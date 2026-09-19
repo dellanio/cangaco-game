@@ -1,0 +1,18 @@
+{
+  "_doc": "Escalas de tempo. Editar aqui NAO exige recompilar. escala 1.0 = ritmo do KaM original; 2.0 = duas vezes mais rapido.",
+  "tickHz": 10,
+  "escalas": {
+    "economia": 2.0,
+    "movimento": 2.0,
+    "construcao": 2.0,
+    "combate": 1.5
+  },
+  "_nota_escalas": "economia afeta producao e condicao; movimento afeta velocidade de deslocamento; construcao afeta nivelamento, marteladas e treino; combate afeta cadencia de ataque e recarga. Combate e menor de proposito: o tempo de reacao do jogador nao escala.",
+  "velocidadeDeJogo": {
+    "_doc": "Botao do jogador. Multiplica o relogio, NAO o balanceamento.",
+    "opcoes": [1, 2, 3],
+    "padrao": 1
+  },
+  "duracaoAlvoDePartida_min": 60,
+  "arredondamento": "Toda duracao em segundos e convertida para ticks inteiros no carregamento, com Math.round. Nunca converter em tempo de execucao."
+}

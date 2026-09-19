@@ -4,6 +4,10 @@ screenshots/
 *.png
 NEXT_FINDINGS.md
 STEER.md
+.serena
+.verify-ok
+AGENT_STOP
+STEER.md
 
 # --- Build e Execução (Vite / Node / TypeScript) ---
 node_modules/
@@ -23,3 +27,4 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json
+

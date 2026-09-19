@@ -1,0 +1,33 @@
+{
+  "_doc": "Estado inicial do modo cidade do zero e precos.",
+  "estadoInicial": {
+    "predios": [
+      { "id": "storehouse", "estado": "completo" },
+      { "id": "schoolhouse", "estado": "completo" }
+    ],
+    "estoque": { "gold": 20, "timber": 40, "stone": 30, "loaves": 15, "sausages": 10 },
+    "unidades": { "serf": 4, "laborer": 2 },
+    "menuBuildInicial": ["quarry", "woodcutters", "inn"]
+  },
+  "schoolhouse": {
+    "custoOuroPorUnidade": 1,
+    "slotsDeFila": 5,
+    "segundosPorTreino_base": 30,
+    "escala": "construcao",
+    "reembolsoSeNaoIniciado": true
+  },
+  "storehouse": { "capacidade": null, "bloqueioPorItem": true },
+  "marketplace": { "taxaFixa": true, "maxSerfs": 10 },
+  "mercadorias": [
+    "tree_trunk", "timber", "stone",
+    "gold_ore", "gold", "coal", "iron_ore", "iron",
+    "corn", "flour", "pigs", "skins", "leather", "horses",
+    "loaves", "sausages", "wine", "fish",
+    "hand_axe", "sword", "lance", "pike", "longbow", "crossbow",
+    "leather_armor", "iron_armor", "wooden_shield", "iron_shield"
+  ],
+  "bloqueioPadraoNoArmazem": {
+    "aceitar": ["timber", "stone", "loaves", "sausages", "wine", "fish", "gold"],
+    "_doc": "Sugestao de guia do original. O jogador pode mudar item a item."
+  }
+}

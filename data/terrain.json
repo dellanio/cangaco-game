@@ -1,0 +1,25 @@
+{
+  "_doc": "Grid ORTOGONAL (top-down 3/4). Tile quadrado.",
+  "tile_px": 64,
+  "estrada": {
+    "custoStonePorTile": 1,
+    "bonusVelocidade": 1.30,
+    "obrigatoriaParaEntrega": true,
+    "_doc": "Sem estrada ligando a porta do predio a rede, o serf nao entrega e o predio nao funciona."
+  },
+  "campos": {
+    "milho": { "custo": {}, "tilesPorFarm": 15 },
+    "uva":   { "custo": { "timber": 1 }, "tilesPorWineyard": 9 }
+  },
+  "custoDeMovimento": {
+    "estrada": 1.0,
+    "grama": 1.30,
+    "campoArado": 1.45,
+    "areia": 1.50,
+    "_doc": "Custo relativo no A*. estrada 1.0 e grama 1.30 produzem o bonus de 30% sem regra especial: o caminho mais barato passa pela estrada sozinho."
+  },
+  "intransponivel": ["agua", "rocha", "montanha", "predio"],
+  "colisao": { "civis": false, "militares": true },
+  "pathfinding": { "algoritmo": "A*", "vizinhanca": 8, "cachePorParOrigemDestino": true },
+  "mapaPadrao": { "largura": 64, "altura": 64 }
+}

@@ -1,0 +1,40 @@
+{
+  "_doc": "Taxas em unidades por minuto na escala 1.0. O carregador multiplica por escalas.economia. Todos os valores sao [proposta] e devem ser calibrados em F15 e F20 contra as proporcoes de referencia do GDD.",
+  "escala": "economia",
+  "predios": {
+    "quarry":           { "entra": {}, "sai": { "stone": 1.8 }, "notas": "consome o veio de rocha; esgota" },
+    "woodcutters":      { "entra": {}, "sai": { "tree_trunk": 0.55 }, "modos": ["cortar", "replantar", "ambos"] },
+    "sawmill":          { "entra": { "tree_trunk": 1.1 }, "sai": { "timber": 2.2 } },
+    "farm":             { "entra": {}, "sai": { "corn": 1.22 }, "notas": "medicao da comunidade (2014)" },
+    "wineyard":         { "entra": {}, "sai": { "wine": 0.5 }, "campos": 9, "timberPorCampo": 1 },
+    "fishermans":       { "entra": {}, "sai": { "fish": 1.0 }, "notas": "estoque do lago e finito" },
+    "gold_mine":        { "entra": {}, "sai": { "gold_ore": 1.0 }, "notas": "veio esgota" },
+    "coal_mine":        { "entra": {}, "sai": { "coal": 1.2 } },
+    "iron_mine":        { "entra": {}, "sai": { "iron_ore": 1.0 }, "notas": "veio esgota" },
+    "metallurgists":    { "entra": { "gold_ore": 0.5, "coal": 0.5 }, "sai": { "gold": 1.0 } },
+    "mill":             { "entra": { "corn": 1.22 }, "sai": { "flour": 1.22 } },
+    "bakery":           { "entra": { "flour": 1.22 }, "sai": { "loaves": 2.44 } },
+    "swine_farm":       { "entra": { "corn": 2.0 }, "sai": { "pigs": 0.5, "skins": 0.5 }, "notas": "4 corn por porco, 4 etapas de alimentacao" },
+    "stables":          { "entra": { "corn": 2.0 }, "sai": { "horses": 0.5 } },
+    "butchers":         { "entra": { "pigs": 1.5 }, "sai": { "sausages": 4.5 }, "notas": "honra a proporcao 3 granjas : 1 acougue. Relatos da comunidade sugerem salsicha mais lenta: CALIBRAR em F20." },
+    "tannery":          { "entra": { "skins": 0.5 }, "sai": { "leather": 1.0 } },
+    "armory_workshop":  { "entra": { "leather": 1.0, "timber": 1.0 }, "sai": { "leather_armor": 1.0, "wooden_shield": 1.0 } },
+    "weapons_workshop": { "entra": { "timber": 1.6 }, "sai": { "arma_madeira": 0.8 }, "notas": "2 timber por arma; jogador escolhe hand_axe, lance ou longbow" },
+    "iron_smithy":      { "entra": { "iron_ore": 1.0, "coal": 1.0 }, "sai": { "iron": 1.0 } },
+    "weapon_smithy":    { "entra": { "iron": 0.8, "coal": 0.8 }, "sai": { "arma_ferro": 0.8 }, "notas": "sword, pike ou crossbow" },
+    "armor_smithy":     { "entra": { "iron": 0.8, "coal": 0.8 }, "sai": { "armadura_ferro": 0.8 }, "notas": "iron_armor ou iron_shield" }
+  },
+  "proporcoesDeReferencia": {
+    "_doc": "Oraculo de calibracao. Um cenario longo que respeite estas proporcoes nao pode acumular fila infinita nem deixar predio ocioso.",
+    "woodcutters_por_sawmill": 2,
+    "farm_por_mill": 1,
+    "mill_por_bakery": 1,
+    "farm_por_swine_farm": 1.63,
+    "farm_por_stables": 2,
+    "swine_farm_por_butchers": 3,
+    "swine_farm_por_tannery": 3,
+    "iron_smithy_por_weapon_smithy": 1,
+    "iron_smithy_por_armor_smithy": 0.4
+  },
+  "estoqueInternoPorPredio": { "entrada": 5, "saida": 5 }
+}

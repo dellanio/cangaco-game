@@ -1,0 +1,19 @@
+{
+  "F01-esqueleto": { "passes": false },
+  "F02-tick-determinista": { "passes": false },
+  "F03-dados-validados": { "passes": false },
+  "F04-grid-ortogonal": { "passes": false },
+  "F05-estado-inicial-hud": { "passes": false },
+  "F06-menu-build-planta": { "passes": false },
+  "F07-posicionar-planta": { "passes": false },
+  "F08-estradas": { "passes": false },
+  "F09-jobboard": { "passes": false },
+  "F10-serf-fsm": { "passes": false },
+  "F11-laborer-construcao": { "passes": false },
+  "F12-desbloqueio": { "passes": false },
+  "F13-schoolhouse-fila": { "passes": false },
+  "F14-especialistas-ocupam": { "passes": false },
+  "F15-producao-basica": { "passes": false },
+  "F16-painel-selecao-demolir": { "passes": false },
+  "F17-aceite-fase-a": { "passes": false }
+}

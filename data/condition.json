@@ -1,0 +1,12 @@
+{
+  "_doc": "Condicao de 0 a 100. Drena linearmente. Duracoes em minutos na escala 1.0; o carregador divide por escalas.economia.",
+  "escala": "economia",
+  "duracaoCondicaoCheia_min_base": { "civil": 40, "militar": 60 },
+  "duracaoEfetiva_min_escala2": { "civil": 20, "militar": 30 },
+  "limiares": { "alertaVisual": 0.35, "civilVaiComer": 0.50, "morte": 0.0 },
+  "restauracaoPorComida": { "wine": 0.30, "loaves": 0.40, "fish": 0.50, "sausages": 0.60 },
+  "regraCivil": "Precisa de pelo menos 2 comidas DIFERENTES para chegar a 100%.",
+  "regraMilitar": "Enche com 1 item qualquer. Nao vai ao Inn; serf leva comida no comando Feed.",
+  "inn": { "comensaisSimultaneos": 8, "estoquePorTipoDeComida": 5 },
+  "populacao": { "limite": null, "_doc": "Nao existe limite de populacao. A comida e o limite." }
+}

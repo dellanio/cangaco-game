@@ -1,2 +1,0 @@
-# cangaco-game
-Jogo Cangaço

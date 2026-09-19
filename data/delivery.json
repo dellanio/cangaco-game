@@ -1,0 +1,22 @@
+{
+  "_doc": "Escada de prioridade do JobBoard. Nivel menor = mais urgente.",
+  "prioridades": [
+    { "nivel": 1, "tarefa": "comida -> inn",                       "fonte": "[fonte] maior prioridade no Remake" },
+    { "nivel": 2, "tarefa": "ouro -> schoolhouse",                 "fonte": "[fonte] segunda maior prioridade no Remake" },
+    { "nivel": 3, "tarefa": "material -> obra ja nivelada" },
+    { "nivel": 4, "tarefa": "insumo -> producao parada por falta de insumo" },
+    { "nivel": 5, "tarefa": "insumo -> producao com estoque baixo" },
+    { "nivel": 6, "tarefa": "saida cheia -> armazem" },
+    { "nivel": 7, "tarefa": "excedente -> armazem" }
+  ],
+  "desempate": ["menorDistanciaDeCaminhoReal", "menorIdDeTarefa"],
+  "_nota_distancia": "Distancia de CAMINHO A PE, nunca euclidiana. Distancia direta faz o trabalhador escolher alvo do outro lado de uma montanha. E erro conhecido no proprio Remake.",
+  "reserva": {
+    "obrigatoria": true,
+    "naOrigem": "unidade de recurso",
+    "noDestino": "vaga de estoque",
+    "_doc": "Sem reserva dupla: dois serfs pegam a mesma pedra e um predio recebe mais do que cabe."
+  },
+  "alertaTarefaSemCandidato_segundos": 30,
+  "maxSerfsNoMarketplace": 10
+}

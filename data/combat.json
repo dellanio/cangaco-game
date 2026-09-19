@@ -1,0 +1,30 @@
+{
+  "_doc": "Cada golpe bem sucedido tira 1 ponto. attack e chance de acerto, nao dano.",
+  "formula": "chanceAcerto = clamp( (attackEfetivo * multiplicadorDirecao) / (defence * 100), pisoAcerto, tetoAcerto )",
+  "attackEfetivo": "se o alvo for montado e attackVsCavalo > 0, usa attackVsCavalo; senao usa attack",
+  "pisoAcerto": 0.08,
+  "tetoAcerto": 0.92,
+  "multiplicadorDirecao": { "frente": 1.0, "flanco": 1.35, "costas": 1.75 },
+  "multiplicadorHP": {
+    "valor": 2,
+    "_doc": "Dobra os golpes ate morrer de units.json. Junto com cadenciaDeAtaque dobrada, o tempo ate a morte fica igual e a variancia cai pela metade. E isso, nao o piso, que impede o miliciano de matar o cavaleiro por sorte."
+  },
+  "cadenciaDeAtaque_segundos_base": 0.5,
+  "escala": "combate",
+  "aDistancia": {
+    "alcance_tiles": 8,
+    "arcoDeTiro_graus": 45,
+    "_doc": "Arqueiro so atira na direcao em que esta virado. Posicionar e virar, nao mandar atacar."
+  },
+  "stormAttack": {
+    "multiplicadorVelocidade": 1.5,
+    "duracao_segundos_base": 8,
+    "incontrolavel": true
+  },
+  "watchtower": {
+    "municao_stone_max": 5,
+    "alcance_tiles": 6,
+    "mataEmUmGolpe": true
+  },
+  "formacao": { "tamanhoRecomendado": [9, 15], "colunasMin": 1, "colunasMax": 10 }
+}

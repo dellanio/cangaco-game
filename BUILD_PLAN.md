@@ -1,0 +1,227 @@
+# BUILD_PLAN — cangaço
+
+Fila de trabalho. **Uma feature por sessão**, na ordem. Cada feature tem uma
+chave correspondente em `test-results.json`, que começa em `false`.
+
+Como ler cada item:
+
+- **Escopo**: o que entra. O que não está aqui não entra.
+- **Aceite**: condição verificável por máquina. É o que o avaliador checa.
+- **Evidência**: o arquivo que precisa ser aberto antes de marcar `passes: true`.
+
+Regra: se o aceite não puder ser verificado sem um humano interpretando, o item
+está mal escrito — corrija o item antes de implementar.
+
+---
+
+## Fase 0 — Fundação (sem jogo ainda)
+
+### F01 — Esqueleto do projeto
+- **Escopo**: Vite + TypeScript estrito + Vitest + ESLint. Estrutura de pastas da
+  seção 3 do CLAUDE.md, com `sim/`, `render/`, `ui/`, `input/`, `data/`,
+  `tests/`, `tools/`. Scripts do `package.json`. Um teste trivial verde.
+- **Aceite**: `npm run test`, `npm run typecheck` e `npm run lint` saem com
+  código 0. `src/sim/` existe e não tem nenhum import.
+- **Evidência**: `test-output/F01.json`
+
+### F02 — GameState e o contrato do tick
+- **Escopo**: tipos de `GameState`, `Command`, `GameEvent`. `step(state, commands)`
+  pura, retornando novo estado. RNG semeado em `sim/rng.ts`. Nenhum sistema ainda:
+  o tick só incrementa `state.tick`.
+- **Aceite**: teste que roda 1000 ticks a partir da mesma semente duas vezes e
+  compara `JSON.stringify` dos dois estados finais — idênticos. Teste que
+  confirma que `step` não muta o estado de entrada.
+- **Evidência**: `test-output/F02.json`
+
+### F03 — Dados, escala de tempo e validação
+- **Escopo**: carregar os nove arquivos de `data/` (`time`, `buildings`,
+  `production`, `units`, `combat`, `condition`, `delivery`, `terrain`,
+  `economy`), aplicar as escalas de `time.json` e converter toda duração para
+  ticks inteiros no carregamento. Schema + `npm run validate:data`.
+- **Aceite**: `validate:data` sai com código 0. Testes que confirmam:
+  28 prédios; `hp === (timber + stone) * 50` em todos eles; todo
+  `desbloqueadoPor` aponta para um id existente; o grafo de desbloqueio não tem
+  ciclo e tem raiz única (`storehouse`); toda duração convertida é inteira;
+  trocar `escalas.economia` de 2.0 para 3.0 muda as taxas na proporção esperada
+  e **não** muda nenhum valor dos grupos `movimento`, `construcao` ou `combate`.
+- **Evidência**: `test-output/F03.json`
+
+### F04 — Grid ortogonal e câmera
+- **Escopo**: `render/grid.ts` com `gridToScreen` e `screenToGrid` (grid quadrado,
+  tile de 64 px, arte top-down 3/4). Cena Phaser com tilemap ortogonal, mapa
+  64×64 de grama. Câmera com arrasto e limites. Highlight do tile sob o mouse.
+  Depth sorting por `y`, com culling do que está fora da câmera.
+- **Aceite**: teste unitário de ida e volta — para 1000 coordenadas aleatórias
+  (RNG semeado), `screenToGrid(gridToScreen(p)) === p`. Screenshot mostrando o
+  mapa desenhado e um tile destacado.
+- **Evidência**: `test-output/F04.json` + `screenshots/F04-*.png`
+
+---
+
+## Fase A — Loop de construção jogável
+
+O critério de aceite da fase inteira, do GDD: partindo do estado inicial, o
+jogador consegue, só com o mouse, construir 2 Woodcutter's, 1 Quarry e 1 Sawmill
+conectados por estrada, treinar os trabalhadores e ver o estoque subir. Nenhum
+prédio surge sem clique do jogador.
+
+### F05 — Estado inicial e barra de recursos
+- **Escopo**: cenário inicial da seção 3.2 do GDD (Storehouse e Schoolhouse
+  prontos, estoque, 4 serfs, 2 laborers). HUD de topo com gold, timber, stone,
+  comida e população.
+- **Aceite**: `npm run sim -- inicial --ticks 0` imprime exatamente os valores da
+  tabela. Screenshot com o HUD legível e os dois prédios no mapa.
+- **Evidência**: `test-output/F05.json` + `screenshots/F05-*.png`
+
+### F06 — Menu Build e planta fantasma
+- **Escopo**: painel lateral com os prédios desbloqueados e seu custo; bloqueados
+  em cinza com "requer X". Planta seguindo o mouse, verde quando pode e vermelha
+  quando não pode (terreno, sobreposição, borda do mapa). `Esc` cancela.
+- **Aceite**: teste da função `canPlace(state, buildingId, x, y)` cobrindo:
+  sobreposição com prédio, fora do mapa, terreno inválido, prédio não
+  desbloqueado. Screenshots dos dois estados da planta, verde e vermelha.
+- **Evidência**: `test-output/F06.json` + `screenshots/F06-*.png`
+
+### F07 — Comando de posicionar planta
+- **Escopo**: clique confirma e emite `PlaceBlueprint`. O estado ganha uma obra
+  pendente com HP 0 e a lista de materiais faltantes. Marcação visível no chão.
+  O custo **não** sai do estoque no momento do clique; ele é consumido na entrega.
+- **Aceite**: teste que emite `PlaceBlueprint` e confirma que o estado tem uma
+  obra com os materiais corretos vindos de `buildings.json`, e que um segundo
+  comando na mesma posição é rejeitado.
+- **Evidência**: `test-output/F07.json`
+
+### F08 — Estradas
+- **Escopo**: ferramenta de estrada com arrasto tile a tile. Custo em stone por
+  tile. Grafo de conectividade e função `isConnected(from, to)`. Demolir.
+- **Aceite**: teste que desenha uma estrada em L entre dois pontos e confirma
+  `isConnected` verdadeiro; remove um tile do meio e confirma falso. Screenshot
+  da estrada desenhada.
+- **Evidência**: `test-output/F08.json` + `screenshots/F08-*.png`
+
+### F09 — JobBoard
+- **Escopo**: criação, `claim`, `release`, reserva de recurso na origem e de vaga
+  no destino. Prioridade simples e desempate determinístico. Sem unidade ainda.
+- **Aceite**: teste que cria 1 tarefa e 2 unidades e confirma que só uma faz
+  `claim`. Teste que confirma que após `claim` a quantidade disponível na origem
+  cai e a reservada sobe. Teste que confirma que `release` restaura exatamente o
+  estado anterior.
+- **Evidência**: `test-output/F09.json`
+
+### F10 — FSM do Serf (transporte)
+- **Escopo**: estados `ocioso → indo_buscar → carregando → indo_entregar →
+  entregando`. Movimento sobre o grafo de estradas. Consome tarefas do JobBoard.
+  Falha graciosa quando o caminho some no meio.
+- **Aceite**: cenário com armazém contendo 10 stone e uma obra pedindo 2 stone.
+  Após N ticks, a obra recebeu 2 e o armazém tem 8. Teste de falha: demolir a
+  obra com o serf a caminho e confirmar que a carga volta ao armazém e a tarefa
+  é liberada.
+- **Evidência**: `test-output/F10.json`
+
+### F11 — FSM do Laborer (construção em etapas)
+- **Escopo**: nivelar terreno → esperar material → martelar. HP subindo conforme
+  o GDD: cada material entregue soma 50 HP, cada martelada soma 5. Três estágios
+  visuais: marcação, estrutura de madeira, prédio completo.
+- **Aceite**: cenário com Quarry (3 timber + 2 stone, 250 HP). Após a entrega dos
+  5 materiais o HP é 250 e o prédio fica `completo`. Screenshots dos três
+  estágios.
+- **Evidência**: `test-output/F11.json` + `screenshots/F11-*.png`
+
+### F12 — Desbloqueio por conclusão
+- **Escopo**: concluir um prédio libera os filhos dele na árvore do GDD. O menu
+  Build reflete na hora.
+- **Aceite**: teste que parte do estado inicial, conclui uma Schoolhouse e
+  confirma que Quarry e Woodcutter's saíram de bloqueado; conclui um Woodcutter's
+  e confirma Sawmill liberado.
+- **Evidência**: `test-output/F12.json`
+
+### F13 — Schoolhouse: fila de treino
+- **Escopo**: painel com fila de até 5 slots, um botão por tipo de trabalhador,
+  1 gold por unidade, cobrado ao iniciar. Cancelar item da fila devolve o ouro
+  só se ainda não começou.
+- **Aceite**: teste que enfileira 3 unidades com 3 de ouro, confirma ouro 0 e as
+  3 unidades criadas após o tempo de treino; tenta a quarta sem ouro e confirma
+  rejeição. Screenshot do painel com fila cheia.
+- **Evidência**: `test-output/F13.json` + `screenshots/F13-*.png`
+
+### F14 — Especialistas ocupam prédios
+- **Escopo**: trabalhador treinado caminha até um prédio vago do seu tipo e o
+  ocupa. Prédio sem trabalhador fica parado e o HUD alerta.
+- **Aceite**: cenário com 2 Quarries prontas e 2 stonemasons treinados: após N
+  ticks os dois prédios têm ocupante e nenhum ficou com dois.
+- **Evidência**: `test-output/F14.json`
+
+### F15 — Produção: Quarry, Woodcutter's, Sawmill
+- **Escopo**: ciclo de produção por tempo, saída depositada no prédio, tarefa de
+  transporte criada para levar ao armazém. Quarry esgota o veio de pedra.
+- **Aceite**: cenário completo, 3000 ticks. O estoque de stone e timber é maior
+  que zero e cresce monotonicamente enquanto houver rocha e árvore. Nenhum
+  trabalhador em `ocioso` por mais de X ticks consecutivos.
+- **Evidência**: `test-output/F15.json`
+
+### F16 — Painel de seleção e demolição
+- **Escopo**: clicar em prédio mostra nome, HP ou progresso de obra, ocupante,
+  estoque de entrada e saída, botões pausar e demolir. Demolir devolve parte do
+  material e libera as tarefas ligadas ao prédio.
+- **Aceite**: teste que demole um prédio com tarefa em curso e confirma que
+  nenhuma tarefa órfã sobrou no JobBoard e nenhum serf ficou travado.
+  Screenshot do painel.
+- **Evidência**: `test-output/F16.json` + `screenshots/F16-*.png`
+
+### F17 — Aceite da Fase A (integração)
+- **Escopo**: roteiro Playwright que executa a sessão inteira do critério de
+  aceite do GDD, só com cliques.
+- **Aceite**: o roteiro conclui com 2 Woodcutter's, 1 Quarry e 1 Sawmill
+  completos e ocupados, ligados por estrada, e o estoque de timber maior que o
+  inicial. Screenshot final da vila.
+- **Evidência**: `test-output/F17.json` + `screenshots/F17-final.png`
+
+---
+
+## Fase B — Comida e crescimento
+
+### F18 — Farm e campos de milho
+### F19 — Mill e Bakery (cadeia do pão)
+### F20 — Inn, fome e consumo
+- Restauração por tipo de comida e regra das duas comidas diferentes, conforme o
+  GDD. Aceite: cenário longo em que a população sobrevive; cenário sem comida em
+  que morre — e a morte é registrada em evento, não em log solto.
+### F21 — Gold mine, Coal mine e Metallurgist's (ouro renovável)
+### F22 — Alertas do HUD
+- Prédio sem trabalhador, sem estrada, fome, mina esgotada.
+### F23 — Save e load
+- Aceite: salvar num tick qualquer, carregar e rodar 500 ticks produz o mesmo
+  estado que rodar 500 ticks sem salvar. É o teste que prova que a invariante 2
+  continua de pé.
+
+---
+
+## Fase C — Militar
+
+### F24 — Weapons workshop e cadeia de couro
+### F25 — Barracks e criação de soldado
+### F26 — Seleção e movimento de grupo
+### F27 — Formação, virar e storm attack
+### F28 — Combate e IA inimiga simples
+
+---
+
+## Fase D — Profundidade
+
+### F29 — Ferro e smithies
+### F30 — Armazém com toggles por mercadoria
+### F31 — Menu de distribuição
+### F32 — Aba de estatísticas
+### F33 — Minimapa
+### F34 — Condições de vitória e derrota (escaramuça)
+
+---
+
+## Regras da fila
+
+- Fase A inteira antes de qualquer item da Fase B. Sem exceção.
+- Item da Fase B em diante só é detalhado quando a fase anterior fechar. Detalhar
+  agora é desperdício, porque o que você aprende na Fase A muda o resto.
+- Se uma feature reprovar duas vezes seguidas na avaliação, pare o loop e escreva
+  em `PROGRESS.md` o motivo. Insistir uma terceira vez com o mesmo prompt é
+  queimar crédito.

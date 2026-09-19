@@ -1,0 +1,117 @@
+{
+  "_doc": "Camada temática. Mapeia os ids da simulação para nomes e descrições do sertão. A simulação NUNCA lê este arquivo para decidir regra: ele só alimenta a tela e o pipeline de arte. Trocar de tema é trocar este arquivo.",
+  "tema": {
+    "id": "sertao",
+    "nome": "Sertão de cordel",
+    "epoca": "atemporal, sem data — registro de literatura de cordel",
+    "conflito": "dois bandos rivais disputando o mesmo sertão",
+    "idioma": "português com termos regionais; toda palavra regional precisa de verbete no glossário",
+    "restricao": "nenhum nome, pessoa ou episódio histórico real"
+  },
+  "paleta": {
+    "terra": "#B5763A",
+    "terraQueimada": "#8C4A25",
+    "ocre": "#C9974B",
+    "telha": "#B4562F",
+    "cal": "#EDE3D0",
+    "algodaoCru": "#D9C9A8",
+    "verdeSeco": "#7C8B6A",
+    "verdeCaatinga": "#5E6B4F",
+    "madeira": "#5A3F2B",
+    "couro": "#8A5A32",
+    "ceu": "#4E86A8"
+  },
+  "predios": {
+    "storehouse":       { "nome": "Armazém",          "desc": "Depósito da fazenda. Guarda tudo que a vila produz." },
+    "schoolhouse":      { "nome": "Casa do Coronel",  "desc": "Onde se engaja gente por dinheiro." },
+    "inn":              { "nome": "Bodega",           "desc": "Venda e mesa. É onde o povo come e bebe." },
+    "quarry":           { "nome": "Pedreira",         "desc": "Lascas de pedra tiradas do lajedo." },
+    "woodcutters":      { "nome": "Casa do Lenhador", "desc": "Corta e replanta a lenha da caatinga." },
+    "watchtower":       { "nome": "Mirante de Pedra", "desc": "Torre de pedra seca. Dali se atira de cima." },
+    "sawmill":          { "nome": "Serraria",         "desc": "Tora vira tábua." },
+    "farm":             { "nome": "Roçado de Milho",  "desc": "O milho sustenta gente e bicho." },
+    "wineyard":         { "nome": "Canavial",         "desc": "Cana que vira cachaça no engenho." },
+    "fishermans":       { "nome": "Casa do Pescador", "desc": "Pesca no açude." },
+    "gold_mine":        { "nome": "Garimpo",          "desc": "Veio de ouro na serra. Esgota." },
+    "coal_mine":        { "nome": "Jazida de Carvão", "desc": "Carvão tirado da serra." },
+    "iron_mine":        { "nome": "Mina de Ferro",    "desc": "Veio de ferro na serra. Esgota." },
+    "weapons_workshop": { "nome": "Oficina do Seleiro","desc": "Cabo de madeira: foice, aguilhada, bodoque." },
+    "barracks":         { "nome": "Couto",            "desc": "Esconderijo do bando. Onde se arma a gente." },
+    "marketplace":      { "nome": "Feira",            "desc": "Troca de mercadoria a preço fixo." },
+    "mill":             { "nome": "Monjolo",          "desc": "Milho vira fubá." },
+    "bakery":           { "nome": "Casa de Forno",    "desc": "Fubá vira cuscuz e beiju." },
+    "swine_farm":       { "nome": "Criação de Bode",  "desc": "Bode e couro." },
+    "stables":          { "nome": "Cocheira",         "desc": "Cria e doma cavalo." },
+    "butchers":         { "nome": "Casa de Carne",    "desc": "Bode vira carne de sol." },
+    "tannery":          { "nome": "Curtume",          "desc": "Couro cru vira couro curtido." },
+    "armory_workshop":  { "nome": "Casa do Gibão",    "desc": "Gibão de couro e chapéu de aba." },
+    "metallurgists":    { "nome": "Fundição",         "desc": "Ouro bruto vira moeda." },
+    "town_hall":        { "nome": "Sobrado",          "desc": "Aqui se contrata jagunço com dinheiro na mão." },
+    "iron_smithy":      { "nome": "Forja",            "desc": "Minério vira ferro." },
+    "weapon_smithy":    { "nome": "Ferraria",         "desc": "Ferro vira peixeira, ferrão e cano de fogo." },
+    "armor_smithy":     { "nome": "Oficina de Couro Cru","desc": "Gibão reforçado e peitoral." }
+  },
+  "civis": {
+    "serf":           { "nome": "Carregador",  "item": "cesto ou saco nas costas" },
+    "laborer":        { "nome": "Obreiro",     "item": "marreta de madeira" },
+    "stonemason":     { "nome": "Cabra da Pedreira", "item": "ponteiro e marreta" },
+    "woodcutter":     { "nome": "Lenhador",    "item": "machado" },
+    "carpenter":      { "nome": "Carpina",     "item": "serrote" },
+    "farmer":         { "nome": "Roceiro",     "item": "enxada" },
+    "baker":          { "nome": "Forneiro",    "item": "pá de forno" },
+    "animal_breeder": { "nome": "Criador",     "item": "cambito" },
+    "butcher":        { "nome": "Carneador",   "item": "faca de ponta" },
+    "fisherman":      { "nome": "Pescador",    "item": "tarrafa" },
+    "miner":          { "nome": "Mineiro",     "item": "picareta e candeeiro" },
+    "metallurgist":   { "nome": "Fundidor",    "item": "tenaz" },
+    "blacksmith":     { "nome": "Ferreiro",    "item": "martelo de forja" },
+    "recruit":        { "nome": "Aprendiz",    "item": "mãos vazias, chapéu de couro novo" }
+  },
+  "militares": {
+    "militia":       { "nome": "Cabra",             "arma": "facão", "protecao": "nenhuma" },
+    "axe_fighter":   { "nome": "Cabra de Gibão",    "arma": "facão", "protecao": "gibão de couro e chapéu de aba" },
+    "sword_fighter": { "nome": "Valente",           "arma": "peixeira longa", "protecao": "gibão reforçado e peitoral de couro cru" },
+    "bowman":        { "nome": "Bodoqueiro",        "arma": "bodoque", "protecao": "gibão de couro" },
+    "crossbowman":   { "nome": "Cabra de Fogo",     "arma": "bacamarte", "protecao": "gibão reforçado" },
+    "lance_carrier": { "nome": "Aguilhadeiro",      "arma": "aguilhada de vaqueiro", "protecao": "gibão de couro" },
+    "pikeman":       { "nome": "Ferrão",            "arma": "ferrão comprido", "protecao": "gibão reforçado" },
+    "scout":         { "nome": "Vaqueiro",          "arma": "facão", "protecao": "gibão completo", "montado": true },
+    "knight":        { "nome": "Capitão do Bando",  "arma": "peixeira e cano de fogo", "protecao": "gibão reforçado e peitoral", "montado": true }
+  },
+  "mercenarios": {
+    "rebel":     { "nome": "Retirante" },
+    "rogue":     { "nome": "Emboscador" },
+    "vagabond":  { "nome": "Andarilho" },
+    "barbarian": { "nome": "Bruto do Mato" },
+    "warrior":   { "nome": "Jagunço" }
+  },
+  "mercadorias": {
+    "tree_trunk": "Tora", "timber": "Tábua", "stone": "Pedra",
+    "gold_ore": "Ouro bruto", "gold": "Dinheiro", "coal": "Carvão",
+    "iron_ore": "Minério", "iron": "Ferro",
+    "corn": "Milho", "flour": "Fubá", "pigs": "Bode", "skins": "Couro cru",
+    "leather": "Couro", "horses": "Cavalo",
+    "loaves": "Cuscuz", "sausages": "Carne de sol", "wine": "Cachaça", "fish": "Peixe",
+    "hand_axe": "Facão", "sword": "Peixeira", "lance": "Aguilhada",
+    "pike": "Ferrão", "longbow": "Bodoque", "crossbow": "Bacamarte",
+    "leather_armor": "Gibão de couro", "iron_armor": "Gibão reforçado",
+    "wooden_shield": "Chapéu de aba", "iron_shield": "Peitoral de couro cru"
+  },
+  "vegetacao": ["mandacaru", "xique-xique", "juazeiro", "umbuzeiro", "facheiro", "macambira"],
+  "props": ["cerca de vara", "pilha de lenha", "cacimba", "carro de boi", "jumento", "varal de carne de sol"],
+  "facoes": {
+    "_doc": "Dois bandos rivais. MESMA arquitetura e MESMOS sprites: mudam só a cor do lenço e da bandeira. Foi essa escolha que cortou a conta de arte quase pela metade.",
+    "bando_a": { "nome": "Bando do Cabeça-Branca", "corLenco": "#D64B3F", "corBandeira": "#D64B3F" },
+    "bando_b": { "nome": "Bando do Vento-Leste",   "corLenco": "#3F72D6", "corBandeira": "#3F72D6" }
+  },
+  "audio": {
+    "instrumentos": ["rabeca", "zabumba", "viola de dez cordas", "triângulo", "pífano"],
+    "ambiente": ["vento seco", "cigarra", "sino da bodega", "carro de boi rangendo"],
+    "efeitos": ["martelada", "machado na madeira", "ponteiro na pedra", "tiro de bacamarte", "relincho", "berro de bode"]
+  },
+  "ui": {
+    "estilo": "xilogravura de cordel: alto contraste, preto sobre papel, traço grosso",
+    "glossarioObrigatorio": true,
+    "_doc": "O mundo é colorido e detalhado; a interface é xilogravura. Os dois registros não competem."
+  }
+}

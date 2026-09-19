@@ -1,0 +1,48 @@
+{
+  "_doc": "hp aqui significa GOLPES ATE MORRER, nao pontos de vida. attack e CHANCE DE ACERTO, nao dano. Ver combat.json.",
+  "velocidadeBase_tilesPorSegundo": { "aPe": 1.0, "montado": 1.66 },
+  "escalaVelocidade": "movimento",
+  "civis": {
+    "_comum": { "velocidade": "aPe", "direcoesDeSprite": 4, "vaiAoInn": true },
+    "tipos": [
+      { "id": "serf",           "nome": "Servo",       "custoOuro": 1 },
+      { "id": "laborer",        "nome": "Operario",    "custoOuro": 1 },
+      { "id": "stonemason",     "nome": "Pedreiro",    "custoOuro": 1 },
+      { "id": "woodcutter",     "nome": "Lenhador",    "custoOuro": 1 },
+      { "id": "carpenter",      "nome": "Carpinteiro", "custoOuro": 1 },
+      { "id": "farmer",         "nome": "Fazendeiro",  "custoOuro": 1 },
+      { "id": "baker",          "nome": "Padeiro",     "custoOuro": 1 },
+      { "id": "animal_breeder", "nome": "Criador",     "custoOuro": 1 },
+      { "id": "butcher",        "nome": "Acougueiro",  "custoOuro": 1 },
+      { "id": "fisherman",      "nome": "Pescador",    "custoOuro": 1 },
+      { "id": "miner",          "nome": "Mineiro",     "custoOuro": 1 },
+      { "id": "metallurgist",   "nome": "Metalurgico", "custoOuro": 1 },
+      { "id": "blacksmith",     "nome": "Ferreiro",    "custoOuro": 1 },
+      { "id": "recruit",        "nome": "Recruta",     "custoOuro": 1, "vaiAoInn": true, "notas": "vira soldado no quartel ou ocupa torre" }
+    ]
+  },
+  "militares": {
+    "_comum": { "direcoesDeSprite": 8, "vaiAoInn": false, "alimentadoPor": "comando Feed" },
+    "tipos": [
+      { "id": "militia",       "nome": "Miliciano",       "hp": 3, "attack": 35,  "attackVsCavalo": 0,  "defence": 1, "montado": false, "visao": 9,  "requisitos": ["hand_axe"] },
+      { "id": "axe_fighter",   "nome": "Machadeiro",      "hp": 3, "attack": 35,  "attackVsCavalo": 0,  "defence": 2, "montado": false, "visao": 9,  "requisitos": ["hand_axe", "leather_armor", "wooden_shield"] },
+      { "id": "sword_fighter", "nome": "Espadachim",      "hp": 3, "attack": 55,  "attackVsCavalo": 0,  "defence": 3, "montado": false, "visao": 9,  "requisitos": ["sword", "iron_armor", "iron_shield"] },
+      { "id": "bowman",        "nome": "Arqueiro",        "hp": 1, "attack": 60,  "attackVsCavalo": 0,  "defence": 2, "montado": false, "visao": 9,  "requisitos": ["longbow", "leather_armor"], "aDistancia": true },
+      { "id": "crossbowman",   "nome": "Besteiro",        "hp": 1, "attack": 120, "attackVsCavalo": 0,  "defence": 3, "montado": false, "visao": 9,  "requisitos": ["crossbow", "iron_armor"], "aDistancia": true },
+      { "id": "lance_carrier", "nome": "Lanceiro",        "hp": 3, "attack": 25,  "attackVsCavalo": 60, "defence": 2, "montado": false, "visao": 9,  "requisitos": ["lance", "leather_armor"] },
+      { "id": "pikeman",       "nome": "Piqueiro",        "hp": 3, "attack": 35,  "attackVsCavalo": 80, "defence": 3, "montado": false, "visao": 9,  "requisitos": ["pike", "iron_armor"] },
+      { "id": "scout",         "nome": "Batedor",         "hp": 4, "attack": 35,  "attackVsCavalo": 0,  "defence": 2, "montado": true,  "visao": 18, "requisitos": ["hand_axe", "leather_armor", "wooden_shield", "horse"] },
+      { "id": "knight",        "nome": "Cavaleiro",       "hp": 4, "attack": 55,  "attackVsCavalo": 0,  "defence": 3, "montado": true,  "visao": 9,  "requisitos": ["sword", "iron_armor", "iron_shield", "horse"] }
+    ]
+  },
+  "mercenarios": {
+    "_doc": "Town hall. Pagos em ouro, prontos na hora.",
+    "tipos": [
+      { "id": "rebel",     "nome": "Rebelde",  "hp": 3, "attack": 25, "attackVsCavalo": 50, "defence": 1, "montado": false, "visao": 9, "custoOuro": 2 },
+      { "id": "rogue",     "nome": "Bandido",  "hp": 1, "attack": 60, "attackVsCavalo": 0,  "defence": 1, "montado": false, "visao": 9, "custoOuro": 3, "aDistancia": true },
+      { "id": "vagabond",  "nome": "Vagabundo","hp": 4, "attack": 35, "attackVsCavalo": 0,  "defence": 1, "montado": true,  "visao": 9, "custoOuro": 5 },
+      { "id": "barbarian", "nome": "Barbaro",  "hp": 4, "attack": 75, "attackVsCavalo": 0,  "defence": 2, "montado": false, "visao": 9, "custoOuro": 7 },
+      { "id": "warrior",   "nome": "Guerreiro","hp": 4, "attack": 75, "attackVsCavalo": 0,  "defence": 2, "montado": false, "visao": 9, "custoOuro": 8 }
+    ]
+  }
+}

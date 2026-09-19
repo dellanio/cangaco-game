@@ -1,0 +1,43 @@
+{
+  "_doc": "Dados estruturais dos predios. HP e derivado: (timber + stone) * 50. marteladas = HP / 5. A validacao rejeita qualquer linha que quebre a regra.",
+  "regraHP": "(timber + stone) * 50",
+  "regraMarteladas": "hp / 5",
+  "predios": [
+    { "id": "storehouse",       "nome": "Armazem",             "tamanho": [3,3], "timber": 6, "stone": 5, "hp": 550, "desbloqueadoPor": null,          "trabalhador": null },
+    { "id": "schoolhouse",      "nome": "Escola",              "tamanho": [3,3], "timber": 6, "stone": 5, "hp": 550, "desbloqueadoPor": "storehouse",  "trabalhador": null },
+    { "id": "inn",              "nome": "Taverna",             "tamanho": [4,3], "timber": 6, "stone": 5, "hp": 550, "desbloqueadoPor": "storehouse",  "trabalhador": null },
+    { "id": "quarry",           "nome": "Pedreira",            "tamanho": [3,2], "timber": 3, "stone": 2, "hp": 250, "desbloqueadoPor": "schoolhouse", "trabalhador": "stonemason" },
+    { "id": "woodcutters",      "nome": "Casa do lenhador",    "tamanho": [3,2], "timber": 3, "stone": 2, "hp": 250, "desbloqueadoPor": "schoolhouse", "trabalhador": "woodcutter" },
+    { "id": "watchtower",       "nome": "Torre de vigia",      "tamanho": [2,2], "timber": 3, "stone": 2, "hp": 250, "desbloqueadoPor": "quarry",      "trabalhador": "recruit" },
+    { "id": "sawmill",          "nome": "Serraria",            "tamanho": [4,2], "timber": 4, "stone": 3, "hp": 350, "desbloqueadoPor": "woodcutters", "trabalhador": "carpenter" },
+    { "id": "farm",             "nome": "Fazenda",             "tamanho": [4,3], "timber": 4, "stone": 3, "hp": 350, "desbloqueadoPor": "sawmill",     "trabalhador": "farmer" },
+    { "id": "wineyard",         "nome": "Vinhedo",             "tamanho": [3,2], "timber": 4, "stone": 3, "hp": 350, "desbloqueadoPor": "sawmill",     "trabalhador": "farmer" },
+    { "id": "fishermans",       "nome": "Casa do pescador",    "tamanho": [3,2], "timber": 4, "stone": 3, "hp": 350, "desbloqueadoPor": "sawmill",     "trabalhador": "fisherman" },
+    { "id": "gold_mine",        "nome": "Mina de ouro",        "tamanho": [2,1], "timber": 3, "stone": 2, "hp": 250, "desbloqueadoPor": "sawmill",     "trabalhador": "miner" },
+    { "id": "coal_mine",        "nome": "Mina de carvao",      "tamanho": [3,2], "timber": 3, "stone": 2, "hp": 250, "desbloqueadoPor": "sawmill",     "trabalhador": "miner" },
+    { "id": "iron_mine",        "nome": "Mina de ferro",       "tamanho": [3,1], "timber": 3, "stone": 2, "hp": 250, "desbloqueadoPor": "sawmill",     "trabalhador": "miner" },
+    { "id": "weapons_workshop", "nome": "Oficina de armas",    "tamanho": [4,2], "timber": 4, "stone": 3, "hp": 350, "desbloqueadoPor": "sawmill",     "trabalhador": "carpenter" },
+    { "id": "barracks",         "nome": "Quartel",             "tamanho": [4,4], "timber": 6, "stone": 6, "hp": 600, "desbloqueadoPor": "sawmill",     "trabalhador": null },
+    { "id": "marketplace",      "nome": "Mercado",             "tamanho": [4,3], "timber": 6, "stone": 5, "hp": 550, "desbloqueadoPor": "sawmill",     "trabalhador": null },
+    { "id": "mill",             "nome": "Moinho",              "tamanho": [3,3], "timber": 4, "stone": 3, "hp": 350, "desbloqueadoPor": "farm",        "trabalhador": "baker" },
+    { "id": "bakery",           "nome": "Padaria",             "tamanho": [3,3], "timber": 4, "stone": 3, "hp": 350, "desbloqueadoPor": "mill",        "trabalhador": "baker" },
+    { "id": "swine_farm",       "nome": "Granja de porcos",    "tamanho": [4,3], "timber": 4, "stone": 3, "hp": 350, "desbloqueadoPor": "farm",        "trabalhador": "animal_breeder" },
+    { "id": "stables",          "nome": "Estabulo",            "tamanho": [4,3], "timber": 6, "stone": 5, "hp": 550, "desbloqueadoPor": "farm",        "trabalhador": "animal_breeder" },
+    { "id": "butchers",         "nome": "Acougue",             "tamanho": [3,3], "timber": 4, "stone": 3, "hp": 350, "desbloqueadoPor": "swine_farm",  "trabalhador": "butcher" },
+    { "id": "tannery",          "nome": "Curtume",             "tamanho": [3,2], "timber": 4, "stone": 3, "hp": 350, "desbloqueadoPor": "swine_farm",  "trabalhador": "butcher" },
+    { "id": "armory_workshop",  "nome": "Oficina de armaduras","tamanho": [3,3], "timber": 4, "stone": 3, "hp": 350, "desbloqueadoPor": "tannery",     "trabalhador": "carpenter" },
+    { "id": "metallurgists",    "nome": "Metalurgia",          "tamanho": [3,3], "timber": 4, "stone": 3, "hp": 350, "desbloqueadoPor": "gold_mine",   "trabalhador": "metallurgist" },
+    { "id": "town_hall",        "nome": "Prefeitura",          "tamanho": [4,3], "timber": 6, "stone": 5, "hp": 550, "desbloqueadoPor": "metallurgists","trabalhador": null },
+    { "id": "iron_smithy",      "nome": "Fundicao de ferro",   "tamanho": [4,2], "timber": 4, "stone": 3, "hp": 350, "desbloqueadoPor": "iron_mine",   "trabalhador": "metallurgist" },
+    { "id": "weapon_smithy",    "nome": "Forja de armas",      "tamanho": [4,2], "timber": 4, "stone": 3, "hp": 350, "desbloqueadoPor": "iron_smithy", "trabalhador": "blacksmith" },
+    { "id": "armor_smithy",     "nome": "Forja de armaduras",  "tamanho": [4,3], "timber": 4, "stone": 3, "hp": 350, "desbloqueadoPor": "iron_smithy", "trabalhador": "blacksmith" }
+  ],
+  "construcao": {
+    "hpPorMaterialEntregue": 50,
+    "hpPorMartelada": 5,
+    "segundosPorMartelada_base": 1.0,
+    "segundosNivelamentoPorTile_base": 2.0,
+    "escala": "construcao",
+    "devolucaoAoDemolir": 0.5
+  }
+}
