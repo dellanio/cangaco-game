@@ -10,8 +10,15 @@ const JANELA_SEG = 900;
 let raw = '';
 process.stdin.on('data', (d) => (raw += d));
 process.stdin.on('end', () => {
-  // So interessa quando o alvo da escrita e o rastreador.
-  if (!raw.includes('test-results.json')) process.exit(0);
+  // So interessa quando o ALVO da escrita e o rastreador — nao o conteudo.
+  let alvo = '';
+  try {
+    const payload = JSON.parse(raw.replace(/^\uFEFF/, '').trim());
+    alvo = (payload.tool_input && payload.tool_input.file_path) || '';
+  } catch {
+    alvo = raw;   // payload ilegivel: volta ao casamento amplo, nunca fail-open
+  }
+  if (!/(^|[\\/])test-results\.json$/.test(alvo)) process.exit(0);
 
   let idade = Infinity;
   try {

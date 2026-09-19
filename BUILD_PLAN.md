@@ -92,7 +92,10 @@ prédio surge sem clique do jogador.
   obra com os materiais corretos vindos de `buildings.json`, e que um segundo
   comando na mesma posição é rejeitado.
 - **Evidência**: `test-output/F07.json`
-
+- **Atenção**: `Command` é `never` desde a F02. Ao acrescentar o primeiro
+  membro, escreva o `switch` em `step()` com `default` atribuindo a `never`
+  — a checagem de exaustividade não existe hoje e nada vai avisar.
+  
 ### F08 — Estradas
 - **Escopo**: ferramenta de estrada com arrasto tile a tile. Custo em stone por
   tile. Grafo de conectividade e função `isConnected(from, to)`. Demolir.
