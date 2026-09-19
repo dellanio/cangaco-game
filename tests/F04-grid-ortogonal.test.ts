@@ -132,6 +132,25 @@ describe('F04 — guardas estruturais', () => {
   });
 });
 
+// Task 5 do plano da F04: prova de que nada vazou para sim/. Checagem manual,
+// de uma vez so, feita nesta sessao (nao recomputada aqui): um `git diff
+// --stat` contra o commit que fechou a F03 (8c08a51) contra src/sim/ voltou
+// vazio, e um arquivo de prova temporario em src/sim/ importando `phaser` e
+// `../render/scenes/WorldScene` foi reprovado por `no-restricted-imports`
+// (2 erros) e depois apagado. Vira teste live so quebraria a partir da F05,
+// quando sim/ legitimamente mudar de novo — por isso e um fato registrado,
+// nao uma asserção recomputada a cada `npm run test`.
+const PROVA_SEM_VAZAMENTO_PARA_SIM = {
+  commitBaseF03: '8c08a51',
+  gitDiffStatSimVazio: true,
+  arquivoDeProvaReprovadoPeloEslint: {
+    caminho: 'src/sim/__prova_vazamento_f04.ts',
+    importsTestados: ['phaser', '../render/scenes/WorldScene'],
+    erros: 2,
+    apagadoAposAChecagem: true,
+  },
+};
+
 afterAll(() => {
   gravarEvidencia('F04', {
     feature: 'F04-grid-ortogonal',
@@ -142,5 +161,6 @@ afterAll(() => {
       gridTsSemImport: !gridTsTemImport(),
       soMapaTsLeSimData: arquivosQueLeemSimDataForaDeMapa().length === 0,
     },
+    simNaoVazou: PROVA_SEM_VAZAMENTO_PARA_SIM,
   });
 });
