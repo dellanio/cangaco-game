@@ -294,6 +294,83 @@ marcado depois de `npm run verify` verde e evidência lida.
   segue passo manual da sessão, como o CLAUDE.md §8 já define — mantém o
   portão rápido e estável.
 
+## F05a — Estado inicial em `sim/` (2026-09-19)
+
+A F05 original juntava formato de entidade (`sim/`) e HUD/render numa feature
+só. O operador quebrou em F05a e F05b — o formato do `GameState` que F07, F10,
+F11 e F14 herdam precisa ser revisado isolado, sem decisão de render no meio.
+Esta sessão entregou só a F05a. `test-results.json` passou de 17 para 18
+chaves (intencional): `F05-estado-inicial-hud` virou `F05a-estado-inicial` +
+`F05b-hud`.
+
+- **Coleção indexada por id, com `ordem` explícita ao lado do `Record`.**
+  `predios`/`unidades` são `{ porId, ordem }`. O `Record` dá acesso O(1); o
+  array `ordem` existe porque a ordem de iteração de `Object.keys` num objeto
+  JS não é uma garantia da linguagem para chave não numérica — só "na
+  prática" os motores atuais preservam inserção. Todo sistema futuro varre
+  `ordem`, nunca `Object.keys(porId)`. Os ids também são não numéricos
+  (`p1`, `u3`, ...), que é uma segunda garantia independente da primeira.
+- **Estoque e capacidade têm a mesma forma: duas gavetas, `entrada` e
+  `saida`.** Decisão do operador, corrigindo um desenho meu que deixava
+  `estoque` plano enquanto `capacidade` já tinha as duas gavetas. A razão:
+  a F09 reserva vaga no destino, e numa Bakery a vaga de farinha é na entrada
+  e a de pão é na saída — com estoque plano o JobBoard teria que inventar
+  essa separação no meio, exatamente o cenário que modelar a capacidade cedo
+  queria evitar. O armazém é o caso especial: capacidade `null` nas duas
+  gavetas (de `economy.storehouse.capacidade`), e o estoque inicial inteiro
+  entra em `saida` — é de lá que o serf retira. Um prédio de produção nasce
+  com capacidade `{ entrada: 5, saida: 5 }` (de
+  `production.estoqueInternoPorPredio`, que o carregador não expunha e passou
+  a expor) e as duas gavetas de estoque vazias. A schoolhouse (nem armazém,
+  nem produção) nasce sem limite e sem estoque.
+- **Unidade é entidade endereçável desde já, não contagem.** `unidades: {
+  serf: 4, laborer: 2 }` no JSON vira 6 entidades com `id`, `tipo`, `gx`,
+  `gy`, `fsm: 'ocioso'`, `fsmData: {}`. Contagem economizaria hoje e custaria
+  caro na F10, que precisa de estado por unidade.
+- **`proximoId` é um contador único, compartilhado entre prédio e unidade.**
+  F07 (posicionar planta) e F13 (treinar na schoolhouse) criam entidade em
+  runtime e precisam de um id novo sem colidir com os que já existem — não
+  há `Math.random`, não há UUID.
+- **`estoqueTotal`/`contagemPorTipo` moram em `src/sim/selectors.ts`, puros,
+  não em `ui/`.** Condição do operador: o HUD (F05b) não varre prédios por
+  conta própria; se precisar de outro agregado, ele nasce ao lado, no mesmo
+  arquivo.
+- **`createInitialState(seed, dados = gameData)` aceita o dado como
+  parâmetro explícito.** O default cobre os chamadores existentes
+  (`tests/helpers/determinism.ts`); o parâmetro explícito é o que um teste
+  usa para provar que nenhum valor da tabela foi digitado em `.ts` — injeta
+  um `GameData` com outro estoque e confirma que o estado muda junto.
+- **A vila vai para o meio do mapa 64×64**, decisão do operador na pergunta
+  da câmera (`camera.centerOn` é F05b). `gx`/`gy` dos dois prédios e
+  `spawnDeUnidades` entraram em `data/economy.json`, com seis regras novas em
+  `validarEconomiaReferencia` (posição inteira, footprint dentro do mapa, sem
+  sobreposição entre prédios, spawn dentro do mapa, chaves de estoque e de
+  unidades existentes nos catálogos correspondentes). Verificado com um teste
+  negativo manual (prédio fora do mapa reprova) e desfeito antes do commit.
+- **O carregador passou a expor `production.estoqueInternoPorPredio`.**
+  `GameData.producao` mudou de `Record<string, ProducaoPredio>` para
+  `{ receitas, estoqueInternoPorPredio }` — as receitas não mudaram de forma,
+  só de endereço. Nenhum chamador existente tocava `gameData.producao`, então
+  não houve ponto de migração.
+- **`npm run sim` deixou de ser stub da F01.** Sobe um servidor Vite em
+  `middlewareMode` e carrega `state.ts`/`tick.ts`/`selectors.ts` via
+  `ssrLoadModule` — zero dependência nova (`vite-node`/`tsx` não estão
+  instalados e não entraram). `npm run sim -- inicial --ticks 0` imprime os
+  mesmos valores de `data/economy.json`, conferido lado a lado com a
+  ferramenta Read.
+- **`sim/` continua sem tocar o tema.** Checagem manual desta sessão: um
+  arquivo de prova temporário em `src/sim/` importando
+  `theme-sertao.json` foi reprovado pelo ESLint (`no-restricted-imports`,
+  regra já existente desde a F03) e apagado — resultado registrado em
+  `test-output/F05a.json`.
+- **`npm run shot -- F04` continua passando** mesmo com a vila agora no meio
+  do mapa em `economy.json` — a câmera ainda não lê posição de prédio nesta
+  feature (isso é F05b), então o roteiro da F04 não foi tocado.
+- **Registrado no `BUILD_PLAN.md`**, não só aqui: em F05b, as notas de
+  `atualizar(state)` e do roteiro da F04 precisar parar de assumir scroll
+  fixo quando `camera.centerOn` chegar; em F11, a nota de que o laço de tempo
+  fixo a 10 Hz ainda não existe e nasce ali.
+
 ## Perguntas em aberto
 
 Nenhuma no momento.

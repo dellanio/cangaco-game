@@ -3,7 +3,7 @@
   "F02-tick-determinista": { "passes": true },
   "F03-dados-validados": { "passes": true },
   "F04-grid-ortogonal": { "passes": true },
-  "F05a-estado-inicial": { "passes": false },
+  "F05a-estado-inicial": { "passes": true },
   "F05b-hud": { "passes": false },
   "F06-menu-build-planta": { "passes": false },
   "F07-posicionar-planta": { "passes": false },
