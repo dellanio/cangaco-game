@@ -67,13 +67,37 @@ jogador consegue, só com o mouse, construir 2 Woodcutter's, 1 Quarry e 1 Sawmil
 conectados por estrada, treinar os trabalhadores e ver o estoque subir. Nenhum
 prédio surge sem clique do jogador.
 
-### F05 — Estado inicial e barra de recursos
+### F05a — Estado inicial
 - **Escopo**: cenário inicial da seção 3.2 do GDD (Storehouse e Schoolhouse
-  prontos, estoque, 4 serfs, 2 laborers). HUD de topo com gold, timber, stone,
-  comida e população.
-- **Aceite**: `npm run sim -- inicial --ticks 0` imprime exatamente os valores da
-  tabela. Screenshot com o HUD legível e os dois prédios no mapa.
-- **Evidência**: `test-output/F05.json` + `screenshots/F05-*.png`
+  prontos, estoque, 4 serfs, 2 laborers) vivo dentro de `sim/`, vindo inteiro de
+  `data/economy.json`. `npm run sim` deixa de ser stub. Nada de render, nada de
+  UI — o formato de prédio e unidade no `GameState` é herdado por F07, F10, F11
+  e F14, e é revisado isolado, sem decisão de tela no meio.
+- **Aceite**: `npm run sim -- inicial --ticks 0` imprime exatamente os valores
+  da tabela. O estado sobrevive ao round-trip por JSON. `compararComESemSave`
+  (F02) continua passando com o estado povoado.
+- **Evidência**: `test-output/F05a.json`
+
+### F05b — HUD e a vila na tela
+- **Escopo**: os dois prédios (posição vinda de `economy.json`, meio do mapa)
+  desenhados no mapa, `camera.centerOn` na abertura. HUD de topo com gold,
+  timber, stone, comida e população, lendo `estoqueTotal`/`contagemPorTipo`
+  (F05a) — o HUD não varre prédios por conta própria. Nomes na tela vêm de
+  `data/theme-sertao.json`, não dos ids da simulação.
+- **Aceite**: screenshot com o HUD legível e os dois prédios no mapa.
+- **Evidência**: `test-output/F05b.json` + `screenshots/F05b-*.png`
+- **Nota**: `main.ts` entrega o estado ao render e ao HUD por uma função de
+  atualização — `atualizar(state)` — nunca guardando uma referência no momento
+  da criação. Quando o laço de tempo fixo entrar (F11), é só passar a chamá-la
+  a cada tick; se o render capturar o estado inicial e ler dele direto, a
+  chegada do laço vira refatoração em vez de ligação.
+- **Nota**: `tools/shots/F04.js` hoje assume `camera.scrollX/scrollY === 0`
+  (`TILE_ALVO` fixo). Com `camera.centerOn` nesta feature isso deixa de ser
+  verdade. O roteiro tem que parar de assumir scroll fixo — ler
+  `camera.scrollX/scrollY` de `window.__cangaco` e calcular o tile esperado a
+  partir do estado real, afirmando a relação (tile sob o mouse ↔ pixel dado a
+  câmera atual), não uma coordenada literal. `npm run shot -- F04` precisa
+  passar antes de fechar esta feature.
 - **Nota**: `gridToScreen`/`screenToGrid` (F04) são cegas a zoom — a conversão
   assume escala 1. Quando o zoom entrar (GDD §2.1, roda do mouse), as duas
   precisam de um parâmetro de escala e o teste de ida e volta precisa varrê-lo.
@@ -135,6 +159,10 @@ prédio surge sem clique do jogador.
   5 materiais o HP é 250 e o prédio fica `completo`. Screenshots dos três
   estágios.
 - **Evidência**: `test-output/F11.json` + `screenshots/F11-*.png`
+- **Nota**: o laço de tempo fixo a 10 Hz (CLAUDE.md §5, `TICK_MS = 100`) ainda
+  não existe e nasce aqui — a F11 é a primeira feature que precisa de
+  movimento. Até aqui `step()` só foi chamado direto por teste, sem laço
+  externo nem interpolação de render.
 
 ### F12 — Desbloqueio por conclusão
 - **Escopo**: concluir um prédio libera os filhos dele na árvore do GDD. O menu
