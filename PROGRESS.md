@@ -129,6 +129,88 @@ preservadas (conferido com `git diff` antes do commit).
   "número de balanceamento em `.ts`" (invariante 3) inteiramente nesta
   feature — entra quando o laço externo (render) existir.
 
+## F03 — Dados, escala de tempo e validação (2026-09-19)
+
+**Feito:** `tools/data-schema.js` (registro declarativo de forma e de campos
+escalonados, compartilhado), `tools/data-rules.js` (`validarTudo`, puro,
+CommonJS) e `tools/validate-data.js` (CLI reescrito, `--dir`, exit 0/1).
+`src/sim/data/{types,raw,loader,index}.ts` — `loadGameData(raw)` puro,
+converte os nove arquivos para `GameData`, toda duração/taxa vira tick
+inteiro (`Math.round`) uma única vez, registrada em `GameData.conversoes`
+para auditoria. `src/sim/freeze.ts` (`deepFreeze`, promovido de
+`tests/helpers/determinism.ts`). `gameData` é o singleton congelado em
+profundidade. 25 testes em `tests/F03-dados-validados.test.ts`: 11 fixtures
+quebrados provando que `validate:data` reprova (mais sinal trocado e CLI
+ponta a ponta), carregamento/grafo/congelamento, e a exigência de escala
+(economia 2.0→3.0 na proporção 2/3 ±1 tick, direção correta, e
+`movimento`/`construcao`/`combate` intactos por `toEqual`). `npm run verify`
+verde (4 passos), `.verify-ok` criado, `test-output/F03.json` lido com a
+ferramenta Read antes de marcar o rastreador. `F03-dados-validados: true`
+por substituição no lugar, 17 chaves preservadas (conferido com `git diff`).
+
+**Decisões e por quê:**
+
+- **Validador sem dependência nova.** A parte que importa da spec — hp
+  derivado, grafo acíclico, integridade referencial entre arquivos — não é
+  expressável em JSON Schema puro; eu escreveria a regra à mão de qualquer
+  jeito. `ajv` cobriria só a metade rasa (tipos/chaves obrigatórias) a custo
+  de uma dependência nova. `tools/data-schema.js` guarda essa metade rasa,
+  declarativa, em CommonJS sem lib. `tools/data-rules.d.ts` e
+  `data-schema.d.ts` são só declarações de tipo ambiente, para os testes
+  `.ts` estritos importarem sem `allowJs` — não mudam o runtime.
+- **`GameData` não expõe `escalas` — enforcement por ausência, não por
+  convenção.** `loadGameData` consome `time.escalas` e não o repassa;
+  `GameData.tempo` só tem `tickHz`, `tickMs` e `velocidadeDeJogo`. Um sistema
+  que tentasse escalar em tempo de execução não teria de onde tirar o
+  número. Reforçado por teste (`acharChave(gameData, 'escalas')` vazio) e
+  por regra ESLint nova (`no-restricted-imports` barra `**/theme-*.json` em
+  `src/sim/**/*.ts` — CLAUDE.md §9, aproveitando o mesmo bloco).
+- **Taxa vira período em ticks no carregamento, nunca float dividido em
+  runtime.** `production.json` está em unidades/minuto;
+  `ticksPorUnidade = round(60 * tickHz / (taxa * escala))`, guardado pronto.
+  Mesma lógica pra movimento: velocidade × custo de terreno vira matriz
+  `ticksPorTile[aPe|montado][terreno]`, arredondamento único a partir dos
+  valores exatos — nunca arredondar a velocidade e depois multiplicar pelo
+  terreno, que arredondaria duas vezes.
+- **`TICK_MS` deixou de ser ausência (pendência da F02) e passou a nascer de
+  `tickHz`.** `gameData.tempo.tickMs = Math.round(1000 / tickHz)`, confirmado
+  em teste (`tickHz === 10 → tickMs === 100`) — não é mais número hardcoded
+  em lugar nenhum.
+- **`deepFreeze` promovido de `tests/helpers/determinism.ts` para
+  `src/sim/freeze.ts`.** `Object.freeze` na raiz deixaria `predios[0]` e
+  `conversoes` mutáveis; como `gameData` é singleton importado por todo
+  `sim/`, uma escrita em qualquer lugar contaminaria todos os outros
+  importadores e quebraria o determinismo sem deixar rastro. O helper de
+  teste agora reexporta do utilitário de produção — duas cópias divergentes
+  seria pior que nenhuma.
+- **`delivery.alertaTarefaSemCandidato_segundos` declara `escala: null`,
+  decisão do operador.** É aviso de interface, não balanceamento — comprimir
+  a economia não muda o tempo de atenção humana. A distinção
+  ausente-vs-`null` virou regra permanente do validador
+  (`tempo/duracao-sem-grupo` vs. aceitar `null`): ausente é esquecimento,
+  `null` é decisão registrada.
+- **`src/sim/data/` e `src/sim/freeze.ts` não estão na árvore literal da
+  seção 3 do CLAUDE.md.** O carregador precisava morar em algum lugar dentro
+  de `sim/`, e não fazia sentido inflar `state.ts` ou `tick.ts` com nove
+  imports de JSON. Registrado aqui por não ter sido decisão prévia do
+  documento.
+- **O `as`/tipo de `raw.ts` é uma promessa, não uma prova.** `sim/` assume
+  que `npm run verify` roda `validate:data` antes de `test` — a ordem real do
+  script. Rodar `npm run test` isolado, sem o passo de validação antes, não
+  tem essa garantia; dado malformado chegaria ao carregador como erro
+  confuso (`< 1 tick` ou não-inteiro) em vez de mensagem de regra clara.
+  Preferido a duplicar o validador dentro de `sim/` (duplicação de fonte de
+  verdade). Risco aceito, não resolvido nesta sessão.
+- **Lacuna conhecida, não inventada agora:** `units.json` `militares.requisitos`
+  referencia ids de item (`sword`, `longbow`, `horse`) sem lista canônica em
+  `data/` — `economy.mercadorias` é parcial. Não dá para validar integridade
+  referencial disso hoje; fica para a F24 (cadeia de armas).
+- **Nenhum red real no TDD desta feature.** Regras e fórmulas foram
+  verificadas contra o dado real por script antes de escrever
+  regra/carregador (ver riscos do plano), então testes e `tsc`/`eslint`
+  passaram limpos já na primeira rodada de cada task — não é desvio de
+  processo, é o efeito de checar a aritmética antes de commitar a fórmula.
+
 ## Perguntas em aberto
 
 Nenhuma no momento.

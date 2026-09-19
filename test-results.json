@@ -1,7 +1,7 @@
 {
   "F01-esqueleto": { "passes": true },
   "F02-tick-determinista": { "passes": true },
-  "F03-dados-validados": { "passes": false },
+  "F03-dados-validados": { "passes": true },
   "F04-grid-ortogonal": { "passes": false },
   "F05-estado-inicial-hud": { "passes": false },
   "F06-menu-build-planta": { "passes": false },
