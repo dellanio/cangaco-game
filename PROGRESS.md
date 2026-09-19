@@ -65,6 +65,70 @@ implementações reais vêm nas F03, F04 e F02. Teste trivial verde
 **`bug.md` e `codex.md`:** já estão em `.claude/commands/` — o operador moveu
 à mão durante a sessão. Resolvido, não é mais pendência.
 
+## F02 — GameState e o contrato do tick (2026-09-19)
+
+**Feito:** `src/sim/rng.ts` (RNG semeado, puro, mulberry32), `src/sim/state.ts`
+(`GameState`, `GameEvent`, `createInitialState`), `src/sim/commands.ts`
+(`Command`), `src/sim/tick.ts` (`step`). `tests/helpers/determinism.ts` com
+`compararComESemSave`, o teste canônico de determinismo do projeto — F23 vai
+reusá-lo em vez de escrever outro. 22 testes verdes em 3 arquivos
+(`F02-rng`, `F02-tick-determinista`, mais o F01 herdado), `test-output/F02.json`
+gravado e lido. `npm run verify` passou os quatro passos, `.verify-ok` criado.
+`F02-tick-determinista: true` marcado por substituição no lugar, 17 chaves
+preservadas (conferido com `git diff` antes do commit).
+
+**Decisões e por quê:**
+
+- **`events` é limpo a cada tick, e também é determinístico.** `step()` começa
+  cada tick com lista vazia — mantém o `GameState` limitado ao longo de 1000+
+  ticks. Mas eventos são função pura de estado e comandos: dois runs com a
+  mesma semente emitem os mesmos eventos, na mesma ordem — provado em teste
+  dedicado, não só documentado. Exigência explícita do operador.
+- **`step()` não consome aleatoriedade nesta feature.** Decisão do operador,
+  dentro do escopo literal da F02 ("nenhum sistema ainda"). `state.rng` passa
+  adiante intocado; o primeiro consumidor real chega com o primeiro sistema
+  (F09 em diante). Consequência visível na evidência: `rngFinal.cursor` é
+  igual à semente depois de 1000 ticks.
+- **`seed` guardado separado do `cursor` em `RngState`.** `BUGS.md` pede repro
+  no formato "(semente, tick)" — sem a semente original sobrevivendo à parte,
+  um bug não seria reproduzível a partir de um estado salvo no meio da
+  corrida.
+- **`nextInt` usa rejection sampling desde o início, não módulo puro.**
+  Módulo enviesaria as faces baixas quando a amplitude não divide 2³². Como
+  `nextInt` vai decidir desempate no JobBoard e chance de acerto no combate,
+  corrigir depois significaria recalibrar balanceamento feito em cima do
+  viés — mais caro que fazer certo agora. Provado com teste de distribuição
+  (10000 sorteios em `[0,3)`, cada face a ±5% de 1/3, semente fixa — não é
+  teste flaky). Sem contador de tentativas no laço de descarte: um limite
+  arbitrário seria número mágico em `.ts` e mascararia um RNG quebrado em vez
+  de expô-lo.
+- **`Command = never`, não um `noop` de mentira.** Comando morto sobrevive ao
+  projeto inteiro; a união nasce vazia e a F07 acrescenta o primeiro membro.
+  Efeito colateral: o teste "step não muta a lista de comandos" perdeu força
+  — com a união vazia, `[]` é a única lista válida e `step()` nem percorre o
+  parâmetro (por isso o parâmetro é `_commands`), então não há elemento para
+  provar que não é mutado. Renomeado para "step aceita uma lista de comandos
+  congelada" — guarda de contrato, não prova de não-mutação de elemento. Essa
+  cobertura real volta na F07. **A checagem de exaustividade também não existe
+  ainda**: sem o `const naoTratado: never = command` dentro de um `switch`
+  (que só faz sentido quando há um `case` para escrever), nada vai reprovar o
+  `typecheck` sozinho quando a união ganhar o primeiro membro. Quem
+  implementar a F07 precisa escrever o `switch` com `default` atribuindo a
+  `never` — não é automático.
+- **`argsIgnorePattern: '^_'` acrescentado ao `eslint.config.mjs`**, em bloco
+  novo ao final do array, sem tocar nos blocos existentes. Necessário porque
+  `tsc` já ignora parâmetro prefixado com `_` sob `noUnusedParameters`, mas o
+  preset `tseslint.configs.recommended` liga `@typescript-eslint/no-unused-vars`
+  como `'error'` **sem opções** (confirmado lendo
+  `node_modules/@typescript-eslint/eslint-plugin/dist/configs/flat/recommended.js`)
+  — sem configurar, `_commands` reprovaria o lint. Configuração do caso
+  legítimo, não exceção: a regra continua `error` para tudo que não segue a
+  convenção.
+- **`TICK_MS` deliberadamente ausente.** `step()` só incrementa um contador
+  inteiro; não precisa saber de milissegundos. Isso evita a pergunta de
+  "número de balanceamento em `.ts`" (invariante 3) inteiramente nesta
+  feature — entra quando o laço externo (render) existir.
+
 ## Perguntas em aberto
 
 Nenhuma no momento.
