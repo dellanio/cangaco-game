@@ -18,5 +18,7 @@
     "_doc": "Sem reserva dupla: dois serfs pegam a mesma pedra e um predio recebe mais do que cabe."
   },
   "alertaTarefaSemCandidato_segundos": 30,
+  "escala": null,
+  "_nota_escala": "Deliberadamente sem escala: e aviso de interface, nao balanceamento. Comprimir a economia nao muda o tempo de atencao humana. Decisao do operador, F03.",
   "maxSerfsNoMarketplace": 10
 }
