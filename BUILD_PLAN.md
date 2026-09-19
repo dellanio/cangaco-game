@@ -32,6 +32,8 @@ está mal escrito — corrija o item antes de implementar.
   compara `JSON.stringify` dos dois estados finais — idênticos. Teste que
   confirma que `step` não muta o estado de entrada.
 - **Evidência**: `test-output/F02.json`
+- **Nota**: `tests/helpers/determinism.ts` (`compararComESemSave`) é o teste
+  canônico de determinismo do projeto. A F23 estende, não reescreve.
 
 ### F03 — Dados, escala de tempo e validação
 - **Escopo**: carregar os nove arquivos de `data/` (`time`, `buildings`,
@@ -193,6 +195,8 @@ prédio surge sem clique do jogador.
 - Aceite: salvar num tick qualquer, carregar e rodar 500 ticks produz o mesmo
   estado que rodar 500 ticks sem salvar. É o teste que prova que a invariante 2
   continua de pé.
+- Reusar `compararComESemSave` de `tests/helpers/determinism.ts`, criado na F02,
+  com o estado povoado. Não escrever um segundo teste de save/load.
 
 ---
 
