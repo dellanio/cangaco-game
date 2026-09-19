@@ -203,6 +203,8 @@ escrita.
   `BUILD_PLAN.md` disser explicitamente que a feature é de integração.
 - `git push --force`, reescrever histórico, mexer em `.claude/`.
 
+- Desativar, ignorar ou excluir código da verificação para fazer o `npm run  verify` passar. Configure a regra para o caso legítimo, ou pare e reporte. Ampliar `ignores`, usar `skip` em teste ou `eslint-disable` é mudança de  escopo, não correção.
+
 ---
 
 ## 11. Superpowers, Codex e política de crédito
