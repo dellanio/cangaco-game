@@ -2,11 +2,12 @@
   "_doc": "Estado inicial do modo cidade do zero e precos.",
   "estadoInicial": {
     "predios": [
-      { "id": "storehouse", "estado": "completo" },
-      { "id": "schoolhouse", "estado": "completo" }
+      { "id": "storehouse", "estado": "completo", "gx": 29, "gy": 30 },
+      { "id": "schoolhouse", "estado": "completo", "gx": 34, "gy": 30 }
     ],
     "estoque": { "gold": 20, "timber": 40, "stone": 30, "loaves": 15, "sausages": 10 },
     "unidades": { "serf": 4, "laborer": 2 },
+    "spawnDeUnidades": { "gx": 30, "gy": 34 },
     "menuBuildInicial": ["quarry", "woodcutters", "inn"]
   },
   "schoolhouse": {

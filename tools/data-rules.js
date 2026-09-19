@@ -201,12 +201,33 @@ function validarCondicaoOraculo(dados, erros) {
   }
 }
 
+function retanguloDoPredio(estadoPredio, dados) {
+  const def = ((dados.buildings && dados.buildings.predios) || []).find((p) => p.id === estadoPredio.id);
+  if (!def || !Array.isArray(def.tamanho)) return null;
+  const [largura, altura] = def.tamanho;
+  return {
+    id: estadoPredio.id,
+    x0: estadoPredio.gx, y0: estadoPredio.gy,
+    x1: estadoPredio.gx + largura - 1, y1: estadoPredio.gy + altura - 1,
+  };
+}
+
+function retangulosSeSobrepoem(a, b) {
+  return a.x0 <= b.x1 && b.x0 <= a.x1 && a.y0 <= b.y1 && b.y0 <= a.y1;
+}
+
 function validarEconomiaReferencia(dados, erros) {
   const idsDePredios = new Set(
     ((dados.buildings && dados.buildings.predios) || []).map((p) => p.id),
   );
+  const idsDeCivis = new Set(
+    ((dados.units && dados.units.civis && dados.units.civis.tipos) || []).map((t) => t.id),
+  );
+  const mercadoriasValidas = new Set((dados.economy && dados.economy.mercadorias) || []);
+  const mapaPadrao = dados.terrain && dados.terrain.mapaPadrao;
   const estadoInicial = dados.economy && dados.economy.estadoInicial;
   if (!estadoInicial) return;
+
   for (const p of estadoInicial.predios || []) {
     if (!idsDePredios.has(p.id)) {
       erros.push(`economia/referencia: estadoInicial.predios referencia '${p.id}', que nao existe em buildings`);
@@ -215,6 +236,49 @@ function validarEconomiaReferencia(dados, erros) {
   for (const id of estadoInicial.menuBuildInicial || []) {
     if (!idsDePredios.has(id)) {
       erros.push(`economia/referencia: menuBuildInicial referencia '${id}', que nao existe em buildings`);
+    }
+  }
+  for (const mercadoria of Object.keys(estadoInicial.estoque || {})) {
+    if (!mercadoriasValidas.has(mercadoria)) {
+      erros.push(`economia/referencia: estadoInicial.estoque referencia '${mercadoria}', que nao existe em economy.mercadorias`);
+    }
+  }
+  for (const tipo of Object.keys(estadoInicial.unidades || {})) {
+    if (!idsDeCivis.has(tipo)) {
+      erros.push(`economia/referencia: estadoInicial.unidades referencia '${tipo}', que nao existe em units.civis.tipos`);
+    }
+  }
+
+  // posicao dos predios: gx/gy presentes, footprint dentro do mapa, sem sobreposicao
+  const retangulos = [];
+  for (const p of estadoInicial.predios || []) {
+    if (!Number.isInteger(p.gx) || !Number.isInteger(p.gy)) {
+      erros.push(`economia/posicao: estadoInicial.predios '${p.id}' precisa de gx/gy inteiros`);
+      continue;
+    }
+    const retangulo = retanguloDoPredio(p, dados);
+    if (!retangulo) continue; // id invalido ja reportado acima
+    if (mapaPadrao) {
+      if (retangulo.x0 < 0 || retangulo.y0 < 0 || retangulo.x1 >= mapaPadrao.largura || retangulo.y1 >= mapaPadrao.altura) {
+        erros.push(`economia/posicao: estadoInicial.predios '${p.id}' com footprint fora do mapa ${mapaPadrao.largura}x${mapaPadrao.altura}`);
+      }
+    }
+    retangulos.push(retangulo);
+  }
+  for (let i = 0; i < retangulos.length; i++) {
+    for (let j = i + 1; j < retangulos.length; j++) {
+      if (retangulosSeSobrepoem(retangulos[i], retangulos[j])) {
+        erros.push(`economia/posicao: '${retangulos[i].id}' e '${retangulos[j].id}' se sobrepoem`);
+      }
+    }
+  }
+
+  const spawn = estadoInicial.spawnDeUnidades;
+  if (!spawn || !Number.isInteger(spawn.gx) || !Number.isInteger(spawn.gy)) {
+    erros.push('economia/posicao: estadoInicial.spawnDeUnidades precisa de gx/gy inteiros');
+  } else if (mapaPadrao) {
+    if (spawn.gx < 0 || spawn.gy < 0 || spawn.gx >= mapaPadrao.largura || spawn.gy >= mapaPadrao.altura) {
+      erros.push('economia/posicao: estadoInicial.spawnDeUnidades fora do mapa');
     }
   }
 }
