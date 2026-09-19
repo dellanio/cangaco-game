@@ -74,6 +74,10 @@ prédio surge sem clique do jogador.
 - **Aceite**: `npm run sim -- inicial --ticks 0` imprime exatamente os valores da
   tabela. Screenshot com o HUD legível e os dois prédios no mapa.
 - **Evidência**: `test-output/F05.json` + `screenshots/F05-*.png`
+- **Nota**: `gridToScreen`/`screenToGrid` (F04) são cegas a zoom — a conversão
+  assume escala 1. Quando o zoom entrar (GDD §2.1, roda do mouse), as duas
+  precisam de um parâmetro de escala e o teste de ida e volta precisa varrê-lo.
+  Hoje nenhum item da fila agenda zoom.
 
 ### F06 — Menu Build e planta fantasma
 - **Escopo**: painel lateral com os prédios desbloqueados e seu custo; bloqueados
