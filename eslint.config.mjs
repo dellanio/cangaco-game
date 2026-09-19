@@ -28,6 +28,18 @@ export default tseslint.config(
     },
   },
   {
+    // tools/shot.js roda em Node (fetch/setTimeout sao globais nativas do
+    // Node 18+), mas tambem escreve closures que o Playwright serializa e
+    // executa no browser (page.evaluate/waitForFunction) — la dentro `window`
+    // e real, mesmo que o parser aqui nao saiba distinguir closure remota de
+    // local. Escopo estreito: so estes arquivos, para nao esconder um erro de
+    // `window` de verdade num script de Node comum.
+    files: ['tools/shot.js', 'tools/shots/**/*.js'],
+    languageOptions: {
+      globals: { fetch: 'readonly', setTimeout: 'readonly', window: 'readonly' },
+    },
+  },
+  {
     files: ['src/sim/**/*.ts'],
     rules: {
       '@typescript-eslint/no-explicit-any': 'error',
