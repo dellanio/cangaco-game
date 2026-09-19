@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterAll } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { mkdtempSync, cpSync, writeFileSync } from 'node:fs';
@@ -6,6 +6,9 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { validarTudo } from '../tools/data-rules.js';
 import { ARQUIVOS } from '../tools/data-schema.js';
+import { gameData, loadGameData, rawGameData } from '../src/sim/data';
+import type { ConversaoRegistrada, GameData } from '../src/sim/data';
+import { gravarEvidencia } from './helpers/evidence';
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- fixtures mutam JSON
    heterogeneo; tipar cada forma aqui so pra este teste seria ruido. */
@@ -97,5 +100,179 @@ describe('F03 — validate:data reprova dado invalido', () => {
     const { codigo, stderr } = rodarCliContraCopiaQuebrada();
     expect(codigo).toBe(1);
     expect(stderr).toMatch(/predios\/hp/);
+  });
+});
+
+// --- Task 4: aceite do carregamento e da escala ---
+
+/** Varre um objeto atras de qualquer chave com o nome dado. Usado para
+ *  provar que `escalas` nunca vaza para GameData. */
+function acharChave(valor: unknown, chave: string, caminho = 'gameData'): string[] {
+  const achados: string[] = [];
+  const visitar = (v: unknown, p: string, vistos: Set<unknown>): void => {
+    if (v === null || typeof v !== 'object') return;
+    if (vistos.has(v)) return;
+    vistos.add(v);
+    for (const [k, filho] of Object.entries(v)) {
+      if (k === chave) achados.push(`${p}.${k}`);
+      visitar(filho, `${p}.${k}`, vistos);
+    }
+  };
+  visitar(valor, caminho, new Set());
+  return achados;
+}
+
+function verificarGrafoDeDesbloqueio(
+  predios: readonly { readonly id: string; readonly desbloqueadoPor: string | null }[],
+): { readonly raizes: string[]; readonly pendurados: string[]; readonly temCiclo: boolean } {
+  const ids = new Set(predios.map((p) => p.id));
+  const pendurados = predios
+    .filter((p) => p.desbloqueadoPor !== null && !ids.has(p.desbloqueadoPor))
+    .map((p) => p.id);
+  const raizes = predios.filter((p) => p.desbloqueadoPor === null).map((p) => p.id);
+  const grafo = new Map(predios.map((p) => [p.id, p.desbloqueadoPor]));
+  let temCiclo = false;
+  for (const p of predios) {
+    const visitados = new Set<string>();
+    let atual: string | null = p.id;
+    while (atual !== null && grafo.has(atual)) {
+      if (visitados.has(atual)) { temCiclo = true; break; }
+      visitados.add(atual);
+      atual = grafo.get(atual) ?? null;
+    }
+  }
+  return { raizes, pendurados, temCiclo };
+}
+
+describe('F03 — carregamento e regras', () => {
+  it('carrega exatamente 28 predios, todos com hp = (timber+stone)*50', () => {
+    expect(gameData.predios).toHaveLength(28);
+    for (const p of gameData.predios) {
+      expect(p.hp).toBe((p.timber + p.stone) * 50);
+    }
+  });
+
+  it('todo desbloqueadoPor resolve, o grafo nao tem ciclo, e a raiz e unica (storehouse)', () => {
+    const { raizes, pendurados, temCiclo } = verificarGrafoDeDesbloqueio(gameData.predios);
+    expect(pendurados).toEqual([]);
+    expect(temCiclo).toBe(false);
+    expect(raizes).toEqual(['storehouse']);
+  });
+
+  it('toda conversao registrada e um tick inteiro >= 1', () => {
+    expect(gameData.conversoes.length).toBeGreaterThan(0);
+    for (const c of gameData.conversoes) {
+      expect(Number.isInteger(c.ticks)).toBe(true);
+      expect(c.ticks).toBeGreaterThanOrEqual(1);
+    }
+  });
+
+  it('GameData nunca expoe escalas, em nenhum lugar', () => {
+    expect(acharChave(gameData, 'escalas')).toEqual([]);
+  });
+
+  it('tempo.tickMs vem de tickHz (10 Hz = 100ms), nao esta hardcoded', () => {
+    expect(gameData.tempo.tickHz).toBe(10);
+    expect(gameData.tempo.tickMs).toBe(100);
+  });
+
+  it('gameData esta congelado em profundidade, nao so na raiz', () => {
+    const [primeiroPredio] = gameData.predios;
+    if (!primeiroPredio) throw new Error('fixture: gameData.predios vazio');
+
+    expect(() => {
+      (primeiroPredio as unknown as { timber: number }).timber = 999;
+    }).toThrow(TypeError);
+
+    expect(() => {
+      (gameData.conversoes as unknown as ConversaoRegistrada[]).push({
+        caminho: 'x', grupo: null, valorBase: 0, unidade: '', ticks: 1,
+      });
+    }).toThrow(TypeError);
+
+    // objeto aninhado (nao a raiz, nem um item de array) — prova que o
+    // congelamento desce mais de um nivel.
+    expect(() => {
+      (gameData.movimento.ticksPorTile.aPe as unknown as Record<string, number>).estrada = 999;
+    }).toThrow(TypeError);
+  });
+});
+
+describe('F03 — escala de tempo', () => {
+  const comEconomia = (valor: number): GameData => loadGameData({
+    ...rawGameData,
+    time: {
+      ...rawGameData.time,
+      escalas: { ...rawGameData.time.escalas, economia: valor },
+    },
+  });
+  const base = comEconomia(2.0);
+  const rapido = comEconomia(3.0);
+
+  const porGrupo = (dados: GameData, grupo: string | null): ConversaoRegistrada[] => (
+    dados.conversoes.filter((c) => c.grupo === grupo)
+  );
+
+  it('trocar economia de 2.0 para 3.0 muda os ticks do grupo economia na proporcao 2/3', () => {
+    const economiaBase = porGrupo(base, 'economia');
+    const economiaRapido = new Map(porGrupo(rapido, 'economia').map((c) => [c.caminho, c]));
+    expect(economiaBase.length).toBeGreaterThan(0);
+
+    for (const c of economiaBase) {
+      const r = economiaRapido.get(c.caminho);
+      expect(r).toBeDefined();
+      const esperado = c.ticks * (2 / 3);
+      expect(Math.abs(r!.ticks - esperado)).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it('escala maior significa periodo menor (direcao certa, nao so proporcao)', () => {
+    const economiaBase = porGrupo(base, 'economia');
+    const economiaRapido = new Map(porGrupo(rapido, 'economia').map((c) => [c.caminho, c]));
+    for (const c of economiaBase) {
+      expect(economiaRapido.get(c.caminho)!.ticks).toBeLessThanOrEqual(c.ticks);
+    }
+    expect(economiaBase.some((c) => economiaRapido.get(c.caminho)!.ticks < c.ticks)).toBe(true);
+  });
+
+  it.each(['movimento', 'construcao', 'combate'])('grupo %s fica intacto quando so economia muda', (grupo) => {
+    const doBase = porGrupo(base, grupo);
+    const doRapido = porGrupo(rapido, grupo);
+    expect(doBase.length).toBeGreaterThan(0); // sem isso o toEqual seria vacuo
+    expect(doRapido).toEqual(doBase);
+  });
+});
+
+afterAll(() => {
+  const economiaPorGrupo = (dados: GameData, grupo: string): number => (
+    dados.conversoes.filter((c) => c.grupo === grupo).length
+  );
+  const { raizes, pendurados, temCiclo } = verificarGrafoDeDesbloqueio(gameData.predios);
+  const cliContraCopiaQuebrada = rodarCliContraCopiaQuebrada();
+  const fixturesResultado = fixtures.map(({ nome, regraEsperada, quebrar }) => {
+    const quebrado = clonar(carregarDadosReais());
+    quebrar(quebrado);
+    const erros = validarTudo(quebrado);
+    return { nome, regraEsperada, disparou: erros.some((e) => e.startsWith(`${regraEsperada}:`)) };
+  });
+
+  gravarEvidencia('F03', {
+    feature: 'F03-dados-validados',
+    predios: { contagem: gameData.predios.length, raizes, pendurados, temCiclo },
+    conversoes: {
+      total: gameData.conversoes.length,
+      todasInteirasEPositivas: gameData.conversoes.every((c) => Number.isInteger(c.ticks) && c.ticks >= 1),
+      porGrupo: {
+        economia: economiaPorGrupo(gameData, 'economia'),
+        movimento: economiaPorGrupo(gameData, 'movimento'),
+        construcao: economiaPorGrupo(gameData, 'construcao'),
+        combate: economiaPorGrupo(gameData, 'combate'),
+        semEscala: gameData.conversoes.filter((c) => c.grupo === null).length,
+      },
+    },
+    tempo: { tickHz: gameData.tempo.tickHz, tickMs: gameData.tempo.tickMs, gameDataExpoeEscalas: acharChave(gameData, 'escalas') },
+    fixturesQuebrados: fixturesResultado,
+    cliContraCopiaQuebrada: { codigo: cliContraCopiaQuebrada.codigo, stderrContemRegra: /predios\/hp/.test(cliContraCopiaQuebrada.stderr) },
+    validateDataNoDadoReal: validarTudo(clonar(carregarDadosReais())),
   });
 });
