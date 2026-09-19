@@ -211,6 +211,89 @@ por substituição no lugar, 17 chaves preservadas (conferido com `git diff`).
   passaram limpos já na primeira rodada de cada task — não é desvio de
   processo, é o efeito de checar a aritmética antes de commitar a fórmula.
 
+## F04 — Grid ortogonal e câmera (2026-09-19)
+
+**Feito:** `src/render/grid.ts` puro (zero `import`): `gridToScreen`,
+`gridToScreenCentro`, `screenToGrid` (`Math.floor`), `depthDeY`,
+`tileDentroDoMapa`. `src/render/mapa.ts` — único leitor de `sim/data` dentro
+de `render/`, expõe `configDoMapa` derivado de `gameData.terreno`. Cena
+`WorldScene` com tilemap ortogonal 64×64, textura de grama procedural (cor de
+`data/theme-sertao.json`), câmera com arrasto (botão do meio) e
+`setBounds`, highlight do tile sob o mouse, dois marcadores placeholder
+exercitando `depthDeY`. `window.__cangaco` (`src/render/debug.ts`) publica
+`pronto`/`tileSobMouse`/`camera`/`tilesRenderizados` para o Playwright
+verificar estado do app, não pixel. `tools/shot.js` reescrito como runner
+genérico reusável (sobe Vite, Chromium headless viewport fixo, reprova em
+erro de console) e `tools/shots/F04.js` como o primeiro roteiro. 16 testes
+novos em `tests/F04-grid-ortogonal.test.ts` (ida e volta com 1000 amostras
++ jitter + coordenada negativa + 4 tamanhos de tile, guardas estruturais,
+prova de fonte do dado). `npm run shot -- F04`: 4/4 afirmações, 0 erro de
+console, PNGs abertos e conferidos com Read. `F04-grid-ortogonal: true`
+marcado depois de `npm run verify` verde e evidência lida.
+
+**Decisões e por quê:**
+
+- **Projeção é a identidade** (`x = gx*tilePx`, `y = gy*tilePx`), sem
+  achatamento nem skew. O grid por baixo é quadrado (CLAUDE.md §4); o 3/4
+  está na arte, que ainda não existe. O screenshot da F04 é um gradeado
+  verde chapado — resultado esperado, não feature incompleta.
+- **`tilePx` é parâmetro de `grid.ts`, nunca lido de dentro do módulo.**
+  Decisão do operador: permite testar a ida e volta em vários tamanhos de
+  tile (16/32/48/64) e prova que a propriedade é da matemática, não
+  coincidência do número 64. `mapa.ts` é o único arquivo de `render/` que
+  importa `../sim/data`; todo o resto recebe `configDoMapa`.
+- **Guardas estruturais, não varredura de literal.** Cheguei a planejar um
+  teste que procurava o texto `64` em `src/render/` — o operador rejeitou:
+  o número aparece em hex, em `4096`, em qualquer cor com esses dígitos (o
+  mesmo erro de classe do `min`/`gold_mine` na F03). Trocado por duas
+  guardas estruturais: `grid.ts` lido do disco não tem nenhum `import`; e
+  nenhum arquivo de `render/` fora de `mapa.ts` importa `../sim/data`. A
+  prova de que o valor vem do dado é a igualdade
+  `configDoMapa.tilePx === gameData.terreno.tilePx`, rastreada até
+  `tile_px` de `data/terrain.json`.
+- **`screenToGrid` usa `Math.floor`, testado com jitter.** `floor` acerta
+  coordenada negativa (`floor(-1/64) === -1`); o teste sorteia um ponto
+  qualquer *dentro* do tile, não só os cantos — é o caso que distingue
+  `floor` de `round`, sem ele o teste seria decorativo.
+- **`window.__cangaco` como contrato de prontidão e de asserção.** Sem
+  `pronto`, o Playwright fotografaria um canvas em branco. Sem `estado()`
+  exposto, o roteiro teria que inferir "a câmera moveu" olhando pixel —
+  fràgil. Perguntar ao app o que ele acha que fez é sólido e reusável pelas
+  próximas 30 features.
+- **`npm run shot` genérico, roteiro por feature.** `tools/shot.js` nunca
+  muda; `tools/shots/<nome>.js` exporta `async roteiro(ctx)`. Erro de
+  console reprova a captura — é o que transforma "tela preta" de achado
+  manual em falha automática.
+- **Phaser 3.90.0 e `@playwright/test` 1.63.0 fixados sem caret** (decisão
+  do operador para o Playwright, estendida por mim ao Phaser pela mesma
+  razão: a versão da engine muda o que é desenhado, um caret reintroduziria
+  evidência que muda sozinha entre execuções). Cache do Chromium do
+  Playwright fica fora do repo (`%LOCALAPPDATA%`), mas `ms-playwright/` e
+  `.playwright/` entraram no `.gitignore` por precaução.
+- **`sim/` não mudou uma linha nesta feature** — o carregador da F03 já
+  expunha `gameData.terreno.tilePx` e `gameData.terreno.mapaPadrao`.
+  Verificado com `git diff --stat` contra o commit que fechou a F03
+  (vazio) e com um arquivo de prova temporário em `src/sim/` importando
+  `phaser`/`../render/scenes/WorldScene` — reprovado por
+  `no-restricted-imports` (2 erros) e apagado em seguida, não entra no
+  repositório.
+- **Marcadores de depth sorting são placeholder de render, não entram no
+  `GameState`.** Equivalentes ao "retângulo com o id escrito" do CLAUDE.md
+  §9 — desaparecem quando entidades reais chegarem, não violam "prédio não
+  nasce sem comando do jogador" (§10) porque nunca foram um prédio.
+  `depthDeY` é testada isoladamente (monotônica); os marcadores só a
+  exercitam visualmente no screenshot.
+- **Câmera: só arrasto e limite**, escopo literal do BUILD_PLAN e escolha
+  do operador. Borda de tela, WASD e zoom ficam fora. Nota de dívida
+  acrescentada ao item da F05 em `BUILD_PLAN.md` (não ao `Escopo`/`Aceite`):
+  `gridToScreen`/`screenToGrid` são cegas a zoom hoje e vão precisar de
+  parâmetro de escala quando ele entrar — nenhum item da fila agenda zoom
+  ainda.
+- **`npm run shot` fica fora do `npm run verify`.** As quatro etapas do
+  `verify` continuam `typecheck → lint → validate:data → test`; screenshot
+  segue passo manual da sessão, como o CLAUDE.md §8 já define — mantém o
+  portão rápido e estável.
+
 ## Perguntas em aberto
 
 Nenhuma no momento.
