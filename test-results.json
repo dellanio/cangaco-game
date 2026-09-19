@@ -1,6 +1,6 @@
 {
   "F01-esqueleto": { "passes": true },
-  "F02-tick-determinista": { "passes": false },
+  "F02-tick-determinista": { "passes": true },
   "F03-dados-validados": { "passes": false },
   "F04-grid-ortogonal": { "passes": false },
   "F05-estado-inicial-hud": { "passes": false },
