@@ -1,7 +1,7 @@
 import type { RawGameData } from './raw';
 import type {
   CombateData, CondicaoData, ConstrucaoData, ConversaoRegistrada, EconomiaData,
-  EntregaData, GameData, MovimentoData, TerrenoData, TerrenoTipo, Ticks, UnidadesData,
+  EntregaData, GameData, MovimentoData, ProducaoData, TerrenoData, TerrenoTipo, Ticks, UnidadesData,
 } from './types';
 
 /**
@@ -102,7 +102,7 @@ export function loadGameData(raw: RawGameData): GameData {
 
   // --- producao (taxas de entra/sai, estruturalmente, nao por nome) ---
   const escalaEconomiaProducao = escalaDe(escalas, raw.production.escala);
-  const producao: Record<string, { entra: Record<string, Ticks>; sai: Record<string, Ticks> }> = {};
+  const receitas: Record<string, { entra: Record<string, Ticks>; sai: Record<string, Ticks> }> = {};
   for (const [predioId, def] of Object.entries(raw.production.predios)) {
     const entra: Record<string, Ticks> = {};
     const sai: Record<string, Ticks> = {};
@@ -120,8 +120,12 @@ export function loadGameData(raw: RawGameData): GameData {
         taxaParaTicksPorUnidade(taxa, escalaEconomiaProducao as number, tickHz),
       );
     }
-    producao[predioId] = { entra, sai };
+    receitas[predioId] = { entra, sai };
   }
+  const producao: ProducaoData = {
+    receitas,
+    estoqueInternoPorPredio: raw.production.estoqueInternoPorPredio,
+  };
 
   // --- movimento (velocidade x custo de terreno, matriz) ---
   const escalaMovimento = escalaDe(escalas, raw.units.escalaVelocidade) as number;

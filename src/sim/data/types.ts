@@ -39,7 +39,21 @@ export interface ProducaoPredio {
   readonly entra: Readonly<Record<string, Ticks>>;
   readonly sai: Readonly<Record<string, Ticks>>;
 }
-export type ProducaoData = Readonly<Record<string, ProducaoPredio>>;
+export type ProducaoReceitas = Readonly<Record<string, ProducaoPredio>>;
+
+/** Capacidade do buffer interno de um predio de producao — quantas unidades
+ *  cabem antes de bloquear (F09 reserva isto como "vaga no destino"). Numero
+ *  fixo por predio, nao por mercadoria: vem de
+ *  `production.json:estoqueInternoPorPredio`. */
+export interface EstoqueInternoPorPredio {
+  readonly entrada: number;
+  readonly saida: number;
+}
+
+export interface ProducaoData {
+  readonly receitas: ProducaoReceitas;
+  readonly estoqueInternoPorPredio: EstoqueInternoPorPredio;
+}
 
 export type TerrenoTipo = 'estrada' | 'grama' | 'campoArado' | 'areia';
 
