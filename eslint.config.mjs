@@ -53,4 +53,16 @@ export default tseslint.config(
       ],
     },
   },
+  {
+    // Convencao de parametro/variavel intencionalmente nao usado: prefixo
+    // `_`. Usada em sim/tick.ts, onde `Command` ainda e `never` (F02) e o
+    // parametro `_commands` existe so para fixar a assinatura do contrato.
+    rules: {
+      '@typescript-eslint/no-unused-vars': ['error', {
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+        caughtErrorsIgnorePattern: '^_',
+      }],
+    },
+  },
 );
