@@ -37,6 +37,8 @@ export default tseslint.config(
             message: 'Invariante 1: src/sim/ nao pode importar phaser.' },
           { group: ['**/render/**', '**/ui/**', '**/input/**'],
             message: 'sim/ nao depende de engine, render ou UI.' },
+          { group: ['**/theme-*.json'],
+            message: 'CLAUDE.md 9: sim/ nunca le o arquivo de tema.' },
         ],
       }],
       'no-restricted-globals': ['error',

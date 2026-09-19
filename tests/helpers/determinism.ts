@@ -2,14 +2,7 @@ import type { GameState } from '../../src/sim/state';
 import { createInitialState } from '../../src/sim/state';
 import { step } from '../../src/sim/tick';
 
-/** Congela em profundidade, para que qualquer mutacao vire TypeError. */
-export function deepFreeze<T>(valor: T): T {
-  if (valor === null || typeof valor !== 'object') return valor;
-  for (const chave of Object.getOwnPropertyNames(valor)) {
-    deepFreeze((valor as Record<string, unknown>)[chave]);
-  }
-  return Object.freeze(valor);
-}
+export { deepFreeze } from '../../src/sim/freeze';
 
 /** Round-trip por JSON, como um save/load faria. */
 export function reviverPorJson(state: GameState): GameState {
