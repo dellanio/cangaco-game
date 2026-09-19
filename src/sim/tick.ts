@@ -18,5 +18,12 @@ export function step(state: GameState, _commands: readonly Command[]): GameState
   const tick = state.tick + 1;
   events.push({ type: 'tick-advanced', tick });
 
-  return { tick, rng: state.rng, events };
+  return {
+    tick,
+    rng: state.rng,
+    events,
+    predios: state.predios,
+    unidades: state.unidades,
+    proximoId: state.proximoId,
+  };
 }
