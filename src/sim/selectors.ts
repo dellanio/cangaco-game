@@ -3,6 +3,7 @@ import type { GameData } from './data/types';
 import { gameData } from './data';
 import { caixaDoPredio } from './footprint';
 import { estaDesbloqueado } from './desbloqueio';
+import { custoDoPredio } from './systems/build';
 import type { CaixaEmTiles } from './footprint';
 
 /**
@@ -19,7 +20,8 @@ export function estoqueTotal(state: GameState): Readonly<Record<string, number>>
   const total: Record<string, number> = {};
   for (const id of state.predios.ordem) {
     const predio = state.predios.porId[id];
-    if (!predio) continue;
+    // Obra nao guarda mercadoria: o que ja foi entregue a ela e custo - obra.faltam.
+    if (!predio || predio.estado !== 'completo') continue;
     for (const gaveta of [predio.estoque.entrada, predio.estoque.saida]) {
       for (const [mercadoria, quantidade] of Object.entries(gaveta)) {
         total[mercadoria] = (total[mercadoria] ?? 0) + quantidade;
@@ -177,7 +179,7 @@ export function opcoesDoMenuBuild(
     const desbloqueado = estaDesbloqueado(state, def.id, dados);
     return {
       id: def.id,
-      custo: { timber: def.timber, stone: def.stone },
+      custo: custoDoPredio(def),
       tamanho: def.tamanho,
       desbloqueado,
       requer: desbloqueado ? null : def.desbloqueadoPor,

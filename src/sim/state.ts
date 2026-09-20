@@ -1,6 +1,8 @@
 import { createRng, type RngState } from './rng';
 import { gameData } from './data';
 import type { GameData } from './data/types';
+import type { Command } from './commands';
+import type { MotivoDeRecusa } from './placement';
 
 /**
  * Efeito colateral emitido por um sistema para o render consumir
@@ -14,7 +16,21 @@ import type { GameData } from './data/types';
  * semente e os mesmos comandos produzem os mesmos eventos, na mesma ordem.
  * O teste de determinismo compara o estado inteiro, `events` incluso.
  */
-export type GameEvent = { readonly type: 'tick-advanced'; readonly tick: number };
+export type GameEvent =
+  | { readonly type: 'tick-advanced'; readonly tick: number }
+  /**
+   * Um comando foi recusado pela sim (ex.: `PlaceBlueprint` sobre outro predio).
+   * O estado nao mudou. E o canal que a UI vai usar para dizer "por que nao"
+   * (GDD §10); o texto ao lado do cursor nao esta na F07.
+   */
+  | {
+      readonly type: 'command-rejected';
+      readonly command: Command['type'];
+      readonly buildingId: string;
+      readonly gx: number;
+      readonly gy: number;
+      readonly motivo: MotivoDeRecusa;
+    };
 
 /**
  * Colecao indexada por id, com ordem de iteracao explicita.
@@ -32,11 +48,11 @@ export interface Colecao<T> {
 }
 
 /**
- * `'completo'` e o unico estado possivel nesta feature — os dois predios do
- * cenario inicial ja nascem prontos. A F07 acrescenta `'obra'` quando o
- * jogador passa a posicionar planta.
+ * `'completo'`: o predio existe e funciona. `'obra'`: a planta foi posicionada
+ * (F07) e o predio ainda esta sendo entregue e martelado (F10/F11). O cenario
+ * inicial so descreve predio `'completo'`.
  */
-export type EstadoDePredio = 'completo';
+export type EstadoDePredio = 'completo' | 'obra';
 
 /**
  * Estoque e capacidade tem a MESMA forma — duas gavetas, `entrada` e `saida`
@@ -56,17 +72,56 @@ export interface Capacidade {
   readonly saida: number | null;
 }
 
-export interface Predio {
+interface PredioBase {
   readonly id: string;
   /** Id do predio em data/buildings.json ('storehouse', 'quarry', ...). */
   readonly tipo: string;
   readonly gx: number;
   readonly gy: number;
-  readonly estado: EstadoDePredio;
+  /**
+   * HP atual. Completo: o `hp` do dado. Em obra: o HP **ja martelado**, de 0 ate
+   * `def.hp` — o total nao e guardado aqui (vem de `buildings.json`, que valida
+   * `(timber + stone) * 50`), para nao haver duas fontes de verdade.
+   */
   readonly hp: number;
+}
+
+export interface PredioCompleto extends PredioBase {
+  readonly estado: 'completo';
   readonly capacidade: Capacidade;
   readonly estoque: Estoque;
 }
+
+/**
+ * CONTRATO HERDADO (F09, F10, F11, F12, F16) — quem mudar isto muda as cinco.
+ *
+ * Obra nao tem `capacidade` nem `estoque`: ela nao guarda mercadoria. O que ja
+ * foi entregue e `custo - faltam`; quando o serf entrega, o item SAI do estoque
+ * do armazem e ENTRA em `faltam` (decrementa). E la que o custo e debitado — nao
+ * no clique. O destino de uma entrega e `faltam`, nao a capacidade.
+ */
+export interface Obra {
+  /**
+   * Materiais que ainda faltam ENTREGAR, por mercadoria. Nasce igual ao custo do
+   * dado (`buildings.json`: `timber`, `stone`). O que foi entregue e derivavel:
+   * `entregues = soma sobre m de (custo[m] - faltam[m])`, e o teto de HP martelavel
+   * e `entregues * hpPorMaterialEntregue`. Reservas de vaga (F09) NAO moram aqui:
+   * moram no JobBoard.
+   *
+   * Deliberadamente fora: o nivelamento do terreno. Sem consumidor hoje, sem campo
+   * hoje — a F11 acrescenta o que precisar (BUILD_PLAN, notas da F11).
+   */
+  readonly faltam: Readonly<Record<string, number>>;
+}
+
+export interface PredioEmObra extends PredioBase {
+  readonly estado: 'obra';
+  readonly obra: Obra;
+}
+
+/** Uniao discriminada por `estado`: um predio em obra sem `obra`, ou completo sem
+ *  `estoque`, nao e representavel. */
+export type Predio = PredioCompleto | PredioEmObra;
 
 export interface Unidade {
   readonly id: string;
@@ -161,11 +216,16 @@ function criarPredios(
   contadorInicial: number,
 ): { readonly predios: Colecao<Predio>; readonly proximoContador: number } {
   let contador = contadorInicial;
-  const lista: Predio[] = [];
+  const lista: PredioCompleto[] = [];
   for (const p of dados.economia.estadoInicial.predios) {
     const def = dados.predios.find((candidato) => candidato.id === p.id);
     if (!def) {
       throw new Error(`createInitialState: predio '${p.id}' de estadoInicial nao existe em data/buildings.json`);
+    }
+    if (p.estado !== 'completo') {
+      throw new Error(
+        `createInitialState: predio '${p.id}' de estadoInicial tem estado '${p.estado}'; o cenario inicial so descreve predio 'completo'`,
+      );
     }
     const id = `p${contador}`;
     contador += 1;
@@ -174,7 +234,7 @@ function criarPredios(
       tipo: p.id,
       gx: p.gx,
       gy: p.gy,
-      estado: p.estado as EstadoDePredio,
+      estado: 'completo',
       hp: def.hp,
       capacidade: capacidadeParaTipo(p.id, dados),
       estoque: estoqueParaTipo(p.id, dados.economia.estadoInicial.estoque),

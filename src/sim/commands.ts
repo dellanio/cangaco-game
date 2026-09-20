@@ -1,12 +1,20 @@
 /**
- * Comandos que o jogador pode emitir. Sera uma uniao discriminada por `type`.
+ * Comandos que o jogador pode emitir: uniao discriminada por `type`. Entram no
+ * `step()` como lista, na ordem em que o jogador os emitiu.
  *
- * A F02 define o contrato, nao os comandos: a uniao nasce vazia. `never`
- * em vez de um `noop` de mentira — comando morto sobrevive ao projeto
- * inteiro e nunca mais e removido.
- *
- * A F07 (posicionar planta) acrescenta o primeiro membro:
- *   export type Command =
- *     | { readonly type: 'place-building'; ... };
+ * Nasceu vazia (`never`) na F02, para nao ter comando morto; a F07 acrescentou o
+ * primeiro. O `switch` em `step()` (`tick.ts`) fecha com `default` atribuindo a
+ * `never`: acrescentar um membro aqui sem tratar la reprova o `typecheck`.
  */
-export type Command = never;
+export type Command = {
+  /**
+   * Posiciona a planta de um predio. Cria uma obra pendente (HP 0, materiais
+   * faltando) se `canPlace` aceitar; senao o estado nao muda e o tick emite um
+   * evento `command-rejected`. NAO debita estoque: o custo sai na entrega (F10).
+   */
+  readonly type: 'PlaceBlueprint';
+  readonly buildingId: string;
+  /** Canto superior esquerdo do footprint (mesma convencao de `canPlace`). */
+  readonly gx: number;
+  readonly gy: number;
+};

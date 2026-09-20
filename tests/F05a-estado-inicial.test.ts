@@ -1,7 +1,7 @@
 import { describe, it, expect, afterAll } from 'vitest';
 import { execFileSync } from 'node:child_process';
 import { createInitialState } from '../src/sim/state';
-import type { GameState, Predio } from '../src/sim/state';
+import type { GameState, PredioCompleto } from '../src/sim/state';
 import { estoqueTotal, contagemPorTipo, resumoDoEstado } from '../src/sim/selectors';
 import { gameData } from '../src/sim/data';
 import type { GameData } from '../src/sim/data/types';
@@ -33,10 +33,13 @@ function acharNaoSerializavel(valor: unknown, caminho = 'state'): string[] {
   return problemas;
 }
 
-function predioPorTipo(state: GameState, tipo: string): Predio {
+/** O predio COMPLETO do tipo — so ele tem `capacidade` e `estoque` (uma obra nao
+ *  guarda mercadoria; ver `PredioEmObra` em `src/sim/state.ts`). */
+function predioPorTipo(state: GameState, tipo: string): PredioCompleto {
   const id = state.predios.ordem.find((i) => state.predios.porId[i]?.tipo === tipo);
   const predio = id ? state.predios.porId[id] : undefined;
   if (!predio) throw new Error(`nenhum predio do tipo '${tipo}' no estado`);
+  if (predio.estado !== 'completo') throw new Error(`o predio '${tipo}' nao esta completo`);
   return predio;
 }
 

@@ -55,14 +55,18 @@ describe('F02 — tick determinista', () => {
     expect(saida.tick).toBe(entrada.tick + 1);
   });
 
-  // Com `Command = never` a unica lista valida e a vazia, e `step()` nem
-  // percorre o parametro. O teste guarda o contrato — a assinatura aceita uma
-  // lista congelada — mas nao prova nada sobre elementos. Essa cobertura
-  // aparece na F07, com o primeiro comando de verdade. Registrado no PROGRESS.
-  it('step aceita uma lista de comandos congelada', () => {
-    const comandos: readonly Command[] = deepFreeze([]);
+  // Ate a F06 `Command` era `never`, a unica lista valida era a vazia e este
+  // teste so guardava o contrato da assinatura. Desde a F07 ha um comando de
+  // verdade: a lista e o ELEMENTO congelados provam que `step` nao os muta
+  // (mutar um objeto congelado lanca TypeError). A prova sobre o efeito do
+  // comando esta em tests/F07-posicionar.test.ts.
+  it('step aceita uma lista de comandos congelada, com elemento real, sem muta-la', () => {
+    const comandos: readonly Command[] = deepFreeze([
+      { type: 'PlaceBlueprint', buildingId: 'quarry', gx: 0, gy: 0 } as const,
+    ]);
+    const antes = JSON.stringify(comandos);
     expect(() => step(createInitialState(1), comandos)).not.toThrow();
-    expect(comandos).toEqual([]);
+    expect(JSON.stringify(comandos)).toBe(antes);
   });
 
   // --- Exigencia 1: serializavel de verdade ---
