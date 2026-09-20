@@ -3,6 +3,8 @@
 // Roteiro da F05b. So isto muda de feature para feature — tools/shot.js e o
 // runner generico e nao sabe nada de HUD, predios ou camera.
 
+const { retanguloDoCanvas } = require('./_canvas');
+
 async function roteiro(ctx) {
   const { page, capturar, estado, afirmar } = ctx;
   const s = await estado();
@@ -35,7 +37,8 @@ async function roteiro(ctx) {
   }
 
   await capturar('vila'); // a screenshot do aceite: HUD + os dois predios
-  await page.mouse.move(640, 360);
+  const canvas = await retanguloDoCanvas(page);
+  await page.mouse.move(canvas.left + canvas.width / 2, canvas.top + canvas.height / 2);
   await page.waitForTimeout(200);
   await capturar('hud-e-highlight');
 }

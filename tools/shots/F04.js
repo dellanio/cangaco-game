@@ -6,7 +6,11 @@
 // A partir da F05b a camera abre centrada na vila (centroDaVila), nao mais
 // no scroll (0,0) — por isso o tile alvo do passo 2 e o delta do passo 4 sao
 // calculados a partir do que a pagina publicou, nunca mais um literal fixo
-// que presume onde a camera comecou.
+// que presume onde a camera comecou. Desde a F06 o canvas tambem nao esta mais
+// em (0,0) da pagina (fica abaixo do HUD): todo ponto de mouse e convertido
+// pelo retangulo do canvas.
+
+const { retanguloDoCanvas } = require('./_canvas');
 
 const TILE_PX = 64;
 
@@ -19,13 +23,15 @@ async function roteiro(ctx) {
   // 2. mouse sobre o centro do viewport -> tileSobMouse bate com a mesma
   //    regra de screenToGrid (Math.floor(px / tilePx)), calculado a partir
   //    do scroll atual da camera.
+  const canvas = await retanguloDoCanvas(page);
   const antesDeMover = await estado();
-  const pontoNoViewport = { x: 640, y: 360 };
+  // ponto no CENTRO do canvas, em coordenada de canvas e em coordenada de pagina
+  const pontoNoCanvas = { x: Math.floor(canvas.width / 2), y: Math.floor(canvas.height / 2) };
   const tileAlvo = {
-    gx: Math.floor((antesDeMover.camera.scrollX + pontoNoViewport.x) / TILE_PX),
-    gy: Math.floor((antesDeMover.camera.scrollY + pontoNoViewport.y) / TILE_PX),
+    gx: Math.floor((antesDeMover.camera.scrollX + pontoNoCanvas.x) / TILE_PX),
+    gy: Math.floor((antesDeMover.camera.scrollY + pontoNoCanvas.y) / TILE_PX),
   };
-  await page.mouse.move(pontoNoViewport.x, pontoNoViewport.y);
+  await page.mouse.move(canvas.left + pontoNoCanvas.x, canvas.top + pontoNoCanvas.y);
   // o listener de pointermove roda a cada frame; da um tempo pro Phaser processar.
   await page.waitForTimeout(200);
   const estadoAposMover = await estado();
@@ -49,8 +55,8 @@ async function roteiro(ctx) {
   //    exato do arrasto, nao mais "> 0" (que com a camera ja centrada na
   //    vila seria verdade antes mesmo do arrasto, e nao provaria nada).
   const antesDoArrasto = await estado();
-  const centroX = 640;
-  const centroY = 360;
+  const centroX = canvas.left + pontoNoCanvas.x;
+  const centroY = canvas.top + pontoNoCanvas.y;
   const deltaX = -200;
   const deltaY = -150;
   await page.mouse.move(centroX, centroY);
@@ -71,7 +77,7 @@ async function roteiro(ctx) {
   );
 
   // 5. arrastar repetidamente ate bater no limite (0,0). Um unico arrasto
-  //    saindo da viewport nao funciona: passar de (1280,720) tira o ponteiro
+  //    saindo do canvas nao funciona: passar da borda tira o ponteiro
   //    da pagina, o Chromium para de entregar mousemove e o excesso pedido
   //    (ex.: 5000px) nao vira scroll nenhum — confirmado com um script de
   //    depuracao nesta sessao (ver PROGRESS.md). Por isso cada arrasto fica
@@ -79,8 +85,9 @@ async function roteiro(ctx) {
   // scrollX/scrollY caem quando o mouse anda para a direita/baixo (dx e dy
   // positivos): camera.scrollX -= dx (WorldScene.ts). Por isso o arrasto vai
   // do canto superior esquerdo para o inferior direito, nao o contrario.
-  const cantoInicial = { x: 30, y: 20 };
-  const cantoFinal = { x: 1250, y: 700 };
+  const margem = { x: 30, y: 20 };
+  const cantoInicial = { x: canvas.left + margem.x, y: canvas.top + margem.y };
+  const cantoFinal = { x: canvas.right - margem.x, y: canvas.bottom - margem.y };
   for (let i = 0; i < 8; i++) {
     const antesDaIteracao = await estado();
     if (antesDaIteracao.camera.scrollX === 0 && antesDaIteracao.camera.scrollY === 0) break;

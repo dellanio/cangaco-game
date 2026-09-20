@@ -47,6 +47,13 @@ export function montarMenuBuild(ferramenta: Ferramenta): MenuBuild {
     for (const [id, item] of itens) {
       item.botao.setAttribute('aria-pressed', String(id === predioAtivo));
     }
+    // Sem ferramenta, nenhum item deve parecer selecionado: o anel de foco que
+    // o navegador deixa no ultimo botao clicado (aparece de novo apos o Esc)
+    // le como "ainda ativo".
+    if (predioAtivo === null) {
+      const focado = document.activeElement;
+      if (focado instanceof HTMLElement && raiz?.contains(focado)) focado.blur();
+    }
   }
 
   function montar(opcoes: readonly OpcaoDoMenuBuild[]): void {
