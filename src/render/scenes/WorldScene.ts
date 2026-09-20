@@ -12,13 +12,18 @@ import { aparenciaDoPredio } from '../predios';
 import { centroDaVila } from '../../sim/selectors';
 import type { GameState, Predio } from '../../sim/state';
 import type { PonteDeEstado } from '../ponte';
+import type { Ferramenta } from '../../input/ferramenta';
+import { criarPlantaFantasma } from '../planta-fantasma';
 
 const CHAVE_TEXTURA_GRAMA = 'tile-grama';
 
 export class WorldScene extends Phaser.Scene {
   private readonly desenhados = new Map<string, Phaser.GameObjects.Container>();
 
-  constructor(private readonly ponte: PonteDeEstado) {
+  constructor(
+    private readonly ponte: PonteDeEstado,
+    private readonly ferramenta: Ferramenta,
+  ) {
     super('world');
   }
 
@@ -40,6 +45,11 @@ export class WorldScene extends Phaser.Scene {
       this.atualizarPredios(estadoDoJogo, tilePx, estado);
     }
 
+    const planta = criarPlantaFantasma(this, tilePx);
+    // Ultimo tile valido sob o ponteiro. Efemero: some no gameout e nunca entra
+    // no GameState (a planta e estado de interface, ver input/ferramenta.ts).
+    let tileAtual: Tile | null = null;
+
     const highlight = this.add.graphics();
     highlight.lineStyle(3, 0xede3d0, 1);
     highlight.strokeRect(1, 1, tilePx - 2, tilePx - 2);
@@ -59,12 +69,20 @@ export class WorldScene extends Phaser.Scene {
       if (tileDentroDoMapa(tile, largura, altura)) {
         const canto = gridToScreen(tile, tilePx);
         highlight.setPosition(canto.x, canto.y);
-        highlight.setVisible(true);
         estado.tileSobMouse = tile;
+        tileAtual = tile;
       } else {
-        highlight.setVisible(false);
         estado.tileSobMouse = null;
+        tileAtual = null;
       }
+    });
+
+    // O canvas so ocupa a celula dele na grade (index.html); ao sair para o HUD
+    // ou para o painel o ponteiro deixa de ser do Phaser. Sem isto o ultimo tile
+    // ficaria preso, com a planta desenhada onde o jogador nao esta olhando.
+    this.input.on(Phaser.Input.Events.GAME_OUT, () => {
+      estado.tileSobMouse = null;
+      tileAtual = null;
     });
 
     // POST_RENDER, nao update(): o clamp de camera.setBounds acontece dentro
@@ -76,6 +94,12 @@ export class WorldScene extends Phaser.Scene {
       estado.tilesRenderizados = camadaChao.tilesDrawn;
       estado.pronto = true;
       if (this.ponte.atual) this.atualizarPredios(this.ponte.atual, tilePx, estado);
+
+      // Ferramenta ativa -> a planta pergunta canPlace e pinta; sem ferramenta
+      // volta o highlight de tile. O render pergunta, nao decide.
+      estado.ferramentaAtiva = this.ferramenta.predioAtivo;
+      estado.plantaFantasma = planta.atualizar(this.ferramenta.predioAtivo, tileAtual, this.ponte.atual);
+      highlight.setVisible(tileAtual !== null && this.ferramenta.predioAtivo === null);
     });
   }
 

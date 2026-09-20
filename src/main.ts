@@ -25,7 +25,7 @@ ligarTeclado(ferramenta, window);
 // estar assentado (as dimensoes sao fixas no CSS, mas nao custa a ordem certa).
 const hud = montarHud();
 const menu = montarMenuBuild(ferramenta);
-const jogo = iniciarJogo();
+const jogo = iniciarJogo(ferramenta);
 
 function atualizar(s: GameState): void {
   jogo.atualizar(s);

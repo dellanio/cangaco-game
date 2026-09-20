@@ -6,6 +6,7 @@
  * (invariante 1, CLAUDE.md §2).
  */
 import type { Tile } from './grid';
+import type { EstadoDaPlanta } from './planta-fantasma';
 
 export interface EstadoDebug {
   /** false ate a cena terminar o primeiro desenho. O roteiro espera por isto
@@ -22,6 +23,11 @@ export interface EstadoDebug {
    *  e `Tile` (render/grid.ts): pode ser fracionario (33, 31.5, ver
    *  sim/selectors.ts PontoEmTiles) e nao indexa o mapa. */
   centroDaVila: { readonly gx: number; readonly gy: number } | null;
+  /** A planta fantasma desenhada agora, ou null se escondida. `valida` e o
+   *  que `canPlace` respondeu; `motivo` e o porque quando nao pode. */
+  plantaFantasma: EstadoDaPlanta | null;
+  /** Predio que a ferramenta carrega (src/input/ferramenta.ts), ou null. */
+  ferramentaAtiva: string | null;
 }
 
 declare global {
@@ -43,6 +49,8 @@ export function publicarEstadoDebug(): EstadoDebug {
     tilesRenderizados: 0,
     prediosRenderizados: 0,
     centroDaVila: null,
+    plantaFantasma: null,
+    ferramentaAtiva: null,
   };
   window.__cangaco = estado;
   return estado;
