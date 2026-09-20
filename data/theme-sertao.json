@@ -98,6 +98,7 @@
     "wooden_shield": "Chapéu de aba", "iron_shield": "Peitoral de couro cru"
   },
   "hud": { "comida": "Comida", "populacao": "Gente" },
+  "menuBuild": { "titulo": "Construir", "requer": "requer", "semRequisito": "ainda não disponível" },
   "vegetacao": ["mandacaru", "xique-xique", "juazeiro", "umbuzeiro", "facheiro", "macambira"],
   "props": ["cerca de vara", "pilha de lenha", "cacimba", "carro de boi", "jumento", "varal de carne de sol"],
   "facoes": {

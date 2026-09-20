@@ -5,23 +5,56 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>cangaço</title>
     <style>
+      /* Grade, nao sobreposicao: o canvas ocupa SO a celula dele. O ponteiro
+         sobre o HUD ou o painel nunca chega ao Phaser — em vez de a cena
+         ignorar cliques em faixas de pixel. As dimensoes sao fixas de
+         proposito: o Phaser mede o pai no boot, e o tamanho nao pode depender
+         de o HUD ja ter texto nessa hora. */
+      :root { --altura-hud: 38px; --largura-painel: 260px; }
       html, body { margin: 0; padding: 0; background: #0a0a0a; overflow: hidden; }
-      #jogo { width: 100vw; height: 100vh; }
-      #jogo canvas { display: block; }
+      body {
+        display: grid; height: 100vh;
+        grid-template-columns: 1fr var(--largura-painel);
+        grid-template-rows: var(--altura-hud) 1fr;
+      }
       #hud {
-        position: fixed; top: 0; left: 0; right: 0; z-index: 10;
-        display: flex; gap: 24px; padding: 8px 16px;
-        background: rgba(20, 14, 10, 0.85); color: #ede3d0;
-        font: 16px/1.4 system-ui, sans-serif; pointer-events: none;
+        grid-column: 1 / -1; grid-row: 1;
+        box-sizing: border-box; height: var(--altura-hud);
+        display: flex; align-items: center; gap: 24px; padding: 0 16px;
+        background: #1e1a14; color: #ede3d0;
+        font: 16px/1.4 system-ui, sans-serif;
       }
       #hud .campo { display: flex; gap: 6px; }
       #hud .rotulo { opacity: 0.7; }
       #hud .valor { font-weight: 700; }
+      #jogo { grid-column: 1; grid-row: 2; min-width: 0; min-height: 0; overflow: hidden; }
+      #jogo canvas { display: block; }
+      #menu-build {
+        grid-column: 2; grid-row: 2; min-height: 0; overflow-y: auto;
+        box-sizing: border-box; padding: 8px;
+        background: #1e1a14; color: #ede3d0;
+        font: 14px/1.3 system-ui, sans-serif;
+        display: flex; flex-direction: column; gap: 6px;
+      }
+      #menu-build h2 { margin: 4px 4px 2px; font-size: 15px; font-weight: 700; }
+      #menu-build .item {
+        display: flex; flex-direction: column; gap: 2px; text-align: left;
+        padding: 6px 8px; border: 2px solid #3a3226; border-radius: 4px;
+        background: #2a241b; color: inherit; font: inherit; cursor: pointer;
+      }
+      #menu-build .item .nome { font-weight: 700; }
+      #menu-build .item .custo { opacity: 0.75; }
+      #menu-build .item .requer { color: #c9974b; }
+      #menu-build .item[aria-pressed="true"] { border-color: #ede3d0; background: #3a3226; }
+      #menu-build .item[aria-disabled="true"] {
+        cursor: not-allowed; opacity: 0.45; filter: grayscale(1);
+      }
     </style>
   </head>
   <body>
     <div id="hud"></div>
     <div id="jogo"></div>
+    <aside id="menu-build"></aside>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
