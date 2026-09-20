@@ -8,9 +8,19 @@
       html, body { margin: 0; padding: 0; background: #0a0a0a; overflow: hidden; }
       #jogo { width: 100vw; height: 100vh; }
       #jogo canvas { display: block; }
+      #hud {
+        position: fixed; top: 0; left: 0; right: 0; z-index: 10;
+        display: flex; gap: 24px; padding: 8px 16px;
+        background: rgba(20, 14, 10, 0.85); color: #ede3d0;
+        font: 16px/1.4 system-ui, sans-serif; pointer-events: none;
+      }
+      #hud .campo { display: flex; gap: 6px; }
+      #hud .rotulo { opacity: 0.7; }
+      #hud .valor { font-weight: 700; }
     </style>
   </head>
   <body>
+    <div id="hud"></div>
     <div id="jogo"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>

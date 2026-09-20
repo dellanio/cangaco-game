@@ -97,6 +97,7 @@
     "leather_armor": "Gibão de couro", "iron_armor": "Gibão reforçado",
     "wooden_shield": "Chapéu de aba", "iron_shield": "Peitoral de couro cru"
   },
+  "hud": { "comida": "Comida", "populacao": "Gente" },
   "vegetacao": ["mandacaru", "xique-xique", "juazeiro", "umbuzeiro", "facheiro", "macambira"],
   "props": ["cerca de vara", "pilha de lenha", "cacimba", "carro de boi", "jumento", "varal de carne de sol"],
   "facoes": {
