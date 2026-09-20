@@ -471,6 +471,118 @@ permissão por hábito.
   (Dinheiro 20, Tábua 40, Pedra 30, Comida 25, Gente 6/0), nenhum id neutro
   (`gold`/`timber`/`stone`) visível no texto do HUD.
 
+## F06 — Menu Build e planta fantasma (2026-09-20)
+
+Segunda feature de integração, com a nota de exceção da §10 escrita no
+`BUILD_PLAN.md` **antes** de qualquer código (Task 0), valendo para a F06 e só.
+A F06 não emite comando nenhum: o clique que posiciona é a F07.
+
+**Decisões do operador na revisão do plano:** (1) a nota de integração foi
+aprovada; (2) **"terreno inválido" saiu do aceite e do código.** O mapa não tem
+terreno variado nem feature que o produza; uma lista `obstaculos` vazia só para
+o teste injetar seria andaime — a verificação nunca dispara numa partida real e
+fixa um formato de dado antes de existir quem o produza. O tipo antecipa, a
+implementação não finge: `MotivoDeRecusa` declara `'terreno'`, inalcançável hoje.
+Terreno de mapa não está na fila; foi registrado em `IDEIAS.md` como falta antes
+da F11 (a decisão de fila é do operador). `data/terrain.json` **não foi tocado**.
+
+### Verificado (aberto e rodado nesta sessão)
+
+- `npm run verify` verde: typecheck, lint, `validate:data` (9 arquivos, 0 erros)
+  e 128 testes (38 novos em `tests/F06-build.test.ts`). Evidência headless em
+  `test-output/F06.json`, aberta com Read.
+- `canPlace`: os três casos do aceite escrito, cada um isolado e afirmando o
+  **motivo** (`sobreposicao`, `fora-do-mapa`, `bloqueado`), incluindo o limite
+  meio-aberto (encostar é ok, um tile a mais já é sobreposição) e a precedência
+  entre motivos. Nenhum número é digitado: os testes injetam `GameData` com outro
+  `tamanho`, outro `mapaPadrao` e outro `menuBuildInicial` e o resultado muda.
+  Roda sobre `GameState` congelado (`deepFreeze`).
+- Desbloqueio: percorre as 27 arestas `desbloqueadoPor` de `buildings.json`
+  (sem o pai bloqueia, com o pai completo libera).
+- Guardas por import: `src/input/` não importa `phaser`, `sim/data` nem
+  `sim/state`.
+- **Visual** (`npm run shot -- F06`, fora do `verify`, §8): 22 afirmações e 3
+  screenshots, todas abertas com Read — planta verde sobre tile livre, vermelha
+  sobre o armazém, e o estado após `Esc`. Rodei o roteiro 3 vezes seguidas,
+  estável. `npm run shot -- F04` e `-- F05b` continuam passando com o novo layout.
+
+### O que foi decidido e por quê
+
+- **Onde a planta mora.** Fora do `GameState`, em três camadas que não
+  persistem: a *intenção* (qual prédio a ferramenta carrega) em
+  `src/input/ferramenta.ts`, criada em `main.ts` no molde da ponte da F05b; a
+  *posição* é o `tileSobMouse` efêmero da cena; o *desenho* é derivado a cada
+  frame de intenção + posição + `canPlace`. `Esc` chama `cancelar()`. A fronteira
+  é verificável: `ferramenta.ts` não importa `sim/state` (guarda por import) e o
+  teste roda `selecionar/cancelar` sobre um estado congelado.
+- **`canPlace` devolve motivo, não boolean.** Um teste que só afirma `false` para
+  "sobreposição" passaria mesmo se a função recusasse pela razão errada; e a F07
+  precisa rejeitar o segundo comando na mesma posição.
+- **Desbloqueio derivado, sem campo novo no `GameState`:** liberado se está em
+  `menuBuildInicial` ou se o `desbloqueadoPor` existe completo em `state.predios`.
+  Não cria formato de estado que F07/F10 herdariam, e a F12 passa a valer quase
+  sozinha. A geometria de footprint foi extraída de `selectors.ts` (F05b) para
+  `sim/footprint.ts` porque `canPlace` precisa da mesma.
+- **O HUD/painel não podem ficar sob o canvas — corrigido na causa.** O problema
+  não era "o HUD tem 38 px", era o canvas se estender por baixo de qualquer UI
+  sobreposta. `index.html` virou uma grade CSS (HUD em cima, canvas e painel
+  lado a lado embaixo); o ponteiro sobre a UI nunca chega ao Phaser. O número 38
+  ficou só em CSS (`--altura-hud`), nenhum `.ts` o conhece. A cena esconde tile e
+  planta no `GAME_OUT`. `#hud { pointer-events: none }` (F05b) saiu: existia só
+  por causa da sobreposição. Provado por medição no roteiro (canvas abaixo do HUD
+  e à esquerda do painel; mouse dentro do HUD e do painel deixa `tileSobMouse` e
+  `plantaFantasma` nulos), não a olho.
+- **`aria-disabled` e não `disabled`** nos itens bloqueados: o clique continua
+  chegando e é ignorado, o que deixa o roteiro provar que clicar não ativa nada
+  (com `force: true`, porque o Playwright recusa clicar em item não habilitado).
+- **Acabamento achado na screenshot e corrigido:** depois do `Esc` o botão da
+  Pedreira ficava com o anel de foco do navegador e parecia ainda selecionado;
+  o painel agora tira o foco quando a ferramenta volta a `null`.
+- **Corrida no roteiro, corrigida:** `window.__cangaco` só é publicado no
+  `POST_RENDER`; ler logo depois de um clique falhava de vez em quando. O roteiro
+  espera o frame, como nos outros passos.
+- **Desvio do plano:** a mudança em `render/game.ts` (receber a ferramenta) foi
+  feita na Task da cena, junto do consumidor, para cada commit compilar.
+- **Roteiros existentes.** F04 e F05b assumiam o canvas em (0,0) da página; agora
+  convertem pelo retângulo do canvas (`tools/shots/_canvas.js`).
+
+### Não feito, de propósito (fora do Escopo da F06)
+
+- Texto do motivo da recusa ao lado do cursor (GDD §10, "a planta vermelha diz por
+  quê"). `canPlace` já devolve o motivo; falta só desenhá-lo.
+- Porta ao sul na planta (GDD §5.1); custo/estoque e obra pendente (F07).
+- `'terreno'` em `canPlace` — declarado no tipo, **não verificado por nenhum
+  teste** (`terreno.verificadoPorTeste: false` no `F06.json`).
+
+### Hipóteses, não fatos (não verifiquei)
+
+- `GAME_OUT` disparando ao sair para HUD/painel foi observado só no Chromium
+  headless do Playwright, em 1280×720. Outros navegadores e outras resoluções
+  não foram exercitados.
+- Não testei redimensionar a janela com o jogo aberto: o Phaser em `Scale.RESIZE`
+  reage ao resize da janela e as dimensões do HUD/painel são fixas no CSS, então
+  espero que o canvas acompanhe a célula, mas é expectativa.
+- A planta só foi exercitada em tela com `quarry` (3×2); footprints de outros
+  tamanhos são cobertos pelo teste de `canPlace`, não por screenshot.
+
 ## Perguntas em aberto
 
-Nenhuma no momento.
+Registradas na F06 (§14: não inventei resposta; implementei a interpretação mais
+conservadora e segui).
+
+1. **Schoolhouse liberada no início.** A regra derivada (menu inicial ∪ filhos de
+   prédio completo) libera também a Schoolhouse, filha do Storehouse completo; o
+   GDD §3.2 lista só Quarry, Woodcutter's e Inn no menu inicial. Segui o pedido
+   (união das duas fontes). `F06.json` registra
+   `liberadosAlemDoMenuInicial: ["schoolhouse"]`. Uma segunda Schoolhouse deve
+   poder ser construída no início?
+2. **Storehouse sem pai na árvore.** `buildings.json` tem `desbloqueadoPor: null`
+   para o Storehouse e ele não está em `menuBuildInicial`, mas o GDD §5.2/5.3 diz
+   "inicial / Sawmill" (o armazém *adicional* exige Serraria). Hoje aparece
+   bloqueado, com "ainda não disponível" e ninguém para nomear. Não mexi em
+   `buildings.json` (ligar storehouse→sawmill cria ciclo na árvore).
+3. **Aceite da F12 vs `menuBuildInicial`.** O aceite da F12 parte do estado
+   inicial, conclui uma Schoolhouse e espera Quarry e Woodcutter's saindo de
+   bloqueado; no estado inicial os dois já estão em `menuBuildInicial` e a
+   Schoolhouse já está completa. O teste da F12 vai precisar de um estado (ou de
+   um dado injetado) em que eles comecem bloqueados.

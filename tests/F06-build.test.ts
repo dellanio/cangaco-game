@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterAll } from 'vitest';
 import { createInitialState } from '../src/sim/state';
 import type { GameState, Predio } from '../src/sim/state';
 import type { GameData } from '../src/sim/data/types';
@@ -11,6 +11,7 @@ import { deepFreeze } from '../src/sim/freeze';
 import { opcoesDoMenuBuild } from '../src/sim/selectors';
 import { criarFerramenta } from '../src/input/ferramenta';
 import { ligarTeclado } from '../src/input/teclado';
+import { gravarEvidencia } from './helpers/evidence';
 
 // --- montagem de estados e de dados injetados (so teste; nada disto entra em sim/) ---
 
@@ -366,5 +367,51 @@ describe('F06 — guardas estruturais de input/', () => {
 
   it('src/input/ nao importa sim/state: a planta fantasma nao mora no GameState', () => {
     expect(importam('src/input', /from\s+['"].*sim\/state['"]/)).toEqual([]);
+  });
+});
+
+afterAll(() => {
+  const inicial = createInitialState(1);
+  const armazem = gameData.economia.estadoInicial.predios.find((p) => p.id === 'storehouse');
+  if (!armazem) throw new Error('cenario inicial sem storehouse');
+  const opcoes = opcoesDoMenuBuild(inicial);
+  const menuInicial = gameData.economia.estadoInicial.menuBuildInicial;
+  const desbloqueadosNoInicio = opcoes.filter((o) => o.desbloqueado).map((o) => o.id);
+
+  gravarEvidencia('F06', {
+    feature: 'F06-menu-build-planta',
+    // VERIFICADO por teste headless: os tres casos do aceite escrito no
+    // BUILD_PLAN.md, cada um com o motivo que canPlace devolveu.
+    canPlace: {
+      casosDoAceite: {
+        sobreposicao: canPlace(inicial, 'quarry', armazem.gx, armazem.gy),
+        foraDoMapa: canPlace(inicial, 'quarry', -1, 0),
+        predioNaoDesbloqueado: canPlace(inicial, 'sawmill', 0, 0),
+      },
+      posicaoLivre: canPlace(inicial, 'quarry', 0, 0),
+      ordemDeChecagemDocumentada: ['predio-desconhecido', 'bloqueado', 'fora-do-mapa', 'sobreposicao'],
+    },
+    desbloqueio: {
+      menuBuildInicial: menuInicial,
+      desbloqueadosNoEstadoInicial: desbloqueadosNoInicio,
+      // Achado, nao decisao: a regra derivada (menu inicial + filhos de predio
+      // completo) libera tambem o que o GDD §3.2 nao lista no menu inicial.
+      liberadosAlemDoMenuInicial: desbloqueadosNoInicio.filter((id) => !menuInicial.includes(id)),
+      arestasDaArvorePercorridas: gameData.predios.filter((p) => p.desbloqueadoPor !== null).length,
+    },
+    menu: {
+      opcoes: opcoes.length,
+      bloqueadosSemPaiNaArvore: opcoes.filter((o) => !o.desbloqueado && o.requer === null).map((o) => o.id),
+    },
+    // DECLARADO, NAO VERIFICADO: o membro existe no tipo e nenhum teste o
+    // alcanca, de proposito. "Terreno invalido" saiu do aceite por decisao do
+    // operador (nota da F06 no BUILD_PLAN.md; terreno de mapa esta em IDEIAS.md).
+    terreno: {
+      motivoDeclaradoNoTipo: 'terreno',
+      alcancavelHoje: false,
+      verificadoPorTeste: false,
+    },
+    // Verificacao visual e separada, fora do npm run verify (CLAUDE.md §8).
+    verificacaoVisual: 'fora deste arquivo: npm run shot -- F06 (test-output/F06-shot.json)',
   });
 });
