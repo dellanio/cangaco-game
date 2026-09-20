@@ -1,13 +1,13 @@
 {
-  "_doc": "Escada de prioridade do JobBoard. Nivel menor = mais urgente.",
+  "_doc": "Escada de prioridade do JobBoard. Nivel menor = mais urgente. Cada linha tem um `id`: e por ele que o codigo se refere a um tipo de tarefa, sem digitar o numero do nivel em .ts. So os tipos com produtor existente sao implementados (F09: material-para-obra); os demais ficam so aqui ate a feature que os produz (validado em tools/data-rules.js, validarEscadaDePrioridade).",
   "prioridades": [
-    { "nivel": 1, "tarefa": "comida -> inn",                       "fonte": "[fonte] maior prioridade no Remake" },
-    { "nivel": 2, "tarefa": "ouro -> schoolhouse",                 "fonte": "[fonte] segunda maior prioridade no Remake" },
-    { "nivel": 3, "tarefa": "material -> obra ja nivelada" },
-    { "nivel": 4, "tarefa": "insumo -> producao parada por falta de insumo" },
-    { "nivel": 5, "tarefa": "insumo -> producao com estoque baixo" },
-    { "nivel": 6, "tarefa": "saida cheia -> armazem" },
-    { "nivel": 7, "tarefa": "excedente -> armazem" }
+    { "nivel": 1, "id": "comida-para-inn",          "tarefa": "comida -> inn",                       "fonte": "[fonte] maior prioridade no Remake" },
+    { "nivel": 2, "id": "ouro-para-escola",         "tarefa": "ouro -> schoolhouse",                 "fonte": "[fonte] segunda maior prioridade no Remake" },
+    { "nivel": 3, "id": "material-para-obra",       "tarefa": "material -> obra ja nivelada" },
+    { "nivel": 4, "id": "insumo-producao-parada",   "tarefa": "insumo -> producao parada por falta de insumo" },
+    { "nivel": 5, "id": "insumo-producao-baixa",    "tarefa": "insumo -> producao com estoque baixo" },
+    { "nivel": 6, "id": "saida-cheia-para-armazem", "tarefa": "saida cheia -> armazem" },
+    { "nivel": 7, "id": "excedente-para-armazem",   "tarefa": "excedente -> armazem" }
   ],
   "desempate": ["menorDistanciaDeCaminhoReal", "menorIdDeTarefa"],
   "_nota_distancia": "Distancia de CAMINHO A PE, nunca euclidiana. Distancia direta faz o trabalhador escolher alvo do outro lado de uma montanha. E erro conhecido no proprio Remake.",

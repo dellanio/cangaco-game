@@ -297,6 +297,35 @@ function validarMenuInicialSoRaiz(dados, erros) {
   }
 }
 
+// F09: a escada de prioridade de delivery.json tem um `id` por nivel — e por ele que
+// o codigo referencia um tipo de tarefa, sem digitar o numero do nivel em .ts
+// (invariante 3). Ids unicos e nao vazios; niveis inteiros, unicos e contiguos a
+// partir de 1 (um buraco faria "nivel menor = mais urgente" enganar).
+function validarEscadaDePrioridade(dados, erros) {
+  const escada = dados.delivery && dados.delivery.prioridades;
+  if (!Array.isArray(escada)) {
+    erros.push('entrega/escada: delivery.prioridades precisa ser array');
+    return;
+  }
+  const ids = new Set();
+  const niveis = [];
+  escada.forEach((linha, i) => {
+    if (typeof linha.id !== 'string' || linha.id === '') {
+      erros.push(`entrega/escada: prioridades[${i}] precisa de um id nao vazio`);
+    } else if (ids.has(linha.id)) {
+      erros.push(`entrega/escada: id '${linha.id}' repetido em delivery.prioridades`);
+    } else {
+      ids.add(linha.id);
+    }
+    niveis.push(linha.nivel);
+  });
+  const ordenados = [...niveis].sort((a, b) => a - b);
+  const contiguos = ordenados.every((nivel, i) => Number.isInteger(nivel) && nivel === i + 1);
+  if (!contiguos) {
+    erros.push('entrega/escada: os niveis precisam ser inteiros, unicos e contiguos a partir de 1');
+  }
+}
+
 // F08: fracao da pedra devolvida ao demolir tiles de estrada. Campo proprio de
 // terrain.estrada (nao o de buildings.construcao): estrada e predio podem
 // divergir. Uma fracao fora de [0, 1] devolveria mais do que custou, ou negativo.
@@ -357,6 +386,7 @@ function validarTudo(dados) {
   validarGruposDeComida(dados, erros);
   validarMenuInicialSoRaiz(dados, erros);
   validarDevolucaoDeEstrada(dados, erros);
+  validarEscadaDePrioridade(dados, erros);
   return erros;
 }
 
