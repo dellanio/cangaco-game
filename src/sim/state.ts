@@ -3,6 +3,7 @@ import { gameData } from './data';
 import type { GameData } from './data/types';
 import type { MotivoDeRecusa } from './placement';
 import type { MotivoDeRecusaDeEstrada, TileDeGrid } from './estradas';
+import type { MotivoDeLiberacao } from './jobs';
 
 /**
  * Efeito colateral emitido por um sistema para o render consumir
@@ -38,6 +39,17 @@ export type GameEvent =
       readonly command: 'PlaceRoad';
       readonly motivo: MotivoDeRecusaDeEstrada;
       readonly tile: TileDeGrid | null;
+    }
+  | {
+      /**
+       * Uma tarefa saiu de `reclamada`: as DUAS reservas (recurso na origem, vaga no
+       * destino) foram devolvidas. `reaberta`: a mesma tarefa voltou a `aberta`;
+       * `cancelada`: foi removida (o gerador cria outra, com a origem certa).
+       */
+      readonly type: 'task-released';
+      readonly tarefa: string;
+      readonly motivo: MotivoDeLiberacao;
+      readonly resultado: 'reaberta' | 'cancelada';
     };
 
 /**
@@ -131,6 +143,46 @@ export interface PredioEmObra extends PredioBase {
  *  `estoque`, nao e representavel. */
 export type Predio = PredioCompleto | PredioEmObra;
 
+/**
+ * O tipo da tarefa. Hoje so `'material-para-obra'` (nivel 3 da escada de
+ * `delivery.json`) tem produtor; os outros seis niveis so existem no dado. Cada
+ * feature que criar um produtor (F13, F15, F20) alarga este tipo, junto dele.
+ */
+export type TipoDeTarefa = 'material-para-obra';
+
+/**
+ * CONTRATO HERDADO (F10, F11, F13, F15) — uma unidade de trabalho do JobBoard.
+ *
+ * UMA TAREFA = UMA UNIDADE DE RECURSO (o GDD §6.3 fala em "a unidade de recurso" e
+ * nao ha dado de capacidade de carga; se houver, ganha `quantidade`).
+ *
+ * A RESERVA nao e um campo: e DERIVADA das tarefas `reclamada` (`sim/reservas.ts`).
+ * Uma tarefa `aberta` nao reserva nada; a `reclamada` reserva, ao mesmo tempo, a
+ * unidade de recurso em `origem` e a vaga em `destino`. Tirar a tarefa de
+ * `reclamada` devolve as duas — nao ha contador para dessincronizar, e a reserva
+ * sobrevive ao save/load porque a tarefa sobrevive.
+ */
+export interface Tarefa {
+  /** `t<numero>`, do mesmo contador `proximoId` de predios e unidades. */
+  readonly id: string;
+  /** O desempate compara ESTE numero; comparar a string errararia ('t10' < 't2'). */
+  readonly numero: number;
+  readonly tipo: TipoDeTarefa;
+  readonly mercadoria: string;
+  /** Id do armazem de onde a unidade sai. */
+  readonly origem: string;
+  /** Id da obra que recebe. */
+  readonly destino: string;
+  readonly estado: 'aberta' | 'reclamada';
+  /** Id da unidade que a reclamou; `null` (nunca `undefined`) se aberta. */
+  readonly reclamadaPor: string | null;
+}
+
+/** A central de tarefas. Serializavel: so `Colecao` de objetos planos. */
+export interface JobBoard {
+  readonly tarefas: Colecao<Tarefa>;
+}
+
 export interface Unidade {
   readonly id: string;
   /** Id do civil em data/units.json civis.tipos ('serf', 'laborer', ...). */
@@ -191,6 +243,8 @@ export interface GameState {
    * ordem: use `tilesOrdenados`.
    */
   readonly estradas: Readonly<Record<string, true>>;
+  /** O JobBoard (F09). Ver `Tarefa`. */
+  readonly jobs: JobBoard;
 }
 
 function construirColecao<T extends { readonly id: string }>(itens: readonly T[]): Colecao<T> {
@@ -316,6 +370,7 @@ export function createInitialState(seed: number, dados: GameData = gameData): Ga
     proximoId: apósUnidades,
     tiposJaConstruidos: tiposCompletos(predios),
     estradas: {},
+    jobs: { tarefas: { porId: {}, ordem: [] } },
   };
 }
 

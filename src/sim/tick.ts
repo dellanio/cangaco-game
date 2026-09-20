@@ -68,5 +68,6 @@ export function step(
     proximoId: atual.proximoId,
     tiposJaConstruidos: atual.tiposJaConstruidos,
     estradas: atual.estradas,
+    jobs: atual.jobs,
   };
 }

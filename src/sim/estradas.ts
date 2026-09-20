@@ -117,6 +117,81 @@ export function isConnected(state: GameState, from: TileDeGrid, to: TileDeGrid):
   return a !== null && a === componenteDe(state.estradas, to);
 }
 
+// --- distancia por estrada (F09) ---
+
+const distancias = new WeakMap<object, Map<string, number | null>>();
+
+/**
+ * Distancia de CAMINHO A PE pela rede: o menor numero de passos, so por tiles de
+ * estrada e em 4 direcoes, de uma das portas de `de` ate uma das de `para`; `null`
+ * se nao ha caminho ou se nenhuma ponta e estrada. Nunca euclidiana nem de Manhattan
+ * (erro conhecido do Remake: o trabalhador escolhia alvo do outro lado da montanha).
+ *
+ * PROVISORIA, e mede so a perna da ENTREGA (origem -> destino): unidade -> origem
+ * pede A* com `custoDeMovimento`, vizinhanca 8 e cache, que e a F10, e as unidades
+ * nascem fora da estrada. A F10 substitui a funcao de distancia do desempate; a
+ * interface do comparador nao muda (nota no item F10 do BUILD_PLAN).
+ *
+ * Busca em largura multi-origem; o resultado e memoizado pela REFERENCIA de
+ * `estradas` (mesmo molde do indice de componentes), entao so recalcula quando a
+ * rede muda.
+ */
+export function distanciaPorEstrada(
+  estradas: GameState['estradas'], de: readonly TileDeGrid[], para: readonly TileDeGrid[],
+): number | null {
+  const chave = `${de.map(chaveDeTile).join(';')}|${para.map(chaveDeTile).join(';')}`;
+  let memo = distancias.get(estradas);
+  if (memo === undefined) {
+    memo = new Map();
+    distancias.set(estradas, memo);
+  }
+  const guardada = memo.get(chave);
+  if (guardada !== undefined) return guardada;
+
+  const resultado = buscarDistancia(estradas, de, para);
+  memo.set(chave, resultado);
+  return resultado;
+}
+
+function buscarDistancia(
+  estradas: GameState['estradas'], de: readonly TileDeGrid[], para: readonly TileDeGrid[],
+): number | null {
+  const alvos = new Set(para.filter((t) => ehEstrada(estradas, t)).map(chaveDeTile));
+  if (alvos.size === 0) return null;
+  const visto = new Map<string, number>();
+  let fronteira: TileDeGrid[] = [];
+  for (const inicio of de) {
+    const chaveInicio = chaveDeTile(inicio);
+    if (ehEstrada(estradas, inicio) && !visto.has(chaveInicio)) {
+      visto.set(chaveInicio, 0);
+      fronteira.push(inicio);
+    }
+  }
+  for (let passos = 0; fronteira.length > 0; passos++) {
+    if (fronteira.some((t) => alvos.has(chaveDeTile(t)))) return passos;
+    const proxima: TileDeGrid[] = [];
+    for (const atual of fronteira) {
+      for (const [dx, dy] of VIZINHOS) {
+        const vizinho = { gx: atual.gx + dx, gy: atual.gy + dy };
+        const chaveVizinho = chaveDeTile(vizinho);
+        if (estradas[chaveVizinho] === true && !visto.has(chaveVizinho)) {
+          visto.set(chaveVizinho, passos + 1);
+          proxima.push(vizinho);
+        }
+      }
+    }
+    fronteira = proxima;
+  }
+  return null;
+}
+
+/** Distancia por estrada entre as PORTAS de dois predios (a borda sul de cada um). */
+export function distanciaEntrePredios(
+  state: GameState, a: Predio, b: Predio, dados: GameData = gameData,
+): number | null {
+  return distanciaPorEstrada(state.estradas, tilesDaPorta(a, dados), tilesDaPorta(b, dados));
+}
+
 // --- predios na rede ---
 
 export function armazensCompletos(state: GameState): PredioCompleto[] {
