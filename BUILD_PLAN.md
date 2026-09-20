@@ -117,9 +117,15 @@ prédio surge sem clique do jogador.
   em cinza com "requer X". Planta seguindo o mouse, verde quando pode e vermelha
   quando não pode (terreno, sobreposição, borda do mapa). `Esc` cancela.
 - **Aceite**: teste da função `canPlace(state, buildingId, x, y)` cobrindo:
-  sobreposição com prédio, fora do mapa, terreno inválido, prédio não
-  desbloqueado. Screenshots dos dois estados da planta, verde e vermelha.
+  sobreposição com prédio, fora do mapa, prédio não desbloqueado. Screenshots
+  dos dois estados da planta, verde e vermelha.
 - **Evidência**: `test-output/F06.json` + `screenshots/F06-*.png`
+- **Nota**: "terreno inválido" saiu do aceite — o mapa não tem terreno variado
+  nem feature que o produza, e um caso que nunca dispara numa partida real é
+  andaime, não verificação. `MotivoDeRecusa` já declara `'terreno'`,
+  inalcançável hoje; `canPlace` ganha essa recusa quando o mapa tiver terreno
+  variado. O GDD já a exige: Fisherman's precisa de lago, mina precisa de veio
+  na montanha, estrada precisa de solo transponível.
 - **Nota**: esta é uma **feature de integração** — é a exceção explícita que a
   §10 do CLAUDE.md exige para tocar `src/sim/`, `src/render/`, `src/ui/` e
   `src/input/` na mesma feature. Cada camada recebe só o que é dela: `sim/`

@@ -20,3 +20,8 @@ caminho. Ideia boa é justamente a mais perigosa.
 - Editor de mapas
 - 8 direções para civis (hoje são 4; ver guia de estilo)
 - Sistema de reputação entre os dois bandos
+- Terreno de mapa variado (água/lago, rocha, veio na montanha) — falta uma
+  feature de terreno antes da F11: quem produz o mapa, o formato do dado, o
+  render e o motivo `'terreno'` de `canPlace`. Dependem dela o Fisherman's
+  (lago), as minas (veio) e a estrada (solo transponível). O formato do dado deve
+  nascer junto de quem o produz, não antes. Decisão de fila é do operador.
