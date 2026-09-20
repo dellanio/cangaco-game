@@ -196,6 +196,15 @@ prédio surge sem clique do jogador.
   cai e a reservada sobe. Teste que confirma que `release` restaura exatamente o
   estado anterior.
 - **Evidência**: `test-output/F09.json`
+- **Nota**: a rede de estradas (F08) se consulta por `isConnected(state, from,
+  to)`, em `src/sim/estradas.ts`: O(1) entre mudanças de estrada (índice de
+  componentes memoizado pela referência de `state.estradas`), conectividade em 4
+  direções, e `false` para tile que não é estrada. O JobBoard **não cria tarefa
+  para destino sem ligação** (`predioLigadoAoArmazem`, mesmo arquivo). E o débito
+  de pedra da estrada (`PlaceRoad`) hoje tira do estoque total dos armazéns: assim
+  que o JobBoard reservar pedra na origem, esse débito só pode tirar do
+  **disponível** (estoque − reservado), senão a estrada come pedra já prometida a
+  uma obra.
 
 ### F10 — FSM do Serf (transporte)
 - **Escopo**: estados `ocioso → indo_buscar → carregando → indo_entregar →
@@ -206,6 +215,13 @@ prédio surge sem clique do jogador.
   obra com o serf a caminho e confirmar que a carga volta ao armazém e a tarefa
   é liberada.
 - **Evidência**: `test-output/F10.json`
+- **Nota**: o movimento sobre estrada usa o contrato da F08: `ehEstrada(estradas,
+  tile)` é O(1) (lookup), a conectividade é em 4 direções, e o A* usa
+  `terreno.custoDeMovimento.estrada` (1.0) contra `grama` (1.30). Quando
+  `state.estradas` muda (referência nova) e o caminho de um serf some, o serf
+  **solta a reserva** e a tarefa é liberada — a F08 não mexe em unidade nem em
+  tarefa, quem reage é quem consome. `terreno.estrada.obrigatoriaParaEntrega` é
+  `true`: sem ligação, não há entrega.
 
 ### F11 — FSM do Laborer (construção em etapas)
 - **Escopo**: nivelar terreno → esperar material → martelar. HP subindo conforme
@@ -215,6 +231,12 @@ prédio surge sem clique do jogador.
   5 materiais o HP é 250 e o prédio fica `completo`. Screenshots dos três
   estágios.
 - **Evidência**: `test-output/F11.json` + `screenshots/F11-*.png`
+- **Nota**: **a estrada como canteiro é decisão da F11.** A F08 entrega estrada
+  instantânea, com a pedra debitada no comando (ver a Nota de desvio no item F08).
+  O GDD §5.4 diz que laborers constroem estrada; se o operador escolher isso, a
+  "estrada planejada" entra como **campo novo** no `GameState`, separado de
+  `estradas` (que continua sendo só o que está de pé, e é o que `isConnected`
+  consulta), e o débito migra do comando para a entrega.
 - **Nota**: o laço de tempo fixo a 10 Hz (CLAUDE.md §5, `TICK_MS = 100`) ainda
   não existe e nasce aqui — a F11 é a primeira feature que precisa de
   movimento. Até a F06 `step()` só foi chamado direto por teste; desde a F07 a
@@ -286,6 +308,12 @@ prédio surge sem clique do jogador.
   que zero e cresce monotonicamente enquanto houver rocha e árvore. Nenhum
   trabalhador em `ocioso` por mais de X ticks consecutivos.
 - **Evidência**: `test-output/F15.json`
+- **Nota**: prédio **sem ligação** ao armazém (`predioLigadoAoArmazem`, F08) **não
+  produz** — a estrada é requisito de funcionamento (GDD §5.1). E o HUD mostra
+  `estoqueTotal`, que soma **todos** os prédios (F05a), enquanto a estrada (F08)
+  gasta só do que está em **armazém**: hoje idênticos, mas quando a Quarry
+  guardar saída própria o HUD pode mostrar mais pedra do que a estrada pode gastar.
+  Decidir, ao dar estoque a prédio produtivo, o que o número do HUD conta.
 
 ### F16 — Painel de seleção e demolição
 - **Escopo**: clicar em prédio mostra nome, HP ou progresso de obra, ocupante,
