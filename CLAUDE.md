@@ -132,6 +132,11 @@ Se a feature se revelar maior do que uma sessão, **não improvise**: quebre em
 sub-itens dentro de `BUILD_PLAN.md`, registre em `PROGRESS.md` e entregue o
 primeiro. Feature pela metade sem registro é o pior resultado possível.
 
+No PROGRESS.md, separe o que foi verificado do que foi concluído. Um
+achado que você não confirmou abrindo o arquivo ou rodando o comando
+entra como hipótese, nomeada como tal — nunca como fato. Sessões
+futuras leem esse arquivo como verdade e não têm como distinguir.
+
 ---
 
 ## 7. Definition of Done
