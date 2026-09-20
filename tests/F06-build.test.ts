@@ -11,6 +11,8 @@ import { deepFreeze } from '../src/sim/freeze';
 import { opcoesDoMenuBuild } from '../src/sim/selectors';
 import { criarFerramenta } from '../src/input/ferramenta';
 import { ligarTeclado } from '../src/input/teclado';
+import { validarTudo } from '../tools/data-rules.js';
+import { ARQUIVOS } from '../tools/data-schema.js';
 import { gravarEvidencia } from './helpers/evidence';
 
 // --- montagem de estados e de dados injetados (so teste; nada disto entra em sim/) ---
@@ -49,9 +51,20 @@ function dadosSemMenuInicial(): GameData {
 describe('F06 — desbloqueio derivado de menuBuildInicial e da arvore', () => {
   const inicial = createInitialState(1);
 
-  it('todo id de menuBuildInicial esta desbloqueado no estado inicial', () => {
-    for (const id of gameData.economia.estadoInicial.menuBuildInicial) {
-      expect(estaDesbloqueado(inicial, id)).toBe(true);
+  it('o estado inicial libera, so pela arvore, exatamente os filhos dos predios do cenario', () => {
+    // esperado calculado do JSON (desbloqueadoPor x predios do cenario), sem passar por estaDesbloqueado
+    const presentes = new Set(gameData.economia.estadoInicial.predios.map((p) => p.id));
+    const esperado = gameData.predios
+      .filter((p) => p.desbloqueadoPor !== null && presentes.has(p.desbloqueadoPor))
+      .map((p) => p.id);
+    expect(esperado.length).toBeGreaterThan(0);
+    const liberados = gameData.predios.filter((p) => estaDesbloqueado(inicial, p.id)).map((p) => p.id);
+    expect(liberados).toEqual(esperado);
+  });
+
+  it('o menu inicial do GDD §3.2 (Inn, Quarry, Woodcutter\'s) esta liberado no cenario', () => {
+    for (const id of ['inn', 'quarry', 'woodcutters']) {
+      expect(estaDesbloqueado(inicial, id), id).toBe(true);
     }
   });
 
@@ -87,15 +100,18 @@ describe('F06 — desbloqueio derivado de menuBuildInicial e da arvore', () => {
     expect(estaDesbloqueado(inicial, 'nao-existe')).toBe(false);
   });
 
-  it('a lista vem do dado: menuBuildInicial injetado com sawmill libera sawmill sem nenhum pai', () => {
+  it('a lista vem do dado: uma raiz sem pai posta em menuBuildInicial fica liberada sem nenhum predio', () => {
+    const raiz = gameData.predios.find((p) => p.desbloqueadoPor === null);
+    if (!raiz) throw new Error('o dado nao tem raiz sem pai');
     const dados: GameData = {
       ...gameData,
       economia: {
         ...gameData.economia,
-        estadoInicial: { ...gameData.economia.estadoInicial, menuBuildInicial: ['sawmill'] },
+        estadoInicial: { ...gameData.economia.estadoInicial, menuBuildInicial: [raiz.id] },
       },
     };
-    expect(estaDesbloqueado(semPredios(inicial), 'sawmill', dados)).toBe(true);
+    expect(estaDesbloqueado(semPredios(inicial), raiz.id, dados)).toBe(true);
+    expect(estaDesbloqueado(semPredios(inicial), raiz.id)).toBe(false);
   });
 });
 
@@ -328,9 +344,9 @@ describe('F06 — opcoesDoMenuBuild', () => {
     }
   });
 
-  it('o menu inicial do cenario aparece liberado e sawmill, bloqueado exigindo woodcutters', () => {
-    for (const id of gameData.economia.estadoInicial.menuBuildInicial) {
-      expect(opcoes.find((o) => o.id === id)?.desbloqueado).toBe(true);
+  it('o menu inicial do GDD §3.2 aparece liberado e sawmill, bloqueado exigindo woodcutters', () => {
+    for (const id of ['inn', 'quarry', 'woodcutters']) {
+      expect(opcoes.find((o) => o.id === id)?.desbloqueado, id).toBe(true);
     }
     const serraria = opcoes.find((o) => o.id === 'sawmill');
     expect(serraria?.desbloqueado).toBe(false);
@@ -370,6 +386,38 @@ describe('F06 — guardas estruturais de input/', () => {
   });
 });
 
+// --- a regra de dados: menuBuildInicial so para raiz sem pai ---
+
+function dadosReaisComMenuInicial(menu: string[]): Record<string, unknown> {
+  const dados: Record<string, unknown> = {};
+  for (const nome of ARQUIVOS) dados[nome] = JSON.parse(readFileSync(`data/${nome}.json`, 'utf8'));
+  (dados.economy as { estadoInicial: { menuBuildInicial: string[] } }).estadoInicial.menuBuildInicial = menu;
+  return dados;
+}
+
+describe('F06 — validate:data: menuBuildInicial so para raiz sem pai', () => {
+  const errosDaRegra = (menu: string[]): string[] =>
+    validarTudo(dadosReaisComMenuInicial(menu)).filter((e) => e.startsWith('economia/menu-inicial'));
+
+  it('o dado real passa e nao repete nada da arvore', () => {
+    expect(validarTudo(dadosReaisComMenuInicial([]))).toEqual([]);
+    for (const id of gameData.economia.estadoInicial.menuBuildInicial) {
+      expect(gameData.predios.find((p) => p.id === id)?.desbloqueadoPor).toBeNull();
+    }
+  });
+
+  it('um predio com pai na arvore (quarry) em menuBuildInicial reprova, e a mensagem nomeia o pai', () => {
+    const erros = errosDaRegra(['quarry']);
+    expect(erros).toHaveLength(1);
+    expect(erros[0]).toContain("'quarry'");
+    expect(erros[0]).toContain("'schoolhouse'");
+  });
+
+  it('uma raiz sem pai (storehouse) em menuBuildInicial passa', () => {
+    expect(errosDaRegra(['storehouse'])).toEqual([]);
+  });
+});
+
 afterAll(() => {
   const inicial = createInitialState(1);
   const armazem = gameData.economia.estadoInicial.predios.find((p) => p.id === 'storehouse');
@@ -394,9 +442,12 @@ afterAll(() => {
     desbloqueio: {
       menuBuildInicial: menuInicial,
       desbloqueadosNoEstadoInicial: desbloqueadosNoInicio,
-      // Achado, nao decisao: a regra derivada (menu inicial + filhos de predio
-      // completo) libera tambem o que o GDD §3.2 nao lista no menu inicial.
-      liberadosAlemDoMenuInicial: desbloqueadosNoInicio.filter((id) => !menuInicial.includes(id)),
+      // Decisao do operador: menuBuildInicial so para raiz sem pai; o resto vem
+      // da arvore. Schoolhouse liberada no inicio e aceitavel (o jogador pode
+      // construir uma segunda).
+      menuBuildInicialSoTemRaiz: menuInicial.every(
+        (id) => gameData.predios.find((p) => p.id === id)?.desbloqueadoPor === null,
+      ),
       arestasDaArvorePercorridas: gameData.predios.filter((p) => p.desbloqueadoPor !== null).length,
     },
     menu: {

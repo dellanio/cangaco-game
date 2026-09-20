@@ -115,7 +115,7 @@ prédio surge sem clique do jogador.
 ### F06 — Menu Build e planta fantasma
 - **Escopo**: painel lateral com os prédios desbloqueados e seu custo; bloqueados
   em cinza com "requer X". Planta seguindo o mouse, verde quando pode e vermelha
-  quando não pode (terreno, sobreposição, borda do mapa). `Esc` cancela.
+  quando não pode (sobreposição, borda do mapa). `Esc` cancela.
 - **Aceite**: teste da função `canPlace(state, buildingId, x, y)` cobrindo:
   sobreposição com prédio, fora do mapa, prédio não desbloqueado. Screenshots
   dos dois estados da planta, verde e vermelha.

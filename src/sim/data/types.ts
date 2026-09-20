@@ -119,7 +119,11 @@ export interface EconomiaSchoolhouseData {
 }
 
 export interface EconomiaData {
-  readonly estadoInicial: RawGameData['economy']['estadoInicial'];
+  readonly estadoInicial: Omit<RawGameData['economy']['estadoInicial'], 'menuBuildInicial'> & {
+    /** So raiz sem pai na arvore (`tools/data-rules.js`). Tipo explicito: um `[]`
+     *  importado de JSON tipa como `never[]` e nao aceitaria nem `.includes(id)`. */
+    readonly menuBuildInicial: readonly string[];
+  };
   readonly schoolhouse: EconomiaSchoolhouseData;
   readonly storehouse: RawGameData['economy']['storehouse'];
   readonly marketplace: RawGameData['economy']['marketplace'];

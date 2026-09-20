@@ -9,7 +9,8 @@
     "estoque": { "gold": 20, "timber": 40, "stone": 30, "loaves": 15, "sausages": 10 },
     "unidades": { "serf": 4, "laborer": 2 },
     "spawnDeUnidades": { "gx": 30, "gy": 34 },
-    "menuBuildInicial": ["quarry", "woodcutters", "inn"]
+    "menuBuildInicial": [],
+    "_docMenuBuildInicial": "So raiz sem pai (desbloqueadoPor: null) — validado em tools/data-rules.js (validarMenuInicialSoRaiz). Quem tem pai na arvore e liberado pela arvore, nunca por esta lista: repetir aqui o que a arvore ja faz esvazia o teste de desbloqueio."
   },
   "grupos": {
     "comida": ["loaves", "sausages", "wine", "fish"],

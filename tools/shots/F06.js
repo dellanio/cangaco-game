@@ -56,7 +56,13 @@ async function roteiro(ctx) {
   afirmar((await estado()).ferramentaAtiva === null, 'clicar num item bloqueado nao deveria ativar a ferramenta');
 
   // 3. liberado: clicar ativa a ferramenta e marca o item.
-  const idLiberado = economia.estadoInicial.menuBuildInicial[0];
+  // liberado pela ARVORE (menuBuildInicial esta vazio): um filho de predio que ja
+  // existe no cenario. quarry cabe folgado no canvas; o pai vem do JSON.
+  const idLiberado = 'quarry';
+  afirmar(
+    economia.estadoInicial.predios.some((p) => p.id === defDe(idLiberado).desbloqueadoPor),
+    `${idLiberado} deveria ser filho de um predio do cenario inicial (a arvore o libera)`,
+  );
   await page.click(`[data-predio="${idLiberado}"]`);
   await page.waitForTimeout(200);
   afirmar((await estado()).ferramentaAtiva === idLiberado, `clicar em ${idLiberado} deveria ativar a ferramenta`);

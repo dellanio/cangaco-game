@@ -565,24 +565,46 @@ da F11 (a decisão de fila é do operador). `data/terrain.json` **não foi tocad
 - A planta só foi exercitada em tela com `quarry` (3×2); footprints de outros
   tamanhos são cobertos pelo teste de `canPlace`, não por screenshot.
 
+## Ajuste pós-F06 — `menuBuildInicial` só para raiz (2026-09-20)
+
+Decisões do operador, fechando as três perguntas que a F06 deixou em aberto:
+
+- **A árvore de desbloqueio fica como está.** Decisão tomada; não se reabre.
+- **`menuBuildInicial` só para raiz sem pai** (`desbloqueadoPor: null`). Passou a
+  ser `[]`: a lista duplicava o que a árvore já faz e era isso que deixava o
+  aceite da F12 sem conteúdo — Quarry e Woodcutter's nasciam liberados pela
+  lista, então não havia o que provar ao concluir um prédio.
+- **Schoolhouse liberada no início é aceitável:** o jogador pode construir uma
+  segunda. O Storehouse (raiz sem pai) continua bloqueado no menu, com "ainda não
+  disponível", como antes.
+
+**Verificado (rodado, não deduzido):** com Storehouse e Schoolhouse completos e
+`menuBuildInicial` vazio, a árvore sozinha libera exatamente `schoolhouse`, `inn`,
+`quarry` e `woodcutters` — o esperado, e mais nada.
+
+**O que mudou**
+- `data/economy.json`: `menuBuildInicial: []`, com uma chave `_docMenuBuildInicial`
+  dizendo por que a lista existe e o que não deve voltar a conter.
+- `tools/data-rules.js`: `validarMenuInicialSoRaiz` — todo id em `menuBuildInicial`
+  tem que ter `desbloqueadoPor: null`. **Cobertura permanente**, em
+  `tests/F06-build.test.ts`, contra `validarTudo` (dado real passa; `quarry` na
+  lista reprova e a mensagem nomeia `schoolhouse`; `storehouse` passa). Não é só
+  prova por arquivo temporário.
+- `src/sim/data/types.ts`: `menuBuildInicial` ganhou tipo explícito
+  (`readonly string[]`); um `[]` importado de JSON tipa como `never[]` e não
+  aceitaria nem `.includes(id)`.
+- Testes de desbloqueio da F06 que percorriam a lista (agora vazia, portanto
+  vazios) foram trocados por asserções sobre a árvore: o estado inicial libera
+  exatamente os filhos dos prédios do cenário, calculado do JSON sem passar por
+  `estaDesbloqueado`, e o menu do GDD §3.2 (Inn, Quarry, Woodcutter's) continua
+  liberado. `tools/shots/F06.js` deriva o item liberado da árvore em vez de ler
+  `menuBuildInicial[0]`.
+- `BUILD_PLAN.md`: "terreno" saiu do parêntese do Escopo da F06, que tinha ficado
+  pendente da decisão sobre o aceite.
+
+**Verificado nesta rodada:** `npm run verify` verde e `npm run shot -- F06`,
+`-- F04` e `-- F05b` passando (ver o fechamento no commit).
+
 ## Perguntas em aberto
 
-Registradas na F06 (§14: não inventei resposta; implementei a interpretação mais
-conservadora e segui).
-
-1. **Schoolhouse liberada no início.** A regra derivada (menu inicial ∪ filhos de
-   prédio completo) libera também a Schoolhouse, filha do Storehouse completo; o
-   GDD §3.2 lista só Quarry, Woodcutter's e Inn no menu inicial. Segui o pedido
-   (união das duas fontes). `F06.json` registra
-   `liberadosAlemDoMenuInicial: ["schoolhouse"]`. Uma segunda Schoolhouse deve
-   poder ser construída no início?
-2. **Storehouse sem pai na árvore.** `buildings.json` tem `desbloqueadoPor: null`
-   para o Storehouse e ele não está em `menuBuildInicial`, mas o GDD §5.2/5.3 diz
-   "inicial / Sawmill" (o armazém *adicional* exige Serraria). Hoje aparece
-   bloqueado, com "ainda não disponível" e ninguém para nomear. Não mexi em
-   `buildings.json` (ligar storehouse→sawmill cria ciclo na árvore).
-3. **Aceite da F12 vs `menuBuildInicial`.** O aceite da F12 parte do estado
-   inicial, conclui uma Schoolhouse e espera Quarry e Woodcutter's saindo de
-   bloqueado; no estado inicial os dois já estão em `menuBuildInicial` e a
-   Schoolhouse já está completa. O teste da F12 vai precisar de um estado (ou de
-   um dado injetado) em que eles comecem bloqueados.
+Nenhuma no momento.

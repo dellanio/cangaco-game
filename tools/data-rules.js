@@ -289,6 +289,20 @@ function validarEconomiaReferencia(dados, erros) {
 // duas listas divergem em silencio: alguem acrescenta uma comida nova em um
 // arquivo e o HUD (ou a restauracao de condicao) continua contando a lista
 // velha.
+// menuBuildInicial existe so para RAIZ sem pai (desbloqueadoPor: null). Quem tem
+// pai na arvore e liberado pela arvore; repetir aqui o que ela ja faz esvazia o
+// teste de desbloqueio (o aceite da F12 nao teria o que provar).
+function validarMenuInicialSoRaiz(dados, erros) {
+  const estadoInicial = dados.economy && dados.economy.estadoInicial;
+  const predios = (dados.buildings && dados.buildings.predios) || [];
+  for (const id of (estadoInicial && estadoInicial.menuBuildInicial) || []) {
+    const def = predios.find((p) => p.id === id);
+    if (def && def.desbloqueadoPor !== null) {
+      erros.push(`economia/menu-inicial: '${id}' em menuBuildInicial tem desbloqueadoPor '${def.desbloqueadoPor}'; a lista existe so para raiz sem pai (a arvore ja libera o resto)`);
+    }
+  }
+}
+
 function validarGruposDeComida(dados, erros) {
   const grupo = dados.economy && dados.economy.grupos && dados.economy.grupos.comida;
   const restauracao = dados.condition && dados.condition.restauracaoPorComida;
@@ -330,6 +344,7 @@ function validarTudo(dados) {
   validarCondicaoOraculo(dados, erros);
   validarEconomiaReferencia(dados, erros);
   validarGruposDeComida(dados, erros);
+  validarMenuInicialSoRaiz(dados, erros);
   return erros;
 }
 
