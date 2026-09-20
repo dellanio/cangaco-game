@@ -120,6 +120,14 @@ prédio surge sem clique do jogador.
   sobreposição com prédio, fora do mapa, terreno inválido, prédio não
   desbloqueado. Screenshots dos dois estados da planta, verde e vermelha.
 - **Evidência**: `test-output/F06.json` + `screenshots/F06-*.png`
+- **Nota**: esta é uma **feature de integração** — é a exceção explícita que a
+  §10 do CLAUDE.md exige para tocar `src/sim/`, `src/render/`, `src/ui/` e
+  `src/input/` na mesma feature. Cada camada recebe só o que é dela: `sim/`
+  ganha `canPlace` e o desbloqueio; `render/` desenha a planta; `ui/` monta o
+  painel e o layout; `input/` nasce com a ferramenta ativa e o teclado. Nenhum
+  comando é emitido (o `PlaceBlueprint` é a F07) e nenhuma regra de jogo muda de
+  lado. Nenhuma outra feature da fila herda esta permissão: ela vale para a F06
+  e só.
 
 ### F07 — Comando de posicionar planta
 - **Escopo**: clique confirma e emite `PlaceBlueprint`. O estado ganha uma obra
