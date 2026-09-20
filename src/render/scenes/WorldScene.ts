@@ -181,8 +181,7 @@ export class WorldScene extends Phaser.Scene {
       larguraPx / 2, alturaPx / 2, larguraPx, alturaPx, 0x6b4a33, emObra ? 0.4 : 1,
     );
     retangulo.setStrokeStyle(2, emObra ? 0xede3d0 : 0x2c1d12);
-    const texto = emObra ? `${nome}
-(${temaSertao.obra.rotulo})` : nome;
+    const texto = emObra ? `${nome}\n(${temaSertao.obra.rotulo})` : nome;
     const rotulo = this.add.text(larguraPx / 2, alturaPx / 2, texto, {
       fontSize: '14px',
       color: '#ede3d0',
