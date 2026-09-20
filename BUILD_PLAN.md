@@ -197,8 +197,24 @@ prédio surge sem clique do jogador.
 - **Evidência**: `test-output/F11.json` + `screenshots/F11-*.png`
 - **Nota**: o laço de tempo fixo a 10 Hz (CLAUDE.md §5, `TICK_MS = 100`) ainda
   não existe e nasce aqui — a F11 é a primeira feature que precisa de
-  movimento. Até aqui `step()` só foi chamado direto por teste, sem laço
-  externo nem interpolação de render.
+  movimento. Até a F06 `step()` só foi chamado direto por teste; desde a F07 a
+  `Sessão` (`src/sessao.ts`) o chama, mas **por comando**, sem relógio e sem
+  interpolação de render. A F11 troca o disparo por comando por um timer de
+  `TICK_MS` que chama `passo()`; a fila e a `Sessão` não mudam.
+- **Nota**: **o nivelamento está fora do contrato da obra.** A `Obra` da F07 tem
+  só `faltam` (materiais ainda a entregar, por mercadoria) e o `hp` do prédio
+  (HP já martelado, de 0 até `def.hp`). "Nivelar terreno → esperar material →
+  martelar" não tem campo, e o GDD §5.1 põe o laborer nivelando *antes* de os
+  serfs entregarem. **É a F11 quem acrescenta o que precisar em `Obra`** — por
+  exemplo, o progresso do nivelamento — e quem decide se a entrega espera por ele.
+- **Nota**: teto de HP durante a obra: `entregues = Σ_m (custo[m] − faltam[m])`
+  e `teto = entregues × hpPorMaterialEntregue`. A soma é sobre mercadorias, cada
+  material vale `hpPorMaterialEntregue`; não se somam quantidades de mercadorias
+  diferentes como uma grandeza só. O Escopo diz "cada material entregue soma 50
+  HP"; o contrato lê isso como o GDD §5.1 diz — a entrega **habilita** 50 HP de
+  martelada, e a martelada (`hpPorMartelada`) é o que soma ao `hp`. Ao
+  `hp === def.hp` a obra vira `'completo'` e chama `registrarTipoConstruido`
+  (F12).
 
 ### F12 — Desbloqueio por conclusão
 - **Escopo**: concluir um prédio libera os filhos dele na árvore do GDD. O menu
