@@ -167,6 +167,26 @@ prédio surge sem clique do jogador.
   `isConnected` verdadeiro; remove um tile do meio e confirma falso. Screenshot
   da estrada desenhada.
 - **Evidência**: `test-output/F08.json` + `screenshots/F08-*.png`
+- **Nota**: esta é uma **feature de integração** — é a exceção explícita que a
+  §10 do CLAUDE.md exige para tocar `src/sim/`, `src/input/`, `src/render/` e
+  `src/ui/` na mesma feature. Cada camada recebe só o que é dela: `sim/` ganha o
+  estado das estradas, os dois comandos, o custo e o grafo de conectividade;
+  `input/` faz o arrasto; `render/` desenha a estrada e a prévia; `ui/` ganha os
+  botões de ferramenta. Nenhuma regra de jogo muda de lado. Nenhuma outra feature
+  da fila herda esta permissão: ela vale para a F08 e só.
+- **Nota**: **desvio provisório da regra "o custo sai na entrega".** A estrada
+  não tem canteiro nem viagem de material: o aceite exige que o tile exista e
+  conecte no próprio comando, e serf (F10) e laborer (F11) ainda não existem. Por
+  isso, na F08, `PlaceRoad` debita a pedra **no comando**, dos armazéns completos
+  (gaveta `saida`, depois `entrada`, em `predios.ordem`), e o tile nasce pronto.
+  **Demolir devolve** `floor(removidos × estrada.devolucaoAoDemolir)` de pedra
+  (`terrain.json`, `0.5`; decisão do operador — sem isso corrigir traçado seria
+  punitivo), ao mesmo armazém de onde sairia o débito; o arredondamento é por
+  comando. O GDD §5.4 diz "feita por laborers": quando a F11 chegar, o operador
+  decide se a estrada continua instantânea ou vira canteiro por tile (campo novo,
+  separado do que já está de pé) e o débito migra para a entrega.
+- **Nota**: "Demolir", aqui, é demolir **tiles de estrada**. Demolir prédio é da
+  F16 (painel de seleção e demolição).
 
 ### F09 — JobBoard
 - **Escopo**: criação, `claim`, `release`, reserva de recurso na origem e de vaga
