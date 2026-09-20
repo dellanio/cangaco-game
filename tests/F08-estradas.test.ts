@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterAll } from 'vitest';
 import { createInitialState } from '../src/sim/state';
 import type { GameEvent, GameState, PredioCompleto } from '../src/sim/state';
 import type { Command } from '../src/sim/commands';
@@ -13,6 +13,7 @@ import {
 } from '../src/sim/estradas';
 import type { TileDeGrid } from '../src/sim/estradas';
 import { compararComESemSave, deepFreeze } from './helpers/determinism';
+import { gravarEvidencia } from './helpers/evidence';
 import { validarTudo } from '../tools/data-rules.js';
 import { ARQUIVOS } from '../tools/data-schema.js';
 
@@ -475,5 +476,78 @@ describe('F08 — validate:data: estrada.devolucaoAoDemolir', () => {
 
   it.each([1.5, -0.1, '0.5', null, Number.NaN])('%s reprova', (v) => {
     expect(errosDaRegra(v)).toHaveLength(1);
+  });
+});
+
+afterAll(() => {
+  const L = [...linhaH(10, 14, 40), ...linhaV(14, 41, 44)];
+  const A = tile(10, 40);
+  const B = tile(14, 44);
+  const desenhado = step(inicial, [construir(L)]);
+  const partido = step(desenhado, [demolir([tile(12, 40)])]);
+
+  // ponto 4: rua ao longo da borda sul do armazem e da escola
+  const armazem = armazens(inicial)[0];
+  const escola = inicial.predios.ordem
+    .map((id) => inicial.predios.porId[id])
+    .find((p) => p?.tipo === 'schoolhouse');
+  if (!armazem || !escola || escola.estado !== 'completo') throw new Error('fixture: cenario sem armazem/escola');
+  const portas = [...tilesDaPorta(armazem, gameData), ...tilesDaPorta(escola, gameData)];
+  const xs = portas.map((p) => p.gx);
+  const yRua = armazem.gy + 3;
+  const rua = linhaH(Math.min(...xs), Math.max(...xs), yRua);
+  const comRua = step(inicial, [construir(rua)]);
+  const meio = rua.filter((p) => p.gx > armazem.gx + 2 && p.gx < escola.gx);
+  const desligada = step(comRua, [demolir(meio)]);
+
+  // devolucao: 2 tiles demolidos
+  const dois = step(desenhado, [demolir([tile(11, 40), tile(12, 40)])]);
+
+  const estadoParado = step(desenhado, []);
+
+  gravarEvidencia('F08', {
+    feature: 'F08-estradas',
+    // VERIFICADO por teste headless: o aceite escrito no BUILD_PLAN.md.
+    aceite: {
+      estradaEmL: {
+        tiles: L.length,
+        isConnectedDeAParaB: isConnected(desenhado, A, B),
+      },
+      depoisDeRemoverUmTileDoMeio: {
+        tileRemovido: tile(12, 40),
+        isConnectedDeAParaB: isConnected(partido, A, B),
+      },
+    },
+    // O custo SAI no comando (desvio provisorio da regra "sai na entrega"; BUILD_PLAN, nota da F08).
+    custo: {
+      custoStonePorTileNoDado: CUSTO,
+      tiles: L.length,
+      pedraAntes: pedraTotal(inicial),
+      pedraDepois: pedraTotal(desenhado),
+      debitado: pedraTotal(inicial) - pedraTotal(desenhado),
+      debitadoIgualATilesVezesCusto: pedraTotal(inicial) - pedraTotal(desenhado) === L.length * CUSTO,
+    },
+    // Decisao do operador: demolir devolve floor(removidos x fracao); 2 tiles -> 1.
+    demolicao: {
+      devolucaoAoDemolirNoDado: FRACAO,
+      tilesDemolidos: 2,
+      pedraDevolvida: pedraTotal(dois) - pedraTotal(desenhado),
+      esperado: Math.floor(2 * FRACAO),
+    },
+    // Ponto 4: o predio que fica sem ligacao nao muda; "desligado" e derivado.
+    prediosSemLigacao: {
+      escolaLigadaAntesDeDemolir: predioLigadoAoArmazem(comRua, escola, gameData),
+      escolaLigadaDepoisDeDemolirTrechoDoMeio: predioLigadoAoArmazem(desligada, escola, gameData),
+      predioIdenticoDepoisDeDemolir: desligada.predios.porId[escola.id] === comRua.predios.porId[escola.id],
+      chavesDoEstadoIguais: JSON.stringify(Object.keys(desligada).sort()) === JSON.stringify(Object.keys(comRua).sort()),
+    },
+    // Consulta O(1) entre mudancas: estrutural, sem teste de tempo.
+    consultaEntreMudancas: {
+      indiceReaproveitadoParaAMesmaReferencia: indiceDeEstradas(desenhado.estradas) === indiceDeEstradas(desenhado.estradas),
+      referenciaDeEstradasMantidaSemComandoDeEstrada: estadoParado.estradas === desenhado.estradas,
+    },
+    conectividade: 'quatro direcoes (diagonal nao liga) — GDD nao responde; interpretacao conservadora',
+    // Verificacao visual e separada, fora do npm run verify (CLAUDE.md §8).
+    verificacaoVisual: 'fora deste arquivo: npm run shot -- F08 (test-output/F08-shot.json)',
   });
 });

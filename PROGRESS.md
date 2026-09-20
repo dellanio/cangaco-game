@@ -729,7 +729,12 @@ GDD §5.1 diz — a entrega **habilita** 50 HP de martelada, e a martelada soma 
   na união, o TypeScript não estreita `command` para `never` no `default` (só filtra
   membros de uma união); estreita `command.type`. Atribuir `command.type` a `never`
   funciona com um membro e continua valendo quando a união crescer. Achado do
-  `typecheck`, não previsto no plano.
+  `typecheck`, não previsto no plano. **CORRIGIDO NA F08: a última frase estava
+  errada.** Assim que a união ganhou membros de verdade (F08), `command` passou a
+  ser `never` no `default` e `command.type` deixou de compilar; voltou o idioma
+  padrão (`const naoTratado: never = command`), que é o que vale com uma união real.
+  A atribuição da discriminante só servia enquanto havia um membro. Descoberto pelo
+  `typecheck`, não por mim: afirmei o que não tinha verificado.
 - **A fila de comandos mora na `Sessão` (`src/sessao.ts`)**, o "laço externo" do
   CLAUDE.md §5: dona do `GameState` **e** da fila. `input/` só produz comandos (por
   callback), `sim/` só os recebe como parâmetro de `step`, `render/` e `ui/` nunca a
@@ -779,6 +784,199 @@ GDD §5.1 diz — a entrega **habilita** 50 HP de martelada, e a martelada soma 
 - A obra translúcida com a planta vermelha por cima é legível na screenshot, mas
   não avaliei o contraste em telas reais nem com muitas obras sobrepostas à vista.
 
+## F08 — Estradas (2026-09-20)
+
+Quarta feature de integração, com a nota de exceção da §10 escrita no `BUILD_PLAN.md`
+**antes** de qualquer código (Task 0), valendo para a F08 e só. Também na fila, com
+aprovação do operador: a nota do **desvio provisório do custo**, a leitura de
+"Demolir" e notas nos itens **F09, F10, F11 e F15** (o contrato que cada uma vai
+precisar — para não ficar só aqui, a seis features de distância). `Escopo`, `Aceite` e
+`Evidência` de nenhum item foram tocados.
+
+### Verificado (aberto e rodado nesta sessão)
+
+- `npm run verify` verde: typecheck, lint, `validate:data` (9 arquivos, 0 erros) e
+  245 testes (68 novos, em `tests/F08-estradas.test.ts` e `tests/F08-arrasto.test.ts`).
+  Evidência headless em `test-output/F08.json`, aberta com Read.
+- **Aceite escrito:** estrada em L de 9 tiles → `isConnected(A, B)` verdadeiro; remove
+  um tile do meio → falso, com os dois pedaços ainda conectados por dentro.
+- **Custo no comando:** a pedra cai exatamente `novos × custoStonePorTile` (lido do
+  dado; com o custo injetado o débito muda); só ela; tile que já é estrada não custa;
+  débito em `predios.ordem`, gaveta `saida` antes de `entrada`, cobrindo com dois
+  armazéns; `sem-pedra` e tile inválido no meio **não deixam estrada parcial**;
+  fronteira exata (pedra = custo aceita, uma a menos recusa).
+- **Devolução ao demolir:** 2 tiles demolidos devolvem 1 pedra (`floor(2 × 0.5)`, o
+  0.5 vem de `terrain.json`); 1 tile devolve 0; vai à gaveta `saida` do **primeiro**
+  armazém completo (o mesmo do débito); sem armazém completo nada é devolvido;
+  fração injetada muda o resultado. A regra nova de `validate:data`
+  (`estrada.devolucaoAoDemolir` em `[0, 1]`) tem teste **permanente** contra
+  `validarTudo` (`1.5`, `-0.1`, `'0.5'`, `null` e `NaN` reprovam).
+- **Prédio sem ligação:** com a rua ao longo da borda sul do armazém e da escola, os
+  dois estão ligados; demolir um trecho do meio desliga a escola; o prédio segue o
+  **mesmo objeto**, e as chaves do estado são as mesmas (não há campo "desligado").
+- **Consulta O(1) entre mudanças (estrutural, sem teste de tempo — seria flaky):** o
+  índice é o mesmo objeto para a mesma referência de `estradas`; `step` sem comando de
+  estrada mantém a referência (`toBe`) por dezenas de ticks, com comandos de outros
+  tipos no meio; um comando que muda algo troca a referência.
+- **Conectividade:** 4 direções (diagonal não liga); trechos separados não ligam e o
+  tile que falta os une; tile que não é estrada nunca está conectado.
+- **Determinismo:** mesma lista → mesmo JSON, e com save/load no meio; `step` não muta
+  lista congelada.
+- **Arrasto (`input/`):** `tilesEntre` em 500 pares sorteados (RNG semeado) tem os
+  extremos, `|dx|+|dy|+1` tiles, só passos ortogonais e nenhum tile repetido; um salto
+  de vários tiles entre amostras sai contíguo; soltar sem mover = 1 tile; sair do
+  canvas, `Esc` e trocar de ferramenta cancelam **sem emitir**; o modo prédio da F07
+  segue idêntico; `R` escolhe a estrada (e Ctrl+R não).
+- **Visual** (`npm run shot -- F08`, fora do `verify`, §8): 30 afirmações e 3
+  screenshots, todas abertas com Read — a prévia verde do L ao longo da borda sul dos
+  dois prédios (Pedra **ainda 30**); a estrada depois de soltar (Pedra **21**: o custo
+  saiu); a rede partida ao demolir 2 tiles do meio (Pedra **22**: devolveu 1). Rodei 3
+  vezes seguidas, estável. `shot -- F07`, `-- F06`, `-- F05b` e `-- F04` seguem verdes.
+
+### Probe, não cobertura contínua (CLAUDE.md §8)
+
+Acrescentei um membro fictício a `Command` e rodei o `typecheck`: reprovou em
+`tick.ts(56,15): Type '{ readonly type: "ProbeFicticio"; }' is not assignable to type
+'never'` — revertido. Demonstra que a regra funciona hoje, não que continua funcionando;
+a proteção permanente é a atribuição a `never`, checada a cada `verify`.
+
+### O contrato de `estradas` (herdado por F09, F10 e F15 — aprovado pelo operador)
+
+`GameState.estradas: Readonly<Record<string, true>>` — chave `"gx,gy"`, só tiles **de pé**.
+
+- `ehEstrada(estradas, tile)` é **O(1)** (lookup): é o que o A* do serf (F10) pergunta a
+  cada passo.
+- "Existe caminho de A até B?" é **O(1) amortizado** por um **índice de componentes
+  conexos**, construído uma vez por mudança de estrada e **memoizado pela referência**
+  de `state.estradas` (`WeakMap` em `sim/estradas.ts`). `step()` carrega a mesma
+  referência enquanto nenhum comando de estrada muda algo; então os milhares de
+  perguntas de um tick (F09) custam um lookup, não uma busca.
+- **Não se guardam componentes no estado:** seria dado derivado serializado, que
+  poderia ficar inconsistente com os tiles. O `WeakMap` é memória de cache, não estado
+  de jogo: função pura da referência imutável, não entra no JSON, não afeta determinismo.
+  (Se o operador preferir zero estado de módulo, a alternativa é guardar `componentes`
+  no `GameState` — ao preço de uma segunda fonte de verdade.)
+- **Conectividade em 4 direções.** O GDD não responde; o arrasto é 4-conectado e diagonal
+  seria um atalho por dentro de dois cantos.
+- **Determinismo:** os ids de componente vêm dos tiles **ordenados** (`gy`, depois `gx`),
+  nunca de `Object.keys` na ordem de inserção; o índice depende só do *conjunto*.
+- **Só o que está de pé.** Se a F11 fizer laborer construir estrada, a "estrada planejada"
+  é **outro campo** (como `obra` é para prédio), e `isConnected` continua respondendo só
+  sobre este.
+- **API:** `chaveDeTile`, `ehEstrada`, `componenteDe`, `isConnected(state, from, to)`
+  (`false` se algum lado não é estrada), `indiceDeEstradas`, `tilesDaPorta`,
+  `predioLigadoAoArmazem`, `canPlaceRoad`, `pedraDisponivel`.
+
+### O custo em pedra: de onde, quando, e por que difere da obra da F07
+
+- **No comando**, **dos armazéns completos** (só armazém: pedra na saída de uma Quarry
+  espera o serf, não é estoque gastável), em `predios.ordem`, gaveta `saida` e depois
+  `entrada`. Atômico: sem pedra suficiente o comando inteiro é recusado.
+- **Desvio consciente e provisório da regra "o custo sai na entrega".** Essa regra existe
+  porque o material de um *prédio* **viaja**: o serf o leva ao canteiro e `faltam` cai. A
+  regra de fundo é *o material sai do estoque quando é comprometido com o destino*. A
+  estrada, na F08, não tem canteiro nem viagem — o aceite exige que o tile exista e
+  conecte no próprio comando, e serf (F10) e laborer (F11) não existem. Aplicar a mesma
+  regra com trânsito zero é debitar no momento em que o tile nasce. Contradiz o GDD §5.4
+  ("feita por laborers"). Quando a F11 chegar, o operador escolhe: continua instantânea,
+  ou vira canteiro por tile (campo novo) e o débito migra para a entrega. Registrado na
+  nota da F08, na nota da F11 e no comentário de `aplicarPlaceRoad`.
+- **Herdado por F09:** quando o JobBoard reservar pedra, o débito da estrada só pode tirar
+  do **disponível** (estoque − reservado). Nota no item F09.
+- **Efeito colateral a decidir na F15:** `estoqueTotal` (o HUD, F05a) soma **todos** os
+  prédios; a estrada gasta só de **armazém**. Hoje idênticos; quando a Quarry guardar
+  saída própria, o HUD pode mostrar mais pedra do que a estrada pode gastar. Nota no F15.
+
+### Demolir devolve pedra (decisão do operador, não pergunta em aberto)
+
+Sem devolução a ferramenta seria **punitiva sem justificativa de design**: o jogador
+redesenha o traçado o tempo todo (o GDD pede duas rotas entre prédios relacionados e
+atalhos desde cedo) e cada correção queimaria pedra para sempre. `terrain.json` ganhou
+`estrada.devolucaoAoDemolir: 0.5` — o mesmo valor de `buildings.construcao`, mas **campo
+próprio**, porque estrada e prédio podem divergir. A pedra volta ao mesmo armazém de onde
+sairia o débito, arredondando para baixo.
+
+**Consequência conhecida:** o `floor` é **por comando**, então **demolir tile a tile
+devolve zero** — e esse é o gesto natural ao corrigir um traçado. Está escrito, não
+escondido (o roteiro e os testes arrastam sobre vários tiles). **Se o playtest mostrar que
+é sempre um a um, a alternativa é acumular a fração num resto por armazém** (a fração que
+sobra de cada demolição soma na seguinte, e a pedra inteira é devolvida quando o resto
+completa uma unidade). Não implementada agora, por decisão do operador.
+
+### O que acontece com prédio que fica sem ligação (ponto 4)
+
+**Nada.** O prédio segue de pé, com o mesmo `estado`, `hp` e `estoque` (o mesmo objeto).
+"Desligado" **não é um campo**: é uma consulta derivada (`predioLigadoAoArmazem`),
+calculada na hora — alguma **porta** do prédio é estrada e está no mesmo componente da
+porta de algum armazém completo. A "porta ao sul" (GDD §5.1) é a **borda sul inteira** do
+footprint, em vez de uma coluna escolhida: o GDD não diz qual, e escolher seria inventar;
+qual tile o serf usa é da F10. Quem reage é quem consome: a F09 não cria tarefa para
+destino sem ligação, a F10 solta a reserva quando o caminho some (já é o aceite dela).
+Estrada não se constrói sobre prédio (nem obra), e o `canPlace` da F06 passou a recusar
+prédio sobre estrada com o motivo `'estrada'`.
+
+### O arrasto, e o que fazer se o playtest reclamar
+
+- **Um arrasto = um comando**, ao soltar. Enquanto arrasta só há prévia (verde/vermelha,
+  perguntando `canPlaceRoad`), que mora em `input/`, fora do `GameState`.
+- **Interpolar:** um `mousemove` rápido pula tiles e uma estrada com buraco não conecta;
+  `tilesEntre` liga cada amostra à anterior por uma linha 4-conectada.
+- **Sair do canvas com o botão apertado CANCELA** — padrão conservador, aprovado pelo
+  operador. Motivo: fora do canvas o Chromium para de entregar `mousemove` (achado da
+  F06), então o último trecho conhecido estaria truncado num ponto que o jogador não
+  escolheu; gastar pedra nisso em silêncio é pior que cancelar. **Se o playtest mostrar
+  irritação, trocar para "confirma até onde chegou" é uma linha:** em `aoSairDoMapa`
+  (`src/input/colocar.ts`), chamar o fechamento do arrasto em vez de descartá-lo.
+- **No roteiro, o erro da F06 virou erro do helper:** `arrastarDentroDoCanvas` **lança** se
+  qualquer ponto cair fora do canvas. O único movimento que sai (o que prova o
+  cancelamento) é um `page.mouse.move` explícito, fora do helper, com o porquê escrito.
+  Na primeira execução o passo do cancelamento falhou porque **escolhi tiles fora da área
+  visível**; quem acusou foi a asserção de visibilidade do próprio roteiro — corrigi a
+  geometria, não a asserção.
+
+### O que foi decidido e por quê (o resto)
+
+- **"Demolir" = tiles de estrada.** Demolir prédio é a F16 ("Painel de seleção e
+  demolição"); `Delete` fica para ela. Só `R` (estrada) entrou no teclado.
+- **Tudo ou nada:** um tile inválido no meio recusa o arrasto inteiro (`fora-do-mapa`,
+  `sobreposicao`, `sem-pedra`), com o **tile culpado** no evento. Trecho vazio ou já
+  construído: aceito, sem custo e sem evento. Demolir tile que não é estrada:
+  idempotente, sem evento.
+- **`terreno` não é motivo de recusa de estrada**, como não é de prédio: o mapa não tem
+  terreno variado (IDEIAS.md).
+- **Render:** todos os tiles num único `Graphics`, refeito só quando a referência de
+  `state.estradas` muda — não um objeto por tile.
+- **Tropeços que registro:** (1) a afirmação da F07 sobre o `never` na discriminante
+  estava errada (ver a correção lá); (2) achei, e arrumei de passagem, um comentário da
+  regra da F05b colado em cima da função errada em `tools/data-rules.js` (resíduo de uma
+  sessão anterior).
+
+### Não feito, de propósito (fora do Escopo da F08)
+
+- Alerta "Sem estrada até o armazém" (GDD §10, P1) e qualquer marcação visual de prédio
+  sem ligação: nenhum efeito visual do ponto 4 nesta feature.
+- Prévia com o **custo acumulado no cursor** (GDD §10): `previaDeEstrada.custo` já é
+  publicado; falta só desenhá-lo.
+- Estrada como **canteiro** (laborer constrói): decisão da F11.
+- Reserva de pedra pelo JobBoard: F09.
+
+### Hipóteses, não fatos (não verifiquei)
+
+- **Desempenho real:** a garantia é **estrutural** (referência reaproveitada), não medida em
+  tempo. Não medi o custo de reconstruir o índice em um mapa cheio de estrada.
+- O cancelamento ao sair do canvas e o arrasto inteiro foram exercitados só no Chromium
+  headless do Playwright, a 1280×720, com o botão esquerdo.
+- O `WeakMap` do índice assume que ninguém **muta** `state.estradas` no lugar (o estado é
+  imutável por contrato e `deepFreeze` cobre os testes); não há guarda em runtime.
+- A legibilidade da estrada (terra sobre grama) foi vista nas screenshots, não avaliada em
+  telas reais nem com redes grandes.
+
 ## Perguntas em aberto
 
-Nenhuma no momento.
+Do que sobrou de fato (§14: implementei a interpretação mais conservadora e segui):
+
+1. **Conectividade diagonal.** A estrada liga só em 4 direções. O GDD não responde. O
+   mais permissivo (8 direções) é fácil de adotar depois; o mais restritivo, não.
+2. **O que o número de pedra do HUD conta** quando um prédio produtivo tiver estoque
+   (`estoqueTotal` soma todos; a estrada gasta só de armazém). Registrado na nota do F15;
+   hoje os dois coincidem.
