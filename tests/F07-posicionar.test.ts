@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterAll } from 'vitest';
 import { createInitialState } from '../src/sim/state';
 import type { GameEvent, GameState, PredioEmObra } from '../src/sim/state';
 import type { Command } from '../src/sim/commands';
@@ -8,6 +8,7 @@ import { step } from '../src/sim/tick';
 import { estoqueTotal } from '../src/sim/selectors';
 import { estaDesbloqueado } from '../src/sim/desbloqueio';
 import { compararComESemSave, deepFreeze } from './helpers/determinism';
+import { gravarEvidencia } from './helpers/evidence';
 
 // --- montagem (so teste) ---
 
@@ -215,5 +216,50 @@ describe('F07 — o cenario inicial so descreve predio completo', () => {
       },
     };
     expect(() => createInitialState(1, dados)).toThrow(/completo/);
+  });
+});
+
+afterAll(() => {
+  const inicial = createInitialState(1);
+  const def = definicaoDe('quarry');
+  const depois = step(inicial, [colocar('quarry', 0, 0)]);
+  const obra = obraDe(depois, ultimoId(depois));
+  const segundo = step(depois, [colocar('quarry', 0, 0)]);
+
+  gravarEvidencia('F07', {
+    feature: 'F07-posicionar-planta',
+    // VERIFICADO por teste headless: os dois casos do aceite escrito no BUILD_PLAN.md.
+    aceite: {
+      obraComOsMateriaisDoDado: {
+        estado: obra.estado,
+        hp: obra.hp,
+        tipo: obra.tipo,
+        faltam: obra.obra.faltam,
+        custoEmBuildingsJson: { timber: def.timber, stone: def.stone },
+        faltamIgualAoCusto: JSON.stringify(obra.obra.faltam) === JSON.stringify({ timber: def.timber, stone: def.stone }),
+      },
+      segundoComandoNaMesmaPosicao: {
+        prediosDepoisDoPrimeiro: depois.predios.ordem.length,
+        prediosDepoisDoSegundo: segundo.predios.ordem.length,
+        rejeicoes: rejeicoes(segundo),
+      },
+    },
+    // O ponto que o operador pediu para nao "melhorar": o custo NAO sai no clique.
+    custoNaoSaiuNoClique: {
+      estoqueAntes: estoqueTotal(inicial),
+      estoqueDepois: estoqueTotal(depois),
+      iguais: JSON.stringify(estoqueTotal(inicial)) === JSON.stringify(estoqueTotal(depois)),
+    },
+    obraNaoDesbloqueia: {
+      serrariaLiberadaComObraDeWoodcutters: estaDesbloqueado(step(inicial, [colocar('woodcutters', 0, 0)]), 'sawmill'),
+    },
+    // A exaustividade do switch tem duas camadas: a atribuicao a never em step()
+    // e checada pelo typecheck do npm run verify; o throw do default tem teste.
+    switchDeStep: {
+      exaustividade: 'atribuicao a never, checada pelo typecheck do npm run verify',
+      comandoForaDaUniao: 'step lanca (teste)',
+    },
+    // Verificacao visual e separada, fora do npm run verify (CLAUDE.md §8).
+    verificacaoVisual: 'fora deste arquivo: npm run shot -- F07 (test-output/F07-shot.json)',
   });
 });

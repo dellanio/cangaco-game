@@ -442,7 +442,9 @@ permissão por hábito.
   não têm id de simulação) — nenhuma string visível digitada em `.ts`. Cada
   valor carrega `data-campo`, o gancho que o roteiro do Playwright usa para
   afirmar o número, não só "tem texto na tela".
-- **`main.ts` passou a ser o dono do `GameState`.** `createInitialState`
+- **`main.ts` passou a ser o dono do `GameState`** *(desde a F07 o dono é a
+  `Sessão`, `src/sessao.ts`, que também guarda a fila de comandos; `main.ts` só a
+  cria e liga o resto — ver a seção da F07).* `createInitialState`
   agora lê a semente de `gameData.economia.estadoInicial.semente` (novo campo
   em `economy.json`, não mais implícito) em vez de um literal. `iniciarJogo()`
   e `montarHud()` devolvem `{ atualizar(state) }`; `main.ts` chama as duas a
@@ -644,6 +646,138 @@ constrói). A F12 liga isso ao `step()`; o aceite dela (reescrito no
 `BUILD_PLAN.md`) prova a ligação ao conduzir uma obra até o fim. Até lá, a
 alimentação depois do estado inicial só é exercitada por teste, chamando a função
 diretamente.
+
+## F07 — Comando de posicionar planta (2026-09-20)
+
+Terceira feature de integração, com a nota de exceção da §10 escrita no
+`BUILD_PLAN.md` **antes** de qualquer código (Task 0), valendo para a F07 e só.
+Também na fila, com aprovação do operador: `+ screenshots/F07-*.png` na linha
+Evidência da F07 (só ela), e três notas novas no item F11 (o laço de tempo, o
+nivelamento fora do contrato da obra, o teto de HP).
+
+### Verificado (aberto e rodado nesta sessão)
+
+- `npm run verify` verde: typecheck, lint, `validate:data` (9 arquivos, 0 erros) e
+  177 testes (37 novos, em `tests/F07-posicionar.test.ts` e `tests/F07-sessao.test.ts`).
+  Evidência headless em `test-output/F07.json`, aberta com Read.
+- **Aceite escrito**, os dois casos: `PlaceBlueprint` produz uma obra com
+  `estado 'obra'`, `hp 0` e `faltam` igual ao `timber`/`stone` de `buildings.json`
+  (lido do dado; com outro custo injetado o resultado muda); e um segundo comando
+  na mesma posição é rejeitado — em ticks separados e **dentro da mesma lista**
+  (o segundo enxerga o estado que o primeiro deixou), com o evento
+  `command-rejected` e o `motivo`.
+- **O custo não sai no clique:** `estoqueTotal` idêntico antes e depois, e cada
+  `estoque` de prédio existente é o mesmo objeto. Na tela, o HUD segue em
+  Dinheiro 20 / Tábua 40 / Pedra 30 depois de plantar duas obras.
+- **Obra não desbloqueia:** plantar um Woodcutter's não libera a Sawmill nem mexe
+  em `tiposJaConstruidos`.
+- **Determinismo com comandos de verdade:** mesma lista → mesmo JSON, e com
+  save/load no meio (o helper canônico `compararComESemSave` ganhou um parâmetro
+  opcional `comandosNoTick`, sem quebrar quem já o chama). `step` não muta uma
+  lista de comandos congelada com elemento real — a cobertura que a F02 registrou
+  como "volta na F07".
+- **Visual** (`npm run shot -- F07`, fora do `verify`, §8): 18 afirmações e 3
+  screenshots, todas abertas com Read — planta verde antes do clique; a obra
+  "Pedreira (em obra)" translúcida com a planta vermelha por cima; duas obras em
+  sequência. Rodei 3 vezes seguidas, estável. `shot -- F06`, `-- F05b` e `-- F04`
+  continuam passando.
+
+### Probe, não cobertura contínua (CLAUDE.md §8)
+
+Para provar que o `default` do `switch` em `step()` de fato reprova: acrescentei
+um membro fictício à união `Command`, rodei o `typecheck` — reprovou em
+`tick.ts(42,15): Type '"ProbeFicticio"' is not assignable to type 'never'` — e
+revertei. **Isso demonstra que a regra funciona hoje, não que continua
+funcionando.** A proteção permanente é a própria atribuição a `never`, que o
+`typecheck` do `npm run verify` checa a cada rodada; o `throw` em runtime (comando
+fora da união) tem teste próprio.
+
+### O contrato da obra (herdado por F09, F10, F11, F12 e F16 — aprovado pelo operador)
+
+`Predio` virou **união discriminada por `estado`**: `PredioCompleto` (com
+`capacidade` e `estoque`, como antes) e `PredioEmObra` (com `obra: { faltam }`, sem
+`capacidade` nem `estoque`). Um prédio em obra sem `obra`, ou completo sem
+`estoque`, não é representável.
+
+- **`hp` da obra = HP já martelado**, de 0 até `def.hp`. O total vem do dado
+  (`buildings.json` valida `(timber + stone) × 50`); não é guardado no estado.
+- **`faltam` = o que ainda precisa ser entregue**, por mercadoria. Nasce igual ao
+  custo do dado. O entregue é `custo − faltam`. Reservas de vaga (F09) **não**
+  moram no prédio: moram no JobBoard.
+- **Obra não guarda mercadoria.** O que o serf entrega **sai do estoque do armazém
+  e entra em `faltam`** (decrementa): é aí que o custo é debitado, nunca no clique.
+
+| Feature | Uso do contrato |
+|---|---|
+| **F09** JobBoard | destino de material = prédio `'obra'`; vaga = `faltam[m]` menos as reservas do próprio JobBoard |
+| **F10** serf | entregar 1 de `m`: `faltam[m] −= 1` **e** `estoque.saida[m] −= 1` no armazém (aceite da F10: obra pedindo 2 stone recebe 2, armazém 10→8) |
+| **F11** laborer | martelar `hp += hpPorMartelada` enquanto `hp < teto`, com `entregues = Σ_m (custo[m] − faltam[m])` e `teto = entregues × hpPorMaterialEntregue`; ao `hp === def.hp` reconstrói como `'completo'` (com `capacidade`/`estoque` do tipo, hoje privados em `state.ts`) |
+| **F12** | ao virar `'completo'`, chama `registrarTipoConstruido`; obra não desbloqueia |
+| **F16** demolir | remove o prédio; devolução = `devolucaoAoDemolir × (custo − faltam)` |
+| render | estágio visual derivado de `hp` e `def.hp`, sem campo extra |
+
+**Fora do contrato, de propósito:** o **nivelamento**. Sem consumidor hoje, sem
+campo hoje; está registrado na Nota do item F11 do `BUILD_PLAN.md` (não só aqui),
+porque é a F11 quem vai acrescentar campo em `Obra`. Também registrado lá: o
+Escopo da F11 diz "cada material entregue soma 50 HP", e o contrato lê isso como o
+GDD §5.1 diz — a entrega **habilita** 50 HP de martelada, e a martelada soma ao
+`hp`.
+
+### O que foi decidido e por quê
+
+- **`step()` fecha o `switch` com `never` na *discriminante*.** Com um único membro
+  na união, o TypeScript não estreita `command` para `never` no `default` (só filtra
+  membros de uma união); estreita `command.type`. Atribuir `command.type` a `never`
+  funciona com um membro e continua valendo quando a união crescer. Achado do
+  `typecheck`, não previsto no plano.
+- **A fila de comandos mora na `Sessão` (`src/sessao.ts`)**, o "laço externo" do
+  CLAUDE.md §5: dona do `GameState` **e** da fila. `input/` só produz comandos (por
+  callback), `sim/` só os recebe como parâmetro de `step`, `render/` e `ui/` nunca a
+  tocam, e ela não entra no `GameState` (teste). `enviar` só enfileira; `passo()`
+  drena, roda **um** `step` e avisa quem ouve.
+- **O disparo é provisório, numa linha só de `main.ts`:** cada clique faz
+  `enviar` + `passo()`. Consequência aceita: **o `tick` avança 1 por comando** até a
+  F11, que traz o relógio de 10 Hz e passa a chamar `passo()` num timer — a mudança
+  é só quem dispara, a fila e a Sessão não mudam. Inócuo hoje, porque nenhum sistema
+  consome tempo antes da F09; mas **ninguém deve depender desse `tick` antes do
+  relógio existir.** Descartado: `step(estado, [cmd])` direto no clique, que
+  espalharia "avançar o relógio a cada clique" pelo código.
+- **O clique sempre emite** (com ferramenta ativa), mesmo sobre um lugar que a sim
+  vai recusar: a decisão é da `sim/` (`canPlace` dentro do `step`); a planta
+  verde/vermelha é só consultiva. A rejeição sai como evento `command-rejected`
+  (canal de `state.events` do CLAUDE.md §5) — o texto "por quê" ao lado do cursor
+  (GDD §10) **continua fora do escopo**.
+- **A ferramenta segue ativa depois de plantar** (decisão do operador): o jogador
+  planta vários prédios em sequência e a estrada da F08 exige isso; `Esc` cancela.
+- **Sem checagem de "tenho material?":** o jogador pode plantar sem ter; a obra
+  espera as entregas.
+- **A cena entrega o tile clicado e mais nada** (recalcula o tile no `pointerdown`,
+  sem confiar no último `pointermove`); `src/input/` continua sem importar `phaser`.
+- **O diff de prédios da cena passou a usar `id + estado`.** Antes só o id: uma
+  obra que vira `'completo'` (mesmo id) ficaria desenhada como obra. Como `'obra'`
+  nasce agora, é aqui que isso se resolve, não na F11.
+- **`createInitialState` lança se o cenário descrever um prédio que não seja
+  `'completo'`**, em vez de fabricar um prédio inválido por cast.
+- **Refatoração mínima:** `custoDoPredio(def)` (em `sim/systems/build.ts`) é o
+  único ponto que lê `timber`/`stone` do dado; o menu Build (F06) passou a usá-lo.
+- **Tropeço meu, corrigido:** o rótulo da obra saiu com uma quebra de linha real
+  dentro do template (o `\n` de um script de edição virou quebra literal). Vi na
+  saída do `grep`, corrigi e commitei separado.
+
+### Não feito, de propósito (fora do Escopo da F07)
+
+- Texto do motivo ao lado do cursor (GDD §10). O evento `command-rejected` já
+  carrega o `motivo`; falta só desenhá-lo.
+- Nenhuma transição `obra → completo`, nenhuma entrega, nenhum laborer: F10/F11.
+  `registrarTipoConstruido` (F06) continua sem chamador real; a F12 o liga.
+- Estágios visuais da obra (madeira, pedra): F11. Hoje a obra é só a marcação.
+
+### Hipóteses, não fatos (não verifiquei)
+
+- O `pointerdown` foi exercitado só com o botão esquerdo, no Chromium headless do
+  Playwright a 1280×720. Outros navegadores, botões e resoluções não foram testados.
+- A obra translúcida com a planta vermelha por cima é legível na screenshot, mas
+  não avaliei o contraste em telas reais nem com muitas obras sobrepostas à vista.
 
 ## Perguntas em aberto
 

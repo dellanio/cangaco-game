@@ -6,7 +6,7 @@
   "F05a-estado-inicial": { "passes": true },
   "F05b-hud": { "passes": true },
   "F06-menu-build-planta": { "passes": true },
-  "F07-posicionar-planta": { "passes": false },
+  "F07-posicionar-planta": { "passes": true },
   "F08-estradas": { "passes": false },
   "F09-jobboard": { "passes": false },
   "F10-serf-fsm": { "passes": false },
