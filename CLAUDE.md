@@ -162,7 +162,11 @@ escrita.
   roteiro do Playwright e salva em `screenshots/<feature>-<n>.png`.
 - Para qualquer feature que muda o que aparece na tela, screenshot é
   obrigatório. Não descreva o que você acha que apareceu.
-
+- Prova por arquivo temporário (probe) demonstra que a regra funciona no
+  momento, não que continua funcionando. Ela vale como evidência da
+  sessão; a proteção permanente é a regra automatizada que roda no
+  `npm run verify`. Registre as duas como coisas distintas, e nunca cite
+  o probe como se fosse cobertura contínua.
 ---
 
 ## 9. Arte e assets
