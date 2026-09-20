@@ -283,12 +283,6 @@ function validarEconomiaReferencia(dados, erros) {
   }
 }
 
-// F05b: comida no HUD e um grupo do dado (economy.grupos.comida), mas
-// condition.restauracaoPorComida ja lista as mesmas mercadorias implicitamente
-// (uma chave por comida, para saber quanto ela restaura). Sem esta regra as
-// duas listas divergem em silencio: alguem acrescenta uma comida nova em um
-// arquivo e o HUD (ou a restauracao de condicao) continua contando a lista
-// velha.
 // menuBuildInicial existe so para RAIZ sem pai (desbloqueadoPor: null). Quem tem
 // pai na arvore e liberado pela arvore; repetir aqui o que ela ja faz esvazia o
 // teste de desbloqueio (o aceite da F12 nao teria o que provar).
@@ -303,6 +297,23 @@ function validarMenuInicialSoRaiz(dados, erros) {
   }
 }
 
+// F08: fracao da pedra devolvida ao demolir tiles de estrada. Campo proprio de
+// terrain.estrada (nao o de buildings.construcao): estrada e predio podem
+// divergir. Uma fracao fora de [0, 1] devolveria mais do que custou, ou negativo.
+function validarDevolucaoDeEstrada(dados, erros) {
+  const estrada = dados.terrain && dados.terrain.estrada;
+  const valor = estrada && estrada.devolucaoAoDemolir;
+  if (typeof valor !== 'number' || Number.isNaN(valor) || valor < 0 || valor > 1) {
+    erros.push('terreno/estrada: devolucaoAoDemolir precisa ser um numero em [0, 1]');
+  }
+}
+
+// F05b: comida no HUD e um grupo do dado (economy.grupos.comida), mas
+// condition.restauracaoPorComida ja lista as mesmas mercadorias implicitamente
+// (uma chave por comida, para saber quanto ela restaura). Sem esta regra as
+// duas listas divergem em silencio: alguem acrescenta uma comida nova em um
+// arquivo e o HUD (ou a restauracao de condicao) continua contando a lista
+// velha.
 function validarGruposDeComida(dados, erros) {
   const grupo = dados.economy && dados.economy.grupos && dados.economy.grupos.comida;
   const restauracao = dados.condition && dados.condition.restauracaoPorComida;
@@ -345,6 +356,7 @@ function validarTudo(dados) {
   validarEconomiaReferencia(dados, erros);
   validarGruposDeComida(dados, erros);
   validarMenuInicialSoRaiz(dados, erros);
+  validarDevolucaoDeEstrada(dados, erros);
   return erros;
 }
 

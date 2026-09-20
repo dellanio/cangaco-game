@@ -1,8 +1,8 @@
 import { createRng, type RngState } from './rng';
 import { gameData } from './data';
 import type { GameData } from './data/types';
-import type { Command } from './commands';
 import type { MotivoDeRecusa } from './placement';
+import type { MotivoDeRecusaDeEstrada, TileDeGrid } from './estradas';
 
 /**
  * Efeito colateral emitido por um sistema para o render consumir
@@ -25,11 +25,19 @@ export type GameEvent =
    */
   | {
       readonly type: 'command-rejected';
-      readonly command: Command['type'];
+      readonly command: 'PlaceBlueprint';
       readonly buildingId: string;
       readonly gx: number;
       readonly gy: number;
       readonly motivo: MotivoDeRecusa;
+    }
+  | {
+      /** `PlaceRoad` recusado. `tile` e o primeiro tile culpado (fora do mapa ou
+       *  sobre um predio); `null` quando o motivo e do trecho todo (`sem-pedra`). */
+      readonly type: 'command-rejected';
+      readonly command: 'PlaceRoad';
+      readonly motivo: MotivoDeRecusaDeEstrada;
+      readonly tile: TileDeGrid | null;
     };
 
 /**
@@ -168,6 +176,21 @@ export interface GameState {
    * nao foi confirmado nas fontes: e decisao nossa, proposta (PROGRESS.md).
    */
   readonly tiposJaConstruidos: readonly string[];
+  /**
+   * CONTRATO HERDADO (F09, F10, F15) — as estradas que estao DE PE.
+   *
+   * Conjunto de tiles, chave `"gx,gy"` (inteiros), valor `true`. So tile PRONTO:
+   * quando a F11 decidir que laborer constroi estrada, a "estrada planejada" e
+   * OUTRO campo, e este continua sendo o que `isConnected` consulta.
+   *
+   * Nao guarda componentes conexos: dado derivado serializado poderia ficar
+   * inconsistente com os tiles. A consulta "existe caminho de A ate B?" e O(1) por
+   * um indice derivado e memoizado pela REFERENCIA deste objeto (`sim/estradas.ts`);
+   * `step()` carrega a mesma referencia enquanto nenhum comando de estrada muda
+   * algo. Conectividade em 4 direcoes. Nunca itere por `Object.keys` esperando uma
+   * ordem: use `tilesOrdenados`.
+   */
+  readonly estradas: Readonly<Record<string, true>>;
 }
 
 function construirColecao<T extends { readonly id: string }>(itens: readonly T[]): Colecao<T> {
@@ -183,7 +206,7 @@ function construirColecao<T extends { readonly id: string }>(itens: readonly T[]
 /** O unico predio com estoque de verdade nesta feature. Referencia de id
  *  estrutural (qual predio e o armazem), nao numero de balanceamento — os
  *  numeros continuam vindo do dado. */
-const ID_DO_ARMAZEM = 'storehouse';
+export const ID_DO_ARMAZEM = 'storehouse';
 
 function capacidadeParaTipo(tipoId: string, dados: GameData): Capacidade {
   if (tipoId === ID_DO_ARMAZEM) {
@@ -292,6 +315,7 @@ export function createInitialState(seed: number, dados: GameData = gameData): Ga
     unidades,
     proximoId: apósUnidades,
     tiposJaConstruidos: tiposCompletos(predios),
+    estradas: {},
   };
 }
 

@@ -171,6 +171,11 @@ export interface OpcaoDoMenuBuild {
   readonly requer: string | null;
 }
 
+/** O que a estrada custa por tile, para o painel mostrar sem ler `sim/data`. */
+export function custoDaEstrada(dados: GameData = gameData): { readonly stone: number } {
+  return { stone: dados.terreno.estrada.custoStonePorTile };
+}
+
 /** Na ordem de `data/buildings.json`. */
 export function opcoesDoMenuBuild(
   state: GameState, dados: GameData = gameData,

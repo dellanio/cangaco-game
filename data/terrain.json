@@ -5,7 +5,8 @@
     "custoStonePorTile": 1,
     "bonusVelocidade": 1.30,
     "obrigatoriaParaEntrega": true,
-    "_doc": "Sem estrada ligando a porta do predio a rede, o serf nao entrega e o predio nao funciona."
+    "devolucaoAoDemolir": 0.5,
+    "_doc": "Sem estrada ligando a porta do predio a rede, o serf nao entrega e o predio nao funciona. devolucaoAoDemolir: fracao da pedra devolvida ao demolir tiles (arredonda para baixo, por comando) — campo proprio, nao o de buildings.construcao: estrada e predio podem divergir."
   },
   "campos": {
     "milho": { "custo": {}, "tilesPorFarm": 15 },
