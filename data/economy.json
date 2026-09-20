@@ -1,6 +1,7 @@
 {
   "_doc": "Estado inicial do modo cidade do zero e precos.",
   "estadoInicial": {
+    "semente": 20260920,
     "predios": [
       { "id": "storehouse", "estado": "completo", "gx": 29, "gy": 30 },
       { "id": "schoolhouse", "estado": "completo", "gx": 34, "gy": 30 }
@@ -9,6 +10,10 @@
     "unidades": { "serf": 4, "laborer": 2 },
     "spawnDeUnidades": { "gx": 30, "gy": 34 },
     "menuBuildInicial": ["quarry", "woodcutters", "inn"]
+  },
+  "grupos": {
+    "comida": ["loaves", "sausages", "wine", "fish"],
+    "_doc": "As mesmas quatro chaves de condition.restauracaoPorComida — validado em tools/data-rules.js (validarGruposDeComida). Mudar aqui sem mudar la quebra o validate:data."
   },
   "schoolhouse": {
     "custoOuroPorUnidade": 1,

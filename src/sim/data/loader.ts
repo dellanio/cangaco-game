@@ -248,6 +248,7 @@ export function loadGameData(raw: RawGameData): GameData {
     marketplace: raw.economy.marketplace,
     mercadorias: raw.economy.mercadorias,
     bloqueioPadraoNoArmazem: raw.economy.bloqueioPadraoNoArmazem,
+    grupos: raw.economy.grupos,
   };
 
   // --- unidades (civis/militares/mercenarios — sem campo de tempo aqui;

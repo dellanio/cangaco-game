@@ -125,6 +125,7 @@ export interface EconomiaData {
   readonly marketplace: RawGameData['economy']['marketplace'];
   readonly mercadorias: RawGameData['economy']['mercadorias'];
   readonly bloqueioPadraoNoArmazem: RawGameData['economy']['bloqueioPadraoNoArmazem'];
+  readonly grupos: RawGameData['economy']['grupos'];
 }
 
 export interface UnidadesData {

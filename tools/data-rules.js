@@ -283,6 +283,44 @@ function validarEconomiaReferencia(dados, erros) {
   }
 }
 
+// F05b: comida no HUD e um grupo do dado (economy.grupos.comida), mas
+// condition.restauracaoPorComida ja lista as mesmas mercadorias implicitamente
+// (uma chave por comida, para saber quanto ela restaura). Sem esta regra as
+// duas listas divergem em silencio: alguem acrescenta uma comida nova em um
+// arquivo e o HUD (ou a restauracao de condicao) continua contando a lista
+// velha.
+function validarGruposDeComida(dados, erros) {
+  const grupo = dados.economy && dados.economy.grupos && dados.economy.grupos.comida;
+  const restauracao = dados.condition && dados.condition.restauracaoPorComida;
+  if (!Array.isArray(grupo)) {
+    erros.push('economia/grupos: economy.grupos.comida precisa ser array');
+    return;
+  }
+  if (!restauracao || typeof restauracao !== 'object') {
+    erros.push('economia/grupos: condition.restauracaoPorComida ausente');
+    return;
+  }
+  const mercadorias = new Set((dados.economy && dados.economy.mercadorias) || []);
+  const noGrupo = new Set(grupo);
+  if (noGrupo.size !== grupo.length) {
+    erros.push('economia/grupos: economy.grupos.comida tem id repetido');
+  }
+  const naCondicao = new Set(Object.keys(restauracao));
+  for (const id of noGrupo) {
+    if (!mercadorias.has(id)) {
+      erros.push(`economia/grupos: '${id}' em grupos.comida nao existe em economy.mercadorias`);
+    }
+    if (!naCondicao.has(id)) {
+      erros.push(`economia/grupos: '${id}' esta em grupos.comida mas nao em condition.restauracaoPorComida`);
+    }
+  }
+  for (const id of naCondicao) {
+    if (!noGrupo.has(id)) {
+      erros.push(`economia/grupos: '${id}' esta em condition.restauracaoPorComida mas nao em grupos.comida`);
+    }
+  }
+}
+
 function validarTudo(dados) {
   const erros = [];
   validarForma(dados, erros);
@@ -291,6 +329,7 @@ function validarTudo(dados) {
   validarTempo(dados, erros);
   validarCondicaoOraculo(dados, erros);
   validarEconomiaReferencia(dados, erros);
+  validarGruposDeComida(dados, erros);
   return erros;
 }
 
