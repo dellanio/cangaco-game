@@ -102,6 +102,12 @@ prédio surge sem clique do jogador.
   assume escala 1. Quando o zoom entrar (GDD §2.1, roda do mouse), as duas
   precisam de um parâmetro de escala e o teste de ida e volta precisa varrê-lo.
   Hoje nenhum item da fila agenda zoom.
+- **Nota**: esta é uma **feature de integração** — é a exceção explícita que a
+  §10 do CLAUDE.md exige para tocar `src/sim/` e `src/render/` na mesma
+  feature. O escopo dela é literalmente ligar o estado da F05a à tela: os
+  selectors novos entram em `sim/`, o desenho e a câmera em `render/`, o HUD em
+  `ui/`. Nenhuma regra de jogo muda de lado. Nenhuma outra feature da fila
+  herda esta permissão: ela vale para a F05b e só.
 
 ### F06 — Menu Build e planta fantasma
 - **Escopo**: painel lateral com os prédios desbloqueados e seu custo; bloqueados
