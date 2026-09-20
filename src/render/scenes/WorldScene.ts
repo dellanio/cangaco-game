@@ -1,16 +1,24 @@
-// A cena so le o estado (aqui, so gameData/tema) e desenha. Nada de logica de
-// jogo (CLAUDE.md §10): nenhuma decisao de regra mora aqui, so apresentacao.
+// A cena so le o estado (aqui, so gameData/tema e o GameState via ponte) e
+// desenha. Nada de logica de jogo (CLAUDE.md §10): nenhuma decisao de regra
+// mora aqui, so apresentacao.
 import Phaser from 'phaser';
 import temaSertao from '../../../data/theme-sertao.json';
 import { configDoMapa } from '../mapa';
 import { gridToScreen, screenToGrid, depthDeY, tileDentroDoMapa } from '../grid';
 import type { Tile } from '../grid';
 import { publicarEstadoDebug } from '../debug';
+import type { EstadoDebug } from '../debug';
+import { aparenciaDoPredio } from '../predios';
+import { centroDaVila } from '../../sim/selectors';
+import type { GameState, Predio } from '../../sim/state';
+import type { PonteDeEstado } from '../ponte';
 
 const CHAVE_TEXTURA_GRAMA = 'tile-grama';
 
 export class WorldScene extends Phaser.Scene {
-  constructor() {
+  private readonly desenhados = new Map<string, Phaser.GameObjects.Container>();
+
+  constructor(private readonly ponte: PonteDeEstado) {
     super('world');
   }
 
@@ -24,11 +32,13 @@ export class WorldScene extends Phaser.Scene {
     const camera = this.cameras.main;
     camera.setBounds(0, 0, larguraPx, alturaPx);
 
-    // Dois marcadores placeholder verticais, sobrepostos de proposito, so
-    // para exercitar o depth sorting por y — nao entram no GameState (§10):
-    // sao render puro, como o retangulo com o id escrito que o §9 descreve.
-    this.criarMarcadorPlaceholder(6, 8, tilePx, 0xb4562f);
-    this.criarMarcadorPlaceholder(6, 9, tilePx, 0x5a3f2b);
+    const estadoDoJogo = this.ponte.atual;
+    if (estadoDoJogo) {
+      const centro = centroDaVila(estadoDoJogo);
+      camera.centerOn(centro.gx * tilePx, centro.gy * tilePx);
+      estado.centroDaVila = centro;
+      this.atualizarPredios(estadoDoJogo, tilePx, estado);
+    }
 
     const highlight = this.add.graphics();
     highlight.lineStyle(3, 0xede3d0, 1);
@@ -65,6 +75,7 @@ export class WorldScene extends Phaser.Scene {
       estado.camera = { scrollX: camera.scrollX, scrollY: camera.scrollY };
       estado.tilesRenderizados = camadaChao.tilesDrawn;
       estado.pronto = true;
+      if (this.ponte.atual) this.atualizarPredios(this.ponte.atual, tilePx, estado);
     });
   }
 
@@ -89,13 +100,49 @@ export class WorldScene extends Phaser.Scene {
     return camada;
   }
 
-  private criarMarcadorPlaceholder(gx: number, gy: number, tilePx: number, cor: number): void {
-    const centro = gridToScreen({ gx, gy }, tilePx);
-    const largura = tilePx * 0.5;
-    const altura = tilePx * 1.4;
-    const marcador = this.add.rectangle(
-      centro.x + tilePx / 2, centro.y + tilePx - altura / 2, largura, altura, cor,
-    );
-    marcador.setDepth(depthDeY(centro.y + tilePx));
+  /** Diff por id contra o que ja esta desenhado: id novo cria, id sumido
+   *  destroi, id igual nao mexe. Sem isso, redesenhar do zero a cada chamada
+   *  recriaria os prédios todo frame (a F07 vai chamar isto com frequencia).
+   *  `desenhados` e memoria de render local da cena — handle do sprite que
+   *  ela mesma criou, nao estado de jogo guardado em sprite (§10). */
+  private atualizarPredios(estadoDoJogo: GameState, tilePx: number, debug: EstadoDebug): void {
+    const vivos = new Set(estadoDoJogo.predios.ordem);
+    for (const [id, obj] of this.desenhados) {
+      if (!vivos.has(id)) {
+        obj.destroy();
+        this.desenhados.delete(id);
+      }
+    }
+    for (const id of estadoDoJogo.predios.ordem) {
+      if (this.desenhados.has(id)) continue;
+      const predio = estadoDoJogo.predios.porId[id];
+      if (!predio) continue;
+      this.desenhados.set(id, this.criarPredio(predio, tilePx));
+    }
+    debug.prediosRenderizados = this.desenhados.size;
+  }
+
+  /** Placeholder do §9: retangulo do tamanho do footprint com o nome
+   *  tematico escrito por cima. Sem PNG em assets/base/, isto e o desenho
+   *  definitivo desta sessao, nao uma falha. */
+  private criarPredio(predio: Predio, tilePx: number): Phaser.GameObjects.Container {
+    const { largura, altura, nome } = aparenciaDoPredio(predio.tipo);
+    const canto = gridToScreen({ gx: predio.gx, gy: predio.gy }, tilePx);
+    const larguraPx = largura * tilePx;
+    const alturaPx = altura * tilePx;
+
+    const retangulo = this.add.rectangle(larguraPx / 2, alturaPx / 2, larguraPx, alturaPx, 0x6b4a33);
+    retangulo.setStrokeStyle(2, 0x2c1d12);
+    const rotulo = this.add.text(larguraPx / 2, alturaPx / 2, nome, {
+      fontSize: '14px',
+      color: '#ede3d0',
+      align: 'center',
+      wordWrap: { width: larguraPx - 8 },
+    });
+    rotulo.setOrigin(0.5, 0.5);
+
+    const container = this.add.container(canto.x, canto.y, [retangulo, rotulo]);
+    container.setDepth(depthDeY(canto.y + alturaPx));
+    return container;
   }
 }

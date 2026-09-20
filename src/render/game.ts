@@ -2,10 +2,21 @@
 // iniciarJogo(). Nao decide nada de jogo (§10): so tamanho de tela e a lista
 // de cenas.
 import Phaser from 'phaser';
+import type { GameState } from '../sim/state';
 import { WorldScene } from './scenes/WorldScene';
+import { criarPonte } from './ponte';
 
-export function iniciarJogo(): Phaser.Game {
-  return new Phaser.Game({
+export interface JogoLigado {
+  readonly jogo: Phaser.Game;
+  /** Entrega o estado mais recente para a cena desenhar. Nao guarda
+   *  referencia aqui: so escreve na ponte (render/ponte.ts). */
+  atualizar(estado: GameState): void;
+}
+
+export function iniciarJogo(): JogoLigado {
+  const ponte = criarPonte();
+  const cena = new WorldScene(ponte);
+  const jogo = new Phaser.Game({
     type: Phaser.AUTO,
     parent: 'jogo',
     backgroundColor: '#0a0a0a',
@@ -15,6 +26,12 @@ export function iniciarJogo(): Phaser.Game {
       width: '100%',
       height: '100%',
     },
-    scene: [WorldScene],
+    scene: [cena],
   });
+  return {
+    jogo,
+    atualizar(estado) {
+      ponte.atual = estado;
+    },
+  };
 }
