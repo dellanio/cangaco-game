@@ -4,6 +4,7 @@ import type { GameData } from './data/types';
 import { gameData } from './data';
 import { aplicarPlaceBlueprint } from './systems/build';
 import { aplicarDemolishRoad, aplicarPlaceRoad } from './systems/estradas';
+import { gerarTarefas, sanearTarefas } from './systems/jobs';
 
 /**
  * A unica porta de entrada da simulacao.
@@ -58,6 +59,13 @@ export function step(
       }
     }
   }
+
+  // O JobBoard: revalida o que existe (release em todo ramo de falha) e so depois cria
+  // o que falta. Depois dos comandos, para ver a estrada demolida e a obra plantada
+  // neste mesmo tick.
+  const saneado = sanearTarefas(atual, dados);
+  atual = gerarTarefas(saneado.state, dados);
+  events.push(...saneado.events);
 
   return {
     tick,

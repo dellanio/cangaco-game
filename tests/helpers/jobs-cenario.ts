@@ -97,3 +97,40 @@ export function cenarioLigado(faltam: Record<string, number> = { stone: 2, timbe
   const comObraA = comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam });
   return comEstradas(comObraA, [tile(29, 33), tile(29, 34), tile(29, 35), tile(29, 36), tile(28, 36)]);
 }
+
+/** Um armazem completo a mais, com a pedra e a tabua dadas na saida. */
+export function comArmazemCompleto(
+  estado: GameState, id: string, opcoes: { readonly gx: number; readonly gy: number; readonly stone?: number; readonly timber?: number },
+): GameState {
+  const predio: PredioCompleto = {
+    id, tipo: 'storehouse', gx: opcoes.gx, gy: opcoes.gy, estado: 'completo', hp: 0,
+    capacidade: { entrada: null, saida: null },
+    estoque: { entrada: {}, saida: { stone: opcoes.stone ?? 0, timber: opcoes.timber ?? 0 } },
+  };
+  return {
+    ...estado,
+    predios: { porId: { ...estado.predios.porId, [id]: predio }, ordem: [...estado.predios.ordem, id] },
+  };
+}
+
+/** Troca a pedra E a tabua da saida de um predio completo. */
+export function comEstoqueNaSaida(estado: GameState, id: string, estoque: { readonly stone: number; readonly timber: number }): GameState {
+  const p = estado.predios.porId[id];
+  if (!p || p.estado !== 'completo') throw new Error(`fixture: '${id}' nao e predio completo`);
+  const novo: PredioCompleto = { ...p, estoque: { ...p.estoque, saida: { ...p.estoque.saida, ...estoque } } };
+  return { ...estado, predios: { ...estado.predios, porId: { ...estado.predios.porId, [id]: novo } } };
+}
+
+/** Tira um predio do estado (demolir, no que importa aqui). */
+export function semOPredio(estado: GameState, id: string): GameState {
+  const porId = { ...estado.predios.porId };
+  delete porId[id];
+  return { ...estado, predios: { porId, ordem: estado.predios.ordem.filter((x) => x !== id) } };
+}
+
+/** Tira uma unidade do estado (a unidade morreu). */
+export function semAUnidade(estado: GameState, id: string): GameState {
+  const porId = { ...estado.unidades.porId };
+  delete porId[id];
+  return { ...estado, unidades: { porId, ordem: estado.unidades.ordem.filter((x) => x !== id) } };
+}
