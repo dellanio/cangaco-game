@@ -17,8 +17,10 @@ export interface EstadoDebug {
   /** Quantos tiles o tilemap desenhou de fato. Prova que o culling nativo do
    *  Phaser esta ligado: deve ficar bem abaixo de largura*altura do mapa. */
   tilesRenderizados: number;
-  /** Quantos predios do GameState a cena tem desenhados agora. */
+  /** Quantos predios do GameState a cena tem desenhados agora (obras incluidas). */
   prediosRenderizados: number;
+  /** Quantos deles estao em obra (F07): a marcacao no chao. */
+  obrasRenderizadas: number;
   /** Onde a cena centralizou a camera na abertura, em unidades de tile. Nao
    *  e `Tile` (render/grid.ts): pode ser fracionario (33, 31.5, ver
    *  sim/selectors.ts PontoEmTiles) e nao indexa o mapa. */
@@ -48,6 +50,7 @@ export function publicarEstadoDebug(): EstadoDebug {
     camera: { scrollX: 0, scrollY: 0 },
     tilesRenderizados: 0,
     prediosRenderizados: 0,
+    obrasRenderizadas: 0,
     centroDaVila: null,
     plantaFantasma: null,
     ferramentaAtiva: null,

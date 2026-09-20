@@ -10,19 +10,23 @@ import { publicarEstadoDebug } from '../debug';
 import type { EstadoDebug } from '../debug';
 import { aparenciaDoPredio } from '../predios';
 import { centroDaVila } from '../../sim/selectors';
-import type { GameState, Predio } from '../../sim/state';
+import type { EstadoDePredio, GameState, Predio } from '../../sim/state';
 import type { PonteDeEstado } from '../ponte';
 import type { Ferramenta } from '../../input/ferramenta';
+import type { EntradaDoMapa } from '../../input/colocar';
 import { criarPlantaFantasma } from '../planta-fantasma';
 
 const CHAVE_TEXTURA_GRAMA = 'tile-grama';
 
 export class WorldScene extends Phaser.Scene {
-  private readonly desenhados = new Map<string, Phaser.GameObjects.Container>();
+  private readonly desenhados = new Map<
+    string, { readonly estado: EstadoDePredio; readonly objeto: Phaser.GameObjects.Container }
+  >();
 
   constructor(
     private readonly ponte: PonteDeEstado,
     private readonly ferramenta: Ferramenta,
+    private readonly entrada: EntradaDoMapa,
   ) {
     super('world');
   }
@@ -85,6 +89,16 @@ export class WorldScene extends Phaser.Scene {
       tileAtual = null;
     });
 
+    // Clique esquerdo: entrega o TILE clicado a input/, que decide se vira comando
+    // (so com ferramenta ativa). A cena nao decide nada e nao confia no ultimo
+    // pointermove: recalcula o tile do ponteiro no proprio clique.
+    this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      if (!pointer.leftButtonDown()) return;
+      const mundo = camera.getWorldPoint(pointer.x, pointer.y);
+      const tile: Tile = screenToGrid({ x: mundo.x, y: mundo.y }, tilePx);
+      if (tileDentroDoMapa(tile, largura, altura)) this.entrada.aoClicar(tile);
+    });
+
     // POST_RENDER, nao update(): o clamp de camera.setBounds acontece dentro
     // do preRender do proprio ciclo de desenho (depois de update()). Ler
     // scrollX/scrollY aqui garante o valor ja limitado, nao um instantaneo a
@@ -124,40 +138,52 @@ export class WorldScene extends Phaser.Scene {
     return camada;
   }
 
-  /** Diff por id contra o que ja esta desenhado: id novo cria, id sumido
-   *  destroi, id igual nao mexe. Sem isso, redesenhar do zero a cada chamada
-   *  recriaria os prédios todo frame (a F07 vai chamar isto com frequencia).
+  /** Diff por id E estado contra o que ja esta desenhado: id novo cria, id sumido
+   *  destroi, mesmo id no mesmo estado nao mexe. O estado entra na chave porque uma
+   *  obra que vira `'completo'` (F11) mantem o id e precisa ser redesenhada.
+   *  Sem o diff, redesenhar do zero a cada chamada recriaria os prédios todo frame.
    *  `desenhados` e memoria de render local da cena — handle do sprite que
    *  ela mesma criou, nao estado de jogo guardado em sprite (§10). */
   private atualizarPredios(estadoDoJogo: GameState, tilePx: number, debug: EstadoDebug): void {
     const vivos = new Set(estadoDoJogo.predios.ordem);
-    for (const [id, obj] of this.desenhados) {
+    for (const [id, item] of this.desenhados) {
       if (!vivos.has(id)) {
-        obj.destroy();
+        item.objeto.destroy();
         this.desenhados.delete(id);
       }
     }
+    let obras = 0;
     for (const id of estadoDoJogo.predios.ordem) {
-      if (this.desenhados.has(id)) continue;
       const predio = estadoDoJogo.predios.porId[id];
       if (!predio) continue;
-      this.desenhados.set(id, this.criarPredio(predio, tilePx));
+      if (predio.estado === 'obra') obras += 1;
+      const existente = this.desenhados.get(id);
+      if (existente && existente.estado === predio.estado) continue;
+      existente?.objeto.destroy();
+      this.desenhados.set(id, { estado: predio.estado, objeto: this.criarPredio(predio, tilePx) });
     }
     debug.prediosRenderizados = this.desenhados.size;
+    debug.obrasRenderizadas = obras;
   }
 
   /** Placeholder do §9: retangulo do tamanho do footprint com o nome
    *  tematico escrito por cima. Sem PNG em assets/base/, isto e o desenho
-   *  definitivo desta sessao, nao uma falha. */
+   *  definitivo desta sessao, nao uma falha. Uma OBRA (F07) e a marcacao no
+   *  chao: o mesmo retangulo, translucido, com "em obra" (tema) sob o nome. */
   private criarPredio(predio: Predio, tilePx: number): Phaser.GameObjects.Container {
     const { largura, altura, nome } = aparenciaDoPredio(predio.tipo);
     const canto = gridToScreen({ gx: predio.gx, gy: predio.gy }, tilePx);
     const larguraPx = largura * tilePx;
     const alturaPx = altura * tilePx;
 
-    const retangulo = this.add.rectangle(larguraPx / 2, alturaPx / 2, larguraPx, alturaPx, 0x6b4a33);
-    retangulo.setStrokeStyle(2, 0x2c1d12);
-    const rotulo = this.add.text(larguraPx / 2, alturaPx / 2, nome, {
+    const emObra = predio.estado === 'obra';
+    const retangulo = this.add.rectangle(
+      larguraPx / 2, alturaPx / 2, larguraPx, alturaPx, 0x6b4a33, emObra ? 0.4 : 1,
+    );
+    retangulo.setStrokeStyle(2, emObra ? 0xede3d0 : 0x2c1d12);
+    const texto = emObra ? `${nome}
+(${temaSertao.obra.rotulo})` : nome;
+    const rotulo = this.add.text(larguraPx / 2, alturaPx / 2, texto, {
       fontSize: '14px',
       color: '#ede3d0',
       align: 'center',

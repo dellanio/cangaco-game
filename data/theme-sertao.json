@@ -99,6 +99,7 @@
   },
   "hud": { "comida": "Comida", "populacao": "Gente" },
   "menuBuild": { "titulo": "Construir", "requer": "requer", "semRequisito": "ainda não disponível" },
+  "obra": { "rotulo": "em obra" },
   "vegetacao": ["mandacaru", "xique-xique", "juazeiro", "umbuzeiro", "facheiro", "macambira"],
   "props": ["cerca de vara", "pilha de lenha", "cacimba", "carro de boi", "jumento", "varal de carne de sol"],
   "facoes": {

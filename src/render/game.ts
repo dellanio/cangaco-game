@@ -6,6 +6,7 @@ import type { GameState } from '../sim/state';
 import { WorldScene } from './scenes/WorldScene';
 import { criarPonte } from './ponte';
 import type { Ferramenta } from '../input/ferramenta';
+import type { EntradaDoMapa } from '../input/colocar';
 
 export interface JogoLigado {
   readonly jogo: Phaser.Game;
@@ -14,9 +15,9 @@ export interface JogoLigado {
   atualizar(estado: GameState): void;
 }
 
-export function iniciarJogo(ferramenta: Ferramenta): JogoLigado {
+export function iniciarJogo(ferramenta: Ferramenta, entrada: EntradaDoMapa): JogoLigado {
   const ponte = criarPonte();
-  const cena = new WorldScene(ponte, ferramenta);
+  const cena = new WorldScene(ponte, ferramenta, entrada);
   const jogo = new Phaser.Game({
     type: Phaser.AUTO,
     parent: 'jogo',
