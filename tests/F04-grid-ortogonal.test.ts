@@ -117,8 +117,16 @@ function gridTsTemImport(): boolean {
   return /^\s*import\b/m.test(fonte);
 }
 
-function arquivosQueLeemSimDataForaDeMapa(): string[] {
-  const arquivos = listarArquivosTs('src/render').filter((f) => !f.endsWith(join('src', 'render', 'mapa.ts')));
+// F05b acrescenta um segundo funil (predios.ts, para footprint/nome de
+// predio). A lista continua fechada: um terceiro arquivo ainda reprova.
+const FUNIS_PARA_SIM_DATA = [
+  join('src', 'render', 'mapa.ts'),
+  join('src', 'render', 'predios.ts'),
+];
+
+function arquivosQueLeemSimDataForaDosFunis(): string[] {
+  const arquivos = listarArquivosTs('src/render')
+    .filter((f) => !FUNIS_PARA_SIM_DATA.some((funil) => f.endsWith(funil)));
   return arquivos.filter((f) => /from\s+['"].*sim\/data['"]/.test(readFileSync(f, 'utf-8')));
 }
 
@@ -127,8 +135,8 @@ describe('F04 — guardas estruturais', () => {
     expect(gridTsTemImport()).toBe(false);
   });
 
-  it('nenhum arquivo de src/render/ alem de mapa.ts importa ../sim/data', () => {
-    expect(arquivosQueLeemSimDataForaDeMapa()).toEqual([]);
+  it('nenhum arquivo de src/render/ alem dos funis (mapa.ts, predios.ts) importa ../sim/data', () => {
+    expect(arquivosQueLeemSimDataForaDosFunis()).toEqual([]);
   });
 });
 
@@ -159,7 +167,7 @@ afterAll(() => {
     fonteDoTile: { arquivo: 'data/terrain.json', chave: 'tile_px', valor: gameData.terreno.tilePx },
     guardas: {
       gridTsSemImport: !gridTsTemImport(),
-      soMapaTsLeSimData: arquivosQueLeemSimDataForaDeMapa().length === 0,
+      soFunisLeemSimData: arquivosQueLeemSimDataForaDosFunis().length === 0,
     },
     simNaoVazou: PROVA_SEM_VAZAMENTO_PARA_SIM,
   });
