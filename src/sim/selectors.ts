@@ -2,6 +2,7 @@ import type { GameState, Predio, Unidade } from './state';
 import type { GameData } from './data/types';
 import { gameData } from './data';
 import { caixaDoPredio } from './footprint';
+import { estaDesbloqueado } from './desbloqueio';
 import type { CaixaEmTiles } from './footprint';
 
 /**
@@ -154,4 +155,32 @@ export function centroDaVila(state: GameState, dados: GameData = gameData): Pont
 
   const { largura, altura } = dados.terreno.mapaPadrao;
   return { gx: largura / 2, gy: altura / 2 };
+}
+
+/** Uma linha do menu Build: tudo que o painel precisa para desenhar, sem ele
+ *  varrer predios nem ler `sim/data`. Nomes de tela sao do tema, na `ui/`. */
+export interface OpcaoDoMenuBuild {
+  readonly id: string;
+  readonly custo: { readonly timber: number; readonly stone: number };
+  readonly tamanho: readonly number[];
+  readonly desbloqueado: boolean;
+  /** Id do predio que falta para liberar este; `null` se ja esta liberado ou
+   *  se o dado nao aponta nenhum (`desbloqueadoPor: null`, ex.: storehouse). */
+  readonly requer: string | null;
+}
+
+/** Na ordem de `data/buildings.json`. */
+export function opcoesDoMenuBuild(
+  state: GameState, dados: GameData = gameData,
+): readonly OpcaoDoMenuBuild[] {
+  return dados.predios.map((def) => {
+    const desbloqueado = estaDesbloqueado(state, def.id, dados);
+    return {
+      id: def.id,
+      custo: { timber: def.timber, stone: def.stone },
+      tamanho: def.tamanho,
+      desbloqueado,
+      requer: desbloqueado ? null : def.desbloqueadoPor,
+    };
+  });
 }

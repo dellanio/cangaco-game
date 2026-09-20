@@ -1,3 +1,5 @@
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, it, expect } from 'vitest';
 import { createInitialState } from '../src/sim/state';
 import type { GameState, Predio } from '../src/sim/state';
@@ -6,6 +8,9 @@ import { gameData } from '../src/sim/data';
 import { estaDesbloqueado } from '../src/sim/desbloqueio';
 import { canPlace } from '../src/sim/placement';
 import { deepFreeze } from '../src/sim/freeze';
+import { opcoesDoMenuBuild } from '../src/sim/selectors';
+import { criarFerramenta } from '../src/input/ferramenta';
+import { ligarTeclado } from '../src/input/teclado';
 
 // --- montagem de estados e de dados injetados (so teste; nada disto entra em sim/) ---
 
@@ -219,5 +224,147 @@ describe('F06 — canPlace', () => {
       expect(a).toEqual(b);
       expect(JSON.stringify(congelado)).toBe(antes);
     });
+  });
+});
+
+// --- ferramenta ativa e teclado (estado de interface, fora do GameState) ---
+
+describe('F06 — ferramenta ativa', () => {
+  it('nasce sem predio ativo', () => {
+    expect(criarFerramenta().predioAtivo).toBeNull();
+  });
+
+  it('selecionar e cancelar mudam o predio ativo e avisam quem ouve', () => {
+    const ferramenta = criarFerramenta();
+    const avisos: Array<string | null> = [];
+    ferramenta.aoMudar((p) => avisos.push(p));
+    ferramenta.selecionar('quarry');
+    expect(ferramenta.predioAtivo).toBe('quarry');
+    ferramenta.cancelar();
+    expect(ferramenta.predioAtivo).toBeNull();
+    expect(avisos).toEqual(['quarry', null]);
+  });
+
+  it('nao avisa quando nada mudou', () => {
+    const ferramenta = criarFerramenta();
+    const avisos: Array<string | null> = [];
+    ferramenta.aoMudar((p) => avisos.push(p));
+    ferramenta.cancelar();
+    ferramenta.selecionar('quarry');
+    ferramenta.selecionar('quarry');
+    expect(avisos).toEqual(['quarry']);
+  });
+
+  it('quem se desinscreve para de ouvir', () => {
+    const ferramenta = criarFerramenta();
+    const avisos: Array<string | null> = [];
+    const desinscrever = ferramenta.aoMudar((p) => avisos.push(p));
+    desinscrever();
+    ferramenta.selecionar('quarry');
+    expect(avisos).toEqual([]);
+  });
+
+  it('nao toca o GameState: rodar sobre um estado congelado nao lanca e nao o altera', () => {
+    const congelado = deepFreeze(createInitialState(1));
+    const antes = JSON.stringify(congelado);
+    const ferramenta = criarFerramenta();
+    ferramenta.selecionar('quarry');
+    ferramenta.cancelar();
+    expect(JSON.stringify(congelado)).toBe(antes);
+  });
+});
+
+function teclar(alvo: EventTarget, tecla: string): void {
+  alvo.dispatchEvent(Object.assign(new Event('keydown'), { key: tecla }));
+}
+
+describe('F06 — teclado', () => {
+  it('Escape cancela a ferramenta; outra tecla nao', () => {
+    const alvo = new EventTarget();
+    const ferramenta = criarFerramenta();
+    ligarTeclado(ferramenta, alvo);
+    ferramenta.selecionar('quarry');
+    teclar(alvo, 'a');
+    expect(ferramenta.predioAtivo).toBe('quarry');
+    teclar(alvo, 'Escape');
+    expect(ferramenta.predioAtivo).toBeNull();
+  });
+
+  it('o desligador remove o ouvinte', () => {
+    const alvo = new EventTarget();
+    const ferramenta = criarFerramenta();
+    const desligar = ligarTeclado(ferramenta, alvo);
+    desligar();
+    ferramenta.selecionar('quarry');
+    teclar(alvo, 'Escape');
+    expect(ferramenta.predioAtivo).toBe('quarry');
+  });
+});
+
+// --- o que o painel mostra: um seletor, o painel nao varre predios ---
+
+describe('F06 — opcoesDoMenuBuild', () => {
+  const inicial = createInitialState(1);
+  const opcoes = opcoesDoMenuBuild(inicial);
+
+  it('uma opcao por predio do dado, na ordem do dado', () => {
+    expect(opcoes.map((o) => o.id)).toEqual(gameData.predios.map((p) => p.id));
+  });
+
+  it('custo e tamanho vem do dado', () => {
+    for (const def of gameData.predios) {
+      const opcao = opcoes.find((o) => o.id === def.id);
+      expect(opcao?.custo).toEqual({ timber: def.timber, stone: def.stone });
+      expect(opcao?.tamanho).toEqual(def.tamanho);
+    }
+  });
+
+  it('desbloqueado bate com estaDesbloqueado; requer e o pai da arvore so quando bloqueado', () => {
+    for (const def of gameData.predios) {
+      const opcao = opcoes.find((o) => o.id === def.id);
+      expect(opcao?.desbloqueado).toBe(estaDesbloqueado(inicial, def.id));
+      expect(opcao?.requer).toBe(opcao?.desbloqueado ? null : def.desbloqueadoPor);
+    }
+  });
+
+  it('o menu inicial do cenario aparece liberado e sawmill, bloqueado exigindo woodcutters', () => {
+    for (const id of gameData.economia.estadoInicial.menuBuildInicial) {
+      expect(opcoes.find((o) => o.id === id)?.desbloqueado).toBe(true);
+    }
+    const serraria = opcoes.find((o) => o.id === 'sawmill');
+    expect(serraria?.desbloqueado).toBe(false);
+    expect(serraria?.requer).toBe('woodcutters');
+  });
+
+  it('bloqueado sem pai na arvore (storehouse) tem requer null: ninguem para nomear', () => {
+    const armazem = opcoes.find((o) => o.id === 'storehouse');
+    expect(armazem?.desbloqueado).toBe(false);
+    expect(armazem?.requer).toBeNull();
+  });
+});
+
+// --- guardas estruturais (por import, nunca por substring de numero) ---
+
+function arquivosTs(dir: string): string[] {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
+    e.isDirectory() ? arquivosTs(join(dir, e.name)) : e.name.endsWith('.ts') ? [join(dir, e.name)] : [],
+  );
+}
+
+function importam(dir: string, alvo: RegExp): string[] {
+  return arquivosTs(dir).filter((f) => alvo.test(readFileSync(f, 'utf-8')));
+}
+
+describe('F06 — guardas estruturais de input/', () => {
+  it('src/input/ nao importa phaser', () => {
+    expect(importam('src/input', /from\s+['"]phaser['"]/)).toEqual([]);
+  });
+
+  it('src/input/ nao importa sim/data: le so intencao, nao tabela', () => {
+    expect(importam('src/input', /from\s+['"].*sim\/data['"]/)).toEqual([]);
+  });
+
+  it('src/input/ nao importa sim/state: a planta fantasma nao mora no GameState', () => {
+    expect(importam('src/input', /from\s+['"].*sim\/state['"]/)).toEqual([]);
   });
 });
