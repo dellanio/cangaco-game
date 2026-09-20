@@ -3,6 +3,7 @@ import type { Colecao, GameEvent, GameState, Predio } from '../state';
 import { ID_DO_ARMAZEM } from '../state';
 import type { GameData } from '../data/types';
 import { canPlaceRoad, chaveDeTile, MERCADORIA_DA_ESTRADA } from '../estradas';
+import { disponivelNaOrigem } from '../reservas';
 
 export type PlaceRoad = Extract<Command, { readonly type: 'PlaceRoad' }>;
 export type DemolishRoad = Extract<Command, { readonly type: 'DemolishRoad' }>;
@@ -14,17 +15,19 @@ interface Resultado {
 
 /**
  * Tira `quantidade` de pedra dos armazens completos: um armazem depois do outro em
- * `predios.ordem`, e em cada um a gaveta `saida` antes da `entrada`. O chamador ja
- * garantiu (`canPlaceRoad`) que ha o bastante.
+ * `predios.ordem`, e em cada um a gaveta `saida` (so o que nao esta reservado por uma
+ * tarefa) antes da `entrada`. O chamador ja garantiu (`canPlaceRoad`, que usa a mesma
+ * conta em `pedraDisponivel`) que ha o bastante.
  */
-function debitarPedra(predios: Colecao<Predio>, quantidade: number): Colecao<Predio> {
+function debitarPedra(state: GameState, quantidade: number): Colecao<Predio> {
+  const { predios } = state;
   let restante = quantidade;
   const porId = { ...predios.porId };
   for (const id of predios.ordem) {
     if (restante <= 0) break;
     const predio = predios.porId[id];
     if (!predio || predio.estado !== 'completo' || predio.tipo !== ID_DO_ARMAZEM) continue;
-    const daSaida = Math.min(predio.estoque.saida[MERCADORIA_DA_ESTRADA] ?? 0, restante);
+    const daSaida = Math.min(Math.max(disponivelNaOrigem(state, id, MERCADORIA_DA_ESTRADA), 0), restante);
     restante -= daSaida;
     const daEntrada = Math.min(predio.estoque.entrada[MERCADORIA_DA_ESTRADA] ?? 0, restante);
     restante -= daEntrada;
@@ -88,7 +91,7 @@ export function aplicarPlaceRoad(state: GameState, comando: PlaceRoad, dados: Ga
   const estradas: Record<string, true> = { ...state.estradas };
   for (const tile of resposta.novos) estradas[chaveDeTile(tile)] = true;
   return {
-    state: { ...state, estradas, predios: debitarPedra(state.predios, resposta.custoEmPedra) },
+    state: { ...state, estradas, predios: debitarPedra(state, resposta.custoEmPedra) },
     events: [],
   };
 }

@@ -12,6 +12,7 @@ import { ID_DO_ARMAZEM } from './state';
 import type { GameData } from './data/types';
 import { gameData } from './data';
 import { caixaDoPredio } from './footprint';
+import { disponivelNaOrigem } from './reservas';
 
 /** Um tile de grid, sempre em coordenada inteira quando valido. Mesma forma do
  *  `Tile` de `render/grid.ts`, sem importa-lo: `sim/` nao depende de `render/`. */
@@ -240,12 +241,14 @@ export function predioLigadoAoArmazem(
 
 // --- pode construir estrada? (pura; o render pergunta, nao decide) ---
 
-/** Pedra que os armazens completos tem para gastar (as duas gavetas). So armazem:
- *  pedra na saida de uma Quarry esta esperando o serf, nao e estoque gastavel. */
+/** Pedra que os armazens completos tem para gastar. So armazem: pedra na saida de uma
+ *  Quarry esta esperando o serf, nao e estoque gastavel. Na `saida` conta so o que
+ *  NAO esta reservado por uma tarefa (JobBoard, F09): a unidade que um serf ja
+ *  reservou e dele. A `entrada` nao e reservavel. */
 export function pedraDisponivel(state: GameState): number {
   let soma = 0;
   for (const armazem of armazensCompletos(state)) {
-    soma += (armazem.estoque.saida[MERCADORIA_DA_ESTRADA] ?? 0) + (armazem.estoque.entrada[MERCADORIA_DA_ESTRADA] ?? 0);
+    soma += disponivelNaOrigem(state, armazem.id, MERCADORIA_DA_ESTRADA) + (armazem.estoque.entrada[MERCADORIA_DA_ESTRADA] ?? 0);
   }
   return soma;
 }
