@@ -7,6 +7,7 @@
  */
 import type { Tile } from './grid';
 import type { EstadoDaPlanta } from './planta-fantasma';
+import type { PreviaDeEstrada } from './estradas';
 
 export interface EstadoDebug {
   /** false ate a cena terminar o primeiro desenho. O roteiro espera por isto
@@ -21,6 +22,11 @@ export interface EstadoDebug {
   prediosRenderizados: number;
   /** Quantos deles estao em obra (F07): a marcacao no chao. */
   obrasRenderizadas: number;
+  /** Quantos tiles de estrada (F08) a cena tem desenhados agora. */
+  estradasRenderizadas: number;
+  /** A previa do arrasto de estrada em curso, ou null. `custo` e a pedra que o
+   *  trecho custaria; `valida` e o que `canPlaceRoad` respondeu. */
+  previaDeEstrada: PreviaDeEstrada | null;
   /** Onde a cena centralizou a camera na abertura, em unidades de tile. Nao
    *  e `Tile` (render/grid.ts): pode ser fracionario (33, 31.5, ver
    *  sim/selectors.ts PontoEmTiles) e nao indexa o mapa. */
@@ -51,6 +57,8 @@ export function publicarEstadoDebug(): EstadoDebug {
     tilesRenderizados: 0,
     prediosRenderizados: 0,
     obrasRenderizadas: 0,
+    estradasRenderizadas: 0,
+    previaDeEstrada: null,
     centroDaVila: null,
     plantaFantasma: null,
     ferramentaAtiva: null,

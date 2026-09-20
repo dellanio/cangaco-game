@@ -15,6 +15,7 @@ import type { PonteDeEstado } from '../ponte';
 import type { Ferramenta } from '../../input/ferramenta';
 import type { EntradaDoMapa } from '../../input/colocar';
 import { criarPlantaFantasma } from '../planta-fantasma';
+import { criarCamadaDeEstradas, criarPreviaDeEstrada } from '../estradas';
 
 const CHAVE_TEXTURA_GRAMA = 'tile-grama';
 
@@ -50,6 +51,8 @@ export class WorldScene extends Phaser.Scene {
     }
 
     const planta = criarPlantaFantasma(this, tilePx);
+    const camadaDeEstradas = criarCamadaDeEstradas(this, tilePx);
+    const previaDeEstrada = criarPreviaDeEstrada(this, tilePx);
     // Ultimo tile valido sob o ponteiro. Efemero: some no gameout e nunca entra
     // no GameState (a planta e estado de interface, ver input/ferramenta.ts).
     let tileAtual: Tile | null = null;
@@ -75,6 +78,8 @@ export class WorldScene extends Phaser.Scene {
         highlight.setPosition(canto.x, canto.y);
         estado.tileSobMouse = tile;
         tileAtual = tile;
+        // botao esquerdo apertado: e um arrasto (estrada); o botao do meio e a camera
+        if (pointer.leftButtonDown()) this.entrada.aoArrastar(tile);
       } else {
         estado.tileSobMouse = null;
         tileAtual = null;
@@ -87,6 +92,8 @@ export class WorldScene extends Phaser.Scene {
     this.input.on(Phaser.Input.Events.GAME_OUT, () => {
       estado.tileSobMouse = null;
       tileAtual = null;
+      // Sair do canvas com o botao apertado CANCELA o arrasto (ver input/colocar.ts).
+      this.entrada.aoSairDoMapa();
     });
 
     // Clique esquerdo: entrega o TILE clicado a input/, que decide se vira comando
@@ -97,6 +104,16 @@ export class WorldScene extends Phaser.Scene {
       const mundo = camera.getWorldPoint(pointer.x, pointer.y);
       const tile: Tile = screenToGrid({ x: mundo.x, y: mundo.y }, tilePx);
       if (tileDentroDoMapa(tile, largura, altura)) this.entrada.aoClicar(tile);
+    });
+
+    // Soltar o botao esquerdo: fecha o arrasto no tile do ponteiro. Solto fora do mapa
+    // (canvas maior que o mapa) cancela, como sair do canvas.
+    this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => {
+      if (!pointer.leftButtonReleased()) return;
+      const mundo = camera.getWorldPoint(pointer.x, pointer.y);
+      const tile: Tile = screenToGrid({ x: mundo.x, y: mundo.y }, tilePx);
+      if (tileDentroDoMapa(tile, largura, altura)) this.entrada.aoSoltar(tile);
+      else this.entrada.aoSairDoMapa();
     });
 
     // POST_RENDER, nao update(): o clamp de camera.setBounds acontece dentro
@@ -114,6 +131,10 @@ export class WorldScene extends Phaser.Scene {
       estado.ferramentaAtiva = this.ferramenta.predioAtivo;
       estado.plantaFantasma = planta.atualizar(this.ferramenta.predioAtivo, tileAtual, this.ponte.atual);
       highlight.setVisible(tileAtual !== null && this.ferramenta.predioAtivo === null);
+
+      // Estrada (F08): desenha o que o estado diz e a previa do arrasto em curso.
+      estado.estradasRenderizadas = camadaDeEstradas.atualizar(this.ponte.atual?.estradas ?? {});
+      estado.previaDeEstrada = previaDeEstrada.atualizar(this.entrada.trecho(), this.ferramenta.modo, this.ponte.atual);
     });
   }
 

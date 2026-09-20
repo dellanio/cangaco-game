@@ -4,9 +4,9 @@
 // comando (o PlaceBlueprint e a F07), nao importa phaser nem sim/data e nao
 // varre predios por conta propria (CLAUDE.md §3, §10).
 import type { GameState } from '../sim/state';
-import { opcoesDoMenuBuild } from '../sim/selectors';
+import { custoDaEstrada, opcoesDoMenuBuild } from '../sim/selectors';
 import type { OpcaoDoMenuBuild } from '../sim/selectors';
-import type { Ferramenta } from '../input/ferramenta';
+import type { Ferramenta, ModoDaFerramenta } from '../input/ferramenta';
 import temaSertao from '../../data/theme-sertao.json';
 
 export interface MenuBuild {
@@ -23,6 +23,11 @@ function nomeDe(id: string): string {
 function textoDoCusto(opcao: OpcaoDoMenuBuild): string {
   const { timber, stone } = temaSertao.mercadorias;
   return `${timber} ${opcao.custo.timber} · ${stone} ${opcao.custo.stone}`;
+}
+
+/** "Pedra 1 por tile": o numero vem do dado, pelo seletor; os rotulos, do tema. */
+function textoDoCustoDaEstrada(): string {
+  return `${temaSertao.mercadorias.stone} ${custoDaEstrada().stone} ${temaSertao.menuBuild.porTile}`;
 }
 
 function textoDoRequisito(opcao: OpcaoDoMenuBuild): string {
@@ -42,15 +47,20 @@ export function montarMenuBuild(ferramenta: Ferramenta): MenuBuild {
   if (!raiz) throw new Error('menu-build: #menu-build nao existe no index.html');
 
   const itens = new Map<string, ItemMontado>();
+  // As ferramentas que nao sao planta de predio (F08): estrada e demolir estrada.
+  const ferramentas = new Map<ModoDaFerramenta, HTMLButtonElement>();
 
-  function marcarAtivo(predioAtivo: string | null): void {
+  function marcarAtivo(predioAtivo: string | null, modo: ModoDaFerramenta): void {
     for (const [id, item] of itens) {
       item.botao.setAttribute('aria-pressed', String(id === predioAtivo));
+    }
+    for (const [modoDoBotao, botao] of ferramentas) {
+      botao.setAttribute('aria-pressed', String(modoDoBotao === modo));
     }
     // Sem ferramenta, nenhum item deve parecer selecionado: o anel de foco que
     // o navegador deixa no ultimo botao clicado (aparece de novo apos o Esc)
     // le como "ainda ativo".
-    if (predioAtivo === null) {
+    if (modo === 'nenhum') {
       const focado = document.activeElement;
       if (focado instanceof HTMLElement && raiz?.contains(focado)) focado.blur();
     }
@@ -60,6 +70,14 @@ export function montarMenuBuild(ferramenta: Ferramenta): MenuBuild {
     const titulo = document.createElement('h2');
     titulo.textContent = temaSertao.menuBuild.titulo;
     raiz?.append(titulo);
+
+    montarFerramenta('estrada', 'estrada', temaSertao.menuBuild.estrada, textoDoCustoDaEstrada(), () => {
+      ferramenta.selecionarEstrada();
+    });
+    montarFerramenta('demolir-estrada', 'demolir-estrada', temaSertao.menuBuild.demolirEstrada,
+      temaSertao.menuBuild.demolirEstradaDesc, () => {
+        ferramenta.selecionarDemolicao();
+      });
 
     for (const opcao of opcoes) {
       const botao = document.createElement('button');
@@ -91,7 +109,31 @@ export function montarMenuBuild(ferramenta: Ferramenta): MenuBuild {
       itens.set(opcao.id, { botao, requer });
     }
     ferramenta.aoMudar(marcarAtivo);
-    marcarAtivo(ferramenta.predioAtivo);
+    marcarAtivo(ferramenta.predioAtivo, ferramenta.modo);
+  }
+
+  /** Um botao de ferramenta (estrada, demolir estrada), acima da lista de predios.
+   *  Sempre disponivel: nao depende da arvore de desbloqueio. */
+  function montarFerramenta(
+    modo: ModoDaFerramenta, id: string, nomeDoBotao: string, detalhe: string, aoClicar: () => void,
+  ): void {
+    const botao = document.createElement('button');
+    botao.type = 'button';
+    botao.className = 'item';
+    botao.dataset.ferramenta = id;
+
+    const nome = document.createElement('span');
+    nome.className = 'nome';
+    nome.textContent = nomeDoBotao;
+
+    const custo = document.createElement('span');
+    custo.className = 'custo';
+    custo.textContent = detalhe;
+
+    botao.append(nome, custo);
+    botao.addEventListener('click', aoClicar);
+    raiz?.append(botao);
+    ferramentas.set(modo, botao);
   }
 
   return {
