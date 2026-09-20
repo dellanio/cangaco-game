@@ -100,6 +100,19 @@ export interface GameState {
    *  planta) e a F13 (treinar na schoolhouse) criam entidade em runtime e
    *  precisam de um id novo sem colidir com os que ja existem. */
   readonly proximoId: number;
+  /**
+   * Ids dos TIPOS de predio que ja chegaram a `'completo'` alguma vez, na ordem
+   * em que chegaram, sem repeticao. E o que o desbloqueio consulta
+   * (`sim/desbloqueio.ts`), e nao a presenca atual: demolir o ultimo
+   * Woodcutter's nao pode re-bloquear a Serraria — nem com uma Sawmill de pe —,
+   * e demolir para reposicionar e um cenario banal.
+   *
+   * O estado inicial nasce com os tipos dos predios ja completos; depois, quem
+   * alimenta e `registrarTipoConstruido`, chamado quando uma obra vira
+   * `'completo'` (a F12 liga isso ao `step()`). O comportamento do jogo original
+   * nao foi confirmado nas fontes: e decisao nossa, proposta (PROGRESS.md).
+   */
+  readonly tiposJaConstruidos: readonly string[];
 }
 
 function construirColecao<T extends { readonly id: string }>(itens: readonly T[]): Colecao<T> {
@@ -218,5 +231,16 @@ export function createInitialState(seed: number, dados: GameData = gameData): Ga
     predios,
     unidades,
     proximoId: apósUnidades,
+    tiposJaConstruidos: tiposCompletos(predios),
   };
+}
+
+/** Tipos distintos dos predios `'completo'`, na ordem de `predios.ordem`. */
+function tiposCompletos(predios: Colecao<Predio>): readonly string[] {
+  const tipos: string[] = [];
+  for (const id of predios.ordem) {
+    const predio = predios.porId[id];
+    if (predio && predio.estado === 'completo' && !tipos.includes(predio.tipo)) tipos.push(predio.tipo);
+  }
+  return tipos;
 }

@@ -518,10 +518,11 @@ da F11 (a decisão de fila é do operador). `data/terrain.json` **não foi tocad
 - **`canPlace` devolve motivo, não boolean.** Um teste que só afirma `false` para
   "sobreposição" passaria mesmo se a função recusasse pela razão errada; e a F07
   precisa rejeitar o segundo comando na mesma posição.
-- **Desbloqueio derivado, sem campo novo no `GameState`:** liberado se está em
-  `menuBuildInicial` ou se o `desbloqueadoPor` existe completo em `state.predios`.
-  Não cria formato de estado que F07/F10 herdariam, e a F12 passa a valer quase
-  sozinha. A geometria de footprint foi extraída de `selectors.ts` (F05b) para
+- **Desbloqueio derivado:** liberado se está em `menuBuildInicial` ou se o
+  `desbloqueadoPor` está satisfeito. *(A primeira versão olhava a presença atual
+  em `state.predios` e não criava campo no `GameState`; foi **substituída** logo
+  depois pelo desbloqueio permanente — ver "Desbloqueio permanente" abaixo.)*
+  A geometria de footprint foi extraída de `selectors.ts` (F05b) para
   `sim/footprint.ts` porque `canPlace` precisa da mesma.
 - **O HUD/painel não podem ficar sob o canvas — corrigido na causa.** O problema
   não era "o HUD tem 38 px", era o canvas se estender por baixo de qualquer UI
@@ -604,6 +605,45 @@ Decisões do operador, fechando as três perguntas que a F06 deixou em aberto:
 
 **Verificado nesta rodada:** `npm run verify` verde e `npm run shot -- F06`,
 `-- F04` e `-- F05b` passando (ver o fechamento no commit).
+
+## Desbloqueio permanente — `tiposJaConstruidos` (2026-09-20)
+
+**Proposta nossa, não confirmada nas fontes.** O GDD §5.1 diz só "concluir um
+prédio desbloqueia os próximos da árvore"; não diz se o desbloqueio persiste
+depois de demolir, e o comportamento do jogo original **não foi confirmado** —
+não o consultei. É uma decisão de design do projeto, marcada como proposta: se
+uma fonte contradisser, muda-se aqui.
+
+**Por quê.** A primeira versão derivava o desbloqueio da *presença atual* do pai
+em `state.predios`. Isso re-bloqueia a Serraria ao demolir o último Woodcutter's
+— inclusive com uma Sawmill de pé — e frustra um cenário banal: demolir para
+reposicionar. Achado do operador na revisão; não é assunto só da F16 (demolir),
+porque a regra que decide o desbloqueio nasceu na F06.
+
+**O que foi feito**
+- `GameState.tiposJaConstruidos: readonly string[]`: ids dos **tipos** que já
+  chegaram a `'completo'`, na ordem em que chegaram, sem repetição. O estado
+  inicial nasce com os tipos dos prédios já completos (`['storehouse',
+  'schoolhouse']`).
+- `estaDesbloqueado` consulta essa lista em vez da presença atual. Continua
+  derivado do dado (`menuBuildInicial` + `desbloqueadoPor`) e serializável.
+- `registrarTipoConstruido(state, tipo)` em `sim/desbloqueio.ts`: pura,
+  idempotente (devolve o mesmo estado se o tipo já está). É o ponto único que
+  alimenta a lista depois do estado inicial.
+- `step()` monta o estado campo a campo e **perderia o campo novo no primeiro
+  tick**; o `typecheck` pegou. Agora o carrega adiante, com teste próprio.
+
+**Verificado (rodado):** 140 testes verdes. Com um Woodcutter's completo e depois
+removido do estado, a Sawmill continua liberada — também com uma Sawmill de pé, e
+também no `canPlace` e no menu; demolir o único Schoolhouse não trava Quarry nem
+Woodcutter's; o que nunca foi construído (Farm) segue bloqueado.
+
+**Ainda não feito:** nada chama `registrarTipoConstruido` numa transição real,
+porque ainda não existe transição para `'completo'` (a F07 cria a obra, a F11 a
+constrói). A F12 liga isso ao `step()`; o aceite dela (reescrito no
+`BUILD_PLAN.md`) prova a ligação ao conduzir uma obra até o fim. Até lá, a
+alimentação depois do estado inicial só é exercitada por teste, chamando a função
+diretamente.
 
 ## Perguntas em aberto
 

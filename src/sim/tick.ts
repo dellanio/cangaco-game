@@ -25,5 +25,6 @@ export function step(state: GameState, _commands: readonly Command[]): GameState
     predios: state.predios,
     unidades: state.unidades,
     proximoId: state.proximoId,
+    tiposJaConstruidos: state.tiposJaConstruidos,
   };
 }

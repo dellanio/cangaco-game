@@ -190,10 +190,29 @@ prédio surge sem clique do jogador.
 ### F12 — Desbloqueio por conclusão
 - **Escopo**: concluir um prédio libera os filhos dele na árvore do GDD. O menu
   Build reflete na hora.
-- **Aceite**: teste que parte do estado inicial, conclui uma Schoolhouse e
-  confirma que Quarry e Woodcutter's saíram de bloqueado; conclui um Woodcutter's
-  e confirma Sawmill liberado.
+- **Aceite**: teste headless que parte do estado inicial (Storehouse e
+  Schoolhouse completos, `menuBuildInicial` vazio) e:
+  1. confirma, pelo seletor do menu Build, Sawmill bloqueada exigindo Woodcutter's;
+  2. posiciona um Woodcutter's (`PlaceBlueprint`) e, com a obra ainda pendente,
+     confirma Sawmill **ainda bloqueada** — obra não desbloqueia;
+  3. conduz a obra até `'completo'` pelo `step()`, sem injetar prédio pronto, e
+     confirma Sawmill liberada e que o conjunto de liberados cresceu exatamente
+     pelos filhos diretos do Woodcutter's em `buildings.json`, calculado do dado
+     e sem lista digitada;
+  4. repete um elo: conclui a Sawmill e confirma Farm e os demais filhos dela
+     liberados.
 - **Evidência**: `test-output/F12.json`
+- **Nota**: o aceite anterior ("conclui uma Schoolhouse e confirma que Quarry e
+  Woodcutter's saíram de bloqueado") não testava nada: o estado inicial já tem a
+  Schoolhouse completa e a lista `menuBuildInicial` liberava os dois. A lista agora
+  só existe para raiz sem pai; o desbloqueio vem da árvore.
+- **Nota**: sem screenshot nesta feature. Conduzir uma obra até o fim só com
+  cliques é um roteiro grande, e isso pertence à F17, o aceite integrado da fase.
+- **Nota**: o desbloqueio é permanente — `estaDesbloqueado` consulta
+  `GameState.tiposJaConstruidos` (F06), não a presença atual do prédio. Hoje só o
+  estado inicial alimenta essa lista; a F12 liga `registrarTipoConstruido`
+  (`sim/desbloqueio.ts`) ao `step()` no momento em que uma obra chega a
+  `'completo'`.
 
 ### F13 — Schoolhouse: fila de treino
 - **Escopo**: painel com fila de até 5 slots, um botão por tipo de trabalhador,

@@ -2,10 +2,11 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, it, expect, afterAll } from 'vitest';
 import { createInitialState } from '../src/sim/state';
+import { step } from '../src/sim/tick';
 import type { GameState, Predio } from '../src/sim/state';
 import type { GameData } from '../src/sim/data/types';
 import { gameData } from '../src/sim/data';
-import { estaDesbloqueado } from '../src/sim/desbloqueio';
+import { estaDesbloqueado, registrarTipoConstruido } from '../src/sim/desbloqueio';
 import { canPlace } from '../src/sim/placement';
 import { deepFreeze } from '../src/sim/freeze';
 import { opcoesDoMenuBuild } from '../src/sim/selectors';
@@ -17,11 +18,14 @@ import { gravarEvidencia } from './helpers/evidence';
 
 // --- montagem de estados e de dados injetados (so teste; nada disto entra em sim/) ---
 
+/** Nada construido: sem predio E sem historico de tipos ja construidos. */
 function semPredios(estado: GameState): GameState {
-  return { ...estado, predios: { porId: {}, ordem: [] } };
+  return { ...estado, predios: { porId: {}, ordem: [] }, tiposJaConstruidos: [] };
 }
 
-/** Acrescenta um predio completo, como o cenario inicial faz. */
+/** Completa um predio: ele entra no estado E o tipo entra no historico, que e o
+ *  que o desbloqueio consulta (a F12 chama `registrarTipoConstruido` no `step()`
+ *  quando uma obra chega a 'completo'). */
 function comPredio(estado: GameState, tipo: string, gx: number, gy: number): GameState {
   const id = `teste-${estado.predios.ordem.length}-${tipo}`;
   const predio: Predio = {
@@ -29,13 +33,25 @@ function comPredio(estado: GameState, tipo: string, gx: number, gy: number): Gam
     capacidade: { entrada: null, saida: null },
     estoque: { entrada: {}, saida: {} },
   };
-  return {
+  return registrarTipoConstruido({
     ...estado,
     predios: {
       porId: { ...estado.predios.porId, [id]: predio },
       ordem: [...estado.predios.ordem, id],
     },
-  };
+  }, tipo);
+}
+
+/** Tira do estado todo predio do tipo (demolir, no que importa aqui). O
+ *  historico `tiposJaConstruidos` NAO e tocado. */
+function semOsPrediosDoTipo(estado: GameState, tipo: string): GameState {
+  const ordem = estado.predios.ordem.filter((id) => estado.predios.porId[id]?.tipo !== tipo);
+  const porId: Record<string, Predio> = {};
+  for (const id of ordem) {
+    const p = estado.predios.porId[id];
+    if (p) porId[id] = p;
+  }
+  return { ...estado, predios: { porId, ordem } };
 }
 
 function dadosSemMenuInicial(): GameData {
@@ -112,6 +128,72 @@ describe('F06 — desbloqueio derivado de menuBuildInicial e da arvore', () => {
     };
     expect(estaDesbloqueado(semPredios(inicial), raiz.id, dados)).toBe(true);
     expect(estaDesbloqueado(semPredios(inicial), raiz.id)).toBe(false);
+  });
+});
+
+// --- desbloqueio PERMANENTE: consulta o historico, nao a presenca atual ---
+
+describe('F06 — desbloqueio permanente (tiposJaConstruidos)', () => {
+  const inicial = createInitialState(1);
+
+  it('o estado inicial nasce com os tipos dos predios ja completos, na ordem do dado', () => {
+    const esperado = gameData.economia.estadoInicial.predios
+      .filter((p) => p.estado === 'completo')
+      .map((p) => p.id);
+    expect(esperado.length).toBeGreaterThan(0);
+    expect(inicial.tiposJaConstruidos).toEqual(esperado);
+  });
+
+  it("com um Woodcutter's completo e depois removido do estado, a Sawmill continua liberada", () => {
+    const comLenhador = comPredio(inicial, 'woodcutters', 10, 10);
+    expect(estaDesbloqueado(comLenhador, 'sawmill')).toBe(true);
+
+    const demolido = semOsPrediosDoTipo(comLenhador, 'woodcutters');
+    expect(demolido.predios.ordem.some((id) => demolido.predios.porId[id]?.tipo === 'woodcutters')).toBe(false);
+    expect(estaDesbloqueado(demolido, 'sawmill')).toBe(true);
+    expect(canPlace(demolido, 'sawmill', 0, 0)).toEqual({ ok: true });
+    expect(opcoesDoMenuBuild(demolido).find((o) => o.id === 'sawmill')?.desbloqueado).toBe(true);
+  });
+
+  it('inclusive com uma Sawmill de pe: demolir o ultimo Woodcutter\'s nao a re-bloqueia', () => {
+    const cadeia = comPredio(comPredio(inicial, 'woodcutters', 10, 10), 'sawmill', 20, 10);
+    const demolido = semOsPrediosDoTipo(cadeia, 'woodcutters');
+    expect(demolido.predios.ordem.some((id) => demolido.predios.porId[id]?.tipo === 'sawmill')).toBe(true);
+    expect(estaDesbloqueado(demolido, 'sawmill')).toBe(true);
+  });
+
+  it('demolir o unico predio de um tipo (reposicionar) nao trava o que ele liberou nem o que ja estava liberado', () => {
+    const semEscola = semOsPrediosDoTipo(inicial, 'schoolhouse');
+    for (const id of ['quarry', 'woodcutters', 'schoolhouse']) {
+      expect(estaDesbloqueado(semEscola, id), id).toBe(true);
+    }
+  });
+
+  it('o que nunca foi construido segue bloqueado, mesmo depois de outras demolicoes', () => {
+    const demolido = semOsPrediosDoTipo(comPredio(inicial, 'woodcutters', 10, 10), 'woodcutters');
+    expect(estaDesbloqueado(demolido, 'farm')).toBe(false); // filho de sawmill, que nunca existiu
+  });
+
+  it('registrarTipoConstruido: acrescenta uma vez, mantem a ordem e nao muta o estado', () => {
+    const congelado = deepFreeze(createInitialState(1));
+    const a = registrarTipoConstruido(congelado, 'woodcutters');
+    expect(a.tiposJaConstruidos).toEqual([...congelado.tiposJaConstruidos, 'woodcutters']);
+    const b = registrarTipoConstruido(a, 'woodcutters');
+    expect(b.tiposJaConstruidos).toEqual(a.tiposJaConstruidos); // idempotente
+    expect(b).toBe(a); // nada mudou: mesma referencia
+    expect(congelado.tiposJaConstruidos).toEqual(inicial.tiposJaConstruidos);
+  });
+
+  it('continua serializavel em JSON', () => {
+    const estado = registrarTipoConstruido(inicial, 'woodcutters');
+    expect(JSON.parse(JSON.stringify(estado))).toEqual(estado);
+  });
+
+  it('step() carrega o historico adiante: nao o perde a cada tick', () => {
+    let estado = registrarTipoConstruido(inicial, 'woodcutters');
+    for (let i = 0; i < 5; i++) estado = step(estado, []);
+    expect(estado.tiposJaConstruidos).toEqual([...inicial.tiposJaConstruidos, 'woodcutters']);
+    expect(estaDesbloqueado(estado, 'sawmill')).toBe(true);
   });
 });
 
@@ -449,6 +531,18 @@ afterAll(() => {
         (id) => gameData.predios.find((p) => p.id === id)?.desbloqueadoPor === null,
       ),
       arestasDaArvorePercorridas: gameData.predios.filter((p) => p.desbloqueadoPor !== null).length,
+      // Decisao NOSSA (proposta, nao confirmada nas fontes): o desbloqueio e
+      // permanente. Verificado por teste: demolir o Woodcutter's nao re-bloqueia
+      // a Serraria, nem com uma Sawmill de pe.
+      tiposJaConstruidosNoEstadoInicial: inicial.tiposJaConstruidos,
+      demolirNaoReBloqueia: (() => {
+        const cadeia = comPredio(comPredio(inicial, 'woodcutters', 10, 10), 'sawmill', 20, 10);
+        const demolido = semOsPrediosDoTipo(cadeia, 'woodcutters');
+        return {
+          serrariaLiberadaAposDemolirLenhador: estaDesbloqueado(demolido, 'sawmill'),
+          serrariaDePeNoEstado: demolido.predios.ordem.some((id) => demolido.predios.porId[id]?.tipo === 'sawmill'),
+        };
+      })(),
     },
     menu: {
       opcoes: opcoes.length,
