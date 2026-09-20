@@ -86,18 +86,21 @@ prédio surge sem clique do jogador.
   `data/theme-sertao.json`, não dos ids da simulação.
 - **Aceite**: screenshot com o HUD legível e os dois prédios no mapa.
 - **Evidência**: `test-output/F05b.json` + `screenshots/F05b-*.png`
-- **Nota**: `main.ts` entrega o estado ao render e ao HUD por uma função de
+- ~~**Nota**: `main.ts` entrega o estado ao render e ao HUD por uma função de
   atualização — `atualizar(state)` — nunca guardando uma referência no momento
   da criação. Quando o laço de tempo fixo entrar (F11), é só passar a chamá-la
   a cada tick; se o render capturar o estado inicial e ler dele direto, a
-  chegada do laço vira refatoração em vez de ligação.
-- **Nota**: `tools/shots/F04.js` hoje assume `camera.scrollX/scrollY === 0`
+  chegada do laço vira refatoração em vez de ligação.~~ Cumprida na F05b:
+  `iniciarJogo()`/`montarHud()` devolvem `{ atualizar }`, `main.ts` chama as
+  duas a partir de uma função só.
+- ~~**Nota**: `tools/shots/F04.js` hoje assume `camera.scrollX/scrollY === 0`
   (`TILE_ALVO` fixo). Com `camera.centerOn` nesta feature isso deixa de ser
   verdade. O roteiro tem que parar de assumir scroll fixo — ler
   `camera.scrollX/scrollY` de `window.__cangaco` e calcular o tile esperado a
   partir do estado real, afirmando a relação (tile sob o mouse ↔ pixel dado a
   câmera atual), não uma coordenada literal. `npm run shot -- F04` precisa
-  passar antes de fechar esta feature.
+  passar antes de fechar esta feature.~~ Cumprida na F05b: `npm run shot --
+  F04` passa lendo o scroll publicado, sem presumir onde a câmera abriu.
 - **Nota**: `gridToScreen`/`screenToGrid` (F04) são cegas a zoom — a conversão
   assume escala 1. Quando o zoom entrar (GDD §2.1, roda do mouse), as duas
   precisam de um parâmetro de escala e o teste de ida e volta precisa varrê-lo.

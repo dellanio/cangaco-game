@@ -371,6 +371,106 @@ chaves (intencional): `F05-estado-inicial-hud` virou `F05a-estado-inicial` +
   fixo quando `camera.centerOn` chegar; em F11, a nota de que o laço de tempo
   fixo a 10 Hz ainda não existe e nasce ali.
 
+## F05b — HUD e a vila na tela (2026-09-20)
+
+A primeira feature de integração: atravessa `sim/` e `render/`/`ui/` na mesma
+sessão, sob a exceção explícita da §10 do CLAUDE.md. A exceção foi escrita no
+`BUILD_PLAN.md` **antes** de qualquer código (Task 0 do plano) — não inferida
+no plano de implementação, por correção do operador durante a revisão do
+plano: o mesmo raciocínio ("o escopo parece justificar a exceção") tinha sido
+recusado antes, quando propus tratar a F05 inteira como integração. A nota diz
+explicitamente que vale só para a F05b; nenhuma feature seguinte herda a
+permissão por hábito.
+
+- **A ponte (`src/render/ponte.ts`) é um campo mutável simples, não um
+  `EventEmitter`.** `new Phaser.Game()` volta na hora, mas `Scene.create()`
+  roda depois, assíncrono — a cena não pode receber o estado por parâmetro de
+  construtor no sentido tradicional porque ele ainda não existe quando
+  `iniciarJogo()` chama `new WorldScene(ponte)`. A ponte (`{ atual: GameState
+  | null }`) é passada ao construtor e populada por `main.ts` chamando
+  `jogo.atualizar(state)` antes do primeiro frame; a cena lê `ponte.atual`
+  quando `create()` roda, e de novo a cada `POST_RENDER`. Não é
+  `EventEmitter` porque o estado é imutável e trocado inteiro a cada chamada —
+  quem lê só precisa da referência mais recente, um assinante de evento aqui
+  seria cerimônia sem propósito.
+- **`WorldScene` redesenha prédios por diff de id, não do zero a cada
+  frame.** `atualizarPredios` mantém `Map<string, Container>` local da cena:
+  id novo cria, id sumido destrói, id igual não mexe. Isso é memória de
+  render (o handle do sprite que a própria cena criou), não estado de jogo
+  guardado em sprite — o que a §10 proíbe é o inverso. Sem o diff, a F07
+  (posicionar planta) recriaria todos os prédios a cada frame.
+- **Os dois marcadores de demonstração da F04 saíram de `WorldScene.ts`.**
+  Existiam só para exercitar o depth sorting sem ter entidade real; os
+  prédios do `GameState` fazem o mesmo trabalho agora, e mantê-los deixaria
+  dois retângulos fantasma em (6,8)/(6,9) sobre a screenshot do aceite.
+- **`comidaTotal`/`populacaoPorGrupo`/`centroDaVila` nasceram em
+  `sim/selectors.ts`**, ao lado de `estoqueTotal`/`contagemPorTipo` da F05a —
+  é o arquivo que já se declarava aberto a isso. `centroDaVila` devolve
+  `PontoEmTiles` (`{ gx, gy }`), um tipo novo e deliberadamente **não** o
+  `Tile` de `render/grid.ts`: correção do operador na revisão do plano — o
+  centro do bounding box dos dois prédios cai em (33, 31.5), meio tile, e
+  reusar `Tile` (que carrega semântica de coordenada inteira, é o que indexa
+  o mapa e o que pode ir para o `GameState`) convidaria alguém a guardar
+  `31.5` num campo de coordenada depois. `PontoEmTiles` existe só para a
+  câmera, nunca entra no `GameState`. A cadeia de fallback é explícita no
+  código, não uma exceção: prédio → bounding box dos footprints; sem prédio
+  mas com unidade → bounding box das unidades; nem um nem outro → centro de
+  `terreno.mapaPadrao`. Os três ramos têm teste headless próprio.
+- **Comida virou grupo no dado (`economy.json: grupos.comida`), com regra
+  que fecha a costura contra `condition.json`.** Condição do operador: sem
+  validação cruzada, `condition.restauracaoPorComida` e `economy.grupos.comida`
+  seriam duas fontes de verdade independentes — alguém acrescenta uma comida
+  nova num arquivo e o HUD continua somando as quatro antigas.
+  `validarGruposDeComida` (`tools/data-rules.js`) exige conjuntos idênticos
+  dos dois lados, mais todo id existindo em `economy.mercadorias`. Testado nos
+  dois sentidos manualmente (tirar `fish` de um lado, acrescentar `corn` do
+  outro) e revertido antes do commit.
+- **Segundo funil de `render/` para `sim/data`: `render/predios.ts`.** Mesmo
+  molde de `mapa.ts` (o primeiro funil, da F04): lê `gameData.predios` e
+  `theme-sertao.json` uma vez, expõe `aparenciaDoPredio(tipo)`. A guarda
+  estrutural de `tests/F04-grid-ortogonal.test.ts` passou a aceitar **dois**
+  arquivos na whitelist, continua fechada para um terceiro.
+- **Prédio sem PNG em `assets/base/` é o placeholder do §9, não uma falha.**
+  Retângulo do tamanho do footprint (`largura × altura` de tiles, de
+  `buildings.json`) com o nome temático (`theme-sertao.json: predios[tipo].nome`)
+  escrito por cima — "Armazém", "Casa do Coronel" na screenshot do aceite.
+- **HUD é DOM puro sobre o canvas (`src/ui/hud.ts` + `<div id="hud">` em
+  `index.html`), `pointer-events: none`.** Sem isso o HUD roubaria o
+  `pointermove` que a F04 testa (highlight de tile sob o mouse). Rótulos dos
+  cinco campos vêm de `theme-sertao.json` (`mercadorias.*` para
+  gold/timber/stone, `hud.comida`/`hud.populacao` para os dois agregados que
+  não têm id de simulação) — nenhuma string visível digitada em `.ts`. Cada
+  valor carrega `data-campo`, o gancho que o roteiro do Playwright usa para
+  afirmar o número, não só "tem texto na tela".
+- **`main.ts` passou a ser o dono do `GameState`.** `createInitialState`
+  agora lê a semente de `gameData.economia.estadoInicial.semente` (novo campo
+  em `economy.json`, não mais implícito) em vez de um literal. `iniciarJogo()`
+  e `montarHud()` devolvem `{ atualizar(state) }`; `main.ts` chama as duas a
+  partir de uma função só (`atualizar`). Quando o laço de 10 Hz entrar (F11),
+  a ligação é uma linha nova chamando `atualizar` a cada tick, não uma
+  refatoração de quem lê o estado.
+- **`npm run shot -- F04` quebrou com a câmera centralizada e revelou um bug
+  pré-existente no próprio roteiro, não só no literal de scroll fixo.** O
+  passo 5 arrastava o mouse 5000px além da borda num único movimento; um
+  script de depuração nesta sessão mostrou que um `mousemove` que sai da
+  viewport (1280×720) para de gerar eventos no Chromium — o excesso pedido
+  nunca virava scroll de verdade. Isso sempre esteve quebrado; ficou invisível
+  antes porque a câmera partia de (0,0) e um delta parcial de ~250px já
+  bastava para bater no limite. O conserto: passo 2 calcula o tile alvo a
+  partir do `camera.scrollX/scrollY` publicado (não mais um `TILE_ALVO`
+  fixo); passo 4 afirma o delta do arrasto contra o scroll medido antes dele
+  (não mais `scrollX > 0`, que seria verdade mesmo sem arrastar com a câmera
+  já longe da origem); passo 5 virou um loop de arrastos **dentro** da
+  viewport, repetidos até a câmera não ter mais para onde ir.
+- **Evidência em duas linhas separadas, nunca confundidas (CLAUDE.md §8).**
+  Headless (`tests/F05b-hud.test.ts`, dentro do `npm run verify`) prova os
+  selectors e as guardas estruturais → `test-output/F05b.json`. Visual
+  (`npm run shot -- F05b`, fora do verify, rodado à mão) prova a tela → dois
+  arquivos em `screenshots/`, abertos com a ferramenta Read: os dois prédios
+  rotulados no meio do mapa e a barra de recursos legível no topo
+  (Dinheiro 20, Tábua 40, Pedra 30, Comida 25, Gente 6/0), nenhum id neutro
+  (`gold`/`timber`/`stone`) visível no texto do HUD.
+
 ## Perguntas em aberto
 
 Nenhuma no momento.
