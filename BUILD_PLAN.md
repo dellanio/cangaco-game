@@ -222,6 +222,33 @@ prédio surge sem clique do jogador.
   **solta a reserva** e a tarefa é liberada — a F08 não mexe em unidade nem em
   tarefa, quem reage é quem consome. `terreno.estrada.obrigatoriaParaEntrega` é
   `true`: sem ligação, não há entrega.
+- **Nota**: **o JobBoard (F09) é a interface do serf.** As funções são
+  `reclamar(state, tarefaId, unidadeId)` (atômico: reserva a unidade de recurso na
+  origem **e** a vaga no destino, ou não reserva nada), `liberar(state, tarefaId,
+  motivo)` e `reclamarMelhor(state, unidadeId)` (ordem `(nível, distância,
+  número)`), em `src/sim/jobs.ts`. **A reserva é derivada das tarefas
+  `reclamada`**, não um contador à parte. O `sanearTarefas` (todo tick) já libera
+  sozinho por unidade removida, caminho cortado, origem ou destino sumidos ou sem
+  recurso/vaga; a FSM do serf **só precisa chamar `liberar('pedido-da-unidade')`**
+  nos seus estados de erro (`devolvendo`).
+- **Nota**: **o ciclo real da tarefa é em duas fases, e é a F10 quem o cria.** A F09
+  não tem `concluir`. *Coleta*: a reserva da origem vira carga na unidade
+  (`estoque.saida[m] − 1`, item em `fsmData`); *entrega*: a vaga vira `faltam[m] −
+  1`. Entre as duas a tarefa mantém só a reserva do destino, então `Tarefa` ganha
+  o estado `carregando`. O serf carrega **uma** unidade por viagem (uma tarefa =
+  uma unidade; não há dado de capacidade — se houver, `Tarefa` ganha `quantidade`).
+- **Nota**: **a distância do desempate muda aqui.** Na F09 ela é o comprimento do
+  caminho **por estrada** entre as portas de origem e destino (`distanciaPorEstrada`,
+  `src/sim/estradas.ts`; 4 direções; só a perna da entrega). A F10 substitui por
+  A* real a partir da **posição do serf** (perna até a origem + perna da entrega),
+  com `custoDeMovimento` e vizinhança 8; a interface do comparador não muda, muda a
+  função de distância. Nunca euclidiana.
+- **Nota**: **o cenário de carga da F09 diz se o JobBoard precisa de índice.**
+  Enquanto ninguém reclama, o gerador acumula tarefas `abertas` e o `sanearTarefas`
+  as revalida todo tick, com as reservas derivadas custando O(tarefas). O número de
+  tarefas do cenário com muitas obras está em `test-output/F09.json`
+  (`cargaComMuitasObras`); ler antes de decidir entre índice por prédio e deixar como
+  está.
 
 ### F11 — FSM do Laborer (construção em etapas)
 - **Escopo**: nivelar terreno → esperar material → martelar. HP subindo conforme
@@ -257,6 +284,13 @@ prédio surge sem clique do jogador.
   martelada, e a martelada (`hpPorMartelada`) é o que soma ao `hp`. Ao
   `hp === def.hp` a obra vira `'completo'` e chama `registrarTipoConstruido`
   (F12).
+- **Nota**: **"obra já nivelada" é portão da criação de tarefa.** O nível 3 da
+  escada de `delivery.json` é "material → obra **já nivelada**". A F09 ainda não
+  tem como avaliar isso (a `Obra` não tem campo de nivelamento) e o gerador cria
+  tarefa de material para **toda obra ligada por estrada**, sem predicado
+  "sempre verdadeiro". A F11 acrescenta o campo de nivelamento em `Obra` **e** o
+  portão em `gerarTarefas` (`src/sim/systems/jobs.ts`), decidindo se a entrega
+  espera o laborer terminar de nivelar.
 
 ### F12 — Desbloqueio por conclusão
 - **Escopo**: concluir um prédio libera os filhos dele na árvore do GDD. O menu
@@ -293,6 +327,11 @@ prédio surge sem clique do jogador.
   3 unidades criadas após o tempo de treino; tenta a quarta sem ouro e confirma
   rejeição. Screenshot do painel com fila cheia.
 - **Evidência**: `test-output/F13.json` + `screenshots/F13-*.png`
+- **Nota**: **o nível 2 da escada (ouro → Schoolhouse) nasce aqui.** Na F09 só o
+  nível 3 (material → obra) tem produtor; o nível 2 tem a escola, mas não tinha
+  **demanda de ouro** — quem a cria é a fila de treino. Ao acrescentar o produtor,
+  alargar `Tarefa.tipo` (hoje o literal `'material-para-obra'`) e acrescentar o tipo
+  na escada por `id` em `data/delivery.json`, sem digitar o número do nível em `.ts`.
 
 ### F14 — Especialistas ocupam prédios
 - **Escopo**: trabalhador treinado caminha até um prédio vago do seu tipo e o
@@ -314,6 +353,12 @@ prédio surge sem clique do jogador.
   gasta só do que está em **armazém**: hoje idênticos, mas quando a Quarry
   guardar saída própria o HUD pode mostrar mais pedra do que a estrada pode gastar.
   Decidir, ao dar estoque a prédio produtivo, o que o número do HUD conta.
+- **Nota**: **os níveis 4 a 7 da escada nascem aqui** (insumo → produção parada,
+  insumo → produção com estoque baixo, saída cheia → armazém, excedente → armazém):
+  a F09 só implementa o nível 3 (material → obra). Cada produtor alarga
+  `Tarefa.tipo` e referencia o nível por `id` em `data/delivery.json`. E o
+  `alertaTarefaSemCandidato_segundos` (alerta de HUD para tarefa sem candidato) só
+  passa a ter consumidor quando existir o alerta — a F09 não o usa.
 
 ### F16 — Painel de seleção e demolição
 - **Escopo**: clicar em prédio mostra nome, HP ou progresso de obra, ocupante,
