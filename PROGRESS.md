@@ -971,6 +971,162 @@ prédio sobre estrada com o motivo `'estrada'`.
 - A legibilidade da estrada (terra sobre grama) foi vista nas screenshots, não avaliada em
   telas reais nem com redes grandes.
 
+## F09 — JobBoard (2026-09-20)
+
+Só `sim/`, `data/`, `tools/` e `tests/`: **nenhum arquivo de `render/`, `ui/` ou `input/`**
+mudou (`git diff --name-only f48f6ca..HEAD` conferido), então **não precisou da exceção
+da §10** e não há nota de integração. Nada muda na tela; por isso não há screenshot novo
+da F09 — rodei os roteiros F04–F08 só como não-regressão. Na fila (aprovado pelo
+operador, antes do código): notas nos itens **F10, F11, F13 e F15** (o que cada uma
+herda do JobBoard). `Escopo`, `Aceite` e `Evidência` de nenhum item foram tocados.
+
+### Verificado (aberto e rodado nesta sessão)
+
+- `npm run verify` verde: typecheck, lint, `validate:data` (9 arquivos, 0 erros) e
+  **327 testes** (82 novos: 5 em `F09-escada`, 39 em `F09-jobboard`, 31 em
+  `F09-sistema`, 7 em `F09-estrada-reserva`). Evidência headless em
+  `test-output/F09.json`, **aberta com Read**.
+- **Aceite escrito:** 1 tarefa e 2 unidades → só uma faz `claim` (a segunda recebe
+  `tarefa-ja-reclamada`); depois do claim o disponível na origem cai 30 → 29 e o
+  reservado sobe 0 → 1 (e a vaga no destino 2 → 1, reservado 0 → 1); `liberar`
+  restaura o estado **inteiro** (`toEqual` e igualdade do JSON, byte a byte).
+- **Reserva dupla, metade a metade** (ponto 1): com 1 unidade em estoque e vaga de
+  sobra (4), o 2º claim falha por `origem-sem-recurso`; com estoque de sobra (29) e
+  vaga 1, falha por `destino-sem-vaga`; em ambos a recusa **não deixa nada reservado**
+  na outra ponta (reservado = 1 dos dois lados só pelo 1º claim) e o claim é atômico
+  (uma única atribuição de estado depois de todas as checagens).
+- **`release` em todo ramo** (ponto 2): um teste por ramo, cada um provocando a falha,
+  rodando `step` e afirmando **as duas reservas de volta a 0**, o efeito e o evento
+  `task-released`: `unidade-removida` e `pedido-da-unidade` **reabrem** a mesma tarefa;
+  `caminho-cortado`, `origem-sumiu`, `origem-sem-recurso`, `destino-sumiu` e
+  `destino-completo` (destino que encheu **e** destino que virou prédio completo)
+  **cancelam**. Mais um caso de destino com duas reclamadas e `faltam` caindo a 1: solta
+  só a de maior número.
+- **Propriedade estrutural:** RNG semeado, 3 sementes × 200 passos, `violacoesDeInvariantes`
+  vazia depois de **cada** `step` (tarefa reclamada sempre com unidade viva, origem com
+  recurso, destino que ainda é obra com vaga e caminho; nenhuma unidade com duas tarefas;
+  nunca mais tarefas que o `faltam`; `reservado ≤ disponível` nas duas pontas). Números
+  reais de F09.json: 38 claims e liberações `unidade-removida` 10, `pedido-da-unidade` 6,
+  `caminho-cortado` 10, `origem-sumiu` 4, `origem-sem-recurso` 2, `destino-sumiu` 1,
+  `destino-completo` 3. Uma asserção **permanente** exige ≥ 1 de cada ramo.
+- **Distância** (ponto 3): no cenário adversarial, a obra "perto" está a 4 em linha reta
+  e a **21** por estrada; a "longe" a 15,03 em reta e a **17** por estrada. `reclamarMelhor`
+  escolhe a "longe", mesmo com número de tarefa maior. `t2` vem antes de `t10`
+  (comparação numérica do `numero`, não da string).
+- **Save/load** (ponto 5): `compararComESemSave` passa sem o gancho novo, e **com uma
+  reserva pendente atravessando o save** (tarefa reclamada no tick 3, save no tick 7,
+  JSON final igual byte a byte, reserva ainda 1 na origem). O `JobBoard` é JSON puro.
+- **A estrada respeita a reserva:** com 5 de pedra na saída e 2 reservadas, uma estrada
+  de 4 tiles é recusada com `sem-pedra` e uma de 3 passa deixando exatamente a pedra
+  reservada; esgotado o disponível da saída o débito vai à `entrada`; um armazém com a
+  saída toda reservada é pulado. Os testes da F08 seguem verdes (são o alarme).
+- **Não-regressão visual:** `shot -- F04`, `F05b`, `F06`, `F07` e `F08` passaram; abri
+  `F08-2-estrada-desenhada.png` (Pedra **21** = 30 − 9 tiles, igual à F08).
+
+### Probe, não cobertura contínua (CLAUDE.md §8)
+
+Prova por mutação, **evidência desta sessão**, não proteção permanente: (1) trocar a
+distância por euclidiana reprovou o teste da volta (Task 3); (2) em `sanearTarefas`,
+nunca detectar `caminho-cortado` → 5 falhas; nunca soltar o excedente de reclamadas →
+6 falhas; ignorar unidade removida → 5 falhas (arquivo restaurado e conferido com `cmp`).
+Demonstra que os testes discriminam hoje. A proteção permanente são os próprios testes
+(um por ramo + a propriedade com a asserção de cobertura) rodando no `verify`.
+
+**Um tropeço que o próprio teste pegou:** a 1ª versão da propriedade só destruía o mundo
+(nada era reposto), e a asserção de cobertura mostrou **`caminho-cortado` = 0** em 600
+passos (e `pedido-da-unidade` = 0 porque eu não o contava). O limiar `> 20` de claims que
+eu tinha chutado era arbitrário e caiu por isso; reescrevi o caos com destruição
+**dirigida** ao que uma tarefa reclamada usa (unidade, armazém, porta, obra) e ações de
+**reposição** (rua, obra, armazém, serf, estoque). Não afrouxei a asserção: ela exige
+cada ramo ≥ 1. Fragilidade que registro: `destino-sumiu` aparece **1 vez** (semente
+fixa, então determinístico; se o caos mudar e ele zerar, o teste diz qual ramo faltou).
+
+### O contrato do `JobBoard` (herdado por F10, F11, F13 e F15)
+
+`GameState.jobs: { tarefas: Colecao<Tarefa> }`. `Tarefa`: `id` (`t<numero>`, do **mesmo**
+contador `proximoId` de prédios e unidades), `numero`, `tipo` (hoje só
+`'material-para-obra'`), `mercadoria`, `origem` (armazém), `destino` (obra), `estado`
+(`'aberta' | 'reclamada'`), `reclamadaPor` (`string | null`, nunca `undefined`).
+
+- **A reserva é DERIVADA das tarefas `reclamada`, não um campo** (`sim/reservas.ts`):
+  `reservadoNaOrigem`/`reservadoNoDestino` contam tarefas reclamadas; `disponivelNaOrigem`
+  = `saida − reservado` (só a gaveta `saida`, só armazém completo); `vagaNoDestino` =
+  `faltam − reservado`. Uma tarefa **aberta não reserva nada**. Como a reserva só existe
+  *através* da tarefa, `liberar` devolve as duas metades **de uma vez** e não há contador
+  para dessincronizar (a lição da F05b: uma fonte de verdade); e o save/load é de graça.
+- **API** (`sim/jobs.ts`): `criarTarefa`, `reclamar` (atômico; recusa devolve só o motivo),
+  `liberar(state, id, motivo)`, `tarefasEmOrdem`, `reclamarMelhor`, `nivelDoTipo`,
+  `distanciaDaTarefa`. **Nada é `Command`:** o jogador não manda serf (§1).
+- **`sanearTarefas` roda todo tick** (depois dos comandos, antes de `gerarTarefas`) e
+  revalida cada tarefa; o release **não depende de alguém lembrar de chamá-lo**. A F10 só
+  precisa chamar `liberar('pedido-da-unidade')` nos estados de erro da FSM do serf.
+- **Reabrir × cancelar:** falha só da unidade reabre a mesma tarefa; falha de origem,
+  caminho ou destino a **cancela**, e o gerador recria com a origem certa (id novo).
+- **Ordem de escolha:** `(nível lido do dado pelo id, distância por estrada, numero)`.
+
+### Decidido (e por quê)
+
+- **Um nível da escada de prioridade, não dois** (ponto 4). Contei o nível 2 (ouro →
+  escola) como alcançável porque a escola existe; o **operador corrigiu**: não há demanda
+  de ouro até a F13. Só o **nível 3** (material → obra) tem produtor. Os outros seis
+  ficam **só no dado**, com `id` em cada linha de `delivery.json` (regra nova de
+  `validate:data`: ids e níveis únicos e contíguos, teste permanente), para o código
+  referenciar `'material-para-obra'` sem o literal `3` (invariante 3). Mesma regra do
+  `'terreno'` da F06: sem produtor, não se implementa.
+- **Distância = caminho por estrada entre as portas** (ponto 3, aprovado): BFS em 4
+  direções sobre o grafo da F08, entre a borda sul de cada prédio, memoizado pela
+  referência de `estradas`. **Mede só a perna origem → destino da entrega**; não mede
+  unidade → origem (as unidades nascem fora da estrada, e medir isso pede A* com custo de
+  terreno). **A F10 substitui** por A* a partir da posição do serf; a nota está no item
+  F10 do `BUILD_PLAN.md`. Não inventei pathfinding.
+- **Uma tarefa = uma unidade de recurso** (sem campo `quantidade`): o GDD diz "a unidade
+  de recurso" e não há dado de capacidade de carga do serf. Saída, se mudar: `Tarefa`
+  ganha `quantidade` e as somas passam a somá-la. Vai em "Perguntas em aberto".
+- **Origem da tarefa gerada** = armazém completo, **ligado por estrada**, com `disponível > 0`
+  e de menor caminho (empate: ordem em `predios`). O gerador **não** desconta as tarefas
+  abertas do estoque (pode haver mais tarefas abertas que estoque; o `claim` é quem
+  recusa). Tarefa **aberta** cuja origem ficou sem nada livre é cancelada e recriada de
+  outro armazém, se houver.
+- **O débito de pedra da estrada (F08) só tira do disponível** — a nota da própria F08
+  exigia. Toca `pedraDisponivel` e `debitarPedra`; a `entrada` não é reservável.
+- **Decisão E do operador — não otimizar; registrar o número.** Cenário de carga: **20
+  obras** plantadas ao longo de uma rua, estoque de sobra, **300 ticks, ninguém
+  reclamando** (o jogo real antes da F10). Resultado em F09.json: **100 tarefas geradas,
+  máximo simultâneo 100, 100 no fim** — 5 por obra (uma pedreira pede 3 de tábua e 2 de
+  pedra), **sem churn** (cada tarefa foi criada uma única vez). Invariantes checadas a
+  cada tick nos primeiros 5 e a cada 25. **É o número que a F10 usa para decidir** se o
+  índice por (prédio, mercadoria) é necessário. Não é um veredito: não medi tempo.
+
+### Não feito, de propósito (fora do Escopo da F09)
+
+- **`concluir`/entrega** e o ciclo em duas fases (coleta consome a reserva da origem →
+  carga na unidade; entrega consome a vaga → `faltam − 1`): F10, com o estado
+  `carregando`. Um `concluir` "teleporte" seria função sem consumidor e fixaria um
+  contrato errado.
+- Níveis **1, 2, 4, 5, 6 e 7** da escada (F13, F15, F20), `alertaTarefaSemCandidato` e
+  `maxSerfsNoMarketplace`: continuam só no dado.
+- O portão **"obra já nivelada"** do nível 3: a `Obra` da F07 não tem campo de
+  nivelamento. Não criei predicado "sempre verdadeiro"; a F11 acrescenta o campo **e** o
+  portão em `gerarTarefas` (nota no item F11). Hoje o gerador cria tarefa para toda obra
+  ligada por estrada.
+- **A ordenação por nível não é exercitável** com um único nível produzido; o comparador a
+  tem (uma linha) e o nível vem do dado (teste com dado injetado), mas não montei
+  tarefas de tipos que ninguém produz só para fingir cobertura.
+
+### Hipóteses, não fatos (não verifiquei)
+
+- **Custo por tick.** Pela leitura do código, `sanearTarefas`/`gerarTarefas` são O(n²) em
+  nº de tarefas (cada reserva derivada é O(n) e é consultada por tarefa). Com 100
+  tarefas o teste de 300 ticks roda dentro de uma suíte inteira de ~2,5 s, mas **não
+  medi** nem testei 1.000 tarefas.
+- **Reabrir a mesma tarefa quando a unidade morre** assume que a carga (se já coletada)
+  se perde ou é tratada pela F10; a F09 não tem fase de carga para testar isso.
+- O cancelamento de tarefa aberta por origem sem nada livre **poderia oscilar**
+  (cancelar/recriar) se o estoque ficar rodando em torno de zero; o caos aleatório não
+  mostrou violação, mas não é um teste dirigido a isso.
+- O comportamento com **serfs reais** (F10) — filas, várias unidades disputando a mesma
+  origem — só existe como propriedade sobre claims sorteados, não como jogo.
+
 ## Perguntas em aberto
 
 Do que sobrou de fato (§14: implementei a interpretação mais conservadora e segui):
@@ -980,3 +1136,7 @@ Do que sobrou de fato (§14: implementei a interpretação mais conservadora e s
 2. **O que o número de pedra do HUD conta** quando um prédio produtivo tiver estoque
    (`estoqueTotal` soma todos; a estrada gasta só de armazém). Registrado na nota do F15;
    hoje os dois coincidem.
+3. **Quantas unidades um serf carrega por viagem.** O GDD diz "a unidade de recurso"
+   (singular) e não há dado de capacidade de carga. Implementei **uma tarefa = uma
+   unidade**. Se o serf carregar mais, `Tarefa` ganha `quantidade` e as somas de
+   reserva passam a somá-la — não muda o contrato do `claim`/`release`.

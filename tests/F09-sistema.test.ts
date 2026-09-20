@@ -1,19 +1,20 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterAll } from 'vitest';
 import { gameData } from '../src/sim/data';
 import { createInitialState } from '../src/sim/state';
 import type { GameEvent, GameState, PredioCompleto, Tarefa } from '../src/sim/state';
 import type { Command } from '../src/sim/commands';
 import { createRng, nextInt } from '../src/sim/rng';
 import { step } from '../src/sim/tick';
-import { tilesDaPorta, tilesOrdenados } from '../src/sim/estradas';
+import { distanciaEntrePredios, tilesDaPorta, tilesOrdenados } from '../src/sim/estradas';
 import { custoDoPredio } from '../src/sim/systems/build';
-import { liberar, reclamar, reclamarMelhor } from '../src/sim/jobs';
+import { criarTarefa, liberar, reclamar, reclamarMelhor, tarefasEmOrdem } from '../src/sim/jobs';
 import type { MotivoDeLiberacao } from '../src/sim/jobs';
-import { reservadoNaOrigem, reservadoNoDestino } from '../src/sim/reservas';
+import { disponivelNaOrigem, reservadoNaOrigem, reservadoNoDestino, vagaNoDestino } from '../src/sim/reservas';
 import { compararComESemSave } from './helpers/determinism';
 import { violacoesDeInvariantes } from './helpers/jobs-invariantes';
+import { gravarEvidencia } from './helpers/evidence';
 import {
-  armazemDoCenario, cenarioLigado, comArmazemCompleto, comEstoqueNaSaida, comEstradas, comObra,
+  armazemDoCenario, cenarioDeVolta, cenarioLigado, comArmazemCompleto, comEstoqueNaSaida, comEstradas, comObra,
   comPedraNaSaida, comTarefas, inicial, linhaH, linhaV, semAUnidade, semOPredio, serfsDoCenario, tarefaDe, tile,
 } from './helpers/jobs-cenario';
 
@@ -391,8 +392,10 @@ const coberturaVazia = (): Cobertura => ({
   },
 });
 
+export const coberturaDoCaos = coberturaVazia();
+
 describe('F09 — propriedade estrutural: eventos aleatorios, invariantes depois de CADA tick', () => {
-  const cobertura = coberturaVazia();
+  const cobertura = coberturaDoCaos;
 
   it.each([1, 2, 3])('semente %i: 200 passos sem uma unica violacao', (semente) => {
     rodarCaos(semente, 200, cobertura);
@@ -452,21 +455,21 @@ describe('F09 — cenario de carga: muitas obras simultaneas e ninguem reclamand
 
 // --- determinismo e save/load com reserva pendente ---
 
-describe('F09 — determinismo e save/load com reservas pendentes', () => {
-  const plantarERuar = (t: number): Command[] => {
-    if (t !== 0) return [];
-    return [
-      { type: 'PlaceBlueprint', buildingId: 'quarry', gx: 26, gy: 34 },
-      { type: 'PlaceRoad', tiles: [tile(29, 33), tile(29, 34), tile(29, 35), tile(29, 36), tile(28, 36)] },
-    ];
-  };
-  /** No tick 3, um serf reclama a melhor tarefa (na F10 isso sera a FSM do serf). */
-  const reclamaNoTick3 = (estado: GameState): GameState => {
-    if (estado.tick !== 3) return estado;
-    const r = reclamarMelhor(estado, serf1);
-    return r.ok ? r.state : estado;
-  };
+const plantarERuar = (t: number): Command[] => {
+  if (t !== 0) return [];
+  return [
+    { type: 'PlaceBlueprint', buildingId: 'quarry', gx: 26, gy: 34 },
+    { type: 'PlaceRoad', tiles: [tile(29, 33), tile(29, 34), tile(29, 35), tile(29, 36), tile(28, 36)] },
+  ];
+};
+/** No tick 3, um serf reclama a melhor tarefa (na F10 isso sera a FSM do serf). */
+const reclamaNoTick3 = (estado: GameState): GameState => {
+  if (estado.tick !== 3) return estado;
+  const r = reclamarMelhor(estado, serf1);
+  return r.ok ? r.state : estado;
+};
 
+describe('F09 — determinismo e save/load com reservas pendentes', () => {
   it('compararComESemSave continua passando SEM o gancho (o helper canonico da F02)', () => {
     const { direto, comSave } = compararComESemSave({ seed: 1, totalTicks: 30, saveAtTick: 15 });
     expect(comSave).toBe(direto);
@@ -512,5 +515,167 @@ describe('F09 — determinismo e save/load com reservas pendentes', () => {
     const todos = [...e.predios.ordem, ...e.unidades.ordem, ...e.jobs.tarefas.ordem];
     expect(new Set(todos).size).toBe(todos.length);
     expect(e.jobs.tarefas.ordem.length).toBeGreaterThan(0);
+  });
+});
+
+// --- a evidencia: recalcula os cenarios (nao copia asserts) e grava test-output/F09.json ---
+
+/** Uma reclamacao que tem que dar certo, para montar os cenarios da evidencia. */
+function reclamarOuFalhar(estado: GameState, tarefa: string, serf: string): GameState {
+  const r = reclamar(estado, tarefa, serf);
+  if (!r.ok) throw new Error(`evidencia: claim recusado '${r.motivo}'`);
+  return r.state;
+}
+
+/** Cria `n` tarefas abertas de pedra (armazem -> obra-a) pela API real. */
+function comTarefasDePedra(estado: GameState, n: number): { estado: GameState; ids: string[] } {
+  let atual = estado;
+  const ids: string[] = [];
+  for (let i = 0; i < n; i++) {
+    const c = criarTarefa(atual, { mercadoria: 'stone', origem: armazem.id, destino: 'obra-a' });
+    atual = c.state;
+    ids.push(c.id);
+  }
+  return { estado: atual, ids };
+}
+
+const idNo = (ids: readonly string[], i: number): string => {
+  const id = ids[i];
+  if (id === undefined) throw new Error(`evidencia: faltou a tarefa ${i}`);
+  return id;
+};
+
+function tabelaDeRamos(): Record<string, unknown>[] {
+  // cada provocacao devolve o estado E os eventos que ela produziu (o `liberar` chamado
+  // direto os devolve a parte; os que passam pelo `step` ficam em `state.events`)
+  type Resultado = { readonly state: GameState; readonly events: readonly GameEvent[] };
+  const pelosStep = (e: GameState): Resultado => ({ state: e, events: e.events });
+  const provocacoes: readonly (readonly [MotivoDeLiberacao, (e: GameState) => Resultado])[] = [
+    ['unidade-removida', (e) => pelosStep(step(semAUnidade(e, serf1), []))],
+    ['caminho-cortado', (e) => pelosStep(step(e, [{ type: 'DemolishRoad', tiles: [tile(29, 35)] }]))],
+    ['origem-sumiu', (e) => pelosStep(step(semOPredio(e, armazem.id), []))],
+    ['origem-sem-recurso', (e) => pelosStep(step(comPedraNaSaida(e, armazem.id, 0), []))],
+    ['destino-sumiu', (e) => pelosStep(step(semOPredio(e, 'obra-a'), []))],
+    ['destino-completo', (e) => pelosStep(step(comObra(semOPredio(e, 'obra-a'), 'obra-a', { gx: 26, gy: 34, faltam: { stone: 0 } }), []))],
+    ['pedido-da-unidade', (e) => liberar(e, e.jobs.tarefas.ordem[0] ?? 't?', 'pedido-da-unidade')],
+  ];
+  return provocacoes.map(([motivo, provocar]) => {
+    const { estado, tarefa } = comUmaTarefaReclamada();
+    const { state: depois, events } = provocar(estado);
+    const evento = events.find((e) => e.type === 'task-released');
+    const aindaExiste = depois.jobs.tarefas.porId[tarefa];
+    return {
+      motivo,
+      reservaNaOrigemAntes: reservadoNaOrigem(estado, armazem.id, 'stone'),
+      reservaNoDestinoAntes: reservadoNoDestino(estado, 'obra-a', 'stone'),
+      reservaNaOrigemDepois: reservadoNaOrigem(depois, armazem.id, 'stone'),
+      reservaNoDestinoDepois: reservadoNoDestino(depois, 'obra-a', 'stone'),
+      evento: evento?.type === 'task-released' ? { motivo: evento.motivo, resultado: evento.resultado } : null,
+      tarefaDepois: aindaExiste ? aindaExiste.estado : 'removida',
+      invariantesViolacoes: violacoesDeInvariantes(depois).length,
+    };
+  });
+}
+
+afterAll(() => {
+  // aceite (BUILD_PLAN): 1 tarefa e 2 unidades, so uma faz claim
+  const criada = criarTarefa(cenarioLigado(), { mercadoria: 'stone', origem: armazem.id, destino: 'obra-a' });
+  const base = criada.state;
+  const primeira = reclamarOuFalhar(base, criada.id, serf1);
+  const segunda = reclamar(primeira, criada.id, serf2);
+  const liberada = liberar(primeira, criada.id, 'pedido-da-unidade').state;
+
+  // reserva dupla, metade a metade
+  const origemLimita = comTarefasDePedra(comPedraNaSaida(cenarioLigado({ stone: 5 }), armazem.id, 1), 2);
+  const origem1 = reclamarOuFalhar(origemLimita.estado, idNo(origemLimita.ids, 0), serf1);
+  const destinoLimita = comTarefasDePedra(cenarioLigado({ stone: 1 }), 2);
+  const destino1 = reclamarOuFalhar(destinoLimita.estado, idNo(destinoLimita.ids, 0), serf1);
+
+  // distancia: a prova de que nunca e euclidiana
+  const volta = cenarioDeVolta();
+  const s = armazemDoCenario(volta);
+  const perto = volta.predios.porId.perto;
+  const longe = volta.predios.porId.longe;
+  if (!perto || !longe) throw new Error('evidencia: cenario de volta sem perto/longe');
+  const euclid = (a: { gx: number; gy: number }, b: { gx: number; gy: number }): number => Math.hypot(a.gx - b.gx, a.gy - b.gy);
+  const ordemDaVolta = tarefasEmOrdem(comTarefas(volta, [tarefaDe({ numero: 1, destino: 'perto' }), tarefaDe({ numero: 2, destino: 'longe' })]));
+  const ordemNumerica = tarefasEmOrdem(comTarefas(cenarioLigado(), [tarefaDe({ numero: 10 }), tarefaDe({ numero: 2 })]));
+
+  // save/load com uma reserva pendente atravessando o save
+  const semGancho = compararComESemSave({ seed: 1, totalTicks: 30, saveAtTick: 15 });
+  const comGancho = compararComESemSave({ seed: 1, totalTicks: 14, saveAtTick: 7, comandosNoTick: plantarERuar, antesDoStep: reclamaNoTick3 });
+  const finalComGancho = JSON.parse(comGancho.direto) as GameState;
+  const reclamadasNoFinal = Object.values(finalComGancho.jobs.tarefas.porId).filter((t) => t.estado === 'reclamada');
+
+  const nivelDoCodigo = gameData.entrega.prioridades.find((p) => p.id === 'material-para-obra');
+  gravarEvidencia('F09', {
+    feature: 'F09-jobboard',
+    // VERIFICADO por teste headless: o aceite escrito no BUILD_PLAN.md.
+    aceite: {
+      umaTarefaDuasUnidades: {
+        primeiraReclamou: primeira.jobs.tarefas.porId[criada.id]?.reclamadaPor === serf1,
+        segundaRecusada: segunda,
+        tarefasReclamadas: primeira.jobs.tarefas.ordem.filter((id) => primeira.jobs.tarefas.porId[id]?.estado === 'reclamada').length,
+      },
+      aposClaim: {
+        disponivelNaOrigem: { antes: disponivelNaOrigem(base, armazem.id, 'stone'), depois: disponivelNaOrigem(primeira, armazem.id, 'stone') },
+        reservadoNaOrigem: { antes: reservadoNaOrigem(base, armazem.id, 'stone'), depois: reservadoNaOrigem(primeira, armazem.id, 'stone') },
+        vagaNoDestino: { antes: vagaNoDestino(base, 'obra-a', 'stone'), depois: vagaNoDestino(primeira, 'obra-a', 'stone') },
+        reservadoNoDestino: { antes: reservadoNoDestino(base, 'obra-a', 'stone'), depois: reservadoNoDestino(primeira, 'obra-a', 'stone') },
+      },
+      releaseRestauraExatamente: JSON.stringify(liberada) === JSON.stringify(base),
+    },
+    // Ponto 1: reserva DUPLA. Cada metade limita sozinha e a recusa nao deixa nada reservado na outra ponta.
+    reservaDupla: {
+      soAOrigemLimita: {
+        disponivelNaOrigemDepoisDoPrimeiro: disponivelNaOrigem(origem1, armazem.id, 'stone'),
+        vagaNoDestinoDepoisDoPrimeiro: vagaNoDestino(origem1, 'obra-a', 'stone'),
+        segundoClaim: reclamar(origem1, idNo(origemLimita.ids, 1), serf2),
+        reservaNoDestinoDepoisDaRecusa: reservadoNoDestino(origem1, 'obra-a', 'stone'),
+      },
+      soODestinoLimita: {
+        vagaNoDestinoDepoisDoPrimeiro: vagaNoDestino(destino1, 'obra-a', 'stone'),
+        disponivelNaOrigemDepoisDoPrimeiro: disponivelNaOrigem(destino1, armazem.id, 'stone'),
+        segundoClaim: reclamar(destino1, idNo(destinoLimita.ids, 1), serf2),
+        reservaNaOrigemDepoisDaRecusa: reservadoNaOrigem(destino1, armazem.id, 'stone'),
+      },
+    },
+    // Ponto 2: release em TODO ramo; cada linha tambem e um teste, e a propriedade estrutural cobre as combinacoes.
+    ramosDeFalha: tabelaDeRamos(),
+    propriedadeEstrutural: {
+      sementes: [1, 2, 3],
+      passosPorSemente: 200,
+      claimsFeitos: coberturaDoCaos.claims,
+      liberacoesPorMotivo: coberturaDoCaos.liberacoes,
+      invariantes: 'violacoesDeInvariantes vazia depois de CADA step (tests/helpers/jobs-invariantes.ts)',
+    },
+    // Ponto 3: distancia REAL por estrada, nunca euclidiana; o que a F10 substitui esta no BUILD_PLAN.
+    distancia: {
+      medida: 'caminho por estrada (BFS, 4 direcoes) entre as portas de origem e destino; so a perna da entrega',
+      euclidiana: { ateAPerto: euclid(s, perto), ateALonge: euclid(s, longe) },
+      porEstrada: { ateAPerto: distanciaEntrePredios(volta, s, perto), ateALonge: distanciaEntrePredios(volta, s, longe) },
+      ordemEscolhida: ordemDaVolta.map((t) => t.destino),
+      desempatePorNumeroNumerico: ordemNumerica.map((t) => t.numero),
+      aF10Substitui: 'A* real a partir da posicao do serf (perna ate a origem + perna da entrega), com custo de terreno',
+    },
+    // Ponto 4: so o nivel 3 tem produtor; os demais so existem no dado.
+    escada: {
+      nivelImplementado: { id: 'material-para-obra', nivelNoDado: nivelDoCodigo?.nivel ?? null },
+      soNoDado: gameData.entrega.prioridades.filter((p) => p.id !== 'material-para-obra').map((p) => ({ nivel: p.nivel, id: p.id })),
+      ordenacaoPorNivelExercitavel: false,
+      motivo: 'com um unico nivel produzido nao ha como exercitar a ordenacao por nivel sem fabricar tarefas que ninguem produz',
+    },
+    // Ponto 5: JobBoard em GameState.jobs; a reserva e derivada, entao atravessa o save/load de graca.
+    saveLoad: {
+      compararComESemSaveSemGancho: semGancho.comSave === semGancho.direto,
+      comReservaPendenteAtravessandoOSave: comGancho.comSave === comGancho.direto,
+      tarefasReclamadasNoFinal: reclamadasNoFinal.length,
+      reservaNaOrigemNoFinal: reclamadasNoFinal.map((t) => reservadoNaOrigem(finalComGancho, t.origem, t.mercadoria)),
+    },
+    // Decisao E do operador: o numero que dira, na F10, se o indice por predio e necessario. NAO otimizado.
+    cargaComMuitasObras: {
+      ...metricasDeCarga,
+      observacao: 'sem ninguem reclamando (o jogo real antes da F10); reservas derivadas custam O(tarefas) por consulta; sem medida de tempo',
+    },
   });
 });

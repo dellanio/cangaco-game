@@ -134,3 +134,19 @@ export function semAUnidade(estado: GameState, id: string): GameState {
   delete porId[id];
   return { ...estado, unidades: { porId, ordem: estado.unidades.ordem.filter((x) => x !== id) } };
 }
+
+/**
+ * O caso adversarial da distancia euclidiana. O armazem tem a porta em y=33
+ * (x 29..31). A obra PERTO fica logo abaixo dele, mas a unica estrada que chega a
+ * porta dela da uma volta grande; a obra LONGE fica muito mais ao sul, mas tem uma
+ * estrada quase reta. Em linha reta a PERTO ganha; pelo caminho a pe, a LONGE.
+ */
+export function cenarioDeVolta(): GameState {
+  let estado = comObra(inicial, 'perto', { gx: 29, gy: 34, faltam: { stone: 1 } }); // porta y=36, x 29..31
+  estado = comObra(estado, 'longe', { gx: 28, gy: 45, faltam: { stone: 1 } }); // porta y=47, x 28..30
+  const voltaGrande = [
+    ...linhaH(29, 40, 33), ...linhaV(40, 34, 36), ...linhaH(31, 39, 36), // porta (31,36) so por aqui
+  ];
+  const retaQuase = [tile(28, 33), tile(27, 33), ...linhaV(27, 34, 47), tile(28, 47)];
+  return comEstradas(estado, [...voltaGrande, ...retaQuase]);
+}

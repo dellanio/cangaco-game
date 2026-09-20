@@ -8,7 +8,7 @@
   "F06-menu-build-planta": { "passes": true },
   "F07-posicionar-planta": { "passes": true },
   "F08-estradas": { "passes": true },
-  "F09-jobboard": { "passes": false },
+  "F09-jobboard": { "passes": true },
   "F10-serf-fsm": { "passes": false },
   "F11-laborer-construcao": { "passes": false },
   "F12-desbloqueio": { "passes": false },
