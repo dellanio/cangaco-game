@@ -1,7 +1,7 @@
 ---
 name: evaluator
 description: Revisa uma feature concluída contra o critério de aceite e a rubrica visual. Só leitura e navegador. Nunca escreve código.
-tools: Read, Glob, Grep, Bash, mcp__playwright__*
+
 ---
 
 # Avaliador do cangaço
