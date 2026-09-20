@@ -142,10 +142,23 @@ prédio surge sem clique do jogador.
 - **Aceite**: teste que emite `PlaceBlueprint` e confirma que o estado tem uma
   obra com os materiais corretos vindos de `buildings.json`, e que um segundo
   comando na mesma posição é rejeitado.
-- **Evidência**: `test-output/F07.json`
+- **Evidência**: `test-output/F07.json` + `screenshots/F07-*.png`
 - **Atenção**: `Command` é `never` desde a F02. Ao acrescentar o primeiro
   membro, escreva o `switch` em `step()` com `default` atribuindo a `never`
   — a checagem de exaustividade não existe hoje e nada vai avisar.
+- **Nota**: esta é uma **feature de integração** — é a exceção explícita que a
+  §10 do CLAUDE.md exige para tocar `src/sim/`, `src/render/`, `src/input/` e o
+  laço externo (`main.ts`) na mesma feature. Cada camada recebe só o que é dela:
+  `sim/` ganha o comando, o `switch` do `step()` e o formato da obra; `input/`
+  transforma o clique em comando; `render/` desenha a marcação no chão; a
+  `Sessão` (`src/sessao.ts`) e o `main.ts` ligam os três. Nenhuma regra de jogo
+  muda de lado. Nenhuma outra feature da fila herda esta permissão: ela vale para
+  a F07 e só.
+- **Nota**: a fila de comandos e a `Sessão` (dona do `GameState` e da fila)
+  nascem aqui. O disparo é **provisório e por comando**: cada clique enfileira e
+  roda um `passo()`, então o `tick` avança 1 por comando até a F11, que traz o
+  relógio de 10 Hz e passa a chamar `passo()` num timer. A mudança da F11 é só
+  quem dispara; a fila e a `Sessão` não mudam.
   
 ### F08 — Estradas
 - **Escopo**: ferramenta de estrada com arrasto tile a tile. Custo em stone por
