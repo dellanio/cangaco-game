@@ -1,6 +1,8 @@
 import type { GameState, Predio, Unidade } from './state';
 import type { GameData } from './data/types';
 import { gameData } from './data';
+import { caixaDoPredio } from './footprint';
+import type { CaixaEmTiles } from './footprint';
 
 /**
  * Agregados puros sobre o `GameState`. Vivem aqui, e nao em `ui/`, porque
@@ -112,26 +114,12 @@ export interface PontoEmTiles {
   readonly gy: number;
 }
 
-interface CaixaEmTiles {
-  readonly x0: number;
-  readonly y0: number;
-  readonly x1: number;
-  readonly y1: number;
-}
-
 function centroDeCaixas(caixas: readonly CaixaEmTiles[]): PontoEmTiles {
   const x0 = Math.min(...caixas.map((c) => c.x0));
   const y0 = Math.min(...caixas.map((c) => c.y0));
   const x1 = Math.max(...caixas.map((c) => c.x1));
   const y1 = Math.max(...caixas.map((c) => c.y1));
   return { gx: (x0 + x1) / 2, gy: (y0 + y1) / 2 };
-}
-
-function caixaDoPredio(predio: Predio, dados: GameData): CaixaEmTiles | null {
-  const def = dados.predios.find((p) => p.id === predio.tipo);
-  const [largura, altura] = def?.tamanho ?? [];
-  if (largura === undefined || altura === undefined) return null;
-  return { x0: predio.gx, y0: predio.gy, x1: predio.gx + largura, y1: predio.gy + altura };
 }
 
 function caixaDaUnidade(unidade: Unidade): CaixaEmTiles {
