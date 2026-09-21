@@ -858,6 +858,8 @@ a proteção permanente é a atribuição a `never`, checada a cada `verify`.
   no `GameState` — ao preço de uma segunda fonte de verdade.)
 - **Conectividade em 4 direções.** O GDD não responde; o arrasto é 4-conectado e diagonal
   seria um atalho por dentro de dois cantos.
+  *(Atualização pós-F10: o GDD **não** trazia a linha das diagonais e agora traz — ver "Ajuste
+  pós-F10". A decisão é do operador: 4 direções na Fase A, diagonal em `IDEIAS.md`.)*
 - **Determinismo:** os ids de componente vêm dos tiles **ordenados** (`gy`, depois `gx`),
   nunca de `Object.keys` na ordem de inserção; o índice depende só do *conjunto*.
 - **Só o que está de pé.** Se a F11 fizer laborer construir estrada, a "estrada planejada"
@@ -1081,7 +1083,7 @@ contador `proximoId` de prédios e unidades), `numero`, `tipo` (hoje só
   F10 do `BUILD_PLAN.md`. Não inventei pathfinding.
 - **Uma tarefa = uma unidade de recurso** (sem campo `quantidade`): o GDD diz "a unidade
   de recurso" e não há dado de capacidade de carga do serf. Saída, se mudar: `Tarefa`
-  ganha `quantidade` e as somas passam a somá-la. Vai em "Perguntas em aberto".
+  ganha `quantidade` e as somas passam a somá-la. **Decidido pelo operador** (ver "Ajuste pós-F10").
 - **Origem da tarefa gerada** = armazém completo, **ligado por estrada**, com `disponível > 0`
   e de menor caminho (empate: ordem em `predios`). O gerador **não** desconta as tarefas
   abertas do estoque (pode haver mais tarefas abertas que estoque; o `claim` é quem
@@ -1316,16 +1318,59 @@ Registradas como decisão dele, cada uma com o porquê e a saída que ele deixou
   única porta com estrada); na screenshot final só se vê um. Não avaliei se isso lê bem em jogo.
 - O roteiro visual foi exercitado só no Chromium headless do Playwright, a 1280×720.
 
+## Ajuste pós-F10 — HUD lê os armazéns, e as três últimas perguntas decididas (2026-09-21)
+
+Não é uma feature da fila: é um ajuste pedido pelo operador. Toca `src/sim/selectors.ts` **e**
+`src/ui/hud.ts` porque o operador **mandou explicitamente** criar o seletor em `sim/` e fazer o HUD
+usá-lo (mesmo molde do "Ajuste pós-F06"). Nenhuma regra de jogo mudou de lado, nada em `render/` ou
+`input/`, nenhum dado mudou.
+
+### Decisões do operador (as três perguntas que sobravam; saíram de "Perguntas em aberto")
+
+1. **Conectividade: 4 direções durante a Fase A.** Conferi o GDD §5.4 como pedido: a linha da
+   pesquisa original, "estradas diagonais funcionam se nada bloquear a passagem" **[fonte]**, **não
+   estava lá**, e `git log -S"diagona" -- docs/GDD.md` não mostra nenhum commit que a tenha tido —
+   nem outro documento do repo a traz. Por isso **restaurei a linha** em §5.4 e acrescentei, ao lado,
+   a divergência marcada **[proposta]**: 4 direções por decisão do operador. **A marca `[fonte]` é a
+   palavra do operador, sem rastro que eu consiga verificar no repositório.** Com a linha no GDD,
+   isto deixa de ser lacuna e passa a ser **divergência consciente do original**. Acrescentei ao
+   `IDEIAS.md`: "estrada diagonal, fidelidade ao original — exige interpolação diagonal no arrasto,
+   render inclinado e isConnected com 8 vizinhos sem cortar quina", mais uma frase minha e
+   verificável: o A\* por estrada da F10 só liga o que `isConnected` liga, e o teste de equivalência
+   em `tests/F10-astar.test.ts` prende os dois. **Não implementei.** (Na F08 escrevi "o GDD não
+   responde": era verdade sobre o GDD que havia; a nota da F08 ganhou uma atualização.)
+2. **O HUD mostra o estoque dos ARMAZÉNS, não `estoqueTotal`.** O número precisa prever o que o
+   jogador pode gastar; a estrada e as obras só tiram de armazém. Novo seletor `estoqueDosArmazens`
+   (`sim/selectors.ts`): as duas gavetas dos armazéns completos, e só deles. `estoqueTotal` continua
+   existindo (o resumo do `npm run sim`, `comidaTotal` e vários testes o usam). **Reservado não é
+   descontado** (a pedra ainda está lá; a prévia da estrada já explica a recusa); mercadoria em
+   trânsito (na mão de um serf) e obra não contam. Nota do item F15 atualizada com a decisão.
+3. **Uma unidade por viagem — decisão, não pergunta.** É o que o sprite do serf carregando pressupõe
+   (GDD §10, "o sprite carrega visivelmente o recurso que está levando", conferido na linha 550) e o
+   que o aceite da F10 já conta. Se um dia carregar mais, `Tarefa` ganha `quantidade` (saída pronta,
+   sem mudar o contrato de `reclamar`/`liberar`). Nota do item F10 ajustada.
+
+### Verificado
+
+- Os dois seletores são **idênticos no estado inicial** (`toEqual`, e iguais a `estadoInicial.estoque`
+  do dado): é a prova de que a troca não mudou nada visível hoje. `npm run shot -- F05b` passa **sem
+  alteração no roteiro**.
+- Onde divergem: com uma pedreira **completa** de estoque próprio (`saida: { stone: 7, ... }`),
+  `estoqueTotal` sobe 7 e `estoqueDosArmazens` **não muda**. Testes em
+  `tests/F05b-hud-armazens.test.ts` (7 do seletor: divergência, duas gavetas, vários armazéns, obra,
+  reservado, trânsito, identidade; 2 do HUD).
+- **A fiação do HUD é provada por comportamento, não por texto do fonte:** um `document` falso do
+  tamanho do que `montarHud` usa (o vitest roda em `node`) mostra que, com estoque numa pedreira, a
+  barra continua dando o que há nos armazéns. Antes da troca esse teste reprovava (o HUD somava tudo).
+
+### Uma interpretação minha, para o operador confirmar
+
+O `montarHud` lia `estoqueTotal` **uma vez** para os três materiais, e a decisão fala em "a pedra". Troquei
+a fonte dos **três** (gold, timber, stone): o argumento ("prever o que se pode gastar") vale igual para
+tábua e ouro, e deixar só a pedra viraria uma barra incoerente. **Comida não mudou** (`comidaTotal`,
+que usa `estoqueTotal`): quem "gasta" comida é o Inn (F20), que decide se também é só a dos armazéns —
+registrado na nota do F15. Se o operador quiser só a pedra, é reverter duas linhas do `hud.ts`.
+
 ## Perguntas em aberto
 
-Do que sobrou de fato (§14: implementei a interpretação mais conservadora e segui):
-
-1. **Conectividade diagonal.** A estrada liga só em 4 direções. O GDD não responde. O
-   mais permissivo (8 direções) é fácil de adotar depois; o mais restritivo, não.
-2. **O que o número de pedra do HUD conta** quando um prédio produtivo tiver estoque
-   (`estoqueTotal` soma todos; a estrada gasta só de armazém). Registrado na nota do F15;
-   hoje os dois coincidem.
-3. **Quantas unidades um serf carrega por viagem.** O GDD diz "a unidade de recurso"
-   (singular) e não há dado de capacidade de carga. Implementei **uma tarefa = uma
-   unidade**. Se o serf carregar mais, `Tarefa` ganha `quantidade` e as somas de
-   reserva passam a somá-la — não muda o contrato do `claim`/`release`.
+_(nenhuma no momento: as três que sobravam foram decididas pelo operador — ver "Ajuste pós-F10".)_

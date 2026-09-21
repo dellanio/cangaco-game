@@ -299,6 +299,10 @@ Storehouse
 - **Estrada dá 30% de bônus de velocidade** **[proposta]**. Implementado como
   custo de movimento no A*: estrada 1,0 e grama 1,30. O caminho mais barato passa
   pela estrada sozinho, sem regra especial.
+- Estradas diagonais funcionam se nada bloquear a passagem **[fonte]**.
+- **Divergência consciente do original (decisão do operador, Fase A) [proposta]:** a estrada
+  liga só em **4 direções**. A fidelidade ao original fica congelada em `IDEIAS.md` até a
+  Fase A fechar.
 - Campo de milho: arado por laborer, sem custo de material **[proposta]**.
 - Campo de uva: **1 timber** por campo **[fonte]**.
 - Boa prática do original: estrada ao redor de todos os prédios desde cedo e pelo

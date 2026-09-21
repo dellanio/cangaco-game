@@ -235,7 +235,8 @@ prédio surge sem clique do jogador.
   não tem `concluir`. *Coleta*: a reserva da origem vira carga na unidade
   (`estoque.saida[m] − 1`, item em `fsmData`); *entrega*: a vaga vira `faltam[m] −
   1`. Entre as duas a tarefa mantém só a reserva do destino, então `Tarefa` ganha
-  o estado `carregando`. O serf carrega **uma** unidade por viagem (uma tarefa =
+  o estado `carregando`. O serf carrega **uma** unidade por viagem (decisão do operador, pós-F10: é o que o sprite
+  carregando pressupõe, GDD §10, e o que o aceite conta; uma tarefa =
   uma unidade; não há dado de capacidade — se houver, `Tarefa` ganha `quantidade`).
 - **Nota**: **a distância do desempate muda aqui.** Na F09 ela é o comprimento do
   caminho **por estrada** entre as portas de origem e destino (`distanciaPorEstrada`,
@@ -382,11 +383,19 @@ prédio surge sem clique do jogador.
   trabalhador em `ocioso` por mais de X ticks consecutivos.
 - **Evidência**: `test-output/F15.json`
 - **Nota**: prédio **sem ligação** ao armazém (`predioLigadoAoArmazem`, F08) **não
-  produz** — a estrada é requisito de funcionamento (GDD §5.1). E o HUD mostra
-  `estoqueTotal`, que soma **todos** os prédios (F05a), enquanto a estrada (F08)
-  gasta só do que está em **armazém**: hoje idênticos, mas quando a Quarry
-  guardar saída própria o HUD pode mostrar mais pedra do que a estrada pode gastar.
-  Decidir, ao dar estoque a prédio produtivo, o que o número do HUD conta.
+  produz** — a estrada é requisito de funcionamento (GDD §5.1).
+- **Nota**: **o que o HUD conta está decidido (operador, pós-F10): o estoque dos ARMAZÉNS.** O
+  número da barra precisa prever o que o jogador pode gastar, e a estrada (F08) e as obras (F10)
+  só tiram de armazém; somar a saída de uma pedreira mostraria pedra que ninguém consegue usar. O
+  HUD lê `estoqueDosArmazens` (`sim/selectors.ts`) para **gold, timber e stone**; `estoqueTotal`
+  continua para outros usos. **Reservado não é descontado** (a pedra ainda está lá; a prévia da
+  estrada já explica a recusa) e a mercadoria em trânsito, na mão de um serf, não conta. Hoje os dois
+  seletores dão o mesmo número (nenhum prédio produtivo guarda estoque), e o roteiro da F05b é o
+  teste de que a troca não mudou nada visível. **Esta feature** é a primeira em que eles divergem:
+  o teste com uma pedreira de estoque próprio já existe (`tests/F05b-hud-armazens.test.ts`); aqui
+  vale repeti-lo com a produção real. **Fica em aberto para a F20:** o campo **Comida** do HUD
+  continua em `comidaTotal` (que usa `estoqueTotal`) — decidir, quando o Inn existir, se comida
+  também é só a dos armazéns.
 - **Nota**: **os níveis 4 a 7 da escada nascem aqui** (insumo → produção parada,
   insumo → produção com estoque baixo, saída cheia → armazém, excedente → armazém):
   a F09 só implementa o nível 3 (material → obra). Cada produtor alarga

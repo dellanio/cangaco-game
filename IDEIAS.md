@@ -25,3 +25,8 @@ caminho. Ideia boa é justamente a mais perigosa.
   render e o motivo `'terreno'` de `canPlace`. Dependem dela o Fisherman's
   (lago), as minas (veio) e a estrada (solo transponível). O formato do dado deve
   nascer junto de quem o produz, não antes. Decisão de fila é do operador.
+- Estrada diagonal, fidelidade ao original — exige interpolação diagonal no arrasto, render
+  inclinado e isConnected com 8 vizinhos sem cortar quina. (O GDD §5.4 traz "estradas diagonais
+  funcionam se nada bloquear a passagem" **[fonte]**; a Fase A fica em 4 direções por decisão do
+  operador. Ao adotar: o A\* por estrada da F10 só liga o que `isConnected` liga, e o teste de
+  equivalência em `tests/F10-astar.test.ts` prende os dois — mudar um exige mudar o outro.)
