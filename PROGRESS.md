@@ -1331,8 +1331,11 @@ usá-lo (mesmo molde do "Ajuste pós-F06"). Nenhuma regra de jogo mudou de lado,
    pesquisa original, "estradas diagonais funcionam se nada bloquear a passagem" **[fonte]**, **não
    estava lá**, e `git log -S"diagona" -- docs/GDD.md` não mostra nenhum commit que a tenha tido —
    nem outro documento do repo a traz. Por isso **restaurei a linha** em §5.4 e acrescentei, ao lado,
-   a divergência marcada **[proposta]**: 4 direções por decisão do operador. **A marca `[fonte]` é a
-   palavra do operador, sem rastro que eu consiga verificar no repositório.** Com a linha no GDD,
+   a divergência marcada **[proposta]**: 4 direções por decisão do operador. **Fonte da linha:
+   confirmada pelo operador no GDD de pesquisa original, `knights-and-merchants-gdd.md`, §5.4, que
+   precede o repositório — por isso o `git log -S` não a encontrou: ela se perdeu na reescrita do GDD
+   que virou o commit inicial.** (Não abri esse arquivo: ele não está no repositório; a confirmação é
+   do operador.) Com a linha no GDD,
    isto deixa de ser lacuna e passa a ser **divergência consciente do original**. Acrescentei ao
    `IDEIAS.md`: "estrada diagonal, fidelidade ao original — exige interpolação diagonal no arrasto,
    render inclinado e isConnected com 8 vizinhos sem cortar quina", mais uma frase minha e
