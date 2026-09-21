@@ -13,7 +13,10 @@
 import type { GameEvent, GameState, Tarefa, TipoDeTarefa } from './state';
 import type { GameData } from './data/types';
 import { gameData } from './data';
-import { distanciaEntrePredios } from './estradas';
+import { componenteDe, distanciaEntrePredios, ehEstrada, tilesDaPorta } from './estradas';
+import type { TileDeGrid } from './estradas';
+import { buscarCaminho } from './pathfinding';
+import type { Caminho } from './pathfinding';
 import { disponivelNaOrigem, vagaNoDestino } from './reservas';
 
 /**
@@ -101,13 +104,83 @@ function unidadeJaTemTarefa(state: GameState, unidadeId: string): boolean {
   });
 }
 
-/** Distancia por estrada, pelas portas, do armazem de origem ate a obra de destino;
- *  `null` se algum dos dois nao existe ou nao ha caminho. */
+/** Distancia por estrada, pelas portas, do armazem de origem ate a obra de destino, em
+ *  PASSOS (BFS, 4 direcoes); `null` se algum dos dois nao existe ou nao ha caminho.
+ *  E a pergunta de EXISTENCIA ("esta ligado?"), que nao depende de serf: e o que o
+ *  gerador, o saneamento e o verificador usam. A ORDEM de escolha do serf usa o custo A*
+ *  em ticks de `custoDaTarefa`, que parte da posicao dele. */
 export function distanciaDaTarefa(state: GameState, tarefa: Tarefa, dados: GameData = gameData): number | null {
   const origem = state.predios.porId[tarefa.origem];
   const destino = state.predios.porId[tarefa.destino];
   if (!origem || !destino) return null;
   return distanciaEntrePredios(state, origem, destino, dados);
+}
+
+/** As duas pernas da viagem de uma unidade para uma tarefa, em ticks (F10). */
+export interface PlanoDaTarefa {
+  /** A pe, por qualquer tile livre, da posicao do serf ate a porta de coleta do armazem. */
+  readonly ateAOrigem: Caminho;
+  /** Carregado, SO por estrada, da porta de coleta ate a porta da obra. */
+  readonly deEntrega: Caminho;
+  /** `ateAOrigem.custo + deEntrega.custo`. */
+  readonly custo: number;
+}
+
+/** Os tiles de porta que sao estrada: so por eles a carga entra e sai da rede. */
+function portasDeEstrada(state: GameState, predioId: string, dados: GameData): TileDeGrid[] {
+  const predio = state.predios.porId[predioId];
+  return predio ? tilesDaPorta(predio, dados).filter((t) => ehEstrada(state.estradas, t)) : [];
+}
+
+/** As portas de COLETA: as do armazem que sao estrada E estao no mesmo componente de
+ *  alguma porta de estrada da obra. Sem isto a perna carregada nao teria como existir. */
+function portasDeColeta(state: GameState, tarefa: Tarefa, dados: GameData): { coleta: TileDeGrid[]; entrega: TileDeGrid[] } {
+  const entrega = portasDeEstrada(state, tarefa.destino, dados);
+  const componentesDaEntrega = new Set(entrega.map((t) => componenteDe(state.estradas, t)));
+  const coleta = portasDeEstrada(state, tarefa.origem, dados).filter((t) => componentesDaEntrega.has(componenteDe(state.estradas, t)));
+  return { coleta, entrega };
+}
+
+/**
+ * O plano de `unidadeId` para `tarefa`: a perna livre (A*, vizinhanca 8, custo de terreno,
+ * a partir de ONDE O SERF ESTA) ate a porta de coleta mais barata, mais a perna de entrega
+ * (A* so por estrada) dessa porta ate a da obra. `null` se algo nao existe, ou se alguma
+ * das pernas nao tem caminho. Nunca euclidiana.
+ *
+ * A porta de coleta e a de menor perna livre (guloso: nao minimiza a soma das duas
+ * pernas; empate: a primeira de `tilesDaPorta`, por `gx`).
+ */
+export function planoDaTarefa(
+  state: GameState, tarefa: Tarefa, unidadeId: string, dados: GameData = gameData,
+): PlanoDaTarefa | null {
+  const unidade = state.unidades.porId[unidadeId];
+  if (!unidade) return null;
+  const { coleta, entrega } = portasDeColeta(state, tarefa, dados);
+  if (coleta.length === 0 || entrega.length === 0) return null;
+  const ateAOrigem = buscarCaminho(state, { gx: unidade.gx, gy: unidade.gy }, coleta, 'livre', dados);
+  if (ateAOrigem === null) return null;
+  const porta = ateAOrigem.tiles[ateAOrigem.tiles.length - 1] ?? { gx: unidade.gx, gy: unidade.gy };
+  const deEntrega = buscarCaminho(state, porta, entrega, 'estrada', dados);
+  if (deEntrega === null) return null;
+  return { ateAOrigem, deEntrega, custo: ateAOrigem.custo + deEntrega.custo };
+}
+
+/**
+ * O custo, em ticks, que ordena as tarefas. Com `unidadeId`: o plano inteiro (as duas
+ * pernas). Sem unidade (`null`): so a perna de entrega, da melhor porta de coleta —
+ * unica coisa que existe sem um serf em campo. `null` se nao ha caminho.
+ */
+export function custoDaTarefa(
+  state: GameState, tarefa: Tarefa, unidadeId: string | null, dados: GameData = gameData,
+): number | null {
+  if (unidadeId !== null) return planoDaTarefa(state, tarefa, unidadeId, dados)?.custo ?? null;
+  const { coleta, entrega } = portasDeColeta(state, tarefa, dados);
+  let melhor: number | null = null;
+  for (const porta of coleta) {
+    const perna = buscarCaminho(state, porta, entrega, 'estrada', dados);
+    if (perna !== null && (melhor === null || perna.custo < melhor)) melhor = perna.custo;
+  }
+  return melhor;
 }
 
 /**
@@ -117,7 +190,9 @@ export function distanciaDaTarefa(state: GameState, tarefa: Tarefa, dados: GameD
  * tocado.
  *
  * Ordem das checagens (fixada por teste): tarefa existe, esta aberta, unidade valida
- * (existe e e `serf`), unidade livre, origem com disponivel, destino com vaga, caminho.
+ * (existe e e `serf`), unidade livre, origem com disponivel, destino com vaga, caminho
+ * (F10: o plano inteiro — a perna do serf ate a origem tambem tem que existir, senao um
+ * serf preso reclamaria e soltaria a mesma tarefa a cada tick).
  */
 export function reclamar(
   state: GameState, tarefaId: string, unidadeId: string, dados: GameData = gameData,
@@ -136,7 +211,7 @@ export function reclamar(
   if (vagaNoDestino(state, tarefa.destino, tarefa.mercadoria) < 1) {
     return { ok: false, motivo: 'destino-sem-vaga' };
   }
-  if (distanciaDaTarefa(state, tarefa, dados) === null) return { ok: false, motivo: 'sem-caminho' };
+  if (custoDaTarefa(state, tarefa, unidadeId, dados) === null) return { ok: false, motivo: 'sem-caminho' };
 
   const reclamada: Tarefa = { ...tarefa, estado: 'reclamada', reclamadaPor: unidadeId };
   return {
@@ -187,24 +262,27 @@ export function liberar(
 }
 
 /**
- * As tarefas ABERTAS na ordem de escolha: `(nivel, distancia por estrada, numero)`.
- * `numero` numerico, nao a string do id ('t10' < 't2'). Distancia `null` (sem caminho)
- * vai para o fim. A escada le o nivel do dado; so o nivel 3 tem produtor hoje.
+ * As tarefas ABERTAS na ordem de escolha: `(nivel, custo A* em ticks, numero)`. `numero`
+ * numerico, nao a string do id ('t10' < 't2'). Com `unidadeId` o custo parte da posicao
+ * do serf (as duas pernas); sem, so a perna de entrega. Custo `null` (sem caminho) vai
+ * para o fim. A escada le o nivel do dado; so o nivel 3 tem produtor hoje.
  */
-export function tarefasEmOrdem(state: GameState, dados: GameData = gameData): Tarefa[] {
+export function tarefasEmOrdem(
+  state: GameState, unidadeId: string | null = null, dados: GameData = gameData,
+): Tarefa[] {
   const abertas = state.jobs.tarefas.ordem
     .map((id) => state.jobs.tarefas.porId[id])
     .filter((t): t is Tarefa => t !== undefined && t.estado === 'aberta');
   const chaves = new Map(abertas.map((t) => [t.id, {
     nivel: nivelDoTipo(t.tipo, dados),
-    distancia: distanciaDaTarefa(state, t, dados) ?? Number.POSITIVE_INFINITY,
+    custo: custoDaTarefa(state, t, unidadeId, dados) ?? Number.POSITIVE_INFINITY,
   }]));
   return [...abertas].sort((a, b) => {
     const ca = chaves.get(a.id);
     const cb = chaves.get(b.id);
     if (!ca || !cb) return 0;
     if (ca.nivel !== cb.nivel) return ca.nivel - cb.nivel;
-    if (ca.distancia !== cb.distancia) return ca.distancia < cb.distancia ? -1 : 1;
+    if (ca.custo !== cb.custo) return ca.custo < cb.custo ? -1 : 1;
     return a.numero - b.numero;
   });
 }
@@ -214,7 +292,7 @@ export function tarefasEmOrdem(state: GameState, dados: GameData = gameData): Ta
 export function reclamarMelhor(
   state: GameState, unidadeId: string, dados: GameData = gameData,
 ): ResultadoDoClaimMelhor {
-  const candidatas = tarefasEmOrdem(state, dados);
+  const candidatas = tarefasEmOrdem(state, unidadeId, dados);
   const primeira = candidatas[0];
   if (primeira === undefined) return { ok: false, motivo: 'sem-tarefa-aberta' };
   let primeiraRecusa: MotivoDeRecusaDoClaim | null = null;

@@ -150,3 +150,10 @@ export function cenarioDeVolta(): GameState {
   const retaQuase = [tile(28, 33), tile(27, 33), ...linhaV(27, 34, 47), tile(28, 47)];
   return comEstradas(estado, [...voltaGrande, ...retaQuase]);
 }
+
+/** Poe uma unidade em (gx, gy), ociosa e sem `fsmData` (so o lugar muda). */
+export function comUnidadeEm(estado: GameState, id: string, gx: number, gy: number): GameState {
+  const u = estado.unidades.porId[id];
+  if (!u) throw new Error(`fixture: unidade '${id}' nao existe`);
+  return { ...estado, unidades: { ...estado.unidades, porId: { ...estado.unidades.porId, [id]: { ...u, gx, gy } } } };
+}
