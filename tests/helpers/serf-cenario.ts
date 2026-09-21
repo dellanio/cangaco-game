@@ -5,7 +5,8 @@ import { step } from '../../src/sim/tick';
 import type { Command } from '../../src/sim/commands';
 import type { GameEvent, GameState, PredioCompleto, PredioEmObra } from '../../src/sim/state';
 import {
-  armazemDoCenario, comEstradas, comObra, comPedraNaSaida, inicial, linhaH, linhaV, semAUnidade, serfsDoCenario,
+  armazemDoCenario, comArmazemCompleto, comEstradas, comObra, comPedraNaSaida, comTarefas, comUnidadeEm, inicial, linhaH,
+  linhaV, semAUnidade, serfsDoCenario, tarefaDe, tile,
 } from './jobs-cenario';
 
 export const armazemDoJogo = armazemDoCenario(inicial);
@@ -72,3 +73,37 @@ export function rodarAte(
 
 export const liberacoes = (eventos: readonly GameEvent[]): Extract<GameEvent, { type: 'task-released' }>[] =>
   eventos.filter((e): e is Extract<GameEvent, { type: 'task-released' }> => e.type === 'task-released');
+
+const serfNoCenario = (i: number): string => {
+  const id = serfsDoCenario(inicial)[i];
+  if (id === undefined) throw new Error(`fixture: o cenario deveria ter o serf ${i}`);
+  return id;
+};
+/** Os dois serfs do cenario do muro: X do lado do armazem 'a', Y do outro lado do muro. */
+export const SERF_DO_LADO_DE_A = serfNoCenario(0);
+export const SERF_DO_LADO_DE_B = serfNoCenario(1);
+
+/**
+ * O caso adversarial da perna do serf. Um MURO de obras (y=16..17, x=8..40) separa o serf Y
+ * (20,20) do armazem 'a' (porta em (20,13)); o armazem 'b' (porta em (20,33)) esta a 13
+ * linhas de Y, sem muro no meio. A reta ate 'a' (7) e menor que ate 'b' (13); a pe, o muro
+ * inverte. As pernas de ENTREGA sao iguais por simetria (38 passos cada), entao so a perna
+ * unidade -> origem desempata. O serf X (20,11), do lado de 'a' do muro, e o contraponto.
+ */
+export function cenarioDoMuro(): GameState {
+  let estado = comArmazemCompleto(inicial, 'a', { gx: 18, gy: 10, stone: 5 });
+  estado = comArmazemCompleto(estado, 'b', { gx: 18, gy: 30, stone: 5 });
+  for (let i = 0; i < 11; i++) estado = comObra(estado, `muro${i}`, { gx: 8 + 3 * i, gy: 16, faltam: {} });
+  estado = comObra(estado, 'dest', { gx: 44, gy: 21, faltam: { stone: 2 } });
+  estado = comEstradas(estado, [
+    ...linhaH(20, 47, 13), ...linhaV(47, 13, 23), // de 'a' ate a porta da obra
+    ...linhaH(20, 47, 33), ...linhaV(47, 23, 33), // de 'b' ate a porta da obra
+    tile(46, 23), tile(45, 23), tile(44, 23),
+  ]);
+  estado = comUnidadeEm(estado, SERF_DO_LADO_DE_B, 20, 20);
+  estado = comUnidadeEm(estado, SERF_DO_LADO_DE_A, 20, 11);
+  return comTarefas(estado, [
+    tarefaDe({ numero: 1, origem: 'a', destino: 'dest' }),
+    tarefaDe({ numero: 2, origem: 'b', destino: 'dest' }),
+  ]);
+}

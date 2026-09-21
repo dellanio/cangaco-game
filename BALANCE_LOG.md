@@ -22,7 +22,12 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
 
 ## Observações abertas
 
-_(nenhuma ainda)_
+- [2026-09-20] o bônus efetivo da estrada é 1,4 e não 1,30: estrada 5 ticks/tile, grama 7 (6,5 arredonda para 7)
+  | `custoDeMovimento.grama` 1.30 a `tickHz` 10 e escala de movimento 2.0, com um único `Math.round`
+  | data/terrain.json, data/time.json (não é bug do loader: é a granularidade de 10 Hz)
+- [2026-09-20] 4 serfs levam 5538 ticks (~9 min a 1x) para entregar os 100 materiais de 20 obras de uma vez
+  | logística lenta se o jogador planta muitas obras juntas; layout sintético do teste de carga, não partida
+  | data/units.json (velocidade a pé 1.0 tile/s) e o número de serfs treinados
 
 ---
 

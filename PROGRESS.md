@@ -1127,6 +1127,172 @@ contador `proximoId` de prédios e unidades), `numero`, `tipo` (hoje só
 - O comportamento com **serfs reais** (F10) — filas, várias unidades disputando a mesma
   origem — só existe como propriedade sobre claims sorteados, não como jogo.
 
+## F10 — FSM do Serf (2026-09-20)
+
+Quinta feature de integração, com a nota de exceção da §10 escrita no `BUILD_PLAN.md`
+**antes** de qualquer código (Task 0), valendo para a F10 e só: `sim/`, `render/` e o laço
+externo (`main.ts`); `input/` e `ui/` **não** foram tocados (conferido por `git diff
+--name-only`). Também na fila, aprovadas pelo operador: a decisão de como o serf se move sem
+o laço, o que a F11 muda, a **decisão pendente do `avancar`** (Nota no item F11, não só
+aqui) e a Nota do F16 (repetir a demolição pelo comando). `Escopo`, `Aceite` e `Evidência`
+de nenhum item foram tocados.
+
+### Verificado (aberto e rodado nesta sessão)
+
+- `npm run verify` verde: typecheck, lint, `validate:data` (9 arquivos, 0 erros) e **456
+  testes** (129 novos: 6 em `F10-movimento`, 33 em `F10-astar`, 30 em `F10-ciclo`, 12 em
+  `F10-desempate`, 24 em `F10-fsm`, 24 em `F10-falhas`). Evidência headless em
+  `test-output/F10.json`, **aberta com Read**.
+- **Aceite escrito:** armazém com 10 stone e uma obra pedindo 2 → em **38 ticks** a obra recebeu
+  2 (`faltam.stone` 0), o armazém ficou com **8**, sem tarefa no fim, todos os serfs ociosos, 2
+  `task-completed` e nenhum `task-released`.
+- **A FSM é a do GDD §6.2, sem estado novo:** um serf sozinho passa por `ocioso → indo_buscar →
+  carregando → indo_entregar → entregando → ocioso`, e `carregando`/`entregando` duram 1 tick.
+  Em cada fase as reservas são as do contrato: `indo_buscar` reserva origem **e** destino;
+  na coleta o armazém cai 10 → 9 **no tick exato** em que a tarefa vira `carregando` (origem
+  0, destino 1); a obra só recebe na entrega.
+- **Falha graciosa (o aceite escrito e o pedido do operador):** obra tirada com o serf
+  **carregado a caminho** → tarefa cancelada (`destino-sumiu`), serf em `devolvendo` com a
+  carga na mão, e ao chegar ao armazém a pedra **volta (9 → 10)**, evento `cargo-returned`,
+  serf ocioso. Com o serf **ainda indo buscar** (e nos ticks de `carregando` e `entregando`):
+  as duas reservas voltam, nada sai do armazém. **Estrada cortada no meio da viagem** pelo
+  comando **real** `DemolishRoad`: à frente do serf, **sob** o serf, com o serf indo buscar,
+  e com rota alternativa (duas pistas: replaneja, **zero** liberações). **Refazer a estrada**
+  retoma e a obra fecha (`faltam` 0, armazém 8 = 10 − 1 da rua − 1 entregue).
+- **`devolvendo` completo:** escolhe o armazém de menor custo A\* **a partir de onde o serf
+  está** (devolve ao `perto`, não ao de origem); recalcula se o alvo some no caminho; sem
+  armazém nenhum **espera com a carga** e deposita quando nasce um.
+- **A\* provado contra um oráculo independente** (relaxamento em fila, sem heap nem
+  heurística): custo igual em 160 mapas livres e 240 redes por estrada sorteados com RNG
+  semeado; por estrada, o A\* acha caminho **se e somente se** `isConnected` da F08 acha (500
+  redes sorteadas): a vizinhança 8 sem cortar quina não liga o que a rede de 4 direções
+  desliga. Cache: mesma pergunta devolve o **mesmo objeto**; referência nova de `estradas` ou
+  de `predios.ordem` invalida; trocar só o estoque **não** invalida.
+- **"Nunca euclidiana" segue valendo:** `F09-jobboard.test.ts` (o desempate da F09,
+  `t2`×`t10`) **não foi editado** e passa contra a função nova. Caso novo, da perna do serf: um
+  muro de obras faz a reta ao armazém A valer **7** e a pé **209 ticks**, e ao B 13 em reta e
+  **96** a pé; com entregas iguais (190 = 190), o serf do outro lado do muro escolhe B, o do
+  lado de A escolhe A, e sem unidade decide o número. Um serf **cercado** (sem rota) tem a
+  tarefa reaberta (`pedido-da-unidade`) e **40 ticks seguidos sem laço reclama/libera**,
+  porque `reclamar` passou a recusar `sem-caminho` quando a perna dele não existe.
+- **Bens conservados:** estoques + cargas em trânsito − `faltam` é constante entre dois `step`
+  em todo tick sem comando, no aceite, nos quatro serfs em paralelo e na propriedade; a única
+  perda é a decisão abaixo (carga some com a unidade, e o teste afirma "exatamente 1").
+- **Propriedade estrutural:** RNG semeado, 3 sementes × 250 passos, invariantes do quadro e da
+  FSM em **todo** passo. Números reais do F10.json: os seis estados vistos, **8 entregas
+  concluídas, 13 cargas devolvidas**, liberações `destino-sumiu` 13, `caminho-cortado` 15,
+  `origem-sumiu` 6, `unidade-removida` 2. Asserção permanente: cada estado e cada motivo ≥ 1.
+- **Carga (decisão E, F09):** 20 obras, 4 serfs, 100 tarefas: todas entregues em **5538 ticks**,
+  sem churn (100 geradas, 100 concluídas), invariantes e conservação amostradas. Buscas A\*
+  executadas: **44**; consultas respondidas pelo cache: **10 556**.
+- **Visual** (`npm run shot -- F10`, fora do `verify`, §8): 24 afirmações e 4 screenshots,
+  **todas abertas com Read**: os 6 serfs/laborers ociosos com a obra e a rua desenhadas (Pedra
+  19); os serfs **entre dois tiles**; a etiqueta `timber` sobre os carregados com a Tábua **caindo
+  para 38** (o que vai a caminho não é estoque de ninguém); a obra entregue (Tábua 37, Pedra 17).
+  `shot -- F04`, `F05b`, `F06`, `F07` e `F08` seguem verdes.
+- **Mutantes** (probe, não cobertura contínua): heurística ×3, corte de quina, cache ignorando
+  `estradas` e passo diagonal com custo reto reprovam o A\*; a coleta sem tirar do armazém, a
+  entrega sem abater `faltam`, o passo de 1 tick e a entrega sem remover a tarefa reprovam a
+  FSM; `devolvendo` sem depositar, corte de estrada não detectado, "primeiro armazém em vez do
+  mais próximo", sem replanejar e sem liberar reprovam as falhas; a perna do serf euclidiana
+  reprova o desempate. Arquivos restaurados e conferidos com `cmp`. **Um tropeço que os próprios
+  testes pegaram:** o A\* estava certo e o meu teste, errado (tomei 13 tiles retos; o footprint
+  do armazém obriga a contornar: 96 = 1 diagonal + 11 retos + 2 de estrada, derivado à mão).
+- **O agente errou um número e conferi:** a exploração disse "grama 13 ticks/tile"; o
+  `loader.ts` e os JSON dão **estrada 5, grama 7** (`Math.round(6,5)`). O plano usou o valor
+  conferido.
+
+### O contrato da FSM (herdado por F11, F13 e F15)
+
+- `Unidade.gx/gy` é o tile onde ela **está**; o movimento em curso vive em `fsmData`
+  (`DadosDaFsm`: `tarefa`, `carga`, `caminho` **sem** o tile atual, `progresso` em ticks no
+  passo, `armazem`). Campos ausentes são **omitidos**, nunca `undefined`; `{}` vale para laborer e
+  serf ocioso. Um estado de FSM fora do GDD é **erro** (save corrompido), não ignorado.
+- `Tarefa.estado`: `aberta → reclamada → carregando → (some na entrega)`. A reserva continua
+  **derivada**: `reservadoNaOrigem` só conta `reclamada`; `reservadoNoDestino` conta `reclamada`
+  **e** `carregando`. `liberar` de uma `carregando` **sempre cancela**.
+- Ordem no `step()`: comandos → `sanearTarefas` → **`sistemaDosSerfs`** → `gerarTarefas`. O
+  quadro que o serf vê já está saneado, e o que ele libera é recriado no mesmo tick.
+- `sanearTarefas` sobre `carregando` olha só **unidade viva, destino e vaga**; na disputa por vaga
+  solta a **reclamada antes da carregando** (quem tem carga na mão é o último a perder a vaga). O
+  caminho do serf **carregado** é da FSM (só ela tem a posição).
+- `posicaoDaUnidade` (`sim/selectors.ts`) é o que o render desenha: função **pura** do estado.
+- **`andar` é privado de `systems/serfs.ts`.** O laborer da F11 vai precisar do mesmo movimento:
+  extrair **lá**, quando houver o segundo consumidor (não antes, para não criar abstração sem uso).
+
+### O que a F11 muda no movimento (registrado também no BUILD_PLAN)
+
+(a) quem chama `passo()` passa a ser um timer de `TICK_MS`; (b) o render ganha a interpolação
+**entre ticks** por cima da posição por `progresso`; (c) o roteiro precisa **pausar** o timer antes
+de usar `avancar`; (d) a velocidade de jogo 1x/2x/3x acelera o relógio, nunca a sim. A FSM e o
+`step()` não mudam.
+
+### DÍVIDA COM DONO E PRAZO: o gancho `avancar` (operador: "nasce marcado para morrer")
+
+`window.__cangaco.avancar(n)` roda `sessao.passo()` `n` vezes. É **ponte de harness**: escreve no
+estado a partir do `window` do jogo real. Está publicado **no mesmo bloco** que já publica
+`window.__cangaco` (`EstadoDebug`, `render/debug.ts`), com o comentário `PONTE DE HARNESS DA F10`
+no campo, no `main.ts` e no `render/game.ts`; o `main.ts` (dono da Sessão) só injeta o callback.
+Sem timer, tecla nem botão. **Dono: F11.** Ao criar o timer a F11 **decide** se ele **some** ou
+**vira pausar/retomar** — decisão escrita na Nota do item F11 do `BUILD_PLAN.md`. Risco se ninguém
+decidir: com o timer rodando, os screenshots deixam de ser determinísticos.
+
+### Decidido (e por quê)
+
+- **`devolvendo` só existe com carga.** Falha antes da coleta não tem o que devolver: a tarefa é
+  liberada e o serf volta a `ocioso`. Justificativa, não estado novo.
+- **`carregando` e `entregando` duram 1 tick** (o dado não tem tempo de manuseio; não inventei
+  número). Pergunta em aberto abaixo.
+- **Só a perna carregada é obrigada a ir por estrada** (`obrigatoriaParaEntrega`); indo buscar e
+  devolvendo andam por qualquer tile livre. Interpretação conservadora (o serf nasce na grama).
+- **O custo do A\* é o tempo da viagem, em ticks inteiros** (`ticksPorTile` e a diagonal nova,
+  `ticksPorTileDiagonal`, com **um único** `Math.round` — `round(√2 × 6,5) = 9`, não `10`).
+  Sem float no A\*: empates exatos. Um serf **dentro** do footprint de uma obra plantada em cima
+  dele sai (civis não colidem, GDD §6.4).
+- **Cache pela referência de `predios.ordem`, não de `predios`:** `predios` troca a cada coleta e
+  entrega e invalidaria o cache toda hora; só o conjunto de footprints importa.
+- **A porta de coleta é a de menor perna livre** entre as que estão no componente da obra (guloso;
+  não minimiza a soma das duas pernas).
+- **A carga se perde com a unidade removida** (decisão registrada; a fome e o Dismiss decidem
+  depois). O teste afirma "exatamente 1 unidade perdida".
+- **Decisão E do operador — índice do JobBoard: não indexar agora.** O F09 registrou 100 tarefas;
+  com serfs de verdade o A\* rodou 44 vezes contra 10 556 consultas de cache em 5538 ticks. É uma
+  decisão sustentada por **contagens**, não por tempo (ver hipóteses).
+- **Os testes da F09 que pressupunham "ninguém reclama" isolam a premissa, sem afrouxar a regra:**
+  no release de "unidade removida" o cenário só tem o serf removido (senão outro serf reclama a
+  tarefa reaberta no mesmo tick); o cenário de carga da F09 (o número `cargaComMuitasObras`) não
+  tem serfs, como antes; o save/load da F09 usa o serf real e o gancho manual `reclamaNoTick3`
+  saiu (era andaime do "sem unidade ainda"). Meus testes de saneamento da Task 3 passaram a testar
+  o **quadro** (`sanearTarefas` + `gerarTarefas`), não o `step`.
+- **O caos ganhou folego (38 dos 48 sorteios so deixam o tempo passar):** a primeira versão só destruía (1 entrega em
+  750 passos); sem folego o caminho feliz quase não acontecia sob estresse. Não afrouxei nenhuma
+  asserção; a distribuição é que estava enviesada.
+
+### Não feito, de propósito (fora do Escopo da F10)
+
+- Laço de 10 Hz, timer, interpolação entre ticks e pausa: F11. Laborer, nivelamento e martelada: F11.
+- **Demolir prédio por comando:** é a F16. Aqui a obra sai do estado por injeção (`semOPredio`); a
+  F16 repete o teste pelo comando (Nota no item F16).
+- Tempo de manuseio ao carregar e entregar; capacidade de carga do serf (uma unidade por viagem);
+  capacidade do armazém ao devolver (`capacidade: null` hoje: o depósito nunca é recusado).
+- Cenário `f10` em `tools/sim.js` (o comentário do runner sugeria "armazém com 10 stone"): o
+  aceite é provado por teste headless, e o `npm run sim` não imprime posição de unidade.
+
+### Hipóteses, não fatos (não verifiquei)
+
+- **Custo real por tick.** O F10.json conta buscas e acertos de cache, **não mede tempo**; e não
+  cobre o custo das **reservas derivadas** (O(tarefas) por consulta), que não instrumentei. O
+  vitest levou ~7 s para o arquivo inteiro de falhas, com o cenário de 5538 ticks dentro, o que é
+  ordem de grandeza (~1 ms por tick com 100 tarefas), **não medição**. Nunca testei 1.000 tarefas.
+- **A escolha gulosa da porta** pode não ser a de menor soma das duas pernas; não provei ótimo global.
+- **O cache assume** que `predios.ordem` só troca de referência quando um prédio entra ou sai (vale
+  por imutabilidade; não há guarda em runtime).
+- **`entregando` é pouco visto sob caos** (8 ticks em 750 passos): as invariantes valem nele, mas o
+  volume é pequeno; o caminho feliz é coberto por outros testes (aceite, quatro serfs, carga).
+- **Os quatro serfs terminam empilhados no mesmo tile de porta** da obra (civis não colidem e é a
+  única porta com estrada); na screenshot final só se vê um. Não avaliei se isso lê bem em jogo.
+- O roteiro visual foi exercitado só no Chromium headless do Playwright, a 1280×720.
+
 ## Perguntas em aberto
 
 Do que sobrou de fato (§14: implementei a interpretação mais conservadora e segui):
@@ -1140,3 +1306,14 @@ Do que sobrou de fato (§14: implementei a interpretação mais conservadora e s
    (singular) e não há dado de capacidade de carga. Implementei **uma tarefa = uma
    unidade**. Se o serf carregar mais, `Tarefa` ganha `quantidade` e as somas de
    reserva passam a somá-la — não muda o contrato do `claim`/`release`.
+4. **Tempo de manuseio ao carregar e ao entregar.** O dado não tem; implementei **1 tick** cada. Se o
+   operador quiser um tempo (em segundos, no grupo `movimento` ou `economia`), é um campo novo em
+   `units.json` e os dois estados passam a durar `ticks`; a FSM não muda de forma.
+5. **A estrada é obrigatória só na perna carregada?** O GDD diz "sem estrada o serf não entrega e o
+   prédio não funciona", e o serf nasce na grama; implementei estrada obrigatória **só** para
+   `indo_entregar`. Se a leitura for "o serf só anda em estrada", `indo_buscar` e `devolvendo`
+   passam ao modo `estrada` (uma linha), mas o serf spawnado fora da rede nunca chega a ela.
+6. **O que acontece com a carga quando a unidade some** (fome, Dismiss, combate)? Implementei que ela
+   **se perde**. A alternativa é a carga cair no tile e ser recolhida (novo estado ou tarefa).
+7. **O bônus da estrada é 1,4, não 1,3.** A 10 Hz e escala 2,0, estrada = 5 ticks/tile e grama =
+   6,5 → **7**: efeito do arredondamento único da F03. Registrei no `BALANCE_LOG.md`; não mexi no dado.

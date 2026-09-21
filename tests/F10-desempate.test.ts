@@ -11,44 +11,11 @@ import type { GameState } from '../src/sim/state';
 import { chaveDeTile } from '../src/sim/estradas';
 import { buscarCaminho } from '../src/sim/pathfinding';
 import { custoDaTarefa, planoDaTarefa, reclamar, reclamarMelhor, tarefasEmOrdem } from '../src/sim/jobs';
+import { cenarioDoMuro, SERF_DO_LADO_DE_A as serfX, SERF_DO_LADO_DE_B as serfY } from './helpers/serf-cenario';
 import {
-  armazemDoCenario, cenarioLigado, comArmazemCompleto, comEstradas, comObra, comTarefas, comUnidadeEm, inicial,
-  linhaH, linhaV, serfsDoCenario, tarefaDe, tile,
+  armazemDoCenario, cenarioLigado, comArmazemCompleto, comEstradas, comObra, comTarefas, comUnidadeEm, inicial, linhaH,
+  linhaV, tarefaDe, tile,
 } from './helpers/jobs-cenario';
-
-const serfsIniciais = serfsDoCenario(inicial);
-const serfNo = (i: number): string => {
-  const id = serfsIniciais[i];
-  if (id === undefined) throw new Error(`fixture: o cenario deveria ter o serf ${i}`);
-  return id;
-};
-const serfX = serfNo(0);
-const serfY = serfNo(1);
-
-/**
- * O caso adversarial da perna do serf. Um MURO de obras (y=16..17, x=8..40) separa o serf Y
- * (20,20) do armazem 'a' (porta em (20,13)); o armazem 'b' (porta em (20,33)) esta a 13
- * linhas de Y, sem muro no meio. A reta ate 'a' (7) e menor que ate 'b' (13); a pe, o muro
- * inverte. As pernas de ENTREGA sao iguais por simetria (38 passos cada), entao so a perna
- * unidade -> origem desempata. O serf X (20,11), do lado de 'a' do muro, e o contraponto.
- */
-function cenarioDoMuro(): GameState {
-  let estado = comArmazemCompleto(inicial, 'a', { gx: 18, gy: 10, stone: 5 });
-  estado = comArmazemCompleto(estado, 'b', { gx: 18, gy: 30, stone: 5 });
-  for (let i = 0; i < 11; i++) estado = comObra(estado, `muro${i}`, { gx: 8 + 3 * i, gy: 16, faltam: {} });
-  estado = comObra(estado, 'dest', { gx: 44, gy: 21, faltam: { stone: 2 } });
-  estado = comEstradas(estado, [
-    ...linhaH(20, 47, 13), ...linhaV(47, 13, 23), // de 'a' ate a porta da obra
-    ...linhaH(20, 47, 33), ...linhaV(47, 23, 33), // de 'b' ate a porta da obra
-    tile(46, 23), tile(45, 23), tile(44, 23),
-  ]);
-  estado = comUnidadeEm(estado, serfY, 20, 20);
-  estado = comUnidadeEm(estado, serfX, 20, 11);
-  return comTarefas(estado, [
-    tarefaDe({ numero: 1, origem: 'a', destino: 'dest' }),
-    tarefaDe({ numero: 2, origem: 'b', destino: 'dest' }),
-  ]);
-}
 
 describe('F10 — a perna do serf: unidade -> origem por A*, nunca pela reta', () => {
   const estado = cenarioDoMuro();
