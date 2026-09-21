@@ -1242,7 +1242,7 @@ decidir: com o timer rodando, os screenshots deixam de ser determinísticos.
 - **`devolvendo` só existe com carga.** Falha antes da coleta não tem o que devolver: a tarefa é
   liberada e o serf volta a `ocioso`. Justificativa, não estado novo.
 - **`carregando` e `entregando` duram 1 tick** (o dado não tem tempo de manuseio; não inventei
-  número). Pergunta em aberto abaixo.
+  número). Decisão do operador registrada abaixo.
 - **Só a perna carregada é obrigada a ir por estrada** (`obrigatoriaParaEntrega`); indo buscar e
   devolvendo andam por qualquer tile livre. Interpretação conservadora (o serf nasce na grama).
 - **O custo do A\* é o tempo da viagem, em ticks inteiros** (`ticksPorTile` e a diagonal nova,
@@ -1267,6 +1267,29 @@ decidir: com o timer rodando, os screenshots deixam de ser determinísticos.
 - **O caos ganhou folego (38 dos 48 sorteios so deixam o tempo passar):** a primeira versão só destruía (1 entrega em
   750 passos); sem folego o caminho feliz quase não acontecia sob estresse. Não afrouxei nenhuma
   asserção; a distribuição é que estava enviesada.
+
+### Decisões do operador sobre as perguntas da F10 (2026-09-20)
+
+Eram quatro perguntas em aberto; o operador as decidiu e elas **saíram** de "Perguntas em aberto".
+Registradas como decisão dele, cada uma com o porquê e a saída que ele deixou pronta:
+
+1. **Manuseio de 1 tick ao carregar e ao entregar: fica.** É mínimo **estrutural** (a FSM precisa
+   de um tick para mudar de estado), não número de balanceamento. **Saída pronta:** se o playtest
+   mostrar que parece teleporte, vira campo em `data/` (`units.json`, em segundos, num grupo de
+   escala) e `carregando`/`entregando` passam a durar `ticks`; a FSM não muda de forma.
+2. **Estrada obrigatória só na perna carregada: fica.** O serf nasce na grama e precisa chegar ao
+   armazém; o que o GDD exige é que a **entrega** dependa de estrada, e é isso que está
+   implementado (`indo_entregar` só pisa em estrada; `indo_buscar` e `devolvendo` andam livres).
+   **Alternativa descartada:** estrada obrigatória também nas outras pernas — o serf nascido fora da
+   rede nunca chegaria a ela.
+3. **Carga perdida quando a unidade some: fica, por enquanto.** Não existe item no chão, e nenhuma
+   unidade morre antes da fome (F20) ou do combate. **Prazo:** Nota no item **F20** do
+   `BUILD_PLAN.md` — revisitar quando uma unidade puder morrer carregando (alternativa: a carga cai
+   no tile e é recolhida, o que pede item no chão).
+4. **Bônus da estrada em 1,4 em vez de 1,3: fica.** É quantização do tick a 10 Hz (estrada 5
+   ticks/tile, grama 6,5 → 7); corrigir exigiria mudar `tickHz`, que mexe em tudo. Favorece a estrada
+   mais do que o pedido, na direção certa: o objetivo é a estrada importar. **A linha continua no
+   `BALANCE_LOG.md`** (observação, não bug; sem mudança de dado).
 
 ### Não feito, de propósito (fora do Escopo da F10)
 
@@ -1306,14 +1329,3 @@ Do que sobrou de fato (§14: implementei a interpretação mais conservadora e s
    (singular) e não há dado de capacidade de carga. Implementei **uma tarefa = uma
    unidade**. Se o serf carregar mais, `Tarefa` ganha `quantidade` e as somas de
    reserva passam a somá-la — não muda o contrato do `claim`/`release`.
-4. **Tempo de manuseio ao carregar e ao entregar.** O dado não tem; implementei **1 tick** cada. Se o
-   operador quiser um tempo (em segundos, no grupo `movimento` ou `economia`), é um campo novo em
-   `units.json` e os dois estados passam a durar `ticks`; a FSM não muda de forma.
-5. **A estrada é obrigatória só na perna carregada?** O GDD diz "sem estrada o serf não entrega e o
-   prédio não funciona", e o serf nasce na grama; implementei estrada obrigatória **só** para
-   `indo_entregar`. Se a leitura for "o serf só anda em estrada", `indo_buscar` e `devolvendo`
-   passam ao modo `estrada` (uma linha), mas o serf spawnado fora da rede nunca chega a ela.
-6. **O que acontece com a carga quando a unidade some** (fome, Dismiss, combate)? Implementei que ela
-   **se perde**. A alternativa é a carga cair no tile e ser recolhida (novo estado ou tarefa).
-7. **O bônus da estrada é 1,4, não 1,3.** A 10 Hz e escala 2,0, estrada = 5 ticks/tile e grama =
-   6,5 → **7**: efeito do arredondamento único da F03. Registrei no `BALANCE_LOG.md`; não mexi no dado.

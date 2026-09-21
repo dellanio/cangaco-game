@@ -427,6 +427,12 @@ prédio surge sem clique do jogador.
 - Restauração por tipo de comida e regra das duas comidas diferentes, conforme o
   GDD. Aceite: cenário longo em que a população sobrevive; cenário sem comida em
   que morre — e a morte é registrada em evento, não em log solto.
+- **Nota**: **revisitar a carga do serf quando uma unidade puder morrer carregando.** Na F10 a carga
+  vive em `fsmData.carga` e **se perde** com a unidade removida (o `sanearTarefas` cancela a tarefa
+  `carregando` e o gerador recria; o teste afirma "exatamente 1 unidade perdida"). Decisão do
+  operador: fica assim **por enquanto**, porque não existe item no chão e nenhuma unidade morre antes
+  desta feature ou do combate. Esta feature decide se a carga cai no tile e é recolhida (item no chão,
+  tarefa ou estado novo no GDD §6.2) ou se continua perdida — e ajusta o teste de conservação de bens.
 ### F21 — Gold mine, Coal mine e Metallurgist's (ouro renovável)
 ### F22 — Alertas do HUD
 - Prédio sem trabalhador, sem estrada, fome, mina esgotada.
