@@ -28,6 +28,10 @@ async function roteiro(ctx) {
 
   // pausa curta: window.__cangaco e publicado no POST_RENDER
   const esperarFrame = () => page.waitForTimeout(200);
+  // F11a: o laco nasce pausado (`?pausado`, no runner) e o clique so ENFILEIRA o comando. Cada clique
+  // que emite (ou poderia emitir) um comando roda UM passo, como o clique fazia antes do laco. Tambem
+  // o que NAO deve plantar nada: sem o passo, um comando emitido por engano ficaria na fila.
+  const avancar = (n) => page.evaluate((k) => window.__cangaco.avancar(k), n);
 
   // ponto de pagina no centro de um tile, dada a camera atual
   async function pontoDoTile(gx, gy) {
@@ -74,6 +78,7 @@ async function roteiro(ctx) {
 
   // 3. CLICAR: a obra nasce no chao
   await page.mouse.click(pontoLivre.x, pontoLivre.y);
+  await avancar(1);
   await esperarFrame();
   let s = await estado();
   afirmar(s.prediosRenderizados === inicio.prediosRenderizados + 1,
@@ -96,6 +101,7 @@ async function roteiro(ctx) {
 
   // 4. um segundo clique no MESMO tile e rejeitado: nada muda
   await page.mouse.click(pontoLivre.x, pontoLivre.y);
+  await avancar(1);
   await esperarFrame();
   s = await estado();
   afirmar(s.prediosRenderizados === inicio.prediosRenderizados + 1 && s.obrasRenderizadas === 1,
@@ -105,6 +111,7 @@ async function roteiro(ctx) {
   const vizinho = { gx: livre.gx + larguraDoPredio, gy: livre.gy };
   const pontoVizinho = await pontoDoTile(vizinho.gx, vizinho.gy);
   await page.mouse.click(pontoVizinho.x, pontoVizinho.y);
+  await avancar(1);
   await esperarFrame();
   s = await estado();
   afirmar(s.obrasRenderizadas === 2 && s.prediosRenderizados === inicio.prediosRenderizados + 2,
@@ -118,6 +125,7 @@ async function roteiro(ctx) {
   afirmar((await estado()).ferramentaAtiva === null, 'depois do Esc a ferramenta deveria ser null');
   const foraDeUso = await pontoDoTile(livre.gx - 4, livre.gy);
   await page.mouse.click(foraDeUso.x, foraDeUso.y);
+  await avancar(1);
   await esperarFrame();
   s = await estado();
   afirmar(s.obrasRenderizadas === 2, `sem ferramenta, clicar nao deveria plantar; obras: ${s.obrasRenderizadas}`);

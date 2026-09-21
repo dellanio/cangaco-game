@@ -4,6 +4,10 @@
 // e painel recebem o estado por chamada (`atualizar`), nunca guardam referencia no
 // momento da criacao.
 //
+// O LACO (src/laco.ts, F11a) e quem faz o tempo passar: a cada quadro do navegador ele roda
+// os `passo()` devidos a `TICK_MS`. Desde a F11a o clique so ENFILEIRA o comando; ele so e
+// aplicado no proximo passo — e, com o jogo pausado, so quando o jogador retomar.
+//
 // A ferramenta ativa (F06) tambem nasce aqui, mas NAO e estado de jogo: e o que o
 // jogador tem na mao (qual planta fantasma), some com Esc e nunca entra em
 // GameState.
@@ -11,40 +15,48 @@ import { createInitialState } from './sim/state';
 import type { GameState } from './sim/state';
 import { gameData } from './sim/data';
 import { criarSessao } from './sessao';
+import { criarLaco, nascerPausadoPelaUrl, pausarAoOcultar } from './laco';
 import { iniciarJogo } from './render/game';
 import { montarHud } from './ui/hud';
 import { montarMenuBuild } from './ui/menu-build';
+import { montarAvisoDoTempo } from './ui/aviso-tempo';
 import { criarFerramenta } from './input/ferramenta';
 import { criarEntradaDoMapa } from './input/colocar';
 import { ligarTeclado } from './input/teclado';
+import { ligarTeclasDoTempo } from './input/teclas-do-tempo';
 
 const sessao = criarSessao(createInitialState(gameData.economia.estadoInicial.semente));
 const ferramenta = criarFerramenta();
 ligarTeclado(ferramenta, window);
 
-// PROVISORIO ATE A F11 (BUILD_PLAN, notas da F07 e da F11): cada clique enfileira o
-// comando E roda um passo(), entao o tick avanca 1 por comando. Quando o relogio
-// de 10 Hz chegar, a mudanca e SO esta linha — quem chama passo() vira um timer de
-// TICK_MS —, e nem a fila nem a Sessao mudam.
+// O laco. `?pausado` na URL o faz NASCER pausado: e o que o runner de screenshot usa para todo
+// roteiro comecar no tick 0, sem a janela de ticks que existiria entre carregar a pagina e
+// pausar depois do aperto de mao. Nao e superficie de jogador.
+const laco = criarLaco({
+  passo: () => {
+    sessao.passo();
+  },
+  tickMs: gameData.tempo.tickMs,
+  velocidades: gameData.tempo.velocidadeDeJogo.opcoes,
+  velocidadePadrao: gameData.tempo.velocidadeDeJogo.padrao,
+  nascerPausado: nascerPausadoPelaUrl(window.location.search),
+});
+ligarTeclasDoTempo(laco, window);
+// aba oculta pausa; voltar a aba NAO retoma (o jogador aperta P)
+pausarAoOcultar(laco, document);
+
+// So enfileira. Quem roda o passo que aplica o comando e o laco.
 const entrada = criarEntradaDoMapa(ferramenta, (comando) => {
   sessao.enviar(comando);
-  sessao.passo();
 });
 
 // HUD e painel ANTES do jogo: o Phaser mede o pai no boot e o layout tem que
 // estar assentado (as dimensoes sao fixas no CSS, mas nao custa a ordem certa).
 const hud = montarHud();
+const aviso = montarAvisoDoTempo();
 const menu = montarMenuBuild(ferramenta);
-// PONTE DE HARNESS DA F10 (BUILD_PLAN, notas do F10 e do F11): roda `passos` ticks. NAO e o
-// laco de 10 Hz (F11) — nao ha timer. Serve so ao roteiro de screenshot, que precisa mover o
-// serf sem clicar; a F11 decide se isto some ou vira pausar/retomar do timer. E o `main.ts`
-// que a define porque so ele e dono da Sessao; o render apenas a publica em window.__cangaco.
-function avancar(passos: number): void {
-  if (!Number.isInteger(passos) || passos < 0) throw new Error(`avancar: '${passos}' nao e um inteiro >= 0`);
-  for (let i = 0; i < passos; i++) sessao.passo();
-}
 
-const jogo = iniciarJogo(ferramenta, entrada, avancar);
+const jogo = iniciarJogo(ferramenta, entrada, laco);
 
 function atualizar(s: GameState): void {
   jogo.atualizar(s);
@@ -54,3 +66,13 @@ function atualizar(s: GameState): void {
 
 sessao.aoMudar(atualizar);
 atualizar(sessao.estado);
+aviso.atualizar(laco.pausado, laco.velocidade);
+
+// O relogio do navegador dirige o laco. Isto NAO e o `update()` da cena: o laco e do laco
+// externo, nao do render (CLAUDE.md §10).
+function quadro(agoraMs: number): void {
+  laco.tique(agoraMs);
+  aviso.atualizar(laco.pausado, laco.velocidade);
+  requestAnimationFrame(quadro);
+}
+requestAnimationFrame(quadro);

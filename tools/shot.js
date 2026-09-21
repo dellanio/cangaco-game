@@ -124,7 +124,11 @@ async function main() {
       errosDeConsole.push(String(erro));
     });
 
-    await page.goto(`http://localhost:${PORTA}/`);
+    // `?pausado`: o laco de tempo NASCE pausado (F11a). E um lugar so, e todo roteiro herda: o
+    // tick e 0 quando `pronto` fica verdadeiro, sem a janela de ticks (de duracao variavel) que
+    // existiria se o runner pausasse DEPOIS do aperto de mao. Roteiro que quer tempo passando usa
+    // `window.__cangaco.avancar(n)`, que so funciona com o timer pausado.
+    await page.goto(`http://localhost:${PORTA}/?pausado`);
     await page.waitForFunction(
       () => Boolean(window.__cangaco && window.__cangaco.pronto),
       { timeout: TIMEOUT_PRONTO_MS },

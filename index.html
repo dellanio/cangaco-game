@@ -27,6 +27,12 @@
       #hud .campo { display: flex; gap: 6px; }
       #hud .rotulo { opacity: 0.7; }
       #hud .valor { font-weight: 700; }
+      /* F11a: aviso de pausa/velocidade, na barra, a direita. Some (hidden) em 1x despausado. */
+      #hud .aviso-tempo {
+        margin-left: auto; padding: 2px 10px; border-radius: 4px;
+        background: #c9974b; color: #1e1a14; font-weight: 700;
+      }
+      #hud .aviso-tempo[hidden] { display: none; }
       #jogo { grid-column: 1; grid-row: 2; min-width: 0; min-height: 0; overflow: hidden; }
       #jogo canvas { display: block; }
       #menu-build {

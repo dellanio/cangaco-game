@@ -7,6 +7,7 @@ import { WorldScene } from './scenes/WorldScene';
 import { criarPonte } from './ponte';
 import type { Ferramenta } from '../input/ferramenta';
 import type { EntradaDoMapa } from '../input/colocar';
+import type { RelogioVisivel } from './debug';
 
 export interface JogoLigado {
   readonly jogo: Phaser.Game;
@@ -17,11 +18,11 @@ export interface JogoLigado {
 
 export function iniciarJogo(
   ferramenta: Ferramenta, entrada: EntradaDoMapa,
-  /** PONTE DE HARNESS DA F10: so repassada a cena, que a publica em `window.__cangaco`. */
-  avancar: (passos: number) => void,
+  /** O relogio (F11a): a cena o le para interpolar e o publica em `window.__cangaco`. */
+  relogio: RelogioVisivel,
 ): JogoLigado {
   const ponte = criarPonte();
-  const cena = new WorldScene(ponte, ferramenta, entrada, avancar);
+  const cena = new WorldScene(ponte, ferramenta, entrada, relogio);
   const jogo = new Phaser.Game({
     type: Phaser.AUTO,
     parent: 'jogo',

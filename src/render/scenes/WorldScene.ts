@@ -7,7 +7,7 @@ import { configDoMapa } from '../mapa';
 import { gridToScreen, screenToGrid, depthDeY, tileDentroDoMapa } from '../grid';
 import type { Tile } from '../grid';
 import { publicarEstadoDebug } from '../debug';
-import type { EstadoDebug } from '../debug';
+import type { EstadoDebug, RelogioVisivel } from '../debug';
 import { aparenciaDoPredio } from '../predios';
 import { centroDaVila } from '../../sim/selectors';
 import type { EstadoDePredio, GameState, Predio } from '../../sim/state';
@@ -29,15 +29,15 @@ export class WorldScene extends Phaser.Scene {
     private readonly ponte: PonteDeEstado,
     private readonly ferramenta: Ferramenta,
     private readonly entrada: EntradaDoMapa,
-    /** Ponte de harness da F10 (ver `EstadoDebug.avancar`): a cena so a publica. */
-    private readonly avancar: (passos: number) => void,
+    /** O relogio (F11a): a cena le o `alfa` para interpolar e o publica em `window.__cangaco`. */
+    private readonly relogio: RelogioVisivel,
   ) {
     super('world');
   }
 
   create(): void {
     const { tilePx, largura, altura, larguraPx, alturaPx } = configDoMapa;
-    const estado = publicarEstadoDebug(this.avancar);
+    const estado = publicarEstadoDebug(this.relogio);
 
     this.criarTexturaDeGrama(tilePx);
     const camadaChao = this.criarTilemap(tilePx, largura, altura);
@@ -140,9 +140,10 @@ export class WorldScene extends Phaser.Scene {
       estado.estradasRenderizadas = camadaDeEstradas.atualizar(this.ponte.atual?.estradas ?? {});
       estado.previaDeEstrada = previaDeEstrada.atualizar(this.entrada.trecho(), this.ferramenta.modo, this.ponte.atual);
 
-      // Unidades (F10): a posicao vem do estado (selector puro), sem relogio de render.
+      // Unidades (F10): a posicao de cada tick vem do estado (selector puro); a F11a interpola
+      // ENTRE ticks com o alfa do laco. O render so le o relogio, nunca o move.
       estado.tick = this.ponte.atual?.tick ?? 0;
-      estado.unidadesRenderizadas = camadaDeUnidades.atualizar(this.ponte.atual);
+      estado.unidadesRenderizadas = camadaDeUnidades.atualizar(this.ponte.atual, this.relogio.alfa());
     });
   }
 

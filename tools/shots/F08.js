@@ -33,6 +33,11 @@ async function roteiro(ctx) {
     comida: await ler('comida'), populacao: await ler('populacao'),
   });
   const esperarFrame = () => page.waitForTimeout(200); // window.__cangaco sai no POST_RENDER
+  // F11a: o laco nasce pausado (`?pausado`, no runner) e o clique so ENFILEIRA o comando. Cada gesto
+  // que emite (ou poderia emitir) um comando roda UM passo, como o clique fazia antes do laco.
+  // Tambem depois dos gestos que NAO devem emitir nada: sem o passo, um comando emitido por engano
+  // ficaria na fila e "nao construiu nada" passaria em falso.
+  const avancar = (n) => page.evaluate((k) => window.__cangaco.avancar(k), n);
 
   async function pontoDoTile(tile) {
     const { camera } = await estado();
@@ -95,6 +100,7 @@ async function roteiro(ctx) {
 
   // 3. SOLTAR: a estrada nasce e o custo SAI
   await page.mouse.up();
+  await avancar(1);
   await esperarFrame();
   s = await estado();
   afirmar(s.estradasRenderizadas === totalDeTiles, `deveria haver ${totalDeTiles} tiles de estrada, veio ${s.estradasRenderizadas}`);
@@ -125,6 +131,7 @@ async function roteiro(ctx) {
     `a previa da demolicao deveria mostrar 2 tiles, veio ${JSON.stringify(s.previaDeEstrada)}`,
   );
   await page.mouse.up();
+  await avancar(1);
   await esperarFrame();
   s = await estado();
   afirmar(s.estradasRenderizadas === totalDeTiles - 2, `deveriam sobrar ${totalDeTiles - 2} tiles, veio ${s.estradasRenderizadas}`);
@@ -153,6 +160,7 @@ async function roteiro(ctx) {
   await esperarFrame();
   afirmar((await estado()).previaDeEstrada === null, 'ao sair do canvas o arrasto deveria ser cancelado (previa some)');
   await page.mouse.up(); // o mouseup fora do canvas chega sem arrasto e e ignorado
+  await avancar(1);
   await esperarFrame();
   s = await estado();
   afirmar(s.estradasRenderizadas === totalDeTiles - 2, `sair do canvas nao deveria construir nada, veio ${s.estradasRenderizadas}`);
@@ -168,6 +176,7 @@ async function roteiro(ctx) {
   await esperarFrame();
   afirmar((await estado()).previaDeEstrada === null, 'o Esc no meio do arrasto deveria cancelar (previa some)');
   await page.mouse.up();
+  await avancar(1);
   await esperarFrame();
   s = await estado();
   afirmar(s.estradasRenderizadas === totalDeTiles - 2, `o Esc nao deveria construir nada, veio ${s.estradasRenderizadas}`);

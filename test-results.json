@@ -10,7 +10,7 @@
   "F08-estradas": { "passes": true },
   "F09-jobboard": { "passes": true },
   "F10-serf-fsm": { "passes": true },
-  "F11a-laco-de-tempo": { "passes": false },
+  "F11a-laco-de-tempo": { "passes": true },
   "F11b-laborer-construcao": { "passes": false },
   "F12-desbloqueio": { "passes": false },
   "F13-schoolhouse-fila": { "passes": false },

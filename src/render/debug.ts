@@ -39,20 +39,39 @@ export interface EstadoDebug {
   ferramentaAtiva: string | null;
   /** O tick do estado que a cena desenha agora. */
   tick: number;
-  /** As unidades desenhadas agora (F10), na posicao que o selector `posicaoDaUnidade`
-   *  devolveu — FRACIONARIA no meio de um passo. O roteiro afirma sobre isto. */
+  /** As unidades desenhadas agora (F10), na posicao DO TICK que o selector `posicaoDaUnidade`
+   *  devolveu — FRACIONARIA no meio de um passo, deterministica. O roteiro afirma sobre isto.
+   *  A posicao interpolada (F11a) vem em `gxDesenhado/gyDesenhado`. */
   unidadesRenderizadas: readonly UnidadeRenderizada[];
+  /** O laco de tempo esta pausado (F11a). Le o valor vivo do relogio, nao o do ultimo quadro. */
+  readonly pausado: boolean;
+  /** A velocidade de jogo atual (1x, 2x, 3x), valor vivo. */
+  readonly velocidade: number;
+  /** A fracao do tick em curso que a interpolacao esta usando, em [0, 1]. Vale 1 pausado. */
+  readonly alfaDeInterpolacao: number;
   /**
-   * PONTE DE HARNESS DA F10 — nasce marcada para morrer.
-   *
-   * Roda `passos` ticks da sim (`sessao.passo()` `passos` vezes). Existe so para o roteiro de
-   * screenshot mover o serf antes de haver o laco de 10 Hz (F11): nao e laco, nao ha timer,
-   * tecla nem botao, nao e superficie de jogador. Ele ESCREVE NO ESTADO a partir do `window`
-   * do jogo real, e por isso tem prazo: a F11 decide se ele SOME ou se VIRA pausar/retomar do
-   * timer (decisao pendente registrada no item F11 do BUILD_PLAN.md). Nao usar em codigo de
-   * jogo, nem em `ui/` nem em `input/`.
+   * Controle do relogio para o roteiro de screenshot (F11a; antes, a ponte `avancar` da F10).
+   * Escrevem no estado a partir do `window` do jogo real, entao sao HARNESS: nao usar em codigo
+   * de jogo, nem em `ui/` nem em `input/`. O runner abre a pagina com `?pausado`, e o roteiro que
+   * quer tempo passando usa `avancar`, que LANCA se o timer estiver rodando — o que impede um
+   * passo manual de disputar a sessao com o acumulador. (Decisao na Nota da F11a, BUILD_PLAN.)
    */
+  pausar: () => void;
+  retomar: () => void;
   avancar: (passos: number) => void;
+}
+
+/**
+ * O que o render precisa saber do relogio: ler e, para o harness, mandar. E o `Laco`
+ * (`src/laco.ts`) visto por uma interface estreita, para `render/` nao importar o laco externo.
+ */
+export interface RelogioVisivel {
+  readonly pausado: boolean;
+  readonly velocidade: number;
+  alfa(): number;
+  pausar(): void;
+  retomar(): void;
+  avancar(passos: number): void;
 }
 
 declare global {
@@ -66,7 +85,7 @@ declare global {
  * referencia: a cena muta os campos ao vivo (pointermove, drag de camera),
  * e quem le `window.__cangaco` sempre ve o estado atual sem republicar.
  */
-export function publicarEstadoDebug(avancar: (passos: number) => void): EstadoDebug {
+export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
   const estado: EstadoDebug = {
     pronto: false,
     tileSobMouse: null,
@@ -81,7 +100,19 @@ export function publicarEstadoDebug(avancar: (passos: number) => void): EstadoDe
     ferramentaAtiva: null,
     tick: 0,
     unidadesRenderizadas: [],
-    avancar,
+    // getters: sempre o valor vivo do relogio, sem esperar o proximo POST_RENDER
+    get pausado() {
+      return relogio.pausado;
+    },
+    get velocidade() {
+      return relogio.velocidade;
+    },
+    get alfaDeInterpolacao() {
+      return relogio.alfa();
+    },
+    pausar: () => relogio.pausar(),
+    retomar: () => relogio.retomar(),
+    avancar: (passos) => relogio.avancar(passos),
   };
   window.__cangaco = estado;
   return estado;

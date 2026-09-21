@@ -1458,6 +1458,103 @@ no mapa enquanto pausado** — **não decidido agora.**
   `systems/estradas.ts`) **não foram tocados**: a F11a não toca `sim/`, então ficam para a F11b. Dois
   deles (`state.ts:270` e `systems/estradas.ts:78`) ficam obsoletos com a decisão da estrada.
 
+## F11a — Laço de tempo fixo (2026-09-21)
+
+Não é feature de integração da §10: **nenhum arquivo de `src/sim/` mudou** (`git diff --name-only 69e3ee7 -- src/sim`
+e os arquivos novos, ambos vazios). Tocou `render/`, `ui/`, `input/`, `main.ts`, `sessao.ts` (só comentário), `data/`
+(um rótulo no tema), `tools/` e `tests/`. Cumpre a promessa das notas da F07 e da F10: mudou **só quem chama `passo()`** —
+a fila, a `Sessão` e o `step()` não mudaram.
+
+### Verificado (aberto e rodado nesta sessão)
+
+- `npm run verify` verde: typecheck, lint, `validate:data` (9 arquivos, 0 erros) e **539 testes** (74 novos, em
+  `F11a-laco`, `F11a-teclas-e-aviso` e `F11a-tempo-dados`). Evidência headless em `test-output/F11a.json`, **aberta com Read**.
+- **Aceite 1–2 (acumulador e velocidade):** N ms a 1x rodam ⌊N/tickMs⌋ passos e o resto sobra; a 1x/2x/3x, 10 quadros de um
+  tick dão 10/20/30 passos. **A mesma lista de comandos e o mesmo número de passos dão o mesmo `JSON.stringify` a 1x e a
+  3x** (200 ticks com uma pedreira, uma rua e serfs de verdade: 1250 quadros a 1x, 417 a 3x, JSON idêntico) — a velocidade
+  acelera o relógio, nunca a sim. Um teste próprio afirma que a corrida não é vácua (o JSON difere do inicial).
+- **Aceite 3 (interpolação):** α=0 → anterior, α=1 → atual, α=½ → o meio, em 2D e monotônica; salto acima do limiar assenta
+  sem interpolar (distância medida em 2D, limiar estrito); α fora de [0,1] ou NaN é fixado no extremo.
+- **Aceite 4–6 (pausa, teto, `avancar`):** pausado, 1 s de relógio falso roda 0 passos; `retomar` **não recupera o tempo
+  parado** nem quando não houve quadro nenhum durante a pausa (aba oculta: o rAF para); um quadro de 10 s roda no máximo
+  `MAX_PASSOS_POR_QUADRO` (10, de 100 sem o teto) e o excedente é descartado; `avancar(n)` lança com o timer rodando.
+- **Aceite 7 (`validate:data`):** `velocidadeDeJogo` ganhou regra (`tempo/velocidade`): `opcoes` array não vazio de inteiros
+  positivos sem repetição e `padrao` dentre elas. **Cobertura permanente** em `tests/F11a-tempo-dados.test.ts` contra
+  `validarTudo` (11 casos). Até aqui nada validava esse dado.
+- **Aceite 10–11 (aba oculta, `?pausado`):** ocultar pausa; voltar **não** retoma; quem pausou com `P` continua pausado.
+  `?pausado` faz o laço nascer pausado. **`npm run shot -- F10` três vezes seguidas: o JSON do runner é idêntico byte a byte,
+  e os quatro PNGs (serfs a meio de viagem) têm o mesmo hash entre duas rodadas** — as posições são as mesmas, não só as mensagens.
+- **Aceite 8 (visual)** (`npm run shot -- F11a`, 35 afirmações, 0 erro de console, repetido depois do último ajuste do
+  roteiro). As 3 imagens **abertas com Read**: pausado com o selo "Pausado" na barra e o HUD no estado inicial; rodando a 1x
+  **sem selo** e com os serfs já em movimento; a 2x com o selo "2x" e serfs carregando `timber`. No navegador real o
+  roteiro prova ainda: nasce no tick 0; pausado 1 s não anda; **o clique só enfileira** (a obra só nasce no `avancar(1)`);
+  `avancar` lança rodando; com uma unidade em movimento a posição desenhada difere da do tick e **nunca passa de 2 tiles**;
+  `+`/`-` chegam ao teto e ao piso; `P` pausa e retoma; a aba oculta pausa e voltar não retoma.
+- **Aceite 9 (regressão):** `shot` de F04, F05b, F06, F07, F08 e F10, todos **exit 0**. Só o F10 teve um screenshot aberto (o
+  selo "Pausado" aparece na barra e os serfs u5/u6 estão entre tiles); os outros, só o código de saída.
+- **Mutantes** (probe, **não cobertura contínua** — CLAUDE.md §8): `retomar` sem rebasear o relógio reprova o teste da aba
+  oculta sem quadro; o laço sem o teto reprova o teste dos 10 s. Arquivo restaurado e conferido com `cmp`.
+
+### O que foi decidido e por quê
+
+- **`src/laco.ts`, fora de `render/`, com tudo por parâmetro.** A guarda da F04 mantém fechada a lista de arquivos de `render/`
+  que leem `sim/data`; o laço precisa de `tickMs` e das velocidades. Ele não lê nada: `main.ts` injeta — o mesmo padrão do
+  `tilePx` em `render/grid.ts`. A fonte de tempo entra por parâmetro de `tique`, então o módulo roda em Node com relógio
+  falso (o projeto não tinha nenhum teste de tempo; **não** usei `vi.useFakeTimers`).
+- **`RelogioVisivel` em `render/debug.ts`**: uma interface estreita que o `Laco` satisfaz estruturalmente, para `render/` não
+  importar o laço externo. `pausado`, `velocidade` e `alfaDeInterpolacao` saem como **getters**, sempre o valor vivo.
+- **`interpolacao.ts` é aritmética pura, sem `import`** (guarda estrutural, como o `grid.ts`). `unidadesRenderizadas` continua
+  publicando a posição **do tick** (o que os roteiros afirmam, determinística); a interpolada vai em `gxDesenhado/gyDesenhado`.
+  A posição do tick anterior é memória de render (`criarMemoriaDePosicoes`), como o `Map` de containers — nunca estado de jogo.
+- **Pausado, o `alfa` vale 1**: o render mostra o tick atual sem interpolar. É o que torna o screenshot pausado determinístico.
+- **`MAX_PASSOS_POR_QUADRO = 10` é constante nomeada no módulo do laço**, fora de `sim/` e de `data/` (decisão do operador:
+  salvaguarda de motor, não balanceamento), o que dispensou tocar `sim/data/loader.ts`. **O 10 é uma escolha minha, não
+  derivada de nada**: cobre 3x com quadros de até ~330 ms. Se o playtest mostrar cortes visíveis, é o número a rever.
+- **`SALTO_MAXIMO_EM_TILES = 2`** em `unidades.ts`: apresentação, não regra. A 10 Hz uma unidade a pé anda ~0,2 tile por tick.
+- **As teclas do tempo (`P`, `+`/`=`, `-`) moraram em módulo próprio** (`input/teclas-do-tempo.ts`), não em `ligarTeclado`: manter a
+  assinatura de `ligarTeclado` evitou editar quatro chamadas em testes antigos, e o tempo não é da ferramenta. Ignora
+  Ctrl/Meta/Alt (Ctrl+`+`/`-` é zoom do navegador) e **`keydown` repetido** (`P` segurado não pode ligar e desligar 30 vezes).
+- **O aviso vive na barra do HUD, à direita** (`ui/aviso-tempo.ts`), e não sobre o canvas: assim não há sobreposição nem
+  ponteiro roubado. O texto é função pura (`textoDoAviso`): pausado mostra a pausa; ≠ 1x mostra a velocidade; os dois juntos
+  quando pausado a 2x (para não esconder a velocidade em que o jogo vai retomar); some em 1x despausado. Rótulo em
+  `theme-sertao.json` (`hud.pausado`).
+- **`?pausado` é lido só em `main.ts`**, o dono da `Sessão` — a única leitura de URL do projeto. O runner (`tools/shot.js`) abre a
+  página com ele, num lugar só; todo roteiro herda o tick 0 determinístico.
+- **Roteiros F07, F08 e F10 ganharam `avancar(1)`** depois de cada gesto que emite comando, **inclusive depois dos que NÃO devem
+  emitir** (sair do canvas, `Esc` no meio do arrasto, clicar sem ferramenta). Sem isso um comando emitido por engano ficaria
+  na fila e "não construiu nada" passaria em falso. **O F10 não estava na lista do pedido**: precisou pelo mesmo critério
+  (plantar e arrastar a rua, com asserções logo depois) e fica registrado aqui.
+- **`window.document` e `window.Event` no roteiro**, em vez de ampliar as globais do ESLint: o lint reprovou `document` dentro do
+  `page.evaluate`, e o §10 trata ampliar a configuração como mudança de escopo. Um bloco já declara `window` para
+  `tools/shots/**` pelo mesmo motivo; usei essa global e **não toquei o `eslint.config.mjs`**.
+
+### Consequência para o jogador (registrada a pedido do operador)
+
+**Com o jogo pausado, o clique enfileira o comando e ele só é aplicado ao retomar.** A planta some e nada aparece até
+despausar. Confirmado no navegador: pausado, plantar a pedreira deixa `obrasRenderizadas === 0` e `tick === 0`; a obra só
+nasce no passo seguinte. **Se o playtest mostrar que confunde, a alternativa é ignorar entrada no mapa enquanto pausado —
+não decidido agora.**
+
+### Não feito, de propósito (fora do Escopo da F11a)
+
+- **Widget de controle de velocidade** (GDD §10, P1): decisão do operador; o aviso é só o retorno visual.
+- **Comentários em `sim/` que ainda dizem "F11"** (`state.ts`, `selectors.ts`, `systems/jobs.ts`, `systems/estradas.ts`) e o de
+  `WorldScene.ts:173`: são da F11b. Dois deles (`state.ts:270`, `systems/estradas.ts:78`) estão **obsoletos** desde a decisão de
+  que a estrada continua instantânea.
+- Nada do laborer: FSM, nivelamento, teto de HP e a obra virando `'completo'` são da F11b, que tem a nota de integração da §10.
+
+### Hipóteses, não fatos (não verifiquei)
+
+- **Aba oculta de verdade.** O roteiro simula `visibilitychange` trocando `document.hidden` e disparando o evento real; não
+  troquei de aba num navegador nem medi como o Chromium estrangula o `requestAnimationFrame` em segundo plano.
+- **Navegadores e resoluções.** Tudo foi exercitado só no Chromium headless do Playwright, a 1280×720.
+- **O ritmo real a 60 Hz.** Provei a interpolação por amostragem (a posição desenhada difere da do tick e não passa de 2 tiles)
+  e por aritmética; **não medi suavidade** nem tempo de quadro.
+- **Que `+` chegue ao `keydown` em todo layout de teclado.** No ABNT2 o `+` é Shift+`=`; tratei `=` como `+`, e o teste cobre os
+  dois, mas só exercitei o teclado do Playwright.
+- **Custo do `requestAnimationFrame` paralelo ao do Phaser.** São dois laços de quadro independentes; um lê o relógio e o outro
+  desenha. Não medi se há um quadro de defasagem entre o `passo()` e o desenho.
+
 ## Perguntas em aberto
 
 _(nenhuma no momento: as três que sobravam foram decididas pelo operador — ver "Ajuste pós-F10".)_

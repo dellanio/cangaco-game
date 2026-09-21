@@ -9,13 +9,12 @@
  *  - `sim/` so RECEBE a lista, como parametro de `step()`.
  *
  * `enviar` so enfileira; quem roda o tempo e `passo()`: drena a fila, roda UM
- * `step` e avisa quem ouve. Assim, quando o relogio de 10 Hz chegar (F11), a
- * mudanca e SO quem chama `passo()` — um timer de `TICK_MS` em vez do clique —
- * e nem a fila nem a Sessao mudam.
+ * `step` e avisa quem ouve. Desde a F11a, quem chama `passo()` e o laco de tempo
+ * (`src/laco.ts`), num timer de `TICK_MS` — como a nota da F07 previa: a mudanca
+ * foi SO quem chama `passo()`, e nem a fila nem a Sessao mudaram.
  *
- * Provisorio ate la (BUILD_PLAN, notas da F07 e da F11): `main.ts` chama
- * `passo()` logo apos cada `enviar`, entao o `tick` avanca 1 por comando. Nenhum
- * sistema consome tempo antes da F09, entao e inocuo — mas nao dependa desse tick.
+ * Consequencia: um comando enviado so e aplicado no proximo `passo()`. Com o jogo
+ * pausado isso significa "so ao retomar" (BUILD_PLAN e PROGRESS, F11a).
  */
 import type { Command } from './sim/commands';
 import type { GameState } from './sim/state';

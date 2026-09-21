@@ -150,10 +150,38 @@ function varrerCamposDeTempo(valor, prefixo, achados, heranca) {
   }
 }
 
+// F11a: a velocidade de jogo (1x, 2x, 3x) e consumida pelo laco de tempo (`src/laco.ts`), que
+// lanca na criacao se o padrao nao esta nas opcoes. Sem esta regra o erro so apareceria no
+// navegador. `opcoes`: array nao vazio de inteiros positivos sem repeticao; `padrao` e uma delas.
+function validarVelocidadeDeJogo(dados, erros) {
+  const v = dados.time && dados.time.velocidadeDeJogo;
+  if (v === undefined || v === null || typeof v !== 'object') {
+    erros.push('tempo/velocidade: time.velocidadeDeJogo precisa existir, com `opcoes` e `padrao`');
+    return;
+  }
+  const { opcoes, padrao } = v;
+  if (!Array.isArray(opcoes) || opcoes.length === 0) {
+    erros.push(`tempo/velocidade: velocidadeDeJogo.opcoes precisa ser um array nao vazio, achou ${JSON.stringify(opcoes)}`);
+    return;
+  }
+  if (!opcoes.every((o) => Number.isInteger(o) && o > 0)) {
+    erros.push(`tempo/velocidade: velocidadeDeJogo.opcoes so aceita inteiros positivos, achou ${JSON.stringify(opcoes)}`);
+    return;
+  }
+  if (new Set(opcoes).size !== opcoes.length) {
+    erros.push(`tempo/velocidade: velocidadeDeJogo.opcoes tem valor repetido: ${JSON.stringify(opcoes)}`);
+    return;
+  }
+  if (!opcoes.includes(padrao)) {
+    erros.push(`tempo/velocidade: velocidadeDeJogo.padrao ${JSON.stringify(padrao)} nao esta em opcoes [${opcoes.join(', ')}]`);
+  }
+}
+
 function validarTempo(dados, erros) {
   if (!Number.isInteger(dados.time && dados.time.tickHz) || dados.time.tickHz <= 0) {
     erros.push(`tempo/tickHz: time.tickHz precisa ser inteiro positivo, achou ${dados.time && dados.time.tickHz}`);
   }
+  validarVelocidadeDeJogo(dados, erros);
   const escalas = (dados.time && dados.time.escalas) || {};
 
   const declaracoesObrigatorias = new Map();

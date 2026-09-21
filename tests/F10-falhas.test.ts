@@ -698,7 +698,7 @@ afterAll(() => {
     declaradoApenas: [
       'tempo de manuseio em carregando/entregando (dado inexistente): 1 tick cada',
       'demolir obra por comando (F16): a demolicao aqui e injecao de estado',
-      'laco de 10 Hz e interpolacao entre ticks (F11); `avancar` e ponte de harness com prazo na F11',
+      'laco de 10 Hz e interpolacao entre ticks (F11a); `avancar` era ponte de harness com prazo na F11a, que o resolveu (pausar/retomar/avancar)',
       'capacidade de carga do serf: uma unidade por viagem',
       'capacidade do armazem ao devolver (capacidade: null hoje)',
     ],

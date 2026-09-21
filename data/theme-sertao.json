@@ -97,7 +97,7 @@
     "leather_armor": "Gibão de couro", "iron_armor": "Gibão reforçado",
     "wooden_shield": "Chapéu de aba", "iron_shield": "Peitoral de couro cru"
   },
-  "hud": { "comida": "Comida", "populacao": "Gente" },
+  "hud": { "comida": "Comida", "populacao": "Gente", "pausado": "Pausado" },
   "menuBuild": {
     "titulo": "Construir", "requer": "requer", "semRequisito": "ainda não disponível",
     "estrada": "Estrada", "porTile": "por tile",

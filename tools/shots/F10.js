@@ -11,9 +11,10 @@
 //    e estoque de ninguem), e a carga aparece sobre o serf;
 //  - no fim a obra recebeu tudo: o HUD ficou `custo` abaixo, e os serfs voltam a ociosos.
 //
-// O tempo avanca por `window.__cangaco.avancar(n)` — a PONTE DE HARNESS DA F10 (nao e o laco de
-// 10 Hz, que e da F11; ver a nota do F11 no BUILD_PLAN). O cenario e montado so pela UI, como
-// nas F07 e F08: nada e injetado no estado.
+// O tempo avanca por `window.__cangaco.avancar(n)`: o runner abre a pagina com `?pausado` (o laco
+// de 10 Hz da F11a nasce pausado), entao o roteiro comeca no tick 0 e e ele quem faz o tempo passar.
+// `avancar` lanca se o timer estiver rodando (ver as notas da F11a no BUILD_PLAN). O cenario e
+// montado so pela UI, como nas F07 e F08: nada e injetado no estado.
 
 const { retanguloDoCanvas, arrastarDentroDoCanvas } = require('./_canvas');
 const economia = require('../../data/economy.json');
@@ -102,6 +103,7 @@ async function roteiro(ctx) {
   await page.mouse.move(pPedreira.x, pPedreira.y);
   await esperarFrame();
   await page.mouse.click(pPedreira.x, pPedreira.y);
+  await avancar(1); // o clique so enfileira o comando; um passo o aplica (F11a)
   await esperarFrame();
   let s = await estado();
   afirmar(s.obrasRenderizadas === 1, `deveria haver 1 obra, veio ${s.obrasRenderizadas}`);
@@ -113,6 +115,7 @@ async function roteiro(ctx) {
   await arrastarDentroDoCanvas(
     page, canvas, [await pontoDoTile(inicioDaRua), await pontoDoTile(cantoDaRua), await pontoDoTile(pontaDaRua)],
   );
+  await avancar(1); // idem: o arrasto so enfileira o PlaceRoad
   await esperarFrame();
   s = await estado();
   afirmar(s.estradasRenderizadas === tilesDaRua, `deveria haver ${tilesDaRua} tiles de estrada, veio ${s.estradasRenderizadas}`);
@@ -122,7 +125,7 @@ async function roteiro(ctx) {
     `a Pedra deveria cair para ${estoque.stone - custoDaRua} (${tilesDaRua} tiles x ${custoPorTile}), veio ${hudDaRua.stone}`);
   const tickDaRua = s.tick;
 
-  // a obra esta ligada: a sim ja gerou as tarefas, mas nenhum serf se mexeu (o tick so andou por comando)
+  // a obra esta ligada: a sim ja gerou as tarefas, mas nenhum serf se mexeu (o tempo so passou por `avancar(1)` dos dois comandos)
   afirmar(serfsDe(s).every((u) => u.fsm === 'ocioso'), 'antes de avancar o tempo os serfs continuam ociosos');
   await capturar('serfs-ociosos');
 
