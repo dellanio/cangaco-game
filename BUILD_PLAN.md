@@ -71,7 +71,7 @@ prédio surge sem clique do jogador.
 - **Escopo**: cenário inicial da seção 3.2 do GDD (Storehouse e Schoolhouse
   prontos, estoque, 4 serfs, 2 laborers) vivo dentro de `sim/`, vindo inteiro de
   `data/economy.json`. `npm run sim` deixa de ser stub. Nada de render, nada de
-  UI — o formato de prédio e unidade no `GameState` é herdado por F07, F10, F11
+  UI — o formato de prédio e unidade no `GameState` é herdado por F07, F10, F11b
   e F14, e é revisado isolado, sem decisão de tela no meio.
 - **Aceite**: `npm run sim -- inicial --ticks 0` imprime exatamente os valores
   da tabela. O estado sobrevive ao round-trip por JSON. `compararComESemSave`
@@ -156,8 +156,8 @@ prédio surge sem clique do jogador.
   a F07 e só.
 - **Nota**: a fila de comandos e a `Sessão` (dona do `GameState` e da fila)
   nascem aqui. O disparo é **provisório e por comando**: cada clique enfileira e
-  roda um `passo()`, então o `tick` avança 1 por comando até a F11, que traz o
-  relógio de 10 Hz e passa a chamar `passo()` num timer. A mudança da F11 é só
+  roda um `passo()`, então o `tick` avança 1 por comando até a F11a, que traz o
+  relógio de 10 Hz e passa a chamar `passo()` num timer. A mudança da F11a é só
   quem dispara; a fila e a `Sessão` não mudam.
   
 ### F08 — Estradas
@@ -176,15 +176,17 @@ prédio surge sem clique do jogador.
   da fila herda esta permissão: ela vale para a F08 e só.
 - **Nota**: **desvio provisório da regra "o custo sai na entrega".** A estrada
   não tem canteiro nem viagem de material: o aceite exige que o tile exista e
-  conecte no próprio comando, e serf (F10) e laborer (F11) ainda não existem. Por
+  conecte no próprio comando, e serf (F10) e laborer (F11b) ainda não existem. Por
   isso, na F08, `PlaceRoad` debita a pedra **no comando**, dos armazéns completos
   (gaveta `saida`, depois `entrada`, em `predios.ordem`), e o tile nasce pronto.
   **Demolir devolve** `floor(removidos × estrada.devolucaoAoDemolir)` de pedra
   (`terrain.json`, `0.5`; decisão do operador — sem isso corrigir traçado seria
   punitivo), ao mesmo armazém de onde sairia o débito; o arredondamento é por
-  comando. O GDD §5.4 diz "feita por laborers": quando a F11 chegar, o operador
-  decide se a estrada continua instantânea ou vira canteiro por tile (campo novo,
-  separado do que já está de pé) e o débito migra para a entrega.
+  comando. O GDD §5.4 diz "feita por laborers", e **o operador decidiu (2026-09-21) que a
+  estrada continua instantânea na Fase A**: virar canteiro por tile dobra a F11b e
+  atrasa o aceite da fase. O desvio deixa de ser provisório; o desenho de como
+  adotar o canteiro (campo novo, separado do que já está de pé, e o débito
+  migrando para a entrega) está em `IDEIAS.md`.
 - **Nota**: "Demolir", aqui, é demolir **tiles de estrada**. Demolir prédio é da
   F16 (painel de seleção e demolição).
 
@@ -255,48 +257,99 @@ prédio surge sem clique do jogador.
   (`main.ts`) na mesma feature. Cada camada recebe só o que é dela: `sim/` ganha a
   FSM, o A* e o ciclo em duas fases; `render/` desenha o serf e a carga e publica o
   que desenhou, junto com o gancho `avancar` no bloco de `window.__cangaco` (ponte de
-  harness, com prazo na F11); `main.ts` só injeta o callback que chama `passo()`, sem
+  harness, com prazo na F11a); `main.ts` só injeta o callback que chama `passo()`, sem
   timer. `input/` e `ui/` **não** são tocados. Nenhuma regra de jogo muda de lado.
   Nenhuma outra feature da fila herda esta permissão: ela vale para a F10 e só.
-- **Nota**: **como o serf se move na tela sem o laço de 10 Hz (que é da F11).** A
+- **Nota**: **como o serf se move na tela sem o laço de 10 Hz (que é da F11a).** A
   posição visível é função **pura do estado**: `Unidade.gx/gy` é o tile onde ela está,
   e `fsmData` guarda o `caminho` e o `progresso` (ticks no passo em curso), de modo que
   o selector `posicaoDaUnidade` devolve o tile fracionário. O render só lê; não tem
   relógio nem guarda posição anterior. O tempo avança por `avancar(n)`, publicado em
   `window.__cangaco` (chama `sessao.passo()` `n` vezes), usado pelo roteiro de
   screenshot e pelo operador no console — sem tecla, sem botão, sem timer.
-- **Nota**: **o que a F11 muda no movimento.** (a) quem chama `passo()` passa a ser um
+- **Nota**: **o que a F11a muda no movimento.** (a) quem chama `passo()` passa a ser um
   timer de `TICK_MS`; (b) o render ganha interpolação **entre ticks** (fração do tempo
   desde o último `passo`) por cima da posição por `progresso`, que continua valendo;
-  (c) o roteiro de screenshot precisa **pausar** o timer antes de usar `avancar`; (d) a
+  (c) o roteiro de screenshot precisa do timer **pausado** antes de usar `avancar` — decidido: o laço nasce pausado com `?pausado` na URL, o que evita a janela de ticks entre o carregamento e uma pausa posterior; (d) a
   velocidade de jogo 1x/2x/3x acelera o relógio, nunca a sim. A FSM e o `step()` não
   mudam.
 
-### F11 — FSM do Laborer (construção em etapas)
+### F11a — Laço de tempo fixo (10 Hz)
+- **Escopo**: timer de `TICK_MS` chamando `sessao.passo()`, com acumulador e fonte
+  de tempo injetada. Velocidade de jogo 1x/2x/3x, com opções e padrão vindos de
+  `data/time.json`, nas teclas `+` e `-`. Pausa do jogador (`P`) e pausa
+  automática e **assimétrica** (`visibilitychange` pausa ao ocultar a aba; voltar
+  à aba **não** retoma). O laço **nasce pausado** quando a URL tem `?pausado`.
+  Aviso visual único de pausa e de velocidade. Interpolação de render entre
+  ticks. O destino do gancho `avancar` da F10. **Nada em `src/sim/`** — o
+  `step()`, a FSM e a fila não mudam; muda só quem chama `passo()`.
+- **Aceite**:
+  1. Com relógio falso a 1x, `N` ms produzem `⌊N/tickMs⌋` passos e o resto sobra
+     no acumulador; a 2x e 3x o número é proporcional.
+  2. Mesma lista de comandos e mesmo número de passos produzem `JSON.stringify`
+     idêntico a 1x e a 3x — a velocidade acelera o relógio, nunca a simulação.
+  3. Interpolação: α=0 devolve a posição do tick anterior, α=1 a do atual, α=½ o
+     meio; salto acima do limiar assenta sem interpolar.
+  4. Pausado, com 1 s de relógio falso: zero passos, `tick` e posições idênticos.
+     `retomar()` volta a avançar **sem rajada** — o tempo parado não é recuperado.
+  5. Um quadro muito longo (ex.: 10 s) roda no máximo `MAX_PASSOS_POR_QUADRO`.
+  6. `avancar(n)` lança se o timer não estiver pausado.
+  7. `npm run validate:data` reprova `velocidadeDeJogo` com `padrao` fora de
+     `opcoes` e com `opcoes` vazio.
+  8. Screenshots: pausado com o aviso, 2x com o aviso, 1x sem o aviso.
+  9. `npm run shot` de F04 a F10 continua verde.
+  10. `visibilitychange` é assimétrico: ocultar a aba pausa; torná-la visível não
+      retoma, e quem já tinha pausado com `P` continua pausado ao voltar.
+  11. Abrir com `?pausado` deixa o laço pausado antes do primeiro quadro (`tick`
+      é 0 quando `pronto` fica verdadeiro), e **rodar `npm run shot -- F10` três
+      vezes seguidas dá o mesmo resultado**.
+- **Evidência**: `test-output/F11a.json` + `screenshots/F11a-*.png`
+- **Nota**: o laço de tempo fixo a 10 Hz (CLAUDE.md §5, `TICK_MS = 100`) ainda
+  não existe e nasce aqui — a F11a é a primeira feature **com relógio** (o serf
+  da F10 já se move; o que não havia era quem fizesse o tempo passar sozinho).
+  Até a F06 `step()` só foi chamado direto por teste; desde a F07 a `Sessão`
+  (`src/sessao.ts`) o chama, mas **por comando**, sem relógio e sem interpolação
+  de render. A F11a troca o disparo por comando por um timer de `TICK_MS` que
+  chama `passo()`; a fila e a `Sessão` não mudam.
+- **Nota**: **o destino do gancho `avancar` da F10, decidido.** A F10 publica
+  `window.__cangaco.avancar(n)` (chama `sessao.passo()` `n` vezes) para o roteiro
+  de screenshot mover o serf sem o laço, e a ponte nasceu marcada para morrer.
+  Ela **não some**: vira `pausar()` / `retomar()` / `avancar(n)`, e `avancar`
+  **lança se o timer estiver rodando**. Com isso ela deixa de ser dívida e passa
+  a ser harness legítimo — a trava é o que impede screenshot não determinístico.
+  O comentário `PONTE DE HARNESS DA F10` no código aponta para esta nota.
+- **Nota**: **a pausa não é só do harness — é do jogador, e precisa de retorno
+  visual.** Decisão do operador: o que ficou fora foi o widget de controle, não o
+  retorno; o GDD §10 exige retorno imediato para toda ação. Um elemento único
+  mostra o texto de pausa quando pausado, a velocidade quando ela é diferente de
+  1x, e some em 1x despausado. Rótulos em `data/theme-sertao.json`, como o HUD.
+- **Nota**: **a interpolação entre ticks é do render e não toca `sim/`.** A
+  posição visível já é função pura do estado (`posicaoDaUnidade`, fração *dentro*
+  do tick pelo `progresso`); a F11a acrescenta a fração *entre* ticks por cima,
+  guardando a posição do tick anterior como memória de render. O que
+  `window.__cangaco.unidadesRenderizadas` publica continua sendo a posição **do
+  tick**, determinística — é o que os roteiros afirmam; o α vai em campo próprio.
+
+### F11b — FSM do Laborer (construção em etapas)
 - **Escopo**: nivelar terreno → esperar material → martelar. HP subindo conforme
   o GDD: cada material entregue soma 50 HP, cada martelada soma 5. Três estágios
   visuais: marcação, estrutura de madeira, prédio completo.
 - **Aceite**: cenário com Quarry (3 timber + 2 stone, 250 HP). Após a entrega dos
   5 materiais o HP é 250 e o prédio fica `completo`. Screenshots dos três
   estágios.
-- **Evidência**: `test-output/F11.json` + `screenshots/F11-*.png`
-- **Nota**: **a estrada como canteiro é decisão da F11.** A F08 entrega estrada
-  instantânea, com a pedra debitada no comando (ver a Nota de desvio no item F08).
-  O GDD §5.4 diz que laborers constroem estrada; se o operador escolher isso, a
-  "estrada planejada" entra como **campo novo** no `GameState`, separado de
-  `estradas` (que continua sendo só o que está de pé, e é o que `isConnected`
-  consulta), e o débito migra do comando para a entrega.
-- **Nota**: o laço de tempo fixo a 10 Hz (CLAUDE.md §5, `TICK_MS = 100`) ainda
-  não existe e nasce aqui — a F11 é a primeira feature que precisa de
-  movimento. Até a F06 `step()` só foi chamado direto por teste; desde a F07 a
-  `Sessão` (`src/sessao.ts`) o chama, mas **por comando**, sem relógio e sem
-  interpolação de render. A F11 troca o disparo por comando por um timer de
-  `TICK_MS` que chama `passo()`; a fila e a `Sessão` não mudam.
+- **Evidência**: `test-output/F11b.json` + `screenshots/F11b-*.png`
+- **Nota**: esta é uma **feature de integração** — é a exceção explícita que a
+  §10 do CLAUDE.md exige para tocar `src/sim/` e `src/render/` na mesma feature.
+  Cada camada recebe só o que é dela: `sim/` ganha a FSM do laborer, o campo de
+  nivelamento em `Obra`, o teto de HP e o portão de `gerarTarefas`; `render/`
+  ganha os três estágios visuais da obra e o desenho do laborer. Nenhuma regra de
+  jogo muda de lado. Nenhuma outra feature da fila herda esta permissão: ela vale
+  para a F11b e só.
 - **Nota**: **o nivelamento está fora do contrato da obra.** A `Obra` da F07 tem
   só `faltam` (materiais ainda a entregar, por mercadoria) e o `hp` do prédio
   (HP já martelado, de 0 até `def.hp`). "Nivelar terreno → esperar material →
   martelar" não tem campo, e o GDD §5.1 põe o laborer nivelando *antes* de os
-  serfs entregarem. **É a F11 quem acrescenta o que precisar em `Obra`** — por
+  serfs entregarem. **É a F11b quem acrescenta o que precisar em `Obra`** — por
   exemplo, o progresso do nivelamento — e quem decide se a entrega espera por ele.
 - **Nota**: teto de HP durante a obra: `entregues = Σ_m (custo[m] − faltam[m])`
   e `teto = entregues × hpPorMaterialEntregue`. A soma é sobre mercadorias, cada
@@ -304,28 +357,19 @@ prédio surge sem clique do jogador.
   diferentes como uma grandeza só. O Escopo diz "cada material entregue soma 50
   HP"; o contrato lê isso como o GDD §5.1 diz — a entrega **habilita** 50 HP de
   martelada, e a martelada (`hpPorMartelada`) é o que soma ao `hp`. Ao
-  `hp === def.hp` a obra vira `'completo'` e chama `registrarTipoConstruido`
-  (F12).
+  `hp === def.hp` a obra vira `'completo'` e **só isso**: a F11b não chama
+  `registrarTipoConstruido` — ligar o desbloqueio a essa transição é da F12.
 - **Nota**: **"obra já nivelada" é portão da criação de tarefa.** O nível 3 da
   escada de `delivery.json` é "material → obra **já nivelada**". A F09 ainda não
   tem como avaliar isso (a `Obra` não tem campo de nivelamento) e o gerador cria
   tarefa de material para **toda obra ligada por estrada**, sem predicado
-  "sempre verdadeiro". A F11 acrescenta o campo de nivelamento em `Obra` **e** o
+  "sempre verdadeiro". A F11b acrescenta o campo de nivelamento em `Obra` **e** o
   portão em `gerarTarefas` (`src/sim/systems/jobs.ts`), decidindo se a entrega
   espera o laborer terminar de nivelar.
-- **Nota**: **decisão pendente — o gancho `avancar` da F10.** A F10 publica
-  `window.__cangaco.avancar(n)` (chama `sessao.passo()` `n` vezes) para o roteiro de
-  screenshot mover o serf sem o laço. É uma **ponte de harness que escreve no estado a
-  partir do `window` do jogo real**, e nasce marcada para morrer: a F11, ao criar o
-  timer, **decide** se ele **some** ou **vira pausar/retomar do timer** — e não fecha a
-  feature com ele esquecido. Com o timer rodando e sem pausa, os screenshots deixam de
-  ser determinísticos. O comentário `PONTE DE HARNESS DA F10` no código aponta para
-  esta nota.
-- **Nota**: **o que a F10 deixa para a F11.** `carregando` e `entregando` duram **um
+- **Nota**: **o que a F10 deixa para a F11b.** `carregando` e `entregando` duram **um
   tick** cada (não há tempo de manuseio no dado). A entrega faz `Obra.faltam` chegar a 0
-  e **não completa nada**: virar `'completo'` é da martelada (esta feature). A posição
-  visível do serf já é derivada do `progresso`; a F11 só acrescenta a interpolação
-  entre ticks (ver a Nota de movimento no item F10).
+  e **não completa nada**: virar `'completo'` é da martelada (esta feature). A
+  interpolação entre ticks da posição do serf é da F11a, não desta.
 
 ### F12 — Desbloqueio por conclusão
 - **Escopo**: concluir um prédio libera os filhos dele na árvore do GDD. O menu

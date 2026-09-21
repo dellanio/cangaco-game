@@ -104,7 +104,9 @@ minutos. Se não couber, o ritmo está errado — não o jogador.
 
 `B` Build · `R` estrada · `F` campo · `Delete` demolir · `Esc` cancela ·
 `Ctrl+1..9` salva grupo · `1..9` seleciona grupo · `Espaço` pula para o último
-alerta · `+`/`-` velocidade de jogo.
+alerta · `+`/`-` velocidade de jogo · `P` pausa. A pausa também é automática
+ao ocultar a aba do navegador, mas voltar à aba **não** retoma: o jogador
+despausa com `P`.
 
 ### 2.3 Comandos de prédio
 

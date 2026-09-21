@@ -30,3 +30,10 @@ caminho. Ideia boa é justamente a mais perigosa.
   funcionam se nada bloquear a passagem" **[fonte]**; a Fase A fica em 4 direções por decisão do
   operador. Ao adotar: o A\* por estrada da F10 só liga o que `isConnected` liga, e o teste de
   equivalência em `tests/F10-astar.test.ts` prende os dois — mudar um exige mudar o outro.)
+- Estrada como canteiro (laborer constrói a estrada tile a tile) — o GDD §5.4 diz "feita por
+  laborers"; a Fase A fica com a estrada **instantânea** (F08: `PlaceRoad` debita a pedra no
+  comando e o tile nasce pronto). Decisão do operador, 2026-09-21: virar canteiro por tile dobra a
+  F11b e atrasa o aceite da Fase A. Ao adotar (o desenho já está na Nota de desvio do item F08 do
+  `BUILD_PLAN.md`): a "estrada planejada" entra como **campo novo** no `GameState`, separado de
+  `estradas` (que segue sendo só o que está de pé, e é o que `isConnected` consulta), e o débito
+  da pedra migra do comando para a entrega.

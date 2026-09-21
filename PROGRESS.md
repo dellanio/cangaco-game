@@ -1374,6 +1374,90 @@ tábua e ouro, e deixar só a pedra viraria uma barra incoerente. **Comida não 
 que usa `estoqueTotal`): quem "gasta" comida é o Inn (F20), que decide se também é só a dos armazéns —
 registrado na nota do F15. Se o operador quiser só a pedra, é reverter duas linhas do `hud.ts`.
 
+## Divisão da F11 em F11a e F11b (2026-09-21)
+
+Não é feature da fila: é reorganização da fila, pedida e aprovada pelo operador. O item F11
+acumulou notas de duas naturezas independentes — o relógio (timer de 10 Hz, interpolação, pausa,
+velocidade, o destino do `avancar`) e o laborer (FSM, nivelamento, teto de HP, obra virando
+`completo`) — e a divisão segue o molde da F05a/F05b. `test-results.json` passou de 18 para 19
+chaves (intencional): `F11-laborer-construcao` virou `F11a-laco-de-tempo` + `F11b-laborer-construcao`.
+**A F11a vem antes**: os screenshots dos três estágios da F11b só saem determinísticos com a pausa.
+
+### Como as notas do item F11 foram distribuídas
+
+| Nota | Destino |
+|---|---|
+| Estrada como canteiro | **Nenhum: decidida** — instantânea (ver abaixo) |
+| Laço de 10 Hz nasce aqui | F11a |
+| Nivelamento fora do contrato da obra | F11b |
+| Teto de HP | F11b |
+| "Obra já nivelada" como portão de `gerarTarefas` | F11b |
+| Decisão pendente do `avancar` | F11a (**decidida**, ver abaixo) |
+| O que a F10 deixa para a F11 | Dividida: manuseio de 1 tick e "entrega não completa" na F11b; interpolação na F11a |
+
+Referências cruzadas atualizadas: F07 e F10 passam a dizer F11a; F05a e F08 passam a dizer F11b. O
+texto riscado da F05b ficou como estava.
+
+### Decisões do operador (não são perguntas em aberto)
+
+1. **A estrada continua instantânea na Fase A.** *Por quê:* virar canteiro por tile dobra a F11b e
+   atrasa o aceite da fase. *Saída pronta:* o desenho de como adotar (campo novo no `GameState`,
+   separado de `estradas`; o débito migrando do comando para a entrega) está em `IDEIAS.md` e na
+   Nota de desvio da F08, que deixou de dizer "provisório".
+2. **Velocidade de jogo: mecanismo mais as teclas `+` e `-`; sem widget de HUD.** O que ficou
+   fora foi o widget de controle, não o retorno visual: um aviso único mostra a pausa e a velocidade
+   quando ≠ 1x (GDD §10 exige retorno imediato; a rubrica do evaluator reprova "aperta e nada aparece").
+3. **A pausa é do jogador (`P`), não só do harness.** *Por quê:* numa partida de uma hora no
+   navegador o jogador vai ser interrompido. Registrada no GDD §2.2. **Pausa automática em
+   `visibilitychange`, assimétrica:** ocultar a aba pausa; voltar **não** retoma, para não devolver
+   o jogo despausado a quem pausou com `P`. Com isso o teto de passos por quadro vira proteção
+   secundária e é constante nomeada no módulo do laço, fora de `sim/` (salvaguarda de motor, não
+   balanceamento), o que dispensa tocar `sim/data/loader.ts`.
+4. **`avancar` não some:** vira `pausar()` / `retomar()` / `avancar(n)` em `window.__cangaco`, e
+   `avancar` lança se o timer estiver rodando.
+5. **Pausa = zero passos, sem exceção.** Descartada a alternativa de rodar um passo quando a fila não
+   está vazia: `step()` roda todos os sistemas, não só a fila, então os serfs andariam a cada clique
+   durante a pausa.
+6. **O laço nasce pausado com `?pausado` na URL**, e o runner abre a página com o parâmetro. Pausar
+   depois do aperto de mão deixaria uma janela de ticks de duração variável e tornaria instável o
+   roteiro da F10, que afirma posições depois de `avancar(n)`.
+7. **Roteiros F07 e F08 ganham `avancar(1)` depois de cada clique que muda estado.** A instrução de
+   não editar roteiros um a um valia para a pausa (resolvida num lugar só, o runner); isto é tempo
+   passando, o caso que `avancar` existe para cobrir.
+8. **F11b leva a nota de integração da §10** (toca `sim/` e `render/`), escrita no BUILD_PLAN antes
+   do código. **A F11a não leva**, porque não toca `sim/`.
+
+### Duas incoerências corrigidas na fila (achadas lendo os textos)
+
+- A nota do teto de HP dizia que a obra, ao completar, "chama `registrarTipoConstruido` (F12)", mas a
+  Nota da F12, a tabela do contrato da obra e a seção "Desbloqueio permanente" atribuem essa ligação à
+  F12. **A F11b só vira a obra para `'completo'`**; a frase saiu.
+- "A F11 é a primeira feature que precisa de movimento" estava errado: o serf da F10 já se move. O
+  correto é **"primeira com relógio"**.
+
+### Consequência para o jogador (registrada a pedido do operador)
+
+**Com o jogo pausado, o clique enfileira o comando e ele só é aplicado ao retomar.** A planta some e
+nada aparece até despausar. Se o playtest mostrar que isso confunde, a alternativa é **ignorar entrada
+no mapa enquanto pausado** — **não decidido agora.**
+
+### Verificado nesta rodada
+
+- `npm run verify` verde antes de escrever em `test-results.json`: 465 testes, `validate:data` com
+  9 arquivos e 0 erros.
+- `git diff test-results.json`: mudou só a linha da F11 (uma chave virou duas); 19 chaves, 11 em `true`.
+- `grep` por `F11` sem sufixo no BUILD_PLAN.md: sobra só a linha do texto riscado da F05b.
+
+### Hipóteses, não fatos (não verifiquei)
+
+- Que F04, F05b e F06 passem sem edição depois da F11a. Suponho que sim por não dependerem de tick (a
+  planta fantasma vive em `input/`, fora do `GameState`), mas só rodando para saber.
+- Que `?pausado` seja lido antes do primeiro quadro em qualquer navegador: só há o Chromium headless
+  do Playwright.
+- Comentários em `sim/` que ainda dizem "F11" (`state.ts`, `selectors.ts`, `systems/jobs.ts`,
+  `systems/estradas.ts`) **não foram tocados**: a F11a não toca `sim/`, então ficam para a F11b. Dois
+  deles (`state.ts:270` e `systems/estradas.ts:78`) ficam obsoletos com a decisão da estrada.
+
 ## Perguntas em aberto
 
 _(nenhuma no momento: as três que sobravam foram decididas pelo operador — ver "Ajuste pós-F10".)_
