@@ -11,7 +11,7 @@ import type { GameState, PredioCompleto, Tarefa } from '../src/sim/state';
 import { liberar, reclamar } from '../src/sim/jobs';
 import type { MotivoDeLiberacao } from '../src/sim/jobs';
 import { disponivelNaOrigem, reservadoNaOrigem, reservadoNoDestino, vagaNoDestino } from '../src/sim/reservas';
-import { step } from '../src/sim/tick';
+import { gerarTarefas, sanearTarefas } from '../src/sim/systems/jobs';
 import { deepFreeze } from './helpers/determinism';
 import { violacoesDeInvariantes } from './helpers/jobs-invariantes';
 import {
@@ -36,6 +36,20 @@ const reclamada = (numero: number, serf: string, extra: Partial<Tarefa> = {}): T
 
 /** Uma tarefa `carregando` valida de pedra: obra-a pede 2, a unidade ja pegou 1. */
 const comUmaCarregando = (): GameState => comTarefas(cenarioLigado({ stone: 2 }), [carregando(1, serf1)]);
+
+/**
+ * Um tick do QUADRO: `sanearTarefas` e depois `gerarTarefas`, sem os serfs. Aqui se testa o
+ * JobBoard; o serf real (F10) agiria sobre as tarefas no mesmo tick (o teste da FSM e outro
+ * arquivo). Os eventos do saneamento ficam em `events`, como no `step`.
+ */
+function tickDoQuadro(estado: GameState): GameState {
+  const saneado = sanearTarefas(estado);
+  return { ...gerarTarefas(saneado.state), events: saneado.events };
+}
+
+const semOTile = (estado: GameState, chave: string): GameState => ({
+  ...estado, estradas: Object.fromEntries(Object.entries(estado.estradas).filter(([k]) => k !== chave)) as GameState['estradas'],
+});
 
 const tarefasDe = (estado: GameState): Tarefa[] =>
   estado.jobs.tarefas.ordem.map((id) => estado.jobs.tarefas.porId[id]).filter((t): t is Tarefa => t !== undefined);
@@ -102,7 +116,7 @@ describe('F10 — liberar uma tarefa carregando: sempre CANCELA (a carga volta a
 describe('F10 — sanearTarefas sobre uma tarefa carregando: so olha unidade, destino e vaga', () => {
   it('uma carregando valida sobrevive a ticks sem evento nenhum', () => {
     let estado = comUmaCarregando();
-    for (let i = 0; i < 5; i++) estado = step(estado, []);
+    for (let i = 0; i < 5; i++) estado = tickDoQuadro(estado);
     expect(estado.jobs.tarefas.porId.t1?.estado).toBe('carregando');
     expect(estado.jobs.tarefas.porId.t1?.reclamadaPor).toBe(serf1);
     // obra pede 2 e uma ja esta na mao: o gerador cria so a que falta, uma vez
@@ -111,24 +125,24 @@ describe('F10 — sanearTarefas sobre uma tarefa carregando: so olha unidade, de
   });
 
   it('a ORIGEM sumir nao cancela: a coleta ja aconteceu', () => {
-    const depois = step(semOPredio(comUmaCarregando(), armazem.id), []);
+    const depois = tickDoQuadro(semOPredio(comUmaCarregando(), armazem.id));
     expect(tarefasDe(depois).map((t) => t.estado)).toEqual(['carregando']);
     expect(liberacoes(depois)).toEqual([]);
   });
 
   it('a origem sem estoque nao cancela', () => {
-    const depois = step(comPedraNaSaida(comUmaCarregando(), armazem.id, 0), []);
+    const depois = tickDoQuadro(comPedraNaSaida(comUmaCarregando(), armazem.id, 0));
     expect(tarefasDe(depois).map((t) => t.estado)).toEqual(['carregando']);
   });
 
   it('a estrada cortada entre as portas de origem e destino nao cancela aqui: o caminho do serf carregado e da FSM', () => {
-    const depois = step(comUmaCarregando(), [{ type: 'DemolishRoad', tiles: [tile(29, 35)] }]);
+    const depois = tickDoQuadro(semOTile(comUmaCarregando(), '29,35'));
     expect(tarefasDe(depois).map((t) => t.estado)).toEqual(['carregando']);
     expect(liberacoes(depois)).toEqual([]);
   });
 
   it('destino que sumiu: cancela com `destino-sumiu`', () => {
-    const depois = step(semOPredio(comUmaCarregando(), 'obra-a'), []);
+    const depois = tickDoQuadro(semOPredio(comUmaCarregando(), 'obra-a'));
     expect(liberacoes(depois)).toEqual([{ type: 'task-released', tarefa: 't1', motivo: 'destino-sumiu', resultado: 'cancelada' }]);
     expect(reservadoNoDestino(depois, 'obra-a', 'stone')).toBe(0);
   });
@@ -139,18 +153,18 @@ describe('F10 — sanearTarefas sobre uma tarefa carregando: so olha unidade, de
       capacidade: { entrada: 5, saida: 5 }, estoque: { entrada: {}, saida: {} },
     };
     const estado = comUmaCarregando();
-    const depois = step({ ...estado, predios: { ...estado.predios, porId: { ...estado.predios.porId, 'obra-a': completo } } }, []);
+    const depois = tickDoQuadro({ ...estado, predios: { ...estado.predios, porId: { ...estado.predios.porId, 'obra-a': completo } } });
     expect(liberacoes(depois)).toEqual([{ type: 'task-released', tarefa: 't1', motivo: 'destino-completo', resultado: 'cancelada' }]);
   });
 
   it('destino sem mais vaga (faltam abaixo do reservado): cancela com `destino-completo`', () => {
     const estado = comTarefas(comObra(semOPredio(cenarioLigado({ stone: 2 }), 'obra-a'), 'obra-a', { gx: 26, gy: 34, faltam: { stone: 0 } }), [carregando(1, serf1)]);
-    const depois = step(estado, []);
+    const depois = tickDoQuadro(estado);
     expect(liberacoes(depois)).toEqual([{ type: 'task-released', tarefa: 't1', motivo: 'destino-completo', resultado: 'cancelada' }]);
   });
 
   it('unidade removida: CANCELA (nao reabre): a carga se perdeu com ela', () => {
-    const depois = step(semAUnidade(comUmaCarregando(), serf1), []);
+    const depois = tickDoQuadro(semAUnidade(comUmaCarregando(), serf1));
     expect(liberacoes(depois)).toEqual([{ type: 'task-released', tarefa: 't1', motivo: 'unidade-removida', resultado: 'cancelada' }]);
     expect(tarefasDe(depois).filter((t) => t.id === 't1')).toEqual([]);
   });
@@ -158,14 +172,14 @@ describe('F10 — sanearTarefas sobre uma tarefa carregando: so olha unidade, de
   it('na disputa por vaga solta a RECLAMADA primeiro, mesmo de numero MENOR: a carregando tem carga na mao', () => {
     // faltam 1, uma reclamada (t3) e uma carregando (t9). Por numero decrescente sairia a t9.
     const estado = comTarefas(cenarioLigado({ stone: 1 }), [reclamada(3, serf1), carregando(9, serf2)]);
-    const depois = step(estado, []);
+    const depois = tickDoQuadro(estado);
     expect(liberacoes(depois)).toEqual([{ type: 'task-released', tarefa: 't3', motivo: 'destino-completo', resultado: 'cancelada' }]);
     expect(tarefasDe(depois).map((t) => [t.id, t.estado])).toEqual([['t9', 'carregando']]);
   });
 
   it('e quando so ha carregandas em excesso, solta a de MAIOR numero', () => {
     const estado = comTarefas(cenarioLigado({ stone: 1 }), [carregando(3, serf1), carregando(9, serf2)]);
-    const depois = step(estado, []);
+    const depois = tickDoQuadro(estado);
     expect(liberacoes(depois)).toEqual([{ type: 'task-released', tarefa: 't9', motivo: 'destino-completo', resultado: 'cancelada' }]);
   });
 });
@@ -173,7 +187,7 @@ describe('F10 — sanearTarefas sobre uma tarefa carregando: so olha unidade, de
 describe('F10 — o gerador e o verificador de invariantes conhecem a carregando', () => {
   it('o gerador conta a carregando: obra pedindo 1, uma carregando -> nenhuma tarefa nova, nenhuma cancelada', () => {
     const estado = comTarefas(cenarioLigado({ stone: 1 }), [carregando(1, serf1)]);
-    const depois = step(estado, []);
+    const depois = tickDoQuadro(estado);
     expect(tarefasDe(depois).map((t) => t.id)).toEqual(['t1']);
   });
 

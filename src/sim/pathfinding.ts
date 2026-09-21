@@ -32,6 +32,7 @@ import type { GameData } from './data/types';
 import { gameData } from './data';
 import { caixaDoPredio } from './footprint';
 import type { CaixaEmTiles } from './footprint';
+import { chaveDeTile } from './estradas';
 import type { TileDeGrid } from './estradas';
 
 export type ModoDeBusca = 'livre' | 'estrada';
@@ -130,6 +131,31 @@ function entradaDeCache(state: Pick<GameState, 'predios' | 'estradas'>, dados: G
   const criada = { estrada, resultados: new Map<string, Caminho | null>() };
   porEstradas.set(state.estradas, criada);
   return criada;
+}
+
+/**
+ * Ticks de UM passo de `de` para `para` (tiles vizinhos), a pe: o terreno do tile de
+ * DESTINO (estrada ou grama) e reto ou diagonal. E a mesma conta que o A* soma, entao
+ * "custo do caminho" = "tempo da viagem". O serf a usa para andar e o selector de posicao
+ * para interpolar dentro do passo.
+ */
+export function custoDoPasso(
+  estradas: GameState['estradas'], de: TileDeGrid, para: TileDeGrid, dados: GameData = gameData,
+): number {
+  const terreno = estradas[chaveDeTile(para)] === true ? 'estrada' : 'grama';
+  const diagonal = de.gx !== para.gx && de.gy !== para.gy;
+  return diagonal ? dados.movimento.ticksPorTileDiagonal.aPe[terreno] : dados.movimento.ticksPorTile.aPe[terreno];
+}
+
+/** Um unico tile e andavel neste modo? (Dentro do mapa; `livre`: fora de footprint;
+ *  `estrada`: e estrada.) O serf pergunta antes de pisar no proximo tile do caminho. */
+export function tileAndavel(
+  state: Pick<GameState, 'predios' | 'estradas'>, tile: TileDeGrid, modo: ModoDeBusca, dados: GameData = gameData,
+): boolean {
+  const { largura, altura } = dados.terreno.mapaPadrao;
+  if (!(Number.isInteger(tile.gx) && Number.isInteger(tile.gy) && tile.gx >= 0 && tile.gy >= 0 && tile.gx < largura && tile.gy < altura)) return false;
+  if (modo === 'estrada') return state.estradas[chaveDeTile(tile)] === true;
+  return footprintsDe(state, dados).bloqueado[tile.gy * largura + tile.gx] === 0;
 }
 
 /**

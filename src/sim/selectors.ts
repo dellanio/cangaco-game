@@ -3,6 +3,7 @@ import type { GameData } from './data/types';
 import { gameData } from './data';
 import { caixaDoPredio } from './footprint';
 import { estaDesbloqueado } from './desbloqueio';
+import { custoDoPasso } from './pathfinding';
 import { custoDoPredio } from './systems/build';
 import type { CaixaEmTiles } from './footprint';
 
@@ -190,4 +191,30 @@ export function opcoesDoMenuBuild(
       requer: desbloqueado ? null : def.desbloqueadoPor,
     };
   });
+}
+
+/** Uma posicao no mapa em tiles, FRACIONARIA (a unidade pode estar no meio de um passo). */
+export interface PosicaoNoMapa {
+  readonly gx: number;
+  readonly gy: number;
+}
+
+/**
+ * Onde a unidade esta DE VERDADE, para o render desenhar (F10). Funcao pura do estado: o
+ * tile onde ela esta (`gx`, `gy`) mais a fracao `progresso / custo do passo` rumo ao
+ * proximo tile do caminho. Sem relogio de render e sem posicao anterior guardada — e por
+ * isso o movimento e observavel mesmo antes do laco de 10 Hz (F11), que so acrescenta a
+ * interpolacao ENTRE ticks por cima disto.
+ */
+export function posicaoDaUnidade(
+  state: GameState, unidade: Unidade, dados: GameData = gameData,
+): PosicaoNoMapa {
+  const proximo = unidade.fsmData.caminho?.[0];
+  const progresso = unidade.fsmData.progresso ?? 0;
+  if (!proximo || progresso === 0) return { gx: unidade.gx, gy: unidade.gy };
+  const fracao = progresso / custoDoPasso(state.estradas, { gx: unidade.gx, gy: unidade.gy }, proximo, dados);
+  return {
+    gx: unidade.gx + (proximo.gx - unidade.gx) * fracao,
+    gy: unidade.gy + (proximo.gy - unidade.gy) * fracao,
+  };
 }

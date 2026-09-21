@@ -127,7 +127,7 @@ export interface PlanoDaTarefa {
 }
 
 /** Os tiles de porta que sao estrada: so por eles a carga entra e sai da rede. */
-function portasDeEstrada(state: GameState, predioId: string, dados: GameData): TileDeGrid[] {
+export function portasDeEstrada(state: GameState, predioId: string, dados: GameData = gameData): TileDeGrid[] {
   const predio = state.predios.porId[predioId];
   return predio ? tilesDaPorta(predio, dados).filter((t) => ehEstrada(state.estradas, t)) : [];
 }
@@ -221,6 +221,24 @@ export function reclamar(
       jobs: { tarefas: { porId: { ...state.jobs.tarefas.porId, [tarefaId]: reclamada }, ordem: state.jobs.tarefas.ordem } },
     },
   };
+}
+
+/** A coleta: a tarefa `reclamada` passa a `carregando` (a reserva da origem foi consumida
+ *  pela saida do material do estoque, que quem chama faz no mesmo tick). So o quadro. */
+export function marcarCarregando(state: GameState, tarefaId: string): GameState {
+  const tarefa = state.jobs.tarefas.porId[tarefaId];
+  if (!tarefa || tarefa.estado !== 'reclamada') {
+    throw new Error(`marcarCarregando: '${tarefaId}' nao esta reclamada`);
+  }
+  const carregando: Tarefa = { ...tarefa, estado: 'carregando' };
+  return { ...state, jobs: { tarefas: { porId: { ...state.jobs.tarefas.porId, [tarefaId]: carregando }, ordem: state.jobs.tarefas.ordem } } };
+}
+
+/** A entrega concluiu a tarefa: ela sai do quadro. Nao emite evento (quem entrega o emite). */
+export function removerTarefa(state: GameState, tarefaId: string): GameState {
+  const porId = { ...state.jobs.tarefas.porId };
+  delete porId[tarefaId];
+  return { ...state, jobs: { tarefas: { porId, ordem: state.jobs.tarefas.ordem.filter((id) => id !== tarefaId) } } };
 }
 
 /**

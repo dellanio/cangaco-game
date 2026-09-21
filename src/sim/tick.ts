@@ -5,6 +5,7 @@ import { gameData } from './data';
 import { aplicarPlaceBlueprint } from './systems/build';
 import { aplicarDemolishRoad, aplicarPlaceRoad } from './systems/estradas';
 import { gerarTarefas, sanearTarefas } from './systems/jobs';
+import { sistemaDosSerfs } from './systems/serfs';
 
 /**
  * A unica porta de entrada da simulacao.
@@ -12,8 +13,8 @@ import { gerarTarefas, sanearTarefas } from './systems/jobs';
  *
  * Os comandos rodam EM ORDEM dentro do tick, cada um sobre o estado que o
  * anterior deixou (dois `PlaceBlueprint` na mesma posicao, na mesma lista: o
- * segundo e rejeitado). Os sistemas com relogio (haul, produce, eat, combat)
- * entram a partir da F09.
+ * segundo e rejeitado). O serf (F10) ja roda aqui; os sistemas com
+ * relogio que faltam (produce, eat, combat) entram nas features deles.
  *
  * `dados` e injetavel pelo mesmo motivo de `createInitialState`: um teste prova
  * que nenhum numero foi digitado em `sim/` trocando o dado.
@@ -60,12 +61,14 @@ export function step(
     }
   }
 
-  // O JobBoard: revalida o que existe (release em todo ramo de falha) e so depois cria
-  // o que falta. Depois dos comandos, para ver a estrada demolida e a obra plantada
-  // neste mesmo tick.
+  // O JobBoard e os serfs, nesta ordem, depois dos comandos (para ver a estrada demolida e
+  // a obra plantada neste mesmo tick): revalida o que existe (release em todo ramo de
+  // falha); os serfs agem sobre o quadro ja saneado (F10); so entao se cria o que falta —
+  // assim o que um serf libera e recriado no mesmo tick.
   const saneado = sanearTarefas(atual, dados);
-  atual = gerarTarefas(saneado.state, dados);
-  events.push(...saneado.events);
+  const serfs = sistemaDosSerfs(saneado.state, dados);
+  atual = gerarTarefas(serfs.state, dados);
+  events.push(...saneado.events, ...serfs.events);
 
   return {
     tick,

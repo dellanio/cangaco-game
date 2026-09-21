@@ -58,7 +58,10 @@ describe('F09 — release em TODO ramo de falha: um teste por ramo, as duas rese
   });
 
   it('1. unidade removida -> REABRE a mesma tarefa', () => {
-    const { estado, tarefa } = comUmaTarefaReclamada();
+    // F10: com outros serfs ociosos no cenario, um deles reclamaria a tarefa reaberta NO MESMO
+    // tick. Este teste e sobre o release, entao o serf removido e o unico do cenario.
+    const { estado: comTodos, tarefa } = comUmaTarefaReclamada();
+    const estado = serfsDoCenario(comTodos).filter((id) => id !== serf1).reduce((e, id) => semAUnidade(e, id), comTodos);
     const antes = estado.jobs.tarefas.porId[tarefa];
     const depois = step(semAUnidade(estado, serf1), []);
     expect(liberacoes(depois)).toEqual([{ type: 'task-released', tarefa, motivo: 'unidade-removida', resultado: 'reaberta' }]);
@@ -411,7 +414,9 @@ describe('F09 — propriedade estrutural: eventos aleatorios, invariantes depois
   });
 });
 
-// --- o cenario de carga: muitas obras, ninguem reclama (o jogo real antes da F10) ---
+// --- o cenario de carga: muitas obras, ninguem reclama ---
+// Desde a F10 os serfs reclamam sozinhos; para medir o JobBoard SEM consumidor (o numero que a
+// F09 registrou, `cargaComMuitasObras`), o cenario nao tem serfs. A carga COM serfs e da F10.
 
 export const metricasDeCarga = { obras: 0, ticks: 0, tarefasGeradas: 0, maximoSimultaneo: 0, tarefasNoFim: 0 };
 
@@ -423,7 +428,8 @@ describe('F09 — cenario de carga: muitas obras simultaneas e ninguem reclamand
 
     // 20 obras ao longo de uma rua (y=40), ligada a porta do armazem por uma vertical em x=31
     const xs = [...Array.from({ length: 10 }, (_, i) => i * 3), ...Array.from({ length: 10 }, (_, i) => 33 + i * 3)];
-    let estado = comEstoqueNaSaida(inicial, armazem.id, { stone: 500, timber: 500 });
+    const semSerfs = serfsDoCenario(inicial).reduce((e, id) => semAUnidade(e, id), inicial);
+    let estado = comEstoqueNaSaida(semSerfs, armazem.id, { stone: 500, timber: 500 });
     estado = comEstradas(estado, [...linhaH(0, 62, 40), ...linhaV(31, 33, 40)]);
     xs.forEach((x, i) => {
       estado = comObra(estado, `obra-${i}`, { gx: x, gy: 38, faltam });
@@ -462,13 +468,6 @@ const plantarERuar = (t: number): Command[] => {
     { type: 'PlaceRoad', tiles: [tile(29, 33), tile(29, 34), tile(29, 35), tile(29, 36), tile(28, 36)] },
   ];
 };
-/** No tick 3, um serf reclama a melhor tarefa (na F10 isso sera a FSM do serf). */
-const reclamaNoTick3 = (estado: GameState): GameState => {
-  if (estado.tick !== 3) return estado;
-  const r = reclamarMelhor(estado, serf1);
-  return r.ok ? r.state : estado;
-};
-
 describe('F09 — determinismo e save/load com reservas pendentes', () => {
   it('compararComESemSave continua passando SEM o gancho (o helper canonico da F02)', () => {
     const { direto, comSave } = compararComESemSave({ seed: 1, totalTicks: 30, saveAtTick: 15 });
@@ -476,17 +475,20 @@ describe('F09 — determinismo e save/load com reservas pendentes', () => {
   });
 
   it('com uma reserva PENDENTE atravessando o save, chega ao mesmo JSON', () => {
-    const { direto, comSave } = compararComESemSave({
-      seed: 1, totalTicks: 14, saveAtTick: 7, comandosNoTick: plantarERuar, antesDoStep: reclamaNoTick3,
-    });
+    // desde a F10 o proprio serf reclama: no tick do save ja ha tarefa reclamada (indo buscar)
+    let noSave = createInitialState(1);
+    for (let t = 0; t < 7; t++) noSave = step(noSave, plantarERuar(t));
+    const pendentesNoSave = tarefasDe(noSave).filter((t) => t.estado === 'reclamada');
+    expect(pendentesNoSave.length, 'sem reserva pendente no tick do save o teste seria vacuo').toBeGreaterThan(0);
+    for (const t of pendentesNoSave) {
+      expect(reservadoNaOrigem(noSave, t.origem, t.mercadoria)).toBeGreaterThan(0);
+      expect(reservadoNoDestino(noSave, t.destino, t.mercadoria)).toBeGreaterThan(0);
+    }
+
+    const { direto, comSave } = compararComESemSave({ seed: 1, totalTicks: 14, saveAtTick: 7, comandosNoTick: plantarERuar });
     expect(comSave).toBe(direto);
     const final = JSON.parse(direto) as GameState;
-    const reclamadas = tarefasDe(final).filter((t) => t.estado === 'reclamada');
-    expect(reclamadas).toHaveLength(1);
-    // a reserva continua la depois do save/load, por causa da tarefa
-    const alvo = reclamadas[0];
-    expect(alvo && reservadoNaOrigem(final, alvo.origem, alvo.mercadoria)).toBe(1);
-    expect(alvo && reservadoNoDestino(final, alvo.destino, alvo.mercadoria)).toBe(1);
+    expect(tarefasDe(final).some((t) => t.estado !== 'aberta')).toBe(true); // ainda ha tarefa em curso
     expect(violacoesDeInvariantes(final)).toEqual([]);
   });
 
@@ -502,7 +504,7 @@ describe('F09 — determinismo e save/load com reservas pendentes', () => {
     const rodar = (): string => {
       let e = createInitialState(1);
       for (let t = 0; t < 12; t++) {
-        e = step(reclamaNoTick3(e), plantarERuar(t));
+        e = step(e, plantarERuar(t));
       }
       return JSON.stringify(e);
     };
@@ -603,9 +605,11 @@ afterAll(() => {
 
   // save/load com uma reserva pendente atravessando o save
   const semGancho = compararComESemSave({ seed: 1, totalTicks: 30, saveAtTick: 15 });
-  const comGancho = compararComESemSave({ seed: 1, totalTicks: 14, saveAtTick: 7, comandosNoTick: plantarERuar, antesDoStep: reclamaNoTick3 });
+  const comGancho = compararComESemSave({ seed: 1, totalTicks: 14, saveAtTick: 7, comandosNoTick: plantarERuar });
   const finalComGancho = JSON.parse(comGancho.direto) as GameState;
-  const reclamadasNoFinal = Object.values(finalComGancho.jobs.tarefas.porId).filter((t) => t.estado === 'reclamada');
+  let noSave = createInitialState(1);
+  for (let t = 0; t < 7; t++) noSave = step(noSave, plantarERuar(t));
+  const reclamadasNoSave = Object.values(noSave.jobs.tarefas.porId).filter((t) => t.estado === 'reclamada');
 
   const nivelDoCodigo = gameData.entrega.prioridades.find((p) => p.id === 'material-para-obra');
   gravarEvidencia('F09', {
@@ -669,8 +673,10 @@ afterAll(() => {
     saveLoad: {
       compararComESemSaveSemGancho: semGancho.comSave === semGancho.direto,
       comReservaPendenteAtravessandoOSave: comGancho.comSave === comGancho.direto,
-      tarefasReclamadasNoFinal: reclamadasNoFinal.length,
-      reservaNaOrigemNoFinal: reclamadasNoFinal.map((t) => reservadoNaOrigem(finalComGancho, t.origem, t.mercadoria)),
+      // desde a F10 o serf reclama sozinho; a reserva pendente que atravessa o save e a do tick 7
+      tarefasReclamadasNoSave: reclamadasNoSave.length,
+      reservaNaOrigemNoSave: reclamadasNoSave.map((t) => reservadoNaOrigem(noSave, t.origem, t.mercadoria)),
+      tarefasEmCursoNoFinal: Object.values(finalComGancho.jobs.tarefas.porId).filter((t) => t.estado !== 'aberta').length,
     },
     // Decisao E do operador: o numero que dira, na F10, se o indice por predio e necessario. NAO otimizado.
     cargaComMuitasObras: {
