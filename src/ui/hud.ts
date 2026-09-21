@@ -2,7 +2,7 @@
 // escreve texto — nunca muta GameState, nunca importa phaser, nunca varre
 // predios por conta propria (CLAUDE.md §3, §10).
 import type { GameState } from '../sim/state';
-import { estoqueTotal, comidaTotal, populacaoPorGrupo } from '../sim/selectors';
+import { estoqueDosArmazens, comidaTotal, populacaoPorGrupo } from '../sim/selectors';
 import temaSertao from '../../data/theme-sertao.json';
 
 export interface Hud {
@@ -52,7 +52,8 @@ export function montarHud(): Hud {
 
   return {
     atualizar(estado) {
-      const total = estoqueTotal(estado);
+      // o que o jogador pode GASTAR (armazens), nao a soma de todos os predios
+      const total = estoqueDosArmazens(estado);
       const pop = populacaoPorGrupo(estado);
       escrever('gold', String(total.gold ?? 0));
       escrever('timber', String(total.timber ?? 0));

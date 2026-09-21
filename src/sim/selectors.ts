@@ -1,4 +1,5 @@
 import type { GameState, Predio, Unidade } from './state';
+import { ID_DO_ARMAZEM } from './state';
 import type { GameData } from './data/types';
 import { gameData } from './data';
 import { caixaDoPredio } from './footprint';
@@ -23,6 +24,30 @@ export function estoqueTotal(state: GameState): Readonly<Record<string, number>>
     const predio = state.predios.porId[id];
     // Obra nao guarda mercadoria: o que ja foi entregue a ela e custo - obra.faltam.
     if (!predio || predio.estado !== 'completo') continue;
+    for (const gaveta of [predio.estoque.entrada, predio.estoque.saida]) {
+      for (const [mercadoria, quantidade] of Object.entries(gaveta)) {
+        total[mercadoria] = (total[mercadoria] ?? 0) + quantidade;
+      }
+    }
+  }
+  return total;
+}
+
+/**
+ * O estoque que o jogador PODE GASTAR: as duas gavetas (`entrada` + `saida`) dos ARMAZENS
+ * completos, e so deles. E o numero da barra de recursos: a estrada (F08) e as obras (F10)
+ * so tiram de armazem, entao somar a saida de uma pedreira faria o HUD mostrar pedra que
+ * ninguem consegue usar (`estoqueTotal`, que soma todos os predios, continua para outros usos).
+ *
+ * O RESERVADO por uma tarefa nao e descontado: a pedra ainda esta la, e a previa da estrada ja
+ * explica a recusa. A mercadoria em transito (na mao de um serf) nao esta em armazem nenhum e
+ * nao conta. Obra nao guarda mercadoria.
+ */
+export function estoqueDosArmazens(state: GameState): Readonly<Record<string, number>> {
+  const total: Record<string, number> = {};
+  for (const id of state.predios.ordem) {
+    const predio = state.predios.porId[id];
+    if (!predio || predio.estado !== 'completo' || predio.tipo !== ID_DO_ARMAZEM) continue;
     for (const gaveta of [predio.estoque.entrada, predio.estoque.saida]) {
       for (const [mercadoria, quantidade] of Object.entries(gaveta)) {
         total[mercadoria] = (total[mercadoria] ?? 0) + quantidade;
