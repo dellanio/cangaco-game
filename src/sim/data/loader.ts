@@ -51,6 +51,21 @@ function ticksParaTile(
   return ticks;
 }
 
+/** Ticks do passo DIAGONAL: o passo reto vezes a raiz de 2 (geometria do grid, nao
+ *  balanceamento), num unico arredondamento — `round(sqrt2 * x)`, nunca
+ *  `round(sqrt2 * round(x))`, que arredondaria duas vezes (com custo 1.3, 9 e nao 10). */
+function ticksParaTileDiagonal(
+  velocidadeTilesPorSegundo: number, custoDeTerreno: number, escala: number, tickHz: number,
+): Ticks {
+  const ticks = Math.round((Math.SQRT2 * tickHz * custoDeTerreno) / (velocidadeTilesPorSegundo * escala));
+  if (!Number.isFinite(ticks) || ticks < 1) {
+    throw new Error(
+      `loadGameData: movimento diagonal invalido apos conversao (${ticks} ticks; velocidade=${velocidadeTilesPorSegundo}, custo=${custoDeTerreno}, escala=${escala})`,
+    );
+  }
+  return ticks;
+}
+
 /**
  * Busca o multiplicador de um grupo em `time.escalas` pelo nome que o
  * proprio arquivo declara (`raw.combat.escala`, `raw.units.escalaVelocidade`,
@@ -142,10 +157,26 @@ export function loadGameData(raw: RawGameData): GameData {
     }
     return linha;
   }
+  function matrizDiagonalPorModo(modo: 'aPe' | 'montado', velocidade: number): Record<TerrenoTipo, Ticks> {
+    const linha = {} as Record<TerrenoTipo, Ticks>;
+    for (const terreno of terrenos) {
+      const custo = raw.terrain.custoDeMovimento[terreno];
+      linha[terreno] = registrar(
+        `movimento.ticksPorTileDiagonal.${modo}.${terreno}`, raw.units.escalaVelocidade,
+        (Math.SQRT2 * custo) / velocidade, 'segundosPorTile',
+        ticksParaTileDiagonal(velocidade, custo, escalaMovimento, tickHz),
+      );
+    }
+    return linha;
+  }
   const movimento: MovimentoData = {
     ticksPorTile: {
       aPe: matrizPorModo('aPe', raw.units.velocidadeBase_tilesPorSegundo.aPe),
       montado: matrizPorModo('montado', raw.units.velocidadeBase_tilesPorSegundo.montado),
+    },
+    ticksPorTileDiagonal: {
+      aPe: matrizDiagonalPorModo('aPe', raw.units.velocidadeBase_tilesPorSegundo.aPe),
+      montado: matrizDiagonalPorModo('montado', raw.units.velocidadeBase_tilesPorSegundo.montado),
     },
   };
 

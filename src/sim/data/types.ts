@@ -58,7 +58,13 @@ export interface ProducaoData {
 export type TerrenoTipo = 'estrada' | 'grama' | 'campoArado' | 'areia';
 
 export interface MovimentoData {
+  /** Passo reto (4 direcoes), por terreno de DESTINO. */
   readonly ticksPorTile: {
+    readonly aPe: Readonly<Record<TerrenoTipo, Ticks>>;
+    readonly montado: Readonly<Record<TerrenoTipo, Ticks>>;
+  };
+  /** Passo diagonal: `round(sqrt2 * custo)` num arredondamento so (F10, A* de vizinhanca 8). */
+  readonly ticksPorTileDiagonal: {
     readonly aPe: Readonly<Record<TerrenoTipo, Ticks>>;
     readonly montado: Readonly<Record<TerrenoTipo, Ticks>>;
   };
