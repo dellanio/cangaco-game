@@ -32,9 +32,6 @@ está mal escrito — corrija o item antes de implementar.
   compara `JSON.stringify` dos dois estados finais — idênticos. Teste que
   confirma que `step` não muta o estado de entrada.
 - **Evidência**: `test-output/F02.json`
-- **Nota**: `tests/helpers/determinism.ts` (`compararComESemSave`) é o teste
-  canônico de determinismo do projeto. A F23 estende, não reescreve.
-
 ### F03 — Dados, escala de tempo e validação
 - **Escopo**: carregar os nove arquivos de `data/` (`time`, `buildings`,
   `production`, `units`, `combat`, `condition`, `delivery`, `terrain`,
@@ -86,32 +83,10 @@ prédio surge sem clique do jogador.
   `data/theme-sertao.json`, não dos ids da simulação.
 - **Aceite**: screenshot com o HUD legível e os dois prédios no mapa.
 - **Evidência**: `test-output/F05b.json` + `screenshots/F05b-*.png`
-- ~~**Nota**: `main.ts` entrega o estado ao render e ao HUD por uma função de
-  atualização — `atualizar(state)` — nunca guardando uma referência no momento
-  da criação. Quando o laço de tempo fixo entrar (F11), é só passar a chamá-la
-  a cada tick; se o render capturar o estado inicial e ler dele direto, a
-  chegada do laço vira refatoração em vez de ligação.~~ Cumprida na F05b:
-  `iniciarJogo()`/`montarHud()` devolvem `{ atualizar }`, `main.ts` chama as
-  duas a partir de uma função só.
-- ~~**Nota**: `tools/shots/F04.js` hoje assume `camera.scrollX/scrollY === 0`
-  (`TILE_ALVO` fixo). Com `camera.centerOn` nesta feature isso deixa de ser
-  verdade. O roteiro tem que parar de assumir scroll fixo — ler
-  `camera.scrollX/scrollY` de `window.__cangaco` e calcular o tile esperado a
-  partir do estado real, afirmando a relação (tile sob o mouse ↔ pixel dado a
-  câmera atual), não uma coordenada literal. `npm run shot -- F04` precisa
-  passar antes de fechar esta feature.~~ Cumprida na F05b: `npm run shot --
-  F04` passa lendo o scroll publicado, sem presumir onde a câmera abriu.
 - **Nota**: `gridToScreen`/`screenToGrid` (F04) são cegas a zoom — a conversão
   assume escala 1. Quando o zoom entrar (GDD §2.1, roda do mouse), as duas
   precisam de um parâmetro de escala e o teste de ida e volta precisa varrê-lo.
   Hoje nenhum item da fila agenda zoom.
-- **Nota**: esta é uma **feature de integração** — é a exceção explícita que a
-  §10 do CLAUDE.md exige para tocar `src/sim/` e `src/render/` na mesma
-  feature. O escopo dela é literalmente ligar o estado da F05a à tela: os
-  selectors novos entram em `sim/`, o desenho e a câmera em `render/`, o HUD em
-  `ui/`. Nenhuma regra de jogo muda de lado. Nenhuma outra feature da fila
-  herda esta permissão: ela vale para a F05b e só.
-
 ### F06 — Menu Build e planta fantasma
 - **Escopo**: painel lateral com os prédios desbloqueados e seu custo; bloqueados
   em cinza com "requer X". Planta seguindo o mouse, verde quando pode e vermelha
@@ -126,15 +101,6 @@ prédio surge sem clique do jogador.
   inalcançável hoje; `canPlace` ganha essa recusa quando o mapa tiver terreno
   variado. O GDD já a exige: Fisherman's precisa de lago, mina precisa de veio
   na montanha, estrada precisa de solo transponível.
-- **Nota**: esta é uma **feature de integração** — é a exceção explícita que a
-  §10 do CLAUDE.md exige para tocar `src/sim/`, `src/render/`, `src/ui/` e
-  `src/input/` na mesma feature. Cada camada recebe só o que é dela: `sim/`
-  ganha `canPlace` e o desbloqueio; `render/` desenha a planta; `ui/` monta o
-  painel e o layout; `input/` nasce com a ferramenta ativa e o teclado. Nenhum
-  comando é emitido (o `PlaceBlueprint` é a F07) e nenhuma regra de jogo muda de
-  lado. Nenhuma outra feature da fila herda esta permissão: ela vale para a F06
-  e só.
-
 ### F07 — Comando de posicionar planta
 - **Escopo**: clique confirma e emite `PlaceBlueprint`. O estado ganha uma obra
   pendente com HP 0 e a lista de materiais faltantes. Marcação visível no chão.
@@ -146,20 +112,6 @@ prédio surge sem clique do jogador.
 - **Atenção**: `Command` é `never` desde a F02. Ao acrescentar o primeiro
   membro, escreva o `switch` em `step()` com `default` atribuindo a `never`
   — a checagem de exaustividade não existe hoje e nada vai avisar.
-- **Nota**: esta é uma **feature de integração** — é a exceção explícita que a
-  §10 do CLAUDE.md exige para tocar `src/sim/`, `src/render/`, `src/input/` e o
-  laço externo (`main.ts`) na mesma feature. Cada camada recebe só o que é dela:
-  `sim/` ganha o comando, o `switch` do `step()` e o formato da obra; `input/`
-  transforma o clique em comando; `render/` desenha a marcação no chão; a
-  `Sessão` (`src/sessao.ts`) e o `main.ts` ligam os três. Nenhuma regra de jogo
-  muda de lado. Nenhuma outra feature da fila herda esta permissão: ela vale para
-  a F07 e só.
-- **Nota**: a fila de comandos e a `Sessão` (dona do `GameState` e da fila)
-  nascem aqui. O disparo é **provisório e por comando**: cada clique enfileira e
-  roda um `passo()`, então o `tick` avança 1 por comando até a F11a, que traz o
-  relógio de 10 Hz e passa a chamar `passo()` num timer. A mudança da F11a é só
-  quem dispara; a fila e a `Sessão` não mudam.
-  
 ### F08 — Estradas
 - **Escopo**: ferramenta de estrada com arrasto tile a tile. Custo em stone por
   tile. Grafo de conectividade e função `isConnected(from, to)`. Demolir.
@@ -167,29 +119,6 @@ prédio surge sem clique do jogador.
   `isConnected` verdadeiro; remove um tile do meio e confirma falso. Screenshot
   da estrada desenhada.
 - **Evidência**: `test-output/F08.json` + `screenshots/F08-*.png`
-- **Nota**: esta é uma **feature de integração** — é a exceção explícita que a
-  §10 do CLAUDE.md exige para tocar `src/sim/`, `src/input/`, `src/render/` e
-  `src/ui/` na mesma feature. Cada camada recebe só o que é dela: `sim/` ganha o
-  estado das estradas, os dois comandos, o custo e o grafo de conectividade;
-  `input/` faz o arrasto; `render/` desenha a estrada e a prévia; `ui/` ganha os
-  botões de ferramenta. Nenhuma regra de jogo muda de lado. Nenhuma outra feature
-  da fila herda esta permissão: ela vale para a F08 e só.
-- **Nota**: **desvio provisório da regra "o custo sai na entrega".** A estrada
-  não tem canteiro nem viagem de material: o aceite exige que o tile exista e
-  conecte no próprio comando, e serf (F10) e laborer (F11b) ainda não existem. Por
-  isso, na F08, `PlaceRoad` debita a pedra **no comando**, dos armazéns completos
-  (gaveta `saida`, depois `entrada`, em `predios.ordem`), e o tile nasce pronto.
-  **Demolir devolve** `floor(removidos × estrada.devolucaoAoDemolir)` de pedra
-  (`terrain.json`, `0.5`; decisão do operador — sem isso corrigir traçado seria
-  punitivo), ao mesmo armazém de onde sairia o débito; o arredondamento é por
-  comando. O GDD §5.4 diz "feita por laborers", e **o operador decidiu (2026-09-21) que a
-  estrada continua instantânea na Fase A**: virar canteiro por tile dobra a F11b e
-  atrasa o aceite da fase. O desvio deixa de ser provisório; o desenho de como
-  adotar o canteiro (campo novo, separado do que já está de pé, e o débito
-  migrando para a entrega) está em `IDEIAS.md`.
-- **Nota**: "Demolir", aqui, é demolir **tiles de estrada**. Demolir prédio é da
-  F16 (painel de seleção e demolição).
-
 ### F09 — JobBoard
 - **Escopo**: criação, `claim`, `release`, reserva de recurso na origem e de vaga
   no destino. Prioridade simples e desempate determinístico. Sem unidade ainda.
@@ -198,16 +127,6 @@ prédio surge sem clique do jogador.
   cai e a reservada sobe. Teste que confirma que `release` restaura exatamente o
   estado anterior.
 - **Evidência**: `test-output/F09.json`
-- **Nota**: a rede de estradas (F08) se consulta por `isConnected(state, from,
-  to)`, em `src/sim/estradas.ts`: O(1) entre mudanças de estrada (índice de
-  componentes memoizado pela referência de `state.estradas`), conectividade em 4
-  direções, e `false` para tile que não é estrada. O JobBoard **não cria tarefa
-  para destino sem ligação** (`predioLigadoAoArmazem`, mesmo arquivo). E o débito
-  de pedra da estrada (`PlaceRoad`) hoje tira do estoque total dos armazéns: assim
-  que o JobBoard reservar pedra na origem, esse débito só pode tirar do
-  **disponível** (estoque − reservado), senão a estrada come pedra já prometida a
-  uma obra.
-
 ### F10 — FSM do Serf (transporte)
 - **Escopo**: estados `ocioso → indo_buscar → carregando → indo_entregar →
   entregando`. Movimento sobre o grafo de estradas. Consome tarefas do JobBoard.
@@ -217,63 +136,6 @@ prédio surge sem clique do jogador.
   obra com o serf a caminho e confirmar que a carga volta ao armazém e a tarefa
   é liberada.
 - **Evidência**: `test-output/F10.json`
-- **Nota**: o movimento sobre estrada usa o contrato da F08: `ehEstrada(estradas,
-  tile)` é O(1) (lookup), a conectividade é em 4 direções, e o A* usa
-  `terreno.custoDeMovimento.estrada` (1.0) contra `grama` (1.30). Quando
-  `state.estradas` muda (referência nova) e o caminho de um serf some, o serf
-  **solta a reserva** e a tarefa é liberada — a F08 não mexe em unidade nem em
-  tarefa, quem reage é quem consome. `terreno.estrada.obrigatoriaParaEntrega` é
-  `true`: sem ligação, não há entrega.
-- **Nota**: **o JobBoard (F09) é a interface do serf.** As funções são
-  `reclamar(state, tarefaId, unidadeId)` (atômico: reserva a unidade de recurso na
-  origem **e** a vaga no destino, ou não reserva nada), `liberar(state, tarefaId,
-  motivo)` e `reclamarMelhor(state, unidadeId)` (ordem `(nível, distância,
-  número)`), em `src/sim/jobs.ts`. **A reserva é derivada das tarefas
-  `reclamada`**, não um contador à parte. O `sanearTarefas` (todo tick) já libera
-  sozinho por unidade removida, caminho cortado, origem ou destino sumidos ou sem
-  recurso/vaga; a FSM do serf **só precisa chamar `liberar('pedido-da-unidade')`**
-  nos seus estados de erro (`devolvendo`).
-- **Nota**: **o ciclo real da tarefa é em duas fases, e é a F10 quem o cria.** A F09
-  não tem `concluir`. *Coleta*: a reserva da origem vira carga na unidade
-  (`estoque.saida[m] − 1`, item em `fsmData`); *entrega*: a vaga vira `faltam[m] −
-  1`. Entre as duas a tarefa mantém só a reserva do destino, então `Tarefa` ganha
-  o estado `carregando`. O serf carrega **uma** unidade por viagem (decisão do operador, pós-F10: é o que o sprite
-  carregando pressupõe, GDD §10, e o que o aceite conta; uma tarefa =
-  uma unidade; não há dado de capacidade — se houver, `Tarefa` ganha `quantidade`).
-- **Nota**: **a distância do desempate muda aqui.** Na F09 ela é o comprimento do
-  caminho **por estrada** entre as portas de origem e destino (`distanciaPorEstrada`,
-  `src/sim/estradas.ts`; 4 direções; só a perna da entrega). A F10 substitui por
-  A* real a partir da **posição do serf** (perna até a origem + perna da entrega),
-  com `custoDeMovimento` e vizinhança 8; a interface do comparador não muda, muda a
-  função de distância. Nunca euclidiana.
-- **Nota**: **o cenário de carga da F09 diz se o JobBoard precisa de índice.**
-  Enquanto ninguém reclama, o gerador acumula tarefas `abertas` e o `sanearTarefas`
-  as revalida todo tick, com as reservas derivadas custando O(tarefas). O número de
-  tarefas do cenário com muitas obras está em `test-output/F09.json`
-  (`cargaComMuitasObras`); ler antes de decidir entre índice por prédio e deixar como
-  está. **Lido na F10:** 20 obras → 100 tarefas simultâneas, sem churn.
-- **Nota**: esta é uma **feature de integração** — é a exceção explícita que a
-  §10 do CLAUDE.md exige para tocar `src/sim/`, `src/render/` e o laço externo
-  (`main.ts`) na mesma feature. Cada camada recebe só o que é dela: `sim/` ganha a
-  FSM, o A* e o ciclo em duas fases; `render/` desenha o serf e a carga e publica o
-  que desenhou, junto com o gancho `avancar` no bloco de `window.__cangaco` (ponte de
-  harness, com prazo na F11a); `main.ts` só injeta o callback que chama `passo()`, sem
-  timer. `input/` e `ui/` **não** são tocados. Nenhuma regra de jogo muda de lado.
-  Nenhuma outra feature da fila herda esta permissão: ela vale para a F10 e só.
-- **Nota**: **como o serf se move na tela sem o laço de 10 Hz (que é da F11a).** A
-  posição visível é função **pura do estado**: `Unidade.gx/gy` é o tile onde ela está,
-  e `fsmData` guarda o `caminho` e o `progresso` (ticks no passo em curso), de modo que
-  o selector `posicaoDaUnidade` devolve o tile fracionário. O render só lê; não tem
-  relógio nem guarda posição anterior. O tempo avança por `avancar(n)`, publicado em
-  `window.__cangaco` (chama `sessao.passo()` `n` vezes), usado pelo roteiro de
-  screenshot e pelo operador no console — sem tecla, sem botão, sem timer.
-- **Nota**: **o que a F11a muda no movimento.** (a) quem chama `passo()` passa a ser um
-  timer de `TICK_MS`; (b) o render ganha interpolação **entre ticks** (fração do tempo
-  desde o último `passo`) por cima da posição por `progresso`, que continua valendo;
-  (c) o roteiro de screenshot precisa do timer **pausado** antes de usar `avancar` — decidido: o laço nasce pausado com `?pausado` na URL, o que evita a janela de ticks entre o carregamento e uma pausa posterior; (d) a
-  velocidade de jogo 1x/2x/3x acelera o relógio, nunca a sim. A FSM e o `step()` não
-  mudam.
-
 ### F11a — Laço de tempo fixo (10 Hz)
 - **Escopo**: timer de `TICK_MS` chamando `sessao.passo()`, com acumulador e fonte
   de tempo injetada. Velocidade de jogo 1x/2x/3x, com opções e padrão vindos de
@@ -304,32 +166,6 @@ prédio surge sem clique do jogador.
       é 0 quando `pronto` fica verdadeiro), e **rodar `npm run shot -- F10` três
       vezes seguidas dá o mesmo resultado**.
 - **Evidência**: `test-output/F11a.json` + `screenshots/F11a-*.png`
-- **Nota**: o laço de tempo fixo a 10 Hz (CLAUDE.md §5, `TICK_MS = 100`) ainda
-  não existe e nasce aqui — a F11a é a primeira feature **com relógio** (o serf
-  da F10 já se move; o que não havia era quem fizesse o tempo passar sozinho).
-  Até a F06 `step()` só foi chamado direto por teste; desde a F07 a `Sessão`
-  (`src/sessao.ts`) o chama, mas **por comando**, sem relógio e sem interpolação
-  de render. A F11a troca o disparo por comando por um timer de `TICK_MS` que
-  chama `passo()`; a fila e a `Sessão` não mudam.
-- **Nota**: **o destino do gancho `avancar` da F10, decidido.** A F10 publica
-  `window.__cangaco.avancar(n)` (chama `sessao.passo()` `n` vezes) para o roteiro
-  de screenshot mover o serf sem o laço, e a ponte nasceu marcada para morrer.
-  Ela **não some**: vira `pausar()` / `retomar()` / `avancar(n)`, e `avancar`
-  **lança se o timer estiver rodando**. Com isso ela deixa de ser dívida e passa
-  a ser harness legítimo — a trava é o que impede screenshot não determinístico.
-  O comentário `PONTE DE HARNESS DA F10` no código aponta para esta nota.
-- **Nota**: **a pausa não é só do harness — é do jogador, e precisa de retorno
-  visual.** Decisão do operador: o que ficou fora foi o widget de controle, não o
-  retorno; o GDD §10 exige retorno imediato para toda ação. Um elemento único
-  mostra o texto de pausa quando pausado, a velocidade quando ela é diferente de
-  1x, e some em 1x despausado. Rótulos em `data/theme-sertao.json`, como o HUD.
-- **Nota**: **a interpolação entre ticks é do render e não toca `sim/`.** A
-  posição visível já é função pura do estado (`posicaoDaUnidade`, fração *dentro*
-  do tick pelo `progresso`); a F11a acrescenta a fração *entre* ticks por cima,
-  guardando a posição do tick anterior como memória de render. O que
-  `window.__cangaco.unidadesRenderizadas` publica continua sendo a posição **do
-  tick**, determinística — é o que os roteiros afirmam; o α vai em campo próprio.
-
 ### F11b — FSM do Laborer (construção em etapas)
 - **Escopo**: nivelar terreno → esperar material → martelar. HP subindo conforme
   o GDD: cada material entregue soma 50 HP, cada martelada soma 5. Três estágios

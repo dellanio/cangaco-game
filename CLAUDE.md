@@ -172,6 +172,9 @@ escrita.
   sessão; a proteção permanente é a regra automatizada que roda no
   `npm run verify`. Registre as duas como coisas distintas, e nunca cite
   o probe como se fosse cobertura contínua.
+- Não-regressão é rodar os roteiros e conferir o código de saída. Abra
+  screenshot com Read só da feature atual: imagem é o que mais pesa na
+  janela de contexto.
 ---
 
 ## 9. Arte e assets
