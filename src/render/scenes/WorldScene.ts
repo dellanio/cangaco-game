@@ -16,6 +16,7 @@ import type { Ferramenta } from '../../input/ferramenta';
 import type { EntradaDoMapa } from '../../input/colocar';
 import { criarPlantaFantasma } from '../planta-fantasma';
 import { criarCamadaDeEstradas, criarPreviaDeEstrada } from '../estradas';
+import { criarCamadaDeUnidades } from '../unidades';
 
 const CHAVE_TEXTURA_GRAMA = 'tile-grama';
 
@@ -28,13 +29,15 @@ export class WorldScene extends Phaser.Scene {
     private readonly ponte: PonteDeEstado,
     private readonly ferramenta: Ferramenta,
     private readonly entrada: EntradaDoMapa,
+    /** Ponte de harness da F10 (ver `EstadoDebug.avancar`): a cena so a publica. */
+    private readonly avancar: (passos: number) => void,
   ) {
     super('world');
   }
 
   create(): void {
     const { tilePx, largura, altura, larguraPx, alturaPx } = configDoMapa;
-    const estado = publicarEstadoDebug();
+    const estado = publicarEstadoDebug(this.avancar);
 
     this.criarTexturaDeGrama(tilePx);
     const camadaChao = this.criarTilemap(tilePx, largura, altura);
@@ -53,6 +56,7 @@ export class WorldScene extends Phaser.Scene {
     const planta = criarPlantaFantasma(this, tilePx);
     const camadaDeEstradas = criarCamadaDeEstradas(this, tilePx);
     const previaDeEstrada = criarPreviaDeEstrada(this, tilePx);
+    const camadaDeUnidades = criarCamadaDeUnidades(this, tilePx);
     // Ultimo tile valido sob o ponteiro. Efemero: some no gameout e nunca entra
     // no GameState (a planta e estado de interface, ver input/ferramenta.ts).
     let tileAtual: Tile | null = null;
@@ -135,6 +139,10 @@ export class WorldScene extends Phaser.Scene {
       // Estrada (F08): desenha o que o estado diz e a previa do arrasto em curso.
       estado.estradasRenderizadas = camadaDeEstradas.atualizar(this.ponte.atual?.estradas ?? {});
       estado.previaDeEstrada = previaDeEstrada.atualizar(this.entrada.trecho(), this.ferramenta.modo, this.ponte.atual);
+
+      // Unidades (F10): a posicao vem do estado (selector puro), sem relogio de render.
+      estado.tick = this.ponte.atual?.tick ?? 0;
+      estado.unidadesRenderizadas = camadaDeUnidades.atualizar(this.ponte.atual);
     });
   }
 

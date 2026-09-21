@@ -8,6 +8,7 @@
 import type { Tile } from './grid';
 import type { EstadoDaPlanta } from './planta-fantasma';
 import type { PreviaDeEstrada } from './estradas';
+import type { UnidadeRenderizada } from './unidades';
 
 export interface EstadoDebug {
   /** false ate a cena terminar o primeiro desenho. O roteiro espera por isto
@@ -36,6 +37,22 @@ export interface EstadoDebug {
   plantaFantasma: EstadoDaPlanta | null;
   /** Predio que a ferramenta carrega (src/input/ferramenta.ts), ou null. */
   ferramentaAtiva: string | null;
+  /** O tick do estado que a cena desenha agora. */
+  tick: number;
+  /** As unidades desenhadas agora (F10), na posicao que o selector `posicaoDaUnidade`
+   *  devolveu — FRACIONARIA no meio de um passo. O roteiro afirma sobre isto. */
+  unidadesRenderizadas: readonly UnidadeRenderizada[];
+  /**
+   * PONTE DE HARNESS DA F10 — nasce marcada para morrer.
+   *
+   * Roda `passos` ticks da sim (`sessao.passo()` `passos` vezes). Existe so para o roteiro de
+   * screenshot mover o serf antes de haver o laco de 10 Hz (F11): nao e laco, nao ha timer,
+   * tecla nem botao, nao e superficie de jogador. Ele ESCREVE NO ESTADO a partir do `window`
+   * do jogo real, e por isso tem prazo: a F11 decide se ele SOME ou se VIRA pausar/retomar do
+   * timer (decisao pendente registrada no item F11 do BUILD_PLAN.md). Nao usar em codigo de
+   * jogo, nem em `ui/` nem em `input/`.
+   */
+  avancar: (passos: number) => void;
 }
 
 declare global {
@@ -49,7 +66,7 @@ declare global {
  * referencia: a cena muta os campos ao vivo (pointermove, drag de camera),
  * e quem le `window.__cangaco` sempre ve o estado atual sem republicar.
  */
-export function publicarEstadoDebug(): EstadoDebug {
+export function publicarEstadoDebug(avancar: (passos: number) => void): EstadoDebug {
   const estado: EstadoDebug = {
     pronto: false,
     tileSobMouse: null,
@@ -62,6 +79,9 @@ export function publicarEstadoDebug(): EstadoDebug {
     centroDaVila: null,
     plantaFantasma: null,
     ferramentaAtiva: null,
+    tick: 0,
+    unidadesRenderizadas: [],
+    avancar,
   };
   window.__cangaco = estado;
   return estado;

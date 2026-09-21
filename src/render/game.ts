@@ -15,9 +15,13 @@ export interface JogoLigado {
   atualizar(estado: GameState): void;
 }
 
-export function iniciarJogo(ferramenta: Ferramenta, entrada: EntradaDoMapa): JogoLigado {
+export function iniciarJogo(
+  ferramenta: Ferramenta, entrada: EntradaDoMapa,
+  /** PONTE DE HARNESS DA F10: so repassada a cena, que a publica em `window.__cangaco`. */
+  avancar: (passos: number) => void,
+): JogoLigado {
   const ponte = criarPonte();
-  const cena = new WorldScene(ponte, ferramenta, entrada);
+  const cena = new WorldScene(ponte, ferramenta, entrada, avancar);
   const jogo = new Phaser.Game({
     type: Phaser.AUTO,
     parent: 'jogo',

@@ -35,7 +35,16 @@ const entrada = criarEntradaDoMapa(ferramenta, (comando) => {
 // estar assentado (as dimensoes sao fixas no CSS, mas nao custa a ordem certa).
 const hud = montarHud();
 const menu = montarMenuBuild(ferramenta);
-const jogo = iniciarJogo(ferramenta, entrada);
+// PONTE DE HARNESS DA F10 (BUILD_PLAN, notas do F10 e do F11): roda `passos` ticks. NAO e o
+// laco de 10 Hz (F11) — nao ha timer. Serve so ao roteiro de screenshot, que precisa mover o
+// serf sem clicar; a F11 decide se isto some ou vira pausar/retomar do timer. E o `main.ts`
+// que a define porque so ele e dono da Sessao; o render apenas a publica em window.__cangaco.
+function avancar(passos: number): void {
+  if (!Number.isInteger(passos) || passos < 0) throw new Error(`avancar: '${passos}' nao e um inteiro >= 0`);
+  for (let i = 0; i < passos; i++) sessao.passo();
+}
+
+const jogo = iniciarJogo(ferramenta, entrada, avancar);
 
 function atualizar(s: GameState): void {
   jogo.atualizar(s);
