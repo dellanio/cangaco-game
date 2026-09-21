@@ -248,7 +248,28 @@ prédio surge sem clique do jogador.
   as revalida todo tick, com as reservas derivadas custando O(tarefas). O número de
   tarefas do cenário com muitas obras está em `test-output/F09.json`
   (`cargaComMuitasObras`); ler antes de decidir entre índice por prédio e deixar como
-  está.
+  está. **Lido na F10:** 20 obras → 100 tarefas simultâneas, sem churn.
+- **Nota**: esta é uma **feature de integração** — é a exceção explícita que a
+  §10 do CLAUDE.md exige para tocar `src/sim/`, `src/render/` e o laço externo
+  (`main.ts`) na mesma feature. Cada camada recebe só o que é dela: `sim/` ganha a
+  FSM, o A* e o ciclo em duas fases; `render/` desenha o serf e a carga e publica o
+  que desenhou, junto com o gancho `avancar` no bloco de `window.__cangaco` (ponte de
+  harness, com prazo na F11); `main.ts` só injeta o callback que chama `passo()`, sem
+  timer. `input/` e `ui/` **não** são tocados. Nenhuma regra de jogo muda de lado.
+  Nenhuma outra feature da fila herda esta permissão: ela vale para a F10 e só.
+- **Nota**: **como o serf se move na tela sem o laço de 10 Hz (que é da F11).** A
+  posição visível é função **pura do estado**: `Unidade.gx/gy` é o tile onde ela está,
+  e `fsmData` guarda o `caminho` e o `progresso` (ticks no passo em curso), de modo que
+  o selector `posicaoDaUnidade` devolve o tile fracionário. O render só lê; não tem
+  relógio nem guarda posição anterior. O tempo avança por `avancar(n)`, publicado em
+  `window.__cangaco` (chama `sessao.passo()` `n` vezes), usado pelo roteiro de
+  screenshot e pelo operador no console — sem tecla, sem botão, sem timer.
+- **Nota**: **o que a F11 muda no movimento.** (a) quem chama `passo()` passa a ser um
+  timer de `TICK_MS`; (b) o render ganha interpolação **entre ticks** (fração do tempo
+  desde o último `passo`) por cima da posição por `progresso`, que continua valendo;
+  (c) o roteiro de screenshot precisa **pausar** o timer antes de usar `avancar`; (d) a
+  velocidade de jogo 1x/2x/3x acelera o relógio, nunca a sim. A FSM e o `step()` não
+  mudam.
 
 ### F11 — FSM do Laborer (construção em etapas)
 - **Escopo**: nivelar terreno → esperar material → martelar. HP subindo conforme
@@ -291,6 +312,19 @@ prédio surge sem clique do jogador.
   "sempre verdadeiro". A F11 acrescenta o campo de nivelamento em `Obra` **e** o
   portão em `gerarTarefas` (`src/sim/systems/jobs.ts`), decidindo se a entrega
   espera o laborer terminar de nivelar.
+- **Nota**: **decisão pendente — o gancho `avancar` da F10.** A F10 publica
+  `window.__cangaco.avancar(n)` (chama `sessao.passo()` `n` vezes) para o roteiro de
+  screenshot mover o serf sem o laço. É uma **ponte de harness que escreve no estado a
+  partir do `window` do jogo real**, e nasce marcada para morrer: a F11, ao criar o
+  timer, **decide** se ele **some** ou **vira pausar/retomar do timer** — e não fecha a
+  feature com ele esquecido. Com o timer rodando e sem pausa, os screenshots deixam de
+  ser determinísticos. O comentário `PONTE DE HARNESS DA F10` no código aponta para
+  esta nota.
+- **Nota**: **o que a F10 deixa para a F11.** `carregando` e `entregando` duram **um
+  tick** cada (não há tempo de manuseio no dado). A entrega faz `Obra.faltam` chegar a 0
+  e **não completa nada**: virar `'completo'` é da martelada (esta feature). A posição
+  visível do serf já é derivada do `progresso`; a F11 só acrescenta a interpolação
+  entre ticks (ver a Nota de movimento no item F10).
 
 ### F12 — Desbloqueio por conclusão
 - **Escopo**: concluir um prédio libera os filhos dele na árvore do GDD. O menu
@@ -368,6 +402,12 @@ prédio surge sem clique do jogador.
   nenhuma tarefa órfã sobrou no JobBoard e nenhum serf ficou travado.
   Screenshot do painel.
 - **Evidência**: `test-output/F16.json` + `screenshots/F16-*.png`
+- **Nota**: **a falha "obra demolida com o serf a caminho" foi provada na F10 por
+  injeção**, tirando a obra do estado com um helper de teste (`semOPredio`), porque
+  não existe comando de demolir prédio antes desta feature. A F10 garante o caminho —
+  `sanearTarefas` cancela a tarefa e o serf carregado vai a `devolvendo`, deposita e
+  fica `ocioso` — mas **esta feature repete o teste pelo comando real**, com o serf
+  carregando e com o serf ainda indo buscar, e confirma que a carga voltou ao armazém.
 
 ### F17 — Aceite da Fase A (integração)
 - **Escopo**: roteiro Playwright que executa a sessão inteira do critério de
