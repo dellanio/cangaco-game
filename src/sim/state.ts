@@ -50,6 +50,20 @@ export type GameEvent =
       readonly tarefa: string;
       readonly motivo: MotivoDeLiberacao;
       readonly resultado: 'reaberta' | 'cancelada';
+    }
+  | {
+      /** O serf entregou: `faltam[mercadoria]` da `obra` caiu 1 e a tarefa foi removida. */
+      readonly type: 'task-completed';
+      readonly tarefa: string;
+      readonly obra: string;
+      readonly mercadoria: string;
+    }
+  | {
+      /** O serf depositou em `armazem` a carga que nao pode entregar (estado `devolvendo`). */
+      readonly type: 'cargo-returned';
+      readonly unidade: string;
+      readonly armazem: string;
+      readonly mercadoria: string;
     };
 
 /**
@@ -156,11 +170,14 @@ export type TipoDeTarefa = 'material-para-obra';
  * UMA TAREFA = UMA UNIDADE DE RECURSO (o GDD §6.3 fala em "a unidade de recurso" e
  * nao ha dado de capacidade de carga; se houver, ganha `quantidade`).
  *
- * A RESERVA nao e um campo: e DERIVADA das tarefas `reclamada` (`sim/reservas.ts`).
- * Uma tarefa `aberta` nao reserva nada; a `reclamada` reserva, ao mesmo tempo, a
- * unidade de recurso em `origem` e a vaga em `destino`. Tirar a tarefa de
- * `reclamada` devolve as duas — nao ha contador para dessincronizar, e a reserva
- * sobrevive ao save/load porque a tarefa sobrevive.
+ * A RESERVA nao e um campo: e DERIVADA das tarefas (`sim/reservas.ts`). Uma tarefa
+ * `aberta` nao reserva nada; a `reclamada` (serf indo buscar) reserva, ao mesmo tempo, a
+ * unidade de recurso em `origem` e a vaga em `destino`; a `carregando` (F10: a coleta
+ * consumiu a reserva da origem e a unidade leva o recurso) reserva so a vaga em
+ * `destino`. Tirar a tarefa desses estados devolve o que ela reservava — nao ha contador
+ * para dessincronizar, e a reserva sobrevive ao save/load porque a tarefa sobrevive.
+ *
+ * Ciclo (F10): `aberta` -> `reclamada` -> `carregando` -> (entrega: a tarefa some).
  */
 export interface Tarefa {
   /** `t<numero>`, do mesmo contador `proximoId` de predios e unidades. */
@@ -173,8 +190,9 @@ export interface Tarefa {
   readonly origem: string;
   /** Id da obra que recebe. */
   readonly destino: string;
-  readonly estado: 'aberta' | 'reclamada';
-  /** Id da unidade que a reclamou; `null` (nunca `undefined`) se aberta. */
+  readonly estado: 'aberta' | 'reclamada' | 'carregando';
+  /** Id da unidade que a reclamou (e, `carregando`, que leva a carga); `null` (nunca
+   *  `undefined`) se aberta. */
   readonly reclamadaPor: string | null;
 }
 
@@ -183,17 +201,34 @@ export interface JobBoard {
   readonly tarefas: Colecao<Tarefa>;
 }
 
+/**
+ * O que a FSM de uma unidade guarda entre ticks (CLAUDE.md §5: `fsmData` serializavel).
+ * Campos ausentes sao OMITIDOS, nunca `undefined` (o JSON os perderia). `{}` e valido:
+ * laborer e serf ocioso.
+ *
+ * Serf (F10): `tarefa` o id da tarefa em curso; `carga` a mercadoria que leva (uma
+ * unidade); `caminho` os tiles a andar, SEM o tile onde esta; `progresso` os ticks ja
+ * gastos no passo em curso; `armazem` o alvo do `devolvendo`.
+ */
+export interface DadosDaFsm {
+  readonly tarefa?: string;
+  readonly carga?: string;
+  readonly caminho?: readonly TileDeGrid[];
+  readonly progresso?: number;
+  readonly armazem?: string;
+}
+
 export interface Unidade {
   readonly id: string;
   /** Id do civil em data/units.json civis.tipos ('serf', 'laborer', ...). */
   readonly tipo: string;
   readonly gx: number;
   readonly gy: number;
-  /** Estado explicito da FSM (CLAUDE.md secao 5). Nesta feature toda unidade
-   *  nasce ociosa — as FSMs reais (buscar/carregar/nivelar/martelar) entram
-   *  na F10 e na F11. */
+  /** Estado explicito da FSM (CLAUDE.md secao 5). Toda unidade nasce `ocioso`; a FSM do
+   *  serf e da F10, a do laborer da F11. `gx`/`gy` e o tile onde a unidade ESTA; o
+   *  movimento em curso vive em `fsmData` (`caminho` + `progresso`). */
   readonly fsm: string;
-  readonly fsmData: Readonly<Record<string, never>>;
+  readonly fsmData: DadosDaFsm;
 }
 
 /**

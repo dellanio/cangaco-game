@@ -43,24 +43,28 @@ export function violacoesDeInvariantes(estado: GameState, dados: GameData = game
       v.push(`${id}: tipo '${t.tipo}' fora da escada do dado`);
     }
 
+    // `carregando` (F10): a coleta consumiu a reserva da origem e o caminho de la ja nao
+    // importa; so o destino, a unidade e a vaga tem que valer.
     const origem = estado.predios.porId[t.origem];
-    if (!origem || origem.estado !== 'completo' || origem.tipo !== ID_DO_ARMAZEM) v.push(`${id}: origem '${t.origem}' nao e armazem completo`);
+    if (t.estado !== 'carregando' && (!origem || origem.estado !== 'completo' || origem.tipo !== ID_DO_ARMAZEM)) {
+      v.push(`${id}: origem '${t.origem}' nao e armazem completo`);
+    }
     const destino = estado.predios.porId[t.destino];
     if (!destino || destino.estado !== 'obra') v.push(`${id}: destino '${t.destino}' nao e obra`);
-    if (origem && destino && distanciaDaTarefa(estado, t, dados) === null) v.push(`${id}: sem caminho por estrada`);
+    if (t.estado !== 'carregando' && origem && destino && distanciaDaTarefa(estado, t, dados) === null) v.push(`${id}: sem caminho por estrada`);
 
     if (t.estado === 'aberta' && t.reclamadaPor !== null) v.push(`${id}: aberta mas com reclamadaPor`);
-    if (t.estado === 'reclamada') {
+    if (t.estado !== 'aberta') {
       if (t.reclamadaPor === null) {
-        v.push(`${id}: reclamada sem unidade`);
+        v.push(`${id}: ${t.estado} sem unidade`);
       } else {
         const u = estado.unidades.porId[t.reclamadaPor];
-        if (!u || u.tipo !== TIPO_QUE_CARREGA) v.push(`${id}: reclamada por unidade inexistente ou que nao carrega`);
+        if (!u || u.tipo !== TIPO_QUE_CARREGA) v.push(`${id}: ${t.estado} por unidade inexistente ou que nao carrega`);
         const outra = unidadesEmUso.get(t.reclamadaPor);
         if (outra !== undefined) v.push(`${id}: a unidade ${t.reclamadaPor} tambem segura ${outra}`);
         unidadesEmUso.set(t.reclamadaPor, id);
       }
-      reservasPorOrigem.add(`${t.origem}|${t.mercadoria}`);
+      if (t.estado === 'reclamada') reservasPorOrigem.add(`${t.origem}|${t.mercadoria}`);
       reservasPorDestino.add(`${t.destino}|${t.mercadoria}`);
     }
 

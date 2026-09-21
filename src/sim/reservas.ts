@@ -14,7 +14,8 @@
  */
 import type { GameState } from './state';
 
-/** Unidades de `mercadoria` reservadas na ORIGEM `predioId` (tarefas reclamadas). */
+/** Unidades de `mercadoria` reservadas na ORIGEM `predioId`: so tarefas `reclamada` — a
+ *  `carregando` ja consumiu a reserva da origem na coleta (F10). */
 export function reservadoNaOrigem(state: GameState, predioId: string, mercadoria: string): number {
   let soma = 0;
   for (const id of state.jobs.tarefas.ordem) {
@@ -24,12 +25,13 @@ export function reservadoNaOrigem(state: GameState, predioId: string, mercadoria
   return soma;
 }
 
-/** Vagas de `mercadoria` reservadas no DESTINO `predioId` (tarefas reclamadas). */
+/** Vagas de `mercadoria` reservadas no DESTINO `predioId`: tarefas reclamadas E
+ *  carregando (F10). Entre a coleta e a entrega a tarefa mantem so esta reserva. */
 export function reservadoNoDestino(state: GameState, predioId: string, mercadoria: string): number {
   let soma = 0;
   for (const id of state.jobs.tarefas.ordem) {
     const t = state.jobs.tarefas.porId[id];
-    if (t && t.estado === 'reclamada' && t.destino === predioId && t.mercadoria === mercadoria) soma += 1;
+    if (t && t.estado !== 'aberta' && t.destino === predioId && t.mercadoria === mercadoria) soma += 1;
   }
   return soma;
 }

@@ -97,7 +97,7 @@ export function criarTarefa(
 function unidadeJaTemTarefa(state: GameState, unidadeId: string): boolean {
   return state.jobs.tarefas.ordem.some((id) => {
     const t = state.jobs.tarefas.porId[id];
-    return t !== undefined && t.estado === 'reclamada' && t.reclamadaPor === unidadeId;
+    return t !== undefined && t.estado !== 'aberta' && t.reclamadaPor === unidadeId;
   });
 }
 
@@ -149,19 +149,22 @@ export function reclamar(
 }
 
 /**
- * O release: tira a tarefa de `reclamada`, e com isso devolve as DUAS reservas (a da
- * origem e a do destino existiam so atraves dela). Motivo de UNIDADE reabre a mesma
- * tarefa; motivo de origem, caminho ou destino a CANCELA (o gerador cria outra, com a
- * origem certa). Tarefa aberta ou inexistente: no-op. Devolve os eventos para quem
- * chama juntar aos do tick.
+ * O release: tira a tarefa de `reclamada` (ou `carregando`), e com isso devolve o que
+ * ela reservava (as DUAS pontas, ou so o destino). Numa `reclamada`, motivo de UNIDADE
+ * reabre a mesma tarefa; motivo de origem, caminho ou destino a CANCELA (o gerador cria
+ * outra, com a origem certa). Numa `carregando`, sempre cancela. Tarefa aberta ou
+ * inexistente: no-op. Devolve os eventos para quem chama juntar aos do tick.
  */
 export function liberar(
   state: GameState, tarefaId: string, motivo: MotivoDeLiberacao,
 ): { readonly state: GameState; readonly events: readonly GameEvent[] } {
   const tarefa = state.jobs.tarefas.porId[tarefaId];
-  if (!tarefa || tarefa.estado !== 'reclamada') return { state, events: [] };
+  if (!tarefa || tarefa.estado === 'aberta') return { state, events: [] };
 
-  if (MOTIVOS_QUE_REABREM.includes(motivo)) {
+  // `carregando` (F10) SEMPRE cancela: a reserva da origem ja foi consumida na coleta, a
+  // carga volta a um armazem que pode nao ser o de origem, e o gerador recria a tarefa
+  // com a origem certa. Reabrir deixaria uma tarefa aberta cuja origem nao tem a unidade.
+  if (tarefa.estado === 'reclamada' && MOTIVOS_QUE_REABREM.includes(motivo)) {
     const reaberta: Tarefa = { ...tarefa, estado: 'aberta', reclamadaPor: null };
     return {
       state: {
