@@ -30,6 +30,13 @@ caminho. Ideia boa é justamente a mais perigosa.
   funcionam se nada bloquear a passagem" **[fonte]**; a Fase A fica em 4 direções por decisão do
   operador. Ao adotar: o A\* por estrada da F10 só liga o que `isConnected` liga, e o teste de
   equivalência em `tests/F10-astar.test.ts` prende os dois — mudar um exige mudar o outro.)
+- Ordenar os botões do painel da escola por "tem prédio vago" (F13b: os 14 tipos
+  de civil viram 14 botões). Decisão do operador, 2026-09-22: **ordenar, nunca
+  filtrar.** Esconder quem não tem prédio vago quebraria o fluxo do jogo — o
+  jogador treina o lenhador **antes** de construir a casa dele, senão o prédio
+  nasce parado esperando ocupante. A saída é quem tem vaga primeiro, o resto
+  depois, sem esconder nenhum. É polimento de interface, não escopo da Fase A, e
+  por isso não entrou na F14.
 - Estrada como canteiro (laborer constrói a estrada tile a tile) — o GDD §5.4 diz "feita por
   laborers"; a Fase A fica com a estrada **instantânea** (F08: `PlaceRoad` debita a pedra no
   comando e o tile nasce pronto). Decisão do operador, 2026-09-21: virar canteiro por tile dobra a
