@@ -1,8 +1,11 @@
 import { describe, it, expect } from 'vitest';
+import { gameData } from '../src/sim/data';
 import type { TarefaConstruir } from '../src/sim/state';
-import { criarTarefaDeConstrucao, elegivelParaTarefa, TIPO_QUE_CONSTROI, tarefasEmOrdem } from '../src/sim/jobs';
 import {
-  cenarioLigado, comTarefas, inicial, serfsDoCenario, tarefaDe,
+  criarTarefaDeConstrucao, elegivelParaTarefa, reclamar, TIPO_QUE_CONSTROI, tarefasEmOrdem,
+} from '../src/sim/jobs';
+import {
+  cenarioLigado, comObra, comTarefas, comUnidadeExtra, inicial, laborersDoCenario, serfsDoCenario, tarefaDe,
 } from './helpers/jobs-cenario';
 
 describe('F11b — Tarefa vira uniao discriminada', () => {
@@ -44,5 +47,41 @@ describe('F11b — tarefasEmOrdem exclui construir da escada', () => {
     expect(() => tarefasEmOrdem(estado)).not.toThrow();
     expect(tarefasEmOrdem(estado).map((t) => t.id)).toEqual(['t1']);
     expect(tarefasEmOrdem(estado, serf1).map((t) => t.id)).toEqual(['t1']);
+  });
+});
+
+describe('F11b — reclamar tarefa de construir', () => {
+  const cenarioComObra = () => comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: { stone: 2 } });
+
+  it('so laborer reclama; serf e recusado com unidade-invalida', () => {
+    const [serf1] = serfsDoCenario(inicial);
+    const [laborer1] = laborersDoCenario(inicial);
+    if (!serf1 || !laborer1) throw new Error('fixture: sem serf/laborer');
+    const { state, id } = criarTarefaDeConstrucao(cenarioComObra(), 'obra-a');
+    expect(reclamar(state, id, serf1)).toEqual({ ok: false, motivo: 'unidade-invalida' });
+    expect(reclamar(state, id, laborer1).ok).toBe(true);
+  });
+
+  it('respeita o teto de laborersMaximosPorObra (4 no dado real)', () => {
+    const teto = gameData.construcao.laborersMaximosPorObra;
+    let estado = cenarioComObra();
+    const laborers: string[] = [];
+    for (let i = 0; i < teto + 1; i++) {
+      const id = `laborer-extra-${i}`;
+      estado = comUnidadeExtra(estado, id, 'laborer', 10 + i, 10);
+      laborers.push(id);
+    }
+    for (let i = 0; i < teto; i++) {
+      const { state: comMaisUma, id } = criarTarefaDeConstrucao(estado, 'obra-a');
+      const laborerId = laborers[i];
+      if (laborerId === undefined) throw new Error('fixture: laborer faltando');
+      const r = reclamar(comMaisUma, id, laborerId);
+      expect(r.ok, `laborer #${i}`).toBe(true);
+      estado = r.ok ? r.state : comMaisUma;
+    }
+    const { state: comAQuinta, id: quinta } = criarTarefaDeConstrucao(estado, 'obra-a');
+    const quintoLaborer = laborers[teto];
+    if (quintoLaborer === undefined) throw new Error('fixture: laborer faltando');
+    expect(reclamar(comAQuinta, quinta, quintoLaborer)).toMatchObject({ ok: false, motivo: 'destino-sem-vaga' });
   });
 });

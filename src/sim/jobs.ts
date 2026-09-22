@@ -17,7 +17,7 @@ import { componenteDe, distanciaEntrePredios, ehEstrada, tilesDaPorta } from './
 import type { TileDeGrid } from './estradas';
 import { buscarCaminho } from './pathfinding';
 import type { Caminho } from './pathfinding';
-import { disponivelNaOrigem, vagaNoDestino } from './reservas';
+import { disponivelNaOrigem, vagaDeConstrucao, vagaNoDestino } from './reservas';
 
 /**
  * Por que uma tarefa reclamada foi liberada. Cada motivo devolve as DUAS reservas
@@ -230,16 +230,24 @@ export function reclamar(
   if (tarefa.estado !== 'aberta') return { ok: false, motivo: 'tarefa-ja-reclamada' };
 
   const unidade = state.unidades.porId[unidadeId];
-  if (!unidade || unidade.tipo !== TIPO_QUE_CARREGA) return { ok: false, motivo: 'unidade-invalida' };
+  if (!unidade || !elegivelParaTarefa(tarefa.tipo, unidade.tipo)) return { ok: false, motivo: 'unidade-invalida' };
   if (unidadeJaTemTarefa(state, unidadeId)) return { ok: false, motivo: 'unidade-ocupada' };
 
-  if (disponivelNaOrigem(state, tarefa.origem, tarefa.mercadoria) < 1) {
-    return { ok: false, motivo: 'origem-sem-recurso' };
+  if (tarefa.tipo === 'material-para-obra') {
+    if (disponivelNaOrigem(state, tarefa.origem, tarefa.mercadoria) < 1) {
+      return { ok: false, motivo: 'origem-sem-recurso' };
+    }
+    if (vagaNoDestino(state, tarefa.destino, tarefa.mercadoria) < 1) {
+      return { ok: false, motivo: 'destino-sem-vaga' };
+    }
+    if (custoDaTarefa(state, tarefa, unidadeId, dados) === null) return { ok: false, motivo: 'sem-caminho' };
+  } else {
+    // 'construir': sem mercadoria/origem (nao carrega nada) e sem checagem de
+    // caminho ainda. A F09 tambem nao checava caminho antes de existir um
+    // consumidor (o F10 acrescentou, para o serf); a F11c decide se o
+    // laborer precisa da mesma protecao quando ganhar FSM.
+    if (vagaDeConstrucao(state, tarefa.destino, dados) < 1) return { ok: false, motivo: 'destino-sem-vaga' };
   }
-  if (vagaNoDestino(state, tarefa.destino, tarefa.mercadoria) < 1) {
-    return { ok: false, motivo: 'destino-sem-vaga' };
-  }
-  if (custoDaTarefa(state, tarefa, unidadeId, dados) === null) return { ok: false, motivo: 'sem-caminho' };
 
   const reclamada: Tarefa = { ...tarefa, estado: 'reclamada', reclamadaPor: unidadeId };
   return {

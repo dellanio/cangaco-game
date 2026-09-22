@@ -4,7 +4,7 @@
  * exato de tarefas, e o gerador (que roda no `step`) criaria as suas.
  */
 import { createInitialState } from '../../src/sim/state';
-import type { GameState, PredioCompleto, PredioEmObra, Tarefa } from '../../src/sim/state';
+import type { GameState, PredioCompleto, PredioEmObra, Tarefa, Unidade } from '../../src/sim/state';
 import { chaveDeTile } from '../../src/sim/estradas';
 import type { TileDeGrid } from '../../src/sim/estradas';
 
@@ -156,4 +156,15 @@ export function comUnidadeEm(estado: GameState, id: string, gx: number, gy: numb
   const u = estado.unidades.porId[id];
   if (!u) throw new Error(`fixture: unidade '${id}' nao existe`);
   return { ...estado, unidades: { ...estado.unidades, porId: { ...estado.unidades.porId, [id]: { ...u, gx, gy } } } };
+}
+
+/** F11b — acrescenta uma unidade nova (id `id`, tipo `tipo`), ociosa e sem
+ *  `fsmData`. O cenario inicial so tem 2 laborers; testes de teto
+ *  (`laborersMaximosPorObra`) precisam de mais do que isso. */
+export function comUnidadeExtra(estado: GameState, id: string, tipo: string, gx: number, gy: number): GameState {
+  const unidade: Unidade = { id, tipo, gx, gy, fsm: 'ocioso', fsmData: {} };
+  return {
+    ...estado,
+    unidades: { porId: { ...estado.unidades.porId, [id]: unidade }, ordem: [...estado.unidades.ordem, id] },
+  };
 }
