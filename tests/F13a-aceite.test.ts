@@ -80,10 +80,13 @@ describe('F13a — aceite headless do BUILD_PLAN', () => {
     const spawn = gameData.economia.estadoInicial.spawnDeUnidades;
     expect(onde).not.toContain(`${spawn.gx},${spawn.gy}`);
 
-    // 4. uma por `ticksPorTreino` — o numero vem do dado, nunca digitado aqui.
+    // 4. uma por `ticksPorTreino`, na cadencia EXATA: o tick que cobra nao conta como
+    //    tick de treino (systems/escolas.ts), entao o intervalo e `ticksPorTreino + 1`.
+    //    Intervalo maior significaria serf atrasando a entrega; aqui o ouro chega a tempo.
+    const CADENCIA = TICKS + 1;
     expect(corrida.ticks).toHaveLength(3);
-    expect(corrida.ticks[1]! - corrida.ticks[0]!).toBeGreaterThanOrEqual(TICKS);
-    expect(corrida.ticks[2]! - corrida.ticks[1]!).toBeGreaterThanOrEqual(TICKS);
+    expect(corrida.ticks[1]! - corrida.ticks[0]!).toBe(CADENCIA);
+    expect(corrida.ticks[2]! - corrida.ticks[1]!).toBe(CADENCIA);
 
     // 5. o quarto pedido, sem ouro no mapa: fica `aguardando` e nunca sai de la.
     const quarto = step(fim, [pedir(ESCOLA, 'baker')]);

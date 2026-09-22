@@ -335,7 +335,14 @@ prédio surge sem clique do jogador.
   vale repeti-lo com a produção real. **Fica em aberto para a F20:** o campo **Comida** do HUD
   continua em `comidaTotal` (que usa `estoqueTotal`) — decidir, quando o Inn existir, se comida
   também é só a dos armazéns.
-- **Nota**: **os níveis 4 a 7 da escada nascem aqui** (insumo → produção parada,
+- **Nota (origem: revisão da F13a)**: **mesmo assunto da nota acima — o número que o
+  jogador lê contra o que existe.** Há uma janela real em que ouro fica parado na gaveta
+  `entrada` da Schoolhouse: o ouro do segundo item chega enquanto o primeiro treina, e se
+  o jogador cancelar a fila inteira nesse intervalo o ouro fica lá. Não se perde (o
+  próximo `EnqueueTraining` o consome) e **não** volta ao armazém, então some do HUD, que
+  lê `estoqueDosArmazens`. A F13a não trata disso — o aceite dela não fala de
+  cancelamento. Decidir aqui, junto com a divergência dos dois seletores: ou a mercadoria
+  parada em prédio volta por tarefa, ou o HUD passa a distingui-la. Não é balanceamento.
   insumo → produção com estoque baixo, saída cheia → armazém, excedente → armazém):
   a F09 só implementa o nível 3 (material → obra). Cada produtor alarga
   `Tarefa.tipo` e referencia o nível por `id` em `data/delivery.json`. E o
@@ -356,6 +363,17 @@ prédio surge sem clique do jogador.
   `sanearTarefas` cancela a tarefa e o serf carregado vai a `devolvendo`, deposita e
   fica `ocioso` — mas **esta feature repete o teste pelo comando real**, com o serf
   carregando e com o serf ainda indo buscar, e confirma que a carga voltou ao armazém.
+- **Nota (origem: revisão da F13a)**: **dois casos de teste que esta feature deve cobrir**,
+  os dois só alcançáveis com o comando real de demolir. (1) **Escola demolida com tarefa
+  `ouro-para-escola` já reclamada.** O ramo existe (`motivoDoDestino` em
+  `sim/systems/jobs.ts`) mas é código sem teste: o `destino-sumiu` coberto pela F09 e pela
+  F10 é o ramo de *material*, e o teste da F13a demole a escola sem tarefa no quadro.
+  (2) **Estrada da porta demolida com um item de treino já pago.** Se a porta sul ficar
+  intransitável, `tileDeSaida` devolve `null` e o item pronto segura com o ouro já
+  cobrado (`sim/systems/escolas.ts`). Hoje não acontece, porque o ouro só chega por porta
+  que é estrada — hipótese não confirmada por execução, registrada como tal na F13a. **Se
+  travar, é travamento de regra, não balanceamento, e se resolve aqui**: item pronto sem
+  saída precisa de destino (esperar é aceitável só se a porta puder voltar a existir).
 - **Nota (origem: F12)**: o desbloqueio já está ligado ao `step()` e é
   **permanente** — `registrarConclusoes` só acrescenta a `tiposJaConstruidos`,
   nunca remove. Demolir o último Woodcutter's **não** re-bloqueia a Sawmill, e isso

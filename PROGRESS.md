@@ -413,6 +413,38 @@ anterior a todos os sistemas, não existe tick em que um item avance numa escola
 que já caiu. (Hoje não há comando de demolir — é a F16; o teste chega lá por
 fixture.)
 
+## Revisão da F12 e da F13a (subagente evaluator, a pedido do operador)
+
+**Veredicto: as duas mantêm `passes: true`.** Todos os critérios de aceite das
+duas foram conferidos com evidência aberta (`test-output/F12.json`,
+`test-output/F13a.json`, os testes e o código). `npm run verify` com exit 0: 33
+arquivos, 627 testes, `validate:data` 9 arquivos / 0 erros. Nenhum import de
+`phaser`, nenhum `Math.random`/`Date.now` em `sim/`. Nenhum critério da F13
+depende da F13b (ela tem aceite próprio).
+
+Três achados, e o **operador decidiu o destino de cada um**:
+
+1. **Asserção frouxa no aceite da F13a — apertada nesta sessão, não registrada.**
+   `tests/F13a-aceite.test.ts` comparava o intervalo entre nascimentos com
+   `toBeGreaterThanOrEqual(TICKS)`, que passaria com 900 ticks quando o esperado
+   são 151. Virou igualdade exata contra `ticksPorTreino + 1` (o tick que cobra
+   não conta como tick de treino). Verificado: o teste passa com a asserção
+   estrita.
+2. **Ouro parado na gaveta `entrada` da escola → Nota no item F15.** Se o
+   jogador cancelar a fila inteira enquanto o ouro do próximo item está a
+   caminho, ele fica na escola: não se perde, mas some do HUD, que lê
+   `estoqueDosArmazens`. O operador mandou juntar à nota que a F08 já deixou lá
+   sobre HUD contra armazéns — **é o mesmo assunto, o número que o jogador lê
+   contra o que existe, e não é balanceamento.**
+3. **Dois casos de teste → Nota no item F16.** (a) Escola demolida com tarefa
+   `ouro-para-escola` já reclamada: o ramo existe em `sanearTarefas` mas é código
+   sem teste (o `destino-sumiu` coberto pela F09/F10 é o de *material*). (b)
+   Estrada da porta demolida com item de treino já pago: `tileDeSaida` devolve
+   `null` e o item segura com o ouro cobrado. **Hipótese, não confirmada por
+   execução** — hoje é inalcançável, porque o ouro só chega por porta que é
+   estrada e não existe comando de demolir prédio antes da F16. Se travar, é
+   travamento de regra, e a F16 resolve.
+
 Histórico das features fechadas: docs/historico/F01-F11a.md.
 
 ## Perguntas em aberto
