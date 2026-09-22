@@ -5,7 +5,7 @@ import { gameData } from './data';
 import { caixaDoPredio } from './footprint';
 import { estaDesbloqueado } from './desbloqueio';
 import { custoDoPasso } from './pathfinding';
-import { custoDoPredio } from './systems/build';
+import { custoDoPredio } from './obra';
 import type { CaixaEmTiles } from './footprint';
 
 /**

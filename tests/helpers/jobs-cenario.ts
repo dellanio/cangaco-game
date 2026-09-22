@@ -9,6 +9,7 @@ import type {
 } from '../../src/sim/state';
 import { chaveDeTile } from '../../src/sim/estradas';
 import type { TileDeGrid } from '../../src/sim/estradas';
+import { alvoDeNivelamento } from '../../src/sim/obra';
 
 export const inicial = createInitialState(1);
 
@@ -35,13 +36,25 @@ export function armazemDoCenario(estado: GameState): PredioCompleto {
   return p;
 }
 
-/** Acrescenta uma obra em (gx, gy), sem validar. `tipo` define o footprint e a porta. */
+/**
+ * Acrescenta uma obra em (gx, gy), sem validar. `tipo` define o footprint e a
+ * porta. `nivelamento` default = JA NIVELADA (`alvoDeNivelamento(tipo)`): o
+ * universo implicito de F09/F10 (escritas antes da F11c) e uma obra que ja
+ * aceita material — os testes da F11c passam `nivelamento: 0` explicitamente
+ * quando querem o laborer nivelando do zero.
+ */
 export function comObra(
-  estado: GameState, id: string, opcoes: { readonly gx: number; readonly gy: number; readonly tipo?: string; readonly faltam: Record<string, number> },
+  estado: GameState,
+  id: string,
+  opcoes: {
+    readonly gx: number; readonly gy: number; readonly tipo?: string;
+    readonly faltam: Record<string, number>; readonly nivelamento?: number;
+  },
 ): GameState {
+  const tipo = opcoes.tipo ?? 'quarry';
   const obra: PredioEmObra = {
-    id, tipo: opcoes.tipo ?? 'quarry', gx: opcoes.gx, gy: opcoes.gy, estado: 'obra', hp: 0,
-    obra: { faltam: opcoes.faltam },
+    id, tipo, gx: opcoes.gx, gy: opcoes.gy, estado: 'obra', hp: 0,
+    obra: { faltam: opcoes.faltam, nivelamento: opcoes.nivelamento ?? alvoDeNivelamento(tipo) },
   };
   return {
     ...estado,

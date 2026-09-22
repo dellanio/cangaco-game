@@ -6,7 +6,7 @@ import type { Command } from '../src/sim/commands';
 import { createRng, nextInt } from '../src/sim/rng';
 import { step } from '../src/sim/tick';
 import { distanciaEntrePredios, tilesDaPorta, tilesOrdenados } from '../src/sim/estradas';
-import { custoDoPredio } from '../src/sim/systems/build';
+import { custoDoPredio } from '../src/sim/obra';
 import { criarTarefa, liberar, reclamar, reclamarMelhor, tarefasEmOrdem } from '../src/sim/jobs';
 import type { MotivoDeLiberacao } from '../src/sim/jobs';
 import { disponivelNaOrigem, reservadoNaOrigem, reservadoNoDestino, vagaNoDestino } from '../src/sim/reservas';
@@ -368,7 +368,7 @@ function rodarCaos(semente: number, passos: number, cobertura: Cobertura): void 
         if (alvo && obra && obra.estado === 'obra') {
           const atual = obra.obra.faltam[alvo.mercadoria] ?? 0;
           if (atual > 0) {
-            estado = { ...estado, predios: { ...estado.predios, porId: { ...estado.predios.porId, [obra.id]: { ...obra, obra: { faltam: { ...obra.obra.faltam, [alvo.mercadoria]: atual - 1 } } } } } };
+            estado = { ...estado, predios: { ...estado.predios, porId: { ...estado.predios.porId, [obra.id]: { ...obra, obra: { ...obra.obra, faltam: { ...obra.obra.faltam, [alvo.mercadoria]: atual - 1 } } } } } };
           }
         }
       }

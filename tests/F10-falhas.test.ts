@@ -19,7 +19,7 @@ import { planoDaTarefa, tarefasEmOrdem } from '../src/sim/jobs';
 import { posicaoDaUnidade } from '../src/sim/selectors';
 import { createRng, nextInt } from '../src/sim/rng';
 import type { RngState } from '../src/sim/rng';
-import { custoDoPredio } from '../src/sim/systems/build';
+import { custoDoPredio } from '../src/sim/obra';
 import { tilesOrdenados } from '../src/sim/estradas';
 import { caixaDeTipo } from '../src/sim/footprint';
 import { reservadoNaOrigem, reservadoNoDestino } from '../src/sim/reservas';

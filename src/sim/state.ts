@@ -64,6 +64,16 @@ export type GameEvent =
       readonly unidade: string;
       readonly armazem: string;
       readonly mercadoria: string;
+    }
+  | {
+      /**
+       * A obra virou predio COMPLETO (F11c: `hp === def.hp`). NAO desbloqueia
+       * nada por si so — `tiposJaConstruidos` continua parado ate a F12 ligar
+       * `registrarTipoConstruido` (`sim/desbloqueio.ts`) a este evento.
+       */
+      readonly type: 'building-completed';
+      readonly predio: string;
+      readonly tipo: string;
     };
 
 /**
@@ -141,11 +151,15 @@ export interface Obra {
    * `entregues = soma sobre m de (custo[m] - faltam[m])`, e o teto de HP martelavel
    * e `entregues * hpPorMaterialEntregue`. Reservas de vaga (F09) NAO moram aqui:
    * moram no JobBoard.
-   *
-   * Deliberadamente fora: o nivelamento do terreno. Sem consumidor hoje, sem campo
-   * hoje — a F11 acrescenta o que precisar (BUILD_PLAN, notas da F11).
    */
   readonly faltam: Readonly<Record<string, number>>;
+  /**
+   * Ticks de nivelamento do terreno ja acumulados pelo(s) laborer(s) desta obra
+   * (F11c). MONOTONICO — nunca decresce, por isso `obraNivelada` (`sim/obra.ts`)
+   * nunca fica retroativamente falsa. O alvo (`alvoDeNivelamento`) e derivado da
+   * area do footprint; nao guardado aqui, para nao haver duas fontes de verdade.
+   */
+  readonly nivelamento: number;
 }
 
 export interface PredioEmObra extends PredioBase {
@@ -352,6 +366,27 @@ function estoqueParaTipo(
     return { entrada: {}, saida: { ...estoqueInicial } };
   }
   return { entrada: {}, saida: {} };
+}
+
+/**
+ * A obra vira PREDIO COMPLETO (F11c: `hp === def.hp`, decidido por quem chama).
+ * `id`/`tipo`/`gx`/`gy`/`hp` sao preservados; nasce com estoque e capacidade do
+ * tipo — reusa `capacidadeParaTipo`/`estoqueParaTipo`, o mesmo caminho de
+ * `criarPredios`, sem estoque inicial (uma obra nao guarda mercadoria: o custo
+ * ja saiu do armazem na entrega, F10). NAO chama `registrarTipoConstruido` —
+ * quem chama emite `building-completed`; a F12 decide o que fazer com ele.
+ */
+export function completarObra(predio: PredioEmObra, dados: GameData = gameData): PredioCompleto {
+  return {
+    id: predio.id,
+    tipo: predio.tipo,
+    gx: predio.gx,
+    gy: predio.gy,
+    estado: 'completo',
+    hp: predio.hp,
+    capacidade: capacidadeParaTipo(predio.tipo, dados),
+    estoque: estoqueParaTipo(predio.tipo, {}),
+  };
 }
 
 function criarPredios(
