@@ -1,10 +1,11 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterAll } from 'vitest';
 import { gameData } from '../src/sim/data';
 import type { TarefaConstruir } from '../src/sim/state';
 import {
   criarTarefaDeConstrucao, elegivelParaTarefa, reclamar, TIPO_QUE_CONSTROI, tarefasEmOrdem,
 } from '../src/sim/jobs';
-import { sanearTarefas } from '../src/sim/systems/jobs';
+import { gerarTarefas, sanearTarefas } from '../src/sim/systems/jobs';
+import { gravarEvidencia } from './helpers/evidence';
 import {
   cenarioLigado, comObra, comTarefas, comUnidadeExtra, inicial, laborersDoCenario, semAUnidade, semOPredio,
   serfsDoCenario, tarefaDe,
@@ -118,5 +119,81 @@ describe('F11b — sanearTarefas cobre construir', () => {
     const { state: saneado } = sanearTarefas(estado);
     const construir = saneado.jobs.tarefas.ordem.filter((id) => saneado.jobs.tarefas.porId[id]?.tipo === 'construir');
     expect(construir).toHaveLength(teto);
+  });
+});
+
+describe('F11b — gerarTarefas cria construir ate o teto', () => {
+  it('cria ate laborersMaximosPorObra tarefas de construir por obra, sem exigir estrada', () => {
+    const semEstrada = comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: { stone: 2 } }); // sem comEstradas: nao ligada
+    const gerado = gerarTarefas(semEstrada);
+    const construir = gerado.jobs.tarefas.ordem.filter((id) => gerado.jobs.tarefas.porId[id]?.tipo === 'construir');
+    expect(construir).toHaveLength(gameData.construcao.laborersMaximosPorObra);
+    const material = gerado.jobs.tarefas.ordem.filter((id) => gerado.jobs.tarefas.porId[id]?.tipo === 'material-para-obra');
+    expect(material).toHaveLength(0); // material continua exigindo estrada
+  });
+
+  it('nao duplica construir ja existente: chamar duas vezes fica no teto', () => {
+    const obra = comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: {} });
+    const umaVez = gerarTarefas(obra);
+    const duasVezes = gerarTarefas(umaVez);
+    const contar = (e: typeof obra): number => e.jobs.tarefas.ordem.filter((id) => e.jobs.tarefas.porId[id]?.tipo === 'construir').length;
+    expect(contar(duasVezes)).toBe(contar(umaVez));
+    expect(contar(umaVez)).toBe(gameData.construcao.laborersMaximosPorObra);
+  });
+});
+
+afterAll(() => {
+  const [serf1] = serfsDoCenario(inicial);
+  const [laborer1] = laborersDoCenario(inicial);
+  if (!serf1 || !laborer1) throw new Error('evidencia: fixture sem serf/laborer');
+
+  // aceite 1: elegibilidade
+  const { state: comConstruirA, id: construirA } = criarTarefaDeConstrucao(
+    comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: {} }), 'obra-a',
+  );
+  const serfRecusado = reclamar(comConstruirA, construirA, serf1);
+  const laborerAceito = reclamar(comConstruirA, construirA, laborer1);
+
+  // aceite 2: teto de 4 recusando o quinto
+  const teto = gameData.construcao.laborersMaximosPorObra;
+  let comOTeto = comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: {} });
+  const laborersExtras: string[] = [];
+  for (let i = 0; i < teto + 1; i++) {
+    const id = `laborer-evidencia-${i}`;
+    comOTeto = comUnidadeExtra(comOTeto, id, 'laborer', 10 + i, 10);
+    laborersExtras.push(id);
+  }
+  for (let i = 0; i < teto; i++) {
+    const { state, id } = criarTarefaDeConstrucao(comOTeto, 'obra-a');
+    const l = laborersExtras[i] ?? laborer1;
+    const r = reclamar(state, id, l);
+    comOTeto = r.ok ? r.state : state;
+  }
+  const { state: comQuinta, id: quinta } = criarTarefaDeConstrucao(comOTeto, 'obra-a');
+  const quintoLaborer = laborersExtras[teto] ?? laborer1;
+  const quintoRecusado = reclamar(comQuinta, quinta, quintoLaborer);
+
+  // aceite 3: gerador cria exatamente o teto, sem estrada
+  const semEstrada = comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: { stone: 2 } });
+  const gerado = gerarTarefas(semEstrada);
+  const construirGeradas = gerado.jobs.tarefas.ordem.filter((id) => gerado.jobs.tarefas.porId[id]?.tipo === 'construir');
+
+  gravarEvidencia('F11b', {
+    feature: 'F11b-jobboard-construir',
+    // VERIFICADO por teste headless: o aceite escrito no BUILD_PLAN.md.
+    aceite: {
+      elegibilidade: {
+        serfRecusado,
+        laborerAceito: laborerAceito.ok,
+      },
+      tetoDeQuatroRecusaOQuinto: {
+        laborersMaximosPorObra: teto,
+        quintoRecusado,
+      },
+      geradorCriaExatamenteOTetoSemEstrada: {
+        laborersMaximosPorObra: teto,
+        construirCriadas: construirGeradas.length,
+      },
+    },
   });
 });

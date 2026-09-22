@@ -17,7 +17,9 @@ import { ID_DO_ARMAZEM } from '../state';
 import type { GameData } from '../data/types';
 import { gameData } from '../data';
 import { armazensCompletos, distanciaEntrePredios } from '../estradas';
-import { criarTarefa, distanciaDaTarefa, elegivelParaTarefa, liberar, TIPO_QUE_CARREGA } from '../jobs';
+import {
+  criarTarefa, criarTarefaDeConstrucao, distanciaDaTarefa, elegivelParaTarefa, liberar, TIPO_QUE_CARREGA,
+} from '../jobs';
 import type { MotivoDeLiberacao } from '../jobs';
 import { disponivelNaOrigem, reservadoNaOrigem, reservadoNoDestino } from '../reservas';
 
@@ -182,13 +184,21 @@ export function gerarTarefas(state: GameState, dados: GameData = gameData): Game
     if (!ehObra(obra)) continue;
     for (const mercadoria of dados.economia.mercadorias) {
       const faltam = obra.obra.faltam[mercadoria] ?? 0;
-      const existentes = tarefasPorNumero(atual).filter((t) => t.destino === obra.id && t.mercadoria === mercadoria).length;
+      const existentes = tarefasPorNumero(atual)
+        .filter((t) => t.tipo === 'material-para-obra' && t.destino === obra.id && t.mercadoria === mercadoria).length;
       if (faltam <= existentes) continue;
       const origem = origemMaisPerto(atual, obra, mercadoria, dados);
       if (origem === null) continue;
       for (let i = existentes; i < faltam; i++) {
         atual = criarTarefa(atual, { mercadoria, origem, destino: obra.id }).state;
       }
+    }
+
+    // 'construir' (F11b): ate o teto do dado, sem checar armazem/estrada — o
+    // laborer nivela/martela sem carregar material (decisao do operador).
+    const existentesConstruir = tarefasPorNumero(atual).filter((t) => t.tipo === 'construir' && t.destino === obra.id).length;
+    for (let i = existentesConstruir; i < dados.construcao.laborersMaximosPorObra; i++) {
+      atual = criarTarefaDeConstrucao(atual, obra.id).state;
     }
   }
   return atual;
