@@ -4,8 +4,10 @@ import type { TarefaConstruir } from '../src/sim/state';
 import {
   criarTarefaDeConstrucao, elegivelParaTarefa, reclamar, TIPO_QUE_CONSTROI, tarefasEmOrdem,
 } from '../src/sim/jobs';
+import { sanearTarefas } from '../src/sim/systems/jobs';
 import {
-  cenarioLigado, comObra, comTarefas, comUnidadeExtra, inicial, laborersDoCenario, serfsDoCenario, tarefaDe,
+  cenarioLigado, comObra, comTarefas, comUnidadeExtra, inicial, laborersDoCenario, semAUnidade, semOPredio,
+  serfsDoCenario, tarefaDe,
 } from './helpers/jobs-cenario';
 
 describe('F11b — Tarefa vira uniao discriminada', () => {
@@ -83,5 +85,38 @@ describe('F11b — reclamar tarefa de construir', () => {
     const quintoLaborer = laborers[teto];
     if (quintoLaborer === undefined) throw new Error('fixture: laborer faltando');
     expect(reclamar(comAQuinta, quinta, quintoLaborer)).toMatchObject({ ok: false, motivo: 'destino-sem-vaga' });
+  });
+});
+
+describe('F11b — sanearTarefas cobre construir', () => {
+  it('unidade removida: reabre a mesma tarefa de construir', () => {
+    const [laborer1] = laborersDoCenario(inicial);
+    if (!laborer1) throw new Error('fixture: sem laborer');
+    const { state, id } = criarTarefaDeConstrucao(comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: {} }), 'obra-a');
+    const r = reclamar(state, id, laborer1);
+    if (!r.ok) throw new Error('fixture: reclamar deveria aceitar');
+    const semOLaborer = semAUnidade(r.state, laborer1);
+    const { state: saneado } = sanearTarefas(semOLaborer);
+    const t = saneado.jobs.tarefas.porId[id];
+    expect(t?.estado).toBe('aberta');
+    expect(t?.reclamadaPor).toBeNull();
+  });
+
+  it('obra demolida: cancela a tarefa de construir (sem tarefa fantasma)', () => {
+    const { state, id } = criarTarefaDeConstrucao(comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: {} }), 'obra-a');
+    const semAObra = semOPredio(state, 'obra-a');
+    const { state: saneado } = sanearTarefas(semAObra);
+    expect(saneado.jobs.tarefas.porId[id]).toBeUndefined();
+  });
+
+  it('abertas em excesso: nunca mais construir do que laborersMaximosPorObra', () => {
+    const teto = gameData.construcao.laborersMaximosPorObra;
+    let estado = comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: {} });
+    for (let i = 0; i < teto + 2; i++) {
+      estado = criarTarefaDeConstrucao(estado, 'obra-a').state;
+    }
+    const { state: saneado } = sanearTarefas(estado);
+    const construir = saneado.jobs.tarefas.ordem.filter((id) => saneado.jobs.tarefas.porId[id]?.tipo === 'construir');
+    expect(construir).toHaveLength(teto);
   });
 });

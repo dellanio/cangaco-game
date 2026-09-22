@@ -12,12 +12,12 @@
  * Ordem fixa: tarefas por `numero` (o excedente sai do maior para o menor). Mesma
  * entrada, mesmo estado.
  */
-import type { GameEvent, GameState, Predio, PredioCompleto, PredioEmObra, Tarefa } from '../state';
+import type { GameEvent, GameState, Predio, PredioCompleto, PredioEmObra, Tarefa, TarefaMaterialParaObra } from '../state';
 import { ID_DO_ARMAZEM } from '../state';
 import type { GameData } from '../data/types';
 import { gameData } from '../data';
 import { armazensCompletos, distanciaEntrePredios } from '../estradas';
-import { criarTarefa, distanciaDaTarefa, liberar, TIPO_QUE_CARREGA } from '../jobs';
+import { criarTarefa, distanciaDaTarefa, elegivelParaTarefa, liberar, TIPO_QUE_CARREGA } from '../jobs';
 import type { MotivoDeLiberacao } from '../jobs';
 import { disponivelNaOrigem, reservadoNaOrigem, reservadoNoDestino } from '../reservas';
 
@@ -41,12 +41,13 @@ const ehObra = (p: Predio | undefined): p is PredioEmObra => p !== undefined && 
 /** O motivo pelo qual uma tarefa reclamada, sozinha, deixou de valer; `null` se vale. */
 function motivoIndividual(state: GameState, t: Tarefa, dados: GameData): MotivoDeLiberacao | null {
   const unidade = t.reclamadaPor === null ? undefined : state.unidades.porId[t.reclamadaPor];
-  if (!unidade || unidade.tipo !== TIPO_QUE_CARREGA) return 'unidade-removida';
-  const origem = state.predios.porId[t.origem];
-  if (!ehArmazemCompleto(origem)) return 'origem-sumiu';
+  if (!unidade || !elegivelParaTarefa(t.tipo, unidade.tipo)) return 'unidade-removida';
   const destino = state.predios.porId[t.destino];
   if (!destino) return 'destino-sumiu';
   if (!ehObra(destino)) return 'destino-completo';
+  if (t.tipo !== 'material-para-obra') return null; // construir: nada alem do destino importa
+  const origem = state.predios.porId[t.origem];
+  if (!ehArmazemCompleto(origem)) return 'origem-sumiu';
   if (distanciaEntrePredios(state, origem, destino, dados) === null) return 'caminho-cortado';
   return null;
 }
@@ -74,11 +75,14 @@ function cancelarAberta(state: GameState, tarefaId: string): GameState {
   return { ...state, jobs: { tarefas: { porId, ordem: state.jobs.tarefas.ordem.filter((id) => id !== tarefaId) } } };
 }
 
-/** Uma aberta vale enquanto a origem e um armazem com algo livre, o destino e obra e ha
- *  caminho. Se a origem esvaziou, cancela: o gerador refaz a tarefa com outra origem. */
+/** Uma aberta vale enquanto o destino e obra; material tambem precisa de origem
+ *  com algo livre e caminho. Se a origem esvaziou, cancela: o gerador refaz a
+ *  tarefa com outra origem. Construir: so o destino importa (o laborer nao
+ *  carrega material, nao ha origem nem caminho a checar). */
 function abertaVale(state: GameState, t: Tarefa, dados: GameData): boolean {
-  if (!ehArmazemCompleto(state.predios.porId[t.origem])) return false;
   if (!ehObra(state.predios.porId[t.destino])) return false;
+  if (t.tipo !== 'material-para-obra') return true;
+  if (!ehArmazemCompleto(state.predios.porId[t.origem])) return false;
   if (disponivelNaOrigem(state, t.origem, t.mercadoria) < 1) return false;
   return distanciaDaTarefa(state, t, dados) !== null;
 }
@@ -103,8 +107,13 @@ export function sanearTarefas(state: GameState, dados: GameData = gameData): Res
   // 2. em grupo: o reservado nao pode passar do que a origem tem (so reclamadas reservam
   //    a origem) nem do que a obra ainda pede (reclamadas e carregando). A ordem de soltar
   //    e fixa: as RECLAMADAS antes (ninguem tem carga na mao), e dentro de cada estado do
-  //    maior numero para o menor, ate caber.
-  const emGrupo = tarefasPorNumero(atual).filter((t) => t.estado !== 'aberta').reverse();
+  //    maior numero para o menor, ate caber. So MATERIAL: o teto de 'construir'
+  //    (`laborersMaximosPorObra`) e constante do dado, nunca encolhe em runtime como
+  //    `faltam` encolhe — uma 'construir' reclamada nunca fica retroativamente invalida
+  //    por essa via (ver `vagaDeConstrucao`, reservas.ts).
+  const emGrupo = tarefasPorNumero(atual)
+    .filter((t): t is TarefaMaterialParaObra => t.tipo === 'material-para-obra' && t.estado !== 'aberta')
+    .reverse();
   const ordemDeSoltar = [...emGrupo.filter((t) => t.estado === 'reclamada'), ...emGrupo.filter((t) => t.estado === 'carregando')];
   for (const t of ordemDeSoltar) {
     const origem = atual.predios.porId[t.origem];
@@ -124,13 +133,21 @@ export function sanearTarefas(state: GameState, dados: GameData = gameData): Res
     if (t.estado === 'aberta' && !abertaVale(atual, t, dados)) atual = cancelarAberta(atual, t.id);
   }
 
-  // 4. abertas em excesso: nunca mais tarefas (abertas + reclamadas) do que a obra pede
+  // 4. abertas em excesso: nunca mais tarefas (abertas + reclamadas, por obra e — so
+  //    material — por mercadoria) do que o teto pede. Material: teto = faltam[mercadoria]
+  //    (encolhe com a entrega). Construir: teto = laborersMaximosPorObra (constante).
   for (const t of tarefasPorNumero(atual).reverse()) {
     if (t.estado !== 'aberta') continue;
     const destino = atual.predios.porId[t.destino];
-    const faltam = ehObra(destino) ? destino.obra.faltam[t.mercadoria] ?? 0 : 0;
-    const existentes = tarefasPorNumero(atual).filter((o) => o.destino === t.destino && o.mercadoria === t.mercadoria).length;
-    if (existentes > faltam) atual = cancelarAberta(atual, t.id);
+    if (t.tipo === 'material-para-obra') {
+      const faltam = ehObra(destino) ? destino.obra.faltam[t.mercadoria] ?? 0 : 0;
+      const existentes = tarefasPorNumero(atual)
+        .filter((o) => o.tipo === 'material-para-obra' && o.destino === t.destino && o.mercadoria === t.mercadoria).length;
+      if (existentes > faltam) atual = cancelarAberta(atual, t.id);
+    } else {
+      const existentes = tarefasPorNumero(atual).filter((o) => o.tipo === 'construir' && o.destino === t.destino).length;
+      if (existentes > dados.construcao.laborersMaximosPorObra) atual = cancelarAberta(atual, t.id);
+    }
   }
 
   return { state: atual, events };
