@@ -5,8 +5,9 @@ import { completarObra } from '../src/sim/state';
 import {
   alvoDeNivelamento, entreguesNaObra, hpTotalDoTipo, obraNivelada, obraTrabalhavel, tetoDeHp,
 } from '../src/sim/obra';
+import { criarTarefaDeConstrucao, reclamar, tarefasDeConstrucaoEmOrdem } from '../src/sim/jobs';
 import {
-  armazemDoCenario, comObra, comTarefas, inicial, tarefaDe,
+  armazemDoCenario, comObra, comTarefas, comUnidadeEm, inicial, laborersDoCenario, serfsDoCenario, tarefaDe,
 } from './helpers/jobs-cenario';
 
 /** So para este arquivo: muda o `hp` (o martelado) de uma obra, sem tocar no resto. */
@@ -90,6 +91,68 @@ describe('F11c — Obra.nivelamento sobrevive ao JSON', () => {
     const estado = comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: { stone: 1 }, nivelamento: 12 });
     expect(JSON.parse(JSON.stringify(estado))).toEqual(estado);
     expect((estado.predios.porId['obra-a'] as PredioEmObra).obra.nivelamento).toBe(12);
+  });
+});
+
+describe('F11c — jobs.ts: o laborer acha e reclama tarefa (Task 4)', () => {
+  it('laborer numa ilha, sem caminho a pe: sem-caminho', () => {
+    const [laborer1] = laborersDoCenario(inicial);
+    if (!laborer1) throw new Error('fixture: sem laborer');
+    let estado = comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: { stone: 2, timber: 3 } });
+    // o mesmo cerco da F10 (F10-desempate.test.ts): laborer em (0,0), fechado por
+    // duas obras que ocupam (1,0) e (0,1) — sem ligacao a nenhuma porta de 'obra-a'.
+    estado = comObra(estado, 'cerca1', { gx: 1, gy: 0, faltam: {} });
+    estado = comObra(estado, 'cerca2', { gx: 0, gy: 1, faltam: {} });
+    estado = comUnidadeEm(estado, laborer1, 0, 0);
+    const { state, id } = criarTarefaDeConstrucao(estado, 'obra-a');
+    expect(reclamar(state, id, laborer1)).toEqual({ ok: false, motivo: 'sem-caminho' });
+  });
+
+  it('laborer com caminho livre ate a porta: ok', () => {
+    const [laborer1] = laborersDoCenario(inicial);
+    if (!laborer1) throw new Error('fixture: sem laborer');
+    // faltam {}: ja tudo entregue, hp 0 < teto 250 — ha o que martelar (obraTrabalhavel).
+    const estado = comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: {} });
+    const { state, id } = criarTarefaDeConstrucao(estado, 'obra-a');
+    expect(reclamar(state, id, laborer1).ok).toBe(true);
+  });
+
+  it('obra nivelada, no teto, SEM tarefa de material: destino-sem-trabalho, e nem entra na ordenacao', () => {
+    const [laborer1] = laborersDoCenario(inicial);
+    if (!laborer1) throw new Error('fixture: sem laborer');
+    let estado = comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: {} }); // ja nivelada (default)
+    estado = comHp(estado, 'obra-a', 250); // no teto, sem tarefa de material
+    const { state, id } = criarTarefaDeConstrucao(estado, 'obra-a');
+    expect(reclamar(state, id, laborer1)).toEqual({ ok: false, motivo: 'destino-sem-trabalho' });
+    expect(tarefasDeConstrucaoEmOrdem(state, laborer1).map((t) => t.id)).toEqual([]);
+  });
+
+  it('tarefasDeConstrucaoEmOrdem ordena pela obra mais perto', () => {
+    const [laborer1] = laborersDoCenario(inicial);
+    if (!laborer1) throw new Error('fixture: sem laborer');
+    let estado = comObra(inicial, 'perto', { gx: 30, gy: 35, faltam: {} }); // trabalhavel: hp 0 < teto
+    estado = comObra(estado, 'longe', { gx: 30, gy: 60, faltam: {} });
+    estado = comUnidadeEm(estado, laborer1, 30, 34);
+    const { state: comA, id: idPerto } = criarTarefaDeConstrucao(estado, 'perto');
+    const { state: comAmbas, id: idLonge } = criarTarefaDeConstrucao(comA, 'longe');
+    expect(tarefasDeConstrucaoEmOrdem(comAmbas, laborer1).map((t) => t.id)).toEqual([idPerto, idLonge]);
+  });
+
+  it('desempata por numero quando o custo e igual (duas tarefas para a mesma obra)', () => {
+    const [laborer1] = laborersDoCenario(inicial);
+    if (!laborer1) throw new Error('fixture: sem laborer');
+    const estado = comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: {} });
+    const { state: comUma, id: primeira } = criarTarefaDeConstrucao(estado, 'obra-a');
+    const { state: comDuas, id: segunda } = criarTarefaDeConstrucao(comUma, 'obra-a');
+    expect(tarefasDeConstrucaoEmOrdem(comDuas, laborer1).map((t) => t.id)).toEqual([primeira, segunda]);
+  });
+
+  it('um serf continua recusado com unidade-invalida', () => {
+    const [serf1] = serfsDoCenario(inicial);
+    if (!serf1) throw new Error('fixture: sem serf');
+    const estado = comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: {} });
+    const { state, id } = criarTarefaDeConstrucao(estado, 'obra-a');
+    expect(reclamar(state, id, serf1)).toEqual({ ok: false, motivo: 'unidade-invalida' });
   });
 });
 
