@@ -318,6 +318,101 @@ todos os sistemas.
 - **O que continua valendo:** o desbloqueio é permanente (demolir não re-bloqueia,
   F06) e `menuBuildInicial` segue existindo só para raiz sem pai.
 
+(origem: F13a)
+
+### A fila de treino e o nível 2 da escada (herdado por F13b, F14 e F15 — verificado)
+
+A F13 foi **quebrada em duas** (CLAUDE.md §6): `F13a` é a simulação, `F13b` é o
+painel. O corte está escrito no `BUILD_PLAN.md`, com a marca de **feature de
+integração** já no item da F13b — ela é que pode tocar `ui/`, `input/` e
+`render/` juntos. A F13a ficou inteira em `sim/`, sem screenshot.
+
+**O que a fila é.** `GameState.treino: Record<predioId, ItemDeFila[]>`, e
+`ItemDeFila` é união discriminada por `estado`: `'aguardando'` (só `id` e
+`unidade`) ou `'treinando'` (com `restam`, ticks que faltam). Um item aguardando
+com relógio, ou treinando sem, não é representável. **Fila vazia apaga a
+entrada** — `{}` e `{ p2: [] }` descreveriam o mesmo jogo com JSON diferente, o
+que quebraria a comparação byte a byte; todo caminho que mexe em fila passa por
+`comFila` (`sim/escola.ts`), que é onde isso é garantido.
+
+**Só o primeiro item da fila anda.** `sistemaDasEscolas` avança exclusivamente
+`fila[0]`: `aguardando → treinando` cobra `custoOuroPorUnidade` da gaveta
+`entrada` da escola e põe `restam = ticksPorTreino`; daí em diante `restam − 1`
+por tick; em 0 a unidade nasce, o item sai da fila e sai um `unit-trained`. **O
+tick da cobrança não conta como tick de treino** — por isso o intervalo medido
+entre dois nascimentos é 151, e não 150 (`test-output/F13a.json`).
+
+**`Tarefa` virou `TarefaDeTransporte | TarefaConstruir`** (o contrato da F11b
+continua valendo, só ganhou um andar): `TarefaDeTransporte =
+TarefaMaterialParaObra | TarefaOuroParaEscola`, as duas com `mercadoria`,
+`origem`, `destino` e `estado` incluindo `'carregando'`. Reserva, claim,
+saneamento e a FSM do serf passaram a falar de **transporte**, não de material —
+`ehTarefaDeTransporte` é o ponto único de estreitamento. O nível continua vindo
+de `data/delivery.json` por `id` (`nivelDoTipo`); nenhum número de nível foi
+digitado em `.ts`.
+
+**A "vaga no destino" de uma tarefa de ouro é a demanda da fila**
+(`ouroNecessario` = itens `aguardando` × custo − ouro já na `entrada`), o análogo
+exato de `faltam` numa obra. `demandaNoDestino`/`vagaDoDestino` (`sim/reservas.ts`)
+escolhem o ramo pelo **tipo da tarefa**, não pelo estado do prédio: uma tarefa de
+material apontando para escola pede zero, e é isso que faz `sanearTarefas`
+cancelá-la em vez de entregar no lugar errado. Como a demanda **encolhe** quando o
+jogador cancela um item, `vagaDoDestino` pode ficar negativa debaixo de uma
+reserva — é esse sinal que desfaz o excesso, e o serf já carregado vai para
+`devolvendo` em vez de entregar a uma fila que não quer mais o ouro (conservação
+do ouro verificada em `tests/F13a-ouro.test.ts`).
+
+**Ordem no `step()`:** comandos → `sanearTarefas` → serfs → laborers →
+**escolas** → `gerarTarefas`. A escola roda **depois** dos serfs para cobrar no
+mesmo tick em que o ouro chega, e **antes** de `gerarTarefas` para que a demanda
+que o gerador lê já esteja atualizada. Consequência observável: a gaveta
+`entrada` da escola está em 0 no mesmo tick da entrega — quem prova que o ouro
+passou por lá é o item ter saído de `aguardando`.
+
+**O evento `task-completed` trocou o campo `obra` por `destino`.** O nome deixou
+de ser verdade quando o destino pode ser uma escola. Ao contrário do que o plano
+supunha, **dois testes liam o campo** (`F10-fsm`, `F11c-laborer`) e foram
+ajustados no mesmo commit.
+
+Decisões desta sessão (todas registradas também como Nota no item do BUILD_PLAN):
+
+- **D1 — onde a unidade nasce:** no primeiro tile andável da **porta da escola**
+  (`tileDeSaida`, em `systems/escolas.ts`). `economy.json:estadoInicial.spawnDeUnidades`
+  continua sendo só o canto do cenário inicial: usá-lo em runtime empilharia as
+  unidades de todas as escolas no mesmo tile. Verificado na evidência: as três
+  nasceram em `(34,33)`, que está em `tilesDaPorta(escola)`.
+- **D2 — "rejeição do 4º pedido":** lida como recusa de **iniciar o treino**, não
+  de enfileirar. Cobrar ao iniciar e recusar o enfileiramento por falta de ouro se
+  excluem — se enfileirar exigisse ouro presente, a fila nunca criaria a demanda
+  que faz o ouro vir. A recusa de comando de verdade está coberta por
+  `fila-cheia`, `nao-e-escola`, `escola-em-obra` e `unidade-desconhecida`.
+- **D3 — o preço lido é `economy.schoolhouse.custoOuroPorUnidade`.**
+  `units.json:civis.tipos[].custoOuro` (hoje 1 para todos) **continua sem
+  leitor**; quando um civil custar diferente, é ele que passa a mandar.
+- **D4 — a política do dado é validada.** `validarPoliticaDeTreino`
+  (`tools/data-rules.js`) recusa `reembolsoSeNaoIniciado: false`, `slotsDeFila`
+  não inteiro ou < 1, e `custoOuroPorUnidade` fracionário: o dado não pode
+  declarar uma política que a sim não implementa.
+
+**O que ficou de fora, por escopo e não por bloqueio:**
+
+- O **painel** (F13b) — nenhum `EnqueueTraining` sai da interface ainda; os dois
+  comandos existem e são exercidos por teste.
+- **Nenhum consumidor das unidades treinadas.** O `stonemason` nasce ocioso na
+  porta e fica lá: ocupar prédio é a F14. Isso é escopo declarado no BUILD_PLAN,
+  não a espera indefinida de algo que não pode chegar.
+- **Reembolso** não tem caminho de código porque nada é cobrado antes do início;
+  `reembolsoSeNaoIniciado: true` no dado descreve a regra, e a regra é "o item
+  que ainda não começou não pagou nada".
+
+**Escola demolida no meio do treino (verificado no código, não só no teste):**
+`sistemaDasEscolas` chama `sanearFilas` na **primeira linha**, antes de qualquer
+decremento, e o laço que avança as filas pula todo prédio que não é
+`ehEscolaCompleta`. Como a demolição acontece na fase de **comandos**, que é
+anterior a todos os sistemas, não existe tick em que um item avance numa escola
+que já caiu. (Hoje não há comando de demolir — é a F16; o teste chega lá por
+fixture.)
+
 Histórico das features fechadas: docs/historico/F01-F11a.md.
 
 ## Perguntas em aberto
