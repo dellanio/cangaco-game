@@ -145,6 +145,9 @@ export class WorldScene extends Phaser.Scene {
       // Unidades (F10): a posicao de cada tick vem do estado (selector puro); a F11a interpola
       // ENTRE ticks com o alfa do laco. O render so le o relogio, nunca o move.
       estado.tick = this.ponte.atual?.tick ?? 0;
+      // F13b: a fila de treino, crua, para o roteiro afirmar sobre o ESTADO e nao
+      // sobre o que o painel escreveu. Leitura, como todo o resto daqui.
+      estado.filaDeTreino = this.ponte.atual?.treino ?? {};
       estado.unidadesRenderizadas = camadaDeUnidades.atualizar(this.ponte.atual, this.relogio.alfa());
     });
   }

@@ -10,6 +10,7 @@ import type { EstadoDaPlanta } from './planta-fantasma';
 import type { PreviaDeEstrada } from './estradas';
 import type { UnidadeRenderizada } from './unidades';
 import type { EstagioDaObra } from './estagio-obra';
+import type { ItemDeFila } from '../sim/state';
 
 export interface EstadoDebug {
   /** false ate a cena terminar o primeiro desenho. O roteiro espera por isto
@@ -43,6 +44,9 @@ export interface EstadoDebug {
   ferramentaAtiva: string | null;
   /** O tick do estado que a cena desenha agora. */
   tick: number;
+  /** F13b — `GameState.treino` do tick desenhado: a fila de cada escola, por id de
+   *  PREDIO. E o que o roteiro le quando o aceite pede "a fila no estado". */
+  filaDeTreino: Readonly<Record<string, readonly ItemDeFila[]>>;
   /** As unidades desenhadas agora (F10), na posicao DO TICK que o selector `posicaoDaUnidade`
    *  devolveu — FRACIONARIA no meio de um passo, deterministica. O roteiro afirma sobre isto.
    *  A posicao interpolada (F11a) vem em `gxDesenhado/gyDesenhado`. */
@@ -104,6 +108,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     plantaFantasma: null,
     ferramentaAtiva: null,
     tick: 0,
+    filaDeTreino: {},
     unidadesRenderizadas: [],
     // getters: sempre o valor vivo do relogio, sem esperar o proximo POST_RENDER
     get pausado() {
