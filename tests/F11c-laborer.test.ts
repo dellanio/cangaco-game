@@ -497,7 +497,12 @@ describe('F11c — aceite headless do BUILD_PLAN (Task 7)', () => {
     expect(tickNivelamentoPronto).toBeLessThan(tickPrimeiroMaterialCompletado); // o portao da Task 6, ponta a ponta
     expect(liberacoesPorPedidoDaUnidade).toEqual([]); // a reavaliacao nunca libera (Task 5)
     expect(construidos).toEqual([{ type: 'building-completed', predio: 'obra-a', tipo: 'quarry' }]);
-    expect(atual.tiposJaConstruidos).toEqual(tiposAntes); // registrarTipoConstruido e da F12
+    // F12 ligou `building-completed` a `registrarTipoConstruido` no `step()`: o tipo agora
+    // ENTRA no historico, e a assercao de antes (escrita quando ninguem consumia o evento)
+    // deixou de valer. O aceite da F11c nao depende disto — ele e hp 250 + `completo`. O que
+    // a guarda antiga protegia ("concluir obra nao desbloqueia sozinho") virou invariante por
+    // tick no teste da F12: historico cresceu => houve evento, e vice-versa.
+    expect(atual.tiposJaConstruidos).toEqual([...tiposAntes, 'quarry']);
     expect(bensDivergentes).toEqual([]);
     expect(violacoesEncontradas).toEqual([]);
   });
@@ -523,7 +528,10 @@ describe('F11c — aceite headless do BUILD_PLAN (Task 7)', () => {
           && tickNivelamentoPronto < tickPrimeiroMaterialCompletado,
         liberacoesPorPedidoDaUnidade: liberacoesPorPedidoDaUnidade.length,
         buildingCompletedEventos: construidos,
-        tiposJaConstruidosNaoMudou: JSON.stringify(atual.tiposJaConstruidos) === JSON.stringify(tiposAntes),
+        // F12: era `tiposJaConstruidosNaoMudou`. Virou o seu oposto no mesmo lugar, para a
+        // evidencia gravada nao afirmar o que deixou de ser verdade.
+        tiposJaConstruidosGanhouOTipoConcluido:
+          JSON.stringify(atual.tiposJaConstruidos) === JSON.stringify([...tiposAntes, 'quarry']),
         conservacaoDeBensEmTodoTick: bensDivergentes.length === 0,
         invariantesVaziasEmTodoTick: violacoesEncontradas.length === 0,
       },

@@ -3,6 +3,7 @@ import { gameData } from '../src/sim/data';
 import type { GameEvent, GameState } from '../src/sim/state';
 import { createInitialState } from '../src/sim/state';
 import { estaDesbloqueado, registrarConclusoes } from '../src/sim/desbloqueio';
+import { step } from '../src/sim/tick';
 
 const inicial = createInitialState(1);
 
@@ -50,5 +51,21 @@ describe('F12 — registrarConclusoes: a dobra dos eventos do tick', () => {
     const antes = liberados(congelado);
     registrarConclusoes(congelado, [concluido('p7', 'woodcutters')]);
     expect(liberados(congelado)).toEqual(antes);
+  });
+});
+
+describe('F12 — o step() consome o evento', () => {
+  it('um tick sem conclusao nao mexe no historico', () => {
+    const depois = step(inicial, []);
+    expect(depois.tiposJaConstruidos).toEqual(inicial.tiposJaConstruidos);
+  });
+
+  it('o historico sobrevive ao tick e o desbloqueio vale para o tick seguinte', () => {
+    // Nao se fabrica o evento: o aceite, abaixo, o produz pelo caminho real. Aqui
+    // prova-se so que `step` PRESERVA o historico movido e que `canPlace` o enxerga.
+    const comConclusao = registrarConclusoes(inicial, [concluido('p7', 'woodcutters')]);
+    const depois = step(comConclusao, []);
+    expect(depois.tiposJaConstruidos).toContain('woodcutters');
+    expect(estaDesbloqueado(depois, 'sawmill')).toBe(true);
   });
 });
