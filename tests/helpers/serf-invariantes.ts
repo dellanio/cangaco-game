@@ -48,7 +48,9 @@ export function violacoesDaFsm(estado: GameState, dados: GameData = gameData): s
       case 'entregando':
         if (!tarefa || tarefa.estado !== 'carregando' || tarefa.reclamadaPor !== id) v.push(`${id}: ${u.fsm} sem tarefa carregando dele`);
         if (!temCarga) v.push(`${id}: ${u.fsm} sem carga`);
-        else if (tarefa && dadosDaFsm.carga !== tarefa.mercadoria) v.push(`${id}: carga '${dadosDaFsm.carga}' difere da tarefa '${tarefa.mercadoria}'`);
+        else if (tarefa && tarefa.tipo === 'material-para-obra' && dadosDaFsm.carga !== tarefa.mercadoria) {
+          v.push(`${id}: carga '${dadosDaFsm.carga}' difere da tarefa '${tarefa.mercadoria}'`);
+        }
         break;
       case 'devolvendo':
         if (!temCarga) v.push(`${id}: devolvendo sem carga`);

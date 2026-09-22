@@ -4,7 +4,9 @@
  * exato de tarefas, e o gerador (que roda no `step`) criaria as suas.
  */
 import { createInitialState } from '../../src/sim/state';
-import type { GameState, PredioCompleto, PredioEmObra, Tarefa, Unidade } from '../../src/sim/state';
+import type {
+  GameState, PredioCompleto, PredioEmObra, Tarefa, TarefaConstruir, TarefaMaterialParaObra, Unidade,
+} from '../../src/sim/state';
 import { chaveDeTile } from '../../src/sim/estradas';
 import type { TileDeGrid } from '../../src/sim/estradas';
 
@@ -63,12 +65,25 @@ export function laborersDoCenario(estado: GameState): string[] {
   return estado.unidades.ordem.filter((id) => estado.unidades.porId[id]?.tipo === 'laborer');
 }
 
-export function tarefaDe(parcial: Partial<Tarefa> & { readonly numero: number }): Tarefa {
+export function tarefaDe(parcial: Partial<TarefaMaterialParaObra> & { readonly numero: number }): TarefaMaterialParaObra {
   return {
     id: `t${parcial.numero}`,
     tipo: 'material-para-obra',
     mercadoria: 'stone',
     origem: armazemDoCenario(inicial).id,
+    destino: 'obra-a',
+    estado: 'aberta',
+    reclamadaPor: null,
+    ...parcial,
+  };
+}
+
+/** F11b — a irma de `tarefaDe` para tarefas de construir: sem
+ *  mercadoria/origem, sem estado `'carregando'`. */
+export function tarefaConstruirDe(parcial: Partial<TarefaConstruir> & { readonly numero: number }): TarefaConstruir {
+  return {
+    id: `t${parcial.numero}`,
+    tipo: 'construir',
     destino: 'obra-a',
     estado: 'aberta',
     reclamadaPor: null,

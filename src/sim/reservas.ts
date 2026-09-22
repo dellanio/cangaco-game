@@ -22,7 +22,7 @@ export function reservadoNaOrigem(state: GameState, predioId: string, mercadoria
   let soma = 0;
   for (const id of state.jobs.tarefas.ordem) {
     const t = state.jobs.tarefas.porId[id];
-    if (t && t.estado === 'reclamada' && t.origem === predioId && t.mercadoria === mercadoria) soma += 1;
+    if (t && t.tipo === 'material-para-obra' && t.estado === 'reclamada' && t.origem === predioId && t.mercadoria === mercadoria) soma += 1;
   }
   return soma;
 }
@@ -33,7 +33,7 @@ export function reservadoNoDestino(state: GameState, predioId: string, mercadori
   let soma = 0;
   for (const id of state.jobs.tarefas.ordem) {
     const t = state.jobs.tarefas.porId[id];
-    if (t && t.estado !== 'aberta' && t.destino === predioId && t.mercadoria === mercadoria) soma += 1;
+    if (t && t.tipo === 'material-para-obra' && t.estado !== 'aberta' && t.destino === predioId && t.mercadoria === mercadoria) soma += 1;
   }
   return soma;
 }

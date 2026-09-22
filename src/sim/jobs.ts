@@ -260,13 +260,14 @@ export function reclamar(
 }
 
 /** A coleta: a tarefa `reclamada` passa a `carregando` (a reserva da origem foi consumida
- *  pela saida do material do estoque, que quem chama faz no mesmo tick). So o quadro. */
+ *  pela saida do material do estoque, que quem chama faz no mesmo tick). So o quadro.
+ *  So MATERIAL tem `'carregando'` (F11b: 'construir' nao carrega nada, nunca chega aqui). */
 export function marcarCarregando(state: GameState, tarefaId: string): GameState {
   const tarefa = state.jobs.tarefas.porId[tarefaId];
-  if (!tarefa || tarefa.estado !== 'reclamada') {
-    throw new Error(`marcarCarregando: '${tarefaId}' nao esta reclamada`);
+  if (!tarefa || tarefa.tipo !== 'material-para-obra' || tarefa.estado !== 'reclamada') {
+    throw new Error(`marcarCarregando: '${tarefaId}' nao esta reclamada (ou nao e material-para-obra)`);
   }
-  const carregando: Tarefa = { ...tarefa, estado: 'carregando' };
+  const carregando: TarefaMaterialParaObra = { ...tarefa, estado: 'carregando' };
   return { ...state, jobs: { tarefas: { porId: { ...state.jobs.tarefas.porId, [tarefaId]: carregando }, ordem: state.jobs.tarefas.ordem } } };
 }
 
@@ -333,7 +334,7 @@ export function tarefasEmOrdem(
   const candidatas = state.jobs.tarefas.ordem
     .map((id) => state.jobs.tarefas.porId[id])
     .filter((t): t is TarefaMaterialParaObra => t !== undefined && t.tipo === 'material-para-obra' && t.estado === 'aberta')
-    .filter((t) => unidade === null || elegivelParaTarefa(t.tipo, unidade.tipo));
+    .filter((t) => unidade == null || elegivelParaTarefa(t.tipo, unidade.tipo));
   const chaves = new Map(candidatas.map((t) => [t.id, {
     nivel: nivelDoTipo(t.tipo, dados),
     custo: custoDaTarefa(state, t, unidadeId, dados) ?? Number.POSITIVE_INFINITY,
