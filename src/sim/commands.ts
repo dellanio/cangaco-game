@@ -40,4 +40,28 @@ export type Command =
        */
       readonly type: 'DemolishRoad';
       readonly tiles: readonly TileDeGrid[];
+    }
+  | {
+      /**
+       * Enfileira UM pedido de treino na escola `predio` (F13). NAO debita ouro: o
+       * custo sai quando o treino COMECA (`systems/escolas.ts`) — e a fila em espera
+       * que cria a demanda de ouro do JobBoard. Recusado (evento `command-rejected`)
+       * se o predio nao e escola completa, se a fila esta no teto de
+       * `economy.schoolhouse.slotsDeFila` ou se `unidade` nao e um civil conhecido.
+       */
+      readonly type: 'EnqueueTraining';
+      readonly predio: string;
+      /** Id do civil em data/units.json civis.tipos. */
+      readonly unidade: string;
+    }
+  | {
+      /**
+       * Tira um item da fila de treino (F13). Nunca e recusado: item ou escola
+       * inexistentes sao no-op, como no `DemolishRoad`. Nao devolve ouro — o item
+       * que espera nunca pagou, e o que treina ja gastou.
+       */
+      readonly type: 'CancelTraining';
+      readonly predio: string;
+      /** Id do item (`f<numero>`), nao a posicao na fila. */
+      readonly item: string;
     };

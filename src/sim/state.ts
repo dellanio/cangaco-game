@@ -4,6 +4,7 @@ import type { GameData } from './data/types';
 import type { MotivoDeRecusa } from './placement';
 import type { MotivoDeRecusaDeEstrada, TileDeGrid } from './estradas';
 import type { MotivoDeLiberacao } from './jobs';
+import type { MotivoDeRecusaDeTreino } from './escola';
 
 /**
  * Efeito colateral emitido por um sistema para o render consumir
@@ -39,6 +40,27 @@ export type GameEvent =
       readonly command: 'PlaceRoad';
       readonly motivo: MotivoDeRecusaDeEstrada;
       readonly tile: TileDeGrid | null;
+    }
+  | {
+      /**
+       * F13 — `EnqueueTraining` recusado; o estado nao mudou. `CancelTraining` nunca
+       * e recusado (item inexistente e no-op), no mesmo molde do `DemolishRoad`.
+       */
+      readonly type: 'command-rejected';
+      readonly command: 'EnqueueTraining';
+      readonly predio: string;
+      readonly unidade: string;
+      readonly motivo: MotivoDeRecusaDeTreino;
+    }
+  | {
+      /**
+       * F13 — a escola terminou um treino: a unidade `unidade`, do tipo `tipo`,
+       * nasceu na porta de `predio` e o item saiu da fila no mesmo tick.
+       */
+      readonly type: 'unit-trained';
+      readonly predio: string;
+      readonly unidade: string;
+      readonly tipo: string;
     }
   | {
       /**
@@ -248,6 +270,32 @@ export interface JobBoard {
 }
 
 /**
+ * F13 — um pedido na fila de uma escola. Uniao discriminada por `estado`, no molde
+ * de `Predio` e `Tarefa`: um item que ainda nao comecou NAO tem `restam`, e um em
+ * treino tem sempre `restam >= 1` (ao chegar a 0 a unidade nasce e o item sai da
+ * fila no mesmo tick; `restam: 0` nunca fica gravado).
+ *
+ * O ouro e cobrado na TRANSICAO `aguardando -> treinando` (decisao do operador):
+ * cancelar um `aguardando` nao devolve nada porque nada saiu; cancelar um
+ * `treinando` perde o ouro ja gasto.
+ */
+export type ItemDeFila =
+  | {
+      /** `f<numero>`, do mesmo contador `proximoId` de predios, unidades e tarefas. */
+      readonly id: string;
+      /** Id do civil em data/units.json civis.tipos. */
+      readonly unidade: string;
+      readonly estado: 'aguardando';
+    }
+  | {
+      readonly id: string;
+      readonly unidade: string;
+      readonly estado: 'treinando';
+      /** Ticks de treino que faltam. Sempre >= 1 enquanto o item esta na fila. */
+      readonly restam: number;
+    };
+
+/**
  * O que a FSM de uma unidade guarda entre ticks (CLAUDE.md §5: `fsmData` serializavel).
  * Campos ausentes sao OMITIDOS, nunca `undefined` (o JSON os perderia). `{}` e valido:
  * laborer e serf ocioso.
@@ -326,6 +374,19 @@ export interface GameState {
   readonly estradas: Readonly<Record<string, true>>;
   /** O JobBoard (F09). Ver `Tarefa`. */
   readonly jobs: JobBoard;
+  /**
+   * CONTRATO HERDADO (F13b, F14) — a fila de treino de cada escola, por id de
+   * PREDIO (nao de tipo: duas escolas tem duas filas).
+   *
+   * Escola sem pedido **nao tem entrada** (`{}`, nunca `{ p2: [] }`): dois estados
+   * iguais precisam ter o mesmo JSON, ou o teste de determinismo e o save/load
+   * passam a comparar ruido. Quem grava e so `comFila` (`sim/escola.ts`).
+   *
+   * A fila mora aqui, e nao em `PredioCompleto`, pelo mesmo motivo que `Predio` e
+   * `Tarefa` sao unioes discriminadas: uma Pedreira com fila de treino nao pode
+   * ser representavel.
+   */
+  readonly treino: Readonly<Record<string, readonly ItemDeFila[]>>;
 }
 
 function construirColecao<T extends { readonly id: string }>(itens: readonly T[]): Colecao<T> {
@@ -342,6 +403,14 @@ function construirColecao<T extends { readonly id: string }>(itens: readonly T[]
  *  estrutural (qual predio e o armazem), nao numero de balanceamento — os
  *  numeros continuam vindo do dado. */
 export const ID_DO_ARMAZEM = 'storehouse';
+
+/** F13 — o predio que treina civis (chave de `economy.json:schoolhouse`). Id
+ *  estrutural, como `ID_DO_ARMAZEM`: os numeros (custo, slots, duracao)
+ *  continuam vindo do dado. */
+export const ID_DA_ESCOLA = 'schoolhouse';
+
+/** F13 — a mercadoria que a escola consome. Id estrutural, nao numero. */
+export const MERCADORIA_DE_OURO = 'gold';
 
 function capacidadeParaTipo(tipoId: string, dados: GameData): Capacidade {
   if (tipoId === ID_DO_ARMAZEM) {
@@ -474,6 +543,7 @@ export function createInitialState(seed: number, dados: GameData = gameData): Ga
     tiposJaConstruidos: tiposCompletos(predios),
     estradas: {},
     jobs: { tarefas: { porId: {}, ordem: [] } },
+    treino: {},
   };
 }
 

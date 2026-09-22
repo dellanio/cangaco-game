@@ -4,6 +4,7 @@ import type { GameData } from './data/types';
 import { gameData } from './data';
 import { registrarConclusoes } from './desbloqueio';
 import { aplicarPlaceBlueprint } from './systems/build';
+import { aplicarCancelTraining, aplicarEnqueueTraining, sistemaDasEscolas } from './systems/escolas';
 import { aplicarDemolishRoad, aplicarPlaceRoad } from './systems/estradas';
 import { gerarTarefas, sanearTarefas } from './systems/jobs';
 import { sistemaDosLaborers } from './systems/laborers';
@@ -48,6 +49,18 @@ export function step(
         events.push(...resultado.events);
         break;
       }
+      case 'EnqueueTraining': {
+        const resultado = aplicarEnqueueTraining(atual, command, dados);
+        atual = resultado.state;
+        events.push(...resultado.events);
+        break;
+      }
+      case 'CancelTraining': {
+        const resultado = aplicarCancelTraining(atual, command);
+        atual = resultado.state;
+        events.push(...resultado.events);
+        break;
+      }
       default: {
         // Exaustividade: acrescentar um membro a `Command` sem tratar aqui
         // reprova o `typecheck` (este `never` deixa de compilar). Aqui `command` ja
@@ -72,8 +85,12 @@ export function step(
   const saneado = sanearTarefas(atual, dados);
   const serfs = sistemaDosSerfs(saneado.state, dados);
   const laborers = sistemaDosLaborers(serfs.state, dados);
-  atual = gerarTarefas(laborers.state, dados);
-  events.push(...saneado.events, ...serfs.events, ...laborers.events);
+  // F13: a escola DEPOIS dos serfs (o ouro entregue neste tick ja comeca o treino
+  // neste tick) e ANTES de `gerarTarefas` (o ouro cobrado neste tick ja abre a
+  // demanda do proximo pedido antes de o gerador olhar o quadro).
+  const escolas = sistemaDasEscolas(laborers.state, dados);
+  atual = gerarTarefas(escolas.state, dados);
+  events.push(...saneado.events, ...serfs.events, ...laborers.events, ...escolas.events);
 
   // F12: o desbloqueio le os eventos do TICK INTEIRO, depois de todos os sistemas — assim
   // nao depende de QUAL sistema concluiu a obra (hoje so o laborer, F11c). Nenhum sistema le
@@ -93,5 +110,6 @@ export function step(
     tiposJaConstruidos: atual.tiposJaConstruidos,
     estradas: atual.estradas,
     jobs: atual.jobs,
+    treino: atual.treino,
   };
 }
