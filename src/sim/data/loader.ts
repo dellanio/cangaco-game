@@ -102,6 +102,7 @@ export function loadGameData(raw: RawGameData): GameData {
   const construcao: ConstrucaoData = {
     hpPorMaterialEntregue: raw.buildings.construcao.hpPorMaterialEntregue,
     hpPorMartelada: raw.buildings.construcao.hpPorMartelada,
+    laborersMaximosPorObra: raw.buildings.construcao.laborersMaximosPorObra,
     ticksPorMartelada: registrar(
       'buildings.construcao.segundosPorMartelada_base', escalaConstrucaoNome,
       raw.buildings.construcao.segundosPorMartelada_base, 'segundos',

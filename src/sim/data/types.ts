@@ -30,6 +30,7 @@ export type PredioData = RawGameData['buildings']['predios'][number];
 export interface ConstrucaoData {
   readonly hpPorMaterialEntregue: number;
   readonly hpPorMartelada: number;
+  readonly laborersMaximosPorObra: number;
   readonly ticksPorMartelada: Ticks;
   readonly ticksNivelamentoPorTile: Ticks;
   readonly devolucaoAoDemolir: number;

@@ -35,6 +35,7 @@
   "construcao": {
     "hpPorMaterialEntregue": 50,
     "hpPorMartelada": 5,
+    "laborersMaximosPorObra": 4,
     "segundosPorMartelada_base": 1.0,
     "segundosNivelamentoPorTile_base": 2.0,
     "escala": "construcao",
