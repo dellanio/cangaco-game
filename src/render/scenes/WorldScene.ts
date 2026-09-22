@@ -9,6 +9,8 @@ import type { Tile } from '../grid';
 import { publicarEstadoDebug } from '../debug';
 import type { EstadoDebug, RelogioVisivel } from '../debug';
 import { aparenciaDoPredio } from '../predios';
+import { estagioDaObra } from '../estagio-obra';
+import type { EstagioDaObra } from '../estagio-obra';
 import { centroDaVila } from '../../sim/selectors';
 import type { EstadoDePredio, GameState, Predio } from '../../sim/state';
 import type { PonteDeEstado } from '../ponte';
@@ -22,7 +24,7 @@ const CHAVE_TEXTURA_GRAMA = 'tile-grama';
 
 export class WorldScene extends Phaser.Scene {
   private readonly desenhados = new Map<
-    string, { readonly estado: EstadoDePredio; readonly objeto: Phaser.GameObjects.Container }
+    string, { readonly estado: EstadoDePredio; readonly estagio: EstagioDaObra; readonly objeto: Phaser.GameObjects.Container }
   >();
 
   constructor(
@@ -168,12 +170,14 @@ export class WorldScene extends Phaser.Scene {
     return camada;
   }
 
-  /** Diff por id E estado contra o que ja esta desenhado: id novo cria, id sumido
-   *  destroi, mesmo id no mesmo estado nao mexe. O estado entra na chave porque uma
-   *  obra que vira `'completo'` (F11) mantem o id e precisa ser redesenhada.
-   *  Sem o diff, redesenhar do zero a cada chamada recriaria os prédios todo frame.
-   *  `desenhados` e memoria de render local da cena — handle do sprite que
-   *  ela mesma criou, nao estado de jogo guardado em sprite (§10). */
+  /** Diff por id E estagio contra o que ja esta desenhado: id novo cria, id sumido
+   *  destroi, mesmo id no mesmo estagio nao mexe. O estagio (F11c: `estagio-obra.ts`)
+   *  entra na chave, nao so o `estado` — uma obra que so avanca de `hp` (marcacao ->
+   *  madeira, ou vira `'completo'`) mantem o id e precisa ser redesenhada; `hp` sozinho
+   *  nao redisparava nada antes desta feature. Sem o diff, redesenhar do zero a cada
+   *  chamada recriaria os prédios todo frame. `desenhados` e memoria de render local
+   *  da cena — handle do sprite que ela mesma criou, nao estado de jogo guardado em
+   *  sprite (§10). */
   private atualizarPredios(estadoDoJogo: GameState, tilePx: number, debug: EstadoDebug): void {
     const vivos = new Set(estadoDoJogo.predios.ordem);
     for (const [id, item] of this.desenhados) {
@@ -182,36 +186,44 @@ export class WorldScene extends Phaser.Scene {
         this.desenhados.delete(id);
       }
     }
-    let obras = 0;
+    const porEstagio: Record<EstagioDaObra, number> = { marcacao: 0, madeira: 0, completo: 0 };
     for (const id of estadoDoJogo.predios.ordem) {
       const predio = estadoDoJogo.predios.porId[id];
       if (!predio) continue;
-      if (predio.estado === 'obra') obras += 1;
+      const estagio = estagioDaObra(predio.hp, aparenciaDoPredio(predio.tipo).hpTotal);
+      porEstagio[estagio] += 1;
       const existente = this.desenhados.get(id);
-      if (existente && existente.estado === predio.estado) continue;
+      if (existente && existente.estado === predio.estado && existente.estagio === estagio) continue;
       existente?.objeto.destroy();
-      this.desenhados.set(id, { estado: predio.estado, objeto: this.criarPredio(predio, tilePx) });
+      this.desenhados.set(id, { estado: predio.estado, estagio, objeto: this.criarPredio(predio, estagio, tilePx) });
     }
     debug.prediosRenderizados = this.desenhados.size;
-    debug.obrasRenderizadas = obras;
+    // F11c: um predio 'completo' tem hp === hpTotal, entao estagio 'completo' aqui NAO
+    // e so a obra que acabou de martelar o ultimo golpe — inclui todo predio de pe. A
+    // contagem que corresponde ao antigo `obrasRenderizadas` (a marcacao no chao) e a
+    // soma de marcacao+madeira; publicamos os tres separados para o roteiro afirmar por
+    // estagio (tools/shots/F11c.js), sem adivinhar por pixel.
+    debug.obrasRenderizadas = porEstagio.marcacao + porEstagio.madeira;
+    debug.estagiosDeObraRenderizados = porEstagio;
   }
 
   /** Placeholder do §9: retangulo do tamanho do footprint com o nome
    *  tematico escrito por cima. Sem PNG em assets/base/, isto e o desenho
    *  definitivo desta sessao, nao uma falha. Uma OBRA (F07) e a marcacao no
-   *  chao: o mesmo retangulo, translucido, com "em obra" (tema) sob o nome. */
-  private criarPredio(predio: Predio, tilePx: number): Phaser.GameObjects.Container {
+   *  chao; a F11c divide essa fase em tres estagios derivados do `hp`
+   *  (`estagio-obra.ts`): marcacao (nada martelado), madeira (em obra) e
+   *  completo (o predio de pe, sem rotulo extra). */
+  private criarPredio(predio: Predio, estagio: EstagioDaObra, tilePx: number): Phaser.GameObjects.Container {
     const { largura, altura, nome } = aparenciaDoPredio(predio.tipo);
     const canto = gridToScreen({ gx: predio.gx, gy: predio.gy }, tilePx);
     const larguraPx = largura * tilePx;
     const alturaPx = altura * tilePx;
 
-    const emObra = predio.estado === 'obra';
-    const retangulo = this.add.rectangle(
-      larguraPx / 2, alturaPx / 2, larguraPx, alturaPx, 0x6b4a33, emObra ? 0.4 : 1,
-    );
+    const emObra = estagio === 'marcacao' || estagio === 'madeira';
+    const alfa = estagio === 'marcacao' ? 0.15 : estagio === 'madeira' ? 0.4 : 1;
+    const retangulo = this.add.rectangle(larguraPx / 2, alturaPx / 2, larguraPx, alturaPx, 0x6b4a33, alfa);
     retangulo.setStrokeStyle(2, emObra ? 0xede3d0 : 0x2c1d12);
-    const texto = emObra ? `${nome}\n(${temaSertao.obra.rotulo})` : nome;
+    const texto = emObra ? `${nome}\n(${temaSertao.obra[estagio]})` : nome;
     const rotulo = this.add.text(larguraPx / 2, alturaPx / 2, texto, {
       fontSize: '14px',
       color: '#ede3d0',

@@ -130,9 +130,13 @@ async function roteiro(ctx) {
   await capturar('serfs-ociosos');
 
   // 3. avanca o tempo: os serfs reclamam e SE MOVEM. Espera ver uma posicao FRACIONARIA.
+  // F11c: a obra nasce sem nivelar (nivelamento 0) quando plantada pela UI — o(s) laborer(s)
+  // nivelam primeiro (~60 ticks / laborers ativos na obra, mais a caminhada), e so DEPOIS o
+  // portao de gerarTarefas deixa nascer a tarefa de material que o serf reclama. 40 ticks
+  // (o horizonte de antes da F11c) nao alcanca mais o serf se movendo; 150 sobra.
   s = await ate(
     (e) => serfsDe(e).some((u) => !Number.isInteger(u.gx) || !Number.isInteger(u.gy)),
-    1, 40, 'algum serf a meio de um passo (posicao fracionaria)',
+    2, 150, 'algum serf a meio de um passo (posicao fracionaria)',
   );
   afirmar(s.tick > tickDaRua, `o tick deveria ter avancado (era ${tickDaRua}, agora ${s.tick})`);
   const emMovimento = serfsDe(s).filter((u) => u.fsm === 'indo_buscar');
@@ -141,7 +145,7 @@ async function roteiro(ctx) {
   await capturar('serfs-a-caminho');
 
   // 4. a carga aparece sobre o serf e o material JA SAIU do armazem (o HUD so soma armazens)
-  s = await ate((e) => serfsDe(e).some((u) => u.fsm === 'indo_entregar' && u.carga !== null), 2, 60, 'algum serf carregado a caminho da obra');
+  s = await ate((e) => serfsDe(e).some((u) => u.fsm === 'indo_entregar' && u.carga !== null), 2, 100, 'algum serf carregado a caminho da obra');
   const carregados = serfsDe(s).filter((u) => u.carga !== null);
   afirmar(carregados.every((u) => ['timber', 'stone'].includes(u.carga)), `a carga deveria ser timber ou stone, veio ${JSON.stringify(carregados)}`);
   const hudEmTransito = await hud();

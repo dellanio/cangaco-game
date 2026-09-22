@@ -6,7 +6,7 @@ import type { Command } from '../src/sim/commands';
 import { createRng, nextInt } from '../src/sim/rng';
 import { step } from '../src/sim/tick';
 import { distanciaEntrePredios, tilesDaPorta, tilesOrdenados } from '../src/sim/estradas';
-import { custoDoPredio } from '../src/sim/systems/build';
+import { custoDoPredio } from '../src/sim/obra';
 import { criarTarefa, liberar, reclamar, reclamarMelhor, tarefasEmOrdem } from '../src/sim/jobs';
 import type { MotivoDeLiberacao } from '../src/sim/jobs';
 import { disponivelNaOrigem, reservadoNaOrigem, reservadoNoDestino, vagaNoDestino } from '../src/sim/reservas';
@@ -368,7 +368,7 @@ function rodarCaos(semente: number, passos: number, cobertura: Cobertura): void 
         if (alvo && obra && obra.estado === 'obra') {
           const atual = obra.obra.faltam[alvo.mercadoria] ?? 0;
           if (atual > 0) {
-            estado = { ...estado, predios: { ...estado.predios, porId: { ...estado.predios.porId, [obra.id]: { ...obra, obra: { faltam: { ...obra.obra.faltam, [alvo.mercadoria]: atual - 1 } } } } } };
+            estado = { ...estado, predios: { ...estado.predios, porId: { ...estado.predios.porId, [obra.id]: { ...obra, obra: { ...obra.obra, faltam: { ...obra.obra.faltam, [alvo.mercadoria]: atual - 1 } } } } } };
           }
         }
       }
@@ -486,9 +486,11 @@ describe('F09 — determinismo e save/load com reservas pendentes', () => {
   });
 
   it('com uma reserva PENDENTE atravessando o save, chega ao mesmo JSON', () => {
-    // desde a F10 o proprio serf reclama: no tick do save ja ha tarefa reclamada (indo buscar)
+    // desde a F10 o proprio serf reclama: no tick do save ja ha tarefa reclamada (indo buscar).
+    // F11c: o quarry plantado pela UI nasce sem nivelar — a tarefa de material so nasce
+    // depois que o laborer nivela (~60 ticks/2 + caminhada); 7 ticks nao alcancava mais.
     let noSave = createInitialState(1);
-    for (let t = 0; t < 7; t++) noSave = step(noSave, plantarERuar(t));
+    for (let t = 0; t < 90; t++) noSave = step(noSave, plantarERuar(t));
     const pendentesNoSave = tarefasDe(noSave).filter((t) => t.estado === 'reclamada');
     expect(pendentesNoSave.length, 'sem reserva pendente no tick do save o teste seria vacuo').toBeGreaterThan(0);
     for (const t of pendentesNoSave) {
@@ -496,7 +498,7 @@ describe('F09 — determinismo e save/load com reservas pendentes', () => {
       expect(reservadoNoDestino(noSave, t.destino, t.mercadoria)).toBeGreaterThan(0);
     }
 
-    const { direto, comSave } = compararComESemSave({ seed: 1, totalTicks: 14, saveAtTick: 7, comandosNoTick: plantarERuar });
+    const { direto, comSave } = compararComESemSave({ seed: 1, totalTicks: 140, saveAtTick: 90, comandosNoTick: plantarERuar });
     expect(comSave).toBe(direto);
     const final = JSON.parse(direto) as GameState;
     expect(tarefasDe(final).some((t) => t.estado !== 'aberta')).toBe(true); // ainda ha tarefa em curso

@@ -5,6 +5,7 @@ import { gameData } from './data';
 import { aplicarPlaceBlueprint } from './systems/build';
 import { aplicarDemolishRoad, aplicarPlaceRoad } from './systems/estradas';
 import { gerarTarefas, sanearTarefas } from './systems/jobs';
+import { sistemaDosLaborers } from './systems/laborers';
 import { sistemaDosSerfs } from './systems/serfs';
 
 /**
@@ -61,14 +62,17 @@ export function step(
     }
   }
 
-  // O JobBoard e os serfs, nesta ordem, depois dos comandos (para ver a estrada demolida e
-  // a obra plantada neste mesmo tick): revalida o que existe (release em todo ramo de
-  // falha); os serfs agem sobre o quadro ja saneado (F10); so entao se cria o que falta —
-  // assim o que um serf libera e recriado no mesmo tick.
+  // O JobBoard, os serfs e os laborers, nesta ordem, depois dos comandos (para ver a
+  // estrada demolida e a obra plantada neste mesmo tick): revalida o que existe (release em
+  // todo ramo de falha); os serfs agem sobre o quadro ja saneado (F10); os laborers DEPOIS
+  // dos serfs e ANTES de `gerarTarefas` (F11c) — assim um nivelamento que termina neste tick
+  // ja abre a tarefa de material no mesmo tick; so entao se cria o que falta, para que o que
+  // um serf ou laborer libera seja recriado no mesmo tick.
   const saneado = sanearTarefas(atual, dados);
   const serfs = sistemaDosSerfs(saneado.state, dados);
-  atual = gerarTarefas(serfs.state, dados);
-  events.push(...saneado.events, ...serfs.events);
+  const laborers = sistemaDosLaborers(serfs.state, dados);
+  atual = gerarTarefas(laborers.state, dados);
+  events.push(...saneado.events, ...serfs.events, ...laborers.events);
 
   return {
     tick,

@@ -9,6 +9,7 @@ import type { Tile } from './grid';
 import type { EstadoDaPlanta } from './planta-fantasma';
 import type { PreviaDeEstrada } from './estradas';
 import type { UnidadeRenderizada } from './unidades';
+import type { EstagioDaObra } from './estagio-obra';
 
 export interface EstadoDebug {
   /** false ate a cena terminar o primeiro desenho. O roteiro espera por isto
@@ -21,8 +22,11 @@ export interface EstadoDebug {
   tilesRenderizados: number;
   /** Quantos predios do GameState a cena tem desenhados agora (obras incluidas). */
   prediosRenderizados: number;
-  /** Quantos deles estao em obra (F07): a marcacao no chao. */
+  /** Quantos deles estao em obra (F07): marcacao + madeira, F11c. */
   obrasRenderizadas: number;
+  /** F11c: a mesma contagem acima, quebrada por estagio (`estagio-obra.ts`) — o
+   *  roteiro de screenshot afirma sobre isto, nunca por pixel (§8). */
+  estagiosDeObraRenderizados: Readonly<Record<EstagioDaObra, number>>;
   /** Quantos tiles de estrada (F08) a cena tem desenhados agora. */
   estradasRenderizadas: number;
   /** A previa do arrasto de estrada em curso, ou null. `custo` e a pedra que o
@@ -93,6 +97,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     tilesRenderizados: 0,
     prediosRenderizados: 0,
     obrasRenderizadas: 0,
+    estagiosDeObraRenderizados: { marcacao: 0, madeira: 0, completo: 0 },
     estradasRenderizadas: 0,
     previaDeEstrada: null,
     centroDaVila: null,

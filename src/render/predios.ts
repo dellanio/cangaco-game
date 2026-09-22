@@ -11,6 +11,7 @@ export interface AparenciaDoPredio {
   readonly largura: number; // em tiles
   readonly altura: number; // em tiles
   readonly nome: string; // o que o jogador le, vindo do tema
+  readonly hpTotal: number; // F11c: os tres estagios da obra (estagio-obra.ts) precisam do teto
 }
 
 type TemaDePredios = Readonly<Record<string, { readonly nome: string } | undefined>>;
@@ -21,7 +22,7 @@ function construirAparencias(): Readonly<Record<string, AparenciaDoPredio>> {
   for (const p of gameData.predios) {
     const [largura, altura] = p.tamanho;
     if (largura === undefined || altura === undefined) continue;
-    porTipo[p.id] = { largura, altura, nome: temaDePredios[p.id]?.nome ?? p.id };
+    porTipo[p.id] = { largura, altura, nome: temaDePredios[p.id]?.nome ?? p.id, hpTotal: p.hp };
   }
   return porTipo;
 }
@@ -32,5 +33,5 @@ const aparencias = construirAparencias();
  *  placeholder e comportamento normal (CLAUDE.md §9), o jogo nao quebra por
  *  falta de arte ou de nome. */
 export function aparenciaDoPredio(tipo: string): AparenciaDoPredio {
-  return aparencias[tipo] ?? { largura: 1, altura: 1, nome: tipo };
+  return aparencias[tipo] ?? { largura: 1, altura: 1, nome: tipo, hpTotal: 0 };
 }

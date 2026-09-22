@@ -22,6 +22,7 @@ import {
 } from '../jobs';
 import type { MotivoDeLiberacao } from '../jobs';
 import { disponivelNaOrigem, reservadoNaOrigem, reservadoNoDestino } from '../reservas';
+import { obraNivelada } from '../obra';
 
 export interface ResultadoDeSistema {
   readonly state: GameState;
@@ -174,23 +175,26 @@ function origemMaisPerto(state: GameState, obra: PredioEmObra, mercadoria: strin
  * que ja existem. Sem armazem ligado e com estoque, nao cria: a obra espera, e a
  * tarefa surge quando a estrada e o estoque existirem.
  *
- * A condicao "obra ja nivelada" do GDD nao e avaliavel ainda (a `Obra` da F07 nao tem
- * campo de nivelamento; a F11 acrescenta o campo E o portao aqui).
+ * "Obra ja nivelada" (GDD): o portao so vale para MATERIAL — o laborer nivela sem
+ * carregar nada, e tarefa de construir e o que faz o nivelamento acontecer. Pos o
+ * portao tambem no laco de construir seria deadlock (F11c, Task 6).
  */
 export function gerarTarefas(state: GameState, dados: GameData = gameData): GameState {
   let atual = state;
   for (const id of state.predios.ordem) {
     const obra = atual.predios.porId[id];
     if (!ehObra(obra)) continue;
-    for (const mercadoria of dados.economia.mercadorias) {
-      const faltam = obra.obra.faltam[mercadoria] ?? 0;
-      const existentes = tarefasPorNumero(atual)
-        .filter((t) => t.tipo === 'material-para-obra' && t.destino === obra.id && t.mercadoria === mercadoria).length;
-      if (faltam <= existentes) continue;
-      const origem = origemMaisPerto(atual, obra, mercadoria, dados);
-      if (origem === null) continue;
-      for (let i = existentes; i < faltam; i++) {
-        atual = criarTarefa(atual, { mercadoria, origem, destino: obra.id }).state;
+    if (obraNivelada(obra, dados)) {
+      for (const mercadoria of dados.economia.mercadorias) {
+        const faltam = obra.obra.faltam[mercadoria] ?? 0;
+        const existentes = tarefasPorNumero(atual)
+          .filter((t) => t.tipo === 'material-para-obra' && t.destino === obra.id && t.mercadoria === mercadoria).length;
+        if (faltam <= existentes) continue;
+        const origem = origemMaisPerto(atual, obra, mercadoria, dados);
+        if (origem === null) continue;
+        for (let i = existentes; i < faltam; i++) {
+          atual = criarTarefa(atual, { mercadoria, origem, destino: obra.id }).state;
+        }
       }
     }
 

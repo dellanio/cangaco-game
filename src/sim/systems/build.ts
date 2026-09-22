@@ -1,15 +1,10 @@
 import type { Command } from '../commands';
 import type { GameEvent, GameState, PredioEmObra } from '../state';
-import type { GameData, PredioData } from '../data/types';
+import type { GameData } from '../data/types';
 import { canPlace } from '../placement';
+import { custoDoPredio } from '../obra';
 
 export type PlaceBlueprint = Extract<Command, { readonly type: 'PlaceBlueprint' }>;
-
-/** O custo em materiais de um tipo de predio, lido de `buildings.json`. Um ponto
- *  so: o menu Build (F06) e a obra (F07) leem por aqui. */
-export function custoDoPredio(def: PredioData): { readonly timber: number; readonly stone: number } {
-  return { timber: def.timber, stone: def.stone };
-}
 
 /**
  * `PlaceBlueprint`: pergunta `canPlace` e, se aceitar, acrescenta uma OBRA
@@ -56,7 +51,7 @@ export function aplicarPlaceBlueprint(
     gy: comando.gy,
     estado: 'obra',
     hp: 0,
-    obra: { faltam: custoDoPredio(def) },
+    obra: { faltam: custoDoPredio(def), nivelamento: 0 },
   };
   return {
     state: {

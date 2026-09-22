@@ -26,7 +26,7 @@
  * sumiu debaixo dele. O que so o serf sabe — o caminho dele cortado, a perna livre
  * bloqueada — ele libera aqui, por `liberar`. Toda tarefa reclamada tem caminho de volta.
  */
-import type { DadosDaFsm, GameEvent, GameState, Predio, PredioCompleto, PredioEmObra, Tarefa, TarefaMaterialParaObra, Unidade } from '../state';
+import type { GameEvent, GameState, Predio, PredioCompleto, PredioEmObra, Tarefa, TarefaMaterialParaObra, Unidade } from '../state';
 import { ID_DO_ARMAZEM } from '../state';
 import type { GameData } from '../data/types';
 import { gameData } from '../data';
@@ -34,41 +34,16 @@ import { armazensCompletos, ehEstrada, isConnected, tilesDaPorta } from '../estr
 import type { TileDeGrid } from '../estradas';
 import { liberar, marcarCarregando, planoDaTarefa, portasDeEstrada, reclamarMelhor, removerTarefa, TIPO_QUE_CARREGA } from '../jobs';
 import type { MotivoDeLiberacao } from '../jobs';
-import { buscarCaminho, custoDoPasso, tileAndavel } from '../pathfinding';
+import { buscarCaminho, tileAndavel } from '../pathfinding';
+import { andar, chegou, comUnidade, dadosDaFsm, ficarOcioso, noTile, ocioso } from '../units/movimento';
 import type { ResultadoDeSistema } from './jobs';
 
 type Passo = ResultadoDeSistema;
 
 const semEventos = (state: GameState): Passo => ({ state, events: [] });
 
-/** Monta `fsmData` OMITINDO o que falta (o JSON perderia um `undefined`; e o tipo o proibe). */
-function dadosDaFsm(d: {
-  readonly tarefa?: string; readonly carga?: string; readonly caminho?: readonly TileDeGrid[];
-  readonly progresso?: number; readonly armazem?: string;
-}): DadosDaFsm {
-  return {
-    ...(d.tarefa === undefined ? {} : { tarefa: d.tarefa }),
-    ...(d.carga === undefined ? {} : { carga: d.carga }),
-    ...(d.caminho === undefined ? {} : { caminho: [...d.caminho] }),
-    ...(d.progresso === undefined ? {} : { progresso: d.progresso }),
-    ...(d.armazem === undefined ? {} : { armazem: d.armazem }),
-  };
-}
-
-function comUnidade(state: GameState, unidade: Unidade): GameState {
-  return { ...state, unidades: { ...state.unidades, porId: { ...state.unidades.porId, [unidade.id]: unidade } } };
-}
-
 function comPredio(state: GameState, predio: Predio): GameState {
   return { ...state, predios: { ...state.predios, porId: { ...state.predios.porId, [predio.id]: predio } } };
-}
-
-const noTile = (u: Unidade): TileDeGrid => ({ gx: u.gx, gy: u.gy });
-
-const ocioso = (u: Unidade): Unidade => ({ ...u, fsm: 'ocioso', fsmData: {} });
-
-function ficarOcioso(state: GameState, u: Unidade, eventos: readonly GameEvent[] = []): Passo {
-  return { state: comUnidade(state, ocioso(u)), events: eventos };
 }
 
 /** A tarefa de MATERIAL do serf, se ela existe, esta no estado esperado e e
@@ -80,20 +55,6 @@ function tarefaDoSerf(state: GameState, u: Unidade, estado: Tarefa['estado']): T
   const t = id === undefined ? undefined : state.jobs.tarefas.porId[id];
   return t !== undefined && t.tipo === 'material-para-obra' && t.estado === estado && t.reclamadaPor === u.id ? t : null;
 }
-
-/** Um tick de movimento: acumula 1 de progresso; ao completar o passo, o serf passa ao tile seguinte. */
-function andar(state: GameState, u: Unidade, dados: GameData): Unidade {
-  const caminho = u.fsmData.caminho ?? [];
-  const proximo = caminho[0];
-  if (proximo === undefined) return u;
-  const progresso = (u.fsmData.progresso ?? 0) + 1;
-  if (progresso < custoDoPasso(state.estradas, noTile(u), proximo, dados)) {
-    return { ...u, fsmData: { ...u.fsmData, progresso } };
-  }
-  return { ...u, gx: proximo.gx, gy: proximo.gy, fsmData: { ...u.fsmData, caminho: caminho.slice(1), progresso: 0 } };
-}
-
-const chegou = (u: Unidade): boolean => (u.fsmData.caminho ?? []).length === 0;
 
 /** Libera a tarefa (que sai de `reclamada` ou `carregando`) e devolve os eventos. */
 function liberarTarefa(state: GameState, tarefaId: string, motivo: MotivoDeLiberacao): { state: GameState; events: readonly GameEvent[] } {

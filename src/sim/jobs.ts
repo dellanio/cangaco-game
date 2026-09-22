@@ -15,6 +15,7 @@ import type { GameData } from './data/types';
 import { gameData } from './data';
 import { componenteDe, distanciaEntrePredios, ehEstrada, tilesDaPorta } from './estradas';
 import type { TileDeGrid } from './estradas';
+import { obraTrabalhavel } from './obra';
 import { buscarCaminho } from './pathfinding';
 import type { Caminho } from './pathfinding';
 import { disponivelNaOrigem, vagaDeConstrucao, vagaNoDestino } from './reservas';
@@ -47,7 +48,8 @@ export type MotivoDeRecusaDoClaim =
   | 'unidade-ocupada'
   | 'origem-sem-recurso'
   | 'destino-sem-vaga'
-  | 'sem-caminho';
+  | 'sem-caminho'
+  | 'destino-sem-trabalho';
 
 export type ResultadoDoClaim =
   | { readonly ok: true; readonly state: GameState }
@@ -193,6 +195,19 @@ export function planoDaTarefa(
   return { ateAOrigem, deEntrega, custo: ateAOrigem.custo + deEntrega.custo };
 }
 
+/** O caminho do laborer (a pe, `'livre'` — nao precisa de estrada) da posicao dele
+ *  ate a obra `predioId`: qualquer tile da PORTA INTEIRA (`tilesDaPorta`, a borda sul
+ *  toda, nao so a que e estrada — o laborer chega ANTES de existir estrada ou material,
+ *  GDD §5.1: ele nivela primeiro). `null` se a obra nao existe ou nao ha caminho. */
+export function caminhoAteAObra(
+  state: GameState, predioId: string, unidadeId: string, dados: GameData = gameData,
+): Caminho | null {
+  const predio = state.predios.porId[predioId];
+  const unidade = state.unidades.porId[unidadeId];
+  if (!predio || predio.estado !== 'obra' || !unidade) return null;
+  return buscarCaminho(state, { gx: unidade.gx, gy: unidade.gy }, tilesDaPorta(predio, dados), 'livre', dados);
+}
+
 /**
  * O custo, em ticks, que ordena as tarefas. Com `unidadeId`: o plano inteiro (as duas
  * pernas). Sem unidade (`null`): so a perna de entrega, da melhor porta de coleta —
@@ -242,11 +257,15 @@ export function reclamar(
     }
     if (custoDaTarefa(state, tarefa, unidadeId, dados) === null) return { ok: false, motivo: 'sem-caminho' };
   } else {
-    // 'construir': sem mercadoria/origem (nao carrega nada) e sem checagem de
-    // caminho ainda. A F09 tambem nao checava caminho antes de existir um
-    // consumidor (o F10 acrescentou, para o serf); a F11c decide se o
-    // laborer precisa da mesma protecao quando ganhar FSM.
+    // 'construir': sem mercadoria/origem (o laborer nao carrega nada).
     if (vagaDeConstrucao(state, tarefa.destino, dados) < 1) return { ok: false, motivo: 'destino-sem-vaga' };
+    // F11c: agora HA consumidor (sistemaDosLaborers), entao o claim checa caminho —
+    // como o F10 fez para o serf. Modo 'livre': o laborer nao carrega nada e precisa
+    // chegar ANTES de existir estrada (GDD §5.1: ele nivela primeiro).
+    if (caminhoAteAObra(state, tarefa.destino, unidadeId, dados) === null) return { ok: false, motivo: 'sem-caminho' };
+    // O portao vive AQUI, e nao so na ordenacao (`tarefasDeConstrucaoEmOrdem`), para
+    // que o laborer nao reclame, largue e reclame a mesma obra sem trabalho a cada tick.
+    if (!obraTrabalhavel(state, tarefa.destino, dados)) return { ok: false, motivo: 'destino-sem-trabalho' };
   }
 
   const reclamada: Tarefa = { ...tarefa, estado: 'reclamada', reclamadaPor: unidadeId };
@@ -355,6 +374,53 @@ export function reclamarMelhor(
   state: GameState, unidadeId: string, dados: GameData = gameData,
 ): ResultadoDoClaimMelhor {
   const candidatas = tarefasEmOrdem(state, unidadeId, dados);
+  const primeira = candidatas[0];
+  if (primeira === undefined) return { ok: false, motivo: 'sem-tarefa-aberta' };
+  let primeiraRecusa: MotivoDeRecusaDoClaim | null = null;
+  for (const tarefa of candidatas) {
+    const r = reclamar(state, tarefa.id, unidadeId, dados);
+    if (r.ok) return { ok: true, state: r.state, tarefa: tarefa.id };
+    primeiraRecusa ??= r.motivo;
+  }
+  return { ok: false, motivo: primeiraRecusa ?? 'sem-tarefa-aberta' };
+}
+
+/**
+ * As `'construir'` abertas na ordem de escolha do laborer: `(custo do caminho A* a pe
+ * ate a porta, numero)`. SEM nivel — `'construir'` nao esta na escada de
+ * `delivery.json` (decisao do operador, F11b: serf e laborer nao disputam tarefa).
+ *
+ * PULA obra nao trabalhavel (`obraTrabalhavel`, obra.ts): nao adianta o laborer ir para
+ * onde nao ha nada a fazer — e a mesma regra que `reclamar` aplica, aqui so para nao
+ * nem oferecer a obra morta na ordenacao.
+ */
+export function tarefasDeConstrucaoEmOrdem(
+  state: GameState, unidadeId: string | null = null, dados: GameData = gameData,
+): TarefaConstruir[] {
+  const unidade = unidadeId === null ? null : state.unidades.porId[unidadeId];
+  const candidatas = state.jobs.tarefas.ordem
+    .map((id) => state.jobs.tarefas.porId[id])
+    .filter((t): t is TarefaConstruir => t !== undefined && t.tipo === 'construir' && t.estado === 'aberta')
+    .filter((t) => unidade == null || elegivelParaTarefa(t.tipo, unidade.tipo))
+    .filter((t) => obraTrabalhavel(state, t.destino, dados));
+  const chaves = new Map(candidatas.map((t) => [
+    t.id,
+    unidadeId === null ? 0 : caminhoAteAObra(state, t.destino, unidadeId, dados)?.custo ?? Number.POSITIVE_INFINITY,
+  ]));
+  return [...candidatas].sort((a, b) => {
+    const ca = chaves.get(a.id) ?? Number.POSITIVE_INFINITY;
+    const cb = chaves.get(b.id) ?? Number.POSITIVE_INFINITY;
+    if (ca !== cb) return ca < cb ? -1 : 1;
+    return a.numero - b.numero;
+  });
+}
+
+/** Reclama, para o laborer `unidadeId`, a melhor `'construir'` aberta QUE DER para
+ *  reclamar — irma de `reclamarMelhor`, que so serve `'material-para-obra'`. */
+export function reclamarMelhorConstrucao(
+  state: GameState, unidadeId: string, dados: GameData = gameData,
+): ResultadoDoClaimMelhor {
+  const candidatas = tarefasDeConstrucaoEmOrdem(state, unidadeId, dados);
   const primeira = candidatas[0];
   if (primeira === undefined) return { ok: false, motivo: 'sem-tarefa-aberta' };
   let primeiraRecusa: MotivoDeRecusaDoClaim | null = null;
