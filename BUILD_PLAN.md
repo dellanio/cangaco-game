@@ -306,6 +306,20 @@ prédio surge sem clique do jogador.
 - **Nota**: a seleção de prédio é da F16. Decidir na sessão da F13b se o painel
   abre por clique próprio (mínimo viável, sem painel genérico) ou pela ponte de
   harness; não antecipar a F16.
+- **Nota (D1, decidido na F13b)**: **clique próprio**, mínimo viável. Com a
+  ferramenta em `'nenhum'`, clicar num tile do footprint de uma schoolhouse
+  completa abre o painel (`predioNoTile` + `src/input/selecao.ts`); `Esc` e clique
+  fora fecham. A ponte de harness foi recusada: é superfície de teste, e um painel
+  que só abre pelo Playwright não é a feature.
+- **Nota (D2, decisão do operador)**: o item `aguardando` mostra **três** motivos
+  distintos, não um rótulo neutro — `sem-estrada`, `sem-ouro` e `a-caminho`.
+  Porque as causas pedem ações opostas: sem estrada é um arrasto de dez segundos,
+  sem dinheiro é garimpo e metalurgia. Os três saem de composição, **sem campo
+  novo**: tarefa `'ouro-para-escola'` no quadro ⇒ `a-caminho`;
+  `!predioLigadoAoArmazem` (F08) ⇒ `sem-estrada`; senão `sem-ouro`.
+- **Nota (D3)**: o motivo é da **fila**, não do item — `ouroNecessario` é um
+  agregado da escola. Com o ouro já na gaveta `entrada` o motivo é `null` e o
+  painel diz "na fila". Quem quiser motivo por item precisa de estado novo.
 
 ### F14 — Especialistas ocupam prédios
 - **Escopo**: trabalhador treinado caminha até um prédio vago do seu tipo e o
@@ -374,6 +388,14 @@ prédio surge sem clique do jogador.
   que é estrada — hipótese não confirmada por execução, registrada como tal na F13a. **Se
   travar, é travamento de regra, não balanceamento, e se resolve aqui**: item pronto sem
   saída precisa de destino (esperar é aceitável só se a porta puder voltar a existir).
+- **Nota (origem: F13b)**: **contrato herdado.** `src/input/selecao.ts` (só guarda o
+  id do prédio aberto, estado de interface, nunca `GameState`), `predioNoTile`
+  (`sim/selectors.ts`) e o `<aside id="painel-escola">` são o **mínimo** da F13b: a
+  seleção só reconhece schoolhouse e o painel é específico. A seleção genérica desta
+  feature **substitui** a `selecao.ts` e hospeda o bloco da escola como um trecho do
+  painel de prédio qualquer — `painelDaEscola` continua sendo a fonte. O `Esc` é **um
+  só ouvinte** (`src/input/teclado.ts`): larga a ferramenta e fecha o painel; não
+  criar um segundo `keydown` na página.
 - **Nota (origem: F12)**: o desbloqueio já está ligado ao `step()` e é
   **permanente** — `registrarConclusoes` só acrescenta a `tiposJaConstruidos`,
   nunca remove. Demolir o último Woodcutter's **não** re-bloqueia a Sawmill, e isso

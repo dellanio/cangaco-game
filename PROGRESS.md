@@ -445,6 +445,73 @@ Três achados, e o **operador decidiu o destino de cada um**:
    estrada e não existe comando de demolir prédio antes da F16. Se travar, é
    travamento de regra, e a F16 resolve.
 
+## F13b — Schoolhouse: painel da fila (interface)
+
+Plano: `docs/planos/F13b-painel-escola.md`. Quatro decisões, todas também como
+Nota no item F13b do BUILD_PLAN (e uma no F16, contrato herdado).
+
+**D1 — o painel abre por clique próprio, não pela ponte de harness.** O item
+mandava decidir na sessão. Com a ferramenta em `'nenhum'`, clicar em qualquer
+tile do footprint de uma schoolhouse completa abre o painel; `Esc` e clique fora
+fecham. A ponte foi recusada porque é superfície de teste — um painel que só abre
+pelo Playwright não é a feature. Nada disto vira dívida na F16: a seleção genérica
+de lá substitui `src/input/selecao.ts` e hospeda este bloco.
+
+**D2 — os três motivos da espera (decisão do operador, não minha).** Eu havia
+proposto um rótulo neutro único ("esperando dinheiro"), com a limitação
+registrada. **O operador decidiu separar as três causas** porque elas *pedem
+ações opostas*: sem estrada é um arrasto de dez segundos, sem dinheiro é garimpo
+e metalurgia, e mostrar o mesmo texto nos dois é o defeito da fila parada de novo,
+em menor escala. Ele deixou o recuo pronto — voltar ao rótulo neutro se a
+separação exigisse mais do que compor o que já existe. **Não exigiu**: sai de
+`ouroNecessario` (F13a) + tarefa `'ouro-para-escola'` no quadro +
+`predioLigadoAoArmazem` (F08), **zero campo novo em `GameState`**.
+
+| Condição, nesta ordem | Motivo | Rótulo (tema) |
+|---|---|---|
+| tarefa `'ouro-para-escola'` com `destino` = esta escola | `a-caminho` | "Dinheiro a caminho" |
+| `!predioLigadoAoArmazem` | `sem-estrada` | "Sem estrada até o armazém" |
+| caso contrário | `sem-ouro` | "Sem dinheiro no armazém" |
+
+A primeira linha é confiável porque `gerarTarefasDeOuro` (`sim/systems/jobs.ts`)
+só cria a tarefa quando `origemMaisPerto` acha um armazém com ouro **não
+reservado** e **alcançável por estrada**: tarefa no quadro ⇒ o ouro existe e foi
+destinado a esta escola.
+
+**D3 — o motivo é da FILA, não do item.** `ouroNecessario` é um agregado
+(itens `aguardando` × custo − caixa da escola); não existe "o ouro deste item".
+Todo item `aguardando` mostra o mesmo motivo. Com `ouroNecessario === 0` (ouro já
+na gaveta `entrada`) o motivo é `null` e o painel diz "na fila" — é o que a
+captura `F13b-2` mostra nos três itens atrás do que treina.
+
+**D4 — progresso derivado, não guardado.** `(ticksPorTreino − restam) /
+ticksPorTreino`, em `[0,1)`. `ItemDeFila` não ganhou campo.
+
+**Verificado** (evidência aberta nesta sessão):
+- `npm run shot -- F13b` exit 0, e as duas capturas abertas com Read.
+  `F13b-1-fila-cheia.png`: os 5 slots, "Carregador" vindo do tema, "Sem estrada
+  até o armazém" nos cinco, o `×` em cada item, "Fila cheia", e o canvas **não
+  encolhido** ao lado do menu. `F13b-2-treinando.png`: a rua desenhada, o Dinheiro
+  do HUD caindo 20→16, "treinando 13%" no primeiro slot e "na fila" nos outros.
+- O roteiro afirma sobre o **estado**, não sobre o que o painel escreveu:
+  `window.__cangaco.filaDeTreino` (o `GameState.treino` do tick desenhado, novo
+  em `render/debug.ts`) tem `slotsDeFila` itens depois de enfileirar por clique, e
+  `slotsDeFila − 1` depois do `×`.
+- A separação das causas é provada na tela com o armazém **cheio** de ouro (o
+  roteiro afirma `estoque.gold > 0` antes): se `sem-estrada` e `sem-ouro`
+  colapsassem num rótulo só, este passo não distinguiria nada.
+- Não-regressão do layout: `npm run shot -- F06` e `-- F08`, exit 0 nos dois
+  (código de saída, imagens não abertas — §8). A F06 é a que afirma
+  `canvas.right <= painel.left`; o `#painel-escola` é **sobreposição** na célula
+  do canvas justamente para não virar terceira coluna.
+- `tests/F13b-painel.test.ts`: 14 testes do seletor, headless. `npm run verify`
+  exit 0.
+
+**Fora de escopo, declarado:** nenhum outro prédio abre painel, não há HP, nem
+ocupante, nem botão de demolir — é tudo F16. `src/ui/` continua sem teste
+unitário neste projeto (Vitest roda em `environment: 'node'`, sem jsdom); quem
+prova a interface é o roteiro.
+
 Histórico das features fechadas: docs/historico/F01-F11a.md.
 
 ## Perguntas em aberto

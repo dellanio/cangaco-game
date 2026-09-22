@@ -15,7 +15,7 @@
   "F11c-laborer-fsm": { "passes": true },
   "F12-desbloqueio": { "passes": true },
   "F13a-schoolhouse-fila": { "passes": true },
-  "F13b-schoolhouse-painel": { "passes": false },
+  "F13b-schoolhouse-painel": { "passes": true },
   "F14-especialistas-ocupam": { "passes": false },
   "F15-producao-basica": { "passes": false },
   "F16-painel-selecao-demolir": { "passes": false },
