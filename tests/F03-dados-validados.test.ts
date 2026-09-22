@@ -261,6 +261,24 @@ describe('F11b — buildings.construcao.laborersMaximosPorObra', () => {
   });
 });
 
+describe('F13a — economy.schoolhouse: a politica de treino que a sim implementa', () => {
+  it('validate:data reprova reembolsoSeNaoIniciado=false, slots < 1 e custo nao-inteiro', () => {
+    const dados = carregarDadosReais();
+
+    const semReembolso = clonar(dados);
+    semReembolso.economy.schoolhouse.reembolsoSeNaoIniciado = false;
+    expect(validarTudo(semReembolso).some((e) => e.startsWith('economia/escola:'))).toBe(true);
+
+    const semSlots = clonar(dados);
+    semSlots.economy.schoolhouse.slotsDeFila = 0;
+    expect(validarTudo(semSlots).some((e) => e.startsWith('economia/escola:'))).toBe(true);
+
+    const custoQuebrado = clonar(dados);
+    custoQuebrado.economy.schoolhouse.custoOuroPorUnidade = 1.5;
+    expect(validarTudo(custoQuebrado).some((e) => e.startsWith('economia/escola:'))).toBe(true);
+  });
+});
+
 afterAll(() => {
   const economiaPorGrupo = (dados: GameData, grupo: string): number => (
     dados.conversoes.filter((c) => c.grupo === grupo).length

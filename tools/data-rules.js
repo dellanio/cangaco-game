@@ -359,6 +359,26 @@ function validarEscadaDePrioridade(dados, erros) {
   }
 }
 
+// F13a: a sim cobra o ouro do treino ao INICIAR (economy.schoolhouse), e cancelar
+// um item que ja comecou nao devolve nada. A politica alternativa — cobrar ao
+// enfileirar e reembolsar quem for cancelado antes de comecar — NAO esta
+// implementada; sem esta regra, `reembolsoSeNaoIniciado: false` seria um dado que
+// ninguem le, dizendo do jogo uma coisa que o jogo nao faz.
+function validarPoliticaDeTreino(dados, erros) {
+  const escola = (dados.economy && dados.economy.schoolhouse) || {};
+  if (escola.reembolsoSeNaoIniciado !== true) {
+    erros.push(
+      "economia/escola: economy.schoolhouse.reembolsoSeNaoIniciado precisa ser true — a sim cobra o ouro ao INICIAR o treino (F13a), entao so o item que ainda nao comecou sai de graca; 'false' nao esta implementado",
+    );
+  }
+  if (!Number.isInteger(escola.slotsDeFila) || escola.slotsDeFila < 1) {
+    erros.push('economia/escola: slotsDeFila precisa ser inteiro >= 1');
+  }
+  if (!Number.isInteger(escola.custoOuroPorUnidade) || escola.custoOuroPorUnidade < 0) {
+    erros.push('economia/escola: custoOuroPorUnidade precisa ser inteiro >= 0');
+  }
+}
+
 // F08: fracao da pedra devolvida ao demolir tiles de estrada. Campo proprio de
 // terrain.estrada (nao o de buildings.construcao): estrada e predio podem
 // divergir. Uma fracao fora de [0, 1] devolveria mais do que custou, ou negativo.
@@ -420,6 +440,7 @@ function validarTudo(dados) {
   validarMenuInicialSoRaiz(dados, erros);
   validarDevolucaoDeEstrada(dados, erros);
   validarEscadaDePrioridade(dados, erros);
+  validarPoliticaDeTreino(dados, erros);
   return erros;
 }
 
