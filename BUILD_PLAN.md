@@ -253,6 +253,13 @@ prédio surge sem clique do jogador.
   estado inicial alimenta essa lista; a F12 liga `registrarTipoConstruido`
   (`sim/desbloqueio.ts`) ao `step()` no momento em que uma obra chega a
   `'completo'`.
+- **Nota (origem: F11c)**: o gancho já existe. A F11c emite
+  `{ type: 'building-completed', predio, tipo }` (`GameEvent`, `state.ts`) no
+  exato tick em que `sistemaDosLaborers` chama `completarObra` — verificado, um
+  evento por prédio, nunca chamando `registrarTipoConstruido` sozinho. A F12
+  só precisa **consumir** esse evento (varrer `state.events` por
+  `'building-completed'` e chamar `registrarTipoConstruido(tipo)`), não
+  detectar a transição por conta própria.
 
 ### F13 — Schoolhouse: fila de treino
 - **Escopo**: painel com fila de até 5 slots, um botão por tipo de trabalhador,

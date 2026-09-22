@@ -216,6 +216,66 @@ com `mercadoria`, ou uma de material sem `origem`, não é representável.
 - **Estágios visuais** (hp-derivados, função pura em `render/`) são só da
   F11c — nada em `render/` mudou nesta feature.
 
+(origem: F11c)
+
+### A FSM do laborer e o fechamento da obra (herdado por F12 — verificado)
+
+`Obra` (F07) ganha o único campo que faltava: `readonly nivelamento: number`
+(ticks já acumulados, `state.ts:157-162`). É monotônico — nunca decresce —
+então `obraNivelada` nunca fica retroativamente falsa e `sanearTarefas` não
+precisou de ramo novo por causa do portão da Task 6.
+
+- **FSM canônica** (GDD §5.1, `sim/systems/laborers.ts`): `ocioso →
+  indo_a_obra → nivelando → esperando_material → martelando → ocioso`. Um
+  `fsm` fora desta lista é erro (save corrompido), como o serf.
+- **As três grandezas derivadas** (`sim/obra.ts`), nunca guardadas no estado:
+  `alvoDeNivelamento` (área do footprint × `ticksNivelamentoPorTile`),
+  `entreguesNaObra` (Σ por mercadoria de `custo − faltam`), `tetoDeHp`
+  (`entregues × hpPorMaterialEntregue`, nunca passando de `def.hp`).
+- **`completarObra`** (`state.ts`) troca `PredioEmObra` por `PredioCompleto`
+  quando `hp === def.hp`. **Não** chama `registrarTipoConstruido` — isso é da
+  F12. Emite `{ type: 'building-completed', predio, tipo }`
+  (`GameEvent`, `state.ts:74`) — **este evento é o contrato que a F12
+  herda**: ela só precisa consumi-lo (varrer `state.events`), não detectar a
+  transição por conta própria (nota espelhada no item F12 do
+  `BUILD_PLAN.md`).
+- **Obra trabalhável, regra verificada (decisão do operador na aprovação do
+  plano, não balanceamento — não vai para `BALANCE_LOG.md`).** Sem ela a
+  partida trava em silêncio: um laborer preso em `esperando_material` por
+  uma obra sem estoque possível nunca libera, a obra vizinha (que teria
+  material) nunca é nivelada, e o portão da Task 6 nunca deixa nascer tarefa
+  de material para ela. A regra é derivada, sem estado novo:
+  `obraTrabalhavel = !nivelada || hp < teto || existe tarefa de material
+  aberta/reclamada/carregando`. Só o handler de `esperando_material` libera
+  por essa regra (`'pedido-da-unidade'`, que **reabre**, não cancela); a
+  reavaliação que roda ao saltar de `indo_a_obra`/`nivelando`/`martelando`
+  **nunca libera** — ela roda antes de `gerarTarefas` no mesmo tick, e uma
+  obra que acabou de nivelar ainda não tem tarefa de material nesse instante.
+  Testado (Task 5 do plano): duas obras, uma sem material possível — os
+  laborers migram para a que tem, ela termina, e quando o estoque da
+  primeira aparece eles voltam, sem liberação repetida nem obra abandonada.
+- **`sim/units/movimento.ts`**: `andar`, `noTile`, `chegou`, `dadosDaFsm`,
+  `comUnidade`, `ficarOcioso` saíram de `systems/serfs.ts` sem mudar de
+  corpo — o laborer é o segundo consumidor que o contrato do F10 previa
+  (linha 134-135, agora resolvida).
+- **Ordem no tick**: comandos → `sanearTarefas` → `sistemaDosSerfs` →
+  `sistemaDosLaborers` → `gerarTarefas`. Laborers depois dos serfs e antes do
+  gerador: o nivelamento que termina num tick já abre a tarefa de material
+  no mesmo tick (é o que o teste de aceite headless confirma,
+  `tickNivelamentoPronto < tickPrimeiroMaterialCompletado`).
+- **Estágios visuais: três, não quatro.** `estagioDaObra(hp, hpTotal)`
+  (`render/estagio-obra.ts`, zero imports) devolve `marcacao` (`hp === 0`),
+  `madeira` (`0 < hp < hpTotal`) ou `completo` (`hp >= hpTotal`). O original
+  (K&M) sobe em quatro fases (madeira, depois pedra); aqui são três por
+  decisão do operador — a mesma função pura pode dividir a fase do meio pela
+  fração de `hp` se um dia houver arte para isso.
+- **Hipótese, não implementada nesta sessão**: distinguir visualmente
+  `esperando_material` de `martelando` (o "estado real e visível" do GDD
+  §5.1, marcador sobre o laborer como o `marcadorDeCarga` do serf). O plano
+  marcava este passo como separado e destacável, sem comprometer o aceite
+  (que é sobre os três estágios da obra, não sobre o laborer); ficou de fora
+  por escopo, não por bloqueio — nenhuma pré-condição falta para fazê-lo.
+
 Histórico das features fechadas: docs/historico/F01-F11a.md.
 
 ## Perguntas em aberto
