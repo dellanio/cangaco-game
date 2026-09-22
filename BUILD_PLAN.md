@@ -261,19 +261,51 @@ prédio surge sem clique do jogador.
   `'building-completed'` e chamar `registrarTipoConstruido(tipo)`), não
   detectar a transição por conta própria.
 
-### F13 — Schoolhouse: fila de treino
-- **Escopo**: painel com fila de até 5 slots, um botão por tipo de trabalhador,
-  1 gold por unidade, cobrado ao iniciar. Cancelar item da fila devolve o ouro
-  só se ainda não começou.
-- **Aceite**: teste que enfileira 3 unidades com 3 de ouro, confirma ouro 0 e as
-  3 unidades criadas após o tempo de treino; tenta a quarta sem ouro e confirma
-  rejeição. Screenshot do painel com fila cheia.
-- **Evidência**: `test-output/F13.json` + `screenshots/F13-*.png`
+### F13a — Schoolhouse: fila de treino (simulação)
+- **Escopo**: fila de até 5 slots por escola, um pedido por tipo de trabalhador,
+  1 gold por unidade **cobrado ao iniciar o treino**; a unidade nasce na porta da
+  escola. O ouro chega pelo serf: nasce aqui o produtor do nível 2 da escada
+  (`ouro-para-escola`).
+- **Aceite**: teste headless que, do estado inicial com 3 de ouro no armazém,
+  enfileira 3 unidades, conduz por `step()` e confirma: o ouro sai do armazém e
+  chega à escola pelo serf, ouro 0 nos dois prédios ao fim, as 3 unidades criadas
+  (uma por `ticksPorTreino` do dado) e nascidas na porta da escola; um 4º pedido
+  sem ouro fica em `aguardando` para sempre, sem unidade e sem gasto; e um pedido
+  além do teto de slots é recusado com `command-rejected`.
+- **Evidência**: `test-output/F13a.json`
 - **Nota**: **o nível 2 da escada (ouro → Schoolhouse) nasce aqui.** Na F09 só o
   nível 3 (material → obra) tem produtor; o nível 2 tem a escola, mas não tinha
   **demanda de ouro** — quem a cria é a fila de treino. Ao acrescentar o produtor,
   alargar `Tarefa.tipo` (hoje o literal `'material-para-obra'`) e acrescentar o tipo
   na escada por `id` em `data/delivery.json`, sem digitar o número do nível em `.ts`.
+- **Nota**: sem screenshot — nada em `render/` ou `ui/` muda aqui, e o painel é a
+  F13b.
+- **Nota (D2)**: "tenta a quarta sem ouro e confirma rejeição", do aceite
+  original, vale como **recusa de iniciar o treino**: cobrar ao iniciar e recusar
+  o enfileiramento por falta de ouro se excluem — se enfileirar exigisse ouro
+  presente, a fila nunca criaria a demanda que faz o ouro vir. A recusa de comando
+  de verdade fica coberta pelo teto de slots e pelo prédio que não é escola.
+- **Nota (D1)**: a unidade nasce no primeiro tile andável da **porta da escola**
+  (borda sul). `economy.json:estadoInicial.spawnDeUnidades` continua sendo só o
+  canto do cenário inicial; não vale para prédio em runtime.
+- **Nota (D3)**: o preço lido é `economy.schoolhouse.custoOuroPorUnidade`.
+  `units.json:civis.tipos[].custoOuro` (hoje 1 para todos) continua sem leitor —
+  quando um civil custar diferente, é ele que passa a mandar, e o campo da escola
+  vira o padrão. Quem for mexer nisso mexe nos dois.
+
+### F13b — Schoolhouse: painel da fila (interface)
+- **Escopo**: painel com os 5 slots, um botão por tipo de trabalhador e
+  cancelamento de item, emitindo `EnqueueTraining`/`CancelTraining` (já
+  existentes, F13a). Lê o estado, não o muta.
+- **Aceite**: screenshot do painel com a fila cheia, e roteiro que enfileira por
+  clique e confirma a fila no estado.
+- **Evidência**: `screenshots/F13b-*.png`
+- **Nota**: **feature de integração** (CLAUDE.md §10): pode tocar `src/ui/`,
+  `src/input/` e `src/render/` na mesma feature, porque o painel precisa abrir a
+  partir do prédio clicado.
+- **Nota**: a seleção de prédio é da F16. Decidir na sessão da F13b se o painel
+  abre por clique próprio (mínimo viável, sem painel genérico) ou pela ponte de
+  harness; não antecipar a F16.
 
 ### F14 — Especialistas ocupam prédios
 - **Escopo**: trabalhador treinado caminha até um prédio vago do seu tipo e o
