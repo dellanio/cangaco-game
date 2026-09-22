@@ -4,7 +4,9 @@
  * exato de tarefas, e o gerador (que roda no `step`) criaria as suas.
  */
 import { createInitialState } from '../../src/sim/state';
-import type { GameState, PredioCompleto, PredioEmObra, Tarefa } from '../../src/sim/state';
+import type {
+  GameState, PredioCompleto, PredioEmObra, Tarefa, TarefaConstruir, TarefaMaterialParaObra, Unidade,
+} from '../../src/sim/state';
 import { chaveDeTile } from '../../src/sim/estradas';
 import type { TileDeGrid } from '../../src/sim/estradas';
 
@@ -63,7 +65,7 @@ export function laborersDoCenario(estado: GameState): string[] {
   return estado.unidades.ordem.filter((id) => estado.unidades.porId[id]?.tipo === 'laborer');
 }
 
-export function tarefaDe(parcial: Partial<Tarefa> & { readonly numero: number }): Tarefa {
+export function tarefaDe(parcial: Partial<TarefaMaterialParaObra> & { readonly numero: number }): TarefaMaterialParaObra {
   return {
     id: `t${parcial.numero}`,
     tipo: 'material-para-obra',
@@ -76,9 +78,28 @@ export function tarefaDe(parcial: Partial<Tarefa> & { readonly numero: number })
   };
 }
 
+/** F11b — a irma de `tarefaDe` para tarefas de construir: sem
+ *  mercadoria/origem, sem estado `'carregando'`. */
+export function tarefaConstruirDe(parcial: Partial<TarefaConstruir> & { readonly numero: number }): TarefaConstruir {
+  return {
+    id: `t${parcial.numero}`,
+    tipo: 'construir',
+    destino: 'obra-a',
+    estado: 'aberta',
+    reclamadaPor: null,
+    ...parcial,
+  };
+}
+
+/** F11b: `proximoId` sobe para passar do maior `numero` dado, nunca desce. Sem isto, um
+ *  `gerarTarefas` chamado depois (agora sempre cria 'construir' tambem) podia reusar um
+ *  `numero` que a fixture ja escolheu a mao — dois `t<numero>` diferentes colidindo no
+ *  mesmo id, um sobrescrevendo o outro em `porId` e duplicado em `ordem`. */
 export function comTarefas(estado: GameState, tarefas: readonly Tarefa[]): GameState {
+  const maiorNumero = tarefas.reduce((m, t) => Math.max(m, t.numero), 0);
   return {
     ...estado,
+    proximoId: Math.max(estado.proximoId, maiorNumero + 1),
     jobs: {
       tarefas: {
         porId: Object.fromEntries(tarefas.map((t) => [t.id, t])),
@@ -156,4 +177,15 @@ export function comUnidadeEm(estado: GameState, id: string, gx: number, gy: numb
   const u = estado.unidades.porId[id];
   if (!u) throw new Error(`fixture: unidade '${id}' nao existe`);
   return { ...estado, unidades: { ...estado.unidades, porId: { ...estado.unidades.porId, [id]: { ...u, gx, gy } } } };
+}
+
+/** F11b — acrescenta uma unidade nova (id `id`, tipo `tipo`), ociosa e sem
+ *  `fsmData`. O cenario inicial so tem 2 laborers; testes de teto
+ *  (`laborersMaximosPorObra`) precisam de mais do que isso. */
+export function comUnidadeExtra(estado: GameState, id: string, tipo: string, gx: number, gy: number): GameState {
+  const unidade: Unidade = { id, tipo, gx, gy, fsm: 'ocioso', fsmData: {} };
+  return {
+    ...estado,
+    unidades: { porId: { ...estado.unidades.porId, [id]: unidade }, ordem: [...estado.unidades.ordem, id] },
+  };
 }

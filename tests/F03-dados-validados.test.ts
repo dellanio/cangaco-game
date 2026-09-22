@@ -243,6 +243,24 @@ describe('F03 — escala de tempo', () => {
   });
 });
 
+describe('F11b — buildings.construcao.laborersMaximosPorObra', () => {
+  it('o dado real e um inteiro >= 1', () => {
+    expect(Number.isInteger(gameData.construcao.laborersMaximosPorObra)).toBe(true);
+    expect(gameData.construcao.laborersMaximosPorObra).toBeGreaterThanOrEqual(1);
+  });
+
+  it('validate:data reprova nao-inteiro e reprova < 1', () => {
+    const dados = carregarDadosReais();
+    const naoInteiro = clonar(dados);
+    naoInteiro.buildings.construcao.laborersMaximosPorObra = 2.5;
+    expect(validarTudo(naoInteiro).some((e) => e.startsWith('predios/laborers-maximos-por-obra'))).toBe(true);
+
+    const zero = clonar(dados);
+    zero.buildings.construcao.laborersMaximosPorObra = 0;
+    expect(validarTudo(zero).some((e) => e.startsWith('predios/laborers-maximos-por-obra'))).toBe(true);
+  });
+});
+
 afterAll(() => {
   const economiaPorGrupo = (dados: GameData, grupo: string): number => (
     dados.conversoes.filter((c) => c.grupo === grupo).length

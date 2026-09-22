@@ -10,14 +10,14 @@
  * Por isso `reclamar` e atomico por construcao (uma unica atribuicao de estado, so
  * depois de todas as checagens) e `liberar` devolve as DUAS reservas de uma vez.
  */
-import type { GameEvent, GameState, Tarefa, TipoDeTarefa } from './state';
+import type { GameEvent, GameState, Tarefa, TarefaConstruir, TarefaMaterialParaObra, TipoDeTarefa } from './state';
 import type { GameData } from './data/types';
 import { gameData } from './data';
 import { componenteDe, distanciaEntrePredios, ehEstrada, tilesDaPorta } from './estradas';
 import type { TileDeGrid } from './estradas';
 import { buscarCaminho } from './pathfinding';
 import type { Caminho } from './pathfinding';
-import { disponivelNaOrigem, vagaNoDestino } from './reservas';
+import { disponivelNaOrigem, vagaDeConstrucao, vagaNoDestino } from './reservas';
 
 /**
  * Por que uma tarefa reclamada foi liberada. Cada motivo devolve as DUAS reservas
@@ -60,6 +60,21 @@ export type ResultadoDoClaimMelhor =
 /** So o serf carrega mercadoria. Id estrutural, como `ID_DO_ARMAZEM`. */
 export const TIPO_QUE_CARREGA = 'serf';
 
+/** So o laborer constroi. Id estrutural, como `TIPO_QUE_CARREGA`. */
+export const TIPO_QUE_CONSTROI = 'laborer';
+
+const UNIDADE_ELEGIVEL_POR_TIPO: Readonly<Record<TipoDeTarefa, string>> = {
+  'material-para-obra': TIPO_QUE_CARREGA,
+  construir: TIPO_QUE_CONSTROI,
+};
+
+/** Generaliza a checagem "a unidade e serf": cada tipo de tarefa tem UM tipo
+ *  de unidade elegivel — serf e laborer nao disputam tarefa (decisao do
+ *  operador, F11b). */
+export function elegivelParaTarefa(tipoDaTarefa: TipoDeTarefa, tipoDaUnidade: string): boolean {
+  return UNIDADE_ELEGIVEL_POR_TIPO[tipoDaTarefa] === tipoDaUnidade;
+}
+
 /** O nivel do tipo na escada de `delivery.json`, lido pelo `id` — nunca um numero em
  *  `.ts`. Falha alto se o dado nao tem o id: assumir um nivel escondido seria pior. */
 export function nivelDoTipo(tipo: TipoDeTarefa, dados: GameData = gameData): number {
@@ -70,31 +85,44 @@ export function nivelDoTipo(tipo: TipoDeTarefa, dados: GameData = gameData): num
   return linha.nivel;
 }
 
-/** Cria uma tarefa ABERTA (nao reserva nada). O id e o numero vem do contador
- *  `proximoId`, compartilhado com predios e unidades. */
-export function criarTarefa(
-  state: GameState,
-  campos: { readonly mercadoria: string; readonly origem: string; readonly destino: string; readonly tipo?: TipoDeTarefa },
-): { readonly state: GameState; readonly id: string } {
-  const numero = state.proximoId;
-  const id = `t${numero}`;
-  const tarefa: Tarefa = {
-    id, numero, tipo: campos.tipo ?? 'material-para-obra', mercadoria: campos.mercadoria,
-    origem: campos.origem, destino: campos.destino, estado: 'aberta', reclamadaPor: null,
-  };
+function inserirTarefa(state: GameState, tarefa: Tarefa): { readonly state: GameState; readonly id: string } {
   return {
-    id,
+    id: tarefa.id,
     state: {
       ...state,
-      proximoId: numero + 1,
+      proximoId: tarefa.numero + 1,
       jobs: {
         tarefas: {
-          porId: { ...state.jobs.tarefas.porId, [id]: tarefa },
-          ordem: [...state.jobs.tarefas.ordem, id],
+          porId: { ...state.jobs.tarefas.porId, [tarefa.id]: tarefa },
+          ordem: [...state.jobs.tarefas.ordem, tarefa.id],
         },
       },
     },
   };
+}
+
+/** Cria uma tarefa de material ABERTA (nao reserva nada). O id e o numero vem
+ *  do contador `proximoId`, compartilhado com predios e unidades. */
+export function criarTarefa(
+  state: GameState,
+  campos: { readonly mercadoria: string; readonly origem: string; readonly destino: string },
+): { readonly state: GameState; readonly id: string } {
+  const numero = state.proximoId;
+  const tarefa: TarefaMaterialParaObra = {
+    id: `t${numero}`, numero, tipo: 'material-para-obra', mercadoria: campos.mercadoria,
+    origem: campos.origem, destino: campos.destino, estado: 'aberta', reclamadaPor: null,
+  };
+  return inserirTarefa(state, tarefa);
+}
+
+/** F11b — cria uma vaga de construcao ABERTA na obra `destino`. Sem
+ *  mercadoria/origem: o laborer nao carrega material. */
+export function criarTarefaDeConstrucao(
+  state: GameState, destino: string,
+): { readonly state: GameState; readonly id: string } {
+  const numero = state.proximoId;
+  const tarefa: TarefaConstruir = { id: `t${numero}`, numero, tipo: 'construir', destino, estado: 'aberta', reclamadaPor: null };
+  return inserirTarefa(state, tarefa);
 }
 
 function unidadeJaTemTarefa(state: GameState, unidadeId: string): boolean {
@@ -109,7 +137,7 @@ function unidadeJaTemTarefa(state: GameState, unidadeId: string): boolean {
  *  E a pergunta de EXISTENCIA ("esta ligado?"), que nao depende de serf: e o que o
  *  gerador, o saneamento e o verificador usam. A ORDEM de escolha do serf usa o custo A*
  *  em ticks de `custoDaTarefa`, que parte da posicao dele. */
-export function distanciaDaTarefa(state: GameState, tarefa: Tarefa, dados: GameData = gameData): number | null {
+export function distanciaDaTarefa(state: GameState, tarefa: TarefaMaterialParaObra, dados: GameData = gameData): number | null {
   const origem = state.predios.porId[tarefa.origem];
   const destino = state.predios.porId[tarefa.destino];
   if (!origem || !destino) return null;
@@ -134,7 +162,7 @@ export function portasDeEstrada(state: GameState, predioId: string, dados: GameD
 
 /** As portas de COLETA: as do armazem que sao estrada E estao no mesmo componente de
  *  alguma porta de estrada da obra. Sem isto a perna carregada nao teria como existir. */
-function portasDeColeta(state: GameState, tarefa: Tarefa, dados: GameData): { coleta: TileDeGrid[]; entrega: TileDeGrid[] } {
+function portasDeColeta(state: GameState, tarefa: TarefaMaterialParaObra, dados: GameData): { coleta: TileDeGrid[]; entrega: TileDeGrid[] } {
   const entrega = portasDeEstrada(state, tarefa.destino, dados);
   const componentesDaEntrega = new Set(entrega.map((t) => componenteDe(state.estradas, t)));
   const coleta = portasDeEstrada(state, tarefa.origem, dados).filter((t) => componentesDaEntrega.has(componenteDe(state.estradas, t)));
@@ -151,7 +179,7 @@ function portasDeColeta(state: GameState, tarefa: Tarefa, dados: GameData): { co
  * pernas; empate: a primeira de `tilesDaPorta`, por `gx`).
  */
 export function planoDaTarefa(
-  state: GameState, tarefa: Tarefa, unidadeId: string, dados: GameData = gameData,
+  state: GameState, tarefa: TarefaMaterialParaObra, unidadeId: string, dados: GameData = gameData,
 ): PlanoDaTarefa | null {
   const unidade = state.unidades.porId[unidadeId];
   if (!unidade) return null;
@@ -171,7 +199,7 @@ export function planoDaTarefa(
  * unica coisa que existe sem um serf em campo. `null` se nao ha caminho.
  */
 export function custoDaTarefa(
-  state: GameState, tarefa: Tarefa, unidadeId: string | null, dados: GameData = gameData,
+  state: GameState, tarefa: TarefaMaterialParaObra, unidadeId: string | null, dados: GameData = gameData,
 ): number | null {
   if (unidadeId !== null) return planoDaTarefa(state, tarefa, unidadeId, dados)?.custo ?? null;
   const { coleta, entrega } = portasDeColeta(state, tarefa, dados);
@@ -202,16 +230,24 @@ export function reclamar(
   if (tarefa.estado !== 'aberta') return { ok: false, motivo: 'tarefa-ja-reclamada' };
 
   const unidade = state.unidades.porId[unidadeId];
-  if (!unidade || unidade.tipo !== TIPO_QUE_CARREGA) return { ok: false, motivo: 'unidade-invalida' };
+  if (!unidade || !elegivelParaTarefa(tarefa.tipo, unidade.tipo)) return { ok: false, motivo: 'unidade-invalida' };
   if (unidadeJaTemTarefa(state, unidadeId)) return { ok: false, motivo: 'unidade-ocupada' };
 
-  if (disponivelNaOrigem(state, tarefa.origem, tarefa.mercadoria) < 1) {
-    return { ok: false, motivo: 'origem-sem-recurso' };
+  if (tarefa.tipo === 'material-para-obra') {
+    if (disponivelNaOrigem(state, tarefa.origem, tarefa.mercadoria) < 1) {
+      return { ok: false, motivo: 'origem-sem-recurso' };
+    }
+    if (vagaNoDestino(state, tarefa.destino, tarefa.mercadoria) < 1) {
+      return { ok: false, motivo: 'destino-sem-vaga' };
+    }
+    if (custoDaTarefa(state, tarefa, unidadeId, dados) === null) return { ok: false, motivo: 'sem-caminho' };
+  } else {
+    // 'construir': sem mercadoria/origem (nao carrega nada) e sem checagem de
+    // caminho ainda. A F09 tambem nao checava caminho antes de existir um
+    // consumidor (o F10 acrescentou, para o serf); a F11c decide se o
+    // laborer precisa da mesma protecao quando ganhar FSM.
+    if (vagaDeConstrucao(state, tarefa.destino, dados) < 1) return { ok: false, motivo: 'destino-sem-vaga' };
   }
-  if (vagaNoDestino(state, tarefa.destino, tarefa.mercadoria) < 1) {
-    return { ok: false, motivo: 'destino-sem-vaga' };
-  }
-  if (custoDaTarefa(state, tarefa, unidadeId, dados) === null) return { ok: false, motivo: 'sem-caminho' };
 
   const reclamada: Tarefa = { ...tarefa, estado: 'reclamada', reclamadaPor: unidadeId };
   return {
@@ -224,13 +260,14 @@ export function reclamar(
 }
 
 /** A coleta: a tarefa `reclamada` passa a `carregando` (a reserva da origem foi consumida
- *  pela saida do material do estoque, que quem chama faz no mesmo tick). So o quadro. */
+ *  pela saida do material do estoque, que quem chama faz no mesmo tick). So o quadro.
+ *  So MATERIAL tem `'carregando'` (F11b: 'construir' nao carrega nada, nunca chega aqui). */
 export function marcarCarregando(state: GameState, tarefaId: string): GameState {
   const tarefa = state.jobs.tarefas.porId[tarefaId];
-  if (!tarefa || tarefa.estado !== 'reclamada') {
-    throw new Error(`marcarCarregando: '${tarefaId}' nao esta reclamada`);
+  if (!tarefa || tarefa.tipo !== 'material-para-obra' || tarefa.estado !== 'reclamada') {
+    throw new Error(`marcarCarregando: '${tarefaId}' nao esta reclamada (ou nao e material-para-obra)`);
   }
-  const carregando: Tarefa = { ...tarefa, estado: 'carregando' };
+  const carregando: TarefaMaterialParaObra = { ...tarefa, estado: 'carregando' };
   return { ...state, jobs: { tarefas: { porId: { ...state.jobs.tarefas.porId, [tarefaId]: carregando }, ordem: state.jobs.tarefas.ordem } } };
 }
 
@@ -280,22 +317,29 @@ export function liberar(
 }
 
 /**
- * As tarefas ABERTAS na ordem de escolha: `(nivel, custo A* em ticks, numero)`. `numero`
- * numerico, nao a string do id ('t10' < 't2'). Com `unidadeId` o custo parte da posicao
- * do serf (as duas pernas); sem, so a perna de entrega. Custo `null` (sem caminho) vai
- * para o fim. A escada le o nivel do dado; so o nivel 3 tem produtor hoje.
+ * As tarefas de MATERIAL abertas na ordem de escolha: `(nivel, custo A* em
+ * ticks, numero)`. `numero` numerico, nao a string do id ('t10' < 't2').
+ * Com `unidadeId` o custo parte da posicao do serf (as duas pernas); sem, so
+ * a perna de entrega. Custo `null` (sem caminho) vai para o fim.
+ *
+ * `'construir'` fica fora — nao esta na escada de `delivery.json` (decisao
+ * do operador, F11b: serf e laborer nao disputam tarefa). Com `unidadeId`
+ * filtra tambem por elegibilidade antes de ordenar (hoje isso so importa
+ * para serf; a F11c decide como o laborer ordena as `'construir'`).
  */
 export function tarefasEmOrdem(
   state: GameState, unidadeId: string | null = null, dados: GameData = gameData,
-): Tarefa[] {
-  const abertas = state.jobs.tarefas.ordem
+): TarefaMaterialParaObra[] {
+  const unidade = unidadeId === null ? null : state.unidades.porId[unidadeId];
+  const candidatas = state.jobs.tarefas.ordem
     .map((id) => state.jobs.tarefas.porId[id])
-    .filter((t): t is Tarefa => t !== undefined && t.estado === 'aberta');
-  const chaves = new Map(abertas.map((t) => [t.id, {
+    .filter((t): t is TarefaMaterialParaObra => t !== undefined && t.tipo === 'material-para-obra' && t.estado === 'aberta')
+    .filter((t) => unidade == null || elegivelParaTarefa(t.tipo, unidade.tipo));
+  const chaves = new Map(candidatas.map((t) => [t.id, {
     nivel: nivelDoTipo(t.tipo, dados),
     custo: custoDaTarefa(state, t, unidadeId, dados) ?? Number.POSITIVE_INFINITY,
   }]));
-  return [...abertas].sort((a, b) => {
+  return [...candidatas].sort((a, b) => {
     const ca = chaves.get(a.id);
     const cb = chaves.get(b.id);
     if (!ca || !cb) return 0;

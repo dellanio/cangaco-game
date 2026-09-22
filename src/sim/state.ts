@@ -158,14 +158,26 @@ export interface PredioEmObra extends PredioBase {
 export type Predio = PredioCompleto | PredioEmObra;
 
 /**
- * O tipo da tarefa. Hoje so `'material-para-obra'` (nivel 3 da escada de
- * `delivery.json`) tem produtor; os outros seis niveis so existem no dado. Cada
- * feature que criar um produtor (F13, F15, F20) alarga este tipo, junto dele.
+ * O tipo da tarefa. `'material-para-obra'` (nivel 3 da escada de
+ * `delivery.json`) e `'construir'` (F11b — o laborer nivela/martela; NAO
+ * entra na escada, decisao do operador: serf e laborer nao disputam tarefa).
+ * Cada feature que criar um produtor novo (F13, F15, F20) alarga este tipo.
  */
-export type TipoDeTarefa = 'material-para-obra';
+export type TipoDeTarefa = 'material-para-obra' | 'construir';
+
+interface TarefaBase {
+  /** `t<numero>`, do mesmo contador `proximoId` de predios e unidades. */
+  readonly id: string;
+  /** O desempate compara ESTE numero; comparar a string errararia ('t10' < 't2'). */
+  readonly numero: number;
+  /** Id da unidade que a reclamou; `null` (nunca `undefined`) se aberta. */
+  readonly reclamadaPor: string | null;
+}
 
 /**
- * CONTRATO HERDADO (F10, F11, F13, F15) — uma unidade de trabalho do JobBoard.
+ * CONTRATO HERDADO (F10, F11b, F13, F15) — a tarefa original do JobBoard
+ * (F09): uma unidade de recurso, de um armazem ATE uma obra. So o serf
+ * (`TIPO_QUE_CARREGA`) e elegivel.
  *
  * UMA TAREFA = UMA UNIDADE DE RECURSO (o GDD §6.3 fala em "a unidade de recurso" e
  * nao ha dado de capacidade de carga; se houver, ganha `quantidade`).
@@ -179,22 +191,41 @@ export type TipoDeTarefa = 'material-para-obra';
  *
  * Ciclo (F10): `aberta` -> `reclamada` -> `carregando` -> (entrega: a tarefa some).
  */
-export interface Tarefa {
-  /** `t<numero>`, do mesmo contador `proximoId` de predios e unidades. */
-  readonly id: string;
-  /** O desempate compara ESTE numero; comparar a string errararia ('t10' < 't2'). */
-  readonly numero: number;
-  readonly tipo: TipoDeTarefa;
+export interface TarefaMaterialParaObra extends TarefaBase {
+  readonly tipo: 'material-para-obra';
+  readonly estado: 'aberta' | 'reclamada' | 'carregando';
   readonly mercadoria: string;
   /** Id do armazem de onde a unidade sai. */
   readonly origem: string;
   /** Id da obra que recebe. */
   readonly destino: string;
-  readonly estado: 'aberta' | 'reclamada' | 'carregando';
-  /** Id da unidade que a reclamou (e, `carregando`, que leva a carga); `null` (nunca
-   *  `undefined`) se aberta. */
-  readonly reclamadaPor: string | null;
 }
+
+/**
+ * F11b — uma vaga de trabalho de construcao numa obra. So o laborer
+ * (`TIPO_QUE_CONSTROI`) e elegivel. SEM `mercadoria`/`origem`: nao carrega
+ * nada, e por isso SEM `'carregando'` no `estado` — o ciclo e so `aberta ->
+ * reclamada -> (a obra completa: a F11c decide como a tarefa sai do quadro)`.
+ * A vaga e o TETO `construcao.laborersMaximosPorObra` (dado), nao um campo
+ * em `Obra` — a posse continua so no JobBoard (decisao do operador).
+ */
+export interface TarefaConstruir extends TarefaBase {
+  readonly tipo: 'construir';
+  readonly estado: 'aberta' | 'reclamada';
+  /** Id da obra. */
+  readonly destino: string;
+}
+
+/**
+ * CONTRATO HERDADO (F10, F11b, F11c, F13, F15) — uma unidade de trabalho do
+ * JobBoard. Uniao discriminada por `tipo`, no molde de `Predio` (F07): uma
+ * tarefa de construir com `mercadoria`, ou uma de material sem `origem`, NAO
+ * e representavel.
+ *
+ * A RESERVA nao e um campo: e DERIVADA das tarefas (`sim/reservas.ts`). Ver
+ * `elegivelParaTarefa` (`sim/jobs.ts`) para quem pode reclamar cada tipo.
+ */
+export type Tarefa = TarefaMaterialParaObra | TarefaConstruir;
 
 /** A central de tarefas. Serializavel: so `Colecao` de objetos planos. */
 export interface JobBoard {

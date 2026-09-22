@@ -60,6 +60,11 @@ function validarPredios(dados, erros) {
   );
   const hpPorMartelada = dados.buildings && dados.buildings.construcao
     && dados.buildings.construcao.hpPorMartelada;
+  const laborersMaximosPorObra = dados.buildings && dados.buildings.construcao
+    && dados.buildings.construcao.laborersMaximosPorObra;
+  if (!(Number.isInteger(laborersMaximosPorObra) && laborersMaximosPorObra >= 1)) {
+    erros.push(`predios/laborers-maximos-por-obra: buildings.construcao.laborersMaximosPorObra=${laborersMaximosPorObra}, precisa ser inteiro >= 1`);
+  }
   const raizes = [];
 
   for (const p of predios) {

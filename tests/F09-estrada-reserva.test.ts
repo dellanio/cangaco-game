@@ -82,7 +82,9 @@ describe('F09 — a estrada so tira pedra do disponivel (nao da reservada)', () 
     expect(estoqueDe(depois, armazem.id, 'saida')).toBe(2); // exatamente a pedra reservada
     expect(reservadoNaOrigem(depois, armazem.id, 'stone')).toBe(2);
     expect(liberacoes(depois)).toEqual([]); // ninguem foi cancelado por falta de pedra
-    expect(depois.jobs.tarefas.ordem.map((id) => depois.jobs.tarefas.porId[id]?.estado)).toEqual(['reclamada', 'reclamada']);
+    // F11b: 'construir' (ate o teto, sem relacao com pedra de estrada) fica fora desta leitura
+    const materiais = depois.jobs.tarefas.ordem.filter((id) => depois.jobs.tarefas.porId[id]?.tipo === 'material-para-obra');
+    expect(materiais.map((id) => depois.jobs.tarefas.porId[id]?.estado)).toEqual(['reclamada', 'reclamada']);
     expect(violacoesDeInvariantes(depois)).toEqual([]);
   });
 

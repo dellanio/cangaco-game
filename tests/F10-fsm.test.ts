@@ -43,7 +43,11 @@ const saidaDoArmazem = (estado: GameState, m: string): number => {
 };
 const faltamDaObra = (estado: GameState, m: string): number => ((estado.predios.porId['obra-a'] as PredioEmObra).obra.faltam[m] ?? 0);
 const fsmDe = (estado: GameState, id: string): string => estado.unidades.porId[id]?.fsm ?? 'sumiu';
-const tarefasDe = (estado: GameState) => estado.jobs.tarefas.ordem.map((id) => estado.jobs.tarefas.porId[id]);
+// F11b: so as tarefas de material — este arquivo testa a FSM do serf; 'construir' nao e o
+// universo destes testes, escritos antes dela existir.
+const tarefasDe = (estado: GameState) => estado.jobs.tarefas.ordem
+  .map((id) => estado.jobs.tarefas.porId[id])
+  .filter((t) => t?.tipo === 'material-para-obra');
 
 interface Registro { readonly estado: GameState; readonly eventos: readonly GameEvent[] }
 
@@ -60,8 +64,12 @@ function rodar(inicio: GameState, parar: (e: GameState) => boolean, maximo = 600
   return { passos, ticks: passos.length - 1, eventos };
 }
 
+// F11b: idem tarefasDe — so material conta para "quieto" ('construir' fica aberta ate o teto,
+// sem FSM de laborer ainda para reclama-la nesta feature).
 const quieto = (e: GameState): boolean =>
-  e.tick > 2 && e.jobs.tarefas.ordem.length === 0 && serfsDoCenario(e).every((id) => fsmDe(e, id) === 'ocioso');
+  e.tick > 2
+  && e.jobs.tarefas.ordem.filter((id) => e.jobs.tarefas.porId[id]?.tipo === 'material-para-obra').length === 0
+  && serfsDoCenario(e).every((id) => fsmDe(e, id) === 'ocioso');
 
 describe('F10 — aceite: 10 stone no armazem, obra pedindo 2 -> obra recebe 2, armazem fica com 8', () => {
   const inicioDoAceite = cenarioDoAceite();

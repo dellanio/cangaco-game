@@ -39,6 +39,10 @@ import {
 import type { TileDeGrid } from '../src/sim/estradas';
 
 const P1 = armazemDoJogo.id;
+// F11b: quantas tarefas de MATERIAL (qualquer estado) estao no quadro — 'construir' fica de
+// fora, e permanente ate laborersMaximosPorObra por obra, nao e o que estas metricas medem.
+const materiaisNoQuadro = (e: GameState): number =>
+  e.jobs.tarefas.ordem.filter((id) => e.jobs.tarefas.porId[id]?.tipo === 'material-para-obra').length;
 const dadosDoSerf = (e: GameState) => e.unidades.porId[serfDoJogo]?.fsmData ?? {};
 const restante = (e: GameState): number => (dadosDoSerf(e).caminho ?? []).length;
 const emViagem = (e: GameState): boolean => fsmDe(e) === 'indo_entregar' && restante(e) <= 10;
@@ -159,7 +163,8 @@ describe('F10 — estrada cortada NO MEIO DA VIAGEM (o comando real DemolishRoad
     expect(fsmDe(estado)).toBe('ocioso');
     expect(eventos.filter((e) => e.type === 'cargo-returned')).toHaveLength(1);
     expect(faltamDe(estado, 'obra-a')).toBe(1);
-    expect(estado.jobs.tarefas.ordem).toEqual([]); // sem caminho, o gerador nao recria
+    // sem caminho, o gerador nao recria material; 'construir' (F11b) continua aberta a parte
+    expect(tarefasEmOrdem(estado)).toEqual([]);
   });
 
   it('REFAZER a estrada: o quadro se recompoe e a entrega acaba (o serf nao ficou travado)', () => {
@@ -491,7 +496,7 @@ describe('F10 — cenario de carga: 20 obras e 4 serfs entregando de verdade', (
     let t = 0;
     for (; t < TETO; t++) {
       estado = step(estado, []);
-      maximo = Math.max(maximo, estado.jobs.tarefas.ordem.length);
+      maximo = Math.max(maximo, materiaisNoQuadro(estado));
       concluidas += estado.events.filter((e) => e.type === 'task-completed').length;
       if (t < 5 || t % 200 === 0) {
         expect(violacoesDeInvariantes(estado), `quadro, tick ${t}`).toEqual([]);
@@ -509,12 +514,19 @@ describe('F10 — cenario de carga: 20 obras e 4 serfs entregando de verdade', (
     }
     expect(bensPorMercadoria(estado)).toEqual(bensAntes);
 
+    // F11b: 'construir' e deterministico aqui — laborersMaximosPorObra por obra, criado uma
+    // vez (sem laborer FSM nesta feature para reclamar e sem excesso pro gerador cancelar; as
+    // obras nunca sao demolidas neste cenario). Subtrair isola quanto do contador
+    // COMPARTILHADO (proximoId) veio so de material, sem mudar o `esperadas` de sempre.
+    const construirGeradas = 20 * gameData.construcao.laborersMaximosPorObra;
+    const materiaisGerados = estado.proximoId - idsAntes - construirGeradas;
+
     const buscas = estatisticasDeBusca();
     Object.assign(metricasDeCarga, {
-      obras: 20, serfs: serfsDoInicio, tarefasGeradas: estado.proximoId - idsAntes, maximoSimultaneo: maximo, ticks: t + 1,
-      concluidas, tarefasNoFim: estado.jobs.tarefas.ordem.length, buscasExecutadas: buscas.execucoes, acertosDeCache: buscas.acertos,
+      obras: 20, serfs: serfsDoInicio, tarefasGeradas: materiaisGerados, maximoSimultaneo: maximo, ticks: t + 1,
+      concluidas, tarefasNoFim: materiaisNoQuadro(estado), buscasExecutadas: buscas.execucoes, acertosDeCache: buscas.acertos,
     });
-    expect(metricasDeCarga.tarefasGeradas, 'churn: alguma tarefa foi criada mais de uma vez').toBe(esperadas);
+    expect(metricasDeCarga.tarefasGeradas, 'churn: alguma tarefa de material foi criada mais de uma vez').toBe(esperadas);
   }, 120_000);
 });
 
@@ -592,7 +604,9 @@ afterAll(() => {
   // ---- a distancia: A* a partir do serf, nunca a reta
   const muro = cenarioDoMuro();
   const [tarefaA, tarefaB] = [muro.jobs.tarefas.porId.t1, muro.jobs.tarefas.porId.t2];
-  if (!tarefaA || !tarefaB) throw new Error('evidencia: cenario do muro sem tarefas');
+  if (!tarefaA || tarefaA.tipo !== 'material-para-obra' || !tarefaB || tarefaB.tipo !== 'material-para-obra') {
+    throw new Error('evidencia: cenario do muro sem tarefas de material');
+  }
   const planoA = planoDaTarefa(muro, tarefaA, SERF_DO_LADO_DE_B);
   const planoB = planoDaTarefa(muro, tarefaB, SERF_DO_LADO_DE_B);
   const euclid = (a: { gx: number; gy: number }, b: { gx: number; gy: number }): number => Math.hypot(a.gx - b.gx, a.gy - b.gy);

@@ -21,7 +21,9 @@ describe('F10 — a perna do serf: unidade -> origem por A*, nunca pela reta', (
   const estado = cenarioDoMuro();
   const tarefaA = estado.jobs.tarefas.porId.t1;
   const tarefaB = estado.jobs.tarefas.porId.t2;
-  if (!tarefaA || !tarefaB) throw new Error('fixture: faltam as tarefas t1 e t2');
+  if (!tarefaA || tarefaA.tipo !== 'material-para-obra' || !tarefaB || tarefaB.tipo !== 'material-para-obra') {
+    throw new Error('fixture: faltam as tarefas de material t1 e t2');
+  }
 
   it('PREMISSAS do cenario: a reta prefere A, o caminho a pe prefere B, e a entrega e igual', () => {
     const euclid = (a: { gx: number; gy: number }, b: { gx: number; gy: number }): number => Math.hypot(a.gx - b.gx, a.gy - b.gy);

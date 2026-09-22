@@ -166,6 +166,56 @@ contador `proximoId` de prédios e unidades), `numero`, `tipo` (hoje só
   tick**, determinística — é o que os roteiros afirmam; o α vai em campo próprio.
 
 
+(origem: F11b)
+
+### O contrato de `Tarefa` como união discriminada (herdado por F11c, F13, F15 — aprovado pelo operador)
+
+`Tarefa` deixou de ser uma interface única e virou `TarefaMaterialParaObra |
+TarefaConstruir`, no mesmo molde de `Predio` (F07): uma tarefa de construir
+com `mercadoria`, ou uma de material sem `origem`, não é representável.
+
+- **`TarefaMaterialParaObra`** é a tarefa original da F09/F10: `mercadoria`,
+  `origem` (armazém), `destino` (obra), `estado: 'aberta' | 'reclamada' |
+  'carregando'`. Só o serf (`TIPO_QUE_CARREGA`) é elegível.
+- **`TarefaConstruir`** (F11b) é uma vaga de trabalho numa obra: só `destino`,
+  sem `mercadoria`/`origem` (o laborer não carrega nada) e sem `'carregando'`
+  no `estado` (não há coleta). Só o laborer (`TIPO_QUE_CONSTROI`) é elegível.
+  A vaga é o **teto** `data/buildings.json:construcao.laborersMaximosPorObra`
+  (4), lido pelo dado — nunca um campo em `Obra`: a posse continua só no
+  JobBoard, sem varredura de `predios.ordem` por nenhuma unidade.
+- **`elegivelParaTarefa(tipoDaTarefa, tipoDaUnidade)`** (`sim/jobs.ts`) é o
+  ponto único de "quem pode reclamar o quê" — generaliza o que antes era um
+  `unidade.tipo !== TIPO_QUE_CARREGA` hardcoded em `reclamar`. Serf e laborer
+  **não disputam tarefa**: `'construir'` não entra na escada de
+  `delivery.json`, e `tarefasEmOrdem`/`nivelDoTipo` nunca a veem.
+- **`gerarTarefas` cria `'construir'` para TODA obra**, até o teto, sem checar
+  armazém nem estrada (decisão do operador — nivelar/martelar não depende de
+  material chegar). Isso significa que, a partir da F11b, **qualquer obra em
+  qualquer cenário de teste passa a ter até 4 tarefas de construir no
+  quadro**, mesmo sem nenhum laborer para reclamá-las. Testes que contam ou
+  filtram `state.jobs.tarefas` sem checar `tipo` quebram por isso — não é
+  regressão de material, é o board deixando de ter um só tipo (ver o commit
+  "test(F11b): suite F09/F10 filtra tarefas de material" para o padrão de
+  correção).
+- **Sem FSM de laborer nesta feature.** As tarefas de construir nascem e
+  podem ser reclamadas (`reclamar` aceita, sem checagem de caminho — a F09
+  também não checava antes de existir um consumidor; o F10 acrescentou isso
+  para o serf, e a F11c decide se o laborer precisa do mesmo), mas nada as
+  consome: nenhum `sistemaDosLaborers` existe, nenhum `tick.ts` as avança.
+
+### O que a F11c herda (não decidido aqui, só registrado)
+
+- **O campo de nivelamento em `Obra`** continua fora do contrato — a F11b não
+  o acrescentou, porque nivelar é comportamento do laborer (F11c), não posse
+  do JobBoard.
+- **"Obra já nivelada" como portão de `gerarTarefas` continua sem existir**
+  para a tarefa de material: o gerador de material desta feature não mudou
+  (confirmado no código) — ele cria tarefa de material para toda obra ligada
+  por estrada, do jeito que a F09 já fazia. É a F11c quem acrescenta esse
+  portão, condicionado ao campo de nivelamento que ela mesma cria.
+- **Estágios visuais** (hp-derivados, função pura em `render/`) são só da
+  F11c — nada em `render/` mudou nesta feature.
+
 Histórico das features fechadas: docs/historico/F01-F11a.md.
 
 ## Perguntas em aberto

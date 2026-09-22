@@ -26,7 +26,7 @@
  * sumiu debaixo dele. O que so o serf sabe — o caminho dele cortado, a perna livre
  * bloqueada — ele libera aqui, por `liberar`. Toda tarefa reclamada tem caminho de volta.
  */
-import type { DadosDaFsm, GameEvent, GameState, Predio, PredioCompleto, PredioEmObra, Tarefa, Unidade } from '../state';
+import type { DadosDaFsm, GameEvent, GameState, Predio, PredioCompleto, PredioEmObra, Tarefa, TarefaMaterialParaObra, Unidade } from '../state';
 import { ID_DO_ARMAZEM } from '../state';
 import type { GameData } from '../data/types';
 import { gameData } from '../data';
@@ -71,11 +71,14 @@ function ficarOcioso(state: GameState, u: Unidade, eventos: readonly GameEvent[]
   return { state: comUnidade(state, ocioso(u)), events: eventos };
 }
 
-/** A tarefa do serf, se ela existe, esta no estado esperado e e mesmo dele. */
-function tarefaDoSerf(state: GameState, u: Unidade, estado: Tarefa['estado']): Tarefa | null {
+/** A tarefa de MATERIAL do serf, se ela existe, esta no estado esperado e e
+ *  mesmo dele. So serf reclama material-para-obra (`elegivelParaTarefa`,
+ *  F11b) — o filtro de tipo aqui e so para o compilador estreitar o tipo, o
+ *  serf nunca segura uma tarefa 'construir' em runtime. */
+function tarefaDoSerf(state: GameState, u: Unidade, estado: Tarefa['estado']): TarefaMaterialParaObra | null {
   const id = u.fsmData.tarefa;
   const t = id === undefined ? undefined : state.jobs.tarefas.porId[id];
-  return t !== undefined && t.estado === estado && t.reclamadaPor === u.id ? t : null;
+  return t !== undefined && t.tipo === 'material-para-obra' && t.estado === estado && t.reclamadaPor === u.id ? t : null;
 }
 
 /** Um tick de movimento: acumula 1 de progresso; ao completar o passo, o serf passa ao tile seguinte. */
@@ -123,7 +126,10 @@ function comecarADevolver(state: GameState, u: Unidade, carga: string, dados: Ga
 function passoOcioso(state: GameState, u: Unidade, dados: GameData): Passo {
   const r = reclamarMelhor(state, u.id, dados);
   if (!r.ok) return semEventos(state);
-  const tarefa = r.state.jobs.tarefas.porId[r.tarefa];
+  // reclamarMelhor (F11b: filtrado por elegivelParaTarefa) so devolve material-para-obra
+  // para um serf; o filtro de tipo aqui e so para o compilador estreitar o tipo.
+  const bruta = r.state.jobs.tarefas.porId[r.tarefa];
+  const tarefa = bruta?.tipo === 'material-para-obra' ? bruta : undefined;
   const plano = tarefa === undefined ? null : planoDaTarefa(r.state, tarefa, u.id, dados);
   if (tarefa === undefined || plano === null) {
     // o claim ja exigiu um plano; se ele sumiu, devolve a reserva em vez de segurar a tarefa

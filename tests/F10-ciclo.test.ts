@@ -7,7 +7,7 @@
  * transicoes, e a Task seguinte.
  */
 import { describe, it, expect } from 'vitest';
-import type { GameState, PredioCompleto, Tarefa } from '../src/sim/state';
+import type { GameState, PredioCompleto, TarefaMaterialParaObra } from '../src/sim/state';
 import { liberar, reclamar } from '../src/sim/jobs';
 import type { MotivoDeLiberacao } from '../src/sim/jobs';
 import { disponivelNaOrigem, reservadoNaOrigem, reservadoNoDestino, vagaNoDestino } from '../src/sim/reservas';
@@ -29,9 +29,9 @@ const serfNo = (i: number): string => {
 const serf1 = serfNo(0);
 const serf2 = serfNo(1);
 
-const carregando = (numero: number, serf: string, extra: Partial<Tarefa> = {}): Tarefa =>
+const carregando = (numero: number, serf: string, extra: Partial<TarefaMaterialParaObra> = {}): TarefaMaterialParaObra =>
   tarefaDe({ numero, estado: 'carregando', reclamadaPor: serf, ...extra });
-const reclamada = (numero: number, serf: string, extra: Partial<Tarefa> = {}): Tarefa =>
+const reclamada = (numero: number, serf: string, extra: Partial<TarefaMaterialParaObra> = {}): TarefaMaterialParaObra =>
   tarefaDe({ numero, estado: 'reclamada', reclamadaPor: serf, ...extra });
 
 /** Uma tarefa `carregando` valida de pedra: obra-a pede 2, a unidade ja pegou 1. */
@@ -51,8 +51,12 @@ const semOTile = (estado: GameState, chave: string): GameState => ({
   ...estado, estradas: Object.fromEntries(Object.entries(estado.estradas).filter(([k]) => k !== chave)) as GameState['estradas'],
 });
 
-const tarefasDe = (estado: GameState): Tarefa[] =>
-  estado.jobs.tarefas.ordem.map((id) => estado.jobs.tarefas.porId[id]).filter((t): t is Tarefa => t !== undefined);
+// F11b: so as tarefas de material — este arquivo testa o ciclo reclamada->carregando do
+// serf; 'construir' (sem 'carregando') nao faz parte do universo destes testes.
+const tarefasDe = (estado: GameState): TarefaMaterialParaObra[] =>
+  estado.jobs.tarefas.ordem
+    .map((id) => estado.jobs.tarefas.porId[id])
+    .filter((t): t is TarefaMaterialParaObra => t !== undefined && t.tipo === 'material-para-obra');
 const liberacoes = (estado: GameState): unknown[] => estado.events.filter((e) => e.type === 'task-released');
 
 describe('F10 — reservas entre as duas fases', () => {

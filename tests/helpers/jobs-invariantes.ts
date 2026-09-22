@@ -11,7 +11,7 @@
 import { gameData } from '../../src/sim/data';
 import type { GameData } from '../../src/sim/data/types';
 import type { GameState } from '../../src/sim/state';
-import { distanciaDaTarefa, nivelDoTipo, TIPO_QUE_CARREGA } from '../../src/sim/jobs';
+import { distanciaDaTarefa, nivelDoTipo, TIPO_QUE_CARREGA, TIPO_QUE_CONSTROI } from '../../src/sim/jobs';
 import { disponivelNaOrigem, vagaNoDestino } from '../../src/sim/reservas';
 import { ID_DO_ARMAZEM } from '../../src/sim/state';
 
@@ -26,6 +26,7 @@ export function violacoesDeInvariantes(estado: GameState, dados: GameData = game
 
   const unidadesEmUso = new Map<string, string>();
   const contagemPorDestino = new Map<string, { total: number; obra: string; mercadoria: string }>();
+  const contagemDeConstrucaoPorObra = new Map<string, number>();
   const reservasPorOrigem = new Set<string>();
   const reservasPorDestino = new Set<string>();
 
@@ -37,40 +38,51 @@ export function violacoesDeInvariantes(estado: GameState, dados: GameData = game
     }
     if (t.id !== `t${t.numero}`) v.push(`${id}: id nao e t<numero>`);
     if (t.numero >= estado.proximoId) v.push(`${id}: numero >= proximoId (colisao futura de id)`);
-    try {
-      nivelDoTipo(t.tipo, dados);
-    } catch {
-      v.push(`${id}: tipo '${t.tipo}' fora da escada do dado`);
-    }
 
-    // `carregando` (F10): a coleta consumiu a reserva da origem e o caminho de la ja nao
-    // importa; so o destino, a unidade e a vaga tem que valer.
-    const origem = estado.predios.porId[t.origem];
-    if (t.estado !== 'carregando' && (!origem || origem.estado !== 'completo' || origem.tipo !== ID_DO_ARMAZEM)) {
-      v.push(`${id}: origem '${t.origem}' nao e armazem completo`);
-    }
     const destino = estado.predios.porId[t.destino];
     if (!destino || destino.estado !== 'obra') v.push(`${id}: destino '${t.destino}' nao e obra`);
-    if (t.estado !== 'carregando' && origem && destino && distanciaDaTarefa(estado, t, dados) === null) v.push(`${id}: sem caminho por estrada`);
+
+    if (t.tipo === 'material-para-obra') {
+      try {
+        nivelDoTipo(t.tipo, dados);
+      } catch {
+        v.push(`${id}: tipo '${t.tipo}' fora da escada do dado`);
+      }
+      // `carregando` (F10): a coleta consumiu a reserva da origem e o caminho de la ja nao
+      // importa; so o destino, a unidade e a vaga tem que valer.
+      const origem = estado.predios.porId[t.origem];
+      if (t.estado !== 'carregando' && (!origem || origem.estado !== 'completo' || origem.tipo !== ID_DO_ARMAZEM)) {
+        v.push(`${id}: origem '${t.origem}' nao e armazem completo`);
+      }
+      if (t.estado !== 'carregando' && origem && destino && distanciaDaTarefa(estado, t, dados) === null) v.push(`${id}: sem caminho por estrada`);
+    }
+    // 'construir' (F11b) fica fora da escada por decisao do operador — nao e violacao.
 
     if (t.estado === 'aberta' && t.reclamadaPor !== null) v.push(`${id}: aberta mas com reclamadaPor`);
     if (t.estado !== 'aberta') {
+      const tipoElegivel = t.tipo === 'material-para-obra' ? TIPO_QUE_CARREGA : TIPO_QUE_CONSTROI;
       if (t.reclamadaPor === null) {
         v.push(`${id}: ${t.estado} sem unidade`);
       } else {
         const u = estado.unidades.porId[t.reclamadaPor];
-        if (!u || u.tipo !== TIPO_QUE_CARREGA) v.push(`${id}: ${t.estado} por unidade inexistente ou que nao carrega`);
+        if (!u || u.tipo !== tipoElegivel) v.push(`${id}: ${t.estado} por unidade inexistente ou de tipo errado`);
         const outra = unidadesEmUso.get(t.reclamadaPor);
         if (outra !== undefined) v.push(`${id}: a unidade ${t.reclamadaPor} tambem segura ${outra}`);
         unidadesEmUso.set(t.reclamadaPor, id);
       }
-      if (t.estado === 'reclamada') reservasPorOrigem.add(`${t.origem}|${t.mercadoria}`);
-      reservasPorDestino.add(`${t.destino}|${t.mercadoria}`);
+      if (t.tipo === 'material-para-obra') {
+        if (t.estado === 'reclamada') reservasPorOrigem.add(`${t.origem}|${t.mercadoria}`);
+        reservasPorDestino.add(`${t.destino}|${t.mercadoria}`);
+      }
     }
 
-    const chave = `${t.destino}|${t.mercadoria}`;
-    const atual = contagemPorDestino.get(chave) ?? { total: 0, obra: t.destino, mercadoria: t.mercadoria };
-    contagemPorDestino.set(chave, { ...atual, total: atual.total + 1 });
+    if (t.tipo === 'material-para-obra') {
+      const chave = `${t.destino}|${t.mercadoria}`;
+      const atual = contagemPorDestino.get(chave) ?? { total: 0, obra: t.destino, mercadoria: t.mercadoria };
+      contagemPorDestino.set(chave, { ...atual, total: atual.total + 1 });
+    } else if (t.estado !== 'aberta') {
+      contagemDeConstrucaoPorObra.set(t.destino, (contagemDeConstrucaoPorObra.get(t.destino) ?? 0) + 1);
+    }
   }
 
   // nunca mais tarefas do que a obra precisa (aberta ou reclamada)
@@ -78,6 +90,13 @@ export function violacoesDeInvariantes(estado: GameState, dados: GameData = game
     const p = estado.predios.porId[obra];
     const faltam = p && p.estado === 'obra' ? (p.obra.faltam[mercadoria] ?? 0) : 0;
     if (total > faltam) v.push(`${obra}/${mercadoria}: ${total} tarefas para faltam=${faltam}`);
+  }
+  // idem para construir: reservado nunca acima do teto do dado (aqui SO reclamadas, ja
+  // que abertas nao entram em `contagemDeConstrucaoPorObra`)
+  for (const [obra, reservado] of contagemDeConstrucaoPorObra) {
+    if (reservado > dados.construcao.laborersMaximosPorObra) {
+      v.push(`${obra}: ${reservado} laborers reclamados para teto=${dados.construcao.laborersMaximosPorObra}`);
+    }
   }
   // reservado <= disponivel nas DUAS pontas (disponivel/vaga nunca negativos)
   for (const chave of reservasPorOrigem) {
