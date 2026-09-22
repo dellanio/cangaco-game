@@ -6,7 +6,7 @@ import type { Command } from '../../src/sim/commands';
 import type { GameEvent, GameState, PredioCompleto, PredioEmObra } from '../../src/sim/state';
 import {
   armazemDoCenario, comArmazemCompleto, comEstradas, comObra, comPedraNaSaida, comTarefas, comUnidadeEm, inicial, linhaH,
-  linhaV, semAUnidade, serfsDoCenario, tarefaDe, tile,
+  linhaV, semAUnidade, semLaborers, serfsDoCenario, tarefaDe, tile,
 } from './jobs-cenario';
 
 export const armazemDoJogo = armazemDoCenario(inicial);
@@ -23,13 +23,14 @@ export const soUmSerf = (estado: GameState): GameState =>
 /**
  * Uma rua longa do armazem (porta em (29,33)) ate uma obra a leste, 18 passos de estrada:
  * o serf fica bastante tempo em viagem, e da para agir no meio dela. Um serf, 10 de pedra
- * no armazem, a obra pede `faltam` (1 de pedra por padrao).
+ * no armazem, a obra pede `faltam` (1 de pedra por padrao). Sem laborers (F11c): o
+ * universo destas suites e o serf sozinho, e `comObra` ja nasce nivelada por default.
  */
 export function cenarioLongo(faltam: Record<string, number> = { stone: 1 }): GameState {
-  return soUmSerf(comEstradas(
+  return soUmSerf(semLaborers(comEstradas(
     comObra(comPedraNaSaida(inicial, armazemDoJogo.id, 10), 'obra-a', { gx: 44, gy: 34, faltam }),
     [...linhaV(29, 33, 36), ...linhaH(29, 46, 36)],
-  ));
+  )));
 }
 
 export const fsmDe = (estado: GameState, id: string = serfDoJogo): string => estado.unidades.porId[id]?.fsm ?? 'sumiu';
@@ -96,7 +97,7 @@ export const SERF_DO_LADO_DE_B = serfNoCenario(1);
  * unidade -> origem desempata. O serf X (20,11), do lado de 'a' do muro, e o contraponto.
  */
 export function cenarioDoMuro(): GameState {
-  let estado = comArmazemCompleto(inicial, 'a', { gx: 18, gy: 10, stone: 5 });
+  let estado = comArmazemCompleto(semLaborers(inicial), 'a', { gx: 18, gy: 10, stone: 5 });
   estado = comArmazemCompleto(estado, 'b', { gx: 18, gy: 30, stone: 5 });
   for (let i = 0; i < 11; i++) estado = comObra(estado, `muro${i}`, { gx: 8 + 3 * i, gy: 16, faltam: {} });
   estado = comObra(estado, 'dest', { gx: 44, gy: 21, faltam: { stone: 2 } });

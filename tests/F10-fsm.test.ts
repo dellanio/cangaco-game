@@ -306,10 +306,13 @@ describe('F10 — determinismo, save/load no meio da viagem e imutabilidade', ()
     { type: 'PlaceRoad', tiles: [tile(29, 33), tile(29, 34), tile(29, 35), tile(29, 36), tile(28, 36)] },
   ]);
 
+  // F11c: o quarry nasce sem nivelar (nivelamento 0) quando plantado pela UI — o laborer
+  // niveia primeiro (~60 ticks/2), so depois o portao de gerarTarefas deixa nascer a
+  // tarefa de material. 80 ticks nao alcancava mais o serf CARREGANDO; 200 sobra.
   function ticksComSerfCarregando(): number[] {
     let e = createInitialState(1);
     const ticks: number[] = [];
-    for (let t = 0; t < 80; t++) {
+    for (let t = 0; t < 200; t++) {
       e = step(e, plantarERuar(t));
       if (serfsDoCenario(e).some((id) => e.unidades.porId[id]?.fsmData.carga !== undefined)) ticks.push(e.tick);
     }
@@ -323,10 +326,10 @@ describe('F10 — determinismo, save/load no meio da viagem e imutabilidade', ()
   it('com o save atravessando uma viagem CARREGADA, o JSON final e igual byte a byte', () => {
     const carregando = ticksComSerfCarregando();
     const saveAtTick = carregando[Math.floor(carregando.length / 2)] as number;
-    const { direto, comSave } = compararComESemSave({ seed: 1, totalTicks: 80, saveAtTick, comandosNoTick: plantarERuar });
+    const { direto, comSave } = compararComESemSave({ seed: 1, totalTicks: 200, saveAtTick, comandosNoTick: plantarERuar });
     expect(comSave).toBe(direto);
     const final = JSON.parse(direto) as GameState;
-    expect(final.tick).toBe(80);
+    expect(final.tick).toBe(200);
     expect(violacoesDaFsm(final)).toEqual([]);
   });
 

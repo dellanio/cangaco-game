@@ -78,6 +78,15 @@ export function laborersDoCenario(estado: GameState): string[] {
   return estado.unidades.ordem.filter((id) => estado.unidades.porId[id]?.tipo === 'laborer');
 }
 
+/** F11c — tira os laborers do cenario inicial. O universo implicito das suites F09/F10
+ *  (escritas antes da F11c) e o serf sozinho: sem isto, os 2 laborers passam a reclamar
+ *  'construir', nivelar e martelar as obras dessas fixtures, e a obra vira `completo` ou
+ *  muda de HP por conta propria no meio de um teste que so queria observar o serf. Os
+ *  testes que plantam pela UI (o pipeline inteiro) mantem os laborers de proposito. */
+export function semLaborers(estado: GameState): GameState {
+  return laborersDoCenario(estado).reduce((e, id) => semAUnidade(e, id), estado);
+}
+
 export function tarefaDe(parcial: Partial<TarefaMaterialParaObra> & { readonly numero: number }): TarefaMaterialParaObra {
   return {
     id: `t${parcial.numero}`,
