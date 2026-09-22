@@ -68,7 +68,7 @@ prédio surge sem clique do jogador.
 - **Escopo**: cenário inicial da seção 3.2 do GDD (Storehouse e Schoolhouse
   prontos, estoque, 4 serfs, 2 laborers) vivo dentro de `sim/`, vindo inteiro de
   `data/economy.json`. `npm run sim` deixa de ser stub. Nada de render, nada de
-  UI — o formato de prédio e unidade no `GameState` é herdado por F07, F10, F11b
+  UI — o formato de prédio e unidade no `GameState` é herdado por F07, F10, F11c
   e F14, e é revisado isolado, sem decisão de tela no meio.
 - **Aceite**: `npm run sim -- inicial --ticks 0` imprime exatamente os valores
   da tabela. O estado sobrevive ao round-trip por JSON. `compararComESemSave`
@@ -166,26 +166,44 @@ prédio surge sem clique do jogador.
       é 0 quando `pronto` fica verdadeiro), e **rodar `npm run shot -- F10` três
       vezes seguidas dá o mesmo resultado**.
 - **Evidência**: `test-output/F11a.json` + `screenshots/F11a-*.png`
-### F11b — FSM do Laborer (construção em etapas)
-- **Escopo**: nivelar terreno → esperar material → martelar. HP subindo conforme
-  o GDD: cada material entregue soma 50 HP, cada martelada soma 5. Três estágios
-  visuais: marcação, estrutura de madeira, prédio completo.
+### F11b — JobBoard: tarefa de construir
+- **Escopo**: `Tarefa` vira união discriminada (`material-para-obra` |
+  `construir`). `reclamar` generaliza a elegibilidade por tipo de unidade
+  (serf só material, laborer só construir — não disputam tarefa).
+  `laborersMaximosPorObra: 4` em `buildings.json` (`construcao`), validado
+  como inteiro ≥ 1. `gerarTarefas` cria até esse número de tarefas de
+  construir por obra, sem checar armazém/estrada (o laborer não carrega
+  material). `sanearTarefas` cobre os ramos novos. **Sem FSM de laborer**: as
+  tarefas nascem e podem ser reclamadas, mas nada as consome ainda.
+- **Aceite**: teste que um laborer reclama uma tarefa de construir e um serf é
+  recusado (e vice-versa para material). Teste que a quinta reclamação numa
+  obra com teto 4 é recusada com `destino-sem-vaga`. Teste que `gerarTarefas`
+  cria exatamente `laborersMaximosPorObra` tarefas de construir por obra,
+  mesmo sem estrada. `npm run test` inteiro (F01–F11a) continua verde.
+- **Evidência**: `test-output/F11b.json`
+- **Nota**: sem screenshot — feature só de `sim/`.
+
+### F11c — FSM do Laborer (construção em etapas)
+- **Escopo**: nivelar terreno → esperar material → martelar, consumindo as
+  tarefas `'construir'` da F11b. HP subindo conforme o GDD: cada material
+  entregue soma 50 HP, cada martelada soma 5. Três estágios visuais:
+  marcação, estrutura de madeira, prédio completo.
 - **Aceite**: cenário com Quarry (3 timber + 2 stone, 250 HP). Após a entrega dos
   5 materiais o HP é 250 e o prédio fica `completo`. Screenshots dos três
   estágios.
-- **Evidência**: `test-output/F11b.json` + `screenshots/F11b-*.png`
+- **Evidência**: `test-output/F11c.json` + `screenshots/F11c-*.png`
 - **Nota**: esta é uma **feature de integração** — é a exceção explícita que a
   §10 do CLAUDE.md exige para tocar `src/sim/` e `src/render/` na mesma feature.
   Cada camada recebe só o que é dela: `sim/` ganha a FSM do laborer, o campo de
   nivelamento em `Obra`, o teto de HP e o portão de `gerarTarefas`; `render/`
   ganha os três estágios visuais da obra e o desenho do laborer. Nenhuma regra de
   jogo muda de lado. Nenhuma outra feature da fila herda esta permissão: ela vale
-  para a F11b e só.
+  para a F11c e só.
 - **Nota**: **o nivelamento está fora do contrato da obra.** A `Obra` da F07 tem
   só `faltam` (materiais ainda a entregar, por mercadoria) e o `hp` do prédio
   (HP já martelado, de 0 até `def.hp`). "Nivelar terreno → esperar material →
   martelar" não tem campo, e o GDD §5.1 põe o laborer nivelando *antes* de os
-  serfs entregarem. **É a F11b quem acrescenta o que precisar em `Obra`** — por
+  serfs entregarem. **É a F11c quem acrescenta o que precisar em `Obra`** — por
   exemplo, o progresso do nivelamento — e quem decide se a entrega espera por ele.
 - **Nota**: teto de HP durante a obra: `entregues = Σ_m (custo[m] − faltam[m])`
   e `teto = entregues × hpPorMaterialEntregue`. A soma é sobre mercadorias, cada
@@ -193,16 +211,18 @@ prédio surge sem clique do jogador.
   diferentes como uma grandeza só. O Escopo diz "cada material entregue soma 50
   HP"; o contrato lê isso como o GDD §5.1 diz — a entrega **habilita** 50 HP de
   martelada, e a martelada (`hpPorMartelada`) é o que soma ao `hp`. Ao
-  `hp === def.hp` a obra vira `'completo'` e **só isso**: a F11b não chama
+  `hp === def.hp` a obra vira `'completo'` e **só isso**: a F11c não chama
   `registrarTipoConstruido` — ligar o desbloqueio a essa transição é da F12.
-- **Nota**: **"obra já nivelada" é portão da criação de tarefa.** O nível 3 da
-  escada de `delivery.json` é "material → obra **já nivelada**". A F09 ainda não
-  tem como avaliar isso (a `Obra` não tem campo de nivelamento) e o gerador cria
-  tarefa de material para **toda obra ligada por estrada**, sem predicado
-  "sempre verdadeiro". A F11b acrescenta o campo de nivelamento em `Obra` **e** o
-  portão em `gerarTarefas` (`src/sim/systems/jobs.ts`), decidindo se a entrega
-  espera o laborer terminar de nivelar.
-- **Nota**: **o que a F10 deixa para a F11b.** `carregando` e `entregando` duram **um
+- **Nota**: **"obra já nivelada" é portão da criação de tarefa** — mas só para
+  a tarefa de MATERIAL (nível 3 da escada de `delivery.json`, "material → obra
+  **já nivelada**"); a tarefa de CONSTRUIR (F11b) não tem esse portão, o
+  laborer nivela antes de o material contar como entregável. A F09/F11b ainda
+  não tinham como avaliar isso (a `Obra` não tem campo de nivelamento) e o
+  gerador cria tarefa de material para **toda obra ligada por estrada**, sem
+  predicado "sempre verdadeiro". A F11c acrescenta o campo de nivelamento em
+  `Obra` **e** o portão em `gerarTarefas` (`src/sim/systems/jobs.ts`),
+  decidindo se a entrega de material espera o laborer terminar de nivelar.
+- **Nota**: **o que a F10 deixa para a F11c.** `carregando` e `entregando` duram **um
   tick** cada (não há tempo de manuseio no dado). A entrega faz `Obra.faltam` chegar a 0
   e **não completa nada**: virar `'completo'` é da martelada (esta feature). A
   interpolação entre ticks da posição do serf é da F11a, não desta.
