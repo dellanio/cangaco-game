@@ -18,6 +18,8 @@ export interface TileClicado {
  *  - modo `estrada` / `demolir-estrada` (F08): um ARRASTO e UM comando, emitido ao
  *    soltar (`PlaceRoad` / `DemolishRoad`). Enquanto arrasta so ha previa
  *    (`trecho()`), que mora aqui — estado de interface, fora do `GameState`.
+ *  - modo `nenhum` (F13b): NENHUM comando. So avisa `aoClicarSemFerramenta`, que e
+ *    quem cuida da selecao de predio. Mao vazia nunca gasta recurso.
  *
  * `aoClicar` e o botao esquerdo apertado; o nome ficou da F07.
  */
@@ -51,6 +53,9 @@ export interface EntradaDoMapa {
  */
 export function criarEntradaDoMapa(
   ferramenta: Ferramenta, emitir: (comando: Command) => void,
+  /** F13b — clique de mao vazia. Opcional: quem nao passa continua com o
+   *  comportamento antigo (clique sem ferramenta nao faz nada). */
+  aoClicarSemFerramenta?: (tile: TileClicado) => void,
 ): EntradaDoMapa {
   let arrasto: TileClicado[] | null = null;
 
@@ -72,6 +77,11 @@ export function criarEntradaDoMapa(
         emitir({ type: 'PlaceBlueprint', buildingId: ferramenta.predioAtivo, gx: tile.gx, gy: tile.gy });
       } else if (ferramenta.modo === 'estrada' || ferramenta.modo === 'demolir-estrada') {
         arrasto = [tile];
+      } else {
+        // Mao vazia (F13b): nao emite comando nenhum. Quem sabe que predio esta
+        // neste tile e o `main.ts`, que tem o estado — `input/` nao conhece
+        // `GameState` (mesma razao de `ferramenta.ts`).
+        aoClicarSemFerramenta?.(tile);
       }
     },
     aoArrastar(tile) {
