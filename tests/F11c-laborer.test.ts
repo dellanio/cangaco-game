@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterAll } from 'vitest';
 import { gameData } from '../src/sim/data';
 import type { GameEvent, GameState, PredioEmObra } from '../src/sim/state';
 import { completarObra } from '../src/sim/state';
@@ -17,6 +17,7 @@ import { ate, liberacoes } from './helpers/serf-cenario';
 import { bensPorMercadoria, violacoesDaFsm } from './helpers/serf-invariantes';
 import { violacoesDeInvariantes } from './helpers/jobs-invariantes';
 import { violacoesDaFsmDoLaborer } from './helpers/laborer-invariantes';
+import { gravarEvidencia } from './helpers/evidence';
 
 /** So para este arquivo: muda o `hp` (o martelado) de uma obra, sem tocar no resto. */
 function comHp(estado: GameState, id: string, hp: number): GameState {
@@ -433,5 +434,99 @@ describe('F11c — gerarTarefas: o portao "obra ja nivelada" (Task 6)', () => {
     const tarefas = depois.jobs.tarefas.ordem.map((id) => depois.jobs.tarefas.porId[id]);
     expect(tarefas.filter((t) => t?.tipo === 'material-para-obra')).toHaveLength(5); // 2 stone + 3 timber
     expect(tarefas.filter((t) => t?.tipo === 'construir')).toHaveLength(gameData.construcao.laborersMaximosPorObra);
+  });
+});
+
+/**
+ * Task 7 — o aceite headless do BUILD_PLAN: um Quarry plantado do zero (sem nivelar,
+ * armazem ligado e abastecido) sobe sozinho, so pelo `step()`, ate ficar de pe.
+ * `gravarEvidencia('F11c', ...)` grava `test-output/F11c.json` (CLAUDE.md §8).
+ */
+describe('F11c — aceite headless do BUILD_PLAN (Task 7)', () => {
+  const alvo = alvoDeNivelamento('quarry');
+  const estado = comEstradas(
+    comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: { timber: 3, stone: 2 }, nivelamento: 0 }),
+    [tile(29, 33), tile(29, 34), tile(29, 35), tile(29, 36), tile(28, 36)],
+  );
+  const totalInicial = bensPorMercadoria(estado);
+  const tiposAntes = estado.tiposJaConstruidos;
+
+  let atual = estado;
+  const eventos: GameEvent[] = [];
+  let tickNivelamentoPronto = -1;
+  let tickFaltamVazio = -1;
+  let tickHp250 = -1;
+  let tickPrimeiroMaterialCompletado = -1;
+  const violacoesEncontradas: string[] = [];
+  const bensDivergentes: number[] = [];
+
+  beforeAll(() => {
+    for (let i = 0; i < 2000 && atual.predios.porId['obra-a']?.estado !== 'completo'; i += 1) {
+      atual = step(atual, []);
+      eventos.push(...atual.events);
+      violacoesEncontradas.push(
+        ...violacoesDaFsmDoLaborer(atual), ...violacoesDaFsm(atual), ...violacoesInesperadas(atual),
+      );
+      if (JSON.stringify(bensPorMercadoria(atual)) !== JSON.stringify(totalInicial)) bensDivergentes.push(atual.tick);
+
+      const obra = atual.predios.porId['obra-a'];
+      if (obra?.estado === 'obra') {
+        if (tickNivelamentoPronto === -1 && obra.obra.nivelamento === alvo) tickNivelamentoPronto = atual.tick;
+        if (tickFaltamVazio === -1 && Object.values(obra.obra.faltam).every((v) => (v ?? 0) === 0)) tickFaltamVazio = atual.tick;
+      }
+      if (tickHp250 === -1 && obra && obra.hp === 250) tickHp250 = atual.tick;
+      if (tickPrimeiroMaterialCompletado === -1 && atual.events.some((e) => e.type === 'task-completed' && e.obra === 'obra-a')) {
+        tickPrimeiroMaterialCompletado = atual.tick;
+      }
+    }
+  });
+
+  it('o quarry sobe do zero ate completo, so pelo step()', () => {
+    const completo = atual.predios.porId['obra-a'];
+    const construidos = eventos.filter((e) => e.type === 'building-completed');
+    const liberacoesPorPedidoDaUnidade = liberacoes(eventos).filter((e) => e.motivo === 'pedido-da-unidade');
+
+    expect(completo?.estado).toBe('completo');
+    expect(completo?.estado === 'completo' ? completo.hp : null).toBe(250);
+    expect(hpTotalDoTipo('quarry')).toBe(250);
+    expect(tickFaltamVazio).toBeGreaterThan(-1);
+    expect(tickHp250).toBeGreaterThan(-1);
+    expect(tickFaltamVazio).toBeLessThanOrEqual(tickHp250); // os 5 materiais chegam antes (ou no tick) do hp bater 250
+    expect(tickNivelamentoPronto).toBeGreaterThan(-1);
+    expect(tickPrimeiroMaterialCompletado).toBeGreaterThan(-1);
+    expect(tickNivelamentoPronto).toBeLessThan(tickPrimeiroMaterialCompletado); // o portao da Task 6, ponta a ponta
+    expect(liberacoesPorPedidoDaUnidade).toEqual([]); // a reavaliacao nunca libera (Task 5)
+    expect(construidos).toEqual([{ type: 'building-completed', predio: 'obra-a', tipo: 'quarry' }]);
+    expect(atual.tiposJaConstruidos).toEqual(tiposAntes); // registrarTipoConstruido e da F12
+    expect(bensDivergentes).toEqual([]);
+    expect(violacoesEncontradas).toEqual([]);
+  });
+
+  afterAll(() => {
+    const completo = atual.predios.porId['obra-a'];
+    const construidos = eventos.filter((e) => e.type === 'building-completed');
+    const liberacoesPorPedidoDaUnidade = liberacoes(eventos).filter((e) => e.motivo === 'pedido-da-unidade');
+    gravarEvidencia('F11c', {
+      feature: 'F11c-laborer-fsm',
+      // VERIFICADO por teste headless: o aceite escrito no BUILD_PLAN.md.
+      aceite: {
+        predioFicouCompleto: completo?.estado === 'completo',
+        hpFinal: completo?.estado === 'completo' ? completo.hp : null,
+        hpTotalDoTipo: hpTotalDoTipo('quarry'),
+        tickFaltamVazio,
+        tickHp250,
+        faltamVazioAntesOuNoTickDoHp250: tickFaltamVazio !== -1 && tickHp250 !== -1 && tickFaltamVazio <= tickHp250,
+        alvoDeNivelamento: alvo,
+        tickNivelamentoPronto,
+        tickPrimeiroMaterialCompletado,
+        nivelamentoTerminaAntesDoPrimeiroMaterial: tickNivelamentoPronto !== -1 && tickPrimeiroMaterialCompletado !== -1
+          && tickNivelamentoPronto < tickPrimeiroMaterialCompletado,
+        liberacoesPorPedidoDaUnidade: liberacoesPorPedidoDaUnidade.length,
+        buildingCompletedEventos: construidos,
+        tiposJaConstruidosNaoMudou: JSON.stringify(atual.tiposJaConstruidos) === JSON.stringify(tiposAntes),
+        conservacaoDeBensEmTodoTick: bensDivergentes.length === 0,
+        invariantesVaziasEmTodoTick: violacoesEncontradas.length === 0,
+      },
+    });
   });
 });
