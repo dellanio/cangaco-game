@@ -4,6 +4,8 @@ import type { GameData } from './data/types';
 import { gameData } from './data';
 import { caixaDoPredio } from './footprint';
 import { estaDesbloqueado } from './desbloqueio';
+import { predioLigadoAoArmazem } from './estradas';
+import { custoDeTreino, ehEscolaCompleta, filaDaEscola, ouroNecessario } from './escola';
 import { custoDoPasso } from './pathfinding';
 import { custoDoPredio } from './obra';
 import type { CaixaEmTiles } from './footprint';
@@ -216,6 +218,90 @@ export function opcoesDoMenuBuild(
       requer: desbloqueado ? null : def.desbloqueadoPor,
     };
   });
+}
+
+/** Por que a fila de uma escola nao anda. Tres causas, tres acoes diferentes (F13b). */
+export type MotivoDeEspera = 'a-caminho' | 'sem-estrada' | 'sem-ouro';
+
+/** Um slot da fila de treino, como o painel o desenha. */
+export interface ItemDoPainelDeTreino {
+  readonly id: string;
+  /** Id NEUTRO do civil (`stonemason`). Quem traduz e o tema, na `ui/`. */
+  readonly unidade: string;
+  readonly estado: 'aguardando' | 'treinando';
+  /** Em [0,1). Vale 0 em `aguardando`. Derivado de `restam`: `ItemDeFila` nao guarda progresso. */
+  readonly progresso: number;
+  /** Por que este item nao comecou. `null` quando treina ou quando o ouro ja chegou. */
+  readonly motivo: MotivoDeEspera | null;
+}
+
+/** Tudo que o painel da escola desenha (F13b). */
+export interface PainelDaEscola {
+  readonly predio: string;
+  readonly slots: number;
+  readonly itens: readonly ItemDoPainelDeTreino[];
+  readonly podeEnfileirar: boolean;
+  /** Os civis de `data/units.json`, na ordem do dado. Um botao por tipo. */
+  readonly tiposTreinaveis: readonly string[];
+  readonly custoPorUnidade: number;
+}
+
+/**
+ * F13b — por que a fila desta escola esta parada. Tres causas, NESTA ordem,
+ * porque pedem acoes opostas do jogador: esperar o carregador, puxar uma
+ * estrada, ou ir atras de dinheiro. Mostrar o mesmo texto nas tres seria o
+ * defeito da fila parada de novo, em menor escala.
+ *
+ * Nada aqui e campo novo. A tarefa ja esta no quadro — `gerarTarefasDeOuro` so a
+ * cria quando ha ouro NAO RESERVADO e rota ate o armazem — e a ligacao e
+ * derivada na hora (`predioLigadoAoArmazem`, F08).
+ */
+function motivoDaEspera(
+  state: GameState, predioId: string, escola: Predio, dados: GameData,
+): MotivoDeEspera | null {
+  if (ouroNecessario(state, predioId, dados) <= 0) return null;
+  const temTarefa = state.jobs.tarefas.ordem.some((id) => {
+    const tarefa = state.jobs.tarefas.porId[id];
+    return tarefa !== undefined
+      && tarefa.tipo === 'ouro-para-escola' && tarefa.destino === predioId;
+  });
+  if (temTarefa) return 'a-caminho';
+  return predioLigadoAoArmazem(state, escola, dados) ? 'sem-ouro' : 'sem-estrada';
+}
+
+/**
+ * F13b — tudo que o painel da escola desenha, num objeto so. Mora aqui, e nao na
+ * `ui/`, porque `ui/` nao varre estado (CLAUDE.md §3): o painel recebe isto
+ * pronto e so escreve DOM. `null` quando o id nao e de uma escola completa — e
+ * assim que o painel se fecha sozinho se o predio cair.
+ *
+ * O MOTIVO e da FILA, nao do item: `ouroNecessario` e um agregado da escola, e
+ * nao existe "o ouro deste item".
+ */
+export function painelDaEscola(
+  state: GameState, predioId: string, dados: GameData = gameData,
+): PainelDaEscola | null {
+  const escola = state.predios.porId[predioId];
+  if (!ehEscolaCompleta(escola)) return null;
+
+  const motivo = motivoDaEspera(state, predioId, escola, dados);
+  const total = dados.economia.schoolhouse.ticksPorTreino;
+  const itens = filaDaEscola(state, predioId).map((item) => ({
+    id: item.id,
+    unidade: item.unidade,
+    estado: item.estado,
+    progresso: item.estado === 'treinando' ? (total - item.restam) / total : 0,
+    motivo: item.estado === 'treinando' ? null : motivo,
+  }));
+
+  return {
+    predio: predioId,
+    slots: dados.economia.schoolhouse.slotsDeFila,
+    itens,
+    podeEnfileirar: itens.length < dados.economia.schoolhouse.slotsDeFila,
+    tiposTreinaveis: dados.unidades.civis.tipos.map((civil) => civil.id),
+    custoPorUnidade: custoDeTreino(dados),
+  };
 }
 
 /**
