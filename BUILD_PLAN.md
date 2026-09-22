@@ -324,6 +324,11 @@ prédio surge sem clique do jogador.
   `sanearTarefas` cancela a tarefa e o serf carregado vai a `devolvendo`, deposita e
   fica `ocioso` — mas **esta feature repete o teste pelo comando real**, com o serf
   carregando e com o serf ainda indo buscar, e confirma que a carga voltou ao armazém.
+- **Nota (origem: F12)**: o desbloqueio já está ligado ao `step()` e é
+  **permanente** — `registrarConclusoes` só acrescenta a `tiposJaConstruidos`,
+  nunca remove. Demolir o último Woodcutter's **não** re-bloqueia a Sawmill, e isso
+  é decisão registrada (`sim/desbloqueio.ts`, travada por testes da F06). A F16 não
+  precisa de ramo nenhum para desbloqueio.
 
 ### F17 — Aceite da Fase A (integração)
 - **Escopo**: roteiro Playwright que executa a sessão inteira do critério de

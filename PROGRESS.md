@@ -276,6 +276,48 @@ precisou de ramo novo por causa do portão da Task 6.
   (que é sobre os três estágios da obra, não sobre o laborer); ficou de fora
   por escopo, não por bloqueio — nenhuma pré-condição falta para fazê-lo.
 
+(origem: F12)
+
+### O desbloqueio ligado ao `step()` (verificado)
+
+`building-completed` deixou de ser um evento sem consumidor. `registrarConclusoes`
+(`sim/desbloqueio.ts`) dobra os eventos de **um tick** sobre
+`registrarTipoConstruido`, e o `step()` a chama **uma vez, no fim**, depois de
+todos os sistemas.
+
+- **Lê evento, não diferença de estado.** Quem conclui anuncia; quem desbloqueia
+  escuta. Redescobrir a transição comparando `predios` com o tick anterior seria
+  uma segunda fonte de verdade, e amarraria o desbloqueio ao sistema que hoje por
+  acaso conclui obras (`sistemaDosLaborers`). Qualquer sistema futuro que emita
+  `building-completed` fica desbloqueado de graça.
+- **Posição no tick, e por que ela é livre.** Nenhum sistema lê
+  `tiposJaConstruidos` — os leitores são `canPlace` (fase de **comandos**) e
+  `opcoesDoMenuBuild` (render). A conclusão do tick `t` vale, então, para os
+  **comandos de `t+1`**, que é onde o jogador clica; o painel, que lê o estado
+  depois do tick, reflete na hora.
+- **Zero mudança em `render/` e `ui/`.** `ui/menu-build.ts` já relê
+  `opcoesDoMenuBuild(estado)` a cada `atualizar()`. A F12 ficou só em `sim/` e
+  **não** precisou da exceção de feature de integração da §10.
+- **A guarda da F11c mudou de nível, não sumiu.** `tests/F11c-laborer.test.ts`
+  afirmava que `tiposJaConstruidos` não se movia depois de uma obra fechar — era
+  guarda de fronteira enquanto ninguém consumia o evento, e a F12 é exatamente
+  quem a inverte. O aceite da F11c (hp 250 + `completo` + screenshots) não
+  dependia disso; conferido por `git diff` que nenhum outro valor asserido mudou.
+  O que ela protegia virou invariante **por tick** no teste da F12: histórico
+  cresceu ⟹ houve `building-completed` no tick; anunciaram tipo novo ⟹ o
+  histórico passou a contê-lo. Não é "se e somente se": um segundo prédio do
+  mesmo tipo anuncia e **não** faz a lista crescer (`registrarTipoConstruido` é
+  idempotente).
+- **O aceite usa o caminho real, ponta a ponta** (conferido nesta sessão, a pedido
+  do operador): `PlaceBlueprint` de verdade para os dois prédios, `step()` para
+  conduzir cada obra até `'completo'`, nenhum `PredioCompleto` fabricado por
+  fixture. As **estradas** vêm de fixture de propósito — o aceite não fala delas,
+  e `PlaceRoad` debita pedra por tile, o que amarraria a F12 ao preço da estrada.
+- **Números observados** (`test-output/F12.json`, não são alvo de balanceamento):
+  o Woodcutter's fecha no tick 233 e a Sawmill no 547, partindo do estoque inicial.
+- **O que continua valendo:** o desbloqueio é permanente (demolir não re-bloqueia,
+  F06) e `menuBuildInicial` segue existindo só para raiz sem pai.
+
 Histórico das features fechadas: docs/historico/F01-F11a.md.
 
 ## Perguntas em aberto
