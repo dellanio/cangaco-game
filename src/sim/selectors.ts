@@ -218,6 +218,25 @@ export function opcoesDoMenuBuild(
   });
 }
 
+/**
+ * F13b — que predio ocupa este tile, ou `null`. Varre `predios.ordem` (nunca
+ * `Object.keys`) e compara com o FOOTPRINT inteiro, nao com o canto: o jogador
+ * clica no meio do predio. A porta fica fora do footprint, entao clicar nela nao
+ * seleciona nada — e a mesma borda sul por onde o serf entra.
+ */
+export function predioNoTile(
+  state: GameState, gx: number, gy: number, dados: GameData = gameData,
+): string | null {
+  for (const id of state.predios.ordem) {
+    const predio = state.predios.porId[id];
+    if (predio === undefined) continue;
+    const caixa = caixaDoPredio(predio, dados);
+    if (caixa === null) continue;
+    if (gx >= caixa.x0 && gx < caixa.x1 && gy >= caixa.y0 && gy < caixa.y1) return id;
+  }
+  return null;
+}
+
 /** Uma posicao no mapa em tiles, FRACIONARIA (a unidade pode estar no meio de um passo). */
 export interface PosicaoNoMapa {
   readonly gx: number;
