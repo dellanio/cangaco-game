@@ -2,6 +2,7 @@ import type { Command } from './commands';
 import type { GameEvent, GameState } from './state';
 import type { GameData } from './data/types';
 import { gameData } from './data';
+import { registrarConclusoes } from './desbloqueio';
 import { aplicarPlaceBlueprint } from './systems/build';
 import { aplicarDemolishRoad, aplicarPlaceRoad } from './systems/estradas';
 import { gerarTarefas, sanearTarefas } from './systems/jobs';
@@ -73,6 +74,14 @@ export function step(
   const laborers = sistemaDosLaborers(serfs.state, dados);
   atual = gerarTarefas(laborers.state, dados);
   events.push(...saneado.events, ...serfs.events, ...laborers.events);
+
+  // F12: o desbloqueio le os eventos do TICK INTEIRO, depois de todos os sistemas — assim
+  // nao depende de QUAL sistema concluiu a obra (hoje so o laborer, F11c). Nenhum sistema le
+  // `tiposJaConstruidos` (os leitores sao `canPlace`, na fase de comandos, e o seletor do
+  // menu, no render), entao a posicao aqui dentro nao muda mais nada: o que ela fixa e que a
+  // conclusao do tick `t` vale para os COMANDOS de `t+1`, que e onde o jogador clica.
+  // Identidade num tick sem conclusao.
+  atual = registrarConclusoes(atual, events);
 
   return {
     tick,

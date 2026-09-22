@@ -1,4 +1,4 @@
-import type { GameState } from './state';
+import type { GameEvent, GameState } from './state';
 import type { GameData } from './data/types';
 import { gameData } from './data';
 
@@ -30,10 +30,34 @@ export function estaDesbloqueado(
 /**
  * Registra que um predio do tipo `tipo` chegou a `'completo'`. Idempotente e
  * pura: se o tipo ja esta no historico devolve o MESMO estado; senao, um novo com
- * o tipo no fim da lista. Quem chama e o sistema que conclui obras (a F12 liga
- * isto ao `step()`); ate la o unico produtor e o `createInitialState`.
+ * o tipo no fim da lista. Quem chama e `registrarConclusoes`, logo abaixo (F12);
+ * o outro produtor e o `createInitialState`.
  */
 export function registrarTipoConstruido(state: GameState, tipo: string): GameState {
   if (state.tiposJaConstruidos.includes(tipo)) return state;
   return { ...state, tiposJaConstruidos: [...state.tiposJaConstruidos, tipo] };
+}
+
+/**
+ * F12 — o gancho do desbloqueio: os eventos de UM tick, dobrados sobre
+ * `registrarTipoConstruido`. Pura e idempotente por heranca dele — dois
+ * `building-completed` do mesmo tipo no mesmo tick registram uma vez so, e um tick
+ * sem nenhum devolve o MESMO estado (identidade, nao copia).
+ *
+ * Por que ler EVENTO e nao comparar `predios` com o tick anterior: a transicao ja e
+ * anunciada por quem a faz (`sistemaDosLaborers`, F11c) e o evento e o contrato
+ * registrado no BUILD_PLAN. Redescobrir a transicao por diferenca de estado seria uma
+ * segunda fonte de verdade — e amarraria o desbloqueio ao sistema que hoje por acaso
+ * conclui obras.
+ *
+ * Continua sem nenhum id de predio: o `tipo` vem do evento, a arvore vem do dado.
+ */
+export function registrarConclusoes(
+  state: GameState, events: readonly GameEvent[],
+): GameState {
+  let atual = state;
+  for (const evento of events) {
+    if (evento.type === 'building-completed') atual = registrarTipoConstruido(atual, evento.tipo);
+  }
+  return atual;
 }

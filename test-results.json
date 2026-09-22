@@ -13,7 +13,7 @@
   "F11a-laco-de-tempo": { "passes": true },
   "F11b-jobboard-construir": { "passes": true },
   "F11c-laborer-fsm": { "passes": true },
-  "F12-desbloqueio": { "passes": false },
+  "F12-desbloqueio": { "passes": true },
   "F13-schoolhouse-fila": { "passes": false },
   "F14-especialistas-ocupam": { "passes": false },
   "F15-producao-basica": { "passes": false },

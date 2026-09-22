@@ -67,9 +67,10 @@ export type GameEvent =
     }
   | {
       /**
-       * A obra virou predio COMPLETO (F11c: `hp === def.hp`). NAO desbloqueia
-       * nada por si so — `tiposJaConstruidos` continua parado ate a F12 ligar
-       * `registrarTipoConstruido` (`sim/desbloqueio.ts`) a este evento.
+       * A obra virou predio COMPLETO (F11c: `hp === def.hp`). Quem emite NAO
+       * desbloqueia nada: e o `step()` que, no fim do tick, dobra os eventos com
+       * `registrarConclusoes` (`sim/desbloqueio.ts`) e move `tiposJaConstruidos`
+       * (F12). Separado de proposito — quem conclui anuncia, quem desbloqueia escuta.
        */
       readonly type: 'building-completed';
       readonly predio: string;
@@ -373,8 +374,9 @@ function estoqueParaTipo(
  * `id`/`tipo`/`gx`/`gy`/`hp` sao preservados; nasce com estoque e capacidade do
  * tipo — reusa `capacidadeParaTipo`/`estoqueParaTipo`, o mesmo caminho de
  * `criarPredios`, sem estoque inicial (uma obra nao guarda mercadoria: o custo
- * ja saiu do armazem na entrega, F10). NAO chama `registrarTipoConstruido` —
- * quem chama emite `building-completed`; a F12 decide o que fazer com ele.
+ * ja saiu do armazem na entrega, F10). NAO chama `registrarTipoConstruido` — quem
+ * chama emite `building-completed`, e a F12 o consome no fim do `step()`
+ * (`registrarConclusoes`).
  */
 export function completarObra(predio: PredioEmObra, dados: GameData = gameData): PredioCompleto {
   return {
