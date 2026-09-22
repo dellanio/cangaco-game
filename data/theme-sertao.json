@@ -103,6 +103,15 @@
     "estrada": "Estrada", "porTile": "por tile",
     "demolirEstrada": "Demolir estrada", "demolirEstradaDesc": "devolve parte da pedra"
   },
+  "painelEscola": {
+    "_doc": "F13b. Os três motivos de espera são específicos de propósito: cada um aponta a ação que resolve aquele caso. 'Sem estrada' é um arrasto de dez segundos; 'sem dinheiro' é garimpo e metalurgia. Um texto neutro para os dois esconderia justamente a diferença que importa.",
+    "titulo": "Casa do Coronel", "fila": "Fila", "vazio": "—",
+    "treinando": "treinando", "naFila": "na fila",
+    "ouroACaminho": "Dinheiro a caminho",
+    "semEstrada": "Sem estrada até o armazém",
+    "semOuro": "Sem dinheiro no armazém",
+    "cancelarItem": "tirar da fila", "custo": "custa", "filaCheia": "Fila cheia"
+  },
   "obra": { "marcacao": "marcação no chão", "madeira": "em obra" },
   "vegetacao": ["mandacaru", "xique-xique", "juazeiro", "umbuzeiro", "facheiro", "macambira"],
   "props": ["cerca de vara", "pilha de lenha", "cacimba", "carro de boi", "jumento", "varal de carne de sol"],
