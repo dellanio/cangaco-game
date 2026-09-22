@@ -10,7 +10,7 @@
  * Por isso `reclamar` e atomico por construcao (uma unica atribuicao de estado, so
  * depois de todas as checagens) e `liberar` devolve as DUAS reservas de uma vez.
  */
-import type { GameEvent, GameState, Tarefa, TipoDeTarefa } from './state';
+import type { GameEvent, GameState, Tarefa, TarefaConstruir, TarefaMaterialParaObra, TipoDeTarefa } from './state';
 import type { GameData } from './data/types';
 import { gameData } from './data';
 import { componenteDe, distanciaEntrePredios, ehEstrada, tilesDaPorta } from './estradas';
@@ -60,6 +60,21 @@ export type ResultadoDoClaimMelhor =
 /** So o serf carrega mercadoria. Id estrutural, como `ID_DO_ARMAZEM`. */
 export const TIPO_QUE_CARREGA = 'serf';
 
+/** So o laborer constroi. Id estrutural, como `TIPO_QUE_CARREGA`. */
+export const TIPO_QUE_CONSTROI = 'laborer';
+
+const UNIDADE_ELEGIVEL_POR_TIPO: Readonly<Record<TipoDeTarefa, string>> = {
+  'material-para-obra': TIPO_QUE_CARREGA,
+  construir: TIPO_QUE_CONSTROI,
+};
+
+/** Generaliza a checagem "a unidade e serf": cada tipo de tarefa tem UM tipo
+ *  de unidade elegivel — serf e laborer nao disputam tarefa (decisao do
+ *  operador, F11b). */
+export function elegivelParaTarefa(tipoDaTarefa: TipoDeTarefa, tipoDaUnidade: string): boolean {
+  return UNIDADE_ELEGIVEL_POR_TIPO[tipoDaTarefa] === tipoDaUnidade;
+}
+
 /** O nivel do tipo na escada de `delivery.json`, lido pelo `id` — nunca um numero em
  *  `.ts`. Falha alto se o dado nao tem o id: assumir um nivel escondido seria pior. */
 export function nivelDoTipo(tipo: TipoDeTarefa, dados: GameData = gameData): number {
@@ -70,31 +85,44 @@ export function nivelDoTipo(tipo: TipoDeTarefa, dados: GameData = gameData): num
   return linha.nivel;
 }
 
-/** Cria uma tarefa ABERTA (nao reserva nada). O id e o numero vem do contador
- *  `proximoId`, compartilhado com predios e unidades. */
-export function criarTarefa(
-  state: GameState,
-  campos: { readonly mercadoria: string; readonly origem: string; readonly destino: string; readonly tipo?: TipoDeTarefa },
-): { readonly state: GameState; readonly id: string } {
-  const numero = state.proximoId;
-  const id = `t${numero}`;
-  const tarefa: Tarefa = {
-    id, numero, tipo: campos.tipo ?? 'material-para-obra', mercadoria: campos.mercadoria,
-    origem: campos.origem, destino: campos.destino, estado: 'aberta', reclamadaPor: null,
-  };
+function inserirTarefa(state: GameState, tarefa: Tarefa): { readonly state: GameState; readonly id: string } {
   return {
-    id,
+    id: tarefa.id,
     state: {
       ...state,
-      proximoId: numero + 1,
+      proximoId: tarefa.numero + 1,
       jobs: {
         tarefas: {
-          porId: { ...state.jobs.tarefas.porId, [id]: tarefa },
-          ordem: [...state.jobs.tarefas.ordem, id],
+          porId: { ...state.jobs.tarefas.porId, [tarefa.id]: tarefa },
+          ordem: [...state.jobs.tarefas.ordem, tarefa.id],
         },
       },
     },
   };
+}
+
+/** Cria uma tarefa de material ABERTA (nao reserva nada). O id e o numero vem
+ *  do contador `proximoId`, compartilhado com predios e unidades. */
+export function criarTarefa(
+  state: GameState,
+  campos: { readonly mercadoria: string; readonly origem: string; readonly destino: string },
+): { readonly state: GameState; readonly id: string } {
+  const numero = state.proximoId;
+  const tarefa: TarefaMaterialParaObra = {
+    id: `t${numero}`, numero, tipo: 'material-para-obra', mercadoria: campos.mercadoria,
+    origem: campos.origem, destino: campos.destino, estado: 'aberta', reclamadaPor: null,
+  };
+  return inserirTarefa(state, tarefa);
+}
+
+/** F11b — cria uma vaga de construcao ABERTA na obra `destino`. Sem
+ *  mercadoria/origem: o laborer nao carrega material. */
+export function criarTarefaDeConstrucao(
+  state: GameState, destino: string,
+): { readonly state: GameState; readonly id: string } {
+  const numero = state.proximoId;
+  const tarefa: TarefaConstruir = { id: `t${numero}`, numero, tipo: 'construir', destino, estado: 'aberta', reclamadaPor: null };
+  return inserirTarefa(state, tarefa);
 }
 
 function unidadeJaTemTarefa(state: GameState, unidadeId: string): boolean {
