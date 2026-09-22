@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import type { TarefaConstruir } from '../src/sim/state';
-import { criarTarefaDeConstrucao, elegivelParaTarefa, TIPO_QUE_CONSTROI } from '../src/sim/jobs';
-import { cenarioLigado, comTarefas, inicial } from './helpers/jobs-cenario';
+import { criarTarefaDeConstrucao, elegivelParaTarefa, TIPO_QUE_CONSTROI, tarefasEmOrdem } from '../src/sim/jobs';
+import {
+  cenarioLigado, comTarefas, inicial, serfsDoCenario, tarefaDe,
+} from './helpers/jobs-cenario';
 
 describe('F11b — Tarefa vira uniao discriminada', () => {
   it('uma tarefa de construir (sem mercadoria/origem) sobrevive ao JSON de ida e volta', () => {
@@ -29,5 +31,18 @@ describe('F11b — elegibilidade por tipo de tarefa', () => {
     const { state, id } = criarTarefaDeConstrucao(inicial, 'obra-a');
     const t = state.jobs.tarefas.porId[id];
     expect(t).toEqual({ id, numero: expect.any(Number), tipo: 'construir', destino: 'obra-a', estado: 'aberta', reclamadaPor: null });
+  });
+});
+
+describe('F11b — tarefasEmOrdem exclui construir da escada', () => {
+  it('nao quebra com uma tarefa de construir no quadro', () => {
+    const [serf1] = serfsDoCenario(inicial);
+    if (!serf1) throw new Error('fixture: sem serf');
+    const material = tarefaDe({ numero: 1 });
+    const construir: TarefaConstruir = { id: 't2', numero: 2, tipo: 'construir', destino: 'obra-a', estado: 'aberta', reclamadaPor: null };
+    const estado = comTarefas(cenarioLigado(), [material, construir]);
+    expect(() => tarefasEmOrdem(estado)).not.toThrow();
+    expect(tarefasEmOrdem(estado).map((t) => t.id)).toEqual(['t1']);
+    expect(tarefasEmOrdem(estado, serf1).map((t) => t.id)).toEqual(['t1']);
   });
 });
