@@ -7,6 +7,7 @@ import {
   alvoDeNivelamento, entreguesNaObra, hpTotalDoTipo, obraNivelada, obraTrabalhavel, tetoDeHp,
 } from '../src/sim/obra';
 import { criarTarefaDeConstrucao, reclamar, tarefasDeConstrucaoEmOrdem } from '../src/sim/jobs';
+import { gerarTarefas } from '../src/sim/systems/jobs';
 import { tilesDaPorta } from '../src/sim/estradas';
 import {
   armazemDoCenario, comEstradas, comObra, comTarefas, comUnidadeEm, inicial, laborersDoCenario, linhaH, linhaV,
@@ -408,5 +409,29 @@ describe('F11c — sistemaDosLaborers (Task 5)', () => {
     const ambasProntas = ate(fase3, (e) => e.predios.porId['obra-a']?.estado === 'completo', 'obra-a se recupera e tambem termina');
     expect(ambasProntas.predios.porId['obra-a']?.estado).toBe('completo');
     expect(ambasProntas.predios.porId['obra-b']?.estado).toBe('completo');
+  });
+});
+
+describe('F11c — gerarTarefas: o portao "obra ja nivelada" (Task 6)', () => {
+  it('obra NAO nivelada, armazem ligado com estoque: zero tarefas de material, mas o teto de construir', () => {
+    const estado = comEstradas(
+      comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: { stone: 2, timber: 3 }, nivelamento: 0 }),
+      [tile(29, 33), tile(29, 34), tile(29, 35), tile(29, 36), tile(28, 36)],
+    );
+    const depois = gerarTarefas(estado);
+    const tarefas = depois.jobs.tarefas.ordem.map((id) => depois.jobs.tarefas.porId[id]);
+    expect(tarefas.filter((t) => t?.tipo === 'material-para-obra')).toHaveLength(0);
+    expect(tarefas.filter((t) => t?.tipo === 'construir')).toHaveLength(gameData.construcao.laborersMaximosPorObra);
+  });
+
+  it('ao nivelar, as tarefas de material aparecem no mesmo tick (mesma chamada de gerarTarefas)', () => {
+    const nivelada = comEstradas(
+      comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: { stone: 2, timber: 3 } }), // default: ja nivelada
+      [tile(29, 33), tile(29, 34), tile(29, 35), tile(29, 36), tile(28, 36)],
+    );
+    const depois = gerarTarefas(nivelada);
+    const tarefas = depois.jobs.tarefas.ordem.map((id) => depois.jobs.tarefas.porId[id]);
+    expect(tarefas.filter((t) => t?.tipo === 'material-para-obra')).toHaveLength(5); // 2 stone + 3 timber
+    expect(tarefas.filter((t) => t?.tipo === 'construir')).toHaveLength(gameData.construcao.laborersMaximosPorObra);
   });
 });
