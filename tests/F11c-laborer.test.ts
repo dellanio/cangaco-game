@@ -475,7 +475,7 @@ describe('F11c — aceite headless do BUILD_PLAN (Task 7)', () => {
         if (tickFaltamVazio === -1 && Object.values(obra.obra.faltam).every((v) => (v ?? 0) === 0)) tickFaltamVazio = atual.tick;
       }
       if (tickHp250 === -1 && obra && obra.hp === 250) tickHp250 = atual.tick;
-      if (tickPrimeiroMaterialCompletado === -1 && atual.events.some((e) => e.type === 'task-completed' && e.obra === 'obra-a')) {
+      if (tickPrimeiroMaterialCompletado === -1 && atual.events.some((e) => e.type === 'task-completed' && e.destino === 'obra-a')) {
         tickPrimeiroMaterialCompletado = atual.tick;
       }
     }

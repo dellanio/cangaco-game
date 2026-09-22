@@ -74,10 +74,12 @@ export type GameEvent =
       readonly resultado: 'reaberta' | 'cancelada';
     }
   | {
-      /** O serf entregou: `faltam[mercadoria]` da `obra` caiu 1 e a tarefa foi removida. */
+      /** O serf entregou em `destino` e a tarefa foi removida. Obra: `faltam[mercadoria]`
+       *  caiu 1. Escola (F13): `estoque.entrada[mercadoria]` subiu 1. O campo se chamava
+       *  `obra` ate a F13 — deixou de ser verdade quando o destino pode ser escola. */
       readonly type: 'task-completed';
       readonly tarefa: string;
-      readonly obra: string;
+      readonly destino: string;
       readonly mercadoria: string;
     }
   | {
@@ -194,14 +196,6 @@ export interface PredioEmObra extends PredioBase {
  *  `estoque`, nao e representavel. */
 export type Predio = PredioCompleto | PredioEmObra;
 
-/**
- * O tipo da tarefa. `'material-para-obra'` (nivel 3 da escada de
- * `delivery.json`) e `'construir'` (F11b — o laborer nivela/martela; NAO
- * entra na escada, decisao do operador: serf e laborer nao disputam tarefa).
- * Cada feature que criar um produtor novo (F13, F15, F20) alarga este tipo.
- */
-export type TipoDeTarefa = 'material-para-obra' | 'construir';
-
 interface TarefaBase {
   /** `t<numero>`, do mesmo contador `proximoId` de predios e unidades. */
   readonly id: string;
@@ -228,15 +222,36 @@ interface TarefaBase {
  *
  * Ciclo (F10): `aberta` -> `reclamada` -> `carregando` -> (entrega: a tarefa some).
  */
-export interface TarefaMaterialParaObra extends TarefaBase {
-  readonly tipo: 'material-para-obra';
+interface TarefaDeCarga extends TarefaBase {
   readonly estado: 'aberta' | 'reclamada' | 'carregando';
   readonly mercadoria: string;
   /** Id do armazem de onde a unidade sai. */
   readonly origem: string;
-  /** Id da obra que recebe. */
+  /** Id do predio que recebe. */
   readonly destino: string;
 }
+
+export interface TarefaMaterialParaObra extends TarefaDeCarga {
+  readonly tipo: 'material-para-obra';
+}
+
+/**
+ * F13 — nivel 2 da escada (`delivery.json: ouro-para-escola`): uma unidade de ouro
+ * do armazem ate uma escola COMPLETA. Mesmo serf, mesmo claim, mesma reserva dupla
+ * da tarefa de material; o que muda e onde a carga entra na chegada (a gaveta
+ * `entrada` da escola, em vez de `faltam` da obra) e o nivel na escada.
+ *
+ * A vaga no destino NAO e capacidade — a escola nao tem limite de gaveta. E a
+ * DEMANDA DA FILA: `ouroNecessario` (`sim/escola.ts`), os itens que ainda nao
+ * comecaram vezes o custo, menos o ouro que ja esta la. Demanda que encolhe
+ * (item cancelado) e o que faz `sanearTarefas` cancelar a tarefa.
+ */
+export interface TarefaOuroParaEscola extends TarefaDeCarga {
+  readonly tipo: 'ouro-para-escola';
+}
+
+/** As tarefas que um serf CARREGA: mesma forma, destinos diferentes. */
+export type TarefaDeTransporte = TarefaMaterialParaObra | TarefaOuroParaEscola;
 
 /**
  * F11b — uma vaga de trabalho de construcao numa obra. So o laborer
@@ -262,7 +277,20 @@ export interface TarefaConstruir extends TarefaBase {
  * A RESERVA nao e um campo: e DERIVADA das tarefas (`sim/reservas.ts`). Ver
  * `elegivelParaTarefa` (`sim/jobs.ts`) para quem pode reclamar cada tipo.
  */
-export type Tarefa = TarefaMaterialParaObra | TarefaConstruir;
+export type Tarefa = TarefaDeTransporte | TarefaConstruir;
+
+/**
+ * O tipo da tarefa, DERIVADO da uniao: acrescentar um produtor novo (F15, F20)
+ * alarga `Tarefa` e esta linha acompanha sozinha. Os niveis continuam vindo de
+ * `delivery.json` por id (`nivelDoTipo`), nunca digitados em `.ts`.
+ */
+export type TipoDeTarefa = Tarefa['tipo'];
+
+/** Uma tarefa que o serf carrega (tem `origem` e `mercadoria`), e nao uma de
+ *  construir. Estreita a uniao sem enumerar os tipos de transporte um a um. */
+export function ehTarefaDeTransporte(tarefa: Tarefa): tarefa is TarefaDeTransporte {
+  return tarefa.tipo !== 'construir';
+}
 
 /** A central de tarefas. Serializavel: so `Colecao` de objetos planos. */
 export interface JobBoard {

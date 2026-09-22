@@ -12,17 +12,20 @@
  * `test-output/F09.json` e a nota da F10 no BUILD_PLAN. Se pedir indice, e otimizacao
  * (por predio e mercadoria), nao mudanca de contrato.
  */
-import type { GameState } from './state';
+import type { GameState, TarefaDeTransporte } from './state';
+import { ehTarefaDeTransporte } from './state';
 import type { GameData } from './data/types';
 import { gameData } from './data';
+import { ouroNecessario } from './escola';
 
 /** Unidades de `mercadoria` reservadas na ORIGEM `predioId`: so tarefas `reclamada` — a
- *  `carregando` ja consumiu a reserva da origem na coleta (F10). */
+ *  `carregando` ja consumiu a reserva da origem na coleta (F10). Vale para todo tipo
+ *  de transporte (F13: material e ouro saem do mesmo armazem e disputam o estoque). */
 export function reservadoNaOrigem(state: GameState, predioId: string, mercadoria: string): number {
   let soma = 0;
   for (const id of state.jobs.tarefas.ordem) {
     const t = state.jobs.tarefas.porId[id];
-    if (t && t.tipo === 'material-para-obra' && t.estado === 'reclamada' && t.origem === predioId && t.mercadoria === mercadoria) soma += 1;
+    if (t && ehTarefaDeTransporte(t) && t.estado === 'reclamada' && t.origem === predioId && t.mercadoria === mercadoria) soma += 1;
   }
   return soma;
 }
@@ -33,7 +36,7 @@ export function reservadoNoDestino(state: GameState, predioId: string, mercadori
   let soma = 0;
   for (const id of state.jobs.tarefas.ordem) {
     const t = state.jobs.tarefas.porId[id];
-    if (t && t.tipo === 'material-para-obra' && t.estado !== 'aberta' && t.destino === predioId && t.mercadoria === mercadoria) soma += 1;
+    if (t && ehTarefaDeTransporte(t) && t.estado !== 'aberta' && t.destino === predioId && t.mercadoria === mercadoria) soma += 1;
   }
   return soma;
 }
@@ -51,6 +54,37 @@ export function vagaNoDestino(state: GameState, predioId: string, mercadoria: st
   const predio = state.predios.porId[predioId];
   if (!predio || predio.estado !== 'obra') return 0;
   return (predio.obra.faltam[mercadoria] ?? 0) - reservadoNoDestino(state, predioId, mercadoria);
+}
+
+/**
+ * F13 — quanto o destino de uma tarefa de transporte ainda PEDE, antes de descontar
+ * reserva: obra -> `faltam[mercadoria]`; escola -> a demanda da fila de treino. O
+ * ramo e escolhido pelo TIPO da tarefa (exaustivo), nao pelo estado do predio: uma
+ * tarefa de material apontando para escola, ou de ouro para obra, pede zero — e o
+ * que faz `sanearTarefas` cancelar a tarefa em vez de entregar no lugar errado.
+ */
+export function demandaNoDestino(
+  state: GameState, tarefa: TarefaDeTransporte, dados: GameData = gameData,
+): number {
+  if (tarefa.tipo === 'material-para-obra') {
+    const predio = state.predios.porId[tarefa.destino];
+    if (!predio || predio.estado !== 'obra') return 0;
+    return predio.obra.faltam[tarefa.mercadoria] ?? 0;
+  }
+  return ouroNecessario(state, tarefa.destino, dados);
+}
+
+/**
+ * A vaga que ainda pode ser reservada no destino de uma tarefa de transporte:
+ * `demanda - reservado`. Pode ficar NEGATIVA quando a demanda encolhe debaixo de uma
+ * reserva (item de fila cancelado com o serf a caminho) — e esse sinal que
+ * `sanearTarefas` usa para desfazer o excesso.
+ */
+export function vagaDoDestino(
+  state: GameState, tarefa: TarefaDeTransporte, dados: GameData = gameData,
+): number {
+  return demandaNoDestino(state, tarefa, dados)
+    - reservadoNoDestino(state, tarefa.destino, tarefa.mercadoria);
 }
 
 /** Vagas de CONSTRUCAO (F11b) reservadas na obra `predioId`: tarefas

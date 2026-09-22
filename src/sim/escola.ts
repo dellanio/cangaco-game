@@ -1,7 +1,7 @@
 import { gameData } from './data';
 import type { GameData } from './data/types';
 import type { GameState, ItemDeFila, Predio, PredioCompleto } from './state';
-import { ID_DA_ESCOLA } from './state';
+import { ID_DA_ESCOLA, MERCADORIA_DE_OURO } from './state';
 
 /**
  * F13 — os derivados puros da escola: quem e escola, qual e a fila, quanto custa
@@ -53,6 +53,24 @@ export function comFila(
 /** Ouro por unidade treinada. Do dado — `economy.json:schoolhouse`. */
 export function custoDeTreino(dados: GameData = gameData): number {
   return dados.economia.schoolhouse.custoOuroPorUnidade;
+}
+
+/**
+ * O ouro que a fila desta escola ainda precisa RECEBER: os itens que nao
+ * comecaram, vezes o custo, menos o que ja esta na gaveta `entrada`. Nunca
+ * negativo. Um item em treino ja pagou e nao conta.
+ *
+ * E a demanda que o JobBoard converte em tarefa de entrega, e e a "vaga no
+ * destino" de uma tarefa de ouro — o analogo de `faltam` numa obra.
+ */
+export function ouroNecessario(
+  state: GameState, predioId: string, dados: GameData = gameData,
+): number {
+  const escola = state.predios.porId[predioId];
+  if (!ehEscolaCompleta(escola)) return 0;
+  const aguardando = filaDaEscola(state, predioId).filter((i) => i.estado === 'aguardando').length;
+  const emCaixa = escola.estoque.entrada[MERCADORIA_DE_OURO] ?? 0;
+  return Math.max(0, aguardando * custoDeTreino(dados) - emCaixa);
 }
 
 /** Se `tipo` e um civil declarado em `data/units.json`. O comando recusa o que nao e. */

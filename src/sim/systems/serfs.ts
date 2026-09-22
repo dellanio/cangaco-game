@@ -26,7 +26,10 @@
  * sumiu debaixo dele. O que so o serf sabe — o caminho dele cortado, a perna livre
  * bloqueada — ele libera aqui, por `liberar`. Toda tarefa reclamada tem caminho de volta.
  */
-import type { GameEvent, GameState, Predio, PredioCompleto, PredioEmObra, Tarefa, TarefaMaterialParaObra, Unidade } from '../state';
+import type {
+  GameEvent, GameState, Predio, PredioCompleto, PredioEmObra, Tarefa, TarefaDeTransporte, Unidade,
+} from '../state';
+import { ehTarefaDeTransporte, MERCADORIA_DE_OURO } from '../state';
 import { ID_DO_ARMAZEM } from '../state';
 import type { GameData } from '../data/types';
 import { gameData } from '../data';
@@ -35,6 +38,8 @@ import type { TileDeGrid } from '../estradas';
 import { liberar, marcarCarregando, planoDaTarefa, portasDeEstrada, reclamarMelhor, removerTarefa, TIPO_QUE_CARREGA } from '../jobs';
 import type { MotivoDeLiberacao } from '../jobs';
 import { buscarCaminho, tileAndavel } from '../pathfinding';
+import { ehEscolaCompleta } from '../escola';
+import { demandaNoDestino } from '../reservas';
 import { andar, chegou, comUnidade, dadosDaFsm, ficarOcioso, noTile, ocioso } from '../units/movimento';
 import type { ResultadoDeSistema } from './jobs';
 
@@ -46,14 +51,14 @@ function comPredio(state: GameState, predio: Predio): GameState {
   return { ...state, predios: { ...state.predios, porId: { ...state.predios.porId, [predio.id]: predio } } };
 }
 
-/** A tarefa de MATERIAL do serf, se ela existe, esta no estado esperado e e
- *  mesmo dele. So serf reclama material-para-obra (`elegivelParaTarefa`,
- *  F11b) — o filtro de tipo aqui e so para o compilador estreitar o tipo, o
- *  serf nunca segura uma tarefa 'construir' em runtime. */
-function tarefaDoSerf(state: GameState, u: Unidade, estado: Tarefa['estado']): TarefaMaterialParaObra | null {
+/** A tarefa de TRANSPORTE do serf, se ela existe, esta no estado esperado e e mesmo
+ *  dele. So serf reclama transporte (`elegivelParaTarefa`, F11b/F13) — o filtro de
+ *  tipo aqui e so para o compilador estreitar o tipo, o serf nunca segura uma tarefa
+ *  'construir' em runtime. */
+function tarefaDoSerf(state: GameState, u: Unidade, estado: Tarefa['estado']): TarefaDeTransporte | null {
   const id = u.fsmData.tarefa;
   const t = id === undefined ? undefined : state.jobs.tarefas.porId[id];
-  return t !== undefined && t.tipo === 'material-para-obra' && t.estado === estado && t.reclamadaPor === u.id ? t : null;
+  return t !== undefined && ehTarefaDeTransporte(t) && t.estado === estado && t.reclamadaPor === u.id ? t : null;
 }
 
 /** Libera a tarefa (que sai de `reclamada` ou `carregando`) e devolve os eventos. */
@@ -87,10 +92,10 @@ function comecarADevolver(state: GameState, u: Unidade, carga: string, dados: Ga
 function passoOcioso(state: GameState, u: Unidade, dados: GameData): Passo {
   const r = reclamarMelhor(state, u.id, dados);
   if (!r.ok) return semEventos(state);
-  // reclamarMelhor (F11b: filtrado por elegivelParaTarefa) so devolve material-para-obra
-  // para um serf; o filtro de tipo aqui e so para o compilador estreitar o tipo.
+  // reclamarMelhor (F11b: filtrado por elegivelParaTarefa) so devolve tarefa de
+  // transporte para um serf; o filtro aqui e so para o compilador estreitar o tipo.
   const bruta = r.state.jobs.tarefas.porId[r.tarefa];
-  const tarefa = bruta?.tipo === 'material-para-obra' ? bruta : undefined;
+  const tarefa = bruta !== undefined && ehTarefaDeTransporte(bruta) ? bruta : undefined;
   const plano = tarefa === undefined ? null : planoDaTarefa(r.state, tarefa, u.id, dados);
   if (tarefa === undefined || plano === null) {
     // o claim ja exigiu um plano; se ele sumiu, devolve a reserva em vez de segurar a tarefa
@@ -178,24 +183,48 @@ function passoIndoEntregar(state: GameState, u: Unidade, dados: GameData): Passo
   return semEventos(comUnidade(state, chegou(andou) ? { ...andou, fsm: 'entregando' } : andou));
 }
 
+/** A entrega numa OBRA: `faltam[m] - 1`. `null` se o destino ja nao e obra ou nao
+ *  pede mais essa mercadoria. A obra nao guarda mercadoria (CONTRATO, state.ts). */
+function entregarMaterial(state: GameState, tarefa: TarefaDeTransporte): PredioEmObra | null {
+  const destino = state.predios.porId[tarefa.destino];
+  if (destino === undefined || destino.estado !== 'obra') return null;
+  const faltam = destino.obra.faltam[tarefa.mercadoria] ?? 0;
+  if (faltam < 1) return null;
+  return { ...destino, obra: { ...destino.obra, faltam: { ...destino.obra.faltam, [tarefa.mercadoria]: faltam - 1 } } };
+}
+
+/** F13 — a entrega numa ESCOLA: o ouro entra na gaveta `entrada`, de onde o treino o
+ *  cobra. `null` se o destino deixou de ser escola completa. */
+function entregarOuro(state: GameState, tarefa: TarefaDeTransporte): PredioCompleto | null {
+  const destino = state.predios.porId[tarefa.destino];
+  if (!ehEscolaCompleta(destino)) return null;
+  const tinha = destino.estoque.entrada[MERCADORIA_DE_OURO] ?? 0;
+  return {
+    ...destino,
+    estoque: { ...destino.estoque, entrada: { ...destino.estoque.entrada, [MERCADORIA_DE_OURO]: tinha + 1 } },
+  };
+}
+
 function passoEntregando(state: GameState, u: Unidade, dados: GameData): Passo {
   const carga = u.fsmData.carga;
   if (carga === undefined) return ficarOcioso(state, u);
   const tarefa = tarefaDoSerf(state, u, 'carregando');
   if (tarefa === null) return semEventos(comecarADevolver(state, u, carga, dados));
 
-  const destino = state.predios.porId[tarefa.destino];
-  const faltam = destino !== undefined && destino.estado === 'obra' ? (destino.obra.faltam[tarefa.mercadoria] ?? 0) : 0;
-  if (destino === undefined || destino.estado !== 'obra' || faltam < 1) {
+  // O destino ainda PEDE? Obra: `faltam`. Escola: a demanda da fila (F13). Se nao pede
+  // mais, a carga volta ao armazem em vez de entrar num predio que nao a quer.
+  const recebida = tarefa.tipo === 'ouro-para-escola'
+    ? (demandaNoDestino(state, tarefa, dados) >= 1 ? entregarOuro(state, tarefa) : null)
+    : entregarMaterial(state, tarefa);
+  if (recebida === null) {
     const l = liberarTarefa(state, tarefa.id, 'destino-completo');
     return { state: comecarADevolver(l.state, u, carga, dados), events: l.events };
   }
 
-  const recebida: PredioEmObra = { ...destino, obra: { ...destino.obra, faltam: { ...destino.obra.faltam, [tarefa.mercadoria]: faltam - 1 } } };
   const concluida = removerTarefa(comPredio(state, recebida), tarefa.id);
   return {
     state: comUnidade(concluida, ocioso(u)),
-    events: [{ type: 'task-completed', tarefa: tarefa.id, obra: tarefa.destino, mercadoria: tarefa.mercadoria }],
+    events: [{ type: 'task-completed', tarefa: tarefa.id, destino: tarefa.destino, mercadoria: tarefa.mercadoria }],
   };
 }
 

@@ -93,7 +93,7 @@ describe('F10 — aceite: 10 stone no armazem, obra pedindo 2 -> obra recebe 2, 
 
   it('duas entregas, dois eventos `task-completed`, nenhum `task-released` (nada falhou)', () => {
     expect(eventos.filter((e) => e.type === 'task-completed')).toHaveLength(2);
-    expect(eventos.filter((e) => e.type === 'task-completed').every((e) => e.type === 'task-completed' && e.obra === 'obra-a' && e.mercadoria === 'stone')).toBe(true);
+    expect(eventos.filter((e) => e.type === 'task-completed').every((e) => e.type === 'task-completed' && e.destino === 'obra-a' && e.mercadoria === 'stone')).toBe(true);
     expect(eventos.filter((e) => e.type === 'task-released')).toEqual([]);
   });
 
