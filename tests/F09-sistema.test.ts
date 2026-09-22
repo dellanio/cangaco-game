@@ -1,7 +1,7 @@
 import { describe, it, expect, afterAll } from 'vitest';
 import { gameData } from '../src/sim/data';
 import { createInitialState } from '../src/sim/state';
-import type { GameEvent, GameState, PredioCompleto, Tarefa } from '../src/sim/state';
+import type { GameEvent, GameState, PredioCompleto, TarefaMaterialParaObra } from '../src/sim/state';
 import type { Command } from '../src/sim/commands';
 import { createRng, nextInt } from '../src/sim/rng';
 import { step } from '../src/sim/tick';
@@ -28,8 +28,12 @@ const serfNo = (i: number): string => {
 const serf1 = serfNo(0);
 const serf2 = serfNo(1);
 
-const tarefasDe = (estado: GameState): Tarefa[] =>
-  estado.jobs.tarefas.ordem.map((id) => estado.jobs.tarefas.porId[id]).filter((t): t is Tarefa => t !== undefined);
+// F11b: so as tarefas de material — 'construir' (fora da escada) nao e o universo destes
+// testes, escritos antes dela existir. gerarTarefas cria construir para toda obra agora.
+const tarefasDe = (estado: GameState): TarefaMaterialParaObra[] =>
+  estado.jobs.tarefas.ordem
+    .map((id) => estado.jobs.tarefas.porId[id])
+    .filter((t): t is TarefaMaterialParaObra => t !== undefined && t.tipo === 'material-para-obra');
 
 const liberacoes = (estado: GameState): Extract<GameEvent, { type: 'task-released' }>[] =>
   estado.events.filter((e): e is Extract<GameEvent, { type: 'task-released' }> => e.type === 'task-released');
@@ -441,7 +445,7 @@ describe('F09 — cenario de carga: muitas obras simultaneas e ninguem reclamand
     let maximo = 0;
     for (let t = 0; t < TICKS; t++) {
       estado = step(estado, []);
-      maximo = Math.max(maximo, estado.jobs.tarefas.ordem.length);
+      maximo = Math.max(maximo, tarefasDe(estado).length); // F11b: metrica e so de material (o que a F09/F10 mediam)
       if (t < 5 || t % 25 === 0) expect(violacoesDeInvariantes(estado), `tick ${t}`).toEqual([]);
     }
     expect(violacoesDeInvariantes(estado)).toEqual([]);
@@ -449,13 +453,20 @@ describe('F09 — cenario de carga: muitas obras simultaneas e ninguem reclamand
     // ninguem reclamou: tudo o que o gerador criou continua aberto, e so ele criou
     expect(tarefasDe(estado).every((t) => t.estado === 'aberta')).toBe(true);
     const esperadas = 20 * (faltam.timber + faltam.stone);
-    expect(estado.jobs.tarefas.ordem).toHaveLength(esperadas);
+    expect(tarefasDe(estado)).toHaveLength(esperadas);
+
+    // F11b: 'construir' e deterministico aqui — laborersMaximosPorObra por obra, criado uma
+    // vez (sem laborer FSM nesta feature para reclamar e sem excesso pro gerador cancelar).
+    // Subtrair isola quanto do contador COMPARTILHADO (proximoId) veio so de material, sem
+    // mudar o `esperadas` que este teste sempre mediu.
+    const construirGeradas = 20 * gameData.construcao.laborersMaximosPorObra;
+    const materiaisGerados = estado.proximoId - idsAntes - construirGeradas;
 
     Object.assign(metricasDeCarga, {
-      obras: 20, ticks: TICKS, tarefasGeradas: estado.proximoId - idsAntes, maximoSimultaneo: maximo,
-      tarefasNoFim: estado.jobs.tarefas.ordem.length,
+      obras: 20, ticks: TICKS, tarefasGeradas: materiaisGerados, maximoSimultaneo: maximo,
+      tarefasNoFim: tarefasDe(estado).length,
     });
-    expect(metricasDeCarga.tarefasGeradas).toBe(esperadas); // nenhum churn: cada tarefa criada uma vez
+    expect(metricasDeCarga.tarefasGeradas, 'churn: alguma tarefa de material foi criada mais de uma vez').toBe(esperadas);
   });
 });
 
@@ -609,7 +620,8 @@ afterAll(() => {
   const finalComGancho = JSON.parse(comGancho.direto) as GameState;
   let noSave = createInitialState(1);
   for (let t = 0; t < 7; t++) noSave = step(noSave, plantarERuar(t));
-  const reclamadasNoSave = Object.values(noSave.jobs.tarefas.porId).filter((t) => t.estado === 'reclamada');
+  const reclamadasNoSave = Object.values(noSave.jobs.tarefas.porId)
+    .filter((t): t is TarefaMaterialParaObra => t.tipo === 'material-para-obra' && t.estado === 'reclamada');
 
   const nivelDoCodigo = gameData.entrega.prioridades.find((p) => p.id === 'material-para-obra');
   gravarEvidencia('F09', {

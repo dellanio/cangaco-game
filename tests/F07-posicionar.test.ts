@@ -67,10 +67,14 @@ describe('F07 — PlaceBlueprint cria uma obra', () => {
     expect(obraDe(depois, ultimoId(depois)).obra.faltam).toEqual({ timber: 77, stone: 88 });
   });
 
-  it('o id e novo e deterministico: p<proximoId>, e proximoId avanca uma vez', () => {
+  it('o id e novo e deterministico: p<proximoId>, e proximoId cobre exatamente o predio + o que o gerador criou', () => {
     const depois = step(inicial, [colocar('quarry', 0, 0)]);
     expect(ultimoId(depois)).toBe(`p${inicial.proximoId}`);
-    expect(depois.proximoId).toBe(inicial.proximoId + 1);
+    // F11b: o mesmo step ja roda gerarTarefas (hoje cria tarefas de construir para a obra
+    // nova; um tipo futuro poderia criar mais). Derivado do estado, nao de um literal — o
+    // contador e compartilhado, mas "1 predio + o que esta no quadro agora" e exato aqui
+    // porque nada foi removido do quadro neste unico tick.
+    expect(depois.proximoId).toBe(inicial.proximoId + 1 + depois.jobs.tarefas.ordem.length);
   });
 
   it('nao emite evento de rejeicao quando aceita', () => {

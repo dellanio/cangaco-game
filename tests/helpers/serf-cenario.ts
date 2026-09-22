@@ -44,8 +44,13 @@ export const faltamDe = (estado: GameState, obraId: string, m = 'stone'): number
   return p?.obra.faltam[m] ?? Number.NaN;
 };
 
+// F11b: so tarefas de MATERIAL contam para "quieto" — 'construir' fica aberta ate o teto
+// para sempre nesta feature (sem FSM de laborer ainda para reclama-la, F11c), entao exigir
+// zero tarefas no total nunca ficaria quieto com uma obra no mapa.
 export const quieto = (e: GameState): boolean =>
-  e.tick > 2 && e.jobs.tarefas.ordem.length === 0 && serfsDoCenario(e).every((id) => fsmDe(e, id) === 'ocioso');
+  e.tick > 2
+  && e.jobs.tarefas.ordem.filter((id) => e.jobs.tarefas.porId[id]?.tipo === 'material-para-obra').length === 0
+  && serfsDoCenario(e).every((id) => fsmDe(e, id) === 'ocioso');
 
 /** Anda ate a condicao valer; falha alto se ela nunca vale. */
 export function ate(inicio: GameState, cond: (e: GameState) => boolean, descricao: string, maximo = 800): GameState {

@@ -91,9 +91,15 @@ export function tarefaConstruirDe(parcial: Partial<TarefaConstruir> & { readonly
   };
 }
 
+/** F11b: `proximoId` sobe para passar do maior `numero` dado, nunca desce. Sem isto, um
+ *  `gerarTarefas` chamado depois (agora sempre cria 'construir' tambem) podia reusar um
+ *  `numero` que a fixture ja escolheu a mao — dois `t<numero>` diferentes colidindo no
+ *  mesmo id, um sobrescrevendo o outro em `porId` e duplicado em `ordem`. */
 export function comTarefas(estado: GameState, tarefas: readonly Tarefa[]): GameState {
+  const maiorNumero = tarefas.reduce((m, t) => Math.max(m, t.numero), 0);
   return {
     ...estado,
+    proximoId: Math.max(estado.proximoId, maiorNumero + 1),
     jobs: {
       tarefas: {
         porId: Object.fromEntries(tarefas.map((t) => [t.id, t])),
