@@ -68,24 +68,32 @@ a feature. Por que não antecipar a F16: a seleção aqui **só reconhece escola
 o painel é específico. A F16 troca `selecao.ts` por seleção genérica e o painel
 genérico passa a hospedar este bloco — nada do que existe aqui vira dívida.
 
-### D2 — os dois motivos, e o que eles não distinguem
+### D2 — os três motivos (decisão do operador)
 
-O estado **permite** separar "ouro a caminho" de "sem ouro", sem campo novo:
+O estado permite separar as **três** causas, sem campo novo, compondo o que já
+existe:
 
-- existe tarefa `'ouro-para-escola'` com `destino` = esta escola → **`'a-caminho'`**;
-- não existe → **`'sem-ouro'`**.
+| Condição, nesta ordem | Motivo |
+|---|---|
+| existe tarefa `'ouro-para-escola'` com `destino` = esta escola | `'a-caminho'` |
+| `!predioLigadoAoArmazem(state, escola)` (F08) | `'sem-estrada'` |
+| caso contrário | `'sem-ouro'` |
 
-O sinal é confiável porque `gerarTarefasDeOuro` (`sim/systems/jobs.ts:209-225`) só
-cria a tarefa quando `origemMaisPerto` acha um armazém com ouro **não reservado** e
-**alcançável por estrada**. Tarefa no quadro = o ouro existe e foi destinado a esta
-escola.
+O primeiro sinal é confiável porque `gerarTarefasDeOuro`
+(`sim/systems/jobs.ts:209-225`) só cria a tarefa quando `origemMaisPerto` acha um
+armazém com ouro **não reservado** e **alcançável por estrada**. Tarefa no quadro =
+o ouro existe e foi destinado a esta escola.
 
-**Limitação a registrar:** `origemMaisPerto` devolve `null` por dois motivos
-diferentes — não há ouro, ou não há rota (a escola não está ligada ao armazém por
-estrada). Os dois caem em `'sem-ouro'` e **leem igual no painel**. Separá-los
-exigiria um seletor novo sobre `estradas.ts`; **fora do escopo da F13b**. Por isso
-o rótulo do tema é neutro ("Esperando dinheiro"), verdadeiro nos dois casos, e não
-"sem dinheiro no armazém", que seria mentira no caso da rota.
+**Por que separar** (razão do operador): as duas causas pedem ações opostas. Sem
+dinheiro é garimpo e metalurgia, minutos de construção; sem estrada é um arrasto de
+dez segundos. Mostrar o mesmo texto nos dois é o defeito da fila parada de novo, em
+menor escala.
+
+`predioLigadoAoArmazem` é derivado na hora (`sim/estradas.ts:225-240`) e
+`selectors.ts` já importa de `pathfinding`, então a camada permite. **Se na
+implementação isto exigir mais do que compor as duas funções, PARE e reporte** — o
+recuo combinado é o rótulo neutro único ("Esperando dinheiro"), que é correto como
+fallback, com a limitação registrada.
 
 ### D3 — o motivo é da FILA, não do item
 
@@ -221,7 +229,7 @@ git commit -m "feat(F13b): predioNoTile, o seletor que responde o clique no mapa
 - Produz, para a Task 5 (`ui/painel-escola.ts`):
 
 ```ts
-export type MotivoDeEspera = 'a-caminho' | 'sem-ouro';
+export type MotivoDeEspera = 'a-caminho' | 'sem-estrada' | 'sem-ouro';
 
 export interface ItemDoPainelDeTreino {
   readonly id: string;
@@ -270,14 +278,20 @@ describe('F13b — painelDaEscola', () => {
     expect(painel.podeEnfileirar).toBe(true);
   });
 
-  it('sem ouro alcançável o item aguardando diz `sem-ouro`', () => {
-    // estado inicial NAO tem estrada: `origemMaisPerto` nao acha rota, nenhuma
-    // tarefa nasce. E o caso que o jogador ve e nao entende (D2).
+  it('sem estrada o item aguardando diz `sem-estrada`, e nao `sem-ouro`', () => {
+    // estado inicial tem ouro no armazem mas NAO tem estrada: as duas causas
+    // pedem acoes opostas, entao nao podem ler igual (D2).
     const semRua = avancar(step(inicial, [pedir(ESCOLA, 'stonemason')]), 3);
     const painel = painelDaEscola(semRua, ESCOLA)!;
     expect(painel.itens.map((i) => [i.estado, i.motivo]))
-      .toEqual([['aguardando', 'sem-ouro']]);
+      .toEqual([['aguardando', 'sem-estrada']]);
     expect(painel.itens[0]!.progresso).toBe(0);
+  });
+
+  it('com estrada e sem ouro no armazém o motivo vira `sem-ouro`', () => {
+    const semOuro = comOuroNoArmazem(comEstradas(inicial, RUAS), ARMAZEM, 0);
+    const pedido = avancar(step(semOuro, [pedir(ESCOLA, 'stonemason')]), 3);
+    expect(painelDaEscola(pedido, ESCOLA)!.itens[0]!.motivo).toBe('sem-ouro');
   });
 
   it('com rua e ouro no armazém o motivo vira `a-caminho`', () => {
@@ -315,14 +329,33 @@ Esperado: FAIL — `painelDaEscola` não existe.
 
 ```ts
 /**
+ * F13b — por que a fila desta escola nao anda (D2). Tres causas, nesta ordem,
+ * porque pedem acoes OPOSTAS do jogador: esperar o carregador, puxar uma
+ * estrada, ou ir atras de dinheiro.
+ *
+ * Nada aqui e campo novo: a tarefa ja esta no quadro (`gerarTarefasDeOuro` so a
+ * cria com ouro nao reservado E rota ate o armazem) e a ligacao e derivada na
+ * hora (`predioLigadoAoArmazem`, F08).
+ */
+function motivoDaEspera(
+  state: GameState, predioId: string, escola: Predio, dados: GameData,
+): MotivoDeEspera | null {
+  if (ouroNecessario(state, predioId, dados) <= 0) return null;
+  const temTarefa = state.jobs.tarefas.ordem.some((id) => {
+    const tarefa = state.jobs.tarefas.porId[id];
+    return tarefa !== undefined
+      && tarefa.tipo === 'ouro-para-escola' && tarefa.destino === predioId;
+  });
+  if (temTarefa) return 'a-caminho';
+  return predioLigadoAoArmazem(state, escola, dados) ? 'sem-ouro' : 'sem-estrada';
+}
+
+/**
  * F13b — tudo que o painel da escola desenha, num objeto so. Mora aqui, e nao
  * em `ui/`, porque `ui/` nao varre estado (CLAUDE.md §3): o painel recebe isto
  * pronto e so escreve DOM.
  *
- * O MOTIVO e da fila, nao do item (D2/D3): `ouroNecessario` e um agregado da
- * escola, e a existencia de uma tarefa `ouro-para-escola` para este destino e o
- * que separa "ja vem" de "nao vem". Ausencia de tarefa tambem cobre "nao ha rota
- * ate o armazem" — os dois leem igual, e o rotulo do tema e neutro por isso.
+ * O MOTIVO e da fila, nao do item (D3): `ouroNecessario` e um agregado da escola.
  */
 export function painelDaEscola(
   state: GameState, predioId: string, dados: GameData = gameData,
@@ -330,13 +363,7 @@ export function painelDaEscola(
   const escola = state.predios.porId[predioId];
   if (!ehEscolaCompleta(escola)) return null;
 
-  const faltaOuro = ouroNecessario(state, predioId, dados) > 0;
-  const temTarefa = state.jobs.tarefas.ordem.some((id) => {
-    const tarefa = state.jobs.tarefas.porId[id];
-    return tarefa !== undefined
-      && tarefa.tipo === 'ouro-para-escola' && tarefa.destino === predioId;
-  });
-  const motivo: MotivoDeEspera | null = !faltaOuro ? null : temTarefa ? 'a-caminho' : 'sem-ouro';
+  const motivo = motivoDaEspera(state, predioId, escola, dados);
   const total = dados.economia.schoolhouse.ticksPorTreino;
 
   const itens = filaDaEscola(state, predioId).map((item) => ({
@@ -392,7 +419,8 @@ git commit -m "feat(F13b): painelDaEscola, com o motivo da espera derivado do es
   "vazio": "Ninguém em treinamento.",
   "treinando": "treinando",
   "naFila": "na fila",
-  "esperandoOuro": "Esperando dinheiro",
+  "semOuro": "Sem dinheiro no armazém",
+  "semEstrada": "Sem estrada até o armazém",
   "ouroACaminho": "Dinheiro a caminho",
   "cancelar": "Cancelar",
   "cancelarItem": "tirar da fila",
@@ -402,8 +430,9 @@ git commit -m "feat(F13b): painelDaEscola, com o motivo da espera derivado do es
 }
 ```
 
-O texto de `esperandoOuro` é **neutro de propósito** (D2): vale tanto para "não há
-ouro" quanto para "não há rota até o armazém".
+Os três textos são **específicos de propósito** (D2): cada um aponta a ação que
+resolve aquele caso. Um rótulo neutro único só volta se a separação se mostrar
+impossível de compor — e aí é parada e reporte, não escolha no meio do caminho.
 
 - [ ] **Step 2: conferir que o dado continua válido**
 
@@ -586,8 +615,9 @@ function nomeDoCivil(id: string): string {
 
 function textoDoMotivo(item: ItemDoPainelDeTreino): string {
   if (item.estado === 'treinando') return `${t.treinando} ${Math.round(item.progresso * 100)}%`;
-  if (item.motivo === 'sem-ouro') return t.esperandoOuro;
   if (item.motivo === 'a-caminho') return t.ouroACaminho;
+  if (item.motivo === 'sem-estrada') return t.semEstrada;
+  if (item.motivo === 'sem-ouro') return t.semOuro;
   return t.naFila;
 }
 
@@ -869,12 +899,15 @@ async function roteiro(ctx) {
   afirmar(fila.length === SLOTS, `a fila no estado deveria ter ${SLOTS} itens, veio ${fila.length}`);
   afirmar(fila.every((i) => i.unidade === tipo), 'a fila deveria ser do tipo clicado');
 
-  // 4. sem rua ate o armazem nao ha tarefa: todo item diz "esperando dinheiro" (D2)
+  // 4. sem rua ate o armazem: o motivo e `sem-estrada`, NAO `sem-ouro` — o
+  //    armazem tem ouro de sobra no estado inicial (D2).
   const motivos = await page.$$eval('#painel-escola [data-slot][data-motivo]',
     (ns) => ns.map((n) => n.dataset.motivo));
-  afirmar(motivos.length === SLOTS && motivos.every((m) => m === 'sem-ouro'),
-    `sem rua todos os itens deveriam dizer sem-ouro, veio ${JSON.stringify(motivos)}`);
-  afirmar((await page.textContent('#painel-escola')).includes(tema.painelEscola.esperandoOuro),
+  afirmar(motivos.length === SLOTS && motivos.every((m) => m === 'sem-estrada'),
+    `sem rua todos os itens deveriam dizer sem-estrada, veio ${JSON.stringify(motivos)}`);
+  afirmar(economia.estadoInicial.estoque.gold > 0,
+    'o cenario so prova a separacao se o armazem TIVER ouro; com 0 os dois casos coincidem');
+  afirmar((await page.textContent('#painel-escola')).includes(tema.painelEscola.semEstrada),
     'o painel deveria mostrar o rotulo do tema, nao o id do motivo');
   afirmar(await page.getAttribute(`#painel-escola [data-treinar="${tipo}"]`, 'aria-disabled') === 'true',
     'com a fila cheia os botoes de treinar deveriam estar aria-disabled');
@@ -952,8 +985,9 @@ git commit -m "feat(F13b): roteiro do painel e a evidencia visual"
 
 - [ ] **Step 1: registrar em `PROGRESS.md`**
 
-Uma seção da F13b com: as quatro decisões (D1-D4), **a limitação da D2 nomeada
-como limitação**, e o que ficou de fora por escopo (seleção genérica e painel de
+Uma seção da F13b com: as quatro decisões (D1-D4), a D2 registrada **como decisão
+do operador**, com o porquê (as causas pedem ações opostas) e com o fallback que
+ele deixou pronto caso a composição não desse, e o que ficou de fora por escopo (seleção genérica e painel de
 prédio qualquer são F16; nenhum outro prédio abre painel).
 
 Separe **verificado** de **hipótese**, como a §6 manda.
@@ -990,9 +1024,9 @@ confirma a fila no estado"* → Task 7, passo 3: clica `[data-treinar]` e lê
 "cancelamento de item" (Task 7, passo 5) e "um botão por tipo de trabalhador"
 (Task 5, `tiposTreinaveis`, derivado de `units.json`).
 
-**Os três pontos do operador.** (1) O motivo derivado está na Task 2, e os **dois**
-casos são distinguíveis sem campo novo — a decisão e o que ela *não* separa estão
-na D2. (2) O seletor mora em `sim/selectors.ts` e o painel não varre estado: a
+**Os três pontos do operador.** (1) O motivo derivado está na Task 2, e as **três**
+causas são distinguíveis sem campo novo, compondo a tarefa no quadro com
+`predioLigadoAoArmazem` (D2) — cada rótulo aponta a ação que resolve aquele caso. (2) O seletor mora em `sim/selectors.ts` e o painel não varre estado: a
 única coisa que `ui/` faz é chamar `painelDaEscola`. (3) A marca de integração já
 está no item; o plano toca `ui/`, `input/` e `render/` só por isso, e `sim/` só
 ganha seletor puro.
