@@ -394,55 +394,67 @@ prédio surge sem clique do jogador.
   **sem leitor**. Aqui o lenhador replanta, e por isso o veio dele é `null`.
   Escolher modo é comando de prédio (GDD §2.3) — F16.
 
-### F15b — Produção: entrega ao armazém e calibração
-- **Escopo**: níveis **6** (`saida-cheia-para-armazem`) e **7**
-  (`excedente-para-armazem`) da escada de `data/delivery.json`; o serf leva a
-  saída do produtor ao armazém e devolve ao armazém a mercadoria parada em prédio
-  que não a pede mais. Cenário longo de calibração.
-- **Aceite**: cenário completo, 3000 ticks. O estoque de stone e timber é maior
-  que zero e cresce monotonicamente enquanto houver rocha e árvore. Nenhum
-  trabalhador em `ocioso` por mais de X ticks consecutivos.
-- **Evidência**: `test-output/F15.json`
-- **Nota (operador)**: a **calibração não sai da Fase A** — ela é o que prova que
-  o jogo tem ritmo, e o aceite da F17 depende dela.
-- **Nota (a calibrar aqui)**: `production.json: quarry.veio.rendimento = 200` é
-  ponto de partida aprovado pelo operador (~55 min de produção contínua na escala
-  2.0 — quase uma partida inteira de uma Quarry, que casa com o original, onde se
-  constroem várias e elas se esgotam). Ver `BALANCE_LOG.md`.
+### F15b-1 — Produção: a escada do produtor (níveis 4, 5, 6 e 7)
+- **Escopo**: níveis **4** (`insumo-producao-parada`), **5**
+  (`insumo-producao-baixa`), **6** (`saida-cheia-para-armazem`) e **7**
+  (`excedente-para-armazem`) da escada de `data/delivery.json`. O serf leva
+  insumo do armazém à gaveta `entrada` de um produtor, leva a gaveta `saida` de
+  um produtor ao armazém, e devolve ao armazém a mercadoria parada em prédio que
+  não a pede mais.
+- **Aceite**: (a) pedreira ocupada e ligada por estrada com `saida > 0` gera
+  tarefa de nível 6 e o stone chega ao armazém; (b) Sawmill sem tronco gera
+  nível 4, Sawmill com estoque parcial gera nível 5, e alimentada por serf o
+  `progresso` dela avança; (c) escola com fila cancelada devolve o ouro ao
+  armazém pelo nível 7 e a gaveta `entrada` fica vazia; (d) nenhuma unidade de
+  mercadoria some nem se duplica no trajeto, e nenhuma invariante do JobBoard é
+  violada em nenhum tick da corrida.
+- **Evidência**: `test-output/F15b-escada.json`
+- **Nota (alargamento de escopo, decisão do operador em 2026-09-23)**: o escopo
+  original desta feature dizia níveis **6 e 7** só. Os níveis **4** e **5**
+  entram junto, e a razão está registrada como o operador a deu: **erro de
+  sequenciamento na escrita da F15** — ela foi escrita pensando em quem
+  *produz*, e passou despercebido que a Sawmill *consome*. Não é escopo
+  alargado por conveniência de quem implementa. O fato que torna o conserto
+  obrigatório aqui: **nada mais na fila é dono dos níveis 4 e 5**, e sem eles
+  nenhuma carga entra na gaveta `entrada` de um produtor — a Sawmill fica em
+  `esperando_insumo` para sempre (F15a, `test-output/F15a.json`,
+  `cenariosControlados.serrariaSemTronco`: 300 ticks, progresso 0). O cenário
+  oráculo do GDD §4.5 (2 Woodcutter's : 1 Sawmill) e o aceite da **F17**
+  ("estoque de timber maior que o inicial") dependem dos quatro níveis.
 - **Nota (D3)**: o nível 6 dispara com **estoque > 0** na gaveta `saida`, não com
   a gaveta cheia. Esperar encher faria de `saida_cheia` o regime permanente, e o
-  GDD §6.2 a descreve como **sinal de gargalo**.
-- **Nota (o `X` do aceite)**: "mais de X ticks" precisa virar número **do dado**,
-  não digitado em `.ts`. Candidato:
-  `delivery.alertaTarefaSemCandidato_segundos` (30 s → 300 ticks), que é o próprio
-  limiar que o dado declara para "isto está parado tempo demais". E "trabalhador"
-  precisa ser lido como **especialista**: serf entre tarefas passa por `ocioso`
-  legitimamente. Decidir com o operador antes de começar.
+  GDD §6.2 a descreve como **sinal de gargalo**. O nome do nível no dado
+  (`saida-cheia-para-armazem`) descreve o sintoma que ele evita, não a condição
+  de disparo.
+- **Nota (D2, urgência fotografada)**: os níveis 4 e 5 são o mesmo pedido com
+  urgência diferente — 4 é "precisa e tem zero", 5 é "tem menos que o alvo". O
+  tipo é decidido na **criação** da tarefa e **nunca muda** depois de `reclamada`
+  ou `carregando`: trocar o tipo com a carga na mão do serf é trocar a tarefa
+  sem devolver a reserva. Só tarefa **aberta** é re-tipada, e de graça, por
+  `abertaVale` → `sanearTarefas` → `gerarTarefas` no mesmo tick.
+- **Nota (D4, decisão do operador)**: o ouro parado na entrada da escola é
+  **resolvido pelo nível 7**, não pela tela. O vazamento se conserta na origem e
+  o HUD continua com **uma regra só** — conta armazéns. A pedra parada na saída
+  de um produtor **não** é distorção: é limitada ao buffer, drenada pelo nível 6,
+  e é pedra que o jogador não pode gastar. **Sem nota de feature de integração;
+  nada de `render/` nem de `ui/` aqui.**
+- **Nota (origem: revisão da F13a)**: há uma janela real em que ouro fica parado
+  na gaveta `entrada` da Schoolhouse: o ouro do segundo item chega enquanto o
+  primeiro treina, e se o jogador cancelar a fila inteira nesse intervalo o ouro
+  fica lá. Não se perde (o próximo `EnqueueTraining` o consome) e, até esta
+  feature, **não** voltava ao armazém — sumia do HUD, que lê
+  `estoqueDosArmazens`. A F13a não trata disso; o aceite dela não fala de
+  cancelamento. É o nível 7 que fecha.
 - **Nota**: **o que o HUD conta está decidido (operador, pós-F10): o estoque dos ARMAZÉNS.** O
   número da barra precisa prever o que o jogador pode gastar, e a estrada (F08) e as obras (F10)
   só tiram de armazém; somar a saída de uma pedreira mostraria pedra que ninguém consegue usar. O
   HUD lê `estoqueDosArmazens` (`sim/selectors.ts`) para **gold, timber e stone**; `estoqueTotal`
   continua para outros usos. **Reservado não é descontado** (a pedra ainda está lá; a prévia da
-  estrada já explica a recusa) e a mercadoria em trânsito, na mão de um serf, não conta. Hoje os dois
-  seletores dão o mesmo número (nenhum prédio produtivo guarda estoque), e o roteiro da F05b é o
-  teste de que a troca não mudou nada visível. **Esta feature** é a primeira em que eles divergem:
-  o teste com uma pedreira de estoque próprio já existe (`tests/F05b-hud-armazens.test.ts`); aqui
-  vale repeti-lo com a produção real. **Fica em aberto para a F20:** o campo **Comida** do HUD
+  estrada já explica a recusa) e a mercadoria em trânsito, na mão de um serf, não conta. O teste
+  com uma pedreira de estoque próprio já existe (`tests/F05b-hud-armazens.test.ts`); aqui vale
+  repeti-lo com a produção real. **Fica em aberto para a F20:** o campo **Comida** do HUD
   continua em `comidaTotal` (que usa `estoqueTotal`) — decidir, quando o Inn existir, se comida
   também é só a dos armazéns.
-- **Nota (origem: revisão da F13a)**: **mesmo assunto da nota acima — o número que o
-  jogador lê contra o que existe.** Há uma janela real em que ouro fica parado na gaveta
-  `entrada` da Schoolhouse: o ouro do segundo item chega enquanto o primeiro treina, e se
-  o jogador cancelar a fila inteira nesse intervalo o ouro fica lá. Não se perde (o
-  próximo `EnqueueTraining` o consome) e **não** volta ao armazém, então some do HUD, que
-  lê `estoqueDosArmazens`. A F13a não trata disso — o aceite dela não fala de
-  cancelamento. Decidir aqui, junto com a divergência dos dois seletores: ou a mercadoria
-  parada em prédio volta por tarefa, ou o HUD passa a distingui-la. Não é balanceamento.
-- **Nota (D4, decisão do operador)**: **resolvido pelo nível 7**, não pela tela. O
-  vazamento se conserta na origem e o HUD continua com **uma regra só** — conta
-  armazéns. A pedra parada na saída de um produtor **não** é distorção: é limitada
-  ao buffer, drenada pelo nível 6, e é pedra que o jogador não pode gastar.
-  **Sem nota de feature de integração; nada de `render/` nem de `ui/` aqui.**
 - **Nota (origem: F09)** — *a primeira linha desta nota está faltando no arquivo;
   preservada literalmente como estava, sem reconstituir o que se perdeu:*
   insumo → produção com estoque baixo, saída cheia → armazém, excedente → armazém):
@@ -450,6 +462,51 @@ prédio surge sem clique do jogador.
   `Tarefa.tipo` e referencia o nível por `id` em `data/delivery.json`. E o
   `alertaTarefaSemCandidato_segundos` (alerta de HUD para tarefa sem candidato) só
   passa a ter consumidor quando existir o alerta — a F09 não o usa.
+- **Nota (contrato que a F20 herda)**: `alvoDeEntrada` (`sim/insumo.ts`) reparte a
+  capacidade da gaveta `entrada` na **proporção da receita**, com a sobra da
+  divisão indo para a mercadoria de maior `entra` (desempate por nome, para ser
+  determinístico). Aqui ela só é exercitada com receitas de **uma** entrada. O
+  primeiro prédio de duas entradas reais (`metallurgists`, `iron_smithy`) é o
+  primeiro teste de verdade dessa regra.
+
+### F15b-2 — Produção: o cenário oráculo e a calibração
+- **Escopo**: o cenário longo do GDD §4.5 (2 Woodcutter's : 1 Sawmill, com serfs
+  entregando), a medição que ele produz e a calibração do `rendimento` do veio.
+  **Mede antes de ajustar**: nenhuma taxa muda sem os números na mão.
+- **Aceite**: cenário completo, 3000 ticks. O **acumulado produzido** de stone e
+  timber é maior que zero e cresce monotonicamente enquanto houver rocha e
+  árvore. Nenhum **especialista** em `ocioso` por mais de
+  `delivery.alertaTarefaSemCandidato_segundos` (30 s → 300 ticks) consecutivos.
+- **Correção do aceite (F15b, decisão do operador em 2026-09-23)**: o texto
+  original dizia "o **estoque** de stone e timber (...) cresce
+  monotonicamente". Está errado, e a razão é estrutural, não de balanceamento:
+  **o saldo do armazém cai de modo legítimo**, porque é de lá que o serf tira o
+  tronco que leva à Sawmill (nível 4/5) e o material que leva à obra (nível 3).
+  Um critério de monotonicidade sobre o saldo reprovaria exatamente o
+  comportamento que esta feature existe para criar. O que cresce
+  monotonicamente é o **acumulado produzido** — a soma de tudo que saiu de um
+  ciclo de produção, que por construção nunca decresce. O `X` do ócio também
+  saiu do limbo: `ticksAlertaTarefaSemCandidato` (300), e **"trabalhador" =
+  especialista** (confirmado pelo operador) — serf e laborer passam por `ocioso`
+  legitimamente entre tarefas.
+- **Evidência**: `test-output/F15.json`
+- **Nota (operador)**: a **calibração não sai da Fase A** — ela é o que prova que
+  o jogo tem ritmo, e o aceite da F17 depende dela.
+- **Nota (a calibrar aqui)**: `production.json: quarry.veio.rendimento = 200` é
+  ponto de partida aprovado pelo operador (~55 min de produção contínua na escala
+  2.0 — quase uma partida inteira de uma Quarry, que casa com o original, onde se
+  constroem várias e elas se esgotam). Ver `BALANCE_LOG.md`.
+- **Nota (como medir o veio, decisão do operador em 2026-09-23)**: **medir com
+  veio curto e extrapolar, declarando a extrapolação como extrapolação.** A
+  aritmética direta (200 × ticks do ciclo) mente, porque pressupõe a pedreira
+  trabalhando sem parar — e a F15a mostrou ela congelando em `saida_cheia` com a
+  gaveta cheia (tick 1116). O tempo real inclui toda espera por serf. **Não
+  gastar 40 mil ticks de CLI nesta sessão**; se o número extrapolado parecer fora
+  de escala com o jogo rodando, aí vale a corrida longa.
+- **Nota (contrato que a F17 herda)**: o cenário `oraculo` de `tools/sim.js` e os
+  números do `BALANCE_LOG.md` são a linha de base do aceite da Fase A. Se as
+  taxas mudarem entre uma coisa e outra, a linha de base morre junto e precisa
+  ser remedida.
 
 ### F16 — Painel de seleção e demolição
 - **Escopo**: clicar em prédio mostra nome, HP ou progresso de obra, ocupante,
