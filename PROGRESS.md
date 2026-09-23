@@ -1282,6 +1282,87 @@ dois tipos que vão para o armazém.** A sonda foi prova do momento, não cobert
 protegida, isso é um item de fila, não um efeito colateral desta sessão.
 
 
+## F17b — Material entregue visível na obra (2026-09-23)
+
+Feature de integração (`render/` + `ui/` na mesma feature, nota escrita no
+BUILD_PLAN **antes** do código). **`src/sim/` não mudou** — exceto a Tarefa 0,
+que é a correção da F16b e tem commit próprio. Plano em
+`docs/planos/F17b-material-na-obra.md`.
+
+### Verificado (comando rodado, evidência aberta)
+
+- `npm run verify` **exit 0**, 866 testes em 51 arquivos (código de saída do
+  comando inteiro, não do `tail` — a lição da F17).
+- `npm run shot -- F17b` **exit 0**, 24 afirmações, 0 erro de console.
+  Evidência em `test-output/F17b-shot.json`.
+- `npm run shot -- F16b` **exit 0** (não-regressão do painel; imagem não aberta,
+  §8).
+- Screenshots abertos com Read: `F17b-2-cheio.png` (os blocos no mapa, tábua
+  cheia) e `F17b-3-painel.png` (`Em obra 4%` / `Material  Tábua 3/3  Pedra 0/2`).
+  Só estes dois.
+- **O medidor enche, medido contra a primeira leitura**: tábua `0/3 → 3/3` em
+  ~150 ticks, teto declarado de 1000. É esta a prova de D3 — sem a assinatura
+  dos `entregue` na chave do diff de `atualizarPredios`, o medidor nasceria
+  correto e congelaria, e uma foto única passaria assim mesmo.
+- Painel e mapa conferidos **um contra o outro** no roteiro: mesma
+  `medidorDaObra`, mesma saída.
+
+### Correção da F16b (Tarefa 0, commit `e014a0c`)
+
+`gaveta()` do seletor filtra `quantidade > 0`, e o `faltam` da obra usava essa
+mesma gaveta: material inteiramente entregue **sumia** e a obra que já recebeu
+toda a tábua ficava idêntica à que nunca pediu tábua. Corrigido com
+`faltamDaObra`, que deriva a lista do **custo** e não das chaves de `faltam`. O
+filtro continua em `gaveta` (sem ele o armazém listaria dezenas de zeros). Isso
+virou infraestrutura do medidor: a ORDEM que o painel usa sai de `dados.faltam`.
+
+### Decisões
+
+- **D3 (a que o operador destacou)** — a assinatura `entregue.join(',')` entra na
+  chave do diff ao lado de `(estado, estágio)`. Entrega não mexe em `hp`, logo
+  não mexe em estágio.
+- **Emenda ao D8** — o plano mandava importar `ordemDasMercadorias` de
+  `render/predios.ts` no painel. Não importei: aquele arquivo lê `sim/data`, e
+  `ui/` não lê `sim/data` de propósito (topo de `menu-build.ts`). A ordem sai de
+  `dados.faltam`, que já vem na ordem de `economia.mercadorias` com uma entrada
+  por material do custo. O custo continua vindo de `opcoesDoMenuBuild`, como o
+  plano pediu. De `render/` o painel importa só `medidor-obra.ts`, que **não tem
+  import nenhum**.
+- **A gaveta "Falta chegar" saiu do painel da obra.** Com o medidor ao lado, a
+  primeira captura mostrou "Tábua 0" logo acima de "Tábua 3/3": duas leituras do
+  mesmo número, uma delas pior. `Pedra 0/2` diz tudo o que `Pedra 2` dizia e
+  ainda dá o denominador. A asserção do roteiro da F16b foi apontada para
+  `[data-gaveta="material"] [data-medidor]`, com o porquê escrito lá; o critério
+  de aceite da F16b no BUILD_PLAN **não** foi tocado. `painelPredio.faltaChegar`
+  saiu do tema por não ter mais consumidor (grep conferido antes).
+- **Tarefas 4 e 5 executadas em ordem trocada** (painel antes do roteiro): a
+  Tarefa 4 afirma `[data-medidor]` no DOM, que só existe depois da Tarefa 5.
+  Na ordem do plano o roteiro nasceria vermelho por dependência, não por defeito.
+- **Ordem da execução**: T0 (`fix(F16b)`), T1+T2, T1b (a escada), T3 (mapa),
+  T5 (painel), T4 (roteiro), T6.
+
+### A escada do serf, por decisão do operador (Tarefa 1b)
+
+A sonda virou `tests/F17b-escada-do-serf.test.ts`, cobertura permanente: montagem
+adversarial (a carga do armazém **mais perto** que a obra, os dois custos saindo
+do A\* real, 0 vs 75), controle sem a obra, e a escolha com os três tipos abertos.
+**Provado que o guarda acusa**: invertendo `material-para-obra`→7 e
+`excedente-para-armazem`→3 em `data/delivery.json`, ele falha com
+`expected 'excedente-para-armazem' to be 'material-para-obra'`; o dado foi
+restaurado e `git diff --stat data/delivery.json` voltou vazio.
+
+### Hipótese, não fato
+
+- **O F09 estourou o timeout de 5 s duas vezes** durante a sessão
+  (`tests/F09-sistema.test.ts:429`), e passou em todas as corridas seguintes.
+  Medido: F09 sozinho 3,50 s na árvore limpa e 3,61 s na minha; suíte inteira
+  20,14–20,82 s morna e 29–30 s fria. **Hipótese**: disputa de cache frio entre
+  workers paralelos contra um orçamento de 5 s apertado num teste de carga, sem
+  relação com esta feature (F09 não chama `painelDoPredio`). Não mexi no
+  timeout, não pulei nem ignorei nada (§10). Se voltar, é item de fila.
+- O `data-cheio="true"` do painel (destaque verde do material completo) é
+  afirmado só pela existência do atributo, não pelo pixel da cor.
+
 ## Perguntas em aberto
 
 _(nenhuma no momento: as três que sobravam foram decididas pelo operador — ver "Ajuste pós-F10".)_

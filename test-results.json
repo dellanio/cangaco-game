@@ -24,5 +24,5 @@
   "F16c-pausar-e-modos": { "passes": true },
   "F16b-painel-selecao": { "passes": true },
   "F17-aceite-fase-a": { "passes": true },
-  "F17b-material-na-obra": { "passes": false }
+  "F17b-material-na-obra": { "passes": true }
 }

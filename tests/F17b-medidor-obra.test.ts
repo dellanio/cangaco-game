@@ -80,6 +80,6 @@ describe('F17b — o funil entrega o custo do dado', () => {
     expect(linhas.map((l) => l.mercadoria)).toEqual(
       gameData.economia.mercadorias.filter((m) => (custo[m] ?? 0) > 0),
     );
-    gravarEvidencia('F17b-medidor', { quarryRecemPosta: linhas });
+    gravarEvidencia('F17b', { quarryRecemPosta: linhas });
   });
 });
