@@ -168,9 +168,23 @@ async function roteiro(ctx) {
     (await page.getAttribute('#painel-predio', 'data-estado-do-predio')) === 'obra',
     'o painel deveria marcar que o predio esta em obra',
   );
+  // A obra recem-posta ainda esta com o chao sendo aplainado, e desde a correcao
+  // do defeito da F16b (achado ao planejar a F17d) e ISSO que o painel escreve:
+  // "Em obra 0%" dizia a mesma coisa aqui e numa obra que ja esperou o
+  // nivelamento inteiro, porque `progresso` e `hp / hpTotal` e `hp` so sobe com o
+  // martelo. O criterio da F16b continua sendo o mesmo — o painel diz, com
+  // rotulo do TEMA, em que pe a obra esta —, so mudou qual rotulo cabe aqui.
   afirmar(
-    (await painel()).includes(tema.painelPredio.emObra),
-    'a obra deveria mostrar o rotulo do tema com o progresso',
+    (await painel()).includes(tema.painelPredio.nivelando),
+    'a obra recem-posta deveria mostrar o rotulo do tema do nivelamento',
+  );
+  afirmar(
+    !(await painel()).includes(tema.painelPredio.emObra),
+    'os dois rotulos sao exclusivos: com o chao sendo aplainado, "Em obra %" nao aparece',
+  );
+  afirmar(
+    await temNoPainel('.linha.nivelamento[data-tiles-totais]'),
+    'a linha do nivelamento deveria trazer o total de tiles para o roteiro afirmar',
   );
   // A F17b trocou a gaveta "Falta chegar" pelo medidor `chegou/total`, que
   // responde a mesma pergunta do aceite da F16b ("o que ainda falta chegar")
