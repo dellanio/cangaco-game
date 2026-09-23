@@ -101,6 +101,11 @@
         padding: 1px 4px; border: 1px solid #3a3226; border-radius: 3px; background: #2a241b;
       }
       #painel-predio .gaveta .vazia { opacity: 0.35; }
+      /* F17b: o medidor de material da obra. Herda `.gaveta`; so o material que
+         ja chegou inteiro ganha destaque, para "falta pedra" saltar aos olhos. */
+      #painel-predio .gaveta.material .item[data-cheio="true"] {
+        border-color: #6f8c3a; color: #cfe08a;
+      }
       #painel-predio .acoes { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
       #painel-predio .acoes .pausado { color: #c9974b; font-size: 12px; }
       /* o unico botao que destroi trabalho: cor propria, e sozinho no rodape */

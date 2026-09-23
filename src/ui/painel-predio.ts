@@ -14,10 +14,15 @@
 // existia — o painel nao inventa um segundo lugar para o mesmo nome.
 import type { GameState } from '../sim/state';
 import type { Command } from '../sim/commands';
-import { painelDaEscola, painelDoPredio } from '../sim/selectors';
+import { opcoesDoMenuBuild, painelDaEscola, painelDoPredio } from '../sim/selectors';
 import type { ItemDeEstoque, PainelDoPredio } from '../sim/selectors';
 import type { Selecao } from '../input/selecao';
 import { desenharSecaoDaEscola, nomeDoCivil } from './painel-escola';
+// A MESMA aritmetica que a cena desenha no mapa (F17b). O arquivo nao tem
+// import nenhum — nem phaser, nem `sim/data` —, entao trazer ele para ca nao
+// abre o caminho que `menu-build.ts` fechou de proposito: `ui/` continua sem
+// ler `sim/data`. Duas contas para o mesmo numero acabariam divergindo.
+import { medidorDaObra } from '../render/medidor-obra';
 import temaSertao from '../../data/theme-sertao.json';
 
 export interface PainelPredio {
@@ -74,10 +79,42 @@ function gaveta(classe: string, rotulo: string, itens: readonly ItemDeEstoque[])
   return div;
 }
 
-function desenharObra(raiz: HTMLElement, dados: PainelDoPredio): void {
+function desenharObra(
+  raiz: HTMLElement, dados: PainelDoPredio, custo: Readonly<Record<string, number>>,
+): void {
   raiz.append(linha('obra', rotulos.emObra, `${Math.round(dados.progresso * 100)}%`));
   const faltam = dados.faltam ?? [];
   raiz.append(gaveta('faltam', rotulos.faltaChegar, faltam));
+
+  // F17b — `chegou/total` por material, INCLUSIVE o que ja completou. A gaveta
+  // acima filtra quantidade 0 (certo para ela: uma gaveta de armazem listaria
+  // dezenas de zeros), entao sozinha ela nao distingue "a pedra ja chegou" de
+  // "esta obra nunca pediu pedra".
+  //
+  // A ORDEM sai de `dados.faltam`, que o seletor ja devolve na ordem de
+  // `economia.mercadorias` e com uma entrada por material do CUSTO (correcao
+  // da F16b, `faltamDaObra`). Derivar dali e o que evita importar a lista de
+  // `render/predios.ts` e arrastar `sim/data` para dentro de `ui/`.
+  const ordem = faltam.map((i) => i.mercadoria);
+  const porMercadoria = Object.fromEntries(faltam.map((i) => [i.mercadoria, i.quantidade]));
+  const bloco = document.createElement('div');
+  bloco.className = 'gaveta material';
+  bloco.dataset.gaveta = 'material';
+  const r = document.createElement('span');
+  r.className = 'rotulo';
+  r.textContent = rotulos.material;
+  bloco.append(r);
+  for (const l of medidorDaObra(porMercadoria, custo, ordem)) {
+    const span = document.createElement('span');
+    span.className = 'item';
+    span.dataset.medidor = l.mercadoria;
+    span.dataset.entregue = String(l.entregue);
+    span.dataset.total = String(l.total);
+    span.dataset.cheio = String(l.entregue >= l.total);
+    span.textContent = `${temaDeMercadorias[l.mercadoria] ?? l.mercadoria} ${l.entregue}/${l.total}`;
+    bloco.append(span);
+  }
+  raiz.append(bloco);
 }
 
 function desenharCompleto(
@@ -166,8 +203,13 @@ export function montarPainelPredio(
     titulo.textContent = nomeDoPredio(dados.tipo);
     raiz.append(titulo);
 
-    if (dados.estado === 'obra') desenharObra(raiz, dados);
-    else desenharCompleto(raiz, dados, emitir);
+    if (dados.estado === 'obra') {
+      // O custo vem do seletor que o menu Build (F06) ja usa, e nao de um import
+      // novo para `sim/data`: `ui/` nao le o dado direto, de proposito (topo de
+      // `menu-build.ts`). Varredura de lista curta, so quando ha obra aberta.
+      const opcao = opcoesDoMenuBuild(estado).find((o) => o.id === dados.tipo);
+      desenharObra(raiz, dados, opcao?.custo ?? {});
+    } else desenharCompleto(raiz, dados, emitir);
 
     // A escola entra como SECAO, e so quando ela existe de fato no estado.
     const escola = dados.estado === 'completo' ? painelDaEscola(estado, dados.predio) : null;
