@@ -84,12 +84,12 @@ function desenharObra(
 ): void {
   raiz.append(linha('obra', rotulos.emObra, `${Math.round(dados.progresso * 100)}%`));
   const faltam = dados.faltam ?? [];
-  raiz.append(gaveta('faltam', rotulos.faltaChegar, faltam));
 
-  // F17b — `chegou/total` por material, INCLUSIVE o que ja completou. A gaveta
-  // acima filtra quantidade 0 (certo para ela: uma gaveta de armazem listaria
-  // dezenas de zeros), entao sozinha ela nao distingue "a pedra ja chegou" de
-  // "esta obra nunca pediu pedra".
+  // F17b — `chegou/total` por material, INCLUSIVE o que ja completou. Isto
+  // SUBSTITUI a gaveta "Falta chegar" da F16b em vez de somar a ela: as duas
+  // respondem a mesma pergunta, e lado a lado o painel escrevia "Tabua 0" logo
+  // acima de "Tabua 3/3" — duas leituras do mesmo numero, uma delas pior.
+  // "Pedra 0/2" diz tudo o que "Pedra 2" dizia, e ainda diz o denominador.
   //
   // A ORDEM sai de `dados.faltam`, que o seletor ja devolve na ordem de
   // `economia.mercadorias` e com uma entrada por material do CUSTO (correcao

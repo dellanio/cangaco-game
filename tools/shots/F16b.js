@@ -172,9 +172,13 @@ async function roteiro(ctx) {
     (await painel()).includes(tema.painelPredio.emObra),
     'a obra deveria mostrar o rotulo do tema com o progresso',
   );
+  // A F17b trocou a gaveta "Falta chegar" pelo medidor `chegou/total`, que
+  // responde a mesma pergunta do aceite da F16b ("o que ainda falta chegar")
+  // sem perder o material que ja completou — e por cima diz o denominador. O
+  // criterio da F16b continua sendo o afirmado aqui; so mudou onde ele se le.
   afirmar(
-    await temNoPainel('[data-gaveta="faltam"] .item'),
-    'a obra recem-posta deveria listar o material que falta chegar',
+    await temNoPainel('[data-gaveta="material"] [data-medidor]'),
+    'a obra recem-posta deveria listar o material de cada tipo que ainda falta chegar',
   );
   afirmar(
     !(await temNoPainel('[data-pausar]')) && !(await temNoPainel('[data-ocupante]')),
