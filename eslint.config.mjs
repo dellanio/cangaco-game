@@ -40,6 +40,17 @@ export default tseslint.config(
     },
   },
   {
+    // Mesmo caso do bloco acima, em bloco proprio para nao dar `document` e
+    // `Image` aos roteiros de screenshot, que nao precisam: derivar-sprites.js
+    // roda em Node (Buffer) e serializa UMA closure para o Chromium, onde
+    // `Image` e `document` sao reais. Escopo de um arquivo so, para nao
+    // esconder um `document` de verdade num script de Node comum.
+    files: ['tools/derivar-sprites.js'],
+    languageOptions: {
+      globals: { Buffer: 'readonly', document: 'readonly', Image: 'readonly' },
+    },
+  },
+  {
     files: ['src/sim/**/*.ts'],
     rules: {
       '@typescript-eslint/no-explicit-any': 'error',
