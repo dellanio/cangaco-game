@@ -27,5 +27,6 @@
   "F17b-material-na-obra": { "passes": true },
   "F17c-buffer-do-astar": { "passes": true },
   "F17f-primeiro-sprite": { "passes": true },
-  "F17d-nivelamento-canteiro": { "passes": true }
+  "F17d-nivelamento-canteiro": { "passes": true },
+  "F17e-estagios-da-obra": { "passes": true }
 }

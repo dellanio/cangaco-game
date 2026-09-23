@@ -1902,6 +1902,94 @@ No enquadramento do roteiro (o mesmo da F16b e da F17b) a obra fica
 bastante para a evidência, e o roteiro afirma sobre número, não pixel. Não
 mexi: mudar geometria de roteiro validado não era escopo desta feature.
 
+## F17e — Estágios visuais da obra: cinco, não três (2026-09-23)
+
+Plano: `docs/planos/F17e-estagios-da-obra.md`. Só `src/render/`, `data/`,
+`assets/` e `tools/` — `src/sim/` não foi tocado, e nem precisou ser: as três
+entradas da fronteira (`hp`, `hpTotal`, "já nivelou") já existiam.
+
+### Verificado
+
+- `npm run verify` — **EXIT=0**. 56 arquivos de teste, 933 testes, typecheck,
+  lint e `validate:data` limpos.
+- `test-output/F17e.json`, aberto com Read. As transições que ele grava, com
+  `hpTotal` vindo do dado: na `quarry` (250) `estrutura → paredes` em `hp=84` e
+  `paredes → cobertura` em `hp=167` (250/3 e 500/3 truncados); na `barracks`
+  (600) em `hp=201` e `hp=401` — as duas fronteiras caindo em inteiro exato, que
+  é onde comparação de float seria sorteio. Com `hp=0`: `marcacao` sem nivelar,
+  `fundacao` depois de nivelado, nos dois tipos.
+- Monotonicidade varrida caso a caso (`hp` de 0 a `hpTotal`, com `nivelada` nos
+  dois valores, nos dois tipos): o estágio nunca anda para trás, e os seis são
+  todos alcançáveis.
+- `npm run shot -- F17e` — **EXIT=0**, 6 capturas, uma por estágio, na ordem
+  `marcacao → fundacao → estrutura → paredes → cobertura → completo`. O roteiro
+  afirma que essa ordem de aparição é igual à lista que a cena publica, não só
+  que os seis apareceram.
+- Abertas com Read (§8, só os dois estágios que não existiam antes desta
+  feature): `screenshots/F17e-4-paredes.png` e `F17e-5-cobertura.png`. O volume
+  cinza de `paredes` ocupa dois terços da altura do footprint; o volume telha de
+  `cobertura` ocupa a altura inteira; o rótulo temático embaixo do nome muda
+  junto ("paredes subindo" / "telhado por fechar"). O footprint inteiro está
+  dentro do canvas nas duas.
+- Não-regressão por código de saída, sem abrir imagem: `F11c`, `F17b`, `F17d`,
+  `F17f`, `F16b` — **EXIT=0** em todos.
+
+### Decidido
+
+- **Os limiares são constantes nomeadas em `estagio-obra.ts`**, não dado
+  (decisão do operador registrada no BUILD_PLAN). Escritos em aritmética
+  **inteira** — `hp * PARTES <= hpTotal * k` —, nunca como fração de float.
+- **`nivelada` é o terceiro argumento obrigatório**, e a cena passou a calcular o
+  canteiro **antes** do estágio: a fronteira `marcacao`/`fundacao` é a única das
+  seis que olha o terreno em vez do `hp`.
+- **Uma lista só nomeia os seis** (`ORDEM_DOS_ESTAGIOS`). Dela saem a
+  monotonicidade do teste, o contador do debug (`contagemDeEstagios()`, um
+  `Record` completo) e `obrasRenderizadas` (`filter(estaEmObra).reduce`).
+  Acrescentar um estágio à união quebra a compilação em três pontos, incluindo a
+  indexação do tema sob o type guard — e não silenciosamente na tela.
+- **Tarefa 1 saiu num commit só** (função + teste + debug + cena + tema +
+  `tools/shots/F11c.js`): o terceiro argumento é obrigatório e a união mudou de
+  tamanho, então o typecheck só volta ao verde quando todos acompanham. O
+  roteiro da F11c entrou aí, e não no fim, porque é essa mudança que altera a
+  forma do record que ele afirma.
+- **A asserção do F11c ficou mais estrita, não só diferente**: o helper `so()`
+  exige as contagens esperadas **e** zero em todo o resto, inclusive num estágio
+  que ainda não exista. O `JSON.stringify` do record inteiro só comparava a lista
+  de então.
+- **A chave `madeira` do manifesto virou `estrutura`**, apontando para o **mesmo
+  PNG**. Sem isso a arte do meio do armazém ficaria órfã: declarada no manifesto,
+  desenhada em lugar nenhum. A base versionada sempre se chamou
+  `armazem_02_estrutura.png` — o nome que o operador deu à arte é o nome do
+  estágio novo. Nenhum PNG foi tocado, gerado ou baixado (§9).
+- **O arquivo derivado continua `storehouse_madeira.png`**: `manifesto.ts` é
+  explícito em não parsear nome de arquivo; quem mapeia estágio → arquivo é o
+  campo `estados`. Renomear moveria binário no git sem ganho.
+- **`paredes` e `cobertura` não têm arte e caem no retângulo daquele estágio.**
+  O teste da F17f agora prova isso diretamente, no lugar do estágio fictício que
+  ele usava — herdar o sprite do estágio vizinho mentiria sobre o progresso.
+- **O placeholder ganhou silhueta por estágio** sem uma linha de arte: contorno
+  vazado do lote sempre, volume em três patamares de altura ancorado no pé do
+  footprint, uma cor por camada. `marcacao` é o único sem volume.
+
+### Enquadramento: a observação do BALANCE_LOG, agora com número
+
+O roteiro **mede** o footprint contra o canvas antes da primeira foto, e a medida
+fica em `test-output/F17e-shot.json`. Com a folga de 1 tile que a F11c usa, a
+obra ficava **2 px fora do canvas à direita** (`sobra.direita: -2`) — a última
+coluna do footprint saía do quadro. A observação do operador estava certa, e a
+causa medida é recorte na borda do canvas, não sobreposição do painel
+`#painel-predio`.
+
+Dois px não atrapalhavam um retângulo único; atrapalham uma foto que existe para
+mostrar a silhueta do estágio. **A obra deste roteiro ficou encostada na escola**
+(sem o tile de folga), e a sobra passou a 62 px, com o footprint inteiro no
+quadro nas seis capturas.
+
+Os roteiros já validados (F16b, F17b, F17d) **não** foram reenquadrados: eles
+afirmam sobre número e passam; refazer geometria validada não era escopo desta
+feature. O item do BALANCE_LOG continua aberto — o que esta feature entregou foi
+a medida, não o ajuste geral.
+
 ## Perguntas em aberto
 
 _(nenhuma no momento: as três que sobravam foram decididas pelo operador — ver "Ajuste pós-F10".)_

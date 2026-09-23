@@ -114,6 +114,15 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   | medido, `test-output/F17.json`. Registrado porque a leitura ingênua ("a vila levou 5 min para produzir
   madeira") é falsa: a vila produziu a primeira tábua em 2,5 min; os outros 2,8 min foram pagar as plantas.
 
+- [2026-09-23] **o enquadramento dos roteiros poe a obra parcialmente ATRAS do painel "Construir"**: foi validado
+  na F16b, quando a obra era um retangulo simples e a sobreposicao nao escondia informacao nenhuma. Depois disso
+  a obra ganhou o medidor de material (F17b) e o canteiro de nivelamento (F17d), e a F17e acrescenta cinco
+  estagios visuais — o mesmo canto da tela passou a carregar quatro leituras em vez de uma.
+  | nao e numero: e a geometria do cenario dos roteiros (posicao das plantas em relacao ao painel lateral)
+  | tools/shots/F16b.js, tools/shots/F17b.js, tools/shots/F17d.js
+  | **se a F17e precisar mostrar os seis estagios num screenshot, o enquadramento e o primeiro lugar a olhar.**
+  Observacao do operador a partir do que relatei ao fechar a F17d; a evidencia ate aqui afirma sobre NUMERO
+  (dataset e `window.__cangaco`), nao sobre pixel, entao nenhum aceite escrito depende da sobreposicao hoje.
 
 ---
 
