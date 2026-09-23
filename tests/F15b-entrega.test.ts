@@ -16,7 +16,9 @@ import { gerarTarefas, sanearTarefas } from '../src/sim/systems/jobs';
 import { gameData } from '../src/sim/data';
 import { createInitialState } from '../src/sim/state';
 import { step } from '../src/sim/tick';
-import { comOuroNaEscola, escolaDoCenario, pedir } from './helpers/escola-cenario';
+import {
+  avancarAte, comOuroNaEscola, escolaDoCenario, ouroNaEscola, pedir,
+} from './helpers/escola-cenario';
 import { violacoesDeInvariantes } from './helpers/jobs-invariantes';
 import {
   armazemDoCenario, comEstradas, comTarefas, comUnidadeExtra, linhaH,
@@ -24,7 +26,8 @@ import {
 import { demandaNoDestino, disponivelNaOrigem, reservadoNaOrigem } from '../src/sim/reservas';
 import { demandaDeInsumo } from '../src/sim/insumo';
 import {
-  cenarioDePedreira, cenarioDeSerraria, comEntrada, comSaida, semEstrada,
+  cenarioDePedreira, cenarioDeSerraria, comEntrada, comSaida, entradaDe, saidaDe, semAUnidade,
+  semEstrada, semOcupante,
 } from './helpers/producao-cenario';
 
 const CAPACIDADE_DA_ENTRADA = gameData.producao.estoqueInternoPorPredio.entrada;
@@ -411,5 +414,113 @@ describe('F15b — nivel 7: o excedente volta', () => {
   it('o armazem nunca e origem de tarefa de excedente (nao devolve a si mesmo)', () => {
     const s = gerarTarefas(comEntrada(ligado(), armazem, { stone: 5 }));
     expect(tarefasDoTipo(s, 'excedente-para-armazem')).toEqual([]);
+  });
+});
+
+/**
+ * F15b-1, Tarefa 5 — a viagem em si: de qual gaveta o serf TIRA e em qual ele
+ * POE. Pelo caminho real (`step`), como a F13a: o que se afirma aqui e o efeito
+ * no estoque, nao a chamada de uma funcao privada.
+ *
+ * Os produtores entram SEM OCUPANTE de proposito: um pedreiro produzindo cria
+ * pedra do veio e uma serraria consome tronco, e nenhuma das duas coisas e
+ * conservacao — com o predio parado, tudo que muda no estoque foi o serf que
+ * moveu, e e isso que o teste quer ver.
+ */
+describe('F15b — o serf coleta da gaveta do tipo e entrega no destino do tipo', () => {
+  const escola = escolaDoCenario(createInitialState(1)).id;
+  const ligado = (): GameState => comEstradas(createInitialState(1), linhaH(29, 36, 33));
+
+  const ateEntregarEm = (s: GameState, destino: string, limite = 400): GameState =>
+    avancarAte(s, (e) => e.events.some((ev) => ev.type === 'task-completed' && ev.destino === destino), limite);
+
+  /** Todo o estoque de uma mercadoria no mapa: as duas gavetas de todo predio
+   *  completo, mais o que esta no ombro de alguem. */
+  const totalNoMundo = (s: GameState, mercadoria: string): number => {
+    let total = 0;
+    for (const id of s.predios.ordem) {
+      const p = s.predios.porId[id];
+      if (p?.estado !== 'completo') continue;
+      total += (p.estoque.entrada[mercadoria] ?? 0) + (p.estoque.saida[mercadoria] ?? 0);
+    }
+    for (const id of s.unidades.ordem) if (s.unidades.porId[id]?.fsmData.carga === mercadoria) total += 1;
+    return total;
+  };
+
+  /** Parar o produtor e tirar o ESPECIALISTA do mapa, nao so a posse: solto, ele
+   *  reclama a tarefa `ocupar` que o quadro gera e volta a produzir no tick
+   *  seguinte — e ai o insumo recem-entregue some no ciclo (a producao roda
+   *  depois dos serfs, como a escola na F13a). */
+  const pedreiraParada = (): GameState => comUnidadeExtra(
+    semAUnidade(semOcupante(comSaida(pedreira, 'q1', { stone: 3 }), 'q1'), 'u1'),
+    'serf-a', TIPO_QUE_CARREGA, 29, 33,
+  );
+
+  const serrariaParada = (): GameState => comUnidadeExtra(
+    semAUnidade(semOcupante(comArmazemServido(base, { tree_trunk: 4 }), 's1'), 'u2'),
+    'serf-a', TIPO_QUE_CARREGA, 31, 33,
+  );
+
+  it('nivel 6: tira da SAIDA da pedreira e poe na SAIDA do armazem', () => {
+    const cenario = pedreiraParada();
+    const noArmazem = saidaDe(cenario, armazem).stone ?? 0;
+    const fim = ateEntregarEm(cenario, armazem);
+
+    expect(saidaDe(fim, 'q1').stone ?? 0).toBe(2);
+    expect(saidaDe(fim, armazem).stone ?? 0).toBe(noArmazem + 1);
+    expect(entradaDe(fim, 'q1').stone ?? 0).toBe(0); // nao passou pela gaveta errada
+    expect(entradaDe(fim, armazem).stone ?? 0).toBe(0);
+  });
+
+  it('nivel 4: tira da SAIDA do armazem e poe na ENTRADA da serraria', () => {
+    const cenario = serrariaParada();
+    const noArmazem = saidaDe(cenario, armazem).tree_trunk ?? 0;
+    const fim = ateEntregarEm(cenario, 's1');
+
+    expect(entradaDe(fim, 's1').tree_trunk ?? 0).toBe(1);
+    expect(saidaDe(fim, 's1').tree_trunk ?? 0).toBe(0);
+    expect(saidaDe(fim, armazem).tree_trunk ?? 0).toBe(noArmazem - 1);
+  });
+
+  it('nivel 7: tira da ENTRADA da escola e poe na SAIDA do armazem', () => {
+    const cenario = comOuroNaEscola(ligado(), escola, 1);
+    const noArmazem = saidaDe(cenario, armazem)[MERCADORIA_DE_OURO] ?? 0;
+    const fim = ateEntregarEm(cenario, armazem);
+
+    expect(ouroNaEscola(fim, escola)).toBe(0);
+    expect(saidaDe(fim, armazem)[MERCADORIA_DE_OURO] ?? 0).toBe(noArmazem + 1);
+  });
+
+  it('nenhuma unidade de mercadoria some nem se duplica no trajeto', () => {
+    const casos = [
+      { cenario: pedreiraParada(), destino: armazem, mercadoria: 'stone' },
+      { cenario: serrariaParada(), destino: 's1', mercadoria: 'tree_trunk' },
+      { cenario: comOuroNaEscola(ligado(), escola, 1), destino: armazem, mercadoria: MERCADORIA_DE_OURO },
+    ];
+    for (const { cenario, destino, mercadoria } of casos) {
+      const fim = ateEntregarEm(cenario, destino);
+      expect(totalNoMundo(fim, mercadoria)).toBe(totalNoMundo(cenario, mercadoria));
+    }
+  });
+
+  it('entregue, a tarefa sai do quadro e o serf volta a ocioso', () => {
+    const casos = [
+      { cenario: pedreiraParada(), destino: armazem, tipo: 'saida-cheia-para-armazem' as const },
+      { cenario: serrariaParada(), destino: 's1', tipo: 'insumo-producao-parada' as const },
+      { cenario: comOuroNaEscola(ligado(), escola, 1), destino: armazem, tipo: 'excedente-para-armazem' as const },
+    ];
+    for (const { cenario, destino, tipo } of casos) {
+      const fim = ateEntregarEm(cenario, destino);
+      const entregue = fim.events.find((ev) => ev.type === 'task-completed' && ev.destino === destino);
+      expect(entregue).toBeDefined();
+      const id = entregue?.type === 'task-completed' ? entregue.tarefa : '';
+      expect(fim.jobs.tarefas.porId[id]).toBeUndefined();
+      // quem carregava aquela tarefa esta ocioso ou ja pegou a proxima — o que
+      // nao pode e continuar com a carga da tarefa que saiu do quadro
+      expect(fim.unidades.ordem
+        .map((uid) => fim.unidades.porId[uid])
+        .filter((u) => u?.fsmData.tarefa === id)).toEqual([]);
+      expect(tarefasDoTipo(fim, tipo).every((t) => t.id !== id)).toBe(true);
+    }
   });
 });

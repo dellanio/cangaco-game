@@ -29,7 +29,7 @@
 import type {
   GameEvent, GameState, Predio, PredioCompleto, PredioEmObra, Tarefa, TarefaDeTransporte, Unidade,
 } from '../state';
-import { ehTarefaDeTransporte, MERCADORIA_DE_OURO } from '../state';
+import { ehTarefaDeTransporte, gavetaDeOrigem, MERCADORIA_DE_OURO } from '../state';
 import { ID_DO_ARMAZEM } from '../state';
 import type { GameData } from '../data/types';
 import { gameData } from '../data';
@@ -130,8 +130,11 @@ function passoCarregando(state: GameState, u: Unidade, dados: GameData): Passo {
   const tarefa = tarefaDoSerf(state, u, 'reclamada');
   if (tarefa === null) return ficarOcioso(state, u);
 
+  // F15b — de qual gaveta o serf tira vem do TIPO da tarefa, nao mais de
+  // "sempre a saida": no nivel 7 a carga esta presa na gaveta `entrada`.
+  const gaveta = gavetaDeOrigem(tarefa.tipo);
   const origem = state.predios.porId[tarefa.origem];
-  if (origem === undefined || origem.estado !== 'completo' || (origem.estoque.saida[tarefa.mercadoria] ?? 0) < 1) {
+  if (origem === undefined || origem.estado !== 'completo' || (origem.estoque[gaveta][tarefa.mercadoria] ?? 0) < 1) {
     const l = liberarTarefa(state, tarefa.id, 'origem-sem-recurso');
     return ficarOcioso(l.state, u, l.events);
   }
@@ -144,7 +147,10 @@ function passoCarregando(state: GameState, u: Unidade, dados: GameData): Passo {
 
   const semUma: PredioCompleto = {
     ...origem,
-    estoque: { ...origem.estoque, saida: { ...origem.estoque.saida, [tarefa.mercadoria]: (origem.estoque.saida[tarefa.mercadoria] ?? 0) - 1 } },
+    estoque: {
+      ...origem.estoque,
+      [gaveta]: { ...origem.estoque[gaveta], [tarefa.mercadoria]: (origem.estoque[gaveta][tarefa.mercadoria] ?? 0) - 1 },
+    },
   };
   const carregada = marcarCarregando(comPredio(state, semUma), tarefa.id);
   return semEventos(comUnidade(carregada, {
@@ -205,17 +211,65 @@ function entregarOuro(state: GameState, tarefa: TarefaDeTransporte): PredioCompl
   };
 }
 
+/** F15b — a entrega num PRODUTOR (niveis 4 e 5): o insumo entra na gaveta
+ *  `entrada`, de onde `producao.ts` o cobra no inicio do ciclo. `null` se o
+ *  destino deixou de ser predio completo. */
+function entregarInsumo(state: GameState, tarefa: TarefaDeTransporte): PredioCompleto | null {
+  const destino = state.predios.porId[tarefa.destino];
+  if (destino === undefined || destino.estado !== 'completo') return null;
+  const tinha = destino.estoque.entrada[tarefa.mercadoria] ?? 0;
+  return {
+    ...destino,
+    estoque: { ...destino.estoque, entrada: { ...destino.estoque.entrada, [tarefa.mercadoria]: tinha + 1 } },
+  };
+}
+
+/** F15b — o deposito num ARMAZEM: a mercadoria entra na gaveta `saida`, de onde
+ *  os serfs retiram. E o MESMO gesto da devolucao de carga e da entrega dos
+ *  niveis 6 e 7 — uma funcao so, para as duas nao divergirem. `null` se o predio
+ *  deixou de ser armazem completo. */
+function depositarNoArmazem(state: GameState, predioId: string, mercadoria: string): PredioCompleto | null {
+  const destino = state.predios.porId[predioId];
+  if (destino === undefined || destino.estado !== 'completo' || destino.tipo !== ID_DO_ARMAZEM) return null;
+  return {
+    ...destino,
+    estoque: { ...destino.estoque, saida: { ...destino.estoque.saida, [mercadoria]: (destino.estoque.saida[mercadoria] ?? 0) + 1 } },
+  };
+}
+
+/**
+ * Onde a carga entra, por TIPO de tarefa — a irma de `gavetaDeOrigem` do outro
+ * lado da viagem, e exaustiva como ela: um tipo novo sem lugar de entrega nao
+ * compila. `null` quer dizer "o destino nao recebe", e o serf devolve ao
+ * armazem em vez de largar a carga num predio que nao a quer.
+ *
+ * Os tipos que tem DEMANDA variavel (a fila da escola, a gaveta do produtor)
+ * sao conferidos contra `demandaNoDestino` antes: a fila pode ter encolhido
+ * enquanto o serf andava.
+ */
+function destinoQueRecebe(state: GameState, tarefa: TarefaDeTransporte, dados: GameData): Predio | null {
+  switch (tarefa.tipo) {
+    case 'material-para-obra':
+      return entregarMaterial(state, tarefa);
+    case 'ouro-para-escola':
+      return demandaNoDestino(state, tarefa, dados) >= 1 ? entregarOuro(state, tarefa) : null;
+    case 'insumo-producao-parada':
+    case 'insumo-producao-baixa':
+      return demandaNoDestino(state, tarefa, dados) >= 1 ? entregarInsumo(state, tarefa) : null;
+    case 'saida-cheia-para-armazem':
+    case 'excedente-para-armazem':
+      return depositarNoArmazem(state, tarefa.destino, tarefa.mercadoria);
+  }
+}
+
 function passoEntregando(state: GameState, u: Unidade, dados: GameData): Passo {
   const carga = u.fsmData.carga;
   if (carga === undefined) return ficarOcioso(state, u);
   const tarefa = tarefaDoSerf(state, u, 'carregando');
   if (tarefa === null) return semEventos(comecarADevolver(state, u, carga, dados));
 
-  // O destino ainda PEDE? Obra: `faltam`. Escola: a demanda da fila (F13). Se nao pede
-  // mais, a carga volta ao armazem em vez de entrar num predio que nao a quer.
-  const recebida = tarefa.tipo === 'ouro-para-escola'
-    ? (demandaNoDestino(state, tarefa, dados) >= 1 ? entregarOuro(state, tarefa) : null)
-    : entregarMaterial(state, tarefa);
+  // O destino ainda PEDE, e onde ele recebe? Os dois vem do TIPO da tarefa.
+  const recebida = destinoQueRecebe(state, tarefa, dados);
   if (recebida === null) {
     const l = liberarTarefa(state, tarefa.id, 'destino-completo');
     return { state: comecarADevolver(l.state, u, carga, dados), events: l.events };
@@ -246,11 +300,10 @@ function passoDevolvendo(state: GameState, u: Unidade, dados: GameData): Passo {
   const destino = andou.fsmData.armazem === undefined ? undefined : state.predios.porId[andou.fsmData.armazem];
   if (!chegou(andou) || destino === undefined || destino.estado !== 'completo') return semEventos(comUnidade(state, andou));
 
-  // chegou: deposita na `saida`, de onde os serfs retiram
-  const guardada: PredioCompleto = {
-    ...destino,
-    estoque: { ...destino.estoque, saida: { ...destino.estoque.saida, [carga]: (destino.estoque.saida[carga] ?? 0) + 1 } },
-  };
+  // chegou: deposita na `saida`, de onde os serfs retiram — o mesmo gesto dos
+  // niveis 6 e 7 (`depositarNoArmazem`)
+  const guardada = depositarNoArmazem(state, destino.id, carga);
+  if (guardada === null) return semEventos(comUnidade(state, andou)); // deixou de ser armazem: segue segurando
   return {
     state: comUnidade(comPredio(state, guardada), ocioso(u)),
     events: [{ type: 'cargo-returned', unidade: u.id, armazem: destino.id, mercadoria: carga }],

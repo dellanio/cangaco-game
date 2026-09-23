@@ -24,7 +24,7 @@ import type { TileDeGrid } from './estradas';
 import { obraTrabalhavel } from './obra';
 import { buscarCaminho } from './pathfinding';
 import type { Caminho } from './pathfinding';
-import { disponivelNaOrigem, vagaDeConstrucao, vagaDeOcupacao, vagaDoDestino } from './reservas';
+import { sobraNaOrigem, vagaDeConstrucao, vagaDeOcupacao, vagaDoDestino } from './reservas';
 import { predioAceita } from './ocupacao';
 
 /**
@@ -372,7 +372,12 @@ export function reclamar(
   if (unidadeJaTemTarefa(state, unidadeId)) return { ok: false, motivo: 'unidade-ocupada' };
 
   if (ehTarefaDeTransporte(tarefa)) {
-    if (disponivelNaOrigem(state, tarefa.origem, tarefa.mercadoria) < 1) {
+    // F15b — a oferta da origem depende do TIPO: a gaveta muda (nivel 7 tira da
+    // `entrada`) e no nivel 7 o que se pode levar e o EXCEDENTE, nao o estoque
+    // bruto. `sobraNaOrigem` e a mesma conta que `sanearTarefas` usa; perguntar
+    // aqui por `disponivelNaOrigem` da gaveta `saida` deixava o serf recusar
+    // para sempre uma tarefa que o quadro insistia em criar.
+    if (sobraNaOrigem(state, tarefa, dados) < 1) {
       return { ok: false, motivo: 'origem-sem-recurso' };
     }
     // A vaga depende do TIPO: `faltam` numa obra, a demanda da fila numa escola (F13).
