@@ -109,6 +109,28 @@ export type GameEvent =
       readonly predio: string;
       readonly unidade: string;
       readonly tipo: string;
+    }
+  | {
+      /**
+       * F15a — um ciclo de producao terminou e a mercadoria caiu na gaveta
+       * `saida` do predio. Um evento por mercadoria: uma receita pode render
+       * duas (swine_farm: pig + skin).
+       */
+      readonly type: 'goods-produced';
+      readonly predio: string;
+      readonly mercadoria: string;
+      readonly quantidade: number;
+    }
+  | {
+      /**
+       * F15a — o veio deste predio deixou de render um ciclo inteiro. Sai UMA
+       * vez, no tick do ultimo deposito. Dali em diante o ocupante fica em
+       * `esperando_insumo` (a rocha e o insumo que nao vem mais) e o alerta
+       * "mina esgotada" da F22 le `producao.veio === 0`.
+       */
+      readonly type: 'vein-exhausted';
+      readonly predio: string;
+      readonly tipo: string;
     };
 
 /**
@@ -183,6 +205,30 @@ export interface PredioCompleto extends PredioBase {
    * tarefa de ocupacao para ele.
    */
   readonly ocupante: string | null;
+  /**
+   * F15a — o relogio do ciclo de producao e o veio. `null` quando o tipo nao tem
+   * receita em `production.json` (armazem, escola, quartel): nao ha o que
+   * representar, e `null` em vez de `{ progresso: 0 }` mantem "nao produz"
+   * irrepresentavel como "produz, parado". Mesmo molde de `ocupante`.
+   */
+  readonly producao: Producao | null;
+}
+
+/**
+ * F15a — o estado de producao de UM predio.
+ *
+ * Um relogio por PREDIO, nao um por mercadoria: a receita ja veio derivada em
+ * ciclo do carregamento (`ReceitaDePredio`), entao um contador basta e o estado
+ * nao ganha um campo por bem produzido.
+ */
+export interface Producao {
+  /** Ticks ja trabalhados no ciclo em curso, de 0 ate `ticksDoCiclo`. Igual a
+   *  `ticksDoCiclo` significa CICLO PRONTO esperando caber na gaveta `saida`. */
+  readonly progresso: number;
+  /** Unidades de saida que o veio ainda rende. `null` = nao esgota (renovavel);
+   *  0 = esgotado. Mora no predio porque nao existe camada de terreno na sim —
+   *  BUILD_PLAN F15a/D2, contrato que a F21 herda. */
+  readonly veio: number | null;
 }
 
 /**
@@ -505,6 +551,17 @@ function capacidadeParaTipo(tipoId: string, dados: GameData): Capacidade {
   return { entrada: null, saida: null };
 }
 
+/**
+ * F15a — o relogio de producao de um predio recem-nascido. `null` quando o tipo
+ * nao tem receita: nao ha o que representar. `tipoId in dados.producao.receitas`
+ * e o mesmo teste de "e produtor" que `capacidadeParaTipo` ja usa para dar
+ * buffer de entrada e saida — os dois andam juntos de proposito.
+ */
+function producaoParaTipo(tipoId: string, dados: GameData): Producao | null {
+  const receita = dados.producao.receitas[tipoId];
+  return receita === undefined ? null : { progresso: 0, veio: receita.rendimentoDoVeio };
+}
+
 function estoqueParaTipo(
   tipoId: string,
   estoqueInicial: Readonly<Record<string, number>>,
@@ -537,6 +594,7 @@ export function completarObra(predio: PredioEmObra, dados: GameData = gameData):
     capacidade: capacidadeParaTipo(predio.tipo, dados),
     estoque: estoqueParaTipo(predio.tipo, {}),
     ocupante: null,
+    producao: producaoParaTipo(predio.tipo, dados),
   };
 }
 
@@ -568,6 +626,7 @@ function criarPredios(
       capacidade: capacidadeParaTipo(p.id, dados),
       estoque: estoqueParaTipo(p.id, dados.economia.estadoInicial.estoque),
       ocupante: null,
+      producao: producaoParaTipo(p.id, dados),
     });
   }
   return { predios: construirColecao(lista), proximoContador: contador };

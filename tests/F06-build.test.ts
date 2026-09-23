@@ -32,7 +32,7 @@ function comPredio(estado: GameState, tipo: string, gx: number, gy: number): Gam
     id, tipo, gx, gy, estado: 'completo', hp: 0,
     capacidade: { entrada: null, saida: null },
     estoque: { entrada: {}, saida: {} },
-    ocupante: null,
+    ocupante: null, producao: null,
   };
   return registrarTipoConstruido({
     ...estado,
