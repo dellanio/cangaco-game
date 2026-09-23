@@ -438,6 +438,17 @@ function validarDevolucaoDeEstrada(dados, erros) {
   }
 }
 
+// F16a: fracao do material JA ENTREGUE que volta ao armazem ao demolir um predio.
+// Irma da regra da estrada acima, e com campo separado de proposito. Fora de [0, 1]
+// a demolicao devolveria mais do que o predio custou (moeda infinita) ou negativo.
+function validarDevolucaoDePredio(dados, erros) {
+  const construcao = dados.buildings && dados.buildings.construcao;
+  const valor = construcao && construcao.devolucaoAoDemolir;
+  if (typeof valor !== 'number' || Number.isNaN(valor) || valor < 0 || valor > 1) {
+    erros.push('predios/construcao: devolucaoAoDemolir precisa ser um numero em [0, 1]');
+  }
+}
+
 // F05b: comida no HUD e um grupo do dado (economy.grupos.comida), mas
 // condition.restauracaoPorComida ja lista as mesmas mercadorias implicitamente
 // (uma chave por comida, para saber quanto ela restaura). Sem esta regra as
@@ -487,6 +498,7 @@ function validarTudo(dados) {
   validarGruposDeComida(dados, erros);
   validarMenuInicialSoRaiz(dados, erros);
   validarDevolucaoDeEstrada(dados, erros);
+  validarDevolucaoDePredio(dados, erros);
   validarEscadaDePrioridade(dados, erros);
   validarPoliticaDeTreino(dados, erros);
   return erros;

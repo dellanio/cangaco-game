@@ -51,3 +51,10 @@ caminho. Ideia boa é justamente a mais perigosa.
   desenho a decidir é de quem parte a iniciativa: o prédio se desocupa sozinho (e vira o quê:
   ruína, prédio vago, demolição automática?) ou o jogador precisa demolir. O original esgota
   pedreiras ao longo da partida, então isto vai acontecer em toda partida longa.
+- Demolir e reconstruir renova o veio da Quarry — achado da F16a (2026-09-23). O veio é semeado
+  em `PredioCompleto.producao.veio` no instante em que a obra vira `completo` (contrato da F15a),
+  então derrubar a pedreira esgotada e reerguer no mesmo tile devolve o veio cheio. O tamanho, que
+  é o que decide: `production.json` dá `quarry.veio.rendimento = 200`, e `devolucaoAoDemolir = 0.5`
+  devolve metade do material — 200 pedras renovadas por meio custo de construção é **exploit, não
+  detalhe**. Não se conserta na F16a: quem decide é a **F21**, se passar o veio para o terreno; a
+  âncora ficou na nota daquele item. Enquanto o veio morar no prédio, o exploit existe.

@@ -123,6 +123,21 @@ export type GameEvent =
     }
   | {
       /**
+       * F16a — o predio saiu do estado por comando do jogador. `tipo` e o do
+       * predio; `devolvido` e o que efetivamente entrou no armazem, por
+       * mercadoria — vazio quando nao havia armazem alcancavel, e e assim que o
+       * render (F16b) sabe se anuncia devolucao ou perda. Quem ouve nao precisa
+       * do estado anterior para isso.
+       */
+      readonly type: 'building-demolished';
+      readonly predio: string;
+      readonly tipo: string;
+      readonly devolvido: Readonly<Record<string, number>>;
+      /** O armazem que recebeu, ou `null` quando a carga se perdeu. */
+      readonly armazem: string | null;
+    }
+  | {
+      /**
        * F15a — o veio deste predio deixou de render um ciclo inteiro. Sai UMA
        * vez, no tick do ultimo deposito. Dali em diante o ocupante fica em
        * `esperando_insumo` (a rocha e o insumo que nao vem mais) e o alerta

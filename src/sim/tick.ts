@@ -4,6 +4,7 @@ import type { GameData } from './data/types';
 import { gameData } from './data';
 import { registrarConclusoes } from './desbloqueio';
 import { aplicarPlaceBlueprint } from './systems/build';
+import { aplicarDemolishBuilding } from './systems/demolicao';
 import { aplicarCancelTraining, aplicarEnqueueTraining, sistemaDasEscolas } from './systems/escolas';
 import { aplicarDemolishRoad, aplicarPlaceRoad } from './systems/estradas';
 import { gerarTarefas, sanearTarefas } from './systems/jobs';
@@ -46,6 +47,12 @@ export function step(
       }
       case 'DemolishRoad': {
         const resultado = aplicarDemolishRoad(atual, command, dados);
+        atual = resultado.state;
+        events.push(...resultado.events);
+        break;
+      }
+      case 'DemolishBuilding': {
+        const resultado = aplicarDemolishBuilding(atual, command, dados);
         atual = resultado.state;
         events.push(...resultado.events);
         break;

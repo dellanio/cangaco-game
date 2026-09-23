@@ -238,10 +238,11 @@ describe('F06 — canPlace', () => {
       expect(r).toEqual({ ok: false, motivo: 'sobreposicao' });
     });
 
-    it('encostado (meio-aberto) pela esquerda, por cima e por baixo: ok', () => {
+    // Encostar PELOS LADOS continua valendo: o meio-aberto e o que separa encostar
+    // de sobrepor. O encosto VERTICAL saiu daqui na F16a — nao virou sobreposicao,
+    // virou `porta-sem-saida`, e esta no describe proprio mais abaixo.
+    it('encostado (meio-aberto) pela esquerda: ok', () => {
       expect(canPlace(inicial, 'quarry', armazem.gx - pedreiraL, armazem.gy)).toEqual({ ok: true });
-      expect(canPlace(inicial, 'quarry', armazem.gx, armazem.gy - pedreiraA)).toEqual({ ok: true });
-      expect(canPlace(inicial, 'quarry', armazem.gx, armazem.gy + armazemA)).toEqual({ ok: true });
     });
 
     it('um tile para dentro do encosto ja e sobreposicao (o limite e exato)', () => {
@@ -269,8 +270,12 @@ describe('F06 — canPlace', () => {
       expect(canPlace(inicial, 'quarry', 0, alturaDoMapa - pedreiraA + 1)).toEqual({ ok: false, motivo: 'fora-do-mapa' });
     });
 
-    it('rente a borda (ultimo tile do footprint e o ultimo do mapa): ok', () => {
-      expect(canPlace(inicial, 'quarry', larguraDoMapa - pedreiraL, alturaDoMapa - pedreiraA)).toEqual({ ok: true });
+    // Rente a borda DIREITA continua ok. Rente a borda de BAIXO nao: a porta cairia
+    // fora do mapa, e o motivo passa a ser `porta-sem-saida` (F16a; o describe proprio
+    // mais abaixo diz por que). Aqui fica so a fronteira do `fora-do-mapa`.
+    it('rente a borda direita, com a linha da porta dentro do mapa: ok', () => {
+      expect(canPlace(inicial, 'quarry', larguraDoMapa - pedreiraL, alturaDoMapa - pedreiraA - 1))
+        .toEqual({ ok: true });
     });
 
     it('o tamanho vem do dado: a mesma posicao muda de resultado com outro footprint', () => {
@@ -282,10 +287,52 @@ describe('F06 — canPlace', () => {
     it('as dimensoes do mapa vem do dado: mapa injetado menor recusa o que o padrao aceita', () => {
       const dados: GameData = {
         ...gameData,
-        terreno: { ...gameData.terreno, mapaPadrao: { largura: pedreiraL, altura: pedreiraA } },
+        // A linha a mais na altura e a PORTA: num mapa com a altura exata do
+        // footprint, nenhum predio cabe, porque a borda sul ficaria fora (F16a).
+        terreno: { ...gameData.terreno, mapaPadrao: { largura: pedreiraL, altura: pedreiraA + 1 } },
       };
       expect(canPlace(inicial, 'quarry', 0, 0, dados)).toEqual({ ok: true });
       expect(canPlace(inicial, 'quarry', 1, 0, dados)).toEqual({ ok: false, motivo: 'fora-do-mapa' });
+    });
+  });
+
+  // A porta (GDD §5.1) e a borda sul: e por ela que entra todo material e sai toda
+  // unidade. Ate a F16a o `canPlace` so olhava footprint contra footprint e aceitava
+  // planta que tapava a porta alheia — com a escola, isso segura para sempre um treino
+  // JA PAGO (medido em `F16a-porta.test.ts`, com a hipotese que a F13a tinha deixado
+  // aberta). Uma regra, um motivo, um lugar: a borda sul precisa estar NO MAPA e LIVRE,
+  // dos dois lados — nem tapar a porta de quem esta de pe, nem nascer sem a propria.
+  describe('porta sem saida (achado da F16a que corrige a F06)', () => {
+    it('tapar a porta de quem ja esta de pe (encostar por baixo)', () => {
+      expect(canPlace(inicial, 'quarry', armazem.gx, armazem.gy + armazemA))
+        .toEqual({ ok: false, motivo: 'porta-sem-saida' });
+    });
+
+    it('nascer com a propria porta coberta pelo vizinho (encostar por cima)', () => {
+      expect(canPlace(inicial, 'quarry', armazem.gx, armazem.gy - pedreiraA))
+        .toEqual({ ok: false, motivo: 'porta-sem-saida' });
+    });
+
+    it('nascer com a propria porta fora do mapa (rente a borda de baixo)', () => {
+      expect(canPlace(inicial, 'quarry', 0, alturaDoMapa - pedreiraA))
+        .toEqual({ ok: false, motivo: 'porta-sem-saida' });
+    });
+
+    // Sem isto o describe provaria so que a funcao recusa, nao que recusa no lugar
+    // certo: um tile de folga em qualquer das tres formas e a mesma planta passa.
+    it('um tile de folga e a mesma planta passa: o limite e exato', () => {
+      expect(canPlace(inicial, 'quarry', 0, alturaDoMapa - pedreiraA - 1)).toEqual({ ok: true });
+      expect(canPlace(inicial, 'quarry', armazem.gx, armazem.gy + armazemA + 1)).toEqual({ ok: true });
+      expect(canPlace(inicial, 'quarry', armazem.gx, armazem.gy - pedreiraA - 1)).toEqual({ ok: true });
+    });
+
+    it('estrada na porta NAO e impedimento — e o caso normal', () => {
+      const porta = [0, 1, 2].map((i) => `${10 + i},12`);
+      const comRua: GameState = {
+        ...inicial,
+        estradas: { ...inicial.estradas, ...Object.fromEntries(porta.map((k) => [k, true as const])) },
+      };
+      expect(canPlace(comRua, 'quarry', 10, 10)).toEqual({ ok: true });
     });
   });
 

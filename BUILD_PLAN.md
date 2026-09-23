@@ -303,7 +303,7 @@ prédio surge sem clique do jogador.
 - **Nota**: **feature de integração** (CLAUDE.md §10): pode tocar `src/ui/`,
   `src/input/` e `src/render/` na mesma feature, porque o painel precisa abrir a
   partir do prédio clicado.
-- **Nota**: a seleção de prédio é da F16. Decidir na sessão da F13b se o painel
+- **Nota**: a seleção de prédio é da F16b. Decidir na sessão da F13b se o painel
   abre por clique próprio (mínimo viável, sem painel genérico) ou pela ponte de
   harness; não antecipar a F16.
 - **Nota (D1, decidido na F13b)**: **clique próprio**, mínimo viável. Com a
@@ -392,7 +392,7 @@ prédio surge sem clique do jogador.
   produz uma.
 - **Nota (D7)**: `modos` do Woodcutter's (`cortar`/`replantar`/`ambos`) continua
   **sem leitor**. Aqui o lenhador replanta, e por isso o veio dele é `null`.
-  Escolher modo é comando de prédio (GDD §2.3) — F16.
+  Escolher modo é comando de prédio (GDD §2.3) — F16c.
 
 ### F15b-1 — Produção: a escada do produtor (níveis 4, 5, 6 e 7)
 - **Escopo**: níveis **4** (`insumo-producao-parada`), **5**
@@ -508,50 +508,128 @@ prédio surge sem clique do jogador.
   taxas mudarem entre uma coisa e outra, a linha de base morre junto e precisa
   ser remedida.
 
-### F16 — Painel de seleção e demolição
-- **Escopo**: clicar em prédio mostra nome, HP ou progresso de obra, ocupante,
-  estoque de entrada e saída, botões pausar e demolir. Demolir devolve parte do
-  material e libera as tarefas ligadas ao prédio.
-- **Aceite**: teste que demole um prédio com tarefa em curso e confirma que
-  nenhuma tarefa órfã sobrou no JobBoard e nenhum serf ficou travado.
-  Screenshot do painel.
-- **Evidência**: `test-output/F16.json` + `screenshots/F16-*.png`
-- **Nota (origem: F14)**: o "ocupante" do painel é `PredioCompleto.ocupante`, um
-  id de unidade ou `null`. É nesta feature que a ocupação ganha evidência
-  visual (o aceite da F16 já pede screenshot; o da F14 não). Demolir prédio
-  ocupado tem que devolver o especialista a `ocioso` — o caminho existe
-  (`passoTrabalhando`, que lê a posse do prédio), mas quem o prova pelo comando
-  real é este item.
-- **Nota**: **a falha "obra demolida com o serf a caminho" foi provada na F10 por
-  injeção**, tirando a obra do estado com um helper de teste (`semOPredio`), porque
-  não existe comando de demolir prédio antes desta feature. A F10 garante o caminho —
-  `sanearTarefas` cancela a tarefa e o serf carregado vai a `devolvendo`, deposita e
-  fica `ocioso` — mas **esta feature repete o teste pelo comando real**, com o serf
-  carregando e com o serf ainda indo buscar, e confirma que a carga voltou ao armazém.
-- **Nota (origem: revisão da F13a)**: **dois casos de teste que esta feature deve cobrir**,
-  os dois só alcançáveis com o comando real de demolir. (1) **Escola demolida com tarefa
-  `ouro-para-escola` já reclamada.** O ramo existe (`motivoDoDestino` em
-  `sim/systems/jobs.ts`) mas é código sem teste: o `destino-sumiu` coberto pela F09 e pela
-  F10 é o ramo de *material*, e o teste da F13a demole a escola sem tarefa no quadro.
-  (2) **Estrada da porta demolida com um item de treino já pago.** Se a porta sul ficar
-  intransitável, `tileDeSaida` devolve `null` e o item pronto segura com o ouro já
-  cobrado (`sim/systems/escolas.ts`). Hoje não acontece, porque o ouro só chega por porta
-  que é estrada — hipótese não confirmada por execução, registrada como tal na F13a. **Se
-  travar, é travamento de regra, não balanceamento, e se resolve aqui**: item pronto sem
-  saída precisa de destino (esperar é aceitável só se a porta puder voltar a existir).
-- **Nota (origem: F13b)**: **contrato herdado.** `src/input/selecao.ts` (só guarda o
-  id do prédio aberto, estado de interface, nunca `GameState`), `predioNoTile`
-  (`sim/selectors.ts`) e o `<aside id="painel-escola">` são o **mínimo** da F13b: a
-  seleção só reconhece schoolhouse e o painel é específico. A seleção genérica desta
-  feature **substitui** a `selecao.ts` e hospeda o bloco da escola como um trecho do
-  painel de prédio qualquer — `painelDaEscola` continua sendo a fonte. O `Esc` é **um
-  só ouvinte** (`src/input/teclado.ts`): larga a ferramenta e fecha o painel; não
-  criar um segundo `keydown` na página.
+### F16a — Demolir prédio (sim)
+- **Escopo**: comando `DemolishBuilding` na união `Command`, devolução do
+  material de construção **e do estoque interno** ao armazém, e a limpeza das
+  tarefas, filas e ocupação pelo saneamento do mesmo tick. Só `src/sim/`.
+- **Aceite**: teste que demole um prédio com tarefa em curso **pelo comando
+  real** e confirma que nenhuma tarefa órfã sobrou no JobBoard e nenhum serf
+  ficou travado.
+- **Evidência**: `test-output/F16a.json`. **Sem screenshot**: esta metade não
+  muda um pixel; o screenshot que o escopo da F16 pedia é da F16b.
+- **Nota (corte da F16 — decisão do operador, 2026-09-23)**: a F16 virou três
+  itens, nesta ordem: **F16a** (demolir, sim) → **F16c** (pausar e modos, sim) →
+  **F16b** (painel, integração). Razão registrada como ele a deu: a metade de
+  `sim/` carrega as duas notas mais delicadas da fila (escola com tarefa de ouro
+  reclamada; estrada da porta com treino já pago), e se a segunda travasse ele
+  queria o travamento numa feature focada. A nota de integração ele autorizaria
+  se a metade de `sim/` fosse trivial; não é. **A F16a e a F16c não tocam
+  `render/`, `ui/` nem `input/` e por isso não levam nota de integração.**
+- **Nota (origem: F10)**: **a falha "obra demolida com o serf a caminho" foi
+  provada na F10 por injeção**, tirando a obra do estado com um helper de teste
+  (`semOPredio`), porque não existe comando de demolir prédio antes desta
+  feature. A F10 garante o caminho — `sanearTarefas` cancela a tarefa e o serf
+  carregado vai a `devolvendo`, deposita e fica `ocioso` — mas **esta feature
+  repete o teste pelo comando real**, com o serf carregando e com o serf ainda
+  indo buscar, e confirma que a carga voltou ao armazém.
+- **Nota (origem: revisão da F13a)**: **dois casos de teste que esta feature deve
+  cobrir**, os dois só alcançáveis com o comando real de demolir. (1) **Escola
+  demolida com tarefa `ouro-para-escola` já reclamada.** O ramo existe
+  (`motivoDoDestino` em `sim/systems/jobs.ts`) mas é código sem teste: o
+  `destino-sumiu` coberto pela F09 e pela F10 é o ramo de *material*, e o teste
+  da F13a demole a escola sem tarefa no quadro. (2) **Estrada da porta demolida
+  com um item de treino já pago.** A hipótese da F13a era que a porta ficaria
+  intransitável e o item pronto seguraria com o ouro já cobrado. **Medida na
+  Tarefa 1 da sessão, antes de escrever qualquer código: a hipótese é falsa.**
+  `tileDeSaida` pergunta por `tileAndavel(..., 'livre')` e estrada não entra
+  nessa conta, então com os três tiles da porta demolidos a unidade nasce
+  normalmente e o ouro não fica preso (`tests/F16a-porta.test.ts`, caso 1a;
+  medição em `test-output/F16a-porta.json`). A via que trava de verdade é a
+  porta coberta por **footprint**, e ela era alcançável porque `canPlace`
+  aceitava a planta ali — é o achado que corrige a F06, na nota abaixo. Com
+  aquela recusa no lugar, o `if (tile === null) continue` de
+  `systems/escolas.ts` vira defesa sem caminho de jogo, não código morto.
+- **Nota (origem: F14)**: demolir prédio **ocupado** tem que devolver o
+  especialista a `ocioso`. O caminho existe — `passoProduzindo`
+  (`sim/systems/especialistas.ts`) lê a posse do prédio; a nota antiga da F16
+  chamava essa função de `passoTrabalhando`, nome que não existe no código — e
+  quem o prova pelo comando real é este item. A **evidência visual** da ocupação
+  (`PredioCompleto.ocupante` no painel) migrou para a F16b, que é quem tem
+  screenshot.
+- **Nota (devolução do estoque interno — decisão do operador, 2026-09-23)**: o
+  estoque das gavetas do prédio demolido vai **integralmente para o armazém
+  completo mais próximo alcançável**; sem armazém alcançável **se perde, e o
+  teste declara esse caso**. É o mesmo que o serf já faz em `devolvendo`. Razão
+  dele: os níveis 6 e 7 da escada existem desde a F15b exatamente para trazer
+  essas mercadorias de volta, então destruir o que o jogador recuperaria
+  esperando um tick pune quem demole rápido — e a conservação de bens é uma das
+  invariantes mais fortes do projeto, que não se troca por simplicidade.
+- **Nota (achado da F16a que corrige a F06 — decisão do operador, 2026-09-23)**:
+  `canPlace` só checa footprint contra footprint, então hoje é possível plantar
+  em cima da **porta** de um prédio existente e deixá-lo sem saída. O buraco é da
+  F06 e a correção vai lá: **`canPlace` recusa posicionamento que cubra a borda
+  sul de um prédio existente, ou que deixe a própria borda sul fora do mapa, com
+  motivo próprio** — uma regra, um motivo, uma checagem ("a borda sul precisa
+  estar no mapa e livre"). A razão que fecha o caso da borda do mapa: prédio
+  colado nela nunca poderá receber entrega, porque não há onde passar a estrada;
+  recusar não é rigor, é impedir que o jogador construa algo que nasce inútil.
+  **Consequência medida, além das duas formas que o operador nomeou**: dois
+  prédios deixam de poder se encostar na VERTICAL, nos dois sentidos — o de
+  baixo cobriria a porta do de cima, e o de cima teria a própria porta coberta.
+  Encostar na horizontal continua valendo. Três casos da F06 foram atualizados
+  por isso (`tests/F06-build.test.ts`), com o motivo escrito ao lado de cada um.
 - **Nota (origem: F12)**: o desbloqueio já está ligado ao `step()` e é
   **permanente** — `registrarConclusoes` só acrescenta a `tiposJaConstruidos`,
-  nunca remove. Demolir o último Woodcutter's **não** re-bloqueia a Sawmill, e isso
-  é decisão registrada (`sim/desbloqueio.ts`, travada por testes da F06). A F16 não
-  precisa de ramo nenhum para desbloqueio.
+  nunca remove. Demolir o último Woodcutter's **não** re-bloqueia a Sawmill, e
+  isso é decisão registrada (`sim/desbloqueio.ts`, travada por testes da F06).
+  Nenhum ramo de desbloqueio é preciso aqui.
+
+### F16c — Pausar e modos (sim)
+- **Escopo**: `pausar` como estado de prédio e os `modos` do Woodcutter's
+  (`cortar`/`replantar`/`ambos`) ganham **campo em `PredioCompleto` e leitor no
+  sistema de produção**, com comandos próprios. Só `src/sim/`.
+- **Aceite**: teste que pausa um prédio em produção e confirma que o ciclo para
+  segundo a semântica decidida, e que despausar retoma sem perder nem duplicar
+  mercadoria; e teste que troca o modo do Woodcutter's e confirma que o
+  comportamento do lenhador acompanha.
+- **Evidência**: `test-output/F16c.json`. Sem screenshot: o botão é da F16b.
+- **Nota (ordem — decisão do operador, 2026-09-23)**: este item vem **antes da
+  F16b**, e não depois, porque o botão pausar está no escopo escrito da F16 e um
+  painel sem ele é entrega pela metade. A F16b monta o botão sobre comando que já
+  existe, em vez de nascer com um buraco.
+- **Nota (origem: F15a, D7)**: `modos` do Woodcutter's continua **sem leitor**
+  desde a F15a; lá o lenhador replanta sempre, e por isso o veio dele é `null`.
+  Escolher modo é comando de prédio (GDD §2.3).
+- **Nota (pergunta em aberto, decidir na abertura da sessão)**: o GDD gasta **uma
+  linha `[geral]`** em pausar (§2.3: "Qualquer prédio: demolir, pausar,
+  ligar/desligar reparo") e não diz a semântica. Prédio pausado congela o relógio
+  do ciclo? para de pedir insumo (some do quadro como destino)? solta o ocupante?
+  **Decidir isso é a primeira coisa desta sessão**, e a decisão entra aqui antes
+  do código — não é decisão da F16a nem da F16b.
+
+### F16b — Painel de seleção e demolição (integração)
+- **Escopo**: clicar em prédio mostra nome, HP ou progresso de obra, ocupante,
+  estoque de entrada e saída, botões pausar e demolir — os dois apoiados em
+  comando que já existe (F16a e F16c).
+- **Aceite**: screenshot do painel de um prédio completo e ocupado, e roteiro que
+  demole por clique e confirma o prédio fora do estado.
+- **Evidência**: `screenshots/F16b-*.png`
+- **Nota**: **feature de integração** (CLAUDE.md §10): pode tocar `src/ui/`,
+  `src/input/` e `src/render/` na mesma feature, porque o painel precisa abrir a
+  partir do prédio clicado e desenhar o que a sim já decide. Autorizada pelo
+  operador em 2026-09-23, escrita aqui **antes do código**. A exceção é **só
+  deste item**: a F16a e a F16c não a herdam.
+- **Nota (origem: F13b)**: **contrato herdado.** `src/input/selecao.ts` (só guarda
+  o id do prédio aberto, estado de interface, nunca `GameState`), `predioNoTile`
+  (`sim/selectors.ts`) e o `<aside id="painel-escola">` são o **mínimo** da F13b: a
+  seleção só reconhece schoolhouse e o painel é específico. A seleção genérica
+  desta feature **substitui** a `selecao.ts` e hospeda o bloco da escola como um
+  trecho do painel de prédio qualquer — `painelDaEscola` continua sendo a fonte.
+  O `Esc` é **um só ouvinte** (`src/input/teclado.ts`): larga a ferramenta e
+  fecha o painel; não criar um segundo `keydown` na página.
+- **Nota (origem: F14)**: o "ocupante" do painel é `PredioCompleto.ocupante`, um
+  id de unidade ou `null`. É nesta feature que a ocupação ganha **evidência
+  visual** — o aceite daqui pede screenshot, o da F14 não pedia.
 
 ### F17 — Aceite da Fase A (integração)
 - **Escopo**: roteiro Playwright que executa a sessão inteira do critério de
@@ -588,6 +666,15 @@ prédio surge sem clique do jogador.
   feature antes da F17 produz uma), **só o inicializador muda**: o rendimento
   passa a ser função dos tiles sob e ao redor do prédio. Nenhum sistema precisa
   mudar para isso acontecer.
+- **Nota (achado da F16a, 2026-09-23)**: enquanto o veio for semeado na
+  **conclusão da obra**, demolir e reconstruir a Quarry sobre o mesmo tile
+  devolve o veio **cheio** por metade do custo de construção
+  (`buildings.construcao.devolucaoAoDemolir = 0.5`). O tamanho:
+  `production.json` dá `quarry.veio.rendimento = 200` — 200 pedras renovadas
+  de graça, não um detalhe. **É esta feature que decide** se o veio passa a ser
+  do terreno; se passar, o exploit some sozinho. A F16a não é dona disso e não
+  mexeu.
+
 ### F22 — Alertas do HUD
 - Prédio sem trabalhador, sem estrada, fome, mina esgotada.
 - **Nota (origem: F15a)**: "mina esgotada" também **nasce pronta**: é

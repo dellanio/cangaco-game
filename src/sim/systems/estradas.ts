@@ -3,6 +3,7 @@ import type { Colecao, GameEvent, GameState, Predio } from '../state';
 import { ID_DO_ARMAZEM } from '../state';
 import type { GameData } from '../data/types';
 import { canPlaceRoad, chaveDeTile, MERCADORIA_DA_ESTRADA } from '../estradas';
+import { devolverMercadorias } from '../deposito';
 import { disponivelNaOrigem } from '../reservas';
 
 export type PlaceRoad = Extract<Command, { readonly type: 'PlaceRoad' }>;
@@ -43,28 +44,15 @@ function debitarPedra(state: GameState, quantidade: number): Colecao<Predio> {
   return { porId, ordem: predios.ordem };
 }
 
-/** Devolve pedra ao PRIMEIRO armazem completo (o mesmo de onde o debito comecaria),
- *  na gaveta `saida`. Sem armazem completo nao ha para onde devolver: nada muda. */
-function devolverPedra(predios: Colecao<Predio>, quantidade: number): Colecao<Predio> {
-  if (quantidade <= 0) return predios;
+/** O PRIMEIRO armazem completo de `predios.ordem` — o mesmo de onde o debito
+ *  comecaria. E o destino da devolucao da estrada, que nao tem porta de onde medir
+ *  distancia; o predio demolido (F16a) tem, e por isso mede (`armazemDeDestino`). */
+function primeiroArmazem(predios: Colecao<Predio>): string | null {
   for (const id of predios.ordem) {
     const predio = predios.porId[id];
-    if (!predio || predio.estado !== 'completo' || predio.tipo !== ID_DO_ARMAZEM) continue;
-    return {
-      porId: {
-        ...predios.porId,
-        [id]: {
-          ...predio,
-          estoque: {
-            ...predio.estoque,
-            saida: { ...predio.estoque.saida, [MERCADORIA_DA_ESTRADA]: (predio.estoque.saida[MERCADORIA_DA_ESTRADA] ?? 0) + quantidade },
-          },
-        },
-      },
-      ordem: predios.ordem,
-    };
+    if (predio && predio.estado === 'completo' && predio.tipo === ID_DO_ARMAZEM) return id;
   }
-  return predios;
+  return null;
 }
 
 /**
@@ -121,5 +109,8 @@ export function aplicarDemolishRoad(state: GameState, comando: DemolishRoad, dad
     if (!remover.has(chave)) estradas[chave] = true;
   }
   const devolvida = Math.floor(remover.size * dados.terreno.estrada.devolucaoAoDemolir);
-  return { state: { ...state, estradas, predios: devolverPedra(state.predios, devolvida) }, events: [] };
+  const predios = devolverMercadorias(
+    state.predios, { [MERCADORIA_DA_ESTRADA]: devolvida }, primeiroArmazem(state.predios),
+  );
+  return { state: { ...state, estradas, predios }, events: [] };
 }

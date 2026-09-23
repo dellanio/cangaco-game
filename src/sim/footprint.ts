@@ -28,6 +28,17 @@ export function caixaDoPredio(predio: Predio, dados: GameData): CaixaEmTiles | n
   return caixaDeTipo(predio.tipo, predio.gx, predio.gy, dados);
 }
 
+/**
+ * A borda sul de uma caixa, como caixa de uma linha: os tiles imediatamente ao
+ * sul do footprint (`y1`). E por ela que tudo entra e sai do predio (GDD §5.1:
+ * "porta ao sul"), e e o que `tilesDaPorta` devolve tile a tile. Devolver caixa,
+ * e nao lista, deixa a pergunta "esta caixa cobre aquela porta?" ser o mesmo
+ * `caixasSeSobrepoem` que ja decide sobreposicao.
+ */
+export function bordaSul(caixa: CaixaEmTiles): CaixaEmTiles {
+  return { x0: caixa.x0, y0: caixa.y1, x1: caixa.x1, y1: caixa.y1 + 1 };
+}
+
 /** Meio-aberto dos dois lados: encostar (`a.x1 === b.x0`) NAO e sobrepor. */
 export function caixasSeSobrepoem(a: CaixaEmTiles, b: CaixaEmTiles): boolean {
   return a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;

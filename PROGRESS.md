@@ -48,7 +48,7 @@
 | **F10** serf | entregar 1 de `m`: `faltam[m] −= 1` **e** `estoque.saida[m] −= 1` no armazém (aceite da F10: obra pedindo 2 stone recebe 2, armazém 10→8) |
 | **F11** laborer | martelar `hp += hpPorMartelada` enquanto `hp < teto`, com `entregues = Σ_m (custo[m] − faltam[m])` e `teto = entregues × hpPorMaterialEntregue`; ao `hp === def.hp` reconstrói como `'completo'` (com `capacidade`/`estoque` do tipo, hoje privados em `state.ts`) |
 | **F12** | ao virar `'completo'`, chama `registrarTipoConstruido`; obra não desbloqueia |
-| **F16** demolir | remove o prédio; devolução = `devolucaoAoDemolir × (custo − faltam)` |
+| **F16a** demolir (feito) | remove o prédio; devolução = `floor(devolucaoAoDemolir × (custo − faltam))` por mercadoria (`entreguesPorMercadoria`, com `faltam = {}` no prédio completo) **mais o estoque interno inteiro**, no armazém completo mais próximo alcançável por estrada; sem armazém alcançável, perde-se |
 | render | estágio visual derivado de `hp` e `def.hp`, sem campo extra |
 
 **Fora do contrato, de propósito:** o **nivelamento**. Sem consumidor hoje, sem
@@ -805,6 +805,106 @@ cenário isolado, onde nada escoa. É mudança de premissa, não afrouxamento.
 Nenhuma taxa foi ajustada (o operador pediu medir antes). Nenhum arquivo de
 `render/`, `ui/` ou `input/` foi tocado — a F15b-1 tem nota explícita de que
 **não** é feature de integração.
+
+## F16a — Demolir prédio (sim)
+
+Plano: `docs/planos/F16a-demolir.md` (aprovado). O operador **partiu a F16 em
+três** e fixou a ordem **F16a (sim) → F16c (pausar e modos, sim) → F16b (painel,
+integração)**. A razão, como ele a deu: a metade de `sim/` carrega as duas notas
+mais delicadas da fila (escola com tarefa de ouro reclamada; estrada da porta com
+treino já pago), e se a segunda travasse ele queria o travamento numa feature
+focada. A nota de integração do §10 está escrita **só no item F16b**, antes do
+código dela; F16a e F16c não tocam `render/`, `ui/` nem `input/` e não a herdam.
+
+### A sonda veio antes do código
+
+A Tarefa 1 foi medir a hipótese da F13a com o comando que já existia
+(`DemolishRoad`), **antes** de escrever `DemolishBuilding`. Resultado:
+
+- **A hipótese é falsa** (verificado, `test-output/F16a-porta.json`). `tileDeSaida`
+  pergunta por `tileAndavel(..., 'livre')` — estrada não entra na conta —, então
+  com os três tiles da porta demolidos a unidade nasce normalmente e o ouro já
+  cobrado não fica preso.
+- **A via que trava de verdade é outra**: a porta coberta por *footprint*. E ela
+  era alcançável pelo jogo, porque `canPlace` só comparava footprint com
+  footprint. A nota da F13a no `BUILD_PLAN.md` foi corrigida com essa medição ao
+  lado, no mesmo commit.
+
+### Decisões do operador (2026-09-23), com o porquê dele
+
+- **O buraco da porta é da F06, e a correção vai lá**, com motivo próprio e uma
+  única checagem: *"a borda sul precisa estar no mapa e livre"* — uma regra, um
+  motivo, um lugar. A razão que fechou o caso da borda do mapa: prédio colado
+  nela nunca poderá receber entrega, porque não há onde passar a estrada; recusar
+  não é rigor, é impedir que o jogador construa algo que nasce inútil.
+- **O estoque interno do prédio demolido vai integralmente** ao armazém completo
+  mais próximo alcançável, e só se perde quando nenhum está ligado — e aí o teste
+  declara a perda com o número. Razão dele: os níveis 6 e 7 da escada existem
+  desde a F15b exatamente para trazer essa mercadoria de volta, então destruir o
+  que o jogador recuperaria esperando um tick pune quem demole rápido, e
+  conservação de bens é invariante forte demais para se trocar por simplicidade.
+- **O exploit do veio** (demolir e replantar renova `rendimento`) foi para
+  `IDEIAS.md` com o tamanho medido (`rendimento = 200` por metade do custo) e
+  para uma nota no item F21, que é quem semeia o veio no terreno. A F16a não é
+  dona disso e não o corrige.
+
+### Verificado (evidência aberta nesta sessão)
+
+- `test-output/F16a.json`: o aceite escrito, pelo comando real. Obra demolida com
+  o serf **no meio da rua carregando** — tarefa liberada com `destino-sumiu`
+  (`resultado: cancelada`), serf passa por `devolvendo` e termina `ocioso`, a
+  pedra volta ao armazém (9 → 10), 48 ticks até o quadro ficar quieto e **zero
+  violação de invariante em todos eles**. E a corrida irmã com o serf ainda
+  `indo_buscar`: nada a devolver, quadro vazio no fim, zero violação.
+- Mesmo arquivo: **escola demolida com a tarefa `ouro-para-escola` reclamada** —
+  o ramo `ehEscolaCompleta(destino) ? null : 'destino-sumiu'` de
+  `systems/jobs.ts`, que não tinha teste. `destino-sumiu`, fila apagada por
+  `sanearFilas` (`treino` volta a `{}`, não a `{ escola: [] }`), e o ouro em
+  trânsito conservado (1 antes, 1 depois).
+- Mesmo arquivo: **prédio ocupado e com estoque** — devolve `{ timber: 1, stone: 4 }`
+  (3 de estoque + metade do custo entregue) ao armazém `p1`, e o pedreiro volta a
+  `ocioso` sem tarefa órfã. E **sem armazém alcançável**: `devolvido: {}`,
+  `armazem: null`, perda declarada de 3 de pedra no total do mapa.
+- A devolução **segue o dado**: com a fração injetada em 0 não volta nada, com 1
+  volta o custo inteiro, com a fração real volta a metade arredondada para baixo.
+  Regra nova em `tools/data-rules.js` valida `buildings.construcao.devolucaoAoDemolir`
+  em `[0,1]` — o campo não era validado por nada até hoje.
+- `npm run verify` verde: **824 testes, 46 arquivos**, typecheck, lint e
+  `validate:data` limpos. Roteiros de não-regressão F06, F08, F10, F11c e F13b:
+  **código de saída 0** nos cinco (screenshot não aberto — não é a feature desta
+  sessão, e a F16a não muda um pixel).
+
+### Sondas de mutação (prova do momento, não cobertura)
+
+Duas mutações manuais no fonte, revertidas em seguida (md5 conferido). Valem como
+evidência **desta sessão**; quem protege daqui para frente são as asserções:
+
+1. Devolução desligada → 4 casos reprovaram. O guarda acusa.
+2. `semOPredio` deixando o id em `predios.ordem` (órfão em `porId`) → **os 21
+   casos passavam**. Quase todo laço do jogo faz `if (!predio) continue`, então o
+   id órfão não quebra nada hoje e apareceria como bug de save meses depois. Daí
+   nasceu `violacoesDaColecaoDePredios`, conferido **a cada tick** das corridas;
+   com ele, a mesma mutação reprova 5 casos.
+
+### Consequência da regra da porta, além do que foi pedido
+
+A checagem é simétrica, então **dois prédios deixaram de poder se encostar na
+vertical, nos dois sentidos**: o de baixo cobriria a porta do de cima, e o de
+cima teria a própria porta coberta. Encostar na horizontal continua valendo.
+Três casos da F06 foram atualizados por isso, com o motivo escrito ao lado de
+cada um, e a consequência está registrada na nota do item F16a do `BUILD_PLAN.md`.
+Não é afrouxamento de teste: é a mesma regra que o operador pediu, aplicada nos
+dois lados.
+
+### Fora de escopo, declarado
+
+Nenhum arquivo de `render/`, `ui/` ou `input/` foi tocado. O painel de seleção, o
+botão de demolir e o screenshot são da F16b; `pausar` e `modos` são da F16c. O
+único refactor foi generalizar `devolverPedra` para
+`devolverMercadorias(predios, quantidades, destino)` em `sim/deposito.ts`, com o
+`DemolishRoad` chamando-a com o destino de sempre (o primeiro armazém da ordem):
+a estrada não tem porta de onde medir distância, e mudar isso alteraria
+comportamento testado da F08 sem pedido.
 
 ## Perguntas em aberto
 

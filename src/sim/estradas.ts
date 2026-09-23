@@ -11,7 +11,7 @@ import type { GameState, Predio, PredioCompleto } from './state';
 import { ID_DO_ARMAZEM } from './state';
 import type { GameData } from './data/types';
 import { gameData } from './data';
-import { caixaDoPredio } from './footprint';
+import { bordaSul, caixaDoPredio } from './footprint';
 import { disponivelNaOrigem } from './reservas';
 
 /** Um tile de grid, sempre em coordenada inteira quando valido. Mesma forma do
@@ -210,8 +210,11 @@ export function armazensCompletos(state: GameState): PredioCompleto[] {
 export function tilesDaPorta(predio: Predio, dados: GameData = gameData): TileDeGrid[] {
   const caixa = caixaDoPredio(predio, dados);
   if (caixa === null) return [];
+  // Mesma `bordaSul` que o `canPlace` usa para recusar porta tapada: uma
+  // definicao so, senao as duas divergem e a recusa passa a proteger outra linha.
+  const porta = bordaSul(caixa);
   const tiles: TileDeGrid[] = [];
-  for (let gx = caixa.x0; gx < caixa.x1; gx++) tiles.push({ gx, gy: caixa.y1 });
+  for (let gx = porta.x0; gx < porta.x1; gx++) tiles.push({ gx, gy: porta.y0 });
   return tiles;
 }
 

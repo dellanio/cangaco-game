@@ -5,7 +5,7 @@
  * dado e do estado atual, para nao haver uma segunda fonte de verdade quando
  * `data/buildings.json` mudar (CLAUDE.md §2.3).
  */
-import type { GameState, PredioEmObra } from './state';
+import type { GameState, Predio, PredioEmObra } from './state';
 import type { GameData, PredioData } from './data/types';
 import { gameData } from './data';
 import { caixaDeTipo } from './footprint';
@@ -38,16 +38,30 @@ export function obraNivelada(predio: PredioEmObra, dados: GameData = gameData): 
   return predio.obra.nivelamento >= alvoDeNivelamento(predio.tipo, dados);
 }
 
-/** Unidades de material JA ENTREGUES, somadas sobre as mercadorias do custo:
- *  `custo[m] - faltam[m]`. Derivado, nunca guardado (comentario de `Obra`,
- *  `state.ts`). */
-export function entreguesNaObra(predio: PredioEmObra, dados: GameData = gameData): number {
+/**
+ * Material JA ENTREGUE, POR MERCADORIA: `custo[m] - faltam[m]` numa obra, e o
+ * custo inteiro num predio completo (que nao tem mais `faltam`). Derivado do
+ * dado, nunca guardado (comentario de `Obra`, `state.ts`) — e e daqui que a
+ * demolicao (F16a) tira a base da devolucao, para nao haver uma segunda formula
+ * de "quanto ja foi posto neste predio".
+ */
+export function entreguesPorMercadoria(
+  predio: Predio, dados: GameData = gameData,
+): Record<string, number> {
   const custo = custoDoPredio(defDoTipo(predio.tipo, dados));
-  let soma = 0;
+  const faltam = predio.estado === 'obra' ? predio.obra.faltam : {};
+  const entregues: Record<string, number> = {};
   for (const [mercadoria, quantidade] of Object.entries(custo)) {
-    soma += quantidade - (predio.obra.faltam[mercadoria] ?? 0);
+    const posto = quantidade - (faltam[mercadoria] ?? 0);
+    if (posto > 0) entregues[mercadoria] = posto;
   }
-  return soma;
+  return entregues;
+}
+
+/** Unidades de material JA ENTREGUES, somadas sobre as mercadorias do custo.
+ *  Mesma conta de `entreguesPorMercadoria`, somada. */
+export function entreguesNaObra(predio: PredioEmObra, dados: GameData = gameData): number {
+  return Object.values(entreguesPorMercadoria(predio, dados)).reduce((a, b) => a + b, 0);
 }
 
 /** O HP total do tipo — o que o predio COMPLETO tem. */

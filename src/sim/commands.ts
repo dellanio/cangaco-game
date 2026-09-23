@@ -43,6 +43,22 @@ export type Command =
     }
   | {
       /**
+       * Demole o predio `predio`, em obra ou completo (F16a). Devolve
+       * `floor(construcao.devolucaoAoDemolir * material ja entregue)` MAIS o
+       * estoque interno inteiro, ao armazem completo mais proximo ALCANCAVEL por
+       * estrada; sem armazem alcancavel a carga se perde. Nunca e recusado: id
+       * inexistente e no-op, como no `DemolishRoad` e no `CancelTraining`.
+       *
+       * So tira o predio do estado. Quem cancela as tarefas ligadas a ele, apaga
+       * a fila de treino e devolve o ocupante a `ocioso` e o saneamento do MESMO
+       * tick (`sanearTarefas`, `sanearFilas`, `passoProduzindo`) — a demolicao
+       * nao reimplementa nada disso.
+       */
+      readonly type: 'DemolishBuilding';
+      readonly predio: string;
+    }
+  | {
+      /**
        * Enfileira UM pedido de treino na escola `predio` (F13). NAO debita ouro: o
        * custo sai quando o treino COMECA (`systems/escolas.ts`) — e a fila em espera
        * que cria a demanda de ouro do JobBoard. Recusado (evento `command-rejected`)
