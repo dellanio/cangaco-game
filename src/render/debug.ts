@@ -11,6 +11,7 @@ import type { PreviaDeEstrada } from './estradas';
 import type { UnidadeRenderizada } from './unidades';
 import type { EstagioDaObra } from './estagio-obra';
 import type { LinhaDoMedidor } from './medidor-obra';
+import type { CanteiroDaObra } from './nivelamento-obra';
 import type { ItemDeFila } from '../sim/state';
 
 /** O recorte de um predio que o roteiro le. Nao e `Predio`: so o que a tela
@@ -49,6 +50,13 @@ export interface EstadoDebug {
    *  material chegou e quanto o predio custa. Obra apenas; predio completo nao
    *  entra. O roteiro afirma sobre isto em vez de contar bloco por pixel (§8). */
   medidoresDeObra: Readonly<Record<string, readonly LinhaDoMedidor[]>>;
+  /** F17d — o canteiro de cada OBRA desenhada agora, por id: quantos tiles do
+   *  footprint ja foram aplainados, a fracao do tile em curso em oitavos e se o
+   *  terreno acabou. Obra apenas, mesmo criterio de `medidoresDeObra`. E o que
+   *  permite ao roteiro medir o canteiro ENCHENDO contra a primeira leitura, em
+   *  vez de so conferir que ele nasceu certo — um canteiro congelado passaria
+   *  numa foto unica (§8). */
+  canteirosDeObra: Readonly<Record<string, CanteiroDaObra>>;
   /** F17f — com que TEXTURA cada predio foi desenhado agora, por id, ou `null`
    *  quando ele caiu no retangulo do §9 (sem entrada no manifesto, sem arquivo
    *  para o estagio, ou textura que o loader nao trouxe). Os dois lados na
@@ -131,6 +139,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     obrasRenderizadas: 0,
     estagiosDeObraRenderizados: { marcacao: 0, madeira: 0, completo: 0 },
     medidoresDeObra: {},
+    canteirosDeObra: {},
     spritesDePredio: {},
     estradasRenderizadas: 0,
     previaDeEstrada: null,

@@ -11,6 +11,8 @@ import type { EstadoDebug, PredioNoDebug, RelogioVisivel } from '../debug';
 import { aparenciaDoPredio, ordemDasMercadorias } from '../predios';
 import { medidorDaObra } from '../medidor-obra';
 import type { LinhaDoMedidor } from '../medidor-obra';
+import { canteiroDaObra, chaveDoCanteiro } from '../nivelamento-obra';
+import type { CanteiroDaObra } from '../nivelamento-obra';
 import { estagioDaObra } from '../estagio-obra';
 import type { EstagioDaObra } from '../estagio-obra';
 import { centroDaVila } from '../../sim/selectors';
@@ -200,7 +202,8 @@ export class WorldScene extends Phaser.Scene {
     return camada;
   }
 
-  /** Diff por id, estagio E assinatura do medidor (F17b) contra o que ja esta desenhado: id novo cria, id sumido
+  /** Diff por id, estagio, assinatura do medidor (F17b) E leitura do canteiro
+   *  (F17d) contra o que ja esta desenhado: id novo cria, id sumido
    *  destroi, mesmo id no mesmo estagio nao mexe. O estagio (F11c: `estagio-obra.ts`)
    *  entra na chave, nao so o `estado` — uma obra que so avanca de `hp` (marcacao ->
    *  madeira, ou vira `'completo'`) mantem o id e precisa ser redesenhada; `hp` sozinho
@@ -222,6 +225,8 @@ export class WorldScene extends Phaser.Scene {
     // F05a). Nao entra em sprite: e ponte de harness, nao estado guardado no render.
     const doEstado: Record<string, PredioNoDebug> = {};
     const medidores: Record<string, readonly LinhaDoMedidor[]> = {};
+    // F17d: o canteiro de cada obra, para o roteiro. Mesmo criterio de `medidores`.
+    const canteiros: Record<string, CanteiroDaObra> = {};
     // F17f: com que textura cada predio foi desenhado, ou null quando caiu no
     // retangulo. O roteiro afirma sobre isto, nunca por pixel.
     const sprites: Record<string, string | null> = {};
@@ -249,14 +254,28 @@ export class WorldScene extends Phaser.Scene {
       // D3: material que chega nao mexe em `estado` nem em `estagio` — o `hp` so sobe
       // depois, com o martelo. Sem a assinatura na chave, o medidor nasceria certo no
       // primeiro desenho e congelaria ali para sempre.
-      const assinatura = linhas.map((l) => l.entregue).join(',');
+      // F17d: o canteiro so existe para obra, como o medidor — predio completo nao
+      // tem `obra.nivelamento`.
+      const canteiro = predio.estado === 'obra'
+        ? canteiroDaObra(
+          predio.obra.nivelamento, aparencia.alvoDeNivelamento, aparencia.largura * aparencia.altura,
+        )
+        : null;
+      if (canteiro !== null) canteiros[id] = canteiro;
+      // O mesmo D3, agora para o nivelamento: aplainar o chao nao mexe em `estado`
+      // nem em `estagio`. Sem a leitura do canteiro na chave, ele nasceria certo no
+      // primeiro desenho e congelaria ali para sempre — e uma foto unica passaria
+      // assim mesmo. A fracao entra QUANTIZADA em oitavos (`chaveDoCanteiro`):
+      // redesenho limitado a 8 por tile, e chave testavel, em vez de um float
+      // diferente a cada tick.
+      const assinatura = `${linhas.map((l) => l.entregue).join(',')}|${chaveDoCanteiro(canteiro)}`;
       const existente = this.desenhados.get(id);
       if (existente && existente.estado === predio.estado && existente.estagio === estagio
         && existente.assinatura === assinatura) continue;
       existente?.objeto.destroy();
       this.desenhados.set(id, {
         estado: predio.estado, estagio, assinatura,
-        objeto: this.criarPredio(predio, estagio, linhas, tilePx),
+        objeto: this.criarPredio(predio, estagio, linhas, canteiro, tilePx),
       });
     }
     debug.prediosRenderizados = this.desenhados.size;
@@ -269,6 +288,7 @@ export class WorldScene extends Phaser.Scene {
     debug.obrasRenderizadas = porEstagio.marcacao + porEstagio.madeira;
     debug.estagiosDeObraRenderizados = porEstagio;
     debug.medidoresDeObra = medidores;
+    debug.canteirosDeObra = canteiros;
     debug.spritesDePredio = sprites;
   }
 
@@ -299,7 +319,8 @@ export class WorldScene extends Phaser.Scene {
    *  (`estagio-obra.ts`): marcacao (nada martelado), madeira (em obra) e
    *  completo (o predio de pe, sem rotulo extra). */
   private criarPredio(
-    predio: Predio, estagio: EstagioDaObra, linhas: readonly LinhaDoMedidor[], tilePx: number,
+    predio: Predio, estagio: EstagioDaObra, linhas: readonly LinhaDoMedidor[],
+    canteiro: CanteiroDaObra | null, tilePx: number,
   ): Phaser.GameObjects.Container {
     const { largura, altura, nome } = aparenciaDoPredio(predio.tipo);
     const canto = gridToScreen({ gx: predio.gx, gy: predio.gy }, tilePx);
@@ -311,8 +332,12 @@ export class WorldScene extends Phaser.Scene {
       ? this.desenharPlaceholder(estagio, nome, larguraPx, alturaPx)
       : [this.desenharSprite(sprite.chave, sprite.entrada, larguraPx, alturaPx)];
 
+    // O canteiro vai PRIMEIRO no container: ele e o chao, e o corpo da obra fica
+    // por cima. O medidor da F17b continua por ultimo.
     const container = this.add.container(canto.x, canto.y, [
-      ...corpo, ...this.desenharMedidor(linhas, larguraPx, alturaPx),
+      ...this.desenharCanteiro(canteiro, largura, tilePx),
+      ...corpo,
+      ...this.desenharMedidor(linhas, larguraPx, alturaPx, canteiro === null || canteiro.nivelada),
     ]);
     container.setDepth(depthDeY(canto.y + alturaPx));
     return container;
@@ -362,6 +387,44 @@ export class WorldScene extends Phaser.Scene {
     return [retangulo, rotulo];
   }
 
+  /** F17d — o canteiro: um retangulo de terra aplainada por tile ja nivelado, na
+   *  ordem em que o laborer aplaina (linha a linha, da esquerda para a direita).
+   *  O tile em curso entra parcial, pela fracao QUANTIZADA em oitavos que a chave
+   *  do diff tambem carrega (`nivelamento-obra.ts`) — desenhar a fracao continua
+   *  aqui criaria mudanca visivel que a chave nao ve, e o canteiro congelaria na
+   *  tela sem nenhum teste reprovar.
+   *
+   *  Placeholder geometrico (§9), como o medidor da F17b. A pergunta que ele
+   *  responde ("esta obra ja pode receber material, ou ainda esta sendo
+   *  preparada?") e de longe, sem clicar. Vazio para predio completo.
+   *
+   *  Cor e opacidade sao DESENHO, nao balanceamento: ficam aqui, como o resto do
+   *  placeholder ja fica (§2.3 fala de custo, tempo, capacidade e proporcao). */
+  private desenharCanteiro(
+    canteiro: CanteiroDaObra | null, larguraEmTiles: number, tilePx: number,
+  ): Phaser.GameObjects.GameObject[] {
+    if (canteiro === null || canteiro.tilesTotais <= 0) return [];
+    const COR = 0x8a6a4a;
+    const OPACIDADE = 0.55;
+    const OITAVOS = 8;
+    const objetos: Phaser.GameObjects.GameObject[] = [];
+    const porLinha = Math.max(1, larguraEmTiles);
+    const bloco = (n: number, largura: number): void => {
+      if (largura <= 0) return;
+      const coluna = n % porLinha;
+      const fileira = Math.floor(n / porLinha);
+      // origem no canto superior esquerdo do tile: o tile em curso enche da
+      // esquerda para a direita, e nao a partir do centro
+      const r = this.add.rectangle(coluna * tilePx, fileira * tilePx, largura, tilePx,
+        COR, OPACIDADE);
+      r.setOrigin(0, 0);
+      objetos.push(r);
+    };
+    for (let n = 0; n < canteiro.tilesProntos; n++) bloco(n, tilePx);
+    bloco(canteiro.tilesProntos, (canteiro.oitavosDoTileEmCurso / OITAVOS) * tilePx);
+    return objetos;
+  }
+
   /** F17b — o medidor de material: uma fileira por material do custo, um bloco
    *  por unidade, cheio = ja entregue. Placeholder geometrico (§9). A pergunta
    *  que ele responde ("falta pedra ou falta tabua?") e de longe, sem clicar;
@@ -370,10 +433,15 @@ export class WorldScene extends Phaser.Scene {
    *  Os blocos entram no MESMO container do retangulo: um `destroy()` continua
    *  limpando tudo, e o diff de `atualizarPredios` nao precisa saber deles. */
   private desenharMedidor(
-    linhas: readonly LinhaDoMedidor[], larguraPx: number, alturaPx: number,
+    linhas: readonly LinhaDoMedidor[], larguraPx: number, alturaPx: number, aceso: boolean,
   ): Phaser.GameObjects.GameObject[] {
     const LADO = 8;
     const VAO = 2;
+    // F17d: enquanto o terreno esta sendo aplainado a obra ainda NAO recebe
+    // material — o medidor fica esmaecido, nunca escondido. Escondido mudaria o
+    // que o roteiro da F17b conta; esmaecido responde "ainda nao e a vez dele"
+    // sem apagar o denominador que o jogador ja aprendeu a ler.
+    const OPACIDADE = aceso ? 1 : 0.3;
     const objetos: Phaser.GameObjects.GameObject[] = [];
     linhas.forEach((linha, i) => {
       const larguraDaFileira = linha.total * LADO + (linha.total - 1) * VAO;
@@ -383,8 +451,8 @@ export class WorldScene extends Phaser.Scene {
       for (let n = 0; n < linha.total; n++) {
         const cheio = n < linha.entregue;
         const bloco = this.add.rectangle(x0 + n * (LADO + VAO), y, LADO, LADO,
-          0xede3d0, cheio ? 1 : 0);
-        bloco.setStrokeStyle(1, 0xede3d0, cheio ? 1 : 0.5);
+          0xede3d0, (cheio ? 1 : 0) * OPACIDADE);
+        bloco.setStrokeStyle(1, 0xede3d0, (cheio ? 1 : 0.5) * OPACIDADE);
         objetos.push(bloco);
       }
     });
