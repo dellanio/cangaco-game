@@ -30,6 +30,13 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
 - [2026-09-20] 4 serfs levam 5538 ticks (~9 min a 1x) para entregar os 100 materiais de 20 obras de uma vez
   | logística lenta se o jogador planta muitas obras juntas; layout sintético do teste de carga, não partida
   | data/units.json (velocidade a pé 1.0 tile/s) e o número de serfs treinados
+- [2026-09-22] com várias obras plantadas e NENHUM material entregue ainda, os laborers acabam todos na ÚLTIMA obra
+  plantada, depois de um tempo | sugere que largam a tarefa no meio e reclamam outra — `esperando_material` é o
+  único estado que libera (`'pedido-da-unidade'`, que reabre), e sem material nenhuma obra é trabalhável
+  | src/sim/systems/laborers.ts, data/construcao.json (`laborersMaximosPorObra`)
+  | **verificar na F17**, com estradas e serfs entregando de verdade, ANTES de decidir qualquer regra de
+  prioridade — pode desaparecer sozinho quando houver material. Observação do operador; não confirmada por
+  execução minha.
 
 ---
 
