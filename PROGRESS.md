@@ -559,8 +559,9 @@ da Tarefa 8, por código de saída.
   no ombro de um serf — nada pôs ouro na escola à mão.
 - `npm run verify` exit 0 (typecheck, lint, validate:data 9 arquivos/0 erros,
   e a suíte inteira).
-- Suíte: 37 arquivos, 675 testes. Os novos são `tests/F14-ocupacao.test.ts`
-  (23), `tests/F14-especialista.test.ts` (7) e `tests/F14-aceite.test.ts` (4).
+- Suíte: 38 arquivos, 679 testes. Os novos são `tests/F14-ocupacao.test.ts`
+  (23), `tests/F14-especialista.test.ts` (7), `tests/F14-aceite.test.ts` (3) e
+  `tests/F14-invariantes-destino.test.ts` (5).
 - Não-regressão visual (Tarefa 8), **por código de saída, sem abrir imagem**:
   `npm run shot -- F11c` exit 0 (3 capturas), `npm run shot -- F13b` exit 0 (2
   capturas). Não afirmo nada sobre o conteúdo dessas imagens.
@@ -582,19 +583,37 @@ da Tarefa 8, por código de saída.
 - Fixtures de prédio completo em 6 arquivos de teste ganharam `ocupante: null`,
   que é consequência direta do campo novo.
 
-**Um achado que NÃO é desta feature, registrado como tal:**
-`violacoesDeInvariantes` (helper de teste) exige destino em OBRA para toda
-tarefa que não seja `'ocupar'`. Isso deixou de ser verdade na **F13**, quando a
-escola virou destino de ouro — o helper nunca foi atualizado, e nenhum teste
-anterior o chamava num cenário com treino em curso. Confirmado por execução: o
-aceite da F14, ao rodá-lo tick a tick com a escola trabalhando, acusa
-`"t11: destino 'p2' nao e obra"`. Não afrouxei a invariante para acomodar o
-ouro, porque corrigi-la é decidir o que a F13 quis dizer, e isso é escopo de
-outra feature. Em vez disso, a asserção do aceite ficou restrita ao cenário que
-ela de fato cobre (duas pedreiras vagas, sem treino), e as invariantes do
-especialista rodam tick a tick no cenário completo. **Fica aberto:** quem tocar
-nesse helper deve ensiná-lo que destino de transporte pode ser prédio completo
-com demanda.
+**A invariante de destino, corrigida (decisão do operador, na revisão da F14):**
+`violacoesDeInvariantes` (helper de teste) exigia destino em OBRA para toda
+tarefa que não fosse `'ocupar'`. A regra nasceu na F09, quando todo destino era
+obra, e a **F13** a deixou desatualizada sem que ninguém percebesse — a escola
+virou destino de ouro e o helper continuou exigindo obra. Eu havia restringido a
+asserção do aceite da F14 e deixado o item em aberto; o operador mandou o
+contrário, e com razão: é exatamente o tipo de defeito silencioso que a
+invariante existe para pegar. Agora ela exige destino coerente com o TIPO:
+
+| tipo de tarefa | destino exigido |
+|---|---|
+| `material-para-obra`, `construir` | obra |
+| `ouro-para-escola` | escola completa (`ehEscolaCompleta`) |
+| `ocupar` | prédio completo que pede trabalhador e está vago (`ehPredioOcupavel`) |
+
+O que vale para quem mexer nisso depois:
+
+- O `switch` de `violacoesDoDestino` é **exaustivo**: um membro novo de `Tarefa`
+  sem contrato de destino reprova o `npm run typecheck` (o `never` do `default`),
+  em vez de passar calado por um `else` genérico. **Nenhuma tarefa ficou sem
+  caso** na correção — os quatro tipos têm contrato.
+- Cada caso pergunta pelo **mesmo predicado que a sim usa**, não por uma cópia da
+  regra escrita no teste.
+- A asserção do aceite da F14 **voltou ao escopo original**: as duas invariantes
+  juntas, tick a tick, com a escola treinando.
+- `tests/F14-invariantes-destino.test.ts` (5 testes) é novo e prova o sentido que
+  faltava. Toda a suíte só chamava o helper sobre estados **sadios**, o que prova
+  que ele não acusa falso positivo, mas nunca que ele **acusa** — que é
+  justamente como o defeito da F13 passou despercebido. Agora cada tipo com
+  destino da espécie errada tem que aparecer na lista. Isso é cobertura contínua,
+  não probe de sessão.
 
 **Fora de escopo, declarado:** o alerta do HUD (F22, D1), PRODUZIR (F15 — um
 prédio ocupado ainda não faz nada), o painel que mostra o ocupante e a demolição

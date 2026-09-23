@@ -99,25 +99,12 @@ describe('F14 — aceite headless do BUILD_PLAN', () => {
     expect(r.comSave).toBe(r.direto);
   });
 
-  it('as invariantes do especialista seguem valendo tick a tick, com a escola rodando', () => {
+  it('as invariantes do quadro seguem valendo tick a tick', () => {
     let e = step(cenario(), [...PEDIDOS]);
     for (let i = 0; i < 300; i++) {
       e = step(e, []);
-      expect(violacoesDaFsmDoEspecialista(e), `tick ${e.tick}`).toEqual([]);
-    }
-  });
-
-  it('as invariantes do quadro seguem valendo tick a tick (sem treino em curso)', () => {
-    // `violacoesDeInvariantes` exige destino em OBRA para toda tarefa que nao e
-    // 'ocupar'. Isso deixou de ser verdade na F13, quando a escola virou destino
-    // de ouro — lacuna do helper, anterior a esta feature, registrada no
-    // PROGRESS.md. Afrouxar a invariante para acomodar o ouro seria mudar o
-    // escopo da F14, entao aqui ela roda no cenario que ela de fato cobre: as
-    // duas pedreiras vagas, com as vagas de ocupacao abertas no quadro.
-    let e = cenario();
-    for (let i = 0; i < 300; i++) {
-      e = step(e, []);
-      expect(violacoesDeInvariantes(e), `tick ${e.tick}`).toEqual([]);
+      const v = [...violacoesDaFsmDoEspecialista(e), ...violacoesDeInvariantes(e)];
+      expect(v, `tick ${e.tick}`).toEqual([]);
     }
   });
 });

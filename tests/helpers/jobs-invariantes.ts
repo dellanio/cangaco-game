@@ -10,11 +10,42 @@
  */
 import { gameData } from '../../src/sim/data';
 import type { GameData } from '../../src/sim/data/types';
-import type { GameState } from '../../src/sim/state';
+import type { GameState, Tarefa } from '../../src/sim/state';
 import { distanciaDaTarefa, nivelDoTipo, podeReclamar } from '../../src/sim/jobs';
+import { ehEscolaCompleta } from '../../src/sim/escola';
 import { ehPredioOcupavel } from '../../src/sim/ocupacao';
 import { disponivelNaOrigem, vagaNoDestino } from '../../src/sim/reservas';
 import { ID_DO_ARMAZEM } from '../../src/sim/state';
+
+/**
+ * O destino tem que ser coerente com o TIPO da tarefa. A regra nasceu na F09,
+ * quando todo destino era obra, e a F13 a deixou desatualizada sem que ninguem
+ * percebesse — a escola virou destino de ouro e o helper continuou exigindo
+ * obra. Correcao do operador na F14.
+ *
+ * O `switch` e EXAUSTIVO de proposito: um membro novo de `Tarefa` sem contrato
+ * de destino nao compila (o `never` do `default` deixa de aceitar `t`), em vez
+ * de passar calado por um `else` generico. Cada caso pergunta pelo MESMO
+ * predicado que a sim usa, nao por uma copia da regra:
+ * `ehEscolaCompleta` (sim/escola.ts) e `ehPredioOcupavel` (sim/ocupacao.ts).
+ */
+function violacoesDoDestino(estado: GameState, t: Tarefa, dados: GameData): string[] {
+  const destino = estado.predios.porId[t.destino];
+  switch (t.tipo) {
+    case 'material-para-obra':
+    case 'construir':
+      return !destino || destino.estado !== 'obra' ? [`${t.id}: destino '${t.destino}' nao e obra`] : [];
+    case 'ouro-para-escola':
+      return !ehEscolaCompleta(destino) ? [`${t.id}: destino '${t.destino}' nao e escola completa`] : [];
+    case 'ocupar':
+      if (!ehPredioOcupavel(destino, dados)) return [`${t.id}: destino '${t.destino}' nao e predio ocupavel`];
+      return destino.ocupante !== null ? [`${t.id}: destino '${t.destino}' ja tem ocupante`] : [];
+    default: {
+      const semContrato: never = t;
+      throw new Error(`jobs-invariantes: tarefa sem contrato de destino ${JSON.stringify(semContrato)}`);
+    }
+  }
+}
 
 export function violacoesDeInvariantes(estado: GameState, dados: GameData = gameData): string[] {
   const v: string[] = [];
@@ -41,15 +72,7 @@ export function violacoesDeInvariantes(estado: GameState, dados: GameData = game
     if (t.id !== `t${t.numero}`) v.push(`${id}: id nao e t<numero>`);
     if (t.numero >= estado.proximoId) v.push(`${id}: numero >= proximoId (colisao futura de id)`);
 
-    const destino = estado.predios.porId[t.destino];
-    if (t.tipo === 'ocupar') {
-      // F14: o destino de 'ocupar' e um predio COMPLETO, vago e que pede
-      // trabalhador — nao uma obra.
-      if (!ehPredioOcupavel(destino, dados)) v.push(`${id}: destino '${t.destino}' nao e predio ocupavel`);
-      else if (destino.ocupante !== null) v.push(`${id}: destino '${t.destino}' ja tem ocupante`);
-    } else if (!destino || destino.estado !== 'obra') {
-      v.push(`${id}: destino '${t.destino}' nao e obra`);
-    }
+    v.push(...violacoesDoDestino(estado, t, dados));
 
     if (t.tipo === 'material-para-obra') {
       try {
@@ -60,6 +83,7 @@ export function violacoesDeInvariantes(estado: GameState, dados: GameData = game
       // `carregando` (F10): a coleta consumiu a reserva da origem e o caminho de la ja nao
       // importa; so o destino, a unidade e a vaga tem que valer.
       const origem = estado.predios.porId[t.origem];
+      const destino = estado.predios.porId[t.destino];
       if (t.estado !== 'carregando' && (!origem || origem.estado !== 'completo' || origem.tipo !== ID_DO_ARMAZEM)) {
         v.push(`${id}: origem '${t.origem}' nao e armazem completo`);
       }
