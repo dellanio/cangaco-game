@@ -524,3 +524,89 @@ describe('F15b — o serf coleta da gaveta do tipo e entrega no destino do tipo'
     }
   });
 });
+
+/**
+ * F15b-1, Tarefa 6 — o ciclo fechado. Nenhum codigo novo: e aqui que as cinco
+ * tarefas anteriores ou se encaixam ou mentem. Tudo pelo `step`, com os
+ * produtores OCUPADOS e os serfs decidindo sozinhos.
+ */
+describe('F15b — o ciclo fechado', () => {
+  const escolaLigada = escolaDoCenario(createInitialState(1)).id;
+  const ligadoAEscola = (): GameState => comEstradas(createInitialState(1), linhaH(29, 36, 33));
+
+  const comSerf = (s: GameState, gx: number, gy: number): GameState =>
+    comUnidadeExtra(s, 'serf-a', TIPO_QUE_CARREGA, gx, gy);
+
+  /** Pedreira ocupada, ligada, com um serf na porta do armazem. */
+  const pedreiraViva = (): GameState => comSerf(cenarioDePedreira(), 29, 33);
+
+  /** Serraria ocupada e ligada, com troncos no armazem e um serf para leva-los. */
+  const serrariaViva = (troncos: number): GameState =>
+    comSerf(comSaida(cenarioDeSerraria(), armazem, { tree_trunk: troncos }), 31, 33);
+
+  const noArmazem = (s: GameState, mercadoria: string): number =>
+    saidaDe(s, armazem)[mercadoria] ?? 0;
+
+  const rodar = (s: GameState, ticks: number): GameState => {
+    let atual = s;
+    for (let i = 0; i < ticks; i++) atual = step(atual, []);
+    return atual;
+  };
+
+  it('caminho real: a pedra sai da pedreira e chega ao armazem', () => {
+    const cenario = pedreiraViva();
+    const antes = noArmazem(cenario, 'stone');
+    const fim = rodar(cenario, 600);
+    expect(noArmazem(fim, 'stone')).toBeGreaterThan(antes);
+  });
+
+  it('caminho real: a serraria alimentada por serf produz timber e ele volta ao armazem', () => {
+    const fim = rodar(serrariaViva(3), 900);
+    expect(noArmazem(fim, 'timber')).toBeGreaterThan(0);
+    expect(noArmazem(fim, 'tree_trunk')).toBeLessThan(3); // o tronco saiu do armazem
+  });
+
+  it('a pedreira nao fica presa em `saida_cheia` esperando quem nunca vem', () => {
+    let s = pedreiraViva();
+    let maiorSequencia = 0;
+    let atual = 0;
+    for (let i = 0; i < 1500; i++) {
+      s = step(s, []);
+      const pedreiro = s.unidades.porId['u1'];
+      atual = pedreiro?.fsm === 'saida_cheia' ? atual + 1 : 0;
+      maiorSequencia = Math.max(maiorSequencia, atual);
+    }
+    // o teto e o proprio alerta "tarefa sem candidato" do dado: ficar parado mais
+    // tempo do que isso e, pela definicao do projeto, espera indefinida
+    expect(maiorSequencia).toBeLessThan(gameData.entrega.ticksAlertaTarefaSemCandidato);
+  });
+
+  it('o ouro parado na escola volta ao armazem quando a fila esvazia (D4)', () => {
+    const cenario = comOuroNaEscola(ligadoAEscola(), escolaLigada, 1);
+    const antes = noArmazem(cenario, MERCADORIA_DE_OURO);
+    const fim = rodar(cenario, 300);
+    expect(noArmazem(fim, MERCADORIA_DE_OURO)).toBe(antes + 1);
+    expect(ouroNaEscola(fim, escolaLigada)).toBe(0);
+  });
+
+  it('nenhuma invariante do quadro e violada em nenhum tick', () => {
+    let s = pedreiraViva();
+    for (let i = 0; i < 600; i++) {
+      s = step(s, []);
+      expect(violacoesDeInvariantes(s)).toEqual([]);
+    }
+    let t = serrariaViva(3);
+    for (let i = 0; i < 600; i++) {
+      t = step(t, []);
+      expect(violacoesDeInvariantes(t)).toEqual([]);
+    }
+  });
+
+  it('determinismo: mesma semente, mesmos comandos, mesmo estado final', () => {
+    const a = rodar(pedreiraViva(), 600);
+    const b = rodar(pedreiraViva(), 600);
+    expect(JSON.stringify(a)).toBe(JSON.stringify(b));
+    // e o estado atravessa o JSON sem perder nada (save/load)
+    expect(JSON.parse(JSON.stringify(a))).toEqual(a);
+  });
+});
