@@ -351,12 +351,22 @@ prédio surge sem clique do jogador.
 - **Escopo**: ciclo de produção por tempo, saída depositada na gaveta `saida` do
   prédio. Quarry esgota o veio de pedra. **Sem transporte** — levar a saída ao
   armazém é a F15b.
-- **Aceite**: cenário de 1000 ticks, caminho real (planta, obra concluída,
+- **Aceite**: cenário de 1300 ticks, caminho real (planta, obra concluída,
   especialista treinado na escola e ocupando). A pedreira ocupada e ligada por
   estrada deposita stone na gaveta `saida` em intervalos **exatos e iguais**, até
-  o teto da gaveta, e o especialista nunca passa por `ocioso`. Uma serraria sem
-  tronco fica em `esperando_insumo` sem gastar relógio. Com o veio curto (dado
-  injetado), a produção para e `vein-exhausted` sai **uma vez**.
+  o teto da gaveta, e o especialista **não volta** a `ocioso` depois de ocupar.
+  Uma serraria sem tronco fica em `esperando_insumo` sem gastar relógio. Com o
+  veio curto (dado injetado), a produção para e `vein-exhausted` sai **uma vez**.
+- **Correção do aceite (F15a, medida)**: o texto original dizia 1000 ticks e
+  "nunca passa por `ocioso`". Os dois estavam errados, e a medição está em
+  `test-output/F15a.json`. (a) o caminho real gasta 281 ticks até a ocupação
+  (stonemason treinado no tick 179, obra `completo` em 240, ocupada em 281) e 5
+  ciclos de 167 ticks custam outros 835 — a gaveta só enche no tick 1116, e o
+  rótulo `saida_cheia` só aparece no 1283, quando o 6º ciclo fica pronto sem
+  onde cair. 1000 ticks não alcançam nada disso. (b) **toda** unidade nasce
+  `ocioso` na escola; o que a feature garante é que ela não *regride* a
+  `ocioso` depois de ocupar. As duas cláusulas passaram a ser verificadas com
+  esses números.
 - **Evidência**: `test-output/F15a.json`
 - **Nota (origem: F14)**: prédio sem `ocupante` **não produz** — a pergunta é
   `ehPredioOcupavel(predio) && predio.ocupante === null` (`sim/ocupacao.ts`). É

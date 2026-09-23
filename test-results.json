@@ -17,7 +17,7 @@
   "F13a-schoolhouse-fila": { "passes": true },
   "F13b-schoolhouse-painel": { "passes": true },
   "F14-especialistas-ocupam": { "passes": true },
-  "F15a-producao-ciclo": { "passes": false },
+  "F15a-producao-ciclo": { "passes": true },
   "F15b-producao-entrega": { "passes": false },
   "F16-painel-selecao-demolir": { "passes": false },
   "F17-aceite-fase-a": { "passes": false }

@@ -627,6 +627,99 @@ mexer em `.claude/` e também reescrever histórico, então deixei o commit como
 está e passei a usar `git add <paths>` explícito em todos os commits seguintes
 desta sessão.
 
+## F15a — Produção: o ciclo e o veio
+
+Plano: `docs/planos/F15-producao.md` (aprovado). O operador partiu a F15 **por
+camada**: a F15a faz o prédio produzir na própria gaveta `saida`; levar essa
+saída ao armazém (níveis 6 e 7 da escada de `data/delivery.json`) e a calibração
+do cenário longo são a F15b — e ele condicionou: "calibração não pode ficar de
+fora da Fase A — ela é o que prova que o jogo tem ritmo, e o aceite da F17
+depende dela".
+
+### Decisões
+
+**D1 — a receita é um CICLO, não uma taxa por minuto.** `data/production.json`
+declara, por prédio, quanto entra e quanto sai a cada ciclo, e
+`ticksDoCiclo` é o período da MENOR taxa entre `entra ∪ sai`; as quantidades
+saem de `round(ticksDoCiclo / periodo)`. A quarry fica em 167 ticks por 1
+`stone`; a sawmill em 273 ticks, 1 `tree_trunk` → 2 `timber`; o Woodcutter's em
+545. Uma taxa por minuto convertida tick a tick produziria fração, e fração em
+estoque inteiro é não-determinismo disfarçado. `validate:data` passou a **recusar
+receita cuja razão o arredondamento distorce** (`tools/data-rules.js`).
+
+**D6 (do operador, com a razão dele) — prédio que não escoa é `saida_cheia`,**
+estado que o GDD §6.2 já prevê; nenhum estado novo foi criado. Por isso prédio
+**sem estrada** até o armazém também cai em `saida_cheia`: a causa é a mesma do
+ponto de vista do especialista — a saída não tem para onde ir.
+
+**D4(b) (do operador) — o nível 7 da escada fica onde está.** "O vazamento se
+resolve na origem e o HUD continua com uma regra só — conta armazéns. Sem nota
+de integração, sem tocar na tela."
+
+**`rendimento: 200` é ponto de partida, não número calibrado.** Aprovado pelo
+operador em `data/production.json` ("~55 minutos de produção contínua na escala
+2.0"), com instrução explícita de **registrar como número a calibrar na F15b**.
+
+### Verificado (rodado, e a evidência aberta)
+
+- `npm run verify`: 41 arquivos, **719 testes** verdes; `validate:data` 9
+  arquivos, 0 erros.
+- `test-output/F15a.json`, aberto com a ferramenta Read. Caminho **real**
+  (`PlaceBlueprint quarry (26,34)` + `EnqueueTraining stonemason`, nenhum
+  `PredioCompleto` fabricado por fixture): stonemason treinado no tick **179**,
+  obra `completo` em **240**, ocupada em **281**; depósitos em **448, 615, 782,
+  949, 1116** — intervalos **167, 167, 167, 167**, iguais ao `ticksDoCiclo` do
+  dado; gaveta parou no teto (5); veio 200 → **195**, um por unidade; `ocioso`
+  depois de ocupar: **0 ticks**; `esperando_insumo`: 0; no fim, `saida_cheia`
+  com `progresso === 167` (o ciclo pronto que não cabe).
+- Cláusulas de dado injetado, sobre fixture controlada e **rotuladas como tal**
+  dentro da evidência: serraria sem tronco fica 300 ticks em `esperando_insumo`
+  com `progresso 0` (não gasta relógio); veio curto (`rendimento: 2`) produz 2 e
+  para com `veio 0`, e `vein-exhausted` sai **uma vez**.
+- `npm run sim -- producao --ticks 1300` reproduz a mesma corrida fora do teste:
+  `progresso 167, veio 195, saida stone=5, ocupante u21 (saida_cheia)`.
+- Não-regressão visual: `npm run shot -- F11c` e `npm run shot -- F13b`, ambos
+  código de saída 0 (3 e 2 capturas). As imagens **não** foram abertas — é
+  roteiro de outra feature.
+
+### Correção do critério de aceite (com o número medido)
+
+O aceite da F15a, como eu o escrevi na sessão anterior, era **aritmeticamente
+impossível**, e os dois defeitos estão corrigidos no BUILD_PLAN com a medição
+junto:
+
+1. **1000 → 1300 ticks.** 5 ciclos são 835 ticks só de produção, depois de 281
+   ticks de preparo; e o rótulo `saida_cheia` só aparece no tick **1283**.
+2. **"nunca passa por `ocioso`" → "não volta a `ocioso` depois de ocupar".**
+   Toda unidade nasce `ocioso` na escola; a cláusula original só poderia passar
+   com um teste desenhado para não olhar o começo.
+
+Corrigi o critério em vez de ajustar o teste para caber no critério.
+
+### Contornado, não resolvido: BUG-001
+
+O helper de invariantes acusa 3 tarefas de `construir` apontando para prédio já
+completo **no tick 240**, o tick exato da conclusão; `sanearTarefas` as cancela
+no tick seguinte e nenhum laborer age sobre elas. Registrado em `BUGS.md` como
+`feio` (não quebra critério de aceite escrito nenhum). Não é regressão da F15a:
+a F14 nunca cruzou a transição obra → completo com o quadro carregado porque
+montava o prédio completo por fixture. O aceite afirma a **forma exata** do
+transitório e que **nenhum outro tick** tem violação — inclusive o seguinte.
+
+### Hipótese, nomeada como tal
+
+A projeção do §0 do plano (quanto tempo de jogo os 200 do veio representam na
+escala 2.0, e se o ritmo resultante é jogável) é **aritmética em cima do dado,
+não medição**. Continua hipótese até a F15b rodar o cenário longo. Nenhum
+número de balanceamento foi mexido nesta feature.
+
+### Fora de escopo, declarado
+
+Transporte da saída ao armazém (F15b), escolher `modos` do Woodcutter's (F16,
+D7 — o campo segue sem leitor, e por isso o veio do lenhador é `null`), painel e
+alerta de prédio parado (F16/F22). Nenhum arquivo de `render/`, `ui/` ou
+`input/` foi tocado.
+
 Histórico das features fechadas: docs/historico/F01-F11a.md.
 
 ## Perguntas em aberto
