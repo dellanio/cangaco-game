@@ -771,9 +771,16 @@ prédio surge sem clique do jogador.
   reporte: ou o comportamento mudou, ou o teste estava frouxo.
 - **Nota (o guarda permanente é estrutural, não cronômetro)**: o aceite pede um
   número medido, e número medido é evidência **da sessão**. A cobertura que fica
-  é **contagem de alocação**: `estatisticasDeBusca()` passa a expor quantas
-  vezes o buffer foi criado, e o teste faz N buscas distribuídas pelos três
-  tamanhos e afirma **no máximo uma alocação por tamanho distinto** — não N.
+  é **contagem de alocação**: um **export novo**, `estatisticasDoRascunho()`,
+  com objeto próprio, diz quantas vezes o buffer foi criado; e o teste faz N
+  buscas distribuídas pelos três tamanhos e afirma **no máximo uma alocação por
+  tamanho distinto** — não N.
+  *(Correção de 2026-09-23, do operador: este item dizia "`estatisticasDeBusca()`
+  passa a expor". Estaria errado — `tests/F10-astar.test.ts` tem **seis
+  asserções `toEqual` sobre o objeto inteiro** de `EstatisticasDeBusca`, nas
+  linhas 357, 365, 372, 388, 409 e 424; um campo novo derrubaria as seis, e a
+  nota acima manda parar e reportar se esse arquivo precisar mudar. A separação
+  é melhor de qualquer forma: busca e cache num lugar, memória em outro.)*
   Isso é determinístico e não depende de relógio. Se um limite de tempo também
   entrar no teste, ele é frouxo e traz o número medido no comentário; se vier a
   oscilar, a correção é a razão mais larga com o motivo escrito, **nunca `skip`
