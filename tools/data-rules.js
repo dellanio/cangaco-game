@@ -111,12 +111,50 @@ function validarPredios(dados, erros) {
   }
 }
 
+// F15a: o carregador nao guarda mais taxa, guarda um CICLO — periodo da taxa mais
+// lenta, e quantidade = razao dos periodos, arredondada uma vez. As regras abaixo
+// replicam essa derivacao e conferem que a quantidade inteira ainda representa a
+// proporcao DECLARADA nas taxas. Medir sobre ticks e deliberado: e o arredondamento
+// em ticks que distorce, e ele depende de `escalas.economia` — trocar a escala por
+// um valor que quebre uma receita e dado ruim, e a regra tem que acusar.
+const TOLERANCIA_DA_RAZAO = 0.02; // dado atual: desvio 0,00% nas 21 receitas
+
+function periodoEmTicks(taxaPorMinuto, escala, tickHz) {
+  return Math.round((60 * tickHz) / (taxaPorMinuto * escala));
+}
+
+function validarCicloDaReceita(id, def, escala, tickHz, erros) {
+  const taxas = { ...((def && def.entra) || {}), ...((def && def.sai) || {}) };
+  const positivas = Object.entries(taxas).filter(([, taxa]) => taxa > 0);
+  // taxa nao positiva ja foi reportada; escala invalida e problema de tempo/*
+  if (positivas.length === 0 || !(escala > 0) || !(tickHz > 0)) return;
+
+  const periodos = positivas.map(([m, taxa]) => [m, periodoEmTicks(taxa, escala, tickHz)]);
+  const ciclo = Math.max(...periodos.map(([, p]) => p));
+  const menorTaxa = Math.min(...positivas.map(([, taxa]) => taxa));
+  for (const [mercadoria, periodo] of periodos) {
+    const inteira = Math.round(ciclo / periodo);
+    const declarada = taxas[mercadoria] / menorTaxa;
+    if (inteira < 1) {
+      erros.push(`producao/quantidade-zero: production.predios.${id}.${mercadoria} rende 0 unidade por ciclo`);
+    } else if (Math.abs(inteira - declarada) / declarada > TOLERANCIA_DA_RAZAO) {
+      erros.push(
+        `producao/razao-distorcida: production.predios.${id}.${mercadoria} vira ${inteira} por ciclo, `
+        + `mas a taxa declara ${declarada.toFixed(3)} (tolerancia ${TOLERANCIA_DA_RAZAO * 100}%)`,
+      );
+    }
+  }
+}
+
 function validarProducao(dados, erros) {
   const predios = dados.production && dados.production.predios;
   if (!predios || typeof predios !== 'object') return; // forma/* ja reportou
   const idsDePredios = new Set(
     ((dados.buildings && dados.buildings.predios) || []).map((p) => p.id),
   );
+  const escalas = (dados.time && dados.time.escalas) || {};
+  const escala = escalas[dados.production && dados.production.escala];
+  const tickHz = dados.time && dados.time.tickHz;
   for (const [id, def] of Object.entries(predios)) {
     if (id.startsWith('_')) continue;
     if (!idsDePredios.has(id)) {
@@ -128,6 +166,16 @@ function validarProducao(dados, erros) {
         if (!(taxa > 0)) {
           erros.push(`producao/taxa-nao-positiva: production.predios.${id}.${grupo}.${mercadoria}=${taxa}`);
         }
+      }
+    }
+    validarCicloDaReceita(id, def, escala, tickHz, erros);
+    // F15a/D2: o veio mora no predio e e semeado deste campo. Ausente = renovavel;
+    // presente tem de render pelo menos uma unidade inteira de saida.
+    const veio = def && def.veio;
+    if (veio !== undefined && veio !== null) {
+      const rendimento = veio.rendimento;
+      if (!Number.isInteger(rendimento) || rendimento < 1) {
+        erros.push(`producao/veio-invalido: production.predios.${id}.veio.rendimento=${rendimento} (inteiro >= 1)`);
       }
     }
   }

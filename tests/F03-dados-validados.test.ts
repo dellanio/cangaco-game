@@ -54,6 +54,14 @@ const fixtures: Fixture[] = [
     quebrar: (d) => { d.production.predios.fantasma = { entra: {}, sai: { ouro: 1 } }; } },
   { nome: 'quarry.sai.stone zerado', regraEsperada: 'producao/taxa-nao-positiva',
     quebrar: (d) => { d.production.predios.quarry.sai.stone = 0; } },
+  // F15a: o carregador deriva a receita em ciclo e arredonda a razao das taxas
+  // UMA vez. Estas tres provam que o dado que sairia distorcido nao passa.
+  { nome: 'bakery com razao que o arredondamento distorce', regraEsperada: 'producao/razao-distorcida',
+    quebrar: (d) => { d.production.predios.bakery.sai.loaves = d.production.predios.bakery.entra.flour * 1.9; } },
+  { nome: 'veio com rendimento fracionario', regraEsperada: 'producao/veio-invalido',
+    quebrar: (d) => { d.production.predios.quarry.veio.rendimento = 2.5; } },
+  { nome: 'veio com rendimento zero', regraEsperada: 'producao/veio-invalido',
+    quebrar: (d) => { d.production.predios.quarry.veio.rendimento = 0; } },
   { nome: 'production.escala aponta pra grupo inexistente', regraEsperada: 'tempo/grupo-inexistente',
     quebrar: (d) => { d.production.escala = 'inexistente'; } },
   { nome: 'delivery perde a chave escala', regraEsperada: 'tempo/duracao-sem-grupo',
