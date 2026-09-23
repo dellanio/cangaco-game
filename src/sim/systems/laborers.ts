@@ -24,7 +24,7 @@
  * `reclamar` (jobs.ts) tambem recusa obra nao trabalhavel, do outro lado: sem os dois,
  * o laborer soltaria e reclamaria a mesma obra sem trabalho a cada tick.
  */
-import type { GameEvent, GameState, Predio, PredioEmObra, TarefaConstruir, Unidade } from '../state';
+import type { GameEvent, GameState, PredioEmObra, TarefaConstruir, Unidade } from '../state';
 import { completarObra } from '../state';
 import type { GameData } from '../data/types';
 import { gameData } from '../data';
@@ -32,16 +32,12 @@ import { caminhoAteAObra, liberar, reclamarMelhorConstrucao, removerTarefa, TIPO
 import type { MotivoDeLiberacao } from '../jobs';
 import { alvoDeNivelamento, hpTotalDoTipo, obraNivelada, obraTrabalhavel, tetoDeHp } from '../obra';
 import { tileAndavel } from '../pathfinding';
-import { andar, chegou, comUnidade, dadosDaFsm, ficarOcioso, ocioso } from '../units/movimento';
+import { andar, chegou, comPredio, comUnidade, dadosDaFsm, ficarOcioso, ocioso } from '../units/movimento';
 import type { ResultadoDeSistema } from './jobs';
 
 type Passo = ResultadoDeSistema;
 
 const semEventos = (state: GameState): Passo => ({ state, events: [] });
-
-function comPredio(state: GameState, predio: Predio): GameState {
-  return { ...state, predios: { ...state.predios, porId: { ...state.predios.porId, [predio.id]: predio } } };
-}
 
 /** A tarefa de CONSTRUIR do laborer, se ela existe, esta `'reclamada'` e e mesmo dele.
  *  So laborer reclama `'construir'` (`elegivelParaTarefa`, F11b) — o filtro de tipo aqui

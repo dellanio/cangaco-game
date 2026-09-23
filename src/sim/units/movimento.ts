@@ -6,7 +6,7 @@
  * `fsmData.caminho` (tiles a andar, sem o atual) e `fsmData.progresso` (ticks no passo em
  * curso). O passo custa `custoDoPasso` (dado); ao completa-lo a unidade passa ao tile seguinte.
  */
-import type { DadosDaFsm, GameEvent, GameState, Unidade } from '../state';
+import type { DadosDaFsm, GameEvent, GameState, Predio, Unidade } from '../state';
 import type { GameData } from '../data/types';
 import type { TileDeGrid } from '../estradas';
 import { custoDoPasso } from '../pathfinding';
@@ -30,6 +30,13 @@ export function dadosDaFsm(d: {
 
 export function comUnidade(state: GameState, unidade: Unidade): GameState {
   return { ...state, unidades: { ...state.unidades, porId: { ...state.unidades.porId, [unidade.id]: unidade } } };
+}
+
+/** Troca um predio no estado. Era privado em `systems/laborers.ts` (F11c) e
+ *  subiu aqui ao ganhar o segundo consumidor (F14), como `andar`/`chegou`
+ *  subiram de `systems/serfs.ts`. */
+export function comPredio(state: GameState, predio: Predio): GameState {
+  return { ...state, predios: { ...state.predios, porId: { ...state.predios.porId, [predio.id]: predio } } };
 }
 
 export const noTile = (u: Unidade): TileDeGrid => ({ gx: u.gx, gy: u.gy });

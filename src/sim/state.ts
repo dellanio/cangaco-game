@@ -99,6 +99,16 @@ export type GameEvent =
       readonly type: 'building-completed';
       readonly predio: string;
       readonly tipo: string;
+    }
+  | {
+      /**
+       * F14 — um especialista chegou e ocupou um predio. `tipo` e o do CIVIL
+       * (`stonemason`), nao o do predio — quem quiser o do predio o le do estado.
+       */
+      readonly type: 'building-occupied';
+      readonly predio: string;
+      readonly unidade: string;
+      readonly tipo: string;
     };
 
 /**

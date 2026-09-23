@@ -7,6 +7,7 @@ import { aplicarPlaceBlueprint } from './systems/build';
 import { aplicarCancelTraining, aplicarEnqueueTraining, sistemaDasEscolas } from './systems/escolas';
 import { aplicarDemolishRoad, aplicarPlaceRoad } from './systems/estradas';
 import { gerarTarefas, sanearTarefas } from './systems/jobs';
+import { sistemaDosEspecialistas } from './systems/especialistas';
 import { sistemaDosLaborers } from './systems/laborers';
 import { sistemaDosSerfs } from './systems/serfs';
 
@@ -85,12 +86,19 @@ export function step(
   const saneado = sanearTarefas(atual, dados);
   const serfs = sistemaDosSerfs(saneado.state, dados);
   const laborers = sistemaDosLaborers(serfs.state, dados);
+  // F14: os especialistas DEPOIS dos laborers (o predio que ficou pronto neste
+  // tick so ganha vaga de ocupante no `gerarTarefas` do fim deste tick, e a vaga
+  // e reclamada no tick seguinte) e ANTES de `gerarTarefas` (a ocupacao concluida
+  // aqui tira a tarefa do quadro antes de o gerador olhar, entao ele nao recria
+  // nada). Antes da escola por simetria com os outros: a unidade que NASCE neste
+  // tick entra em `unidades.ordem` depois e comeca a andar no tick seguinte.
+  const especialistas = sistemaDosEspecialistas(laborers.state, dados);
   // F13: a escola DEPOIS dos serfs (o ouro entregue neste tick ja comeca o treino
   // neste tick) e ANTES de `gerarTarefas` (o ouro cobrado neste tick ja abre a
   // demanda do proximo pedido antes de o gerador olhar o quadro).
-  const escolas = sistemaDasEscolas(laborers.state, dados);
+  const escolas = sistemaDasEscolas(especialistas.state, dados);
   atual = gerarTarefas(escolas.state, dados);
-  events.push(...saneado.events, ...serfs.events, ...laborers.events, ...escolas.events);
+  events.push(...saneado.events, ...serfs.events, ...laborers.events, ...especialistas.events, ...escolas.events);
 
   // F12: o desbloqueio le os eventos do TICK INTEIRO, depois de todos os sistemas — assim
   // nao depende de QUAL sistema concluiu a obra (hoje so o laborer, F11c). Nenhum sistema le
