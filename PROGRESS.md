@@ -1145,6 +1145,95 @@ e alerta sem seleção, que é da F22. `src/input/selecao.ts` e
 só um id); o que era específico da escola era o painel devolver `null` para o
 resto.
 
+## F17 — Aceite da Fase A (2026-09-23)
+
+Plano: `docs/planos/F17-aceite.md`; a medição inteira está na §8 dele, porque
+`test-output/` é gitignored e número que some não serve a sessão nenhuma.
+
+O critério do BUILD_PLAN, inteiro, em dois lugares: `tests/F17-aceite.test.ts`
+(headless) e `tools/shots/F17.js` (cliques). A vila sobe **por comando** nos
+dois — não existe ponte para injetar prédio, unidade ou estoque, e é de propósito:
+este é o único teste que exercita as sete features da Fase A de uma vez.
+**Nada em `src/` foi tocado.**
+
+### Verificado (rodei e abri)
+
+- **O critério é satisfazível como está escrito. Não corrigi critério nenhum.**
+  Ele fecha no **tick 3184** (≈5,3 min a 1x); os quatro prédios ficam completos e
+  ocupados no **1077** (≈1,8 min). O operador tinha autorizado trocar a medida se
+  isso exigisse ≥6000 ticks — **a condição não disparou**.
+- Teto do teste = 3184 + 25% = **4000 ticks**, com o comentário dizendo de onde
+  veio. Provei que o teste ACUSA: com o teto em 500 ele reprova nomeando o prédio
+  e o estado (`woodcutters@16 nao ficou completo: expected 'obra' to be 'completo'`).
+- `npm run verify` verde. Regressão por código de saída: F16b, F13b, F08, F07,
+  F06, todos 0 — screenshots não abertos, só o código (§8 do CLAUDE.md).
+- Aceite visual aberto com Read: `screenshots/F17-5-final.png` — as quatro casas
+  em fila com a rua à frente, unidades andando nela, e o HUD em **Tábua 41**
+  contra as 40 iniciais.
+- **Linha de base da F16b contra quatro prédios** (§8.2 do plano): treino
+  idêntico (24/174 contra 29/179), obra +45, ocupação **+286**. A ocupação é o
+  único número que estourou, e **a causa não é disputa por carregador**: é a
+  ordem da fila de treino — o pedreiro é o terceiro a sair da escola enquanto a
+  pedreira, primeira a ficar pronta, espera por ele.
+- **Saldo ≠ acumulado**, medido: o marco "primeira entrega" respondia `null` para
+  stone **com 17 pedras entregues**, porque comparava o saldo com a linha de base
+  do tick 0 e a pedra foi gasta abaixo dela. Corrigido para o primeiro delta
+  positivo. O acumulado entregue (15 stone, 8 tronco, 14 tábua até o tick 3184)
+  bate por três vias independentes: delta positivo, `task-completed` e
+  `goods-produced`.
+- As três observações do BALANCE_LOG estão medidas e datadas lá. Resumo: o efeito
+  dos laborers existe mas a causa suposta cai (não largam a obra no meio); a
+  regra da porta não custou um tile; o gargalo do ritmo é a PEDRA (o armazém
+  chegou a 3), não a construção.
+
+### Um defeito real, achado pela sonda e corrigido no cenário
+
+A primeira corrida deu `todos-ocupados: null` com os quatro prédios subindo e
+zero recusas. A rua ia da ponta da fila até o armazém e **não alcançava a porta
+da escola**: sem estrada até ela o ouro do treino nunca chega, a fila fica em
+`sem-estrada` para sempre (o caso que a F13b isolou) e ninguém ocupa nada.
+**Não é bug do jogo** — o jogo reportou certo; era geometria errada do cenário.
+Corrigido, e protegido por uma guarda que recusa a geometria se escola e armazém
+não estiverem na mesma linha de porta.
+
+### Decisões
+
+- **D1 — a ordem dos comandos reage ao ESTADO, não ao relógio.** A serraria é
+  plantada no primeiro tick em que `estaDesbloqueado` responde true, não num tick
+  fixo. Tick fixo viraria um número mágico que quebra em silêncio quando o
+  balanceamento mudar.
+- **D2 — "ligados por estrada" não virou campo novo em `render/debug.ts`.** Na
+  tela a ligação se prova por CONSEQUÊNCIA, que é mais forte que um booleano:
+  material só chega a obra com rede, e cabra treinado só ocupa prédio que recebeu
+  material. O booleano está afirmado no headless, onde `predioLigadoAoArmazem` é
+  importável.
+- **D3 — o desbloqueio se afirma pelo `aria-disabled`, não pela presença.** O
+  menu Build mostra o prédio bloqueado de propósito (decisão da F06, com o texto
+  do requisito). Afirmar presença teria passado mesmo se a serraria estivesse
+  liberada desde sempre — não provaria desbloqueio nenhum.
+- **D4 — nenhuma asserção na gaveta `saida` de prédio de produção**, em teste ou
+  roteiro, como a nota da F16b no item pedia. Estoque se prova no armazém.
+- **D5 — a geometria é derivada do dado**, não digitada: largura e altura saem de
+  `caixaDeTipo` (o mesmo caminho que a sim usa), a linha da rua sai da altura do
+  armazém, o civil sai de `buildings.trabalhador`. O helper **lança** se os
+  quatro prédios tiverem alturas diferentes, em vez de adivinhar.
+
+### Hipóteses (não confirmadas por execução)
+
+- **A ocupação melhoraria enfileirando o pedreiro primeiro.** A causa (ordem da
+  fila) está medida; a melhora, não — eu não rodei a variante. É mudança de
+  cenário, não de código, e vale a medição quando alguém for mexer no arranque.
+- **A abertura do GDD §1.3 inteira (16 prédios) não cabe em 8–10 min por falta de
+  pedra.** A aritmética está no BALANCE_LOG (~162 ticks por pedra, 2 de folga no
+  fim desta abertura). Não rodei a abertura inteira.
+
+### Detalhe de nomenclatura
+
+O item pede a evidência em `screenshots/F17-final.png`; o runner numera as
+capturas e o arquivo é **`screenshots/F17-5-final.png`**. É a convenção fixa do
+`tools/shot.js`, igual para toda feature — não renomeei nada.
+
+
 ## Perguntas em aberto
 
 _(nenhuma no momento: as três que sobravam foram decididas pelo operador — ver "Ajuste pós-F10".)_

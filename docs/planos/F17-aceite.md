@@ -369,4 +369,103 @@ expect(estoqueDosArmazens(estado)['timber']).toBeGreaterThan(timberInicial);
 
 ## 8. Resultado da medição
 
-*(preenchido na execução — Tarefa 1 Passo 6, Tarefa 3 e Tarefa 5 Passo 3)*
+Tudo abaixo saiu da sonda e do aceite desta sessão, semente do `estadoInicial`,
+geometria da §4/D1. `test-output/` é gitignored — é por isso que os números moram
+aqui.
+
+### 8.1 O critério é satisfazível como está escrito
+
+**Não houve correção de critério.** A condição que o operador pôs (se "timber
+maior que o inicial" exigisse **6000 ticks ou mais**, trocar a medida pelo
+acumulado entregue) **não disparou**:
+
+| marco | tick | em minutos a 1x |
+|---|---|---|
+| rua pronta, três plantas postas | 1 | — |
+| treino começou | 24 | 0,04 |
+| primeiro civil treinado | 174 | 0,3 |
+| primeira obra completa | 265 | 0,44 |
+| primeira ocupação | 527 | 0,9 |
+| serraria desbloqueada / plantada | 504 / 505 | 0,84 |
+| **todos completos** | 1046 | 1,7 |
+| **todos ocupados** | 1077 | **1,8** |
+| **timber acima do inicial → critério fechado** | **3184** | **5,3** |
+
+Zero comandos recusados. O teto do teste é 3184 + 25% = 4000.
+
+### 8.2 Linha de base da F16b (um prédio) contra quatro (ponto 3 do operador)
+
+| marco | F16b (1 prédio) | F17 (4 prédios) | diferença |
+|---|---|---|---|
+| treino começou | 29 | 24 | −5 |
+| civil treinado | 179 | 174 | −5 |
+| obra completa | 220 | **265** | +45 |
+| ocupação | 241 | **527** | **+286** |
+| primeira pedra no armazém | 408 | **752** | +344 |
+
+O arranque do treino é idêntico — ele não depende de quantas obras existem. O
+que a competição por carregadores custa aparece depois:
+
+- **obra completa +45**: a pedreira leva material para mais três obras no
+  caminho, mas ainda é a primeira a fechar.
+- **ocupação +286, e a causa não é disputa**: é a ORDEM DA FILA. Os quatro
+  treinos entram na ordem das plantas (lenhador, lenhador, pedreiro,
+  carpinteiro), então o pedreiro é o terceiro a sair da escola — enquanto a
+  pedreira, que foi a primeira a ficar pronta, espera por ele. Trocar a ordem
+  de enfileiramento derrubaria esse número sem mexer em balanceamento nenhum.
+- **primeira pedra +344**: consequência direta da anterior (a pedreira só começa
+  a produzir quando é ocupada, no 527) mais a caminhada mais longa até o armazém.
+
+### 8.3 Saldo não é acumulado — o ponto do operador, medido
+
+O acumulado ENTREGUE ao armazém até o critério fechar (tick 3184), contado por
+**três vias independentes que concordam**: delta positivo do saldo, evento `task-completed`
+com destino no armazém, e evento `goods-produced`.
+
+| mercadoria | entregue (acumulado) | saldo final | mínimo do saldo |
+|---|---|---|---|
+| stone | 15 | 19 | **3** (tick 917) |
+| tree_trunk | 8 | 0 | 0 |
+| timber | 14 | 41 | 27 (tick 919) |
+
+O medidor inicialmente marcava "primeira entrega" comparando o saldo com a linha
+de base do tick 0 — herança da F15b, onde o saldo só subia. Aqui ele respondeu
+**`null` para stone** — na corrida da sonda, que seguiu 300 ticks além do
+critério, com 17 pedras entregues — porque a rua e as obras gastaram a pedra
+abaixo das 30 iniciais e ela nunca voltou. É exatamente a confusão que o
+operador descreveu, aparecendo sozinha na medição: o marco agora é o primeiro
+**delta positivo**, e o campo `entregueAoArmazem` responde a pergunta "a cadeia
+produziu?" sem se misturar com o que a vila já tinha.
+
+O critério do BUILD_PLAN continua sendo o saldo, e isso está certo **neste caso**:
+com 40 de timber inicial e 13 debitados pelas plantas, o saldo só passa os 40
+depois de 14 tábuas entregues — ou seja, aqui o saldo é uma condição MAIS FORTE
+que o acumulado, não mais fraca. O teste afirma as duas.
+
+### 8.4 As três observações do BALANCE_LOG (ponto 2 do operador)
+
+Escritas por extenso em `BALANCE_LOG.md`, datadas. Em uma linha cada:
+
+- **Laborers**: o efeito existe (os dois sempre na mesma obra, em ordem inversa
+  ao plantio), mas a causa suposta cai — não largam a obra no meio, levam cada
+  uma até o fim. Custo de vazão: nenhum. Custo de legibilidade: o jogador que
+  planta A, B, C vê C subir primeiro.
+- **Regra da porta**: não custou um tile. Os quatro ficaram encostados em fila
+  única na linha de porta do armazém, (16,31) a (25,31). O caso apertado de
+  verdade só aparece na Fase B; a porta de uma coluna continua de pé como saída,
+  e nada aqui pede que ela aconteça.
+- **Ritmo**: a construção não é o gargalo (1077 ticks para os quatro, contra os
+  8–10 min que o GDD §1.3 dá para a abertura inteira). A PEDRA é: o armazém
+  chegou a 3, com 2 de folga sobre o gasto (19 de rua + 9 de plantas = 28 de 30).
+
+### 8.5 O defeito que a sonda achou
+
+A primeira corrida reprovou com `todos-ocupados: null`: os quatro prédios subiam,
+zero recusas, e ninguém era treinado. A rua ia da ponta da fila até o armazém e
+**não alcançava a porta da escola** — sem estrada até ela o ouro do treino nunca
+chega, a fila fica em `sem-estrada` para sempre (o caso que a F13b isolou) e
+nenhum prédio é ocupado. Corrigido no traçado (a rua vai até `escola.gx`) e
+protegido por uma guarda que recusa a geometria se escola e armazém não
+estiverem na mesma linha de porta. **Não é bug do jogo** — é geometria errada do
+cenário, e o jogo a reportou corretamente.
+
