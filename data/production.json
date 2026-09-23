@@ -3,7 +3,7 @@
   "escala": "economia",
   "predios": {
     "quarry":           { "entra": {}, "sai": { "stone": 1.8 }, "veio": { "rendimento": 200 }, "notas": "consome o veio de rocha; esgota. rendimento 200 e PONTO DE PARTIDA aprovado pelo operador (~55 min de producao continua na escala 2.0); calibrar na F15b, ver BALANCE_LOG" },
-    "woodcutters":      { "entra": {}, "sai": { "tree_trunk": 0.55 }, "modos": ["cortar", "replantar", "ambos"] },
+    "woodcutters":      { "entra": {}, "sai": { "tree_trunk": 0.55 }, "modos": ["cortar", "replantar", "ambos"], "notas": "`modos` NAO TEM LEITOR, de proposito (F16c, 2026-09-23): nao ha arvore no mapa nem camada de terreno, entao `cortar` nao tem o que consumir, `replantar` seria `pausar` com outro nome e `ambos` e o comportamento atual. Pre-condicao para implementar: a camada de terreno com arvore (IDEIAS.md). Nao ligue o campo sem ela." },
     "sawmill":          { "entra": { "tree_trunk": 1.1 }, "sai": { "timber": 2.2 } },
     "farm":             { "entra": {}, "sai": { "corn": 1.22 }, "notas": "medicao da comunidade (2014)" },
     "wineyard":         { "entra": {}, "sai": { "wine": 0.5 }, "campos": 9, "timberPorCampo": 1 },

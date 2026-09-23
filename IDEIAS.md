@@ -25,6 +25,12 @@ caminho. Ideia boa é justamente a mais perigosa.
   render e o motivo `'terreno'` de `canPlace`. Dependem dela o Fisherman's
   (lago), as minas (veio) e a estrada (solo transponível). O formato do dado deve
   nascer junto de quem o produz, não antes. Decisão de fila é do operador.
+  **Dependentes registrados (atualizado na F16c, 2026-09-23): dois.** (1) o motivo
+  `'terreno'` de `canPlace`, desde a F06; (2) os **modos do Woodcutter's**
+  (`cortar`/`replantar`/`ambos`), que saíram do aceite da F16c por falta de árvore
+  no mapa. Cada dependente novo aumenta o peso desta entrada na hora de decidir a
+  **Fase B** — ela deixou de ser só "mapa mais bonito" e virou pré-condição de
+  mecânica escrita no GDD.
 - Estrada diagonal, fidelidade ao original — exige interpolação diagonal no arrasto, render
   inclinado e isConnected com 8 vizinhos sem cortar quina. (O GDD §5.4 traz "estradas diagonais
   funcionam se nada bloquear a passagem" **[fonte]**; a Fase A fica em 4 direções por decisão do
@@ -58,3 +64,12 @@ caminho. Ideia boa é justamente a mais perigosa.
   devolve metade do material — 200 pedras renovadas por meio custo de construção é **exploit, não
   detalhe**. Não se conserta na F16a: quem decide é a **F21**, se passar o veio para o terreno; a
   âncora ficou na nota daquele item. Enquanto o veio morar no prédio, o exploit existe.
+- Modos do Woodcutter's (`cortar` / `replantar` / `ambos`) — GDD §2.3, uma linha `[geral]`. Tirado
+  do aceite da F16c pelo operador (2026-09-23) por ser **andaime**: o comportamento que o modo
+  governaria não existe. `ambos` é o comportamento de hoje; `replantar` (não produzir) seria
+  `pausar` com outro nome; e `cortar` exigiria **estoque finito de árvore no terreno** — a sim não
+  tem camada de terreno, e é justamente por isso que o veio mora no prédio (F15a/D2). O campo
+  `modos` continua em `data/production.json`, sem leitor e com `notas` dizendo isso; `ReceitaDePredio`
+  não o carrega. **Pré-condição**: a camada de terreno com árvore (entrada "Terreno de mapa variado",
+  acima). Enquanto ela não tiver dono na fila, implementar modos é dar ao jogador uma escolha que
+  não muda nada — ou que duplica o botão de pausar.

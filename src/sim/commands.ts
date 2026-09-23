@@ -80,4 +80,21 @@ export type Command =
       readonly predio: string;
       /** Id do item (`f<numero>`), nao a posicao na fila. */
       readonly item: string;
+    }
+  | {
+      /**
+       * F16c — pausa ou despausa a PRODUCAO do predio `predio`. Pausado, o
+       * relogio do ciclo congela e nada mais muda: a gaveta `saida` continua
+       * escoando, as tarefas de transporte continuam valendo e o ocupante fica
+       * (`docs/planos/F16c-pausar.md` §3). Recusado (`command-rejected`) se o
+       * predio nao existe ou ainda esta em obra.
+       *
+       * `pausado` e o VALOR, nao um alternador: reenviar o comando, ou manda-lo
+       * duas vezes no mesmo tick, nao pode inverter o estado — o botao da F16b
+       * manda o que ele representa. Comando com o valor que o predio ja tem e
+       * no-op: devolve o MESMO estado e nao emite nada.
+       */
+      readonly type: 'SetBuildingPaused';
+      readonly predio: string;
+      readonly pausado: boolean;
     };

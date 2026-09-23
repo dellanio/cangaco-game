@@ -187,6 +187,7 @@ describe('F11c — completarObra', () => {
       capacidade: gameData.producao.estoqueInternoPorPredio,
       estoque: { entrada: {}, saida: {} },
       ocupante: null,
+      pausado: false,
       producao: { progresso: 0, veio: gameData.producao.receitas.quarry?.rendimentoDoVeio },
     });
   });

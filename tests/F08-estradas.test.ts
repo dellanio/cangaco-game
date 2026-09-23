@@ -64,7 +64,7 @@ function comArmazemExtra(estado: GameState, saida: number, entrada: number): { e
     id, tipo: 'storehouse', gx: 50, gy: 50, estado: 'completo', hp: 0,
     capacidade: { entrada: null, saida: null },
     estoque: { entrada: { stone: entrada }, saida: { stone: saida } },
-    ocupante: null, producao: null,
+    ocupante: null, producao: null, pausado: false,
   };
   return {
     id,
@@ -167,7 +167,7 @@ describe('F08 — o custo em pedra sai NO COMANDO, do armazem', () => {
         id: 'pedreira', tipo: 'quarry', gx: 0, gy: 0, estado: 'completo', hp: 0,
         capacidade: { entrada: 5, saida: 5 },
         estoque: { entrada: {}, saida: { stone: 100 } },
-        ocupante: null, producao: { progresso: 0, veio: null },
+        ocupante: null, producao: { progresso: 0, veio: null }, pausado: false,
       };
       return { ...inicial, predios: { porId: { pedreira: outro }, ordem: ['pedreira'] } } as GameState;
     })();

@@ -585,13 +585,12 @@ prédio surge sem clique do jogador.
   Nenhum ramo de desbloqueio é preciso aqui.
 
 ### F16c — Pausar e modos (sim)
-- **Escopo**: `pausar` como estado de prédio e os `modos` do Woodcutter's
-  (`cortar`/`replantar`/`ambos`) ganham **campo em `PredioCompleto` e leitor no
-  sistema de produção**, com comandos próprios. Só `src/sim/`.
+- **Escopo**: `pausar` como estado de prédio ganha **campo em `PredioCompleto` e
+  leitor no sistema de produção**, com comando próprio. Só `src/sim/`. Os `modos`
+  do Woodcutter's **saíram do escopo** — ver a Nota da emenda.
 - **Aceite**: teste que pausa um prédio em produção e confirma que o ciclo para
   segundo a semântica decidida, e que despausar retoma sem perder nem duplicar
-  mercadoria; e teste que troca o modo do Woodcutter's e confirma que o
-  comportamento do lenhador acompanha.
+  mercadoria.
 - **Evidência**: `test-output/F16c.json`. Sem screenshot: o botão é da F16b.
 - **Nota (ordem — decisão do operador, 2026-09-23)**: este item vem **antes da
   F16b**, e não depois, porque o botão pausar está no escopo escrito da F16 e um
@@ -600,12 +599,39 @@ prédio surge sem clique do jogador.
 - **Nota (origem: F15a, D7)**: `modos` do Woodcutter's continua **sem leitor**
   desde a F15a; lá o lenhador replanta sempre, e por isso o veio dele é `null`.
   Escolher modo é comando de prédio (GDD §2.3).
-- **Nota (pergunta em aberto, decidir na abertura da sessão)**: o GDD gasta **uma
-  linha `[geral]`** em pausar (§2.3: "Qualquer prédio: demolir, pausar,
-  ligar/desligar reparo") e não diz a semântica. Prédio pausado congela o relógio
-  do ciclo? para de pedir insumo (some do quadro como destino)? solta o ocupante?
-  **Decidir isso é a primeira coisa desta sessão**, e a decisão entra aqui antes
-  do código — não é decisão da F16a nem da F16b.
+- **Nota (semântica de pausar — decisão do operador, 2026-09-23)**: o GDD gasta
+  uma linha `[geral]` em pausar (§2.3) e não diz a semântica; a pergunta estava
+  aberta aqui e foi **fechada assim: pausar congela o relógio de produção daquele
+  prédio, e nada mais**. (a) a gaveta `saida` **continua escoando** — congelá-la
+  criaria mercadoria que nenhuma regra libera; (b) **nenhuma tarefa de transporte
+  é cancelada** e o gerador continua até o alvo de sempre — o destino é validado
+  pelo TIPO do prédio (`motivoDoDestino`), então não há órfã, e zerar o alvo
+  mandaria a gaveta de entrada de volta ao armazém pelo nível 7 a cada pausa;
+  (c) **o ocupante fica**, com rótulo `trabalhando` — prédio pausado e vago
+  anunciaria vaga e puxaria um especialista para sentar parado, tirando-o de um
+  prédio que produziria. Um campo (`PredioCompleto.pausado`), um leitor (o topo
+  de `produzir`), nenhum estado de FSM novo: "pausado" se compõe do campo mais o
+  ocupante. Plano e alternativas rejeitadas em `docs/planos/F16c-pausar.md` §3.
+- **Nota (emenda do aceite — decisão do operador, 2026-09-23)**: a cláusula "teste
+  que troca o modo do Woodcutter's e confirma que o comportamento do lenhador
+  acompanha" **saiu do aceite**. Razão: **o comportamento que o modo governaria
+  não existe**, e cumprir o critério exigiria fabricá-lo. `ambos` é o
+  comportamento de hoje; `replantar` (não produzir) seria `pausar` com outro nome;
+  `cortar` exigiria estoque finito de árvore no terreno — e não há camada de
+  terreno na sim (é por isso que o veio mora no prédio, F15a/D2). **Pré-condição
+  para voltar**: a camada de terreno com árvore, hoje **sem dono na fila** — mesmo
+  tratamento do `terreno` da F06. O campo `modos` continua em
+  `data/production.json`, **sem leitor e com `notas` dizendo isso**, para que a
+  próxima sessão não ache que alguém esqueceu de ligá-lo. Registrado também em
+  `IDEIAS.md`, que é onde a camada de terreno acumula dependentes.
+- **Nota (recusa do comando)**: `SetBuildingPaused` é recusado com
+  `command-rejected` em dois casos — `predio-inexistente` e `predio-em-obra`
+  (pausar obra, isto é "parar de martelar", é feature que ninguém escreveu; a
+  leitura conservadora do §14 é recusar). Prédio completo **sem receita**
+  (armazém, escola, quartel) é aceito: o campo é do prédio, não da receita, e
+  pausá-lo simplesmente não tem leitor. **Sem evento próprio de pausa** — decisão
+  do operador: evento sem consumidor não nasce; quem precisar cria na feature que
+  o consome.
 
 ### F16b — Painel de seleção e demolição (integração)
 - **Escopo**: clicar em prédio mostra nome, HP ou progresso de obra, ocupante,
@@ -630,6 +656,16 @@ prédio surge sem clique do jogador.
 - **Nota (origem: F14)**: o "ocupante" do painel é `PredioCompleto.ocupante`, um
   id de unidade ou `null`. É nesta feature que a ocupação ganha **evidência
   visual** — o aceite daqui pede screenshot, o da F14 não pedia.
+- **Nota (origem: F16c — contrato herdado)**: o botão pausar emite
+  `SetBuildingPaused { predio, pausado }` com o **valor explícito**, nunca um
+  alternador: reenviar o comando não pode inverter o estado, e mandar o valor que
+  o prédio já tem é no-op silencioso na sim. O painel compõe "pausado" de
+  **`predio.pausado` + o ocupante** — não existe rótulo de FSM `pausado` para
+  ler, e o especialista de um prédio pausado continua em `trabalhando`, de
+  propósito. **Não há evento de pausa**: se a tela precisar de um (som, toast),
+  ela nasce aqui, na feature que o consome. O botão só faz sentido em prédio com
+  `producao !== null`; a sim aceita pausar qualquer prédio completo, então quem
+  esconde o botão em armazém/escola/quartel é a tela.
 
 ### F17 — Aceite da Fase A (integração)
 - **Escopo**: roteiro Playwright que executa a sessão inteira do critério de
@@ -701,6 +737,13 @@ prédio surge sem clique do jogador.
   trabalhador — `ehPredioOcupavel` + `vagasDoPredio`, em `sim/ocupacao.ts`. O
   que falta aqui é **só o mecanismo de exibição**, o mesmo que serve as outras
   três causas. A F14 não entregou nada de tela, de propósito.
+- **Nota (origem: F16c)**: todo alerta de "prédio parado" tem de ler
+  **`predio.pausado`** e **não alertar em pausa deliberada** — o jogador que
+  pausou sabe que parou; avisá-lo é ruído, e é o caminho mais curto para ele
+  desligar os alertas. Cuidado com o rótulo: o especialista de um prédio pausado
+  continua em `trabalhando` (a pausa não é estado de FSM), então nenhum alerta
+  pode ser derivado do rótulo — só do campo, como "sem estrada" se deriva do
+  predicado.
 ### F23 — Save e load
 - Aceite: salvar num tick qualquer, carregar e rodar 500 ticks produz o mesmo
   estado que rodar 500 ticks sem salvar. É o teste que prova que a invariante 2

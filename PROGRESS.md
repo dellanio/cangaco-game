@@ -918,6 +918,115 @@ botão de demolir e o screenshot são da F16b; `pausar` e `modos` são da F16c. 
 a estrada não tem porta de onde medir distância, e mudar isso alteraria
 comportamento testado da F08 sem pedido.
 
+## F16c — Pausar produção (sim)
+
+Plano em `docs/planos/F16c-pausar.md`, escrito e **aprovado pelo operador antes
+do código** (2026-09-23), com os três pontos que ele decidiu ponto a ponto. Só
+`src/sim/`: nenhum arquivo de `render/`, `ui/` ou `input/` foi tocado, e esta
+feature **não herda** a nota de integração, que está escrita só no item F16b.
+
+### A semântica de "pausado" (decisão do operador, com o porquê dele)
+
+> **Pausar congela o relógio de produção daquele prédio, e nada mais.**
+
+Um campo (`PredioCompleto.pausado`), um leitor (a primeira linha de `produzir`,
+`sim/systems/especialistas.ts`), nenhum estado novo. As três sub-perguntas que a
+nota do item deixara em aberto, respondidas:
+
+- **(a) a gaveta `saida` continua escoando.** O nível 6 da escada não olha o
+  produtor, e congelar a gaveta criaria mercadoria presa que nenhuma regra
+  libera enquanto o jogador não voltar — travamento de regra, não balanceamento.
+- **(b) nenhuma tarefa de transporte é cancelada**, e o gerador continua criando
+  até o alvo de sempre. O destino segue válido porque `motivoDoDestino` valida
+  pelo **tipo** do prédio, então não há órfã nem ramo novo em `sanearTarefas`; e
+  zerar o alvo faria o estoque da `entrada` virar excedente e voltar ao armazém
+  pelo nível 7 — pausar e despausar mandaria a mesma mercadoria de ida e de volta.
+- **(c) o ocupante fica**, com rótulo `trabalhando`. A razão que o operador
+  endossou: prédio pausado e vago **anunciaria vaga** e puxaria um especialista
+  para sentar parado, tirando-o de um prédio que produziria. "Pausado" não é
+  estado de FSM — a tela o compõe do campo mais o ocupante, uma fonte de verdade
+  só, no prédio, como a posse.
+
+Ciclo em curso: `progresso` congela e **não** zera; insumo já consumido continua
+consumido; ciclo PRONTO não deposita enquanto pausado e deposita no primeiro tick
+depois de despausar. As alternativas rejeitadas, com a razão de cada uma, estão
+na tabela do §3 do plano.
+
+**Sem evento de pausa, por decisão do operador.** Eu havia proposto
+`building-paused` como gancho da F16b; ele cortou: evento sem consumidor criado
+para feature que ainda não existe. O `building-completed` da F11c era diferente
+porque a F12 tinha aceite escrito que dependia dele. A F16b lê `predio.pausado`
+do estado, como o painel já lê tudo, e cria o evento lá se precisar. A nota do
+contrato está no item **F16b**, e a do alerta que não pode disparar em pausa
+deliberada, no item **F22**.
+
+### Os modos do Woodcutter's: andaime, não implementados
+
+O operador aprovou a emenda do aceite: a cláusula *"teste que troca o modo do
+Woodcutter's e confirma que o comportamento do lenhador acompanha"* **saiu**, com
+a razão escrita ao lado no item — o comportamento que o modo governaria não
+existe, e cumprir o critério exigiria fabricá-lo. **Verificado** nesta sessão:
+`modos` está em `data/production.json` e **não tem leitor** (`ReceitaDePredio`
+não carrega o campo; `grep` em `src/sim/data/` e `tools/` não devolve nada);
+`data/terrain.json` não tem camada de tiles (só custo de movimento, lista de
+intransponíveis e tamanho do mapa); e `woodcutters` não declara `veio`, isto é,
+a sim já modela "o lenhador replanta sempre" (F15a, D7). Traduzindo: `ambos` é o
+comportamento de hoje, `replantar` seria `pausar` com outro nome e `cortar`
+exigiria estoque finito de árvore no terreno.
+
+Ficou registrado em três lugares, como ele pediu: `IDEIAS.md` (entrada própria +
+a pré-condição acrescentada à entrada de terreno que existe desde a F06 — ela
+agora tem **dois dependentes**, o motivo `'terreno'` do `canPlace` e os modos, o
+que aumenta o peso dela na decisão da Fase B), a Nota da emenda no item F16c do
+`BUILD_PLAN.md`, e o campo `notas` ao lado do `modos` órfão em
+`data/production.json`. A chave `F16c-pausar-e-modos` do `test-results.json`
+ficou como estava: renomear mexeria no arquivo do portão sem ganho.
+
+### Verificado (evidência aberta nesta sessão)
+
+- `test-output/F16c.json`, aberto com Read: pedreira pausada no tick com
+  `progresso = 3` fica em **3 depois de 200 ticks**, sem nenhum `goods-produced`,
+  com o ocupante `u1` intacto em `trabalhando` e **zero violação de invariante em
+  todos os ticks**. Despausada, deposita **uma** pedra nos 164 ticks que faltavam
+  do ciclo, `progresso` volta a 0 e a pedra no mapa vai de 30 a 31 — nem perda nem
+  duplicação.
+- Mesmo arquivo, a resposta (a) medida: pedreira **pausada** com 2 de pedra na
+  `saida` e um serf no mapa — a gaveta zera, o armazém vai de 30 a 32 e o total
+  de pedra no mapa não muda (32 → 32). E a resposta (b): serraria **pausada**
+  recebe os 3 troncos do armazém, o quadro termina **vazio** (nenhuma tarefa
+  órfã) e nada é produzido durante a pausa.
+- `npm run verify` verde: **839 testes, 47 arquivos**, typecheck, lint e
+  `validate:data` limpos. Roteiros de não-regressão F10, F11c e F13b: **código de
+  saída 0** nos três. Screenshot não foi aberto: a F16c não muda um pixel, o
+  botão é da F16b.
+
+### Sondas de mutação (prova do momento, não cobertura)
+
+Quatro mutações manuais no fonte, revertidas em seguida. Valem como evidência
+**desta sessão**; quem protege daqui para frente são as asserções de
+`tests/F16c-pausar.test.ts`:
+
+1. Leitor apagado (`produzir` sem o `if (predio.pausado)`) → **4 casos
+   reprovaram** (1, 2, 3, 4).
+2. Leitor invertido (`!predio.pausado`) → os mesmos 4.
+3. A alternativa rejeitada **"pausa cancela a tarefa em voo"** (um ramo de
+   `pausado` em `motivoDoDestino`) → **o caso 5 reprovou**.
+4. A alternativa rejeitada **"pausa solta o ocupante"** (um `&& !predio.pausado`
+   em `sanearOcupacao`) → **os casos 1 e 6 reprovaram**.
+
+As duas últimas existem porque os casos 5 e 6 guardam decisões de desenho, não o
+leitor: sem elas eu saberia que o leitor funciona, mas não que as respostas (b) e
+(c) estão travadas contra uma sessão futura que resolva "melhorar" a pausa.
+
+### Fora de escopo, declarado
+
+Nenhum `modos`, nenhum botão, nenhum evento novo. Não entrou também: pausar
+**obra** (recusado com `predio-em-obra` — "parar de martelar" não está escrito em
+lugar nenhum) e ligar/desligar reparo (mesma linha `[geral]` do GDD §2.3: não há
+HP em queda no jogo, não há o que pausar). Prédio completo **sem receita**
+(armazém, escola, quartel) é aceito pelo comando e simplesmente não tem leitor —
+quem esconde o botão nesse caso é a tela, e isso está na nota da F16b.
+
 ## Perguntas em aberto
 
 _(nenhuma no momento: as três que sobravam foram decididas pelo operador — ver "Ajuste pós-F10".)_

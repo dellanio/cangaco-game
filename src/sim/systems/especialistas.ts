@@ -168,6 +168,12 @@ function depositar(
  * razao que a posse mora so no predio.
  */
 function produzir(state: GameState, u: Unidade, predio: PredioCompleto, dados: GameData): Passo {
+  // F16c — a PRIMEIRA pergunta, antes da receita e antes da estrada: e o fato
+  // mais especifico sobre este predio e e acao deliberada do jogador. Congela o
+  // relogio e nada mais: `progresso` nao zera, o insumo ja consumido continua
+  // consumido, a gaveta `saida` segue escoando e o ocupante fica — por isso o
+  // rotulo e `trabalhando`, e nao um estado novo (`docs/planos/F16c-pausar.md`).
+  if (predio.pausado) return comFsm(state, u, 'trabalhando');
   const receita = receitaDoTipo(predio.tipo, dados);
   const prod = predio.producao;
   // predio ocupavel sem receita nao existe no dado de hoje; se existir, ocupa e nao produz

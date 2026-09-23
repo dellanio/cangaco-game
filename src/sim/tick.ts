@@ -8,6 +8,7 @@ import { aplicarDemolishBuilding } from './systems/demolicao';
 import { aplicarCancelTraining, aplicarEnqueueTraining, sistemaDasEscolas } from './systems/escolas';
 import { aplicarDemolishRoad, aplicarPlaceRoad } from './systems/estradas';
 import { gerarTarefas, sanearTarefas } from './systems/jobs';
+import { aplicarSetBuildingPaused } from './systems/pausa';
 import { sistemaDosEspecialistas } from './systems/especialistas';
 import { sistemaDosLaborers } from './systems/laborers';
 import { sistemaDosSerfs } from './systems/serfs';
@@ -65,6 +66,12 @@ export function step(
       }
       case 'CancelTraining': {
         const resultado = aplicarCancelTraining(atual, command);
+        atual = resultado.state;
+        events.push(...resultado.events);
+        break;
+      }
+      case 'SetBuildingPaused': {
+        const resultado = aplicarSetBuildingPaused(atual, command);
         atual = resultado.state;
         events.push(...resultado.events);
         break;

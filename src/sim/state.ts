@@ -5,6 +5,7 @@ import type { MotivoDeRecusa } from './placement';
 import type { MotivoDeRecusaDeEstrada, TileDeGrid } from './estradas';
 import type { MotivoDeLiberacao } from './jobs';
 import type { MotivoDeRecusaDeTreino } from './escola';
+import type { MotivoDeRecusaDePausa } from './pausa';
 
 /**
  * Efeito colateral emitido por um sistema para o render consumir
@@ -51,6 +52,16 @@ export type GameEvent =
       readonly predio: string;
       readonly unidade: string;
       readonly motivo: MotivoDeRecusaDeTreino;
+    }
+  | {
+      /**
+       * F16c — `SetBuildingPaused` recusado; o estado nao mudou. Pausar com o
+       * valor que o predio JA tem nao e recusa, e no-op: nao emite nada.
+       */
+      readonly type: 'command-rejected';
+      readonly command: 'SetBuildingPaused';
+      readonly predio: string;
+      readonly motivo: MotivoDeRecusaDePausa;
     }
   | {
       /**
@@ -227,6 +238,22 @@ export interface PredioCompleto extends PredioBase {
    * irrepresentavel como "produz, parado". Mesmo molde de `ocupante`.
    */
   readonly producao: Producao | null;
+  /**
+   * F16c — o jogador pausou este predio (`SetBuildingPaused`). Pausado, o
+   * RELOGIO do ciclo congela e nada mais muda: a gaveta `saida` continua
+   * escoando, as tarefas de transporte continuam valendo e o ocupante fica onde
+   * esta, no rotulo `trabalhando` (decisao do operador, 2026-09-23;
+   * `docs/planos/F16c-pausar.md` §3).
+   *
+   * SEMPRE presente e `false` no nascimento, nunca `undefined`: e o que mantem o
+   * estado comparavel byte a byte depois de um save/load, como `ocupante`.
+   *
+   * O campo e do PREDIO, de qualquer tipo. Quem nao tem `producao` pode ser
+   * pausado sem efeito — o unico leitor e o ciclo de producao
+   * (`systems/especialistas.ts`), e "pausado" nao e estado de FSM: a tela o
+   * compoe deste campo mais o ocupante, uma fonte de verdade so.
+   */
+  readonly pausado: boolean;
 }
 
 /**
@@ -718,6 +745,7 @@ export function completarObra(predio: PredioEmObra, dados: GameData = gameData):
     estoque: estoqueParaTipo(predio.tipo, {}),
     ocupante: null,
     producao: producaoParaTipo(predio.tipo, dados),
+    pausado: false,
   };
 }
 
@@ -750,6 +778,7 @@ function criarPredios(
       estoque: estoqueParaTipo(p.id, dados.economia.estadoInicial.estoque),
       ocupante: null,
       producao: producaoParaTipo(p.id, dados),
+      pausado: false,
     });
   }
   return { predios: construirColecao(lista), proximoContador: contador };
