@@ -16,7 +16,7 @@ import type { GameState } from '../src/sim/state';
 import { step } from '../src/sim/tick';
 import { gameData } from '../src/sim/data';
 import { painelDoPredio } from '../src/sim/selectors';
-import { custoDoPredio } from '../src/sim/obra';
+import { alvoDeNivelamento, custoDoPredio } from '../src/sim/obra';
 import { gravarEvidencia } from './helpers/evidence';
 import { cenarioDePedreira, semOcupante } from './helpers/producao-cenario';
 import { comObra as comObraEm } from './helpers/jobs-cenario';
@@ -136,6 +136,38 @@ describe('F16b — painelDoPredio', () => {
     const faltam = painelDoPredio(nada, 'obra-cheia')?.faltam;
     expect(faltam?.map((i) => i.mercadoria)).toEqual(esperado);
     expect(faltam?.every((i) => i.quantidade === 0)).toBe(true);
+  });
+
+  // --- correcao do defeito da F16b (achado ao planejar a F17d) ---
+  // `progresso` e `hp / hpTotal`, e `hp` so sobe com o MARTELO: durante TODO o
+  // nivelamento o painel escrevia "Em obra 0%". A obra recem-plantada e a que ja
+  // esperou o nivelamento inteiro diziam a mesma coisa, e sao estados diferentes
+  // para o jogador — um ainda vai demorar, o outro so espera material.
+
+  it('F16b (correcao): obra recem-posta traz o nivelamento zerado, com alvo e tiles do DADO', () => {
+    const [largura, altura] = defDaQuarry?.tamanho ?? [0, 0];
+    expect(painelDoPredio(comObra, OBRA)?.nivelamento).toEqual({
+      feito: 0,
+      // igualdade contra a MESMA funcao que a sim usa para nivelar
+      // (`systems/laborers.ts`), nunca contra um literal digitado aqui
+      alvo: alvoDeNivelamento('quarry', gameData),
+      tiles: (largura ?? 0) * (altura ?? 0),
+    });
+  });
+
+  it('F16b (correcao): obra JA NIVELADA se distingue da recem-posta', () => {
+    const alvo = alvoDeNivelamento('quarry', gameData);
+    // `comObraEm` nasce nivelada por default (`helpers/jobs-cenario.ts`)
+    const pronta = comObraEm(inicial, 'obra-plana', { gx: 26, gy: 34, faltam: {} });
+    expect(painelDoPredio(pronta, 'obra-plana')?.nivelamento).toMatchObject({ feito: alvo, alvo });
+    // e as duas continuam com o MESMO progresso: e exatamente por isso que
+    // "Em obra 0%" nao servia para distinguir uma da outra.
+    expect(painelDoPredio(pronta, 'obra-plana')?.progresso).toBe(0);
+    expect(painelDoPredio(comObra, OBRA)?.progresso).toBe(0);
+  });
+
+  it('F16b (correcao): predio completo nao tem nivelamento', () => {
+    expect(painelDoPredio(pedreira, PEDREIRA)?.nivelamento).toBeNull();
   });
 
   it('as gavetas saem na ordem de economia.mercadorias, nao na de Object.keys', () => {

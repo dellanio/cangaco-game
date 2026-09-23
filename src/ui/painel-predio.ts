@@ -82,7 +82,27 @@ function gaveta(classe: string, rotulo: string, itens: readonly ItemDeEstoque[])
 function desenharObra(
   raiz: HTMLElement, dados: PainelDoPredio, custo: Readonly<Record<string, number>>,
 ): void {
-  raiz.append(linha('obra', rotulos.emObra, `${Math.round(dados.progresso * 100)}%`));
+  // Correcao da F16b: "Em obra 0%" durante todo o nivelamento dizia a mesma
+  // coisa para a obra recem-plantada e para a que so espera material —
+  // `progresso` e `hp / hpTotal`, e `hp` so sobe com o martelo. Enquanto nivela,
+  // o painel diz o que esta REALMENTE acontecendo, na unidade que o mapa mostra:
+  // tiles de chao aplainado.
+  const nivelamento = dados.nivelamento;
+  if (nivelamento !== null && nivelamento.feito < nivelamento.alvo) {
+    // A conta inline sai na F17d, substituida pela MESMA funcao que o mapa usa.
+    // Aqui ela fica porque esta correcao precisa fechar sozinha, em commit
+    // proprio, antes de aquela feature existir.
+    const ticksPorTile = nivelamento.tiles > 0 ? nivelamento.alvo / nivelamento.tiles : 0;
+    const prontos = ticksPorTile > 0
+      ? Math.min(nivelamento.tiles, Math.floor(nivelamento.feito / ticksPorTile))
+      : nivelamento.tiles;
+    const l = linha('nivelamento', rotulos.nivelando, `${prontos}/${nivelamento.tiles}`);
+    l.dataset.tilesProntos = String(prontos);
+    l.dataset.tilesTotais = String(nivelamento.tiles);
+    raiz.append(l);
+  } else {
+    raiz.append(linha('obra', rotulos.emObra, `${Math.round(dados.progresso * 100)}%`));
+  }
   const faltam = dados.faltam ?? [];
 
   // F17b — `chegou/total` por material, INCLUSIVE o que ja completou. Isto

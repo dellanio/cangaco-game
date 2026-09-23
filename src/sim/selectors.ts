@@ -7,7 +7,7 @@ import { estaDesbloqueado } from './desbloqueio';
 import { predioLigadoAoArmazem } from './estradas';
 import { custoDeTreino, ehEscolaCompleta, filaDaEscola, ouroNecessario } from './escola';
 import { custoDoPasso } from './pathfinding';
-import { custoDoPredio } from './obra';
+import { alvoDeNivelamento, custoDoPredio } from './obra';
 import { trabalhadorDoTipo } from './ocupacao';
 import type { CaixaEmTiles } from './footprint';
 
@@ -358,6 +358,24 @@ export interface PainelDoPredio {
   readonly progresso: number;
   /** So em obra: o que ainda falta ENTREGAR. `null` no completo. */
   readonly faltam: readonly ItemDeEstoque[] | null;
+  /**
+   * Quanto do terreno da obra ja foi aplainado. `null` no predio completo.
+   *
+   * Existe porque `progresso` (`hp / hpTotal`) e ZERO durante todo o
+   * nivelamento — `hp` so sobe com o martelo —, e sem isto o painel escrevia
+   * "Em obra 0%" tanto na obra recem-plantada quanto na que ja esperou o
+   * nivelamento inteiro. Sao estados diferentes para o jogador: um ainda vai
+   * demorar, o outro so espera material.
+   *
+   * `tiles` vem junto de proposito: e a unidade que o jogador ve no mapa, e
+   * `ui/` nao pode deriva-la de `alvo` sem ler `ticksNivelamentoPorTile` de
+   * `sim/data` — coisa que `ui/` nao faz (topo de `menu-build.ts`).
+   */
+  readonly nivelamento: {
+    readonly feito: number;
+    readonly alvo: number;
+    readonly tiles: number;
+  } | null;
   /** `null` em obra, no predio vago e no tipo que nao pede trabalhador. */
   readonly ocupante: OcupanteDoPainel | null;
   /**
@@ -444,10 +462,16 @@ export function painelDoPredio(
   };
 
   if (predio.estado === 'obra') {
+    const [largura, altura] = def.tamanho;
     return {
       ...comum,
       estado: 'obra',
       faltam: faltamDaObra(predio, def, dados),
+      nivelamento: {
+        feito: predio.obra.nivelamento,
+        alvo: alvoDeNivelamento(predio.tipo, dados),
+        tiles: (largura ?? 0) * (altura ?? 0),
+      },
       ocupante: null,
       estoque: null,
       temProducao: false,
@@ -460,6 +484,7 @@ export function painelDoPredio(
     ...comum,
     estado: 'completo',
     faltam: null,
+    nivelamento: null,
     ocupante: unidade === undefined ? null : { unidade: unidade.id, tipo: unidade.tipo },
     estoque: {
       entrada: gaveta(predio.estoque.entrada, dados),
