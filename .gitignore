@@ -2,6 +2,8 @@
 test-output/
 screenshots/
 *.png
+# A arte do jogo e versionada (CLAUDE.md 9): base e derivado entram no git.
+!assets/**/*.png
 NEXT_FINDINGS.md
 STEER.md
 .serena

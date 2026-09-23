@@ -1543,6 +1543,46 @@ o teste afirma `acertos === 0` nos três.
   oscilar, a correção é alargar o teto **com o motivo escrito**, nunca `skip`.
 
 
+## F17f — O primeiro sprite real: armazém (2026-09-23)
+
+### Decisões do operador, antes do código (2026-09-23)
+
+- **Base em 1536×1024 versionada; o derivado 192×128 é gerado pela feature.**
+  Não se versiona só o derivado: sem a base não há como reajustar um frame sem
+  refazer o conjunto (§9). Não se carrega a base: o jogo lê só `assets/sprites/`.
+- **Armazenamento não é restrição.** Decisão explícita dele, tomada com o número
+  na mesa — ver "A consequência medida" abaixo.
+- **As imagens moram por id neutro da simulação.** `assets/edificios/armazem/`
+  era caixa de entrada; a base passou a `assets/base/storehouse/`, **mantendo o
+  nome que o autor deu aos arquivos** (`armazem_01_obra.png` etc.), porque a base
+  é o registro da geração. Quem traduz id → arquivo é o `assets/manifest.json`,
+  e nada no código parseia nome de arquivo.
+- **Duas regras novas na §9 do CLAUDE.md**: base e derivado entram no git, o jogo
+  carrega só `sprites/`; e arquivo de asset não se abre com Read em sessão de
+  código — imagem só entra no contexto como evidência da feature atual.
+
+### A consequência medida do versionamento da base
+
+Verificado, com `ls` nos arquivos entregues: o trio do armazém pesa **7,0 MB**
+(2,04 + 2,38 + 2,35). Nessa escala, **28 prédios × 3 estágios ≈ 170 MB** de base
+no histórico do git. **Histórico não encolhe**: apagar o arquivo depois não
+recupera o espaço — só um `filter-repo` recuperaria, e isso é reescrita de
+histórico, que o §10 proíbe. O operador tomou a decisão com esse número à vista.
+
+O derivado é outra ordem de grandeza e não pesa: os três de 192×128 somam
+dezenas de KB.
+
+### Verificado nesta etapa
+
+- `.gitignore`: `*.png` continua, com `!assets/**/*.png` logo abaixo.
+  `git status --porcelain` passou a listar `assets/base/` como não rastreado —
+  essa é a prova, não o código de saída do `git check-ignore`, que devolve 0
+  tanto para regra quanto para negação. `screenshots/` e `test-output/` seguem
+  ignorados: as regras deles são de diretório e não dependem da extensão.
+- A linha solta `assets/edificios`, que eu tinha encontrado acrescentada e não
+  commitada ao fim do `.gitignore` na sessão de planejamento, **não existe mais**
+  na árvore de hoje. Não removi nada: ela já tinha saído.
+
 ## Perguntas em aberto
 
 _(nenhuma no momento: as três que sobravam foram decididas pelo operador — ver "Ajuste pós-F10".)_

@@ -198,6 +198,13 @@ escrita.
   render desenha um retângulo com o `id` escrito. O jogo nunca quebra por asset
   faltando, e você nunca fica bloqueado esperando arte.
 - Não gere nem baixe arte por iniciativa própria. Arte entra por decisão humana.
+- **Base e derivado entram no git.** A base fica em `assets/base/<id-neutro>/` e o
+  derivado que o jogo carrega em `assets/sprites/<id-neutro>/`; `*.png` é ignorado,
+  com negação para `assets/**/*.png`. O jogo carrega **só** `assets/sprites/`: a base
+  é registro de geração e não entra no bundle.
+- **Arquivo de asset não se abre com Read em sessão de código.** Imagem só entra no
+  contexto quando é evidência da feature atual, como a §8 já manda para screenshot.
+  Para conferir dimensão, leia o cabeçalho do arquivo; não abra o PNG.
 
 ---
 
