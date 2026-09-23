@@ -722,6 +722,90 @@ alerta de prédio parado (F16/F22). Nenhum arquivo de `render/`, `ui/` ou
 
 Histórico das features fechadas: docs/historico/F01-F11a.md.
 
+## F15b — Entrega ao armazém e calibração
+
+Plano: `docs/planos/F15b-entrega.md` (aprovado). O operador **alargou o escopo**
+de "níveis 6 e 7" para **níveis 4–7** e partiu a feature em **F15b-1** (a escada
+do produtor) e **F15b-2** (cenário longo e calibração). A razão, nas palavras
+dele: "meu erro de sequenciamento — escrevi a F15 pensando em quem produz e não
+notei que a Sawmill consome". Registrado assim, e não como mudança de escopo por
+conveniência. A nota de alargamento entrou no `BUILD_PLAN.md` **antes** do
+código.
+
+### Decisões
+
+**A origem da tarefa virou simétrica ao destino.** Antes da F15b só o destino
+tinha predicado (`demandaNoDestino`/`vagaDoDestino`); a origem era sempre "a
+gaveta `saida` do armazém". Agora tem o par `ofertaNaOrigem`/`sobraNaOrigem`, e
+a **gaveta** vem do TIPO da tarefa (`gavetaDeOrigem`), nunca de um campo do
+estado: nível 6 tira da `saida` do produtor, nível 7 tira da `entrada` da
+escola. `reservadoNaOrigem` passou a contar **por gaveta** — sem isso, dois
+tipos que saem do mesmo prédio com a mesma mercadoria reservariam a unidade um
+do outro.
+
+**No nível 7 a oferta é o EXCEDENTE, não o estoque.** O ouro que a fila da
+escola ainda quer está na gaveta `entrada` e não pode voltar ao armazém; seria o
+vaivém que `alvoDeEntrada` existe para impedir.
+
+**BUG-001 foi corrigido em commit próprio** (decisão do operador). A obra que
+vira prédio cancela as tarefas `construir` irmãs no mesmo tick
+(`cancelarConstrucoesDe`), e quem segurava uma delas volta a `ocioso`
+(`semOsOrfaos`) — o saneamento roda **antes** dos laborers no tick, então quem
+já passou pelo laço precisa ser devolvido pelo concluinte.
+
+### Verificado (evidência aberta nesta sessão)
+
+- `test-output/F15b-escada.json`: as quatro cláusulas (a)–(d) da fila. Nível 6
+  leva a pedra da pedreira ao armazém (saída 0 no fim, 33 stone no armazém);
+  níveis 4/5 alimentam a Sawmill (3 troncos viram 5 timber no armazém); nível 7
+  devolve o ouro parado (escola 0, armazém 20 → 21); conservação exata e
+  `violacoesDeInvariantes` vazio em todo tick.
+- `test-output/F15.json`, cenário oráculo, 3000 ticks: nenhuma queda no
+  acumulado produzido; `piorOcio` de especialista = **0** (o X é 300); fila do
+  quadro **nunca** acumulou (zero tarefa `aberta` em todas as amostras de 100 em
+  100 ticks); primeira pedra no armazém no tick 207, primeiro tronco no 628,
+  primeiro timber no 968.
+- **A proporção 2:1 do GDD §4.5 bate quase no tick**: 2 Woodcutter's a 545
+  ticks/tronco dão um tronco a cada 272,5 ticks e a Sawmill consome um a cada
+  273. O carpinteiro ficou 661 ticks em `esperando_insumo` — **todos em uma
+  única sequência, no arranque**, e nenhum depois da primeira entrega.
+- **Veio**: medido com veio 20 (zera no tick 3340) e veio 40 (tick 6680) — 167
+  ticks por pedra nos dois, exatamente o `ticksDoCiclo`, sem intercepto. **A
+  extrapolação para 200 é 33400 ticks ≈ 55,7 min de jogo a 1x, e está declarada
+  como extrapolação** em `BALANCE_LOG.md`, não como corrida medida. Nenhuma taxa
+  mudou: o ajuste é em lote.
+- `npm run verify` verde (796 testes, 44 arquivos). Roteiros de não-regressão
+  F08, F10, F11c e F13b rodados: **código de saída 0** nos quatro (screenshot
+  não aberto — não é a feature desta sessão).
+
+### Achados registrados, não corrigidos
+
+- **`reclamar` ainda perguntava pela gaveta errada.** O claim checava
+  `disponivelNaOrigem(..., 'saida')` enquanto o quadro já criava tarefa de nível
+  7 (gaveta `entrada`): o quadro insistia em criar e todo serf recusava, para
+  sempre. Corrigido junto (é a mesma feature), mas fica anotado porque é a forma
+  exata da "espera indefinida" — a conta do claim e a conta do saneamento
+  **precisam ser a mesma função**.
+- **Veio esgotado deixa o especialista parado para sempre**: no tick em que o
+  veio zera sai `vein-exhausted` e o pedreiro entra em `esperando_insumo` e
+  fica (medido: 1000 ticks depois continua lá). Não quebra critério escrito
+  nenhum — foi para `IDEIAS.md` como buraco de desenho, não como bug.
+
+### Correção de aceite herdada pela F15a
+
+O aceite da F15a afirmava "a gaveta `saida` entope e o relógio congela". Essa
+**premissa deixou de valer por desenho** quando o nível 6 passou a escoar a
+gaveta. As cláusulas 2/3/5 foram reescritas com a medição ao lado (a cadência
+continua exata e agora cobre a corrida inteira, sem buraco), e o teto da gaveta
+e o `saida_cheia` continuam afirmados em `F15a-producao.test.ts`, sobre o
+cenário isolado, onde nada escoa. É mudança de premissa, não afrouxamento.
+
+### Fora de escopo, declarado
+
+Nenhuma taxa foi ajustada (o operador pediu medir antes). Nenhum arquivo de
+`render/`, `ui/` ou `input/` foi tocado — a F15b-1 tem nota explícita de que
+**não** é feature de integração.
+
 ## Perguntas em aberto
 
 _(nenhuma no momento: as três que sobravam foram decididas pelo operador — ver "Ajuste pós-F10".)_
