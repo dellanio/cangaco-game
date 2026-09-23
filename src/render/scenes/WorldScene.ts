@@ -31,6 +31,29 @@ import { manifestoDoJogo, texturasParaCarregar } from '../sprites';
 
 const CHAVE_TEXTURA_GRAMA = 'tile-grama';
 
+/** F17e — a cara de cada estagio no placeholder geometrico (§9). `altura` e a
+ *  fracao da altura do footprint que o volume ocupa, ancorado no PE: sao os tres
+ *  patamares que distinguem estrutura, paredes e cobertura de longe. `marcacao`
+ *  nao tem volume nenhum — e o lote marcado no chao, e so.
+ *
+ *  Cor e opacidade sao DESENHO, nao balanceamento, como ja valia para o canteiro
+ *  da F17d e para o medidor da F17b (§2.3 fala de custo, tempo, capacidade e
+ *  proporcao). O `Record` exige os seis: acrescentar um estagio a uniao quebra a
+ *  compilacao aqui, e nao silenciosamente na tela. */
+interface CaraDoEstagio {
+  readonly altura: number;
+  readonly cor: number;
+  readonly opacidade: number;
+}
+const CARA_DO_ESTAGIO: Record<EstagioDaObra, CaraDoEstagio> = {
+  marcacao: { altura: 0, cor: 0x6b4a33, opacidade: 0 },
+  fundacao: { altura: 1 / 6, cor: 0x8a6a4a, opacidade: 0.6 },
+  estrutura: { altura: 1 / 3, cor: 0xa9763f, opacidade: 0.55 },
+  paredes: { altura: 2 / 3, cor: 0x9a968c, opacidade: 0.75 },
+  cobertura: { altura: 1, cor: 0x7a4a33, opacidade: 0.9 },
+  completo: { altura: 1, cor: 0x6b4a33, opacidade: 1 },
+};
+
 export class WorldScene extends Phaser.Scene {
   private readonly desenhados = new Map<
     string,
@@ -377,19 +400,33 @@ export class WorldScene extends Phaser.Scene {
     return imagem;
   }
 
-  /** O placeholder do §9, intocado desde a F11c: retangulo do tamanho do
-   *  footprint com o nome tematico por cima. Continua sendo o desenho de 27 dos
-   *  28 predios, e continua NAO sendo falha. */
+  /** O placeholder do §9: o lote e o volume que sobe nele. A F11c desenhava o
+   *  mesmo retangulo com tres opacidades; a F17e da a cada um dos seis estagios
+   *  uma silhueta propria — contorno vazado sempre, volume em tres patamares de
+   *  altura e uma cor por camada. Continua sendo o desenho de 27 dos 28 predios,
+   *  e continua NAO sendo falha. */
   private desenharPlaceholder(
     estagio: EstagioDaObra, nome: string, larguraPx: number, alturaPx: number,
   ): Phaser.GameObjects.GameObject[] {
-    // F17e: a uniao passou de tres valores a seis. Aqui o desenho ainda e o da
-    // F11c (chao / em obra / de pe) — quem da silhueta propria a cada um dos seis
-    // e a tarefa seguinte desta feature.
     const emObra = estaEmObra(estagio);
-    const alfa = estagio === 'marcacao' ? 0.15 : emObra ? 0.4 : 1;
-    const retangulo = this.add.rectangle(larguraPx / 2, alturaPx / 2, larguraPx, alturaPx, 0x6b4a33, alfa);
-    retangulo.setStrokeStyle(2, emObra ? 0xede3d0 : 0x2c1d12);
+    const cara = CARA_DO_ESTAGIO[estagio];
+    const objetos: Phaser.GameObjects.GameObject[] = [];
+
+    // O lote, sempre: e o que diz ao jogador quanto chao a obra vai ocupar,
+    // inclusive quando ainda nao ha volume nenhum em cima dele.
+    const lote = this.add.rectangle(larguraPx / 2, alturaPx / 2, larguraPx, alturaPx, cara.cor, 0);
+    lote.setStrokeStyle(2, emObra ? 0xede3d0 : 0x2c1d12);
+    objetos.push(lote);
+
+    // O volume, ancorado no PE do footprint: a obra sobe do chao para cima, e nao
+    // cresce a partir do meio.
+    if (cara.altura > 0) {
+      const altura = alturaPx * cara.altura;
+      objetos.push(this.add.rectangle(
+        larguraPx / 2, alturaPx - altura / 2, larguraPx, altura, cara.cor, cara.opacidade,
+      ));
+    }
+
     const texto = emObra ? `${nome}\n(${temaSertao.obra[estagio]})` : nome;
     const rotulo = this.add.text(larguraPx / 2, alturaPx / 2, texto, {
       fontSize: '14px',
@@ -398,7 +435,8 @@ export class WorldScene extends Phaser.Scene {
       wordWrap: { width: larguraPx - 8 },
     });
     rotulo.setOrigin(0.5, 0.5);
-    return [retangulo, rotulo];
+    objetos.push(rotulo);
+    return objetos;
   }
 
   /** F17d — o canteiro: um retangulo de terra aplainada por tile ja nivelado, na
