@@ -12,21 +12,33 @@
  * `test-output/F09.json` e a nota da F10 no BUILD_PLAN. Se pedir indice, e otimizacao
  * (por predio e mercadoria), nao mudanca de contrato.
  */
-import type { GameState, TarefaDeTransporte } from './state';
-import { ehTarefaDeTransporte } from './state';
+import type { Gaveta, GameState, TarefaDeTransporte } from './state';
+import { ehTarefaDeTransporte, gavetaDeOrigem, ID_DO_ARMAZEM } from './state';
 import type { GameData } from './data/types';
 import { gameData } from './data';
 import { ouroNecessario } from './escola';
+import { demandaDeInsumo } from './insumo';
 import { vagasDoPredio } from './ocupacao';
 
-/** Unidades de `mercadoria` reservadas na ORIGEM `predioId`: so tarefas `reclamada` — a
- *  `carregando` ja consumiu a reserva da origem na coleta (F10). Vale para todo tipo
- *  de transporte (F13: material e ouro saem do mesmo armazem e disputam o estoque). */
-export function reservadoNaOrigem(state: GameState, predioId: string, mercadoria: string): number {
+/**
+ * Unidades de `mercadoria` reservadas na ORIGEM `predioId`: so tarefas `reclamada` — a
+ * `carregando` ja consumiu a reserva da origem na coleta (F10). Vale para todo tipo
+ * de transporte (F13: material e ouro saem do mesmo armazem e disputam o estoque).
+ *
+ * F15b — a conta e POR GAVETA, porque desde o nivel 7 dois tipos de tarefa podem
+ * sair do MESMO predio com a MESMA mercadoria e gavetas diferentes. Somar as duas
+ * juntas faria uma reservar a unidade da outra, e `disponivelNaOrigem` cairia
+ * abaixo de zero sem que nada estivesse errado. A gaveta vem do TIPO da tarefa
+ * (`gavetaDeOrigem`), nunca de um campo.
+ */
+export function reservadoNaOrigem(
+  state: GameState, predioId: string, mercadoria: string, gaveta: Gaveta = 'saida',
+): number {
   let soma = 0;
   for (const id of state.jobs.tarefas.ordem) {
     const t = state.jobs.tarefas.porId[id];
-    if (t && ehTarefaDeTransporte(t) && t.estado === 'reclamada' && t.origem === predioId && t.mercadoria === mercadoria) soma += 1;
+    if (t && ehTarefaDeTransporte(t) && t.estado === 'reclamada' && t.origem === predioId
+        && t.mercadoria === mercadoria && gavetaDeOrigem(t.tipo) === gaveta) soma += 1;
   }
   return soma;
 }
@@ -42,12 +54,22 @@ export function reservadoNoDestino(state: GameState, predioId: string, mercadori
   return soma;
 }
 
-/** O que um serf ainda pode reservar na origem: `saida - reservado`. So a gaveta
- *  `saida` (e de la que o serf retira, decisao da F05a) e so de armazem completo. */
-export function disponivelNaOrigem(state: GameState, predioId: string, mercadoria: string): number {
+/**
+ * O que um serf ainda pode reservar na origem: `gaveta - reservado`, num predio
+ * completo qualquer.
+ *
+ * O padrao `'saida'` e o universo ate a F13: e de la que o serf retira (decisao
+ * da F05a) e a origem era sempre armazem. A F15b acrescenta duas coisas: a
+ * origem passa a poder ser o proprio produtor (nivel 6) e, no nivel 7, a carga
+ * sai da gaveta `entrada` — que e justamente onde a mercadoria fica presa.
+ */
+export function disponivelNaOrigem(
+  state: GameState, predioId: string, mercadoria: string, gaveta: Gaveta = 'saida',
+): number {
   const predio = state.predios.porId[predioId];
   if (!predio || predio.estado !== 'completo') return 0;
-  return (predio.estoque.saida[mercadoria] ?? 0) - reservadoNaOrigem(state, predioId, mercadoria);
+  return (predio.estoque[gaveta][mercadoria] ?? 0)
+    - reservadoNaOrigem(state, predioId, mercadoria, gaveta);
 }
 
 /** A vaga que ainda pode ser reservada no destino: `faltam - reservado`. So obra. */
@@ -63,16 +85,38 @@ export function vagaNoDestino(state: GameState, predioId: string, mercadoria: st
  * ramo e escolhido pelo TIPO da tarefa (exaustivo), nao pelo estado do predio: uma
  * tarefa de material apontando para escola, ou de ouro para obra, pede zero — e o
  * que faz `sanearTarefas` cancelar a tarefa em vez de entregar no lugar errado.
+ *
+ * F15b — o `switch` virou exaustivo de verdade (era um `else` que mandava tudo
+ * que nao fosse material para `ouroNecessario`). Com seis tipos, o `else` teria
+ * respondido "demanda de ouro da escola" para uma tarefa de tronco.
  */
 export function demandaNoDestino(
   state: GameState, tarefa: TarefaDeTransporte, dados: GameData = gameData,
 ): number {
-  if (tarefa.tipo === 'material-para-obra') {
-    const predio = state.predios.porId[tarefa.destino];
-    if (!predio || predio.estado !== 'obra') return 0;
-    return predio.obra.faltam[tarefa.mercadoria] ?? 0;
+  switch (tarefa.tipo) {
+    case 'material-para-obra': {
+      const predio = state.predios.porId[tarefa.destino];
+      if (!predio || predio.estado !== 'obra') return 0;
+      return predio.obra.faltam[tarefa.mercadoria] ?? 0;
+    }
+    case 'ouro-para-escola':
+      return ouroNecessario(state, tarefa.destino, dados);
+    case 'insumo-producao-parada':
+    case 'insumo-producao-baixa':
+      return demandaDeInsumo(state, tarefa.destino, tarefa.mercadoria, dados);
+    case 'saida-cheia-para-armazem':
+    case 'excedente-para-armazem': {
+      // O armazem nao tem teto de gaveta (`capacidade.entrada === null`), entao
+      // a demanda dele e infinita de proposito — nao um numero grande escolhido
+      // a mao, que seria balanceamento escondido em `.ts`. Quem limita estas
+      // tarefas e a ORIGEM: so existe tarefa para o que esta la, e
+      // `disponivelNaOrigem` ja desconta o reservado.
+      const destino = state.predios.porId[tarefa.destino];
+      const ehArmazem = destino !== undefined && destino.estado === 'completo'
+        && destino.tipo === ID_DO_ARMAZEM;
+      return ehArmazem ? Number.POSITIVE_INFINITY : 0;
+    }
   }
-  return ouroNecessario(state, tarefa.destino, dados);
 }
 
 /**

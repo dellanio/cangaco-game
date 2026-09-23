@@ -8,13 +8,15 @@ import {
   criarTarefaDeInsumo, criarTarefaParaArmazem, elegivelParaTarefa, nivelDoTipo,
   TIPO_QUE_CARREGA, TIPO_QUE_CONSTROI,
 } from '../src/sim/jobs';
-import type { Tarefa, TipoDeTransporte } from '../src/sim/state';
+import type { GameState, Tarefa, TarefaDeTransporte, TipoDeTransporte } from '../src/sim/state';
 import {
   ehTarefaDeTransporte, gavetaDeOrigem, MERCADORIA_DE_OURO,
 } from '../src/sim/state';
 import { violacoesDeInvariantes } from './helpers/jobs-invariantes';
-import { armazemDoCenario, comTarefas } from './helpers/jobs-cenario';
-import { cenarioDePedreira, cenarioDeSerraria, comSaida } from './helpers/producao-cenario';
+import { armazemDoCenario, comTarefas, comUnidadeExtra } from './helpers/jobs-cenario';
+import { demandaNoDestino, disponivelNaOrigem, reservadoNaOrigem } from '../src/sim/reservas';
+import { demandaDeInsumo } from '../src/sim/insumo';
+import { cenarioDePedreira, cenarioDeSerraria, comEntrada, comSaida } from './helpers/producao-cenario';
 
 /** Serraria (`s1`, consome `tree_trunk`) e pedreira (`q1`, sem receita): os dois
  *  lados do contrato de destino. Os dois cenarios usam o mesmo armazem inicial. */
@@ -167,5 +169,97 @@ describe('F15b — o helper de invariantes ACUSA (D8)', () => {
       origem: armazem, destino: 'q1', estado: 'aberta', reclamadaPor: null,
     })]);
     expect(violacoesDeInvariantes(torto)).not.toEqual([]);
+  });
+});
+
+describe('F15b — reserva por gaveta', () => {
+  /** `s1` com 1 timber na gaveta `saida` e 1 na `entrada`, e duas tarefas
+   *  RECLAMADAS: uma de nivel 6 (tira da `saida`) e uma de nivel 7 (tira da
+   *  `entrada`). Mesma mercadoria, mesmo predio — o caso em que uma reserva
+   *  poderia comer a unidade da outra. */
+  function comAsDuasGavetasReservadas(): GameState {
+    let s = comSaida(comEntrada(base, 's1', { timber: 1 }), 's1', { timber: 1 });
+    s = comUnidadeExtra(s, 'serf-a', TIPO_QUE_CARREGA, 30, 33);
+    s = comUnidadeExtra(s, 'serf-b', TIPO_QUE_CARREGA, 30, 34);
+    return comTarefas(s, [
+      crua({
+        id: 't90', numero: 90, tipo: 'saida-cheia-para-armazem', mercadoria: 'timber',
+        origem: 's1', destino: armazem, estado: 'reclamada', reclamadaPor: 'serf-a',
+      }),
+      crua({
+        id: 't91', numero: 91, tipo: 'excedente-para-armazem', mercadoria: 'timber',
+        origem: 's1', destino: armazem, estado: 'reclamada', reclamadaPor: 'serf-b',
+      }),
+    ]);
+  }
+
+  it('reserva na origem conta so a MESMA gaveta', () => {
+    const s = comAsDuasGavetasReservadas();
+    expect(reservadoNaOrigem(s, 's1', 'timber', 'saida')).toBe(1);
+    expect(reservadoNaOrigem(s, 's1', 'timber', 'entrada')).toBe(1);
+  });
+
+  it('e por isso as duas unidades continuam disponiveis, uma em cada gaveta', () => {
+    const s = comAsDuasGavetasReservadas();
+    expect(disponivelNaOrigem(s, 's1', 'timber', 'saida')).toBe(0);
+    expect(disponivelNaOrigem(s, 's1', 'timber', 'entrada')).toBe(0);
+    // sem a gaveta, cada uma contaria a reserva da outra e daria -1 (reserva orfa)
+    expect(disponivelNaOrigem(s, 's1', 'timber', 'saida')).toBeGreaterThanOrEqual(0);
+  });
+
+  it('disponivel de nivel 6 le a gaveta `saida` do PRODUTOR, nao do armazem', () => {
+    const s = comSaida(pedreira, 'q1', { stone: 3 });
+    expect(disponivelNaOrigem(s, 'q1', 'stone', 'saida')).toBe(3);
+  });
+
+  it('disponivel de nivel 7 le a gaveta `entrada`', () => {
+    const s = comEntrada(base, 's1', { tree_trunk: 1 });
+    expect(disponivelNaOrigem(s, 's1', 'tree_trunk', 'entrada')).toBe(1);
+    expect(disponivelNaOrigem(s, 's1', 'tree_trunk', 'saida')).toBe(0);
+  });
+
+  it('a chamada antiga, sem gaveta, continua lendo `saida`', () => {
+    const s = comEntrada(comSaida(base, 's1', { timber: 4 }), 's1', { timber: 9 });
+    expect(disponivelNaOrigem(s, 's1', 'timber')).toBe(4);
+    expect(reservadoNaOrigem(s, 's1', 'timber')).toBe(0);
+  });
+
+  it('destino armazem nao tem teto: a origem e que limita', () => {
+    const nivel6 = crua({
+      id: 't90', numero: 90, tipo: 'saida-cheia-para-armazem', mercadoria: 'stone',
+      origem: 'q1', destino: armazem, estado: 'aberta', reclamadaPor: null,
+    }) as TarefaDeTransporte;
+    const nivel7 = crua({
+      id: 't91', numero: 91, tipo: 'excedente-para-armazem', mercadoria: MERCADORIA_DE_OURO,
+      origem: 's1', destino: armazem, estado: 'aberta', reclamadaPor: null,
+    }) as TarefaDeTransporte;
+    expect(demandaNoDestino(base, nivel6)).toBe(Number.POSITIVE_INFINITY);
+    expect(demandaNoDestino(base, nivel7)).toBe(Number.POSITIVE_INFINITY);
+  });
+
+  it('destino produtor pede exatamente a demanda de insumo', () => {
+    const s = comEntrada(base, 's1', { tree_trunk: 2 });
+    const t = crua({
+      id: 't92', numero: 92, tipo: 'insumo-producao-baixa', mercadoria: 'tree_trunk',
+      origem: armazem, destino: 's1', estado: 'aberta', reclamadaPor: null,
+    }) as TarefaDeTransporte;
+    expect(demandaNoDestino(s, t)).toBe(demandaDeInsumo(s, 's1', 'tree_trunk'));
+    expect(demandaNoDestino(s, t)).toBeGreaterThan(0);
+  });
+
+  it('tarefa de insumo apontando para o armazem pede zero (sanear cancela)', () => {
+    const t = crua({
+      id: 't93', numero: 93, tipo: 'insumo-producao-parada', mercadoria: 'tree_trunk',
+      origem: armazem, destino: armazem, estado: 'aberta', reclamadaPor: null,
+    }) as TarefaDeTransporte;
+    expect(demandaNoDestino(base, t)).toBe(0);
+  });
+
+  it('tarefa para armazem apontando para produtor pede zero (sanear cancela)', () => {
+    const t = crua({
+      id: 't94', numero: 94, tipo: 'saida-cheia-para-armazem', mercadoria: 'timber',
+      origem: 'q1', destino: 's1', estado: 'aberta', reclamadaPor: null,
+    }) as TarefaDeTransporte;
+    expect(demandaNoDestino(base, t)).toBe(0);
   });
 });
