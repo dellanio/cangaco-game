@@ -11,8 +11,10 @@
  * depois de todas as checagens) e `liberar` devolve as DUAS reservas de uma vez.
  */
 import type {
-  GameEvent, GameState, Tarefa, TarefaConstruir, TarefaDeTransporte, TarefaMaterialParaObra,
-  TarefaOcupar, TarefaOuroParaEscola, TipoDeTarefa,
+  GameEvent, GameState, Tarefa, TarefaConstruir, TarefaDeTransporte,
+  TarefaExcedenteParaArmazem, TarefaInsumoProducaoBaixa, TarefaInsumoProducaoParada,
+  TarefaMaterialParaObra, TarefaOcupar, TarefaOuroParaEscola,
+  TarefaSaidaCheiaParaArmazem, TipoDeTarefa,
 } from './state';
 import { ehTarefaDeTransporte, MERCADORIA_DE_OURO } from './state';
 import type { GameData } from './data/types';
@@ -74,6 +76,13 @@ const UNIDADE_ELEGIVEL_POR_TIPO: Readonly<Record<TipoDeTarefa, string | null>> =
   'material-para-obra': TIPO_QUE_CARREGA,
   // F13: ouro tambem e carga — mesmo serf, mesma FSM, mesmo claim.
   'ouro-para-escola': TIPO_QUE_CARREGA,
+  // F15b: os quatro niveis do produtor sao carga como qualquer outra — mesmo
+  // serf, mesma FSM, mesmo claim. O que muda e a gaveta de onde a carga sai
+  // (`gavetaDeOrigem`) e onde ela entra na chegada.
+  'insumo-producao-parada': TIPO_QUE_CARREGA,
+  'insumo-producao-baixa': TIPO_QUE_CARREGA,
+  'saida-cheia-para-armazem': TIPO_QUE_CARREGA,
+  'excedente-para-armazem': TIPO_QUE_CARREGA,
   construir: TIPO_QUE_CONSTROI,
   // F14: 'ocupar' nao tem UM tipo elegivel — quem pode ocupar depende do PREDIO
   // de destino. `null` aqui significa "esta pergunta nao se responde so com o
@@ -157,6 +166,53 @@ export function criarTarefaDeOuro(
   const tarefa: TarefaOuroParaEscola = {
     id: `t${numero}`, numero, tipo: 'ouro-para-escola', mercadoria: MERCADORIA_DE_OURO,
     origem: campos.origem, destino: campos.destino, estado: 'aberta', reclamadaPor: null,
+  };
+  return inserirTarefa(state, tarefa);
+}
+
+/**
+ * F15b — niveis 4 e 5: uma unidade de insumo do armazem `origem` ate a gaveta
+ * `entrada` do produtor `destino`. `parada` escolhe o TIPO, e com ele o nivel
+ * na escada — `true` quando o produtor esta com zero da mercadoria.
+ *
+ * A urgencia e decidida AQUI e nunca revista depois (ver `TarefaInsumoProducaoParada`).
+ */
+export function criarTarefaDeInsumo(
+  state: GameState,
+  campos: {
+    readonly mercadoria: string; readonly origem: string;
+    readonly destino: string; readonly parada: boolean;
+  },
+): { readonly state: GameState; readonly id: string } {
+  const numero = state.proximoId;
+  const tarefa: TarefaInsumoProducaoParada | TarefaInsumoProducaoBaixa = {
+    id: `t${numero}`, numero,
+    tipo: campos.parada ? 'insumo-producao-parada' : 'insumo-producao-baixa',
+    mercadoria: campos.mercadoria, origem: campos.origem, destino: campos.destino,
+    estado: 'aberta', reclamadaPor: null,
+  };
+  return inserirTarefa(state, tarefa);
+}
+
+/**
+ * F15b — niveis 6 e 7: uma unidade do predio `origem` de volta ao armazem
+ * `destino`. `excedente` escolhe o nivel E, com ele, a gaveta de onde a carga
+ * sai: `entrada` no nivel 7 (mercadoria parada num predio que nao a pede mais),
+ * `saida` no nivel 6 (o que o produtor acabou de fazer). Ver `gavetaDeOrigem`.
+ */
+export function criarTarefaParaArmazem(
+  state: GameState,
+  campos: {
+    readonly mercadoria: string; readonly origem: string;
+    readonly destino: string; readonly excedente: boolean;
+  },
+): { readonly state: GameState; readonly id: string } {
+  const numero = state.proximoId;
+  const tarefa: TarefaSaidaCheiaParaArmazem | TarefaExcedenteParaArmazem = {
+    id: `t${numero}`, numero,
+    tipo: campos.excedente ? 'excedente-para-armazem' : 'saida-cheia-para-armazem',
+    mercadoria: campos.mercadoria, origem: campos.origem, destino: campos.destino,
+    estado: 'aberta', reclamadaPor: null,
   };
   return inserirTarefa(state, tarefa);
 }

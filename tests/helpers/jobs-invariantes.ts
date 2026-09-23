@@ -13,6 +13,7 @@ import type { GameData } from '../../src/sim/data/types';
 import type { GameState, Tarefa } from '../../src/sim/state';
 import { distanciaDaTarefa, nivelDoTipo, podeReclamar } from '../../src/sim/jobs';
 import { ehEscolaCompleta } from '../../src/sim/escola';
+import { insumosDoPredio } from '../../src/sim/insumo';
 import { ehPredioOcupavel } from '../../src/sim/ocupacao';
 import { disponivelNaOrigem, vagaNoDestino } from '../../src/sim/reservas';
 import { ID_DO_ARMAZEM } from '../../src/sim/state';
@@ -37,6 +38,31 @@ function violacoesDoDestino(estado: GameState, t: Tarefa, dados: GameData): stri
       return !destino || destino.estado !== 'obra' ? [`${t.id}: destino '${t.destino}' nao e obra`] : [];
     case 'ouro-para-escola':
       return !ehEscolaCompleta(destino) ? [`${t.id}: destino '${t.destino}' nao e escola completa`] : [];
+    // F15b, niveis 4 e 5: o destino tem que ser um produtor completo que PEDE
+    // esta mercadoria. `insumosDoPredio` (sim/insumo.ts) e o mesmo predicado que
+    // o gerador usa — nao uma copia da regra.
+    case 'insumo-producao-parada':
+    case 'insumo-producao-baixa':
+      return insumosDoPredio(estado, t.destino, dados).includes(t.mercadoria)
+        ? [] : [`${t.id}: destino '${t.destino}' nao consome '${t.mercadoria}'`];
+    // F15b, niveis 6 e 7: o destino e armazem completo e a origem e um predio
+    // completo QUE NAO E ARMAZEM — armazem mandando para armazem seria carga
+    // andando em circulo.
+    case 'saida-cheia-para-armazem':
+    case 'excedente-para-armazem': {
+      const v: string[] = [];
+      if (!destino || destino.estado !== 'completo' || destino.tipo !== ID_DO_ARMAZEM) {
+        v.push(`${t.id}: destino '${t.destino}' nao e armazem completo`);
+      }
+      // `carregando` (F10): a coleta ja aconteceu e a origem deixou de importar.
+      if (t.estado !== 'carregando') {
+        const origem = estado.predios.porId[t.origem];
+        if (!origem || origem.estado !== 'completo' || origem.tipo === ID_DO_ARMAZEM) {
+          v.push(`${t.id}: origem '${t.origem}' nao e predio completo fora do armazem`);
+        }
+      }
+      return v;
+    }
     case 'ocupar':
       if (!ehPredioOcupavel(destino, dados)) return [`${t.id}: destino '${t.destino}' nao e predio ocupavel`];
       return destino.ocupante !== null ? [`${t.id}: destino '${t.destino}' ja tem ocupante`] : [];

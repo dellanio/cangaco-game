@@ -320,8 +320,85 @@ export interface TarefaOuroParaEscola extends TarefaDeCarga {
   readonly tipo: 'ouro-para-escola';
 }
 
+/**
+ * F15b — niveis 4 e 5 da escada: uma unidade de insumo do armazem ate a gaveta
+ * `entrada` de um produtor. Dois tipos e nao um com campo de urgencia porque o
+ * NIVEL e a unica diferenca entre eles, e nivel mora no tipo (`nivelDoTipo`,
+ * `delivery.json`). 4 e "precisa e tem zero"; 5 e "tem menos que o alvo".
+ *
+ * O tipo e FOTOGRAFADO na criacao e nunca muda depois: a urgencia pode virar
+ * debaixo de um serf que ja esta com o tronco na mao, e trocar o tipo ali seria
+ * trocar a tarefa por outra sem devolver a reserva. Tarefa ABERTA que perdeu a
+ * urgencia e cancelada por `abertaVale` e recriada no mesmo tick — de graca,
+ * porque aberta nao reserva nada.
+ */
+export interface TarefaInsumoProducaoParada extends TarefaDeCarga {
+  readonly tipo: 'insumo-producao-parada';
+}
+export interface TarefaInsumoProducaoBaixa extends TarefaDeCarga {
+  readonly tipo: 'insumo-producao-baixa';
+}
+
+/**
+ * F15b — nivel 6: a gaveta `saida` de um produtor ate o armazem. Dispara com
+ * estoque > 0, NAO com a gaveta cheia (BUILD_PLAN F15b-1, nota D3): esperar
+ * encher faria de `saida_cheia` o regime permanente, e o GDD §6.2 a descreve
+ * como sinal de gargalo. O nome do nivel no dado descreve o sintoma que ele
+ * evita, nao a condicao de disparo.
+ *
+ * E o primeiro tipo em que a ORIGEM nao e armazem.
+ */
+export interface TarefaSaidaCheiaParaArmazem extends TarefaDeCarga {
+  readonly tipo: 'saida-cheia-para-armazem';
+}
+
+/**
+ * F15b — nivel 7: mercadoria parada na gaveta `entrada` de um predio que nao a
+ * pede mais, de volta ao armazem. E o que fecha o ouro preso na escola depois de
+ * a fila ser cancelada (BUILD_PLAN F15b-1, nota D4): o vazamento se conserta na
+ * origem, e o HUD continua com uma regra so. Unico tipo cuja carga sai da gaveta
+ * `entrada` — ver `gavetaDeOrigem`.
+ */
+export interface TarefaExcedenteParaArmazem extends TarefaDeCarga {
+  readonly tipo: 'excedente-para-armazem';
+}
+
 /** As tarefas que um serf CARREGA: mesma forma, destinos diferentes. */
-export type TarefaDeTransporte = TarefaMaterialParaObra | TarefaOuroParaEscola;
+export type TarefaDeTransporte =
+  | TarefaMaterialParaObra
+  | TarefaOuroParaEscola
+  | TarefaInsumoProducaoParada
+  | TarefaInsumoProducaoBaixa
+  | TarefaSaidaCheiaParaArmazem
+  | TarefaExcedenteParaArmazem;
+
+/** O tipo de uma tarefa que CARREGA, DERIVADO da uniao — nunca escrito a mao. */
+export type TipoDeTransporte = TarefaDeTransporte['tipo'];
+
+/** As duas gavetas de estoque de um predio completo. */
+export type Gaveta = 'entrada' | 'saida';
+
+/**
+ * F15b — de que gaveta do predio de ORIGEM a carga sai. Exaustiva por
+ * construcao: um tipo de transporte novo sem linha aqui nao compila, e quem o
+ * acrescenta e obrigado a decidir, em vez de herdar `saida` por omissao.
+ *
+ * Mora em `state.ts`, e nao em `jobs.ts`, porque `reservas.ts` precisa dela e
+ * deliberadamente nao importa `jobs.ts` (o ciclo que o cabecalho de `reservas.ts`
+ * explica).
+ */
+export const GAVETA_DE_ORIGEM_POR_TIPO: Readonly<Record<TipoDeTransporte, Gaveta>> = {
+  'material-para-obra': 'saida',
+  'ouro-para-escola': 'saida',
+  'insumo-producao-parada': 'saida',
+  'insumo-producao-baixa': 'saida',
+  'saida-cheia-para-armazem': 'saida',
+  'excedente-para-armazem': 'entrada',
+};
+
+export function gavetaDeOrigem(tipo: TipoDeTransporte): Gaveta {
+  return GAVETA_DE_ORIGEM_POR_TIPO[tipo];
+}
 
 /**
  * F11b — uma vaga de trabalho de construcao numa obra. So o laborer
