@@ -1810,6 +1810,98 @@ testes com dado sintético. Registrado como decisão, não como pergunta em aber
   passo de correção de bug. O cabeçalho de `tools/shots/F17f.js` e a Nota da
   F17f dizem isso.
 
+## F17d — Nivelamento visível no canteiro (2026-09-23)
+
+Plano: `docs/planos/F17d-nivelamento-canteiro.md`. Feature de **integração**
+(permissão escrita no item da fila **antes** do código, CLAUDE.md §10): tocou
+`src/render/` e `src/ui/` na mesma feature. `src/sim/` foi tocado **uma vez
+só**, na Tarefa 0, que é a exceção nomeada pelo operador.
+
+### Verificado nesta sessão
+
+- `npm run verify` — **EXIT=0**, 54 arquivos de teste, 905 casos.
+- `test-output/F17d.json`, aberto com Read: `ticksNivelamentoPorTile: 10`;
+  `gold_mine` 2 tiles / alvo 20, `barracks` 16 / 160, `woodcutters` 6 / 60.
+  `recemPosta.tilesProntos` é 0 nos três e `nivelada.tilesProntos === tiles`
+  com `nivelada: true` nos três — o aceite escrito no BUILD_PLAN, item a item.
+- `npm run shot -- F17d` — **EXIT=0**, `screenshots/F17d-1-nivelando.png` e
+  `F17d-2-nivelada.png`. A primeira foi aberta com Read (evidência da feature
+  atual): o canteiro aparece parcialmente aplainado e o medidor de material
+  está esmaecido. A segunda **não** foi aberta — imagem é o que mais pesa na
+  janela, e o roteiro já afirma sobre número.
+- Não-regressão por **código de saída**, sem abrir imagem: `F17b EXIT=0`,
+  `F11c EXIT=0`, `F16b EXIT=0` (depois da correção abaixo).
+
+### O defeito da F16b, e o que ele arrastou
+
+`progresso` é `hp / hpTotal` e `hp` só sobe com o martelo, então **a obra
+recém-plantada e a que já esperou o nivelamento inteiro escreviam a mesma
+coisa**: "Em obra 0%". Correção em commit próprio (`74f8677`), como o operador
+mandou, no mesmo molde do `e014a0c`: `painelDoPredio` ganhou `nivelamento`
+(`feito`, `alvo`, `tiles`) e o painel escreve "Aplainando o chão N/M".
+
+`tiles` entra junto com os outros dois **de propósito**: é a unidade que o
+jogador vê no mapa, e `ui/` não pode derivá-la de `alvo` sem ler
+`ticksNivelamentoPorTile` de `sim/data` — coisa que `ui/` não faz. Separar em
+dois commits abriria `src/sim/` duas vezes, e as outras tarefas não podiam.
+
+**O que o plano não previu:** `tools/shots/F16b.js` afirmava o texto
+`painelPredio.emObra` numa obra **recém-plantada**, isto é, codificava o
+comportamento defeituoso. Ele reprovou na não-regressão da Tarefa 5, corrigido
+em `ab82abb`. A afirmação nova é **mais estrita** que a velha: exige o rótulo
+do nivelamento, exige que "Em obra" **não** apareça (são exclusivos) e exige
+`data-tiles-totais` na linha. O passo de não-regressão devia estar na Tarefa 0,
+onde a mudança de texto aconteceu, e não no fim.
+
+### A armadilha, e a proteção permanente
+
+`atualizarPredios` pula o redesenho quando a chave do diff não muda, e
+**aplainar o chão não mexe em `estado` nem em `estagio`**. Sem a leitura do
+canteiro na chave, ele nasceria certo e **congelaria para sempre** — e uma foto
+única passaria assim mesmo. A fração do tile em curso entra quantizada em
+**oitavos**, e o **desenho usa o mesmo valor quantizado**: é isso que torna
+"mesma chave ⇒ mesmo desenho" verdade por construção, e não por disciplina.
+
+Separando o que protege de verdade do que é evidência de hoje:
+
+- **Proteção permanente** (roda em todo `npm run verify`): o caso
+  `mesma chave implica mesmo desenho` em `tests/F17d-nivelamento.test.ts`, a
+  igualdade `aparenciaDoPredio(t).alvoDeNivelamento === alvoDeNivelamento(t)`
+  (é o que impede mapa e simulação de divergirem quando `buildings.json` mudar),
+  e a guarda de "zero imports" da F04, **generalizada**: ela valia só para
+  `grid.ts`; agora cobre `estagio-obra.ts`, `medidor-obra.ts` e
+  `nivelamento-obra.ts`, que prometiam no comentário e nada verificava.
+- **Probe, evidência da sessão e nada além disso**: acrescentei um `import` ao
+  fim de `src/render/nivelamento-obra.ts` e **as duas guardas acusaram** (a da
+  F04 e a da F17d), voltando ao verde depois de desfazer. Isso mostra que a
+  regra acusa hoje, não que continua acusando.
+
+### Decisões
+
+- **O laborer continua parado, e é de propósito.** Decisão do operador
+  (2026-09-23), registrada no item da fila: desenhar a unidade deslizando fora
+  da posição que está em `sim/` quebraria "o render lê o estado, não decide", e
+  caminhada falsa mente sobre uma regra que não existe. Está em `IDEIAS.md`.
+- **Medidor esmaecido, não escondido** (opacidade 0,3). Esconder mudaria o que o
+  roteiro da F17b conta; esmaecer responde "ainda não é a vez dele" sem apagar o
+  denominador. `debug.medidoresDeObra` **não mudou de forma**.
+- **Cor e opacidade ficam no `.ts`.** Não são balanceamento: a §2.3 fala de
+  custo, tempo, capacidade e proporção. É desenho de placeholder, como o resto.
+- **Aritmética e funil saíram num commit só** (`c9f2390`), contra a divisão do
+  plano em duas tarefas: o arquivo de teste cobre os dois, e o caso do funil é
+  justamente a igualdade contra `alvoDeNivelamento`.
+- **`PASSO_DE_AVANCO = 10` no roteiro** porque o dado de hoje gasta 10 ticks por
+  tile: um passo nunca pula um tile inteiro, então a foto do canteiro pela
+  metade é alcançável, e não sorte. Se `ticksNivelamentoPorTile` cair, esse
+  passo precisa cair junto — o teste headless deriva do dado, o roteiro não.
+
+### Observação, não defeito
+
+No enquadramento do roteiro (o mesmo da F16b e da F17b) a obra fica
+**parcialmente atrás do painel "Construir"**. O canteiro aparece inteiro o
+bastante para a evidência, e o roteiro afirma sobre número, não pixel. Não
+mexi: mudar geometria de roteiro validado não era escopo desta feature.
+
 ## Perguntas em aberto
 
 _(nenhuma no momento: as três que sobravam foram decididas pelo operador — ver "Ajuste pós-F10".)_
