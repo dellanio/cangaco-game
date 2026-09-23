@@ -37,6 +37,12 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   | **verificar na F17**, com estradas e serfs entregando de verdade, ANTES de decidir qualquer regra de
   prioridade — pode desaparecer sozinho quando houver material. Observação do operador; não confirmada por
   execução minha.
+- [2026-09-22] o veio da Quarry rende 200 pedras: ~33400 ticks, ~55 min de produção contínua na escala 2.0
+  | `quarry.veio.rendimento` 200, número de PARTIDA aprovado pelo operador, nunca medido em partida
+  | data/production.json
+  | **calibrar na F15b**, junto com o resto do lote. A referência é o original: constroem-se várias pedreiras e
+  elas se esgotam ao longo da partida — se uma só durar a partida inteira, o número está alto. Aprovado como
+  ponto de partida, não como valor final.
 
 ---
 

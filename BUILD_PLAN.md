@@ -347,19 +347,67 @@ prédio surge sem clique do jogador.
   como a de construir (F11b), e **não exige estrada** — o especialista anda em
   modo `'livre'`, como o laborer.
 
-### F15 — Produção: Quarry, Woodcutter's, Sawmill
-- **Escopo**: ciclo de produção por tempo, saída depositada no prédio, tarefa de
-  transporte criada para levar ao armazém. Quarry esgota o veio de pedra.
-- **Aceite**: cenário completo, 3000 ticks. O estoque de stone e timber é maior
-  que zero e cresce monotonicamente enquanto houver rocha e árvore. Nenhum
-  trabalhador em `ocioso` por mais de X ticks consecutivos.
-- **Evidência**: `test-output/F15.json`
+### F15a — Produção: o ciclo e o veio
+- **Escopo**: ciclo de produção por tempo, saída depositada na gaveta `saida` do
+  prédio. Quarry esgota o veio de pedra. **Sem transporte** — levar a saída ao
+  armazém é a F15b.
+- **Aceite**: cenário de 1000 ticks, caminho real (planta, obra concluída,
+  especialista treinado na escola e ocupando). A pedreira ocupada e ligada por
+  estrada deposita stone na gaveta `saida` em intervalos **exatos e iguais**, até
+  o teto da gaveta, e o especialista nunca passa por `ocioso`. Uma serraria sem
+  tronco fica em `esperando_insumo` sem gastar relógio. Com o veio curto (dado
+  injetado), a produção para e `vein-exhausted` sai **uma vez**.
+- **Evidência**: `test-output/F15a.json`
 - **Nota (origem: F14)**: prédio sem `ocupante` **não produz** — a pergunta é
   `ehPredioOcupavel(predio) && predio.ocupante === null` (`sim/ocupacao.ts`). É
   nesta feature que "fica parado" ganha significado observável, e é aqui que
   entram `esperando_insumo` e `saida_cheia` (GDD §6.2).
 - **Nota**: prédio **sem ligação** ao armazém (`predioLigadoAoArmazem`, F08) **não
   produz** — a estrada é requisito de funcionamento (GDD §5.1).
+- **Nota (D6, decisão do operador)**: prédio sem estrada fica em **`saida_cheia`**,
+  com o relógio do ciclo congelado. Prédio que não escoa é exatamente o que o GDD
+  §6.2 descreve por `saida_cheia` ("a logística é o gargalo"), e sem estrada o
+  escoamento é impossível — o caso extremo, não um caso novo. **Nenhum estado de
+  FSM fora da lista do GDD §6.2.** A causa continua observável sem estado novo
+  (`predioLigadoAoArmazem === false`), que é o que o alerta "sem estrada" da F22 lê.
+- **Nota (D1)**: a receita é um **ciclo**, derivado **uma vez no carregamento**:
+  `ticksDoCiclo` é o período da taxa mais lenta entre `entra` e `sai`, e as
+  quantidades são a razão dos períodos, arredondada ali. É isso que faz "1 tronco
+  → 2 timber" sair das **taxas**, sem a quantidade estar digitada em lugar nenhum.
+  `tools/data-rules.js` recusa receita cuja razão o arredondamento distorça acima
+  de 2 %.
+- **Nota (D2, contrato que a F21 herda)**: o veio mora no **prédio**
+  (`PredioCompleto.producao.veio`), semeado de `data/production.json` no instante
+  da conclusão. Não há camada de terreno na sim e nenhuma feature antes da F17
+  produz uma.
+- **Nota (D7)**: `modos` do Woodcutter's (`cortar`/`replantar`/`ambos`) continua
+  **sem leitor**. Aqui o lenhador replanta, e por isso o veio dele é `null`.
+  Escolher modo é comando de prédio (GDD §2.3) — F16.
+
+### F15b — Produção: entrega ao armazém e calibração
+- **Escopo**: níveis **6** (`saida-cheia-para-armazem`) e **7**
+  (`excedente-para-armazem`) da escada de `data/delivery.json`; o serf leva a
+  saída do produtor ao armazém e devolve ao armazém a mercadoria parada em prédio
+  que não a pede mais. Cenário longo de calibração.
+- **Aceite**: cenário completo, 3000 ticks. O estoque de stone e timber é maior
+  que zero e cresce monotonicamente enquanto houver rocha e árvore. Nenhum
+  trabalhador em `ocioso` por mais de X ticks consecutivos.
+- **Evidência**: `test-output/F15.json`
+- **Nota (operador)**: a **calibração não sai da Fase A** — ela é o que prova que
+  o jogo tem ritmo, e o aceite da F17 depende dela.
+- **Nota (a calibrar aqui)**: `production.json: quarry.veio.rendimento = 200` é
+  ponto de partida aprovado pelo operador (~55 min de produção contínua na escala
+  2.0 — quase uma partida inteira de uma Quarry, que casa com o original, onde se
+  constroem várias e elas se esgotam). Ver `BALANCE_LOG.md`.
+- **Nota (D3)**: o nível 6 dispara com **estoque > 0** na gaveta `saida`, não com
+  a gaveta cheia. Esperar encher faria de `saida_cheia` o regime permanente, e o
+  GDD §6.2 a descreve como **sinal de gargalo**.
+- **Nota (o `X` do aceite)**: "mais de X ticks" precisa virar número **do dado**,
+  não digitado em `.ts`. Candidato:
+  `delivery.alertaTarefaSemCandidato_segundos` (30 s → 300 ticks), que é o próprio
+  limiar que o dado declara para "isto está parado tempo demais". E "trabalhador"
+  precisa ser lido como **especialista**: serf entre tarefas passa por `ocioso`
+  legitimamente. Decidir com o operador antes de começar.
 - **Nota**: **o que o HUD conta está decidido (operador, pós-F10): o estoque dos ARMAZÉNS.** O
   número da barra precisa prever o que o jogador pode gastar, e a estrada (F08) e as obras (F10)
   só tiram de armazém; somar a saída de uma pedreira mostraria pedra que ninguém consegue usar. O
@@ -380,6 +428,13 @@ prédio surge sem clique do jogador.
   lê `estoqueDosArmazens`. A F13a não trata disso — o aceite dela não fala de
   cancelamento. Decidir aqui, junto com a divergência dos dois seletores: ou a mercadoria
   parada em prédio volta por tarefa, ou o HUD passa a distingui-la. Não é balanceamento.
+- **Nota (D4, decisão do operador)**: **resolvido pelo nível 7**, não pela tela. O
+  vazamento se conserta na origem e o HUD continua com **uma regra só** — conta
+  armazéns. A pedra parada na saída de um produtor **não** é distorção: é limitada
+  ao buffer, drenada pelo nível 6, e é pedra que o jogador não pode gastar.
+  **Sem nota de feature de integração; nada de `render/` nem de `ui/` aqui.**
+- **Nota (origem: F09)** — *a primeira linha desta nota está faltando no arquivo;
+  preservada literalmente como estava, sem reconstituir o que se perdeu:*
   insumo → produção com estoque baixo, saída cheia → armazém, excedente → armazém):
   a F09 só implementa o nível 3 (material → obra). Cada produtor alarga
   `Tarefa.tipo` e referencia o nível por `id` em `data/delivery.json`. E o
@@ -456,8 +511,24 @@ prédio surge sem clique do jogador.
   desta feature ou do combate. Esta feature decide se a carga cai no tile e é recolhida (item no chão,
   tarefa ou estado novo no GDD §6.2) ou se continua perdida — e ajusta o teste de conservação de bens.
 ### F21 — Gold mine, Coal mine e Metallurgist's (ouro renovável)
+- **Nota (origem: F15a — contrato herdado)**: o veio mora no **prédio**, em
+  `PredioCompleto.producao.veio`, semeado de `data/production.json`
+  (`predios.<id>.veio.rendimento`) no instante em que a obra vira `'completo'`.
+  Campo ausente no dado = renovável (`null`). **Esta feature herda prontos** o
+  campo, o decremento por unidade de saída, o estado terminal (`esperando_insumo`
+  com `veio === 0` — a rocha é o insumo que não vem mais) e o evento
+  `vein-exhausted`. Quando existir camada de terreno (não existe hoje, e nenhuma
+  feature antes da F17 produz uma), **só o inicializador muda**: o rendimento
+  passa a ser função dos tiles sob e ao redor do prédio. Nenhum sistema precisa
+  mudar para isso acontecer.
 ### F22 — Alertas do HUD
 - Prédio sem trabalhador, sem estrada, fome, mina esgotada.
+- **Nota (origem: F15a)**: "mina esgotada" também **nasce pronta**: é
+  `predio.producao.veio === 0` num prédio completo, e o evento `vein-exhausted`
+  marca o instante em que isso passa a valer. "Sem estrada" é
+  `predioLigadoAoArmazem(state, predio) === false` — a F15a congela o ciclo nesse
+  caso sem criar estado de FSM novo, justamente para que o alerta leia o predicado
+  e não um rótulo. Falta **só o mecanismo de exibição**.
 - **Nota (origem: F14)**: a derivação de "prédio sem trabalhador" **nasce pronta
   na F14**: é `predio.ocupante === null` num prédio completo cujo tipo pede
   trabalhador — `ehPredioOcupavel` + `vagasDoPredio`, em `sim/ocupacao.ts`. O
