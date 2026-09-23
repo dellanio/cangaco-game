@@ -83,3 +83,40 @@ describe('F17c — o rascunho do A* nao se aloca por busca', () => {
     expect(caminho?.tiles.length).toBe(3);
   });
 });
+
+describe('F17c — o A* nao e reentrante, e a guarda diz isso em voz alta', () => {
+  beforeEach(() => { zerarEstatisticasDeBusca(); });
+
+  // Reentrancia de verdade, por uma costura que existe mesmo: `dados` vem do
+  // chamador e `dados.movimento.ticksPorTile.aPe` e lido DURANTE a busca. Nenhum
+  // caminho do jogo faz isto — o teste existe para provar que a guarda ACUSA, e
+  // nao so que ela nao acusa a toa.
+  it('uma busca disparada de dentro de outra e recusada', () => {
+    const base = gameData.movimento.ticksPorTile.aPe;
+    let leituras = 0;
+    const aPe = {
+      estrada: base.estrada,
+      campoArado: base.campoArado,
+      areia: base.areia,
+      get grama(): number {
+        leituras += 1;
+        if (leituras === 1) buscarCaminho(inicial, tile(3, 3), [tile(6, 3)], 'livre');
+        return base.grama;
+      },
+    };
+    const dados: GameData = {
+      ...gameData,
+      movimento: { ...gameData.movimento, ticksPorTile: { ...gameData.movimento.ticksPorTile, aPe } },
+    };
+    expect(() => buscarCaminho(inicial, tile(10, 10), [tile(14, 10)], 'livre', dados))
+      .toThrow(/reentrante/);
+    expect(leituras).toBeGreaterThan(0); // a costura foi mesmo exercitada
+  });
+
+  // Se a guarda travasse o rascunho ao explodir, todo o resto da partida pararia.
+  it('depois da recusa o rascunho volta a servir: a busca seguinte e normal', () => {
+    const caminho = buscarCaminho(inicial, tile(10, 10), [tile(14, 10)], 'livre');
+    expect(caminho).not.toBeNull();
+    expect(caminho?.tiles.length).toBe(4);
+  });
+});
