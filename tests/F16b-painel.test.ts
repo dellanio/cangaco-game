@@ -19,6 +19,7 @@ import { painelDoPredio } from '../src/sim/selectors';
 import { custoDoPredio } from '../src/sim/obra';
 import { gravarEvidencia } from './helpers/evidence';
 import { cenarioDePedreira, semOcupante } from './helpers/producao-cenario';
+import { comObra as comObraEm } from './helpers/jobs-cenario';
 import { armazemPorTipo, escolaDoCenario } from './helpers/escola-cenario';
 
 const inicial = createInitialState(1);
@@ -29,6 +30,9 @@ const pedreira = cenarioDePedreira();
 const PEDREIRA = 'q1';
 const TRABALHADOR_DA_QUARRY = gameData.predios.find((p) => p.id === 'quarry')?.trabalhador;
 const HP_DA_QUARRY = gameData.predios.find((p) => p.id === 'quarry')?.hp;
+const defDaQuarry = gameData.predios.find((p) => p.id === 'quarry');
+const CUSTO_DA_QUARRY: Readonly<Record<string, number>> =
+  defDaQuarry === undefined ? {} : custoDoPredio(defDaQuarry);
 
 /** Uma obra de verdade, posta pelo comando — nao um predio montado a mao. */
 const comObra: GameState = step(inicial, [
@@ -107,6 +111,31 @@ describe('F16b — painelDoPredio', () => {
         .map((m) => ({ mercadoria: m, quantidade: custo[m] ?? 0 }))
         .filter((i) => i.quantidade > 0),
     );
+  });
+
+  // --- correcao do defeito da F16b (achado ao planejar a F17b) ---
+  // A lista da obra vinha de `gaveta`, que filtra `quantidade > 0`. Efeito:
+  // material INTEIRAMENTE entregue sumia, e a obra que ja recebeu toda a pedra
+  // ficava identica a que nunca pediu pedra. Para `entrada`/`saida` de predio
+  // completo o filtro esta CERTO (sem ele o armazem listaria 28 zeros) — por
+  // isso a correcao e so do `faltam`, e `gaveta` nao muda.
+
+  it('F16b (correcao): material JA ENTREGUE continua na lista, com 0', () => {
+    // metade da pedra entregue, toda a tabua entregue
+    const meio = comObraEm(inicial, 'obra-meio', { gx: 26, gy: 34, faltam: { stone: 1 } });
+    expect(painelDoPredio(meio, 'obra-meio')?.faltam).toEqual(
+      gameData.economia.mercadorias
+        .filter((m) => (CUSTO_DA_QUARRY[m] ?? 0) > 0)
+        .map((m) => ({ mercadoria: m, quantidade: m === 'stone' ? 1 : 0 })),
+    );
+  });
+
+  it('F16b (correcao): a lista e a do CUSTO, nao a das chaves de faltam', () => {
+    const nada = comObraEm(inicial, 'obra-cheia', { gx: 26, gy: 34, faltam: {} });
+    const esperado = gameData.economia.mercadorias.filter((m) => (CUSTO_DA_QUARRY[m] ?? 0) > 0);
+    const faltam = painelDoPredio(nada, 'obra-cheia')?.faltam;
+    expect(faltam?.map((i) => i.mercadoria)).toEqual(esperado);
+    expect(faltam?.every((i) => i.quantidade === 0)).toBe(true);
   });
 
   it('as gavetas saem na ordem de economia.mercadorias, nao na de Object.keys', () => {

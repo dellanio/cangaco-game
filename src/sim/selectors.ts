@@ -1,6 +1,6 @@
-import type { GameState, Predio, Unidade } from './state';
+import type { GameState, Predio, PredioEmObra, Unidade } from './state';
 import { ID_DO_ARMAZEM } from './state';
-import type { GameData } from './data/types';
+import type { GameData, PredioData } from './data/types';
 import { gameData } from './data';
 import { caixaDoPredio } from './footprint';
 import { estaDesbloqueado } from './desbloqueio';
@@ -395,6 +395,29 @@ function gaveta(
 }
 
 /**
+ * O que ainda falta entregar numa obra, POR MERCADORIA DO CUSTO — inclusive a
+ * que ja chegou inteira, com quantidade 0. Irma de `gaveta`, e nao ela: a
+ * gaveta filtra `quantidade > 0` de proposito (sem isso o armazem listaria as 28
+ * mercadorias zeradas), mas numa obra esse filtro APAGA informacao. Com ele, a
+ * obra que ja recebeu toda a pedra fica identica a que nunca pediu pedra, e o
+ * jogador nao tem como distinguir as duas.
+ *
+ * Correcao da F16b, achada ao planejar a F17b. A lista vem do CUSTO, nunca das
+ * chaves de `obra.faltam`: o estado nao guarda a mercadoria que ja zerou.
+ */
+function faltamDaObra(
+  predio: PredioEmObra, def: PredioData, dados: GameData,
+): readonly ItemDeEstoque[] {
+  const custo: Readonly<Record<string, number>> = custoDoPredio(def);
+  const linhas: ItemDeEstoque[] = [];
+  for (const mercadoria of dados.economia.mercadorias) {
+    if ((custo[mercadoria] ?? 0) <= 0) continue;
+    linhas.push({ mercadoria, quantidade: predio.obra.faltam[mercadoria] ?? 0 });
+  }
+  return linhas;
+}
+
+/**
  * F16b — o painel de um predio qualquer. `null` quando o id nao esta no estado,
  * e e assim que o painel se fecha sozinho no MESMO tick em que o predio e
  * demolido: nao ha evento para a tela ouvir, nem copia de estado para ficar
@@ -424,7 +447,7 @@ export function painelDoPredio(
     return {
       ...comum,
       estado: 'obra',
-      faltam: gaveta(predio.obra.faltam, dados),
+      faltam: faltamDaObra(predio, def, dados),
       ocupante: null,
       estoque: null,
       temProducao: false,

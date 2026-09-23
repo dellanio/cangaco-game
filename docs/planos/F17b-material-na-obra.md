@@ -24,11 +24,29 @@ F11c (`estagio-obra.ts`, o diff por estágio na cena).
 
 ---
 
+## Acréscimos do operador na aprovação (2026-09-23)
+
+**A1 — a escada ganha cobertura permanente aqui, não em item próprio.** A sonda
+vira teste: cardápio com `material-para-obra` aberta ao lado de `saida-cheia` e
+`excedente`, **com o controle** (sem a obra, ele reclama a do armazém), afirmando
+a escolha. Razão dele: a regra está inerte na Fase A (medido: zero co-ocorrências
+em 4000 ticks) e **vai importar na Fase B**, quando a cadeia de comida tiver mais
+consumidores que serfs — e aí ninguém vai lembrar de provar que ela funciona.
+Vira a **Tarefa 1b**.
+
+**A2 — o filtro `quantidade > 0` é defeito da F16b, não detalhe daqui.** Correção
+com **commit próprio, marcado como correção da F16b**. Vira a **Tarefa 0**, antes
+de tudo, e é a única coisa desta sessão que abre `src/sim/` — autorizada por ele
+nominalmente, e fora do escopo da F17b por construção.
+
+---
+
 ## Restrições globais
 
-- **Nada em `src/sim/`.** Nem seletor novo, nem campo novo em `PainelDoPredio`,
-  nem `state`. Instrução explícita do operador (2026-09-23). Se a implementação
-  parecer pedir um seletor, **pare e reporte** — não é para negociar sozinho.
+- **Nada em `src/sim/`** nas tarefas 1 a 6. Nem seletor novo, nem campo novo em
+  `PainelDoPredio`, nem `state`. Instrução explícita do operador (2026-09-23). A
+  **Tarefa 0** é a exceção nomeada por ele (A2) e sai em commit `fix(F16b)`
+  separado. Se qualquer outra tarefa parecer pedir um seletor, **pare e reporte**.
 - Toca `src/render/` e `src/ui/`. É exceção à §10 e está **escrita no item da
   fila**, antes do código.
 - Nenhum número de balanceamento em `.ts`: o custo sai de `data/buildings.json`
@@ -190,6 +208,56 @@ na montagem do painel, **não** abrir um import novo para `sim/data` em `ui/`.
 
 ## 5. Tarefas
 
+### Tarefa 0: corrigir o defeito da F16b (commit próprio, `fix(F16b)`)
+
+**Arquivos:**
+- Modificar: `src/sim/selectors.ts`
+- Teste: `tests/F16b-painel.test.ts` (dois casos novos)
+
+O defeito: `gaveta()` filtra `quantidade > 0`, e `painelDoPredio` usa essa mesma
+`gaveta` para o `faltam` de uma obra. Material inteiramente entregue **some da
+lista**, e a obra que já recebeu toda a pedra fica idêntica à que nunca pediu
+pedra. Para `entrada`/`saida` de prédio completo o filtro está **certo** (sem ele
+o armazém listaria 28 mercadorias zeradas): a correção é específica do `faltam`,
+não em `gaveta`.
+
+- [ ] **Passo 1: os testes que falham**
+
+```ts
+it('F16b (correcao): material JA ENTREGUE continua na lista, com 0', () => {
+  // metade da pedra entregue, toda a tabua entregue
+  const def = gameData.predios.find((b) => b.id === 'quarry');
+  const custo: Readonly<Record<string, number>> = def === undefined ? {} : custoDoPredio(def);
+  const meio = comObra(inicial, OBRA, { gx: 26, gy: 34, faltam: { stone: 1 } });
+  const p = painelDoPredio(meio, OBRA);
+  expect(p?.faltam).toEqual(
+    gameData.economia.mercadorias
+      .filter((m) => (custo[m] ?? 0) > 0)
+      .map((m) => ({ mercadoria: m, quantidade: m === 'stone' ? 1 : 0 })),
+  );
+});
+
+it('F16b (correcao): a lista e a do CUSTO, nao a das chaves de faltam', () => {
+  const nada = comObra(inicial, OBRA, { gx: 26, gy: 34, faltam: {} });
+  const def = gameData.predios.find((b) => b.id === 'quarry');
+  const custo: Readonly<Record<string, number>> = def === undefined ? {} : custoDoPredio(def);
+  const esperado = gameData.economia.mercadorias.filter((m) => (custo[m] ?? 0) > 0);
+  expect(painelDoPredio(nada, OBRA)?.faltam?.map((i) => i.mercadoria)).toEqual(esperado);
+  expect(painelDoPredio(nada, OBRA)?.faltam?.every((i) => i.quantidade === 0)).toBe(true);
+});
+```
+
+- [ ] **Passo 2: rodar e ver falhar** — hoje as duas listas vêm curtas.
+- [ ] **Passo 3: implementar** — em `src/sim/selectors.ts`, um helper irmão de
+      `gaveta`, e `painelDoPredio` passa a usá-lo no ramo `'obra'`. `gaveta`
+      **não muda**.
+- [ ] **Passo 4: rodar a suíte inteira** — o caso antigo (`obra recem-posta`)
+      continua verde porque todo prédio de `buildings.json` custa timber > 0 e
+      stone > 0; a filtragem dele não descarta nada. Conferido no dado.
+- [ ] **Passo 5: commit** — `fix(F16b): material ja entregue some da lista da obra`
+
+---
+
 ### Tarefa 1: a aritmética do medidor
 
 **Arquivos:**
@@ -292,6 +360,44 @@ export function medidorDaObra(
 
 - [ ] **Passo 4: rodar e ver passar** — os seis casos verdes.
 - [ ] **Passo 5: commit** — `feat(F17b): a aritmetica do material entregue na obra`
+
+---
+
+### Tarefa 1b: a escada do serf ganha cobertura permanente (A1)
+
+**Arquivos:**
+- Criar: `tests/F17b-escada-do-serf.test.ts`
+
+Não é teste desta feature — é a sonda do operador virando cobertura, no item que
+ele mandou hospedá-la. Não toca `src/` **nenhum**: monta estado e chama `step`.
+
+- [ ] **Passo 1: escrever o teste.** A montagem já foi medida e funciona:
+      pedreira `q1` (26,34) com `stone` na `saida` (nível 6) **e** `timber` na
+      `entrada` (a pedreira não consome timber, então `alvoDeEntrada` é 0 e tudo
+      vira excedente, nível 7); obra em (42,34) pedindo `stone` (nível 3), ligada
+      pela rua de y=36 esticada até x=45; **um** serf em (27,36), colado na porta
+      da pedreira e a ~15 tiles da obra. Três asserções:
+
+  1. **controle** — sem a obra no mapa, o serf reclama uma das duas do armazém.
+     Sem isto, "foi para a obra" poderia ser "não conseguiu reclamar a outra";
+  2. **o caso** — com as três abertas, ele reclama `material-para-obra`;
+  3. **a geometria é adversarial de verdade** — afirmar que a origem da tarefa do
+     armazém está mais perto do serf que a porta da obra, derivando das posições,
+     não digitando distância. Uma montagem que deixasse a obra mais perto provaria
+     distância, não escada, e passaria pelo motivo errado.
+
+  A fixture confere a si mesma (`predioLigadoAoArmazem` na obra): coordenada
+  errada falha ali, com o motivo escrito, e não três `expect` adiante como
+  "não reclamou nada".
+
+- [ ] **Passo 2: rodar e ver passar** (a regra já existe — este é o caso raro em
+      que o teste nasce verde de propósito: é cobertura de regressão de uma regra
+      medida, não TDD de comportamento novo).
+- [ ] **Passo 3: provar que o teste ACUSA.** Inverter na mão os níveis de
+      `data/delivery.json` (material para 7, excedente para 3), rodar, ver
+      **falhar**, desfazer. Um teste que nunca falhou não é guarda
+      (`conserte-o-guarda-nao-a-assercao`). Registrar o resultado no `PROGRESS.md`.
+- [ ] **Passo 4: commit** — `test(F17b): a escada do serf vira cobertura permanente`
 
 ---
 
