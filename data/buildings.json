@@ -3,7 +3,7 @@
   "regraHP": "(timber + stone) * 50",
   "regraMarteladas": "hp / 5",
   "predios": [
-    { "id": "storehouse",       "nome": "Armazem",             "tamanho": [3,3], "timber": 6, "stone": 5, "hp": 550, "desbloqueadoPor": null,          "trabalhador": null },
+    { "id": "storehouse",       "nome": "Armazem",             "tamanho": [3,3], "timber": 6, "stone": 5, "hp": 550, "desbloqueadoPor": "sawmill",     "trabalhador": null },
     { "id": "schoolhouse",      "nome": "Escola",              "tamanho": [3,3], "timber": 6, "stone": 5, "hp": 550, "desbloqueadoPor": "storehouse",  "trabalhador": null },
     { "id": "inn",              "nome": "Taverna",             "tamanho": [4,3], "timber": 6, "stone": 5, "hp": 550, "desbloqueadoPor": "storehouse",  "trabalhador": null },
     { "id": "quarry",           "nome": "Pedreira",            "tamanho": [3,2], "timber": 3, "stone": 2, "hp": 250, "desbloqueadoPor": "schoolhouse", "trabalhador": "stonemason" },

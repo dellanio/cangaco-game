@@ -294,6 +294,26 @@ Storehouse
                         └── Armory workshop
 ```
 
+
+**A árvore diz o que cada prédio EXIGE; a fase diz o que está DISPONÍVEL.**
+São duas camadas, e a raiz do desenho acima é a primeira delas. O `Storehouse`
+no topo é o armazém que a partida já dá de pé — ele não é construível de graça;
+o que o jogador constrói é o **`Storehouse (adicional)`**, pendurado na Sawmill,
+e é isso que `buildings.json` grava em `storehouse.desbloqueadoPor: "sawmill"`.
+Logo o grafo do dado **não tem raiz** e fecha um ciclo de propósito: quem abre a
+partida é o que já está construído (`economy.estadoInicial.predios`), não um pai
+nulo.
+
+**Decisão do operador, 2026-09-23.** No original, a disponibilidade do armazém
+adicional é decisão de **fase**, não só da árvore: as primeiras missões permitem
+um só armazém, e do meio da campanha em diante o jogo libera mais. Hoje o jogo
+tem uma configuração só — sandbox —, então a árvore basta e nada mais é preciso.
+Quando a campanha existir, ela ganha uma **camada de permissão por fase** por
+cima da árvore: a fase restringe o que a árvore já autorizou, nunca o contrário.
+O campo `economy.estadoInicial.menuBuildInicial` é o lugar natural dela, e hoje
+só pode ficar vazio, porque a regra que o valida (`economia/menu-inicial`) ainda
+exige raiz sem pai — algo que a árvore não tem mais. Quem for implementar a fase
+revisita aquela regra; não é esquecimento.
 ### 5.4 Estradas e campos
 
 - **Estrada: 1 stone por tile** **[proposta]**, feita por laborers. Ela é

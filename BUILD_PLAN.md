@@ -260,6 +260,37 @@ prédio surge sem clique do jogador.
   só precisa **consumir** esse evento (varrer `state.events` por
   `'building-completed'` e chamar `registrarTipoConstruido(tipo)`), não
   detectar a transição por conta própria.
+- **Nota (BUG-002 fechado em 2026-09-23 — e a natureza do defeito)**: o armazém
+  era **permanentemente não construível**: `desbloqueadoPor: null` com
+  `menuBuildInicial` vazio. Corrigido no dado — `storehouse.desbloqueadoPor`
+  passa a `"sawmill"`, que é o que o GDD §5.2 escreve ("inicial / Sawmill") e o
+  que a árvore do §5.3 desenha (`Storehouse (adicional)` pendurado na Serraria).
+  O aceite ganhou o **passo 5**: com a Serraria concluída, o armazém adicional
+  libera e **planta de verdade** (dois armazéns no estado, sem `command-rejected`).
+- **Nota (a correção tirou a raiz da árvore, e a regra de dados mudou junto)**: com
+  o armazém ganhando pai, **nenhum** dos 28 prédios tem `desbloqueadoPor: null`, e
+  o grafo fecha um ciclo de propósito (`storehouse → sawmill → woodcutters →
+  schoolhouse → storehouse`). As regras `predios/raiz-unica` e `predios/ciclo`
+  reprovavam exatamente isso. Elas foram **reconfiguradas para o caso legítimo**,
+  não afrouxadas (§10): a semente deixou de ser "pai nulo" e passou a ser o que
+  já está de pé na abertura (`economy.estadoInicial.predios` + `menuBuildInicial`),
+  e o invariante virou **alcance** — `predios/alcance` acusa todo prédio que exista
+  no JSON e nunca no jogo, que é o que aquelas duas sempre protegeram de fato.
+  `predios/ciclo` sobrevive só para ciclo que a semente não toca.
+- **Nota (a disponibilidade é decisão de FASE, não só da árvore — decisão do
+  operador, 2026-09-23)**: no original, as primeiras missões permitem **um só**
+  armazém, e do meio da campanha em diante o jogo libera mais. A árvore diz o que
+  cada prédio **exige**; a fase diz o que está **disponível** naquela missão. Hoje
+  o jogo tem uma configuração só (sandbox), então a árvore basta e nada mais é
+  preciso. Quando a campanha existir, ela ganha uma camada de permissão por fase
+  por cima: a fase **restringe** o que a árvore autorizou, nunca o contrário.
+  Escrito também no GDD §5.3. **O que quem implementar a fase herda**:
+  `menuBuildInicial` é o lugar natural dela e hoje **só pode ficar vazio** — a
+  regra `economia/menu-inicial` ainda exige raiz sem pai, e não existe mais
+  nenhuma. Revisitar aquela regra faz parte do trabalho da fase; não é
+  esquecimento. O ramo `desbloqueadoPor: null` continua vivo no código e no tipo
+  (`PredioData` declara `string | null` à mão, senão a inferência do JSON o
+  estreitaria para `string`) e se prova com dado sintético em `tests/F06`.
 
 ### F13a — Schoolhouse: fila de treino (simulação)
 - **Escopo**: fila de até 5 slots por escola, um pedido por tipo de trabalhador,
@@ -823,11 +854,15 @@ prédio surge sem clique do jogador.
 - **Nota (as fotos de obra do armazém não existem, e por quê — 2026-09-23)**: a
   evidência dizia `F17f-2-obra-marcacao` e `F17f-3-obra-madeira`. **Não há como
   pôr os dois na tela**: o armazém é permanentemente não construível
-  (`desbloqueadoPor: null` com `menuBuildInicial` vazio — **BUG-002**), então o
-  único prédio com arte nunca está em obra. Os três estágios continuam provados no
-  teste headless, que resolve os três arquivos e confere a dimensão de cada um; o
-  que ficou faltando é só a prova **na tela**, e ela volta junto com a correção do
-  BUG-002. No lugar delas, a foto 2 prova o outro lado do §9 com uma obra de
+  (`desbloqueadoPor: null` com `menuBuildInicial` vazio — era o BUG-002), então o
+  único prédio com arte nunca estava em obra. Os três estágios continuam provados
+  no teste headless, que resolve os três arquivos e confere a dimensão de cada um;
+  o que ficou faltando é só a prova **na tela**. **O BUG-002 foi corrigido no
+  mesmo dia** (ver a Nota da F12): o armazém adicional agora planta, e as duas
+  fotos passaram a ser possíveis — elas **não foram capturadas**, porque conduzir
+  uma obra até `madeira` por clique é o roteiro grande que pertence à F17. Quem
+  quiser fechá-las tem o caminho pronto: Casa do Lenhador → Serraria → Armazém.
+  No lugar delas, a foto 2 prova o outro lado do §9 com uma obra de
   `woodcutters` (sem arte, rectângulo) **ao lado** do armazém com sprite, no mesmo
   quadro: é a convivência que a feature existe para garantir.
 - **Nota (não é feature de integração)**: toca `src/render/`, `assets/`, `tools/`

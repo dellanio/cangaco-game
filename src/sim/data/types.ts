@@ -25,7 +25,15 @@ export interface ConversaoRegistrada {
   readonly ticks: Ticks;
 }
 
-export type PredioData = RawGameData['buildings']['predios'][number];
+/** `desbloqueadoPor` vem explicito porque o JSON de hoje nao tem nenhum `null`:
+ *  desde que o armazem ADICIONAL passou a exigir Serraria (GDD §5.2), a arvore
+ *  ficou sem raiz, e a inferencia do import estreitaria o campo para `string`.
+ *  O modelo continua admitindo predio sem pai — `tools/data-rules.js` o aceita
+ *  desde que a semente o alcance, e a permissao por fase da campanha (GDD §5.3)
+ *  vai precisar dele. Tipo que segue o dado do dia apaga a capacidade. */
+export type PredioData = Omit<RawGameData['buildings']['predios'][number], 'desbloqueadoPor'> & {
+  readonly desbloqueadoPor: string | null;
+};
 
 export interface ConstrucaoData {
   readonly hpPorMaterialEntregue: number;
@@ -143,8 +151,11 @@ export interface EconomiaSchoolhouseData {
 
 export interface EconomiaData {
   readonly estadoInicial: Omit<RawGameData['economy']['estadoInicial'], 'menuBuildInicial'> & {
-    /** So raiz sem pai na arvore (`tools/data-rules.js`). Tipo explicito: um `[]`
-     *  importado de JSON tipa como `never[]` e nao aceitaria nem `.includes(id)`. */
+    /** So raiz sem pai na arvore (`tools/data-rules.js`) — e a arvore nao tem
+     *  mais nenhuma (GDD §5.2), entao hoje esta lista so pode ficar vazia e quem
+     *  abre a partida e `estadoInicial.predios`. E por aqui que a permissao por
+     *  fase da campanha (GDD §5.3) vai entrar. Tipo explicito: um `[]` importado
+     *  de JSON tipa como `never[]` e nao aceitaria nem `.includes(id)`. */
     readonly menuBuildInicial: readonly string[];
   };
   readonly schoolhouse: EconomiaSchoolhouseData;

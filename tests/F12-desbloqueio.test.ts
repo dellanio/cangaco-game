@@ -87,6 +87,7 @@ describe('F12 — o step() consome o evento', () => {
 describe('F12 — aceite headless do BUILD_PLAN', () => {
   const LENHADOR = { gx: 26, gy: 34 }; // woodcutters [3,2] -> x 26..28, y 34..35; porta y=36
   const SERRARIA = { gx: 24, gy: 38 }; // sawmill     [4,2] -> x 24..27, y 38..39; porta y=40
+  const ARMAZEM_2 = { gx: 20, gy: 34 }; // storehouse [3,3] -> x 20..22, y 34..36; longe das ruas
   const RUAS = [
     ...linhaV(29, 33, 40), // desce da porta do armazem (29,33)
     tile(28, 36), // entra na porta do lenhador
@@ -99,6 +100,9 @@ describe('F12 — aceite headless do BUILD_PLAN', () => {
   const opcao = (e: GameState, id: string) => opcoesDoMenuBuild(e).find((o) => o.id === id);
   const doTipo = (e: GameState, tipo: string) =>
     e.predios.ordem.map((id) => e.predios.porId[id]).find((p) => p?.tipo === tipo);
+  /** Quantos armazens existem — `doTipo` acharia sempre o da abertura. */
+  const armazens = (e: GameState): number =>
+    e.predios.ordem.filter((id) => e.predios.porId[id]?.tipo === 'storehouse').length;
 
   /** Os filhos DIRETOS de um pai, tirados do dado — nunca uma lista digitada. */
   const filhosDe = (pai: string): string[] =>
@@ -135,6 +139,7 @@ describe('F12 — aceite headless do BUILD_PLAN', () => {
   let lenhador: Corrida;
   let recusasAoPlantar: readonly GameEvent[] = [];
   let serraria: Corrida;
+  let comSegundoArmazem: GameState;
 
   beforeAll(() => {
     // 2. posiciona o Woodcutter's pela UI (PlaceBlueprint)
@@ -145,6 +150,8 @@ describe('F12 — aceite headless do BUILD_PLAN', () => {
     const comObraDaSerraria = step(lenhador.estado, [plantar('sawmill', SERRARIA)]);
     recusasAoPlantar = comObraDaSerraria.events.filter((e) => e.type === 'command-rejected');
     serraria = conduzir(comObraDaSerraria, 'sawmill');
+    // 5. o elo do BUG-002: com a Serraria de pe, o armazem ADICIONAL pode ser plantado
+    comSegundoArmazem = step(serraria.estado, [plantar('storehouse', ARMAZEM_2)]);
   });
 
   it('1. o seletor do menu Build mostra a Sawmill bloqueada, exigindo o Woodcutter\'s', () => {
@@ -181,6 +188,20 @@ describe('F12 — aceite headless do BUILD_PLAN', () => {
     expect(serraria.semCrescimento).toEqual([]);
   });
 
+  it('5. o elo que faltava (BUG-002): a Serraria libera o armazem ADICIONAL, e ele planta', () => {
+    // GDD §5.2: o armazem da abertura vem de pe, o segundo exige Serraria. Antes
+    // o dado dizia `desbloqueadoPor: null` e, com `menuBuildInicial` vazio, um
+    // segundo armazem era impossivel em qualquer ordem de construcao.
+    expect(filhosDe('sawmill')).toContain('storehouse');
+    expect(opcao(base, 'storehouse')?.desbloqueado).toBe(false);
+    expect(opcao(base, 'storehouse')?.requer).toBe('sawmill');
+    expect(opcao(serraria.estado, 'storehouse')?.desbloqueado).toBe(true);
+
+    expect(armazens(serraria.estado)).toBe(1); // so o da abertura
+    expect(comSegundoArmazem.events.filter((e) => e.type === 'command-rejected')).toEqual([]);
+    expect(armazens(comSegundoArmazem)).toBe(2);
+  });
+
   afterAll(() => {
     const ordenado = (ids: readonly string[]): string => JSON.stringify([...ids].sort());
     gravarEvidencia('F12', {
@@ -202,6 +223,11 @@ describe('F12 — aceite headless do BUILD_PLAN', () => {
         serrariaFicouCompleta: doTipo(serraria.estado, 'sawmill')?.estado === 'completo',
         tickDaSerraria: serraria.tick,
         farmLiberada: estaDesbloqueado(serraria.estado, 'farm'),
+        // BUG-002, fechado em 2026-09-23: o armazem ADICIONAL e filho da Serraria
+        armazemAdicionalRequerNoInicio: opcao(base, 'storehouse')?.requer ?? null,
+        armazemAdicionalLiberadoPelaSerraria: estaDesbloqueado(serraria.estado, 'storehouse'),
+        armazensAntesDoSegundo: armazens(serraria.estado),
+        armazensDepoisDoSegundo: armazens(comSegundoArmazem),
         filhosDiretosDeSawmill: filhosDe('sawmill'),
         liberadosCresceramExatamentePelosFilhosDaSerraria:
           ordenado(liberados(serraria.estado))

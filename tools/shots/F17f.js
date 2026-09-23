@@ -16,13 +16,13 @@
 // tem cerca da altura de uma porta, e isso nunca foi visto.
 //
 // O QUE ESTE ROTEIRO NAO MOSTRA, e por que: os sprites de `marcacao` e
-// `madeira` do armazem. Nao ha como pol-los na tela hoje — o armazem e
-// PERMANENTEMENTE nao construivel (`desbloqueadoPor: null` em buildings.json
-// com `menuBuildInicial` vazio, contra o "Storehouse (adicional)" pendurado na
-// Sawmill na arvore do GDD; ver BUG-002). Os tres estagios sao provados no
-// teste headless (tests/F17f-manifesto.test.ts), que resolve os tres arquivos e
-// confere a dimensao de cada um; o que falta e so a prova NA TELA, e ela volta
-// junto com a correcao do BUG-002.
+// `madeira` do armazem. Quando ele foi escrito nao havia como pol-los na tela —
+// o armazem era nao construivel (BUG-002, corrigido no mesmo dia: o adicional
+// agora exige Serraria, GDD 5.2). Os tres estagios sao provados no teste
+// headless (tests/F17f-manifesto.test.ts), que resolve os tres arquivos e
+// confere a dimensao de cada um; falta so a prova NA TELA. Ela e possivel hoje,
+// pelo caminho Casa do Lenhador -> Serraria -> Armazem, e nao foi feita aqui
+// porque conduzir uma obra ate `madeira` por clique e o roteiro grande da F17.
 //
 // Geometria: a mesma linha ja validada na F16b e na F17b — rua na linha de
 // porta do armazem, o predio novo a direita da escola.

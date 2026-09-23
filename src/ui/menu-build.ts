@@ -30,6 +30,13 @@ function textoDoCustoDaEstrada(): string {
   return `${temaSertao.mercadorias.stone} ${custoDaEstrada().stone} ${temaSertao.menuBuild.porTile}`;
 }
 
+/** O ramo `semRequisito` ("ainda nao disponivel") nao tem produtor no dado de
+ *  hoje: desde a correcao do BUG-002 nenhum predio tem `desbloqueadoPor` null
+ *  (GDD §5.2), e `tools/shots/F06.js` afirma justamente que nenhum item do menu
+ *  fica cinza sem dizer do que depende. Fica porque a permissao por fase da
+ *  campanha (GDD §5.3) e quem volta a produzi-lo: "existe na arvore, mas esta
+ *  missao nao libera". Apagar agora e apagar o rotulo que essa camada vai pedir.
+ */
 function textoDoRequisito(opcao: OpcaoDoMenuBuild): string {
   const { requer, semRequisito } = temaSertao.menuBuild;
   return opcao.requer === null ? semRequisito : `${requer} ${nomeDe(opcao.requer)}`;

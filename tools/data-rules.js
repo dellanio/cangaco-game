@@ -65,8 +65,6 @@ function validarPredios(dados, erros) {
   if (!(Number.isInteger(laborersMaximosPorObra) && laborersMaximosPorObra >= 1)) {
     erros.push(`predios/laborers-maximos-por-obra: buildings.construcao.laborersMaximosPorObra=${laborersMaximosPorObra}, precisa ser inteiro >= 1`);
   }
-  const raizes = [];
-
   for (const p of predios) {
     const hpEsperado = (p.timber + p.stone) * 50;
     if (p.hp !== hpEsperado) {
@@ -75,9 +73,7 @@ function validarPredios(dados, erros) {
     if (typeof hpPorMartelada === 'number' && !Number.isInteger(p.hp / hpPorMartelada)) {
       erros.push(`predios/marteladas: ${p.id} tem hp=${p.hp}, nao divide inteiro por hpPorMartelada=${hpPorMartelada}`);
     }
-    if (p.desbloqueadoPor === null) {
-      raizes.push(p.id);
-    } else if (!idsValidos.has(p.desbloqueadoPor)) {
+    if (p.desbloqueadoPor !== null && !idsValidos.has(p.desbloqueadoPor)) {
       erros.push(`predios/desbloqueio-pendurado: ${p.id}.desbloqueadoPor='${p.desbloqueadoPor}' nao existe`);
     }
     if (p.trabalhador !== null && !idsDeCivis.has(p.trabalhador)) {
@@ -85,12 +81,42 @@ function validarPredios(dados, erros) {
     }
   }
 
-  if (raizes.length !== 1) {
-    erros.push(`predios/raiz-unica: esperada exatamente 1 raiz (desbloqueadoPor=null), achou ${raizes.length}: [${raizes.join(', ')}]`);
-  } else if (raizes[0] !== 'storehouse') {
-    erros.push(`predios/raiz-unica: raiz esperada 'storehouse', achou '${raizes[0]}'`);
+  // A semente da arvore NAO e "pai nulo". E o que ja esta de pe quando a partida
+  // comeca (`economy.estadoInicial.predios`) mais o que o menu inicial libera de
+  // graca. O armazem da abertura vem pronto e o ADICIONAL exige Serraria (GDD
+  // 5.2) — logo um predio pode ser semente e ter pai ao mesmo tempo, e a arvore
+  // fica sem raiz. O que continua tendo de valer, e e o que estas duas regras
+  // sempre protegeram de fato, e ALCANCE: todo predio do dado precisa ser
+  // alcancavel a partir da semente, senao existe no JSON e nunca no jogo.
+  const estadoInicial = (dados.economy && dados.economy.estadoInicial) || {};
+  const semente = new Set([
+    ...((estadoInicial.predios || []).map((p) => p.id)),
+    ...(estadoInicial.menuBuildInicial || []),
+  ].filter((id) => idsValidos.has(id)));
+  if (semente.size === 0) {
+    erros.push('predios/alcance: nenhuma semente — estadoInicial.predios e menuBuildInicial estao vazios, e entao nenhum predio pode ser construido');
+  }
+  const alcancados = new Set(semente);
+  let cresceu = true;
+  while (cresceu) {
+    cresceu = false;
+    for (const p of predios) {
+      if (!alcancados.has(p.id) && p.desbloqueadoPor !== null && alcancados.has(p.desbloqueadoPor)) {
+        alcancados.add(p.id);
+        cresceu = true;
+      }
+    }
+  }
+  const inalcancaveis = predios.filter((p) => !alcancados.has(p.id)).map((p) => p.id);
+  if (inalcancaveis.length > 0) {
+    erros.push(`predios/alcance: ${inalcancaveis.length} predio(s) nunca desbloqueiam a partir da semente [${[...semente].join(', ')}]: ${inalcancaveis.join(', ')}`);
   }
 
+  // Ciclo so e defeito quando NAO passa pela semente: `storehouse -> sawmill ->
+  // woodcutters -> schoolhouse -> storehouse` e o dado correto de hoje, porque o
+  // armazem inicial entra pela semente e quebra a volta. Um ciclo sem semente
+  // nenhuma e um grupo que se tranca por fora — a regra de alcance ja o acusa,
+  // e esta aqui diz POR QUE.
   const grafo = new Map(predios.map((p) => [p.id, p.desbloqueadoPor]));
   const emCicloJaReportado = new Set();
   for (const p of predios) {
@@ -102,7 +128,9 @@ function validarPredios(dados, erros) {
       if (idx !== -1) {
         const ciclo = caminho.slice(idx);
         ciclo.forEach((id) => emCicloJaReportado.add(id));
-        erros.push(`predios/ciclo: ciclo de desbloqueio detectado: ${ciclo.join(' -> ')} -> ${atual}`);
+        if (!ciclo.some((id) => semente.has(id))) {
+          erros.push(`predios/ciclo: ciclo de desbloqueio sem semente: ${ciclo.join(' -> ')} -> ${atual}`);
+        }
         break;
       }
       caminho.push(atual);

@@ -42,12 +42,26 @@ async function roteiro(ctx) {
     !textoSerraria.includes(serraria.desbloqueadoPor),
     `o texto nao deveria mostrar o id neutro '${serraria.desbloqueadoPor}', veio: ${textoSerraria}`,
   );
+  // O texto neutro `semRequisito` ("ainda nao disponivel") era provado aqui pelo
+  // armazem, unico predio sem pai na arvore. Desde a correcao do BUG-002 nao ha
+  // mais nenhum: o armazem ADICIONAL exige Serraria (GDD 5.2). Entao o que se
+  // afirma agora e a consequencia, que vale mais para o jogador: NENHUM item do
+  // menu fica cinza sem dizer do que depende. O rotulo neutro continua no tema
+  // para a permissao por fase da campanha (GDD 5.3), e la volta a ter dono.
   const semPai = predios.find((p) => p.desbloqueadoPor === null && !economia.estadoInicial.menuBuildInicial.includes(p.id));
-  const textoSemPai = await page.textContent(`[data-predio="${semPai.id}"]`);
   afirmar(
-    textoSemPai.includes(tema.menuBuild.semRequisito),
-    `bloqueado sem pai na arvore (${semPai.id}) deveria dizer "${tema.menuBuild.semRequisito}", veio: ${textoSemPai}`,
+    semPai === undefined,
+    `a arvore nao deveria ter raiz sem pai; '${semPai && semPai.id}' tem desbloqueadoPor null`,
   );
+  for (const p of predios) {
+    const item = await page.$(`[data-predio="${p.id}"]`);
+    if (!item) continue; // nem todo predio cabe no menu do cenario
+    const texto = await item.textContent();
+    afirmar(
+      !texto.includes(tema.menuBuild.semRequisito),
+      `'${p.id}' aparece no menu sem dizer do que depende ("${tema.menuBuild.semRequisito}"), veio: ${texto}`,
+    );
+  }
   // force: o Playwright recusa clicar em aria-disabled; o que se prova aqui e
   // exatamente que um clique que CHEGA no item bloqueado nao ativa nada.
   await page.click(seletorSerraria, { force: true });

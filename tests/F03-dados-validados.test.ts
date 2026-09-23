@@ -44,10 +44,17 @@ const fixtures: Fixture[] = [
     quebrar: (d) => { d.buildings.predios.pop(); } },
   { nome: 'quarry.desbloqueadoPor fica pendurado', regraEsperada: 'predios/desbloqueio-pendurado',
     quebrar: (d) => { acharPredio(d, 'quarry').desbloqueadoPor = 'nao_existe'; } },
-  { nome: 'storehouse.desbloqueadoPor cria ciclo', regraEsperada: 'predios/ciclo',
-    quebrar: (d) => { acharPredio(d, 'storehouse').desbloqueadoPor = 'sawmill'; } },
-  { nome: 'schoolhouse vira raiz tambem', regraEsperada: 'predios/raiz-unica',
-    quebrar: (d) => { acharPredio(d, 'schoolhouse').desbloqueadoPor = null; } },
+  // A arvore nao tem mais raiz: `storehouse -> sawmill -> woodcutters ->
+  // schoolhouse -> storehouse` E o dado correto, porque o armazem da abertura
+  // entra pela SEMENTE (estadoInicial.predios) e o adicional exige Serraria.
+  // As tres quebras abaixo provam que a regra que sobrou — alcance a partir da
+  // semente — acusa os tres jeitos de um predio existir no JSON e nunca no jogo.
+  { nome: 'ciclo que a semente nao toca (woodcutters <-> sawmill)', regraEsperada: 'predios/ciclo',
+    quebrar: (d) => { acharPredio(d, 'woodcutters').desbloqueadoPor = 'sawmill'; } },
+  { nome: 'quarry vira raiz que ninguem semeia', regraEsperada: 'predios/alcance',
+    quebrar: (d) => { acharPredio(d, 'quarry').desbloqueadoPor = null; } },
+  { nome: 'abertura sem nenhum predio de pe', regraEsperada: 'predios/alcance',
+    quebrar: (d) => { d.economy.estadoInicial.predios = []; } },
   { nome: 'quarry.trabalhador inexistente', regraEsperada: 'predios/trabalhador',
     quebrar: (d) => { acharPredio(d, 'quarry').trabalhador = 'ninguem'; } },
   { nome: 'production referencia predio fantasma', regraEsperada: 'producao/predio-inexistente',
@@ -130,26 +137,31 @@ function acharChave(valor: unknown, chave: string, caminho = 'gameData'): string
   return achados;
 }
 
+/** O grafo de desbloqueio visto do jeito que o jogo o percorre: da SEMENTE —
+ *  os predios ja de pe na abertura mais o menu inicial — para a frente. Nao ha
+ *  "raiz": o armazem da abertura vem pronto **e** o adicional exige Serraria
+ *  (GDD 5.2), entao ele e semente e filho ao mesmo tempo, e a arvore tem ciclo
+ *  de proposito. O que precisa valer e alcance. */
 function verificarGrafoDeDesbloqueio(
   predios: readonly { readonly id: string; readonly desbloqueadoPor: string | null }[],
-): { readonly raizes: string[]; readonly pendurados: string[]; readonly temCiclo: boolean } {
+  semente: readonly string[],
+): { readonly inalcancaveis: string[]; readonly pendurados: string[] } {
   const ids = new Set(predios.map((p) => p.id));
   const pendurados = predios
     .filter((p) => p.desbloqueadoPor !== null && !ids.has(p.desbloqueadoPor))
     .map((p) => p.id);
-  const raizes = predios.filter((p) => p.desbloqueadoPor === null).map((p) => p.id);
-  const grafo = new Map(predios.map((p) => [p.id, p.desbloqueadoPor]));
-  let temCiclo = false;
-  for (const p of predios) {
-    const visitados = new Set<string>();
-    let atual: string | null = p.id;
-    while (atual !== null && grafo.has(atual)) {
-      if (visitados.has(atual)) { temCiclo = true; break; }
-      visitados.add(atual);
-      atual = grafo.get(atual) ?? null;
+  const alcancados = new Set(semente.filter((id) => ids.has(id)));
+  let cresceu = true;
+  while (cresceu) {
+    cresceu = false;
+    for (const p of predios) {
+      if (!alcancados.has(p.id) && p.desbloqueadoPor !== null && alcancados.has(p.desbloqueadoPor)) {
+        alcancados.add(p.id);
+        cresceu = true;
+      }
     }
   }
-  return { raizes, pendurados, temCiclo };
+  return { inalcancaveis: predios.filter((p) => !alcancados.has(p.id)).map((p) => p.id), pendurados };
 }
 
 describe('F03 — carregamento e regras', () => {
@@ -160,11 +172,30 @@ describe('F03 — carregamento e regras', () => {
     }
   });
 
-  it('todo desbloqueadoPor resolve, o grafo nao tem ciclo, e a raiz e unica (storehouse)', () => {
-    const { raizes, pendurados, temCiclo } = verificarGrafoDeDesbloqueio(gameData.predios);
+  it('todo desbloqueadoPor resolve, e os 28 predios sao alcancaveis a partir da abertura', () => {
+    const semente = [
+      ...gameData.economia.estadoInicial.predios.map((p) => p.id),
+      ...gameData.economia.estadoInicial.menuBuildInicial,
+    ];
+    const { inalcancaveis, pendurados } = verificarGrafoDeDesbloqueio(gameData.predios, semente);
     expect(pendurados).toEqual([]);
-    expect(temCiclo).toBe(false);
-    expect(raizes).toEqual(['storehouse']);
+    expect(inalcancaveis).toEqual([]);
+  });
+
+  it('a arvore nao tem raiz, e o ciclo do armazem passa pela semente', () => {
+    // O `null` sumiu do dado: nenhum predio e construivel de graca. Quem abre a
+    // partida e o que ja esta de pe, e o armazem ADICIONAL exige Serraria — o
+    // que fecha storehouse -> sawmill -> woodcutters -> schoolhouse ->
+    // storehouse. O ciclo e legitimo porque a volta e cortada pela semente.
+    expect(gameData.predios.filter((p) => p.desbloqueadoPor === null)).toEqual([]);
+    const pai = (id: string) => gameData.predios.find((p) => p.id === id)?.desbloqueadoPor;
+    const volta: string[] = [];
+    for (let atual: string | null | undefined = 'storehouse'; atual && !volta.includes(atual);) {
+      volta.push(atual);
+      atual = pai(atual);
+    }
+    expect(volta).toEqual(['storehouse', 'sawmill', 'woodcutters', 'schoolhouse']);
+    expect(gameData.economia.estadoInicial.predios.map((p) => p.id)).toContain('storehouse');
   });
 
   it('toda conversao registrada e um tick inteiro >= 1', () => {
@@ -291,7 +322,11 @@ afterAll(() => {
   const economiaPorGrupo = (dados: GameData, grupo: string): number => (
     dados.conversoes.filter((c) => c.grupo === grupo).length
   );
-  const { raizes, pendurados, temCiclo } = verificarGrafoDeDesbloqueio(gameData.predios);
+  const semente = [
+    ...gameData.economia.estadoInicial.predios.map((p) => p.id),
+    ...gameData.economia.estadoInicial.menuBuildInicial,
+  ];
+  const { inalcancaveis, pendurados } = verificarGrafoDeDesbloqueio(gameData.predios, semente);
   const cliContraCopiaQuebrada = rodarCliContraCopiaQuebrada();
   const fixturesResultado = fixtures.map(({ nome, regraEsperada, quebrar }) => {
     const quebrado = clonar(carregarDadosReais());
@@ -302,7 +337,7 @@ afterAll(() => {
 
   gravarEvidencia('F03', {
     feature: 'F03-dados-validados',
-    predios: { contagem: gameData.predios.length, raizes, pendurados, temCiclo },
+    predios: { contagem: gameData.predios.length, semente, inalcancaveis, pendurados },
     conversoes: {
       total: gameData.conversoes.length,
       todasInteirasEPositivas: gameData.conversoes.every((c) => Number.isInteger(c.ticks) && c.ticks >= 1),

@@ -1669,6 +1669,88 @@ dezenas de KB.
   commitados: sao arte de um predio que esta feature nao cobre, e o que entra em
   `assets/base/` e decisao humana (§9).
 
+## BUG-002 — o armazém adicional exige Serraria (2026-09-23)
+
+Fora da fila: correção de bug com a emenda já escrita, por ordem do operador.
+`BUG-002` saiu do `BUGS.md` no mesmo commit que o corrige (§12).
+
+### O que foi feito
+
+- **`data/buildings.json`: `storehouse.desbloqueadoPor` de `null` para
+  `"sawmill"`.** É o que o GDD §5.2 sempre disse: o armazém inicial vem de pé no
+  cenário, o **adicional** exige Serraria. Enquanto o campo era `null` e
+  `menuBuildInicial` estava vazio, `estaDesbloqueado('storehouse')` era `false`
+  para sempre — o item nascia cinza e nunca acendia.
+- **A árvore perdeu a raiz, e isso é correto.** Com a emenda o grafo fecha o
+  ciclo `storehouse → sawmill → woodcutters → schoolhouse → storehouse`, e
+  nenhum dos 28 prédios tem mais `desbloqueadoPor: null`. A regra antiga
+  (`predios/raiz-unica` + `predios/ciclo` proibindo qualquer ciclo) modelava a
+  semente como "pai nulo", e nesse modelo a correção do operador é
+  irrepresentável.
+- **`tools/data-rules.js`: `predios/raiz-unica` saiu, `predios/ciclo` estreitou,
+  entrou `predios/alcance`.** A semente passou a ser **o que está de pé no tick
+  0** — `economy.estadoInicial.predios` mais `menuBuildInicial` — e a regra
+  verifica alcance a partir dela, por ponto fixo. Ciclo só é erro se **nenhum**
+  de seus membros for semente. Isto não é afrouxar a regra para o `verify`
+  passar (§10): é a mesma pergunta que `sim/desbloqueio.ts` já responde em
+  runtime com `tiposJaConstruidos`, que também nasce do estado inicial. A regra
+  nova acusa três coisas que a antiga não acusava — prédio inalcançável, ciclo
+  fora da semente, e abertura sem nenhum prédio de pé — e cada uma tem fixture
+  em `tests/F03-dados-validados.test.ts`.
+- **`src/sim/data/types.ts`: `PredioData` declara `desbloqueadoPor: string |
+  null` explicitamente.** Sem isso a inferência do JSON estreitaria o campo para
+  `string`, porque hoje não existe nenhum `null` no dado — o tipo seguiria o
+  dado do dia e apagaria a capacidade em silêncio.
+- **`tools/shots/F06.js`: a afirmação do rótulo neutro virou a sua consequência.**
+  O roteiro provava `semRequisito` ("ainda não disponível") pelo armazém, o único
+  sem pai; agora afirma que **nenhum** item do menu fica cinza sem dizer do que
+  depende, e que a árvore não tem raiz. `src/ui/menu-build.ts` mantém o ramo, com
+  comentário dizendo quem volta a produzi-lo (a fase).
+- **`docs/GDD.md` §5.3 e as Notas da F12 no `BUILD_PLAN.md`:** as duas camadas
+  (árvore = o que cada prédio **exige**; fase = o que está **disponível** naquela
+  missão) e a decisão do operador que as separa.
+- **Nenhuma linha de `src/sim/` mudou.** `estaDesbloqueado` já lia
+  `tiposJaConstruidos`; a correção era só de dado, e o resto foi a verificação
+  que descrevia o dado errado.
+
+### Decisão do operador (2026-09-23)
+
+A disponibilidade do armazém adicional é decisão de **fase**, não só da árvore.
+No original as primeiras missões permitem um armazém só, e do meio da campanha
+em diante o jogo libera mais. Hoje o jogo tem uma configuração só (sandbox), e a
+árvore basta; quando a campanha existir, ela ganha uma camada de permissão por
+fase. `economy.estadoInicial.menuBuildInicial` é a casa natural dessa camada — e
+é ela que volta a dar dono ao rótulo `semRequisito` e ao ramo
+`desbloqueadoPor: null`, que por isso ficam vivos no tipo, na regra de dado e nos
+testes com dado sintético. Registrado como decisão, não como pergunta em aberto.
+
+### Verificado (evidência aberta nesta sessão)
+
+- **O segundo armazém é plantável de verdade, não por asserção.**
+  `tests/F12-desbloqueio.test.ts`, passo 5: a partir do estado com Serraria de
+  pé, um `PlaceBlueprint` de `storehouse` passa por `step()` e a contagem de
+  prédios do tipo vai de **1 para 2**, com **zero** `command-rejected`. O
+  `requer` da opção no menu inicial é `"sawmill"`, e `storehouse` aparece em
+  `filhosDe('sawmill')`.
+- **`npm run verify` EXIT=0** — typecheck 0 erro, lint 0, `validate:data` 9
+  arquivos e 0 erro, 885 testes em 53 arquivos.
+- **Não-regressão por código de saída (§8), sem abrir imagem:** `npm run shot --
+  F06` EXIT=0 (3 capturas), `F16b` EXIT=0 (5), `F17f` EXIT=0 (2). F06 é o
+  roteiro do menu de construção; F16b e F17f são os que leem o armazém do
+  cenário.
+
+### O que ficou de fora, e por que
+
+- **A chave da F12 não foi virada para `false` e depois de volta.** O aceite
+  escrito dela sempre passou — o que falhava era o "Storehouse (adicional)" da
+  árvore, que aquele aceite nunca listou. A lacuna foi fechada acrescentando o
+  passo 5 ao teste e a Nota ao item, com o aceite original intacto.
+- **As fotos dos estágios `marcacao` e `madeira` do armazém.** Agora são
+  **possíveis** (Casa do Lenhador → Serraria → Armazém), e não foram capturadas:
+  conduzir uma obra até `madeira` por clique é o roteiro grande da F17, não um
+  passo de correção de bug. O cabeçalho de `tools/shots/F17f.js` e a Nota da
+  F17f dizem isso.
+
 ## Perguntas em aberto
 
 _(nenhuma no momento: as três que sobravam foram decididas pelo operador — ver "Ajuste pós-F10".)_

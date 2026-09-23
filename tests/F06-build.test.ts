@@ -65,6 +65,22 @@ function dadosSemMenuInicial(): GameData {
   };
 }
 
+/** Um dado onde UM predio nao tem pai. Existe porque `buildings.json` nao tem
+ *  mais nenhum: o armazem da abertura vem de pe e o ADICIONAL exige Serraria
+ *  (GDD §5.2), entao a arvore ficou sem raiz. O ramo `desbloqueadoPor: null`
+ *  de `estaDesbloqueado` nao morreu com isso — e por ele que a permissao por
+ *  fase da campanha vai entrar — e continua se provando, com dado sintetico. */
+function dadosComRaizSintetica(id: string, menuBuildInicial: readonly string[] = []): GameData {
+  return {
+    ...gameData,
+    predios: gameData.predios.map((p) => (p.id === id ? { ...p, desbloqueadoPor: null } : p)),
+    economia: {
+      ...gameData.economia,
+      estadoInicial: { ...gameData.economia.estadoInicial, menuBuildInicial },
+    },
+  };
+}
+
 describe('F06 — desbloqueio derivado de menuBuildInicial e da arvore', () => {
   const inicial = createInitialState(1);
 
@@ -105,12 +121,14 @@ describe('F06 — desbloqueio derivado de menuBuildInicial e da arvore', () => {
   });
 
   it('desbloqueadoPor null fora do menu inicial continua bloqueado, mesmo com o predio no mapa', () => {
-    const dados = dadosSemMenuInicial();
-    const raiz = gameData.predios.filter((p) => p.desbloqueadoPor === null);
-    expect(raiz.length).toBeGreaterThan(0);
-    for (const p of raiz) {
-      expect(estaDesbloqueado(comPredio(semPredios(inicial), p.id, 0, 0), p.id, dados)).toBe(false);
-    }
+    // Dado SINTETICO de proposito: a arvore real nao tem mais raiz desde que o
+    // armazem adicional passou a exigir Serraria (GDD §5.2). O ramo `null` de
+    // `estaDesbloqueado` continua existindo e continua tendo de se comportar —
+    // e a camada de permissao por fase da campanha vai reabri-lo —, entao ele se
+    // prova aqui, e nao com uma afirmacao sobre o buildings.json de hoje.
+    const dados = dadosComRaizSintetica('quarry');
+    expect(dados.predios.find((p) => p.id === 'quarry')?.desbloqueadoPor).toBeNull();
+    expect(estaDesbloqueado(comPredio(semPredios(inicial), 'quarry', 0, 0), 'quarry', dados)).toBe(false);
   });
 
   it('id que nao existe no dado esta bloqueado', () => {
@@ -118,17 +136,10 @@ describe('F06 — desbloqueio derivado de menuBuildInicial e da arvore', () => {
   });
 
   it('a lista vem do dado: uma raiz sem pai posta em menuBuildInicial fica liberada sem nenhum predio', () => {
-    const raiz = gameData.predios.find((p) => p.desbloqueadoPor === null);
-    if (!raiz) throw new Error('o dado nao tem raiz sem pai');
-    const dados: GameData = {
-      ...gameData,
-      economia: {
-        ...gameData.economia,
-        estadoInicial: { ...gameData.economia.estadoInicial, menuBuildInicial: [raiz.id] },
-      },
-    };
-    expect(estaDesbloqueado(semPredios(inicial), raiz.id, dados)).toBe(true);
-    expect(estaDesbloqueado(semPredios(inicial), raiz.id)).toBe(false);
+    const dados = dadosComRaizSintetica('quarry', ['quarry']);
+    expect(estaDesbloqueado(semPredios(inicial), 'quarry', dados)).toBe(true);
+    // com o dado real a mesma consulta e falsa: a quarry tem pai e o mapa esta vazio
+    expect(estaDesbloqueado(semPredios(inicial), 'quarry')).toBe(false);
   });
 });
 
@@ -483,10 +494,13 @@ describe('F06 — opcoesDoMenuBuild', () => {
     expect(serraria?.requer).toBe('woodcutters');
   });
 
-  it('bloqueado sem pai na arvore (storehouse) tem requer null: ninguem para nomear', () => {
+  it('o armazem ADICIONAL aparece bloqueado exigindo Serraria (GDD §5.2)', () => {
+    // O armazem da abertura ja esta de pe; o que o menu oferece e o segundo, e
+    // ele exige Serraria. Antes o dado dizia `null` aqui, e o menu ficava sem
+    // ninguem para nomear — um predio que o jogador via para sempre cinza.
     const armazem = opcoes.find((o) => o.id === 'storehouse');
     expect(armazem?.desbloqueado).toBe(false);
-    expect(armazem?.requer).toBeNull();
+    expect(armazem?.requer).toBe('sawmill');
   });
 });
 
@@ -531,9 +545,7 @@ describe('F06 — validate:data: menuBuildInicial so para raiz sem pai', () => {
 
   it('o dado real passa e nao repete nada da arvore', () => {
     expect(validarTudo(dadosReaisComMenuInicial([]))).toEqual([]);
-    for (const id of gameData.economia.estadoInicial.menuBuildInicial) {
-      expect(gameData.predios.find((p) => p.id === id)?.desbloqueadoPor).toBeNull();
-    }
+    expect(gameData.economia.estadoInicial.menuBuildInicial).toEqual([]);
   });
 
   it('um predio com pai na arvore (quarry) em menuBuildInicial reprova, e a mensagem nomeia o pai', () => {
@@ -543,8 +555,14 @@ describe('F06 — validate:data: menuBuildInicial so para raiz sem pai', () => {
     expect(erros[0]).toContain("'schoolhouse'");
   });
 
-  it('uma raiz sem pai (storehouse) em menuBuildInicial passa', () => {
-    expect(errosDaRegra(['storehouse'])).toEqual([]);
+  it('hoje a lista so pode ficar vazia: nenhum dos 28 predios e raiz', () => {
+    // Consequencia direta de o armazem adicional ter ganhado pai (GDD §5.2): a
+    // regra "menuBuildInicial so para raiz sem pai" agora reprova TODOS. A lista
+    // fica morta enquanto a arvore bastar — e e justamente ela que a camada de
+    // permissao por fase da campanha (GDD §5.3) vai ter de reabrir.
+    for (const p of gameData.predios) {
+      expect(errosDaRegra([p.id]), p.id).toHaveLength(1);
+    }
   });
 });
 
