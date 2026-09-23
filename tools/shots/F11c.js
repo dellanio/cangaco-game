@@ -6,8 +6,10 @@
 // tambem saiba.
 //
 // O que este roteiro existe para provar NA TELA: uma obra plantada pela UI passa
-// pelos TRES estagios visuais (marcacao -> madeira -> completo), so pelo `step()` —
-// nenhum comando alem de plantar o Quarry e desenhar a rua.
+// pelos estagios visuais (marcacao -> ... -> completo), so pelo `step()` — nenhum
+// comando alem de plantar o Quarry e desenhar a rua. A prova dos SEIS estagios da
+// F17e e o roteiro dela (tools/shots/F17e.js); aqui ficam as tres leituras que a
+// F11c fixou: nada martelado, em obra, de pe.
 //
 // Tempo por `window.__cangaco.avancar(n)` (laco nasce pausado, `?pausado`).
 
@@ -35,6 +37,12 @@ async function roteiro(ctx) {
     );
     return { x, y };
   }
+
+  /** F17e: exatamente estas contagens, e zero em todo o resto — inclusive num
+   *  estagio que nao existia quando este roteiro foi escrito. Mais estrito que o
+   *  `JSON.stringify` do record inteiro, que so comparava a lista de entao. */
+  const so = (record, esperado) => Object.entries(record)
+    .every(([estagio, n]) => n === (esperado[estagio] ?? 0));
 
   /** Avanca de `passo` em `passo` ticks ate a condicao valer; falha alto se nunca vale. */
   async function ate(cond, passo, maximo, descricao) {
@@ -66,11 +74,12 @@ async function roteiro(ctx) {
   const s0 = await estado();
   afirmar(s0.obrasRenderizadas === 0, `no inicio nao deveria haver obra, veio ${s0.obrasRenderizadas}`);
   afirmar(
-    JSON.stringify(s0.estagiosDeObraRenderizados) === JSON.stringify({ marcacao: 0, madeira: 0, completo: 2 }),
+    so(s0.estagiosDeObraRenderizados, { completo: 2 }),
     `no inicio os 2 predios do cenario deveriam contar como 'completo', veio ${JSON.stringify(s0.estagiosDeObraRenderizados)}`,
   );
 
-  // 1. planta o Quarry pela UI — nasce hp=0: estagio MARCACAO
+  // 1. planta o Quarry pela UI — nasce hp=0 e com o terreno por aplainar: MARCACAO
+  // (F17e: com o chao ja nivelado e hp=0 o estagio seria FUNDACAO)
   await page.click('[data-predio="quarry"]');
   await esperarFrame();
   const pPedreira = await pontoDoTile(pedreira);
@@ -83,8 +92,8 @@ async function roteiro(ctx) {
   let s = await estado();
   afirmar(s.obrasRenderizadas === 1, `deveria haver 1 obra, veio ${s.obrasRenderizadas}`);
   afirmar(
-    JSON.stringify(s.estagiosDeObraRenderizados) === JSON.stringify({ marcacao: 1, madeira: 0, completo: 2 }),
-    `recem-plantada (hp=0) a obra deveria contar como 'marcacao', veio ${JSON.stringify(s.estagiosDeObraRenderizados)}`,
+    so(s.estagiosDeObraRenderizados, { marcacao: 1, completo: 2 }),
+    `recem-plantada (hp=0, terreno por aplainar) a obra deveria contar como 'marcacao', veio ${JSON.stringify(s.estagiosDeObraRenderizados)}`,
   );
   await capturar('marcacao');
 
@@ -100,18 +109,20 @@ async function roteiro(ctx) {
   await esperarFrame();
   await page.keyboard.press('Escape');
 
-  // 3. avanca ate o laborer martelar o primeiro golpe: hp sai de 0, estagio MADEIRA.
+  // 3. avanca ate o laborer martelar o primeiro golpe: hp sai de 0, estagio ESTRUTURA.
+  // F17e: a primeira martelada cai em ESTRUTURA, e nao mais no generico 'madeira' —
+  // 250 de HP na pedreira poem a fronteira estrutura/paredes em 83.
   // Horizonte generoso: nivelar (60 ticks / 2 laborers) + caminhada + a primeira entrega.
   s = await ate(
-    (e) => e.estagiosDeObraRenderizados.madeira === 1,
-    10, 60, 'a obra deveria passar a MADEIRA (primeira martelada)',
+    (e) => e.estagiosDeObraRenderizados.estrutura === 1,
+    10, 60, 'a obra deveria passar a ESTRUTURA (primeira martelada)',
   );
   afirmar(
-    JSON.stringify(s.estagiosDeObraRenderizados) === JSON.stringify({ marcacao: 0, madeira: 1, completo: 2 }),
-    `com hp>0 e < hpTotal a obra deveria contar como 'madeira', veio ${JSON.stringify(s.estagiosDeObraRenderizados)}`,
+    so(s.estagiosDeObraRenderizados, { estrutura: 1, completo: 2 }),
+    `com hp>0 e no primeiro terco a obra deveria contar como 'estrutura', veio ${JSON.stringify(s.estagiosDeObraRenderizados)}`,
   );
-  afirmar(s.obrasRenderizadas === 1, `a obra em madeira ainda e 'obra' (nao completou), veio ${s.obrasRenderizadas}`);
-  await capturar('madeira');
+  afirmar(s.obrasRenderizadas === 1, `a obra em estrutura ainda e 'obra' (nao completou), veio ${s.obrasRenderizadas}`);
+  await capturar('estrutura');
 
   // 4. avanca ate a obra terminar: hp chega no teto (250), o predio nasce, nao ha mais obra.
   s = await ate(
@@ -119,7 +130,7 @@ async function roteiro(ctx) {
     20, 150, 'a obra deveria terminar (building-completed) e sumir de obrasRenderizadas',
   );
   afirmar(
-    JSON.stringify(s.estagiosDeObraRenderizados) === JSON.stringify({ marcacao: 0, madeira: 0, completo: 3 }),
+    so(s.estagiosDeObraRenderizados, { completo: 3 }),
     `de pe, o Quarry deveria somar ao 'completo' dos 2 predios do cenario (3 no total), veio ${JSON.stringify(s.estagiosDeObraRenderizados)}`,
   );
   afirmar(s.prediosRenderizados === 3, `deveriam existir 3 predios desenhados (armazem, escola, pedreira), veio ${s.prediosRenderizados}`);

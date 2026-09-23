@@ -13,7 +13,9 @@ import { medidorDaObra } from '../medidor-obra';
 import type { LinhaDoMedidor } from '../medidor-obra';
 import { canteiroDaObra, chaveDoCanteiro } from '../nivelamento-obra';
 import type { CanteiroDaObra } from '../nivelamento-obra';
-import { estagioDaObra } from '../estagio-obra';
+import {
+  contagemDeEstagios, estagioDaObra, estaEmObra, ORDEM_DOS_ESTAGIOS,
+} from '../estagio-obra';
 import type { EstagioDaObra } from '../estagio-obra';
 import { centroDaVila } from '../../sim/selectors';
 import type { EstadoDePredio, GameState, Predio } from '../../sim/state';
@@ -205,8 +207,9 @@ export class WorldScene extends Phaser.Scene {
   /** Diff por id, estagio, assinatura do medidor (F17b) E leitura do canteiro
    *  (F17d) contra o que ja esta desenhado: id novo cria, id sumido
    *  destroi, mesmo id no mesmo estagio nao mexe. O estagio (F11c: `estagio-obra.ts`)
-   *  entra na chave, nao so o `estado` — uma obra que so avanca de `hp` (marcacao ->
-   *  madeira, ou vira `'completo'`) mantem o id e precisa ser redesenhada; `hp` sozinho
+   *  entra na chave, nao so o `estado` — uma obra que so avanca de `hp` (F17e:
+   *  estrutura -> paredes -> cobertura -> completo) mantem o id e precisa ser
+   *  redesenhada; `hp` sozinho
    *  nao redisparava nada antes desta feature. Sem o diff, redesenhar do zero a cada
    *  chamada recriaria os prédios todo frame. `desenhados` e memoria de render local
    *  da cena — handle do sprite que ela mesma criou, nao estado de jogo guardado em
@@ -219,7 +222,7 @@ export class WorldScene extends Phaser.Scene {
         this.desenhados.delete(id);
       }
     }
-    const porEstagio: Record<EstagioDaObra, number> = { marcacao: 0, madeira: 0, completo: 0 };
+    const porEstagio = contagemDeEstagios();
     // F16b: o recorte cru do estado para o roteiro. Montado aqui porque este laco
     // ja percorre `predios.ordem` — e e `ordem`, nunca `Object.keys` (contrato da
     // F05a). Nao entra em sprite: e ponte de harness, nao estado guardado no render.
@@ -242,7 +245,19 @@ export class WorldScene extends Phaser.Scene {
         ocupante: predio.estado === 'completo' ? predio.ocupante : null,
       };
       const aparencia = aparenciaDoPredio(predio.tipo);
-      const estagio = estagioDaObra(predio.hp, aparencia.hpTotal);
+      // F17d: o canteiro so existe para obra, como o medidor — predio completo nao
+      // tem `obra.nivelamento`.
+      // F17e: ele vem ANTES do estagio porque a fronteira marcacao/fundacao e a
+      // unica das seis que olha o terreno, e nao o `hp`.
+      const canteiro = predio.estado === 'obra'
+        ? canteiroDaObra(
+          predio.obra.nivelamento, aparencia.alvoDeNivelamento, aparencia.largura * aparencia.altura,
+        )
+        : null;
+      if (canteiro !== null) canteiros[id] = canteiro;
+      const estagio = estagioDaObra(
+        predio.hp, aparencia.hpTotal, canteiro === null || canteiro.nivelada,
+      );
       porEstagio[estagio] += 1;
       sprites[id] = this.spriteDoPredio(predio.tipo, estagio)?.chave ?? null;
       // F17b: o medidor so existe para obra. Predio completo nao tem `obra.faltam`
@@ -254,14 +269,6 @@ export class WorldScene extends Phaser.Scene {
       // D3: material que chega nao mexe em `estado` nem em `estagio` — o `hp` so sobe
       // depois, com o martelo. Sem a assinatura na chave, o medidor nasceria certo no
       // primeiro desenho e congelaria ali para sempre.
-      // F17d: o canteiro so existe para obra, como o medidor — predio completo nao
-      // tem `obra.nivelamento`.
-      const canteiro = predio.estado === 'obra'
-        ? canteiroDaObra(
-          predio.obra.nivelamento, aparencia.alvoDeNivelamento, aparencia.largura * aparencia.altura,
-        )
-        : null;
-      if (canteiro !== null) canteiros[id] = canteiro;
       // O mesmo D3, agora para o nivelamento: aplainar o chao nao mexe em `estado`
       // nem em `estagio`. Sem a leitura do canteiro na chave, ele nasceria certo no
       // primeiro desenho e congelaria ali para sempre — e uma foto unica passaria
@@ -282,10 +289,14 @@ export class WorldScene extends Phaser.Scene {
     debug.prediosDoEstado = doEstado;
     // F11c: um predio 'completo' tem hp === hpTotal, entao estagio 'completo' aqui NAO
     // e so a obra que acabou de martelar o ultimo golpe — inclui todo predio de pe. A
-    // contagem que corresponde ao antigo `obrasRenderizadas` (a marcacao no chao) e a
-    // soma de marcacao+madeira; publicamos os tres separados para o roteiro afirmar por
-    // estagio (tools/shots/F11c.js), sem adivinhar por pixel.
-    debug.obrasRenderizadas = porEstagio.marcacao + porEstagio.madeira;
+    // contagem que corresponde ao antigo `obrasRenderizadas` e a soma dos estagios EM
+    // OBRA; publicamos os seis separados para o roteiro afirmar por estagio
+    // (tools/shots/F11c.js, tools/shots/F17e.js), sem adivinhar por pixel.
+    // F17e: a soma vem da MESMA lista que nomeia os estagios — somar chave por chave
+    // aqui seria a segunda lista, e e dela que a primeira diverge.
+    debug.obrasRenderizadas = ORDEM_DOS_ESTAGIOS
+      .filter(estaEmObra)
+      .reduce((total, e) => total + porEstagio[e], 0);
     debug.estagiosDeObraRenderizados = porEstagio;
     debug.medidoresDeObra = medidores;
     debug.canteirosDeObra = canteiros;
@@ -372,8 +383,11 @@ export class WorldScene extends Phaser.Scene {
   private desenharPlaceholder(
     estagio: EstagioDaObra, nome: string, larguraPx: number, alturaPx: number,
   ): Phaser.GameObjects.GameObject[] {
-    const emObra = estagio === 'marcacao' || estagio === 'madeira';
-    const alfa = estagio === 'marcacao' ? 0.15 : estagio === 'madeira' ? 0.4 : 1;
+    // F17e: a uniao passou de tres valores a seis. Aqui o desenho ainda e o da
+    // F11c (chao / em obra / de pe) — quem da silhueta propria a cada um dos seis
+    // e a tarefa seguinte desta feature.
+    const emObra = estaEmObra(estagio);
+    const alfa = estagio === 'marcacao' ? 0.15 : emObra ? 0.4 : 1;
     const retangulo = this.add.rectangle(larguraPx / 2, alturaPx / 2, larguraPx, alturaPx, 0x6b4a33, alfa);
     retangulo.setStrokeStyle(2, emObra ? 0xede3d0 : 0x2c1d12);
     const texto = emObra ? `${nome}\n(${temaSertao.obra[estagio]})` : nome;

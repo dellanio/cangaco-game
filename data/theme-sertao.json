@@ -122,7 +122,13 @@
     "pausar": "Parar", "retomar": "Voltar ao trabalho", "pausado": "Parado",
     "demolir": "Derrubar", "demolirDesc": "devolve parte do material"
   },
-  "obra": { "marcacao": "marcação no chão", "madeira": "em obra" },
+  "obra": {
+    "marcacao": "marcação no chão",
+    "fundacao": "alicerce pronto",
+    "estrutura": "armação de madeira",
+    "paredes": "paredes subindo",
+    "cobertura": "telhado por fechar"
+  },
   "vegetacao": ["mandacaru", "xique-xique", "juazeiro", "umbuzeiro", "facheiro", "macambira"],
   "props": ["cerca de vara", "pilha de lenha", "cacimba", "carro de boi", "jumento", "varal de carne de sol"],
   "facoes": {

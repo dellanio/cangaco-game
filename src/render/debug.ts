@@ -9,6 +9,7 @@ import type { Tile } from './grid';
 import type { EstadoDaPlanta } from './planta-fantasma';
 import type { PreviaDeEstrada } from './estradas';
 import type { UnidadeRenderizada } from './unidades';
+import { contagemDeEstagios } from './estagio-obra';
 import type { EstagioDaObra } from './estagio-obra';
 import type { LinhaDoMedidor } from './medidor-obra';
 import type { CanteiroDaObra } from './nivelamento-obra';
@@ -41,10 +42,12 @@ export interface EstadoDebug {
    *  de subir nao tem id fixo) e para afirmar sobre ocupante e pausa sem
    *  perguntar ao painel — o painel e justamente o que esta sendo provado. */
   prediosDoEstado: Readonly<Record<string, PredioNoDebug>>;
-  /** Quantos deles estao em obra (F07): marcacao + madeira, F11c. */
+  /** Quantos deles estao em obra (F07): a soma dos cinco estagios EM OBRA
+   *  (F17e); o `completo` fica de fora. */
   obrasRenderizadas: number;
-  /** F11c: a mesma contagem acima, quebrada por estagio (`estagio-obra.ts`) — o
-   *  roteiro de screenshot afirma sobre isto, nunca por pixel (§8). */
+  /** F11c: a mesma contagem acima, quebrada pelos SEIS estagios da F17e
+   *  (`estagio-obra.ts`) — o roteiro de screenshot afirma sobre isto, nunca por
+   *  pixel (§8). */
   estagiosDeObraRenderizados: Readonly<Record<EstagioDaObra, number>>;
   /** F17b — o medidor de cada OBRA desenhada agora, por id: quanto de cada
    *  material chegou e quanto o predio custa. Obra apenas; predio completo nao
@@ -137,7 +140,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     prediosRenderizados: 0,
     prediosDoEstado: {},
     obrasRenderizadas: 0,
-    estagiosDeObraRenderizados: { marcacao: 0, madeira: 0, completo: 0 },
+    estagiosDeObraRenderizados: contagemDeEstagios(),
     medidoresDeObra: {},
     canteirosDeObra: {},
     spritesDePredio: {},
