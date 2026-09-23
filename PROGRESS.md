@@ -1453,6 +1453,96 @@ sessão que implementar névoa faz o serf se perder no escuro.
   subida do Vite, não pelo tilemap. Não dá para concluir nada sobre custo de
   abertura a partir desses três números.
 
+## F17c — Buffer do A* reaproveitado (2026-09-23)
+
+Item criado pelo operador na frente da F18a, depois da sessão de medição acima:
+*"é defeito, não limite"*. Só `src/sim/` — nenhum arquivo de `render/` ou `ui/`
+foi tocado.
+
+### O defeito
+
+`executar` alocava, **por busca**, um `Float64Array(largura*altura)` preenchido
+com `+Infinity` e um `Int32Array(largura*altura)` preenchido com `-1`. O custo
+de *preparar* a busca era proporcional à **área do mapa**, não ao trabalho feito:
+48 KB a 64², 192 KB a 128², 768 KB a 256², para uma caminhada de 3 tiles.
+
+### O conserto
+
+Rascunho no escopo do módulo (`rascunhoG`, `rascunhoPai`, `rascunhoMarca`),
+capacidade que **só cresce**, e **marca de geração**: `marca[i] === geracao`
+substitui a sentinela `+Infinity`, então nenhum vetor precisa ser limpo entre
+buscas. Quando `geracaoAtual` chega a `0x7fffffff` (limite de representação de
+`Int32Array`, não número de balanceamento), `marca` é zerado uma vez e a
+contagem recomeça. Vetor recém-alocado já vem zerado, então a geração volta a 0
+junto — sem isso, uma marca velha de outro vetor poderia coincidir.
+
+### Verificado
+
+- **Aceite, `test-output/F17c.json`** (aberto com Read): 400 buscas de 3 tiles
+  com cache frio em cada tamanho, depois de 100 de aquecimento — **10,1 µs a
+  64², 4,8 µs a 128², 3,7 µs a 256²**. Razão 256²/64² = **0,37**, contra **7,6**
+  medidos antes da feature (40 / 94 / 303 µs). O custo não cresce mais com a
+  área; a inversão vem de o 64² rodar primeiro e pagar o JIT do trio.
+- **Guarda permanente é estrutural, não cronômetro:** `estatisticasDoRascunho()`
+  conta alocações. 900 buscas inéditas espalhadas pelos três tamanhos alocam no
+  máximo **3** (uma por tamanho distinto); com o rascunho já grande, mais 900
+  alocam **0**; depois do 256², cinquenta buscas a 64² mantêm a capacidade e
+  alocam 0. O cronômetro é o aceite; o contador é o que protege daqui em diante.
+- **O oráculo Dijkstra da F10 não mudou.** `tests/F10-astar.test.ts` e
+  `tests/F10-falhas.test.ts` passam **sem uma linha alterada** — era o ponto 2
+  do operador. `git status` durante a Task 1 mostrou só `src/sim/pathfinding.ts`
+  e o arquivo de teste novo.
+- `npm run verify` verde: **52 arquivos, 873 testes**, 23,2 s.
+
+### Por que a contagem não entrou em `estatisticasDeBusca()`
+
+O texto original do item dizia que entraria. Entraria errado:
+`EstatisticasDeBusca` é comparado por **seis asserções `toEqual` sobre o objeto
+inteiro** em `tests/F10-astar.test.ts` (linhas 357, 365, 372, 388, 409, 424), e
+um campo novo derrubaria as seis — justamente o arquivo que o operador mandou
+não tocar. A contagem foi para um export novo, `estatisticasDoRascunho()`, com
+objeto próprio. O operador corrigiu o item no BUILD_PLAN antes da execução e
+registrou a razão: busca e cache num lugar, memória em outro.
+
+### A guarda de reentrância
+
+`ocuparRascunho` lança se já houver uma busca em curso, e `executar` a solta num
+`finally`. **Nenhum caminho do código de hoje a alcança**: os 8 chamadores
+(`jobs.ts:300,303,318,331,346`, `systems/serfs.ts:75,142,181`) são todos de
+topo, a busca não aceita callback, e a única função externa que ela chama
+(`footprintsDe` → `caixaDoPredio`, em `src/sim/footprint.ts`) importa só tipos.
+A guarda é para amanhã — e é testada **acusando**, não só não-acusando: o teste
+força a reentrância por uma costura real (um getter em
+`dados.movimento.ticksPorTile.aPe.grama`, lido durante a busca) e afirma que a
+costura foi mesmo exercitada.
+
+### BUG-001 fechado no caminho
+
+`npm run verify` desta sessão estourou o timeout de 5 s em `F09-sistema:429` —
+terceira ocorrência, com cache frio, como o registro previa. Apliquei a correção
+que o próprio BUG-001 já tinha decidido: **orçamento explícito de 20 s nesse
+caso**, comentado com o número medido (3,46 s isolado nesta sessão), e o bug saiu
+do `BUGS.md` no mesmo commit. Não é `skip`, não reduz a carga do cenário e não
+afrouxa o orçamento global.
+
+### Desvio do plano, registrado
+
+A Task 3 do plano salvo usava índices `5000+i` e `10_000+i` em
+`buscaCurtaInedita`. Estariam **fora do mapa**: a função deriva
+`y = 12 + floor(i/40)`, então `i = 10_000` daria `y = 262`, além da borda a 64².
+Troquei por aquecimento em `[0,99]` e medição em `[100,499]`, dentro dos 640
+pares livres da faixa. O cache é chaveado pela referência de `dados`, que muda a
+cada tamanho, então repetir índices entre tamanhos não gera acerto de cache — e
+o teste afirma `acertos === 0` nos três.
+
+### Hipótese, não fato
+
+- Que o 64² tenha ficado **mais lento** que o 256² (10,1 contra 3,7 µs) é
+  quase certamente JIT: ele roda primeiro no laço dos três. Não isolei.
+- O teto do teste é 3,0, frouxo de propósito — o medido é 0,37. Se um dia
+  oscilar, a correção é alargar o teto **com o motivo escrito**, nunca `skip`.
+
+
 ## Perguntas em aberto
 
 _(nenhuma no momento: as três que sobravam foram decididas pelo operador — ver "Ajuste pós-F10".)_

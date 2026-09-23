@@ -426,6 +426,11 @@ describe('F09 — propriedade estrutural: eventos aleatorios, invariantes depois
 export const metricasDeCarga = { obras: 0, ticks: 0, tarefasGeradas: 0, maximoSimultaneo: 0, tarefasNoFim: 0 };
 
 describe('F09 — cenario de carga: muitas obras simultaneas e ninguem reclamando', () => {
+  // Orcamento explicito, nao o padrao de 5 s do Vitest: este caso mede 3,5 s
+  // isolado e ~3,6 s na suite MORNA, mas estourou tres vezes com o cache do
+  // Vitest frio (BUG-001, 2026-09-23), onde a suite inteira passa de 20 s para
+  // 30 s. A carga e o que o teste existe para exercer: reduzi-la trocaria o
+  // sintoma pela cobertura. 20 s da ~5x de folga sobre o medido.
   it('gera as tarefas, mantem as invariantes e ANOTA quantas foram (sem otimizar, sem medir tempo)', () => {
     const quarry = gameData.predios.find((p) => p.id === 'quarry');
     if (!quarry) throw new Error('fixture: sem quarry no dado');
@@ -468,7 +473,7 @@ describe('F09 — cenario de carga: muitas obras simultaneas e ninguem reclamand
       tarefasNoFim: tarefasDe(estado).length,
     });
     expect(metricasDeCarga.tarefasGeradas, 'churn: alguma tarefa de material foi criada mais de uma vez').toBe(esperadas);
-  });
+  }, 20_000);
 });
 
 // --- determinismo e save/load com reserva pendente ---
