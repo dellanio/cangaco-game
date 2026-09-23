@@ -44,3 +44,10 @@ caminho. Ideia boa é justamente a mais perigosa.
   `BUILD_PLAN.md`): a "estrada planejada" entra como **campo novo** no `GameState`, separado de
   `estradas` (que segue sendo só o que está de pé, e é o que `isConnected` consulta), e o débito
   da pedra migra do comando para a entrega.
+- Prédio com veio esgotado devolve o trabalhador — medido na F15b (2026-09-23): quando o veio
+  da Quarry zera, sai o evento `vein-exhausted` e o pedreiro entra em `esperando_insumo` e fica
+  lá indefinidamente, ocupando a vaga de um prédio que nunca mais vai produzir. Não quebra
+  critério de aceite escrito (o aceite da F15b-2 fala de `ocioso`), por isso não é bug. O
+  desenho a decidir é de quem parte a iniciativa: o prédio se desocupa sozinho (e vira o quê:
+  ruína, prédio vago, demolição automática?) ou o jogador precisa demolir. O original esgota
+  pedreiras ao longo da partida, então isto vai acontecer em toda partida longa.

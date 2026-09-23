@@ -43,6 +43,28 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   | **calibrar na F15b**, junto com o resto do lote. A referência é o original: constroem-se várias pedreiras e
   elas se esgotam ao longo da partida — se uma só durar a partida inteira, o número está alto. Aprovado como
   ponto de partida, não como valor final.
+  | **[2026-09-23] MEDIDO no cenário oráculo (não mais aritmética):** com veio 20 a pedreira zera no tick 3340 e
+  com veio 40 no tick 6680 — 167 ticks por pedra nos dois, exatamente o `ticksDoCiclo`, sem intercepto. O
+  pedreiro nunca para no meio (a gaveta escoa pelo nível 6), então a taxa teórica **é** a taxa real neste
+  cenário. **Extrapolação declarada:** 200 × 167 = 33400 ticks = 3340 s ≈ **55,7 min de tempo de jogo a 1x**.
+  É extrapolação linear de duas medições, não uma corrida de 33 mil ticks — o operador pediu assim para não
+  gastar a sessão; se o número parecer fora de escala com o jogo rodando, vale a corrida longa.
+  Nenhuma taxa mudou nesta sessão: a decisão do número fica para o lote.
+- [2026-09-23] **a proporção 2:1 do GDD §4.5 bate quase no tick**: 2 Woodcutter's a 545 ticks/tronco dão um tronco
+  a cada 272,5 ticks, e a Sawmill consome um a cada 273 (`ticksDoCiclo`). Em 3000 ticks o carpinteiro ficou em
+  `esperando_insumo` 661 ticks — todos em UMA sequência, no arranque, e zero depois que a primeira entrega
+  chegou. | data/production.json | medido, `test-output/F15.json`; o atraso do arranque é logística (o primeiro
+  tronco leva 628 ticks para chegar ao armazém), não taxa. Não mexer na receita por causa dele.
+- [2026-09-23] **o arranque do oráculo é lento e é transporte, não produção**: primeira pedra no armazém no tick
+  207, primeiro tronco no 628, primeiro timber no 968 (≈100 s de jogo até o primeiro timber existir).
+  | data/units.json (velocidade a pé), quantidade de serfs | medido, `test-output/F15.json`. Com 4 serfs a fila
+  do quadro NUNCA acumulou: em todas as amostras de 100 em 100 ticks havia zero tarefa `aberta`. Se houver
+  ajuste a fazer, é no arranque, não na vazão.
+- [2026-09-23] **veio esgotado deixa o especialista parado para sempre**: no tick em que o veio zera sai
+  `vein-exhausted` e o pedreiro entra em `esperando_insumo` e fica — 1000 ticks depois continua lá, ocupando a
+  pedreira. | src/sim/systems (ocupação), não é número | medido com veio curto (zerou no tick 835). Não quebra
+  critério escrito nenhum (o aceite fala de `ocioso`), então não é bug: é buraco de desenho, registrado em
+  `IDEIAS.md`. Importa para a calibração do veio — quanto mais curto o veio, mais cedo aparece.
 
 ---
 

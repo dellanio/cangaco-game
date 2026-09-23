@@ -34,6 +34,13 @@ const CENARIOS = {
     ],
     producao: true,
   },
+
+  // F15b — o cenario ORACULO do GDD 4.5 (2 Woodcutter's : 1 Sawmill, mais a
+  // pedreira, com os serfs do cenario inicial entregando). O estado vem de
+  // `cenarioOraculo` em tests/helpers/producao-cenario.ts, o MESMO que o aceite
+  // usa: duplicar a montagem aqui so criaria duas versoes do oraculo que
+  // divergem no primeiro ajuste. `npm run sim -- oraculo --ticks 3000`.
+  oraculo: { montar: 'cenarioOraculo', producao: true, quadro: true },
 };
 
 function predioDoTipo(state, tipo) {
@@ -75,6 +82,30 @@ function imprimirProducao(state) {
   }
 }
 
+/** F15b — a fila do JobBoard por tipo e o que cada civil esta fazendo: as duas
+ *  coisas que o ponto 2 do operador pergunta (fila acumulando, predio ocioso) e
+ *  que o resumo geral nao mostra. */
+function imprimirQuadro(state) {
+  const porTipo = {};
+  for (const id of state.jobs.tarefas.ordem) {
+    const t = state.jobs.tarefas.porId[id];
+    if (!t) continue;
+    const chave = `${t.tipo}/${t.estado}`;
+    porTipo[chave] = (porTipo[chave] ?? 0) + 1;
+  }
+  console.log('quadro de tarefas:');
+  const chaves = Object.keys(porTipo).sort();
+  if (chaves.length === 0) console.log('    (vazio)');
+  for (const k of chaves) console.log(`    ${k}: ${porTipo[k]}`);
+
+  console.log('civis:');
+  for (const id of state.unidades.ordem) {
+    const u = state.unidades.porId[id];
+    if (!u) continue;
+    console.log(`    ${u.id} (${u.tipo}): ${u.fsm}`);
+  }
+}
+
 function imprimirResumo(resumo) {
   console.log(`tick: ${resumo.tick}`);
   console.log('predios:');
@@ -110,7 +141,13 @@ async function main() {
     const { chaveDeTile } = await server.ssrLoadModule('/src/sim/estradas.ts');
     const { trabalhadorDoTipo } = await server.ssrLoadModule('/src/sim/ocupacao.ts');
 
-    let state = createInitialState(config.seed);
+    let state;
+    if (config.montar) {
+      const helpers = await server.ssrLoadModule('/tests/helpers/producao-cenario.ts');
+      state = helpers[config.montar]();
+    } else {
+      state = createInitialState(config.seed);
+    }
     if (config.estradas) {
       const novas = Object.fromEntries(config.estradas.map((t) => [chaveDeTile(t), true]));
       state = { ...state, estradas: { ...state.estradas, ...novas } };
@@ -122,6 +159,7 @@ async function main() {
 
     imprimirResumo(resumoDoEstado(state));
     if (config.producao) imprimirProducao(state);
+    if (config.quadro) imprimirQuadro(state);
   } finally {
     await server.close();
   }
