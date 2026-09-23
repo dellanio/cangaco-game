@@ -20,13 +20,14 @@ import type { GameData } from '../data/types';
 import { gameData } from '../data';
 import { armazensCompletos, distanciaEntrePredios } from '../estradas';
 import {
-  criarTarefa, criarTarefaDeConstrucao, criarTarefaDeOuro, distanciaDaTarefa, elegivelParaTarefa,
-  liberar, TIPO_QUE_CARREGA,
+  criarTarefa, criarTarefaDeConstrucao, criarTarefaDeOcupacao, criarTarefaDeOuro, distanciaDaTarefa,
+  liberar, podeReclamar, TIPO_QUE_CARREGA,
 } from '../jobs';
 import type { MotivoDeLiberacao } from '../jobs';
 import { demandaNoDestino, disponivelNaOrigem, reservadoNaOrigem, vagaDoDestino } from '../reservas';
 import { obraNivelada } from '../obra';
 import { ehEscolaCompleta, ouroNecessario } from '../escola';
+import { ehPredioOcupavel, vagasDoPredio } from '../ocupacao';
 
 export interface ResultadoDeSistema {
   readonly state: GameState;
@@ -47,24 +48,37 @@ const ehObra = (p: Predio | undefined): p is PredioEmObra => p !== undefined && 
 
 /**
  * O destino de `t` ainda e do tipo que a tarefa pressupoe? Obra, para material e
- * construir; escola completa, para ouro (F13). `null` se vale. Quem escolhe o ramo e
- * o TIPO da tarefa, nao o predio: material apontando para escola nao passa a valer
- * so porque o predio existe.
+ * construir; escola completa, para ouro (F13); predio completo, ocupavel e VAGO,
+ * para ocupar (F14). `null` se vale. Quem escolhe o ramo e o TIPO da tarefa, nao
+ * o predio: material apontando para escola nao passa a valer so porque o predio
+ * existe.
  */
-function motivoDoDestino(state: GameState, t: Tarefa): MotivoDeLiberacao | null {
+function motivoDoDestino(state: GameState, t: Tarefa, dados: GameData): MotivoDeLiberacao | null {
   const destino = state.predios.porId[t.destino];
   if (!destino) return 'destino-sumiu';
   if (t.tipo === 'ouro-para-escola') return ehEscolaCompleta(destino) ? null : 'destino-sumiu';
+  if (t.tipo === 'ocupar') {
+    // Deixou de ser predio ocupavel (demolido e replantado, save de outra
+    // versao): a tarefa nao tem mais sentido. Ja ocupado: a vaga acabou — e o
+    // unico jeito de `vagaDeOcupacao` ficar negativa, e sai por aqui.
+    if (!ehPredioOcupavel(destino, dados)) return 'destino-sumiu';
+    return destino.ocupante === null ? null : 'destino-completo';
+  }
   return ehObra(destino) ? null : 'destino-completo';
 }
 
 /** O motivo pelo qual uma tarefa reclamada, sozinha, deixou de valer; `null` se vale. */
 function motivoIndividual(state: GameState, t: Tarefa, dados: GameData): MotivoDeLiberacao | null {
-  const unidade = t.reclamadaPor === null ? undefined : state.unidades.porId[t.reclamadaPor];
-  if (!unidade || !elegivelParaTarefa(t.tipo, unidade.tipo)) return 'unidade-removida';
-  const motivoDeDestino = motivoDoDestino(state, t);
+  // O DESTINO vem primeiro (F14). Para `'ocupar'`, a elegibilidade e funcao do
+  // predio de destino (`podeReclamar`): com o predio demolido, perguntar da
+  // unidade primeiro devolveria 'unidade-removida' para uma unidade viva — o
+  // rotulo da causa errada, e ainda por cima um que REABRE a tarefa. O motivo
+  // do destino tambem e o mais especifico dos dois quando ambos valem.
+  const motivoDeDestino = motivoDoDestino(state, t, dados);
   if (motivoDeDestino !== null) return motivoDeDestino;
-  if (!ehTarefaDeTransporte(t)) return null; // construir: nada alem do destino importa
+  const unidade = t.reclamadaPor === null ? undefined : state.unidades.porId[t.reclamadaPor];
+  if (!unidade || !podeReclamar(state, t, unidade.tipo, dados)) return 'unidade-removida';
+  if (!ehTarefaDeTransporte(t)) return null; // construir/ocupar: nada alem do destino importa
   const destino = state.predios.porId[t.destino];
   const origem = state.predios.porId[t.origem];
   if (!ehArmazemCompleto(origem)) return 'origem-sumiu';
@@ -78,10 +92,10 @@ function motivoIndividual(state: GameState, t: Tarefa, dados: GameData): MotivoD
  * importam, a coleta aconteceu. O caminho do serf carregado ate a obra e da FSM, que
  * tem a posicao dele.
  */
-function motivoDaCarregando(state: GameState, t: Tarefa): MotivoDeLiberacao | null {
+function motivoDaCarregando(state: GameState, t: Tarefa, dados: GameData): MotivoDeLiberacao | null {
   const unidade = t.reclamadaPor === null ? undefined : state.unidades.porId[t.reclamadaPor];
   if (!unidade || unidade.tipo !== TIPO_QUE_CARREGA) return 'unidade-removida';
-  return motivoDoDestino(state, t);
+  return motivoDoDestino(state, t, dados);
 }
 
 /** Tira uma tarefa ABERTA do quadro. Nao ha o que liberar (uma aberta nao reserva nada),
@@ -97,7 +111,7 @@ function cancelarAberta(state: GameState, tarefaId: string): GameState {
  *  tarefa com outra origem. Construir: so o destino importa (o laborer nao
  *  carrega material, nao ha origem nem caminho a checar). */
 function abertaVale(state: GameState, t: Tarefa, dados: GameData): boolean {
-  if (motivoDoDestino(state, t) !== null) return false;
+  if (motivoDoDestino(state, t, dados) !== null) return false;
   if (!ehTarefaDeTransporte(t)) return true;
   // F13: o destino tambem precisa continuar PEDINDO (a fila de treino encolhe quando o
   // jogador cancela um item; `faltam` de uma obra encolhe na entrega).
@@ -120,7 +134,7 @@ export function sanearTarefas(state: GameState, dados: GameData = gameData): Res
   //    Carregando: so unidade e destino (a coleta ja aconteceu).
   for (const t of tarefasPorNumero(state)) {
     if (t.estado === 'aberta') continue;
-    const motivo = t.estado === 'reclamada' ? motivoIndividual(atual, t, dados) : motivoDaCarregando(atual, t);
+    const motivo = t.estado === 'reclamada' ? motivoIndividual(atual, t, dados) : motivoDaCarregando(atual, t, dados);
     if (motivo !== null) liberarComMotivo(t.id, motivo);
   }
 
@@ -164,9 +178,14 @@ export function sanearTarefas(state: GameState, dados: GameData = gameData): Res
       const existentes = tarefasPorNumero(atual)
         .filter((o) => o.tipo === t.tipo && o.destino === t.destino && ehTarefaDeTransporte(o) && o.mercadoria === t.mercadoria).length;
       if (existentes > teto) atual = cancelarAberta(atual, t.id);
-    } else {
+    } else if (t.tipo === 'construir') {
       const existentes = tarefasPorNumero(atual).filter((o) => o.tipo === 'construir' && o.destino === t.destino).length;
       if (existentes > dados.construcao.laborersMaximosPorObra) atual = cancelarAberta(atual, t.id);
+    } else {
+      // 'ocupar' (F14): o teto e a VAGA do predio (1 vago, 0 ocupado), derivada
+      // do estado — nao ha teto em dado, ver `vagasDoPredio`.
+      const existentes = tarefasPorNumero(atual).filter((o) => o.tipo === 'ocupar' && o.destino === t.destino).length;
+      if (existentes > vagasDoPredio(atual.predios.porId[t.destino], dados)) atual = cancelarAberta(atual, t.id);
     }
   }
 
@@ -224,6 +243,27 @@ function gerarTarefasDeOuro(state: GameState, dados: GameData): GameState {
   return atual;
 }
 
+/**
+ * F14 — uma vaga de OCUPACAO por predio completo, vago e que pede trabalhador.
+ * Cria MESMO SEM especialista daquele tipo no mapa, como `'construir'` cria sem
+ * laborer (F11b): a vaga existe no quadro assim que o predio fica pronto. Quem
+ * responde "este predio esta parado esperando trabalhador" e `predio.ocupante`
+ * (F22), nunca a existencia da tarefa — entao o quadro nao precisa mentir.
+ *
+ * Nao exige estrada: o especialista anda em modo `'livre'`, como o laborer.
+ */
+function gerarTarefasDeOcupacao(state: GameState, dados: GameData): GameState {
+  let atual = state;
+  for (const id of state.predios.ordem) {
+    const predio = atual.predios.porId[id];
+    if (!ehPredioOcupavel(predio, dados) || predio.ocupante !== null) continue;
+    const existentes = tarefasPorNumero(atual).filter((t) => t.tipo === 'ocupar' && t.destino === id).length;
+    if (existentes >= vagasDoPredio(predio, dados)) continue;
+    atual = criarTarefaDeOcupacao(atual, id).state;
+  }
+  return atual;
+}
+
 export function gerarTarefas(state: GameState, dados: GameData = gameData): GameState {
   let atual = gerarTarefasDeOuro(state, dados);
   for (const id of state.predios.ordem) {
@@ -250,5 +290,8 @@ export function gerarTarefas(state: GameState, dados: GameData = gameData): Game
       atual = criarTarefaDeConstrucao(atual, obra.id).state;
     }
   }
-  return atual;
+  // F14 por ultimo, e sobre PREDIOS COMPLETOS — o laco acima so olha obra. Uma
+  // obra que o laborer completou neste tick ja entra aqui e ganha a vaga de
+  // ocupante no mesmo tick; o especialista a reclama no tick seguinte.
+  return gerarTarefasDeOcupacao(atual, dados);
 }

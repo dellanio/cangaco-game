@@ -11,7 +11,8 @@
 import { gameData } from '../../src/sim/data';
 import type { GameData } from '../../src/sim/data/types';
 import type { GameState } from '../../src/sim/state';
-import { distanciaDaTarefa, nivelDoTipo, TIPO_QUE_CARREGA, TIPO_QUE_CONSTROI } from '../../src/sim/jobs';
+import { distanciaDaTarefa, nivelDoTipo, podeReclamar } from '../../src/sim/jobs';
+import { ehPredioOcupavel } from '../../src/sim/ocupacao';
 import { disponivelNaOrigem, vagaNoDestino } from '../../src/sim/reservas';
 import { ID_DO_ARMAZEM } from '../../src/sim/state';
 
@@ -27,6 +28,7 @@ export function violacoesDeInvariantes(estado: GameState, dados: GameData = game
   const unidadesEmUso = new Map<string, string>();
   const contagemPorDestino = new Map<string, { total: number; obra: string; mercadoria: string }>();
   const contagemDeConstrucaoPorObra = new Map<string, number>();
+  const contagemDeOcupacaoPorPredio = new Map<string, number>();
   const reservasPorOrigem = new Set<string>();
   const reservasPorDestino = new Set<string>();
 
@@ -40,7 +42,14 @@ export function violacoesDeInvariantes(estado: GameState, dados: GameData = game
     if (t.numero >= estado.proximoId) v.push(`${id}: numero >= proximoId (colisao futura de id)`);
 
     const destino = estado.predios.porId[t.destino];
-    if (!destino || destino.estado !== 'obra') v.push(`${id}: destino '${t.destino}' nao e obra`);
+    if (t.tipo === 'ocupar') {
+      // F14: o destino de 'ocupar' e um predio COMPLETO, vago e que pede
+      // trabalhador — nao uma obra.
+      if (!ehPredioOcupavel(destino, dados)) v.push(`${id}: destino '${t.destino}' nao e predio ocupavel`);
+      else if (destino.ocupante !== null) v.push(`${id}: destino '${t.destino}' ja tem ocupante`);
+    } else if (!destino || destino.estado !== 'obra') {
+      v.push(`${id}: destino '${t.destino}' nao e obra`);
+    }
 
     if (t.tipo === 'material-para-obra') {
       try {
@@ -60,12 +69,14 @@ export function violacoesDeInvariantes(estado: GameState, dados: GameData = game
 
     if (t.estado === 'aberta' && t.reclamadaPor !== null) v.push(`${id}: aberta mas com reclamadaPor`);
     if (t.estado !== 'aberta') {
-      const tipoElegivel = t.tipo === 'material-para-obra' ? TIPO_QUE_CARREGA : TIPO_QUE_CONSTROI;
       if (t.reclamadaPor === null) {
         v.push(`${id}: ${t.estado} sem unidade`);
       } else {
         const u = estado.unidades.porId[t.reclamadaPor];
-        if (!u || u.tipo !== tipoElegivel) v.push(`${id}: ${t.estado} por unidade inexistente ou de tipo errado`);
+        // F14: quem responde "este civil pode segurar esta tarefa" e
+        // `podeReclamar` — para 'ocupar' a resposta vem do predio de destino, e
+        // nao de um par fixo tipo-de-tarefa/tipo-de-unidade.
+        if (!u || !podeReclamar(estado, t, u.tipo, dados)) v.push(`${id}: ${t.estado} por unidade inexistente ou de tipo errado`);
         const outra = unidadesEmUso.get(t.reclamadaPor);
         if (outra !== undefined) v.push(`${id}: a unidade ${t.reclamadaPor} tambem segura ${outra}`);
         unidadesEmUso.set(t.reclamadaPor, id);
@@ -80,8 +91,11 @@ export function violacoesDeInvariantes(estado: GameState, dados: GameData = game
       const chave = `${t.destino}|${t.mercadoria}`;
       const atual = contagemPorDestino.get(chave) ?? { total: 0, obra: t.destino, mercadoria: t.mercadoria };
       contagemPorDestino.set(chave, { ...atual, total: atual.total + 1 });
-    } else if (t.estado !== 'aberta') {
+    } else if (t.tipo === 'construir' && t.estado !== 'aberta') {
       contagemDeConstrucaoPorObra.set(t.destino, (contagemDeConstrucaoPorObra.get(t.destino) ?? 0) + 1);
+    } else if (t.tipo === 'ocupar' && t.estado !== 'aberta') {
+      // F14: a vaga e UMA por predio — a reserva de ocupacao nunca passa disso.
+      contagemDeOcupacaoPorPredio.set(t.destino, (contagemDeOcupacaoPorPredio.get(t.destino) ?? 0) + 1);
     }
   }
 
@@ -97,6 +111,11 @@ export function violacoesDeInvariantes(estado: GameState, dados: GameData = game
     if (reservado > dados.construcao.laborersMaximosPorObra) {
       v.push(`${obra}: ${reservado} laborers reclamados para teto=${dados.construcao.laborersMaximosPorObra}`);
     }
+  }
+  // F14: nunca mais de um ocupante reservado por predio — a vaga e a
+  // cardinalidade do campo `ocupante`, nao um teto de dado.
+  for (const [predio, reservado] of contagemDeOcupacaoPorPredio) {
+    if (reservado > 1) v.push(`${predio}: ${reservado} ocupantes reclamados para uma vaga`);
   }
   // reservado <= disponivel nas DUAS pontas (disponivel/vaga nunca negativos)
   for (const chave of reservasPorOrigem) {

@@ -519,7 +519,14 @@ describe('F10 — cenario de carga: 20 obras e 4 serfs entregando de verdade', (
     // obras nunca sao demolidas neste cenario). Subtrair isola quanto do contador
     // COMPARTILHADO (proximoId) veio so de material, sem mudar o `esperadas` de sempre.
     const construirGeradas = 20 * gameData.construcao.laborersMaximosPorObra;
-    const materiaisGerados = estado.proximoId - idsAntes - construirGeradas;
+    // F14: uma obra que os laborers terminam vira pedreira VAGA e ganha uma vaga
+    // de ocupante, que tambem consome o contador compartilhado. Aqui ninguem a
+    // consome (nao ha stonemason no cenario), entao "quantas existem no fim" e
+    // igual a "quantas foram criadas" — se essa tarefa passar a ter churn, esta
+    // conta sobra para o material e o teste falha alto, que e o que se quer.
+    const ocuparGeradas = estado.jobs.tarefas.ordem
+      .filter((id) => estado.jobs.tarefas.porId[id]?.tipo === 'ocupar').length;
+    const materiaisGerados = estado.proximoId - idsAntes - construirGeradas - ocuparGeradas;
 
     const buscas = estatisticasDeBusca();
     Object.assign(metricasDeCarga, {

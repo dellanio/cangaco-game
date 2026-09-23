@@ -9,13 +9,14 @@ import {
   reclamar, reclamarMelhorOcupacao, tarefasDeOcupacaoEmOrdem,
 } from '../src/sim/jobs';
 import { ocupantesReservados, vagaDeOcupacao } from '../src/sim/reservas';
+import { gerarTarefas, sanearTarefas } from '../src/sim/systems/jobs';
 import { gameData } from '../src/sim/data';
 import {
   ehPredioOcupavel, predioAceita, predioDoOcupante, tiposQueOcupam,
   trabalhadorDoTipo, vagasDoPredio,
 } from '../src/sim/ocupacao';
 import {
-  armazemDoCenario, comPredioCompletoEm, comUnidadeExtra, semLaborers, serfsDoCenario,
+  armazemDoCenario, comPredioCompletoEm, comUnidadeExtra, semLaborers, semOPredio, serfsDoCenario,
 } from './helpers/jobs-cenario';
 
 const inicial = createInitialState(1);
@@ -181,5 +182,83 @@ describe('F14 — a tarefa de ocupar no quadro', () => {
     const comLenhador = comUnidadeExtra(state, 'lenha1', 'woodcutter', 30, 34);
     expect(tarefasDeOcupacaoEmOrdem(comLenhador, 'lenha1')).toHaveLength(0);
     expect(tarefasDeOcupacaoEmOrdem(comLenhador, 'esp1')).toHaveLength(1);
+  });
+});
+
+const ocuparPara = (estado: GameState, destino: string): string[] =>
+  estado.jobs.tarefas.ordem.filter((id) => {
+    const t = estado.jobs.tarefas.porId[id];
+    return t?.tipo === 'ocupar' && t.destino === destino;
+  });
+
+const comOcupante = (estado: GameState, id: string, ocupante: string | null): GameState => {
+  const p = estado.predios.porId[id];
+  if (!p || p.estado !== 'completo') throw new Error(`fixture: '${id}' nao e predio completo`);
+  return { ...estado, predios: { ...estado.predios, porId: { ...estado.predios.porId, [id]: { ...p, ocupante } } } };
+};
+
+describe('F14 — o gerador e o saneamento', () => {
+  it('predio completo e vago que pede trabalhador ganha UMA vaga, e so uma', () => {
+    const gerado = gerarTarefas(cenarioDeOcupacao());
+    expect(ocuparPara(gerado, 'q1')).toHaveLength(1);
+    // idempotente: rodar de novo nao duplica
+    expect(ocuparPara(gerarTarefas(gerado), 'q1')).toHaveLength(1);
+  });
+
+  it('armazem e escola nunca ganham vaga de ocupante', () => {
+    const gerado = gerarTarefas(cenarioDeOcupacao());
+    const semTrabalhador = gerado.predios.ordem.filter((id) => {
+      const p = gerado.predios.porId[id];
+      return p !== undefined && trabalhadorDoTipo(p.tipo) === null;
+    });
+    expect(semTrabalhador.length).toBeGreaterThan(0);
+    for (const id of semTrabalhador) expect(ocuparPara(gerado, id)).toHaveLength(0);
+  });
+
+  it('predio ja ocupado nao ganha vaga nova', () => {
+    const ocupado = comOcupante(cenarioDeOcupacao(), 'q1', 'esp1');
+    expect(ocuparPara(gerarTarefas(ocupado), 'q1')).toHaveLength(0);
+  });
+
+  it('a vaga aberta some quando o predio deixa de existir', () => {
+    const gerado = gerarTarefas(cenarioDeOcupacao());
+    const saneado = sanearTarefas(semOPredio(gerado, 'q1')).state;
+    expect(ocuparPara(saneado, 'q1')).toHaveLength(0);
+  });
+
+  it('a vaga RECLAMADA e liberada quando o predio some', () => {
+    const gerado = gerarTarefas(cenarioDeOcupacao());
+    const id = ocuparPara(gerado, 'q1')[0] ?? '';
+    const r = reclamar(gerado, id, 'esp1');
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const saneado = sanearTarefas(semOPredio(r.state, 'q1'));
+    expect(saneado.state.jobs.tarefas.porId[id]).toBeUndefined();
+    expect(saneado.events.some((e) => e.type === 'task-released' && e.motivo === 'destino-sumiu')).toBe(true);
+  });
+
+  it('a vaga reclamada e cancelada se o predio ganhou ocupante por outro caminho', () => {
+    const gerado = gerarTarefas(cenarioDeOcupacao());
+    const id = ocuparPara(gerado, 'q1')[0] ?? '';
+    const r = reclamar(gerado, id, 'esp1');
+    if (!r.ok) throw new Error('claim');
+    const saneado = sanearTarefas(comOcupante(r.state, 'q1', 'outro'));
+    expect(saneado.state.jobs.tarefas.porId[id]).toBeUndefined();
+    expect(saneado.events.some((e) => e.type === 'task-released' && e.motivo === 'destino-completo')).toBe(true);
+  });
+
+  it('a vaga reclamada por quem o predio nao aceita e liberada', () => {
+    const gerado = gerarTarefas(cenarioDeOcupacao());
+    const id = ocuparPara(gerado, 'q1')[0] ?? '';
+    const r = reclamar(gerado, id, 'esp1');
+    if (!r.ok) throw new Error('claim');
+    const u = r.state.unidades.porId.esp1;
+    if (!u) throw new Error('fixture');
+    const virouOutroCivil: GameState = {
+      ...r.state,
+      unidades: { ...r.state.unidades, porId: { ...r.state.unidades.porId, esp1: { ...u, tipo: 'woodcutter' } } },
+    };
+    const saneado = sanearTarefas(virouOutroCivil);
+    expect(saneado.events.some((e) => e.type === 'task-released' && e.motivo === 'unidade-removida')).toBe(true);
   });
 });
