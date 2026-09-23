@@ -1363,6 +1363,96 @@ restaurado e `git diff --stat data/delivery.json` voltou vazio.
 - O `data-cheio="true"` do painel (destaque verde do material completo) é
   afirmado só pela existência do atributo, não pelo pixel da cor.
 
+## Escala de mapa, névoa e zoom — sessão de medição e projeto (2026-09-23)
+
+Sessão **sem implementação**, a pedido do operador: medir, propor, parar. O que
+mudou no repositório foram três documentos — dois itens novos no `BUILD_PLAN.md`
+e a §6.5 no GDD. Nenhuma linha de `src/`.
+
+### Verificado — medição de escala do mapa
+
+Cinco sondas headless (descartáveis, fora do repositório) passando `dados` por
+parâmetro, que `step` e `buscarCaminho` já aceitam; mais uma em browser, descrita
+abaixo. Mapa de grama uniforme nos três tamanhos — portanto estes números são o
+**piso**: um mapa 256² real teria obstáculos e caminhos mais longos.
+
+| | 64² | 128² | 256² |
+|---|---|---|---|
+| A* curto (3 tiles), cache frio — µs/busca | 40 | 94 | **303** |
+| A* travessia ponta a ponta — ms/busca | 2,1 | 9,4 | **32,9** |
+| Cardápio do serf ocioso (174 tarefas), cache quente — ms | 0,61 | 0,54 | 0,64 |
+| Cardápio, cache frio — ms | 1,58 | 2,58 | **6,03** |
+| Carga do F09 (20 obras, 300 ticks, sem serfs) — ms | 2680 | 3008 | 3038 |
+| Oráculo (600 ticks, com serfs) — ms | 57 | 37 | 28 |
+| BFS de estrada, 50 consultas — ms | 0,6 | 1,2 | 1,9 |
+| `JSON.stringify(estado)` — KB | 29 | 29 | 29 |
+| Tiles desenhados (culling) | 234 | 234 | 234 |
+| Heap do browser — MB | 48,1 | 48,1 | 57,5 |
+| Quadro mediano — ms | 16,6 | 16,6 | 16,7 |
+
+**Degrada só o A*, e pela preparação, não pelo caminho.**
+`src/sim/pathfinding.ts:241-242` aloca e preenche `Float64Array(largura*altura)`
++ `Int32Array(largura*altura)` a cada busca: 48 KB → 192 KB → 768 KB por
+chamada. Daí os 7,6× numa caminhada idêntica de 3 tiles. Virou o item **F17c**.
+
+**Não degrada**: o BFS de estrada (`distanciaPorEstrada` só varre tiles de
+estrada, memoizado pela referência de `estradas` — acompanha o comprimento da
+rua: 62 → 126 → 254 tiles); o tamanho do `GameState` (o mapa não mora nele); o
+culling do render; o custo de quadro. Os +9,4 MB de heap a 256² são os 65 536
+objetos de tile que `camada.fill(0,0,0,largura,altura)` cria **na abertura** —
+custo fixo de boot, não por quadro.
+
+**O cache esconde quase tudo, e é aí que está a armadilha.** O oráculo fez 8
+buscas reais e 28 acertos nos três tamanhos. O cache é chaveado nas referências
+de `estradas`/`predios.ordem`, ou seja **invalida a cada estrada construída e a
+cada prédio plantado**; no tick seguinte cada serf ocioso refaz o cardápio
+inteiro. Dez serfs ociosos a 256² = 60 ms num tick de 100 ms.
+
+**Uma medida saiu do headless, de propósito e uma vez só.** Culling não é
+observável sem tela. Editei `data/terrain.json` temporariamente para 128 e 256,
+rodei um roteiro descartável lendo `tilesRenderizados`, `performance.memory` e 90
+quadros de rAF, e depois `git checkout data/terrain.json`, apaguei o roteiro e o
+`test-output` dele e conferi `git status` vazio. As outras cinco sondas são
+headless.
+
+**Sondas são evidência do momento, não cobertura.** As seis foram apagadas. A
+proteção permanente contra a regressão do A* é a contagem de alocação que o
+aceite da F17c pede — coisa distinta, escrita no item.
+
+### Decisões do operador
+
+- **A F17c vem antes de qualquer mapa maior.** O buffer por busca é defeito, não
+  limite. Ordem dele, revendo a minha proposta, que punha o zoom primeiro.
+- **F18a (zoom) aprovada como escrita**, e pela razão medida: navegação, não
+  desempenho. A 256², com tile de 64 px e viewport de 1280×720, o jogador
+  enxerga 20×11 tiles — 0,35% do mapa.
+- **A névoa entra no GDD agora, sem item de fila**, nível de regra para unidade e
+  prédio inimigos e nível de apresentação para terreno, com as duas lacunas
+  fechadas de forma conservadora (prédio revela footprint mais raio pequeno;
+  civil com visão 9 declarada em `data/units.json`). Sem item porque **depende de
+  facção**, que não existe em `src/sim/state.ts` e chega com a F28.
+
+### Escrito no GDD
+
+Nova **§6.5 — Visão e névoa de guerra**, logo depois de §6.4, porque é ali que
+moram as regras de simulação sobre unidades e porque a §12.2 (Anexo A) deixa de
+ser tabela órfã: `visao` 9/18 já está em `data/units.json` desde sempre, sem
+consumidor. Mais três edições menores: a linha de **não-regra** na §6.4 — *névoa
+não afeta pathfinding nem JobBoard* —, a linha da camada de névoa na tabela de
+telas da §7.2 (P1) e *exploração não é objetivo* na §8.2.
+
+A linha de não-regra é a que importa mais do que parece: sem ela, a primeira
+sessão que implementar névoa faz o serf se perder no escuro.
+
+### Hipótese, não fato
+
+- A queda do oráculo (57 → 37 → 28 ms) com o mapa **maior** é quase certamente
+  ruído de JIT, não ganho real — o cenário faz o mesmo trabalho nos três
+  tamanhos. Não investiguei.
+- `bootMs` no browser veio 1133 / 688 / 1337 nos três tamanhos: dominado pela
+  subida do Vite, não pelo tilemap. Não dá para concluir nada sobre custo de
+  abertura a partir desses três números.
+
 ## Perguntas em aberto
 
 _(nenhuma no momento: as três que sobravam foram decididas pelo operador — ver "Ajuste pós-F10".)_

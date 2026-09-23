@@ -378,6 +378,68 @@ montanha **[fonte]**.
   a razão 1:1,666 do Remake **[fonte]**.
 - Custo de movimento por terreno em `data/terrain.json`.
 - Civis não colidem entre si, para não travar a logística. Militares colidem.
+- **Névoa não afeta pathfinding nem JobBoard.** O A* enxerga o mapa inteiro, a
+  tarefa se cria e se reclama igual no escuro, e o serf acha o armazém que o
+  jogador não está vendo. A névoa é sobre o que o **jogador** sabe, nunca sobre
+  o que a unidade sabe — ver §6.5.
+
+### 6.5 Visão e névoa de guerra [proposta]
+
+O original tem névoa; nós ainda não. O número já existe e está sem consumidor: a
+tabela do Anexo A (§12.2) dá **visão 9 tiles** para quase toda unidade e **18
+para o Scout**, e `data/units.json` já carrega o campo `visao`. Esta seção é
+quem consome.
+
+**Os dois níveis, e eles são diferentes de propósito:**
+
+| O que | Nível | Regra |
+|---|---|---|
+| Terreno, e prédio próprio | **apresentação** | o que nunca foi descoberto aparece escuro; o que já foi fica desenhado como estava na última vez que se viu. A simulação não muda. |
+| Unidade e prédio **inimigos** | **regra** | só existem para o jogador enquanto estão em tiles visíveis **agora**. Fora deles não aparecem na tela, não aparecem em painel nem no minimapa, e não podem ser alvo de ordem. |
+
+Sem o nível de regra para o inimigo, a névoa é decoração: o jogador leria pelo
+painel e pelo minimapa o que a tela escondeu.
+
+**Duas camadas por tile, por facção:**
+
+- `descoberto` — já foi visto alguma vez. **Monotônico**: nunca volta a
+  escurecer. É progresso do jogador e **entra no save**.
+- `visivel` — está sendo visto **agora**. **Derivado**, recomputado dentro de
+  `step()` a partir das posições das unidades e dos prédios mais o raio de
+  `data/units.json`. Não precisa ser salvo: sai idêntico depois do load, porque
+  deriva de estado determinístico.
+
+**Quem enxerga, e as duas lacunas que o Anexo A não cobre:**
+
+- **Unidade militar**: raio da tabela do §12.2 — 9, e 18 para o Scout.
+- **Civil**: **visão 9**, declarada em `data/units.json` como já está para os
+  militares. Não é detalhe: sem isso a vila nasce dentro da própria névoa.
+- **Prédio**: revela o próprio footprint mais um **raio pequeno fixo**. É a
+  decisão conservadora: enquanto não existir torre de vigia, nenhum prédio
+  ganha campo `visao` em `data/buildings.json`.
+
+**Exploração não é objetivo.** Ver §8.2: nenhuma condição de vitória depende de
+descobrir mapa.
+
+**Duas consequências de implementação que precisam estar escritas antes de
+alguém começar** (medidas em 2026-09-23, ver `PROGRESS.md`):
+
+1. `descoberto` é uma camada de `largura × altura` e o `GameState` é JSON
+   comparado byte a byte (F02, F23). O estado inteiro mede hoje **29 KB**; um
+   `number[]` de um inteiro por tile são 4 096 entradas a 64² e **65 536 a
+   256²**. A forma é **empacotada, 1 bit por tile** — 128 inteiros de 32 bits a
+   64², 2 048 a 256² — e `visivel` **não se guarda**. Empacotamento é formato,
+   não balanceamento: não fere a invariante 3.
+2. Recompor `visivel` é limpar `largura × altura` e carimbar o disco de cada
+   unidade, **todo tick**. É o mesmo formato de problema que o A* tinha antes da
+   F17c: buffer do tamanho do mapa por operação. A saída é a mesma — buffer
+   reaproveitado com marca de geração em vez de limpar, ou carimbo só de quem se
+   moveu.
+
+**Pré-requisito que ainda não existe: facção.** Névoa é por facção, e não há
+`faccao` nem `dono` em `src/sim/state.ts` — todo prédio e toda unidade são do
+jogador. Esse conceito chega com a IA inimiga (F28), e a névoa não é
+implementável antes dele. Por isso esta seção não tem item na fila.
 
 ---
 
@@ -403,6 +465,7 @@ contextual do item selecionado abaixo.
 | Aba Estatísticas | Prédios e trabalhadores por tipo; ociosos em destaque | P1 |
 | Controle de velocidade | 1x, 2x, 3x | P1 |
 | Aba Distribuição | Sliders por recurso disputado | P2 |
+| Camada de névoa | Escuro no não-descoberto; inimigo só onde se vê agora (§6.5) | P1 |
 | Minimapa | Terreno, prédios, unidades, câmera | P2 |
 
 ### 7.3 Regras de UI [proposta]
@@ -430,6 +493,8 @@ missões, sobreviver a ondas de ataque. A derrota não é explicitada nas fontes
 - **Escaramuça**: vitória ao destruir Storehouse, Schoolhouse e Barracks inimigos
   e todas as tropas. Derrota ao perder os próprios Storehouse **e** Schoolhouse
   **e** todas as tropas. Peacetime configurável.
+- **Exploração não é objetivo.** Descobrir mapa não conta para vitória nenhuma;
+  a névoa (§6.5) é sobre informação, não sobre meta.
 - **Duração-alvo de partida: 60 minutos.** É o número que justifica a escala de
   tempo da seção 11. Se o playtest mostrar partidas de 90 minutos, o problema é a
   escala, não o jogador.

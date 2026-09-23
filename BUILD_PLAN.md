@@ -749,9 +749,75 @@ prédio surge sem clique do jogador.
   feature executa a seguir; numerar entre F17 e F18 renumeraria a Fase B inteira.
 - **Plano**: `docs/planos/F17b-material-na-obra.md`
 
+### F17c — Buffer do A* reaproveitado
+- **Escopo**: `src/sim/pathfinding.ts`. Hoje toda busca aloca e preenche
+  `Float64Array(largura*altura)` + `Int32Array(largura*altura)` — 48 KB por
+  chamada a 64², 768 KB a 256². Trocar por **buffer reaproveitado com número de
+  geração**: os arrays vivem no módulo, e em vez de `fill` a cada busca, cada
+  célula carrega a geração em que foi escrita; geração diferente da atual lê
+  como "não visitada". O buffer se recria só quando `largura*altura` muda.
+  **Só `sim/`. Nenhuma mudança de comportamento**: mesmo custo, mesmo caminho,
+  mesmo desempate, mesma resposta `null`.
+- **Aceite**: o custo de uma **busca curta não cresce com o tamanho do mapa**.
+  Medir a mesma caminhada de 3 tiles a 64², 128² e 256², com o cache de par
+  origem-destino frio, e mostrar os três números. Linha de base medida em
+  2026-09-23, antes da correção: **40 µs / 94 µs / 303 µs — 7,6×**.
+- **Evidência**: `test-output/F17c.json` com a tabela dos três tamanhos.
+- **Nota (a prova de que nada mudou)**: `tests/F10-astar.test.ts` já traz o
+  **oráculo independente** — relaxamento em fila (Bellman-Ford, sem heap e sem
+  heurística), 4 sementes × 40 mapas no modo livre e × 60 redes no modo estrada,
+  mais a equivalência com `isConnected` da F08. É esse arquivo que prova a
+  não-regressão desta feature; ele **não muda**. Se precisar mudar, pare e
+  reporte: ou o comportamento mudou, ou o teste estava frouxo.
+- **Nota (o guarda permanente é estrutural, não cronômetro)**: o aceite pede um
+  número medido, e número medido é evidência **da sessão**. A cobertura que fica
+  é **contagem de alocação**: `estatisticasDeBusca()` passa a expor quantas
+  vezes o buffer foi criado, e o teste faz N buscas distribuídas pelos três
+  tamanhos e afirma **no máximo uma alocação por tamanho distinto** — não N.
+  Isso é determinístico e não depende de relógio. Se um limite de tempo também
+  entrar no teste, ele é frouxo e traz o número medido no comentário; se vier a
+  oscilar, a correção é a razão mais larga com o motivo escrito, **nunca `skip`
+  nem tirar o caso da verificação** (CLAUDE.md §10).
+- **Nota (a pureza continua de pé)**: o buffer é rascunho de módulo, como os
+  caches de `estrada`/`bloqueado` e o contador de `estatisticasDeBusca` que já
+  existem ali. Ele **não entra no `GameState`**, logo save/load e a comparação
+  byte a byte da F02/F23 não o enxergam. Duas condições que precisam valer e
+  estar escritas no código: toda célula é escrita antes de ser lida (é o que a
+  marca de geração garante), e o A* **não é reentrante** — nenhuma busca pode
+  começar dentro de outra, porque as duas dividiriam o mesmo rascunho.
+- **Nota (por que agora, antes de qualquer mapa maior)**: medido em 2026-09-23
+  a 64², 128² e 256² — o custo é da **área do mapa**, não do caminho: a mesma
+  caminhada de 3 tiles custa 7,6× mais a 256². Nada mais degrada com o mapa
+  (BFS de estrada acompanha o comprimento da rua; `JSON.stringify(estado)` fica
+  em 29 KB nos três; culling desenha 234 tiles nos três). Com o cache frio — e
+  ele invalida **a cada estrada construída e a cada prédio plantado** — o
+  cardápio de um serf ocioso custa 1,58 ms a 64² e **6,03 ms a 256²**: dez serfs
+  ociosos comeriam 60 ms de um tick de 100 ms.
+
+
 ---
 
 ## Fase B — Comida e crescimento
+
+### F18a — Zoom da câmera (render + input)
+- **Escopo**: `gridToScreen`/`screenToGrid` (F04) passam a receber um nível de
+  escala; câmera com zoom pela roda do mouse (GDD §2.1), em passos discretos
+  lidos de `data/`, ancorado no cursor (o tile sob o ponteiro não se move).
+  Limites de câmera recalculados por nível. **Nada em `src/sim/`** — zoom é
+  câmera, não regra; a simulação não sabe que ele existe.
+- **Aceite**: o teste de ida e volta da F04 varrendo os níveis — 1000
+  coordenadas (RNG semeado) × cada nível, `screenToGrid(gridToScreen(p, z), z)
+  === p`. Mais screenshot no zoom mínimo e no máximo com o mesmo ponto de mouse
+  destacando o mesmo tile.
+- **Evidência**: `test-output/F18a.json` + `screenshots/F18a-*.png`
+- **Nota**: encerra a nota da F05b. Os níveis de zoom são dado de render em
+  `data/` e `npm run validate:data` precisa aceitá-los; não são balanceamento
+  de simulação.
+- **Nota (medido em 2026-09-23)**: culling e custo de quadro são planos com o
+  tamanho do mapa — 234 tiles desenhados e ~16,6 ms/quadro a 64², 128² e 256².
+  O zoom é necessidade de **navegação**, não de desempenho. **O item que
+  aumentar `mapaPadrao` depende deste** e da F17c: a 256², com tile de 64 px e
+  viewport de 1280×720, o jogador enxerga 20×11 tiles — 0,35% do mapa.
 
 ### F18 — Farm e campos de milho
 ### F19 — Mill e Bakery (cadeia do pão)
