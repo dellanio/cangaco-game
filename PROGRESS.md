@@ -512,6 +512,102 @@ ocupante, nem botão de demolir — é tudo F16. `src/ui/` continua sem teste
 unitário neste projeto (Vitest roda em `environment: 'node'`, sem jsdom); quem
 prova a interface é o roteiro.
 
+## F14 — Especialistas ocupam prédios
+
+Plano: `docs/planos/F14-especialistas.md` (aprovado pelo operador, com uma
+correção na D1). Cinco decisões, as quatro primeiras também como Nota no item
+F14 do BUILD_PLAN; a D5 fica só aqui.
+
+**D1 — o alerta de "prédio sem trabalhador" é da F22, não desta feature.** O
+critério de aceite da F14 não o menciona e a evidência que ele pede é JSON, sem
+screenshot; e a F22 faz os quatro alertas com UM mecanismo só, sendo que três
+das causas (sem estrada, fome, mina esgotada) nem são observáveis antes da
+F15/F20/F21 — entregar uma causa isolada agora obrigaria a refazer o componente
+lá. **Correção do operador:** eu havia usado como quarto argumento "a §10 barra
+porque o item não tem nota de integração escrita", e isso está errado — a nota
+não é condição preexistente, é autorização que ele concede quando faz sentido
+(foi assim em F05b, F06, F07, F08 e F11c). Se o alerta valesse a pena agora, a
+nota entraria como Tarefa 0. O que decide são as razões de mérito acima. O
+argumento errado foi apagado do plano e da Nota para não reaparecer.
+
+**D2 — o `sem_prédio` do GDD §6.2 chama-se `ocioso` no código.** A FSM entregue
+é `ocioso → indo_ocupar → trabalhando`. Toda unidade nasce em `ocioso` e
+`ficarOcioso`/`ocioso` (`units/movimento.ts`) são compartilhados; um segundo
+nome para o mesmo significado obrigaria cada helper a conhecer os dois.
+`esperando_insumo` e `saida_cheia` são de PRODUÇÃO e nascem na F15.
+
+**D3 — "um prédio, um ocupante" mora no tipo,** em `PredioCompleto.ocupante:
+string | null`. Não existe `ocupantesMaximosPorPredio` em dado porque não há o
+que balancear: dois ocupantes não são representáveis. É o oposto do
+`laborersMaximosPorObra`, que é teto de verdade e por isso vive no dado.
+
+**D4 — a vaga de ocupação nasce mesmo sem especialista no mapa,** como a de
+construir (F11b), e não exige estrada: o especialista anda em modo `'livre'`,
+como o laborer. Uma pedreira vaga num mapa sem pedreiro fica com a tarefa
+aberta no quadro — é exatamente o estado que a F22 vai querer ler.
+
+**D5 — sem screenshot: a feature não muda uma linha de tela.** Nada de
+`src/render/`, `src/ui/` ou `src/input/` foi tocado. A não-regressão visual é a
+da Tarefa 8, por código de saída.
+
+**Verificado (aberto com ferramenta ou rodado):**
+
+- `test-output/F14.json`, **aberto com Read**: `q1` tem ocupante `u16`, `q2` tem
+  `u15`, ids distintos, os dois `stonemason` em `trabalhando` na linha de porta
+  (y=38), `ocupantesDistintos: 2`, `vagasAbertasNoFim: 0`, `violacoes: []`. Os
+  dois foram TREINADOS na escola de verdade, com o ouro atravessando a estrada
+  no ombro de um serf — nada pôs ouro na escola à mão.
+- `npm run verify` exit 0 (typecheck, lint, validate:data 9 arquivos/0 erros,
+  e a suíte inteira).
+- Suíte: 37 arquivos, 675 testes. Os novos são `tests/F14-ocupacao.test.ts`
+  (23), `tests/F14-especialista.test.ts` (7) e `tests/F14-aceite.test.ts` (4).
+- Não-regressão visual (Tarefa 8), **por código de saída, sem abrir imagem**:
+  `npm run shot -- F11c` exit 0 (3 capturas), `npm run shot -- F13b` exit 0 (2
+  capturas). Não afirmo nada sobre o conteúdo dessas imagens.
+
+**Fallout da triagem (Tarefa 6), com a causa de cada um:**
+
+- `tests/helpers/jobs-invariantes.ts`: aprendeu `'ocupar'` — destino é prédio
+  ocupável e vago (não obra), a elegibilidade vem de `podeReclamar` (não do par
+  fixo tipo-de-tarefa/tipo-de-unidade), e um prédio nunca tem mais de um
+  ocupante reclamado. **Nenhuma asserção foi afrouxada**; a invariante ficou
+  mais estrita, não menos.
+- `tests/F10-falhas.test.ts` (cenário de carga): a conta que isola as tarefas de
+  material do contador compartilhado de ids subtraía só as de construir. As
+  obras que os laborers terminam agora viram pedreiras vagas e cunham um id de
+  `'ocupar'` cada uma (11 delas, no cenário), que vazavam para `materiaisGerados`
+  e faziam o churn acusar 111 em vez de 100. A conta passa a subtrair também
+  essas, contadas do estado final — onde "quantas existem" é igual a "quantas
+  foram criadas", porque neste cenário ninguém as consome.
+- Fixtures de prédio completo em 6 arquivos de teste ganharam `ocupante: null`,
+  que é consequência direta do campo novo.
+
+**Um achado que NÃO é desta feature, registrado como tal:**
+`violacoesDeInvariantes` (helper de teste) exige destino em OBRA para toda
+tarefa que não seja `'ocupar'`. Isso deixou de ser verdade na **F13**, quando a
+escola virou destino de ouro — o helper nunca foi atualizado, e nenhum teste
+anterior o chamava num cenário com treino em curso. Confirmado por execução: o
+aceite da F14, ao rodá-lo tick a tick com a escola trabalhando, acusa
+`"t11: destino 'p2' nao e obra"`. Não afrouxei a invariante para acomodar o
+ouro, porque corrigi-la é decidir o que a F13 quis dizer, e isso é escopo de
+outra feature. Em vez disso, a asserção do aceite ficou restrita ao cenário que
+ela de fato cobre (duas pedreiras vagas, sem treino), e as invariantes do
+especialista rodam tick a tick no cenário completo. **Fica aberto:** quem tocar
+nesse helper deve ensiná-lo que destino de transporte pode ser prédio completo
+com demanda.
+
+**Fora de escopo, declarado:** o alerta do HUD (F22, D1), PRODUZIR (F15 — um
+prédio ocupado ainda não faz nada), o painel que mostra o ocupante e a demolição
+pelo comando real (F16). Nenhum arquivo de `render/`, `ui/` ou `input/` foi
+tocado.
+
+**Para reportar ao operador:** no commit `132fbb7` (F14, Tarefa 1) um `git add
+-A` levou junto `.claude/.headroom_wrap_owners.json`, arquivo rastreado desde a
+F02 e reescrito automaticamente por uma ferramenta. A §10 do CLAUDE.md proíbe
+mexer em `.claude/` e também reescrever histórico, então deixei o commit como
+está e passei a usar `git add <paths>` explícito em todos os commits seguintes
+desta sessão.
+
 Histórico das features fechadas: docs/historico/F01-F11a.md.
 
 ## Perguntas em aberto

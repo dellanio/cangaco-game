@@ -327,6 +327,25 @@ prédio surge sem clique do jogador.
 - **Aceite**: cenário com 2 Quarries prontas e 2 stonemasons treinados: após N
   ticks os dois prédios têm ocupante e nenhum ficou com dois.
 - **Evidência**: `test-output/F14.json`
+- **Nota (D1, decisão registrada)**: **o alerta de "prédio sem trabalhador" é da
+  F22, não desta feature.** O critério de aceite acima não o menciona e a
+  evidência que ele pede é JSON, sem screenshot; e a F22 faz os quatro alertas
+  com UM mecanismo só, sendo que três das causas (sem estrada, fome, mina
+  esgotada) nem são observáveis antes da F15/F20/F21 — entregar uma causa
+  isolada agora obrigaria a refazer o componente lá. A ausência de nota de
+  integração no item **não** entra no argumento: a nota é autorização que o
+  operador concede quando faz sentido, não condição preexistente.
+- **Nota (D2)**: a FSM entregue é `ocioso → indo_ocupar → trabalhando`. O
+  `sem_prédio` do GDD §6.2 chama-se `ocioso` no código, porque toda unidade
+  nasce assim e `ficarOcioso`/`ocioso` são compartilhados por todas as FSMs.
+  `esperando_insumo` e `saida_cheia` são de PRODUÇÃO e nascem na F15.
+- **Nota (D3)**: **"um prédio, um ocupante" mora no tipo**, em
+  `PredioCompleto.ocupante: string | null`. Não há `ocupantesMaximosPorPredio`
+  em dado porque não há o que balancear — dois ocupantes não são
+  representáveis. Diferente do `laborersMaximosPorObra`, que é teto de verdade.
+- **Nota (D4)**: a vaga de ocupação **nasce mesmo sem especialista no mapa**,
+  como a de construir (F11b), e **não exige estrada** — o especialista anda em
+  modo `'livre'`, como o laborer.
 
 ### F15 — Produção: Quarry, Woodcutter's, Sawmill
 - **Escopo**: ciclo de produção por tempo, saída depositada no prédio, tarefa de
@@ -335,6 +354,10 @@ prédio surge sem clique do jogador.
   que zero e cresce monotonicamente enquanto houver rocha e árvore. Nenhum
   trabalhador em `ocioso` por mais de X ticks consecutivos.
 - **Evidência**: `test-output/F15.json`
+- **Nota (origem: F14)**: prédio sem `ocupante` **não produz** — a pergunta é
+  `ehPredioOcupavel(predio) && predio.ocupante === null` (`sim/ocupacao.ts`). É
+  nesta feature que "fica parado" ganha significado observável, e é aqui que
+  entram `esperando_insumo` e `saida_cheia` (GDD §6.2).
 - **Nota**: prédio **sem ligação** ao armazém (`predioLigadoAoArmazem`, F08) **não
   produz** — a estrada é requisito de funcionamento (GDD §5.1).
 - **Nota**: **o que o HUD conta está decidido (operador, pós-F10): o estoque dos ARMAZÉNS.** O
@@ -371,6 +394,12 @@ prédio surge sem clique do jogador.
   nenhuma tarefa órfã sobrou no JobBoard e nenhum serf ficou travado.
   Screenshot do painel.
 - **Evidência**: `test-output/F16.json` + `screenshots/F16-*.png`
+- **Nota (origem: F14)**: o "ocupante" do painel é `PredioCompleto.ocupante`, um
+  id de unidade ou `null`. É nesta feature que a ocupação ganha evidência
+  visual (o aceite da F16 já pede screenshot; o da F14 não). Demolir prédio
+  ocupado tem que devolver o especialista a `ocioso` — o caminho existe
+  (`passoTrabalhando`, que lê a posse do prédio), mas quem o prova pelo comando
+  real é este item.
 - **Nota**: **a falha "obra demolida com o serf a caminho" foi provada na F10 por
   injeção**, tirando a obra do estado com um helper de teste (`semOPredio`), porque
   não existe comando de demolir prédio antes desta feature. A F10 garante o caminho —
@@ -429,6 +458,11 @@ prédio surge sem clique do jogador.
 ### F21 — Gold mine, Coal mine e Metallurgist's (ouro renovável)
 ### F22 — Alertas do HUD
 - Prédio sem trabalhador, sem estrada, fome, mina esgotada.
+- **Nota (origem: F14)**: a derivação de "prédio sem trabalhador" **nasce pronta
+  na F14**: é `predio.ocupante === null` num prédio completo cujo tipo pede
+  trabalhador — `ehPredioOcupavel` + `vagasDoPredio`, em `sim/ocupacao.ts`. O
+  que falta aqui é **só o mecanismo de exibição**, o mesmo que serve as outras
+  três causas. A F14 não entregou nada de tela, de propósito.
 ### F23 — Save e load
 - Aceite: salvar num tick qualquer, carregar e rodar 500 ticks produz o mesmo
   estado que rodar 500 ticks sem salvar. É o teste que prova que a invariante 2
