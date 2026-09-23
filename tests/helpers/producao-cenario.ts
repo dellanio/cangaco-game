@@ -51,7 +51,10 @@ function comProdutorOcupado(
   return {
     ...estado,
     predios: { porId: { ...estado.predios.porId, [predio.id]: predio }, ordem: [...estado.predios.ordem, predio.id] },
-    unidades: { porId: { [u.id]: u }, ordem: [u.id] },
+    // SOMA a unidade, nao substitui: os cenarios de um produtor so chamam isto
+    // depois de `semCivis` (mapa vazio, resultado identico ao de antes), mas o
+    // oraculo precisa de quatro produtores E dos serfs do cenario inicial.
+    unidades: { porId: { ...estado.unidades.porId, [u.id]: u }, ordem: [...estado.unidades.ordem, u.id] },
   };
 }
 
@@ -70,6 +73,30 @@ export function cenarioDePedreira(dados: GameData = gameData): GameState {
   s = comProdutorOcupado(s, { tipo: 'quarry', id: 'q1', unidade: 'u1', gx: 26, gy: 34 }, dados);
   s = comEstradas(s, [tile(29, 33), tile(29, 34), tile(29, 35), tile(29, 36), tile(28, 36)]);
   return exigirLigado(s, 'q1', dados);
+}
+
+/**
+ * F15b — o cenario ORACULO do GDD §4.5: 2 Woodcutter's : 1 Sawmill, mais a
+ * pedreira, todos ocupados e ligados a MESMA rede de estrada, e COM os civis do
+ * cenario inicial — sao os serfs deles que entregam. E o cenario de medicao, nao
+ * de unidade: ele existe para ser rodado por milhares de ticks e observado.
+ *
+ * Disposicao (y=36 e a rua que passa na porta de todos; x=29 sobe ate a porta do
+ * armazem, em 29,33):
+ *   w2 (18,34)  w1 (22,34)  q1 (26,34)  [armazem 29..31]  s1 (32,34)
+ */
+export function cenarioOraculo(dados: GameData = gameData): GameState {
+  let s = createInitialState(1);
+  s = comProdutorOcupado(s, { tipo: 'woodcutters', id: 'w2', unidade: 'lenhador-2', gx: 18, gy: 34 }, dados);
+  s = comProdutorOcupado(s, { tipo: 'woodcutters', id: 'w1', unidade: 'lenhador-1', gx: 22, gy: 34 }, dados);
+  s = comProdutorOcupado(s, { tipo: 'quarry', id: 'q1', unidade: 'pedreiro', gx: 26, gy: 34 }, dados);
+  s = comProdutorOcupado(s, { tipo: 'sawmill', id: 's1', unidade: 'carpinteiro', gx: 32, gy: 34 }, dados);
+  const rua: TileDeGrid[] = [];
+  for (let x = 18; x <= 35; x++) rua.push(tile(x, 36));
+  for (let y = 33; y <= 35; y++) rua.push(tile(29, y));
+  s = comEstradas(s, rua);
+  for (const id of ['w1', 'w2', 'q1', 's1']) exigirLigado(s, id, dados);
+  return s;
 }
 
 /** Serraria `s1` (32,34) ocupada por `u2`, ligada, e com a entrada VAZIA. */
