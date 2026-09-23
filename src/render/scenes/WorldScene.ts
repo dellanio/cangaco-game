@@ -8,7 +8,9 @@ import { gridToScreen, screenToGrid, depthDeY, tileDentroDoMapa } from '../grid'
 import type { Tile } from '../grid';
 import { publicarEstadoDebug } from '../debug';
 import type { EstadoDebug, PredioNoDebug, RelogioVisivel } from '../debug';
-import { aparenciaDoPredio } from '../predios';
+import { aparenciaDoPredio, ordemDasMercadorias } from '../predios';
+import { medidorDaObra } from '../medidor-obra';
+import type { LinhaDoMedidor } from '../medidor-obra';
 import { estagioDaObra } from '../estagio-obra';
 import type { EstagioDaObra } from '../estagio-obra';
 import { centroDaVila } from '../../sim/selectors';
@@ -24,7 +26,14 @@ const CHAVE_TEXTURA_GRAMA = 'tile-grama';
 
 export class WorldScene extends Phaser.Scene {
   private readonly desenhados = new Map<
-    string, { readonly estado: EstadoDePredio; readonly estagio: EstagioDaObra; readonly objeto: Phaser.GameObjects.Container }
+    string,
+    {
+      readonly estado: EstadoDePredio;
+      readonly estagio: EstagioDaObra;
+      /** F17b — os `entregue` do medidor em texto, na chave do diff (ver `atualizarPredios`). */
+      readonly assinatura: string;
+      readonly objeto: Phaser.GameObjects.Container;
+    }
   >();
 
   constructor(
@@ -173,7 +182,7 @@ export class WorldScene extends Phaser.Scene {
     return camada;
   }
 
-  /** Diff por id E estagio contra o que ja esta desenhado: id novo cria, id sumido
+  /** Diff por id, estagio E assinatura do medidor (F17b) contra o que ja esta desenhado: id novo cria, id sumido
    *  destroi, mesmo id no mesmo estagio nao mexe. O estagio (F11c: `estagio-obra.ts`)
    *  entra na chave, nao so o `estado` — uma obra que so avanca de `hp` (marcacao ->
    *  madeira, ou vira `'completo'`) mantem o id e precisa ser redesenhada; `hp` sozinho
@@ -194,6 +203,7 @@ export class WorldScene extends Phaser.Scene {
     // ja percorre `predios.ordem` — e e `ordem`, nunca `Object.keys` (contrato da
     // F05a). Nao entra em sprite: e ponte de harness, nao estado guardado no render.
     const doEstado: Record<string, PredioNoDebug> = {};
+    const medidores: Record<string, readonly LinhaDoMedidor[]> = {};
     for (const id of estadoDoJogo.predios.ordem) {
       const predio = estadoDoJogo.predios.porId[id];
       if (!predio) continue;
@@ -205,12 +215,27 @@ export class WorldScene extends Phaser.Scene {
         pausado: predio.estado === 'completo' ? predio.pausado : false,
         ocupante: predio.estado === 'completo' ? predio.ocupante : null,
       };
-      const estagio = estagioDaObra(predio.hp, aparenciaDoPredio(predio.tipo).hpTotal);
+      const aparencia = aparenciaDoPredio(predio.tipo);
+      const estagio = estagioDaObra(predio.hp, aparencia.hpTotal);
       porEstagio[estagio] += 1;
+      // F17b: o medidor so existe para obra. Predio completo nao tem `obra.faltam`
+      // (uniao discriminada em `sim/state.ts`) e nem pergunta de material pendente.
+      const linhas = predio.estado === 'obra'
+        ? medidorDaObra(predio.obra.faltam, aparencia.custo, ordemDasMercadorias)
+        : [];
+      if (predio.estado === 'obra') medidores[id] = linhas;
+      // D3: material que chega nao mexe em `estado` nem em `estagio` — o `hp` so sobe
+      // depois, com o martelo. Sem a assinatura na chave, o medidor nasceria certo no
+      // primeiro desenho e congelaria ali para sempre.
+      const assinatura = linhas.map((l) => l.entregue).join(',');
       const existente = this.desenhados.get(id);
-      if (existente && existente.estado === predio.estado && existente.estagio === estagio) continue;
+      if (existente && existente.estado === predio.estado && existente.estagio === estagio
+        && existente.assinatura === assinatura) continue;
       existente?.objeto.destroy();
-      this.desenhados.set(id, { estado: predio.estado, estagio, objeto: this.criarPredio(predio, estagio, tilePx) });
+      this.desenhados.set(id, {
+        estado: predio.estado, estagio, assinatura,
+        objeto: this.criarPredio(predio, estagio, linhas, tilePx),
+      });
     }
     debug.prediosRenderizados = this.desenhados.size;
     debug.prediosDoEstado = doEstado;
@@ -221,6 +246,7 @@ export class WorldScene extends Phaser.Scene {
     // estagio (tools/shots/F11c.js), sem adivinhar por pixel.
     debug.obrasRenderizadas = porEstagio.marcacao + porEstagio.madeira;
     debug.estagiosDeObraRenderizados = porEstagio;
+    debug.medidoresDeObra = medidores;
   }
 
   /** Placeholder do §9: retangulo do tamanho do footprint com o nome
@@ -229,7 +255,9 @@ export class WorldScene extends Phaser.Scene {
    *  chao; a F11c divide essa fase em tres estagios derivados do `hp`
    *  (`estagio-obra.ts`): marcacao (nada martelado), madeira (em obra) e
    *  completo (o predio de pe, sem rotulo extra). */
-  private criarPredio(predio: Predio, estagio: EstagioDaObra, tilePx: number): Phaser.GameObjects.Container {
+  private criarPredio(
+    predio: Predio, estagio: EstagioDaObra, linhas: readonly LinhaDoMedidor[], tilePx: number,
+  ): Phaser.GameObjects.Container {
     const { largura, altura, nome } = aparenciaDoPredio(predio.tipo);
     const canto = gridToScreen({ gx: predio.gx, gy: predio.gy }, tilePx);
     const larguraPx = largura * tilePx;
@@ -248,8 +276,39 @@ export class WorldScene extends Phaser.Scene {
     });
     rotulo.setOrigin(0.5, 0.5);
 
-    const container = this.add.container(canto.x, canto.y, [retangulo, rotulo]);
+    const container = this.add.container(canto.x, canto.y, [
+      retangulo, rotulo, ...this.desenharMedidor(linhas, larguraPx, alturaPx),
+    ]);
     container.setDepth(depthDeY(canto.y + alturaPx));
     return container;
+  }
+
+  /** F17b — o medidor de material: uma fileira por material do custo, um bloco
+   *  por unidade, cheio = ja entregue. Placeholder geometrico (§9). A pergunta
+   *  que ele responde ("falta pedra ou falta tabua?") e de longe, sem clicar;
+   *  o painel da F16b so responde depois de selecionar. Vazio para predio
+   *  completo, e ai o container fica igual ao de antes desta feature.
+   *  Os blocos entram no MESMO container do retangulo: um `destroy()` continua
+   *  limpando tudo, e o diff de `atualizarPredios` nao precisa saber deles. */
+  private desenharMedidor(
+    linhas: readonly LinhaDoMedidor[], larguraPx: number, alturaPx: number,
+  ): Phaser.GameObjects.GameObject[] {
+    const LADO = 8;
+    const VAO = 2;
+    const objetos: Phaser.GameObjects.GameObject[] = [];
+    linhas.forEach((linha, i) => {
+      const larguraDaFileira = linha.total * LADO + (linha.total - 1) * VAO;
+      const x0 = (larguraPx - larguraDaFileira) / 2 + LADO / 2;
+      // de baixo para cima: a ultima fileira encosta no pe do retangulo
+      const y = alturaPx - 6 - (linhas.length - 1 - i) * (LADO + VAO);
+      for (let n = 0; n < linha.total; n++) {
+        const cheio = n < linha.entregue;
+        const bloco = this.add.rectangle(x0 + n * (LADO + VAO), y, LADO, LADO,
+          0xede3d0, cheio ? 1 : 0);
+        bloco.setStrokeStyle(1, 0xede3d0, cheio ? 1 : 0.5);
+        objetos.push(bloco);
+      }
+    });
+    return objetos;
   }
 }

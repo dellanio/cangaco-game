@@ -10,6 +10,7 @@ import type { EstadoDaPlanta } from './planta-fantasma';
 import type { PreviaDeEstrada } from './estradas';
 import type { UnidadeRenderizada } from './unidades';
 import type { EstagioDaObra } from './estagio-obra';
+import type { LinhaDoMedidor } from './medidor-obra';
 import type { ItemDeFila } from '../sim/state';
 
 /** O recorte de um predio que o roteiro le. Nao e `Predio`: so o que a tela
@@ -44,6 +45,10 @@ export interface EstadoDebug {
   /** F11c: a mesma contagem acima, quebrada por estagio (`estagio-obra.ts`) — o
    *  roteiro de screenshot afirma sobre isto, nunca por pixel (§8). */
   estagiosDeObraRenderizados: Readonly<Record<EstagioDaObra, number>>;
+  /** F17b — o medidor de cada OBRA desenhada agora, por id: quanto de cada
+   *  material chegou e quanto o predio custa. Obra apenas; predio completo nao
+   *  entra. O roteiro afirma sobre isto em vez de contar bloco por pixel (§8). */
+  medidoresDeObra: Readonly<Record<string, readonly LinhaDoMedidor[]>>;
   /** Quantos tiles de estrada (F08) a cena tem desenhados agora. */
   estradasRenderizadas: number;
   /** A previa do arrasto de estrada em curso, ou null. `custo` e a pedra que o
@@ -119,6 +124,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     prediosDoEstado: {},
     obrasRenderizadas: 0,
     estagiosDeObraRenderizados: { marcacao: 0, madeira: 0, completo: 0 },
+    medidoresDeObra: {},
     estradasRenderizadas: 0,
     previaDeEstrada: null,
     centroDaVila: null,
