@@ -801,6 +801,119 @@ prédio surge sem clique do jogador.
   cardápio de um serf ocioso custa 1,58 ms a 64² e **6,03 ms a 256²**: dez serfs
   ociosos comeriam 60 ms de um tick de 100 ms.
 
+### F17d — Nivelamento visível no canteiro (integração)
+- **Escopo**: olhando o mapa, **sem selecionar nada**, o jogador vê o canteiro de
+  uma obra ficar plano **tile a tile** enquanto o laborer nivela, e distingue uma
+  obra ainda sendo nivelada de uma **pronta para receber material**. A informação
+  já existe e nunca foi olhada com esta lente: o alvo é `área do footprint ×
+  ticksNivelamentoPorTile` (`sim/obra.ts:28-33`) e `nivelamento` sobe `+1` por
+  laborer por tick, com teto no alvo (`sim/systems/laborers.ts:121`) — logo
+  `tilesProntos = floor(nivelamento / ticksNivelamentoPorTile)` é a **contagem
+  exata de tiles já aplainados**, e o resto da divisão dá a fração do tile em
+  curso. Aritmética pura em `render/nivelamento-obra.ts`, **zero imports**, como
+  `medidor-obra.ts`; o alvo por tipo entra em `AparenciaDoPredio` pelo funil
+  `render/predios.ts`, que já importa `sim/obra` para o `custoDoPredio`.
+- **Aceite**: teste headless da aritmética — `nivelamento = 0` dá 0 tiles,
+  `= alvo` dá todos e `nivelada`, com footprint de 2 tiles (`gold_mine`) e de 16
+  (`barracks`). Roteiro que planta uma obra, lê `tilesProntos` **no tick da
+  planta** e afirma, depois de avançar, **maior que a primeira leitura** — não
+  maior que zero. Screenshot do canteiro pela metade e do canteiro plano com o
+  medidor de material aceso.
+- **Evidência**: `test-output/F17d.json` + `screenshots/F17d-1-nivelando.png` +
+  `screenshots/F17d-2-nivelada.png`
+- **Nota (Tarefa 0 — correção da F16b, commit próprio)**: o painel escreve
+  **"Em obra 0%" durante todo o nivelamento**, porque `progresso` é
+  `predio.hp / def.hp` (`sim/selectors.ts:442`) e `hp` só sobe com o martelo.
+  Isso é **defeito do painel da F16b**, não escolha desta feature — mesmo
+  tratamento do filtro `quantidade > 0` (commit `e014a0c`, `fix(F16b)`).
+  Vai numa tarefa própria, a **primeira**, com commit `fix(F16b): ...`, antes de
+  qualquer coisa desta feature. Decisão do operador, 2026-09-23.
+- **Nota**: **feature de integração** (CLAUDE.md §10), escrita aqui **antes** do
+  código: pode tocar `src/render/` e `src/ui/` na mesma feature, pelo mesmo
+  motivo da F17b — o mesmo número aparece no mapa e no painel, e ter duas contas
+  para ele é como elas divergem. **`src/sim/` não muda.** Se a implementação
+  parecer pedir seletor novo ou campo novo, **pare e reporte**. Esta permissão
+  vale para a F17d e só; nenhuma outra feature da fila a herda.
+- **Nota (armadilha já medida na F17b)**: `atualizarPredios` pula o redesenho
+  quando `(id, estado, estagio, assinatura do medidor)` não muda, e o
+  nivelamento **não mexe em `estado` nem em `estagio`**. Sem a leitura do
+  nivelamento na chave do diff, o canteiro nasce correto e **congela para
+  sempre**, e um screenshot único passa assim mesmo — é por isso que o aceite
+  pede o canteiro *enchendo*, medido contra a primeira leitura. A fração do tile
+  em curso entra na chave **quantizada em oitavos**: redesenho limitado e chave
+  testável, em vez de um float diferente a cada tick.
+- **Nota (não-regressão)**: o roteiro da F17b tem de continuar passando,
+  conferido pelo **código de saída**, sem abrir a imagem. Por isso o medidor de
+  material durante o nivelamento fica **esmaecido, não escondido**, e
+  `debug.medidoresDeObra` não muda de forma.
+- **Nota (o laborer continua parado, e é de propósito)**: decisão do operador,
+  2026-09-23. `render/` desenhar a unidade deslizando sobre o canteiro, fora da
+  posição que está em `sim/`, quebraria *"o render lê o estado, não decide"* —
+  hoje seria inofensivo porque civil não é selecionável, e é exatamente por isso
+  que a divergência apareceria mais tarde sem ninguém lembrar da causa. E é pior
+  em fidelidade: no original o laborer **caminha de verdade**; desenhar caminhada
+  falsa mente sobre uma regra que não existe, em vez de assumir que ela falta.
+  O laborer percorrendo o canteiro está congelado em `IDEIAS.md`.
+
+### F17e — Estágios visuais da obra: cinco, não três
+- **Escopo**: `estagioDaObra` (`render/estagio-obra.ts`) passa de três valores a
+  **seis** — cinco em obra mais o completo. **Sem tocar em `sim/`**: as fronteiras
+  saem de `hp`, de `hpTotal` e do "já nivelou" da F17d.
+
+  | estágio | fronteira | o que o jogador vê |
+  |---|---|---|
+  | `marcacao` | `hp === 0` e **não** nivelada | estacas e corda, terreno irregular |
+  | `fundacao` | `hp === 0` e nivelada | canteiro plano, alicerce — **pronta para material** |
+  | `estrutura` | `0 < hp*3 ≤ hpTotal` | madeira: postes e vigas |
+  | `paredes` | `hp*3 ≤ hpTotal*2` | pedra subindo até meia altura |
+  | `cobertura` | `hp < hpTotal` | volume cheio, telhado por fechar |
+  | `completo` | `hp ≥ hpTotal` | o prédio |
+
+  As fronteiras se escrevem em **aritmética inteira** (`hp * 3 <= hpTotal`),
+  nunca `hp / hpTotal <= 1/3`: a `barracks` tem 600 de HP e a fronteira cai
+  exatamente em 200, e comparação de float ali é sorteio.
+- **Aceite**: tabela dos **dois lados de cada fronteira** em teste headless, mais
+  a propriedade de **monotonicidade** — varrendo `hp` de 0 a `hpTotal`, o estágio
+  nunca anda para trás. Roteiro que observa os seis num mesmo cenário, afirmando
+  por `debug.estagiosDeObraRenderizados` que **todos apareceram**, e salvando um
+  PNG por estágio.
+- **Evidência**: `test-output/F17e.json` + `screenshots/F17e-*.png`. **Abrir com
+  Read só os dois novos do meio** (`paredes`, `cobertura`); os outros valem pelo
+  código de saída do roteiro. A regra fica escrita aqui para ser regra, não
+  improviso na hora: imagem é o que mais pesa na janela de contexto
+  (CLAUDE.md §8).
+- **Nota (correção de aceite, 2026-09-23)**: a F11c fixou **três** estágios
+  (`marcacao`, `madeira`, `completo`) e o `estagio-obra.ts` ainda diz isso no
+  comentário de topo. A decisão de três **foi minha e estava errada**: a pesquisa
+  do original descreve estrutura de madeira e depois de pedra, e o relato do
+  operador é de cinco ou mais. O PROGRESS (origem F11c) já registrava a saída —
+  *"a mesma função pura pode dividir a fase do meio pela fração de `hp`"*. Esta
+  feature executa aquela frase; o aceite da F11c não é reaberto.
+- **Nota (os limiares são constantes de desenho, não balanceamento)**: decisão do
+  operador, 2026-09-23. O `3` e o `2` entram como **constantes nomeadas** em
+  `estagio-obra.ts`, com a razão escrita ao lado: um jogador não distingue
+  fronteira em 1/3 de fronteira em 0,35 — distingue a casa subindo. A guarda
+  estrutural do arquivo (**zero imports**, `tests/F04-grid-ortogonal.test.ts`)
+  não deixa ele ler `data/`; se um dia virarem dado, passam pelo funil
+  `render/predios.ts`, como o custo e o alvo de nivelamento.
+- **Nota (o dado permitiria um degrau por material — e não é o que se faz aqui)**:
+  conferido nos 28 prédios de `data/buildings.json`, **`hp === 50 × (timber +
+  stone)` em todos**, e `hpPorMaterialEntregue` é 50 — logo fração de HP **é**
+  fração de material. Um degrau por material daria 5 na `quarry` e 12 na
+  `barracks`: de graça com placeholder geométrico, **doze desenhos** com arte de
+  verdade. Fica registrado porque o dado sustenta a ideia sem campo novo, se um
+  dia for o caminho.
+- **Nota (placeholder e arte)**: contorno vazado, retângulo baixo, três patamares
+  de altura e cor por camada distinguem os seis **sem uma linha de arte**
+  (CLAUDE.md §9 — placeholder é comportamento normal). O que só faz sentido com
+  arte de verdade: a leitura de madeira contra pedra, o andaime, a silhueta do
+  telhado e a textura do terreno aplainado da F17d. A função pura não muda quando
+  a arte chegar; troca o desenho, não a fronteira.
+- **Nota (o que esta feature herda da F17d)**: só a fronteira
+  `marcacao`/`fundacao` precisa saber se a obra já nivelou. Se a ordem inverter,
+  `estagioDaObra` mantém a assinatura de dois argumentos e `fundacao` espera —
+  os outros cinco valores não dependem da F17d.
+
 
 ---
 

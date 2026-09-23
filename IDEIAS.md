@@ -82,3 +82,14 @@ caminho. Ideia boa é justamente a mais perigosa.
   botão fica sozinho no rodapé do painel, com cor própria, separado das outras ações; é isso que
   segura o clique acidental hoje. Se a confirmação entrar um dia, o lugar é a tela (`ui/`): o
   comando `DemolishBuilding` não muda, porque a sim não pergunta nada a ninguém.
+- Laborer percorrendo o canteiro tile a tile — no original ele **caminha de verdade** sobre a
+  obra enquanto o terreno fica plano quadrado por quadrado; aqui ele fica parado na porta e quem
+  se mexe é o canteiro (F17d). Exige **posição em `sim/` durante `nivelando`**: FSM nova e
+  determinismo a provar, com teste próprio. Depende da escotilha do A* para unidade **dentro** de
+  footprint (`liberados`, `sim/pathfinding.ts:295-300`, "civis nao colidem") — não trava, mas o
+  laborer passaria todo o nivelamento ocupando um tile que é obstáculo para todo mundo, e cada
+  caminho dele dependeria daquela saída. Isso é regra, não enfeite. **Decisão do operador,
+  2026-09-23**: fora da F17d, e **sem substituto visual** — `render/` desenhar a unidade
+  deslizando onde ela não está quebraria *"o render lê o estado, não decide"*, hoje inofensivo só
+  porque civil não é selecionável, e desenhar caminhada falsa **mente sobre uma regra que não
+  existe** em vez de assumir que ela falta.
