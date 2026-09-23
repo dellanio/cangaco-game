@@ -896,6 +896,18 @@ cada um, e a consequência está registrada na nota do item F16a do `BUILD_PLAN.
 Não é afrouxamento de teste: é a mesma regra que o operador pediu, aplicada nos
 dois lados.
 
+**Decisão do operador (2026-09-23), depois de ver a consequência: a regra fica
+simétrica.** O porquê dele: encostar na vertical de fato quebraria a entrega, e
+recusar no clique é melhor que o jogador descobrir que o prédio nunca recebe
+material — é fiel ao original, porta ao sul e estrada obrigatória. Ele mandou
+registrar o efeito colateral (proíbe empilhar prédios em coluna; a vila pode
+sair mais esparsa do que o GDD §1.3 sugere) no `BALANCE_LOG.md`, para
+**verificar na F17** montando a abertura recomendada (2 Woodcutter's, 1 Quarry,
+1 Sawmill) e vendo se cabe confortavelmente. A saída que ele já deixou pronta,
+se ficar apertado: reduzir a porta a **uma coluna** em vez da borda sul inteira
+— não afrouxar a regra. A mesma nota está no item F17 do `BUILD_PLAN.md`, que é
+quem herda a medição. Isto é decisão registrada, não pergunta em aberto.
+
 ### Fora de escopo, declarado
 
 Nenhum arquivo de `render/`, `ui/` ou `input/` foi tocado. O painel de seleção, o

@@ -638,6 +638,19 @@ prédio surge sem clique do jogador.
   completos e ocupados, ligados por estrada, e o estoque de timber maior que o
   inicial. Screenshot final da vila.
 - **Evidência**: `test-output/F17.json` + `screenshots/F17-final.png`
+- **Nota (origem: F16a — consequência medida da regra da porta)**: desde a F16a
+  o `canPlace` recusa com `porta-sem-saida` todo prédio cuja borda sul (a porta,
+  GDD §5.1) caia fora do mapa ou sob o footprint de outro. A checagem é
+  simétrica, então **dois prédios não podem se encostar na vertical, nos dois
+  sentidos**; na horizontal continua valendo. Decisão do operador (2026-09-23):
+  a regra fica — encostar na vertical quebraria a entrega, e recusar no clique é
+  melhor que o jogador descobrir que o prédio nunca recebe material.
+  **Esta feature mede a consequência**: ao montar a abertura recomendada (2
+  Woodcutter's, 1 Quarry, 1 Sawmill) ligadas por estrada, registre se a vila
+  cabe confortavelmente ou se o espaçamento forçado a deixa mais esparsa do que
+  o GDD §1.3 sugere. **Se ficar apertado, a saída é reduzir a porta a UMA coluna
+  em vez da borda sul inteira — não afrouxar a regra.** Ver `BALANCE_LOG.md`
+  [2026-09-23].
 
 ---
 

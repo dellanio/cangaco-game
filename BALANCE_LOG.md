@@ -65,6 +65,17 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   pedreira. | src/sim/systems (ocupação), não é número | medido com veio curto (zerou no tick 835). Não quebra
   critério escrito nenhum (o aceite fala de `ocioso`), então não é bug: é buraco de desenho, registrado em
   `IDEIAS.md`. Importa para a calibração do veio — quanto mais curto o veio, mais cedo aparece.
+- [2026-09-23] **a regra da porta proíbe empilhar prédios em coluna**: a checagem é simétrica (a borda sul precisa
+  estar no mapa e livre), então o de baixo cobriria a porta do de cima e o de cima teria a própria porta coberta
+  — dois prédios não podem se encostar na vertical, nos dois sentidos. Encostar na horizontal continua valendo.
+  A vila pode sair mais esparsa do que o GDD §1.3 sugere. | não é número: é a regra `porta-sem-saida`
+  | src/sim/placement.ts, docs/GDD.md §1.3 e §5.1
+  | **decidido pelo operador (2026-09-23): a regra fica.** Razão dele: encostar na vertical de fato quebraria a
+  entrega, e recusar no clique é melhor que o jogador descobrir que o prédio nunca recebe material — é fiel ao
+  original, porta ao sul e estrada obrigatória.
+  | **verificar na F17**, montando a abertura recomendada (2 Woodcutter's, 1 Quarry, 1 Sawmill) e vendo se cabe
+  confortavelmente. **Se ficar apertado, a saída é reduzir a porta a UMA coluna em vez da borda sul inteira —
+  não afrouxar a regra.** Nota pareada no item F17 do `BUILD_PLAN.md`.
 
 ---
 
