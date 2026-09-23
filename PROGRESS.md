@@ -1027,6 +1027,124 @@ HP em queda no jogo, não há o que pausar). Prédio completo **sem receita**
 (armazém, escola, quartel) é aceito pelo comando e simplesmente não tem leitor —
 quem esconde o botão nesse caso é a tela, e isso está na nota da F16b.
 
+## F16b — Painel de seleção de prédio (2026-09-23)
+
+Plano: `docs/planos/F16b-painel-predio.md`. **Feature de integração**, autorizada
+pelo operador e escrita na Nota do item **antes** do código, na sessão da F16a —
+conferido no `BUILD_PLAN.md` antes de começar, e a exceção é só deste item.
+
+Um painel para todo prédio: nome temático, firmeza ou progresso de obra,
+ocupante, as duas gavetas de estoque, pausar e derrubar. **Nenhum mecanismo
+novo** — junta o que cinco features deixaram: `selecao.ts` e `predioNoTile`
+(F13b), `DemolishBuilding` (F16a), `SetBuildingPaused` com valor explícito
+(F16c), estoque e ciclo (F15), `ocupante` (F14). Zero comando novo, zero campo
+novo no `GameState`. Os modos do Woodcutter's **não entraram**: saíram na F16c.
+
+### Decisões
+
+- **D1 — o seletor mora em `sim/selectors.ts`**, junto de `painelDaEscola` e
+  `predioNoTile`, e não em `ui/`. Duas razões: `ui/` varrendo `GameState` é o
+  anti-padrão do §10, e o Vitest roda em `environment: 'node'` — um seletor em
+  `ui/` só teria prova por Playwright, enquanto em `sim/` ele tem teste unitário.
+- **D2 — `painelDoPredio` devolve `null` para id fora do estado**, e é isso que
+  **fecha o painel sozinho ao demolir**: ninguém manda fechar; o prédio deixou de
+  existir e a seleção se limpa. O caso vale para qualquer sumiço futuro.
+- **D3 — a ordem das gavetas vem de `economia.mercadorias`** (dado), não de
+  `Object.keys` (proibido pelo contrato da F05a) nem de ordem alfabética
+  (inventaria ordem em código). O teste e o roteiro **derivam** a ordem esperada
+  do dado: uma lista digitada continuaria passando se a fonte mudasse de lugar.
+- **D4 — `hp`, `hpTotal` e `progresso` saem do que já existe** (`predio.hp` e o
+  `hp` do dado). Obra e prédio de pé usam o mesmo par; o painel escolhe o rótulo.
+- **D5 — "não pede trabalhador" e "vago" são dois campos, não um.** O armazém
+  **não ganha a linha de ocupante**; a pedreira vazia ganha a linha dizendo "sem
+  trabalhador". Um campo só juntaria causas opostas: não cabe ninguém ali × cabe
+  e está faltando. A distinção vai inteira para o alerta da F22.
+- **D6 — o botão manda o VALOR** (`data-pausar="true|false"`), nunca "inverta o
+  que estiver aí": com a tela um tick atrasada, um alternador pausaria o que o
+  jogador acabou de retomar. É o contrato herdado da F16c. O botão **só nasce em
+  prédio com `producao !== null`**, como a nota daquele item registrou.
+- **D7 — derrubar é um clique, sem confirmação. Decisão do operador
+  (2026-09-23)**, registrada em `IDEIAS.md` **com o custo** — e não em Perguntas
+  em aberto, porque a decisão está tomada e uma pergunta aberta convidaria uma
+  sessão futura a reabri-la. O custo registrado: é o único botão que destrói
+  trabalho de forma irreversível e a devolução é parcial (0.5), então o erro é
+  caro. O que segura o clique acidental hoje é a posição: sozinho no rodapé, com
+  cor própria, separado das outras ações.
+- **D8 — um painel só; a escola virou uma seção dele.** `painel-escola.ts` deixou
+  de ser dono de DOM: exporta `desenharSecaoDaEscola(raiz, dados, emitir)`, não
+  chama `getElementById`, não mexe em `hidden` e não conhece a seleção.
+  `painelDaEscola` continua sendo a fonte. O `<aside>` foi renomeado
+  `#painel-escola` → `#painel-predio`, **mantendo posição e largura** para o
+  roteiro da F06 (`canvas.right <= painel.left`) seguir valendo.
+- **D9 — o atributo do painel é `data-predio-aberto`**, não `data-predio`: este
+  último já é o item do menu Build (F06), e o mesmo atributo em dois papéis faria
+  seletor de roteiro pegar o elemento errado.
+
+### A sonda: a cadeia da Fase A, medida (não é cobertura contínua)
+
+Antes de escrever o painel, uma sonda descartável (scratchpad, não commitada)
+rodou a cadeia inteira **pelo caminho real, só com comandos** — sem injetar
+estado. O operador pediu que ela **medisse**, não só semaforizasse: se a cadeia
+fecha, é o aceite da Fase A acontecendo pela primeira vez. Os números ficaram em
+**`docs/planos/F16b-painel-predio.md` §7**, para a F17 **comparar em vez de
+descobrir**. O JSON cru (`test-output/F16b-sonda.json`) existe na máquina mas o
+git **ignora `test-output/`** — por isso a medição foi copiada para arquivo
+versionado; artefato ignorado não é linha de base para sessão nenhuma:
+
+| etapa | tick |
+|---|---|
+| treino começa | 29 |
+| treino termina | 179 |
+| obra completa | 220 |
+| especialista ocupa | 241 |
+| primeira pedra produzida | 408 |
+
+Reprodutível: duas execuções, os mesmos ticks. Semente `20260920`, uma pedreira
+em (38,31) com a rua em y=33, x 29..40 — geometria derivada do dado, e **sem
+nenhum `command-rejected`**, o que confirma de passagem que esse encaixe passa na
+regra da porta da F16a.
+
+**Achado que muda roteiro alheio**: a gaveta `saida` da pedreira fica **vazia
+quase o tempo todo** — o carregador leva a pedra assim que ela sai (pedra
+presente em 2 de 24 amostras entre os ticks 240 e 700). Afirmar conteúdo de
+gaveta de prédio de produção **oscila**; estoque cheio se prova no **armazém**.
+Foi por isso que o roteiro da F16b não afirma o conteúdo da gaveta da pedreira.
+Registrado como Nota na F17.
+
+**A sonda é prova do momento, não cobertura.** O que protege daqui para frente é
+`tools/shots/F16b.js`, que roda a mesma cadeia a cada `npm run shot -- F16b`.
+
+### Verificado (evidência aberta nesta sessão)
+
+- `npm run verify` verde: **850 testes, 48 arquivos**; typecheck, lint e
+  `validate:data` (9 arquivos, 0 erros) limpos.
+- `npm run shot -- F16b`: **OK, 5 capturas**, passando na primeira execução.
+  `screenshots/F16b-3-completo-ocupado.png` **aberto com Read** — o painel da
+  Pedreira mostra "Firmeza 250/250", "Quem trabalha: Cabra da Pedreira" (nome do
+  sertão, não o id `stonemason`), as gavetas "Entra —" e "Sai —", o botão "Parar"
+  e o "Derrubar" destacado no rodapé. É o aceite do item: prédio completo e
+  ocupado, com a demolição por clique provada no mesmo roteiro.
+- `test-output/F16b.json`: o seletor nos cinco casos (completo ocupado, pausado,
+  obra, armazém, id inexistente → `null`).
+- Não-regressão por **código de saída**: `F13b`, `F06` e `F07` → **0** nos três.
+  Screenshot deles não foi aberto (§8: imagem é o que mais pesa na janela).
+
+### Hipótese (não verificada)
+
+- A folga de `TICKS_ATE_OCUPAR = 300` sobre os 241 medidos parece confortável,
+  mas só foi observada com **uma** pedreira e o armazém cheio do estado inicial.
+  Com a vila da F17 (4 prédios disputando carregadores) a ocupação deve demorar
+  mais; quanto, não foi medido nesta sessão.
+
+### Fora de escopo, declarado
+
+Não entraram: modos do Woodcutter's (saíram na F16c), confirmação de demolição
+(decidida contra, ver D7), evento de pausa (sem consumidor — a tela lê o campo),
+e alerta sem seleção, que é da F22. `src/input/selecao.ts` e
+`src/input/teclado.ts` **não foram tocados**: a seleção já era genérica (guarda
+só um id); o que era específico da escola era o painel devolver `null` para o
+resto.
+
 ## Perguntas em aberto
 
 _(nenhuma no momento: as três que sobravam foram decididas pelo operador — ver "Ajuste pós-F10".)_

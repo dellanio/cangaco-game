@@ -112,6 +112,14 @@
     "semOuro": "Sem dinheiro no armazém",
     "cancelarItem": "tirar da fila", "custo": "custa", "filaCheia": "Fila cheia"
   },
+  "painelPredio": {
+    "_doc": "F16b. O NOME do prédio NÃO mora aqui: vem de predios.<id>.nome, que já existe. Só os rótulos fixos do painel. 'Sem trabalhador' e a ausência da linha são coisas diferentes: prédio que não pede trabalhador (armazém, Casa do Coronel) não ganha a linha nenhuma — dizer 'sem trabalhador' num armazém seria acusar falta onde não cabe ninguém.",
+    "hp": "Firmeza", "emObra": "Em obra", "faltaChegar": "Falta chegar",
+    "ocupante": "Quem trabalha", "semTrabalhador": "Sem trabalhador",
+    "entrada": "Entra", "saida": "Sai", "gavetaVazia": "—",
+    "pausar": "Parar", "retomar": "Voltar ao trabalho", "pausado": "Parado",
+    "demolir": "Derrubar", "demolirDesc": "devolve parte do material"
+  },
   "obra": { "marcacao": "marcação no chão", "madeira": "em obra" },
   "vegetacao": ["mandacaru", "xique-xique", "juazeiro", "umbuzeiro", "facheiro", "macambira"],
   "props": ["cerca de vara", "pilha de lenha", "cacimba", "carro de boi", "jumento", "varal de carne de sol"],

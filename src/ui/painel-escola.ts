@@ -1,25 +1,24 @@
-// Painel da fila de treino da escola (F13b). So le o estado (via
-// `painelDaEscola`, seletor puro de sim/) e emite comando; nao muta GameState,
-// nao importa phaser e nao varre predios por conta propria (CLAUDE.md §3, §10).
+// A fila de treino da escola (F13b), desde a F16b desenhada como uma SECAO
+// dentro do painel de predio. So le o estado (via `painelDaEscola`, seletor puro
+// de sim/) e emite comando; nao muta GameState, nao importa phaser e nao varre
+// predios por conta propria (CLAUDE.md §3, §10).
+//
+// O que mudou na F16b: este arquivo nao possui mais elemento nenhum. Ele nao
+// chama `getElementById`, nao mexe em `hidden` e nao conhece a selecao — quem
+// decide se esta secao existe e `ui/painel-predio.ts`. `painelDaEscola` continua
+// sendo a fonte dos dados, que e o que a nota do item F16b manda.
 //
 // Todo rotulo vem do tema. O painel mostra o NOME do civil no sertao e o MOTIVO
 // de cada item parado — nunca o id neutro da simulacao.
-import type { GameState } from '../sim/state';
 import type { Command } from '../sim/commands';
-import { painelDaEscola } from '../sim/selectors';
 import type { ItemDoPainelDeTreino, PainelDaEscola } from '../sim/selectors';
-import type { Selecao } from '../input/selecao';
 import temaSertao from '../../data/theme-sertao.json';
-
-export interface PainelEscola {
-  atualizar(estado: GameState): void;
-}
 
 const rotulos = temaSertao.painelEscola;
 type TemaDeCivis = Readonly<Record<string, { readonly nome: string } | undefined>>;
 const temaDeCivis = temaSertao.civis as TemaDeCivis;
 
-function nomeDoCivil(id: string): string {
+export function nomeDoCivil(id: string): string {
   return temaDeCivis[id]?.nome ?? id;
 }
 
@@ -36,114 +35,94 @@ function detalheDoItem(item: ItemDoPainelDeTreino): string {
   return rotulos.naFila;
 }
 
+function slotDoItem(
+  dados: PainelDaEscola, item: ItemDoPainelDeTreino, i: number,
+  emitir: (comando: Command) => void,
+): HTMLElement {
+  const slot = document.createElement('div');
+  slot.className = 'slot';
+  slot.dataset.slot = String(i);
+  slot.dataset.estado = item.estado;
+  slot.dataset.item = item.id;
+  slot.dataset.unidade = item.unidade;
+  if (item.motivo !== null) slot.dataset.motivo = item.motivo;
+
+  const nome = document.createElement('span');
+  nome.className = 'nome';
+  nome.textContent = nomeDoCivil(item.unidade);
+
+  const detalhe = document.createElement('span');
+  detalhe.className = item.estado === 'treinando' ? 'progresso' : 'motivo';
+  detalhe.textContent = detalheDoItem(item);
+
+  const cancelar = document.createElement('button');
+  cancelar.type = 'button';
+  cancelar.dataset.cancelar = item.id;
+  cancelar.title = rotulos.cancelarItem;
+  cancelar.textContent = '×';
+  cancelar.addEventListener('click', () => {
+    emitir({ type: 'CancelTraining', predio: dados.predio, item: item.id });
+  });
+
+  slot.append(nome, detalhe, cancelar);
+  return slot;
+}
+
+function slotVazio(i: number): HTMLElement {
+  const slot = document.createElement('div');
+  slot.className = 'slot';
+  slot.dataset.slot = String(i);
+  slot.dataset.estado = 'vazio';
+  const nome = document.createElement('span');
+  nome.className = 'nome';
+  nome.textContent = rotulos.vazio;
+  slot.append(nome);
+  return slot;
+}
+
 /**
- * Reescreve o painel inteiro a cada `atualizar`. Sao no maximo 5 slots mais os
- * botoes de tipo: reaproveitar no de item cancelado custaria mais em bug do que
- * economiza em DOM.
+ * Desenha a fila de treino DENTRO de `raiz`, que o chamador acabou de criar.
+ * Nao limpa nada: quem redesenha o painel inteiro a cada `atualizar` e o painel
+ * de predio — sao no maximo 5 slots mais os botoes de tipo, e reaproveitar o no
+ * de um item cancelado custaria mais em bug do que economiza em DOM.
  */
-export function montarPainelEscola(
-  selecao: Selecao, emitir: (comando: Command) => void,
-): PainelEscola {
-  const raiz = document.getElementById('painel-escola');
-  if (!raiz) throw new Error('painel-escola: #painel-escola nao existe no index.html');
-  const painel = raiz;
+export function desenharSecaoDaEscola(
+  raiz: HTMLElement, dados: PainelDaEscola, emitir: (comando: Command) => void,
+): void {
+  const fila = document.createElement('h3');
+  fila.textContent = rotulos.fila;
+  raiz.append(fila);
 
-  function slotDoItem(dados: PainelDaEscola, item: ItemDoPainelDeTreino, i: number): HTMLElement {
-    const slot = document.createElement('div');
-    slot.className = 'slot';
-    slot.dataset.slot = String(i);
-    slot.dataset.estado = item.estado;
-    slot.dataset.item = item.id;
-    slot.dataset.unidade = item.unidade;
-    if (item.motivo !== null) slot.dataset.motivo = item.motivo;
+  // Os slots VAZIOS tambem aparecem: o jogador tem que ver quanto ainda cabe.
+  for (let i = 0; i < dados.slots; i++) {
+    const item = dados.itens[i];
+    raiz.append(item === undefined ? slotVazio(i) : slotDoItem(dados, item, i, emitir));
+  }
 
-    const nome = document.createElement('span');
-    nome.className = 'nome';
-    nome.textContent = nomeDoCivil(item.unidade);
-
-    const detalhe = document.createElement('span');
-    detalhe.className = item.estado === 'treinando' ? 'progresso' : 'motivo';
-    detalhe.textContent = detalheDoItem(item);
-
-    const cancelar = document.createElement('button');
-    cancelar.type = 'button';
-    cancelar.dataset.cancelar = item.id;
-    cancelar.title = rotulos.cancelarItem;
-    cancelar.textContent = '×';
-    cancelar.addEventListener('click', () => {
-      emitir({ type: 'CancelTraining', predio: dados.predio, item: item.id });
+  const tipos = document.createElement('div');
+  tipos.className = 'tipos';
+  for (const tipo of dados.tiposTreinaveis) {
+    const botao = document.createElement('button');
+    botao.type = 'button';
+    botao.dataset.treinar = tipo;
+    botao.textContent = nomeDoCivil(tipo);
+    botao.title = `${rotulos.custo} ${dados.custoPorUnidade}`;
+    // aria-disabled e nao `disabled`, como no menu Build (F06): o clique CHEGA
+    // e e ignorado aqui, entao o roteiro consegue provar que nao enfileirou.
+    botao.setAttribute('aria-disabled', String(!dados.podeEnfileirar));
+    botao.addEventListener('click', () => {
+      if (botao.getAttribute('aria-disabled') === 'true') return;
+      emitir({ type: 'EnqueueTraining', predio: dados.predio, unidade: tipo });
     });
-
-    slot.append(nome, detalhe, cancelar);
-    return slot;
+    tipos.append(botao);
   }
+  raiz.append(tipos);
 
-  function slotVazio(i: number): HTMLElement {
-    const slot = document.createElement('div');
-    slot.className = 'slot';
-    slot.dataset.slot = String(i);
-    slot.dataset.estado = 'vazio';
-    const nome = document.createElement('span');
-    nome.className = 'nome';
-    nome.textContent = rotulos.vazio;
-    slot.append(nome);
-    return slot;
+  if (!dados.podeEnfileirar) {
+    const cheia = document.createElement('span');
+    cheia.className = 'fila-cheia';
+    cheia.dataset.filaCheia = 'true';
+    cheia.textContent = rotulos.filaCheia;
+    raiz.append(cheia);
   }
-
-  function desenhar(dados: PainelDaEscola): void {
-    painel.replaceChildren();
-
-    const titulo = document.createElement('h2');
-    titulo.textContent = rotulos.titulo;
-    painel.append(titulo);
-
-    // Os slots VAZIOS tambem aparecem: o jogador tem que ver quanto ainda cabe.
-    for (let i = 0; i < dados.slots; i++) {
-      const item = dados.itens[i];
-      painel.append(item === undefined ? slotVazio(i) : slotDoItem(dados, item, i));
-    }
-
-    const tipos = document.createElement('div');
-    tipos.className = 'tipos';
-    for (const tipo of dados.tiposTreinaveis) {
-      const botao = document.createElement('button');
-      botao.type = 'button';
-      botao.dataset.treinar = tipo;
-      botao.textContent = nomeDoCivil(tipo);
-      botao.title = `${rotulos.custo} ${dados.custoPorUnidade}`;
-      // aria-disabled e nao `disabled`, como no menu Build (F06): o clique CHEGA
-      // e e ignorado aqui, entao o roteiro consegue provar que nao enfileirou.
-      botao.setAttribute('aria-disabled', String(!dados.podeEnfileirar));
-      botao.addEventListener('click', () => {
-        if (botao.getAttribute('aria-disabled') === 'true') return;
-        emitir({ type: 'EnqueueTraining', predio: dados.predio, unidade: tipo });
-      });
-      tipos.append(botao);
-    }
-    painel.append(tipos);
-
-    if (!dados.podeEnfileirar) {
-      const cheia = document.createElement('span');
-      cheia.className = 'fila-cheia';
-      cheia.dataset.filaCheia = 'true';
-      cheia.textContent = rotulos.filaCheia;
-      painel.append(cheia);
-    }
-  }
-
-  return {
-    atualizar(estado) {
-      const id = selecao.predio;
-      const dados = id === null ? null : painelDaEscola(estado, id);
-      // Nada selecionado, ou o predio nao e (mais) uma escola completa: o painel
-      // fecha. Nao mexe na selecao — quem a limpa e o `Esc` e o clique no mapa.
-      if (dados === null) {
-        painel.hidden = true;
-        painel.replaceChildren();
-        return;
-      }
-      painel.hidden = false;
-      desenhar(dados);
-    },
-  };
 }

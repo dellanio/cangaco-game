@@ -687,6 +687,26 @@ prédio surge sem clique do jogador.
   o GDD §1.3 sugere. **Se ficar apertado, a saída é reduzir a porta a UMA coluna
   em vez da borda sul inteira — não afrouxar a regra.** Ver `BALANCE_LOG.md`
   [2026-09-23].
+- **Nota (origem: F16b — a cadeia já foi medida)**: a F16b rodou a cadeia inteira
+  da Fase A pelo caminho do jogador (rua → planta → obra → escola treina → o
+  especialista ocupa) e **gravou os ticks de cada etapa** em
+  `docs/planos/F16b-painel-predio.md` §7 (o JSON cru fica em
+  `test-output/F16b-sonda.json`, que o git **ignora** — por isso a medição foi
+  copiada para arquivo versionado): treino começa em 29, termina em 179, obra
+  completa em 220, ocupação em 241, primeira pedra em 408 (semente
+  `20260920`, uma pedreira). **Compare contra esses números em vez de descobrir
+  de novo**: se baterem, esta feature é confirmação; se divergirem muito, algo
+  entre as duas sessões mudou o balanceamento e isso é o achado. Herda também
+  `tools/shots/F16b.js` (a geometria da rua e do encaixe da pedreira já validada
+  contra a regra da porta) e `window.__cangaco.prediosDoEstado`, que dá tipo,
+  estado, posição, `pausado` e `ocupante` de cada prédio — é por ali que o
+  roteiro acha o id de um prédio recém-construído, que não tem id previsível.
+- **Nota (origem: F16b — armadilha medida)**: **não afirme o conteúdo da gaveta
+  `saida` de um prédio de produção.** A sonda mediu: a pedreira fica com a gaveta
+  vazia quase o tempo todo (o carregador leva a pedra assim que ela sai — pedra
+  presente em 2 de 24 amostras). Estoque cheio se prova no **armazém**, que é
+  onde ele para. O aceite desta feature já pede `timber` acima do inicial, o que
+  é a forma certa; não troque por "a serraria tem tábua na gaveta".
 
 ---
 
@@ -744,6 +764,14 @@ prédio surge sem clique do jogador.
   continua em `trabalhando` (a pausa não é estado de FSM), então nenhum alerta
   pode ser derivado do rótulo — só do campo, como "sem estrada" se deriva do
   predicado.
+- **Nota (origem: F16b)**: o painel de prédio (`src/ui/painel-predio.ts`) já
+  **mostra** as três causas por prédio selecionado — ocupante vago, prédio parado
+  e as gavetas. O que falta aqui é o alerta **sem seleção**, no HUD: o jogador
+  não pode precisar clicar em cada prédio para descobrir que um está parado. Reuse
+  `painelDoPredio` (`sim/selectors.ts`) como a derivação por prédio; ele já separa
+  `pedeTrabalhador` de `ocupante === null`, que é exatamente a distinção que o
+  alerta precisa — **prédio que não pede trabalhador nunca pode alertar** "sem
+  trabalhador", e por isso são dois campos e não um.
 ### F23 — Save e load
 - Aceite: salvar num tick qualquer, carregar e rodar 500 ticks produz o mesmo
   estado que rodar 500 ticks sem salvar. É o teste que prova que a invariante 2

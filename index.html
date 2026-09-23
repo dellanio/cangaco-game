@@ -57,8 +57,9 @@
       }
       /* F13b: SOBREPOSICAO na celula do canvas, nao coluna nova. Uma terceira
          coluna encolheria o canvas e reprovaria o roteiro da F06, que afirma
-         canvas.right <= painel.left. */
-      #painel-escola {
+         canvas.right <= painel.left. A F16b so renomeou (#painel-escola ->
+         #painel-predio): a posicao e a largura seguem as mesmas, de proposito. */
+      #painel-predio {
         grid-column: 1; grid-row: 2; place-self: end start; margin: 12px;
         box-sizing: border-box; width: 248px; max-height: calc(100% - 24px);
         overflow-y: auto; padding: 8px;
@@ -67,30 +68,52 @@
         font: 14px/1.3 system-ui, sans-serif;
         display: flex; flex-direction: column; gap: 5px;
       }
-      #painel-escola[hidden] { display: none; }
-      #painel-escola h2 { margin: 0 0 2px; font-size: 15px; font-weight: 700; }
-      #painel-escola .slot {
+      #painel-predio[hidden] { display: none; }
+      #painel-predio h2 { margin: 0 0 2px; font-size: 15px; font-weight: 700; }
+      #painel-predio .slot {
         display: flex; align-items: baseline; gap: 6px;
         padding: 4px 6px; border: 1px solid #3a3226; border-radius: 3px;
         background: #2a241b;
       }
-      #painel-escola .slot[data-estado="vazio"] { opacity: 0.35; }
-      #painel-escola .slot .nome { font-weight: 700; flex: 1; }
-      #painel-escola .slot .motivo { color: #c9974b; font-size: 12px; text-align: right; }
-      #painel-escola .slot .progresso { opacity: 0.75; font-size: 12px; font-variant-numeric: tabular-nums; }
-      #painel-escola .tipos { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
-      #painel-escola button {
+      #painel-predio .slot[data-estado="vazio"] { opacity: 0.35; }
+      #painel-predio .slot .nome { font-weight: 700; flex: 1; }
+      #painel-predio .slot .motivo { color: #c9974b; font-size: 12px; text-align: right; }
+      #painel-predio .slot .progresso { opacity: 0.75; font-size: 12px; font-variant-numeric: tabular-nums; }
+      #painel-predio .tipos { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+      #painel-predio button {
         border: 1px solid #3a3226; border-radius: 3px; background: #2a241b;
         color: inherit; font: inherit; font-size: 12px; padding: 3px 6px; cursor: pointer;
       }
-      #painel-escola button[aria-disabled="true"] { cursor: not-allowed; opacity: 0.45; }
-      #painel-escola .fila-cheia { color: #c9974b; font-size: 12px; }
+      #painel-predio button[aria-disabled="true"] { cursor: not-allowed; opacity: 0.45; }
+      #painel-predio .fila-cheia { color: #c9974b; font-size: 12px; }
+      /* F16b: o painel deixou de ser so a fila da escola. Linha = rotulo a
+         esquerda, valor a direita; gaveta = rotulo mais os itens do estoque. */
+      #painel-predio h3 { margin: 4px 0 0; font-size: 12px; font-weight: 700; opacity: 0.7; }
+      #painel-predio .linha { display: flex; align-items: baseline; gap: 6px; font-size: 13px; }
+      #painel-predio .linha .rotulo { opacity: 0.7; flex: 1; }
+      #painel-predio .linha .valor { font-variant-numeric: tabular-nums; }
+      #painel-predio .linha[data-ocupante="vago"] .valor { color: #c9974b; }
+      #painel-predio .gaveta {
+        display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px; font-size: 12px;
+      }
+      #painel-predio .gaveta .rotulo { opacity: 0.7; }
+      #painel-predio .gaveta .item {
+        padding: 1px 4px; border: 1px solid #3a3226; border-radius: 3px; background: #2a241b;
+      }
+      #painel-predio .gaveta .vazia { opacity: 0.35; }
+      #painel-predio .acoes { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
+      #painel-predio .acoes .pausado { color: #c9974b; font-size: 12px; }
+      /* o unico botao que destroi trabalho: cor propria, e sozinho no rodape */
+      #painel-predio button.demolir {
+        margin-top: 4px; align-self: flex-start;
+        border-color: #8c4a25; color: #d64b3f;
+      }
     </style>
   </head>
   <body>
     <div id="hud"></div>
     <div id="jogo"></div>
-    <aside id="painel-escola" hidden></aside>
+    <aside id="painel-predio" hidden></aside>
     <aside id="menu-build"></aside>
     <script type="module" src="/src/main.ts"></script>
   </body>

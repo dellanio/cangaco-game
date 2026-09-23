@@ -8,6 +8,7 @@ import { predioLigadoAoArmazem } from './estradas';
 import { custoDeTreino, ehEscolaCompleta, filaDaEscola, ouroNecessario } from './escola';
 import { custoDoPasso } from './pathfinding';
 import { custoDoPredio } from './obra';
+import { trabalhadorDoTipo } from './ocupacao';
 import type { CaixaEmTiles } from './footprint';
 
 /**
@@ -321,6 +322,129 @@ export function predioNoTile(
     if (gx >= caixa.x0 && gx < caixa.x1 && gy >= caixa.y0 && gy < caixa.y1) return id;
   }
   return null;
+}
+
+/** Uma linha de gaveta, como o painel a desenha (F16b). */
+export interface ItemDeEstoque {
+  /** Id NEUTRO da mercadoria (`stone`). Quem traduz e o tema, na `ui/`. */
+  readonly mercadoria: string;
+  readonly quantidade: number;
+}
+
+/** O ocupante de um predio, para o painel (F16b). */
+export interface OcupanteDoPainel {
+  /** Id da unidade (`u7`). */
+  readonly unidade: string;
+  /** Id NEUTRO do civil (`stonemason`). Quem traduz e o tema, na `ui/`. */
+  readonly tipo: string;
+}
+
+/**
+ * F16b — tudo que o painel de um predio QUALQUER desenha, num objeto so. Mora
+ * aqui pela mesma razao que `PainelDaEscola`: `ui/` nao varre `GameState`
+ * (CLAUDE.md §3), e o Vitest roda em `node`, entao uma regra que morasse no DOM
+ * ficaria sem teste.
+ */
+export interface PainelDoPredio {
+  readonly predio: string;
+  /** Id NEUTRO do tipo (`quarry`); o NOME que o jogador le vem do tema. */
+  readonly tipo: string;
+  readonly estado: 'obra' | 'completo';
+  /** HP ja martelado em obra; o `hp` do dado quando completo. */
+  readonly hp: number;
+  /** `def.hp` de `buildings.json` — o total nunca e guardado no estado. */
+  readonly hpTotal: number;
+  /** `hp / hpTotal`, em [0,1]. Vale 1 no predio completo. */
+  readonly progresso: number;
+  /** So em obra: o que ainda falta ENTREGAR. `null` no completo. */
+  readonly faltam: readonly ItemDeEstoque[] | null;
+  /** `null` em obra, no predio vago e no tipo que nao pede trabalhador. */
+  readonly ocupante: OcupanteDoPainel | null;
+  /**
+   * O TIPO pede trabalhador. Existe para separar "vago" (true, `ocupante`
+   * null) de "nao se aplica" (false) — sao coisas diferentes, e o painel
+   * escreve textos diferentes. Um campo so juntaria as duas causas.
+   */
+  readonly pedeTrabalhador: boolean;
+  /** `null` em obra: obra nao guarda mercadoria (contrato da F07). */
+  readonly estoque: {
+    readonly entrada: readonly ItemDeEstoque[];
+    readonly saida: readonly ItemDeEstoque[];
+  } | null;
+  /** `producao !== null`. E o que decide se o botao pausar aparece: a sim aceita
+   *  pausar qualquer predio completo, e quem esconde o botao e a tela (F16c). */
+  readonly temProducao: boolean;
+  readonly pausado: boolean;
+}
+
+/**
+ * Uma gaveta virando linhas do painel. A ordem vem de `economia.mercadorias`,
+ * NUNCA de `Object.keys` — a ordem de iteracao de chave nao numerica nao e
+ * garantia da linguagem (contrato da F05a), e o dado ja traz uma ordem.
+ * Mercadoria zerada nao vira linha: gaveta vazia tem rotulo proprio na tela.
+ */
+function gaveta(
+  quantidades: Readonly<Record<string, number>>, dados: GameData,
+): readonly ItemDeEstoque[] {
+  const linhas: ItemDeEstoque[] = [];
+  for (const mercadoria of dados.economia.mercadorias) {
+    const quantidade = quantidades[mercadoria] ?? 0;
+    if (quantidade > 0) linhas.push({ mercadoria, quantidade });
+  }
+  return linhas;
+}
+
+/**
+ * F16b — o painel de um predio qualquer. `null` quando o id nao esta no estado,
+ * e e assim que o painel se fecha sozinho no MESMO tick em que o predio e
+ * demolido: nao ha evento para a tela ouvir, nem copia de estado para ficar
+ * velha. Mesmo mecanismo de `painelDaEscola` (F13b).
+ *
+ * A escola continua sendo desenhada por `painelDaEscola`: este seletor nao sabe
+ * o que e uma fila de treino, e o painel compoe os dois.
+ */
+export function painelDoPredio(
+  state: GameState, predioId: string, dados: GameData = gameData,
+): PainelDoPredio | null {
+  const predio = state.predios.porId[predioId];
+  if (predio === undefined) return null;
+  const def = dados.predios.find((b) => b.id === predio.tipo);
+  if (def === undefined) return null;
+
+  const comum = {
+    predio: predioId,
+    tipo: predio.tipo,
+    hp: predio.hp,
+    hpTotal: def.hp,
+    progresso: predio.hp / def.hp,
+    pedeTrabalhador: trabalhadorDoTipo(predio.tipo, dados) !== null,
+  };
+
+  if (predio.estado === 'obra') {
+    return {
+      ...comum,
+      estado: 'obra',
+      faltam: gaveta(predio.obra.faltam, dados),
+      ocupante: null,
+      estoque: null,
+      temProducao: false,
+      pausado: false,
+    };
+  }
+
+  const unidade = predio.ocupante === null ? undefined : state.unidades.porId[predio.ocupante];
+  return {
+    ...comum,
+    estado: 'completo',
+    faltam: null,
+    ocupante: unidade === undefined ? null : { unidade: unidade.id, tipo: unidade.tipo },
+    estoque: {
+      entrada: gaveta(predio.estoque.entrada, dados),
+      saida: gaveta(predio.estoque.saida, dados),
+    },
+    temProducao: predio.producao !== null,
+    pausado: predio.pausado,
+  };
 }
 
 /** Uma posicao no mapa em tiles, FRACIONARIA (a unidade pode estar no meio de um passo). */

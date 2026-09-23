@@ -22,6 +22,6 @@
   "F15b-2-oraculo-e-calibracao": { "passes": true },
   "F16a-demolir-predio": { "passes": true },
   "F16c-pausar-e-modos": { "passes": true },
-  "F16b-painel-selecao": { "passes": false },
+  "F16b-painel-selecao": { "passes": true },
   "F17-aceite-fase-a": { "passes": false }
 }

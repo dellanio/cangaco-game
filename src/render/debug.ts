@@ -12,6 +12,17 @@ import type { UnidadeRenderizada } from './unidades';
 import type { EstagioDaObra } from './estagio-obra';
 import type { ItemDeFila } from '../sim/state';
 
+/** O recorte de um predio que o roteiro le. Nao e `Predio`: so o que a tela
+ *  precisa afirmar, para a ponte nao virar copia do GameState. */
+export interface PredioNoDebug {
+  readonly tipo: string;
+  readonly estado: 'obra' | 'completo';
+  readonly gx: number;
+  readonly gy: number;
+  readonly pausado: boolean;
+  readonly ocupante: string | null;
+}
+
 export interface EstadoDebug {
   /** false ate a cena terminar o primeiro desenho. O roteiro espera por isto
    *  antes de fotografar — sem isso a captura sai do canvas em branco. */
@@ -23,6 +34,11 @@ export interface EstadoDebug {
   tilesRenderizados: number;
   /** Quantos predios do GameState a cena tem desenhados agora (obras incluidas). */
   prediosRenderizados: number;
+  /** F16b — os predios do tick desenhado, por id, na leitura CRUA do estado. E o
+   *  que o roteiro usa para achar o predio que quer clicar (a quarry que acabou
+   *  de subir nao tem id fixo) e para afirmar sobre ocupante e pausa sem
+   *  perguntar ao painel — o painel e justamente o que esta sendo provado. */
+  prediosDoEstado: Readonly<Record<string, PredioNoDebug>>;
   /** Quantos deles estao em obra (F07): marcacao + madeira, F11c. */
   obrasRenderizadas: number;
   /** F11c: a mesma contagem acima, quebrada por estagio (`estagio-obra.ts`) — o
@@ -100,6 +116,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     camera: { scrollX: 0, scrollY: 0 },
     tilesRenderizados: 0,
     prediosRenderizados: 0,
+    prediosDoEstado: {},
     obrasRenderizadas: 0,
     estagiosDeObraRenderizados: { marcacao: 0, madeira: 0, completo: 0 },
     estradasRenderizadas: 0,

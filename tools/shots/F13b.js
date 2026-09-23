@@ -50,10 +50,10 @@ async function roteiro(ctx) {
   }
 
   const motivosNaTela = () => page.$$eval(
-    '#painel-escola [data-slot][data-motivo]', (ns) => ns.map((n) => n.dataset.motivo),
+    '#painel-predio [data-slot][data-motivo]', (ns) => ns.map((n) => n.dataset.motivo),
   );
   const slotsNaTela = () => page.$$eval(
-    '#painel-escola [data-slot]', (ns) => ns.map((n) => ({ estado: n.dataset.estado, motivo: n.dataset.motivo ?? null })),
+    '#painel-predio [data-slot]', (ns) => ns.map((n) => ({ estado: n.dataset.estado, motivo: n.dataset.motivo ?? null })),
   );
   async function filaNoEstado() {
     const s = await estado();
@@ -76,27 +76,30 @@ async function roteiro(ctx) {
   afirmar(largAr > 1 && largEs > 1, 'o teste do "meio do footprint" so vale se o predio for maior que 1x1');
 
   // 1. o painel nasce fechado
-  afirmar(await page.isHidden('#painel-escola'), 'o painel deveria nascer fechado');
+  afirmar(await page.isHidden('#painel-predio'), 'o painel deveria nascer fechado');
 
   // 2. clicar no MEIO do footprint (nao no canto) abre o painel: prova `predioNoTile`
   const pEscola = await pontoDoTile(meioDaEscola);
   await page.mouse.click(pEscola.x, pEscola.y);
   await esperarFrame();
-  afirmar(await page.isVisible('#painel-escola'), 'clicar no meio da escola deveria abrir o painel');
+  afirmar(await page.isVisible('#painel-predio'), 'clicar no meio da escola deveria abrir o painel');
   afirmar(
-    (await page.$$('#painel-escola [data-slot]')).length === SLOTS,
+    (await page.$$('#painel-predio [data-slot]')).length === SLOTS,
     `o painel deveria mostrar os ${SLOTS} slots do dado`,
   );
   afirmar(
-    (await page.textContent('#painel-escola h2')) === tema.painelEscola.titulo,
-    'o titulo deveria vir do tema',
+    // F16b: o titulo do painel e o NOME DO PREDIO, nao um rotulo proprio da
+    // escola. A fonte mudou de lugar (predios.schoolhouse.nome); o que a F13b
+    // afirma — titulo vindo do tema, nunca do id neutro — segue de pe.
+    (await page.textContent('#painel-predio h2')) === tema.predios.schoolhouse.nome,
+    'o titulo deveria ser o nome do predio, vindo do tema',
   );
   afirmar((await filaNoEstado()).length === 0, 'a fila deveria comecar vazia no estado');
 
   // 3. enfileirar por CLIQUE ate encher, e conferir a fila NO ESTADO
   const tipo = unidades.civis.tipos[0].id;
   for (let i = 0; i < SLOTS; i++) {
-    await page.click(`#painel-escola [data-treinar="${tipo}"]`);
+    await page.click(`#painel-predio [data-treinar="${tipo}"]`);
     await avancar(1); // o clique so ENFILEIRA o comando (F11a); o passo o aplica
     await esperarFrame();
   }
@@ -104,11 +107,11 @@ async function roteiro(ctx) {
   afirmar(fila.length === SLOTS, `a fila no estado deveria ter ${SLOTS} itens, veio ${fila.length}`);
   afirmar(fila.every((i) => i.unidade === tipo), `a fila deveria ser toda de ${tipo}, veio ${JSON.stringify(fila.map((i) => i.unidade))}`);
   afirmar(
-    await page.getAttribute(`#painel-escola [data-treinar="${tipo}"]`, 'aria-disabled') === 'true',
+    await page.getAttribute(`#painel-predio [data-treinar="${tipo}"]`, 'aria-disabled') === 'true',
     'com a fila cheia o botao de treinar deveria ficar aria-disabled',
   );
   afirmar(
-    (await page.textContent('#painel-escola')).includes(tema.painelEscola.filaCheia),
+    (await page.textContent('#painel-predio')).includes(tema.painelEscola.filaCheia),
     'o painel deveria dizer que a fila esta cheia, com o texto do tema',
   );
 
@@ -124,14 +127,14 @@ async function roteiro(ctx) {
     `sem rua todos os itens deveriam dizer sem-estrada, veio ${JSON.stringify(motivos)}`,
   );
   afirmar(
-    (await page.textContent('#painel-escola')).includes(tema.painelEscola.semEstrada),
+    (await page.textContent('#painel-predio')).includes(tema.painelEscola.semEstrada),
     'o painel deveria mostrar o rotulo do tema, nunca o id do motivo',
   );
 
   await capturar('fila-cheia'); // ACEITE: o painel com a fila cheia
 
   // 5. cancelar um item pelo X: a fila encolhe NO ESTADO
-  await page.click(`#painel-escola [data-cancelar="${fila[SLOTS - 1].id}"]`);
+  await page.click(`#painel-predio [data-cancelar="${fila[SLOTS - 1].id}"]`);
   await avancar(1);
   await esperarFrame();
   afirmar(
@@ -142,7 +145,7 @@ async function roteiro(ctx) {
   // 6. `Esc` fecha o painel (e larga a ferramenta, no mesmo ouvinte)
   await page.keyboard.press('Escape');
   await esperarFrame();
-  afirmar(await page.isHidden('#painel-escola'), 'o Esc deveria fechar o painel');
+  afirmar(await page.isHidden('#painel-predio'), 'o Esc deveria fechar o painel');
 
   // 7. puxar a rua da porta do armazem ate a porta da escola. O painel esta
   //    fechado: ele sobrepoe o canvas e roubaria o mouse do canto de baixo.
@@ -165,7 +168,7 @@ async function roteiro(ctx) {
   await page.mouse.click(pEscola.x, pEscola.y);
   await avancar(2); // o quadro de tarefas ganha o `ouro-para-escola` no proximo passo
   await esperarFrame();
-  afirmar(await page.isVisible('#painel-escola'), 'clicar na escola de novo deveria reabrir o painel');
+  afirmar(await page.isVisible('#painel-predio'), 'clicar na escola de novo deveria reabrir o painel');
   const depoisDaRua = await motivosNaTela();
   afirmar(
     depoisDaRua.includes('a-caminho') && !depoisDaRua.includes('sem-estrada'),
@@ -181,7 +184,7 @@ async function roteiro(ctx) {
     `em ${TICKS_ATE_TREINAR} ticks algum item deveria estar treinando, veio ${JSON.stringify(slots)}`,
   );
   afirmar(
-    (await page.textContent('#painel-escola')).includes(tema.painelEscola.treinando),
+    (await page.textContent('#painel-predio')).includes(tema.painelEscola.treinando),
     'o slot que treina deveria mostrar o rotulo do tema com o progresso',
   );
 
@@ -190,7 +193,7 @@ async function roteiro(ctx) {
   // 10. clicar num tile vazio fecha o painel (nada selecionado). O tile e ACIMA
   //     dos predios: o painel ocupa o canto de baixo do canvas e roubaria o clique.
   const vazio = await pontoDoTile({ gx: armazem.gx, gy: armazem.gy - 3 });
-  const caixaDoPainel = await retanguloDe(page, '#painel-escola');
+  const caixaDoPainel = await retanguloDe(page, '#painel-predio');
   afirmar(
     vazio.x < caixaDoPainel.left || vazio.x > caixaDoPainel.right
       || vazio.y < caixaDoPainel.top || vazio.y > caixaDoPainel.bottom,
@@ -199,7 +202,7 @@ async function roteiro(ctx) {
   await page.mouse.click(vazio.x, vazio.y);
   await avancar(1); // sem isto, um comando emitido por engano ficaria na fila
   await esperarFrame();
-  afirmar(await page.isHidden('#painel-escola'), 'clicar fora de um predio deveria fechar o painel');
+  afirmar(await page.isHidden('#painel-predio'), 'clicar fora de um predio deveria fechar o painel');
 }
 
 module.exports = { roteiro };

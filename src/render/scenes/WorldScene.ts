@@ -7,7 +7,7 @@ import { configDoMapa } from '../mapa';
 import { gridToScreen, screenToGrid, depthDeY, tileDentroDoMapa } from '../grid';
 import type { Tile } from '../grid';
 import { publicarEstadoDebug } from '../debug';
-import type { EstadoDebug, RelogioVisivel } from '../debug';
+import type { EstadoDebug, PredioNoDebug, RelogioVisivel } from '../debug';
 import { aparenciaDoPredio } from '../predios';
 import { estagioDaObra } from '../estagio-obra';
 import type { EstagioDaObra } from '../estagio-obra';
@@ -190,9 +190,21 @@ export class WorldScene extends Phaser.Scene {
       }
     }
     const porEstagio: Record<EstagioDaObra, number> = { marcacao: 0, madeira: 0, completo: 0 };
+    // F16b: o recorte cru do estado para o roteiro. Montado aqui porque este laco
+    // ja percorre `predios.ordem` — e e `ordem`, nunca `Object.keys` (contrato da
+    // F05a). Nao entra em sprite: e ponte de harness, nao estado guardado no render.
+    const doEstado: Record<string, PredioNoDebug> = {};
     for (const id of estadoDoJogo.predios.ordem) {
       const predio = estadoDoJogo.predios.porId[id];
       if (!predio) continue;
+      doEstado[id] = {
+        tipo: predio.tipo,
+        estado: predio.estado,
+        gx: predio.gx,
+        gy: predio.gy,
+        pausado: predio.estado === 'completo' ? predio.pausado : false,
+        ocupante: predio.estado === 'completo' ? predio.ocupante : null,
+      };
       const estagio = estagioDaObra(predio.hp, aparenciaDoPredio(predio.tipo).hpTotal);
       porEstagio[estagio] += 1;
       const existente = this.desenhados.get(id);
@@ -201,6 +213,7 @@ export class WorldScene extends Phaser.Scene {
       this.desenhados.set(id, { estado: predio.estado, estagio, objeto: this.criarPredio(predio, estagio, tilePx) });
     }
     debug.prediosRenderizados = this.desenhados.size;
+    debug.prediosDoEstado = doEstado;
     // F11c: um predio 'completo' tem hp === hpTotal, entao estagio 'completo' aqui NAO
     // e so a obra que acabou de martelar o ultimo golpe — inclui todo predio de pe. A
     // contagem que corresponde ao antigo `obrasRenderizadas` (a marcacao no chao) e a

@@ -19,7 +19,7 @@ import { criarLaco, nascerPausadoPelaUrl, pausarAoOcultar } from './laco';
 import { iniciarJogo } from './render/game';
 import { montarHud } from './ui/hud';
 import { montarMenuBuild } from './ui/menu-build';
-import { montarPainelEscola } from './ui/painel-escola';
+import { montarPainelPredio } from './ui/painel-predio';
 import { montarAvisoDoTempo } from './ui/aviso-tempo';
 import { criarFerramenta } from './input/ferramenta';
 import { criarSelecao } from './input/selecao';
@@ -68,7 +68,8 @@ const entrada = criarEntradaDoMapa(
 const hud = montarHud();
 const aviso = montarAvisoDoTempo();
 const menu = montarMenuBuild(ferramenta);
-const painelEscola = montarPainelEscola(selecao, (comando) => {
+// UM painel para todo predio (F16b). A fila da escola virou uma secao dele.
+const painel = montarPainelPredio(selecao, (comando) => {
   sessao.enviar(comando);
 });
 
@@ -78,14 +79,14 @@ function atualizar(s: GameState): void {
   jogo.atualizar(s);
   hud.atualizar(s);
   menu.atualizar(s);
-  painelEscola.atualizar(s);
+  painel.atualizar(s);
 }
 
 sessao.aoMudar(atualizar);
 // O painel abre NO CLIQUE, sem esperar o proximo tick: com o jogo pausado nao
 // viria nenhum, e o painel so apareceria quando o jogador retomasse.
 selecao.aoMudar(() => {
-  painelEscola.atualizar(sessao.estado);
+  painel.atualizar(sessao.estado);
 });
 atualizar(sessao.estado);
 aviso.atualizar(laco.pausado, laco.velocidade);

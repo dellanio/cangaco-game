@@ -73,3 +73,12 @@ caminho. Ideia boa é justamente a mais perigosa.
   não o carrega. **Pré-condição**: a camada de terreno com árvore (entrada "Terreno de mapa variado",
   acima). Enquanto ela não tiver dono na fila, implementar modos é dar ao jogador uma escolha que
   não muda nada — ou que duplica o botão de pausar.
+- Confirmação antes de derrubar prédio — **decisão tomada pelo operador (2026-09-23): fica UM
+  clique, sem confirmação**, e esta entrada registra o **custo** dessa escolha, não a reabre.
+  O custo: `Derrubar` é o único botão do jogo que **destrói trabalho de forma irreversível**, e a
+  devolução é **parcial** (`construcao.devolucaoAoDemolir = 0.5`), então o erro é caro — uma
+  pedreira derrubada por engano custa meio prédio mais todo o tempo de obra e de treino do
+  especialista que a ocupava (medido na sonda da F16b: 241 ticks do comando até a ocupação). O
+  botão fica sozinho no rodapé do painel, com cor própria, separado das outras ações; é isso que
+  segura o clique acidental hoje. Se a confirmação entrar um dia, o lugar é a tela (`ui/`): o
+  comando `DemolishBuilding` não muda, porque a sim não pergunta nada a ninguém.
