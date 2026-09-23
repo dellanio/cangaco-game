@@ -197,6 +197,7 @@ describe('F11c — completarObra', () => {
       id: 'obra-a', tipo: 'quarry', gx: 26, gy: 34, estado: 'completo', hp: 250,
       capacidade: gameData.producao.estoqueInternoPorPredio,
       estoque: { entrada: {}, saida: {} },
+      ocupante: null,
     });
   });
 

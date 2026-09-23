@@ -159,6 +159,20 @@ export interface PredioCompleto extends PredioBase {
   readonly estado: 'completo';
   readonly capacidade: Capacidade;
   readonly estoque: Estoque;
+  /**
+   * F14 — id do especialista que ocupa este predio, ou `null`. UM ocupante: a
+   * cardinalidade esta no TIPO (um campo, nao uma lista com teto), entao "dois
+   * no mesmo predio" nao e representavel. NAO e numero de balanceamento — nao
+   * ha dado para mexer, diferente de `construcao.laborersMaximosPorObra`.
+   *
+   * `null` e nunca `undefined`, como `Tarefa.reclamadaPor`: e o que mantem o
+   * estado comparavel byte a byte depois de um save/load.
+   *
+   * Predio cujo tipo nao pede trabalhador (`buildings.json: trabalhador: null`
+   * — armazem, escola, quartel) fica `null` para sempre: o gerador nunca cria
+   * tarefa de ocupacao para ele.
+   */
+  readonly ocupante: string | null;
 }
 
 /**
@@ -277,7 +291,29 @@ export interface TarefaConstruir extends TarefaBase {
  * A RESERVA nao e um campo: e DERIVADA das tarefas (`sim/reservas.ts`). Ver
  * `elegivelParaTarefa` (`sim/jobs.ts`) para quem pode reclamar cada tipo.
  */
-export type Tarefa = TarefaDeTransporte | TarefaConstruir;
+/**
+ * F14 — uma vaga de OCUPANTE num predio COMPLETO que pede trabalhador
+ * (`buildings.json: trabalhador`). Molde da `TarefaConstruir`: SEM
+ * `mercadoria`/`origem` e SEM `'carregando'` (o especialista nao carrega nada),
+ * e FORA da escada de `delivery.json` — como a de construir, e pelo mesmo
+ * motivo: quem a reclama nao disputa tarefa com serf nem com laborer.
+ *
+ * E o unico tipo cuja ELEGIBILIDADE depende do DESTINO e nao so do tipo da
+ * tarefa: quem ocupa uma `quarry` e o civil que o dado declara para `quarry`.
+ * Ver `podeReclamar` (`sim/jobs.ts`).
+ *
+ * A tarefa SOME quando o especialista chega (`removerTarefa`), no MESMO tick em
+ * que `predio.ocupante` passa a apontar para ele. Nao existe instante com
+ * ocupante e reserva ao mesmo tempo — e por isso a vaga nunca fica negativa.
+ */
+export interface TarefaOcupar extends TarefaBase {
+  readonly tipo: 'ocupar';
+  readonly estado: 'aberta' | 'reclamada';
+  /** Id do predio completo a ocupar. */
+  readonly destino: string;
+}
+
+export type Tarefa = TarefaDeTransporte | TarefaConstruir | TarefaOcupar;
 
 /**
  * O tipo da tarefa, DERIVADO da uniao: acrescentar um produtor novo (F15, F20)
@@ -286,10 +322,15 @@ export type Tarefa = TarefaDeTransporte | TarefaConstruir;
  */
 export type TipoDeTarefa = Tarefa['tipo'];
 
-/** Uma tarefa que o serf carrega (tem `origem` e `mercadoria`), e nao uma de
- *  construir. Estreita a uniao sem enumerar os tipos de transporte um a um. */
+/**
+ * Uma tarefa que o serf CARREGA: tem `mercadoria` e `origem`. Testa a FORMA, e
+ * nao `tipo !== 'construir'` (como ate a F13): com a chegada de `'ocupar'`
+ * (F14), o negativo classificaria a tarefa nova como transporte e ela passaria
+ * por `vagaDoDestino`/`disponivelNaOrigem`, que leriam `undefined`. Pela forma,
+ * um tipo novo so entra na uniao de transporte se realmente carregar algo.
+ */
 export function ehTarefaDeTransporte(tarefa: Tarefa): tarefa is TarefaDeTransporte {
-  return tarefa.tipo !== 'construir';
+  return 'mercadoria' in tarefa;
 }
 
 /** A central de tarefas. Serializavel: so `Colecao` de objetos planos. */
@@ -485,6 +526,7 @@ export function completarObra(predio: PredioEmObra, dados: GameData = gameData):
     hp: predio.hp,
     capacidade: capacidadeParaTipo(predio.tipo, dados),
     estoque: estoqueParaTipo(predio.tipo, {}),
+    ocupante: null,
   };
 }
 
@@ -515,6 +557,7 @@ function criarPredios(
       hp: def.hp,
       capacidade: capacidadeParaTipo(p.id, dados),
       estoque: estoqueParaTipo(p.id, dados.economia.estadoInicial.estoque),
+      ocupante: null,
     });
   }
   return { predios: construirColecao(lista), proximoContador: contador };

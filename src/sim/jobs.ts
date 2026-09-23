@@ -69,11 +69,16 @@ export const TIPO_QUE_CARREGA = 'serf';
 /** So o laborer constroi. Id estrutural, como `TIPO_QUE_CARREGA`. */
 export const TIPO_QUE_CONSTROI = 'laborer';
 
-const UNIDADE_ELEGIVEL_POR_TIPO: Readonly<Record<TipoDeTarefa, string>> = {
+const UNIDADE_ELEGIVEL_POR_TIPO: Readonly<Record<TipoDeTarefa, string | null>> = {
   'material-para-obra': TIPO_QUE_CARREGA,
   // F13: ouro tambem e carga — mesmo serf, mesma FSM, mesmo claim.
   'ouro-para-escola': TIPO_QUE_CARREGA,
   construir: TIPO_QUE_CONSTROI,
+  // F14: 'ocupar' nao tem UM tipo elegivel — quem pode ocupar depende do PREDIO
+  // de destino. `null` aqui significa "esta pergunta nao se responde so com o
+  // tipo da tarefa", e por isso `elegivelParaTarefa` NUNCA autoriza uma
+  // ocupacao: quem responde e `podeReclamar`.
+  ocupar: null,
 };
 
 /** Generaliza a checagem "a unidade e serf": cada tipo de tarefa tem UM tipo

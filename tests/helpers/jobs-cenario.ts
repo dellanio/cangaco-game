@@ -3,7 +3,8 @@
  * passar por `step`), de proposito: os testes de claim/release precisam de um numero
  * exato de tarefas, e o gerador (que roda no `step`) criaria as suas.
  */
-import { createInitialState } from '../../src/sim/state';
+import { completarObra, createInitialState } from '../../src/sim/state';
+import { gameData } from '../../src/sim/data';
 import type {
   GameState, PredioCompleto, PredioEmObra, Tarefa, TarefaConstruir, TarefaMaterialParaObra, Unidade,
 } from '../../src/sim/state';
@@ -149,7 +150,31 @@ export function comArmazemCompleto(
     id, tipo: 'storehouse', gx: opcoes.gx, gy: opcoes.gy, estado: 'completo', hp: 0,
     capacidade: { entrada: null, saida: null },
     estoque: { entrada: {}, saida: { stone: opcoes.stone ?? 0, timber: opcoes.timber ?? 0 } },
+    ocupante: null,
   };
+  return {
+    ...estado,
+    predios: { porId: { ...estado.predios.porId, [id]: predio }, ordem: [...estado.predios.ordem, id] },
+  };
+}
+
+/**
+ * F14 — acrescenta um predio COMPLETO de qualquer tipo (a irma de
+ * `comArmazemCompleto`, que so faz armazem). Passa pelo MESMO caminho do jogo,
+ * `completarObra`: capacidade, estoque e `ocupante` nascem de la, e a fixture
+ * nao pode divergir do que o jogo produz.
+ */
+export function comPredioCompletoEm(
+  estado: GameState,
+  id: string,
+  opcoes: { readonly tipo: string; readonly gx: number; readonly gy: number },
+): GameState {
+  const def = gameData.predios.find((p) => p.id === opcoes.tipo);
+  if (!def) throw new Error(`fixture: tipo '${opcoes.tipo}' nao existe em buildings.json`);
+  const predio = completarObra({
+    id, tipo: opcoes.tipo, gx: opcoes.gx, gy: opcoes.gy, estado: 'obra', hp: def.hp,
+    obra: { faltam: {}, nivelamento: 0 },
+  });
   return {
     ...estado,
     predios: { porId: { ...estado.predios.porId, [id]: predio }, ordem: [...estado.predios.ordem, id] },
