@@ -10,7 +10,7 @@
       "anchor": [0.5, 1],
       "estados": {
         "marcacao": "sprites/storehouse/storehouse_marcacao.png",
-        "madeira": "sprites/storehouse/storehouse_madeira.png",
+        "estrutura": "sprites/storehouse/storehouse_madeira.png",
         "completo": "sprites/storehouse/storehouse_completo.png"
       },
       "licenca": "arte propria do projeto, fornecida pelo operador em 2026-09-23",

@@ -70,12 +70,18 @@ describe('F17f — o manifesto descreve a arte que existe', () => {
     }
   });
 
-  it('o armazem tem arte nos tres estagios', () => {
+  it('o armazem tem arte em tres dos seis estagios', () => {
     const armazem = assetDoPredio(manifesto, 'storehouse');
     expect(armazem).not.toBeNull();
     expect(arquivoDoEstagio(armazem!, 'marcacao')).toBe('sprites/storehouse/storehouse_marcacao.png');
-    expect(arquivoDoEstagio(armazem!, 'madeira')).toBe('sprites/storehouse/storehouse_madeira.png');
+    // F17e: o estagio do meio passou a se chamar `estrutura`. O arquivo e o
+    // mesmo (a base dele sempre se chamou `armazem_02_estrutura.png`); a chave e
+    // que acompanha o vocabulario dos seis estagios.
+    expect(arquivoDoEstagio(armazem!, 'estrutura')).toBe('sprites/storehouse/storehouse_madeira.png');
     expect(arquivoDoEstagio(armazem!, 'completo')).toBe('sprites/storehouse/storehouse_completo.png');
+    // e o nome antigo nao pode ter ficado para tras: chave orfa e arte que nunca
+    // mais aparece na tela, sem ninguem reprovar.
+    expect(arquivoDoEstagio(armazem!, 'madeira')).toBeNull();
   });
 
   // O outro lado do §9: placeholder e comportamento normal, nao e falha.
@@ -90,7 +96,12 @@ describe('F17f — o manifesto descreve a arte que existe', () => {
 
   it('estagio sem arte resolve null, mesmo num predio que tem arte', () => {
     const armazem = assetDoPredio(manifesto, 'storehouse');
-    expect(arquivoDoEstagio(armazem!, 'estagio_futuro_da_F17e')).toBeNull();
+    // F17e: `paredes` e `cobertura` existem no render e NAO tem arte. O
+    // resolvedor devolve null e a cena cai no retangulo DAQUELE estagio — herdar
+    // o sprite do estagio vizinho mentiria sobre o progresso da obra.
+    expect(arquivoDoEstagio(armazem!, 'paredes')).toBeNull();
+    expect(arquivoDoEstagio(armazem!, 'cobertura')).toBeNull();
+    expect(arquivoDoEstagio(armazem!, 'estagio_que_nao_existe')).toBeNull();
   });
 
   // Uma unica funcao monta a chave para quem carrega e para quem desenha:

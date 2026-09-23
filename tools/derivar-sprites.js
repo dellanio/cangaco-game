@@ -45,6 +45,8 @@ const LIMIARES_DO_LOG = [0, 16, 64];
 
 const ALVOS = [
   { base: 'base/storehouse/armazem_01_obra.png', saida: 'sprites/storehouse/storehouse_marcacao.png' },
+  // F17e: a chave do manifesto para esta saida e `estrutura` (o estagio `madeira`
+  // deixou de existir). O NOME do arquivo fica: `manifesto.ts` nao parseia nome.
   { base: 'base/storehouse/armazem_02_estrutura.png', saida: 'sprites/storehouse/storehouse_madeira.png' },
   { base: 'base/storehouse/armazem_03_completo.png', saida: 'sprites/storehouse/storehouse_completo.png' },
 ];
