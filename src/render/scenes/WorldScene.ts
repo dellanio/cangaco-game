@@ -21,6 +21,9 @@ import type { EntradaDoMapa } from '../../input/colocar';
 import { criarPlantaFantasma } from '../planta-fantasma';
 import { criarCamadaDeEstradas, criarPreviaDeEstrada } from '../estradas';
 import { criarCamadaDeUnidades } from '../unidades';
+import { assetDoPredio, arquivoDoEstagio, chaveDaTextura } from '../manifesto';
+import type { EntradaDeAsset } from '../manifesto';
+import { manifestoDoJogo, texturasParaCarregar } from '../sprites';
 
 const CHAVE_TEXTURA_GRAMA = 'tile-grama';
 
@@ -44,6 +47,21 @@ export class WorldScene extends Phaser.Scene {
     private readonly relogio: RelogioVisivel,
   ) {
     super('world');
+  }
+
+  /** F17f — o primeiro carregamento de asset do projeto. Enfileira SO o que o
+   *  manifesto declara e o bundler resolveu (`texturasParaCarregar`): um
+   *  caminho inventado viraria 404, e o runner de screenshot reprova a feature
+   *  inteira por erro de console. Predio sem entrada nao aparece aqui e cai no
+   *  retangulo do §9, que e comportamento normal.
+   *
+   *  Roda antes de `create()`, entao toda textura ja existe quando o primeiro
+   *  `atualizarPredios` pergunta por ela.
+   */
+  preload(): void {
+    for (const textura of texturasParaCarregar()) {
+      this.load.image(textura.chave, textura.url);
+    }
   }
 
   create(): void {
@@ -204,6 +222,9 @@ export class WorldScene extends Phaser.Scene {
     // F05a). Nao entra em sprite: e ponte de harness, nao estado guardado no render.
     const doEstado: Record<string, PredioNoDebug> = {};
     const medidores: Record<string, readonly LinhaDoMedidor[]> = {};
+    // F17f: com que textura cada predio foi desenhado, ou null quando caiu no
+    // retangulo. O roteiro afirma sobre isto, nunca por pixel.
+    const sprites: Record<string, string | null> = {};
     for (const id of estadoDoJogo.predios.ordem) {
       const predio = estadoDoJogo.predios.porId[id];
       if (!predio) continue;
@@ -218,6 +239,7 @@ export class WorldScene extends Phaser.Scene {
       const aparencia = aparenciaDoPredio(predio.tipo);
       const estagio = estagioDaObra(predio.hp, aparencia.hpTotal);
       porEstagio[estagio] += 1;
+      sprites[id] = this.spriteDoPredio(predio.tipo, estagio)?.chave ?? null;
       // F17b: o medidor so existe para obra. Predio completo nao tem `obra.faltam`
       // (uniao discriminada em `sim/state.ts`) e nem pergunta de material pendente.
       const linhas = predio.estado === 'obra'
@@ -247,6 +269,27 @@ export class WorldScene extends Phaser.Scene {
     debug.obrasRenderizadas = porEstagio.marcacao + porEstagio.madeira;
     debug.estagiosDeObraRenderizados = porEstagio;
     debug.medidoresDeObra = medidores;
+    debug.spritesDePredio = sprites;
+  }
+
+  /** F17f — a chave de textura de um (tipo, estagio), ou `null` quando esse
+   *  desenho nao existe: predio fora do manifesto, estagio sem arquivo, ou
+   *  arquivo que o loader nao trouxe. `null` significa retangulo, e retangulo
+   *  e comportamento normal (§9), nao falha.
+   *
+   *  Uma funcao so para quem pergunta (`atualizarPredios`, que publica em
+   *  `debug.spritesDePredio`) e para quem desenha (`criarPredio`): duas contas
+   *  para a mesma coisa e como o roteiro passa a afirmar sobre algo que a tela
+   *  nao mostra.
+   */
+  private spriteDoPredio(
+    tipo: string, estagio: EstagioDaObra,
+  ): { readonly chave: string; readonly entrada: EntradaDeAsset } | null {
+    const entrada = assetDoPredio(manifestoDoJogo, tipo);
+    if (!entrada) return null;
+    if (!arquivoDoEstagio(entrada, estagio)) return null;
+    const chave = chaveDaTextura(entrada.id, estagio);
+    return this.textures.exists(chave) ? { chave, entrada } : null;
   }
 
   /** Placeholder do §9: retangulo do tamanho do footprint com o nome
@@ -263,6 +306,47 @@ export class WorldScene extends Phaser.Scene {
     const larguraPx = largura * tilePx;
     const alturaPx = altura * tilePx;
 
+    const sprite = this.spriteDoPredio(predio.tipo, estagio);
+    const corpo = sprite === null
+      ? this.desenharPlaceholder(estagio, nome, larguraPx, alturaPx)
+      : [this.desenharSprite(sprite.chave, sprite.entrada, larguraPx, alturaPx)];
+
+    const container = this.add.container(canto.x, canto.y, [
+      ...corpo, ...this.desenharMedidor(linhas, larguraPx, alturaPx),
+    ]);
+    container.setDepth(depthDeY(canto.y + alturaPx));
+    return container;
+  }
+
+  /** F17f — o sprite, ancorado pela BORDA INFERIOR do footprint: `anchor`
+   *  `[0.5, 1]` no meio da linha de baixo do retangulo de chao. E a ancoragem
+   *  que faz o predio pousar no grid; ancorar pelo centro o faria flutuar meio
+   *  tile acima sempre que a arte nao tiver a altura do footprint.
+   *
+   *  Escala por UM fator, o da largura. Dois fatores esticariam a arte: a fonte
+   *  e 3:2 (192x128 para um footprint 3x3), e a altura do sprite NAO e a do
+   *  footprint. Derivar a escala do `larguraPx` corrente, e nao de um numero
+   *  fixo, e o que faz isto sobreviver ao zoom sem tocar neste codigo.
+   *
+   *  O predio ocupar so a parte de baixo do quadrado de chao e consequencia da
+   *  perspectiva isometrica da arte de hoje — divergencia conhecida do §9.3,
+   *  registrada no `origem.nota` do manifesto e a substituir.
+   */
+  private desenharSprite(
+    chave: string, entrada: EntradaDeAsset, larguraPx: number, alturaPx: number,
+  ): Phaser.GameObjects.Image {
+    const imagem = this.add.image(larguraPx / 2, alturaPx, chave);
+    imagem.setOrigin(entrada.anchor[0], entrada.anchor[1]);
+    imagem.setScale(larguraPx / entrada.tamanho[0]);
+    return imagem;
+  }
+
+  /** O placeholder do §9, intocado desde a F11c: retangulo do tamanho do
+   *  footprint com o nome tematico por cima. Continua sendo o desenho de 27 dos
+   *  28 predios, e continua NAO sendo falha. */
+  private desenharPlaceholder(
+    estagio: EstagioDaObra, nome: string, larguraPx: number, alturaPx: number,
+  ): Phaser.GameObjects.GameObject[] {
     const emObra = estagio === 'marcacao' || estagio === 'madeira';
     const alfa = estagio === 'marcacao' ? 0.15 : estagio === 'madeira' ? 0.4 : 1;
     const retangulo = this.add.rectangle(larguraPx / 2, alturaPx / 2, larguraPx, alturaPx, 0x6b4a33, alfa);
@@ -275,12 +359,7 @@ export class WorldScene extends Phaser.Scene {
       wordWrap: { width: larguraPx - 8 },
     });
     rotulo.setOrigin(0.5, 0.5);
-
-    const container = this.add.container(canto.x, canto.y, [
-      retangulo, rotulo, ...this.desenharMedidor(linhas, larguraPx, alturaPx),
-    ]);
-    container.setDepth(depthDeY(canto.y + alturaPx));
-    return container;
+    return [retangulo, rotulo];
   }
 
   /** F17b — o medidor de material: uma fileira por material do custo, um bloco

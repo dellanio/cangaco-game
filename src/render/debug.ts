@@ -49,6 +49,12 @@ export interface EstadoDebug {
    *  material chegou e quanto o predio custa. Obra apenas; predio completo nao
    *  entra. O roteiro afirma sobre isto em vez de contar bloco por pixel (§8). */
   medidoresDeObra: Readonly<Record<string, readonly LinhaDoMedidor[]>>;
+  /** F17f — com que TEXTURA cada predio foi desenhado agora, por id, ou `null`
+   *  quando ele caiu no retangulo do §9 (sem entrada no manifesto, sem arquivo
+   *  para o estagio, ou textura que o loader nao trouxe). Os dois lados na
+   *  mesma estrutura: e assim que o roteiro prova que sprite e placeholder
+   *  convivem, sem olhar pixel (§8). */
+  spritesDePredio: Readonly<Record<string, string | null>>;
   /** Quantos tiles de estrada (F08) a cena tem desenhados agora. */
   estradasRenderizadas: number;
   /** A previa do arrasto de estrada em curso, ou null. `custo` e a pedra que o
@@ -125,6 +131,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     obrasRenderizadas: 0,
     estagiosDeObraRenderizados: { marcacao: 0, madeira: 0, completo: 0 },
     medidoresDeObra: {},
+    spritesDePredio: {},
     estradasRenderizadas: 0,
     previaDeEstrada: null,
     centroDaVila: null,
