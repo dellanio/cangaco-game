@@ -70,14 +70,88 @@ const footprintsPorOrdem = new WeakMap<object, WeakMap<object, FootprintsEmCache
 let execucoes = 0;
 let acertos = 0;
 
+/**
+ * F17c — RASCUNHO REAPROVEITADO.
+ *
+ * Antes, cada busca alocava `Float64Array(largura*altura)` e
+ * `Int32Array(largura*altura)` e preenchia os dois: 48 KB por chamada num mapa
+ * 64x64, 768 KB num 256x256. O custo era da AREA DO MAPA e nao do caminho — a
+ * mesma caminhada de 3 tiles custava 7,6x mais no mapa grande (medido antes
+ * desta feature: 40 / 94 / 303 us).
+ *
+ * Agora os vetores vivem aqui, e `marca[i] === geracaoAtual` diz se `g[i]` e
+ * `pai[i]` valem para ESTA busca. Marca velha le como "nao visitado", que era o
+ * papel do `+Infinity` e do `-1`. Zerar deixa de ser necessario.
+ *
+ * O rascunho CRESCE E NUNCA ENCOLHE: depois de um mapa grande o pequeno
+ * reaproveita o mesmo vetor, porque o indice e `y * largura + x` e cabe sempre.
+ */
+let rascunhoCapacidade = 0;
+let rascunhoG = new Float64Array(0);
+let rascunhoPai = new Int32Array(0);
+let rascunhoMarca = new Int32Array(0);
+let geracaoAtual = 0;
+let alocacoesDeRascunho = 0;
+let rascunhoEmUso = false;
+
+/** Limite de representacao de `Int32Array`, nao numero de balanceamento. */
+const GERACAO_MAXIMA = 0x7fffffff;
+
+export interface EstatisticasDoRascunho {
+  /** Quantas vezes o rascunho foi CRIADO — nao por busca: por tamanho novo. */
+  readonly alocacoes: number;
+  /** Em celulas: a area do maior mapa ja visto. */
+  readonly capacidade: number;
+}
+
 /** Contadores de busca (execucoes reais e acertos de cache) — so para teste e evidencia. */
 export function estatisticasDeBusca(): EstatisticasDeBusca {
   return { execucoes, acertos };
 }
 
+/**
+ * F17c — instrumentacao do rascunho. Fica FORA de `estatisticasDeBusca()` de
+ * proposito: execucoes e acertos sao sobre busca e cache, isto e sobre memoria.
+ * (E `EstatisticasDeBusca` tem assercoes `toEqual` sobre o objeto inteiro na
+ * F10, que um campo a mais reprovaria.)
+ */
+export function estatisticasDoRascunho(): EstatisticasDoRascunho {
+  return { alocacoes: alocacoesDeRascunho, capacidade: rascunhoCapacidade };
+}
+
 export function zerarEstatisticasDeBusca(): void {
   execucoes = 0;
   acertos = 0;
+  alocacoesDeRascunho = 0; // F17c — contador de instrumentacao, como os outros dois
+}
+
+function ocuparRascunho(total: number): void {
+  // O A* NAO e reentrante: duas buscas ao mesmo tempo dividiriam este rascunho e
+  // uma sobrescreveria a outra em silencio. Nenhum caminho do codigo faz isso
+  // hoje (a busca nao aceita callback, e a unica chamada externa dela,
+  // `footprintsDe`, so alcanca `footprint.ts`, que importa apenas tipos). A
+  // guarda existe para o dia em que alguem tentar.
+  if (rascunhoEmUso) {
+    throw new Error('pathfinding.ts: busca de A* reentrante — o rascunho e unico e nao aguenta duas buscas ao mesmo tempo.');
+  }
+  rascunhoEmUso = true;
+  if (total > rascunhoCapacidade) {
+    rascunhoG = new Float64Array(total);
+    rascunhoPai = new Int32Array(total);
+    rascunhoMarca = new Int32Array(total);
+    rascunhoCapacidade = total;
+    geracaoAtual = 0; // vetor novo vem zerado: nenhuma geracao anterior vale
+    alocacoesDeRascunho += 1;
+  }
+  if (geracaoAtual >= GERACAO_MAXIMA) {
+    rascunhoMarca.fill(0);
+    geracaoAtual = 0;
+  }
+  geracaoAtual += 1;
+}
+
+function liberarRascunho(): void {
+  rascunhoEmUso = false;
 }
 
 function footprintsDe(state: Pick<GameState, 'predios'>, dados: GameData): FootprintsEmCache {
@@ -187,7 +261,25 @@ export function buscarCaminho(
   return resultado;
 }
 
+/**
+ * F17c — ocupa o rascunho unico e garante a devolucao em qualquer saida,
+ * inclusive por excecao. Envolve a funcao INTEIRA, e nao so o laco: assim a
+ * guarda de reentrancia tambem cobre `footprintsDe` e a leitura de `dados`.
+ */
 function executar(
+  state: Pick<GameState, 'predios'>, estrada: Uint8Array, de: TileDeGrid, alvos: readonly number[],
+  modo: ModoDeBusca, dados: GameData,
+): Caminho | null {
+  const { largura, altura } = dados.terreno.mapaPadrao;
+  ocuparRascunho(largura * altura);
+  try {
+    return executarComRascunho(state, estrada, de, alvos, modo, dados);
+  } finally {
+    liberarRascunho();
+  }
+}
+
+function executarComRascunho(
   state: Pick<GameState, 'predios'>, estrada: Uint8Array, de: TileDeGrid, alvos: readonly number[],
   modo: ModoDeBusca, dados: GameData,
 ): Caminho | null {
@@ -237,9 +329,13 @@ function executar(
   };
   const ehAlvo = new Set(alvos);
 
-  const total = largura * altura;
-  const g = new Float64Array(total).fill(Number.POSITIVE_INFINITY);
-  const pai = new Int32Array(total).fill(-1);
+  // F17c — o rascunho ja foi ocupado e a geracao ja foi virada pelo involucro.
+  // `marca[i] !== geracao` e o que antes era `g[i] === +Infinity`.
+  const g = rascunhoG;
+  const pai = rascunhoPai;
+  const marca = rascunhoMarca;
+  const geracao = geracaoAtual;
+  const gDe = (i: number): number => (marca[i] === geracao ? (g[i] as number) : Number.POSITIVE_INFINITY);
 
   // fila binaria em vetores paralelos; ordem total (f, h, indice do tile)
   const hIdx: number[] = [];
@@ -286,11 +382,12 @@ function executar(
     return topo;
   };
 
+  marca[inicio] = geracao;
   g[inicio] = 0;
   empurrar(inicio, 0, heuristica(de.gx, de.gy));
   while (hIdx.length > 0) {
     const { idx, g: gAtual } = tirar();
-    if (gAtual !== g[idx]) continue; // entrada velha: ja se achou coisa melhor
+    if (gAtual !== gDe(idx)) continue; // entrada velha: ja se achou coisa melhor
     if (ehAlvo.has(idx)) {
       const tiles: TileDeGrid[] = [];
       for (let atual = idx; atual !== inicio; atual = pai[atual] as number) {
@@ -308,7 +405,8 @@ function executar(
       if (diagonal && !(andavel(nx, y) && andavel(x, ny))) continue;
       const vizinho = ny * largura + nx;
       const novo = gAtual + (diagonal ? diagonalDoTerreno(vizinho) : retoDoTerreno(vizinho));
-      if (novo < (g[vizinho] as number)) {
+      if (novo < gDe(vizinho)) {
+        marca[vizinho] = geracao;
         g[vizinho] = novo;
         pai[vizinho] = idx;
         empurrar(vizinho, novo, heuristica(nx, ny));
