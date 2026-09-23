@@ -112,9 +112,21 @@ function listarArquivosTs(dir: string): string[] {
   return resultado;
 }
 
-function gridTsTemImport(): boolean {
-  const fonte = readFileSync('src/render/grid.ts', 'utf-8');
-  return /^\s*import\b/m.test(fonte);
+/**
+ * Os arquivos de `render/` que sao aritmetica pura: prometem ZERO import no
+ * proprio comentario, e e essa promessa que os mantem fora da regra dos funis —
+ * eles nao leem `sim/data` porque nao leem NADA. Generalizada na F17d: ate ela,
+ * so `grid.ts` era verificado, e os outros dois prometiam sem prova.
+ */
+const ARITMETICA_PURA_EM_RENDER = [
+  join('src', 'render', 'grid.ts'),
+  join('src', 'render', 'estagio-obra.ts'),
+  join('src', 'render', 'medidor-obra.ts'),
+  join('src', 'render', 'nivelamento-obra.ts'),
+];
+
+function arquivosPurosComImport(): string[] {
+  return ARITMETICA_PURA_EM_RENDER.filter((f) => /^\s*import\b/m.test(readFileSync(f, 'utf-8')));
 }
 
 // F05b acrescenta um segundo funil (predios.ts, para footprint/nome de
@@ -131,8 +143,8 @@ function arquivosQueLeemSimDataForaDosFunis(): string[] {
 }
 
 describe('F04 — guardas estruturais', () => {
-  it('src/render/grid.ts nao importa nada: e aritmetica pura', () => {
-    expect(gridTsTemImport()).toBe(false);
+  it('os arquivos de aritmetica pura de src/render/ nao importam nada', () => {
+    expect(arquivosPurosComImport()).toEqual([]);
   });
 
   it('nenhum arquivo de src/render/ alem dos funis (mapa.ts, predios.ts) importa ../sim/data', () => {
@@ -166,7 +178,10 @@ afterAll(() => {
     configDoMapa,
     fonteDoTile: { arquivo: 'data/terrain.json', chave: 'tile_px', valor: gameData.terreno.tilePx },
     guardas: {
-      gridTsSemImport: !gridTsTemImport(),
+      aritmeticaPuraSemImport: {
+        arquivos: ARITMETICA_PURA_EM_RENDER,
+        comImport: arquivosPurosComImport(),
+      },
       soFunisLeemSimData: arquivosQueLeemSimDataForaDosFunis().length === 0,
     },
     simNaoVazou: PROVA_SEM_VAZAMENTO_PARA_SIM,
