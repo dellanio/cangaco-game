@@ -635,7 +635,8 @@ export function ehPredioProdutivo(predio: Predio | undefined, dados?: GameData):
 /** A gaveta `entrada` tem tudo que o ciclo consome? */
 export function temInsumo(predio: PredioCompleto, receita: ReceitaDePredio): boolean;
 /** Debita de `entrada` o que o ciclo consome. Pressupoe `temInsumo`. */
-export function consumirInsumos(predio: PredioCompleto, receita: ReceitaDePredio, dados: GameData): PredioCompleto;
+/* Na execucao o parametro `dados` caiu: debitar so precisa das chaves da receita. */
+export function consumirInsumos(predio: PredioCompleto, receita: ReceitaDePredio): PredioCompleto;
 /** O que o ciclo rende cabe na gaveta `saida`, respeitando `capacidade.saida`? */
 export function cabeNaSaida(predio: PredioCompleto, receita: ReceitaDePredio): boolean;
 /** Unidades de saida de UM ciclo (a soma de `sai`). */
@@ -654,7 +655,7 @@ it('temInsumo exige TODAS as mercadorias da receita, nao uma', () => {
 });
 
 it('consumirInsumos debita so o que o ciclo pede e nao toca na saida', () => {
-  const s = consumirInsumos(produtor('sawmill', { entrada: { tree_trunk: 3 } }), receita('sawmill'), gameData);
+  const s = consumirInsumos(produtor('sawmill', { entrada: { tree_trunk: 3 } }), receita('sawmill'));
   expect(s.estoque.entrada.tree_trunk).toBe(2);
   expect(s.estoque.saida).toEqual({});
 });
