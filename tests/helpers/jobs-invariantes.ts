@@ -16,7 +16,7 @@ import { ehEscolaCompleta } from '../../src/sim/escola';
 import { insumosDoPredio } from '../../src/sim/insumo';
 import { ehPredioOcupavel } from '../../src/sim/ocupacao';
 import { disponivelNaOrigem, vagaNoDestino } from '../../src/sim/reservas';
-import { ID_DO_ARMAZEM } from '../../src/sim/state';
+import { ID_DO_ARMAZEM, origemDaTarefaVale } from '../../src/sim/state';
 
 /**
  * O destino tem que ser coerente com o TIPO da tarefa. A regra nasceu na F09,
@@ -55,11 +55,10 @@ function violacoesDoDestino(estado: GameState, t: Tarefa, dados: GameData): stri
         v.push(`${t.id}: destino '${t.destino}' nao e armazem completo`);
       }
       // `carregando` (F10): a coleta ja aconteceu e a origem deixou de importar.
-      if (t.estado !== 'carregando') {
-        const origem = estado.predios.porId[t.origem];
-        if (!origem || origem.estado !== 'completo' || origem.tipo === ID_DO_ARMAZEM) {
-          v.push(`${t.id}: origem '${t.origem}' nao e predio completo fora do armazem`);
-        }
+      // A forma exigida da origem vem de `origemDaTarefaVale` (sim/state.ts), o
+      // MESMO predicado que `sanearTarefas` usa — nao uma copia da regra aqui.
+      if (t.estado !== 'carregando' && !origemDaTarefaVale(estado, t)) {
+        v.push(`${t.id}: origem '${t.origem}' nao e predio completo fora do armazem`);
       }
       return v;
     }

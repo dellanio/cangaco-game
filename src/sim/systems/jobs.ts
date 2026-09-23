@@ -15,16 +15,25 @@
 import type {
   GameEvent, GameState, Predio, PredioCompleto, PredioEmObra, Tarefa, TarefaDeTransporte,
 } from '../state';
-import { ehTarefaDeTransporte, ID_DO_ARMAZEM, MERCADORIA_DE_OURO } from '../state';
+import {
+  ehTarefaDeTransporte, ID_DO_ARMAZEM, MERCADORIA_DE_OURO, ORIGEM_ESPERADA_POR_TIPO,
+  origemDaTarefaVale,
+} from '../state';
 import type { GameData } from '../data/types';
 import { gameData } from '../data';
 import { armazensCompletos, distanciaEntrePredios } from '../estradas';
 import {
-  criarTarefa, criarTarefaDeConstrucao, criarTarefaDeOcupacao, criarTarefaDeOuro, distanciaDaTarefa,
-  liberar, podeReclamar, TIPO_QUE_CARREGA,
+  criarTarefa, criarTarefaDeConstrucao, criarTarefaDeInsumo, criarTarefaDeOcupacao,
+  criarTarefaDeOuro, criarTarefaParaArmazem, distanciaDaTarefa, liberar, podeReclamar,
+  TIPO_QUE_CARREGA,
 } from '../jobs';
 import type { MotivoDeLiberacao } from '../jobs';
-import { demandaNoDestino, disponivelNaOrigem, reservadoNaOrigem, vagaDoDestino } from '../reservas';
+import {
+  demandaNoDestino, disponivelNaOrigem, ofertaNaOrigem, sobraNaOrigem, vagaDoDestino,
+} from '../reservas';
+import {
+  demandaDeInsumo, excedenteNaEntrada, insumosDoPredio, produtorParado,
+} from '../insumo';
 import { obraNivelada } from '../obra';
 import { ehEscolaCompleta, ouroNecessario } from '../escola';
 import { ehPredioOcupavel, vagasDoPredio } from '../ocupacao';
@@ -56,15 +65,28 @@ const ehObra = (p: Predio | undefined): p is PredioEmObra => p !== undefined && 
 function motivoDoDestino(state: GameState, t: Tarefa, dados: GameData): MotivoDeLiberacao | null {
   const destino = state.predios.porId[t.destino];
   if (!destino) return 'destino-sumiu';
-  if (t.tipo === 'ouro-para-escola') return ehEscolaCompleta(destino) ? null : 'destino-sumiu';
-  if (t.tipo === 'ocupar') {
-    // Deixou de ser predio ocupavel (demolido e replantado, save de outra
-    // versao): a tarefa nao tem mais sentido. Ja ocupado: a vaga acabou — e o
-    // unico jeito de `vagaDeOcupacao` ficar negativa, e sai por aqui.
-    if (!ehPredioOcupavel(destino, dados)) return 'destino-sumiu';
-    return destino.ocupante === null ? null : 'destino-completo';
+  switch (t.tipo) {
+    case 'material-para-obra':
+    case 'construir':
+      return ehObra(destino) ? null : 'destino-completo';
+    case 'ouro-para-escola':
+      return ehEscolaCompleta(destino) ? null : 'destino-sumiu';
+    // F15b — o destino de insumo tem que continuar CONSUMINDO a mercadoria.
+    // `insumosDoPredio` e o mesmo predicado que o gerador usa.
+    case 'insumo-producao-parada':
+    case 'insumo-producao-baixa':
+      return insumosDoPredio(state, t.destino, dados).includes(t.mercadoria) ? null : 'destino-sumiu';
+    // F15b — niveis 6 e 7 entregam num armazem, e so nele.
+    case 'saida-cheia-para-armazem':
+    case 'excedente-para-armazem':
+      return ehArmazemCompleto(destino) ? null : 'destino-sumiu';
+    case 'ocupar':
+      // Deixou de ser predio ocupavel (demolido e replantado, save de outra
+      // versao): a tarefa nao tem mais sentido. Ja ocupado: a vaga acabou — e o
+      // unico jeito de `vagaDeOcupacao` ficar negativa, e sai por aqui.
+      if (!ehPredioOcupavel(destino, dados)) return 'destino-sumiu';
+      return destino.ocupante === null ? null : 'destino-completo';
   }
-  return ehObra(destino) ? null : 'destino-completo';
 }
 
 /** O motivo pelo qual uma tarefa reclamada, sozinha, deixou de valer; `null` se vale. */
@@ -81,7 +103,9 @@ function motivoIndividual(state: GameState, t: Tarefa, dados: GameData): MotivoD
   if (!ehTarefaDeTransporte(t)) return null; // construir/ocupar: nada alem do destino importa
   const destino = state.predios.porId[t.destino];
   const origem = state.predios.porId[t.origem];
-  if (!ehArmazemCompleto(origem)) return 'origem-sumiu';
+  // F15b — a forma exigida da origem vem do TIPO (`origemDaTarefaVale`): ate o
+  // nivel 5 e armazem; nos niveis 6 e 7 e o produtor que tem a sobra.
+  if (!origemDaTarefaVale(state, t) || origem === undefined) return 'origem-sumiu';
   if (!destino || distanciaEntrePredios(state, origem, destino, dados) === null) return 'caminho-cortado';
   return null;
 }
@@ -116,9 +140,49 @@ function abertaVale(state: GameState, t: Tarefa, dados: GameData): boolean {
   // F13: o destino tambem precisa continuar PEDINDO (a fila de treino encolhe quando o
   // jogador cancela um item; `faltam` de uma obra encolhe na entrega).
   if (demandaNoDestino(state, t, dados) < 1) return false;
-  if (!ehArmazemCompleto(state.predios.porId[t.origem])) return false;
-  if (disponivelNaOrigem(state, t.origem, t.mercadoria) < 1) return false;
+  if (!origemDaTarefaVale(state, t)) return false;
+  // F15b — `sobraNaOrigem` generaliza `disponivelNaOrigem`: le a gaveta do tipo
+  // e, no nivel 7, o EXCEDENTE em vez do estoque bruto.
+  if (sobraNaOrigem(state, t, dados) < 1) return false;
+  // F15b/D2 — a urgencia esta fotografada no tipo. Se ela virou, a aberta deixa
+  // de valer; o gerador cria a do nivel certo no MESMO tick, de graca, porque
+  // aberta nao reserva nada. Reclamada e carregando nunca passam por aqui.
+  if (t.tipo === 'insumo-producao-parada' || t.tipo === 'insumo-producao-baixa') {
+    if (produtorParado(state, t.destino, t.mercadoria, dados) !== (t.tipo === 'insumo-producao-parada')) return false;
+  }
   return distanciaDaTarefa(state, t, dados) !== null;
+}
+
+/**
+ * O TETO de tarefas que podem coexistir no grupo de `t`, e quantas ja existem
+ * nele. O grupo muda de eixo com o tipo:
+ *
+ *  - niveis 1 a 5 agrupam por DESTINO, e o teto e a demanda de la (`faltam` da
+ *    obra, a fila da escola, a gaveta do produtor);
+ *  - niveis 6 e 7 agrupam por ORIGEM, e o teto e o que a gaveta dela oferece —
+ *    o destino e um armazem, que nao tem teto nenhum (`demandaNoDestino`
+ *    devolve infinito de proposito, e `existentes > Infinity` nunca seria
+ *    verdade).
+ *
+ * `carregando` sai da contagem do lado da origem: a coleta ja tirou a unidade da
+ * gaveta, entao ela nao disputa mais com as abertas. Do lado do destino ela
+ * continua contando, porque a vaga la so e consumida na entrega.
+ */
+function grupoDeAbertas(
+  state: GameState, t: TarefaDeTransporte, dados: GameData,
+): { readonly teto: number; readonly existentes: number } {
+  const mesmoTipoEMercadoria = tarefasPorNumero(state)
+    .filter((o): o is TarefaDeTransporte => ehTarefaDeTransporte(o) && o.tipo === t.tipo && o.mercadoria === t.mercadoria);
+  if (ORIGEM_ESPERADA_POR_TIPO[t.tipo] === 'outro-predio') {
+    return {
+      teto: ofertaNaOrigem(state, t, dados),
+      existentes: mesmoTipoEMercadoria.filter((o) => o.origem === t.origem && o.estado !== 'carregando').length,
+    };
+  }
+  return {
+    teto: demandaNoDestino(state, t, dados),
+    existentes: mesmoTipoEMercadoria.filter((o) => o.destino === t.destino).length,
+  };
 }
 
 export function sanearTarefas(state: GameState, dados: GameData = gameData): ResultadoDeSistema {
@@ -150,11 +214,11 @@ export function sanearTarefas(state: GameState, dados: GameData = gameData): Res
     .reverse();
   const ordemDeSoltar = [...emGrupo.filter((t) => t.estado === 'reclamada'), ...emGrupo.filter((t) => t.estado === 'carregando')];
   for (const t of ordemDeSoltar) {
-    const origem = atual.predios.porId[t.origem];
-    if (
-      t.estado === 'reclamada' && ehArmazemCompleto(origem)
-      && (origem.estoque.saida[t.mercadoria] ?? 0) < reservadoNaOrigem(atual, t.origem, t.mercadoria)
-    ) {
+    // F15b — `sobraNaOrigem` e `oferta - reservado` na gaveta do tipo, o mesmo
+    // que a conta antiga fazia a mao para a `saida` do armazem. Negativa =
+    // reservaram mais do que a origem tem (ou do que ela ainda OFERECE: a fila
+    // da escola voltou a querer o ouro que ja era excedente).
+    if (t.estado === 'reclamada' && sobraNaOrigem(atual, t, dados) < 0) {
       liberarComMotivo(t.id, 'origem-sem-recurso');
     } else if (vagaDoDestino(atual, t, dados) < 0) {
       // A demanda caiu abaixo do reservado: obra que recebeu, ou fila de treino que
@@ -174,9 +238,7 @@ export function sanearTarefas(state: GameState, dados: GameData = gameData): Res
   for (const t of tarefasPorNumero(atual).reverse()) {
     if (t.estado !== 'aberta') continue;
     if (ehTarefaDeTransporte(t)) {
-      const teto = demandaNoDestino(atual, t, dados);
-      const existentes = tarefasPorNumero(atual)
-        .filter((o) => o.tipo === t.tipo && o.destino === t.destino && ehTarefaDeTransporte(o) && o.mercadoria === t.mercadoria).length;
+      const { teto, existentes } = grupoDeAbertas(atual, t, dados);
       if (existentes > teto) atual = cancelarAberta(atual, t.id);
     } else if (t.tipo === 'construir') {
       const existentes = tarefasPorNumero(atual).filter((o) => o.tipo === 'construir' && o.destino === t.destino).length;
@@ -203,6 +265,103 @@ function origemMaisPerto(state: GameState, destino: Predio, mercadoria: string, 
     if (melhor === null || distancia < melhor.distancia) melhor = { id: armazem.id, distancia };
   }
   return melhor === null ? null : melhor.id;
+}
+
+/**
+ * F15b — o espelho de `origemMaisPerto` para os niveis 6 e 7: o armazem completo
+ * de menor caminho por estrada a partir de `origem`. Aqui a origem e que e
+ * conhecida (e o predio que tem a sobra) e quem se escolhe e o destino. Mesmo
+ * desempate: menor distancia, e no empate o primeiro em `predios.ordem`.
+ *
+ * `null` quando nenhum armazem esta ligado — e nao e travamento: e o mesmo
+ * silencio de uma obra sem estrada. A carga espera na gaveta ate haver caminho.
+ */
+function destinoMaisPerto(state: GameState, origem: PredioCompleto, dados: GameData): string | null {
+  let melhor: { id: string; distancia: number } | null = null;
+  for (const armazem of armazensCompletos(state)) {
+    if (armazem.id === origem.id) continue;
+    const distancia = distanciaEntrePredios(state, origem, armazem, dados);
+    if (distancia === null) continue;
+    if (melhor === null || distancia < melhor.distancia) melhor = { id: armazem.id, distancia };
+  }
+  return melhor === null ? null : melhor.id;
+}
+
+/** As mercadorias de uma gaveta com quantidade positiva, em ordem ALFABETICA —
+ *  e nao a ordem das chaves do objeto, que depende de como o estoque foi montado
+ *  e nao sobreviveria a um save/load como criterio de determinismo. Nao da para
+ *  usar `economia.mercadorias`: `gold` nao esta la, e e justamente o ouro preso
+ *  na escola que o nivel 7 existe para devolver. */
+function mercadoriasDaGaveta(predio: PredioCompleto, gaveta: 'entrada' | 'saida'): string[] {
+  return Object.keys(predio.estoque[gaveta]).filter((m) => (predio.estoque[gaveta][m] ?? 0) > 0).sort();
+}
+
+/**
+ * F15b — niveis 4 e 5: o insumo que falta na gaveta `entrada` de cada produtor.
+ * Uma tarefa por unidade que falta, limitada pelo que o armazem escolhido tem
+ * livre — diferente do material de obra, que gera pelo `faltam` inteiro mesmo
+ * sem estoque. A diferenca e deliberada: aqui a demanda e permanente (a gaveta
+ * quer ficar cheia para sempre), e gerar tarefa sem lastro encheria o quadro de
+ * aberta que ninguem pode atender.
+ *
+ * `parada` vem de `produtorParado` no momento da criacao — a urgencia do D2.
+ */
+function gerarTarefasDeInsumo(state: GameState, dados: GameData): GameState {
+  let atual = state;
+  for (const id of state.predios.ordem) {
+    const predio = atual.predios.porId[id];
+    if (!predio || predio.estado !== 'completo') continue;
+    for (const mercadoria of insumosDoPredio(atual, id, dados)) {
+      const querem = demandaDeInsumo(atual, id, mercadoria, dados);
+      const existentes = tarefasPorNumero(atual)
+        .filter((t) => ehTarefaDeTransporte(t) && t.destino === id && t.mercadoria === mercadoria
+          && (t.tipo === 'insumo-producao-parada' || t.tipo === 'insumo-producao-baixa')).length;
+      if (querem <= existentes) continue;
+      const origem = origemMaisPerto(atual, predio, mercadoria, dados);
+      if (origem === null) continue;
+      const livres = disponivelNaOrigem(atual, origem, mercadoria);
+      const parada = produtorParado(atual, id, mercadoria, dados);
+      for (let i = existentes; i < Math.min(querem, existentes + livres); i++) {
+        atual = criarTarefaDeInsumo(atual, { mercadoria, origem, destino: id, parada }).state;
+      }
+    }
+  }
+  return atual;
+}
+
+/**
+ * F15b — niveis 6 e 7: o que um predio COMPLETO que nao e armazem tem para
+ * devolver. Da gaveta `saida` sai tudo (nivel 6, e dispara com estoque > 0 e nao
+ * com a gaveta cheia — nota D3); da `entrada` sai so o EXCEDENTE (nivel 7), o
+ * que o predio nao pede mais.
+ *
+ * O armazem nao entra no laco: ele nunca e origem, ou passaria a mandar carga
+ * para si mesmo (ou para o vizinho) sem que ninguem tivesse pedido.
+ */
+function gerarTarefasParaArmazem(state: GameState, dados: GameData): GameState {
+  let atual = state;
+  for (const id of state.predios.ordem) {
+    const predio = atual.predios.porId[id];
+    if (!predio || predio.estado !== 'completo' || predio.tipo === ID_DO_ARMAZEM) continue;
+    const destino = destinoMaisPerto(atual, predio, dados);
+    if (destino === null) continue;
+    for (const excedente of [false, true]) {
+      const gaveta = excedente ? 'entrada' : 'saida';
+      for (const mercadoria of mercadoriasDaGaveta(predio, gaveta)) {
+        const tipo = excedente ? 'excedente-para-armazem' : 'saida-cheia-para-armazem';
+        const oferta = excedente
+          ? excedenteNaEntrada(atual, id, mercadoria, dados)
+          : (predio.estoque.saida[mercadoria] ?? 0);
+        const existentes = tarefasPorNumero(atual)
+          .filter((t) => ehTarefaDeTransporte(t) && t.tipo === tipo && t.origem === id
+            && t.mercadoria === mercadoria && t.estado !== 'carregando').length;
+        for (let i = existentes; i < oferta; i++) {
+          atual = criarTarefaParaArmazem(atual, { mercadoria, origem: id, destino, excedente }).state;
+        }
+      }
+    }
+  }
+  return atual;
 }
 
 /**
@@ -290,6 +449,11 @@ export function gerarTarefas(state: GameState, dados: GameData = gameData): Game
       atual = criarTarefaDeConstrucao(atual, obra.id).state;
     }
   }
+  // F15b: os niveis 4 a 7, tambem sobre PREDIOS COMPLETOS. A ordem de criacao
+  // nao decide prioridade nenhuma — quem decide e `nivelDoTipo` no atendimento;
+  // seguir a escada aqui so deixa os ids em ordem legivel na evidencia.
+  atual = gerarTarefasDeInsumo(atual, dados);
+  atual = gerarTarefasParaArmazem(atual, dados);
   // F14 por ultimo, e sobre PREDIOS COMPLETOS — o laco acima so olha obra. Uma
   // obra que o laborer completou neste tick ja entra aqui e ganha a vaga de
   // ocupante no mesmo tick; o especialista a reclama no tick seguinte.

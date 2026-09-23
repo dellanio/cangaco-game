@@ -12,11 +12,22 @@ import type { GameState, Tarefa, TarefaDeTransporte, TipoDeTransporte } from '..
 import {
   ehTarefaDeTransporte, gavetaDeOrigem, MERCADORIA_DE_OURO,
 } from '../src/sim/state';
+import { gerarTarefas, sanearTarefas } from '../src/sim/systems/jobs';
+import { gameData } from '../src/sim/data';
+import { createInitialState } from '../src/sim/state';
+import { step } from '../src/sim/tick';
+import { comOuroNaEscola, escolaDoCenario, pedir } from './helpers/escola-cenario';
 import { violacoesDeInvariantes } from './helpers/jobs-invariantes';
-import { armazemDoCenario, comTarefas, comUnidadeExtra } from './helpers/jobs-cenario';
+import {
+  armazemDoCenario, comEstradas, comTarefas, comUnidadeExtra, linhaH,
+} from './helpers/jobs-cenario';
 import { demandaNoDestino, disponivelNaOrigem, reservadoNaOrigem } from '../src/sim/reservas';
 import { demandaDeInsumo } from '../src/sim/insumo';
-import { cenarioDePedreira, cenarioDeSerraria, comEntrada, comSaida } from './helpers/producao-cenario';
+import {
+  cenarioDePedreira, cenarioDeSerraria, comEntrada, comSaida, semEstrada,
+} from './helpers/producao-cenario';
+
+const CAPACIDADE_DA_ENTRADA = gameData.producao.estoqueInternoPorPredio.entrada;
 
 /** Serraria (`s1`, consome `tree_trunk`) e pedreira (`q1`, sem receita): os dois
  *  lados do contrato de destino. Os dois cenarios usam o mesmo armazem inicial. */
@@ -261,5 +272,144 @@ describe('F15b — reserva por gaveta', () => {
       origem: 'q1', destino: 's1', estado: 'aberta', reclamadaPor: null,
     }) as TarefaDeTransporte;
     expect(demandaNoDestino(base, t)).toBe(0);
+  });
+});
+
+/** O armazem do cenario com o estoque dado na gaveta `saida` (a inicial tem 30
+ *  de pedra e nada mais — os niveis 4 e 5 precisam de tronco la). */
+const comArmazemServido = (s: GameState, saida: Record<string, number>): GameState =>
+  comSaida(s, armazem, saida);
+
+const tarefasDoTipo = (s: GameState, tipo: TipoDeTransporte): TarefaDeTransporte[] =>
+  s.jobs.tarefas.ordem
+    .map((id) => s.jobs.tarefas.porId[id])
+    .filter((t): t is TarefaDeTransporte => t !== undefined && t.tipo === tipo);
+
+const tarefasPara = (s: GameState, destino: string): TarefaDeTransporte[] =>
+  s.jobs.tarefas.ordem
+    .map((id) => s.jobs.tarefas.porId[id])
+    .filter((t): t is TarefaDeTransporte => t !== undefined && ehTarefaDeTransporte(t) && t.destino === destino);
+
+describe('F15b — nivel 6: a saida do produtor vai ao armazem', () => {
+  it('pedreira com stone na saida gera tarefa para o armazem', () => {
+    const s = gerarTarefas(comSaida(pedreira, 'q1', { stone: 1 }));
+    const t = tarefasDoTipo(s, 'saida-cheia-para-armazem');
+    expect(t).toHaveLength(1);
+    expect(t[0]!.origem).toBe('q1');
+    expect(t[0]!.destino).toBe(armazem);
+    expect(t[0]!.mercadoria).toBe('stone');
+  });
+
+  it('uma tarefa por unidade na gaveta, e nao duplica em dois ticks de geracao', () => {
+    const s = gerarTarefas(comSaida(pedreira, 'q1', { stone: 3 }));
+    expect(tarefasDoTipo(s, 'saida-cheia-para-armazem')).toHaveLength(3);
+    expect(tarefasDoTipo(gerarTarefas(s), 'saida-cheia-para-armazem')).toHaveLength(3);
+  });
+
+  it('gaveta vazia nao gera nada', () => {
+    expect(tarefasDoTipo(gerarTarefas(pedreira), 'saida-cheia-para-armazem')).toEqual([]);
+  });
+
+  it('produtor sem estrada ate o armazem nao gera tarefa', () => {
+    const s = gerarTarefas(semEstrada(comSaida(pedreira, 'q1', { stone: 3 })));
+    expect(tarefasDoTipo(s, 'saida-cheia-para-armazem')).toEqual([]);
+  });
+
+  it('o armazem nunca e origem de tarefa de nivel 6 (nao entrega a si mesmo)', () => {
+    const s = gerarTarefas(comArmazemServido(pedreira, { stone: 30, timber: 10 }));
+    expect(tarefasDoTipo(s, 'saida-cheia-para-armazem')).toEqual([]);
+  });
+});
+
+describe('F15b — niveis 4 e 5: o insumo chega ao produtor', () => {
+  const servida = (naEntrada: number, noArmazem = 99): GameState =>
+    comEntrada(comArmazemServido(base, { tree_trunk: noArmazem }), 's1', { tree_trunk: naEntrada });
+
+  it('serraria vazia pede como PARADA; serraria com 2 pede como BAIXA', () => {
+    expect(tarefasDoTipo(gerarTarefas(servida(0)), 'insumo-producao-parada').length).toBeGreaterThan(0);
+    expect(tarefasDoTipo(gerarTarefas(servida(0)), 'insumo-producao-baixa')).toEqual([]);
+    expect(tarefasDoTipo(gerarTarefas(servida(2)), 'insumo-producao-baixa').length).toBeGreaterThan(0);
+    expect(tarefasDoTipo(gerarTarefas(servida(2)), 'insumo-producao-parada')).toEqual([]);
+  });
+
+  it('a parada esta acima da baixa na escada (o desempate e do atendimento)', () => {
+    expect(nivelDoTipo('insumo-producao-parada'))
+      .toBeLessThan(nivelDoTipo('insumo-producao-baixa'));
+  });
+
+  it('nao gera mais tarefas do que cabe na gaveta de entrada', () => {
+    const s = gerarTarefas(servida(0));
+    expect(tarefasPara(s, 's1')).toHaveLength(CAPACIDADE_DA_ENTRADA);
+  });
+
+  it('nao gera mais tarefas do que ha tronco no armazem', () => {
+    expect(tarefasPara(gerarTarefas(servida(0, 2)), 's1')).toHaveLength(2);
+  });
+
+  it('armazem sem tronco nenhum nao gera tarefa de insumo', () => {
+    expect(tarefasPara(gerarTarefas(servida(0, 0)), 's1')).toEqual([]);
+  });
+
+  it('gaveta cheia nao pede mais nada', () => {
+    expect(tarefasPara(gerarTarefas(servida(CAPACIDADE_DA_ENTRADA)), 's1')).toEqual([]);
+  });
+
+  it('tarefa ABERTA e re-tipada quando a urgencia muda, no mesmo tick', () => {
+    // a aberta nasceu com a serraria parada; o tronco chegou por outro caminho
+    const comAberta = gerarTarefas(servida(0));
+    expect(tarefasDoTipo(comAberta, 'insumo-producao-parada').length).toBeGreaterThan(0);
+    const urgenciaMudou = comEntrada(comAberta, 's1', { tree_trunk: 2 });
+    const depois = gerarTarefas(sanearTarefas(urgenciaMudou).state);
+    expect(tarefasDoTipo(depois, 'insumo-producao-parada')).toEqual([]);
+    expect(tarefasDoTipo(depois, 'insumo-producao-baixa').length).toBeGreaterThan(0);
+  });
+
+  it('tarefa RECLAMADA nao muda de tipo nem e cancelada por mudanca de urgencia', () => {
+    let s = comUnidadeExtra(servida(0), 'serf-a', TIPO_QUE_CARREGA, 30, 33);
+    s = comTarefas(s, [crua({
+      id: 't80', numero: 80, tipo: 'insumo-producao-parada', mercadoria: 'tree_trunk',
+      origem: armazem, destino: 's1', estado: 'reclamada', reclamadaPor: 'serf-a',
+    })]);
+    const depois = sanearTarefas(comEntrada(s, 's1', { tree_trunk: 2 })).state;
+    const t = depois.jobs.tarefas.porId['t80'];
+    expect(t?.tipo).toBe('insumo-producao-parada');
+    expect(t?.estado).toBe('reclamada');
+  });
+});
+
+describe('F15b — nivel 7: o excedente volta', () => {
+  const escola = escolaDoCenario(createInitialState(1)).id;
+  // A linha de porta dos dois predios do cenario inicial (armazem em 29..31,
+  // escola em 34..36), a mesma da F13a: sem estrada nao ha destino, e o
+  // excedente ficaria parado com razao.
+  const ligado = (): GameState => comEstradas(createInitialState(1), linhaH(29, 36, 33));
+
+  it('escola com ouro e fila vazia devolve o ouro ao armazem', () => {
+    const s = gerarTarefas(comOuroNaEscola(ligado(), escola, 1));
+    const t = tarefasDoTipo(s, 'excedente-para-armazem');
+    expect(t).toHaveLength(1);
+    expect(t[0]!.mercadoria).toBe(MERCADORIA_DE_OURO);
+    expect(t[0]!.origem).toBe(escola);
+    expect(t[0]!.destino).toBe(armazem);
+  });
+
+  it('NAO dispara enquanto a fila ainda quer o ouro', () => {
+    const inicial = ligado();
+    const comFila = step(inicial, [pedir(escola, 'serf')]);
+    const s = gerarTarefas(comOuroNaEscola(comFila, escola, 1));
+    expect(tarefasDoTipo(s, 'excedente-para-armazem')).toEqual([]);
+  });
+
+  it('o excedente some quando a fila volta a querer o ouro, e a aberta e cancelada', () => {
+    const inicial = ligado();
+    const comSobra = gerarTarefas(comOuroNaEscola(inicial, escola, 1));
+    expect(tarefasDoTipo(comSobra, 'excedente-para-armazem')).toHaveLength(1);
+    const pediuDeNovo = step(comSobra, [pedir(escola, 'serf')]);
+    expect(tarefasDoTipo(pediuDeNovo, 'excedente-para-armazem')).toEqual([]);
+  });
+
+  it('o armazem nunca e origem de tarefa de excedente (nao devolve a si mesmo)', () => {
+    const s = gerarTarefas(comEntrada(ligado(), armazem, { stone: 5 }));
+    expect(tarefasDoTipo(s, 'excedente-para-armazem')).toEqual([]);
   });
 });

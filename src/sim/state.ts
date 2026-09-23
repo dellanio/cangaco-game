@@ -401,6 +401,37 @@ export function gavetaDeOrigem(tipo: TipoDeTransporte): Gaveta {
 }
 
 /**
+ * F15b — de que PREDIO a carga sai, pelo tipo. Ate o nivel 5 e sempre um
+ * armazem (o serf abastece a cidade a partir do deposito); nos niveis 6 e 7 e o
+ * proprio predio que tem a sobra, e o armazem e o destino. Exaustiva por
+ * construcao, como `GAVETA_DE_ORIGEM_POR_TIPO`.
+ */
+export const ORIGEM_ESPERADA_POR_TIPO: Readonly<Record<TipoDeTransporte, 'armazem' | 'outro-predio'>> = {
+  'material-para-obra': 'armazem',
+  'ouro-para-escola': 'armazem',
+  'insumo-producao-parada': 'armazem',
+  'insumo-producao-baixa': 'armazem',
+  'saida-cheia-para-armazem': 'outro-predio',
+  'excedente-para-armazem': 'outro-predio',
+};
+
+/**
+ * A origem de `tarefa` tem a FORMA que o tipo dela pressupoe? Predio completo,
+ * e armazem ou nao-armazem conforme `ORIGEM_ESPERADA_POR_TIPO`.
+ *
+ * Mora aqui, e nao em `systems/jobs.ts`, para que o saneamento e o helper de
+ * invariantes dos testes facam a MESMA pergunta — nao duas copias da regra que
+ * um dia divergem.
+ */
+export function origemDaTarefaVale(state: GameState, tarefa: TarefaDeTransporte): boolean {
+  const origem = state.predios.porId[tarefa.origem];
+  if (origem === undefined || origem.estado !== 'completo') return false;
+  return ORIGEM_ESPERADA_POR_TIPO[tarefa.tipo] === 'armazem'
+    ? origem.tipo === ID_DO_ARMAZEM
+    : origem.tipo !== ID_DO_ARMAZEM;
+}
+
+/**
  * F11b — uma vaga de trabalho de construcao numa obra. So o laborer
  * (`TIPO_QUE_CONSTROI`) e elegivel. SEM `mercadoria`/`origem`: nao carrega
  * nada, e por isso SEM `'carregando'` no `estado` — o ciclo e so `aberta ->

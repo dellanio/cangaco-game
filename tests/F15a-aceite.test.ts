@@ -117,13 +117,22 @@ describe('F15a — aceite headless do BUILD_PLAN', () => {
     expect(r.tickDaObra).toBeGreaterThan(0);
     expect(r.tickDaOcupacao).toBeGreaterThan(r.tickDaObra);
 
-    // 2. a gaveta `saida` encheu ate o teto, e nada alem dele
+    // 2. a gaveta `saida` NAO entope mais: o nivel 6 da escada (F15b) leva a
+    //    pedra ao armazem. A premissa "ninguem tira da gaveta", que valia
+    //    quando este aceite foi escrito, deixou de valer POR DESENHO — o teto
+    //    da gaveta e `saida_cheia` continuam afirmados em
+    //    `F15a-producao.test.ts`, sobre o cenario isolado, onde nada escoa.
+    //    Medido: a gaveta fica em 1 e a corrida deposita 6 vezes (eram 5, com o
+    //    relogio congelado desde o tick 1116).
     const quarry = aPedreira(r.fim);
-    expect(quarry?.estoque.saida.stone).toBe(TETO_DA_GAVETA);
-    expect(r.depositos).toHaveLength(TETO_DA_GAVETA);
+    expect(quarry?.estoque.saida.stone ?? 0).toBeLessThan(TETO_DA_GAVETA);
 
-    // 3. INTERVALOS EXATOS E IGUAIS, todos do tamanho do ciclo
-    expect(intervalos(r.depositos)).toEqual(Array<number>(TETO_DA_GAVETA - 1).fill(CICLO));
+    // 3. INTERVALOS EXATOS E IGUAIS, todos do tamanho do ciclo — e agora SEM
+    //    buraco nenhum: sem o teto no caminho, o numero de depositos e
+    //    exatamente o numero de ciclos completos desde a ocupacao. E a mesma
+    //    afirmacao da F15a (ritmo constante), so que mais forte.
+    expect(r.depositos).toHaveLength(Math.floor((TICKS - r.tickDaOcupacao) / CICLO));
+    expect(intervalos(r.depositos)).toEqual(Array<number>(r.depositos.length - 1).fill(CICLO));
     expect(r.depositos[0]).toBe(r.tickDaOcupacao + CICLO);
 
     // 4. depois de ocupar, o pedreiro nunca volta a `ocioso` nem espera insumo
@@ -131,12 +140,15 @@ describe('F15a — aceite headless do BUILD_PLAN', () => {
     expect(r.ociosoDepoisDeOcupar).toBe(0);
     expect(r.esperandoInsumo).toBe(0);
 
-    // 5. cheia a gaveta, para em `saida_cheia` com o ciclo PRONTO na mao
+    // 5. com a gaveta drenando, o pedreiro nunca chega a `saida_cheia`: fica em
+    //    `trabalhando` com um ciclo em curso (progresso ENTRE zero e o ciclo —
+    //    `CICLO` cheio seria o ciclo pronto e sem lugar, que e justamente o
+    //    estado que deixou de acontecer aqui).
     const pedreiro = r.fim.unidades.ordem
       .map((id) => r.fim.unidades.porId[id])
       .find((u) => u?.tipo === PEDREIRO);
-    expect(pedreiro?.fsm).toBe('saida_cheia');
-    expect(quarry?.producao?.progresso).toBe(CICLO);
+    expect(pedreiro?.fsm).toBe('trabalhando');
+    expect(quarry?.producao?.progresso ?? 0).toBeLessThan(CICLO);
 
     // 6. as invariantes dos dois quadros, tick a tick. A UNICA excecao e o tick
     //    em que a obra vira predio: as tarefas de construir ainda apontam para
@@ -167,7 +179,7 @@ describe('F15a — aceite headless do BUILD_PLAN', () => {
 
     gravarEvidencia('F15a', {
       feature: 'F15a — Producao: o ciclo e o veio',
-      aceite: 'cenario de 1300 ticks, caminho real (planta, obra concluida, especialista treinado na escola e ocupando). A pedreira ocupada e ligada por estrada deposita stone na gaveta saida em intervalos exatos e iguais, ate o teto da gaveta, e o especialista nunca passa por ocioso depois de ocupar. Uma serraria sem tronco fica em esperando_insumo sem gastar relogio. Com o veio curto (dado injetado), a producao para e vein-exhausted sai uma vez.',
+      aceite: 'cenario de 1300 ticks, caminho real (planta, obra concluida, especialista treinado na escola e ocupando). A pedreira ocupada e ligada por estrada deposita stone na gaveta saida em intervalos exatos e iguais, e o especialista nunca passa por ocioso depois de ocupar. CORRECAO F15b: a clausula "ate o teto da gaveta" caiu porque o nivel 6 da escada passou a escoar a saida — o teto e saida_cheia seguem afirmados em F15a-producao.test.ts, no cenario isolado. Uma serraria sem tronco fica em esperando_insumo sem gastar relogio. Com o veio curto (dado injetado), a producao para e vein-exhausted sai uma vez.',
       dado: {
         ticksDoCicloDaQuarry: CICLO,
         tetoDaGavetaDeSaida: TETO_DA_GAVETA,
@@ -183,6 +195,7 @@ describe('F15a — aceite headless do BUILD_PLAN', () => {
         ticksDeCadaDeposito: r.depositos,
         intervalosEntreDepositos: intervalos(r.depositos),
         stoneNaSaidaNoFim: quarry?.estoque.saida.stone ?? 0,
+        _notaF15b: 'a gaveta nao enche mais: o nivel 6 escoa para o armazem',
         progressoNoFim: quarry?.producao?.progresso ?? 0,
         veioNoFim: quarry?.producao?.veio ?? null,
         fsmDoPedreiroNoFim: pedreiro?.fsm,

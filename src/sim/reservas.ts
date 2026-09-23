@@ -13,11 +13,11 @@
  * (por predio e mercadoria), nao mudanca de contrato.
  */
 import type { Gaveta, GameState, TarefaDeTransporte } from './state';
-import { ehTarefaDeTransporte, gavetaDeOrigem, ID_DO_ARMAZEM } from './state';
+import { ehTarefaDeTransporte, gavetaDeOrigem, ID_DO_ARMAZEM, origemDaTarefaVale } from './state';
 import type { GameData } from './data/types';
 import { gameData } from './data';
 import { ouroNecessario } from './escola';
-import { demandaDeInsumo } from './insumo';
+import { demandaDeInsumo, excedenteNaEntrada } from './insumo';
 import { vagasDoPredio } from './ocupacao';
 
 /**
@@ -117,6 +117,40 @@ export function demandaNoDestino(
       return ehArmazem ? Number.POSITIVE_INFINITY : 0;
     }
   }
+}
+
+/**
+ * F15b — quanto a ORIGEM de uma tarefa de transporte OFERECE, antes de descontar
+ * reserva. A irma de `demandaNoDestino` do outro lado da viagem.
+ *
+ * Ate o nivel 6 e simplesmente o que esta na gaveta do tipo. No nivel 7 e o
+ * EXCEDENTE, nao o estoque: o ouro que a fila da escola ainda quer esta na
+ * gaveta `entrada` e nao pode ser oferecido de volta ao armazem — seria o
+ * vaivem que `alvoDeEntrada` existe para impedir.
+ */
+export function ofertaNaOrigem(
+  state: GameState, tarefa: TarefaDeTransporte, dados: GameData = gameData,
+): number {
+  if (!origemDaTarefaVale(state, tarefa)) return 0;
+  if (tarefa.tipo === 'excedente-para-armazem') {
+    return excedenteNaEntrada(state, tarefa.origem, tarefa.mercadoria, dados);
+  }
+  const origem = state.predios.porId[tarefa.origem];
+  if (origem === undefined || origem.estado !== 'completo') return 0;
+  return origem.estoque[gavetaDeOrigem(tarefa.tipo)][tarefa.mercadoria] ?? 0;
+}
+
+/**
+ * F15b — o que ainda pode ser reservado na origem: `oferta - reservado`. A irma
+ * de `vagaDoDestino`. Pode ficar NEGATIVA quando a oferta encolhe debaixo de uma
+ * reserva (a fila da escola volta a querer o ouro que ja era excedente, com o
+ * serf a caminho) — e esse sinal que `sanearTarefas` usa.
+ */
+export function sobraNaOrigem(
+  state: GameState, tarefa: TarefaDeTransporte, dados: GameData = gameData,
+): number {
+  return ofertaNaOrigem(state, tarefa, dados)
+    - reservadoNaOrigem(state, tarefa.origem, tarefa.mercadoria, gavetaDeOrigem(tarefa.tipo));
 }
 
 /**
