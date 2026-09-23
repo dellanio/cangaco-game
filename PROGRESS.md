@@ -1640,13 +1640,72 @@ dezenas de KB.
   resolvem e existem, cada um com a dimensao declarada no cabecalho; `quarry` e
   `schoolhouse` resolvem `null`; **27 dos 28** predios nao tem arte.
 
+### A hipotese da margem, MEDIDA e substituida (2026-09-23, a pedido do operador)
+
+Esta secao dizia, como hipotese, que *"a margem transparente do derivado pode
+desalinhar predios vizinhos"* e que *"na foto o armazem parece flutuar um pouco
+a esquerda do seu quadrado"*. **As duas partes estao erradas, e agora ha
+medida.** As bboxes de alpha dos tres derivados de 192x128 foram calculadas por
+script (nenhum PNG aberto com Read, §9; limiar alpha > 32, e a bbox varia no
+maximo 2 px entre limiar 0 e 128):
+
+| estagio | bbox | larg x alt | canvas transparente | preenchido dentro da bbox |
+|---|---|---|---|---|
+| marcacao | x 9..180, y 19..110 | 172 x 92 | 64,1% | 55,8% |
+| madeira | x 18..176, y 4..123 | 159 x 120 | 52,7% | 60,9% |
+| completo | x 19..176, y 10..124 | 158 x 115 | 52,4% | 64,4% |
+
+- **Nao flutua a esquerda: o centro do conteudo do `completo` estava 2 px a
+  DIREITA** do eixo do canvas (x 97,5 contra 95,5). A impressao a olho era o
+  contrario do medido — e por isso que o §8 manda medir.
+- **A margem transparente nao era a causa principal.** No `completo` ela
+  respondia por 18% da largura; o grosso da transparencia estava DENTRO da bbox,
+  que so tinha 64,4% de pixel opaco.
+- **A causa e a PROJECAO.** O perfil linha a linha do `marcacao` da um losango de
+  vertices ~(57,19), (9,56), (180,76), (127,110) — isometrico ~2:1 — e a bbox
+  dele preenchida a 55,8% contra os 50% de um losango perfeito. `CLAUDE.md` §4
+  pede 3/4 sobre grid ortogonal e proibe losango; um losango inscrito num
+  quadrado cobre no maximo metade dele. Com o quadro cheio, o `completo` cobria
+  **31,8% do quadrado de chao de 192x192**, contra os **100%** do retangulo
+  placeholder da Casa do Coronel (`schoolhouse`, sem arte) — e e essa a
+  diferenca que o operador viu, nao margem.
+
+### O recorte pela uniao (cosmetico, feito)
+
+Decisao do operador: recortar pela **uniao** das tres bboxes, um retangulo so
+para os tres, **registrando que e cosmetico**. `tools/derivar-sprites.js` passou
+a medir os tres antes de cortar qualquer um e a aplicar `x71,y32 1380x968` (na
+resolucao da base, `alpha > 16`) aos tres. Mesmo retangulo = translacao mais
+escala uniforme identicas, entao o registro entre estagios se preserva por
+construcao e nenhum estagio pula — era essa a razao de nao recortar cada um pelo
+seu.
+
+- **O derivado passou de 192x128 para 192x135**, e `assets/manifest.json` acompanha
+  (`tamanho` e `origem.nota`). `tests/F17f-manifesto.test.ts` le o IHDR e casa com o
+  manifesto, entao a mudanca de dimensao esta coberta por teste, nao por conferencia.
+- **O ganho, medido nos arquivos novos:** o `completo` foi de 82,3% para **91,1%**
+  da largura do quadrado e de 31,8% para **39,3%** da area; o `marcacao` foi a
+  100% da largura. Repetir o recorte agora renderia 0% — a uniao virou o proprio
+  canvas.
+- **O limiar de alpha e escolha documentada, nao arbitraria:** com `alpha > 0` a
+  uniao na base da 1514x1007 (ha halo fraquissimo quase de borda a borda), com
+  `> 16` da 1380x968 e com `> 64` da 1378x967. O script imprime os tres no log a
+  cada rodada.
+- **O que o recorte NAO conserta:** os 39,3% continuam longe dos 100% do
+  placeholder, porque a causa e a projecao. Nenhum fator de escala concilia um
+  losango 2:1 com um footprint quadrado. A saida e arte, nao codigo: ou o chao e
+  redesenhado como quadrado em 3/4 (§4), ou o §4 muda junto. Continua registrado
+  na `origem.nota` do manifesto como divergencia conhecida a substituir.
+- **Evidencia desta sessao:** `npm run verify` EXIT=0 (53 arquivos, 885 testes,
+  `validate:data` 9 arquivos / 0 erros) e `npm run shot -- F17f` EXIT=0. A foto
+  `screenshots/F17f-1-armazem-placeholder-unidade.png` foi **aberta**: o armazem
+  ocupa ~180 px contra os 193 px cheios do retangulo da Casa do Coronel ao lado
+  — os 91% medidos, na tela. Na mesma foto o menu ja mostra "Armazem ... requer
+  Serraria" (BUG-002).
+
 ### Hipotese, nao verificado
 
-- **A margem transparente do derivado pode desalinhar predios vizinhos.** O
-  sprite nao encosta na borda do footprint (consequencia de nao recortar), e na
-  foto o armazem parece flutuar um pouco a esquerda do seu quadrado. Nao foi
-  medido contra o grid, e nao ha um segundo predio com arte para comparar. Volta
-  quando o segundo sprite entrar.
+- _(nenhuma: a que havia aqui foi medida e substituida acima.)_
 
 ### O que ficou de fora, e por que
 

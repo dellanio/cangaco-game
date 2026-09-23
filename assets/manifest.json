@@ -6,7 +6,7 @@
       "id": "storehouse",
       "tipo": "predio",
       "footprint": [3, 3],
-      "tamanho": [192, 128],
+      "tamanho": [192, 135],
       "anchor": [0.5, 1],
       "estados": {
         "marcacao": "sprites/storehouse/storehouse_marcacao.png",
@@ -17,7 +17,7 @@
       "origem": {
         "base": "base/storehouse/armazem_03_completo.png",
         "semente": null,
-        "nota": "Derivado por tools/derivar-sprites.js a partir de assets/base/storehouse/ (1536x1024 -> 192x128, canvas inteiro, sem recorte). PERSPECTIVA ISOMETRICA, divergente do §9.3 (3/4 sobre grid ortogonal): conhecida e a substituir. Gerada fora do repositorio e a semente nao foi fornecida, entao hoje um frame so se ajusta refazendo o conjunto."
+        "nota": "Derivado por tools/derivar-sprites.js a partir de assets/base/storehouse/ (1536x1024 -> 192x135, recorte UNICO pela uniao das bboxes de alpha dos tres estagios, x71,y32 1380x968, alpha > 16). O recorte comum preserva o registro entre estagios; recortar cada um pelo seu faria o predio pular. E COSMETICO: devolveu ~12% de tamanho linear (o completo cobria 31,8% do quadrado de chao e passou a cobrir 39,3%). PERSPECTIVA ISOMETRICA, divergente do §4 (3/4 sobre grid ortogonal): o plano de chao e um losango ~2:1, e nenhuma escala concilia losango com footprint quadrado — e esta, medida, a causa de o predio nao preencher o 3x3, nao a margem transparente. Conhecida e a substituir. Gerada fora do repositorio e a semente nao foi fornecida, entao hoje um frame so se ajusta refazendo o conjunto."
       }
     }
   ]
