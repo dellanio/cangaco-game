@@ -1583,6 +1583,92 @@ dezenas de KB.
   commitada ao fim do `.gitignore` na sessão de planejamento, **não existe mais**
   na árvore de hoje. Não removi nada: ela já tinha saído.
 
+### O que foi feito, e o que cada peca decidiu
+
+- **O `assets/manifest.json` nao existia.** O CLAUDE.md o cita desde a F01 e
+  nenhuma feature o criou — os 28 predios sempre foram retangulo, e retangulo nao
+  precisa de manifesto. Esta feature o criou com **uma** entrada (`storehouse`).
+  As outras 27 continuam ausentes de proposito: ausencia **e** o placeholder.
+- **`src/render/manifesto.ts`, zero imports.** Resolver id -> arquivo e id ->
+  chave de textura e logica pura; nao precisa de Phaser nem de `data/`. Fica
+  coberto pela guarda estrutural generica de `tests/F04-grid-ortogonal.test.ts`,
+  que varre todo arquivo de `src/render/` — nao foi preciso cadastrar o arquivo
+  novo em lugar nenhum.
+- **A dimensao derivada e 192x128, e nao 192x192.** `1536 = 192 x 8` exato, e a
+  razao da arte e 3:2. A regra que a feature fixa: **a largura manda**
+  (`tamanho[0] === footprint[0] x tilePx`, com guarda no teste), e a altura e o
+  que a arte der, gravada no manifesto e conferida contra o **cabecalho do PNG**
+  (bytes 16-23), sem abrir a imagem. O desenho escala por **um** fator.
+- **A derivacao nao recorta.** Os tres estagios tem bbox de alpha diferente
+  (1454x961, 1498x964, 1514x1007) com offsets diferentes; recortar cada um pelo
+  seu conteudo faria o predio **pular** ao trocar de estagio. `tools/derivar-
+  sprites.js` escala o canvas inteiro, e o registro se preserva por construcao.
+  O preco e a margem transparente: o sprite nao encosta na borda do footprint.
+- **`derivar-sprites.js` roda a mao; nao esta no `verify`.** Gerar arte e ato
+  humano (§9), e o `verify` nao pode depender de Chromium. O que o `verify`
+  garante e o outro lado: o teste headless reprova se um arquivo declarado
+  sumir ou mudar de dimensao.
+- **`sprites-urls.ts` e o unico arquivo que fala com o bundler.** `import.meta.
+  glob` resolve as URLs com hash em build; `sprites.ts` so enfileira o que o
+  manifesto declara **e** o glob resolveu. Sem isso o PNG carregaria por caminho
+  relativo e quebraria em producao — e o runner de screenshot reprova por erro
+  de console, entao um 404 derruba a feature sozinho.
+- **`debug.spritesDePredio`**: por id, a chave de textura ou `null`. Os dois
+  lados do §9 na **mesma** estrutura — e assim que o roteiro prova que sprite e
+  placeholder convivem, sem olhar pixel (§8). A chave de diff de
+  `atualizarPredios` nao mudou: textura e funcao de `(tipo, estagio)`, e
+  `estagio` ja estava na chave.
+- **Um bloco de eslint de um arquivo so** para `derivar-sprites.js`
+  (`Buffer`/`document`/`Image`): configurar a regra para o caso legitimo, nao
+  ampliar `ignores` nem usar `eslint-disable` (§10).
+- **Perspectiva divergente, conhecida.** A arte fornecida e **isometrica**; a
+  convencao do projeto (§9.3) e 3/4 sobre grid ortogonal. Usada assim por decisao
+  do operador: o objetivo era validar manifesto, dimensao e ancoragem, nao a arte
+  final. Registrado no `origem.nota` do manifesto e na Nota do item.
+
+### Verificado (evidencia aberta nesta sessao)
+
+- `npm run verify` — **53 arquivos, 882 testes**, typecheck e lint limpos,
+  `validate:data` 9 arquivos / 0 erros. Codigo de saida 0.
+- `npm run shot -- F17f` — codigo de saida 0, 2 capturas. O runner reprova por
+  erro de console, entao as capturas tambem provam que nenhum asset deu 404.
+- `screenshots/F17f-1-armazem-placeholder-unidade.png` **aberto com Read**: o
+  armazem desenhado por PNG, a Casa do Coronel como retangulo marrom com o nome
+  escrito, e seis unidades no mesmo quadro. A escala fecha com o GDD — a unidade
+  (32 px) da mais ou menos a altura da porta do armazem.
+- `tests/F17f-manifesto.test.ts` — 9 casos: os tres arquivos do armazem
+  resolvem e existem, cada um com a dimensao declarada no cabecalho; `quarry` e
+  `schoolhouse` resolvem `null`; **27 dos 28** predios nao tem arte.
+
+### Hipotese, nao verificado
+
+- **A margem transparente do derivado pode desalinhar predios vizinhos.** O
+  sprite nao encosta na borda do footprint (consequencia de nao recortar), e na
+  foto o armazem parece flutuar um pouco a esquerda do seu quadrado. Nao foi
+  medido contra o grid, e nao ha um segundo predio com arte para comparar. Volta
+  quando o segundo sprite entrar.
+
+### O que ficou de fora, e por que
+
+- **As fotos dos estagios `marcacao` e `madeira` do armazem.** Impossiveis hoje:
+  o armazem e **permanentemente nao construivel** — `data/buildings.json` da a ele
+  `"desbloqueadoPor": null` e `menuBuildInicial` esta vazio, entao
+  `estaDesbloqueado('storehouse')` e sempre `false`, enquanto a arvore do GDD
+  (`docs/GDD.md:262-282`) pendura "Storehouse (adicional)" na **Sawmill**.
+  Registrado como **BUG-002**, com a correcao ja escrita (`"desbloqueadoPor":
+  "sawmill"`). Os tres estagios continuam provados no teste headless; o que falta
+  e so a prova na tela. A Evidencia do item da F17f foi corrigida para o que
+  existe, e a foto 2 passou a ser uma obra de `woodcutters` (sem arte) **ao lado**
+  do armazem com sprite — a convivencia que a feature existe para garantir.
+- **A chave da F12 nao foi virada para `false`.** O aceite dela **como esta
+  escrito** (Casa do Lenhador -> Serraria -> Rocado) passa; o que falha e o
+  "Storehouse (adicional)" da arvore, que aquele aceite nunca listou. Virar ou
+  nao e decisao do operador.
+- **`assets/edificios/` continua fora do git.** Sobraram ali os PNGs de
+  `casa_lenhador`, que a negacao do `.gitignore` tornou versionaveis. Nao foram
+  commitados: sao arte de um predio que esta feature nao cobre, e o que entra em
+  `assets/base/` e decisao humana (§9).
+
 ## Perguntas em aberto
 
 _(nenhuma no momento: as três que sobravam foram decididas pelo operador — ver "Ajuste pós-F10".)_

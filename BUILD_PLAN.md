@@ -819,7 +819,17 @@ prédio surge sem clique do jogador.
   porta, e isso nunca foi visto.
 - **Evidência**: `test-output/F17f.json` +
   `screenshots/F17f-1-armazem-placeholder-unidade.png` +
-  `screenshots/F17f-2-obra-marcacao.png` + `screenshots/F17f-3-obra-madeira.png`
+  `screenshots/F17f-2-obra-placeholder-ao-lado-do-sprite.png`
+- **Nota (as fotos de obra do armazém não existem, e por quê — 2026-09-23)**: a
+  evidência dizia `F17f-2-obra-marcacao` e `F17f-3-obra-madeira`. **Não há como
+  pôr os dois na tela**: o armazém é permanentemente não construível
+  (`desbloqueadoPor: null` com `menuBuildInicial` vazio — **BUG-002**), então o
+  único prédio com arte nunca está em obra. Os três estágios continuam provados no
+  teste headless, que resolve os três arquivos e confere a dimensão de cada um; o
+  que ficou faltando é só a prova **na tela**, e ela volta junto com a correção do
+  BUG-002. No lugar delas, a foto 2 prova o outro lado do §9 com uma obra de
+  `woodcutters` (sem arte, rectângulo) **ao lado** do armazém com sprite, no mesmo
+  quadro: é a convivência que a feature existe para garantir.
 - **Nota (não é feature de integração)**: toca `src/render/`, `assets/`, `tools/`
   e `tests/`. **`src/sim/` e `src/ui/` não mudam** — logo não precisa da exceção
   do §10, e não ganha uma no meio do caminho. Se a implementação parecer pedir
@@ -961,6 +971,17 @@ prédio surge sem clique do jogador.
   `marcacao`/`fundacao` precisa saber se a obra já nivelou. Se a ordem inverter,
   `estagioDaObra` mantém a assinatura de dois argumentos e `fundacao` espera —
   os outros cinco valores não dependem da F17d.
+- **Nota (o que esta feature herda da F17f — estágio sem arquivo cai no retângulo
+  DELE)**: a F17f fixou o contrato do manifesto com **três** estágios; esta feature
+  transforma três em **seis**, e o armazém terá arte para três deles e nenhuma para
+  os outros. O resolvedor já responde a isso e **não precisa mudar**:
+  `arquivoDoEstagio` devolve `null` para estágio ausente em `estados`, e
+  `spriteDoPredio` (`render/scenes/WorldScene.ts`) cai no placeholder **daquele
+  estágio**. O que não pode acontecer, e o que uma implementação apressada faria,
+  é herdar o sprite do estágio vizinho: um prédio em `paredes` desenhado com o PNG
+  de `estrutura` mente sobre o progresso, que é justamente o que esta feature
+  existe para mostrar. Meio sprite e meio retângulo no mesmo prédio é **feio e
+  correto**; sprite errado é só errado.
 
 
 ---
