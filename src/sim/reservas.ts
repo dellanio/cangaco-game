@@ -17,6 +17,7 @@ import { ehTarefaDeTransporte } from './state';
 import type { GameData } from './data/types';
 import { gameData } from './data';
 import { ouroNecessario } from './escola';
+import { vagasDoPredio } from './ocupacao';
 
 /** Unidades de `mercadoria` reservadas na ORIGEM `predioId`: so tarefas `reclamada` — a
  *  `carregando` ja consumiu a reserva da origem na coleta (F10). Vale para todo tipo
@@ -107,4 +108,29 @@ export function vagaDeConstrucao(state: GameState, predioId: string, dados: Game
   const predio = state.predios.porId[predioId];
   if (!predio || predio.estado !== 'obra') return 0;
   return dados.construcao.laborersMaximosPorObra - laborersReservados(state, predioId);
+}
+
+/** F14 — vagas de OCUPACAO reservadas no predio `predioId`: tarefas `'ocupar'`
+ *  que nao estao abertas — so `'reclamada'` existe para esse tipo. Irma de
+ *  `laborersReservados`. */
+export function ocupantesReservados(state: GameState, predioId: string): number {
+  let soma = 0;
+  for (const id of state.jobs.tarefas.ordem) {
+    const t = state.jobs.tarefas.porId[id];
+    if (t && t.tipo === 'ocupar' && t.estado !== 'aberta' && t.destino === predioId) soma += 1;
+  }
+  return soma;
+}
+
+/**
+ * A vaga de ocupante ainda reservavel: `vagasDoPredio - reservado`. Nunca fica
+ * negativa por disputa: com uma vaga so, um claim ja zera a conta, e a chegada
+ * troca reserva por posse no mesmo tick. O caso "ocupado por outro caminho"
+ * (save adulterado, demolir e replantar) e pego no ramo INDIVIDUAL de
+ * `sanearTarefas` (`motivoDoDestino` -> `destino-completo`), nao aqui.
+ */
+export function vagaDeOcupacao(
+  state: GameState, predioId: string, dados: GameData = gameData,
+): number {
+  return vagasDoPredio(state.predios.porId[predioId], dados) - ocupantesReservados(state, predioId);
 }

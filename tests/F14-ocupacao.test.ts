@@ -2,14 +2,21 @@
  * F14 — a posse mora no predio, e quem ocupa o que vem do dado.
  */
 import { describe, expect, it } from 'vitest';
-import { completarObra, createInitialState } from '../src/sim/state';
-import type { PredioEmObra } from '../src/sim/state';
+import { completarObra, createInitialState, ehTarefaDeTransporte } from '../src/sim/state';
+import type { GameState, PredioEmObra } from '../src/sim/state';
+import {
+  caminhoAtePredioCompleto, criarTarefaDeOcupacao, elegivelParaTarefa, podeReclamar,
+  reclamar, reclamarMelhorOcupacao, tarefasDeOcupacaoEmOrdem,
+} from '../src/sim/jobs';
+import { ocupantesReservados, vagaDeOcupacao } from '../src/sim/reservas';
 import { gameData } from '../src/sim/data';
 import {
   ehPredioOcupavel, predioAceita, predioDoOcupante, tiposQueOcupam,
   trabalhadorDoTipo, vagasDoPredio,
 } from '../src/sim/ocupacao';
-import { armazemDoCenario, comPredioCompletoEm } from './helpers/jobs-cenario';
+import {
+  armazemDoCenario, comPredioCompletoEm, comUnidadeExtra, semLaborers, serfsDoCenario,
+} from './helpers/jobs-cenario';
 
 const inicial = createInitialState(1);
 
@@ -94,5 +101,85 @@ describe('F14 — quem ocupa o que vem do dado', () => {
     expect(ocupam.has('serf')).toBe(false);
     expect(ocupam.has('laborer')).toBe(false);
     expect(ocupam.has(trabalhadorDoTipo('quarry') ?? '')).toBe(true);
+  });
+});
+
+const PEDREIRO = trabalhadorDoTipo('quarry') ?? '';
+
+/** Uma quarry completa em (26,36) e um pedreiro parado no spawn, sem laborers
+ *  (que so poluiriam o quadro com tarefas de construcao). */
+function cenarioDeOcupacao(): GameState {
+  const com = comPredioCompletoEm(semLaborers(inicial), 'q1', { tipo: 'quarry', gx: 26, gy: 36 });
+  return comUnidadeExtra(com, 'esp1', PEDREIRO, 30, 34);
+}
+
+describe('F14 — a tarefa de ocupar no quadro', () => {
+  it('nao e tarefa de transporte: nao tem mercadoria nem origem', () => {
+    const { state, id } = criarTarefaDeOcupacao(cenarioDeOcupacao(), 'q1');
+    const t = state.jobs.tarefas.porId[id];
+    expect(t?.tipo).toBe('ocupar');
+    expect(t && ehTarefaDeTransporte(t)).toBe(false);
+    expect(t && 'origem' in t).toBe(false);
+  });
+
+  it('a elegibilidade vem do DESTINO, nao do tipo da tarefa', () => {
+    const { state, id } = criarTarefaDeOcupacao(cenarioDeOcupacao(), 'q1');
+    const t = state.jobs.tarefas.porId[id];
+    if (!t) throw new Error('tarefa criada');
+    expect(podeReclamar(state, t, PEDREIRO)).toBe(true);
+    expect(podeReclamar(state, t, 'serf')).toBe(false);
+    expect(podeReclamar(state, t, 'laborer')).toBe(false);
+    // o mapa por tipo de tarefa, sozinho, nunca autoriza uma ocupacao
+    expect(elegivelParaTarefa('ocupar', PEDREIRO)).toBe(false);
+  });
+
+  it('o claim reserva a unica vaga: o segundo pedreiro e recusado', () => {
+    const base = comUnidadeExtra(cenarioDeOcupacao(), 'esp2', PEDREIRO, 31, 34);
+    const { state, id } = criarTarefaDeOcupacao(base, 'q1');
+    expect(vagaDeOcupacao(state, 'q1')).toBe(1);
+
+    const r = reclamar(state, id, 'esp1');
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(ocupantesReservados(r.state, 'q1')).toBe(1);
+    expect(vagaDeOcupacao(r.state, 'q1')).toBe(0);
+
+    const { state: comSegunda, id: id2 } = criarTarefaDeOcupacao(r.state, 'q1');
+    expect(reclamar(comSegunda, id2, 'esp2')).toEqual({ ok: false, motivo: 'destino-sem-vaga' });
+  });
+
+  it('serf nao reclama uma vaga de ocupante', () => {
+    const { state, id } = criarTarefaDeOcupacao(cenarioDeOcupacao(), 'q1');
+    const serf = serfsDoCenario(state)[0] ?? '';
+    expect(reclamar(state, id, serf)).toEqual({ ok: false, motivo: 'unidade-invalida' });
+  });
+
+  it('sem caminho ate a porta, nao ha claim', () => {
+    const base = comUnidadeExtra(cenarioDeOcupacao(), 'ilhado', PEDREIRO, 0, 0);
+    const u = base.unidades.porId.ilhado;
+    if (!u) throw new Error('fixture');
+    const semRota: GameState = {
+      ...base,
+      unidades: { ...base.unidades, porId: { ...base.unidades.porId, ilhado: { ...u, gx: -1, gy: -1 } } },
+    };
+    expect(caminhoAtePredioCompleto(semRota, 'q1', 'ilhado')).toBe(null);
+    const { state, id } = criarTarefaDeOcupacao(semRota, 'q1');
+    expect(reclamar(state, id, 'ilhado')).toEqual({ ok: false, motivo: 'sem-caminho' });
+  });
+
+  it('reclamarMelhorOcupacao escolhe pelo caminho mais curto, e desempata pelo numero', () => {
+    let e = comPredioCompletoEm(cenarioDeOcupacao(), 'q2', { tipo: 'quarry', gx: 40, gy: 44 });
+    e = criarTarefaDeOcupacao(e, 'q2').state; // longe, criada primeiro
+    e = criarTarefaDeOcupacao(e, 'q1').state; // perto
+    const r = reclamarMelhorOcupacao(e, 'esp1');
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.state.jobs.tarefas.porId[r.tarefa]?.destino).toBe('q1');
+  });
+
+  it('a ordenacao nao oferece a vaga a quem o predio nao aceita', () => {
+    const { state } = criarTarefaDeOcupacao(cenarioDeOcupacao(), 'q1');
+    const comLenhador = comUnidadeExtra(state, 'lenha1', 'woodcutter', 30, 34);
+    expect(tarefasDeOcupacaoEmOrdem(comLenhador, 'lenha1')).toHaveLength(0);
+    expect(tarefasDeOcupacaoEmOrdem(comLenhador, 'esp1')).toHaveLength(1);
   });
 });

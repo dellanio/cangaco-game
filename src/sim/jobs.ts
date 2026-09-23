@@ -12,7 +12,7 @@
  */
 import type {
   GameEvent, GameState, Tarefa, TarefaConstruir, TarefaDeTransporte, TarefaMaterialParaObra,
-  TarefaOuroParaEscola, TipoDeTarefa,
+  TarefaOcupar, TarefaOuroParaEscola, TipoDeTarefa,
 } from './state';
 import { ehTarefaDeTransporte, MERCADORIA_DE_OURO } from './state';
 import type { GameData } from './data/types';
@@ -22,7 +22,8 @@ import type { TileDeGrid } from './estradas';
 import { obraTrabalhavel } from './obra';
 import { buscarCaminho } from './pathfinding';
 import type { Caminho } from './pathfinding';
-import { disponivelNaOrigem, vagaDeConstrucao, vagaDoDestino } from './reservas';
+import { disponivelNaOrigem, vagaDeConstrucao, vagaDeOcupacao, vagaDoDestino } from './reservas';
+import { predioAceita } from './ocupacao';
 
 /**
  * Por que uma tarefa reclamada foi liberada. Cada motivo devolve as DUAS reservas
@@ -88,6 +89,23 @@ export function elegivelParaTarefa(tipoDaTarefa: TipoDeTarefa, tipoDaUnidade: st
   return UNIDADE_ELEGIVEL_POR_TIPO[tipoDaTarefa] === tipoDaUnidade;
 }
 
+/**
+ * F14 — a pergunta completa: esta unidade pode reclamar ESTA tarefa? Para tudo
+ * que nao e `'ocupar'` e exatamente `elegivelParaTarefa` (o tipo basta). Para
+ * `'ocupar'`, a resposta vem do DESTINO — o `trabalhador` que o tipo de predio
+ * declara no dado.
+ *
+ * Toda checagem de elegibilidade passa por aqui: `reclamar`, `sanearTarefas` e
+ * as invariantes de teste. `elegivelParaTarefa` continua publica porque a F11b
+ * prende o par serf/laborer nela.
+ */
+export function podeReclamar(
+  state: GameState, tarefa: Tarefa, tipoDaUnidade: string, dados: GameData = gameData,
+): boolean {
+  if (tarefa.tipo !== 'ocupar') return elegivelParaTarefa(tarefa.tipo, tipoDaUnidade);
+  return predioAceita(state.predios.porId[tarefa.destino], tipoDaUnidade, dados);
+}
+
 /** O nivel do tipo na escada de `delivery.json`, lido pelo `id` — nunca um numero em
  *  `.ts`. Falha alto se o dado nao tem o id: assumir um nivel escondido seria pior. */
 export function nivelDoTipo(tipo: TipoDeTarefa, dados: GameData = gameData): number {
@@ -150,6 +168,16 @@ export function criarTarefaDeConstrucao(
 ): { readonly state: GameState; readonly id: string } {
   const numero = state.proximoId;
   const tarefa: TarefaConstruir = { id: `t${numero}`, numero, tipo: 'construir', destino, estado: 'aberta', reclamadaPor: null };
+  return inserirTarefa(state, tarefa);
+}
+
+/** F14 — cria uma vaga de OCUPANTE aberta no predio completo `destino`. Irma de
+ *  `criarTarefaDeConstrucao`. */
+export function criarTarefaDeOcupacao(
+  state: GameState, destino: string,
+): { readonly state: GameState; readonly id: string } {
+  const numero = state.proximoId;
+  const tarefa: TarefaOcupar = { id: `t${numero}`, numero, tipo: 'ocupar', destino, estado: 'aberta', reclamadaPor: null };
   return inserirTarefa(state, tarefa);
 }
 
@@ -234,6 +262,19 @@ export function caminhoAteAObra(
   return buscarCaminho(state, { gx: unidade.gx, gy: unidade.gy }, tilesDaPorta(predio, dados), 'livre', dados);
 }
 
+/** F14 — o caminho a pe do especialista ate a porta do predio COMPLETO. Irmao de
+ *  `caminhoAteAObra`: mesma vizinhanca `'livre'` e a porta inteira
+ *  (`tilesDaPorta`), porque o especialista nao carrega nada e nao depende de
+ *  estrada — a mesma regra do laborer. So o estado exigido do predio muda. */
+export function caminhoAtePredioCompleto(
+  state: GameState, predioId: string, unidadeId: string, dados: GameData = gameData,
+): Caminho | null {
+  const predio = state.predios.porId[predioId];
+  const unidade = state.unidades.porId[unidadeId];
+  if (!predio || predio.estado !== 'completo' || !unidade) return null;
+  return buscarCaminho(state, { gx: unidade.gx, gy: unidade.gy }, tilesDaPorta(predio, dados), 'livre', dados);
+}
+
 /**
  * O custo, em ticks, que ordena as tarefas. Com `unidadeId`: o plano inteiro (as duas
  * pernas). Sem unidade (`null`): so a perna de entrega, da melhor porta de coleta —
@@ -271,7 +312,7 @@ export function reclamar(
   if (tarefa.estado !== 'aberta') return { ok: false, motivo: 'tarefa-ja-reclamada' };
 
   const unidade = state.unidades.porId[unidadeId];
-  if (!unidade || !elegivelParaTarefa(tarefa.tipo, unidade.tipo)) return { ok: false, motivo: 'unidade-invalida' };
+  if (!unidade || !podeReclamar(state, tarefa, unidade.tipo, dados)) return { ok: false, motivo: 'unidade-invalida' };
   if (unidadeJaTemTarefa(state, unidadeId)) return { ok: false, motivo: 'unidade-ocupada' };
 
   if (ehTarefaDeTransporte(tarefa)) {
@@ -283,6 +324,13 @@ export function reclamar(
       return { ok: false, motivo: 'destino-sem-vaga' };
     }
     if (custoDaTarefa(state, tarefa, unidadeId, dados) === null) return { ok: false, motivo: 'sem-caminho' };
+  } else if (tarefa.tipo === 'ocupar') {
+    // F14: UMA vaga por predio; o tipo certo de civil ja foi checado em
+    // `podeReclamar`. Sem estrada exigida, como a de construir.
+    if (vagaDeOcupacao(state, tarefa.destino, dados) < 1) return { ok: false, motivo: 'destino-sem-vaga' };
+    if (caminhoAtePredioCompleto(state, tarefa.destino, unidadeId, dados) === null) {
+      return { ok: false, motivo: 'sem-caminho' };
+    }
   } else {
     // 'construir': sem mercadoria/origem (o laborer nao carrega nada).
     if (vagaDeConstrucao(state, tarefa.destino, dados) < 1) return { ok: false, motivo: 'destino-sem-vaga' };
@@ -450,6 +498,49 @@ export function reclamarMelhorConstrucao(
   state: GameState, unidadeId: string, dados: GameData = gameData,
 ): ResultadoDoClaimMelhor {
   const candidatas = tarefasDeConstrucaoEmOrdem(state, unidadeId, dados);
+  const primeira = candidatas[0];
+  if (primeira === undefined) return { ok: false, motivo: 'sem-tarefa-aberta' };
+  let primeiraRecusa: MotivoDeRecusaDoClaim | null = null;
+  for (const tarefa of candidatas) {
+    const r = reclamar(state, tarefa.id, unidadeId, dados);
+    if (r.ok) return { ok: true, state: r.state, tarefa: tarefa.id };
+    primeiraRecusa ??= r.motivo;
+  }
+  return { ok: false, motivo: primeiraRecusa ?? 'sem-tarefa-aberta' };
+}
+
+/**
+ * As `'ocupar'` abertas na ordem de escolha do especialista: `(custo do caminho
+ * A* a pe ate a porta, numero)`. SEM nivel — `'ocupar'` nao esta na escada de
+ * `delivery.json`, como `'construir'` nao esta. Filtra por `podeReclamar`: um
+ * lenhador nunca ve a vaga da pedreira.
+ */
+export function tarefasDeOcupacaoEmOrdem(
+  state: GameState, unidadeId: string | null = null, dados: GameData = gameData,
+): TarefaOcupar[] {
+  const unidade = unidadeId === null ? null : state.unidades.porId[unidadeId];
+  const candidatas = state.jobs.tarefas.ordem
+    .map((id) => state.jobs.tarefas.porId[id])
+    .filter((t): t is TarefaOcupar => t !== undefined && t.tipo === 'ocupar' && t.estado === 'aberta')
+    .filter((t) => unidade == null || podeReclamar(state, t, unidade.tipo, dados));
+  const chaves = new Map(candidatas.map((t) => [
+    t.id,
+    unidadeId === null ? 0 : caminhoAtePredioCompleto(state, t.destino, unidadeId, dados)?.custo ?? Number.POSITIVE_INFINITY,
+  ]));
+  return [...candidatas].sort((a, b) => {
+    const ca = chaves.get(a.id) ?? Number.POSITIVE_INFINITY;
+    const cb = chaves.get(b.id) ?? Number.POSITIVE_INFINITY;
+    if (ca !== cb) return ca < cb ? -1 : 1;
+    return a.numero - b.numero;
+  });
+}
+
+/** F14 — reclama, para o especialista `unidadeId`, a melhor `'ocupar'` aberta QUE
+ *  DER para reclamar. Irma de `reclamarMelhorConstrucao`. */
+export function reclamarMelhorOcupacao(
+  state: GameState, unidadeId: string, dados: GameData = gameData,
+): ResultadoDoClaimMelhor {
+  const candidatas = tarefasDeOcupacaoEmOrdem(state, unidadeId, dados);
   const primeira = candidatas[0];
   if (primeira === undefined) return { ok: false, motivo: 'sem-tarefa-aberta' };
   let primeiraRecusa: MotivoDeRecusaDoClaim | null = null;
