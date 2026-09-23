@@ -434,6 +434,40 @@ export function removerTarefa(state: GameState, tarefaId: string): GameState {
 }
 
 /**
+ * BUG-001 — a obra que acabou de virar predio leva junto TODAS as tarefas de
+ * `construir` que ainda apontam para ela: a do concluinte ja saiu por
+ * `removerTarefa`, mas as dos outros laborers (reclamadas) e as abertas do teto
+ * de `laborersMaximosPorObra` ficavam ate `sanearTarefas` do tick SEGUINTE.
+ *
+ * Era um residuo de um tick que se curava sozinho — e uma janela em que o
+ * quadro afirmava algo falso ("ha obra para construir aqui"). Cancelar no
+ * mesmo tick faz a invariante "tarefa de construir tem destino em obra" valer
+ * em TODO tick, sem tolerancia no verificador.
+ *
+ * Cancela, nao reabre: `'destino-completo'` nao esta em `MOTIVOS_QUE_REABREM`,
+ * e o caminho e o mesmo que `sanearTarefas` usaria. A unidade que segurava a
+ * tarefa larga o id na propria FSM (`tarefaDoLaborer` -> `null` -> ocioso).
+ */
+export function cancelarConstrucoesDe(
+  state: GameState, predioId: string,
+): { readonly state: GameState; readonly events: readonly GameEvent[] } {
+  let atual = state;
+  const events: GameEvent[] = [];
+  for (const id of [...state.jobs.tarefas.ordem]) {
+    const t = atual.jobs.tarefas.porId[id];
+    if (!t || t.tipo !== 'construir' || t.destino !== predioId) continue;
+    if (t.estado === 'aberta') {
+      atual = removerTarefa(atual, id); // aberta nao reserva nada: nada a liberar, nada a emitir
+      continue;
+    }
+    const r = liberar(atual, id, 'destino-completo');
+    atual = r.state;
+    events.push(...r.events);
+  }
+  return { state: atual, events };
+}
+
+/**
  * O release: tira a tarefa de `reclamada` (ou `carregando`), e com isso devolve o que
  * ela reservava (as DUAS pontas, ou so o destino). Numa `reclamada`, motivo de UNIDADE
  * reabre a mesma tarefa; motivo de origem, caminho ou destino a CANCELA (o gerador cria

@@ -1,12 +1,12 @@
 import { describe, it, expect, afterAll } from 'vitest';
 import { gameData } from '../src/sim/data';
-import type { GameEvent, GameState, PredioEmObra } from '../src/sim/state';
+import type { GameEvent, GameState, PredioEmObra, Tarefa } from '../src/sim/state';
 import { completarObra } from '../src/sim/state';
 import { step } from '../src/sim/tick';
 import {
   alvoDeNivelamento, entreguesNaObra, hpTotalDoTipo, obraNivelada, obraTrabalhavel, tetoDeHp,
 } from '../src/sim/obra';
-import { criarTarefaDeConstrucao, reclamar, tarefasDeConstrucaoEmOrdem } from '../src/sim/jobs';
+import { criarTarefaDeConstrucao, reclamar, tarefasDeConstrucaoEmOrdem, TIPO_QUE_CONSTROI } from '../src/sim/jobs';
 import { gerarTarefas } from '../src/sim/systems/jobs';
 import { tilesDaPorta } from '../src/sim/estradas';
 import {
@@ -27,27 +27,16 @@ function comHp(estado: GameState, id: string, hp: number): GameState {
   return { ...estado, predios: { ...estado.predios, porId: { ...estado.predios.porId, [id]: novo } } };
 }
 
-/**
- * `violacoesDeInvariantes` (jobs-invariantes.ts, generico, compartilhado com F09/F10) marca
- * QUALQUER tarefa cujo destino nao seja mais `'obra'` — sem distinguir "sumiu" de "terminou
- * de pé". Isso pega um residuo de UM tick que e esperado, nao bug: quando um laborer termina
- * uma obra, as tarefas 'construir' DOS OUTROS (reclamadas ou ainda abertas, do teto de
- * `laborersMaximosPorObra`) so caem no tick seguinte, por `sanearTarefas` -> 'destino-completo'
- * — o mesmo caminho que o serf ja usa (comentario no topo de sim/systems/laborers.ts). Aqui se
- * tolera SO essa forma exata, e SO quando o destino de fato virou 'completo' (nunca 'sumiu').
+/*
+ * A TOLERANCIA SAIU (BUG-001, 2026-09-23). Ate aqui existia um
+ * `violacoesInesperadas` que deixava passar UMA forma de violacao: tarefa
+ * 'construir' apontando para predio ja `completo`, o residuo de um tick entre a
+ * conclusao da obra e o `sanearTarefas` do tick seguinte. Agora a conclusao
+ * cancela as irmas no mesmo tick (`cancelarConstrucoesDe`), entao
+ * `violacoesDeInvariantes` vale INTEIRO aqui, sem filtro — que e o ponto: o
+ * verificador voltou a poder acusar essa forma, e ha um teste que prova que ele
+ * acusa ("prova do guarda", no describe do BUG-001).
  */
-function violacoesInesperadas(estado: GameState): string[] {
-  return violacoesDeInvariantes(estado).filter((msg) => {
-    const m = /^(t\d+): destino '(.+)' nao e obra$/.exec(msg);
-    if (!m) return true;
-    const tarefaId = m[1] as string;
-    const destinoId = m[2] as string;
-    const tarefa = estado.jobs.tarefas.porId[tarefaId];
-    const destino = estado.predios.porId[destinoId];
-    const toleravel = tarefa?.tipo === 'construir' && destino?.estado === 'completo';
-    return !toleravel;
-  });
-}
 
 describe('F11c — alvoDeNivelamento', () => {
   it('quarry (3x2 tiles, 10 ticks/tile): 60', () => {
@@ -367,7 +356,7 @@ describe('F11c — sistemaDosLaborers (Task 5)', () => {
       atual = step(atual, []);
       expect(violacoesDaFsmDoLaborer(atual)).toEqual([]);
       expect(violacoesDaFsm(atual)).toEqual([]);
-      expect(violacoesInesperadas(atual)).toEqual([]);
+      expect(violacoesDeInvariantes(atual)).toEqual([]);
       expect(bensPorMercadoria(atual)).toEqual(totalInicial);
     }
   });
@@ -444,6 +433,78 @@ describe('F11c — gerarTarefas: o portao "obra ja nivelada" (Task 6)', () => {
  * armazem ligado e abastecido) sobe sozinho, so pelo `step()`, ate ficar de pe.
  * `gravarEvidencia('F11c', ...)` grava `test-output/F11c.json` (CLAUDE.md §8).
  */
+describe('F11c — BUG-001: a conclusao da obra leva junto as tarefas irmas', () => {
+  /** Toda tarefa `construir` que ainda aponta para `predioId`, qualquer estado. */
+  const construirPara = (estado: GameState, predioId: string): Tarefa[] => estado.jobs.tarefas.ordem
+    .map((id) => estado.jobs.tarefas.porId[id])
+    .filter((t): t is Tarefa => t !== undefined && t.tipo === 'construir' && t.destino === predioId);
+
+  it('no TICK da conclusao nao sobra nenhuma tarefa de construir apontando para o predio', () => {
+    const estado = comEstradas(
+      comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: { timber: 3, stone: 2 }, nivelamento: 0 }),
+      [tile(29, 33), tile(29, 34), tile(29, 35), tile(29, 36), tile(28, 36)],
+    );
+    let atual = estado;
+    let noTickDaConclusao: Tarefa[] | null = null;
+    const invariantesNoCaminho: string[] = [];
+    for (let i = 0; i < 2000 && noTickDaConclusao === null; i += 1) {
+      atual = step(atual, []);
+      invariantesNoCaminho.push(...violacoesDeInvariantes(atual));
+      if (atual.events.some((e) => e.type === 'building-completed' && e.predio === 'obra-a')) {
+        noTickDaConclusao = construirPara(atual, 'obra-a');
+      }
+    }
+    expect(noTickDaConclusao).not.toBeNull();
+    expect(noTickDaConclusao).toEqual([]);
+    // e o invariante GERAL (sem tolerancia): nenhuma tarefa com destino fora de obra,
+    // em nenhum tick do caminho — e isto que a tolerancia de `violacoesInesperadas`
+    // existia para deixar passar.
+    expect(invariantesNoCaminho).toEqual([]);
+  });
+
+  it('o verificador ACUSA a forma que a tolerancia deixava passar (prova do guarda)', () => {
+    // sem isto, "nenhuma violacao em tick nenhum" poderia ser verdade so porque o
+    // verificador ficou cego. Monta a mao o estado que o bug produzia.
+    const comObraEComTarefa = gerarTarefas(
+      comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: { timber: 3, stone: 2 }, nivelamento: alvoDeNivelamento('quarry') }),
+    );
+    const emObra = comObraEComTarefa.predios.porId['obra-a'] as PredioEmObra;
+    const comPredioCompleto: GameState = {
+      ...comObraEComTarefa,
+      predios: {
+        ...comObraEComTarefa.predios,
+        porId: { ...comObraEComTarefa.predios.porId, 'obra-a': completarObra(emObra) },
+      },
+    };
+    const construir = construirPara(comPredioCompleto, 'obra-a');
+    expect(construir.length).toBeGreaterThan(0); // o cenario tem o que acusar
+    expect(violacoesDeInvariantes(comPredioCompleto)).toEqual(
+      construir.map((t) => `${t.id}: destino 'obra-a' nao e obra`),
+    );
+  });
+
+  it('o laborer que nao terminou a obra fica ocioso, sem tarefa pendurada', () => {
+    const estado = comEstradas(
+      comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: { timber: 3, stone: 2 }, nivelamento: 0 }),
+      [tile(29, 33), tile(29, 34), tile(29, 35), tile(29, 36), tile(28, 36)],
+    );
+    let atual = estado;
+    for (let i = 0; i < 2000 && atual.predios.porId['obra-a']?.estado !== 'completo'; i += 1) {
+      atual = step(atual, []);
+    }
+    expect(atual.predios.porId['obra-a']?.estado).toBe('completo');
+    // mais dois ticks: quem vem ANTES do concluinte em `unidades.ordem` so passa
+    // pela propria FSM no tick seguinte, e e la que ele larga o id.
+    atual = step(step(atual, []), []);
+    const pendurados = atual.unidades.ordem
+      .map((id) => atual.unidades.porId[id])
+      .filter((u) => u !== undefined && u.tipo === TIPO_QUE_CONSTROI
+        && u.fsmData.tarefa !== undefined && atual.jobs.tarefas.porId[u.fsmData.tarefa] === undefined)
+      .map((u) => `${u?.id ?? '?'} segura '${u?.fsmData.tarefa ?? '?'}', que nao existe mais`);
+    expect(pendurados).toEqual([]);
+  });
+});
+
 describe('F11c — aceite headless do BUILD_PLAN (Task 7)', () => {
   const alvo = alvoDeNivelamento('quarry');
   const estado = comEstradas(
@@ -467,7 +528,7 @@ describe('F11c — aceite headless do BUILD_PLAN (Task 7)', () => {
       atual = step(atual, []);
       eventos.push(...atual.events);
       violacoesEncontradas.push(
-        ...violacoesDaFsmDoLaborer(atual), ...violacoesDaFsm(atual), ...violacoesInesperadas(atual),
+        ...violacoesDaFsmDoLaborer(atual), ...violacoesDaFsm(atual), ...violacoesDeInvariantes(atual),
       );
       if (JSON.stringify(bensPorMercadoria(atual)) !== JSON.stringify(totalInicial)) bensDivergentes.push(atual.tick);
 

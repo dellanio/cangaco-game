@@ -150,16 +150,15 @@ describe('F15a — aceite headless do BUILD_PLAN', () => {
     expect(pedreiro?.fsm).toBe('trabalhando');
     expect(quarry?.producao?.progresso ?? 0).toBeLessThan(CICLO);
 
-    // 6. as invariantes dos dois quadros, tick a tick. A UNICA excecao e o tick
-    //    em que a obra vira predio: as tarefas de construir ainda apontam para
-    //    ela e so sao canceladas no tick seguinte (BUG-001, `feio`, anterior a
-    //    esta feature — a F14 nunca cruzou essa transicao porque montava o
-    //    predio ja completo). Afirmar a forma exata do transitorio e o que
-    //    impede ele de crescer sem ninguem ver.
+    // 6. as invariantes dos dois quadros, tick a tick — agora SEM excecao
+    //    nenhuma. Ate a F15b este teste tolerava tres violacoes no tick em que a
+    //    obra vira predio (BUG-001, `feio`): as tarefas de construir irmas so
+    //    caiam no tick seguinte. O BUG-001 foi corrigido nesta sessao
+    //    (`cancelarConstrucoesDe`), entao a tolerancia saiu junto — e o bug
+    //    saindo, nao o aceite mudando: o que se exige aqui so aumentou. Medido:
+    //    `violacoes.noTickDaObraConcluida` passou de 3 entradas para zero.
+    expect(r.violacoes).toEqual([]);
     const transitorias = r.violacoes.filter((x) => x.tick === r.tickDaObra);
-    // nada em nenhum outro tick — inclusive no SEGUINTE, onde o saneamento age
-    expect(r.violacoes.filter((x) => x.tick !== r.tickDaObra)).toEqual([]);
-    for (const x of transitorias) expect(x.texto).toMatch(/^t\d+: destino '\w+' nao e obra$/);
 
     // --- as duas clausulas de dado injetado, sobre cenarios controlados ---
     const serraria = avancar(cenarioDeSerraria(), 300);

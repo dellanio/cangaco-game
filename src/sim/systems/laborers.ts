@@ -28,7 +28,9 @@ import type { GameEvent, GameState, PredioEmObra, TarefaConstruir, Unidade } fro
 import { completarObra } from '../state';
 import type { GameData } from '../data/types';
 import { gameData } from '../data';
-import { caminhoAteAObra, liberar, reclamarMelhorConstrucao, removerTarefa, TIPO_QUE_CONSTROI } from '../jobs';
+import {
+  caminhoAteAObra, cancelarConstrucoesDe, liberar, reclamarMelhorConstrucao, removerTarefa, TIPO_QUE_CONSTROI,
+} from '../jobs';
 import type { MotivoDeLiberacao } from '../jobs';
 import { alvoDeNivelamento, hpTotalDoTipo, obraNivelada, obraTrabalhavel, tetoDeHp } from '../obra';
 import { tileAndavel } from '../pathfinding';
@@ -158,9 +160,16 @@ function passoMartelando(state: GameState, u: Unidade, dados: GameData): Passo {
   if (hp >= hpTotal) {
     const completo = completarObra(martelada, dados);
     const semATarefa = removerTarefa(comPredio(state, completo), tarefa.id);
+    // BUG-001: as tarefas IRMAS (dos outros laborers e as abertas do teto) saem no
+    // MESMO tick. Antes elas sobreviviam ate `sanearTarefas` do tick seguinte, e
+    // nesse intervalo o quadro apontava para um predio que ja nao era obra.
+    const irmas = cancelarConstrucoesDe(semATarefa, completo.id);
     return {
-      state: comUnidade(semATarefa, ocioso(u)),
-      events: [{ type: 'building-completed', predio: completo.id, tipo: completo.tipo }],
+      state: comUnidade(semOsOrfaos(irmas.state, u.id), ocioso(u)),
+      events: [
+        ...irmas.events,
+        { type: 'building-completed', predio: completo.id, tipo: completo.tipo },
+      ],
     };
   }
   const comAMartelada = comPredio(state, martelada);
@@ -168,6 +177,29 @@ function passoMartelando(state: GameState, u: Unidade, dados: GameData): Passo {
     ? { ...u, fsm: 'esperando_material' as const, fsmData: dadosDaFsm({ tarefa: tarefa.id }) }
     : { ...u, fsmData: dadosDaFsm({ tarefa: tarefa.id, progresso: 0 }) };
   return semEventos(comUnidade(comAMartelada, proximo));
+}
+
+/**
+ * BUG-001, a outra metade: cancelar a tarefa irma deixaria o laborer que a
+ * segurava em `martelando` (ou `nivelando`) sem tarefa reclamada — violacao da
+ * invariante da FSM, e ele so passaria pela propria FSM no tick SEGUINTE.
+ *
+ * Por que aqui e nao la: quando `sanearTarefas` cancela, ele roda ANTES dos
+ * laborers no tick (ver tick.ts), e cada um se conserta sozinho no proprio
+ * passo. A conclusao acontece NO MEIO do laco, entao quem ja passou precisa ser
+ * devolvido a `ocioso` pelo concluinte. So e tocado quem esta segurando um id
+ * que nao existe mais — nenhum laborer com tarefa viva muda de estado.
+ */
+function semOsOrfaos(state: GameState, concluinteId: string): GameState {
+  let atual = state;
+  for (const id of state.unidades.ordem) {
+    const outro = atual.unidades.porId[id];
+    if (outro === undefined || outro.tipo !== TIPO_QUE_CONSTROI || outro.id === concluinteId) continue;
+    const daTarefa = outro.fsmData.tarefa;
+    if (daTarefa === undefined || atual.jobs.tarefas.porId[daTarefa] !== undefined) continue;
+    atual = comUnidade(atual, ocioso(outro));
+  }
+  return atual;
 }
 
 function passoDoLaborer(state: GameState, u: Unidade, dados: GameData): Passo {
