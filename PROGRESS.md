@@ -1234,6 +1234,54 @@ capturas e o arquivo é **`screenshots/F17-5-final.png`**. É a convenção fixa
 `tools/shot.js`, igual para toda feature — não renomeei nada.
 
 
+## Sonda do operador — prioridade do serf ocioso (2026-09-23)
+
+Pergunta dele: *"quando um serf fica ocioso e existe uma obra esperando material,
+ele prefere a tarefa da obra à de levar excedente ao armazém? Mostre o teste ou a
+medição, não deduza da escada."*
+
+**Resposta: sim, prefere a obra — e a preferência é da ESCADA, não da distância.**
+
+### Verificado (rodado, `tests/sonda-serf-prioridade.test.ts`, arquivo temporário já apagado)
+
+**(a) Laboratório.** Pedreira `q1` em (26,34) com `stone: 2` na gaveta `saida`
+(nível 6) **e** `timber: 2` na `entrada`, que a pedreira não consome e por isso
+vira excedente (nível 7). Obra em (42,34) pedindo `stone: 2` (nível 3), ligada
+pela mesma rua. **Um** serf, nascido em (27,36) — em cima da porta da pedreira,
+a ~15 tiles da obra. Passando por `step` de verdade, não por `tarefasEmOrdem`:
+
+- **controle, sem a obra no mapa:** o serf reclama `saida-cheia-para-armazem` no
+  tick 2. Prova que a tarefa do armazém existia, era alcançável e ele a pegaria.
+- **com os dois lados abertos:** cardápio `{material-para-obra: 2,
+  saida-cheia-para-armazem: 2, excedente-para-armazem: 2}`, e ele reclama
+  **`material-para-obra`**, no mesmo tick 2.
+
+O controle é o que dá valor ao resultado: sem ele, "foi para a obra" poderia ser
+"não conseguiu reclamar a outra". A carga estava aos pés dele e a obra a 15
+tiles; escolheu a obra.
+
+**(b) Corrida real — e aqui está o achado que interessa.** Rodando a abertura
+inteira da Fase A (4000 ticks, os mesmos comandos do aceite da F17) e anotando
+todo claim de serf: **88 escolhas, e `ticksComOsDoisLadosAbertos = 0`.** A
+colisão da pergunta **nunca acontece jogando** na Fase A. Distribuição das 88:
+`saida-cheia-para-armazem` 51, `material-para-obra` 22, `insumo-producao-parada`
+11, `ouro-para-escola` 4 — sempre com um tipo só aberto por vez.
+
+Bate com o que a F15b já tinha medido e está no `BALANCE_LOG`: com 4 serfs a fila
+do quadro nunca acumula. A regra existe e está correta; ela é **teoria** na Fase A.
+
+### Cobertura permanente: não existe
+
+Antes da sonda, procurei. `tests/F13a-ouro.test.ts:104` é o **único** teste de
+comportamento que compara tipos de nível diferente (ouro 2 na frente de material
+3), e mesmo ele afirma sobre `tarefasEmOrdem`, que é a ordenação, não a escolha.
+O resto (F13a, F15b) compara `nivelDoTipo` como **dado**, o que prova o arquivo,
+não o comportamento. **Não há teste nenhum cobrindo material-para-obra contra os
+dois tipos que vão para o armazém.** A sonda foi prova do momento, não cobertura
+(CLAUDE.md §8): apagada depois de reportada. Se o operador quiser a regra
+protegida, isso é um item de fila, não um efeito colateral desta sessão.
+
+
 ## Perguntas em aberto
 
 _(nenhuma no momento: as três que sobravam foram decididas pelo operador — ver "Ajuste pós-F10".)_

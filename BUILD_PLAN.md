@@ -708,6 +708,47 @@ prédio surge sem clique do jogador.
   onde ele para. O aceite desta feature já pede `timber` acima do inicial, o que
   é a forma certa; não troque por "a serraria tem tábua na gaveta".
 
+### F17b — Material entregue visível na obra (integração)
+- **Escopo**: olhando o mapa, **sem selecionar nada**, o jogador vê em cada obra
+  quanto de cada material já chegou e quanto falta — blocos geométricos, um por
+  unidade, cheio = entregue (placeholder do §9, não arte). O painel da obra
+  selecionada passa a escrever `chegou/total` por material, inclusive o material
+  já completo. A informação já existe: `PredioEmObra.obra.faltam` mais o custo do
+  dado; entregue é `custo − faltam`.
+- **Aceite**: teste headless da aritmética do medidor (inclusive o material com
+  falta 0, que a gaveta `faltam` do seletor hoje esconde), e roteiro que planta
+  uma obra, afirma todos os materiais em 0, avança até uma entrega chegar e
+  afirma a soma de `entregue` **maior que a primeira leitura** — não maior que
+  zero. Screenshot da obra com o medidor cheio e do painel.
+- **Evidência**: `test-output/F17b.json` + `screenshots/F17b-2-cheio.png` +
+  `screenshots/F17b-3-painel.png`
+- **Nota**: **feature de integração** (CLAUDE.md §10): pode tocar `src/render/`
+  e `src/ui/` na mesma feature, porque o mesmo número aparece nos dois lugares e
+  ter duas contas para ele é como elas divergem. **`src/sim/` não muda** —
+  instrução explícita do operador (2026-09-23), escrita aqui antes do código.
+  Se a implementação parecer pedir seletor novo, **pare e reporte**.
+- **Nota (origem: F16b — o que o painel já faz e o que não faz)**: o painel já
+  desenha "Em obra N%" e a gaveta "Falta chegar" (`desenharObra`,
+  `src/ui/painel-predio.ts`). *Quanto falta* já está na tela desde a F16b, para
+  a obra **selecionada**. O que não existe em lugar nenhum é (a) *quanto já
+  chegou* — `linhasDeEstoque` filtra `quantidade > 0`, então o material
+  inteiramente entregue **some** da gaveta e o jogador não distingue "a pedra
+  chegou" de "esta obra nunca pediu pedra" — e (b) qualquer sinal **no mapa**:
+  duas obras, uma abastecida e uma faminta, são pixel a pixel idênticas até que
+  um laborer martele. O GDD §1.2 lista "serfs trazem material" como uma seta
+  própria do loop micro, separada de "obra sobe em 3 estágios visíveis"; hoje só
+  o segundo sinal existe (F11c, `estagio-obra.ts`).
+- **Nota (origem: F11c — armadilha medida no diff da cena)**: `atualizarPredios`
+  pula o redesenho quando `(id, estado, estagio)` não mudou. Uma entrega **não**
+  muda `hp`, logo não muda o estágio: sem pôr a leitura do medidor na chave do
+  diff, ele nasce correto e **congela para sempre**, e um screenshot único passa
+  assim mesmo. É por isso que o aceite pede o medidor *enchendo*, medido contra
+  a primeira leitura.
+- **Nota**: a letra `b` aqui não é subdivisão da F17 — é "depois do aceite da
+  Fase A, ainda na Fase A". A ordem do arquivo é a ordem de execução, e esta
+  feature executa a seguir; numerar entre F17 e F18 renumeraria a Fase B inteira.
+- **Plano**: `docs/planos/F17b-material-na-obra.md`
+
 ---
 
 ## Fase B — Comida e crescimento

@@ -103,6 +103,10 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   | data/production.json, data/terrain.json, data/economy.json | medido, `test-output/F17.json`
   (`menorNoArmazem`, `marcos`). A serraria só desbloqueia no tick 504 (precisa de um Woodcutter's COMPLETO),
   então a cadeia da madeira é serial por desenho — isso não é o gargalo; a pedra é.
+  | **[2026-09-23] confirmado por sonda:** em 4000 ticks da abertura, os serfs fizeram 88 escolhas e em
+  **zero** tick havia tarefa de obra E tarefa para o armazém abertas ao mesmo tempo. A escada de
+  `delivery.json` está certa e é inerte na Fase A: nunca há o que desempatar. Ver `PROGRESS.md`,
+  "Sonda do operador — prioridade do serf ocioso".
 - [2026-09-23] **"timber acima do inicial" demora 3184 ticks, e quase tudo é a dívida das plantas**: as quatro
   plantas debitam 13 timber ANTES de qualquer produção, então o saldo só passa os 40 iniciais depois de 14
   tábuas entregues. A primeira tábua chega no tick 1488 e a serraria entrega ~1 a cada 120 ticks a partir daí.
