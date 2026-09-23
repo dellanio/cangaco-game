@@ -2,13 +2,25 @@
  * As invariantes da FSM do especialista (F14), irma de `laborer-invariantes.ts`.
  * Devolve a lista de violacoes (vazia = tudo certo). O ponto central: a POSSE
  * mora so no predio, entao "os dois lados concordam" e a coisa a verificar.
+ *
+ * F15a — os estados de PRODUCAO (`esperando_insumo`, `saida_cheia`) passaram a
+ * existir. Aqui eles valem tudo o que `trabalhando` valia: quem esta em
+ * qualquer um dos tres OCUPA um predio. Uma pedreira sem estrada fica em
+ * `saida_cheia` desde a F15a (D6) e continua legitimamente ocupada.
  */
 import { gameData } from '../../src/sim/data';
 import type { GameData } from '../../src/sim/data/types';
 import type { GameState } from '../../src/sim/state';
 import { predioAceita, predioDoOcupante, tiposQueOcupam } from '../../src/sim/ocupacao';
 
-export const ESTADOS_DO_ESPECIALISTA = ['ocioso', 'indo_ocupar', 'trabalhando'] as const;
+/** F15a — os tres estados em que o especialista JA OCUPA um predio (GDD §6.2).
+ *  Do ponto de vista da posse eles sao um so: a unidade tem predio, nao segura
+ *  tarefa e tem `fsmData` vazio. O que os distingue e o ciclo, nao a ocupacao. */
+export const ESTADOS_DE_PRODUCAO = ['trabalhando', 'esperando_insumo', 'saida_cheia'] as const;
+
+export const ESTADOS_DO_ESPECIALISTA = ['ocioso', 'indo_ocupar', ...ESTADOS_DE_PRODUCAO] as const;
+
+const produzindo = (fsm: string): boolean => (ESTADOS_DE_PRODUCAO as readonly string[]).includes(fsm);
 
 export function violacoesDaFsmDoEspecialista(estado: GameState, dados: GameData = gameData): string[] {
   const v: string[] = [];
@@ -42,9 +54,11 @@ export function violacoesDaFsmDoEspecialista(estado: GameState, dados: GameData 
         if (predio !== null) v.push(`${id}: indo_ocupar mas ja ocupa ${predio.id}`);
         break;
       case 'trabalhando':
-        if (predio === null) v.push(`${id}: trabalhando sem predio que o reconheca`);
-        if (suas.length > 0) v.push(`${id}: trabalhando e ainda segura a tarefa ${suas[0]}`);
-        if (Object.keys(u.fsmData).length > 0) v.push(`${id}: trabalhando com fsmData nao vazio`);
+      case 'esperando_insumo':
+      case 'saida_cheia':
+        if (predio === null) v.push(`${id}: ${u.fsm} sem predio que o reconheca`);
+        if (suas.length > 0) v.push(`${id}: ${u.fsm} e ainda segura a tarefa ${suas[0]}`);
+        if (Object.keys(u.fsmData).length > 0) v.push(`${id}: ${u.fsm} com fsmData nao vazio`);
         break;
       default:
         break;
@@ -64,7 +78,7 @@ export function violacoesDaFsmDoEspecialista(estado: GameState, dados: GameData 
     const u = estado.unidades.porId[p.ocupante];
     if (!u) v.push(`${id}: ocupante '${p.ocupante}' nao existe`);
     else if (!predioAceita(p, u.tipo, dados)) v.push(`${id}: ocupante '${p.ocupante}' e ${u.tipo}, que o predio nao aceita`);
-    else if (u.fsm !== 'trabalhando') v.push(`${id}: ocupante '${p.ocupante}' esta em '${u.fsm}'`);
+    else if (!produzindo(u.fsm)) v.push(`${id}: ocupante '${p.ocupante}' esta em '${u.fsm}'`);
   }
   return v;
 }

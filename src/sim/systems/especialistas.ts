@@ -2,13 +2,17 @@
  * F14 — a FSM do especialista (GDD §6.2), um passo por tick, na ordem de
  * `unidades.ordem`.
  *
- *   ocioso -> indo_ocupar -> trabalhando
+ *   ocioso -> indo_ocupar -> trabalhando  <->  esperando_insumo
+ *                                  ^
+ *                                  +------->  saida_cheia
  *
  * O GDD chama o primeiro estado de `sem_predio`; aqui ele e `ocioso`, o mesmo de
  * toda unidade recem-nascida (`systems/escolas.ts`) e o que
  * `ficarOcioso`/`ocioso` produzem. Mesmo significado, um nome so (Nota do item
  * F14 no BUILD_PLAN). Os outros dois estados do GDD (`esperando_insumo`,
- * `saida_cheia`) sao de PRODUCAO e nascem na F15.
+ * `saida_cheia`) sao de PRODUCAO e nasceram na F15a: os tres compartilham UM
+ * handler, e o rotulo e recalculado do predio a cada tick — nao existe estado
+ * da FSM que discorde do estoque de verdade.
  *
  * MOVIMENTO: modo `'livre'`, como o laborer — o especialista nao carrega nada e
  * nao depende de estrada para chegar.
@@ -16,16 +20,20 @@
  * A POSSE mora no PREDIO (`PredioCompleto.ocupante`), nunca na unidade:
  * `trabalhando` e verdade enquanto o predio ainda aponta para ela. Predio
  * demolido (F16) e ocupante morto (F20) desfazem a posse pelos dois lados —
- * `sanearOcupacao` do lado do predio, `passoTrabalhando` do lado da unidade.
+ * `sanearOcupacao` do lado do predio, `passoProduzindo` do lado da unidade.
  *
  * Quem SEGURA a tarefa e revalidado por `sanearTarefas`, como nas outras FSMs:
  * nenhum ramo aqui precisa lembrar de liberar por conta do destino.
  */
 import type { GameEvent, GameState, PredioCompleto, TarefaOcupar, Unidade } from '../state';
-import type { GameData } from '../data/types';
+import type { GameData, ReceitaDePredio } from '../data/types';
 import { gameData } from '../data';
 import { caminhoAtePredioCompleto, liberar, reclamarMelhorOcupacao, removerTarefa } from '../jobs';
 import { ehPredioOcupavel, predioAceita, predioDoOcupante, tiposQueOcupam } from '../ocupacao';
+import { predioLigadoAoArmazem } from '../estradas';
+import {
+  cabeNaSaida, consumirInsumos, receitaDoTipo, temInsumo, unidadesPorCiclo, veioEsgotado,
+} from '../producao';
 import { tileAndavel } from '../pathfinding';
 import { andar, chegou, comPredio, comUnidade, dadosDaFsm, ficarOcioso } from '../units/movimento';
 import type { ResultadoDeSistema } from './jobs';
@@ -109,18 +117,101 @@ function passoIndoOcupar(state: GameState, u: Unidade, dados: GameData): Passo {
   };
 }
 
-function passoTrabalhando(state: GameState, u: Unidade): Passo {
-  // A posse mora no predio: sumiu, deixou de ser ocupavel ou passou a apontar
-  // para outro, este especialista volta a procurar. Nada alem disso na F14 —
-  // PRODUZIR e F15, e e la que entram `esperando_insumo` e `saida_cheia`.
-  return predioDoOcupante(state, u.id) === null ? ficarOcioso(state, u) : semEventos(state);
+/** Devolve o MESMO estado quando o rotulo nao muda: um tick de producao normal
+ *  nao realoca a unidade. Molde de `sanearOcupacao`. */
+function comFsm(state: GameState, u: Unidade, fsm: string): Passo {
+  return u.fsm === fsm ? semEventos(state) : semEventos(comUnidade(state, { ...u, fsm, fsmData: {} }));
+}
+
+/**
+ * O deposito do ciclo pronto: o UNICO ponto que mexe na gaveta `saida` e no
+ * veio. Nao cabendo, o ciclo fica pronto e espera — `progresso` nao volta a
+ * zero, entao nada do que ja foi trabalhado se perde.
+ */
+function depositar(
+  state: GameState, u: Unidade, predio: PredioCompleto, receita: ReceitaDePredio, dados: GameData,
+): Passo {
+  if (!cabeNaSaida(predio, receita)) return comFsm(state, u, 'saida_cheia');
+  const saida: Record<string, number> = { ...predio.estoque.saida };
+  const events: GameEvent[] = [];
+  // ordem de `economia.mercadorias`, nunca `Object.keys` da receita: a ordem dos
+  // eventos e do estoque tem que ser a mesma em qualquer maquina (contrato da F05a)
+  for (const mercadoria of dados.economia.mercadorias) {
+    const q = receita.sai[mercadoria];
+    if (q === undefined) continue;
+    saida[mercadoria] = (saida[mercadoria] ?? 0) + q;
+    events.push({ type: 'goods-produced', predio: predio.id, mercadoria, quantidade: q });
+  }
+  const veioAntes = predio.producao?.veio ?? null;
+  const veio = veioAntes === null ? null : veioAntes - unidadesPorCiclo(receita);
+  const depositado: PredioCompleto = {
+    ...predio, estoque: { ...predio.estoque, saida }, producao: { progresso: 0, veio },
+  };
+  // o evento sai UMA vez, no ciclo que esgotou: quem ja estava esgotado nao
+  // chega ate aqui (o ramo de `veioEsgotado` em `produzir` corta antes)
+  if (veio !== null && veioEsgotado({ progresso: 0, veio }, receita)) {
+    events.push({ type: 'vein-exhausted', predio: predio.id, tipo: predio.tipo });
+  }
+  return {
+    state: comUnidade(comPredio(state, depositado), { ...u, fsm: 'trabalhando', fsmData: {} }),
+    events,
+  };
+}
+
+/**
+ * F15a — o ciclo de producao, um tick. Quem o avanca e o OCUPANTE: predio sem
+ * ocupante nao produz (Nota da F14), e "um predio, um ocupante" (F14) torna
+ * avanco duplo no mesmo tick irrepresentavel.
+ *
+ * O rotulo da FSM e RECALCULADO do predio a cada tick — nao existe
+ * `esperando_insumo` gravado que discorde do estoque de verdade, pela mesma
+ * razao que a posse mora so no predio.
+ */
+function produzir(state: GameState, u: Unidade, predio: PredioCompleto, dados: GameData): Passo {
+  const receita = receitaDoTipo(predio.tipo, dados);
+  const prod = predio.producao;
+  // predio ocupavel sem receita nao existe no dado de hoje; se existir, ocupa e nao produz
+  if (receita === null || prod === null) return comFsm(state, u, 'trabalhando');
+  // GDD §5.1: a estrada e requisito de FUNCIONAMENTO. Predio que nao ESCOA e
+  // `saida_cheia` (GDD §6.2, "a logistica e o gargalo") — sem estrada o
+  // escoamento e impossivel, o caso extremo do mesmo fenomeno. Ver D6.
+  if (!predioLigadoAoArmazem(state, predio, dados)) return comFsm(state, u, 'saida_cheia');
+  // ciclo PRONTO de um tick anterior: so falta caber
+  if (prod.progresso >= receita.ticksDoCiclo) return depositar(state, u, predio, receita, dados);
+  // o veio e o insumo que nao vem mais (D2) — a F22 distingue os dois pelo `veio === 0`
+  if (veioEsgotado(prod, receita)) return comFsm(state, u, 'esperando_insumo');
+  // inicio de ciclo: cobra os insumos, como a escola cobra o ouro ao INICIAR o treino (F13a)
+  let atual = predio;
+  if (prod.progresso === 0) {
+    if (!temInsumo(predio, receita)) return comFsm(state, u, 'esperando_insumo');
+    atual = consumirInsumos(predio, receita);
+  }
+  const avancado: PredioCompleto = {
+    ...atual, producao: { progresso: prod.progresso + 1, veio: prod.veio },
+  };
+  const comRelogio = comPredio(state, avancado);
+  return prod.progresso + 1 < receita.ticksDoCiclo
+    ? comFsm(comRelogio, u, 'trabalhando')
+    : depositar(comRelogio, u, avancado, receita, dados);
+}
+
+/** A posse mora no predio: sumiu, deixou de ser ocupavel ou passou a apontar
+ *  para outro, este especialista volta a procurar. Senao, produz. */
+function passoProduzindo(state: GameState, u: Unidade, dados: GameData): Passo {
+  const predio = predioDoOcupante(state, u.id);
+  return predio === null ? ficarOcioso(state, u) : produzir(state, u, predio, dados);
 }
 
 function passoDoEspecialista(state: GameState, u: Unidade, dados: GameData): Passo {
   switch (u.fsm) {
     case 'ocioso': return passoOcioso(state, u, dados);
     case 'indo_ocupar': return passoIndoOcupar(state, u, dados);
-    case 'trabalhando': return passoTrabalhando(state, u);
+    // os tres estados de PRODUCAO caem no mesmo ramo: o rotulo e recalculado do
+    // predio a cada tick, entao nao ha transicao a escrever entre eles
+    case 'trabalhando':
+    case 'esperando_insumo':
+    case 'saida_cheia':
+      return passoProduzindo(state, u, dados);
     default:
       // `fsm` e uma string no estado (JSON): um valor fora do GDD §6.2 e save corrompido
       throw new Error(`sistemaDosEspecialistas: estado de FSM desconhecido '${u.fsm}' no especialista ${u.id}`);

@@ -11,7 +11,7 @@ import { gameData } from '../src/sim/data';
 import { trabalhadorDoTipo } from '../src/sim/ocupacao';
 import { armazemPorTipo, avancar, escolaDoCenario, novasUnidades, pedir } from './helpers/escola-cenario';
 import { comEstradas, comPredioCompletoEm, linhaH } from './helpers/jobs-cenario';
-import { violacoesDaFsmDoEspecialista } from './helpers/especialista-invariantes';
+import { ESTADOS_DE_PRODUCAO, violacoesDaFsmDoEspecialista } from './helpers/especialista-invariantes';
 import { violacoesDeInvariantes } from './helpers/jobs-invariantes';
 import { compararComESemSave } from './helpers/determinism';
 import { gravarEvidencia } from './helpers/evidence';
@@ -60,8 +60,9 @@ describe('F14 — aceite headless do BUILD_PLAN', () => {
     expect(new Set(ocupantes).size).toBe(2);
     expect([...ocupantes].sort()).toEqual(novos.map((u) => u.id).sort());
 
-    // 4. os dois estao trabalhando, e o quadro nao guardou vaga orfa
-    for (const u of novos) expect(fim.unidades.porId[u.id]?.fsm).toBe('trabalhando');
+    // 4. os dois ocupam (F15a: sem estrada o rotulo e `saida_cheia`, e ocupacao
+    // do mesmo jeito — ver D6), e o quadro nao guardou vaga orfa
+    for (const u of novos) expect(ESTADOS_DE_PRODUCAO).toContain(fim.unidades.porId[u.id]?.fsm);
     const vagas = fim.jobs.tarefas.ordem.filter((id) => fim.jobs.tarefas.porId[id]?.tipo === 'ocupar');
     expect(vagas).toHaveLength(0);
 

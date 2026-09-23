@@ -11,12 +11,18 @@
  */
 import { describe, expect, it } from 'vitest';
 import { completarObra, createInitialState } from '../src/sim/state';
-import type { PredioCompleto, PredioEmObra } from '../src/sim/state';
+import type { GameState, PredioCompleto, PredioEmObra } from '../src/sim/state';
 import { gameData } from '../src/sim/data';
 import type { ReceitaDePredio } from '../src/sim/data/types';
 import {
   cabeNaSaida, consumirInsumos, ehPredioProdutivo, receitaDoTipo, temInsumo, unidadesPorCiclo, veioEsgotado,
 } from '../src/sim/producao';
+import { step } from '../src/sim/tick';
+import {
+  avancar, cenarioDePedreira, cenarioDeSerraria, comEntrada, comRendimento, comSaida, entradaDe,
+  eventosNoTick, fsmDe, progressoDe, saidaDe, semAUnidade, semEstrada, semOcupante, veioDe,
+} from './helpers/producao-cenario';
+import { violacoesDaFsmDoEspecialista } from './helpers/especialista-invariantes';
 
 function obraDe(tipo: string): PredioEmObra {
   const def = gameData.predios.find((p) => p.id === tipo);
@@ -135,5 +141,135 @@ describe('F15a — sim/producao.ts, as derivacoes puras', () => {
     const r: ReceitaDePredio = { ...receita('quarry'), sai: { stone: 2 } };
     expect(veioEsgotado({ progresso: 0, veio: 1 }, r)).toBe(true);
     expect(veioEsgotado({ progresso: 0, veio: 2 }, r)).toBe(false);
+  });
+});
+
+describe('F15a — o especialista produz', () => {
+  it('pedreira ocupada e ligada deposita 1 stone a cada 167 ticks', () => {
+    let s = avancar(cenarioDePedreira(), 166);
+    expect(saidaDe(s, 'q1').stone ?? 0).toBe(0);
+    s = avancar(s, 1);
+    expect(saidaDe(s, 'q1').stone).toBe(1); // tick 167
+    s = avancar(s, 167);
+    expect(saidaDe(s, 'q1').stone).toBe(2); // tick 334, intervalo EXATO
+  });
+
+  it('o especialista que produz nunca fica `ocioso`', () => {
+    const s = avancar(cenarioDePedreira(), 400);
+    expect(fsmDe(s, 'u1')).toBe('trabalhando');
+  });
+
+  it('predio sem ocupante nao produz (Nota da F14: quem produz e o ocupante)', () => {
+    const vazia = semAUnidade(semOcupante(cenarioDePedreira(), 'q1'), 'u1');
+    const s = avancar(vazia, 400);
+    expect(saidaDe(s, 'q1').stone ?? 0).toBe(0);
+    expect(progressoDe(s, 'q1')).toBe(0);
+  });
+
+  it('ocupante que perdeu o predio volta a procurar — a posse mora no predio (F14)', () => {
+    const s = avancar(semOcupante(cenarioDePedreira(), 'q1'), 1);
+    expect(fsmDe(s, 'u1')).toBe('ocioso');
+  });
+
+  it('predio sem ligacao ao armazem nao produz e fica em `saida_cheia`', () => {
+    const s = avancar(semEstrada(cenarioDePedreira()), 400);
+    expect(saidaDe(s, 'q1').stone ?? 0).toBe(0);
+    expect(progressoDe(s, 'q1')).toBe(0);       // o relogio nem comeca
+    expect(fsmDe(s, 'u1')).toBe('saida_cheia'); // D6: nao escoa, GDD §5.1 + §6.2
+  });
+
+  it('saida cheia: para em `saida_cheia` e NAO perde o ciclo pronto', () => {
+    const s = avancar(cenarioDePedreira(), 167 * 6);
+    expect(saidaDe(s, 'q1').stone).toBe(5);  // o teto da gaveta
+    expect(fsmDe(s, 'u1')).toBe('saida_cheia');
+    expect(progressoDe(s, 'q1')).toBe(167);  // ciclo pronto, so nao coube
+    const depois = avancar(comSaida(s, 'q1', { stone: 4 }), 1);
+    expect(saidaDe(depois, 'q1').stone).toBe(5); // depositou no tick seguinte
+    expect(progressoDe(depois, 'q1')).toBe(0);
+    expect(fsmDe(depois, 'u1')).toBe('trabalhando');
+  });
+
+  it('sawmill sem tronco fica em `esperando_insumo` e nao gasta relogio', () => {
+    const s = avancar(cenarioDeSerraria(), 300);
+    expect(fsmDe(s, 'u2')).toBe('esperando_insumo');
+    expect(progressoDe(s, 's1')).toBe(0);
+    expect(saidaDe(s, 's1').timber ?? 0).toBe(0);
+  });
+
+  it('sawmill com 1 tronco consome 1 e rende 2 timber em 273 ticks', () => {
+    let s = comEntrada(cenarioDeSerraria(), 's1', { tree_trunk: 1 });
+    s = avancar(s, 1);
+    expect(entradaDe(s, 's1').tree_trunk).toBe(0); // cobrado no INICIO do ciclo
+    expect(saidaDe(s, 's1').timber ?? 0).toBe(0);
+    s = avancar(s, 272);
+    expect(saidaDe(s, 's1').timber).toBe(2);
+    expect(fsmDe(s, 'u2')).toBe('trabalhando');
+    s = avancar(s, 1); // sem outro tronco, volta a esperar
+    expect(fsmDe(s, 'u2')).toBe('esperando_insumo');
+  });
+
+  it('cada ciclo emite `goods-produced` com a quantidade do ciclo', () => {
+    const s = comEntrada(cenarioDeSerraria(), 's1', { tree_trunk: 1 });
+    expect(eventosNoTick(s, 273)).toContainEqual(
+      { type: 'goods-produced', predio: 's1', mercadoria: 'timber', quantidade: 2 },
+    );
+  });
+
+  it('veio esgota: evento no tick exato, e depois a pedreira nao produz mais', () => {
+    const dadosCurtos = comRendimento(gameData, 'quarry', 2); // 2 pedras e acabou
+    expect(eventosNoTick(cenarioDePedreira(dadosCurtos), 334, dadosCurtos)).toContainEqual(
+      { type: 'vein-exhausted', predio: 'q1', tipo: 'quarry' },
+    );
+    const s = avancar(cenarioDePedreira(dadosCurtos), 167 * 5, dadosCurtos);
+    expect(saidaDe(s, 'q1').stone).toBe(2);
+    expect(veioDe(s, 'q1')).toBe(0);
+    expect(fsmDe(s, 'u1')).toBe('esperando_insumo');
+  });
+
+  it('o evento de veio esgotado sai UMA vez, nao a cada tick depois', () => {
+    const dadosCurtos = comRendimento(gameData, 'quarry', 2);
+    let s = cenarioDePedreira(dadosCurtos);
+    let quantos = 0;
+    for (let i = 0; i < 167 * 4; i++) {
+      s = step(s, [], dadosCurtos);
+      quantos += s.events.filter((e) => e.type === 'vein-exhausted').length;
+    }
+    expect(quantos).toBe(1);
+  });
+});
+
+/**
+ * O guarda `violacoesDaFsmDoEspecialista` passou a aceitar `esperando_insumo` e
+ * `saida_cheia`. Alargar um guarda sem provar que ele ainda acusa e como
+ * desliga-lo: toda a suite so o chama sobre estados SADIOS, o que mostra que
+ * ele nao da falso positivo — nunca que ele acusa. Este bloco prova o outro
+ * sentido (mesma razao de `F14-invariantes-destino.test.ts`).
+ */
+describe('F15a — o guarda da FSM do especialista ACUSA', () => {
+  const semLigacao = (): GameState => avancar(semEstrada(cenarioDePedreira()), 2);
+
+  it('estado de producao sem predio que o reconheca e acusado', () => {
+    const s = semLigacao();
+    expect(fsmDe(s, 'u1')).toBe('saida_cheia');
+    expect(violacoesDaFsmDoEspecialista(s)).toEqual([]); // ocupada: sadio
+    expect(violacoesDaFsmDoEspecialista(semOcupante(s, 'q1'))).toContain(
+      'u1: saida_cheia sem predio que o reconheca',
+    );
+  });
+
+  it('predio cujo ocupante esta em estado que NAO e de producao e acusado', () => {
+    const s = semLigacao();
+    const u = s.unidades.porId.u1;
+    if (u === undefined) throw new Error('fixture: u1 sumiu');
+    const ocioso = { ...s, unidades: { ...s.unidades, porId: { ...s.unidades.porId, u1: { ...u, fsm: 'ocioso' } } } };
+    expect(violacoesDaFsmDoEspecialista(ocioso)).toContain("q1: ocupante 'u1' esta em 'ocioso'");
+  });
+
+  it('estado fora do GDD §6.2 continua acusado', () => {
+    const s = semLigacao();
+    const u = s.unidades.porId.u1;
+    if (u === undefined) throw new Error('fixture: u1 sumiu');
+    const invalido = { ...s, unidades: { ...s.unidades, porId: { ...s.unidades.porId, u1: { ...u, fsm: 'dancando' } } } };
+    expect(violacoesDaFsmDoEspecialista(invalido)).toContain("u1: estado 'dancando' fora do GDD §6.2");
   });
 });
