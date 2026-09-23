@@ -216,8 +216,11 @@ lugar nenhum como quantidade:
 | `swine_farm` | 600 ticks: 4 corn → 1 pig + 1 skin | "4 corn por porco" |
 | `weapons_workshop` | 375 ticks: 2 timber → 1 arma | "2 timber → arma de madeira" |
 
-Vinte e uma receitas, nenhuma exceção. O maior erro de arredondamento é 0,5 %
-(butchers: 3 contra 2,985). É isso que a regra de dado da Tarefa 2 congela.
+Vinte e uma receitas, nenhuma exceção. **Medido** (script sobre `production.json`
++ `time.json`, 2026-09-22): contra a razão declarada nas taxas, o desvio da
+quantidade inteira é **0,00 % nas 21** — as razões do dado são inteiras de
+propósito. O arredondamento em ticks chega a **0,5 %** de distância do inteiro
+(butchers: `200/67 = 2,985` → 3), e é essa folga que a regra da Tarefa 2 limita.
 
 ### Restrições globais (valem para toda tarefa)
 
@@ -444,97 +447,94 @@ git commit -m "feat(F15a): a receita de producao vira um ciclo com quantidades i
 - Modificar: `tools/data-rules.js`, `tools/data-rules.d.ts`, `tools/validate-data.js`
 - Testar: `tests/F03-dados-validados.test.ts` (acrescentar), `npm run validate:data`
 
-**Interfaces — Consome:** `raw.production` (as taxas cruas), `raw.buildings.predios`.
-**Produz:** `validarReceitasDeProducao(raw)` → lista de erros, no molde de
-`validarPoliticaDeTreino` (F13a).
+**Interfaces — Consome:** `dados.production`, `dados.time`, `dados.buildings`.
+**Produz:** nada novo exportado — `validarProducao(dados, erros)` **já existe**
+(`tools/data-rules.js:114`, com `producao/predio-inexistente` e
+`producao/taxa-nao-positiva`) e ganha as verificações novas. A porta continua
+sendo `validarTudo`, e o teste entra como **fixture** na tabela de
+`tests/F03-dados-validados.test.ts`, no molde das outras: quebra uma cópia do
+dado real e espera o id da regra.
+
+**A regra mede sobre os TICKS, não sobre as taxas cruas.** Corrige o que eu tinha
+escrito: a distorção que interessa é a que o **arredondamento em ticks** pode
+introduzir, e ela depende da escala. Se alguém trocar `escalas.economia` por um
+valor que faça uma receita perder a proporção, o dado ficou ruim de verdade e a
+regra tem que acusar. Por isso ela replica a derivação do carregador.
 
 - [ ] **Passo 1: escrever o teste que falha**, acrescentando a
       `tests/F03-dados-validados.test.ts`. Ele precisa provar que a regra
       **acusa**, não só que não acusa à toa (a lição da F14):
 
 ```ts
-describe('F15a — validarReceitasDeProducao', () => {
-  it('aceita o dado de verdade', () => {
-    expect(validarReceitasDeProducao(rawGameData)).toEqual([]);
-  });
-
-  it('ACUSA uma razao que o arredondamento distorce demais', () => {
-    // 1.9 / 1 -> quantidade 2: erro de 5,3 % contra a razao declarada
-    const adulterado = comReceita(rawGameData, 'bakery', { entra: { flour: 1 }, sai: { loaves: 1.9 } });
-    expect(validarReceitasDeProducao(adulterado)).toHaveLength(1);
-  });
-
-  it('ACUSA rendimento de veio fracionario ou < 1', () => {
-    expect(validarReceitasDeProducao(comVeio(rawGameData, 'quarry', 0))).toHaveLength(1);
-    expect(validarReceitasDeProducao(comVeio(rawGameData, 'quarry', 2.5))).toHaveLength(1);
-  });
-
-  it('ACUSA receita de um predio que nao existe em buildings.json', () => {
-    expect(validarReceitasDeProducao(comReceitaOrfa(rawGameData, 'padaria_fantasma'))).toHaveLength(1);
-  });
-});
+// tres fixtures novas na tabela existente
+{ nome: 'bakery com razao que o arredondamento distorce', regraEsperada: 'producao/razao-distorcida',
+  // 1.9 timber por 1 flour: a quantidade inteira vira 2, 5,3 % acima do declarado
+  quebrar: (d) => { d.production.predios.bakery.sai.loaves = 1.9; } },
+{ nome: 'veio com rendimento fracionario', regraEsperada: 'producao/veio-invalido',
+  quebrar: (d) => { d.production.predios.quarry.veio.rendimento = 2.5; } },
+{ nome: 'veio com rendimento zero', regraEsperada: 'producao/veio-invalido',
+  quebrar: (d) => { d.production.predios.quarry.veio.rendimento = 0; } },
 ```
 
-- [ ] **Passo 2: rodar e ver falhar.**
-      `npx vitest run tests/F03-dados-validados.test.ts` → FALHA
-      (`validarReceitasDeProducao is not a function`).
+> A tabela de fixtures **já prova que a regra acusa** — é para isso que ela
+> existe. O caso "aceita o dado de verdade" também já está coberto: o teste roda
+> `validarTudo` no dado real e exige zero erro.
 
-- [ ] **Passo 3: implementar em `tools/data-rules.js`**, na mesma forma das
-      outras regras do arquivo (função pura, devolve array de
-      `{ regra, caminho, mensagem }`):
+- [ ] **Passo 2: rodar e ver falhar.**
+      `npx vitest run tests/F03-dados-validados.test.ts` → FALHA: as três
+      fixtures quebram o dado e **nenhum erro é reportado**.
+
+- [ ] **Passo 3: estender `validarProducao`** em `tools/data-rules.js`, na forma
+      do arquivo (`erros.push('<id-da-regra>: <mensagem>')`):
 
 ```js
-// F15a — o ciclo da receita e derivado das taxas por arredondamento; a regra
-// existe para que o arredondamento nunca troque a proporcao declarada por
-// outra. Tolerancia de 2 %: o pior caso do dado atual e 0,5 % (butchers).
-const TOLERANCIA_DA_RAZAO = 0.02;
+// F15a — o carregador deriva a receita em CICLO: periodo da taxa mais lenta, e
+// quantidade = razao dos periodos, arredondada. A regra replica a derivacao e
+// confere que a quantidade inteira ainda representa a proporcao DECLARADA nas
+// taxas. Mede sobre TICKS de proposito: e o arredondamento em ticks que pode
+// distorcer, e ele depende de `escalas.economia`.
+const TOLERANCIA_DA_RAZAO = 0.02; // medido no dado atual: desvio 0,00 % nas 21 receitas
 
-function validarReceitasDeProducao(raw) {
-  const erros = [];
-  const idsDePredio = new Set(raw.buildings.predios.map((p) => p.id));
-  for (const [id, def] of Object.entries(raw.production.predios)) {
-    if (!idsDePredio.has(id)) {
-      erros.push({ regra: 'producao/predio-inexistente', caminho: `production.predios.${id}`,
-        mensagem: `receita de '${id}', que nao existe em buildings.json` });
-    }
-    const taxas = { ...def.entra, ...def.sai };
-    const valores = Object.values(taxas);
-    if (valores.length === 0) {
-      erros.push({ regra: 'producao/receita-vazia', caminho: `production.predios.${id}`,
-        mensagem: 'receita sem entrada e sem saida' });
-      continue;
-    }
-    const menor = Math.min(...valores); // a taxa mais lenta define o ciclo
-    for (const [mercadoria, taxa] of Object.entries(taxas)) {
-      const exata = taxa / menor;
-      const inteira = Math.round(exata);
-      if (inteira < 1) {
-        erros.push({ regra: 'producao/quantidade-zero', caminho: `production.predios.${id}.${mercadoria}`,
-          mensagem: `taxa ${taxa} arredonda para 0 unidade por ciclo` });
-      } else if (Math.abs(inteira - exata) / exata > TOLERANCIA_DA_RAZAO) {
-        erros.push({ regra: 'producao/razao-distorcida', caminho: `production.predios.${id}.${mercadoria}`,
-          mensagem: `${inteira} por ciclo contra ${exata.toFixed(3)} declarado (> ${TOLERANCIA_DA_RAZAO * 100} %)` });
-      }
-    }
-    const rendimento = def.veio?.rendimento;
-    if (rendimento !== undefined && (!Number.isInteger(rendimento) || rendimento < 1)) {
-      erros.push({ regra: 'producao/veio-invalido', caminho: `production.predios.${id}.veio.rendimento`,
-        mensagem: `rendimento precisa ser inteiro >= 1, veio ${rendimento}` });
-    }
-  }
-  return erros;
+function periodoEmTicks(taxaPorMinuto, escala, tickHz) {
+  return Math.round((60 * tickHz) / (taxaPorMinuto * escala));
 }
 ```
 
-> A regra trabalha sobre as **taxas cruas** (a razão entre elas), não sobre os
-> ticks. É a mesma proporção, sem a escala no meio — trocar `economia` de 2.0
-> para outro valor não pode fazer a regra mudar de veredicto.
+      e, dentro do laço que já percorre `production.predios`:
 
-- [ ] **Passo 4: ligar em `tools/validate-data.js`** (onde as outras regras são
-      chamadas) e declarar em `tools/data-rules.d.ts`.
-- [ ] **Passo 5: rodar.** `npm run validate:data` → 0 erros.
-      `npx vitest run tests/F03-dados-validados.test.ts` → PASSA.
-- [ ] **Passo 6: commit.**
+```js
+    const taxas = { ...((def && def.entra) || {}), ...((def && def.sai) || {}) };
+    const positivas = Object.entries(taxas).filter(([, t]) => t > 0);
+    if (positivas.length > 0 && escala > 0) {
+      const periodos = positivas.map(([m, t]) => [m, periodoEmTicks(t, escala, tickHz)]);
+      const ciclo = Math.max(...periodos.map(([, p]) => p));
+      const menorTaxa = Math.min(...positivas.map(([, t]) => t));
+      for (const [mercadoria, periodo] of periodos) {
+        const inteira = Math.round(ciclo / periodo);
+        const declarada = taxas[mercadoria] / menorTaxa;
+        if (inteira < 1) {
+          erros.push(`producao/quantidade-zero: production.predios.${id}.${mercadoria} rende 0 unidade por ciclo`);
+        } else if (Math.abs(inteira - declarada) / declarada > TOLERANCIA_DA_RAZAO) {
+          erros.push(
+            `producao/razao-distorcida: production.predios.${id}.${mercadoria} vira ${inteira} por ciclo, `
+            + `mas a taxa declara ${declarada.toFixed(3)} (tolerancia ${TOLERANCIA_DA_RAZAO * 100}%)`,
+          );
+        }
+      }
+    }
+    const veio = def && def.veio;
+    if (veio !== undefined && veio !== null) {
+      const r = veio.rendimento;
+      if (!Number.isInteger(r) || r < 1) {
+        erros.push(`producao/veio-invalido: production.predios.${id}.veio.rendimento=${r} (inteiro >= 1)`);
+      }
+    }
+```
+
+- [ ] **Passo 4: rodar.** `npm run validate:data` → 0 erros no dado real.
+      `npx vitest run tests/F03-dados-validados.test.ts` → PASSA, com as três
+      fixtures acusando.
+- [ ] **Passo 5: commit.**
 
 ```bash
 git add tools/ tests/F03-dados-validados.test.ts

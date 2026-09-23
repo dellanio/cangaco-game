@@ -36,11 +36,27 @@ export interface ConstrucaoData {
   readonly devolucaoAoDemolir: number;
 }
 
-export interface ProducaoPredio {
-  readonly entra: Readonly<Record<string, Ticks>>;
-  readonly sai: Readonly<Record<string, Ticks>>;
+/**
+ * F15a — a receita de um predio, ja derivada em CICLO no carregamento.
+ *
+ * Nao guarda taxa nem ticks-por-unidade: guarda a duracao de UM ciclo e quantas
+ * unidades inteiras ele consome e rende. `ticksDoCiclo` e o periodo da taxa mais
+ * lenta entre `entra` e `sai`; as quantidades sao a razao dos periodos,
+ * arredondada uma unica vez, aqui. E por isso que "1 tronco -> 2 timber" (GDD
+ * §4.2) e consequencia das taxas, e nao um numero digitado em `.ts`.
+ */
+export interface ReceitaDePredio {
+  readonly ticksDoCiclo: Ticks;
+  /** Unidades tiradas da gaveta `entrada` no INICIO do ciclo. */
+  readonly entra: Readonly<Record<string, number>>;
+  /** Unidades postas na gaveta `saida` no FIM do ciclo. */
+  readonly sai: Readonly<Record<string, number>>;
+  /** Unidades de SAIDA que o veio ainda rende quando o predio nasce; `null` = nao
+   *  esgota (renovavel). Mora aqui porque nao existe camada de terreno na sim —
+   *  ver BUILD_PLAN, F15a/D2, contrato que a F21 herda. */
+  readonly rendimentoDoVeio: number | null;
 }
-export type ProducaoReceitas = Readonly<Record<string, ProducaoPredio>>;
+export type ProducaoReceitas = Readonly<Record<string, ReceitaDePredio>>;
 
 /** Capacidade do buffer interno de um predio de producao — quantas unidades
  *  cabem antes de bloquear (F09 reserva isto como "vaga no destino"). Numero

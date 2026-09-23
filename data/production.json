@@ -2,7 +2,7 @@
   "_doc": "Taxas em unidades por minuto na escala 1.0. O carregador multiplica por escalas.economia. Todos os valores sao [proposta] e devem ser calibrados em F15 e F20 contra as proporcoes de referencia do GDD.",
   "escala": "economia",
   "predios": {
-    "quarry":           { "entra": {}, "sai": { "stone": 1.8 }, "notas": "consome o veio de rocha; esgota" },
+    "quarry":           { "entra": {}, "sai": { "stone": 1.8 }, "veio": { "rendimento": 200 }, "notas": "consome o veio de rocha; esgota. rendimento 200 e PONTO DE PARTIDA aprovado pelo operador (~55 min de producao continua na escala 2.0); calibrar na F15b, ver BALANCE_LOG" },
     "woodcutters":      { "entra": {}, "sai": { "tree_trunk": 0.55 }, "modos": ["cortar", "replantar", "ambos"] },
     "sawmill":          { "entra": { "tree_trunk": 1.1 }, "sai": { "timber": 2.2 } },
     "farm":             { "entra": {}, "sai": { "corn": 1.22 }, "notas": "medicao da comunidade (2014)" },

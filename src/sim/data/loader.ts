@@ -1,7 +1,8 @@
 import type { RawGameData } from './raw';
 import type {
   CombateData, CondicaoData, ConstrucaoData, ConversaoRegistrada, EconomiaData,
-  EntregaData, GameData, MovimentoData, ProducaoData, TerrenoData, TerrenoTipo, Ticks, UnidadesData,
+  EntregaData, GameData, MovimentoData, ProducaoData, ReceitaDePredio,
+  TerrenoData, TerrenoTipo, Ticks, UnidadesData,
 } from './types';
 
 /**
@@ -116,27 +117,44 @@ export function loadGameData(raw: RawGameData): GameData {
     devolucaoAoDemolir: raw.buildings.construcao.devolucaoAoDemolir,
   };
 
-  // --- producao (taxas de entra/sai, estruturalmente, nao por nome) ---
+  // --- producao: a receita vira um CICLO (F15a) ---
+  // Cada taxa vira um periodo em ticks, como antes — a auditoria de conversao da
+  // F03 continua registrando linha a linha. O CICLO e o periodo mais LENTO entre
+  // entra e sai; as quantidades sao a razao dos periodos, arredondada UMA vez,
+  // aqui. E isso que reproduz "1 tronco -> 2 timber" sem a quantidade estar
+  // digitada em lugar nenhum: ela e a razao de duas taxas.
   const escalaEconomiaProducao = escalaDe(escalas, raw.production.escala);
-  const receitas: Record<string, { entra: Record<string, Ticks>; sai: Record<string, Ticks> }> = {};
+  const receitas: Record<string, ReceitaDePredio> = {};
   for (const [predioId, def] of Object.entries(raw.production.predios)) {
-    const entra: Record<string, Ticks> = {};
-    const sai: Record<string, Ticks> = {};
-    for (const [mercadoria, taxa] of Object.entries(def.entra)) {
-      entra[mercadoria] = registrar(
-        `production.predios.${predioId}.entra.${mercadoria}`, raw.production.escala,
-        taxa, 'unidadesPorMinuto',
-        taxaParaTicksPorUnidade(taxa, escalaEconomiaProducao as number, tickHz),
-      );
+    const periodos: { entra: Record<string, Ticks>; sai: Record<string, Ticks> } = { entra: {}, sai: {} };
+    for (const grupo of ['entra', 'sai'] as const) {
+      for (const [mercadoria, taxa] of Object.entries(def[grupo] as Record<string, number>)) {
+        periodos[grupo][mercadoria] = registrar(
+          `production.predios.${predioId}.${grupo}.${mercadoria}`, raw.production.escala,
+          taxa, 'unidadesPorMinuto',
+          taxaParaTicksPorUnidade(taxa, escalaEconomiaProducao as number, tickHz),
+        );
+      }
     }
-    for (const [mercadoria, taxa] of Object.entries(def.sai)) {
-      sai[mercadoria] = registrar(
-        `production.predios.${predioId}.sai.${mercadoria}`, raw.production.escala,
-        taxa, 'unidadesPorMinuto',
-        taxaParaTicksPorUnidade(taxa, escalaEconomiaProducao as number, tickHz),
-      );
+    const todos = [...Object.values(periodos.entra), ...Object.values(periodos.sai)];
+    if (todos.length === 0) {
+      throw new Error(`loadGameData: receita '${predioId}' nao declara nem entrada nem saida`);
     }
-    receitas[predioId] = { entra, sai };
+    const ticksDoCiclo = Math.max(...todos);
+    const quantidades = (p: Record<string, Ticks>): Record<string, number> => {
+      const q: Record<string, number> = {};
+      for (const [mercadoria, periodo] of Object.entries(p)) q[mercadoria] = Math.round(ticksDoCiclo / periodo);
+      return q;
+    };
+    // `veio` e opcional no JSON e so a quarry o declara hoje: `in` estreita a
+    // uniao que o `resolveJsonModule` produz, sem `any` e sem campo inventado.
+    const veio = 'veio' in def ? def.veio : null;
+    receitas[predioId] = {
+      ticksDoCiclo,
+      entra: quantidades(periodos.entra),
+      sai: quantidades(periodos.sai),
+      rendimentoDoVeio: veio === null ? null : veio.rendimento,
+    };
   }
   const producao: ProducaoData = {
     receitas,
