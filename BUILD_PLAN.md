@@ -801,6 +801,54 @@ prédio surge sem clique do jogador.
   cardápio de um serf ocioso custa 1,58 ms a 64² e **6,03 ms a 256²**: dez serfs
   ociosos comeriam 60 ms de um tick de 100 ms.
 
+### F17f — O primeiro sprite real: o armazém
+- **Escopo**: o armazém deixa de ser retângulo e passa a ser desenhado por **PNG**
+  nos três estágios de hoje (`marcacao`, `madeira`, `completo`). Os outros 27
+  prédios **continuam placeholder, e o jogo não quebra por isso**. O que esta
+  feature existe para fixar não é o desenho: é o **formato do
+  `assets/manifest.json`**, a **estrutura de pastas** que os outros 27 herdam, a
+  **convenção de nome** por prédio e por estágio, a **dimensão** derivada do
+  footprint e a **ancoragem** no grid ortogonal. Plano em
+  `docs/planos/F17f-primeiro-sprite.md`.
+- **Aceite**: teste headless que prova **os dois lados** do §9 — `storehouse`
+  resolve os três arquivos, `quarry` resolve `null` e cai no retângulo — mais a
+  guarda de convenção `tamanho[0] === footprint[0] × tilePx` e a conferência de
+  que todo arquivo declarado **existe** e tem no cabeçalho a dimensão declarada.
+  Screenshot do armazém real **ao lado de um prédio placeholder e de uma
+  unidade**, para julgar escala: o GDD diz que o civil tem cerca da altura de uma
+  porta, e isso nunca foi visto.
+- **Evidência**: `test-output/F17f.json` +
+  `screenshots/F17f-1-armazem-placeholder-unidade.png` +
+  `screenshots/F17f-2-obra-marcacao.png` + `screenshots/F17f-3-obra-madeira.png`
+- **Nota (não é feature de integração)**: toca `src/render/`, `assets/`, `tools/`
+  e `tests/`. **`src/sim/` e `src/ui/` não mudam** — logo não precisa da exceção
+  do §10, e não ganha uma no meio do caminho. Se a implementação parecer pedir
+  campo novo em `sim/`, **pare e reporte**.
+- **Nota (a dimensão é 192×128, não 192×192 — medido em 2026-09-23)**: a fonte é
+  1536×1024, e **1536 = 192 × 8 exato**, então a redução por 8 é limpa. Mas a
+  razão é **3:2**: forçar 192×192 esticaria a arte 1,5× na vertical. A regra que
+  esta feature fixa é **a largura manda** — `tamanho[0] = footprint[0] × tilePx` —
+  e a **altura é o que a arte der**, gravada no manifesto e conferida contra o
+  cabeçalho do PNG. O desenho escala por **um** fator, o da largura; dois fatores
+  esticam, e é isso que o teste impede.
+- **Nota (os três estágios não estão registrados entre si)**: bbox de alpha de
+  1454×961, 1498×964 e 1514×1007, com offsets diferentes. Recortar cada estágio
+  pelo seu conteúdo faria o prédio **pular de posição** ao trocar de estágio: a
+  derivação escala o **canvas inteiro**, sem recorte, e o registro se preserva
+  por construção.
+- **Nota (perspectiva divergente, conhecida e a substituir)**: a arte fornecida é
+  **isométrica**; a convenção do projeto (§9.3 do CLAUDE.md) é **3/4 sobre grid
+  ortogonal**. Usada assim mesmo, por decisão do operador de 2026-09-23: o
+  objetivo é validar manifesto, dimensão e ancoragem, **não a arte final**. Fica
+  registrado no `origem.nota` do manifesto e na evidência do teste. É também a
+  razão de o prédio ocupar a metade de baixo do quadrado de chão — em isométrico
+  o chão de um 3×3 é losango, mais largo que alto.
+- **Nota (por que antes da F17d e da F17e)**: a arte entregue tem exatamente os
+  **três** estágios que existem hoje, e a F17e transforma três em seis. Se ela
+  vier antes, o armazém nasce metade sprite e metade retângulo, e a foto de
+  escala fica poluída. As letras são id, não ordem — **a ordem é a do arquivo**,
+  como a F16a/F16c/F16b já demonstram.
+
 ### F17d — Nivelamento visível no canteiro (integração)
 - **Escopo**: olhando o mapa, **sem selecionar nada**, o jogador vê o canteiro de
   uma obra ficar plano **tile a tile** enquanto o laborer nivela, e distingue uma
