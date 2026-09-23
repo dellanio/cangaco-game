@@ -15,6 +15,7 @@ import {
 } from '../src/sim/pathfinding';
 import type { Caminho } from '../src/sim/pathfinding';
 import { inicial, tile } from './helpers/jobs-cenario';
+import { gravarEvidencia } from './helpers/evidence';
 
 const TAMANHOS = [64, 128, 256] as const;
 
@@ -118,5 +119,51 @@ describe('F17c — o A* nao e reentrante, e a guarda diz isso em voz alta', () =
     const caminho = buscarCaminho(inicial, tile(10, 10), [tile(14, 10)], 'livre');
     expect(caminho).not.toBeNull();
     expect(caminho?.tiles.length).toBe(4);
+  });
+});
+
+// Linha de base medida em 2026-09-23, ANTES desta feature, na mesma maquina:
+// 40 / 94 / 303 us por busca curta — razao 7,6x entre 256x256 e 64x64.
+const RAZAO_ANTES = 7.6;
+// Teto FROUXO de proposito: o esperado depois da correcao e ~1,0, e microbench
+// em maquina compartilhada oscila. 3,0 ainda separa "nao cresce" de 7,6x com
+// folga. Se vier a oscilar, a correcao e alargar o teto COM O MOTIVO ESCRITO —
+// nunca `skip`, nunca tirar o caso da verificacao (CLAUDE.md 10).
+const RAZAO_MAXIMA = 3.0;
+const BUSCAS = 400;
+const AQUECIMENTO = 100;
+
+describe('F17c — aceite: a busca curta nao paga pela area do mapa', () => {
+  it('mede 64x64, 128x128 e 256x256 e mostra os tres', () => {
+    // Os indices ficam DENTRO da faixa de 640 pares de `buscaCurtaInedita`:
+    // aquecimento em [0,99], medicao em [100,499]. O cache e chaveado pela
+    // referencia de `dados`, que muda a cada tamanho — por isso os mesmos
+    // indices podem repetir entre tamanhos e ainda assim toda busca executa.
+    const medidas = TAMANHOS.map((n) => {
+      const dados = dadosCom(n);
+      for (let i = 0; i < AQUECIMENTO; i += 1) buscaCurtaInedita(inicial, dados, i); // aquece JIT e caches por tamanho
+      zerarEstatisticasDeBusca();
+      const t0 = performance.now();
+      for (let i = AQUECIMENTO; i < AQUECIMENTO + BUSCAS; i += 1) buscaCurtaInedita(inicial, dados, i);
+      const ms = performance.now() - t0;
+      expect(estatisticasDeBusca().execucoes).toBe(BUSCAS); // cache frio: mediu busca, nao acerto
+      expect(estatisticasDeBusca().acertos).toBe(0);
+      return { mapa: `${n}x${n}`, tiles: n * n, usPorBuscaCurta: (ms * 1000) / BUSCAS };
+    });
+
+    const menor = medidas[0]?.usPorBuscaCurta ?? 0;
+    const maior = medidas[medidas.length - 1]?.usPorBuscaCurta ?? 0;
+    const razao = maior / menor;
+    gravarEvidencia('F17c', {
+      feature: 'F17c-buffer-do-astar',
+      oQueSeMede: 'a mesma caminhada de 3 tiles, cache de par origem-destino frio, em tres tamanhos de mapa',
+      buscasPorTamanho: BUSCAS,
+      medidas: medidas.map((m) => ({ ...m, usPorBuscaCurta: Math.round(m.usPorBuscaCurta * 10) / 10 })),
+      razao256sobre64: Math.round(razao * 100) / 100,
+      razaoAntesDaFeature: RAZAO_ANTES,
+      tetoDoTeste: RAZAO_MAXIMA,
+      alocacoesDeRascunho: estatisticasDoRascunho().alocacoes,
+    });
+    expect(razao).toBeLessThan(RAZAO_MAXIMA);
   });
 });
