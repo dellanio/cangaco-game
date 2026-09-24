@@ -175,6 +175,19 @@ escrita.
 - Não-regressão é rodar os roteiros e conferir o código de saída. Abra
   screenshot com Read só da feature atual: imagem é o que mais pesa na
   janela de contexto.
+- **Medida de relógio é evidência da sessão, nunca asserção** (decisão do operador,
+  2026-09-24). Tempo de parede, `performance.now()` e razão entre dois tempos
+  **não entram em `expect`**: eles vão para `test-output/<feature>.json` e ficam lá
+  como número da corrida. Asserção permanente usa **eixo determinístico** — nó do A*
+  expandido, contagem de alocação, número de tarefas, execução contra acerto de cache.
+  O motivo é medido: a razão de tempo da F-T2b saiu 2,58 / 4,74 / 4,97 / 8,79 em
+  corridas da mesma árvore, e isolada dá 0,32 — razão entre duas medidas de ~10 µs
+  em máquina compartilhada **não tem patamar**, e teto que dobra a cada corrida não
+  protege nada: ensina a afrouxar. No mesmo teste, o eixo de nós deu 1,054 nas quatro.
+  **`timeout` de teste não é asserção de tempo** e continua valendo: ele existe para o
+  caso travar, não para afirmar desempenho (`tests/F09-sistema.test.ts`, 20 s, é esse
+  uso). Isto revoga a regra antiga do `BUGS.md` de "alargar o teto com o número
+  medido"; alargar era o conserto enquanto a asserção existia.
 - **Roteiro que exercita painel roda pelo menos um passo despausado.**
   `tools/shot.js` abre a página com `?pausado`, e `page.click()` aperta e solta
   no mesmo instante: nessa condição o laço nunca redesenha entre o `mousedown` e

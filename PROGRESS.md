@@ -4762,3 +4762,51 @@ com o commit: a mitigação não é correção.
    para comer"): a 35 % ele **já saiu** (sai a 50 %). Escrevi no item da F20 a interpretação
    conservadora — vale o dado, o marcador é de **falha de abastecimento** — e marquei que a
    escolha é do operador.
+
+---
+
+## Medida de relógio sai das asserções (decisão do operador, 2026-09-24)
+
+Ele decidiu o que o BUG-E deixou em aberto: **eixo de tempo deixa de ser asserção**; o
+número vai para a evidência e o guarda permanente é o **eixo determinístico**. Regra
+escrita em `CLAUDE.md` §8. Palavras dele: *"um teto que precisa dobrar a cada corrida não
+protege nada — ensina a afrouxar."*
+
+### O que mudou, arquivo por arquivo
+
+- **`tests/F-T2b-obstaculo.test.ts`** — duas asserções de tempo removidas (curta e longa).
+  `RAZAO_TEMPO_MAXIMA` **deixou de existir**. Ficam os três tetos de nó (1,5 / 1,5 / 5,0).
+- **`tests/F-T1-terreno.test.ts`** — a asserção de tempo era a **única** do caso, então
+  entrou o eixo determinístico que faltava: `nosExpandidos()` por busca, com
+  `RAZAO_DE_NOS_MAXIMA = 1,1`. **Medido: 4,0000 nós no liso contra 4,0000 com terreno,
+  razão 1,0000.** Ler custo de terreno por vizinho não muda a forma da busca — e agora
+  isso é afirmado, o que o cronômetro nunca chegou a afirmar.
+- **`tests/F17c-buffer.test.ts`** — asserção removida. A proteção do aceite dela já era a
+  contagem de alocação (`estatisticasDoRascunho().alocacoes`, 0 nesta corrida).
+- **`tests/F09-sistema.test.ts`** — **nada a remover, e isso foi conferido, não suposto**:
+  o `20_000` é **timeout**, não `expect`; nenhuma afirmação daquele caso lê relógio. Só
+  anotei no comentário por que a regra o preserva.
+- **`BUGS.md`** — BUG-D e BUG-E saem, e com eles a seção "A regra dos dois testes de
+  tempo", **revogada**. `## Polimento` ficou vazio.
+
+### Verificado (a evidência da corrida em que a regra entrou)
+
+O número que a regra produz está em `test-output/`, e ele mostra por que a decisão está
+certa — na **mesma** árvore, no mesmo `npm run verify`:
+
+| eixo | relógio | nó |
+|---|---|---|
+| F-T1 terreno/liso | **1,36** (e 0,92 minutos antes) | **1,0000** |
+| F-T2b curta | **0,62** | **1,054** |
+| F-T2b longa | **0,93** | **0,99** |
+| F-T2b desvio | **5,27** | **3,04** |
+
+O `desvioTempo` de 5,27 nesta corrida teria estourado o teto de 2,5 **e** o de 5,0; o
+`desvioNos` de 3,04 é o mesmo número de todas as corridas anteriores.
+
+### Histórico que ficou de pé, de propósito
+
+`PROGRESS.md` linha ~1573 e `docs/planos/F17c-buffer-do-astar.md` linha ~461 ainda
+descrevem a doutrina antiga ("alargar o teto com o motivo escrito"). **Não editei**: são
+registro do que foi decidido naquela sessão, e reescrevê-los apagaria a razão pela qual a
+regra nova existe. A regra vigente é a de `CLAUDE.md` §8, que diz explicitamente que revoga.

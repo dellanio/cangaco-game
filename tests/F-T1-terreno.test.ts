@@ -16,7 +16,9 @@ import type { GameData, MapaData, TerrenoDeMapa } from '../src/sim/data/types';
 import { tipoDoTile, ehTransponivel, custoDoTerreno } from '../src/sim/mapa';
 import { canPlace } from '../src/sim/placement';
 import { canPlaceRoad } from '../src/sim/estradas';
-import { buscarCaminho, zerarEstatisticasDeBusca, estatisticasDeBusca } from '../src/sim/pathfinding';
+import {
+  buscarCaminho, zerarEstatisticasDeBusca, estatisticasDeBusca, nosExpandidos,
+} from '../src/sim/pathfinding';
 import type { Caminho } from '../src/sim/pathfinding';
 import type { GameState } from '../src/sim/state';
 import { inicial, tile } from './helpers/jobs-cenario';
@@ -198,26 +200,26 @@ function tilesDaFaixa(): { pisaveis: boolean; tipos: Set<TerrenoDeMapa> } {
   return { pisaveis, tipos };
 }
 
-// Teto FROUXO, pelo mesmo motivo escrito na F17c: microbench em maquina
-// compartilhada oscila, e a protecao deterministica desta feature nao e o
-// cronometro — sao os casos das pernas 1 e 2 e a contagem de alocacao que a
-// F17c ja roda em todo `npm run verify`. O numero medido vai para
-// `test-output/F-T1.json`; se este teto vier a reprovar, a correcao e alarga-lo
-// COM O NUMERO MEDIDO ao lado, nunca `skip` (CLAUDE.md §10).
-// MEDIDO na F-T1, com os dois JIT aquecidos: 6,1 us por busca no mapa liso
-// contra 7,4 us no mapa com terreno — razao 1,22. O teto de 2,5 fica acima do
-// ruido e ainda acusaria uma leitura por vizinho que custasse o dobro do que
-// esta medido.
-// RE-MEDIDO na F-T2b (2026-09-24), ja com a checagem de obstaculo por vizinho
-// no caminho quente e com a faixa sem recurso: 7,2 / 7,6 / 9,6 / 9,9 us no liso
-// contra 8,1 / 8,7 / 10,3 / 17,9 com terreno em quatro corridas — razoes 1,05
-// 1,07 1,22 e 1,87. O teto de 2,5 continua acima do ruido, e por pouco na pior
-// corrida: se ele vier a reprovar, o numero a olhar antes de mexer no teto e o
-// de NOS EXPANDIDOS da F-T2b, que nao depende da maquina.
-const RAZAO_MAXIMA = 2.5;
+// O EIXO DESTE TESTE E NO EXPANDIDO, NAO RELOGIO (CLAUDE.md §8, decisao do
+// operador em 2026-09-24). A pergunta e "ler terreno por vizinho encareceu o A*?",
+// e a resposta que vale em qualquer maquina e quantos nos a busca expande.
+// MEDIDO: 4,0000 nos por busca no mapa liso contra 4,0000 no mapa com terreno —
+// razao 1,0000. Ler o custo do tile nao muda a forma da busca nesta faixa, e e
+// exatamente isso que o teto de 1,10 guarda: se alguem fizer a leitura de terreno
+// abrir vizinho a mais, este numero sobe e o teste reprova em toda maquina.
+// O RELOGIO CONTINUA MEDIDO E CONTINUA NA EVIDENCIA (`test-output/F-T1.json`,
+// `pernaTres`), mas NAO e assercao: ele saiu 6,1 contra 7,4 us (razao 1,22) na
+// F-T1; 7,2/7,6/9,6/9,9 contra 8,1/8,7/10,3/17,9 us (1,05 a 1,87) na re-medicao da
+// F-T2b; e 9,7 contra 8,9 us (0,92 — o mapa COM terreno "mais rapido" que o liso)
+// na corrida em que este teto virou numero. Um eixo que atravessa 0,92 e 1,87
+// medindo a mesma coisa nao separa regressao de ruido de JIT.
+const RAZAO_DE_NOS_MAXIMA = 1.1;
 
 /** Preenchido pela medicao e despejado na evidencia. */
-const medida = { usPorBuscaNoLiso: 0, usPorBuscaComTerreno: 0, razao: 0 };
+const medida = {
+  usPorBuscaNoLiso: 0, usPorBuscaComTerreno: 0, razao: 0,
+  nosPorBuscaNoLiso: 0, nosPorBuscaComTerreno: 0, razaoDeNos: 0,
+};
 
 describe('F-T1 — o custo do A* foi remedido, nao estimado', () => {
   it('a faixa medida e pisavel e tem mais de um tipo de terreno (senao a medicao e de outra coisa)', () => {
@@ -232,7 +234,7 @@ describe('F-T1 — o custo do A* foi remedido, nao estimado', () => {
     // mediria acerto de cache, nao busca. Trocar a referencia nao paga
     // decodificacao de mapa de novo — a grade e cacheada pelo `MapaData`, que
     // continua o mesmo objeto.
-    const medir = (fabrica: () => GameData): number => {
+    const medir = (fabrica: () => GameData): { us: number; nos: number } => {
       const dados = fabrica();
       for (let i = 0; i < AQUECIMENTO; i += 1) buscaCurtaInedita(dados, i);
       zerarEstatisticasDeBusca();
@@ -241,7 +243,7 @@ describe('F-T1 — o custo do A* foi remedido, nao estimado', () => {
       const ms = performance.now() - t0;
       expect(estatisticasDeBusca().execucoes).toBe(BUSCAS); // cache frio: mediu busca, nao acerto
       expect(estatisticasDeBusca().acertos).toBe(0);
-      return (ms * 1000) / BUSCAS;
+      return { us: (ms * 1000) / BUSCAS, nos: nosExpandidos() / BUSCAS };
     };
     // Duas rodadas, e vale a SEGUNDA de cada um: na primeira, quem mede depois
     // herda o JIT ja aquecido de quem mediu antes, e a razao sai do lugar (a
@@ -253,10 +255,13 @@ describe('F-T1 — o custo do A* foi remedido, nao estimado', () => {
     medir(terreno0);
     const liso = medir(liso0);
     const comTerreno = medir(terreno0);
-    medida.usPorBuscaNoLiso = Math.round(liso * 10) / 10;
-    medida.usPorBuscaComTerreno = Math.round(comTerreno * 10) / 10;
-    medida.razao = Math.round((comTerreno / liso) * 100) / 100;
-    expect(comTerreno / liso).toBeLessThan(RAZAO_MAXIMA);
+    medida.usPorBuscaNoLiso = Math.round(liso.us * 10) / 10;
+    medida.usPorBuscaComTerreno = Math.round(comTerreno.us * 10) / 10;
+    medida.razao = Math.round((comTerreno.us / liso.us) * 100) / 100;
+    medida.nosPorBuscaNoLiso = Math.round(liso.nos * 10000) / 10000;
+    medida.nosPorBuscaComTerreno = Math.round(comTerreno.nos * 10000) / 10000;
+    medida.razaoDeNos = Math.round((comTerreno.nos / liso.nos) * 10000) / 10000;
+    expect(comTerreno.nos / liso.nos).toBeLessThan(RAZAO_DE_NOS_MAXIMA);
   });
 });
 
@@ -376,7 +381,8 @@ afterAll(() => {
       rodadasPorMapa: 2,
       oQueEntra: 'a segunda rodada de cada mapa, com os dois JIT ja aquecidos',
       ...medida,
-      tetoDoTeste: RAZAO_MAXIMA,
+      tetoDeNos: RAZAO_DE_NOS_MAXIMA,
+      tempo: 'medido e registrado, SEM teto: relogio e evidencia da sessao (CLAUDE.md §8)',
     },
     pernaQuatro: {
       comoFoiObtida: 'a suite inteira verde sem mudar fixture; o mapa e que nasce com a vila e a moldura em grama',

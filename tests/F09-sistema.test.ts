@@ -465,6 +465,11 @@ describe('F09 — cenario de carga: muitas obras simultaneas e ninguem reclamand
   // Vitest frio (BUG-001, 2026-09-23), onde a suite inteira passa de 20 s para
   // 30 s. A carga e o que o teste existe para exercer: reduzi-la trocaria o
   // sintoma pela cobertura. 20 s da ~5x de folga sobre o medido.
+  // Isto e TIMEOUT, nao assercao de tempo — existe para o caso travar, nao para
+  // afirmar desempenho, e por isso a regra de CLAUDE.md §8 ("medida de relogio e
+  // evidencia, nunca assercao") o mantem: nenhum `expect` deste caso le relogio,
+  // as afirmacoes dele sao contagem de tarefa e invariante, que nao dependem da
+  // maquina. Conferido em 2026-09-24, quando a regra entrou.
   it('gera as tarefas, mantem as invariantes e ANOTA quantas foram (sem otimizar, sem medir tempo)', () => {
     const quarry = gameData.predios.find((p) => p.id === 'quarry');
     if (!quarry) throw new Error('fixture: sem quarry no dado');

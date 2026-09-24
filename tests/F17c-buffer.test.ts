@@ -136,20 +136,18 @@ describe('F17c — o A* nao e reentrante, e a guarda diz isso em voz alta', () =
 // Linha de base medida em 2026-09-23, ANTES desta feature, na mesma maquina:
 // 40 / 94 / 303 us por busca curta — razao 7,6x entre 256x256 e 64x64.
 const RAZAO_ANTES = 7.6;
-// Teto FROUXO de proposito: o esperado depois da correcao e ~1,0, e microbench
-// em maquina compartilhada oscila. Se vier a oscilar, a correcao e alargar o
-// teto COM O MOTIVO ESCRITO — nunca `skip`, nunca tirar o caso da verificacao
-// (CLAUDE.md 10).
-//
-// Alargado de 3,0 para 5,0 em 2026-09-24, com o numero medido: o teto de 3,0
-// REPROVOU na suite completa com razao 3,06, e a corrida seguinte da mesma
-// arvore deu 1,56. Antes disso: 0,37 no fechamento e 0,82 no BUG-003. A razao
-// oscila entre 0,4 e 3,1 nesta maquina — 3,0 estava DENTRO do ruido, e era isso
-// que o BUG-003 dava como improvavel. 5,0 fica acima do ruido medido e ainda
-// separa de 7,6x, que e o custo real de realocar o rascunho por tamanho de mapa.
-// A protecao deterministica desta feature nao e esta medida, e a contagem
-// `alocacoesDeRascunho`, que roda em todo `npm run verify`.
-const RAZAO_MAXIMA = 5.0;
+// NAO HA TETO NESTA MEDIDA (CLAUDE.md §8, decisao do operador em 2026-09-24). A
+// razao era assercao, com teto de 3,0 e depois 5,0, e o historico dela nesta mesma
+// maquina e 0,37 / 0,82 / 1,56 / 3,06 medindo a mesma coisa — o teto de 3,0 estava
+// DENTRO do ruido, que foi o que o BUG-003 deu como improvavel. O esperado depois
+// da correcao e ~1,0 e a linha de base de 7,6x continua na evidencia, mas uma razao
+// que atravessa 0,37 e 3,06 nao separa regressao de JIT: 5,0 tambem nao separava,
+// so demorava mais para reprovar.
+// A PROTECAO DETERMINISTICA DESTA FEATURE E A CONTAGEM DE ALOCACAO
+// (`estatisticasDoRascunho().alocacoes`, nos dois primeiros casos deste arquivo):
+// ela reprova em qualquer maquina, e e ela que responde ao aceite — o rascunho do
+// A* nao se realoca por tamanho de mapa. O tempo fica como numero da corrida em
+// `test-output/F17c.json`.
 const BUSCAS = 400;
 const AQUECIMENTO = 100;
 
@@ -181,9 +179,8 @@ describe('F17c — aceite: a busca curta nao paga pela area do mapa', () => {
       medidas: medidas.map((m) => ({ ...m, usPorBuscaCurta: Math.round(m.usPorBuscaCurta * 10) / 10 })),
       razao256sobre64: Math.round(razao * 100) / 100,
       razaoAntesDaFeature: RAZAO_ANTES,
-      tetoDoTeste: RAZAO_MAXIMA,
+      teto: 'SEM TETO: relogio e evidencia da sessao, nao assercao (CLAUDE.md §8)',
       alocacoesDeRascunho: estatisticasDoRascunho().alocacoes,
     });
-    expect(razao).toBeLessThan(RAZAO_MAXIMA);
   });
 });

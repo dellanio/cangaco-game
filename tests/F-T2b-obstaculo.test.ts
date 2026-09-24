@@ -416,25 +416,17 @@ function medirDesvio(estado: GameState, fabrica: () => GameData): Medida {
 // O que a floresta fechou de verdade nao e tempo, e TOPOLOGIA: dos 67 corredores
 // de 3 tiles com arvore no meio, 22 ficaram sem solucao nenhuma — origem e alvo
 // em componentes diferentes. Numero na evidencia, em `corredoresTampadosPelaArvore`.
-// TETO DO RELOGIO ALARGADO (BUG-E, 2026-09-24). Regra do operador no BUGS.md:
-// orcamento mais largo com o numero medido no comentario, NUNCA `skip`, NUNCA
-// reduzir a carga — as 400 buscas curtas continuam 400, que e o que este teste
-// existe para exercer.
-// O QUE FOI MEDIDO HOJE, e por que o teto ficou tao largo: na suite morna a razao
-// saiu 2,58 (sessao original), 4,7387, 4,9684 e 8,7852. Alarguei para 8,0 depois
-// da terceira e a quarta reprovou na corrida seguinte — o valor nao oscila em
-// torno de um patamar, ele nao tem patamar. Quatro corridas do arquivo SOZINHO,
-// lidas de `test-output/F-T2b.json`, mostram por que: `noLiso` varia 8,8 / 15,7 /
-// 23,4 / 24,3 us e `comFloresta` 7,2 / 7,4 / 9,5 / 15,6 — a razao de duas medidas
-// independentes de ~10 us e dominada por JIT e por carga da maquina, e isolado ela
-// da 0,32 a 1,00, abaixo de 1. 14,0 e ~1,6x sobre o pior valor ja visto, a mesma
-// folga que a F17c adotou (5,0 sobre 3,06).
-// A PROTECAO PERMANENTE DESTE EIXO NAO E ESTA LINHA: e `RAZAO_NOS_CURTA_MAXIMA`
-// logo abaixo, que conta NO expandido. Ela e deterministica e nao se mexeu — nas
-// quatro corridas deu 4,0000 contra 4,2175 nos, razao 1,054 identica em todas.
-// O relogio aqui e evidencia de sessao; o BUG-E segue aberto no BUGS.md com a
-// pergunta que sobrou: se um eixo sem patamar deve continuar sendo assercao.
-const RAZAO_TEMPO_MAXIMA = 14.0;
+// NAO HA TETO DE RELOGIO NESTE ARQUIVO (CLAUDE.md §8, decisao do operador em
+// 2026-09-24, e foi este teste que a provocou). A razao de tempo era assercao e
+// reprovou tres vezes com 4,7387, 4,9684 e 8,7852 contra tetos de 2,5 e depois 8,0:
+// alargar de 2,5 para 8,0 durou uma corrida. Quatro corridas do arquivo SOZINHO
+// mostram por que — `noLiso` 8,8 / 15,7 / 23,4 / 24,3 us contra `comFloresta`
+// 7,2 / 7,4 / 9,5 / 15,6 us, com a razao entre 0,32 e 1,00, abaixo de 1. E razao
+// entre duas medidas independentes de ~10 us: ela nao tem patamar.
+// O tempo continua MEDIDO e vai inteiro para `test-output/F-T2b.json`
+// (`medidas` e `razoes.*Tempo`), como numero da corrida.
+// QUEM REPROVA SAO OS NOS, que nas mesmas quatro corridas deram 4,0000 contra
+// 4,2175 — razao 1,054, identica em todas. Sao estes tres tetos:
 const RAZAO_NOS_CURTA_MAXIMA = 1.5;
 const RAZAO_NOS_LONGA_MAXIMA = 1.5;
 const RAZAO_NOS_DESVIO_MAXIMA = 5;
@@ -463,7 +455,8 @@ describe('F-T2b — o A* foi re-medido com a floresta em pe', () => {
     const comFloresta = medirCurta(inicial, real);
     medidas.curta = { noLiso, semFloresta, comFloresta };
     for (const m of [noLiso, semFloresta, comFloresta]) expect(m.nulos).toBe(0);
-    expect(comFloresta.usPorBusca / noLiso.usPorBusca).toBeLessThan(RAZAO_TEMPO_MAXIMA);
+    // O tempo esta em `medidas.curta` e vai para a evidencia; ele NAO e assercao
+    // (CLAUDE.md §8). O que reprova aqui e o no expandido.
     expect(comFloresta.nosPorBusca / noLiso.nosPorBusca).toBeLessThan(RAZAO_NOS_CURTA_MAXIMA);
   });
 
@@ -479,8 +472,6 @@ describe('F-T2b — o A* foi re-medido com a floresta em pe', () => {
     };
     const m = medidas.longa as Record<string, Medida>;
     for (const arm of [m.noLiso, m.semFloresta, m.comFloresta]) expect(arm?.nulos).toBe(0);
-    expect((m.comFloresta?.usPorBusca ?? 0) / (m.noLiso?.usPorBusca ?? 1))
-      .toBeLessThan(RAZAO_TEMPO_MAXIMA);
     expect((m.comFloresta?.nosPorBusca ?? 0) / (m.noLiso?.nosPorBusca ?? 1))
       .toBeLessThan(RAZAO_NOS_LONGA_MAXIMA);
   });
@@ -528,11 +519,11 @@ afterAll(() => {
       desvioNos: razaoDeDesvio('nosPorBusca'),
     },
     tetos: {
-      tempo: RAZAO_TEMPO_MAXIMA,
+      tempo: 'SEM TETO: relogio e evidencia da sessao, nao assercao (CLAUDE.md §8)',
       nosCurta: RAZAO_NOS_CURTA_MAXIMA,
       nosLonga: RAZAO_NOS_LONGA_MAXIMA,
       nosDesvio: RAZAO_NOS_DESVIO_MAXIMA,
-      tetoDaFT1: 2.5,
+      tetoDeNosDaFT1: 1.1,
     },
   });
 });
