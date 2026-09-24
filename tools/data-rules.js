@@ -825,6 +825,90 @@ function validarMapas(dados, erros) {
 //     fala de um recurso que o mundo nao tem.
 const REGIMES_DE_RECURSO = ['nunca', 'porAcao', 'porTempo'];
 
+/** F18 — os tipos de terreno que este mapa REALMENTE desenha, pela legenda e
+ *  pelas linhas. E a mesma pergunta que o carregador faz para montar a camada
+ *  de um recurso derivado de terreno; contar a legenda sozinha diria que ha
+ *  campo arado num mapa que nao tem nenhum 'c'. */
+function terrenosComTile(mapa) {
+  const legenda = (mapa && mapa.legenda) || {};
+  const linhas = (mapa && mapa.linhas) || [];
+  const achados = new Set();
+  for (const linha of linhas) {
+    for (const ch of String(linha)) {
+      const terreno = legenda[ch];
+      if (terreno !== undefined) achados.add(terreno);
+    }
+  }
+  return achados;
+}
+
+/** F18 — `terreno` diz de qual terreno a camada deste recurso e derivada. E
+ *  opcional (rocha, arvore e cardume vem da lista esparsa do mapa), mas quando
+ *  esta la tem de ser terreno do vocabulario, senao a camada nasceria vazia em
+ *  silencio e a fazenda nunca acharia campo. */
+function validarCampoDerivadoDoTerreno(dados, id, def, erros) {
+  if (def.terreno === undefined) return;
+  const { todos } = vocabularioDeTerreno(dados);
+  if (typeof def.terreno !== 'string' || !todos.has(def.terreno)) {
+    erros.push(
+      `recurso/terreno: resources.tipos.${id}.terreno e '${def.terreno}', `
+      + `que nao esta no vocabulario de terrain.json (${[...todos].join('/')})`,
+    );
+  }
+  if (def.quantidadeInicial !== undefined) {
+    const q = def.quantidadeInicial;
+    if (!Number.isInteger(q) || q < 0 || q > def.rendimentoPorTile) {
+      erros.push(
+        `recurso/quantidade-inicial: resources.tipos.${id}.quantidadeInicial precisa ser `
+        + `inteiro entre 0 e rendimentoPorTile (${def.rendimentoPorTile}), achou ${q}`,
+      );
+    }
+  }
+}
+
+/** F18 — `reposicao` e o que um predio gasta e demora para repor UM tile. So
+ *  faz sentido no regime `porAcao`: no `nunca` seria a promessa de repor o que
+ *  o regime diz que nao volta, e no `porTempo` seriam duas fontes para a mesma
+ *  reposicao. A duracao tem de estar registrada em tools/data-schema.js — o
+ *  varredor de tempo cobra isso sozinho; o que se cobra aqui e a FORMA. */
+function validarReposicao(dados, id, def, erros) {
+  if (def.reposicao === undefined) return;
+  if (def.regime !== 'porAcao') {
+    erros.push(
+      `recurso/reposicao: resources.tipos.${id} declara reposicao com regime '${def.regime}' `
+      + '(so `porAcao` se repoe por acao de um predio)',
+    );
+  }
+  const r = def.reposicao;
+  if (!r || typeof r !== 'object') {
+    erros.push(`recurso/reposicao: resources.tipos.${id}.reposicao nao e um objeto`);
+    return;
+  }
+  if (typeof r.segundos_base !== 'number' || !(r.segundos_base > 0)) {
+    erros.push(
+      `recurso/reposicao: resources.tipos.${id}.reposicao.segundos_base precisa ser numero > 0, `
+      + `achou ${JSON.stringify(r.segundos_base)}`,
+    );
+  }
+  if (!r.custo || typeof r.custo !== 'object') {
+    erros.push(`recurso/reposicao: resources.tipos.${id}.reposicao.custo precisa ser objeto (vazio quando de graca)`);
+    return;
+  }
+  const mercadorias = new Set((dados.economy && dados.economy.mercadorias) || []);
+  for (const [mercadoria, q] of Object.entries(r.custo)) {
+    if (mercadoria.startsWith('_')) continue;
+    if (!mercadorias.has(mercadoria)) {
+      erros.push(
+        `recurso/reposicao: resources.tipos.${id}.reposicao.custo referencia '${mercadoria}', `
+        + 'que nao existe em economy.mercadorias',
+      );
+    }
+    if (!Number.isInteger(q) || q < 1) {
+      erros.push(`recurso/reposicao: resources.tipos.${id}.reposicao.custo.${mercadoria} precisa ser inteiro >= 1`);
+    }
+  }
+}
+
 function validarRecursos(dados, erros) {
   const tipos = (dados.resources && dados.resources.tipos) || null;
   if (tipos === null || typeof tipos !== 'object') return; // forma/* ja reportou
@@ -852,6 +936,8 @@ function validarRecursos(dados, erros) {
         + '(ausente leria como "nao bloqueia" sem ninguem notar)',
       );
     }
+    validarCampoDerivadoDoTerreno(dados, id, def, erros);
+    validarReposicao(dados, id, def, erros);
   }
 
   // A receita que colhe tem de colher algo que existe, e ate uma distancia real.
@@ -881,6 +967,18 @@ function validarRecursos(dados, erros) {
       if (tiles.length > 0) usados.add(tipo);
       if (!(tipo in tipos)) {
         erros.push(`recurso/mapa: ${nome} poe o recurso '${tipo}', que nao existe em resources.tipos`);
+      }
+    }
+  }
+  // F18 — o tipo derivado de TERRENO (`corn`, em `campoArado`) nao aparece na
+  // lista esparsa do arquivo de mapa: quem monta a camada dele e o carregador,
+  // a partir das linhas. Contar so a lista reprovaria o dado CORRETO, entao a
+  // pergunta aqui e a mesma que o runtime faz — ha tile deste recurso em algum
+  // mapa, venha ele da lista ou do terreno?
+  for (const { mapa } of mapas) {
+    for (const terreno of terrenosComTile(mapa)) {
+      for (const [id, def] of Object.entries(tipos)) {
+        if (!id.startsWith('_') && def && def.terreno === terreno) usados.add(id);
       }
     }
   }

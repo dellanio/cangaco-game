@@ -187,6 +187,27 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   como nao calibrado. | observado no aceite da F-T2c (`test-output/F-T2c.json`), em cenario montado
   de proposito para forcar a disputa; **nao medido em partida**
 
+- [2026-09-24] **a fazenda ficou ~30% mais lenta, e o plantio é ~23% do tempo dela** | medido no
+  aceite (`test-output/F18.json`), em ticks e não em minutos, porque a escala `economia: 2` de
+  `time.json` já está dentro dos dois números: plantar um tile custa **300 ticks**
+  (`corn.reposicao`) e cada colheita **246** (`farm.ticksDoCiclo`), com `rendimentoPorTile: 4` — o
+  ciclo fechado de um tile é 300 + 4×246 = **1284 ticks por 4 milhos**, ou **321 ticks/milho** contra
+  os **246** de antes da F18. A taxa declarada (`sai: { corn: 1.22 }`) continua valendo *durante* a
+  colheita; o que a derruba é o plantio, que é tempo que não existia. **Meu palpite no plano era
+  "metade do tempo"; a medição diz 23%** — fica registrado para não virar folclore.
+  Nota do formato: como o roceiro replanta **o mesmo tile** assim que ele seca (a varredura do
+  plantio tem a mesma ordem da colheita, de propósito), a fazenda alterna 300 parada / 984
+  produzindo para sempre e **nunca encadeia** os outros ~36 tiles aráveis ao alcance. **Não mexi em
+  número nenhum**: os três candidatos (`reposicao.segundos_base`, `rendimentoPorTile` e a ordem da
+  varredura do plantio) mudam a comida, e comida é a F20 — o lote se ajusta lá, com o pão junto |
+  `resources.json:tipos.corn.reposicao`, `production.json:receitas.farm`
+- [2026-09-24] **a terra arável do mapa é pouca e fica longe da vila** | medido: **130 tiles** de
+  `campoArado` no mapa inteiro (0,8% de 128²), em dois blocos, o maior com 65 tiles no nordeste —
+  a **~80 tiles** da vila de abertura (`tools/shots/F18.js`, `test-output/F18-shot.json`). Toda
+  fazenda vai nascer longe, e a estrada até ela é o custo real da comida. É o mesmo formato do
+  problema da rocha que virou a F-TP (11 lajedos, 85,5% do mapa sem nenhum ao alcance), e o número
+  a olhar é do **gerador de mapa**, não da receita | `data/maps/sertao-128.json`
+
 ---
 
 ## Ciclos fechados

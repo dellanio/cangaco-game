@@ -67,6 +67,34 @@ function carregarMapa(raw: RawGameData): MapaData {
  * desempate em tempo de jogo — `state.recursos` e chaveado por tile, entao dois
  * tipos no mesmo tile seriam um deles sumindo em silencio.
  */
+/**
+ * A forma CRUA de um tipo de recurso. Os campos da F18 so existem em alguns
+ * tipos do JSON, e o tipo que o `resolveJsonModule` infere e a uniao dos quatro
+ * — perguntar `def.terreno` na uniao nao compila. Declarar a forma aqui, com os
+ * campos novos opcionais, e o mesmo contrato de `raw.ts`: campo renomeado em
+ * `data/` reprova no `typecheck`, nao em tempo de execucao.
+ */
+interface RawTipoDeRecurso {
+  readonly regime: string;
+  readonly rendimentoPorTile: number;
+  readonly bloqueiaPasso?: boolean;
+  readonly terreno?: string;
+  readonly quantidadeInicial?: number;
+  readonly reposicao?: {
+    readonly segundos_base: number;
+    readonly custo: Readonly<Record<string, number>>;
+  };
+}
+
+/** As chaves `_doc*` sao comentario do arquivo de dado, nunca conteudo. */
+function semChavesDeDoc(
+  bruto: Readonly<Record<string, number>>,
+): Readonly<Record<string, number>> {
+  const limpo: Record<string, number> = {};
+  for (const [k, v] of Object.entries(bruto)) if (!k.startsWith('_')) limpo[k] = v;
+  return limpo;
+}
+
 function carregarRecursosDoMapa(
   bruto: RawGameData['mapa'], largura: number, altura: number,
   tipos: RawGameData['resources']['tipos'],
@@ -96,7 +124,63 @@ function carregarRecursosDoMapa(
     }
     recursos[tipo] = lista;
   }
+  derivarRecursosDoTerreno(bruto, tipos, recursos, ocupado);
   return recursos;
+}
+
+/**
+ * F18 — as camadas DERIVADAS do terreno. Um tipo com `terreno` em
+ * `resources.json` existe em todo tile daquele terreno: o milho nao aparece
+ * tile a tile no arquivo de mapa, ele E o campo arado. Sem isto o roçado teria
+ * de ser uma lista de 130 pares copiada do mapa, que sairia do ar no dia em que
+ * o gerador emitisse um mapa novo.
+ *
+ * Vem DEPOIS das listas esparsas e respeita o mesmo `ocupado`: se um dia um
+ * lajedo cair sobre campo arado, o conflito reprova o carregamento aqui — nao
+ * vira um dos dois sumindo em silencio dentro da partida.
+ *
+ * A ordem e a de leitura do mapa (norte→sul, oeste→leste), fixa: e ela que
+ * decide qual tile o roceiro trabalha primeiro, e o teste de determinismo
+ * compara byte a byte.
+ */
+function derivarRecursosDoTerreno(
+  bruto: RawGameData['mapa'], tipos: RawGameData['resources']['tipos'],
+  recursos: Record<string, readonly TileDeMapa[]>, ocupado: Map<string, string>,
+): void {
+  const legenda = bruto.legenda as Record<string, string>;
+  const porTerreno = new Map<string, string>();
+  for (const [id, def] of Object.entries(tipos)) {
+    const terreno = (def as RawTipoDeRecurso).terreno;
+    if (terreno === undefined) continue;
+    const jaTem = porTerreno.get(terreno);
+    if (jaTem !== undefined) {
+      throw new Error(
+        `loadGameData: '${jaTem}' e '${id}' derivam do mesmo terreno '${terreno}' — um tile, um recurso`,
+      );
+    }
+    porTerreno.set(terreno, id);
+  }
+  if (porTerreno.size === 0) return;
+
+  const listas = new Map<string, TileDeMapa[]>();
+  for (const id of porTerreno.values()) listas.set(id, []);
+  for (let gy = 0; gy < bruto.linhas.length; gy += 1) {
+    const linha = bruto.linhas[gy] as string;
+    for (let gx = 0; gx < linha.length; gx += 1) {
+      const id = porTerreno.get(legenda[linha[gx] as string] as string);
+      if (id === undefined) continue;
+      const chave = `${gx},${gy}`;
+      const jaTem = ocupado.get(chave);
+      if (jaTem !== undefined) {
+        throw new Error(
+          `loadGameData: o tile (${gx},${gy}) do mapa '${bruto.id}' tem '${jaTem}' e '${id}' — um tile, um recurso`,
+        );
+      }
+      ocupado.set(chave, id);
+      (listas.get(id) as TileDeMapa[]).push([gx, gy]);
+    }
+  }
+  for (const [id, lista] of listas) recursos[id] = lista;
 }
 
 /**
@@ -370,7 +454,6 @@ export function loadGameData(raw: RawGameData): GameData {
   const terreno: TerrenoData = {
     tilePx: raw.terrain.tile_px,
     estrada: raw.terrain.estrada,
-    campos: raw.terrain.campos,
     custoDeMovimento: raw.terrain.custoDeMovimento,
     intransponivel: raw.terrain.intransponivel,
     colisao: raw.terrain.colisao,
@@ -394,8 +477,27 @@ export function loadGameData(raw: RawGameData): GameData {
     // F-T2b: `=== true` e nao coercao. Campo ausente ou `"true"` de string tem
     // de virar `false` aqui e ser acusado pelo `validate:data`, nao virar
     // "bloqueia" por acidente de tipo — o dado e a fonte, e ele e booleano.
+    // F18: `terreno` diz que a camada deste tipo e DERIVADA do mapa base em vez
+    // de vir da lista esparsa (ver `carregarRecursosDoMapa`), e `reposicao` e o
+    // que um predio gasta para repor um tile. A duracao vira tick AQUI, uma vez,
+    // como toda duracao — o caminho e por tipo e esta registrado em
+    // `tools/data-schema.js`, um por linha, de proposito.
+    const cru = def as RawTipoDeRecurso;
+    const reposicao = cru.reposicao;
     tiposDeRecurso[id] = {
       regime, rendimentoPorTile: def.rendimentoPorTile, bloqueiaPasso: def.bloqueiaPasso === true,
+      terreno: cru.terreno ?? null,
+      quantidadeInicial: cru.quantidadeInicial ?? null,
+      reposicao: reposicao === undefined ? null : {
+        ticks: registrar(
+          `resources.tipos.${id}.reposicao.segundos_base`, raw.resources.escala,
+          reposicao.segundos_base, 'segundos',
+          paraTicksDeDuracao(
+            reposicao.segundos_base, 'segundos', escalaDe(escalas, raw.resources.escala), tickHz,
+          ),
+        ),
+        custo: semChavesDeDoc(reposicao.custo),
+      },
     };
   }
   const recursos: RecursosData = {

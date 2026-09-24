@@ -11,7 +11,7 @@
 import type { GameData, ReceitaDePredio } from './data/types';
 import { gameData } from './data';
 import type { GameState, Predio, PredioCompleto } from './state';
-import { melhorTileDeColheita } from './recursos';
+import { algumTileTrabalhavel, melhorTileDeColheita } from './recursos';
 
 /** A receita do tipo, ou `null` — inclusive para tipo que nem existe no dado
  *  (save de outra versao). `null` e nunca `undefined`, como `trabalhadorDoTipo`. */
@@ -103,4 +103,22 @@ export function semRecursoAoAlcance(
   const { colheita } = receita;
   if (colheita === null) return false;
   return melhorTileDeColheita(state, predio, colheita, unidadesPorCiclo(receita), undefined, dados) === null;
+}
+
+/**
+ * F18 — este predio nao tem mais NADA que fazer no mapa: nem colher agora, nem
+ * plantar para colher depois. E a irma larga de `semRecursoAoAlcance`, e a
+ * diferenca entre as duas e so o pousio.
+ *
+ * Quem pergunta e o ALERTA, e e a pergunta certa para ele: o ciclo congela
+ * enquanto nao ha o que colher (e ai o roceiro planta), mas o predio so esta
+ * parado de verdade quando nao ha tile nenhum ao alcance. Para a pedreira as
+ * duas dao a mesma resposta sempre — lajedo nao se replanta.
+ */
+export function semTrabalhoAoAlcance(
+  state: GameState, predio: PredioCompleto, receita: ReceitaDePredio, dados: GameData = gameData,
+): boolean {
+  const { colheita } = receita;
+  if (colheita === null) return false;
+  return !algumTileTrabalhavel(state, predio, colheita, unidadesPorCiclo(receita), dados);
 }

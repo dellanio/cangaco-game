@@ -271,6 +271,29 @@ export interface Producao {
   /** Ticks ja trabalhados no ciclo em curso, de 0 ate `ticksDoCiclo`. Igual a
    *  `ticksDoCiclo` significa CICLO PRONTO esperando caber na gaveta `saida`. */
   readonly progresso: number;
+  /** F18 — o tile que este predio esta REPONDO agora, ou `null`. O roçado nao
+   *  colhe o que nao plantou: quando nao ha tile maduro ao alcance mas ha terra
+   *  livre, o roceiro ara e semeia, e so depois volta a colher. */
+  readonly plantio: Plantio | null;
+}
+
+/**
+ * F18 — a reposicao de UM tile em curso, dentro do predio.
+ *
+ * Por que aqui e nao como tarefa do quadro, ao contrario da colheita (F-T2c): a
+ * tarefa de colheita existe porque DUAS pedreiras podem mirar o mesmo tile, e
+ * ela carrega um caminho de `release` a errar. O unico pretendente de um plantio
+ * e o proprio predio que o comecou, nao ha viagem, e demolir o predio some com a
+ * reserva sem nenhum ramo de erro. O que a F-T2c conquistou continua valendo
+ * porque `tilesReservadosParaColheita` devolve a UNIAO: tile de tarefa de
+ * colheita mais tile em plantio. Duas fazendas vizinhas continuam sem poder
+ * trabalhar o mesmo tile.
+ */
+export interface Plantio {
+  /** O tile sendo reposto. Reservado desde o primeiro tick do plantio. */
+  readonly tile: TileDeGrid;
+  /** Ticks ja trabalhados, de 0 ate `reposicao.ticks` do tipo de recurso. */
+  readonly progresso: number;
 }
 
 /**
@@ -855,7 +878,7 @@ function producaoParaTipo(tipoId: string, dados: GameData): Producao | null {
   // F-T2a: nao ha mais nada para semear alem do relogio. O que o predio tem para
   // colher nao nasce com ele — esta no mapa desde o tick 0 e continua la depois
   // que ele for demolido.
-  return receita === undefined ? null : { progresso: 0 };
+  return receita === undefined ? null : { progresso: 0, plantio: null };
 }
 
 function estoqueParaTipo(

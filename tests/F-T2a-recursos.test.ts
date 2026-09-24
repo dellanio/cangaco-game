@@ -15,7 +15,7 @@ import { describe, expect, it } from 'vitest';
 import { createInitialState } from '../src/sim/state';
 import type { GameState } from '../src/sim/state';
 import { gameData } from '../src/sim/data';
-import type { GameData } from '../src/sim/data/types';
+import type { GameData, TipoDeRecurso } from '../src/sim/data/types';
 import { step } from '../src/sim/tick';
 import { chaveDeTile, predioLigadoAoArmazem } from '../src/sim/estradas';
 import {
@@ -82,9 +82,15 @@ describe('F-T2a — a camada de recurso: o mapa diz ONDE, o estado diz QUANTO', 
     const total = doMapa.reduce((n, [, tiles]) => n + tiles.length, 0);
     expect(Object.keys(recursos)).toHaveLength(total);
     for (const [tipo, tiles] of doMapa) {
-      const rendimento = gameData.recursos.tipos[tipo]?.rendimentoPorTile;
+      // F18: a quantidade inicial e do TIPO e nem sempre e o rendimento cheio —
+      // o campo arado nasce em pousio (`quantidadeInicial: 0`). O que este
+      // guarda afirma continua sendo "o estado nasce com o que o DADO declara";
+      // o que mudou e que o dado passou a poder declarar outra coisa. Quem
+      // afirma o pousio pelo lado do campo e tests/F18-camada-de-campo.test.ts.
+      const def = gameData.recursos.tipos[tipo];
+      const inicial = def?.quantidadeInicial ?? def?.rendimentoPorTile;
       for (const [gx, gy] of tiles) {
-        expect(recursos[chave(gx, gy)], `${tipo} em ${gx},${gy}`).toEqual({ tipo, quantidade: rendimento });
+        expect(recursos[chave(gx, gy)], `${tipo} em ${gx},${gy}`).toEqual({ tipo, quantidade: inicial });
       }
     }
   });
@@ -241,9 +247,9 @@ describe('F-T2a — perna 3: os tres regimes se distinguem no ESTADO', () => {
         tipos: {
           ...gameData.recursos.tipos,
           tree: {
+            ...(gameData.recursos.tipos.tree as TipoDeRecurso),
             regime: 'porTempo',
             rendimentoPorTile: 4,
-            bloqueiaPasso: gameData.recursos.tipos.tree?.bloqueiaPasso === true,
           },
         },
         ticksPorUnidadeRegenerada: 10,
@@ -366,6 +372,7 @@ it('F-T2a — evidencia', () => {
       bytesDaCamadaNoSave: bytesDaCamada,
       kbDaCamadaNoSave: Number((bytesDaCamada / 1024).toFixed(1)),
       bytesPorTile: Number((bytesDaCamada / tiles).toFixed(1)),
+      _f18: 'a camada ganhou 130 tiles de campo arado (derivados do terreno): 34.5 KB -> 41.5 KB, com o MESMO custo por tile. O teto do total foi remedido; o de forma (B/tile) nao se mexeu.',
       _tetoDoAceite: 'o item escreveu "+30 KB, medido: 900 tiles". O numero MEDIDO agora, com a forma que o proprio item manda ({ tipo, quantidade } por tile), e 34.5 KB a 883 tiles — ~40 B/tile. O +30 KB era estimativa pre-medicao; o teto do teste esta escrito a partir da medicao, nao o contrario. Divergencia registrada em PROGRESS.md para o operador.',
     },
   });
@@ -374,9 +381,16 @@ it('F-T2a — evidencia', () => {
   // B/tile na forma que o item mandou. O "+30 KB" do BUILD_PLAN era estimativa
   // feita antes de medir — nao se conserta numero medido para bater com
   // estimativa, e a divergencia esta em PROGRESS.md.
+  //
+  // F18: a camada ganhou o roçado — 130 tiles de campo arado, derivados do
+  // TERRENO e nao de lista esparsa —, e o total foi de 34.5 KB para 41.5 KB. O
+  // que NAO mudou e o custo por tile (39.9 B), que e a invariante de FORMA que
+  // este teste protege; o total e funcao do mundo, e o mundo cresceu de
+  // proposito. As duas assercoes continuam: a de forma intacta, a de total
+  // remedida com a mesma folga (~16%) que a primeira medicao tinha.
   expect(tiles).toBeGreaterThan(800);
   expect(bytesDaCamada / tiles).toBeLessThan(45);
-  expect(bytesDaCamada).toBeLessThan(40 * 1024);
+  expect(bytesDaCamada).toBeLessThan(48 * 1024);
 });
 
 // ---------------------------------------------------------------------------

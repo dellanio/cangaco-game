@@ -37,13 +37,17 @@ describe('F15a — PredioCompleto.producao', () => {
   // F-T2a: o predio deixou de carregar o total. Ele nasce so com o relogio, e o
   // que ha para colher esta no MAPA desde o tick 0 — e continua la depois que
   // ele for demolido. E essa a diferenca que mata o exploit da F16a.
+  //
+  // F18: `plantio: null` entrou na forma, e o ponto do guarda nao mudou — o
+  // predio continua nascendo sem NADA colhivel dentro dele. Plantio e trabalho
+  // em curso, nao estoque: nenhum predio nasce com um.
   it('produtor nasce SO com o relogio zerado — o total nao mora nele', () => {
-    expect(completarObra(obraDe('quarry')).producao).toEqual({ progresso: 0 });
+    expect(completarObra(obraDe('quarry')).producao).toEqual({ progresso: 0, plantio: null });
   });
 
   it('produtor sem colheita nasce com a mesma forma: nada o distingue no predio', () => {
-    expect(completarObra(obraDe('sawmill')).producao).toEqual({ progresso: 0 });
-    expect(completarObra(obraDe('woodcutters')).producao).toEqual({ progresso: 0 });
+    expect(completarObra(obraDe('sawmill')).producao).toEqual({ progresso: 0, plantio: null });
+    expect(completarObra(obraDe('woodcutters')).producao).toEqual({ progresso: 0, plantio: null });
   });
 
   it('predio sem receita nasce com `producao: null`', () => {
@@ -58,7 +62,7 @@ describe('F15a — PredioCompleto.producao', () => {
       if (p?.estado !== 'completo') continue;
       const receita = gameData.producao.receitas[p.tipo];
       if (receita === undefined) expect(p.producao, p.tipo).toBeNull();
-      else expect(p.producao, p.tipo).toEqual({ progresso: 0 });
+      else expect(p.producao, p.tipo).toEqual({ progresso: 0, plantio: null });
     }
   });
 

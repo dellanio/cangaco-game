@@ -59,6 +59,12 @@ const CAMPOS_ESCALONADOS = [
   // fixo se registra, caminho por tipo (como as taxas de production.json) nao.
   { arquivo: 'resources', caminho: 'regimes.porTempo.segundosPorUnidade_base',
     unidade: 'segundos', declaraEscalaEm: 'escala' },
+  // F18 — a reposicao e POR TIPO, e por isso cada tipo se registra em sua
+  // linha. E de proposito: tipo `porAcao` novo (a uva, a arvore do replantio)
+  // so passa no validate:data quando alguem escreve a linha dele aqui, que e o
+  // contrato deste arquivo. Caminho por tipo nao vira curinga.
+  { arquivo: 'resources', caminho: 'tipos.corn.reposicao.segundos_base',
+    unidade: 'segundos', declaraEscalaEm: 'escala' },
 ];
 
 // production.json nao entra em CAMPOS_ESCALONADOS: as taxas de entra/sai sao

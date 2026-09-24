@@ -1727,6 +1727,14 @@ a geografia já corrigida do que regravar 900 tiles depois.
   de transição; screenshot do mapa com água, grama, areia, floresta e serra no
   mesmo quadro. Nenhum teste de `sim/` muda — se algum mudar, o escopo vazou.
 - **Evidência**: `test-output/F-TR-shot.json` + `screenshots/F-TR-*.png`
+- **Nota herdada da F18 (2026-09-24, medida na tela)**: hoje **todo tile de
+  quantidade zero divide um código só** (`esgotado`, em `render/mapa.ts`), então
+  o campo em pousio e o lajedo já cavado desenham o **mesmo marcador escuro** —
+  visível em `screenshots/F18-1-o-campo-arado-em-pousio.png`, onde os 65 tiles do
+  roçado aparecem como diamantes escuros sobre a terra marrom. São estados
+  **opostos** para quem joga: um é trabalho por fazer, o outro é fonte acabada. A
+  correção é arte por tipo, que é o escopo desta feature; não foi feita na F18
+  porque mexer aí é `src/render/` e a F18 não é feature de integração.
 
 ### F18 — Farm e campos de milho
 - **Escopo**: a fazenda passa a depender de **tile arável no mapa**. O campo é
@@ -1758,6 +1766,19 @@ a geografia já corrigida do que regravar 900 tiles depois.
   produção de hoje. O render **não** pode desenhar o fazendeiro andando até o
   campo enquanto isso valer — seria desenhar regra que não existe, o mesmo motivo
   que tirou o laborer caminhando da F17d.
+- **Nota (fechada em 2026-09-24, o que os dois duplicados viraram)**: os dois
+  saíram, como o escopo autorizava. `terrain.json.campos` foi removido inteiro
+  (milho e uva); `production.json.wineyard` perdeu `campos: 9` e
+  `timberPorCampo: 1`, que viraram **frase** na nota da própria receita, para os
+  dois números da uva não se perderem. A regra passou a ser outra e mora em dois
+  lugares com leitor: o alcance está em `production.json:receitas.<t>.colheita`
+  e o custo de plantar em `resources.json:tipos.<t>.reposicao.custo`.
+- **Nota (o campo NÃO está no arquivo de mapa, e é de propósito)**: a camada de
+  milho é **derivada do terreno** — `resources.json:tipos.corn.terreno =
+  "campoArado"` e o carregador varre as linhas do mapa. `mapa.recursos` continua
+  sem uma linha de milho, e `campoArado` ganhou o leitor que lhe faltava (até
+  aqui ele só existia na matriz de custo do A*). Terra arável tem **uma** verdade,
+  e não um desenho de terreno que poderia divergir de uma lista de tiles.
 - **Nota (o que caiu da proposta anterior)**: `docs/planos/F18-F19-proposta-de-item.md`
   §2 propunha `state.campos` derivado da posição da fazenda e §4 propunha o
   fazendeiro não sair nunca. As duas caem com a decisão de arquitetura de
@@ -1857,6 +1878,12 @@ a geografia já corrigida do que regravar 900 tiles depois.
      (nem no prédio, nem no tile) e 200 ticks depois: estado idêntico byte a byte
      ao que não passou por save.
 - **Evidência**: `test-output/F-T3.json`
+- **Nota herdada da F18 (2026-09-24)**: `tilesDeColheita` inclui os tiles **sob o
+  próprio footprint** do prédio. Enquanto o especialista fica dentro do prédio
+  isso é inofensivo — o cenário da F18 evita o caso por posicionamento, e o
+  aceite não depende dele. **Quando ele sair, passa a ser bug**: o roceiro andaria
+  até um tile que está debaixo da própria fazenda. Resolver aqui, junto com o
+  caminho; não antes.
 - **Nota de integração (CLAUDE.md §10 — decisão do operador, 2026-09-24)**: o
   **desenho do especialista fora do prédio vai junto desta feature**, não em item
   separado — mesma razão da F-T1 e da F-T2: unidade que a simulação põe no campo

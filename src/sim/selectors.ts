@@ -8,7 +8,7 @@ import { predioLigadoAoArmazem } from './estradas';
 import { custoDeTreino, ehEscolaCompleta, filaDaEscola, ouroNecessario } from './escola';
 import { custoDoPasso } from './pathfinding';
 import { alvoDeNivelamento, custoDoPredio } from './obra';
-import { receitaDoTipo, semRecursoAoAlcance } from './producao';
+import { receitaDoTipo, semTrabalhoAoAlcance } from './producao';
 import { ehPredioOcupavel, trabalhadorDoTipo } from './ocupacao';
 import type { CaixaEmTiles } from './footprint';
 
@@ -533,7 +533,9 @@ export function posicaoDaUnidade(
  * junto com a sua derivacao em `temCausa`, ou o `switch` sem `default` reprova
  * o typecheck.
  */
-export const CAUSAS_DE_ALERTA = ['sem-trabalhador', 'sem-estrada', 'veio-esgotado'] as const;
+export const CAUSAS_DE_ALERTA = [
+  'sem-trabalhador', 'sem-estrada', 'veio-esgotado', 'sem-campo',
+] as const;
 
 export type CausaDeAlerta = (typeof CAUSAS_DE_ALERTA)[number];
 
@@ -568,20 +570,42 @@ function temCausa(
         return motivoDaEspera(state, predio.id, predio, dados) === 'sem-estrada';
       }
       return false;
-    case 'veio-esgotado': {
-      const receita = receitaDoTipo(predio.tipo, dados);
-      // O PREDICADO do runtime (`sim/producao.ts`), nao uma contagem propria: e
-      // `semRecursoAoAlcance` que congela o ciclo, e ele reprova ja quando o que
-      // sobrou no mapa nao da um ciclo inteiro. Alertar so no zero avisaria
-      // depois de o jogador ter percebido sozinho.
-      //
-      // F-T2a: a causa continua se chamando `veio-esgotado` porque e a mesma
-      // coisa da perspectiva de quem joga — a pedreira parou por falta de
-      // pedra. O que mudou foi de onde vem a resposta: do mapa, nao do predio.
-      return predio.producao !== null && receita !== null
-        && semRecursoAoAlcance(state, predio, receita, dados);
-    }
+    // F18 — a mesma medida, dois nomes. O que separa as duas causas nao e o id
+    // do predio: e o DADO do recurso que ele colhe. Tipo com `reposicao` e terra
+    // que o proprio trabalhador replanta, entao parar significa que nao sobrou
+    // terra ao alcance; tipo sem `reposicao` e veio que acaba.
+    //
+    // Fossem um rotulo so, "Sem terra de plantio" apareceria na pedreira e
+    // "Veio esgotado" na fazenda, e nenhum dos dois diria ao jogador o que
+    // fazer. Sao situacoes opostas: uma se resolve mudando a fazenda de lugar
+    // logo, a outra e o fim daquele veio.
+    case 'veio-esgotado':
+      return fonteSemTrabalho(state, predio, dados, false);
+    case 'sem-campo':
+      return fonteSemTrabalho(state, predio, dados, true);
   }
+}
+
+/**
+ * F18 — o predio parou por falta de fonte no mapa, e a fonte dele se repoe (ou
+ * nao)? Uma funcao para as duas causas, porque a medida e uma so — separa-las
+ * seria abrir espaco para as duas discordarem.
+ *
+ * O PREDICADO do runtime (`sim/producao.ts`), nao uma contagem propria. E
+ * `semTrabalhoAoAlcance`, o largo: o estrito congela o ciclo a cada plantio, e
+ * alertar ali diria que a fazenda esta parada justamente enquanto ela semeia.
+ * Para a pedreira os dois sao a mesma coisa, e por isso a F-T2a segue valendo
+ * palavra por palavra — o alerta reprova ja quando o que sobrou no mapa nao da
+ * um ciclo inteiro, e nao so no zero.
+ */
+function fonteSemTrabalho(
+  state: GameState, predio: PredioCompleto, dados: GameData, reponivel: boolean,
+): boolean {
+  const receita = receitaDoTipo(predio.tipo, dados);
+  if (predio.producao === null || receita === null || receita.colheita === null) return false;
+  const tipo = dados.recursos.tipos[receita.colheita.recurso];
+  if (tipo === undefined || (tipo.reposicao !== null) !== reponivel) return false;
+  return semTrabalhoAoAlcance(state, predio, receita, dados);
 }
 
 /**

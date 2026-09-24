@@ -136,5 +136,8 @@
   },
   "F-TP-alcance-na-planta-fantasma": {
     "passes": true
+  },
+  "F18-rocado-de-milho": {
+    "passes": true
   }
 }

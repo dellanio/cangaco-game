@@ -20,10 +20,12 @@ import { step } from '../src/sim/tick';
 import { alertasDoEstado, CAUSAS_DE_ALERTA } from '../src/sim/selectors';
 import type { Alerta, CausaDeAlerta } from '../src/sim/selectors';
 import { trabalhadorDoTipo } from '../src/sim/ocupacao';
+import { receitaDoTipo } from '../src/sim/producao';
 import temaSertao from '../data/theme-sertao.json';
 import { gravarEvidencia } from './helpers/evidence';
 import {
-  avancar, cenarioDePedreira, comJazida, disponivelDe, semAUnidade, semEstrada, semOcupante,
+  avancar, cenarioDeFazenda, cenarioDeFazendaSemCampo, cenarioDePedreira, comJazida, disponivelDe,
+  semAUnidade, semEstrada, semOcupante,
 } from './helpers/producao-cenario';
 
 const pausar = (predio: string, pausado: boolean): Command => ({
@@ -59,6 +61,8 @@ function cenariosDoAceite(): Readonly<Record<string, readonly Alerta[]>> {
     pedreiraComVeioEsgotado: alertas(
       avancar(cenarioDePedreira(dadosCurtos), 167 * 5, dadosCurtos), dadosCurtos,
     ),
+    fazendaSemCampo: alertas(cenarioDeFazendaSemCampo()),
+    fazendaComCampo: alertas(cenarioDeFazenda()),
   };
 }
 
@@ -223,9 +227,43 @@ describe('F22 — rotulo e causa nao se separam', () => {
   });
 });
 
+describe('F18 — sem-campo e veio-esgotado nao se confundem', () => {
+  // As duas nascem da MESMA medida (`semTrabalhoAoAlcance`) e se separam pelo
+  // dado do recurso. O que se afirma aqui e justamente que a separacao existe:
+  // um rotulo so diria "Veio esgotado" na fazenda, e o jogador iria procurar
+  // pedra onde falta terra.
+  it('fazenda sem terra ao alcance alerta sem-campo, e NAO veio-esgotado', () => {
+    expect(alertas(cenarioDeFazendaSemCampo())).toEqual([
+      { predio: 'f1', tipo: 'farm', causa: 'sem-campo' },
+    ]);
+  });
+
+  it('pedreira sem pedra alerta veio-esgotado, e NAO sem-campo', () => {
+    const dadosCurtos = comJazida(gameData, 'rock', [[25, 32]], 2);
+    const esgotada = avancar(cenarioDePedreira(dadosCurtos), 167 * 5, dadosCurtos);
+    expect(alertas(esgotada, dadosCurtos)).toEqual([
+      { predio: 'q1', tipo: 'quarry', causa: 'veio-esgotado' },
+    ]);
+  });
+
+  it('a fazenda que TEM campo nao alerta, nem enquanto o roceiro planta', () => {
+    // O ponto do predicado largo. Com o estrito, esta fazenda apareceria parada
+    // durante todo plantio — que e metade do tempo dela — e o jogador aprenderia
+    // a ignorar o alerta.
+    const com = cenarioDeFazenda();
+    const receita = receitaDoTipo('farm', gameData);
+    const plantio = gameData.recursos.tipos[receita?.colheita?.recurso ?? '']?.reposicao?.ticks ?? 0;
+    expect(plantio).toBeGreaterThan(0);
+    for (const t of [1, Math.floor(plantio / 2), plantio, plantio + 1]) {
+      expect(alertas(avancar(com, t)), `tick ${t}`).toEqual([]);
+    }
+  });
+});
+
 describe('F22 — nenhuma causa sem produtor', () => {
   it('fome e ataque nao existem na lista: nao ha produtor antes da F20/F28', () => {
-    expect([...CAUSAS_DE_ALERTA]).toEqual(['sem-trabalhador', 'sem-estrada', 'veio-esgotado']);
+    expect([...CAUSAS_DE_ALERTA])
+      .toEqual(['sem-trabalhador', 'sem-estrada', 'veio-esgotado', 'sem-campo']);
   });
 
   it('GUARDA: toda causa declarada e PRODUZIDA por um cenario do aceite', () => {
@@ -248,7 +286,8 @@ describe('F22 — nenhuma causa sem produtor', () => {
       produtorPorCausa: {
         'sem-trabalhador': 'ehPredioOcupavel + ocupante === null (F14)',
         'sem-estrada': 'predioLigadoAoArmazem (F08), via motivoDaEspera (F13b) na escola',
-        'veio-esgotado': 'veioEsgotado(producao, receita) (sim/producao.ts, F15a)',
+        'veio-esgotado': 'semTrabalhoAoAlcance + tipo SEM reposicao (sim/producao.ts, F18)',
+        'sem-campo': 'semTrabalhoAoAlcance + tipo COM reposicao (sim/producao.ts, F18)',
       },
       deixadasDeFora: {
         fome: 'sem produtor: nao ha consumo nem estado de fome antes da F20',

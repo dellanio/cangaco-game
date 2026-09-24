@@ -1,7 +1,7 @@
 {
   "_doc": "F-T2a — os recursos naturais que moram no TILE, nao no predio. ONDE cada um esta e do arquivo de mapa (`data/maps/<id>.json`, chave `recursos`); QUANTO cada tile rende e o regime de esgotamento sao daqui. A separacao e de proposito: trocar o mapa nao mexe no balanceamento, e mudar o balanceamento nao regrava 900 tiles.",
   "escala": "economia",
-  "_docEscala": "Declaracao estrutural (tools/data-schema.js): a unica duracao deste arquivo e a da regeneracao, convertida pelo carregador. Nenhum sistema le `escalas`.",
+  "_docEscala": "Declaracao estrutural (tools/data-schema.js): as duracoes deste arquivo sao a da regeneracao (`porTempo`) e a reposicao de cada tipo `porAcao` (F18), todas convertidas pelo carregador. Nenhum sistema le `escalas`.",
   "regimes": {
     "nunca": {
       "_doc": "Nao volta. Ao zerar, a entrada SAI de `state.recursos` e o tile passa a ser so terreno base — nao existe mais recurso ali para desenhar nem para colher."
@@ -35,6 +35,22 @@
       "bloqueiaPasso": false,
       "_docBloqueiaPasso": "O cardume esta na agua, e agua ja e intransponivel por terreno. Marcar aqui seria a segunda regra dizendo a mesma coisa, e duas fontes para o mesmo fato e como elas divergem.",
       "_doc": "O cardume do lago. `nunca` porque o GDD marca o estoque do lago como finito (production.json, fishermans.notas) e regeneracao seria invencao nossa em cima de fonte."
+    },
+    "corn": {
+      "regime": "porAcao",
+      "rendimentoPorTile": 4,
+      "bloqueiaPasso": false,
+      "_docBloqueiaPasso": "O milho nao fecha o passo: o roceiro entra no proprio campo, e a estrada atravessa roca sem derrubar nada.",
+      "terreno": "campoArado",
+      "_docTerreno": "F18 — ONDE o campo pode existir e o TERRENO que diz, e o carregador deriva a camada de milho das linhas do mapa. Assim o terreno arado ganha o leitor que lhe faltava (ate aqui ele so existia na matriz de custo do A*) e a terra aravel tem uma verdade so, em vez de uma lista de tiles no arquivo de mapa que poderia divergir do desenho do terreno.",
+      "quantidadeInicial": 0,
+      "_docQuantidadeInicial": "O campo nasce em POUSIO, nao maduro: terra arada e por semear. Com o regime `porAcao`, `quantidade: 0` e exatamente a diferenca entre `aravel, sem nada plantado` e `nao e campo` — a mesma distincao que a arvore cortada usa. O primeiro ciclo de toda fazenda e de plantio, e nao milho de graca.",
+      "reposicao": {
+        "segundos_base": 60,
+        "custo": {},
+        "_doc": "F18 — o que o predio gasta para repor UM tile deste recurso, e quanto tempo isso leva. `segundos_base` cobre arar, semear e esperar crescer num ciclo so: o tile guarda `quantidade` e mais nada, e relogio por tile custaria um campo de estado em cada um deles (ver `regenerar`, sim/recursos.ts). `custo` sai da gaveta de entrada do predio, e e por onde a videira vai cobrar seu timber quando o Wineyard existir — era o `terrain.json.campos.<cultura>.custo`, que nao tinha leitor nenhum. [proposta] — calibrar no BALANCE_LOG."
+      },
+      "_doc": "O milho do rocado. Regime `porAcao` porque quem o repoe e o roceiro que ara e semeia (GDD 5.4), nao o relogio. 4 por tile: quatro ciclos de colheita para um de plantio."
     }
   }
 }

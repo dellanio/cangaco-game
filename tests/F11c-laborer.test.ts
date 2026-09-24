@@ -189,7 +189,7 @@ describe('F11c — completarObra', () => {
       estoque: { entrada: {}, saida: {} },
       ocupante: null,
       pausado: false,
-      producao: { progresso: 0 },
+      producao: { progresso: 0, plantio: null },
     });
   });
 

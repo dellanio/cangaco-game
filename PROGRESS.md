@@ -4498,3 +4498,117 @@ terceiro funil.
 
 - Nenhuma nova. (A generalização da regra dos testes de tempo está no BUG-E, como
   decisão pendente do operador, não como pergunta minha.)
+
+---
+
+## F18 — Roçado de Milho (2026-09-24)
+
+O campo virou **tile de mapa com esgotamento de verdade**, e "fazenda sem campo
+não produz" passou a ter sujeito: **sem tile arável alcançável**, condição de
+mapa. Segunda consumidora de `state.recursos` depois da Quarry.
+Plano em `docs/planos/F18-rocado-de-milho.md`.
+
+### O que foi VERIFICADO (comando rodado, arquivo aberto)
+
+- `npm run verify` — **77 arquivos, 1205 testes, verde**; typecheck, lint e
+  `validate:data` (11 arquivos, 0 erros) limpos.
+- `test-output/F18.json` **aberto com Read**. As duas pernas do aceite:
+  - (a) fazenda na vila, sem um tile arável ao alcance: **0 milho em 1830 ticks**,
+    e o alerta traz a causa **`sem-campo`** — a causa, não só a parada;
+  - (b) a mesma fazenda no bloco arável: série de entrega
+    `0 → 0 (300) → 1 (546) → 4 (1284) → 4 (1434) → 5 (1830)`. O **patamar** entre
+    1284 e 1830 é a produção parando com o tile seco, e o 5 é ela **voltando**
+    depois do replantio. Medido contra o tick 0, em milho entregue.
+- `screenshots/F18-1-o-campo-arado-em-pousio.png` **aberto com Read** (evidência
+  da feature atual, §8): o bloco arável aparece como terra marrom com **65 tiles**
+  de marcador escuro, e o contador da cena devolve `esgotado: 65` — bate tile a
+  tile com a conta feita do arquivo de mapa.
+- Não-regressão por **código de saída** (imagem não aberta, §8): `F22`, `F-T2a`,
+  `F-T2b`, `F-TP` — todos 0. O `F-TP` importa em especial: `predioQueColhe()`
+  pega a **primeira** receita com `colheita`, e a `farm` passou a ter uma.
+
+### As decisões, com o motivo
+
+- **A camada de milho é derivada do TERRENO, não escrita no mapa.**
+  `resources.json:tipos.corn.terreno = "campoArado"` e o carregador varre as
+  linhas. `mapa.recursos` continua sem milho. Foi o que deu leitor ao
+  `campoArado`, que até aqui só existia na matriz de custo do A*, e o que evita
+  duas verdades (o desenho do terreno e uma lista de tiles) divergindo.
+- **O campo nasce em POUSIO (`quantidadeInicial: 0`), não maduro.** Com o regime
+  `porAcao` a entrada fica no estado com quantidade 0, e é exatamente isso que
+  separa "arável, por semear" de "não é campo". O primeiro ciclo de toda fazenda
+  é de plantio — milho de graça seria a mecânica inteira de volta ao começo.
+- **Três predicados, não um.** `tileColhivelAgora` (estrito, escolhe onde
+  colher), `tilePlantavel` (entrada existe, está em 0 e o tipo tem `reposicao`) e
+  `tileTrabalhavel` = a união. Rotear `melhorTileDeColheita` pelo largo deixaria
+  a fazenda **abrir ciclo sobre tile vazio**; foi o erro que peguei antes de
+  entregar.
+- **O alerta usa o LARGO, e por isso `semTrabalhoAoAlcance` nasceu.** Com o
+  estrito, toda fazenda apareceria parada **enquanto o roceiro semeia** — 23% do
+  tempo dela — e o jogador aprenderia a ignorar o alerta.
+- **`sem-campo` e `veio-esgotado` são a mesma medida com dois nomes, separados
+  pelo DADO.** Tipo com `reposicao` → falta terra; tipo sem → o veio acabou. O id
+  do prédio não entra em lugar nenhum. Um rótulo só diria "O veio secou" na
+  fazenda, e o jogador iria procurar pedra onde falta terra.
+- **`quantidadeInicial` é `number | null` e só se resolve em `recursosIniciais`.**
+  Resolver o default no carregador congelava o `rendimentoPorTile` real dentro de
+  toda fixture injetada — 16 testes da pedreira caíram por isso, e a causa não era
+  o predicado novo.
+- **O custo de plantio existe e é cobrado, mas o milho custa `{}`.** O ramo é
+  exercitado com custo **injetado** (`timber: 1`), porque o consumidor real é o
+  Wineyard — cujos dois números ficaram guardados na nota da própria receita em
+  `production.json`. Regra que entra sem teste é dado sem leitor com outro nome.
+
+### O que saiu do dado (o escopo mandava: "ganham leitor ou saem")
+
+`terrain.json.campos` inteiro (milho e uva) e `production.json.wineyard.campos` /
+`.timberPorCampo`. Nenhum dos dois tinha leitor, e a regra agora mora em dois
+campos que têm: `receitas.<t>.colheita` e `tipos.<t>.reposicao.custo`.
+
+### O que esta feature NÃO fez
+
+- **O roceiro não sai do prédio.** É a F-T3, e está escrito assim no item. O
+  trabalho no campo continua sendo abstração de tempo, como toda produção de hoje.
+- **Não tocou em `src/render/`.** A F18 não é feature de integração (§10). O
+  milho aparece na tela porque a camada de recurso do render já é genérica.
+- **Não mexeu em número de balanceamento.** As duas observações medidas foram
+  para o `BALANCE_LOG.md`.
+
+### Hipóteses e limites (NÃO verificados como fato)
+
+- O teto de tamanho de save em `tests/F-T2a-recursos.test.ts` subiu de **40 KB
+  para 48 KB** porque a camada de milho acrescentou 130 tiles. O que **medi** foi
+  o custo por tile: **39,9 B/tile, inalterado**; total 41,5 KB. A invariante de
+  forma (bytes por tile) ficou intocada — só o teto de tamanho de mundo subiu.
+- **Sonda de sessão, não cobertura permanente:** duas sondas confirmaram que as
+  mensagens de erro nomeiam `corn` e que remover a linha do milho de
+  `CAMPOS_ESCALONADOS` produz `tempo/duracao-nao-registrada`. As duas foram
+  apagadas. A proteção que **continua** rodando é a regra em `tools/data-rules.js`
+  e os testes da F03.
+
+### O que ficou registrado em outro arquivo
+
+- `BALANCE_LOG.md`: a fazenda ~30% mais lenta (o plantio é 23% do tempo, e **meu
+  palpite no plano era "metade"**), e a terra arável do mapa sendo pouca (130
+  tiles, 0,8%) e distante (~80 tiles da vila).
+- `BUILD_PLAN.md`: nota herdada na **F-TR** (campo em pousio e lajedo cavado
+  dividem o código `esgotado` e desenham igual — estados opostos com o mesmo
+  marcador) e na **F-T3** (`tilesDeColheita` inclui os tiles sob o próprio
+  footprint; inofensivo enquanto o especialista fica dentro, bug quando ele sair).
+
+### O que o roteiro de tela NÃO pôde mostrar, e por quê
+
+`tools/shots/F18.js` mostra o campo **em pousio** e prova que ele **não brota
+sozinho** com o laço vivo. Não mostra o campo **semeado** nem a prévia da F-TP
+sobre a fazenda: `farm` só entra no menu depois de uma Sawmill completa
+(`desbloqueadoPor`), e o harness de screenshot joga a partir da abertura — ele
+não constrói prédio. A prova de que o campo enche está em `test-output/F18.json`
+e em `tests/F18-ciclo-do-roceiro.test.ts`, tick a tick; a prévia da **classe**
+está provada em `tools/shots/F-TP.js` com a pedreira, e a fazenda entra na mesma
+regra sem uma linha de código nova.
+
+### Perguntas em aberto
+
+- **Nenhuma pergunta nova.** A do tile de recurso debaixo do footprint virou
+  **nota no item da F-T3**, que é onde ela passa a doer.
+

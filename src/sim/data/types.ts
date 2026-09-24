@@ -147,6 +147,31 @@ export interface TipoDeRecurso {
   /** F-T2b — o tile com este recurso EM PE reprova o passo, como terreno
    *  intransponivel. Por tipo e em dado: ninguem digita `'tree'` em `.ts`. */
   readonly bloqueiaPasso: boolean;
+  /** F18 — o tipo de TERRENO de onde a camada deste recurso e derivada, ou
+   *  `null` para os que vem da lista esparsa do mapa (rocha, arvore, cardume).
+   *  O milho nao e desenhado tile a tile no arquivo de mapa: ele EXISTE em todo
+   *  tile de `campoArado`, e quem pergunta "ha campo aqui?" pergunta a camada,
+   *  como pergunta pela rocha. */
+  readonly terreno: string | null;
+  /** F18 — quanto UM tile tem quando a partida comeca, ou `null` para "cheio".
+   *  O `null` nao e detalhe: `rendimentoPorTile` e o teto do tipo e os testes o
+   *  injetam para caber um esgotamento dentro de um cenario. Resolver o padrao
+   *  aqui, no carregamento, congelaria o teto do dado real dentro de todo
+   *  cenario injetado. Quem resolve e `recursosIniciais`, no momento de usar.
+   *  Zero e o campo, que nasce em POUSIO e so rende depois que o roceiro ara. */
+  readonly quantidadeInicial: number | null;
+  /** F18 — o que um predio gasta e demora para repor UM tile, ou `null` para
+   *  quem nao se repoe por acao nenhuma. */
+  readonly reposicao: ReposicaoDeRecurso | null;
+}
+
+/** F18 — o custo de repor um tile, ja em ticks. So o regime `porAcao` tem. */
+export interface ReposicaoDeRecurso {
+  readonly ticks: Ticks;
+  /** Mercadoria -> quantidade que o predio gasta por tile reposto. Vazio quando
+   *  a reposicao nao cobra nada (o milho de hoje: a semente vem do proprio
+   *  roçado, decisao registrada no item da fila). */
+  readonly custo: Readonly<Record<string, number>>;
 }
 
 export interface RecursosData {
@@ -210,7 +235,6 @@ export interface EntregaData {
 export interface TerrenoData {
   readonly tilePx: number;
   readonly estrada: RawGameData['terrain']['estrada'];
-  readonly campos: RawGameData['terrain']['campos'];
   readonly custoDeMovimento: RawGameData['terrain']['custoDeMovimento'];
   readonly intransponivel: RawGameData['terrain']['intransponivel'];
   readonly colisao: RawGameData['terrain']['colisao'];

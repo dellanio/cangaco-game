@@ -15,7 +15,7 @@ import { step } from '../../src/sim/tick';
 import { chaveDeTile, predioLigadoAoArmazem, tilesDaPorta } from '../../src/sim/estradas';
 import type { TileDeGrid } from '../../src/sim/estradas';
 import { trabalhadorDoTipo } from '../../src/sim/ocupacao';
-import { disponivelAoAlcance } from '../../src/sim/recursos';
+import { disponivelAoAlcance, tilesDeColheita } from '../../src/sim/recursos';
 import { receitaDoTipo } from '../../src/sim/producao';
 
 const tile = (gx: number, gy: number): TileDeGrid => ({ gx, gy });
@@ -107,6 +107,78 @@ export function cenarioOraculo(dados: GameData = gameData): GameState {
   s = comEstradas(s, rua);
   for (const id of ['w1', 'w2', 'q1', 's1']) exigirLigado(s, id, dados);
   return s;
+}
+
+/**
+ * F18 — Fazenda `f1` (112,30) ocupada por `roceiro`, no NORTE do mapa, ao lado
+ * do bloco de terra arada que o gerador emitiu, com um armazem proprio em
+ * (116,34) e a rua que liga os dois.
+ *
+ * Longe da aldeia de proposito: a terra arada do mapa esta onde esta, e um
+ * cenario que injetasse campo ao lado do armazem da abertura provaria o ciclo
+ * sobre um dado que o jogo nao tem. O armazem extra nao e artificio — e o que o
+ * jogador faz quando produz longe, e `predioLigadoAoArmazem` aceita qualquer
+ * armazem completo.
+ *
+ * A fazenda NAO fica em cima do proprio campo: o footprint escolhido nao
+ * encosta em tile de milho. Ver a pergunta em aberto do PROGRESS.md sobre tile
+ * de recurso debaixo de predio.
+ */
+export function cenarioDeFazenda(dados: GameData = gameData): GameState {
+  let s = semCivis(createInitialState(1, dados));
+  s = comArmazemExtra(s, 'armazem-do-roçado', 116, 34, dados);
+  s = comProdutorOcupado(s, { tipo: 'farm', id: 'f1', unidade: 'roceiro', gx: 112, gy: 30 }, dados);
+  const rua: TileDeGrid[] = [];
+  for (let gy = 33; gy <= 37; gy++) rua.push(tile(112, gy));
+  for (let gx = 112; gx <= 119; gx++) rua.push(tile(gx, 37));
+  s = comEstradas(s, rua);
+  return exigirLigado(s, 'f1', dados);
+}
+
+/**
+ * F18 — a MESMA fazenda, posta na aldeia: ligada, ocupada, e sem um unico tile
+ * de campo ao alcance. E o erro que o jogador comete antes de a planta fantasma
+ * da F-TP existir, e e o cenario que produz o alerta `sem-campo`.
+ *
+ * A fixture confere a si mesma: se o mapa um dia tiver terra arada perto da
+ * aldeia, isto falha aqui com o motivo escrito, em vez de o alerta sumir
+ * calado tres testes adiante.
+ */
+export function cenarioDeFazendaSemCampo(dados: GameData = gameData): GameState {
+  let s = semCivis(createInitialState(1, dados));
+  s = comProdutorOcupado(s, { tipo: 'farm', id: 'f1', unidade: 'roceiro', gx: 33, gy: 30 }, dados);
+  s = comEstradas(s, [tile(29, 33), tile(30, 33), tile(31, 33), tile(32, 33), tile(33, 33)]);
+  s = exigirLigado(s, 'f1', dados);
+  const predio = s.predios.porId.f1;
+  const colheita = receitaDoTipo('farm', dados)?.colheita ?? null;
+  if (predio?.estado !== 'completo' || colheita === null) {
+    throw new Error('fixture: `farm` precisa de receita com colheita');
+  }
+  for (const chave of tilesDeColheita(predio, colheita, dados)) {
+    if (s.recursos[chave] !== undefined) {
+      throw new Error(`fixture: a fazenda da aldeia alcanca o tile de recurso ${chave}`);
+    }
+  }
+  return s;
+}
+
+/** Um armazem COMPLETO a mais, sem estoque e sem ocupante (armazem nao tem
+ *  trabalhador). Existe para os cenarios que produzem longe da aldeia. */
+export function comArmazemExtra(
+  estado: GameState, id: string, gx: number, gy: number, dados: GameData = gameData,
+): GameState {
+  const def = dados.predios.find((p) => p.id === 'storehouse');
+  if (!def) throw new Error('fixture: storehouse nao existe em buildings.json');
+  const predio = completarObra({
+    id, tipo: 'storehouse', gx, gy, estado: 'obra', hp: def.hp, obra: { faltam: {}, nivelamento: 0 },
+  }, dados);
+  return {
+    ...estado,
+    predios: {
+      porId: { ...estado.predios.porId, [id]: predio },
+      ordem: [...estado.predios.ordem, id],
+    },
+  };
 }
 
 /** Serraria `s1` (32,34) ocupada por `u2`, ligada, e com a entrada VAZIA. */
@@ -267,6 +339,33 @@ export function comAlcance(dados: GameData, tipo: string, alcance: number): Game
       receitas: {
         ...dados.producao.receitas,
         [tipo]: { ...receita, colheita: { ...receita.colheita, alcance } },
+      },
+    },
+  };
+}
+
+/**
+ * F18 — o mesmo dado com OUTRO custo de plantio. Existe porque o custo do milho
+ * e `{}` no dado publicado (arar e semear milho nao gasta mercadoria nenhuma), e
+ * o ramo que cobra so tem consumidor de verdade quando o Wineyard chegar: a
+ * videira nasce com `timber: 1` por campo, numero que ficou guardado na nota do
+ * `wineyard` em `production.json`.
+ *
+ * Sem isto, a regra de cobrar entraria no jogo sem nenhum teste a exercitar, que
+ * e a mesma falha do dado sem leitor.
+ */
+export function comCustoDePlantio(
+  dados: GameData, recurso: string, custo: Readonly<Record<string, number>>,
+): GameData {
+  const tipo = dados.recursos.tipos[recurso];
+  if (tipo?.reposicao == null) throw new Error(`fixture: '${recurso}' nao tem reposicao`);
+  return {
+    ...dados,
+    recursos: {
+      ...dados.recursos,
+      tipos: {
+        ...dados.recursos.tipos,
+        [recurso]: { ...tipo, reposicao: { ...tipo.reposicao, custo } },
       },
     },
   };

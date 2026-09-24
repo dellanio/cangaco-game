@@ -78,6 +78,28 @@ const fixtures: Fixture[] = [
     quebrar: (d) => { d.production.predios.quarry.colheita.recurso = 'fantasma'; } },
   { nome: 'tipo de recurso declarado sem nenhum tile em mapa nenhum', regraEsperada: 'recurso/sem-instancia',
     quebrar: (d) => { d.resources.tipos.orvalho = { regime: 'porTempo', rendimentoPorTile: 1 }; } },
+  // F18: o milho nao esta na lista esparsa de nenhum mapa — a camada dele e
+  // DERIVADA do terreno (`campoArado`). As cinco abaixo cobrem as duas regras
+  // novas dessa derivacao, e a sexta prova que alargar `sem-instancia` para
+  // aceitar terreno nao a transformou em passe livre.
+  { nome: 'recurso derivado de terreno que nao existe no vocabulario', regraEsperada: 'recurso/terreno',
+    quebrar: (d) => { d.resources.tipos.corn.terreno = 'brejo'; } },
+  { nome: 'quantidadeInicial acima do rendimento do tile', regraEsperada: 'recurso/quantidade-inicial',
+    quebrar: (d) => { d.resources.tipos.corn.quantidadeInicial = d.resources.tipos.corn.rendimentoPorTile + 1; } },
+  { nome: 'reposicao sem segundos_base', regraEsperada: 'recurso/reposicao',
+    quebrar: (d) => { delete d.resources.tipos.corn.reposicao.segundos_base; } },
+  { nome: 'reposicao em regime que nao repoe por acao', regraEsperada: 'recurso/reposicao',
+    quebrar: (d) => { d.resources.tipos.corn.regime = 'nunca'; } },
+  { nome: 'reposicao cobra mercadoria que nao existe', regraEsperada: 'recurso/reposicao',
+    quebrar: (d) => { d.resources.tipos.corn.reposicao.custo = { fubaDeOuro: 1 }; } },
+  { nome: 'terreno do recurso derivado sem nenhum tile desenhado', regraEsperada: 'recurso/sem-instancia',
+    quebrar: (d) => {
+      const char = Object.entries(d['maps/sertao-128'].legenda)
+        .find(([, t]) => t === d.resources.tipos.corn.terreno)?.[0];
+      if (char === undefined) throw new Error('fixture: a legenda perdeu o campo arado');
+      d['maps/sertao-128'].linhas = d['maps/sertao-128'].linhas
+        .map((l: string) => l.split(char).join('g'));
+    } },
   { nome: 'mapa poe recurso que nao existe em resources.tipos', regraEsperada: 'recurso/mapa',
     quebrar: (d) => { d['maps/sertao-128'].recursos.fantasma = [[1, 1]]; } },
   { nome: 'production.escala aponta pra grupo inexistente', regraEsperada: 'tempo/grupo-inexistente',

@@ -205,7 +205,7 @@ describe('F08 + F18d-1b — o custo em pedra e COMPROMETIDO no comando, do armaz
         id: 'pedreira', tipo: 'quarry', gx: 0, gy: 0, estado: 'completo', hp: 0,
         capacidade: { entrada: 5, saida: 5 },
         estoque: { entrada: {}, saida: { stone: 100 } },
-        ocupante: null, producao: { progresso: 0 }, pausado: false,
+        ocupante: null, producao: { progresso: 0, plantio: null }, pausado: false,
       };
       return { ...inicial, predios: { porId: { pedreira: outro }, ordem: ['pedreira'] } } as GameState;
     })();
