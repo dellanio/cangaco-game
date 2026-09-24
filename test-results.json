@@ -30,5 +30,6 @@
   "F17d-nivelamento-canteiro": { "passes": true },
   "F17e-estagios-da-obra": { "passes": true },
   "F18a-zoom-da-camera": { "passes": true },
-  "F18b-mapa-grande": { "passes": true }
+  "F18b-mapa-grande": { "passes": true },
+  "F22-alertas-do-hud": { "passes": true }
 }

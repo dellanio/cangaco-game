@@ -1133,6 +1133,40 @@ prédio surge sem clique do jogador.
 
 ### F22 — Alertas do HUD
 - Prédio sem trabalhador, sem estrada, fome, mina esgotada.
+- **Escopo**: o jogador descobre que um prédio está parado **sem clicar nele**.
+  Um seletor puro (`alertasDoEstado`, `sim/selectors.ts`) deriva a lista do
+  `GameState` — nenhum campo novo, nenhum evento — e `src/ui/alertas.ts` a
+  escreve em HTML sobre o canvas, traduzindo pelo tema. `src/render/` não é
+  tocado. Só entram as causas com **produtor no dado publicado hoje**:
+  `sem-trabalhador` (F14), `sem-estrada` (F08) e `veio-esgotado` (F15a).
+- **Aceite**: com a pedreira completa e sem cabra treinado, o aviso aparece no
+  HUD sozinho, sem seleção, com o rótulo do tema e a contagem; **pausar pelo
+  painel apaga o aviso inteiro** e retomar o traz de volta; cortar a estrada
+  acrescenta o segundo aviso sem tirar o primeiro. O jogo **abre sem aviso** e
+  obra não alerta. Guarda estrutural: o conjunto de `CAUSAS_DE_ALERTA` é
+  exatamente o que os cenários do aceite conseguem produzir, e exatamente o
+  conjunto de rótulos do tema — causa sem produtor ou sem texto reprova o
+  `npm run verify`.
+- **Evidência**: `test-output/F22.json` + `test-output/F22-shot.json` +
+  `screenshots/F22-*.png`
+- **Nota (o critério acima foi escrito na sessão da F22, 2026-09-23)**: o item
+  só tinha a linha de causas e as quatro Notas abaixo. Escopo, Aceite e
+  Evidência são interpretação da linha de causas, pela leitura mais
+  conservadora (§14) — registrada em `PROGRESS.md`. As Notas estão intocadas.
+- **Nota (correção da Nota da F15a, medida na F22)**: "mina esgotada" **tem**
+  produtor hoje, ao contrário do que se supunha ao antecipar o item:
+  `data/production.json` dá `veio.rendimento: 200` à `quarry`, que é construível
+  desde a Fase A. Por isso `veio-esgotado` entrou. E o alerta sai do **predicado
+  do runtime** (`veioEsgotado`, `sim/producao.ts`), não de `veio === 0` como a
+  Nota da F15a escreveu: é `veioEsgotado` que congela o ciclo, e ele reprova já
+  em `veio < unidadesPorCiclo` — com receita de 2 por ciclo o prédio para com
+  `veio === 1`, e alertar só no zero avisaria tarde.
+- **Nota (o que ficou de fora, e para qual feature)**: `fome` não tem produtor
+  antes da **F20** (não há consumo nem estado de fome) e `sendo atacado` não tem
+  antes da **F28** (não há combate). Nenhuma das duas existe no código, nem como
+  constante comentada — é a regra do `terreno` na F06. Quem fizer a F20 ou a F28
+  acrescenta a causa em `CAUSAS_DE_ALERTA`, a derivação em `temCausa` e o rótulo
+  em `theme-sertao.json: alertas.causas`; os três guardas já obrigam os três.
 - **Nota (origem: F15a)**: "mina esgotada" também **nasce pronta**: é
   `predio.producao.veio === 0` num prédio completo, e o evento `vein-exhausted`
   marca o instante em que isso passa a valer. "Sem estrada" é

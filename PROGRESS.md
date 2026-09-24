@@ -2221,6 +2221,122 @@ arquivo rodando dentro do `npm run verify`.
   escolhida, não lacuna: o mapa cresceu para a campanha caber, e a campanha vem
   depois.
 
+## F22 — Alertas do HUD (2026-09-23)
+
+Plano: `docs/planos/F22-alertas-do-hud.md`. Feature antecipada na fila pelo
+operador. Nenhum campo novo no `GameState`, nenhum evento: as três causas já
+existiam, e o que faltava era o mecanismo de exibição.
+
+### Verificado
+
+- `npm run verify` — **EXIT=0**. 58 arquivos de teste, 978 testes, typecheck,
+  lint e `validate:data` (9 arquivos, 0 erros) limpos.
+- `test-output/F22.json`, aberto com Read: seis cenários e o que cada um
+  produz. Abertura da vila `[]`; pedreira ocupada e ligada `[]`; pedreira vaga
+  `sem-trabalhador`; a **mesma** pedreira vaga e pausada `[]`; sem estrada
+  `sem-estrada`; veio esgotado `veio-esgotado`.
+- `npm run shot -- F22` — **EXIT=0**, 4 capturas, **29 afirmações**, 0 erro de
+  console. O aviso nasce sozinho no **tick 250**, quando a pedreira fica
+  completa e vaga; pausar pelo painel o apaga inteiro; retomar o traz; cortar
+  um tile da rua acrescenta o segundo sem tirar o primeiro.
+- Abertas com Read (§8, só as do aceite desta feature):
+  `screenshots/F22-2-sem-trabalhador.png` — "Avisos / Sem quem trabalhe 1" no
+  canto superior direito do mapa, com a pedreira vazia embaixo; e
+  `screenshots/F22-3-pausado-sem-aviso.png` — o mesmo quadro com o painel
+  aberto em "Parado", e **nenhum aviso**. A quarta captura (os dois avisos)
+  está afirmada pelo texto do DOM no relatório, não foi aberta.
+- **O layout foi medido, não descrito** (§8, e a lição de "está atrás do
+  painel"): aviso em `851..1008 × 50..106`, painel em `12..260 × 518..708`,
+  canvas `0..1020 × 38..720`. Não se cruzam, o aviso cabe na célula do canvas,
+  e o canvas continua encostado no menu (1020 = 1020) — a invariante que o
+  roteiro da F06 afirma do outro lado.
+- Não-regressão por código de saída, sem abrir imagem: `F04`, `F05b`, `F06`,
+  `F16b`, `F17`, `F18a`, `F18b` — **EXIT=0** em todos.
+
+### Que causa tem produtor hoje, uma a uma
+
+O ponto 2 do pedido manda não criar alerta sem causa. Verifiquei caso a caso
+contra o dado publicado, não por memória do item da fila:
+
+| Causa | Produtor hoje | Entra? |
+|---|---|---|
+| sem trabalhador | `ehPredioOcupavel` + `ocupante === null` (F14) | **sim** |
+| sem estrada | `predioLigadoAoArmazem` (F08); `motivoDaEspera` (F13b) já o usa | **sim** |
+| mina esgotada | `veioEsgotado` (`sim/producao.ts:82`) | **sim** — ver abaixo |
+| fome | ninguém: não há consumo nem estado de fome antes da **F20** | não |
+| sendo atacado | ninguém: não há combate antes da **F28** | não |
+
+As duas de fora não existem no código nem como constante comentada.
+
+### Divergência do que o pedido supunha, com a evidência
+
+O pedido dizia que "mina esgotada" não teria produtor antes da F21. **Tem.**
+`data/production.json:5` dá `"veio": { "rendimento": 200 }` à `quarry`, que é
+construível desde a Fase A, e `tests/F15a-producao.test.ts` já afirma o evento
+`vein-exhausted` nela. O que a F21 acrescenta é a mina de ouro/ferro, não o
+mecanismo de veio. Por isso `veio-esgotado` entrou, e ficaram de fora só duas
+das quatro causas do item.
+
+### Decidido
+
+- **Prédio pausado não produz alerta nenhum**, não só o de "parado". A Nota da
+  F16c manda não alertar em pausa deliberada; esta é a leitura mais
+  conservadora dela (§14). Pedreira pausada **e** vaga é um prédio que o
+  jogador desligou — as duas coisas são a mesma decisão dele. A regra fica num
+  lugar só, na entrada do laço, e lê o **campo** `pausado`: nenhum alerta é
+  derivado de rótulo de FSM, porque o especialista de um prédio pausado
+  continua em `trabalhando`.
+- **`veio-esgotado` sai do predicado do runtime, não de `veio === 0`.** A Nota
+  da F15a escreveu `veio === 0`; quem congela o ciclo é `veioEsgotado`, que
+  reprova já em `veio < unidadesPorCiclo`. Na `quarry` os dois coincidem (ela
+  rende 1 por ciclo), então o teste que os separa injeta uma receita de 2 por
+  ciclo: o prédio para com `veio === 1` e o alerta tem de sair aí. A correção
+  está escrita na Nota nova do item.
+- **Uma linha por CAUSA, não por prédio.** Dez pedreiras sem trabalhador são um
+  aviso com "10", não dez avisos empilhados por cima do mapa. E o bloco some
+  inteiro quando não há nada: "0 avisos" permanente é ruído, e o jogador para
+  de olhar para ele.
+- **A escola reusa `motivoDaEspera` (F13b) inteiro** em vez de repetir a regra —
+  é ele que já separa "sem estrada" de "sem ouro". Escola de fila vazia não
+  espera nada e não alerta: pedir uma estrada que nada usa seria alerta sem
+  causa em outra roupa.
+- **O critério de aceite foi escrito nesta sessão.** O item da F22 só tinha a
+  linha de causas e as quatro Notas — não havia Escopo, Aceite nem Evidência. Os
+  três são **interpretação minha** da linha de causas, pela leitura mais
+  conservadora (§14), e estão registrados como tal numa Nota do próprio item. As
+  quatro Notas herdadas ficaram intocadas.
+
+### Guardas permanentes, e o probe que é outra coisa (§8)
+
+Três guardas ficam rodando no `npm run verify`, todos **estruturais** e nenhum
+textual:
+
+1. o conjunto de `CAUSAS_DE_ALERTA` é exatamente o que os cenários do aceite
+   conseguem produzir — causa sem produtor reprova;
+2. o conjunto de causas é exatamente o de chaves de `alertas.causas` no tema —
+   causa sem texto, ou texto sem causa, reprova;
+3. nenhuma causa devolvida pela sim pode ser um texto do tema — é o que se veria
+   se `sim/` tivesse ido ler o tema (§9).
+
+E o `switch` de `temCausa` não tem `default`: causa nova sem derivação reprova o
+typecheck antes de qualquer teste.
+
+O **probe** foi outra coisa, e vale só para esta sessão: trocar o predicado do
+veio por `veio === 0` reprova um teste; tirar a barreira de `pausado` reprova
+dois. Isso demonstra que os guardas acusam agora; a proteção contínua são os
+arquivos rodando no `verify`.
+
+### Ficou aberto
+
+- O aviso **não é clicável**. Ele diz que há um prédio parado e quantos, não
+  leva a câmera até ele. `Alerta` já carrega o id do prédio, então o gancho
+  existe — mas não inventei a interação: o item não pede, e "clicar no aviso
+  centra a câmera" é mudança de design, que vai para `IDEIAS.md` se alguém
+  quiser.
+- `fome` e `sendo atacado` entram na F20 e na F28. Quem as fizer acrescenta a
+  causa, a derivação e o rótulo; os três guardas acima obrigam os três juntos —
+  não dá para entregar meia causa.
+
 ## Perguntas em aberto
 
 _(nenhuma no momento: as três que sobravam foram decididas pelo operador — ver "Ajuste pós-F10".)_
