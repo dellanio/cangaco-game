@@ -12,6 +12,8 @@ import {
   ehEstrada, indiceDeEstradas, isConnected, predioLigadoAoArmazem, tilesDaPorta,
 } from '../src/sim/estradas';
 import type { TileDeGrid } from '../src/sim/estradas';
+import { reservadoNaOrigem } from '../src/sim/reservas';
+import { comEstradas } from './helpers/jobs-cenario';
 import { compararComESemSave, deepFreeze } from './helpers/determinism';
 import { gravarEvidencia } from './helpers/evidence';
 import { validarTudo } from '../tools/data-rules.js';
@@ -88,20 +90,38 @@ function rejeicoes(estado: GameState): GameEvent[] {
 
 const semEstradas = (estado: GameState): GameState => ({ ...estado, estradas: {} });
 
+/**
+ * F18d-1b — a rua JA DE PE, montada direto no estado. `PlaceRoad` deixou de levantar
+ * estrada: ele desenha o CANTEIRO e o laborer assenta tile a tile. Quem afirma coisa
+ * sobre a REDE (conectar, indice, demolir, placement) monta a rua por aqui; quem
+ * afirma coisa sobre o COMANDO segue emitindo `construir`.
+ */
+const dePe = (estado: GameState, tiles: readonly TileDeGrid[]): GameState => comEstradas(estado, tiles);
+
+/** A pedra que o canteiro COMPROMETEU, somada nos armazens. Vale como medida do
+ *  comando no tick em que ele foi dado: nesse tick nenhuma tarefa de carga esta
+ *  reclamada ainda, entao toda reserva de pedra e do canteiro. */
+const comprometida = (estado: GameState, dados: GameData = gameData): number =>
+  armazens(estado).reduce((soma, a) => soma + reservadoNaOrigem(estado, a.id, 'stone', 'saida', dados), 0);
+
+const planejados = (estado: GameState): number => Object.keys(estado.estradasPlanejadas).length;
+const assentamentos = (estado: GameState): number =>
+  estado.jobs.tarefas.ordem.filter((id) => estado.jobs.tarefas.porId[id]?.tipo === 'assentar-estrada').length;
+
 describe('F08 — aceite: estrada em L conecta e remover um tile do meio desconecta', () => {
   const L = [...linhaH(10, 14, 40), ...linhaV(14, 41, 44)]; // (10,40) -> (14,40) -> (14,44)
   const A = tile(10, 40);
   const B = tile(14, 44);
 
   it('depois de desenhar o L, isConnected(A, B) e verdadeiro', () => {
-    const depois = step(inicial, [construir(L)]);
+    const depois = dePe(inicial, L);
     expect(L.every((t) => ehEstrada(depois.estradas, t))).toBe(true);
     expect(isConnected(depois, A, B)).toBe(true);
     expect(isConnected(depois, B, A)).toBe(true);
   });
 
   it('removido um tile do meio, isConnected(A, B) e falso', () => {
-    const desenhado = step(inicial, [construir(L)]);
+    const desenhado = dePe(inicial, L);
     const partido = step(desenhado, [demolir([tile(12, 40)])]);
     expect(ehEstrada(partido.estradas, tile(12, 40))).toBe(false);
     expect(isConnected(partido, A, B)).toBe(false);
@@ -111,12 +131,21 @@ describe('F08 — aceite: estrada em L conecta e remover um tile do meio descone
   });
 });
 
-describe('F08 — o custo em pedra sai NO COMANDO, do armazem', () => {
+/**
+ * F18d-1b — FIM do desvio escrito na Nota da F08 ("o custo sai no comando"). O comando
+ * agora COMPROMETE a pedra: cada tile vira uma tarefa de assentamento que a reserva no
+ * armazem, e o debito sai quando o laborer assenta o tile (`tests/F18d-1b-*.test.ts`).
+ * O que este bloco guarda e o que nao mudou: quanto custa, de onde sai, e que comando
+ * sem pedra e recusado inteiro.
+ */
+describe('F08 + F18d-1b — o custo em pedra e COMPROMETIDO no comando, do armazem', () => {
   const L = [...linhaH(10, 14, 40), ...linhaV(14, 41, 44)];
 
-  it('a pedra cai exatamente novos x custoStonePorTile do dado; mais nada cai', () => {
+  it('a pedra comprometida e exatamente novos x custoStonePorTile do dado; do estoque nao sai nada', () => {
     const depois = step(inicial, [construir(L)]);
-    expect(pedraTotal(inicial) - pedraTotal(depois)).toBe(L.length * CUSTO);
+    expect(comprometida(depois)).toBe(L.length * CUSTO);
+    expect(assentamentos(depois)).toBe(L.length);
+    expect(pedraTotal(depois)).toBe(pedraTotal(inicial)); // quem debita e o assentamento
     const semPedra = (e: GameState): Record<string, number> => {
       const { stone: _stone, ...resto } = estoqueTotal(e);
       void _stone;
@@ -125,40 +154,49 @@ describe('F08 — o custo em pedra sai NO COMANDO, do armazem', () => {
     expect(semPedra(depois)).toEqual(semPedra(inicial));
   });
 
-  it('o custo vem do dado: com outro custoStonePorTile injetado, o debito muda', () => {
-    const depois = step(inicial, [construir(L)], dadosDeEstrada({ custoStonePorTile: 3 }));
-    expect(pedraTotal(inicial) - pedraTotal(depois)).toBe(L.length * 3);
+  it('o custo vem do dado: com outro custoStonePorTile injetado, a reserva muda', () => {
+    const dados = dadosDeEstrada({ custoStonePorTile: 3 });
+    const depois = step(inicial, [construir(L)], dados);
+    expect(comprometida(depois, dados)).toBe(L.length * 3);
   });
 
-  it('tile que ja e estrada nao custa: repetir o mesmo trecho e no-op (mesma referencia, sem evento)', () => {
+  it('tile que ja esta no canteiro nao custa: repetir o mesmo trecho e no-op (sem tarefa nova, sem evento)', () => {
     const uma = step(inicial, [construir(L)]);
     const duas = step(uma, [construir(L)]);
-    expect(duas.estradas).toBe(uma.estradas);
+    // ninguem chegou perto de (10,40) em um tick: o canteiro esta igual, tile a tile
+    expect(duas.estradasPlanejadas).toEqual(uma.estradasPlanejadas);
+    expect(assentamentos(duas)).toBe(assentamentos(uma));
     expect(pedraTotal(duas)).toBe(pedraTotal(uma));
     expect(rejeicoes(duas)).toEqual([]);
   });
 
-  it('estender um trecho existente cobra so os tiles novos', () => {
+  it('estender um trecho ja desenhado compromete so os tiles novos', () => {
     const uma = step(inicial, [construir(linhaH(10, 12, 40))]);
     const estendida = step(uma, [construir(linhaH(10, 15, 40))]);
-    expect(pedraTotal(uma) - pedraTotal(estendida)).toBe(3 * CUSTO);
+    expect(assentamentos(estendida) - assentamentos(uma)).toBe(3);
+    expect(planejados(estendida) - planejados(uma)).toBe(3);
   });
 
   it('tiles repetidos dentro da mesma lista contam uma vez', () => {
     const depois = step(inicial, [construir([tile(10, 40), tile(10, 40), tile(11, 40)])]);
-    expect(pedraTotal(inicial) - pedraTotal(depois)).toBe(2 * CUSTO);
+    expect(comprometida(depois)).toBe(2 * CUSTO);
+    expect(planejados(depois)).toBe(2);
   });
 
-  it('debita gaveta saida antes de entrada e um armazem depois do outro, em predios.ordem', () => {
+  it('cada tarefa reserva no primeiro armazem que ainda pode pagar, em predios.ordem; a gaveta entrada nao paga', () => {
     const primeiro = armazens(inicial)[0];
     if (!primeiro) throw new Error('fixture: cenario sem armazem');
     const base = comPedraNoPredio(inicial, primeiro.id, 2, 2);
     const { estado, id: segundo } = comArmazemExtra(base, 10, 0);
-    // 5 tiles: primeiro armazem (saida 2, entrada 2) esgota, o segundo cede 1
-    const depois = step(estado, [construir(linhaH(10, 14, 40))], dadosDeEstrada({ custoStonePorTile: 1 }));
-    expect(gaveta(depois, primeiro.id, 'saida')).toBe(0);
-    expect(gaveta(depois, primeiro.id, 'entrada')).toBe(0);
-    expect(gaveta(depois, segundo, 'saida')).toBe(9);
+    const dados = dadosDeEstrada({ custoStonePorTile: 1 });
+    // 5 tiles: o primeiro armazem compromete as 2 da SAIDA e o segundo assume as outras 3.
+    // As 2 da `entrada` nao entram: reserva so existe na saida (F18d-1b, `pedraDisponivel`).
+    const depois = step(estado, [construir(linhaH(10, 14, 40))], dados);
+    expect(reservadoNaOrigem(depois, primeiro.id, 'stone', 'saida', dados)).toBe(2);
+    expect(reservadoNaOrigem(depois, segundo, 'stone', 'saida', dados)).toBe(3);
+    expect(gaveta(depois, primeiro.id, 'saida')).toBe(2);   // comprometida, ainda la
+    expect(gaveta(depois, primeiro.id, 'entrada')).toBe(2); // intocada
+    expect(gaveta(depois, segundo, 'saida')).toBe(10);
   });
 
   it('so armazem paga: pedra na saida de outro tipo de predio nao conta', () => {
@@ -173,6 +211,7 @@ describe('F08 — o custo em pedra sai NO COMANDO, do armazem', () => {
     })();
     const depois = step(semArmazem, [construir([tile(10, 40)])]);
     expect(depois.estradas).toBe(semArmazem.estradas);
+    expect(depois.estradasPlanejadas).toBe(semArmazem.estradasPlanejadas);
     expect(rejeicoes(depois)).toMatchObject([{ command: 'PlaceRoad', motivo: 'sem-pedra' }]);
   });
 
@@ -182,6 +221,7 @@ describe('F08 — o custo em pedra sai NO COMANDO, do armazem', () => {
     const pobre = comPedraNoPredio(inicial, primeiro.id, 4 * CUSTO, 0);
     const depois = step(pobre, [construir(linhaH(10, 14, 40))]); // 5 tiles, so cobre 4
     expect(depois.estradas).toBe(pobre.estradas);
+    expect(depois.estradasPlanejadas).toBe(pobre.estradasPlanejadas); // nem meio canteiro
     expect(pedraTotal(depois)).toBe(pedraTotal(pobre));
     expect(rejeicoes(depois)).toEqual([
       { type: 'command-rejected', command: 'PlaceRoad', motivo: 'sem-pedra', tile: null },
@@ -193,8 +233,9 @@ describe('F08 — o custo em pedra sai NO COMANDO, do armazem', () => {
     if (!primeiro) throw new Error('fixture: cenario sem armazem');
     const justo = comPedraNoPredio(inicial, primeiro.id, 5 * CUSTO, 0);
     const aceito = step(justo, [construir(linhaH(10, 14, 40))]);
-    expect(Object.keys(aceito.estradas)).toHaveLength(5);
-    expect(pedraTotal(aceito)).toBe(0);
+    expect(planejados(aceito)).toBe(5);
+    expect(comprometida(aceito)).toBe(5 * CUSTO); // a ultima pedra do armazem, comprometida
+    expect(pedraTotal(aceito)).toBe(5 * CUSTO);   // e ainda no armazem: nada saiu no comando
     const curto = comPedraNoPredio(inicial, primeiro.id, 5 * CUSTO - 1, 0);
     expect(rejeicoes(step(curto, [construir(linhaH(10, 14, 40))]))).toHaveLength(1);
   });
@@ -241,12 +282,19 @@ describe('F08 — recusas sao atomicas e dizem por que', () => {
   });
 
   it('predio sobre estrada e recusado por canPlace com o motivo estrada; ao lado, aceito', () => {
-    const comEstrada = step(inicial, [construir(linhaH(0, 5, 0))]);
+    const comEstrada = dePe(inicial, linhaH(0, 5, 0));
     expect(canPlace(comEstrada, 'quarry', 0, 0)).toEqual({ ok: false, motivo: 'estrada' });
     expect(canPlace(comEstrada, 'quarry', 5, 0)).toEqual({ ok: false, motivo: 'estrada' }); // pega o ultimo tile
     expect(canPlace(comEstrada, 'quarry', 0, 1)).toEqual({ ok: true }); // encostado por baixo
     const depois = step(comEstrada, [{ type: 'PlaceBlueprint', buildingId: 'quarry', gx: 2, gy: 0 }]);
     expect(rejeicoes(depois)).toMatchObject([{ command: 'PlaceBlueprint', motivo: 'estrada' }]);
+  });
+
+  it('F18d-1b: o CANTEIRO recusa igual — predio sobre tile so desenhado tambem e estrada', () => {
+    const comCanteiro = step(inicial, [construir(linhaH(0, 5, 0))]);
+    expect(Object.keys(comCanteiro.estradas)).toEqual([]); // ainda nao ha rua nenhuma de pe
+    expect(canPlace(comCanteiro, 'quarry', 0, 0)).toEqual({ ok: false, motivo: 'estrada' });
+    expect(canPlace(comCanteiro, 'quarry', 0, 1)).toEqual({ ok: true });
   });
 });
 
@@ -257,7 +305,7 @@ describe('F08 — conectividade: 8 direcoes sem cortar quina (F18e), sobre o que
   // predio. O teste afirma a regra nova nos dois sentidos — o que liga e o que
   // deixa de ligar — e nao so o que mudou.
   it('diagonal liga; a quina de predio corta', () => {
-    const depois = step(inicial, [construir([tile(10, 40), tile(11, 41)])]);
+    const depois = dePe(inicial, [tile(10, 40), tile(11, 41)]);
     expect(isConnected(depois, tile(10, 40), tile(11, 41))).toBe(true);
 
     // obra 3x2 em (11,39): ocupa x 11..13, y 39..40 — tapa a quina (11,40) e
@@ -267,19 +315,19 @@ describe('F08 — conectividade: 8 direcoes sem cortar quina (F18e), sobre o que
     expect(isConnected(comQuina, tile(10, 40), tile(11, 41))).toBe(false);
 
     // e a quina e regra de LIGACAO, nao de passagem: pelo contorno liga de novo.
-    const contornando = step(comQuina, [construir([tile(10, 41)])]);
+    const contornando = dePe(comQuina, [tile(10, 41)]);
     expect(isConnected(contornando, tile(10, 40), tile(11, 41))).toBe(true);
   });
 
   it('dois trechos separados nao ligam; o tile que falta os une', () => {
-    const dois = step(inicial, [construir(linhaH(10, 12, 40)), construir(linhaH(14, 16, 40))]);
+    const dois = dePe(dePe(inicial, linhaH(10, 12, 40)), linhaH(14, 16, 40));
     expect(isConnected(dois, tile(10, 40), tile(16, 40))).toBe(false);
-    const unidos = step(dois, [construir([tile(13, 40)])]);
+    const unidos = dePe(dois, [tile(13, 40)]);
     expect(isConnected(unidos, tile(10, 40), tile(16, 40))).toBe(true);
   });
 
   it('tile que nao e estrada nunca esta conectado; o mesmo tile de estrada esta', () => {
-    const depois = step(inicial, [construir(linhaH(10, 12, 40))]);
+    const depois = dePe(inicial, linhaH(10, 12, 40));
     expect(isConnected(depois, tile(10, 40), tile(10, 41))).toBe(false);
     expect(isConnected(depois, tile(20, 20), tile(20, 20))).toBe(false);
     expect(isConnected(depois, tile(10, 40), tile(10, 40))).toBe(true);
@@ -287,20 +335,20 @@ describe('F08 — conectividade: 8 direcoes sem cortar quina (F18e), sobre o que
 
   it('o indice de componentes depende so do CONJUNTO de tiles, nao da ordem em que vieram', () => {
     const trecho = [tile(10, 40), tile(11, 40), tile(12, 40), tile(12, 41)];
-    const a = step(inicial, [construir(trecho)]);
-    const b = step(inicial, [construir([...trecho].reverse())]);
+    const a = dePe(inicial, trecho);
+    const b = dePe(inicial, [...trecho].reverse());
     expect(indiceDeEstradas(a).componentes).toEqual(indiceDeEstradas(b).componentes);
   });
 });
 
 describe('F08 — consulta O(1) entre mudancas (estrutural, sem teste de tempo)', () => {
   it('o indice e construido uma vez por par (estradas, predios)', () => {
-    const estado = step(inicial, [construir(linhaH(10, 14, 40))]);
+    const estado = dePe(inicial, linhaH(10, 14, 40));
     expect(indiceDeEstradas(estado)).toBe(indiceDeEstradas(estado));
   });
 
   it('step sem comando de estrada nem predio novo reaproveita o indice entre ticks', () => {
-    let estado = step(inicial, [construir(linhaH(10, 14, 40))]);
+    let estado = dePe(inicial, linhaH(10, 14, 40));
     const antes = estado.estradas;
     const indice = indiceDeEstradas(estado);
     for (let i = 0; i < 20; i++) estado = step(estado, []);
@@ -310,15 +358,15 @@ describe('F08 — consulta O(1) entre mudancas (estrutural, sem teste de tempo)'
     expect(indiceDeEstradas(estado)).toBe(indice);
   });
 
-  it('um comando de estrada que muda algo troca a referencia (e o indice)', () => {
-    const uma = step(inicial, [construir(linhaH(10, 14, 40))]);
-    const duas = step(uma, [construir([tile(15, 40)])]);
+  it('um tile assentado troca a referencia (e o indice)', () => {
+    const uma = dePe(inicial, linhaH(10, 14, 40));
+    const duas = dePe(uma, [tile(15, 40)]);
     expect(duas.estradas).not.toBe(uma.estradas);
     expect(indiceDeEstradas(duas)).not.toBe(indiceDeEstradas(uma));
   });
 
   it('predio novo tambem troca o indice: desde a F18e a quina faz a ligacao depender de predio', () => {
-    const uma = step(inicial, [construir(linhaH(10, 14, 40))]);
+    const uma = dePe(inicial, linhaH(10, 14, 40));
     const comPredio = step(uma, [{ type: 'PlaceBlueprint', buildingId: 'quarry', gx: 0, gy: 0 }]);
     expect(comPredio.estradas).toBe(uma.estradas);
     expect(indiceDeEstradas(comPredio)).not.toBe(indiceDeEstradas(uma));
@@ -344,7 +392,7 @@ describe('F08 — ponto 4: predio que fica sem ligacao nao muda; a ligacao e der
   });
 
   it('com a rua ao longo das duas bordas sul, os dois estao ligados ao armazem', () => {
-    const comRua = step(inicial, [construir(rua)]);
+    const comRua = dePe(inicial, rua);
     expect(predioLigadoAoArmazem(comRua, armazem, gameData)).toBe(true);
     expect(predioLigadoAoArmazem(comRua, escola, gameData)).toBe(true);
   });
@@ -355,7 +403,7 @@ describe('F08 — ponto 4: predio que fica sem ligacao nao muda; a ligacao e der
   });
 
   it('demolir um trecho do meio desliga a escola — e o predio segue IDENTICO, sem campo novo', () => {
-    const comRua = step(inicial, [construir(rua)]);
+    const comRua = dePe(inicial, rua);
     const meio = rua.filter((t) => t.gx > armazem.gx + 2 && t.gx < escola.gx);
     expect(meio.length).toBeGreaterThan(0);
     const partida = step(comRua, [demolir(meio)]);
@@ -367,7 +415,7 @@ describe('F08 — ponto 4: predio que fica sem ligacao nao muda; a ligacao e der
     // "desligado" nao e um campo: as chaves do estado sao as mesmas
     expect(Object.keys(partida).sort()).toEqual(Object.keys(comRua).sort());
     // redesenhar reconecta
-    const refeita = step(partida, [construir(meio)]);
+    const refeita = dePe(partida, meio);
     expect(predioLigadoAoArmazem(refeita, escola, gameData)).toBe(true);
   });
 
@@ -375,7 +423,7 @@ describe('F08 — ponto 4: predio que fica sem ligacao nao muda; a ligacao e der
     const comObra = step(inicial, [{ type: 'PlaceBlueprint', buildingId: 'quarry', gx: 0, gy: 0 }]);
     const obra = comObra.predios.porId[comObra.predios.ordem[comObra.predios.ordem.length - 1] ?? ''];
     if (!obra) throw new Error('fixture: obra ausente');
-    const aoLado = step(comObra, [construir(linhaV(3, 0, 1))]); // a direita do footprint, nao ao sul
+    const aoLado = dePe(comObra, linhaV(3, 0, 1)); // a direita do footprint, nao ao sul
     expect(predioLigadoAoArmazem(aoLado, obra, gameData)).toBe(false);
   });
 });
@@ -385,21 +433,21 @@ describe('F08 — demolir devolve pedra (decisao do operador): floor(removidos x
 
   it('2 tiles demolidos devolvem 1 pedra; o valor vem do dado', () => {
     expect(FRACAO).toBe(0.5);
-    const desenhado = step(inicial, [construir(trecho)]);
+    const desenhado = dePe(inicial, trecho);
     const demolido = step(desenhado, [demolir([tile(11, 40), tile(12, 40)])]);
     expect(pedraTotal(demolido) - pedraTotal(desenhado)).toBe(Math.floor(2 * FRACAO));
     expect(pedraTotal(demolido) - pedraTotal(desenhado)).toBe(1);
   });
 
   it('1 tile devolve 0: o arredondamento e por comando', () => {
-    const desenhado = step(inicial, [construir(trecho)]);
+    const desenhado = dePe(inicial, trecho);
     const demolido = step(desenhado, [demolir([tile(11, 40)])]);
     expect(pedraTotal(demolido)).toBe(pedraTotal(desenhado));
     expect(ehEstrada(demolido.estradas, tile(11, 40))).toBe(false);
   });
 
   it('com outra fracao injetada, a devolucao muda (0 nada, 1 tudo)', () => {
-    const desenhado = step(inicial, [construir(trecho)]);
+    const desenhado = dePe(inicial, trecho);
     const tiles = [tile(11, 40), tile(12, 40), tile(13, 40)];
     expect(pedraTotal(step(desenhado, [demolir(tiles)], dadosDeEstrada({ devolucaoAoDemolir: 0 }))))
       .toBe(pedraTotal(desenhado));
@@ -411,7 +459,7 @@ describe('F08 — demolir devolve pedra (decisao do operador): floor(removidos x
     const primeiro = armazens(inicial)[0];
     if (!primeiro) throw new Error('fixture: cenario sem armazem');
     const { estado, id: segundo } = comArmazemExtra(inicial, 7, 0);
-    const desenhado = step(estado, [construir(trecho)]);
+    const desenhado = dePe(estado, trecho);
     const saidaAntes = gaveta(desenhado, primeiro.id, 'saida');
     const segundoAntes = gaveta(desenhado, segundo, 'saida');
     const demolido = step(desenhado, [demolir([tile(11, 40), tile(12, 40)])]);
@@ -436,11 +484,13 @@ describe('F08 — demolir devolve pedra (decisao do operador): floor(removidos x
     expect(rejeicoes(depois)).toEqual([]);
   });
 
-  it('construir e demolir o mesmo trecho custa novos - floor(novos x fracao)', () => {
-    const desenhado = step(inicial, [construir(trecho)]);
+  it('demolir a rua inteira devolve floor(novos x fracao) — a outra metade do saldo e do assentamento', () => {
+    // F18d-1b: o saldo do ciclo inteiro (levantar E demolir) passou a depender do
+    // laborer, e e medido de ponta a ponta em `tests/F18d-1b-aceite.test.ts`. Aqui
+    // fica so a metade que o comando ainda resolve sozinho: a devolucao.
+    const desenhado = dePe(inicial, trecho);
     const desfeito = step(desenhado, [demolir(trecho)]);
-    expect(pedraTotal(inicial) - pedraTotal(desfeito))
-      .toBe(trecho.length * CUSTO - Math.floor(trecho.length * FRACAO));
+    expect(pedraTotal(desfeito) - pedraTotal(desenhado)).toBe(Math.floor(trecho.length * FRACAO));
     expect(Object.keys(desfeito.estradas)).toEqual([]);
   });
 });
@@ -465,7 +515,11 @@ describe('F08 — determinismo e pureza com os comandos de estrada', () => {
       },
     });
     expect(comSave).toBe(direto);
-    expect(Object.keys((JSON.parse(direto) as GameState).estradas).length).toBeGreaterThan(0);
+    // F18d-1b: em 12 ticks o laborer ainda nao chegou ao trecho; o que atravessa o save
+    // e o CANTEIRO (e as tarefas dele), e e isso que o teste precisa nao ver vazio.
+    const noFim = JSON.parse(direto) as GameState;
+    expect(Object.keys(noFim.estradasPlanejadas).length + Object.keys(noFim.estradas).length)
+      .toBeGreaterThan(0);
   });
 
   it('step nao muta a lista de comandos nem o estado congelados', () => {
@@ -474,7 +528,7 @@ describe('F08 — determinismo e pureza com os comandos de estrada', () => {
   });
 
   it('o estado com estradas sobrevive ao JSON', () => {
-    const estado = step(inicial, [construir(L)]);
+    const estado = dePe(inicial, L);
     expect(JSON.parse(JSON.stringify(estado))).toEqual(estado);
     expect(semEstradas(estado).estradas).toEqual({});
   });
@@ -507,7 +561,7 @@ afterAll(() => {
   const L = [...linhaH(10, 14, 40), ...linhaV(14, 41, 44)];
   const A = tile(10, 40);
   const B = tile(14, 44);
-  const desenhado = step(inicial, [construir(L)]);
+  const desenhado = dePe(inicial, L);
   const partido = step(desenhado, [demolir([tile(12, 40)])]);
 
   // ponto 4: rua ao longo da borda sul do armazem e da escola
@@ -520,12 +574,13 @@ afterAll(() => {
   const xs = portas.map((p) => p.gx);
   const yRua = armazem.gy + 3;
   const rua = linhaH(Math.min(...xs), Math.max(...xs), yRua);
-  const comRua = step(inicial, [construir(rua)]);
+  const comRua = dePe(inicial, rua);
   const meio = rua.filter((p) => p.gx > armazem.gx + 2 && p.gx < escola.gx);
   const desligada = step(comRua, [demolir(meio)]);
 
   // devolucao: 2 tiles demolidos
   const dois = step(desenhado, [demolir([tile(11, 40), tile(12, 40)])]);
+  const comprometido = step(inicial, [construir(L)]);
 
   const estadoParado = step(desenhado, []);
 
@@ -542,14 +597,17 @@ afterAll(() => {
         isConnectedDeAParaB: isConnected(partido, A, B),
       },
     },
-    // O custo SAI no comando (desvio provisorio da regra "sai na entrega"; BUILD_PLAN, nota da F08).
+    // F18d-1b encerrou o desvio da F08: o comando COMPROMETE a pedra (uma tarefa de
+    // assentamento por tile, reservando na origem) e o debito sai quando o laborer
+    // assenta. O saldo de ponta a ponta esta em test-output/F18d-1b.json.
     custo: {
       custoStonePorTileNoDado: CUSTO,
       tiles: L.length,
       pedraAntes: pedraTotal(inicial),
-      pedraDepois: pedraTotal(desenhado),
-      debitado: pedraTotal(inicial) - pedraTotal(desenhado),
-      debitadoIgualATilesVezesCusto: pedraTotal(inicial) - pedraTotal(desenhado) === L.length * CUSTO,
+      pedraDepoisDoComando: pedraTotal(comprometido),
+      comprometidoPeloComando: comprometida(comprometido),
+      comprometidoIgualATilesVezesCusto: comprometida(comprometido) === L.length * CUSTO,
+      saiuDoEstoqueNoComando: pedraTotal(inicial) - pedraTotal(comprometido),
     },
     // Decisao do operador: demolir devolve floor(removidos x fracao); 2 tiles -> 1.
     demolicao: {

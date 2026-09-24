@@ -44,6 +44,18 @@ const P1 = armazemDoJogo.id;
 // fora, e permanente ate laborersMaximosPorObra por obra, nao e o que estas metricas medem.
 const materiaisNoQuadro = (e: GameState): number =>
   e.jobs.tarefas.ordem.filter((id) => e.jobs.tarefas.porId[id]?.tipo === 'material-para-obra').length;
+/**
+ * F18d-1b — os bens do mundo CONTANDO a pedra que ja virou rua. Assentar um tile tira
+ * `custoStonePorTile` do armazem e o poe no chao: sem somar a rua, a conservacao
+ * acusaria o tick do assentamento como perda de pedra. Demolir devolve so uma fracao,
+ * entao esta soma nao se conserva em tick COM comando de estrada — que e exatamente o
+ * tick de que a verificacao no caos ja se exclui.
+ */
+const bensComARua = (e: GameState): Record<string, number> => {
+  const bens = bensPorMercadoria(e);
+  const naRua = Object.keys(e.estradas).length * gameData.terreno.estrada.custoStonePorTile;
+  return { ...bens, stone: (bens.stone ?? 0) + naRua };
+};
 const dadosDoSerf = (e: GameState) => e.unidades.porId[serfDoJogo]?.fsmData ?? {};
 const restante = (e: GameState): number => (dadosDoSerf(e).caminho ?? []).length;
 const emViagem = (e: GameState): boolean => fsmDe(e) === 'indo_entregar' && restante(e) <= 10;
@@ -439,12 +451,14 @@ function rodarCaos(semente: number, passos: number, cobertura: CoberturaDoCaos):
       default: break; // 0..3 e 14..47: so deixa o tempo passar
     }
 
-    const bensAntes = bensPorMercadoria(estado);
+    const bensAntes = bensComARua(estado);
     estado = step(estado, comandos);
     cobertura.passos += 1;
     cobertura.comandos += comandos.length;
-    // comandos de estrada mexem no estoque (custo e devolucao): a conservacao vale nos ticks SEM comando
-    if (comandos.length === 0) expect(bensPorMercadoria(estado), `bens, semente ${semente}, passo ${i}, acao ${acao}`).toEqual(bensAntes);
+    // comandos de estrada mexem no estoque (a devolucao do demolir): a conservacao vale
+    // nos ticks SEM comando — e ai ela conta a rua junto, porque desde a F18d-1b um tick
+    // qualquer pode ser o do assentamento, em que a pedra sai do armazem e vira tile.
+    if (comandos.length === 0) expect(bensComARua(estado), `bens, semente ${semente}, passo ${i}, acao ${acao}`).toEqual(bensAntes);
     expect(violacoesDeInvariantes(estado), `quadro, semente ${semente}, passo ${i}, acao ${acao}`).toEqual([]);
     expect(violacoesDaFsm(estado), `FSM, semente ${semente}, passo ${i}, acao ${acao}`).toEqual([]);
 
@@ -629,7 +643,7 @@ afterAll(() => {
   const aFrente = (dadosDoSerf(meio).caminho ?? [])[2] as TileDeGrid;
   const cortada = step(meio, [{ type: 'DemolishRoad', tiles: [aFrente] }]);
   const cortadaAteOFim = rodarAte(meio, quieto, [{ type: 'DemolishRoad', tiles: [aFrente] }]);
-  const refeita = rodarAte(step(cortadaAteOFim.estado, [{ type: 'PlaceRoad', tiles: [aFrente] }]), quieto);
+  const refeita = rodarAte(comEstradas(cortadaAteOFim.estado, [aFrente]), quieto);
   const duasPistas = ate(comEstradas(cenarioLongo(), linhaH(29, 46, 37)), emViagem, 'serf carregado, duas pistas');
   const proximoTile = (dadosDoSerf(duasPistas).caminho ?? [])[0] as TileDeGrid;
   const alternativa = rodarAte(duasPistas, quieto, [{ type: 'DemolishRoad', tiles: [proximoTile] }]);

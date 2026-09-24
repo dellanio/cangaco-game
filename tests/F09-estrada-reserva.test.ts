@@ -1,9 +1,15 @@
 /**
- * F09 x F08: o debito de pedra da estrada tira so do DISPONIVEL (saida - reservado),
- * nunca da pedra que uma tarefa reclamada reservou na origem. Sem isto, uma estrada
- * comeria a pedra de um serf que ja "reservou" a unidade, e a reserva ficaria sem
- * lastro (o `sanearTarefas` a cancelaria como `origem-sem-recurso`, mas a estrada
- * teria vencido a corrida por acaso da ordem, nao por regra).
+ * F09 x F08: a estrada so conta o DISPONIVEL (saida - reservado), nunca a pedra que uma
+ * tarefa reclamada reservou na origem. Sem isto, uma estrada comeria a pedra de um serf
+ * que ja "reservou" a unidade, e a reserva ficaria sem lastro (o `sanearTarefas` a
+ * cancelaria como `origem-sem-recurso`, mas a estrada teria vencido a corrida por acaso
+ * da ordem, nao por regra).
+ *
+ * F18d-1b mudou O QUE a estrada faz com essa pedra: em vez de debitar no comando, ela
+ * RESERVA (uma tarefa de assentamento por tile) e debita quando o laborer assenta. A
+ * regra deste arquivo sobreviveu inteira — as duas reservas dividem o mesmo disponivel,
+ * e nenhuma come a da outra —, e por isso o que os testes medem passou de "quanto caiu
+ * da gaveta" para "quanto ficou comprometido".
  */
 import { describe, it, expect } from 'vitest';
 import { gameData } from '../src/sim/data';
@@ -49,6 +55,11 @@ const estoqueDe = (estado: GameState, id: string, gaveta: 'entrada' | 'saida'): 
 };
 
 const rua = (tiles: number) => linhaH(0, tiles - 1, 45);
+/** Quanto do que este comando pediu ficou comprometido: uma tarefa de assentamento por
+ *  tile, cada uma reservando `custoStonePorTile` na `saida` do armazem que a paga. */
+const comprometidaNaEstrada = (estado: GameState): number =>
+  estado.jobs.tarefas.ordem.filter((id) => estado.jobs.tarefas.porId[id]?.tipo === 'assentar-estrada').length
+  * custoPorTile;
 const rejeicoes = (estado: GameState): Extract<GameEvent, { type: 'command-rejected' }>[] =>
   estado.events.filter((e): e is Extract<GameEvent, { type: 'command-rejected' }> => e.type === 'command-rejected');
 const liberacoes = (estado: GameState): GameEvent[] => estado.events.filter((e) => e.type === 'task-released');
@@ -72,15 +83,19 @@ describe('F09 — a estrada so tira pedra do disponivel (nao da reservada)', () 
     const semReserva = comPedraNaSaida(cenarioLigado({ stone: 2 }), armazem.id, 5);
     const depois = step(semReserva, [{ type: 'PlaceRoad', tiles: rua(4 / custoPorTile) }]);
     expect(rejeicoes(depois)).toEqual([]);
-    expect(estoqueDe(depois, armazem.id, 'saida')).toBe(1);
+    expect(comprometidaNaEstrada(depois)).toBe(4);
+    expect(estoqueDe(depois, armazem.id, 'saida')).toBe(5); // F18d-1b: so o assentamento debita
+    expect(pedraDisponivel(depois)).toBe(1); // 5 - 4 comprometidas
   });
 
   it('uma estrada que cabe no disponivel passa e NAO deixa reserva sem lastro', () => {
     const estado = comDuasReclamadas(5);
     const depois = step(estado, [{ type: 'PlaceRoad', tiles: rua(3 / custoPorTile) }]);
     expect(rejeicoes(depois)).toEqual([]);
-    expect(estoqueDe(depois, armazem.id, 'saida')).toBe(2); // exatamente a pedra reservada
-    expect(reservadoNaOrigem(depois, armazem.id, 'stone')).toBe(2);
+    expect(comprometidaNaEstrada(depois)).toBe(3);
+    expect(estoqueDe(depois, armazem.id, 'saida')).toBe(5); // nada saiu: 2 de carga + 3 de estrada
+    expect(pedraDisponivel(depois)).toBe(0); // e as 5 estao todas faladas
+    expect(reservadoNaOrigem(depois, armazem.id, 'stone')).toBe(2 + 3); // 2 de carga, 3 de estrada
     expect(liberacoes(depois)).toEqual([]); // ninguem foi cancelado por falta de pedra
     // F11b: 'construir' (ate o teto, sem relacao com pedra de estrada) fica fora desta leitura
     const materiais = depois.jobs.tarefas.ordem.filter((id) => depois.jobs.tarefas.porId[id]?.tipo === 'material-para-obra');
@@ -88,22 +103,29 @@ describe('F09 — a estrada so tira pedra do disponivel (nao da reservada)', () 
     expect(violacoesDeInvariantes(depois)).toEqual([]);
   });
 
-  it('esgotado o disponivel da saida, o debito vai para a ENTRADA (que nao e reservavel)', () => {
+  it('F18d-1b: a gaveta ENTRADA nao paga estrada — nao e reservavel, entao nao e disponivel', () => {
+    // Ate a F18d-1b o comando debitava, e debitar da `entrada` era possivel. Agora o
+    // custo e uma RESERVA, e so a `saida` se reserva: contar a `entrada` no disponivel
+    // aceitaria um comando que nenhum armazem consegue pagar, e o tile ficaria
+    // desenhado esperando para sempre uma tarefa que nao nasce.
+    // (No jogo a `entrada` de um armazem nunca recebe pedra — e fixture de teste.)
     const estado = comPedraNaEntrada(comDuasReclamadas(2), armazem.id, 3);
-    expect(pedraDisponivel(estado)).toBe(3);
+    expect(pedraDisponivel(estado)).toBe(0); // 2 na saida, as 2 reservadas pelas cargas
     const depois = step(estado, [{ type: 'PlaceRoad', tiles: rua(3 / custoPorTile) }]);
-    expect(rejeicoes(depois)).toEqual([]);
-    expect(estoqueDe(depois, armazem.id, 'saida')).toBe(2); // a reservada, intacta
-    expect(estoqueDe(depois, armazem.id, 'entrada')).toBe(0);
+    expect(rejeicoes(depois)).toMatchObject([{ command: 'PlaceRoad', motivo: 'sem-pedra' }]);
+    expect(estoqueDe(depois, armazem.id, 'saida')).toBe(2);
+    expect(estoqueDe(depois, armazem.id, 'entrada')).toBe(3); // intocada
     expect(violacoesDeInvariantes(depois)).toEqual([]);
   });
 
-  it('um armazem com a saida toda reservada e pulado: o debito sai do proximo', () => {
+  it('um armazem com a saida toda reservada e pulado: quem paga a estrada e o proximo', () => {
     const estado = comArmazemCompleto(comDuasReclamadas(2), 'segundo', { gx: 40, gy: 20, stone: 10 });
     const depois = step(estado, [{ type: 'PlaceRoad', tiles: rua(3 / custoPorTile) }]);
     expect(rejeicoes(depois)).toEqual([]);
+    expect(reservadoNaOrigem(depois, armazem.id, 'stone')).toBe(2);  // so as duas cargas
+    expect(reservadoNaOrigem(depois, 'segundo', 'stone')).toBe(3);   // o canteiro inteiro
     expect(estoqueDe(depois, armazem.id, 'saida')).toBe(2);
-    expect(estoqueDe(depois, 'segundo', 'saida')).toBe(7);
+    expect(estoqueDe(depois, 'segundo', 'saida')).toBe(10);
     expect(violacoesDeInvariantes(depois)).toEqual([]);
   });
 

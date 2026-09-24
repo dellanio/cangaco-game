@@ -3,14 +3,20 @@ import type { GameData } from './data/types';
 import { gameData } from './data';
 import { estaDesbloqueado } from './desbloqueio';
 import { bordaSul, caixaDeTipo, caixaDoPredio, caixasSeSobrepoem } from './footprint';
-import { ehEstrada } from './estradas';
+import { ehEstrada, ehPlanejada } from './estradas';
 
 export type MotivoDeRecusa =
   | 'predio-desconhecido'
   | 'bloqueado'
   | 'fora-do-mapa'
   | 'sobreposicao'
-  // Ha estrada (F08) sobre o footprint: predio nao se constroi em cima de estrada.
+  // Ha estrada (F08) ou canteiro de estrada (F18d-1b) sobre o footprint: predio nao
+  // se constroi em cima de estrada.
+  //
+  // O canteiro conta porque ele e o pedido: `canPlaceRoad` ja recusa estrada sobre
+  // predio, e sem a recusa simetrica o laborer assentaria o tile DEBAIXO do predio
+  // plantado depois — o mesmo tile ocupado pelos dois, que e o que o motivo existe
+  // para impedir.
   | 'estrada'
   // A borda sul — a porta (GDD §5.1) — precisa estar NO MAPA e LIVRE, dos dois
   // lados: nem o candidato nasce com a propria porta fora do mapa ou coberta,
@@ -72,6 +78,7 @@ export function canPlace(
   for (let gy = candidato.y0; gy < candidato.y1; gy++) {
     for (let gx = candidato.x0; gx < candidato.x1; gx++) {
       if (ehEstrada(state.estradas, { gx, gy })) return recusa('estrada');
+      if (ehPlanejada(state.estradasPlanejadas, { gx, gy })) return recusa('estrada');
     }
   }
 

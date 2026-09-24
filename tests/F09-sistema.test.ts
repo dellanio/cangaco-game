@@ -519,6 +519,8 @@ const plantarERuar = (t: number): Command[] => {
     { type: 'PlaceRoad', tiles: [tile(29, 33), tile(29, 34), tile(29, 35), tile(29, 36), tile(28, 36)] },
   ];
 };
+const SAVE_NO_TICK = 112;
+
 describe('F09 — determinismo e save/load com reservas pendentes', () => {
   it('compararComESemSave continua passando SEM o gancho (o helper canonico da F02)', () => {
     const { direto, comSave } = compararComESemSave({ seed: 1, totalTicks: 30, saveAtTick: 15 });
@@ -529,8 +531,11 @@ describe('F09 — determinismo e save/load com reservas pendentes', () => {
     // desde a F10 o proprio serf reclama: no tick do save ja ha tarefa reclamada (indo buscar).
     // F11c: o quarry plantado pela UI nasce sem nivelar — a tarefa de material so nasce
     // depois que o laborer nivela (~60 ticks/2 + caminhada); 7 ticks nao alcancava mais.
+    // F18d-1b: o `PlaceRoad` do tick 0 virou canteiro, e os mesmos laborers assentam os 5
+    // tiles antes de nivelar a obra (a rua fica de pe perto do tick 75). O marco andou
+    // junto: a primeira tarefa de material e reclamada por volta do tick 110.
     let noSave = createInitialState(1);
-    for (let t = 0; t < 90; t++) noSave = step(noSave, plantarERuar(t));
+    for (let t = 0; t < SAVE_NO_TICK; t++) noSave = step(noSave, plantarERuar(t));
     const pendentesNoSave = tarefasDe(noSave).filter((t) => t.estado === 'reclamada');
     expect(pendentesNoSave.length, 'sem reserva pendente no tick do save o teste seria vacuo').toBeGreaterThan(0);
     for (const t of pendentesNoSave) {
@@ -538,7 +543,9 @@ describe('F09 — determinismo e save/load com reservas pendentes', () => {
       expect(reservadoNoDestino(noSave, t.destino, t.mercadoria)).toBeGreaterThan(0);
     }
 
-    const { direto, comSave } = compararComESemSave({ seed: 1, totalTicks: 140, saveAtTick: 90, comandosNoTick: plantarERuar });
+    const { direto, comSave } = compararComESemSave({
+      seed: 1, totalTicks: 150, saveAtTick: SAVE_NO_TICK, comandosNoTick: plantarERuar,
+    });
     expect(comSave).toBe(direto);
     const final = JSON.parse(direto) as GameState;
     expect(tarefasDe(final).some((t) => t.estado !== 'aberta')).toBe(true); // ainda ha tarefa em curso

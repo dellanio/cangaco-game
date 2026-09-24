@@ -3,8 +3,8 @@ import type { Colecao, GameEvent, GameState, Predio } from '../state';
 import { ID_DO_ARMAZEM } from '../state';
 import type { GameData } from '../data/types';
 import { canPlaceRoad, chaveDeTile, MERCADORIA_DA_ESTRADA } from '../estradas';
+import { criarTarefaDeAssentamento } from '../jobs';
 import { devolverMercadorias } from '../deposito';
-import { disponivelNaOrigem } from '../reservas';
 
 export type PlaceRoad = Extract<Command, { readonly type: 'PlaceRoad' }>;
 export type DemolishRoad = Extract<Command, { readonly type: 'DemolishRoad' }>;
@@ -12,36 +12,6 @@ export type DemolishRoad = Extract<Command, { readonly type: 'DemolishRoad' }>;
 interface Resultado {
   readonly state: GameState;
   readonly events: readonly GameEvent[];
-}
-
-/**
- * Tira `quantidade` de pedra dos armazens completos: um armazem depois do outro em
- * `predios.ordem`, e em cada um a gaveta `saida` (so o que nao esta reservado por uma
- * tarefa) antes da `entrada`. O chamador ja garantiu (`canPlaceRoad`, que usa a mesma
- * conta em `pedraDisponivel`) que ha o bastante.
- */
-function debitarPedra(state: GameState, quantidade: number): Colecao<Predio> {
-  const { predios } = state;
-  let restante = quantidade;
-  const porId = { ...predios.porId };
-  for (const id of predios.ordem) {
-    if (restante <= 0) break;
-    const predio = predios.porId[id];
-    if (!predio || predio.estado !== 'completo' || predio.tipo !== ID_DO_ARMAZEM) continue;
-    const daSaida = Math.min(Math.max(disponivelNaOrigem(state, id, MERCADORIA_DA_ESTRADA), 0), restante);
-    restante -= daSaida;
-    const daEntrada = Math.min(predio.estoque.entrada[MERCADORIA_DA_ESTRADA] ?? 0, restante);
-    restante -= daEntrada;
-    if (daSaida === 0 && daEntrada === 0) continue;
-    porId[id] = {
-      ...predio,
-      estoque: {
-        saida: { ...predio.estoque.saida, [MERCADORIA_DA_ESTRADA]: (predio.estoque.saida[MERCADORIA_DA_ESTRADA] ?? 0) - daSaida },
-        entrada: { ...predio.estoque.entrada, [MERCADORIA_DA_ESTRADA]: (predio.estoque.entrada[MERCADORIA_DA_ESTRADA] ?? 0) - daEntrada },
-      },
-    };
-  }
-  return { porId, ordem: predios.ordem };
 }
 
 /** O PRIMEIRO armazem completo de `predios.ordem` — o mesmo de onde o debito
@@ -56,15 +26,20 @@ function primeiroArmazem(predios: Colecao<Predio>): string | null {
 }
 
 /**
- * `PlaceRoad`: pergunta `canPlaceRoad` e, se aceitar, acrescenta os tiles NOVOS a
- * `estradas` e DEBITA a pedra deles — no comando, dos armazens. Recusa = mesmo estado
- * e um evento `command-rejected`. Nada novo a fazer (trecho vazio ou ja construido) =
- * mesmo estado, sem custo e sem evento.
+ * `PlaceRoad`: pergunta `canPlaceRoad` e, se aceitar, desenha os tiles NOVOS no
+ * CANTEIRO (`estradasPlanejadas`) e abre uma tarefa de assentamento para cada um.
+ * Recusa = mesmo estado e um evento `command-rejected`. Nada novo a fazer (trecho
+ * vazio, ja construido ou ja desenhado) = mesmo estado, sem tarefa e sem evento.
  *
- * DESVIO PROVISORIO da regra "o custo sai na entrega" (F07): a estrada nao tem
- * canteiro nem viagem de material — o aceite exige que o tile exista e conecte no
- * proprio comando, e serf (F10) e laborer (F11) ainda nao existem. Ver a Nota de
- * desvio no item F08 do BUILD_PLAN; a F11 decide se isso muda.
+ * F18d-1b — FIM DO DESVIO da F08. O comando ja nao cria estrada nem debita pedra:
+ * ele so PEDE a rua. Quem a levanta e o laborer, tile por tile, e e ele quem paga
+ * (`comOTileAssentado`). A pedra fica RESERVADA desde aqui — a tarefa a reserva
+ * desde `'aberta'` —, e por isso `canPlaceRoad` continua recusando por `'sem-pedra'`
+ * o trecho que o canteiro pendente ja comprometeu.
+ *
+ * Um tile pode ficar desenhado SEM tarefa: se nenhum armazem pode pagar na hora do
+ * clique, `criarTarefaDeAssentamento` devolve `null` e o `gerarTarefas` remenda
+ * quando houver pedra. O canteiro e o pedido; a tarefa e a execucao.
  */
 export function aplicarPlaceRoad(state: GameState, comando: PlaceRoad, dados: GameData): Resultado {
   const resposta = canPlaceRoad(state, comando.tiles, dados);
@@ -76,12 +51,17 @@ export function aplicarPlaceRoad(state: GameState, comando: PlaceRoad, dados: Ga
   }
   if (resposta.novos.length === 0) return { state, events: [] };
 
-  const estradas: Record<string, true> = { ...state.estradas };
-  for (const tile of resposta.novos) estradas[chaveDeTile(tile)] = true;
-  return {
-    state: { ...state, estradas, predios: debitarPedra(state, resposta.custoEmPedra) },
-    events: [],
-  };
+  const estradasPlanejadas: Record<string, true> = { ...state.estradasPlanejadas };
+  for (const tile of resposta.novos) estradasPlanejadas[chaveDeTile(tile)] = true;
+  let atual: GameState = { ...state, estradasPlanejadas };
+  for (const tile of resposta.novos) {
+    // uma de cada vez, e de proposito: a tarefa recem-criada ja reserva a pedra
+    // dela, entao a proxima enxerga o armazem ja mais pobre e pode nao nascer.
+    const criada = criarTarefaDeAssentamento(atual, tile);
+    if (criada === null) break;
+    atual = criada.state;
+  }
+  return { state: atual, events: [] };
 }
 
 /**

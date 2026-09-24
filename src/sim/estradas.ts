@@ -352,10 +352,10 @@ export function predioLigadoAoArmazem(
  *  reservou e dele. A `entrada` nao e reservavel. */
 /**
  * F18d-1b — O armazem que PAGA o proximo tile de estrada: o primeiro de
- * `predios.ordem` com pedra ainda reservavel na gaveta `saida`. Mesma ordem de
- * varredura do debito (`debitarPedra`, systems/estradas.ts), e de proposito:
- * reserva e debito em armazens diferentes fariam a pedra sair de um e faltar no
- * outro — o "exatamente uma vez" depende dos dois olharem para o mesmo lugar.
+ * `predios.ordem` com pedra ainda reservavel na gaveta `saida`. O id dele fica
+ * GRAVADO na tarefa (`origem`), e e de la que `comOTileAssentado` debita: reserva e
+ * debito nao "seguem a mesma ordem de varredura", eles olham para o MESMO armazem
+ * por construcao — o "exatamente uma vez" nao depende de duas buscas coincidirem.
  *
  * So a `saida` conta aqui, e nao `entrada`, porque so ela e reservavel
  * (`reservadoNaOrigem`). Entrega em armazem cai na `saida`
@@ -407,10 +407,29 @@ export function comOTileAssentado(
   };
 }
 
-export function pedraDisponivel(state: GameState): number {
+/**
+ * A pedra que o canteiro ainda PODE comprometer, contada como `armazemQuePagaAEstrada`
+ * paga: so a gaveta `saida`, so o que nenhuma tarefa reservou, e so em multiplos do
+ * custo de um tile.
+ *
+ * F18d-1b — as tres restricoes sao o MESMO predicado do pagador, escrito uma vez:
+ *  - a gaveta `entrada` saiu da conta. Ate aqui ela entrava porque o `debitarPedra` do
+ *    comando podia esvazia-la; agora o custo e uma RESERVA, e so `saida` e reservavel.
+ *    (No jogo a `entrada` de um armazem nunca recebe pedra — `estoqueParaTipo` nasce
+ *    vazia e o deposito do serf cai na `saida`; ela so existia em fixture de teste.)
+ *  - o piso por armazem impede o aceite que ninguem consegue pagar: dois armazens com
+ *    1 de pedra cada, custo 2, somam 2 e nao levantam um tile sequer. Aceitar ali
+ *    deixaria o tile desenhado esperando para sempre uma tarefa que nao nasce.
+ *
+ * Aceito => existe pagador para cada tile, por construcao: cada tarefa consome um
+ * multiplo inteiro do custo no armazem que a paga.
+ */
+export function pedraDisponivel(state: GameState, dados: GameData = gameData): number {
+  const custo = dados.terreno.estrada.custoStonePorTile;
   let soma = 0;
   for (const armazem of armazensCompletos(state)) {
-    soma += disponivelNaOrigem(state, armazem.id, MERCADORIA_DA_ESTRADA) + (armazem.estoque.entrada[MERCADORIA_DA_ESTRADA] ?? 0);
+    const livre = disponivelNaOrigem(state, armazem.id, MERCADORIA_DA_ESTRADA);
+    soma += custo > 0 ? Math.floor(livre / custo) * custo : livre;
   }
   return soma;
 }
@@ -450,9 +469,11 @@ export function canPlaceRoad(
     const chave = chaveDeTile(tile);
     if (vistos.has(chave)) continue;
     vistos.add(chave);
-    if (!ehEstrada(state.estradas, tile)) novos.push(tile);
+    // F18d-1b: ja planejado tambem nao e novo — a pedra dele ja esta reservada e a
+    // tarefa dele ja existe. Redesenhar por cima do proprio canteiro nao custa nada.
+    if (!ehEstrada(state.estradas, tile) && !ehPlanejada(state.estradasPlanejadas, tile)) novos.push(tile);
   }
   const custoEmPedra = novos.length * dados.terreno.estrada.custoStonePorTile;
-  if (custoEmPedra > pedraDisponivel(state)) return { ok: false, motivo: 'sem-pedra', tile: null };
+  if (custoEmPedra > pedraDisponivel(state, dados)) return { ok: false, motivo: 'sem-pedra', tile: null };
   return { ok: true, novos, custoEmPedra };
 }

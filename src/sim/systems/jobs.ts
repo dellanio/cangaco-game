@@ -21,10 +21,11 @@ import {
 } from '../state';
 import type { GameData } from '../data/types';
 import { gameData } from '../data';
-import { armazensCompletos, chaveDeTile, ehPlanejada } from '../estradas';
+import { armazensCompletos, chaveDeTile, ehPlanejada, tilesOrdenados } from '../estradas';
 import {
-  criarTarefa, criarTarefaDeConstrucao, criarTarefaDeInsumo, criarTarefaDeOcupacao,
-  criarTarefaDeOuro, criarTarefaParaArmazem, distanciaDaTarefa, liberar, ligacaoEntrePredios,
+  criarTarefa, criarTarefaDeAssentamento, criarTarefaDeConstrucao, criarTarefaDeInsumo,
+  criarTarefaDeOcupacao, criarTarefaDeOuro, criarTarefaParaArmazem, distanciaDaTarefa,
+  liberar, ligacaoEntrePredios,
   modoDoTipo, podeReclamar, TIPO_QUE_CARREGA,
 } from '../jobs';
 import type { MotivoDeLiberacao } from '../jobs';
@@ -461,6 +462,33 @@ function gerarTarefasDeOcupacao(state: GameState, dados: GameData): GameState {
   return atual;
 }
 
+/**
+ * F18d-1b — o remendo do canteiro: todo tile desenhado precisa de UMA tarefa. O
+ * `PlaceRoad` ja cria a dele no clique; esta funcao existe para os buracos — o tile
+ * cuja tarefa caiu porque o armazem que pagava sumiu ou secou, e que agora tem de
+ * novo quem pague.
+ *
+ * Nunca duplica: tile que ja tem tarefa (aberta ou reclamada) e pulado. A varredura
+ * segue `tilesOrdenados` (por gy, depois gx), e nao a ordem de insercao do objeto:
+ * dois saves com o mesmo canteiro tem de gerar os mesmos ids na mesma ordem.
+ */
+function gerarTarefasDeAssentamento(state: GameState): GameState {
+  const comTarefa = new Set<string>();
+  for (const t of tarefasPorNumero(state)) {
+    if (ehTarefaDeAssentamento(t)) comTarefa.add(chaveDeTile(t.destinoTile));
+  }
+  let atual = state;
+  for (const tile of tilesOrdenados(state.estradasPlanejadas)) {
+    if (comTarefa.has(chaveDeTile(tile))) continue;
+    const criada = criarTarefaDeAssentamento(atual, tile);
+    // `null` = nenhum armazem tem pedra livre. Nao adianta tentar os proximos tiles:
+    // a busca do pagador e a mesma para todos, e o estado nao mudou.
+    if (criada === null) break;
+    atual = criada.state;
+  }
+  return atual;
+}
+
 export function gerarTarefas(state: GameState, dados: GameData = gameData): GameState {
   let atual = gerarTarefasDeOuro(state, dados);
   for (const id of state.predios.ordem) {
@@ -492,6 +520,7 @@ export function gerarTarefas(state: GameState, dados: GameData = gameData): Game
   // seguir a escada aqui so deixa os ids em ordem legivel na evidencia.
   atual = gerarTarefasDeInsumo(atual, dados);
   atual = gerarTarefasParaArmazem(atual, dados);
+  atual = gerarTarefasDeAssentamento(atual);
   // F14 por ultimo, e sobre PREDIOS COMPLETOS — o laco acima so olha obra. Uma
   // obra que o laborer completou neste tick ja entra aqui e ganha a vaga de
   // ocupante no mesmo tick; o especialista a reclama no tick seguinte.
