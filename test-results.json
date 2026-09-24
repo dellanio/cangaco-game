@@ -29,5 +29,6 @@
   "F17f-primeiro-sprite": { "passes": true },
   "F17d-nivelamento-canteiro": { "passes": true },
   "F17e-estagios-da-obra": { "passes": true },
-  "F18a-zoom-da-camera": { "passes": true }
+  "F18a-zoom-da-camera": { "passes": true },
+  "F18b-mapa-grande": { "passes": true }
 }

@@ -2090,6 +2090,137 @@ dentro do `npm run verify`. São coisas distintas.
   mapa. Não foi tratado, e não é do escopo escrito da F18a. **Hipótese não
   verificada**, registrada como tal.
 
+## F18b — O mapa padrão passa a 128×128 (2026-09-23)
+
+Plano: `docs/planos/F18b-mapa-grande.md`. Feature nova, proposta e aceita nesta
+sessão; entra na fila entre a F18a e a F18. **Nada em `src/`**: o tamanho do
+mapa já era dado, e esta feature é o dado mudando mais o guarda de que ele
+continua sendo dado.
+
+### Verificado
+
+- `npm run verify` — **EXIT=0**. 57 arquivos de teste, 961 testes, typecheck,
+  lint e `validate:data` (9 arquivos, 0 erros) limpos.
+- `test-output/F18b.json`, aberto com Read: `mapaPadrao` 128×128, área 16384
+  tiles contra 4096 da Fase A, a vila com folga 29/30/99/98 até as quatro
+  bordas, e o estado inicial com **1221 bytes idênticos** nos quatro tamanhos
+  (64², 128², 256², 97×61).
+- `npm run shot -- F18b` — **EXIT=0**, 2 capturas, 15 afirmações, 0 erro de
+  console. A câmera sai da vila (scroll 1602,1675) e chega à borda sudeste
+  (6662,7169) em **12 arrastos**; o jogo destaca `{gx:127,gy:127}` sob o
+  ponteiro no zoom 0,5 e de volta no 1.
+- Aberta com Read (§8, só a do aceite desta feature):
+  `screenshots/F18b-1-canto-sudeste.png` — o tile do canto destacado no pé da
+  tela, com o mapa terminando exatamente na borda do quadro.
+- Não-regressão por código de saída, sem abrir imagem: `F04`, `F06`, `F07`,
+  `F08`, `F16b`, `F17`, `F17e`, `F18a` — **EXIT=0** em todos. O F18a mede os
+  mesmos 875/234/88 tiles por nível e a mesma deriva de scroll de antes.
+
+### A medida do operador, refeita depois da F17c
+
+Ponto 1 do pedido: confirmar, agora com a correção da F17c, que o mapa maior
+não custa. Probe de sessão (seis obras, rede de estradas real, 48 tarefas
+abertas, duas passadas com a ordem dos tamanhos invertida para tirar o viés de
+JIT):
+
+| | 64² | 128² | 256² | linha de base (Nota da F17c, antes da correção) |
+|---|---|---|---|---|
+| busca curta | 2,7 µs | 3,5 µs | 2,6 µs | 40 / 94 / 303 µs |
+| cardápio de um serf ocioso | 0,17 ms | 0,17 ms | 0,22 ms | 1,58 → 6,03 ms |
+| tick | 0,80 ms | 0,65 ms | 0,79 ms | — |
+| estado serializado | 2,5 KB | 2,5 KB | 2,5 KB | — |
+| rascunho do A* | 64 KB | 256 KB | 1024 KB | idem |
+
+O crescimento sumiu: dez serfs ociosos custavam 60 ms de um tick de 100 ms a
+256², e hoje custam 2,2 ms. O único número que ainda cresce é o rascunho do A*,
+que é **capacidade máxima já vista** (o buffer da F17c cresce e não encolhe),
+não alocação por busca.
+
+**Correção de um número herdado:** a Nota da F17c diz `JSON.stringify(estado)` =
+29 KB nos três tamanhos. O que se mede é 1,4 KB no estado inicial e 2,5 KB no
+cenário de seis obras — os 29 KB vieram de um cenário mais avançado. A
+afirmação que importava (não varia com a área do mapa) continua de pé, e agora
+está provada por teste permanente, não por probe.
+
+### Decidido
+
+- **128×128, e o custo não foi o critério.** Uma cidade completa cabe em 40×40
+  tiles; a campanha prevê duas cidades com espaço entre elas, o que dá ~110
+  tiles de lado. 256² deixaria ~170 tiles de grama que nada preenche antes da
+  F28 — mapa vazio não é mapa grande. Navegação: no zoom mínimo o quadro mostra
+  850 tiles, 5,2% de um 128² contra 1,3% de um 256². E 128 = 2×64 faz a
+  centralização futura da vila ser uma translação uniforme de +32 em cada eixo.
+- **A vila nasce onde já nascia.** `storehouse` (29,30), `schoolhouse` (34,30) e
+  spawn (30,34) não se mexem; o mapa cresce para sul e leste. Ela passa a
+  ocupar o quadrante noroeste, com folga de 29 tiles a oeste e 30 ao norte —
+  mais que a vila inteira da F17, que ocupou dez — e sobra ~98×97 a sudeste,
+  que é onde a segunda cidade da campanha cabe. A câmera já abre centrada em
+  `centroDaVila`, então o jogador não vê canto nenhum.
+- **Centralizar a vila hoje seria a feature errada.** O custo foi contado, não
+  estimado: ~20 arquivos de fixture e 15 roteiros carregam a posição absoluta
+  (~64 literais vizinhos da vila entre 508 literais de tile) e há ~100 chamadas
+  diretas de `createInitialState(1)`. O defeito real não é a vila estar no
+  canto: é **fixture depender de coordenada absoluta em vez de derivá-la do
+  armazém**. Está na fila com esse nome, como **F18c**, com o tamanho contado.
+- **O guarda desta feature não é o número.** Medida é evidência de sessão (§8);
+  o que fica é `tests/F18b-mapa.test.ts`, que roda a sim inteira em quatro
+  tamanhos — inclusive **97×61**, retangular e com nenhum lado potência de dois
+  — e não cronometra nada. Foi uma presunção de 64 escondida numa fixture que
+  travou esta mudança; este arquivo é o que acusa a próxima.
+
+### Desvio consciente da Nota da F17c
+
+A Nota da F17c manda **parar e reportar** se `tests/F10-astar.test.ts` precisar
+mudar. Ele precisou, e mudou. Dito com todas as letras:
+
+- **O que mudou:** a fixture declara o mapa de 64² em que prova
+  (`LADO_DA_PROPRIEDADE`), em vez de herdar `gameData.terreno.mapaPadrao`. Os
+  dois lados de toda comparação recebem esse mesmo `dados`.
+- **O que não mudou:** o oráculo — regras, asserções, casos. Um caso continua
+  lendo o valor **publicado** de propósito: "alvo fora do mapa".
+- **Por que não é "mudar o teste para o verde passar" (§10):** herdar o valor
+  publicado fazia o **oráculo** (Dijkstra ingênuo, não o A*) inundar a área
+  inteira do mapa novo e estourar o timeout de 5 s sem nada no A* ter mudado.
+- **Como foi provado neutro:** rodado com o dado ainda em 64², antes de
+  `data/terrain.json` mudar — 33 testes verdes em 2,96 s contra 3,02 s da linha
+  de base. Commit separado (`c33d895`), anterior ao que mexe no dado.
+
+### Probe distinto da cobertura permanente (§8)
+
+O guarda foi provado **acusando**, por probe de sessão: trocar `dados` por
+`gameData` em `tileAndavel` reprova 64×64, 256×256 e 97×61; a mesma troca em
+`buscarCaminho` reprova os mesmos três. 128×128 passa nas duas — e tem de
+passar: ali o valor declarado e o publicado são o mesmo, então o caso não
+distingue nada. A primeira versão do guarda **não acusava** a quebra de
+`tileAndavel`: `buscarCaminho` filtra alvos pela própria borda e a asserção
+nunca chegava ao código quebrado. Consertou-se o guarda, não a asserção — ele
+passou a tocar as **três** bordas independentes (filtro de alvos, `andavel`
+interno da expansão, e o `tileAndavel` exportado que quatro sistemas consultam).
+O probe demonstrou que ele funciona naquele momento; a proteção permanente é o
+arquivo rodando dentro do `npm run verify`.
+
+### Dois defeitos que o roteiro achou, e como foram medidos
+
+1. **`pontoDoTileNaTela` não era ciente de zoom, apesar do nome** (herdado da
+   F18a). A origem da câmera é 0,5: ampliar afasta do **centro** do quadro, não
+   do canto. Faltavam os dois termos de origem, que em zoom 1 se cancelam — por
+   isso nada acusava: até aqui nenhum roteiro calculava ponto fora do neutro (a
+   F18a calcula uma vez, no nível 1, e reusa o mesmo ponto de tela). Agora é a
+   inversa exata de `mundoSobPonto` (`render/zoom.ts`).
+2. **O clamp de `setBounds` não para o `scroll` na borda do mapa: para a área
+   exibida.** Com mapa de 8192 px, quadro de 1020 e zoom 0,5, o scroll encosta
+   em **6662**, não em 7172 — a asserção ingênua errava por 510 px. Virou
+   `bordaVisivel` em `tools/shots/_canvas.js`, e a afirmação passou a ser "a
+   borda do mapa está na borda do quadro", que é o que o aceite quer dizer.
+
+### Ficou aberto
+
+- **F18c** (na fila): fixtures derivarem a vila do armazém, e a vila ir para o
+  centro do mapa.
+- O quadrante sudeste está vazio e nada o preenche antes da F28. É consequência
+  escolhida, não lacuna: o mapa cresceu para a campanha caber, e a campanha vem
+  depois.
+
 ## Perguntas em aberto
 
 _(nenhuma no momento: as três que sobravam foram decididas pelo operador — ver "Ajuste pós-F10".)_

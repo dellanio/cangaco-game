@@ -1043,6 +1043,62 @@ prédio surge sem clique do jogador.
   aumentar `mapaPadrao` depende deste** e da F17c: a 256², com tile de 64 px e
   viewport de 1280×720, o jogador enxerga 20×11 tiles — 0,35% do mapa.
 
+### F18b — O mapa padrão passa a 128×128
+- **Escopo**: `data/terrain.json` publica `mapaPadrao` 128×128 (quatro vezes a
+  área da Fase A) e um guarda de que a simulação roda em **qualquer** tamanho
+  declarado. **Nada em `src/`** — o tamanho já era dado, lido por `configDoMapa`
+  no render e por `terreno.mapaPadrao` na busca de caminho. Depende da F17c
+  (buffer do A*) e da F18a (zoom), as duas fechadas.
+- **Aceite**: `tests/F18b-mapa.test.ts` roda estado inicial + 30 ticks e as
+  bordas de busca em 64×64, 128×128, 256×256 e **97×61** (retangular, nenhum
+  lado potência de dois), e prova que o estado serializado não cresce com a
+  área. Mais roteiro que leva a câmera até o canto (127,127) — tile que no 64²
+  não existe — e afirma que o jogo o destaca sob o ponteiro.
+- **Evidência**: `test-output/F18b.json` + `screenshots/F18b-*.png`
+- **Nota (a medida, refeita em 2026-09-23 depois da F17c)**: nada escala com a
+  área. Busca curta 2,7 / 3,5 / 2,6 µs; cardápio de um serf ocioso 0,17 / 0,17 /
+  0,22 ms; tick 0,80 / 0,65 / 0,79 ms; estado serializado 2,5 KB **idêntico**
+  nos três (64² / 128² / 256²). A linha de base da Nota da F17c, antes da
+  correção, era 40 / 94 / 303 µs na busca e 1,58 → 6,03 ms no cardápio: dez
+  serfs ociosos custavam 60 ms de um tick de 100 ms, e hoje custam 2,2 ms. O
+  único número que cresce é o rascunho do A* (64 / 256 / 1024 KB), que é
+  capacidade máxima já vista, não alocação por busca.
+- **Nota (por que 128 e não 256)**: custo **não** foi o critério — ver acima.
+  Uma cidade completa cabe em 40×40 tiles e a campanha prevê duas com espaço
+  entre elas (~110 tiles de lado); 256² deixaria ~170 tiles de grama que nada
+  preenche antes da F28. Navegação: no zoom mínimo o quadro mostra 850 tiles,
+  5,2% de um 128² contra 1,3% de um 256². E 128 = 2×64 faz a centralização
+  futura ser uma translação uniforme de +32.
+- **Nota (a vila não se moveu)**: `storehouse` (29,30), `schoolhouse` (34,30) e
+  spawn (30,34) ficam onde estavam; o mapa cresce para sul e leste. A vila passa
+  a ocupar o quadrante noroeste, com 29 tiles de folga a oeste e 30 ao norte
+  (mais que a vila inteira da F17, que ocupou dez), e sobra ~98×97 a sudeste
+  para a segunda cidade da campanha. Centralizar hoje custaria os ~20 arquivos
+  de fixture e 15 roteiros da **F18c** — o defeito real tem nome e está na fila.
+- **Nota (desvio consciente da Nota da F17c)**: aquela nota manda parar e
+  reportar se `tests/F10-astar.test.ts` precisar mudar. Ele mudou: a fixture
+  **declara** o mapa de 64² em que prova, em vez de herdar o publicado. O
+  oráculo — regras, asserções, casos — está intocado; o que mudou é o tamanho do
+  mapa que a fixture sorteia, que ela já assumia pela faixa [4,55]. Provado
+  neutro com o dado ainda em 64² (33 testes, 2,96 s contra 3,02 s) **antes** de
+  o dado mudar.
+
+### F18c — Fixtures param de depender da posição absoluta da vila
+- **Escopo**: `tests/helpers/*` e os roteiros de `tools/shots/` deixam de
+  escrever a coordenada da vila à mão e passam a derivá-la do armazém do
+  cenário. A prova de que funcionou é mover a vila para o **centro** do mapa
+  (`data/economy.json`: +32 em cada eixo — storehouse (61,62), schoolhouse
+  (66,62), spawn (62,66)) sem que nenhuma asserção mude.
+- **Aceite**: regra nova em `tools/data-rules.js` — o centro da caixa que
+  envolve os prédios iniciais fica a no máximo 2 tiles do centro de
+  `mapaPadrao` — reprovando antes e passando depois; `npm run verify` verde e os
+  roteiros de screenshot verdes por código de saída.
+- **Nota (o tamanho, contado na F18b, não estimado)**: ~20 arquivos de fixture e
+  15 roteiros carregam posição absoluta (~64 literais vizinhos da vila entre 508
+  literais de tile), e há ~100 chamadas diretas de `createInitialState(1)`. Não
+  é um `sed`: cada literal tem de ser lido. Se não couber numa sessão, quebre
+  por arquivo.
+
 ### F18 — Farm e campos de milho
 ### F19 — Mill e Bakery (cadeia do pão)
 ### F20 — Inn, fome e consumo
