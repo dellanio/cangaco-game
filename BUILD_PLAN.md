@@ -1157,34 +1157,29 @@ prédio surge sem clique do jogador.
   `colisao`/`intransponivel`: quina proibida é regra de **ligação**, não de
   passagem.
 
-### F18d-1 — Estrada como canteiro, e a entrega de construção sem estrada (sim)
-- **Nota (o que a F18e deixou pronto, 2026-09-24)**: a rede de estradas agora
-  depende dos **prédios** (a quina que eles tapam corta a ligação diagonal), e por
-  isso `indiceDeEstradas`, `componenteDe`, `isConnected` e `distanciaPorEstrada`
-  recebem `EstadoDaRede` (`Pick<GameState, 'estradas' | 'predios'>`), não mais só
-  `estradas`. O `estradasPlanejadas` desta feature **não** entra nesse índice: tile
-  planejado não liga nada até o laborer assentar, que é o próprio aceite. Se ele
-  precisar de índice próprio, é índice separado, com a mesma regra de quina — o
-  único lugar onde ela mora é o `passoPermitido` de `sim/estradas.ts`.
-- **Escopo**: duas regras que só fazem sentido juntas.
-  (a) **Canteiro**: campo novo `estradasPlanejadas` no `GameState`, separado de
-  `estradas`; `PlaceRoad` **reserva** a pedra e planta o tile planejado; variante
-  de tarefa `'assentar-estrada'` (destino é tile, não prédio); o laborer assenta e
-  é o **assentamento** que debita a pedra; `DemolishRoad` parte a entrada em três
-  conjuntos — de pé (devolve `floor(n × devolucaoAoDemolir)`, como hoje),
-  planejado (devolve 0, libera a reserva e a tarefa), nem um nem outro (no-op).
-  (b) **Modo por nível**: `delivery.json` publica `"modo": "livre" | "estrada"`
-  por nível. Níveis 3 e `'assentar-estrada'` em **livre**; níveis 1, 2, 4, 5, 6 e
-  7 em **estrada**. `obrigatoriaParaEntrega` sai de `terrain.json` (ver Nota).
+### F18d-1a — Modo de entrega por nível: construir anda livre (sim)
+- **Nota (a F18d-1 virou duas, medido em 2026-09-24)**: o item original trazia
+  duas regras num item só — o `modo` por nível e a estrada-canteiro. A segunda
+  cria uma tarefa cujo **destino é um tile**, e hoje `destino` é id de prédio em
+  **59 ocorrências** de `src/sim/` — 12 delas `predios.porId[<tarefa>.destino]`
+  direto — espalhadas por **8 arquivos** (`jobs.ts`, `obra.ts`, `reservas.ts`,
+  `selectors.ts` e `systems/{jobs,serfs,laborers,especialistas}.ts`). As duas
+  juntas não cabem numa sessão, e CLAUDE.md §6 manda quebrar em sub-itens e
+  entregar o primeiro. **O aceite não foi reescrito**: cada metade ficou com a
+  metade dele que já estava escrita, palavra por palavra.
+- **Escopo**: o item (b) do original. `delivery.json` publica
+  `"modo": "livre" | "estrada"` por nível: nível 3 em **livre**; níveis 1, 2, 4,
+  5, 6 e 7 em **estrada**. Quem lê o campo é um helper irmão de `nivelDoTipo`
+  (`modoDoTipo`, `sim/jobs.ts`), e ele é passado por **tipo de tarefa** aos call
+  sites; nenhum sistema digita `'estrada'` ou `'livre'` para tarefa de
+  transporte. `obrigatoriaParaEntrega` já saiu de `terrain.json` (ver Nota).
 - **Aceite**: a primeira casa sobe **sem nenhuma estrada no mapa** — planta a
   obra, o serf entrega o material andando livre, o prédio fica `completo`; e no
   mesmo cenário a pedreira pronta **não** escoa: a saída enche e o pedreiro vai
-  a `saida_cheia`, até a rua existir. A rua desenhada não liga nada no tick do
-  comando e liga depois que o laborer assenta; a pedra sai do armazém
-  exatamente uma vez, no assentamento. `tests/F09-sistema.test.ts:214` reescrito
+  a `saida_cheia`, até a rua existir. `tests/F09-sistema.test.ts:214` reescrito
   para afirmar a regra nova (origem do nível 3 por distância **a pé**), com o
   número medido ao lado.
-- **Evidência**: `test-output/F18d-1.json`
+- **Evidência**: `test-output/F18d-1a.json`
 - **Nota**: sem screenshot — feature só de `sim/` e `data/`.
 - **Nota (decisão do operador, 2026-09-23 — a regra tem dois lados)**: entregar
   material **numa construção** (obra, tile de estrada planejado, comida para
@@ -1219,6 +1214,13 @@ prédio surge sem clique do jogador.
   rota some), `systems/especialistas.ts:184` (`saida_cheia`), `selectors.ts:271`
   e `:563`. Quem implementar passa o modo por **tipo de tarefa** nesses pontos;
   não há uma checagem única para virar.
+- **Nota (correção medida da Nota acima, 2026-09-24)**: dos dez lugares, **três
+  não mudam**: `systems/especialistas.ts:184` (`saida_cheia`), `selectors.ts:271`
+  (`motivoDaEspera` da escola) e `selectors.ts:563` (causa `sem-estrada` da F22)
+  perguntam todos ao mesmo `predioLigadoAoArmazem`, e ele serve os níveis 2, 6 e
+  7 — os três em **estrada**. Verificado abrindo os três. `systems/jobs.ts`
+  também se parte: `origemMaisPerto` é do nível 3 e passa a medir **a pé**;
+  `destinoMaisPerto` é dos níveis 6/7 e continua por estrada.
 - **Nota (o que quebra, contado por tipo de tarefa e não por título)**: 14
   asserções em 5 arquivos, todos exercitando **só** `'material-para-obra'` —
   `F09-sistema` (5: `:76`, `:173`, `:207`, `:214`, `:232`), `F10-desempate`
@@ -1236,6 +1238,36 @@ prédio surge sem clique do jogador.
   reescrito para o novo, com o número medido ao lado, como nas outras Notas
   desta F18d.
 
+### F18d-1b — Estrada como canteiro (sim)
+- **Nota (o que a F18e deixou pronto, 2026-09-24)**: a rede de estradas agora
+  depende dos **prédios** (a quina que eles tapam corta a ligação diagonal), e por
+  isso `indiceDeEstradas`, `componenteDe`, `isConnected` e `distanciaPorEstrada`
+  recebem `EstadoDaRede` (`Pick<GameState, 'estradas' | 'predios'>`), não mais só
+  `estradas`. O `estradasPlanejadas` desta feature **não** entra nesse índice: tile
+  planejado não liga nada até o laborer assentar, que é o próprio aceite. Se ele
+  precisar de índice próprio, é índice separado, com a mesma regra de quina — o
+  único lugar onde ela mora é o `passoPermitido` de `sim/estradas.ts`.
+- **Escopo**: o item (a) do original. Campo novo `estradasPlanejadas` no
+  `GameState`, separado de `estradas`; `PlaceRoad` **reserva** a pedra e planta o
+  tile planejado; variante de tarefa `'assentar-estrada'` (destino é tile, não
+  prédio); o laborer assenta e é o **assentamento** que debita a pedra;
+  `DemolishRoad` parte a entrada em três conjuntos — de pé (devolve
+  `floor(n × devolucaoAoDemolir)`, como hoje), planejado (devolve 0, libera a
+  reserva e a tarefa), nem um nem outro (no-op).
+- **Aceite**: a rua desenhada não liga nada no tick do comando e liga depois que
+  o laborer assenta; a pedra sai do armazém exatamente uma vez, no assentamento.
+- **Evidência**: `test-output/F18d-1b.json`
+- **Nota**: sem screenshot — feature só de `sim/` e `data/`.
+- **Nota (o que a F18d-1a deixou pronto)**: `'assentar-estrada'` nasce em
+  **livre** pelo mecanismo que já existe — entra na escada de `delivery.json`
+  com `"modo": "livre"` e o `modoDoTipo` responde por ela. Se esta feature
+  precisar digitar `'livre'` em algum sistema, a F18d-1a ficou incompleta.
+- **Nota (o preço do destino de tile, medido em 2026-09-24)**: `destino` é id de
+  prédio em 59 ocorrências de `src/sim/`, 12 delas `predios.porId[…destino]`
+  direto (ver a Nota da quebra, na F18d-1a). É aqui que esse custo é pago: o
+  `motivoDoDestino`, o `vagaDoDestino` e as reservas passam a ter um ramo que
+  não olha `predios.porId`.
+
 ### F18d-2 — Estrada planejada na tela (integração)
 - **Escopo**: `render/` desenha o tile planejado distinto do tile de pé, e os
   roteiros de `tools/shots/` migram para a ordem nova (o arrasto planeja; a
@@ -1248,8 +1280,8 @@ prédio surge sem clique do jogador.
 - **Nota (esta é uma feature de integração)**: é a exceção explícita que a §10 do
   CLAUDE.md exige para tocar `src/sim/` e `src/render/` na mesma feature — e ela
   só vale aqui, não se herda da F11c nem da F18d-1. `sim/` só recebe o que a
-  F18d-1 deixou; se algo de regra aparecer nesta feature, é sinal de que a
-  F18d-1 ficou incompleta.
+  F18d-1b deixou; se algo de regra aparecer nesta feature, é sinal de que a
+  F18d-1b ficou incompleta.
 - **Nota (o tamanho, medido na sessão de 2026-09-23)**: **10 roteiros** afirmam
   `estradasRenderizadas` em **25 asserções** — `F08` (6), `F22` (4), `F17` (3),
   `F13b`/`F16b`/`F17b`/`F17d`/`F17e` (2 cada), `F10` (1), `F11a` (1). Os 10
@@ -1264,7 +1296,7 @@ prédio surge sem clique do jogador.
   é 8-conectado desde a F18e, então um arrasto em 45° de `n` passos vira `n + 1`
   tiles, não `2n + 1`; os roteiros que contam tiles de arrasto diagonal já estão
   na conta nova (ver `tools/shots/F18e.js`).
-- **Nota (a janela entre as duas)**: entre a F18d-1 e esta, a estrada planejada
+- **Nota (a janela entre as duas)**: entre a F18d-1b e esta, a estrada planejada
   existe no estado e **não aparece na tela**. É feio e está registrado de
   propósito: o alternativo era empurrar `render/` para dentro do slice de `sim/`
   sem a nota de integração.
