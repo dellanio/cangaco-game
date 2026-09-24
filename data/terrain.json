@@ -22,7 +22,8 @@
   "intransponivel": ["agua", "rocha", "montanha", "predio"],
   "colisao": { "civis": false, "militares": true },
   "pathfinding": { "algoritmo": "A*", "vizinhanca": 8, "cachePorParOrigemDestino": true },
-  "mapaPadrao": { "largura": 64, "altura": 64 },
+  "mapaPadrao": { "largura": 128, "altura": 128 },
+  "_docMapaPadrao": "128 e nao 256: uma cidade completa cabe em 40x40 tiles, a campanha quer duas com espaco entre elas (~110 tiles de lado), e no zoom minimo o quadro mostra 875 tiles — 5,3% de um 128x128 contra 1,3% de um 256x256. Custo nao foi criterio: medido em 2026-09-23, depois da F17c, nada escala com a area do mapa (docs/planos/F18b-mapa-grande.md). A vila inicial de economy.json NAO se move com o mapa; ela ocupa o quadrante noroeste de proposito, e o sudeste fica para a segunda cidade (F18c).",
   "zoom": {
     "niveis": [0.5, 0.75, 1, 1.5, 2],
     "inicial": 1,

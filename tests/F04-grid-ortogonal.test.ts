@@ -96,7 +96,7 @@ describe('F04 — tile vem de data/terrain.json, nao hardcoded', () => {
   it('configDoMapa.largura/altura batem com gameData.terreno.mapaPadrao', () => {
     expect(configDoMapa.largura).toBe(gameData.terreno.mapaPadrao.largura);
     expect(configDoMapa.altura).toBe(gameData.terreno.mapaPadrao.altura);
-    expect(gameData.terreno.mapaPadrao).toEqual({ largura: 64, altura: 64 });
+    expect(gameData.terreno.mapaPadrao).toEqual({ largura: 128, altura: 128 }); // rastreado ate data/terrain.json: mapaPadrao
   });
 
   it('larguraPx/alturaPx sao o produto direto, sem arredondamento escondido', () => {
