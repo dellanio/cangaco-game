@@ -12,16 +12,21 @@ export interface ConfigDoMapa {
   readonly altura: number;
   readonly larguraPx: number;
   readonly alturaPx: number;
+  /** F18a — os passos de zoom e o nivel de abertura, de `data/terrain.json`.
+   *  Dado de render: zoom nao muda regra nenhuma e `sim/` nao sabe que ele
+   *  existe. Quem anda pela lista e `render/zoom.ts`. */
+  readonly zoom: { readonly niveis: readonly number[]; readonly inicial: number };
 }
 
 export function criarConfigDoMapa(): ConfigDoMapa {
-  const { tilePx, mapaPadrao } = gameData.terreno;
+  const { tilePx, mapaPadrao, zoom } = gameData.terreno;
   return {
     tilePx,
     largura: mapaPadrao.largura,
     altura: mapaPadrao.altura,
     larguraPx: mapaPadrao.largura * tilePx,
     alturaPx: mapaPadrao.altura * tilePx,
+    zoom: { niveis: zoom.niveis, inicial: zoom.inicial },
   };
 }
 

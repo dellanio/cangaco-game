@@ -140,6 +140,10 @@ export interface TerrenoData {
   readonly colisao: RawGameData['terrain']['colisao'];
   readonly pathfinding: RawGameData['terrain']['pathfinding'];
   readonly mapaPadrao: RawGameData['terrain']['mapaPadrao'];
+  /** F18a: passos de zoom. Dado de RENDER — nenhum sistema de `sim/` le
+   *  este campo; ele viaja junto so porque `data/terrain.json` e um arquivo
+   *  so, e chega a `render/` pelo funil `render/mapa.ts`. */
+  readonly zoom: RawGameData['terrain']['zoom'];
 }
 
 export interface EconomiaSchoolhouseData {

@@ -22,5 +22,10 @@
   "intransponivel": ["agua", "rocha", "montanha", "predio"],
   "colisao": { "civis": false, "militares": true },
   "pathfinding": { "algoritmo": "A*", "vizinhanca": 8, "cachePorParOrigemDestino": true },
-  "mapaPadrao": { "largura": 64, "altura": 64 }
+  "mapaPadrao": { "largura": 64, "altura": 64 },
+  "zoom": {
+    "niveis": [0.5, 0.75, 1, 1.5, 2],
+    "inicial": 1,
+    "_doc": "Dado de RENDER, nao balanceamento: zoom nao muda regra nenhuma, nao entra em GameState e sim/ nao le este bloco. Passos discretos e crescentes. tile_px vezes o nivel e INTEIRO em todos (32, 48, 64, 96, 128), que e o que mantem a ida e volta grid<->pixel exata sem depender de sorte de ponto flutuante. O inicial e 1 porque todo roteiro de screenshot ja validado calcula a posicao do tile no canvas assumindo escala 1."
+  }
 }

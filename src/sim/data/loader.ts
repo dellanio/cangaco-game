@@ -277,6 +277,7 @@ export function loadGameData(raw: RawGameData): GameData {
     colisao: raw.terrain.colisao,
     pathfinding: raw.terrain.pathfinding,
     mapaPadrao: raw.terrain.mapaPadrao,
+    zoom: raw.terrain.zoom,
   };
 
   // --- economia (economy.json) ---

@@ -515,6 +515,47 @@ function validarGruposDeComida(dados, erros) {
   }
 }
 
+// F18a: zoom e dado de RENDER, nao balanceamento — nenhuma regra de jogo depende
+// dele e `sim/` nao le este bloco. O que a regra guarda e a forma e a propriedade
+// que o resto do codigo assume: passos crescentes, o neutro presente, e
+// tile_px * nivel INTEIRO. Sem o inteiro, a ida e volta grid<->pixel acumula erro
+// de ponto flutuante e o clique erra o tile em zoom nao-neutro.
+function validarZoomDoTerreno(dados, erros) {
+  const terrain = dados.terrain;
+  if (!terrain) return; // forma/* ja reportou
+  const zoom = terrain.zoom;
+  if (!zoom || typeof zoom !== 'object') {
+    erros.push('terreno/zoom: terrain.zoom precisa existir (F18a)');
+    return;
+  }
+  if (!Array.isArray(zoom.niveis) || zoom.niveis.length < 3) {
+    erros.push('terreno/zoom: terrain.zoom.niveis precisa ser uma lista com pelo menos 3 niveis');
+    return;
+  }
+  let anterior = 0;
+  for (const nivel of zoom.niveis) {
+    if (typeof nivel !== 'number' || Number.isNaN(nivel) || !(nivel > 0)) {
+      erros.push(`terreno/zoom: nivel invalido '${nivel}' (precisa ser numero > 0)`);
+      continue;
+    }
+    if (nivel <= anterior) {
+      erros.push(
+        `terreno/zoom: os niveis precisam ser crescentes e sem repeticao (${nivel} depois de ${anterior})`,
+      );
+    }
+    anterior = nivel;
+    if (!Number.isInteger(terrain.tile_px * nivel)) {
+      erros.push(
+        `terreno/zoom: tile_px (${terrain.tile_px}) vezes o nivel ${nivel} nao e inteiro; `
+        + 'a ida e volta grid<->pixel deixaria de ser exata',
+      );
+    }
+  }
+  if (!zoom.niveis.includes(zoom.inicial)) {
+    erros.push(`terreno/zoom: inicial (${zoom.inicial}) precisa ser um dos niveis da lista`);
+  }
+}
+
 function validarTudo(dados) {
   const erros = [];
   validarForma(dados, erros);
@@ -526,6 +567,7 @@ function validarTudo(dados) {
   validarGruposDeComida(dados, erros);
   validarMenuInicialSoRaiz(dados, erros);
   validarDevolucaoDeEstrada(dados, erros);
+  validarZoomDoTerreno(dados, erros);
   validarDevolucaoDePredio(dados, erros);
   validarEscadaDePrioridade(dados, erros);
   validarPoliticaDeTreino(dados, erros);
