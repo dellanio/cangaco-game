@@ -43,7 +43,7 @@ export interface EntradaDoMapa {
  * arrasta varias estradas em sequencia. Quem a encerra e o `Esc`.
  *
  * Preencher o caminho: um `mousemove` rapido pula tiles, e uma estrada com buraco nao
- * conecta. Cada amostra e ligada a anterior por `tilesEntre` (4-conectada).
+ * conecta. Cada amostra e ligada a anterior por `tilesEntre` (8-conectada desde a F18e).
  *
  * SAIR DO CANVAS CANCELA o arrasto (padrao conservador): fora do canvas o Chromium
  * para de entregar `mousemove` (achado da F06), entao o ultimo trecho conhecido estaria

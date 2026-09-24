@@ -675,7 +675,7 @@ afterAll(() => {
     },
     // Ponto 3: distancia REAL por estrada, nunca euclidiana; o que a F10 substitui esta no BUILD_PLAN.
     distancia: {
-      medida: 'caminho por estrada (BFS, 4 direcoes) entre as portas de origem e destino; so a perna da entrega',
+      medida: 'caminho por estrada (BFS, 8 direcoes, sem cortar quina de predio) entre as portas de origem e destino; so a perna da entrega',
       euclidiana: { ateAPerto: euclid(s, perto), ateALonge: euclid(s, longe) },
       porEstrada: { ateAPerto: distanciaEntrePredios(volta, s, perto), ateALonge: distanciaEntrePredios(volta, s, longe) },
       ordemEscolhida: ordemDaVolta.map((t) => t.destino),

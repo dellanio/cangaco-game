@@ -643,7 +643,8 @@ export interface GameState {
    * inconsistente com os tiles. A consulta "existe caminho de A ate B?" e O(1) por
    * um indice derivado e memoizado pela REFERENCIA deste objeto (`sim/estradas.ts`);
    * `step()` carrega a mesma referencia enquanto nenhum comando de estrada muda
-   * algo. Conectividade em 4 direcoes. Nunca itere por `Object.keys` esperando uma
+   * algo. Conectividade em 8 direcoes, com a quina de predio cortando a diagonal
+   * (F18e). Nunca itere por `Object.keys` esperando uma
    * ordem: use `tilesOrdenados`.
    */
   readonly estradas: Readonly<Record<string, true>>;

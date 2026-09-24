@@ -245,7 +245,8 @@ function unidadeJaTemTarefa(state: GameState, unidadeId: string): boolean {
 }
 
 /** Distancia por estrada, pelas portas, do armazem de origem ate a obra de destino, em
- *  PASSOS (BFS, 4 direcoes); `null` se algum dos dois nao existe ou nao ha caminho.
+ *  PASSOS (BFS, 8 direcoes, sem cortar quina de predio — F18e); `null` se algum dos dois
+ *  nao existe ou nao ha caminho.
  *  E a pergunta de EXISTENCIA ("esta ligado?"), que nao depende de serf: e o que o
  *  gerador, o saneamento e o verificador usam. A ORDEM de escolha do serf usa o custo A*
  *  em ticks de `custoDaTarefa`, que parte da posicao dele. */

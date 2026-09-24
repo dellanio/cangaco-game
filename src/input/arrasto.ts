@@ -6,7 +6,7 @@ import type { TileClicado } from './colocar';
  * preencher o caminho entre duas amostras do mouse — um `mousemove` rapido pula
  * tiles, e uma estrada com buraco nao conecta.
  *
- * Ate a F18d era 4-conectada, porque a estrada so ligava em cruz e a escada de
+ * Ate a F18e era 4-conectada, porque a estrada so ligava em cruz e a escada de
  * passos ortogonais era a unica rua de verdade. Com a F18e a estrada liga em
  * diagonal, e a escada viraria o dobro de tiles pagos pelo mesmo trajeto.
  *
