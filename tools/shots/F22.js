@@ -27,6 +27,8 @@ const { erguerRua } = require('./_estradas');
 const economia = require('../../data/economy.json');
 const tema = require('../../data/theme-sertao.json');
 const { predios } = require('../../data/buildings.json');
+const producao = require('../../data/production.json');
+const mapa = require('../../data/maps/sertao-128.json');
 
 const TILE_PX = 64;
 const defDe = (id) => predios.find((p) => p.id === id);
@@ -82,8 +84,18 @@ async function roteiro(ctx) {
   const resumo = async () => JSON.stringify(await avisosNaTela());
 
   // ---- geometria, tirada dos JSON (a mesma do F16b) -------------------------
-  // A pedreira entra a DIREITA da escola, com a borda sul na linha de porta do
-  // armazem: uma rua so serve os tres.
+  // A pedreira entra a ESQUERDA do armazem, com a borda sul na linha de porta
+  // dele: uma rua so serve os tres.
+  //
+  // BUG-C (corrigido em 2026-09-24): ela ficava a DIREITA da escola, e ali nao
+  // ha pedra nenhuma — o `rock` mais proximo estava a 12 tiles, o dobro do
+  // alcance. Isso passou despercebido por tres sessoes porque a geometria foi
+  // escrita na F15a, quando o veio morava DENTRO do predio (`veio: 200`) e o
+  // lugar nao importava; desde a F-T2a o veio esta no chao. A oeste do armazem
+  // fica o lajedo da vila, e de la a pedreira alcanca os 13 tiles dele.
+  //
+  // A folga de um tile entre a pedreira e o armazem nao e estetica: e ela que
+  // da ao corte da rua, no passo 6, um tile onde cair sem encostar em porta.
   const armazem = noDado('storehouse');
   const escola = noDado('schoolhouse');
   const [, altAr] = defDe('storehouse').tamanho;
@@ -91,17 +103,38 @@ async function roteiro(ctx) {
   const [largQu, altQu] = defDe('quarry').tamanho;
   const yRua = armazem.gy + altAr;
   afirmar(escola.gy + altEs === yRua, 'este roteiro assume armazem e escola na mesma linha de porta');
-  const pedreira = { gx: escola.gx + largEs + 1, gy: yRua - altQu };
+  const pedreira = { gx: armazem.gx - largQu - 1, gy: yRua - altQu };
   const meioDaPedreira = { gx: pedreira.gx + Math.floor(largQu / 2), gy: pedreira.gy };
-  const pontaEsquerda = { gx: armazem.gx, gy: yRua };
-  const pontaDireita = { gx: pedreira.gx + largQu - 1, gy: yRua };
+  const pontaEsquerda = { gx: pedreira.gx, gy: yRua };
+  const pontaDireita = { gx: escola.gx + largEs - 1, gy: yRua };
   const tilesDaRua = pontaDireita.gx - pontaEsquerda.gx + 1;
-  // O corte fica ENTRE a escola e a pedreira: parte a rede em dois pedacos, um
+  // O corte fica ENTRE a pedreira e o armazem: parte a rede em dois pedacos, um
   // com o armazem e outro com a pedreira, sem encostar na porta de ninguem.
-  const corte = { gx: escola.gx + largEs, gy: yRua };
+  const corte = { gx: pedreira.gx + largQu, gy: yRua };
   afirmar(
-    corte.gx > pontaEsquerda.gx && corte.gx < pedreira.gx,
-    `o corte (${corte.gx}) precisa cair na rua, entre o armazem e a pedreira`,
+    corte.gx > pontaEsquerda.gx && corte.gx < armazem.gx && corte.gx >= pedreira.gx + largQu,
+    `o corte (${corte.gx}) precisa cair na rua, entre a pedreira e o armazem`,
+  );
+
+  // A PRE-CONDICAO do cenario, e e ela que faltava no BUG-C: a pedreira tem
+  // pedra ao alcance. Contada do arquivo de mapa com o alcance do dado, sem
+  // nenhuma coordenada digitada aqui — se o gerador mudar a geografia de novo,
+  // esta afirmacao acusa antes de o roteiro inteiro rodar e culpar o aviso.
+  const rochaAoAlcance = () => {
+    // `alcance_tiles` e a chave do JSON; `alcance` e o nome depois do carregador.
+    const alcance = producao.predios.quarry.colheita.alcance_tiles;
+    const x0 = pedreira.gx - alcance;
+    const x1 = pedreira.gx + largQu - 1 + alcance;
+    const y0 = pedreira.gy - alcance;
+    const y1 = pedreira.gy + altQu - 1 + alcance;
+    return mapa.recursos.rock.filter(([gx, gy]) => gx >= x0 && gx <= x1 && gy >= y0 && gy <= y1).length;
+  };
+  const tilesDeRocha = rochaAoAlcance();
+  afirmar(
+    tilesDeRocha > 0,
+    `a pedreira de (${pedreira.gx},${pedreira.gy}) nao tem UM tile de rocha ao alcance: `
+      + 'ela nunca vai produzir, e o aviso que este roteiro mede sairia pelo motivo errado '
+      + '(era exatamente o BUG-C)',
   );
 
   // ---- 1. o jogo abre SEM aviso --------------------------------------------
@@ -110,6 +143,25 @@ async function roteiro(ctx) {
   // defeito que esta feature introduziria.
   afirmar(await page.isHidden('#alertas'), 'o jogo deveria abrir sem aviso nenhum');
   await capturar('abertura-sem-aviso');
+
+  // A camera anda para oeste ate a pedreira caber no quadro (F-D2). Nao e
+  // enfeite: a captura e a evidencia que um humano le, e com a pedreira na
+  // borda esquerda o cenario inteiro ficava meio fora dela. Por laco e nao por
+  // tempo fixo, porque a tecla ACELERA enquanto segurada — 300 ms nao andam
+  // sempre a mesma distancia. `pontoDoTile` le a camera viva a cada chamada,
+  // entao todo clique daqui para a frente acompanha sozinho.
+  const alvoDeScroll = (pedreira.gx - 2) * TILE_PX;
+  for (let i = 0; i < 12 && (await estado()).camera.scrollX > alvoDeScroll; i += 1) {
+    await page.keyboard.down('ArrowLeft');
+    await page.waitForTimeout(120);
+    await page.keyboard.up('ArrowLeft');
+    await esperarFrame();
+  }
+  afirmar(
+    (await estado()).camera.scrollX <= alvoDeScroll,
+    `a camera deveria ter chegado a ${alvoDeScroll} para a pedreira caber no quadro, `
+      + `parou em ${(await estado()).camera.scrollX}`,
+  );
 
   // ---- 2. a rua e a planta da pedreira -------------------------------------
   await page.click('[data-ferramenta="estrada"]');

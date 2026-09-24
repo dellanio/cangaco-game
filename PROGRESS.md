@@ -3990,3 +3990,95 @@ terreno difere **só** em `gx 27..42 × gy 24..28` — o retângulo do açude e 
   fora da F18a ele deve aparecer inteiro. Não foi conferido nesta sessão, e o
   roteiro da F-D3 não anda com a câmera de propósito — o que ele mede é o quadro
   que o jogador recebe.
+
+---
+
+## BUG-C corrigido — a pedreira da F22 nasceu sem veio (2026-09-24)
+
+O conserto estava escrito no `BUGS.md` desde o turno H e esperava a F-D3. A
+F-D3 entrou, o defeito sobreviveu inteiro, e o pedido desta sessão era decidir
+entre dois ramos antes de aplicar. Plano em `docs/planos/BUG-C-pedreira-sem-veio.md`.
+
+### A decisão: é (a), cenário no lugar errado. Nada foi para `data/`.
+
+O ramo (b) — "alcance 6 é pequeno demais para a densidade que o gerador
+produz" — foi descartado **com medida, não por preferência**. O que decidiu:
+
+**Verificado** (transformada de distância sobre os 11519 tiles jogáveis do
+`data/maps/sertao-128.json`, distância de Chebyshev até o `rock` mais próximo):
+
+| alcance | fração da área jogável com ao menos 1 tile de rocha ao alcance |
+|---|---|
+| 3 | 8,6 % |
+| 6 | 14,5 % |
+| 12 | 26,5 % |
+| 20 | 45,0 % |
+
+média 25,7 · mediana 23 · p75 38 · p90 51 · máx 66.
+
+**Verificado:** a rocha do gerador é *aglomerada*, não espalhada — 311 tiles em
+**11 lajedos**, de tamanhos `[88, 74, 30, 29, 20, 18, 13, 13, 13, 8, 5]`. Isso
+é o que torna (b) errado: a média de 25,7 não descreve a experiência do
+jogador, porque ninguém planta pedreira num ponto aleatório. Plantada *num
+lajedo*, a pedreira de alcance 6 alcança o lajedo inteiro da vila (13 tiles,
+195 de pedra a 15/tile, ≈ o `veio: 200` fixo que a F-T2a substituiu). O
+alcance 6 está fazendo exatamente o que a F-T2a queria: **o lugar importa**.
+Subir para 12 dobraria a área construível e apagaria a escolha — seria mudar a
+regra do jogo para consertar um roteiro. `quarry.colheita.alcance` continua 6 e
+**nenhum número novo entrou em `data/`**.
+
+### O conserto, em `tools/shots/F22.js` (só o cenário do roteiro)
+
+A pedreira foi **espelhada** para o outro lado da rua: ficava à direita da
+escola, em (38,31), e passou a ficar à esquerda do armazém, em (25,31). A
+geometria continua derivada — `pedreira.gx = armazem.gx - largQu - 1`, com os
+tamanhos vindo de `buildings.json` —, e a folga de um tile não é estética: é
+ela que dá ao corte de estrada do passo 6 um tile onde cair sem encostar em
+porta. As pontas e o corte foram remapeados junto.
+
+**Verificado antes de escrever a coordenada**, não depois: caixa `gx 25..27 ×
+gy 31..32` toda em grama, fila da porta (`gy 33`) toda em grama, nenhuma rocha
+na linha da rua, e **13 tiles de rocha ao alcance**. A pedreira pisa em 3
+tiles do lajedo — (25,31), (26,31), (25,32) —, o que é legal: `placement.ts`
+não tem recusa por recurso (conferido em `MotivoDeRecusa`) e `systems/build.ts`
+não apaga recurso nenhum ao concluir a obra.
+
+### A pré-condição virou asserção, e é o que impede a reincidência
+
+O roteiro agora afirma, **antes** de plantar, que a pedreira tem ao menos um
+tile de rocha ao alcance — lendo `alcance_tiles` de `data/production.json` e a
+lista de `rock` do mapa, e reproduzindo a regra de alcance a partir da *caixa*
+do prédio. Se alguém mover a pedreira, mudar o alcance ou regerar o mapa sem
+rocha ali, o roteiro acusa **na pré-condição**, com a frase "não tem UM tile de
+rocha ao alcance", em vez de acusar lá na frente com um aviso `veio-esgotado`
+que não explica nada. Foi essa falta que fez o BUG-C custar três turnos para
+ser entendido.
+
+> Cuidado registrado: a chave do JSON cru é `alcance_tiles`; `alcance` é o
+> nome *depois* do carregador. O roteiro lê o JSON direto (é Node, fora da
+> sim), então `producao.predios.quarry.colheita.alcance` vem `undefined` e a
+> conta de alcance daria `NaN` em silêncio. Já custou uma rodada aqui.
+
+### A câmera anda, porque a evidência é para humano ler
+
+Com a pedreira espelhada, ela caía meio fora do quadro na captura — as
+asserções passavam e a evidência visual piorava. O roteiro passou a andar para
+oeste com `ArrowLeft` (as teclas da F-D2) **depois** da captura de abertura,
+por laço contra `camera.scrollX` e não por tempo fixo, porque a tecla acelera
+enquanto segurada e 300 ms não andam sempre a mesma distância. `pontoDoTile`
+relê a câmera viva a cada chamada, então os cliques seguintes acompanham
+sozinhos.
+
+### Evidência
+
+- `npm run shot -- F22` sai 0, com o painel mostrando exatamente
+  `[{sem-trabalhador, "Sem quem trabalhe", 1}]`.
+- `screenshots/F22-2-sem-trabalhador.png` aberta com Read: a pedreira inteira
+  no quadro, o lajedo à esquerda dela, e o aviso único no canto.
+- `npm run verify` verde.
+
+### O que ficou aberto
+
+Nenhuma chave de `test-results.json` mudou: a F22 já estava `true` (o roteiro é
+evidência de sessão, não o aceite escrito dela). O BUG-C sai do `BUGS.md` neste
+mesmo commit, e `## Abertos` fica vazio pela primeira vez.
