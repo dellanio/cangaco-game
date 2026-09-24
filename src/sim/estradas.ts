@@ -12,6 +12,7 @@ import { ID_DO_ARMAZEM } from './state';
 import type { GameData } from './data/types';
 import { gameData } from './data';
 import { bordaSul, caixaDoPredio } from './footprint';
+import { ehTransponivel } from './mapa';
 import { disponivelNaOrigem } from './reservas';
 
 /** Um tile de grid, sempre em coordenada inteira quando valido. Mesma forma do
@@ -21,7 +22,10 @@ export interface TileDeGrid {
   readonly gy: number;
 }
 
-export type MotivoDeRecusaDeEstrada = 'fora-do-mapa' | 'sobreposicao' | 'sem-pedra';
+// F-T1: `'terreno'` entra com a camada de terreno base — estrada nao se assenta
+// sobre agua, rocha ou montanha (`terrain.intransponivel`). Ate ela o comentario
+// de `canPlaceRoad` dizia, com razao, que o motivo nao existia.
+export type MotivoDeRecusaDeEstrada = 'fora-do-mapa' | 'terreno' | 'sobreposicao' | 'sem-pedra';
 
 /** A mercadoria que a estrada custa ("1 stone por tile", terrain.json). E um id
  *  estrutural, como `ID_DO_ARMAZEM` — o NUMERO vem do dado. */
@@ -92,13 +96,16 @@ function tilesDePredios(state: EstadoDaRede, dados: GameData): Set<string> {
 }
 
 /** O passo de `atual` na direcao (dx, dy) e permitido? Reto sempre; diagonal so
- *  com as duas quinas livres de predio. Unico ponto onde a regra da quina mora
- *  deste lado — o indice e a distancia chamam o mesmo. */
+ *  com as duas quinas livres de predio E de terreno intransponivel (F-T1).
+ *  Unico ponto onde a regra da quina mora deste lado — o indice e a distancia
+ *  chamam o mesmo, e o `quinaLivre` do A* diz exatamente isto do outro lado
+ *  (propriedade da equivalencia, tests/F10-astar.test.ts). */
 function passoPermitido(
-  atual: TileDeGrid, dx: number, dy: number, bloqueados: ReadonlySet<string>,
+  atual: TileDeGrid, dx: number, dy: number, bloqueados: ReadonlySet<string>, dados: GameData,
 ): boolean {
   if (dx === 0 || dy === 0) return true;
-  return !bloqueados.has(`${atual.gx + dx},${atual.gy}`) && !bloqueados.has(`${atual.gx},${atual.gy + dy}`);
+  const quina = (gx: number, gy: number): boolean => !bloqueados.has(`${gx},${gy}`) && ehTransponivel(gx, gy, dados);
+  return quina(atual.gx + dx, atual.gy) && quina(atual.gx, atual.gy + dy);
 }
 
 /** Os pares de tiles de estrada ligados em DIAGONAL, cada par uma vez so (o
@@ -115,7 +122,7 @@ export function pontesDiagonais(
     for (const [dx, dy] of [[1, 1], [1, -1]] as const) {
       const vizinho = { gx: tile.gx + dx, gy: tile.gy + dy };
       if (!ehEstrada(state.estradas, vizinho)) continue;
-      if (!passoPermitido(tile, dx, dy, bloqueados)) continue;
+      if (!passoPermitido(tile, dx, dy, bloqueados, dados)) continue;
       pontes.push([tile, vizinho]);
     }
   }
@@ -145,7 +152,7 @@ function construirIndice(state: EstadoDaRede, dados: GameData): IndiceDeEstradas
       const atual = fila[i];
       if (!atual) continue;
       for (const [dx, dy] of VIZINHOS) {
-        if (!passoPermitido(atual, dx, dy, bloqueados)) continue;
+        if (!passoPermitido(atual, dx, dy, bloqueados, dados)) continue;
         const vizinho = { gx: atual.gx + dx, gy: atual.gy + dy };
         const chave = chaveDeTile(vizinho);
         if (estradas[chave] === true && componentes[chave] === undefined) {
@@ -274,7 +281,7 @@ function buscarDistancia(
     const proxima: TileDeGrid[] = [];
     for (const atual of fronteira) {
       for (const [dx, dy] of VIZINHOS) {
-        if (!passoPermitido(atual, dx, dy, bloqueados)) continue;
+        if (!passoPermitido(atual, dx, dy, bloqueados, dados)) continue;
         const vizinho = { gx: atual.gx + dx, gy: atual.gy + dy };
         const chaveVizinho = chaveDeTile(vizinho);
         if (estradas[chaveVizinho] === true && !visto.has(chaveVizinho)) {
@@ -452,8 +459,8 @@ export type ResultadoDeEstrada =
  * nao sao estrada, sem repeticao, na ordem em que vieram) e o custo em pedra deles, ou
  * o motivo e o primeiro tile culpado. Tudo ou nada: um tile invalido recusa o trecho.
  *
- * Ordem: cada tile (mapa, depois predio — obra incluida), e so entao a pedra.
- * `terreno` nao existe como motivo: o mapa nao tem terreno variado (IDEIAS.md).
+ * Ordem: cada tile (mapa, depois terreno, depois predio — obra incluida), e so
+ * entao a pedra.
  */
 export function canPlaceRoad(
   state: GameState, tiles: readonly TileDeGrid[], dados: GameData = gameData,
@@ -465,6 +472,7 @@ export function canPlaceRoad(
     const dentro = Number.isInteger(tile.gx) && Number.isInteger(tile.gy)
       && tile.gx >= 0 && tile.gy >= 0 && tile.gx < largura && tile.gy < altura;
     if (!dentro) return { ok: false, motivo: 'fora-do-mapa', tile };
+    if (!ehTransponivel(tile.gx, tile.gy, dados)) return { ok: false, motivo: 'terreno', tile };
     if (tileEmPredio(state, tile, dados)) return { ok: false, motivo: 'sobreposicao', tile };
     const chave = chaveDeTile(tile);
     if (vistos.has(chave)) continue;

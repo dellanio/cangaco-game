@@ -5,11 +5,13 @@
  *
  * O CUSTO e em ticks e e exatamente o que o serf gasta: o passo reto e o diagonal vem de
  * `movimento.ticksPorTile` e `movimento.ticksPorTileDiagonal` (convertidos no
- * carregamento, F03/F10), pelo terreno do tile de DESTINO — estrada se ha estrada, grama
- * se nao (o mapa nao tem terreno variado). "Custo do caminho" = "tempo da viagem".
+ * carregamento, F03/F10), pelo terreno do tile de DESTINO: estrada se ha estrada, senao o
+ * terreno do MAPA (F-T1 — grama, solo arado ou areia; ate ela o A* so conhecia dois dos
+ * quatro custos que o carregador monta). "Custo do caminho" = "tempo da viagem".
  *
  * Dois modos:
- *  - `livre`: qualquer tile dentro do mapa e fora do footprint de qualquer predio (obra
+ *  - `livre`: qualquer tile dentro do mapa, TRANSPONIVEL (F-T1: agua, rocha e montanha nao
+ *    se pisam, `terrain.intransponivel`) e fora do footprint de qualquer predio (obra
  *    inclusive). O tile de partida e sempre permitido (civis nao colidem, GDD §6.4): se ele
  *    esta dentro de um footprint (uma obra plantada sobre o serf), a caixa inteira fica
  *    andavel nesta busca, para o serf poder sair.
@@ -17,7 +19,8 @@
  *    o modo e o chamador, pelo literal: nao ha flag de regra no dado (o campo
  *    `terrain.estrada.obrigatoriaParaEntrega` foi removido em 2026-09-23, sem leitor).
  *
- * Diagonal so se NENHUMA das duas quinas ortogonais tiver predio — nos dois modos, com o
+ * Diagonal so se NENHUMA das duas quinas ortogonais tiver predio ou terreno intransponivel
+ * (F-T1) — nos dois modos, com o
  * mesmo predicado (F18e; antes disso o modo `estrada` exigia estrada nas duas quinas, e a
  * rua so ligava em cruz). Consequencia que o teste prova por propriedade: por estrada, o A*
  * acha caminho se e somente se `isConnected` (F08/F18e, 8 direcoes) acha — as duas nocoes
@@ -36,6 +39,7 @@ import { gameData } from './data';
 import { caixaDoPredio } from './footprint';
 import type { CaixaEmTiles } from './footprint';
 import { chaveDeTile } from './estradas';
+import { codigoDoTile, terrenoIndexado } from './mapa';
 import type { TileDeGrid } from './estradas';
 
 export type ModoDeBusca = 'livre' | 'estrada';
@@ -219,9 +223,23 @@ function entradaDeCache(state: Pick<GameState, 'predios' | 'estradas'>, dados: G
 export function custoDoPasso(
   estradas: GameState['estradas'], de: TileDeGrid, para: TileDeGrid, dados: GameData = gameData,
 ): number {
-  const terreno = estradas[chaveDeTile(para)] === true ? 'estrada' : 'grama';
   const diagonal = de.gx !== para.gx && de.gy !== para.gy;
-  return diagonal ? dados.movimento.ticksPorTileDiagonal.aPe[terreno] : dados.movimento.ticksPorTile.aPe[terreno];
+  if (estradas[chaveDeTile(para)] === true) {
+    return diagonal
+      ? dados.movimento.ticksPorTileDiagonal.aPe.estrada
+      : dados.movimento.ticksPorTile.aPe.estrada;
+  }
+  // F-T1: o terreno do mapa, e nao mais grama sempre. Passo para tile
+  // intransponivel nao existe — o A* nunca o devolve —, e por isso a queda para
+  // grama abaixo e so a resposta a uma pergunta que ninguem faz: sem ela a funcao
+  // teria de devolver `null` e todo chamador ganharia um ramo morto.
+  const indexado = terrenoIndexado(dados);
+  const ehTile = Number.isInteger(para.gx) && Number.isInteger(para.gy) && para.gx >= 0 && para.gy >= 0;
+  const codigo = ehTile ? codigoDoTile(indexado, para.gx, para.gy) : -1;
+  if (codigo < 0 || indexado.transponivel[codigo] === 0) {
+    return diagonal ? dados.movimento.ticksPorTileDiagonal.aPe.grama : dados.movimento.ticksPorTile.aPe.grama;
+  }
+  return (diagonal ? indexado.diagonal[codigo] : indexado.reto[codigo]) as number;
 }
 
 /** Um unico tile e andavel neste modo? (Dentro do mapa; `livre`: fora de footprint;
@@ -232,7 +250,17 @@ export function tileAndavel(
   const { largura, altura } = dados.terreno.mapaPadrao;
   if (!(Number.isInteger(tile.gx) && Number.isInteger(tile.gy) && tile.gx >= 0 && tile.gy >= 0 && tile.gx < largura && tile.gy < altura)) return false;
   if (modo === 'estrada') return state.estradas[chaveDeTile(tile)] === true;
+  if (!transponivelNoMapa(tile.gx, tile.gy, dados)) return false;
   return footprintsDe(state, dados).bloqueado[tile.gy * largura + tile.gx] === 0;
+}
+
+/** F-T1 — o tile e transponivel no MAPA? Fora da grade do mapa, nao. Indexado pela
+ *  largura DO MAPA, que nao e obrigatoriamente a de `mapaPadrao`: teste que
+ *  redeclara o tamanho do mundo (F17c) segue com o mapa carregado de 128. */
+function transponivelNoMapa(gx: number, gy: number, dados: GameData): boolean {
+  if (gx < 0 || gy < 0) return false;
+  const indexado = terrenoIndexado(dados);
+  return indexado.transponivel[codigoDoTile(indexado, gx, gy)] === 1;
 }
 
 /**
@@ -303,10 +331,16 @@ function executarComRascunho(
       }
     }
   }
+  // F-T1 — o terreno entra aqui, e so no modo `livre`: no modo `estrada` o tile JA
+  // e estrada, e estrada nao se assenta em terreno intransponivel (`canPlaceRoad`
+  // recusa por `'terreno'`). Repetir a checagem la mudaria a propriedade da
+  // equivalencia com `isConnected` sem mudar uma resposta sequer.
   const andavel = (x: number, y: number): boolean => {
     if (x < 0 || y < 0 || x >= largura || y >= altura) return false;
     const i = y * largura + x;
-    return modo === 'estrada' ? estrada[i] === 1 : bloqueado[i] === 0 || liberados.has(i);
+    if (modo === 'estrada') return estrada[i] === 1;
+    if (!transponivelNoMapa(x, y, dados)) return false;
+    return bloqueado[i] === 0 || liberados.has(i);
   };
   /**
    * A quina do passo diagonal, e a MESMA regra nos dois modos (F18e): o que
@@ -320,14 +354,22 @@ function executarComRascunho(
    */
   const quinaLivre = (x: number, y: number): boolean => {
     if (x < 0 || y < 0 || x >= largura || y >= altura) return false;
+    if (!transponivelNoMapa(x, y, dados)) return false;
     const i = y * largura + x;
     return bloqueado[i] === 0 || liberados.has(i);
   };
 
   const { aPe } = dados.movimento.ticksPorTile;
   const { aPe: aPeDiagonal } = dados.movimento.ticksPorTileDiagonal;
-  const retoDoTerreno = (i: number): number => (estrada[i] === 1 ? aPe.estrada : aPe.grama);
-  const diagonalDoTerreno = (i: number): number => (estrada[i] === 1 ? aPeDiagonal.estrada : aPeDiagonal.grama);
+  // F-T1 — o custo por tile sai da grade do mapa (codigo de terreno) e da tabela por
+  // codigo, sem string no laco. `x`/`y` vem do laco de vizinhos, entao nao ha divisao
+  // para recuperar a coluna; `i` e o indice da grade DA BUSCA, e so serve a estrada.
+  const terreno = terrenoIndexado(dados);
+  const codigoEm = (x: number, y: number): number => codigoDoTile(terreno, x, y);
+  const retoDoTerreno = (x: number, y: number, i: number): number => (
+    estrada[i] === 1 ? aPe.estrada : (terreno.reto[codigoEm(x, y)] as number));
+  const diagonalDoTerreno = (x: number, y: number, i: number): number => (
+    estrada[i] === 1 ? aPeDiagonal.estrada : (terreno.diagonal[codigoEm(x, y)] as number));
 
   // Heuristica octil com o MENOR custo de cada tipo de passo: admissivel (nenhum passo
   // real custa menos) e consistente. `min(diagonal, 2 * reto)` cobre um dado em que a
@@ -422,7 +464,7 @@ function executarComRascunho(
       const diagonal = dx !== 0 && dy !== 0;
       if (diagonal && !(quinaLivre(nx, y) && quinaLivre(x, ny))) continue;
       const vizinho = ny * largura + nx;
-      const novo = gAtual + (diagonal ? diagonalDoTerreno(vizinho) : retoDoTerreno(vizinho));
+      const novo = gAtual + (diagonal ? diagonalDoTerreno(nx, ny, vizinho) : retoDoTerreno(nx, ny, vizinho));
       if (novo < gDe(vizinho)) {
         marca[vizinho] = geracao;
         g[vizinho] = novo;

@@ -212,6 +212,44 @@ calibração da F15 e da F20.
 
 ---
 
+### 4.6 Terreno natural [proposta — implementado na F-T1, 2026-09-24]
+
+O mapa deixou de ser uma folha lisa. A camada base é um **tipo de terreno por
+tile**, versionado em `data/maps/<id>.json` (linhas de caracteres mais uma
+legenda) e carregado junto do resto do dado — **fora do `GameState`**, porque
+não muda durante a partida.
+
+| Terreno | Anda? | Constrói? | Custo de movimento (a pé) |
+|---|---|---|---|
+| `grama` | sim | sim | 1,30 |
+| `campoArado` | sim | sim | 1,45 |
+| `areia` | sim | sim | 1,50 |
+| `agua` | não | não | — |
+| `rocha` | não | não | — |
+| `montanha` | não | não | — |
+
+- Os custos saem de `terrain.json.custoDeMovimento` e a lista do que não se
+  atravessa, de `terrain.json.intransponivel`. Nenhum número aqui é digitado em
+  código.
+- **Construir em terreno intransponível é recusado**, com a causa nomeada
+  (`terreno`) — e a **linha da porta** do prédio tem causa própria
+  (`porta-sem-saida`): prédio em terra firme com a saída dentro d'água não é a
+  mesma falha, e um rótulo só para as duas esconderia qual delas aconteceu.
+- **Estrada também não nasce em terreno intransponível.** Como ela já é
+  recusada na hora de colocar, o caminho de estrada não precisa reconferir
+  terreno tile a tile.
+- O A* **contorna** o intransponível e **desiste** (devolve caminho nenhum)
+  quando ele fecha a passagem. Andar por areia custa mais que por grama, então
+  o caminho barato deixou de ser sempre a linha reta.
+- **Recursos naturais** (árvore, veio de pedra e de minério, cardume) são outra
+  camada, em lista esparsa no mesmo arquivo: eles entram na F-T2, e até lá o
+  mapa tem só o terreno acima.
+- A vila inicial nasce em região inteiramente construível, e a borda do mapa é
+  sempre terreno pisável: o limite do mundo é o limite do mundo, e não uma
+  serra encostada nele.
+
+---
+
 ## 5. Árvore de construções
 
 ### 5.1 Regras de construção [fonte]

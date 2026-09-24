@@ -2,8 +2,59 @@ import type { RawGameData } from './raw';
 import type {
   CombateData, CondicaoData, ConstrucaoData, ConversaoRegistrada, EconomiaData,
   EntregaData, GameData, MovimentoData, ProducaoData, ReceitaDePredio,
-  TerrenoData, TerrenoTipo, Ticks, UnidadesData,
+  MapaData, TerrenoData, TerrenoDeMapa, TerrenoTipo, Ticks, UnidadesData,
 } from './types';
+import { TERRENOS_DE_MAPA } from './terrenos';
+
+/**
+ * F-T1 — a camada de terreno base. O carregador confere a legenda contra
+ * `TERRENOS_DE_MAPA` E contra `terrain.json`: um tipo que nao tem custo de
+ * movimento nem esta em `intransponivel` seria terreno mudo, e o A* descobriria
+ * isso dentro do navegador. Nada aqui decodifica o mapa tile a tile — quem
+ * decodifica, uma vez e em cache, e `sim/mapa.ts`.
+ */
+function carregarMapa(raw: RawGameData): MapaData {
+  const bruto = raw.mapa;
+  const { largura, altura } = raw.terrain.mapaPadrao;
+  if (bruto.largura !== largura || bruto.altura !== altura) {
+    throw new Error(
+      `loadGameData: o mapa '${bruto.id}' e ${bruto.largura}x${bruto.altura} e `
+      + `terrain.mapaPadrao e ${largura}x${altura} — o mundo teria dois tamanhos`,
+    );
+  }
+  if (bruto.linhas.length !== altura) {
+    throw new Error(`loadGameData: o mapa '${bruto.id}' tem ${bruto.linhas.length} linhas, esperado ${altura}`);
+  }
+  const comCusto = new Set(Object.keys(raw.terrain.custoDeMovimento).filter((k) => k !== 'estrada'));
+  const intransponivel = new Set(raw.terrain.intransponivel.filter((k) => k !== 'predio'));
+  const legenda: Record<string, TerrenoDeMapa> = {};
+  for (const [ch, tipo] of Object.entries(bruto.legenda)) {
+    const conhecido = TERRENOS_DE_MAPA.find((t) => t === tipo);
+    if (conhecido === undefined) {
+      throw new Error(`loadGameData: o mapa '${bruto.id}' mapeia '${ch}' para o terreno desconhecido '${tipo}'`);
+    }
+    if (!comCusto.has(conhecido) && !intransponivel.has(conhecido)) {
+      throw new Error(
+        `loadGameData: o terreno '${conhecido}' do mapa '${bruto.id}' nao tem custo de movimento `
+        + 'nem esta em terrain.intransponivel',
+      );
+    }
+    legenda[ch] = conhecido;
+  }
+  for (let gy = 0; gy < altura; gy += 1) {
+    const linha = bruto.linhas[gy] as string;
+    if (linha.length !== largura) {
+      throw new Error(`loadGameData: a linha ${gy} do mapa '${bruto.id}' tem ${linha.length} chars, esperado ${largura}`);
+    }
+    for (let gx = 0; gx < largura; gx += 1) {
+      const ch = linha[gx] as string;
+      if (!(ch in legenda)) {
+        throw new Error(`loadGameData: o mapa '${bruto.id}' usa o char '${ch}' em (${gx},${gy}), fora da legenda`);
+      }
+    }
+  }
+  return { id: bruto.id, largura, altura, linhas: bruto.linhas, legenda };
+}
 
 /**
  * Converte para ticks inteiros UMA vez. Nenhum sistema repete isto.
@@ -321,6 +372,7 @@ export function loadGameData(raw: RawGameData): GameData {
     condicao,
     entrega,
     terreno,
+    mapa: carregarMapa(raw),
     economia,
     conversoes,
   };

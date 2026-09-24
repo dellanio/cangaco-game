@@ -3,7 +3,7 @@
 // mora aqui, so apresentacao.
 import Phaser from 'phaser';
 import temaSertao from '../../../data/theme-sertao.json';
-import { configDoMapa } from '../mapa';
+import { configDoMapa, terrenoDeRender } from '../mapa';
 import {
   gridToScreen, screenToGrid, depthDeY, tileDentroDoMapa, ESCALA_DO_MUNDO,
 } from '../grid';
@@ -32,7 +32,7 @@ import { assetDoPredio, arquivoDoEstagio, chaveDaTextura } from '../manifesto';
 import type { EntradaDeAsset } from '../manifesto';
 import { manifestoDoJogo, texturasParaCarregar } from '../sprites';
 
-const CHAVE_TEXTURA_GRAMA = 'tile-grama';
+const CHAVE_TEXTURA_TERRENO = 'tiles-terreno';
 
 /** F17e — a cara de cada estagio no placeholder geometrico (§9). `altura` e a
  *  fracao da altura do footprint que o volume ocupa, ancorado no PE: sao os tres
@@ -98,7 +98,7 @@ export class WorldScene extends Phaser.Scene {
     const { tilePx, largura, altura, larguraPx, alturaPx } = configDoMapa;
     const estado = publicarEstadoDebug(this.relogio);
 
-    this.criarTexturaDeGrama(tilePx);
+    this.criarTexturaDeTerreno(tilePx);
     const camadaChao = this.criarTilemap(tilePx, largura, altura);
 
     const camera = this.cameras.main;
@@ -229,6 +229,7 @@ export class WorldScene extends Phaser.Scene {
       // que o clamp de setBounds acontece, entao este e o valor ja limitado.
       estado.camera = { scrollX: camera.scrollX, scrollY: camera.scrollY, zoom: camera.zoom };
       estado.tilesRenderizados = camadaChao.tilesDrawn;
+      estado.terrenoVisivel = this.contarTerrenoVisivel(camadaChao);
       estado.pronto = true;
       if (this.ponte.atual) this.atualizarPredios(this.ponte.atual, tilePx, estado);
 
@@ -255,25 +256,61 @@ export class WorldScene extends Phaser.Scene {
     });
   }
 
-  private criarTexturaDeGrama(tilePx: number): void {
-    const cor = Phaser.Display.Color.HexStringToColor(temaSertao.paleta.verdeCaatinga).color;
+  /**
+   * F-T1 (desenho MINIMO) — uma tira de N quadrados, um por tipo de terreno, na
+   * ordem do codigo que vem do funil `render/mapa.ts`. Vira tileset de N tiles,
+   * entao o INDICE DO TILE E O CODIGO DO TERRENO: pintar e `putTileAt(codigo)`,
+   * sem nenhuma tabela paralela na cena.
+   *
+   * Uma cor chapada por tipo e o escopo inteiro do desenho desta feature. Sem
+   * textura, sem transicao de borda, sem arte — o suficiente para a tela nao
+   * mentir: o jogador ve a agua antes de a construcao ser recusada por ela.
+   */
+  private criarTexturaDeTerreno(tilePx: number): void {
     const g = this.make.graphics({ x: 0, y: 0 }, false);
-    g.fillStyle(cor, 1);
-    g.fillRect(0, 0, tilePx, tilePx);
-    g.lineStyle(1, 0x000000, 0.08);
-    g.strokeRect(0, 0, tilePx, tilePx);
-    g.generateTexture(CHAVE_TEXTURA_GRAMA, tilePx, tilePx);
+    terrenoDeRender.cores.forEach((hex, codigo) => {
+      g.fillStyle(Phaser.Display.Color.HexStringToColor(hex).color, 1);
+      g.fillRect(codigo * tilePx, 0, tilePx, tilePx);
+      g.lineStyle(1, 0x000000, 0.08);
+      g.strokeRect(codigo * tilePx, 0, tilePx, tilePx);
+    });
+    g.generateTexture(CHAVE_TEXTURA_TERRENO, tilePx * terrenoDeRender.cores.length, tilePx);
     g.destroy();
   }
 
   private criarTilemap(tilePx: number, largura: number, altura: number): Phaser.Tilemaps.TilemapLayer {
     const mapa = this.make.tilemap({ tileWidth: tilePx, tileHeight: tilePx, width: largura, height: altura });
-    const tileset = mapa.addTilesetImage('grama', CHAVE_TEXTURA_GRAMA, tilePx, tilePx, 0, 0);
-    if (!tileset) throw new Error('WorldScene: falha ao criar o tileset de grama.');
+    const tileset = mapa.addTilesetImage('terreno', CHAVE_TEXTURA_TERRENO, tilePx, tilePx, 0, 0);
+    if (!tileset) throw new Error('WorldScene: falha ao criar o tileset de terreno.');
     const camada = mapa.createBlankLayer('chao', tileset);
     if (!camada) throw new Error('WorldScene: falha ao criar a camada de chao.');
+    // Preenche com o codigo 0 e so visita o que difere: no mapa base a grande
+    // maioria dos tiles e grama, e `fill` custa uma passada contra as duas de
+    // um `putTileAt` por tile.
     camada.fill(0, 0, 0, largura, altura);
+    const { codigos, largura: larguraDoTerreno, altura: alturaDoTerreno } = terrenoDeRender;
+    for (let gy = 0; gy < Math.min(altura, alturaDoTerreno); gy += 1) {
+      for (let gx = 0; gx < Math.min(largura, larguraDoTerreno); gx += 1) {
+        const codigo = codigos[gy * larguraDoTerreno + gx] as number;
+        if (codigo !== 0) camada.putTileAt(codigo, gx, gy);
+      }
+    }
     return camada;
+  }
+
+  /** F-T1 — quantos tiles de cada tipo de terreno estao DENTRO da vista da
+   *  camera agora, lidos de volta da camada desenhada (nao do dado que a
+   *  alimentou). E sobre isto que o roteiro de screenshot afirma; pixel, nunca
+   *  (§8). */
+  private contarTerrenoVisivel(camada: Phaser.Tilemaps.TilemapLayer): Record<string, number> {
+    const vista = this.cameras.main.worldView;
+    const contagem: Record<string, number> = {};
+    for (const tipo of terrenoDeRender.tipos) contagem[tipo] = 0;
+    for (const tile of camada.getTilesWithinWorldXY(vista.x, vista.y, vista.width, vista.height)) {
+      const tipo = terrenoDeRender.tipos[tile.index];
+      if (tipo !== undefined) contagem[tipo] = (contagem[tipo] as number) + 1;
+    }
+    return contagem;
   }
 
   /** Diff por id, estagio, assinatura do medidor (F17b) E leitura do canteiro

@@ -68,6 +68,12 @@ export interface EstadoDebug {
    *  mesma estrutura: e assim que o roteiro prova que sprite e placeholder
    *  convivem, sem olhar pixel (§8). */
   spritesDePredio: Readonly<Record<string, string | null>>;
+  /** F-T1 — quantos tiles de cada TIPO DE TERRENO estao dentro da vista da
+   *  camera agora, lidos de volta da camada de chao ja desenhada. E o que
+   *  permite ao roteiro afirmar "a camera esta em cima do lago" sem olhar
+   *  pixel: a agua aparece na contagem, ou a tela esta mentindo. Vazio ate o
+   *  primeiro POST_RENDER. */
+  terrenoVisivel: Readonly<Record<string, number>>;
   /** Quantos tiles de estrada DE PE (F08) a cena tem desenhados agora. */
   estradasRenderizadas: number;
   /** F18d-2 — quantos tiles de CANTEIRO (`estradasPlanejadas`, F18d-1b) a cena tem
@@ -151,6 +157,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     medidoresDeObra: {},
     canteirosDeObra: {},
     spritesDePredio: {},
+    terrenoVisivel: {},
     estradasRenderizadas: 0,
     estradasPlanejadasRenderizadas: 0,
     previaDeEstrada: null,

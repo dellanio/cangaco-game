@@ -7,7 +7,8 @@
 // mesma funcao — uma fonte de verdade, nunca duas copias divergentes.
 
 const {
-  CAMPOS_ESCALONADOS, DECLARACOES_ESTRUTURAIS, NAO_SAO_DURACAO, bateNomeDeTempo,
+  CAMPOS_ESCALONADOS, DECLARACOES_ESTRUTURAIS, NAO_SAO_DURACAO, PREFIXO_DE_MAPA,
+  bateNomeDeTempo,
 } = require('./data-schema');
 
 function getByPath(obj, caminho) {
@@ -562,6 +563,134 @@ function validarZoomDoTerreno(dados, erros) {
   }
 }
 
+// --- F-T1: a camada de terreno base ------------------------------------------
+//
+// O mapa nao e um arquivo solto: cada tipo que ele desenha tem de EXISTIR no
+// vocabulario de `terrain.json` — ou com custo de movimento, ou na lista de
+// intransponivel. Sem esta regra um 'x' no meio de uma linha viraria terreno
+// mudo, e o A* descobriria isso em tempo de execucao, dentro do navegador.
+//
+// Os mapas sao achados por prefixo (`maps/`), nunca por id: acrescentar o
+// segundo mapa da campanha nao mexe nesta funcao.
+function mapasDe(dados) {
+  return Object.keys(dados)
+    .filter((nome) => nome.startsWith(PREFIXO_DE_MAPA))
+    .map((nome) => ({ nome, mapa: dados[nome] }));
+}
+
+/** Os tipos que um mapa PODE usar, derivados de terrain.json e nao digitados
+ *  aqui: os transponiveis sao as chaves de custoDeMovimento menos 'estrada'
+ *  (estrada e ESTADO, o jogador a constroi, nao terreno de mapa); os
+ *  intransponiveis sao a lista menos 'predio' (idem: predio e estado). */
+function vocabularioDeTerreno(dados) {
+  const custo = (dados.terrain && dados.terrain.custoDeMovimento) || {};
+  const transponiveis = Object.keys(custo).filter((k) => k !== 'estrada' && !k.startsWith('_'));
+  const intransponiveis = ((dados.terrain && dados.terrain.intransponivel) || [])
+    .filter((k) => k !== 'predio');
+  return { transponiveis, intransponiveis, todos: new Set([...transponiveis, ...intransponiveis]) };
+}
+
+function validarMapas(dados, erros) {
+  // Sem chave de mapa nao ha o que validar: quem carrega do disco (o CLI e os
+  // testes que iteram ARQUIVOS) quebra antes daqui, no readFileSync, se o
+  // arquivo sumir. Testes que montam `dados` a mao com um subconjunto dos
+  // arquivos continuam valendo.
+  const mapas = mapasDe(dados);
+  if (mapas.length === 0) return;
+  const vocabulario = vocabularioDeTerreno(dados);
+  const mapaPadrao = (dados.terrain && dados.terrain.mapaPadrao) || {};
+
+  for (const { nome, mapa } of mapas) {
+    if (!mapa || typeof mapa !== 'object') {
+      erros.push(`mapa/forma: ${nome} nao e um objeto`);
+      continue;
+    }
+    if (typeof mapa.id !== 'string' || mapa.id.length === 0) {
+      erros.push(`mapa/forma: ${nome}.id precisa ser string nao vazia`);
+    }
+    if (!Number.isInteger(mapa.largura) || !Number.isInteger(mapa.altura)
+      || mapa.largura < 1 || mapa.altura < 1) {
+      erros.push(`mapa/forma: ${nome} precisa de largura/altura inteiras >= 1`);
+      continue;
+    }
+    // O mapa e o tamanho do mundo: se ele discordar de terrain.mapaPadrao, o
+    // A* e o `canPlace` indexariam grades de tamanhos diferentes.
+    if (mapa.largura !== mapaPadrao.largura || mapa.altura !== mapaPadrao.altura) {
+      erros.push(
+        `mapa/dimensao: ${nome} e ${mapa.largura}x${mapa.altura}, `
+        + `terrain.mapaPadrao e ${mapaPadrao.largura}x${mapaPadrao.altura}`,
+      );
+    }
+    if (!mapa.legenda || typeof mapa.legenda !== 'object') {
+      erros.push(`mapa/legenda: ${nome}.legenda precisa existir`);
+      continue;
+    }
+    for (const [ch, tipo] of Object.entries(mapa.legenda)) {
+      if (ch.length !== 1) erros.push(`mapa/legenda: ${nome} tem a chave '${ch}', que nao e um char`);
+      if (!vocabulario.todos.has(tipo)) {
+        erros.push(
+          `mapa/legenda: ${nome} mapeia '${ch}' para '${tipo}', que nao esta em `
+          + 'terrain.custoDeMovimento nem em terrain.intransponivel',
+        );
+      }
+    }
+    if (!Array.isArray(mapa.linhas) || mapa.linhas.length !== mapa.altura) {
+      erros.push(`mapa/linhas: ${nome}.linhas precisa ter ${mapa.altura} linhas`);
+      continue;
+    }
+    let linhaTorta = false;
+    for (let gy = 0; gy < mapa.linhas.length; gy += 1) {
+      const linha = mapa.linhas[gy];
+      if (typeof linha !== 'string' || linha.length !== mapa.largura) {
+        erros.push(`mapa/linhas: ${nome}.linhas[${gy}] precisa ser string de ${mapa.largura} chars`);
+        linhaTorta = true;
+        break;
+      }
+      for (let gx = 0; gx < linha.length; gx += 1) {
+        if (!(linha[gx] in mapa.legenda)) {
+          erros.push(`mapa/linhas: ${nome} usa o char '${linha[gx]}' em (${gx},${gy}), fora da legenda`);
+          linhaTorta = true;
+          break;
+        }
+      }
+      if (linhaTorta) break;
+    }
+    if (linhaTorta) continue;
+
+    const tipoEm = (gx, gy) => mapa.legenda[mapa.linhas[gy][gx]];
+    const transponivel = new Set(vocabulario.transponiveis);
+    // A vila inicial tem de NASCER em chao construivel, inclusive a porta (a
+    // borda sul do footprint, GDD §5.1) e o tile onde as unidades aparecem.
+    // Sem esta regra, um mapa novo poria o armazem dentro do lago e o jogo
+    // abriria travado — e o sintoma apareceria a 300 ticks de distancia.
+    const estadoInicial = (dados.economy && dados.economy.estadoInicial) || {};
+    for (const predio of estadoInicial.predios || []) {
+      const r = retanguloDoPredio(predio, dados);
+      if (r === null) continue;
+      for (let gy = r.y0; gy <= r.y1 + 1; gy += 1) {
+        for (let gx = r.x0; gx <= r.x1; gx += 1) {
+          if (gx < 0 || gy < 0 || gx >= mapa.largura || gy >= mapa.altura) continue;
+          if (!transponivel.has(tipoEm(gx, gy))) {
+            erros.push(
+              `mapa/vila: ${nome} poe '${tipoEm(gx, gy)}' em (${gx},${gy}), `
+              + `sob o predio inicial '${predio.id}' (footprint ou porta)`,
+            );
+          }
+        }
+      }
+    }
+    const spawn = estadoInicial.spawnDeUnidades;
+    if (spawn && Number.isInteger(spawn.gx) && Number.isInteger(spawn.gy)
+      && spawn.gx >= 0 && spawn.gy >= 0 && spawn.gx < mapa.largura && spawn.gy < mapa.altura
+      && !transponivel.has(tipoEm(spawn.gx, spawn.gy))) {
+      erros.push(
+        `mapa/vila: ${nome} poe '${tipoEm(spawn.gx, spawn.gy)}' em `
+        + `(${spawn.gx},${spawn.gy}), onde as unidades iniciais aparecem`,
+      );
+    }
+  }
+}
+
 function validarTudo(dados) {
   const erros = [];
   validarForma(dados, erros);
@@ -577,6 +706,7 @@ function validarTudo(dados) {
   validarDevolucaoDePredio(dados, erros);
   validarEscadaDePrioridade(dados, erros);
   validarPoliticaDeTreino(dados, erros);
+  validarMapas(dados, erros);
   return erros;
 }
 

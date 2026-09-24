@@ -16,6 +16,7 @@ export interface CampoIsento {
   readonly motivo: string;
 }
 export const ARQUIVOS: readonly string[];
+export const PREFIXO_DE_MAPA: string;
 export const CAMPOS_ESCALONADOS: readonly CampoEscalonado[];
 export const DECLARACOES_ESTRUTURAIS: readonly DeclaracaoEstrutural[];
 export const NAO_SAO_DURACAO: readonly CampoIsento[];

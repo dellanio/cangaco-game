@@ -82,6 +82,38 @@ export interface ProducaoData {
 
 export type TerrenoTipo = 'estrada' | 'grama' | 'campoArado' | 'areia';
 
+/**
+ * F-T1 — o que um TILE DO MAPA pode ser. Nao e `TerrenoTipo`: `'estrada'` sai
+ * (estrada e ESTADO, o jogador a constroi e ela mora em `state.estradas`) e
+ * entram os tres intransponiveis de `terrain.json`. O loader confere esta uniao
+ * contra o dado no carregamento — nenhum sistema decide por conta propria o que
+ * e terreno valido.
+ */
+export type TerrenoDeMapa =
+  | Exclude<TerrenoTipo, 'estrada'>
+  | 'agua' | 'rocha' | 'montanha';
+
+/**
+ * A camada de terreno base, CARREGADA E CONGELADA COM O RESTO DE `GameData` —
+ * fora do `GameState` de proposito. Ela e imutavel durante a partida: por um
+ * `Record` denso de 128x128 o save passaria de 29 KB para ~0,35 MB so para
+ * guardar dado que nunca muda, e o que nao esta no estado nao pode divergir.
+ *
+ * Guardada CODIFICADA (um char por tile, a legenda ao lado) e nao decodificada:
+ * e a forma que o git revisa e a que o arquivo tem. Quem decodifica — uma vez,
+ * em cache — e `sim/mapa.ts`, a unica porta de leitura.
+ */
+export interface MapaData {
+  readonly id: string;
+  readonly largura: number;
+  readonly altura: number;
+  /** `altura` linhas de `largura` chars. */
+  readonly linhas: readonly string[];
+  /** char -> tipo. O loader ja garantiu que todo char usado esta aqui e que
+   *  todo tipo existe em `terrain.json`. */
+  readonly legenda: Readonly<Record<string, TerrenoDeMapa>>;
+}
+
 export interface MovimentoData {
   /** Passo reto (4 direcoes), por terreno de DESTINO. */
   readonly ticksPorTile: {
@@ -199,6 +231,8 @@ export interface GameData {
   readonly condicao: CondicaoData;
   readonly entrega: EntregaData;
   readonly terreno: TerrenoData;
+  /** F-T1 — a camada de terreno do mapa em jogo. Leia por `sim/mapa.ts`. */
+  readonly mapa: MapaData;
   readonly economia: EconomiaData;
   readonly conversoes: readonly ConversaoRegistrada[];
 }

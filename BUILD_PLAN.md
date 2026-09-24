@@ -1703,6 +1703,15 @@ prédio surge sem clique do jogador.
   continua de pé.
 - Reusar `compararComESemSave` de `tests/helpers/determinism.ts`, criado na F02,
   com o estado povoado. Não escrever um segundo teste de save/load.
+- **Nota (contrato herdado da F-T1, 2026-09-24)**: o terreno **não está no
+  `GameState`** — ele vive em `GameData`, carregado de `data/maps/<id>.json`. O
+  save precisa, portanto, guardar **qual mapa** a partida usava: `mapa: "<id>"`
+  mais o **hash do arquivo**. Carregar um save com outro mapa (ou com o mesmo id
+  e o arquivo editado) tem de falhar **na hora**, e não divergir 300 ticks
+  depois, que é o modo de falha caro. O campo `hash` **não** foi criado na F-T1
+  de propósito: dado sem leitor vira folclore, e o leitor é esta feature. Quem
+  o escrever aqui gera o hash no **carregamento**, uma vez, a partir do texto do
+  arquivo — nunca a cada tick.
 
 ### F18g — A pedra da estrada vira carga que viaja (sim)
 - **Escopo**: hoje a pedra da estrada **não viaja**: ela é reservada no armazém

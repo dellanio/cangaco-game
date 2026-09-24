@@ -36,5 +36,6 @@
   "F18d-1a-modo-por-nivel": { "passes": true },
   "F18d-1b-estrada-canteiro": { "passes": true },
   "F18d-2-estrada-planejada-na-tela": { "passes": true },
-  "F18f-unidade-empilhada": { "passes": true }
+  "F18f-unidade-empilhada": { "passes": true },
+  "F-T1-terreno-base": { "passes": true }
 }

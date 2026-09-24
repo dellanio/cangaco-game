@@ -3186,3 +3186,95 @@ que vetar custe uma linha.
 ## Perguntas em aberto
 
 _(nenhuma no momento: as três que sobravam foram decididas pelo operador — ver "Ajuste pós-F10".)_
+
+
+## F-T1 — Camada de terreno base (dado + sim + render mínimo) (2026-09-24)
+
+Feature de integração declarada **antes** do código, no próprio item do
+`BUILD_PLAN.md` (§10). Tocou `src/sim/` e `src/render/` por isso.
+
+### O que existe agora
+
+- `data/maps/sertao-128.json` — 128 linhas de 128 chars + legenda, emitido por
+  `tools/gerar-mapa.js` (semente `20260924` gravada no arquivo). O jogo **nunca**
+  roda o gerador; ele lê o JSON. Entrou em `ARQUIVOS` (`tools/data-schema.js`)
+  como `maps/sertao-128`, e não numa lista paralela: todo carregador do projeto
+  usa a lista como `data/${nome}.json`, então o arquivo passou a valer para
+  todos de uma vez.
+- Regras novas em `tools/data-rules.js` (`mapa/forma`, `mapa/dimensao`,
+  `mapa/legenda`, `mapa/linhas`, `mapa/vila`). Acham mapa por **prefixo**
+  (`maps/`), nunca por id. `validate:data` — 10 arquivos, 0 erros.
+- `src/sim/mapa.ts` — a **porta única**: `tipoDoTile`, `ehTransponivel`,
+  `custoDoTerreno`, `terrenoIndexado`. Ninguém mais decodifica linha/legenda.
+- A* soma os **quatro** custos e recusa o intransponível; `canPlace` alcança o
+  motivo `terreno` (declarado e inalcançável desde a F06) e ganhou
+  `porta-sem-saida` para a linha da porta; `canPlaceRoad` recusa por `terreno`.
+- Render mínimo: uma cor por tipo (tira de N quadrados virando tileset, o
+  **índice do tile é o código do terreno**), cores em `theme-sertao.json`,
+  tudo passando pelo funil `src/render/mapa.ts`. A cena publica
+  `terrenoVisivel` em `window.__cangaco`.
+
+### Verificado (evidência aberta nesta sessão)
+
+- `test-output/F-T1.json`: perna 1 — `canPlace` em (92,46) devolve
+  `{ok:false, motivo:'terreno'}`, e o **mesmo tile** com um mapa todo grama
+  devolve `{ok:true}` (a recusa é do terreno e de mais nada). Perna 2 — a
+  travessia (74,46)→(110,46) custa **292** ticks com terreno contra **252** no
+  mapa liso, com **0** tiles de água no caminho; com uma coluna de água
+  fechando a passagem o A* devolve `null`, e com um vão de um tile volta a
+  achar. Perna 3 — **6,1 µs** por busca curta no mapa liso contra **7,4 µs** com
+  terreno, razão **1,22**, teto do teste 2,5 escrito com esse número ao lado.
+- Perna 4: `npm run verify` verde — **67 arquivos, 1059 testes**, sem mudar
+  nenhuma fixture.
+- `screenshots/F-T1-3-planta-recusada-pela-agua.png` aberto com Read: água azul
+  ocupando a vista, faixa de areia na margem, e a planta da pedreira em vermelho
+  sobre a água. O roteiro afirma sobre número publicado, nunca pixel: abertura
+  `{grama:176, agua:0, montanha:0}`, no lago `{agua:184, areia:3, grama:0}`,
+  `plantaFantasma.motivo === 'terreno'` sobre a água e `valida === true` no tile
+  (78,46) da margem.
+- `campoArado` e `areia` têm instância no mapa (130 e 1083 tiles, varridos pela
+  porta única) e `intransponivel` ganhou leitor em `ehTransponivel` — os três
+  dados que a nota do item marcava como sem leitor. Guarda permanente no teste.
+- `tilesPorFarm`/`tilesPorWineyard` continuam **sem leitor** (conferido com grep
+  agora: só aparecem em `data/terrain.json`). Não é pendência desta feature — a
+  obrigação "ganham leitor ou saem" já está escrita no escopo da F18.
+
+### Decisões, e por quê
+
+1. **Além da grade do arquivo de mapa, o tile vale `grama`.** Apareceu quando a
+   suíte rodou: `F18b` e `F17c` montam `dados` sintéticos que **redeclaram** o
+   tamanho do mundo (64, 256) sem trocar o mapa. Tratar o que está fora como
+   intransponível quebrava os dois sem que nada estivesse errado no jogo — o
+   carregador **reprova** mapa que discorde de `terrain.mapaPadrao`, então no
+   jogo o arquivo cobre o mundo inteiro. A regra está num lugar só
+   (`tipoDoTile`/`codigoDoTile`) e escrita lá.
+2. **Moldura de 8 tiles de grama em volta do mapa.** Também veio da suíte, não
+   de leitura: além das coordenadas literais (máximo (64,63), que a caixa
+   noroeste até 71 já cobria), há teste que **calcula** a coordenada a partir de
+   `terrain.mapaPadrao` — F06 encosta uma pedreira na borda direita, F18b pede
+   caminho entre os dois últimos tiles da linha de baixo. A serra do sudeste
+   cobria os dois. Consertei no **gerador**, nunca na fixture.
+3. **Nada de campo `hash` no mapa agora.** O save é quem precisa dele, e a F23
+   não existe: campo sem leitor vira folclore. O contrato foi escrito como Nota
+   **no item da F23**, que é quem vai herdá-lo.
+4. **`predio` não é terreno de mapa**, embora esteja em `intransponivel`: quem
+   bloqueia por prédio é a ocupação em `state.predios`. Fica de fora do
+   vocabulário de mapa no validador e no guarda.
+5. **Dois rótulos, não um**: footprint em terreno intransponível é `terreno`;
+   footprint em terra com a saída na água é `porta-sem-saida`. Causas opostas
+   sob um rótulo só esconderiam qual aconteceu.
+6. **A medição da perna 3 foi refeita.** A primeira corrida deu razão **0,59** —
+   o mapa com terreno "mais barato" que o liso, o que é leitura da **ordem** (o
+   segundo a medir herda o JIT aquecido), não do custo. Passou a medir duas
+   rodadas por mapa, valendo a segunda, e cada rodada recebe um `dados` novo
+   (o cache de caminho do A* é chaveado por `dados`; sem isso a segunda rodada
+   mediria acerto de cache: `execucoes` veio 0 e o teste acusou).
+
+### Hipóteses — não verificadas
+
+- O desenho mínimo foi conferido **no nível de zoom inicial**. Não medi como as
+  seis cores se separam nos outros níveis da F18a; se não se separarem, é
+  assunto do item de render único depois da F-T2, não desta feature.
+- Não medi o A* com terreno num mapa **256²**: a perna 3 mede 128². A proteção
+  determinística contra custo por área continua sendo a contagem de alocação da
+  F17c, que roda em todo `verify`.

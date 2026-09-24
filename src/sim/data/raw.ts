@@ -7,13 +7,16 @@ import conditionJson from '../../../data/condition.json';
 import deliveryJson from '../../../data/delivery.json';
 import terrainJson from '../../../data/terrain.json';
 import economyJson from '../../../data/economy.json';
+// F-T1 — a camada de terreno base. Um arquivo por mapa; o jogo carrega ESTE, e
+// `tools/gerar-mapa.js` e quem o emite (autoria, nunca runtime).
+import mapaSertaoJson from '../../../data/maps/sertao-128.json';
 
 // theme-sertao.json fica de fora deliberadamente. CLAUDE.md 9: sim/ nunca le
 // o arquivo de tema — ele alimenta so a tela e o pipeline de arte. Reforcado
 // em eslint.config.mjs (no-restricted-imports em src/sim/**/*.ts).
 
 /**
- * Os nove arquivos crus, ja parseados pelo `resolveJsonModule` do
+ * Os arquivos crus, ja parseados pelo `resolveJsonModule` do
  * TypeScript — os tipos vem direto do JSON, entao um campo renomeado em
  * `data/` quebra o `typecheck` aqui, nao silenciosamente em tempo de
  * execucao.
@@ -34,6 +37,7 @@ export const rawGameData = {
   delivery: deliveryJson,
   terrain: terrainJson,
   economy: economyJson,
+  mapa: mapaSertaoJson,
 };
 
 export type RawGameData = typeof rawGameData;

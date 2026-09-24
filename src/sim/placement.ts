@@ -4,6 +4,7 @@ import { gameData } from './data';
 import { estaDesbloqueado } from './desbloqueio';
 import { bordaSul, caixaDeTipo, caixaDoPredio, caixasSeSobrepoem } from './footprint';
 import { ehEstrada, ehPlanejada } from './estradas';
+import { ehTransponivel } from './mapa';
 
 export type MotivoDeRecusa =
   | 'predio-desconhecido'
@@ -25,11 +26,14 @@ export type MotivoDeRecusa =
   // entao predio sem porta nunca recebe entrega e nunca funciona, e escola com a
   // porta tapada segura para sempre um treino ja pago (`systems/escolas.ts`).
   | 'porta-sem-saida'
-  // DECLARADO, INALCANCAVEL HOJE: o mapa nao tem terreno variado nem feature
-  // que o produza (BUILD_PLAN, nota da F06). `canPlace` ganha esta recusa
-  // quando existir terreno — o GDD ja a exige: Fisherman's precisa de lago,
-  // mina precisa de veio na montanha, estrada precisa de solo transponivel.
-  // O tipo antecipa; a implementacao nao finge.
+  // F-T1: ALCANCAVEL desde que existe camada de terreno. Algum tile do
+  // footprint e intransponivel (`terrain.intransponivel`: agua, rocha,
+  // montanha). Declarado desde a F06 e inalcancavel ate aqui — o tipo
+  // antecipava, a implementacao nao fingia.
+  //
+  // Nao cobre a PORTA: prédio inteiro em terra firme com a borda sul na agua
+  // recusa por `'porta-sem-saida'`, que e o que de fato esta errado ali (por ela
+  // entra todo material, e material nao atravessa o lago). Um rotulo por causa.
   | 'terreno';
 
 export type ResultadoDePosicionamento =
@@ -48,7 +52,7 @@ function recusa(motivo: MotivoDeRecusa): ResultadoDePosicionamento {
  * F07 precisa do vocabulario para rejeitar o segundo comando na mesma posicao.
  *
  * Ordem das checagens (fixada por teste): desconhecido, bloqueado,
- * fora-do-mapa, sobreposicao, estrada, porta-sem-saida. Footprint meio-aberto:
+ * fora-do-mapa, terreno (F-T1), sobreposicao, estrada, porta-sem-saida. Footprint meio-aberto:
  * encostar nao e sobrepor — mas encostar NA PORTA e tapa-la, e isso se recusa.
  *
  * Fora daqui, de proposito: custo/estoque (F07: o custo nao sai no clique) e
@@ -66,6 +70,15 @@ export function canPlace(
   const { largura, altura } = dados.terreno.mapaPadrao;
   if (candidato.x0 < 0 || candidato.y0 < 0 || candidato.x1 > largura || candidato.y1 > altura) {
     return recusa('fora-do-mapa');
+  }
+
+  // F-T1, logo depois de `fora-do-mapa` e antes de `sobreposicao`: as duas
+  // primeiras sao sobre o CHAO, e o chao e o que existe antes de qualquer
+  // prédio. Uma obra sobre agua nao e "lugar ocupado", e outro tipo de nao.
+  for (let gy = candidato.y0; gy < candidato.y1; gy++) {
+    for (let gx = candidato.x0; gx < candidato.x1; gx++) {
+      if (!ehTransponivel(gx, gy, dados)) return recusa('terreno');
+    }
   }
 
   for (const id of state.predios.ordem) {
@@ -86,6 +99,11 @@ export function canPlace(
   // motivo quando os dois valem, e a ordem das checagens segue fixada por teste.
   const porta = bordaSul(candidato);
   if (porta.y1 > altura) return recusa('porta-sem-saida');
+  // F-T1: porta na agua e porta sem saida. O footprint ja passou pelo terreno
+  // acima; o que se checa aqui e a faixa de fora.
+  for (let gx = porta.x0; gx < porta.x1; gx++) {
+    if (!ehTransponivel(gx, porta.y0, dados)) return recusa('porta-sem-saida');
+  }
   for (const id of state.predios.ordem) {
     const existente = state.predios.porId[id];
     if (!existente) continue;

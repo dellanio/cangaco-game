@@ -10,10 +10,22 @@
 // Uma duracao nova em data/*.json so vira valida quando alguem a registra
 // aqui; sem isso, tempo/duracao-nao-registrada reprova o validate:data.
 
+// Caminho relativo a `data/`, sem a extensao — e assim que todo carregador do
+// projeto usa a lista (`data/${nome}.json`), do CLI aos testes. Por isso o mapa
+// da F-T1 entra AQUI e nao numa lista paralela: acrescentar um arquivo de dado
+// passa a valer para todo mundo de uma vez, sem que cada carregador precise
+// aprender que existe uma segunda lista.
 const ARQUIVOS = [
   'time', 'buildings', 'production', 'units',
   'combat', 'condition', 'delivery', 'terrain', 'economy',
+  // F-T1 — a camada de terreno base. Um arquivo por mapa; `maps/` e diretorio
+  // porque a campanha vai ter varios (GDD Anexo B).
+  'maps/sertao-128',
 ];
+
+/** O prefixo que marca um arquivo de mapa dentro de `ARQUIVOS`. As regras de
+ *  `data-rules.js` acham os mapas por ele, em vez de conhecer os ids. */
+const PREFIXO_DE_MAPA = 'maps/';
 
 // Campos numericos cujo valor depende de escalas.<grupo> e por isso precisa
 // virar tick inteiro (ou ticksPorTile/ticksPorUnidade) no carregamento.
@@ -86,6 +98,7 @@ function bateNomeDeTempo(chave) {
 
 module.exports = {
   ARQUIVOS,
+  PREFIXO_DE_MAPA,
   CAMPOS_ESCALONADOS,
   DECLARACOES_ESTRUTURAIS,
   NAO_SAO_DURACAO,

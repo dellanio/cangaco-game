@@ -22,6 +22,13 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
 
 ## Observações abertas
 
+- [2026-09-24] o terreno passou a existir (F-T1) e viagem deixou de ser linha reta | medido: a
+  travessia de 36 tiles ao redor do lago custa **292 ticks** contra **252** no mesmo trajeto sem
+  terreno (`test-output/F-T1.json`), 16% a mais só por contornar | `data/maps/sertao-128.json`,
+  `terrain.json.custoDeMovimento`
+- [2026-09-24] `areia 1.50` e `campoArado 1.45` saíram do papel: até a F-T1 o A* nunca os alcançava,
+  e agora a faixa de areia do sul e as duas manchas de solo arado cobram de verdade | ninguém
+  calibrou esses dois números contra jogo nenhum — eles vêm da proposta | `terrain.json`
 - [2026-09-20] o bônus efetivo da estrada é 1,4 e não 1,30: estrada 5 ticks/tile, grama 7 (6,5 arredonda para 7)
   | `custoDeMovimento.grama` 1.30 a `tickHz` 10 e escala de movimento 2.0, com um único `Math.round`
   | data/terrain.json, data/time.json (não é bug do loader: é a granularidade de 10 Hz)

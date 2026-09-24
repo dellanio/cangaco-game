@@ -21,6 +21,15 @@
     "couro": "#8A5A32",
     "ceu": "#4E86A8"
   },
+  "terreno": {
+    "_doc": "F-T1 — desenho MINIMO: uma cor por tipo de terreno da camada base, e so. Sem textura, sem transicao, sem arte; o tratamento visual decente e item proprio depois da F-T2. A chave e o id NEUTRO do terreno (data/terrain.json e o mapa em data/maps/), porque sim/ nao le este arquivo: quem casa id com cor e o funil src/render/mapa.ts. Terreno sem cor aqui reprova no carregamento do funil — tela que mente por omissao e pior do que tela feia.",
+    "grama": "#5E6B4F",
+    "campoArado": "#6B4A2E",
+    "areia": "#C9974B",
+    "agua": "#3C6E8F",
+    "rocha": "#8A8175",
+    "montanha": "#5C544B"
+  },
   "predios": {
     "storehouse":       { "nome": "Armazém",                  "desc": "Depósito da fazenda. Guarda tudo que a vila produz." },
     "schoolhouse":      { "nome": "Casa do Coronel",          "desc": "Onde se engaja gente por dinheiro." },
