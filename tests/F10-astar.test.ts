@@ -22,7 +22,30 @@ import {
   armazemDoCenario, comArmazemCompleto, comEstradas, comObra, comPedraNaSaida, inicial, linhaH, linhaV, tile,
 } from './helpers/jobs-cenario';
 
-const { largura, altura } = gameData.terreno.mapaPadrao;
+/** A borda do mapa PUBLICADO: so o caso "alvo fora do mapa" depende dela, e ele
+ *  tem de perguntar ao dado que o jogo carrega, nao ao mapa da fixture. */
+const { largura } = gameData.terreno.mapaPadrao;
+
+/**
+ * O mapa em que as PROPRIEDADES sorteadas sao provadas, DECLARADO aqui — nao
+ * herdado de `terrain.mapaPadrao`. A fixture sempre presumiu 64: `mapaSorteado`
+ * espalha predio em `4 + sorteio(52)`, a faixa [4,55]. Herdar o valor publicado
+ * fazia o ORACULO (relaxamento em fila, de proposito burro para ser
+ * independente) inundar a area inteira do mapa novo — com `mapaPadrao` em
+ * 128x128 ele estoura o timeout de 5 s sem que nada do A* tenha mudado. O que se
+ * prova aqui e o CUSTO do A* contra um segundo algoritmo, e isso nao depende de
+ * quantos tiles vazios existem alem da faixa sorteada.
+ *
+ * Os dois lados da comparacao recebem ESTE `dados`: se o oraculo parasse em 64 e
+ * o A* enxergasse o mapa publicado, um desvio por fora da faixa existiria so
+ * para um dos dois e a propriedade acusaria divergencia que nao existe.
+ */
+const LADO_DA_PROPRIEDADE = 64;
+const DADOS_DA_PROPRIEDADE: GameData = {
+  ...gameData,
+  terreno: { ...gameData.terreno, mapaPadrao: { largura: LADO_DA_PROPRIEDADE, altura: LADO_DA_PROPRIEDADE } },
+};
+
 const VIZINHOS: readonly (readonly [number, number])[] = [
   [0, -1], [1, 0], [0, 1], [-1, 0], [1, -1], [1, 1], [-1, 1], [-1, -1],
 ];
@@ -47,7 +70,9 @@ function custoDoOraculo(
 ): number | null {
   const bloqueados = bloqueadosDe(estado, dados);
   const andavel = (t: TileDeGrid): boolean => {
-    if (t.gx < 0 || t.gy < 0 || t.gx >= largura || t.gy >= altura) return false;
+    // A borda e a do `dados` RECEBIDO, nao a do mapa publicado: e o que deixa o
+    // oraculo e o A* olharem o mesmo mapa em toda comparacao.
+    if (t.gx < 0 || t.gy < 0 || t.gx >= dados.terreno.mapaPadrao.largura || t.gy >= dados.terreno.mapaPadrao.altura) return false;
     return modo === 'estrada' ? ehEstrada(estado.estradas, t) : !bloqueados.has(chaveDeTile(t));
   };
   const custoDoPasso = (para: TileDeGrid, diagonal: boolean): number => {
@@ -104,7 +129,9 @@ function mapaSorteado(sorteio: (n: number) => number, opcoes: { readonly predios
     const x = 2 + sorteio(58);
     const y = 2 + sorteio(58);
     const tam = 3 + sorteio(14);
-    tiles.push(...(sorteio(2) === 0 ? linhaH(x, Math.min(x + tam, largura - 1), y) : linhaV(x, y, Math.min(y + tam, altura - 1))));
+    tiles.push(...(sorteio(2) === 0
+      ? linhaH(x, Math.min(x + tam, LADO_DA_PROPRIEDADE - 1), y)
+      : linhaV(x, y, Math.min(y + tam, LADO_DA_PROPRIEDADE - 1))));
   }
   return comEstradas(estado, tiles);
 }
@@ -113,7 +140,7 @@ const tileLivre = (estado: GameState, t: TileDeGrid): boolean => !bloqueadosDe(e
 
 function tileLivreSorteado(estado: GameState, sorteio: (n: number) => number): TileDeGrid {
   for (let tentativa = 0; tentativa < 200; tentativa++) {
-    const t = { gx: sorteio(largura), gy: sorteio(altura) };
+    const t = { gx: sorteio(LADO_DA_PROPRIEDADE), gy: sorteio(LADO_DA_PROPRIEDADE) };
     if (tileLivre(estado, t)) return t;
   }
   throw new Error('fixture: mapa sem tile livre');
@@ -153,8 +180,8 @@ describe('F10 — A*: o custo e o do oraculo independente (propriedade, RNG seme
       const estado = mapaSorteado(sorteio, { predios: 6 + sorteio(8), segmentos: sorteio(8) });
       const de = tileLivreSorteado(estado, sorteio);
       const alvos = Array.from({ length: 1 + sorteio(3) }, () => tileLivreSorteado(estado, sorteio));
-      const esperado = custoDoOraculo(estado, de, alvos, 'livre');
-      const achado = buscarCaminho(estado, de, alvos, 'livre');
+      const esperado = custoDoOraculo(estado, de, alvos, 'livre', DADOS_DA_PROPRIEDADE);
+      const achado = buscarCaminho(estado, de, alvos, 'livre', DADOS_DA_PROPRIEDADE);
       expect(achado?.custo ?? null, `semente ${semente}, caso ${i}`).toBe(esperado);
       if (achado) comCaminho += 1;
     }
@@ -171,8 +198,8 @@ describe('F10 — A*: o custo e o do oraculo independente (propriedade, RNG seme
         const de = tileDeEstradaSorteado(estado, sorteio);
         const alvo = tileDeEstradaSorteado(estado, sorteio);
         if (de === null || alvo === null) continue;
-        const esperado = custoDoOraculo(estado, de, [alvo], 'estrada');
-        const achado = buscarCaminho(estado, de, [alvo], 'estrada');
+        const esperado = custoDoOraculo(estado, de, [alvo], 'estrada', DADOS_DA_PROPRIEDADE);
+        const achado = buscarCaminho(estado, de, [alvo], 'estrada', DADOS_DA_PROPRIEDADE);
         expect(achado?.custo ?? null, `semente ${semente}, caso ${i}`).toBe(esperado);
         if (achado) comCaminho += 1;
         else semCaminho += 1;
