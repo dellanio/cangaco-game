@@ -142,9 +142,14 @@ async function roteiro(ctx) {
   await arrastarDentroDoCanvas(page, canvas, [pEsq, pDir]);
   await avancar(1);
   await esperarFrame();
+  // F18d-1b: o arrasto DESENHA; quem ergue e o laborer, durante o passo 5. O ouro da
+  // escola so anda por rua de pe, entao a rua erguida e precondicao do "cabra ocupou" —
+  // e e la que ela e conferida, ja de pe.
+  const canteiro = await estado();
   afirmar(
-    (await estado()).estradasRenderizadas === tilesDaRua,
-    `a rua deveria ter ${tilesDaRua} tiles, veio ${(await estado()).estradasRenderizadas}`,
+    canteiro.estradasPlanejadasRenderizadas === tilesDaRua && canteiro.estradasRenderizadas === 0,
+    `o arrasto deveria desenhar ${tilesDaRua} tiles e erguer 0, veio `
+      + `${canteiro.estradasPlanejadasRenderizadas} e ${canteiro.estradasRenderizadas}`,
   );
 
   await page.keyboard.press('Escape');
@@ -223,6 +228,13 @@ async function roteiro(ctx) {
     await avancar(PASSO_DE_AVANCO);
   }
   await esperarFrame();
+  const depoisDoTrabalho = await estado();
+  afirmar(
+    depoisDoTrabalho.estradasRenderizadas === tilesDaRua
+      && depoisDoTrabalho.estradasPlanejadasRenderizadas === 0,
+    `em ${TICKS_ATE_OCUPAR} ticks a rua deveria estar toda de pe (${tilesDaRua} tiles), veio `
+      + `${depoisDoTrabalho.estradasRenderizadas} de pe e ${depoisDoTrabalho.estradasPlanejadasRenderizadas} planejados`,
+  );
   const noEstado = await predioDoEstado(ID_PEDREIRA);
   afirmar(
     noEstado !== null && noEstado.estado === 'completo',

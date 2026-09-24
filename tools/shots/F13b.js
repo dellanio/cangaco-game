@@ -18,6 +18,7 @@
 // do canvas, e o que esta debaixo dele nao recebe mouse.
 
 const { retanguloDe, retanguloDoCanvas, arrastarDentroDoCanvas } = require('./_canvas');
+const { erguerRua } = require('./_estradas');
 const economia = require('../../data/economy.json');
 const unidades = require('../../data/units.json');
 const terreno = require('../../data/terrain.json');
@@ -156,10 +157,19 @@ async function roteiro(ctx) {
   await arrastarDentroDoCanvas(page, canvas, [pEsq, pDir]);
   await avancar(1);
   await esperarFrame();
+  const desenhada = await estado();
+  afirmar(
+    desenhada.estradasPlanejadasRenderizadas === tilesDaRua && desenhada.estradasRenderizadas === 0,
+    `o arrasto deveria DESENHAR ${tilesDaRua} tiles e erguer 0, veio `
+      + `${desenhada.estradasPlanejadasRenderizadas} e ${desenhada.estradasRenderizadas}`,
+  );
+  // o ouro so anda por rua DE PE (o nivel dele e `estrada`), e desde a F18d-1b quem
+  // ergue e o laborer: sem esta espera o passo 8 mediria o canteiro, que nao liga nada
+  await erguerRua(ctx, { tiles: tilesDaRua });
   const comRua = await estado();
   afirmar(
-    comRua.estradasRenderizadas === tilesDaRua,
-    `a rua deveria ter ${tilesDaRua} tiles (x ${terreno.estrada.custoStonePorTile} de pedra), veio ${comRua.estradasRenderizadas}`,
+    comRua.estradasRenderizadas === tilesDaRua && comRua.estradasPlanejadasRenderizadas === 0,
+    `a rua deveria ter ${tilesDaRua} tiles de pe (x ${terreno.estrada.custoStonePorTile} de pedra), veio ${comRua.estradasRenderizadas}`,
   );
 
   // 8. reabrir o painel: com rua e ouro no armazem o motivo vira `a-caminho`

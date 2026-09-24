@@ -5,16 +5,20 @@
 // esperado vem dos JSON — nada digitado aqui que o jogo tambem saiba.
 //
 // Dois pontos que este roteiro existe para provar NA TELA:
-//  - aqui, ao contrario da obra da F07, o custo SAI no comando: a Pedra do HUD cai
-//    `tiles x custoStonePorTile` ao soltar o arrasto (e NAO durante ele);
+//  - o arrasto DESENHA o traçado e nao gasta nada; a Pedra do HUD so cai quando o
+//    laborer assenta, `tiles x custoStonePorTile` no total (F18d-1b/F18d-2). Ate a
+//    F18d-1b o custo saia no proprio comando, e este roteiro afirmava isso — o texto
+//    velho ficaria descrevendo um jogo que nao existe mais;
 //  - demolir devolve `floor(removidos x devolucaoAoDemolir)`, e um arrasto que sai
-//    do canvas nao gasta nada (cancela).
+//    do canvas nao gasta nada (cancela). "Nao construiu nada" agora tem DOIS jeitos de
+//    ser falso (canteiro e rua), e os dois sao afirmados.
 //
 // Todo arrasto usa `arrastarDentroDoCanvas`, que LANCA se um ponto sair do canvas
 // (achado da F06: fora dele o Chromium nao entrega mousemove ao Phaser). O unico
 // movimento que sai — o do passo 5 — e um `page.mouse.move` explicito, fora do helper.
 
 const { retanguloDe, retanguloDoCanvas, arrastarDentroDoCanvas } = require('./_canvas');
+const { erguerRua } = require('./_estradas');
 const economia = require('../../data/economy.json');
 const terreno = require('../../data/terrain.json');
 const { predios } = require('../../data/buildings.json');
@@ -72,6 +76,7 @@ async function roteiro(ctx) {
   // 0. ponto de partida: nenhuma estrada, HUD = tabela do cenario
   const inicioDoEstado = await estado();
   afirmar(inicioDoEstado.estradasRenderizadas === 0, `no inicio nao deveria haver estrada, veio ${inicioDoEstado.estradasRenderizadas}`);
+  afirmar(inicioDoEstado.estradasPlanejadasRenderizadas === 0, `no inicio nao deveria haver canteiro, veio ${inicioDoEstado.estradasPlanejadasRenderizadas}`);
   const hudInicial = await hud();
   afirmar(hudInicial.stone === String(pedraInicial), `a Pedra inicial deveria ser ${pedraInicial}, veio ${hudInicial.stone}`);
 
@@ -95,16 +100,27 @@ async function roteiro(ctx) {
     `a previa deveria ter ${totalDeTiles} tiles validos custando ${totalDeTiles * custoPorTile}, veio ${JSON.stringify(s.previaDeEstrada)}`,
   );
   afirmar(s.estradasRenderizadas === 0, 'enquanto arrasta ainda nao ha estrada no estado');
-  afirmar((await hud()).stone === hudInicial.stone, 'enquanto arrasta a Pedra NAO deve cair: so ao soltar');
+  afirmar(s.estradasPlanejadasRenderizadas === 0, 'enquanto arrasta ainda nao ha canteiro no estado: previa nao e comando');
+  afirmar((await hud()).stone === hudInicial.stone, 'enquanto arrasta a Pedra NAO deve cair');
   await capturar('previa-do-arrasto');
 
-  // 3. SOLTAR: a estrada nasce e o custo SAI
+  // 3. SOLTAR: o traçado e DESENHADO, sem custo; quem ergue e paga e o laborer
   await page.mouse.up();
   await avancar(1);
   await esperarFrame();
   s = await estado();
-  afirmar(s.estradasRenderizadas === totalDeTiles, `deveria haver ${totalDeTiles} tiles de estrada, veio ${s.estradasRenderizadas}`);
+  afirmar(
+    s.estradasPlanejadasRenderizadas === totalDeTiles && s.estradasRenderizadas === 0,
+    `soltar deveria desenhar ${totalDeTiles} tiles e erguer 0, veio `
+    + `${s.estradasPlanejadasRenderizadas} e ${s.estradasRenderizadas}`,
+  );
   afirmar(s.previaDeEstrada === null, 'depois de soltar a previa some');
+  afirmar((await hud()).stone === hudInicial.stone, 'o comando reserva a pedra, nao gasta: a Pedra so cai no assentamento');
+
+  await erguerRua(ctx, { tiles: totalDeTiles });
+  s = await estado();
+  afirmar(s.estradasRenderizadas === totalDeTiles, `deveria haver ${totalDeTiles} tiles de estrada, veio ${s.estradasRenderizadas}`);
+  afirmar(s.estradasPlanejadasRenderizadas === 0, `o canteiro deveria ter esvaziado, veio ${s.estradasPlanejadasRenderizadas}`);
   const hudDepoisDeConstruir = await hud();
   const pedraEsperada = pedraInicial - totalDeTiles * custoPorTile;
   afirmar(
@@ -135,6 +151,7 @@ async function roteiro(ctx) {
   await esperarFrame();
   s = await estado();
   afirmar(s.estradasRenderizadas === totalDeTiles - 2, `deveriam sobrar ${totalDeTiles - 2} tiles, veio ${s.estradasRenderizadas}`);
+  afirmar(s.estradasPlanejadasRenderizadas === 0, 'demolir rua de pe nao deveria deixar canteiro para tras');
   const devolvida = Math.floor(2 * fracao);
   const pedraDepoisDeDemolir = pedraEsperada + devolvida;
   afirmar(
@@ -163,7 +180,11 @@ async function roteiro(ctx) {
   await avancar(1);
   await esperarFrame();
   s = await estado();
-  afirmar(s.estradasRenderizadas === totalDeTiles - 2, `sair do canvas nao deveria construir nada, veio ${s.estradasRenderizadas}`);
+  afirmar(
+    s.estradasRenderizadas === totalDeTiles - 2 && s.estradasPlanejadasRenderizadas === 0,
+    `sair do canvas nao deveria construir nem desenhar nada, veio ${s.estradasRenderizadas} de pe `
+    + `e ${s.estradasPlanejadasRenderizadas} planejados`,
+  );
   afirmar((await hud()).stone === String(pedraDepoisDeDemolir), 'sair do canvas nao deveria gastar pedra');
 
   // 6. Esc no MEIO do arrasto tambem cancela e desmarca a ferramenta
@@ -179,7 +200,11 @@ async function roteiro(ctx) {
   await avancar(1);
   await esperarFrame();
   s = await estado();
-  afirmar(s.estradasRenderizadas === totalDeTiles - 2, `o Esc nao deveria construir nada, veio ${s.estradasRenderizadas}`);
+  afirmar(
+    s.estradasRenderizadas === totalDeTiles - 2 && s.estradasPlanejadasRenderizadas === 0,
+    `o Esc nao deveria construir nem desenhar nada, veio ${s.estradasRenderizadas} de pe `
+    + `e ${s.estradasPlanejadasRenderizadas} planejados`,
+  );
   afirmar((await hud()).stone === String(pedraDepoisDeDemolir), 'o Esc nao deveria gastar pedra');
   afirmar(await page.getAttribute('[data-ferramenta="estrada"]', 'aria-pressed') === 'false', 'depois do Esc a ferramenta deveria estar desmarcada');
 }

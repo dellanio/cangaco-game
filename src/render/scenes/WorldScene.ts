@@ -238,8 +238,11 @@ export class WorldScene extends Phaser.Scene {
       estado.plantaFantasma = planta.atualizar(this.ferramenta.predioAtivo, tileAtual, this.ponte.atual);
       highlight.setVisible(tileAtual !== null && this.ferramenta.predioAtivo === null);
 
-      // Estrada (F08): desenha o que o estado diz e a previa do arrasto em curso.
-      estado.estradasRenderizadas = camadaDeEstradas.atualizar(this.ponte.atual ?? null);
+      // Estrada (F08): desenha o que o estado diz — rua de pe e canteiro (F18d-2) — e a
+      // previa do arrasto em curso.
+      const estradas = camadaDeEstradas.atualizar(this.ponte.atual ?? null);
+      estado.estradasRenderizadas = estradas.dePe;
+      estado.estradasPlanejadasRenderizadas = estradas.planejadas;
       estado.previaDeEstrada = previaDeEstrada.atualizar(this.entrada.trecho(), this.ferramenta.modo, this.ponte.atual);
 
       // Unidades (F10): a posicao de cada tick vem do estado (selector puro); a F11a interpola

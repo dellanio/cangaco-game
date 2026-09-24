@@ -1,8 +1,9 @@
 /**
- * A estrada no chao e a previa do arrasto. Nada aqui decide: a camada desenha o que
- * `GameState.estradas` diz, e a previa PERGUNTA `canPlaceRoad` a `sim/` e pinta o
- * resultado — verde se o trecho pode, vermelho se nao. Nenhum comando sai daqui: um
- * arrasto vira comando ao soltar, em `input/`.
+ * A estrada no chao — de pe e desenhada — e a previa do arrasto. Nada aqui decide: a
+ * camada desenha o que `GameState.estradas` e `GameState.estradasPlanejadas` dizem, e a
+ * previa PERGUNTA `canPlaceRoad` a `sim/` e pinta o resultado — verde se o trecho pode,
+ * vermelho se nao. Nenhum comando sai daqui: um arrasto vira comando ao soltar, em
+ * `input/`.
  */
 import Phaser from 'phaser';
 import temaSertao from '../../data/theme-sertao.json';
@@ -19,6 +20,9 @@ const DEPTH_DA_PREVIA = 999_998;
 const COR_PODE = 0x5fbf5a;
 const COR_NAO_PODE = 0xd64b3f;
 const OPACIDADE_DA_PREVIA = 0.55;
+/** O canteiro e a mesma terra, translucida: "aqui vai rua, ainda nao e rua". */
+const OPACIDADE_DO_CANTEIRO = 0.3;
+const ESPESSURA_DO_CANTEIRO = 2;
 /** Meia-diagonal da ponte, em fracao do tile. Cobre o pinch sem engordar a rua. */
 const RAIO_DA_PONTE = 0.34;
 
@@ -33,11 +37,17 @@ export interface PreviaDeEstrada {
   readonly motivo: string | null;
 }
 
+/** Os dois conjuntos desenhados agora. A soma e o traçado inteiro que o jogador ve. */
+export interface ContagemDeEstradas {
+  readonly dePe: number;
+  readonly planejadas: number;
+}
+
 export interface CamadaDeEstradas {
-  /** Redesenha SO quando `estradas` ou o conjunto de predios mudou de referencia;
-   *  devolve quantos tiles ha. Predio entra na conta porque e ele que tapa quina
-   *  e desfaz uma ponte diagonal (F18e). */
-  atualizar(estado: GameState | null): number;
+  /** Redesenha SO quando `estradas`, `estradasPlanejadas` ou o conjunto de predios
+   *  mudou de referencia; devolve a contagem dos dois conjuntos. Predio entra na conta
+   *  porque e ele que tapa quina e desfaz uma ponte diagonal (F18e). */
+  atualizar(estado: GameState | null): ContagemDeEstradas;
 }
 
 /**
@@ -61,21 +71,42 @@ function desenharPonte(
   ], true);
 }
 
+/**
+ * A camada do chao: a rua de pe e o canteiro dela, no mesmo grafico e do mesmo tick.
+ *
+ * O canteiro (F18d-1b) e terra translucida com contorno, e **nao** ganha ponte
+ * diagonal: a ponte e o desenho de "ha passagem por aqui", e tile planejado nao liga
+ * nada ate o laborer assentar. Desenhar a ponte nele seria a tela afirmando uma ligacao
+ * que a sim nega — e `pontesDiagonais` continua sendo a unica dona da regra da quina.
+ */
 export function criarCamadaDeEstradas(cena: Phaser.Scene, tilePx: number): CamadaDeEstradas {
   const cor = Phaser.Display.Color.HexStringToColor(temaSertao.paleta.terra).color;
+  const corDoContorno = Phaser.Display.Color.HexStringToColor(temaSertao.paleta.terraQueimada).color;
   const grafico = cena.add.graphics();
   grafico.setDepth(DEPTH_DA_ESTRADA);
   let desenhada: GameState['estradas'] | null = null;
+  let desenhadoOCanteiro: GameState['estradasPlanejadas'] | null = null;
   let desenhadaComPredios: GameState['predios']['ordem'] | null = null;
-  let quantidade = 0;
+  let contagem: ContagemDeEstradas = { dePe: 0, planejadas: 0 };
 
   return {
     atualizar(estado) {
       const estradas = estado?.estradas ?? {};
+      const planejadas = estado?.estradasPlanejadas ?? {};
       const ordem = estado?.predios.ordem ?? null;
-      if (estradas !== desenhada || ordem !== desenhadaComPredios) {
+      if (estradas !== desenhada || planejadas !== desenhadoOCanteiro || ordem !== desenhadaComPredios) {
         const tiles = tilesOrdenados(estradas);
+        const canteiro = tilesOrdenados(planejadas);
         grafico.clear();
+
+        grafico.fillStyle(cor, OPACIDADE_DO_CANTEIRO);
+        grafico.lineStyle(ESPESSURA_DO_CANTEIRO, corDoContorno, 1);
+        for (const tile of canteiro) {
+          const canto = gridToScreen(tile, tilePx, ESCALA_DO_MUNDO);
+          grafico.fillRect(canto.x, canto.y, tilePx, tilePx);
+          grafico.strokeRect(canto.x + 1, canto.y + 1, tilePx - 2, tilePx - 2);
+        }
+
         grafico.fillStyle(cor, 1);
         for (const tile of tiles) {
           const canto = gridToScreen(tile, tilePx, ESCALA_DO_MUNDO);
@@ -84,11 +115,13 @@ export function criarCamadaDeEstradas(cena: Phaser.Scene, tilePx: number): Camad
         if (estado !== null) {
           for (const [a, b] of pontesDiagonais(estado)) desenharPonte(grafico, a, b, tilePx);
         }
+
         desenhada = estradas;
+        desenhadoOCanteiro = planejadas;
         desenhadaComPredios = ordem;
-        quantidade = tiles.length;
+        contagem = { dePe: tiles.length, planejadas: canteiro.length };
       }
-      return quantidade;
+      return contagem;
     },
   };
 }

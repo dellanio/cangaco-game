@@ -24,6 +24,7 @@
 // canto do canvas, e o que esta debaixo dele nao recebe mouse (licao da F16b).
 
 const { retanguloDoCanvas, arrastarDentroDoCanvas } = require('./_canvas');
+const { erguerRua } = require('./_estradas');
 const economia = require('../../data/economy.json');
 const tema = require('../../data/theme-sertao.json');
 const { predios } = require('../../data/buildings.json');
@@ -99,9 +100,19 @@ async function roteiro(ctx) {
   await arrastarDentroDoCanvas(page, canvas, [pEsq, pDir]);
   await avancar(1);
   await esperarFrame();
+  const desenhada = await estado();
   afirmar(
-    (await estado()).estradasRenderizadas === tilesDaRua,
-    `a rua deveria ter ${tilesDaRua} tiles, veio ${(await estado()).estradasRenderizadas}`,
+    desenhada.estradasPlanejadasRenderizadas === tilesDaRua && desenhada.estradasRenderizadas === 0,
+    `o arrasto deveria DESENHAR ${tilesDaRua} tiles e erguer 0, veio `
+      + `${desenhada.estradasPlanejadasRenderizadas} e ${desenhada.estradasRenderizadas}`,
+  );
+  // o material so anda por rua DE PE, e desde a F18d-1b quem a ergue e o laborer: sem
+  // esta espera o medidor do passo 3 ficaria em 0 pelo mesmo motivo errado de antes
+  await erguerRua(ctx, { tiles: tilesDaRua });
+  const comRua = await estado();
+  afirmar(
+    comRua.estradasRenderizadas === tilesDaRua && comRua.estradasPlanejadasRenderizadas === 0,
+    `a rua deveria estar DE PE com ${tilesDaRua} tiles, veio ${comRua.estradasRenderizadas} de pe e ${comRua.estradasPlanejadasRenderizadas} no canteiro`,
   );
   await page.keyboard.press('Escape');
   await esperarFrame();

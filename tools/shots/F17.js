@@ -194,9 +194,13 @@ async function roteiro(ctx) {
   }
   await page.keyboard.press('Escape');
   await esperarFrame();
+  // F18d-1b: os dois arrastos DESENHAM o traçado inteiro (o tile do meio entra nos dois e
+  // conta uma vez so); os laborers o erguem enquanto a vila trabalha, no passo 4.
+  const canteiro = await estado();
   afirmar(
-    (await estado()).estradasRenderizadas === tilesDaRua,
-    `a rua deveria ter ${tilesDaRua} tiles, veio ${(await estado()).estradasRenderizadas}`,
+    canteiro.estradasPlanejadasRenderizadas === tilesDaRua && canteiro.estradasRenderizadas === 0,
+    `os arrastos deveriam desenhar ${tilesDaRua} tiles e erguer 0, veio `
+      + `${canteiro.estradasPlanejadasRenderizadas} e ${canteiro.estradasRenderizadas}`,
   );
 
   // ---- 3. as tres casas que ja da para plantar ------------------------------
@@ -312,9 +316,11 @@ async function roteiro(ctx) {
     `o HUD deveria mostrar timber acima dos ${timberInicial} iniciais em ate `
       + `${TETO_ATE_O_CRITERIO} ticks, veio ${timberFinal}`,
   );
+  const noFim = await estado();
   afirmar(
-    (await estado()).estradasRenderizadas === tilesDaRua,
-    'a rua que liga tudo deveria continuar inteira no fim',
+    noFim.estradasRenderizadas === tilesDaRua && noFim.estradasPlanejadasRenderizadas === 0,
+    `a rua que liga tudo deveria estar inteira e DE PE no fim (${tilesDaRua} tiles), veio `
+      + `${noFim.estradasRenderizadas} de pe e ${noFim.estradasPlanejadasRenderizadas} planejados`,
   );
 
   // A foto do aceite: a fila das quatro casas de pe, com a rua na frente delas.

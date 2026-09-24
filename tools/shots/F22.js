@@ -23,6 +23,7 @@
 // geometria vem de `economy.json` e `buildings.json`, como no F16b.
 
 const { retanguloDe, retanguloDoCanvas, arrastarDentroDoCanvas } = require('./_canvas');
+const { erguerRua } = require('./_estradas');
 const economia = require('../../data/economy.json');
 const tema = require('../../data/theme-sertao.json');
 const { predios } = require('../../data/buildings.json');
@@ -118,10 +119,16 @@ async function roteiro(ctx) {
   await arrastarDentroDoCanvas(page, canvas, [pEsq, pDir]);
   await avancar(1);
   await esperarFrame();
+  const desenhada = await estado();
   afirmar(
-    (await estado()).estradasRenderizadas === tilesDaRua,
-    `a rua deveria ter ${tilesDaRua} tiles, veio ${(await estado()).estradasRenderizadas}`,
+    desenhada.estradasPlanejadasRenderizadas === tilesDaRua && desenhada.estradasRenderizadas === 0,
+    `o arrasto deveria DESENHAR ${tilesDaRua} tiles e erguer 0, veio `
+      + `${desenhada.estradasPlanejadasRenderizadas} e ${desenhada.estradasRenderizadas}`,
   );
+  // a pedreira so conta como LIGADA por rua de pe, e desde a F18d-1b quem ergue o tile e
+  // o laborer: sem esta espera o passo 3 veria `sem-estrada` desde o comeco, e o aviso
+  // que esta feature mede apareceria pelo motivo errado.
+  await erguerRua(ctx, { tiles: tilesDaRua });
   await page.keyboard.press('Escape');
   await esperarFrame();
 
@@ -244,9 +251,11 @@ async function roteiro(ctx) {
   await esperarFrame();
   await page.keyboard.press('Escape');
   await esperarFrame();
+  const cortada = await estado();
   afirmar(
-    (await estado()).estradasRenderizadas === tilesDaRua - 1,
-    `a rua deveria ter perdido um tile, veio ${(await estado()).estradasRenderizadas}`,
+    cortada.estradasRenderizadas === tilesDaRua - 1 && cortada.estradasPlanejadasRenderizadas === 0,
+    `a rua deveria ter perdido um tile e nao virar canteiro, veio `
+      + `${cortada.estradasRenderizadas} de pe e ${cortada.estradasPlanejadasRenderizadas} planejados`,
   );
   afirmar(
     (await resumo()) === JSON.stringify([

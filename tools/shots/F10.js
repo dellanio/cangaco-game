@@ -109,7 +109,10 @@ async function roteiro(ctx) {
   afirmar(s.obrasRenderizadas === 1, `deveria haver 1 obra, veio ${s.obrasRenderizadas}`);
   await page.keyboard.press('Escape');
 
-  // 2. desenha a rua ate a obra, pela UI (o custo sai no comando: desvio da F08)
+  // 2. desenha a rua ate a obra, pela UI. Desde a F18d-1b o arrasto DESENHA o traçado e
+  //    reserva a pedra; quem ergue e paga e o laborer, e isso acontece enquanto os serfs
+  //    trabalham (passos 3 a 5). Por isso aqui a Pedra ainda esta inteira, e a conta do
+  //    custo da rua so fecha no passo 5 — onde ela e conferida junto com a rua DE PE.
   await page.click('[data-ferramenta="estrada"]');
   await esperarFrame();
   await arrastarDentroDoCanvas(
@@ -118,11 +121,12 @@ async function roteiro(ctx) {
   await avancar(1); // idem: o arrasto so enfileira o PlaceRoad
   await esperarFrame();
   s = await estado();
-  afirmar(s.estradasRenderizadas === tilesDaRua, `deveria haver ${tilesDaRua} tiles de estrada, veio ${s.estradasRenderizadas}`);
+  afirmar(s.estradasPlanejadasRenderizadas === tilesDaRua && s.estradasRenderizadas === 0,
+    `o arrasto deveria desenhar ${tilesDaRua} tiles e erguer 0, veio ${s.estradasPlanejadasRenderizadas} e ${s.estradasRenderizadas}`);
   await page.keyboard.press('Escape');
   const hudDaRua = await hud();
-  afirmar(hudDaRua.stone === String(estoque.stone - custoDaRua),
-    `a Pedra deveria cair para ${estoque.stone - custoDaRua} (${tilesDaRua} tiles x ${custoPorTile}), veio ${hudDaRua.stone}`);
+  afirmar(hudDaRua.stone === String(estoque.stone),
+    `o comando reserva e nao gasta: a Pedra deveria seguir em ${estoque.stone}, veio ${hudDaRua.stone}`);
   const tickDaRua = s.tick;
 
   // a obra esta ligada: a sim ja gerou as tarefas, mas nenhum serf se mexeu (o tempo so passou por `avancar(1)` dos dois comandos)
@@ -151,6 +155,8 @@ async function roteiro(ctx) {
   const hudEmTransito = await hud();
   const somaAntes = Number(hudDaRua.timber) + Number(hudDaRua.stone);
   const somaAgora = Number(hudEmTransito.timber) + Number(hudEmTransito.stone);
+  // o assentamento tambem come pedra nesta janela: por isso o criterio e "caiu AO MENOS
+  // o que esta na mao dos serfs", e nao uma igualdade
   afirmar(somaAgora <= somaAntes - carregados.length,
     `com ${carregados.length} serf(s) carregado(s) o HUD deveria ter caido ao menos isso: era ${somaAntes}, agora ${somaAgora}`);
   await capturar('carga-em-transito');
@@ -179,6 +185,11 @@ async function roteiro(ctx) {
   afirmar(hudFinal.timber === String(timberFinal) && hudFinal.stone === String(stoneFinal),
     `no fim o HUD deveria ser Tabua ${timberFinal} e Pedra ${stoneFinal} (o custo da Pedreira sai na entrega)`);
   afirmar(serfsDe(fim).every((u) => Number.isInteger(u.gx) && Number.isInteger(u.gy)), 'parados de novo, os serfs estao em tiles inteiros');
+  // a Pedra final so bate se a rua inteira ficou DE PE: e o assentamento que debita, e o
+  // canteiro vazio e o que prova que nao sobrou tile pago pela metade
+  afirmar(fim.estradasRenderizadas === tilesDaRua && fim.estradasPlanejadasRenderizadas === 0,
+    `no fim a rua deveria estar toda de pe (${tilesDaRua} tiles, 0 planejados), veio `
+    + `${fim.estradasRenderizadas} e ${fim.estradasPlanejadasRenderizadas}`);
   afirmar(fim.unidadesRenderizadas.length === totalDeUnidades, 'nenhuma unidade sumiu no caminho');
   await capturar('obra-entregue');
 }

@@ -98,7 +98,11 @@ async function roteiro(ctx) {
   afirmar(s.tick === 1, `avancar(1) deveria dar tick 1, veio ${s.tick}`);
   await page.keyboard.press('Escape');
 
-  // 3. a rua ate a obra, para as tarefas existirem e os serfs terem para onde andar
+  // 3. a rua ate a obra, para as tarefas existirem e os serfs terem para onde andar.
+  //    Desde a F18d-1b o arrasto so DESENHA: a rua fica de pe quando o laborer assenta.
+  //    Este roteiro NAO espera por isso — ele mede interpolacao, e o laborer indo assentar
+  //    e mais uma unidade em movimento. Esperar aqui teria o efeito contrario: gastaria os
+  //    ticks em que ha gente andando e chegaria ao passo 6 com todo mundo parado.
   await page.click('[data-ferramenta="estrada"]');
   await esperarFrame();
   await arrastarDentroDoCanvas(
@@ -107,7 +111,8 @@ async function roteiro(ctx) {
   await avancar(1);
   await esperarFrame();
   s = await estado();
-  afirmar(s.estradasRenderizadas === tilesDaRua, `deveria haver ${tilesDaRua} tiles de estrada, veio ${s.estradasRenderizadas}`);
+  afirmar(s.estradasPlanejadasRenderizadas === tilesDaRua && s.estradasRenderizadas === 0,
+    `o arrasto deveria desenhar ${tilesDaRua} tiles e erguer 0, veio ${s.estradasPlanejadasRenderizadas} e ${s.estradasRenderizadas}`);
   await page.keyboard.press('Escape');
 
   // 4. pausado a posicao desenhada e a do tick (alfa 1): o screenshot pausado e o da F10, sem interpolar

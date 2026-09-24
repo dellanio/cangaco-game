@@ -2735,6 +2735,80 @@ a Nota de integração (exceção explícita da §10 para tocar `sim/` e `render
 mesma feature) já está escrita lá, com o aviso: se aparecer regra nova naquela
 feature, é sinal de que esta ficou incompleta.
 
+## F18d-2 — A estrada planejada na tela (integração, 2026-09-24)
+
+Feature de integração pela Nota escrita no item do `BUILD_PLAN.md` — a exceção
+explícita da §10 para tocar `render/` na mesma feature em que `sim/` está fresco.
+E ela foi respeitada na prática: **`src/sim/` não recebeu uma linha**. Tudo o que
+esta feature precisava de regra já tinha vindo da F18d-1b, que era exatamente o
+teste que a Nota propunha.
+
+### O que mudou no render
+
+- `src/render/estradas.ts`: a camada passou a devolver `ContagemDeEstradas`
+  (`{ dePe, planejadas }`) em vez de um número, e desenha **três** coisas, nesta
+  ordem: o canteiro (preenchimento de `terra` com opacidade `0.3` + contorno de
+  2px em `terraQueimada`), a rua de pé (sólida) e as pontes diagonais da F18e.
+  As pontes continuam **só** na rua de pé: canteiro não liga nada, e desenhar a
+  ponte dele sugeriria ligação que a sim não tem.
+- `src/render/debug.ts`: campo novo `estradasPlanejadasRenderizadas`. É o que
+  torna a migração dos roteiros possível — sem ele, "não construiu nada" e "está
+  desenhado mas ninguém assentou ainda" seriam o mesmo `0` na ponte de debug.
+- `src/render/scenes/WorldScene.ts`: publica os dois contadores por tick.
+
+### O que os roteiros passaram a afirmar
+
+`tools/shots/_estradas.js` (novo) concentra a espera: `erguerRua(ctx, { tiles })`
+avança em blocos de 10 ticks **enquanto houver canteiro**, com teto de 600, e
+falha dizendo os dois contadores e o tick. A espera é por **condição**, nunca por
+`avancar(N)` chutado: o N depende de quantos laborers estão livres e de quanto
+andam, e um número adivinhado que passa hoje quebra no primeiro ajuste de `data/`.
+
+A regra da migração saiu medida, roteiro a roteiro, e não é uniforme:
+
+| Roteiro | O que passou a fazer | Por quê |
+|---|---|---|
+| `F08` | desenha → `erguerRua` → confere pedra | o texto antigo dizia "o custo SAI no comando", e isso virou falso |
+| `F13b` | desenha → `erguerRua` | ouro só anda em rua de pé (nível `estrada`) |
+| `F16b` | desenha → laço de trabalho de 300 ticks → confere de pé | o laço dele já cobre o assentamento |
+| `F17b`, `F17d`, `F17e` | desenha → `erguerRua` | material só chega por rua de pé; sem esperar, o medidor/canteiro/estágio daria 0 pelo motivo errado |
+| `F22` | desenha → `erguerRua` | senão `sem-estrada` apareceria desde o começo, e o aviso que a feature mede sairia pelo motivo errado |
+| `F17` | só canteiro depois dos dois arrastos, de pé no fim | os dois arrastos dividem o tile do meio, e ele conta **uma** vez |
+| `F10` | canteiro no arrasto, de pé no fim | a comparação em trânsito segue `<=`: nessa janela o assentamento também come pedra |
+| `F11a` | só canteiro, **sem esperar** | ele mede interpolação; esperar gastaria justamente os ticks em que há gente andando e chegaria ao passo final com todo mundo parado |
+| `F11c` | inalterado | já esperava por condição, com horizonte que absorve o assentamento |
+
+Toda asserção migrada confere **os dois** contadores. Isso é o que o aceite pedia
+("mais estrita, não só diferente"): antes, um `estradasRenderizadas === n` era
+compatível com um mundo em que o comando erguia tudo na hora; agora, o mesmo
+passo precisa provar que o arrasto **desenhou** e não ergueu, e depois que o
+tempo **ergueu** e esvaziou o canteiro.
+
+### Números remedidos nesta sessão (não estimados)
+
+- Cenário do roteiro novo (`tools/shots/F18d-2.js`, rua de 9 tiles em L):
+  soltar o arrasto → 9 planejados, 0 de pé, Pedra **30** intacta; tick **11** →
+  1 de pé + 8 planejados e Pedra **29** (a queda é exatamente pelos assentados);
+  o canteiro esvazia em **81 ticks**, com 9 de pé e Pedra **21** (30 − 9 × 1).
+- `screenshots/F18d-2-2-metade-erguida.png` (aberto com Read): o canteiro
+  translúcido contornado e o tile sólido na mesma tela, HUD "Pedra 29".
+
+### Evidência
+
+`test-output/F18d-2-shot.json` — 19 asserções, todas verdes, `errosDeConsole: []`.
+Não-regressão por código de saída (§8, sem abrir imagem): `F08`, `F10`, `F11a`,
+`F11c`, `F13b`, `F16b`, `F17`, `F17b`, `F17d`, `F17e`, `F18e`, `F22` — todos OK.
+`npm run verify` verde: 65 arquivos, **1036 testes**, `validate:data` 9 arquivos
+0 erros.
+
+### O que fica aberto
+
+O canteiro é desenho de geometria (retângulo translúcido + contorno), não sprite.
+Quando entrar arte de estrada, o canteiro precisa de estado próprio no
+`manifest.json` — hoje ele não tem entrada nenhuma, e a §9 pede uma por asset.
+Isso é decisão humana de arte, não trabalho de código; fica registrado aqui e não
+virou item de fila.
+
 ## Perguntas em aberto
 
 _(nenhuma no momento: as três que sobravam foram decididas pelo operador — ver "Ajuste pós-F10".)_

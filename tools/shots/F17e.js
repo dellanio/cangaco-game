@@ -19,6 +19,7 @@
 // da primeira foto, e a medida vai na mensagem do afirmar.
 
 const { retanguloDoCanvas, arrastarDentroDoCanvas } = require('./_canvas');
+const { erguerRua } = require('./_estradas');
 const economia = require('../../data/economy.json');
 const { predios } = require('../../data/buildings.json');
 
@@ -111,10 +112,19 @@ async function roteiro(ctx) {
   await arrastarDentroDoCanvas(page, canvas, [pEsq, pDir]);
   await avancar(1);
   await esperarFrame();
+  const desenhada = await estado();
+  afirmar(
+    desenhada.estradasPlanejadasRenderizadas === tilesDaRua && desenhada.estradasRenderizadas === 0,
+    `o arrasto deveria DESENHAR ${tilesDaRua} tiles e erguer 0, veio `
+      + `${desenhada.estradasPlanejadasRenderizadas} e ${desenhada.estradasRenderizadas}`,
+  );
+  // os cinco estagios so aparecem se o material chegar, e material so anda por rua DE PE:
+  // desde a F18d-1b quem ergue o tile e o laborer, e isso custa ticks
+  await erguerRua(ctx, { tiles: tilesDaRua });
   const comRua = await estado();
   afirmar(
-    comRua.estradasRenderizadas === tilesDaRua,
-    `a rua deveria ter ${tilesDaRua} tiles, veio ${comRua.estradasRenderizadas}`,
+    comRua.estradasRenderizadas === tilesDaRua && comRua.estradasPlanejadasRenderizadas === 0,
+    `a rua deveria estar DE PE com ${tilesDaRua} tiles, veio ${comRua.estradasRenderizadas} de pe e ${comRua.estradasPlanejadasRenderizadas} no canteiro`,
   );
   await page.keyboard.press('Escape');
   await esperarFrame();

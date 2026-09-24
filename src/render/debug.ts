@@ -68,8 +68,13 @@ export interface EstadoDebug {
    *  mesma estrutura: e assim que o roteiro prova que sprite e placeholder
    *  convivem, sem olhar pixel (§8). */
   spritesDePredio: Readonly<Record<string, string | null>>;
-  /** Quantos tiles de estrada (F08) a cena tem desenhados agora. */
+  /** Quantos tiles de estrada DE PE (F08) a cena tem desenhados agora. */
   estradasRenderizadas: number;
+  /** F18d-2 — quantos tiles de CANTEIRO (`estradasPlanejadas`, F18d-1b) a cena tem
+   *  desenhados agora: traçado que o jogador desenhou e o laborer ainda nao assentou.
+   *  Os dois numeros juntos sao o que o roteiro afirma: o arrasto planeja, o tempo
+   *  ergue, e a soma fecha em todo passo. */
+  estradasPlanejadasRenderizadas: number;
   /** A previa do arrasto de estrada em curso, ou null. `custo` e a pedra que o
    *  trecho custaria; `valida` e o que `canPlaceRoad` respondeu. */
   previaDeEstrada: PreviaDeEstrada | null;
@@ -147,6 +152,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     canteirosDeObra: {},
     spritesDePredio: {},
     estradasRenderizadas: 0,
+    estradasPlanejadasRenderizadas: 0,
     previaDeEstrada: null,
     centroDaVila: null,
     plantaFantasma: null,

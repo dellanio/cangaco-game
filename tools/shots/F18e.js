@@ -13,6 +13,7 @@
 // nunca pixel. O custo por tile vem de `data/terrain.json`.
 
 const { retanguloDoCanvas, arrastarDentroDoCanvas } = require('./_canvas');
+const { erguerRua } = require('./_estradas');
 const economia = require('../../data/economy.json');
 const terreno = require('../../data/terrain.json');
 
@@ -51,8 +52,9 @@ async function roteiro(ctx) {
   // ---- 0. ponto de partida --------------------------------------------------
   const abertura = await estado();
   afirmar(
-    abertura.estradasRenderizadas === 0,
-    `no inicio nao deveria haver estrada, veio ${abertura.estradasRenderizadas}`,
+    abertura.estradasRenderizadas === 0 && abertura.estradasPlanejadasRenderizadas === 0,
+    `no inicio nao deveria haver estrada nem canteiro, veio ${abertura.estradasRenderizadas} `
+      + `e ${abertura.estradasPlanejadasRenderizadas}`,
   );
   const pedraInicial = Number(await pedra());
 
@@ -83,16 +85,30 @@ async function roteiro(ctx) {
   );
   await capturar('previa-diagonal');
 
-  // ---- 2. soltar: a rua diagonal nasce, com a ponte de canto desenhada ------
+  // ---- 2. soltar: o traçado diagonal e DESENHADO; o laborer o ergue ---------
+  //       A ponte de canto (F18e) e o desenho de "ha passagem": ela so aparece na rua
+  //       de pe. O canteiro nao a ganha, entao a captura do fim e a que a mostra.
   await page.mouse.up();
   await avancar(1);
   await esperarFrame();
   s = await estado();
   afirmar(
+    s.estradasPlanejadasRenderizadas === tilesDaDiagonal && s.estradasRenderizadas === 0,
+    `soltar deveria desenhar ${tilesDaDiagonal} tiles em diagonal e erguer 0, veio `
+      + `${s.estradasPlanejadasRenderizadas} e ${s.estradasRenderizadas}`,
+  );
+  afirmar(s.previaDeEstrada === null, 'depois de soltar a previa some');
+  afirmar(
+    Number(await pedra()) === pedraInicial,
+    `o comando reserva, nao gasta: a Pedra deveria seguir em ${pedraInicial}, veio ${await pedra()}`,
+  );
+
+  await erguerRua(ctx, { tiles: tilesDaDiagonal });
+  s = await estado();
+  afirmar(
     s.estradasRenderizadas === tilesDaDiagonal,
     `deveriam existir ${tilesDaDiagonal} tiles de estrada, veio ${s.estradasRenderizadas}`,
   );
-  afirmar(s.previaDeEstrada === null, 'depois de soltar a previa some');
   const pedraDepois = Number(await pedra());
   afirmar(
     pedraDepois === pedraInicial - tilesDaDiagonal * custoPorTile,
