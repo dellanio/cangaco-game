@@ -20,6 +20,7 @@ import { step } from '../src/sim/tick';
 import { alertasDoEstado, CAUSAS_DE_ALERTA } from '../src/sim/selectors';
 import type { Alerta, CausaDeAlerta } from '../src/sim/selectors';
 import { trabalhadorDoTipo } from '../src/sim/ocupacao';
+import temaSertao from '../data/theme-sertao.json';
 import { gravarEvidencia } from './helpers/evidence';
 import {
   avancar, cenarioDePedreira, comRendimento, semAUnidade, semEstrada, semOcupante, veioDe,
@@ -194,6 +195,30 @@ describe('F22 — determinismo da lista', () => {
     const antes = JSON.stringify(estado);
     expect(alertas(estado)).toEqual(alertas(estado));
     expect(JSON.stringify(estado)).toBe(antes);
+  });
+});
+
+describe('F22 — rotulo e causa nao se separam', () => {
+  it('toda causa tem rotulo no tema, e nenhum rotulo sobra', () => {
+    // Estrutural, nao textual: itera a lista REAL importada de `sim/` e exige a
+    // ida e a volta. Causa nova nasce com texto, ou o `npm run verify` reprova;
+    // rotulo sem causa e alerta que alguem tirou e esqueceu de limpar.
+    const doTema = Object.keys(temaSertao.alertas.causas);
+    expect([...doTema].sort()).toEqual([...CAUSAS_DE_ALERTA].sort());
+    for (const causa of CAUSAS_DE_ALERTA) {
+      const rotulo = (temaSertao.alertas.causas as Record<string, string>)[causa];
+      expect(rotulo, `rotulo da causa '${causa}'`).toBeTruthy();
+    }
+  });
+
+  it('o tema e da TELA: `sim/` nao le rotulo nenhum', () => {
+    // A causa que a sim devolve e id neutro, em ingles com hifen — nunca o
+    // texto do jogador (CLAUDE.md §9). Se um dia um alerta vier ja traduzido,
+    // e porque `sim/` foi ler o tema.
+    const rotulos = Object.values(temaSertao.alertas.causas);
+    const doEstado = alertas(semEstrada(pedreiraVaga())).map((a) => a.causa);
+    expect(doEstado.length).toBeGreaterThan(0);
+    for (const causa of doEstado) expect(rotulos).not.toContain(causa);
   });
 });
 

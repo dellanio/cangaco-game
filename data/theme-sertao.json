@@ -122,6 +122,15 @@
     "pausar": "Parar", "retomar": "Voltar ao trabalho", "pausado": "Parado",
     "demolir": "Derrubar", "demolirDesc": "devolve parte do material"
   },
+  "alertas": {
+    "_doc": "F22. Uma chave por causa de alerta, e a chave E o id neutro de CAUSAS_DE_ALERTA (src/sim/selectors.ts). Causa sem rótulo aqui, ou rótulo sobrando sem causa, reprova o npm run verify — o guarda está em tests/F22-alertas.test.ts. O texto é o do JOGADOR: diz o que fazer, não o nome do campo que ficou nulo.",
+    "titulo": "Avisos",
+    "causas": {
+      "sem-trabalhador": "Sem quem trabalhe",
+      "sem-estrada": "Sem estrada até o armazém",
+      "veio-esgotado": "O veio secou"
+    }
+  },
   "obra": {
     "marcacao": "marcação no chão",
     "fundacao": "alicerce pronto",

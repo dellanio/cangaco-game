@@ -55,6 +55,24 @@
       #menu-build .item[aria-disabled="true"] {
         cursor: not-allowed; opacity: 0.45; filter: grayscale(1);
       }
+      /* F22: os avisos. SOBREPOSICAO na celula do canvas, como o painel, mas
+         ancorada no canto oposto (`start end` contra o `end start` dele): os
+         dois aparecem juntos e nao podem se cobrir. O roteiro da F22 MEDE os
+         dois retangulos, nao confia nesta linha. */
+      #alertas {
+        grid-column: 1; grid-row: 2; place-self: start end; margin: 12px;
+        box-sizing: border-box; max-width: 248px; padding: 6px 8px;
+        border: 2px solid #8c4a25; border-radius: 4px;
+        background: #1e1a14; color: #ede3d0;
+        font: 14px/1.3 system-ui, sans-serif;
+        display: flex; flex-direction: column; gap: 3px;
+      }
+      #alertas[hidden] { display: none; }
+      #alertas h2 { margin: 0 0 2px; font-size: 13px; font-weight: 700; opacity: 0.7; }
+      #alertas .alerta { display: flex; align-items: baseline; gap: 8px; }
+      #alertas .alerta[hidden] { display: none; }
+      #alertas .alerta .rotulo { color: #c9974b; flex: 1; }
+      #alertas .alerta .contagem { font-weight: 700; font-variant-numeric: tabular-nums; }
       /* F13b: SOBREPOSICAO na celula do canvas, nao coluna nova. Uma terceira
          coluna encolheria o canvas e reprovaria o roteiro da F06, que afirma
          canvas.right <= painel.left. A F16b so renomeou (#painel-escola ->
@@ -118,6 +136,7 @@
   <body>
     <div id="hud"></div>
     <div id="jogo"></div>
+    <aside id="alertas" hidden></aside>
     <aside id="painel-predio" hidden></aside>
     <aside id="menu-build"></aside>
     <script type="module" src="/src/main.ts"></script>

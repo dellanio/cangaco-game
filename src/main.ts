@@ -20,6 +20,7 @@ import { iniciarJogo } from './render/game';
 import { montarHud } from './ui/hud';
 import { montarMenuBuild } from './ui/menu-build';
 import { montarPainelPredio } from './ui/painel-predio';
+import { montarAlertas } from './ui/alertas';
 import { montarAvisoDoTempo } from './ui/aviso-tempo';
 import { criarFerramenta } from './input/ferramenta';
 import { criarSelecao } from './input/selecao';
@@ -73,6 +74,10 @@ const painel = montarPainelPredio(selecao, (comando) => {
   sessao.enviar(comando);
 });
 
+// F22 — o aviso de predio parado. Nao tem evento nem assinatura propria: e
+// derivado do estado, entao basta ser atualizado junto dos outros.
+const alertas = montarAlertas();
+
 const jogo = iniciarJogo(ferramenta, entrada, laco);
 
 function atualizar(s: GameState): void {
@@ -80,6 +85,7 @@ function atualizar(s: GameState): void {
   hud.atualizar(s);
   menu.atualizar(s);
   painel.atualizar(s);
+  alertas.atualizar(s);
 }
 
 sessao.aoMudar(atualizar);
