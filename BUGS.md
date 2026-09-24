@@ -30,44 +30,30 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
 
 ## Abertos
 
-## BUG-A — preso na ferramenta de construcao: nao ha saida obvia
-- feature: F06-menu-build-planta
-- severidade: trava
-- repro: jogando (relato do operador, 2026-09-24). Abrir o jogo, clicar
-  qualquer item do menu Construir.
-- esperado: o jogador consegue largar a ferramenta com o gesto que ele tenta
-  primeiro — clicar de novo no item ja selecionado — e com o gesto de RTS —
-  botao direito. E consegue ver qual item esta ativo.
-- observado: so `Esc` cancela, e nada na tela diz isso. Clicar no botao ja
-  ativo nao desmarca (`menu-build.ts` chama `ferramenta.selecionar(id)` sempre,
-  e `selecionar` so limpa quando recebe `null`). Botao direito nao faz nada:
-  `WorldScene` so trata `leftButtonDown`/`leftButtonReleased` e o botao do meio.
-  O destaque do item ativo e so `aria-pressed`, e o operador nao percebeu qual
-  estava selecionado.
-- evidencia: relato de sessao de jogo; `src/ui/menu-build.ts`,
-  `src/input/ferramenta.ts:53`, `src/render/scenes/WorldScene.ts`
-- status: aberto
-- nota: o botao direito e **ordem de movimento militar** no GDD §2.1 (F26). A
-  precedencia — com ferramenta ativa cancela, sem ferramenta fica livre para a
-  ordem militar — tem de ficar escrita no GDD, ou a F26 descobre isso sozinha.
+## BUG-C — o roteiro da F22 falha: o aviso "O veio secou" aparece onde ele afirma so "sem-trabalhador"
 
-## BUG-B — o x da fila da Casa do Coronel nao remove o pedido
-- feature: F13b-schoolhouse-painel
+- feature: F22-avisos (o defeito nasceu na F-T2a)
 - severidade: errado
-- repro: jogando (relato do operador, 2026-09-24). Abrir o painel da
-  schoolhouse, enfileirar, clicar no x de um item.
-- esperado: o escopo escrito da F13b diz "cancelamento de item, emitindo
-  `EnqueueTraining`/`CancelTraining`". O clique no x tira o item da fila, ou o
-  painel diz por que nao da.
-- observado: clicar no x nao remove nada.
-- evidencia: `screenshots/F13b-*.png` mostra o x por item; relato de sessao.
-- status: aberto — **a diagnosticar antes de corrigir** (decisao do operador):
-  (a) o clique nao chega ao botao; (b) chega e nao emite comando; (c) emite e a
-  sim recusa, e ai o conserto e o painel dizer o motivo, nao permitir o
-  cancelamento.
+- repro: `npm run shot -- F22` (saida 1). Nao depende de semente: o cenario do
+  roteiro e fixo.
+- esperado: o roteiro afirma que o painel de avisos mostra UM aviso,
+  `sem-trabalhador`, com contagem 1.
+- observado: vem `[{sem-trabalhador, 1}, {veio-esgotado, "O veio secou", 1}]`.
+- evidencia: `test-output/F22-shot.json`. **Medido nesta sessao (2026-09-24):
+  falha identica com as mudancas do BUG-A/BUG-B guardadas no stash**, ou seja,
+  nao e regressao destes consertos — veio da F-T2a (`f57a3c1`), que trocou o
+  `veio: 200` do predio por rendimento por tile e passou a esgotar a jazida.
+- status: aberto — **a diagnosticar antes de corrigir**. Ha dois desfechos
+  opostos e nao da para escolher no olho:
+  (a) o comportamento novo esta CERTO e quem envelheceu foi a afirmacao do
+      roteiro, que foi escrita quando nenhuma pedreira secava; ou
+  (b) a pedreira do cenario da F22 esgota rapido demais, e ai o numero errado
+      esta em `data/resources.json` (`rock.rendimentoPorTile`) ou no alcance da
+      colheita — caso de `BALANCE_LOG.md`, nao de roteiro.
+  Registrado sem corrigir por causa disso.
+- nota: e a segunda vez que a F-T2a aparece num roteiro de outra feature. A
+  contagem de tiles ao alcance ja esta no `BALANCE_LOG.md` desde `f57a3c1`.
 
-
----
 
 ## Polimento
 

@@ -29,6 +29,17 @@ export interface EntradaDoMapa {
   aoSoltar(tile: TileClicado): void;
   /** O ponteiro saiu do canvas com o botao apertado: CANCELA o arrasto, sem emitir. */
   aoSairDoMapa(): void;
+  /**
+   * BUG-A — botao direito no mapa. COM ferramenta ativa ele larga a ferramenta,
+   * que e o padrao de RTS e a segunda saida do modo de construir. SEM ferramenta
+   * ele nao faz nada aqui: o botao direito de mao vazia e a ordem de movimento
+   * militar do GDD §2.1, e a F26 e quem a implementa.
+   *
+   * Devolve `true` quando CONSUMIU o gesto. Nao e enfeite: e a precedencia
+   * escrita em codigo, para a F26 saber que so recebe o que voltar `false` em
+   * vez de descobrir o conflito na tela.
+   */
+  aoClicarDireito(): boolean;
   /** O trecho que esta sendo arrastado, em ordem; `null` fora de um arrasto. */
   trecho(): readonly TileClicado[] | null;
 }
@@ -93,6 +104,13 @@ export function criarEntradaDoMapa(
       const tiles = arrasto;
       arrasto = null;
       emitir({ type: ferramenta.modo === 'demolir-estrada' ? 'DemolishRoad' : 'PlaceRoad', tiles });
+    },
+    aoClicarDireito() {
+      if (ferramenta.modo === 'nenhum') return false;
+      // Cancelar tambem derruba o arrasto em curso: `criarEntradaDoMapa` ja
+      // escuta `aoMudar` para isso, e nenhum comando sai daqui.
+      ferramenta.cancelar();
+      return true;
     },
     aoSairDoMapa() {
       arrasto = null;

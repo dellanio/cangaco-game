@@ -11,6 +11,7 @@ import { canPlace } from '../src/sim/placement';
 import { deepFreeze } from '../src/sim/freeze';
 import { opcoesDoMenuBuild } from '../src/sim/selectors';
 import { criarFerramenta } from '../src/input/ferramenta';
+import { criarEntradaDoMapa } from '../src/input/colocar';
 import { ligarTeclado } from '../src/input/teclado';
 import { validarTudo } from '../tools/data-rules.js';
 import { ARQUIVOS } from '../tools/data-schema.js';
@@ -422,6 +423,32 @@ describe('F06 — ferramenta ativa', () => {
     expect(avisos).toEqual([]);
   });
 
+  // BUG-A. O que travava o jogador: escolhida uma ferramenta, o menu nao tinha
+  // saida visivel — clicar de novo no mesmo botao era no-op, porque `definir`
+  // sai calado quando modo e predio nao mudaram.
+  it('alternar no que JA esta ativo larga a ferramenta', () => {
+    const ferramenta = criarFerramenta();
+    const avisos: Array<[string | null, string]> = [];
+    ferramenta.aoMudar((p, m) => avisos.push([p, m]));
+    ferramenta.alternar('predio', 'quarry');
+    expect([ferramenta.modo, ferramenta.predioAtivo]).toEqual(['predio', 'quarry']);
+    ferramenta.alternar('predio', 'quarry');
+    expect([ferramenta.modo, ferramenta.predioAtivo]).toEqual(['nenhum', null]);
+    // O aviso do desligamento tem de SAIR: e ele que apaga o destaque no menu.
+    expect(avisos).toEqual([['quarry', 'predio'], [null, 'nenhum']]);
+  });
+
+  it('alternar em OUTRO item troca de ferramenta, nao desliga', () => {
+    const ferramenta = criarFerramenta();
+    ferramenta.alternar('predio', 'quarry');
+    ferramenta.alternar('predio', 'woodcutters');
+    expect([ferramenta.modo, ferramenta.predioAtivo]).toEqual(['predio', 'woodcutters']);
+    ferramenta.alternar('estrada');
+    expect([ferramenta.modo, ferramenta.predioAtivo]).toEqual(['estrada', null]);
+    ferramenta.alternar('estrada');
+    expect([ferramenta.modo, ferramenta.predioAtivo]).toEqual(['nenhum', null]);
+  });
+
   it('nao toca o GameState: rodar sobre um estado congelado nao lanca e nao o altera', () => {
     const congelado = deepFreeze(createInitialState(1));
     const antes = JSON.stringify(congelado);
@@ -429,6 +456,48 @@ describe('F06 — ferramenta ativa', () => {
     ferramenta.selecionar('quarry');
     ferramenta.cancelar();
     expect(JSON.stringify(congelado)).toBe(antes);
+  });
+});
+
+// BUG-A, segunda saida: o botao direito. A precedencia esta escrita no GDD
+// §2.1 e e ELA que este bloco guarda — com ferramenta na mao o gesto e
+// consumido; de mao vazia ele passa adiante, intocado, para a ordem militar da
+// F26. O valor de retorno existe para isso ser afirmavel sem tela.
+describe('F06 — botao direito larga a ferramenta, e so ela', () => {
+  const semComando = (): never => {
+    throw new Error('o botao direito nao pode emitir comando nenhum');
+  };
+
+  it('com ferramenta ativa: consome o gesto e larga a ferramenta', () => {
+    for (const armar of [
+      (f: ReturnType<typeof criarFerramenta>) => f.selecionar('quarry'),
+      (f: ReturnType<typeof criarFerramenta>) => f.selecionarEstrada(),
+      (f: ReturnType<typeof criarFerramenta>) => f.selecionarDemolicao(),
+    ]) {
+      const ferramenta = criarFerramenta();
+      const entrada = criarEntradaDoMapa(ferramenta, semComando);
+      armar(ferramenta);
+      expect(entrada.aoClicarDireito()).toBe(true);
+      expect([ferramenta.modo, ferramenta.predioAtivo]).toEqual(['nenhum', null]);
+    }
+  });
+
+  it('de mao vazia: NAO consome — e o que sobra para a ordem militar da F26', () => {
+    const ferramenta = criarFerramenta();
+    const entrada = criarEntradaDoMapa(ferramenta, semComando);
+    expect(entrada.aoClicarDireito()).toBe(false);
+    expect(ferramenta.modo).toBe('nenhum');
+  });
+
+  it('cancelar no meio de um arrasto de estrada descarta o trecho, sem emitir', () => {
+    const ferramenta = criarFerramenta();
+    const entrada = criarEntradaDoMapa(ferramenta, semComando);
+    ferramenta.selecionarEstrada();
+    entrada.aoClicar({ gx: 5, gy: 5 });
+    entrada.aoArrastar({ gx: 8, gy: 5 });
+    expect(entrada.trecho()).not.toBeNull();
+    expect(entrada.aoClicarDireito()).toBe(true);
+    expect(entrada.trecho()).toBeNull();
   });
 });
 

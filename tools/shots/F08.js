@@ -188,8 +188,14 @@ async function roteiro(ctx) {
   afirmar((await hud()).stone === String(pedraDepoisDeDemolir), 'sair do canvas nao deveria gastar pedra');
 
   // 6. Esc no MEIO do arrasto tambem cancela e desmarca a ferramenta
-  await page.click('[data-ferramenta="estrada"]');
-  await esperarFrame();
+  // Aqui NAO se clica de novo no botao da estrada: desde o BUG-A, clicar no que
+  // ja esta ativo LARGA a ferramenta, e o passo 5 a deixou ativa de proposito —
+  // sair do canvas cancela o arrasto, nunca a ferramenta. Afirmar isso vale mais
+  // que o clique que estava aqui, que so repetia o que ja era verdade.
+  afirmar(
+    await page.getAttribute('[data-ferramenta="estrada"]', 'aria-pressed') === 'true',
+    'sair do canvas deveria cancelar o arrasto e MANTER a ferramenta na mao',
+  );
   await arrastarDentroDoCanvas(page, canvas, [livre0, livre1], { soltar: false });
   await esperarFrame();
   afirmar((await estado()).previaDeEstrada !== null, 'antes do Esc o arrasto deveria ter previa');

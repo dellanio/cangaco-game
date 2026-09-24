@@ -3384,9 +3384,19 @@ sobrepostos podem mirar o mesmo tile no mesmo tick; a colheita é aplicada em
 ordem de prédio e nenhuma quantidade fica negativa, então o efeito é uma
 colherada a menos, nunca estado inválido. **Fecha na F-T2c.**
 
+### Decidido pelo operador depois de eu medir (2026-09-24)
+
+- **Os 34,5 KB ficam.** Levantei a divergência entre o número medido e o "+30 KB"
+  escrito na perna 4 do aceite, e o operador decidiu: *"Os 34,5 KB ficam. O
+  aceite errou a estimativa."* A forma `{ tipo, quantidade }` por tile fica como
+  está, o teto do teste continua o que a medição mandou, e o número do
+  `BUILD_PLAN.md` é que está errado — **não reescrevi o item** (§11: o critério
+  vem da fila, intocado); quem o corrige é o operador, se quiser.
+
 ### Aberto, para decisão do operador
 
-- **O custo do save divergiu do número do item.** A perna 4 do aceite escreve
+- ~~**O custo do save divergiu do número do item.**~~ **Decidido acima.** A
+  perna 4 do aceite escreve
   "+30 KB no save, medido: 900 tiles de recurso". O valor **medido** agora, com a
   forma que o próprio item manda (`{ tipo, quantidade }` por tile), é **35 369 B
   = 34,5 KB a 883 tiles**, ou ~40 B/tile. Não encolhi a forma nem arredondei o
@@ -3406,3 +3416,154 @@ colherada a menos, nunca estado inválido. **Fecha na F-T2c.**
   árvore sobre grama não se separar o bastante, é assunto da F-T2b (que põe a
   árvore em cena como obstáculo) ou da F-TR, não desta feature.
 - O marcador foi conferido **no nível de zoom inicial**, como o terreno da F-T1.
+
+
+## BUG-A e BUG-B corrigidos: a saída da ferramenta e o × da fila (2026-09-24)
+
+Sessão de bug, não de fila: os dois vieram de sessão de jogo do operador e o
+BUG-A era `trava`. O BUG-B foi **diagnosticado antes de corrigir**, como ele
+pediu.
+
+### BUG-B — o veredicto é a causa (a), e o mecanismo é o relógio
+
+O operador ofereceu três causas. A resposta é **(a) — o clique não chega ao
+botão**, e o motivo específico dentro de (a) é o que ele já suspeitava: *o painel
+redesenhando e perdendo o listener*.
+
+Cadeia, toda verificada abrindo arquivo:
+
+1. `src/ui/painel-escola.ts:63-65` — o × **emite** `CancelTraining` com o predio
+   e o item certos. A fiação existe. Isso elimina (b).
+2. `src/sim/systems/escolas.ts:63-68` — `aplicarCancelTraining` filtra o item por
+   id e **nunca recusa**, nem para item em `treinando`. Isso elimina (c), e com
+   ele o conserto "o painel dizer por que não dá": não há motivo para dizer.
+3. `src/ui/painel-predio.ts` — `atualizar` fazia `raiz.replaceChildren()` **sem
+   diff nenhum**, e `src/main.ts:83-97` liga `painel.atualizar` em
+   `sessao.aoMudar`. Ou seja: **o painel inteiro era destruído e refeito 10 vezes
+   por segundo**. O botão que recebeu o `mousedown` já não existia no `mouseup`,
+   e o navegador só dispara `click` quando os dois caem no mesmo elemento.
+
+**Por que nenhum teste pegou:** `tools/shot.js:131` abre
+`http://localhost:5175/?pausado`. **Todo roteiro roda com o laço parado**, então
+o painel nunca se redesenhava no meio de um clique. O roteiro da F13b cancelava
+pelo × e passava — o passo estava certo, a condição é que não era a do jogador.
+
+**Medido** (sonda temporária `tools/shots/_probe-bugB.js`, mesmo gesto em três
+condições):
+
+| condição | fila antes → depois | removeu? |
+|---|---|---|
+| pausado, aperto de 150 ms | 1 → 0 | sim |
+| **andando, aperto de 150 ms** | **1 → 1** | **não** |
+| andando, `page.click()` instantâneo | 2 → 1 | sim |
+
+A terceira linha é a que explica por que um roteiro comum nunca acharia isso:
+`page.click()` aperta e solta no mesmo instante, sem tick no meio.
+
+**Conserto:** enquanto houver ponteiro apertado dentro de `#painel-predio`, o
+redesenho espera; o último estado fica guardado e entra ao soltar. O destravar
+escuta a **janela** (`pointerup`/`pointercancel`), não o painel, e passa por um
+`setTimeout(…, 0)` — redesenhar dentro do próprio `pointerup` destruiria o botão
+meio evento antes de o `click` nascer, que é o mesmo bug mais tarde.
+
+Depois do conserto, a mesma sonda: **andando, aperto de 150 ms → 1 → 0**.
+
+### BUG-A — as três partes
+
+1. **Clicar no que já está ativo larga a ferramenta.** `input/ferramenta.ts`
+   ganhou `alternar(modo, predio?)`. A comparação mora ali, e não no botão do
+   menu: no menu ela viraria uma segunda cópia de `modo`/`predioAtivo`. `definir`
+   sai calado quando nada muda, então a comparação vem **antes** dela — era
+   exatamente esse retorno silencioso que fazia o reclique ser no-op.
+2. **Botão direito com ferramenta ativa cancela.** A regra está em
+   `input/colocar.ts:aoClicarDireito()`, que devolve **se consumiu o gesto**. A
+   cena só encaminha (`WorldScene`), e `disableContextMenu()` impede o menu do
+   navegador de cobrir o jogo. A precedência ficou escrita no **GDD §2.1**, com o
+   nome do arquivo e da função: a F26 recebe os gestos que voltarem `false` e não
+   precisa reabrir a decisão.
+3. **O destaque.** Era borda creme sobre fundo `#3a3226`, a distância 32 do
+   `#2a241b` dos outros itens. Agora muda fundo, texto e borda de uma vez e ganha
+   barra lateral. **Medido no roteiro da F06**, não descrito: fundo a 117 e borda
+   a 367 (soma das diferenças por canal, de 765 possíveis), contra piso 60.
+
+### Verificado (evidência aberta nesta sessão)
+
+- `npm run verify` verde: 68 arquivos, 1085 testes, typecheck e lint limpos.
+- `npm run shot -- F06` saída 0, com as três partes do BUG-A afirmadas.
+  Screenshot `F06-1-item-ativo-destacado.png` aberto: a Pedreira está
+  inconfundível na lista.
+- `npm run shot -- F13b` saída 0, **e o guarda novo acusa**: desligado o conserto
+  no `painel-predio.ts`, o roteiro falha em *"com o jogo andando, apertar o x
+  deveria remover 'f12' da fila"*. Provado nos dois sentidos.
+- Não-regressão, por código de saída: F04, F07, F08, F11a, F16b, F17b, F18a,
+  F18e, F-T1, F-T2a — todos 0.
+
+### Proteção permanente × evidência da sessão (CLAUDE.md §8)
+
+- **Permanente, dentro do `npm run verify`:** `tests/F06-build.test.ts` ganhou o
+  `alternar` (liga, desliga, troca) e a precedência do botão direito nos três
+  casos — com ferramenta consome e larga, de mão vazia **não** consome, e cancelar
+  no meio de um arrasto descarta o trecho sem emitir.
+- **Permanente, fora do `verify`:** o passo 9b do roteiro da F13b, que roda com o
+  laço **andando** e aperta por 150 ms. É o único lugar do projeto que exerce o
+  painel despausado.
+- **Evidência da sessão, e só dela:** `tools/shots/_probe-bugB.js`, apagado neste
+  mesmo commit. A tabela acima é o que fica dele.
+
+### O roteiro da F08 codificava o comportamento antigo
+
+O passo 6 clicava em `[data-ferramenta="estrada"]` quando a estrada **já estava
+ativa** — inofensivo antes, desligava a ferramenta depois do BUG-A. Não troquei o
+clique por outro clique: o passo agora **afirma** que sair do canvas cancela o
+arrasto e **mantém** a ferramenta na mão, que é mais estrito do que o que estava
+lá e é a invariante que o passo 5 existe para produzir.
+
+### Achado de lado: BUG-C (registrado, não corrigido)
+
+`npm run shot -- F22` falha. O painel de avisos traz `veio-esgotado` ("O veio
+secou") além do `sem-trabalhador` que o roteiro afirma sozinho.
+
+**Medido:** guardei minhas mudanças no stash e rodei — **falha idêntica**. Não é
+regressão destes consertos; veio da F-T2a (`f57a3c1`), que trocou o `veio: 200`
+do prédio por rendimento por tile e passou a esgotar a jazida de verdade.
+
+Não corrigi porque há dois desfechos opostos e nenhum se escolhe no olho: ou o
+comportamento novo está certo e quem envelheceu foi a afirmação do roteiro, ou a
+pedreira do cenário da F22 esgota rápido demais — e aí o número errado está em
+`data/resources.json`, o que é `BALANCE_LOG.md` e não roteiro. Está em `BUGS.md`
+com os dois ramos escritos.
+
+### Lacuna de aceite, para decisão do operador
+
+O *Aceite* escrito da F13b é *"screenshot do painel com fila cheia, e roteiro que
+enfileira por clique e confirma a fila no estado"*. Ele cobre **enfileirar**, não
+**cancelar** — cancelar aparece só no *Escopo*. Ou seja: o aceite escrito da F13b
+**continuava passando** com o × quebrado. Não virei a chave dela para `false`, e
+a decisão de virar (ou de reescrever o aceite) é sua.
+
+### Decidido aqui, e por quê
+
+- **`ferramenta.alternar` em vez de lógica no botão.** Duas cópias do mesmo
+  estado é como duas verdades começam a divergir.
+- **`aoClicarDireito` devolve `boolean`.** A precedência do GDD §2.1 vira coisa
+  afirmável sem tela, e a F26 herda um contrato em vez de um conflito.
+- **O painel adia, não deixa de redesenhar.** O redesenho integral a 10 Hz
+  continua de pé; o que o conserto garante é que o nó sob o dedo do jogador
+  sobrevive ao aperto. Trocar `replaceChildren` por reconciliação com chave seria
+  a correção de raiz, e era refatoração ampla não pedida — está abaixo, como
+  dívida declarada.
+- **`getComputedStyle` declarado no `eslint.config.mjs`** para
+  `tools/shots/**/*.js`, no mesmo bloco e pelo mesmo motivo que `window` já
+  estava: a closure roda no browser. Configurar a regra para o caso legítimo, não
+  abrir exceção (§10).
+
+### Dívida declarada (e quem a fecha)
+
+- **`painel-predio.ts` refaz o DOM inteiro a cada tick.** Além do clique, isso
+  derruba foco e `:active` e vai reaparecer em todo painel futuro. A correção de
+  raiz é reconciliar por chave em vez de `replaceChildren`. Não entra por
+  iniciativa minha: é item de fila.
+- **`ferramentaAtiva` publica só `predioAtivo`.** No modo estrada o campo é
+  `null`, igual a "nenhuma ferramenta" — o roteiro da F06 teve de afirmar por
+  `aria-pressed`. Publicar o `modo` resolveria, e não fiz porque render não era o
+  alvo destes bugs.

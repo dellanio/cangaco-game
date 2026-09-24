@@ -26,6 +26,17 @@ export interface Ferramenta {
   selecionar(idDoPredio: string | null): void;
   selecionarEstrada(): void;
   selecionarDemolicao(): void;
+  /**
+   * BUG-A — escolher o que JA esta escolhido larga a ferramenta. E o primeiro
+   * gesto que o jogador tenta quando quer sair do modo de construir, e sem ele a
+   * unica saida era o `Esc`, que nada na tela anuncia. Nao substitui o `Esc`:
+   * soma a ele.
+   *
+   * Existe aqui, e nao no botao do menu, porque a comparacao e com o estado da
+   * ferramenta — no menu ela viraria uma segunda copia de `modo`/`predioAtivo`,
+   * que e como duas verdades comecam a divergir.
+   */
+  alternar(novoModo: ModoDaFerramenta, novoPredio?: string | null): void;
   cancelar(): void;
   /** Devolve o desinscrever. So avisa quando o modo ou o predio de fato mudou. */
   aoMudar(ouvinte: OuvinteDaFerramenta): () => void;
@@ -59,6 +70,13 @@ export function criarFerramenta(): Ferramenta {
     },
     selecionarDemolicao() {
       definir('demolir-estrada', null);
+    },
+    alternar(novoModo, novoPredio = null) {
+      // `definir` sai calado quando nada muda, entao a comparacao tem de vir
+      // ANTES dela: e justamente o caso "ja esta ativo" que precisa virar
+      // `nenhum` em vez de nao fazer nada.
+      if (novoModo === modo && novoPredio === predioAtivo) definir('nenhum', null);
+      else definir(novoModo, novoPredio);
     },
     cancelar() {
       definir('nenhum', null);

@@ -36,7 +36,13 @@ export default tseslint.config(
     // `window` de verdade num script de Node comum.
     files: ['tools/shot.js', 'tools/shots/**/*.js'],
     languageOptions: {
-      globals: { fetch: 'readonly', setTimeout: 'readonly', window: 'readonly' },
+      // `getComputedStyle` entrou pelo mesmo motivo de `window`, e com o mesmo
+      // escopo: o roteiro da F06 MEDE o destaque do item ativo dentro de um
+      // `page.$eval`, que roda no browser (BUG-A, parte 3).
+      globals: {
+        fetch: 'readonly', setTimeout: 'readonly', window: 'readonly',
+        getComputedStyle: 'readonly',
+      },
     },
   },
   {

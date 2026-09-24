@@ -85,6 +85,76 @@ async function roteiro(ctx) {
     `${idLiberado} deveria ficar marcado como ativo no painel`,
   );
 
+  // 3b. BUG-A, parte 3 — o destaque do item ativo, MEDIDO. O operador nao
+  // percebeu qual item estava selecionado, e "agora esta melhor" nao e
+  // evidencia: o que se afirma aqui e a DISTANCIA entre o item ativo e um item
+  // inativo, lida do estilo computado. O numero pode mudar quando a paleta
+  // mudar; o que nao pode e a distancia encolher de volta.
+  const estiloDoItem = (id) => page.$eval(
+    `[data-predio="${id}"]`,
+    (n) => {
+      const e = getComputedStyle(n);
+      return { fundo: e.backgroundColor, borda: e.borderTopColor, texto: e.color, sombra: e.boxShadow };
+    },
+  );
+  /** Soma das diferencas por canal entre duas cores `rgb(...)`. 0 = identicas. */
+  const distancia = (a, b) => {
+    const canais = (c) => (c.match(/\d+/g) ?? []).slice(0, 3).map(Number);
+    const [x, y] = [canais(a), canais(b)];
+    return x.reduce((soma, v, i) => soma + Math.abs(v - (y[i] ?? 0)), 0);
+  };
+  const idInativo = 'woodcutters';
+  const ativo = await estiloDoItem(idLiberado);
+  const inativo = await estiloDoItem(idInativo);
+  // 60 sobre 765 possiveis e baixo de proposito: e o piso do "da para ver de
+  // relance", nao a medida do gosto de ninguem. O destaque anterior ao BUG-A
+  // dava 32 no fundo, e foi o que passou despercebido.
+  afirmar(
+    distancia(ativo.fundo, inativo.fundo) >= 60,
+    `o fundo do item ativo deveria destacar do inativo, veio ${ativo.fundo} contra ${inativo.fundo}`,
+  );
+  afirmar(
+    distancia(ativo.borda, inativo.borda) >= 60,
+    `a borda do item ativo deveria destacar da inativa, veio ${ativo.borda} contra ${inativo.borda}`,
+  );
+  // A barra lateral: quem varre a lista com o olho a acha antes de comparar tom.
+  afirmar(
+    ativo.sombra !== 'none' && inativo.sombra === 'none',
+    `so o item ativo deveria ter a barra lateral, veio ${ativo.sombra} contra ${inativo.sombra}`,
+  );
+  await capturar('item-ativo-destacado');
+
+  // 3c. BUG-A, parte 1 — clicar de novo no item JA ativo larga a ferramenta.
+  // Era o primeiro gesto que o jogador tentava, e nao fazia nada: a unica saida
+  // era o `Esc`, que nada na tela anuncia.
+  await page.click(`[data-predio="${idLiberado}"]`);
+  await page.waitForTimeout(200);
+  afirmar(
+    (await estado()).ferramentaAtiva === null,
+    'clicar de novo no item ativo deveria largar a ferramenta',
+  );
+  afirmar(
+    await page.getAttribute(`[data-predio="${idLiberado}"]`, 'aria-pressed') === 'false',
+    'largada a ferramenta, o item nao deveria continuar marcado',
+  );
+  // E a ferramenta do menu lateral (estrada) alterna pelo mesmo gesto. Aqui a
+  // afirmacao e o `aria-pressed`, e nao `ferramentaAtiva`: a cena so publica o
+  // PREDIO ativo (`WorldScene`: `ferramenta.predioAtivo`), entao no modo estrada
+  // esse campo e null nos dois lados e nao distinguiria nada. O `aria-pressed` e
+  // o que o jogador ve, que e o que este passo existe para guardar.
+  const marcado = (seletor) => page.getAttribute(seletor, 'aria-pressed');
+  await page.click('[data-ferramenta="estrada"]');
+  await page.waitForTimeout(200);
+  afirmar(await marcado('[data-ferramenta="estrada"]') === 'true', 'a estrada deveria ativar');
+  await page.click('[data-ferramenta="estrada"]');
+  await page.waitForTimeout(200);
+  afirmar(await marcado('[data-ferramenta="estrada"]') === 'false', 'clicar de novo na estrada deveria larga-la');
+
+  // volta ao estado que os passos 4-7 assumem
+  await page.click(`[data-predio="${idLiberado}"]`);
+  await page.waitForTimeout(200);
+  afirmar((await estado()).ferramentaAtiva === idLiberado, 'a ferramenta deveria voltar para os passos seguintes');
+
   // ponto de pagina no centro de um tile, dada a camera atual
   async function pontoDoTile(gx, gy) {
     const { camera } = await estado();
@@ -155,6 +225,35 @@ async function roteiro(ctx) {
     `depois do Esc ${idLiberado} deveria sair de marcado`,
   );
   await capturar('apos-esc');
+
+  // 8. BUG-A, parte 2 — o botao direito no mapa, e a precedencia do GDD §2.1.
+  // COM ferramenta na mao ele larga a ferramenta e NAO planta nada. DE MAO VAZIA
+  // ele nao faz nada aqui: essa fatia fica inteira para a ordem militar da F26,
+  // e e por isso que este passo mede a contagem de predios nos dois casos.
+  const quantosPredios = async () => Object.keys((await estado()).prediosDoEstado).length;
+  const antesDoDireito = await quantosPredios();
+
+  await page.click(`[data-predio="${idLiberado}"]`);
+  await page.waitForTimeout(200);
+  afirmar((await estado()).ferramentaAtiva === idLiberado, 'a ferramenta deveria estar ativa antes do clique direito');
+  await page.mouse.move(pontoLivre.x, pontoLivre.y);
+  await page.mouse.click(pontoLivre.x, pontoLivre.y, { button: 'right' });
+  await page.waitForTimeout(200);
+  s = await estado();
+  afirmar(s.ferramentaAtiva === null, `o clique direito deveria largar a ferramenta, veio ${s.ferramentaAtiva}`);
+  afirmar(s.plantaFantasma === null, 'largada a ferramenta, a planta fantasma deveria sumir');
+  afirmar(
+    await quantosPredios() === antesDoDireito,
+    'o clique direito nao pode plantar nada: ele cancela, nao confirma',
+  );
+
+  // de mao vazia: o gesto passa adiante intocado e nada acontece no mapa
+  await page.mouse.click(pontoLivre.x, pontoLivre.y, { button: 'right' });
+  await page.waitForTimeout(200);
+  afirmar(
+    (await estado()).ferramentaAtiva === null && await quantosPredios() === antesDoDireito,
+    'o clique direito de mao vazia nao deveria mudar nada hoje (a fatia e da F26)',
+  );
 }
 
 module.exports = { roteiro };

@@ -197,7 +197,49 @@ export function montarPainelPredio(
   if (encontrado === null) throw new Error('painel-predio: falta #painel-predio no index.html');
   const raiz: HTMLElement = encontrado;
 
+  // BUG-B — o x da fila da escola nao removia nada com o jogo andando.
+  //
+  // A causa nao esta no botao nem na sim: `aplicarCancelTraining` nunca recusa,
+  // e o listener emite certo. Esta AQUI: `atualizar` faz `replaceChildren()` sem
+  // diff e `main.ts` a liga em `sessao.aoMudar`, ou seja, 10 vezes por segundo.
+  // O botao que recebeu o `mousedown` e destruido antes do `mouseup`, e o
+  // navegador so dispara `click` quando os dois caem no MESMO elemento — entao
+  // nenhum `click` nasce. Sonda desta sessao: pausado, 1 -> 0; andando, com um
+  // aperto de 150 ms, 1 -> 1; andando, com o clique instantaneo do Playwright,
+  // 2 -> 1. Os roteiros nunca acusaram porque `tools/shot.js` abre `/?pausado`.
+  //
+  // A regra: enquanto houver ponteiro APERTADO dentro do painel, o redesenho
+  // espera. O ultimo estado fica guardado e entra ao soltar, entao o painel nao
+  // envelhece — ele atrasa o tempo de um aperto, e so.
+  let segurando = false;
+  let pendente: GameState | null = null;
+
+  raiz.addEventListener('pointerdown', () => {
+    segurando = true;
+  });
+  const soltar = (): void => {
+    if (!segurando) return;
+    segurando = false;
+    const ultimo = pendente;
+    pendente = null;
+    if (ultimo !== null) atualizar(ultimo);
+  };
+  // O redesenho espera o PROXIMO turno do laco de eventos: o `click` so e
+  // despachado depois do `pointerup`/`mouseup`, e redesenhar dentro do proprio
+  // `pointerup` destruiria o botao meio evento antes — o mesmo bug, mais tarde.
+  const destravar = (): void => {
+    window.setTimeout(soltar, 0);
+  };
+  // Na JANELA, nao no painel: soltar o botao fora dele, ou o navegador tomar o
+  // ponteiro, tem de destravar igual. Sem isto o painel congelaria de vez.
+  window.addEventListener('pointerup', destravar);
+  window.addEventListener('pointercancel', destravar);
+
   function atualizar(estado: GameState): void {
+    if (segurando) {
+      pendente = estado;
+      return;
+    }
     const id = selecao.predio;
     const dados = id === null ? null : painelDoPredio(estado, id);
 

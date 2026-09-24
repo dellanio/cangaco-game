@@ -92,13 +92,28 @@ minutos. Se não couber, o ritmo está errado — não o jogador.
 | Selecionar prédio, unidade ou grupo | Clique esquerdo | [geral] |
 | Posicionar planta, estrada ou campo | Clique esquerdo com a ferramenta ativa | [fonte] |
 | Arrastar estrada | Segurar e arrastar tile a tile | [proposta] |
-| Cancelar ferramenta | `Esc` ou clique direito sem seleção | [proposta] |
+| Cancelar ferramenta | `Esc` ou clique direito **com ferramenta ativa** | [proposta] |
 | Mover grupo militar | Clique direito no destino | [fonte] |
 | Definir direção da formação | Segurar clique direito, rosa dos ventos, soltar na direção | [fonte] |
 | Virar sem mover | Segurar clique direito sobre os pés do líder e soltar na nova direção | [fonte] |
 | Atacar | Clique direito em inimigo; corpo a corpo carrega ao contato | [fonte] |
 | Mover a câmera | Arrastar com o botão do meio, borda da tela ou `WASD` | [proposta] |
 | Zoom | Roda do mouse | [proposta] |
+
+**Precedência do botão direito** (decidida ao corrigir o BUG-A, 2026-09-24). O
+mesmo botão tem dois papéis e eles nunca disputam, porque a ferramenta ativa
+decide antes:
+
+1. **Com ferramenta ativa** (planta de prédio, estrada, demolir estrada), o
+   botão direito **larga a ferramenta** e nada mais acontece — nenhum comando é
+   emitido e o arrasto em curso é descartado.
+2. **De mão vazia**, o botão direito não faz nada hoje. É esta a fatia que sobra
+   inteira para a ordem de movimento, o giro de formação e o ataque das linhas
+   acima, quando a F26 os implementar.
+
+Quem aplica a regra é `input/colocar.ts` (`aoClicarDireito`), que devolve se
+consumiu o gesto; a cena só encaminha. A F26 recebe os gestos que voltarem
+`false` — não precisa reabrir esta decisão, e não deve.
 
 ### 2.2 Teclado [proposta]
 

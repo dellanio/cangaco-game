@@ -51,7 +51,16 @@
       #menu-build .item .nome { font-weight: 700; }
       #menu-build .item .custo { opacity: 0.75; }
       #menu-build .item .requer { color: #c9974b; }
-      #menu-build .item[aria-pressed="true"] { border-color: #ede3d0; background: #3a3226; }
+      /* BUG-A, parte 3. O destaque anterior era borda creme sobre fundo #3a3226,
+         a dois passos do #2a241b dos outros itens: o operador nao percebeu qual
+         estava selecionado. Agora o item ativo muda FUNDO, TEXTO e BORDA de uma
+         vez, e ganha a barra lateral — quem varre a lista com o olho acha a
+         barra antes de comparar tom de marrom. O roteiro da F06 MEDE a distancia
+         entre o ativo e um inativo; esta linha nao e a prova. */
+      #menu-build .item[aria-pressed="true"] {
+        border-color: #f2c14e; background: #6b5320; color: #fff8e6;
+        box-shadow: inset 5px 0 0 #f2c14e;
+      }
       #menu-build .item[aria-disabled="true"] {
         cursor: not-allowed; opacity: 0.45; filter: grayscale(1);
       }

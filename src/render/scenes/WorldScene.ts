@@ -215,6 +215,18 @@ export class WorldScene extends Phaser.Scene {
     // Clique esquerdo: entrega o TILE clicado a input/, que decide se vira comando
     // (so com ferramenta ativa). A cena nao decide nada e nao confia no ultimo
     // pointermove: recalcula o tile do ponteiro no proprio clique.
+    // Sem isto, todo clique direito no mapa abre o menu de contexto do
+    // navegador por cima do jogo e o gesto abaixo nunca chega a ser util. So o
+    // canvas: no HUD e no painel o menu do navegador continua normal.
+    this.input.mouse?.disableContextMenu();
+
+    // Botao direito: a cena so ENCAMINHA o gesto. Quem decide se ele larga a
+    // ferramenta ou sobra para a ordem militar da F26 e `input/colocar.ts`
+    // (BUG-A) — a cena nao conhece a ferramenta ativa e nao deve conhecer.
+    this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      if (pointer.rightButtonDown()) this.entrada.aoClicarDireito();
+    });
+
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       if (!pointer.leftButtonDown()) return;
       // F18a: ESCALA_DO_MUNDO — `getWorldPoint` ja desfez o zoom (ver pointermove).

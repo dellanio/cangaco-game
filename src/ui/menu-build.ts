@@ -78,12 +78,15 @@ export function montarMenuBuild(ferramenta: Ferramenta): MenuBuild {
     titulo.textContent = temaSertao.menuBuild.titulo;
     raiz?.append(titulo);
 
+    // `alternar`, e nao `selecionar*`: clicar de novo no que ja esta ativo larga
+    // a ferramenta (BUG-A). A comparacao mora em `input/ferramenta.ts`; o menu
+    // so diz qual botao foi apertado.
     montarFerramenta('estrada', 'estrada', temaSertao.menuBuild.estrada, textoDoCustoDaEstrada(), () => {
-      ferramenta.selecionarEstrada();
+      ferramenta.alternar('estrada');
     });
     montarFerramenta('demolir-estrada', 'demolir-estrada', temaSertao.menuBuild.demolirEstrada,
       temaSertao.menuBuild.demolirEstradaDesc, () => {
-        ferramenta.selecionarDemolicao();
+        ferramenta.alternar('demolir-estrada');
       });
 
     for (const opcao of opcoes) {
@@ -109,7 +112,7 @@ export function montarMenuBuild(ferramenta: Ferramenta): MenuBuild {
       // resposta e o roteiro consegue provar que clicar nele nao ativa nada.
       botao.addEventListener('click', () => {
         if (botao.getAttribute('aria-disabled') === 'true') return;
-        ferramenta.selecionar(opcao.id);
+        ferramenta.alternar('predio', opcao.id);
       });
 
       raiz?.append(botao);

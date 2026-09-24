@@ -198,6 +198,34 @@ async function roteiro(ctx) {
     'o slot que treina deveria mostrar o rotulo do tema com o progresso',
   );
 
+  // 9b. BUG-B — o mesmo cancelamento COM O LACO ANDANDO, e com o aperto de uma
+  // mao humana. Este passo existe porque os passos 1-9 rodam todos pausados (o
+  // runner abre `/?pausado`) e por isso nunca tocaram no defeito: com o jogo
+  // andando, o painel se redesenhava inteiro 10 vezes por segundo e destruia o
+  // botao entre o `mousedown` e o `mouseup`, de modo que o `click` nao nascia.
+  //
+  // Um `page.click()` NAO serve de guarda aqui: ele aperta e solta no mesmo
+  // instante e passava mesmo com o bug de pe. O que prova e o intervalo.
+  await page.keyboard.press('p');
+  await esperarFrame();
+  afirmar((await estado()).pausado === false, 'o passo 9b so vale com o laco ANDANDO');
+  const antesDoAperto = await filaNoEstado();
+  afirmar(antesDoAperto.length > 0, 'deveria haver item na fila para o passo 9b');
+  const alvoDoAperto = antesDoAperto[antesDoAperto.length - 1].id;
+  const caixaDoX = await retanguloDe(page, `#painel-predio [data-cancelar="${alvoDoAperto}"]`);
+  await page.mouse.move(caixaDoX.left + caixaDoX.width / 2, caixaDoX.top + caixaDoX.height / 2);
+  await page.mouse.down();
+  await page.waitForTimeout(150); // o tempo de uma mao, e varios ticks do laco
+  await page.mouse.up();
+  await esperarFrame();
+  afirmar(
+    !(await filaNoEstado()).some((i) => i.id === alvoDoAperto),
+    `com o jogo andando, apertar o x deveria remover '${alvoDoAperto}' da fila`,
+  );
+  await page.keyboard.press('p'); // volta a pausar: os passos seguintes contam ticks
+  await esperarFrame();
+  afirmar((await estado()).pausado === true, 'o roteiro deveria voltar a pausar depois do 9b');
+
   await capturar('treinando'); // o motivo mudando: treinando + dinheiro a caminho
 
   // 10. clicar num tile vazio fecha o painel (nada selecionado). O tile e ACIMA
