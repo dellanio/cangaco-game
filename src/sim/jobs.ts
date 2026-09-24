@@ -14,13 +14,16 @@ import type {
   GameEvent, GameState, Predio, Tarefa, TarefaConstruir, TarefaDeTransporte,
   TarefaExcedenteParaArmazem, TarefaInsumoProducaoBaixa, TarefaInsumoProducaoParada,
   TarefaMaterialParaObra, TarefaOcupar, TarefaOuroParaEscola,
-  TarefaAssentarEstrada, TarefaDeLaborer, TarefaSaidaCheiaParaArmazem, TipoDeTarefa, TipoNaEscada,
+  TarefaAssentarEstrada, TarefaColher, TarefaDeLaborer, TarefaSaidaCheiaParaArmazem, TipoDeTarefa,
+  TipoNaEscada,
 } from './state';
-import { ehTarefaDeAssentamento, ehTarefaDeLaborer, ehTarefaDeTransporte, MERCADORIA_DE_OURO } from './state';
+import {
+  ehTarefaDeAssentamento, ehTarefaDeColheita, ehTarefaDeLaborer, ehTarefaDeTransporte, MERCADORIA_DE_OURO,
+} from './state';
 import type { GameData } from './data/types';
 import { gameData } from './data';
 import {
-  armazemQuePagaAEstrada, componenteDe, distanciaEntrePredios, ehEstrada, ehPlanejada,
+  armazemQuePagaAEstrada, chaveDeTile, componenteDe, distanciaEntrePredios, ehEstrada, ehPlanejada,
   MERCADORIA_DA_ESTRADA, tilesDaPorta,
 } from './estradas';
 import type { TileDeGrid } from './estradas';
@@ -29,6 +32,7 @@ import { buscarCaminho } from './pathfinding';
 import type { Caminho, ModoDeBusca } from './pathfinding';
 import { sobraNaOrigem, vagaDeConstrucao, vagaDeOcupacao, vagaDoDestino } from './reservas';
 import { predioAceita } from './ocupacao';
+import { tilesReservadosParaColheita } from './recursos';
 
 /**
  * Por que uma tarefa reclamada foi liberada. Cada motivo devolve as DUAS reservas
@@ -96,6 +100,11 @@ const UNIDADE_ELEGIVEL_POR_TIPO: Readonly<Record<TipoDeTarefa, string | null>> =
   // tipo da tarefa", e por isso `elegivelParaTarefa` NUNCA autoriza uma
   // ocupacao: quem responde e `podeReclamar`.
   ocupar: null,
+  // F-T2c: 'colher' depende do destino pelo mesmo motivo que 'ocupar' — quem
+  // colhe numa `quarry` e o civil que o dado declara para `quarry` —, e ainda
+  // mais: so o OCUPANTE daquele predio. A segunda metade e do `reclamar`, que e
+  // quem tem a unidade na mao.
+  colher: null,
 };
 
 /** Generaliza a checagem "a unidade e serf": cada tipo de tarefa tem UM tipo
@@ -118,7 +127,12 @@ export function elegivelParaTarefa(tipoDaTarefa: TipoDeTarefa, tipoDaUnidade: st
 export function podeReclamar(
   state: GameState, tarefa: Tarefa, tipoDaUnidade: string, dados: GameData = gameData,
 ): boolean {
-  if (tarefa.tipo !== 'ocupar') return elegivelParaTarefa(tarefa.tipo, tipoDaUnidade);
+  // F-T2c — 'colher' entra aqui pelo mesmo caminho de 'ocupar': o tipo de civil
+  // vem do predio. "E o ocupante DESTE predio" nao cabe nesta pergunta (ela nao
+  // recebe a unidade, so o tipo dela) e mora no `reclamar`.
+  if (tarefa.tipo !== 'ocupar' && tarefa.tipo !== 'colher') {
+    return elegivelParaTarefa(tarefa.tipo, tipoDaUnidade);
+  }
   return predioAceita(state.predios.porId[tarefa.destino], tipoDaUnidade, dados);
 }
 
@@ -285,6 +299,42 @@ export function criarTarefaDeAssentamento(
     origem, destinoTile: tile, estado: 'aberta', reclamadaPor: null,
   };
   return inserirTarefa(state, tarefa);
+}
+
+/**
+ * F-T2c — cria a tarefa de colher `origemTile` para o predio `destino`, aberta,
+ * e com ela a reserva do tile inteiro. Irma de `criarTarefaDeAssentamento`: a
+ * reserva vale ja em `'aberta'`, entao e ESTA funcao que compromete o tile, e
+ * nao o `reclamar` (ver `TarefaColher`, state.ts).
+ *
+ * Quem escolhe o tile e `melhorTileDeColheita` (sim/recursos.ts), a varredura
+ * pura herdada da F-T2a; aqui ele ja vem escolhido.
+ */
+export function criarTarefaDeColheita(
+  state: GameState,
+  campos: {
+    readonly destino: string; readonly origemTile: TileDeGrid;
+    readonly recurso: string; readonly quantidade: number;
+  },
+): { readonly state: GameState; readonly id: string } {
+  const numero = state.proximoId;
+  const tarefa: TarefaColher = {
+    id: `t${numero}`, numero, tipo: 'colher', destino: campos.destino,
+    origemTile: campos.origemTile, recurso: campos.recurso, quantidade: campos.quantidade,
+    estado: 'aberta', reclamadaPor: null,
+  };
+  return inserirTarefa(state, tarefa);
+}
+
+/** F-T2c — a tarefa de colheita deste predio, se existe. E por ela, e nao por um
+ *  id guardado em `fsmData`, que o ocupante acha a sua: o rotulo da FSM do
+ *  especialista e recalculado todo tick e `comFsm` zera `fsmData`. */
+export function tarefaDeColheitaDoPredio(state: GameState, predioId: string): TarefaColher | null {
+  for (const id of state.jobs.tarefas.ordem) {
+    const t = state.jobs.tarefas.porId[id];
+    if (t !== undefined && ehTarefaDeColheita(t) && t.destino === predioId) return t;
+  }
+  return null;
 }
 
 function unidadeJaTemTarefa(state: GameState, unidadeId: string): boolean {
@@ -525,6 +575,25 @@ export function reclamar(
     if (caminhoAteOTile(state, tarefa.destinoTile, unidadeId, dados) === null) {
       return { ok: false, motivo: 'sem-caminho' };
     }
+  } else if (ehTarefaDeColheita(tarefa)) {
+    // F-T2c: quem colhe e o OCUPANTE daquele predio, e so ele. `podeReclamar` ja
+    // conferiu o TIPO de civil; a identidade e aqui, que e onde ha unidade.
+    const predio = state.predios.porId[tarefa.destino];
+    if (!predio || predio.estado !== 'completo' || predio.ocupante !== unidadeId) {
+      return { ok: false, motivo: 'destino-sem-trabalho' };
+    }
+    // O tile tem de continuar valendo o ciclo inteiro, e continuar SO desta
+    // tarefa. A criacao ja reservou (a reserva vale desde 'aberta'), mas o claim
+    // nao confia na criacao: entre um tick e outro o tile pode ter secado, e um
+    // save de outra versao pode trazer duas tarefas no mesmo tile.
+    const chave = chaveDeTile(tarefa.origemTile);
+    if ((state.recursos[chave]?.quantidade ?? 0) < tarefa.quantidade) {
+      return { ok: false, motivo: 'origem-sem-recurso' };
+    }
+    if (tilesReservadosParaColheita(state, tarefa.id).has(chave)) {
+      return { ok: false, motivo: 'origem-sem-recurso' };
+    }
+    // Sem caminho a conferir: o especialista ja esta DENTRO do predio.
   } else {
     // 'construir': sem mercadoria/origem (o laborer nao carrega nada).
     if (vagaDeConstrucao(state, tarefa.destino, dados) < 1) return { ok: false, motivo: 'destino-sem-vaga' };

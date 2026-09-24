@@ -15,7 +15,8 @@ import type { GameData, MapaData } from '../src/sim/data/types';
 import { canPlaceRoad, chaveDeTile, indiceDeEstradas } from '../src/sim/estradas';
 import { ehTransponivel } from '../src/sim/mapa';
 import {
-  bloqueadoPorRecurso, camadaDeBloqueio, colher, recursoBloqueiaPasso, recursoNoTile,
+  bloqueadoPorRecurso, camadaDeBloqueio, colherDoTile, melhorTileDeColheita, recursoBloqueiaPasso,
+  recursoNoTile,
 } from '../src/sim/recursos';
 import {
   buscarCaminho, nosExpandidos, tileAndavel, zerarEstatisticasDeBusca,
@@ -205,7 +206,11 @@ describe('F-T2b — a camada derivada nao mata o cache a cada colheita', () => {
     expect(colheita, 'a quarry tem colheita no dado').not.toBeNull();
     const camadaAntes = camadaDeBloqueio(inicial);
     if (pedreira !== undefined && pedreira.estado === 'completo' && colheita !== null) {
-      const recursos = colher(inicial, pedreira, colheita, 1);
+      // F-T2c: quem varre o alcance agora e `melhorTileDeColheita` (a escolha que
+      // a tarefa do JobBoard reserva); a colheita em si e de UM tile.
+      const alvo = melhorTileDeColheita(inicial, pedreira, colheita, 1);
+      expect(alvo, 'a pedreira tem rocha ao alcance').not.toBeNull();
+      const recursos = colherDoTile(inicial, alvo ?? '', 1);
       expect(recursos, 'colheu de verdade').not.toBe(inicial.recursos);
       expect(camadaDeBloqueio({ recursos })).toBe(camadaAntes);
     }

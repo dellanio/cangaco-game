@@ -16,16 +16,16 @@ import type {
   GameEvent, GameState, Predio, PredioCompleto, PredioEmObra, Tarefa, TarefaDeTransporte,
 } from '../state';
 import {
-  ehTarefaDeAssentamento, ehTarefaDeTransporte, ID_DO_ARMAZEM, MERCADORIA_DE_OURO,
-  ORIGEM_ESPERADA_POR_TIPO, origemDaTarefaVale,
+  ehTarefaDeAssentamento, ehTarefaDeColheita, ehTarefaDeTransporte, ID_DO_ARMAZEM,
+  MERCADORIA_DE_OURO, ORIGEM_ESPERADA_POR_TIPO, origemDaTarefaVale,
 } from '../state';
 import type { GameData } from '../data/types';
 import { gameData } from '../data';
 import { armazensCompletos, chaveDeTile, ehPlanejada, tilesOrdenados } from '../estradas';
 import {
-  criarTarefa, criarTarefaDeAssentamento, criarTarefaDeConstrucao, criarTarefaDeInsumo,
-  criarTarefaDeOcupacao, criarTarefaDeOuro, criarTarefaParaArmazem, distanciaDaTarefa,
-  liberar, ligacaoEntrePredios,
+  criarTarefa, criarTarefaDeAssentamento, criarTarefaDeConstrucao,
+  criarTarefaDeInsumo, criarTarefaDeOcupacao, criarTarefaDeOuro, criarTarefaParaArmazem,
+  distanciaDaTarefa, liberar, ligacaoEntrePredios,
   modoDoTipo, podeReclamar, TIPO_QUE_CARREGA,
 } from '../jobs';
 import type { MotivoDeLiberacao } from '../jobs';
@@ -38,6 +38,7 @@ import {
 } from '../insumo';
 import { obraNivelada } from '../obra';
 import { ehEscolaCompleta, ouroNecessario } from '../escola';
+import { receitaDoTipo } from '../producao';
 import { ehPredioOcupavel, vagasDoPredio } from '../ocupacao';
 
 export interface ResultadoDeSistema {
@@ -94,6 +95,31 @@ function motivoDoDestino(state: GameState, t: Tarefa, dados: GameData): MotivoDe
       // unico jeito de `vagaDeOcupacao` ficar negativa, e sai por aqui.
       if (!ehPredioOcupavel(destino, dados)) return 'destino-sumiu';
       return destino.ocupante === null ? null : 'destino-completo';
+    // F-T2c — a tarefa de colheita tem DUAS pontas a revalidar, e as duas estao
+    // aqui porque as duas valem tambem para a aberta (`abertaVale`), que e quem
+    // devolve o tile a pedreira vizinha assim que este predio deixa de poder
+    // usa-lo.
+    case 'colher': {
+      if (!destino || destino.estado !== 'completo') return 'destino-sumiu';
+      const receita = receitaDoTipo(destino.tipo, dados);
+      // deixou de ser predio de colheita (save de outra versao, dado editado)
+      if (receita === null || receita.colheita === null) return 'destino-sumiu';
+      // F16c — pausado e acao deliberada do jogador, e o relogio fica congelado
+      // por tempo indeterminado. Segurar o tile nesse tempo seria o jogador
+      // podendo travar a pedreira do vizinho de graca. Cancela ('destino-completo'
+      // nao reabre); o gerador refaz quando ele despausar.
+      if (destino.pausado) return 'destino-completo';
+      // Sem ocupante nao ha quem colha, e segurar o tile vazio tiraria da
+      // pedreira vizinha um lajedo que ninguem esta cavando. O ocupante MORTO
+      // conta como nenhum, e por isso se pergunta pelas `unidades` e nao so pelo
+      // campo: `sanearOcupacao` so zera o campo mais adiante no tick, e esperar
+      // por ele deixaria o tile preso um tick inteiro depois da morte.
+      const ocupante = destino.ocupante;
+      if (ocupante === null || state.unidades.porId[ocupante] === undefined) return 'destino-completo';
+      const chave = chaveDeTile(t.origemTile);
+      if ((state.recursos[chave]?.quantidade ?? 0) < t.quantidade) return 'origem-sem-recurso';
+      return null;
+    }
   }
 }
 
@@ -108,6 +134,15 @@ function motivoIndividual(state: GameState, t: Tarefa, dados: GameData): MotivoD
   if (motivoDeDestino !== null) return motivoDeDestino;
   const unidade = t.reclamadaPor === null ? undefined : state.unidades.porId[t.reclamadaPor];
   if (!unidade || !podeReclamar(state, t, unidade.tipo, dados)) return 'unidade-removida';
+  // F-T2c — quem colhe e o OCUPANTE, e so ele: o especialista que largou o predio
+  // (ou que foi trocado por outro) nao segura mais o tile. Cancela em vez de
+  // reabrir, porque a tarefa nasceu para AQUELE par predio/ocupante; o gerador
+  // cria a do ocupante novo no mesmo tick.
+  if (ehTarefaDeColheita(t)) {
+    const predio = state.predios.porId[t.destino];
+    const ocupante = predio !== undefined && predio.estado === 'completo' ? predio.ocupante : null;
+    return ocupante === t.reclamadaPor ? null : 'destino-completo';
+  }
   if (!ehTarefaDeTransporte(t)) return null; // construir/ocupar: nada alem do destino importa
   const destino = state.predios.porId[t.destino];
   const origem = state.predios.porId[t.origem];
@@ -258,6 +293,17 @@ export function sanearTarefas(state: GameState, dados: GameData = gameData): Res
       const existentes = tarefasPorNumero(atual)
         .filter((o) => ehTarefaDeAssentamento(o) && chaveDeTile(o.destinoTile) === chave).length;
       if (existentes > 1) atual = cancelarAberta(atual, t.id);
+    } else if (ehTarefaDeColheita(t)) {
+      // F-T2c: um predio colhe UM tile por vez (um ciclo, um ocupante), e um
+      // tile serve a UMA tarefa (a reserva e do tile inteiro). As duas contas
+      // sao a mesma regra vista das duas pontas, e as duas precisam existir: sem
+      // a segunda, duas pedreiras com alcances sobrepostos voltariam a mirar o
+      // mesmo tile — que e a divida que esta feature fecha.
+      const chave = chaveDeTile(t.origemTile);
+      const doPredio = tarefasPorNumero(atual).filter((o) => ehTarefaDeColheita(o) && o.destino === t.destino).length;
+      const doTile = tarefasPorNumero(atual)
+        .filter((o) => ehTarefaDeColheita(o) && chaveDeTile(o.origemTile) === chave).length;
+      if (doPredio > 1 || doTile > 1) atual = cancelarAberta(atual, t.id);
     } else {
       // 'ocupar' (F14): o teto e a VAGA do predio (1 vago, 0 ocupado), derivada
       // do estado — nao ha teto em dado, ver `vagasDoPredio`.

@@ -4227,3 +4227,137 @@ tocar `src/render/` numa feature de simulação.
 ### Perguntas em aberto
 
 - Nenhuma nova.
+
+## F-T2c — A escolha do tile nasce no JobBoard, com reserva (2026-09-24)
+
+Fecha a **perna 6** do aceite da F-T2 e encerra a dívida declarada na F-T2a: a
+pedreira escolhia o tile varrendo o próprio alcance, sem reserva nenhuma, e duas
+pedreiras de alcances sobrepostos cavavam **o mesmo lajedo no mesmo tick**.
+Plano em `docs/planos/F-T2c-colheita-pelo-jobboard.md`, escrito antes do código;
+as decisões D1–D5 são de lá, a D6 foi tomada durante a execução e está registrada
+lá também.
+
+Feature de **simulação apenas** — o item não traz nota de integração (CLAUDE.md
+§10), e nenhum arquivo de `src/render/`, `src/ui/` ou `src/input/` menciona tipo
+de tarefa. Sem screenshot novo, por isso.
+
+### O que passou a existir
+
+`TarefaColher` é o quinto membro da união de tarefas: `destino` é o prédio que
+colhe, `origemTile` é o tile reservado, `recurso` e `quantidade` são fotografados
+na criação. Enquanto a tarefa vive, **o tile inteiro é dela** — não uma
+quantidade dentro dele (D1). O aceite escrito pelo operador diz "nunca colhem o
+mesmo tile no mesmo tick"; reserva por quantidade deixaria duas pedreiras tirando
+uma unidade cada do mesmo tile e passaria por cima da frase.
+
+O campo se chama `origemTile` e **não** `destinoTile` (D3): `ehTarefaDeAssentamento`
+classifica por FORMA (`'destinoTile' in tarefa`), e um segundo tipo com esse
+campo seria lido como tarefa de estrada no saneamento, no verificador e no claim.
+O nome também está certo: o recurso sai do tile e entra no prédio.
+
+A reserva é **derivada**, como todas as outras: `tilesReservadosParaColheita`
+varre a lista de tarefas e devolve o conjunto de tiles ocupados. Não há contador.
+Ela mora em `sim/recursos.ts` e não em `sim/reservas.ts` porque a chave do tile
+vem de `chaveDeTile`, em `estradas.ts`, e `estradas.ts` já importa de
+`reservas.ts` — pôr lá fecharia um ciclo de import. Fica um parágrafo de
+referência cruzada no cabeçalho de `reservas.ts`.
+
+### D6 — quem cria a tarefa é o ocupante, no mesmo tick do claim
+
+**Isto foi medido, não escolhido por gosto.** O plano mandava criar no
+`gerarTarefas`, junto da ocupação. Implementado assim, **7 testes reprovaram** —
+3 da F15a, 3 da F16c, 1 da F-T2a — todos por **um tick de atraso**:
+`gerarTarefas` roda no FIM do passo, depois dos especialistas, então a tarefa
+nascida no tick N só seria reclamada no tick N+1. O primeiro ciclo de toda
+pedreira do jogo atrasaria um tick, e a pedreira despausada perderia mais um.
+
+Nenhuma asserção foi afrouxada: o mecanismo é que estava errado. A tarefa de
+colheita não tem fila de pretendentes — o único que pode reclamá-la é o ocupante
+daquele prédio — então ficar aberta um tick não compra nada. Ela passa a nascer
+em `garantirColheita`, que escolhe o tile **já descontando os reservados**, cria
+e reclama em seguida. O `reclamar` refaz as conferências por conta própria, como
+em qualquer claim. `gerarTarefasDeColheita` não existe.
+
+O release desse ramo é **estrutural**: se o claim falha, o estado com a tarefa
+criada é descartado inteiro e o chamador segue com o estado de antes. Não há
+ramo de erro que possa esquecer de liberar porque não há nada gravado para
+liberar.
+
+### Release em todo ramo, e um tick de atraso que foi corrigido
+
+Os quatro ramos de saída estão no aceite, cada um com seu teste:
+
+- **prédio demolido** → `motivoDoDestino` devolve `destino-sumiu`;
+- **prédio pausado** → `destino-completo` (cancela, não reabre): pausa é ação
+  deliberada e de duração indeterminada, e segurar o tile nesse tempo seria o
+  jogador travando a pedreira do vizinho de graça. Ao despausar, o ocupante cria
+  a dele no mesmo tick;
+- **ocupante morto** → aqui apareceu um defeito de verdade durante o aceite: o
+  primeiro corte perguntava só por `destino.ocupante`, e esse campo só é zerado
+  por `sanearOcupacao`, **mais adiante no mesmo tick**. O tile ficava preso um
+  tick inteiro depois da morte. `motivoDoDestino` passou a perguntar pelas
+  `unidades`: ocupante que não existe mais conta como nenhum;
+- **especialista que perde o prédio** → `passoProduzindo` chama `liberar(...,
+  'pedido-da-unidade')` antes de `ficarOcioso`. Sem isso, `unidadeJaTemTarefa`
+  recusaria o próximo claim de ocupação e a unidade ficaria ociosa para sempre.
+
+### O predicado de esgotamento passou a ser por tile (D4)
+
+`semRecursoAoAlcance` somava o alcance inteiro. Com a reserva exclusiva, quem
+produz um ciclo é UM tile: se o predicado continuasse somando, um prédio com dois
+tiles de 1 unidade e um ciclo de 2 ficaria eternamente sem tarefa possível **e**
+sem se declarar esgotado — espera indefinida. Os dois lados passam a perguntar a
+mesma coisa: existe tile ao alcance com `>= unidadesPorCiclo`? Hoje a resposta é
+idêntica à antiga (ciclo da quarry é 1, rocha rende 15 por tile); a diferença só
+aparece em receita futura.
+
+O alerta da F22 e o `vein-exhausted` continuam perguntando pelo **mapa**, sem
+descontar reserva: quem espera o vizinho soltar o tile não está sem veio.
+
+### Consequência declarada: a disputa é injusta, e isso é sabido
+
+Duas pedreiras cujo único tile de rocha comum é o mesmo **não se alternam**. Quem
+pede primeiro é quem vem antes em `unidades.ordem`, e ele repete o pedido a cada
+ciclo; a outra fica em `esperando_insumo` até o tile secar. **Não é espera
+indefinida** — o tile seca e as duas passam a esgotadas pelo mesmo predicado —
+mas é injusto. Round-robin entre prédios é mudança de design e não entra aqui;
+fica em `IDEIAS.md` se algum dia incomodar.
+
+O rótulo `esperando_insumo` cobre duas causas ("o mapa secou" e "o vizinho está
+com o tile"). As duas leem como "falta matéria-prima" para o jogador e a segunda
+se resolve sozinha no ciclo seguinte; separar exigiria estado novo na FSM.
+
+### Evidência
+
+- `test-output/F-T2c.json`, aberto com Read: cenário de duas pedreiras em
+  (22,34) e (26,34), alcance 6, mancha de rocha em y=30 x=24..27 — toda ela ao
+  alcance das duas. 1200 ticks, **4 ticks com as duas produzindo juntas**, 8
+  depósitos, 8 unidades colhidas (a jazida inteira), `colisoesDeTile: []`,
+  `tiquesComTarefaRepetida: []`, `violacoesDeInvariante: []`, nenhuma tarefa
+  sobrando ao fim e as duas em `esperando_insumo`.
+- `tests/F-T2c-colheita-jobboard.test.ts` — 10 testes. O aceite é medido por
+  **comportamento**: a cada tick, a queda de quantidade de cada tile. Queda de 2
+  num tile num tick é a colisão que a F-T2a permitia; duas pedreiras depositando
+  no mesmo tick precisam ter cavado dois tiles distintos.
+- **O cenário é mesmo de disputa**, e isso é asserção e não promessa: sem o
+  conjunto de reservados — a escolha pura, que é o que a F-T2a fazia — as duas
+  apontam para o **mesmo** tile `(24,30)`. É daí que viria a colisão.
+- **O guarda acusa**: estado forjado com as duas tarefas na mesma rocha produz
+  exatamente uma violação, com o texto do tile. Isso é cobertura **permanente**,
+  não sonda de sessão: o caso novo entrou em `tests/helpers/jobs-invariantes.ts`
+  e vale para todos os cenários que já rodam `violacoesDeInvariantes`.
+- `npm run verify` verde: **73 arquivos, 1163 testes**.
+- Não-regressão por código de saída (imagem não aberta, §8): `F-T2a`, `F-T2b`,
+  `F22` — todos 0.
+
+### O que esta feature não fez
+
+- **Não mexeu em `data/`.** Nenhum número novo: `alcance_tiles`,
+  `rendimentoPorTile` e o ciclo continuam onde estavam.
+- **Não tocou render, UI nem input.** Nenhum deles conhece tipo de tarefa.
+- **Não criou fila nem prioridade entre prédios.** Ver a consequência declarada
+  acima.
+
+### Perguntas em aberto
+
+- Nenhuma nova.

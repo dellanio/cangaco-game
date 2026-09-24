@@ -130,5 +130,8 @@
   },
   "F-T2b-arvore-obstaculo": {
     "passes": true
+  },
+  "F-T2c-colheita-pelo-jobboard": {
+    "passes": true
   }
 }

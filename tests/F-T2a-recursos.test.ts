@@ -12,14 +12,14 @@
  * reserva no `claim` (F-T2c, que encerra a divida declarada no item).
  */
 import { describe, expect, it } from 'vitest';
-import { completarObra, createInitialState } from '../src/sim/state';
-import type { GameState, PredioCompleto } from '../src/sim/state';
+import { createInitialState } from '../src/sim/state';
+import type { GameState } from '../src/sim/state';
 import { gameData } from '../src/sim/data';
 import type { GameData } from '../src/sim/data/types';
 import { step } from '../src/sim/tick';
 import { chaveDeTile, predioLigadoAoArmazem } from '../src/sim/estradas';
 import {
-  colher, recursoNoTile, recursosIniciais, regenerar, regimeDoTipo, tilesDeColheita,
+  colherDoTile, recursoNoTile, recursosIniciais, regenerar, regimeDoTipo, tilesDeColheita,
 } from '../src/sim/recursos';
 import { receitaDoTipo } from '../src/sim/producao';
 import { comEstradas, linhaH, linhaV } from './helpers/jobs-cenario';
@@ -71,14 +71,6 @@ function produzirDrenando(
     s = comEspacoNaSaida(s, id);
   }
   return { fim: s, produzido };
-}
-
-function predioEm(tipo: string, gx: number, gy: number): PredioCompleto {
-  const def = gameData.predios.find((p) => p.id === tipo);
-  if (!def) throw new Error(`fixture: predio '${tipo}' nao existe`);
-  return completarObra({
-    id: 'sonda', tipo, gx, gy, estado: 'obra', hp: def.hp, obra: { faltam: {}, nivelamento: 0 },
-  });
 }
 
 // --- a camada, antes de qualquer sistema -------------------------------------
@@ -215,15 +207,20 @@ describe('F-T2a — perna 2: o lugar passa a importar, e o numero prova', () => 
 // --- perna 3 -----------------------------------------------------------------
 
 describe('F-T2a — perna 3: os tres regimes se distinguem no ESTADO', () => {
-  it('UM mecanismo: a mesma chamada de `colher`, o regime vindo do dado', () => {
+  // F-T2c: `colher(state, predio, colheita, q)` virou `colherDoTile(state, chave, q)`
+  // — a varredura do alcance deixou de ser da colheita e passou a ser a ESCOLHA
+  // feita na criacao da tarefa do JobBoard. A propriedade provada aqui e a MESMA:
+  // um mecanismo, o regime vindo do dado. Os dois tiles sao os mesmos de antes
+  // (o `alcance: 0` da chamada antiga apontava o proprio tile do predio).
+  it('UM mecanismo: a mesma chamada de `colherDoTile`, o regime vindo do dado', () => {
     const s = createInitialState(1);
     const [rx, ry] = gameData.mapa.recursos.rock?.[0] ?? [0, 0];
     const [tx, ty] = gameData.mapa.recursos.tree?.[0] ?? [0, 0];
     expect(regimeDoTipo('rock')).toBe('nunca');
     expect(regimeDoTipo('tree')).toBe('porAcao');
 
-    const semRocha = colher(s, predioEm('quarry', rx, ry), { recurso: 'rock', alcance: 0 }, 15);
-    const semArvore = colher(s, predioEm('quarry', tx, ty), { recurso: 'tree', alcance: 0 }, 4);
+    const semRocha = colherDoTile(s, chave(rx, ry), 15);
+    const semArvore = colherDoTile(s, chave(tx, ty), 4);
 
     // `nunca`: a entrada SAI, e o tile volta a ser so terreno
     expect(semRocha[chave(rx, ry)]).toBeUndefined();

@@ -15,9 +15,12 @@ import { distanciaDaTarefa, modoDoTipo, nivelDoTipo, podeReclamar } from '../../
 import { ehEscolaCompleta } from '../../src/sim/escola';
 import { chaveDeTile, ehPlanejada } from '../../src/sim/estradas';
 import { insumosDoPredio } from '../../src/sim/insumo';
+import { receitaDoTipo, unidadesPorCiclo } from '../../src/sim/producao';
 import { ehPredioOcupavel } from '../../src/sim/ocupacao';
 import { disponivelNaOrigem, vagaNoDestino } from '../../src/sim/reservas';
-import { ehTarefaDeAssentamento, ID_DO_ARMAZEM, origemDaTarefaVale } from '../../src/sim/state';
+import {
+  ehTarefaDeAssentamento, ehTarefaDeColheita, ID_DO_ARMAZEM, origemDaTarefaVale,
+} from '../../src/sim/state';
 
 /**
  * O destino tem que ser coerente com o TIPO da tarefa. A regra nasceu na F09,
@@ -75,6 +78,28 @@ function violacoesDoDestino(estado: GameState, t: Tarefa, dados: GameData): stri
     case 'ocupar':
       if (!ehPredioOcupavel(destino, dados)) return [`${t.id}: destino '${t.destino}' nao e predio ocupavel`];
       return destino.ocupante !== null ? [`${t.id}: destino '${t.destino}' ja tem ocupante`] : [];
+    // F-T2c: o destino de uma colheita e um predio COMPLETO cuja receita colhe, e
+    // o tile ainda tem o ciclo inteiro. `reclamada` exige mais: quem a segura tem
+    // de ser o OCUPANTE daquele predio — a tarefa nasce para um par
+    // predio/ocupante, e trocar de ocupante a cancela (`motivoIndividual`).
+    case 'colher': {
+      if (!destino || destino.estado !== 'completo') return [`${t.id}: destino '${t.destino}' nao e predio completo`];
+      const receita = receitaDoTipo(destino.tipo, dados);
+      if (receita === null || receita.colheita === null) {
+        return [`${t.id}: destino '${t.destino}' (${destino.tipo}) nao tem receita de colheita`];
+      }
+      const v: string[] = [];
+      const chave = chaveDeTile(t.origemTile);
+      const quantidade = estado.recursos[chave]?.quantidade ?? 0;
+      if (quantidade < t.quantidade) v.push(`${t.id}: tile '${chave}' tem ${quantidade} para um ciclo de ${t.quantidade}`);
+      if (t.quantidade !== unidadesPorCiclo(receita)) {
+        v.push(`${t.id}: quantidade ${t.quantidade} discorda do ciclo de '${destino.tipo}'`);
+      }
+      if (t.estado === 'reclamada' && destino.ocupante !== t.reclamadaPor) {
+        v.push(`${t.id}: reclamada por ${t.reclamadaPor}, que nao ocupa '${t.destino}'`);
+      }
+      return v;
+    }
     default: {
       const semContrato: never = t;
       throw new Error(`jobs-invariantes: tarefa sem contrato de destino ${JSON.stringify(semContrato)}`);
@@ -97,6 +122,11 @@ export function violacoesDeInvariantes(estado: GameState, dados: GameData = game
   const contagemDeOcupacaoPorPredio = new Map<string, number>();
   const reservasPorOrigem = new Set<string>();
   const reservasPorDestino = new Set<string>();
+  // F-T2c: a reserva de colheita e do TILE INTEIRO. Um tile com duas tarefas e
+  // exatamente o defeito que a feature fecha (duas pedreiras mirando o mesmo
+  // lajedo), e um predio com duas e um ciclo colhendo em dobro.
+  const colheitaPorTile = new Map<string, string>();
+  const colheitaPorPredio = new Map<string, string>();
 
   for (const id of tarefas.ordem) {
     const t = tarefas.porId[id];
@@ -156,6 +186,14 @@ export function violacoesDeInvariantes(estado: GameState, dados: GameData = game
       contagemPorDestino.set(chave, { ...atual, total: atual.total + 1 });
     } else if (t.tipo === 'construir' && t.estado !== 'aberta') {
       contagemDeConstrucaoPorObra.set(t.destino, (contagemDeConstrucaoPorObra.get(t.destino) ?? 0) + 1);
+    } else if (ehTarefaDeColheita(t)) {
+      const chave = chaveDeTile(t.origemTile);
+      const outraNoTile = colheitaPorTile.get(chave);
+      if (outraNoTile !== undefined) v.push(`${id}: o tile '${chave}' ja e reservado por ${outraNoTile}`);
+      colheitaPorTile.set(chave, id);
+      const outraNoPredio = colheitaPorPredio.get(t.destino);
+      if (outraNoPredio !== undefined) v.push(`${id}: '${t.destino}' ja colhe por ${outraNoPredio}`);
+      colheitaPorPredio.set(t.destino, id);
     } else if (t.tipo === 'ocupar' && t.estado !== 'aberta') {
       // F14: a vaga e UMA por predio — a reserva de ocupacao nunca passa disso.
       contagemDeOcupacaoPorPredio.set(t.destino, (contagemDeOcupacaoPorPredio.get(t.destino) ?? 0) + 1);

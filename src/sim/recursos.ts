@@ -23,6 +23,7 @@
 import type { ColheitaDeRecurso, GameData, RegimeDeRecurso } from './data/types';
 import { gameData } from './data';
 import type { GameState, PredioCompleto, RecursoNoTile } from './state';
+import { ehTarefaDeColheita } from './state';
 import { chaveDeTile } from './estradas';
 import { caixaDoPredio } from './footprint';
 
@@ -110,31 +111,81 @@ export function disponivelAoAlcance(
 }
 
 /**
- * Colhe `quantidade` unidades dos tiles ao alcance, na ordem de
- * `tilesDeColheita`, e aplica o regime de cada tile que zerar. Pressupoe que ha
- * o bastante (quem chama ja perguntou por `disponivelAoAlcance`): colher a
- * descoberto e bug de quem chamou, como em `consumirInsumos`.
+ * F-T2c — O TILE que este predio deve colher agora: o primeiro de
+ * `tilesDeColheita` (oeste para leste) que tem `minimo` unidades e que NINGUEM
+ * reservou. E a varredura da F-T2a, intacta na ordem — o que mudou e que ela
+ * deixou de ser feita dentro do sistema de producao e passou a ser o CANDIDATO
+ * que a tarefa do JobBoard reserva.
+ *
+ * Pura: `reservados` entra por parametro (`tilesReservadosParaColheita`) em vez
+ * de ser lido daqui, e e isso que permite perguntar "e se ninguem tivesse
+ * reservado" — que e a pergunta do esgotamento (`semRecursoAoAlcance`).
+ */
+export function melhorTileDeColheita(
+  state: GameState, predio: PredioCompleto, colheita: ColheitaDeRecurso, minimo: number,
+  reservados: ReadonlySet<string> = SEM_RESERVA, dados: GameData = gameData,
+): string | null {
+  for (const chaveDoTile of tilesDeColheita(predio, colheita, dados)) {
+    if (reservados.has(chaveDoTile)) continue;
+    if ((state.recursos[chaveDoTile]?.quantidade ?? 0) >= minimo) return chaveDoTile;
+  }
+  return null;
+}
+
+/** O conjunto vazio, uma vez so: perguntar pelo MAPA e perguntar sem reservas. */
+const SEM_RESERVA: ReadonlySet<string> = new Set<string>();
+
+/**
+ * F-T2c — os tiles de recurso que ja tem dono. A reserva de colheita nao e uma
+ * QUANTIDADE como as de `sim/reservas.ts`: e o tile INTEIRO, ocupado ou livre.
+ * Duas pedreiras cavando o mesmo lajedo, uma unidade cada, seria estado valido
+ * numa conta de quantidade — e e exatamente o que o aceite da F-T2c proibe.
+ *
+ * Conta desde `'aberta'`, como a tarefa de assentar estrada e pelo mesmo motivo:
+ * e a criacao que compromete o tile (ver `TarefaColher`, state.ts).
+ *
+ * Mora AQUI, e nao em `reservas.ts`, porque a chave de tile vem de `estradas.ts`
+ * e aquele arquivo se proibe de importa-lo para nao fechar ciclo. Esta e a porta
+ * de leitura da camada de recurso; a reserva de um tile e leitura dela.
+ *
+ * `excetoTarefa` existe para o CLAIM: ao reconferir a propria tarefa, ela nao
+ * pode se ver como concorrente.
+ */
+export function tilesReservadosParaColheita(
+  state: GameState, excetoTarefa: string | null = null,
+): ReadonlySet<string> {
+  const reservados = new Set<string>();
+  for (const id of state.jobs.tarefas.ordem) {
+    const t = state.jobs.tarefas.porId[id];
+    if (t === undefined || !ehTarefaDeColheita(t) || t.id === excetoTarefa) continue;
+    reservados.add(chaveDeTile(t.origemTile));
+  }
+  return reservados;
+}
+
+/**
+ * Colhe `quantidade` unidades de UM tile — o que a tarefa do JobBoard reservou —
+ * e aplica o regime se ele zerar. Pressupoe que ha o bastante (quem chama ja
+ * perguntou, e o claim reconferiu): colher a descoberto e bug de quem chamou,
+ * como em `consumirInsumos`.
+ *
+ * Ate a F-T2c quem colhia era `colher(state, predio, colheita, quantidade)`, que
+ * varria o alcance e podia tirar de varios tiles. Com a reserva exclusiva um
+ * ciclo sai de um tile so, e a varredura virou a ESCOLHA (`melhorTileDeColheita`),
+ * feita uma vez, na criacao da tarefa — e nao a cada deposito.
  *
  * Devolve o MESMO objeto quando nao ha o que colher, para que um tick sem
  * colheita nao realoque a camada inteira.
  */
-export function colher(
-  state: GameState, predio: PredioCompleto, colheita: ColheitaDeRecurso, quantidade: number,
-  dados: GameData = gameData,
+export function colherDoTile(
+  state: GameState, chaveDoTile: string, quantidade: number, dados: GameData = gameData,
 ): Readonly<Record<string, RecursoNoTile>> {
-  if (quantidade <= 0) return state.recursos;
-  let falta = quantidade;
+  const atual = state.recursos[chaveDoTile];
+  if (quantidade <= 0 || atual === undefined || atual.quantidade === 0) return state.recursos;
   const recursos: Record<string, RecursoNoTile> = { ...state.recursos };
-  for (const chave of tilesDeColheita(predio, colheita, dados)) {
-    if (falta === 0) break;
-    const atual = recursos[chave];
-    if (atual === undefined || atual.quantidade === 0) continue;
-    const tirado = Math.min(atual.quantidade, falta);
-    falta -= tirado;
-    const restante = atual.quantidade - tirado;
-    if (restante === 0 && regimeDoTipo(atual.tipo, dados) === 'nunca') delete recursos[chave];
-    else recursos[chave] = { tipo: atual.tipo, quantidade: restante };
-  }
+  const restante = atual.quantidade - Math.min(atual.quantidade, quantidade);
+  if (restante === 0 && regimeDoTipo(atual.tipo, dados) === 'nunca') delete recursos[chaveDoTile];
+  else recursos[chaveDoTile] = { tipo: atual.tipo, quantidade: restante };
   return recursos;
 }
 

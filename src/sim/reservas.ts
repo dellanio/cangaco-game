@@ -8,6 +8,12 @@
  * da estrada (F08) precisa do `disponivel`, e `jobs.ts` precisa de `estradas` —
  * separar aqui evita o ciclo.
  *
+ * F-T2c — a reserva de TILE de colheita nao mora aqui, e sim em
+ * `tilesReservadosParaColheita` (`sim/recursos.ts`), pela regra do paragrafo
+ * acima: a chave de tile vem de `estradas.ts`, e importa-la aqui fecharia o
+ * ciclo que este arquivo existe para evitar. Ela tambem nao e uma QUANTIDADE
+ * como tudo que esta abaixo — e o tile inteiro, ocupado ou livre.
+ *
  * Custo: cada consulta e O(nº de tarefas). Nao medido; ver o cenario de carga em
  * `test-output/F09.json` e a nota da F10 no BUILD_PLAN. Se pedir indice, e otimizacao
  * (por predio e mercadoria), nao mudanca de contrato.

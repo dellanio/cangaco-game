@@ -566,7 +566,45 @@ export interface TarefaAssentarEstrada extends TarefaBase {
   readonly destinoTile: TileDeGrid;
 }
 
-export type Tarefa = TarefaDeTransporte | TarefaConstruir | TarefaOcupar | TarefaAssentarEstrada;
+/**
+ * F-T2c — UM CICLO de colheita de UM tile de recurso natural, para o predio que
+ * o colhe. Fecha a divida declarada na F-T2a: ate aqui a pedreira varria o
+ * proprio alcance dentro do sistema de producao, sem passar pelo quadro, e duas
+ * pedreiras vizinhas podiam mirar o mesmo tile no mesmo tick.
+ *
+ * A RESERVA e do TILE INTEIRO, e nao de unidades dentro dele: um tile e um
+ * LUGAR, e quem cava nele o ocupa. Por isso ela nao passa por
+ * `reservadoNaOrigem` (que conta mercadoria em gaveta) e sim por
+ * `tilesReservadosParaColheita` (`sim/reservas.ts`), que devolve um conjunto.
+ *
+ * Vale desde `'aberta'`, como em `TarefaAssentarEstrada` e pelo mesmo motivo:
+ * e a CRIACAO que compromete o tile. Sem isso duas tarefas nasceriam no mesmo
+ * tile no mesmo `gerarTarefas`, e o claim teria de desempatar o que nem devia
+ * ter sido criado.
+ *
+ * O tile e a ORIGEM (`origemTile`), nunca `destinoTile`: o recurso sai dele e
+ * entra no predio, e `ehTarefaDeAssentamento` classifica por FORMA
+ * (`'destinoTile' in tarefa`) — um segundo tipo com aquele nome passaria a ser
+ * lido como tarefa de estrada em `sanearTarefas`, no claim e no verificador.
+ *
+ * Quem reclama e o OCUPANTE do predio, e so ele (`reclamar`). Nao ha caminho a
+ * conferir: o especialista ja esta dentro.
+ */
+export interface TarefaColher extends TarefaBase {
+  readonly tipo: 'colher';
+  readonly estado: 'aberta' | 'reclamada';
+  /** Id do predio COMPLETO que colhe. */
+  readonly destino: string;
+  /** O tile de onde o recurso sai, reservado inteiro enquanto a tarefa vive. */
+  readonly origemTile: TileDeGrid;
+  /** `colheita.recurso` da receita, fotografado na criacao. */
+  readonly recurso: string;
+  /** `unidadesPorCiclo(receita)`: o que UM ciclo tira do tile. */
+  readonly quantidade: number;
+}
+
+export type Tarefa =
+  TarefaDeTransporte | TarefaConstruir | TarefaOcupar | TarefaAssentarEstrada | TarefaColher;
 
 /**
  * O tipo da tarefa, DERIVADO da uniao: acrescentar um produtor novo (F15, F20)
@@ -601,6 +639,12 @@ export function ehTarefaDeTransporte(tarefa: Tarefa): tarefa is TarefaDeTranspor
 /** F18d-1b — a irma da de cima, pela mesma forma: o destino e um tile. */
 export function ehTarefaDeAssentamento(tarefa: Tarefa): tarefa is TarefaAssentarEstrada {
   return 'destinoTile' in tarefa;
+}
+
+/** F-T2c — pelo TIPO, e nao pela forma: `origemTile` existe justamente para esta
+ *  tarefa nao cair na pergunta de forma acima. */
+export function ehTarefaDeColheita(tarefa: Tarefa): tarefa is TarefaColher {
+  return tarefa.tipo === 'colher';
 }
 
 /** As tarefas que SO o laborer reclama (`UNIDADE_ELEGIVEL_POR_TIPO`): construir e

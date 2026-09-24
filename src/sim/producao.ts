@@ -11,7 +11,7 @@
 import type { GameData, ReceitaDePredio } from './data/types';
 import { gameData } from './data';
 import type { GameState, Predio, PredioCompleto } from './state';
-import { disponivelAoAlcance } from './recursos';
+import { melhorTileDeColheita } from './recursos';
 
 /** A receita do tipo, ou `null` — inclusive para tipo que nem existe no dado
  *  (save de outra versao). `null` e nunca `undefined`, como `trabalhadorDoTipo`. */
@@ -84,11 +84,23 @@ export function cabeNaSaida(predio: PredioCompleto, receita: ReceitaDePredio): b
  * pergunta agora e ao MAPA, e e por isso que ela precisa do estado. O nome do
  * alerta (`veio-esgotado`) e o do evento (`vein-exhausted`) ficaram: o que mudou
  * foi de onde vem a resposta, nao o que o jogador ve acontecer.
+ *
+ * F-T2c — a conta deixou de ser a SOMA do alcance e passou a ser POR TILE:
+ * existe um tile ao alcance com o ciclo inteiro? Com a reserva exclusiva
+ * (`TarefaColher`) um ciclo sai de UM tile, entao somar aqui e exigir um tile
+ * ali seria o predicado de elegibilidade discordando de si mesmo nos dois lados:
+ * dois tiles de 1 unidade para um ciclo de 2 nao esgotariam o predio e tambem
+ * nunca gerariam tarefa, e o especialista esperaria o que nunca chega.
+ *
+ * A pergunta e ao MAPA e ignora reservas de proposito: quem responde "este veio
+ * acabou" (o alerta da F22, o evento `vein-exhausted`) nao pode responder "a
+ * pedreira vizinha esta usando o tile" — sao coisas diferentes, e a segunda se
+ * resolve sozinha quando o ciclo da vizinha fecha.
  */
 export function semRecursoAoAlcance(
   state: GameState, predio: PredioCompleto, receita: ReceitaDePredio, dados: GameData = gameData,
 ): boolean {
   const { colheita } = receita;
   if (colheita === null) return false;
-  return disponivelAoAlcance(state, predio, colheita, dados) < unidadesPorCiclo(receita);
+  return melhorTileDeColheita(state, predio, colheita, unidadesPorCiclo(receita), undefined, dados) === null;
 }
