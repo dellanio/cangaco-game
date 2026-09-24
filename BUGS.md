@@ -51,6 +51,28 @@ _Nenhum._
   dois testes de la, e este e um terceiro caso — o alargamento e uma linha e cabe
   em qualquer sessao que o veja falhar de novo.
 
+### BUG-E — quarto teste de tempo da mesma classe: a razão da F-T2b oscilou
+
+- feature: F-T2b-obstaculo
+- severidade: feio (não bloqueia: `npm run verify` na corrida seguinte deu 0,
+  74 arquivos / 1176 testes)
+- observado: `tests/F-T2b-obstaculo.test.ts > busca curta: o corredor limpo custa
+  o mesmo, com ou sem floresta` falhou com **4,7387 contra `RAZAO_TEMPO_MAXIMA`
+  = 2,5** (linha 419) numa corrida de `npm run test` durante a F-TP. Medido em
+  2026-09-24.
+- **não é da F-TP, e isto foi verificado, não suposto**: com o trabalho da F-TP
+  guardado (`git stash`) a suíte passou; com o trabalho aplicado e o arquivo
+  rodando **sozinho**, passou também; a suíte inteira passou nas corridas
+  seguintes. O que mudou foi a carga paralela — a F-TP acrescentou o 74º arquivo
+  de teste, e a razão é de relógio de parede.
+- é a **mesma classe** de `tests/F17c-buffer.test.ts`, `tests/F09-sistema.test.ts`
+  e do BUG-D acima. A regra escrita abaixo nomeia dois testes; este é o **quarto**
+  caso, e com quatro a pergunta deixa de ser sobre cada teste: **generalizar a
+  regra para toda razão de relógio de parede é decisão do operador**, e é o que
+  está em aberto aqui. Não alarguei o teto: o teste é de outra feature, e alargar
+  no meio da F-TP seria mudança de escopo por conta própria.
+- status: aberto
+
 ### A regra dos dois testes de tempo (decisão do operador, 2026-09-23)
 
 São dois casos da mesma classe — medição de tempo em máquina compartilhada:

@@ -5,7 +5,10 @@
  * `tests/F04-grid-ortogonal.test.ts`.
  */
 import { gameData } from '../sim/data';
+import type { GameData } from '../sim/data/types';
 import { alvoDeNivelamento, custoDoPredio } from '../sim/obra';
+import type { CaixaEmTiles } from '../sim/footprint';
+import { caixaDeTipo } from '../sim/footprint';
 import temaSertao from '../../data/theme-sertao.json';
 
 export interface AparenciaDoPredio {
@@ -26,6 +29,22 @@ export interface AparenciaDoPredio {
  *  `render/` nao pode importar `sim/data` (teste estrutural em
  *  `tests/F04-grid-ortogonal.test.ts`). Nao e copia: e a mesma lista. */
 export const ordemDasMercadorias: readonly string[] = gameData.economia.mercadorias;
+
+/**
+ * F-TP: o retangulo em tiles de um TIPO posto em (gx, gy). Mesma razao de
+ * `ordemDasMercadorias` — quem em `render/` nao pode importar `sim/data` pega o
+ * dado pelo funil, e footprint por tipo de predio e exatamente o que este funil
+ * existe para servir. Nao e copia da conta: chama `sim/footprint`, que e a mesma
+ * funcao que `canPlace` e a colheita usam.
+ *
+ * `dados` explicito para o teste poder injetar uma variante; `undefined` cai no
+ * `gameData` congelado, como em `sim/`.
+ */
+export function caixaDeTipoNoMapa(
+  tipo: string, gx: number, gy: number, dados: GameData = gameData,
+): CaixaEmTiles | null {
+  return caixaDeTipo(tipo, gx, gy, dados);
+}
 
 type TemaDePredios = Readonly<Record<string, { readonly nome: string } | undefined>>;
 const temaDePredios = temaSertao.predios as TemaDePredios;

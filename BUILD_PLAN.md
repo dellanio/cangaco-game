@@ -1808,11 +1808,17 @@ a geografia já corrigida do que regravar 900 tiles depois.
   tile**. Esta é a perna estrutural, e é ela que impede a segunda cópia da regra;
   (c) prédio sem `colheita` na receita não desenha alcance nenhum.
 - **Evidência**: `test-output/F-TP-shot.json` + `screenshots/F-TP-*.png`
-- **Posição na fila — decisão do operador, 2026-09-24**: vem **depois da F18**,
-  ainda que a medição que a originou seja anterior. Razão dele: o campo como tile
-  é o que ele quer ver primeiro. Quando esta feature entrar, o roceiro da F18 já
-  existirá e a prévia nasce cobrindo os dois — o que é a prova da regra de classe,
-  não um acidente de ordem.
+- **Posição na fila — decisão do operador, 2026-09-24 (revisada no mesmo dia)**:
+  vem **antes da F18**, e não depois. A nota anterior dizia o contrário, com a
+  razão de que o roceiro já existiria e a prévia nasceria cobrindo os dois; ele
+  reordenou ao disparar as três features seguidas. **A consequência é real e está
+  registrada**: no momento em que esta feature entrou, a única receita com
+  `colheita` no dado era a `quarry`, então a regra da classe **não pôde** ser
+  provada por um segundo prédio de verdade. Ela é provada por um tipo de prédio
+  **fabricado** em `GameData` clonado dentro do teste
+  (`tests/F-TP-alcance-previa.test.ts`), que é prova estrutural e não varre o
+  fonte atrás de nome. Quando a F18 chegar, o roceiro herda a prévia sem uma
+  linha de código — e isso é o que o teste da classe já afirma.
 
 ### F19 — Mill e Bakery (cadeia do pão)
 ### F20 — Inn, fome e consumo

@@ -133,5 +133,8 @@
   },
   "F-T2c-colheita-pelo-jobboard": {
     "passes": true
+  },
+  "F-TP-alcance-na-planta-fantasma": {
+    "passes": true
   }
 }

@@ -37,6 +37,16 @@
     "fish": "#7FB8C9",
     "esgotado": "#2A2622"
   },
+  "plantaFantasma": {
+    "_doc": "F-TP. O rotulo da previa de colheita da planta fantasma. `{recurso}` sai de `recursos` aqui, `{n}` e quantos tiles ainda tem o que colher ao alcance e `{u}` e quanto isso da somado. A chave de `recursos` e o id NEUTRO de data/resources.json, pelo mesmo motivo do bloco `recursos` de cor: sim/ nao le este arquivo, e quem casa id com texto e o funil src/render/alcance-de-colheita.ts. Tipo sem nome aqui reprova no carregamento.",
+    "alcance": "{recurso}: {n} ao alcance ({u})",
+    "vazio": "{recurso}: nenhum ao alcance",
+    "recursos": {
+      "rock": "Lajedo",
+      "tree": "Mata",
+      "fish": "Pesca"
+    }
+  },
   "predios": {
     "storehouse": {
       "nome": "Armazém",

@@ -4398,3 +4398,103 @@ se resolve sozinha no ciclo seguinte; separar exigiria estado novo na FSM.
 ### Perguntas em aberto
 
 - Nenhuma nova.
+
+---
+
+## F-TP — A planta fantasma mostra o alcance de colheita (2026-09-24)
+
+**Plano:** `docs/planos/F-TP-alcance-na-planta-fantasma.md`. Feature de
+integração autorizada pela Nota escrita no item **antes** do código.
+
+### O que a feature entrega
+
+Com a fantasma de um prédio que colhe sob o cursor, a tela desenha a moldura do
+alcance sobre o grid e um rótulo com quantos tiles daquele recurso caem dentro e
+quanto isso dá somado — **antes** do clique. Prédio sem `colheita` na receita não
+ganha moldura nenhuma. **Não é recusa:** zero ao alcance mostra "nenhum ao
+alcance" e o clique continua valendo, como o operador decidiu no item.
+
+### A decisão que sustenta a feature: uma função só
+
+O defeito que esta feature existe para **não** criar é a prévia e o prédio
+discordarem. Por isso a contagem não foi reescrita em `render/`: extraí de
+`src/sim/recursos.ts` o núcleo que recebe a **caixa** em vez do prédio
+(`tilesDeColheitaNaCaixa` e `colheitaAoAlcanceDaCaixa`), e `tilesDeColheita` e
+`disponivelAoAlcance` passaram a chamá-lo. É a única mudança em `src/sim/`, e é
+de assinatura: nenhuma regra nova, nenhum número novo, nenhum campo novo em
+`GameState`.
+
+A perna estrutural do aceite é essa igualdade, medida **tile a tile**: o teste
+varre 13 × 11 tiles e afirma que o `tiles` da prévia é igual ao que
+`tilesDeColheita` devolve para o prédio plantado naquele mesmo tile.
+
+### Verificado (não é hipótese)
+
+- `npm run verify` verde: **74 arquivos, 1176 testes**.
+- `npm run shot -- F-TP`: `test-output/F-TP-shot.json` com `sucesso: true` e
+  **21 afirmações**, 3 capturas. Sobre o lajedo em (105,92): `tiles: 63`,
+  `unidades: 945`, `rotulo: "Lajedo: 63 ao alcance (945)"`, moldura de 15 tiles
+  de largura (2 × alcance 6 + largura 3) e `valida: true`. Longe da rocha em
+  (120,94): `tiles: 0`, `unidades: 0`, `valida: true`, `motivo: null` — a prova
+  de que a prévia não virou recusa. Com `schoolhouse`: `alcance: null`.
+- As três capturas **foram abertas com Read** (são a evidência da feature atual,
+  §8): a moldura aparece, os marcadores de rocha estão dentro dela, o rótulo é
+  legível e a fantasma segue **verde** longe do lajedo.
+- O roteiro cumpre a §8: passo 1 despausa com `press('p')` e usa
+  `mouse.down` / `waitForTimeout(150)` / `mouse.up` no botão do menu; o último
+  passo pausa de volta e afirma isso.
+- Não-regressão por código de saída (imagem **não** aberta, §8): `F07`, `F-T2a`,
+  `F-T2b` — todos 0.
+
+### A regra da classe, e a honestidade sobre como ela foi provada
+
+O item pede regra da **classe**, não da Quarry. Nenhum id de prédio e nenhum id
+de recurso está digitado em `src/render/alcance-de-colheita.ts`: o gatilho é ter
+`colheita` na receita, o alcance e o recurso saem do dado e a cor sai da mesma
+tabela do marcador de chão.
+
+**Mas o operador reordenou a fila e esta feature veio antes da F18**, então hoje
+a única receita com `colheita` é a `quarry` — a classe tem **um membro só**. A
+regra é provada por um tipo de prédio **fabricado** num `GameData` clonado dentro
+do teste, que ganha a prévia com o alcance **dele** sem uma linha de código, mais
+um `iff` sobre todos os prédios do dado (tem prévia ⟺ tem `colheita`). Isso é
+prova estrutural e não varre o fonte atrás de nome. A nota de posição do item no
+`BUILD_PLAN.md` foi corrigida e diz isto.
+
+**Sonda de sessão, não cobertura:** escrevi `if (tipo !== 'quarry') return null;`
+no começo de `previaDeAlcance` e o teste do tipo fabricado reprovou — exatamente
+um teste. O guarda acusa. A sonda saiu; a proteção permanente é o teste, que roda
+em todo `npm run verify`.
+
+### O funil da F04 recusou o arquivo novo, e a correção foi estender o funil
+
+O guarda estrutural da F04 permite importar `sim/data` só de `render/mapa.ts` e
+`render/predios.ts`, e ele reprovou `render/alcance-de-colheita.ts`. **Não toquei
+no guarda.** Segui o precedente do próprio código (`ordemDasMercadorias`, que
+`predios.ts` reexporta): `predios.ts` ganhou `caixaDeTipoNoMapa`, e o arquivo
+novo recebe `dados?: GameData` opcional, repassado como veio — `undefined` cai no
+default de cada função de `sim/`. É o que impede o arquivo novo de virar um
+terceiro funil.
+
+### O que ficou registrado em outro arquivo
+
+- **BUG-E em `BUGS.md`** (severidade `feio`): `tests/F-T2b-obstaculo.test.ts`
+  falhou com razão **4,7387 contra teto 2,5** numa corrida. **Verifiquei que não
+  é da F-TP**: com o trabalho guardado a suíte passa, com o trabalho aplicado e o
+  arquivo sozinho também passa, e a suíte inteira passou depois. É o **quarto**
+  teste de relógio de parede da mesma classe (F17c, F09, BUG-D/F-T1). Não alarguei
+  o teto: é teste de outra feature, e generalizar a regra dos dois testes para
+  toda razão de relógio de parede é decisão do operador.
+
+### O que esta feature não fez
+
+- **Não tocou em `placement.ts`.** Nenhum motivo novo de recusa, por decisão do
+  operador escrita no item.
+- **Não criou número novo em `data/`.** O tema ganhou só texto
+  (`plantaFantasma`: os dois moldes de frase e os nomes dos recursos).
+- **Não mexeu na cor do recurso.** A moldura reusa a paleta da F-T2a.
+
+### Perguntas em aberto
+
+- Nenhuma nova. (A generalização da regra dos testes de tempo está no BUG-E, como
+  decisão pendente do operador, não como pergunta minha.)

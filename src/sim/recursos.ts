@@ -25,6 +25,7 @@ import { gameData } from './data';
 import type { GameState, PredioCompleto, RecursoNoTile } from './state';
 import { ehTarefaDeColheita } from './state';
 import { chaveDeTile } from './estradas';
+import type { CaixaEmTiles } from './footprint';
 import { caixaDoPredio } from './footprint';
 
 /** `chaveDeTile` por coordenada solta — a mesma chave de `state.estradas`. */
@@ -69,23 +70,43 @@ export function recursosIniciais(dados: GameData = gameData): Readonly<Record<st
  * Ordem: linha a linha, oeste para leste. E arbitraria, mas tem de ser FIXA —
  * e ela que decide qual tile esvazia primeiro, e o teste de determinismo compara
  * byte a byte.
+ *
+ * A distancia e de Chebyshev a partir do FOOTPRINT, nao do canto: uma pedreira
+ * de 3x2 alcanca o mesmo tanto para os dois lados, e girar o predio um dia nao
+ * muda o alcance. Quem faz a conta e `tilesDeColheitaNaCaixa`, logo abaixo.
  */
 export function tilesDeColheita(
   predio: PredioCompleto, colheita: ColheitaDeRecurso, dados: GameData = gameData,
 ): readonly string[] {
-  const memoKey = `${colheita.recurso}:${colheita.alcance}:${predio.tipo}:${predio.gx},${predio.gy}`;
+  const caixa = caixaDoPredio(predio, dados);
+  if (caixa === null) return SEM_TILES; // tipo fora do dado (save de outra versao)
+  return tilesDeColheitaNaCaixa(caixa, colheita, dados);
+}
+
+/** A lista vazia, uma vez so: tipo fora do dado nao aloca array por chamada. */
+const SEM_TILES: readonly string[] = Object.freeze([]);
+
+/**
+ * F-TP — o mesmo alcance, a partir de uma CAIXA em vez de um predio.
+ *
+ * A planta fantasma nao e predio: nao tem id, nao esta em `state.predios` e
+ * fabricar um predio falso no render para poder perguntar seria o render
+ * inventando estado de jogo. A caixa e o que os dois lados tem — `caixaDeTipo`
+ * produz a da fantasma e `caixaDoPredio` a do predio de pe, e e a MESMA conta
+ * daqui para baixo. Uma segunda copia da regra no render faria a previa
+ * prometer o que o predio nao entrega.
+ */
+export function tilesDeColheitaNaCaixa(
+  caixa: CaixaEmTiles, colheita: ColheitaDeRecurso, dados: GameData = gameData,
+): readonly string[] {
+  const memoKey = `${colheita.recurso}:${colheita.alcance}:${caixa.x0},${caixa.y0},${caixa.x1},${caixa.y1}`;
   const memo = memoPorDados(dados);
   const existente = memo.get(memoKey);
   if (existente !== undefined) return existente;
 
-  // A distancia e de Chebyshev a partir do FOOTPRINT, nao do canto: uma pedreira
-  // de 3x2 alcanca o mesmo tanto para os dois lados, e girar o predio um dia nao
-  // muda o alcance.
-  const caixa = caixaDoPredio(predio, dados);
   const alcance = colheita.alcance;
   const naCamada = camadaDoTipo(dados, colheita.recurso);
   const tiles: string[] = [];
-  if (caixa === null) return tiles; // tipo fora do dado (save de outra versao)
   // `caixa.x1`/`y1` sao a BORDA, nao o ultimo tile (`footprint.ts`): o ultimo
   // tile ocupado e `x1 - 1`, e e dele que se contam os `alcance` passos.
   for (let gy = caixa.y0 - alcance; gy <= caixa.y1 - 1 + alcance; gy += 1) {
@@ -99,15 +120,44 @@ export function tilesDeColheita(
   return tiles;
 }
 
+/**
+ * F-TP — O QUE HA ao alcance de uma caixa: quantos tiles ainda tem o que colher
+ * e quanto isso da somado.
+ *
+ * UMA funcao para os dois lados. A previa da planta fantasma e o predio de pe
+ * tem de dizer o mesmo numero, senao a tela promete o que a pedreira nao
+ * entrega — e a previa nasceu justamente para o jogador nao plantar no escuro.
+ *
+ * `tiles` conta `quantidade > 0`, nao o tamanho da lista: tile de regime
+ * `porAcao` FICA na camada com zero (ver o cabecalho deste arquivo), e dizer
+ * "8 lajedos ao alcance" sobre mancha seca seria a tela mentindo. `unidades`
+ * soma tudo, e tile zerado soma zero — por isso `disponivelAoAlcance` nao muda
+ * de resultado ao passar por aqui.
+ */
+export interface ColheitaAoAlcance {
+  readonly tiles: number;
+  readonly unidades: number;
+}
+
+export function colheitaAoAlcanceDaCaixa(
+  state: GameState, caixa: CaixaEmTiles, colheita: ColheitaDeRecurso, dados: GameData = gameData,
+): ColheitaAoAlcance {
+  let tiles = 0;
+  let unidades = 0;
+  for (const chave of tilesDeColheitaNaCaixa(caixa, colheita, dados)) {
+    const quantidade = state.recursos[chave]?.quantidade ?? 0;
+    if (quantidade > 0) tiles += 1;
+    unidades += quantidade;
+  }
+  return { tiles, unidades };
+}
+
 /** Quanto ainda ha, somado, nos tiles ao alcance. */
 export function disponivelAoAlcance(
   state: GameState, predio: PredioCompleto, colheita: ColheitaDeRecurso, dados: GameData = gameData,
 ): number {
-  let total = 0;
-  for (const chave of tilesDeColheita(predio, colheita, dados)) {
-    total += state.recursos[chave]?.quantidade ?? 0;
-  }
-  return total;
+  const caixa = caixaDoPredio(predio, dados);
+  return caixa === null ? 0 : colheitaAoAlcanceDaCaixa(state, caixa, colheita, dados).unidades;
 }
 
 /**
