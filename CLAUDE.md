@@ -175,6 +175,16 @@ escrita.
 - Não-regressão é rodar os roteiros e conferir o código de saída. Abra
   screenshot com Read só da feature atual: imagem é o que mais pesa na
   janela de contexto.
+- **Roteiro que exercita painel roda pelo menos um passo despausado.**
+  `tools/shot.js` abre a página com `?pausado`, e `page.click()` aperta e solta
+  no mesmo instante: nessa condição o laço nunca redesenha entre o `mousedown` e
+  o `mouseup`. Uma classe inteira de defeito — redesenho que destrói o nó sob o
+  dedo, foco perdido, evento que nunca chega — fica verde por construção, e foi
+  assim que o BUG-B passou por todo roteiro existente. Se o roteiro clica em
+  `#painel-predio`, `#menu-build`, `#alertas` ou `#hud`, pelo menos um passo
+  despausa (`press('p')`), usa `mouse.down` / `waitForTimeout(150)` /
+  `mouse.up` em vez de `page.click()`, e pausa de volta. O inventário de quem
+  ainda não cumpre está em `PROGRESS.md` (2026-09-24).
 ---
 
 ## 9. Arte e assets

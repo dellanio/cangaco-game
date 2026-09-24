@@ -43,19 +43,48 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
   falha identica com as mudancas do BUG-A/BUG-B guardadas no stash**, ou seja,
   nao e regressao destes consertos — veio da F-T2a (`f57a3c1`), que trocou o
   `veio: 200` do predio por rendimento por tile e passou a esgotar a jazida.
-- status: aberto — **a diagnosticar antes de corrigir**. Ha dois desfechos
-  opostos e nao da para escolher no olho:
-  (a) o comportamento novo esta CERTO e quem envelheceu foi a afirmacao do
-      roteiro, que foi escrita quando nenhuma pedreira secava; ou
-  (b) a pedreira do cenario da F22 esgota rapido demais, e ai o numero errado
-      esta em `data/resources.json` (`rock.rendimentoPorTile`) ou no alcance da
-      colheita — caso de `BALANCE_LOG.md`, nao de roteiro.
-  Registrado sem corrigir por causa disso.
+- **DIAGNOSTICADO em 2026-09-24 (turno H). Nao e nenhum dos dois ramos: a
+  pedreira do roteiro nunca teve pedra.** O numero pedido: **zero ticks**. Ela
+  nao esgota o veio, ela nasce sem veio.
+  - A pedreira da F22 fica em `(38,31)`, 3x2, com `alcance_tiles: 6`
+    (`data/production.json`), o que cobre `gx 32..46`.
+  - O lajedo da vila vai de `gx 22` a `gx 26` (`data/maps/sertao-128.json`), 13
+    tiles, 195 de pedra ao todo.
+  - **Tiles de `rock` ao alcance dessa pedreira: 0.** A borda leste do lajedo
+    esta a 6 tiles de distancia da borda oeste do alcance; para alcancar
+    qualquer pedra a pedreira teria de ficar em `gx <= 20`.
+  - Logo `semRecursoAoAlcance` e verdade no primeiro tick em que o predio fica
+    `completo`, e `veio-esgotado` e a resposta CERTA: aquela pedreira nunca vai
+    produzir nada. O balanceamento nao tem culpa, e o roteiro nao roda longe
+    demais — a geometria do roteiro foi escrita quando o veio morava no PREDIO
+    (`veio: 200`, F15a) e o lugar nao importava.
+- **Conserto, ja escrito (nao aplicado ainda)**: mover a pedreira do roteiro da
+  F22 para dentro do alcance do lajedo, e afirmar no proprio roteiro que ela tem
+  pedra ao alcance — a geometria passou a ser pre-condicao do cenario, e
+  pre-condicao nao se deixa implicita.
+- status: aberto — **espera a F-D3**. A F-D3 troca a reserva em faixa por reserva
+  por raio e regrava `data/maps/sertao-128.json`: mexe exatamente nesta
+  geografia. Mover a pedreira agora seria move-la duas vezes.
 - nota: e a segunda vez que a F-T2a aparece num roteiro de outra feature. A
   contagem de tiles ao alcance ja esta no `BALANCE_LOG.md` desde `f57a3c1`.
 
 
 ## Polimento
+
+### BUG-D — terceiro teste de tempo da mesma classe: o teto da F-T1 oscilou
+
+- feature: F-T1-terreno-base
+- severidade: feio (nao bloqueia: `npm run verify` na corrida seguinte deu 0)
+- observado: `tests/F-T1-terreno.test.ts > a busca curta com terreno nao custa
+  mais que o teto contra o mapa liso` falhou com **2,8899 contra teto 2,5** numa
+  corrida de `npm run verify`; **isolado, o mesmo teste passa** (14/14, 547 ms).
+  Medido em 2026-09-24.
+- e a **mesma classe** de `tests/F17c-buffer.test.ts` e `tests/F09-sistema.test.ts`
+  (razao/tempo medidos em maquina compartilhada), entao vale a regra do operador
+  escrita abaixo: **teto mais largo com o numero medido no comentario, nunca
+  `skip`, nunca reduzir a carga**. Nao apliquei ainda porque a regra nomeia os
+  dois testes de la, e este e um terceiro caso — o alargamento e uma linha e cabe
+  em qualquer sessao que o veja falhar de novo.
 
 ### A regra dos dois testes de tempo (decisão do operador, 2026-09-23)
 

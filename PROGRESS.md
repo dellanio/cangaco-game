@@ -3567,3 +3567,86 @@ a decisão de virar (ou de reescrever o aceite) é sua.
   `null`, igual a "nenhuma ferramenta" — o roteiro da F06 teve de afirmar por
   `aria-pressed`. Publicar o `modo` resolveria, e não fiz porque render não era o
   alvo destes bugs.
+
+## Turno H — a regra do passo despausado, o aceite da F13b, o número do BUG-C e a fila F-D (2026-09-24)
+
+Sessão de registro e decisão, não de código. Cinco itens do operador, todos
+fechados; nenhuma feature implementada aqui.
+
+### 1. `?pausado` virou regra escrita (CLAUDE.md §8)
+
+`tools/shot.js:131` abre `http://localhost:5175/?pausado`: **todo** roteiro roda
+com o laço parado. Somado ao `page.click()`, que aperta e solta no mesmo
+instante, isso apaga uma classe inteira de defeito — redesenho que destrói o nó
+sob o dedo, foco perdido, evento que nunca chega. Foi assim que o BUG-B passou
+por todo roteiro existente.
+
+A regra entrou na §8: **roteiro que exercita painel roda pelo menos um passo
+despausado**, com `press('p')` e `mouse.down` / `waitForTimeout(150)` /
+`mouse.up` no lugar do `page.click()`.
+
+**Inventário medido** (contagem por `grep` em `tools/shots/*.js`: "despausa" =
+`press('p')`/`retomar()`, "clique DOM" = `page.click()` em seletor):
+
+| situação | roteiros |
+|---|---|
+| **zero passos despausados, e clica em painel** | F06, F07, F08, F10, F11c, F16b, F17, F17b, F17d, F17e, F17f, F18d-2, F18e, F18f, F22, F-T1, F-T2a |
+| já tem passo despausado | F11a (4), F13b (2 — o passo 9b do BUG-B) |
+| não clica em DOM nenhum | F04, F05b, F18a, F18b |
+
+São **17** roteiros na primeira linha. Não os converti: seriam 17 features de
+uma vez, e a regra nova vale para quem tocar em cada um. Registro como **dívida
+declarada**, não como pendência silenciosa.
+
+### 2. Aceite da F13b reescrito (a chave NÃO foi virada)
+
+O aceite escrito cobria **enfileirar** e calava sobre **cancelar** — por isso a
+F13b continuou verde com o `x` quebrado. Ganhou a perna (b): cancelamento **com
+o laço andando**, aperto de 150 ms, fila medida de N para N-1 **no estado**. A
+nota D3 no item nomeia a classe: é o mesmo defeito de critério escrito antes do
+código que já apareceu na **F12**, na **F15a** e na **F15b**.
+
+A chave continua `true` porque o roteiro **já cumpre** as duas pernas desde
+`8f118af`, e o passo do cancelamento foi provado nos dois sentidos.
+
+### 3. BUG-C — o número: **zero ticks**
+
+O operador pediu para medir em quantos ticks a pedreira da F22 esgota o tile.
+**Ela não esgota: ela nasce sem veio.** Medido (contas sobre
+`data/maps/sertao-128.json` e `data/production.json`):
+
+- pedreira do roteiro em `(38,31)`, 3x2, `alcance_tiles: 6` → cobre `gx 32..46`;
+- lajedo da vila: `gx 22..26`, 13 tiles, 195 de pedra;
+- **tiles de `rock` ao alcance: 0.** Para alcançar qualquer pedra a pedreira
+  teria de ficar em `gx <= 20`.
+
+Logo não é balanceamento (o `rendimentoPorTile` não tem culpa) **nem** roteiro
+rodando longe demais: é a **geometria do roteiro**, escrita quando o veio morava
+no prédio (`veio: 200`, F15a) e o lugar não importava. O alerta `veio-esgotado`
+está **certo** — aquela pedreira nunca produziria nada.
+
+O conserto está escrito no `BUGS.md`, e **espera a F-D3**: ela regrava o mapa e
+mexe nessa mesma geografia; mover a pedreira agora seria movê-la duas vezes.
+
+### 4 e 5. A fila F-D entrou no BUILD_PLAN
+
+`F-D1` (tela de ajuda), `F-D2` (setas + Espaço) e `F-D3` (reserva por raio),
+aprovadas como escritas, com as decisões do operador dentro dos itens:
+
+- **F-D1, aceite (b)**: a tela é comparada com um **inventário do código**, não
+  com a tabela do GDD §2.2.
+- **F-D2, conflito do `Espaço`**: setas e `Espaço` são da câmera, `WASD` é
+  sinônimo, o "pular para o último alerta" fica **sem tecla**. O **GDD §2.2 se
+  corrige dentro da F-D2**.
+- **F-D3**: item próprio, com aceite próprio — a abertura mostra terreno variado
+  sem o jogador precisar procurar, medido no retângulo visível.
+- **Ordem**: F-D1 → F-D2 → F-D3 → F-T2b, porque a F-T2b semeia árvores e é mais
+  barato semear com a geografia já corrigida.
+
+### Achado de lado: BUG-D (terceiro teste de tempo instável)
+
+`npm run verify` falhou uma vez em `tests/F-T1-terreno.test.ts` — razão **2,8899
+contra teto 2,5** — e a corrida seguinte deu verde; isolado, o arquivo passa
+14/14 em 547 ms. É a **mesma classe** do F17c e do F09, e a regra do operador
+para ela já está escrita no `BUGS.md`: teto mais largo com o número medido no
+comentário, nunca `skip`. Registrado em `## Polimento`, não aplicado.

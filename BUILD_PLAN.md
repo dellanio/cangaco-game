@@ -336,8 +336,13 @@ prédio surge sem clique do jogador.
 - **Escopo**: painel com os 5 slots, um botão por tipo de trabalhador e
   cancelamento de item, emitindo `EnqueueTraining`/`CancelTraining` (já
   existentes, F13a). Lê o estado, não o muta.
-- **Aceite**: screenshot do painel com a fila cheia, e roteiro que enfileira por
-  clique e confirma a fila no estado.
+- **Aceite** (reescrito em 2026-09-24, ver nota D3):
+  (a) screenshot do painel com a fila cheia, e roteiro que enfileira por clique e
+  confirma a fila no estado;
+  (b) **cancelamento**, com o laço andando: o roteiro despausa, aperta o `x` de
+  um item por 150 ms (`mouse.down` / `waitForTimeout(150)` / `mouse.up`, nunca
+  `page.click()`) e confirma pelo **estado** que a fila encolheu de N para N-1 —
+  medido nos dois lados do gesto, não descrito.
 - **Evidência**: `screenshots/F13b-*.png`
 - **Nota**: **feature de integração** (CLAUDE.md §10): pode tocar `src/ui/`,
   `src/input/` e `src/render/` na mesma feature, porque o painel precisa abrir a
@@ -350,6 +355,17 @@ prédio surge sem clique do jogador.
   completa abre o painel (`predioNoTile` + `src/input/selecao.ts`); `Esc` e clique
   fora fecham. A ponte de harness foi recusada: é superfície de teste, e um painel
   que só abre pelo Playwright não é a feature.
+- **Nota (D3, decisão do operador — aceite reescrito, não chave virada)**: o
+  aceite original cobria **enfileirar** e não **cancelar**; o cancelamento só
+  aparecia no *Escopo*. Resultado: a F13b continuou verde com o `x` quebrado
+  (BUG-B), porque o critério nunca pediu a perna que quebrou. É o mesmo defeito
+  de critério escrito antes do código que já apareceu na **F12**, na **F15a** e
+  na **F15b** — aceite que descreve o caminho feliz e cala sobre a operação
+  inversa. A perna (b) existe para isso, e o "com o laço andando" não é detalhe
+  de implementação: é a única condição em que o defeito aparece (CLAUDE.md §8).
+  A chave em `test-results.json` **não** foi virada: o roteiro já cumpre as duas
+  pernas desde `8f118af`, e o passo do cancelamento foi provado nos dois
+  sentidos — desligado o conserto de `painel-predio.ts`, ele falha.
 - **Nota (D2, decisão do operador)**: o item `aguardando` mostra **três** motivos
   distintos, não um rótulo neutro — `sem-estrada`, `sem-ouro` e `a-caminho`.
   Porque as causas pedem ações opostas: sem estrada é um arrasto de dez segundos,
@@ -1432,6 +1448,105 @@ prédio surge sem clique do jogador.
 - **Nota (GDD — decisão minha, §7.7)**: o GDD §4 ganha a seção de recursos
   naturais **no commit da feature que a torna verdadeira**, nunca antes. Doc que
   descreve o que não existe é pior que doc faltando.
+
+### F-D — Descoberta: o jogo diz o que existe, e o mapa não esconde
+
+**Origem (turnos F–H, 2026-09-24)**: três sessões de jogo do operador acharam o
+mesmo defeito por três portas. Ele ficou preso na ferramenta de construir porque
+nada anuncia o `Esc` (BUG-A); descobriu que o botão do meio move a câmera só
+quando alguém contou; e achou o lago só depois de alguém dizer onde procurar.
+*"O jogador não vai ter quem diga."* As três features abaixo fecham isso pela
+raiz: o jogo **anuncia** os controles, dá o gesto que todo mundo tenta primeiro
+e abre num lugar onde há o que ver.
+
+**Ordem (decisão do operador)**: F-D1 → F-D2 → F-D3 → **F-T2b**. A F-D3 vem antes
+da F-T2b de propósito: a F-T2b semeia árvores no mapa, e é mais barato semear com
+a geografia já corrigida do que regravar 900 tiles depois.
+
+#### F-D1 — A tela de ajuda: o jogo diz quais teclas existem
+- **Por que primeiro**: é o mais barato e ataca a causa. Hoje nada no jogo anuncia
+  `Esc`, `R`, `P`, `+`/`-`, o botão do meio ou a roda — e a F06 já devia ter
+  trazido isso.
+- **Escopo**: sobreposição HTML sobre o canvas, aberta por `H` **e** `F1`, fechada
+  por `Esc` ou pelo mesmo `H`/`F1`. Todo texto vem de `data/theme-sertao.json`,
+  como todo texto que o jogador lê. Mais um lembrete discreto no primeiro
+  carregamento (*"`H` para os controles"*), que some no primeiro `H` e não volta —
+  a marca fica em `localStorage`, que é coisa de `ui/`, **nunca** de `GameState`.
+- **Aceite**:
+  1. `H` e `F1` abrem; `Esc` e o segundo `H` fecham. O `F1` precisa de
+     `preventDefault`, senão abre a ajuda do navegador.
+  2. **A tela não mente.** O roteiro afirma que cada tecla listada **existe no
+     código**: a lista da tela é comparada com um inventário exportado por
+     `input/`, **não** com a tabela do GDD §2.2.
+  3. Nenhum rótulo é id neutro: todos saem do tema.
+  4. O lembrete aparece na primeira partida e não na segunda.
+- **Evidência**: `screenshots/F-D1-*.png` e `test-output/F-D1-shot.json`
+- **Nota (decisão do operador, turno H)**: o aceite (b) comparar com o **código** e
+  não com o GDD é a decisão certa. Hoje `B`, `F`, `Delete`, `1..9`, `Ctrl+1..9` e
+  `Espaço` estão na tabela do GDD e **não existem** no código. *"Listar tecla que
+  não existe é trocar jogador perdido por jogador enganado."*
+- **Nota de integração (CLAUDE.md §10)**: **feature de integração** — pode tocar
+  `src/ui/` e `src/input/` na mesma feature, porque o inventário de teclas mora em
+  `input/` e quem o mostra é `ui/`. **Não toca `src/sim/`.**
+- **Nota (contrato herdado)**: o inventário de teclas que a F-D1 exporta é a fonte
+  única de "que tecla existe". Toda feature que acrescentar tecla (F-D2, F26)
+  acrescenta **ali**, e a tela de ajuda passa a listá-la sem tocar em `ui/`.
+
+#### F-D2 — Navegação por setas e espaço + arrastar
+- **Por quê**: seta todo mundo tenta; botão do meio quase ninguém. Não se remove
+  nada — o botão do meio continua funcionando.
+- **Escopo**: as setas movem a câmera a passo constante por tick de render;
+  `Espaço` segurado + arrastar move a câmera **independente da ferramenta ativa**
+  (padrão de editor), e o cursor muda enquanto o espaço está apertado, senão o
+  gesto continua invisível. Entra junto, **como higiene, não como urgência**:
+  `preventDefault` no `mousedown` do botão do meio, para o ícone de autoscroll do
+  navegador não aparecer.
+- **Aceite**:
+  1. Cada seta move a câmera na direção certa e o roteiro afirma o `scrollX`/
+     `scrollY` publicado; segurar acelera até um teto lido de `data/terrain.json`,
+     nunca digitado em `.ts`.
+  2. O clamp da F04 continua valendo nas quatro bordas.
+  3. **`Espaço` + arrastar move a câmera com a planta de prédio na mão, e não
+     planta nada** — é a perna que prova a independência da ferramenta.
+  4. `Espaço` sem arrastar não rola a página nem dispara o botão focado do menu.
+  5. Não-regressão: `npm run shot -- F04` e `F18a` saída 0.
+- **Evidência**: `test-output/F-D2-shot.json`
+- **Nota (decisão do operador, turno H — o conflito do `Espaço`)**: leitura
+  conservadora. **Setas e `Espaço` são da câmera**, `WASD` é sinônimo das setas, e
+  o "pular para o último alerta" do GDD §2.2 fica **sem tecla** até alguém lhe dar
+  uma. O **GDD §2.2 se corrige nesta feature**, não depois: tabela que descreve
+  teclas que não existem é o que a F-D1 acabou de proibir.
+- **Nota de integração (CLAUDE.md §10)**: **feature de integração** — toca
+  `src/input/` e `src/render/` (a câmera). **Não toca `src/sim/`**: câmera é
+  render, e nada disto entra no `GameState`.
+
+#### F-D3 — Reserva por raio em volta da vila (gerador de mapa)
+- **Por quê**: *"eu achei o lago depois de alguém me dizer onde procurar."* Hoje
+  `tools/gerar-mapa.js` usa `LIVRE_A_PARTIR_DE = 72`, uma **faixa** que reserva
+  31,6% do mapa e empurra lago, lajedo e mato para longe da vila — fora do alcance
+  de qualquer zoom da abertura. A reserva existe para a vila caber; a forma dela é
+  que está errada.
+- **Escopo**: trocar a faixa por uma **reserva por raio** em volta da vila inicial
+  no gerador. O raio e o que ele reserva são **dado**, não número digitado no
+  `.js`. O mapa é regravado (`data/maps/sertao-128.json`) e a semente registrada.
+- **Aceite**:
+  1. **A abertura mostra terreno variado sem o jogador precisar procurar**: no
+     retângulo visível da câmera inicial, medido do estado e não descrito,
+     aparecem pelo menos **dois tipos de recurso** e **três tipos de terreno**.
+     Screenshot da abertura junto.
+  2. **A vila continua construível**: nenhum recurso e nenhum terreno
+     intransponível sob o footprint dos prédios iniciais nem sob a estrada
+     inicial. Guarda automatizada, dentro do `npm run verify`.
+  3. Mesma semente = mesmo mapa, byte a byte.
+  4. Não-regressão: os roteiros que dependem da geografia (`F-T1`, `F-T2a`,
+     `F16b`) saída 0.
+- **Evidência**: `screenshots/F-D3-*.png` + `test-output/F-D3.json`
+- **Nota (não é feature de integração)**: `tools/` e `data/`. Se algum roteiro
+  precisar de ajuste de coordenada, é não-regressão da geografia, não render novo.
+- **Nota (reavaliar o BUG-C depois desta)**: a pedreira do roteiro da F22 fica em
+  (38,31) e o lajedo da vila termina em `gx 26` — **zero** tiles de pedra ao
+  alcance 6, medido em 2026-09-24. A F-D3 mexe exatamente nessa geografia, então o
+  conserto do BUG-C espera por ela em vez de mover a pedreira duas vezes.
 
 ### F-T2 — Camada de recursos no mapa (sim + render mínimo, integração)
 

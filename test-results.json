@@ -118,5 +118,14 @@
   },
   "F-T2a-recursos-no-mapa": {
     "passes": true
+  },
+  "F-D1-tela-de-ajuda": {
+    "passes": false
+  },
+  "F-D2-navegacao-camera": {
+    "passes": false
+  },
+  "F-D3-reserva-por-raio": {
+    "passes": false
   }
 }
