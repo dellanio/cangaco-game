@@ -350,6 +350,26 @@ export function predioLigadoAoArmazem(
  *  Quarry esta esperando o serf, nao e estoque gastavel. Na `saida` conta so o que
  *  NAO esta reservado por uma tarefa (JobBoard, F09): a unidade que um serf ja
  *  reservou e dele. A `entrada` nao e reservavel. */
+/**
+ * F18d-1b — O armazem que PAGA o proximo tile de estrada: o primeiro de
+ * `predios.ordem` com pedra ainda reservavel na gaveta `saida`. Mesma ordem de
+ * varredura do debito (`debitarPedra`, systems/estradas.ts), e de proposito:
+ * reserva e debito em armazens diferentes fariam a pedra sair de um e faltar no
+ * outro — o "exatamente uma vez" depende dos dois olharem para o mesmo lugar.
+ *
+ * So a `saida` conta aqui, e nao `entrada`, porque so ela e reservavel
+ * (`reservadoNaOrigem`). Entrega em armazem cai na `saida`
+ * (`depositarNoArmazem`), entao `entrada` de armazem nao e caso de jogo normal;
+ * reservar contra ela faria `disponivelNaOrigem` ficar negativo, que e o sinal
+ * que o saneamento usa para "reservado acima do estoque".
+ */
+export function armazemQuePagaAEstrada(state: GameState): string | null {
+  for (const armazem of armazensCompletos(state)) {
+    if (disponivelNaOrigem(state, armazem.id, MERCADORIA_DA_ESTRADA) >= 1) return armazem.id;
+  }
+  return null;
+}
+
 export function pedraDisponivel(state: GameState): number {
   let soma = 0;
   for (const armazem of armazensCompletos(state)) {

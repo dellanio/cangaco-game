@@ -13,10 +13,11 @@ import type { GameData } from '../../src/sim/data/types';
 import type { GameState, Tarefa } from '../../src/sim/state';
 import { distanciaDaTarefa, modoDoTipo, nivelDoTipo, podeReclamar } from '../../src/sim/jobs';
 import { ehEscolaCompleta } from '../../src/sim/escola';
+import { chaveDeTile, ehPlanejada } from '../../src/sim/estradas';
 import { insumosDoPredio } from '../../src/sim/insumo';
 import { ehPredioOcupavel } from '../../src/sim/ocupacao';
 import { disponivelNaOrigem, vagaNoDestino } from '../../src/sim/reservas';
-import { ID_DO_ARMAZEM, origemDaTarefaVale } from '../../src/sim/state';
+import { ehTarefaDeAssentamento, ID_DO_ARMAZEM, origemDaTarefaVale } from '../../src/sim/state';
 
 /**
  * O destino tem que ser coerente com o TIPO da tarefa. A regra nasceu na F09,
@@ -31,6 +32,15 @@ import { ID_DO_ARMAZEM, origemDaTarefaVale } from '../../src/sim/state';
  * `ehEscolaCompleta` (sim/escola.ts) e `ehPredioOcupavel` (sim/ocupacao.ts).
  */
 function violacoesDoDestino(estado: GameState, t: Tarefa, dados: GameData): string[] {
+  // F18d-1b: o destino de `'assentar-estrada'` nao e predio, e o `switch` abaixo
+  // le `predios.porId[t.destino]`. A pergunta dela vem antes, e e a mesma que
+  // `motivoDoDestino` faz (`ehPlanejada`, sim/estradas.ts): o tile continua no
+  // canteiro? Tile ja assentado ou demolido deixa a tarefa sem objeto.
+  if (ehTarefaDeAssentamento(t)) {
+    const chave = chaveDeTile(t.destinoTile);
+    return ehPlanejada(estado.estradasPlanejadas, t.destinoTile)
+      ? [] : [`${t.id}: tile '${chave}' nao esta no canteiro`];
+  }
   const destino = estado.predios.porId[t.destino];
   switch (t.tipo) {
     case 'material-para-obra':

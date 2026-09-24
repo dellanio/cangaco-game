@@ -16,7 +16,8 @@ import {
   trabalhadorDoTipo, vagasDoPredio,
 } from '../src/sim/ocupacao';
 import {
-  armazemDoCenario, comPredioCompletoEm, comUnidadeExtra, semLaborers, semOPredio, serfsDoCenario,
+  armazemDoCenario, comPredioCompletoEm, comUnidadeExtra, destinoPredioDa, semLaborers, semOPredio,
+  serfsDoCenario,
 } from './helpers/jobs-cenario';
 
 const inicial = createInitialState(1);
@@ -174,7 +175,7 @@ describe('F14 — a tarefa de ocupar no quadro', () => {
     e = criarTarefaDeOcupacao(e, 'q1').state; // perto
     const r = reclamarMelhorOcupacao(e, 'esp1');
     expect(r.ok).toBe(true);
-    if (r.ok) expect(r.state.jobs.tarefas.porId[r.tarefa]?.destino).toBe('q1');
+    if (r.ok) expect(destinoPredioDa(r.state.jobs.tarefas.porId[r.tarefa])).toBe('q1');
   });
 
   it('a ordenacao nao oferece a vaga a quem o predio nao aceita', () => {

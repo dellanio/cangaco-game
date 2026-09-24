@@ -39,8 +39,8 @@ import {
   armazemDoJogo, ate, cenarioLongo, fsmDe, liberacoes, quieto, saidaDe, serfDoJogo,
 } from './helpers/serf-cenario';
 import {
-  comEstoqueNaSaida, comEstradas, comPredioCompletoEm, comUnidadeExtra, linhaH, semLaborers,
-  serfsDoCenario,
+  comEstoqueNaSaida, comEstradas, comPredioCompletoEm, comUnidadeExtra, destinoPredioDa, linhaH,
+  semLaborers, serfsDoCenario,
 } from './helpers/jobs-cenario';
 import {
   armazemPorTipo, comOuroNoArmazem, escolaDoCenario, pedir, totalDeOuro,
@@ -125,7 +125,7 @@ const demolicoes = (eventos: readonly GameEvent[]): Extract<GameEvent, { type: '
   eventos.filter((e): e is Extract<GameEvent, { type: 'building-demolished' }> => e.type === 'building-demolished');
 
 const tarefasDe = (e: GameState, destino: string): string[] =>
-  e.jobs.tarefas.ordem.filter((id) => e.jobs.tarefas.porId[id]?.destino === destino);
+  e.jobs.tarefas.ordem.filter((id) => destinoPredioDa(e.jobs.tarefas.porId[id]) === destino);
 
 const evidencia: Record<string, unknown> = {};
 

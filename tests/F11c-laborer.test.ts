@@ -10,7 +10,8 @@ import { criarTarefaDeConstrucao, reclamar, tarefasDeConstrucaoEmOrdem, TIPO_QUE
 import { gerarTarefas } from '../src/sim/systems/jobs';
 import { tilesDaPorta } from '../src/sim/estradas';
 import {
-  armazemDoCenario, comEstoqueNaSaida, comEstradas, comObra, comTarefas, comUnidadeEm, inicial, laborersDoCenario,
+  armazemDoCenario, comEstoqueNaSaida, comEstradas, comObra, comTarefas, comUnidadeEm, destinoPredioDa,
+  inicial, laborersDoCenario,
   semAUnidade, semOPredio, serfsDoCenario, tarefaDe, tile,
 } from './helpers/jobs-cenario';
 import { ate, liberacoes } from './helpers/serf-cenario';
@@ -396,7 +397,7 @@ describe('F11c — sistemaDosLaborers (Task 5)', () => {
     const liberacoesDaFase1 = liberacoes(eventosDaFase1).filter((e) => e.motivo === 'pedido-da-unidade');
     expect(liberacoesDaFase1).toHaveLength(2); // uma por laborer, nenhuma repetida
     for (const lib of liberacoesDaFase1) {
-      expect(atual.jobs.tarefas.porId[lib.tarefa]?.destino).toBe('obra-a'); // so a obra sem material possivel
+      expect(destinoPredioDa(atual.jobs.tarefas.porId[lib.tarefa])).toBe('obra-a'); // so a obra sem material possivel
     }
 
     // fase 2: obra-b nasce, nivelada do zero, pedindo TABUA — que existe. Os ociosos vao

@@ -429,16 +429,20 @@ export type Gaveta = 'entrada' | 'saida';
  * deliberadamente nao importa `jobs.ts` (o ciclo que o cabecalho de `reservas.ts`
  * explica).
  */
-export const GAVETA_DE_ORIGEM_POR_TIPO: Readonly<Record<TipoDeTransporte, Gaveta>> = {
+export const GAVETA_DE_ORIGEM_POR_TIPO: Readonly<Record<TipoNaEscada, Gaveta>> = {
   'material-para-obra': 'saida',
   'ouro-para-escola': 'saida',
   'insumo-producao-parada': 'saida',
   'insumo-producao-baixa': 'saida',
   'saida-cheia-para-armazem': 'saida',
   'excedente-para-armazem': 'entrada',
+  // F18d-1b: a pedra da estrada sai da `saida` do armazem, a mesma gaveta de onde
+  // `debitarPedra` tira e a unica reservavel. O laborer nao a carrega — ela e
+  // debitada no assentamento —, mas a RESERVA e da mesma natureza das outras.
+  'assentar-estrada': 'saida',
 };
 
-export function gavetaDeOrigem(tipo: TipoDeTransporte): Gaveta {
+export function gavetaDeOrigem(tipo: TipoNaEscada): Gaveta {
   return GAVETA_DE_ORIGEM_POR_TIPO[tipo];
 }
 
@@ -519,7 +523,36 @@ export interface TarefaOcupar extends TarefaBase {
   readonly destino: string;
 }
 
-export type Tarefa = TarefaDeTransporte | TarefaConstruir | TarefaOcupar;
+/**
+ * F18d-1b — assentar UM tile de estrada planejado (`estradasPlanejadas`). So o
+ * laborer (`TIPO_QUE_CONSTROI`) e elegivel: o canteiro de estrada e obra, nao
+ * carga. Molde da `TarefaConstruir` num ponto e da de carga noutro, e e a unica
+ * que mistura os dois:
+ *
+ *  - SEM `'carregando'`: o laborer nao leva a pedra na mao. Ela e debitada do
+ *    armazem no assentamento, e por isso a viagem e so de ida.
+ *  - COM `mercadoria`/`origem`: a pedra e RESERVADA no armazem que vai pagar
+ *    (`armazemQuePagaAEstrada`), e a reserva vale desde `'aberta'` — diferente
+ *    de toda tarefa de carga, que so reserva ao ser reclamada. E o clique do
+ *    jogador que compromete a pedra: sem isso dois `PlaceRoad` no mesmo tick
+ *    gastariam a mesma unidade, e o segundo tracado nasceria impagavel.
+ *  - O destino e um TILE, em `destinoTile`, e NAO ha `destino: string`. Tile nao
+ *    e predio: nao tem gaveta, nao tem vaga, nao tem porta. Os lugares que fazem
+ *    `predios.porId[tarefa.destino]` nao compilam contra este tipo, de proposito.
+ */
+export interface TarefaAssentarEstrada extends TarefaBase {
+  readonly tipo: 'assentar-estrada';
+  readonly estado: 'aberta' | 'reclamada';
+  /** Sempre `MERCADORIA_DA_ESTRADA`; o campo existe para a reserva ser a mesma
+   *  conta de `reservadoNaOrigem`, e nao uma segunda regra paralela. */
+  readonly mercadoria: string;
+  /** Id do armazem que reserva a pedra e que vai paga-la no assentamento. */
+  readonly origem: string;
+  /** O tile planejado a assentar. */
+  readonly destinoTile: TileDeGrid;
+}
+
+export type Tarefa = TarefaDeTransporte | TarefaConstruir | TarefaOcupar | TarefaAssentarEstrada;
 
 /**
  * O tipo da tarefa, DERIVADO da uniao: acrescentar um produtor novo (F15, F20)
@@ -529,14 +562,31 @@ export type Tarefa = TarefaDeTransporte | TarefaConstruir | TarefaOcupar;
 export type TipoDeTarefa = Tarefa['tipo'];
 
 /**
- * Uma tarefa que o serf CARREGA: tem `mercadoria` e `origem`. Testa a FORMA, e
- * nao `tipo !== 'construir'` (como ate a F13): com a chegada de `'ocupar'`
- * (F14), o negativo classificaria a tarefa nova como transporte e ela passaria
- * por `vagaDoDestino`/`disponivelNaOrigem`, que leriam `undefined`. Pela forma,
- * um tipo novo so entra na uniao de transporte se realmente carregar algo.
+ * F18d-1b — os tipos que ESTAO na escada de `delivery.json`, e so eles.
+ * `'construir'` e `'ocupar'` ficam de fora (nao disputam nivel com ninguem), e e
+ * por isso que `modoDoTipo` nao aceita `TipoDeTarefa` inteiro: pedir o modo de um
+ * tipo fora da escada e erro de chamada, e continua falhando alto.
+ */
+export type TipoNaEscada = TipoDeTransporte | TarefaAssentarEstrada['tipo'];
+
+/**
+ * Uma tarefa que o serf CARREGA: tem `mercadoria` e entrega num PREDIO. Testa a
+ * FORMA, e nao `tipo !== 'construir'` (como ate a F13): com a chegada de
+ * `'ocupar'` (F14), o negativo classificaria a tarefa nova como transporte e ela
+ * passaria por `vagaDoDestino`/`disponivelNaOrigem`, que leriam `undefined`.
+ *
+ * F18d-1b — `'mercadoria' in tarefa` sozinho deixou de bastar: a tarefa de
+ * assentar tem mercadoria (a pedra que o armazem paga) e NAO tem `destino` de
+ * predio. As duas perguntas juntas sao a forma inteira de uma carga: de onde sai
+ * e em que predio entra.
  */
 export function ehTarefaDeTransporte(tarefa: Tarefa): tarefa is TarefaDeTransporte {
-  return 'mercadoria' in tarefa;
+  return 'mercadoria' in tarefa && 'destino' in tarefa;
+}
+
+/** F18d-1b — a irma da de cima, pela mesma forma: o destino e um tile. */
+export function ehTarefaDeAssentamento(tarefa: Tarefa): tarefa is TarefaAssentarEstrada {
+  return 'destinoTile' in tarefa;
 }
 
 /** A central de tarefas. Serializavel: so `Colecao` de objetos planos. */

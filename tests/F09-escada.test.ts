@@ -18,9 +18,11 @@ const errosDaEscada = (escada: unknown): string[] =>
 const real = gameData.entrega.prioridades as ReadonlyArray<{ readonly nivel: number; readonly id?: string }>;
 
 describe('F09 — delivery.json: a escada de prioridade tem id por nivel', () => {
-  it('o dado real passa e cada um dos 7 niveis tem id', () => {
+  // F18d-1b: eram 7 niveis ate a estrada virar canteiro; 'assentar-estrada' entrou
+  // no fim (nivel 8) justamente para nao deslocar nenhum dos outros.
+  it('o dado real passa e cada um dos 8 niveis tem id', () => {
     expect(validarTudo(dadosReaisComEscada(real))).toEqual([]);
-    expect(real).toHaveLength(7);
+    expect(real).toHaveLength(8);
     for (const linha of real) expect(typeof linha.id).toBe('string');
   });
 

@@ -14,12 +14,15 @@ import type {
   GameEvent, GameState, Predio, Tarefa, TarefaConstruir, TarefaDeTransporte,
   TarefaExcedenteParaArmazem, TarefaInsumoProducaoBaixa, TarefaInsumoProducaoParada,
   TarefaMaterialParaObra, TarefaOcupar, TarefaOuroParaEscola,
-  TarefaSaidaCheiaParaArmazem, TipoDeTarefa,
+  TarefaAssentarEstrada, TarefaSaidaCheiaParaArmazem, TipoDeTarefa, TipoNaEscada,
 } from './state';
 import { ehTarefaDeTransporte, MERCADORIA_DE_OURO } from './state';
 import type { GameData } from './data/types';
 import { gameData } from './data';
-import { componenteDe, distanciaEntrePredios, ehEstrada, tilesDaPorta } from './estradas';
+import {
+  armazemQuePagaAEstrada, componenteDe, distanciaEntrePredios, ehEstrada, ehPlanejada,
+  MERCADORIA_DA_ESTRADA, tilesDaPorta,
+} from './estradas';
 import type { TileDeGrid } from './estradas';
 import { obraTrabalhavel } from './obra';
 import { buscarCaminho } from './pathfinding';
@@ -84,6 +87,10 @@ const UNIDADE_ELEGIVEL_POR_TIPO: Readonly<Record<TipoDeTarefa, string | null>> =
   'saida-cheia-para-armazem': TIPO_QUE_CARREGA,
   'excedente-para-armazem': TIPO_QUE_CARREGA,
   construir: TIPO_QUE_CONSTROI,
+  // F18d-1b: assentar tile planejado e trabalho de canteiro — mesmo laborer,
+  // mesma FSM (`indo_a_obra` -> `martelando`), mesmo claim. A pedra nao viaja
+  // com ele: sai do armazem no assentamento.
+  'assentar-estrada': TIPO_QUE_CONSTROI,
   // F14: 'ocupar' nao tem UM tipo elegivel — quem pode ocupar depende do PREDIO
   // de destino. `null` aqui significa "esta pergunta nao se responde so com o
   // tipo da tarefa", e por isso `elegivelParaTarefa` NUNCA autoriza uma
@@ -134,7 +141,7 @@ export function nivelDoTipo(tipo: TipoDeTarefa, dados: GameData = gameData): num
  * Falha alto pelas duas vias — id fora da escada e modo que nao existe — porque
  * um padrao assumido aqui viraria a regra do jogo escondida num `??`.
  */
-export function modoDoTipo(tipo: TarefaDeTransporte['tipo'], dados: GameData = gameData): ModoDeBusca {
+export function modoDoTipo(tipo: TipoNaEscada, dados: GameData = gameData): ModoDeBusca {
   const linha = dados.entrega.prioridades.find((p) => p.id === tipo);
   if (linha === undefined) {
     throw new Error(`modoDoTipo: '${tipo}' nao esta na escada de delivery.json (prioridades[].id)`);
@@ -254,6 +261,29 @@ export function criarTarefaDeOcupacao(
 ): { readonly state: GameState; readonly id: string } {
   const numero = state.proximoId;
   const tarefa: TarefaOcupar = { id: `t${numero}`, numero, tipo: 'ocupar', destino, estado: 'aberta', reclamadaPor: null };
+  return inserirTarefa(state, tarefa);
+}
+
+/**
+ * F18d-1b — cria a tarefa de assentar o tile PLANEJADO `tile`, aberta, e com
+ * ela a reserva de uma pedra no armazem que vai pagar. `null` quando nenhum
+ * armazem tem pedra reservavel: sem pagador nao ha tarefa, e o tile fica no
+ * canteiro esperando (`gerarTarefas` tenta de novo quando a pedra chegar).
+ *
+ * A reserva vale ja em `'aberta'`, diferente de toda tarefa de carga — ver
+ * `TarefaAssentarEstrada`. Por isso `criar` e a operacao que compromete a pedra,
+ * e nao `reclamar`.
+ */
+export function criarTarefaDeAssentamento(
+  state: GameState, tile: TileDeGrid,
+): { readonly state: GameState; readonly id: string } | null {
+  const origem = armazemQuePagaAEstrada(state);
+  if (origem === null) return null;
+  const numero = state.proximoId;
+  const tarefa: TarefaAssentarEstrada = {
+    id: `t${numero}`, numero, tipo: 'assentar-estrada', mercadoria: MERCADORIA_DA_ESTRADA,
+    origem, destinoTile: tile, estado: 'aberta', reclamadaPor: null,
+  };
   return inserirTarefa(state, tarefa);
 }
 
@@ -454,6 +484,15 @@ export function reclamar(
     if (caminhoAtePredioCompleto(state, tarefa.destino, unidadeId, dados) === null) {
       return { ok: false, motivo: 'sem-caminho' };
     }
+  } else if (tarefa.tipo === 'assentar-estrada') {
+    // F18d-1b: o tile tem de continuar no CANTEIRO. Se ja foi assentado ou
+    // demolido entre a criacao e o claim, nao ha o que fazer la.
+    if (!ehPlanejada(state.estradasPlanejadas, tarefa.destinoTile)) {
+      return { ok: false, motivo: 'destino-sem-trabalho' };
+    }
+    // O caminho ate o tile e a FSM que assenta sao a Tarefa 3 da F18d-1b. Ate
+    // la nenhum laborer chega aqui: `tarefasDeConstrucaoEmOrdem` so lista
+    // `'construir'`, e e dela que `sistemaDosLaborers` reclama.
   } else {
     // 'construir': sem mercadoria/origem (o laborer nao carrega nada).
     if (vagaDeConstrucao(state, tarefa.destino, dados) < 1) return { ok: false, motivo: 'destino-sem-vaga' };

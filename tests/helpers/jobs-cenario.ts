@@ -32,6 +32,22 @@ export function comEstradas(estado: GameState, tiles: readonly TileDeGrid[]): Ga
   return { ...estado, estradas: { ...estado.estradas, ...estradasDe(tiles) } };
 }
 
+/**
+ * F18d-1b — o PREDIO que uma tarefa mira, ou `null`. Nem toda tarefa tem
+ * `destino`: a de assentar estrada aponta para um tile (`destinoTile`), e por
+ * isso `t.destino` deixou de compilar sobre `Tarefa`. Os testes que so se
+ * importam com predio perguntam por aqui.
+ */
+export function destinoPredioDa(tarefa: Tarefa | undefined): string | null {
+  return tarefa !== undefined && 'destino' in tarefa ? tarefa.destino : null;
+}
+
+/** F18d-1b — acrescenta tiles ao CANTEIRO (planejados, ninguem assentou ainda).
+ *  Irma de `comEstradas`: sem custo e sem validar, e montagem de teste. */
+export function comPlanejadas(estado: GameState, tiles: readonly TileDeGrid[]): GameState {
+  return { ...estado, estradasPlanejadas: { ...estado.estradasPlanejadas, ...estradasDe(tiles) } };
+}
+
 export function armazemDoCenario(estado: GameState): PredioCompleto {
   const p = estado.predios.ordem.map((id) => estado.predios.porId[id]).find((x) => x?.tipo === 'storehouse');
   if (!p || p.estado !== 'completo') throw new Error('fixture: cenario sem armazem');

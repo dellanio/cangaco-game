@@ -12,8 +12,10 @@
  * `test-output/F09.json` e a nota da F10 no BUILD_PLAN. Se pedir indice, e otimizacao
  * (por predio e mercadoria), nao mudanca de contrato.
  */
-import type { Gaveta, GameState, TarefaDeTransporte } from './state';
-import { ehTarefaDeTransporte, gavetaDeOrigem, ID_DO_ARMAZEM, origemDaTarefaVale } from './state';
+import type { Gaveta, GameState, TarefaAssentarEstrada, TarefaDeTransporte } from './state';
+import {
+  ehTarefaDeAssentamento, ehTarefaDeTransporte, gavetaDeOrigem, ID_DO_ARMAZEM, origemDaTarefaVale,
+} from './state';
 import type { GameData } from './data/types';
 import { gameData } from './data';
 import { ouroNecessario } from './escola';
@@ -30,6 +32,12 @@ import { vagasDoPredio } from './ocupacao';
  * juntas faria uma reservar a unidade da outra, e `disponivelNaOrigem` cairia
  * abaixo de zero sem que nada estivesse errado. A gaveta vem do TIPO da tarefa
  * (`gavetaDeOrigem`), nunca de um campo.
+ *
+ * F18d-1b — a tarefa de assentar estrada conta AQUI TAMBEM, e conta desde
+ * `'aberta'`: a pedra de um tile planejado ja e dele no instante do clique. Sem
+ * isso, dois `PlaceRoad` no mesmo tick veriam a mesma unidade livre e o segundo
+ * tracado nasceria impagavel. Ela sempre sai da gaveta `saida` do armazem — a
+ * unica reservavel, e a mesma de onde `debitarPedra` tira.
  */
 export function reservadoNaOrigem(
   state: GameState, predioId: string, mercadoria: string, gaveta: Gaveta = 'saida',
@@ -37,8 +45,14 @@ export function reservadoNaOrigem(
   let soma = 0;
   for (const id of state.jobs.tarefas.ordem) {
     const t = state.jobs.tarefas.porId[id];
-    if (t && ehTarefaDeTransporte(t) && t.estado === 'reclamada' && t.origem === predioId
-        && t.mercadoria === mercadoria && gavetaDeOrigem(t.tipo) === gaveta) soma += 1;
+    if (t === undefined) continue;
+    // a unica diferenca entre os dois ramos e QUANDO a reserva comeca: a de
+    // assentar reserva desde `aberta`, a de carga so quando reclamada.
+    const daOrigem = (x: TarefaDeTransporte | TarefaAssentarEstrada): boolean =>
+      x.origem === predioId && x.mercadoria === mercadoria && gavetaDeOrigem(x.tipo) === gaveta;
+    if (ehTarefaDeAssentamento(t)) {
+      if (daOrigem(t)) soma += 1;
+    } else if (ehTarefaDeTransporte(t) && t.estado === 'reclamada' && daOrigem(t)) soma += 1;
   }
   return soma;
 }

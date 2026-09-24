@@ -16,12 +16,12 @@ import type {
   GameEvent, GameState, Predio, PredioCompleto, PredioEmObra, Tarefa, TarefaDeTransporte,
 } from '../state';
 import {
-  ehTarefaDeTransporte, ID_DO_ARMAZEM, MERCADORIA_DE_OURO, ORIGEM_ESPERADA_POR_TIPO,
-  origemDaTarefaVale,
+  ehTarefaDeAssentamento, ehTarefaDeTransporte, ID_DO_ARMAZEM, MERCADORIA_DE_OURO,
+  ORIGEM_ESPERADA_POR_TIPO, origemDaTarefaVale,
 } from '../state';
 import type { GameData } from '../data/types';
 import { gameData } from '../data';
-import { armazensCompletos } from '../estradas';
+import { armazensCompletos, chaveDeTile, ehPlanejada } from '../estradas';
 import {
   criarTarefa, criarTarefaDeConstrucao, criarTarefaDeInsumo, criarTarefaDeOcupacao,
   criarTarefaDeOuro, criarTarefaParaArmazem, distanciaDaTarefa, liberar, ligacaoEntrePredios,
@@ -64,6 +64,12 @@ const ehObra = (p: Predio | undefined): p is PredioEmObra => p !== undefined && 
  * existe.
  */
 function motivoDoDestino(state: GameState, t: Tarefa, dados: GameData): MotivoDeLiberacao | null {
+  // F18d-1b — o destino de `'assentar-estrada'` e um TILE, e a pergunta e outra:
+  // ele continua no canteiro? Assentado ou demolido, a tarefa perdeu o objeto e
+  // some, devolvendo a pedra reservada (a reserva e derivada da tarefa).
+  if (ehTarefaDeAssentamento(t)) {
+    return ehPlanejada(state.estradasPlanejadas, t.destinoTile) ? null : 'destino-sumiu';
+  }
   const destino = state.predios.porId[t.destino];
   if (!destino) return 'destino-sumiu';
   switch (t.tipo) {
@@ -244,6 +250,13 @@ export function sanearTarefas(state: GameState, dados: GameData = gameData): Res
     } else if (t.tipo === 'construir') {
       const existentes = tarefasPorNumero(atual).filter((o) => o.tipo === 'construir' && o.destino === t.destino).length;
       if (existentes > dados.construcao.laborersMaximosPorObra) atual = cancelarAberta(atual, t.id);
+    } else if (ehTarefaDeAssentamento(t)) {
+      // F18d-1b: um tile planejado comporta UMA tarefa. Duas assentariam a mesma
+      // casa e reservariam duas pedras para uma so.
+      const chave = chaveDeTile(t.destinoTile);
+      const existentes = tarefasPorNumero(atual)
+        .filter((o) => ehTarefaDeAssentamento(o) && chaveDeTile(o.destinoTile) === chave).length;
+      if (existentes > 1) atual = cancelarAberta(atual, t.id);
     } else {
       // 'ocupar' (F14): o teto e a VAGA do predio (1 vago, 0 ocupado), derivada
       // do estado — nao ha teto em dado, ver `vagasDoPredio`.

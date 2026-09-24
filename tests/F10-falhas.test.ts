@@ -33,7 +33,7 @@ import {
 } from './helpers/serf-cenario';
 import {
   cenarioLigado, comAPortaTapada, comArmazemCompleto, comEstoqueNaSaida, comEstradas, comObra, comPedraNaSaida,
-  comUnidadeEm, inicial, linhaH,
+  comUnidadeEm, destinoPredioDa, inicial, linhaH,
   linhaV, semAUnidade,
   semOPredio, serfsDoCenario, tile,
 } from './helpers/jobs-cenario';
@@ -380,7 +380,8 @@ function rodarCaos(semente: number, passos: number, cobertura: CoberturaDoCaos):
         break;
       }
       case 5: { // corta o caminho do serf ocupado: tapa a porta da obra, ou tira a rua debaixo dele
-        const destino = tarefaDoAlvo === undefined ? undefined : estado.predios.porId[tarefaDoAlvo.destino];
+        const alvoDaTarefa = destinoPredioDa(tarefaDoAlvo);
+        const destino = alvoDaTarefa === null ? undefined : estado.predios.porId[alvoDaTarefa];
         // F18d-1a: demolir rua deixou de cortar caminho de entrega em obra — o nivel 3 anda
         // livre. Quem corta um caminho a pe e um predio em cima da porta. Sem este ramo o
         // caos nunca chegaria a `caminho-cortado`, e a cobertura, la embaixo, acusaria.
@@ -400,7 +401,8 @@ function rodarCaos(semente: number, passos: number, cobertura: CoberturaDoCaos):
         break;
       }
       case 8: { // a obra do serf ocupado some
-        if (tarefaDoAlvo) estado = semOPredio(estado, tarefaDoAlvo.destino);
+        const predioDoAlvo = destinoPredioDa(tarefaDoAlvo);
+        if (predioDoAlvo !== null) estado = semOPredio(estado, predioDoAlvo);
         break;
       }
       case 9: { // um armazem some (e o mundo pode ficar sem nenhum: o serf espera)

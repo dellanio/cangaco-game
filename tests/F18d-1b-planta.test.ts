@@ -9,20 +9,15 @@
  */
 import { describe, it, expect } from 'vitest';
 import { createInitialState } from '../src/sim/state';
-import type { GameState } from '../src/sim/state';
 import type { TileDeGrid } from '../src/sim/estradas';
 import {
-  chaveDeTile, ehEstrada, ehPlanejada, indiceDeEstradas, isConnected, predioLigadoAoArmazem,
+  ehEstrada, ehPlanejada, indiceDeEstradas, isConnected, predioLigadoAoArmazem,
 } from '../src/sim/estradas';
+import { comPlanejadas } from './helpers/jobs-cenario';
 
 const tile = (gx: number, gy: number): TileDeGrid => ({ gx, gy });
 const linhaH = (x0: number, x1: number, y: number): TileDeGrid[] =>
   Array.from({ length: x1 - x0 + 1 }, (_, i) => tile(x0 + i, y));
-
-function comPlanejadas(estado: GameState, tiles: readonly TileDeGrid[]): GameState {
-  const novas = Object.fromEntries(tiles.map((t) => [chaveDeTile(t), true as const]));
-  return { ...estado, estradasPlanejadas: { ...estado.estradasPlanejadas, ...novas } };
-}
 
 describe('F18d-1b — `estradasPlanejadas` existe no estado, e e inerte', () => {
   const inicial = createInitialState(1);
