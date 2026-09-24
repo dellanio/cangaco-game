@@ -93,3 +93,13 @@ caminho. Ideia boa é justamente a mais perigosa.
   deslizando onde ela não está quebraria *"o render lê o estado, não decide"*, hoje inofensivo só
   porque civil não é selecionável, e desenhar caminhada falsa **mente sobre uma regra que não
   existe** em vez de assumir que ela falta.
+- Clicar no aviso do HUD centra a câmera no prédio — **fora da F22 por decisão do operador
+  (2026-09-23)**, e esta entrada registra o gancho que ficou pronto, não uma pendência. O
+  `Alerta` devolvido por `alertasDoEstado` já carrega `predio` (o id no estado) além da causa,
+  justamente porque a contagem sozinha não bastaria para isso depois; hoje a tela usa só a causa
+  e a contagem, e o id viaja sem leitor. Implementar é **só `render/` e `input/`**: o alerta vira
+  alvo de clique e o handler resolve `gx`/`gy` pelo id. **Não há helper de centrar hoje** — o
+  único uso é `camera.centerOn` na abertura (`src/render/scenes/WorldScene.ts:115`), e o clamp
+  da F18a se aplica sozinho. **Nenhum comando novo, nada em `sim/`**: a sim não sabe onde está a
+  câmera e não pode saber. O que falta decidir quando entrar: com uma causa em vários prédios,
+  um clique leva a qual, e o segundo clique leva ao próximo ou repete o primeiro.
