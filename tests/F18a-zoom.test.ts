@@ -12,7 +12,7 @@ import { gameData } from '../src/sim/data';
 import {
   gridToScreen, gridToScreenCentro, screenToGrid, ESCALA_DO_MUNDO,
 } from '../src/render/grid';
-import { proximoNivel } from '../src/render/zoom';
+import { proximoNivel, mundoSobPonto, scrollAncorado } from '../src/render/zoom';
 import { createRng, nextInt, nextFloat } from '../src/sim/rng';
 import { gravarEvidencia } from './helpers/evidence';
 
@@ -142,5 +142,57 @@ describe('F18a — proximoNivel: passos discretos, com as pontas fechadas', () =
         passoAbaixo: proximoNivel(NIVEIS, escala, -1),
       })),
     });
+  });
+});
+
+describe('F18a — ancoragem no cursor: a inversa exata, provada nos dois sentidos', () => {
+  // A camera do jogo: viewport cheia, origem 0.5, x = 0.
+  const LARGURA = 1020;
+  const ANCORA = LARGURA * 0.5;
+  const ORIGEM = LARGURA * 0.5;
+
+  it('em zoom 1 a conversao se reduz a scroll + ponto (o que os roteiros assumiam)', () => {
+    expect(mundoSobPonto(1602, 542, ANCORA, ORIGEM, 1)).toBe(1602 + 542);
+  });
+
+  it('scrollAncorado e a inversa de mundoSobPonto, em todo nivel', () => {
+    for (const zoom of NIVEIS) {
+      for (const scroll of [0, 137, 1602, 2056]) {
+        for (const ponto of [0, 3, 542, 1019]) {
+          const mundo = mundoSobPonto(scroll, ponto, ANCORA, ORIGEM, zoom);
+          expect(
+            scrollAncorado(mundo, ponto, ANCORA, ORIGEM, zoom),
+            `zoom ${zoom}, scroll ${scroll}, ponto ${ponto}`,
+          ).toBeCloseTo(scroll, 9);
+        }
+      }
+    }
+  });
+
+  it('ACEITE: mudar de nivel com o scroll ancorado mantem o mundo sob o cursor', () => {
+    const ponto = 542;
+    for (const de of NIVEIS) {
+      for (const para of NIVEIS) {
+        const scroll = 1602;
+        const mundo = mundoSobPonto(scroll, ponto, ANCORA, ORIGEM, de);
+        const scrollNovo = scrollAncorado(mundo, ponto, ANCORA, ORIGEM, para);
+        expect(
+          mundoSobPonto(scrollNovo, ponto, ANCORA, ORIGEM, para),
+          `de ${de} para ${para}`,
+        ).toBeCloseTo(mundo, 9);
+      }
+    }
+  });
+
+  it('o cursor no pivo da camera nao move o scroll, seja qual for o nivel', () => {
+    const mundo = mundoSobPonto(1602, ANCORA, ANCORA, ORIGEM, 1);
+    for (const zoom of NIVEIS) {
+      expect(scrollAncorado(mundo, ANCORA, ANCORA, ORIGEM, zoom), `zoom ${zoom}`).toBeCloseTo(1602, 9);
+    }
+  });
+
+  it('zoom <= 0 lanca nas duas, como a escala em grid.ts', () => {
+    expect(() => mundoSobPonto(0, 0, ANCORA, ORIGEM, 0)).toThrow();
+    expect(() => scrollAncorado(0, 0, ANCORA, ORIGEM, -1)).toThrow();
   });
 });

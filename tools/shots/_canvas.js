@@ -53,4 +53,26 @@ async function arrastarDentroDoCanvas(page, canvas, pontos, opcoes = {}) {
   if (soltar) await page.mouse.up();
 }
 
-module.exports = { retanguloDe, retanguloDoCanvas, arrastarDentroDoCanvas };
+/**
+ * F18a — o CENTRO de um tile no canvas, ciente de zoom.
+ *
+ * Ate a F18a cada roteiro calculava `canvas.left + gx * TILE_PX - camera.scrollX`
+ * a mao, e essa formula so vale em zoom 1: com zoom, tela = (mundo - scroll) * zoom.
+ * Enquanto o nivel inicial for 1 os roteiros antigos continuam certos; qualquer
+ * roteiro que MEXA no zoom tem de passar por aqui.
+ *
+ * `camera` e o `window.__cangaco.camera` que a cena publica no POST_RENDER:
+ * { scrollX, scrollY, zoom } — ja com o clamp de setBounds aplicado.
+ */
+function pontoDoTileNaTela(canvas, tile, camera, tilePx) {
+  const mundoX = tile.gx * tilePx + tilePx / 2;
+  const mundoY = tile.gy * tilePx + tilePx / 2;
+  return {
+    x: canvas.left + (mundoX - camera.scrollX) * camera.zoom,
+    y: canvas.top + (mundoY - camera.scrollY) * camera.zoom,
+  };
+}
+
+module.exports = {
+  retanguloDe, retanguloDoCanvas, arrastarDentroDoCanvas, pontoDoTileNaTela,
+};

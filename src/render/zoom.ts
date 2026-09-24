@@ -36,3 +36,41 @@ export function proximoNivel(
   if (alvo < 0 || alvo >= niveis.length) return niveis[iMaisProximo] as number;
   return niveis[alvo] as number;
 }
+
+/**
+ * Ancoragem no cursor, em uma dimensao. Camera ortogonal, sem rotacao.
+ *
+ * Por que a conta mora aqui, pura, e nao em `camera.getWorldPoint` chamado duas
+ * vezes: `getWorldPoint` mistura o `zoomX` NOVO com a `matrix` VELHA — a matriz
+ * so e reconstruida no `preRender` do quadro seguinte (Phaser 3,
+ * `cameras/2d/Camera.js`). Chamado logo depois de `setZoom`, ele devolve um
+ * hibrido, e a correcao de scroll sai errada. Medido: o tile sob o cursor
+ * pulava de (33,32) para (49,50) ao ir de zoom 1 a 0.5.
+ *
+ * A formula sai da propria `preRender`, onde a matriz e
+ * `T(camera.x + origem) . S(zoom) . T(-origem)`:
+ *
+ *   mundo = scroll + (pontoNaTela - ancora) / zoom + origem
+ *
+ * com `ancora = camera.x + camera.width * camera.originX` (o pivo da matriz) e
+ * `origem = camera.width * camera.originX`. Em zoom 1 ela se reduz a
+ * `scroll + pontoNaTela`, que e o caso que todo roteiro anterior assumia.
+ */
+export function mundoSobPonto(
+  scroll: number, pontoNaTela: number, ancora: number, origem: number, zoom: number,
+): number {
+  if (!(zoom > 0)) throw new Error(`zoom: nivel precisa ser > 0 (recebeu ${zoom}).`);
+  return scroll + (pontoNaTela - ancora) / zoom + origem;
+}
+
+/**
+ * O scroll que poe `mundo` de volta sob `pontoNaTela` no `zoom` dado. E a
+ * inversa exata de `mundoSobPonto`, e e isso que faz o tile sob o cursor nao se
+ * mexer quando a roda muda de nivel.
+ */
+export function scrollAncorado(
+  mundo: number, pontoNaTela: number, ancora: number, origem: number, zoom: number,
+): number {
+  if (!(zoom > 0)) throw new Error(`zoom: nivel precisa ser > 0 (recebeu ${zoom}).`);
+  return mundo - origem - (pontoNaTela - ancora) / zoom;
+}

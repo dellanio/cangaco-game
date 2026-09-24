@@ -7,7 +7,7 @@ import { configDoMapa } from '../mapa';
 import {
   gridToScreen, screenToGrid, depthDeY, tileDentroDoMapa, ESCALA_DO_MUNDO,
 } from '../grid';
-import { proximoNivel } from '../zoom';
+import { proximoNivel, mundoSobPonto, scrollAncorado } from '../zoom';
 import type { Tile } from '../grid';
 import { publicarEstadoDebug } from '../debug';
 import type { EstadoDebug, PredioNoDebug, RelogioVisivel } from '../debug';
@@ -140,15 +140,25 @@ export class WorldScene extends Phaser.Scene {
       const proximo = proximoNivel(configDoMapa.zoom.niveis, nivelDeZoom, dy < 0 ? +1 : -1);
       if (proximo === nivelDeZoom) return; // ja esta na ponta: nao mexe em nada
 
-      // Ancoragem no cursor: o tile sob o ponteiro nao pode se mexer. Perguntar
-      // ao proprio Phaser antes e depois vale para qualquer convencao interna
-      // de midpoint/origem; deduzir a formula a mao erraria em silencio.
-      const antes = camera.getWorldPoint(pointer.x, pointer.y);
+      // Ancoragem no cursor: o tile sob o ponteiro nao pode se mexer.
+      //
+      // `camera.getWorldPoint` NAO serve aqui: ele mistura o zoom novo com a
+      // matriz velha, que so e reconstruida no preRender seguinte. Chamado em
+      // volta do setZoom, devolve um hibrido e a correcao sai errada (medido:
+      // o tile sob o cursor pulava de (33,32) para (49,50) indo de 1 a 0.5).
+      // A aritmetica vive em `render/zoom.ts`, pura e testada headless; o
+      // roteiro da F18a e quem prova que ela bate com o que o Phaser desenha.
+      const ancoraX = camera.x + camera.width * camera.originX;
+      const ancoraY = camera.y + camera.height * camera.originY;
+      const origemX = camera.width * camera.originX;
+      const origemY = camera.height * camera.originY;
+      const mundoX = mundoSobPonto(camera.scrollX, pointer.x, ancoraX, origemX, nivelDeZoom);
+      const mundoY = mundoSobPonto(camera.scrollY, pointer.y, ancoraY, origemY, nivelDeZoom);
+
       nivelDeZoom = proximo;
       camera.setZoom(nivelDeZoom);
-      const depois = camera.getWorldPoint(pointer.x, pointer.y);
-      camera.scrollX += antes.x - depois.x;
-      camera.scrollY += antes.y - depois.y;
+      camera.scrollX = scrollAncorado(mundoX, pointer.x, ancoraX, origemX, nivelDeZoom);
+      camera.scrollY = scrollAncorado(mundoY, pointer.y, ancoraY, origemY, nivelDeZoom);
     });
 
     this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
