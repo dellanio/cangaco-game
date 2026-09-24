@@ -4612,3 +4612,82 @@ regra sem uma linha de código nova.
 - **Nenhuma pergunta nova.** A do tile de recurso debaixo do footprint virou
   **nota no item da F-T3**, que é onde ela passa a doer.
 
+---
+
+## F19 — Moinho e Padaria (2026-09-24)
+
+O item mandava **medir antes de implementar**, e a medição mudou o escopo: a
+cadeia `corn → flour → loaves` já fechava inteira, sem uma linha de código novo.
+A feature virou a prova, a evidência e o que a medição expôs.
+Plano em `docs/planos/F19-moinho-e-padaria.md`.
+
+### O que foi VERIFICADO
+
+- `npm run verify` — **78 arquivos, 1214 testes, verde**; typecheck, lint e
+  `validate:data` (11 arquivos, 0 erros) limpos.
+- `test-output/F19.json` **aberto com Read**. No cenário 1 Fazenda : 1 Moinho :
+  1 Padaria, 12 000 ticks:
+  - **68 cuscuzes entregues**, contra um teto de **68,3** que a fazenda permite
+    (dois pães por milho, um milho a cada 321 ticks) — **99,6 %**. A cadeia não
+    perde carga e o transporte não é o gargalo;
+  - marcos: primeiro milho em **546**, fubá em **885**, cuscuz em **1256**;
+  - **ociosidade**: moinho **26,2 %**, padaria **28,8 %**, fazenda **0 %**;
+  - sem o moinho, a mesma vila entrega **0** cuscuz em 12 000 ticks.
+- O dado bate com o GDD §5.2 linha a linha (Mill 3×3, Baker, `corn → flour`;
+  Bakery 3×3, Baker, `flour → 2 loaves`), o tema já traz **Fubá** e **Cuscuz**, e
+  `buildings.json` já encadeia `farm → mill → bakery`. **Conferido no arquivo**,
+  não suposto.
+- Não-regressão por código de saída: a suíte inteira, verde.
+
+### As decisões, com o motivo
+
+- **A sonda virou teste, e depois foi apagada.** `tests/zz-probe-F19.test.ts`
+  respondeu a pergunta em 10 minutos; ela prova o momento, não o amanhã (§8). A
+  cobertura permanente é `tests/F19-cadeia-do-pao.test.ts`, 9 testes.
+- **O aceite tem uma perna que reprova contra uma padaria mágica.** "A cadeia
+  entrega cuscuz" passaria mesmo se a padaria fabricasse pão do nada — foi
+  exatamente o defeito que a F18 encontrou na fazenda. A perna é a vila **sem o
+  moinho**: 0 cuscuz, 0 fubá, e o milho se acumulando com o forneiro parado.
+- **O piso do primeiro cuscuz é estrutural, não um número medido.** O teste
+  afirma `plantio + ciclo da fazenda + ciclo do moinho + ciclo da padaria`
+  (1038), que nenhum transporte pode furar. O tick medido (1256) fica **acima**
+  dele, e a diferença é a viagem do serf. Fixar 1256 seria congelar a fixture.
+- **O oráculo ganhou leitor.** `proporcoesDeReferencia` não passa pelo carregador
+  — e não deve: é número de referência para medir, não regra de jogo. O teste o
+  lê do JSON cru e afirma que a contagem de prédios do cenário **é** a proporção
+  publicada. Sem isso, "1:1:1" seria escolha minha, e a observação de
+  balanceamento não teria contra o que medir.
+- **`cenarioDaCadeiaDoPao` refaz `tiposJaConstruidos`.** Cenário montado à mão
+  nunca passou por `registrarConclusoes`, e sem isso uma vila com fazenda de pé
+  aparecia no menu Build como se nunca tivesse construído uma — o teste do
+  desbloqueio estaria medindo a fixture, não a regra.
+
+### O que a medição EXPÔS (e não virou código aqui)
+
+- **O oráculo 1:1:1 ficou otimista, e desatualizou na F18.** `production.json`
+  promete, no `_doc`, que quem respeita as proporções não deixa prédio ocioso;
+  deixa 26 % e 29 %. A causa é aritmética: 321 ticks por milho contra 246 de
+  consumo do moinho. **Não mexi em número** — foi para o `BALANCE_LOG.md`, no
+  mesmo lote da fazenda e da F20.
+- **Prédio parado por falta de insumo é mudo.** Nenhuma das quatro causas da F22
+  cobre isso, e a própria medição mostra por que a causa nova não é trivial:
+  esperar insumo 29 % do tempo é o **regime normal** da cadeia, então ela
+  precisaria de limiar. Limiar é desenho: virou **Nota na F20**, que é onde a
+  fome torna o silêncio caro, e é decisão do operador.
+
+### Hipóteses e limites (NÃO verificados como fato)
+
+- Os 4 serfs e a estrada curta do cenário são **do cenário**, não do jogo. Os
+  99,6 % de aproveitamento dizem que, com esse transporte, a fonte é o gargalo;
+  **não** dizem quanto a vila real perde com a estrada de ~80 tiles até o roçado.
+  Quem mede isso é o cenário longo da F20, com a vila inteira.
+- Não olhei a tela. Nada em `src/render/` mudou e o harness não constrói prédio
+  (moinho está atrás da fazenda, que está atrás da serraria), então **não há
+  screenshot desta feature** — o HUD de mercadorias que mostraria Fubá e Cuscuz
+  é o mesmo genérico da F05b, já coberto.
+
+### Perguntas em aberto
+
+- **Nenhuma nova.** O limiar do alerta de insumo é decisão do operador e está
+  escrita como Nota na F20.
+

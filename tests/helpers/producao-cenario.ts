@@ -17,6 +17,7 @@ import type { TileDeGrid } from '../../src/sim/estradas';
 import { trabalhadorDoTipo } from '../../src/sim/ocupacao';
 import { disponivelAoAlcance, tilesDeColheita } from '../../src/sim/recursos';
 import { receitaDoTipo } from '../../src/sim/producao';
+import { registrarTipoConstruido } from '../../src/sim/desbloqueio';
 
 const tile = (gx: number, gy: number): TileDeGrid => ({ gx, gy });
 
@@ -158,6 +159,85 @@ export function cenarioDeFazendaSemCampo(dados: GameData = gameData): GameState 
     if (s.recursos[chave] !== undefined) {
       throw new Error(`fixture: a fazenda da aldeia alcanca o tile de recurso ${chave}`);
     }
+  }
+  return s;
+}
+
+/**
+ * F19 — a CADEIA DO PAO na proporcao que o proprio dado publica como oraculo
+ * (`production.json:proporcoesDeReferencia`, 1 fazenda : 1 moinho : 1 padaria),
+ * mais o armazem por onde tudo passa e os serfs que carregam.
+ *
+ * Os serfs entram a MAO, e nao pelo cenario inicial: os do jogo nascem na vila,
+ * a 80 tiles daqui, e gastariam o teste inteiro so chegando. Numero e posicao
+ * sao do cenario, nao do balanceamento — o que se mede e se a cadeia FECHA.
+ *
+ * Disposicao (y=37 e a rua que passa na porta de todos):
+ *   b1 (104,34)   m1 (108,34)   [f1 112,30, porta em y=33]   arm (116,34)
+ */
+export function cenarioDaCadeiaDoPao(
+  dados: GameData = gameData, serfs: number = 4,
+): GameState {
+  let s = semCivis(createInitialState(1, dados));
+  s = comArmazemExtra(s, 'arm', 116, 34, dados);
+  s = comProdutorOcupado(s, { tipo: 'farm', id: 'f1', unidade: 'roceiro', gx: 112, gy: 30 }, dados);
+  s = comProdutorOcupado(s, { tipo: 'mill', id: 'm1', unidade: 'moleiro', gx: 108, gy: 34 }, dados);
+  s = comProdutorOcupado(s, { tipo: 'bakery', id: 'b1', unidade: 'forneiro', gx: 104, gy: 34 }, dados);
+  const rua: TileDeGrid[] = [];
+  for (let gy = 33; gy <= 37; gy++) rua.push(tile(112, gy));
+  for (let gx = 104; gx <= 119; gx++) rua.push(tile(gx, 37));
+  s = comEstradas(s, rua);
+  for (const id of ['f1', 'm1', 'b1']) s = exigirLigado(s, id, dados);
+  return comHistoricoDosPredios(comSerfs(s, serfs, 112, 37));
+}
+
+/** Serfs ociosos em cima de um tile, para o cenario que precisa de carga sem
+ *  esperar a caminhada da vila. Ids `serf-1..n`, para nao colidir com os `u<n>`
+ *  do cenario inicial. */
+export function comSerfs(
+  estado: GameState, quantos: number, gx: number, gy: number,
+): GameState {
+  const porId = { ...estado.unidades.porId };
+  const ordem = [...estado.unidades.ordem];
+  for (let i = 1; i <= quantos; i++) {
+    const u: Unidade = { id: `serf-${i}`, tipo: 'serf', gx, gy, fsm: 'ocioso', fsmData: {} };
+    porId[u.id] = u;
+    ordem.push(u.id);
+  }
+  return { ...estado, unidades: { porId, ordem } };
+}
+
+/** F19 — a MESMA cadeia sem o elo do meio: a padaria e a fazenda, e nenhum
+ *  moinho. E o que impede o aceite de passar por a padaria fabricar pao do nada. */
+export function cenarioDaCadeiaSemMoinho(dados: GameData = gameData): GameState {
+  const completa = cenarioDaCadeiaDoPao(dados);
+  const porId = { ...completa.predios.porId };
+  delete porId.m1;
+  return comHistoricoDosPredios({
+    ...completa,
+    predios: { porId, ordem: completa.predios.ordem.filter((id) => id !== 'm1') },
+    unidades: {
+      porId: Object.fromEntries(
+        Object.entries(completa.unidades.porId).filter(([id]) => id !== 'moleiro'),
+      ),
+      ordem: completa.unidades.ordem.filter((id) => id !== 'moleiro'),
+    },
+    tiposJaConstruidos: [],
+  });
+}
+
+/**
+ * O historico de tipos (`tiposJaConstruidos`, F12) refeito a partir dos predios
+ * que EXISTEM. Cenario montado a mao nunca passou por `registrarConclusoes`, e
+ * sem isto uma vila com fazenda de pe aparece no menu Build como se nunca
+ * tivesse construido uma — o que faria o teste do desbloqueio medir a fixture,
+ * nao a regra.
+ */
+function comHistoricoDosPredios(estado: GameState): GameState {
+  let s = estado;
+  for (const id of s.predios.ordem) {
+    const p = s.predios.porId[id];
+    if (p?.estado === 'completo') s = registrarTipoConstruido(s, p.tipo);
   }
   return s;
 }

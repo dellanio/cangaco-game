@@ -1842,6 +1842,43 @@ a geografia já corrigida do que regravar 900 tiles depois.
   linha de código — e isso é o que o teste da classe já afirma.
 
 ### F19 — Mill e Bakery (cadeia do pão)
+- **O item começou com uma tarefa de MEDIR, não de implementar — decisão do
+  operador, 2026-09-24**: a cadeia `corn → flour → loaves` podia já funcionar sem
+  código novo, porque a produção é genérica desde a F15a e as tarefas de insumo
+  entre prédios existem desde a F15b. *"Meça primeiro e me diga o que faltou; o
+  escopo é o que faltar."*
+- **Resultado da medição: nada faltou.** A cadeia fecha inteira no cenário
+  1 Fazenda : 1 Moinho : 1 Padaria — a proporção que o próprio
+  `production.json` publica. Primeiro milho no tick 546, primeiro fubá em 885,
+  primeiro cuscuz em **1256**; 68 cuscuzes em 12 000 ticks, que é **99,6 % do
+  teto que a fazenda permite**. Nenhuma gaveta represada no fim. O dado bate com
+  o GDD §5.2 linha a linha e o tema já traz **Fubá** e **Cuscuz**.
+- **Escopo, portanto**: a prova, a evidência, e o que a medição expôs — nada
+  além. `tests/F19-cadeia-do-pao.test.ts` transforma a sonda em cobertura
+  permanente (sonda prova o momento, §8), e `cenarioDaCadeiaDoPao` entra no
+  helper de produção.
+- **Aceite** (todo marco derivado do dado, nenhum digitado):
+  1. **a cadeia fecha**: partindo da linha de base do tick 0, o cuscuz aparece —
+     e nunca antes de `plantio + ciclo da fazenda + ciclo do moinho + ciclo da
+     padaria`, que é o piso que nenhum transporte pode furar;
+  2. **o elo do meio é real**: a mesma vila **sem o moinho** não faz um cuscuz, e
+     o milho se acumula. É o que impede o aceite de passar por uma padaria que
+     fabrique pão do nada — o mesmo defeito que a F18 encontrou na fazenda;
+  3. **a vazão é limitada pela FONTE**: o cuscuz entregue cabe no teto de dois
+     pães por milho e fica acima de 85 % dele;
+  4. **o cenário é o oráculo**: a contagem de prédios do cenário bate com
+     `proporcoesDeReferencia`, lido do JSON cru;
+  5. **o jogador alcança a cadeia**: `opcoesDoMenuBuild` libera `mill` com a
+     fazenda construída e mantém `bakery` bloqueada, `requer: "mill"`, enquanto
+     não houver moinho.
+- **Evidência**: `test-output/F19.json`
+- **Sem screenshot, e o motivo é o da F18**: nada muda na tela (nenhuma linha de
+  `src/render/`), e o harness não constrói prédio — moinho e padaria estão atrás
+  da fazenda, que está atrás da serraria.
+- **Nota (o oráculo não tem leitor em `sim/`, e é de propósito)**:
+  `proporcoesDeReferencia` não passa pelo carregador — é número de referência
+  para medir, não regra de jogo. Quem passou a lê-lo é o teste de medição, e com
+  isso ele deixou de ser dado sem leitor.
 ### F20 — Inn, fome e consumo
 - Restauração por tipo de comida e regra das duas comidas diferentes, conforme o
   GDD. Aceite: cenário longo em que a população sobrevive; cenário sem comida em
@@ -1852,6 +1889,14 @@ a geografia já corrigida do que regravar 900 tiles depois.
   operador: fica assim **por enquanto**, porque não existe item no chão e nenhuma unidade morre antes
   desta feature ou do combate. Esta feature decide se a carga cai no tile e é recolhida (item no chão,
   tarefa ou estado novo no GDD §6.2) ou se continua perdida — e ajusta o teste de conservação de bens.
+- **Nota herdada da F19 (2026-09-24) — o prédio que para por falta de insumo é
+  MUDO**: as causas da F22 são `sem-trabalhador`, `sem-estrada`, `veio-esgotado`
+  e `sem-campo`. Uma padaria sem fubá não produz alerta nenhum, e a medição da
+  F19 mostra por que a causa não é trivial: na cadeia calibrada, o moinho passa
+  **26 %** e a padaria **29 %** do tempo em `esperando_insumo` — esse é o regime
+  normal, não a falha. Uma causa nova precisaria de **limiar** (tempo parado, ou
+  estoque zero na cadeia inteira), e limiar é desenho. **Decisão do operador**, e
+  cai aqui porque é com a fome que o silêncio fica caro.
 ### F-T3 — O especialista sai do prédio (sim + render, integração)
 - **Posição na fila — decisão do operador, 2026-09-24**: **depois da F20**, e a
   razão é dele: *"o especialista sair é locomoção, e locomoção pode esperar o

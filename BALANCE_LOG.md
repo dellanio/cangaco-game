@@ -207,6 +207,18 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   fazenda vai nascer longe, e a estrada até ela é o custo real da comida. É o mesmo formato do
   problema da rocha que virou a F-TP (11 lajedos, 85,5% do mapa sem nenhum ao alcance), e o número
   a olhar é do **gerador de mapa**, não da receita | `data/maps/sertao-128.json`
+- [2026-09-24] **a proporção 1 Fazenda : 1 Moinho : 1 Padaria deixa os dois últimos ociosos, e a
+  culpa é do plantio** | medido em 12 000 ticks no cenário da F19
+  (`test-output/F19.json`): o moinho passa **26,2 %** e a padaria **28,8 %** do tempo em
+  `esperando_insumo`; a fazenda, **0 %**. A conta fecha e não é logística: a fazenda entrega um
+  milho a cada **321** ticks (246 do ciclo + os 300 do plantio diluídos nas 4 colheitas do tile) e o
+  moinho consome um a cada **246** — ocioso previsto de 23,4 %, mais ~3 % de viagem do serf. O
+  oráculo do próprio dado (`production.json:proporcoesDeReferencia`, com `_doc` dizendo que um
+  cenário que as respeite *"não pode … deixar prédio ocioso"*) **é o que está desatualizado**, e
+  desatualizou na F18, quando o campo passou a exigir aração. Dois caminhos, e os dois mexem em
+  comida: subir `farm_por_mill` para ~1,3 (mais fazendas por moinho) ou baixar o custo do plantio.
+  **Não mexi em nada** — é o mesmo lote da entrada acima e da F20 | `production.json:
+  proporcoesDeReferencia`, `resources.json:tipos.corn.reposicao`
 
 ---
 
