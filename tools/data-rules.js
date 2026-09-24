@@ -426,6 +426,12 @@ function validarEscadaDePrioridade(dados, erros) {
     } else {
       ids.add(linha.id);
     }
+    // F18d-1a: o modo da perna de entrega e do nivel, e TODA linha publica o seu.
+    // Regra positiva, sem lista de excecao: linha nova sem modo reprova aqui, em
+    // vez de cair num padrao escondido no .ts.
+    if (linha.modo !== 'livre' && linha.modo !== 'estrada') {
+      erros.push(`entrega/escada: prioridades[${i}] (${linha.id}) precisa de modo 'livre' ou 'estrada'`);
+    }
     niveis.push(linha.nivel);
   });
   const ordenados = [...niveis].sort((a, b) => a - b);

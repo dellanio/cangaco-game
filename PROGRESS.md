@@ -2562,6 +2562,94 @@ apagados aqui porque apagar dado de feature alheia é mudança de escopo; a deci
   Screenshot de outra feature não foi aberta (CLAUDE.md §8).
 - `npm run verify`: 59 arquivos, **993 testes**, verde.
 
+## F18d-1a — O modo de busca vem do nível: entregar em obra anda livre (2026-09-24)
+
+A F18d-1 se revelou maior que uma sessão e foi **quebrada em duas** (CLAUDE.md
+§6), antes de escrever código: **F18d-1a** (o modo por nível: quem anda livre,
+quem exige rua) e **F18d-1b** (estrada como canteiro: `estradasPlanejadas`,
+`PlaceRoad` reservando pedra, `'assentar-estrada'`, o laborer assentando, o
+`DemolishRoad` de três caminhos). A medição que motivou a quebra está no item da
+fila: **10 roteiros e 25 asserções** de render dependiam do desenho da estrada,
+além dos testes de sim. Só a 1a foi entregue nesta sessão.
+
+### O que mudou
+
+- `data/delivery.json`: cada linha de `prioridades` publica `"modo"`. Nível 3
+  (`material-para-obra`) em `livre`; os outros seis em `estrada`.
+- `sim/jobs.ts`: `modoDoTipo(tipo, dados)`, irmão de `nivelDoTipo`, é o **único**
+  leitor do campo. Id fora da escada e modo fora de `'livre' | 'estrada'` falham
+  alto, com teste dos dois casos. Nenhum sistema digita `'estrada'` ou `'livre'`
+  para tarefa de transporte — o modo viaja pelo **tipo da tarefa**.
+- `ligacaoEntrePredios`, `portasDaTarefa`, `planoDaTarefa`, `custoDaTarefa`,
+  `origemMaisPerto` e o saneamento medem no modo do nível que estão tratando.
+- `tools/data-rules.js`: `modo` entrou no schema de `delivery.json`.
+
+### Verificado (evidência aberta: `test-output/F18d-1a.json`)
+
+Um cenário só, **sem uma única estrada no mapa do primeiro ao último tick**:
+
+- a obra fica `completo` no **tick 247** — o serf entregou andando livre — e a
+  pedra do armazém cai de **30 para 28**, que são as duas que entraram na obra;
+- no mesmo cenário o pedreiro fica em `saida_cheia`, a gaveta da pedreira segue
+  com **5** (cheia), e **nenhuma** tarefa de nível 6 nasce;
+- ligada a rua, a gaveta começa a escoar no **tick 43**, o pedreiro volta a
+  `trabalhando` e o armazém chega a **34** (28 + as 5 da gaveta + 1 produzida).
+- origem do nível 3 por distância **a pé**: o armazém `vizinho`, que não encosta
+  na rede (`estrada` = `null`), ganha a **14 ticks** do armazém ligado a **20**
+  (4 passos de estrada). `origemEscolhida: "vizinho"`.
+
+### Uma diferença honesta entre o aceite escrito e o que a sim faz
+
+O aceite dizia "a saída **enche** e o pedreiro vai a `saida_cheia`". Na prática a
+regra D6 (F15a) curto-circuita antes: prédio não ligado ao armazém **nem produz**
+— o pedreiro vai a `saida_cheia` já no primeiro tick, com a gaveta vazia. O
+cenário do aceite então **começa com a gaveta cheia** (`comPedraNaSaida(..., 5)`)
+e prova o que importava: sem rua ela não esvazia; com rua, esvazia. A forma é
+mais forte que a escrita, não mais fraca — mas é outra, e fica registrado.
+
+### Testes velhos reescritos (nenhum `skip`, nenhum apagado)
+
+Onde o cenário existia só para provar "material exige estrada", ele virou cenário
+de **nível 6** (coleta), que continua exigindo. Os números novos foram todos
+**medidos** contra a sim antes de escritos, nunca estimados:
+
+- `F09-sistema`: a escolha de origem agora é a pé (14 × 20); o bloco de evidência
+  passou a registrar as **três** distâncias (euclidiana, por estrada, livre) e
+  `modoQueDecidiu`, porque dizer "distância por estrada" ali virou meia verdade.
+- `F09-jobboard`: nova fixture `cenarioDaRuaMaisBarata` (reta 35,51 × 43,14;
+  ticks 242 × 206; estrada `null` × 30) — a rua barata tinha de ser **medida**,
+  porque a razão estrada/grama limita o ganho a 40% (reto) e 29% (diagonal). O
+  teste de recusa do claim virou: sem estrada o claim **passa**; quem recusa com
+  `sem-caminho` é a **porta tapada**.
+- `F10-desempate`, `F10-ciclo`, `F10-fsm`, `F11b`: idem, com o número de cada
+  asserção remedido.
+- `F10-falhas`: "estrada cortada no meio da viagem" não corta mais nada no nível
+  3 — o describe inteiro passou a cortar pela **porta tapada**, incluindo o ramo
+  do caos (`case 5`), sem o qual a asserção de cobertura acusaria (e acusou).
+- `F11c`: o cenário anti-travamento trocou de causa. Antes a obra era impossível
+  por falta de rua; agora é por **falta da mercadoria no mundo** (premissa
+  medida: `bensPorMercadoria(...).stone === -2`, que é "nenhuma pedra existe e a
+  obra deve 2"). O que o teste prova — laborer não fica preso em obra impossível
+  — é o mesmo.
+- `helpers/jobs-invariantes.ts`: a violação `sem caminho por estrada` virou
+  `sem caminho no modo '<modo>'`, derivada de `modoDoTipo`. Consertar o guarda, e
+  não a asserção — e há teste novo provando que ele **acusa** (porta tapada) e
+  que não acusa à toa.
+
+### Custo medido da busca livre
+
+`npx vitest run` inteiro, duas corridas mornas de cada lado, mesma máquina, a de
+"antes" com a árvore em `git stash`: **antes 21,56 s e 22,39 s; depois 22,75 s e
+23,09 s** — cerca de **+5%**, longe do teto de 2× que o plano mandava parar e
+registrar. O A* livre por par armazém×obra não precisou de otimização.
+
+### O que fica para a F18d-1b
+
+`estradasPlanejadas` no estado, `PlaceRoad` reservando pedra, o tipo de tarefa
+`'assentar-estrada'`, o laborer assentando e o `DemolishRoad` de três caminhos
+(planejada, em obra, de pé). O contrato que ela herda está na Nota do item dela
+no `BUILD_PLAN.md`.
+
 ## Perguntas em aberto
 
 _(nenhuma no momento: as três que sobravam foram decididas pelo operador — ver "Ajuste pós-F10".)_

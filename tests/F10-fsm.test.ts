@@ -174,7 +174,9 @@ describe('F10 — o movimento: um passo custa o que o dado diz, e a posicao nunc
     [...linhaV(29, 33, 36), ...linhaH(29, 46, 36)],
   ));
   const inicioLongo = cenarioLongo();
-  const passosDaEntrega = buscarCaminho(inicioLongo, tile(29, 33), [tile(44, 36), tile(45, 36), tile(46, 36)], 'estrada')?.tiles.length ?? 0;
+  // F18d-1a: a entrega de material em obra anda LIVRE (delivery.json, nivel 3), entao o
+  // trajeto de verdade e o A* livre — que corta a quina do L da rua em vez de contorna-la.
+  const passosDaEntrega = buscarCaminho(inicioLongo, tile(29, 33), [tile(44, 36), tile(45, 36), tile(46, 36)], 'livre')?.tiles.length ?? 0;
   const { passos: passosLongos } = rodar(inicioLongo, quieto);
 
   // o cenario curto (5 tiles de rua) para os testes de posicao

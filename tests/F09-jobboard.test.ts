@@ -9,10 +9,10 @@ import {
   disponivelNaOrigem, reservadoNaOrigem, reservadoNoDestino, vagaNoDestino,
 } from '../src/sim/reservas';
 import {
-  criarTarefa, liberar, nivelDoTipo, reclamar, reclamarMelhor, tarefasEmOrdem,
+  criarTarefa, liberar, ligacaoEntrePredios, nivelDoTipo, reclamar, reclamarMelhor, tarefasEmOrdem,
 } from '../src/sim/jobs';
 import {
-  armazemDoCenario, cenarioDeVolta, cenarioLigado, comObra, comPedraNaSaida, comTarefas, estradasDe,
+  armazemDoCenario, cenarioDaRuaMaisBarata, cenarioDeVolta, comAPortaTapada, cenarioLigado, comObra, comPedraNaSaida, comTarefas, estradasDe,
   inicial, laborersDoCenario, serfsDoCenario, tarefaDe, tile,
 } from './helpers/jobs-cenario';
 
@@ -281,9 +281,16 @@ describe('F09 — outras recusas do claim', () => {
     expect(reclamar(comUma, t2, serf2).ok).toBe(true);
   });
 
-  it('sem caminho por estrada entre as portas: sem-caminho, e nada e reservado', () => {
+  it('sem estrada nenhuma o claim PASSA; quem recusa com sem-caminho e a porta tapada, e nada fica reservado', () => {
+    // F18d-1a: o nivel 3 anda livre, entao tirar a rua toda nao corta mais o caminho.
+    // O que corta um caminho a pe e um predio em cima da porta — e e ai que o claim
+    // recusa, sem deixar reserva nem na origem nem no destino.
     const semRua = { ...estado, estradas: {} };
-    expect(reclamar(semRua, t1, serf1)).toEqual({ ok: false, motivo: 'sem-caminho' });
+    expect(reclamar(semRua, t1, serf1).ok).toBe(true);
+    const tapado = comAPortaTapada(semRua, 'obra-a');
+    expect(reclamar(tapado, t1, serf1)).toEqual({ ok: false, motivo: 'sem-caminho' });
+    expect(reservadoNaOrigem(tapado, armazem.id, 'stone')).toBe(0);
+    expect(reservadoNoDestino(tapado, 'obra-a', 'stone')).toBe(0);
   });
 
   it('origem que nao e armazem completo e destino que nao e obra: recusados, sem excecao', () => {
@@ -349,7 +356,10 @@ describe('F09 — a escada de prioridade vem do dado', () => {
 });
 
 describe('F09 — desempate: menor caminho REAL, depois menor numero', () => {
-  it('prova o caso: em linha reta a obra PERTO e mais perto, pelo caminho a pe a LONGE e', () => {
+  it('na rede de ESTRADAS: em linha reta a PERTO ganha, pela rua a LONGE ganha (niveis que exigem rua)', () => {
+    // F18d-1a: esta e a rede dos niveis 1, 2, 4, 5, 6 e 7 — os que coletam de producao
+    // ou entregam em predio pronto. O nivel 3 (material para obra) anda livre e tem a
+    // sua propria armadilha no `it` de baixo, com `cenarioDaRuaMaisBarata`.
     const estado = cenarioDeVolta();
     const s = armazemDoCenario(estado);
     const perto = exigir(estado.predios.porId.perto, 'perto');
@@ -362,8 +372,26 @@ describe('F09 — desempate: menor caminho REAL, depois menor numero', () => {
     expect(dLonge).toBeLessThan(dPerto); // a realidade
   });
 
-  it('reclamarMelhor escolhe a tarefa do caminho curto, nao a da reta curta', () => {
-    const estado = comTarefas(cenarioDeVolta(), [
+  it('na rede LIVRE: a PERTO esta a 35.5 de reta e custa 242 ticks; a LONGE, a 43.1, custa 206', () => {
+    // A rua deixou de ser condicao para entregar material em obra — mas continua sendo
+    // a rota barata: 5 ticks por tile de estrada contra 7 de grama. A 'perto' nao tem
+    // estrada nenhuma (ligacao por estrada = null) e mesmo assim tem caminho.
+    const estado = cenarioDaRuaMaisBarata();
+    const s = armazemDoCenario(estado);
+    const perto = exigir(estado.predios.porId.perto, 'perto');
+    const longe = exigir(estado.predios.porId.longe, 'longe');
+    const euclid = (a: { gx: number; gy: number }, b: { gx: number; gy: number }): number =>
+      Math.hypot(a.gx - b.gx, a.gy - b.gy);
+    expect(euclid(s, perto)).toBeCloseTo(35.51, 2); // a armadilha: a reta prefere a 'perto'
+    expect(euclid(s, longe)).toBeCloseTo(43.14, 2);
+    expect(ligacaoEntrePredios(estado, s, perto, 'livre')).toBe(242); // a realidade, em ticks
+    expect(ligacaoEntrePredios(estado, s, longe, 'livre')).toBe(206);
+    expect(ligacaoEntrePredios(estado, s, perto, 'estrada')).toBeNull(); // e nem por isso perde a vez
+    expect(ligacaoEntrePredios(estado, s, longe, 'estrada')).toBe(30);
+  });
+
+  it('reclamarMelhor escolhe a tarefa do caminho curto EM TICKS, nao a da reta curta', () => {
+    const estado = comTarefas(cenarioDaRuaMaisBarata(), [
       tarefaDe({ numero: 1, destino: 'perto' }), // numero MENOR e reta menor: nada disso pode decidir
       tarefaDe({ numero: 2, destino: 'longe' }),
     ]);
@@ -391,7 +419,7 @@ describe('F09 — desempate: menor caminho REAL, depois menor numero', () => {
   it('reclamarMelhor pula a tarefa que nao da para reclamar e pega a proxima', () => {
     // a MELHOR por caminho (a da obra 'longe') pede milho, que o armazem nao tem: nao da
     // para reclama-la; a segunda por ordem e reclamavel
-    const estado = comTarefas(cenarioDeVolta(), [
+    const estado = comTarefas(cenarioDaRuaMaisBarata(), [
       tarefaDe({ numero: 1, destino: 'longe', mercadoria: 'corn' }),
       tarefaDe({ numero: 2, destino: 'perto' }),
     ]);

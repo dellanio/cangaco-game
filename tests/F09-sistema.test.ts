@@ -1,13 +1,14 @@
 import { describe, it, expect, afterAll } from 'vitest';
 import { gameData } from '../src/sim/data';
 import { createInitialState } from '../src/sim/state';
-import type { GameEvent, GameState, PredioCompleto, TarefaMaterialParaObra } from '../src/sim/state';
+import type { GameEvent, GameState, Predio, PredioCompleto, TarefaMaterialParaObra } from '../src/sim/state';
 import type { Command } from '../src/sim/commands';
 import { createRng, nextInt } from '../src/sim/rng';
 import { step } from '../src/sim/tick';
+import type { ModoDeBusca } from '../src/sim/pathfinding';
 import { distanciaEntrePredios, tilesDaPorta, tilesOrdenados } from '../src/sim/estradas';
 import { custoDoPredio } from '../src/sim/obra';
-import { criarTarefa, liberar, reclamar, reclamarMelhor, tarefasEmOrdem } from '../src/sim/jobs';
+import { criarTarefa, liberar, ligacaoEntrePredios, modoDoTipo, reclamar, reclamarMelhor, tarefasEmOrdem } from '../src/sim/jobs';
 import type { MotivoDeLiberacao } from '../src/sim/jobs';
 import { disponivelNaOrigem, reservadoNaOrigem, reservadoNoDestino, vagaNoDestino } from '../src/sim/reservas';
 import { compararComESemSave } from './helpers/determinism';
@@ -15,7 +16,8 @@ import { violacoesDeInvariantes } from './helpers/jobs-invariantes';
 import { gravarEvidencia } from './helpers/evidence';
 import {
   armazemDoCenario, cenarioDeVolta, cenarioLigado, comArmazemCompleto, comEstoqueNaSaida, comEstradas, comObra,
-  comPedraNaSaida, comTarefas, inicial, linhaH, linhaV, semAUnidade, semOPredio, serfsDoCenario, tarefaDe, tile,
+  comAPortaTapada, comPedraNaSaida, comTarefas, inicial, linhaH, linhaV, semAUnidade, semOPredio,
+  serfsDoCenario, tarefaDe, tile,
 } from './helpers/jobs-cenario';
 
 const armazem = armazemDoCenario(inicial);
@@ -73,10 +75,12 @@ describe('F09 — release em TODO ramo de falha: um teste por ramo, as duas rese
     afirmarAsDuasReservasDeVolta(depois, 'unidade-removida');
   });
 
-  it('2. caminho cortado (estrada demolida entre as portas) -> CANCELA', () => {
+  it('2. caminho cortado (predio plantado em cima da porta da obra) -> CANCELA', () => {
+    // F18d-1a: a entrega em obra anda LIVRE, entao demolir a rua nao corta mais nada
+    // (ha teste disso no gerador, abaixo). O que corta um caminho a pe e um predio
+    // em cima da porta — e a fixture confere que a porta ficou toda coberta.
     const { estado, tarefa } = comUmaTarefaReclamada();
-    const demolir: Command = { type: 'DemolishRoad', tiles: [tile(29, 35)] };
-    const depois = step(estado, [demolir]);
+    const depois = step(comAPortaTapada(estado, 'obra-a'), []);
     expect(liberacoes(depois)).toEqual([{ type: 'task-released', tarefa, motivo: 'caminho-cortado', resultado: 'cancelada' }]);
     expect(depois.jobs.tarefas.porId[tarefa]).toBeUndefined();
     expect(tarefasDe(depois)).toEqual([]); // sem caminho, o gerador nao recria
@@ -139,10 +143,10 @@ describe('F09 — release em TODO ramo de falha: um teste por ramo, as duas rese
   it('claim recusado nao tem o que liberar: nada foi reservado (atomico)', () => {
     const gerado = step(cenarioLigado({ stone: 1 }), []);
     const tarefa = gerado.jobs.tarefas.ordem[0] ?? 't?';
-    const semRua = { ...gerado, estradas: {} };
-    expect(reclamar(semRua, tarefa, serf1).ok).toBe(false);
-    expect(reservadoNaOrigem(semRua, armazem.id, 'stone')).toBe(0);
-    expect(reservadoNoDestino(semRua, 'obra-a', 'stone')).toBe(0);
+    const semCaminho = comAPortaTapada(gerado, 'obra-a');
+    expect(reclamar(semCaminho, tarefa, serf1).ok).toBe(false);
+    expect(reservadoNaOrigem(semCaminho, armazem.id, 'stone')).toBe(0);
+    expect(reservadoNoDestino(semCaminho, 'obra-a', 'stone')).toBe(0);
   });
 
   it('um tick sem falha nao libera nada: a reserva atravessa ticks intactos', () => {
@@ -170,9 +174,16 @@ describe('F09 — release em TODO ramo de falha: um teste por ramo, as duas rese
 });
 
 describe('F09 — o gerador de tarefas (nivel 3: material -> obra)', () => {
-  it('obra sem estrada ate o armazem: nenhuma tarefa', () => {
+  it('obra sem estrada nenhuma: as tarefas nascem — o nivel 3 anda livre (F18d-1a)', () => {
     const semRua = comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: { stone: 2, timber: 3 } });
-    expect(tarefasDe(step(semRua, []))).toEqual([]);
+    const depois = step(semRua, []);
+    expect(Object.keys(depois.estradas)).toEqual([]); // a premissa, afirmada
+    expect(tarefasDe(depois).map((t) => t.mercadoria)).toEqual(['timber', 'timber', 'timber', 'stone', 'stone']);
+  });
+
+  it('obra com a porta tapada por um predio: nenhuma tarefa — e a pe que nao da', () => {
+    const semRua = comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: { stone: 2, timber: 3 } });
+    expect(tarefasDe(step(comAPortaTapada(semRua, 'obra-a'), []))).toEqual([]);
   });
 
   it('com estrada, cria exatamente as tarefas que faltam, timber antes de stone (ordem do dado)', () => {
@@ -204,22 +215,38 @@ describe('F09 — o gerador de tarefas (nivel 3: material -> obra)', () => {
     expect(tarefasDe(step(semPedra, [])).map((t) => t.mercadoria)).toEqual(['timber']);
   });
 
-  it('a tarefa surge quando a estrada e o estoque passam a existir (a obra espera, sem erro)', () => {
-    let estado = step(comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: { stone: 1 } }), []);
+  it('a tarefa surge quando o CAMINHO passa a existir, sem estrada nenhuma (a obra espera, sem erro)', () => {
+    const tapado = comAPortaTapada(comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: { stone: 1 } }), 'obra-a');
+    let estado = step(tapado, []);
     expect(tarefasDe(estado)).toEqual([]);
-    estado = comEstradas(estado, [tile(29, 33), tile(29, 34), tile(29, 35), tile(29, 36), tile(28, 36)]);
-    expect(tarefasDe(step(estado, []))).toHaveLength(1);
+    estado = semOPredio(estado, 'tampa-de-obra-a');
+    const depois = step(estado, []);
+    expect(Object.keys(depois.estradas)).toEqual([]); // nasceu sem rua nenhuma
+    expect(tarefasDe(depois)).toHaveLength(1);
   });
 
-  it('a origem e o armazem LIGADO de menor caminho POR ESTRADA; um armazem sem ligacao nao entra', () => {
-    // p1 (o do cenario) esta a 4 passos da obra-a e a 22 da obra-b; 'perto' esta a 23 da
-    // obra-a e a 3 da obra-b; 'isolado' tem estoque de sobra mas nenhuma estrada.
+  it('a origem e o armazem de menor caminho A PE: o SEM estrada nenhuma, a 14, ganha do ligado, a 20', () => {
+    // F18d-1a: a perna de entrega do nivel 3 anda livre, e a origem e medida nessa
+    // mesma rede. 'vizinho' nao tem estrada nenhuma — ligacao por estrada = null — e
+    // mesmo assim ganha do armazem do cenario, que esta a 4 passos de rua da obra-a.
+    // A rua deixou de decidir quem entrega material em obra. Os numeros abaixo saem
+    // do proprio medidor da sim, e sao afirmados nos DOIS modos: e a diferenca entre
+    // eles que prova que a escolha mudou de rede, e nao so de valor.
     let estado = comObra(cenarioLigado({ stone: 1 }), 'obra-b', { gx: 48, gy: 34, faltam: { stone: 1 } });
     estado = comArmazemCompleto(estado, 'perto', { gx: 51, gy: 33, stone: 10 });
-    estado = comArmazemCompleto(estado, 'isolado', { gx: 50, gy: 50, stone: 500 });
+    estado = comArmazemCompleto(estado, 'vizinho', { gx: 23, gy: 32, stone: 10 });
     estado = comEstradas(estado, linhaH(28, 53, 36));
+    const predioDe = (id: string): Predio => {
+      const p = estado.predios.porId[id];
+      if (p === undefined) throw new Error(`fixture: predio '${id}' nao existe`);
+      return p;
+    };
+    const ate = (de: string, para: string, modo: ModoDeBusca): number | null =>
+      ligacaoEntrePredios(estado, predioDe(de), predioDe(para), modo);
+    expect([ate('vizinho', 'obra-a', 'estrada'), ate(armazem.id, 'obra-a', 'estrada')]).toEqual([null, 4]);
+    expect([ate('vizinho', 'obra-a', 'livre'), ate(armazem.id, 'obra-a', 'livre')]).toEqual([14, 20]);
     const tarefas = tarefasDe(step(estado, []));
-    expect(tarefas.map((t) => [t.destino, t.origem])).toEqual([['obra-a', armazem.id], ['obra-b', 'perto']]);
+    expect(tarefas.map((t) => [t.destino, t.origem])).toEqual([['obra-a', 'vizinho'], ['obra-b', 'perto']]);
   });
 
   it('excedente ABERTO e cancelado: duas tarefas para faltam=1 viram uma (a de menor numero fica)', () => {
@@ -229,12 +256,12 @@ describe('F09 — o gerador de tarefas (nivel 3: material -> obra)', () => {
     expect(violacoesDeInvariantes(depois)).toEqual([]);
   });
 
-  it('tarefa aberta sem caminho e cancelada, e volta a ser criada quando a estrada volta', () => {
+  it('tarefa aberta sem caminho e cancelada, e volta a ser criada quando o caminho volta', () => {
     const gerado = step(cenarioLigado({ stone: 1 }), []);
-    const semRua = step({ ...gerado, estradas: {} }, []);
-    expect(tarefasDe(semRua)).toEqual([]);
-    const comRua = step({ ...semRua, estradas: gerado.estradas }, []);
-    expect(tarefasDe(comRua)).toHaveLength(1);
+    expect(tarefasDe(step({ ...gerado, estradas: {} }, []))).toHaveLength(1); // sem rua ela FICA
+    const tapado = step(comAPortaTapada(gerado, 'obra-a'), []);
+    expect(tarefasDe(tapado)).toEqual([]);
+    expect(tarefasDe(step(semOPredio(tapado, 'tampa-de-obra-a'), []))).toHaveLength(1);
   });
 });
 
@@ -326,9 +353,16 @@ function rodarCaos(semente: number, passos: number, cobertura: Cobertura): void 
         if (serfsVivos.length < 4) estado = comUmSerfNovo(estado);
         break;
       }
-      case 7: { // demole estrada: a porta do armazem de origem de uma reclamada, ou um tile qualquer
+      case 7: { // corta caminho: tapa a porta da obra de uma reclamada, ou demole estrada
         const origem = alvo && estado.predios.porId[alvo.origem];
-        if (origem && sorteio(2) === 0) {
+        const destino = alvo && estado.predios.porId[alvo.destino];
+        // F18d-1a: a entrega do nivel 3 anda livre, e quem corta um caminho a pe e um
+        // predio em cima da porta. Sem este ramo o caos nunca provocaria
+        // 'caminho-cortado' de novo — e a assercao de cobertura, abaixo, acusaria.
+        if (destino && destino.estado === 'obra' && sorteio(3) === 0
+            && estado.predios.porId[`tampa-de-${destino.id}`] === undefined) {
+          estado = comAPortaTapada(estado, destino.id);
+        } else if (origem && sorteio(2) === 0) {
           comandos.push({ type: 'DemolishRoad', tiles: tilesDaPorta(origem) });
         } else {
           const tiles = tilesOrdenados(estado.estradas);
@@ -612,7 +646,7 @@ afterAll(() => {
   const destinoLimita = comTarefasDePedra(cenarioLigado({ stone: 1 }), 2);
   const destino1 = reclamarOuFalhar(destinoLimita.estado, idNo(destinoLimita.ids, 0), serf1);
 
-  // distancia: a prova de que nunca e euclidiana
+  // distancia: a prova de que nunca e euclidiana — e de qual busca decidiu a ordem
   const volta = cenarioDeVolta();
   const s = armazemDoCenario(volta);
   const perto = volta.predios.porId.perto;
@@ -673,11 +707,16 @@ afterAll(() => {
       liberacoesPorMotivo: coberturaDoCaos.liberacoes,
       invariantes: 'violacoesDeInvariantes vazia depois de CADA step (tests/helpers/jobs-invariantes.ts)',
     },
-    // Ponto 3: distancia REAL por estrada, nunca euclidiana; o que a F10 substitui esta no BUILD_PLAN.
+    // Ponto 3: distancia REAL de caminho, nunca euclidiana; o que a F10 substitui esta no BUILD_PLAN.
     distancia: {
-      medida: 'caminho por estrada (BFS, 8 direcoes, sem cortar quina de predio) entre as portas de origem e destino; so a perna da entrega',
+      medida: 'caminho real entre as portas de origem e destino, so a perna da entrega; a busca e a do MODO do nivel',
+      // F18d-1a: quem decide a ordem destas tarefas (nivel 3) e a busca LIVRE, nao a rede de
+      // estradas. As tres medidas ficam lado a lado de proposito: a euclidiana e o que a regra
+      // NAO usa, a por estrada e o que os niveis de coleta usam, a livre e o que decidiu aqui.
       euclidiana: { ateAPerto: euclid(s, perto), ateALonge: euclid(s, longe) },
       porEstrada: { ateAPerto: distanciaEntrePredios(volta, s, perto), ateALonge: distanciaEntrePredios(volta, s, longe) },
+      livreEmTicks: { ateAPerto: ligacaoEntrePredios(volta, s, perto, 'livre'), ateALonge: ligacaoEntrePredios(volta, s, longe, 'livre') },
+      modoQueDecidiu: modoDoTipo('material-para-obra'),
       ordemEscolhida: ordemDaVolta.map((t) => t.destino),
       desempatePorNumeroNumerico: ordemNumerica.map((t) => t.numero),
       aF10Substitui: 'A* real a partir da posicao do serf (perna ate a origem + perna da entrega), com custo de terreno',

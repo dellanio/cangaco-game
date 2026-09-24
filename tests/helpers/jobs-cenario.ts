@@ -3,14 +3,15 @@
  * passar por `step`), de proposito: os testes de claim/release precisam de um numero
  * exato de tarefas, e o gerador (que roda no `step`) criaria as suas.
  */
-import { completarObra, createInitialState } from '../../src/sim/state';
+import { completarObra, createInitialState, ID_DO_ARMAZEM } from '../../src/sim/state';
 import { gameData } from '../../src/sim/data';
 import type {
   GameState, PredioCompleto, PredioEmObra, Tarefa, TarefaConstruir, TarefaMaterialParaObra, Unidade,
 } from '../../src/sim/state';
-import { chaveDeTile } from '../../src/sim/estradas';
+import { chaveDeTile, tilesDaPorta } from '../../src/sim/estradas';
 import type { TileDeGrid } from '../../src/sim/estradas';
 import { alvoDeNivelamento } from '../../src/sim/obra';
+import { tileAndavel } from '../../src/sim/pathfinding';
 
 export const inicial = createInitialState(1);
 
@@ -181,6 +182,26 @@ export function comPredioCompletoEm(
   };
 }
 
+/**
+ * F18d-1a — tapa a PORTA de um predio com outro predio completo. Desde que a
+ * entrega do nivel 3 anda livre, e isto que corta o caminho de uma tarefa de
+ * material: um predio em cima da porta, nao a demolicao da rua.
+ *
+ * Confere o que promete: se a tampa nao cobrir a porta INTEIRA, lanca — uma
+ * fixture que so acha que bloqueou faria o teste passar pelo motivo errado.
+ */
+export function comAPortaTapada(estado: GameState, id: string, tipo: string = ID_DO_ARMAZEM): GameState {
+  const predio = estado.predios.porId[id];
+  if (!predio) throw new Error(`fixture: predio '${id}' nao existe`);
+  const portas = tilesDaPorta(predio);
+  const primeira = portas[0];
+  if (primeira === undefined) throw new Error(`fixture: predio '${id}' sem porta`);
+  const tapado = comPredioCompletoEm(estado, `tampa-de-${id}`, { tipo, gx: primeira.gx, gy: primeira.gy });
+  const aberta = portas.filter((t) => tileAndavel(tapado, t, 'livre'));
+  if (aberta.length > 0) throw new Error(`fixture: a tampa de '${id}' deixou ${aberta.length} tile(s) de porta livre(s)`);
+  return tapado;
+}
+
 /** Troca a pedra E a tabua da saida de um predio completo. */
 export function comEstoqueNaSaida(estado: GameState, id: string, estoque: { readonly stone: number; readonly timber: number }): GameState {
   const p = estado.predios.porId[id];
@@ -217,6 +238,36 @@ export function cenarioDeVolta(): GameState {
   ];
   const retaQuase = [tile(28, 33), tile(27, 33), ...linhaV(27, 34, 47), tile(28, 47)];
   return comEstradas(estado, [...voltaGrande, ...retaQuase]);
+}
+
+/** A diagonal de `n` tiles que sai de (x0, y0) indo para sudeste. A estrada liga
+ *  em 8 direcoes desde a F18e, entao uma rua diagonal e uma rua de verdade. */
+const linhaD = (x0: number, y0: number, n: number): TileDeGrid[] =>
+  Array.from({ length: n }, (_, i) => tile(x0 + i, y0 + i));
+
+/**
+ * F18d-1a — a armadilha da reta, agora na rede LIVRE. Entregar material em obra
+ * anda por qualquer tile (delivery.json, nivel 3 `modo: livre`), entao a rua
+ * deixou de ser a CONDICAO da escolha. Ela continua sendo a rota BARATA: andando
+ * a pe, um tile de grama custa 7 ticks (9 na diagonal) e um de estrada custa 5
+ * (7 na diagonal) — terrain.json/movimento.ticksPorTile.
+ *
+ * `perto` fica a sudoeste, mais perto em linha reta, e so tem grama pela frente.
+ * `longe` fica a sudeste, mais longe, e tem uma rua diagonal ate a porta. Medido:
+ * reta 35.51 x 43.14, ticks 242 x 206. Quem decide e o tick.
+ *
+ * E o mesmo papel que o `cenarioDeVolta` faz na rede de estradas, que segue
+ * valendo para os niveis que exigem rua.
+ */
+export function cenarioDaRuaMaisBarata(): GameState {
+  let estado = comObra(inicial, 'perto', { gx: 10, gy: 60, faltam: { stone: 1 } }); // porta y=62, x 10..12
+  estado = comObra(estado, 'longe', { gx: 60, gy: 60, faltam: { stone: 1 } });      // porta y=62, x 60..62
+  const ruaAteALonge = [
+    tile(31, 33),               // uma porta do armazem, para a rua tambem ligar na rede de estradas
+    ...linhaD(32, 34, 28),      // (32,34) ate (59,61)
+    tile(59, 62), tile(60, 62), // entra na porta de lado: a diagonal cortaria a quina do predio (F18e)
+  ];
+  return comEstradas(estado, ruaAteALonge);
 }
 
 /** Poe uma unidade em (gx, gy), ociosa e sem `fsmData` (so o lugar muda). */

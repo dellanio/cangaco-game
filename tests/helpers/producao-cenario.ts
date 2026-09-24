@@ -27,7 +27,12 @@ function comEstradas(estado: GameState, tiles: readonly TileDeGrid[]): GameState
   return { ...estado, estradas: { ...estado.estradas, ...novas } };
 }
 
-function comProdutorOcupado(
+/**
+ * Um produtor COMPLETO e ocupado, somado ao estado que veio. Exportado desde a
+ * F18d-1a: o aceite dela precisa de uma pedreira viva DENTRO de um cenario que
+ * ja tem civis e obra, e nao do cenario fechado de `cenarioDePedreira`.
+ */
+export function comProdutorOcupado(
   estado: GameState,
   opcoes: { readonly tipo: string; readonly id: string; readonly unidade: string; readonly gx: number; readonly gy: number },
   dados: GameData,

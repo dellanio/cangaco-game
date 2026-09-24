@@ -7,7 +7,8 @@ import {
 import { gerarTarefas, sanearTarefas } from '../src/sim/systems/jobs';
 import { gravarEvidencia } from './helpers/evidence';
 import {
-  cenarioLigado, comObra, comTarefas, comUnidadeExtra, inicial, laborersDoCenario, semAUnidade, semOPredio,
+  armazemDoCenario, cenarioLigado, comObra, comTarefas, comUnidadeExtra, inicial, laborersDoCenario, semAUnidade,
+  semOPredio,
   serfsDoCenario, tarefaDe,
 } from './helpers/jobs-cenario';
 
@@ -128,8 +129,15 @@ describe('F11b — gerarTarefas cria construir ate o teto', () => {
     const gerado = gerarTarefas(semEstrada);
     const construir = gerado.jobs.tarefas.ordem.filter((id) => gerado.jobs.tarefas.porId[id]?.tipo === 'construir');
     expect(construir).toHaveLength(gameData.construcao.laborersMaximosPorObra);
-    const material = gerado.jobs.tarefas.ordem.filter((id) => gerado.jobs.tarefas.porId[id]?.tipo === 'material-para-obra');
-    expect(material).toHaveLength(0); // material continua exigindo estrada
+    // F18d-1a: material para obra deixou de exigir estrada — nasce aqui tambem, uma tarefa
+    // por unidade que falta, saindo do armazem. Ate a F18d-1a esta lista vinha vazia, e era
+    // dai que vinha o impasse: a obra so andava depois que alguem ruava ate ela.
+    const material = gerado.jobs.tarefas.ordem
+      .map((id) => gerado.jobs.tarefas.porId[id])
+      .filter((t) => t?.tipo === 'material-para-obra');
+    expect(material.map((t) => t && 'origem' in t ? [t.origem, t.mercadoria] : null))
+      .toEqual([[armazemDoCenario(inicial).id, 'stone'], [armazemDoCenario(inicial).id, 'stone']]);
+    expect(Object.keys(gerado.estradas)).toEqual([]); // e sem uma unica rua no mapa
   });
 
   it('nao duplica construir ja existente: chamar duas vezes fica no teto', () => {

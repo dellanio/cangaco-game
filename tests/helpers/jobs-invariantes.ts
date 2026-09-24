@@ -11,7 +11,7 @@
 import { gameData } from '../../src/sim/data';
 import type { GameData } from '../../src/sim/data/types';
 import type { GameState, Tarefa } from '../../src/sim/state';
-import { distanciaDaTarefa, nivelDoTipo, podeReclamar } from '../../src/sim/jobs';
+import { distanciaDaTarefa, modoDoTipo, nivelDoTipo, podeReclamar } from '../../src/sim/jobs';
 import { ehEscolaCompleta } from '../../src/sim/escola';
 import { insumosDoPredio } from '../../src/sim/insumo';
 import { ehPredioOcupavel } from '../../src/sim/ocupacao';
@@ -112,7 +112,11 @@ export function violacoesDeInvariantes(estado: GameState, dados: GameData = game
       if (t.estado !== 'carregando' && (!origem || origem.estado !== 'completo' || origem.tipo !== ID_DO_ARMAZEM)) {
         v.push(`${id}: origem '${t.origem}' nao e armazem completo`);
       }
-      if (t.estado !== 'carregando' && origem && destino && distanciaDaTarefa(estado, t, dados) === null) v.push(`${id}: sem caminho por estrada`);
+      // F18d-1a: o modo e do nivel, nao do verificador — o nivel 3 anda livre, e dizer
+      // "por estrada" aqui esconderia qual busca falhou.
+      if (t.estado !== 'carregando' && origem && destino && distanciaDaTarefa(estado, t, dados) === null) {
+        v.push(`${id}: sem caminho no modo '${modoDoTipo(t.tipo, dados)}'`);
+      }
     }
     // 'construir' (F11b) fica fora da escada por decisao do operador — nao e violacao.
 

@@ -12,15 +12,15 @@
  */
 import { describe, it, expect, afterAll } from 'vitest';
 import type { Command } from '../src/sim/commands';
-import type { GameEvent, GameState } from '../src/sim/state';
+import type { GameEvent, GameState, PredioEmObra } from '../src/sim/state';
 import { gameData } from '../src/sim/data';
-import { buscarCaminho, estatisticasDeBusca, zerarEstatisticasDeBusca } from '../src/sim/pathfinding';
+import { buscarCaminho, estatisticasDeBusca, tileAndavel, zerarEstatisticasDeBusca } from '../src/sim/pathfinding';
 import { planoDaTarefa, tarefasEmOrdem } from '../src/sim/jobs';
 import { posicaoDaUnidade } from '../src/sim/selectors';
 import { createRng, nextInt } from '../src/sim/rng';
 import type { RngState } from '../src/sim/rng';
 import { custoDoPredio } from '../src/sim/obra';
-import { tilesOrdenados } from '../src/sim/estradas';
+import { tilesDaPorta, tilesOrdenados } from '../src/sim/estradas';
 import { caixaDeTipo } from '../src/sim/footprint';
 import { reservadoNaOrigem, reservadoNoDestino } from '../src/sim/reservas';
 import { step } from '../src/sim/tick';
@@ -32,7 +32,8 @@ import {
   SERF_DO_LADO_DE_A, SERF_DO_LADO_DE_B, soUmSerf,
 } from './helpers/serf-cenario';
 import {
-  cenarioLigado, comArmazemCompleto, comEstoqueNaSaida, comEstradas, comObra, comPedraNaSaida, comUnidadeEm, inicial, linhaH,
+  cenarioLigado, comAPortaTapada, comArmazemCompleto, comEstoqueNaSaida, comEstradas, comObra, comPedraNaSaida,
+  comUnidadeEm, inicial, linhaH,
   linhaV, semAUnidade,
   semOPredio, serfsDoCenario, tile,
 } from './helpers/jobs-cenario';
@@ -141,65 +142,75 @@ describe('F10 — obra demolida ANTES da coleta: nao ha carga a devolver, so a r
   });
 });
 
-describe('F10 — estrada cortada NO MEIO DA VIAGEM (o comando real DemolishRoad)', () => {
+describe('F10 — o caminho cortado NO MEIO DA VIAGEM (a rua nao corta mais; a porta tapada corta)', () => {
   const meio = ate(cenarioLongo(), emViagem, 'serf carregado a meio caminho');
   const aFrente = (dadosDoSerf(meio).caminho ?? [])[2] as TileDeGrid;
   const demolir = (tiles: TileDeGrid[]): Command[] => [{ type: 'DemolishRoad', tiles }];
+  /** F18d-1a: o que corta um caminho a pe e um predio em cima da porta. A tampa e uma
+   *  pedreira, nao um armazem, para nao virar destino de devolucao e embaralhar a conta
+   *  da pedra. A fixture confere sozinha que os tres tiles da porta ficaram cobertos. */
+  const tapar = (estado: GameState): GameState => comAPortaTapada(estado, 'obra-a', 'quarry');
 
-  it('demolir um tile A FRENTE do serf carregado: a rede se parte, a tarefa e liberada e ele passa a devolver', () => {
-    const tarefa = tarefaDoSerf(meio);
-    const depois = step(meio, demolir([aFrente]));
-    expect(liberacoes(depois.events)).toEqual([{ type: 'task-released', tarefa, motivo: 'caminho-cortado', resultado: 'cancelada' }]);
-    expect(fsmDe(depois)).toBe('devolvendo');
-    expect(dadosDoSerf(depois).carga).toBe('stone');
-    expect(reservadoNoDestino(depois, 'obra-a', 'stone')).toBe(0);
-    expect(violacoesDaFsm(depois)).toEqual([]);
-    expect(violacoesDeInvariantes(depois)).toEqual([]);
+  it('demolir um tile A FRENTE do serf carregado NAO parte mais nada: ele desvia pela grama e entrega', () => {
+    // Ate a F18d-1a este mesmo comando liberava a tarefa com `caminho-cortado` e mandava o
+    // serf devolver a carga. A entrega em obra anda livre: a rua sumiu, o caminho ficou.
+    const { estado, eventos } = rodarAte(meio, quieto, demolir([aFrente]));
+    expect(liberacoes(eventos)).toEqual([]);
+    expect(eventos.filter((e) => e.type === 'cargo-returned')).toEqual([]);
+    expect(eventos.filter((e) => e.type === 'task-completed')).toHaveLength(1);
+    expect(faltamDe(estado, 'obra-a')).toBe(0);
+    expect(saidaDe(estado, P1)).toBe(9);
   });
 
-  it('a carga volta ao armazem (10), o serf termina ocioso, e a obra segue esperando (nao ha estrada)', () => {
-    const { estado, eventos } = rodarAte(meio, quieto, demolir([aFrente]));
-    expect(saidaDe(estado, P1)).toBe(10);
-    expect(fsmDe(estado)).toBe('ocioso');
+  it('demolir o tile SOBRE o qual o serf esta: ele tambem segue, so mais devagar (grama)', () => {
+    const u = meio.unidades.porId[serfDoJogo];
+    if (!u) throw new Error('fixture');
+    const { estado, eventos } = rodarAte(meio, quieto, demolir([{ gx: u.gx, gy: u.gy }]));
+    expect(liberacoes(eventos)).toEqual([]);
+    expect(eventos.filter((e) => e.type === 'task-completed')).toHaveLength(1);
+    expect(saidaDe(estado, P1)).toBe(9);
+  });
+
+  it('TAPAR A PORTA da obra com o serf carregado a caminho: a tarefa e liberada e ele passa a devolver', () => {
+    const tarefa = tarefaDoSerf(meio);
+    const { estado, eventos } = rodarAte(tapar(meio), quieto);
+    expect(liberacoes(eventos)).toEqual([{ type: 'task-released', tarefa, motivo: 'caminho-cortado', resultado: 'cancelada' }]);
     expect(eventos.filter((e) => e.type === 'cargo-returned')).toHaveLength(1);
+    expect(fsmDe(estado)).toBe('ocioso');
+    expect(violacoesDaFsm(estado)).toEqual([]);
+    expect(violacoesDeInvariantes(estado)).toEqual([]);
+  });
+
+  it('a carga volta ao armazem (10) e a obra segue esperando: sem caminho, o gerador nao recria', () => {
+    const { estado } = rodarAte(tapar(meio), quieto);
+    expect(saidaDe(estado, P1)).toBe(10);
     expect(faltamDe(estado, 'obra-a')).toBe(1);
-    // sem caminho, o gerador nao recria material; 'construir' (F11b) continua aberta a parte
+    // 'construir' (F11b) continua aberta a parte; material nao nasce sem caminho
     expect(tarefasEmOrdem(estado)).toEqual([]);
   });
 
-  it('REFAZER a estrada: o quadro se recompoe e a entrega acaba (o serf nao ficou travado)', () => {
-    const { estado: parado } = rodarAte(meio, quieto, demolir([aFrente]));
-    const refeito = step(parado, [{ type: 'PlaceRoad', tiles: [aFrente] }]);
-    const { estado: fim, eventos } = rodarAte(refeito, quieto);
+  it('DESTAPAR a porta: o quadro se recompoe e a entrega acaba (o serf nao ficou travado)', () => {
+    const { estado: parado } = rodarAte(tapar(meio), quieto);
+    // sai pelo helper, nao por `DemolishBuilding`: a demolicao devolveria material ao
+    // armazem e embaralharia a conta da pedra, que e o que este teste mede.
+    const { estado: fim, eventos } = rodarAte(semOPredio(parado, 'tampa-de-obra-a'), quieto);
     expect(faltamDe(fim, 'obra-a')).toBe(0);
     expect(eventos.filter((e) => e.type === 'task-completed')).toHaveLength(1);
-    // 10 - 1 da estrada refeita - 1 entregue
-    expect(saidaDe(fim, P1)).toBe(8);
+    expect(saidaDe(fim, P1)).toBe(9);
     expect(violacoesDaFsm(fim)).toEqual([]);
   });
 
-  it('demolir o tile SOBRE o qual o serf esta: ele nao fica preso no ar, devolve', () => {
-    const u = meio.unidades.porId[serfDoJogo];
-    if (!u) throw new Error('fixture');
-    const depois = step(meio, demolir([{ gx: u.gx, gy: u.gy }]));
-    expect(liberacoes(depois.events)).toMatchObject([{ motivo: 'caminho-cortado', resultado: 'cancelada' }]);
-    expect(fsmDe(depois)).toBe('devolvendo');
-    const { estado } = rodarAte(meio, quieto, demolir([{ gx: u.gx, gy: u.gy }]));
-    expect(saidaDe(estado, P1)).toBe(10);
-  });
-
-  it('cortar a rede com o serf AINDA INDO BUSCAR: o saneamento cancela, ele volta a ocioso, e refazer a estrada retoma', () => {
+  it('tapar a porta com o serf AINDA INDO BUSCAR: o saneamento cancela, ele volta a ocioso, e destapar retoma', () => {
     const buscando = ate(cenarioLongo(), (e) => fsmDe(e) === 'indo_buscar', 'serf indo buscar');
     const tarefa = tarefaDoSerf(buscando);
-    const corte = tile(36, 36);
-    const { estado: parado, eventos } = rodarAte(buscando, quieto, demolir([corte]));
+    const { estado: parado, eventos } = rodarAte(tapar(buscando), quieto);
     expect(liberacoes(eventos)).toEqual([{ type: 'task-released', tarefa, motivo: 'caminho-cortado', resultado: 'cancelada' }]);
     expect(saidaDe(parado, P1)).toBe(10); // nada saiu
     expect(eventos.filter((e) => e.type === 'cargo-returned')).toEqual([]);
-    const refeito = step(parado, [{ type: 'PlaceRoad', tiles: [corte] }]);
-    const { estado: fim } = rodarAte(refeito, quieto);
+    expect(fsmDe(parado)).toBe('ocioso');
+    const { estado: fim } = rodarAte(semOPredio(parado, 'tampa-de-obra-a'), quieto);
     expect(faltamDe(fim, 'obra-a')).toBe(0);
-    expect(saidaDe(fim, P1)).toBe(8);
+    expect(saidaDe(fim, P1)).toBe(9);
   });
 
   it('com uma rota ALTERNATIVA (rua de duas pistas), o serf replaneja e entrega SEM liberar nada', () => {
@@ -368,8 +379,14 @@ function rodarCaos(semente: number, passos: number, cobertura: CoberturaDoCaos):
         if (t !== undefined) comandos.push({ type: 'DemolishRoad', tiles: [t] });
         break;
       }
-      case 5: { // demole o tile A FRENTE do serf ocupado, ou o que ele pisa
-        if (alvo) {
+      case 5: { // corta o caminho do serf ocupado: tapa a porta da obra, ou tira a rua debaixo dele
+        const destino = tarefaDoAlvo === undefined ? undefined : estado.predios.porId[tarefaDoAlvo.destino];
+        // F18d-1a: demolir rua deixou de cortar caminho de entrega em obra — o nivel 3 anda
+        // livre. Quem corta um caminho a pe e um predio em cima da porta. Sem este ramo o
+        // caos nunca chegaria a `caminho-cortado`, e a cobertura, la embaixo, acusaria.
+        if (destino?.estado === 'obra' && sorteio(2) === 0 && daParaTapar(estado, destino)) {
+          estado = comAPortaTapada(estado, destino.id, 'quarry');
+        } else if (alvo) {
           const frente = alvo.fsmData.caminho?.[0];
           comandos.push({ type: 'DemolishRoad', tiles: [sorteio(2) === 0 && frente ? frente : { gx: alvo.gx, gy: alvo.gy }] });
         }
@@ -439,6 +456,25 @@ function rodarCaos(semente: number, passos: number, cobertura: CoberturaDoCaos):
       else if (e.type === 'cargo-returned') cobertura.devolvidas += 1;
     }
   }
+}
+
+/**
+ * F18d-1a — da para plantar a tampa (uma pedreira 3x2) sobre a porta de `predio` sem
+ * encavalar em nada? `comAPortaTapada` falha alto se sobrar tile de porta livre; o caos so
+ * a chama quando o lugar esta vazio, para a falha continuar significando bug.
+ */
+function daParaTapar(estado: GameState, predio: PredioEmObra): boolean {
+  if (estado.predios.porId[`tampa-de-${predio.id}`] !== undefined) return false;
+  const porta = tilesDaPorta(predio)[0];
+  if (porta === undefined) return false;
+  const caixa = caixaDeTipo('quarry', porta.gx, porta.gy, gameData);
+  if (caixa === null) return false;
+  for (let gy = caixa.y0; gy < caixa.y1; gy++) {
+    for (let gx = caixa.x0; gx < caixa.x1; gx++) {
+      if (!tileAndavel(estado, { gx, gy }, 'livre')) return false;
+    }
+  }
+  return true;
 }
 
 /** Um serf novo, clonado de um serf do cenario inicial. */

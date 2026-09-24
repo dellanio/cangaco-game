@@ -21,13 +21,14 @@ import {
 } from '../state';
 import type { GameData } from '../data/types';
 import { gameData } from '../data';
-import { armazensCompletos, distanciaEntrePredios } from '../estradas';
+import { armazensCompletos } from '../estradas';
 import {
   criarTarefa, criarTarefaDeConstrucao, criarTarefaDeInsumo, criarTarefaDeOcupacao,
-  criarTarefaDeOuro, criarTarefaParaArmazem, distanciaDaTarefa, liberar, podeReclamar,
-  TIPO_QUE_CARREGA,
+  criarTarefaDeOuro, criarTarefaParaArmazem, distanciaDaTarefa, liberar, ligacaoEntrePredios,
+  modoDoTipo, podeReclamar, TIPO_QUE_CARREGA,
 } from '../jobs';
 import type { MotivoDeLiberacao } from '../jobs';
+import type { ModoDeBusca } from '../pathfinding';
 import {
   demandaNoDestino, disponivelNaOrigem, ofertaNaOrigem, sobraNaOrigem, vagaDoDestino,
 } from '../reservas';
@@ -106,7 +107,7 @@ function motivoIndividual(state: GameState, t: Tarefa, dados: GameData): MotivoD
   // F15b — a forma exigida da origem vem do TIPO (`origemDaTarefaVale`): ate o
   // nivel 5 e armazem; nos niveis 6 e 7 e o produtor que tem a sobra.
   if (!origemDaTarefaVale(state, t) || origem === undefined) return 'origem-sumiu';
-  if (!destino || distanciaEntrePredios(state, origem, destino, dados) === null) return 'caminho-cortado';
+  if (!destino || distanciaDaTarefa(state, t, dados) === null) return 'caminho-cortado';
   return null;
 }
 
@@ -254,17 +255,35 @@ export function sanearTarefas(state: GameState, dados: GameData = gameData): Res
   return { state: atual, events };
 }
 
-/** O armazem completo de menor caminho por estrada ate `obra` que tem `mercadoria`
- *  livre; empate: o primeiro em `predios.ordem`. `null` se nenhum serve. */
-function origemMaisPerto(state: GameState, destino: Predio, mercadoria: string, dados: GameData): string | null {
+/** O armazem completo de menor caminho ate `destino` que tem `mercadoria` livre;
+ *  empate: o primeiro em `predios.ordem`. `null` se nenhum serve.
+ *
+ *  F18d-1a — a medida e a do MODO do tipo que se vai criar: por estrada nos niveis
+ *  de coleta, a pe no nivel 3 (material para obra). Sao unidades diferentes, mas a
+ *  comparacao acontece toda dentro de um `tipo` so. */
+function origemMaisPerto(
+  state: GameState, destino: Predio, mercadoria: string, tipo: TarefaDeTransporte['tipo'], dados: GameData,
+): string | null {
+  const modo = modoDoTipo(tipo, dados);
   let melhor: { id: string; distancia: number } | null = null;
   for (const armazem of armazensCompletos(state)) {
     if (disponivelNaOrigem(state, armazem.id, mercadoria) < 1) continue;
-    const distancia = distanciaEntrePredios(state, armazem, destino, dados);
+    const distancia = ligacaoEntrePredios(state, armazem, destino, modo, dados);
     if (distancia === null) continue;
     if (melhor === null || distancia < melhor.distancia) melhor = { id: armazem.id, distancia };
   }
   return melhor === null ? null : melhor.id;
+}
+
+/** Os niveis 6 e 7 entregam os dois na PORTA do armazem, e por isso tem que ter o
+ *  mesmo modo: `destinoMaisPerto` escolhe o armazem antes de saber qual dos dois
+ *  vai criar. Dado divergente falha alto em vez de escolher pelo nivel errado. */
+function modoDoArmazem(dados: GameData): ModoDeBusca {
+  const daSaidaCheia = modoDoTipo('saida-cheia-para-armazem', dados);
+  if (daSaidaCheia !== modoDoTipo('excedente-para-armazem', dados)) {
+    throw new Error('delivery.json: niveis 6 e 7 entregam na mesma porta e precisam do mesmo modo');
+  }
+  return daSaidaCheia;
 }
 
 /**
@@ -276,11 +295,13 @@ function origemMaisPerto(state: GameState, destino: Predio, mercadoria: string, 
  * `null` quando nenhum armazem esta ligado — e nao e travamento: e o mesmo
  * silencio de uma obra sem estrada. A carga espera na gaveta ate haver caminho.
  */
-function destinoMaisPerto(state: GameState, origem: PredioCompleto, dados: GameData): string | null {
+function destinoMaisPerto(
+  state: GameState, origem: PredioCompleto, modo: ModoDeBusca, dados: GameData,
+): string | null {
   let melhor: { id: string; distancia: number } | null = null;
   for (const armazem of armazensCompletos(state)) {
     if (armazem.id === origem.id) continue;
-    const distancia = distanciaEntrePredios(state, origem, armazem, dados);
+    const distancia = ligacaoEntrePredios(state, origem, armazem, modo, dados);
     if (distancia === null) continue;
     if (melhor === null || distancia < melhor.distancia) melhor = { id: armazem.id, distancia };
   }
@@ -317,10 +338,14 @@ function gerarTarefasDeInsumo(state: GameState, dados: GameData): GameState {
         .filter((t) => ehTarefaDeTransporte(t) && t.destino === id && t.mercadoria === mercadoria
           && (t.tipo === 'insumo-producao-parada' || t.tipo === 'insumo-producao-baixa')).length;
       if (querem <= existentes) continue;
-      const origem = origemMaisPerto(atual, predio, mercadoria, dados);
+      // `parada` sobe para antes da origem porque agora e ele que diz o TIPO da
+      // tarefa, e o tipo e que diz em que modo a origem se mede (F18d-1a).
+      const parada = produtorParado(atual, id, mercadoria, dados);
+      const origem = origemMaisPerto(
+        atual, predio, mercadoria, parada ? 'insumo-producao-parada' : 'insumo-producao-baixa', dados,
+      );
       if (origem === null) continue;
       const livres = disponivelNaOrigem(atual, origem, mercadoria);
-      const parada = produtorParado(atual, id, mercadoria, dados);
       for (let i = existentes; i < Math.min(querem, existentes + livres); i++) {
         atual = criarTarefaDeInsumo(atual, { mercadoria, origem, destino: id, parada }).state;
       }
@@ -343,7 +368,7 @@ function gerarTarefasParaArmazem(state: GameState, dados: GameData): GameState {
   for (const id of state.predios.ordem) {
     const predio = atual.predios.porId[id];
     if (!predio || predio.estado !== 'completo' || predio.tipo === ID_DO_ARMAZEM) continue;
-    const destino = destinoMaisPerto(atual, predio, dados);
+    const destino = destinoMaisPerto(atual, predio, modoDoArmazem(dados), dados);
     if (destino === null) continue;
     for (const excedente of [false, true]) {
       const gaveta = excedente ? 'entrada' : 'saida';
@@ -393,7 +418,7 @@ function gerarTarefasDeOuro(state: GameState, dados: GameData): GameState {
     const existentes = tarefasPorNumero(atual)
       .filter((t) => t.tipo === 'ouro-para-escola' && t.destino === id).length;
     if (querem <= existentes) continue;
-    const origem = origemMaisPerto(atual, escola, MERCADORIA_DE_OURO, dados);
+    const origem = origemMaisPerto(atual, escola, MERCADORIA_DE_OURO, 'ouro-para-escola', dados);
     if (origem === null) continue;
     for (let i = existentes; i < querem; i++) {
       atual = criarTarefaDeOuro(atual, { origem, destino: id }).state;
@@ -434,7 +459,7 @@ export function gerarTarefas(state: GameState, dados: GameData = gameData): Game
         const existentes = tarefasPorNumero(atual)
           .filter((t) => t.tipo === 'material-para-obra' && t.destino === obra.id && t.mercadoria === mercadoria).length;
         if (faltam <= existentes) continue;
-        const origem = origemMaisPerto(atual, obra, mercadoria, dados);
+        const origem = origemMaisPerto(atual, obra, mercadoria, 'material-para-obra', dados);
         if (origem === null) continue;
         for (let i = existentes; i < faltam; i++) {
           atual = criarTarefa(atual, { mercadoria, origem, destino: obra.id }).state;

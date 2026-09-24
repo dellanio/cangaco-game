@@ -11,7 +11,7 @@
  * depois de todas as checagens) e `liberar` devolve as DUAS reservas de uma vez.
  */
 import type {
-  GameEvent, GameState, Tarefa, TarefaConstruir, TarefaDeTransporte,
+  GameEvent, GameState, Predio, Tarefa, TarefaConstruir, TarefaDeTransporte,
   TarefaExcedenteParaArmazem, TarefaInsumoProducaoBaixa, TarefaInsumoProducaoParada,
   TarefaMaterialParaObra, TarefaOcupar, TarefaOuroParaEscola,
   TarefaSaidaCheiaParaArmazem, TipoDeTarefa,
@@ -23,7 +23,7 @@ import { componenteDe, distanciaEntrePredios, ehEstrada, tilesDaPorta } from './
 import type { TileDeGrid } from './estradas';
 import { obraTrabalhavel } from './obra';
 import { buscarCaminho } from './pathfinding';
-import type { Caminho } from './pathfinding';
+import type { Caminho, ModoDeBusca } from './pathfinding';
 import { sobraNaOrigem, vagaDeConstrucao, vagaDeOcupacao, vagaDoDestino } from './reservas';
 import { predioAceita } from './ocupacao';
 
@@ -123,6 +123,26 @@ export function nivelDoTipo(tipo: TipoDeTarefa, dados: GameData = gameData): num
     throw new Error(`nivelDoTipo: '${tipo}' nao esta na escada de delivery.json (prioridades[].id)`);
   }
   return linha.nivel;
+}
+
+/**
+ * F18d-1a — a vizinhanca que a perna de ENTREGA daquele tipo usa, lida do mesmo
+ * lugar que o nivel (`delivery.json: prioridades[].modo`). Nenhum sistema digita
+ * `'estrada'` ou `'livre'` para tarefa de transporte: o criterio e o destino
+ * (canteiro -> livre, porta de predio pronto -> estrada) e ele mora no dado.
+ *
+ * Falha alto pelas duas vias — id fora da escada e modo que nao existe — porque
+ * um padrao assumido aqui viraria a regra do jogo escondida num `??`.
+ */
+export function modoDoTipo(tipo: TarefaDeTransporte['tipo'], dados: GameData = gameData): ModoDeBusca {
+  const linha = dados.entrega.prioridades.find((p) => p.id === tipo);
+  if (linha === undefined) {
+    throw new Error(`modoDoTipo: '${tipo}' nao esta na escada de delivery.json (prioridades[].id)`);
+  }
+  if (linha.modo !== 'livre' && linha.modo !== 'estrada') {
+    throw new Error(`modoDoTipo: modo '${linha.modo}' de '${tipo}' nao e 'livre' nem 'estrada'`);
+  }
+  return linha.modo;
 }
 
 function inserirTarefa(state: GameState, tarefa: Tarefa): { readonly state: GameState; readonly id: string } {
@@ -244,48 +264,88 @@ function unidadeJaTemTarefa(state: GameState, unidadeId: string): boolean {
   });
 }
 
-/** Distancia por estrada, pelas portas, do armazem de origem ate a obra de destino, em
- *  PASSOS (BFS, 8 direcoes, sem cortar quina de predio — F18e); `null` se algum dos dois
- *  nao existe ou nao ha caminho.
- *  E a pergunta de EXISTENCIA ("esta ligado?"), que nao depende de serf: e o que o
+/**
+ * A ligacao entre as portas de dois predios NO MODO dado (F18d-1a), ou `null` se
+ * nao ha caminho.
+ *
+ * Em `'estrada'` e a distancia em PASSOS do BFS da rede (8 direcoes, sem cortar
+ * quina de predio — F18e), memoizada. Em `'livre'` e o menor custo A* em TICKS,
+ * pela porta mais barata de `a`: nao ha rede a consultar, quem responde e o
+ * terreno.
+ *
+ * As duas unidades nunca se comparam entre si, e nao podem: a comparacao
+ * acontece sempre dentro de um nivel da escada, e um nivel tem um modo so.
+ */
+export function ligacaoEntrePredios(
+  state: GameState, a: Predio, b: Predio, modo: ModoDeBusca, dados: GameData = gameData,
+): number | null {
+  if (modo === 'estrada') return distanciaEntrePredios(state, a, b, dados);
+  const alvos = tilesDaPorta(b, dados);
+  let melhor: number | null = null;
+  for (const porta of tilesDaPorta(a, dados)) {
+    const caminho = buscarCaminho(state, porta, alvos, 'livre', dados);
+    if (caminho !== null && (melhor === null || caminho.custo < melhor)) melhor = caminho.custo;
+  }
+  return melhor;
+}
+
+/** A ligacao da origem ate o destino DESTA tarefa, no modo do nivel dela; `null` se
+ *  algum dos dois nao existe ou nao ha caminho.
+ *  E a pergunta de EXISTENCIA ("da para entregar?"), que nao depende de serf: e o que o
  *  gerador, o saneamento e o verificador usam. A ORDEM de escolha do serf usa o custo A*
  *  em ticks de `custoDaTarefa`, que parte da posicao dele. */
 export function distanciaDaTarefa(state: GameState, tarefa: TarefaDeTransporte, dados: GameData = gameData): number | null {
   const origem = state.predios.porId[tarefa.origem];
   const destino = state.predios.porId[tarefa.destino];
   if (!origem || !destino) return null;
-  return distanciaEntrePredios(state, origem, destino, dados);
+  return ligacaoEntrePredios(state, origem, destino, modoDoTipo(tarefa.tipo, dados), dados);
 }
 
 /** As duas pernas da viagem de uma unidade para uma tarefa, em ticks (F10). */
 export interface PlanoDaTarefa {
   /** A pe, por qualquer tile livre, da posicao do serf ate a porta de coleta do armazem. */
   readonly ateAOrigem: Caminho;
-  /** Carregado, SO por estrada, da porta de coleta ate a porta da obra. */
+  /** Carregado, da porta de coleta ate a porta do destino, no modo do nivel
+   *  (`modoDoTipo`): por estrada nos niveis de coleta, livre no de construcao. */
   readonly deEntrega: Caminho;
   /** `ateAOrigem.custo + deEntrega.custo`. */
   readonly custo: number;
 }
 
-/** Os tiles de porta que sao estrada: so por eles a carga entra e sai da rede. */
-export function portasDeEstrada(state: GameState, predioId: string, dados: GameData = gameData): TileDeGrid[] {
+/**
+ * Os tiles de porta por onde a carga daquele MODO entra e sai (F18d-1a).
+ *
+ * Em `'estrada'` sao so os tiles de porta que sao estrada — a rede e o unico
+ * caminho da carga. Em `'livre'` e a borda sul INTEIRA, a mesma porta que
+ * `caminhoAteAObra` ja dava ao laborer: quem entrega num canteiro chega antes de
+ * existir rua.
+ */
+export function portasDaTarefa(
+  state: GameState, predioId: string, modo: ModoDeBusca, dados: GameData = gameData,
+): TileDeGrid[] {
   const predio = state.predios.porId[predioId];
-  return predio ? tilesDaPorta(predio, dados).filter((t) => ehEstrada(state.estradas, t)) : [];
+  if (!predio) return [];
+  const portas = tilesDaPorta(predio, dados);
+  return modo === 'estrada' ? portas.filter((t) => ehEstrada(state.estradas, t)) : portas;
 }
 
-/** As portas de COLETA: as do armazem que sao estrada E estao no mesmo componente de
- *  alguma porta de estrada da obra. Sem isto a perna carregada nao teria como existir. */
+/** As portas de COLETA e de ENTREGA da tarefa, no modo do nivel dela. Em
+ *  `'estrada'` a coleta ainda se filtra ao componente da entrega — sem isso a
+ *  perna carregada nao teria como existir. Em `'livre'` nao ha componente: a
+ *  existencia do caminho quem responde e o A*, tile a tile. */
 function portasDeColeta(state: GameState, tarefa: TarefaDeTransporte, dados: GameData): { coleta: TileDeGrid[]; entrega: TileDeGrid[] } {
-  const entrega = portasDeEstrada(state, tarefa.destino, dados);
+  const modo = modoDoTipo(tarefa.tipo, dados);
+  const entrega = portasDaTarefa(state, tarefa.destino, modo, dados);
+  if (modo === 'livre') return { coleta: portasDaTarefa(state, tarefa.origem, modo, dados), entrega };
   const componentesDaEntrega = new Set(entrega.map((t) => componenteDe(state, t, dados)));
-  const coleta = portasDeEstrada(state, tarefa.origem, dados).filter((t) => componentesDaEntrega.has(componenteDe(state, t, dados)));
+  const coleta = portasDaTarefa(state, tarefa.origem, modo, dados).filter((t) => componentesDaEntrega.has(componenteDe(state, t, dados)));
   return { coleta, entrega };
 }
 
 /**
  * O plano de `unidadeId` para `tarefa`: a perna livre (A*, vizinhanca 8, custo de terreno,
  * a partir de ONDE O SERF ESTA) ate a porta de coleta mais barata, mais a perna de entrega
- * (A* so por estrada) dessa porta ate a da obra. `null` se algo nao existe, ou se alguma
+ * (A* no modo do nivel, `modoDoTipo`) dessa porta ate a do destino. `null` se algo nao existe, ou se alguma
  * das pernas nao tem caminho. Nunca euclidiana.
  *
  * A porta de coleta e a de menor perna livre (guloso: nao minimiza a soma das duas
@@ -301,7 +361,7 @@ export function planoDaTarefa(
   const ateAOrigem = buscarCaminho(state, { gx: unidade.gx, gy: unidade.gy }, coleta, 'livre', dados);
   if (ateAOrigem === null) return null;
   const porta = ateAOrigem.tiles[ateAOrigem.tiles.length - 1] ?? { gx: unidade.gx, gy: unidade.gy };
-  const deEntrega = buscarCaminho(state, porta, entrega, 'estrada', dados);
+  const deEntrega = buscarCaminho(state, porta, entrega, modoDoTipo(tarefa.tipo, dados), dados);
   if (deEntrega === null) return null;
   return { ateAOrigem, deEntrega, custo: ateAOrigem.custo + deEntrega.custo };
 }
@@ -343,8 +403,9 @@ export function custoDaTarefa(
   if (unidadeId !== null) return planoDaTarefa(state, tarefa, unidadeId, dados)?.custo ?? null;
   const { coleta, entrega } = portasDeColeta(state, tarefa, dados);
   let melhor: number | null = null;
+  const modo = modoDoTipo(tarefa.tipo, dados);
   for (const porta of coleta) {
-    const perna = buscarCaminho(state, porta, entrega, 'estrada', dados);
+    const perna = buscarCaminho(state, porta, entrega, modo, dados);
     if (perna !== null && (melhor === null || perna.custo < melhor)) melhor = perna.custo;
   }
   return melhor;

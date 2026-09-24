@@ -10,7 +10,7 @@ import { criarTarefaDeConstrucao, reclamar, tarefasDeConstrucaoEmOrdem, TIPO_QUE
 import { gerarTarefas } from '../src/sim/systems/jobs';
 import { tilesDaPorta } from '../src/sim/estradas';
 import {
-  armazemDoCenario, comEstradas, comObra, comTarefas, comUnidadeEm, inicial, laborersDoCenario, linhaH, linhaV,
+  armazemDoCenario, comEstoqueNaSaida, comEstradas, comObra, comTarefas, comUnidadeEm, inicial, laborersDoCenario,
   semAUnidade, semOPredio, serfsDoCenario, tarefaDe, tile,
 } from './helpers/jobs-cenario';
 import { ate, liberacoes } from './helpers/serf-cenario';
@@ -367,9 +367,19 @@ describe('F11c — sistemaDosLaborers (Task 5)', () => {
     if (!laborer1 || !laborer2) throw new Error('fixture: precisa de 2 laborers');
     const alvo = alvoDeNivelamento('quarry');
 
-    // fase 1: SO obra-a existe, sem estrada nenhuma — nenhum armazem e alcancavel, entao
+    // fase 1: SO obra-a existe, e ela pede PEDRA num mundo sem uma unica pedra — entao
     // nenhuma tarefa de material nasce para ela nunca, nem depois de nivelada.
-    const fase1 = comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: { stone: 2 }, nivelamento: 0 });
+    //
+    // F18d-1a: ate aqui quem segurava o material era a falta de estrada. Nao segura mais
+    // (entregar em obra anda livre), e o unico jeito de uma obra ficar sem material possivel
+    // e a mercadoria nao existir em lugar nenhum. O cenario mudou de causa; o que ele prova
+    // — laborer nao fica preso em obra impossivel — e o mesmo, e a premissa agora e medida.
+    const semPedra = comEstoqueNaSaida(inicial, armazemDoCenario(inicial).id, { stone: 0, timber: 40 });
+    const fase1 = comObra(semPedra, 'obra-a', { gx: 26, gy: 34, faltam: { stone: 2 }, nivelamento: 0 });
+    // premissa medida: `bensPorMercadoria` lanca `faltam` como divida, entao -2 e
+    // exatamente "nenhuma pedra existe no mundo, e a obra-a deve 2". Zero seria obra sem pedido.
+    expect(bensPorMercadoria(fase1).stone).toBe(-2);
+    expect(Object.keys(fase1.estradas)).toEqual([]); // e zero estrada: nao e a rua que segura
 
     const eventosDaFase1: GameEvent[] = [];
     let atual = fase1;
@@ -389,16 +399,20 @@ describe('F11c — sistemaDosLaborers (Task 5)', () => {
       expect(atual.jobs.tarefas.porId[lib.tarefa]?.destino).toBe('obra-a'); // so a obra sem material possivel
     }
 
-    // fase 2: obra-b nasce, nivelada do zero, ligada e abastecida — os ociosos vao para ela,
-    // porque obra-a continua nao-trabalhavel (`reclamar` a recusa, Task 4).
-    let fase2 = comObra(atual, 'obra-b', { gx: 26, gy: 45, faltam: { stone: 2, timber: 3 }, nivelamento: 0 });
-    fase2 = comEstradas(fase2, [...linhaV(29, 33, 47), ...linhaH(26, 29, 47)]);
+    // fase 2: obra-b nasce, nivelada do zero, pedindo TABUA — que existe. Os ociosos vao
+    // para ela, porque obra-a continua nao-trabalhavel (`reclamar` a recusa, Task 4). E vao
+    // sem estrada nenhuma: a obra-b termina com o mapa limpo de ruas.
+    const fase2 = comObra(atual, 'obra-b', { gx: 26, gy: 45, faltam: { timber: 3 }, nivelamento: 0 });
     const comObraBFeita = ate(fase2, (e) => e.predios.porId['obra-b']?.estado === 'completo', 'obra-b termina — a partida nao travou');
     expect(comObraBFeita.predios.porId['obra-b']?.estado).toBe('completo');
+    expect(Object.keys(comObraBFeita.estradas)).toEqual([]);
 
-    // fase 3: a estrada chega em obra-a — o armazem (ja abastecido) passa a ser alcancavel,
-    // a tarefa de material nasce, obra-a volta a ser trabalhavel e tambem termina.
-    const fase3 = comEstradas(comObraBFeita, [tile(29, 33), tile(29, 34), tile(29, 35), tile(29, 36), tile(28, 36)]);
+    // fase 3: a pedra aparece no armazem — a tarefa de material de obra-a nasce, ela volta a
+    // ser trabalhavel e tambem termina. A tabua que sobrou entra como esta: a fixture le o
+    // estoque do tick, em vez de repor um numero que ja mudou.
+    const sobrou = armazemDoCenario(comObraBFeita).estoque.saida;
+    const fase3 = comEstoqueNaSaida(comObraBFeita, armazemDoCenario(comObraBFeita).id,
+      { stone: 10, timber: sobrou.timber ?? 0 });
     const ambasProntas = ate(fase3, (e) => e.predios.porId['obra-a']?.estado === 'completo', 'obra-a se recupera e tambem termina');
     expect(ambasProntas.predios.porId['obra-a']?.estado).toBe('completo');
     expect(ambasProntas.predios.porId['obra-b']?.estado).toBe('completo');
@@ -466,9 +480,14 @@ describe('F11c — BUG-001: a conclusao da obra leva junto as tarefas irmas', ()
   it('o verificador ACUSA a forma que a tolerancia deixava passar (prova do guarda)', () => {
     // sem isto, "nenhuma violacao em tick nenhum" poderia ser verdade so porque o
     // verificador ficou cego. Monta a mao o estado que o bug produzia.
-    const comObraEComTarefa = gerarTarefas(
+    const geradas = gerarTarefas(
       comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: { timber: 3, stone: 2 }, nivelamento: alvoDeNivelamento('quarry') }),
     );
+    // F18d-1a: `gerarTarefas` passou a criar tambem as tarefas de MATERIAL aqui (o nivel 3
+    // nao exige mais estrada, e o armazem do cenario esta abastecido). O quadro fica so com
+    // as `construir`: a forma que a tolerancia deixava passar era construir -> predio ja
+    // completo, e a igualdade abaixo so prova o guarda se nada mais estiver torto de graca.
+    const comObraEComTarefa = comTarefas(geradas, construirPara(geradas, 'obra-a'));
     const emObra = comObraEComTarefa.predios.porId['obra-a'] as PredioEmObra;
     const comPredioCompleto: GameState = {
       ...comObraEComTarefa,

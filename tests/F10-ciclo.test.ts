@@ -139,9 +139,12 @@ describe('F10 — sanearTarefas sobre uma tarefa carregando: so olha unidade, de
     expect(tarefasDe(depois).map((t) => t.estado)).toEqual(['carregando']);
   });
 
-  it('a estrada cortada entre as portas de origem e destino nao cancela aqui: o caminho do serf carregado e da FSM', () => {
+  it('a estrada cortada entre as portas nao cancela aqui: o caminho do serf carregado e da FSM', () => {
     const depois = tickDoQuadro(semOTile(comUmaCarregando(), '29,35'));
-    expect(tarefasDe(depois).map((t) => t.estado)).toEqual(['carregando']);
+    // F18d-1a: cortar a rua deixou de cortar o caminho — a entrega em obra anda livre. A
+    // tarefa carregada segue de pe (como antes, e por outro motivo: quem cuida dela e a FSM)
+    // e o gerador ainda cria a segunda unidade que falta, igual ao quadro com rua inteira.
+    expect(tarefasDe(depois).map((t) => t.estado)).toEqual(['carregando', 'aberta']);
     expect(liberacoes(depois)).toEqual([]);
   });
 

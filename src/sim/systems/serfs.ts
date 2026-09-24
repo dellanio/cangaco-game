@@ -35,7 +35,10 @@ import type { GameData } from '../data/types';
 import { gameData } from '../data';
 import { armazensCompletos, ehEstrada, isConnected, tilesDaPorta } from '../estradas';
 import type { TileDeGrid } from '../estradas';
-import { liberar, marcarCarregando, planoDaTarefa, portasDeEstrada, reclamarMelhor, removerTarefa, TIPO_QUE_CARREGA } from '../jobs';
+import {
+  liberar, marcarCarregando, modoDoTipo, planoDaTarefa, portasDaTarefa, reclamarMelhor,
+  removerTarefa, TIPO_QUE_CARREGA,
+} from '../jobs';
 import type { MotivoDeLiberacao } from '../jobs';
 import { buscarCaminho, tileAndavel } from '../pathfinding';
 import { ehEscolaCompleta } from '../escola';
@@ -139,7 +142,8 @@ function passoCarregando(state: GameState, u: Unidade, dados: GameData): Passo {
     return ficarOcioso(l.state, u, l.events);
   }
   // o caminho de volta para a entrega tem que existir ANTES de o material sair do armazem
-  const rota = buscarCaminho(state, noTile(u), portasDeEstrada(state, tarefa.destino, dados), 'estrada', dados);
+  const modo = modoDoTipo(tarefa.tipo, dados);
+  const rota = buscarCaminho(state, noTile(u), portasDaTarefa(state, tarefa.destino, modo, dados), modo, dados);
   if (rota === null) {
     const l = liberarTarefa(state, tarefa.id, 'caminho-cortado');
     return ficarOcioso(l.state, u, l.events);
@@ -166,19 +170,26 @@ function passoIndoEntregar(state: GameState, u: Unidade, dados: GameData): Passo
   if (tarefa === null) return semEventos(comecarADevolver(state, u, carga, dados)); // o quadro cancelou: devolve
 
   const agora = noTile(u);
-  const portas = portasDeEstrada(state, tarefa.destino, dados);
-  // estrada cortada: o tile onde esta deixou de ser estrada, ou nao liga mais a nenhuma porta da obra
-  const ligado = ehEstrada(state.estradas, agora) && portas.some((p) => isConnected(state, agora, p));
-  if (!ligado) {
-    const l = liberarTarefa(state, tarefa.id, 'caminho-cortado');
-    return { state: comecarADevolver(l.state, u, carga, dados), events: l.events };
+  const modo = modoDoTipo(tarefa.tipo, dados);
+  const portas = portasDaTarefa(state, tarefa.destino, modo, dados);
+  // Em `'estrada'`, a rede pode ter sido cortada LONGE daqui e a rota inteira morre
+  // junto; o componente responde isso barato, e por isso a pergunta e por tick.
+  // Em `'livre'` (F18d-1a) nao ha rede a perder: o que corta uma rota a pe e um
+  // predio novo em cima dela, e isso o proximo tile ja denuncia, logo abaixo.
+  if (modo === 'estrada') {
+    const ligado = ehEstrada(state.estradas, agora) && portas.some((p) => isConnected(state, agora, p));
+    if (!ligado) {
+      const l = liberarTarefa(state, tarefa.id, 'caminho-cortado');
+      return { state: comecarADevolver(l.state, u, carga, dados), events: l.events };
+    }
   }
 
   let atual = u;
   const proximo = (u.fsmData.caminho ?? [])[0];
-  if (proximo !== undefined && !ehEstrada(state.estradas, proximo)) {
-    // ainda ha ligacao, mas o proximo tile da rota foi demolido: replaneja pela rede
-    const rota = buscarCaminho(state, agora, portas, 'estrada', dados);
+  if (proximo !== undefined && !tileAndavel(state, proximo, modo, dados)) {
+    // o proximo tile da rota deixou de servir (estrada demolida, ou predio plantado
+    // em cima): replaneja no mesmo modo, e desiste se nao houver outro caminho
+    const rota = buscarCaminho(state, agora, portas, modo, dados);
     if (rota === null) {
       const l = liberarTarefa(state, tarefa.id, 'caminho-cortado');
       return { state: comecarADevolver(l.state, u, carga, dados), events: l.events };
