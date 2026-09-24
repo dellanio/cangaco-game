@@ -1,4 +1,4 @@
-import type { GameState, Predio, PredioEmObra, Unidade } from './state';
+import type { GameState, Predio, PredioCompleto, PredioEmObra, Unidade } from './state';
 import { ID_DO_ARMAZEM } from './state';
 import type { GameData, PredioData } from './data/types';
 import { gameData } from './data';
@@ -8,7 +8,8 @@ import { predioLigadoAoArmazem } from './estradas';
 import { custoDeTreino, ehEscolaCompleta, filaDaEscola, ouroNecessario } from './escola';
 import { custoDoPasso } from './pathfinding';
 import { alvoDeNivelamento, custoDoPredio } from './obra';
-import { trabalhadorDoTipo } from './ocupacao';
+import { receitaDoTipo, veioEsgotado } from './producao';
+import { ehPredioOcupavel, trabalhadorDoTipo } from './ocupacao';
 import type { CaixaEmTiles } from './footprint';
 
 /**
@@ -519,4 +520,94 @@ export function posicaoDaUnidade(
     gx: unidade.gx + (proximo.gx - unidade.gx) * fracao,
     gy: unidade.gy + (proximo.gy - unidade.gy) * fracao,
   };
+}
+
+/**
+ * F22 — as causas de alerta do HUD, ids NEUTROS e em ordem FIXA. O texto que o
+ * jogador le mora em `data/theme-sertao.json` e e assunto da `ui/`: `sim/`
+ * nunca le o tema (CLAUDE.md secao 9).
+ *
+ * As tres tem produtor no dado publicado hoje. "Fome" e "sendo atacado" ficaram
+ * de fora de proposito — nao ha consumo antes da F20 nem combate antes da F28,
+ * e alerta sem causa e a mesma falha do `terreno` na F06. Causa nova entra aqui
+ * junto com a sua derivacao em `temCausa`, ou o `switch` sem `default` reprova
+ * o typecheck.
+ */
+export const CAUSAS_DE_ALERTA = ['sem-trabalhador', 'sem-estrada', 'veio-esgotado'] as const;
+
+export type CausaDeAlerta = (typeof CAUSAS_DE_ALERTA)[number];
+
+/** Um prédio parado, e por que. Sem texto e sem severidade: os dois seriam
+ *  decisao de tela, e a tela ja tem o tema e a ordem das causas. */
+export interface Alerta {
+  /** Id no estado (`q1`) — e por ele que a tela seleciona o predio. */
+  readonly predio: string;
+  /** Id NEUTRO do tipo (`quarry`); quem traduz e o tema, na `ui/`. */
+  readonly tipo: string;
+  readonly causa: CausaDeAlerta;
+}
+
+/**
+ * A derivacao de UMA causa, uma por `case`. O `switch` nao tem `default` de
+ * proposito: causa nova sem derivacao reprova o typecheck, em vez de nascer
+ * calada.
+ */
+function temCausa(
+  state: GameState, predio: PredioCompleto, causa: CausaDeAlerta, dados: GameData,
+): boolean {
+  switch (causa) {
+    case 'sem-trabalhador':
+      // F14, sem campo novo: o tipo pede trabalhador e a vaga esta livre.
+      return ehPredioOcupavel(predio, dados) && predio.ocupante === null;
+    case 'sem-estrada':
+      if (predio.producao !== null) return !predioLigadoAoArmazem(state, predio, dados);
+      // A escola reusa `motivoDaEspera` (F13b) inteiro, em vez de repetir a
+      // regra: e ele que ja separa "sem estrada" de "sem ouro", e duas copias
+      // da mesma pergunta divergem na primeira mudanca.
+      if (ehEscolaCompleta(predio)) {
+        return motivoDaEspera(state, predio.id, predio, dados) === 'sem-estrada';
+      }
+      return false;
+    case 'veio-esgotado': {
+      const receita = receitaDoTipo(predio.tipo, dados);
+      // O PREDICADO do runtime (`sim/producao.ts`), nao `veio === 0`: e
+      // `veioEsgotado` que congela o ciclo, e ele reprova ja em
+      // `veio < unidadesPorCiclo`. Alertar so no zero avisaria depois de o
+      // jogador ter percebido sozinho.
+      return predio.producao !== null && receita !== null
+        && veioEsgotado(predio.producao, receita);
+    }
+  }
+}
+
+/**
+ * F22 — tudo que esta parado, para o HUD avisar SEM o jogador clicar em predio
+ * nenhum. Derivacao pura: nenhum campo novo no `GameState`, nenhum evento,
+ * nenhuma assinatura — as tres causas ja existiam na F08, F14 e F15a, e o que
+ * faltava era o mecanismo de exibicao.
+ *
+ * A ordem e determinista por construcao: `predios.ordem` por fora (nunca
+ * `Object.keys`) e `CAUSAS_DE_ALERTA` por dentro. Duas chamadas no mesmo estado
+ * dao a mesma lista, na mesma ordem.
+ */
+export function alertasDoEstado(
+  state: GameState, dados: GameData = gameData,
+): readonly Alerta[] {
+  const alertas: Alerta[] = [];
+  for (const id of state.predios.ordem) {
+    const predio = state.predios.porId[id];
+    // Obra nao alerta: nao ha trabalhador a esperar antes de o predio existir,
+    // e o que falta a ela ja aparece no medidor da F17b.
+    if (predio === undefined || predio.estado !== 'completo') continue;
+    // Pausa deliberada nao alerta NADA (Nota da F16c): quem pausou sabe que
+    // parou. Le o CAMPO, nunca o rotulo da FSM — o especialista de um predio
+    // pausado continua em `trabalhando`.
+    if (predio.pausado) continue;
+    for (const causa of CAUSAS_DE_ALERTA) {
+      if (temCausa(state, predio, causa, dados)) {
+        alertas.push({ predio: id, tipo: predio.tipo, causa });
+      }
+    }
+  }
+  return alertas;
 }
