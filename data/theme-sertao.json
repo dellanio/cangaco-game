@@ -38,107 +38,320 @@
     "esgotado": "#2A2622"
   },
   "predios": {
-    "storehouse":       { "nome": "Armazém",                  "desc": "Depósito da fazenda. Guarda tudo que a vila produz." },
-    "schoolhouse":      { "nome": "Casa do Coronel",          "desc": "Onde se engaja gente por dinheiro." },
-    "inn":              { "nome": "Bodega",                   "desc": "Venda e mesa. É onde o povo come e bebe." },
-    "quarry":           { "nome": "Pedreira",                 "desc": "Lascas de pedra tiradas do lajedo." },
-    "woodcutters":      { "nome": "Casa do Lenhador",         "desc": "Corta e replanta a lenha da caatinga." },
-    "watchtower":       { "nome": "Torre de Pedra",           "desc": "Torre de pedra seca. Dali se atira de cima." },
-    "sawmill":          { "nome": "Serraria",                 "desc": "Tora vira tábua." },
-    "farm":             { "nome": "Roçado de Milho",          "desc": "O milho sustenta gente e bicho." },
-    "wineyard":         { "nome": "Canavial",                 "desc": "Cana que vira cachaça no engenho." },
-    "fishermans":       { "nome": "Casa do Pescador",         "desc": "Pesca no açude." },
-    "gold_mine":        { "nome": "Garimpo",                  "desc": "Veio de ouro na serra. Esgota." },
-    "coal_mine":        { "nome": "Jazida de Carvão",         "desc": "Carvão tirado da serra." },
-    "iron_mine":        { "nome": "Mina de Ferro",            "desc": "Veio de ferro na serra. Esgota." },
-    "weapons_workshop": { "nome": "Casa de Armas de Madeira", "desc": "Cabo de madeira: foice, aguilhada, bodoque." },
-    "barracks":         { "nome": "Quartel do Bando",         "desc": "Esconderijo do bando. Onde se arma a gente." },
-    "marketplace":      { "nome": "Feira",                    "desc": "Troca de mercadoria a preço fixo." },
-    "mill":             { "nome": "Moinho",                   "desc": "Milho vira fubá." },
-    "bakery":           { "nome": "Padaria",                  "desc": "Fubá vira cuscuz e beiju." },
-    "swine_farm":       { "nome": "Malhada",                  "desc": "Cercado do bode. Dá bode e couro cru." },
-    "stables":          { "nome": "Cocheira",                 "desc": "Cria e doma cavalo." },
-    "butchers":         { "nome": "Casa de Carne",            "desc": "Bode vira carne de sol." },
-    "tannery":          { "nome": "Curtume",                  "desc": "Couro cru vira couro curtido." },
-    "armory_workshop":  { "nome": "Casa do Gibão",            "desc": "Gibão de couro e chapéu de aba." },
-    "metallurgists":    { "nome": "Fundição",                 "desc": "Ouro bruto vira moeda." },
-    "town_hall":        { "nome": "Mercenários",              "desc": "Aqui se contrata jagunço com dinheiro na mão." },
-    "iron_smithy":      { "nome": "Forja",                    "desc": "Minério vira ferro." },
-    "weapon_smithy":    { "nome": "Ferraria",                 "desc": "Ferro vira peixeira, ferrão e cano de fogo." },
-    "armor_smithy":     { "nome": "Casa do Ferro",            "desc": "Gibão reforçado e peitoral." }
+    "storehouse": {
+      "nome": "Armazém",
+      "desc": "Depósito da fazenda. Guarda tudo que a vila produz."
+    },
+    "schoolhouse": {
+      "nome": "Casa do Coronel",
+      "desc": "Onde se engaja gente por dinheiro."
+    },
+    "inn": {
+      "nome": "Bodega",
+      "desc": "Venda e mesa. É onde o povo come e bebe."
+    },
+    "quarry": {
+      "nome": "Pedreira",
+      "desc": "Lascas de pedra tiradas do lajedo."
+    },
+    "woodcutters": {
+      "nome": "Casa do Lenhador",
+      "desc": "Corta e replanta a lenha da caatinga."
+    },
+    "watchtower": {
+      "nome": "Torre de Pedra",
+      "desc": "Torre de pedra seca. Dali se atira de cima."
+    },
+    "sawmill": {
+      "nome": "Serraria",
+      "desc": "Tora vira tábua."
+    },
+    "farm": {
+      "nome": "Roçado de Milho",
+      "desc": "O milho sustenta gente e bicho."
+    },
+    "wineyard": {
+      "nome": "Canavial",
+      "desc": "Cana que vira cachaça no engenho."
+    },
+    "fishermans": {
+      "nome": "Casa do Pescador",
+      "desc": "Pesca no açude."
+    },
+    "gold_mine": {
+      "nome": "Garimpo",
+      "desc": "Veio de ouro na serra. Esgota."
+    },
+    "coal_mine": {
+      "nome": "Jazida de Carvão",
+      "desc": "Carvão tirado da serra."
+    },
+    "iron_mine": {
+      "nome": "Mina de Ferro",
+      "desc": "Veio de ferro na serra. Esgota."
+    },
+    "weapons_workshop": {
+      "nome": "Casa de Armas de Madeira",
+      "desc": "Cabo de madeira: foice, aguilhada, bodoque."
+    },
+    "barracks": {
+      "nome": "Quartel do Bando",
+      "desc": "Esconderijo do bando. Onde se arma a gente."
+    },
+    "marketplace": {
+      "nome": "Feira",
+      "desc": "Troca de mercadoria a preço fixo."
+    },
+    "mill": {
+      "nome": "Moinho",
+      "desc": "Milho vira fubá."
+    },
+    "bakery": {
+      "nome": "Padaria",
+      "desc": "Fubá vira cuscuz e beiju."
+    },
+    "swine_farm": {
+      "nome": "Malhada",
+      "desc": "Cercado do bode. Dá bode e couro cru."
+    },
+    "stables": {
+      "nome": "Cocheira",
+      "desc": "Cria e doma cavalo."
+    },
+    "butchers": {
+      "nome": "Casa de Carne",
+      "desc": "Bode vira carne de sol."
+    },
+    "tannery": {
+      "nome": "Curtume",
+      "desc": "Couro cru vira couro curtido."
+    },
+    "armory_workshop": {
+      "nome": "Casa do Gibão",
+      "desc": "Gibão de couro e chapéu de aba."
+    },
+    "metallurgists": {
+      "nome": "Fundição",
+      "desc": "Ouro bruto vira moeda."
+    },
+    "town_hall": {
+      "nome": "Mercenários",
+      "desc": "Aqui se contrata jagunço com dinheiro na mão."
+    },
+    "iron_smithy": {
+      "nome": "Forja",
+      "desc": "Minério vira ferro."
+    },
+    "weapon_smithy": {
+      "nome": "Ferraria",
+      "desc": "Ferro vira peixeira, ferrão e cano de fogo."
+    },
+    "armor_smithy": {
+      "nome": "Casa do Ferro",
+      "desc": "Gibão reforçado e peitoral."
+    }
   },
   "civis": {
-    "serf":           { "nome": "Carregador",  "item": "cesto ou saco nas costas" },
-    "laborer":        { "nome": "Obreiro",     "item": "marreta de madeira" },
-    "stonemason":     { "nome": "Cabra da Pedreira", "item": "ponteiro e marreta" },
-    "woodcutter":     { "nome": "Lenhador",    "item": "machado" },
-    "carpenter":      { "nome": "Carpina",     "item": "serrote" },
-    "farmer":         { "nome": "Roceiro",     "item": "enxada" },
-    "baker":          { "nome": "Forneiro",    "item": "pá de forno" },
-    "animal_breeder": { "nome": "Criador",     "item": "cambito" },
-    "butcher":        { "nome": "Carneador",   "item": "faca de ponta" },
-    "fisherman":      { "nome": "Pescador",    "item": "tarrafa" },
-    "miner":          { "nome": "Mineiro",     "item": "picareta e candeeiro" },
-    "metallurgist":   { "nome": "Fundidor",    "item": "tenaz" },
-    "blacksmith":     { "nome": "Ferreiro",    "item": "martelo de forja" },
-    "recruit":        { "nome": "Aprendiz",    "item": "mãos vazias, chapéu de couro novo" }
+    "serf": {
+      "nome": "Carregador",
+      "item": "cesto ou saco nas costas"
+    },
+    "laborer": {
+      "nome": "Obreiro",
+      "item": "marreta de madeira"
+    },
+    "stonemason": {
+      "nome": "Cabra da Pedreira",
+      "item": "ponteiro e marreta"
+    },
+    "woodcutter": {
+      "nome": "Lenhador",
+      "item": "machado"
+    },
+    "carpenter": {
+      "nome": "Carpina",
+      "item": "serrote"
+    },
+    "farmer": {
+      "nome": "Roceiro",
+      "item": "enxada"
+    },
+    "baker": {
+      "nome": "Forneiro",
+      "item": "pá de forno"
+    },
+    "animal_breeder": {
+      "nome": "Criador",
+      "item": "cambito"
+    },
+    "butcher": {
+      "nome": "Carneador",
+      "item": "faca de ponta"
+    },
+    "fisherman": {
+      "nome": "Pescador",
+      "item": "tarrafa"
+    },
+    "miner": {
+      "nome": "Mineiro",
+      "item": "picareta e candeeiro"
+    },
+    "metallurgist": {
+      "nome": "Fundidor",
+      "item": "tenaz"
+    },
+    "blacksmith": {
+      "nome": "Ferreiro",
+      "item": "martelo de forja"
+    },
+    "recruit": {
+      "nome": "Aprendiz",
+      "item": "mãos vazias, chapéu de couro novo"
+    }
   },
   "militares": {
-    "militia":       { "nome": "Cabra",             "arma": "facão", "protecao": "nenhuma" },
-    "axe_fighter":   { "nome": "Cabra de Gibão",    "arma": "facão", "protecao": "gibão de couro e chapéu de aba" },
-    "sword_fighter": { "nome": "Valente",           "arma": "peixeira longa", "protecao": "gibão reforçado e peitoral de couro cru" },
-    "bowman":        { "nome": "Bodoqueiro",        "arma": "bodoque", "protecao": "gibão de couro" },
-    "crossbowman":   { "nome": "Cabra de Fogo",     "arma": "bacamarte", "protecao": "gibão reforçado" },
-    "lance_carrier": { "nome": "Aguilhadeiro",      "arma": "aguilhada de vaqueiro", "protecao": "gibão de couro" },
-    "pikeman":       { "nome": "Ferrão",            "arma": "ferrão comprido", "protecao": "gibão reforçado" },
-    "scout":         { "nome": "Vaqueiro",          "arma": "facão", "protecao": "gibão completo", "montado": true },
-    "knight":        { "nome": "Capitão do Bando",  "arma": "peixeira e cano de fogo", "protecao": "gibão reforçado e peitoral", "montado": true }
+    "militia": {
+      "nome": "Cabra",
+      "arma": "facão",
+      "protecao": "nenhuma"
+    },
+    "axe_fighter": {
+      "nome": "Cabra de Gibão",
+      "arma": "facão",
+      "protecao": "gibão de couro e chapéu de aba"
+    },
+    "sword_fighter": {
+      "nome": "Valente",
+      "arma": "peixeira longa",
+      "protecao": "gibão reforçado e peitoral de couro cru"
+    },
+    "bowman": {
+      "nome": "Bodoqueiro",
+      "arma": "bodoque",
+      "protecao": "gibão de couro"
+    },
+    "crossbowman": {
+      "nome": "Cabra de Fogo",
+      "arma": "bacamarte",
+      "protecao": "gibão reforçado"
+    },
+    "lance_carrier": {
+      "nome": "Aguilhadeiro",
+      "arma": "aguilhada de vaqueiro",
+      "protecao": "gibão de couro"
+    },
+    "pikeman": {
+      "nome": "Ferrão",
+      "arma": "ferrão comprido",
+      "protecao": "gibão reforçado"
+    },
+    "scout": {
+      "nome": "Vaqueiro",
+      "arma": "facão",
+      "protecao": "gibão completo",
+      "montado": true
+    },
+    "knight": {
+      "nome": "Capitão do Bando",
+      "arma": "peixeira e cano de fogo",
+      "protecao": "gibão reforçado e peitoral",
+      "montado": true
+    }
   },
   "mercenarios": {
-    "rebel":     { "nome": "Retirante" },
-    "rogue":     { "nome": "Emboscador" },
-    "vagabond":  { "nome": "Andarilho" },
-    "barbarian": { "nome": "Bruto do Mato" },
-    "warrior":   { "nome": "Jagunço" }
+    "rebel": {
+      "nome": "Retirante"
+    },
+    "rogue": {
+      "nome": "Emboscador"
+    },
+    "vagabond": {
+      "nome": "Andarilho"
+    },
+    "barbarian": {
+      "nome": "Bruto do Mato"
+    },
+    "warrior": {
+      "nome": "Jagunço"
+    }
   },
   "mercadorias": {
-    "tree_trunk": "Tora", "timber": "Tábua", "stone": "Pedra",
-    "gold_ore": "Ouro bruto", "gold": "Dinheiro", "coal": "Carvão",
-    "iron_ore": "Minério", "iron": "Ferro",
-    "corn": "Milho", "flour": "Fubá", "pigs": "Bode", "skins": "Couro cru",
-    "leather": "Couro", "horses": "Cavalo",
-    "loaves": "Cuscuz", "sausages": "Carne de sol", "wine": "Cachaça", "fish": "Peixe",
-    "hand_axe": "Facão", "sword": "Peixeira", "lance": "Aguilhada",
-    "pike": "Ferrão", "longbow": "Bodoque", "crossbow": "Bacamarte",
-    "leather_armor": "Gibão de couro", "iron_armor": "Gibão reforçado",
-    "wooden_shield": "Chapéu de aba", "iron_shield": "Peitoral de couro cru",
-    "arma_madeira": "Arma de madeira", "arma_ferro": "Arma de ferro",
+    "tree_trunk": "Tora",
+    "timber": "Tábua",
+    "stone": "Pedra",
+    "gold_ore": "Ouro bruto",
+    "gold": "Dinheiro",
+    "coal": "Carvão",
+    "iron_ore": "Minério",
+    "iron": "Ferro",
+    "corn": "Milho",
+    "flour": "Fubá",
+    "pigs": "Bode",
+    "skins": "Couro cru",
+    "leather": "Couro",
+    "horses": "Cavalo",
+    "loaves": "Cuscuz",
+    "sausages": "Carne de sol",
+    "wine": "Cachaça",
+    "fish": "Peixe",
+    "hand_axe": "Facão",
+    "sword": "Peixeira",
+    "lance": "Aguilhada",
+    "pike": "Ferrão",
+    "longbow": "Bodoque",
+    "crossbow": "Bacamarte",
+    "leather_armor": "Gibão de couro",
+    "iron_armor": "Gibão reforçado",
+    "wooden_shield": "Chapéu de aba",
+    "iron_shield": "Peitoral de couro cru",
+    "arma_madeira": "Arma de madeira",
+    "arma_ferro": "Arma de ferro",
     "armadura_ferro": "Proteção reforçada"
   },
-  "hud": { "comida": "Comida", "populacao": "Gente", "pausado": "Pausado" },
+  "hud": {
+    "comida": "Comida",
+    "populacao": "Gente",
+    "pausado": "Pausado"
+  },
   "menuBuild": {
-    "titulo": "Construir", "requer": "requer", "semRequisito": "ainda não disponível",
-    "estrada": "Estrada", "porTile": "por tile",
-    "demolirEstrada": "Demolir estrada", "demolirEstradaDesc": "devolve parte da pedra"
+    "titulo": "Construir",
+    "requer": "requer",
+    "semRequisito": "ainda não disponível",
+    "estrada": "Estrada",
+    "porTile": "por tile",
+    "demolirEstrada": "Demolir estrada",
+    "demolirEstradaDesc": "devolve parte da pedra"
   },
   "painelEscola": {
     "_doc": "F13b. Os três motivos de espera são específicos de propósito: cada um aponta a ação que resolve aquele caso. 'Sem estrada' é um arrasto de dez segundos; 'sem dinheiro' é garimpo e metalurgia. Um texto neutro para os dois esconderia justamente a diferença que importa.",
-    "titulo": "Casa do Coronel", "fila": "Fila", "vazio": "—",
-    "treinando": "treinando", "naFila": "na fila",
+    "titulo": "Casa do Coronel",
+    "fila": "Fila",
+    "vazio": "—",
+    "treinando": "treinando",
+    "naFila": "na fila",
     "ouroACaminho": "Dinheiro a caminho",
     "semEstrada": "Sem estrada até o armazém",
     "semOuro": "Sem dinheiro no armazém",
-    "cancelarItem": "tirar da fila", "custo": "custa", "filaCheia": "Fila cheia"
+    "cancelarItem": "tirar da fila",
+    "custo": "custa",
+    "filaCheia": "Fila cheia"
   },
   "painelPredio": {
     "_doc": "F16b. O NOME do prédio NÃO mora aqui: vem de predios.<id>.nome, que já existe. Só os rótulos fixos do painel. 'Sem trabalhador' e a ausência da linha são coisas diferentes: prédio que não pede trabalhador (armazém, Casa do Coronel) não ganha a linha nenhuma — dizer 'sem trabalhador' num armazém seria acusar falta onde não cabe ninguém.",
-    "hp": "Firmeza", "emObra": "Em obra",
+    "hp": "Firmeza",
+    "emObra": "Em obra",
     "nivelando": "Aplainando o chão",
     "material": "Material",
-    "ocupante": "Quem trabalha", "semTrabalhador": "Sem trabalhador",
-    "entrada": "Entra", "saida": "Sai", "gavetaVazia": "—",
-    "pausar": "Parar", "retomar": "Voltar ao trabalho", "pausado": "Parado",
-    "demolir": "Derrubar", "demolirDesc": "devolve parte do material"
+    "ocupante": "Quem trabalha",
+    "semTrabalhador": "Sem trabalhador",
+    "entrada": "Entra",
+    "saida": "Sai",
+    "gavetaVazia": "—",
+    "pausar": "Parar",
+    "retomar": "Voltar ao trabalho",
+    "pausado": "Parado",
+    "demolir": "Derrubar",
+    "demolirDesc": "devolve parte do material"
   },
   "alertas": {
     "_doc": "F22. Uma chave por causa de alerta, e a chave E o id neutro de CAUSAS_DE_ALERTA (src/sim/selectors.ts). Causa sem rótulo aqui, ou rótulo sobrando sem causa, reprova o npm run verify — o guarda está em tests/F22-alertas.test.ts. O texto é o do JOGADOR: diz o que fazer, não o nome do campo que ficou nulo.",
@@ -156,21 +369,87 @@
     "paredes": "paredes subindo",
     "cobertura": "telhado por fechar"
   },
-  "vegetacao": ["mandacaru", "xique-xique", "juazeiro", "umbuzeiro", "facheiro", "macambira"],
-  "props": ["cerca de vara", "pilha de lenha", "cacimba", "carro de boi", "jumento", "varal de carne de sol"],
+  "vegetacao": [
+    "mandacaru",
+    "xique-xique",
+    "juazeiro",
+    "umbuzeiro",
+    "facheiro",
+    "macambira"
+  ],
+  "props": [
+    "cerca de vara",
+    "pilha de lenha",
+    "cacimba",
+    "carro de boi",
+    "jumento",
+    "varal de carne de sol"
+  ],
   "facoes": {
     "_doc": "Dois bandos rivais. MESMA arquitetura e MESMOS sprites: mudam só a cor do lenço e da bandeira. Foi essa escolha que cortou a conta de arte quase pela metade.",
-    "bando_a": { "nome": "Bando do Cabeça-Branca", "corLenco": "#D64B3F", "corBandeira": "#D64B3F" },
-    "bando_b": { "nome": "Bando do Vento-Leste",   "corLenco": "#3F72D6", "corBandeira": "#3F72D6" }
+    "bando_a": {
+      "nome": "Bando do Cabeça-Branca",
+      "corLenco": "#D64B3F",
+      "corBandeira": "#D64B3F"
+    },
+    "bando_b": {
+      "nome": "Bando do Vento-Leste",
+      "corLenco": "#3F72D6",
+      "corBandeira": "#3F72D6"
+    }
   },
   "audio": {
-    "instrumentos": ["rabeca", "zabumba", "viola de dez cordas", "triângulo", "pífano"],
-    "ambiente": ["vento seco", "cigarra", "sino da bodega", "carro de boi rangendo"],
-    "efeitos": ["martelada", "machado na madeira", "ponteiro na pedra", "tiro de bacamarte", "relincho", "berro de bode"]
+    "instrumentos": [
+      "rabeca",
+      "zabumba",
+      "viola de dez cordas",
+      "triângulo",
+      "pífano"
+    ],
+    "ambiente": [
+      "vento seco",
+      "cigarra",
+      "sino da bodega",
+      "carro de boi rangendo"
+    ],
+    "efeitos": [
+      "martelada",
+      "machado na madeira",
+      "ponteiro na pedra",
+      "tiro de bacamarte",
+      "relincho",
+      "berro de bode"
+    ]
   },
   "ui": {
     "estilo": "xilogravura de cordel: alto contraste, preto sobre papel, traço grosso",
     "glossarioObrigatorio": true,
     "_doc": "O mundo é colorido e detalhado; a interface é xilogravura. Os dois registros não competem."
+  },
+  "ajuda": {
+    "_doc": "F-D1. A tela de ajuda. As chaves de `rotulos` e `gestos` SÃO os ids de `ATALHOS` e `GESTOS` (src/input/atalhos.ts): id sem rótulo aqui, ou rótulo sobrando sem id, reprova o npm run verify — o guarda está em tests/F-D1-ajuda.test.ts, na ida e na volta, como o da F22. O nome da TECLA (Esc, H, F1) não sai daqui: é o que está escrito no teclado do jogador, não texto de tema.",
+    "titulo": "Os controles",
+    "rodape": "Esc ou H fecha este aviso",
+    "dica": "Aperte H para ver os controles",
+    "grupos": {
+      "ferramenta": "Na mão",
+      "tempo": "O tempo",
+      "camera": "Andar pelo mapa",
+      "ajuda": "Este papel"
+    },
+    "rotulos": {
+      "ajuda": "Mostra e esconde este papel",
+      "cancelar": "Larga o que está na mão e fecha o que está aberto",
+      "estrada": "Pega a estrada para puxar",
+      "pausa": "Para e retoma o mundo",
+      "acelerar": "Apressa o tempo",
+      "desacelerar": "Afrouxa o tempo",
+      "arrastar-camera": "Corre o mapa de um lado para o outro",
+      "zoom": "Chega perto e afasta"
+    },
+    "gestos": {
+      "arrastar-camera": "Botão do meio, arrastando",
+      "zoom": "Roda do mouse"
+    }
   }
 }

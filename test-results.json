@@ -120,7 +120,7 @@
     "passes": true
   },
   "F-D1-tela-de-ajuda": {
-    "passes": false
+    "passes": true
   },
   "F-D2-navegacao-camera": {
     "passes": false

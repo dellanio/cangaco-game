@@ -3650,3 +3650,107 @@ contra teto 2,5** — e a corrida seguinte deu verde; isolado, o arquivo passa
 14/14 em 547 ms. É a **mesma classe** do F17c e do F09, e a regra do operador
 para ela já está escrita no `BUGS.md`: teto mais largo com o número medido no
 comentário, nunca `skip`. Registrado em `## Polimento`, não aplicado.
+
+## F-D1 — A tela de ajuda, e o inventário de atalhos (2026-09-24)
+
+O jogo tinha oito atalhos e nenhuma forma de descobri-los. A feature é a tela,
+mas o que ela custou de projeto foi outra coisa: **como impedir que a tela
+minta**.
+
+### A decisão: a tela lê o código, não o GDD
+
+A tabela do GDD §2.2 promete `B`, `F`, `Delete`, `1..9`, `Ctrl+1..9` e `Espaço`.
+Nenhum existe. Copiar a tabela para a tela trocaria um jogador perdido por um
+jogador enganado — é a decisão do operador no Turno H, aceite (b). Então nasceu
+`src/input/atalhos.ts`: o **inventário**, uma lista de `{ id, grupo, teclas,
+semModificadores }` com o que o jogo de fato escuta.
+
+A direção importa e está escrita no arquivo: **os ouvintes casam a tecla POR
+ESTA DECLARAÇÃO** (`teclado.ts` e `teclas-do-tempo.ts` chamam `casa()` e
+`atalhoDeId()`, e não têm mais `evento.key === 'r'` em lugar nenhum), e a tela
+LÊ a mesma declaração. Se fosse o inverso — inventário escrito à mão, ouvintes
+com seus `if` — seriam duas listas, e duas listas divergem na primeira feature
+que acrescenta tecla.
+
+### A corrente de três elos (verificada)
+
+| elo | onde se prova | o que reprova |
+|---|---|---|
+| inventário → comportamento | `tests/F-D1-ajuda.test.ts` | declarar tecla sem implementar |
+| inventário → tema | mesmo teste | id sem rótulo, rótulo órfão, rótulo que é o id |
+| inventário → tela | `tools/shots/F-D1.js` passo 2 | tela filtrar, reordenar ou inventar linha |
+
+O primeiro elo é o que dá honestidade ao resto: para cada entrada, apertar cada
+uma das teclas dela numa bancada com os dois ouvintes ligados tem que produzir
+**alguma** ação, e a ação **dela** (uma tabela de esperado, com asserção de ida
+e volta contra `ATALHOS`, para que acrescentar atalho e esquecer da tabela
+falhe). O terceiro elo sozinho seria circular — tela lê fonte, teste compara
+tela com fonte, sempre verde.
+
+### Guardas provados como acusadores (não só como verdes)
+
+- **Teste:** inserido um `{ id: 'demolir', teclas: ['Delete'] }` falso em
+  `ATALHOS` → **4 testes falharam** (o atalho não faz nada; a tabela do "coisa
+  dele" não cobre o inventário; o guarda do GDD §2.2 acusa `Delete` declarado;
+  `Delete` apertado não faz nada). Restaurado, 18 passam.
+- **Roteiro:** `ui/ajuda.ts` alterado para pular o atalho `estrada` ao montar →
+  o passo 2 falhou nomeando o que sumiu: `fonte [...,"estrada",...]`, `tela
+  [...]` sem ele. Restaurado por checksum (`md5sum` idêntico ao backup), roteiro
+  OK de novo.
+
+As duas sondas são **evidência da sessão**, não cobertura contínua (CLAUDE.md
+§8). A proteção permanente é o teste no `npm run verify` e o roteiro no
+`npm run shot -- F-D1`.
+
+### O passo despausado
+
+O passo 5 do roteiro roda com o laço andando — a regra que o próprio Turno H
+acabou de escrever na §8, aplicada de primeira no primeiro roteiro novo depois
+dela. É onde a precedência do `Esc` é exercida: com a ajuda aberta, `Esc` fecha
+a ajuda e a planta **continua na mão**; fechada, o mesmo `Esc` volta a ser o da
+F06 e larga a planta. Com o jogo parado esse encadeamento não provaria nada
+sobre o jogo que o jogador tem na frente.
+
+### Decisões menores, com o porquê
+
+- **O lembrete mora na barra (`#hud`), não sobre o mapa.** Sobreposição nova na
+  célula do canvas mexeria nas medidas de retângulo que os roteiros da F06 e da
+  F22 afirmam. Um aviso de primeira partida não vale uma regressão de layout.
+- **A marca de "já vi" é `localStorage`, nunca `GameState`.** É preferência de
+  quem joga nesta máquina; dentro do estado ela entraria num save e viajaria
+  junto. Acesso embrulhado em `try/catch`: sem `localStorage`, o lembrete
+  reaparece — chato, nunca quebrado.
+- **`h` e `F1` são um atalho, não dois**, e aparecem numa linha ("H ou F1"):
+  duas linhas fariam o jogador procurar a diferença que não existe.
+- **`F1` chama `preventDefault`**, senão o navegador abre a ajuda dele por cima.
+- **Os gestos de mouse entram na tela e ficam fora do guarda comportamental.**
+  Arrastar com o botão do meio e a roda do zoom vivem na cena do Phaser, que não
+  roda headless; quem os exerce de verdade é o roteiro da F04. A separação está
+  escrita em `atalhos.ts` para não se perder.
+- **`repeat` continua sendo regra local de `teclas-do-tempo.ts`**, não do
+  inventário: segurar `+` não deve varrer as velocidades, mas segurar `Esc` não
+  tem por que ser bloqueado.
+
+### Evidência
+
+- `npm run verify` → **1103 testes, 69 arquivos, 0 erro**; `validate:data` 11
+  arquivos, 0 erro.
+- `npx vitest run tests/F-D1-ajuda.test.ts` → **18 passam**.
+- `npm run shot -- F-D1` → OK, **39 asserções**, 0 erro de console, 2 capturas.
+- Screenshots abertos com Read (feature atual, §8):
+  `F-D1-2-ajuda-aberta.png` mostra "Os controles" com os quatro grupos ("Este
+  papel", "Na mão", "O tempo", "Andar pelo mapa"), as teclas `H ou F1`, `Esc`,
+  `R`, `P`, `+ ou =`, `-`, os dois gestos, e o rodapé; centrado sobre o mapa sem
+  cobrir o menu de construir. `F-D1-1-dica-na-primeira-partida.png` mostra o
+  lembrete como etiqueta discreta à esquerda da barra, sem cobrir o mapa.
+- Não-regressão por código de saída: **F04, F06, F11a, F13b → 0**. **F22 → 1**,
+  na assinatura idêntica à do **BUG-C** já diagnosticado (aviso `veio-esgotado`
+  a mais), que espera a F-D3.
+
+### O que ficou aberto
+
+- A tela é estática: não mostra tecla que uma feature futura acrescentar sem
+  que ela entre no inventário — e é esse o ponto. Quem acrescentar atalho e não
+  declarar vai ver o teste do "coisa dele" reprovar.
+- O GDD §2.2 continua prometendo teclas que não existem. A correção dele é
+  **da F-D2**, junto com o conflito do Espaço (decisão do operador no Turno H).

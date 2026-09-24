@@ -14,6 +14,7 @@ import type { EstagioDaObra } from './estagio-obra';
 import type { LinhaDoMedidor } from './medidor-obra';
 import type { CanteiroDaObra } from './nivelamento-obra';
 import type { ItemDeFila } from '../sim/state';
+import { ATALHOS, GESTOS } from '../input/atalhos';
 
 /** O recorte de um predio que o roteiro le. Nao e `Predio`: so o que a tela
  *  precisa afirmar, para a ponte nao virar copia do GameState. */
@@ -101,6 +102,16 @@ export interface EstadoDebug {
   plantaFantasma: EstadoDaPlanta | null;
   /** Predio que a ferramenta carrega (src/input/ferramenta.ts), ou null. */
   ferramentaAtiva: string | null;
+  /**
+   * F-D1 — o INVENTARIO de atalhos, publicado cru. E o que o roteiro compara com
+   * a lista que a tela de ajuda mostra: a tela nao pode filtrar nem acrescentar.
+   * Nao muda durante a partida — e uma constante de modulo, publicada aqui so
+   * porque o roteiro nao consegue importar TypeScript.
+   */
+  atalhos: {
+    readonly teclado: readonly { readonly id: string; readonly teclas: readonly string[] }[];
+    readonly gestos: readonly string[];
+  };
   /** O tick do estado que a cena desenha agora. */
   tick: number;
   /** F13b — `GameState.treino` do tick desenhado: a fila de cada escola, por id de
@@ -173,6 +184,10 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     centroDaVila: null,
     plantaFantasma: null,
     ferramentaAtiva: null,
+    atalhos: {
+      teclado: ATALHOS.map((a) => ({ id: a.id, teclas: a.teclas })),
+      gestos: GESTOS.map((g) => g.id),
+    },
     tick: 0,
     filaDeTreino: {},
     unidadesRenderizadas: [],

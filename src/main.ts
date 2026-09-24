@@ -22,6 +22,7 @@ import { montarMenuBuild } from './ui/menu-build';
 import { montarPainelPredio } from './ui/painel-predio';
 import { montarAlertas } from './ui/alertas';
 import { montarAvisoDoTempo } from './ui/aviso-tempo';
+import { montarAjuda } from './ui/ajuda';
 import { criarFerramenta } from './input/ferramenta';
 import { criarSelecao } from './input/selecao';
 import { criarEntradaDoMapa } from './input/colocar';
@@ -33,7 +34,11 @@ const sessao = criarSessao(createInitialState(gameData.economia.estadoInicial.se
 const ferramenta = criarFerramenta();
 // O predio aberto no painel (F13b). Estado de interface, como a ferramenta.
 const selecao = criarSelecao();
-ligarTeclado(ferramenta, window, selecao);
+// A ajuda (F-D1) precisa do `#hud` ja no DOM, e ele e estatico no index.html —
+// entao ela pode nascer antes do resto da interface. Quem a abre e o teclado, e
+// e por isso que ela e o quarto parametro: com a ajuda aberta, o `Esc` e dela.
+const ajuda = montarAjuda();
+ligarTeclado(ferramenta, window, selecao, ajuda);
 
 // O laco. `?pausado` na URL o faz NASCER pausado: e o que o runner de screenshot usa para todo
 // roteiro comecar no tick 0, sem a janela de ticks que existiria entre carregar a pagina e
