@@ -1897,6 +1897,53 @@ a geografia já corrigida do que regravar 900 tiles depois.
   normal, não a falha. Uma causa nova precisaria de **limiar** (tempo parado, ou
   estoque zero na cadeia inteira), e limiar é desenho. **Decisão do operador**, e
   cai aqui porque é com a fome que o silêncio fica caro.
+- **Retorno visual que falta — marcador de fome no mundo, sobre a unidade** (pedido do
+  operador, 2026-09-24). Não basta o alerta do HUD: o jogador precisa ver **quem**
+  está passando fome, no mapa. **Não é marcador permanente** — todo civil fica com
+  fome o tempo todo, e ícone sempre aceso vira ruído. Ele aparece **a partir de um
+  limiar**, e o limiar vem de `data/condition.json`, nunca de número em `.ts`.
+  - **Conferido no dado (2026-09-24)**: `condition.json` → `limiares.alertaVisual: 0.35`,
+    `limiares.civilVaiComer: 0.50`, `limiares.morte: 0.0`. São os 35 % e 50 % do pedido,
+    e hoje `limiares` **chega ao carregador** (`data/loader.ts:429`) mas **nenhum sistema
+    o lê** — esta feature é a primeira leitora.
+  - **O que a ordem dos dois números significa, e é decisão a tomar**: a condição cai de
+    100 a 0, então ela cruza **50 % primeiro** (sai para comer) e **35 % depois**. Com
+    `alertaVisual` abaixo de `civilVaiComer`, o marcador **não** é "ele vai comer" — é
+    "ele foi e não conseguiu", ou seja, marcador de **falha de abastecimento**. Isso é o
+    que dá a propriedade de não virar ruído, e contradiz a frase do **GDD §7 (linha 727)**:
+    *"Fome: ícone sobre a cabeça do civil antes de ele sair para comer."* Uma das duas
+    está errada. Interpretação conservadora a implementar: **vale o dado** (35 %,
+    marcador de falha), e a frase do GDD é que se corrige — mas **decisão do operador**.
+  - **Exceção da §10 escrita ANTES do código**: esta feature **é de integração** e pode
+    tocar `src/sim/` e `src/render/` no mesmo commit. A razão: o dreno da condição, o
+    consumo no Inn e a morte são sim; o marcador sobre a cabeça é render, e lê o mesmo
+    `unidade.condicao` que a sim acabou de escrever. Separar em duas features deixaria a
+    primeira sem retorno visível nenhum.
+  - Aceite do marcador: unidade acima do limiar **não** tem marcador; a mesma unidade
+    abaixo dele tem; e **screenshot** — é mudança de tela (§8). O roteiro roda pelo
+    menos um passo despausado se tocar em `#hud` ou `#alertas`.
+- **A morte a 0 % está confirmada no GDD, em dois lugares** (conferido 2026-09-24):
+  §2, linha 54 — *"Sem comida, os civis morrem"* — e §11.3, linha 795 — *"Alerta visual a
+  35 %, o civil sai para comer a 50 %, morre a 0 %."* O dado concorda: `limiares.morte: 0.0`.
+  Então **sim**: unidade que chega a 0 % morre, e isso não é interpretação.
+- **O que "morrer" significa para quem estava no meio de alguma coisa** — três casos, e
+  hoje **nenhum tem caminho**, porque nunca morreu ninguém. O saneamento que existe cobre o
+  caso espelho ("o prédio sumiu": `sanearTarefas`, `sanearFilas`, `passoProduzindo`, ver o
+  cabeçalho de `systems/demolicao.ts`). A morte estreia **"a unidade sumiu"**, e ele não existe:
+  1. **O especialista dentro do prédio.** `predio.ocupante` guarda o **id** da unidade e é
+     **fonte de verdade única** (`ocupacao.ts:59`, e o comentário de lá diz por quê). Morto o
+     ocupante sem mexer no prédio, `ocupante` aponta para unidade que não existe: o prédio
+     parece com trabalhador, não produz, e a vaga nunca volta ao mercado. A morte **tem** de
+     zerar `ocupante` no mesmo tick.
+  2. **O produtor no meio do ciclo** (o fazendeiro do pedido). Decidir se o progresso parcial
+     do ciclo **se perde** (ciclo recomeça com o próximo ocupante) ou **fica** no prédio. E se
+     o tile de campo reservado por ele volta ao mercado — se não voltar, terra arada fica
+     presa para sempre.
+  3. **O serf com pedra na mão.** Já está na nota da carga, acima: hoje a carga **se perde**,
+     e a decisão do operador foi "assim por enquanto, porque ninguém morre". Esta feature é a
+     que tira o "por enquanto".
+  Os três entram no aceite como caso de teste separado, e o evento de morte que o aceite já
+  pede é o que o render usa para o retorno na tela.
 ### F-T3 — O especialista sai do prédio (sim + render, integração)
 - **Posição na fila — decisão do operador, 2026-09-24**: **depois da F20**, e a
   razão é dele: *"o especialista sair é locomoção, e locomoção pode esperar o

@@ -416,7 +416,25 @@ function medirDesvio(estado: GameState, fabrica: () => GameData): Medida {
 // O que a floresta fechou de verdade nao e tempo, e TOPOLOGIA: dos 67 corredores
 // de 3 tiles com arvore no meio, 22 ficaram sem solucao nenhuma — origem e alvo
 // em componentes diferentes. Numero na evidencia, em `corredoresTampadosPelaArvore`.
-const RAZAO_TEMPO_MAXIMA = 2.5;
+// TETO DO RELOGIO ALARGADO (BUG-E, 2026-09-24). Regra do operador no BUGS.md:
+// orcamento mais largo com o numero medido no comentario, NUNCA `skip`, NUNCA
+// reduzir a carga — as 400 buscas curtas continuam 400, que e o que este teste
+// existe para exercer.
+// O QUE FOI MEDIDO HOJE, e por que o teto ficou tao largo: na suite morna a razao
+// saiu 2,58 (sessao original), 4,7387, 4,9684 e 8,7852. Alarguei para 8,0 depois
+// da terceira e a quarta reprovou na corrida seguinte — o valor nao oscila em
+// torno de um patamar, ele nao tem patamar. Quatro corridas do arquivo SOZINHO,
+// lidas de `test-output/F-T2b.json`, mostram por que: `noLiso` varia 8,8 / 15,7 /
+// 23,4 / 24,3 us e `comFloresta` 7,2 / 7,4 / 9,5 / 15,6 — a razao de duas medidas
+// independentes de ~10 us e dominada por JIT e por carga da maquina, e isolado ela
+// da 0,32 a 1,00, abaixo de 1. 14,0 e ~1,6x sobre o pior valor ja visto, a mesma
+// folga que a F17c adotou (5,0 sobre 3,06).
+// A PROTECAO PERMANENTE DESTE EIXO NAO E ESTA LINHA: e `RAZAO_NOS_CURTA_MAXIMA`
+// logo abaixo, que conta NO expandido. Ela e deterministica e nao se mexeu — nas
+// quatro corridas deu 4,0000 contra 4,2175 nos, razao 1,054 identica em todas.
+// O relogio aqui e evidencia de sessao; o BUG-E segue aberto no BUGS.md com a
+// pergunta que sobrou: se um eixo sem patamar deve continuar sendo assercao.
+const RAZAO_TEMPO_MAXIMA = 14.0;
 const RAZAO_NOS_CURTA_MAXIMA = 1.5;
 const RAZAO_NOS_LONGA_MAXIMA = 1.5;
 const RAZAO_NOS_DESVIO_MAXIMA = 5;

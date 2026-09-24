@@ -4697,3 +4697,68 @@ Plano em `docs/planos/F19-moinho-e-padaria.md`.
 - **Nenhuma nova.** O limiar do alerta de insumo é decisão do operador e está
   escrita como Nota na F20.
 
+---
+
+## BUG-F registrado (investigado, não corrigido) e o item da F20 (2026-09-24)
+
+Sessão **sem feature**: o operador relatou um bug jogando e pediu, nesta ordem,
+**registrar, investigar e medir — e só depois propor**. Mais o que faltava de retorno
+visual no item da F20.
+
+### Verificado (medido, com o comando aberto)
+
+- **Recurso natural não entra em `canPlace` nem, quando não fecha o passo, em
+  `canPlaceRoad`.** Alcance real no mapa de abertura: `schoolhouse` tem **14038** posições
+  aceitas, **37** delas cobrindo rocha, **706** cobrindo árvore, **214** cobrindo milho; a
+  `quarry` tem **30** cobrindo rocha (âncora `22,28` cobre `24,29`). `canPlaceRoad` aceita
+  os **13** tiles de rocha transponíveis e os **130** de milho.
+- **Dos 311 tiles de rocha, só 13 estão em terreno transponível** — os outros 298 já caem
+  em `terreno`. O buraco parecia menor do que é por isso.
+- **O recurso sob o prédio não some nem fica inacessível: ele continua sendo colhido.**
+  Pedreira sobre o lajedo, 900 ticks: saída **idêntica** nos três casos (nada por cima /
+  estrada por cima / obra por cima) — tile 15 → 10, 5 `stone`. Os 4 tiles sob o próprio
+  footprint dela entram na lista de colheita dela.
+- **O prédio deixa o tile não-andável enquanto ele segue colhível** (`andavel: false`,
+  tile na lista `true`).
+- **GDD confirma a morte a 0 %**: §2 linha 54 e §11.3 linha 795. `condition.json` concorda:
+  `limiares.morte: 0.0`, `alertaVisual: 0.35`, `civilVaiComer: 0.50`.
+- **`limiares` chega ao carregador (`data/loader.ts:429`) e nenhum sistema o lê.** A F20 é
+  a primeira leitora.
+- **`predio.ocupante` é fonte de verdade única** (`ocupacao.ts:59`): matar o ocupante sem
+  zerar o campo deixa id pendurado.
+
+### Erro meu, corrigido dentro da sessão
+
+A primeira sonda chamou `canPlace(state, tipo, { gx, gy }, dados)` — a assinatura real é
+**posicional**, `canPlace(state, tipo, gx, gy, dados)`. Com objeto no lugar de `gx` os laços
+do footprint não iteram e **tudo devolve `ok: true`**. A conclusão "prédio é aceito sobre
+rocha" estava certa, mas por acidente; os números acima são da remedição com a assinatura
+certa. Fica como aviso: sonda que devolve o resultado esperado também precisa de conferência.
+
+### Decisão registrada, não tomada
+
+**Recusar construção sobre recurso ou permitir e consumir o tile** é decisão do operador e
+está no BUG-F com as duas opções e o recorte que as duas precisam: a regra **não pode ser
+"todo recurso"** — milho é tile plantado pelo jogador e o pousio continua sendo recurso com
+`quantidade: 0`, então o recorte vem de `resources.json` por tipo, não de lista em `.ts`.
+
+### BUG-E: mitigado, não resolvido
+
+A razão de relógio da F-T2b reprovou de novo (**8,7852**) e bloqueou o `verify`. Apliquei a
+correção pré-escrita do operador (teto mais largo, número medido no comentário, sem `skip`
+e sem reduzir carga): 2,5 → 8,0 → **14,0**. **Alargar para 8,0 não bastou** — a corrida
+seguinte deu 8,7852. Quatro corridas isoladas mostram a causa e estão no BUG-E: é razão entre
+duas medidas de ~10 µs. O eixo determinístico do mesmo teste (`RAZAO_NOS_CURTA_MAXIMA`) não
+foi tocado e deu 1,054 nas quatro. Por isso o BUG-E **voltou ao arquivo** em vez de sair
+com o commit: a mitigação não é correção.
+
+### Perguntas em aberto
+
+1. **Recusar ou consumir** (BUG-F). Sem ela não dá para escrever o aceite da correção.
+2. **Um eixo de tempo sem patamar deve continuar sendo asserção?** (BUG-E e BUG-D.) A
+   alternativa — número registrado em `test-output/`, com a contagem de nós como guarda —
+   não desativa verificação, mas é mudança de desenho de teste.
+3. **O marcador de fome a 35 % contradiz o GDD §7 linha 727** ("ícone ... antes de ele sair
+   para comer"): a 35 % ele **já saiu** (sai a 50 %). Escrevi no item da F20 a interpretação
+   conservadora — vale o dado, o marcador é de **falha de abastecimento** — e marquei que a
+   escolha é do operador.
