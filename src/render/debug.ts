@@ -31,7 +31,9 @@ export interface EstadoDebug {
    *  antes de fotografar — sem isso a captura sai do canvas em branco. */
   pronto: boolean;
   tileSobMouse: Tile | null;
-  camera: { readonly scrollX: number; readonly scrollY: number };
+  /** F18a: `zoom` e o nivel da camera, nao um fator de desenho. O roteiro
+   *  afirma sobre ele — nunca sobre pixel. */
+  camera: { readonly scrollX: number; readonly scrollY: number; readonly zoom: number };
   /** Quantos tiles o tilemap desenhou de fato. Prova que o culling nativo do
    *  Phaser esta ligado: deve ficar bem abaixo de largura*altura do mapa. */
   tilesRenderizados: number;
@@ -135,7 +137,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
   const estado: EstadoDebug = {
     pronto: false,
     tileSobMouse: null,
-    camera: { scrollX: 0, scrollY: 0 },
+    camera: { scrollX: 0, scrollY: 0, zoom: 1 },
     tilesRenderizados: 0,
     prediosRenderizados: 0,
     prediosDoEstado: {},

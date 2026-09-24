@@ -7,6 +7,7 @@ import { configDoMapa } from '../mapa';
 import {
   gridToScreen, screenToGrid, depthDeY, tileDentroDoMapa, ESCALA_DO_MUNDO,
 } from '../grid';
+import { proximoNivel } from '../zoom';
 import type { Tile } from '../grid';
 import { publicarEstadoDebug } from '../debug';
 import type { EstadoDebug, PredioNoDebug, RelogioVisivel } from '../debug';
@@ -102,6 +103,11 @@ export class WorldScene extends Phaser.Scene {
 
     const camera = this.cameras.main;
     camera.setBounds(0, 0, larguraPx, alturaPx);
+    // F18a: o nivel de abertura vem do dado, e hoje e 1. Nao e detalhe — todo
+    // roteiro de screenshot ja validado calcula a posicao do tile no canvas
+    // assumindo escala 1, e continua valendo enquanto o inicial for 1.
+    let nivelDeZoom = configDoMapa.zoom.inicial;
+    camera.setZoom(nivelDeZoom);
 
     const estadoDoJogo = this.ponte.atual;
     if (estadoDoJogo) {
@@ -124,6 +130,26 @@ export class WorldScene extends Phaser.Scene {
     highlight.strokeRect(1, 1, tilePx - 2, tilePx - 2);
     highlight.setDepth(1_000_000); // sempre por cima
     highlight.setVisible(false);
+
+    // F18a — zoom pela roda do mouse (GDD 2.1), em passos discretos do dado.
+    // Rolar para CIMA (deltaY < 0) aproxima. Nada disto vira comando nem toca
+    // o GameState: zoom e camera, e `src/sim/` nao sabe que ele existe.
+    this.input.on('wheel', (
+      pointer: Phaser.Input.Pointer, _objetos: unknown[], _dx: number, dy: number,
+    ) => {
+      const proximo = proximoNivel(configDoMapa.zoom.niveis, nivelDeZoom, dy < 0 ? +1 : -1);
+      if (proximo === nivelDeZoom) return; // ja esta na ponta: nao mexe em nada
+
+      // Ancoragem no cursor: o tile sob o ponteiro nao pode se mexer. Perguntar
+      // ao proprio Phaser antes e depois vale para qualquer convencao interna
+      // de midpoint/origem; deduzir a formula a mao erraria em silencio.
+      const antes = camera.getWorldPoint(pointer.x, pointer.y);
+      nivelDeZoom = proximo;
+      camera.setZoom(nivelDeZoom);
+      const depois = camera.getWorldPoint(pointer.x, pointer.y);
+      camera.scrollX += antes.x - depois.x;
+      camera.scrollY += antes.y - depois.y;
+    });
 
     this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
       if (pointer.middleButtonDown()) {
@@ -189,7 +215,9 @@ export class WorldScene extends Phaser.Scene {
     // scrollX/scrollY aqui garante o valor ja limitado, nao um instantaneo a
     // meio de frame — e o que faz "arrastar alem da borda" ser verificavel.
     this.game.events.on(Phaser.Core.Events.POST_RENDER, () => {
-      estado.camera = { scrollX: camera.scrollX, scrollY: camera.scrollY };
+      // F18a: o zoom sai daqui pelo mesmo motivo que o scroll — e no preRender
+      // que o clamp de setBounds acontece, entao este e o valor ja limitado.
+      estado.camera = { scrollX: camera.scrollX, scrollY: camera.scrollY, zoom: camera.zoom };
       estado.tilesRenderizados = camadaChao.tilesDrawn;
       estado.pronto = true;
       if (this.ponte.atual) this.atualizarPredios(this.ponte.atual, tilePx, estado);
