@@ -131,6 +131,7 @@ export function step(
     proximoId: atual.proximoId,
     tiposJaConstruidos: atual.tiposJaConstruidos,
     estradas: atual.estradas,
+    estradasPlanejadas: atual.estradasPlanejadas,
     jobs: atual.jobs,
     treino: atual.treino,
   };

@@ -43,6 +43,15 @@ export function ehEstrada(estradas: GameState['estradas'], tile: TileDeGrid): bo
   return estradas[chaveDeTile(tile)] === true;
 }
 
+/** F18d-1b — o tile esta no CANTEIRO (desenhado, ainda nao assentado)? Irma de
+ *  `ehEstrada`, e de proposito separada: quem pergunta uma coisa nao responde a
+ *  outra, e nenhuma consulta de rede olha aqui. */
+export function ehPlanejada(
+  planejadas: GameState['estradasPlanejadas'], tile: TileDeGrid,
+): boolean {
+  return planejadas[chaveDeTile(tile)] === true;
+}
+
 /** Os tiles em ordem canonica (por `gy`, depois `gx`), independente da ordem de
  *  insercao no objeto: e daqui que qualquer iteracao deterministica deve partir. */
 export function tilesOrdenados(estradas: GameState['estradas']): TileDeGrid[] {

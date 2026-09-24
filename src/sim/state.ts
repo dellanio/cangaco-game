@@ -636,8 +636,8 @@ export interface GameState {
    * CONTRATO HERDADO (F09, F10, F15) — as estradas que estao DE PE.
    *
    * Conjunto de tiles, chave `"gx,gy"` (inteiros), valor `true`. So tile PRONTO:
-   * quando a F11 decidir que laborer constroi estrada, a "estrada planejada" e
-   * OUTRO campo, e este continua sendo o que `isConnected` consulta.
+   * a estrada PLANEJADA e outro campo (`estradasPlanejadas`, F18d-1b), e este
+   * continua sendo o unico que `isConnected` consulta.
    *
    * Nao guarda componentes conexos: dado derivado serializado poderia ficar
    * inconsistente com os tiles. A consulta "existe caminho de A ate B?" e O(1) por
@@ -648,6 +648,18 @@ export interface GameState {
    * ordem: use `tilesOrdenados`.
    */
   readonly estradas: Readonly<Record<string, true>>;
+  /**
+   * F18d-1b — o CANTEIRO da estrada: os tiles que o jogador desenhou e que
+   * nenhum laborer assentou ainda. Mesma forma de `estradas`, conjunto
+   * separado, e os dois sao disjuntos por construcao (assentar move o tile de
+   * um para o outro).
+   *
+   * NAO entra no indice da rede, de proposito: tile planejado nao liga nada —
+   * e o proprio aceite da feature. Se um dia precisar de indice (para desenhar
+   * o traçado, por exemplo), e indice SEPARADO, com a mesma regra de quina de
+   * `passoPermitido`.
+   */
+  readonly estradasPlanejadas: Readonly<Record<string, true>>;
   /** O JobBoard (F09). Ver `Tarefa`. */
   readonly jobs: JobBoard;
   /**
@@ -835,6 +847,7 @@ export function createInitialState(seed: number, dados: GameData = gameData): Ga
     proximoId: apósUnidades,
     tiposJaConstruidos: tiposCompletos(predios),
     estradas: {},
+    estradasPlanejadas: {},
     jobs: { tarefas: { porId: {}, ordem: [] } },
     treino: {},
   };
