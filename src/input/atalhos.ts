@@ -56,6 +56,17 @@ export const ATALHOS: readonly AtalhoDeTeclado[] = [
   { id: 'pausa', grupo: 'tempo', teclas: ['p'], semModificadores: true },
   { id: 'acelerar', grupo: 'tempo', teclas: ['+', '='], semModificadores: true },
   { id: 'desacelerar', grupo: 'tempo', teclas: ['-'], semModificadores: true },
+  // F-D2. Uma entrada para as oito teclas, e nao oito: para o jogador `WASD` e
+  // sinonimo da seta (decisao do operador, turno H), e a tela de ajuda mostra
+  // uma linha so. Qual das oito vira qual direcao e de `input/navegacao.ts`,
+  // que tem a tabela — e o teste prende as duas listas uma a outra.
+  {
+    id: 'camera-mover',
+    grupo: 'camera',
+    teclas: ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd'],
+    semModificadores: true,
+  },
+  { id: 'camera-arrastar', grupo: 'camera', teclas: [' '], semModificadores: true },
 ];
 
 /**

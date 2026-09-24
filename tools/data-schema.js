@@ -83,6 +83,17 @@ const NAO_SAO_DURACAO = [
     motivo: 'oraculo redundante do autor, conferido so quando economia = 2.0' },
   { arquivo: 'condition', caminho: 'duracaoEfetiva_min_escala2.militar',
     motivo: 'oraculo redundante do autor, conferido so quando economia = 2.0' },
+  // F-D2: as tres sao taxas por segundo, e por isso batem no varredor. O
+  // segundo delas e de RELOGIO DE PAREDE, nao de jogo: a camera anda no quadro
+  // do navegador, nao no tick, e nao deve ser escalada por time.json nem
+  // convertida para ticks. Escalar a camera com a economia faria o mapa andar
+  // mais devagar porque o pao assa mais devagar.
+  { arquivo: 'terrain', caminho: 'camera.velocidadeInicialPxPorSegundo',
+    motivo: 'velocidade de camera em tempo real de render; nao e duracao de jogo nem vira tick' },
+  { arquivo: 'terrain', caminho: 'camera.aceleracaoPxPorSegundo2',
+    motivo: 'aceleracao de camera em tempo real de render; nao e duracao de jogo nem vira tick' },
+  { arquivo: 'terrain', caminho: 'camera.tetoPxPorSegundo',
+    motivo: 'teto de velocidade de camera em tempo real de render; nao e duracao de jogo' },
 ];
 
 // Um campo "tem cara de duracao/taxa de tempo" se algum token do seu nome

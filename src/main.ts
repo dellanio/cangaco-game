@@ -28,6 +28,8 @@ import { criarSelecao } from './input/selecao';
 import { criarEntradaDoMapa } from './input/colocar';
 import { ligarTeclado } from './input/teclado';
 import { ligarTeclasDoTempo } from './input/teclas-do-tempo';
+import { ligarNavegacao } from './input/navegacao';
+import { configDoMapa } from './render/mapa';
 import { predioNoTile } from './sim/selectors';
 
 const sessao = criarSessao(createInitialState(gameData.economia.estadoInicial.semente));
@@ -83,7 +85,12 @@ const painel = montarPainelPredio(selecao, (comando) => {
 // derivado do estado, entao basta ser atualizado junto dos outros.
 const alertas = montarAlertas();
 
-const jogo = iniciarJogo(ferramenta, entrada, laco);
+// F-D2 — a navegacao da camera. Ligada aqui, com os outros ouvintes de
+// `input/`, e no `window` como eles. Os numeros vem de `data/terrain.json` pelo
+// funil `render/mapa.ts`: `input/` nao le `sim/data`.
+const navegacao = ligarNavegacao(window, configDoMapa.camera);
+
+const jogo = iniciarJogo(ferramenta, entrada, laco, navegacao);
 
 function atualizar(s: GameState): void {
   jogo.atualizar(s);

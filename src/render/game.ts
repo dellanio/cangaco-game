@@ -8,6 +8,7 @@ import { criarPonte } from './ponte';
 import type { Ferramenta } from '../input/ferramenta';
 import type { EntradaDoMapa } from '../input/colocar';
 import type { RelogioVisivel } from './debug';
+import type { Navegacao } from '../input/navegacao';
 
 export interface JogoLigado {
   readonly jogo: Phaser.Game;
@@ -20,9 +21,12 @@ export function iniciarJogo(
   ferramenta: Ferramenta, entrada: EntradaDoMapa,
   /** O relogio (F11a): a cena o le para interpolar e o publica em `window.__cangaco`. */
   relogio: RelogioVisivel,
+  /** F-D2 — a navegacao por teclado, ligada no `main.ts` como os outros
+   *  ouvintes de `input/`. A cena so pergunta. */
+  navegacao: Navegacao,
 ): JogoLigado {
   const ponte = criarPonte();
-  const cena = new WorldScene(ponte, ferramenta, entrada, relogio);
+  const cena = new WorldScene(ponte, ferramenta, entrada, relogio, navegacao);
   const jogo = new Phaser.Game({
     type: Phaser.AUTO,
     parent: 'jogo',

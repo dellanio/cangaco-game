@@ -123,7 +123,7 @@
     "passes": true
   },
   "F-D2-navegacao-camera": {
-    "passes": false
+    "passes": true
   },
   "F-D3-reserva-por-raio": {
     "passes": false

@@ -377,6 +377,7 @@ export function loadGameData(raw: RawGameData): GameData {
     pathfinding: raw.terrain.pathfinding,
     mapaPadrao: raw.terrain.mapaPadrao,
     zoom: raw.terrain.zoom,
+    camera: raw.terrain.camera,
   };
 
   // --- recursos (resources.json): regime e rendimento por TIPO ---------------

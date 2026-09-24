@@ -560,6 +560,36 @@ function validarZoomDoTerreno(dados, erros) {
   }
 }
 
+// F-D2: a navegacao por teclado. Dado de RENDER, como o zoom. A regra guarda a
+// forma e UMA coerencia que nao se ve lendo os numeros: teto abaixo da
+// velocidade inicial faria "segurar a seta" FREAR a camera, o contrario do que
+// o item pede. Os valores em si sao balanceamento e nao se validam aqui.
+function validarCameraDoTerreno(dados, erros) {
+  const terrain = dados.terrain;
+  if (!terrain) return; // forma/* ja reportou
+  const camera = terrain.camera;
+  if (!camera || typeof camera !== 'object') {
+    erros.push('terreno/camera: terrain.camera precisa existir (F-D2)');
+    return;
+  }
+  const campos = ['velocidadeInicialPxPorSegundo', 'aceleracaoPxPorSegundo2', 'tetoPxPorSegundo'];
+  let completo = true;
+  for (const campo of campos) {
+    const valor = camera[campo];
+    if (typeof valor !== 'number' || Number.isNaN(valor) || !(valor > 0)) {
+      erros.push(`terreno/camera: ${campo} precisa ser um numero > 0 (veio '${valor}')`);
+      completo = false;
+    }
+  }
+  if (!completo) return;
+  if (camera.tetoPxPorSegundo < camera.velocidadeInicialPxPorSegundo) {
+    erros.push(
+      `terreno/camera: o teto (${camera.tetoPxPorSegundo}) nao pode ser menor que a velocidade `
+        + `inicial (${camera.velocidadeInicialPxPorSegundo}): segurar a seta frearia a camera`,
+    );
+  }
+}
+
 // --- F-T1: a camada de terreno base ------------------------------------------
 //
 // O mapa nao e um arquivo solto: cada tipo que ele desenha tem de EXISTIR no
@@ -799,6 +829,7 @@ function validarTudo(dados) {
   validarMenuInicialSoRaiz(dados, erros);
   validarDevolucaoDeEstrada(dados, erros);
   validarZoomDoTerreno(dados, erros);
+  validarCameraDoTerreno(dados, erros);
   validarDevolucaoDePredio(dados, erros);
   validarEscadaDePrioridade(dados, erros);
   validarPoliticaDeTreino(dados, erros);

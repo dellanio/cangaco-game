@@ -11,6 +11,8 @@ import { describe, expect, it } from 'vitest';
 import { ATALHOS, GESTOS, casa, atalhoDeId } from '../src/input/atalhos';
 import { ligarTeclado, type AjudaParaTeclado } from '../src/input/teclado';
 import { ligarTeclasDoTempo, type ControleDoTempo } from '../src/input/teclas-do-tempo';
+import { ligarNavegacao } from '../src/input/navegacao';
+import { gameData } from '../src/sim/data';
 import { criarFerramenta } from '../src/input/ferramenta';
 import { criarSelecao } from '../src/input/selecao';
 import temaSertao from '../data/theme-sertao.json';
@@ -27,7 +29,7 @@ function apertar(alvo: EventTarget, key: string, extra: Record<string, boolean> 
 /** Liga os DOIS ouvintes no mesmo alvo, como o `main.ts` faz, e devolve um
  *  registro do que cada um fez. E preciso ser os dois: o inventario e unico e
  *  atravessa os dois modulos. */
-function bancada(): { alvo: EventTarget; feitos: string[] } {
+function bancada(): { alvo: EventTarget; feitos: string[]; observar(): void } {
   const feitos: string[] = [];
   const alvo = new EventTarget();
 
@@ -46,12 +48,24 @@ function bancada(): { alvo: EventTarget; feitos: string[] } {
 
   ligarTeclado(ferramenta, alvo, selecao, ajuda);
   ligarTeclasDoTempo(controle, alvo);
+  // F-D2: o terceiro ouvinte. A navegacao nao tem callback — ela guarda estado
+  // e e PERGUNTADA pelo quadro da cena. Entao a bancada pergunta tambem, e e
+  // `observar()` que traduz o estado dela para a mesma lista dos outros dois.
+  const nav = ligarNavegacao(alvo, gameData.terreno.camera);
   // Ferramenta na mao: sem isto o `Esc` nao teria o que cancelar e nao emitiria
   // mudanca nenhuma — o atalho pareceria morto por falta de estado, nao por
   // falta de codigo.
   ferramenta.selecionar('quarry');
   feitos.length = 0;
-  return { alvo, feitos };
+  return {
+    alvo,
+    feitos,
+    observar() {
+      const { x, y } = nav.direcao;
+      if (x !== 0 || y !== 0) feitos.push('camera:mover');
+      if (nav.espacoApertado) feitos.push('camera:arrastar');
+    },
+  };
 }
 
 describe('F-D1 — o inventario nao declara tecla que nao existe', () => {
@@ -59,8 +73,9 @@ describe('F-D1 — o inventario nao declara tecla que nao existe', () => {
     'o atalho %s faz alguma coisa quando apertado',
     (_id, atalho) => {
       for (const tecla of atalho.teclas) {
-        const { alvo, feitos } = bancada();
+        const { alvo, feitos, observar } = bancada();
         apertar(alvo, tecla);
+        observar();
         expect(feitos, `a tecla "${tecla}" do atalho "${atalho.id}" nao fez nada`).not.toEqual([]);
       }
     },
@@ -74,13 +89,16 @@ describe('F-D1 — o inventario nao declara tecla que nao existe', () => {
       pausa: 'tempo:pausa',
       acelerar: 'tempo:acelerar',
       desacelerar: 'tempo:desacelerar',
+      'camera-mover': 'camera:mover',
+      'camera-arrastar': 'camera:arrastar',
     };
     // A ida: o mapa acima cobre o inventario inteiro. Se alguem acrescentar um
     // atalho e esquecer desta tabela, e aqui que aparece.
     expect(Object.keys(esperado).sort()).toEqual(ATALHOS.map((a) => a.id).sort());
     for (const atalho of ATALHOS) {
-      const { alvo, feitos } = bancada();
+      const { alvo, feitos, observar } = bancada();
       apertar(alvo, atalho.teclas[0] as string);
+      observar();
       expect(feitos, `atalho "${atalho.id}"`).toEqual([esperado[atalho.id]]);
     }
   });
@@ -88,8 +106,9 @@ describe('F-D1 — o inventario nao declara tecla que nao existe', () => {
   it('nenhum atalho dispara com Ctrl, Meta ou Alt: essas teclas sao do navegador', () => {
     for (const atalho of ATALHOS) {
       for (const mod of ['ctrlKey', 'metaKey', 'altKey']) {
-        const { alvo, feitos } = bancada();
+        const { alvo, feitos, observar } = bancada();
         apertar(alvo, atalho.teclas[0] as string, { [mod]: true });
+        observar();
         expect(feitos, `atalho "${atalho.id}" com ${mod}`).toEqual([]);
       }
     }
@@ -100,15 +119,21 @@ describe('F-D1 — o inventario nao declara tecla que nao existe', () => {
     // existem. Listar tecla que nao existe e trocar jogador perdido por jogador
     // enganado (BUILD_PLAN, F-D1). Este teste e o que impede alguem de
     // "completar" a tela copiando o GDD.
-    const prometidas = ['b', 'f', 'Delete', '1', '9', ' '];
+    // O `Espaco` SAIU desta lista na F-D2, e nao por conveniencia: ele passou a
+    // existir de verdade, como arrasto de camera. O que o GDD §2.2 prometia
+    // ("pular para o ultimo alerta") continua nao existindo, e continua sem
+    // tecla — a tabela do GDD foi corrigida na mesma feature, para nao voltar a
+    // ser fonte de tecla imaginaria.
+    const prometidas = ['b', 'f', 'Delete', '1', '9'];
     const declaradas = new Set(ATALHOS.flatMap((a) => a.teclas.map((t) => t.toLowerCase())));
     for (const t of prometidas) {
       expect(declaradas.has(t.toLowerCase()), `"${t}" nao esta implementada`).toBe(false);
     }
     // E a outra ponta: apertar uma delas nao faz nada mesmo.
     for (const t of prometidas) {
-      const { alvo, feitos } = bancada();
+      const { alvo, feitos, observar } = bancada();
       apertar(alvo, t);
+      observar();
       expect(feitos, `a tecla "${t}" fez alguma coisa: o inventario esta desatualizado`).toEqual([]);
     }
   });

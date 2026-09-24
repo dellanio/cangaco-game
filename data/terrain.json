@@ -27,4 +27,11 @@
     "inicial": 1,
     "_doc": "Dado de RENDER, nao balanceamento: zoom nao muda regra nenhuma, nao entra em GameState e sim/ nao le este bloco. Passos discretos e crescentes. tile_px vezes o nivel e INTEIRO em todos (32, 48, 64, 96, 128), que e o que mantem a ida e volta grid<->pixel exata sem depender de sorte de ponto flutuante. O inicial e 1 porque todo roteiro de screenshot ja validado calcula a posicao do tile no canvas assumindo escala 1."
   }
+,
+  "camera": {
+    "velocidadeInicialPxPorSegundo": 640,
+    "aceleracaoPxPorSegundo2": 900,
+    "tetoPxPorSegundo": 1600,
+    "_doc": "F-D2: a navegacao por teclado. Dado de RENDER pelo mesmo motivo do zoom — camera nao muda regra nenhuma e sim/ nao le este bloco. A unidade e px de MUNDO por segundo (tile_px 64: 640 = 10 tiles/s de saida, teto 25 tiles/s, que atravessa o mapa de 128 tiles em ~5s). A cena divide pelo zoom antes de somar ao scroll: com o mapa ampliado 2x o mesmo px de mundo cobre 2 px de tela, e sem a divisao a camera parece disparar. A aceleracao so corre enquanto a tecla esta segurada; soltar volta a velocidade inicial, para o toque curto continuar sendo um passo previsivel."
+  }
 }

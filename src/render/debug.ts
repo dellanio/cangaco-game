@@ -35,6 +35,10 @@ export interface EstadoDebug {
   /** F18a: `zoom` e o nivel da camera, nao um fator de desenho. O roteiro
    *  afirma sobre ele — nunca sobre pixel. */
   camera: { readonly scrollX: number; readonly scrollY: number; readonly zoom: number };
+  /** F-D2: o estado da navegacao por teclado AGORA. `velocidade` em px de mundo
+   *  por segundo — e sobre ela que o roteiro afirma o teto do dado, sem
+   *  cronometrar pixel entre quadros. */
+  navegacao: { readonly espacoApertado: boolean; readonly velocidade: number };
   /** Quantos tiles o tilemap desenhou de fato. Prova que o culling nativo do
    *  Phaser esta ligado: deve ficar bem abaixo de largura*altura do mapa. */
   tilesRenderizados: number;
@@ -168,6 +172,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     pronto: false,
     tileSobMouse: null,
     camera: { scrollX: 0, scrollY: 0, zoom: 1 },
+    navegacao: { espacoApertado: false, velocidade: 0 },
     tilesRenderizados: 0,
     prediosRenderizados: 0,
     prediosDoEstado: {},

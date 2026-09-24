@@ -8,6 +8,7 @@ import {
   gridToScreen, screenToGrid, depthDeY, tileDentroDoMapa, ESCALA_DO_MUNDO,
 } from '../grid';
 import { proximoNivel, mundoSobPonto, scrollAncorado } from '../zoom';
+import type { Navegacao } from '../../input/navegacao';
 import type { Tile } from '../grid';
 import { publicarEstadoDebug } from '../debug';
 import type { EstadoDebug, PredioNoDebug, RelogioVisivel } from '../debug';
@@ -87,6 +88,9 @@ export class WorldScene extends Phaser.Scene {
     private readonly entrada: EntradaDoMapa,
     /** O relogio (F11a): a cena le o `alfa` para interpolar e o publica em `window.__cangaco`. */
     private readonly relogio: RelogioVisivel,
+    /** F-D2 — a navegacao por teclado. A cena PERGUNTA; quem escuta tecla e
+     *  `input/navegacao.ts`, que nao conhece camera nenhuma. */
+    private readonly navegacao: Navegacao,
   ) {
     super('world');
   }
@@ -100,6 +104,37 @@ export class WorldScene extends Phaser.Scene {
    *  Roda antes de `create()`, entao toda textura ja existe quando o primeiro
    *  `atualizarPredios` pergunta por ela.
    */
+  /**
+   * F-D2 — o unico `update()` da cena, e ele NAO e logica de jogo (§10): mexe
+   * em camera, que e render puro e nao entra no `GameState`. A regra que o §10
+   * protege e outra — simulacao dentro do quadro do navegador —, e ela continua
+   * valendo: quem faz o tempo passar e o laco (`src/laco.ts`).
+   *
+   * Aqui tambem nao ha `deltaMs` fixo: a camera anda no relogio de parede, e
+   * nao no tick. E por isso que a velocidade dela e px por segundo real, e a
+   * velocidade de jogo (1x, 2x, 3x) nao a acelera.
+   */
+  update(_tempo: number, deltaMs: number): void {
+    const camera = this.cameras.main;
+    const { dx, dy } = this.navegacao.avancar(deltaMs);
+    if (dx !== 0 || dy !== 0) {
+      // Dividido pelo zoom pelo mesmo motivo do arrasto: o dado esta em px de
+      // mundo, e ampliado 2x o mesmo px de mundo cobre 2 px de tela. O clamp
+      // continua sendo o `setBounds` da F04, que age no preRender — nada aqui
+      // precisa conhecer as bordas do mapa.
+      camera.scrollX += dx / camera.zoom;
+      camera.scrollY += dy / camera.zoom;
+    }
+
+    // O gesto do `Espaco` e invisivel sem isto: o jogador segura, nada muda na
+    // tela, e ele conclui que a tecla nao faz nada (foi o que aconteceu com o
+    // botao do meio, que ninguem achou sozinho).
+    const cursor = this.navegacao.espacoApertado
+      ? (this.input.activePointer.isDown ? 'grabbing' : 'grab')
+      : '';
+    if (this.game.canvas.style.cursor !== cursor) this.game.canvas.style.cursor = cursor;
+  }
+
   preload(): void {
     for (const textura of texturasParaCarregar()) {
       this.load.image(textura.chave, textura.url);
@@ -176,9 +211,17 @@ export class WorldScene extends Phaser.Scene {
     });
 
     this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
-      if (pointer.middleButtonDown()) {
-        const dx = pointer.x - pointer.prevPosition.x;
-        const dy = pointer.y - pointer.prevPosition.y;
+      // F-D2: o botao do meio continua sendo camera, e o `Espaco` segurado
+      // passa a ser camera TAMBEM — com qualquer botao, e independente da
+      // ferramenta na mao (padrao de editor). Nada foi removido: quem ja sabia
+      // do botao do meio nao perde o gesto.
+      const arrastandoCamera = pointer.middleButtonDown()
+        || (this.navegacao.espacoApertado && pointer.isDown);
+      if (arrastandoCamera) {
+        // Dividido pelo zoom: o ponteiro anda em px de TELA, e o scroll conta
+        // px de MUNDO. Sem a divisao, o mapa ampliado escorregaria do cursor.
+        const dx = (pointer.x - pointer.prevPosition.x) / camera.zoom;
+        const dy = (pointer.y - pointer.prevPosition.y) / camera.zoom;
         camera.scrollX -= dx;
         camera.scrollY -= dy;
       }
@@ -195,7 +238,11 @@ export class WorldScene extends Phaser.Scene {
         estado.tileSobMouse = tile;
         tileAtual = tile;
         // botao esquerdo apertado: e um arrasto (estrada); o botao do meio e a camera
-        if (pointer.leftButtonDown()) this.entrada.aoArrastar(tile);
+        // F-D2: com o `Espaco` segurado o botao esquerdo tambem e camera, e
+        // puxar estrada sem querer e exatamente o que o aceite 3 proibe.
+        if (pointer.leftButtonDown() && !this.navegacao.espacoApertado) {
+          this.entrada.aoArrastar(tile);
+        }
       } else {
         estado.tileSobMouse = null;
         tileAtual = null;
@@ -220,6 +267,13 @@ export class WorldScene extends Phaser.Scene {
     // canvas: no HUD e no painel o menu do navegador continua normal.
     this.input.mouse?.disableContextMenu();
 
+    // F-D2 (higiene, nao urgencia): sem isto o botao do meio abre o icone de
+    // autoscroll do navegador por cima do jogo, e o arrasto de camera vira uma
+    // briga entre dois gestos de rolagem. So no canvas.
+    this.game.canvas.addEventListener('mousedown', (evento: MouseEvent) => {
+      if (evento.button === 1) evento.preventDefault();
+    });
+
     // Botao direito: a cena so ENCAMINHA o gesto. Quem decide se ele larga a
     // ferramenta ou sobra para a ordem militar da F26 e `input/colocar.ts`
     // (BUG-A) — a cena nao conhece a ferramenta ativa e nao deve conhecer.
@@ -229,6 +283,9 @@ export class WorldScene extends Phaser.Scene {
 
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       if (!pointer.leftButtonDown()) return;
+      // F-D2, aceite 3: com o `Espaco` segurado o clique e o comeco de um
+      // arrasto de camera, e nao a planta descendo no tile.
+      if (this.navegacao.espacoApertado) return;
       // F18a: ESCALA_DO_MUNDO — `getWorldPoint` ja desfez o zoom (ver pointermove).
       const mundo = camera.getWorldPoint(pointer.x, pointer.y);
       const tile: Tile = screenToGrid({ x: mundo.x, y: mundo.y }, tilePx, ESCALA_DO_MUNDO);
@@ -239,6 +296,7 @@ export class WorldScene extends Phaser.Scene {
     // (canvas maior que o mapa) cancela, como sair do canvas.
     this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => {
       if (!pointer.leftButtonReleased()) return;
+      if (this.navegacao.espacoApertado) return;
       // F18a: ESCALA_DO_MUNDO — `getWorldPoint` ja desfez o zoom (ver pointermove).
       const mundo = camera.getWorldPoint(pointer.x, pointer.y);
       const tile: Tile = screenToGrid({ x: mundo.x, y: mundo.y }, tilePx, ESCALA_DO_MUNDO);
@@ -254,6 +312,12 @@ export class WorldScene extends Phaser.Scene {
       // F18a: o zoom sai daqui pelo mesmo motivo que o scroll — e no preRender
       // que o clamp de setBounds acontece, entao este e o valor ja limitado.
       estado.camera = { scrollX: camera.scrollX, scrollY: camera.scrollY, zoom: camera.zoom };
+      // F-D2: o roteiro afirma o teto sobre este numero, em vez de cronometrar
+      // pixel entre dois quadros e brigar com o relogio do navegador.
+      estado.navegacao = {
+        espacoApertado: this.navegacao.espacoApertado,
+        velocidade: this.navegacao.velocidade,
+      };
       estado.tilesRenderizados = camadaChao.tilesDrawn;
       estado.terrenoVisivel = this.contarTerrenoVisivel(camadaChao);
       // F-T2a: a camada de recurso se repinta do ESTADO a cada frame (por diff),

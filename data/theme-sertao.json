@@ -444,6 +444,8 @@
       "pausa": "Para e retoma o mundo",
       "acelerar": "Apressa o tempo",
       "desacelerar": "Afrouxa o tempo",
+      "camera-mover": "Anda com o mapa para o lado que a seta aponta",
+      "camera-arrastar": "Segure e arraste com o mouse para correr o mapa",
       "arrastar-camera": "Corre o mapa de um lado para o outro",
       "zoom": "Chega perto e afasta"
     },

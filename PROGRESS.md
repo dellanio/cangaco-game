@@ -3754,3 +3754,99 @@ sobre o jogo que o jogador tem na frente.
   declarar vai ver o teste do "coisa dele" reprovar.
 - O GDD §2.2 continua prometendo teclas que não existem. A correção dele é
   **da F-D2**, junto com o conflito do Espaço (decisão do operador no Turno H).
+
+## F-D2 — Navegação: setas, WASD e `Espaço` + arrastar (2026-09-24)
+
+A câmera só andava com o botão do meio — gesto que, nas palavras do item,
+"quase ninguém" encontra sozinho. Agora anda com o que todo mundo tenta.
+
+### A F-D1 organizou esta feature
+
+As teclas novas **não** viraram um `if` novo escondido: entraram no inventário
+(`src/input/atalhos.ts`), e três coisas aconteceram sem código de interface:
+
+- a tela de ajuda passou a ensinar seta, `WASD` e `Espaço` — verificado pelo
+  roteiro da F-D1 rodado de novo, que compara a tela com o inventário;
+- o teste da F-D1 passou a **exigir** que as duas entradas façam algo de
+  verdade (a bancada dele ganhou o terceiro ouvinte);
+- o rótulo de cada uma teve que existir no tema, ou o teste reprova.
+
+### O `Espaço`, e o guarda que mudou junto com o mundo
+
+O teste da F-D1 afirmava que o inventário **não** declara `' '`. Ele agora
+declara. A asserção não foi afrouxada para caber no código: o `Espaço` passou a
+existir de verdade, como arrasto de câmera, e o que o GDD §2.2 prometia ("pular
+para o último alerta") continua não existindo e continua **sem tecla** (decisão
+do operador, turno H). **O GDD §2.2 foi corrigido no mesmo commit**, dividido em
+"o que existe hoje" e "proposta, ainda sem código" — era a fonte de onde a tecla
+imaginária sairia de novo.
+
+### Decisões, com o porquê
+
+- **Módulo próprio (`src/input/navegacao.ts`), não mais um `if` em
+  `teclado.ts`.** Aquele é sem memória: recebe tecla, chama método. Navegação
+  tem estado contínuo (quais direções estão seguras, e a velocidade que cresce
+  enquanto se segura), e estado contínuo dentro de um ouvinte sem dono é como se
+  perde tecla presa.
+- **A unidade é px de MUNDO por segundo, e a cena divide pelo zoom.** Sem a
+  divisão, o mapa ampliado 2× faria a câmera parecer disparar — o mesmo px de
+  mundo cobre 2 px de tela. Vale para a seta e para o arrasto.
+- **Segundo de relógio de parede, não de jogo.** Os três campos novos batem no
+  varredor de durações de `tools/data-rules.js` e entraram na allowlist
+  `NAO_SAO_DURACAO` com motivo escrito: escalar a câmera com `time.json` faria o
+  mapa andar mais devagar porque o pão assa mais devagar. A velocidade de jogo
+  (1x, 2x, 3x) também não a acelera.
+- **Soltar volta ao passo inicial, sem desacelerar aos poucos.** Um toque curto
+  tem de ser sempre o mesmo passo; com inércia, a mesma batidinha de seta andaria
+  distâncias diferentes conforme o que o jogador fez antes.
+- **Diagonal dividida por √2.** Sem isso, andar de canto seria 41% mais rápido e
+  o teto do dado deixaria de ser teto.
+- **Perder o foco solta tudo.** Trocar de janela com a seta presa deixaria a
+  câmera correndo sozinha: o `keyup` chega para a outra janela, nunca para esta.
+- **O cursor muda (`grab`/`grabbing`) enquanto o `Espaço` está apertado.** Sem
+  isso o gesto é invisível — foi exatamente o que aconteceu com o botão do meio,
+  que ninguém achou sozinho. O item pede isso em letra.
+- **Nada foi removido.** O botão do meio continua arrastando.
+- **`update()` na cena, e não é violação da §10.** O que a regra proíbe é
+  simulação dentro do quadro do navegador; câmera é render puro e não entra no
+  `GameState`. Está escrito no próprio método.
+
+### Correções durante o trabalho (os dois testes que reprovaram primeiro)
+
+1. **Linha de base errada na diagonal.** Comparei o passo diagonal com
+   `velocidadeInicial × dt` — mas o próprio quadro acelera antes de andar: 73 px
+   contra os 64 px da linha de base. O teste reprovava um código correto. A
+   correção foi medir contra uma **reta rodada nas mesmas condições**, não
+   contra o número do dado.
+2. **"Toques curtos" que não eram toques.** A simulação apertava, andava e
+   soltava sem nunca deixar passar um quadro parado — e a velocidade só zera
+   quando um quadro observa direção nenhuma. Os dois lados deram exatamente
+   414,336 px. O quadro ocioso entre um toque e outro entrou no teste, com o
+   número medido no comentário.
+
+### Evidência
+
+- `npm run verify` → **1121 testes, 70 arquivos, 0 erro**; `validate:data` 11
+  arquivos, 0 erro.
+- `npm run shot -- F-D2` → OK, **25 asserções**, 0 erro de console, 2 capturas.
+- Screenshot aberto com Read (feature atual, §8):
+  `F-D2-2-espaco-arrastando.png` mostra a Pedreira acesa no menu, a planta
+  fantasma desenhada, o mapa deslocado — e **nenhum prédio novo**.
+- **Sondas (evidência da sessão, não cobertura):**
+  - regra de dado nova: teto abaixo da velocidade inicial →
+    `terreno/camera: o teto (100) nao pode ser menor que a velocidade inicial (640)`;
+  - guarda do aceite 3 removido da cena → `o arrasto com Espaco plantou 1 predio(s)`;
+  - sinal do scroll invertido → `a seta direita deveria aumentar o scrollX, veio -255`.
+  Restauradas por checksum (`md5sum` idêntico ao backup nas duas vezes).
+- Não-regressão por código de saída: **F04, F18a, F06, F-D1, F13b → 0**.
+
+### O que ficou aberto
+
+- A borda direita e a de baixo levam ~9 s de tecla segurada no roteiro, porque o
+  mapa tem 8192 px de lado e não há como teletransportar a câmera. É o passo
+  mais lento do roteiro; se incomodar, o jeito é publicar um atalho de debug para
+  posicionar a câmera, e isso é feature, não ajuste.
+- `WASD` vale com qualquer layout de teclado? A comparação é por
+  `KeyboardEvent.key`, então num teclado AZERTY as teclas físicas mudam de
+  lugar. As setas continuam funcionando em qualquer layout, e é por isso que elas
+  são o caminho principal.

@@ -115,13 +115,33 @@ Quem aplica a regra é `input/colocar.ts` (`aoClicarDireito`), que devolve se
 consumiu o gesto; a cena só encaminha. A F26 recebe os gestos que voltarem
 `false` — não precisa reabrir esta decisão, e não deve.
 
-### 2.2 Teclado [proposta]
+### 2.2 Teclado
 
-`B` Build · `R` estrada · `F` campo · `Delete` demolir · `Esc` cancela ·
-`Ctrl+1..9` salva grupo · `1..9` seleciona grupo · `Espaço` pula para o último
-alerta · `+`/`-` velocidade de jogo · `P` pausa. A pausa também é automática
-ao ocultar a aba do navegador, mas voltar à aba **não** retoma: o jogador
-despausa com `P`.
+Esta tabela foi dividida em duas na F-D2 (2026-09-24). A versão anterior
+misturava o que existe com o que se pretende, e a F-D1 acabou de estabelecer
+que **anunciar tecla que não existe troca jogador perdido por jogador
+enganado**. A fonte de verdade do que existe é `src/input/atalhos.ts` — o
+inventário que a tela de ajuda lê. Esta seção descreve; ela não decide.
+
+**O que existe hoje**
+
+`H` ou `F1` ajuda · `Esc` cancela (e fecha a ajuda primeiro, se estiver aberta) ·
+`R` estrada · `P` pausa · `+`/`-` velocidade de jogo ·
+**setas** ou `WASD` andam com a câmera (segurar acelera até um teto) ·
+`Espaço` **segurado + arrastar** anda com a câmera, mesmo com planta na mão.
+
+A pausa também é automática ao ocultar a aba do navegador, mas voltar à aba
+**não** retoma: o jogador despausa com `P`.
+
+**Proposta, ainda sem código** [proposta]
+
+`B` Build · `F` campo · `Delete` demolir · `Ctrl+1..9` salva grupo ·
+`1..9` seleciona grupo.
+
+O "pular para o último alerta" ficou **sem tecla** (decisão do operador,
+2026-09-24): o `Espaço` é da câmera, que é gesto de todo momento, e o salto
+para o alerta é gesto ocasional. Quem o implementar escolhe a tecla então, e a
+acrescenta ao inventário — não aqui.
 
 ### 2.3 Comandos de prédio
 

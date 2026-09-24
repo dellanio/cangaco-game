@@ -11,6 +11,8 @@ import type { TerrenoDeMapa } from '../sim/data/types';
 import { tipoDoTile } from '../sim/mapa';
 import temaSertao from '../../data/theme-sertao.json';
 
+import type { DadosDaCamera } from '../input/navegacao';
+
 export interface ConfigDoMapa {
   readonly tilePx: number;
   readonly largura: number;
@@ -21,10 +23,14 @@ export interface ConfigDoMapa {
    *  Dado de render: zoom nao muda regra nenhuma e `sim/` nao sabe que ele
    *  existe. Quem anda pela lista e `render/zoom.ts`. */
   readonly zoom: { readonly niveis: readonly number[]; readonly inicial: number };
+  /** F-D2 — a navegacao por teclado, de `data/terrain.json`. Chega aqui pelo
+   *  mesmo funil do zoom: nenhum outro arquivo de `render/` (nem `input/`)
+   *  importa `sim/data` para ler isto. */
+  readonly camera: DadosDaCamera;
 }
 
 export function criarConfigDoMapa(): ConfigDoMapa {
-  const { tilePx, mapaPadrao, zoom } = gameData.terreno;
+  const { tilePx, mapaPadrao, zoom, camera } = gameData.terreno;
   return {
     tilePx,
     largura: mapaPadrao.largura,
@@ -32,6 +38,11 @@ export function criarConfigDoMapa(): ConfigDoMapa {
     larguraPx: mapaPadrao.largura * tilePx,
     alturaPx: mapaPadrao.altura * tilePx,
     zoom: { niveis: zoom.niveis, inicial: zoom.inicial },
+    camera: {
+      velocidadeInicialPxPorSegundo: camera.velocidadeInicialPxPorSegundo,
+      aceleracaoPxPorSegundo2: camera.aceleracaoPxPorSegundo2,
+      tetoPxPorSegundo: camera.tetoPxPorSegundo,
+    },
   };
 }
 

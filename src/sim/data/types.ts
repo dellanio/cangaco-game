@@ -217,6 +217,11 @@ export interface TerrenoData {
    *  este campo; ele viaja junto so porque `data/terrain.json` e um arquivo
    *  so, e chega a `render/` pelo funil `render/mapa.ts`. */
   readonly zoom: RawGameData['terrain']['zoom'];
+  /** F-D2: a navegacao por teclado da camera. Dado de RENDER pelo mesmo motivo
+   *  do `zoom` acima, e com um agravante proprio: a unidade e px por segundo de
+   *  RELOGIO DE PAREDE. Nao passa por `time.json`, nao vira tick, e nenhum
+   *  sistema de `sim/` a le. */
+  readonly camera: RawGameData['terrain']['camera'];
 }
 
 export interface EconomiaSchoolhouseData {
