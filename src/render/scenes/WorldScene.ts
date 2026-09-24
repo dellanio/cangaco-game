@@ -4,7 +4,9 @@
 import Phaser from 'phaser';
 import temaSertao from '../../../data/theme-sertao.json';
 import { configDoMapa } from '../mapa';
-import { gridToScreen, screenToGrid, depthDeY, tileDentroDoMapa } from '../grid';
+import {
+  gridToScreen, screenToGrid, depthDeY, tileDentroDoMapa, ESCALA_DO_MUNDO,
+} from '../grid';
 import type { Tile } from '../grid';
 import { publicarEstadoDebug } from '../debug';
 import type { EstadoDebug, PredioNoDebug, RelogioVisivel } from '../debug';
@@ -131,10 +133,14 @@ export class WorldScene extends Phaser.Scene {
         camera.scrollY -= dy;
       }
 
+      // F18a: ESCALA_DO_MUNDO, e nao o nivel de zoom. `getWorldPoint` JA
+      // inverteu o zoom da camera; passar o nivel aqui dividiria duas vezes e
+      // o clique erraria o tile em todo nivel diferente de 1. O highlight
+      // tambem e objeto de mundo: a camera o amplia sozinha.
       const mundo = camera.getWorldPoint(pointer.x, pointer.y);
-      const tile: Tile = screenToGrid({ x: mundo.x, y: mundo.y }, tilePx);
+      const tile: Tile = screenToGrid({ x: mundo.x, y: mundo.y }, tilePx, ESCALA_DO_MUNDO);
       if (tileDentroDoMapa(tile, largura, altura)) {
-        const canto = gridToScreen(tile, tilePx);
+        const canto = gridToScreen(tile, tilePx, ESCALA_DO_MUNDO);
         highlight.setPosition(canto.x, canto.y);
         estado.tileSobMouse = tile;
         tileAtual = tile;
@@ -161,8 +167,9 @@ export class WorldScene extends Phaser.Scene {
     // pointermove: recalcula o tile do ponteiro no proprio clique.
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       if (!pointer.leftButtonDown()) return;
+      // F18a: ESCALA_DO_MUNDO — `getWorldPoint` ja desfez o zoom (ver pointermove).
       const mundo = camera.getWorldPoint(pointer.x, pointer.y);
-      const tile: Tile = screenToGrid({ x: mundo.x, y: mundo.y }, tilePx);
+      const tile: Tile = screenToGrid({ x: mundo.x, y: mundo.y }, tilePx, ESCALA_DO_MUNDO);
       if (tileDentroDoMapa(tile, largura, altura)) this.entrada.aoClicar(tile);
     });
 
@@ -170,8 +177,9 @@ export class WorldScene extends Phaser.Scene {
     // (canvas maior que o mapa) cancela, como sair do canvas.
     this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => {
       if (!pointer.leftButtonReleased()) return;
+      // F18a: ESCALA_DO_MUNDO — `getWorldPoint` ja desfez o zoom (ver pointermove).
       const mundo = camera.getWorldPoint(pointer.x, pointer.y);
-      const tile: Tile = screenToGrid({ x: mundo.x, y: mundo.y }, tilePx);
+      const tile: Tile = screenToGrid({ x: mundo.x, y: mundo.y }, tilePx, ESCALA_DO_MUNDO);
       if (tileDentroDoMapa(tile, largura, altura)) this.entrada.aoSoltar(tile);
       else this.entrada.aoSairDoMapa();
     });
@@ -357,7 +365,7 @@ export class WorldScene extends Phaser.Scene {
     canteiro: CanteiroDaObra | null, tilePx: number,
   ): Phaser.GameObjects.Container {
     const { largura, altura, nome } = aparenciaDoPredio(predio.tipo);
-    const canto = gridToScreen({ gx: predio.gx, gy: predio.gy }, tilePx);
+    const canto = gridToScreen({ gx: predio.gx, gy: predio.gy }, tilePx, ESCALA_DO_MUNDO);
     const larguraPx = largura * tilePx;
     const alturaPx = altura * tilePx;
 

@@ -3,6 +3,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   gridToScreen, gridToScreenCentro, screenToGrid, depthDeY, tileDentroDoMapa,
+  ESCALA_DO_MUNDO,
 } from '../src/render/grid';
 import { configDoMapa } from '../src/render/mapa';
 import { gameData } from '../src/sim/data';
@@ -18,7 +19,7 @@ describe('F04 — grid ortogonal: ida e volta', () => {
       const passoGx = nextInt(rng, -50, 200); rng = passoGx.rng;
       const passoGy = nextInt(rng, -50, 200); rng = passoGy.rng;
       const tile = { gx: passoGx.value, gy: passoGy.value };
-      const volta = screenToGrid(gridToScreen(tile, 64), 64);
+      const volta = screenToGrid(gridToScreen(tile, 64, ESCALA_DO_MUNDO), 64, ESCALA_DO_MUNDO);
       expect(volta).toEqual(tile);
     }
   });
@@ -29,20 +30,20 @@ describe('F04 — grid ortogonal: ida e volta', () => {
       const passoGx = nextInt(rng, -50, 200); rng = passoGx.rng;
       const passoGy = nextInt(rng, -50, 200); rng = passoGy.rng;
       const tile = { gx: passoGx.value, gy: passoGy.value };
-      const canto = gridToScreen(tile, 64);
+      const canto = gridToScreen(tile, 64, ESCALA_DO_MUNDO);
 
       const jx = nextFloat(rng); rng = jx.rng;
       const jy = nextFloat(rng); rng = jy.rng;
       const pontoDentro = { x: canto.x + jx.value * 64, y: canto.y + jy.value * 64 };
 
-      expect(screenToGrid(pontoDentro, 64)).toEqual(tile);
+      expect(screenToGrid(pontoDentro, 64, ESCALA_DO_MUNDO)).toEqual(tile);
     }
   });
 
   it('coordenada negativa volta certo (floor, nao truncamento)', () => {
-    expect(screenToGrid({ x: -1, y: -1 }, 64)).toEqual({ gx: -1, gy: -1 });
-    expect(screenToGrid({ x: -64, y: -64 }, 64)).toEqual({ gx: -1, gy: -1 });
-    expect(screenToGrid({ x: -65, y: 0 }, 64)).toEqual({ gx: -2, gy: 0 });
+    expect(screenToGrid({ x: -1, y: -1 }, 64, ESCALA_DO_MUNDO)).toEqual({ gx: -1, gy: -1 });
+    expect(screenToGrid({ x: -64, y: -64 }, 64, ESCALA_DO_MUNDO)).toEqual({ gx: -1, gy: -1 });
+    expect(screenToGrid({ x: -65, y: 0 }, 64, ESCALA_DO_MUNDO)).toEqual({ gx: -2, gy: 0 });
   });
 
   it.each(TAMANHOS_DE_TILE)('a ida e volta vale para tilePx = %i, nao so 64', (tilePx) => {
@@ -51,17 +52,24 @@ describe('F04 — grid ortogonal: ida e volta', () => {
       const passoGx = nextInt(rng, 0, 100); rng = passoGx.rng;
       const passoGy = nextInt(rng, 0, 100); rng = passoGy.rng;
       const tile = { gx: passoGx.value, gy: passoGy.value };
-      expect(screenToGrid(gridToScreen(tile, tilePx), tilePx)).toEqual(tile);
+      expect(screenToGrid(gridToScreen(tile, tilePx, ESCALA_DO_MUNDO), tilePx, ESCALA_DO_MUNDO)).toEqual(tile);
     }
   });
 
   it('gridToScreenCentro fica no meio do tile', () => {
-    expect(gridToScreenCentro({ gx: 2, gy: 3 }, 64)).toEqual({ x: 160, y: 224 });
+    expect(gridToScreenCentro({ gx: 2, gy: 3 }, 64, ESCALA_DO_MUNDO)).toEqual({ x: 160, y: 224 });
   });
 
   it('tilePx <= 0 lanca erro em vez de dividir por zero em silencio', () => {
-    expect(() => gridToScreen({ gx: 0, gy: 0 }, 0)).toThrow();
-    expect(() => screenToGrid({ x: 0, y: 0 }, -1)).toThrow();
+    expect(() => gridToScreen({ gx: 0, gy: 0 }, 0, ESCALA_DO_MUNDO)).toThrow();
+    expect(() => screenToGrid({ x: 0, y: 0 }, -1, ESCALA_DO_MUNDO)).toThrow();
+  });
+
+  // F18a: a escala entrou como SEGUNDO divisor de screenToGrid. Ela erra pelo
+  // mesmo motivo que tilePx se for zero ou negativa.
+  it('escala <= 0 lanca pelo mesmo motivo que tilePx <= 0', () => {
+    expect(() => gridToScreen({ gx: 0, gy: 0 }, 64, 0)).toThrow();
+    expect(() => screenToGrid({ x: 0, y: 0 }, 64, -1)).toThrow();
   });
 });
 
@@ -123,6 +131,9 @@ const ARITMETICA_PURA_EM_RENDER = [
   join('src', 'render', 'estagio-obra.ts'),
   join('src', 'render', 'medidor-obra.ts'),
   join('src', 'render', 'nivelamento-obra.ts'),
+  // F18a: os passos de zoom sao aritmetica pura pelo mesmo motivo — a lista
+  // de niveis chega por parametro, vinda do funil `mapa.ts`.
+  join('src', 'render', 'zoom.ts'),
 ];
 
 function arquivosPurosComImport(): string[] {

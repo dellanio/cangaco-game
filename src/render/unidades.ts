@@ -15,7 +15,7 @@
  */
 import Phaser from 'phaser';
 import temaSertao from '../../data/theme-sertao.json';
-import { depthDeY, gridToScreenCentro } from './grid';
+import { depthDeY, gridToScreenCentro, ESCALA_DO_MUNDO } from './grid';
 import { criarMemoriaDePosicoes, interpolarPosicao } from './interpolacao';
 import { posicaoDaUnidade } from '../sim/selectors';
 import type { GameState } from '../sim/state';
@@ -103,7 +103,7 @@ export function criarCamadaDeUnidades(cena: Phaser.Scene, tilePx: number): Camad
         const posicao = posicaoDaUnidade(estado, unidade);
         const anterior = memoria.observar(id, estado.tick, posicao);
         const desenhada = interpolarPosicao(anterior, posicao, alfa, SALTO_MAXIMO_EM_TILES);
-        const centro = gridToScreenCentro(desenhada, tilePx);
+        const centro = gridToScreenCentro(desenhada, tilePx, ESCALA_DO_MUNDO);
         item.container.setPosition(centro.x, centro.y);
         item.container.setDepth(depthDeY(centro.y));
         const carga = unidade.fsmData.carga ?? null;

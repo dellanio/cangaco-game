@@ -10,7 +10,7 @@ import type { GameState } from '../sim/state';
 import { canPlaceRoad, ehEstrada, tilesOrdenados } from '../sim/estradas';
 import type { TileDeGrid } from '../sim/estradas';
 import type { ModoDaFerramenta } from '../input/ferramenta';
-import { gridToScreen } from './grid';
+import { gridToScreen, ESCALA_DO_MUNDO } from './grid';
 
 // Acima do chao (depth 0) e abaixo dos predios (depth = y em px, >= dezenas de
 // milhares aqui) e da planta/prévia.
@@ -50,7 +50,7 @@ export function criarCamadaDeEstradas(cena: Phaser.Scene, tilePx: number): Camad
         grafico.clear();
         grafico.fillStyle(cor, 1);
         for (const tile of tiles) {
-          const canto = gridToScreen(tile, tilePx);
+          const canto = gridToScreen(tile, tilePx, ESCALA_DO_MUNDO);
           grafico.fillRect(canto.x, canto.y, tilePx, tilePx);
         }
         desenhada = estradas;
@@ -76,7 +76,7 @@ export function criarPreviaDeEstrada(cena: Phaser.Scene, tilePx: number): Previa
   function pintar(tiles: readonly TileDeGrid[], cor: number): void {
     grafico.fillStyle(cor, OPACIDADE_DA_PREVIA);
     for (const tile of tiles) {
-      const canto = gridToScreen(tile, tilePx);
+      const canto = gridToScreen(tile, tilePx, ESCALA_DO_MUNDO);
       grafico.fillRect(canto.x, canto.y, tilePx, tilePx);
     }
   }
@@ -103,7 +103,7 @@ export function criarPreviaDeEstrada(cena: Phaser.Scene, tilePx: number): Previa
       pintar(distintos, resposta.ok ? COR_PODE : COR_NAO_PODE);
       if (!resposta.ok && resposta.tile !== null) {
         // o tile culpado, com contorno, para o jogador ver ONDE nao pode
-        const canto = gridToScreen(resposta.tile, tilePx);
+        const canto = gridToScreen(resposta.tile, tilePx, ESCALA_DO_MUNDO);
         grafico.lineStyle(3, 0xede3d0, 1);
         grafico.strokeRect(canto.x + 1, canto.y + 1, tilePx - 2, tilePx - 2);
       }

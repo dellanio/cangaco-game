@@ -11,7 +11,7 @@ import type { GameState } from '../sim/state';
 import { canPlace } from '../sim/placement';
 import type { MotivoDeRecusa } from '../sim/placement';
 import { aparenciaDoPredio } from './predios';
-import { gridToScreen } from './grid';
+import { gridToScreen, ESCALA_DO_MUNDO } from './grid';
 import type { Tile } from './grid';
 
 // Cores de apresentacao. O vermelho e o do lenco do bando_a em
@@ -78,7 +78,7 @@ export function criarPlantaFantasma(cena: Phaser.Scene, tilePx: number): PlantaF
 
       const resposta = canPlace(estado, predioAtivo, tile.gx, tile.gy);
       const desenho = garantirRetangulo(predioAtivo);
-      const canto = gridToScreen(tile, tilePx);
+      const canto = gridToScreen(tile, tilePx, ESCALA_DO_MUNDO);
       desenho.setPosition(canto.x, canto.y);
       desenho.setFillStyle(resposta.ok ? COR_PODE : COR_NAO_PODE, OPACIDADE);
       desenho.setVisible(true);
