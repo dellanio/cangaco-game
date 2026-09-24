@@ -23,10 +23,10 @@ Armazém  (storehouse)
 │        ├─ Roçado de Milho  (farm)
 │        │  ├─ Moinho  (mill)
 │        │  │  └─ Padaria  (bakery)
-│        │  ├─ Criação de Bode  (swine_farm)
+│        │  ├─ Malhada  (swine_farm)
 │        │  │  ├─ Casa de Carne  (butchers)
 │        │  │  └─ Curtume  (tannery)
-│        │  │     └─ Oficina de Couro Cru  (armory_workshop)
+│        │  │     └─ Casa do Gibão  (armory_workshop)
 │        │  └─ Cocheira  (stables)
 │        ├─ Canavial  (wineyard)
 │        ├─ Casa do Pescador  (fishermans)
@@ -72,21 +72,21 @@ na escala 1.0 (`production.json`), antes do multiplicador de tempo.
 | Garimpo | `gold_mine` | 2x1 | 3 | 2 | 250 | Serraria | Mineiro | — | Ouro bruto 1 |
 | Jazida de Carvão | `coal_mine` | 3x2 | 3 | 2 | 250 | Serraria | Mineiro | — | Carvão 1.2 |
 | Mina de Ferro | `iron_mine` | 3x1 | 3 | 2 | 250 | Serraria | Mineiro | — | Minério 1 |
-| Casa de Armas de Madeira | `weapons_workshop` | 4x2 | 4 | 3 | 350 | Serraria | Carpina | Tábua 1.6 | `arma_madeira` 0.8 |
+| Casa de Armas de Madeira | `weapons_workshop` | 4x2 | 4 | 3 | 350 | Serraria | Carpina | Tábua 1.6 | Arma de madeira 0.8 |
 | Quartel do Bando | `barracks` | 4x4 | 6 | 6 | 600 | Serraria | — | — | — |
 | Feira | `marketplace` | 4x3 | 6 | 5 | 550 | Serraria | — | — | — |
 | Moinho | `mill` | 3x3 | 4 | 3 | 350 | Roçado de Milho | Forneiro | Milho 1.22 | Fubá 1.22 |
 | Padaria | `bakery` | 3x3 | 4 | 3 | 350 | Moinho | Forneiro | Fubá 1.22 | Cuscuz 2.44 |
-| Criação de Bode | `swine_farm` | 4x3 | 4 | 3 | 350 | Roçado de Milho | Criador | Milho 2 | Bode 0.5, Couro cru 0.5 |
+| Malhada | `swine_farm` | 4x3 | 4 | 3 | 350 | Roçado de Milho | Criador | Milho 2 | Bode 0.5, Couro cru 0.5 |
 | Cocheira | `stables` | 4x3 | 6 | 5 | 550 | Roçado de Milho | Criador | Milho 2 | Cavalo 0.5 |
-| Casa de Carne | `butchers` | 3x3 | 4 | 3 | 350 | Criação de Bode | Carneador | Bode 1.5 | Carne de sol 4.5 |
-| Curtume | `tannery` | 3x2 | 4 | 3 | 350 | Criação de Bode | Carneador | Couro cru 0.5 | Couro 1 |
-| Oficina de Couro Cru | `armory_workshop` | 3x3 | 4 | 3 | 350 | Curtume | Carpina | Couro 1, Tábua 1 | Armas de couro 1, Chapéu de aba 1 |
+| Casa de Carne | `butchers` | 3x3 | 4 | 3 | 350 | Malhada | Carneador | Bode 1.5 | Carne de sol 4.5 |
+| Curtume | `tannery` | 3x2 | 4 | 3 | 350 | Malhada | Carneador | Couro cru 0.5 | Couro 1 |
+| Casa do Gibão | `armory_workshop` | 3x3 | 4 | 3 | 350 | Curtume | Carpina | Couro 1, Tábua 1 | Gibão de couro 1, Chapéu de aba 1 |
 | Fundição | `metallurgists` | 3x3 | 4 | 3 | 350 | Garimpo | Fundidor | Ouro bruto 0.5, Carvão 0.5 | Dinheiro 1 |
 | Mercenários | `town_hall` | 4x3 | 6 | 5 | 550 | Fundição | — | — | — |
 | Forja | `iron_smithy` | 4x2 | 4 | 3 | 350 | Mina de Ferro | Fundidor | Minério 1, Carvão 1 | Ferro 1 |
-| Ferraria | `weapon_smithy` | 4x2 | 4 | 3 | 350 | Forja | Ferreiro | Ferro 0.8, Carvão 0.8 | `arma_ferro` 0.8 |
-| Casa do Ferro | `armor_smithy` | 4x3 | 4 | 3 | 350 | Forja | Ferreiro | Ferro 0.8, Carvão 0.8 | `armadura_ferro` 0.8 |
+| Ferraria | `weapon_smithy` | 4x2 | 4 | 3 | 350 | Forja | Ferreiro | Ferro 0.8, Carvão 0.8 | Arma de ferro 0.8 |
+| Casa do Ferro | `armor_smithy` | 4x3 | 4 | 3 | 350 | Forja | Ferreiro | Ferro 0.8, Carvão 0.8 | Proteção reforçada 0.8 |
 
 ---
 
@@ -104,10 +104,10 @@ insumo chega pelo carregador.
 |---|---|---|---|---|
 | Cabra da Pedreira | `stonemason` | Pedreira | **FORA** do predio | rocha no mapa |
 | Lenhador | `woodcutter` | Casa do Lenhador | **FORA** do predio | arvore no mapa |
-| Carpina | `carpenter` | Serraria, Casa de Armas de Madeira, Oficina de Couro Cru | dentro | — |
+| Carpina | `carpenter` | Serraria, Casa de Armas de Madeira, Casa do Gibão | dentro | — |
 | Roceiro | `farmer` | Roçado de Milho, Canavial | **FORA** do predio | campo arado (milho, cana) |
 | Forneiro | `baker` | Moinho, Padaria | dentro | — |
-| Criador | `animal_breeder` | Criação de Bode, Cocheira | dentro | — |
+| Criador | `animal_breeder` | Malhada, Cocheira | dentro | — |
 | Carneador | `butcher` | Casa de Carne, Curtume | dentro | — |
 | Pescador | `fisherman` | Casa do Pescador | **FORA** do predio | agua |
 | Mineiro | `miner` | Garimpo, Jazida de Carvão, Mina de Ferro | **FORA** do predio | veio na serra |
@@ -130,29 +130,19 @@ Da extração ao bem que ninguém mais consome. Derivadas do grafo `entra`/`sai`
 de `production.json`.
 
 - Pedreira → **Pedra**
-- Casa do Lenhador → Tora → Serraria → Tábua → Oficina de Couro Cru → **Armas de couro + Chapéu de aba**
-- Casa do Lenhador → Tora → Serraria → Tábua → Casa de Armas de Madeira → **`arma_madeira`**
+- Casa do Lenhador → Tora → Serraria → Tábua → Casa do Gibão → **Gibão de couro + Chapéu de aba**
+- Casa do Lenhador → Tora → Serraria → Tábua → Casa de Armas de Madeira → **Arma de madeira**
 - Roçado de Milho → Milho → Moinho → Fubá → Padaria → **Cuscuz**
-- Roçado de Milho → Milho → Criação de Bode → Bode → Casa de Carne → **Carne de sol**
-- Roçado de Milho → Milho → Criação de Bode → Couro cru → Curtume → Couro → Oficina de Couro Cru → **Armas de couro + Chapéu de aba**
+- Roçado de Milho → Milho → Malhada → Bode → Casa de Carne → **Carne de sol**
+- Roçado de Milho → Milho → Malhada → Couro cru → Curtume → Couro → Casa do Gibão → **Gibão de couro + Chapéu de aba**
 - Roçado de Milho → Milho → Cocheira → **Cavalo**
 - Canavial → **Cachaça**
 - Casa do Pescador → **Peixe**
 - Garimpo → Ouro bruto → Fundição → **Dinheiro**
 - Jazida de Carvão → Carvão → Fundição → **Dinheiro**
-- Jazida de Carvão → Carvão → Forja → Ferro → Ferraria → **`arma_ferro`**
-- Jazida de Carvão → Carvão → Forja → Ferro → Casa do Ferro → **`armadura_ferro`**
-- Jazida de Carvão → Carvão → Ferraria → **`arma_ferro`**
-- Jazida de Carvão → Carvão → Casa do Ferro → **`armadura_ferro`**
-- Mina de Ferro → Minério → Forja → Ferro → Ferraria → **`arma_ferro`**
-- Mina de Ferro → Minério → Forja → Ferro → Casa do Ferro → **`armadura_ferro`**
-
----
-
-## 5. Lacunas que o gerador encontrou
-
-Ids que aparecem no dado e não têm nome no tema — na tela saem como id cru:
-
-- mercadoria `arma_madeira` aparece em production.json e nao tem nome no tema
-- mercadoria `arma_ferro` aparece em production.json e nao tem nome no tema
-- mercadoria `armadura_ferro` aparece em production.json e nao tem nome no tema
+- Jazida de Carvão → Carvão → Forja → Ferro → Ferraria → **Arma de ferro**
+- Jazida de Carvão → Carvão → Forja → Ferro → Casa do Ferro → **Proteção reforçada**
+- Jazida de Carvão → Carvão → Ferraria → **Arma de ferro**
+- Jazida de Carvão → Carvão → Casa do Ferro → **Proteção reforçada**
+- Mina de Ferro → Minério → Forja → Ferro → Ferraria → **Arma de ferro**
+- Mina de Ferro → Minério → Forja → Ferro → Casa do Ferro → **Proteção reforçada**

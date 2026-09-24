@@ -91,3 +91,26 @@ caminho. Ideia boa é justamente a mais perigosa.
   da F18a se aplica sozinho. **Nenhum comando novo, nada em `sim/`**: a sim não sabe onde está a
   câmera e não pode saber. O que falta decidir quando entrar: com uma causa em vários prédios,
   um clique leva a qual, e o segundo clique leva ao próximo ou repete o primeiro.
+- Separar as armas genéricas nas seis do GDD — **pré-requisito da Fase C**
+  (decisão do operador, 2026-09-24). Não é nome de tema faltando: é **dado
+  incompleto**. Três ids agregados (`arma_madeira`, `arma_ferro`,
+  `armadura_ferro`) existem em **um único lugar**, `data/production.json:22,24,25`,
+  e as próprias `notas` de lá dizem o que eles escondem — *"jogador escolhe
+  hand_axe, lance ou longbow"*, *"sword, pike ou crossbow"*, *"iron_armor ou
+  iron_shield"*. O GDD §4.1 lista as seis armas como mercadoria (Hand axes,
+  Swords, Lances, Pikes, Longbows, Crossbows), e o **Anexo A §12.1** diz qual
+  tropa exige qual: Bowman pede `longbow + leather_armor`, Pikeman pede
+  `pike + iron_armor`, e assim por diante. A Fase A não precisou distinguir
+  porque ninguém consome arma ainda; o **Quartel consumindo arma específica por
+  tropa** é o que torna o agregado insustentável, e isso é Fase C.
+  **O que medi hoje**, e que dimensiona o trabalho: os três ids **não estão em
+  `economia.mercadorias`** — a lista tem 28 ids e bate exatamente com o tema.
+  Sem entrada lá eles não têm estoque, não têm linha de HUD e não viram linha de
+  painel: a gaveta (`src/sim/selectors.ts:409`) itera `economia.mercadorias`, e
+  saída fora da lista simplesmente **não aparece** — a Casa de Armas de Madeira
+  mostra "Sai: —", não um id cru. Então separar não é só trocar três ids por
+  seis: é **declarar as seis (mais as armaduras) em `economy.json`**, e aí cada
+  uma ganha estoque, ordem no painel e o botão de "quantas de cada" que o GDD
+  §2.3 pede em `[geral]` para as oficinas. Até lá os três ids têm nome
+  provisório no tema (Arma de madeira, Arma de ferro, Proteção reforçada), pelo
+  mesmo motivo de sempre: se um dia chegarem à tela, chegam com nome.

@@ -2967,6 +2967,10 @@ Duas decisões do gerador que valem registro:
 
 ### Achados abertos, para decisão do operador
 
+> **Os quatro foram decididos no mesmo dia, e dois viraram reversão:**
+> leia a seção seguinte antes desta. `armory_workshop` **não** se chama
+> "Oficina de Couro Cru" e `leather_armor` **não** é "Armas de couro".
+
 1. **`leather_armor` = "Armas de couro" conflita com o GDD.** §9.2 diz que *"o
    gibão de couro do vaqueiro é literalmente armadura de couro"*, e o bloco
    `militares` do próprio tema usa "gibão de couro" como **proteção** de
@@ -2989,6 +2993,108 @@ Duas decisões do gerador que valem registro:
    sertanejo para o cercado onde o bode dorme, e resolve sem inventar palavra. O
    mesmo padrão existe em "Roçado de Milho" → "Milho" e agora em "Moinho" ←
    "Milho", que diferem por uma letra no HUD. Nada disso foi mudado.
+
+## Reversão de dois nomes, e as armas genéricas como dado incompleto (2026-09-24)
+
+Três decisões do operador sobre a sessão anterior, aplicadas aqui. Só tema e
+documento: **nenhum id da simulação mudou, nenhum número de dado mudou, nada em
+`src/sim/`** fora do teto de tempo do BUG-003, abaixo.
+
+### As duas reversões, e o motivo escrito
+
+| id | estava (sessão anterior) | ficou | por quê |
+|---|---|---|---|
+| `leather_armor` | Armas de couro | **Gibão de couro** | é armadura, não arma |
+| `armory_workshop` | Oficina de Couro Cru | **Casa do Gibão** | consome `leather`, não `skins` |
+| `armor_smithy` | — | **Casa do Ferro** | o único nome novo que fica |
+
+O operador registrou a reversão como erro dele, não meu: *"Você está certo e eu
+estava errado"*. O motivo de cada uma, que é o que uma sessão futura precisa para
+não desfazer de novo:
+
+1. **`leather_armor` é armadura.** GDD §9.2: *"o gibão de couro do vaqueiro é
+   literalmente armadura de couro"*. O bloco `militares` do próprio tema usa
+   "gibão de couro" como **`protecao`** de `axe_fighter`, `bowman` e
+   `lance_carrier` — chamar a mercadoria de "arma" punha o mesmo objeto em duas
+   categorias opostas dentro do mesmo arquivo.
+2. **"Couro Cru" nomeia o insumo do Curtume, não o da oficina.** O
+   `armory_workshop` consome `leather` (= "Couro", curtido) e produz
+   `leather_armor` + `wooden_shield`; quem consome `skins` (= "Couro cru") é o
+   `tannery`. "Casa do Gibão" casa com a **saída**, que é o critério que os
+   outros 27 nomes seguem.
+3. **O nome errado estava mesmo na oficina errada — só que a correta era a
+   terceira.** O `armor_smithy` (ferro + carvão → `armadura_ferro`) chamava-se
+   "Oficina de Couro Cru", e é ele que ganha "Casa do Ferro". As quatro oficinas
+   fecham assim: **Casa de Armas de Madeira**, **Casa do Gibão**, **Ferraria**,
+   **Casa do Ferro**.
+
+`swine_farm` passou de "Criação de Bode" para **Malhada** (o cercado onde o bode
+dorme), e a mercadoria `pigs` continua **Bode** — o jogador conta bodes no
+estoque. A `desc` acompanhou: "Cercado do bode. Dá bode e couro cru."
+
+### As três armas genéricas: dado incompleto, não nome faltando
+
+Reenquadramento do operador, e ele muda o destino do achado: não é lacuna de
+tema, é **dado incompleto**, e a separação vira **pré-requisito da Fase C**.
+Registrado em `IDEIAS.md`. O que **medi** ao escrever a entrada, e que ninguém
+tinha medido antes:
+
+- os três ids (`arma_madeira`, `arma_ferro`, `armadura_ferro`) existem em **um
+  único lugar do projeto**: `data/production.json:22,24,25`. Nenhum `.ts`,
+  nenhum teste, nenhum outro `.json` os menciona;
+- as próprias `notas` daquelas linhas já dizem o que eles escondem — *"jogador
+  escolhe hand_axe, lance ou longbow"*, *"sword, pike ou crossbow"*,
+  *"iron_armor ou iron_shield"*. O agregado é deliberado e está documentado;
+- o GDD **também** escreve o agregado na tabela de prédios (linhas 245, 258 e
+  259: "2 timber → arma de madeira"), enquanto o §4.1 lista as seis armas como
+  mercadoria e o **Anexo A §12.1** exige a arma específica por tropa (Bowman =
+  `longbow + leather_armor`, Pikeman = `pike + iron_armor`…). A inconsistência é
+  do documento, não do `production.json`;
+- **eles não estão em `economia.mercadorias`.** A lista tem 28 ids e batia
+  exatamente com as 28 chaves do tema antes desta sessão. Consequência medida na
+  gaveta do painel (`src/sim/selectors.ts:409`), que itera `economia.mercadorias`:
+  saída fora da lista **não vira linha nenhuma**. A Casa de Armas de Madeira
+  mostra "Sai: —", não um id cru. Ou seja, o risco que o nome provisório evita é
+  **futuro**, não presente.
+
+Nome provisório dado, como o operador pediu, para o dia em que chegarem à tela:
+**Arma de madeira**, **Arma de ferro**, **Proteção reforçada**. O terceiro não é
+"Armadura de ferro" de propósito: ele cobre `iron_armor` **ou** `iron_shield`
+(Gibão reforçado ou Peitoral), e o tema não tem armadura de ferro — o §9.2
+trocou toda armadura por couro.
+
+O gerador confirma o fechamento: `npm run docs:mapa` agora imprime **0
+lacuna(s)**, e a seção 5 do documento desapareceu.
+
+### BUG-003 fechado, com a correção que o próprio arquivo já previa
+
+O primeiro `npm run verify` desta sessão **reprovou** em
+`tests/F17c-buffer.test.ts`: `expected 3.059966744466311 to be less than 3`. O
+BUG-003 estava aberto justamente porque a mensagem da oscilação anterior não
+tinha sido capturada, e listava duas hipóteses; a capturada hoje é a que ele
+dava como **improvável** — o teto da razão, não o timeout.
+
+Apliquei a correção pré-escrita pelo operador no próprio BUGS.md (*"orçamento
+mais largo com o número medido escrito no comentário — nunca `skip`"*):
+`RAZAO_MAXIMA` de 3,0 para **5,0**, com os quatro números medidos no comentário
+(0,37 no fechamento · 0,82 no BUG-003 · **3,06 na reprovação** · 1,56 na corrida
+seguinte). A razão oscila entre 0,4 e 3,1 nesta máquina: 3,0 estava **dentro do
+ruído**. 5,0 fica acima do ruído medido e ainda separa de 7,6x, que é o custo
+real de realocar o rascunho por tamanho de mapa. A proteção determinística da
+F17c não é esta medida — é `alocacoesDeRascunho: 0`, que roda em todo verify e
+não foi tocada. BUG-003 saiu do `BUGS.md` neste commit; a regra dos dois testes
+de tempo fica, porque o F09 continua sob ela.
+
+### Verificado
+
+- `npm run verify` — **EXIT=0**: 66 arquivos, 1045 testes, typecheck, lint e
+  `validate:data`. (A primeira corrida foi a reprovação do F17c acima; a
+  segunda, antes de eu tocar no teto, passou — foi por isso que registrei a
+  oscilação em vez de tratar como regressão minha.)
+- Roteiros que leem o tema, por código de saída: **F05b `0`, F06 `0`, F13b `0`,
+  F16b `0`**. Nenhuma asserção precisou de ajuste, pelo mesmo motivo da sessão
+  anterior: elas leem o nome do próprio tema.
+- `npm run docs:mapa` — 28 prédios, 14 civis, 17 cadeias, **0 lacunas**.
 
 ## Perguntas em aberto
 

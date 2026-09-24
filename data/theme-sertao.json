@@ -40,11 +40,11 @@
     "marketplace":      { "nome": "Feira",                    "desc": "Troca de mercadoria a preço fixo." },
     "mill":             { "nome": "Moinho",                   "desc": "Milho vira fubá." },
     "bakery":           { "nome": "Padaria",                  "desc": "Fubá vira cuscuz e beiju." },
-    "swine_farm":       { "nome": "Criação de Bode",          "desc": "Bode e couro." },
+    "swine_farm":       { "nome": "Malhada",                  "desc": "Cercado do bode. Dá bode e couro cru." },
     "stables":          { "nome": "Cocheira",                 "desc": "Cria e doma cavalo." },
     "butchers":         { "nome": "Casa de Carne",            "desc": "Bode vira carne de sol." },
     "tannery":          { "nome": "Curtume",                  "desc": "Couro cru vira couro curtido." },
-    "armory_workshop":  { "nome": "Oficina de Couro Cru",     "desc": "Gibão de couro e chapéu de aba." },
+    "armory_workshop":  { "nome": "Casa do Gibão",            "desc": "Gibão de couro e chapéu de aba." },
     "metallurgists":    { "nome": "Fundição",                 "desc": "Ouro bruto vira moeda." },
     "town_hall":        { "nome": "Mercenários",              "desc": "Aqui se contrata jagunço com dinheiro na mão." },
     "iron_smithy":      { "nome": "Forja",                    "desc": "Minério vira ferro." },
@@ -94,8 +94,10 @@
     "loaves": "Cuscuz", "sausages": "Carne de sol", "wine": "Cachaça", "fish": "Peixe",
     "hand_axe": "Facão", "sword": "Peixeira", "lance": "Aguilhada",
     "pike": "Ferrão", "longbow": "Bodoque", "crossbow": "Bacamarte",
-    "leather_armor": "Armas de couro", "iron_armor": "Gibão reforçado",
-    "wooden_shield": "Chapéu de aba", "iron_shield": "Peitoral de couro cru"
+    "leather_armor": "Gibão de couro", "iron_armor": "Gibão reforçado",
+    "wooden_shield": "Chapéu de aba", "iron_shield": "Peitoral de couro cru",
+    "arma_madeira": "Arma de madeira", "arma_ferro": "Arma de ferro",
+    "armadura_ferro": "Proteção reforçada"
   },
   "hud": { "comida": "Comida", "populacao": "Gente", "pausado": "Pausado" },
   "menuBuild": {

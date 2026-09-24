@@ -126,10 +126,19 @@ describe('F17c — o A* nao e reentrante, e a guarda diz isso em voz alta', () =
 // 40 / 94 / 303 us por busca curta — razao 7,6x entre 256x256 e 64x64.
 const RAZAO_ANTES = 7.6;
 // Teto FROUXO de proposito: o esperado depois da correcao e ~1,0, e microbench
-// em maquina compartilhada oscila. 3,0 ainda separa "nao cresce" de 7,6x com
-// folga. Se vier a oscilar, a correcao e alargar o teto COM O MOTIVO ESCRITO —
-// nunca `skip`, nunca tirar o caso da verificacao (CLAUDE.md 10).
-const RAZAO_MAXIMA = 3.0;
+// em maquina compartilhada oscila. Se vier a oscilar, a correcao e alargar o
+// teto COM O MOTIVO ESCRITO — nunca `skip`, nunca tirar o caso da verificacao
+// (CLAUDE.md 10).
+//
+// Alargado de 3,0 para 5,0 em 2026-09-24, com o numero medido: o teto de 3,0
+// REPROVOU na suite completa com razao 3,06, e a corrida seguinte da mesma
+// arvore deu 1,56. Antes disso: 0,37 no fechamento e 0,82 no BUG-003. A razao
+// oscila entre 0,4 e 3,1 nesta maquina — 3,0 estava DENTRO do ruido, e era isso
+// que o BUG-003 dava como improvavel. 5,0 fica acima do ruido medido e ainda
+// separa de 7,6x, que e o custo real de realocar o rascunho por tamanho de mapa.
+// A protecao deterministica desta feature nao e esta medida, e a contagem
+// `alocacoesDeRascunho`, que roda em todo `npm run verify`.
+const RAZAO_MAXIMA = 5.0;
 const BUSCAS = 400;
 const AQUECIMENTO = 100;
 
