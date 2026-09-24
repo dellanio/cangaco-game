@@ -4320,8 +4320,15 @@ Duas pedreiras cujo único tile de rocha comum é o mesmo **não se alternam**. 
 pede primeiro é quem vem antes em `unidades.ordem`, e ele repete o pedido a cada
 ciclo; a outra fica em `esperando_insumo` até o tile secar. **Não é espera
 indefinida** — o tile seca e as duas passam a esgotadas pelo mesmo predicado —
-mas é injusto. Round-robin entre prédios é mudança de design e não entra aqui;
-fica em `IDEIAS.md` se algum dia incomodar.
+mas é injusto. Round-robin entre prédios é mudança de design e não entra aqui.
+
+**Decisão do operador (2026-09-24): isso vai para o `BALANCE_LOG.md`, e não como
+pendência técnica** — o que importa é o que o jogador vê, que é a segunda
+pedreira parada sem motivo aparente. Com a densidade de rocha que o gerador
+produz (311 tiles de rock no mapa padrão) o caso pode ser raro: duas pedreiras
+vizinhas costumam ter vários tiles próprios, e o desempate só aparece quando a
+interseção é de um tile só. **A verificação é no playtest**, e é o que decide se
+algum número se mexe.
 
 O rótulo `esperando_insumo` cobre duas causas ("o mapa secou" e "o vizinho está
 com o tile"). As duas leem como "falta matéria-prima" para o jogador e a segunda

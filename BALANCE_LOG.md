@@ -170,6 +170,23 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   **o numero e limite de tamanho de arquivo, nao de densidade de floresta**: o dia em que o teto da
   F-T2a subir, ele volta a ser escolha de paisagem
 
+- [2026-09-24] **duas pedreiras que dividem o mesmo lajedo nao se revezam: uma produz e a outra
+  parece parada sem motivo** | nao e numero errado e nao e pendencia tecnica — e o que o jogador ve.
+  Desde a F-T2c o tile e reserva exclusiva de quem esta cavando nele (o aceite pede isso), e o
+  desempate e a ordem de `unidades.ordem`: o mesmo pedreiro pede primeiro a cada ciclo, entao a
+  segunda pedreira fica em `esperando_insumo` ate o tile secar, sem alerta e sem explicacao na tela.
+  Nao e espera indefinida (o tile seca e as duas passam a esgotadas pelo mesmo predicado), e por isso
+  nao e bug: e leitura. | `data/production.json` (`quarry.colheita.alcance` 6),
+  `data/resources.json` (`rock.rendimentoPorTile`) e a densidade que `tools/gerar-mapa.js` semeia —
+  **os tres decidem com que frequencia dois alcances se sobrepoem com UM unico tile em comum**
+  | **round-robin entre predios fica FORA**: e mudanca de design, nao ajuste de numero.
+  **Verificar no playtest, antes de qualquer coisa:** com a densidade de rocha que o gerador produz
+  hoje (311 tiles de rock no mapa padrao) o caso pode ser raro — duas pedreiras vizinhas costumam ter
+  varios tiles proprios, e o desempate so aparece quando a intersecao e de um tile so. Se for raro,
+  nao se mexe em nada. Se for comum, o primeiro numero a olhar e o alcance, que ja esta neste diario
+  como nao calibrado. | observado no aceite da F-T2c (`test-output/F-T2c.json`), em cenario montado
+  de proposito para forcar a disputa; **nao medido em partida**
+
 ---
 
 ## Ciclos fechados
