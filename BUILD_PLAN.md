@@ -1343,7 +1343,186 @@ prédio surge sem clique do jogador.
   Fica registrado como limite conhecido, não resolvido.
 - **Nota**: sem `Math.random()` e sem `Date.now()` — a foto tem de repetir.
 
+### F-T1 — Camada de terreno base (dado + sim)
+- **Escopo**: o mapa deixa de ser liso. (a) arquivo de mapa versionado em
+  `data/maps/<id>.json`, com schema em `npm run validate:data`; (b) carregamento
+  **fora do `GameState`**, congelado por `src/sim/freeze.ts` como o resto de
+  `GameData`; (c) `tipoDoTile(gx, gy)` como **única** porta de leitura; (d) o
+  motivo `'terreno'` de `canPlace` (`src/sim/placement.ts`, declarado e
+  inalcançável desde a F06) passa a ser alcançável; (e) o A* passa a somar os
+  **quatro** custos de terreno que o loader já monta — hoje conhece dois — e a
+  recusar o intransponível. **Nenhum recurso natural** (é a F-T2) e **nada em
+  `src/render/`** (ver Nota de escopo).
+- **Aceite**, quatro pernas, e nenhuma passa por acidente:
+  1. **A recusa nomeia o terreno.** `canPlace` sobre água devolve
+     `motivo === 'terreno'`, e o teste afirma o **motivo**, não só a recusa — o
+     vocabulário de `MotivoDeRecusa` existe justamente para separar isto de
+     "ocupado" e de "porta sem saída".
+  2. **O caminho desvia, e desiste.** Com um lago no meio, o A* devolve caminho
+     **sem nenhum tile de água** e mais caro que a mesma viagem no mapa liso;
+     com o lago fechando a passagem, devolve `null`. As duas metades, não uma.
+  3. **O custo foi remedido, não estimado.** Mesma harness da F17c
+     (`buscaCurtaInedita`), mapa liso contra mapa com terreno, número gravado em
+     `test-output/F-T1.json`, e o teto do teste escrito **com o número medido** —
+     é a regra dos testes de tempo do `BUGS.md`, e a razão da F17c oscila entre
+     0,4 e 3,1 nesta máquina.
+  4. **Nada do que está de pé quebra.** A suíte de hoje (66 arquivos, 1045
+     testes) continua verde **sem mudar fixture**: o mapa padrão nasce com a
+     região da vila inicial (`economy.json`, storehouse em 29,30 — medido na
+     F18b) inteira em terreno construível.
+- **Evidência**: `test-output/F-T1.json`
+- **Nota (por que o terreno fica fora do estado, com o número)**: medido em
+  2026-09-24 sobre 128² = 16 384 tiles, com `JSON.stringify`: `Record` denso de 1
+  campo por tile = **0,35 MB**; de 2 campos = 0,55 MB; de 3 = 0,85 MB. O estado
+  inteiro de hoje é **29 KB e constante** em 64², 128² e 256² (tabela da F18b) —
+  pôr o terreno dentro multiplicaria o save por doze para guardar **dado
+  imutável**. O que não está no estado não pode divergir: o determinismo fica
+  mais forte, não mais fraco.
+- **Nota (formato do arquivo — decisão minha, §7.4 da proposta, registrada para
+  veto barato)**: camada base como **linhas de caracteres** (`"ggggwwwgg…"`),
+  128 linhas de 128 chars ≈ 16 KB de texto que um humano lê no diff do git; os
+  recursos (F-T2) como **lista esparsa** `[{ tipo, gx, gy, quantidade }]`, nunca
+  16 384 objetos. Escolhi pelo diff: o git é quem vai revisar mapa, e matriz de
+  objeto não se revisa.
+- **Nota (quem escreve o primeiro mapa — decisão minha, §7.5)**: gerador em
+  `tools/` que **emite o arquivo** a partir de uma semente escrita no cabeçalho
+  do próprio arquivo; o arquivo é o que entra no git e o que o jogo carrega. O
+  jogo **nunca** roda o gerador. Isso respeita o Anexo B do GDD (*"mapas feitos à
+  mão"*, sem geração procedural no MVP) e a entrada congelada do `IDEIAS.md`:
+  gerar é ferramenta de autoria, não runtime. Se o mapa emitido não servir,
+  edita-se o arquivo à mão e a semente vira registro histórico.
+- **Nota (save/load)**: o save guarda `mapa: "<id>"` **mais o hash do arquivo**.
+  Carregar um save com mapa diferente falha **na hora**, em vez de divergir 300
+  ticks depois — que é o modo de falha caro.
+- **Nota (dado que hoje não tem leitor, e ganha um aqui)**: `intransponivel`
+  (`["agua","rocha","montanha","predio"]`) chega em `GameData`
+  (`src/sim/data/loader.ts:276`) e **nenhum sistema o consulta** — grep em `src/`
+  devolve só o loader e o `types.ts`. `campoArado 1.45` e `areia 1.50` estão na
+  matriz de custo e o A* nunca os alcança (`src/sim/pathfinding.ts:8-9` diz o
+  porquê). Esta feature é quem dá leitor aos três. O que sobrar sem leitor ao
+  fim dela **sai do dado**, em vez de virar folclore.
+- **Nota (balanceamento, em bloco)**: com terreno variado os **tempos de viagem
+  mudam**, e isso mexe em número já calibrado (oráculo da F15b). As observações
+  vão para o `BALANCE_LOG.md` e se ajustam **em lote** depois da F-T2 — nunca
+  item a item, que é como o milho quebra o pão.
+- **Nota de escopo (CLAUDE.md §10)**: o **render** do terreno é item próprio e
+  **ainda não está escrito na fila**. Entre esta feature e ele, a tela mostra
+  grama onde a simulação vê água, e o jogador leva recusa de construção sem ver
+  o motivo. É buraco conhecido de duas features, não descuido: `src/sim/` e
+  `src/render/` na mesma feature exigiria a nota de integração escrita **antes**
+  do código, e esta é de simulação.
+- **Nota (GDD — decisão minha, §7.7)**: o GDD §4 ganha a seção de recursos
+  naturais **no commit da feature que a torna verdadeira**, nunca antes. Doc que
+  descreve o que não existe é pior que doc faltando.
+
+### F-T2 — Camada de recursos no mapa (sim)
+- **Escopo**: `state.recursos`, **esparso e dentro do `GameState`**, com a mesma
+  forma e a mesma chave de `state.estradas` —
+  `Readonly<Record<"gx,gy", { tipo: string; quantidade: number }>>`. Um
+  mecanismo de esgotamento com **três regimes declarados no dado, por tipo**:
+  `nunca` (a entrada sai do mapa ao zerar e o tile volta a ser terreno base),
+  `porAcao` (a entrada **fica** com `quantidade 0` — *cortada* é diferente de
+  *inexistente*) e `porTempo` (sobe sozinha, taxa em `data/`). Um mecanismo, três
+  regimes; **não** três sistemas. Primeiro consumidor: a **Quarry**, que já tem
+  esgotamento, evento `vein-exhausted` e alerta — só a **fonte** muda, do prédio
+  para o tile. Árvore entra como recurso **e como obstáculo**. Nada em
+  `src/render/`.
+- **Aceite**, e as duas primeiras pernas são as que não passam por acidente:
+  1. **O exploit da F16a morre, e a asserção é ele.** Demolir a pedreira
+     esgotada e reconstruir no mesmo tile **não** devolve pedra: o teste roda até
+     o esgotamento, demole, reconstrói, roda de novo e afirma produção **zero**.
+     Hoje isso devolve 200 pedras por meio custo de construção.
+  2. **O lugar passa a importar, e o número prova.** Duas pedreiras iguais em
+     dois lugares do mesmo mapa produzem **totais diferentes** até esgotar, e o
+     total de cada uma é a soma dos tiles de rocha ao alcance dela — os dois
+     números gravados na evidência. É o que separa esta feature de trocar o 200
+     de lugar.
+  3. **Os três regimes se distinguem no estado.** Tile de rocha zerado **sai** de
+     `state.recursos`; tile de árvore cortada **fica**, com `quantidade 0`. O
+     teste afirma a diferença entre os dois, que é a pré-condição escrita no
+     `IDEIAS.md` para os modos do Woodcutter's.
+  4. **Determinismo e save.** Mesma semente, 500 ticks, dois estados idênticos
+     byte a byte com recursos **parcialmente** esgotados (nem vazios, nem
+     cheios); `compararComESemSave` da F02/F23 continua verde **sem código
+     novo** — `Record` de string para objeto simples, sem `Map`, sem função, sem
+     ciclo. +30 KB no save, medido: 900 tiles de recurso.
+  5. **O A* com floresta foi remedido.** Decisão do operador (2026-09-24):
+     **árvore é obstáculo**, e a re-medição é **tarefa dentro desta feature**,
+     não depois. Vizinhança 8 com obstáculo **esparso** é caso diferente do mapa
+     liso da F18b: cada árvore reprova a regra de quina (`quinaLivre`,
+     `src/sim/pathfinding.ts:423`) nas diagonais que a tocam, e a fronteira do A*
+     cresce. Medir busca **curta e longa**, mapa vazio contra mapa com a
+     densidade de floresta do mapa padrão, µs e nós expandidos gravados em
+     `test-output/F-T2.json`, teto escrito com o número medido.
+  6. **Ninguém varre o mapa para escolher alvo.** A escolha de tile continua
+     nascendo como **tarefa do JobBoard**, com origem já resolvida e reservada no
+     `claim`; o teste prova pelo comportamento — dois especialistas que reclamam
+     no mesmo tick recebem tiles **distintos**, e o `release` devolve a reserva.
+     Varrer o mapa é o anti-padrão do CLAUDE.md §10, e recurso no mapa é a maior
+     tentação de quebrá-lo desde a F09.
+- **Evidência**: `test-output/F-T2.json`
+- **Nota (isto substitui o veio do prédio — decisão do operador, 2026-09-24)**:
+  **rendimento por tile, não no prédio.** `ReceitaDePredio.rendimentoDoVeio` e
+  `PredioCompleto.producao.veio` deixam de ser a fonte; `quarry.veio.rendimento
+  = 200` de `data/production.json` (contrato da F15a) sai, e o total passa a ser
+  função dos tiles de rocha ao alcance. **É o ponto de maior risco do pacote** e
+  está escrito aqui de propósito: a Nota da F21 dizia *"só o inicializador
+  muda"*, e isso virou meia verdade — com o recurso no tile, quem decrementa
+  deixa de ser o ciclo de produção e passa a ser a colheita.
+- **Nota (o que sai de outros arquivos neste commit)**: a entrada *"Demolir e
+  reconstruir renova o veio da Quarry"* sai do `IDEIAS.md` **no commit desta
+  feature** — ela morre sozinha, não se conserta. A entrada *"Terreno de mapa
+  variado"* se divide em duas, e os dois dependentes registrados se separam
+  junto: o motivo `'terreno'` do `canPlace` é da F-T1, os **modos do
+  Woodcutter's** são desta.
+- **Nota (cardume — decisão minha, §7.2, registrada para veto barato)**: regime
+  **`nunca`**. O GDD marca o estoque do lago como finito **[fonte]**
+  (`fishermans.notas`, em `data/production.json`, diz *"estoque do lago e
+  finito"* e nada implementa), e regeneração seria invenção nossa em cima de
+  fonte. O custo de errar é **um campo de dado**: trocar para `porTempo` é uma
+  linha em `data/`, sem tocar em sistema — é exatamente isso que os três regimes
+  compram. Consequência herdada, não nova: Fisherman's com cardume seco cai na
+  entrada já aberta do `IDEIAS.md` sobre prédio esgotado que não devolve o
+  trabalhador.
+- **Nota de escopo (CLAUDE.md §10)**: o render dos recursos é item próprio e
+  ainda não está na fila — ver a mesma nota na F-T1. Entre as duas, a floresta
+  existe para o A* e não para os olhos.
+
 ### F18 — Farm e campos de milho
+- **Escopo**: a fazenda passa a depender de **tile arável no mapa**. O campo é
+  recurso de regime `porAcao` (arar e semear repõe; colher consome), criado pela
+  F-T2 e consumido aqui — esta feature **não inventa** mecânica de campo, ela é
+  **consumidora** dela. `terrain.json.campos.milho.tilesPorFarm = 15` e o
+  duplicado em `production.json.wineyard` (9 tiles, 1 timber) ganham leitor **ou
+  saem**: hoje nenhum dos dois tem um (grep em `src/` não acha leitor), e os dois
+  não podem continuar sendo a mesma verdade escrita em dois lugares.
+- **Aceite**, as duas pernas de sempre, com a condição reescrita: **fazenda sem
+  campo não produz** passa a significar **fazenda sem tile arável alcançável não
+  produz** — condição de **mapa**, não número no prédio. (a) fazenda posta em
+  região sem tile arável ao alcance fica parada, com a causa nomeada no alerta
+  (F22), e o teste afirma a **causa**, não só a parada; (b) a mesma fazenda, no
+  mesmo mapa, com tiles aráveis ao alcance, produz milho — e a produção **para**
+  quando os tiles se esgotam e **volta** quando o campo é replantado.
+- **Evidência**: `test-output/F18.json`
+- **Nota (a ordem mudou, e o número da frase com ela)**: a proposta chamava esta
+  feature de **terceira** consumidora do módulo, na fila F-T1 → F-T2 → F-T3 →
+  F18. Com o corte aprovado pelo operador (2026-09-24) a F-T3 foi para **depois
+  da F20**, então na ordem real a F18 é a **segunda** consumidora de
+  `state.recursos` — a Quarry, dentro da F-T2, é a primeira. A frase da proposta
+  fica registrada aqui para que ninguém a leia como contradição.
+- **Nota (o fazendeiro ainda NÃO anda, e é decisão, não esquecimento)**: quem ara
+  e planta é o **fazendeiro**, não o obreiro (correção do operador, 2026-09-24) —
+  mas a **locomoção** do especialista é a F-T3, que vem depois da comida. Aqui o
+  campo é tile de verdade, com esgotamento de verdade, e o fazendeiro continua
+  dentro do prédio: o trabalho no campo é **abstração de tempo**, como toda
+  produção de hoje. O render **não** pode desenhar o fazendeiro andando até o
+  campo enquanto isso valer — seria desenhar regra que não existe, o mesmo motivo
+  que tirou o laborer caminhando da F17d.
+- **Nota (o que caiu da proposta anterior)**: `docs/planos/F18-F19-proposta-de-item.md`
+  §2 propunha `state.campos` derivado da posição da fazenda e §4 propunha o
+  fazendeiro não sair nunca. As duas caem com a decisão de arquitetura de
+  2026-09-24 (`docs/planos/recursos-naturais-proposta.md`); o documento fica como
+  registro do que foi considerado.
 ### F19 — Mill e Bakery (cadeia do pão)
 ### F20 — Inn, fome e consumo
 - Restauração por tipo de comida e regra das duas comidas diferentes, conforme o
@@ -1355,6 +1534,36 @@ prédio surge sem clique do jogador.
   operador: fica assim **por enquanto**, porque não existe item no chão e nenhuma unidade morre antes
   desta feature ou do combate. Esta feature decide se a carga cai no tile e é recolhida (item no chão,
   tarefa ou estado novo no GDD §6.2) ou se continua perdida — e ajusta o teste de conservação de bens.
+### F-T3 — O especialista sai do prédio (sim)
+- **Posição na fila — decisão do operador, 2026-09-24**: **depois da F20**, e a
+  razão é dele: *"o especialista sair é locomoção, e locomoção pode esperar o
+  jogo ter pão."* A F-T1 e a F-T2 vieram antes da comida porque são
+  **pré-condição** de mecânica de cinco prédios e do campo da própria F18; esta
+  não é — ela é a caminhada que torna a saída visível.
+- **Escopo**: FSM nova para o ocupante de prédio extrator: sai, anda até o tile
+  de recurso, colhe, volta, entrega. Estado explícito em `unit.fsm` e
+  `unit.fsmData` serializável, sem `setTimeout`, sem async. **Primeiro caso: o
+  pedreiro** — é o único em que **só a locomoção** é nova; o resto da mecânica
+  dele já está de pé e medido desde a F15a. Lenhador e fazendeiro herdam, e não
+  entram nesta feature.
+- **Aceite**:
+  1. **Ele anda, e o caminho é o do jogo.** O pedreiro sai do prédio, chega ao
+     tile de rocha pelo A* (não por teleporte, não por contador), colhe e volta —
+     o teste afirma a sequência de tiles e o tick de cada transição.
+  2. **"Ocupado, mas fora" é respondido por todo predicado que lê `ocupante`.**
+     Esta é a perna cara, e é o motivo de a feature existir sozinha: o painel da
+     F16b não pode dizer "sem trabalhador"; o alerta `sem-trabalhador` da F22
+     **não** pode disparar; demolir o prédio com o ocupante no campo não pode
+     deixar unidade órfã nem tarefa reclamada sem `release`. Um caso de teste
+     para cada um dos três.
+  3. **Determinismo no meio do passo.** Save e load com o pedreiro **a caminho**
+     (nem no prédio, nem no tile) e 200 ticks depois: estado idêntico byte a byte
+     ao que não passou por save.
+- **Evidência**: `test-output/F-T3.json`
+- **Nota (o que esta feature NÃO faz)**: não desenha nada. O render do
+  especialista fora do prédio é item próprio, pelo mesmo motivo das notas de
+  escopo da F-T1 e da F-T2.
+
 ### F21 — Gold mine, Coal mine e Metallurgist's (ouro renovável)
 - **Nota (origem: F15a — contrato herdado)**: o veio mora no **prédio**, em
   `PredioCompleto.producao.veio`, semeado de `data/production.json`
@@ -1366,6 +1575,13 @@ prédio surge sem clique do jogador.
   feature antes da F17 produz uma), **só o inicializador muda**: o rendimento
   passa a ser função dos tiles sob e ao redor do prédio. Nenhum sistema precisa
   mudar para isso acontecer.
+  **Corrigido em 2026-09-24, e a correção importa para quem pegar este item**: a
+  camada de terreno ganhou dono na fila (F-T1/F-T2), e *"só o inicializador
+  muda"* virou **meia verdade** — com o recurso no tile, quem decrementa deixa de
+  ser o ciclo de produção e passa a ser a colheita. Quando esta feature for pega,
+  o veio do prédio **já não existe**: ouro, carvão e ferro herdam a camada da
+  F-T2 prontos, e **esta feature encolhe** para o metalúrgico e a cadeia do
+  ouro.
 - **Nota (achado da F16a, 2026-09-23)**: enquanto o veio for semeado na
   **conclusão da obra**, demolir e reconstruir a Quarry sobre o mesmo tile
   devolve o veio **cheio** por metade do custo de construção
@@ -1374,6 +1590,9 @@ prédio surge sem clique do jogador.
   de graça, não um detalhe. **É esta feature que decide** se o veio passa a ser
   do terreno; se passar, o exploit some sozinho. A F16a não é dona disso e não
   mexeu.
+  **Dono definido em 2026-09-24: é a F-T2**, não esta. O veio passa para o tile,
+  o exploit morre sozinho, e a asserção que prova a morte é a primeira perna do
+  aceite de lá. A entrada correspondente sai do `IDEIAS.md` no commit da F-T2.
 
 ### F22 — Alertas do HUD
 - Prédio sem trabalhador, sem estrada, fome, mina esgotada.

@@ -3096,6 +3096,93 @@ de tempo fica, porque o F09 continua sob ela.
   anterior: elas leem o nome do próprio tema.
 - `npm run docs:mapa` — 28 prédios, 14 civis, 17 cadeias, **0 lacunas**.
 
+## Os itens F-T1, F-T2 e F-T3 escritos na fila (2026-09-24)
+
+**Nada implementado.** A sessão escreve fila, não código: o operador aprovou o
+desenho de `docs/planos/recursos-naturais-proposta.md` e mandou escrever os três
+itens, com a F18 reescrita, e **parar**. O diff é `BUILD_PLAN.md` e este arquivo.
+
+### O que o operador decidiu, e o que cada decisão fixou no item
+
+1. **Árvore é obstáculo**, com a re-medição do A* **dentro** da feature — é a
+   quinta perna do aceite da F-T2. O argumento dele, que virou o texto do item:
+   *"vizinhança 8 com obstáculo esparso é caso diferente do mapa liso que você
+   mediu na F18b"*. Confere no código: `data/terrain.json` declara
+   `pathfinding.vizinhanca = 8`, e `src/sim/pathfinding.ts:423` recusa o passo
+   diagonal quando qualquer uma das duas quinas está ocupada — cada árvore mata
+   diagonais que o mapa liso nunca perdeu.
+2. **Rendimento por tile, não no prédio** — *"é o que faz o lugar importar"*.
+   Registrado no item como **substituição** do veio: `quarry.veio.rendimento =
+   200` (contrato da F15a) sai, e o exploit de demolir-e-reconstruir da F16a
+   morre junto. A asserção que prova a morte é a **primeira** perna do aceite da
+   F-T2, e a entrada sai do `IDEIAS.md` no commit dela.
+3. **O corte: F-T1 + F-T2 agora, F-T3 depois da comida.** O operador aceitou o
+   argumento contra o que ele mesmo escreveu na F18g — *"isto é pré-condição de
+   cinco prédios e do campo da própria F18, não fidelidade visual. Mas o
+   especialista sair é locomoção, e locomoção pode esperar o jogo ter pão."* A
+   ordem na fila ficou: **F-T1 → F-T2 → F18 → F19 → F20 → F-T3 → F21**.
+
+**Consequência que registrei porque contradiz a proposta:** com a F-T3 atrás da
+F20, a F18 **não** é a terceira consumidora do módulo, como a proposta escreveu —
+é a **segunda** (a Quarry, dentro da F-T2, é a primeira). Está na Nota da F18
+para ninguém ler a frase antiga como contradição. E a F18 fica com o campo como
+tile de verdade **e o fazendeiro parado dentro do prédio**: o trabalho no campo
+segue sendo abstração de tempo até a F-T3.
+
+### As quatro decisões de detalhe que tomei, e por quê
+
+O operador disse: *"as outras cinco decisões da §7: me traga uma por vez se
+alguma mudar o desenho. Se forem detalhe, decida você e registre."* Nenhuma das
+quatro abaixo muda o desenho — todas ficaram escritas no item, com o motivo, para
+que vetar custe uma linha.
+
+| §7 | Decisão | Por quê |
+|---|---|---|
+| 2 — cardume | regime **`nunca`** | o GDD marca o estoque do lago como finito **[fonte]**, e regeneração seria invenção nossa em cima de fonte. Errar custa **um campo de dado**: virar `porTempo` é uma linha, sem tocar em sistema — é para isso que os três regimes existem |
+| 4 — formato do mapa | linhas de caracteres + lista esparsa | escolhi pelo **diff**: o git é quem revisa mapa, e matriz de 16 384 objetos não se revisa. 128 linhas de 128 chars ≈ 16 KB de texto legível |
+| 5 — quem escreve o primeiro mapa | gerador em `tools/` que **emite o arquivo**, com a semente no cabeçalho dele | o jogo nunca roda o gerador. Respeita o Anexo B do GDD (*"mapas feitos à mão"*) e a entrada congelada do `IDEIAS.md`: gerar é ferramenta de autoria, não runtime |
+| 7 — atualização do GDD | o GDD muda **no commit da feature que torna a mudança verdadeira** | doc que descreve o que não existe é pior que doc faltando. §4 ganha recursos naturais na F-T1/F-T2; §5.4 troca laborer por fazendeiro na F18 |
+
+### O que confirmei no arquivo antes de escrever (não herdei da proposta)
+
+- `terrain.json.intransponivel` (`["agua","rocha","montanha","predio"]`) chega em
+  `GameData` (`src/sim/data/loader.ts:276`) e **nenhum sistema o consulta**: grep
+  em `src/` devolve só `loader.ts` e `data/types.ts`. Idem `campoArado 1.45` e
+  `areia 1.50`, que estão na matriz de custo e o A* nunca alcança. Idem
+  `terrain.json.campos.milho.tilesPorFarm = 15` e `uva.tilesPorWineyard = 9`,
+  que **não têm leitor nenhum**. Por isso a F-T1 e a F18 dizem *"ganham leitor ou
+  saem"*: dado citado como fonte da regra e sem leitor é folclore.
+- `pathfinding.ts:423` é mesmo a regra de quina, e `vizinhanca: 8` está no dado —
+  a premissa da decisão 1 do operador está no código, não na lembrança.
+- A F18 estava **vazia** no `BUILD_PLAN.md` (só o título), então reescrevê-la não
+  apagou critério nenhum. A F21 tinha duas notas que **ficaram falsas** com a
+  decisão de hoje: emendei as duas no lugar, sem apagar o texto velho — *"só o
+  inicializador muda"* virou meia verdade, e o exploit da Quarry agora tem dono
+  (F-T2), que era a pergunta aberta na nota da F16a.
+
+### O que NÃO fiz, de propósito
+
+- **Não criei chave em `test-results.json`.** A convenção viva do arquivo é que
+  só feature **concluída** tem chave (F19, F20 e F21 não têm), e o cabeçalho do
+  `BUILD_PLAN.md` diz o contrário — *"cada feature tem uma chave que começa em
+  `false`"*. Segui a prática, não o cabeçalho, porque inverter isso muda como a
+  fila é lida. **É divergência do próprio projeto, e fica aqui como tal.**
+- **Não escrevi os itens de render.** O terreno, os recursos e o especialista
+  fora do prédio precisam de um item de render **cada** (CLAUDE.md §10: `sim/` e
+  `render/` juntos só com a nota de integração escrita antes do código), e o
+  operador pediu três itens, não seis. A lacuna está escrita como **Nota de
+  escopo** dentro da F-T1 e da F-T2, e é buraco de verdade: entre a F-T1 e o
+  render, a tela mostra grama onde a simulação vê água, e o jogador leva recusa
+  de construção sem ver o motivo.
+- **Não toquei no GDD**, pela regra que acabei de registrar: ele muda no commit
+  da feature.
+
+### Verificado
+
+- `npm run verify` — **EXIT=0** (66 arquivos, 1045 testes). Só documento mudou;
+  rodei para provar que o repositório segue verde e que a fila nova não quebrou
+  nenhum guarda de dado.
+
 ## Perguntas em aberto
 
 _(nenhuma no momento: as três que sobravam foram decididas pelo operador — ver "Ajuste pós-F10".)_
