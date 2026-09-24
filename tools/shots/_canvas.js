@@ -67,12 +67,35 @@ async function arrastarDentroDoCanvas(page, canvas, pontos, opcoes = {}) {
 function pontoDoTileNaTela(canvas, tile, camera, tilePx) {
   const mundoX = tile.gx * tilePx + tilePx / 2;
   const mundoY = tile.gy * tilePx + tilePx / 2;
+  // F18b: a origem da camera e 0.5, entao ampliar e AFASTAR do centro do quadro,
+  // nao do canto. Esta e a inversa exata de `mundoSobPonto` (`render/zoom.ts`),
+  // com ancora e origem valendo meio quadro. Em zoom 1 os dois termos de origem
+  // se cancelam e sobra `(mundo - scroll)`, que era a formula anterior — por isso
+  // ela nunca acusou: ate a F18b nenhum roteiro calculava ponto fora do neutro.
+  const meioX = canvas.width / 2;
+  const meioY = canvas.height / 2;
   return {
-    x: canvas.left + (mundoX - camera.scrollX) * camera.zoom,
-    y: canvas.top + (mundoY - camera.scrollY) * camera.zoom,
+    x: canvas.left + (mundoX - camera.scrollX - meioX) * camera.zoom + meioX,
+    y: canvas.top + (mundoY - camera.scrollY - meioY) * camera.zoom + meioY,
+  };
+}
+
+/**
+ * F18b — a borda sudeste do mundo que a camera consegue mostrar, em pixel de
+ * mundo, ja com o clamp de `setBounds` aplicado.
+ *
+ * O clamp do Phaser nao para o `scroll` na borda do mapa: ele para a area
+ * EXIBIDA, que com origem 0.5 vai de `scroll + meio - meio/zoom` a
+ * `scroll + meio + meio/zoom`. Medido na F18b: num mapa de 8192 px e quadro de
+ * 1020, o scroll encosta em 6662, nao em 7172.
+ */
+function bordaVisivel(canvas, camera) {
+  return {
+    x: camera.scrollX + canvas.width / 2 + (canvas.width / camera.zoom) / 2,
+    y: camera.scrollY + canvas.height / 2 + (canvas.height / camera.zoom) / 2,
   };
 }
 
 module.exports = {
-  retanguloDe, retanguloDoCanvas, arrastarDentroDoCanvas, pontoDoTileNaTela,
+  retanguloDe, retanguloDoCanvas, arrastarDentroDoCanvas, pontoDoTileNaTela, bordaVisivel,
 };
