@@ -8,11 +8,12 @@
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { gameData } from '../src/sim/data';
-import type { GameData } from '../src/sim/data/types';
+import type { GameData, TerrenoTipo } from '../src/sim/data/types';
 import type { GameState } from '../src/sim/state';
 import { chaveDeTile, ehEstrada, isConnected } from '../src/sim/estradas';
 import type { TileDeGrid } from '../src/sim/estradas';
 import { caixaDoPredio } from '../src/sim/footprint';
+import { tipoDoTile } from '../src/sim/mapa';
 import { buscarCaminho, estatisticasDeBusca, zerarEstatisticasDeBusca } from '../src/sim/pathfinding';
 import type { ModoDeBusca } from '../src/sim/pathfinding';
 import { createRng, nextInt } from '../src/sim/rng';
@@ -69,21 +70,37 @@ function custoDoOraculo(
   estado: GameState, de: TileDeGrid, alvos: readonly TileDeGrid[], modo: ModoDeBusca, dados: GameData = gameData,
 ): number | null {
   const bloqueados = bloqueadosDe(estado, dados);
+  // O TERRENO do tile, pelo nome — o oraculo le a grade do mapa e a tabela de
+  // custo do JSON, nunca as tabelas indexadas do A* (senao os dois errariam
+  // junto). Ate a F-D3 isto nao existia aqui: o oraculo tratava todo tile livre
+  // como grama, e acertava porque a faixa `LIVRE_A_PARTIR_DE` mantinha o
+  // quadrante inteiro do sorteio em grama. Tirada a faixa, a cegueira apareceu.
+  const pisavel = (t: TileDeGrid): boolean => {
+    const tipo = tipoDoTile(t.gx, t.gy, dados);
+    return tipo !== null && !dados.terreno.intransponivel.includes(tipo);
+  };
   const andavel = (t: TileDeGrid): boolean => {
     // A borda e a do `dados` RECEBIDO, nao a do mapa publicado: e o que deixa o
     // oraculo e o A* olharem o mesmo mapa em toda comparacao.
     if (t.gx < 0 || t.gy < 0 || t.gx >= dados.terreno.mapaPadrao.largura || t.gy >= dados.terreno.mapaPadrao.altura) return false;
-    return modo === 'estrada' ? ehEstrada(estado.estradas, t) : !bloqueados.has(chaveDeTile(t));
+    // No modo `estrada` o terreno nao entra, e e de proposito: o tile JA e
+    // estrada, e estrada nao se assenta em terreno intransponivel. E a mesma
+    // decisao escrita em `sim/pathfinding.ts`.
+    return modo === 'estrada' ? ehEstrada(estado.estradas, t) : (pisavel(t) && !bloqueados.has(chaveDeTile(t)));
   };
   // A quina do passo diagonal e a mesma regra nos dois modos (F18e): so PREDIO
   // proibe. No modo 'livre' isto coincide com `andavel`; no 'estrada' e o que
   // faz a rua virar em diagonal sem atravessar parede.
   const quinaLivre = (t: TileDeGrid): boolean => {
     if (t.gx < 0 || t.gy < 0 || t.gx >= dados.terreno.mapaPadrao.largura || t.gy >= dados.terreno.mapaPadrao.altura) return false;
-    return !bloqueados.has(chaveDeTile(t));
+    return pisavel(t) && !bloqueados.has(chaveDeTile(t));
   };
   const custoDoPasso = (para: TileDeGrid, diagonal: boolean): number => {
-    const terreno = ehEstrada(estado.estradas, para) ? 'estrada' : 'grama';
+    const terreno: TerrenoTipo = ehEstrada(estado.estradas, para)
+      ? 'estrada'
+      // So chega aqui tile que `andavel` ja aprovou: o intransponivel nao tem entrada
+      // de custo, e nao deveria ter. Por isso a assercao de tipo e segura aqui.
+      : (tipoDoTile(para.gx, para.gy, dados) as TerrenoTipo);
     return diagonal ? dados.movimento.ticksPorTileDiagonal.aPe[terreno] : dados.movimento.ticksPorTile.aPe[terreno];
   };
   if (modo === 'estrada' && !andavel(de)) return null;
@@ -166,7 +183,10 @@ const soma = (estado: GameState, de: TileDeGrid, tiles: readonly TileDeGrid[]): 
   let total = 0;
   for (const proximo of tiles) {
     const diagonal = proximo.gx !== atual.gx && proximo.gy !== atual.gy;
-    const terreno = ehEstrada(estado.estradas, proximo) ? 'estrada' : 'grama';
+    // Terreno do MAPA, como em `custoDoOraculo` e pelo mesmo motivo (F-D3).
+    const terreno: TerrenoTipo = ehEstrada(estado.estradas, proximo)
+      ? 'estrada'
+      : (tipoDoTile(proximo.gx, proximo.gy) as TerrenoTipo);
     total += diagonal ? gameData.movimento.ticksPorTileDiagonal.aPe[terreno] : gameData.movimento.ticksPorTile.aPe[terreno];
     atual = proximo;
   }

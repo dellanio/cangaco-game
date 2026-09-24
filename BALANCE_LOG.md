@@ -161,6 +161,15 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   usa**: os três são `nunca`. Número sem efeito hoje | quando o primeiro `porTempo` nascer, é o
   primeiro a conferir | `data/resources.json`
 
+- [2026-09-24] a floresta do mundo foi **re-limitada de 14 para 10 aglomerados** (F-D3) | a faixa
+  `LIVRE_A_PARTIR_DE = 72` descartava em silencio os aglomerados que caiam no quadrante noroeste —
+  quatro dos catorze, na semente 20260924. Sem a faixa, os catorze passaram a pegar e a camada de
+  recurso saltou para **1133 tiles / 44,1 KB**, acima do teto de 40 KB que a F-T2a mede. O teto
+  existia, era o descarte que o cumpria sem ninguem saber. Com 10, a camada fica em **935 tiles**
+  (`rock 311 · tree 350 · fish 274`) | `tools/gerar-mapa.js` (`for (let i = 0; i < 10 ...)`) —
+  **o numero e limite de tamanho de arquivo, nao de densidade de floresta**: o dia em que o teto da
+  F-T2a subir, ele volta a ser escolha de paisagem
+
 ---
 
 ## Ciclos fechados

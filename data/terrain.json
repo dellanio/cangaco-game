@@ -22,6 +22,14 @@
   "pathfinding": { "algoritmo": "A*", "vizinhanca": 8, "cachePorParOrigemDestino": true },
   "mapaPadrao": { "largura": 128, "altura": 128 },
   "_docMapaPadrao": "128 e nao 256: uma cidade completa cabe em 40x40 tiles, a campanha quer duas com espaco entre elas (~110 tiles de lado), e no zoom minimo o quadro mostra 875 tiles — 5,3% de um 128x128 contra 1,3% de um 256x256. Custo nao foi criterio: medido em 2026-09-23, depois da F17c, nada escala com a area do mapa (docs/planos/F18b-mapa-grande.md). A vila inicial de economy.json NAO se move com o mapa; ela ocupa o quadrante noroeste de proposito, e o sudeste fica para a segunda cidade (F18c).",
+  "geracao": {
+    "reservaDaVila": {
+      "raio": 3,
+      "terrenoPermitido": ["grama", "areia"],
+      "recursoPermitido": ["rock"]
+    },
+    "_doc": "F-D3: o unico dado que tools/gerar-mapa.js le para decidir ONDE a geografia NAO entra. O jogo nao le este bloco — o gerador e autoria, o jogo carrega o mapa ja emitido. reservaDaVila.raio e a folga, em tiles de Chebyshev, em volta de CADA tile que a vila inicial ocupa (o footprint de cada predio de economy.estadoInicial mais o tile de spawnDeUnidades); dentro dela o gerador so escreve os terrenos de terrenoPermitido e so aceita os recursos de recursoPermitido. Sob o footprint em si nao entra recurso NENHUM, seja qual for recursoPermitido: o aceite 2 e sobre o tile que o predio ocupa. Na folga passa rock, e a lista diz por que: o que a folga barra e o que IMPEDE a vila de funcionar — terreno que nao se pisa e recurso que vira obstaculo (a arvore, a partir da F-T2b). Pedra ao alcance da pedreira nao e obstaculo, e materia-prima, e tirar o lajedo da vila da folga seria deixar a partida abrir sem nada que cortar. E isso que garante que a vila cabe e que o primeiro caminho existe. Ate a F-D3 a reserva era uma FAIXA: todo o quadrante noroeste ate o tile 71, 31,6% do mapa, que empurrava lago, mato e pedra para fora de qualquer zoom da abertura. A reserva era necessaria; a forma dela e que estava errada. O raio e 3 por medida, nao por gosto: com 2 sobravam dois tiles ao norte do armazem e uma pedreira (3x2) encostada por cima dele ja nao cabia — a folga tem de comportar o VIZINHO que o jogador vai plantar, nao so o predio que ja esta de pe. terrenoPermitido e lista porque areia se pisa e se constroi: a praia do acude pode entrar na folga, agua nao. Quem garante isso nao e a boa vontade de quem edita esta lista, e a regra de validate:data que recusa qualquer terreno de intransponivel aqui."
+  },
   "zoom": {
     "niveis": [0.5, 0.75, 1, 1.5, 2],
     "inicial": 1,

@@ -62,9 +62,15 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
   F22 para dentro do alcance do lajedo, e afirmar no proprio roteiro que ela tem
   pedra ao alcance — a geometria passou a ser pre-condicao do cenario, e
   pre-condicao nao se deixa implicita.
-- status: aberto — **espera a F-D3**. A F-D3 troca a reserva em faixa por reserva
-  por raio e regrava `data/maps/sertao-128.json`: mexe exatamente nesta
-  geografia. Mover a pedreira agora seria move-la duas vezes.
+- status: aberto, **e destravado**. A espera pela F-D3 acabou: ela entrou em
+  2026-09-24 (`data/maps/sertao-128.json` regravado) e o defeito **sobreviveu
+  inteiro**, medido e nao suposto:
+  - tiles de `rock` ao alcance 6 da pedreira de (38,31): **0**, o mesmo de antes;
+  - `rock` mais proximo dela: **(26,31), a 12 tiles** — o dobro do alcance;
+  - o lajedo da vila nao se mexeu: 13 tiles, `gx 22..26 × gy 29..33`, identico.
+  A F-D3 mexeu na faixa `gy 24..28` a norte, que e onde a paisagem nova coube;
+  o pátio dos cenarios ficou intocado de proposito. O conserto acima continua
+  valendo palavra por palavra, e agora nao espera mais nada.
 - nota: e a segunda vez que a F-T2a aparece num roteiro de outra feature. A
   contagem de tiles ao alcance ja esta no `BALANCE_LOG.md` desde `f57a3c1`.
 

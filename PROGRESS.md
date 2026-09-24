@@ -3850,3 +3850,143 @@ imaginária sairia de novo.
   `KeyboardEvent.key`, então num teclado AZERTY as teclas físicas mudam de
   lugar. As setas continuam funcionando em qualquer layout, e é por isso que elas
   são o caminho principal.
+
+---
+
+## F-D3 — Reserva por raio em volta da vila (2026-09-24)
+
+Terceira e última da fila que o operador disparou (F-D1 → F-D2 → F-D3). Plano
+escrito antes do código em `docs/planos/F-D3-reserva-por-raio.md`, com uma seção
+**"o que a execução mudou no plano"** no fim — três decisões do plano não
+sobreviveram à medida, e estão lá com o motivo.
+
+### O que foi feito
+
+`tools/gerar-mapa.js` reservava o quadrante noroeste inteiro
+(`LIVRE_A_PARTIR_DE = 72`, 31,6% do mapa) para a vila caber. A faixa saiu e no
+lugar dela entrou uma **reserva por raio** em volta dos tiles que a vila ocupa —
+os footprints dos prédios iniciais mais o tile de spawn —, com o raio e o que ela
+permite vindo de `data/terrain.json` (`geracao.reservaDaVila`). Na faixa norte
+liberada entraram o **açude** (água, praia de areia, cardume) e o **mato do
+nascente**, que é o que a abertura passou a mostrar.
+
+### Verificado (evidência aberta)
+
+- **Aceite 1 — a abertura mostra paisagem.** `npm run shot -- F-D3`, saída 0.
+  Do estado publicado no tick 0, com a câmera onde a cena a põe:
+  `terreno {grama 146, areia 18, agua 12}` → **3 tipos**;
+  `recurso {rock 4, tree 1, fish 12}` → **3 tipos**. O aceite pede 3 e 2.
+  Antes desta feature eram 1 e 1. Screenshot `screenshots/F-D3-1-abertura.png`
+  aberta com Read: açude com peixe no topo, praia de areia, o lajedo à esquerda,
+  uma árvore a nordeste e a vila em grama limpa.
+- **Aceite 2 — a vila continua construível.** `tests/F-D3-geografia.test.ts`,
+  guarda 2: a partir de `createInitialState()`, todo tile de footprint e toda
+  chave de `state.estradas` passa por `ehTransponivel` e por `recursoNoTile`, o
+  predicado do runtime. `state.estradas` nasce vazio (conferido em
+  `src/sim/state.ts`), então a perna "nem sob estrada inicial" é hoje verdadeira
+  por vacuidade — a guarda foi escrita varrendo `state.estradas` de propósito,
+  para passar a valer sozinha no dia em que a vila nascer com estrada.
+- **Aceite 3 — mesma semente = mesmo mapa.** Guarda 1 do mesmo arquivo:
+  `serializar(montarArquivo())` igual byte a byte a `data/maps/sertao-128.json`.
+  É o `node tools/gerar-mapa.js --conferir` virado teste, e por isso ele passou a
+  rodar dentro do `npm run verify` — até aqui o `--conferir` existia e ninguém o
+  chamava.
+- **Aceite 4 — não-regressão.** `npm run shot -- F-T1`, `F-T2a`, `F16b`: saída 0
+  nos três (conferido pelo código de saída; screenshot de outra feature não se
+  abre com Read). `F22` sai 1 com a assinatura conhecida do BUG-C
+  (`veio-esgotado` + `sem-trabalhador`), idêntica à de antes desta sessão.
+- `npm run verify` verde: **71 arquivos, 1129 testes**, typecheck e lint limpos,
+  `validate:data` passando.
+- **As seis guardas novas foram provadas a ACUSAR**, não só a passar: cada uma
+  reprovou com a mensagem escrita ao se perturbar o dado, e o arquivo foi
+  restaurado e conferido por md5.
+
+### Decidido, e por quê
+
+- **`raio = 3`, por medida e não por gosto.** Com 2, o `F06-build` reprovou com
+  `motivo: 'terreno'`: uma pedreira (3×2) plantada um tile acima do armazém caía
+  na água. A folga não existe para o prédio que já está de pé, existe para o
+  **vizinho que o jogador vai plantar ao lado dele**.
+- **A reserva tem dois níveis, porque o aceite tem dois.** Sob o footprint
+  (`OCUPADOS`) não entra recurso **nenhum**, que é o que o aceite 2 diz; no anel
+  (`RESERVADOS`) entra o que `recursoPermitido` autoriza. A regra única do plano
+  ("nem grama nem recurso, sem exceção") apagou o tile (24,29) do lajedo da vila
+  e reprovou a `F-T2a` com `expected 12 to be 13`.
+- **`terrenoPermitido` é lista (`["grama","areia"]`)**: areia se pisa e se
+  constrói, então a praia do açude pode entrar na folga. Quem garante que mexer
+  nessa lista continua seguro não é a boa vontade de quem edita: é uma regra nova
+  de `validate:data` que **recusa** qualquer terreno que `terrain.intransponivel`
+  liste.
+- **`recursoPermitido: ["rock"]`**: o que a folga barra é o que **impede a vila
+  de funcionar** — terreno que não se pisa e recurso que vira obstáculo (a
+  árvore, a partir da F-T2b). Pedra é matéria-prima, e é exatamente o que a
+  abertura precisa ter ao alcance.
+- **O oráculo da `F10-astar` era cego para terreno.** Ele tratava todo tile livre
+  como grama e só acertava porque a faixa mantinha o quadrado do sorteio inteiro
+  em grama. Passou a ler o terreno pelo nome (`tipoDoTile`) e a indexar as
+  tabelas de custo do JSON por conta própria — nunca os vetores já indexados do
+  A*, senão os dois errariam junto. Conserto de guarda, não de asserção; provado
+  a acusar perturbando `retoDoTerreno` (7 testes reprovaram).
+- **O teste carrega o gerador CommonJS por `createRequire(import.meta.url)`**, e
+  não por `require` solto com `eslint-disable`. Desligar a regra seria mudar o
+  escopo da verificação em vez de resolver o caso (CLAUDE.md §10).
+- **Os roteiros que a geografia nova contradizia foram corrigidos, não
+  afrouxados.** O `F-T1` afirmava "a abertura não tem água nem montanha", e isso
+  passou a ser falso de propósito. A asserção nova é **mais estrita**: mede
+  quantos tipos de terreno a cena de fato desenhou. Descoberto ao escrever isso:
+  `contarTerrenoVisivel` e `atualizarRecursos` (`WorldScene.ts`) **zeram todo
+  tipo conhecido** antes de contar, então `Object.keys(...).length` é constante e
+  contar chave daria 6 terrenos numa tela inteira de grama. O tipo presente é a
+  chave com **contagem maior que zero**, e é assim nos dois roteiros.
+
+### A faixa fazia três trabalhos, e ninguém tinha escrito dois deles
+
+Este é o achado que custou a sessão inteira, e fica registrado para a próxima
+pessoa que for mexer em geografia:
+
+1. manter a vila construível — o único que estava escrito;
+2. manter o mundo dos **cenários de teste** em grama uniforme. O açude inundou a
+   porta de três cenários antes de as bordas dele virarem `gx >= 27` e
+   `gy >= 24`. As coordenadas dos cenários não são só literais, elas também são
+   **computadas** (a `F18e` anda `dx = 12` a partir de (10,20); a `F10-falhas`
+   planta no terceiro tile de um caminho vivo), e um prédio 3×3 custa **quatro**
+   linhas de mapa — três de prédio mais a linha da porta, embaixo. Varredura de
+   par literal não enxerga nada disso;
+3. **limitar o tamanho do arquivo de mapa**, descartando em silêncio os
+   aglomerados de floresta que caíssem no quadrante. Sem a faixa os 14 pegaram
+   todos, a camada de recurso foi a 1133 tiles / 44,1 KB e estourou o teto de
+   40 KB que a `F-T2a` mede. Viraram 10 — registrado no `BALANCE_LOG.md` como
+   **limite de tamanho de arquivo, não de densidade de floresta**.
+
+Cada fronteira de geografia no gerador tem agora a medida que a justifica escrita
+ao lado, no comentário. Nenhuma delas é gosto.
+
+### Registrado para quem vem depois
+
+- **Nota nova no item da F-T2b** (`BUILD_PLAN.md`): o contrato do mapa mudou. Há
+  **16 tiles de árvore em `gx 19..27 × gy 46..48`**, no pátio dos cenários, onde
+  antes não havia nenhuma, e o mato do nascente em `gx 37..42 × gy 22..27`. Hoje
+  não quebra nada porque árvore não bloqueia; **a F-T2b é a feature que faz
+  bloquear**. Conferido: nenhum dos 70 pares `gx:/gy:` literais de `tests/`,
+  `tools/shots/` e `src/` cai sobre árvore, e o único sobre terreno
+  intransponível é `(92,46)`, o lago, que a `F-T1-terreno` usa de propósito.
+- **BUG-C sobreviveu, medido, e destravou.** A espera pela F-D3 acabou: continuam
+  **0 tiles de `rock` ao alcance 6** da pedreira de (38,31), e o mais próximo
+  está em **(26,31), a 12 tiles**. O lajedo da vila não se mexeu (13 tiles,
+  `gx 22..26 × gy 29..33`). O conserto já escrito no `BUGS.md` continua válido
+  palavra por palavra e não espera mais nada. O item da F-D3 mandava **medir e
+  registrar**, não consertar, e foi o que se fez.
+
+### Números do mapa novo (semente 20260924)
+
+`terreno {campoArado 130, rocha 298, montanha 453, agua, areia, grama}` ·
+`recurso {rock 311, tree 350, fish 274}` = 935 tiles. Contra o `HEAD` anterior, o
+terreno difere **só** em `gx 27..42 × gy 24..28` — o retângulo do açude e do mato.
+
+### Hipótese, não fato
+
+- O açude a norte cai parcialmente na borda de cima do quadro de abertura
+  (12 tiles de água visíveis). **Suposição, não medida**: com o zoom máximo para
+  fora da F18a ele deve aparecer inteiro. Não foi conferido nesta sessão, e o
+  roteiro da F-D3 não anda com a câmera de propósito — o que ele mede é o quadro
+  que o jogador recebe.

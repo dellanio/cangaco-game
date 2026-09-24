@@ -105,10 +105,32 @@ async function roteiro(ctx) {
     s.terrenoVisivel.grama > 0,
     `a vista de abertura deveria ter grama, veio ${JSON.stringify(s.terrenoVisivel)}`,
   );
+  // F-D3 — esta afirmacao mudou. A antiga dizia "a abertura nao tem agua nem
+  // montanha": era uma medida POR TABELA, que olhava o quadro inteiro para
+  // concluir algo sobre a vila. O acude do norte entra no quadro de proposito,
+  // e a conclusao sobre a vila ganhou guarda propria e mais estrita — tile a
+  // tile do footprint, pelo predicado do runtime, em
+  // `tests/F-D3-geografia.test.ts` (aceite 2 da F-D3), que roda no
+  // `npm run verify` e nao depende de navegador.
+  //
+  // O que fica aqui e o que so o roteiro ve, e e mais exigente do que era: que
+  // a cena desenhe MAIS DE UM terreno no mesmo quadro. Este era o ponto da
+  // F-T1 — ate ela o chao era uma cor so — e a afirmacao antiga passava de olhos
+  // fechados numa tela inteira de grama.
+  //
+  // E "tipo desenhado" e a chave com contagem MAIOR QUE ZERO: `contarTerrenoVisivel`
+  // zera todo tipo conhecido antes de contar, entao `Object.keys(...).length` e
+  // constante e nao mede nada.
+  const desenhados = Object.keys(s.terrenoVisivel).filter((t) => s.terrenoVisivel[t] > 0);
   afirmar(
-    (s.terrenoVisivel.agua || 0) === 0 && (s.terrenoVisivel.montanha || 0) === 0,
-    'a vila inicial nasce em regiao inteira construivel: a vista de abertura nao deveria '
-      + `ter agua nem montanha, veio ${JSON.stringify(s.terrenoVisivel)}`,
+    desenhados.length >= 2,
+    `a abertura deveria desenhar mais de um tipo de terreno, veio ${desenhados.join(', ')}: `
+      + `${JSON.stringify(s.terrenoVisivel)}`,
+  );
+  afirmar(
+    (s.terrenoVisivel.montanha || 0) === 0,
+    'a serra continua fora do alcance da camera inicial — e o passo 1 existe para ir ate '
+      + `ela de arrasto, veio ${JSON.stringify(s.terrenoVisivel)}`,
   );
   await capturar('vila-em-terreno-limpo');
 

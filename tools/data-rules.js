@@ -590,6 +590,71 @@ function validarCameraDoTerreno(dados, erros) {
   }
 }
 
+// F-D3: a reserva da vila. Dado de AUTORIA — quem le e tools/gerar-mapa.js, e o
+// jogo nunca roda o gerador. A regra guarda a forma e as duas coerencias que so
+// aparecem quando se cruza o bloco com o resto do dado: terreno que a legenda de
+// custo/intransponivel nao conhece nao existe para o mapa, e recurso que
+// resources.json nao declara nao tem como nascer. Raio negativo nao e reserva.
+function validarGeracaoDoTerreno(dados, erros) {
+  const terrain = dados.terrain;
+  if (!terrain) return; // forma/* ja reportou
+  const geracao = terrain.geracao;
+  if (!geracao || typeof geracao !== 'object') {
+    erros.push('terreno/geracao: terrain.geracao precisa existir (F-D3)');
+    return;
+  }
+  const reserva = geracao.reservaDaVila;
+  if (!reserva || typeof reserva !== 'object') {
+    erros.push('terreno/geracao: terrain.geracao.reservaDaVila precisa existir (F-D3)');
+    return;
+  }
+  if (!Number.isInteger(reserva.raio) || reserva.raio < 0) {
+    erros.push(
+      `terreno/geracao: reservaDaVila.raio precisa ser inteiro >= 0 (veio '${reserva.raio}'): `
+      + 'raio negativo nao reserva nada, e fracionario nao e tile',
+    );
+  }
+  const terrenos = new Set([
+    ...Object.keys(terrain.custoDeMovimento || {}).filter((k) => !k.startsWith('_')),
+    ...(terrain.intransponivel || []),
+  ]);
+  if (!Array.isArray(reserva.terrenoPermitido) || reserva.terrenoPermitido.length === 0) {
+    erros.push('terreno/geracao: reservaDaVila.terrenoPermitido precisa ser uma lista nao vazia');
+    return;
+  }
+  for (const id of reserva.terrenoPermitido) {
+    if (!terrenos.has(id)) {
+      erros.push(
+        `terreno/geracao: reservaDaVila.terrenoPermitido cita '${id}', que nao e um terreno `
+        + 'conhecido (custoDeMovimento ou intransponivel)',
+      );
+    }
+    // A regra que faz a lista ser segura de mexer: a reserva existe para a vila
+    // caber, entao permitir nela um terreno que a propria terrain.json declara
+    // intransponivel seria autorizar o gerador a afogar o armazem. Quem mudar a
+    // lista nao precisa saber disto — o validate:data sabe.
+    if ((terrain.intransponivel || []).includes(id)) {
+      erros.push(
+        `terreno/geracao: reservaDaVila.terrenoPermitido cita '${id}', que esta em `
+        + 'terrain.intransponivel: a reserva da vila nao pode permitir terreno que nao se pisa',
+      );
+    }
+  }
+  if (!Array.isArray(reserva.recursoPermitido)) {
+    erros.push('terreno/geracao: reservaDaVila.recursoPermitido precisa ser uma lista');
+    return;
+  }
+  const tipos = Object.keys((dados.resources && dados.resources.tipos) || {});
+  for (const id of reserva.recursoPermitido) {
+    if (!tipos.includes(id)) {
+      erros.push(
+        `terreno/geracao: reservaDaVila.recursoPermitido cita '${id}', que nao e um tipo de `
+        + 'resources.json',
+      );
+    }
+  }
+}
+
 // --- F-T1: a camada de terreno base ------------------------------------------
 //
 // O mapa nao e um arquivo solto: cada tipo que ele desenha tem de EXISTIR no
@@ -830,6 +895,7 @@ function validarTudo(dados) {
   validarDevolucaoDeEstrada(dados, erros);
   validarZoomDoTerreno(dados, erros);
   validarCameraDoTerreno(dados, erros);
+  validarGeracaoDoTerreno(dados, erros);
   validarDevolucaoDePredio(dados, erros);
   validarEscadaDePrioridade(dados, erros);
   validarPoliticaDeTreino(dados, erros);

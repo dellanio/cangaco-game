@@ -126,6 +126,6 @@
     "passes": true
   },
   "F-D3-reserva-por-raio": {
-    "passes": false
+    "passes": true
   }
 }

@@ -1685,6 +1685,22 @@ a geografia já corrigida do que regravar 900 tiles depois.
   retorno dela com `toEqual`, então campo novo ali reprova a suíte inteira. Os
   nós expandidos saem por acessor próprio, e não por crescimento do objeto que
   outra feature já congelou.
+- **Nota (o mapa mudou de contrato na F-D3, 2026-09-24)**: até a F-D3,
+  `tools/gerar-mapa.js` reservava o quadrante noroeste inteiro
+  (`LIVRE_A_PARTIR_DE = 72`) e **descartava em silêncio** todo aglomerado de
+  floresta que caísse lá. A faixa saiu: a árvore agora nasce no miolo do mapa,
+  inclusive perto dos cenários de teste. Medido na semente 20260924, com o mapa
+  já regravado:
+  - **16 tiles de árvore em `gx 19..27 × gy 46..48`**, ao sul-oeste do pátio dos
+    cenários, onde antes não havia nenhuma;
+  - o **mato do nascente**, autoral, em `gx 37..42 × gy 22..27` — dentro do
+    quadro de abertura, a nordeste da vila;
+  - **nenhum** dos 70 pares `gx:/gy:` literais de `tests/`, `tools/shots/` e
+    `src/` cai sobre árvore (conferido na F-D3). O único par sobre terreno
+    intransponível é `(92,46)`, o lago, que a `F-T1-terreno` usa de propósito.
+  Hoje isso não quebra nada porque árvore não bloqueia. **Esta feature é a que
+  faz bloquear**: o pátio dos cenários deixa de ser chão livre por construção, e
+  as coordenadas acima são as primeiras a conferir se algum cenário reprovar.
 - **Evidência**: `test-output/F-T2b.json` + `screenshots/F-T2b-*.png`
 
 #### F-T2c — A escolha do tile nasce no JobBoard, com reserva
