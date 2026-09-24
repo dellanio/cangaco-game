@@ -30,7 +30,42 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
 
 ## Abertos
 
-_(nenhum aberto)_
+## BUG-A — preso na ferramenta de construcao: nao ha saida obvia
+- feature: F06-menu-build-planta
+- severidade: trava
+- repro: jogando (relato do operador, 2026-09-24). Abrir o jogo, clicar
+  qualquer item do menu Construir.
+- esperado: o jogador consegue largar a ferramenta com o gesto que ele tenta
+  primeiro — clicar de novo no item ja selecionado — e com o gesto de RTS —
+  botao direito. E consegue ver qual item esta ativo.
+- observado: so `Esc` cancela, e nada na tela diz isso. Clicar no botao ja
+  ativo nao desmarca (`menu-build.ts` chama `ferramenta.selecionar(id)` sempre,
+  e `selecionar` so limpa quando recebe `null`). Botao direito nao faz nada:
+  `WorldScene` so trata `leftButtonDown`/`leftButtonReleased` e o botao do meio.
+  O destaque do item ativo e so `aria-pressed`, e o operador nao percebeu qual
+  estava selecionado.
+- evidencia: relato de sessao de jogo; `src/ui/menu-build.ts`,
+  `src/input/ferramenta.ts:53`, `src/render/scenes/WorldScene.ts`
+- status: aberto
+- nota: o botao direito e **ordem de movimento militar** no GDD §2.1 (F26). A
+  precedencia — com ferramenta ativa cancela, sem ferramenta fica livre para a
+  ordem militar — tem de ficar escrita no GDD, ou a F26 descobre isso sozinha.
+
+## BUG-B — o x da fila da Casa do Coronel nao remove o pedido
+- feature: F13b-schoolhouse-painel
+- severidade: errado
+- repro: jogando (relato do operador, 2026-09-24). Abrir o painel da
+  schoolhouse, enfileirar, clicar no x de um item.
+- esperado: o escopo escrito da F13b diz "cancelamento de item, emitindo
+  `EnqueueTraining`/`CancelTraining`". O clique no x tira o item da fila, ou o
+  painel diz por que nao da.
+- observado: clicar no x nao remove nada.
+- evidencia: `screenshots/F13b-*.png` mostra o x por item; relato de sessao.
+- status: aberto — **a diagnosticar antes de corrigir** (decisao do operador):
+  (a) o clique nao chega ao botao; (b) chega e nao emite comando; (c) emite e a
+  sim recusa, e ai o conserto e o painel dizer o motivo, nao permitir o
+  cancelamento.
+
 
 ---
 
