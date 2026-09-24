@@ -1910,7 +1910,7 @@ entradas da fronteira (`hp`, `hpTotal`, "já nivelou") já existiam.
 
 ### Verificado
 
-- `npm run verify` — **EXIT=0**. 56 arquivos de teste, 933 testes, typecheck,
+- `npm run verify` — **EXIT=0**. 55 arquivos de teste, 919 testes, typecheck,
   lint e `validate:data` limpos.
 - `test-output/F17e.json`, aberto com Read. As transições que ele grava, com
   `hpTotal` vindo do dado: na `quarry` (250) `estrutura → paredes` em `hp=84` e
@@ -1989,6 +1989,106 @@ Os roteiros já validados (F16b, F17b, F17d) **não** foram reenquadrados: eles
 afirmam sobre número e passam; refazer geometria validada não era escopo desta
 feature. O item do BALANCE_LOG continua aberto — o que esta feature entregou foi
 a medida, não o ajuste geral.
+
+## F18a — Zoom da câmera (render + input) (2026-09-23)
+
+Plano: `docs/planos/F18a-zoom-da-camera.md`. Só `src/render/`, `data/` e
+`tools/` — **`src/sim/` não foi tocado**: zoom é câmera, não regra, não entra
+no `GameState` e não vira comando. Encerra a Nota da F05b.
+
+### Verificado
+
+- `npm run verify` — **EXIT=0**. 56 arquivos de teste, 948 testes, typecheck,
+  lint e `validate:data` limpos.
+- `test-output/F18a.json`, aberto com Read. A ida e volta da F04 varrendo os
+  cinco níveis: 1000 coordenadas com RNG semeado por nível, mais 500 com jitter
+  dentro do tile. O JSON grava, por nível, o tile de 64 px na tela (32, 48, 64,
+  96, 128 — todos inteiros) e o passo acima e abaixo.
+- `npm run shot -- F18a` — **EXIT=0**, 3 capturas, 17 afirmações, 0 erro de
+  console. O aceite medido: o **mesmo ponto de tela** segue sobre o tile
+  `{gx:33,gy:32}` no zoom 0.5, no 2 e de volta no 1.
+- Abertas com Read (§8, as duas que o aceite nomeia):
+  `screenshots/F18a-1-zoom-minimo.png` e `F18a-2-zoom-maximo.png`. O mesmo
+  quadrado de destaque aparece encostado à esquerda da Casa do Coronel nas duas,
+  em duas ampliações; o HUD e o menu Construir não mudam de tamanho, porque são
+  HTML sobre o canvas e ficam fora da câmera.
+- Medida gravada pelo roteiro: **875 tiles desenhados em zoom 0.5, 234 em zoom 1,
+  88 em zoom 2**. Confirma a Nota do BUILD_PLAN — zoom é necessidade de
+  navegação, e o custo de quadro continua plano.
+- Não-regressão por código de saída, sem abrir imagem: `F04`, `F06`, `F07`,
+  `F08`, `F11c`, `F16b`, `F17d`, `F17e` — **EXIT=0** em todos.
+
+### Decidido
+
+- **Os cinco níveis (0.5, 0.75, 1, 1.5, 2) são dado de render em
+  `data/terrain.json`**, com regra própria em `tools/data-rules.js`. A escolha
+  tem dois argumentos e nenhum é gosto: `1` precisa estar na lista e ser o
+  inicial, senão todo roteiro de screenshot já validado muda de geometria; e
+  `tile_px * nível` é **inteiro** em todos, que é o que mantém a ida e volta
+  exata sem depender de sorte de ponto flutuante.
+- **`escala` é parâmetro obrigatório** em `gridToScreen`, `gridToScreenCentro` e
+  `screenToGrid`. Opcional com default seria o mesmo que não existir, e a Nota da
+  F05b pedia que a conversão **declarasse** a escala. Obrigatório significa que o
+  typecheck fica vermelho até o último chamador acompanhar — por isso assinatura,
+  chamadores e teste da F04 saíram num commit só.
+- **Quem desenha passa `ESCALA_DO_MUNDO`, e as três conversões do ponteiro
+  também.** Sob o Phaser o zoom é transformação de **câmera**: o objeto fica em
+  pixel de mundo e aparece certo em qualquer nível. O ponto do ponteiro já veio
+  de `getWorldPoint`, que já inverteu o zoom; passar o nível ali dividiria duas
+  vezes. O comentário no código diz isso, e o passo 5 do roteiro acusa se alguém
+  trocar.
+- **O consumidor real de escala ≠ 1 hoje é o helper dos roteiros**
+  (`pontoDoTileNaTela` em `tools/shots/_canvas.js`), não a cena. Isso é
+  consequência de o Phaser fazer o zoom na câmera, não lacuna: até aqui cada
+  roteiro calculava `canvas.left + gx*TILE_PX - scrollX` à mão, fórmula que só
+  vale em zoom 1.
+- **A ancoragem no cursor não pode usar `camera.getWorldPoint` em volta do
+  `setZoom`.** O plano apostava nisso ("pergunte ao Phaser duas vezes") e a
+  aposta estava errada — ver abaixo. A aritmética passou a viver em
+  `src/render/zoom.ts`, pura e de zero imports, na guarda estrutural da F04.
+
+### Os dois defeitos que o roteiro achou, e como foram medidos
+
+1. **A afirmação de ancoragem passava sozinha.** A cena só atualiza
+   `tileSobMouse` no `pointermove`, e a roda do mouse não dispara um. Na primeira
+   versão o roteiro lia, depois de rodar a roda, o valor de **antes** do zoom — e
+   afirmava que ele era igual a si mesmo. O roteiro agora **reamostra**: sai 3 px
+   e volta ao mesmo ponto de tela, forçando o `pointermove`.
+2. **Com a leitura já valendo, a ancoragem estava errada**: o tile sob o cursor
+   pulava de `(33,32)` para `(49,50)` ao ir de zoom 1 para 0.5. A causa não era
+   nenhuma das duas que o plano previa (ordem das linhas, clamp de `setBounds`).
+   Lido em `node_modules/phaser/src/cameras/2d/Camera.js`: `getWorldPoint` usa o
+   `zoomX` **novo** junto da `matrix` **velha**, que só é reconstruída no
+   `preRender` do quadro seguinte. Chamado logo depois de `setZoom`, ele devolve
+   um híbrido.
+
+   A correção: `mundoSobPonto` e `scrollAncorado` em `render/zoom.ts`, uma a
+   inversa exata da outra, derivadas da própria `preRender`
+   (`mundo = scroll + (ponto - âncora)/zoom + origem`). São puras, então a
+   propriedade "mudar de nível com o scroll ancorado mantém o mundo sob o cursor"
+   é provada headless para todo par de níveis; o roteiro é quem prova que essa
+   aritmética bate com o que o Phaser desenha.
+
+   **Medida da correção:** a volta ao neutro pela roda devolve o scroll a
+   `(1596,1669)` contra `(1602,1675)` da abertura — 6 px de deriva, dentro de um
+   tile de 64, contra os ~1340 px de antes. A ancoragem promete o **tile** sob o
+   cursor, não o pixel, e esse volta igual.
+
+### Probe distinto da cobertura permanente (§8)
+
+A regra `validarZoomDoTerreno` foi provada **acusando**, por probe de sessão:
+nível `0.7` (64 × 0.7 = 44,8), lista fora de ordem e `inicial` fora da lista
+reprovam o `validate:data`, cada um com a mensagem própria. O probe demonstrou
+que ela funciona **naquele momento**; a proteção permanente é a regra rodando
+dentro do `npm run verify`. São coisas distintas.
+
+### Ficou aberto
+
+- Depois de um zoom, `tileSobMouse` e o highlight só se atualizam no próximo
+  `pointermove`. Com a ancoragem certa o tile não muda, então não há efeito
+  visível — exceto se o clamp de `setBounds` comer parte do ajuste na borda do
+  mapa. Não foi tratado, e não é do escopo escrito da F18a. **Hipótese não
+  verificada**, registrada como tal.
 
 ## Perguntas em aberto
 
