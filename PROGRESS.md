@@ -2337,6 +2337,126 @@ arquivos rodando no `verify`.
   causa, a derivação e o rótulo; os três guardas acima obrigam os três juntos —
   não dá para entregar meia causa.
 
+## Correção de regra das estradas — três decisões do operador (2026-09-23)
+
+Sessão de **medição e fila**, sem código. O operador corrigiu uma regra que está
+implementada errada desde a F10, e as decisões abaixo são dele; o que eu fiz foi
+medir o custo de cada uma e escrever os itens.
+
+### A regra, como ele a corrigiu
+
+Tem **dois lados**, e a versão implementada só tem um:
+
+- **Entregar material numa construção** (obra, tile de estrada planejado, comida
+  para tropa em campo) — o serf anda **livre**, qualquer tile. É assim que a
+  primeira casa sobe sem rua nenhuma.
+- **Coletar de produção** (saída da Quarry, insumo do Sawmill, excedente para o
+  armazém) — **exige estrada**. Sem rua o material fica parado na gaveta.
+
+É essa segunda metade que justifica a estrada existir: ela não serve para
+construir, serve para **escoar produção**. Fonte: o jogo original.
+
+O critério que separa os dois, e que cai dos dois sem heurística: **quem decide é
+o destino**. Porta de prédio pronto → estrada. Canteiro, tile planejado ou
+unidade em campo → livre.
+
+### Decisão 1 — o modo vira dado, por nível
+
+Aprovado como proposto. Os sete níveis de `delivery.json` já existem como tipos
+distintos na união `TarefaDeTransporte` (`state.ts:347–405`), então a divisão é
+por tipo, não por perna:
+
+| Nível | Tipo | Modo |
+|---|---|---|
+| 1 | `comida-para-inn` (não existe; é F20) | estrada |
+| 2 | `ouro-para-escola` | **estrada** |
+| 3 | `material-para-obra` | **livre** |
+| — | `assentar-estrada` (nasce na F18d-1) | **livre** |
+| 4–7 | insumo e escoamento | estrada |
+
+**Nível 2 é coleta, não entrega** (decisão do operador, com o argumento que eu
+propus): a escola está pronta, tem porta, e o ouro é insumo dela — treinar não é
+construir. Verificado que isso preserva produtor para o motivo `sem-estrada` da
+F13b e para o alerta `sem-estrada` da F22, que a regra única teria matado.
+
+**O Feed da tropa não é o nível 1.** O nível 1 é literalmente `"comida -> inn"`,
+prédio com porta. Alimentar tropa em campo aberto (GDD §2.4) é **tipo novo**,
+irmão de `assentar-estrada`.
+
+### Decisão 2 — `obrigatoriaParaEntrega` apagado, e por quê
+
+**Verificado**: o campo aparecia três vezes no repositório — `data/terrain.json`
+e **dois comentários** (`sim/pathfinding.ts:17`, `sim/systems/serfs.ts:21`).
+**Nenhum leitor.** Trocá-lo para `false` não mudaria nada e nenhum teste
+acusaria. A regra está nos literais `'estrada'` passados em quatro call sites.
+
+Ele foi citado repetidamente como **a fonte da regra**, inclusive pelo operador
+nesta sessão, durante meses de decisões. Registro pedido por ele: um campo de
+dado que ninguém lê vira folclore — cada leitura futura o cita como se fosse a
+regra, e a regra de verdade segue escondida num literal. Removido nesta sessão,
+com o `_doc` de `terrain.estrada` reescrito para dizer onde o modo passa a morar.
+
+**Achado junto, ainda em aberto**: `terrain.json` tem também
+`estrada.bonusVelocidade: 1.30` com **zero leitores** — nem comentário. O bônus
+real emerge de `custoDeMovimento`. Não removi: o operador mandou apagar só o
+outro. Está como Nota na F18e, que é a feature que mexe no bônus.
+
+### Decisão 3 — estrada diagonal sai do `IDEIAS.md` e entra na fila (F18e)
+
+Promovida **pela medição**, não por gosto, e colocada **antes** da F18d.
+
+**Verificado (aritmética sobre o dado, não `npm run sim` — está rotulado assim no
+`BALANCE_LOG` e na Nota do item):** passo de estrada 5 ticks, grama reta 7, grama
+**diagonal 9**; e no modo `'estrada'` a diagonal não liga
+(`tests/F10-astar.test.ts:315`), então a rua é 4-conectada na prática. Para um
+trajeto `dx × dy` (`dx ≥ dy`), estrada custa `5dx + 5dy` e a perna livre
+`7dx + 2dy` — empate em `dy/dx = 2/3`, ~34°. Acima disso **a grama ganha**, e com
+a entrega de construção em modo livre a estrada viraria opcional em metade dos
+traçados.
+
+A alternativa numérica (subir `custoDeMovimento.grama` de 1,30 para ≥1,45) foi
+**recusada pelo operador**: desacelera serf, laborer e especialista em 15% para
+consertar geometria — lote de balanceamento, não ajuste. Registrada no
+`BALANCE_LOG.md` com o critério de reabertura.
+
+### Decisão 4 — a origem do nível 3 passa a ser por distância a pé
+
+Hoje `origemMaisPerto` mede **por estrada** (`systems/jobs.ts` →
+`distanciaEntrePredios`). Com o nível 3 livre, a origem do material de obra passa
+a ser a de menor caminho **a pé**, e o desempate `menorDistanciaDeCaminhoReal` de
+`delivery.json` passa a significar coisas diferentes por nível. É a mudança de
+comportamento com mais risco de surpresa que a medição achou; o operador decidiu
+que ela vai **junto da F18d-1**, e não depois, com `tests/F09-sistema.test.ts:214`
+reescrito para afirmar a regra nova e o número medido ao lado.
+
+### O custo, contado (não estimado)
+
+**Onde a regra mora — dez lugares em cinco arquivos**, verificados um a um:
+`jobs.ts:270` (`portasDeEstrada`), `jobs.ts:~277` (`portasDeColeta`),
+`jobs.ts:303` (`planoDaTarefa`), `jobs.ts:346` (`custoDaTarefa`),
+`serfs.ts:142` e `:181`, `systems/jobs.ts` (`origemMaisPerto`/`destinoMaisPerto`
+e `sanearTarefas`), `especialistas.ts:184`, `selectors.ts:271` e `:563`.
+**Não** é uma checagem só, e não é uma linha de dado.
+
+**O que quebra**, contado por *tipo de tarefa exercitado* e não por título do
+teste: **14 asserções em 5 arquivos**, todos usando só `'material-para-obra'` —
+`F09-sistema` (5), `F10-desempate` (3), `F10-falhas` (4), `F09-jobboard` (1),
+`F10-ciclo` (1). Ficam **intactos** `F15b-entrega` (52 its), `F22-alertas` (17),
+`F13a-ouro` (12), `F13b-painel` (14), `F08-estradas` (41),
+`F09-estrada-reserva` (7) e `F10-astar` (26). A divisão em dois lados é o que
+preserva esses 169 — com a regra única, `F22-alertas` e `F13b-painel` cairiam
+junto.
+
+**A F18d-2 (render)**: 10 roteiros afirmam `estradasRenderizadas` em 25
+asserções. Os 10 arquivos que semeiam `estradas:` direto no estado não mudam.
+
+### Ficou aberto
+
+- `estrada.bonusVelocidade` continua no dado sem leitor (acima).
+- A F18e tem de **remedir o ponto de virada** depois de ligar a diagonal. A conta
+  prevê 7 ticks por passo diagonal de estrada contra 9 da grama, e a rua ganhando
+  em todo ângulo. Previsão, não medida.
+
 ## Perguntas em aberto
 
 _(nenhuma no momento: as três que sobravam foram decididas pelo operador — ver "Ajuste pós-F10".)_

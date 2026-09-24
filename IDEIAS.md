@@ -31,11 +31,6 @@ caminho. Ideia boa é justamente a mais perigosa.
   no mapa. Cada dependente novo aumenta o peso desta entrada na hora de decidir a
   **Fase B** — ela deixou de ser só "mapa mais bonito" e virou pré-condição de
   mecânica escrita no GDD.
-- Estrada diagonal, fidelidade ao original — exige interpolação diagonal no arrasto, render
-  inclinado e isConnected com 8 vizinhos sem cortar quina. (O GDD §5.4 traz "estradas diagonais
-  funcionam se nada bloquear a passagem" **[fonte]**; a Fase A fica em 4 direções por decisão do
-  operador. Ao adotar: o A\* por estrada da F10 só liga o que `isConnected` liga, e o teste de
-  equivalência em `tests/F10-astar.test.ts` prende os dois — mudar um exige mudar o outro.)
 - Ordenar os botões do painel da escola por "tem prédio vago" (F13b: os 14 tipos
   de civil viram 14 botões). Decisão do operador, 2026-09-22: **ordenar, nunca
   filtrar.** Esconder quem não tem prédio vago quebraria o fluxo do jogo — o
@@ -43,13 +38,6 @@ caminho. Ideia boa é justamente a mais perigosa.
   nasce parado esperando ocupante. A saída é quem tem vaga primeiro, o resto
   depois, sem esconder nenhum. É polimento de interface, não escopo da Fase A, e
   por isso não entrou na F14.
-- Estrada como canteiro (laborer constrói a estrada tile a tile) — o GDD §5.4 diz "feita por
-  laborers"; a Fase A fica com a estrada **instantânea** (F08: `PlaceRoad` debita a pedra no
-  comando e o tile nasce pronto). Decisão do operador, 2026-09-21: virar canteiro por tile dobra a
-  F11c e atrasa o aceite da Fase A. Ao adotar (o desenho já está na Nota de desvio do item F08 do
-  `BUILD_PLAN.md`): a "estrada planejada" entra como **campo novo** no `GameState`, separado de
-  `estradas` (que segue sendo só o que está de pé, e é o que `isConnected` consulta), e o débito
-  da pedra migra do comando para a entrega.
 - Prédio com veio esgotado devolve o trabalhador — medido na F15b (2026-09-23): quando o veio
   da Quarry zera, sai o evento `vein-exhausted` e o pedreiro entra em `esperando_insumo` e fica
   lá indefinidamente, ocupando a vaga de um prédio que nunca mais vai produzir. Não quebra

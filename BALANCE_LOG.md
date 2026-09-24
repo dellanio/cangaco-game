@@ -27,6 +27,18 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   | data/terrain.json, data/time.json (não é bug do loader: é a granularidade de 10 Hz)
   | **decidido pelo operador: fica** — corrigir exigiria mudar `tickHz`, que mexe em tudo, e o excesso favorece a
   estrada, que é a direção certa. Só reabrir se `tickHz` mudar por outro motivo.
+- [2026-09-23] a estrada PERDE para a grama acima de ~34° de inclinação, e a F18d (entrega de construção em
+  modo livre) tornaria isso visível: a rua vira opcional em metade dos traçados
+  | passo medido do dado: estrada reta 5 ticks, grama reta 7, grama DIAGONAL 9 — e no modo `'estrada'` a
+  diagonal não liga (`tests/F10-astar.test.ts:315`), então a rua é 4-conectada. Para `dx × dy` (`dx ≥ dy`),
+  estrada custa `5dx + 5dy` e a perna livre `7dx + 2dy`; empatam em `dy/dx = 2/3`. Aritmética sobre
+  `terrain.json` × `time.json` × `units.json`, NÃO `npm run sim`.
+  | data/terrain.json (`custoDeMovimento`), data/time.json (`escalas.movimento`)
+  | **decidido pelo operador, 2026-09-23: NÃO se conserta com número.** Subir `custoDeMovimento.grama` de 1,30
+  para ≥1,45 faria a rua ganhar em todo ângulo, mas desacelera serf, laborer e especialista em 15% para
+  consertar geometria. A saída é a **F18e — Estrada diagonal**, promovida do `IDEIAS.md` para a fila por causa
+  desta medição. Reabrir só se, com a diagonal ligada, a rua ainda perder em algum ângulo — aí sim é número.
+
 - [2026-09-20] 4 serfs levam 5538 ticks (~9 min a 1x) para entregar os 100 materiais de 20 obras de uma vez
   | logística lenta se o jogador planta muitas obras juntas; layout sintético do teste de carga, não partida
   | data/units.json (velocidade a pé 1.0 tile/s) e o número de serfs treinados

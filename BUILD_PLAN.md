@@ -1099,6 +1099,142 @@ prédio surge sem clique do jogador.
   é um `sed`: cada literal tem de ser lido. Se não couber numa sessão, quebre
   por arquivo.
 
+### F18e — Estrada diagonal
+- **Escopo**: a estrada passa a ligar em 8 direções, **sem cortar quina** — a
+  mesma regra que o A* já usa em modo `'livre'`. Três partes: (a) o arrasto
+  de `input/` interpola em diagonal em vez de subir a escadinha ortogonal;
+  (b) `isConnected`/`indiceDeEstradas` passam a 8 vizinhos com a proibição de
+  quina; (c) `render/` desenha o tile inclinado. O custo por tile em
+  `terrain.json` não muda.
+- **Aceite**: dois tiles só em diagonal passam a estar conectados, e **não
+  passam** quando os dois ortogonais entre eles estão ocupados (a quina não
+  corta). O teste de equivalência de `tests/F10-astar.test.ts` (*"por estrada,
+  o A* acha caminho se e somente se `isConnected` acha"*) continua verde sem
+  ser afrouxado — ele é o que prende as duas metades. `tests/F08-estradas.test.ts:254`
+  (*"diagonal NÃO liga"*) é reescrito para afirmar a regra nova, não apagado.
+  Screenshot de uma estrada em diagonal desenhada por arrasto.
+- **Evidência**: `test-output/F18e.json` + `screenshots/F18e-*.png`
+- **Nota (a ordem da fila é a do arquivo, não a do id)**: este item vem **antes**
+  da F18d de propósito — precedente: `F17f` já está fisicamente antes de `F17d` e
+  `F17e`. O id da F18d foi fixado pelo operador antes deste item existir e não
+  se renomeia.
+- **Nota (por que promovida do `IDEIAS.md`, com a medida)**: medido na sessão de
+  2026-09-23, a partir de `terrain.json` × `time.json` × `units.json`: passo de
+  estrada 5 ticks, grama reta 7, grama **diagonal 9**; e no modo `'estrada'` a
+  diagonal não existe (`F10-astar.test.ts:315`), então a rua é 4-conectada na
+  prática. Para um trajeto `dx × dy` (`dx ≥ dy`), estrada custa `5dx + 5dy` e a
+  perna livre custa `7dx + 2dy`: a rua **perde** acima de `dy/dx = 2/3`, ou seja
+  ~34°. Com a F18d (entrega de construção em modo livre) isso tornaria a estrada
+  opcional em metade dos traçados. A alternativa era subir `custoDeMovimento.grama`
+  de 1,30 para ≥1,45, que desacelera serf, laborer e especialista em 15% para
+  consertar geometria — lote de balanceamento, não ajuste, e por isso recusada
+  (registrada em `BALANCE_LOG.md`).
+- **Nota (medir de novo depois)**: o ponto de virada acima é **aritmética sobre o
+  dado**, não `npm run sim`. Refazer a conta com a diagonal ligada faz parte da
+  evidência: com quina proibida, o trajeto diagonal passa a custar `7` por passo
+  (`round(√2 × 1,00 ÷ 2 × 10)`) contra `9` da grama, e a rua deve ganhar em
+  **todo** ângulo. Se não ganhar, o número é que está errado, e aí sim é balanceamento.
+- **Nota (segundo dado morto, achado na mesma medição — decisão pendente do operador)**: `terrain.json` tem `estrada.bonusVelocidade: 1.30` com **zero leitores** em `src/`, `tools/`, `tests/` — nem sequer um comentário, ao contrário do `obrigatoriaParaEntrega`. O bônus real emerge de `custoDeMovimento.estrada` (1,00) contra `.grama` (1,30), e dá 1,4 efetivo pelo arredondamento de 10 Hz (`BALANCE_LOG`). O campo não foi removido junto porque o operador mandou apagar só o outro; se ele morrer, morre aqui, que é a feature que mexe no bônus.
+- **Nota (o que NÃO entra)**: o custo de movimento diagonal já existe e está
+  exercitado (`ticksPorTileDiagonal`); esta feature não o cria. E não mexe em
+  `colisao`/`intransponivel`: quina proibida é regra de **ligação**, não de
+  passagem.
+
+### F18d-1 — Estrada como canteiro, e a entrega de construção sem estrada (sim)
+- **Escopo**: duas regras que só fazem sentido juntas.
+  (a) **Canteiro**: campo novo `estradasPlanejadas` no `GameState`, separado de
+  `estradas`; `PlaceRoad` **reserva** a pedra e planta o tile planejado; variante
+  de tarefa `'assentar-estrada'` (destino é tile, não prédio); o laborer assenta e
+  é o **assentamento** que debita a pedra; `DemolishRoad` parte a entrada em três
+  conjuntos — de pé (devolve `floor(n × devolucaoAoDemolir)`, como hoje),
+  planejado (devolve 0, libera a reserva e a tarefa), nem um nem outro (no-op).
+  (b) **Modo por nível**: `delivery.json` publica `"modo": "livre" | "estrada"`
+  por nível. Níveis 3 e `'assentar-estrada'` em **livre**; níveis 1, 2, 4, 5, 6 e
+  7 em **estrada**. `obrigatoriaParaEntrega` sai de `terrain.json` (ver Nota).
+- **Aceite**: a primeira casa sobe **sem nenhuma estrada no mapa** — planta a
+  obra, o serf entrega o material andando livre, o prédio fica `completo`; e no
+  mesmo cenário a pedreira pronta **não** escoa: a saída enche e o pedreiro vai
+  a `saida_cheia`, até a rua existir. A rua desenhada não liga nada no tick do
+  comando e liga depois que o laborer assenta; a pedra sai do armazém
+  exatamente uma vez, no assentamento. `tests/F09-sistema.test.ts:214` reescrito
+  para afirmar a regra nova (origem do nível 3 por distância **a pé**), com o
+  número medido ao lado.
+- **Evidência**: `test-output/F18d-1.json`
+- **Nota**: sem screenshot — feature só de `sim/` e `data/`.
+- **Nota (decisão do operador, 2026-09-23 — a regra tem dois lados)**: entregar
+  material **numa construção** (obra, tile de estrada planejado, comida para
+  tropa em campo) anda livre, por qualquer tile — é assim que a primeira casa
+  sobe sem rua. **Coletar de produção** (saída da Quarry, insumo do Sawmill,
+  excedente para o armazém) **exige** estrada: sem rua o material fica parado na
+  gaveta. O critério que separa os dois é o **destino**: porta de prédio pronto →
+  estrada; canteiro, tile planejado ou unidade em campo → livre. Fonte: o jogo
+  original; contradiz o que está implementado desde a F10.
+- **Nota (nível 2 é coleta; o Feed da tropa não é o nível 1)**: `ouro-para-escola`
+  fica em **estrada** — a escola está pronta, tem porta, e o ouro é insumo dela;
+  treinar não é construir. Consequência verificada: o motivo `sem-estrada` da
+  F13b e o alerta `sem-estrada` da F22 **mantêm produtor**. O nível 1 de
+  `delivery.json` é literalmente `"comida -> inn"`, prédio com porta, logo
+  estrada; alimentar tropa em campo aberto (GDD §2.4) é **tipo novo**, irmão de
+  `'assentar-estrada'`, e nasce na F20/F28 — não é o nível 1.
+- **Nota (`obrigatoriaParaEntrega` é dado morto, medido na sessão de 2026-09-23)**:
+  o campo aparece três vezes no repositório — `data/terrain.json` e **dois
+  comentários** (`sim/pathfinding.ts:17`, `sim/systems/serfs.ts:21`). **Nenhum
+  leitor.** A regra está codificada no literal `'estrada'` passado em quatro
+  call sites. Trocá-lo para `false` não mudaria nada e nenhum teste acusaria.
+  Ele foi citado repetidamente como a fonte da regra — inclusive pelo operador —
+  e nunca foi lido por linha nenhuma de código. Saiu do `terrain.json` na sessão
+  em que isso foi medido, antes desta feature; o substituto com leitor de verdade
+  é o `modo` por nível em `delivery.json`.
+- **Nota (a regra mora em dez lugares, não em um)**: `jobs.ts:270`
+  (`portasDeEstrada`), `jobs.ts:~277` (`portasDeColeta`, filtra ao componente da
+  entrega), `jobs.ts:303` (`planoDaTarefa`), `jobs.ts:346` (`custoDaTarefa`),
+  `systems/serfs.ts:142` e `:181` (rota carregada e replanejamento),
+  `systems/jobs.ts` (`origemMaisPerto`/`destinoMaisPerto`, que **não criam
+  tarefa** sem ligação), `systems/jobs.ts` (`sanearTarefas`, que cancela quando a
+  rota some), `systems/especialistas.ts:184` (`saida_cheia`), `selectors.ts:271`
+  e `:563`. Quem implementar passa o modo por **tipo de tarefa** nesses pontos;
+  não há uma checagem única para virar.
+- **Nota (o que quebra, contado por tipo de tarefa e não por título)**: 14
+  asserções em 5 arquivos, todos exercitando **só** `'material-para-obra'` —
+  `F09-sistema` (5: `:76`, `:173`, `:207`, `:214`, `:232`), `F10-desempate`
+  (3: `:72`, `:82`, `:95`), `F10-falhas` (4: `:160`, `:170`, `:191`, `:205`),
+  `F09-jobboard` (1: `:270`), `F10-ciclo` (1: `:142`). Ficam **intactos**
+  `F15b-entrega` (52 its, níveis 4–7), `F22-alertas` (17), `F13a-ouro` (12),
+  `F13b-painel` (14), `F08-estradas` (41), `F09-estrada-reserva` (7) e
+  `F10-astar` (26).
+- **Nota (a mudança de comportamento com mais risco — decisão do operador,
+  2026-09-23)**: hoje a origem do material sai de `origemMaisPerto`, que mede
+  **por estrada**. Com o nível 3 livre, a origem passa a ser a de menor caminho
+  **a pé**, e o desempate `menorDistanciaDeCaminhoReal` de `delivery.json` passa
+  a significar coisas diferentes por nível. Vai nesta feature, não depois;
+  `F09-sistema.test.ts:214` é o teste que codifica o comportamento antigo e é
+  reescrito para o novo, com o número medido ao lado, como nas outras Notas
+  desta F18d.
+
+### F18d-2 — Estrada planejada na tela (integração)
+- **Escopo**: `render/` desenha o tile planejado distinto do tile de pé, e os
+  roteiros de `tools/shots/` migram para a ordem nova (o arrasto planeja; a
+  contagem de estrada de pé sobe com o tempo).
+- **Aceite**: o roteiro afirma, no mesmo cenário, **planejados** subindo no
+  arrasto e **de pé** subindo depois — a asserção fica mais estrita que a de
+  hoje, não só diferente, e a soma fecha. Screenshot com os dois estados na
+  mesma tela.
+- **Evidência**: `test-output/F18d-2-shot.json` + `screenshots/F18d-2-*.png`
+- **Nota (esta é uma feature de integração)**: é a exceção explícita que a §10 do
+  CLAUDE.md exige para tocar `src/sim/` e `src/render/` na mesma feature — e ela
+  só vale aqui, não se herda da F11c nem da F18d-1. `sim/` só recebe o que a
+  F18d-1 deixou; se algo de regra aparecer nesta feature, é sinal de que a
+  F18d-1 ficou incompleta.
+- **Nota (o tamanho, medido na sessão de 2026-09-23)**: **10 roteiros** afirmam
+  `estradasRenderizadas` em **25 asserções** — `F08` (6), `F22` (4), `F17` (3),
+  `F13b`/`F16b`/`F17b`/`F17d`/`F17e` (2 cada), `F10` (1), `F11a` (1). Os 10
+  arquivos que semeiam `estradas:` direto no estado (8 testes + `jobs-cenario.ts`
+  e `producao-cenario.ts`) **não** mudam: eles não passam pelo comando.
+- **Nota (a janela entre as duas)**: entre a F18d-1 e esta, a estrada planejada
+  existe no estado e **não aparece na tela**. É feio e está registrado de
+  propósito: o alternativo era empurrar `render/` para dentro do slice de `sim/`
+  sem a nota de integração.
+
 ### F18 — Farm e campos de milho
 ### F19 — Mill e Bakery (cadeia do pão)
 ### F20 — Inn, fome e consumo

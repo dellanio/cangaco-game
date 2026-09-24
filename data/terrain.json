@@ -4,9 +4,8 @@
   "estrada": {
     "custoStonePorTile": 1,
     "bonusVelocidade": 1.30,
-    "obrigatoriaParaEntrega": true,
     "devolucaoAoDemolir": 0.5,
-    "_doc": "Sem estrada ligando a porta do predio a rede, o serf nao entrega e o predio nao funciona. devolucaoAoDemolir: fracao da pedra devolvida ao demolir tiles (arredonda para baixo, por comando) — campo proprio, nao o de buildings.construcao: estrada e predio podem divergir."
+    "_doc": "Escoamento de producao exige estrada; entrega de construcao, nao (F18d). O MODO por nivel de tarefa mora em delivery.json, que tem leitor. Aqui NAO ha flag de regra: o campo obrigatoriaParaEntrega foi removido em 2026-09-23 por ser dado morto — citado varias vezes como fonte da regra, inclusive pelo operador, e nunca lido por linha nenhuma de codigo (a regra estava nos literais 'estrada' de jobs.ts e systems/serfs.ts). devolucaoAoDemolir: fracao da pedra devolvida ao demolir tiles (arredonda para baixo, por comando) — campo proprio, nao o de buildings.construcao: estrada e predio podem divergir."
   },
   "campos": {
     "milho": { "custo": {}, "tilesPorFarm": 15 },
