@@ -1134,7 +1134,24 @@ prédio surge sem clique do jogador.
   evidência: com quina proibida, o trajeto diagonal passa a custar `7` por passo
   (`round(√2 × 1,00 ÷ 2 × 10)`) contra `9` da grama, e a rua deve ganhar em
   **todo** ângulo. Se não ganhar, o número é que está errado, e aí sim é balanceamento.
-- **Nota (segundo dado morto, achado na mesma medição — decisão pendente do operador)**: `terrain.json` tem `estrada.bonusVelocidade: 1.30` com **zero leitores** em `src/`, `tools/`, `tests/` — nem sequer um comentário, ao contrário do `obrigatoriaParaEntrega`. O bônus real emerge de `custoDeMovimento.estrada` (1,00) contra `.grama` (1,30), e dá 1,4 efetivo pelo arredondamento de 10 Hz (`BALANCE_LOG`). O campo não foi removido junto porque o operador mandou apagar só o outro; se ele morrer, morre aqui, que é a feature que mexe no bônus.
+- **Nota (segundo dado morto — decisão do operador, 2026-09-23: apaga nesta feature)**:
+  `terrain.json` tinha `estrada.bonusVelocidade: 1.30` com **zero leitores** em
+  `src/`, `tools/`, `tests/` — nem sequer um comentário, ao contrário do
+  `obrigatoriaParaEntrega`. O bônus real emerge de `custoDeMovimento.estrada`
+  (1,00) contra `.grama` (1,30), e dá 1,4 efetivo pelo arredondamento de 10 Hz
+  (`BALANCE_LOG`). O operador decidiu apagá-lo aqui, pelo mesmo motivo do
+  primeiro: número que parece configurável e não configura nada faz alguém mexer
+  nele esperando efeito. Pedido junto: uma regra de `validate:data` para "campo
+  de dado sem leitor é erro", **se couber sem inchar**; se não couber, a
+  observação vai para o `PROGRESS.md` com a varredura medida.
+- **Nota (esta é uma feature de integração)**: é a exceção explícita que a §10 do
+  CLAUDE.md exige para tocar `src/sim/` e `src/render/` na mesma feature, e ela
+  vale **só aqui** — não se herda para a F18d-1 nem para nenhuma outra. O motivo
+  é que as três partes são a mesma regra: o arrasto que interpola é `input/`, a
+  ligação em 8 vizinhos é `sim/`, e o tile inclinado é `render/`. Desenhar a
+  diagonal sem ligá-la (ou ligá-la sem desenhá-la) seria uma tela que mente
+  sobre o estado, e nenhuma das metades tem aceite verificável sozinha: o
+  screenshot do item afirma uma rua que o grafo precisa estar ligando.
 - **Nota (o que NÃO entra)**: o custo de movimento diagonal já existe e está
   exercitado (`ticksPorTileDiagonal`); esta feature não o cria. E não mexe em
   `colisao`/`intransponivel`: quina proibida é regra de **ligação**, não de
