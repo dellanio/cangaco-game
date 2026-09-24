@@ -1763,6 +1763,57 @@ a geografia já corrigida do que regravar 900 tiles depois.
   fazendeiro não sair nunca. As duas caem com a decisão de arquitetura de
   2026-09-24 (`docs/planos/recursos-naturais-proposta.md`); o documento fica como
   registro do que foi considerado.
+### F-TP — A planta fantasma mostra o alcance de colheita (render + input)
+- **Origem — decisão do operador, 2026-09-24**, a partir da medição que descartou
+  o ramo (b) do BUG-C: em **85,5 %** da área jogável não há um tile de rocha ao
+  alcance 6 (fração com ao menos um tile: alcance 3 → 8,6 %, 6 → 14,5 %,
+  12 → 26,5 %, 20 → 45,0 %; a rocha vem em **11 lajedos**, não espalhada). O
+  jogador planta a pedreira e ela **nasce parada**, e hoje ele só descobre pelo
+  alerta da F22, depois do fato. **O desenho está certo — plantar longe é escolha
+  legítima. O que chega tarde é o retorno.**
+- **É regra da CLASSE, não da Quarry.** Vale para todo prédio cuja receita tem
+  `colheita` em `data/production.json`: hoje só a `quarry`, amanhã o lenhador, o
+  roceiro (F18), o pescador e o mineiro (F21). Nenhum id de prédio e nenhum id de
+  recurso digitado em `.ts` — o alcance, o recurso e a cor saem do dado, como a
+  paleta de recursos da F-T2a já sai. Prédio novo com `colheita` no dado ganha a
+  prévia **sem uma linha de código**, e é isso que o aceite afirma.
+- **Escopo**: enquanto a planta fantasma está sob o cursor (a prévia da F08, que
+  já segue o mouse), ela mostra:
+  (a) **o alcance de colheita desenhado sobre o grid**, a partir da CAIXA da
+  planta, em Chebyshev — o mesmo `alcance_tiles` que a simulação usa, lido do
+  dado, nunca uma segunda cópia da regra em `src/render/`;
+  (b) **quantos tiles daquele recurso caem dentro dele**, e quanto isso dá em
+  unidades (`quantidade` somada, que é o que a pedreira vai realmente tirar);
+  (c) **nada**, quando a receita do prédio não tem `colheita` — armazém, escola e
+  serraria não ganham moldura nenhuma.
+- **A recusa NÃO entra** (decisão do operador): plantar longe continua valendo e
+  `placement.ts` **não** ganha motivo novo de recusa. Zero tile mostra `0`; não
+  bloqueia, não pinta de vermelho como impedimento, não pede confirmação.
+- **Nota de integração (CLAUDE.md §10 — escrita aqui ANTES do código, e é o que
+  autoriza a exceção)**: a contagem tem de sair da **mesma função** que a sim usa,
+  senão a prévia e o prédio podem discordar. Hoje `tilesDeColheita` recebe um
+  `PredioCompleto` e a fantasma não é prédio nenhum. Esta feature pode extrair, em
+  `src/sim/recursos.ts`, o núcleo que recebe a **caixa** em vez do prédio, e
+  deixar a assinatura de hoje chamando esse núcleo. **É a única mudança
+  autorizada em `src/sim/` aqui**, é refatoração de assinatura e não pode trazer
+  regra nova, número novo nem campo novo em `GameState`. Se o escopo pedir mais
+  que isso, pare e registre.
+- **Aceite**, com o roteiro cumprindo a §8 (despausa, `mouse.down` /
+  `waitForTimeout(150)` / `mouse.up`, pausa de volta):
+  (a) com a fantasma da pedreira **sobre o lajedo**, a prévia diz N > 0 tiles;
+  movida para uma região sem rocha, diz **0** — e em nenhum dos dois casos o
+  clique é recusado;
+  (b) **a fantasma e o prédio concordam**: o N que a prévia mostra num tile é
+  igual ao que `tilesDeColheita` devolve para o prédio **plantado naquele mesmo
+  tile**. Esta é a perna estrutural, e é ela que impede a segunda cópia da regra;
+  (c) prédio sem `colheita` na receita não desenha alcance nenhum.
+- **Evidência**: `test-output/F-TP-shot.json` + `screenshots/F-TP-*.png`
+- **Posição na fila — decisão do operador, 2026-09-24**: vem **depois da F18**,
+  ainda que a medição que a originou seja anterior. Razão dele: o campo como tile
+  é o que ele quer ver primeiro. Quando esta feature entrar, o roceiro da F18 já
+  existirá e a prévia nasce cobrindo os dois — o que é a prova da regra de classe,
+  não um acidente de ordem.
+
 ### F19 — Mill e Bakery (cadeia do pão)
 ### F20 — Inn, fome e consumo
 - Restauração por tipo de comida e regra das duas comidas diferentes, conforme o

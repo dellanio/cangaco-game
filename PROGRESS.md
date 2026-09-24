@@ -413,6 +413,36 @@ anterior a todos os sistemas, não existe tick em que um item avance numa escola
 que já caiu. (Hoje não há comando de demolir — é a F16; o teste chega lá por
 fixture.)
 
+(origem: F17c + F-T2b, 2026-09-24)
+
+### A regra do alvo alcançável (vale para a sim e para toda medição)
+
+**Nenhuma unidade pede alvo inalcançável, e toda medição que sorteia alvo
+garante que o alvo é alcançável.** As duas metades são a mesma regra, e a segunda
+não é higiene de teste: é o que separa medir **busca** de medir **flood fill**.
+
+**Por quê:** o A* sem solução **esgota a componente alcançável inteira** antes de
+devolver `null`. Medido na F-T2b: na faixa da F17c, 5 de 400 alvos caíram sobre
+árvore e as razões saltaram para **11,27 e 23,58** contra um teto de 5,0. Não é
+regressão de buffer nem de heurística — é propriedade do algoritmo. Três cenários
+foram corrigidos por isso (F17c, F18b, F-T1) e **nenhuma asserção foi
+afrouxada**: o que mudou foi o cenário voltar a medir o que diz medir.
+
+Do lado da simulação a regra é anterior e mais forte, e já está implementada:
+quem reclama confere o caminho no `claim` (`distanciaDaTarefa` devolve `null` e o
+claim é recusado) e `sanearTarefas` libera com `'caminho-cortado'` quando ele
+some. Uma unidade que insistisse num alvo inalcançável pagaria a componente
+inteira **por tick**.
+
+**O que isso implica para mapa grande:** o custo cresce com a **área alcançável**,
+não com a quantidade de obstáculo. No 128×128 a travessia longa é 5685 nós
+(~21–26 ms por busca, `test-output/F-T2b.json`); um mapa com espaço para duas
+cidades multiplica isso pela razão de área — **extrapolação declarada, não
+medição**. É esta regra, e não o teto de 2,5 do eixo da F-T1, que decide se mapa
+grande continua viável: a árvore não encareceu a busca (razão 0,99 em nós na
+travessia longa), ela tornou **comum** o alvo sem solução, que antes só água e
+serra produziam.
+
 ## Revisão da F12 e da F13a (subagente evaluator, a pedido do operador)
 
 **Veredicto: as duas mantêm `passes: true`.** Todos os critérios de aceite das
