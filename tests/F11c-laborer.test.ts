@@ -6,7 +6,7 @@ import { step } from '../src/sim/tick';
 import {
   alvoDeNivelamento, entreguesNaObra, hpTotalDoTipo, obraNivelada, obraTrabalhavel, tetoDeHp,
 } from '../src/sim/obra';
-import { criarTarefaDeConstrucao, reclamar, tarefasDeConstrucaoEmOrdem, TIPO_QUE_CONSTROI } from '../src/sim/jobs';
+import { criarTarefaDeConstrucao, reclamar, tarefasDoLaborerEmOrdem, TIPO_QUE_CONSTROI } from '../src/sim/jobs';
 import { gerarTarefas } from '../src/sim/systems/jobs';
 import { tilesDaPorta } from '../src/sim/estradas';
 import {
@@ -145,10 +145,10 @@ describe('F11c — jobs.ts: o laborer acha e reclama tarefa (Task 4)', () => {
     estado = comHp(estado, 'obra-a', 250); // no teto, sem tarefa de material
     const { state, id } = criarTarefaDeConstrucao(estado, 'obra-a');
     expect(reclamar(state, id, laborer1)).toEqual({ ok: false, motivo: 'destino-sem-trabalho' });
-    expect(tarefasDeConstrucaoEmOrdem(state, laborer1).map((t) => t.id)).toEqual([]);
+    expect(tarefasDoLaborerEmOrdem(state, laborer1).map((t) => t.id)).toEqual([]);
   });
 
-  it('tarefasDeConstrucaoEmOrdem ordena pela obra mais perto', () => {
+  it('tarefasDoLaborerEmOrdem ordena pela obra mais perto', () => {
     const [laborer1] = laborersDoCenario(inicial);
     if (!laborer1) throw new Error('fixture: sem laborer');
     let estado = comObra(inicial, 'perto', { gx: 30, gy: 35, faltam: {} }); // trabalhavel: hp 0 < teto
@@ -156,7 +156,7 @@ describe('F11c — jobs.ts: o laborer acha e reclama tarefa (Task 4)', () => {
     estado = comUnidadeEm(estado, laborer1, 30, 34);
     const { state: comA, id: idPerto } = criarTarefaDeConstrucao(estado, 'perto');
     const { state: comAmbas, id: idLonge } = criarTarefaDeConstrucao(comA, 'longe');
-    expect(tarefasDeConstrucaoEmOrdem(comAmbas, laborer1).map((t) => t.id)).toEqual([idPerto, idLonge]);
+    expect(tarefasDoLaborerEmOrdem(comAmbas, laborer1).map((t) => t.id)).toEqual([idPerto, idLonge]);
   });
 
   it('desempata por numero quando o custo e igual (duas tarefas para a mesma obra)', () => {
@@ -165,7 +165,7 @@ describe('F11c — jobs.ts: o laborer acha e reclama tarefa (Task 4)', () => {
     const estado = comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: {} });
     const { state: comUma, id: primeira } = criarTarefaDeConstrucao(estado, 'obra-a');
     const { state: comDuas, id: segunda } = criarTarefaDeConstrucao(comUma, 'obra-a');
-    expect(tarefasDeConstrucaoEmOrdem(comDuas, laborer1).map((t) => t.id)).toEqual([primeira, segunda]);
+    expect(tarefasDoLaborerEmOrdem(comDuas, laborer1).map((t) => t.id)).toEqual([primeira, segunda]);
   });
 
   it('um serf continua recusado com unidade-invalida', () => {

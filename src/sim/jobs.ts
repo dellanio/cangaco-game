@@ -14,9 +14,9 @@ import type {
   GameEvent, GameState, Predio, Tarefa, TarefaConstruir, TarefaDeTransporte,
   TarefaExcedenteParaArmazem, TarefaInsumoProducaoBaixa, TarefaInsumoProducaoParada,
   TarefaMaterialParaObra, TarefaOcupar, TarefaOuroParaEscola,
-  TarefaAssentarEstrada, TarefaSaidaCheiaParaArmazem, TipoDeTarefa, TipoNaEscada,
+  TarefaAssentarEstrada, TarefaDeLaborer, TarefaSaidaCheiaParaArmazem, TipoDeTarefa, TipoNaEscada,
 } from './state';
-import { ehTarefaDeTransporte, MERCADORIA_DE_OURO } from './state';
+import { ehTarefaDeAssentamento, ehTarefaDeLaborer, ehTarefaDeTransporte, MERCADORIA_DE_OURO } from './state';
 import type { GameData } from './data/types';
 import { gameData } from './data';
 import {
@@ -423,6 +423,35 @@ export function caminhoAtePredioCompleto(
 }
 
 /**
+ * F18d-1b — o caminho do laborer ate O TILE do canteiro. O alvo e o proprio tile, e
+ * nao uma porta: quem assenta fica EM CIMA do tile que vai virar estrada.
+ *
+ * O modo sai de `modoDoTipo`, nunca digitado aqui: e a linha da escada
+ * (`delivery.json`) que diz se a tarefa depende de estrada — e esta, que constroi a
+ * rede, obviamente nao pode depender dela.
+ */
+export function caminhoAteOTile(
+  state: GameState, tile: TileDeGrid, unidadeId: string, dados: GameData = gameData,
+): Caminho | null {
+  const unidade = state.unidades.porId[unidadeId];
+  if (!unidade) return null;
+  return buscarCaminho(
+    state, { gx: unidade.gx, gy: unidade.gy }, [tile], modoDoTipo('assentar-estrada', dados), dados,
+  );
+}
+
+/** O caminho de UMA tarefa de laborer, qualquer que seja o tipo dela: porta da obra
+ *  para `'construir'`, o tile para `'assentar-estrada'`. Quem ordena e quem anda usam
+ *  esta, para que a escolha e a viagem nunca midam coisas diferentes. */
+export function caminhoDoLaborer(
+  state: GameState, tarefa: TarefaDeLaborer, unidadeId: string, dados: GameData = gameData,
+): Caminho | null {
+  return ehTarefaDeAssentamento(tarefa)
+    ? caminhoAteOTile(state, tarefa.destinoTile, unidadeId, dados)
+    : caminhoAteAObra(state, tarefa.destino, unidadeId, dados);
+}
+
+/**
  * O custo, em ticks, que ordena as tarefas. Com `unidadeId`: o plano inteiro (as duas
  * pernas). Sem unidade (`null`): so a perna de entrega, da melhor porta de coleta —
  * unica coisa que existe sem um serf em campo. `null` se nao ha caminho.
@@ -490,9 +519,12 @@ export function reclamar(
     if (!ehPlanejada(state.estradasPlanejadas, tarefa.destinoTile)) {
       return { ok: false, motivo: 'destino-sem-trabalho' };
     }
-    // O caminho ate o tile e a FSM que assenta sao a Tarefa 3 da F18d-1b. Ate
-    // la nenhum laborer chega aqui: `tarefasDeConstrucaoEmOrdem` so lista
-    // `'construir'`, e e dela que `sistemaDosLaborers` reclama.
+    // O laborer tem de CHEGAR no tile — mesma exigencia que `'construir'` faz da
+    // porta da obra. Sem isto ele reclamaria um tile ilhado e largaria no tick
+    // seguinte, reservando a pedra a cada volta.
+    if (caminhoAteOTile(state, tarefa.destinoTile, unidadeId, dados) === null) {
+      return { ok: false, motivo: 'sem-caminho' };
+    }
   } else {
     // 'construir': sem mercadoria/origem (o laborer nao carrega nada).
     if (vagaDeConstrucao(state, tarefa.destino, dados) < 1) return { ok: false, motivo: 'destino-sem-vaga' };
@@ -500,7 +532,7 @@ export function reclamar(
     // como o F10 fez para o serf. Modo 'livre': o laborer nao carrega nada e precisa
     // chegar ANTES de existir estrada (GDD §5.1: ele nivela primeiro).
     if (caminhoAteAObra(state, tarefa.destino, unidadeId, dados) === null) return { ok: false, motivo: 'sem-caminho' };
-    // O portao vive AQUI, e nao so na ordenacao (`tarefasDeConstrucaoEmOrdem`), para
+    // O portao vive AQUI, e nao so na ordenacao (`tarefasDoLaborerEmOrdem`), para
     // que o laborer nao reclame, largue e reclame a mesma obra sem trabalho a cada tick.
     if (!obraTrabalhavel(state, tarefa.destino, dados)) return { ok: false, motivo: 'destino-sem-trabalho' };
   }
@@ -659,26 +691,34 @@ export function reclamarMelhor(
 }
 
 /**
- * As `'construir'` abertas na ordem de escolha do laborer: `(custo do caminho A* a pe
- * ate a porta, numero)`. SEM nivel — `'construir'` nao esta na escada de
+ * As tarefas do laborer abertas, na ordem em que ele escolhe: `(custo do caminho A* a
+ * pe ate o destino, numero)`. SEM nivel — `'construir'` nao esta na escada de
  * `delivery.json` (decisao do operador, F11b: serf e laborer nao disputam tarefa).
  *
  * PULA obra nao trabalhavel (`obraTrabalhavel`, obra.ts): nao adianta o laborer ir para
  * onde nao ha nada a fazer — e a mesma regra que `reclamar` aplica, aqui so para nao
  * nem oferecer a obra morta na ordenacao.
+ *
+ * F18d-1b — lista TAMBEM `'assentar-estrada'`, na MESMA ordenacao. Ela tem nivel na
+ * escada (por causa do `modo`), e o nivel nao entra aqui: as duas sao do laborer, e
+ * entre elas vale a mesma pergunta de sempre — o que esta mais perto sai primeiro.
+ * O `obraTrabalhavel` da linha acima vira `ehPlanejada` para ela: e o equivalente
+ * exato, "ainda ha o que fazer no destino".
  */
-export function tarefasDeConstrucaoEmOrdem(
+export function tarefasDoLaborerEmOrdem(
   state: GameState, unidadeId: string | null = null, dados: GameData = gameData,
-): TarefaConstruir[] {
+): TarefaDeLaborer[] {
   const unidade = unidadeId === null ? null : state.unidades.porId[unidadeId];
   const candidatas = state.jobs.tarefas.ordem
     .map((id) => state.jobs.tarefas.porId[id])
-    .filter((t): t is TarefaConstruir => t !== undefined && t.tipo === 'construir' && t.estado === 'aberta')
+    .filter((t): t is TarefaDeLaborer => t !== undefined && ehTarefaDeLaborer(t) && t.estado === 'aberta')
     .filter((t) => unidade == null || elegivelParaTarefa(t.tipo, unidade.tipo))
-    .filter((t) => obraTrabalhavel(state, t.destino, dados));
+    .filter((t) => (ehTarefaDeAssentamento(t)
+      ? ehPlanejada(state.estradasPlanejadas, t.destinoTile)   // o tile ja pode ter saido do canteiro
+      : obraTrabalhavel(state, t.destino, dados)));
   const chaves = new Map(candidatas.map((t) => [
     t.id,
-    unidadeId === null ? 0 : caminhoAteAObra(state, t.destino, unidadeId, dados)?.custo ?? Number.POSITIVE_INFINITY,
+    unidadeId === null ? 0 : caminhoDoLaborer(state, t, unidadeId, dados)?.custo ?? Number.POSITIVE_INFINITY,
   ]));
   return [...candidatas].sort((a, b) => {
     const ca = chaves.get(a.id) ?? Number.POSITIVE_INFINITY;
@@ -690,10 +730,10 @@ export function tarefasDeConstrucaoEmOrdem(
 
 /** Reclama, para o laborer `unidadeId`, a melhor `'construir'` aberta QUE DER para
  *  reclamar — irma de `reclamarMelhor`, que so serve `'material-para-obra'`. */
-export function reclamarMelhorConstrucao(
+export function reclamarMelhorDoLaborer(
   state: GameState, unidadeId: string, dados: GameData = gameData,
 ): ResultadoDoClaimMelhor {
-  const candidatas = tarefasDeConstrucaoEmOrdem(state, unidadeId, dados);
+  const candidatas = tarefasDoLaborerEmOrdem(state, unidadeId, dados);
   const primeira = candidatas[0];
   if (primeira === undefined) return { ok: false, motivo: 'sem-tarefa-aberta' };
   let primeiraRecusa: MotivoDeRecusaDoClaim | null = null;
@@ -732,7 +772,7 @@ export function tarefasDeOcupacaoEmOrdem(
 }
 
 /** F14 — reclama, para o especialista `unidadeId`, a melhor `'ocupar'` aberta QUE
- *  DER para reclamar. Irma de `reclamarMelhorConstrucao`. */
+ *  DER para reclamar. Irma de `reclamarMelhorDoLaborer`. */
 export function reclamarMelhorOcupacao(
   state: GameState, unidadeId: string, dados: GameData = gameData,
 ): ResultadoDoClaimMelhor {

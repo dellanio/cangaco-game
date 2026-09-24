@@ -7,6 +7,7 @@
 import { gameData } from '../../src/sim/data';
 import type { GameData } from '../../src/sim/data/types';
 import type { GameState } from '../../src/sim/state';
+import { ehTarefaDeLaborer } from '../../src/sim/state';
 import { custoDoPasso } from '../../src/sim/pathfinding';
 
 export const ESTADOS_DO_LABORER = ['ocioso', 'indo_a_obra', 'nivelando', 'esperando_material', 'martelando'] as const;
@@ -32,7 +33,10 @@ export function violacoesDaFsmDoLaborer(estado: GameState, dados: GameData = gam
     if (suas.length > 1) v.push(`${id}: segura ${suas.length} tarefas de construir`);
 
     const tarefa = dadosDaFsm.tarefa === undefined ? undefined : estado.jobs.tarefas.porId[dadosDaFsm.tarefa];
-    const reclamadaPeloLaborer = tarefa !== undefined && tarefa.tipo === 'construir'
+    // F18d-1b: as tarefas do laborer sao DUAS ('construir' e 'assentar-estrada'). O
+    // predicado vem de `ehTarefaDeLaborer` — a mesma fonte que a FSM usa — para que a
+    // invariante nao acuse justamente o caso que o codigo passou a permitir.
+    const reclamadaPeloLaborer = tarefa !== undefined && ehTarefaDeLaborer(tarefa)
       && tarefa.estado === 'reclamada' && tarefa.reclamadaPor === id;
 
     switch (u.fsm) {
@@ -48,7 +52,7 @@ export function violacoesDaFsmDoLaborer(estado: GameState, dados: GameData = gam
         // ANTES na ordem pode ver a obra completada por OUTRO laborer no mesmo tick (a
         // dobra sequencial) e so vira `ocioso` no tick seguinte, quando `sanearTarefas`
         // cancela a tarefa dele (`'destino-completo'`) — o mesmo caminho que o serf usa.
-        if (!reclamadaPeloLaborer) v.push(`${id}: ${u.fsm} sem tarefa 'construir' reclamada por ele`);
+        if (!reclamadaPeloLaborer) v.push(`${id}: ${u.fsm} sem tarefa de laborer reclamada por ele`);
         break;
       default:
         break;
@@ -81,7 +85,7 @@ export function violacoesDaFsmDoLaborer(estado: GameState, dados: GameData = gam
   // a outra direcao: toda 'construir' reclamada tem exatamente um laborer que a reconhece
   for (const id of estado.jobs.tarefas.ordem) {
     const t = estado.jobs.tarefas.porId[id];
-    if (!t || t.tipo !== 'construir' || t.estado === 'aberta' || t.reclamadaPor === null) continue;
+    if (!t || !ehTarefaDeLaborer(t) || t.estado === 'aberta' || t.reclamadaPor === null) continue;
     const u = estado.unidades.porId[t.reclamadaPor];
     if (u && u.fsmData.tarefa !== id) v.push(`${id}: o laborer ${u.id} nao a reconhece (fsmData.tarefa='${u.fsmData.tarefa}')`);
   }

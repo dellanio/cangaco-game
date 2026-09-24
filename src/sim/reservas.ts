@@ -38,9 +38,15 @@ import { vagasDoPredio } from './ocupacao';
  * isso, dois `PlaceRoad` no mesmo tick veriam a mesma unidade livre e o segundo
  * tracado nasceria impagavel. Ela sempre sai da gaveta `saida` do armazem — a
  * unica reservavel, e a mesma de onde `debitarPedra` tira.
+ *
+ * A QUANTIDADE dela e `terreno.estrada.custoStonePorTile`, o MESMO campo que o
+ * assentamento debita (`comOTileAssentado`): reservar uma unidade fixa aqui e
+ * cobrar outra la deixaria o armazem negativo no dia em que o custo mudasse.
+ * Uma CARGA, essa sim, e sempre uma unidade — isso e da forma da tarefa.
  */
 export function reservadoNaOrigem(
   state: GameState, predioId: string, mercadoria: string, gaveta: Gaveta = 'saida',
+  dados: GameData = gameData,
 ): number {
   let soma = 0;
   for (const id of state.jobs.tarefas.ordem) {
@@ -51,7 +57,7 @@ export function reservadoNaOrigem(
     const daOrigem = (x: TarefaDeTransporte | TarefaAssentarEstrada): boolean =>
       x.origem === predioId && x.mercadoria === mercadoria && gavetaDeOrigem(x.tipo) === gaveta;
     if (ehTarefaDeAssentamento(t)) {
-      if (daOrigem(t)) soma += 1;
+      if (daOrigem(t)) soma += dados.terreno.estrada.custoStonePorTile;
     } else if (ehTarefaDeTransporte(t) && t.estado === 'reclamada' && daOrigem(t)) soma += 1;
   }
   return soma;

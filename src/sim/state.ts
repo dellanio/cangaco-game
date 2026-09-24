@@ -589,6 +589,15 @@ export function ehTarefaDeAssentamento(tarefa: Tarefa): tarefa is TarefaAssentar
   return 'destinoTile' in tarefa;
 }
 
+/** As tarefas que SO o laborer reclama (`UNIDADE_ELEGIVEL_POR_TIPO`): construir e
+ *  assentar. Nao e a negacao de `ehTarefaDeTransporte` — `'ocupar'` tambem nao e
+ *  carga, e nao e do laborer. */
+export type TarefaDeLaborer = TarefaConstruir | TarefaAssentarEstrada;
+
+export function ehTarefaDeLaborer(tarefa: Tarefa): tarefa is TarefaDeLaborer {
+  return tarefa.tipo === 'construir' || ehTarefaDeAssentamento(tarefa);
+}
+
 /** A central de tarefas. Serializavel: so `Colecao` de objetos planos. */
 export interface JobBoard {
   readonly tarefas: Colecao<Tarefa>;

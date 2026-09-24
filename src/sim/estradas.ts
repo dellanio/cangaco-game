@@ -363,11 +363,48 @@ export function predioLigadoAoArmazem(
  * reservar contra ela faria `disponivelNaOrigem` ficar negativo, que e o sinal
  * que o saneamento usa para "reservado acima do estoque".
  */
-export function armazemQuePagaAEstrada(state: GameState): string | null {
+export function armazemQuePagaAEstrada(state: GameState, dados: GameData = gameData): string | null {
+  const custo = dados.terreno.estrada.custoStonePorTile;
   for (const armazem of armazensCompletos(state)) {
-    if (disponivelNaOrigem(state, armazem.id, MERCADORIA_DA_ESTRADA) >= 1) return armazem.id;
+    if (disponivelNaOrigem(state, armazem.id, MERCADORIA_DA_ESTRADA) >= custo) return armazem.id;
   }
   return null;
+}
+
+/**
+ * F18d-1b — o tile planejado vira estrada DE PE, e o armazem `origemId` (o que a
+ * tarefa reservou) paga `custoStonePorTile`. `null` quando ele nao tem mais a
+ * pedra: sem pedra nao nasce estrada, e quem chama libera a tarefa.
+ *
+ * Le a `saida` CRUA, e nao `disponivelNaOrigem`: a reserva que esta la e a da
+ * PROPRIA tarefa que assenta (`reservadoNaOrigem` a conta desde `'aberta'`), e
+ * descontar de novo seria cobrar duas vezes pelo mesmo tile.
+ */
+export function comOTileAssentado(
+  state: GameState, tile: TileDeGrid, origemId: string, dados: GameData = gameData,
+): GameState | null {
+  const armazem = state.predios.porId[origemId];
+  if (!armazem || armazem.estado !== 'completo' || armazem.tipo !== ID_DO_ARMAZEM) return null;
+  const custo = dados.terreno.estrada.custoStonePorTile;
+  const naSaida = armazem.estoque.saida[MERCADORIA_DA_ESTRADA] ?? 0;
+  if (naSaida < custo) return null;
+
+  const chave = chaveDeTile(tile);
+  const planejadas = { ...state.estradasPlanejadas };
+  delete planejadas[chave];
+  const pago: Predio = {
+    ...armazem,
+    estoque: {
+      ...armazem.estoque,
+      saida: { ...armazem.estoque.saida, [MERCADORIA_DA_ESTRADA]: naSaida - custo },
+    },
+  };
+  return {
+    ...state,
+    estradas: { ...state.estradas, [chave]: true },
+    estradasPlanejadas: planejadas,
+    predios: { porId: { ...state.predios.porId, [origemId]: pago }, ordem: state.predios.ordem },
+  };
 }
 
 export function pedraDisponivel(state: GameState): number {

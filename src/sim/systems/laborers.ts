@@ -24,12 +24,15 @@
  * `reclamar` (jobs.ts) tambem recusa obra nao trabalhavel, do outro lado: sem os dois,
  * o laborer soltaria e reclamaria a mesma obra sem trabalho a cada tick.
  */
-import type { GameEvent, GameState, PredioEmObra, TarefaConstruir, Unidade } from '../state';
-import { completarObra } from '../state';
+import type {
+  GameEvent, GameState, PredioEmObra, TarefaAssentarEstrada, TarefaConstruir, TarefaDeLaborer, Unidade,
+} from '../state';
+import { completarObra, ehTarefaDeAssentamento, ehTarefaDeLaborer } from '../state';
+import { comOTileAssentado } from '../estradas';
 import type { GameData } from '../data/types';
 import { gameData } from '../data';
 import {
-  caminhoAteAObra, cancelarConstrucoesDe, liberar, reclamarMelhorConstrucao, removerTarefa, TIPO_QUE_CONSTROI,
+  caminhoDoLaborer, cancelarConstrucoesDe, liberar, reclamarMelhorDoLaborer, removerTarefa, TIPO_QUE_CONSTROI,
 } from '../jobs';
 import type { MotivoDeLiberacao } from '../jobs';
 import { alvoDeNivelamento, hpTotalDoTipo, obraNivelada, obraTrabalhavel, tetoDeHp } from '../obra';
@@ -41,13 +44,13 @@ type Passo = ResultadoDeSistema;
 
 const semEventos = (state: GameState): Passo => ({ state, events: [] });
 
-/** A tarefa de CONSTRUIR do laborer, se ela existe, esta `'reclamada'` e e mesmo dele.
- *  So laborer reclama `'construir'` (`elegivelParaTarefa`, F11b) — o filtro de tipo aqui
- *  e so para o compilador estreitar; o laborer nunca segura `'material-para-obra'`. */
-function tarefaDoLaborer(state: GameState, u: Unidade): TarefaConstruir | null {
+/** A tarefa do laborer, se ela existe, esta `'reclamada'` e e mesmo dele. So laborer
+ *  reclama `'construir'` e `'assentar-estrada'` (`elegivelParaTarefa`, F11b/F18d-1b) — o
+ *  filtro de tipo aqui e so para o compilador estreitar; ele nunca segura carga. */
+function tarefaDoLaborer(state: GameState, u: Unidade): TarefaDeLaborer | null {
   const id = u.fsmData.tarefa;
   const t = id === undefined ? undefined : state.jobs.tarefas.porId[id];
-  return t !== undefined && t.tipo === 'construir' && t.estado === 'reclamada' && t.reclamadaPor === u.id ? t : null;
+  return t !== undefined && ehTarefaDeLaborer(t) && t.estado === 'reclamada' && t.reclamadaPor === u.id ? t : null;
 }
 
 /** A obra da tarefa, SE o destino ainda e obra. `null` quando outro laborer, mais cedo no
@@ -74,11 +77,11 @@ function reavaliar(obra: PredioEmObra, u: Unidade, tarefa: TarefaConstruir, dado
 // --- os estados ---
 
 function passoOcioso(state: GameState, u: Unidade, dados: GameData): Passo {
-  const r = reclamarMelhorConstrucao(state, u.id, dados);
+  const r = reclamarMelhorDoLaborer(state, u.id, dados);
   if (!r.ok) return semEventos(state);
   const bruta = r.state.jobs.tarefas.porId[r.tarefa];
-  const tarefa = bruta?.tipo === 'construir' ? bruta : undefined;
-  const caminho = tarefa === undefined ? null : caminhoAteAObra(r.state, tarefa.destino, u.id, dados);
+  const tarefa = bruta !== undefined && ehTarefaDeLaborer(bruta) ? bruta : undefined;
+  const caminho = tarefa === undefined ? null : caminhoDoLaborer(r.state, tarefa, u.id, dados);
   if (tarefa === undefined || caminho === null) {
     // o claim ja exigiu o caminho; se ele sumiu, devolve a reserva em vez de segurar a tarefa
     const l = liberarTarefa(r.state, r.tarefa, 'pedido-da-unidade');
@@ -89,31 +92,67 @@ function passoOcioso(state: GameState, u: Unidade, dados: GameData): Passo {
   }));
 }
 
-function passoIndoAObra(state: GameState, u: Unidade, dados: GameData): Passo {
-  const tarefa = tarefaDoLaborer(state, u);
-  if (tarefa === null) return ficarOcioso(state, u); // o quadro a cancelou (destino sumiu/completou)
-  const obra = obraDaTarefa(state, tarefa);
-  if (obra === null) return ficarOcioso(state, u); // outro laborer completou a obra neste tick
-
+/** Um passo rumo ao destino da tarefa, replanejando se plantaram predio na frente.
+ *  `null` = o laborer nao chega mais la, e quem chama libera. */
+function avancar(
+  state: GameState, u: Unidade, tarefa: TarefaDeLaborer, dados: GameData,
+): { readonly u: Unidade; readonly chegou: boolean } | null {
   let atual = u;
   const proximo = (u.fsmData.caminho ?? [])[0];
   if (proximo !== undefined && !tileAndavel(state, proximo, 'livre', dados)) {
     // um predio foi plantado no caminho: replaneja a partir de onde esta
-    const caminho = caminhoAteAObra(state, tarefa.destino, u.id, dados);
-    if (caminho === null) {
-      const l = liberarTarefa(state, tarefa.id, 'pedido-da-unidade'); // so a UNIDADE nao chega: reabre
-      return ficarOcioso(l.state, u, l.events);
-    }
+    const caminho = caminhoDoLaborer(state, tarefa, u.id, dados);
+    if (caminho === null) return null;
     atual = { ...u, fsmData: dadosDaFsm({ tarefa: tarefa.id, caminho: caminho.tiles, progresso: 0 }) };
   }
   const andou = andar(state, atual, dados);
-  if (!chegou(andou)) return semEventos(comUnidade(state, andou));
-  return semEventos(comUnidade(state, reavaliar(obra, andou, tarefa, dados)));
+  return { u: andou, chegou: chegou(andou) };
+}
+
+function passoIndoAObra(state: GameState, u: Unidade, dados: GameData): Passo {
+  const tarefa = tarefaDoLaborer(state, u);
+  if (tarefa === null) return ficarOcioso(state, u); // o quadro a cancelou (destino sumiu/completou)
+  if (ehTarefaDeAssentamento(tarefa)) return passoIndoAoTile(state, u, tarefa, dados);
+  const obra = obraDaTarefa(state, tarefa);
+  if (obra === null) return ficarOcioso(state, u); // outro laborer completou a obra neste tick
+
+  const passo = avancar(state, u, tarefa, dados);
+  if (passo === null) {
+    const l = liberarTarefa(state, tarefa.id, 'pedido-da-unidade'); // so a UNIDADE nao chega: reabre
+    return ficarOcioso(l.state, u, l.events);
+  }
+  if (!passo.chegou) return semEventos(comUnidade(state, passo.u));
+  return semEventos(comUnidade(state, reavaliar(obra, passo.u, tarefa, dados)));
+}
+
+/**
+ * F18d-1b — a viagem ate o tile do canteiro. O tile que deixou de ser planejado nao e
+ * tratado aqui: `sanearTarefas` roda ANTES dos laborers no tick e cancela a tarefa
+ * (`'destino-sumiu'`), e o laborer cai no `tarefaDoLaborer === null` acima — o mesmo
+ * caminho de volta que a obra demolida no meio da viagem ja usava.
+ *
+ * Chegou = `martelando` direto. Nao ha nivelamento nem material a esperar: a pedra nao
+ * viaja com ele, sai do armazem que a tarefa reservou, no tick do assentamento.
+ */
+function passoIndoAoTile(
+  state: GameState, u: Unidade, tarefa: TarefaAssentarEstrada, dados: GameData,
+): Passo {
+  const passo = avancar(state, u, tarefa, dados);
+  if (passo === null) {
+    const l = liberarTarefa(state, tarefa.id, 'pedido-da-unidade'); // so a UNIDADE nao chega: reabre
+    return ficarOcioso(l.state, u, l.events);
+  }
+  if (!passo.chegou) return semEventos(comUnidade(state, passo.u));
+  return semEventos(comUnidade(state, {
+    ...passo.u, fsm: 'martelando', fsmData: dadosDaFsm({ tarefa: tarefa.id, progresso: 0 }),
+  }));
 }
 
 function passoNivelando(state: GameState, u: Unidade, dados: GameData): Passo {
   const tarefa = tarefaDoLaborer(state, u);
-  if (tarefa === null) return ficarOcioso(state, u);
+  // assentar nunca passa por aqui (nivelar e esperar material sao da OBRA); o `if`
+  // e o que deixa isso dito, e nao suposto.
+  if (tarefa === null || ehTarefaDeAssentamento(tarefa)) return ficarOcioso(state, u);
   const obra = obraDaTarefa(state, tarefa);
   if (obra === null) return ficarOcioso(state, u);
 
@@ -127,7 +166,9 @@ function passoNivelando(state: GameState, u: Unidade, dados: GameData): Passo {
 
 function passoEsperandoMaterial(state: GameState, u: Unidade, dados: GameData): Passo {
   const tarefa = tarefaDoLaborer(state, u);
-  if (tarefa === null) return ficarOcioso(state, u);
+  // assentar nunca passa por aqui (nivelar e esperar material sao da OBRA); o `if`
+  // e o que deixa isso dito, e nao suposto.
+  if (tarefa === null || ehTarefaDeAssentamento(tarefa)) return ficarOcioso(state, u);
   const obra = obraDaTarefa(state, tarefa);
   if (obra === null) return ficarOcioso(state, u);
 
@@ -146,6 +187,7 @@ function passoEsperandoMaterial(state: GameState, u: Unidade, dados: GameData): 
 function passoMartelando(state: GameState, u: Unidade, dados: GameData): Passo {
   const tarefa = tarefaDoLaborer(state, u);
   if (tarefa === null) return ficarOcioso(state, u);
+  if (ehTarefaDeAssentamento(tarefa)) return passoAssentando(state, u, tarefa, dados);
   const obra = obraDaTarefa(state, tarefa);
   if (obra === null) return ficarOcioso(state, u);
 
@@ -177,6 +219,33 @@ function passoMartelando(state: GameState, u: Unidade, dados: GameData): Passo {
     ? { ...u, fsm: 'esperando_material' as const, fsmData: dadosDaFsm({ tarefa: tarefa.id }) }
     : { ...u, fsmData: dadosDaFsm({ tarefa: tarefa.id, progresso: 0 }) };
   return semEventos(comUnidade(comAMartelada, proximo));
+}
+
+/**
+ * F18d-1b — assentar e UM ciclo de martelada: o mesmo `construcao.ticksPorMartelada`
+ * que a obra usa, e nao um numero novo (pergunta em aberto no PROGRESS; se o playtest
+ * pedir tempo proprio para a estrada, o campo nasce em `terrain.json` e so esta linha
+ * muda).
+ *
+ * No tick que fecha, a pedra sai do armazem que a tarefa reservou e o tile passa do
+ * canteiro para a rede — os dois no MESMO estado novo, nunca um sem o outro.
+ */
+function passoAssentando(
+  state: GameState, u: Unidade, tarefa: TarefaAssentarEstrada, dados: GameData,
+): Passo {
+  const progresso = (u.fsmData.progresso ?? 0) + 1;
+  if (progresso < dados.construcao.ticksPorMartelada) {
+    return semEventos(comUnidade(state, { ...u, fsmData: dadosDaFsm({ tarefa: tarefa.id, progresso }) }));
+  }
+  const assentado = comOTileAssentado(state, tarefa.destinoTile, tarefa.origem, dados);
+  if (assentado === null) {
+    // o armazem que reservou ficou sem a pedra (demolido, esvaziado): estrada de graca,
+    // nunca. A tarefa CAI (`'origem-sem-recurso'` nao reabre) e o tile continua no
+    // canteiro — `gerarTarefas` cria outra quando houver quem pague.
+    const l = liberarTarefa(state, tarefa.id, 'origem-sem-recurso');
+    return ficarOcioso(l.state, u, l.events);
+  }
+  return semEventos(comUnidade(removerTarefa(assentado, tarefa.id), ocioso(u)));
 }
 
 /**
