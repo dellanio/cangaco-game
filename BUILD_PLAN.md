@@ -1343,67 +1343,6 @@ prédio surge sem clique do jogador.
   Fica registrado como limite conhecido, não resolvido.
 - **Nota**: sem `Math.random()` e sem `Date.now()` — a foto tem de repetir.
 
-### F18g — A pedra da estrada vira carga que viaja (sim)
-- **Escopo**: hoje a pedra da estrada **não viaja**: ela é reservada no armazém
-  quando a tarefa `'assentar-estrada'` nasce e é debitada daquele mesmo armazém
-  no tick do assentamento (`comOTileAssentado`). Esta feature troca isso pelo
-  transporte visível do original: **tarefa de material com destino-tile**, o serf
-  leva a pedra até o tile do canteiro, o **laborer espera no tile** até ela
-  chegar, e o **débito acontece na entrega**, não no assentamento.
-- **Aceite**: num cenário com rua desenhada, o teste afirma (a) que uma carga de
-  pedra **existe em trânsito** (serf com `carga` a caminho do tile), (b) que o
-  laborer **espera no tile** enquanto ela não chega, (c) que a pedra sai do
-  armazém na **entrega** e (d) que a conservação de bens fecha com a pedra
-  **parada no tile** contada.
-- **Evidência**: `test-output/F18g.json`
-- **Nota (por que a F18d-1b evitou isso, 2026-09-24)**: foi decisão registrada,
-  não esquecimento. O item da F18d-1a já media o preço do destino-tile —
-  `destino` é id de prédio em 59 ocorrências de `src/sim/`, 14 delas
-  `predios.porId[…destino]` direto — e a F18d-1b pagou esse preço **só** para a
-  tarefa do laborer, que não reserva vaga no destino nem entrega carga. A
-  variante de **carga** com destino-tile é a parte que ficou de fora, e o aceite
-  escrito da F18d-1b ("a pedra sai do armazém exatamente uma vez, no
-  assentamento") descreve fielmente o que foi construído. **O aceite é que estava
-  incompleto**: no original o transporte visível é mecânica, não decoração.
-  Decisão do operador (2026-09-24), com o porquê dele.
-- **Nota (o custo, medido em 2026-09-24)**: **~12 pontos de ramificação em 3
-  arquivos de `sim/`**, mais um campo de estado e duas FSMs:
-  - `sim/reservas.ts` (4): `reservadoNoDestino`, `demandaNoDestino`,
-    `destinoEhArmazem`, `vagaNoDestino` — todos leem `predios.porId[t.destino]`;
-  - `sim/systems/jobs.ts` (4): `motivoDoDestino` (já tem ramo de tile para
-    `assentar-estrada`; ganha o de carga), elegibilidade, geração e a
-    deduplicação por destino;
-  - `sim/systems/serfs.ts` (4): as **2** chamadas de `portasDaTarefa` (tile não
-    tem porta), a entrega — hoje três ramos, obra/escola/armazém, ganha o quarto
-    — e o `task-completed`, que hoje carrega `destino` de prédio;
-  - **1 campo de estado novo**: onde a pedra entregue descansa. O desenho barato
-    é um mapa **paralelo** (`pedraNoCanteiro`), que deixa intactos os **31
-    arquivos** que leem `estradasPlanejadas`; mudar o valor de `true` para objeto
-    quebraria os 7 acessos `=== true` e todos os leitores;
-  - **2 FSMs**: o laborer (hoje `esperando_material` **recusa** assentamento em
-    dois `if` explícitos, e `passoIndoAoTile` vai direto a `martelando`) e o
-    serf (o alvo deixa de ser porta de prédio);
-  - **demolir ganha o 4º caso**: canteiro **com pedra entregue**. Hoje o canteiro
-    devolve 0 porque nada foi gasto; a pedra no tile é física e tem de voltar —
-    para qual armazém é decisão nova;
-  - **conservação de bens**: `bensPorMercadoria`
-    (`tests/helpers/serf-invariantes.ts:94`, **1** helper) passa a contar a pedra
-    parada no tile; **7** arquivos de teste dependem dele;
-  - **órbita de testes**: **89** testes nas suítes que tocam o caminho (F08 43,
-    as cinco suítes F18d-1b 31, F18d-1a 8, F09-estrada-reserva 7). Nem todos
-    mudam; os **2** do aceite da F18d-1b **invertem por definição**.
-  - **De graça**: some o caso especial de `reservas.ts` — a reserva desde
-    `'aberta'`, que existe hoje **só** para o assentamento. Com carga de verdade,
-    a reserva volta a ser a normal, de reclamar.
-- **Nota (não cabe em uma sessão — quebra proposta)**: entregar isto inteiro
-  cruza estado novo, duas FSMs, o comando de demolir e ~89 testes em órbita.
-  Proposta, **a confirmar pelo operador junto com a posição na fila**: **F18g-1**
-  = a carga chega e descansa no tile (campo de estado, variante de carga com
-  destino-tile, débito na entrega, conservação); **F18g-2** = o laborer espera no
-  tile, a demolição do canteiro com pedra, e o aceite completo.
-- **Nota (posição na fila)**: **a decidir pelo operador**. Enquanto ela não for
-  decidida, este item não é a próxima da fila.
-
 ### F18 — Farm e campos de milho
 ### F19 — Mill e Bakery (cadeia do pão)
 ### F20 — Inn, fome e consumo
@@ -1504,6 +1443,73 @@ prédio surge sem clique do jogador.
   continua de pé.
 - Reusar `compararComESemSave` de `tests/helpers/determinism.ts`, criado na F02,
   com o estado povoado. Não escrever um segundo teste de save/load.
+
+### F18g — A pedra da estrada vira carga que viaja (sim)
+- **Escopo**: hoje a pedra da estrada **não viaja**: ela é reservada no armazém
+  quando a tarefa `'assentar-estrada'` nasce e é debitada daquele mesmo armazém
+  no tick do assentamento (`comOTileAssentado`). Esta feature troca isso pelo
+  transporte visível do original: **tarefa de material com destino-tile**, o serf
+  leva a pedra até o tile do canteiro, o **laborer espera no tile** até ela
+  chegar, e o **débito acontece na entrega**, não no assentamento.
+- **Aceite**: num cenário com rua desenhada, o teste afirma (a) que uma carga de
+  pedra **existe em trânsito** (serf com `carga` a caminho do tile), (b) que o
+  laborer **espera no tile** enquanto ela não chega, (c) que a pedra sai do
+  armazém na **entrega** e (d) que a conservação de bens fecha com a pedra
+  **parada no tile** contada.
+- **Evidência**: `test-output/F18g.json`
+- **Nota (por que a F18d-1b evitou isso, 2026-09-24)**: foi decisão registrada,
+  não esquecimento. O item da F18d-1a já media o preço do destino-tile —
+  `destino` é id de prédio em 59 ocorrências de `src/sim/`, 14 delas
+  `predios.porId[…destino]` direto — e a F18d-1b pagou esse preço **só** para a
+  tarefa do laborer, que não reserva vaga no destino nem entrega carga. A
+  variante de **carga** com destino-tile é a parte que ficou de fora, e o aceite
+  escrito da F18d-1b ("a pedra sai do armazém exatamente uma vez, no
+  assentamento") descreve fielmente o que foi construído. **O aceite é que estava
+  incompleto**: no original o transporte visível é mecânica, não decoração.
+  Decisão do operador (2026-09-24), com o porquê dele.
+- **Nota (o custo, medido em 2026-09-24)**: **~12 pontos de ramificação em 3
+  arquivos de `sim/`**, mais um campo de estado e duas FSMs:
+  - `sim/reservas.ts` (4): `reservadoNoDestino`, `demandaNoDestino`,
+    `destinoEhArmazem`, `vagaNoDestino` — todos leem `predios.porId[t.destino]`;
+  - `sim/systems/jobs.ts` (4): `motivoDoDestino` (já tem ramo de tile para
+    `assentar-estrada`; ganha o de carga), elegibilidade, geração e a
+    deduplicação por destino;
+  - `sim/systems/serfs.ts` (4): as **2** chamadas de `portasDaTarefa` (tile não
+    tem porta), a entrega — hoje três ramos, obra/escola/armazém, ganha o quarto
+    — e o `task-completed`, que hoje carrega `destino` de prédio;
+  - **1 campo de estado novo**: onde a pedra entregue descansa. O desenho barato
+    é um mapa **paralelo** (`pedraNoCanteiro`), que deixa intactos os **31
+    arquivos** que leem `estradasPlanejadas`; mudar o valor de `true` para objeto
+    quebraria os 7 acessos `=== true` e todos os leitores;
+  - **2 FSMs**: o laborer (hoje `esperando_material` **recusa** assentamento em
+    dois `if` explícitos, e `passoIndoAoTile` vai direto a `martelando`) e o
+    serf (o alvo deixa de ser porta de prédio);
+  - **demolir ganha o 4º caso**: canteiro **com pedra entregue**. Hoje o canteiro
+    devolve 0 porque nada foi gasto; a pedra no tile é física e tem de voltar —
+    para qual armazém é decisão nova;
+  - **conservação de bens**: `bensPorMercadoria`
+    (`tests/helpers/serf-invariantes.ts:94`, **1** helper) passa a contar a pedra
+    parada no tile; **7** arquivos de teste dependem dele;
+  - **órbita de testes**: **89** testes nas suítes que tocam o caminho (F08 43,
+    as cinco suítes F18d-1b 31, F18d-1a 8, F09-estrada-reserva 7). Nem todos
+    mudam; os **2** do aceite da F18d-1b **invertem por definição**.
+  - **De graça**: some o caso especial de `reservas.ts` — a reserva desde
+    `'aberta'`, que existe hoje **só** para o assentamento. Com carga de verdade,
+    a reserva volta a ser a normal, de reclamar.
+- **Nota (não cabe em uma sessão — quebra proposta)**: entregar isto inteiro
+  cruza estado novo, duas FSMs, o comando de demolir e ~89 testes em órbita.
+  Proposta, **a confirmar pelo operador junto com a posição na fila**: **F18g-1**
+  = a carga chega e descansa no tile (campo de estado, variante de carga com
+  destino-tile, débito na entrega, conservação); **F18g-2** = o laborer espera no
+  tile, a demolição do canteiro com pedra, e o aceite completo.
+- **Nota (posição na fila — decidida pelo operador em 2026-09-24)**: **depois da
+  Fase B inteira**, e por isso este item está no fim dela. O argumento dele, para
+  que ninguém a puxe para frente sem decidir de novo: o **custo é de feature
+  grande em `sim/`** (12 ramificações, 2 FSMs, ~89 testes em órbita) e o **ganho
+  é visual** — as duas guardas medidas na sonda já impedem estrada de graça (sem
+  pagador a tarefa não nasce; pagador que seca derruba a tarefa e o tile fica no
+  canteiro). Fidelidade ao original importa, **mas não antes de o jogo ter
+  comida**. Quem quiser antecipar, decide de novo e registra aqui.
 
 ---
 
