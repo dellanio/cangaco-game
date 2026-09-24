@@ -1,7 +1,15 @@
 # BUILD_PLAN — cangaço
 
-Fila de trabalho. **Uma feature por sessão**, na ordem. Cada feature tem uma
-chave correspondente em `test-results.json`, que começa em `false`.
+Fila de trabalho. **Uma feature por sessão**, na ordem. **A fila é este
+arquivo**, não o `test-results.json`.
+
+A chave em `test-results.json` **nasce quando a feature fecha**, com
+`"passes": true`, e o portão do hook é o que a controla. Feature não iniciada
+**não tem chave** — chave `false` para as 30 e tantas features que ainda não
+começaram é ruído que não informa nada. *(Corrigido em 2026-09-24: o cabeçalho
+mandava criar a chave em `false` desde o começo, e nenhuma sessão jamais fez
+isso — a divergência apareceu ao escrever a F-T1. Decisão do operador: a prática
+está certa e o cabeçalho estava errado.)*
 
 Como ler cada item:
 
@@ -1343,7 +1351,7 @@ prédio surge sem clique do jogador.
   Fica registrado como limite conhecido, não resolvido.
 - **Nota**: sem `Math.random()` e sem `Date.now()` — a foto tem de repetir.
 
-### F-T1 — Camada de terreno base (dado + sim)
+### F-T1 — Camada de terreno base (dado + sim + render mínimo, integração)
 - **Escopo**: o mapa deixa de ser liso. (a) arquivo de mapa versionado em
   `data/maps/<id>.json`, com schema em `npm run validate:data`; (b) carregamento
   **fora do `GameState`**, congelado por `src/sim/freeze.ts` como o resto de
@@ -1351,8 +1359,12 @@ prédio surge sem clique do jogador.
   motivo `'terreno'` de `canPlace` (`src/sim/placement.ts`, declarado e
   inalcançável desde a F06) passa a ser alcançável; (e) o A* passa a somar os
   **quatro** custos de terreno que o loader já monta — hoje conhece dois — e a
-  recusar o intransponível. **Nenhum recurso natural** (é a F-T2) e **nada em
-  `src/render/`** (ver Nota de escopo).
+  recusar o intransponível. **Nenhum recurso natural** — é a F-T2. Mais o
+  **desenho mínimo** do item seguinte.
+- **Escopo de render — desenho MÍNIMO (decisão do operador, 2026-09-24)**: uma
+  **cor por tipo de terreno** no tilemap que já existe, e nada mais. Sem textura,
+  sem transição entre terrenos, sem arte. É o suficiente para a tela **não
+  mentir**: o jogador vê onde há água antes de a construção ser recusada.
 - **Aceite**, quatro pernas, e nenhuma passa por acidente:
   1. **A recusa nomeia o terreno.** `canPlace` sobre água devolve
      `motivo === 'terreno'`, e o teste afirma o **motivo**, não só a recusa — o
@@ -1370,7 +1382,7 @@ prédio surge sem clique do jogador.
      testes) continua verde **sem mudar fixture**: o mapa padrão nasce com a
      região da vila inicial (`economy.json`, storehouse em 29,30 — medido na
      F18b) inteira em terreno construível.
-- **Evidência**: `test-output/F-T1.json`
+- **Evidência**: `test-output/F-T1.json` + `screenshots/F-T1-*.png`
 - **Nota (por que o terreno fica fora do estado, com o número)**: medido em
   2026-09-24 sobre 128² = 16 384 tiles, com `JSON.stringify`: `Record` denso de 1
   campo por tile = **0,35 MB**; de 2 campos = 0,55 MB; de 3 = 0,85 MB. O estado
@@ -1405,17 +1417,23 @@ prédio surge sem clique do jogador.
   mudam**, e isso mexe em número já calibrado (oráculo da F15b). As observações
   vão para o `BALANCE_LOG.md` e se ajustam **em lote** depois da F-T2 — nunca
   item a item, que é como o milho quebra o pão.
-- **Nota de escopo (CLAUDE.md §10)**: o **render** do terreno é item próprio e
-  **ainda não está escrito na fila**. Entre esta feature e ele, a tela mostra
-  grama onde a simulação vê água, e o jogador leva recusa de construção sem ver
-  o motivo. É buraco conhecido de duas features, não descuido: `src/sim/` e
-  `src/render/` na mesma feature exigiria a nota de integração escrita **antes**
-  do código, e esta é de simulação.
+- **Nota de integração (CLAUDE.md §10 — escrita ANTES do código,
+  2026-09-24)**: **esta feature é de integração.** Ela toca `src/sim/` **e**
+  `src/render/` de propósito, e a exceção do §10 está registrada aqui, no item,
+  antes de existir uma linha de código — como manda a regra, e como a F18d-2 já
+  fez. A razão é a mesma da F18d-1: **a tela não pode mentir por uma feature
+  inteira**. Terreno que existe só na simulação transforma toda recusa de
+  construção em bug aparente. O render continua **lendo** o estado e o mapa, sem
+  decidir nada.
+- **Nota (o que o desenho mínimo NÃO é)**: textura, transição entre terrenos,
+  árvore com silhueta e veio na montanha ficam para o item de render único
+  depois da F-T2 — um item, não três. Cor chapada por tipo é o piso; qualquer
+  coisa além disso nesta feature é escopo que ninguém pediu.
 - **Nota (GDD — decisão minha, §7.7)**: o GDD §4 ganha a seção de recursos
   naturais **no commit da feature que a torna verdadeira**, nunca antes. Doc que
   descreve o que não existe é pior que doc faltando.
 
-### F-T2 — Camada de recursos no mapa (sim)
+### F-T2 — Camada de recursos no mapa (sim + render mínimo, integração)
 - **Escopo**: `state.recursos`, **esparso e dentro do `GameState`**, com a mesma
   forma e a mesma chave de `state.estradas` —
   `Readonly<Record<"gx,gy", { tipo: string; quantidade: number }>>`. Um
@@ -1425,8 +1443,12 @@ prédio surge sem clique do jogador.
   *inexistente*) e `porTempo` (sobe sozinha, taxa em `data/`). Um mecanismo, três
   regimes; **não** três sistemas. Primeiro consumidor: a **Quarry**, que já tem
   esgotamento, evento `vein-exhausted` e alerta — só a **fonte** muda, do prédio
-  para o tile. Árvore entra como recurso **e como obstáculo**. Nada em
-  `src/render/`.
+  para o tile. Árvore entra como recurso **e como obstáculo**. Mais o
+  **desenho mínimo** do item seguinte.
+- **Escopo de render — desenho MÍNIMO (decisão do operador, 2026-09-24)**: um
+  **marcador por tipo de recurso** sobre o tile, e nada mais. Sem arte, sem
+  silhueta. O jogador precisa ver onde há rocha, árvore e veio antes de plantar
+  a pedreira, e precisa ver o tile **esgotar**.
 - **Aceite**, e as duas primeiras pernas são as que não passam por acidente:
   1. **O exploit da F16a morre, e a asserção é ele.** Demolir a pedreira
      esgotada e reconstruir no mesmo tile **não** devolve pedra: o teste roda até
@@ -1460,7 +1482,7 @@ prédio surge sem clique do jogador.
      no mesmo tick recebem tiles **distintos**, e o `release` devolve a reserva.
      Varrer o mapa é o anti-padrão do CLAUDE.md §10, e recurso no mapa é a maior
      tentação de quebrá-lo desde a F09.
-- **Evidência**: `test-output/F-T2.json`
+- **Evidência**: `test-output/F-T2.json` + `screenshots/F-T2-*.png`
 - **Nota (isto substitui o veio do prédio — decisão do operador, 2026-09-24)**:
   **rendimento por tile, não no prédio.** `ReceitaDePredio.rendimentoDoVeio` e
   `PredioCompleto.producao.veio` deixam de ser a fonte; `quarry.veio.rendimento
@@ -1484,9 +1506,26 @@ prédio surge sem clique do jogador.
   compram. Consequência herdada, não nova: Fisherman's com cardume seco cai na
   entrada já aberta do `IDEIAS.md` sobre prédio esgotado que não devolve o
   trabalhador.
-- **Nota de escopo (CLAUDE.md §10)**: o render dos recursos é item próprio e
-  ainda não está na fila — ver a mesma nota na F-T1. Entre as duas, a floresta
-  existe para o A* e não para os olhos.
+- **Nota de integração (CLAUDE.md §10 — escrita ANTES do código,
+  2026-09-24)**: **esta feature é de integração**, pelo mesmo motivo e com a
+  mesma fronteira da F-T1: floresta que existe só para o A* faz o caminho
+  desviar de nada, aos olhos do jogador. O render lê; não decide.
+
+### F-TR — Tratamento visual do terreno e dos recursos (render)
+- **Posição e forma — decisão do operador, 2026-09-24**: **um item, não três.**
+  Ele vem **depois da F-T2**, quando as duas camadas já existirem; o desenho do
+  **especialista fora do prédio** não está aqui, vai junto da F-T3.
+- **Escopo**: o tratamento decente do que a F-T1 e a F-T2 desenharam como cor
+  chapada e marcador: textura por tipo de terreno, **transição entre terrenos**,
+  árvore com silhueta (e com o depth sorting que a leitura 3/4 exige), veio
+  aparente na montanha. **Render puro**: nada em `src/sim/`, nada em `data/`
+  além do manifesto de asset, nenhuma regra nova. Placeholder continua sendo
+  comportamento normal (CLAUDE.md §9): tipo sem PNG cai na cor chapada da F-T1.
+- **Aceite**: o roteiro afirma, no mesmo cenário, que tiles de tipos diferentes
+  desenham **texturas diferentes** e que a fronteira entre dois tipos usa o tile
+  de transição; screenshot do mapa com água, grama, areia, floresta e serra no
+  mesmo quadro. Nenhum teste de `sim/` muda — se algum mudar, o escopo vazou.
+- **Evidência**: `test-output/F-TR-shot.json` + `screenshots/F-TR-*.png`
 
 ### F18 — Farm e campos de milho
 - **Escopo**: a fazenda passa a depender de **tile arável no mapa**. O campo é
@@ -1534,7 +1573,7 @@ prédio surge sem clique do jogador.
   operador: fica assim **por enquanto**, porque não existe item no chão e nenhuma unidade morre antes
   desta feature ou do combate. Esta feature decide se a carga cai no tile e é recolhida (item no chão,
   tarefa ou estado novo no GDD §6.2) ou se continua perdida — e ajusta o teste de conservação de bens.
-### F-T3 — O especialista sai do prédio (sim)
+### F-T3 — O especialista sai do prédio (sim + render, integração)
 - **Posição na fila — decisão do operador, 2026-09-24**: **depois da F20**, e a
   razão é dele: *"o especialista sair é locomoção, e locomoção pode esperar o
   jogo ter pão."* A F-T1 e a F-T2 vieram antes da comida porque são
@@ -1560,9 +1599,11 @@ prédio surge sem clique do jogador.
      (nem no prédio, nem no tile) e 200 ticks depois: estado idêntico byte a byte
      ao que não passou por save.
 - **Evidência**: `test-output/F-T3.json`
-- **Nota (o que esta feature NÃO faz)**: não desenha nada. O render do
-  especialista fora do prédio é item próprio, pelo mesmo motivo das notas de
-  escopo da F-T1 e da F-T2.
+- **Nota de integração (CLAUDE.md §10 — decisão do operador, 2026-09-24)**: o
+  **desenho do especialista fora do prédio vai junto desta feature**, não em item
+  separado — mesma razão da F-T1 e da F-T2: unidade que a simulação põe no campo
+  e a tela deixa dentro do prédio é tela que mente. A exceção do §10 está escrita
+  aqui, antes do código.
 
 ### F21 — Gold mine, Coal mine e Metallurgist's (ouro renovável)
 - **Nota (origem: F15a — contrato herdado)**: o veio mora no **prédio**, em
