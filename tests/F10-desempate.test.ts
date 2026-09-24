@@ -64,7 +64,12 @@ describe('F10 — a perna do serf: unidade -> origem por A*, nunca pela reta', (
     const { grama, estrada } = gameData.movimento.ticksPorTile.aPe;
     expect(plano.ateAOrigem.custo).toBe(gameData.movimento.ticksPorTileDiagonal.aPe.grama + 11 * grama + 2 * estrada);
     expect(plano.ateAOrigem.custo).toBeGreaterThan(13 * estrada);
-    expect(plano.deEntrega.custo).toBe(38 * gameData.movimento.ticksPorTile.aPe.estrada);
+    // F18e: os 38 passos ortogonais viraram 37 — a quina do L em (47,33) se corta com uma
+    // diagonal. A ultima quina, em (46,23), nao se corta: os footprints de 'dest' ao norte e
+    // de 'quina-sul' ao sul tapam as duas, e e isso que mantem as duas pernas iguais.
+    const { aPe: reto } = gameData.movimento.ticksPorTile;
+    const { aPe: diagonal } = gameData.movimento.ticksPorTileDiagonal;
+    expect(plano.deEntrega.custo).toBe(36 * reto.estrada + diagonal.estrada);
     // e a perna livre e mesmo o A* do serf ate a porta:
     expect(buscarCaminho(estado, tile(20, 20), [tile(20, 33)], 'livre')?.custo).toBe(plano.ateAOrigem.custo);
   });

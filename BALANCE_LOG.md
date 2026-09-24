@@ -38,6 +38,11 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   para ≥1,45 faria a rua ganhar em todo ângulo, mas desacelera serf, laborer e especialista em 15% para
   consertar geometria. A saída é a **F18e — Estrada diagonal**, promovida do `IDEIAS.md` para a fila por causa
   desta medição. Reabrir só se, com a diagonal ligada, a rua ainda perder em algum ângulo — aí sim é número.
+  | **FECHADO na F18e, 2026-09-24, REMEDIDO com o A\* rodando (não mais aritmética):** `test-output/F18e.json`,
+  `dx = 12`, `dy` de 0 a 12 — a estrada ganha da grama nos treze ângulos, por 24 ticks constantes (a rua anda
+  os mesmos passos da grama e paga 2 ticks a menos em cada um, reto ou diagonal). Não há mais ponto de virada,
+  e `custoDeMovimento.grama` fica em 1,30. O teste que mede está em `tests/F18e-diagonal.test.ts` e roda no
+  `npm run verify`: se algum ângulo voltar a perder, ele acusa.
 
 - [2026-09-20] 4 serfs levam 5538 ticks (~9 min a 1x) para entregar os 100 materiais de 20 obras de uma vez
   | logística lenta se o jogador planta muitas obras juntas; layout sintético do teste de carga, não partida

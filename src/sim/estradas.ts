@@ -51,9 +51,67 @@ export function tilesOrdenados(estradas: GameState['estradas']): TileDeGrid[] {
 
 // --- conectividade: indice de componentes, memoizado pela referencia ---
 
-/** Vizinhanca de 4 direcoes. O GDD nao responde sobre diagonal; a estrada
- *  arrastada e 4-conectada, e diagonal seria um atalho por dentro de dois cantos. */
-const VIZINHOS: readonly (readonly [number, number])[] = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+/**
+ * Vizinhanca de 8 direcoes (F18e). A diagonal LIGA — e o que o jogo original faz,
+ * e sem ela a rua perdia para a grama acima de ~34 graus. O que ela NAO faz e
+ * cortar quina: o passo diagonal exige as duas quinas livres de predio, a mesma
+ * regra que o A* de `pathfinding.ts` aplica em `quinaLivre`. As duas metades tem
+ * de dizer a mesma coisa; a propriedade da equivalencia (F10-astar) reprova se
+ * divergirem.
+ */
+const VIZINHOS: readonly (readonly [number, number])[] = [
+  [1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1],
+];
+
+/** O que a rede precisa saber do estado: os tiles de estrada e os predios, que
+ *  sao o que tapa quina. Menos que `GameState` para o teste poder montar caso. */
+export type EstadoDaRede = Pick<GameState, 'estradas' | 'predios'>;
+
+/** Os tiles cobertos por footprint de predio. Montado UMA vez por indice — o
+ *  `tileEmPredio` de baixo e O(predios) por tile e serve a consulta avulsa. */
+function tilesDePredios(state: EstadoDaRede, dados: GameData): Set<string> {
+  const tiles = new Set<string>();
+  for (const id of state.predios.ordem) {
+    const predio = state.predios.porId[id];
+    const caixa = predio ? caixaDoPredio(predio, dados) : null;
+    if (caixa === null) continue;
+    for (let gy = caixa.y0; gy < caixa.y1; gy++) {
+      for (let gx = caixa.x0; gx < caixa.x1; gx++) tiles.add(`${gx},${gy}`);
+    }
+  }
+  return tiles;
+}
+
+/** O passo de `atual` na direcao (dx, dy) e permitido? Reto sempre; diagonal so
+ *  com as duas quinas livres de predio. Unico ponto onde a regra da quina mora
+ *  deste lado — o indice e a distancia chamam o mesmo. */
+function passoPermitido(
+  atual: TileDeGrid, dx: number, dy: number, bloqueados: ReadonlySet<string>,
+): boolean {
+  if (dx === 0 || dy === 0) return true;
+  return !bloqueados.has(`${atual.gx + dx},${atual.gy}`) && !bloqueados.has(`${atual.gx},${atual.gy + dy}`);
+}
+
+/** Os pares de tiles de estrada ligados em DIAGONAL, cada par uma vez so (o
+ *  vizinho e sempre a leste). O render desenha uma ponte no canto compartilhado:
+ *  dois quadrados que se tocam por um ponto parecem rua cortada, e a sim diz que
+ *  nao esta. Existe para o desenho NAO reimplementar a regra da quina — quem
+ *  responde e o mesmo `passoPermitido` do indice e da distancia. */
+export function pontesDiagonais(
+  state: EstadoDaRede, dados: GameData = gameData,
+): readonly (readonly [TileDeGrid, TileDeGrid])[] {
+  const bloqueados = tilesDePredios(state, dados);
+  const pontes: (readonly [TileDeGrid, TileDeGrid])[] = [];
+  for (const tile of tilesOrdenados(state.estradas)) {
+    for (const [dx, dy] of [[1, 1], [1, -1]] as const) {
+      const vizinho = { gx: tile.gx + dx, gy: tile.gy + dy };
+      if (!ehEstrada(state.estradas, vizinho)) continue;
+      if (!passoPermitido(tile, dx, dy, bloqueados)) continue;
+      pontes.push([tile, vizinho]);
+    }
+  }
+  return pontes;
+}
 
 export interface IndiceDeEstradas {
   /** `"gx,gy"` -> id do componente conexo. Tile ausente = nao e estrada. */
@@ -61,7 +119,9 @@ export interface IndiceDeEstradas {
   readonly quantidade: number;
 }
 
-function construirIndice(estradas: GameState['estradas']): IndiceDeEstradas {
+function construirIndice(state: EstadoDaRede, dados: GameData): IndiceDeEstradas {
+  const { estradas } = state;
+  const bloqueados = tilesDePredios(state, dados);
   const componentes: Record<string, number> = {};
   let quantidade = 0;
   // Varredura na ordem canonica: o id do componente depende so do CONJUNTO de
@@ -76,6 +136,7 @@ function construirIndice(estradas: GameState['estradas']): IndiceDeEstradas {
       const atual = fila[i];
       if (!atual) continue;
       for (const [dx, dy] of VIZINHOS) {
+        if (!passoPermitido(atual, dx, dy, bloqueados)) continue;
         const vizinho = { gx: atual.gx + dx, gy: atual.gy + dy };
         const chave = chaveDeTile(vizinho);
         if (estradas[chave] === true && componentes[chave] === undefined) {
@@ -88,7 +149,25 @@ function construirIndice(estradas: GameState['estradas']): IndiceDeEstradas {
   return { componentes, quantidade };
 }
 
-const indices = new WeakMap<object, IndiceDeEstradas>();
+// `dados` -> `estradas` -> `predios.ordem`. A quina faz a conectividade depender
+// de predio, entao a chave nao pode ser so a rede: e o mesmo par de chaves que
+// `footprintsDe` de `pathfinding.ts` usa, e `predios.ordem` so muda quando um
+// predio nasce ou morre — nao a cada tick de obra.
+const indices = new WeakMap<object, WeakMap<object, WeakMap<object, IndiceDeEstradas>>>();
+
+function memoDoIndice(state: EstadoDaRede, dados: GameData): WeakMap<object, IndiceDeEstradas> {
+  let porEstradas = indices.get(dados);
+  if (porEstradas === undefined) {
+    porEstradas = new WeakMap();
+    indices.set(dados, porEstradas);
+  }
+  let porOrdem = porEstradas.get(state.estradas);
+  if (porOrdem === undefined) {
+    porOrdem = new WeakMap();
+    porEstradas.set(state.estradas, porOrdem);
+  }
+  return porOrdem;
+}
 
 /**
  * O indice de componentes conexos. Construido UMA vez por referencia de `estradas`
@@ -97,34 +176,43 @@ const indices = new WeakMap<object, IndiceDeEstradas>();
  * mesma referencia enquanto nenhum comando de estrada altera algo — entao os
  * milhares de perguntas de um tick custam um lookup, nao uma busca.
  */
-export function indiceDeEstradas(estradas: GameState['estradas']): IndiceDeEstradas {
-  let indice = indices.get(estradas);
+export function indiceDeEstradas(state: EstadoDaRede, dados: GameData = gameData): IndiceDeEstradas {
+  const memo = memoDoIndice(state, dados);
+  let indice = memo.get(state.predios.ordem);
   if (indice === undefined) {
-    indice = construirIndice(estradas);
-    indices.set(estradas, indice);
+    indice = construirIndice(state, dados);
+    memo.set(state.predios.ordem, indice);
   }
   return indice;
 }
 
 /** O id do componente do tile, ou `null` se o tile nao e estrada. */
-export function componenteDe(estradas: GameState['estradas'], tile: TileDeGrid): number | null {
-  return indiceDeEstradas(estradas).componentes[chaveDeTile(tile)] ?? null;
+export function componenteDe(
+  state: EstadoDaRede, tile: TileDeGrid, dados: GameData = gameData,
+): number | null {
+  return indiceDeEstradas(state, dados).componentes[chaveDeTile(tile)] ?? null;
 }
 
 /** Existe caminho de estrada de `from` ate `to`? `false` se algum dos dois nao e
  *  estrada; o mesmo tile de estrada esta conectado a si mesmo. */
-export function isConnected(state: GameState, from: TileDeGrid, to: TileDeGrid): boolean {
-  const a = componenteDe(state.estradas, from);
-  return a !== null && a === componenteDe(state.estradas, to);
+export function isConnected(
+  state: EstadoDaRede, from: TileDeGrid, to: TileDeGrid, dados: GameData = gameData,
+): boolean {
+  const indice = indiceDeEstradas(state, dados);
+  const a = indice.componentes[chaveDeTile(from)];
+  return a !== undefined && a === indice.componentes[chaveDeTile(to)];
 }
 
 // --- distancia por estrada (F09) ---
 
-const distancias = new WeakMap<object, Map<string, number | null>>();
+// Chaveado pelo OBJETO do indice: ele ja e unico por (dados, estradas,
+// predios.ordem), entao a distancia herda a invalidacao de graca.
+const distancias = new WeakMap<IndiceDeEstradas, Map<string, number | null>>();
 
 /**
  * Distancia de CAMINHO A PE pela rede: o menor numero de passos, so por tiles de
- * estrada e em 4 direcoes, de uma das portas de `de` ate uma das de `para`; `null`
+ * estrada e em 8 direcoes sem cortar quina (F18e; o passo diagonal conta 1, como
+ * qualquer outro), de uma das portas de `de` ate uma das de `para`; `null`
  * se nao ha caminho ou se nenhuma ponta e estrada. Nunca euclidiana nem de Manhattan
  * (erro conhecido do Remake: o trabalhador escolhia alvo do outro lado da montanha).
  *
@@ -138,25 +226,29 @@ const distancias = new WeakMap<object, Map<string, number | null>>();
  * rede muda.
  */
 export function distanciaPorEstrada(
-  estradas: GameState['estradas'], de: readonly TileDeGrid[], para: readonly TileDeGrid[],
+  state: EstadoDaRede, de: readonly TileDeGrid[], para: readonly TileDeGrid[],
+  dados: GameData = gameData,
 ): number | null {
   const chave = `${de.map(chaveDeTile).join(';')}|${para.map(chaveDeTile).join(';')}`;
-  let memo = distancias.get(estradas);
+  const indice = indiceDeEstradas(state, dados);
+  let memo = distancias.get(indice);
   if (memo === undefined) {
     memo = new Map();
-    distancias.set(estradas, memo);
+    distancias.set(indice, memo);
   }
   const guardada = memo.get(chave);
   if (guardada !== undefined) return guardada;
 
-  const resultado = buscarDistancia(estradas, de, para);
+  const resultado = buscarDistancia(state, de, para, dados);
   memo.set(chave, resultado);
   return resultado;
 }
 
 function buscarDistancia(
-  estradas: GameState['estradas'], de: readonly TileDeGrid[], para: readonly TileDeGrid[],
+  state: EstadoDaRede, de: readonly TileDeGrid[], para: readonly TileDeGrid[], dados: GameData,
 ): number | null {
+  const { estradas } = state;
+  const bloqueados = tilesDePredios(state, dados);
   const alvos = new Set(para.filter((t) => ehEstrada(estradas, t)).map(chaveDeTile));
   if (alvos.size === 0) return null;
   const visto = new Map<string, number>();
@@ -173,6 +265,7 @@ function buscarDistancia(
     const proxima: TileDeGrid[] = [];
     for (const atual of fronteira) {
       for (const [dx, dy] of VIZINHOS) {
+        if (!passoPermitido(atual, dx, dy, bloqueados)) continue;
         const vizinho = { gx: atual.gx + dx, gy: atual.gy + dy };
         const chaveVizinho = chaveDeTile(vizinho);
         if (estradas[chaveVizinho] === true && !visto.has(chaveVizinho)) {
@@ -190,7 +283,7 @@ function buscarDistancia(
 export function distanciaEntrePredios(
   state: GameState, a: Predio, b: Predio, dados: GameData = gameData,
 ): number | null {
-  return distanciaPorEstrada(state.estradas, tilesDaPorta(a, dados), tilesDaPorta(b, dados));
+  return distanciaPorEstrada(state, tilesDaPorta(a, dados), tilesDaPorta(b, dados), dados);
 }
 
 // --- predios na rede ---
@@ -228,7 +321,7 @@ export function tilesDaPorta(predio: Predio, dados: GameData = gameData): TileDe
 export function predioLigadoAoArmazem(
   state: GameState, predio: Predio, dados: GameData = gameData,
 ): boolean {
-  const { componentes } = indiceDeEstradas(state.estradas);
+  const { componentes } = indiceDeEstradas(state, dados);
   const doArmazem = new Set<number>();
   for (const armazem of armazensCompletos(state)) {
     for (const porta of tilesDaPorta(armazem, dados)) {

@@ -276,8 +276,8 @@ export function portasDeEstrada(state: GameState, predioId: string, dados: GameD
  *  alguma porta de estrada da obra. Sem isto a perna carregada nao teria como existir. */
 function portasDeColeta(state: GameState, tarefa: TarefaDeTransporte, dados: GameData): { coleta: TileDeGrid[]; entrega: TileDeGrid[] } {
   const entrega = portasDeEstrada(state, tarefa.destino, dados);
-  const componentesDaEntrega = new Set(entrega.map((t) => componenteDe(state.estradas, t)));
-  const coleta = portasDeEstrada(state, tarefa.origem, dados).filter((t) => componentesDaEntrega.has(componenteDe(state.estradas, t)));
+  const componentesDaEntrega = new Set(entrega.map((t) => componenteDe(state, t, dados)));
+  const coleta = portasDeEstrada(state, tarefa.origem, dados).filter((t) => componentesDaEntrega.has(componenteDe(state, t, dados)));
   return { coleta, entrega };
 }
 

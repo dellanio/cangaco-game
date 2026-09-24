@@ -18,7 +18,7 @@
  *
  * MOVIMENTO: `fsmData.caminho` (tiles a andar, sem o atual) e `fsmData.progresso` (ticks no
  * passo em curso). O passo custa `custoDoPasso` (dado); ao completa-lo o serf passa ao
- * tile seguinte. A perna carregada so pisa em estrada (`obrigatoriaParaEntrega`); as outras
+ * tile seguinte. A perna carregada so pisa em estrada (regra no literal, nao no dado); as outras
  * (indo buscar, devolvendo) andam por qualquer tile livre.
  *
  * QUEM LIBERA O QUE: o `sanearTarefas` (roda antes, no mesmo tick) ja cancela a tarefa

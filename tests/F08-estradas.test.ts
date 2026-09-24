@@ -250,10 +250,25 @@ describe('F08 — recusas sao atomicas e dizem por que', () => {
   });
 });
 
-describe('F08 — conectividade: 4 direcoes, sobre o que esta de pe', () => {
-  it('diagonal NAO liga', () => {
+describe('F08 — conectividade: 8 direcoes sem cortar quina (F18e), sobre o que esta de pe', () => {
+  // Ate a F18e a regra escrita aqui era "diagonal NAO liga", interpretacao
+  // conservadora da F08 porque o GDD nao respondia. O operador respondeu
+  // (jogo original): a diagonal LIGA, e o que nao pode e cortar a quina de um
+  // predio. O teste afirma a regra nova nos dois sentidos — o que liga e o que
+  // deixa de ligar — e nao so o que mudou.
+  it('diagonal liga; a quina de predio corta', () => {
     const depois = step(inicial, [construir([tile(10, 40), tile(11, 41)])]);
-    expect(isConnected(depois, tile(10, 40), tile(11, 41))).toBe(false);
+    expect(isConnected(depois, tile(10, 40), tile(11, 41))).toBe(true);
+
+    // obra 3x2 em (11,39): ocupa x 11..13, y 39..40 — tapa a quina (11,40) e
+    // nenhum dos dois tiles de estrada.
+    const comQuina = step(depois, [{ type: 'PlaceBlueprint', buildingId: 'quarry', gx: 11, gy: 39 }]);
+    expect(rejeicoes(comQuina)).toEqual([]);
+    expect(isConnected(comQuina, tile(10, 40), tile(11, 41))).toBe(false);
+
+    // e a quina e regra de LIGACAO, nao de passagem: pelo contorno liga de novo.
+    const contornando = step(comQuina, [construir([tile(10, 41)])]);
+    expect(isConnected(contornando, tile(10, 40), tile(11, 41))).toBe(true);
   });
 
   it('dois trechos separados nao ligam; o tile que falta os une', () => {
@@ -274,32 +289,39 @@ describe('F08 — conectividade: 4 direcoes, sobre o que esta de pe', () => {
     const trecho = [tile(10, 40), tile(11, 40), tile(12, 40), tile(12, 41)];
     const a = step(inicial, [construir(trecho)]);
     const b = step(inicial, [construir([...trecho].reverse())]);
-    expect(indiceDeEstradas(a.estradas).componentes).toEqual(indiceDeEstradas(b.estradas).componentes);
+    expect(indiceDeEstradas(a).componentes).toEqual(indiceDeEstradas(b).componentes);
   });
 });
 
 describe('F08 — consulta O(1) entre mudancas (estrutural, sem teste de tempo)', () => {
-  it('o indice e construido uma vez por referencia de estradas', () => {
+  it('o indice e construido uma vez por par (estradas, predios)', () => {
     const estado = step(inicial, [construir(linhaH(10, 14, 40))]);
-    expect(indiceDeEstradas(estado.estradas)).toBe(indiceDeEstradas(estado.estradas));
+    expect(indiceDeEstradas(estado)).toBe(indiceDeEstradas(estado));
   });
 
-  it('step sem comando de estrada carrega a MESMA referencia, entao o indice e reaproveitado entre ticks', () => {
+  it('step sem comando de estrada nem predio novo reaproveita o indice entre ticks', () => {
     let estado = step(inicial, [construir(linhaH(10, 14, 40))]);
     const antes = estado.estradas;
-    const indice = indiceDeEstradas(antes);
-    estado = step(estado, []);
-    estado = step(estado, [{ type: 'PlaceBlueprint', buildingId: 'quarry', gx: 0, gy: 0 }]);
+    const indice = indiceDeEstradas(estado);
     for (let i = 0; i < 20; i++) estado = step(estado, []);
     expect(estado.estradas).toBe(antes);
-    expect(indiceDeEstradas(estado.estradas)).toBe(indice);
+    // a obra do cenario progride e `predios.porId` muda; `predios.ordem` nao, e
+    // e ele a chave — senao o indice seria reconstruido a cada tick.
+    expect(indiceDeEstradas(estado)).toBe(indice);
   });
 
   it('um comando de estrada que muda algo troca a referencia (e o indice)', () => {
     const uma = step(inicial, [construir(linhaH(10, 14, 40))]);
     const duas = step(uma, [construir([tile(15, 40)])]);
     expect(duas.estradas).not.toBe(uma.estradas);
-    expect(indiceDeEstradas(duas.estradas)).not.toBe(indiceDeEstradas(uma.estradas));
+    expect(indiceDeEstradas(duas)).not.toBe(indiceDeEstradas(uma));
+  });
+
+  it('predio novo tambem troca o indice: desde a F18e a quina faz a ligacao depender de predio', () => {
+    const uma = step(inicial, [construir(linhaH(10, 14, 40))]);
+    const comPredio = step(uma, [{ type: 'PlaceBlueprint', buildingId: 'quarry', gx: 0, gy: 0 }]);
+    expect(comPredio.estradas).toBe(uma.estradas);
+    expect(indiceDeEstradas(comPredio)).not.toBe(indiceDeEstradas(uma));
   });
 });
 
@@ -545,10 +567,10 @@ afterAll(() => {
     },
     // Consulta O(1) entre mudancas: estrutural, sem teste de tempo.
     consultaEntreMudancas: {
-      indiceReaproveitadoParaAMesmaReferencia: indiceDeEstradas(desenhado.estradas) === indiceDeEstradas(desenhado.estradas),
+      indiceReaproveitadoParaAMesmaReferencia: indiceDeEstradas(desenhado) === indiceDeEstradas(desenhado),
       referenciaDeEstradasMantidaSemComandoDeEstrada: estadoParado.estradas === desenhado.estradas,
     },
-    conectividade: 'quatro direcoes (diagonal nao liga) — GDD nao responde; interpretacao conservadora',
+    conectividade: 'oito direcoes, sem cortar quina de predio (F18e substituiu a interpretacao conservadora da F08)',
     // Verificacao visual e separada, fora do npm run verify (CLAUDE.md §8).
     verificacaoVisual: 'fora deste arquivo: npm run shot -- F08 (test-output/F08-shot.json)',
   });

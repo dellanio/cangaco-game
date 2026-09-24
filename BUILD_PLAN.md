@@ -1158,6 +1158,14 @@ prédio surge sem clique do jogador.
   passagem.
 
 ### F18d-1 — Estrada como canteiro, e a entrega de construção sem estrada (sim)
+- **Nota (o que a F18e deixou pronto, 2026-09-24)**: a rede de estradas agora
+  depende dos **prédios** (a quina que eles tapam corta a ligação diagonal), e por
+  isso `indiceDeEstradas`, `componenteDe`, `isConnected` e `distanciaPorEstrada`
+  recebem `EstadoDaRede` (`Pick<GameState, 'estradas' | 'predios'>`), não mais só
+  `estradas`. O `estradasPlanejadas` desta feature **não** entra nesse índice: tile
+  planejado não liga nada até o laborer assentar, que é o próprio aceite. Se ele
+  precisar de índice próprio, é índice separado, com a mesma regra de quina — o
+  único lugar onde ela mora é o `passoPermitido` de `sim/estradas.ts`.
 - **Escopo**: duas regras que só fazem sentido juntas.
   (a) **Canteiro**: campo novo `estradasPlanejadas` no `GameState`, separado de
   `estradas`; `PlaceRoad` **reserva** a pedra e planta o tile planejado; variante
@@ -1247,6 +1255,15 @@ prédio surge sem clique do jogador.
   `F13b`/`F16b`/`F17b`/`F17d`/`F17e` (2 cada), `F10` (1), `F11a` (1). Os 10
   arquivos que semeiam `estradas:` direto no estado (8 testes + `jobs-cenario.ts`
   e `producao-cenario.ts`) **não** mudam: eles não passam pelo comando.
+- **Nota (o que a F18e deixou pronto, 2026-09-24)**: três heranças. (1)
+  `camadaDeEstradas.atualizar` recebe o `GameState` inteiro (ou `null`), não mais
+  `estradas`, e redesenha quando **`estradas` ou `predios.ordem`** trocam de
+  referência — a camada de planejadas segue a mesma forma. (2) Quem diz onde há
+  ligação diagonal é `pontesDiagonais(state)`, de `sim/estradas.ts`: o desenho do
+  tile planejado **não** reimplementa a regra da quina, pergunta. (3) `tilesEntre`
+  é 8-conectado desde a F18e, então um arrasto em 45° de `n` passos vira `n + 1`
+  tiles, não `2n + 1`; os roteiros que contam tiles de arrasto diagonal já estão
+  na conta nova (ver `tools/shots/F18e.js`).
 - **Nota (a janela entre as duas)**: entre a F18d-1 e esta, a estrada planejada
   existe no estado e **não aparece na tela**. É feio e está registrado de
   propósito: o alternativo era empurrar `render/` para dentro do slice de `sim/`

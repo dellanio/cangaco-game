@@ -4,6 +4,7 @@ import type { GameData } from '../src/sim/data/types';
 import type { GameState } from '../src/sim/state';
 import { deepFreeze } from './helpers/determinism';
 import { distanciaEntrePredios, distanciaPorEstrada } from '../src/sim/estradas';
+import type { EstadoDaRede } from '../src/sim/estradas';
 import {
   disponivelNaOrigem, reservadoNaOrigem, reservadoNoDestino, vagaNoDestino,
 } from '../src/sim/reservas';
@@ -108,44 +109,57 @@ describe('F09 — a reserva e DERIVADA das tarefas reclamadas', () => {
   });
 });
 
+/** Uma rede sem predio nenhum: estes casos sao sobre o grafo da rua. A quina de
+ *  predio (F18e) tem caso proprio no fim do bloco. */
+const rede = (estradas: GameState['estradas']): EstadoDaRede => (
+  { estradas, predios: { ordem: [], porId: {} } }
+);
+
 describe('F09 — distanciaPorEstrada: caminho a pe pela rede, nunca reta', () => {
   it('em reta pela estrada: o nº de passos', () => {
     const estradas = estradasDe([0, 1, 2, 3, 4].map((x) => tile(x, 0)));
-    expect(distanciaPorEstrada(estradas, [tile(0, 0)], [tile(4, 0)])).toBe(4);
+    expect(distanciaPorEstrada(rede(estradas), [tile(0, 0)], [tile(4, 0)])).toBe(4);
   });
 
   it('a volta conta inteira: dois pontos vizinhos em linha reta, longe pela estrada', () => {
     const volta = estradasDe([tile(0, 0), tile(0, 1), tile(0, 2), tile(1, 2), tile(2, 2), tile(2, 1), tile(2, 0)]);
-    expect(distanciaPorEstrada(volta, [tile(0, 0)], [tile(2, 0)])).toBe(6);
+    // desde a F18e a volta tem diagonal: (0,0)-(0,1)-(1,2)-(2,1)-(2,0), 4 passos
+    expect(distanciaPorEstrada(rede(volta), [tile(0, 0)], [tile(2, 0)])).toBe(4);
     const comAtalho = estradasDe([tile(0, 0), tile(1, 0), tile(2, 0)]);
-    expect(distanciaPorEstrada(comAtalho, [tile(0, 0)], [tile(2, 0)])).toBe(2);
+    expect(distanciaPorEstrada(rede(comAtalho), [tile(0, 0)], [tile(2, 0)])).toBe(2);
   });
 
   it('null quando nao ha caminho, e quando uma das pontas nao e estrada', () => {
     const doisTrechos = estradasDe([tile(0, 0), tile(1, 0), tile(5, 0), tile(6, 0)]);
-    expect(distanciaPorEstrada(doisTrechos, [tile(0, 0)], [tile(6, 0)])).toBeNull();
-    expect(distanciaPorEstrada(doisTrechos, [tile(0, 0)], [tile(3, 3)])).toBeNull();
-    expect(distanciaPorEstrada(doisTrechos, [tile(9, 9)], [tile(0, 0)])).toBeNull();
-    expect(distanciaPorEstrada({}, [tile(0, 0)], [tile(1, 0)])).toBeNull();
+    expect(distanciaPorEstrada(rede(doisTrechos), [tile(0, 0)], [tile(6, 0)])).toBeNull();
+    expect(distanciaPorEstrada(rede(doisTrechos), [tile(0, 0)], [tile(3, 3)])).toBeNull();
+    expect(distanciaPorEstrada(rede(doisTrechos), [tile(9, 9)], [tile(0, 0)])).toBeNull();
+    expect(distanciaPorEstrada(rede({}), [tile(0, 0)], [tile(1, 0)])).toBeNull();
   });
 
   it('o mesmo tile de estrada esta a distancia 0', () => {
-    expect(distanciaPorEstrada(estradasDe([tile(3, 3)]), [tile(3, 3)], [tile(3, 3)])).toBe(0);
+    expect(distanciaPorEstrada(rede(estradasDe([tile(3, 3)])), [tile(3, 3)], [tile(3, 3)])).toBe(0);
   });
 
   it('com varias portas de cada lado vale a menor distancia entre qualquer par', () => {
     const estradas = estradasDe([0, 1, 2, 3, 4, 5].map((x) => tile(x, 0)));
-    expect(distanciaPorEstrada(estradas, [tile(0, 0), tile(2, 0)], [tile(5, 0), tile(4, 0)])).toBe(2);
+    expect(distanciaPorEstrada(rede(estradas), [tile(0, 0), tile(2, 0)], [tile(5, 0), tile(4, 0)])).toBe(2);
   });
 
-  it('diagonal nao e passo: dois tiles em diagonal nao se ligam', () => {
-    expect(distanciaPorEstrada(estradasDe([tile(0, 0), tile(1, 1)]), [tile(0, 0)], [tile(1, 1)])).toBeNull();
+  it('diagonal E passo, e conta 1 (F18e); a quina de predio tira o passo de volta', () => {
+    const diagonal = estradasDe([tile(0, 0), tile(1, 1)]);
+    expect(distanciaPorEstrada(rede(diagonal), [tile(0, 0)], [tile(1, 1)])).toBe(1);
+
+    // obra 3x2 em (1,0) ocupa x 1..3, y 0..1: tapa a quina (1,0) e nao encosta
+    // em nenhum dos dois tiles de estrada.
+    const comQuina = comObra({ ...inicial, estradas: diagonal }, 'quina', { gx: 1, gy: 0, faltam: { stone: 1 } });
+    expect(distanciaPorEstrada(comQuina, [tile(0, 0)], [tile(1, 1)])).toBeNull();
   });
 
   it('e pura e determinista: mesma resposta em chamadas repetidas, sobre estradas congeladas', () => {
     const estradas = deepFreeze(estradasDe([0, 1, 2, 3].map((x) => tile(x, 0))));
-    const a = distanciaPorEstrada(estradas, [tile(0, 0)], [tile(3, 0)]);
-    const b = distanciaPorEstrada(estradas, [tile(0, 0)], [tile(3, 0)]);
+    const a = distanciaPorEstrada(rede(estradas), [tile(0, 0)], [tile(3, 0)]);
+    const b = distanciaPorEstrada(rede(estradas), [tile(0, 0)], [tile(3, 0)]);
     expect([a, b]).toEqual([3, 3]);
   });
 

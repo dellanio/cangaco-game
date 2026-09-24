@@ -2457,6 +2457,111 @@ asserções. Os 10 arquivos que semeiam `estradas:` direto no estado não mudam.
   prevê 7 ticks por passo diagonal de estrada contra 9 da grama, e a rua ganhando
   em todo ângulo. Previsão, não medida.
 
+## F18e — A estrada liga em diagonal (2026-09-24)
+
+Plano em `docs/planos/F18e-estrada-diagonal.md`. Feature **de integração**, com a
+exceção da §10 escrita no item do `BUILD_PLAN.md` **antes** do código (commit
+`d93cc41`): ela vale só aqui e não se herda para a F18d-1 nem para a F18d-2.
+
+### O que mudou, e onde
+
+- `sim/pathfinding.ts`: a diagonal deixou de exigir `andavel` nas duas quinas e
+  passou a exigir `quinaLivre` — **ausência de prédio**, não presença de estrada.
+  No modo `'livre'` o predicado novo é literalmente o antigo; o que mudou é o modo
+  `'estrada'`, onde a exigência de estrada na quina era o que deixava a rua
+  4-conectada na prática.
+- `sim/estradas.ts`: `VIZINHOS` passou a 8, com a mesma regra da quina num único
+  `passoPermitido` que o índice e a distância chamam. Como a conectividade agora
+  depende de `state.predios`, as assinaturas mudaram: `indiceDeEstradas`,
+  `componenteDe`, `isConnected`, `distanciaPorEstrada` recebem `EstadoDaRede`
+  (`Pick<GameState, 'estradas' | 'predios'>`) em vez de só `estradas`.
+- `input/arrasto.ts`: `tilesEntre` virou Bresenham 8-conectado,
+  `max(|dx|, |dy|) + 1` tiles. Era a escadinha ortogonal.
+- `render/estradas.ts`: dois tiles em diagonal se tocam por um ponto e apareciam
+  como rua cortada. A camada desenha um losango no canto compartilhado. **Quem
+  diz onde há ponte é a sim**, pela `pontesDiagonais(state)` nova — o render não
+  reimplementa a regra da quina.
+
+### Decidido, e por quê
+
+- **A regra implementada é mais estrita que o aceite escrito.** O aceite dizia
+  "não passam quando **os dois** ortogonais entre eles estão ocupados"; o código
+  corta com **um** só. O caso do aceite continua valendo como caso particular, e
+  os dois estão no teste (`tests/F18e-diagonal.test.ts`). Motivo: com a regra
+  literal, uma unidade atravessaria a quina de um prédio na diagonal.
+- **Quina é de prédio, não de estrada**, nos dois modos. É o que faz o A* e o
+  índice dizerem a mesma coisa — a propriedade de equivalência da
+  `tests/F10-astar.test.ts` ficou **mais estrita** (os mapas sorteados agora têm
+  `predios: sorteio(4)`, antes 0) e continua verde sem ser afrouxada.
+- **O memo do índice é de três níveis** (`dados` → `estradas` → `predios.ordem`).
+  `ordem` e não `porId` porque `porId` troca de referência a cada coleta e
+  entrega; sem isso o índice seria reconstruído todo tick. Há teste dos dois
+  lados: tick comum não troca o índice, prédio novo troca.
+- **O cenário `cenarioDoMuro()` precisou de um bloqueio espelhado.** Com a
+  diagonal ligada as duas pernas de entrega deixaram de empatar (187 contra 184):
+  o footprint de `dest` tapa a quina da rota norte e a rota sul cortava a dela. A
+  obra `quina-sul` restaura a simetria; sem ela o cenário deixaria de medir o que
+  diz medir (só a perna do serf desempata). O número derivado à mão no teste saiu
+  de `38 × estrada` para `36 × estrada + 1 × diagonal`.
+
+### Remedição do ponto de virada (pedida no item, e feita)
+
+**Verificado**, `test-output/F18e.json`, com o A* rodando dos dois lados (não
+aritmética de papel): `dx = 12`, `dy` de 0 a 12 — a estrada ganha da grama nos
+treze ângulos, por **24 ticks constantes**. Ela anda os mesmos passos da grama e
+paga 2 ticks a menos em cada um, reto (5 contra 7) ou diagonal (7 contra 9). Não
+há mais ponto de virada; `custoDeMovimento.grama` fica em 1,30. O item do
+`BALANCE_LOG.md` foi **fechado** com esse resultado e com o teste que o mantém.
+
+### `estrada.bonusVelocidade` apagado, e a varredura que o operador pediu
+
+Apagado de `data/terrain.json`, com o `_doc` dizendo onde o bônus mora de verdade
+(`custoDeMovimento`). É o segundo dado morto em duas varreduras — o primeiro foi
+`obrigatoriaParaEntrega`, na sessão anterior. De quebra, os **dois comentários que
+ainda citavam o campo removido em 2026-09-23** (`sim/pathfinding.ts`,
+`sim/systems/serfs.ts`) foram corrigidos: o campo não existe mais, e a regra está
+no literal `'estrada'` que o chamador passa.
+
+**A regra de `validate:data` para "campo de dado sem leitor é erro" NÃO cabe** —
+é a saída que o operador deixou pronta, e o motivo é estrutural, não de esforço:
+`validarTudo(dados)` é pura sobre o JSON já parseado e não enxerga `src/`. Uma
+regra assim teria de varrer o **texto** do fonte atrás do nome do campo, que é
+exatamente o tipo de guarda que este projeto recusa (o nome pode aparecer em
+comentário, como apareceu, e some quando o acesso é dinâmico). Fica como
+observação, com a varredura medida.
+
+**Varredura medida (2026-09-24, campos escalares de `data/*.json` sem nenhuma
+ocorrência do nome em `src/`, `tools/`, `tests/`):** ~100 campos, quase todos de
+features **ainda não construídas** (`combat.json` inteiro, `production.json`
+inteiro, `condition.json`, os atributos militares de `units.json`) — isso é
+especificação adiantada, não dado morto. O que é dado morto de verdade, porque a
+feature dona já existe e nada lê:
+
+| campo | feature dona | o que está errado |
+|---|---|---|
+| `terrain.pathfinding.cachePorParOrigemDestino` | F10/F17c | o cache existe e é por par, mas hardcoded; o campo **descreve** a implementação, não a configura |
+| `delivery.reserva.obrigatoria` | F09 | a reserva dupla é obrigatória no código do JobBoard; o `true` não liga nada |
+| `economy.storehouse.bloqueioPorItem` | F15/F16 | nenhuma ocorrência em código |
+| `terrain.campos.*.tilesPorFarm` / `tilesPorWineyard` | ainda na fila (campos) | especificação adiantada, não morto |
+
+**Hipótese, não verificada**: os três primeiros são do mesmo tipo do
+`obrigatoriaParaEntrega` — descrevem uma regra que vive em literal. Não foram
+apagados aqui porque apagar dado de feature alheia é mudança de escopo; a decisão
+é do operador.
+
+### Evidência
+
+- `test-output/F18e.json` — tabela da remedição, treze ângulos.
+- `screenshots/F18e-2-estrada-diagonal.png` — aberta com Read: a rua de 5 tiles
+  desce em 45° do canto do armazém, contínua, com as pontes de canto desenhadas.
+  `screenshots/F18e-1-previa-diagonal.png` é a prévia do mesmo arrasto.
+- `test-output/F18e-shot.json` — o gesto pede **5** tiles; a escadinha
+  4-conectada da F08 pediria 9. A asserção compara os dois: se a interpolação
+  regredir, o roteiro reprova.
+- Não-regressão: os **19** roteiros de `tools/shots/` rodados, todos `exit 0`.
+  Screenshot de outra feature não foi aberta (CLAUDE.md §8).
+- `npm run verify`: 59 arquivos, **993 testes**, verde.
+
 ## Perguntas em aberto
 
 _(nenhuma no momento: as três que sobravam foram decididas pelo operador — ver "Ajuste pós-F10".)_

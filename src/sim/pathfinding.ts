@@ -13,12 +13,15 @@
  *    inclusive). O tile de partida e sempre permitido (civis nao colidem, GDD §6.4): se ele
  *    esta dentro de um footprint (uma obra plantada sobre o serf), a caixa inteira fica
  *    andavel nesta busca, para o serf poder sair.
- *  - `estrada`: so tiles de estrada, partida inclusive. E a perna CARREGADA
- *    (`terrain.estrada.obrigatoriaParaEntrega`).
+ *  - `estrada`: so tiles de estrada, partida inclusive. E a perna CARREGADA. Quem escolhe
+ *    o modo e o chamador, pelo literal: nao ha flag de regra no dado (o campo
+ *    `terrain.estrada.obrigatoriaParaEntrega` foi removido em 2026-09-23, sem leitor).
  *
- * Diagonal so se as DUAS ortogonais forem andaveis (nao corta quina). Consequencia que o
- * teste prova por propriedade: por estrada, o A* acha caminho se e somente se `isConnected`
- * (F08, 4 direcoes) acha — as duas nocoes de "ligado" nao divergem.
+ * Diagonal so se NENHUMA das duas quinas ortogonais tiver predio — nos dois modos, com o
+ * mesmo predicado (F18e; antes disso o modo `estrada` exigia estrada nas duas quinas, e a
+ * rua so ligava em cruz). Consequencia que o teste prova por propriedade: por estrada, o A*
+ * acha caminho se e somente se `isConnected` (F08/F18e, 8 direcoes) acha — as duas nocoes
+ * de "ligado" nao divergem.
  *
  * CACHE: `WeakMap` aninhado pelas referencias de `dados`, de `predios.ordem` e de
  * `estradas`. `ordem` (e nao `predios`) porque `predios` troca de referencia a cada
@@ -305,6 +308,21 @@ function executarComRascunho(
     const i = y * largura + x;
     return modo === 'estrada' ? estrada[i] === 1 : bloqueado[i] === 0 || liberados.has(i);
   };
+  /**
+   * A quina do passo diagonal, e a MESMA regra nos dois modos (F18e): o que
+   * proibe o passo e PREDIO na quina, nao "a quina nao ser estrada". Avaliar a
+   * quina contra o mapa de estradas — o que este A* fazia ate a F18e — so
+   * deixava a rua virar dentro de um bloco 2x2, e por isso a estrada era
+   * 4-conectada na pratica. Em modo `'livre'` isto e literalmente o `andavel`
+   * de cima, entao nada muda la. `sim/estradas.ts` usa este mesmo predicado ao
+   * montar o indice de componentes; e o que mantem as duas metades iguais
+   * (propriedade da equivalencia, tests/F10-astar.test.ts).
+   */
+  const quinaLivre = (x: number, y: number): boolean => {
+    if (x < 0 || y < 0 || x >= largura || y >= altura) return false;
+    const i = y * largura + x;
+    return bloqueado[i] === 0 || liberados.has(i);
+  };
 
   const { aPe } = dados.movimento.ticksPorTile;
   const { aPe: aPeDiagonal } = dados.movimento.ticksPorTileDiagonal;
@@ -402,7 +420,7 @@ function executarComRascunho(
       const ny = y + dy;
       if (!andavel(nx, ny)) continue;
       const diagonal = dx !== 0 && dy !== 0;
-      if (diagonal && !(andavel(nx, y) && andavel(x, ny))) continue;
+      if (diagonal && !(quinaLivre(nx, y) && quinaLivre(x, ny))) continue;
       const vizinho = ny * largura + nx;
       const novo = gAtual + (diagonal ? diagonalDoTerreno(vizinho) : retoDoTerreno(vizinho));
       if (novo < gDe(vizinho)) {

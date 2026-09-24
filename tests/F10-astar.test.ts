@@ -75,6 +75,13 @@ function custoDoOraculo(
     if (t.gx < 0 || t.gy < 0 || t.gx >= dados.terreno.mapaPadrao.largura || t.gy >= dados.terreno.mapaPadrao.altura) return false;
     return modo === 'estrada' ? ehEstrada(estado.estradas, t) : !bloqueados.has(chaveDeTile(t));
   };
+  // A quina do passo diagonal e a mesma regra nos dois modos (F18e): so PREDIO
+  // proibe. No modo 'livre' isto coincide com `andavel`; no 'estrada' e o que
+  // faz a rua virar em diagonal sem atravessar parede.
+  const quinaLivre = (t: TileDeGrid): boolean => {
+    if (t.gx < 0 || t.gy < 0 || t.gx >= dados.terreno.mapaPadrao.largura || t.gy >= dados.terreno.mapaPadrao.altura) return false;
+    return !bloqueados.has(chaveDeTile(t));
+  };
   const custoDoPasso = (para: TileDeGrid, diagonal: boolean): number => {
     const terreno = ehEstrada(estado.estradas, para) ? 'estrada' : 'grama';
     return diagonal ? dados.movimento.ticksPorTileDiagonal.aPe[terreno] : dados.movimento.ticksPorTile.aPe[terreno];
@@ -89,7 +96,7 @@ function custoDoOraculo(
       const vizinho = { gx: atual.gx + dx, gy: atual.gy + dy };
       if (!andavel(vizinho)) continue;
       const diagonal = dx !== 0 && dy !== 0;
-      if (diagonal && !(andavel({ gx: atual.gx + dx, gy: atual.gy }) && andavel({ gx: atual.gx, gy: atual.gy + dy }))) continue;
+      if (diagonal && !(quinaLivre({ gx: atual.gx + dx, gy: atual.gy }) && quinaLivre({ gx: atual.gx, gy: atual.gy + dy }))) continue;
       const novo = custoAtual + custoDoPasso(vizinho, diagonal);
       const chave = chaveDeTile(vizinho);
       const antigo = melhor.get(chave);
@@ -211,12 +218,15 @@ describe('F10 — A*: o custo e o do oraculo independente (propriedade, RNG seme
   });
 
   it('a EQUIVALENCIA com a F08: por estrada, o A* acha caminho se e somente se `isConnected` acha', () => {
-    // vizinhanca 8 + "sem cortar quina" nao pode ligar o que a rede de 4 direcoes desliga
+    // As duas metades da F18e tem de dizer a mesma coisa: o A* de modo 'estrada'
+    // e o indice de componentes. Desde a F18e o mapa sorteado leva PREDIO
+    // (`predios: sorteio(4)`, antes 0), porque e o predio que tapa quina — sem
+    // ele a propriedade nao exercitaria a metade nova da regra.
     const sorteio = sorteador(7);
     let ligados = 0;
     let desligados = 0;
     for (let i = 0; i < 500; i++) {
-      const estado = mapaSorteado(sorteio, { predios: 0, segmentos: 8 + sorteio(12) });
+      const estado = mapaSorteado(sorteio, { predios: sorteio(4), segmentos: 8 + sorteio(12) });
       const de = tileDeEstradaSorteado(estado, sorteio);
       const alvo = tileDeEstradaSorteado(estado, sorteio);
       if (de === null || alvo === null) continue;
@@ -264,7 +274,12 @@ describe('F10 — A*: o caminho devolvido e valido', () => {
     const achado = buscarCaminho(estado, tile(10, 40), [tile(20, 46)], 'estrada');
     expect(achado).not.toBeNull();
     for (const t of achado?.tiles ?? []) expect(ehEstrada(estado.estradas, t)).toBe(true);
-    expect(achado?.custo).toBe(gameData.movimento.ticksPorTile.aPe.estrada * 16);
+    // Desde a F18e a quina do L se corta com UM passo diagonal: 14 retos + 1
+    // diagonal, nao 16 retos. Os dois tiles da quina sao estrada, entao a regra
+    // da quina (que so proibe predio) nao tem o que barrar.
+    const { ticksPorTile, ticksPorTileDiagonal } = gameData.movimento;
+    expect(achado?.tiles).toHaveLength(15);
+    expect(achado?.custo).toBe(ticksPorTile.aPe.estrada * 14 + ticksPorTileDiagonal.aPe.estrada);
   });
 });
 
@@ -312,10 +327,16 @@ describe('F10 — A*: casos que se leem', () => {
     }
   });
 
-  it('na estrada, dois tiles so em diagonal NAO se ligam (igual a F08)', () => {
+  it('na estrada, dois tiles so em diagonal SE ligam desde a F18e (igual a F08), e a quina de predio corta', () => {
     const estado = comEstradas(inicial, [tile(5, 5), tile(6, 6)]);
-    expect(buscarCaminho(estado, tile(5, 5), [tile(6, 6)], 'estrada')).toBeNull();
-    expect(isConnected(estado, tile(5, 5), tile(6, 6))).toBe(false);
+    expect(buscarCaminho(estado, tile(5, 5), [tile(6, 6)], 'estrada')?.custo)
+      .toBe(gameData.movimento.ticksPorTileDiagonal.aPe.estrada);
+    expect(isConnected(estado, tile(5, 5), tile(6, 6))).toBe(true);
+
+    // obra 3x2 em (6,4): ocupa x 6..8, y 4..5 — tapa a quina (6,5).
+    const comQuina = comObra(estado, 'quina', { gx: 6, gy: 4, faltam: { stone: 1 } });
+    expect(buscarCaminho(comQuina, tile(5, 5), [tile(6, 6)], 'estrada')).toBeNull();
+    expect(isConnected(comQuina, tile(5, 5), tile(6, 6))).toBe(false);
   });
 
   it('na estrada, sair de um tile que nao e estrada nao existe: null', () => {
@@ -393,9 +414,11 @@ describe('F10 — A*: cache por par origem-destino', () => {
   });
 
   it('a ausencia de caminho tambem e cacheada', () => {
-    const estado = comEstradas(inicial, [tile(5, 5), tile(6, 6)]);
-    expect(buscarCaminho(estado, tile(5, 5), [tile(6, 6)], 'estrada')).toBeNull();
-    expect(buscarCaminho(estado, tile(5, 5), [tile(6, 6)], 'estrada')).toBeNull();
+    // dois tiles longe um do outro: desde a F18e a diagonal LIGA, entao o par
+    // vizinho ja nao serve de caso sem caminho.
+    const estado = comEstradas(inicial, [tile(5, 5), tile(8, 8)]);
+    expect(buscarCaminho(estado, tile(5, 5), [tile(8, 8)], 'estrada')).toBeNull();
+    expect(buscarCaminho(estado, tile(5, 5), [tile(8, 8)], 'estrada')).toBeNull();
     expect(estatisticasDeBusca()).toEqual({ execucoes: 1, acertos: 1 });
   });
 

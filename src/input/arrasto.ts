@@ -1,14 +1,18 @@
 import type { TileClicado } from './colocar';
 
 /**
- * A linha 4-CONECTADA de `a` ate `b`, extremos incluidos: so passos ortogonais,
- * `|dx| + |dy| + 1` tiles, nunca um salto diagonal. E o que o arrasto usa para
+ * A linha 8-CONECTADA de `a` ate `b`, extremos incluidos: cada passo anda um tile
+ * em X, em Y ou nos dois, `max(|dx|, |dy|) + 1` tiles. E o que o arrasto usa para
  * preencher o caminho entre duas amostras do mouse — um `mousemove` rapido pula
  * tiles, e uma estrada com buraco nao conecta.
  *
- * Caminhada de grade: a cada passo anda no eixo cuja fracao percorrida esta
- * atrasada, comparando em inteiros `(1 + 2*ix) * ny` contra `(1 + 2*iy) * nx`
- * (sem ponto flutuante, sem divisao). Pura e deterministica.
+ * Ate a F18d era 4-conectada, porque a estrada so ligava em cruz e a escada de
+ * passos ortogonais era a unica rua de verdade. Com a F18e a estrada liga em
+ * diagonal, e a escada viraria o dobro de tiles pagos pelo mesmo trajeto.
+ *
+ * Bresenham inteiro: `err` guarda a diferenca acumulada entre os dois eixos, e o
+ * passo anda em cada eixo que esteja atrasado — quando os dois estao, sai a
+ * diagonal. Sem ponto flutuante, sem divisao. Pura e deterministica.
  */
 export function tilesEntre(a: TileClicado, b: TileClicado): TileClicado[] {
   const nx = Math.abs(b.gx - a.gx);
@@ -19,15 +23,16 @@ export function tilesEntre(a: TileClicado, b: TileClicado): TileClicado[] {
   let gx = a.gx;
   let gy = a.gy;
   const tiles: TileClicado[] = [{ gx, gy }];
-  let ix = 0;
-  let iy = 0;
-  while (ix < nx || iy < ny) {
-    if ((1 + 2 * ix) * ny < (1 + 2 * iy) * nx) {
+  let err = nx - ny;
+  while (gx !== b.gx || gy !== b.gy) {
+    const dobro = 2 * err;
+    if (dobro > -ny) {
+      err -= ny;
       gx += passoX;
-      ix += 1;
-    } else {
+    }
+    if (dobro < nx) {
+      err += nx;
       gy += passoY;
-      iy += 1;
     }
     tiles.push({ gx, gy });
   }

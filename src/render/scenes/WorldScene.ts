@@ -239,7 +239,7 @@ export class WorldScene extends Phaser.Scene {
       highlight.setVisible(tileAtual !== null && this.ferramenta.predioAtivo === null);
 
       // Estrada (F08): desenha o que o estado diz e a previa do arrasto em curso.
-      estado.estradasRenderizadas = camadaDeEstradas.atualizar(this.ponte.atual?.estradas ?? {});
+      estado.estradasRenderizadas = camadaDeEstradas.atualizar(this.ponte.atual ?? null);
       estado.previaDeEstrada = previaDeEstrada.atualizar(this.entrada.trecho(), this.ferramenta.modo, this.ponte.atual);
 
       // Unidades (F10): a posicao de cada tick vem do estado (selector puro); a F11a interpola

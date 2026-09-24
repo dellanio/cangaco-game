@@ -93,14 +93,21 @@ export const SERF_DO_LADO_DE_B = serfNoCenario(1);
  * O caso adversarial da perna do serf. Um MURO de obras (y=16..17, x=8..40) separa o serf Y
  * (20,20) do armazem 'a' (porta em (20,13)); o armazem 'b' (porta em (20,33)) esta a 13
  * linhas de Y, sem muro no meio. A reta ate 'a' (7) e menor que ate 'b' (13); a pe, o muro
- * inverte. As pernas de ENTREGA sao iguais por simetria (38 passos cada), entao so a perna
+ * inverte. As pernas de ENTREGA sao iguais por simetria, entao so a perna
  * unidade -> origem desempata. O serf X (20,11), do lado de 'a' do muro, e o contraponto.
+ *
+ * F18e: com a estrada ligando em 8 direcoes, a simetria passou a exigir 'quina-sul'.
+ * As duas rotas cortam a quina do proprio L com uma diagonal e chegam ao mesmo cotovelo,
+ * mas a de cima nao corta a ultima quina, porque o footprint de 'dest' (44..46, 21..22)
+ * tapa (46,22). Sem um bloqueio espelhado ao sul, a rota de baixo cortaria essa quina,
+ * ficaria 3 ticks mais barata, e o cenario deixaria de medir o que diz medir.
  */
 export function cenarioDoMuro(): GameState {
   let estado = comArmazemCompleto(semLaborers(inicial), 'a', { gx: 18, gy: 10, stone: 5 });
   estado = comArmazemCompleto(estado, 'b', { gx: 18, gy: 30, stone: 5 });
   for (let i = 0; i < 11; i++) estado = comObra(estado, `muro${i}`, { gx: 8 + 3 * i, gy: 16, faltam: {} });
   estado = comObra(estado, 'dest', { gx: 44, gy: 21, faltam: { stone: 2 } });
+  estado = comObra(estado, 'quina-sul', { gx: 44, gy: 24, faltam: {} }); // ver F18e, acima
   estado = comEstradas(estado, [
     ...linhaH(20, 47, 13), ...linhaV(47, 13, 23), // de 'a' ate a porta da obra
     ...linhaH(20, 47, 33), ...linhaV(47, 23, 33), // de 'b' ate a porta da obra

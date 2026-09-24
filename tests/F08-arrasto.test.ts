@@ -9,24 +9,34 @@ import { ligarTeclado } from '../src/input/teclado';
 
 const t = (gx: number, gy: number): TileClicado => ({ gx, gy });
 
-function orto(a: TileClicado, b: TileClicado): boolean {
-  return Math.abs(a.gx - b.gx) + Math.abs(a.gy - b.gy) === 1;
+/** Um passo de verdade: anda um tile em X, em Y ou nos dois — nunca mais que isso. */
+function passoUnitario(a: TileClicado, b: TileClicado): boolean {
+  const dx = Math.abs(a.gx - b.gx);
+  const dy = Math.abs(a.gy - b.gy);
+  return Math.max(dx, dy) === 1;
 }
 
-describe('F08 — tilesEntre: a linha 4-conectada que o arrasto preenche', () => {
+describe('F08/F18e — tilesEntre: a linha 8-conectada que o arrasto preenche', () => {
   it('horizontal, vertical e um unico tile', () => {
     expect(tilesEntre(t(0, 0), t(3, 0))).toEqual([t(0, 0), t(1, 0), t(2, 0), t(3, 0)]);
     expect(tilesEntre(t(2, 5), t(2, 2))).toEqual([t(2, 5), t(2, 4), t(2, 3), t(2, 2)]);
     expect(tilesEntre(t(4, 4), t(4, 4))).toEqual([t(4, 4)]);
   });
 
-  it('em diagonal sai uma escada de passos ortogonais, nunca um salto diagonal', () => {
-    const caminho = tilesEntre(t(0, 0), t(3, 3));
-    expect(caminho).toHaveLength(7);
-    for (let i = 1; i < caminho.length; i++) expect(orto(caminho[i - 1] as TileClicado, caminho[i] as TileClicado)).toBe(true);
+  it('em 45 graus sai a diagonal cheia, sem a escada que a F08 desenhava', () => {
+    // era uma escada de 7 tiles, 4-conectada; a estrada agora liga em diagonal (F18e)
+    expect(tilesEntre(t(0, 0), t(3, 3))).toEqual([t(0, 0), t(1, 1), t(2, 2), t(3, 3)]);
+    expect(tilesEntre(t(3, 3), t(0, 6))).toEqual([t(3, 3), t(2, 4), t(1, 5), t(0, 6)]);
   });
 
-  it('invariantes em 500 pares sorteados (RNG semeado): extremos, tamanho, ortogonal, sem repeticao', () => {
+  it('em angulo raso mistura diagonal e reto, e nao passa de um tile por passo', () => {
+    const caminho = tilesEntre(t(0, 0), t(4, 1));
+    expect(caminho).toHaveLength(5);
+    expect(caminho.some((c, i) => i > 0 && c.gy !== caminho[i - 1]?.gy && c.gx !== caminho[i - 1]?.gx)).toBe(true);
+    for (let i = 1; i < caminho.length; i++) expect(passoUnitario(caminho[i - 1] as TileClicado, caminho[i] as TileClicado)).toBe(true);
+  });
+
+  it('invariantes em 500 pares sorteados (RNG semeado): extremos, tamanho, passo unitario, sem repeticao', () => {
     let rng = createRng(20260921);
     for (let n = 0; n < 500; n++) {
       const p = [0, 0, 0, 0].map(() => {
@@ -39,9 +49,9 @@ describe('F08 — tilesEntre: a linha 4-conectada que o arrasto preenche', () =>
       const caminho = tilesEntre(a, b);
       expect(caminho[0]).toEqual(a);
       expect(caminho[caminho.length - 1]).toEqual(b);
-      expect(caminho).toHaveLength(Math.abs(a.gx - b.gx) + Math.abs(a.gy - b.gy) + 1);
+      expect(caminho).toHaveLength(Math.max(Math.abs(a.gx - b.gx), Math.abs(a.gy - b.gy)) + 1);
       for (let i = 1; i < caminho.length; i++) {
-        expect(orto(caminho[i - 1] as TileClicado, caminho[i] as TileClicado)).toBe(true);
+        expect(passoUnitario(caminho[i - 1] as TileClicado, caminho[i] as TileClicado)).toBe(true);
       }
       expect(new Set(caminho.map((c) => `${c.gx},${c.gy}`)).size).toBe(caminho.length);
     }
