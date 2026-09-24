@@ -64,33 +64,61 @@ export function aplicarPlaceRoad(state: GameState, comando: PlaceRoad, dados: Ga
   return { state: atual, events: [] };
 }
 
+/** Os tiles de `chaves` que sobrevivem, na mesma ordem. */
+function semAsChaves(conjunto: Readonly<Record<string, true>>, remover: ReadonlySet<string>): Record<string, true> {
+  const resto: Record<string, true> = {};
+  for (const chave of Object.keys(conjunto)) {
+    if (!remover.has(chave)) resto[chave] = true;
+  }
+  return resto;
+}
+
 /**
- * `DemolishRoad`: remove os tiles que SAO estrada (o resto e ignorado) e devolve
- * `floor(removidos * terreno.estrada.devolucaoAoDemolir)` de pedra ao primeiro armazem
- * completo. Decisao do operador: sem devolucao a ferramenta seria punitiva — o jogador
- * redesenha o traçado o tempo todo. O arredondamento e POR COMANDO: demolir um tile de
- * cada vez devolve 0, arrastar sobre varios devolve (alternativa, se o playtest pedir:
- * acumular a fracao num resto por armazem — ver PROGRESS.md). `0.5` e exato em ponto
- * flutuante; outra fracao pode arredondar uma unidade abaixo.
+ * `DemolishRoad`: a borracha, sobre os TRES conjuntos em que um tile pode estar.
+ *
+ *  - DE PE (`estradas`): sai, e devolve `floor(removidos * devolucaoAoDemolir)` de pedra
+ *    ao primeiro armazem completo. Decisao do operador: sem devolucao a ferramenta seria
+ *    punitiva — o jogador redesenha o traçado o tempo todo. O arredondamento e POR
+ *    COMANDO: demolir um tile de cada vez devolve 0, arrastar sobre varios devolve
+ *    (alternativa, se o playtest pedir: acumular a fracao num resto por armazem — ver
+ *    PROGRESS.md). `0.5` e exato em ponto flutuante; outra fracao pode arredondar uma
+ *    unidade abaixo.
+ *  - DESENHADO (`estradasPlanejadas`, F18d-1b): sai, e devolve ZERO. Nada foi gasto
+ *    ainda: a pedra do canteiro esta RESERVADA, nao debitada. A conta de devolucao conta
+ *    so os de pe, senao apagar o proprio rascunho fabricaria pedra.
+ *  - NEM UM NEM OUTRO: ignorado. Apagar chao vazio nao e erro.
+ *
+ * A tarefa de assentamento do tile desenhado nao e cancelada aqui: ela perde o destino,
+ * e `sanearTarefas` — que roda logo depois dos comandos, no mesmo tick — a derruba com
+ * `'destino-sumiu'` e devolve a reserva. Um caminho de volta so, para o tile apagado
+ * pelo jogador e para o tile que sumiu por qualquer outro motivo.
  *
  * Nunca e recusado. Os predios que ficam sem ligacao NAO mudam (ver
  * `predioLigadoAoArmazem`).
  */
 export function aplicarDemolishRoad(state: GameState, comando: DemolishRoad, dados: GameData): Resultado {
-  const remover = new Set<string>();
+  const dePe = new Set<string>();
+  const desenhados = new Set<string>();
   for (const tile of comando.tiles) {
     const chave = chaveDeTile(tile);
-    if (state.estradas[chave] === true) remover.add(chave);
+    if (state.estradas[chave] === true) dePe.add(chave);
+    else if (state.estradasPlanejadas[chave] === true) desenhados.add(chave);
   }
-  if (remover.size === 0) return { state, events: [] };
+  if (dePe.size === 0 && desenhados.size === 0) return { state, events: [] };
 
-  const estradas: Record<string, true> = {};
-  for (const chave of Object.keys(state.estradas)) {
-    if (!remover.has(chave)) estradas[chave] = true;
-  }
-  const devolvida = Math.floor(remover.size * dados.terreno.estrada.devolucaoAoDemolir);
-  const predios = devolverMercadorias(
+  const devolvida = Math.floor(dePe.size * dados.terreno.estrada.devolucaoAoDemolir);
+  const predios = devolvida === 0 ? state.predios : devolverMercadorias(
     state.predios, { [MERCADORIA_DA_ESTRADA]: devolvida }, primeiroArmazem(state.predios),
   );
-  return { state: { ...state, estradas, predios }, events: [] };
+  return {
+    state: {
+      ...state,
+      estradas: dePe.size === 0 ? state.estradas : semAsChaves(state.estradas, dePe),
+      estradasPlanejadas: desenhados.size === 0
+        ? state.estradasPlanejadas
+        : semAsChaves(state.estradasPlanejadas, desenhados),
+      predios,
+    },
+    events: [],
+  };
 }
