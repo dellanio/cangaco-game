@@ -10,6 +10,7 @@
     "lint": "eslint .",
     "validate:data": "node tools/validate-data.js",
     "shot": "node tools/shot.js",
+    "docs:mapa": "node tools/gerar-mapa-construcoes.js",
     "sim": "node tools/sim.js",
     "verify": "node scripts/verify.js"
   },

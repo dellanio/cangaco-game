@@ -2889,6 +2889,107 @@ mesmo pixel) somada a `depthDeY` igual e ao quadrado opaco. Oclusão total.
 - **F18g fica parada**: o custo foi medido e entregue ao operador; a posição na
   fila é decisão dele.
 
+## Tema revisado e o mapa de construções gerado do dado (2026-09-24)
+
+Pedido do operador: só o tema. **Nenhum id da simulação mudou, nenhum número de
+dado mudou, nada em `src/sim/`** — o diff é `data/theme-sertao.json`,
+`tools/gerar-mapa-construcoes.js` (novo), `package.json` (um script) e o
+documento gerado.
+
+### O que mudou
+
+Oito prédios renomeados: `watchtower` Mirante de Pedra → **Torre de Pedra**;
+`mill` Monjolo → **Moinho**; `bakery` Casa de Forno → **Padaria**; `barracks`
+Couto → **Quartel do Bando**; `town_hall` Sobrado → **Mercenários**;
+`weapons_workshop` Oficina do Seleiro → **Casa de Armas de Madeira**;
+`armory_workshop` Casa do Gibão → **Oficina de Couro Cru**; `armor_smithy`
+Oficina de Couro Cru → **Casa do Ferro**.
+
+**A correção que motivou as duas últimas** (registrada a pedido do operador): o
+`armor_smithy` consome `iron + coal` e produz `armadura_ferro`, e mesmo assim se
+chamava *Oficina de Couro Cru*. O nome de couro estava na oficina de ferro. Ele
+passou para o `armory_workshop`, que é quem trabalha couro, e o ferro ganhou
+nome de ferro. As quatro oficinas agora leem contra `production.json` assim:
+
+| Prédio | entra → sai (production.json) | nome |
+|---|---|---|
+| `weapons_workshop` | `timber` → `arma_madeira` | Casa de Armas de Madeira |
+| `armory_workshop` | `leather` + `timber` → `leather_armor` + `wooden_shield` | Oficina de Couro Cru |
+| `weapon_smithy` | `iron` + `coal` → `arma_ferro` | Ferraria |
+| `armor_smithy` | `iron` + `coal` → `armadura_ferro` | Casa do Ferro |
+
+Mercadorias: das oito da lista, **sete já tinham exatamente o nome pedido**
+(`tree_trunk` Tora, `flour` Fubá, `loaves` Cuscuz, `pigs` Bode, `sausages` Carne
+de sol, `skins` Couro cru, `wooden_shield` Chapéu de aba). A única que mudou foi
+`leather_armor`: Gibão de couro → **Armas de couro**.
+
+O alinhamento em colunas do bloco `predios` foi recalculado (o nome mais longo
+passou de 18 para 24 caracteres), por isso o diff mostra 28 linhas onde 8 mudaram
+de conteúdo.
+
+### Verificado
+
+- `npm run verify` — **EXIT=0**: 66 arquivos, 1045 testes, typecheck, lint e
+  `validate:data` (9 arquivos, 0 erros).
+- Roteiros que leem o tema, por código de saída: **F05b `0`, F06 `0`, F13b `0`,
+  F16b `0`**.
+- **Nenhuma asserção precisou de ajuste, e o motivo importa:** todo roteiro e
+  todo teste que afirma texto de tela lê o valor **do próprio tema**
+  (`tema.predios[id].nome`, `tema.painelEscola.filaCheia`, `tema.alertas.causas`)
+  em vez de repetir a string. Renomear não quebra o que a asserção prova. Busca
+  por nome antigo literal em `src/`, `tests/` e `tools/`: **zero ocorrências**
+  fora de `data/theme-sertao.json`.
+- `src/sim/` continua sem ler o tema: as três únicas ocorrências de
+  `theme-sertao` em `sim/` são **comentários** (`selectors.ts:527`,
+  `data/raw.ts:11`) dizendo justamente que ele não é lido.
+
+### `docs/mapa-construcoes-profissoes.md` — gerado, não escrito
+
+`tools/gerar-mapa-construcoes.js` (+ `npm run docs:mapa`) monta o documento de
+`buildings.json`, `production.json`, `units.json`, `economy.json` e
+`theme-sertao.json`: árvore de desbloqueio, os 28 prédios, as 14 profissões e 17
+cadeias de produção derivadas do grafo `entra`/`sai`.
+
+Duas decisões do gerador que valem registro:
+
+- **A raiz da árvore é quem fecha ciclo e já está de pé no cenário.** Nenhum
+  prédio tem `desbloqueadoPor: null` — `storehouse` aponta para `sawmill`, que
+  aponta de volta para `storehouse` por `woodcutters`/`schoolhouse`. O gerador
+  detecta o ciclo, ancora no prédio que `economy.json` dá como inicial e emite a
+  aresta de volta como **nota** ("um segundo Armazém requer Serraria", que é o
+  BUG-002 já registrado), em vez de recursão infinita.
+- **A coluna "Onde trabalha" não vem de dado.** Quem sai do prédio para colher é
+  decisão de arquitetura (operador, 2026-09-24,
+  `docs/planos/recursos-naturais-proposta.md`) e **nenhum campo de `data/` a
+  registra**. Ela está declarada num só lugar, no topo do gerador, e o documento
+  diz que é decisão e não dado. Quando a camada de recursos existir, o certo é a
+  constante sair do gerador e virar campo.
+
+### Achados abertos, para decisão do operador
+
+1. **`leather_armor` = "Armas de couro" conflita com o GDD.** §9.2 diz que *"o
+   gibão de couro do vaqueiro é literalmente armadura de couro"*, e o bloco
+   `militares` do próprio tema usa "gibão de couro" como **proteção** de
+   `axe_fighter`, `bowman` e `lance_carrier`. `leather_armor` é armadura, não
+   arma, e a `desc` do `armory_workshop` ainda diz "Gibão de couro e chapéu de
+   aba". Aplicado como pedido; reverter é uma linha.
+2. **"Oficina de Couro Cru" nomeia o insumo errado.** O `armory_workshop`
+   consome `leather` (= "Couro", curtido); quem consome `skins` (= "Couro cru")
+   é o **Curtume**. O nome que ele largou, "Casa do Gibão", casava com a saída.
+3. **Três ids de `production.json` não têm nome no tema** e sairiam crus na
+   tela: `arma_madeira`, `arma_ferro`, `armadura_ferro`. São agregados que não
+   estão nas 28 mercadorias do GDD §4.1 (lá são facão, peixeira, aguilhada,
+   ferrão, bodoque, bacamarte). Lacuna anterior a esta sessão; o gerador passou
+   a acusá-la na seção 5 do documento.
+4. **"Criação de Bode" produz "Bode"** — a pergunta do operador. Confunde em um
+   lugar só e de forma leve: no painel do prédio, o título "Criação de Bode" com
+   "Sai: Bode 0.5" logo abaixo lê como repetição, e no HUD "Bode 12" é a
+   mercadoria. Proposta, se incomodar: **trocar o nome do prédio, nunca o da
+   mercadoria** (o jogador conta bodes no estoque) — *Malhada* é o termo
+   sertanejo para o cercado onde o bode dorme, e resolve sem inventar palavra. O
+   mesmo padrão existe em "Roçado de Milho" → "Milho" e agora em "Moinho" ←
+   "Milho", que diferem por uma letra no HUD. Nada disso foi mudado.
+
 ## Perguntas em aberto
 
 _(nenhuma no momento: as três que sobravam foram decididas pelo operador — ver "Ajuste pós-F10".)_
