@@ -27,7 +27,8 @@
     "armor_smithy":     { "entra": { "iron": 0.8, "coal": 0.8 }, "sai": { "armadura_ferro": 0.8 }, "notas": "iron_armor ou iron_shield" }
   },
   "proporcoesDeReferencia": {
-    "_doc": "Oraculo de calibracao. Um cenario longo que respeite estas proporcoes nao pode acumular fila infinita nem deixar predio ocioso.",
+    "_doc": "Oraculo de calibracao, herdado do GDD 4.5 e do jogo de 1998. Um cenario longo que respeite estas proporcoes nao deveria acumular fila infinita nem deixar predio ocioso. LEIA _aviso antes de calibrar contra esta tabela: a premissa dela deixou de valer para os ramos que dependem da fazenda.",
+    "_aviso": "Esta tabela descreve o jogo ORIGINAL, nao este. Ela pressupoe fazenda produzindo continuamente; desde a F18 (2026-09-24) o campo e tile de mapa com aracao e pousio, e a fazenda entrega um milho a cada 321 ticks em vez de 246 -- 300 ticks de plantio diluidos nas 4 colheitas do tile. Medido em test-output/F19.json: com farm_por_mill=1 e mill_por_bakery=1, o moinho fica 26,2% e a padaria 28,8% do tempo em esperando_insumo, e a fazenda 0%. Os numeros que dependem da fazenda (farm_por_mill, farm_por_swine_farm, farm_por_stables) estao OTIMISTAS na mesma proporcao. woodcutters_por_sawmill foi calibrado na F15b, quando a premissa ainda valia, e nao depende da fazenda: continua de pe. O ajuste vai em lote, com a comida da F20 -- ver BALANCE_LOG.md.",
     "woodcutters_por_sawmill": 2,
     "farm_por_mill": 1,
     "mill_por_bakery": 1,

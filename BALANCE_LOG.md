@@ -217,8 +217,12 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   cenário que as respeite *"não pode … deixar prédio ocioso"*) **é o que está desatualizado**, e
   desatualizou na F18, quando o campo passou a exigir aração. Dois caminhos, e os dois mexem em
   comida: subir `farm_por_mill` para ~1,3 (mais fazendas por moinho) ou baixar o custo do plantio.
-  **Não mexi em nada** — é o mesmo lote da entrada acima e da F20 | `production.json:
-  proporcoesDeReferencia`, `resources.json:tipos.corn.reposicao`
+  **Não mexi em nada** — é o mesmo lote da entrada acima e da F20. **A premissa morta está marcada
+  no próprio dado** (`proporcoesDeReferencia._aviso`, decisão do operador em 2026-09-24): quem
+  abrir o arquivo para calibrar precisa ver ali que a tabela descreve o jogo de 1998, não este, e
+  que só os ramos que dependem da fazenda foram afetados — `woodcutters_por_sawmill`, calibrado na
+  F15b, continua de pé | `production.json:proporcoesDeReferencia`,
+  `resources.json:tipos.corn.reposicao`
 
 ---
 

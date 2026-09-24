@@ -4668,7 +4668,13 @@ Plano em `docs/planos/F19-moinho-e-padaria.md`.
   promete, no `_doc`, que quem respeita as proporções não deixa prédio ocioso;
   deixa 26 % e 29 %. A causa é aritmética: 321 ticks por milho contra 246 de
   consumo do moinho. **Não mexi em número** — foi para o `BALANCE_LOG.md`, no
-  mesmo lote da fazenda e da F20.
+  mesmo lote da fazenda e da F20. **Decisão do operador, no mesmo dia**: a
+  premissa morta vai **marcada no próprio `production.json`**
+  (`proporcoesDeReferencia._aviso`), não só no log — quem abre o dado para
+  calibrar precisa saber ali que a tabela descreve o KaM de 1998 e pressupõe
+  fazenda produzindo sem parar. O aviso separa o que caiu (tudo que depende da
+  fazenda) do que continua de pé (`woodcutters_por_sawmill`, calibrado na F15b,
+  quando a premissa ainda valia).
 - **Prédio parado por falta de insumo é mudo.** Nenhuma das quatro causas da F22
   cobre isso, e a própria medição mostra por que a causa nova não é trivial:
   esperar insumo 29 % do tempo é o **regime normal** da cadeia, então ela
