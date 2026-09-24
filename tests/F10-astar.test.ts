@@ -14,6 +14,7 @@ import { chaveDeTile, ehEstrada, isConnected } from '../src/sim/estradas';
 import type { TileDeGrid } from '../src/sim/estradas';
 import { caixaDoPredio } from '../src/sim/footprint';
 import { tipoDoTile } from '../src/sim/mapa';
+import { recursoBloqueiaPasso } from '../src/sim/recursos';
 import { buscarCaminho, estatisticasDeBusca, zerarEstatisticasDeBusca } from '../src/sim/pathfinding';
 import type { ModoDeBusca } from '../src/sim/pathfinding';
 import { createRng, nextInt } from '../src/sim/rng';
@@ -77,7 +78,16 @@ function custoDoOraculo(
   // quadrante inteiro do sorteio em grama. Tirada a faixa, a cegueira apareceu.
   const pisavel = (t: TileDeGrid): boolean => {
     const tipo = tipoDoTile(t.gx, t.gy, dados);
-    return tipo !== null && !dados.terreno.intransponivel.includes(tipo);
+    if (tipo === null || dados.terreno.intransponivel.includes(tipo)) return false;
+    // F-T2b — o oraculo era cego para OBSTACULO pelo mesmo motivo estrutural
+    // que o deixou cego para terreno ate a F-D3: ele foi escrito quando so
+    // havia predio. Com a arvore reprovando o passo, ele reprovou de verdade
+    // nas 4 sementes do modo livre e no modo estrada (medido antes do
+    // conserto), e nao "quase". Le pelo predicado do RUNTIME
+    // (`recursoBloqueiaPasso`), e nao por uma lista de tipos copiada aqui —
+    // copiar a regra e o jeito de os dois errarem juntos e a propriedade nao
+    // provar nada. E SEM excecao para a origem, que o A* tambem nao tem.
+    return !recursoBloqueiaPasso(estado.recursos[chaveDeTile(t)] ?? null, dados);
   };
   const andavel = (t: TileDeGrid): boolean => {
     // A borda e a do `dados` RECEBIDO, nao a do mapa publicado: e o que deixa o

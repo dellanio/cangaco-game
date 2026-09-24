@@ -4082,3 +4082,148 @@ sozinhos.
 Nenhuma chave de `test-results.json` mudou: a F22 já estava `true` (o roteiro é
 evidência de sessão, não o aceite escrito dela). O BUG-C sai do `BUGS.md` neste
 mesmo commit, e `## Abertos` fica vazio pela primeira vez.
+
+## F-T2b — A árvore é obstáculo, e o A* foi re-medido (2026-09-24)
+
+**Plano:** `docs/planos/F-T2b-arvore-obstaculo.md`, escrito antes do código.
+Fecha a perna 5 do aceite da F-T2. `test-results.json` → `F-T2b-arvore-obstaculo`.
+
+### O que passou a valer
+
+**Quem bloqueia sai do dado, não do código.** `data/resources.json` ganhou
+`bloqueiaPasso` por tipo (`tree: true`, `rock: false`, `fish: false`), cada um com
+o `_docBloqueiaPasso` que diz por quê. Ninguém digita `'tree'` num `.ts`:
+`recursoBloqueiaPasso()` deriva o conjunto de tipos que bloqueiam a partir do
+`GameData` carregado. `tools/data-rules.js` passou a exigir que o campo seja
+booleano de verdade — **ausente leria como "não bloqueia" sem ninguém notar**.
+
+**O recurso em pé bloqueia; o cortado, não.** `quantidade: 0` — a entrada que o
+regime `porAcao` deixa para trás — deixa passar. É a mesma diferença entre
+*cortado* e *inexistente* que a F-T2a criou, agora com consequência de passo.
+
+**As duas metades da regra andaram juntas.** O A* (`pathfinding.ts`) e a rede de
+estradas (`estradas.ts`) leem o mesmo predicado, pela mesma camada. A F10 prova
+por propriedade que "A* por estrada acha caminho ⟺ `isConnected` acha"; mudar uma
+metade sem a outra quebraria a equivalência sem regra de jogo nenhuma ter mudado.
+
+**`canPlaceRoad` ganhou o motivo `'recurso'`, separado de `'terreno'`.** São
+causas diferentes com conserto diferente: terreno não se remove, árvore se corta.
+Quando houver quem corte, a mensagem já está separada.
+
+**A camada de bloqueio tem identidade estável.** `state.recursos` troca de
+referência todo tick em que a pedreira colhe. Chavear o cache de caminho do A*
+nele esvaziaria a memória de caminho inteira toda vez que alguém picasse pedra —
+defeito de desempenho *criado* pela feature. `camadaDeBloqueio()` monta um
+`Uint8Array` e, quando a grade nova sai byte a byte igual a uma já vista,
+**devolve o objeto anterior**. A candidata a reuso é indexada pela *contagem* de
+bloqueados, e não guardada num slot único: com um slot só, dois estados
+alternando (o mundo de verdade e um mundo sem recurso — o par que toda medição
+usa) derrubam um ao outro e o reuso nunca acontece. Duas grades de mesma contagem
+e conteúdo diferente ainda se revezam, e o preço disso é um acerto de cache
+perdido, nunca uma resposta errada.
+
+**O cache de caminho passou a ter a camada como quarto nível da chave.** Faltava,
+e o teste acusou: dois estados que só diferem em árvore compartilhavam o `Map` de
+resultados e o segundo recebia a resposta do primeiro. Nível próprio dentro da
+entrada, e não um `WeakMap` acima, para a grade de estrada não ser remontada toda
+vez que uma árvore cai.
+
+### O oráculo do A* era cego para obstáculo — conserto antes da medição
+
+A F-D3 tinha achado que o oráculo Dijkstra de `tests/F10-astar.test.ts` era cego
+para **terreno**. Ele era cego para **obstáculo** pelo mesmo motivo estrutural: o
+`pisavel` do oráculo remontava a regra em vez de perguntar ao predicado do
+runtime. Ensinado a ler por `recursoBloqueiaPasso`, e **sem exceção para a
+origem**, que o A* também não tem.
+
+Verificado, não suposto: antes do conserto o oráculo reprovou em **5 casos reais**
+(semente 1 caso 1: esperava 169, veio 197; semente 2 caso 5: esperava 192, veio
+`null`; modo estrada, semente 104 caso 40: esperava 92, veio 95). Depois do
+conserto, verde. **A guarda acusa — não é só que ela não acusa à toa.**
+
+### A re-medição (a pergunta do operador: o teto aperta?)
+
+**Não aperta no eixo da F-T1, e o que a floresta fechou não foi tempo — foi
+topologia.** Evidência em `test-output/F-T2b.json`. Os números de **nós
+expandidos** são função pura do estado e do mapa, iguais em toda máquina; o
+relógio oscila e por isso só tem teto frouxo.
+
+| eixo | sem floresta | com floresta | razão (nós) |
+|---|---|---|---|
+| curta, corredor limpo (400 buscas de 3 tiles) | 4,00 nós | 4,22 nós | **1,05** |
+| longa, travessia do mapa (12 buscas) | 5685 nós | 5620 nós | **0,99** |
+| curta **com árvore no corredor** (45 buscas) | 4,00 nós | 12,16 nós | **3,04** |
+
+- O teto de **2,5 da F-T1 continua valendo** nos eixos dela (1,05 no pior).
+- O **desvio é eixo novo**, mede outra coisa e ganhou teto próprio: nós entre
+  1,5 e 5,0. O piso importa tanto quanto o teto — se a razão cair para 1, o A*
+  parou de enxergar o obstáculo.
+- Custo do caminho na travessia: 710 (mapa liso) / 734 (sem floresta) / 738 (com).
+  A floresta alonga o caminho em meio por cento. Ela não alarga a frente de busca.
+
+**O que a floresta realmente fechou:** dos **67** corredores de 3 tiles com árvore
+no meio, **22 ficaram sem solução nenhuma** — origem e alvo em componentes
+diferentes. Não é "busca mais cara": é passagem tampada. Número na evidência, em
+`corredoresTampadosPelaArvore`.
+
+### Achado que vale para toda medição futura
+
+**Busca sem solução custa a componente alcançável inteira.** Medido: na faixa da
+F17c, 5 de 400 alvos caíram sobre árvore, e as razões saltaram para **11,27 e
+23,58** contra um teto de 5,0. Não é regressão do buffer — é propriedade do A*:
+sem solução, ele esgota o que dá para alcançar. Toda medição que sortear alvo
+precisa garantir que o alvo é alcançável, senão mede flood fill e chama de busca.
+
+Três cenários de teste foram corrigidos por isso, e **nenhuma asserção foi
+afrouxada** — o que mudou foi o cenário voltar a medir o que diz medir:
+
+- `tests/F17c-buffer.test.ts` — a faixa da medição roda sem recurso.
+- `tests/F18b-mapa.test.ts` — a guarda é sobre onde fica a **borda** do mapa, e
+  (94,60), o canto do 97×61, é árvore.
+- `tests/F-T1-terreno.test.ts` — **a F-T1 ficou instável por causa desta
+  feature**, e o conserto é dela: 23 das 500 origens e 23 dos 500 alvos da faixa
+  dela caem sobre árvore (contados em `data/maps/sertao-128.json`). A perna
+  compara mapa liso contra mapa com **terreno**; obstáculo é o eixo da F-T2b. Com
+  a faixa sem recurso, quatro corridas deram razão 1,05 · 1,07 · 1,22 · 1,87
+  contra o teto de 2,5, que **não** foi mexido. O número antigo da F-T1 (1,22)
+  continua escrito lá, agora com a re-medição ao lado.
+
+### Evidência
+
+- `test-output/F-T2b.json` — camada, amostra, três eixos, razões e tetos.
+- `screenshots/F-T2b-*.png` — 4 capturas. A que fecha a feature é a terceira:
+  marcador de árvore (losango verde-escuro) e de rocha (losango claro) no mesmo
+  quadro, com cores distintas, e a prévia da rua **vermelha** com o tile da
+  árvore contornado. Aberta com Read: confere.
+- Não-regressão por código de saída (imagem não aberta, §8): `F-T1`, `F-T2a`,
+  `F22`, `F-D3` — todos 0.
+- `npm run verify` verde: 1153 testes, 72 arquivos.
+
+### O roteiro visual cumpre a §8
+
+`tools/shots/F-T2b.js` mexe em `#menu-build`, então o passo 2 **despausa**
+(`press('p')`), seleciona a ferramenta com `mouse.down` / `waitForTimeout(150)` /
+`mouse.up` e arrasta com o botão segurado, lendo a prévia antes de soltar.
+Nenhuma coordenada de árvore ou rocha está digitada no roteiro: o par sai de
+`data/maps/sertao-128.json`, o mesmo arquivo que alimenta a simulação.
+
+O modo de estrada **não** vai para `window.__cangaco` — o que a cena publica ali é
+a *planta* ativa, que na estrada é nula de direito. O roteiro afirma pelo
+`aria-pressed` do botão, como a F08. Publicar campo novo para este roteiro seria
+tocar `src/render/` numa feature de simulação.
+
+### O que esta feature não fez
+
+- **Não criou quem corta árvore.** Enquanto não houver Woodcutter's, a árvore é
+  obstáculo permanente, como água e montanha. O `quantidade: 0` já está tratado
+  em todo caminho: o dia em que alguém cortar, o passo abre sozinho.
+- **Não mexeu em `placement.ts`.** Prédio ainda se planta sobre árvore — o
+  footprint bloqueia de todo jeito, e recusar seria regra nova sem item na fila.
+  Estrada, sim, recusa: uma rua sobre árvore seria transponível no modo `estrada`
+  e bloqueada no modo `livre`, e as duas metades divergiriam.
+- **Não tocou `src/render/`.** O marcador de árvore já existia: a F-T2a montou a
+  paleta genericamente, por tipo do dado.
+
+### Perguntas em aberto
+
+- Nenhuma nova.

@@ -34,6 +34,17 @@ function dadosCom(n: number): GameData {
  * em (34,30)). Alvo inalcancavel faria o A* varrer o mapa inteiro e a medicao
  * seria de outra coisa.
  */
+/**
+ * F-T2b — a medicao roda SEM a camada de recurso, e o motivo e o proprio
+ * assunto do teste: 5 dos 400 alvos da faixa caem sobre arvore, e busca sem
+ * solucao esgota a componente inteira antes de devolver `null`. Com a floresta
+ * ligada, a razao 256/64 saltou para 11,3 e 23,6 (medido nesta sessao) — e o
+ * que ela mede nesse caso e o custo da busca IMPOSSIVEL, nao o do rascunho, que
+ * e o aceite desta feature. A busca sem solucao custar a area alcancavel e
+ * propriedade do A*, nao regressao do buffer.
+ */
+const SEM_RECURSOS: GameState = { ...inicial, recursos: {} };
+
 function buscaCurtaInedita(estado: GameState, dados: GameData, i: number): Caminho | null {
   const x = 2 + (i % 40);
   const y = 12 + Math.floor(i / 40);
@@ -49,7 +60,7 @@ describe('F17c — o rascunho do A* nao se aloca por busca', () => {
       // sao chaveados pela REFERENCIA de `dados`; um objeto novo por busca os
       // recriaria e o teste mediria outra coisa.
       const dados = dadosCom(n);
-      for (let i = 0; i < 300; i += 1) buscaCurtaInedita(inicial, dados, i);
+      for (let i = 0; i < 300; i += 1) buscaCurtaInedita(SEM_RECURSOS, dados, i);
     }
     expect(estatisticasDeBusca().execucoes).toBe(900);
     expect(estatisticasDeBusca().acertos).toBe(0);
@@ -58,28 +69,28 @@ describe('F17c — o rascunho do A* nao se aloca por busca', () => {
 
   it('com o rascunho ja grande o bastante, mais 900 buscas nao alocam nada', () => {
     const porTamanho = TAMANHOS.map((n) => dadosCom(n));
-    porTamanho.forEach((dados) => { for (let i = 0; i < 5; i += 1) buscaCurtaInedita(inicial, dados, i); });
+    porTamanho.forEach((dados) => { for (let i = 0; i < 5; i += 1) buscaCurtaInedita(SEM_RECURSOS, dados, i); });
     zerarEstatisticasDeBusca();
     porTamanho.forEach((dados) => {
-      for (let i = 100; i < 400; i += 1) buscaCurtaInedita(inicial, dados, i);
+      for (let i = 100; i < 400; i += 1) buscaCurtaInedita(SEM_RECURSOS, dados, i);
     });
     expect(estatisticasDeBusca().execucoes).toBe(900);
     expect(estatisticasDoRascunho().alocacoes).toBe(0);
   });
 
   it('o rascunho cresce e nao encolhe: depois do mapa grande, o pequeno reaproveita', () => {
-    buscaCurtaInedita(inicial, dadosCom(256), 0);
+    buscaCurtaInedita(SEM_RECURSOS, dadosCom(256), 0);
     const capacidadeNoGrande = estatisticasDoRascunho().capacidade;
     expect(capacidadeNoGrande).toBeGreaterThanOrEqual(256 * 256);
     zerarEstatisticasDeBusca();
     const pequeno = dadosCom(64);
-    for (let i = 0; i < 50; i += 1) buscaCurtaInedita(inicial, pequeno, i);
+    for (let i = 0; i < 50; i += 1) buscaCurtaInedita(SEM_RECURSOS, pequeno, i);
     expect(estatisticasDoRascunho().alocacoes).toBe(0);
     expect(estatisticasDoRascunho().capacidade).toBe(capacidadeNoGrande);
   });
 
   it('a busca medida e mesmo uma caminhada curta, nao uma varredura por alvo inalcancavel', () => {
-    const caminho = buscaCurtaInedita(inicial, dadosCom(64), 7);
+    const caminho = buscaCurtaInedita(SEM_RECURSOS, dadosCom(64), 7);
     expect(caminho).not.toBeNull();
     expect(caminho?.tiles.length).toBe(3);
   });
@@ -150,10 +161,10 @@ describe('F17c — aceite: a busca curta nao paga pela area do mapa', () => {
     // indices podem repetir entre tamanhos e ainda assim toda busca executa.
     const medidas = TAMANHOS.map((n) => {
       const dados = dadosCom(n);
-      for (let i = 0; i < AQUECIMENTO; i += 1) buscaCurtaInedita(inicial, dados, i); // aquece JIT e caches por tamanho
+      for (let i = 0; i < AQUECIMENTO; i += 1) buscaCurtaInedita(SEM_RECURSOS, dados, i); // aquece JIT e caches por tamanho
       zerarEstatisticasDeBusca();
       const t0 = performance.now();
-      for (let i = AQUECIMENTO; i < AQUECIMENTO + BUSCAS; i += 1) buscaCurtaInedita(inicial, dados, i);
+      for (let i = AQUECIMENTO; i < AQUECIMENTO + BUSCAS; i += 1) buscaCurtaInedita(SEM_RECURSOS, dados, i);
       const ms = performance.now() - t0;
       expect(estatisticasDeBusca().execucoes).toBe(BUSCAS); // cache frio: mediu busca, nao acerto
       expect(estatisticasDeBusca().acertos).toBe(0);

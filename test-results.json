@@ -127,5 +127,8 @@
   },
   "F-D3-reserva-por-raio": {
     "passes": true
+  },
+  "F-T2b-arvore-obstaculo": {
+    "passes": true
   }
 }

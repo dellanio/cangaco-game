@@ -239,7 +239,16 @@ describe('F-T2a — perna 3: os tres regimes se distinguem no ESTADO', () => {
     const comFonte: GameData = {
       ...gameData,
       recursos: {
-        tipos: { ...gameData.recursos.tipos, tree: { regime: 'porTempo', rendimentoPorTile: 4 } },
+        // `bloqueiaPasso` vem do dado real e nao e o assunto deste teste: injetar
+        // o regime nao pode, de tabela, mudar se a arvore bloqueia (F-T2b).
+        tipos: {
+          ...gameData.recursos.tipos,
+          tree: {
+            regime: 'porTempo',
+            rendimentoPorTile: 4,
+            bloqueiaPasso: gameData.recursos.tipos.tree?.bloqueiaPasso === true,
+          },
+        },
         ticksPorUnidadeRegenerada: 10,
       },
     };

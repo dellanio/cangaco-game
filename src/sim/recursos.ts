@@ -203,3 +203,123 @@ function tiposPorTempo(dados: GameData): ReadonlyMap<string, number> {
   porTempoPorGameData.set(dados, tipos);
   return tipos;
 }
+
+// --- F-T2b: a camada de OBSTACULO -------------------------------------------
+
+/** Os tipos que reprovam o passo, do DADO. Ninguem digita `'tree'` em `.ts`. */
+function tiposQueBloqueiam(dados: GameData): ReadonlySet<string> {
+  const existente = bloqueadoresPorGameData.get(dados);
+  if (existente !== undefined) return existente;
+  const tipos = new Set<string>();
+  for (const [id, def] of Object.entries(dados.recursos.tipos)) {
+    if (def.bloqueiaPasso) tipos.add(id);
+  }
+  bloqueadoresPorGameData.set(dados, tipos);
+  return tipos;
+}
+
+/**
+ * O recurso deste tile reprova o passo? So o que esta EM PE: tile cortado
+ * (`quantidade: 0`, entrada que o regime `porAcao` deixa ficar) deixa passar.
+ * E a mesma diferenca entre cortado e inexistente que a perna 3 do aceite
+ * distingue, lida pela mesma porta.
+ */
+export function recursoBloqueiaPasso(
+  recurso: RecursoNoTile | null, dados: GameData = gameData,
+): boolean {
+  if (recurso === null || recurso.quantidade <= 0) return false;
+  return tiposQueBloqueiam(dados).has(recurso.tipo);
+}
+
+/**
+ * A grade de obstaculo por recurso, derivada de `state.recursos`.
+ *
+ * A IDENTIDADE dela e o ponto, e nao a grade: o cache de caminho do A* e por
+ * referencia, e `state.recursos` troca de referencia a cada tick em que a
+ * pedreira colhe. Chavear o cache no `recursos` cru esvaziaria a memoria de
+ * caminho inteira toda vez que alguem picasse pedra — defeito de desempenho
+ * criado pela feature, nao herdado.
+ *
+ * Por isso, quando a grade nova sai IGUAL a ultima, devolvemos o objeto
+ * ANTERIOR. Colher rocha muda `recursos` e nao muda obstaculo nenhum, entao o
+ * cache sobrevive. Trocar objeto por outro de conteudo identico nunca muda
+ * resposta; e a mesma ideia do `predios.ordem` no topo deste arquivo de cache.
+ */
+export interface CamadaDeBloqueio {
+  /** 1 onde o recurso em pe reprova o passo. Indexada por `gy * largura + gx`. */
+  readonly grade: Uint8Array;
+  readonly largura: number;
+  readonly altura: number;
+  /** Quantos tiles bloqueiam — so para evidencia e teste. */
+  readonly bloqueados: number;
+}
+
+export function camadaDeBloqueio(
+  state: Pick<GameState, 'recursos'>, dados: GameData = gameData,
+): CamadaDeBloqueio {
+  let porRecursos = camadaDeBloqueioPorGameData.get(dados);
+  if (porRecursos === undefined) {
+    porRecursos = new WeakMap();
+    camadaDeBloqueioPorGameData.set(dados, porRecursos);
+  }
+  const existente = porRecursos.get(state.recursos);
+  if (existente !== undefined) return existente;
+
+  const { largura, altura } = dados.terreno.mapaPadrao;
+  const grade = new Uint8Array(largura * altura);
+  const bloqueadores = tiposQueBloqueiam(dados);
+  let bloqueados = 0;
+  if (bloqueadores.size > 0) {
+    for (const [chaveDoTile, recurso] of Object.entries(state.recursos)) {
+      if (recurso.quantidade <= 0 || !bloqueadores.has(recurso.tipo)) continue;
+      const virgula = chaveDoTile.indexOf(',');
+      const gx = Number(chaveDoTile.slice(0, virgula));
+      const gy = Number(chaveDoTile.slice(virgula + 1));
+      // Fora da grade DESTE `dados` nao entra: teste que redeclara o tamanho do
+      // mundo (F17c, F10) usa a camada de recurso do mapa de 128.
+      if (!(gx >= 0 && gy >= 0 && gx < largura && gy < altura)) continue;
+      grade[gy * largura + gx] = 1;
+      bloqueados += 1;
+    }
+  }
+  // A candidata a reuso e indexada pela CONTAGEM de bloqueados, e nao guardada
+  // num slot unico: com um slot so, dois estados alternando (o mundo de
+  // verdade e um mundo sem recurso, que e o par que todo teste de medicao usa)
+  // derrubam um ao outro e o reuso nunca acontece. Grades de contagem
+  // diferente nunca sao iguais, entao o indice nao perde caso nenhum; duas
+  // grades de mesma contagem e conteudo diferente ainda se revezam, e o preco
+  // disso e so um acerto de cache perdido — nunca uma resposta errada.
+  let ultimas = ultimaCamadaPorGameData.get(dados);
+  if (ultimas === undefined) {
+    ultimas = new Map();
+    ultimaCamadaPorGameData.set(dados, ultimas);
+  }
+  const anterior = ultimas.get(bloqueados);
+  const reaproveitavel = anterior !== undefined
+    && anterior.grade.length === grade.length
+    && mesmaGrade(anterior.grade, grade);
+  const camada: CamadaDeBloqueio = reaproveitavel
+    ? (anterior as CamadaDeBloqueio)
+    : { grade, largura, altura, bloqueados };
+  if (!reaproveitavel) ultimas.set(bloqueados, camada);
+  porRecursos.set(state.recursos, camada);
+  return camada;
+}
+
+function mesmaGrade(a: Uint8Array, b: Uint8Array): boolean {
+  for (let i = 0; i < a.length; i += 1) if (a[i] !== b[i]) return false;
+  return true;
+}
+
+/** O tile reprova o passo por RECURSO? A porta unica: nem o A*, nem a rede de
+ *  estradas indexam `state.recursos` por conta propria. */
+export function bloqueadoPorRecurso(
+  camada: CamadaDeBloqueio, gx: number, gy: number,
+): boolean {
+  if (gx < 0 || gy < 0 || gx >= camada.largura || gy >= camada.altura) return false;
+  return camada.grade[gy * camada.largura + gx] === 1;
+}
+
+const bloqueadoresPorGameData = new WeakMap<GameData, ReadonlySet<string>>();
+const camadaDeBloqueioPorGameData = new WeakMap<GameData, WeakMap<object, CamadaDeBloqueio>>();
+const ultimaCamadaPorGameData = new WeakMap<GameData, Map<number, CamadaDeBloqueio>>();

@@ -391,7 +391,12 @@ export function loadGameData(raw: RawGameData): GameData {
     if (regime === undefined) {
       throw new Error(`loadGameData: o recurso '${id}' declara o regime desconhecido '${def.regime}'`);
     }
-    tiposDeRecurso[id] = { regime, rendimentoPorTile: def.rendimentoPorTile };
+    // F-T2b: `=== true` e nao coercao. Campo ausente ou `"true"` de string tem
+    // de virar `false` aqui e ser acusado pelo `validate:data`, nao virar
+    // "bloqueia" por acidente de tipo — o dado e a fonte, e ele e booleano.
+    tiposDeRecurso[id] = {
+      regime, rendimentoPorTile: def.rendimentoPorTile, bloqueiaPasso: def.bloqueiaPasso === true,
+    };
   }
   const recursos: RecursosData = {
     tipos: tiposDeRecurso,

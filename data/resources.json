@@ -18,16 +18,22 @@
     "rock": {
       "regime": "nunca",
       "rendimentoPorTile": 15,
+      "bloqueiaPasso": false,
+      "_docBloqueiaPasso": "A rocha NAO bloqueia o passo, e isso e decisao, nao esquecimento: a pedreira se assenta em cima do lajedo (BUG-C, 2026-09-24) e `placement.ts` nunca teve recusa por recurso. O intransponivel da serra e do lajedo alto e terreno (`terrain.intransponivel`), nao recurso.",
       "_doc": "A pedra do lajedo e da saia da serra. 15 por tile contra o veio fixo de 200 da F15a: o lajedo de 13 tiles da vila rende 195, entao a pedreira de abertura vale quase o mesmo que valia — o que mudou nao foi o total, foi de onde ele vem."
     },
     "tree": {
       "regime": "porAcao",
       "rendimentoPorTile": 4,
+      "bloqueiaPasso": true,
+      "_docBloqueiaPasso": "A arvore EM PE bloqueia o passo (F-T2b). Tile cortado — `quantidade: 0`, entrada que fica — deixa passar: e a mesma diferenca entre cortado e inexistente que o regime `porAcao` guarda. Enquanto nao houver quem corte, ela e obstaculo permanente, como agua e montanha.",
       "_doc": "A arvore em pe. Regime `porAcao` porque quem a repoe e o replantio do Woodcutter's (GDD 4.2), nao o relogio."
     },
     "fish": {
       "regime": "nunca",
       "rendimentoPorTile": 20,
+      "bloqueiaPasso": false,
+      "_docBloqueiaPasso": "O cardume esta na agua, e agua ja e intransponivel por terreno. Marcar aqui seria a segunda regra dizendo a mesma coisa, e duas fontes para o mesmo fato e como elas divergem.",
       "_doc": "O cardume do lago. `nunca` porque o GDD marca o estoque do lago como finito (production.json, fishermans.notas) e regeneracao seria invencao nossa em cima de fonte."
     }
   }

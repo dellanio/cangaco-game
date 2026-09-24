@@ -112,7 +112,9 @@ describe('F09 — a reserva e DERIVADA das tarefas reclamadas', () => {
 /** Uma rede sem predio nenhum: estes casos sao sobre o grafo da rua. A quina de
  *  predio (F18e) tem caso proprio no fim do bloco. */
 const rede = (estradas: GameState['estradas']): EstadoDaRede => (
-  { estradas, predios: { ordem: [], porId: {} } }
+  // `recursos` vazio: estes casos sao sobre o grafo da rua, e a arvore que tapa
+  // quina (F-T2b) tem caso proprio, como a quina de predio tem.
+  { estradas, predios: { ordem: [], porId: {} }, recursos: {} }
 );
 
 describe('F09 — distanciaPorEstrada: caminho a pe pela rede, nunca reta', () => {

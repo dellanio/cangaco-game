@@ -26,8 +26,8 @@
  * acha caminho se e somente se `isConnected` (F08/F18e, 8 direcoes) acha — as duas nocoes
  * de "ligado" nao divergem.
  *
- * CACHE: `WeakMap` aninhado pelas referencias de `dados`, de `predios.ordem` e de
- * `estradas`. `ordem` (e nao `predios`) porque `predios` troca de referencia a cada
+ * CACHE: `WeakMap` aninhado pelas referencias de `dados`, de `predios.ordem`, de
+ * `estradas` e da camada de bloqueio por recurso (F-T2b). `ordem` (e nao `predios`) porque `predios` troca de referencia a cada
  * coleta e entrega de mercadoria, e so o CONJUNTO de footprints importa: `ordem` so muda
  * quando um predio entra ou sai. Mesmo molde do indice de estradas da F08: memoria de
  * cache, funcao pura das referencias imutaveis, fora do JSON, sem efeito no determinismo.
@@ -40,6 +40,8 @@ import { caixaDoPredio } from './footprint';
 import type { CaixaEmTiles } from './footprint';
 import { chaveDeTile } from './estradas';
 import { codigoDoTile, terrenoIndexado } from './mapa';
+import { bloqueadoPorRecurso, camadaDeBloqueio } from './recursos';
+import type { CamadaDeBloqueio } from './recursos';
 import type { TileDeGrid } from './estradas';
 
 export type ModoDeBusca = 'livre' | 'estrada';
@@ -63,7 +65,13 @@ const PASSOS: readonly (readonly [number, number])[] = [
 
 interface EntradaDeCache {
   readonly estrada: Uint8Array;
-  readonly resultados: Map<string, Caminho | null>;
+  /** F-T2b — o resultado depende TAMBEM de onde ha obstaculo, e a camada de
+   *  bloqueio e o quarto nivel da chave. Nivel proprio, e nao um quarto
+   *  `WeakMap` acima, para a grade de estrada nao ser remontada a cada vez que
+   *  uma arvore cai. A camada so troca de referencia quando a lista de tiles
+   *  bloqueados muda de fato (ver `camadaDeBloqueio`), entao colher pedra —
+   *  que troca `state.recursos` todo tick — nao esvazia esta memoria. */
+  readonly resultadosPorCamada: WeakMap<object, Map<string, Caminho | null>>;
 }
 
 interface FootprintsEmCache {
@@ -76,6 +84,7 @@ const footprintsPorOrdem = new WeakMap<object, WeakMap<object, FootprintsEmCache
 
 let execucoes = 0;
 let acertos = 0;
+let expandidos = 0;
 
 /**
  * F17c — RASCUNHO REAPROVEITADO.
@@ -117,6 +126,20 @@ export function estatisticasDeBusca(): EstatisticasDeBusca {
 }
 
 /**
+ * F-T2b — NOS EXPANDIDOS: quantos tiles sairam da fila com o melhor custo
+ * definitivo, somados desde o ultimo `zerar`. E a medida de quanto o mapa
+ * fechou: obstaculo esparso nao muda o caminho, muda a fronteira que o A*
+ * precisa abrir para achar o mesmo caminho.
+ *
+ * Acessor PROPRIO, e nao um campo novo em `estatisticasDeBusca()`: a F10 afirma
+ * o retorno daquela com `toEqual`, entao crescer o objeto reprovaria a suite de
+ * outra feature sem que nada dela tivesse mudado (Nota do item no BUILD_PLAN).
+ */
+export function nosExpandidos(): number {
+  return expandidos;
+}
+
+/**
  * F17c — instrumentacao do rascunho. Fica FORA de `estatisticasDeBusca()` de
  * proposito: execucoes e acertos sao sobre busca e cache, isto e sobre memoria.
  * (E `EstatisticasDeBusca` tem assercoes `toEqual` sobre o objeto inteiro na
@@ -127,6 +150,7 @@ export function estatisticasDoRascunho(): EstatisticasDoRascunho {
 }
 
 export function zerarEstatisticasDeBusca(): void {
+  expandidos = 0;
   execucoes = 0;
   acertos = 0;
   alocacoesDeRascunho = 0; // F17c — contador de instrumentacao, como os outros dois
@@ -209,7 +233,7 @@ function entradaDeCache(state: Pick<GameState, 'predios' | 'estradas'>, dados: G
     const gy = Number(chave.slice(virgula + 1));
     if (Number.isInteger(gx) && Number.isInteger(gy) && gx >= 0 && gy >= 0 && gx < largura && gy < altura) estrada[gy * largura + gx] = 1;
   }
-  const criada = { estrada, resultados: new Map<string, Caminho | null>() };
+  const criada = { estrada, resultadosPorCamada: new WeakMap<object, Map<string, Caminho | null>>() };
   porEstradas.set(state.estradas, criada);
   return criada;
 }
@@ -245,12 +269,15 @@ export function custoDoPasso(
 /** Um unico tile e andavel neste modo? (Dentro do mapa; `livre`: fora de footprint;
  *  `estrada`: e estrada.) O serf pergunta antes de pisar no proximo tile do caminho. */
 export function tileAndavel(
-  state: Pick<GameState, 'predios' | 'estradas'>, tile: TileDeGrid, modo: ModoDeBusca, dados: GameData = gameData,
+  state: Pick<GameState, 'predios' | 'estradas' | 'recursos'>, tile: TileDeGrid,
+  modo: ModoDeBusca, dados: GameData = gameData,
 ): boolean {
   const { largura, altura } = dados.terreno.mapaPadrao;
   if (!(Number.isInteger(tile.gx) && Number.isInteger(tile.gy) && tile.gx >= 0 && tile.gy >= 0 && tile.gx < largura && tile.gy < altura)) return false;
   if (modo === 'estrada') return state.estradas[chaveDeTile(tile)] === true;
   if (!transponivelNoMapa(tile.gx, tile.gy, dados)) return false;
+  // F-T2b: a arvore em pe reprova o passo como terreno intransponivel reprova.
+  if (bloqueadoPorRecurso(camadaDeBloqueio(state, dados), tile.gx, tile.gy)) return false;
   return footprintsDe(state, dados).bloqueado[tile.gy * largura + tile.gx] === 0;
 }
 
@@ -269,7 +296,7 @@ function transponivelNoMapa(gx: number, gy: number, dados: GameData): boolean {
  * simplesmente inalcancavel.
  */
 export function buscarCaminho(
-  state: Pick<GameState, 'predios' | 'estradas'>,
+  state: Pick<GameState, 'predios' | 'estradas' | 'recursos'>,
   de: TileDeGrid,
   alvos: readonly TileDeGrid[],
   modo: ModoDeBusca,
@@ -282,13 +309,19 @@ export function buscarCaminho(
   const indicesDosAlvos = [...new Set(alvos.filter(emMapa).map((t) => t.gy * largura + t.gx))].sort((a, b) => a - b);
   const chave = `${modo}|${de.gx},${de.gy}|${indicesDosAlvos.join(',')}`;
   const entrada = entradaDeCache(state, dados);
-  if (entrada.resultados.has(chave)) {
+  const camada = camadaDeBloqueio(state, dados);
+  let resultados = entrada.resultadosPorCamada.get(camada);
+  if (!resultados) {
+    resultados = new Map<string, Caminho | null>();
+    entrada.resultadosPorCamada.set(camada, resultados);
+  }
+  if (resultados.has(chave)) {
     acertos += 1;
-    return entrada.resultados.get(chave) ?? null;
+    return resultados.get(chave) ?? null;
   }
   execucoes += 1;
-  const resultado = executar(state, entrada.estrada, de, indicesDosAlvos, modo, dados);
-  entrada.resultados.set(chave, resultado);
+  const resultado = executar(state, entrada.estrada, camada, de, indicesDosAlvos, modo, dados);
+  resultados.set(chave, resultado);
   return resultado;
 }
 
@@ -298,21 +331,21 @@ export function buscarCaminho(
  * guarda de reentrancia tambem cobre `footprintsDe` e a leitura de `dados`.
  */
 function executar(
-  state: Pick<GameState, 'predios'>, estrada: Uint8Array, de: TileDeGrid, alvos: readonly number[],
-  modo: ModoDeBusca, dados: GameData,
+  state: Pick<GameState, 'predios'>, estrada: Uint8Array, recursos: CamadaDeBloqueio,
+  de: TileDeGrid, alvos: readonly number[], modo: ModoDeBusca, dados: GameData,
 ): Caminho | null {
   const { largura, altura } = dados.terreno.mapaPadrao;
   ocuparRascunho(largura * altura);
   try {
-    return executarComRascunho(state, estrada, de, alvos, modo, dados);
+    return executarComRascunho(state, estrada, recursos, de, alvos, modo, dados);
   } finally {
     liberarRascunho();
   }
 }
 
 function executarComRascunho(
-  state: Pick<GameState, 'predios'>, estrada: Uint8Array, de: TileDeGrid, alvos: readonly number[],
-  modo: ModoDeBusca, dados: GameData,
+  state: Pick<GameState, 'predios'>, estrada: Uint8Array, recursos: CamadaDeBloqueio,
+  de: TileDeGrid, alvos: readonly number[], modo: ModoDeBusca, dados: GameData,
 ): Caminho | null {
   const { largura, altura } = dados.terreno.mapaPadrao;
   if (!(Number.isInteger(de.gx) && Number.isInteger(de.gy) && de.gx >= 0 && de.gy >= 0 && de.gx < largura && de.gy < altura)) return null;
@@ -340,6 +373,12 @@ function executarComRascunho(
     const i = y * largura + x;
     if (modo === 'estrada') return estrada[i] === 1;
     if (!transponivelNoMapa(x, y, dados)) return false;
+    // F-T2b — o recurso que bloqueia entra aqui, ao lado do terreno e pelo
+    // mesmo motivo. So no modo `livre`, como o terreno: no modo `estrada` o
+    // tile JA e estrada, e `canPlaceRoad` recusa estrada sobre recurso que
+    // bloqueia (motivo `'recurso'`). Repetir a checagem la mudaria a
+    // propriedade da equivalencia com `isConnected` sem mudar uma resposta.
+    if (bloqueadoPorRecurso(recursos, x, y)) return false;
     return bloqueado[i] === 0 || liberados.has(i);
   };
   /**
@@ -355,6 +394,11 @@ function executarComRascunho(
   const quinaLivre = (x: number, y: number): boolean => {
     if (x < 0 || y < 0 || x >= largura || y >= altura) return false;
     if (!transponivelNoMapa(x, y, dados)) return false;
+    // F-T2b: arvore na quina proibe a diagonal, como predio e como agua. A
+    // outra metade desta mesma regra esta em `estradas.ts::passoPermitido`, e
+    // a propriedade da F10 (A* por estrada <=> `isConnected`) e o que acusa se
+    // as duas divergirem.
+    if (bloqueadoPorRecurso(recursos, x, y)) return false;
     const i = y * largura + x;
     return bloqueado[i] === 0 || liberados.has(i);
   };
@@ -448,6 +492,7 @@ function executarComRascunho(
   while (hIdx.length > 0) {
     const { idx, g: gAtual } = tirar();
     if (gAtual !== gDe(idx)) continue; // entrada velha: ja se achou coisa melhor
+    expandidos += 1;
     if (ehAlvo.has(idx)) {
       const tiles: TileDeGrid[] = [];
       for (let atual = idx; atual !== inicio; atual = pai[atual] as number) {

@@ -13,6 +13,8 @@ import type { GameData } from './data/types';
 import { gameData } from './data';
 import { bordaSul, caixaDoPredio } from './footprint';
 import { ehTransponivel } from './mapa';
+import { bloqueadoPorRecurso, camadaDeBloqueio, recursoBloqueiaPasso } from './recursos';
+import type { CamadaDeBloqueio } from './recursos';
 import { disponivelNaOrigem } from './reservas';
 
 /** Um tile de grid, sempre em coordenada inteira quando valido. Mesma forma do
@@ -25,7 +27,16 @@ export interface TileDeGrid {
 // F-T1: `'terreno'` entra com a camada de terreno base — estrada nao se assenta
 // sobre agua, rocha ou montanha (`terrain.intransponivel`). Ate ela o comentario
 // de `canPlaceRoad` dizia, com razao, que o motivo nao existia.
-export type MotivoDeRecusaDeEstrada = 'fora-do-mapa' | 'terreno' | 'sobreposicao' | 'sem-pedra';
+export type MotivoDeRecusaDeEstrada =
+  | 'fora-do-mapa'
+  | 'terreno'
+  // F-T2b — recurso EM PE que reprova o passo (hoje so a arvore). Motivo
+  // separado de `'terreno'` de proposito: sao causas diferentes com conserto
+  // diferente — terreno nao se remove, arvore se corta. Rotulo unico para as
+  // duas esconderia justamente a diferenca que o jogador precisa ler.
+  | 'recurso'
+  | 'sobreposicao'
+  | 'sem-pedra';
 
 /** A mercadoria que a estrada custa ("1 stone por tile", terrain.json). E um id
  *  estrutural, como `ID_DO_ARMAZEM` — o NUMERO vem do dado. */
@@ -78,7 +89,7 @@ const VIZINHOS: readonly (readonly [number, number])[] = [
 
 /** O que a rede precisa saber do estado: os tiles de estrada e os predios, que
  *  sao o que tapa quina. Menos que `GameState` para o teste poder montar caso. */
-export type EstadoDaRede = Pick<GameState, 'estradas' | 'predios'>;
+export type EstadoDaRede = Pick<GameState, 'estradas' | 'predios' | 'recursos'>;
 
 /** Os tiles cobertos por footprint de predio. Montado UMA vez por indice — o
  *  `tileEmPredio` de baixo e O(predios) por tile e serve a consulta avulsa. */
@@ -96,15 +107,20 @@ function tilesDePredios(state: EstadoDaRede, dados: GameData): Set<string> {
 }
 
 /** O passo de `atual` na direcao (dx, dy) e permitido? Reto sempre; diagonal so
- *  com as duas quinas livres de predio E de terreno intransponivel (F-T1).
+ *  com as duas quinas livres de predio, de terreno intransponivel (F-T1) E de
+ *  recurso que bloqueia (F-T2b).
  *  Unico ponto onde a regra da quina mora deste lado — o indice e a distancia
  *  chamam o mesmo, e o `quinaLivre` do A* diz exatamente isto do outro lado
- *  (propriedade da equivalencia, tests/F10-astar.test.ts). */
+ *  (propriedade da equivalencia, tests/F10-astar.test.ts). A arvore entrou nos
+ *  DOIS lados no mesmo commit, de proposito: mudar so um e o jeito de fazer a
+ *  equivalencia quebrar sem que nenhuma regra de jogo tenha mudado. */
 function passoPermitido(
-  atual: TileDeGrid, dx: number, dy: number, bloqueados: ReadonlySet<string>, dados: GameData,
+  atual: TileDeGrid, dx: number, dy: number, bloqueados: ReadonlySet<string>,
+  recursos: CamadaDeBloqueio, dados: GameData,
 ): boolean {
   if (dx === 0 || dy === 0) return true;
-  const quina = (gx: number, gy: number): boolean => !bloqueados.has(`${gx},${gy}`) && ehTransponivel(gx, gy, dados);
+  const quina = (gx: number, gy: number): boolean => !bloqueados.has(`${gx},${gy}`)
+    && ehTransponivel(gx, gy, dados) && !bloqueadoPorRecurso(recursos, gx, gy);
   return quina(atual.gx + dx, atual.gy) && quina(atual.gx, atual.gy + dy);
 }
 
@@ -117,12 +133,13 @@ export function pontesDiagonais(
   state: EstadoDaRede, dados: GameData = gameData,
 ): readonly (readonly [TileDeGrid, TileDeGrid])[] {
   const bloqueados = tilesDePredios(state, dados);
+  const recursos = camadaDeBloqueio(state, dados);
   const pontes: (readonly [TileDeGrid, TileDeGrid])[] = [];
   for (const tile of tilesOrdenados(state.estradas)) {
     for (const [dx, dy] of [[1, 1], [1, -1]] as const) {
       const vizinho = { gx: tile.gx + dx, gy: tile.gy + dy };
       if (!ehEstrada(state.estradas, vizinho)) continue;
-      if (!passoPermitido(tile, dx, dy, bloqueados, dados)) continue;
+      if (!passoPermitido(tile, dx, dy, bloqueados, recursos, dados)) continue;
       pontes.push([tile, vizinho]);
     }
   }
@@ -138,6 +155,7 @@ export interface IndiceDeEstradas {
 function construirIndice(state: EstadoDaRede, dados: GameData): IndiceDeEstradas {
   const { estradas } = state;
   const bloqueados = tilesDePredios(state, dados);
+  const recursos = camadaDeBloqueio(state, dados);
   const componentes: Record<string, number> = {};
   let quantidade = 0;
   // Varredura na ordem canonica: o id do componente depende so do CONJUNTO de
@@ -152,7 +170,7 @@ function construirIndice(state: EstadoDaRede, dados: GameData): IndiceDeEstradas
       const atual = fila[i];
       if (!atual) continue;
       for (const [dx, dy] of VIZINHOS) {
-        if (!passoPermitido(atual, dx, dy, bloqueados, dados)) continue;
+        if (!passoPermitido(atual, dx, dy, bloqueados, recursos, dados)) continue;
         const vizinho = { gx: atual.gx + dx, gy: atual.gy + dy };
         const chave = chaveDeTile(vizinho);
         if (estradas[chave] === true && componentes[chave] === undefined) {
@@ -169,18 +187,29 @@ function construirIndice(state: EstadoDaRede, dados: GameData): IndiceDeEstradas
 // de predio, entao a chave nao pode ser so a rede: e o mesmo par de chaves que
 // `footprintsDe` de `pathfinding.ts` usa, e `predios.ordem` so muda quando um
 // predio nasce ou morre — nao a cada tick de obra.
-const indices = new WeakMap<object, WeakMap<object, WeakMap<object, IndiceDeEstradas>>>();
+const indices = new WeakMap<object, WeakMap<object, WeakMap<object, WeakMap<object, IndiceDeEstradas>>>>();
 
-function memoDoIndice(state: EstadoDaRede, dados: GameData): WeakMap<object, IndiceDeEstradas> {
+// F-T2b: a camada de bloqueio entra na chave porque a arvore agora tapa quina.
+// Entra a CAMADA e nao `state.recursos`: a camada so troca de identidade quando
+// o conjunto de tiles bloqueados muda, entao colher pedra — que troca
+// `state.recursos` todo tick — nao invalida indice nenhum.
+function memoDoIndice(
+  state: EstadoDaRede, recursos: CamadaDeBloqueio, dados: GameData,
+): WeakMap<object, IndiceDeEstradas> {
   let porEstradas = indices.get(dados);
   if (porEstradas === undefined) {
     porEstradas = new WeakMap();
     indices.set(dados, porEstradas);
   }
-  let porOrdem = porEstradas.get(state.estradas);
+  let porRecursos = porEstradas.get(state.estradas);
+  if (porRecursos === undefined) {
+    porRecursos = new WeakMap();
+    porEstradas.set(state.estradas, porRecursos);
+  }
+  let porOrdem = porRecursos.get(recursos);
   if (porOrdem === undefined) {
     porOrdem = new WeakMap();
-    porEstradas.set(state.estradas, porOrdem);
+    porRecursos.set(recursos, porOrdem);
   }
   return porOrdem;
 }
@@ -193,7 +222,7 @@ function memoDoIndice(state: EstadoDaRede, dados: GameData): WeakMap<object, Ind
  * milhares de perguntas de um tick custam um lookup, nao uma busca.
  */
 export function indiceDeEstradas(state: EstadoDaRede, dados: GameData = gameData): IndiceDeEstradas {
-  const memo = memoDoIndice(state, dados);
+  const memo = memoDoIndice(state, camadaDeBloqueio(state, dados), dados);
   let indice = memo.get(state.predios.ordem);
   if (indice === undefined) {
     indice = construirIndice(state, dados);
@@ -265,6 +294,7 @@ function buscarDistancia(
 ): number | null {
   const { estradas } = state;
   const bloqueados = tilesDePredios(state, dados);
+  const recursos = camadaDeBloqueio(state, dados);
   const alvos = new Set(para.filter((t) => ehEstrada(estradas, t)).map(chaveDeTile));
   if (alvos.size === 0) return null;
   const visto = new Map<string, number>();
@@ -281,7 +311,7 @@ function buscarDistancia(
     const proxima: TileDeGrid[] = [];
     for (const atual of fronteira) {
       for (const [dx, dy] of VIZINHOS) {
-        if (!passoPermitido(atual, dx, dy, bloqueados, dados)) continue;
+        if (!passoPermitido(atual, dx, dy, bloqueados, recursos, dados)) continue;
         const vizinho = { gx: atual.gx + dx, gy: atual.gy + dy };
         const chaveVizinho = chaveDeTile(vizinho);
         if (estradas[chaveVizinho] === true && !visto.has(chaveVizinho)) {
@@ -459,8 +489,16 @@ export type ResultadoDeEstrada =
  * nao sao estrada, sem repeticao, na ordem em que vieram) e o custo em pedra deles, ou
  * o motivo e o primeiro tile culpado. Tudo ou nada: um tile invalido recusa o trecho.
  *
- * Ordem: cada tile (mapa, depois terreno, depois predio — obra incluida), e so
- * entao a pedra.
+ * Ordem: cada tile (mapa, depois terreno, depois recurso, depois predio — obra
+ * incluida), e so entao a pedra.
+ *
+ * F-T2b — a estrada NAO se assenta sobre recurso que bloqueia, e nao e enfeite:
+ * sem esta recusa existe o tile passavel no modo `estrada` e bloqueado no modo
+ * `livre`, ou seja, o serf carregado atravessa a arvore e o serf vazio nao. O
+ * terreno nunca produziu esse par porque estrada sobre terreno intransponivel ja
+ * era recusada; o recurso produziria. Note que PREDIO sobre recurso continua
+ * permitido — ali o footprint bloqueia o tile nos dois modos, e nao ha
+ * contradicao a resolver (e e o que a pedreira sobre o lajedo faz desde o BUG-C).
  */
 export function canPlaceRoad(
   state: GameState, tiles: readonly TileDeGrid[], dados: GameData = gameData,
@@ -473,6 +511,9 @@ export function canPlaceRoad(
       && tile.gx >= 0 && tile.gy >= 0 && tile.gx < largura && tile.gy < altura;
     if (!dentro) return { ok: false, motivo: 'fora-do-mapa', tile };
     if (!ehTransponivel(tile.gx, tile.gy, dados)) return { ok: false, motivo: 'terreno', tile };
+    if (recursoBloqueiaPasso(state.recursos[chaveDeTile(tile)] ?? null, dados)) {
+      return { ok: false, motivo: 'recurso', tile };
+    }
     if (tileEmPredio(state, tile, dados)) return { ok: false, motivo: 'sobreposicao', tile };
     const chave = chaveDeTile(tile);
     if (vistos.has(chave)) continue;

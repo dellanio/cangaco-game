@@ -843,6 +843,15 @@ function validarRecursos(dados, erros) {
     if (!Number.isInteger(def.rendimentoPorTile) || def.rendimentoPorTile < 1) {
       erros.push(`recurso/rendimento: resources.tipos.${id}.rendimentoPorTile precisa ser inteiro >= 1`);
     }
+    // F-T2b: obrigatorio e booleano de verdade. Campo ausente leria como
+    // "nao bloqueia" em silencio, que e o pior dos dois erros possiveis —
+    // a floresta pararia de fechar o mapa sem ninguem perceber.
+    if (typeof def.bloqueiaPasso !== 'boolean') {
+      erros.push(
+        `recurso/bloqueio: resources.tipos.${id}.bloqueiaPasso precisa ser true ou false `
+        + '(ausente leria como "nao bloqueia" sem ninguem notar)',
+      );
+    }
   }
 
   // A receita que colhe tem de colher algo que existe, e ate uma distancia real.

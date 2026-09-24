@@ -144,6 +144,9 @@ export interface TipoDeRecurso {
   readonly regime: RegimeDeRecurso;
   /** Unidades que UM tile rende quando o mapa nasce, e o teto do `porTempo`. */
   readonly rendimentoPorTile: number;
+  /** F-T2b — o tile com este recurso EM PE reprova o passo, como terreno
+   *  intransponivel. Por tipo e em dado: ninguem digita `'tree'` em `.ts`. */
+  readonly bloqueiaPasso: boolean;
 }
 
 export interface RecursosData {

@@ -18,6 +18,7 @@ import { canPlace } from '../src/sim/placement';
 import { canPlaceRoad } from '../src/sim/estradas';
 import { buscarCaminho, zerarEstatisticasDeBusca, estatisticasDeBusca } from '../src/sim/pathfinding';
 import type { Caminho } from '../src/sim/pathfinding';
+import type { GameState } from '../src/sim/state';
 import { inicial, tile } from './helpers/jobs-cenario';
 import { gravarEvidencia } from './helpers/evidence';
 import { validarTudo } from '../tools/data-rules.js';
@@ -162,10 +163,23 @@ const FAIXA = { x0: 66, y0: 60, colunas: 40 };
 const AQUECIMENTO = 100;
 const BUSCAS = 400;
 
+// F-T2b — a medicao roda SEM recurso, e isso e o que ela sempre quis medir.
+// Esta perna compara mapa liso contra mapa com TERRENO; obstaculo e outro eixo,
+// medido em `F-T2b-obstaculo`. Desde que a arvore passou a reprovar o passo,
+// 23 das 500 origens e 23 dos 500 alvos desta faixa caem sobre arvore (contado
+// em `data/maps/sertao-128.json`): a busca fica sem solucao, varre a componente
+// alcancavel inteira e a media vira media de flood fill — nos dois bracos, com
+// ruido grande o bastante para a razao oscilar de corrida para corrida. Nao e o
+// teto de 2,5 que estava errado; era o cenario que deixou de medir o terreno.
+// Constante de modulo, e nao funcao: um `{ ...inicial, recursos: {} }` por
+// chamada daria um objeto novo por busca e refaria a camada de bloqueio (grade
+// da AREA do mapa) 500 vezes.
+const SEM_RECURSOS: GameState = { ...inicial, recursos: {} };
+
 function buscaCurtaInedita(dados: GameData, i: number): Caminho | null {
   const x = FAIXA.x0 + (i % FAIXA.colunas);
   const y = FAIXA.y0 + Math.floor(i / FAIXA.colunas);
-  return buscarCaminho(inicial, tile(x, y), [tile(x + 3, y)], 'livre', dados);
+  return buscarCaminho(SEM_RECURSOS, tile(x, y), [tile(x + 3, y)], 'livre', dados);
 }
 
 /** Todos os tiles que a medicao pisa, no mapa de verdade. */
@@ -190,10 +204,16 @@ function tilesDaFaixa(): { pisaveis: boolean; tipos: Set<TerrenoDeMapa> } {
 // F17c ja roda em todo `npm run verify`. O numero medido vai para
 // `test-output/F-T1.json`; se este teto vier a reprovar, a correcao e alarga-lo
 // COM O NUMERO MEDIDO ao lado, nunca `skip` (CLAUDE.md §10).
-// MEDIDO nesta sessao, com os dois JIT aquecidos: 6,1 us por busca no mapa
-// liso contra 7,4 us no mapa com terreno — razao 1,22. O teto de 2,5 fica
-// acima do ruido e ainda acusaria uma leitura por vizinho que custasse o dobro
-// do que esta medido.
+// MEDIDO na F-T1, com os dois JIT aquecidos: 6,1 us por busca no mapa liso
+// contra 7,4 us no mapa com terreno — razao 1,22. O teto de 2,5 fica acima do
+// ruido e ainda acusaria uma leitura por vizinho que custasse o dobro do que
+// esta medido.
+// RE-MEDIDO na F-T2b (2026-09-24), ja com a checagem de obstaculo por vizinho
+// no caminho quente e com a faixa sem recurso: 7,2 / 7,6 / 9,6 / 9,9 us no liso
+// contra 8,1 / 8,7 / 10,3 / 17,9 com terreno em quatro corridas — razoes 1,05
+// 1,07 1,22 e 1,87. O teto de 2,5 continua acima do ruido, e por pouco na pior
+// corrida: se ele vier a reprovar, o numero a olhar antes de mexer no teto e o
+// de NOS EXPANDIDOS da F-T2b, que nao depende da maquina.
 const RAZAO_MAXIMA = 2.5;
 
 /** Preenchido pela medicao e despejado na evidencia. */

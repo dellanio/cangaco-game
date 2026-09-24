@@ -65,7 +65,13 @@ describe('F18b — GUARDA: nada presume o tamanho do mapa', () => {
 
   it.each(TAMANHOS)('a borda e a do dado DECLARADO, nao a do publicado: %ix%i', (largura, altura) => {
     const dados = dadosCom(largura, altura);
-    const estado = createInitialState(1, dados);
+    // F-T2b — SEM a camada de recurso, e isto e o que a guarda quer dizer. Ela
+    // afirma onde fica a BORDA do mapa declarado, e a borda nao muda porque
+    // nasceu uma arvore perto dela. Com a floresta ligada, (94,60) — o canto de
+    // 97x61 — e arvore, e o caso passaria a reprovar por obstaculo, medindo
+    // outra coisa com a mesma frase. O caso do obstaculo e da F-T2b e tem
+    // arquivo proprio.
+    const estado = { ...createInitialState(1, dados), recursos: {} };
     const dentro = { gx: largura - 1, gy: altura - 1 };
     const fora = { gx: largura, gy: altura - 1 };
     expect(buscarCaminho(estado, dentro, [dentro], 'livre', dados)?.custo).toBe(0);
