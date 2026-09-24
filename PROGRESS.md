@@ -2650,6 +2650,91 @@ registrar. O A* livre por par armazém×obra não precisou de otimização.
 (planejada, em obra, de pé). O contrato que ela herda está na Nota do item dela
 no `BUILD_PLAN.md`.
 
+## F18d-1b — A estrada vira canteiro: `PlaceRoad` desenha, o laborer assenta (2026-09-24)
+
+O `PlaceRoad` deixou de erguer rua. Ele **desenha** o traçado, **reserva** a pedra
+e cria uma tarefa `'assentar-estrada'` por tile. Quem põe o tile de pé — e só
+nesse tick debita a pedra — é o laborer. A rua desenhada não liga nada.
+
+### O que mudou
+
+- `sim/state.ts`: `estradasPlanejadas: Record<string, true>` ao lado de
+  `estradas`, e a tarefa nova com `destinoTile: TileDeGrid` **sem** `destino:
+  string` (D3). `ehTarefaDeAssentamento` é o estreitamento que os 12
+  `predios.porId[…destino]` usam para não compilar contra ela.
+- `data/delivery.json`: `assentar-estrada` em **nível 8**, `"modo": "livre"`.
+- `sim/jobs.ts`: `criarTarefaDeAssentamento` (claim, custo, saneamento).
+- `sim/estradas.ts`: `armazemQuePagaAEstrada` e `pedraDisponivel`.
+- `sim/systems/laborers.ts`: o assentamento reusa `indo_a_obra` + um ciclo de
+  `martelando`. **Nenhum estado novo na FSM** (D1).
+- `sim/systems/estradas.ts`: `DemolishRoad` sobre os três conjuntos.
+- `sim/systems/jobs.ts`: `gerarTarefas` cobre tile desenhado que ficou sem tarefa.
+- `sim/placement.ts`: `canPlace` recusa prédio **sobre tile desenhado**.
+
+### Decisões (D1–D5 estão em `docs/planos/F18d-1b-estrada-canteiro.md`)
+
+Além das cinco do plano, duas nasceram da migração dos testes velhos, e ambas
+corrigiram modelo — não asserção:
+
+- **`pedraDisponivel` conta só a gaveta `saida`, em múltiplos do custo de um
+  tile, por armazém.** Antes o comando debitava e podia debitar da `entrada`;
+  agora o custo é uma **reserva**, e só a `saida` é reservável. O piso por
+  armazém fecha o outro buraco: dois armazéns com 1 de pedra cada, custo 2,
+  somavam 2 e não levantavam um tile. Aceite e pagador passaram a ser o **mesmo
+  predicado**, escrito uma vez — aceito ⇒ existe pagador para cada tile, por
+  construção. Sem isso o tile ficaria desenhado esperando para sempre uma tarefa
+  que não nasce (espera indefinida não é balanceamento).
+- **`canPlace` recusa sobre tile desenhado.** Sem a recusa simétrica, o laborer
+  assentaria o tile **debaixo** do prédio plantado depois.
+
+### Verificado (evidência aberta: `test-output/F18d-1b.json`)
+
+Cenário: a rua de **8 tiles** (29,33)→(36,33) que ligaria a escola `p2` ao
+armazém `p1` do estado inicial.
+
+- **Tick do comando (1):** 8 desenhados, **0 de pé**, `escolaLigadaAoArmazem:
+  false`, pedra no mundo **30 = intacta**.
+- **Assentamento:** 8 tiles em 5 ticks (13, 26, 39, 59, 72 — dois laborers
+  assentam no mesmo tick), a pedra caindo 1 por tile: **30 → 22**, total
+  debitado **8 = 8 × `custoStonePorTile`**.
+- **Ligou no tick 59**, que é um tick de assentamento, com 1 tile ainda
+  desenhado: a rua desenhada é a **união** das duas portas, e o trecho que liga
+  é um pedaço dela. Por isso o invariante do teste não é "liga no último tile" e
+  sim **"a ligação nunca muda em tick sem assentamento"** — que é o que o aceite
+  afirma e é mais estrito no resto do percurso.
+- **`pedra + tiles_de_pé × custo` é constante (30) em todos os ticks.** Isso
+  prende o débito ao tick do assentamento (não ao do comando) e a **uma vez só**:
+  um segundo débito quebraria a soma sem tile novo.
+- **`DemolishRoad` nos três conjuntos, um comando:** 2 de pé + 2 desenhados + 1
+  de chão vazio → devolve **1 = floor(2 × `devolucaoAoDemolir`)**, com a fração em 0,5; o
+  canteiro devolve **0** (nada foi gasto) e o chão vazio é no-op sem evento.
+- `npm run verify` verde: **65 arquivos, 1036 testes**, lint/typecheck/
+  validate:data limpos.
+
+### Pergunta que o GDD não responde, e a interpretação adotada
+
+O GDD não diz se assentar consome tempo de martelo por tile ou é instantâneo ao
+chegar. Adotado o **conservador**: um ciclo de `construcao.ticksPorMartelada`
+por tile, número vindo de `data/buildings.json`, nunca literal em `.ts`. Se o
+playtest achar lento, é `BALANCE_LOG.md`, não código.
+
+### Testes velhos migrados (nenhum `skip`, nenhum apagado)
+
+A regra da migração: teste que afirma a **rede** planta a rua com `comEstradas`;
+teste que afirma o **comando** continua emitindo `PlaceRoad`. `F08-estradas`
+(51), `F09-estrada-reserva` (7), `F09-sistema` e `F10-falhas` foram reescritos
+para o contrato novo. Em `F10-falhas` a conservação de bens passou a contar a
+pedra que virou rua (`bensComARua`) — invariante **mais forte**, que cobre o tick
+do assentamento em vez de excluí-lo.
+
+### O que a F18d-2 herda
+
+O render ainda desenha `estradasPlanejadas` como nada. A F18d-2 dá ao canteiro
+aparência própria e migra os **10 roteiros / 25 asserções** medidos no item dela;
+a Nota de integração (exceção explícita da §10 para tocar `sim/` e `render/` na
+mesma feature) já está escrita lá, com o aviso: se aparecer regra nova naquela
+feature, é sinal de que esta ficou incompleta.
+
 ## Perguntas em aberto
 
 _(nenhuma no momento: as três que sobravam foram decididas pelo operador — ver "Ajuste pós-F10".)_
