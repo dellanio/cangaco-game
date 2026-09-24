@@ -15,7 +15,9 @@
  */
 import Phaser from 'phaser';
 import temaSertao from '../../data/theme-sertao.json';
-import { depthDeY, gridToScreenCentro, ESCALA_DO_MUNDO } from './grid';
+import {
+  depthDeY, gridToScreenCentro, deslocamentoDaUnidade, ESCALA_DO_MUNDO, LADO_DA_UNIDADE_EM_TILES,
+} from './grid';
 import { criarMemoriaDePosicoes, interpolarPosicao } from './interpolacao';
 import { posicaoDaUnidade } from '../sim/selectors';
 import type { GameState } from '../sim/state';
@@ -35,15 +37,20 @@ export interface UnidadeRenderizada {
   readonly fsm: string;
   /** A mercadoria que ela leva, ou null. */
   readonly carga: string | null;
+  /**
+   * F18f — o quanto o desenho sai do centro do tile, em px de mundo. Nao e posicao de
+   * jogo: `gx/gy` continuam sendo o tile, e e por eles que os roteiros medem caminho e
+   * interpolacao. Este campo existe para o roteiro conseguir provar que duas unidades no
+   * MESMO tile nao caem no mesmo pixel — sem ele, "separou" e "empilhou" sao iguais na
+   * ponte de debug.
+   */
+  readonly deslocamentoPx: { readonly x: number; readonly y: number };
 }
 
 export interface CamadaDeUnidades {
   /** `alfa`: fracao do tick em curso (`Laco.alfa()`), em [0, 1]. */
   atualizar(estado: GameState | null, alfa: number): readonly UnidadeRenderizada[];
 }
-
-/** Lado do quadrado da unidade, como fracao do tile (apresentacao, nao regra de jogo). */
-const LADO_EM_TILES = 0.5;
 
 /**
  * Acima disto (em tiles, 2D) entre o tick anterior e o atual a unidade NAO interpola, assenta.
@@ -63,7 +70,7 @@ interface Desenhado {
 export function criarCamadaDeUnidades(cena: Phaser.Scene, tilePx: number): CamadaDeUnidades {
   const desenhados = new Map<string, Desenhado>();
   const memoria = criarMemoriaDePosicoes();
-  const lado = tilePx * LADO_EM_TILES;
+  const lado = tilePx * LADO_DA_UNIDADE_EM_TILES;
 
   function criar(id: string, tipo: string): Desenhado {
     const ehSerf = tipo === 'serf';
@@ -104,14 +111,19 @@ export function criarCamadaDeUnidades(cena: Phaser.Scene, tilePx: number): Camad
         const anterior = memoria.observar(id, estado.tick, posicao);
         const desenhada = interpolarPosicao(anterior, posicao, alfa, SALTO_MAXIMO_EM_TILES);
         const centro = gridToScreenCentro(desenhada, tilePx, ESCALA_DO_MUNDO);
-        item.container.setPosition(centro.x, centro.y);
-        item.container.setDepth(depthDeY(centro.y));
+        // F18f: duas unidades no mesmo tile caem no mesmo pixel e a de cima esconde a de baixo
+        // inteira. O desvio e de DESENHO: some ao pixel e ao depth (assim a que desenha mais ao
+        // sul segue na frente), nunca a posicao do tick, que continua sendo `posicao`.
+        const desvio = deslocamentoDaUnidade(id, tilePx, ESCALA_DO_MUNDO);
+        item.container.setPosition(centro.x + desvio.x, centro.y + desvio.y);
+        item.container.setDepth(depthDeY(centro.y + desvio.y));
         const carga = unidade.fsmData.carga ?? null;
         item.marcadorDeCarga.setText(carga ?? '');
         item.marcadorDeCarga.setVisible(carga !== null);
         renderizadas.push({
           id, tipo: unidade.tipo, gx: posicao.gx, gy: posicao.gy,
           gxDesenhado: desenhada.gx, gyDesenhado: desenhada.gy, fsm: unidade.fsm, carga,
+          deslocamentoPx: { x: desvio.x, y: desvio.y },
         });
       }
       return renderizadas;

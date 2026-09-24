@@ -1301,6 +1301,109 @@ prédio surge sem clique do jogador.
   propósito: o alternativo era empurrar `render/` para dentro do slice de `sim/`
   sem a nota de integração.
 
+### F18f — Unidade empilhada não some (render)
+- **Escopo**: `render/unidades.ts` desloca o desenho de cada unidade dentro do
+  tile, por um deslocamento derivado do **id**, e soma o mesmo `dy` ao `depth`
+  para que a de baixo fique na frente (leitura 3/4). **Render puro**: nada em
+  `sim/`, nada em `data/`, nenhuma mudança na regra de colisão — civis continuam
+  podendo ocupar o mesmo tile, como decidido na F03.
+- **Aceite**: num cenário com pilha medida, o roteiro afirma que as **N**
+  unidades do mesmo tile têm **N centros desenhados distintos**, e a menor
+  distância entre pares é ≥ o raio do anel. Screenshot com a pilha.
+- **Evidência**: `test-output/F18f-shot.json` + `screenshots/F18f-*.png`
+- **Nota (a medição que originou o item, 2026-09-24)**: sonda em cenário com rua
+  e pedreira, 700 ticks, 140 quadros amostrados. **As 6 unidades do cenário na
+  MESMA posição desenhada exata** — `(38,33)`, o tile de porta da obra da
+  pedreira —, no tick 232; **116 dos 140 quadros** com alguma pilha exata.
+  Empilhar é o caso **normal**, não a exceção. A foto do fim mostrava **3
+  quadrados para 6 unidades**. O render já cria um container **por id**
+  (`render/unidades.ts`, um por unidade viva): as N existem na display list; o
+  que as esconde é `gridToScreenCentro` ser função pura do tile (mesmo tile =
+  mesmo pixel) com `depthDeY(worldY)` igual (mesmo y = mesmo depth), e o
+  quadrado ser opaco. Oclusão total, não parcial.
+- **Nota (o limite, medido)**: o quadrado da unidade tem lado `0.5` tile (32 px a
+  64 px/tile). Para ele **não sair do tile**, o centro anda no máximo **±0.25
+  tile = ±16 px**. Seis unidades num anel desse raio ficam a ~16 px umas das
+  outras: quadrados de 32 px **continuam se sobrepondo pela metade**. Decisão do
+  operador: **sobreposição parcial é aceita** — ver que são várias já é melhor
+  que ver uma. As duas saídas para separação real ficam **registradas e não
+  valem agora**: (a) encolher o desenho da unidade; (b) deixar o deslocamento
+  vazar do tile. Revisitar só se o playtest **com sprite** pedir.
+- **Nota (derivar do id, e o que isso custa)**: o deslocamento vem do **sufixo
+  numérico do id** (`u7` -> 7) módulo o número de posições do anel. A alternativa
+  — agrupar por tile no quadro e espalhar pelo índice no grupo — garantiria N
+  distintos sempre, mas faz a unidade **saltar** quando outra entra ou sai do
+  tile dela; derivar do id não salta nunca. O preço é a colisão: duas unidades
+  cujos ids são congruentes módulo o anel, no mesmo tile, continuam exatamente
+  em cima uma da outra. O anel tem **6 posições**: é a pilha máxima medida, e é o
+  único anel em que a **corda entre vizinhos iguala o raio** — com 8 posições os
+  vizinhos ficariam a 0,77 do raio um do outro, e o "≥ o raio do anel" do aceite
+  afirmaria uma separação que o desenho não entrega. Com ids sequenciais
+  (`u3`..`u8`) os 6 slots são distintos e nenhuma pilha do cenário atual colide.
+  Fica registrado como limite conhecido, não resolvido.
+- **Nota**: sem `Math.random()` e sem `Date.now()` — a foto tem de repetir.
+
+### F18g — A pedra da estrada vira carga que viaja (sim)
+- **Escopo**: hoje a pedra da estrada **não viaja**: ela é reservada no armazém
+  quando a tarefa `'assentar-estrada'` nasce e é debitada daquele mesmo armazém
+  no tick do assentamento (`comOTileAssentado`). Esta feature troca isso pelo
+  transporte visível do original: **tarefa de material com destino-tile**, o serf
+  leva a pedra até o tile do canteiro, o **laborer espera no tile** até ela
+  chegar, e o **débito acontece na entrega**, não no assentamento.
+- **Aceite**: num cenário com rua desenhada, o teste afirma (a) que uma carga de
+  pedra **existe em trânsito** (serf com `carga` a caminho do tile), (b) que o
+  laborer **espera no tile** enquanto ela não chega, (c) que a pedra sai do
+  armazém na **entrega** e (d) que a conservação de bens fecha com a pedra
+  **parada no tile** contada.
+- **Evidência**: `test-output/F18g.json`
+- **Nota (por que a F18d-1b evitou isso, 2026-09-24)**: foi decisão registrada,
+  não esquecimento. O item da F18d-1a já media o preço do destino-tile —
+  `destino` é id de prédio em 59 ocorrências de `src/sim/`, 14 delas
+  `predios.porId[…destino]` direto — e a F18d-1b pagou esse preço **só** para a
+  tarefa do laborer, que não reserva vaga no destino nem entrega carga. A
+  variante de **carga** com destino-tile é a parte que ficou de fora, e o aceite
+  escrito da F18d-1b ("a pedra sai do armazém exatamente uma vez, no
+  assentamento") descreve fielmente o que foi construído. **O aceite é que estava
+  incompleto**: no original o transporte visível é mecânica, não decoração.
+  Decisão do operador (2026-09-24), com o porquê dele.
+- **Nota (o custo, medido em 2026-09-24)**: **~12 pontos de ramificação em 3
+  arquivos de `sim/`**, mais um campo de estado e duas FSMs:
+  - `sim/reservas.ts` (4): `reservadoNoDestino`, `demandaNoDestino`,
+    `destinoEhArmazem`, `vagaNoDestino` — todos leem `predios.porId[t.destino]`;
+  - `sim/systems/jobs.ts` (4): `motivoDoDestino` (já tem ramo de tile para
+    `assentar-estrada`; ganha o de carga), elegibilidade, geração e a
+    deduplicação por destino;
+  - `sim/systems/serfs.ts` (4): as **2** chamadas de `portasDaTarefa` (tile não
+    tem porta), a entrega — hoje três ramos, obra/escola/armazém, ganha o quarto
+    — e o `task-completed`, que hoje carrega `destino` de prédio;
+  - **1 campo de estado novo**: onde a pedra entregue descansa. O desenho barato
+    é um mapa **paralelo** (`pedraNoCanteiro`), que deixa intactos os **31
+    arquivos** que leem `estradasPlanejadas`; mudar o valor de `true` para objeto
+    quebraria os 7 acessos `=== true` e todos os leitores;
+  - **2 FSMs**: o laborer (hoje `esperando_material` **recusa** assentamento em
+    dois `if` explícitos, e `passoIndoAoTile` vai direto a `martelando`) e o
+    serf (o alvo deixa de ser porta de prédio);
+  - **demolir ganha o 4º caso**: canteiro **com pedra entregue**. Hoje o canteiro
+    devolve 0 porque nada foi gasto; a pedra no tile é física e tem de voltar —
+    para qual armazém é decisão nova;
+  - **conservação de bens**: `bensPorMercadoria`
+    (`tests/helpers/serf-invariantes.ts:94`, **1** helper) passa a contar a pedra
+    parada no tile; **7** arquivos de teste dependem dele;
+  - **órbita de testes**: **89** testes nas suítes que tocam o caminho (F08 43,
+    as cinco suítes F18d-1b 31, F18d-1a 8, F09-estrada-reserva 7). Nem todos
+    mudam; os **2** do aceite da F18d-1b **invertem por definição**.
+  - **De graça**: some o caso especial de `reservas.ts` — a reserva desde
+    `'aberta'`, que existe hoje **só** para o assentamento. Com carga de verdade,
+    a reserva volta a ser a normal, de reclamar.
+- **Nota (não cabe em uma sessão — quebra proposta)**: entregar isto inteiro
+  cruza estado novo, duas FSMs, o comando de demolir e ~89 testes em órbita.
+  Proposta, **a confirmar pelo operador junto com a posição na fila**: **F18g-1**
+  = a carga chega e descansa no tile (campo de estado, variante de carga com
+  destino-tile, débito na entrega, conservação); **F18g-2** = o laborer espera no
+  tile, a demolição do canteiro com pedra, e o aceite completo.
+- **Nota (posição na fila)**: **a decidir pelo operador**. Enquanto ela não for
+  decidida, este item não é a próxima da fila.
+
 ### F18 — Farm e campos de milho
 ### F19 — Mill e Bakery (cadeia do pão)
 ### F20 — Inn, fome e consumo
@@ -1409,6 +1512,11 @@ prédio surge sem clique do jogador.
 ### F24 — Weapons workshop e cadeia de couro
 ### F25 — Barracks e criação de soldado
 ### F26 — Seleção e movimento de grupo
+- **Nota (herdada da F18f, 2026-09-24)**: o desenho da unidade sai do centro do
+  tile por um deslocamento de até ±16 px derivado do id. **O teste de acerto do
+  clique tem de usar a MESMA função de deslocamento** — se ele mirar o centro do
+  tile, o clique erra a unidade por até 16 px, e erra mais quanto mais cheio o
+  tile estiver, que é justamente onde selecionar importa.
 ### F27 — Formação, virar e storm attack
 ### F28 — Combate e IA inimiga simples
 

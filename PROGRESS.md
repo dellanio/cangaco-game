@@ -2809,6 +2809,86 @@ Quando entrar arte de estrada, o canteiro precisa de estado próprio no
 Isso é decisão humana de arte, não trabalho de código; fica registrado aqui e não
 virou item de fila.
 
+## F18f — Unidade empilhada não some (render, 2026-09-24)
+
+Item nasceu de um achado do operador jogando: unidades ocupando o mesmo tile, e
+com sprite a de cima escondendo a de baixo inteira. A regra de colisão da F03
+(civis não colidem) **não foi tocada** — o que mudou é só o desenho.
+
+### O que foi medido antes de escrever código (sonda, 2026-09-24)
+
+Sonda temporária (`tools/shots/probe-unidades.js`, **não commitada**, prova da
+sessão e não cobertura permanente) no cenário rua + pedreira, 700 ticks, 140
+quadros amostrados:
+
+- **6 das 6 unidades** do cenário na mesma posição desenhada exata — `(38,33)`,
+  o tile de porta da obra da pedreira —, no tick 232;
+- **116 dos 140 quadros** com alguma pilha exata: empilhar é o caso normal;
+- a foto mostrava **3 quadrados para 6 unidades**.
+
+O render já criava um container **por id** — as N existiam na display list. O
+que as escondia era `gridToScreenCentro` ser função pura do tile (mesmo tile =
+mesmo pixel) somada a `depthDeY` igual e ao quadrado opaco. Oclusão total.
+
+### O que mudou
+
+- `src/render/grid.ts`: ganhou `LADO_DA_UNIDADE_EM_TILES`, `POSICOES_DO_ANEL`,
+  `RAIO_DO_ANEL_EM_TILES` e `deslocamentoDaUnidade(id, tilePx, escala)`.
+- `src/render/unidades.ts`: soma o desvio ao `setPosition` **e ao `setDepth`**
+  (a que desenha mais ao sul segue na frente) e publica `deslocamentoPx` em
+  `UnidadeRenderizada`.
+- `tests/F18f-deslocamento.test.ts` (novo) e `tools/shots/F18f.js` (novo).
+- `src/sim/` **não recebeu uma linha** — render puro, sem exceção da §10.
+
+### Decisões, e o porquê
+
+- **A função foi para `grid.ts`, não ficou em `unidades.ts`.** `unidades.ts`
+  importa Phaser e não roda em Vitest; em `grid.ts` (zero import) o cálculo é
+  testável headless, que é o que transforma o limite conhecido em asserção. É
+  também de onde a F26 vai tirá-la para o teste de acerto do clique.
+- **O anel tem 6 posições, não 8** — o item do BUILD_PLAN foi escrito com 8 e
+  corrigido **antes** do código. Seis é a pilha máxima medida e é o único anel
+  em que a corda entre vizinhos **iguala o raio**; com 8, vizinhos ficariam a
+  0,77 do raio e o "≥ o raio do anel" do aceite afirmaria separação que o
+  desenho não entrega. A Nota do item traz a correção e o motivo.
+- **Deriva do id, não do grupo no tile.** Agrupar por tile daria N distintos
+  sempre, mas faria a unidade **saltar** quando outra entra ou sai. O roteiro
+  afirma a não-mudança entre quadros; o teste afirma que a função nem recebe os
+  vizinhos.
+- **O roteiro mira a pilha de 6, não a de 3.** Rodou primeiro com alvo 3 (pilha
+  no tick 157, ids `u4/u7/u8`) e passou; subiu para 6 porque é exatamente o caso
+  que o operador viu — e reproduziu o tick 232 da sonda.
+
+### Verificado (número medido, não descrito)
+
+- Roteiro, tick **232**, tile `(38,33)`: **6 unidades, 6 centros desenhados
+  distintos** (`u3`..`u8`); menor distância entre pares **16,000 px**, igual ao
+  raio do anel (`0.25 × 64`); nenhum desvio vaza do tile; as 6 seguem no **mesmo
+  tile** (o desvio não moveu ninguém) e nenhuma mudou de desvio no quadro
+  seguinte.
+- `npm run verify`: **66 arquivos, 1045 testes**, typecheck, lint e
+  `validate:data` sem erro.
+- Não-regressão pelos códigos de saída, nos roteiros que leem
+  `unidadesRenderizadas`: F10 `0`, F11a `0`, F17f `0`.
+- Evidência: `test-output/F18f.json`, `test-output/F18f-shot.json`,
+  `screenshots/F18f-1-pilha-separada.png` e
+  `screenshots/F18f-2-pilha-de-perto.png` (zoom 2, aberto com Read: o tile
+  mostra vários quadrados sobrepostos onde antes havia um).
+
+### Aberto, e registrado como escolha
+
+- **Sobreposição parcial continua** — decisão do operador, aceita: quadrado de
+  32 px com centros a 16 px se sobrepõe pela metade. Na foto de perto, com 6
+  unidades, os **rótulos** de quem está atrás ficam cobertos; dá para contar os
+  quadrados, não para ler os ids. As duas saídas para separação real (encolher a
+  unidade; deixar o desvio vazar do tile) ficam registradas no item e **não
+  valem agora** — revisitar só se o playtest **com sprite** pedir.
+- **Ids congruentes módulo 6 no mesmo tile voltam a se esconder.** Nenhuma pilha
+  do cenário atual cai nisso (`u3`..`u8` ocupam os 6 slots). O teste afirma a
+  colisão de propósito, para que ela seja escolha visível e não surpresa.
+- **F18g fica parada**: o custo foi medido e entregue ao operador; a posição na
+  fila é decisão dele.
+
 ## Perguntas em aberto
 
 _(nenhuma no momento: as três que sobravam foram decididas pelo operador — ver "Ajuste pós-F10".)_

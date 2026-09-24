@@ -61,6 +61,47 @@ export function gridToScreenCentro(tile: Tile, tilePx: number, escala: number): 
   return { x: tile.gx * lado + lado / 2, y: tile.gy * lado + lado / 2 };
 }
 
+/** Lado do quadrado da unidade, como fracao do tile (apresentacao, nao regra de jogo).
+ *  Vive aqui, e nao em `unidades.ts`, porque o raio do anel da F18f deriva dele. */
+export const LADO_DA_UNIDADE_EM_TILES = 0.5;
+
+/**
+ * F18f — quantas posicoes tem o anel em que o desenho da unidade se desloca dentro do
+ * tile. Seis: e a pilha maxima medida no cenario (6 unidades no mesmo tile de porta) e e
+ * o unico anel em que a corda entre vizinhos IGUALA o raio — com oito posicoes vizinhos
+ * ficariam a 0,77 do raio um do outro, e a separacao afirmada no aceite seria menor do
+ * que o raio. Ids congruentes modulo 6 no mesmo tile voltam a se esconder: limite
+ * conhecido, registrado no BUILD_PLAN.
+ */
+export const POSICOES_DO_ANEL = 6;
+
+/** Raio do anel, em tiles: o maximo que o centro anda sem o quadrado VAZAR do tile. */
+export const RAIO_DO_ANEL_EM_TILES = (1 - LADO_DA_UNIDADE_EM_TILES) / 2;
+
+/** Sufixo numerico do id (`u7` -> 7), reduzido ao anel; 0 se o id nao terminar em digito. */
+function slotDoId(id: string): number {
+  const digitos = /(\d+)$/.exec(id);
+  return digitos ? Number(digitos[1]) % POSICOES_DO_ANEL : 0;
+}
+
+/**
+ * F18f — o desvio do DESENHO da unidade em relacao ao centro do tile, em pixels do espaco
+ * de `escala`. Existe porque duas unidades podem ocupar o mesmo tile (regra da F03, que
+ * segue intacta) e, no mesmo pixel, a de cima escondia a de baixo inteira.
+ *
+ * Funcao pura do id: sem `Math.random()`, sem `Date.now()` e sem olhar quem mais esta no
+ * tile — agrupar por tile daria N posicoes sempre distintas, mas faria a unidade SALTAR
+ * quando outra entra ou sai. Nada disto chega a `sim/`: a posicao de jogo nao muda.
+ *
+ * Quem faz teste de acerto de clique (F26) tem de mirar o MESMO ponto, somando isto ao
+ * centro do tile; mirar o centro erraria por ate um raio, e erraria mais no tile cheio.
+ */
+export function deslocamentoDaUnidade(id: string, tilePx: number, escala: number): Ponto {
+  const raio = RAIO_DO_ANEL_EM_TILES * ladoDoTile(tilePx, escala);
+  const angulo = (slotDoId(id) * 2 * Math.PI) / POSICOES_DO_ANEL;
+  return { x: raio * Math.cos(angulo), y: raio * Math.sin(angulo) };
+}
+
 /**
  * Ponto de mundo -> tile. `Math.floor`, nunca `round` nem truncamento por
  * `| 0`: floor e o unico que acerta coordenada negativa
