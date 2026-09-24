@@ -3278,3 +3278,131 @@ Feature de integração declarada **antes** do código, no próprio item do
 - Não medi o A* com terreno num mapa **256²**: a perna 3 mede 128². A proteção
   determinística contra custo por área continua sendo a contagem de alocação da
   F17c, que roda em todo `verify`.
+
+
+## F-T2a — O recurso está no mapa e no estado, e a Quarry colhe o tile (2026-09-24)
+
+A **F-T2 foi quebrada em três** (CLAUDE.md §6), sem reordenar a fila e sem
+reescrever o critério de aceite: as seis pernas do aceite continuam escritas
+onde estavam, e cada sub-item declara quais fecha.
+
+- **F-T2a** (esta sessão) — pernas **1, 2, 3 e 4**.
+- **F-T2b** — perna **5** (árvore como obstáculo + re-medição do A*).
+- **F-T2c** — perna **6** (escolha de tile como tarefa do JobBoard, com reserva
+  no `claim`); encerra a dívida declarada abaixo.
+
+Feature de integração declarada **antes** do código, no próprio item (§10).
+Tocou `src/sim/` e `src/render/` por isso.
+
+### O que existe agora
+
+- `data/resources.json` — `tipos` (`rock`, `tree`, `fish`) com `regime` e
+  `rendimentoPorTile`, mais `ticksPorUnidadeRegenerada`. Entrou em `ARQUIVOS`
+  (`tools/data-schema.js`), que é a fonte única da lista de arquivos de dado.
+- `data/maps/sertao-128.json` ganhou o bloco `recursos`: `{ tipo: [[gx,gy], …] }`,
+  emitido pelo mesmo `tools/gerar-mapa.js` da F-T1, mesma semente.
+- `src/sim/recursos.ts` — a porta única de leitura da camada: `recursosIniciais`,
+  `recursoNoTile`, `regimeDoTipo`, `tilesDeColheita`, `disponivelAoAlcance`,
+  `colher`, `regenerar`. Memoizado por `GameData` num `WeakMap`, como `sim/mapa.ts`.
+- `state.recursos` — esparso, mesma forma e mesma chave de `state.estradas`
+  (`Record<"gx,gy", { tipo, quantidade }>`). Serializável sem código novo.
+- `producao.veio` morreu: `rendimentoDoVeio` saiu do dado, do carregador e do
+  tipo; quem decrementa é a colheita do tile. A regra
+  `producao/veio-invalido` saiu de `tools/data-rules.js` e no lugar entraram
+  `recurso/forma`, `recurso/regime`, `recurso/rendimento`, `recurso/colheita`,
+  `recurso/mapa`, `recurso/sem-instancia` e `mapa/recursos`.
+- Render (desenho **mínimo**, o marcador e só ele): `criarRecursosDeRender` e
+  `codigoDoRecurso` em `src/render/mapa.ts` (o funil), uma segunda camada de
+  tilemap em `WorldScene` no depth 0,5 — acima do chão, abaixo da estrada — e o
+  contador `recursosVisiveis` em `src/render/debug.ts`.
+- `IDEIAS.md`: a entrada *"Demolir e reconstruir renova o veio da Quarry"*
+  **saiu** — ela morreu neste commit, e o git é o arquivo morto. A entrada dos
+  modos do Woodcutter's foi corrigida: dizia que a sim não tem camada de
+  terreno e que por isso o veio mora no prédio, o que deixou de ser verdade.
+- `docs/GDD.md` §4 (mapa): o parágrafo de recursos naturais passou a descrever
+  rendimento por tile e os três regimes, em vez de prometê-los para a F-T2.
+
+### Verificado (evidência aberta nesta sessão)
+
+- `npm run verify` verde: **68 arquivos, 1080 testes**; `validate:data` 11
+  arquivos, 0 erros.
+- `test-output/F-T2a.json`, lido de volta: perna 1 —
+  `produzidoDepoisDeReconstruirNoMesmoTile: 0` (com o veio no prédio, reconstruir
+  devolvia o rendimento inteiro por meio custo de construção). Perna 2 — a mesma
+  pedreira rende **13** em (26,34) e **1** em (32,34) com rendimento injetado 1,
+  e **195 contra 15** com o dado real. Perna 3 — rocha zerada **sai** de
+  `state.recursos`, árvore cortada **fica** com `quantidade: 0`. Perna 4 —
+  `compararComESemSave` byte a byte com a camada parcialmente esgotada.
+- `screenshots/F-T2a-2-jazida-de-rocha-visivel.png`, aberto com Read: os
+  marcadores caem sobre os tiles de terreno `rocha`, e o terreno da F-T1
+  continua legível por baixo.
+- `test-output/F-T2a-shot.json`: a cena desenhou **52** marcadores de rocha na
+  vista, e o arquivo de mapa põe entre **36** (tile inteiro dentro) e **52**
+  (tocando a borda) ali. É a afirmação que fecha o desenho mínimo — a tela não
+  mente sobre onde há rocha.
+- Não-regressão por código de saída, sem abrir imagem (§8): `F-T1`, `F06`,
+  `F18a`, `F17e`, `F17f` e `F18d-2` saíram **0**.
+
+### Decisões, e por quê
+
+- **O alerta continua se chamando `veio-esgotado`, e o evento `vein-exhausted`.**
+  Da perspectiva de quem joga é a mesma coisa: a pedreira parou porque acabou a
+  pedra. O que mudou foi **de onde vem a resposta** — `selectors.ts` agora chama
+  o predicado do runtime (`semRecursoAoAlcance`, `sim/producao.ts`) em vez de
+  contar por conta própria. Renomear obrigaria o tema e o render a mexer sem que
+  nada mudasse para o jogador.
+- **Esgotado tem UM código de marcador, não um por tipo.** O desenho mínimo
+  distingue "há recurso" de "havia recurso"; cara por tipo é a F-TR.
+- **O marcador se recalcula do ESTADO a cada frame (por diff), e não uma vez no
+  carregamento como o terreno.** Onde há recurso é imutável; quanto sobrou não é,
+  e é o "quanto" que o jogador precisa ver mudar.
+- **O roteiro de screenshot não mostra o tile esgotando.** Não é omissão
+  disfarçada: com o dado real são 15 pedras por tile, e chegar a zero no browser
+  levaria milhares de ticks. A regra do marcador (`ausente` → some, `quantidade
+  0` → esgotado) está afirmada em teste headless sobre a função pura
+  `codigoDoRecurso`, que é a mesma que a cena usa para pintar. O que a tela
+  mostra é o que ela pode mostrar em três capturas.
+- **Dois guardas com a lista de arquivos de dado copiada à mão** (`F11a`,
+  `F-T1`) acusavam o dado correto. Consertei o **guarda**, não a asserção: os
+  dois passaram a importar `ARQUIVOS` de `tools/data-schema.js`. A lista já
+  tinha envelhecido duas vezes (o mapa da F-T1, o `resources.json` desta);
+  copiar de novo só agendaria a terceira.
+- **`tests/F18d-1a-modo.test.ts` mudou de número, e a asserção ficou mais
+  estrita.** A pedreira daquele cenário está em (36,34), que não tem rocha ao
+  alcance, então o especialista vai a `esperando_insumo` e o armazém fecha em 33,
+  não 34. Não movi o prédio — mover invalidaria o `escoouNoTick: 43` que aquele
+  mesmo teste mediu. Acrescentei `rochaAoAlcanceDaPedreira: 0` à asserção, que
+  **nomeia a causa** em vez de só registrar o novo total.
+
+### Dívida declarada (e quem a fecha)
+
+A pedreira escolhe o tile por varredura determinística **limitada ao próprio
+alcance**, dentro do sistema de produção. Quem varre é o **prédio**, não a
+unidade — não é o anti-padrão do §10 —, mas também não é a reserva no `claim`
+que a perna 6 exige. Consequência enquanto durar: duas pedreiras com alcances
+sobrepostos podem mirar o mesmo tile no mesmo tick; a colheita é aplicada em
+ordem de prédio e nenhuma quantidade fica negativa, então o efeito é uma
+colherada a menos, nunca estado inválido. **Fecha na F-T2c.**
+
+### Aberto, para decisão do operador
+
+- **O custo do save divergiu do número do item.** A perna 4 do aceite escreve
+  "+30 KB no save, medido: 900 tiles de recurso". O valor **medido** agora, com a
+  forma que o próprio item manda (`{ tipo, quantidade }` por tile), é **35 369 B
+  = 34,5 KB a 883 tiles**, ou ~40 B/tile. Não encolhi a forma nem arredondei o
+  número: escrevi o teto do teste **a partir da medição** (`< 45 B/tile` e
+  `< 40 KB`) e registrei a divergência aqui. O "+30 KB" era estimativa
+  pré-medição. Se 34,5 KB for caro demais, a saída é mudar a **forma** (chave
+  numérica, ou `tipo` implícito pelo mapa), e isso é decisão de escopo, não
+  correção.
+- **Nenhum tipo do dado de hoje usa o regime `porTempo`.** O cardume ficou
+  `nunca` por decisão do operador. O regime está implementado e coberto, mas só
+  por dado injetado no teste — não há instância viva no jogo.
+
+### Hipóteses — não verificadas
+
+- A cor do marcador de árvore (`#3E5D34`) e a de peixe (`#7FB8C9`) só foram
+  vistas no código: a captura desta sessão pegou uma jazida de **rocha**. Se
+  árvore sobre grama não se separar o bastante, é assunto da F-T2b (que põe a
+  árvore em cena como obstáculo) ou da F-TR, não desta feature.
+- O marcador foi conferido **no nível de zoom inicial**, como o terreno da F-T1.

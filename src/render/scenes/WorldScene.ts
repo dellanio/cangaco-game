@@ -3,7 +3,7 @@
 // mora aqui, so apresentacao.
 import Phaser from 'phaser';
 import temaSertao from '../../../data/theme-sertao.json';
-import { configDoMapa, terrenoDeRender } from '../mapa';
+import { codigoDoRecurso, configDoMapa, recursosDeRender, terrenoDeRender } from '../mapa';
 import {
   gridToScreen, screenToGrid, depthDeY, tileDentroDoMapa, ESCALA_DO_MUNDO,
 } from '../grid';
@@ -21,6 +21,7 @@ import {
 } from '../estagio-obra';
 import type { EstagioDaObra } from '../estagio-obra';
 import { centroDaVila } from '../../sim/selectors';
+import { tileDeChave } from '../../sim/estradas';
 import type { EstadoDePredio, GameState, Predio } from '../../sim/state';
 import type { PonteDeEstado } from '../ponte';
 import type { Ferramenta } from '../../input/ferramenta';
@@ -33,6 +34,11 @@ import type { EntradaDeAsset } from '../manifesto';
 import { manifestoDoJogo, texturasParaCarregar } from '../sprites';
 
 const CHAVE_TEXTURA_TERRENO = 'tiles-terreno';
+const CHAVE_TEXTURA_RECURSO = 'tiles-recurso';
+// Acima do chao (0) e abaixo da estrada (1, `render/estradas.ts`): a rua que o
+// jogador assentou cobre o marcador, como cobre o chao. O recurso continua no
+// estado; quem o le e a simulacao, nao o pixel.
+const DEPTH_DOS_RECURSOS = 0.5;
 
 /** F17e — a cara de cada estagio no placeholder geometrico (§9). `altura` e a
  *  fracao da altura do footprint que o volume ocupa, ancorado no PE: sao os tres
@@ -58,6 +64,12 @@ const CARA_DO_ESTAGIO: Record<EstagioDaObra, CaraDoEstagio> = {
 };
 
 export class WorldScene extends Phaser.Scene {
+  /** F-T2a — o ultimo CODIGO pintado por tile de recurso, para o diff do
+   *  POST_RENDER. Memoria de render local da cena, como `desenhados`: a verdade
+   *  continua em `state.recursos`, e isto aqui so evita repintar 883 tiles a
+   *  cada frame para mudar um. */
+  private readonly recursosDesenhados = new Map<string, number>();
+
   private readonly desenhados = new Map<
     string,
     {
@@ -100,6 +112,8 @@ export class WorldScene extends Phaser.Scene {
 
     this.criarTexturaDeTerreno(tilePx);
     const camadaChao = this.criarTilemap(tilePx, largura, altura);
+    this.criarTexturaDeRecurso(tilePx);
+    const camadaDeRecursos = this.criarCamadaDeRecursos(tilePx, largura, altura);
 
     const camera = this.cameras.main;
     camera.setBounds(0, 0, larguraPx, alturaPx);
@@ -230,6 +244,11 @@ export class WorldScene extends Phaser.Scene {
       estado.camera = { scrollX: camera.scrollX, scrollY: camera.scrollY, zoom: camera.zoom };
       estado.tilesRenderizados = camadaChao.tilesDrawn;
       estado.terrenoVisivel = this.contarTerrenoVisivel(camadaChao);
+      // F-T2a: a camada de recurso se repinta do ESTADO a cada frame (por diff),
+      // e nao uma vez no create como a de terreno. E a diferenca que o item pede:
+      // onde ha rocha e imutavel, quanto sobrou nao e, e o jogador tem de ver o
+      // tile esgotar.
+      estado.recursosVisiveis = this.atualizarRecursos(camadaDeRecursos);
       estado.pronto = true;
       if (this.ponte.atual) this.atualizarPredios(this.ponte.atual, tilePx, estado);
 
@@ -276,6 +295,89 @@ export class WorldScene extends Phaser.Scene {
     });
     g.generateTexture(CHAVE_TEXTURA_TERRENO, tilePx * terrenoDeRender.cores.length, tilePx);
     g.destroy();
+  }
+
+  /**
+   * F-T2a (desenho MINIMO) — a tira de marcadores, no mesmo esquema da tira de
+   * terreno: indice do tile E o codigo que vem de `codigoDoRecurso`. O codigo 0
+   * fica VAZIO de proposito — e o tile sem recurso nenhum, e ele tem de deixar o
+   * chao aparecer.
+   *
+   * Marcador, nao preenchimento: um losango pequeno no centro do tile. Cobrir o
+   * tile inteiro esconderia o terreno por baixo, e a F-T1 existe justamente para
+   * o jogador ler o terreno. Arte de recurso e decisao humana (§9); isto e a
+   * forma geometrica que diz "tem alguma coisa aqui" ate la.
+   */
+  private criarTexturaDeRecurso(tilePx: number): void {
+    const g = this.make.graphics({ x: 0, y: 0 }, false);
+    const meio = tilePx / 2;
+    const raio = Math.max(2, Math.round(tilePx * 0.3));
+    recursosDeRender.cores.forEach((hex, codigo) => {
+      if (codigo === 0) return; // tile vazio: nada desenhado, chao a mostra
+      const x = codigo * tilePx + meio;
+      g.fillStyle(Phaser.Display.Color.HexStringToColor(hex).color, 1);
+      g.fillPoints([
+        new Phaser.Geom.Point(x, meio - raio), new Phaser.Geom.Point(x + raio, meio),
+        new Phaser.Geom.Point(x, meio + raio), new Phaser.Geom.Point(x - raio, meio),
+      ], true);
+      g.lineStyle(1, 0x000000, 0.35);
+      g.strokePoints([
+        new Phaser.Geom.Point(x, meio - raio), new Phaser.Geom.Point(x + raio, meio),
+        new Phaser.Geom.Point(x, meio + raio), new Phaser.Geom.Point(x - raio, meio),
+      ], true, true);
+    });
+    g.generateTexture(CHAVE_TEXTURA_RECURSO, tilePx * recursosDeRender.cores.length, tilePx);
+    g.destroy();
+  }
+
+  private criarCamadaDeRecursos(tilePx: number, largura: number, altura: number): Phaser.Tilemaps.TilemapLayer {
+    const mapa = this.make.tilemap({ tileWidth: tilePx, tileHeight: tilePx, width: largura, height: altura });
+    const tileset = mapa.addTilesetImage('recurso', CHAVE_TEXTURA_RECURSO, tilePx, tilePx, 0, 0);
+    if (!tileset) throw new Error('WorldScene: falha ao criar o tileset de recurso.');
+    const camada = mapa.createBlankLayer('recursos', tileset);
+    if (!camada) throw new Error('WorldScene: falha ao criar a camada de recursos.');
+    camada.setDepth(DEPTH_DOS_RECURSOS);
+    // Comeca vazia: quem a preenche e o diff do POST_RENDER, a partir do estado.
+    return camada;
+  }
+
+  /** F-T2a — repinta SO o que mudou desde o ultimo frame e devolve a contagem
+   *  visivel. Tile que saiu de `state.recursos` (regime `nunca`, que apaga a
+   *  entrada ao zerar) volta a 0 e o marcador some; tile que ficou com
+   *  quantidade 0 (regime `porAcao`) vira o codigo de esgotado. Os dois casos
+   *  sao "acabou" na tela, e o estado e que diz qual e qual. */
+  private atualizarRecursos(camada: Phaser.Tilemaps.TilemapLayer): Record<string, number> {
+    const recursos = this.ponte.atual?.recursos ?? {};
+    for (const [chave, recurso] of Object.entries(recursos)) {
+      const codigo = codigoDoRecurso(recurso);
+      if (this.recursosDesenhados.get(chave) === codigo) continue;
+      const { gx, gy } = tileDeChave(chave);
+      camada.putTileAt(codigo, gx, gy);
+      this.recursosDesenhados.set(chave, codigo);
+    }
+    for (const chave of [...this.recursosDesenhados.keys()]) {
+      if (recursos[chave] !== undefined) continue;
+      const { gx, gy } = tileDeChave(chave);
+      camada.putTileAt(0, gx, gy);
+      this.recursosDesenhados.delete(chave);
+    }
+    return this.contarRecursosVisiveis(camada);
+  }
+
+  /** Lido de volta da camada desenhada, como `contarTerrenoVisivel`: o roteiro
+   *  afirma sobre o que a cena TEM na tela, nao sobre o dado que a alimentou. */
+  private contarRecursosVisiveis(camada: Phaser.Tilemaps.TilemapLayer): Record<string, number> {
+    const vista = this.cameras.main.worldView;
+    const contagem: Record<string, number> = {};
+    for (const tipo of recursosDeRender.tipos) contagem[tipo] = 0;
+    contagem.esgotado = 0;
+    for (const tile of camada.getTilesWithinWorldXY(vista.x, vista.y, vista.width, vista.height)) {
+      if (tile.index <= 0) continue;
+      const chave = tile.index === recursosDeRender.codigoEsgotado
+        ? 'esgotado' : recursosDeRender.tipos[tile.index - 1];
+      if (chave !== undefined) contagem[chave] = (contagem[chave] as number) + 1;
+    }
+    return contagem;
   }
 
   private criarTilemap(tilePx: number, largura: number, altura: number): Phaser.Tilemaps.TilemapLayer {

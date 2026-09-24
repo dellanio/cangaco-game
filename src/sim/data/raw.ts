@@ -7,6 +7,8 @@ import conditionJson from '../../../data/condition.json';
 import deliveryJson from '../../../data/delivery.json';
 import terrainJson from '../../../data/terrain.json';
 import economyJson from '../../../data/economy.json';
+// F-T2a — regime e rendimento dos recursos naturais. ONDE eles estao e do mapa.
+import resourcesJson from '../../../data/resources.json';
 // F-T1 — a camada de terreno base. Um arquivo por mapa; o jogo carrega ESTE, e
 // `tools/gerar-mapa.js` e quem o emite (autoria, nunca runtime).
 import mapaSertaoJson from '../../../data/maps/sertao-128.json';
@@ -37,6 +39,7 @@ export const rawGameData = {
   delivery: deliveryJson,
   terrain: terrainJson,
   economy: economyJson,
+  resources: resourcesJson,
   mapa: mapaSertaoJson,
 };
 

@@ -148,6 +148,19 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   Observacao do operador a partir do que relatei ao fechar a F17d; a evidencia ate aqui afirma sobre NUMERO
   (dataset e `window.__cangaco`), nao sobre pixel, entao nenhum aceite escrito depende da sobreposicao hoje.
 
+- [2026-09-24] a pedreira deixou de render o mesmo em qualquer lugar (F-T2a) | medido: `200` fixo
+  virou **195** numa jazida densa e **15** numa ponta de rocha isolada, com
+  `resources.json.tipos.rock.rendimentoPorTile = 15` e `quarry.colheita.alcance = 6`
+  (`test-output/F-T2a.json`) | `data/resources.json`, `data/production.json`
+- [2026-09-24] o alcance 6 da pedreira é o número que decide se o lugar importa, e ele nunca foi
+  calibrado | com alcance 6 a caixa de colheita tem 13×13 tiles e o melhor sítio do mapa padrão dá
+  13 tiles de rocha; alcance menor estreita a escolha, maior a apaga | `data/production.json`
+  (`quarry.colheita.alcance`) — **não mexer sozinho**: anda junto com `rendimentoPorTile` e com a
+  densidade que `tools/gerar-mapa.js` semeia
+- [2026-09-24] `ticksPorUnidadeRegenerada = 3000` (5 min de jogo) está no dado e **nenhum tipo o
+  usa**: os três são `nunca`. Número sem efeito hoje | quando o primeiro `porTempo` nascer, é o
+  primeiro a conferir | `data/resources.json`
+
 ---
 
 ## Ciclos fechados

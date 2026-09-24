@@ -32,8 +32,9 @@ import { caminhoAtePredioCompleto, liberar, reclamarMelhorOcupacao, removerTaref
 import { ehPredioOcupavel, predioAceita, predioDoOcupante, tiposQueOcupam } from '../ocupacao';
 import { predioLigadoAoArmazem } from '../estradas';
 import {
-  cabeNaSaida, consumirInsumos, receitaDoTipo, temInsumo, unidadesPorCiclo, veioEsgotado,
+  cabeNaSaida, consumirInsumos, receitaDoTipo, semRecursoAoAlcance, temInsumo, unidadesPorCiclo,
 } from '../producao';
+import { colher } from '../recursos';
 import { tileAndavel } from '../pathfinding';
 import { andar, chegou, comPredio, comUnidade, dadosDaFsm, ficarOcioso } from '../units/movimento';
 import type { ResultadoDeSistema } from './jobs';
@@ -124,9 +125,10 @@ function comFsm(state: GameState, u: Unidade, fsm: string): Passo {
 }
 
 /**
- * O deposito do ciclo pronto: o UNICO ponto que mexe na gaveta `saida` e no
- * veio. Nao cabendo, o ciclo fica pronto e espera — `progresso` nao volta a
- * zero, entao nada do que ja foi trabalhado se perde.
+ * O deposito do ciclo pronto: o UNICO ponto que mexe na gaveta `saida` e o UNICO
+ * que COLHE. Nao cabendo, o ciclo fica pronto e espera — `progresso` nao volta a
+ * zero, entao nada do que ja foi trabalhado se perde, e nada e colhido do mapa
+ * por um ciclo que ainda nao entregou.
  */
 function depositar(
   state: GameState, u: Unidade, predio: PredioCompleto, receita: ReceitaDePredio, dados: GameData,
@@ -142,18 +144,22 @@ function depositar(
     saida[mercadoria] = (saida[mercadoria] ?? 0) + q;
     events.push({ type: 'goods-produced', predio: predio.id, mercadoria, quantidade: q });
   }
-  const veioAntes = predio.producao?.veio ?? null;
-  const veio = veioAntes === null ? null : veioAntes - unidadesPorCiclo(receita);
+  // F-T2a — a colheita: o que saiu da gaveta saiu do MAPA. Acontece aqui, no
+  // deposito, e nao no avanco do relogio, para que o tile so perca o que virou
+  // mercadoria de verdade.
   const depositado: PredioCompleto = {
-    ...predio, estoque: { ...predio.estoque, saida }, producao: { progresso: 0, veio },
+    ...predio, estoque: { ...predio.estoque, saida }, producao: { progresso: 0 },
+  };
+  const comColheita: GameState = receita.colheita === null ? state : {
+    ...state, recursos: colher(state, predio, receita.colheita, unidadesPorCiclo(receita), dados),
   };
   // o evento sai UMA vez, no ciclo que esgotou: quem ja estava esgotado nao
-  // chega ate aqui (o ramo de `veioEsgotado` em `produzir` corta antes)
-  if (veio !== null && veioEsgotado({ progresso: 0, veio }, receita)) {
+  // chega ate aqui (o ramo de `semRecursoAoAlcance` em `produzir` corta antes)
+  if (semRecursoAoAlcance(comColheita, depositado, receita, dados)) {
     events.push({ type: 'vein-exhausted', predio: predio.id, tipo: predio.tipo });
   }
   return {
-    state: comUnidade(comPredio(state, depositado), { ...u, fsm: 'trabalhando', fsmData: {} }),
+    state: comUnidade(comPredio(comColheita, depositado), { ...u, fsm: 'trabalhando', fsmData: {} }),
     events,
   };
 }
@@ -184,8 +190,8 @@ function produzir(state: GameState, u: Unidade, predio: PredioCompleto, dados: G
   if (!predioLigadoAoArmazem(state, predio, dados)) return comFsm(state, u, 'saida_cheia');
   // ciclo PRONTO de um tick anterior: so falta caber
   if (prod.progresso >= receita.ticksDoCiclo) return depositar(state, u, predio, receita, dados);
-  // o veio e o insumo que nao vem mais (D2) — a F22 distingue os dois pelo `veio === 0`
-  if (veioEsgotado(prod, receita)) return comFsm(state, u, 'esperando_insumo');
+  // o recurso do mapa e o insumo que nao vem mais (D2) — a F22 distingue os dois
+  if (semRecursoAoAlcance(state, predio, receita, dados)) return comFsm(state, u, 'esperando_insumo');
   // inicio de ciclo: cobra os insumos, como a escola cobra o ouro ao INICIAR o treino (F13a)
   let atual = predio;
   if (prod.progresso === 0) {
@@ -193,7 +199,7 @@ function produzir(state: GameState, u: Unidade, predio: PredioCompleto, dados: G
     atual = consumirInsumos(predio, receita);
   }
   const avancado: PredioCompleto = {
-    ...atual, producao: { progresso: prod.progresso + 1, veio: prod.veio },
+    ...atual, producao: { progresso: prod.progresso + 1 },
   };
   const comRelogio = comPredio(state, avancado);
   return prod.progresso + 1 < receita.ticksDoCiclo

@@ -7,8 +7,10 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { validarTudo } from '../tools/data-rules.js';
-
-const ARQUIVOS = ['time', 'buildings', 'production', 'units', 'combat', 'condition', 'delivery', 'terrain', 'economy'];
+// F-T2a: a lista vinha copiada aqui e envelheceu duas vezes (o mapa da F-T1, o
+// `resources.json` desta). `ARQUIVOS` do schema e a fonte unica — copiar de novo
+// so agendaria a terceira.
+import { ARQUIVOS } from '../tools/data-schema.js';
 
 type Velocidade = { opcoes: unknown; padrao: unknown };
 

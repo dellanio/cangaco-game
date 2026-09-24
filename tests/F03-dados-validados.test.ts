@@ -65,10 +65,21 @@ const fixtures: Fixture[] = [
   // UMA vez. Estas tres provam que o dado que sairia distorcido nao passa.
   { nome: 'bakery com razao que o arredondamento distorce', regraEsperada: 'producao/razao-distorcida',
     quebrar: (d) => { d.production.predios.bakery.sai.loaves = d.production.predios.bakery.entra.flour * 1.9; } },
-  { nome: 'veio com rendimento fracionario', regraEsperada: 'producao/veio-invalido',
-    quebrar: (d) => { d.production.predios.quarry.veio.rendimento = 2.5; } },
-  { nome: 'veio com rendimento zero', regraEsperada: 'producao/veio-invalido',
-    quebrar: (d) => { d.production.predios.quarry.veio.rendimento = 0; } },
+  // F-T2a: as duas de cima eram do `veio` do predio. O total mudou de lugar (foi
+  // para o TILE), entao a regra que o protege mudou de nome junto — o que se
+  // prova aqui continua sendo "rendimento tem de ser inteiro >= 1".
+  { nome: 'rendimento por tile fracionario', regraEsperada: 'recurso/rendimento',
+    quebrar: (d) => { d.resources.tipos.rock.rendimentoPorTile = 2.5; } },
+  { nome: 'rendimento por tile zero', regraEsperada: 'recurso/rendimento',
+    quebrar: (d) => { d.resources.tipos.rock.rendimentoPorTile = 0; } },
+  { nome: 'regime de recurso fora da uniao', regraEsperada: 'recurso/regime',
+    quebrar: (d) => { d.resources.tipos.rock.regime = 'aos-domingos'; } },
+  { nome: 'predio que colhe recurso inexistente', regraEsperada: 'recurso/colheita',
+    quebrar: (d) => { d.production.predios.quarry.colheita.recurso = 'fantasma'; } },
+  { nome: 'tipo de recurso declarado sem nenhum tile em mapa nenhum', regraEsperada: 'recurso/sem-instancia',
+    quebrar: (d) => { d.resources.tipos.orvalho = { regime: 'porTempo', rendimentoPorTile: 1 }; } },
+  { nome: 'mapa poe recurso que nao existe em resources.tipos', regraEsperada: 'recurso/mapa',
+    quebrar: (d) => { d['maps/sertao-128'].recursos.fantasma = [[1, 1]]; } },
   { nome: 'production.escala aponta pra grupo inexistente', regraEsperada: 'tempo/grupo-inexistente',
     quebrar: (d) => { d.production.escala = 'inexistente'; } },
   { nome: 'delivery perde a chave escala', regraEsperada: 'tempo/duracao-sem-grupo',

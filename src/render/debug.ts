@@ -74,6 +74,14 @@ export interface EstadoDebug {
    *  pixel: a agua aparece na contagem, ou a tela esta mentindo. Vazio ate o
    *  primeiro POST_RENDER. */
   terrenoVisivel: Readonly<Record<string, number>>;
+  /** F-T2a — quantos tiles de cada RECURSO estao dentro da vista da camera
+   *  agora, lidos de volta da camada de marcadores. A chave e o id neutro do
+   *  recurso (`rock`, `tree`, `fish`) mais `esgotado`, que e o tile que ja foi
+   *  colhido ate o fim e ficou (regime `porAcao`). E sobre esta contagem que o
+   *  roteiro afirma que o jogador VE a rocha antes de plantar a pedreira, e que
+   *  a ve sumir depois — sem olhar pixel (§8). Vazio ate o primeiro
+   *  POST_RENDER. */
+  recursosVisiveis: Readonly<Record<string, number>>;
   /** Quantos tiles de estrada DE PE (F08) a cena tem desenhados agora. */
   estradasRenderizadas: number;
   /** F18d-2 — quantos tiles de CANTEIRO (`estradasPlanejadas`, F18d-1b) a cena tem
@@ -158,6 +166,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     canteirosDeObra: {},
     spritesDePredio: {},
     terrenoVisivel: {},
+    recursosVisiveis: {},
     estradasRenderizadas: 0,
     estradasPlanejadasRenderizadas: 0,
     previaDeEstrada: null,

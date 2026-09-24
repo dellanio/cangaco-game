@@ -1434,6 +1434,19 @@ prédio surge sem clique do jogador.
   descreve o que não existe é pior que doc faltando.
 
 ### F-T2 — Camada de recursos no mapa (sim + render mínimo, integração)
+
+> **Quebra em sub-itens (CLAUDE.md §6, 2026-09-24)**: o item atravessa dado,
+> `GameState`, produção, JobBoard, A* e render, e as seis pernas não fecham numa
+> sessão. Ele **não** foi reescrito nem reordenado — o escopo, as seis pernas e
+> as notas abaixo continuam sendo o contrato inteiro, e as três partes só dizem
+> **em que ordem** elas fecham. O que o operador mandou lembrar está preservado e
+> repartido, sem sair da feature: *o rendimento por tile substitui o veio: 200 da
+> F15a* e *o exploit de demolir-e-reconstruir morre como primeira perna do
+> aceite* ficam na **F-T2a**; *a árvore como obstáculo tem a re-medição do A*
+> escrita como tarefa de dentro* fica na **F-T2b**, que é a parte que torna a
+> árvore obstáculo — a medição continua sendo tarefa de dentro da parte que muda
+> o A*, que é o que a regra pede. A F-T2 só fecha quando as três fecharem.
+
 - **Escopo**: `state.recursos`, **esparso e dentro do `GameState`**, com a mesma
   forma e a mesma chave de `state.estradas` —
   `Readonly<Record<"gx,gy", { tipo: string; quantidade: number }>>`. Um
@@ -1510,6 +1523,63 @@ prédio surge sem clique do jogador.
   2026-09-24)**: **esta feature é de integração**, pelo mesmo motivo e com a
   mesma fronteira da F-T1: floresta que existe só para o A* faz o caminho
   desviar de nada, aos olhos do jogador. O render lê; não decide.
+
+#### F-T2a — O recurso está no mapa e no estado, e a Quarry colhe o tile
+- **Fecha as pernas 1, 2, 3 e 4** do aceite acima, na íntegra, e mais nada.
+- **Escopo**: o dado dos recursos (tipo, regime, rendimento por tile, alcance da
+  colheita) e a camada de recurso no arquivo de mapa, emitida pelo mesmo gerador
+  de autoria da F-T1; `state.recursos` esparso, com a forma e a chave de
+  `state.estradas`; o mecanismo de esgotamento com os três regimes; a **Quarry**
+  como primeira consumidora — `producao.veio` deixa de ser a fonte,
+  `rendimentoDoVeio` sai do dado, do carregador e do tipo, e quem decrementa
+  passa a ser a colheita do tile. Render: o **marcador de rocha**, e só ele.
+- **Nota (dívida declarada, e quem a fecha)**: nesta parte a pedreira escolhe o
+  tile por varredura determinística **limitada ao próprio alcance**, dentro do
+  sistema de produção. Quem varre é o **prédio**, não a unidade, então não é o
+  anti-padrão do §10 — que fala de unidade escolhendo tarefa varrendo o mundo —,
+  mas também **não** é a reserva no `claim` que a perna 6 exige. Consequência
+  enquanto durar: duas pedreiras com alcances sobrepostos podem mirar o mesmo
+  tile no mesmo tick; a colheita é aplicada em ordem de prédio e nenhuma
+  quantidade fica negativa, então o efeito é uma colher a menos, não estado
+  inválido. Estado intermediário **declarado**, não prática aprovada: quem o
+  encerra é a F-T2c.
+- **Nota (o que a árvore ainda não é aqui)**: a árvore nasce no mapa e no estado
+  como recurso de regime `porAcao` — ela precisa existir para a perna 3, que é
+  justamente a diferença entre *cortada* e *inexistente* —, mas **não** bloqueia
+  passo nesta parte, e o A* não muda uma linha. Obstáculo é a F-T2b, junto da
+  medição que ele obriga; mudar o A* sem medir na mesma parte é o que a decisão
+  do operador proibiu.
+- **Nota (o que sai de outros arquivos no commit desta parte)**: a entrada
+  *"Demolir e reconstruir renova o veio da Quarry"* sai do `IDEIAS.md` aqui — é
+  aqui que ela morre. Os **modos do Woodcutter's**, que a entrada *"Terreno de
+  mapa variado"* deixou pendurados, ganham a pré-condição (a distinção de regime)
+  aqui, mas continuam sendo item futuro: pré-condição não é implementação.
+- **Nota de integração (CLAUDE.md §10)**: vale a da F-T2, escrita acima antes de
+  qualquer código. Esta parte toca `src/sim/` e `src/render/` pelo mesmo motivo:
+  recurso que só a simulação enxerga faz o jogador plantar a pedreira no escuro.
+- **Evidência**: `test-output/F-T2a.json` + `screenshots/F-T2a-*.png`
+
+#### F-T2b — A árvore é obstáculo, e o A* é re-medido
+- **Fecha a perna 5** do aceite acima, com a re-medição dentro dela, mais o
+  **marcador de árvore** no render.
+- **Escopo**: o recurso que a F-T2a já pôs no mapa passa a reprovar o passo, pela
+  mesma porta de leitura que o terreno usa; a medição de busca curta e longa,
+  mapa vazio contra a densidade de floresta do mapa padrão, µs **e nós
+  expandidos**, com o teto escrito a partir do número medido.
+- **Nota (a medição não cabe em `estatisticasDeBusca()`)**: a F10 afirma o
+  retorno dela com `toEqual`, então campo novo ali reprova a suíte inteira. Os
+  nós expandidos saem por acessor próprio, e não por crescimento do objeto que
+  outra feature já congelou.
+- **Evidência**: `test-output/F-T2b.json` + `screenshots/F-T2b-*.png`
+
+#### F-T2c — A escolha do tile nasce no JobBoard, com reserva
+- **Fecha a perna 6** do aceite acima, e encerra a dívida declarada na F-T2a.
+- **Escopo**: a varredura por alcance da F-T2a vira **tarefa do JobBoard**, com a
+  origem resolvida e **reservada** no `claim` e devolvida no `release`. A função
+  pura que escolhe o tile não é jogada fora: ela vira o candidato que a tarefa
+  reserva. Prova por comportamento — dois especialistas reclamando no mesmo tick
+  recebem tiles distintos.
+- **Evidência**: `test-output/F-T2c.json`
 
 ### F-TR — Tratamento visual do terreno e dos recursos (render)
 - **Posição e forma — decisão do operador, 2026-09-24**: **um item, não três.**

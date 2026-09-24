@@ -21,11 +21,14 @@ import type { Caminho } from '../src/sim/pathfinding';
 import { inicial, tile } from './helpers/jobs-cenario';
 import { gravarEvidencia } from './helpers/evidence';
 import { validarTudo } from '../tools/data-rules.js';
+import { ARQUIVOS } from '../tools/data-schema.js';
 
 const { largura: LARGURA, altura: ALTURA } = gameData.terreno.mapaPadrao;
 
 /** Um mapa sintetico com a legenda do mapa de verdade — a legenda e dado, e
- *  reescrever uma aqui so criaria um segundo vocabulario para divergir. */
+ *  reescrever uma aqui so criaria um segundo vocabulario para divergir.
+ *  `recursos` entra vazio (F-T2a): estes cenarios sao de TERRENO, e recurso
+ *  nenhum cai fora do lugar por causa deles. */
 function mapaDe(linhas: readonly string[], id = 'sintetico'): MapaData {
   return {
     id,
@@ -33,6 +36,7 @@ function mapaDe(linhas: readonly string[], id = 'sintetico'): MapaData {
     altura: linhas.length,
     linhas,
     legenda: gameData.mapa.legenda,
+    recursos: {},
   };
 }
 
@@ -296,10 +300,11 @@ describe('F-T1 — guardas', () => {
   });
 
   it('a regra de mapa do validate:data ACUSA — nao so deixa de acusar a toa', () => {
-    const nomes = ['time', 'buildings', 'production', 'units', 'combat', 'condition',
-      'delivery', 'terrain', 'economy', 'maps/sertao-128'];
+    // `ARQUIVOS` do schema, e nao uma copia da lista: a copia que estava aqui
+    // envelheceu no primeiro arquivo novo (`resources.json`, F-T2a) e fez este
+    // guarda acusar o dado REAL.
     const dados: Record<string, unknown> = {};
-    for (const nome of nomes) dados[nome] = JSON.parse(readFileSync(`data/${nome}.json`, 'utf8'));
+    for (const nome of ARQUIVOS) dados[nome] = JSON.parse(readFileSync(`data/${nome}.json`, 'utf8'));
     expect(validarTudo(dados)).toEqual([]);
 
     const mapa = dados['maps/sertao-128'] as { linhas: string[]; largura: number };

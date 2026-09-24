@@ -23,7 +23,7 @@ import { trabalhadorDoTipo } from '../src/sim/ocupacao';
 import temaSertao from '../data/theme-sertao.json';
 import { gravarEvidencia } from './helpers/evidence';
 import {
-  avancar, cenarioDePedreira, comRendimento, semAUnidade, semEstrada, semOcupante, veioDe,
+  avancar, cenarioDePedreira, comJazida, disponivelDe, semAUnidade, semEstrada, semOcupante,
 } from './helpers/producao-cenario';
 
 const pausar = (predio: string, pausado: boolean): Command => ({
@@ -49,7 +49,7 @@ const alertas = alertasDoEstado;
  * o guarda em silencio.
  */
 function cenariosDoAceite(): Readonly<Record<string, readonly Alerta[]>> {
-  const dadosCurtos = comRendimento(gameData, 'quarry', 2);
+  const dadosCurtos = comJazida(gameData, 'rock', [[25, 32]], 2);
   return {
     aberturaDaVila: alertas(createInitialState(gameData.economia.estadoInicial.semente)),
     pedreiraOcupadaELigada: alertas(cenarioDePedreira()),
@@ -143,12 +143,12 @@ describe('F22 — veio-esgotado', () => {
   it('veio esgotado alerta, com o rendimento injetado pelo dado', () => {
     // Como a F15a: o rendimento vem do MESMO `GameData` com outro numero, nunca
     // de veio fabricado a mao nem de 200 unidades de espera.
-    const dadosCurtos = comRendimento(gameData, 'quarry', 2);
+    const dadosCurtos = comJazida(gameData, 'rock', [[25, 32]], 2);
     const inicio = cenarioDePedreira(dadosCurtos);
     expect(causasDe(alertas(inicio, dadosCurtos), 'q1')).toEqual([]);
 
     const esgotada = avancar(inicio, 167 * 5, dadosCurtos);
-    expect(veioDe(esgotada, 'q1'), 'a fixture deveria ter esgotado o veio').toBe(0);
+    expect(disponivelDe(esgotada, 'q1', dadosCurtos), 'a fixture deveria ter esgotado a jazida').toBe(0);
     expect(alertas(esgotada, dadosCurtos)).toEqual([
       { predio: 'q1', tipo: 'quarry', causa: 'veio-esgotado' },
     ]);
@@ -157,20 +157,21 @@ describe('F22 — veio-esgotado', () => {
   it('o alerta sai pelo predicado do runtime, nao por `veio === 0`', () => {
     // A quarry rende 1 por ciclo, entao os dois criterios coincidiriam nela. O
     // que separa os dois e uma receita que consome mais de uma unidade por
-    // ciclo: `veioEsgotado` reprova ja em `veio < unidadesPorCiclo`, e e ai que
+    // ciclo: `semRecursoAoAlcance` reprova ja em `disponivel < unidadesPorCiclo`, e e ai que
     // a producao para de verdade — alertar so em zero avisaria tarde.
+    const comTres = comJazida(gameData, 'rock', [[25, 32]], 3); // um unico tile, de 3 pedras
     const dobrada: GameData = {
-      ...gameData,
+      ...comTres,
       producao: {
-        ...gameData.producao,
+        ...comTres.producao,
         receitas: {
-          ...gameData.producao.receitas,
-          quarry: { ...gameData.producao.receitas['quarry']!, sai: { stone: 2 }, rendimentoDoVeio: 3 },
+          ...comTres.producao.receitas,
+          quarry: { ...comTres.producao.receitas['quarry']!, sai: { stone: 2 } },
         },
       },
     };
     const s = avancar(cenarioDePedreira(dobrada), 167 * 3, dobrada);
-    expect(veioDe(s, 'q1'), 'sobra 1 no veio, e a receita pede 2').toBe(1);
+    expect(disponivelDe(s, 'q1', dobrada), 'sobra 1 na jazida, e a receita pede 2').toBe(1);
     expect(causasDe(alertas(s, dobrada), 'q1')).toEqual(['veio-esgotado']);
   });
 });

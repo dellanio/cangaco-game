@@ -29,7 +29,7 @@ import { TIPO_QUE_CARREGA } from '../src/sim/jobs';
 import { armazemDoCenario, comEstradas, comUnidadeExtra, linhaH } from './helpers/jobs-cenario';
 import { comOuroNaEscola, escolaDoCenario, ouroNaEscola } from './helpers/escola-cenario';
 import {
-  cenarioDePedreira, cenarioDeSerraria, cenarioOraculo, comSaida, entradaDe, progressoDe, saidaDe,
+  cenarioDePedreira, cenarioDeSerraria, cenarioOraculo, comSaida, disponivelDe, entradaDe, progressoDe, saidaDe,
 } from './helpers/producao-cenario';
 import { violacoesDeInvariantes } from './helpers/jobs-invariantes';
 import { gravarEvidencia } from './helpers/evidence';
@@ -248,7 +248,8 @@ describe('F15b-2 — aceite do cenario oraculo (GDD §4.5)', () => {
       dado: {
         receitas: gameData.producao.receitas,
         capacidadeDaGaveta: gameData.producao.estoqueInternoPorPredio,
-        rendimentoDoVeio: gameData.producao.receitas.quarry?.rendimentoDoVeio ?? null,
+        colheitaDaQuarry: gameData.producao.receitas.quarry?.colheita ?? null,
+        rendimentoPorTile: gameData.recursos.tipos.rock?.rendimentoPorTile ?? null,
       },
       cenario: {
         semente: inicial.rng.seed,
@@ -271,10 +272,7 @@ describe('F15b-2 — aceite do cenario oraculo (GDD §4.5)', () => {
         piorOcio,
         ticksPorFsmDoEspecialista: fsmDoEspecialista,
         maiorSequenciaEsperandoInsumo: maiorSemInsumo,
-        veioDaPedreiraNoFim: (() => {
-          const q = s.predios.porId.q1;
-          return q?.estado === 'completo' ? q.producao?.veio ?? null : null;
-        })(),
+        veioDaPedreiraNoFim: disponivelDe(s, 'q1'),
         gavetasNoFim: Object.fromEntries(['w1', 'w2', 'q1', 's1'].map((id) => [
           id, { entrada: { ...entradaDe(s, id) }, saida: { ...saidaDe(s, id) } },
         ])),

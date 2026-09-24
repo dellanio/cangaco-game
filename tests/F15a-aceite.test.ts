@@ -23,7 +23,7 @@ import { trabalhadorDoTipo } from '../src/sim/ocupacao';
 import { comEstradas, linhaH, tile } from './helpers/jobs-cenario';
 import { escolaDoCenario, pedir } from './helpers/escola-cenario';
 import {
-  avancar, cenarioDePedreira, cenarioDeSerraria, comRendimento, fsmDe, progressoDe, saidaDe, veioDe,
+  avancar, cenarioDePedreira, cenarioDeSerraria, comJazida, disponivelDe, fsmDe, progressoDe, saidaDe,
 } from './helpers/producao-cenario';
 import { violacoesDaFsmDoEspecialista } from './helpers/especialista-invariantes';
 import { violacoesDeInvariantes } from './helpers/jobs-invariantes';
@@ -162,7 +162,7 @@ describe('F15a — aceite headless do BUILD_PLAN', () => {
 
     // --- as duas clausulas de dado injetado, sobre cenarios controlados ---
     const serraria = avancar(cenarioDeSerraria(), 300);
-    const dadosCurtos = comRendimento(gameData, 'quarry', 2);
+    const dadosCurtos = comJazida(gameData, 'rock', [[25, 32]], 2);
     const curto = avancar(cenarioDePedreira(dadosCurtos), CICLO * 5, dadosCurtos);
     let esgotados = 0;
     let e = cenarioDePedreira(dadosCurtos);
@@ -173,7 +173,7 @@ describe('F15a — aceite headless do BUILD_PLAN', () => {
     expect(fsmDe(serraria, 'u2')).toBe('esperando_insumo');
     expect(progressoDe(serraria, 's1')).toBe(0);
     expect(saidaDe(curto, 'q1').stone).toBe(2);
-    expect(veioDe(curto, 'q1')).toBe(0);
+    expect(disponivelDe(curto, 'q1', dadosCurtos)).toBe(0);
     expect(esgotados).toBe(1);
 
     gravarEvidencia('F15a', {
@@ -182,7 +182,7 @@ describe('F15a — aceite headless do BUILD_PLAN', () => {
       dado: {
         ticksDoCicloDaQuarry: CICLO,
         tetoDaGavetaDeSaida: TETO_DA_GAVETA,
-        rendimentoDoVeio: gameData.producao.receitas.quarry?.rendimentoDoVeio,
+        colheitaDaQuarry: gameData.producao.receitas.quarry?.colheita,
         receitaDaSawmill: gameData.producao.receitas.sawmill,
       },
       caminhoReal: {
@@ -196,7 +196,7 @@ describe('F15a — aceite headless do BUILD_PLAN', () => {
         stoneNaSaidaNoFim: quarry?.estoque.saida.stone ?? 0,
         _notaF15b: 'a gaveta nao enche mais: o nivel 6 escoa para o armazem',
         progressoNoFim: quarry?.producao?.progresso ?? 0,
-        veioNoFim: quarry?.producao?.veio ?? null,
+        disponivelNoFimAoAlcanceDaQuarry: quarry === null ? null : disponivelDe(r.fim, quarry.id),
         fsmDoPedreiroNoFim: pedreiro?.fsm,
         ticksEmOciosoDepoisDeOcupar: r.ociosoDepoisDeOcupar,
         ticksEmEsperandoInsumo: r.esperandoInsumo,
@@ -206,7 +206,7 @@ describe('F15a — aceite headless do BUILD_PLAN', () => {
         serrariaSemTronco: { ticks: 300, fsm: fsmDe(serraria, 'u2'), progresso: progressoDe(serraria, 's1') },
         veioCurto: {
           rendimento: 2, ticks: CICLO * 5, stoneNaSaida: saidaDe(curto, 'q1').stone,
-          veio: veioDe(curto, 'q1'), fsm: fsmDe(curto, 'u1'), eventosDeVeioEsgotado: esgotados,
+          disponivel: disponivelDe(curto, 'q1', dadosCurtos), fsm: fsmDe(curto, 'u1'), eventosDeVeioEsgotado: esgotados,
         },
       },
       violacoes: {

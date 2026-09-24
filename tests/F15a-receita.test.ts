@@ -20,7 +20,7 @@ describe('F15a — a receita e um ciclo', () => {
     expect(r?.ticksDoCiclo).toBe(167);
     expect(r?.entra).toEqual({});
     expect(r?.sai).toEqual({ stone: 1 });
-    expect(r?.rendimentoDoVeio).toBeGreaterThan(0);
+    expect(r?.colheita).toEqual({ recurso: 'rock', alcance: 6 });
   });
 
   it('sawmill: 1 tronco -> 2 timber, a razao vindo das taxas e nao de um literal', () => {
@@ -28,15 +28,15 @@ describe('F15a — a receita e um ciclo', () => {
     expect(r?.ticksDoCiclo).toBe(273);
     expect(r?.entra).toEqual({ tree_trunk: 1 });
     expect(r?.sai).toEqual({ timber: 2 });
-    expect(r?.rendimentoDoVeio).toBeNull();
+    expect(r?.colheita).toBeNull();
   });
 
-  it('woodcutters: 545 ticks por tronco, sem veio — ele replanta', () => {
+  it('woodcutters: 545 ticks por tronco, sem colheita — ele replanta', () => {
     const r = gameData.producao.receitas.woodcutters;
     expect(r?.ticksDoCiclo).toBe(545);
     expect(r?.entra).toEqual({});
     expect(r?.sai).toEqual({ tree_trunk: 1 });
-    expect(r?.rendimentoDoVeio).toBeNull();
+    expect(r?.colheita).toBeNull();
   });
 
   it('as proporcoes que o GDD escreve em palavras saem do dado', () => {

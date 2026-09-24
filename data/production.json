@@ -2,7 +2,7 @@
   "_doc": "Taxas em unidades por minuto na escala 1.0. O carregador multiplica por escalas.economia. Todos os valores sao [proposta] e devem ser calibrados em F15 e F20 contra as proporcoes de referencia do GDD.",
   "escala": "economia",
   "predios": {
-    "quarry":           { "entra": {}, "sai": { "stone": 1.8 }, "veio": { "rendimento": 200 }, "notas": "consome o veio de rocha; esgota. rendimento 200 e PONTO DE PARTIDA aprovado pelo operador (~55 min de producao continua na escala 2.0); calibrar na F15b, ver BALANCE_LOG" },
+    "quarry":           { "entra": {}, "sai": { "stone": 1.8 }, "colheita": { "recurso": "rock", "alcance_tiles": 6 }, "notas": "F-T2a: a fonte e o TILE, nao o predio. O `veio: { rendimento: 200 }` da F15a saiu daqui — o total passou a ser (tiles de rock ao alcance) x resources.json:tipos.rock.rendimentoPorTile, e e por isso que o lugar da pedreira importa. `alcance_tiles` e distancia de Chebyshev a partir do footprint; 6 cobre o lajedo da vila inteiro. Calibrar na F15b/F20, ver BALANCE_LOG" },
     "woodcutters":      { "entra": {}, "sai": { "tree_trunk": 0.55 }, "modos": ["cortar", "replantar", "ambos"], "notas": "`modos` NAO TEM LEITOR, de proposito (F16c, 2026-09-23): nao ha arvore no mapa nem camada de terreno, entao `cortar` nao tem o que consumir, `replantar` seria `pausar` com outro nome e `ambos` e o comportamento atual. Pre-condicao para implementar: a camada de terreno com arvore (IDEIAS.md). Nao ligue o campo sem ela." },
     "sawmill":          { "entra": { "tree_trunk": 1.1 }, "sai": { "timber": 2.2 } },
     "farm":             { "entra": {}, "sai": { "corn": 1.22 }, "notas": "medicao da comunidade (2014)" },

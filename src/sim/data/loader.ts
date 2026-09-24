@@ -2,7 +2,8 @@ import type { RawGameData } from './raw';
 import type {
   CombateData, CondicaoData, ConstrucaoData, ConversaoRegistrada, EconomiaData,
   EntregaData, GameData, MovimentoData, ProducaoData, ReceitaDePredio,
-  MapaData, TerrenoData, TerrenoDeMapa, TerrenoTipo, Ticks, UnidadesData,
+  MapaData, RecursosData, RegimeDeRecurso, TerrenoData, TerrenoDeMapa, TerrenoTipo,
+  Ticks, TileDeMapa, TipoDeRecurso, UnidadesData,
 } from './types';
 import { TERRENOS_DE_MAPA } from './terrenos';
 
@@ -53,7 +54,49 @@ function carregarMapa(raw: RawGameData): MapaData {
       }
     }
   }
-  return { id: bruto.id, largura, altura, linhas: bruto.linhas, legenda };
+  return {
+    id: bruto.id, largura, altura, linhas: bruto.linhas, legenda,
+    recursos: carregarRecursosDoMapa(bruto, largura, altura, raw.resources.tipos),
+  };
+}
+
+/**
+ * F-T2a — a camada esparsa de recurso do mapa. O carregador confere aqui, uma
+ * vez, o que nenhum sistema deveria reconferir por tile: tipo conhecido, tile
+ * dentro do mundo e NENHUM tile com dois recursos. O ultimo e o que evita um
+ * desempate em tempo de jogo — `state.recursos` e chaveado por tile, entao dois
+ * tipos no mesmo tile seriam um deles sumindo em silencio.
+ */
+function carregarRecursosDoMapa(
+  bruto: RawGameData['mapa'], largura: number, altura: number,
+  tipos: RawGameData['resources']['tipos'],
+): Readonly<Record<string, readonly TileDeMapa[]>> {
+  const recursos: Record<string, readonly TileDeMapa[]> = {};
+  const ocupado = new Map<string, string>();
+  for (const [tipo, tiles] of Object.entries(bruto.recursos as Record<string, number[][]>)) {
+    if (!(tipo in tipos)) {
+      throw new Error(`loadGameData: o mapa '${bruto.id}' poe o recurso desconhecido '${tipo}' no mapa`);
+    }
+    const lista: TileDeMapa[] = [];
+    for (const par of tiles) {
+      const gx = par[0] as number;
+      const gy = par[1] as number;
+      if (!Number.isInteger(gx) || !Number.isInteger(gy) || gx < 0 || gy < 0 || gx >= largura || gy >= altura) {
+        throw new Error(`loadGameData: o recurso '${tipo}' do mapa '${bruto.id}' esta em (${gx},${gy}), fora do mundo`);
+      }
+      const chave = `${gx},${gy}`;
+      const jaTem = ocupado.get(chave);
+      if (jaTem !== undefined) {
+        throw new Error(
+          `loadGameData: o tile (${gx},${gy}) do mapa '${bruto.id}' tem '${jaTem}' e '${tipo}' — um tile, um recurso`,
+        );
+      }
+      ocupado.set(chave, tipo);
+      lista.push([gx, gy]);
+    }
+    recursos[tipo] = lista;
+  }
+  return recursos;
 }
 
 /**
@@ -197,14 +240,19 @@ export function loadGameData(raw: RawGameData): GameData {
       for (const [mercadoria, periodo] of Object.entries(p)) q[mercadoria] = Math.round(ticksDoCiclo / periodo);
       return q;
     };
-    // `veio` e opcional no JSON e so a quarry o declara hoje: `in` estreita a
+    // `colheita` e opcional no JSON e so a quarry a declara hoje: `in` estreita a
     // uniao que o `resolveJsonModule` produz, sem `any` e sem campo inventado.
-    const veio = 'veio' in def ? def.veio : null;
+    const colheita = 'colheita' in def ? def.colheita : null;
+    if (colheita !== null && !(colheita.recurso in raw.resources.tipos)) {
+      throw new Error(
+        `loadGameData: a receita '${predioId}' colhe '${colheita.recurso}', que nao existe em resources.tipos`,
+      );
+    }
     receitas[predioId] = {
       ticksDoCiclo,
       entra: quantidades(periodos.entra),
       sai: quantidades(periodos.sai),
-      rendimentoDoVeio: veio === null ? null : veio.rendimento,
+      colheita: colheita === null ? null : { recurso: colheita.recurso, alcance: colheita.alcance_tiles },
     };
   }
   const producao: ProducaoData = {
@@ -331,6 +379,31 @@ export function loadGameData(raw: RawGameData): GameData {
     zoom: raw.terrain.zoom,
   };
 
+  // --- recursos (resources.json): regime e rendimento por TIPO ---------------
+  // O regime vem do dado como string e e conferido contra a uniao aqui, uma vez:
+  // um regime novo em `data/` sem sistema que o entenda reprova o carregamento,
+  // e nao vira "nao acontece nada" dentro da partida.
+  const REGIMES: readonly RegimeDeRecurso[] = ['nunca', 'porAcao', 'porTempo'];
+  const tiposDeRecurso: Record<string, TipoDeRecurso> = {};
+  for (const [id, def] of Object.entries(raw.resources.tipos)) {
+    const regime = REGIMES.find((r) => r === def.regime);
+    if (regime === undefined) {
+      throw new Error(`loadGameData: o recurso '${id}' declara o regime desconhecido '${def.regime}'`);
+    }
+    tiposDeRecurso[id] = { regime, rendimentoPorTile: def.rendimentoPorTile };
+  }
+  const recursos: RecursosData = {
+    tipos: tiposDeRecurso,
+    ticksPorUnidadeRegenerada: registrar(
+      'resources.regimes.porTempo.segundosPorUnidade_base', raw.resources.escala,
+      raw.resources.regimes.porTempo.segundosPorUnidade_base, 'segundos',
+      paraTicksDeDuracao(
+        raw.resources.regimes.porTempo.segundosPorUnidade_base, 'segundos',
+        escalaDe(escalas, raw.resources.escala), tickHz,
+      ),
+    ),
+  };
+
   // --- economia (economy.json) ---
   const escalaSchoolhouseNome = raw.economy.schoolhouse.escala;
   const escalaSchoolhouse = escalaDe(escalas, escalaSchoolhouseNome) as number;
@@ -373,6 +446,7 @@ export function loadGameData(raw: RawGameData): GameData {
     entrega,
     terreno,
     mapa: carregarMapa(raw),
+    recursos,
     economia,
     conversoes,
   };

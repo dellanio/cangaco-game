@@ -3,6 +3,7 @@ import type { GameEvent, GameState } from './state';
 import type { GameData } from './data/types';
 import { gameData } from './data';
 import { registrarConclusoes } from './desbloqueio';
+import { regenerar } from './recursos';
 import { aplicarPlaceBlueprint } from './systems/build';
 import { aplicarDemolishBuilding } from './systems/demolicao';
 import { aplicarCancelTraining, aplicarEnqueueTraining, sistemaDasEscolas } from './systems/escolas';
@@ -134,5 +135,11 @@ export function step(
     estradasPlanejadas: atual.estradasPlanejadas,
     jobs: atual.jobs,
     treino: atual.treino,
+    // F-T2a: a colheita ja aconteceu dentro dos sistemas (quem colhe e o
+    // especialista, em `especialistas.ts`). O que sobra aqui e o regime
+    // `porTempo`, que nao tem dono — e do mapa, nao de um predio. Identidade em
+    // todo tick que nao e multiplo do periodo, e em todo dado sem tipo `porTempo`
+    // (que e o dado de hoje).
+    recursos: regenerar(atual.recursos, tick, dados),
   };
 }

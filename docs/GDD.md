@@ -241,9 +241,18 @@ não muda durante a partida.
 - O A* **contorna** o intransponível e **desiste** (devolve caminho nenhum)
   quando ele fecha a passagem. Andar por areia custa mais que por grama, então
   o caminho barato deixou de ser sempre a linha reta.
-- **Recursos naturais** (árvore, veio de pedra e de minério, cardume) são outra
-  camada, em lista esparsa no mesmo arquivo: eles entram na F-T2, e até lá o
-  mapa tem só o terreno acima.
+- **Recursos naturais** (árvore, rocha, cardume) são outra camada, em lista
+  esparsa no mesmo arquivo. **O rendimento é por tile, não por prédio** (F-T2a):
+  a pedreira colhe os tiles de rocha ao alcance dela, e o total que ela vai
+  render é a soma do que há em volta — no mapa padrão isso vai de 195 numa
+  jazida densa a 15 numa ponta isolada. É o que faz **o lugar importar** na hora
+  de plantar, e é também o que mata o exploit de demolir e reerguer para renovar
+  o veio: o que esgota é o chão, e o chão fica.
+- Cada tipo de recurso declara no dado **como (ou se) ele volta**: `nunca` (a
+  rocha, que some do mapa ao zerar), `porAcao` (a árvore, que **fica** cortada,
+  com quantidade zero — *cortada* não é *inexistente*) e `porTempo` (sobe
+  sozinha a uma taxa do dado; implementado, sem nenhuma instância hoje). Um
+  mecanismo com três regimes, não três sistemas.
 - A vila inicial nasce em região inteiramente construível, e a borda do mapa é
   sempre terreno pisável: o limite do mundo é o limite do mundo, e não uma
   serra encostada nele.

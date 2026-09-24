@@ -29,6 +29,21 @@
 //
 // Terreno variado em qualquer das duas mudaria fixture de feature fechada, que e
 // exatamente o que a perna 4 do aceite da F-T1 proibe.
+//
+// F-T2a — A CAMADA DE RECURSO, que sai daqui junto com o terreno. Ela e ESPARSA
+// (lista de tiles por tipo, nao uma grade), e as duas regioes protegidas acima
+// valem para ela com uma diferenca escrita:
+//
+//   - ARVORE nao entra em nenhuma das duas. Na F-T2b ela vira OBSTACULO, e
+//     arvore dentro do quadrante da vila ou encostada na borda quebraria os
+//     mesmos caminhos que a moldura de grama existe para proteger. Plantar
+//     agora onde a proxima feature vai bloquear e deixar a armadilha montada.
+//   - PEDRA entra no quadrante da vila, de proposito e uma vez so: o LAJEDO DA
+//     VILA. Sem pedra ao alcance a partida abre sem ter o que cortar — a
+//     pedreira e um dos dois predios do menu inicial. Ele e um disco de 13
+//     tiles em (24,31), longe do armazem (29,30) e da escola (34,30), e nao
+//     toca o terreno: recurso e outra camada.
+
 
 const fs = require('node:fs');
 const path = require('node:path');
@@ -149,43 +164,129 @@ function gerar() {
     }
   }
 
-  return { largura, altura, grade };
+  return { largura, altura, grade, rng, ruido };
+}
+
+/** O disco de Chebyshev/euclidiano usado pelos aglomerados de recurso. */
+function disco(gx, gy, raio) {
+  const tiles = [];
+  for (let dy = -raio; dy <= raio; dy += 1) {
+    for (let dx = -raio; dx <= raio; dx += 1) {
+      if (dx * dx + dy * dy <= raio * raio) tiles.push([gx + dx, gy + dy]);
+    }
+  }
+  return tiles;
+}
+
+/** Centro e raio do lajedo da vila. Ver o cabecalho: e a unica pedra dentro do
+ *  quadrante protegido, e existe para que a partida abra com o que cortar. */
+const LAJEDO_DA_VILA = { gx: 24, gy: 31, raio: 2 };
+
+/**
+ * F-T2a — a camada esparsa de recurso, derivada do terreno ja gerado mais os
+ * aglomerados proprios. Um tile tem NO MAXIMO um recurso: o `ocupado` corta a
+ * sobreposicao aqui, na autoria, para o carregador nao ter que escolher um
+ * vencedor em tempo de jogo.
+ */
+function gerarRecursos({ largura, altura, grade, rng }) {
+  const recursos = { rock: [], tree: [], fish: [] };
+  const ocupado = new Set();
+  const por = (tipo, gx, gy) => {
+    if (gx < 0 || gy < 0 || gx >= largura || gy >= altura) return;
+    const chave = `${gx},${gy}`;
+    if (ocupado.has(chave)) return;
+    ocupado.add(chave);
+    recursos[tipo].push([gx, gy]);
+  };
+  const ehGramaLivre = (gx, gy) => {
+    if (grade[gy]?.[gx] !== 'grama') return false;
+    if (gx < LIVRE_A_PARTIR_DE && gy < LIVRE_A_PARTIR_DE) return false;
+    if (gx < MARGEM_DE_BORDA || gy < MARGEM_DE_BORDA) return false;
+    return gx < largura - MARGEM_DE_BORDA && gy < altura - MARGEM_DE_BORDA;
+  };
+
+  // --- pedra: o lajedo da vila, primeiro, para nada mais disputar o tile -----
+  for (const [gx, gy] of disco(LAJEDO_DA_VILA.gx, LAJEDO_DA_VILA.gy, LAJEDO_DA_VILA.raio)) {
+    if (grade[gy]?.[gx] === 'grama') por('rock', gx, gy);
+  }
+  // --- pedra: a saia da serra e os lajedos soltos ----------------------------
+  // So `rocha`, nunca `montanha`: o pico e cenario, a saia exposta e o que se
+  // corta. E o que da papel distinto aos dois tipos de terreno da F-T1.
+  for (let gy = 0; gy < altura; gy += 1) {
+    for (let gx = 0; gx < largura; gx += 1) {
+      if (grade[gy][gx] === 'rocha') por('rock', gx, gy);
+    }
+  }
+
+  // --- floresta: aglomerados fora das duas regioes protegidas ---------------
+  for (let i = 0; i < 14; i += 1) {
+    const gx = MARGEM_DE_BORDA + Math.floor(rng() * (largura - 2 * MARGEM_DE_BORDA));
+    const gy = MARGEM_DE_BORDA + Math.floor(rng() * (altura - 2 * MARGEM_DE_BORDA));
+    const raio = 3 + Math.floor(rng() * 3);
+    for (const [tx, ty] of disco(gx, gy, raio)) {
+      if (ehGramaLivre(tx, ty) && rng() < 0.82) por('tree', tx, ty);
+    }
+  }
+
+  // --- cardume: o lago inteiro ----------------------------------------------
+  for (let gy = 0; gy < altura; gy += 1) {
+    for (let gx = 0; gx < largura; gx += 1) {
+      if (grade[gy][gx] === 'agua') por('fish', gx, gy);
+    }
+  }
+
+  return recursos;
 }
 
 function montarArquivo() {
-  const { largura, altura, grade } = gerar();
+  const mundo = gerar();
+  const { largura, altura, grade } = mundo;
   const linhas = grade.map((linha) => linha.map((tipo) => CHAR[tipo]).join(''));
+  const recursos = gerarRecursos(mundo);
 
   const contagem = {};
   for (const linha of grade) for (const tipo of linha) contagem[tipo] = (contagem[tipo] || 0) + 1;
+  const contagemDeRecursos = {};
+  for (const [tipo, tiles] of Object.entries(recursos)) contagemDeRecursos[tipo] = tiles.length;
 
   return {
     id: ID,
     _doc: 'Mapa base do sertao. EMITIDO por tools/gerar-mapa.js — nao edite a mao sem '
       + 'apagar a semente ou aceitar que ela vira registro historico. O jogo nunca roda o '
       + 'gerador: le este arquivo. `linhas` e a camada de terreno, um char por tile, na '
-      + 'legenda abaixo; os recursos naturais (arvore, veio, cardume) sao lista esparsa e '
-      + 'entram na F-T2. O quadrante noroeste ate o tile '
+      + 'legenda abaixo; `recursos` e a camada ESPARSA da F-T2a, uma lista de tiles [gx,gy] '
+      + 'por tipo — QUANTO cada tile rende nao esta aqui, esta em data/resources.json. '
+      + 'O quadrante noroeste ate o tile '
       + `${LIVRE_A_PARTIR_DE - 1} e uma moldura de ${MARGEM_DE_BORDA} tiles em volta do mapa sao `
       + 'todo grama de proposito: e onde nasce a vila de economy.json, onde vivem os cenarios '
       + 'de teste ja escritos, e a borda do mundo, que nao deve ser intransponivel.',
     gerador: 'tools/gerar-mapa.js',
     semente: SEMENTE,
     contagemPorTipo: contagem,
+    contagemDeRecursos,
     largura,
     altura,
     legenda: LEGENDA,
     linhas,
+    recursos,
   };
 }
 
 function serializar(arquivo) {
-  // `linhas` uma por linha de texto (e o que faz o diff do git legivel); o resto
-  // com indentacao normal.
-  const { linhas, ...resto } = arquivo;
+  // `linhas` uma por linha de texto (e o que faz o diff do git legivel) e
+  // `recursos` com 8 tiles por linha (uma por tile daria 850 linhas de ruido, e
+  // tudo numa so daria um diff ilegivel); o resto com indentacao normal.
+  const { linhas, recursos, ...resto } = arquivo;
   const corpo = JSON.stringify(resto, null, 2).replace(/\n}$/, '');
   const linhasJson = linhas.map((l) => `    ${JSON.stringify(l)}`).join(',\n');
-  return `${corpo},\n  "linhas": [\n${linhasJson}\n  ]\n}\n`;
+  const tiposJson = Object.entries(recursos).map(([tipo, tiles]) => {
+    const blocos = [];
+    for (let i = 0; i < tiles.length; i += 8) {
+      blocos.push(`      ${tiles.slice(i, i + 8).map(([x, y]) => `[${x},${y}]`).join(', ')}`);
+    }
+    return `    ${JSON.stringify(tipo)}: [\n${blocos.join(',\n')}\n    ]`;
+  }).join(',\n');
+  return `${corpo},\n  "linhas": [\n${linhasJson}\n  ],\n  "recursos": {\n${tiposJson}\n  }\n}\n`;
 }
 
 function main() {

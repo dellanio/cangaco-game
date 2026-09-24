@@ -10,7 +10,8 @@
  */
 import type { GameData, ReceitaDePredio } from './data/types';
 import { gameData } from './data';
-import type { Predio, PredioCompleto, Producao } from './state';
+import type { GameState, Predio, PredioCompleto } from './state';
+import { disponivelAoAlcance } from './recursos';
 
 /** A receita do tipo, ou `null` — inclusive para tipo que nem existe no dado
  *  (save de outra versao). `null` e nunca `undefined`, como `trabalhadorDoTipo`. */
@@ -74,11 +75,20 @@ export function cabeNaSaida(predio: PredioCompleto, receita: ReceitaDePredio): b
 }
 
 /**
- * O veio nao rende mais um ciclo INTEIRO. `false` quando `veio === null`
- * (receita renovavel: sawmill, bakery). O corte e no ciclo e nao na unidade
- * para que o predio nunca comece um ciclo que nao pode terminar — um veio com 1
- * pedra para uma receita de 2 ja esta esgotado.
+ * F-T2a — nao ha mais recurso ao alcance para um ciclo INTEIRO. `false` para
+ * receita sem colheita (sawmill, bakery: o insumo vem da gaveta). O corte e no
+ * ciclo e nao na unidade para que o predio nunca comece um ciclo que nao pode
+ * terminar — um lajedo com 1 pedra para uma receita de 2 ja esta esgotado.
+ *
+ * Substituiu `veioEsgotado(producao, receita)`, que perguntava ao PREDIO. A
+ * pergunta agora e ao MAPA, e e por isso que ela precisa do estado. O nome do
+ * alerta (`veio-esgotado`) e o do evento (`vein-exhausted`) ficaram: o que mudou
+ * foi de onde vem a resposta, nao o que o jogador ve acontecer.
  */
-export function veioEsgotado(producao: Producao, receita: ReceitaDePredio): boolean {
-  return producao.veio !== null && producao.veio < unidadesPorCiclo(receita);
+export function semRecursoAoAlcance(
+  state: GameState, predio: PredioCompleto, receita: ReceitaDePredio, dados: GameData = gameData,
+): boolean {
+  const { colheita } = receita;
+  if (colheita === null) return false;
+  return disponivelAoAlcance(state, predio, colheita, dados) < unidadesPorCiclo(receita);
 }

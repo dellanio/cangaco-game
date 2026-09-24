@@ -15,12 +15,12 @@ import type { GameState, PredioCompleto, PredioEmObra } from '../src/sim/state';
 import { gameData } from '../src/sim/data';
 import type { ReceitaDePredio } from '../src/sim/data/types';
 import {
-  cabeNaSaida, consumirInsumos, ehPredioProdutivo, receitaDoTipo, temInsumo, unidadesPorCiclo, veioEsgotado,
+  cabeNaSaida, consumirInsumos, ehPredioProdutivo, receitaDoTipo, semRecursoAoAlcance, temInsumo, unidadesPorCiclo,
 } from '../src/sim/producao';
 import { step } from '../src/sim/tick';
 import {
-  avancar, cenarioDePedreira, cenarioDeSerraria, comEntrada, comRendimento, comSaida, entradaDe,
-  eventosNoTick, fsmDe, progressoDe, saidaDe, semAUnidade, semEstrada, semOcupante, veioDe,
+  avancar, cenarioDePedreira, cenarioDeSerraria, comEntrada, comJazida, comSaida, disponivelDe, entradaDe,
+  eventosNoTick, fsmDe, progressoDe, saidaDe, semAUnidade, semEstrada, semOcupante,
 } from './helpers/producao-cenario';
 import { violacoesDaFsmDoEspecialista } from './helpers/especialista-invariantes';
 
@@ -34,18 +34,16 @@ function obraDe(tipo: string): PredioEmObra {
 }
 
 describe('F15a — PredioCompleto.producao', () => {
-  it('produtor nasce com relogio zerado e o veio semeado do dado', () => {
-    const quarry = completarObra(obraDe('quarry'));
-    expect(quarry.producao).toEqual({
-      progresso: 0,
-      veio: gameData.producao.receitas.quarry?.rendimentoDoVeio,
-    });
-    expect(quarry.producao?.veio).toBeGreaterThan(0);
+  // F-T2a: o predio deixou de carregar o total. Ele nasce so com o relogio, e o
+  // que ha para colher esta no MAPA desde o tick 0 — e continua la depois que
+  // ele for demolido. E essa a diferenca que mata o exploit da F16a.
+  it('produtor nasce SO com o relogio zerado — o total nao mora nele', () => {
+    expect(completarObra(obraDe('quarry')).producao).toEqual({ progresso: 0 });
   });
 
-  it('produtor sem veio no dado nasce renovavel (`veio: null`)', () => {
-    expect(completarObra(obraDe('sawmill')).producao).toEqual({ progresso: 0, veio: null });
-    expect(completarObra(obraDe('woodcutters')).producao).toEqual({ progresso: 0, veio: null });
+  it('produtor sem colheita nasce com a mesma forma: nada o distingue no predio', () => {
+    expect(completarObra(obraDe('sawmill')).producao).toEqual({ progresso: 0 });
+    expect(completarObra(obraDe('woodcutters')).producao).toEqual({ progresso: 0 });
   });
 
   it('predio sem receita nasce com `producao: null`', () => {
@@ -60,7 +58,7 @@ describe('F15a — PredioCompleto.producao', () => {
       if (p?.estado !== 'completo') continue;
       const receita = gameData.producao.receitas[p.tipo];
       if (receita === undefined) expect(p.producao, p.tipo).toBeNull();
-      else expect(p.producao, p.tipo).toEqual({ progresso: 0, veio: receita.rendimentoDoVeio });
+      else expect(p.producao, p.tipo).toEqual({ progresso: 0 });
     }
   });
 
@@ -133,14 +131,21 @@ describe('F15a — sim/producao.ts, as derivacoes puras', () => {
     expect(unidadesPorCiclo(receita('swine_farm'))).toBe(2); // 1 pig + 1 skin
   });
 
-  it('veioEsgotado e falso para receita renovavel, mesmo com o relogio cheio', () => {
-    expect(veioEsgotado({ progresso: 999, veio: null }, receita('sawmill'))).toBe(false);
+  // F-T2a: `veioEsgotado(producao, receita)` virou `semRecursoAoAlcance(state,
+  // predio, receita)`. A propriedade que as duas assercoes provam e a MESMA — o
+  // predicado congela o ciclo antes do zero, ja quando o que sobrou nao da um
+  // ciclo inteiro; o que mudou foi so a quem ele pergunta.
+  it('semRecursoAoAlcance e falso para receita sem colheita, mesmo com o relogio cheio', () => {
+    expect(semRecursoAoAlcance(createInitialState(1), produtor('sawmill'), receita('sawmill'))).toBe(false);
   });
 
-  it('veioEsgotado ja e verdade quando o veio nao rende um CICLO inteiro', () => {
+  it('semRecursoAoAlcance ja e verdade quando o que sobrou nao da um CICLO inteiro', () => {
     const r: ReceitaDePredio = { ...receita('quarry'), sai: { stone: 2 } };
-    expect(veioEsgotado({ progresso: 0, veio: 1 }, r)).toBe(true);
-    expect(veioEsgotado({ progresso: 0, veio: 2 }, r)).toBe(false);
+    // um unico tile de rock ao alcance da pedreira de `obraDe` (5,5)
+    const umaPedra = comJazida(gameData, 'rock', [[4, 4]], 1);
+    const duasPedras = comJazida(gameData, 'rock', [[4, 4]], 2);
+    expect(semRecursoAoAlcance(createInitialState(1, umaPedra), produtor('quarry'), r, umaPedra)).toBe(true);
+    expect(semRecursoAoAlcance(createInitialState(1, duasPedras), produtor('quarry'), r, duasPedras)).toBe(false);
   });
 });
 
@@ -215,19 +220,19 @@ describe('F15a — o especialista produz', () => {
     );
   });
 
-  it('veio esgota: evento no tick exato, e depois a pedreira nao produz mais', () => {
-    const dadosCurtos = comRendimento(gameData, 'quarry', 2); // 2 pedras e acabou
+  it('jazida esgota: evento no tick exato, e depois a pedreira nao produz mais', () => {
+    const dadosCurtos = comJazida(gameData, 'rock', [[25, 32]], 2); // 1 tile de 2 pedras e acabou
     expect(eventosNoTick(cenarioDePedreira(dadosCurtos), 334, dadosCurtos)).toContainEqual(
       { type: 'vein-exhausted', predio: 'q1', tipo: 'quarry' },
     );
     const s = avancar(cenarioDePedreira(dadosCurtos), 167 * 5, dadosCurtos);
     expect(saidaDe(s, 'q1').stone).toBe(2);
-    expect(veioDe(s, 'q1')).toBe(0);
+    expect(disponivelDe(s, 'q1', dadosCurtos)).toBe(0);
     expect(fsmDe(s, 'u1')).toBe('esperando_insumo');
   });
 
   it('o evento de veio esgotado sai UMA vez, nao a cada tick depois', () => {
-    const dadosCurtos = comRendimento(gameData, 'quarry', 2);
+    const dadosCurtos = comJazida(gameData, 'rock', [[25, 32]], 2);
     let s = cenarioDePedreira(dadosCurtos);
     let quantos = 0;
     for (let i = 0; i < 167 * 4; i++) {

@@ -6,6 +6,10 @@ import type { MotivoDeRecusaDeEstrada, TileDeGrid } from './estradas';
 import type { MotivoDeLiberacao } from './jobs';
 import type { MotivoDeRecusaDeTreino } from './escola';
 import type { MotivoDeRecusaDePausa } from './pausa';
+// F-T2a: a camada de recurso nasce do MAPA, e quem sabe ler o mapa e
+// `sim/recursos.ts`. Import de valor (nao de tipo) e o unico deste arquivo alem
+// do RNG e do dado — `createInitialState` e o lugar certo para ele.
+import { recursosIniciais } from './recursos';
 
 /**
  * Efeito colateral emitido por um sistema para o render consumir
@@ -267,10 +271,20 @@ export interface Producao {
   /** Ticks ja trabalhados no ciclo em curso, de 0 ate `ticksDoCiclo`. Igual a
    *  `ticksDoCiclo` significa CICLO PRONTO esperando caber na gaveta `saida`. */
   readonly progresso: number;
-  /** Unidades de saida que o veio ainda rende. `null` = nao esgota (renovavel);
-   *  0 = esgotado. Mora no predio porque nao existe camada de terreno na sim —
-   *  BUILD_PLAN F15a/D2, contrato que a F21 herda. */
-  readonly veio: number | null;
+}
+
+/**
+ * F-T2a — o que sobrou de recurso natural em UM tile. Mora em
+ * `state.recursos`, esparso, com a mesma chave de `state.estradas`; o mapa diz
+ * ONDE ha recurso, `data/resources.json` diz quanto cada tile rende ao nascer, e
+ * este objeto e o que resta. Leia por `sim/recursos.ts`.
+ *
+ * Nao guarda regime nem teto: os dois sao do TIPO e estao no dado. Dado derivado
+ * dentro do estado seria mais uma coisa capaz de divergir do save.
+ */
+export interface RecursoNoTile {
+  readonly tipo: string;
+  readonly quantidade: number;
 }
 
 /**
@@ -719,6 +733,19 @@ export interface GameState {
    * `passoPermitido`.
    */
   readonly estradasPlanejadas: Readonly<Record<string, true>>;
+  /**
+   * F-T2a — o que sobrou de recurso natural, por tile. Esparso: tile sem recurso
+   * NAO tem entrada, e tile de regime `nunca` que zerou PERDE a sua (o tile
+   * volta a ser so terreno). Tile de regime `porAcao` que zerou FICA com
+   * `quantidade: 0` — cortado nao e inexistente.
+   *
+   * Nasce do mapa (`GameData.mapa.recursos`) e e a unica parte da camada que
+   * muda: onde ha recurso e dado imutavel, quanto ainda ha e estado. E isso que
+   * faz demolir-e-reconstruir nao renovar nada.
+   *
+   * Nunca itere por `Object.keys` esperando ordem: use `sim/recursos.ts`.
+   */
+  readonly recursos: Readonly<Record<string, RecursoNoTile>>;
   /** O JobBoard (F09). Ver `Tarefa`. */
   readonly jobs: JobBoard;
   /**
@@ -781,7 +808,10 @@ function capacidadeParaTipo(tipoId: string, dados: GameData): Capacidade {
  */
 function producaoParaTipo(tipoId: string, dados: GameData): Producao | null {
   const receita = dados.producao.receitas[tipoId];
-  return receita === undefined ? null : { progresso: 0, veio: receita.rendimentoDoVeio };
+  // F-T2a: nao ha mais nada para semear alem do relogio. O que o predio tem para
+  // colher nao nasce com ele — esta no mapa desde o tick 0 e continua la depois
+  // que ele for demolido.
+  return receita === undefined ? null : { progresso: 0 };
 }
 
 function estoqueParaTipo(
@@ -907,6 +937,7 @@ export function createInitialState(seed: number, dados: GameData = gameData): Ga
     tiposJaConstruidos: tiposCompletos(predios),
     estradas: {},
     estradasPlanejadas: {},
+    recursos: recursosIniciais(dados),
     jobs: { tarefas: { porId: {}, ordem: [] } },
     treino: {},
   };

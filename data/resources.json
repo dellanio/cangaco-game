@@ -1,0 +1,34 @@
+{
+  "_doc": "F-T2a — os recursos naturais que moram no TILE, nao no predio. ONDE cada um esta e do arquivo de mapa (`data/maps/<id>.json`, chave `recursos`); QUANTO cada tile rende e o regime de esgotamento sao daqui. A separacao e de proposito: trocar o mapa nao mexe no balanceamento, e mudar o balanceamento nao regrava 900 tiles.",
+  "escala": "economia",
+  "_docEscala": "Declaracao estrutural (tools/data-schema.js): a unica duracao deste arquivo e a da regeneracao, convertida pelo carregador. Nenhum sistema le `escalas`.",
+  "regimes": {
+    "nunca": {
+      "_doc": "Nao volta. Ao zerar, a entrada SAI de `state.recursos` e o tile passa a ser so terreno base — nao existe mais recurso ali para desenhar nem para colher."
+    },
+    "porAcao": {
+      "_doc": "Nao volta sozinho. Ao zerar, a entrada FICA com `quantidade: 0`: tile CORTADO e diferente de tile que nunca teve arvore, e e essa diferenca que o replantio do Woodcutter's e o campo arado da F18 vao ler."
+    },
+    "porTempo": {
+      "_doc": "Sobe sozinho ate o teto do tipo (`rendimentoPorTile`). Nenhum tipo de hoje usa este regime — o cardume e `nunca` por decisao do operador (BUILD_PLAN F-T2) —, e trocar um tipo para ca e uma linha neste arquivo, sem tocar em sistema. E exatamente isso que os tres regimes compram.",
+      "segundosPorUnidade_base": 600
+    }
+  },
+  "tipos": {
+    "rock": {
+      "regime": "nunca",
+      "rendimentoPorTile": 15,
+      "_doc": "A pedra do lajedo e da saia da serra. 15 por tile contra o veio fixo de 200 da F15a: o lajedo de 13 tiles da vila rende 195, entao a pedreira de abertura vale quase o mesmo que valia — o que mudou nao foi o total, foi de onde ele vem."
+    },
+    "tree": {
+      "regime": "porAcao",
+      "rendimentoPorTile": 4,
+      "_doc": "A arvore em pe. Regime `porAcao` porque quem a repoe e o replantio do Woodcutter's (GDD 4.2), nao o relogio."
+    },
+    "fish": {
+      "regime": "nunca",
+      "rendimentoPorTile": 20,
+      "_doc": "O cardume do lago. `nunca` porque o GDD marca o estoque do lago como finito (production.json, fishermans.notas) e regeneracao seria invencao nossa em cima de fonte."
+    }
+  }
+}

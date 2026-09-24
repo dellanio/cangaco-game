@@ -59,10 +59,19 @@ export interface ReceitaDePredio {
   readonly entra: Readonly<Record<string, number>>;
   /** Unidades postas na gaveta `saida` no FIM do ciclo. */
   readonly sai: Readonly<Record<string, number>>;
-  /** Unidades de SAIDA que o veio ainda rende quando o predio nasce; `null` = nao
-   *  esgota (renovavel). Mora aqui porque nao existe camada de terreno na sim —
-   *  ver BUILD_PLAN, F15a/D2, contrato que a F21 herda. */
-  readonly rendimentoDoVeio: number | null;
+  /** F-T2a — de onde este predio TIRA o que produz, quando a fonte e o mapa;
+   *  `null` = receita renovavel (sawmill, bakery: o insumo vem da gaveta).
+   *  Substituiu `rendimentoDoVeio`, que punha o total no PREDIO e fazia com que
+   *  demolir e reconstruir renovasse a fonte. */
+  readonly colheita: ColheitaDeRecurso | null;
+}
+
+/** F-T2a — a colheita de um predio: o que ele corta e ate onde alcanca. */
+export interface ColheitaDeRecurso {
+  /** Chave de `recursos.tipos` (`data/resources.json`). */
+  readonly recurso: string;
+  /** Distancia de Chebyshev a partir do TILE MAIS PROXIMO do footprint. */
+  readonly alcance: number;
 }
 export type ProducaoReceitas = Readonly<Record<string, ReceitaDePredio>>;
 
@@ -112,6 +121,38 @@ export interface MapaData {
   /** char -> tipo. O loader ja garantiu que todo char usado esta aqui e que
    *  todo tipo existe em `terrain.json`. */
   readonly legenda: Readonly<Record<string, TerrenoDeMapa>>;
+  /**
+   * F-T2a — a camada de recurso, ESPARSA: tipo -> os tiles que o tem. Aqui esta
+   * so ONDE; QUANTO cada tile rende e de `resources.json`, e a quantidade que
+   * SOBRA e de `state.recursos` — esta e a semente, nao o estado.
+   *
+   * Esparsa e nao codificada como `linhas` porque recurso cobre ~5% do mapa: uma
+   * segunda grade de 128x128 gastaria 16 KB para dizer "nao ha nada" 15 mil
+   * vezes.
+   */
+  readonly recursos: Readonly<Record<string, readonly TileDeMapa[]>>;
+}
+
+/** Um par `[gx, gy]` do arquivo de mapa. Tupla e nao objeto: sao centenas por
+ *  mapa, e `[24,31]` cabe numa linha de diff. */
+export type TileDeMapa = readonly [number, number];
+
+/** F-T2a — como um tipo de recurso se esgota. Um mecanismo, tres regimes. */
+export type RegimeDeRecurso = 'nunca' | 'porAcao' | 'porTempo';
+
+export interface TipoDeRecurso {
+  readonly regime: RegimeDeRecurso;
+  /** Unidades que UM tile rende quando o mapa nasce, e o teto do `porTempo`. */
+  readonly rendimentoPorTile: number;
+}
+
+export interface RecursosData {
+  readonly tipos: Readonly<Record<string, TipoDeRecurso>>;
+  /** Ticks para o regime `porTempo` repor UMA unidade. Vale para todos os tipos
+   *  desse regime: a taxa e do REGIME, nao do tipo, e por isso tem caminho fixo
+   *  em `data/resources.json` (e so caminho fixo se registra em
+   *  `tools/data-schema.js`). Nenhum tipo de hoje usa o regime. */
+  readonly ticksPorUnidadeRegenerada: Ticks;
 }
 
 export interface MovimentoData {
@@ -233,6 +274,8 @@ export interface GameData {
   readonly terreno: TerrenoData;
   /** F-T1 — a camada de terreno do mapa em jogo. Leia por `sim/mapa.ts`. */
   readonly mapa: MapaData;
+  /** F-T2a — regime e rendimento por TIPO de recurso. Leia por `sim/recursos.ts`. */
+  readonly recursos: RecursosData;
   readonly economia: EconomiaData;
   readonly conversoes: readonly ConversaoRegistrada[];
 }

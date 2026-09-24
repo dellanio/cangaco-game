@@ -8,7 +8,7 @@ import { predioLigadoAoArmazem } from './estradas';
 import { custoDeTreino, ehEscolaCompleta, filaDaEscola, ouroNecessario } from './escola';
 import { custoDoPasso } from './pathfinding';
 import { alvoDeNivelamento, custoDoPredio } from './obra';
-import { receitaDoTipo, veioEsgotado } from './producao';
+import { receitaDoTipo, semRecursoAoAlcance } from './producao';
 import { ehPredioOcupavel, trabalhadorDoTipo } from './ocupacao';
 import type { CaixaEmTiles } from './footprint';
 
@@ -570,12 +570,16 @@ function temCausa(
       return false;
     case 'veio-esgotado': {
       const receita = receitaDoTipo(predio.tipo, dados);
-      // O PREDICADO do runtime (`sim/producao.ts`), nao `veio === 0`: e
-      // `veioEsgotado` que congela o ciclo, e ele reprova ja em
-      // `veio < unidadesPorCiclo`. Alertar so no zero avisaria depois de o
-      // jogador ter percebido sozinho.
+      // O PREDICADO do runtime (`sim/producao.ts`), nao uma contagem propria: e
+      // `semRecursoAoAlcance` que congela o ciclo, e ele reprova ja quando o que
+      // sobrou no mapa nao da um ciclo inteiro. Alertar so no zero avisaria
+      // depois de o jogador ter percebido sozinho.
+      //
+      // F-T2a: a causa continua se chamando `veio-esgotado` porque e a mesma
+      // coisa da perspectiva de quem joga — a pedreira parou por falta de
+      // pedra. O que mudou foi de onde vem a resposta: do mapa, nao do predio.
       return predio.producao !== null && receita !== null
-        && veioEsgotado(predio.producao, receita);
+        && semRecursoAoAlcance(state, predio, receita, dados);
     }
   }
 }

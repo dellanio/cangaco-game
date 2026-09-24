@@ -45,6 +45,9 @@ function validarForma(dados, erros) {
   if (!dados.economy || typeof dados.economy.estadoInicial !== 'object') {
     erros.push('forma/economy: economy.estadoInicial precisa existir');
   }
+  if (!dados.resources || typeof dados.resources.tipos !== 'object') {
+    erros.push('forma/resources: resources.tipos precisa existir');
+  }
 }
 
 function validarPredios(dados, erros) {
@@ -198,15 +201,9 @@ function validarProducao(dados, erros) {
       }
     }
     validarCicloDaReceita(id, def, escala, tickHz, erros);
-    // F15a/D2: o veio mora no predio e e semeado deste campo. Ausente = renovavel;
-    // presente tem de render pelo menos uma unidade inteira de saida.
-    const veio = def && def.veio;
-    if (veio !== undefined && veio !== null) {
-      const rendimento = veio.rendimento;
-      if (!Number.isInteger(rendimento) || rendimento < 1) {
-        erros.push(`producao/veio-invalido: production.predios.${id}.veio.rendimento=${rendimento} (inteiro >= 1)`);
-      }
-    }
+    // F-T2a: `producao/veio-invalido` saiu daqui junto com o campo `veio`. Quem
+    // guarda o total agora e o TILE, e quem o valida e `validarRecursos`
+    // (`recurso/rendimento` e `recurso/colheita`).
   }
 }
 
@@ -679,6 +676,39 @@ function validarMapas(dados, erros) {
         }
       }
     }
+    // A camada esparsa de recurso (F-T2a): tile dentro do mundo e UM recurso por
+    // tile. Dois recursos no mesmo tile fariam `state.recursos`, que e chaveado
+    // por tile, perder um deles em silencio no nascimento da partida.
+    if (!mapa.recursos || typeof mapa.recursos !== 'object') {
+      erros.push(`mapa/recursos: ${nome}.recursos precisa existir (objeto tipo -> lista de [gx,gy])`);
+    } else {
+      const ocupado = new Map();
+      for (const [tipo, tiles] of Object.entries(mapa.recursos)) {
+        if (!Array.isArray(tiles)) {
+          erros.push(`mapa/recursos: ${nome}.recursos.${tipo} precisa ser array de [gx,gy]`);
+          continue;
+        }
+        for (const par of tiles) {
+          if (!Array.isArray(par) || par.length !== 2
+            || !Number.isInteger(par[0]) || !Number.isInteger(par[1])) {
+            erros.push(`mapa/recursos: ${nome}.recursos.${tipo} tem ${JSON.stringify(par)}, que nao e [gx,gy]`);
+            break;
+          }
+          const [gx, gy] = par;
+          if (gx < 0 || gy < 0 || gx >= mapa.largura || gy >= mapa.altura) {
+            erros.push(`mapa/recursos: ${nome} poe '${tipo}' em (${gx},${gy}), fora do mundo`);
+            break;
+          }
+          const chave = `${gx},${gy}`;
+          if (ocupado.has(chave)) {
+            erros.push(`mapa/recursos: ${nome} poe '${ocupado.get(chave)}' e '${tipo}' no tile (${gx},${gy})`);
+            break;
+          }
+          ocupado.set(chave, tipo);
+        }
+      }
+    }
+
     const spawn = estadoInicial.spawnDeUnidades;
     if (spawn && Number.isInteger(spawn.gx) && Number.isInteger(spawn.gy)
       && spawn.gx >= 0 && spawn.gy >= 0 && spawn.gx < mapa.largura && spawn.gy < mapa.altura
@@ -691,10 +721,76 @@ function validarMapas(dados, erros) {
   }
 }
 
+// --- F-T2a: a camada de recursos naturais ------------------------------------
+//
+// Tres erros que so apareceriam dentro da partida, e tarde:
+//   - regime que nenhum sistema entende vira "nao esgota nunca" em silencio;
+//   - receita que colhe um recurso inexistente vira predio parado sem causa;
+//   - tipo declarado sem NENHUM tile no mapa e dado sem leitor — o balanceamento
+//     fala de um recurso que o mundo nao tem.
+const REGIMES_DE_RECURSO = ['nunca', 'porAcao', 'porTempo'];
+
+function validarRecursos(dados, erros) {
+  const tipos = (dados.resources && dados.resources.tipos) || null;
+  if (tipos === null || typeof tipos !== 'object') return; // forma/* ja reportou
+  for (const [id, def] of Object.entries(tipos)) {
+    if (id.startsWith('_')) continue;
+    if (!def || typeof def !== 'object') {
+      erros.push(`recurso/forma: resources.tipos.${id} nao e um objeto`);
+      continue;
+    }
+    if (!REGIMES_DE_RECURSO.includes(def.regime)) {
+      erros.push(
+        `recurso/regime: resources.tipos.${id}.regime e '${def.regime}', `
+        + `fora de ${REGIMES_DE_RECURSO.join('/')}`,
+      );
+    }
+    if (!Number.isInteger(def.rendimentoPorTile) || def.rendimentoPorTile < 1) {
+      erros.push(`recurso/rendimento: resources.tipos.${id}.rendimentoPorTile precisa ser inteiro >= 1`);
+    }
+  }
+
+  // A receita que colhe tem de colher algo que existe, e ate uma distancia real.
+  const receitas = (dados.production && dados.production.predios) || {};
+  for (const [id, def] of Object.entries(receitas)) {
+    if (!def || typeof def !== 'object' || !def.colheita) continue;
+    if (!(def.colheita.recurso in tipos)) {
+      erros.push(
+        `recurso/colheita: production.predios.${id} colhe '${def.colheita.recurso}', `
+        + 'que nao existe em resources.tipos',
+      );
+    }
+    if (!Number.isInteger(def.colheita.alcance_tiles) || def.colheita.alcance_tiles < 1) {
+      erros.push(`recurso/colheita: production.predios.${id}.colheita.alcance_tiles precisa ser inteiro >= 1`);
+    }
+  }
+
+  // E cada tipo tem de aparecer em algum mapa. Sem mapa carregado nao ha o que
+  // conferir (o mesmo caso de `validarMapas`: teste que monta um subconjunto).
+  const mapas = mapasDe(dados);
+  if (mapas.length === 0) return;
+  const usados = new Set();
+  for (const { nome, mapa } of mapas) {
+    const recursos = mapa && mapa.recursos;
+    if (recursos === undefined) continue; // mapa/recursos ja reportou
+    for (const [tipo, tiles] of Object.entries(recursos)) {
+      if (tiles.length > 0) usados.add(tipo);
+      if (!(tipo in tipos)) {
+        erros.push(`recurso/mapa: ${nome} poe o recurso '${tipo}', que nao existe em resources.tipos`);
+      }
+    }
+  }
+  for (const id of Object.keys(tipos)) {
+    if (id.startsWith('_') || usados.has(id)) continue;
+    erros.push(`recurso/sem-instancia: resources.tipos.${id} nao tem nenhum tile em nenhum mapa`);
+  }
+}
+
 function validarTudo(dados) {
   const erros = [];
   validarForma(dados, erros);
   validarPredios(dados, erros);
+  validarRecursos(dados, erros);
   validarProducao(dados, erros);
   validarTempo(dados, erros);
   validarCondicaoOraculo(dados, erros);

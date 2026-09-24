@@ -1,41 +1,122 @@
 {
-  "F01-esqueleto": { "passes": true },
-  "F02-tick-determinista": { "passes": true },
-  "F03-dados-validados": { "passes": true },
-  "F04-grid-ortogonal": { "passes": true },
-  "F05a-estado-inicial": { "passes": true },
-  "F05b-hud": { "passes": true },
-  "F06-menu-build-planta": { "passes": true },
-  "F07-posicionar-planta": { "passes": true },
-  "F08-estradas": { "passes": true },
-  "F09-jobboard": { "passes": true },
-  "F10-serf-fsm": { "passes": true },
-  "F11a-laco-de-tempo": { "passes": true },
-  "F11b-jobboard-construir": { "passes": true },
-  "F11c-laborer-fsm": { "passes": true },
-  "F12-desbloqueio": { "passes": true },
-  "F13a-schoolhouse-fila": { "passes": true },
-  "F13b-schoolhouse-painel": { "passes": true },
-  "F14-especialistas-ocupam": { "passes": true },
-  "F15a-producao-ciclo": { "passes": true },
-  "F15b-1-escada-do-produtor": { "passes": true },
-  "F15b-2-oraculo-e-calibracao": { "passes": true },
-  "F16a-demolir-predio": { "passes": true },
-  "F16c-pausar-e-modos": { "passes": true },
-  "F16b-painel-selecao": { "passes": true },
-  "F17-aceite-fase-a": { "passes": true },
-  "F17b-material-na-obra": { "passes": true },
-  "F17c-buffer-do-astar": { "passes": true },
-  "F17f-primeiro-sprite": { "passes": true },
-  "F17d-nivelamento-canteiro": { "passes": true },
-  "F17e-estagios-da-obra": { "passes": true },
-  "F18a-zoom-da-camera": { "passes": true },
-  "F18b-mapa-grande": { "passes": true },
-  "F22-alertas-do-hud": { "passes": true },
-  "F18e-estrada-diagonal": { "passes": true },
-  "F18d-1a-modo-por-nivel": { "passes": true },
-  "F18d-1b-estrada-canteiro": { "passes": true },
-  "F18d-2-estrada-planejada-na-tela": { "passes": true },
-  "F18f-unidade-empilhada": { "passes": true },
-  "F-T1-terreno-base": { "passes": true }
+  "F01-esqueleto": {
+    "passes": true
+  },
+  "F02-tick-determinista": {
+    "passes": true
+  },
+  "F03-dados-validados": {
+    "passes": true
+  },
+  "F04-grid-ortogonal": {
+    "passes": true
+  },
+  "F05a-estado-inicial": {
+    "passes": true
+  },
+  "F05b-hud": {
+    "passes": true
+  },
+  "F06-menu-build-planta": {
+    "passes": true
+  },
+  "F07-posicionar-planta": {
+    "passes": true
+  },
+  "F08-estradas": {
+    "passes": true
+  },
+  "F09-jobboard": {
+    "passes": true
+  },
+  "F10-serf-fsm": {
+    "passes": true
+  },
+  "F11a-laco-de-tempo": {
+    "passes": true
+  },
+  "F11b-jobboard-construir": {
+    "passes": true
+  },
+  "F11c-laborer-fsm": {
+    "passes": true
+  },
+  "F12-desbloqueio": {
+    "passes": true
+  },
+  "F13a-schoolhouse-fila": {
+    "passes": true
+  },
+  "F13b-schoolhouse-painel": {
+    "passes": true
+  },
+  "F14-especialistas-ocupam": {
+    "passes": true
+  },
+  "F15a-producao-ciclo": {
+    "passes": true
+  },
+  "F15b-1-escada-do-produtor": {
+    "passes": true
+  },
+  "F15b-2-oraculo-e-calibracao": {
+    "passes": true
+  },
+  "F16a-demolir-predio": {
+    "passes": true
+  },
+  "F16c-pausar-e-modos": {
+    "passes": true
+  },
+  "F16b-painel-selecao": {
+    "passes": true
+  },
+  "F17-aceite-fase-a": {
+    "passes": true
+  },
+  "F17b-material-na-obra": {
+    "passes": true
+  },
+  "F17c-buffer-do-astar": {
+    "passes": true
+  },
+  "F17f-primeiro-sprite": {
+    "passes": true
+  },
+  "F17d-nivelamento-canteiro": {
+    "passes": true
+  },
+  "F17e-estagios-da-obra": {
+    "passes": true
+  },
+  "F18a-zoom-da-camera": {
+    "passes": true
+  },
+  "F18b-mapa-grande": {
+    "passes": true
+  },
+  "F22-alertas-do-hud": {
+    "passes": true
+  },
+  "F18e-estrada-diagonal": {
+    "passes": true
+  },
+  "F18d-1a-modo-por-nivel": {
+    "passes": true
+  },
+  "F18d-1b-estrada-canteiro": {
+    "passes": true
+  },
+  "F18d-2-estrada-planejada-na-tela": {
+    "passes": true
+  },
+  "F18f-unidade-empilhada": {
+    "passes": true
+  },
+  "F-T1-terreno-base": {
+    "passes": true
+  },
+  "F-T2a-recursos-no-mapa": {
+    "passes": true
+  }
 }

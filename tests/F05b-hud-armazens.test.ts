@@ -24,7 +24,7 @@ function comPedreiraComEstoque(estado: GameState, saida: Record<string, number>)
   const pedreira: PredioCompleto = {
     id: 'p99', tipo: 'quarry', gx: 50, gy: 50, estado: 'completo', hp: 250,
     capacidade: { entrada: null, saida: null }, estoque: { entrada: {}, saida },
-    ocupante: null, producao: { progresso: 0, veio: null }, pausado: false,
+    ocupante: null, producao: { progresso: 0 }, pausado: false,
   };
   return { ...estado, predios: { porId: { ...estado.predios.porId, p99: pedreira }, ordem: [...estado.predios.ordem, 'p99'] } };
 }

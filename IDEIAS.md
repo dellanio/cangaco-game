@@ -45,22 +45,17 @@ caminho. Ideia boa é justamente a mais perigosa.
   desenho a decidir é de quem parte a iniciativa: o prédio se desocupa sozinho (e vira o quê:
   ruína, prédio vago, demolição automática?) ou o jogador precisa demolir. O original esgota
   pedreiras ao longo da partida, então isto vai acontecer em toda partida longa.
-- Demolir e reconstruir renova o veio da Quarry — achado da F16a (2026-09-23). O veio é semeado
-  em `PredioCompleto.producao.veio` no instante em que a obra vira `completo` (contrato da F15a),
-  então derrubar a pedreira esgotada e reerguer no mesmo tile devolve o veio cheio. O tamanho, que
-  é o que decide: `production.json` dá `quarry.veio.rendimento = 200`, e `devolucaoAoDemolir = 0.5`
-  devolve metade do material — 200 pedras renovadas por meio custo de construção é **exploit, não
-  detalhe**. Não se conserta na F16a: quem decide é a **F21**, se passar o veio para o terreno; a
-  âncora ficou na nota daquele item. Enquanto o veio morar no prédio, o exploit existe.
 - Modos do Woodcutter's (`cortar` / `replantar` / `ambos`) — GDD §2.3, uma linha `[geral]`. Tirado
   do aceite da F16c pelo operador (2026-09-23) por ser **andaime**: o comportamento que o modo
   governaria não existe. `ambos` é o comportamento de hoje; `replantar` (não produzir) seria
-  `pausar` com outro nome; e `cortar` exigiria **estoque finito de árvore no terreno** — a sim não
-  tem camada de terreno, e é justamente por isso que o veio mora no prédio (F15a/D2). O campo
+  `pausar` com outro nome; e `cortar` exigiria **estoque finito de árvore no terreno**. O campo
   `modos` continua em `data/production.json`, sem leitor e com `notas` dizendo isso; `ReceitaDePredio`
-  não o carrega. **Pré-condição**: a camada de terreno com árvore (entrada "Terreno de mapa variado",
-  acima). Enquanto ela não tiver dono na fila, implementar modos é dar ao jogador uma escolha que
-  não muda nada — ou que duplica o botão de pausar.
+  não o carrega. **Pré-condição, atendida na F-T2a (2026-09-24)**: a árvore é recurso de regime
+  `porAcao`, então tile cortado **fica** em `state.recursos` com `quantidade: 0` — *cortada* deixou
+  de ser indistinguível de *inexistente*, que era o que faltava para `replantar` significar alguma
+  coisa. Pré-condição não é implementação: os modos continuam item futuro, e quem os escrever
+  precisa decidir de onde sai a árvore nova (regime `porTempo`, que existe e hoje não tem nenhuma
+  instância no dado, é a candidata óbvia).
 - Confirmação antes de derrubar prédio — **decisão tomada pelo operador (2026-09-23): fica UM
   clique, sem confirmação**, e esta entrada registra o **custo** dessa escolha, não a reabre.
   O custo: `Derrubar` é o único botão do jogo que **destrói trabalho de forma irreversível**, e a

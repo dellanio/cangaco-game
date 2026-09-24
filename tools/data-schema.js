@@ -18,6 +18,8 @@
 const ARQUIVOS = [
   'time', 'buildings', 'production', 'units',
   'combat', 'condition', 'delivery', 'terrain', 'economy',
+  // F-T2a — regime e rendimento dos recursos naturais.
+  'resources',
   // F-T1 — a camada de terreno base. Um arquivo por mapa; `maps/` e diretorio
   // porque a campanha vai ter varios (GDD Anexo B).
   'maps/sertao-128',
@@ -53,6 +55,10 @@ const CAMPOS_ESCALONADOS = [
     unidade: 'tilesPorSegundo', declaraEscalaEm: 'escalaVelocidade' },
   { arquivo: 'units', caminho: 'velocidadeBase_tilesPorSegundo.montado',
     unidade: 'tilesPorSegundo', declaraEscalaEm: 'escalaVelocidade' },
+  // A taxa e do REGIME e nao do tipo, e e por isso que ela cabe aqui: caminho
+  // fixo se registra, caminho por tipo (como as taxas de production.json) nao.
+  { arquivo: 'resources', caminho: 'regimes.porTempo.segundosPorUnidade_base',
+    unidade: 'segundos', declaraEscalaEm: 'escala' },
 ];
 
 // production.json nao entra em CAMPOS_ESCALONADOS: as taxas de entra/sai sao

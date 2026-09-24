@@ -5,6 +5,7 @@
  * importa `../sim/data`), nao por convencao.
  */
 import { gameData } from '../sim/data';
+import type { RecursoNoTile } from '../sim/state';
 import { TERRENOS_DE_MAPA } from '../sim/data/terrenos';
 import type { TerrenoDeMapa } from '../sim/data/types';
 import { tipoDoTile } from '../sim/mapa';
@@ -84,3 +85,64 @@ export function criarTerrenoDeRender(): TerrenoDeRender {
 }
 
 export const terrenoDeRender: TerrenoDeRender = criarTerrenoDeRender();
+
+
+/**
+ * F-T2a (desenho MINIMO) — a camada de RECURSO para desenhar. Pelo mesmo
+ * criterio do terreno: a cena recebe daqui codigos e cores no mesmo indice e
+ * nao sabe o que e rocha nem o que e arvore.
+ *
+ * A diferenca em relacao ao terreno e de onde vem o dado. Terreno e imutavel e
+ * sai de `gameData`; recurso tem ONDE imutavel (o mapa) e QUANTO mutavel
+ * (`state.recursos`), e e o QUANTO que o jogador precisa ver mudar — o item
+ * pede que ele veja o tile ESGOTAR. Por isso o codigo de cada tile se calcula do
+ * ESTADO, a cada leitura, e nao uma vez no carregamento.
+ *
+ * Codigos: 0 e "nada aqui" (tile transparente), 1..N sao os tipos na ordem de
+ * `tipos`, e N+1 e ESGOTADO — o tile que ja foi cortado e ficou com quantidade
+ * zero (regime `porAcao`). Esgotado tem UM codigo so, nao um por tipo: o
+ * desenho minimo distingue "ha recurso" de "havia recurso", e a arte por tipo e
+ * a F-TR.
+ */
+export interface RecursosDeRender {
+  /** Os tipos na ordem do codigo (codigo = indice + 1). O roteiro conta por
+   *  NOME, como no terreno. */
+  readonly tipos: readonly string[];
+  /** Cor por CODIGO, em `#rrggbb`: indice 0 nao e usado (tile vazio), 1..N sao
+   *  os tipos e N+1 e o esgotado. */
+  readonly cores: readonly string[];
+  readonly codigoEsgotado: number;
+}
+
+export function criarRecursosDeRender(): RecursosDeRender {
+  const tipos = Object.keys(gameData.recursos.tipos);
+  const doTema = (temaSertao as { recursos?: Record<string, string | undefined> }).recursos ?? {};
+  const corDe = (chave: string): string => {
+    const cor = doTema[chave];
+    // Mesmo motivo do terreno: sem cor, o marcador sairia com a cor de outro
+    // tipo (ou sumido), e o jogador plantaria a pedreira no escuro — que e
+    // exatamente o que o desenho minimo existe para evitar.
+    if (typeof cor !== 'string') {
+      throw new Error(`render/mapa: theme-sertao.json nao tem cor para o recurso '${chave}'.`);
+    }
+    return cor;
+  };
+  return {
+    tipos,
+    cores: ['#000000', ...tipos.map(corDe), corDe('esgotado')],
+    codigoEsgotado: tipos.length + 1,
+  };
+}
+
+export const recursosDeRender: RecursosDeRender = criarRecursosDeRender();
+
+/** O codigo do tile a partir do que o ESTADO diz que sobrou ali. Puro: e a
+ *  mesma funcao que a cena usa para pintar e que o teste usa para afirmar. */
+export function codigoDoRecurso(
+  recurso: RecursoNoTile | undefined, config: RecursosDeRender = recursosDeRender,
+): number {
+  if (recurso === undefined) return 0;
+  if (recurso.quantidade <= 0) return config.codigoEsgotado;
+  const indice = config.tipos.indexOf(recurso.tipo);
+  return indice < 0 ? 0 : indice + 1;
+}

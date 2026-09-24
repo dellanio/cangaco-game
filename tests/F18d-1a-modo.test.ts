@@ -19,7 +19,7 @@ import {
   armazemDoCenario, cenarioLigado, comAPortaTapada, comArmazemCompleto, comEstradas, comObra, comPedraNaSaida,
   comPredioCompletoEm, comTarefas, inicial, linhaH, linhaV, semLaborers, serfsDoCenario, tarefaDe,
 } from './helpers/jobs-cenario';
-import { comProdutorOcupado } from './helpers/producao-cenario';
+import { comProdutorOcupado, disponivelDe } from './helpers/producao-cenario';
 import { gravarEvidencia } from './helpers/evidence';
 import { violacoesDeInvariantes } from './helpers/jobs-invariantes';
 
@@ -164,6 +164,10 @@ function medirOAceite(): {
     pedreiro: comRuaAgora.unidades.porId['pedreiro']?.fsm,
     pedraNaGavetaDaPedreira: saidaDe(comRuaAgora, 'pedreira').stone ?? 0,
     pedraNoArmazem: saidaDe(comRuaAgora, armazem).stone,
+    // F-T2a: o PORQUE de o pedreiro nao voltar a produzir depois de a gaveta
+    // esvaziar. Sem este campo o `esperando_insumo` abaixo seria so um numero
+    // trocado; com ele, a assercao diz de que falta se trata.
+    rochaAoAlcanceDaPedreira: disponivelDe(comRuaAgora, 'pedreira'),
   };
   return { semRua, comRua };
 }
@@ -179,11 +183,18 @@ describe('F18d-1a — o aceite do BUILD_PLAN', () => {
       tarefasDeColeta: 0, // nenhuma tarefa de nivel 6 nasceu
       pedraNoArmazem: { antes: 30, depois: 28 }, // -2: a pedra que entrou na obra
     });
+    // F-T2a: a pedreira deste cenario esta em (36,34), no descampado — e desde
+    // que a fonte passou a ser o TILE, ali nao ha o que cortar. O que o aceite
+    // afirma (a rua faz a gaveta escoar) esta intacto; o que mudou e o que vem
+    // DEPOIS de escoar: antes o pedreiro voltava a produzir do veio que nascia
+    // com o predio, agora ele fica esperando uma rocha que nao existe no lugar
+    // onde a fixture o pos. O campo `rochaAoAlcanceDaPedreira` fixa a causa.
     expect(comRua).toEqual({
       escoouNoTick: 43, // a rua existe: a tarefa de coleta nasce e o serf vem
-      pedreiro: 'trabalhando', // o pedreiro volta a produzir
+      pedreiro: 'esperando_insumo', // sem rocha ao alcance, nao ha ciclo novo
       pedraNaGavetaDaPedreira: 0,
-      pedraNoArmazem: 34, // 28 + as 5 da gaveta + 1 produzida depois
+      pedraNoArmazem: 33, // 28 + as 5 da gaveta, e nada mais: nao houve producao nova
+      rochaAoAlcanceDaPedreira: 0,
     });
   });
 });

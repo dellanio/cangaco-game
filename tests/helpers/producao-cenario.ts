@@ -15,6 +15,8 @@ import { step } from '../../src/sim/tick';
 import { chaveDeTile, predioLigadoAoArmazem, tilesDaPorta } from '../../src/sim/estradas';
 import type { TileDeGrid } from '../../src/sim/estradas';
 import { trabalhadorDoTipo } from '../../src/sim/ocupacao';
+import { disponivelAoAlcance } from '../../src/sim/recursos';
+import { receitaDoTipo } from '../../src/sim/producao';
 
 const tile = (gx: number, gy: number): TileDeGrid => ({ gx, gy });
 
@@ -74,7 +76,10 @@ function exigirLigado(estado: GameState, id: string, dados: GameData): GameState
 
 /** Pedreira `q1` (26,34) ocupada por `u1`, ligada a porta do armazem (29,33). */
 export function cenarioDePedreira(dados: GameData = gameData): GameState {
-  let s = semCivis(createInitialState(1));
+  // `dados` VAI para `createInitialState`: desde a F-T2a a camada de recurso
+  // nasce com o estado, entao um cenario de dado trocado que esquecesse de
+  // passa-lo abriria com a jazida do arquivo, nao com a do teste.
+  let s = semCivis(createInitialState(1, dados));
   s = comProdutorOcupado(s, { tipo: 'quarry', id: 'q1', unidade: 'u1', gx: 26, gy: 34 }, dados);
   s = comEstradas(s, [tile(29, 33), tile(29, 34), tile(29, 35), tile(29, 36), tile(28, 36)]);
   return exigirLigado(s, 'q1', dados);
@@ -91,7 +96,7 @@ export function cenarioDePedreira(dados: GameData = gameData): GameState {
  *   w2 (18,34)  w1 (22,34)  q1 (26,34)  [armazem 29..31]  s1 (32,34)
  */
 export function cenarioOraculo(dados: GameData = gameData): GameState {
-  let s = createInitialState(1);
+  let s = createInitialState(1, dados);
   s = comProdutorOcupado(s, { tipo: 'woodcutters', id: 'w2', unidade: 'lenhador-2', gx: 18, gy: 34 }, dados);
   s = comProdutorOcupado(s, { tipo: 'woodcutters', id: 'w1', unidade: 'lenhador-1', gx: 22, gy: 34 }, dados);
   s = comProdutorOcupado(s, { tipo: 'quarry', id: 'q1', unidade: 'pedreiro', gx: 26, gy: 34 }, dados);
@@ -106,7 +111,7 @@ export function cenarioOraculo(dados: GameData = gameData): GameState {
 
 /** Serraria `s1` (32,34) ocupada por `u2`, ligada, e com a entrada VAZIA. */
 export function cenarioDeSerraria(dados: GameData = gameData): GameState {
-  let s = semCivis(createInitialState(1));
+  let s = semCivis(createInitialState(1, dados));
   s = comProdutorOcupado(s, { tipo: 'sawmill', id: 's1', unidade: 'u2', gx: 32, gy: 34 }, dados);
   s = comEstradas(s, [tile(31, 33), tile(31, 34), tile(31, 35), tile(31, 36), tile(32, 36)]);
   return exigirLigado(s, 's1', dados);
@@ -147,7 +152,19 @@ function producaoDe(estado: GameState, id: string): Producao {
 }
 
 export const progressoDe = (estado: GameState, id: string): number => producaoDe(estado, id).progresso;
-export const veioDe = (estado: GameState, id: string): number | null => producaoDe(estado, id).veio;
+
+/**
+ * F-T2a: o que ANTES era `veioDe`. A pergunta continua sendo "quanto ainda ha
+ * para este predio colher?", mas a resposta deixou de estar no predio: e a soma
+ * do que sobrou nos tiles ao alcance dele. `null` para receita sem colheita
+ * (serraria, lenhador), que e o que `veio: null` queria dizer.
+ */
+export function disponivelDe(estado: GameState, id: string, dados: GameData = gameData): number | null {
+  const predio = completoDe(estado, id);
+  const receita = receitaDoTipo(predio.tipo, dados);
+  if (receita?.colheita == null) return null;
+  return disponivelAoAlcance(estado, predio, receita.colheita, dados);
+}
 
 export function fsmDe(estado: GameState, unidadeId: string): string {
   const u = estado.unidades.porId[unidadeId];
@@ -194,18 +211,63 @@ export function comEspacoNaSaida(estado: GameState, id: string): GameState {
 }
 
 /**
- * O MESMO `GameData`, com outro rendimento de veio para um tipo. O caminho e o
- * dado de verdade com outro numero — nao se fabrica veio por fixture nem se
- * mexe em `data/production.json` para um teste passar.
+ * F-T2a: o que ANTES era `comRendimento(dados, 'quarry', n)`. O total deixou de
+ * ser um numero do predio, entao encurtar a jazida e encurtar o MAPA: os tiles
+ * de `recurso` passam a ser exatamente `tiles`, cada um valendo
+ * `rendimentoPorTile`. O caminho continua sendo o dado de verdade com outro
+ * numero — nao se fabrica recurso por fixture nem se mexe em `data/` para um
+ * teste passar.
+ *
+ * Um tile de dois vale dois, e e assim que os cenarios de esgotamento da F15a e
+ * da F22 continuam medindo o que mediam: `comJazida(gameData, 'rock',
+ * [[25, 32]], 2)` da a mesma pedreira de duas pedras que `comRendimento(…, 2)`
+ * dava — (25,32) e vizinho do footprint de `q1` em (26,34).
  */
-export function comRendimento(dados: GameData, tipo: string, rendimento: number): GameData {
+export function comJazida(
+  dados: GameData, recurso: string, tiles: readonly (readonly [number, number])[], rendimentoPorTile: number,
+): GameData {
+  const tipo = dados.recursos.tipos[recurso];
+  if (tipo === undefined) throw new Error(`fixture: recurso '${recurso}' nao existe em resources.json`);
+  return {
+    ...dados,
+    recursos: {
+      ...dados.recursos,
+      tipos: { ...dados.recursos.tipos, [recurso]: { ...tipo, rendimentoPorTile } },
+    },
+    mapa: { ...dados.mapa, recursos: { ...dados.mapa.recursos, [recurso]: tiles } },
+  };
+}
+
+/**
+ * O MESMO mapa — a geografia de verdade, tile por tile —, so que cada tile
+ * valendo `rendimentoPorTile`. E o que permite rodar ate o esgotamento dentro de
+ * um teste: com 1 por tile, o total de uma pedreira E a contagem de tiles ao
+ * alcance dela, e 13 ciclos cabem onde 195 nao caberiam.
+ */
+export function comRendimentoPorTile(dados: GameData, recurso: string, rendimentoPorTile: number): GameData {
+  const tipo = dados.recursos.tipos[recurso];
+  if (tipo === undefined) throw new Error(`fixture: recurso '${recurso}' nao existe em resources.json`);
+  return {
+    ...dados,
+    recursos: {
+      ...dados.recursos,
+      tipos: { ...dados.recursos.tipos, [recurso]: { ...tipo, rendimentoPorTile } },
+    },
+  };
+}
+
+/** A mesma jazida, em outro alcance: o que muda e QUANTOS tiles o predio ve. */
+export function comAlcance(dados: GameData, tipo: string, alcance: number): GameData {
   const receita = dados.producao.receitas[tipo];
-  if (receita === undefined) throw new Error(`fixture: '${tipo}' nao tem receita`);
+  if (receita?.colheita == null) throw new Error(`fixture: '${tipo}' nao colhe`);
   return {
     ...dados,
     producao: {
       ...dados.producao,
-      receitas: { ...dados.producao.receitas, [tipo]: { ...receita, rendimentoDoVeio: rendimento } },
+      receitas: {
+        ...dados.producao.receitas,
+        [tipo]: { ...receita, colheita: { ...receita.colheita, alcance } },
+      },
     },
   };
 }
