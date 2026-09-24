@@ -106,6 +106,13 @@ tarefa termina verde e commitada.
 arquivos, mais `tests/helpers/abertura.ts` e `tools/shots/` (estes últimos são da
 F18d-2, não desta).
 
+**Correção durante a execução (Tarefa 2 → 3):** os corpos das Tarefas 3 e 4
+estavam trocados em relação aos títulos — o parágrafo acima manda a máquina de
+assentar vir antes da troca do `PlaceRoad`, e os passos diziam o contrário. Os
+títulos é que estavam certos; os corpos voltaram para baixo do seu. A migração
+dos 27 pontos, que o título da Tarefa 4 promete e nenhum passo listava, virou o
+Passo 5 dela.
+
 ---
 
 ### Tarefa 1: `estradasPlanejadas` no estado (inerte)
@@ -161,22 +168,6 @@ export function criarTarefaDeAssentamento(
 
 ### Tarefa 3: o laborer assenta um tile planejado, e o assentamento debita
 
-**Arquivos:** `src/sim/systems/estradas.ts`, `src/sim/systems/jobs.ts`,
-`tests/F18d-1b-tarefa.test.ts`.
-
-- [ ] **Passo 1:** teste: `PlaceRoad` de 3 tiles cria **3** tarefas abertas e
-      reserva 3 de pedra no mesmo tick; `canPlaceRoad` recusa com `'sem-pedra'`
-      quando o que sobra já está reservado por tarefas anteriores (a reserva
-      entra na conta de `pedraDisponivel` — provar com dois comandos seguidos);
-      `gerarTarefas` recria a tarefa de um tile planejado que ficou sem nenhuma,
-      e **não** duplica quando já existe.
-- [ ] **Passo 2:** rodar; vermelho. **Passo 3:** implementar. **Passo 4:** verde.
-- [ ] **Passo 5:** saneamento: tarefa cujo `destinoTile` não é mais planejado
-      (virou estrada ou foi demolido) é **cancelada**, liberando a reserva;
-      unidade morta reabre. Teste dos dois. Commit.
-
-### Tarefa 4: a troca de comportamento do `PlaceRoad`, e a migração dos cenários
-
 **Arquivos:** `src/sim/systems/laborers.ts`, `data/buildings.json`,
 `tests/F18d-1b-laborer.test.ts`.
 
@@ -195,6 +186,25 @@ export function criarTarefaDeAssentamento(
 - [ ] **Passo 5:** verde; invariantes (`violacoesDeInvariantes`,
       `violacoesDaFsmDoLaborer`, `bensPorMercadoria`) vazias em **todo** tick de
       uma corrida longa. Commit.
+
+### Tarefa 4: a troca de comportamento do `PlaceRoad`, e a migração dos cenários
+
+**Arquivos:** `src/sim/systems/estradas.ts`, `src/sim/systems/jobs.ts`,
+`tests/F18d-1b-tarefa.test.ts`.
+
+- [ ] **Passo 1:** teste: `PlaceRoad` de 3 tiles cria **3** tarefas abertas e
+      reserva 3 de pedra no mesmo tick; `canPlaceRoad` recusa com `'sem-pedra'`
+      quando o que sobra já está reservado por tarefas anteriores (a reserva
+      entra na conta de `pedraDisponivel` — provar com dois comandos seguidos);
+      `gerarTarefas` recria a tarefa de um tile planejado que ficou sem nenhuma,
+      e **não** duplica quando já existe.
+- [ ] **Passo 2:** rodar; vermelho. **Passo 3:** implementar. **Passo 4:** verde.
+- [ ] **Passo 5:** a migração, num golpe só: os **27** pontos de `PlaceRoad` em
+      `tests/` (10 arquivos) e `tests/helpers/abertura.ts` passam a montar a rua
+      de pé pelo helper (`comEstradas`) quando o que o teste afirma é a REDE, e
+      continuam emitindo o comando quando o que ele afirma é o COMANDO. Suíte
+      inteira verde antes do commit.
+- [ ] **Passo 6:** commit.
 
 ### Tarefa 5: `DemolishRoad` em três conjuntos
 
