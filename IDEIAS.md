@@ -109,3 +109,25 @@ caminho. Ideia boa é justamente a mais perigosa.
   §2.3 pede em `[geral]` para as oficinas. Até lá os três ids têm nome
   provisório no tema (Arma de madeira, Arma de ferro, Proteção reforçada), pelo
   mesmo motivo de sempre: se um dia chegarem à tela, chegam com nome.
+- Painel do prédio dizer **"está no campo"** quando o especialista sai — **fora da F-T3 por
+  decisão do operador (2026-09-24)**, com a razão dele: *"o jogador vê o pedreiro andando no
+  mapa, que é o lugar mais forte"*. O painel continua lendo só `predio.ocupante`
+  (`src/sim/selectors.ts:511-517`) e **não lê `unidade.fsm`**, então o especialista em campo
+  aparece como ocupante normal, que é o que ele é. Implementar depois seria campo novo no
+  seletor (`ocupanteEmCampo: boolean`, derivado do `fsm` da unidade apontada por `ocupante`)
+  mais uma linha no painel — nada em `state`, nada de comando.
+- Descontar tile **inalcançável** da contagem do painel do extrator (F-TA) — **fora por decisão
+  do operador (2026-09-24)**, e o motivo é de projeto, não de custo: *"tem aceite escrito em
+  dois lugares, e 'alcançável' depende do caminho, que muda quando o jogador constrói — o número
+  ficaria instável"*. A F-T3 passa a ter um predicado de alcançabilidade
+  (`tileAlcancavelParaColheita`), então o desconto é barato de fazer; o que ele custaria é
+  **estabilidade**: a mesma pedreira mostraria 13 ou 9 dependendo de o jogador ter posto um
+  prédio no meio do caminho, e os aceites da F-TP e da F-TA afirmam o par `(tiles, unidades)`
+  como geometria, não como logística. Se um dia entrar, entra como **segunda** linha ("9 dos 13
+  com caminho"), nunca trocando o número que já está lá.
+- **Pedra visível no braço do pedreiro na volta** — ideia, e o operador deixou o gatilho escrito
+  (2026-09-24): *"Se a captura da Tarefa 7 mostrar que ele parece andar de mãos vazias sem
+  motivo, aí vira aceite desta feature."* Hoje a colheita acontece **no depósito** (D3 do plano
+  da F-T3): nada muda de mão durante a caminhada, e por isso não existe mercadoria órfã. Fazer
+  seria render lendo um campo que a sim ainda não tem — a carga na mão do especialista **não
+  existe** no estado, diferente da do serf.

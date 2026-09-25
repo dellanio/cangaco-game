@@ -224,6 +224,20 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   F15b, continua de pé | `production.json:proporcoesDeReferencia`,
   `resources.json:tipos.corn.reposicao`
 
+- [2026-09-24] **a cadeia da carne é mais faminta de milho do que o oráculo diz, e o elo que não
+  depende da fazenda está certo** | medido em 20 000 ticks no cenário 1 Fazenda : 1 Malhada : 1 Casa
+  de Carne (`test-output/F19b.json`): a fazenda entrega um milho a cada **328** ticks (61 em 20 000),
+  a Malhada quer **4 milhos por 600 ticks** — um a cada 150 —, e a razão real fica em **2,19
+  fazendas por Malhada** contra o **1,63** que `proporcoesDeReferencia` publica. Consequência no
+  cenário mínimo: o criador passa **55 %** e o carneador **86 %** do tempo em `esperando_insumo`
+  (o roceiro, 0 %). A causa é a MESMA das duas entradas acima — o custo do plantio que a F18
+  introduziu —, e por isso esta entrada não é um problema novo: é o terceiro ramo do mesmo. Já o
+  elo que **não** passa pela fazenda bate: o açougue consome um bode a cada 200 ticks e a Malhada
+  entrega um a cada 600, exatamente os **3** de `swine_farm_por_butchers`. **Não mexi em número
+  nenhum** — o operador fechou o lote: *"a Fase B inteira está com proporções desatualizadas desde
+  a F18, e vale calibrar de uma vez quando a cadeia de comida fechar"* | `production.json:predios.swine_farm`,
+  `production.json:proporcoesDeReferencia`, `resources.json:tipos.corn.reposicao`
+
 ---
 
 ## Ciclos fechados

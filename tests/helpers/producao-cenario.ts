@@ -191,6 +191,63 @@ export function cenarioDaCadeiaDoPao(
   return comHistoricoDosPredios(comSerfs(s, serfs, 112, 37));
 }
 
+/**
+ * F19b — a CADEIA DA CARNE: milho -> bode -> carne de sol, na MESMA geografia da
+ * cadeia do pao (o milho do mapa esta no norte, e e de la que o milho sai), com o
+ * armazem por onde tudo passa e os serfs que carregam.
+ *
+ * Disposicao (y=37 e a rua que passa na porta de todos):
+ *   bu1 (103,34)   sf1 (107,34)   [f1 112,30, porta em y=33]   arm (116,34)
+ *
+ * A granja e o acougue ficam em GRAMA, ao sul da terra arada (medido no mapa:
+ * `campoArado` vai de y=26 a y=30), para que nenhum footprint cubra tile de
+ * plantio — o caso da nota herdada da F18, que e da F-T3 e nao deste cenario.
+ */
+export function cenarioDaCadeiaDaCarne(
+  dados: GameData = gameData, serfs: number = 4,
+): GameState {
+  let s = semCivis(createInitialState(1, dados));
+  s = comArmazemExtra(s, 'arm', 116, 34, dados);
+  s = comProdutorOcupado(s, { tipo: 'farm', id: 'f1', unidade: 'roceiro', gx: 112, gy: 30 }, dados);
+  s = comProdutorOcupado(s, { tipo: 'swine_farm', id: 'sf1', unidade: 'criador', gx: 107, gy: 34 }, dados);
+  s = comProdutorOcupado(s, { tipo: 'butchers', id: 'bu1', unidade: 'carneador', gx: 103, gy: 34 }, dados);
+  const rua: TileDeGrid[] = [];
+  for (let gy = 33; gy <= 37; gy++) rua.push(tile(112, gy));
+  for (let gx = 103; gx <= 119; gx++) rua.push(tile(gx, 37));
+  s = comEstradas(s, rua);
+  for (const id of ['f1', 'sf1', 'bu1']) s = exigirLigado(s, id, dados);
+  return comHistoricoDosPredios(comSerfs(s, serfs, 112, 37));
+}
+
+/**
+ * F19b — a MESMA cadeia da carne sem um elo. Tira o predio E o ocupante, e refaz
+ * `tiposJaConstruidos` a partir do que sobrou: sem isso o menu Build mentiria
+ * sobre a arvore, e o teste mediria a fixture.
+ */
+function semPredioEOcupante(estado: GameState, predio: string, unidade: string): GameState {
+  const porId = { ...estado.predios.porId };
+  delete porId[predio];
+  const uPorId = { ...estado.unidades.porId };
+  delete uPorId[unidade];
+  return comHistoricoDosPredios({
+    ...estado,
+    predios: { porId, ordem: estado.predios.ordem.filter((i) => i !== predio) },
+    unidades: { porId: uPorId, ordem: estado.unidades.ordem.filter((i) => i !== unidade) },
+    tiposJaConstruidos: [],
+  });
+}
+
+/** Sem a Malhada: o milho se acumula e o acougue nunca ve um bode. E o que impede
+ *  o aceite de passar por um acougue que fabrique carne do nada. */
+export function cenarioDaCarneSemGranja(dados: GameData = gameData): GameState {
+  return semPredioEOcupante(cenarioDaCadeiaDaCarne(dados), 'sf1', 'criador');
+}
+
+/** Sem a Fazenda: a fonte da cadeia inteira desaparece, e nada e produzido. */
+export function cenarioDaCarneSemFazenda(dados: GameData = gameData): GameState {
+  return semPredioEOcupante(cenarioDaCadeiaDaCarne(dados), 'f1', 'roceiro');
+}
+
 /** Serfs ociosos em cima de um tile, para o cenario que precisa de carga sem
  *  esperar a caminhada da vila. Ids `serf-1..n`, para nao colidir com os `u<n>`
  *  do cenario inicial. */

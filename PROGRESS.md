@@ -5015,3 +5015,92 @@ que só aparece rodando.
 A feature tocou `src/sim/selectors.ts`, `src/ui/painel-predio.ts` e um arquivo novo
 em `src/render/`. A exceção está **escrita no item do `BUILD_PLAN.md`, antes do
 código**, com a razão (a frase tem de ser uma só).
+
+---
+
+## F19b — A segunda comida: Malhada e Casa de Carne (2026-09-24)
+
+Primeira das cinco features da corrida desatendida que o operador deixou. O pedido
+dele: *"Comece medindo, como na F19: a cadeia pode já funcionar sem código novo. O
+escopo é o que faltar. O aceite tem de afirmar que carne de sol chega ao armazém
+partindo do estado inicial, pelo caminho real."* O item **não existia** na fila —
+`grep` por `swine|butcher|Malhada|Casa de Carne` no `BUILD_PLAN.md` não devolvia
+nada —, então ele foi escrito antes do código, com a medição dentro.
+
+### O que foi VERIFICADO (comando rodado, arquivo aberto)
+
+- **A medição, em duas sondas descartáveis** (`tests/zz-probe-carne*.test.ts`,
+  apagadas ao fim da sessão, como manda o §8): a cadeia
+  `milho → bode → carne de sol` **fecha sem uma linha de código novo**.
+- `npm run verify` verde: **80 arquivos de teste, 1247 testes** (eram 79/1237),
+  `validate:data` 11 arquivos 0 erros.
+- `test-output/F19b.json`, **aberto com Read**: primeira carne no armazém no tick
+  **2359** (piso da cadeia 1346), 61 milhos / 15 bodes / 15 couros / **42 carnes**
+  em 20 000 ticks, **93,3 %** do teto que o milho permite, saldo de `sausages` no
+  armazém subindo de 10 (linha de base) para 52. Sem a Malhada: 61 milhos
+  empilhados e **zero** carne, carneador em `esperando_insumo`. Sem a Fazenda:
+  `produzido` **vazio** e os dois especialistas esperando.
+- **Sem screenshot, e o motivo é o da F18 e da F19**: nenhuma linha de
+  `src/render/` mudou, e o harness de captura não constrói prédio — Malhada e Casa
+  de Carne estão atrás da Fazenda, que está atrás da Serraria.
+
+### As decisões, com o motivo (decisões MINHAS, marcadas para o operador revisar)
+
+- **D1 — Medir contra a linha de base do tick 0, nunca contra zero.** O armazém da
+  abertura **já traz `sausages: 10`** (`economy.json estadoInicial.estoque`, além de
+  `loaves: 15`). Conferi a premissa do pedido no dado antes de escrever o aceite: a
+  frase *"hoje só o cuscuz fecha"* vale para **produção**, não para estoque. Contra
+  zero absoluto, o critério 1 passaria com o presente da abertura.
+- **D2 — "Chega ao armazém" é saldo de armazém, não gaveta de prédio.** A F19 mediu
+  `entregue` (soma das gavetas de todos os prédios); o critério que o operador
+  escreveu é mais estrito, então o eixo aqui é `estoqueDosArmazens`, que só sobe
+  quando a tarefa de transporte **termina** no armazém.
+- **D3 — "Pelo caminho real" é a cadeia inteira sem injeção, e não a vila subindo
+  por comando.** O cenário nasce de `createInitialState`, o milho sai do **tile**
+  (aração, plantio, pousio), o serf carrega em quatro pernas (fazenda → armazém →
+  Malhada → Casa de Carne → armazém) e nenhuma gaveta é semeada à mão. O que ele
+  **não** faz é plantar os três prédios por `PlaceBlueprint` e esperar laborer e
+  escola, como o aceite da Fase A (F17) faz: a terra arada do mapa está a ~80 tiles
+  da vila, o que exige estrada longa, armazém novo e ouro de treino, e isso é um
+  **aceite de fase**, não a prova de uma cadeia. O critério 5 cobre o outro lado —
+  que o jogador **alcança** os dois prédios pela árvore de desbloqueio. **Se o
+  operador quis o roteiro por comando, isso é um item próprio** (o aceite da Fase B),
+  e a prova da cadeia continua valendo como está.
+- **D4 — O cenário é mínimo, não é o oráculo** (ao contrário do da F19). A proporção
+  da carne pediria ~5 fazendas para uma Casa de Carne, e o bloco de terra arada do
+  norte tem 65 tiles. O cenário 1 : 1 : 1 prova a **cadeia**; a proporção virou
+  medição no `BALANCE_LOG.md`. **Nenhum número ajustado**, por ordem do operador.
+- **D5 — Teto e piso derivados da receita; a saída dupla ganhou critério próprio.**
+  Teto: `bode ≤ ⌊milho / entra.corn⌋` e `carne ≤ sai.sausages × bode`. Piso: 85 % do
+  teto, mesmo número e mesmo motivo da F19 (tolerância de transporte; medido 93,3 %).
+  E o critério 4 existe porque uma receita de **duas** saídas que entregasse só a
+  primeira passaria em todos os outros: ele afirma `unidadesPorCiclo === 2`,
+  `couro produzido === bode produzido` e couro chegando ao armazém. O id `skins`
+  nunca é digitado — o couro entra por exclusão do que a receita do açougue consome.
+
+### O que a medição expôs (registrado, não corrigido)
+
+- **`farm_por_swine_farm` está otimista, e agora com número**: 1,63 publicado contra
+  **2,19** real; no cenário mínimo o criador fica **55 %** e o carneador **86 %** em
+  `esperando_insumo`. Terceira observação de vazão no `BALANCE_LOG.md`, mesma causa
+  das duas anteriores (o custo do plantio da F18).
+- **`swine_farm_por_butchers: 3` foi CONFIRMADO** pela mesma medição — o elo que não
+  passa pela fazenda está certo. Os dois números entraram no `_aviso` de
+  `production.json:proporcoesDeReferencia`, no próprio arquivo que alguém vai abrir
+  para calibrar: a premissa morta se marca no dado, não só aqui.
+- **O couro não tem consumidor construído.** `tannery` (`skins → leather`) está no
+  dado e liberada pela árvore; a cadeia do couro é a **F24**. Aqui o couro só
+  precisava chegar ao armazém sem travar a granja, e chega (14 no armazém ao fim).
+
+### Nota herdada pela F20 (escrita antes dela, no item)
+
+`condition.json` traz `restauracaoPorComida.sausages: 0.60` contra `loaves: 0.40`, e
+a regra das duas comidas está em `regraCivil` como **prosa** — texto que nenhum
+sistema lê. A F20 decide como ela entra no dado; esta feature só garante que as duas
+comidas **existem produzidas**.
+
+### O que esta feature NÃO fez
+
+- Nenhuma linha de `src/`: nem `sim/`, nem `render/`, nem `ui/`. Só `tests/`, a fila,
+  os registros e o `_aviso` do dado.
+- Não ajustou proporção nenhuma. Não construiu `tannery`. Não mexeu na F20.

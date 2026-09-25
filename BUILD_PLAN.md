@@ -1970,11 +1970,91 @@ a geografia já corrigida do que regravar 900 tiles depois.
   Então o travamento da nota acima **continua vivo pela fazenda**, e é aqui que ele
   morre — a solução é `tilesDeColheita` (ou quem escolhe o tile) descartar tile que
   o próprio footprint cobre, não ampliar a recusa de `canPlace`.
+- **Corte autorizado pelo operador (2026-09-24)**: se a Tarefa 4 do plano
+  (`docs/planos/F-T3-especialista-sai.md` — trocar a escolha do tile pelo
+  predicado de alcançabilidade) estragar **mais que poucas asserções** das
+  features herdadas, quebrar em **F-T3a** (caminho, ida e volta, ciclo em campo)
+  e **F-T3b** (elegibilidade do tile e o milho debaixo do footprint), entregar a
+  primeira e registrar a segunda como item próprio. *"Se a Tarefa 4 estragar mais
+  que poucas asserções, quebre e entregue o primeiro."*
 - **Nota de integração (CLAUDE.md §10 — decisão do operador, 2026-09-24)**: o
   **desenho do especialista fora do prédio vai junto desta feature**, não em item
   separado — mesma razão da F-T1 e da F-T2: unidade que a simulação põe no campo
   e a tela deixa dentro do prédio é tela que mente. A exceção do §10 está escrita
   aqui, antes do código.
+
+### F19b — A segunda comida: Malhada e Casa de Carne (medir primeiro)
+- **Posição na fila — decisão do operador, 2026-09-24**: **antes da F20**, com a
+  razão escrita: *"O GDD §4.3 diz que civil só satura com pelo menos DUAS comidas
+  diferentes, e hoje só o cuscuz fecha. A F20 depende disto."* E o item começou,
+  como a F19, com uma tarefa de **MEDIR**, não de implementar: *"Comece medindo,
+  como na F19: a cadeia pode já funcionar sem código novo. O escopo é o que
+  faltar."*
+- **Resultado da medição: nada faltou** (sonda da sessão, 20 000 ticks, cenário
+  1 Fazenda : 1 Malhada : 1 Casa de Carne, ligado por estrada a um armazém, com 4
+  serfs). Primeiro milho entregue no tick **546**, primeiro bode em **1984**,
+  primeira carne de sol em **2276**, e no armazém em **2359**. Em 20 000 ticks:
+  **61 milhos, 15 bodes, 15 couros, 42 carnes** — e a conta fecha sem sobra, porque
+  a granja consome 4 milhos por bode (`pigs = ⌊61/4⌋ = 15`) e o açougue rende 3
+  carnes por bode. A produção é genérica desde a F15a, a tarefa de insumo entre
+  prédios existe desde a F15b, e **a gaveta de saída com DUAS mercadorias já era
+  prevista** (`cabeNaSaida` soma a gaveta inteira: *"a granja enche a mesma gaveta
+  com porco e couro"*).
+- **Premissa conferida no dado**: o armazém da abertura **já abre com carne de
+  sol** — `economy.json estadoInicial.estoque` traz `loaves: 15` **e**
+  `sausages: 10`. A premissa do pedido é sobre **produção**, não sobre estoque: até
+  aqui só a cadeia do pão fechava. Por isso todo número desta feature é medido
+  **contra a linha de base do tick 0**; contra zero absoluto, o aceite passaria com
+  o presente da abertura e não com uma carne produzida.
+- **Escopo, portanto**: a prova, a evidência, e o que a medição expôs — nada além.
+  `tests/F19b-cadeia-da-carne.test.ts` transforma a sonda em cobertura permanente
+  (sonda prova o momento, §8), e `cenarioDaCadeiaDaCarne` (mais as duas variações
+  negativas) entra no helper de produção. **Nenhuma linha de `src/`**: nem `sim/`,
+  nem `render/`, nem `data/`.
+- **Aceite** (todo marco derivado do dado, nenhum digitado):
+  1. **a carne de sol chega AO ARMAZÉM, pelo caminho real**: partindo de
+     `createInitialState` e da linha de base do tick 0, o saldo de `sausages` nos
+     armazéns sobe — e nunca antes de
+     `plantio + ciclo da fazenda + ciclo da granja + ciclo do açougue`, o piso que
+     nenhum transporte pode furar. Nada é injetado em gaveta: o milho sai do tile,
+     o serf carrega, e a carne entra no armazém por tarefa de transporte;
+  2. **os dois elos do meio são reais**: a mesma vila **sem a Malhada** não produz
+     uma carne (o milho se acumula no armazém e o carneador fica em
+     `esperando_insumo`), e **sem a Fazenda** não nasce um bode. É o que impede o
+     aceite de passar por um açougue que fabrique carne do nada — o defeito que a
+     F18 encontrou na fazenda e a F19 no moinho;
+  3. **nada se perde na cadeia**: o bode produzido cabe no teto que o milho permite
+     (`⌊milho / entra.corn⌋`, derivado da receita) e a carne cabe em
+     `sai.sausages × bode`; acima de 85 % do teto, que é a tolerância de
+     **transporte** medida (deu 93 %), não de balanceamento;
+  4. **o couro é saída de verdade, e não a única**: a granja enche a mesma gaveta
+     com bode **e** couro (`unidadesPorCiclo === 2`) e o couro chega ao armazém
+     junto. Uma receita de duas saídas que entregasse só a primeira passaria no
+     critério 1 e cai aqui;
+  5. **o jogador alcança a cadeia pela árvore**: na vila inicial `swine_farm` está
+     bloqueada com `requer: 'farm'` e `butchers` com `requer: 'swine_farm'`; com a
+     fazenda construída, a Malhada libera.
+- **Evidência**: `test-output/F19b.json`
+- **Sem screenshot, e o motivo é o da F18 e da F19**: nenhuma linha de
+  `src/render/` muda, e o harness de captura não constrói prédio — Malhada e Casa
+  de Carne estão atrás da Fazenda, que está atrás da Serraria.
+- **Nota (o cenário NÃO é o oráculo, ao contrário da F19, e isso é medição)**:
+  `proporcoesDeReferencia` pede **1,63 fazenda por Malhada** e **3 Malhadas por
+  Casa de Carne**; o cenário é 1 : 1 : 1, mínimo que prova a cadeia. Medido:
+  o criador passa **55 %** e o carneador **86 %** do tempo em `esperando_insumo`,
+  e a razão real ficou em **2,19 fazendas por Malhada** (a fazenda entrega um
+  milho a cada ~328 ticks e a Malhada quer um a cada 150) — mesma causa que a F19
+  já registrou para o pão, o custo do plantio da F18. O elo que **não** depende da
+  fazenda, `swine_farm_por_butchers: 3`, bate com a medição e continua de pé.
+  Números vão para o `BALANCE_LOG.md`; **nenhum é ajustado aqui** (o lote é da F20).
+- **Nota herdada para a F20 (escrita antes dela)**: `condition.json` traz
+  `restauracaoPorComida.sausages: 0.60` contra `loaves: 0.40`, e a regra das duas
+  comidas está em `regraCivil` como **prosa** — texto que nenhum sistema lê. A F20
+  decide como a regra entra no dado; esta feature só garante que as duas comidas
+  **existem produzidas**.
+- **Fora do escopo**: o couro não tem consumidor construído. `tannery`
+  (`skins → leather`) está no dado e liberada pela árvore, e a cadeia do couro é a
+  **F24**. Aqui o couro só precisa chegar ao armazém sem travar a granja.
 
 ### F20 — Inn, fome e consumo
 - Restauração por tipo de comida e regra das duas comidas diferentes, conforme o
