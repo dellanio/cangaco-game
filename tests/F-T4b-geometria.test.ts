@@ -129,6 +129,21 @@ describe('F-T4b: a geometria da abertura e UMA so', () => {
     expect(peloJson.yRua).toBe(pelaSim.yRua);
   });
 
+  it('o orcamento da rua ACUSA, e a mensagem traz as DUAS medidas', () => {
+    // Sem pedra suficiente, `PlaceRoad` (tudo ou nada, pago a vista no tick 0)
+    // recusa e a vila nasce completa e DESLIGADA para sempre — foi o que a F-T4b
+    // mediu com 31 tiles contra 30 de pedra. O modulo tem de estourar antes, e a
+    // mensagem tem de dizer de qual lado mexer: quantos tiles a rua precisa e
+    // quanta pedra o estado inicial tem.
+    const base = predicadosDoRoteiro();
+    const tiles = peloJson.rua.length;
+    expect(() => geometriaDaAbertura({ ...base, estoqueInicialDeStone: 1 })).toThrow(
+      new RegExp(`precisa de ${tiles} tiles.*o estado inicial tem 1 de pedra`, 's'),
+    );
+    // e com o estoque publicado ela NAO estoura: o guarda nao e um que so grita
+    expect(() => geometriaDaAbertura(base)).not.toThrow();
+  });
+
   it('o guarda ACUSA: mudar um predicado de um lado so muda a geometria', () => {
     // Um guarda que nunca reprova nao e guarda. Aqui o predicado de recurso e
     // desligado — e exatamente o que aconteceria se um dos dois lados deixasse

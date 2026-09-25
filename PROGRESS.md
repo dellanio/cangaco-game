@@ -6450,9 +6450,66 @@ verde (102 arquivos, 1 412 testes) e `npm run shot -- F17` OK.
 
 ### Aberto
 
-- **A folga de pedra da abertura é 4**, e o módulo agora a protege — mas ela é
-  apertada: qualquer prédio a mais na abertura, ou qualquer encarecimento da
-  estrada, faz o módulo lançar no carregamento do fixture. É o comportamento certo
-  (falha alta e explicada), e fica registrado que a próxima feature que mexer na
-  abertura vai encontrar esse teto.
+- ~~**A folga de pedra da abertura é 4**~~ — **FECHADA no mesmo dia**, a pedido do
+  operador: virou entrada no `BALANCE_LOG.md` com veredito medido (é tensão de
+  design, o número fica) e nota na F18g. Ver a seção abaixo.
 - **O inventário da §8 continua aberto** para os demais roteiros; a F17 saiu dele.
+
+## 2026-09-25 — A folga de 4 de pedra respondida (medida, veredito e a ligação da F18g)
+
+Pedido do operador, sobre o item que eu tinha deixado em **Aberto** na F-T4b: *"a
+folga de 4 de pedra é o achado que importa, e ela não deve ficar como observação
+aberta"*. Três coisas: medida no erro do módulo, veredito no `BALANCE_LOG` e a
+ligação registrada na F18g.
+
+### Verificado
+
+- **O erro do orçamento agora carrega as DUAS medidas.**
+  `tools/geometria-da-abertura.mjs` diz quantos tiles a rua precisa, a que custo
+  unitário, quanto o estado inicial tem, qual é a reserva e quantos tiles teriam de
+  sair — mais o caminho do número (`data/economy.json`). Quem esbarrar nele sabe se
+  falta pedra ou sobra distância sem abrir a sonda.
+- **E o erro ACUSA**: 4º teste de `tests/F-T4b-geometria.test.ts` chama a geometria
+  com `estoqueInicialDeStone: 1` e casa a mensagem contra as duas medidas; a mesma
+  chamada com o estoque publicado não lança. É a regra da sessão de provar que o
+  guarda acusa, não só que não acusa à toa.
+- **A resposta à pergunta como o operador a escreveu é ZERO**
+  (`test-output/F-T4b-folga-de-pedra.json`): 30 de pedra − 26 de rua − 4 do arranque
+  mínimo (woodcutters 2 + quarry 2) = **0 tiles** para o quinto prédio.
+- **Mas esse zero é a ponta cara de uma escolha que existe**
+  (`test-output/F-T4b-escalonado.json`): ligar só a pedreira e a primeira casa de
+  lenhador custa **18 tiles**, e `predioLigadoAoArmazem` devolve `true` para as duas
+  no **tick 168** — sobram **8**. A ligação foi perguntada à sim, não calculada por
+  mim.
+- **A vila não perde antes do primeiro clique**: mesmo ligando tudo de uma vez ela
+  fecha a Fase A (F17, tick 4266); o estoque toca 0 no tick 617, fica em 0 de ~750 a
+  ~2000 e volta a subir com a pedreira — 19 no tick 6000.
+- **`canPlaceRoad` exige a pedra da rua inteira no instante do comando**
+  (`src/sim/estradas.ts:537-538`, `custoEmPedra > pedraDisponivel` ⇒ `sem-pedra`).
+  Lido no arquivo, não suposto: é este portão, e não o débito, que aperta a abertura.
+
+### Decidido
+
+- **A folga de 4 é tensão, não acaso — o número fica.** O critério que o operador deu
+  (*"se for zero, o número está errado"*) mede a rua inteira de uma vez; com a escolha
+  escalonada medida, as duas pontas existem (0 e 8), que é a tensão do KaM que ele
+  descreveu. **Nada girado** em `data/economy.json`, e a entrada do `BALANCE_LOG.md`
+  registra a dívida: a folga de 4 é *igual* ao arranque mínimo de 4, então é fio de
+  navalha, não ladeira — se o lote mexer aqui, mexe nos três números juntos (estoque
+  inicial, `custoStonePorTile`, `stone` das duas casas do arranque).
+- **A nota da F18g diz também onde a expectativa NÃO se cumpre de graça.** O operador
+  escreveu que a F18g *"vai aliviar essa restrição sem ninguém pedir"*. Medido: o
+  escopo escrito dela move o **débito** para a entrega, e o que aperta é a **reserva
+  no instante do comando** — se `PlaceRoad` continuar reservando a rua inteira, o
+  orçamento fica tão apertado quanto hoje. Ficou registrado como decisão de quem
+  implementar (reserva por tile, ou arrasto parcial), porque é mudança de aceite e não
+  consequência dele. Junto foi a dívida inversa: portão afrouxado torna o guarda do
+  gerador **pessimista**, e aí ele vira teto falso.
+
+### Aberto
+
+- **As duas sondas eram testes temporários e saíram no mesmo commit.** O que permanece
+  é o JSON em `test-output/` e o `BALANCE_LOG`, que traz o *como refazer* — inclusive a
+  armadilha medida: `PlaceRoad` deixa a rua **planejada**, então perguntar a ligação no
+  tick 1 devolve `false` para tudo e parece resposta. A proteção contínua aqui é só o
+  4º teste da geometria; o resto é número da corrida.

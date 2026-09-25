@@ -283,9 +283,18 @@ export function geometriaDaAbertura({
   const reserva = stoneDe(GRUPO_DA_MATA[0]) + stoneDe(GRUPO_DA_PEDRA[GRUPO_DA_PEDRA.length - 1]);
   const custoDaRua = rua.length * custoStonePorTile;
   if (custoDaRua + reserva > estoqueInicialDeStone) {
+    // A mensagem carrega a MEDIDA dos dois lados, porque quem esbarrar nisto
+    // daqui a cinco features precisa saber se falta pedra ou sobra distancia:
+    // sem os dois numeros, "nao coube" nao diz qual dos dois mexer.
+    const excesso = custoDaRua + reserva - estoqueInicialDeStone;
     throw new Error(
-      `abertura: a rua custa ${custoDaRua} de pedra e sobram ${estoqueInicialDeStone - custoDaRua} ` +
-        `para as obras, menos que a reserva de ${reserva} da primeira casa e da pedreira`,
+      `abertura: a rua nao cabe no estoque inicial. A rua precisa de ${rua.length} tiles ` +
+        `a ${custoStonePorTile} de pedra = ${custoDaRua}; o estado inicial tem ` +
+        `${estoqueInicialDeStone} de pedra; a reserva de ${reserva} (${GRUPO_DA_MATA[0]} + ` +
+        `${GRUPO_DA_PEDRA[GRUPO_DA_PEDRA.length - 1]}) tem de sobrar, porque e o que sobe ` +
+        `antes de existir producao de pedra. Faltam ${excesso} de pedra, ou seja ` +
+        `${Math.ceil(excesso / custoStonePorTile)} tiles de rua a menos — ou mais pedra em ` +
+        'data/economy.json (estadoInicial.estoque.stone).',
     );
   }
 

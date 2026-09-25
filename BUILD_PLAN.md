@@ -3025,6 +3025,32 @@ Depende da F20b: o marcador lê `unidade.condicao`, que só existe depois dela. 
   - **O que NÃO mudou**: os ~12 pontos de ramificação, as 2 FSMs, o 4º caso do
     demolir e os ~89 testes em órbita da nota de 2026-09-24 seguem valendo. A F23
     acrescentou **1 linha** (a versão) e **1 perna de teste**.
+- **Nota (esta feature ALIVIA o orçamento da abertura, mas só se mexer também no
+  momento da RESERVA — medido em 2026-09-25, pedido do operador)**: hoje `PlaceRoad`
+  é tudo-ou-nada e cobra **a rua inteira no instante do comando**: `canPlaceRoad`
+  soma `novos.length * custoStonePorTile` e recusa com `sem-pedra` se passar de
+  `pedraDisponivel` (`src/sim/estradas.ts:537-538`), que é o reservável na gaveta
+  `saida` dos armazéns completos. É **isso** que faz o estoque inicial ser restrição
+  de GEOMETRIA e não de logística: na F-T4b a rua de 31 tiles contra 30 de pedra
+  recusou inteira, nenhum tile subiu, e a vila ficou com os quatro prédios completos
+  e desligados. A abertura hoje vive em fio de navalha — 26 tiles + 4 de arranque =
+  os 30 exatos (entrada de 2026-09-25 no `BALANCE_LOG.md`), e o gerador estoura com
+  as duas medidas na mensagem (`tools/geometria-da-abertura.mjs`) para o defeito
+  aparecer na causa e não três passos depois.
+  **O cuidado:** o escopo desta feature, como está escrito acima, move o **débito**
+  do assentamento para a entrega — e o portão que aperta a abertura não é o débito, é
+  a **reserva no instante do comando**. Se a F18g mantiver a reserva da rua inteira
+  em `PlaceRoad`, o orçamento da abertura fica **exatamente tão apertado quanto
+  hoje**, e o alívio não vem de graça. Para vir, a reserva tem de passar a ser por
+  tile (ou o arrasto aceitar assentar até onde a pedra der, virando parcial em vez de
+  tudo-ou-nada) — e isso é **mudança de aceite**, não consequência dela. Quem
+  implementar decide qual dos dois e registra aqui.
+  **A dívida que nasce junto:** se o portão afrouxar, o guarda de orçamento do
+  gerador (`rua.length * custoStonePorTile + reserva > estoqueInicialDeStone`) passa
+  a ser **pessimista** — vai recusar geometria que a partida sustenta, porque a
+  pedreira produz enquanto a rua sobe. Aí ele deixa de ser guarda e vira teto falso:
+  revisite-o no mesmo commit, junto com o 4º teste de `tests/F-T4b-geometria.test.ts`,
+  que é quem afirma que a mensagem carrega as duas medidas.
 
 ---
 

@@ -387,6 +387,43 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   o BUG-C ensinou a não usar sozinha. **Conclusão: nada a ajustar.** Fica registrado porque o
   fragmento de 2 tiles é pedreira que esgota em 30 unidades, e isso é do lote de
   `rock.rendimentoPorTile` | `tools/gerar-mapa.js:VEIOS_DE_MINERIO`, `data/resources.json`
+- [2026-09-25] **a folga de 4 de pedra na abertura é TENSÃO, não acaso — o número
+  fica, e o que estava errado era a pergunta** | pedido do operador no mesmo dia:
+  *"folga de 4 é acaso ou é tensão de design? Meça: com os 30 de pedra e rua de 26,
+  quantos tiles de estrada sobram para o jogador ligar o quinto prédio que ele
+  construir? Se for zero, o número está errado."* **A resposta da pergunta como ele a
+  escreveu é ZERO** (`test-output/F-T4b-folga-de-pedra.json`): `custoStonePorTile` 1,
+  estoque inicial 30, a rua da abertura 26 tiles = 26 de pedra, e o arranque mínimo
+  (woodcutters 2 + quarry 2, as duas únicas que não dependem de nada) come os 4 que
+  sobram — `tilesDeRuaQueSobramNoTick0: 0`. **Mas esse zero é o da rua INTEIRA de uma
+  vez, que é a ponta cara de uma escolha que existe.** Medido contra a regra da sim, e
+  não por conta minha (`test-output/F-T4b-escalonado.json`, sonda desta sessão): ligar só
+  a pedreira (que produz pedra) e a PRIMEIRA casa de lenhador (que desbloqueia a
+  serraria) custa **18 tiles**, e `predioLigadoAoArmazem` devolve `true` para as duas
+  no **tick 168** — sobram **8** de pedra, ou seja 8 tiles para o quinto prédio, sem
+  esperar produção nenhuma. Ligar tudo no tick 0 deixa 0; ligar em duas etapas deixa
+  8. **É exatamente a tensão do KaM que o operador descreveu: o jogador escolhe entre
+  ligar tudo agora e guardar pedra, e as duas pontas estão medidas.** E a vila NÃO
+  perde antes do primeiro clique: mesmo na ponta cara ela se liga (a F17 fecha a Fase
+  A no tick 4266), o estoque toca 0 no tick 617, fica em 0 de ~750 a ~2000 e volta a
+  subir com a pedreira — 19 no tick 6000. **Conclusão: nada a ajustar em
+  `estadoInicial.estoque.stone`.** O que fica de dívida é que a folga de 4 é IGUAL ao
+  arranque mínimo de 4: é fio de navalha, não ladeira. Um tile a mais na rua, ou 1 de
+  pedra a mais em quarry/woodcutters, torna a abertura impossível — e é por isso que o
+  orçamento agora estoura no gerador com as duas medidas na mensagem
+  (`tools/geometria-da-abertura.mjs`), em vez de sair `sem-pedra` três passos depois.
+  **Como refazer as duas medidas:** as sondas eram testes temporários e saíram no
+  mesmo commit — o que fica é o JSON. A da folga percorre 6 000 ticks da abertura
+  amostrando `estoqueDosArmazens(s)['stone']`; a do escalonado emite um `PlaceRoad`
+  com os 18 tiles (`21,33`..`29,33` mais o ramo `30,33`..`34,29`), planta quarry e
+  woodcutters, roda até `predioLigadoAoArmazem` devolver `true` para as duas e lê o
+  estoque. **Cuidado medido na sessão:** `PlaceRoad` deixa a rua *planejada*, não
+  assentada — perguntar a ligação no tick 1 devolve `false` para tudo e parece
+  resposta. Se um dia o lote mexer aqui, mexa nos três juntos: estoque inicial,
+  `custoStonePorTile` e o `stone` das duas casas do arranque | **nada girado** |
+  `data/economy.json:estadoInicial.estoque.stone`,
+  `data/terrain.json:estrada.custoStonePorTile`, `data/buildings.json`
+  (quarry.stone, woodcutters.stone)
 
 ---
 
