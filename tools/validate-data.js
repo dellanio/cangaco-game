@@ -8,8 +8,8 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
-const { validarTudo } = require('./data-rules');
-const { ARQUIVOS } = require('./data-schema');
+const { validarTudo, validarInterface } = require('./data-rules');
+const { ARQUIVOS, ARQUIVOS_DA_INTERFACE } = require('./data-schema');
 
 function lerArgs(argv) {
   const idx = argv.indexOf('--dir');
@@ -17,9 +17,9 @@ function lerArgs(argv) {
   return { dir };
 }
 
-function carregarDados(dir) {
+function carregarDados(dir, lista = ARQUIVOS) {
   const dados = {};
-  for (const nome of ARQUIVOS) {
+  for (const nome of lista) {
     const caminho = path.join(dir, `${nome}.json`);
     dados[nome] = JSON.parse(fs.readFileSync(caminho, 'utf8'));
   }
@@ -29,10 +29,13 @@ function carregarDados(dir) {
 function main() {
   const { dir } = lerArgs(process.argv.slice(2));
   const dados = carregarDados(dir);
-  const erros = validarTudo(dados);
+  // Os arquivos de interface (tema, menu) sao validados a parte: sim/ nao os
+  // le, mas eles apontam ids de buildings, e id pendurado e erro de dado.
+  const interfaceUi = carregarDados(dir, ARQUIVOS_DA_INTERFACE);
+  const erros = [...validarTudo(dados), ...validarInterface(dados, interfaceUi)];
 
   if (erros.length === 0) {
-    console.log(`validate:data — ${ARQUIVOS.length} arquivos, 0 erros. OK.`);
+    console.log(`validate:data — ${ARQUIVOS.length + ARQUIVOS_DA_INTERFACE.length} arquivos, 0 erros. OK.`);
     process.exit(0);
   }
 

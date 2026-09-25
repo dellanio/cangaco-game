@@ -997,6 +997,70 @@ function validarRecursos(dados, erros) {
   }
 }
 
+// Layout 2, fatia 2 (docs/propostas/ui-releitura-rts.md §2): o agrupamento do
+// menu Construir (data/menu-build.json) e dado de INTERFACE, validado a parte
+// de validarTudo porque `sim/` nunca o le. O que a regra guarda: todo predio de
+// buildings.json esta em exatamente um grupo; nenhum id inventado; a ORDEM
+// dentro do grupo e a de buildings.json (a ordem nunca e digitada duas vezes);
+// e cada grupo tem rotulo no tema, e so os grupos tem — o mesmo par ida-e-volta
+// do guarda da F22 para as causas de alerta.
+function validarInterface(dados, interfaceUi) {
+  const erros = [];
+  const menu = interfaceUi && interfaceUi['menu-build'];
+  const tema = interfaceUi && interfaceUi['theme-sertao'];
+  if (!menu || !Array.isArray(menu.grupos)) {
+    erros.push('interface/menu-build-forma: menu-build.grupos precisa ser array');
+    return erros;
+  }
+  const rotulos = tema && tema.menuBuild && tema.menuBuild.grupos;
+  if (!rotulos || typeof rotulos !== 'object') {
+    erros.push('interface/menu-build-forma: theme-sertao.menuBuild.grupos precisa existir');
+    return erros;
+  }
+  const ordemDoDado = ((dados.buildings && dados.buildings.predios) || []).map((p) => p.id);
+  const posicao = new Map(ordemDoDado.map((id, i) => [id, i]));
+
+  const idsDeGrupo = new Set();
+  const vistos = new Map(); // predio -> grupo
+  for (const grupo of menu.grupos) {
+    if (!grupo || typeof grupo.id !== 'string' || !Array.isArray(grupo.predios)) {
+      erros.push('interface/menu-build-forma: cada grupo precisa de id string e predios array');
+      continue;
+    }
+    if (idsDeGrupo.has(grupo.id)) erros.push(`interface/menu-build-grupo-repetido: grupo '${grupo.id}' aparece duas vezes`);
+    idsDeGrupo.add(grupo.id);
+    if (!(grupo.id in rotulos)) {
+      erros.push(`interface/menu-build-rotulo: grupo '${grupo.id}' sem rotulo em theme-sertao.menuBuild.grupos`);
+    }
+    let anterior = -1;
+    for (const id of grupo.predios) {
+      if (!posicao.has(id)) {
+        erros.push(`interface/menu-build-inexistente: '${id}' (grupo '${grupo.id}') nao existe em buildings.predios`);
+        continue;
+      }
+      if (vistos.has(id)) {
+        erros.push(`interface/menu-build-repetido: '${id}' esta em '${vistos.get(id)}' e em '${grupo.id}'`);
+      }
+      vistos.set(id, grupo.id);
+      const pos = posicao.get(id);
+      if (pos < anterior) {
+        erros.push(`interface/menu-build-ordem: '${id}' (grupo '${grupo.id}') esta fora da ordem de buildings.json`);
+      }
+      anterior = Math.max(anterior, pos);
+    }
+  }
+  for (const id of ordemDoDado) {
+    if (!vistos.has(id)) erros.push(`interface/menu-build-sem-grupo: '${id}' nao esta em grupo nenhum`);
+  }
+  for (const id of Object.keys(rotulos)) {
+    if (id.startsWith('_')) continue;
+    if (!idsDeGrupo.has(id)) {
+      erros.push(`interface/menu-build-rotulo: theme-sertao.menuBuild.grupos.${id} nao corresponde a grupo nenhum`);
+    }
+  }
+  return erros;
+}
+
 function validarTudo(dados) {
   const erros = [];
   validarForma(dados, erros);
@@ -1019,4 +1083,4 @@ function validarTudo(dados) {
   return erros;
 }
 
-module.exports = { validarTudo, getByPath };
+module.exports = { validarTudo, validarInterface, getByPath };

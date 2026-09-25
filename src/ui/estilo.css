@@ -214,31 +214,71 @@ body[data-prancha="fechada"] #menu-build .lombada {
 }
 body[data-prancha="fechada"] #menu-build .lombada:hover { background: var(--tinta-fraca); }
 body[data-prancha="fechada"] #menu-build .lombada:active { transform: none; }
-#menu-build .item {
-  display: flex; flex-direction: column; gap: 2px; text-align: left;
-  padding: 6px 9px; border: 2px solid var(--tinta);
-  background: var(--papel); color: inherit; font: inherit;
+/* A GRADE DE ICONES (Layout 2, fatia 2): 5 colunas de 40 px na coluna de 260,
+   uma faixa por grupo com a regua gravada entre elas, e o cartao fixo no pe.
+   Numeros medidos na proposta (§1): 5 x 40 + 4 x 9 = 236 de largura util. */
+#menu-build .grade {
+  display: grid; grid-template-columns: repeat(5, 40px); gap: 7px 9px;
+  justify-content: start;
+}
+#menu-build .regua {
+  display: flex; align-items: center; gap: 8px; height: 16px; margin-top: 2px;
+  font: 10px/1 var(--fonte-display); text-transform: uppercase; letter-spacing: 0.14em;
+  color: var(--terra-queimada);
+}
+#menu-build .regua::before, #menu-build .regua::after { content: ''; flex: 1; border-top: 2px solid var(--tinta); }
+#menu-build .regua[data-grupo=""] { display: none; }
+#menu-build .icone {
+  width: 40px; height: 40px; box-sizing: border-box; padding: 0;
+  border: 2px solid var(--tinta); background: var(--papel);
+  display: grid; place-items: center;
   box-shadow: none; transform: none; cursor: pointer;
 }
-#menu-build .item:hover { background: var(--papel-escuro); }
-#menu-build .item .nome { font: 14px/1.2 var(--fonte-display); }
-#menu-build .item .custo { font-size: 12px; color: var(--tinta-fraca); }
-#menu-build .item .requer { font-size: 12px; font-style: italic; color: var(--terracota); }
-/* BUG-A, parte 3. O item ativo e o BLOCO ENTINTADO: fundo de tinta, letra de
-   papel, borda de ocre e a barra lateral. O roteiro da F06 MEDE a distancia
+#menu-build .icone:hover { background: var(--papel-escuro); }
+/* o placeholder: a miniatura do footprint, N x M quadradinhos de tinta */
+#menu-build .footprint { display: grid; grid-template-columns: repeat(var(--colunas, 1), 6px); gap: 1px; }
+#menu-build .footprint i { display: block; width: 6px; height: 6px; background: var(--tinta); }
+/* as ferramentas: estrada e uma faixa de pedra; demolir e a faixa cortada */
+#menu-build .glifo { display: block; width: 24px; height: 24px; position: relative; }
+#menu-build .glifo-estrada::before {
+  content: ''; position: absolute; left: 0; right: 0; top: 8px; height: 8px;
+  background: var(--tinta);
+}
+#menu-build .glifo-demolir-estrada::before {
+  content: ''; position: absolute; left: 0; right: 0; top: 8px; height: 8px;
+  background: var(--hachura), var(--papel-escuro); border: 1px dashed var(--tinta); box-sizing: border-box;
+}
+#menu-build .glifo-demolir-estrada::after {
+  content: ''; position: absolute; left: 10px; top: 0; width: 4px; height: 24px;
+  background: var(--terracota); transform: rotate(45deg);
+}
+/* BUG-A, parte 3. O item ativo e o BLOCO ENTINTADO: fundo de tinta, miniatura
+   de papel, borda de ocre e a barra lateral. O roteiro da F06 MEDE a distancia
    entre o ativo e um inativo (fundo e borda >= 60 por canal somado) e exige
    que SO o ativo tenha `box-shadow`; esta linha nao e a prova. */
-#menu-build .item[aria-pressed="true"] {
+#menu-build .icone[aria-pressed="true"] {
   border-color: var(--ocre); background: var(--tinta); color: var(--papel);
-  box-shadow: inset 6px 0 0 var(--ocre);
+  box-shadow: inset 5px 0 0 var(--ocre);
 }
-#menu-build .item[aria-pressed="true"] .custo { color: var(--papel-escuro); }
-#menu-build .item[aria-pressed="true"] .requer { color: var(--ocre); }
-/* bloqueado: hachurado e apagado, e o `requer` diz do que depende */
-#menu-build .item[aria-disabled="true"] {
-  cursor: not-allowed; opacity: 0.6;
+#menu-build .icone[aria-pressed="true"] .footprint i { background: var(--papel); }
+#menu-build .icone[aria-pressed="true"] .glifo-estrada::before { background: var(--papel); }
+/* bloqueado: hachurado e apagado; do que depende, o cartao diz */
+#menu-build .icone[aria-disabled="true"] {
+  cursor: not-allowed; opacity: 0.55;
   background-image: var(--hachura);
 }
+/* o cartao fixo: nome, custo e tamanho, requisito, descricao. `margin-top: auto`
+   o empurra para o pe da coluna quando sobra espaco. */
+#menu-build .cartao {
+  margin-top: auto; padding: 8px 10px; min-height: 80px; box-sizing: border-box;
+  border: 2px solid var(--tinta); box-shadow: 3px 3px 0 var(--tinta);
+}
+#menu-build .cartao h3 { margin: 0 0 2px; font-size: 15px; text-transform: none; letter-spacing: 0.02em; color: var(--tinta); }
+#menu-build .cartao .custo { font-size: 12px; color: var(--tinta-fraca); }
+#menu-build .cartao .requer { font-size: 12px; font-style: italic; color: var(--terracota); }
+#menu-build .cartao .requer:empty { display: none; }
+#menu-build .cartao .desc { font-size: 12px; margin-top: 3px; }
+#menu-build .cartao[data-planta=""] .desc { font-style: italic; color: var(--tinta-fraca); }
 
 /* ---- os avisos (F22) --------------------------------------------------------- */
 /* SOBREPOSICAO na celula do canvas, no canto superior direito. Ate a fatia 4 do

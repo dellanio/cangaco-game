@@ -1,0 +1,10 @@
+{
+  "_doc": "Layout 2, fatia 2 (docs/propostas/ui-releitura-rts.md §2). O agrupamento por FUNCAO do menu Construir: e dado de INTERFACE, nao de jogo — nenhuma regra da simulacao le este arquivo, e ele fica fora de ARQUIVOS (data-schema.js) de proposito, como o tema. Quem le e src/ui/menu-build.ts, direto, do mesmo jeito que le theme-sertao.json. Os ids sao os NEUTROS de buildings.json; o rotulo de cada grupo vem de theme-sertao.json > menuBuild.grupos. A regra interface/menu-build (tools/data-rules.js, validarInterface) reprova: predio fora de grupo, em dois grupos, id que nao existe, grupo sem rotulo, rotulo sem grupo — e a ORDEM dentro de cada grupo fora da ordem de buildings.json, que e a da tabela do GDD §5.2 (grosso modo, a de desbloqueio): a ordem aqui e a do dado, nunca digitada.",
+  "grupos": [
+    { "id": "vila", "predios": ["storehouse", "schoolhouse", "inn", "marketplace"] },
+    { "id": "materia", "predios": ["quarry", "woodcutters", "sawmill", "gold_mine", "coal_mine", "iron_mine"] },
+    { "id": "comida", "predios": ["farm", "wineyard", "fishermans", "mill", "bakery", "swine_farm", "butchers"] },
+    { "id": "oficinas", "predios": ["weapons_workshop", "tannery", "armory_workshop", "metallurgists", "iron_smithy", "weapon_smithy", "armor_smithy"] },
+    { "id": "bando", "predios": ["watchtower", "barracks", "stables", "town_hall"] }
+  ]
+}

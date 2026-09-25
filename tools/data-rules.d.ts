@@ -3,3 +3,4 @@
 // TypeScript estrito importem o modulo sem `allowJs`.
 export function validarTudo(dados: Record<string, unknown>): string[];
 export function getByPath(obj: unknown, caminho: string): { existe: boolean; valor: unknown };
+export function validarInterface(dados: Record<string, unknown>, interfaceUi: Record<string, unknown>): string[];

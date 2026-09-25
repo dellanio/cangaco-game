@@ -66,14 +66,40 @@ async function roteiro(ctx) {
     await page.getAttribute(seletorSerraria, 'aria-disabled') === 'true',
     'sawmill deveria estar aria-disabled no estado inicial',
   );
-  const textoSerraria = await page.textContent(seletorSerraria);
+  // Layout 2 (estilo-ui): o item e um ICONE sem texto; nome, custo e requisito
+  // moram no cartao fixo `[data-planta]`, que mostra o que esta sob o mouse.
+  const cartao = async (id) => {
+    await page.hover(`[data-predio="${id}"]`);
+    await page.waitForTimeout(100);
+    afirmar(
+      (await page.getAttribute('#menu-build [data-planta]', 'data-planta')) === id,
+      `com o mouse sobre '${id}' o cartao deveria mostrar '${id}'`,
+    );
+    return page.textContent('#menu-build [data-planta]');
+  };
+  const textoSerraria = await cartao('sawmill');
   afirmar(
     textoSerraria.includes(`${tema.menuBuild.requer} ${nomeNoTema(serraria.desbloqueadoPor)}`),
-    `o texto do item bloqueado deveria dizer "requer ${nomeNoTema(serraria.desbloqueadoPor)}" (nome do tema), veio: ${textoSerraria}`,
+    `o cartao do item bloqueado deveria dizer "requer ${nomeNoTema(serraria.desbloqueadoPor)}" (nome do tema), veio: ${textoSerraria}`,
   );
   afirmar(
     !textoSerraria.includes(serraria.desbloqueadoPor),
-    `o texto nao deveria mostrar o id neutro '${serraria.desbloqueadoPor}', veio: ${textoSerraria}`,
+    `o cartao nao deveria mostrar o id neutro '${serraria.desbloqueadoPor}', veio: ${textoSerraria}`,
+  );
+  afirmar(
+    textoSerraria.includes(nomeNoTema('sawmill')),
+    `o cartao deveria trazer o nome tematico do proprio item, veio: ${textoSerraria}`,
+  );
+  // O placeholder de icone e a miniatura do FOOTPRINT, do tamanho do dado.
+  const [largSerraria, altSerraria] = serraria.tamanho;
+  const miniatura = await page.$eval(
+    `${seletorSerraria} .footprint`,
+    (n) => ({ largura: n.dataset.largura, altura: n.dataset.altura, celulas: n.children.length }),
+  );
+  afirmar(
+    miniatura.largura === String(largSerraria) && miniatura.altura === String(altSerraria)
+      && miniatura.celulas === largSerraria * altSerraria,
+    `a miniatura da serraria deveria ser ${largSerraria}x${altSerraria}, veio ${JSON.stringify(miniatura)}`,
   );
   // O texto neutro `semRequisito` ("ainda nao disponivel") era provado aqui pelo
   // armazem, unico predio sem pai na arvore. Desde a correcao do BUG-002 nao ha
@@ -89,12 +115,39 @@ async function roteiro(ctx) {
   for (const p of predios) {
     const item = await page.$(`[data-predio="${p.id}"]`);
     if (!item) continue; // nem todo predio cabe no menu do cenario
-    const texto = await item.textContent();
+    if (await item.getAttribute('aria-disabled') !== 'true') continue;
+    const texto = await cartao(p.id);
     afirmar(
       !texto.includes(tema.menuBuild.semRequisito),
       `'${p.id}' aparece no menu sem dizer do que depende ("${tema.menuBuild.semRequisito}"), veio: ${texto}`,
     );
   }
+  // Todos os 28 estao na grade, em faixas por grupo (data/menu-build.json), e a
+  // grade nao rola: e a razao de ser do Layout 2 — o relogio nao espera.
+  const gruposDoDado = require('../../data/menu-build.json').grupos;
+  for (const g of gruposDoDado) {
+    const naFaixa = await page.$$eval(
+      `#menu-build .grade[data-grupo="${g.id}"] [data-predio]`, (ns) => ns.map((n) => n.dataset.predio),
+    );
+    afirmar(
+      JSON.stringify(naFaixa) === JSON.stringify(g.predios),
+      `a faixa '${g.id}' deveria ter ${JSON.stringify(g.predios)}, veio ${JSON.stringify(naFaixa)}`,
+    );
+    afirmar(
+      (await page.textContent(`#menu-build .regua[data-grupo="${g.id}"]`)) === tema.menuBuild.grupos[g.id],
+      `a regua da faixa '${g.id}' deveria ter o rotulo do tema`,
+    );
+  }
+  afirmar(
+    (await page.$$('#menu-build [data-predio]')).length === predios.length,
+    `a grade deveria ter os ${predios.length} predios`,
+  );
+  afirmar(
+    await page.$eval('#menu-build', (n) => n.scrollHeight <= n.clientHeight + 0.5),
+    'a prancha inteira deveria caber sem rolagem a 1280x720',
+  );
+  await page.mouse.move(hud.left + 100, hud.top + hud.height / 2); // tira o mouse da grade
+  await page.waitForTimeout(100);
   // force: o Playwright recusa clicar em aria-disabled; o que se prova aqui e
   // exatamente que um clique que CHEGA no item bloqueado nao ativa nada.
   await page.click(seletorSerraria, { force: true });

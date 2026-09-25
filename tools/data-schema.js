@@ -29,6 +29,12 @@ const ARQUIVOS = [
  *  `data-rules.js` acham os mapas por ele, em vez de conhecer os ids. */
 const PREFIXO_DE_MAPA = 'maps/';
 
+// Os arquivos de INTERFACE: `sim/` nunca os le (CLAUDE.md 9), entao ficam
+// FORA de ARQUIVOS — o carregador da simulacao nao os conhece e nenhuma regra
+// de jogo pode depender deles. Quem os valida e `validarInterface`, em
+// data-rules.js, contra os arquivos de jogo (o menu aponta ids de buildings).
+const ARQUIVOS_DA_INTERFACE = ['theme-sertao', 'menu-build'];
+
 // Campos numericos cujo valor depende de escalas.<grupo> e por isso precisa
 // virar tick inteiro (ou ticksPorTile/ticksPorUnidade) no carregamento.
 // `caminho` e relativo a raiz do arquivo. `declaraEscalaEm` e o path, no
@@ -121,6 +127,7 @@ function bateNomeDeTempo(chave) {
 
 module.exports = {
   ARQUIVOS,
+  ARQUIVOS_DA_INTERFACE,
   PREFIXO_DE_MAPA,
   CAMPOS_ESCALONADOS,
   DECLARACOES_ESTRUTURAIS,

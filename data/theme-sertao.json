@@ -326,13 +326,22 @@
     "pausado": "Pausado"
   },
   "menuBuild": {
+    "_doc": "Layout 2, fatia 2: o menu e uma grade de icones por grupo (data/menu-build.json) com um cartao fixo embaixo. As chaves de `grupos` SAO os ids de menu-build.json > grupos[].id — id sem rotulo, ou rotulo sem id, reprova o validate:data (interface/menu-build). `cartaoVazio` e o que o cartao diz quando nada esta sob o mouse nem na mao.",
     "titulo": "Construir",
     "requer": "requer",
     "semRequisito": "ainda não disponível",
     "estrada": "Estrada",
     "porTile": "por tile",
     "demolirEstrada": "Demolir estrada",
-    "demolirEstradaDesc": "devolve parte da pedra"
+    "demolirEstradaDesc": "devolve parte da pedra",
+    "cartaoVazio": "Passe o mouse num prédio para ver o que ele custa",
+    "grupos": {
+      "vila": "A vila",
+      "materia": "Mato e pedra",
+      "comida": "De comer",
+      "oficinas": "Oficinas",
+      "bando": "O bando"
+    }
   },
   "painelEscola": {
     "_doc": "F13b. Os três motivos de espera são específicos de propósito: cada um aponta a ação que resolve aquele caso. 'Sem estrada' é um arrasto de dez segundos; 'sem dinheiro' é garimpo e metalurgia. Um texto neutro para os dois esconderia justamente a diferença que importa.",
