@@ -1982,6 +1982,52 @@ a geografia já corrigida do que regravar 900 tiles depois.
   separado — mesma razão da F-T1 e da F-T2: unidade que a simulação põe no campo
   e a tela deixa dentro do prédio é tela que mente. A exceção do §10 está escrita
   aqui, antes do código.
+- **FECHADA em 2026-09-25**, com os três aceites medidos em `test-output/F-T3.json`
+  e abertos com Read: o ciclo da pedreira transita em **1 / 50 / 217 / 266** ticks
+  (`trabalhando → indo_colher → colhendo → voltando`), a pedra cai na gaveta no tick
+  da **chegada**; com o pedreiro a **2 tiles** do footprint o painel continua
+  nomeando o ocupante, `alertasDoPredio` vem **vazio** e demolir devolve unidade
+  `ocioso` com `fsmData` limpo e zero tarefa de colheita reclamada; e o save no
+  tick **37** (fora da porta, caminho pela metade, passo em curso) dá estado
+  idêntico 200 ticks depois. A nota de integração se cumpriu **sem uma linha em
+  `src/render/`** — `src/render/unidades.ts` já desenha toda unidade de
+  `state.unidades` e `posicaoDaUnidade` interpola por `fsmData.caminho` sem olhar
+  `fsm` —, e quem prova isso é `tools/shots/F-T3.js`, que afirma o tile
+  **desenhado** saindo do footprint e da porta (36 asserções,
+  `screenshots/F-T3-1-pedreiro-no-campo.png`).
+- **O corte autorizado não foi usado**: a Tarefa 4 não estragou "mais que poucas
+  asserções", então **não houve F-T3a/F-T3b** — a feature saiu inteira. O que a
+  herança obrigou reescrever está listado em `PROGRESS.md` (2026-09-25).
+- **A queda de vazão foi medida e nenhum número mudou**: `BALANCE_LOG.md`
+  (2026-09-25) — pedreira 167 → 266 ticks por pedra no cenário de teste e 250 no
+  oráculo, fazenda 246 → 351. Calibrar isso agora quebraria o lote fechado pelo
+  operador em 2026-09-24.
+
+### F-T4 — O roceiro e o lenhador herdam a caminhada (sim; posição a definir)
+- **Por que existe**: a F-T3 entregou a caminhada como **regra de classe** — quem
+  tem `colheita` na receita sai do prédio —, então o roceiro **já sai** sem código
+  novo (medido: fazenda 246 → 351 ticks por colheita). O que sobrou é **meia
+  regra** em dois lugares, e meia regra sem item na fila é o pior resultado
+  possível (CLAUDE.md §6):
+  1. **O plantio da fazenda continua acontecendo de dentro do prédio.**
+     `avancarPlantio` (`src/sim/systems/especialistas.ts`) não anda: o roceiro
+     caminha até o tile para **tirar** o milho e **ara sem sair do lugar**. O
+     comentário do `reposicaoDe` foi corrigido para dizer isso, em vez de
+     descrever um jogo que deixou de existir.
+  2. **O lenhador não sai porque não tem o que colher no dado.**
+     `data/production.json:predios.woodcutters` tem `sai: { tree_trunk: 0.55 }` e
+     **nenhuma `colheita`** — verificado —, então ele produz tronco do nada e a
+     regra de classe não o alcança. Dar-lhe `colheita: { recurso: 'tree', ... }`
+     o faria andar de graça, mas muda **o que custa a madeira** e depende de
+     reposição de árvore (`resources.json:tipos.tree`): é decisão de design e de
+     dado, não consequência da F-T3.
+- **Posição na fila: em aberto, para o operador.** Não a coloquei antes da F21 nem
+  da F23 porque o brief da sessão desatendida (2026-09-25) fixou a ordem F-T3 →
+  F21 → F23, e reordenar fila é decisão dele (CLAUDE.md §11).
+- **Escopo provável** (ainda não um aceite): o plantio virar uma ida ao tile com o
+  mesmo predicado de aproximação da F-T3 (`src/sim/aproximacao.ts`), reusando
+  `tileAlcancavelParaColheita`; e o lenhador entrar só depois de o dado da árvore
+  responder quanto tronco sai por tile e em quanto tempo volta.
 
 ### F19b — A segunda comida: Malhada e Casa de Carne (medir primeiro)
 - **Posição na fila — decisão do operador, 2026-09-24**: **antes da F20**, com a

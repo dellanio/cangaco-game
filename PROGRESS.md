@@ -5386,3 +5386,168 @@ item da F20 **não foi usada**. Plano em `docs/planos/F20c-marcador-de-fome.md`.
   tem Bodega, e construir uma dentro do roteiro seria outro cenário. A equivalência
   "marcador ⟺ fração ≤ limiar" está provada para **todas** as 12 001 condições
   possíveis no teste headless, nos dois sentidos.
+
+---
+
+## F-T3 — O especialista sai do prédio, lavra no tile e volta (2026-09-25)
+
+O ciclo de colheita deixou de acontecer com o trabalhador parado na porta:
+
+    trabalhando -> indo_colher -> colhendo -> voltando -> trabalhando
+
+O relógio do ciclo (`predio.producao.progresso` contra `receita.ticksDoCiclo`)
+agora corre **no tile**, e o tile perde `unidadesPorCiclo(receita)` no tick da
+**chegada**, junto com o depósito — pelo mesmo `depositar` da F-T2c, que não foi
+tocado. Nenhum campo novo no `GameState`: os três estados de campo usam
+`fsmData.caminho`/`progresso`, que a F10 já serializava.
+
+### O que foi VERIFICADO (comando rodado, arquivo aberto)
+
+- **Suíte inteira verde** depois do conserto da dívida herdada: 87 arquivos /
+  1318 testes (`npm run test`).
+- **`test-output/F-T3.json`, aberto com Read** — os três aceites num arquivo:
+  transições da pedreira em **1 / 50 / 217 / 266**, depósito no tick 266,
+  `ticksDoCiclo` 167, lajedo caindo de 15 para 14; painel com
+  `{ unidade: 'u1', tipo: 'stonemason' }` e **nenhum** alerta com ele a 2 tiles
+  do footprint; demolição com ele em campo devolvendo `ocioso` e `fsmData` vazio
+  no tile onde estava; e `iguais: true` no save do tick 37 (2 passos pendentes,
+  passo pela metade).
+- **`test-output/F-T3-ocupado-mas-fora.json`, aberto com Read** — as duas bordas:
+  D6 (pausa em campo congela posição, fsm e relógio e devolve o tile) e D7 (mata
+  em pé na porta inteira: o A* não acha volta, `ocupante: null`, alerta
+  `sem-trabalhador` aceso).
+- **`screenshots/F-T3-1-pedreiro-no-campo.png`, aberta com Read** — o retângulo
+  do pedreiro (`u40`) está **fora** do prédio, sobre o lajedo, e o painel ao lado
+  continua escrevendo *"Quem trabalha: Cabra da Pedreira"*. É a nota de
+  integração (§10) provada na tela, e não descrita.
+- **`npm run shot -- F-T3`**: 36 afirmações, todas verdes
+  (`test-output/F-T3-shot.json`), incluindo o passo despausado com aperto de
+  150 ms exigido pela §8 — este roteiro clica em `#painel-predio`.
+
+### Decisões minhas, marcadas para o operador revisar
+
+- **D-1. Pausar um prédio de colheita com o especialista no campo não suspende
+  aquele ciclo: ele recomeça.** O motivo não é novo — `motivoDoDestino`
+  (`src/sim/systems/jobs.ts`) **cancela** a tarefa de colheita do prédio pausado,
+  decisão da F16c com a razão escrita ao lado (segurar o tile por tempo
+  indeterminado deixaria o jogador travar a pedreira do vizinho de graça). Sem
+  tile reservado não há ciclo a retomar. O ocupante congela onde está, volta de
+  mãos vazias ao despausar e faz um ciclo inteiro. **Nenhuma mercadoria se perde
+  ou se duplica** — o que o aceite da F16c exige continua valendo; o preço é em
+  **ticks**, e está escrito exato em `tests/F16c-pausar.test.ts`
+  (`VOLTA_DE_MAOS_VAZIAS = 50`). A alternativa seria a pausa segurar o tile, e é
+  justamente o que a F16c recusou.
+- **D-2. Congelado, a única escrita permitida é apagar o ponteiro pendurado.**
+  Enquanto a pausa dura, `congelar` não dá passo, não anda relógio e não emite
+  evento; ele só apaga `fsmData.tarefa` quando o quadro já tirou aquela tarefa
+  dele. Ponteiro para tarefa que não existe mais é estado mentindo, e foi o que
+  fez a invariante acusar 200 violações por tick antes deste degrau.
+- **D-3. A ordem das três perguntas em campo é prédio → pausado → tarefa.** A
+  pausa vem antes da tarefa de propósito: como a pausa cancela a colheita, medir
+  a tarefa primeiro expulsaria o pedreiro do próprio prédio no tick seguinte à
+  pausa.
+- **D-4. O tick do save do aceite 3 exige distância > 1 do footprint, não > 0.**
+  O anel de distância 1 é a porta; salvar ali seria quase salvar dentro do
+  prédio, e o aceite pede *"nem na porta, nem no tile"*. Com `> 0` o tick
+  escolhido caía no 2, ainda na soleira.
+- **D-5. O roteiro espera o VEIO baixar, não o rótulo `trabalhando`.**
+  `trabalhando` dura **um** tick entre duas voltas — ele deposita ao chegar e sai
+  no tick seguinte. Esperar por aquele rótulo é amostrar um alvo de um tick e
+  passar por sorte. A prova da volta na tela é a linha do alcance caindo de 195
+  para 194, mais a menor distância vista no caminho (1, a porta).
+
+### A dívida herdada, consertada asserção por asserção
+
+A Tarefa 4 do plano previa falha em massa, e foi o que houve: todo teste que
+media "quanto tempo até a pedra aparecer" media, sem saber, um ciclo sem viagem.
+A regra seguida foi a do operador — **reescrever a asserção mais estrita**,
+dizendo a sequência nova, **nunca alargar tolerância e nunca mexer em `data/`**:
+
+- `F15a-producao`, `F15a-aceite`, `F16c-pausar`: constantes nomeadas
+  (`IDA_ATE_O_TILE = 50`, `VOLTA_DO_TILE = 49`, `INTERVALO_DA_PEDREIRA = 266`).
+- `F-T2c-colheita-jobboard`: arrays exatos de depósito por prédio, `977` ticks
+  com as duas em tarefa, `[1, 1, 2]` no destravar.
+- `F-T2a-recursos`: bloco `ULTIMO_DEPOSITO`, `{ q1: 12, q2: 1 }`.
+- `F18-roçado` e `F18-ciclo-do-roceiro`: `IDA = 53`, `VOLTA = 51`, degraus do
+  tile em `n * VOLTA_INTEIRA`.
+- `F19-cadeia-do-pao`: a viagem da fazenda entrou **no modelo**
+  (`TICKS_POR_GRAO`, `ARRANQUE`), e o piso de vazão ficou onde estava (0,85). O
+  teto antigo descrevia uma fazenda que não existe mais — era erro de modelo, não
+  de tolerância.
+
+### Guarda novo (proteção permanente, não sonda)
+
+`tests/helpers/especialista-invariantes.ts` passou a acusar o travamento
+silencioso que a caminhada tornou possível: andar **sem caminho** só é legítimo
+onde chegar tem lugar — `indo_colher` no tile da tarefa ou ao lado,
+`voltando` na porta do próprio prédio. `tests/F-T3-ocupado-mas-fora.test.ts`
+prova que ele **acusa** os quatro casos e que a trilha de verdade passa calada
+por 300 ticks. Isso roda no `npm run verify`; não é prova de momento.
+
+### O que esta feature NÃO fez
+
+- **Não tocou em `src/render/`.** A nota de integração (§10) estava escrita no
+  item antes do código, e o D9 do plano previa mexer no desenho *se* a captura
+  mostrasse o pedreiro parado na porta. Não mostrou: a camada de unidades já
+  desenha toda unidade do estado pela posição do tick, sem filtrar ocupante. O
+  roteiro novo é `tools/shots/F-T3.js`.
+- **Não deu teste próprio ao lenhador.** Fazenda e pedreira estão medidas; o
+  lenhador herda o mesmo caminho de código e não ganhou cenário nesta sessão.
+- **Não ajustou número nenhum de balanceamento.** A queda de vazão (pedreira
+  1,59× mais lenta; fazenda de 246 para 351) foi para o `BALANCE_LOG.md`, no lote
+  que o operador fechou em 2026-09-24.
+
+### Medição de fechamento, e um teto que o oráculo tem e ninguém sabia
+
+- **VERIFICADO — a queda de vazão também no oráculo**: `npm run sim -- oraculo
+  --ticks 3000/6000/9000` dá `stone` **30** (linha de base, tick 1) → **41 → 53 →
+  65**, ou seja **+12 por 3 000 ticks** = **~250 ticks por pedra**, 1,50× o
+  `ticksDoCiclo` de 167. A diferença para o 1,59× do cenário de teste é a
+  distância, que agora é geografia e não dado. Está no `BALANCE_LOG.md`.
+- **VERIFICADO — o número "antes" que o plano mandava comparar não existe.** O
+  Passo 1 da Tarefa 8 dizia *"pedra por minuto antes (número já medido na F19)"*;
+  `grep` em `BALANCE_LOG.md`, `PROGRESS.md` e no próprio plano não acha nenhuma
+  pedra por minuto. Então comparei **dado contra medição** (`ticksDoCiclo` contra
+  intervalo de entrega), e escrevi isso no log em vez de citar uma corrida que
+  ninguém fez.
+- **VERIFICADO, e é achado novo — `cenarioOraculo` tem teto de medição de ~11 500
+  ticks: a aldeia morre de fome nele.** Aos 11 500 ticks os quatro ocupantes estão
+  nos prédios; aos 12 000 **não há um civil vivo**, as quatro tarefas de `ocupar`
+  estão abertas e há **15 pães e 10 carnes paradas no armazém**. A causa está
+  verificada em código, não suposta: o cenário **não tem Bodega**
+  (`tests/helpers/producao-cenario.ts:cenarioOraculo`, conferido tipo por tipo na
+  saída da sim) e comer exige `inn` completa desde a F20a
+  (`src/sim/systems/fome.ts` → `ehBodegaCompleta`). **Não é bug da F20 nem da
+  F-T3** — é a regra da fome fazendo o que promete numa aldeia sem onde comer. O
+  que é consequência real: **toda medição longa feita nesse cenário a partir de
+  ~11 000 ticks mede uma aldeia morta**, e o plano da F-T3 mandava medir a 12 000.
+  Por isso a medida acima para em 9 000, e o aviso ficou escrito **no próprio
+  cenário**, que é onde a próxima sessão vai medir.
+
+### Decisão minha de fila, marcada para o operador
+
+- **D-6. Criei o item `F-T4 — O roceiro e o lenhador herdam a caminhada` no
+  `BUILD_PLAN.md`, sem posição na fila.** O Passo 3 da Tarefa 8 mandava escrever a
+  dívida da herança *"no item da fila que herda"*, e esse item **não existia**.
+  Escrevê-la só aqui seria enterrá-la: meia regra sem item é o que o §6 chama de
+  pior resultado possível. **Não lhe dei posição** porque o brief desatendido
+  fixou F-T3 → F21 → F23 e reordenar fila é decisão do operador (§11) — o item diz
+  isso na cara. A dívida, em duas linhas: o **plantio** da fazenda continua
+  acontecendo de dentro do prédio (`avancarPlantio` não anda, e o comentário do
+  `reposicaoDe` foi corrigido para dizer isso em vez de descrever um jogo que
+  deixou de existir); e o **lenhador** não sai porque
+  `data/production.json:predios.woodcutters` **não tem `colheita`** (verificado) —
+  dar-lhe uma muda o que custa a madeira e depende de reposição de árvore, então é
+  design, não consequência desta feature.
+
+### Perguntas em aberto (para o operador)
+
+1. **O painel deve dizer que o ocupante está no campo?** Hoje ele diz só *quem*
+   trabalha, e o aceite 2 pedia que "fora" não aparecesse como problema — foi o que
+   entreguei. Mostrar o estado do ocupante seria dado de tela novo; a interpretação
+   conservadora era não mostrar, e é a que está lá.
+2. **A contagem do painel (F-TA) deve descontar tile inalcançável?** O predicado
+   novo (`tileAlcancavelParaColheita`) é da **escolha** do tile; `tileTrabalhavel`
+   não mudou, então *"13 ao alcance"* continua contando lajedo que o pedreiro não
+   consegue rodear. Mudar isso muda o número do painel **e** o da prévia da planta
+   fantasma (F-TP), que têm aceite escrito nos dois — então não mexi.

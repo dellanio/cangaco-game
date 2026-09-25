@@ -257,8 +257,12 @@ function garantirColheita(
  * tres relogios. Relogio por tile e o que `regenerar` ja se proibe: custaria um
  * campo de estado por tile do mapa para representar o mesmo intervalo.
  *
- * O roceiro NAO sai do predio nesta feature: isso e a F-T3, e esta escrito
- * assim no item da fila.
+ * MEIA REGRA, e de proposito (F-T3, 2026-09-25): o roceiro AGORA SAI para
+ * colher — a saida e de classe, vem do dado (receita com `colheita`) —, mas o
+ * PLANTIO continua acontecendo de dentro do predio: `avancarPlantio` nao anda.
+ * Ou seja, ele caminha ate o tile para tirar o milho e ara sem sair do lugar.
+ * A outra metade esta escrita no item da fila que herda (`F-T?? — o roceiro e o
+ * lenhador herdam a caminhada`, BUILD_PLAN.md); nao improvisar aqui.
  */
 function reposicaoDe(colheita: ColheitaDeRecurso, dados: GameData): ReposicaoDeRecurso | null {
   return dados.recursos.tipos[colheita.recurso]?.reposicao ?? null;

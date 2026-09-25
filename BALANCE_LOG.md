@@ -238,6 +238,46 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   a F18, e vale calibrar de uma vez quando a cadeia de comida fechar"* | `production.json:predios.swine_farm`,
   `production.json:proporcoesDeReferencia`, `resources.json:tipos.corn.reposicao`
 
+- [2026-09-25] **a F-T3 cortou a vazão de todo prédio de colheita, e o corte é a viagem** | com o
+  especialista saindo do prédio, o intervalo entre duas entregas deixou de ser `ticksDoCiclo` e
+  passou a ser `1 (transição) + ida + ticksDoCiclo + volta`. Medido: a **pedreira** do cenário de
+  teste entrega uma pedra a cada **266** ticks contra os **167** de `ticksDoCiclo` — **1,59×** mais
+  lento (`test-output/F-T3.json`, transições em 1 / 50 / 217 / 266); a **fazenda**, cujo tile fica
+  mais longe, sobe de **246** para **351** ticks por colheita, e sobre isso ainda pesam os **300**
+  ticks de plantio a cada quatro colheitas (`test-output/F-T3-ciclo-do-rocado.json`,
+  `tests/F18-rocado.test.ts`). A distância é geografia, não dado: mesma receita, cenários
+  diferentes, intervalos diferentes — o que antes era um número do arquivo agora depende de onde o
+  jogador põe o prédio, e **essa é a mecânica pretendida** (*"colher pedra de dentro do prédio é a
+  mesma coisa que me incomodou na estrada instantânea: o jogo esconde o trabalho"*). O efeito no
+  balanceamento é que toda proporção da Fase B ficou **mais** desatualizada do que as três entradas
+  acima já diziam: elas mediam a fazenda antes da caminhada. **Não mexi em número nenhum**, pelo
+  mesmo fechamento de lote do operador (2026-09-24): *"a Fase B inteira está com proporções
+  desatualizadas desde a F18, e vale calibrar de uma vez quando a cadeia de comida fechar"*.
+  Quando o lote for calibrado, a conta nova tem de incluir a viagem — corrigir `ticksDoCiclo` para
+  compensar distância seria esconder de novo o trabalho que a feature existe para mostrar |
+  `production.json:predios.quarry`, `production.json:predios.farm`,
+  `production.json:proporcoesDeReferencia`
+
+- [2026-09-25] **a mesma queda, medida no oráculo e não só no cenário de teste** | `npm run sim --
+  oraculo --ticks 3000/6000/9000`: o estoque de `stone` sai de **30** no tick 1 (linha de base, não
+  zero) e sobe **+11, +12, +12** por bloco de 3 000 ticks, ou seja **~250 ticks por pedra** —
+  2,4 pedras por minuto com uma pedreira. Contra os **167** de `ticksDoCiclo` é **1,50×**, e a
+  diferença para o 1,59× do cenário de teste é exatamente o que o item acima diz: a viagem é
+  geografia. O número "antes" **não existe medido** neste cenário — o plano supunha um "pedra por
+  minuto da F19" e o `grep` não achou nenhum —, então o par honesto é
+  `ticksDoCiclo` (dado) contra intervalo de entrega (medido), e não uma corrida velha contra uma
+  nova | `production.json:predios.quarry`
+- [2026-09-25] **o oráculo não serve para medição longa: a população morre de fome nele** | medido
+  na mesma corrida: aos **11 500** ticks os quatro ocupantes estão nos prédios; aos **12 000** não
+  há um civil vivo e as quatro tarefas de `ocupar` estão abertas, com **15 pães e 10 carnes
+  paradas no armazém**. Não é bug da F20 nem da F-T3: `cenarioOraculo`
+  (`tests/helpers/producao-cenario.ts`) **não tem Bodega**, e desde a F20a comer exige `inn`
+  completa (`src/sim/systems/fome.ts`, `ehBodegaCompleta`) — comida em armazém sem Bodega é comida
+  que ninguém alcança. A consequência prática é de medição: **12 000 ticks de oráculo medem uma
+  aldeia que morreu no meio**, e foi por isso que a medida acima para em 9 000. O aviso está escrito
+  também no próprio `cenarioOraculo`, que é onde a próxima sessão vai medir | `condition.json:inn`,
+  `tests/helpers/producao-cenario.ts:cenarioOraculo`
+
 ---
 
 ## Ciclos fechados

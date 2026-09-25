@@ -99,6 +99,14 @@ export function cenarioDePedreira(dados: GameData = gameData): GameState {
  * Disposicao (y=36 e a rua que passa na porta de todos; x=29 sobe ate a porta do
  * armazem, em 29,33):
  *   w2 (18,34)  w1 (22,34)  q1 (26,34)  [armazem 29..31]  s1 (32,34)
+
+ * TETO DE MEDICAO: ~11 500 TICKS (medido na F-T3, 2026-09-25). Este cenario NAO
+ * tem Bodega, e desde a F20a comer exige uma `inn` completa: os paes do armazem
+ * ficam la, ninguem os alcanca, e entre 11 500 e 12 000 ticks a populacao inteira
+ * morre de fome — aos 12 000 nao ha um civil vivo e as quatro tarefas de `ocupar`
+ * estao abertas. Nao e bug: e o que a regra da fome faz numa aldeia sem Bodega.
+ * Para medicao mais longa, ponha uma Bodega abastecida no cenario; ate entao,
+ * numero tirado depois de ~11 000 ticks e numero de aldeia morta.
  */
 export function cenarioOraculo(dados: GameData = gameData): GameState {
   let s = createInitialState(1, dados);
