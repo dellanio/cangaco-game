@@ -5319,3 +5319,70 @@ medido ao lado.
   militar real do dado.
 - **Nenhum marcador na tela.** O dreno já roda, mas quem o mostra é a F20c, que lê
   `unidade.condicao` e `emAlertaDeFome` — os dois já existem e estão exercitados.
+
+## F20c — O marcador de fome no mundo (2026-09-25)
+
+Camada: **só `src/render/`** (mais `data/theme-sertao.json`, que é dado de tela, o
+teste e o roteiro). Nenhum arquivo de `src/sim/` mudou — a exceção da §10 escrita no
+item da F20 **não foi usada**. Plano em `docs/planos/F20c-marcador-de-fome.md`.
+
+### O que foi VERIFICADO (evidência aberta)
+
+- `test-output/F20c.json`, lido: com `condicaoCheia = 12 000` e
+  `alertaVisual = 0,35`, a faixa **sem marcador** vai de 12 000 a 4 201, a faixa
+  **com fome e ainda sem marcador** vai de 6 000 a 4 201, e a faixa **com marcador**
+  de 4 200 a 0. São 7 800 ticks de dreno até o marcador acender.
+- `test-output/F20c-shot.json`, lido: **22 afirmações, todas verdes**, zero erro de
+  console. Tick 0 com os 6 civis em condição cheia e nenhum marcador; tick 6 000 com
+  todos abaixo de `civilVaiComer` e a tela ainda limpa; tick 8 000 com os 6 marcados,
+  incluindo `u3`, a mesma unidade da primeira foto. A fração publicada na ponte bate
+  com o tick corrido (`4 000 = 12 000 − 8 000`), o que amarra a conta do roteiro
+  (derivada de `condition.json` + `time.json`) à do carregador da simulação.
+- `screenshots/F20c-1-cheia-sem-marcador.png` e
+  `screenshots/F20c-4-marcador-de-perto.png`, abertos com Read: no tick 0 os seis
+  quadrados estão limpos; no tick 8 000 cada um tem a tarja "com fome" acima da
+  cabeça, acima do marcador de carga. É o aceite escrito, nos dois sentidos.
+- `npm run verify` verde: 83 arquivos, **1 287 testes**, 27,54 s.
+
+### Decisões minhas, marcadas para revisão do operador
+
+- **D-a — o render não tem limiar: `temMarcadorDeFome` é REEXPORTAÇÃO de
+  `emAlertaDeFome`.** `src/render/marcador-de-fome.ts` não recalcula o `<=`, e o teste
+  afirma a identidade das duas funções (`toBe`), não o comportamento delas. Cópia do
+  predicado passaria em qualquer teste de comportamento e divergiria no dia em que o
+  dado mudasse.
+- **D-b — o rótulo vai em `theme-sertao.json: marcadores.fome`, seção nova.** Não cabe
+  em `alertas.causas`: o guarda da F22 (`tests/F22-alertas.test.ts:211`) exige igualdade
+  entre as chaves de lá e `CAUSAS_DE_ALERTA`, e `fome` não é causa de alerta hoje. A cor
+  entra por **nome da paleta** (`"cor": "telha"`), resolvido no render — nenhum hex novo
+  em `.ts`.
+- **D-c — a causa `fome` no HUD ficou FORA.** A Nota da F22 manda quem fizer a F20
+  acrescentá-la, mas isso é `sim/` + `ui/`, e o item da F20c diz "só `src/render/`". Além
+  da camada, há desenho a decidir: `alertasDoEstado` devolve `{predio, tipo, causa}` e
+  varre `predios.ordem` — fome é de **gente**, não de prédio. Registrado como Nota no
+  item da F20c em `BUILD_PLAN.md`; **falta item na fila**, e a decisão é do operador.
+- **D-d — o marcador fica acima do marcador de carga** (`ALTURA_DA_FOME_EM_LADOS 1,75`
+  contra `ALTURA_DA_CARGA_EM_LADOS 0,9`, as duas nomeadas no módulo novo e com a ordem
+  afirmada no teste). Um serf com fome carregando pão mostra os dois; no mesmo y, o de
+  fome esconderia a carga, que é informação da F10.
+- **D-e — o roteiro roda um passo despausado mesmo sem tocar em `#hud`.** A §8 só
+  obriga quando o roteiro clica em painel, e este não clica em nenhum. Rodei assim
+  mesmo: com o laço pausado o `alfa` é sempre 1 e o quadro nunca é redesenhado com
+  interpolação, que é exatamente onde um marcador recriado a cada quadro apareceria
+  piscando. Um `press('p')` / 150 ms / `press('p')` custa um tick e cobre isso.
+
+### Medido nesta sessão, sem virar asserção
+
+- O roteiro inteiro — subir o Vite, abrir o Chromium, rodar **8 001 ticks** em blocos
+  de 250 e tirar 4 fotos — levou **8,7 s** de relógio de parede. Número da corrida,
+  não patamar (§8): o eixo determinístico do roteiro é tick e fração de condição.
+
+### O que esta feature NÃO fez
+
+- Não tocou em `src/sim/`, `src/ui/` nem em `src/input/`.
+- Não há marcador para militar: `emAlertaDeFome` é falso para quem não drena, e o
+  teste afirma isso com um tipo militar real do dado, com condição 0.
+- O marcador **apagando** quando a unidade come não tem foto: a vila de abertura não
+  tem Bodega, e construir uma dentro do roteiro seria outro cenário. A equivalência
+  "marcador ⟺ fração ≤ limiar" está provada para **todas** as 12 001 condições
+  possíveis no teste headless, nos dois sentidos.

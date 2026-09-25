@@ -10,6 +10,10 @@
  * (`fsmData.carga`), o nome da mercadoria aparece em cima. `desenhados` e memoria de render
  * local — handle dos objetos que esta camada criou, nao estado de jogo (§10).
  *
+ * F20c acrescenta o marcador de fome, mais acima que o da carga: quem decide se ele acende e
+ * `temMarcadorDeFome` (`marcador-de-fome.ts`, reexportacao do predicado da sim), nunca um
+ * limiar digitado aqui.
+ *
  * Este arquivo NAO importa `sim/data` (so `mapa.ts` e `predios.ts` podem, teste estrutural da
  * F04): a paleta vem do tema e a posicao do selector.
  */
@@ -19,7 +23,11 @@ import {
   depthDeY, gridToScreenCentro, deslocamentoDaUnidade, ESCALA_DO_MUNDO, LADO_DA_UNIDADE_EM_TILES,
 } from './grid';
 import { criarMemoriaDePosicoes, interpolarPosicao } from './interpolacao';
+import {
+  ALTURA_DA_CARGA_EM_LADOS, ALTURA_DA_FOME_EM_LADOS, temMarcadorDeFome,
+} from './marcador-de-fome';
 import { posicaoDaUnidade } from '../sim/selectors';
+import { fracaoDeCondicao } from '../sim/condicao';
 import type { GameState } from '../sim/state';
 
 /** O que a camada desenhou de uma unidade, para o roteiro afirmar (`window.__cangaco`). */
@@ -45,6 +53,14 @@ export interface UnidadeRenderizada {
    * ponte de debug.
    */
   readonly deslocamentoPx: { readonly x: number; readonly y: number };
+  /**
+   * F20c — o marcador de fome esta ACESO neste quadro? E o que a camada desenhou, nao uma
+   * segunda conta: sai do mesmo `temMarcadorDeFome` que liga o objeto na tela.
+   */
+  readonly marcadorDeFome: boolean;
+  /** F20c — a condicao de 0 a 1 (`fracaoDeCondicao`), para o roteiro afirmar o limiar contra
+   *  `data/condition.json` em vez de contra um numero escrito no roteiro. */
+  readonly fracaoDeCondicao: number;
 }
 
 export interface CamadaDeUnidades {
@@ -62,9 +78,15 @@ const SALTO_MAXIMO_EM_TILES = 2;
 
 const cor = (hex: string): number => Phaser.Display.Color.HexStringToColor(hex).color;
 
+/** A cor do marcador de fome vem do tema por NOME da paleta (`marcadores.fome.cor`). */
+const corDoMarcadorDeFome: string = (
+  temaSertao.paleta as Record<string, string>
+)[temaSertao.marcadores.fome.cor] ?? temaSertao.paleta.terraQueimada;
+
 interface Desenhado {
   readonly container: Phaser.GameObjects.Container;
   readonly marcadorDeCarga: Phaser.GameObjects.Text;
+  readonly marcadorDeFome: Phaser.GameObjects.Text;
 }
 
 export function criarCamadaDeUnidades(cena: Phaser.Scene, tilePx: number): CamadaDeUnidades {
@@ -78,13 +100,23 @@ export function criarCamadaDeUnidades(cena: Phaser.Scene, tilePx: number): Camad
     retangulo.setStrokeStyle(2, cor(temaSertao.paleta.madeira));
     const rotulo = cena.add.text(0, 0, id, { fontSize: '11px', color: '#2c1d12' });
     rotulo.setOrigin(0.5, 0.5);
-    const marcadorDeCarga = cena.add.text(0, -lado * 0.9, '', {
+    const marcadorDeCarga = cena.add.text(0, -lado * ALTURA_DA_CARGA_EM_LADOS, '', {
       fontSize: '11px', color: '#ede3d0', backgroundColor: '#2c1d12', padding: { x: 3, y: 1 },
     });
     marcadorDeCarga.setOrigin(0.5, 0.5);
     marcadorDeCarga.setVisible(false);
-    const container = cena.add.container(0, 0, [retangulo, rotulo, marcadorDeCarga]);
-    return { container, marcadorDeCarga };
+    // F20c: o texto e o do JOGADOR e mora no tema, com a cor por NOME da paleta — nenhum hex
+    // e nenhum limiar neste arquivo.
+    const marcadorDeFome = cena.add.text(0, -lado * ALTURA_DA_FOME_EM_LADOS, temaSertao.marcadores.fome.rotulo, {
+      fontSize: '12px',
+      color: temaSertao.paleta.cal,
+      backgroundColor: corDoMarcadorDeFome,
+      padding: { x: 4, y: 1 },
+    });
+    marcadorDeFome.setOrigin(0.5, 0.5);
+    marcadorDeFome.setVisible(false);
+    const container = cena.add.container(0, 0, [retangulo, rotulo, marcadorDeCarga, marcadorDeFome]);
+    return { container, marcadorDeCarga, marcadorDeFome };
   }
 
   return {
@@ -120,10 +152,13 @@ export function criarCamadaDeUnidades(cena: Phaser.Scene, tilePx: number): Camad
         const carga = unidade.fsmData.carga ?? null;
         item.marcadorDeCarga.setText(carga ?? '');
         item.marcadorDeCarga.setVisible(carga !== null);
+        const comFome = temMarcadorDeFome(unidade);
+        item.marcadorDeFome.setVisible(comFome);
         renderizadas.push({
           id, tipo: unidade.tipo, gx: posicao.gx, gy: posicao.gy,
           gxDesenhado: desenhada.gx, gyDesenhado: desenhada.gy, fsm: unidade.fsm, carga,
           deslocamentoPx: { x: desvio.x, y: desvio.y },
+          marcadorDeFome: comFome, fracaoDeCondicao: fracaoDeCondicao(unidade),
         });
       }
       return renderizadas;

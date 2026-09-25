@@ -2225,6 +2225,21 @@ Depende da F20b: o marcador lê `unidade.condicao`, que só existe depois dela. 
   - Aceite do marcador: unidade acima do limiar **não** tem marcador; a mesma unidade
     abaixo dele tem; e **screenshot** — é mudança de tela (§8). O roteiro roda pelo
     menos um passo despausado se tocar em `#hud` ou `#alertas`.
+  - **Nota (o que a F20c NÃO fez, e por quê — 2026-09-25, decisão minha para o operador
+    revisar)**: a causa **`fome` no HUD** ficou de fora. A Nota da F22 diz que "quem fizer
+    F20 ou F28 acrescenta causa em `CAUSAS_DE_ALERTA`, derivação em `temCausa` e o rótulo
+    em `theme-sertao.json: alertas.causas`", e isso é `src/sim/` **mais** `src/ui/` — duas
+    camadas que este item exclui por escrito ("Só `src/render/`"). Não estendi a exceção
+    da §10 por conta própria: exceção vale escrita antes do código, e esta foi escrita para
+    a F20 inteira, que o próprio operador quebrou em três itens de uma camada cada. Além
+    disso o alerta do HUD é por **prédio** (`alertasDoEstado` varre `predios.ordem` e
+    devolve `{predio, tipo, causa}`), e fome é de **gente** — ou o alerta ganha entidade
+    nova, ou a causa entra torta. **Falta item na fila**, e ele é de desenho, não mecânico.
+  - **Entregue em 2026-09-25**: `src/render/marcador-de-fome.ts` (reexporta `emAlertaDeFome`,
+    identidade provada no teste), rótulo em `theme-sertao.json: marcadores.fome`, campos
+    `marcadorDeFome` e `fracaoDeCondicao` em `UnidadeRenderizada`,
+    `tests/F20c-marcador-de-fome.test.ts` e `tools/shots/F20c.js`. A frase do **GDD §7
+    linha 727** já tinha sido corrigida pelo operador em 2026-09-24 a favor do dado.
 ### F21 — Gold mine, Coal mine e Metallurgist's (ouro renovável)
 - **Nota (origem: F15a — contrato herdado)**: o veio mora no **prédio**, em
   `PredioCompleto.producao.veio`, semeado de `data/production.json`

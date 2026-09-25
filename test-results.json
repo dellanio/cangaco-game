@@ -154,5 +154,8 @@
   },
   "F20b-fome-e-morte": {
     "passes": true
+  },
+  "F20c-marcador-de-fome": {
+    "passes": true
   }
 }
