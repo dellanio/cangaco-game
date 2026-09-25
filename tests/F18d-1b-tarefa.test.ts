@@ -44,6 +44,9 @@ describe('F18d-1b — a escada acolhe `assentar-estrada` sem mexer em nivel nenh
       ['saida-cheia-para-armazem', 6],
       ['excedente-para-armazem', 7],
       ['assentar-estrada', 8],
+      // F18h: 'arar' entrou em NONO, e esta assercao e o que prova que ela nao
+      // deslocou nenhum dos oito — que e exatamente o que ela existe para provar.
+      ['arar', 9],
     ]);
   });
 

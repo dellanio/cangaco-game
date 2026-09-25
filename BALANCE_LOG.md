@@ -207,6 +207,15 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   fazenda vai nascer longe, e a estrada até ela é o custo real da comida. É o mesmo formato do
   problema da rocha que virou a F-TP (11 lajedos, 85,5% do mapa sem nenhum ao alcance), e o número
   a olhar é do **gerador de mapa**, não da receita | `data/maps/sertao-128.json`
+- [2026-09-25] **o número acima, refinado, e a conclusão dele é mais dura: não existe fazenda
+  possível perto da vila** | medido nesta sessão varrendo as 16 384 posições do mapa com o alcance
+  real da receita (`farm.colheita.alcance_tiles = 4`, do footprint): **748 posições** (4,6 %) têm
+  ao menos um tile arável ao alcance, e a mais próxima do armazém da abertura está a **37 tiles**
+  (Chebyshev; a mancha mais próxima começa em 42). A fazenda posta na aldeia, ocupada e ligada por
+  estrada, fica **3000 ticks com as gavetas vazias** e o alerta `sem-campo`. O ajuste aqui não é de
+  número de receita: ou o gerador espalha terra arável, ou o jogador ganha ferramenta para criá-la —
+  e o operador já decidiu pela segunda (`docs/planos/campo-desenhado-pelo-jogador.md`) |
+  `data/maps/sertao-128.json`, `tools/gerar-mapa.js`
 - [2026-09-24] **a proporção 1 Fazenda : 1 Moinho : 1 Padaria deixa os dois últimos ociosos, e a
   culpa é do plantio** | medido em 12 000 ticks no cenário da F19
   (`test-output/F19.json`): o moinho passa **26,2 %** e a padaria **28,8 %** do tempo em
@@ -299,7 +308,31 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   (`economy.schoolhouse.custoOuroPorUnidade`), o ouro de abertura (20) é que sustenta a aldeia
   inteira até lá; a cadeia não é alternativa ao estoque inicial no começo de partida |
   `production.json`, `economy.json:schoolhouse`
+- [2026-09-25] **arar três tiles e esperar o primeiro milho custa 706 ticks** | medido na F18h
+  (`test-output/F18h.json`): `PlowField` de três tiles de grama no tick 1, primeiro tile arado e
+  alerta `sem-campo` sumindo no tick **79** (20 ticks de aradura por tile + ida do laborer),
+  primeiro milho na gaveta no tick **706**. O grosso não é arar — é o ciclo do roceiro sobre terra
+  em pousio: o campo nasce com `quantidade: 0` e a `reposicao` do milho é de 300 ticks. A 10 Hz
+  isso é ~1 min 10 s entre o gesto do jogador e o primeiro grão, com um laborer só e a fazenda já
+  de pé. Se o número incomodar, os dois parafusos são `corn.aradura.segundos_base` (4,0) e
+  `corn.reposicao.segundos_base` (60) — e o segundo pesa 15× mais que o primeiro |
+  `resources.json:corn`
 
+- [2026-09-25] **alcance 6 do pescador: o açude da vila dura 620 ciclos, e o lago grande é quase
+  todo enfeite** | `fishermans.colheita.alcance_tiles` nasceu **6** na F-T4a, e o número é *a
+  calibrar*, não medido contra nada. O que está medido: a cabana em (31,27), na margem sul do açude
+  da vila, vê **31 tiles** ao alcance — os 31 do açude inteiro — e a linha do painel abre em **620
+  unidades** (31 × `fish.rendimentoPorTile` 20). Um ciclo tira **1** unidade e entrega 1 peixe
+  (620 → 619 na captura `F-T4a-2`), então **uma cabana leva 620 ciclos para secar o açude da
+  vila**. No mapa inteiro há **274 tiles de cardume / 5 480 unidades nominais**, mas só **95 tiles
+  / 1 900 unidades** são alcançáveis por qualquer cabana: o cardume mora em **2 lagos** (243 e 31
+  tiles) e o grande tem **70 tiles de margem em 243**. Água nunca vira andável (`fish.regime:
+  nunca` apaga a entrada), então o interior do lago grande é **permanentemente** inútil — ao
+  contrário da árvore, que ao ser cortada abre o anel seguinte (350 tiles, 12 capoeiras, **301
+  alcançáveis hoje e 350 no fim**). Os dois parafusos, quando o lote for ajustado: `alcance_tiles`
+  (mais alcance = mais margem, não mais lago) e `fish.rendimentoPorTile` (20). Alcance menor que 6
+  não é neutro: a **margem** é que limita a cabana, não o lago |
+  `production.json:fishermans`, `resources.json:fish`, `test-output/F-T4a.json`
 
 ---
 

@@ -334,6 +334,11 @@
     "porTile": "por tile",
     "demolirEstrada": "Demolir estrada",
     "demolirEstradaDesc": "devolve parte da pedra",
+    "demolirEstradaDesc": "devolve parte da pedra",
+    "campo": "Arar",
+    "campoDesc": "arraste para marcar a terra",
+    "apagarCampo": "Apagar roçado",
+    "apagarCampoDesc": "só o traçado; terra arada fica",
     "cartaoVazio": "Passe o mouse num prédio para ver o que ele custa",
     "grupos": {
       "vila": "A vila",

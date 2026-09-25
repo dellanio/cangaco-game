@@ -66,10 +66,19 @@ export function recursosIniciais(dados: GameData = gameData): Readonly<Record<st
 }
 
 /**
- * Os tiles que ESTE predio pode colher, segundo o MAPA — nao segundo o estado.
- * Lista estatica: o mapa nao muda durante a partida, entao ela e memoizada por
- * `GameData` e por (tipo de recurso, alcance, retangulo do predio). Sem isto o
- * predicado "ainda ha recurso?" varreria 200 tiles POR TICK, por predio.
+ * Os tiles que ESTE predio pode colher, segundo o ESTADO.
+ *
+ * F18h — era "segundo o MAPA", e a lista era estatica e memoizada inteira. Nao
+ * pode mais ser: a partir da F18h o jogador ARA, e um tile arado durante a
+ * partida nasce em `state.recursos` sem nunca ter estado em `dados.mapa`. A
+ * camada derivada do mapa era o retrato de `state.recursos` no tick 0, e usa-la
+ * como filtro fazia a fazenda nao ver o campo que o jogador acabara de abrir —
+ * medido: o tile virava milho e o alerta `sem-campo` ficava na tela.
+ *
+ * O que continua memoizado e a MOLDURA (`tilesDaMoldura`), que e do mapa e nao
+ * muda; o que passou a ser por chamada e o filtro por tipo, que e do estado. O
+ * custo por chamada deixou de ser O(1) e passou a ser O(tiles da moldura) — uma
+ * consulta de objeto por tile da moldura, sem realocar a moldura.
  *
  * Ordem: linha a linha, oeste para leste. E arbitraria, mas tem de ser FIXA —
  * e ela que decide qual tile esvazia primeiro, e o teste de determinismo compara
@@ -80,11 +89,12 @@ export function recursosIniciais(dados: GameData = gameData): Readonly<Record<st
  * muda o alcance. Quem faz a conta e `tilesDeColheitaNaCaixa`, logo abaixo.
  */
 export function tilesDeColheita(
-  predio: PredioCompleto, colheita: ColheitaDeRecurso, dados: GameData = gameData,
+  state: GameState, predio: PredioCompleto, colheita: ColheitaDeRecurso,
+  dados: GameData = gameData,
 ): readonly string[] {
   const caixa = caixaDoPredio(predio, dados);
   if (caixa === null) return SEM_TILES; // tipo fora do dado (save de outra versao)
-  return tilesDeColheitaNaCaixa(caixa, colheita, dados);
+  return tilesDeColheitaNaCaixa(state, caixa, colheita, dados);
 }
 
 /** A lista vazia, uma vez so: tipo fora do dado nao aloca array por chamada. */
@@ -101,23 +111,41 @@ const SEM_TILES: readonly string[] = Object.freeze([]);
  * prometer o que o predio nao entrega.
  */
 export function tilesDeColheitaNaCaixa(
-  caixa: CaixaEmTiles, colheita: ColheitaDeRecurso, dados: GameData = gameData,
+  state: GameState, caixa: CaixaEmTiles, colheita: ColheitaDeRecurso,
+  dados: GameData = gameData,
 ): readonly string[] {
-  const memoKey = `${colheita.recurso}:${colheita.alcance}:${caixa.x0},${caixa.y0},${caixa.x1},${caixa.y1}`;
+  const moldura = tilesDaMoldura(caixa, colheita.alcance, dados);
+  const tiles: string[] = [];
+  for (const k of moldura) {
+    if (state.recursos[k]?.tipo === colheita.recurso) tiles.push(k);
+  }
+  return tiles;
+}
+
+/**
+ * A MOLDURA: todos os tiles a `alcance` passos da caixa, em ordem canonica.
+ *
+ * Isto e do MAPA e nao muda durante a partida — a caixa vem do footprint e o
+ * alcance da receita —, e por isso e o que fica memoizado por `GameData`. Nao
+ * depende do tipo de recurso: duas receitas com o mesmo alcance sobre a mesma
+ * caixa olham a mesma moldura, e e o filtro de quem chama que separa milho de
+ * pedra.
+ */
+function tilesDaMoldura(
+  caixa: CaixaEmTiles, alcance: number, dados: GameData,
+): readonly string[] {
+  const memoKey = `${alcance}:${caixa.x0},${caixa.y0},${caixa.x1},${caixa.y1}`;
   const memo = memoPorDados(dados);
   const existente = memo.get(memoKey);
   if (existente !== undefined) return existente;
 
-  const alcance = colheita.alcance;
-  const naCamada = camadaDoTipo(dados, colheita.recurso);
   const tiles: string[] = [];
   // `caixa.x1`/`y1` sao a BORDA, nao o ultimo tile (`footprint.ts`): o ultimo
   // tile ocupado e `x1 - 1`, e e dele que se contam os `alcance` passos.
   for (let gy = caixa.y0 - alcance; gy <= caixa.y1 - 1 + alcance; gy += 1) {
     for (let gx = caixa.x0 - alcance; gx <= caixa.x1 - 1 + alcance; gx += 1) {
       if (gx < 0 || gy < 0) continue;
-      const k = chave(gx, gy);
-      if (naCamada.has(k)) tiles.push(k);
+      tiles.push(chave(gx, gy));
     }
   }
   memo.set(memoKey, tiles);
@@ -153,7 +181,7 @@ export function colheitaAoAlcanceDaCaixa(
 ): ColheitaAoAlcance {
   let tiles = 0;
   let unidades = 0;
-  for (const chave of tilesDeColheitaNaCaixa(caixa, colheita, dados)) {
+  for (const chave of tilesDeColheitaNaCaixa(state, caixa, colheita, dados)) {
     // `minimo` 1: a pergunta da contagem e "ha trabalho neste tile", nao "cabe
     // um ciclo inteiro" — quem exige o ciclo e quem vai ABRIR o ciclo.
     if (tileTrabalhavel(state, chave, colheita, 1, dados)) tiles += 1;
@@ -251,7 +279,7 @@ export function melhorTileDeColheita(
   reservados: ReadonlySet<string> = SEM_RESERVA, dados: GameData = gameData,
   elegivel: TileElegivel = SEMPRE,
 ): string | null {
-  for (const chaveDoTile of tilesDeColheita(predio, colheita, dados)) {
+  for (const chaveDoTile of tilesDeColheita(state, predio, colheita, dados)) {
     if (reservados.has(chaveDoTile)) continue;
     if (!elegivel(chaveDoTile)) continue;
     // ESTRITO de proposito: quem escolhe onde COLHER nao pode aceitar terra em
@@ -282,7 +310,7 @@ export function algumTileTrabalhavel(
   state: GameState, predio: PredioCompleto, colheita: ColheitaDeRecurso, minimo: number,
   dados: GameData = gameData,
 ): boolean {
-  for (const chaveDoTile of tilesDeColheita(predio, colheita, dados)) {
+  for (const chaveDoTile of tilesDeColheita(state, predio, colheita, dados)) {
     if (tileTrabalhavel(state, chaveDoTile, colheita, minimo, dados)) return true;
   }
   return false;
@@ -302,7 +330,7 @@ export function melhorTileParaPlantio(
   reservados: ReadonlySet<string> = SEM_RESERVA, dados: GameData = gameData,
   elegivel: TileElegivel = SEMPRE,
 ): string | null {
-  for (const chaveDoTile of tilesDeColheita(predio, colheita, dados)) {
+  for (const chaveDoTile of tilesDeColheita(state, predio, colheita, dados)) {
     if (reservados.has(chaveDoTile)) continue;
     if (!elegivel(chaveDoTile)) continue;
     if (tilePlantavel(state, chaveDoTile, colheita, dados)) return chaveDoTile;
@@ -423,28 +451,16 @@ export function regenerar(
   return mudou ? recursos : atuais;
 }
 
-// --- memoizacao: derivada do MAPA, que nao muda durante a partida ------------
+// --- memoizacao: so o que e derivado do MAPA, que nao muda durante a partida
+// (F18h: a camada de recurso SAIU daqui — ela e do estado, ver `tilesDeColheita`)
 
 const memoPorGameData = new WeakMap<GameData, Map<string, readonly string[]>>();
-const camadaPorGameData = new WeakMap<GameData, Map<string, ReadonlySet<string>>>();
 const porTempoPorGameData = new WeakMap<GameData, Map<string, number>>();
 
 function memoPorDados(dados: GameData): Map<string, readonly string[]> {
   let memo = memoPorGameData.get(dados);
   if (memo === undefined) { memo = new Map(); memoPorGameData.set(dados, memo); }
   return memo;
-}
-
-/** Os tiles de UM tipo, como conjunto, para o teste de pertinencia do scan. */
-function camadaDoTipo(dados: GameData, tipo: string): ReadonlySet<string> {
-  let porTipo = camadaPorGameData.get(dados);
-  if (porTipo === undefined) { porTipo = new Map(); camadaPorGameData.set(dados, porTipo); }
-  const existente = porTipo.get(tipo);
-  if (existente !== undefined) return existente;
-  const conjunto = new Set<string>();
-  for (const [gx, gy] of dados.mapa.recursos[tipo] ?? []) conjunto.add(chave(gx, gy));
-  porTipo.set(tipo, conjunto);
-  return conjunto;
 }
 
 /** Tipo `porTempo` -> teto. Vazio no dado de hoje. */

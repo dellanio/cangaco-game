@@ -34,6 +34,42 @@ export type Command =
     }
   | {
       /**
+       * F18h — manda ARAR `tiles` para a cultura `recurso` (um arrasto e um
+       * comando). Tudo ou nada, como o `PlaceRoad`: um tile invalido recusa o
+       * trecho inteiro com `command-rejected` e o motivo. Tile que ja esta no
+       * canteiro nao custa e nao recusa.
+       *
+       * NAO cria o campo: escreve o pedido em `camposPlanejados` e abre uma tarefa
+       * de aradura por tile. Quem ara e o laborer, tile por tile, e e na aradura
+       * que o tile entra em `state.recursos` — em POUSIO, por semear. `recurso` e
+       * o id NEUTRO da cultura (`corn`), e so vale tipo com bloco `aradura` em
+       * `data/resources.json`.
+       */
+      readonly type: 'PlowField';
+      readonly recurso: string;
+      readonly tiles: readonly TileDeGrid[];
+    }
+  | {
+      /**
+       * F18i — a BORRACHA do campo: tira de `camposPlanejados` os tiles que o
+       * jogador desenhou e nao quer mais. Nunca e recusado, nao devolve nada (nada
+       * foi gasto: arar nao cobra material) e tile fora do canteiro e no-op. E o
+       * ramo DESENHADO do `DemolishRoad`, e so ele.
+       *
+       * NAO apaga campo ja ARADO, de proposito: tile arado e recurso do tile, e
+       * recurso nao se remove por comando — a mesma regra que vale para a rocha do
+       * lajedo. O nome diz o alcance: `UnplanField`, e nao `DemolishField`.
+       *
+       * A tarefa de arar do tile apagado nao e cancelada aqui: ela perde o destino e
+       * `sanearTarefas` a derruba com `'destino-sumiu'` no mesmo tick, devolvendo o
+       * laborer a `ocioso`. Um caminho de volta so, para o tile que o jogador apagou
+       * e para o que sumiu por qualquer outro motivo.
+       */
+      readonly type: 'UnplanField';
+      readonly tiles: readonly TileDeGrid[];
+    }
+  | {
+      /**
        * Demole os tiles de estrada de `tiles`; o que nao e estrada e ignorado.
        * Devolve `floor(removidos * terreno.estrada.devolucaoAoDemolir)` de pedra ao
        * armazem de onde sairia o debito. Nunca e recusado.

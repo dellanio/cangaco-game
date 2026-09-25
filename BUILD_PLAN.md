@@ -1826,6 +1826,19 @@ a geografia já corrigida do que regravar 900 tiles depois.
   fazendeiro não sair nunca. As duas caem com a decisão de arquitetura de
   2026-09-24 (`docs/planos/recursos-naturais-proposta.md`); o documento fica como
   registro do que foi considerado.
+- **Nota (o operador REVOGOU a premissa desta feature em 2026-09-25)**: o campo deixa
+  de nascer do mapa e passa a ser **desenhado pelo jogador**, com duas ferramentas no
+  menu Construir ao lado de Estrada. O diagnóstico que levou à decisão está medido em
+  `PROGRESS.md` e o plano inteiro em `docs/planos/campo-desenhado-pelo-jogador.md` — o
+  resumo: no mapa publicado **nenhuma** posição a menos de 37 tiles do armazém tem
+  tile arável ao alcance, então a fazenda da abertura não podia produzir em lugar
+  nenhum perto da vila. O que desta feature **sobrevive** à reversão (medido, não
+  suposto): o predicado `semTrabalhoAoAlcance` e o alerta `sem-campo`, o ciclo
+  arar→semear→colher→pousio do regime `porAcao`, e o roceiro que sai até o tile
+  (F-T3). O que cai é só `resources.json: corn.terreno` — e só se o operador escolher
+  a opção B do plano, que custa **16 arquivos de teste / 33 testes** (medido
+  removendo a chave e rodando a suíte). A fila **não** foi reordenada: os itens novos
+  nascem quando o operador decidir a ordem.
 ### F-TP — A planta fantasma mostra o alcance de colheita (render + input)
 - **Origem — decisão do operador, 2026-09-24**, a partir da medição que descartou
   o ramo (b) do BUG-C: em **85,5 %** da área jogável não há um tile de rocha ao
@@ -2045,31 +2058,76 @@ a geografia já corrigida do que regravar 900 tiles depois.
   oráculo, fazenda 246 → 351. Calibrar isso agora quebraria o lote fechado pelo
   operador em 2026-09-24.
 
-### F-T4 — O roceiro e o lenhador herdam a caminhada (sim; posição a definir)
-- **Por que existe**: a F-T3 entregou a caminhada como **regra de classe** — quem
-  tem `colheita` na receita sai do prédio —, então o roceiro **já sai** sem código
-  novo (medido: fazenda 246 → 351 ticks por colheita). O que sobrou é **meia
-  regra** em dois lugares, e meia regra sem item na fila é o pior resultado
-  possível (CLAUDE.md §6):
-  1. **O plantio da fazenda continua acontecendo de dentro do prédio.**
-     `avancarPlantio` (`src/sim/systems/especialistas.ts`) não anda: o roceiro
-     caminha até o tile para **tirar** o milho e **ara sem sair do lugar**. O
-     comentário do `reposicaoDe` foi corrigido para dizer isso, em vez de
-     descrever um jogo que deixou de existir.
-  2. **O lenhador não sai porque não tem o que colher no dado.**
-     `data/production.json:predios.woodcutters` tem `sai: { tree_trunk: 0.55 }` e
-     **nenhuma `colheita`** — verificado —, então ele produz tronco do nada e a
-     regra de classe não o alcança. Dar-lhe `colheita: { recurso: 'tree', ... }`
-     o faria andar de graça, mas muda **o que custa a madeira** e depende de
-     reposição de árvore (`resources.json:tipos.tree`): é decisão de design e de
-     dado, não consequência da F-T3.
-- **Posição na fila: em aberto, para o operador.** Não a coloquei antes da F21 nem
-  da F23 porque o brief da sessão desatendida (2026-09-25) fixou a ordem F-T3 →
-  F21 → F23, e reordenar fila é decisão dele (CLAUDE.md §11).
-- **Escopo provável** (ainda não um aceite): o plantio virar uma ida ao tile com o
-  mesmo predicado de aproximação da F-T3 (`src/sim/aproximacao.ts`), reusando
-  `tileAlcancavelParaColheita`; e o lenhador entrar só depois de o dado da árvore
-  responder quanto tronco sai por tile e em quanto tempo volta.
+### F-T4a — O pescador sai para colher (dado + aceite; ENTREGUE 2026-09-25)
+- **Por que existe**: a F-T3 entregou a caminhada como **regra de classe** — prédio
+  com `colheita` na receita manda o ocupante ao tile —, mas a Casa do Pescador
+  ainda produzia peixe **do nada** (`production.json:fishermans` tinha `sai` e
+  nenhuma `colheita`). Esta é a metade do F-T4 que **não depende de decisão de
+  design**: o açude já existe no mapa desde a F-T2a e ninguém mais depende do
+  peixe.
+- **Escopo entregue**: `fishermans` ganhou
+  `colheita: { recurso: fish, alcance_tiles: 6 }`. **Zero linha de simulação** —
+  caminhada, reserva de JobBoard, regime de esgotamento e aproximação por vizinho
+  andável já existiam. Feature de **dado mais aceite**.
+- **O que ela estreia, e a F-T3 não cobria**: o peixe é o primeiro recurso
+  **inalcançável por dentro**. Rocha e milho se pisam; água não, e `fish.regime`
+  é `nunca` (o tile some do estado em vez de ficar em zero, como a árvore). Então
+  a margem não é detalhe de caminho: é a única posição de trabalho que existe.
+- **Critério de aceite** (os quatro acenos do operador, 2026-09-25; plano em
+  `docs/planos/F-T4-lenhador-e-pescador.md`):
+  1. o pescador larga a porta, anda tile a tile e o tile em que fica `colhendo`
+     está a Chebyshev **1** do cardume reservado, **não é** o tile do cardume, e é
+     andável — e o peixe entra na gaveta no tick da **volta**;
+  2. esgotado o único cardume ao alcance, a entrada **sai** de `state.recursos`,
+     nenhuma tarefa fica reclamada, o pescador volta ao **mesmo** estado de espera
+     de quem espera insumo (afirmado contra a serraria de gaveta vazia, não contra
+     o rótulo digitado) e o prédio passa a dizer `veio-esgotado`;
+  3. no lago grande, em 200 ticks, **todo** tile escolhido é de margem — a
+     asserção compara com `tileAlcancavelParaColheita`, não com coordenada;
+  4. **FORMA** da distribuição medida, não média (lição do BUG-C).
+- **Evidência**: `tests/F-T4-pescador.test.ts` (11 testes), `test-output/F-T4a.json`
+  (forma), `test-output/F-T4a-shot.json` (57 afirmações) e
+  `screenshots/F-T4a-1-pescador-na-margem.png` — o tile **desenhado** do pescador
+  fora do footprint, em areia, encostado em três tiles de cardume que são todos
+  água, com o painel ainda dizendo quem trabalha ali.
+- **Números medidos** (ficam aqui porque a F-T4b herda os da árvore):
+  `fish` 274 tiles em **2 lagos** (243 e 31), **95 alcançáveis** (1 900 de 5 480
+  unidades), o lago grande com **70 tiles de margem em 243** — e água nunca abre.
+  `tree` 350 tiles em **12 capoeiras** (68, 56, 47, 45, 41, 40, 20, 18, 6, 5, 2,
+  2), **301 alcançáveis hoje e 350 no fim**, porque árvore cortada vira andável.
+  Alcance 6 é **a calibrar**, com a conta em `BALANCE_LOG.md` (2026-09-25).
+
+### F-T4b — O lenhador sai para colher (BLOQUEADO: decisão do operador)
+- **O que falta**: `woodcutters` ganhar `colheita: { recurso: tree, ... }`, pelo
+  mesmo caminho da F-T4a. O código já serve; o **dado** é que não fecha.
+- **Por que está bloqueado, medido antes de escrever qualquer linha** (Medição 2
+  do plano, sonda da sessão): com `colheita` no lenhador, **3 aceites reprovam** —
+  `F15a-receita`, `F15b-aceite` (oráculo) e `F17-aceite` (Fase A). Só com o
+  pescador: **0 de 1 358**. A causa é uma e não é de código: a capoeira mais
+  próxima da vila está a **12 tiles** do armazém, e os dois Woodcutter's que o
+  cenário oráculo (18,34 e 22,34) e a abertura da Fase A plantam **ao lado** do
+  armazém têm **zero árvore** em alcance 6 (em alcance 12 teriam 7). Com
+  `colheita`, eles param de produzir — e com eles param a serraria, o `timber` e o
+  aceite do marco.
+- **A pergunta que a fila não responde sozinha**: *onde a abertura da Fase A
+  planta o lenhador, agora que ele precisa de mata a 12 tiles da vila?* Consertar
+  é **mudar a geometria da abertura** (`tests/helpers/abertura.ts`, com a
+  invariante escrita de "altura igual nos quatro" e a rua reta até a escola):
+  a pedreira quer o lajedo da vila e o lenhador quer a mata. Isso não é
+  não-regressão de fixture, é **redesenhar o aceite do marco F17** — e marco é
+  decisão do operador (CLAUDE.md §12 e §14).
+- **As três saídas possíveis, para ele escolher** (nenhuma implementada):
+  (a) mover a abertura da Fase A para perto de uma capoeira, e reescrever a
+  invariante de geometria junto; (b) dar ao lenhador alcance maior que 6 —
+  resolve o aceite e torna o alcance quase irrelevante, porque 12 tiles cobre
+  metade da vila; (c) semear uma capoeira pequena na reserva da vila, o que muda
+  `tools/gerar-mapa.js` e **move tiles que fixtures já usam**.
+- **Nota de herança**: quem pegar este item herda da F-T4a a regra de classe já
+  provada, o predicado `tileAlcancavelParaColheita` e os números da árvore acima —
+  e herda também que, ao contrário do peixe, **a árvore abre o anel seguinte ao
+  ser cortada** (`tree.regime: porAcao`, quantidade 0 e tile andável), então o
+  alcance útil do lenhador CRESCE com o uso. O aceite dele não pode afirmar
+  contagem fixa de tiles ao alcance ao longo do tempo.
 
 ### F19b — A segunda comida: Malhada e Casa de Carne (medir primeiro)
 - **Posição na fila — decisão do operador, 2026-09-24**: **antes da F20**, com a
@@ -2391,6 +2449,144 @@ Depende da F20b: o marcador lê `unidade.condicao`, que só existe depois dela. 
   4000, os dois contra-exemplos e a seção `oQueNaoFecha`). **Sem screenshot**: o
   HUD já mostra `gold` desde a F05b e nenhuma linha de `src/render/` ou
   `src/ui/` foi tocada — a feature é só de `sim/` + teste.
+
+### F18h — Terra de plantio desenhada pelo jogador (sim + dado)
+- **Origem — decisão do operador, 2026-09-25**, que REVOGA a premissa da F18 (o
+  campo derivado do terreno do mapa). O diagnóstico medido está em `PROGRESS.md` e
+  o plano inteiro em `docs/planos/campo-desenhado-pelo-jogador.md`; o número que
+  decidiu: no mapa publicado **nenhuma** posição a menos de **37 tiles** do armazém
+  tem tile arável ao alcance da receita, então a fazenda da abertura não podia
+  produzir em lugar nenhum perto da vila. Passa **à frente da F21b** por decisão do
+  operador: *"fazenda que não pode ser construída é bug de jogabilidade; mina que
+  não esgota ninguém sentiu"*.
+- **Escopo — o jogador manda arar, o obreiro ara.** O molde é a estrada, peça por
+  peça, e nenhum mecanismo novo:
+  1. **dado**: `resources.json: tipos.<t>.aradura = { terrenoPermitido, segundos_base }`.
+     Tipo **sem** `aradura` não se desenha; hoje só o `corn` tem. A duração vira tick
+     uma vez, no carregamento, e o caminho se registra em `tools/data-schema.js`
+     (uma linha por tipo, como a `reposicao` já faz).
+  2. **estado**: `state.camposPlanejados: Readonly<Record<string, string>>` — o
+     canteiro do campo, irmão de `estradasPlanejadas`. Guarda o **recurso** por tile
+     (e não `true`) porque a ferramenta é por cultura, e a cana vai usar o mesmo
+     canteiro sem um segundo campo de estado.
+  3. **comando**: `PlowField { recurso, tiles }`, irmão de `PlaceRoad` — um arrasto
+     é um comando, tudo ou nada, recusa emite `command-rejected` com motivo e tile.
+  4. **tarefa**: `'arar'`, nível **9** de `delivery.json`, modo `livre`, só do
+     laborer, **uma por tile planejado**. Sem `mercadoria` e sem `origem`: o milho
+     não custa nada (GDD §5.4), e reserva de material sem material a reservar seria
+     caminho sem consumidor.
+  5. **fim do ciclo**: o tile sai do canteiro e entra em `state.recursos` como
+     `{ tipo, quantidade: quantidadeInicial }` — pousio. Daí em diante o ciclo do
+     roceiro (F18 + F-T3) corre **intocado**: plantar, crescer, colher, pousio.
+- **O ajuste do gerador vai JUNTO deste item** (exigência do operador: *"sem ele a
+  ferramenta resolve metade do problema"*): `tools/gerar-mapa.js` passa a emitir uma
+  mancha pequena de `campoArado` dentro do quadrante da vila, pelo molde e pelo
+  motivo do `LAJEDO_DA_VILA` da F-D3 — a partida tem de abrir com o que arar à vista,
+  como abre com o que cortar. As duas manchas grandes **ficam** (decisão do operador:
+  elas são terra já arada e dão razão para explorar o mapa).
+- **Aceite**, três pernas:
+  - **(a) a fazenda do operador passa a produzir.** No cenário real dele
+    (`cenarioDeFazendaSemCampo`: mapa `sertao-128`, fazenda na vila, roceiro dentro,
+    ligada por estrada, alerta `sem-campo`), um `PlowField` sobre tiles de grama ao
+    alcance dela faz o alerta sumir e o milho aparecer. O teste afirma a
+    **transição**: no tick do comando, zero milho e `sem-campo` presente; depois,
+    milho > 0 e `sem-campo` ausente. Nenhuma mancha do mapa participa — os tiles são
+    grama que o jogador mandou arar.
+  - **(b) as recusas e o caminho de volta.** Fora do mapa, terreno que a `aradura`
+    não admite, recurso em cima, prédio em cima e estrada em cima **recusam** com o
+    motivo nomeado e **não** sujam o canteiro; e tarefa de arar cujo tile saiu do
+    canteiro cai com `'destino-sumiu'`, com o laborer voltando a `ocioso` — o mesmo
+    caminho de volta que a estrada já tem.
+  - **(c) o gerador resolve a abertura.** No `sertao-128` regravado existe posição de
+    fazenda a **menos de 15 tiles** do armazém com tile arável ao alcance, medida
+    pelo mesmo predicado que a produção usa (hoje a mais próxima está a 37). O teste
+    mede a distância e a escreve na evidência.
+- **Evidência**: `test-output/F18h.json` (com a distância medida da perna (c) e o
+  tick em que o primeiro milho entrou na gaveta).
+- **Nota (as quatro decisões do operador, 2026-09-25, e o porquê de cada uma)**:
+  1. **as manchas do mapa ficam** — custo zero em teste (tirá-las custaria 16
+     arquivos / 33 testes, medido) e função de design: terra já arada é razão para
+     explorar;
+  2. **o campo passa à frente da F21b**;
+  3. **o id neutro da cultura da cachaça é `grapes`**, não `cane` — trocar obrigaria
+     a mexer em `wineyard` e `wine`, e o id neutro é da simulação, não do tema (o
+     tema já escreve "Cana");
+  4. **quem paga o material por tile é o laborer que ara**, no mesmo movimento do
+     assentar estrada, e não o especialista replantando — é o molde que já existe, e
+     mantém "o jogador manda, o obreiro faz".
+- **Nota (a cana NÃO entra aqui, e o que ela espera é o Canavial)**: conferido no
+  dado — `production.json: wineyard` é `entra: {}` / `sai: { wine: 0.5 }`, **sem
+  `colheita`**. Tile de cana não teria colhedor e o prédio fabricaria cachaça do
+  nada. O que a cana espera é o **Canavial virar consumidor**, e **não** a F18g (que
+  segue adiada por outro motivo): há dois caminhos já publicados que cobram material
+  por tile sem carregar nada — a estrada (reserva na gaveta `saida` e debita ao
+  assentar, `sim/estradas.ts:404-442`) e o plantio (`reposicao.custo` cobrado da
+  gaveta `entrada`, `systems/especialistas.ts: iniciarPlantio`). **Contrato para o
+  item do Canavial, quando ele for escrito**: `grapes` ganha `aradura` com custo por
+  tile, e o pagamento é a reserva-e-débito do laborer, decisão 4 acima. Esta nota se
+  muda para o item dele no dia em que ele nascer.
+- **Nota (`ehTarefaDeAssentamento` deixa de classificar por FORMA)**: o doc de
+  `TarefaAssentarEstrada` avisava que "um segundo tipo com `destinoTile` passaria a
+  ser lido como tarefa de estrada em `sanearTarefas`, no claim e no verificador". A
+  `'arar'` é esse segundo tipo. O predicado passa a ser por **tipo**, com um irmão
+  `ehTarefaDeAradura` e um `ehTarefaDeTile` (a forma) onde os dois querem a mesma
+  coisa — a viagem até o tile. Não é refatoração ampla: é o guarda que o próprio
+  arquivo mandou consertar antes de acrescentar o tipo, e o compilador aponta cada
+  site que assumia a equivalência.
+- **Nota (o alcance da colheita passou a perguntar ao ESTADO, e não ao mapa)**:
+  descoberto durante a implementação, com o tile virando milho e o alerta `sem-campo`
+  ficando na tela. `tilesDeColheita`/`tilesDeColheitaNaCaixa` filtravam os candidatos
+  por uma camada derivada de `dados.mapa.recursos[tipo]`, memoizada por `GameData` —
+  o retrato de `state.recursos` no tick 0. Com o campo desenhado em tempo de partida
+  esse modelo fica errado por construção: o tile arado nasce no estado sem nunca ter
+  estado no mapa, e a fazenda não o veria nunca. As duas funções passam a receber
+  `state` e a filtrar por `state.recursos[k]?.tipo`; o que continua memoizado é a
+  **moldura** (a caixa + alcance, que é do mapa e não muda). Custo por chamada: de
+  O(1) para O(tiles da moldura), uma consulta de objeto por tile, sem realocar a
+  moldura. No tick 0 a resposta é idêntica à antiga — `recursosIniciais` é exatamente
+  a camada do mapa —, e é isso que a suíte inteira verde comprova.
+- **Depende de**: nada além do que está de pé (F18, F18d-1b, F-T2c, F-T3).
+
+### F18i — A terra de plantio na tela (render + ui + input)
+- **Escopo**: a ferramenta que a F18h tornou possível fica **visível e clicável**.
+  Molde da estrada, do mesmo jeito: uma ferramenta nova no menu Construir ao lado de
+  Estrada, arrasto 8-conectado (`input/arrasto.ts`), um arrasto = um `PlowField`
+  (`input/colocar.ts`, `ModoDaFerramenta`), e uma camada de **tile planejado**
+  distinta do campo pronto (`render/`).
+- **Feature de INTEGRAÇÃO, e por isso toca `sim/` e `render/` no mesmo item**
+  (exceção da §10, escrita aqui antes do código). O que entra em `sim/` é **só** a
+  borracha: **decisão do operador, 2026-09-25** — *"A borracha entra na F18i, não vira
+  item novo. O jogador vai errar o traçado do campo como erra o da estrada — e a
+  estrada tem `DemolishRoad` desde a F08. Ferramenta de criar sem ferramenta de
+  desfazer é armadilha, e a assimetria entre as duas seria arbitrária para quem
+  joga."* Escopo mínimo dele: **`UnplanField { tiles }`** desfaz tile de campo
+  **PLANEJADO**, exatamente como o ramo DESENHADO do `DemolishRoad` — sai do canteiro,
+  devolve zero (nada foi gasto), nunca é recusado, tile sem canteiro é no-op, e a
+  tarefa de arar perde o destino e cai em `sanearTarefas` com `'destino-sumiu'`, que é
+  o caminho de volta que a F18h já publicou e testou. **Campo já arado NÃO se apaga**:
+  é recurso do tile, e recurso não se remove por comando — a mesma regra que vale para
+  a rocha. Por isso o comando se chama `UnplanField` e não `DemolishField`: o nome diz
+  o que ele alcança.
+- **A lista de ferramentas vem do DADO, não de um literal**: uma por tipo de
+  `resources.json` com bloco `aradura`. Hoje isso desenha **uma** — a terra de milho.
+  Botão morto para a cana não nasce (ela não tem colhedor; ver a Nota da F18h), e no
+  dia em que o Canavial entrar a ferramenta dele aparece sem ninguém tocar em `ui/`.
+- **Aceite**: o roteiro afirma, no mesmo cenário, **planejados** subindo no arrasto e
+  **campo pronto** subindo depois, com a soma fechando — a mesma asserção estrita que
+  a F18d-2 usa para a estrada. Screenshot com os dois estados na mesma tela. E a
+  borracha, no mesmo roteiro: um arrasto com ela sobre tiles planejados **derruba o
+  canteiro** e **não** mexe no campo já arado, com a mesma soma conferida.
+- **Aceite da borracha em `sim/`, headless**: `UnplanField` sobre tile planejado
+  esvazia o canteiro e derruba a tarefa com `'destino-sumiu'`; sobre tile já arado é
+  **no-op** (o recurso fica); sobre chão vazio é no-op; e o laborer que estava arando
+  volta a `ocioso` sem violar invariante.
+- **Evidência**: `test-output/F18i-shot.json` + `screenshots/F18i-*.png` +
+  `test-output/F18i.json` (a perna headless da borracha)
+- **Nota (§8 — o roteiro toca `#menu-build`, então roda despausado)**: pelo menos um
+  passo faz `press('p')`, `mouse.down` / `waitForTimeout(150)` / `mouse.up` e pausa de
+  volta. `page.click()` em página pausada não exerce o gesto do jogador, e foi assim
+  que o BUG-B passou por todo roteiro existente.
+- **Depende de**: F18h.
 
 ### F21b — A mina esgota: minério no tile (sim + dado)
 - **Por que existe**: a F21 fechou a cadeia do ouro, mas `gold_mine`,

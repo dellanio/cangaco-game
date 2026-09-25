@@ -15,12 +15,13 @@ import { distanciaDaTarefa, modoDoTipo, nivelDoTipo, podeReclamar } from '../../
 import { ehEscolaCompleta } from '../../src/sim/escola';
 import { ehBodegaCompleta, ehComida } from '../../src/sim/bodega';
 import { chaveDeTile, ehPlanejada } from '../../src/sim/estradas';
+import { ehCampoPlanejado } from '../../src/sim/campos';
 import { insumosDoPredio } from '../../src/sim/insumo';
 import { receitaDoTipo, unidadesPorCiclo } from '../../src/sim/producao';
 import { ehPredioOcupavel } from '../../src/sim/ocupacao';
 import { disponivelNaOrigem, vagaNoDestino } from '../../src/sim/reservas';
 import {
-  ehTarefaDeAssentamento, ehTarefaDeColheita, ID_DO_ARMAZEM, origemDaTarefaVale,
+  ehTarefaDeAradura, ehTarefaDeAssentamento, ehTarefaDeColheita, ID_DO_ARMAZEM, origemDaTarefaVale,
 } from '../../src/sim/state';
 
 /**
@@ -44,6 +45,19 @@ function violacoesDoDestino(estado: GameState, t: Tarefa, dados: GameData): stri
     const chave = chaveDeTile(t.destinoTile);
     return ehPlanejada(estado.estradasPlanejadas, t.destinoTile)
       ? [] : [`${t.id}: tile '${chave}' nao esta no canteiro`];
+  }
+  // F18h: a mesma coisa para a aradura, no canteiro dela, e com UMA exigencia a
+  // mais que a estrada nao tem — a cultura gravada na tarefa tem de ser a que o
+  // canteiro diz, senao o tile nasceria com a planta de outro pedido. O predicado e
+  // o da sim (`ehCampoPlanejado`, sim/campos.ts), nao uma copia da regra.
+  if (ehTarefaDeAradura(t)) {
+    const chave = chaveDeTile(t.destinoTile);
+    if (!ehCampoPlanejado(estado.camposPlanejados, t.destinoTile)) {
+      return [`${t.id}: tile '${chave}' nao esta no canteiro do campo`];
+    }
+    const plantada = estado.camposPlanejados[chave];
+    return plantada === t.recurso
+      ? [] : [`${t.id}: ara '${t.recurso}' num tile planejado como '${plantada}'`];
   }
   const destino = estado.predios.porId[t.destino];
   switch (t.tipo) {

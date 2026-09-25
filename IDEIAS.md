@@ -139,3 +139,11 @@ caminho. Ideia boa é justamente a mais perigosa.
   unidade selecionada, ou só acima de um nível de zoom. Não entra agora porque trocaria uma
   informação sempre visível por uma escondida sem que ninguém tenha reclamado ainda — e o
   retângulo é placeholder: quando virar sprite, a pergunta muda.
+
+- **Campo em pousio se parece com veio esgotado** (F18i, 2026-09-25). `codigoDoRecurso`
+  (`render/mapa.ts`) manda todo recurso com `quantidade <= 0` para o mesmo marcador
+  escuro, então a terra que o roceiro acabou de arar desenha igual à rocha exaurida —
+  está visível em `screenshots/F18i-3-canteiro-apagado.png`. Nenhum critério de aceite
+  escrito diz o contrário, por isso é ideia e não bug. O conserto natural é o marcador
+  de pousio ser da cor da cultura, e não do esgotado: o `esgotado` é um código só para
+  todos os tipos, e separá-lo custa um código por tipo na paleta de recursos.

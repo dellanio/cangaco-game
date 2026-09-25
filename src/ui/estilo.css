@@ -258,6 +258,22 @@ body[data-prancha="fechada"] #menu-build .lombada:active { transform: none; }
   content: ''; position: absolute; left: 10px; top: 0; width: 4px; height: 24px;
   background: var(--terracota); transform: rotate(45deg);
 }
+/* arar: os sulcos da terra; apagar roca: os sulcos tracejados, riscados */
+#menu-build .glifo-campo::before {
+  content: ''; position: absolute; inset: 2px 0;
+  background: repeating-linear-gradient(180deg, var(--tinta) 0 3px, transparent 3px 6px);
+}
+#menu-build .icone[aria-pressed="true"] .glifo-campo::before {
+  background: repeating-linear-gradient(180deg, var(--papel) 0 3px, transparent 3px 6px);
+}
+#menu-build .glifo-apagar-campo::before {
+  content: ''; position: absolute; inset: 2px 0; opacity: 0.45;
+  background: repeating-linear-gradient(180deg, var(--tinta) 0 3px, transparent 3px 6px);
+}
+#menu-build .glifo-apagar-campo::after {
+  content: ''; position: absolute; left: 10px; top: 0; width: 4px; height: 24px;
+  background: var(--terracota); transform: rotate(45deg);
+}
 /* BUG-A, parte 3. O item ativo e o BLOCO ENTINTADO: fundo de tinta, miniatura
    de papel, borda de ocre e a barra lateral. O roteiro da F06 MEDE a distancia
    entre o ativo e um inativo (fundo e borda >= 60 por canal somado) e exige

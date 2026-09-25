@@ -14,12 +14,13 @@ import type {
   GameEvent, GameState, Predio, Tarefa, TarefaConstruir, TarefaDeTransporte,
   TarefaExcedenteParaArmazem, TarefaInsumoProducaoBaixa, TarefaInsumoProducaoParada,
   TarefaComidaParaInn, TarefaMaterialParaObra, TarefaOcupar, TarefaOuroParaEscola,
-  TarefaAssentarEstrada, TarefaColher, TarefaComer, TarefaDeLaborer, TarefaSaidaCheiaParaArmazem,
+  TarefaArar, TarefaAssentarEstrada, TarefaColher, TarefaComer, TarefaDeLaborer, TarefaSaidaCheiaParaArmazem,
   TipoDeTarefa,
   TipoNaEscada,
 } from './state';
 import {
-  ehTarefaDeAssentamento, ehTarefaDeColheita, ehTarefaDeLaborer, ehTarefaDeTransporte, MERCADORIA_DE_OURO,
+  ehTarefaDeAradura, ehTarefaDeAssentamento, ehTarefaDeColheita, ehTarefaDeLaborer, ehTarefaDeTile,
+  ehTarefaDeTransporte, MERCADORIA_DE_OURO,
 } from './state';
 import type { GameData } from './data/types';
 import { gameData } from './data';
@@ -31,6 +32,7 @@ import {
   MERCADORIA_DA_ESTRADA, tilesDaPorta,
 } from './estradas';
 import type { TileDeGrid } from './estradas';
+import { ehCampoPlanejado } from './campos';
 import { obraTrabalhavel } from './obra';
 import { alvosDeAproximacao } from './aproximacao';
 import { buscarCaminho } from './pathfinding';
@@ -120,6 +122,10 @@ const UNIDADE_ELEGIVEL_POR_TIPO: Readonly<Record<TipoDeTarefa, string | null>> =
   // metade da pergunta — "esta unidade esta com fome?" — precisa da UNIDADE e
   // mora no `reclamar`.
   comer: null,
+  // F18h: arar tile planejado e trabalho de canteiro, como a estrada — mesmo
+  // laborer, mesma FSM, mesmo claim. Sem material a carregar: o milho nao custa
+  // nada, e quando a cana cobrar, ela sai do armazem no fim, como a pedra.
+  arar: TIPO_QUE_CONSTROI,
 };
 
 /** Generaliza a checagem "a unidade e serf": cada tipo de tarefa tem UM tipo
@@ -352,6 +358,27 @@ export function criarTarefaDeAssentamento(
 }
 
 /**
+ * F18h — cria a tarefa de arar o tile do canteiro do campo, aberta. Irma da de
+ * assentamento acima, com UMA diferenca, e ela e a que importa: nao ha material a
+ * reservar, entao nao ha pagador a procurar e nao ha `null` a devolver. O milho
+ * nao custa nada (GDD 5.4); no dia em que a cana custar, esta funcao ganha a
+ * busca do armazem e o `null` de volta, exatamente como a de cima.
+ *
+ * A cultura vem do canteiro e e FOTOGRAFADA aqui, como `TarefaColher.recurso`:
+ * o que vale e o que o jogador mandou plantar quando mandou.
+ */
+export function criarTarefaDeAradura(
+  state: GameState, tile: TileDeGrid, recurso: string,
+): { readonly state: GameState; readonly id: string } {
+  const numero = state.proximoId;
+  const tarefa: TarefaArar = {
+    id: `t${numero}`, numero, tipo: 'arar',
+    destinoTile: tile, recurso, estado: 'aberta', reclamadaPor: null,
+  };
+  return inserirTarefa(state, tarefa);
+}
+
+/**
  * F-T2c — cria a tarefa de colher `origemTile` para o predio `destino`, aberta,
  * e com ela a reserva do tile inteiro. Irma de `criarTarefaDeAssentamento`: a
  * reserva vale ja em `'aberta'`, entao e ESTA funcao que compromete o tile, e
@@ -577,12 +604,14 @@ export function caminhoAteAproximacaoDoTile(
 }
 
 /** O caminho de UMA tarefa de laborer, qualquer que seja o tipo dela: porta da obra
- *  para `'construir'`, o tile para `'assentar-estrada'`. Quem ordena e quem anda usam
- *  esta, para que a escolha e a viagem nunca midam coisas diferentes. */
+ *  para `'construir'`, o tile para `'assentar-estrada'` e para `'arar'`. Quem ordena e
+ *  quem anda usam esta, para que a escolha e a viagem nunca midam coisas diferentes.
+ *  A pergunta e de FORMA (`ehTarefaDeTile`) e nao de tipo: as duas tarefas de tile
+ *  fazem a mesma viagem, e e so isso que esta funcao decide. */
 export function caminhoDoLaborer(
   state: GameState, tarefa: TarefaDeLaborer, unidadeId: string, dados: GameData = gameData,
 ): Caminho | null {
-  return ehTarefaDeAssentamento(tarefa)
+  return ehTarefaDeTile(tarefa)
     ? caminhoAteOTile(state, tarefa.destinoTile, unidadeId, dados)
     : caminhoAteAObra(state, tarefa.destino, unidadeId, dados);
 }
@@ -687,6 +716,17 @@ export function reclamar(
     // O laborer tem de CHEGAR no tile — mesma exigencia que `'construir'` faz da
     // porta da obra. Sem isto ele reclamaria um tile ilhado e largaria no tick
     // seguinte, reservando a pedra a cada volta.
+    if (caminhoAteOTile(state, tarefa.destinoTile, unidadeId, dados) === null) {
+      return { ok: false, motivo: 'sem-caminho' };
+    }
+  } else if (ehTarefaDeAradura(tarefa)) {
+    // F18h: o tile tem de continuar no canteiro do campo, pelo mesmo motivo que o
+    // da estrada logo acima — entre a criacao e o claim ele pode ter sido arado por
+    // outro ou ter saido do canteiro. E o mesmo `'destino-sem-trabalho'`, que NAO
+    // reabre a tarefa.
+    if (!ehCampoPlanejado(state.camposPlanejados, tarefa.destinoTile)) {
+      return { ok: false, motivo: 'destino-sem-trabalho' };
+    }
     if (caminhoAteOTile(state, tarefa.destinoTile, unidadeId, dados) === null) {
       return { ok: false, motivo: 'sem-caminho' };
     }
@@ -905,9 +945,13 @@ export function tarefasDoLaborerEmOrdem(
     .map((id) => state.jobs.tarefas.porId[id])
     .filter((t): t is TarefaDeLaborer => t !== undefined && ehTarefaDeLaborer(t) && t.estado === 'aberta')
     .filter((t) => unidade == null || elegivelParaTarefa(t.tipo, unidade.tipo))
-    .filter((t) => (ehTarefaDeAssentamento(t)
-      ? ehPlanejada(state.estradasPlanejadas, t.destinoTile)   // o tile ja pode ter saido do canteiro
-      : obraTrabalhavel(state, t.destino, dados)));
+    .filter((t) => {
+      // O tile ja pode ter saido do canteiro entre a criacao e agora — e cada
+      // tarefa de tile olha o SEU canteiro. F18h: o do campo e outro objeto.
+      if (ehTarefaDeAssentamento(t)) return ehPlanejada(state.estradasPlanejadas, t.destinoTile);
+      if (ehTarefaDeAradura(t)) return ehCampoPlanejado(state.camposPlanejados, t.destinoTile);
+      return obraTrabalhavel(state, t.destino, dados);
+    });
   const chaves = new Map(candidatas.map((t) => [
     t.id,
     unidadeId === null ? 0 : caminhoDoLaborer(state, t, unidadeId, dados)?.custo ?? Number.POSITIVE_INFINITY,

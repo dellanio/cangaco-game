@@ -214,6 +214,26 @@ function gerar() {
     }
   }
 
+  // --- o rocado da vila: a terra arada que a abertura MOSTRA -----------------
+  // F18h, exigencia do operador: com as duas manchas grandes a 42 tiles da vila,
+  // NENHUMA delas e aproveitavel na abertura — medido, a posicao de fazenda mais
+  // proxima com tile aravel ao alcance estava a 37 tiles do armazem. E o mesmo
+  // motivo do `LAJEDO_DA_VILA`: a partida tem de abrir com o que arar, como abre
+  // com o que cortar. As manchas grandes FICAM (decisao do operador): elas sao
+  // razao para explorar o mapa, e com a ferramenta da F18h o jogador escolhe
+  // entre aproveitar uma mancha ou abrir a propria roca.
+  //
+  // FORA DA FOLGA, e de proposito. O lajedo cabe DENTRO dela porque `rock` esta em
+  // `recursoPermitido`; `campoArado` nao esta em `terrenoPermitido`, e nao se
+  // acrescenta: o que a folga protege e o custo de caminho do patio da vila
+  // (campoArado custa 1,45 contra 1,30 da grama), e nao ha nada a ganhar em
+  // encarecer as ruas da abertura para pousar a roca tres tiles mais ao norte.
+  // Ela encosta na borda SUL da folga, o que basta para estar a vista: o disco de
+  // raio 2 fica a 6 tiles do footprint do armazem, contra os 37 de antes.
+  for (const [gx, gy] of disco(ROCADO_DA_VILA.gx, ROCADO_DA_VILA.gy, ROCADO_DA_VILA.raio)) {
+    if (grade[gy]?.[gx] === 'grama') por(gx, gy, 'campoArado');
+  }
+
   // --- o acude do norte: a agua que a abertura MOSTRA -----------------------
   // F-D3. Por ultimo para nao deslocar o RNG de nada acima (ele nao sorteia
   // nada: o tremor da borda sai do `ruido` que ja foi tirado).
@@ -260,6 +280,12 @@ function disco(gx, gy, raio) {
  *  a reserva de `terrain.json`, que diz ate onde eles podem chegar. */
 const ACUDE = { gx: 33, gy: 25.5, rx: 6, ry: 2.0 };
 const MATO_DO_NASCENTE = { gx: 39, gy: 25, raio: 3 };
+
+/** F18h — centro e raio da roca da vila: a unica terra arada perto do quadrante
+ *  protegido, e existe para que a partida abra com o que arar. Irma do
+ *  `LAJEDO_DA_VILA` em tamanho (raio 2, 13 tiles) e em motivo; ver o comentario
+ *  do bloco que a escreve para por que ela fica FORA da folga e ele dentro. */
+const ROCADO_DA_VILA = { gx: 26, gy: 40, raio: 2 };
 
 /** Centro e raio do lajedo da vila. Ver o cabecalho: e a unica pedra dentro do
  *  quadrante protegido, e existe para que a partida abra com o que cortar. */

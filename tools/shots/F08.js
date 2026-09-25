@@ -81,8 +81,12 @@ async function roteiro(ctx) {
   afirmar(hudInicial.stone === String(pedraInicial), `a Pedra inicial deveria ser ${pedraInicial}, veio ${hudInicial.stone}`);
 
   // 1. o painel tem a ferramenta, com o custo do dado
-  const textoDaEstrada = await page.textContent('[data-ferramenta="estrada"]');
-  afirmar(textoDaEstrada.includes(String(custoPorTile)), `o botao da estrada deveria mostrar o custo ${custoPorTile}, veio: ${textoDaEstrada}`);
+  // Layout 2 (estilo-ui): o botao e um icone; o custo mora no cartao fixo
+  // `[data-planta]` da prancha, que mostra o que esta sob o mouse.
+  await page.hover('[data-ferramenta="estrada"]');
+  await page.waitForTimeout(100);
+  const textoDaEstrada = await page.textContent('#menu-build [data-planta]');
+  afirmar(textoDaEstrada.includes(String(custoPorTile)), `o cartao da estrada deveria mostrar o custo ${custoPorTile}, veio: ${textoDaEstrada}`);
   await page.click('[data-ferramenta="estrada"]');
   await esperarFrame();
   afirmar(await page.getAttribute('[data-ferramenta="estrada"]', 'aria-pressed') === 'true', 'o botao da estrada deveria ficar marcado');

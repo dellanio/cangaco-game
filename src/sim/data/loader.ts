@@ -93,6 +93,10 @@ interface RawTipoDeRecurso {
     readonly segundos_base: number;
     readonly custo: Readonly<Record<string, number>>;
   };
+  readonly aradura?: {
+    readonly segundos_base: number;
+    readonly terrenoPermitido: readonly string[];
+  };
 }
 
 /** As chaves `_doc*` sao comentario do arquivo de dado, nunca conteudo. */
@@ -540,6 +544,7 @@ export function loadGameData(raw: RawGameData): GameData {
     // `tools/data-schema.js`, um por linha, de proposito.
     const cru = def as RawTipoDeRecurso;
     const reposicao = cru.reposicao;
+    const aradura = cru.aradura;
     tiposDeRecurso[id] = {
       regime, rendimentoPorTile: def.rendimentoPorTile, bloqueiaPasso: def.bloqueiaPasso === true,
       bloqueiaConstrucao: cru.bloqueiaConstrucao === true,
@@ -554,6 +559,19 @@ export function loadGameData(raw: RawGameData): GameData {
           ),
         ),
         custo: semChavesDeDoc(reposicao.custo),
+      },
+      // F18h — arar e a outra ponta do mesmo ciclo: `reposicao` diz o que custa
+      // REPOR um tile que ja e campo, `aradura` diz o que custa CRIAR o campo.
+      // A duracao vira tick aqui, uma vez, pelo caminho registrado por tipo.
+      aradura: aradura === undefined ? null : {
+        ticks: registrar(
+          `resources.tipos.${id}.aradura.segundos_base`, raw.resources.escala,
+          aradura.segundos_base, 'segundos',
+          paraTicksDeDuracao(
+            aradura.segundos_base, 'segundos', escalaDe(escalas, raw.resources.escala), tickHz,
+          ),
+        ),
+        terrenoPermitido: [...aradura.terrenoPermitido],
       },
     };
   }

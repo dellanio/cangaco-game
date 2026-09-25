@@ -29,6 +29,7 @@ import type { Ferramenta } from '../../input/ferramenta';
 import type { EntradaDoMapa } from '../../input/colocar';
 import { criarPlantaFantasma } from '../planta-fantasma';
 import { criarCamadaDeEstradas, criarPreviaDeEstrada } from '../estradas';
+import { criarCamadaDeCampos, criarPreviaDeCampo } from '../campos';
 import { criarCamadaDeUnidades } from '../unidades';
 import { assetDoPredio, arquivoDoEstagio, chaveDaTextura } from '../manifesto';
 import type { EntradaDeAsset } from '../manifesto';
@@ -169,6 +170,8 @@ export class WorldScene extends Phaser.Scene {
     const planta = criarPlantaFantasma(this, tilePx);
     const camadaDeEstradas = criarCamadaDeEstradas(this, tilePx);
     const previaDeEstrada = criarPreviaDeEstrada(this, tilePx);
+    const camadaDeCampos = criarCamadaDeCampos(this, tilePx);
+    const previaDeCampo = criarPreviaDeCampo(this, tilePx);
     const camadaDeUnidades = criarCamadaDeUnidades(this, tilePx);
     // Ultimo tile valido sob o ponteiro. Efemero: some no gameout e nunca entra
     // no GameState (a planta e estado de interface, ver input/ferramenta.ts).
@@ -340,6 +343,16 @@ export class WorldScene extends Phaser.Scene {
       estado.estradasRenderizadas = estradas.dePe;
       estado.estradasPlanejadasRenderizadas = estradas.planejadas;
       estado.previaDeEstrada = previaDeEstrada.atualizar(this.entrada.trecho(), this.ferramenta.modo, this.ponte.atual);
+
+      // Campo (F18i): o canteiro que o jogador desenhou, e a previa do arrasto de arar
+      // ou de apagar. O campo PRONTO nao passa por aqui — e marcador de recurso (F-T2a);
+      // esta camada so o conta, para a soma dos dois fechar num numero.
+      const campos = camadaDeCampos.atualizar(this.ponte.atual ?? null);
+      estado.camposPlanejadosRenderizados = campos.planejados;
+      estado.camposProntosNoEstado = campos.prontos;
+      estado.previaDeCampo = previaDeCampo.atualizar(
+        this.entrada.trecho(), this.ferramenta.modo, this.ferramenta.culturaAtiva, this.ponte.atual,
+      );
 
       // Unidades (F10): a posicao de cada tick vem do estado (selector puro); a F11a interpola
       // ENTRE ticks com o alfa do laco. O render so le o relogio, nunca o move.

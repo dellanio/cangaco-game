@@ -25,10 +25,14 @@
  * o laborer soltaria e reclamaria a mesma obra sem trabalho a cada tick.
  */
 import type {
-  GameEvent, GameState, PredioEmObra, TarefaAssentarEstrada, TarefaConstruir, TarefaDeLaborer, Unidade,
+  GameEvent, GameState, PredioEmObra, TarefaArar, TarefaAssentarEstrada, TarefaConstruir, TarefaDeLaborer,
+  Unidade,
 } from '../state';
-import { completarObra, ehTarefaDeAssentamento, ehTarefaDeLaborer } from '../state';
+import {
+  completarObra, ehTarefaDeAradura, ehTarefaDeAssentamento, ehTarefaDeLaborer, ehTarefaDeTile,
+} from '../state';
 import { comOTileAssentado } from '../estradas';
+import { comOTileArado } from '../campos';
 import type { GameData } from '../data/types';
 import { gameData } from '../data';
 import {
@@ -113,7 +117,7 @@ function avancar(
 function passoIndoAObra(state: GameState, u: Unidade, dados: GameData): Passo {
   const tarefa = tarefaDoLaborer(state, u);
   if (tarefa === null) return ficarOcioso(state, u); // o quadro a cancelou (destino sumiu/completou)
-  if (ehTarefaDeAssentamento(tarefa)) return passoIndoAoTile(state, u, tarefa, dados);
+  if (ehTarefaDeTile(tarefa)) return passoIndoAoTile(state, u, tarefa, dados);
   const obra = obraDaTarefa(state, tarefa);
   if (obra === null) return ficarOcioso(state, u); // outro laborer completou a obra neste tick
 
@@ -127,7 +131,9 @@ function passoIndoAObra(state: GameState, u: Unidade, dados: GameData): Passo {
 }
 
 /**
- * F18d-1b — a viagem ate o tile do canteiro. O tile que deixou de ser planejado nao e
+ * F18d-1b — a viagem ate o tile do canteiro, de estrada ou (F18h) de campo: a
+ * viagem e a MESMA, e por isso a pergunta aqui e de forma (`ehTarefaDeTile`) e nao
+ * de tipo. O que difere e o que se faz ao chegar, e isso e `passoMartelando`. O tile que deixou de ser planejado nao e
  * tratado aqui: `sanearTarefas` roda ANTES dos laborers no tick e cancela a tarefa
  * (`'destino-sumiu'`), e o laborer cai no `tarefaDoLaborer === null` acima — o mesmo
  * caminho de volta que a obra demolida no meio da viagem ja usava.
@@ -136,7 +142,7 @@ function passoIndoAObra(state: GameState, u: Unidade, dados: GameData): Passo {
  * viaja com ele, sai do armazem que a tarefa reservou, no tick do assentamento.
  */
 function passoIndoAoTile(
-  state: GameState, u: Unidade, tarefa: TarefaAssentarEstrada, dados: GameData,
+  state: GameState, u: Unidade, tarefa: TarefaAssentarEstrada | TarefaArar, dados: GameData,
 ): Passo {
   const passo = avancar(state, u, tarefa, dados);
   if (passo === null) {
@@ -151,9 +157,9 @@ function passoIndoAoTile(
 
 function passoNivelando(state: GameState, u: Unidade, dados: GameData): Passo {
   const tarefa = tarefaDoLaborer(state, u);
-  // assentar nunca passa por aqui (nivelar e esperar material sao da OBRA); o `if`
-  // e o que deixa isso dito, e nao suposto.
-  if (tarefa === null || ehTarefaDeAssentamento(tarefa)) return ficarOcioso(state, u);
+  // tarefa de TILE nunca passa por aqui (nivelar e esperar material sao da OBRA); o
+  // `if` e o que deixa isso dito, e nao suposto.
+  if (tarefa === null || ehTarefaDeTile(tarefa)) return ficarOcioso(state, u);
   const obra = obraDaTarefa(state, tarefa);
   if (obra === null) return ficarOcioso(state, u);
 
@@ -167,9 +173,9 @@ function passoNivelando(state: GameState, u: Unidade, dados: GameData): Passo {
 
 function passoEsperandoMaterial(state: GameState, u: Unidade, dados: GameData): Passo {
   const tarefa = tarefaDoLaborer(state, u);
-  // assentar nunca passa por aqui (nivelar e esperar material sao da OBRA); o `if`
-  // e o que deixa isso dito, e nao suposto.
-  if (tarefa === null || ehTarefaDeAssentamento(tarefa)) return ficarOcioso(state, u);
+  // tarefa de TILE nunca passa por aqui (nivelar e esperar material sao da OBRA); o
+  // `if` e o que deixa isso dito, e nao suposto.
+  if (tarefa === null || ehTarefaDeTile(tarefa)) return ficarOcioso(state, u);
   const obra = obraDaTarefa(state, tarefa);
   if (obra === null) return ficarOcioso(state, u);
 
@@ -189,6 +195,7 @@ function passoMartelando(state: GameState, u: Unidade, dados: GameData): Passo {
   const tarefa = tarefaDoLaborer(state, u);
   if (tarefa === null) return ficarOcioso(state, u);
   if (ehTarefaDeAssentamento(tarefa)) return passoAssentando(state, u, tarefa, dados);
+  if (ehTarefaDeAradura(tarefa)) return passoArando(state, u, tarefa, dados);
   const obra = obraDaTarefa(state, tarefa);
   if (obra === null) return ficarOcioso(state, u);
 
@@ -247,6 +254,41 @@ function passoAssentando(
     return ficarOcioso(l.state, u, l.events);
   }
   return semEventos(comUnidade(removerTarefa(assentado, tarefa.id), ocioso(u)));
+}
+
+/**
+ * F18h — arar e um ciclo so, e o tempo dele vem do DADO da cultura
+ * (`resources.json: tipos.<t>.aradura.segundos_base`), nao de
+ * `construcao.ticksPorMartelada`: arar um tile e mais do que assentar uma pedra, e a
+ * medida e da roca e nao da obra. Por isso a aradura tem numero proprio desde o
+ * primeiro dia, e o assentamento nao tem (ver a pergunta em aberto do PROGRESS).
+ *
+ * No tick que fecha, o tile passa do canteiro para a camada de recurso, em pousio.
+ * Nao ha material a debitar hoje — o milho nao custa nada — e e por isso que o unico
+ * `null` possivel aqui e "o tile ja nao esta no canteiro". Quando a cana cobrar, este
+ * ramo ganha o debito e a leitura passa a ser a mesma do `comOTileAssentado`.
+ */
+function passoArando(
+  state: GameState, u: Unidade, tarefa: TarefaArar, dados: GameData,
+): Passo {
+  const aradura = dados.recursos.tipos[tarefa.recurso]?.aradura ?? null;
+  if (aradura === null) {
+    // cultura que sumiu do dado (save de outra versao): nao ha quanto tempo arar.
+    const l = liberarTarefa(state, tarefa.id, 'destino-sumiu');
+    return ficarOcioso(l.state, u, l.events);
+  }
+  const progresso = (u.fsmData.progresso ?? 0) + 1;
+  if (progresso < aradura.ticks) {
+    return semEventos(comUnidade(state, { ...u, fsmData: dadosDaFsm({ tarefa: tarefa.id, progresso }) }));
+  }
+  const arado = comOTileArado(state, tarefa.destinoTile, dados);
+  if (arado === null) {
+    // o tile saiu do canteiro entre o claim e agora. A tarefa CAI
+    // (`'destino-sumiu'` nao reabre) e o laborer volta a ocioso no mesmo tick.
+    const l = liberarTarefa(state, tarefa.id, 'destino-sumiu');
+    return ficarOcioso(l.state, u, l.events);
+  }
+  return semEventos(comUnidade(removerTarefa(arado, tarefa.id), ocioso(u)));
 }
 
 /**

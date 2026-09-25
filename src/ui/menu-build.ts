@@ -17,6 +17,10 @@
 // `assets/sprites/<id>/icone.png` e substitui a miniatura, nao o botao.
 import type { GameState } from '../sim/state';
 import { custoDaEstrada, opcoesDoMenuBuild } from '../sim/selectors';
+// A lista de culturas araveis vem do DADO, pela funcao que a define (presenca do
+// bloco `aradura`). Ler `resources.json` aqui seria uma segunda verdade, e um
+// literal `'corn'` em `ui/` seria a terceira.
+import { culturasAraveis } from '../sim/campos';
 import type { OpcaoDoMenuBuild } from '../sim/selectors';
 import type { Ferramenta, ModoDaFerramenta } from '../input/ferramenta';
 import temaSertao from '../../data/theme-sertao.json';
@@ -27,7 +31,9 @@ export interface MenuBuild {
 }
 
 type TemaDePredios = Readonly<Record<string, { readonly nome: string; readonly desc?: string } | undefined>>;
+type TemaDeMercadorias = Readonly<Record<string, string | undefined>>;
 const temaDePredios = temaSertao.predios as TemaDePredios;
+const temaDeMercadorias = temaSertao.mercadorias as TemaDeMercadorias;
 const rotulosDosGrupos = temaSertao.menuBuild.grupos as Readonly<Record<string, string | undefined>>;
 
 function nomeDe(id: string): string {
@@ -47,6 +53,12 @@ function textoDoCusto(opcao: OpcaoDoMenuBuild): string {
 /** "Pedra 1 por tile": o numero vem do dado, pelo seletor; os rotulos, do tema. */
 function textoDoCustoDaEstrada(): string {
   return `${temaSertao.mercadorias.stone} ${custoDaEstrada().stone} ${temaSertao.menuBuild.porTile}`;
+}
+
+/** "Arar Milho": o verbo e do tema, o nome da cultura tambem, e o id neutro
+ *  (`corn`) so aparece no `dataset` e no comando. */
+function nomeDaFerramentaDeCampo(recurso: string): string {
+  return `${temaSertao.menuBuild.campo} ${temaDeMercadorias[recurso] ?? recurso}`;
 }
 
 /** O ramo `semRequisito` ("ainda nao disponivel") nao tem produtor no dado de
@@ -98,6 +110,15 @@ interface ItemMontado {
   planta: Planta;
 }
 
+interface FerramentaMontada {
+  readonly botao: HTMLButtonElement;
+  readonly modo: ModoDaFerramenta;
+  /** A cultura do botao, ou `null` para as ferramentas que nao tem cultura. E o
+   *  que separa "Arar Milho" de "Arar Cana" quando as duas existirem. */
+  readonly cultura: string | null;
+  readonly planta: Planta;
+}
+
 /** Monta a prancha em `#menu-build` na primeira `atualizar` (e la que se sabe a
  *  lista de predios) e depois so reescreve o que mudou. */
 export function montarMenuBuild(ferramenta: Ferramenta): MenuBuild {
@@ -105,11 +126,14 @@ export function montarMenuBuild(ferramenta: Ferramenta): MenuBuild {
   if (!raiz) throw new Error('menu-build: #menu-build nao existe no index.html');
 
   const itens = new Map<string, ItemMontado>();
-  // As ferramentas que nao sao planta de predio (F08): estrada e demolir estrada.
-  const ferramentas = new Map<ModoDaFerramenta, { readonly botao: HTMLButtonElement; readonly planta: Planta }>();
+  // As ferramentas que nao sao planta de predio: estrada e demolir estrada (F08),
+  // arar e apagar roca (F18i). Indexadas pelo ID do botao, e nao pelo modo, porque
+  // a partir da F18i o modo `campo` tem UM botao POR CULTURA: dois botoes no mesmo
+  // modo se sobrescreveriam num mapa por modo, e o ativo seria o errado.
+  const ferramentas = new Map<string, FerramentaMontada>();
 
   // O cartao fixo: o que esta sob o mouse; sem mouse, o que esta na mao; sem
-  // nada, o texto do tema. Sao tres nos fixos, reescritos — nunca recriados.
+  // nada, o texto do tema. Sao quatro nos fixos, reescritos — nunca recriados.
   const cartao = document.createElement('div');
   cartao.className = 'cartao';
   cartao.dataset.planta = '';
@@ -128,11 +152,14 @@ export function montarMenuBuild(ferramenta: Ferramenta): MenuBuild {
     if (ferramenta.modo === 'predio' && ferramenta.predioAtivo !== null) {
       return itens.get(ferramenta.predioAtivo)?.planta ?? null;
     }
-    return ferramentas.get(ferramenta.modo)?.planta ?? null;
+    for (const f of ferramentas.values()) {
+      if (f.modo === ferramenta.modo && f.cultura === ferramenta.culturaAtiva) return f.planta;
+    }
+    return null;
   }
 
   function escreverCartao(): void {
-    const planta = (sobOMouse !== null ? itens.get(sobOMouse)?.planta ?? ferramentasPorId.get(sobOMouse)?.planta : null)
+    const planta = (sobOMouse !== null ? itens.get(sobOMouse)?.planta ?? ferramentas.get(sobOMouse)?.planta : null)
       ?? plantaAtiva();
     if (planta === null || planta === undefined) {
       cartao.dataset.planta = '';
@@ -148,14 +175,16 @@ export function montarMenuBuild(ferramenta: Ferramenta): MenuBuild {
     cartaoRequer.textContent = planta.requer;
     cartaoDesc.textContent = planta.desc;
   }
-  const ferramentasPorId = new Map<string, { readonly planta: Planta }>();
 
-  function marcarAtivo(predioAtivo: string | null, modo: ModoDaFerramenta): void {
+  function marcarAtivo(
+    predioAtivo: string | null, modo: ModoDaFerramenta, culturaAtiva: string | null,
+  ): void {
     for (const [id, item] of itens) {
       item.botao.setAttribute('aria-pressed', String(id === predioAtivo));
     }
-    for (const [modoDoBotao, { botao }] of ferramentas) {
-      botao.setAttribute('aria-pressed', String(modoDoBotao === modo));
+    for (const ferramentaMontada of ferramentas.values()) {
+      const ativo = ferramentaMontada.modo === modo && ferramentaMontada.cultura === culturaAtiva;
+      ferramentaMontada.botao.setAttribute('aria-pressed', String(ativo));
     }
     // Sem ferramenta, nenhum item deve parecer selecionado: o anel de foco que
     // o navegador deixa no ultimo botao clicado (aparece de novo apos o Esc)
@@ -196,13 +225,26 @@ export function montarMenuBuild(ferramenta: Ferramenta): MenuBuild {
     // apertado.
     const linhaDeFerramentas = document.createElement('div');
     linhaDeFerramentas.className = 'grade ferramentas';
-    montarFerramenta(linhaDeFerramentas, 'estrada', 'estrada', temaSertao.menuBuild.estrada,
+    montarFerramenta(linhaDeFerramentas, 'estrada', 'estrada', 'estrada', temaSertao.menuBuild.estrada,
       textoDoCustoDaEstrada(), () => {
         ferramenta.alternar('estrada');
       });
-    montarFerramenta(linhaDeFerramentas, 'demolir-estrada', 'demolir-estrada', temaSertao.menuBuild.demolirEstrada,
-      temaSertao.menuBuild.demolirEstradaDesc, () => {
+    montarFerramenta(linhaDeFerramentas, 'demolir-estrada', 'demolir-estrada', 'demolir-estrada',
+      temaSertao.menuBuild.demolirEstrada, temaSertao.menuBuild.demolirEstradaDesc, () => {
         ferramenta.alternar('demolir-estrada');
+      });
+    // F18i — uma ferramenta de terra POR CULTURA aravel, na ordem do dado, e uma
+    // borracha para todas. A borracha e unica porque nao precisa saber a cultura:
+    // ela tira o tile do canteiro, seja la o que fosse plantar ali.
+    for (const recurso of culturasAraveis()) {
+      montarFerramenta(linhaDeFerramentas, 'campo', `campo-${recurso}`, 'campo',
+        nomeDaFerramentaDeCampo(recurso), temaSertao.menuBuild.campoDesc, () => {
+          ferramenta.alternarCampo(recurso);
+        }, recurso);
+    }
+    montarFerramenta(linhaDeFerramentas, 'apagar-campo', 'apagar-campo', 'apagar-campo',
+      temaSertao.menuBuild.apagarCampo, temaSertao.menuBuild.apagarCampoDesc, () => {
+        ferramenta.alternar('apagar-campo');
       });
     raiz?.append(linhaDeFerramentas);
 
@@ -255,26 +297,26 @@ export function montarMenuBuild(ferramenta: Ferramenta): MenuBuild {
 
     raiz?.append(cartao);
     ferramenta.aoMudar(marcarAtivo);
-    marcarAtivo(ferramenta.predioAtivo, ferramenta.modo);
+    marcarAtivo(ferramenta.predioAtivo, ferramenta.modo, ferramenta.culturaAtiva);
   }
 
-  /** Um botao de ferramenta (estrada, demolir estrada), na primeira linha.
-   *  Sempre disponivel: nao depende da arvore de desbloqueio. O desenho do
-   *  icone e CSS (`.glifo-<id>`), sem letra. */
+  /** Um botao de ferramenta (estrada, demolir estrada, arar, apagar roca), na
+   *  primeira linha. Sempre disponivel: nao depende da arvore de desbloqueio. O
+   *  desenho do icone e CSS (`.glifo-<glifo>`), sem letra; nome e detalhe vao
+   *  ao cartao quando o mouse passa. */
   function montarFerramenta(
-    linha: HTMLElement, modo: ModoDaFerramenta, id: string, nomeDoBotao: string, detalhe: string,
-    aoClicar: () => void,
+    linha: HTMLElement, modo: ModoDaFerramenta, id: string, glifo: string, nomeDoBotao: string,
+    detalhe: string, aoClicar: () => void, cultura: string | null = null,
   ): void {
     const botao = botaoIcone(id, nomeDoBotao);
     botao.dataset.ferramenta = id;
-    const glifo = document.createElement('span');
-    glifo.className = `glifo glifo-${id}`;
-    botao.append(glifo);
+    const desenho = document.createElement('span');
+    desenho.className = `glifo glifo-${glifo}`;
+    botao.append(desenho);
     botao.addEventListener('click', aoClicar);
     linha.append(botao);
     const planta: Planta = { id, nome: nomeDoBotao, custo: detalhe, requer: '', desc: '' };
-    ferramentas.set(modo, { botao, planta });
-    ferramentasPorId.set(id, { planta });
+    ferramentas.set(id, { botao, modo, cultura, planta });
   }
 
   return {

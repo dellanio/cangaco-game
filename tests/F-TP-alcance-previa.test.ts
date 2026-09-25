@@ -72,15 +72,17 @@ describe('F-TP — o nucleo por caixa', () => {
   const COLHEITA = colheitaDe('quarry', DADOS);
 
   it('devolve os mesmos tiles que a assinatura de predio, na mesma ordem', () => {
+    const estado = estadoCom(DADOS);
     const caixa = caixaDeTipo('quarry', 22, 34, DADOS);
     expect(caixa).not.toBeNull();
-    expect(tilesDeColheitaNaCaixa(caixa!, COLHEITA, DADOS))
-      .toEqual(tilesDeColheita(predioEm('quarry', 22, 34), COLHEITA, DADOS));
+    expect(tilesDeColheitaNaCaixa(estado, caixa!, COLHEITA, DADOS))
+      .toEqual(tilesDeColheita(estado, predioEm('quarry', 22, 34), COLHEITA, DADOS));
   });
 
   it('tipo fora do dado nao tem caixa, e a lista sai vazia', () => {
     expect(caixaDeTipo('nao-existe', 22, 34, DADOS)).toBeNull();
-    expect(tilesDeColheita(predioEm('nao-existe', 22, 34), COLHEITA, DADOS)).toEqual([]);
+    expect(tilesDeColheita(estadoCom(DADOS), predioEm('nao-existe', 22, 34), COLHEITA, DADOS))
+      .toEqual([]);
   });
 
   it('tiles conta o que ainda tem recurso, e unidades e a soma', () => {
@@ -160,7 +162,7 @@ describe('F-TP — a previa da planta fantasma', () => {
     for (let gx = 18; gx <= 30; gx += 1) {
       for (let gy = 26; gy <= 36; gy += 1) {
         const previa = previaDeAlcance(estado, 'quarry', gx, gy, DADOS);
-        const doPredio = tilesDeColheita(predioEm('quarry', gx, gy), COLHEITA, DADOS);
+        const doPredio = tilesDeColheita(estado, predioEm('quarry', gx, gy), COLHEITA, DADOS);
         const comRecurso = doPredio.filter((k) => (estado.recursos[k]?.quantidade ?? 0) > 0);
         expect(previa!.tiles, `(${gx},${gy}) contra a lista filtrada`).toBe(comRecurso.length);
         // Mapa novo: nenhum tile zerado, entao a lista filtrada e a lista inteira.
