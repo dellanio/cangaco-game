@@ -23,6 +23,11 @@ import { desenharSecaoDaEscola, nomeDoCivil } from './painel-escola';
 // abre o caminho que `menu-build.ts` fechou de proposito: `ui/` continua sem
 // ler `sim/data`. Duas contas para o mesmo numero acabariam divergindo.
 import { medidorDaObra } from '../render/medidor-obra';
+// F-TA — a MESMA frase que a planta fantasma escreve sob o cursor (F-TP). O
+// modulo le so o tema: ele saiu de `alcance-de-colheita.ts` justamente porque
+// aquele arquivo le `sim/data` pelo funil `render/mapa.ts`, e `ui/` nao le
+// `sim/data`. Dois textos para o mesmo numero sugeririam dois numeros.
+import { rotuloDoAlcance } from '../render/rotulo-de-alcance';
 import { canteiroDaObra } from '../render/nivelamento-obra';
 import temaSertao from '../../data/theme-sertao.json';
 
@@ -154,6 +159,26 @@ function desenharCompleto(
       dados.ocupante === null ? rotulos.semTrabalhador : nomeDoCivil(dados.ocupante.tipo),
     );
     l.dataset.ocupante = dados.ocupante === null ? 'vago' : dados.ocupante.unidade;
+    raiz.append(l);
+  }
+
+  // F-TA — o que resta ao alcance. A linha nao tem rotulo separado porque a
+  // frase do tema JA se descreve ("Lajedo: 13 ao alcance (195)"): um rotulo
+  // "Ao alcance" ao lado dela repetiria a mesma palavra. Os numeros tambem vao
+  // em `data-`, para o roteiro de tela afirmar numero em vez de recortar texto.
+  // `null` (obra, tipo que nao colhe) nao escreve linha; zero escreve, com a
+  // frase propria do tema — e o caso que o operador nao tinha como ver.
+  if (dados.colheita !== null) {
+    const { recurso, tiles, unidades } = dados.colheita;
+    const l = document.createElement('div');
+    l.className = 'linha colheita';
+    l.dataset.colheita = recurso;
+    l.dataset.tiles = String(tiles);
+    l.dataset.unidades = String(unidades);
+    const v = document.createElement('span');
+    v.className = 'valor';
+    v.textContent = rotuloDoAlcance(recurso, tiles, unidades);
+    l.append(v);
     raiz.append(l);
   }
 

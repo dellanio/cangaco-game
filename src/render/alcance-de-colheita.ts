@@ -22,7 +22,6 @@
  * (decisao do operador no item). Zero ao alcance mostra zero, e `canPlace`
  * segue sendo quem diz sim ou nao.
  */
-import temaSertao from '../../data/theme-sertao.json';
 import type { GameData } from '../sim/data/types';
 import type { GameState } from '../sim/state';
 import type { CaixaEmTiles } from '../sim/footprint';
@@ -31,8 +30,7 @@ import { colheitaAoAlcanceDaCaixa } from '../sim/recursos';
 import { recursosDeRender } from './mapa';
 import type { RecursosDeRender } from './mapa';
 import { caixaDeTipoNoMapa } from './predios';
-
-const TEMA = temaSertao.plantaFantasma;
+import { rotuloDoAlcance } from './rotulo-de-alcance';
 
 export interface PreviaDeAlcance {
   /** O id NEUTRO do recurso (`rock`), nao o nome do jogador. */
@@ -64,29 +62,12 @@ export function corDoRecurso(
   return cor;
 }
 
-/** O nome que o jogador le. Pelo mesmo criterio da cor (CLAUDE.md §9): recurso
- *  sem nome no tema reprova aqui, porque previa com o nome de OUTRO recurso e
- *  pior que previa nenhuma. */
-export function nomeDoRecurso(recurso: string): string {
-  const nomes = TEMA.recursos as Readonly<Record<string, string | undefined>>;
-  const nome = nomes[recurso];
-  if (typeof nome !== 'string') {
-    throw new Error(`render/alcance-de-colheita: theme-sertao.json nao tem nome para o recurso '${recurso}'.`);
-  }
-  return nome;
-}
-
-/** O molde vem do tema; so os numeros e o nome entram. Zero ao alcance tem
- *  frase propria: "0 (0)" e ruido, e o que o jogador precisa ler e que ali nao
- *  ha nada — sem que isso seja uma recusa. */
-export function rotuloDoAlcance(recurso: string, tiles: number, unidades: number): string {
-  const nome = nomeDoRecurso(recurso);
-  if (tiles === 0) return TEMA.vazio.replace('{recurso}', nome);
-  return TEMA.alcance
-    .replace('{recurso}', nome)
-    .replace('{n}', String(tiles))
-    .replace('{u}', String(unidades));
-}
+/** F-TA — o nome e a frase saem daqui, de `rotulo-de-alcance.ts`, que le so o
+ *  tema. A reexportacao existe porque o painel do predio precisa da MESMA frase
+ *  e nao pode importar este arquivo (ele le `sim/data` pelo funil
+ *  `render/mapa.ts`, e `ui/` nao le `sim/data`). Quem ja importava daqui
+ *  continua importando daqui. */
+export { nomeDoRecurso, rotuloDoAlcance } from './rotulo-de-alcance';
 
 /** `dados` e OPCIONAL e repassado como veio: `undefined` cai no default de cada
  *  funcao de `sim/`, que ja e o `gameData` congelado. E o que deixa o teste

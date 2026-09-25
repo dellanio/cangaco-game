@@ -9,6 +9,7 @@ import { custoDeTreino, ehEscolaCompleta, filaDaEscola, ouroNecessario } from '.
 import { custoDoPasso } from './pathfinding';
 import { alvoDeNivelamento, custoDoPredio } from './obra';
 import { receitaDoTipo, semTrabalhoAoAlcance } from './producao';
+import { colheitaAoAlcanceDaCaixa } from './recursos';
 import { ehPredioOcupavel, trabalhadorDoTipo } from './ocupacao';
 import type { CaixaEmTiles } from './footprint';
 
@@ -346,6 +347,23 @@ export interface OcupanteDoPainel {
  * (CLAUDE.md §3), e o Vitest roda em `node`, entao uma regra que morasse no DOM
  * ficaria sem teste.
  */
+/**
+ * F-TA — o que resta ao alcance de colheita de um predio, para o painel.
+ *
+ * Ids NEUTROS: `rock`, nao "Lajedo". O nome e a frase que o jogador le saem do
+ * tema, do lado da tela (CLAUDE.md §9).
+ *
+ * E o MESMO par que a previa da planta fantasma publica (F-TP), pela MESMA
+ * funcao (`colheitaAoAlcanceDaCaixa`): `tiles` conta o que ainda DA TRABALHO e
+ * `unidades` soma o que ha nos tiles ao alcance, inclusive os zerados, que somam
+ * zero. Duas contas para o mesmo numero fariam o painel e a previa discordarem.
+ */
+export interface ColheitaDoPainel {
+  readonly recurso: string;
+  readonly tiles: number;
+  readonly unidades: number;
+}
+
 export interface PainelDoPredio {
   readonly predio: string;
   /** Id NEUTRO do tipo (`quarry`); o NOME que o jogador le vem do tema. */
@@ -394,6 +412,15 @@ export interface PainelDoPredio {
    *  pausar qualquer predio completo, e quem esconde o botao e a tela (F16c). */
   readonly temProducao: boolean;
   readonly pausado: boolean;
+  /**
+   * F-TA — o que ainda ha ao alcance. `null` em TRES casos que a tela trata
+   * igual (sem linha) e que sao diferentes entre si: predio em obra, tipo que
+   * nao colhe tile (a serraria tira o insumo da gaveta) e tipo fora do dado.
+   * Zero ao alcance NAO e `null`: e `tiles: 0`, e tem frase propria no tema —
+   * "a pedreira ainda existe e nao tem mais o que lavrar" e exatamente o que o
+   * jogador precisa ler, e foi por nao ler que este campo existe.
+   */
+  readonly colheita: ColheitaDoPainel | null;
 }
 
 /**
@@ -474,6 +501,7 @@ export function painelDoPredio(
         tiles: (largura ?? 0) * (altura ?? 0),
       },
       ocupante: null,
+      colheita: null,
       estoque: null,
       temProducao: false,
       pausado: false,
@@ -493,7 +521,30 @@ export function painelDoPredio(
     },
     temProducao: predio.producao !== null,
     pausado: predio.pausado,
+    colheita: colheitaDoPainel(state, predio, dados),
   };
+}
+
+/**
+ * F-TA — o par `(tiles, unidades)` do painel, ou `null` quando o predio nao
+ * colhe tile nenhum.
+ *
+ * O gatilho e a receita ter `colheita` (`data/production.json`), nao o id do
+ * predio: nenhum `quarry` esta digitado aqui, e por isso o tipo novo que colhe
+ * ganha a linha sem uma linha de codigo. Mesma regra de classe da F-TP.
+ */
+function colheitaDoPainel(
+  state: GameState, predio: PredioCompleto, dados: GameData,
+): ColheitaDoPainel | null {
+  const colheita = receitaDoTipo(predio.tipo, dados)?.colheita ?? null;
+  if (colheita === null) return null;
+  const caixa = caixaDoPredio(predio, dados);
+  // Inalcancavel por `painelDoPredio`: ele ja devolveu `null` para tipo fora do
+  // dado antes de chegar aqui (afirmado em `tests/F-TA-painel-alcance.test.ts`).
+  // Fica porque `caixaDoPredio` admite `null` no tipo, e inventar numero seria pior.
+  if (caixa === null) return null;
+  const { tiles, unidades } = colheitaAoAlcanceDaCaixa(state, caixa, colheita, dados);
+  return { recurso: colheita.recurso, tiles, unidades };
 }
 
 /** Uma posicao no mapa em tiles, FRACIONARIA (a unidade pode estar no meio de um passo). */

@@ -142,5 +142,8 @@
   },
   "F19-moinho-e-padaria": {
     "passes": true
+  },
+  "F-TA-painel-alcance": {
+    "passes": true
   }
 }

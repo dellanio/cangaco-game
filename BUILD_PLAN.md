@@ -1879,6 +1879,103 @@ a geografia já corrigida do que regravar 900 tiles depois.
   `proporcoesDeReferencia` não passa pelo carregador — é número de referência
   para medir, não regra de jogo. Quem passou a lê-lo é o teste de medição, e com
   isso ele deixou de ser dado sem leitor.
+### F-TA — O painel do extrator mostra o que resta ao alcance (sim + ui + render)
+- **Posição na fila — pedido do operador, 2026-09-24**: *"O painel da pedreira
+  mostra quanto resta do recurso ao alcance? O rendimento por tile existe desde a
+  F-T2a e é limitado — 15 por tile, com o tile secando. Se a informação não
+  estiver no painel, ponha: é dado que já está no estado, e sem ela eu não sei se
+  a pedreira vai durar mais cinco minutos ou mais uma hora."* Vem antes da F-T3
+  porque é **leitura, não mecânica**: o número existe desde a F-T2a e só não chega
+  à tela.
+- **Escopo**: nenhuma mecânica nova, nenhum comando novo, nada em `state`.
+  `painelDoPredio` passa a devolver `colheita: { recurso, tiles, unidades } | null`
+  — o MESMO par que `colheitaAoAlcanceDaCaixa` já entrega à planta fantasma
+  (F-TP) —, e o painel escreve uma linha. Prédio em obra e prédio de tipo sem
+  `colheita` na receita: `null`, e o painel não escreve linha nenhuma (a mesma
+  distinção que `pedeTrabalhador` já faz: "não se aplica" não é "zero").
+- **Aceite**:
+  1. **Regra da classe, não da Quarry.** Nenhum id de prédio e nenhum id de
+     recurso digitado no código novo: um tipo **fabricado** com `colheita` na
+     receita ganha a linha sem alteração de código, como
+     `tests/F-TP-alcance-previa.test.ts` já prova para a prévia.
+  2. **O painel e a prévia dizem o mesmo número.** Afirmado comparando a saída do
+     seletor com a de `previaDeAlcance` no mesmo tile e no mesmo estado — não duas
+     contas escritas duas vezes. Se divergirem, a tela promete o que a pedreira
+     não entrega, que é o defeito que a F-TP existiu para não criar.
+  3. **A linha acompanha o esgotamento.** Colher até o veio secar muda o par
+     `(tiles, unidades)` no painel; tile de regime `porAcao` com `quantidade: 0`
+     entra como **zero**, não desaparece — é a diferença entre cortado e
+     inexistente que o regime guarda.
+  4. **Screenshot com a linha legível no painel da pedreira.** O roteiro clica em
+     `#painel-predio`, então cumpre o §8: pelo menos um passo despausa (`press('p')`)
+     e usa `mouse.down` / `waitForTimeout(150)` / `mouse.up`, e pausa de volta.
+- **Evidência**: `test-output/F-TA.json` + `screenshots/F-TA-*.png`
+- **Nota de integração (CLAUDE.md §10 — escrita antes do código)**: a feature toca
+  `src/sim/selectors.ts` (campo novo no seletor puro), `src/ui/painel-predio.ts` e
+  um arquivo **novo** em `src/render/`, para onde sai o rótulo que hoje mora em
+  `alcance-de-colheita.ts` — painel e prévia têm de usar a **mesma frase**, e duas
+  cópias do molde divergiriam. A extração é necessária porque `ui/` **não pode**
+  importar `alcance-de-colheita.ts`: ele importa `render/mapa.ts`, que é funil para
+  `sim/data`, e `ui/` não lê `sim/data` (cabeçalho de `menu-build.ts`). O módulo
+  novo lê **só o tema**.
+- **Fora do escopo**: mudar o que a prévia mostra, mudar o texto do tema, e
+  qualquer coisa sobre o especialista fora do prédio — isso é F-T3.
+
+### F-T3 — O especialista sai do prédio (sim + render, integração)
+- **Posição na fila — ANTES da F20, decisão do operador, 2026-09-24 (revisão da
+  dele mesma)**: ela estava depois da F20 com o argumento de que *"locomoção podia
+  esperar o jogo ter pão"*. Ele antecipou com a razão escrita: **a F19 enfraqueceu
+  esse argumento** — a cadeia de comida já fecha sem código novo, e o que falta é
+  só a F20 —, e jogando, *"colher pedra de dentro do prédio é a mesma coisa que me
+  incomodou na estrada instantânea: o jogo esconde o trabalho"*. O primeiro caso
+  continua sendo o pedreiro, *"o único em que só a locomoção é nova"*. **Ele pediu
+  o plano antes da execução**, respondendo as três perguntas que a FSM obriga (as
+  três estão no aceite 2, e o plano é `docs/planos/F-T3-especialista-sai.md`).
+  Registro do que caiu: o argumento antigo continua válido para a F-T1 e a F-T2,
+  que vieram antes da comida por serem **pré-condição** de mecânica de cinco
+  prédios e do campo da F18; esta é a caminhada que torna a saída visível.
+- **Escopo**: FSM nova para o ocupante de prédio extrator: sai, anda até o tile
+  de recurso, colhe, volta, entrega. Estado explícito em `unit.fsm` e
+  `unit.fsmData` serializável, sem `setTimeout`, sem async. **Primeiro caso: o
+  pedreiro** — é o único em que **só a locomoção** é nova; o resto da mecânica
+  dele já está de pé e medido desde a F15a. Lenhador e fazendeiro herdam, e não
+  entram nesta feature.
+- **Aceite**:
+  1. **Ele anda, e o caminho é o do jogo.** O pedreiro sai do prédio, chega ao
+     tile de rocha pelo A* (não por teleporte, não por contador), colhe e volta —
+     o teste afirma a sequência de tiles e o tick de cada transição.
+  2. **"Ocupado, mas fora" é respondido por todo predicado que lê `ocupante`.**
+     Esta é a perna cara, e é o motivo de a feature existir sozinha: o painel da
+     F16b não pode dizer "sem trabalhador"; o alerta `sem-trabalhador` da F22
+     **não** pode disparar; demolir o prédio com o ocupante no campo não pode
+     deixar unidade órfã nem tarefa reclamada sem `release`. Um caso de teste
+     para cada um dos três.
+  3. **Determinismo no meio do passo.** Save e load com o pedreiro **a caminho**
+     (nem no prédio, nem no tile) e 200 ticks depois: estado idêntico byte a byte
+     ao que não passou por save.
+- **Evidência**: `test-output/F-T3.json`
+- **Nota herdada da F18 (2026-09-24)**: `tilesDeColheita` inclui os tiles **sob o
+  próprio footprint** do prédio. Enquanto o especialista fica dentro do prédio
+  isso é inofensivo — o cenário da F18 evita o caso por posicionamento, e o
+  aceite não depende dele. **Quando ele sair, passa a ser bug**: o roceiro andaria
+  até um tile que está debaixo da própria fazenda. Resolver aqui, junto com o
+  caminho; não antes.
+- **O que o BUG-F fechou e o que sobrou (2026-09-24, medido)**: a recusa de
+  construir sobre recurso fechou o caso da **rocha** e da **árvore** — prédio novo
+  não nasce mais em cima deles, e nenhum prédio do cenário inicial cobre recurso
+  (guarda permanente em `tests/F05a-estado-inicial.test.ts`). **Sobrou o milho, e
+  de propósito**: a bandeira `bloqueiaConstrucao` é `false` para `corn` porque
+  milho é tile que o jogador plantou e pousio é recurso com `quantidade: 0`.
+  Medido: **215** âncoras de `farm` que `canPlace` aceita cobrem tile de milho.
+  Então o travamento da nota acima **continua vivo pela fazenda**, e é aqui que ele
+  morre — a solução é `tilesDeColheita` (ou quem escolhe o tile) descartar tile que
+  o próprio footprint cobre, não ampliar a recusa de `canPlace`.
+- **Nota de integração (CLAUDE.md §10 — decisão do operador, 2026-09-24)**: o
+  **desenho do especialista fora do prédio vai junto desta feature**, não em item
+  separado — mesma razão da F-T1 e da F-T2: unidade que a simulação põe no campo
+  e a tela deixa dentro do prédio é tela que mente. A exceção do §10 está escrita
+  aqui, antes do código.
+
 ### F20 — Inn, fome e consumo
 - Restauração por tipo de comida e regra das duas comidas diferentes, conforme o
   GDD. Aceite: cenário longo em que a população sobrevive; cenário sem comida em
@@ -1944,54 +2041,6 @@ a geografia já corrigida do que regravar 900 tiles depois.
      que tira o "por enquanto".
   Os três entram no aceite como caso de teste separado, e o evento de morte que o aceite já
   pede é o que o render usa para o retorno na tela.
-### F-T3 — O especialista sai do prédio (sim + render, integração)
-- **Posição na fila — decisão do operador, 2026-09-24**: **depois da F20**, e a
-  razão é dele: *"o especialista sair é locomoção, e locomoção pode esperar o
-  jogo ter pão."* A F-T1 e a F-T2 vieram antes da comida porque são
-  **pré-condição** de mecânica de cinco prédios e do campo da própria F18; esta
-  não é — ela é a caminhada que torna a saída visível.
-- **Escopo**: FSM nova para o ocupante de prédio extrator: sai, anda até o tile
-  de recurso, colhe, volta, entrega. Estado explícito em `unit.fsm` e
-  `unit.fsmData` serializável, sem `setTimeout`, sem async. **Primeiro caso: o
-  pedreiro** — é o único em que **só a locomoção** é nova; o resto da mecânica
-  dele já está de pé e medido desde a F15a. Lenhador e fazendeiro herdam, e não
-  entram nesta feature.
-- **Aceite**:
-  1. **Ele anda, e o caminho é o do jogo.** O pedreiro sai do prédio, chega ao
-     tile de rocha pelo A* (não por teleporte, não por contador), colhe e volta —
-     o teste afirma a sequência de tiles e o tick de cada transição.
-  2. **"Ocupado, mas fora" é respondido por todo predicado que lê `ocupante`.**
-     Esta é a perna cara, e é o motivo de a feature existir sozinha: o painel da
-     F16b não pode dizer "sem trabalhador"; o alerta `sem-trabalhador` da F22
-     **não** pode disparar; demolir o prédio com o ocupante no campo não pode
-     deixar unidade órfã nem tarefa reclamada sem `release`. Um caso de teste
-     para cada um dos três.
-  3. **Determinismo no meio do passo.** Save e load com o pedreiro **a caminho**
-     (nem no prédio, nem no tile) e 200 ticks depois: estado idêntico byte a byte
-     ao que não passou por save.
-- **Evidência**: `test-output/F-T3.json`
-- **Nota herdada da F18 (2026-09-24)**: `tilesDeColheita` inclui os tiles **sob o
-  próprio footprint** do prédio. Enquanto o especialista fica dentro do prédio
-  isso é inofensivo — o cenário da F18 evita o caso por posicionamento, e o
-  aceite não depende dele. **Quando ele sair, passa a ser bug**: o roceiro andaria
-  até um tile que está debaixo da própria fazenda. Resolver aqui, junto com o
-  caminho; não antes.
-- **O que o BUG-F fechou e o que sobrou (2026-09-24, medido)**: a recusa de
-  construir sobre recurso fechou o caso da **rocha** e da **árvore** — prédio novo
-  não nasce mais em cima deles, e nenhum prédio do cenário inicial cobre recurso
-  (guarda permanente em `tests/F05a-estado-inicial.test.ts`). **Sobrou o milho, e
-  de propósito**: a bandeira `bloqueiaConstrucao` é `false` para `corn` porque
-  milho é tile que o jogador plantou e pousio é recurso com `quantidade: 0`.
-  Medido: **215** âncoras de `farm` que `canPlace` aceita cobrem tile de milho.
-  Então o travamento da nota acima **continua vivo pela fazenda**, e é aqui que ele
-  morre — a solução é `tilesDeColheita` (ou quem escolhe o tile) descartar tile que
-  o próprio footprint cobre, não ampliar a recusa de `canPlace`.
-- **Nota de integração (CLAUDE.md §10 — decisão do operador, 2026-09-24)**: o
-  **desenho do especialista fora do prédio vai junto desta feature**, não em item
-  separado — mesma razão da F-T1 e da F-T2: unidade que a simulação põe no campo
-  e a tela deixa dentro do prédio é tela que mente. A exceção do §10 está escrita
-  aqui, antes do código.
-
 ### F21 — Gold mine, Coal mine e Metallurgist's (ouro renovável)
 - **Nota (origem: F15a — contrato herdado)**: o veio mora no **prédio**, em
   `PredioCompleto.producao.veio`, semeado de `data/production.json`

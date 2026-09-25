@@ -4938,3 +4938,80 @@ recurso ao alcance; (b) a F-T3 foi antecipada por decisão dele para antes da F2
 ele pediu **o plano antes da execução**, respondendo as três perguntas da FSM (o
 especialista em campo conta como ocupante para o alerta da F22? para o painel? e o
 que acontece com ele se o prédio for demolido com ele fora?).
+
+---
+
+## F-TA — O painel do extrator mostra o que resta ao alcance (2026-09-24)
+
+Pedido direto do operador, escrito no `BUILD_PLAN.md` **antes** do código, com a
+razão dele: *"é dado que já está no estado, e sem ela eu não sei se a pedreira vai
+durar mais cinco minutos ou mais uma hora."* Feature de **leitura**: nenhuma
+mecânica nova, nenhum campo em `state`, nenhum comando.
+
+### O que foi VERIFICADO (comando rodado, arquivo aberto)
+
+- `npm run verify` verde: **79 arquivos de teste, 1237 testes**, `validate:data`
+  sem erro.
+- `test-output/F-TA.json`, aberto: a pedreira `q1` do cenário publica
+  `{ recurso: 'rock', tiles: 13, unidades: 195 }`, frase
+  **"Lajedo: 13 ao alcance (195)"**, `mesmoParDaPrevia: true`, e `null` (sem
+  linha) no armazém e na obra.
+- `screenshots/F-TA-2-pedreira-com-alcance.png`, **aberto com Read**: a linha
+  aparece no painel da Pedreira, entre "Quem trabalha" e as gavetas, legível —
+  "Lajedo: 13 ao alcance (195)". 13 tiles × 15 por tile = 195, que é o lajedo da
+  vila inteiro.
+- `npm run shot -- F-TA` código 0, 3 capturas. O passo 4 roda **despausado**, com
+  `mouse.down` / 150 ms / `mouse.up` (§8), e afirma que a linha continua de pé com
+  o laço andando — o painel se redesenha a cada tick, e é a classe de defeito do
+  BUG-B.
+
+### As decisões, com o motivo
+
+- **O número vem do seletor, a frase vem do tema, e as duas são as MESMAS da
+  prévia da planta fantasma.** `painelDoPredio` ganhou
+  `colheita: { recurso, tiles, unidades } | null`, calculado por
+  `colheitaAoAlcanceDaCaixa` — a função que a F-TP já usava. O teste afirma a
+  igualdade contra `previaDeAlcance` no mesmo tile, não contra um número escrito à
+  mão: painel e prévia discordando seria a tela prometendo o que a pedreira não
+  entrega.
+- **`rotuloDoAlcance` e `nomeDoRecurso` saíram para `src/render/rotulo-de-alcance.ts`.**
+  `ui/` não pode importar `alcance-de-colheita.ts` — ele lê `sim/data` pelo funil
+  `render/mapa.ts`, e `ui/` não lê `sim/data` (cabeçalho de `menu-build.ts`). O
+  módulo novo lê **só o tema**; `alcance-de-colheita.ts` reexporta as duas, então
+  quem já importava de lá continua igual. **Dois textos para o mesmo fato
+  sugeririam dois números.**
+- **A linha não tem rótulo separado.** A frase do tema já se descreve ("Lajedo: 13
+  ao alcance (195)"); um rótulo "Ao alcance" ao lado repetiria a palavra. Os dois
+  números vão também em `data-tiles` / `data-unidades`, para o roteiro afirmar
+  número em vez de recortar texto.
+- **`null` e zero são coisas diferentes, e a tela trata as duas.** `null` (obra,
+  tipo que não colhe) não escreve linha; **zero escreve**, com a frase própria do
+  tema ("nenhum ao alcance"). O veio seco era exatamente o estado que o operador
+  não tinha como ver — some a linha e ele voltaria a não saber.
+- **Regra da classe, não da Quarry.** O gatilho é a receita ter `colheita`; nenhum
+  id de prédio e nenhum id de recurso está digitado no código novo. O teste prova
+  com um **tipo fabricado** que não existe em `data/` nenhum, como a F-TP faz — não
+  varrendo o fonte atrás de nome.
+
+### Achado dentro da feature (registrado, não escondido)
+
+A guarda `if (caixa === null) return null` em `colheitaDoPainel` é
+**inalcançável por `painelDoPredio`**: ele já devolve `null` para tipo fora do dado
+antes de chegar ali. Ficou escrita como tal, com o teste afirmando o comportamento
+real (`painelDoPredio` inteiro é `null`) em vez de um caso que não existe. O
+primeiro teste que escrevi afirmava o caso imaginado e falhou — é o tipo de erro
+que só aparece rodando.
+
+### O que esta feature NÃO fez
+
+- Não mexeu na prévia da planta fantasma, no texto do tema nem em nada de `sim/`
+  além do campo novo no seletor puro.
+- Não mostra **taxa** ("quanto tempo até secar"): o painel diz o estoque ao
+  alcance, não a previsão. Previsão depende do ciclo, do ocupante e da pausa, e
+  seria desenho novo — se o operador quiser, vira item.
+
+### Nota de integração (§10)
+
+A feature tocou `src/sim/selectors.ts`, `src/ui/painel-predio.ts` e um arquivo novo
+em `src/render/`. A exceção está **escrita no item do `BUILD_PLAN.md`, antes do
+código**, com a razão (a frase tem de ser uma só).
