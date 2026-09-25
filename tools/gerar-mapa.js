@@ -53,6 +53,7 @@ const terreno = require(path.join(RAIZ, 'data', 'terrain.json'));
 // F-D3: a vila inicial nao e escrita aqui, e lida de onde ela ja mora.
 const economia = require(path.join(RAIZ, 'data', 'economy.json'));
 const construcoes = require(path.join(RAIZ, 'data', 'buildings.json'));
+const producao = require(path.join(RAIZ, 'data', 'production.json'));
 
 const SEMENTE = 20260924;
 const ID = 'sertao-128';
@@ -292,13 +293,59 @@ const ROCADO_DA_VILA = { gx: 26, gy: 40, raio: 2 };
 const LAJEDO_DA_VILA = { gx: 24, gy: 31, raio: 2 };
 
 /**
+ * F21b - os veios de minerio da serra: os tipos, na ordem, e o teto de cada veio.
+ *
+ * QUANTOS veios nao esta aqui, e isso e deliberado: nao e escolha livre. A serra
+ * tem 453 tiles e so 97 que uma mina consegue trabalhar (o porque esta em
+ * `gerarRecursos`), repartidos em 9 afloramentos separados. Cada afloramento
+ * recebe UM veio, e os afloramentos vao para os tres tipos em rodizio, do maior
+ * para o menor. Pedir "5 veios de carvao" daria cinco pedidos para tres lugares:
+ * numero bonito que o mapa nao tem como cumprir, e a corrida sairia calada com
+ * menos veio do que o pedido - exatamente o tipo de dado sem lastro no mundo que
+ * a F21b existe para tirar do jogo.
+ *
+ * Proporcao, e por que: carvao e o que mais se queima (a metalurgia gasta 1.2 de
+ * carvao por ciclo contra 1.0 de minerio de ouro), ferro alimenta duas oficinas,
+ * e ouro e o mais raro. O rodizio ja entrega ao carvao os afloramentos maiores;
+ * o teto por veio inclina mais um pouco. Os numeros sao de AUTORIA do mapa, como
+ * o raio dos aglomerados de arvore; o rendimento por tile, que e balanceamento,
+ * mora em `data/resources.json`.
+ *
+ * A ordem da lista faz parte da semente E do rodizio: trocar `coal` de lugar
+ * redesenha os tres tipos. Se um dia precisar mudar, mude sabendo disso.
+ */
+const VEIOS_DE_MINERIO = [
+  { tipo: 'coal', tamanho: 12 },
+  { tipo: 'iron_ore', tamanho: 10 },
+  { tipo: 'gold_ore', tamanho: 6 },
+];
+
+/** Guarda de acoplamento com a receita: o tipo semeado aqui precisa ter
+ *  EXATAMENTE uma receita que o colhe. Minerio no mapa sem mina que o tire e
+ *  dado morto, e duas minas com alcances diferentes para o mesmo veio seriam uma
+ *  escolha que ninguem fez. Reprova em vez de decidir calado. */
+function conferirQuemColhe(recurso) {
+  const receitas = Object.entries(producao.predios).filter(
+    ([, def]) => def && def.colheita && def.colheita.recurso === recurso,
+  );
+  if (receitas.length !== 1) {
+    throw new Error(
+      `gerar-mapa: production.json precisa de exatamente UMA receita colhendo '${recurso}' `
+      + `(achou ${receitas.length})`,
+    );
+  }
+}
+
+/**
  * F-T2a — a camada esparsa de recurso, derivada do terreno ja gerado mais os
  * aglomerados proprios. Um tile tem NO MAXIMO um recurso: o `ocupado` corta a
  * sobreposicao aqui, na autoria, para o carregador nao ter que escolher um
  * vencedor em tempo de jogo.
  */
 function gerarRecursos({ largura, altura, grade, rng }) {
-  const recursos = { rock: [], tree: [], fish: [] };
+  const recursos = {
+    rock: [], tree: [], fish: [], coal: [], iron_ore: [], gold_ore: [],
+  };
   const ocupado = new Set();
   const por = (tipo, gx, gy) => {
     if (gx < 0 || gy < 0 || gx >= largura || gy >= altura) return;
@@ -369,6 +416,135 @@ function gerarRecursos({ largura, altura, grade, rng }) {
   for (const [tx, ty] of disco(MATO_DO_NASCENTE.gx, MATO_DO_NASCENTE.gy, MATO_DO_NASCENTE.raio)) {
     const sorte = rng();
     if (sorte < 0.85 && ehGramaLivre(tx, ty)) por('tree', tx, ty);
+  }
+
+
+  // --- veios de minerio: na CARA da serra, onde um mineiro consegue encostar --
+  // F21b, e por ultimo pelo mesmo motivo escrito acima para o mato do nascente:
+  // semeado depois de tudo, nao desloca o RNG de nada que ja estava aqui, e a
+  // floresta, o cardume e o lajedo saem tile por tile identicos ao de antes.
+  //
+  // ONDE, e por que nao "na montanha" e ponto: `sim/aproximacao.ts` decide de
+  // onde se trabalha um tile — o proprio tile, se for andavel, ou um dos oito
+  // vizinhos andaveis — e diz, por escrito, que lista vazia e "veio no meio da
+  // serra". A montanha tem 453 tiles e so 31 deles tem chao andavel ao lado: uma
+  // semeadura que ignorasse isso encheria o mapa de minerio que mina nenhuma
+  // alcanca, e a mina ficaria esperando pra sempre um tile que nunca vem. Entao o
+  // criterio aqui e o MESMO predicado do runtime: tile da serra (a montanha ou a
+  // saia de rocha colada nela) com pelo menos um vizinho andavel.
+  //
+  // A saia de rocha entra, e isso TIRA pedra dali: o tile que vira veio sai de
+  // `rock`. E o que faz a diferenca entre pedra e minerio ser de LUGAR — a pedra
+  // continua no lajedo da vila e nos lajedos soltos do sertao, e o que a serra
+  // tem de proprio e o veio. Sem isso sobrariam 31 tiles de minerio no mundo
+  // inteiro, contra 66 de saia util.
+  const INTRANSPONIVEL = new Set(terreno.intransponivel);
+  const andavel = (gx, gy) => {
+    const tipo = grade[gy]?.[gx];
+    return tipo !== undefined && !INTRANSPONIVEL.has(tipo);
+  };
+  const vizinhos = (gx, gy) => {
+    const lista = [];
+    for (let dy = -1; dy <= 1; dy += 1) {
+      for (let dx = -1; dx <= 1; dx += 1) {
+        if (dx === 0 && dy === 0) continue;
+        const nx = gx + dx;
+        const ny = gy + dy;
+        if (nx >= 0 && ny >= 0 && nx < largura && ny < altura) lista.push([nx, ny]);
+      }
+    }
+    return lista;
+  };
+  const daSerra = (gx, gy) => {
+    const tipo = grade[gy][gx];
+    if (tipo === 'montanha') return true;
+    return tipo === 'rocha' && vizinhos(gx, gy).some(([nx, ny]) => grade[ny][nx] === 'montanha');
+  };
+  const candidatos = [];
+  for (let gy = 0; gy < altura; gy += 1) {
+    for (let gx = 0; gx < largura; gx += 1) {
+      if (!daSerra(gx, gy)) continue;
+      if (!vizinhos(gx, gy).some(([nx, ny]) => andavel(nx, ny))) continue;
+      candidatos.push([gx, gy]);
+    }
+  }
+
+  // Um veio por AFLORAMENTO, e nao um sorteio solto entre os candidatos: os 66
+  // tiles uteis da saia vem em manchas separadas ao longo da cordilheira, e dois
+  // veios caindo na mesma mancha dariam uma jazida so com dois nomes, deixando
+  // metade da serra pelada. Assim cada tipo aparece espalhado, que e o que faz o
+  // lugar da mina importar.
+  const emCandidato = new Set(candidatos.map(([gx, gy]) => `${gx},${gy}`));
+  const afloramentos = [];
+  const visto = new Set();
+  for (const [gx, gy] of candidatos) {
+    const raiz = `${gx},${gy}`;
+    if (visto.has(raiz)) continue;
+    visto.add(raiz);
+    const mancha = [];
+    const pilha = [[gx, gy]];
+    while (pilha.length > 0) {
+      const [cx, cy] = pilha.pop();
+      mancha.push([cx, cy]);
+      for (const [nx, ny] of vizinhos(cx, cy)) {
+        const chave = `${nx},${ny}`;
+        if (!emCandidato.has(chave) || visto.has(chave)) continue;
+        visto.add(chave);
+        pilha.push([nx, ny]);
+      }
+    }
+    afloramentos.push(mancha);
+  }
+  // Ordem estavel antes do sorteio: o flood acima ja e deterministico, mas
+  // depender da ordem dele seria depender de detalhe de implementacao.
+  afloramentos.sort((a, b) => b.length - a.length || a[0][1] - b[0][1] || a[0][0] - b[0][0]);
+
+  // O tile de veio TIRA a pedra dali: `por()` recusaria o tile ja ocupado, e a
+  // recusa calada e que daria o mapa com menos minerio do que o numero pedia.
+  const semPedra = (gx, gy) => {
+    const chave = `${gx},${gy}`;
+    if (!ocupado.has(chave)) return;
+    const i = recursos.rock.findIndex(([rx, ry]) => rx === gx && ry === gy);
+    if (i < 0) return; // ocupado por outra coisa: `por` recusa, e esta certo
+    recursos.rock.splice(i, 1);
+    ocupado.delete(chave);
+  };
+
+  // Rodizio, e nao sorteio: afloramento maior para o primeiro tipo da lista, o
+  // seguinte para o segundo, e assim por diante. Sortear qual mancha recebe qual
+  // tipo seria pior de proposito - daria a corrida em que o ouro cai so no
+  // pedaco de um tile e o carvao leva os dois maiores. O que o RNG decide aqui e
+  // o DESENHO do veio dentro da mancha, nao quem fica com o que.
+  for (let i = 0; i < afloramentos.length; i += 1) {
+    const { tipo, tamanho } = VEIOS_DE_MINERIO[i % VEIOS_DE_MINERIO.length];
+    conferirQuemColhe(tipo);
+    const mancha = afloramentos[i];
+    const naMancha = new Set(mancha.map(([gx, gy]) => `${gx},${gy}`));
+    const veio = [];
+    const posto = new Set();
+    const assentar = ([gx, gy]) => {
+      semPedra(gx, gy);
+      por(tipo, gx, gy);
+      posto.add(`${gx},${gy}`);
+      veio.push([gx, gy]);
+    };
+    assentar(mancha[Math.floor(rng() * mancha.length)]);
+    while (veio.length < tamanho) {
+      // Onda 8-conexa DENTRO do afloramento: a cada passo, os vizinhos livres de
+      // todo o veio, e um deles sorteado. Cresce em mancha, como afloramento de
+      // verdade, e nao em fila indiana como cresceria um passeio aleatorio.
+      const frente = new Map();
+      for (const [gx, gy] of veio) {
+        for (const [nx, ny] of vizinhos(gx, gy)) {
+          const chave = `${nx},${ny}`;
+          if (!naMancha.has(chave) || posto.has(chave)) continue;
+          frente.set(chave, [nx, ny]);
+        }
+      }
+      if (frente.size === 0) break;
+      const lista = [...frente.values()];
+      assentar(lista[Math.floor(rng() * lista.length)]);
+    }
   }
 
   return recursos;

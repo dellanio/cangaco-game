@@ -2097,18 +2097,31 @@ a geografia já corrigida do que regravar 900 tiles depois.
   2), **301 alcançáveis hoje e 350 no fim**, porque árvore cortada vira andável.
   Alcance 6 é **a calibrar**, com a conta em `BALANCE_LOG.md` (2026-09-25).
 
-### F-T4b — O lenhador sai para colher (BLOQUEADO: decisão do operador)
+### F-T4b — O lenhador sai para colher (DESBLOQUEADO 2026-09-25: saída (a))
 - **O que falta**: `woodcutters` ganhar `colheita: { recurso: tree, ... }`, pelo
   mesmo caminho da F-T4a. O código já serve; o **dado** é que não fecha.
 - **Por que está bloqueado, medido antes de escrever qualquer linha** (Medição 2
-  do plano, sonda da sessão): com `colheita` no lenhador, **3 aceites reprovam** —
-  `F15a-receita`, `F15b-aceite` (oráculo) e `F17-aceite` (Fase A). Só com o
-  pescador: **0 de 1 358**. A causa é uma e não é de código: a capoeira mais
-  próxima da vila está a **12 tiles** do armazém, e os dois Woodcutter's que o
-  cenário oráculo (18,34 e 22,34) e a abertura da Fase A plantam **ao lado** do
-  armazém têm **zero árvore** em alcance 6 (em alcance 12 teriam 7). Com
-  `colheita`, eles param de produzir — e com eles param a serraria, o `timber` e o
-  aceite do marco.
+  do plano, sonda da sessão; **remedido em 2026-09-25 a pedido do operador**, que
+  quis escolher a saída com o número na mão — `test-output/F-T4b-reprovacoes.json`
+  e `test-output/F-T4b-geometria-da-mata.json`): com `colheita { tree, 6 }` no
+  lenhador, **3 de 1 400 reprovam**. Só com o pescador: **0**. As três, com a
+  asserção literal:
+  1. `tests/F15a-receita.test.ts:39` — `expect(r?.colheita).toBeNull()` recebe
+     `{ recurso: 'tree', alcance: 6 }`. É **texto do dado**: a asserção afirma a
+     ausência, e se reescreve na tarefa que muda o dado. Não é sintoma de jogo.
+  2. `tests/F15b-aceite.test.ts:237` — `expect(acumulado.timber).toBeGreaterThan(0)`
+     recebe **0**: em 3 000 ticks o cenário oráculo não produz **nenhuma** tábua.
+     `stone` continua > 0, então o que quebra é a mata, não a colheita.
+  3. `tests/F17-aceite.test.ts:109` — `expect(noArmazem['timber']).toBeGreaterThan(40)`
+     recebe **27**. Pior que a de cima: o timber não fica parado, **cai de 40 para
+     27** — a vila gasta tábua nas obras e não repõe nenhuma. O marco da Fase A
+     deixa de fechar.
+- **A geometria, corrigida**: a nota antiga dizia "12 tiles" para os dois casos, e
+  **12 é o número do oráculo**. Medido tile a tile: os lenhadores do oráculo
+  (18,34 e 22,34) têm 0 árvore em alcance 6, 8 e 10, **7 em 12**, mínimo **11**;
+  os da abertura da Fase A (9,31 e 12,31) têm **0 até o alcance 12** e precisam de
+  **14** para ver **uma** árvore (13 em 16, 38 em 20). Armazém em (29,30); a
+  árvore alcançável mais perto dele é (37,23), a **8**.
 - **A pergunta que a fila não responde sozinha**: *onde a abertura da Fase A
   planta o lenhador, agora que ele precisa de mata a 12 tiles da vila?* Consertar
   é **mudar a geometria da abertura** (`tests/helpers/abertura.ts`, com a
@@ -2116,12 +2129,77 @@ a geografia já corrigida do que regravar 900 tiles depois.
   a pedreira quer o lajedo da vila e o lenhador quer a mata. Isso não é
   não-regressão de fixture, é **redesenhar o aceite do marco F17** — e marco é
   decisão do operador (CLAUDE.md §12 e §14).
-- **As três saídas possíveis, para ele escolher** (nenhuma implementada):
-  (a) mover a abertura da Fase A para perto de uma capoeira, e reescrever a
-  invariante de geometria junto; (b) dar ao lenhador alcance maior que 6 —
-  resolve o aceite e torna o alcance quase irrelevante, porque 12 tiles cobre
-  metade da vila; (c) semear uma capoeira pequena na reserva da vila, o que muda
-  `tools/gerar-mapa.js` e **move tiles que fixtures já usam**.
+- **As três saídas possíveis, para ele escolher** (nenhuma implementada), agora
+  com o custo medido de cada uma:
+  - **(a) mover a abertura da Fase A para perto de uma capoeira**, reescrevendo a
+    invariante de geometria junto. **É a mais barata das três, e por uma margem
+    que a nota antiga não mostrava**: existem **2 946** posições legais (`canPlace`)
+    com árvore alcançável em **alcance 6, o de hoje**. As mais próximas do armazém
+    ficam a **3 tiles** — (29,27) com 1 árvore, (30,27) com 2, (31,27) com 3,
+    (32,27) com 5 — e (33,27) a 4 tiles com 8. Para uma mata que sustente a
+    serraria: **(18,41) a 11 tiles com 12 árvores**, e (17,44)/(18,44)/(19,44) a
+    **14 tiles com 27/24/20**. Não mexe em alcance nem em mapa; o preço é a rua
+    mais comprida e a invariante de "altura igual nos quatro" reescrita.
+  - **(b) dar ao lenhador alcance maior que 6.** A medição **derruba esta saída
+    como estava escrita**: 12 resolve o oráculo (7 árvores) e **não resolve a
+    abertura da Fase A**, que só vê árvore em **14**. Alcance 14 cobre boa parte
+    da vila e torna a regra de alcance quase decorativa — e ainda assim entrega
+    **1** árvore ao lenhador da abertura.
+  - **(c) semear uma capoeira pequena na reserva da vila**: muda
+    `tools/gerar-mapa.js` e **move tiles que fixtures já usam** — a mesma classe de
+    efeito colateral que a F21b mediu nos lajedos (46 tiles de rocha viraram veio,
+    `BALANCE_LOG.md` 2026-09-25).
+- **DECISÃO DO OPERADOR, 2026-09-25: saída (a), mover a abertura.** O argumento
+  dele, com o número da medição na mão: *"é a única que não mexe em alcance nem em
+  mapa"* — a (b) tornaria a regra de alcance decorativa e a (c) move tiles que
+  fixtures já usam. A posição se escolhe **pelo mesmo critério da F-D3**: a
+  abertura tem de ter **mato, rocha e terra ao alcance, sem o jogador procurar**.
+  E a cláusula dele, que decide o resto: *"se nenhuma posição tiver três coisas
+  juntas, o gerador é que ajusta, não a vila"*.
+- **Medido antes de mexer** (`test-output/F-T4b-para-onde-a-abertura-vai.json`):
+  **o gerador não precisa ajustar — a vila resolve, mas não em fila única.**
+  - A fila de hoje tem **13 tiles de largura**, com os dois lenhadores numa ponta
+    e a pedreira na outra. Varrendo o mapa inteiro nessa forma: 14 720 posições,
+    **10 880** onde a fila cabe, **1 745** com mata para os dois lenhadores e só
+    **133** que também têm rocha para a pedreira. E as 133 não servem: a mais
+    perto do armazém (a **7 tiles**) tem **1 árvore e 1 rocha**; a primeira com
+    **≥ 5 de cada** está a **54 tiles**, com rua em L de **91 tiles** — contra os
+    26 de hoje, num armazém que abre com **30 de stone**. Fila única está morta.
+  - A causa é geográfica e simples: **o lajedo e a mata ficam em lados opostos da
+    vila**. O lajedo da vila é a oeste (22..26 × 29..33, BUG-F) e a árvore
+    alcançável mais próxima é (37,23), a **nordeste**. Nenhuma linha de 13 tiles
+    alcança os dois; **dois grupos alcançam**.
+  - **Separando, as três coisas estão juntas a 3–5 tiles do armazém** (que está em
+    29..31 × 30..32): par de lenhadores em **(32,27) com 5 e 9 árvores** (3 tiles),
+    **(33,27) com 8 e 9** (4), **(34,27) com 9 e 9** (5) — 2 167 pares legais no
+    mapa; pedreira em **(26,27)…(29,27) com 12–13 rochas** (3 tiles) — 1 604
+    posições legais. Terra arável não é restrição em lugar nenhum: **13 725 tiles**
+    aráveis no mapa, 179–193 no raio de qualquer sítio medido.
+- **A posição escolhida é REGRA, não coordenada.** O helper de hoje já deriva
+  ("recua até caber"); a nova derivação mantém o estilo — a pedreira continua
+  ancorada no lajedo a oeste e o **par de lenhadores passa a varrer para leste na
+  linha de porta ao norte até a primeira coluna em que os dois tenham árvore
+  alcançável**. Com o mapa publicado isso cai em (32,27). Nenhum número digitado
+  em `.ts` ou `.js`.
+- **Consequência medida, como o operador pediu** — *"os roteiros que plantam na
+  abertura mudam de coordenada; meça quantos antes de mexer"*: **duas derivações**
+  e **nenhuma coordenada fixa**. A geometria está escrita à mão em dois lugares que
+  precisam continuar idênticos: `tests/helpers/abertura.ts` (headless) e
+  `tools/shots/F17.js` (tela). Só elas citam `inicioDaFila`/`gyDaFila`. Os
+  consumidores seguem de graça: `tests/F17-aceite.test.ts` tem **9 `expect` e
+  nenhum nomeia a geometria** (ele afirma resultado — quatro completos, ocupados,
+  ligados, timber entregue), e `tests/helpers/bodega-cenario.ts` deriva a própria
+  posição a leste do armazém, sem depender da fila. O que **muda de texto** são as
+  invariantes da fila única: "altura igual nos quatro" e "uma rua reta serve todos"
+  deixam de valer, e é isso que a tarefa tem de reescrever, não coordenada.
+  Cuidado já visto na medição: o par em (32,27) ocupa x32..37 na linha y27..29, e
+  a linha de porta dele (y=30) cruza a coluna da escola (34..36) — `canPlace`
+  aprova (a porta tem saída), mas a rua precisa contornar, e não é mais uma reta.
+- **Armadilha da sonda, registrada para não custar duas vezes**: varrer a fila com
+  `canPlace` dá **zero** posições em todo o mapa, e não por geometria — a
+  `sawmill` nasce `bloqueado` (`desbloqueadoPor: woodcutters`) e só é plantada
+  depois que uma casa de lenhador fica completa. Quem medir geometria tem de
+  aceitar o motivo `'bloqueado'`; senão o resultado nulo parece resposta.
 - **Nota de herança**: quem pegar este item herda da F-T4a a regra de classe já
   provada, o predicado `tileAlcancavelParaColheita` e os números da árvore acima —
   e herda também que, ao contrário do peixe, **a árvore abre o anel seguinte ao
@@ -2615,6 +2693,73 @@ Depende da F20b: o marcador lê `unidade.condicao`, que só existe depois dela. 
   inconsistência do módulo de recursos, e a mesma que a F-T2a corrigiu na
   pedreira"*.
 - **Depende de**: nada além da F21. **Não** depende da F23.
+- **Escopo**: `dado + mapa`. `src/sim/` **não é tocado** — colheita já é regra de
+  classe desde a F-T3, e o alerta `veio-esgotado` já sai de `fonteSemTrabalho`
+  (`sim/selectors.ts`) para todo recurso sem `reposicao`. `src/render/` e
+  `src/ui/` também não: a cor do tipo novo sai de `theme-sertao.json:recursos` e
+  o nome de `theme-sertao.json:plantaFantasma.recursos`, os dois lidos por
+  código que já existe. O minério mora **na montanha** e só nela: todo tile de
+  `rocha` já tem `rock` (298 de 298), e veio solto na grama seria recurso
+  bloqueando construção no meio do pasto.
+- **Aceite**: com uma mina plantada ao lado de um veio, o painel dela diz
+  quantos tiles de minério há ao alcance e quantas unidades sobram; a mina
+  produz, e o total no mapa **cai** na mesma medida do que ela entregou (medido
+  contra a linha de base do tick 0, não contra zero); com o veio zerado a
+  entrada **sai** de `state.recursos` (regime `nunca`), a mina para e o HUD da
+  F22 acusa `veio-esgotado` **sem o jogador clicar nela**; `canPlace` recusa a
+  mina sobre o veio. Guarda estrutural: todo tipo de recurso tem **cor e nome no
+  tema** — hoje a falta só aparece quando o render carrega.
+- **Evidência** (nomes corrigidos ao fim da sessão: a medição saiu em quatro
+  arquivos, um por perna do aceite, e não em um `F21b.json` único):
+  `test-output/F21b-veios-no-mapa.json` (o minério semeado é alcançável),
+  `test-output/F21b-mina-esgota.json` (o que ela entrega sai do chão),
+  `test-output/F21b-veio-esgotado.json` (veio zerado → mina para e alerta),
+  `test-output/F21b-recusa-sobre-o-veio.json` (`canPlace` recusa) +
+  `test-output/F21b-shot.json` + `screenshots/F21b-*.png`
+- **Nota (Escopo, Aceite e Evidência foram escritos na sessão da F21b,
+  2026-09-25)**: o item só tinha Por que existe, O que falta, a Pergunta de
+  design e a Posição na fila. Os três blocos acima são interpretação da linha
+  "o que falta", pela leitura mais conservadora (§14) — mesmo precedente da Nota
+  da F22. O resto do item está intocado. Plano em
+  `docs/planos/F21b-mina-esgota.md`.
+- **Nota (premissa da pergunta de design, 2026-09-25)**: a resposta do operador
+  ("só os adjacentes, nunca o tile sob o prédio") vale inteira, mas o argumento
+  dela — minério com `bloqueiaConstrucao: true` — não é o que a faz valer.
+  `canPlace` confere **terreno antes de recurso** e montanha é intransponível:
+  a recusa acontece uma linha antes, e a bandeira nunca seria lida. O minério
+  nasce com `bloqueiaConstrucao: false`, pelo mesmo `_doc` que o `fish` já tem
+  para o cardume na água (duas regras para o mesmo fato divergem na primeira
+  mudança). **Fechado em 2026-09-25: o operador aceitou a correção** — "recusa
+  sai em `terreno`, meu argumento do BUG-F não se aplicava ao veio" — e pediu que
+  ficasse escrito que **a premissa era dele**, não uma leitura minha do que ele
+  teria dito. A decisão dele ("só os adjacentes") nunca esteve em dúvida; o que
+  caiu foi o motivo, e o motivo é o que a próxima sessão herda.
+
+### ~~F-T4c — Os três mineiros herdam caminhada~~ (ENTREGUE pela F21b, 2026-09-25)
+- **Item criado já riscado.** Ele nunca chegou a existir como linha da fila: era a
+  **terceira** da ordem de três que o operador deu em 2026-09-25 (1. F-T4,
+  2. F21b, 3. "os três mineiros herdam caminhada"). Entra aqui para o histórico
+  não perder a decisão — e entra riscado porque a F21b o consumiu: declarar
+  `colheita` nas três minas fez a **regra de classe** da F-T3 agir sozinha, sem
+  uma linha de simulação nova.
+- **Medido, não inferido** (`test-output/F21b-mineiro-anda.json`, 2026-09-25): a
+  pergunta do operador foi "confirme que os mineiros **andam** até o veio, não só
+  que a mina produz". Os dois mineiros do cenário do ouro, tick a tick —
+  **carvão**: ciclo de 293 ticks, FSM `indo_colher → colhendo → voltando →
+  trabalhando`, **293 de 293 ticks fora do footprint da casa**, salto máximo de
+  **1 tile por tick**, parou em (97,107) para colher o veio (98,106);
+  **ouro**: 410 ticks, mesma sequência, parou em (92,99) para o veio (93,98), a
+  **6 tiles** da porta no ponto mais distante. Nos dois, o tile onde o mineiro
+  fica é **andável** e o tile do veio **não é** (serra), e a distância no momento
+  de colher é **exatamente 1** — ele vai até a beirada, como o pescador da F-T4a
+  vai até a margem.
+- **Cobertura permanente, não só sonda**: a sonda foi apagada e virou o bloco
+  **(8)** de `tests/F21b-mina-esgota.test.ts` (4 testes): sequência de FSM, salto
+  ≤ 1 por tick, Chebyshev 1 ao veio reclamado durante `colhendo`, tile do mineiro
+  andável e tile do veio não, mineiro fora do footprint — mais um teste **(d)**
+  que afirma que a fixture continua exercitando caminhada (o veio está a mais de
+  1 do prédio), para o caso não degenerar em "sai pela porta e volta" se o mapa
+  mudar.
 
 ### F22 — Alertas do HUD
 - Prédio sem trabalhador, sem estrada, fome, mina esgotada.

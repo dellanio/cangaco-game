@@ -147,3 +147,26 @@ caminho. Ideia boa é justamente a mais perigosa.
   escrito diz o contrário, por isso é ideia e não bug. O conserto natural é o marcador
   de pousio ser da cor da cultura, e não do esgotado: o `esgotado` é um código só para
   todos os tipos, e separá-lo custa um código por tipo na paleta de recursos.
+- **Estoque mínimo de ouro na Casa do Coronel — medida, recusada pelo operador**
+  (2026-09-25). A ideia: em vez de pedir ouro só quando há item na fila esperando,
+  a escola manteria um mínimo parado, como qualquer prédio que consome insumo.
+  Medida antes de planejar (`test-output/minimo-de-estoque.json`), e **o número
+  derrubou a ideia** — decisão do operador no mesmo dia, com os dois motivos:
+  1. **O ouro sumiria do HUD para sempre.** `ouroNecessario` (`sim/escola.ts:66`)
+     olha só a fila, sem folga; com fila vazia o nível 7 da escada devolve o ouro
+     parado ao armazém — medido, a escola zera no **tick 63**. Com mínimo, o
+     excedente vira **0 por construção** e a devolução nunca acontece. O HUD conta
+     **só armazém** (`ui/hud.ts` → `estoqueDosArmazens`), então um mínimo de 5 é
+     **25 % do ouro de abertura** (20) invisível enquanto a escola existir. É
+     exatamente o vazamento que a F15a registrou, promovido a permanente.
+  2. **Não conserta o Moinho nem a Padaria**, que eram a razão de generalizar. O
+     mínimo **já é regra de classe** para quem tem receita (`alvo` = gaveta = 5,
+     `production.json:estoqueInternoPorPredio`) e mesmo assim eles ficam em
+     `esperando_insumo`: em 6 000 ticks o moinho passou **6 000 ticks com a gaveta
+     vazia** pedindo 5 de milho, e o milho no armazém **nunca passou de 1**. O
+     gargalo é **vazão do campo**, não alvo de pedido — entrada do `BALANCE_LOG.md`
+     de 2026-09-25.
+  Custo, se algum dia voltar: um campo por receita custa **1 obrigação** de
+  compilação (`sim/data/loader.ts:384`) e nenhum leitor forçado — o preço nunca
+  foi técnico. **Não é pendência**: fica aqui com o número, e só volta se a vazão
+  da comida for consertada e o sintoma continuar.

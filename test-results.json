@@ -178,5 +178,11 @@
   },
   "F-T4a-pescador": {
     "passes": true
+  },
+  "F21b-mina-esgota": {
+    "passes": true
+  },
+  "F-T4b-lenhador": {
+    "passes": false
   }
 }

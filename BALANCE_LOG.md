@@ -334,6 +334,60 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   não é neutro: a **margem** é que limita a cabana, não o lago |
   `production.json:fishermans`, `resources.json:fish`, `test-output/F-T4a.json`
 
+- [2026-09-25] **o minério do mapa inteiro cabe em 56 tiles, e uma mina alcança no máximo 12
+  deles** | os três `rendimentoPorTile` da F21b (carvão 15, ferro 12, ouro 8) nasceram *a
+  calibrar*: são proporção entre si (o carvão é o que mais se gasta, o ouro o mais raro), medida
+  contra nada. O que está medido: o gerador semeia **25 tiles de carvão / 375 unidades**, **20 de
+  ferro / 240** e **11 de ouro / 88** (`test-output/F21b-veios-no-mapa.json`), e **100 % deles são
+  alcançáveis** — o veio nasce na saia da serra, nunca no miolo. Isso é o mundo **inteiro**: não há
+  segundo depósito. Um ciclo da mina de carvão leva **300 ticks** (4 ciclos em 1 200,
+  `test-output/F21b-mina-esgota.json`) e consome **1** unidade do tile, e o melhor ponto legal de
+  cada mina alcança **12 tiles de carvão (180 unidades), 10 de ferro (120) e 10 de ouro (80)**.
+  Logo **uma mina de carvão bem plantada seca o que alcança em ~54 000 ticks — 1 h 30 de relógio a
+  1x** —, e o mapa todo dá 375 ciclos de carvão para a partida inteira. Se isso for curto demais,
+  os dois parafusos são `rendimentoPorTile` (multiplica o estoque sem mexer no mapa) e o tamanho
+  do veio em `tools/gerar-mapa.js:VEIOS_DE_MINERIO` (muda o mapa e exige regerar). O terceiro,
+  `alcance_tiles` 6, não ajuda: a encosta é que limita, como no açude do pescador |
+  `resources.json:coal,iron_ore,gold_ore`, `tools/gerar-mapa.js`, `test-output/F21b-*.json`
+
+- [2026-09-25] **46 tiles de rocha viraram veio, e a pedra do mapa caiu de 311 para 265** | o
+  minério nasce na saia da serra, e tile de saia já tinha `rock`. Nenhuma pedreira da abertura
+  perde nada (o lajedo da vila está intocado, e as duas contagens de `tree`/`fish` saíram idênticas
+  byte a byte), mas o estoque de pedra **do mapa inteiro** é 15 % menor do que era antes da F21b.
+  Não mexi em nada por isso: entra aqui para o lote, junto com `rock.rendimentoPorTile` (15) |
+  `data/maps/sertao-128.json:contagemDeRecursos`
+- [2026-09-25] **A vazão do campo é o gargalo da cadeia de comida, e agora está medida ponta a
+  ponta** | o operador mandou juntar três medidas que estavam soltas em três sessões, porque
+  contam a mesma história: (1) **706 ticks** da ordem de arar até o primeiro milho na gaveta
+  (F18h, entrada de 2026-09-25 acima) — o grosso não é arar (alerta `sem-campo` some no tick 79),
+  é o campo nascer com `quantidade: 0` e esperar a `reposicao`; (2) `corn.reposicao.segundos_base`
+  (60) pesa **15×** `corn.aradura.segundos_base` (4,0) — é o parafuso que manda; (3) **o milho no
+  armazém nunca passou de 1 em 6 000 ticks** (`test-output/minimo-de-estoque.json`), e o moinho
+  ficou **6 000 de 6 000 ticks com a gaveta vazia**, pedindo 5. O milho não se acumula em lugar
+  nenhum: ele é consumido no instante em que chega, e o moinho passa a partida inteira em
+  `esperando_insumo`. **Isso mata a hipótese de que o sintoma do Moinho e da Padaria (26 % e 29 %
+  em `esperando_insumo`) fosse alvo de pedido baixo** — o alvo já é 5 pela regra de classe, e o que
+  falta é milho existir. Por isso o estoque mínimo de ouro foi recusado e foi para `IDEIAS.md` em
+  vez de virar feature. **Nenhum número girado**, por ordem do operador: a cadeia se calibra
+  inteira quando fechar | `resources.json:tipos.corn.reposicao`, `production.json:predios.farm`,
+  `resources.json:tipos.corn.aradura`
+- [2026-09-25] **FORMA dos lajedos depois do veio: nenhum ficou pequeno demais para uma pedreira
+  de alcance 6** | pedido do operador no mesmo dia, com o argumento certo — "pedreira depende de
+  lajedo aglomerado, e a medição do BUG-C mostrou que **forma decide, não média**", então a queda
+  de 311 para 265 não responde sozinha. Medido no mapa inteiro, versão de antes contra a de agora
+  (`test-output/F21b-lajedos-depois-do-veio.json`): dos **11** aglomerados de rocha, **9 estão
+  intocados** (inclusive o da vila); só o 1 (88 tiles, 26 viraram veio) e o 2 (74, 20 viraram) foram
+  atingidos, e o veio os **fragmentou**, não os encolheu por igual — 11 aglomerados viraram **25**,
+  o 1 quebrando em 24/8/8/6/6/4/2/2/2 e o 2 em 19/10/9/8/4/2/2. O que importa para o jogo é a
+  posição da pedreira, e por ela nada morreu: das **13 964** posições legais do mapa, as que têm
+  ao menos uma rocha alcançável em 6 caíram de **1 737 para 1 736** — **uma única** posição,
+  (87,106), perdeu a última rocha, e ela tinha exatamente 1. A melhor pedreira do mapa foi de
+  **56 para 55 tiles** (840 → 825 unidades) e 549 posições perderam alguma rocha (pior caso −15,
+  em (106,94)). A média por posição com rocha caiu de 14,7 para 12,8 — e é justamente a média que
+  o BUG-C ensinou a não usar sozinha. **Conclusão: nada a ajustar.** Fica registrado porque o
+  fragmento de 2 tiles é pedreira que esgota em 30 unidades, e isso é do lote de
+  `rock.rendimentoPorTile` | `tools/gerar-mapa.js:VEIOS_DE_MINERIO`, `data/resources.json`
+
 ---
 
 ## Ciclos fechados

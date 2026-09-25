@@ -30,17 +30,12 @@ const { retanguloDoCanvas, arrastarDentroDoCanvas } = require('./_canvas');
 const economia = require('../../data/economy.json');
 const tema = require('../../data/theme-sertao.json');
 const { predios } = require('../../data/buildings.json');
-const { caixaLivre, ruaComDesvio, arrastosDaRua } = require('./_recursos');
+const { bloqueiaConstrucao, arrastosDaRua } = require('./_recursos');
 
 const TILE_PX = 64;
 const defDe = (id) => predios.find((p) => p.id === id);
 const noDado = (id) => economia.estadoInicial.predios.find((p) => p.id === id);
 
-/** A abertura do GDD §1.3, na ordem em que entra na fila. Mesma lista do
- *  headless (`tests/helpers/abertura.ts`), que e a que o criterio nomeia.
- *  A pedreira e a ULTIMA desde o BUG-F: colada no lajedo, ela alcanca os 13 tiles
- *  de rocha; no meio da fila alcancaria 4. */
-const TIPOS_DA_ABERTURA = ['woodcutters', 'woodcutters', 'sawmill', 'quarry'];
 
 
 // Medido na sonda da sessao da F17 (docs/planos/F17-aceite.md §8): a serraria
@@ -149,42 +144,31 @@ async function roteiro(ctx) {
   // A MESMA de `tests/helpers/abertura.ts`: uma fila encostada na linha de porta
   // do armazem, a serraria por ultimo (perto do armazem, que e a perna de maior
   // trafego), e uma rua reta so que serve as quatro, o armazem e a escola.
+  // A GEOMETRIA nao e escrita aqui: vem do modulo que o headless tambem usa
+  // (`tools/geometria-da-abertura.mjs`). Ate a F-T4b esta derivacao estava
+  // duplicada a mao entre este roteiro e `tests/helpers/abertura.ts`; duas
+  // copias de um algoritmo com mais de uma reta divergem, e a divergencia
+  // apareceria como o roteiro clicando num tile e o headless plantando noutro.
+  // Os PREDICADOS e que sao daqui: tamanho sai de `data/buildings.json` e
+  // `bloqueia` sai do mapa, porque na tela nao ha sim ao alcance.
+  const { geometriaDaAbertura } = await import('../geometria-da-abertura.mjs');
   const armazem = noDado('storehouse');
   const escola = noDado('schoolhouse');
-  const altAr = defDe('storehouse').tamanho[1];
   const [largEs, altEs] = defDe('schoolhouse').tamanho;
-  const yRua = armazem.gy + altAr;
-  afirmar(escola.gy + altEs === yRua, 'este roteiro assume armazem e escola na mesma linha de porta');
-  const alturas = [...new Set(TIPOS_DA_ABERTURA.map((t) => defDe(t).tamanho[1]))];
-  afirmar(alturas.length === 1, `a fila unica exige altura igual nos quatro, veio ${JSON.stringify(alturas)}`);
-  const larguraTotal = TIPOS_DA_ABERTURA.reduce((s, t) => s + defDe(t).tamanho[0], 0);
-  const gyDaFila = yRua - alturas[0];
-  // BUG-F: encostada no armazem a fila cai no lajedo, e rocha recusa obra. Recua
-  // ate caber, igual ao headless — e por isso que a vila abre a oeste do lajedo.
-  const filaCabe = (x0) => TIPOS_DA_ABERTURA.every((tipo, i) => {
-    const antes = TIPOS_DA_ABERTURA.slice(0, i).reduce((acc, t) => acc + defDe(t).tamanho[0], 0);
-    const [larg, alt] = defDe(tipo).tamanho;
-    return caixaLivre(x0 + antes, gyDaFila, larg, alt);
+  const tamanhoDe = (tipo) => {
+    const [largura, altura] = defDe(tipo).tamanho;
+    return { largura, altura };
+  };
+  const caixaDe = (id) => ({ gx: noDado(id).gx, gy: noDado(id).gy, ...tamanhoDe(id) });
+  const geo = geometriaDaAbertura({
+    armazem: caixaDe('storehouse'),
+    escola: caixaDe('schoolhouse'),
+    tamanhoDe,
+    bloqueia: bloqueiaConstrucao,
   });
-  let inicioDaFila = armazem.gx - larguraTotal;
-  while (inicioDaFila >= 0 && !filaCabe(inicioDaFila)) inicioDaFila -= 1;
-  afirmar(inicioDaFila >= 0, 'a fila nao cabe a oeste do armazem sem pisar em recurso que bloqueia');
-  let x = inicioDaFila;
-  const plantas = TIPOS_DA_ABERTURA.map((tipo) => {
-    const planta = { tipo, gx: x, gy: gyDaFila, civil: defDe(tipo).trabalhador };
-    x += defDe(tipo).tamanho[0];
-    return planta;
-  });
-  // A rua tem que alcancar a porta da ESCOLA: sem ela o ouro do treino nao chega,
-  // a fila fica em `sem-estrada` para sempre (F13b) e ninguem ocupa nada. Medido
-  // na sonda desta sessao — foi assim que a primeira corrida reprovou.
-  const ruaDe = plantas[0].gx;
-  const ruaAte = escola.gx;
-  // Onde a reta cai em rocha (o tile 24,33 do lajedo) a rua desce UM tile e volta:
-  // a estrada tambem recusa recurso que bloqueia construcao (BUG-F), e um buraco
-  // na reta partiria a rede em dois componentes. Diagonal conta como ligado
-  // (F-T2b), entao o desvio de um tile basta.
-  const tilesDaRuaLista = ruaComDesvio(ruaDe, ruaAte, yRua);
+  const yRua = geo.yRua;
+  const plantas = geo.plantas.map((p) => ({ ...p, civil: defDe(p.tipo).trabalhador }));
+  const tilesDaRuaLista = geo.rua;
   const tilesDaRua = tilesDaRuaLista.length;
   const arrastos = arrastosDaRua(tilesDaRuaLista);
   const meioDaEscola = { gx: escola.gx + Math.floor(largEs / 2), gy: escola.gy + Math.floor(altEs / 2) };

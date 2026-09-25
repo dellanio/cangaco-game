@@ -64,6 +64,33 @@
         "_doc": "F18 — o que o predio gasta para repor UM tile deste recurso, e quanto tempo isso leva. `segundos_base` cobre arar, semear e esperar crescer num ciclo so: o tile guarda `quantidade` e mais nada, e relogio por tile custaria um campo de estado em cada um deles (ver `regenerar`, sim/recursos.ts). `custo` sai da gaveta de entrada do predio, e e por onde a videira vai cobrar seu timber quando o Wineyard existir — era o `terrain.json.campos.<cultura>.custo`, que nao tinha leitor nenhum. [proposta] — calibrar no BALANCE_LOG."
       },
       "_doc": "O milho do rocado. Regime `porAcao` porque quem o repoe e o roceiro que ara e semeia (GDD 5.4), nao o relogio. 4 por tile: quatro ciclos de colheita para um de plantio."
+    },
+    "coal": {
+      "regime": "nunca",
+      "rendimentoPorTile": 15,
+      "bloqueiaConstrucao": false,
+      "_docBloqueiaConstrucao": "Mesma razao do cardume na agua: o veio esta na montanha, e montanha ja e intransponivel por terreno — `canPlace` recusa com motivo `terreno` antes de olhar recurso (`sim/placement.ts`, ordem terreno -> recurso). Marcar `true` aqui seria a segunda regra dizendo o mesmo fato, e duas fontes para o mesmo fato e como elas divergem. A resposta de design do operador (F21b: so os tiles adjacentes, nunca o de baixo) continua valendo inteira — o que a sustenta e o terreno, nao a bandeira.",
+      "bloqueiaPasso": false,
+      "_docBloqueiaPasso": "O veio esta dentro da montanha, e montanha ja e intransponivel por terreno. Marcar aqui seria a segunda regra dizendo a mesma coisa.",
+      "_doc": "F21b — o carvao da serra. `nunca` porque veio nao volta: a mina de carvao deixou de produzir do nada e passou a colher o tile, como a pedreira desde a F-T2a. 15 por tile, o mesmo da rocha: e o minerio que mais se queima (a metalurgia consome 1.2 de carvao por ciclo contra 1.0 de minerio de ouro), entao o veio dele e o mais gordo dos tres."
+    },
+    "iron_ore": {
+      "regime": "nunca",
+      "rendimentoPorTile": 12,
+      "bloqueiaConstrucao": false,
+      "_docBloqueiaConstrucao": "Mesma razao do cardume na agua: o veio esta na montanha, e montanha ja e intransponivel por terreno — `canPlace` recusa com motivo `terreno` antes de olhar recurso (`sim/placement.ts`, ordem terreno -> recurso). Marcar `true` aqui seria a segunda regra dizendo o mesmo fato, e duas fontes para o mesmo fato e como elas divergem. A resposta de design do operador (F21b: so os tiles adjacentes, nunca o de baixo) continua valendo inteira — o que a sustenta e o terreno, nao a bandeira.",
+      "bloqueiaPasso": false,
+      "_docBloqueiaPasso": "O veio esta dentro da montanha, e montanha ja e intransponivel por terreno. Marcar aqui seria a segunda regra dizendo a mesma coisa.",
+      "_doc": "F21b — o minerio de ferro. 12 por tile: entre o carvao e o ouro, porque a forja gasta menos ferro por ciclo que a metalurgia gasta carvao e o ferro ainda alimenta duas oficinas (armas e armadura)."
+    },
+    "gold_ore": {
+      "regime": "nunca",
+      "rendimentoPorTile": 8,
+      "bloqueiaConstrucao": false,
+      "_docBloqueiaConstrucao": "Mesma razao do cardume na agua: o veio esta na montanha, e montanha ja e intransponivel por terreno — `canPlace` recusa com motivo `terreno` antes de olhar recurso (`sim/placement.ts`, ordem terreno -> recurso). Marcar `true` aqui seria a segunda regra dizendo o mesmo fato, e duas fontes para o mesmo fato e como elas divergem. A resposta de design do operador (F21b: so os tiles adjacentes, nunca o de baixo) continua valendo inteira — o que a sustenta e o terreno, nao a bandeira.",
+      "bloqueiaPasso": false,
+      "_docBloqueiaPasso": "O veio esta dentro da montanha, e montanha ja e intransponivel por terreno. Marcar aqui seria a segunda regra dizendo a mesma coisa.",
+      "_doc": "F21b — o minerio de ouro, o mais raro dos tres. 8 por tile e menos tiles no mapa: o ouro paga o treino da escola (F13a) e um veio farto tiraria a escolha de onde plantar a mina, que e justamente o que a fonte no tile existe para criar."
     }
   }
 }
