@@ -2097,7 +2097,7 @@ a geografia já corrigida do que regravar 900 tiles depois.
   2), **301 alcançáveis hoje e 350 no fim**, porque árvore cortada vira andável.
   Alcance 6 é **a calibrar**, com a conta em `BALANCE_LOG.md` (2026-09-25).
 
-### F-T4b — O lenhador sai para colher (BLOQUEADO: decisão do operador)
+### F-T4b — O lenhador sai para colher (DESBLOQUEADO 2026-09-25: saída (a))
 - **O que falta**: `woodcutters` ganhar `colheita: { recurso: tree, ... }`, pelo
   mesmo caminho da F-T4a. O código já serve; o **dado** é que não fecha.
 - **Por que está bloqueado, medido antes de escrever qualquer linha** (Medição 2
@@ -2149,6 +2149,57 @@ a geografia já corrigida do que regravar 900 tiles depois.
     `tools/gerar-mapa.js` e **move tiles que fixtures já usam** — a mesma classe de
     efeito colateral que a F21b mediu nos lajedos (46 tiles de rocha viraram veio,
     `BALANCE_LOG.md` 2026-09-25).
+- **DECISÃO DO OPERADOR, 2026-09-25: saída (a), mover a abertura.** O argumento
+  dele, com o número da medição na mão: *"é a única que não mexe em alcance nem em
+  mapa"* — a (b) tornaria a regra de alcance decorativa e a (c) move tiles que
+  fixtures já usam. A posição se escolhe **pelo mesmo critério da F-D3**: a
+  abertura tem de ter **mato, rocha e terra ao alcance, sem o jogador procurar**.
+  E a cláusula dele, que decide o resto: *"se nenhuma posição tiver três coisas
+  juntas, o gerador é que ajusta, não a vila"*.
+- **Medido antes de mexer** (`test-output/F-T4b-para-onde-a-abertura-vai.json`):
+  **o gerador não precisa ajustar — a vila resolve, mas não em fila única.**
+  - A fila de hoje tem **13 tiles de largura**, com os dois lenhadores numa ponta
+    e a pedreira na outra. Varrendo o mapa inteiro nessa forma: 14 720 posições,
+    **10 880** onde a fila cabe, **1 745** com mata para os dois lenhadores e só
+    **133** que também têm rocha para a pedreira. E as 133 não servem: a mais
+    perto do armazém (a **7 tiles**) tem **1 árvore e 1 rocha**; a primeira com
+    **≥ 5 de cada** está a **54 tiles**, com rua em L de **91 tiles** — contra os
+    26 de hoje, num armazém que abre com **30 de stone**. Fila única está morta.
+  - A causa é geográfica e simples: **o lajedo e a mata ficam em lados opostos da
+    vila**. O lajedo da vila é a oeste (22..26 × 29..33, BUG-F) e a árvore
+    alcançável mais próxima é (37,23), a **nordeste**. Nenhuma linha de 13 tiles
+    alcança os dois; **dois grupos alcançam**.
+  - **Separando, as três coisas estão juntas a 3–5 tiles do armazém** (que está em
+    29..31 × 30..32): par de lenhadores em **(32,27) com 5 e 9 árvores** (3 tiles),
+    **(33,27) com 8 e 9** (4), **(34,27) com 9 e 9** (5) — 2 167 pares legais no
+    mapa; pedreira em **(26,27)…(29,27) com 12–13 rochas** (3 tiles) — 1 604
+    posições legais. Terra arável não é restrição em lugar nenhum: **13 725 tiles**
+    aráveis no mapa, 179–193 no raio de qualquer sítio medido.
+- **A posição escolhida é REGRA, não coordenada.** O helper de hoje já deriva
+  ("recua até caber"); a nova derivação mantém o estilo — a pedreira continua
+  ancorada no lajedo a oeste e o **par de lenhadores passa a varrer para leste na
+  linha de porta ao norte até a primeira coluna em que os dois tenham árvore
+  alcançável**. Com o mapa publicado isso cai em (32,27). Nenhum número digitado
+  em `.ts` ou `.js`.
+- **Consequência medida, como o operador pediu** — *"os roteiros que plantam na
+  abertura mudam de coordenada; meça quantos antes de mexer"*: **duas derivações**
+  e **nenhuma coordenada fixa**. A geometria está escrita à mão em dois lugares que
+  precisam continuar idênticos: `tests/helpers/abertura.ts` (headless) e
+  `tools/shots/F17.js` (tela). Só elas citam `inicioDaFila`/`gyDaFila`. Os
+  consumidores seguem de graça: `tests/F17-aceite.test.ts` tem **9 `expect` e
+  nenhum nomeia a geometria** (ele afirma resultado — quatro completos, ocupados,
+  ligados, timber entregue), e `tests/helpers/bodega-cenario.ts` deriva a própria
+  posição a leste do armazém, sem depender da fila. O que **muda de texto** são as
+  invariantes da fila única: "altura igual nos quatro" e "uma rua reta serve todos"
+  deixam de valer, e é isso que a tarefa tem de reescrever, não coordenada.
+  Cuidado já visto na medição: o par em (32,27) ocupa x32..37 na linha y27..29, e
+  a linha de porta dele (y=30) cruza a coluna da escola (34..36) — `canPlace`
+  aprova (a porta tem saída), mas a rua precisa contornar, e não é mais uma reta.
+- **Armadilha da sonda, registrada para não custar duas vezes**: varrer a fila com
+  `canPlace` dá **zero** posições em todo o mapa, e não por geometria — a
+  `sawmill` nasce `bloqueado` (`desbloqueadoPor: woodcutters`) e só é plantada
+  depois que uma casa de lenhador fica completa. Quem medir geometria tem de
+  aceitar o motivo `'bloqueado'`; senão o resultado nulo parece resposta.
 - **Nota de herança**: quem pegar este item herda da F-T4a a regra de classe já
   provada, o predicado `tileAlcancavelParaColheita` e os números da árvore acima —
   e herda também que, ao contrário do peixe, **a árvore abre o anel seguinte ao

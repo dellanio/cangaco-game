@@ -6289,3 +6289,65 @@ Nenhuma regra de simulação mudou: o único código novo é teste. `src/` intoc
   campo**, não alvo de pedido.
 - **F-T4b segue bloqueada, e agora com o custo das três saídas medido.** A
   escolha é dele; nada implementado.
+
+---
+
+## 2026-09-25 — Três decisões do operador registradas (mínimo de ouro, F-T4b, vazão do campo)
+
+Sessão de **registro e medição**. Nenhuma linha de simulação mudou; nenhum número
+de balanceamento foi girado, por ordem dele.
+
+### Verificado
+
+- **O mínimo de ouro foi recusado pelo operador, com a minha própria medição como
+  argumento**, e foi para `IDEIAS.md` com o número — **não como pendência**. Os
+  dois motivos dele: 25 % do ouro de abertura sumiria do HUD para sempre, e não
+  conserta Moinho nem Padaria, cujo gargalo é vazão do campo.
+- **`BALANCE_LOG.md` ganhou a entrada da vazão do campo**, juntando três medidas de
+  três sessões que contam a mesma história: 706 ticks até o primeiro milho (F18h),
+  `corn.reposicao` pesando **15×** `corn.aradura`, e o milho no armazém **nunca
+  passando de 1 em 6 000 ticks** com o moinho **6 000 de 6 000 ticks** com a gaveta
+  vazia. As duas primeiras eu confiri no arquivo antes de citar
+  (`BALANCE_LOG.md:311-318`), como a §8 manda.
+- **F-T4b está desbloqueada: o operador escolheu a saída (a)**, mover a abertura, e
+  mandou escolher a posição pelo critério da F-D3. Medido
+  (`test-output/F-T4b-para-onde-a-abertura-vai.json`): **o gerador não precisa
+  ajustar** — a cláusula dele ("se nenhuma posição tiver três coisas juntas, o
+  gerador é que ajusta") **não dispara**, mas só porque a fila deixa de ser uma.
+  Em **fila única** de 13 tiles: 10 880 posições onde cabe, 1 745 com mata,
+  **133** com mata e rocha, e a mais perto com ≥ 5 de cada está a **54 tiles** do
+  armazém (rua em L de 91 contra 26 hoje, e o armazém abre com 30 de stone).
+  **Separando** os grupos, as três coisas estão a **3–5 tiles**: par de lenhadores
+  em (32,27) com 5 e 9 árvores, (33,27) com 8 e 9, (34,27) com 9 e 9; pedreira no
+  lajedo em (26..29,27) com 12–13 rochas; terra arável nunca é restrição
+  (13 725 tiles no mapa).
+- **O raio da mudança, medido antes de mexer** (era o que ele pediu): **duas
+  derivações, zero coordenada fixa** — `tests/helpers/abertura.ts` e
+  `tools/shots/F17.js`, que escrevem a mesma geometria à mão e precisam continuar
+  idênticas. `tests/F17-aceite.test.ts` tem 9 `expect` e **nenhum** nomeia a
+  geometria; `tests/helpers/bodega-cenario.ts` deriva a própria posição. O que muda
+  de texto são as **invariantes** da fila única, não coordenada de roteiro.
+
+### Decidido, e por quê
+
+- **D1 — a posição nova é regra, não coordenada.** O helper de hoje já varre
+  ("recua até caber"); a derivação nova mantém o estilo (pedreira ancorada no
+  lajedo, par de lenhadores varrendo para leste até ter árvore para os dois), para
+  não trocar uma geometria derivada por dois números digitados.
+- **D2 — o resultado nulo da primeira varredura foi investigado, não publicado.**
+  A sonda deu **0 posições em todo o mapa** para a fila, o que é implausível, já
+  que a fila de hoje existe. Causa: a `sawmill` sai `bloqueado` no tick 0
+  (`desbloqueadoPor: woodcutters`), e a varredura reprovava por regra de
+  desbloqueio, não por terreno. Corrigido e registrado no item, para não custar
+  duas vezes.
+- **D3 — a qualidade do sítio entrou na medida, não só a existência.** "Tem árvore
+  ao alcance" com **1** árvore é 4 unidades de madeira: o critério da F-D3 é o
+  jogador não precisar procurar, e um tile só não sustenta o ciclo. Por isso os
+  cortes de ≥ 5 e ≥ 10 de cada estão no arquivo.
+
+### Aberto — precisa do operador
+
+- **A forma nova da abertura é a primeira tarefa da F-T4b**, e ela decide um
+  detalhe que a medição já viu: o par em (32,27) tem linha de porta em y=30, que
+  cruza a coluna da escola — `canPlace` aprova, mas a rua deixa de ser uma reta.
+  Implementei nada; o item está desbloqueado com a decisão e o número escritos.

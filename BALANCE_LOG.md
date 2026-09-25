@@ -356,6 +356,21 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   byte a byte), mas o estoque de pedra **do mapa inteiro** é 15 % menor do que era antes da F21b.
   Não mexi em nada por isso: entra aqui para o lote, junto com `rock.rendimentoPorTile` (15) |
   `data/maps/sertao-128.json:contagemDeRecursos`
+- [2026-09-25] **A vazão do campo é o gargalo da cadeia de comida, e agora está medida ponta a
+  ponta** | o operador mandou juntar três medidas que estavam soltas em três sessões, porque
+  contam a mesma história: (1) **706 ticks** da ordem de arar até o primeiro milho na gaveta
+  (F18h, entrada de 2026-09-25 acima) — o grosso não é arar (alerta `sem-campo` some no tick 79),
+  é o campo nascer com `quantidade: 0` e esperar a `reposicao`; (2) `corn.reposicao.segundos_base`
+  (60) pesa **15×** `corn.aradura.segundos_base` (4,0) — é o parafuso que manda; (3) **o milho no
+  armazém nunca passou de 1 em 6 000 ticks** (`test-output/minimo-de-estoque.json`), e o moinho
+  ficou **6 000 de 6 000 ticks com a gaveta vazia**, pedindo 5. O milho não se acumula em lugar
+  nenhum: ele é consumido no instante em que chega, e o moinho passa a partida inteira em
+  `esperando_insumo`. **Isso mata a hipótese de que o sintoma do Moinho e da Padaria (26 % e 29 %
+  em `esperando_insumo`) fosse alvo de pedido baixo** — o alvo já é 5 pela regra de classe, e o que
+  falta é milho existir. Por isso o estoque mínimo de ouro foi recusado e foi para `IDEIAS.md` em
+  vez de virar feature. **Nenhum número girado**, por ordem do operador: a cadeia se calibra
+  inteira quando fechar | `resources.json:tipos.corn.reposicao`, `production.json:predios.farm`,
+  `resources.json:tipos.corn.aradura`
 - [2026-09-25] **FORMA dos lajedos depois do veio: nenhum ficou pequeno demais para uma pedreira
   de alcance 6** | pedido do operador no mesmo dia, com o argumento certo — "pedreira depende de
   lajedo aglomerado, e a medição do BUG-C mostrou que **forma decide, não média**", então a queda
