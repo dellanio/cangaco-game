@@ -122,6 +122,13 @@ export interface MapaData {
    *  todo tipo existe em `terrain.json`. */
   readonly legenda: Readonly<Record<string, TerrenoDeMapa>>;
   /**
+   * F23 — a impressao digital do arquivo de mapa, calculada uma vez no
+   * carregamento (`loader.ts`, `hashDeTexto`). O save guarda `id` + `hash`, e o
+   * load recusa na hora se qualquer um dos dois nao bater: o terreno nao esta no
+   * `GameState` (F-T1), entao e este par que diz se o save fala do mesmo mundo.
+   */
+  readonly hash: string;
+  /**
    * F-T2a — a camada de recurso, ESPARSA: tipo -> os tiles que o tem. Aqui esta
    * so ONDE; QUANTO cada tile rende e de `resources.json`, e a quantidade que
    * SOBRA e de `state.recursos` — esta e a semente, nao o estado.

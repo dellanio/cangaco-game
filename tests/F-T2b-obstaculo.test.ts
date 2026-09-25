@@ -9,6 +9,7 @@
  *      floresta do mapa padrao, us E nos expandidos.
  */
 import { describe, it, expect, afterAll } from 'vitest';
+import { hashDeTexto } from '../src/sim/data/hash';
 import { gameData } from '../src/sim/data';
 import type { GameState, RecursoNoTile } from '../src/sim/state';
 import type { GameData, MapaData } from '../src/sim/data/types';
@@ -292,6 +293,7 @@ const MAPA_LISO: MapaData = {
     .fill(GRAMA_DO_MAPA.repeat(gameData.terreno.mapaPadrao.largura)),
   legenda: gameData.mapa.legenda,
   recursos: {},
+  hash: hashDeTexto('liso-F-T2b'),
 };
 
 /** O mesmo dado com outro mapa; `mapaPadrao` acompanha porque o carregador

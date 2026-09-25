@@ -5617,3 +5617,64 @@ abrindo arquivo ou rodando** do que **decidi**.
    300/250 contra 600, uma metalurgia sozinha deixa metade do minério parado. Ou
    as minas são lentas demais, ou a cadeia quer duas metalurgias — é
    balanceamento, e está no `BALANCE_LOG.md`, não corrigido.
+
+## F23 — Save e load: o envelope, o hash do mapa e os dois eixos do aceite (2026-09-25)
+
+### Verificado
+
+- **O aceite escrito passa**: `tests/F23-save-e-load.test.ts`, 10 testes verdes.
+  Evidência aberta com Read em `test-output/F23.json`: save no **tick 301**,
+  serf-1 no meio de um passo com carga e 1 tarefa reclamada, 8 prédios e 9
+  unidades vivas, texto de **46 786 bytes**; rodar 500 ticks depois do load dá o
+  **mesmo byte** que rodar 500 ticks sem salvar (`tickFinal 801`).
+- **O tick do save não está digitado**: quem o escolhe é a condição (serf no meio
+  de um passo, carga na mão, tarefa reclamada), e um segundo teste reafirma a
+  condição sobre o número achado — mesmo padrão da F-T3.
+- **Reusei `compararComESemSave` em vez de escrever um segundo teste de
+  save/load**, como o item manda. O que mudou nele: um parâmetro `roundTrip`
+  opcional, com padrão `reviverPorJson` (o comportamento da F02, intacto). A F23
+  passa `carregar(salvar(...))`, então o teste canônico agora exercita o
+  **envelope** — versão, id do mapa, hash — e não só o `JSON.parse`.
+- **O hash do mapa existe e reage ao conteúdo.** `GameData.mapa.hash` nasce em
+  `loader.ts:carregarMapa`, **uma vez no carregamento** (FNV-1a de 32 bits em
+  `src/sim/data/hash.ts`), e o teste afirma as três coisas que importam: o mesmo
+  arquivo dá o mesmo hash; **um char de terreno trocado muda o hash**; e o mapa
+  editado continua com o **mesmo id** — que é exatamente por que o id sozinho não
+  bastava. Medido: `b58aa0d5` contra `67af988f`.
+- **As quatro recusas acontecem na hora, com motivo escrito** (copiadas da
+  evidência): mapa diferente → *"o save e do mapa 'outro-mapa' e a partida usa
+  'sertao-128'"*; arquivo editado → *"o mapa 'sertao-128' mudou desde o save (hash
+  67af988f, agora b58aa0d5)"*; formato velho → *"o save e da versao 2, e esta
+  build le a versao 1"*; texto qualquer → *"o save nao e JSON valido"*.
+- **O aceite de 500 ticks tem um ponto cego, e ele está medido, não suposto**
+  (`tests/zz-probe-F23.test.ts` → `test-output/zz-probe-F23.json`). Sabotando o
+  round-trip de quatro formas: semente de rng trocada **reprova**, passo pela
+  metade zerado **reprova**, carga na mão perdida **reprova** — mas **apagar o
+  JobBoard inteiro passa**: a vila regenera a tarefa, o contador de id volta ao
+  mesmo lugar e os dois lados chegam ao mesmo byte 500 ticks depois. Quem pega
+  essa perda é a igualdade **no instante do load** (`false` na sonda), que é
+  asserção separada no arquivo da F23. Os dois eixos são necessários; está
+  escrito no topo do teste e na nota do item, para quem mexer depois.
+
+### Decisões minhas, marcadas para o operador revisar
+
+- **D-9. Nada na tela, e o gesto do jogador virou a `F23b`.** O aceite escrito da
+  F23 é de `sim/`; pôr botão de salvar exigiria tocar `src/ui/` na mesma feature,
+  e o §10 pede a nota de integração **escrita antes** no item. Então `src/ui/` e
+  `src/render/` ficaram intactos (sem screenshot, portanto — a feature não muda o
+  que aparece), e criei o item `F23b — Salvar e carregar pela tela`, **já com a
+  nota de integração escrita nele** e sem posição na fila. Hoje o jogador ainda
+  não salva partida: só o teste chama `salvar`.
+- **D-10. O hash é do objeto parseado, não do texto do arquivo.** O contrato da
+  F-T1 dizia *"a partir do texto do arquivo"*, mas `sim/` recebe o mapa já
+  parseado pelo `resolveJsonModule` — o texto não chega até lá, e ir buscá-lo
+  com `fs` poria I/O dentro de `sim/`, que é pior. Uso
+  `hashDeTexto(JSON.stringify(bruto))`: a ordem das chaves é a do arquivo, então
+  o mesmo conteúdo dá sempre o mesmo hash. A diferença prática é uma só, e é a
+  favor: reindentar o JSON **não** invalida save nenhum; mudar um char de
+  terreno, um tile de recurso ou a largura invalida.
+- **D-11. Dois fixtures de teste ganharam `hash`.** `tests/F-T1-terreno.test.ts` e
+  `tests/F-T2b-obstaculo.test.ts` montam `MapaData` na mão e pararam de compilar
+  com o campo novo. Preenchi com `hashDeTexto` do próprio conteúdo sintético, e
+  não com string fixa: dois cenários diferentes não podem sair com a mesma
+  impressão digital nem em teste.

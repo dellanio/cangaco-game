@@ -2447,6 +2447,40 @@ Depende da F20b: o marcador lê `unidade.condicao`, que só existe depois dela. 
   o escrever aqui gera o hash no **carregamento**, uma vez, a partir do texto do
   arquivo — nunca a cada tick.
 
+- **ENTREGUE em 2026-09-25**: `src/sim/save.ts` (`salvar` → texto, `carregar` →
+  estado ou erro com motivo) e `src/sim/data/hash.ts` (FNV-1a 32 bits). O hash do
+  mapa nasce em `loader.ts:carregarMapa`, **uma vez no carregamento**, e virou
+  `GameData.mapa.hash` — o campo que a F-T1 deixou de propósito para esta
+  feature. O teste é `tests/F23-save-e-load.test.ts` (10 testes) e reusa
+  `compararComESemSave` com o par `salvar`/`carregar` real no lugar do
+  `JSON.parse(JSON.stringify(...))`, sobre o cenário da cadeia do ouro, salvando
+  no **tick 301** (escolhido por condição: serf no meio de um passo, com carga e
+  tarefa reclamada). Evidência: `test-output/F23.json`.
+- **Nota (medida, e ela muda quem lê este item depois)**: o aceite escrito — 500
+  ticks depois do load — **não pega tudo**. Medido em `tests/zz-probe-F23.test.ts`:
+  ele reprova semente de rng trocada, passo pela metade zerado e carga perdida,
+  mas **passa** com o JobBoard inteiro apagado, porque a vila regenera a tarefa e
+  reconverge byte a byte. Quem pega essa perda é a igualdade **no instante do
+  load**, que por isso virou asserção separada no mesmo arquivo. Quem mexer no
+  teste no futuro: os dois eixos são necessários; tirar um abre um buraco medido.
+- **Fora do escopo, por decisão minha (2026-09-25)**: **nada na tela**. O aceite
+  escrito é de `sim/`, `src/ui/` e `src/render/` não foram tocados, e pôr botão
+  exigiria a nota de feature de integração **escrita antes** (§10). O jogador
+  ainda não salva partida pela tela: isso é a **F23b**.
+
+### F23b — Salvar e carregar pela tela (ui + input; posição na fila a definir)
+- **Por que existe**: a F23 entregou o formato e a garantia, não o gesto. Hoje
+  só um teste chama `salvar`/`carregar`; o jogador não tem como guardar partida.
+- **Escopo previsto**: botão (ou tecla) no HUD que chama `salvar(estado)` e
+  guarda o texto no `localStorage`, e outro que lê, chama `carregar` e substitui
+  o estado do laço externo. O erro de `carregar` já vem com motivo em português
+  pronto para virar aviso na tela — mapa trocado, mapa editado, versão velha.
+- **É feature de integração** (`sim/` + `ui/`): a nota do §10 tem de estar escrita
+  neste item **antes** de o código começar. Está: esta linha é ela.
+- **Aceite previsto**: roteiro de Playwright que salva, recarrega a página, carrega
+  e mostra a mesma aldeia; mais um passo **despausado** com `mouse.down` /
+  `waitForTimeout(150)` / `mouse.up` no botão (§8), e screenshot.
+
 ### F18g — A pedra da estrada vira carga que viaja (sim)
 - **Escopo**: hoje a pedra da estrada **não viaja**: ela é reservada no armazém
   quando a tarefa `'assentar-estrada'` nasce e é debitada daquele mesmo armazém

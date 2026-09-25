@@ -8,6 +8,7 @@
  * aqui e o guarda que explica POR QUE ela continua, e o numero na evidencia.
  */
 import { describe, it, expect, afterAll } from 'vitest';
+import { hashDeTexto } from '../src/sim/data/hash';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { gameData } from '../src/sim/data';
@@ -40,6 +41,9 @@ function mapaDe(linhas: readonly string[], id = 'sintetico'): MapaData {
     linhas,
     legenda: gameData.mapa.legenda,
     recursos: {},
+    // F23 — mapa sintetico tem hash sintetico, mas calculado do conteudo: dois
+    // cenarios diferentes nao podem sair com a mesma impressao digital.
+    hash: hashDeTexto(`${id}|${linhas.join('|')}`),
   };
 }
 

@@ -26,6 +26,12 @@ export function reviverPorJson(state: GameState): GameState {
  * A F23 (save e load) reusa esta funcao com o estado ja povoado, em vez de
  * inventar outro teste. Se um campo novo do GameState nao sobreviver ao
  * JSON, e aqui que quebra.
+ *
+ * `roundTrip` (opcional, F23): o que acontece no tick do save. O padrao e
+ * `reviverPorJson`, o round-trip nu que a F02 pediu; a F23 passa o par
+ * `salvar`/`carregar` de verdade, para que o teste canonico exercite o envelope
+ * (versao, mapa, hash) e nao so o `JSON.parse` — se o load rejeitasse a propria
+ * partida, ou perdesse um campo dentro do envelope, seria aqui que quebraria.
  */
 export function compararComESemSave(opts: {
   readonly seed: number;
@@ -33,14 +39,16 @@ export function compararComESemSave(opts: {
   readonly saveAtTick: number;
   readonly comandosNoTick?: (tickAntesDoStep: number) => readonly Command[];
   readonly antesDoStep?: (estado: GameState) => GameState;
+  readonly roundTrip?: (estado: GameState) => GameState;
 }): { readonly direto: string; readonly comSave: string } {
+  const roundTrip = opts.roundTrip ?? reviverPorJson;
   const rodar = (salvarEm: number | null): GameState => {
     let state = createInitialState(opts.seed);
     for (let i = 0; i < opts.totalTicks; i++) {
       const preparado = opts.antesDoStep ? opts.antesDoStep(state) : state;
       state = step(preparado, opts.comandosNoTick?.(state.tick) ?? []);
       if (salvarEm !== null && state.tick === salvarEm) {
-        state = reviverPorJson(state);
+        state = roundTrip(state);
       }
     }
     return state;

@@ -163,5 +163,8 @@
   },
   "F21-cadeia-do-ouro": {
     "passes": true
+  },
+  "F23-save-e-load": {
+    "passes": true
   }
 }

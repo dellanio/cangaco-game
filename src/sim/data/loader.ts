@@ -6,6 +6,7 @@ import type {
   LimiaresEmTicks, Ticks, TileDeMapa, TipoDeRecurso, UnidadesData,
 } from './types';
 import { TERRENOS_DE_MAPA } from './terrenos';
+import { hashDeTexto } from './hash';
 
 /**
  * F-T1 — a camada de terreno base. O carregador confere a legenda contra
@@ -56,6 +57,13 @@ function carregarMapa(raw: RawGameData): MapaData {
   }
   return {
     id: bruto.id, largura, altura, linhas: bruto.linhas, legenda,
+    // F23 — o hash sai daqui, UMA vez, no carregamento: o save le este campo e
+    // nunca recalcula. E do objeto ja parseado, nao do texto do arquivo, porque
+    // e o objeto que `resolveJsonModule` entrega a `sim/` — a ordem das chaves e
+    // a do arquivo, entao o mesmo conteudo da sempre o mesmo hash, e reindentar o
+    // JSON de proposito nao invalida save nenhum. O que muda o hash e o que muda
+    // o mapa: um char de terreno, um tile de recurso, a largura.
+    hash: hashDeTexto(JSON.stringify(bruto)),
     recursos: carregarRecursosDoMapa(bruto, largura, altura, raw.resources.tipos),
   };
 }
