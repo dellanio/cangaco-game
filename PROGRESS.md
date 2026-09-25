@@ -6192,3 +6192,100 @@ governança. O plano foi escrito antes do código, como ele pede:
   ~300 ticks — **seca o que alcança em 1 h 30 de relógio a 1x**, e o mapa inteiro
   dá 375 ciclos de carvão para a partida. Dois parafusos no `BALANCE_LOG.md`;
   nenhum girado, porque balanceamento se ajusta em lote.
+
+---
+
+## 2026-09-25 — Sessão de medição (sem implementar): mineiro que anda, lenhador, lajedo e mínimo de ouro
+
+Sessão **de medição**, disparada por três perguntas do operador em sequência.
+Nenhuma regra de simulação mudou: o único código novo é teste. `src/` intocado.
+
+### Verificado — abri o arquivo ou rodei o comando
+
+- **Os mineiros ANDAM até o veio** (`test-output/F21b-mineiro-anda.json`). A F21b
+  provava que a mina produz e que o total no mapa cai; produzir não é andar, e
+  especialista produzindo parado dentro do prédio é exatamente o defeito que a
+  F-T3 consertou. Trilha tick a tick dos dois mineiros do cenário do ouro —
+  **carvão**: ciclo de 293 ticks, FSM `indo_colher → colhendo → voltando →
+  trabalhando`, **293 de 293 ticks fora do footprint**, salto máximo **1 tile por
+  tick**, colheu de (97,107) o veio (98,106); **ouro**: 410 ticks, mesma
+  sequência, colheu de (92,99) o veio (93,98), **6 tiles** da porta no ponto mais
+  distante. Nos dois, o tile do mineiro é andável, o do veio não é, e a distância
+  no momento de colher é **exatamente 1**.
+- **Isso encerra a terceira feature da ordem do operador**, que a sessão anterior
+  registrou como "sem nome": era *"os três mineiros herdam caminhada"*, e a F21b
+  a dissolveu — `colheita` no dado fez a regra de classe agir. Item criado já
+  riscado no `BUILD_PLAN.md` (`F-T4c`), com a linha da medição ao lado.
+- **A sonda virou cobertura permanente**, não ficou como prova do momento (§8):
+  bloco **(8)** de `tests/F21b-mina-esgota.test.ts`, 4 testes. O quarto, `(d)`,
+  guarda a **premissa da fixture** — o veio está a mais de 1 tile do prédio —
+  para o caso não degenerar em "sai pela porta e volta" se o mapa mudar. A suíte
+  foi de 1 396 para **1 400**.
+- **As três reprovações da F-T4b, remedidas com a asserção literal**
+  (`test-output/F-T4b-reprovacoes.json`). Com `colheita { tree, 6 }` no lenhador:
+  **3 de 1 400**. `F15a-receita.test.ts:39` é **texto do dado**
+  (`expect(r?.colheita).toBeNull()`); as outras duas são **jogo** —
+  `F15b-aceite.test.ts:237` recebe `timber` acumulado **0** em 3 000 ticks
+  (`stone` continua > 0), e `F17-aceite.test.ts:109` recebe **27 contra 40
+  iniciais**: o timber não fica parado, **cai**, porque a vila gasta tábua na obra
+  e não repõe nenhuma. Medido acrescentando `colheita` a `data/production.json` e
+  revertendo em seguida (`git diff` limpo, conferido).
+- **A nota antiga do item da F-T4b errava o número, e errava para menos.** Ela
+  dizia "12 tiles" para os dois casos; **12 é o número do oráculo** (7 árvores em
+  12, mínimo 11). A **abertura da Fase A** (lenhadores em (9,31) e (12,31)) tem
+  **0 árvore até o alcance 12** e precisa de **14** para ver **uma**. Ou seja: a
+  saída (b) do item, "alcance 12", **não conserta o aceite do marco**.
+- **A saída (a) é muito mais barata do que o item registrava**
+  (`test-output/F-T4b-geometria-da-mata.json`): **2 946** posições legais
+  (`canPlace`) têm árvore alcançável **no alcance 6 de hoje**. As mais próximas do
+  armazém (29,30) ficam a **3 tiles** — (29,27)…(32,27), de 1 a 5 árvores — e a
+  **11 tiles** há (18,41) com **12**, a **14** há (17,44) com **27**.
+- **Nenhum lajedo virou pequeno demais para uma pedreira de alcance 6**
+  (`test-output/F21b-lajedos-depois-do-veio.json`), pergunta do operador com o
+  argumento certo: forma decide, não média (BUG-C). Resposta medida por **posição
+  de pedreira**, não por aglomerado: das 13 964 posições legais, as que têm rocha
+  alcançável caíram de **1 737 para 1 736**; a única que perdeu a última rocha é
+  (87,106), que tinha exatamente 1. Registrado no `BALANCE_LOG.md` com a forma
+  (11 aglomerados → 25; 9 intocados, inclusive o da vila).
+- **O mínimo de ouro da Casa do Coronel, as três perguntas medidas**
+  (`test-output/minimo-de-estoque.json`) — resultado no relatório ao operador e
+  resumido em *Aberto* abaixo. **Nada implementado**: ele pediu "traga medição e
+  PARE".
+
+### Decidido, e por quê
+
+- **D1 — a cobertura da caminhada foi para o arquivo da F21b, não para um arquivo
+  novo.** É a feature que causou o comportamento; teste órfão em arquivo próprio
+  perde o contexto de por que existe.
+- **D2 — a premissa derrubada era do operador, e isso ficou escrito como dele.**
+  Ele aceitou a correção ("recusa sai em `terreno`, meu argumento do BUG-F não se
+  aplicava ao veio") e **pediu que constasse que a premissa era dele**. A decisão
+  ("só os adjacentes") nunca esteve em dúvida; caiu o motivo, e o motivo é o que a
+  próxima sessão herda. Anotado no item da F21b em `BUILD_PLAN.md`.
+- **D3 — as três reprovações da F-T4b foram remedidas, não copiadas do item.** O
+  item já as listava; refiz porque o operador ia **escolher a saída com o número
+  na mão**, e número citado de memória não é medição. Ganhou-se com isso a
+  correção do "12 tiles" e a evidência gravada em arquivo, que a sessão anterior
+  não deixou.
+- **D4 — a viabilidade do lajedo foi medida por posição de pedreira, não pareando
+  aglomerado antes com aglomerado depois.** O pareamento é frágil (o veio
+  fragmenta: 11 viram 25, e não há correspondência 1 para 1), e a pergunta do
+  jogo é "sobrou onde plantar pedreira", que a varredura de `canPlace` responde
+  direto.
+- **D5 — as três sondas foram apagadas.** Uma delas tinha 16 erros de tipo e
+  quebraria `npm run typecheck`; sonda vale a corrida, não a manutenção (§8).
+
+### Aberto — precisa do operador
+
+- **O mínimo de ouro está medido e não implementado**, à espera da decisão dele.
+  O resumo: `ouroNecessario` olha **só a fila**, sem folga; o nível 7 **funciona
+  hoje** (ouro parado com fila vazia sai da escola no **tick 63** e chega ao
+  armazém); com mínimo, o excedente vira **0 por construção** e esses 5 de ouro
+  ficam **invisíveis no HUD para sempre** — 25 % do ouro de abertura; e o mínimo
+  **já existe como regra de classe** para quem tem receita (`alvo` = gaveta = 5),
+  o que mostra que ele **não** conserta Moinho e Padaria: num cenário de 6 000
+  ticks o moinho ficou **6 000 ticks com a gaveta vazia** pedindo 5 de milho, e o
+  milho que apareceu no armazém nunca passou de 1 — o gargalo é **vazão do
+  campo**, não alvo de pedido.
+- **F-T4b segue bloqueada, e agora com o custo das três saídas medido.** A
+  escolha é dele; nada implementado.

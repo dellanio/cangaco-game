@@ -43,6 +43,7 @@ import {
   recursoNoTile, regimeDoTipo, tilesDeColheita, tilesDeColheitaNaCaixa,
 } from '../src/sim/recursos';
 import { tileAlcancavelParaColheita } from '../src/sim/aproximacao';
+import { tileAndavel } from '../src/sim/pathfinding';
 import { registrarTipoConstruido } from '../src/sim/desbloqueio';
 import { alertasDoEstado, painelDoPredio } from '../src/sim/selectors';
 import { criarRecursosDeRender } from '../src/render/mapa';
@@ -373,5 +374,104 @@ describe('F21b — (7) todo recurso tem cor e nome no tema', () => {
     // e a funcao de producao tambem acusa, com a tabela de cor amputada
     const cortada = { tipos: tipos.filter((id) => id !== 'coal'), cores: ['#000000'], codigoEsgotado: 1 };
     expect(() => corDoRecurso('coal', cortada)).toThrow();
+  });
+});
+
+/**
+ * (8) F21b — O MINEIRO ANDA ATE O VEIO. Pedido do operador em 2026-09-25: a
+ * terceira feature da ordem dele era "os tres mineiros herdam caminhada", e ela
+ * se dissolveu nesta aqui — declarar `colheita` fez a regra de classe agir. Isso
+ * so pode ser riscado com o mineiro medido ANDANDO, nao com a mina produzindo:
+ * producao com o especialista parado dentro do predio e exatamente o defeito que
+ * a F-T3 corrigiu, e voltaria sem ninguem perceber.
+ */
+describe('F21b — (8) o mineiro sai do predio e colhe da beirada do veio', () => {
+  interface PassoDaMina {
+    readonly tick: number; readonly fsm: string; readonly gx: number; readonly gy: number;
+    readonly veio: string | null;
+  }
+
+  /** Roda ate a gaveta `saida` subir, um registro por tick. */
+  function trilhaDaMina(
+    inicial: GameState, predioId: string, unidadeId: string, mercadoria: string, limite = 900,
+  ): { trilha: PassoDaMina[]; fim: GameState } {
+    const trilha: PassoDaMina[] = [];
+    let estado = inicial;
+    const saida0 = saidaDe(estado, predioId)[mercadoria] ?? 0;
+    for (let tick = 1; tick <= limite; tick += 1) {
+      estado = step(estado, [], gameData);
+      const u = estado.unidades.porId[unidadeId];
+      if (u === undefined) throw new Error(`fixture: '${unidadeId}' sumiu no tick ${tick}`);
+      const tarefaId = u.fsmData.tarefa ?? null;
+      const tarefa = tarefaId === null ? undefined : estado.jobs.tarefas.porId[tarefaId];
+      const veio = tarefa !== undefined && tarefa.tipo === 'colher' ? tarefa.origemTile : null;
+      trilha.push({
+        tick, fsm: u.fsm, gx: u.gx, gy: u.gy, veio: veio === null ? null : chaveDeTile(veio),
+      });
+      expect(violacoesDaFsmDoEspecialista(estado, gameData), `tick ${tick}`).toEqual([]);
+      expect(violacoesDeInvariantes(estado, gameData), `tick ${tick}`).toEqual([]);
+      if ((saidaDe(estado, predioId)[mercadoria] ?? 0) > saida0) return { trilha, fim: estado };
+    }
+    throw new Error(`o ciclo de '${predioId}' nao fechou em ${limite} ticks`);
+  }
+
+  /** Distancia de Chebyshev do tile ao FOOTPRINT do predio — zero se esta dentro. */
+  function doFootprint(estado: GameState, predioId: string, t: { gx: number; gy: number }): number {
+    const p = predioDe(estado, predioId);
+    const caixa = caixaDeTipo(p.tipo, p.gx, p.gy, gameData);
+    if (caixa === null) throw new Error(`fixture: '${p.tipo}' sem tamanho`);
+    const dx = t.gx < caixa.x0 ? caixa.x0 - t.gx : t.gx >= caixa.x1 ? t.gx - (caixa.x1 - 1) : 0;
+    const dy = t.gy < caixa.y0 ? caixa.y0 - t.gy : t.gy >= caixa.y1 ? t.gy - (caixa.y1 - 1) : 0;
+    return Math.max(dx, dy);
+  }
+
+  const cheb = (a: { gx: number; gy: number }, b: { gx: number; gy: number }): number =>
+    Math.max(Math.abs(a.gx - b.gx), Math.abs(a.gy - b.gy));
+
+  // o mineiro do OURO: e o que anda de verdade neste cenario (o veio do carvao
+  // encosta na mina). A afirmacao (d) abaixo guarda essa premissa da fixture.
+  const inicial = comEspacoNaSaida(cenarioDaCadeiaDoOuro(gameData), 'go1');
+  const { trilha, fim } = trilhaDaMina(inicial, 'go1', 'mineiro-ouro', 'gold_ore');
+  const colhendo = trilha.filter((p) => p.fsm === 'colhendo');
+
+  it('(a) sai, colhe e volta, e nunca salta mais de um tile por tick', () => {
+    const sequencia: string[] = [];
+    for (const p of trilha) if (p.fsm !== sequencia[sequencia.length - 1]) sequencia.push(p.fsm);
+    expect(sequencia).toEqual(['indo_colher', 'colhendo', 'voltando', 'trabalhando']);
+    const partida = inicial.unidades.porId['mineiro-ouro'];
+    if (partida === undefined) throw new Error('fixture: mineiro-ouro nao existe');
+    let anterior = { gx: partida.gx, gy: partida.gy };
+    for (const p of trilha) {
+      expect(cheb(anterior, p), `tick ${p.tick}`).toBeLessThanOrEqual(1);
+      anterior = { gx: p.gx, gy: p.gy };
+    }
+  });
+
+  it('(b) colhe DE FORA do predio, encostado no veio, de tile que se pisa', () => {
+    expect(colhendo.length).toBeGreaterThan(0);
+    for (const p of colhendo) {
+      expect(p.veio, `tick ${p.tick}`).not.toBeNull();
+      const veio = tileDeChave(p.veio ?? '0,0');
+      expect(cheb(p, veio), `tick ${p.tick}`).toBe(1);
+      expect(doFootprint(fim, 'go1', p), `tick ${p.tick}`).toBeGreaterThan(0);
+      expect(tileAndavel(fim, { gx: p.gx, gy: p.gy }, 'livre', gameData), `tick ${p.tick}`).toBe(true);
+      // e o que da sentido as duas de cima: o veio NAO se pisa (serra)
+      expect(tileAndavel(fim, veio, 'livre', gameData), `tick ${p.tick}`).toBe(false);
+    }
+  });
+
+  it('(c) ele foi ATE o veio: parou tao perto dele quanto a serra deixa', () => {
+    const p = colhendo[0];
+    if (p === undefined) throw new Error('trilha sem tick de colheita');
+    const veio = tileDeChave(p.veio ?? '0,0');
+    // o piso geometrico: quem encosta no veio esta a pelo menos (d - 1) da casa
+    expect(doFootprint(fim, 'go1', p)).toBeGreaterThanOrEqual(doFootprint(fim, 'go1', veio) - 1);
+  });
+
+  it('(d) e a fixture continua exercitando CAMINHADA: o veio nao encosta na mina', () => {
+    const p = colhendo[0];
+    if (p === undefined) throw new Error('trilha sem tick de colheita');
+    // sem isto, (b) e (c) passariam com o mineiro saindo pela porta e voltando
+    expect(doFootprint(fim, 'go1', tileDeChave(p.veio ?? '0,0'))).toBeGreaterThan(1);
   });
 });

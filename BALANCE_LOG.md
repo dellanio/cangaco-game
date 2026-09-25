@@ -356,6 +356,22 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   byte a byte), mas o estoque de pedra **do mapa inteiro** é 15 % menor do que era antes da F21b.
   Não mexi em nada por isso: entra aqui para o lote, junto com `rock.rendimentoPorTile` (15) |
   `data/maps/sertao-128.json:contagemDeRecursos`
+- [2026-09-25] **FORMA dos lajedos depois do veio: nenhum ficou pequeno demais para uma pedreira
+  de alcance 6** | pedido do operador no mesmo dia, com o argumento certo — "pedreira depende de
+  lajedo aglomerado, e a medição do BUG-C mostrou que **forma decide, não média**", então a queda
+  de 311 para 265 não responde sozinha. Medido no mapa inteiro, versão de antes contra a de agora
+  (`test-output/F21b-lajedos-depois-do-veio.json`): dos **11** aglomerados de rocha, **9 estão
+  intocados** (inclusive o da vila); só o 1 (88 tiles, 26 viraram veio) e o 2 (74, 20 viraram) foram
+  atingidos, e o veio os **fragmentou**, não os encolheu por igual — 11 aglomerados viraram **25**,
+  o 1 quebrando em 24/8/8/6/6/4/2/2/2 e o 2 em 19/10/9/8/4/2/2. O que importa para o jogo é a
+  posição da pedreira, e por ela nada morreu: das **13 964** posições legais do mapa, as que têm
+  ao menos uma rocha alcançável em 6 caíram de **1 737 para 1 736** — **uma única** posição,
+  (87,106), perdeu a última rocha, e ela tinha exatamente 1. A melhor pedreira do mapa foi de
+  **56 para 55 tiles** (840 → 825 unidades) e 549 posições perderam alguma rocha (pior caso −15,
+  em (106,94)). A média por posição com rocha caiu de 14,7 para 12,8 — e é justamente a média que
+  o BUG-C ensinou a não usar sozinha. **Conclusão: nada a ajustar.** Fica registrado porque o
+  fragmento de 2 tiles é pedreira que esgota em 30 unidades, e isso é do lote de
+  `rock.rendimentoPorTile` | `tools/gerar-mapa.js:VEIOS_DE_MINERIO`, `data/resources.json`
 
 ---
 
