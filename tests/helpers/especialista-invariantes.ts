@@ -22,6 +22,7 @@ import type { GameData } from '../../src/sim/data/types';
 import type { GameState } from '../../src/sim/state';
 import { ehTarefaDeColheita } from '../../src/sim/state';
 import { predioAceita, predioDoOcupante, tiposQueOcupam } from '../../src/sim/ocupacao';
+import { caixaDoPredio, type CaixaEmTiles } from '../../src/sim/footprint';
 
 /** F15a — os tres estados em que o especialista trabalha DENTRO do predio: tem
  *  predio, nao segura tarefa de ocupar e tem `fsmData` vazio. O que os distingue
@@ -45,6 +46,14 @@ const ocupa = (fsm: string): boolean => (
 /** F-T3 — onde o caminho pendente e legitimo. `colhendo` nao esta aqui de
  *  proposito: chegar ao tile CONSOME o caminho no mesmo tick. */
 const ANDANDO = ['indo_ocupar', 'indo_colher', 'voltando'] as const;
+
+/** Distancia de Chebyshev de um tile a uma caixa MEIO-ABERTA. Zero dentro dela,
+ *  1 na borda de fora — que e onde a porta do predio esta. */
+function distanciaACaixa(gx: number, gy: number, caixa: CaixaEmTiles): number {
+  const dx = Math.max(caixa.x0 - gx, 0, gx - (caixa.x1 - 1));
+  const dy = Math.max(caixa.y0 - gy, 0, gy - (caixa.y1 - 1));
+  return Math.max(dx, dy);
+}
 
 export function violacoesDaFsmDoEspecialista(estado: GameState, dados: GameData = gameData): string[] {
   const v: string[] = [];
@@ -136,6 +145,24 @@ export function violacoesDaFsmDoEspecialista(estado: GameState, dados: GameData 
     const caminho = u.fsmData.caminho ?? [];
     if (caminho.length > 0 && !(ANDANDO as readonly string[]).includes(u.fsm)) {
       v.push(`${id}: ${u.fsm} com caminho pendente`);
+    }
+    // F-T3 — e o contrario tambem e violacao: quem anda sem caminho so e legitimo
+    // no tick da CHEGADA, e chegar tem lugar. `indo_colher` sem caminho esta no
+    // tile da tarefa ou ao lado dele; `voltando` sem caminho esta na porta do
+    // proprio predio. Fora disso e unidade parada para sempre a meio caminho — o
+    // travamento silencioso que nenhuma contagem de tarefa pega.
+    if (caminho.length === 0 && u.fsm === 'indo_colher') {
+      const tid = colheitas[0];
+      const t = tid === undefined ? undefined : estado.jobs.tarefas.porId[tid];
+      if (t !== undefined && ehTarefaDeColheita(t)) {
+        const d = Math.max(Math.abs(u.gx - t.origemTile.gx), Math.abs(u.gy - t.origemTile.gy));
+        if (d > 1) v.push(`${id}: indo_colher sem caminho a ${d} tiles de ${t.origemTile.gx},${t.origemTile.gy}`);
+      }
+    }
+    if (caminho.length === 0 && u.fsm === 'voltando' && predio !== null) {
+      const caixa = caixaDoPredio(predio, dados);
+      const d = caixa === null ? 0 : distanciaACaixa(u.gx, u.gy, caixa);
+      if (d > 1) v.push(`${id}: voltando sem caminho a ${d} tiles de ${predio.id}`);
     }
   }
 
