@@ -51,7 +51,7 @@ export default tseslint.config(
     // roda em Node (Buffer) e serializa UMA closure para o Chromium, onde
     // `Image` e `document` sao reais. Escopo de um arquivo so, para nao
     // esconder um `document` de verdade num script de Node comum.
-    files: ['tools/derivar-sprites.js'],
+    files: ['tools/derivar-sprites.js', 'tools/derivar-icones.js'],
     languageOptions: {
       globals: { Buffer: 'readonly', document: 'readonly', Image: 'readonly' },
     },

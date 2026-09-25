@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#1a1410" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+  <!-- moeda: aro grosso, miolo entintado, dois cortes de gravura -->
+  <circle cx="10" cy="10" r="7.5"/>
+  <circle cx="10" cy="10" r="3" fill="#1a1410" stroke="none"/>
+  <path d="M4.5 6.5 L7 8.5 M15.5 6.5 L13 8.5 M4.5 13.5 L7 11.5 M15.5 13.5 L13 11.5"/>
+</svg>

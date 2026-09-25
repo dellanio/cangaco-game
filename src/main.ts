@@ -19,6 +19,10 @@ import { criarLaco, nascerPausadoPelaUrl, pausarAoOcultar } from './laco';
 import { iniciarJogo } from './render/game';
 import { montarHud } from './ui/hud';
 import { montarMenuBuild } from './ui/menu-build';
+import { resolvedorDeIcones } from './ui/icones';
+import type { IconesDoManifesto } from './ui/icones';
+import manifestoJson from '../assets/manifest.json';
+import { urlsDeSprites } from './render/sprites-urls';
 import { montarPainelPredio } from './ui/painel-predio';
 import { montarAlertas } from './ui/alertas';
 import { montarAvisoDoTempo } from './ui/aviso-tempo';
@@ -77,7 +81,13 @@ const entrada = criarEntradaDoMapa(
 // estar assentado (as dimensoes sao fixas no CSS, mas nao custa a ordem certa).
 const hud = montarHud();
 const aviso = montarAvisoDoTempo();
-const menu = montarMenuBuild(ferramenta);
+// Os icones do menu: o trecho `icones` do manifesto mais as URLs que o bundler
+// resolveu. Juntados AQUI, na raiz de composicao, para `ui/` nao falar com o
+// bundler nem parsear caminho (CLAUDE.md §9: quem mapeia e o manifesto).
+const menu = montarMenuBuild(
+  ferramenta,
+  resolvedorDeIcones((manifestoJson as unknown as { icones?: IconesDoManifesto }).icones, urlsDeSprites),
+);
 // UM painel para todo predio (F16b). A fila da escola virou uma secao dele.
 const painel = montarPainelPredio(selecao, (comando) => {
   sessao.enviar(comando);

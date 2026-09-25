@@ -117,7 +117,18 @@ button[aria-disabled="true"] {
 /* A ordem na barra e por `order`, nao pelo DOM: recursos, avisos, lembrete,
    carimbo de pausa. O DOM nasce em outra ordem (o #alertas e estatico no
    index.html, a dica da ajuda e montada antes do HUD). */
-#hud .campo { display: flex; align-items: baseline; gap: 6px; order: -1; }
+#hud .campo { display: flex; align-items: center; gap: 6px; order: -1; }
+/* o glifo de cada recurso: SVG em xilogravura (assets/sprites/ui, manifesto
+   `icones.hud`), um por `data-recurso`. Desenho, nao no de texto. */
+#hud .campo::before {
+  content: ''; flex: 0 0 auto; width: 20px; height: 20px;
+  background: center / contain no-repeat;
+}
+#hud .campo[data-recurso="gold"]::before { background-image: url('../../assets/sprites/ui/hud-gold.svg'); }
+#hud .campo[data-recurso="timber"]::before { background-image: url('../../assets/sprites/ui/hud-timber.svg'); }
+#hud .campo[data-recurso="stone"]::before { background-image: url('../../assets/sprites/ui/hud-stone.svg'); }
+#hud .campo[data-recurso="comida"]::before { background-image: url('../../assets/sprites/ui/hud-comida.svg'); }
+#hud .campo[data-recurso="populacao"]::before { background-image: url('../../assets/sprites/ui/hud-populacao.svg'); }
 #hud .rotulo {
   font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em;
   color: var(--tinta-fraca);
@@ -241,6 +252,9 @@ body[data-prancha="fechada"] #menu-build .lombada:active { transform: none; }
   box-shadow: none; transform: none; cursor: pointer;
 }
 #menu-build .icone:hover { background: var(--papel-escuro); }
+/* o retrato: a imagem do predio, derivada da base (72 px, mostrada a 34) */
+#menu-build .retrato { display: block; width: 34px; height: 34px; object-fit: contain; pointer-events: none; }
+#menu-build .icone[aria-disabled="true"] .retrato { filter: grayscale(1) contrast(0.8); }
 /* o placeholder: a miniatura do footprint, N x M quadradinhos de tinta */
 #menu-build .footprint { display: grid; grid-template-columns: repeat(var(--colunas, 1), 6px); gap: 1px; }
 #menu-build .footprint i { display: block; width: 6px; height: 6px; background: var(--tinta); }

@@ -11,10 +11,12 @@
 // §3, §10). O agrupamento vem de `data/menu-build.json`, lido direto como o
 // tema: e dado de interface, validado por `interface/menu-build`.
 //
-// O ICONE e placeholder por construcao (CLAUDE.md §9): a miniatura do footprint
-// (N x M quadradinhos, do `tamanho` que o seletor ja devolve). Distingue 4x4 de
-// 2x1 de relance e nao digita letra nenhuma. A arte, quando vier, entra por
-// `assets/sprites/<id>/icone.png` e substitui a miniatura, nao o botao.
+// O ICONE e o RETRATO do predio quando o manifesto declara um
+// (`icones.predios.<id>`, derivado da base por tools/derivar-icones.js) e, se
+// nao, a miniatura do footprint (N x M quadradinhos, do `tamanho` que o seletor
+// ja devolve) — placeholder por construcao (CLAUDE.md §9): distingue 4x4 de 2x1
+// de relance e nao digita letra nenhuma. Quem resolve id -> URL chega por
+// parametro (`ui/icones.ts`); este arquivo nao fala com o bundler.
 import type { GameState } from '../sim/state';
 import { custoDaEstrada, opcoesDoMenuBuild } from '../sim/selectors';
 // A lista de culturas araveis vem do DADO, pela funcao que a define (presenca do
@@ -23,6 +25,7 @@ import { custoDaEstrada, opcoesDoMenuBuild } from '../sim/selectors';
 import { culturasAraveis } from '../sim/campos';
 import type { OpcaoDoMenuBuild } from '../sim/selectors';
 import type { Ferramenta, ModoDaFerramenta } from '../input/ferramenta';
+import type { ResolvedorDeIcone } from './icones';
 import temaSertao from '../../data/theme-sertao.json';
 import menuBuild from '../../data/menu-build.json';
 
@@ -119,9 +122,22 @@ interface FerramentaMontada {
   readonly planta: Planta;
 }
 
+/** O retrato: a imagem do predio dentro do botao. `alt` vazio de proposito — o
+ *  nome ja esta no `aria-label` do botao, e repetir seria ler duas vezes. */
+function retrato(url: string): HTMLElement {
+  const img = document.createElement('img');
+  img.className = 'retrato';
+  img.src = url;
+  img.alt = '';
+  img.draggable = false;
+  return img;
+}
+
 /** Monta a prancha em `#menu-build` na primeira `atualizar` (e la que se sabe a
  *  lista de predios) e depois so reescreve o que mudou. */
-export function montarMenuBuild(ferramenta: Ferramenta): MenuBuild {
+export function montarMenuBuild(
+  ferramenta: Ferramenta, iconeDe: ResolvedorDeIcone = () => null,
+): MenuBuild {
   const raiz = document.getElementById('menu-build');
   if (!raiz) throw new Error('menu-build: #menu-build nao existe no index.html');
 
@@ -272,7 +288,8 @@ export function montarMenuBuild(ferramenta: Ferramenta): MenuBuild {
     for (const opcao of opcoes) {
       const botao = botaoIcone(opcao.id, nomeDe(opcao.id));
       botao.dataset.predio = opcao.id;
-      botao.append(miniaturaDoFootprint(opcao.tamanho));
+      const url = iconeDe(opcao.id);
+      botao.append(url === null ? miniaturaDoFootprint(opcao.tamanho) : retrato(url));
       // aria-disabled e nao `disabled`: o item bloqueado continua recebendo o
       // clique, que a ferramenta simplesmente ignora — o jogador nao fica sem
       // resposta e o roteiro consegue provar que clicar nele nao ativa nada.

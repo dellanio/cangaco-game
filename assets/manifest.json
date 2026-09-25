@@ -5,9 +5,18 @@
     {
       "id": "storehouse",
       "tipo": "predio",
-      "footprint": [3, 3],
-      "tamanho": [192, 135],
-      "anchor": [0.5, 1],
+      "footprint": [
+        3,
+        3
+      ],
+      "tamanho": [
+        192,
+        135
+      ],
+      "anchor": [
+        0.5,
+        1
+      ],
       "estados": {
         "marcacao": "sprites/storehouse/storehouse_marcacao.png",
         "estrutura": "sprites/storehouse/storehouse_madeira.png",
@@ -20,5 +29,103 @@
         "nota": "Derivado por tools/derivar-sprites.js a partir de assets/base/storehouse/ (1536x1024 -> 192x135, recorte UNICO pela uniao das bboxes de alpha dos tres estagios, x71,y32 1380x968, alpha > 16). O recorte comum preserva o registro entre estagios; recortar cada um pelo seu faria o predio pular. E COSMETICO: devolveu ~12% de tamanho linear (o completo cobria 31,8% do quadrado de chao e passou a cobrir 39,3%). PERSPECTIVA ISOMETRICA, divergente do §4 (3/4 sobre grid ortogonal): o plano de chao e um losango ~2:1, e nenhuma escala concilia losango com footprint quadrado — e esta, medida, a causa de o predio nao preencher o 3x3, nao a margem transparente. Conhecida e a substituir. Gerada fora do repositorio e a semente nao foi fornecida, entao hoje um frame so se ajusta refazendo o conjunto."
       }
     }
-  ]
+  ],
+  "icones": {
+    "predios": {
+      "storehouse": {
+        "arquivo": "sprites/storehouse/icone.png",
+        "tamanho": [
+          72,
+          72
+        ],
+        "licenca": "arte propria do projeto, fornecida pelo operador",
+        "origem": {
+          "base": "base/storehouse/armazem_03_completo.png",
+          "semente": null,
+          "nota": "Derivado por tools/derivar-icones.js: 1536x1024, bbox alpha>16 em 158,80 1256x920, escala 0.0573, centrado em 72x72."
+        }
+      },
+      "woodcutters": {
+        "arquivo": "sprites/woodcutters/icone.png",
+        "tamanho": [
+          72,
+          72
+        ],
+        "licenca": "arte propria do projeto, fornecida pelo operador",
+        "origem": {
+          "base": "base/woodcutters/casa_lenhador_03_completo.png",
+          "semente": null,
+          "nota": "Derivado por tools/derivar-icones.js: 1223x1286, bbox alpha>16 em 46,144 1128x1040, escala 0.0638, centrado em 72x72."
+        }
+      }
+    },
+    "_doc": "Icones da interface (CLAUDE.md §9). `predios` e por id NEUTRO, derivado da base por tools/derivar-icones.js (rode de novo ao trocar a base); `hud` e por campo de src/ui/hud.ts, desenhado a mao em SVG no registro da xilogravura (tinta, papel, ocre, terracota). Quem resolve `predios` e src/ui/icones.ts, por parametro; `hud` e desenhado pelo CSS por url(). O teste tests/icones-ui.test.ts confere arquivo, dimensao e base.",
+    "hud": {
+      "gold": {
+        "arquivo": "sprites/ui/hud-gold.svg",
+        "tamanho": [
+          20,
+          20
+        ],
+        "licenca": "arte propria do projeto, desenhada em SVG na sessao de 2026-09-25",
+        "origem": {
+          "base": null,
+          "semente": null,
+          "nota": "Vetor autoral, sem base: e glifo de interface, nao personagem nem predio."
+        }
+      },
+      "timber": {
+        "arquivo": "sprites/ui/hud-timber.svg",
+        "tamanho": [
+          20,
+          20
+        ],
+        "licenca": "arte propria do projeto, desenhada em SVG na sessao de 2026-09-25",
+        "origem": {
+          "base": null,
+          "semente": null,
+          "nota": "Vetor autoral, sem base: e glifo de interface, nao personagem nem predio."
+        }
+      },
+      "stone": {
+        "arquivo": "sprites/ui/hud-stone.svg",
+        "tamanho": [
+          20,
+          20
+        ],
+        "licenca": "arte propria do projeto, desenhada em SVG na sessao de 2026-09-25",
+        "origem": {
+          "base": null,
+          "semente": null,
+          "nota": "Vetor autoral, sem base: e glifo de interface, nao personagem nem predio."
+        }
+      },
+      "comida": {
+        "arquivo": "sprites/ui/hud-comida.svg",
+        "tamanho": [
+          20,
+          20
+        ],
+        "licenca": "arte propria do projeto, desenhada em SVG na sessao de 2026-09-25",
+        "origem": {
+          "base": null,
+          "semente": null,
+          "nota": "Vetor autoral, sem base: e glifo de interface, nao personagem nem predio."
+        }
+      },
+      "populacao": {
+        "arquivo": "sprites/ui/hud-populacao.svg",
+        "tamanho": [
+          20,
+          20
+        ],
+        "licenca": "arte propria do projeto, desenhada em SVG na sessao de 2026-09-25",
+        "origem": {
+          "base": null,
+          "semente": null,
+          "nota": "Vetor autoral, sem base: e glifo de interface, nao personagem nem predio."
+        }
+      }
+    }
+  }
 }

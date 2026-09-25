@@ -9,7 +9,9 @@ export interface Hud {
   atualizar(estado: GameState): void;
 }
 
-const CAMPOS = ['gold', 'timber', 'stone', 'comida', 'populacao'] as const;
+/** Os campos da barra, na ordem. Exportado para o teste dos icones conferir
+ *  que cada um tem o seu no manifesto — e so eles. */
+export const CAMPOS = ['gold', 'timber', 'stone', 'comida', 'populacao'] as const;
 type Campo = (typeof CAMPOS)[number];
 
 const ROTULOS: Readonly<Record<Campo, string>> = {
@@ -30,6 +32,10 @@ export function montarHud(): Hud {
   for (const campo of CAMPOS) {
     const linha = document.createElement('div');
     linha.className = 'campo';
+    // `data-recurso`, e nao `data-campo`: este ultimo ja e o VALOR (os roteiros
+    // leem `#hud [data-campo]`), e o mesmo atributo em dois nos faria o seletor
+    // pegar o errado. O icone e CSS (`::before` por recurso), sem no novo.
+    linha.dataset.recurso = campo;
 
     const rotulo = document.createElement('span');
     rotulo.className = 'rotulo';

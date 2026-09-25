@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#1a1410" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+  <!-- pedra: bloco lascado, uma faceta de sombra -->
+  <path d="M3 13 L5 6 L11 3 L17 7 L16 14 L9 17 Z" fill="#d9c9a8"/>
+  <path d="M9 17 L10 9 L5 6 M10 9 L17 7" />
+</svg>

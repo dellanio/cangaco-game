@@ -122,6 +122,36 @@ async function roteiro(ctx) {
       `'${p.id}' aparece no menu sem dizer do que depende ("${tema.menuBuild.semRequisito}"), veio: ${texto}`,
     );
   }
+  // Icones: predio com icone no manifesto mostra o RETRATO; sem icone, a
+  // miniatura do footprint (placeholder e comportamento normal, §9). Os dois
+  // conjuntos vem do manifesto, nunca de uma lista digitada aqui.
+  const iconesDoManifesto = require('../../assets/manifest.json').icones.predios;
+  for (const p of predios) {
+    const temIcone = Boolean(iconesDoManifesto[p.id]);
+    const temRetrato = (await page.$(`[data-predio="${p.id}"] img.retrato`)) !== null;
+    const temFootprint = (await page.$(`[data-predio="${p.id}"] .footprint`)) !== null;
+    afirmar(
+      temRetrato === temIcone && temFootprint === !temIcone,
+      `'${p.id}' deveria mostrar ${temIcone ? 'o retrato' : 'o footprint'}, veio retrato=${temRetrato} footprint=${temFootprint}`,
+    );
+  }
+  afirmar(
+    Object.keys(iconesDoManifesto).length > 0
+      && await page.$$eval('#menu-build img.retrato', (ns) => ns.every((n) => n.complete && n.naturalWidth > 0)),
+    'todo retrato deveria ter carregado (URL resolvida pelo bundler, sem 404)',
+  );
+  // O glifo de cada recurso do HUD e um `::before` com imagem de fundo SVG. O
+  // Vite embute SVG pequeno como data URI, entao o nome do arquivo nao aparece
+  // no estilo computado: o que se afirma e que os cinco tem imagem, que e SVG,
+  // e que sao cinco imagens DIFERENTES (um glifo por recurso, nao um so).
+  const glifos = await page.$$eval('#hud .campo[data-recurso]', (ns) => ns.map((n) => ({
+    recurso: n.dataset.recurso, fundo: getComputedStyle(n, '::before').backgroundImage,
+  })));
+  afirmar(
+    glifos.length === 5 && glifos.every((g) => g.fundo.startsWith('url(') && g.fundo.includes('svg'))
+      && new Set(glifos.map((g) => g.fundo)).size === 5,
+    `cada campo do HUD deveria ter o seu glifo SVG, veio ${JSON.stringify(glifos.map((g) => [g.recurso, g.fundo.slice(0, 40)]))}`,
+  );
   // Todos os 28 estao na grade, em faixas por grupo (data/menu-build.json), e a
   // grade nao rola: e a razao de ser do Layout 2 — o relogio nao espera.
   const gruposDoDado = require('../../data/menu-build.json').grupos;
