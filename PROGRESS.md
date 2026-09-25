@@ -6513,3 +6513,68 @@ ligação registrada na F18g.
   armadilha medida: `PlaceRoad` deixa a rua **planejada**, então perguntar a ligação no
   tick 1 devolve `false` para tudo e parece resposta. A proteção contínua aqui é só o
   4º teste da geometria; o resto é número da corrida.
+
+---
+
+## 2026-09-25 — Calibração da Fase B: a cadeia de comida (branch `calibracao-fase-b`, mergeada)
+
+Pedido do operador: diagnosticar com a sim, propor com a conta ao lado, só então
+mexer em `data/*.json`. Diário completo em `docs/calibracao-fase-b.md`; ponteiro e
+resumo em `BALANCE_LOG.md`, "Ciclos fechados", Lote 1.
+
+### Verificado (rodei o comando ou abri o arquivo)
+
+- **O gargalo é a colheita, não o plantio.** Tempo do roceiro por milho entregue, 24 000
+  ticks, dado antigo: colhendo 243, ida + volta 103, plantando 78, refeição 10 = **432**
+  (campo longe) e 424 (campo colado na vila). O moinho consome um a cada 246 e ficava
+  43 % em `esperando_insumo`. A colheita sozinha (246) já era o ciclo do moinho inteiro:
+  a taxa de 2014 pressupunha que colher era o ciclo todo, e F18 + F-T3 puseram plantio
+  e caminhada em cima.
+- **Alcance e número de tiles não mudam a vazão.** 37 tiles ao alcance, 1 em uso; 4
+  tiles na vila deram 424 contra 432 com 37. O roceiro é serial.
+- **Antes, a vila 1:1:1 sustentava 20 civis e morria inteira com 27** (primeira morte
+  o roceiro, tick 26 400; nenhum vivo no 36 000). **Depois: 27 sem mortes, 39 sem
+  mortes com a Bodega vazia 22 % do tempo**; teto por conta ~37 só com cuscuz.
+- **Depois dos dois números:** 249 / 243 ticks por milho, moinho 2 %, milho nunca
+  acima de 1 no armazém, primeiro cuscuz na vila 1 003 ticks após a ordem de arar
+  (era 1 299). Re-medido na `main` mergeada com a F-T4b: idêntico, e é por construção
+  — nenhum dos cenários passa por `aberturaDaFaseA` (registrado no doc).
+- `npm run verify` na `main` mergeada: 102 arquivos, 1 413 testes, selo criado.
+- **Como medi:** runner de scratchpad que espelha `tools/sim.js` (`tools/` estava fora
+  do escopo) montando `cenarioDaCadeiaDoPao` e um cenário da vila com `PlowField`.
+  Prova de sessão; a proteção contínua é o teto/piso de `tests/F19-cadeia-do-pao.test.ts`,
+  que deriva do dado. **Armadilha achada e corrigida no runner:** `step(state, cmds)`
+  sem o terceiro argumento usa `gameData` padrão — cinco variantes rodaram idênticas até
+  eu passar `dados`.
+
+### Decidido, e por quê
+
+- `farm.sai.corn` 1,22 → **3,0** (colheita 246 → 100 ticks) e `corn.reposicao` 60 → **30 s**
+  (300 → 150). Conta: 246 − 105 (viagem) − 10 (refeição) = 131 para colheita + plantio/4;
+  com reposição 60 a colheita teria de cair a 56, mais curta que a caminhada. 2,4 deixa o
+  moinho 10 % ocioso; 3,5 põe a colheita abaixo da caminhada.
+- **A caminhada fica na conta** (operador): o 1,22 original já incluía fazendeiro andando.
+  O que se recalibrou foi a colheita; a F-T3 continua na tela.
+- **`tests/F19-cadeia-do-pao.test.ts:185`** afirmava que o último estado do roceiro antes
+  de morrer de fome era `trabalhando`; passou a aceitar qualquer fase produtiva da F-T3.
+  Codificava coincidência de fase, não a intenção do comentário. Autorizado pelo operador,
+  único arquivo tocado em `tests/`.
+- **Diário:** as seis entradas da cadeia de comida saíram de "Observações abertas" e estão
+  arquivadas (texto original, em `<details>`) sob "Ciclos fechados / Lote 1", com ponteiro
+  para `docs/calibracao-fase-b.md`, que fica como arquivo, como o histórico das features.
+- **Seis timeouts na primeira rodada do verify** (F-T2b, F09, F10-astar, F10-falhas, F21,
+  zz-probe-F23): nenhum é asserção de tempo; todos no timeout padrão de 5 s e medindo
+  1,7–2,2 s na máquina livre (2,3× a 2,9× de folga). É orçamento, número entregue ao
+  operador: 10 s (~5×), a mesma regra que a F09 já aplica ao caso de carga. Nada alterado.
+
+### Aberto
+
+- **Pedreira, lenhador e minas têm o mesmo padrão** (viagem em cima de `ticksDoCiclo`;
+  pedreira 167 → ~250 medido) e ficaram fora deste lote. Entradas continuam em
+  "Observações abertas".
+- **Trabalho concorrente no mesmo diretório.** Outra sessão editou o diretório principal
+  enquanto esta branch nascia; a branch foi para o worktree
+  `D:\projetos-pessoal\cangaco-game-calibracao` (junction de `node_modules`), que continua
+  lá depois do merge. Remover é decisão do operador.
+- A calibração não foi medida NA abertura da F-T4b (fazenda plantada ao lado dos dois
+  grupos). Se for, o termo a comparar é `ticks por milho`, e só a caminhada pode mudar.

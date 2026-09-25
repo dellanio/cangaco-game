@@ -187,20 +187,6 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   como nao calibrado. | observado no aceite da F-T2c (`test-output/F-T2c.json`), em cenario montado
   de proposito para forcar a disputa; **nao medido em partida**
 
-- [2026-09-24] **a fazenda ficou ~30% mais lenta, e o plantio é ~23% do tempo dela** | medido no
-  aceite (`test-output/F18.json`), em ticks e não em minutos, porque a escala `economia: 2` de
-  `time.json` já está dentro dos dois números: plantar um tile custa **300 ticks**
-  (`corn.reposicao`) e cada colheita **246** (`farm.ticksDoCiclo`), com `rendimentoPorTile: 4` — o
-  ciclo fechado de um tile é 300 + 4×246 = **1284 ticks por 4 milhos**, ou **321 ticks/milho** contra
-  os **246** de antes da F18. A taxa declarada (`sai: { corn: 1.22 }`) continua valendo *durante* a
-  colheita; o que a derruba é o plantio, que é tempo que não existia. **Meu palpite no plano era
-  "metade do tempo"; a medição diz 23%** — fica registrado para não virar folclore.
-  Nota do formato: como o roceiro replanta **o mesmo tile** assim que ele seca (a varredura do
-  plantio tem a mesma ordem da colheita, de propósito), a fazenda alterna 300 parada / 984
-  produzindo para sempre e **nunca encadeia** os outros ~36 tiles aráveis ao alcance. **Não mexi em
-  número nenhum**: os três candidatos (`reposicao.segundos_base`, `rendimentoPorTile` e a ordem da
-  varredura do plantio) mudam a comida, e comida é a F20 — o lote se ajusta lá, com o pão junto |
-  `resources.json:tipos.corn.reposicao`, `production.json:receitas.farm`
 - [2026-09-24] **a terra arável do mapa é pouca e fica longe da vila** | medido: **130 tiles** de
   `campoArado` no mapa inteiro (0,8% de 128²), em dois blocos, o maior com 65 tiles no nordeste —
   a **~80 tiles** da vila de abertura (`tools/shots/F18.js`, `test-output/F18-shot.json`). Toda
@@ -216,57 +202,6 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   número de receita: ou o gerador espalha terra arável, ou o jogador ganha ferramenta para criá-la —
   e o operador já decidiu pela segunda (`docs/planos/campo-desenhado-pelo-jogador.md`) |
   `data/maps/sertao-128.json`, `tools/gerar-mapa.js`
-- [2026-09-24] **a proporção 1 Fazenda : 1 Moinho : 1 Padaria deixa os dois últimos ociosos, e a
-  culpa é do plantio** | medido em 12 000 ticks no cenário da F19
-  (`test-output/F19.json`): o moinho passa **26,2 %** e a padaria **28,8 %** do tempo em
-  `esperando_insumo`; a fazenda, **0 %**. A conta fecha e não é logística: a fazenda entrega um
-  milho a cada **321** ticks (246 do ciclo + os 300 do plantio diluídos nas 4 colheitas do tile) e o
-  moinho consome um a cada **246** — ocioso previsto de 23,4 %, mais ~3 % de viagem do serf. O
-  oráculo do próprio dado (`production.json:proporcoesDeReferencia`, com `_doc` dizendo que um
-  cenário que as respeite *"não pode … deixar prédio ocioso"*) **é o que está desatualizado**, e
-  desatualizou na F18, quando o campo passou a exigir aração. Dois caminhos, e os dois mexem em
-  comida: subir `farm_por_mill` para ~1,3 (mais fazendas por moinho) ou baixar o custo do plantio.
-  **Não mexi em nada** — é o mesmo lote da entrada acima e da F20. **A premissa morta está marcada
-  no próprio dado** (`proporcoesDeReferencia._aviso`, decisão do operador em 2026-09-24): quem
-  abrir o arquivo para calibrar precisa ver ali que a tabela descreve o jogo de 1998, não este, e
-  que só os ramos que dependem da fazenda foram afetados — `woodcutters_por_sawmill`, calibrado na
-  F15b, continua de pé | `production.json:proporcoesDeReferencia`,
-  `resources.json:tipos.corn.reposicao`
-
-- [2026-09-24] **a cadeia da carne é mais faminta de milho do que o oráculo diz, e o elo que não
-  depende da fazenda está certo** | medido em 20 000 ticks no cenário 1 Fazenda : 1 Malhada : 1 Casa
-  de Carne (`test-output/F19b.json`): a fazenda entrega um milho a cada **328** ticks (61 em 20 000),
-  a Malhada quer **4 milhos por 600 ticks** — um a cada 150 —, e a razão real fica em **2,19
-  fazendas por Malhada** contra o **1,63** que `proporcoesDeReferencia` publica. Consequência no
-  cenário mínimo: o criador passa **55 %** e o carneador **86 %** do tempo em `esperando_insumo`
-  (o roceiro, 0 %). A causa é a MESMA das duas entradas acima — o custo do plantio que a F18
-  introduziu —, e por isso esta entrada não é um problema novo: é o terceiro ramo do mesmo. Já o
-  elo que **não** passa pela fazenda bate: o açougue consome um bode a cada 200 ticks e a Malhada
-  entrega um a cada 600, exatamente os **3** de `swine_farm_por_butchers`. **Não mexi em número
-  nenhum** — o operador fechou o lote: *"a Fase B inteira está com proporções desatualizadas desde
-  a F18, e vale calibrar de uma vez quando a cadeia de comida fechar"* | `production.json:predios.swine_farm`,
-  `production.json:proporcoesDeReferencia`, `resources.json:tipos.corn.reposicao`
-
-- [2026-09-25] **a F-T3 cortou a vazão de todo prédio de colheita, e o corte é a viagem** | com o
-  especialista saindo do prédio, o intervalo entre duas entregas deixou de ser `ticksDoCiclo` e
-  passou a ser `1 (transição) + ida + ticksDoCiclo + volta`. Medido: a **pedreira** do cenário de
-  teste entrega uma pedra a cada **266** ticks contra os **167** de `ticksDoCiclo` — **1,59×** mais
-  lento (`test-output/F-T3.json`, transições em 1 / 50 / 217 / 266); a **fazenda**, cujo tile fica
-  mais longe, sobe de **246** para **351** ticks por colheita, e sobre isso ainda pesam os **300**
-  ticks de plantio a cada quatro colheitas (`test-output/F-T3-ciclo-do-rocado.json`,
-  `tests/F18-rocado.test.ts`). A distância é geografia, não dado: mesma receita, cenários
-  diferentes, intervalos diferentes — o que antes era um número do arquivo agora depende de onde o
-  jogador põe o prédio, e **essa é a mecânica pretendida** (*"colher pedra de dentro do prédio é a
-  mesma coisa que me incomodou na estrada instantânea: o jogo esconde o trabalho"*). O efeito no
-  balanceamento é que toda proporção da Fase B ficou **mais** desatualizada do que as três entradas
-  acima já diziam: elas mediam a fazenda antes da caminhada. **Não mexi em número nenhum**, pelo
-  mesmo fechamento de lote do operador (2026-09-24): *"a Fase B inteira está com proporções
-  desatualizadas desde a F18, e vale calibrar de uma vez quando a cadeia de comida fechar"*.
-  Quando o lote for calibrado, a conta nova tem de incluir a viagem — corrigir `ticksDoCiclo` para
-  compensar distância seria esconder de novo o trabalho que a feature existe para mostrar |
-  `production.json:predios.quarry`, `production.json:predios.farm`,
-  `production.json:proporcoesDeReferencia`
-
 - [2026-09-25] **a mesma queda, medida no oráculo e não só no cenário de teste** | `npm run sim --
   oraculo --ticks 3000/6000/9000`: o estoque de `stone` sai de **30** no tick 1 (linha de base, não
   zero) e sobe **+11, +12, +12** por bloco de 3 000 ticks, ou seja **~250 ticks por pedra** —
@@ -308,16 +243,6 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   (`economy.schoolhouse.custoOuroPorUnidade`), o ouro de abertura (20) é que sustenta a aldeia
   inteira até lá; a cadeia não é alternativa ao estoque inicial no começo de partida |
   `production.json`, `economy.json:schoolhouse`
-- [2026-09-25] **arar três tiles e esperar o primeiro milho custa 706 ticks** | medido na F18h
-  (`test-output/F18h.json`): `PlowField` de três tiles de grama no tick 1, primeiro tile arado e
-  alerta `sem-campo` sumindo no tick **79** (20 ticks de aradura por tile + ida do laborer),
-  primeiro milho na gaveta no tick **706**. O grosso não é arar — é o ciclo do roceiro sobre terra
-  em pousio: o campo nasce com `quantidade: 0` e a `reposicao` do milho é de 300 ticks. A 10 Hz
-  isso é ~1 min 10 s entre o gesto do jogador e o primeiro grão, com um laborer só e a fazenda já
-  de pé. Se o número incomodar, os dois parafusos são `corn.aradura.segundos_base` (4,0) e
-  `corn.reposicao.segundos_base` (60) — e o segundo pesa 15× mais que o primeiro |
-  `resources.json:corn`
-
 - [2026-09-25] **alcance 6 do pescador: o açude da vila dura 620 ciclos, e o lago grande é quase
   todo enfeite** | `fishermans.colheita.alcance_tiles` nasceu **6** na F-T4a, e o número é *a
   calibrar*, não medido contra nada. O que está medido: a cabana em (31,27), na margem sul do açude
@@ -356,21 +281,6 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   byte a byte), mas o estoque de pedra **do mapa inteiro** é 15 % menor do que era antes da F21b.
   Não mexi em nada por isso: entra aqui para o lote, junto com `rock.rendimentoPorTile` (15) |
   `data/maps/sertao-128.json:contagemDeRecursos`
-- [2026-09-25] **A vazão do campo é o gargalo da cadeia de comida, e agora está medida ponta a
-  ponta** | o operador mandou juntar três medidas que estavam soltas em três sessões, porque
-  contam a mesma história: (1) **706 ticks** da ordem de arar até o primeiro milho na gaveta
-  (F18h, entrada de 2026-09-25 acima) — o grosso não é arar (alerta `sem-campo` some no tick 79),
-  é o campo nascer com `quantidade: 0` e esperar a `reposicao`; (2) `corn.reposicao.segundos_base`
-  (60) pesa **15×** `corn.aradura.segundos_base` (4,0) — é o parafuso que manda; (3) **o milho no
-  armazém nunca passou de 1 em 6 000 ticks** (`test-output/minimo-de-estoque.json`), e o moinho
-  ficou **6 000 de 6 000 ticks com a gaveta vazia**, pedindo 5. O milho não se acumula em lugar
-  nenhum: ele é consumido no instante em que chega, e o moinho passa a partida inteira em
-  `esperando_insumo`. **Isso mata a hipótese de que o sintoma do Moinho e da Padaria (26 % e 29 %
-  em `esperando_insumo`) fosse alvo de pedido baixo** — o alvo já é 5 pela regra de classe, e o que
-  falta é milho existir. Por isso o estoque mínimo de ouro foi recusado e foi para `IDEIAS.md` em
-  vez de virar feature. **Nenhum número girado**, por ordem do operador: a cadeia se calibra
-  inteira quando fechar | `resources.json:tipos.corn.reposicao`, `production.json:predios.farm`,
-  `resources.json:tipos.corn.aradura`
 - [2026-09-25] **FORMA dos lajedos depois do veio: nenhum ficou pequeno demais para uma pedreira
   de alcance 6** | pedido do operador no mesmo dia, com o argumento certo — "pedreira depende de
   lajedo aglomerado, e a medição do BUG-C mostrou que **forma decide, não média**", então a queda
@@ -429,7 +339,129 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
 
 ## Ciclos fechados
 
-_(nenhum ainda)_
+### Lote 1 — cadeia de comida (fechado em 2026-09-25, branch `calibracao-fase-b`)
+
+**O diário deste lote vive em `docs/calibracao-fase-b.md`**, arquivo próprio porque foi escrito
+enquanto outra sessão editava este aqui; ficou como arquivo, com este ponteiro, do mesmo jeito
+que o histórico das features ficou em `docs/historico/`. Lá estão a medição por fase do
+roceiro, a conta dos dois números, a tabela de antes e depois e o que NÃO mudou.
+
+- **Números girados:** `production.json:farm.sai.corn` 1,22 → 3,0 e
+  `resources.json:corn.reposicao.segundos_base` 60 → 30. **A frase:** a taxa de 2014 pressupunha
+  que colher era o ciclo todo; desde a F18 (plantio) e a F-T3 (caminhada) a colheita sozinha
+  (246) ocupava o ciclo inteiro do moinho (246), e a fazenda entregava um milho a cada 432 ticks.
+  Depois: 249 (campo longe) / 243 (campo colado) ticks por milho, moinho 2 % em
+  `esperando_insumo`, milho nunca acima de 1 no armazém.
+- **[2026-09-25] a vila agora sustenta ~35 civis só com cuscuz, contra o colapso total de
+  antes.** Medido em 36 000 ticks numa vila 1 Roçado : 1 Moinho : 1 Padaria com Bodega: antes,
+  20 civis viviam e 27 morriam TODOS (o roceiro primeiro, no tick 26 400); depois, 27 vivem com
+  cuscuz sobrando e 39 vivem com a Bodega vazia 22 % do tempo — o teto por conta é 4 800 ÷ ~130
+  ≈ 37. **É o primeiro número que diz que o jogo é jogável até o fim de uma partida:** os 26
+  civis que o ouro inicial treina cabem numa cadeia só.
+- **Não mudou, e por quê:** `corn.aradura` (20 ticks, uma vez na vida do tile), `alcance_tiles`
+  e o número de tiles (o roceiro é serial e usa 1 tile de 37), `rendimentoPorTile` (4), moinho,
+  padaria e `condition.json`. A caminhada (~100 ticks por milho, igual com o campo colado ou
+  longe) fica na conta de propósito: o original também tinha fazendeiro andando.
+- **Ainda aberto, do mesmo padrão:** pedreira, lenhador e minas também ganharam a viagem em cima
+  de `ticksDoCiclo` (pedreira 167 → ~250 medido). Fora deste lote; as entradas deles continuam
+  em "Observações abertas".
+
+<details>
+<summary>Observações arquivadas deste lote (texto original, na ordem em que entraram)</summary>
+
+- [2026-09-24] **a fazenda ficou ~30% mais lenta, e o plantio é ~23% do tempo dela** | medido no
+  aceite (`test-output/F18.json`), em ticks e não em minutos, porque a escala `economia: 2` de
+  `time.json` já está dentro dos dois números: plantar um tile custa **300 ticks**
+  (`corn.reposicao`) e cada colheita **246** (`farm.ticksDoCiclo`), com `rendimentoPorTile: 4` — o
+  ciclo fechado de um tile é 300 + 4×246 = **1284 ticks por 4 milhos**, ou **321 ticks/milho** contra
+  os **246** de antes da F18. A taxa declarada (`sai: { corn: 1.22 }`) continua valendo *durante* a
+  colheita; o que a derruba é o plantio, que é tempo que não existia. **Meu palpite no plano era
+  "metade do tempo"; a medição diz 23%** — fica registrado para não virar folclore.
+  Nota do formato: como o roceiro replanta **o mesmo tile** assim que ele seca (a varredura do
+  plantio tem a mesma ordem da colheita, de propósito), a fazenda alterna 300 parada / 984
+  produzindo para sempre e **nunca encadeia** os outros ~36 tiles aráveis ao alcance. **Não mexi em
+  número nenhum**: os três candidatos (`reposicao.segundos_base`, `rendimentoPorTile` e a ordem da
+  varredura do plantio) mudam a comida, e comida é a F20 — o lote se ajusta lá, com o pão junto |
+  `resources.json:tipos.corn.reposicao`, `production.json:receitas.farm`
+
+- [2026-09-24] **a proporção 1 Fazenda : 1 Moinho : 1 Padaria deixa os dois últimos ociosos, e a
+  culpa é do plantio** | medido em 12 000 ticks no cenário da F19
+  (`test-output/F19.json`): o moinho passa **26,2 %** e a padaria **28,8 %** do tempo em
+  `esperando_insumo`; a fazenda, **0 %**. A conta fecha e não é logística: a fazenda entrega um
+  milho a cada **321** ticks (246 do ciclo + os 300 do plantio diluídos nas 4 colheitas do tile) e o
+  moinho consome um a cada **246** — ocioso previsto de 23,4 %, mais ~3 % de viagem do serf. O
+  oráculo do próprio dado (`production.json:proporcoesDeReferencia`, com `_doc` dizendo que um
+  cenário que as respeite *"não pode … deixar prédio ocioso"*) **é o que está desatualizado**, e
+  desatualizou na F18, quando o campo passou a exigir aração. Dois caminhos, e os dois mexem em
+  comida: subir `farm_por_mill` para ~1,3 (mais fazendas por moinho) ou baixar o custo do plantio.
+  **Não mexi em nada** — é o mesmo lote da entrada acima e da F20. **A premissa morta está marcada
+  no próprio dado** (`proporcoesDeReferencia._aviso`, decisão do operador em 2026-09-24): quem
+  abrir o arquivo para calibrar precisa ver ali que a tabela descreve o jogo de 1998, não este, e
+  que só os ramos que dependem da fazenda foram afetados — `woodcutters_por_sawmill`, calibrado na
+  F15b, continua de pé | `production.json:proporcoesDeReferencia`,
+  `resources.json:tipos.corn.reposicao`
+
+- [2026-09-24] **a cadeia da carne é mais faminta de milho do que o oráculo diz, e o elo que não
+  depende da fazenda está certo** | medido em 20 000 ticks no cenário 1 Fazenda : 1 Malhada : 1 Casa
+  de Carne (`test-output/F19b.json`): a fazenda entrega um milho a cada **328** ticks (61 em 20 000),
+  a Malhada quer **4 milhos por 600 ticks** — um a cada 150 —, e a razão real fica em **2,19
+  fazendas por Malhada** contra o **1,63** que `proporcoesDeReferencia` publica. Consequência no
+  cenário mínimo: o criador passa **55 %** e o carneador **86 %** do tempo em `esperando_insumo`
+  (o roceiro, 0 %). A causa é a MESMA das duas entradas acima — o custo do plantio que a F18
+  introduziu —, e por isso esta entrada não é um problema novo: é o terceiro ramo do mesmo. Já o
+  elo que **não** passa pela fazenda bate: o açougue consome um bode a cada 200 ticks e a Malhada
+  entrega um a cada 600, exatamente os **3** de `swine_farm_por_butchers`. **Não mexi em número
+  nenhum** — o operador fechou o lote: *"a Fase B inteira está com proporções desatualizadas desde
+  a F18, e vale calibrar de uma vez quando a cadeia de comida fechar"* | `production.json:predios.swine_farm`,
+  `production.json:proporcoesDeReferencia`, `resources.json:tipos.corn.reposicao`
+
+- [2026-09-25] **a F-T3 cortou a vazão de todo prédio de colheita, e o corte é a viagem** | com o
+  especialista saindo do prédio, o intervalo entre duas entregas deixou de ser `ticksDoCiclo` e
+  passou a ser `1 (transição) + ida + ticksDoCiclo + volta`. Medido: a **pedreira** do cenário de
+  teste entrega uma pedra a cada **266** ticks contra os **167** de `ticksDoCiclo` — **1,59×** mais
+  lento (`test-output/F-T3.json`, transições em 1 / 50 / 217 / 266); a **fazenda**, cujo tile fica
+  mais longe, sobe de **246** para **351** ticks por colheita, e sobre isso ainda pesam os **300**
+  ticks de plantio a cada quatro colheitas (`test-output/F-T3-ciclo-do-rocado.json`,
+  `tests/F18-rocado.test.ts`). A distância é geografia, não dado: mesma receita, cenários
+  diferentes, intervalos diferentes — o que antes era um número do arquivo agora depende de onde o
+  jogador põe o prédio, e **essa é a mecânica pretendida** (*"colher pedra de dentro do prédio é a
+  mesma coisa que me incomodou na estrada instantânea: o jogo esconde o trabalho"*). O efeito no
+  balanceamento é que toda proporção da Fase B ficou **mais** desatualizada do que as três entradas
+  acima já diziam: elas mediam a fazenda antes da caminhada. **Não mexi em número nenhum**, pelo
+  mesmo fechamento de lote do operador (2026-09-24): *"a Fase B inteira está com proporções
+  desatualizadas desde a F18, e vale calibrar de uma vez quando a cadeia de comida fechar"*.
+  Quando o lote for calibrado, a conta nova tem de incluir a viagem — corrigir `ticksDoCiclo` para
+  compensar distância seria esconder de novo o trabalho que a feature existe para mostrar |
+  `production.json:predios.quarry`, `production.json:predios.farm`,
+  `production.json:proporcoesDeReferencia`
+
+- [2026-09-25] **arar três tiles e esperar o primeiro milho custa 706 ticks** | medido na F18h
+  (`test-output/F18h.json`): `PlowField` de três tiles de grama no tick 1, primeiro tile arado e
+  alerta `sem-campo` sumindo no tick **79** (20 ticks de aradura por tile + ida do laborer),
+  primeiro milho na gaveta no tick **706**. O grosso não é arar — é o ciclo do roceiro sobre terra
+  em pousio: o campo nasce com `quantidade: 0` e a `reposicao` do milho é de 300 ticks. A 10 Hz
+  isso é ~1 min 10 s entre o gesto do jogador e o primeiro grão, com um laborer só e a fazenda já
+  de pé. Se o número incomodar, os dois parafusos são `corn.aradura.segundos_base` (4,0) e
+  `corn.reposicao.segundos_base` (60) — e o segundo pesa 15× mais que o primeiro |
+  `resources.json:corn`
+
+- [2026-09-25] **A vazão do campo é o gargalo da cadeia de comida, e agora está medida ponta a
+  ponta** | o operador mandou juntar três medidas que estavam soltas em três sessões, porque
+  contam a mesma história: (1) **706 ticks** da ordem de arar até o primeiro milho na gaveta
+  (F18h, entrada de 2026-09-25 acima) — o grosso não é arar (alerta `sem-campo` some no tick 79),
+  é o campo nascer com `quantidade: 0` e esperar a `reposicao`; (2) `corn.reposicao.segundos_base`
+  (60) pesa **15×** `corn.aradura.segundos_base` (4,0) — é o parafuso que manda; (3) **o milho no
+  armazém nunca passou de 1 em 6 000 ticks** (`test-output/minimo-de-estoque.json`), e o moinho
+  ficou **6 000 de 6 000 ticks com a gaveta vazia**, pedindo 5. O milho não se acumula em lugar
+  nenhum: ele é consumido no instante em que chega, e o moinho passa a partida inteira em
+  `esperando_insumo`. **Isso mata a hipótese de que o sintoma do Moinho e da Padaria (26 % e 29 %
+  em `esperando_insumo`) fosse alvo de pedido baixo** — o alvo já é 5 pela regra de classe, e o que
+  falta é milho existir. Por isso o estoque mínimo de ouro foi recusado e foi para `IDEIAS.md` em
+  vez de virar feature. **Nenhum número girado**, por ordem do operador: a cadeia se calibra
+  inteira quando fechar | `resources.json:tipos.corn.reposicao`, `production.json:predios.farm`,
+  `resources.json:tipos.corn.aradura`
+
+</details>
 
 ---
 

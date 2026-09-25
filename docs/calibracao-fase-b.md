@@ -158,3 +158,56 @@ Corrigida (autorização do operador, 2026-09-25) para aceitar qualquer fase
 produtiva da F-T3: `trabalhando`, `indo_colher`, `colhendo`, `voltando`. O que
 ela exclui continua excluído: `esperando_insumo`, `saida_cheia`, `ocioso` e os
 estados de fome.
+
+---
+
+## Depois do merge na `main` (2026-09-25, em cima da F-T4b)
+
+**`npm run verify` na `main` mergeada, máquina livre** (30 processos node, CPU
+a 19 %): 102 arquivos, 1 413 testes, 36 s, selo `.verify-ok` criado.
+
+**Re-medição com a abertura da F-T4b dentro.** O operador pediu para conferir
+os números da proposta contra a abertura nova (dois grupos, lenhadores a
+leste). Rodei os quatro cenários de novo na `main` mergeada, e saíram **iguais
+byte a byte** aos da branch:
+
+| Cenário | Antes do merge | Depois do merge |
+|---|---|---|
+| ticks por milho, campo longe | 249 | 249 |
+| ticks por milho, campo colado (vila) | 243 | 243 |
+| moinho em `esperando_insumo` (longe / vila) | 2,0 % / 1,9 % | 2,0 % / 1,9 % |
+| 27 civis, 36 000 ticks | 0 mortes | 0 mortes |
+| 39 civis, 36 000 ticks | 0 mortes, Bodega vazia 22 % | 0 mortes, Bodega vazia 22 % |
+
+Iguais por construção, e isso fica registrado para não virar folclore:
+**nenhum dos dois cenários usa a abertura.** O da cadeia do pão fica no norte
+do mapa (x 104–116) e o da vila monta a fazenda por `cenarioDeFazendaSemCampo`
+com moinho e padaria postos à mão, sem passar por `aberturaDaFaseA`. A F-T4b
+mudou onde os lenhadores nascem; não mudou porta, footprint nem custo de
+terreno, que é o que a caminhada do roceiro mede. Se um dia a calibração for
+medida NA abertura (fazenda plantada pelo jogador ao lado dos dois grupos), o
+número a comparar é o de `ticks por milho`, e a caminhada é o único termo que
+pode mudar.
+
+**Os seis timeouts da primeira rodada.** Conferidos um a um: nenhum é asserção
+de tempo. `F-T2b` lê `performance.now()` mas só grava em `test-output/`; o que
+reprova é a razão de nós expandidos. `F09` e `F10-falhas` são os caos de
+propriedade (invariantes por tick), `F10-astar` é custo contra oráculo, `F21`
+grava evidência e `zz-probe-F23` compara estados byte a byte. Todos com o
+timeout **padrão de 5 s** do Vitest (o `20_000` da F09 é só do caso de carga).
+Na máquina livre eles medem:
+
+| Teste | Duração | Folga sobre 5 s |
+|---|---|---|
+| F-T2b busca longa | 2,0 s | 2,4× |
+| F09 caos semente 3 | 1,9 s | 2,6× |
+| F10-astar semente 1 | 1,9 s | 2,7× |
+| F10-falhas caos semente 3 | 2,2 s | 2,3× |
+| F21 evidência | 1,8 s | 2,8× |
+| zz-probe-F23 | 1,7 s | 2,9× |
+
+É orçamento: 2,3× a 2,9× de folga, que duas sessões e oito sims em paralelo
+comeram. A F09 já resolveu o mesmo caso com `20_000` (~5× o medido) e a nota
+de que "timeout não é asserção de tempo" (CLAUDE.md §8). O número para o
+operador decidir: **10 s** nesses seis (~5× o medido) segue a mesma regra.
+Nada alterado — `tests/` fora do escopo desta branch, salvo a F19.
