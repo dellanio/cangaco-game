@@ -5928,3 +5928,81 @@ o primeiro.
   provar o caminho de volta, o que exercita o `release` mas não o gesto do jogador. Se
   o operador quiser a borracha, ela é item novo (`sim/` + `render/`), não ajuste da
   F18i.
+
+  **RESPONDIDO pelo operador em 2026-09-25, e já entregue na F18i:** *"A borracha entra
+  na F18i, não vira item novo. (…) Ferramenta de criar sem ferramenta de desfazer é
+  armadilha, e a assimetria entre as duas seria arbitrária para quem joga."* Escopo que
+  ele fixou: desfaz tile **planejado**, como o `DemolishRoad` faz com tile planejado;
+  campo já arado é recurso do mapa e não se apaga, a mesma regra da rocha.
+
+---
+
+## F18i — A terra de plantio na tela, e a borracha (2026-09-25)
+
+Feature de **integração** (`sim/` + `ui/` + `input/` + `render/`), com a exceção da §10
+escrita no item da fila **antes** do código. O que entrou em `sim/` é só a borracha, que
+é o que o operador mandou entrar.
+
+### Verificado
+
+- **`UnplanField { tiles }`** (`sim/commands.ts`, `sim/systems/campos.ts`,
+  `sim/tick.ts`): tira do canteiro os tiles pedidos, **nunca recusa**, não devolve nada
+  (arar não cobra material) e devolve o **mesmo** objeto de estado quando nada muda.
+  Tile fora do canteiro é no-op — incluindo tile já arado, rocha, água e fora do mapa.
+- **A tarefa de arar cai no mesmo tick**, com `motivo: 'destino-sumiu'` e
+  `resultado: 'cancelada'`, e o laborer volta a `ocioso` sem violação de invariante do
+  JobBoard. Isto é o que a F18h só conseguia provar esvaziando o canteiro **por fora**;
+  agora a prova passa pelo `step`, com o comando que o jogador emite
+  (`tests/F18i-terra-na-tela.test.ts`, perna (a); evidência em `test-output/F18i.json`).
+- **O arrasto misto** (arado + planejado + vazio) apaga só o planejado: o recurso do
+  tile arado sai igual byte a byte da comparação, e o chão vazio segue vazio.
+- **A lista de ferramentas vem do dado.** `ui/menu-build.ts` monta um botão por id com
+  bloco `aradura` (`culturasAraveis`), mais **uma** borracha. Hoje isso desenha
+  `campo-corn` e `apagar-campo` — o roteiro afirma a igualdade entre a lista do menu e
+  a lista derivada de `data/resources.json`, e não a presença de `'corn'`.
+- **O mapa de botões de ferramenta passou a ser por id de botão**, não por modo: dois
+  botões no mesmo modo `campo` (uma cultura cada) se sobrescreveriam num mapa por modo,
+  e o `aria-pressed` marcaria o errado. O ativo agora compara modo **e** cultura.
+- **O roteiro `tools/shots/F18i.js` passou inteiro** (`test-output/F18i-shot.json`, 44
+  afirmações, zero erro de console), com a soma `planejados + prontos` conferida em
+  **todo** passo do desenho e da aradura: 3 + 143 = 146 no tick do comando, 2 + 144 =
+  146 no tick 81, que é o quadro com canteiro e campo pronto na mesma tela
+  (`screenshots/F18i-2-meio-arado.png`, aberto com Read).
+- **A borracha, medida:** com 2 tiles de canteiro e 1 já arado sob o arrasto dos três, a
+  prévia contou **2** — ela pinta só o que de fato apaga. Depois de soltar: planejados
+  0, prontos **144, intacto** (`screenshots/F18i-3-canteiro-apagado.png`, aberto com
+  Read: o canteiro sumiu e o tile arado continua na tela).
+- **§8 cumprido**: o passo da borracha aperta o botão do `#menu-build` **despausado**,
+  com `press('p')`, `mouse.down`, 150 ms, `mouse.up` e pausa de volta — e é ele que
+  prova que escolher a borracha larga a ferramenta de terra (`aria-pressed` dos dois).
+- **Não-regressão por código de saída** (§8, sem abrir screenshot): `F06`, `F08`,
+  `F18d-2` e `F22` saíram 0. `npm run verify` verde: 95 arquivos, 1358 testes.
+
+### Decidido, com o porquê
+
+- **O nome é `UnplanField`, não `DemolishField`** — o nome diz o alcance. Campo arado é
+  recurso do tile, e recurso não se remove por comando (regra da rocha). Consequência
+  registrada no teste: a borracha não precisa de uma segunda regra dizendo "arado não se
+  apaga"; o tile **já saiu** do canteiro quando virou campo, então não há o que apagar.
+- **Nada de seletor novo em `sim/`.** A primeira versão passava a lista de culturas por
+  um `culturasDoMenuBuild` em `sim/selectors.ts`; desfeito. O item da fila diz que o que
+  entra em `sim/` é **só** a borracha, e `ui/` importar `culturasAraveis` direto de
+  `sim/campos` dá a mesma coisa sem acrescentar superfície.
+- **O campo pronto não é desenhado pela camada nova.** Tile arado é recurso, e quem o
+  pinta é a camada de marcadores da F-T2a. A camada de campo só o **conta**, e por isso
+  o campo de debug se chama `camposProntosNoEstado` (estado inteiro) e não
+  `...Renderizados` (o que a câmera mostra) — dois números diferentes, dois nomes
+  diferentes.
+- **O canteiro do campo é desenhado com a cor da cultura, mais sulcos**, e a cor sai de
+  `render/mapa.ts` (`corDoRecurso`, novo), que já é o único casamento id → cor. Os
+  sulcos existem para separá-lo do canteiro da estrada sem depender de cor.
+- **`ehModoDeArrasto` num lugar só** (`input/colocar.ts`): `aoClicar` abre o arrasto e
+  `aoSoltar` o fecha pelo mesmo critério. Dois critérios deixariam um modo que abre
+  arrasto e nunca emite comando.
+
+### Aberto
+
+- **Campo em pousio desenha como `esgotado`** — o mesmo marcador escuro do veio
+  exaurido, porque `codigoDoRecurso` manda todo `quantidade <= 0` para lá. Está na
+  `screenshots/F18i-3`. Não quebra critério escrito de ninguém (por isso não é `BUGS.md`);
+  registrado em `IDEIAS.md`.

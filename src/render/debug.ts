@@ -8,6 +8,7 @@
 import type { Tile } from './grid';
 import type { EstadoDaPlanta } from './planta-fantasma';
 import type { PreviaDeEstrada } from './estradas';
+import type { PreviaDeCampo } from './campos';
 import type { UnidadeRenderizada } from './unidades';
 import { contagemDeEstagios } from './estagio-obra';
 import type { EstagioDaObra } from './estagio-obra';
@@ -97,6 +98,19 @@ export interface EstadoDebug {
   /** A previa do arrasto de estrada em curso, ou null. `custo` e a pedra que o
    *  trecho custaria; `valida` e o que `canPlaceRoad` respondeu. */
   previaDeEstrada: PreviaDeEstrada | null;
+  /** F18i — quantos tiles de CANTEIRO DE CAMPO a cena tem desenhados agora: terra
+   *  que o jogador marcou e o laborer ainda nao arou. */
+  camposPlanejadosRenderizados: number;
+  /** F18i — quantos tiles de cultura aravel existem em `state.recursos`: campo
+   *  PRONTO, contando as manchas que ja vinham do mapa. `NoEstado` e nao
+   *  `Renderizados` porque quem desenha o tile arado e a camada de marcadores de
+   *  recurso (`recursosVisiveis`), que conta so o que esta na vista da camera —
+   *  este numero e do estado inteiro. E com ele que o roteiro fecha a soma:
+   *  planejado que vira arado sai de um e entra no outro. */
+  camposProntosNoEstado: number;
+  /** F18i — a previa do arrasto de campo em curso (arar ou apagar), ou null.
+   *  `valida` e o que `canPlowField` respondeu; na borracha, e "ha canteiro aqui". */
+  previaDeCampo: PreviaDeCampo | null;
   /** Onde a cena centralizou a camera na abertura, em unidades de tile. Nao
    *  e `Tile` (render/grid.ts): pode ser fracionario (33, 31.5, ver
    *  sim/selectors.ts PontoEmTiles) e nao indexa o mapa. */
@@ -186,6 +200,9 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     estradasRenderizadas: 0,
     estradasPlanejadasRenderizadas: 0,
     previaDeEstrada: null,
+    camposPlanejadosRenderizados: 0,
+    camposProntosNoEstado: 0,
+    previaDeCampo: null,
     centroDaVila: null,
     plantaFantasma: null,
     ferramentaAtiva: null,

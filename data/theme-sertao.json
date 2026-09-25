@@ -332,7 +332,11 @@
     "estrada": "Estrada",
     "porTile": "por tile",
     "demolirEstrada": "Demolir estrada",
-    "demolirEstradaDesc": "devolve parte da pedra"
+    "demolirEstradaDesc": "devolve parte da pedra",
+    "campo": "Arar",
+    "campoDesc": "arraste para marcar a terra",
+    "apagarCampo": "Apagar roçado",
+    "apagarCampoDesc": "só o traçado; terra arada fica"
   },
   "painelEscola": {
     "_doc": "F13b. Os três motivos de espera são específicos de propósito: cada um aponta a ação que resolve aquele caso. 'Sem estrada' é um arrasto de dez segundos; 'sem dinheiro' é garimpo e metalurgia. Um texto neutro para os dois esconderia justamente a diferença que importa.",

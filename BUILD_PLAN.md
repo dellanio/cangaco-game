@@ -2507,16 +2507,36 @@ Depende da F20b: o marcador lê `unidade.condicao`, que só existe depois dela. 
   Molde da estrada, do mesmo jeito: uma ferramenta nova no menu Construir ao lado de
   Estrada, arrasto 8-conectado (`input/arrasto.ts`), um arrasto = um `PlowField`
   (`input/colocar.ts`, `ModoDaFerramenta`), e uma camada de **tile planejado**
-  distinta do campo pronto (`render/`). `sim/` **não** recebe nada: o que ela usa
-  já existe.
+  distinta do campo pronto (`render/`).
+- **Feature de INTEGRAÇÃO, e por isso toca `sim/` e `render/` no mesmo item**
+  (exceção da §10, escrita aqui antes do código). O que entra em `sim/` é **só** a
+  borracha: **decisão do operador, 2026-09-25** — *"A borracha entra na F18i, não vira
+  item novo. O jogador vai errar o traçado do campo como erra o da estrada — e a
+  estrada tem `DemolishRoad` desde a F08. Ferramenta de criar sem ferramenta de
+  desfazer é armadilha, e a assimetria entre as duas seria arbitrária para quem
+  joga."* Escopo mínimo dele: **`UnplanField { tiles }`** desfaz tile de campo
+  **PLANEJADO**, exatamente como o ramo DESENHADO do `DemolishRoad` — sai do canteiro,
+  devolve zero (nada foi gasto), nunca é recusado, tile sem canteiro é no-op, e a
+  tarefa de arar perde o destino e cai em `sanearTarefas` com `'destino-sumiu'`, que é
+  o caminho de volta que a F18h já publicou e testou. **Campo já arado NÃO se apaga**:
+  é recurso do tile, e recurso não se remove por comando — a mesma regra que vale para
+  a rocha. Por isso o comando se chama `UnplanField` e não `DemolishField`: o nome diz
+  o que ele alcança.
 - **A lista de ferramentas vem do DADO, não de um literal**: uma por tipo de
   `resources.json` com bloco `aradura`. Hoje isso desenha **uma** — a terra de milho.
   Botão morto para a cana não nasce (ela não tem colhedor; ver a Nota da F18h), e no
   dia em que o Canavial entrar a ferramenta dele aparece sem ninguém tocar em `ui/`.
 - **Aceite**: o roteiro afirma, no mesmo cenário, **planejados** subindo no arrasto e
   **campo pronto** subindo depois, com a soma fechando — a mesma asserção estrita que
-  a F18d-2 usa para a estrada. Screenshot com os dois estados na mesma tela.
-- **Evidência**: `test-output/F18i-shot.json` + `screenshots/F18i-*.png`
+  a F18d-2 usa para a estrada. Screenshot com os dois estados na mesma tela. E a
+  borracha, no mesmo roteiro: um arrasto com ela sobre tiles planejados **derruba o
+  canteiro** e **não** mexe no campo já arado, com a mesma soma conferida.
+- **Aceite da borracha em `sim/`, headless**: `UnplanField` sobre tile planejado
+  esvazia o canteiro e derruba a tarefa com `'destino-sumiu'`; sobre tile já arado é
+  **no-op** (o recurso fica); sobre chão vazio é no-op; e o laborer que estava arando
+  volta a `ocioso` sem violar invariante.
+- **Evidência**: `test-output/F18i-shot.json` + `screenshots/F18i-*.png` +
+  `test-output/F18i.json` (a perna headless da borracha)
 - **Nota (§8 — o roteiro toca `#menu-build`, então roda despausado)**: pelo menos um
   passo faz `press('p')`, `mouse.down` / `waitForTimeout(150)` / `mouse.up` e pausa de
   volta. `page.click()` em página pausada não exerce o gesto do jogador, e foi assim

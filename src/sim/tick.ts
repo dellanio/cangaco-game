@@ -8,7 +8,7 @@ import { aplicarPlaceBlueprint } from './systems/build';
 import { aplicarDemolishBuilding } from './systems/demolicao';
 import { aplicarCancelTraining, aplicarEnqueueTraining, sistemaDasEscolas } from './systems/escolas';
 import { aplicarDemolishRoad, aplicarPlaceRoad } from './systems/estradas';
-import { aplicarPlowField } from './systems/campos';
+import { aplicarPlowField, aplicarUnplanField } from './systems/campos';
 import { gerarTarefas, sanearTarefas } from './systems/jobs';
 import { aplicarSetBuildingPaused } from './systems/pausa';
 import { sistemaDosEspecialistas } from './systems/especialistas';
@@ -51,6 +51,12 @@ export function step(
       }
       case 'PlowField': {
         const resultado = aplicarPlowField(atual, command, dados);
+        atual = resultado.state;
+        events.push(...resultado.events);
+        break;
+      }
+      case 'UnplanField': {
+        const resultado = aplicarUnplanField(atual, command);
         atual = resultado.state;
         events.push(...resultado.events);
         break;

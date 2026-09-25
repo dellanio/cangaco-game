@@ -1,5 +1,5 @@
 import type { Command } from '../sim/commands';
-import type { Ferramenta } from './ferramenta';
+import type { Ferramenta, ModoDaFerramenta } from './ferramenta';
 import { tilesEntre } from './arrasto';
 
 /** O tile do ponteiro, em coordenada de grid. Mesma forma do `Tile` de
@@ -18,6 +18,9 @@ export interface TileClicado {
  *  - modo `estrada` / `demolir-estrada` (F08): um ARRASTO e UM comando, emitido ao
  *    soltar (`PlaceRoad` / `DemolishRoad`). Enquanto arrasta so ha previa
  *    (`trecho()`), que mora aqui — estado de interface, fora do `GameState`.
+ *  - modo `campo` / `apagar-campo` (F18i): o MESMO arrasto, emitindo `PlowField`
+ *    (com a cultura da ferramenta) ou `UnplanField`. Nenhum gesto novo: quem desenha
+ *    estrada ja sabe desenhar roca.
  *  - modo `nenhum` (F13b): NENHUM comando. So avisa `aoClicarSemFerramenta`, que e
  *    quem cuida da selecao de predio. Mao vazia nunca gasta recurso.
  *
@@ -62,6 +65,34 @@ export interface EntradaDoMapa {
  * pior que cancelar. Se o playtest mostrar irritacao, a troca para "confirma ate onde
  * chegou" e uma linha: chamar `soltar` em vez de descartar, em `aoSairDoMapa`.
  */
+/** Os modos que se desenham ARRASTANDO. Um so lugar responde isso: `aoClicar`
+ *  comeca o arrasto e `aoSoltar` o fecha, e dois criterios diferentes deixariam um
+ *  modo que abre arrasto e nunca emite. */
+export function ehModoDeArrasto(modo: ModoDaFerramenta): boolean {
+  return modo === 'estrada' || modo === 'demolir-estrada'
+    || modo === 'campo' || modo === 'apagar-campo';
+}
+
+/**
+ * O comando de um arrasto fechado, ou `null` quando nao ha comando a emitir.
+ *
+ * `null` no modo `campo` sem cultura: a ferramenta de terra e uma por cultura, e sem
+ * id neutro nao ha `PlowField` a montar. Nao e caso alcancavel pelo menu (quem entra
+ * no modo entra com a cultura), e por isso e `null` e nao um `throw`: interface nao
+ * derruba a partida por um estado que ela mesma nao cria.
+ */
+export function comandoDoArrasto(
+  modo: ModoDaFerramenta, cultura: string | null, tiles: readonly TileClicado[],
+): Command | null {
+  switch (modo) {
+    case 'estrada': return { type: 'PlaceRoad', tiles };
+    case 'demolir-estrada': return { type: 'DemolishRoad', tiles };
+    case 'campo': return cultura === null ? null : { type: 'PlowField', recurso: cultura, tiles };
+    case 'apagar-campo': return { type: 'UnplanField', tiles };
+    default: return null;
+  }
+}
+
 export function criarEntradaDoMapa(
   ferramenta: Ferramenta, emitir: (comando: Command) => void,
   /** F13b — clique de mao vazia. Opcional: quem nao passa continua com o
@@ -86,7 +117,7 @@ export function criarEntradaDoMapa(
     aoClicar(tile) {
       if (ferramenta.modo === 'predio' && ferramenta.predioAtivo !== null) {
         emitir({ type: 'PlaceBlueprint', buildingId: ferramenta.predioAtivo, gx: tile.gx, gy: tile.gy });
-      } else if (ferramenta.modo === 'estrada' || ferramenta.modo === 'demolir-estrada') {
+      } else if (ehModoDeArrasto(ferramenta.modo)) {
         arrasto = [tile];
       } else {
         // Mao vazia (F13b): nao emite comando nenhum. Quem sabe que predio esta
@@ -103,7 +134,8 @@ export function criarEntradaDoMapa(
       estender(tile);
       const tiles = arrasto;
       arrasto = null;
-      emitir({ type: ferramenta.modo === 'demolir-estrada' ? 'DemolishRoad' : 'PlaceRoad', tiles });
+      const comando = comandoDoArrasto(ferramenta.modo, ferramenta.culturaAtiva, tiles);
+      if (comando !== null) emitir(comando);
     },
     aoClicarDireito() {
       if (ferramenta.modo === 'nenhum') return false;

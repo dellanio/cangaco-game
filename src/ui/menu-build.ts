@@ -5,6 +5,10 @@
 // varre predios por conta propria (CLAUDE.md §3, §10).
 import type { GameState } from '../sim/state';
 import { custoDaEstrada, opcoesDoMenuBuild } from '../sim/selectors';
+// A lista de culturas araveis vem do DADO, pela funcao que a define (presenca do
+// bloco `aradura`). Ler `resources.json` aqui seria uma segunda verdade, e um
+// literal `'corn'` em `ui/` seria a terceira.
+import { culturasAraveis } from '../sim/campos';
 import type { OpcaoDoMenuBuild } from '../sim/selectors';
 import type { Ferramenta, ModoDaFerramenta } from '../input/ferramenta';
 import temaSertao from '../../data/theme-sertao.json';
@@ -30,6 +34,15 @@ function textoDoCustoDaEstrada(): string {
   return `${temaSertao.mercadorias.stone} ${custoDaEstrada().stone} ${temaSertao.menuBuild.porTile}`;
 }
 
+type TemaDeMercadorias = Readonly<Record<string, string | undefined>>;
+const temaDeMercadorias = temaSertao.mercadorias as TemaDeMercadorias;
+
+/** "Arar Milho": o verbo e do tema, o nome da cultura tambem, e o id neutro
+ *  (`corn`) so aparece no `dataset` e no comando. */
+function nomeDaFerramentaDeCampo(recurso: string): string {
+  return `${temaSertao.menuBuild.campo} ${temaDeMercadorias[recurso] ?? recurso}`;
+}
+
 /** O ramo `semRequisito` ("ainda nao disponivel") nao tem produtor no dado de
  *  hoje: desde a correcao do BUG-002 nenhum predio tem `desbloqueadoPor` null
  *  (GDD §5.2), e `tools/shots/F06.js` afirma justamente que nenhum item do menu
@@ -47,6 +60,14 @@ interface ItemMontado {
   readonly requer: HTMLSpanElement;
 }
 
+interface FerramentaMontada {
+  readonly botao: HTMLButtonElement;
+  readonly modo: ModoDaFerramenta;
+  /** A cultura do botao, ou `null` para as ferramentas que nao tem cultura. E o
+   *  que separa "Arar Milho" de "Arar Cana" quando as duas existirem. */
+  readonly cultura: string | null;
+}
+
 /** Monta o painel em `#menu-build` na primeira `atualizar` (e la que se sabe a
  *  lista de predios) e depois so reescreve o que mudou. */
 export function montarMenuBuild(ferramenta: Ferramenta): MenuBuild {
@@ -54,15 +75,21 @@ export function montarMenuBuild(ferramenta: Ferramenta): MenuBuild {
   if (!raiz) throw new Error('menu-build: #menu-build nao existe no index.html');
 
   const itens = new Map<string, ItemMontado>();
-  // As ferramentas que nao sao planta de predio (F08): estrada e demolir estrada.
-  const ferramentas = new Map<ModoDaFerramenta, HTMLButtonElement>();
+  // As ferramentas que nao sao planta de predio: estrada e demolir estrada (F08),
+  // arar e apagar roca (F18i). Indexadas pelo ID do botao, e nao pelo modo, porque
+  // a partir da F18i o modo `campo` tem UM botao POR CULTURA: dois botoes no mesmo
+  // modo se sobrescreveriam num mapa por modo, e o ativo seria o errado.
+  const ferramentas = new Map<string, FerramentaMontada>();
 
-  function marcarAtivo(predioAtivo: string | null, modo: ModoDaFerramenta): void {
+  function marcarAtivo(
+    predioAtivo: string | null, modo: ModoDaFerramenta, culturaAtiva: string | null,
+  ): void {
     for (const [id, item] of itens) {
       item.botao.setAttribute('aria-pressed', String(id === predioAtivo));
     }
-    for (const [modoDoBotao, botao] of ferramentas) {
-      botao.setAttribute('aria-pressed', String(modoDoBotao === modo));
+    for (const ferramentaMontada of ferramentas.values()) {
+      const ativo = ferramentaMontada.modo === modo && ferramentaMontada.cultura === culturaAtiva;
+      ferramentaMontada.botao.setAttribute('aria-pressed', String(ativo));
     }
     // Sem ferramenta, nenhum item deve parecer selecionado: o anel de foco que
     // o navegador deixa no ultimo botao clicado (aparece de novo apos o Esc)
@@ -87,6 +114,20 @@ export function montarMenuBuild(ferramenta: Ferramenta): MenuBuild {
     montarFerramenta('demolir-estrada', 'demolir-estrada', temaSertao.menuBuild.demolirEstrada,
       temaSertao.menuBuild.demolirEstradaDesc, () => {
         ferramenta.alternar('demolir-estrada');
+      });
+
+    // F18i — uma ferramenta de terra POR CULTURA aravel, na ordem do dado, e uma
+    // borracha para todas. A borracha e unica porque nao precisa saber a cultura:
+    // ela tira o tile do canteiro, seja la o que fosse plantar ali.
+    for (const recurso of culturasAraveis()) {
+      montarFerramenta('campo', `campo-${recurso}`, nomeDaFerramentaDeCampo(recurso),
+        temaSertao.menuBuild.campoDesc, () => {
+          ferramenta.alternarCampo(recurso);
+        }, recurso);
+    }
+    montarFerramenta('apagar-campo', 'apagar-campo', temaSertao.menuBuild.apagarCampo,
+      temaSertao.menuBuild.apagarCampoDesc, () => {
+        ferramenta.alternar('apagar-campo');
       });
 
     for (const opcao of opcoes) {
@@ -119,13 +160,14 @@ export function montarMenuBuild(ferramenta: Ferramenta): MenuBuild {
       itens.set(opcao.id, { botao, requer });
     }
     ferramenta.aoMudar(marcarAtivo);
-    marcarAtivo(ferramenta.predioAtivo, ferramenta.modo);
+    marcarAtivo(ferramenta.predioAtivo, ferramenta.modo, ferramenta.culturaAtiva);
   }
 
-  /** Um botao de ferramenta (estrada, demolir estrada), acima da lista de predios.
-   *  Sempre disponivel: nao depende da arvore de desbloqueio. */
+  /** Um botao de ferramenta (estrada, demolir estrada, arar, apagar roca), acima da
+   *  lista de predios. Sempre disponivel: nao depende da arvore de desbloqueio. */
   function montarFerramenta(
-    modo: ModoDaFerramenta, id: string, nomeDoBotao: string, detalhe: string, aoClicar: () => void,
+    modo: ModoDaFerramenta, id: string, nomeDoBotao: string, detalhe: string,
+    aoClicar: () => void, cultura: string | null = null,
   ): void {
     const botao = document.createElement('button');
     botao.type = 'button';
@@ -143,7 +185,7 @@ export function montarMenuBuild(ferramenta: Ferramenta): MenuBuild {
     botao.append(nome, custo);
     botao.addEventListener('click', aoClicar);
     raiz?.append(botao);
-    ferramentas.set(modo, botao);
+    ferramentas.set(id, { botao, modo, cultura });
   }
 
   return {

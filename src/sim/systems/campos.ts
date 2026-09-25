@@ -6,6 +6,7 @@ import { chaveDeTile } from '../estradas';
 import { criarTarefaDeAradura } from '../jobs';
 
 export type PlowField = Extract<Command, { readonly type: 'PlowField' }>;
+export type UnplanField = Extract<Command, { readonly type: 'UnplanField' }>;
 
 interface Resultado {
   readonly state: GameState;
@@ -40,4 +41,35 @@ export function aplicarPlowField(state: GameState, comando: PlowField, dados: Ga
     atual = criarTarefaDeAradura(atual, tile, comando.recurso).state;
   }
   return { state: atual, events: [] };
+}
+
+/**
+ * F18i — `UnplanField`: a borracha do canteiro. O ramo DESENHADO do
+ * `aplicarDemolishRoad`, e so ele.
+ *
+ * Nunca recusa, nao emite evento e nao devolve material — arar nao cobra nada, entao
+ * nao ha o que estornar. Tile que nao esta no canteiro e ignorado (apagar chao vazio
+ * nao e erro), e tile ja ARADO tambem: ele saiu do canteiro quando o laborer o arou e
+ * virou recurso do tile, que nao se remove por comando (a mesma regra da rocha).
+ *
+ * A tarefa de arar do tile apagado nao e cancelada aqui. Ela perde o destino, e
+ * `sanearTarefas` — que roda logo depois dos comandos, no mesmo tick — a derruba com
+ * `'destino-sumiu'` e devolve o laborer a `ocioso`. Um caminho de volta so.
+ *
+ * Devolve o MESMO estado quando nada sai, pela razao de sempre: tick sem mudanca nao
+ * realoca o canteiro.
+ */
+export function aplicarUnplanField(state: GameState, comando: UnplanField): Resultado {
+  const apagados = new Set<string>();
+  for (const tile of comando.tiles) {
+    const chave = chaveDeTile(tile);
+    if (state.camposPlanejados[chave] !== undefined) apagados.add(chave);
+  }
+  if (apagados.size === 0) return { state, events: [] };
+
+  const camposPlanejados: Record<string, string> = {};
+  for (const [chave, recurso] of Object.entries(state.camposPlanejados)) {
+    if (!apagados.has(chave)) camposPlanejados[chave] = recurso;
+  }
+  return { state: { ...state, camposPlanejados }, events: [] };
 }

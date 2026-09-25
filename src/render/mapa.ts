@@ -147,6 +147,22 @@ export function criarRecursosDeRender(): RecursosDeRender {
 
 export const recursosDeRender: RecursosDeRender = criarRecursosDeRender();
 
+/**
+ * F18i — a cor `#rrggbb` do marcador de um tipo de recurso, para quem desenha
+ * FORA da camada de tiles (o canteiro do campo, `render/campos.ts`). Existe para
+ * o casamento id -> cor continuar sendo UM, aqui, como diz o `_doc` do bloco
+ * `recursos` do tema: ler `theme-sertao.json` numa segunda camada seria a
+ * segunda verdade, e ela divergiria na primeira cultura nova.
+ *
+ * Tipo desconhecido cai na cor do esgotado em vez de lancar: `criarRecursosDeRender`
+ * ja reprovou no carregamento se faltasse cor, e uma camada de desenho nao e o
+ * lugar de derrubar a partida.
+ */
+export function corDoRecurso(tipo: string, config: RecursosDeRender = recursosDeRender): string {
+  const indice = config.tipos.indexOf(tipo);
+  return config.cores[indice + 1] ?? config.cores[config.codigoEsgotado] ?? '#000000';
+}
+
 /** O codigo do tile a partir do que o ESTADO diz que sobrou ali. Puro: e a
  *  mesma funcao que a cena usa para pintar e que o teste usa para afirmar. */
 export function codigoDoRecurso(

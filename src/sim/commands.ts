@@ -51,6 +51,25 @@ export type Command =
     }
   | {
       /**
+       * F18i — a BORRACHA do campo: tira de `camposPlanejados` os tiles que o
+       * jogador desenhou e nao quer mais. Nunca e recusado, nao devolve nada (nada
+       * foi gasto: arar nao cobra material) e tile fora do canteiro e no-op. E o
+       * ramo DESENHADO do `DemolishRoad`, e so ele.
+       *
+       * NAO apaga campo ja ARADO, de proposito: tile arado e recurso do tile, e
+       * recurso nao se remove por comando — a mesma regra que vale para a rocha do
+       * lajedo. O nome diz o alcance: `UnplanField`, e nao `DemolishField`.
+       *
+       * A tarefa de arar do tile apagado nao e cancelada aqui: ela perde o destino e
+       * `sanearTarefas` a derruba com `'destino-sumiu'` no mesmo tick, devolvendo o
+       * laborer a `ocioso`. Um caminho de volta so, para o tile que o jogador apagou
+       * e para o que sumiu por qualquer outro motivo.
+       */
+      readonly type: 'UnplanField';
+      readonly tiles: readonly TileDeGrid[];
+    }
+  | {
+      /**
        * Demole os tiles de estrada de `tiles`; o que nao e estrada e ignorado.
        * Devolve `floor(removidos * terreno.estrada.devolucaoAoDemolir)` de pedra ao
        * armazem de onde sairia o debito. Nunca e recusado.
