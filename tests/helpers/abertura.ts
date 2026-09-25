@@ -221,6 +221,14 @@ export function aberturaDaFaseA(state: GameState, dados: GameData = gameData): A
  * treinos; a cada tick, planta toda casa que ainda nao existe e ja esta
  * desbloqueada — e assim a serraria sai sozinha no primeiro tick em que pode.
  * Nenhum comando fora desta lista: e o mesmo que o jogador clicaria.
+ *
+ * TEMPO DE ASSENTAMENTO — cuidado de MEDICAO, nao de implementacao (segunda vez
+ * que quase deu resposta errada, 2026-09-25): `PlaceRoad` deixa a rua PLANEJADA,
+ * e quem a levanta e o laborer, tile por tile (F18d-1b). Perguntar
+ * `predioLigadoAoArmazem` no tick 1 devolve `false` para TUDO e parece resposta:
+ * na sonda da folga de pedra os dois predios so ligaram nos ticks 96 e 168. Toda
+ * medida de ligacao roda ticks ate a condicao acontecer — nunca le logo depois do
+ * comando. O mesmo vale para o canteiro do prédio: planta nao e prédio completo.
  */
 export function comandosNoTick(
   state: GameState, abertura: Abertura, tick: number, dados: GameData = gameData,

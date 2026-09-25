@@ -4,6 +4,12 @@
 // runner generico e nao sabe nada de HUD, predios ou camera.
 
 const { retanguloDoCanvas } = require('./_canvas');
+// A tabela do cenario inicial vem do DADO, e nao copiada aqui: este roteiro
+// afirmava `'30'` de pedra, e a decisao do operador de subir a folga da abertura
+// para 8 (2026-09-25) reprovaria o roteiro sem nada estar errado na tela. O que o
+// aceite da F05b afirma e "o HUD mostra a tabela, nao um placeholder" — e isso se
+// afirma comparando com a tabela.
+const { estadoInicial } = require('../../data/economy.json');
 
 async function roteiro(ctx) {
   const { page, capturar, estado, afirmar } = ctx;
@@ -24,10 +30,18 @@ async function roteiro(ctx) {
 
   // 3. o HUD mostra os numeros da tabela do cenario inicial, nao um placeholder
   const ler = (campo) => page.textContent(`#hud .valor[data-campo="${campo}"]`);
-  afirmar(await ler('gold') === '20', `gold deveria ser 20, veio ${await ler('gold')}`);
-  afirmar(await ler('timber') === '40', `timber deveria ser 40, veio ${await ler('timber')}`);
-  afirmar(await ler('stone') === '30', `stone deveria ser 30, veio ${await ler('stone')}`);
-  afirmar(await ler('comida') === '25', `comida deveria ser 25 (loaves 15 + sausages 10), veio ${await ler('comida')}`);
+  const esperado = (campo) => String(estadoInicial.estoque[campo] ?? 0);
+  for (const campo of ['gold', 'timber', 'stone']) {
+    afirmar(
+      (await ler(campo)) === esperado(campo),
+      `${campo} deveria ser ${esperado(campo)} (data/economy.json), veio ${await ler(campo)}`,
+    );
+  }
+  const daComida = (estadoInicial.estoque['loaves'] ?? 0) + (estadoInicial.estoque['sausages'] ?? 0);
+  afirmar(
+    (await ler('comida')) === String(daComida),
+    `comida deveria ser ${daComida} (loaves + sausages de data/economy.json), veio ${await ler('comida')}`,
+  );
   afirmar(await ler('populacao') === '6/0', `populacao deveria ser 6/0, veio ${await ler('populacao')}`);
 
   // 4. os nomes sao do tema, nao os ids neutros da simulacao

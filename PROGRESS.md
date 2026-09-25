@@ -6590,3 +6590,115 @@ resumo em `BALANCE_LOG.md`, "Ciclos fechados", Lote 1.
 - Pedreira, lenhador e minas: hipótese registrada em "Observações abertas" do
   `BALANCE_LOG.md` — mesmo padrão (taxa calibrada antes da caminhada), mesmo conserto
   se a colheita ocupar o orçamento inteiro de quem consome. Não medido.
+
+## 2026-09-25 — Duas decisões do operador (folga de pedra, aceite da F18g) e o diagnóstico do lenhador sem estrada
+
+Sessão de decisão e diagnóstico. **Nenhuma linha de `src/sim/` mudou** e nenhuma
+feature virou a chave: o que mudou foi um número de dado, três lugares que o copiavam,
+uma nota de fila e um cuidado de medição.
+
+### Decidido pelo operador (com o porquê dele)
+
+- **A folga da abertura sobe de 4 para 8 de pedra: `estadoInicial.estoque.stone`
+  30 → 34** (`data/economy.json`). Ele decidiu **contra** o veredito que a medida da
+  sessão anterior havia dado ("nada a ajustar"), e o motivo não é ritmo: *"o que some é
+  o fio de navalha: hoje um tile a mais na rua torna a abertura impossível, e isso é
+  ausência de margem, não decisão."* A entrada antiga do `BALANCE_LOG.md` foi marcada
+  como **SUPERADA** no próprio texto para que nenhuma sessão futura a leia como
+  corrente; a medida dela continua válida como descrição do que 30 fazia.
+- **A F18g não alivia o orçamento da abertura, e isso é mudança de ACEITE, não
+  consequência.** Ele pediu que ficasse escrito no item, com as **duas opções** (reserva
+  por tile, ou arrasto parcial) e o custo de cada, porque *"não quero que quem pegar a
+  feature descubra isso no meio"*. Ele decide qual quando a feature chegar.
+- **Registro de erro do operador, a pedido dele:** ele havia dito que a F18g aliviaria a
+  restrição *"sem ninguém pedir"*. **Estava errado** — mover o débito não toca no portão,
+  que é a reserva. Está escrito no item da F18g.
+
+### Verificado (medido nesta sessão, com evidência aberta)
+
+- **As duas pontas depois da mudança** (`test-output/F-T4b-folga-8.json`, sonda
+  temporária, janela de 5 300 ticks, critério de Fase A igual ao da F17 — quatro
+  completos, ocupados, ligados, timber acima da linha do tick 0): ponta A (ligar tudo no
+  tick 0, rua de 26) sobram **4** tiles, Fase A fecha no **3992**, estoque toca **0 no
+  875**, fica 0 por **367** ticks, volta no **1023**; ponta B (escalonar, 18 tiles)
+  sobram **12**, fecha no **4741**, toca 0 no **968**, fica 0 por **1311**, volta no
+  **2060**. Nenhuma recusa nas duas. **A Fase A continua fechando nas duas, a escolha
+  continua existindo (4 ≠ 12), e por isso NÃO voltei para 6.**
+- **Ressalva que eu mesmo medi e que enfraquece a tensão:** uma terceira ponta que
+  escalona **e guarda** margem de 8 saiu **idêntica à B** (`tickDoRestoDaRua: 1` nas
+  duas) — com 34 de pedra os 8 tiles restantes já cabem no tick 1 mesmo guardando 8. A
+  tensão sobrevive na escolha de **geometria**, não numa espera. Registrado no
+  `BALANCE_LOG.md`.
+- **A mudança de 30 → 34 quebrou exatamente três lugares que copiavam o número**, e os
+  três foram consertados **estruturalmente**, lendo o dado — girar o número de novo não
+  reprova mais nada: `tests/F18d-1a-modo.test.ts` (passou a afirmar o DELTA, com a linha
+  de base vinda de `gameData.economia.estadoInicial.estoque`),
+  `tests/F18d-1b-laborer.test.ts` (eixo melhor: a reserva VIRA o débito, então o
+  disponível é o MESMO nos dois instantes) e `tools/shots/F05b.js` (lê a tabela de
+  `data/economy.json`; `npm run shot -- F05b` saiu 0).
+- **Cuidado de medição virou linha no helper**, não só no diário
+  (`tests/helpers/abertura.ts`, no doc de `comandosNoTick`): `PlaceRoad` deixa a rua
+  **planejada**, e perguntar `predioLigadoAoArmazem` no tick 1 devolve `false` para tudo
+  e *parece* resposta — na sonda os dois prédios só ligaram nos ticks **96** e **168**.
+  Foi a segunda vez que o tempo de assentamento quase deu resposta errada.
+
+### Diagnóstico pedido pelo operador: "o lenhador só colhe depois que existe estrada"
+
+Pedido explícito: **"Não corrija ainda. Traga o diagnóstico."** Nada foi corrigido.
+
+- **A resposta é (b), com uma correção:** não é a regra de `saida_cheia` da F16c
+  disparando por emergência — é um **portão explícito** no alto de `produzir()`,
+  `src/sim/systems/especialistas.ts:365`, que roda **antes** da receita, antes da
+  colheita e antes do relógio: `if (!predioLigadoAoArmazem(...)) return comFsm(state, u,
+  'saida_cheia')`. O comentário dele cita GDD §5.1 e a decisão **D6**.
+- **Medido** (`test-output/F-T4b-diagnostico-sem-estrada.json`, sonda temporária, 2 000
+  ticks, **zero** estradas no mapa): `woodcutters@34,27` com **36** tiles de mata ao
+  alcance, `quarry@26,34` com **195** de rocha e `farm@112,30` — os três em
+  `saida_cheia` desde o primeiro tick, gaveta de saída vazia, **0** eventos
+  `goods-produced`, **0** tarefas criadas. **É regra de classe: uma função, um
+  conserto.**
+- **Perna de controle, e ela é o que fecha o diagnóstico:** o **mesmo** fixture, na
+  **mesma** posição, só com a rua a mais, anda
+  `indo_colher → trabalhando → voltando → colhendo`, com **2** eventos de produção e
+  **3** tarefas `colher`. Os dois cenários já ligados da suíte (`cenarioDePedreira`,
+  `cenarioDeFazenda`) produzem **5** cada um. Sem esta perna, "não produziu" não aponta
+  para a estrada.
+- **(a) está descartada, medida:** com zero estradas a tarefa `ocupar` **nasce e é
+  reclamada**, o civil anda `ocioso → indo_ocupar → trabalhando → saida_cheia` e **ocupa
+  no tick 52**. O especialista chega ao prédio desligado sem problema.
+- **(c) está descartada:** `ocupar` e `colher` **não estão na escada de
+  `data/delivery.json`**, então `modoDoTipo` não governa nenhuma das duas e elas andam
+  livres. A colheita nem chega a ser pedida — o portão retorna antes.
+- **Ressalva de nulidade, para não inflar a prova:** na fazenda
+  `recursoAoAlcanceNoTick0` saiu **0** (a fazenda ara, e milho só existe depois de
+  plantado), então o caso dela não distingue "portão" de "nada a colher" pelo número. O
+  que distingue é o **rótulo**: `saida_cheia` desde o tick 1, e não `esperando_insumo` —
+  o portão é a única coisa que produz esse rótulo antes de o plantio ser tentado.
+- **Onde está o conflito, e ele é de decisão, não de código.** O operador afirma hoje:
+  *"entregar é livre, coletar pelo serf exige estrada. Produzir não depende de rua."* O
+  código faz o que **D6** manda, e D6 é decisão dele, registrada em `PROGRESS.md:680` e
+  como Nota no item do `BUILD_PLAN.md:432`, com `PROGRESS.md:2634` dizendo em letras:
+  *"prédio não ligado ao armazém **nem produz**"*. O texto real da **GDD §5.1** é
+  *"Planta com porta ao sul; precisa de estrada até a rede"* — regra de
+  **posicionamento**, que não diz nada sobre produção parar. **Logo: a regra que ele
+  enuncia hoje não contradiz o GDD; contradiz o D6 como implementado.** Revogar D6 é
+  decisão dele, e é por isso que isto **não** foi para o `BUGS.md`: nenhum critério de
+  aceite escrito está quebrado (todos os aceites de hoje descrevem D6), e virar a chave
+  de uma feature por isso seria pré-julgar a decisão.
+- **Conserto pré-escrito, para quando ele decidir** (não aplicado): apagar as 2 linhas
+  do portão em `especialistas.ts:365` faz o produtor rodar o ciclo e parar em
+  `saida_cheia` **por gaveta cheia**, que é o comportamento que ele descreve — a gaveta
+  tem `production.estoqueInternoPorPredio` de teto, então prédio desligado produz até
+  encher e para, sem ganho infinito. **O alerta da tela NÃO depende do portão, e isto
+  eu conferi:** a causa `'sem-estrada'` de `CAUSAS_DE_ALERTA` deriva direto de
+  `!predioLigadoAoArmazem` em `src/sim/selectors.ts:614-615`, sem passar por `produzir()` —
+  apagar o portão não deixa o alerta sem produtor, e o jogador continua vendo "Sem estrada
+  até o armazém". O que precisa de medida antes de mexer: quantos testes afirmam hoje o
+  rótulo `saida_cheia` **vindo do portão** (a F15a e a F18d-1a o usam).
+
+### Aberto
+
+- **Decisão do operador pendente:** revogar ou manter o D6 (produção exige estrada).
+  Enquanto não vier, a interpretação conservadora é a que está no código: nada mudou.
+- Qual das duas opções da F18g (reserva por tile / arrasto parcial), quando a feature
+  chegar.

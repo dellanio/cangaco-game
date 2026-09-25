@@ -317,7 +317,9 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   perde antes do primeiro clique: mesmo na ponta cara ela se liga (a F17 fecha a Fase
   A no tick 4266), o estoque toca 0 no tick 617, fica em 0 de ~750 a ~2000 e volta a
   subir com a pedreira — 19 no tick 6000. **Conclusão: nada a ajustar em
-  `estadoInicial.estoque.stone`.** O que fica de dívida é que a folga de 4 é IGUAL ao
+  `estadoInicial.estoque.stone`.** — **SUPERADA no mesmo dia pela decisão do
+  operador (entrada abaixo): o número virou 34.** A medida acima continua válida como
+  descrição do que 30 fazia; a conclusão "nada a ajustar", não. O que fica de dívida é que a folga de 4 é IGUAL ao
   arranque mínimo de 4: é fio de navalha, não ladeira. Um tile a mais na rua, ou 1 de
   pedra a mais em quarry/woodcutters, torna a abertura impossível — e é por isso que o
   orçamento agora estoura no gerador com as duas medidas na mensagem
@@ -334,6 +336,34 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   `data/economy.json:estadoInicial.estoque.stone`,
   `data/terrain.json:estrada.custoStonePorTile`, `data/buildings.json`
   (quarry.stone, woodcutters.stone)
+
+- [2026-09-25] **a folga da abertura subiu de 4 para 8 de pedra por decisão do
+  operador: 30 → 34 em `estadoInicial.estoque.stone`** | ele decidiu contra a conclusão
+  da entrada acima, e o motivo dele não é ritmo: *"a tensão que você mediu continua
+  existindo — as duas pontas passam a ser 4 e 12... O que some é o fio de navalha: hoje
+  um tile a mais na rua torna a abertura impossível, e isso é ausência de margem, não
+  decisão."* É o único item deste diário girado fora de lote, e de propósito: o que ele
+  ajustou foi a **margem** do fio de navalha que a medida anterior apontou como dívida,
+  não um número de ritmo. **Medido depois de mexer** (`test-output/F-T4b-folga-8.json`,
+  sonda desta sessão, janela de 5 300 ticks, critério de Fase A igual ao da F17 — quatro
+  prédios completos, ocupados, ligados e o timber acima da linha do tick 0):
+  · **ponta A, ligar tudo no tick 0** — rua de 26 tiles, sobram **4** para o quinto
+  prédio, a Fase A fecha no **tick 3992**, o estoque toca **0 no tick 875**, fica em 0
+  por **367 ticks** e volta ao positivo no **1023**, nenhuma recusa;
+  · **ponta B, escalonar** (18 tiles: pedreira + primeira casa de lenhador) — sobram
+  **12**, a Fase A fecha no **4741**, toca 0 no **968**, fica em 0 por **1311 ticks**,
+  volta no **2060**, nenhuma recusa.
+  **A escolha continua existindo** (4 contra 12, e a ponta que guarda pedra paga 749
+  ticks de Fase A mais lenta), então não volto para 6. O que mudou de qualidade: a ponta
+  A deixou de ser zero — quem liga tudo ainda tem 4 tiles de rua na mão.
+  **Ressalva medida, e ela enfraquece a tensão:** rodei uma terceira ponta que escalona
+  **e guarda** margem de 8 antes de comprar o resto da rua, e saiu **idêntica à B**
+  (`tickDoRestoDaRua: 1` nas duas) — com 34 de pedra os 8 tiles restantes já cabem no
+  tick 1 mesmo guardando 8, ou seja "escalonar" virou questão de um tick, não uma
+  aposta. A tensão sobrevive na escolha de **geometria** (quanto de rua comprar), não
+  mais numa espera. Se o lote quiser a aposta de volta, o parafuso é o mesmo trio da
+  entrada acima | **girado: `stone` 30 → 34** |
+  `data/economy.json:estadoInicial.estoque.stone`
 
 - [2026-09-25] **HIPÓTESE, registrada a pedido do operador ao fechar o Lote 1: pedreira,
   lenhador e minas têm o mesmo padrão da fazenda, e o conserto deve ser o mesmo** | as taxas

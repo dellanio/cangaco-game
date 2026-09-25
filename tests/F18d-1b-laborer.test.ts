@@ -58,12 +58,17 @@ describe('F18d-1b — o ciclo do assentamento', () => {
     const { estado } = comOCanteiro();
     const custo = gameData.terreno.estrada.custoStonePorTile;
     const antes = bensPorMercadoria(estado).stone ?? 0;
+    const disponivelAntes = disponivelNaOrigem(estado, ARMAZEM, MERCADORIA_DA_ESTRADA);
     expect(reservadoNaOrigem(estado, ARMAZEM, MERCADORIA_DA_ESTRADA)).toBe(custo);
 
     const pronto = ate(estado, assentado, 'o tile e assentado');
     expect((bensPorMercadoria(pronto).stone ?? 0)).toBe(antes - custo);
     expect(reservadoNaOrigem(pronto, ARMAZEM, MERCADORIA_DA_ESTRADA)).toBe(0);
-    expect(disponivelNaOrigem(pronto, ARMAZEM, MERCADORIA_DA_ESTRADA)).toBe(30 - custo);
+    // era `30 - custo`, com o estoque inicial do dado digitado aqui (e girar de 30
+    // para 34 reprovava este teste, F-T4b/2026-09-25). O eixo honesto e melhor: a
+    // reserva VIRA o debito, entao o disponivel e o MESMO nos dois instantes — debito
+    // de 2, ou reserva que nunca aconteceu, quebram isto igual, e sem numero copiado.
+    expect(disponivelNaOrigem(pronto, ARMAZEM, MERCADORIA_DA_ESTRADA)).toBe(disponivelAntes);
   });
 
   it('a invariante da FSM continua ACUSANDO: assentando sem a tarefa na mao', () => {

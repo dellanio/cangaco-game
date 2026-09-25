@@ -3025,32 +3025,72 @@ Depende da F20b: o marcador lê `unidade.condicao`, que só existe depois dela. 
   - **O que NÃO mudou**: os ~12 pontos de ramificação, as 2 FSMs, o 4º caso do
     demolir e os ~89 testes em órbita da nota de 2026-09-24 seguem valendo. A F23
     acrescentou **1 linha** (a versão) e **1 perna de teste**.
-- **Nota (esta feature ALIVIA o orçamento da abertura, mas só se mexer também no
-  momento da RESERVA — medido em 2026-09-25, pedido do operador)**: hoje `PlaceRoad`
-  é tudo-ou-nada e cobra **a rua inteira no instante do comando**: `canPlaceRoad`
-  soma `novos.length * custoStonePorTile` e recusa com `sem-pedra` se passar de
-  `pedraDisponivel` (`src/sim/estradas.ts:537-538`), que é o reservável na gaveta
-  `saida` dos armazéns completos. É **isso** que faz o estoque inicial ser restrição
-  de GEOMETRIA e não de logística: na F-T4b a rua de 31 tiles contra 30 de pedra
-  recusou inteira, nenhum tile subiu, e a vila ficou com os quatro prédios completos
-  e desligados. A abertura hoje vive em fio de navalha — 26 tiles + 4 de arranque =
-  os 30 exatos (entrada de 2026-09-25 no `BALANCE_LOG.md`), e o gerador estoura com
-  as duas medidas na mensagem (`tools/geometria-da-abertura.mjs`) para o defeito
-  aparecer na causa e não três passos depois.
-  **O cuidado:** o escopo desta feature, como está escrito acima, move o **débito**
-  do assentamento para a entrega — e o portão que aperta a abertura não é o débito, é
-  a **reserva no instante do comando**. Se a F18g mantiver a reserva da rua inteira
-  em `PlaceRoad`, o orçamento da abertura fica **exatamente tão apertado quanto
-  hoje**, e o alívio não vem de graça. Para vir, a reserva tem de passar a ser por
-  tile (ou o arrasto aceitar assentar até onde a pedra der, virando parcial em vez de
-  tudo-ou-nada) — e isso é **mudança de aceite**, não consequência dela. Quem
-  implementar decide qual dos dois e registra aqui.
-  **A dívida que nasce junto:** se o portão afrouxar, o guarda de orçamento do
-  gerador (`rua.length * custoStonePorTile + reserva > estoqueInicialDeStone`) passa
-  a ser **pessimista** — vai recusar geometria que a partida sustenta, porque a
-  pedreira produz enquanto a rua sobe. Aí ele deixa de ser guarda e vira teto falso:
-  revisite-o no mesmo commit, junto com o 4º teste de `tests/F-T4b-geometria.test.ts`,
-  que é quem afirma que a mensagem carrega as duas medidas.
+- **Nota (MUDANÇA DE ACEITE, decidida pelo operador em 2026-09-25 — leia antes de
+  começar)**: o escopo escrito acima **não alivia** o orçamento da abertura, e quem
+  pegar a feature precisa saber disso **antes**, não no meio.
+  **O que foi medido:** `PlaceRoad` é tudo-ou-nada e o portão que aperta a abertura é
+  a **reserva no instante do comando**, não o débito. `canPlaceRoad` soma
+  `novos.length * custoStonePorTile` e recusa o trecho **inteiro** com `sem-pedra` se
+  passar de `pedraDisponivel` (`src/sim/estradas.ts:538-539`), que é o reservável na
+  gaveta `saida` dos armazéns completos. É **isso** que faz o estoque inicial ser
+  restrição de GEOMETRIA: na F-T4b a rua de 31 tiles contra 30 de pedra recusou
+  inteira, nenhum tile subiu, e a vila ficou com os quatro prédios completos e
+  desligados. Mover o débito do assentamento para a entrega — o escopo desta feature —
+  **não toca nesse portão**: o orçamento da abertura fica exatamente tão apertado
+  quanto hoje.
+  **Registro de erro do operador (palavras dele, 2026-09-25):** ele havia dito que a
+  F18g aliviaria a restrição *"sem ninguém pedir"*, e pediu que ficasse escrito que
+  **estava errado**. Não alivia. Aliviar é escopo NOVO, e é por isso que esta nota é
+  mudança de **aceite** e não consequência dela.
+  **As duas opções, e o que cada uma custa.** O operador decide **quando a feature
+  chegar**; quem implementar não escolhe sozinho.
+  - **Opção A — a reserva vira por tile.** Tira o teto agregado de `canPlaceRoad`
+    (as 2 linhas do `sem-pedra`) e deixa o canteiro inteiro ser desenhado; as tarefas
+    nascem conforme a pedra aparece. **Custo baixo em código, e a máquina já existe**:
+    `aplicarPlaceRoad` já cria uma tarefa por tile e já **para** quando
+    `criarTarefaDeAssentamento` devolve `null`, e o próprio comentário dele diz que
+    *"um tile pode ficar desenhado SEM tarefa... o `gerarTarefas` remenda quando houver
+    pedra"* (`src/sim/systems/estradas.ts:38-42`). O que se paga:
+    · **9 asserções de `sem-pedra`** em 3 suítes mais o helper (`F08-estradas` 2,
+    `F09-estrada-reserva` 3, `F18d-1b-tarefa` 2, `tests/helpers/abertura.ts` 2)
+    **invertem de sentido** — e a de `abertura.ts` é a guarda de orçamento do gerador,
+    que vira pessimista (ver a dívida no fim desta nota);
+    · o motivo `'sem-pedra'` do tipo `ResultadoDeEstrada` (`estradas.ts:39`) fica
+    **sem produtor**; ou some, ou passa a ser por tile;
+    · **a recusa NÃO é feedback perdido, e isto foi medido**: `command-rejected` não
+    tem **nenhum** consumidor fora de `sim/` (só `src/input/colocar.ts:54`, num
+    comentário) — hoje o jogador que pede rua sem pedra não vê nada. A dívida real é a
+    inversa: com a Opção A o canteiro vira o feedback ("desenhado e esperando pedra"),
+    e mostrar isso é trabalho de `render`/`ui`, ou seja **outra** feature, com a nota
+    de integração da §10 escrita no item dela;
+    · **risco de desenho**: rua desenhada de graça é um arrasto imenso que a vila
+    nunca termina. As duas guardas medidas na sonda da F18d-1b continuam de pé (sem
+    pagador a tarefa não nasce), mas o canteiro passa a crescer sem limite.
+  - **Opção B — o arrasto vira parcial.** `canPlaceRoad` mantém a conta e devolve o
+    **prefixo que cabe**, e `aplicarPlaceRoad` desenha só ele. **Custo maior, e o
+    caro não é código**:
+    · quebra o contrato "tudo ou nada" que está escrito em `src/sim/commands.ts:28-38`
+    e que o **`PlowField` cita como molde** (*"Tudo ou nada, como o `PlaceRoad`"*) —
+    mexer num decide pelo outro, ou os dois divergem de propósito;
+    · `ResultadoDeEstrada.ok` ganha "quantos ficaram de fora", e todo leitor de `ok`
+    passa a ter de olhar isso: a prévia do render (`src/render/debug.ts:99`, que pinta
+    o que o trecho custaria) e o arrasto do input;
+    · **o custo de design, que é o verdadeiro**: qual prefixo? A ordem dos tiles é o
+    gesto do jogador (`input/arrasto.ts`), então aceitar parcial é **decidir geometria
+    no lugar dele** — cortar um L no meio deixa um trecho que não liga nada, e o
+    jogador paga pedra por rua inútil sem ter pedido. Se esta opção for escolhida, o
+    item precisa dizer **onde** corta e o que acontece com o resto do gesto (some,
+    fica planejado sem tarefa, ou vira recusa).
+  **A dívida que nasce em qualquer das duas:** se o portão afrouxar, o guarda de
+  orçamento do gerador (`rua.length * custoStonePorTile + reserva >
+  estoqueInicialDeStone`, em `tools/geometria-da-abertura.mjs`) passa a ser
+  **pessimista** — vai recusar geometria que a partida sustenta, porque a pedreira
+  produz enquanto a rua sobe. Aí ele deixa de ser guarda e vira teto falso: revisite-o
+  no mesmo commit, junto com o 4º teste de `tests/F-T4b-geometria.test.ts`, que é quem
+  afirma que a mensagem carrega as duas medidas.
+  **Contexto de balanceamento:** o estoque inicial subiu de 30 para 34 por decisão do
+  operador em 2026-09-25 (entrada no `BALANCE_LOG.md`), o que tirou a abertura do fio
+  de navalha — mas isso é margem, não conserto do portão. O portão continua igual.
 
 ### F-CAL — A calibração medida na abertura (aceite; a última medição da Fase B)
 - **Por que existe** (decisão do operador, 2026-09-25, ao mergear a

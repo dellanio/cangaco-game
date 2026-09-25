@@ -179,6 +179,9 @@ function medirOAceite(): {
   return { semRua, comRua };
 }
 
+/** A linha de base do armazem vem do dado, nunca digitada. */
+const STONE_INICIAL = gameData.economia.estadoInicial.estoque['stone'] ?? 0;
+
 describe('F18d-1a — o aceite do BUILD_PLAN', () => {
   it('sem nenhuma estrada a obra fica completa; a pedreira nao escoa ate a rua existir', () => {
     const { semRua, comRua } = medirOAceite();
@@ -188,7 +191,11 @@ describe('F18d-1a — o aceite do BUILD_PLAN', () => {
       pedreiro: 'saida_cheia', // e a producao NAO escoou
       pedraNaGavetaDaPedreira: 5, // a gaveta continua cheia (capacidade 5)
       tarefasDeColeta: 0, // nenhuma tarefa de nivel 6 nasceu
-      pedraNoArmazem: { antes: 30, depois: 28 }, // -2: a pedra que entrou na obra
+      // F-T4b (2026-09-25): o estoque inicial subiu de 30 para 34 por decisao do
+      // operador, e estes tres numeros eram o literal 30 copiado do dado. O que o
+      // aceite afirma e o DELTA (-2 na obra, +5 quando a gaveta escoa), nao o saldo:
+      // a linha de base vem de `data/economy.json` e girar o numero nao reprova aqui.
+      pedraNoArmazem: { antes: STONE_INICIAL, depois: STONE_INICIAL - 2 },
     });
     // F-T2a: a pedreira deste cenario esta em (36,34), no descampado — e desde
     // que a fonte passou a ser o TILE, ali nao ha o que cortar. O que o aceite
@@ -200,7 +207,7 @@ describe('F18d-1a — o aceite do BUILD_PLAN', () => {
       escoouNoTick: 43, // a rua existe: a tarefa de coleta nasce e o serf vem
       pedreiro: 'esperando_insumo', // sem rocha ao alcance, nao ha ciclo novo
       pedraNaGavetaDaPedreira: 0,
-      pedraNoArmazem: 33, // 28 + as 5 da gaveta, e nada mais: nao houve producao nova
+      pedraNoArmazem: STONE_INICIAL - 2 + 5, // e nada mais: nao houve producao nova
       rochaAoAlcanceDaPedreira: 0,
     });
   });
