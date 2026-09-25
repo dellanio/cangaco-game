@@ -14,6 +14,7 @@
 
 const { retanguloDoCanvas, arrastarDentroDoCanvas } = require('./_canvas');
 const { erguerRua } = require('./_estradas');
+const { bloqueiaConstrucao } = require('./_recursos');
 const economia = require('../../data/economy.json');
 const terreno = require('../../data/terrain.json');
 
@@ -39,12 +40,29 @@ async function roteiro(ctx) {
     return { x, y };
   }
 
-  // A diagonal nasce a sudoeste do armazem, em chao livre, e desce para sudeste:
-  // passa rente ao canto do predio sem encostar no footprint, e cabe no quadro da
-  // abertura (o `pontoDoTile` reprova se sair do canvas).
+  // A diagonal nasce a sudoeste do armazem e desce para sudeste: passa rente ao
+  // canto do predio sem encostar no footprint, e cabe no quadro da abertura (o
+  // `pontoDoTile` reprova se sair do canvas). A linha de partida NAO e fixa: ela
+  // desce ate a diagonal inteira estar livre de recurso que recusa obra (BUG-F).
+  // Medido em 2026-09-24: com o `armazem.gy + 1` de antes o primeiro tile caia em
+  // (26,31), que e lajedo da vila, e a previa passou a sair
+  // `valida: false, motivo: 'recurso'` — o roteiro afirmava chao livre num tile
+  // que nunca foi livre, so nao doia enquanto a estrada aceitava rocha.
   const armazem = economia.estadoInicial.predios.find((p) => p.id === 'storehouse');
-  const inicio = { gx: armazem.gx - 3, gy: armazem.gy + 1 };
-  const fim = { gx: inicio.gx + PASSOS, gy: inicio.gy + PASSOS };
+  const diagonalDe = (gy) => Array.from(
+    { length: PASSOS + 1 },
+    (_, k) => ({ gx: armazem.gx - 3 + k, gy: gy + k }),
+  );
+  const diagonalLivre = (gy) => diagonalDe(gy).every((t) => !bloqueiaConstrucao(t.gx, t.gy));
+  let gyDaDiagonal = armazem.gy + 1;
+  while (gyDaDiagonal <= armazem.gy + 6 && !diagonalLivre(gyDaDiagonal)) gyDaDiagonal += 1;
+  afirmar(
+    diagonalLivre(gyDaDiagonal),
+    'nao ha diagonal livre de recurso a sudoeste do armazem; a geometria do roteiro '
+      + 'precisa mudar, nao a regra',
+  );
+  const inicio = diagonalDe(gyDaDiagonal)[0];
+  const fim = diagonalDe(gyDaDiagonal)[PASSOS];
   const custoPorTile = terreno.estrada.custoStonePorTile;
   const tilesDaDiagonal = PASSOS + 1;          // 8-conectada (F18e)
   const tilesDaEscadaAntiga = 2 * PASSOS + 1;  // 4-conectada (F08)

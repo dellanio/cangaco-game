@@ -23,26 +23,34 @@
 // A gaveta `saida` de predio de producao nao e afirmada em lugar nenhum: ela fica
 // vazia quase sempre (nota da F16b no item da F17). Estoque se prova no ARMAZEM.
 //
-// A vila tem 21 tiles de largura e o canvas mostra ~15: `centrarEm` anda a camera
-// com o botao do meio antes de cada clique, como o jogador faria.
+// A vila tem 26 tiles de largura (BUG-F: a fila recuou para fora do lajedo) e o
+// canvas mostra ~15: `centrarEm` anda a camera com o botao do meio antes de cada
+// clique, como o jogador faria.
 const { retanguloDoCanvas, arrastarDentroDoCanvas } = require('./_canvas');
 const economia = require('../../data/economy.json');
 const tema = require('../../data/theme-sertao.json');
 const { predios } = require('../../data/buildings.json');
+const { caixaLivre, ruaComDesvio, arrastosDaRua } = require('./_recursos');
 
 const TILE_PX = 64;
 const defDe = (id) => predios.find((p) => p.id === id);
 const noDado = (id) => economia.estadoInicial.predios.find((p) => p.id === id);
 
 /** A abertura do GDD §1.3, na ordem em que entra na fila. Mesma lista do
- *  headless (`tests/helpers/abertura.ts`), que e a que o criterio nomeia. */
-const TIPOS_DA_ABERTURA = ['woodcutters', 'woodcutters', 'quarry', 'sawmill'];
+ *  headless (`tests/helpers/abertura.ts`), que e a que o criterio nomeia.
+ *  A pedreira e a ULTIMA desde o BUG-F: colada no lajedo, ela alcanca os 13 tiles
+ *  de rocha; no meio da fila alcancaria 4. */
+const TIPOS_DA_ABERTURA = ['woodcutters', 'woodcutters', 'sawmill', 'quarry'];
 
-// Medido na sonda desta sessao (docs/planos/F17-aceite.md §8): a serraria
+
+// Medido na sonda da sessao da F17 (docs/planos/F17-aceite.md §8): a serraria
 // desbloqueia no tick 504 e o criterio fecha no 3184. Os tetos abaixo sao esses
 // numeros com folga — o roteiro PARA no marco, nao no teto.
-const TETO_ATE_DESBLOQUEAR = 900;
-const TETO_ATE_O_CRITERIO = 4200;
+// RE-MEDIDO em 2026-09-24 (BUG-F, geometria recuada): desbloqueio no tick 775 e
+// criterio fechado no 4187. O eixo e TICK, deterministico — nao e medida de
+// relogio, que a §8 do CLAUDE.md proibiu como assercao.
+const TETO_ATE_DESBLOQUEAR = 1100;
+const TETO_ATE_O_CRITERIO = 5300;
 const PASSO_DE_AVANCO = 50; // um avancar seco e grande estoura o frame (F16b)
 
 async function roteiro(ctx) {
@@ -142,9 +150,20 @@ async function roteiro(ctx) {
   const alturas = [...new Set(TIPOS_DA_ABERTURA.map((t) => defDe(t).tamanho[1]))];
   afirmar(alturas.length === 1, `a fila unica exige altura igual nos quatro, veio ${JSON.stringify(alturas)}`);
   const larguraTotal = TIPOS_DA_ABERTURA.reduce((s, t) => s + defDe(t).tamanho[0], 0);
-  let x = armazem.gx - larguraTotal;
+  const gyDaFila = yRua - alturas[0];
+  // BUG-F: encostada no armazem a fila cai no lajedo, e rocha recusa obra. Recua
+  // ate caber, igual ao headless — e por isso que a vila abre a oeste do lajedo.
+  const filaCabe = (x0) => TIPOS_DA_ABERTURA.every((tipo, i) => {
+    const antes = TIPOS_DA_ABERTURA.slice(0, i).reduce((acc, t) => acc + defDe(t).tamanho[0], 0);
+    const [larg, alt] = defDe(tipo).tamanho;
+    return caixaLivre(x0 + antes, gyDaFila, larg, alt);
+  });
+  let inicioDaFila = armazem.gx - larguraTotal;
+  while (inicioDaFila >= 0 && !filaCabe(inicioDaFila)) inicioDaFila -= 1;
+  afirmar(inicioDaFila >= 0, 'a fila nao cabe a oeste do armazem sem pisar em recurso que bloqueia');
+  let x = inicioDaFila;
   const plantas = TIPOS_DA_ABERTURA.map((tipo) => {
-    const planta = { tipo, gx: x, gy: yRua - alturas[0], civil: defDe(tipo).trabalhador };
+    const planta = { tipo, gx: x, gy: gyDaFila, civil: defDe(tipo).trabalhador };
     x += defDe(tipo).tamanho[0];
     return planta;
   });
@@ -153,7 +172,13 @@ async function roteiro(ctx) {
   // na sonda desta sessao — foi assim que a primeira corrida reprovou.
   const ruaDe = plantas[0].gx;
   const ruaAte = escola.gx;
-  const tilesDaRua = ruaAte - ruaDe + 1;
+  // Onde a reta cai em rocha (o tile 24,33 do lajedo) a rua desce UM tile e volta:
+  // a estrada tambem recusa recurso que bloqueia construcao (BUG-F), e um buraco
+  // na reta partiria a rede em dois componentes. Diagonal conta como ligado
+  // (F-T2b), entao o desvio de um tile basta.
+  const tilesDaRuaLista = ruaComDesvio(ruaDe, ruaAte, yRua);
+  const tilesDaRua = tilesDaRuaLista.length;
+  const arrastos = arrastosDaRua(tilesDaRuaLista);
   const meioDaEscola = { gx: escola.gx + Math.floor(largEs / 2), gy: escola.gy + Math.floor(altEs / 2) };
   const timberInicial = economia.estadoInicial.estoque.timber;
 
@@ -178,16 +203,15 @@ async function roteiro(ctx) {
   await capturar('vila-inicial');
 
   // ---- 2. a rua ------------------------------------------------------------
-  // Em dois arrastos porque 19 tiles nao cabem no canvas de uma vez. Sao dois
-  // comandos PlaceRoad com um tile em comum — a rede e uma so.
-  const meio = Math.floor((ruaDe + ruaAte) / 2);
+  // Um arrasto por trecho reto (a rua desvia da rocha), e trecho comprido em dois
+  // porque nao cabe no canvas de uma vez. Cada arrasto e um comando PlaceRoad.
   await page.click('[data-ferramenta="estrada"]');
   await esperarFrame();
-  for (const [de, ate] of [[ruaDe, meio], [meio, ruaAte]]) {
-    await centrarEm(Math.floor((de + ate) / 2), yRua);
+  for (const { gy, de, ate } of arrastos) {
+    await centrarEm(Math.floor((de + ate) / 2), gy);
     const { camera } = await estado();
     await arrastarDentroDoCanvas(page, canvas, [
-      pontoDoTile(de, yRua, camera), pontoDoTile(ate, yRua, camera),
+      pontoDoTile(de, gy, camera), pontoDoTile(ate, gy, camera),
     ]);
     await avancar(1);
     await esperarFrame();
@@ -260,7 +284,10 @@ async function roteiro(ctx) {
   await capturar('serraria-desbloqueada');
 
   // ---- 6. a serraria -------------------------------------------------------
-  const serraria = plantas[plantas.length - 1];
+  // Pelo TIPO, nao pela posicao na fila: desde o BUG-F a serraria e a penultima,
+  // porque a ultima vaga e da pedreira (a que fica colada no lajedo).
+  const serraria = plantas.find((p) => p.tipo === 'sawmill');
+  afirmar(serraria !== undefined, 'a fila da abertura deveria ter uma serraria');
   await page.click(`[data-predio="${serraria.tipo}"]`);
   await esperarFrame();
   await clicarNoTile(serraria.gx, serraria.gy);
@@ -306,8 +333,13 @@ async function roteiro(ctx) {
   });
   const porTipo = {};
   for (const b of daAbertura) porTipo[b.tipo] = (porTipo[b.tipo] ?? 0) + 1;
+  // Por CHAVE, nao por `JSON.stringify` do objeto: a ordem de insercao segue a
+  // ordem da fila, e desde o BUG-F a pedreira vem depois da serraria. Comparar
+  // texto fazia a contagem certa reprovar por causa da ordem.
+  const esperadoPorTipo = { woodcutters: 2, quarry: 1, sawmill: 1 };
   afirmar(
-    JSON.stringify(porTipo) === JSON.stringify({ woodcutters: 2, quarry: 1, sawmill: 1 }),
+    Object.keys(porTipo).length === Object.keys(esperadoPorTipo).length
+      && Object.entries(esperadoPorTipo).every(([tipo, n]) => porTipo[tipo] === n),
     `o criterio pede 2 Woodcutters, 1 Quarry e 1 Sawmill, veio ${JSON.stringify(porTipo)}`,
   );
   const timberFinal = await noHud('timber');

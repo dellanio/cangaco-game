@@ -147,6 +147,11 @@ export interface TipoDeRecurso {
   /** F-T2b — o tile com este recurso EM PE reprova o passo, como terreno
    *  intransponivel. Por tipo e em dado: ninguem digita `'tree'` em `.ts`. */
   readonly bloqueiaPasso: boolean;
+  /** BUG-F — nao se assenta predio nem estrada sobre este recurso EM PE. Por tipo
+   *  e em dado, como o passo: a rocha bloqueia construcao sem bloquear passo (a
+   *  pedreira lavrava o lajedo debaixo das proprias paredes), e o milho nao
+   *  bloqueia nenhum dos dois, porque e tile que o jogador plantou. */
+  readonly bloqueiaConstrucao: boolean;
   /** F18 — o tipo de TERRENO de onde a camada deste recurso e derivada, ou
    *  `null` para os que vem da lista esparsa do mapa (rocha, arvore, cardume).
    *  O milho nao e desenhado tile a tile no arquivo de mapa: ele EXISTE em todo

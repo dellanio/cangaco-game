@@ -18,6 +18,8 @@
     "rock": {
       "regime": "nunca",
       "rendimentoPorTile": 15,
+      "bloqueiaConstrucao": true,
+      "_docBloqueiaConstrucao": "BUG-F (2026-09-24): NAO se constroi nem se ruma estrada em cima. O defeito que isto mata foi medido — a pedreira aceitava ser posta sobre o lajedo e lavrava a rocha debaixo das proprias paredes, com saida identica a de uma pedreira ao lado dele. Recusar mata por construcao; permitir e consumir precisaria apagar o veio, devolver no demolir e avisar antes do clique. E o jogador planta no lajedo porque e ali que se planta: recusar protege o que ele veio colher.",
       "bloqueiaPasso": false,
       "_docBloqueiaPasso": "A rocha NAO bloqueia o passo, e isso e decisao, nao esquecimento: a pedreira se assenta em cima do lajedo (BUG-C, 2026-09-24) e `placement.ts` nunca teve recusa por recurso. O intransponivel da serra e do lajedo alto e terreno (`terrain.intransponivel`), nao recurso.",
       "_doc": "A pedra do lajedo e da saia da serra. 15 por tile contra o veio fixo de 200 da F15a: o lajedo de 13 tiles da vila rende 195, entao a pedreira de abertura vale quase o mesmo que valia — o que mudou nao foi o total, foi de onde ele vem."
@@ -25,6 +27,8 @@
     "tree": {
       "regime": "porAcao",
       "rendimentoPorTile": 4,
+      "bloqueiaConstrucao": true,
+      "_docBloqueiaConstrucao": "BUG-F: nao se constroi sobre arvore em pe. Para a estrada isto ja valia por `bloqueiaPasso`; para o predio faltava, e a arvore sob o footprint teria o mesmo defeito da rocha quando o lenhador for colher tile. Tile CORTADO (`quantidade: 0`) nao bloqueia nada: a bandeira e lida junto com a quantidade, como o passo.",
       "bloqueiaPasso": true,
       "_docBloqueiaPasso": "A arvore EM PE bloqueia o passo (F-T2b). Tile cortado — `quantidade: 0`, entrada que fica — deixa passar: e a mesma diferenca entre cortado e inexistente que o regime `porAcao` guarda. Enquanto nao houver quem corte, ela e obstaculo permanente, como agua e montanha.",
       "_doc": "A arvore em pe. Regime `porAcao` porque quem a repoe e o replantio do Woodcutter's (GDD 4.2), nao o relogio."
@@ -32,6 +36,8 @@
     "fish": {
       "regime": "nunca",
       "rendimentoPorTile": 20,
+      "bloqueiaConstrucao": false,
+      "_docBloqueiaConstrucao": "Mesma razao do passo: o cardume esta na agua, e agua ja e intransponivel por terreno — `canPlace` recusa com motivo `terreno` antes de olhar recurso. Marcar aqui seria a segunda regra dizendo o mesmo fato.",
       "bloqueiaPasso": false,
       "_docBloqueiaPasso": "O cardume esta na agua, e agua ja e intransponivel por terreno. Marcar aqui seria a segunda regra dizendo a mesma coisa, e duas fontes para o mesmo fato e como elas divergem.",
       "_doc": "O cardume do lago. `nunca` porque o GDD marca o estoque do lago como finito (production.json, fishermans.notas) e regeneracao seria invencao nossa em cima de fonte."
@@ -39,6 +45,8 @@
     "corn": {
       "regime": "porAcao",
       "rendimentoPorTile": 4,
+      "bloqueiaConstrucao": false,
+      "_docBloqueiaConstrucao": "BUG-F, e este e o recorte que a regra precisa: milho NAO bloqueia construcao. O tile de milho e tile que o JOGADOR plantou, e o campo em pousio continua sendo recurso com `quantidade: 0` — recusar aqui proibiria construir onde ja se plantou uma vez, o que seria pior que o bug. Nao ha defeito a matar: a fazenda repoe o tile por acao, e nenhum prédio lavra milho debaixo de si.",
       "bloqueiaPasso": false,
       "_docBloqueiaPasso": "O milho nao fecha o passo: o roceiro entra no proprio campo, e a estrada atravessa roca sem derrubar nada.",
       "terreno": "campoArado",

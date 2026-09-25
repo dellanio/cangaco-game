@@ -4810,3 +4810,131 @@ O `desvioTempo` de 5,27 nesta corrida teria estourado o teto de 2,5 **e** o de 5
 descrevem a doutrina antiga ("alargar o teto com o motivo escrito"). **Não editei**: são
 registro do que foi decidido naquela sessão, e reescrevê-los apagaria a razão pela qual a
 regra nova existe. A regra vigente é a de `CLAUDE.md` §8, que diz explicitamente que revoga.
+
+---
+
+## BUG-F corrigido: obra e estrada recusam recurso que bloqueia (2026-09-24)
+
+Sessão **sem feature da fila**: correção de bug decidida pelo operador na sessão
+anterior. Ele escolheu **recusar**, e escolheu pelo argumento do defeito, não pelo
+mais fácil: *"a pedreira lavra rocha debaixo das próprias paredes é o defeito real,
+e recusar mata por construção"*. E manteve o recorte que a medição já tinha achado:
+a regra **não é "todo recurso"** — bandeira por tipo em `data/resources.json`, ao
+lado de `bloqueiaPasso`. Estrada também recusa, *"já que `canPlaceRoad` tem o motivo
+de pé"*, com a ressalva dele registrada: **se o traçado ficar sofrido no playtest,
+ele revê a estrada** (só a estrada; o prédio está decidido).
+
+### O que mudou, arquivo por arquivo
+
+- `data/resources.json` — `tipos.<t>.bloqueiaConstrucao`, obrigatório: `rock` e
+  `tree` **true**, `fish` e `corn` **false**. Cada um com o `_doc` do porquê. O
+  `fish` é false porque água já é `terreno`: duas regras para o mesmo fato divergem.
+- `tools/data-rules.js` — a bandeira é validada como obrigatória e booleana. Tipo
+  novo sem ela reprova o `validate:data`; não há default silencioso.
+- `src/sim/data/types.ts`, `src/sim/data/loader.ts` — a bandeira atravessa o
+  carregador.
+- `src/sim/recursos.ts` — `recursoBloqueiaConstrucao(recurso, dados)`, gêmeo de
+  `recursoBloqueiaPasso`. Devolve **false** para `quantidade <= 0`: a bandeira é
+  lida junto com a quantidade, como o passo. Cache por `GameData` num `WeakMap`.
+- `src/sim/placement.ts` — o laço do footprint recusa com motivo **`recurso`**,
+  depois de `terreno` e antes de `sobreposicao`. Ordem afirmada em teste.
+- `src/sim/estradas.ts` — `canPlaceRoad` soma os dois predicados. **Os dois somam,
+  nenhum deriva do outro:** árvore reprova pelos dois, rocha só pela construção,
+  milho por nenhum.
+- `BUGS.md` — BUG-F sai neste commit (§12). `## Abertos` ficou `_Nenhum._`.
+
+### Verificado (comando rodado, arquivo aberto)
+
+- `npm run verify` verde na árvore final: `validate:data — 11 arquivos, 0 erros`,
+  **78 arquivos de teste, 1225 testes**. `npm run lint` limpo.
+- **Todos os 29 roteiros de tela rodados, código de saída conferido** (§8:
+  não-regressão é rodar e conferir o código, sem abrir screenshot de outra
+  feature). 28 verdes de primeira; **só o F18e reprovou**, e reprovou por acusar
+  defeito verdadeiro no próprio roteiro — ver abaixo. Depois da correção: verde.
+- **O defeito morreu por construção, não por dado:** `canPlace` de `quarry` sobre o
+  lajedo agora devolve `{ ok: false, motivo: 'recurso' }`, e virar a bandeira do
+  `rock` para `false` no JSON faz o mesmo ponto voltar a ser aceito — o teste afirma
+  as duas direções, então a regra está no dado e não no `.ts`.
+- **Nenhum prédio do cenário inicial nasce sobre recurso** (a pergunta 3 do
+  operador). Medido varrendo o `caixaDoPredio` de cada um: lista vazia. Virou
+  guarda permanente em `tests/F05a-estado-inicial.test.ts`, com um segundo caso que
+  prova que o guarda **acusa** (rocha injetada num footprint é encontrada) — guarda
+  que só sabe dizer "nada aqui" não é guarda.
+- **Tile cortado e pousio continuam construíveis:** `quantidade: 0` aceita, milho
+  maduro aceita. Era a condição que o operador pôs: *"recusar ali proibiria
+  construir onde já se plantou"*.
+
+### O que a correção EXPÔS (e é a parte que não estava prevista)
+
+**O cenário de aceite da F17 plantava a pedreira em cima do lajedo, e a rua dele
+cruzava rocha em `24,33`.** Não era "o teste quebrou": a geometria de abertura
+fazia exatamente o que o operador chamou de defeito. Consertei a geometria, não a
+regra:
+
+- `tests/helpers/abertura.ts` — a fila de prédios **recua** para oeste até caber
+  (`filaCabe` lê a bandeira por footprint) e a rua **desce um tile** onde a reta cai
+  em rocha. O desvio de um tile não parte a rede porque diagonal conta como ligada
+  (F-T2b); um buraco partiria.
+- A **ordem da fila mudou** (`quarry` por último, encostando no lajedo). Medido: com
+  a pedreira no fim ela alcança **13** tiles de rocha; na posição antiga alcançaria
+  **4**. Custo assumido e escrito no arquivo: ela fica mais longe do armazém, logo
+  mais tráfego — foi a troca deliberada, porque pedreira que seca em 4 tiles não
+  serve para o aceite.
+- `tools/shots/F17.js` e `tools/shots/F22.js` tinham o mesmo defeito (o F22 é a
+  geometria do BUG-C, que nasceu *afirmando* a pedreira sobre o lajedo). Os dois
+  passaram a derivar posição e traçado de `tools/shots/_recursos.js` — **novo**,
+  módulo que não repete a regra, repete a **leitura** de `resources.json` +
+  `maps/sertao-128.json`. Virar a bandeira no JSON muda roteiro e sim juntos.
+- `tools/shots/F22.js` ganhou `centrarEm(gx)` (setas do teclado) porque a pedreira
+  recuada deixou a rua mais larga que uma tela, e arrasto fora do quadro não é
+  gesto de jogador.
+- **`tools/shots/F18e.js`**: o comentário dizia *"a diagonal nasce a sudoeste do
+  armazém, **em chão livre**"* e o primeiro tile era `(26,31)` — lajedo. A premissa
+  era falsa desde que foi escrita; só não doía enquanto a estrada aceitava rocha. A
+  linha de partida passou a **descer** até a diagonal inteira estar livre, e o
+  número medido ficou no comentário.
+- `tests/F17-aceite.test.ts` — o teto de ticks foi **remedido** com a geometria
+  nova, não afrouxado por reflexo: rua de 26 tiles contra 19, 14 de timber
+  entregues, fechamento em **4187** ticks; `TETO = 5300` (+25 %). Eixo de tick é
+  determinístico, byte a byte — é asserção legítima, ao contrário das medidas de
+  relógio que a regra nova do §8 baniu.
+
+### O que esta correção NÃO fez, e por quê
+
+- **O resíduo do recorte do milho continua vivo, e está registrado no item da
+  F-T3** (não aqui, para a sessão que executar não ter que caçar): **215** âncoras
+  de `farm` aceitas cobrem tile de milho, então *"andar até um tile debaixo do meu
+  próprio footprint"* ainda é alcançável. Morre na F-T3 filtrando
+  `tilesDeColheita`, **não** alargando o `canPlace` — alargar reprovaria construir
+  onde o jogador já plantou, que é pior que o bug.
+- Recurso sob prédio **já existente** não foi tocado: hoje não há como acontecer
+  pelo comando do jogador nem pelo cenário inicial. Se algum dia um prédio nascer
+  por outro caminho, a garantia é o guarda da F05a, não uma regra de runtime.
+- Não mexi no `bloqueiaPasso` de ninguém. Rocha continua transponível a pé, e o
+  teste da F-T2b afirma isso **junto** com a recusa da estrada, para o par não
+  colapsar num predicado só por descuido futuro.
+
+### Distinção que o §8 pede
+
+As sondas desta sessão (alcance de `canPlace`, contagem de âncoras, ticks de
+fechamento) foram **evidência da sessão** e foram apagadas. A proteção permanente
+são as regras que rodam no `npm run verify`: a validação da bandeira em
+`tools/data-rules.js`, o guarda do cenário inicial na F05a, a ordem de motivos e as
+duas direções da bandeira na F06, e o par recusa-mas-não-fecha-o-passo na F-T2b.
+
+### Também nesta sessão
+
+- **GDD §7 linha 727 corrigida** (decisão do operador: *"a sua leitura vale, e o GDD
+  é que está errado"*). O marcador de fome passa a ser **"ele foi e não conseguiu"**
+  — falha de abastecimento, não aviso de rotina —, com os dois limiares medidos
+  (`civilVaiComer: 0.50`, `alertaVisual: 0.35`) num comentário ao lado da linha.
+  Razão dele, registrada: *"avisa quando há o que fazer, não quando é rotina"*.
+
+### Perguntas em aberto
+
+Nenhuma nova. As duas pendências desta conversa são **pedidos do operador ainda não
+executados**, não dúvidas: (a) o painel da pedreira deve mostrar quanto resta do
+recurso ao alcance; (b) a F-T3 foi antecipada por decisão dele para antes da F20, e
+ele pediu **o plano antes da execução**, respondendo as três perguntas da FSM (o
+especialista em campo conta como ocupante para o alerta da F22? para o painel? e o
+que acontece com ele se o prédio for demolido com ele fora?).

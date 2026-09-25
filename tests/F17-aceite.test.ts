@@ -9,11 +9,18 @@
  * reprova aqui — e o unico teste do projeto que exercita as sete features da
  * Fase A de uma vez.
  *
- * O TETO de ticks e MEDIDO, nao chutado: a sonda desta sessao (a mesma geometria,
- * a mesma semente) fechou o criterio no tick 3184. 25% de folga = 3980, arredondado
- * para 4000. A folga existe para mudanca de balanceamento nao virar teste vermelho
- * sem motivo; se um dia ela nao bastar, o numero a rever e o balanceamento, e a
- * medicao que o justifica esta em `docs/planos/F17-aceite.md` §8.
+ * O TETO de ticks e MEDIDO, nao chutado: a sonda da sessao da F17 (a mesma
+ * geometria, a mesma semente) fechou o criterio no tick 3184; 25% de folga = 3980,
+ * arredondado para 4000. A folga existe para mudanca de balanceamento nao virar
+ * teste vermelho sem motivo; se um dia ela nao bastar, o numero a rever e o
+ * balanceamento, e a medicao que o justifica esta em `docs/planos/F17-aceite.md` §8.
+ *
+ * RE-MEDIDO em 2026-09-24 (BUG-F): a recusa de construir sobre rocha tirou a fila
+ * de cima do lajedo, e a vila abriu 8 tiles mais a oeste, com rua de 26 tiles em
+ * vez de 19 — mais acarreto por viagem. O criterio fecha no tick 4187 (antes 3184),
+ * com 14 de timber entregue; 25% de folga = 5234, arredondado para 5300. O eixo
+ * aqui e TICK, que e deterministico e repete byte a byte: nao e a medida de relogio
+ * que a §8 do CLAUDE.md proibiu como assercao.
  */
 import { describe, expect, it } from 'vitest';
 import { createInitialState } from '../src/sim/state';
@@ -24,8 +31,8 @@ import { predioLigadoAoArmazem } from '../src/sim/estradas';
 import { aberturaDaFaseA, comandosNoTick, criarMedidor, TIPOS_DA_ABERTURA } from './helpers/abertura';
 import { gravarEvidencia } from './helpers/evidence';
 
-/** Sonda: 3184 ticks. +25% de folga. */
-const TETO = 4000;
+/** Sonda de 2026-09-24, geometria pos-BUG-F: 4187 ticks. +25% de folga. */
+const TETO = 5300;
 
 describe('F17 — aceite da Fase A', () => {
   it('a vila abre inteira por comando: quatro predios completos, ocupados, ligados, e timber entregue', () => {

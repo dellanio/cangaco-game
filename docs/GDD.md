@@ -724,7 +724,13 @@ Cada item é verificável em screenshot ou em evento emitido:
 - Martelada: partícula de poeira e som a cada incremento de HP.
 - Prédio concluído: fumaça na chaminé, som, e o botão novo do menu piscando uma vez.
 - Recurso entrando no armazém: número do HUD com pulso curto.
-- Fome: ícone sobre a cabeça do civil antes de ele sair para comer.
+- Fome: ícone sobre a cabeça do civil **depois** de ele tentar comer e não conseguir — é aviso de falta de comida, não de fome.
+  <!-- Corrigido em 2026-09-24 (decisão do operador, item da F20). A linha dizia
+  "antes de ele sair para comer", e a medição em `data/condition.json` mostra que
+  isso não existe: `limiares.civilVaiComer: 0.50` é quando ele SAI, e
+  `limiares.alertaVisual: 0.35` é abaixo disso. O marcador aparece, portanto,
+  quando ele já foi e voltou de mão vazia. É melhor assim: avisa quando há o que
+  fazer, não quando é rotina. -->
 - Erro: a planta vermelha diz **por que** não pode, em uma linha, ao lado do cursor.
 
 ---

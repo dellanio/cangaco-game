@@ -13,7 +13,7 @@ import type { GameData } from './data/types';
 import { gameData } from './data';
 import { bordaSul, caixaDoPredio } from './footprint';
 import { ehTransponivel } from './mapa';
-import { bloqueadoPorRecurso, camadaDeBloqueio, recursoBloqueiaPasso } from './recursos';
+import { bloqueadoPorRecurso, camadaDeBloqueio, recursoBloqueiaConstrucao, recursoBloqueiaPasso } from './recursos';
 import type { CamadaDeBloqueio } from './recursos';
 import { disponivelNaOrigem } from './reservas';
 
@@ -492,13 +492,24 @@ export type ResultadoDeEstrada =
  * Ordem: cada tile (mapa, depois terreno, depois recurso, depois predio — obra
  * incluida), e so entao a pedra.
  *
- * F-T2b — a estrada NAO se assenta sobre recurso que bloqueia, e nao e enfeite:
- * sem esta recusa existe o tile passavel no modo `estrada` e bloqueado no modo
- * `livre`, ou seja, o serf carregado atravessa a arvore e o serf vazio nao. O
+ * F-T2b — a estrada NAO se assenta sobre recurso que bloqueia o PASSO, e nao e
+ * enfeite: sem esta recusa existe o tile passavel no modo `estrada` e bloqueado no
+ * modo `livre`, ou seja, o serf carregado atravessa a arvore e o serf vazio nao. O
  * terreno nunca produziu esse par porque estrada sobre terreno intransponivel ja
- * era recusada; o recurso produziria. Note que PREDIO sobre recurso continua
- * permitido — ali o footprint bloqueia o tile nos dois modos, e nao ha
- * contradicao a resolver (e e o que a pedreira sobre o lajedo faz desde o BUG-C).
+ * era recusada; o recurso produziria.
+ *
+ * BUG-F (2026-09-24) — e tambem nao se assenta sobre recurso que bloqueia
+ * CONSTRUCAO, que e o caso da rocha: ela deixa passar e nao aceita obra em cima.
+ * O paragrafo anterior deste comentario dizia que "predio sobre recurso continua
+ * permitido, e e o que a pedreira sobre o lajedo faz desde o BUG-C"; era falso e
+ * foi medido — a pedreira posta no lajedo lavrava a rocha debaixo das proprias
+ * paredes. O `canPlace` passou a recusar, e a estrada acompanha por decisao do
+ * operador: o motivo `'recurso'` ja estava de pe aqui, entao o que mudou foi o
+ * predicado, nao o vocabulario. Se o tracado ficar sofrido no playtest, e ele que
+ * revisa — a rocha da vila e 13 tiles.
+ *
+ * Os dois predicados somam em vez de um derivar do outro: arvore reprova pelos
+ * dois, rocha so pela construcao, milho por nenhum.
  */
 export function canPlaceRoad(
   state: GameState, tiles: readonly TileDeGrid[], dados: GameData = gameData,
@@ -511,7 +522,9 @@ export function canPlaceRoad(
       && tile.gx >= 0 && tile.gy >= 0 && tile.gx < largura && tile.gy < altura;
     if (!dentro) return { ok: false, motivo: 'fora-do-mapa', tile };
     if (!ehTransponivel(tile.gx, tile.gy, dados)) return { ok: false, motivo: 'terreno', tile };
-    if (recursoBloqueiaPasso(state.recursos[chaveDeTile(tile)] ?? null, dados)) {
+    const recursoDoTile = state.recursos[chaveDeTile(tile)] ?? null;
+    if (recursoBloqueiaPasso(recursoDoTile, dados)
+      || recursoBloqueiaConstrucao(recursoDoTile, dados)) {
       return { ok: false, motivo: 'recurso', tile };
     }
     if (tileEmPredio(state, tile, dados)) return { ok: false, motivo: 'sobreposicao', tile };

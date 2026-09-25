@@ -5,6 +5,7 @@ import { estaDesbloqueado } from './desbloqueio';
 import { bordaSul, caixaDeTipo, caixaDoPredio, caixasSeSobrepoem } from './footprint';
 import { ehEstrada, ehPlanejada } from './estradas';
 import { ehTransponivel } from './mapa';
+import { recursoBloqueiaConstrucao, recursoNoTile } from './recursos';
 
 export type MotivoDeRecusa =
   | 'predio-desconhecido'
@@ -34,7 +35,22 @@ export type MotivoDeRecusa =
   // Nao cobre a PORTA: prédio inteiro em terra firme com a borda sul na agua
   // recusa por `'porta-sem-saida'`, que e o que de fato esta errado ali (por ela
   // entra todo material, e material nao atravessa o lago). Um rotulo por causa.
-  | 'terreno';
+  | 'terreno'
+  // BUG-F: ha recurso natural EM PE sob o footprint, e o tipo dele reprova
+  // construcao (`resources.tipos.<t>.bloqueiaConstrucao`). Medido antes de
+  // existir: sem esta recusa a pedreira aceitava ser posta sobre o lajedo e
+  // lavrava a rocha debaixo das proprias paredes, entregando o mesmo que uma
+  // pedreira ao lado — o recurso nao sumia, nao ficava inacessivel, era colhido
+  // atraves do predio.
+  //
+  // Motivo PROPRIO, e nao `'terreno'`: sao causas com conserto diferente, como
+  // `canPlaceRoad` ja separava. Terreno nao se remove; rocha e arvore o jogador
+  // pode ir colher primeiro e construir depois no mesmo tile.
+  //
+  // NAO e "todo recurso": a bandeira e por tipo, em dado. Milho nao reprova,
+  // porque tile de milho e tile que o jogador plantou e pousio e recurso com
+  // quantidade zero — recusar ali proibiria construir onde ele ja plantou uma vez.
+  | 'recurso';
 
 export type ResultadoDePosicionamento =
   | { readonly ok: true }
@@ -52,7 +68,8 @@ function recusa(motivo: MotivoDeRecusa): ResultadoDePosicionamento {
  * F07 precisa do vocabulario para rejeitar o segundo comando na mesma posicao.
  *
  * Ordem das checagens (fixada por teste): desconhecido, bloqueado,
- * fora-do-mapa, terreno (F-T1), sobreposicao, estrada, porta-sem-saida. Footprint meio-aberto:
+ * fora-do-mapa, terreno (F-T1), recurso (BUG-F), sobreposicao, estrada,
+ * porta-sem-saida. Footprint meio-aberto:
  * encostar nao e sobrepor — mas encostar NA PORTA e tapa-la, e isso se recusa.
  *
  * Fora daqui, de proposito: custo/estoque (F07: o custo nao sai no clique) e
@@ -78,6 +95,17 @@ export function canPlace(
   for (let gy = candidato.y0; gy < candidato.y1; gy++) {
     for (let gx = candidato.x0; gx < candidato.x1; gx++) {
       if (!ehTransponivel(gx, gy, dados)) return recusa('terreno');
+    }
+  }
+
+  // BUG-F, junto com o terreno e antes de `sobreposicao`, pela mesma razao que o
+  // comentario acima da: as duas primeiras sao sobre o CHAO. Rocha sob a obra nao
+  // e "lugar ocupado", e outro tipo de nao. A PORTA nao entra: ela só precisa ser
+  // pisavel, e rocha e pisavel — a borda sul sobre o lajedo nao cria defeito
+  // nenhum, e recusar ali seria recusar mais do que o medido.
+  for (let gy = candidato.y0; gy < candidato.y1; gy++) {
+    for (let gx = candidato.x0; gx < candidato.x1; gx++) {
+      if (recursoBloqueiaConstrucao(recursoNoTile(state, gx, gy), dados)) return recusa('recurso');
     }
   }
 

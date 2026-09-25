@@ -254,7 +254,15 @@ describe('F06 — canPlace', () => {
     // de sobrepor. O encosto VERTICAL saiu daqui na F16a — nao virou sobreposicao,
     // virou `porta-sem-saida`, e esta no describe proprio mais abaixo.
     it('encostado (meio-aberto) pela esquerda: ok', () => {
-      expect(canPlace(inicial, 'quarry', armazem.gx - pedreiraL, armazem.gy)).toEqual({ ok: true });
+      // BUG-F (2026-09-24): o encosto pela esquerda do armazem cai em cima de um
+      // tile de rocha do mapa de abertura (26,31 — medido), e rocha passou a
+      // recusar construcao. O caso e sobre o limite do meio-aberto, nao sobre
+      // recurso, entao ele roda sem a camada; e o par abaixo afirma que a recusa
+      // por recurso e o que acontece no mapa de verdade, no MESMO ponto.
+      const semRecursos: GameState = { ...inicial, recursos: {} };
+      expect(canPlace(semRecursos, 'quarry', armazem.gx - pedreiraL, armazem.gy)).toEqual({ ok: true });
+      expect(canPlace(inicial, 'quarry', armazem.gx - pedreiraL, armazem.gy))
+        .toEqual({ ok: false, motivo: 'recurso' });
     });
 
     it('um tile para dentro do encosto ja e sobreposicao (o limite e exato)', () => {
@@ -385,6 +393,112 @@ describe('F06 — canPlace', () => {
     });
   });
 });
+
+// --- BUG-F: o recurso natural debaixo da obra (2026-09-24) ---
+
+/** Uma faixa de grama livre, longe da vila, onde os casos DECLARAM o recurso: o
+ *  caso e sobre a bandeira do tipo, e nao sobre onde o mapa pos a rocha.
+ *  Conferida por assercao antes de usar. */
+const FAIXA_LIVRE = { gx: 8, gy: 60 };
+
+function comRecurso(estado: GameState, gx: number, gy: number, tipo: string, quantidade: number): GameState {
+  return { ...estado, recursos: { ...estado.recursos, [`${gx},${gy}`]: { tipo, quantidade } } };
+}
+
+/** Injeta a bandeira de um tipo de recurso: e o que prova que a regra vem do
+ *  DADO, e nao de uma lista de tipos escrita em `.ts`. */
+function comBloqueiaConstrucao(tipo: string, valor: boolean): GameData {
+  const tipos = Object.fromEntries(
+    Object.entries(gameData.recursos.tipos).map(
+      ([id, def]) => [id, id === tipo ? { ...def, bloqueiaConstrucao: valor } : def],
+    ),
+  );
+  return { ...gameData, recursos: { ...gameData.recursos, tipos } };
+}
+
+/** O primeiro ponto do mapa que `canPlace` recusa por este motivo — derivado, para
+ *  o caso de ordem nao depender de coordenada digitada. */
+function primeiroPontoComMotivo(estado: GameState, motivo: string): { gx: number; gy: number } {
+  const { largura, altura } = gameData.terreno.mapaPadrao;
+  for (let gy = 0; gy < altura; gy++) {
+    for (let gx = 0; gx < largura; gx++) {
+      const r = canPlace(estado, 'quarry', gx, gy);
+      if (!r.ok && r.motivo === motivo) return { gx, gy };
+    }
+  }
+  throw new Error(`nenhum ponto do mapa recusa por '${motivo}'`);
+}
+
+describe('F06 — canPlace: recurso natural sob o footprint (BUG-F)', () => {
+  const inicial = createInitialState(1);
+  const { gx, gy } = FAIXA_LIVRE;
+  const [pedreiraL, pedreiraA] = tamanhoDe('quarry');
+
+  it('a faixa dos casos esta livre: sem isto o describe provaria outra coisa', () => {
+    expect(canPlace(inicial, 'quarry', gx, gy)).toEqual({ ok: true });
+    for (let dy = 0; dy <= pedreiraA; dy++) {
+      for (let dx = 0; dx < pedreiraL; dx++) {
+        expect(inicial.recursos[`${gx + dx},${gy + dy}`], `${gx + dx},${gy + dy} devia estar limpo`).toBeUndefined();
+      }
+    }
+  });
+
+  it('rocha sob o footprint recusa, e o motivo tem nome proprio', () => {
+    // O defeito medido: a pedreira aceitava o lajedo e lavrava a rocha debaixo das
+    // proprias paredes, com saida identica a de uma pedreira ao lado dele.
+    const comRocha = comRecurso(inicial, gx + 1, gy + 1, 'rock', 15);
+    expect(canPlace(comRocha, 'quarry', gx, gy)).toEqual({ ok: false, motivo: 'recurso' });
+  });
+
+  it('arvore em pe sob o footprint tambem recusa', () => {
+    const comArvore = comRecurso(inicial, gx + 2, gy, 'tree', 4);
+    expect(canPlace(comArvore, 'quarry', gx, gy)).toEqual({ ok: false, motivo: 'recurso' });
+  });
+
+  it('veio seco e arvore cortada NAO recusam: a bandeira e lida junto com a quantidade', () => {
+    expect(canPlace(comRecurso(inicial, gx + 1, gy + 1, 'rock', 0), 'quarry', gx, gy)).toEqual({ ok: true });
+    expect(canPlace(comRecurso(inicial, gx + 2, gy, 'tree', 0), 'quarry', gx, gy)).toEqual({ ok: true });
+  });
+
+  it('MILHO nao recusa, maduro ou em pousio — e o recorte que a regra precisa', () => {
+    // Milho e tile que o JOGADOR plantou, e pousio e campo com `quantidade: 0`:
+    // recusar aqui proibiria construir onde ja se plantou uma vez.
+    expect(canPlace(comRecurso(inicial, gx + 1, gy, 'corn', 4), 'quarry', gx, gy)).toEqual({ ok: true });
+    expect(canPlace(comRecurso(inicial, gx + 1, gy, 'corn', 0), 'quarry', gx, gy)).toEqual({ ok: true });
+  });
+
+  it('a regra vem do DADO: virar a bandeira vira a resposta, nos dois sentidos', () => {
+    const comRocha = comRecurso(inicial, gx + 1, gy + 1, 'rock', 15);
+    const comMilho = comRecurso(inicial, gx + 1, gy + 1, 'corn', 4);
+    expect(canPlace(comRocha, 'quarry', gx, gy, comBloqueiaConstrucao('rock', false))).toEqual({ ok: true });
+    expect(canPlace(comMilho, 'quarry', gx, gy, comBloqueiaConstrucao('corn', true)))
+      .toEqual({ ok: false, motivo: 'recurso' });
+  });
+
+  it('a PORTA sobre rocha nao recusa: o footprint e que e obra', () => {
+    // Deliberado, e nao esquecimento: a rocha nao fecha o passo, entao a porta
+    // continua tendo saida (F16a). Quem nao passa por ali e a ESTRADA — e foi
+    // exatamente isso que tirou a fila da abertura da F17 de cima do lajedo, com
+    // a rua desviando um tile ao redor da rocha que caiu na linha da porta.
+    const naPorta = comRecurso(inicial, gx + 1, gy + pedreiraA, 'rock', 15);
+    expect(canPlace(naPorta, 'quarry', gx, gy)).toEqual({ ok: true });
+  });
+
+  it('a ordem do motivo: `terreno` antes, `sobreposicao` depois', () => {
+    // Um rotulo por causa (BUG-B): com duas causas no mesmo ponto, o jogador le a
+    // que ele resolve primeiro. Terreno nao se muda; recurso se colhe;
+    // sobreposicao se remove.
+    const daAgua = primeiroPontoComMotivo(inicial, 'terreno');
+    const naAgua = comRecurso(inicial, daAgua.gx, daAgua.gy, 'rock', 15);
+    expect(canPlace(naAgua, 'quarry', daAgua.gx, daAgua.gy)).toEqual({ ok: false, motivo: 'terreno' });
+    const armazemDoDado = gameData.economia.estadoInicial.predios.find((b) => b.id === 'storehouse');
+    if (!armazemDoDado) throw new Error('cenario inicial sem storehouse');
+    const emCima = comRecurso(inicial, armazemDoDado.gx, armazemDoDado.gy, 'rock', 15);
+    expect(canPlace(emCima, 'quarry', armazemDoDado.gx, armazemDoDado.gy))
+      .toEqual({ ok: false, motivo: 'recurso' });
+  });
+});
+
 
 // --- ferramenta ativa e teclado (estado de interface, fora do GameState) ---
 

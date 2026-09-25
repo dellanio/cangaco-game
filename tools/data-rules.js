@@ -936,6 +936,15 @@ function validarRecursos(dados, erros) {
         + '(ausente leria como "nao bloqueia" sem ninguem notar)',
       );
     }
+    // BUG-F (2026-09-24): mesma forma e mesmo motivo do `bloqueiaPasso`. Campo
+    // ausente leria como "pode construir em cima" em silencio, que e exatamente o
+    // defeito que a bandeira existe para matar.
+    if (typeof def.bloqueiaConstrucao !== 'boolean') {
+      erros.push(
+        `recurso/bloqueio: resources.tipos.${id}.bloqueiaConstrucao precisa ser true ou false `
+        + '(ausente leria como "pode construir em cima" sem ninguem notar)',
+      );
+    }
     validarCampoDerivadoDoTerreno(dados, id, def, erros);
     validarReposicao(dados, id, def, erros);
   }

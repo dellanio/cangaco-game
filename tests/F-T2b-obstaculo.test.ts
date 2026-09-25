@@ -162,12 +162,39 @@ describe('F-T2b — o passo reprova: a rede de estradas, a outra metade', () => 
     expect(recusa.ok === false && recusa.tile).toEqual(alvo);
   });
 
-  it('sobre a MESMA arvore cortada, e sobre rocha, a estrada passa', () => {
+  it('sobre a MESMA arvore cortada a estrada passa, e sobre milho tambem', () => {
     const alvo = tile(FAIXA.x0 + 2, y);
     const cortada = comRecursos({ [chaveDeTile(alvo)]: { tipo: 'tree', quantidade: 0 } });
     expect(canPlaceRoad(cortada, [alvo]).ok).toBe(true);
+    const milho = comRecursos({ [chaveDeTile(alvo)]: { tipo: 'corn', quantidade: 4 } });
+    expect(canPlaceRoad(milho, [alvo]).ok).toBe(true);
+  });
+
+  it('BUG-F: sobre ROCHA a estrada recusa, e NAO e o passo que recusa', () => {
+    // Este caso afirmava o contrario ate 2026-09-24 ("sobre rocha a estrada
+    // passa"), e era a regra antiga escrita em teste: a rocha nao fecha o passo,
+    // entao nada a recusava. O BUG-F mostrou que ela precisa recusar por OUTRO
+    // motivo — obra em cima de recurso que se colhe —, e a assercao fica mais
+    // estrita do que era, nao so diferente: alem do `ok: false` ela exige que a
+    // rocha continue ANDAVEL, que e o que separa os dois predicados. Se alguem
+    // "consertar" isto marcando `bloqueiaPasso: true` na rocha, a segunda metade
+    // reprova.
+    const alvo = tile(FAIXA.x0 + 2, y);
     const rocha = comRecursos({ [chaveDeTile(alvo)]: { tipo: 'rock', quantidade: 15 } });
-    expect(canPlaceRoad(rocha, [alvo]).ok).toBe(true);
+    const recusa = canPlaceRoad(rocha, [alvo]);
+    expect(recusa.ok).toBe(false);
+    expect(recusa.ok === false && recusa.motivo).toBe('recurso');
+    expect(recusa.ok === false && recusa.tile).toEqual(alvo);
+
+    expect(recursoBloqueiaPasso(recursoNoTile(rocha, alvo.gx, alvo.gy)), 'rocha nao fecha o passo').toBe(false);
+    expect(bloqueadoPorRecurso(camadaDeBloqueio(rocha), alvo.gx, alvo.gy), 'e ninguem a ve como obstaculo').toBe(false);
+    expect(tileAndavel(rocha, alvo, 'livre'), 'o serf atravessa o lajedo a pe').toBe(true);
+
+    // E o veio zerado deixa de recusar, como o tile cortado: a bandeira e lida
+    // junto com a quantidade. (Rocha e regime `nunca`, entao na vida real a
+    // entrada sai do estado ao zerar; aqui o estado e declarado a mao.)
+    const veioSeco = comRecursos({ [chaveDeTile(alvo)]: { tipo: 'rock', quantidade: 0 } });
+    expect(canPlaceRoad(veioSeco, [alvo]).ok).toBe(true);
   });
 });
 

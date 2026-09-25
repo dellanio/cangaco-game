@@ -4,6 +4,8 @@ import { createInitialState } from '../src/sim/state';
 import type { GameState, PredioCompleto } from '../src/sim/state';
 import { estoqueTotal, contagemPorTipo, resumoDoEstado } from '../src/sim/selectors';
 import { gameData } from '../src/sim/data';
+import { caixaDoPredio } from '../src/sim/footprint';
+import { recursoNoTile } from '../src/sim/recursos';
 import type { GameData } from '../src/sim/data/types';
 import { compararComESemSave, reviverPorJson } from './helpers/determinism';
 import { gravarEvidencia } from './helpers/evidence';
@@ -205,6 +207,50 @@ const PROVA_SEM_TEMA_EM_SIM = {
   regra: 'no-restricted-imports',
   apagadoAposAChecagem: true,
 };
+
+describe('F05a — nenhum predio do cenario inicial nasce em cima de recurso (BUG-F)', () => {
+  const state = createInitialState(gameData.economia.estadoInicial.semente);
+
+  // A recusa do BUG-F vale para predio NOVO, que passa por `canPlace`. O cenario
+  // inicial nao passa: ele e injetado por `createInitialState` a partir de
+  // `economia.estadoInicial.predios`, e um footprint sobre recurso ali nao seria
+  // recusado por ninguem. Este caso e o que fecha a porta, e ele guarda dois
+  // fatos: o defeito de colher debaixo das proprias paredes, e o travamento que a
+  // F-T3 herdaria (tile NAO-ANDAVEL por causa do predio, mas ainda na lista de
+  // colheita dele — quando o especialista sair para andar ate o tile).
+  it('nenhum tile de footprint tem recurso, nem dos que bloqueiam nem dos outros', () => {
+    const emCima: string[] = [];
+    for (const id of state.predios.ordem) {
+      const predio = state.predios.porId[id];
+      if (predio === undefined) continue;
+      const caixa = caixaDoPredio(predio, gameData);
+      if (caixa === null) throw new Error(`predio '${predio.tipo}' sem tamanho`);
+      for (let gy = caixa.y0; gy < caixa.y1; gy++) {
+        for (let gx = caixa.x0; gx < caixa.x1; gx++) {
+          const recurso = recursoNoTile(state, gx, gy);
+          if (recurso !== null) {
+            emCima.push(`${predio.tipo}@${predio.gx},${predio.gy} cobre ${gx},${gy}=${recurso.tipo}`);
+          }
+        }
+      }
+    }
+    expect(emCima).toEqual([]);
+  });
+
+  // O guarda acima passaria a toa se `caixaDoPredio` devolvesse caixa vazia ou se
+  // `recursoNoTile` nunca achasse nada: os dois lados conferidos aqui.
+  it('o guarda acusa quando ha o que acusar', () => {
+    const predio = state.predios.porId[state.predios.ordem[0] as string] as PredioCompleto;
+    const caixa = caixaDoPredio(predio, gameData);
+    expect(caixa).not.toBeNull();
+    expect((caixa as { x1: number; x0: number }).x1 - (caixa as { x0: number }).x0).toBeGreaterThan(0);
+    const plantado: GameState = {
+      ...state,
+      recursos: { ...state.recursos, [`${predio.gx},${predio.gy}`]: { tipo: 'rock', quantidade: 15 } },
+    };
+    expect(recursoNoTile(plantado, predio.gx, predio.gy)).not.toBeNull();
+  });
+});
 
 describe('F05a — resumoDoEstado', () => {
   it('e a mesma forma que npm run sim imprime', () => {

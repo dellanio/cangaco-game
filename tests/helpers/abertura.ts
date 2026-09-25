@@ -7,10 +7,26 @@
  * cliques na tela e `tools/shots/F17.js`.
  *
  * A GEOMETRIA (D1 do plano): os quatro predios em UMA fila, na linha de porta do
- * armazem, encostados na horizontal e terminando encostados no armazem — a
- * serraria por ultimo, porque tronco entra e tabua sai por ela e essa e a perna
- * de maior trafego. Uma rua reta so, na linha da porta. A regra da porta (F16a) e
- * respeitada por construcao: nenhum predio fica ABAIXO de outro.
+ * armazem, encostados na horizontal, o mais a leste que a fila couber. A regra da
+ * porta (F16a) e respeitada por construcao: nenhum predio fica ABAIXO de outro.
+ *
+ * BUG-F (2026-09-24) mudou duas premissas desta fila, e as duas por MEDICAO:
+ *   - ela nao termina mais encostada no armazem. Encostada, a pedreira caia em
+ *     cima do lajedo da vila (rocha em 22..26 x 29..33, medido), e rocha passou a
+ *     recusar construcao — era este cenario, o do aceite, que mais exibia o
+ *     defeito: a pedreira lavrando a rocha debaixo das proprias paredes. O comeco
+ *     da fila agora RECUA ate caber sem pisar em recurso que bloqueia, pelo mesmo
+ *     predicado que a sim usa (`recursoBloqueiaConstrucao`), e nao por x digitado.
+ *   - a pedreira passou a ser a ULTIMA, e a serraria a penultima. O motivo antigo
+ *     da serraria por ultimo era trafego de tronco e tabua; com a fila recuada,
+ *     ela esta a 8 tiles do armazem de qualquer jeito, e o que a ordem decide
+ *     agora e quanta rocha a pedreira alcanca: pedreira por ultimo (colada no
+ *     lajedo) alcanca os 13 tiles do lajedo, como antes; pedreira no meio da fila
+ *     alcanca 4. Medido nesta sessao, `alcance_tiles: 6` a partir do footprint.
+ *
+ * A rua e uma reta na linha da porta, com DESVIO de um tile para o sul onde a reta
+ * cai em rocha (o tile 24,33 do lajedo) — a estrada tambem recusa recurso que
+ * bloqueia construcao, e um buraco na reta partiria a rede em dois componentes.
  *
  * A ORDEM DOS COMANDOS reage ao ESTADO, nao ao relogio: a serraria so pode ser
  * plantada depois que uma casa de lenhador CHEGA a `completo`
@@ -24,6 +40,8 @@ import type { GameState, PredioCompleto } from '../../src/sim/state';
 import type { Command } from '../../src/sim/commands';
 import type { TileDeGrid } from '../../src/sim/estradas';
 import { armazensCompletos, ehEstrada } from '../../src/sim/estradas';
+import { canPlaceRoad } from '../../src/sim/estradas';
+import { recursoBloqueiaConstrucao, recursoNoTile } from '../../src/sim/recursos';
 import { caixaDoPredio, caixaDeTipo } from '../../src/sim/footprint';
 import { estoqueDosArmazens } from '../../src/sim/selectors';
 import { estaDesbloqueado } from '../../src/sim/desbloqueio';
@@ -33,7 +51,7 @@ import { estaDesbloqueado } from '../../src/sim/desbloqueio';
  * na fila — que e tambem a ordem espacial, da esquerda para a direita. Nao e
  * numero de balanceamento: e a lista que o criterio nomeia.
  */
-export const TIPOS_DA_ABERTURA: readonly string[] = ['woodcutters', 'woodcutters', 'quarry', 'sawmill'];
+export const TIPOS_DA_ABERTURA: readonly string[] = ['woodcutters', 'woodcutters', 'sawmill', 'quarry'];
 
 export interface PlantaDaAbertura {
   readonly tipo: string;
@@ -95,6 +113,25 @@ function predioNoCanto(state: GameState, gx: number, gy: number): string | null 
   return null;
 }
 
+/** A fila inteira cabe neste x? Sem recurso que bloqueie construcao debaixo de
+ *  nenhum dos quatro footprints — o resto da recusa (`sobreposicao`,
+ *  `porta-sem-saida`) nao se pergunta aqui porque a fila nasce longe do armazem e
+ *  com a rua ainda por vir, e `canPlace` responderia `bloqueado` para a serraria,
+ *  que so desbloqueia depois. */
+function filaCabe(state: GameState, x0: number, gy: number, dados: GameData): boolean {
+  let x = x0;
+  for (const tipo of TIPOS_DA_ABERTURA) {
+    const { largura, altura } = tamanhoDe(tipo, dados);
+    for (let gy2 = gy; gy2 < gy + altura; gy2++) {
+      for (let gx = x; gx < x + largura; gx++) {
+        if (recursoBloqueiaConstrucao(recursoNoTile(state, gx, gy2), dados)) return false;
+      }
+    }
+    x += largura;
+  }
+  return true;
+}
+
 /**
  * Monta a abertura a partir do estado inicial. Tudo derivado: largura e altura de
  * `tamanho`, custo de `timber`/`stone`, civil de `trabalhador`, linha da porta da
@@ -125,8 +162,15 @@ export function aberturaDaFaseA(state: GameState, dados: GameData = gameData): A
   const altura = alturas[0] as number;
   const larguraTotal = TIPOS_DA_ABERTURA.reduce((s, t) => s + tamanhoDe(t, dados).largura, 0);
 
+  // Encostada no armazem a fila cai no lajedo (BUG-F). Recua de um em um ate o
+  // primeiro x em que NENHUM footprint pisa em recurso que bloqueia construcao:
+  // derivado do dado e do mesmo predicado da sim, nunca um x digitado aqui.
+  const gyDaFila = yRua - altura;
   let x = armazem.gx - larguraTotal;
-  if (x < 0) throw new Error(`abertura: a fila nao cabe a esquerda do armazem (comecaria em x=${x})`);
+  while (x >= 0 && !filaCabe(state, x, gyDaFila, dados)) x -= 1;
+  if (x < 0) {
+    throw new Error('abertura: a fila nao cabe a esquerda do armazem sem pisar em recurso que bloqueia construcao');
+  }
   const plantas = TIPOS_DA_ABERTURA.map((tipo) => {
     const def = defDe(tipo, dados);
     const civil = def.trabalhador;
@@ -140,12 +184,22 @@ export function aberturaDaFaseA(state: GameState, dados: GameData = gameData): A
     return planta;
   });
 
-  // Uma reta so, da ponta esquerda da fila ate o primeiro tile de porta da
-  // escola: e o traçado mais barato em pedra que liga as quatro obras, o armazem
-  // e a escola na mesma rede.
+  // Uma reta, da ponta esquerda da fila ate o primeiro tile de porta da escola: e
+  // o traçado mais barato em pedra que liga as quatro obras, o armazem e a escola
+  // na mesma rede. Onde a reta bate em recurso que a estrada recusa (a rocha em
+  // 24,33), desce UM tile e volta: a rede continua um componente so, porque tile
+  // na diagonal conta como ligado (F-T2b), e um buraco na reta nao contaria.
   const primeiro = plantas[0] as PlantaDaAbertura;
   const rua: TileDeGrid[] = [];
-  for (let gx = primeiro.gx; gx <= escola.gx; gx++) rua.push({ gx, gy: yRua });
+  for (let gx = primeiro.gx; gx <= escola.gx; gx++) {
+    const reto: TileDeGrid = { gx, gy: yRua };
+    const recusa = canPlaceRoad(state, [reto], dados);
+    if (recusa.ok) { rua.push(reto); continue; }
+    if (recusa.motivo !== 'recurso') {
+      throw new Error(`abertura: a rua nao passa em ${gx},${yRua} por '${recusa.motivo}', e nao ha desvio previsto`);
+    }
+    rua.push({ gx, gy: yRua + 1 });
+  }
 
   return {
     plantas,

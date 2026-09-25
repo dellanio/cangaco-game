@@ -1976,6 +1976,16 @@ a geografia já corrigida do que regravar 900 tiles depois.
   aceite não depende dele. **Quando ele sair, passa a ser bug**: o roceiro andaria
   até um tile que está debaixo da própria fazenda. Resolver aqui, junto com o
   caminho; não antes.
+- **O que o BUG-F fechou e o que sobrou (2026-09-24, medido)**: a recusa de
+  construir sobre recurso fechou o caso da **rocha** e da **árvore** — prédio novo
+  não nasce mais em cima deles, e nenhum prédio do cenário inicial cobre recurso
+  (guarda permanente em `tests/F05a-estado-inicial.test.ts`). **Sobrou o milho, e
+  de propósito**: a bandeira `bloqueiaConstrucao` é `false` para `corn` porque
+  milho é tile que o jogador plantou e pousio é recurso com `quantidade: 0`.
+  Medido: **215** âncoras de `farm` que `canPlace` aceita cobrem tile de milho.
+  Então o travamento da nota acima **continua vivo pela fazenda**, e é aqui que ele
+  morre — a solução é `tilesDeColheita` (ou quem escolhe o tile) descartar tile que
+  o próprio footprint cobre, não ampliar a recusa de `canPlace`.
 - **Nota de integração (CLAUDE.md §10 — decisão do operador, 2026-09-24)**: o
   **desenho do especialista fora do prédio vai junto desta feature**, não em item
   separado — mesma razão da F-T1 e da F-T2: unidade que a simulação põe no campo

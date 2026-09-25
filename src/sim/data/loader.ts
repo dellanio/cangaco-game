@@ -78,6 +78,7 @@ interface RawTipoDeRecurso {
   readonly regime: string;
   readonly rendimentoPorTile: number;
   readonly bloqueiaPasso?: boolean;
+  readonly bloqueiaConstrucao?: boolean;
   readonly terreno?: string;
   readonly quantidadeInicial?: number;
   readonly reposicao?: {
@@ -486,6 +487,7 @@ export function loadGameData(raw: RawGameData): GameData {
     const reposicao = cru.reposicao;
     tiposDeRecurso[id] = {
       regime, rendimentoPorTile: def.rendimentoPorTile, bloqueiaPasso: def.bloqueiaPasso === true,
+      bloqueiaConstrucao: cru.bloqueiaConstrucao === true,
       terreno: cru.terreno ?? null,
       quantidadeInicial: cru.quantidadeInicial ?? null,
       reposicao: reposicao === undefined ? null : {

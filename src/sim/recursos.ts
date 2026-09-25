@@ -469,6 +469,36 @@ export function recursoBloqueiaPasso(
   return tiposQueBloqueiam(dados).has(recurso.tipo);
 }
 
+/** Os tipos que reprovam CONSTRUCAO, do DADO. Conjunto proprio, e nao um `if`
+ *  dentro do de passo: rocha reprova construcao e deixa passar, arvore reprova
+ *  as duas, milho nenhuma das duas. Nao ha como derivar um do outro. */
+function tiposQueBloqueiamConstrucao(dados: GameData): ReadonlySet<string> {
+  const existente = bloqueadoresDeConstrucaoPorGameData.get(dados);
+  if (existente !== undefined) return existente;
+  const tipos = new Set<string>();
+  for (const [id, def] of Object.entries(dados.recursos.tipos)) {
+    if (def.bloqueiaConstrucao) tipos.add(id);
+  }
+  bloqueadoresDeConstrucaoPorGameData.set(dados, tipos);
+  return tipos;
+}
+
+/**
+ * BUG-F — este tile aceita predio ou estrada em cima?
+ *
+ * So o que esta EM PE reprova, e a leitura de `quantidade <= 0` e a MESMA de
+ * `recursoBloqueiaPasso` de proposito: tile de arvore cortada e tile de campo em
+ * pousio sao "recurso que ficou com zero", e nenhum dos dois pode impedir o
+ * jogador de construir ali. O veio esgotado de rocha nao chega aqui — o regime
+ * `nunca` apaga a entrada do estado quando ela zera.
+ */
+export function recursoBloqueiaConstrucao(
+  recurso: RecursoNoTile | null, dados: GameData = gameData,
+): boolean {
+  if (recurso === null || recurso.quantidade <= 0) return false;
+  return tiposQueBloqueiamConstrucao(dados).has(recurso.tipo);
+}
+
 /**
  * A grade de obstaculo por recurso, derivada de `state.recursos`.
  *
@@ -559,5 +589,6 @@ export function bloqueadoPorRecurso(
 }
 
 const bloqueadoresPorGameData = new WeakMap<GameData, ReadonlySet<string>>();
+const bloqueadoresDeConstrucaoPorGameData = new WeakMap<GameData, ReadonlySet<string>>();
 const camadaDeBloqueioPorGameData = new WeakMap<GameData, WeakMap<object, CamadaDeBloqueio>>();
 const ultimaCamadaPorGameData = new WeakMap<GameData, Map<number, CamadaDeBloqueio>>();

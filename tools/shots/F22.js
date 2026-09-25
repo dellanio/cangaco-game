@@ -24,6 +24,7 @@
 
 const { retanguloDe, retanguloDoCanvas, arrastarDentroDoCanvas } = require('./_canvas');
 const { erguerRua } = require('./_estradas');
+const { caixaLivre, ruaComDesvio, arrastosDaRua } = require('./_recursos');
 const economia = require('../../data/economy.json');
 const tema = require('../../data/theme-sertao.json');
 const { predios } = require('../../data/buildings.json');
@@ -66,6 +67,24 @@ async function roteiro(ctx) {
     await esperarFrame();
   }
 
+  /** Anda a camera com as setas ate a coluna `gx` cair no meio do quadro. Por laco
+   *  e nao por tempo fixo, porque a tecla ACELERA enquanto segurada. Precisou
+   *  existir quando o BUG-F recuou a pedreira: com ela em x=19 e a escola em 36, a
+   *  rua nao cabe mais num quadro so. */
+  async function centrarEm(gx) {
+    const alvo = Math.max(0, gx * TILE_PX - (canvas.right - canvas.left) / 2);
+    for (let i = 0; i < 30; i += 1) {
+      const { camera } = await estado();
+      const delta = alvo - camera.scrollX;
+      if (Math.abs(delta) < TILE_PX) return;
+      const tecla = delta > 0 ? 'ArrowRight' : 'ArrowLeft';
+      await page.keyboard.down(tecla);
+      await page.waitForTimeout(120);
+      await page.keyboard.up(tecla);
+      await esperarFrame();
+    }
+  }
+
   const predioDoEstado = async (id) => (await estado()).prediosDoEstado[id] ?? null;
   const idAberto = () => page.getAttribute('#painel-predio', 'data-predio-aberto');
 
@@ -103,17 +122,37 @@ async function roteiro(ctx) {
   const [largQu, altQu] = defDe('quarry').tamanho;
   const yRua = armazem.gy + altAr;
   afirmar(escola.gy + altEs === yRua, 'este roteiro assume armazem e escola na mesma linha de porta');
-  const pedreira = { gx: armazem.gx - largQu - 1, gy: yRua - altQu };
+  // BUG-F (2026-09-24): a pedreira ao lado do lajedo, nunca EM CIMA dele. A
+  // geometria antiga (`armazem.gx - largQu - 1`) punha o footprint sobre a rocha —
+  // era o proprio defeito do BUG-F, a pedreira lavrando debaixo das paredes —, e
+  // desde a correcao `canPlace` recusa ali. Recua de um em um ate a caixa ficar
+  // livre; o alcance de 6 tiles continua cobrindo o lajedo, e a afirmacao de rocha
+  // ao alcance, mais abaixo, e que garante isso.
+  let gxDaPedreira = armazem.gx - largQu - 1;
+  while (gxDaPedreira > 0 && !caixaLivre(gxDaPedreira, yRua - altQu, largQu, altQu)) gxDaPedreira -= 1;
+  const pedreira = { gx: gxDaPedreira, gy: yRua - altQu };
   const meioDaPedreira = { gx: pedreira.gx + Math.floor(largQu / 2), gy: pedreira.gy };
   const pontaEsquerda = { gx: pedreira.gx, gy: yRua };
   const pontaDireita = { gx: escola.gx + largEs - 1, gy: yRua };
-  const tilesDaRua = pontaDireita.gx - pontaEsquerda.gx + 1;
+  // A rua desce um tile onde a reta cai na rocha (24,33 do lajedo): a estrada
+  // tambem recusa, e buraco na reta partiria a rede antes de o corte do passo 6
+  // ter o que partir.
+  const tilesDaRuaLista = ruaComDesvio(pontaEsquerda.gx, pontaDireita.gx, yRua);
+  const tilesDaRua = tilesDaRuaLista.length;
+  const arrastos = arrastosDaRua(tilesDaRuaLista);
   // O corte fica ENTRE a pedreira e o armazem: parte a rede em dois pedacos, um
   // com o armazem e outro com a pedreira, sem encostar na porta de ninguem.
   const corte = { gx: pedreira.gx + largQu, gy: yRua };
   afirmar(
     corte.gx > pontaEsquerda.gx && corte.gx < armazem.gx && corte.gx >= pedreira.gx + largQu,
     `o corte (${corte.gx}) precisa cair na rua, entre a pedreira e o armazem`,
+  );
+  // E ele tem de ser um tile da rua DESENHADA, nao o buraco que a rocha deixou na
+  // reta: cortar onde nao ha rua deixaria a rede inteira de pe e o passo 6 mediria
+  // outra coisa.
+  afirmar(
+    tilesDaRuaLista.some((t) => t.gx === corte.gx && t.gy === corte.gy),
+    `o corte (${corte.gx},${corte.gy}) precisa ser um tile da rua desenhada`,
   );
 
   // A PRE-CONDICAO do cenario, e e ela que faltava no BUG-C: a pedreira tem
@@ -166,11 +205,14 @@ async function roteiro(ctx) {
   // ---- 2. a rua e a planta da pedreira -------------------------------------
   await page.click('[data-ferramenta="estrada"]');
   await esperarFrame();
-  const pEsq = await pontoDoTile(pontaEsquerda.gx, pontaEsquerda.gy);
-  const pDir = await pontoDoTile(pontaDireita.gx, pontaDireita.gy);
-  await arrastarDentroDoCanvas(page, canvas, [pEsq, pDir]);
-  await avancar(1);
-  await esperarFrame();
+  for (const { gy, de, ate } of arrastos) {
+    await centrarEm(Math.floor((de + ate) / 2));
+    const pDe = await pontoDoTile(de, gy);
+    const pAte = await pontoDoTile(ate, gy);
+    await arrastarDentroDoCanvas(page, canvas, [pDe, pAte]);
+    await avancar(1);
+    await esperarFrame();
+  }
   const desenhada = await estado();
   afirmar(
     desenhada.estradasPlanejadasRenderizadas === tilesDaRua && desenhada.estradasRenderizadas === 0,
@@ -184,6 +226,7 @@ async function roteiro(ctx) {
   await page.keyboard.press('Escape');
   await esperarFrame();
 
+  await centrarEm(pedreira.gx + largQu);
   await page.click('[data-predio="quarry"]');
   await esperarFrame();
   await clicarNoTile(pedreira.gx, pedreira.gy);
@@ -297,6 +340,7 @@ async function roteiro(ctx) {
 
   await page.click('[data-ferramenta="demolir-estrada"]');
   await esperarFrame();
+  await centrarEm(corte.gx);
   const pCorte = await pontoDoTile(corte.gx, corte.gy);
   await page.mouse.click(pCorte.x, pCorte.y);
   await avancar(1);
