@@ -32,6 +32,7 @@ import {
 } from './estradas';
 import type { TileDeGrid } from './estradas';
 import { obraTrabalhavel } from './obra';
+import { alvosDeAproximacao } from './aproximacao';
 import { buscarCaminho } from './pathfinding';
 import type { Caminho, ModoDeBusca } from './pathfinding';
 import { sobraNaOrigem, vagaDeConstrucao, vagaDeOcupacao, vagaDeRefeicao, vagaDoDestino } from './reservas';
@@ -553,6 +554,28 @@ export function caminhoAteOTile(
   );
 }
 
+/**
+ * F-T3 — o caminho do especialista ate UMA APROXIMACAO do tile de trabalho.
+ *
+ * Irmao de `caminhoAteOTile`, com dois desvios: o alvo e o CONJUNTO de
+ * aproximacoes (`alvosDeAproximacao`, que inclui o proprio tile quando da para
+ * pisar nele e so os vizinhos quando nao da — arvore em pe), e o modo e `'livre'`,
+ * como todo deslocamento de especialista: ele nao carrega mercadoria e o campo
+ * nao tem rua.
+ *
+ * `null` quer dizer uma de duas coisas, e as duas sao "nao va": a unidade nao
+ * existe mais, ou nenhuma aproximacao se alcanca.
+ */
+export function caminhoAteAproximacaoDoTile(
+  state: GameState, tile: TileDeGrid, unidadeId: string, dados: GameData = gameData,
+): Caminho | null {
+  const unidade = state.unidades.porId[unidadeId];
+  if (unidade === undefined) return null;
+  const alvos = alvosDeAproximacao(state, tile, dados);
+  if (alvos.length === 0) return null;
+  return buscarCaminho(state, { gx: unidade.gx, gy: unidade.gy }, alvos, 'livre', dados);
+}
+
 /** O caminho de UMA tarefa de laborer, qualquer que seja o tipo dela: porta da obra
  *  para `'construir'`, o tile para `'assentar-estrada'`. Quem ordena e quem anda usam
  *  esta, para que a escolha e a viagem nunca midam coisas diferentes. */
@@ -685,7 +708,15 @@ export function reclamar(
     if (tilesReservadosParaColheita(state, tarefa.id).has(chave)) {
       return { ok: false, motivo: 'origem-sem-recurso' };
     }
-    // Sem caminho a conferir: o especialista ja esta DENTRO do predio.
+    // F-T3: o especialista SAI do predio para colher, entao o claim confere o
+    // caminho, como o de `'assentar-estrada'` confere. Sem isto ele reclamaria um
+    // tile ilhado e largaria no tick seguinte, reservando o lajedo a cada volta.
+    // O outro lado da mesma regra e `tileAlcancavelParaColheita`, que a escolha do
+    // tile usa: os dois lados recusam o mesmo tile, senao a tarefa nasce e morre
+    // todo tick e o predio fica esperando o que nunca chega.
+    if (caminhoAteAproximacaoDoTile(state, tarefa.origemTile, unidadeId, dados) === null) {
+      return { ok: false, motivo: 'sem-caminho' };
+    }
   } else {
     // 'construir': sem mercadoria/origem (o laborer nao carrega nada).
     if (vagaDeConstrucao(state, tarefa.destino, dados) < 1) return { ok: false, motivo: 'destino-sem-vaga' };

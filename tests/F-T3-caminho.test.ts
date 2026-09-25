@@ -20,7 +20,7 @@
 import { describe, expect, it } from 'vitest';
 import { cenarioDeFazenda, cenarioDePedreira } from './helpers/producao-cenario';
 import { alvosDeAproximacao, tileAlcancavelParaColheita } from '../src/sim/aproximacao';
-import { tileAndavel, tileCobertoPorPredio } from '../src/sim/pathfinding';
+import { buscarCaminho, tileAndavel, tileCobertoPorPredio } from '../src/sim/pathfinding';
 import {
   melhorTileDeColheita, melhorTileParaPlantio, tileColhivelAgora, tilePlantavel, tilesDeColheita,
 } from '../src/sim/recursos';
@@ -29,6 +29,8 @@ import { completarObra } from '../src/sim/state';
 import type { GameState, PredioCompleto } from '../src/sim/state';
 import { chaveDeTile, tileDeChave } from '../src/sim/estradas';
 import type { TileDeGrid } from '../src/sim/estradas';
+import { caminhoAteAproximacaoDoTile, criarTarefaDeColheita, reclamar } from '../src/sim/jobs';
+import type { Caminho } from '../src/sim/pathfinding';
 import { canPlace } from '../src/sim/placement';
 import { registrarTipoConstruido } from '../src/sim/desbloqueio';
 import { gameData } from '../src/sim/data';
@@ -250,5 +252,90 @@ describe('F-T3 — por onde se chega ao tile', () => {
       .toBe(melhorTileDeColheita(estado, f1, milho, 1, undefined, DADOS));
     expect(melhorTileParaPlantio(estado, f1, milho, undefined, DADOS, sempre))
       .toBe(melhorTileParaPlantio(estado, f1, milho, undefined, DADOS));
+  });
+});
+
+/**
+ * A segunda metade: o CLAIM. Uma tarefa de colheita reclamada e um tile
+ * reservado; se o especialista nao tem como chegar, ele reclamaria e largaria a
+ * cada tick, mantendo o lajedo reservado para ninguem. O claim passa a conferir o
+ * caminho, e o predicado da escolha (Tarefa 2) recusa o MESMO tile — dois lados da
+ * mesma elegibilidade, que e o que impede o predio de esperar o que nunca chega.
+ */
+describe('F-T3 — o claim de colheita exige caminho', () => {
+  it('tile ilhado nao se reclama: o claim recusa por sem-caminho', () => {
+    const estado = cenarioDePedreira(DADOS);
+    // O lajedo cercado de serra existe NO MAPA (ver `tileDeRecursoSemAproximacao`):
+    // e o veio real que ninguem alcanca. A tarefa e criada a mao porque a escolha
+    // da Tarefa 2 ja nao devolve esse tile — e e exatamente esse par de recusas
+    // que o teste seguinte amarra.
+    const ilhado = tileDeRecursoSemAproximacao(estado, 'rock');
+    const criada = criarTarefaDeColheita(estado, {
+      destino: 'q1', origemTile: ilhado, recurso: 'rock', quantidade: 1,
+    });
+    // a recusa nao pode vir por falta de pedra nem por reserva alheia: o tile esta
+    // cheio e a unica tarefa nele e esta.
+    expect(criada.state.recursos[chaveDeTile(ilhado)]?.quantidade ?? 0).toBeGreaterThanOrEqual(1);
+    expect(reclamar(criada.state, criada.id, 'u1', DADOS)).toEqual({ ok: false, motivo: 'sem-caminho' });
+  });
+
+  it('a escolha e o claim recusam o mesmo tile, e aceitam o mesmo tile', () => {
+    const estado = cenarioDePedreira(DADOS);
+    const lajedo = colheitaDe('quarry');
+    const ilhado = chaveDeTile(tileDeRecursoSemAproximacao(estado, 'rock'));
+    expect(tileAlcancavelParaColheita(estado, ilhado, DADOS)).toBe(false);
+
+    // e o outro lado: o tile que a escolha devolve tem caminho, e o claim aceita.
+    const escolhido = melhorTileDeColheita(
+      estado, predioDe(estado, 'q1'), lajedo, 1, undefined, DADOS,
+      (k) => tileAlcancavelParaColheita(estado, k, DADOS),
+    );
+    expect(escolhido).not.toBeNull();
+    expect(escolhido).not.toBe(ilhado);
+    expect(caminhoAteAproximacaoDoTile(estado, tileDeChave(escolhido as string), 'u1', DADOS)).not.toBeNull();
+    const criada = criarTarefaDeColheita(estado, {
+      destino: 'q1', origemTile: tileDeChave(escolhido as string), recurso: lajedo.recurso, quantidade: 1,
+    });
+    expect(reclamar(criada.state, criada.id, 'u1', DADOS).ok).toBe(true);
+  });
+
+  it('o caminho termina numa aproximacao: em cima do lajedo, ao lado da arvore', () => {
+    const estado = cenarioDePedreira(DADOS);
+    const lajedo = tileDeChave(primeiroTileColhivel(estado, predioDe(estado, 'q1'), colheitaDe('quarry')));
+    const ateOLajedo = caminhoAteAproximacaoDoTile(estado, lajedo, 'u1', DADOS);
+    expect(ateOLajedo).not.toBeNull();
+    const alvosDoLajedo = alvosDeAproximacao(estado, lajedo, DADOS);
+    const fimNoLajedo = (ateOLajedo as Caminho).tiles.at(-1) as TileDeGrid;
+    expect(alvosDoLajedo).toContainEqual(fimNoLajedo);
+    // rocha nao fecha o passo, entao o proprio tile e um alvo valido — mas o A*
+    // para no alvo mais BARATO, que e o da borda por onde ele chegou. Por isso a
+    // assercao nao e "termina em cima": e "termina numa das nove casas, e nunca
+    // paga mais do que pagaria para ir em cima".
+    expect(Math.max(Math.abs(fimNoLajedo.gx - lajedo.gx), Math.abs(fimNoLajedo.gy - lajedo.gy)))
+      .toBeLessThanOrEqual(1);
+    expect(alvosDoLajedo).toContainEqual({ gx: lajedo.gx, gy: lajedo.gy });
+    const u1 = estado.unidades.porId['u1'];
+    if (u1 === undefined) throw new Error('teste: u1 saiu do cenario da pedreira');
+    const soEmCima = buscarCaminho(estado, { gx: u1.gx, gy: u1.gy }, [lajedo], 'livre', DADOS);
+    expect(soEmCima).not.toBeNull();
+    expect((ateOLajedo as Caminho).custo).toBeLessThanOrEqual((soEmCima as Caminho).custo);
+
+    const arvores = DADOS.mapa.recursos['tree'] ?? [];
+    const comCaminho = arvores.find(([gx, gy]) => (estado.recursos[chaveDeTile({ gx, gy })]?.quantidade ?? 0) > 0
+      && caminhoAteAproximacaoDoTile(estado, { gx, gy }, 'u1', DADOS) !== null);
+    if (comCaminho === undefined) throw new Error('teste: nenhuma arvore em pe com caminho a partir de u1');
+    const arvore = { gx: comCaminho[0], gy: comCaminho[1] };
+    const ateAArvore = caminhoAteAproximacaoDoTile(estado, arvore, 'u1', DADOS) as Caminho;
+    const fimNaArvore = ateAArvore.tiles.at(-1) as TileDeGrid;
+    // arvore em pe FECHA o passo: o caminho para ao lado, nunca em cima.
+    expect(fimNaArvore).not.toEqual(arvore);
+    expect(Math.max(Math.abs(fimNaArvore.gx - arvore.gx), Math.abs(fimNaArvore.gy - arvore.gy))).toBe(1);
+    expect(alvosDeAproximacao(estado, arvore, DADOS)).toContainEqual(fimNaArvore);
+  });
+
+  it('unidade que nao existe nao tem caminho, e nao explode', () => {
+    const estado = cenarioDePedreira(DADOS);
+    const lajedo = tileDeChave(primeiroTileColhivel(estado, predioDe(estado, 'q1'), colheitaDe('quarry')));
+    expect(caminhoAteAproximacaoDoTile(estado, lajedo, 'ninguem', DADOS)).toBeNull();
   });
 });
