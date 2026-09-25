@@ -47,6 +47,22 @@ const RUAS = [...linhaH(29, 36, 33), tile(29, 34), tile(29, 35), tile(29, 36), t
 const TICKS = 1300;
 const TETO_DA_GAVETA = gameData.producao.estoqueInternoPorPredio.saida;
 const CICLO = gameData.producao.receitas.quarry?.ticksDoCiclo ?? 0;
+/**
+ * F-T3 — entre um deposito e o seguinte ha agora a IDA ao tile e a VOLTA. O
+ * `CICLO` vem do dado; as pernas vem do MAPA, e por isso sao constantes escritas
+ * AQUI, no teste: sao propriedade deste cenario, nao numero de balanceamento.
+ *
+ * O PRIMEIRO ciclo e quatro ticks mais longo que os seguintes, e o motivo esta na
+ * trilha: `indo_ocupar` larga o pedreiro na porta (28,36), e a volta do campo o
+ * traz para (26,36) — quatro tiles mais perto do tile (25,30) de onde ele colhe.
+ * Todos os ciclos seguintes partem de (26,36), e e por isso que sao iguais entre
+ * si. O `1 +` de cada soma e o tick da transicao, em que ele ainda esta na porta.
+ */
+const IDA_DA_PORTA_DA_OCUPACAO = 54;
+const IDA = 49;
+const VOLTA = 49;
+const PRIMEIRO_CICLO = 1 + IDA_DA_PORTA_DA_OCUPACAO + CICLO + VOLTA;
+const INTERVALO = 1 + IDA + CICLO + VOLTA;
 
 function cenario(base: GameState = inicial): GameState {
   return comEstradas(base, RUAS);
@@ -72,6 +88,7 @@ interface Corrida {
   readonly depositos: number[];
   readonly ociosoDepoisDeOcupar: number;
   readonly esperandoInsumo: number;
+  readonly saidaCheia: number;
   readonly violacoes: { readonly tick: number; readonly texto: string }[];
 }
 
@@ -82,6 +99,7 @@ function rodar(ticks: number): Corrida {
   let tickDaOcupacao = 0;
   let ociosoDepoisDeOcupar = 0;
   let esperandoInsumo = 0;
+  let saidaCheia = 0;
   const depositos: number[] = [];
   const violacoes: { tick: number; texto: string }[] = [];
   for (let i = 0; i < ticks; i++) {
@@ -96,13 +114,16 @@ function rodar(ticks: number): Corrida {
         if (u?.tipo !== PEDREIRO) continue;
         if (u.fsm === 'ocioso') ociosoDepoisDeOcupar += 1;
         if (u.fsm === 'esperando_insumo') esperandoInsumo += 1;
+        if (u.fsm === 'saida_cheia') saidaCheia += 1;
       }
     }
     for (const texto of [...violacoesDaFsmDoEspecialista(e), ...violacoesDeInvariantes(e)]) {
       violacoes.push({ tick: e.tick, texto });
     }
   }
-  return { fim: e, tickDaObra, tickDaOcupacao, depositos, ociosoDepoisDeOcupar, esperandoInsumo, violacoes };
+  return {
+    fim: e, tickDaObra, tickDaOcupacao, depositos, ociosoDepoisDeOcupar, esperandoInsumo, saidaCheia, violacoes,
+  };
 }
 
 /** Os intervalos entre depositos consecutivos. Iguais = ritmo constante. */
@@ -131,9 +152,15 @@ describe('F15a — aceite headless do BUILD_PLAN', () => {
     //    buraco nenhum: sem o teto no caminho, o numero de depositos e
     //    exatamente o numero de ciclos completos desde a ocupacao. E a mesma
     //    afirmacao da F15a (ritmo constante), so que mais forte.
-    expect(r.depositos).toHaveLength(Math.floor((TICKS - r.tickDaOcupacao) / CICLO));
-    expect(intervalos(r.depositos)).toEqual(Array<number>(r.depositos.length - 1).fill(CICLO));
-    expect(r.depositos[0]).toBe(r.tickDaOcupacao + CICLO);
+    //    F-T3: o intervalo e `INTERVALO`, nao `CICLO` — a pedra agora atravessa o
+    //    mapa duas vezes por ciclo. O RITMO e o que este aceite afirma, e ele
+    //    continua exato: intervalos todos iguais, e o primeiro deposito no tick
+    //    exato (o `+ 1` e o tick da chegada do pedreiro, em que ele ainda ocupa e
+    //    nao produz — o mesmo tick que o aceite sempre contou a parte).
+    const primeiro = r.tickDaOcupacao + PRIMEIRO_CICLO;
+    expect(r.depositos).toHaveLength(1 + Math.floor((TICKS - primeiro) / INTERVALO));
+    expect(intervalos(r.depositos)).toEqual(Array<number>(r.depositos.length - 1).fill(INTERVALO));
+    expect(r.depositos[0]).toBe(primeiro);
 
     // 4. depois de ocupar, o pedreiro nunca volta a `ocioso` nem espera insumo
     //    (a quarry tira do veio; `ocioso` antes de ocupar e como toda unidade nasce)
@@ -147,8 +174,15 @@ describe('F15a — aceite headless do BUILD_PLAN', () => {
     const pedreiro = r.fim.unidades.ordem
       .map((id) => r.fim.unidades.porId[id])
       .find((u) => u?.tipo === PEDREIRO);
-    expect(pedreiro?.fsm).toBe('trabalhando');
-    expect(quarry?.producao?.progresso ?? 0).toBeLessThan(CICLO);
+    //    F-T3: no tick 1300 ele esta VOLTANDO do tile com o ciclo pronto na mao —
+    //    dai o progresso ser `CICLO` cheio sem que isso seja `saida_cheia`. A
+    //    clausula ficou mais estrita de duas maneiras: o estado final e afirmado
+    //    EXATO (era "trabalhando", uma entre seis possibilidades hoje) e o
+    //    `saida_cheia` passou a ser contado em TODOS os ticks, que e o que a
+    //    clausula sempre quis dizer e o `progresso < CICLO` so insinuava.
+    expect(pedreiro?.fsm).toBe('voltando');
+    expect(quarry?.producao?.progresso ?? 0).toBe(CICLO);
+    expect(r.saidaCheia).toBe(0);
 
     // 6. as invariantes dos dois quadros, tick a tick — agora SEM excecao
     //    nenhuma. Ate a F15b este teste tolerava tres violacoes no tick em que a
@@ -193,6 +227,10 @@ describe('F15a — aceite headless do BUILD_PLAN', () => {
         tickDaOcupacao: r.tickDaOcupacao,
         ticksDeCadaDeposito: r.depositos,
         intervalosEntreDepositos: intervalos(r.depositos),
+        _notaFT3: 'desde a F-T3 o pedreiro vai ao tile e volta: o intervalo e 1 + ida + ticksDoCiclo + volta',
+        ticksDoCicloMaisViagem: INTERVALO,
+        ticksDoPrimeiroCiclo: PRIMEIRO_CICLO,
+        ticksEmSaidaCheia: r.saidaCheia,
         stoneNaSaidaNoFim: quarry?.estoque.saida.stone ?? 0,
         _notaF15b: 'a gaveta nao enche mais: o nivel 6 escoa para o armazem',
         progressoNoFim: quarry?.producao?.progresso ?? 0,

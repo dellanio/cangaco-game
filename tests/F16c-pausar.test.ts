@@ -121,6 +121,45 @@ describe('F16c — Tarefa 2: o comando `SetBuildingPaused`', () => {
 
 const CAPACIDADE_DA_SAIDA = gameData.producao.estoqueInternoPorPredio.saida;
 const CICLO_DA_PEDREIRA = gameData.producao.receitas.quarry?.ticksDoCiclo ?? 0;
+/**
+ * F-T3 — o ciclo da pedreira deixou de comecar no tick da ocupacao: ele comeca com
+ * a IDA ao tile (a transicao mais 49 passos), o relogio anda NO TILE e a mercadoria
+ * so entra na gaveta na VOLTA. As duas pernas vem do mapa deste cenario, medidas na
+ * trilha de `test-output/F-T3-ciclo-em-campo.json`; o ciclo continua vindo do dado.
+ *
+ * O que isso muda para a pausa: "no meio do ciclo" agora quer dizer NO TILE, e e la
+ * que o pedreiro congela. A semantica nao mudou — congelar o relogio e nada mais —,
+ * mudou onde ele esta quando congela, e isto o caso (1) passou a afirmar.
+ */
+const IDA_ATE_O_TILE = 50;
+const VOLTA_DO_TILE = 49;
+const INTERVALO_DA_PEDREIRA = IDA_ATE_O_TILE + CICLO_DA_PEDREIRA + VOLTA_DO_TILE;
+/** Tres ticks de relogio JA no tile: o mesmo "meio do ciclo" de antes da F-T3. */
+const NA_METADE = IDA_ATE_O_TILE + 3;
+/**
+ * DECISAO DESTA SESSAO (F-T3), marcada para o operador revisar (PROGRESS.md):
+ * pausar um predio de colheita com o especialista NO CAMPO nao suspende aquele
+ * ciclo — ele recomeca. O motivo esta em `systems/jobs.ts`: `motivoDoDestino`
+ * CANCELA a tarefa de colheita do predio pausado, decisao da F16c com a razao
+ * escrita ao lado (segurar o tile por tempo indeterminado deixaria o jogador
+ * travar a pedreira do vizinho de graca). Sem tile reservado nao ha ciclo a
+ * retomar, entao o ocupante congela onde esta enquanto a pausa dura, volta de
+ * maos vazias ao despausar e comeca de novo.
+ *
+ * O que o aceite da F16c exige continua valendo, e e o que este caso mede:
+ * nenhuma mercadoria e perdida, nenhuma e duplicada, e o relogio nao anda durante
+ * a pausa. O que ele NAO pode mais dizer e "o ciclo termina ao despausar": o preco
+ * da pausa em campo e pago em TICKS, e esta escrito aqui embaixo, exato.
+ */
+const VOLTA_DE_MAOS_VAZIAS = 50;
+
+/** Onde a unidade esta. A pausa nao pode mover ninguem, e sem isto o congelamento
+ *  em campo passaria com o pedreiro voltando para casa na ponta dos pes. */
+const ondeEsta = (estado: GameState, id: string): string => {
+  const u = estado.unidades.porId[id];
+  if (u === undefined) throw new Error(`fixture: unidade '${id}' nao existe`);
+  return `${u.gx},${u.gy}`;
+};
 
 /** Toda a pedra do mapa, gaveta por gaveta: a conta de conservacao do aceite
  *  ("sem perder nem duplicar mercadoria"). */
@@ -153,9 +192,10 @@ function rodar(estado: GameState, ticks: number, comandos: readonly Command[] = 
 
 describe('F16c — Tarefa 3: pausado, o relogio congela', () => {
   it('(1) pedreira pausada no meio do ciclo: progresso parado, e o ciclo termina ao despausar', () => {
-    const meio = avancar(cenarioDePedreira(), 3);
+    const meio = avancar(cenarioDePedreira(), NA_METADE);
     const progressoNaPausa = progressoDe(meio, 'q1');
     expect(progressoNaPausa).toBe(3);
+    expect(fsmDe(meio, 'u1')).toBe('colhendo'); // F-T3: o meio do ciclo e no tile
 
     const parado = rodar(meio, 200, [pausar('q1', true)]);
     expect(progressoDe(parado.state, 'q1')).toBe(progressoNaPausa);
@@ -163,11 +203,27 @@ describe('F16c — Tarefa 3: pausado, o relogio congela', () => {
     expect(saidaDe(parado.state, 'q1')).toEqual({});
     expect(parado.state.predios.porId.q1?.estado === 'completo'
       && parado.state.predios.porId.q1.ocupante).toBe('u1');
-    expect(fsmDe(parado.state, 'u1')).toBe('trabalhando');
+    // congelou NO TILE, e nao em `trabalhando` na porta: a pausa para o relogio e
+    // nao move ninguem. Duzentos ticks parados no mesmo tile.
+    expect(fsmDe(parado.state, 'u1')).toBe('colhendo');
+    expect(ondeEsta(parado.state, 'u1')).toBe(ondeEsta(meio, 'u1'));
     expect(parado.violacoes).toBe(0);
 
     const pedraAntes = totalDe(parado.state, 'stone');
-    const retomado = rodar(parado.state, CICLO_DA_PEDREIRA - progressoNaPausa, [pausar('q1', false)]);
+    // despausado, ele volta de maos vazias e o relogio zera: o tile deixou de ser
+    // dele na pausa. Nada produzido nesta perna — e um tick a mais ou a menos aqui
+    // reprova, porque o numero e a viagem inteira, nao uma tolerancia.
+    const voltou = rodar(parado.state, VOLTA_DE_MAOS_VAZIAS, [pausar('q1', false)]);
+    expect(voltou.produzidos).toEqual([]);
+    expect(progressoDe(voltou.state, 'q1')).toBe(0);
+    expect(fsmDe(voltou.state, 'u1')).toBe('trabalhando');
+    expect(ondeEsta(voltou.state, 'u1')).not.toBe(ondeEsta(parado.state, 'u1'));
+    expect(voltou.violacoes).toBe(0);
+
+    // e o ciclo seguinte e um ciclo COMPLETO, do tamanho de sempre: uma pedra, uma
+    // vez, no tick exato. Nenhuma mercadoria se perdeu na pausa e nenhuma nasceu
+    // dobrada — que e o que o aceite da F16c pede.
+    const retomado = rodar(voltou.state, INTERVALO_DA_PEDREIRA);
     expect(retomado.produzidos).toEqual(['stone']);
     expect(saidaDe(retomado.state, 'q1')).toEqual({ stone: 1 });
     expect(progressoDe(retomado.state, 'q1')).toBe(0);
@@ -177,7 +233,7 @@ describe('F16c — Tarefa 3: pausado, o relogio congela', () => {
 
   it('(2) ciclo PRONTO esperando gaveta: pausado nao deposita; despausado deposita UMA vez', () => {
     const cheia = comSaida(cenarioDePedreira(), 'q1', { stone: CAPACIDADE_DA_SAIDA });
-    const pronto = avancar(cheia, CICLO_DA_PEDREIRA + 1);
+    const pronto = avancar(cheia, INTERVALO_DA_PEDREIRA);
     expect(progressoDe(pronto, 'q1')).toBe(CICLO_DA_PEDREIRA);
     expect(fsmDe(pronto, 'u1')).toBe('saida_cheia');
 
@@ -267,10 +323,11 @@ describe('F16c — Tarefa 3: pausado, o relogio congela', () => {
 
 describe('F16c — evidencia', () => {
   it('grava test-output/F16c.json com o aceite medido', () => {
-    const meio = avancar(cenarioDePedreira(), 3);
+    const meio = avancar(cenarioDePedreira(), NA_METADE);
     const progressoNaPausa = progressoDe(meio, 'q1');
     const parado = rodar(meio, 200, [pausar('q1', true)]);
-    const retomado = rodar(parado.state, CICLO_DA_PEDREIRA - progressoNaPausa, [pausar('q1', false)]);
+    const voltou = rodar(parado.state, VOLTA_DE_MAOS_VAZIAS, [pausar('q1', false)]);
+    const retomado = rodar(voltou.state, INTERVALO_DA_PEDREIRA);
 
     const comPedra = comSaida(cenarioDePedreira(), 'q1', { stone: 2 });
     const armazem = armazemDoCenario(comPedra);
@@ -292,8 +349,9 @@ describe('F16c — evidencia', () => {
         semantica: {
           decidida: 'pausar congela o RELOGIO do ciclo, e nada mais (operador, 2026-09-23)',
           gavetaDeSaida: 'continua escoando',
+          cicloEmCampo: 'F-T3: com o especialista no campo, a pausa cancela a tarefa de colheita e o ciclo recomeca ao despausar — nenhuma mercadoria perdida ou duplicada, o custo e em ticks',
           tarefasDeTransporte: 'nenhuma cancelada; o gerador continua ate o alvo de sempre',
-          ocupante: 'fica, com o rotulo trabalhando',
+          ocupante: 'fica; desde a F-T3 ele congela ONDE ESTA — no tile, se o predio colhe (rotulo colhendo), ou com o rotulo trabalhando dentro do predio',
         },
         cicloCongelado: {
           ticksPausado: 200,
@@ -301,10 +359,14 @@ describe('F16c — evidencia', () => {
           progressoDepoisDe200Ticks: progressoDe(parado.state, 'q1'),
           mercadoriaProduzidaNaPausa: parado.produzidos,
           fsmDoOcupante: fsmDe(parado.state, 'u1'),
+          ondeCongelou: ondeEsta(parado.state, 'u1'),
+          ondeEstavaAoPausar: ondeEsta(meio, 'u1'),
           violacoesEmTodosOsTicks: parado.violacoes,
         },
         retomada: {
-          ticksAteODeposito: CICLO_DA_PEDREIRA - progressoNaPausa,
+          ticksAteODeposito: VOLTA_DE_MAOS_VAZIAS + INTERVALO_DA_PEDREIRA,
+          _notaFT3: 'a pausa CANCELA a tarefa de colheita (F16c, motivoDoDestino), entao o ciclo em campo nao se retoma: ele volta de maos vazias em 50 ticks e faz um ciclo inteiro. Decisao desta sessao, para o operador revisar.',
+          ticksDaVoltaDeMaosVazias: VOLTA_DE_MAOS_VAZIAS,
           produzidos: retomado.produzidos,
           saidaDaPedreira: saidaDe(retomado.state, 'q1'),
           progressoDepois: progressoDe(retomado.state, 'q1'),

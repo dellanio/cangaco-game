@@ -63,10 +63,21 @@ function serieDeEntrega(
 // Os marcos da perna (b), derivados do dado e nao digitados. A janela para
 // ANTES de a gaveta encher (`estoqueInternoPorPredio.saida`), senao a producao
 // pararia pelo motivo errado e o teste diria outra coisa do que afirma.
-const PRIMEIRA = PLANTIO + CICLO;
-const SECOU = PLANTIO + RENDIMENTO * CICLO;
+/**
+ * F-T3 — o intervalo entre duas colheitas deixou de ser `ticksDoCiclo`: o roceiro
+ * SAI da fazenda. Uma volta inteira e o tick da transicao + a IDA ate o tile + o
+ * relogio do ciclo, que agora anda NO tile + a VOLTA ate a porta, onde o milho
+ * entra na gaveta. As duas pernas sao deste cenario (f1 em (112,30), porta em
+ * (112,33), tile (108,26) trabalhado de (109,27)) e estao medidas na evidencia;
+ * `CICLO`, `PLANTIO` e `RENDIMENTO` continuam vindo do dado, intocados.
+ */
+const IDA = 53;
+const VOLTA = 51;
+const VOLTA_INTEIRA = 1 + IDA + CICLO + VOLTA;
+const PRIMEIRA = PLANTIO + VOLTA_INTEIRA;
+const SECOU = PLANTIO + RENDIMENTO * VOLTA_INTEIRA;
 const PARADA = SECOU + Math.floor(PLANTIO / 2);
-const VOLTOU = SECOU + PLANTIO + CICLO;
+const VOLTOU = SECOU + PLANTIO + VOLTA_INTEIRA;
 
 describe('F18 (a) — fazenda sem tile aravel ao alcance nao produz', () => {
   it('nao entrega um grao sequer, e o campo continua vazio', () => {
@@ -98,20 +109,26 @@ describe('F18 (a) — fazenda sem tile aravel ao alcance nao produz', () => {
 describe('F18 (b) — com terra ao alcance: produz, para, e volta', () => {
   it('a serie de entrega tem o degrau, o patamar e o degrau seguinte', () => {
     const inicial = cenarioDeFazenda();
-    const serie = serieDeEntrega(inicial, [0, PLANTIO, PRIMEIRA, SECOU, PARADA, VOLTOU]);
+    const serie = serieDeEntrega(
+      inicial, [0, PLANTIO, PRIMEIRA - 1, PRIMEIRA, SECOU, PARADA, VOLTOU - 1, VOLTOU],
+    );
 
     // o tick 0 e a linha de base, e ela e zero: o campo nasce em pousio.
     expect(serie[0]).toBe(0);
     // durante o primeiro plantio nao ha o que colher, e nada foi entregue.
     expect(serie[PLANTIO]).toBe(0);
-    // PRODUZ: o primeiro ciclo fecha um ciclo depois de a terra ficar pronta.
+    // PRODUZ: o primeiro milho entra na gaveta no tick EXATO em que o roceiro
+    // chega de volta — um tick antes ele ainda esta na estrada, de maos cheias.
+    expect(serie[PRIMEIRA - 1]).toBe(0);
     expect(serie[PRIMEIRA]).toBe(1);
     // e segue, ate o tile secar — um ciclo por colheita, o rendimento inteiro.
     expect(serie[SECOU]).toBe(RENDIMENTO);
     // PARA: com o tile zerado o roceiro replanta, e no meio do replantio o
     // acumulado e o MESMO de quando secou. E o patamar.
     expect(serie[PARADA]).toBe(RENDIMENTO);
-    // VOLTA: replantado o campo, a colheita seguinte entrega de novo.
+    // VOLTA: replantado o campo, a colheita seguinte entrega de novo, e tambem
+    // ela no tick exato da chegada.
+    expect(serie[VOLTOU - 1]).toBe(RENDIMENTO);
     expect(serie[VOLTOU]).toBe(RENDIMENTO + 1);
   });
 
@@ -188,6 +205,14 @@ describe('F18 — evidencia', () => {
       b_comCampo: {
         fazenda: { gx: 112, gy: 30, nota: 'na borda do bloco aravel do nordeste' },
         marcos: { PLANTIO, PRIMEIRA, SECOU, PARADA, VOLTOU },
+        voltaInteiraFT3: {
+          ticks: VOLTA_INTEIRA,
+          transicao: 1,
+          idaAteOTile: IDA,
+          relogioNoTile: CICLO,
+          voltaAtePorta: VOLTA,
+          nota: 'F-T3: o roceiro sai da fazenda; o milho entra na gaveta no tick da chegada, e o intervalo entre colheitas passou de 246 para 351 ticks',
+        },
         serieDeEntrega: serieDeEntrega(comCampo, [0, PLANTIO, PRIMEIRA, SECOU, PARADA, VOLTOU]),
         alertasNoPatamar: alertasDoEstado(avancar(comCampo, PARADA), gameData),
       },

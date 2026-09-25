@@ -9,7 +9,12 @@
  * -> 3 -> 2 -> 1 -> 0 -> (plantio) -> 4. Cada degrau tem tick exato, porque as
  * duas duracoes vem do dado e viraram tick inteiro no carregamento.
  *
- * O roceiro NAO sai do predio: isso e a F-T3, e esta escrito assim no item.
+ * F-T3 — o roceiro PASSOU a sair do predio, e a sequencia do tile e a mesma: o que
+ * mudou e QUANDO cada degrau cai. Entre duas colheitas ha agora a ida ao tile, o
+ * relogio do ciclo la, e a volta ate a porta — o milho sai do tile no tick da
+ * CHEGADA, junto com o deposito, e nao no tick em que o relogio fecha. O plantio
+ * continua sendo trabalho de dentro: e a unica parte do ciclo em que ele nao anda,
+ * e isto tambem esta afirmado abaixo.
  */
 import { describe, expect, it } from 'vitest';
 import { gameData } from '../src/sim/data';
@@ -31,6 +36,16 @@ const TICKS_DO_CICLO = RECEITA.ticksDoCiclo;
 const RENDIMENTO = gameData.recursos.tipos[COLHEITA.recurso]?.rendimentoPorTile ?? 0;
 const POR_CICLO = unidadesPorCiclo(RECEITA);
 const CICLOS_ATE_SECAR = RENDIMENTO / POR_CICLO;
+
+/**
+ * F-T3 — as duas pernas da viagem neste cenario (f1 em (112,30), porta (112,33),
+ * tile (108,26) trabalhado de (109,27)), medidas. A volta inteira e o tick da
+ * transicao mais a ida, o relogio do dado e a volta: e ela, e nao `ticksDoCiclo`,
+ * o intervalo entre dois degraus do tile.
+ */
+const IDA = 53;
+const VOLTA = 51;
+const VOLTA_INTEIRA = 1 + IDA + TICKS_DO_CICLO + VOLTA;
 
 /** O plantio que a fazenda `f1` do cenario abre no primeiro tick. Descoberto
  *  pelo ESTADO, nao digitado: a posicao vem do mapa versionado, e mudar o mapa
@@ -68,16 +83,17 @@ describe('F18 — o ciclo do roceiro, tick a tick', () => {
     expect(quantidadeNoTick(TICKS_DE_PLANTIO - 1)).toBe(0);
     expect(quantidadeNoTick(TICKS_DE_PLANTIO)).toBe(RENDIMENTO);
 
-    // e cada ciclo tira do tile o que UM ciclo rende, no tick exato.
+    // e cada ciclo tira do tile o que UM ciclo rende, no tick exato — o da CHEGADA
+    // do roceiro na porta, que e onde o milho troca de mao.
     for (let n = 1; n <= CICLOS_ATE_SECAR; n += 1) {
-      const t = TICKS_DE_PLANTIO + n * TICKS_DO_CICLO;
+      const t = TICKS_DE_PLANTIO + n * VOLTA_INTEIRA;
       expect(quantidadeNoTick(t - 1), `tick ${t - 1}`).toBe(RENDIMENTO - (n - 1) * POR_CICLO);
       expect(quantidadeNoTick(t), `tick ${t}`).toBe(RENDIMENTO - n * POR_CICLO);
     }
 
     // secou: o replantio abre no tick SEGUINTE e leva o mesmo tempo. O tile e o
     // MESMO, porque a varredura do plantio tem a ordem da varredura da colheita.
-    const secou = TICKS_DE_PLANTIO + CICLOS_ATE_SECAR * TICKS_DO_CICLO;
+    const secou = TICKS_DE_PLANTIO + CICLOS_ATE_SECAR * VOLTA_INTEIRA;
     const replantado = secou + TICKS_DE_PLANTIO;
     expect(plantioDaFazenda(avancar(inicial, secou + 1, gameData)).tile).toEqual(tile);
     expect(quantidadeNoTick(replantado - 1)).toBe(0);
@@ -133,18 +149,33 @@ describe('F18 — o ciclo do roceiro, tick a tick', () => {
     expect(tilesReservadosParaColheita(seguinte).has(chave)).toBe(true);
   });
 
-  it('o roceiro nunca sai do predio nem fica ocioso durante o plantio', () => {
-    // O rotulo e `trabalhando` do primeiro tick ao ultimo: plantar E trabalho, e
-    // o jogador nao pode ver a fazenda parecendo parada pelo plantio inteiro.
+  it('durante o PLANTIO o roceiro nao sai nem fica ocioso, e depois dele sai', () => {
+    // O rotulo e `trabalhando` do primeiro tick ao ultimo do plantio: plantar E
+    // trabalho de dentro, e o jogador nao pode ver a fazenda parecendo parada pelo
+    // plantio inteiro. Ele nao anda um tile nesse trecho.
     let s = cenarioDeFazenda(gameData);
     const antes = s.unidades.porId.roceiro;
     if (antes === undefined) throw new Error('fixture: o cenario precisa do roceiro');
-    for (let t = 0; t < TICKS_DE_PLANTIO + TICKS_DO_CICLO; t += 1) {
+    const naPorta = (e: GameState): [number | undefined, number | undefined] => {
+      const u = e.unidades.porId.roceiro;
+      return [u?.gx, u?.gy];
+    };
+    for (let t = 0; t < TICKS_DE_PLANTIO; t += 1) {
       s = avancar(s, 1, gameData);
       expect(fsmDe(s, 'roceiro'), `tick ${t + 1}`).toBe('trabalhando');
+      expect(naPorta(s), `tick ${t + 1}`).toEqual([antes.gx, antes.gy]);
     }
-    const fim = s.unidades.porId.roceiro;
-    expect([fim?.gx, fim?.gy]).toEqual([antes.gx, antes.gy]);
+
+    // e no tick SEGUINTE ao plantio ele sai — e a F-T3, e o teste diz o tick.
+    s = avancar(s, 1, gameData);
+    expect(fsmDe(s, 'roceiro')).toBe('indo_colher');
+
+    // a volta fecha onde comecou: no fim de uma volta inteira ele esta de novo na
+    // porta, em `trabalhando`, e o milho ja entrou na gaveta.
+    s = avancar(s, VOLTA_INTEIRA - 1, gameData);
+    expect(fsmDe(s, 'roceiro')).toBe('trabalhando');
+    expect(naPorta(s)).toEqual([antes.gx, antes.gy]);
+    expect(saidaDe(s, 'f1')[COLHEITA.recurso] ?? 0).toBe(POR_CICLO);
   });
 
   it('so repoe o tipo que declara reposicao: pedreira nenhuma refaz lajedo', () => {

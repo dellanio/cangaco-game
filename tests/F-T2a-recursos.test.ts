@@ -60,18 +60,42 @@ function cenarioEm(gx: number, gy: number, dados: GameData, id = 'q1'): GameStat
  */
 function produzirDrenando(
   estado: GameState, ticks: number, id: string, dados: GameData,
-): { readonly fim: GameState; readonly produzido: number } {
+): { readonly fim: GameState; readonly produzido: number; readonly ticksDeDeposito: readonly number[] } {
   let s = estado;
   let produzido = 0;
-  for (let i = 0; i < ticks; i++) {
+  const ticksDeDeposito: number[] = [];
+  for (let i = 1; i <= ticks; i++) {
     s = step(s, [], dados);
     for (const e of s.events) {
-      if (e.type === 'goods-produced' && e.predio === id) produzido += e.quantidade;
+      if (e.type === 'goods-produced' && e.predio === id) {
+        produzido += e.quantidade;
+        ticksDeDeposito.push(i);
+      }
     }
     s = comEspacoNaSaida(s, id);
   }
-  return { fim: s, produzido };
+  return { fim: s, produzido, ticksDeDeposito };
 }
+
+/**
+ * F-T3 — entre dois depositos ha agora a IDA ao tile e a VOLTA, e as duas pernas
+ * dependem de QUAL tile a pedreira escolheu: o orcamento deixou de ser
+ * `ticksDoCiclo x numero de tiles`. Cada medicao de total abaixo declara o tick do
+ * seu ULTIMO deposito, medido neste mapa, e roda exatamente um tick a mais. Nao e
+ * folga: o tick do primeiro e do ultimo deposito e afirmado junto com o total,
+ * entao um ciclo que encurte ou alargue reprova em vez de passar mais rapido.
+ */
+const ULTIMO_DEPOSITO = {
+  /** jazida de um tile e duas pedras, pedreira em (26,34): tile (25,32) */
+  curtoPrimeiro: 218,
+  curtoSegundo: 436,
+  /** 13 tiles a uma pedra cada, pedreira no lajedo (26,34) */
+  lajedo: 3036,
+  /** um unico tile ao alcance, pedreira na borda (32,34) */
+  borda: 244,
+  /** as duas sobrepostas: q1 no lajedo leva 12 tiles, q2 na borda leva 1 */
+  sobrepostas: 2804,
+} as const;
 
 // --- a camada, antes de qualquer sistema -------------------------------------
 
@@ -119,8 +143,11 @@ describe('F-T2a — perna 1: o exploit de demolir-e-reconstruir morre', () => {
   const curto = comJazida(gameData, 'rock', [[25, 32]], 2);
 
   it('esgotada, demolida e reconstruida no MESMO tile, a pedreira nao devolve uma pedra', () => {
-    const { fim: esgotada, produzido } = produzirDrenando(cenarioEm(26, 34, curto), 167 * 3, 'q1', curto);
+    const { fim: esgotada, produzido, ticksDeDeposito } = produzirDrenando(
+      cenarioEm(26, 34, curto), ULTIMO_DEPOSITO.curtoSegundo + 1, 'q1', curto,
+    );
     expect(produzido).toBe(2);
+    expect(ticksDeDeposito).toEqual([ULTIMO_DEPOSITO.curtoPrimeiro, ULTIMO_DEPOSITO.curtoSegundo]);
     expect(disponivelDe(esgotada, 'q1', curto)).toBe(0);
 
     // demolicao pelo caminho do jogador, e reconstrucao completa no mesmo tile
@@ -130,13 +157,22 @@ describe('F-T2a — perna 1: o exploit de demolir-e-reconstruir morre', () => {
       demolida, { tipo: 'quarry', id: 'q2', unidade: 'pedreiro-novo', gx: 26, gy: 34 }, curto,
     ), RUA);
 
-    const depois = produzirDrenando(refeita, 167 * 5, 'q2', curto);
+    // nada a colher: a pedreira refeita fica em `esperando_insumo` o tempo todo, e
+    // o orcamento aqui e so "muito mais que dois ciclos inteiros com viagem"
+    const depois = produzirDrenando(refeita, ULTIMO_DEPOSITO.curtoSegundo * 2, 'q2', curto);
     expect(depois.produzido).toBe(0);
     expect(disponivelDe(depois.fim, 'q2', curto)).toBe(0);
   });
 
   it('a camada do tile atravessa a demolicao sem mudar um byte', () => {
-    const { fim } = produzirDrenando(cenarioEm(26, 34, curto), 167, 'q1', curto);
+    // F-T3: o tile so perde a pedra no tick da CHEGADA, junto com o deposito. Um
+    // tick antes ela ainda esta na pedra, e e isso que os dois passos afirmam.
+    const antes = produzirDrenando(cenarioEm(26, 34, curto), ULTIMO_DEPOSITO.curtoPrimeiro - 1, 'q1', curto);
+    expect(antes.produzido).toBe(0);
+    expect(recursoNoTile(antes.fim, 25, 32)).toEqual({ tipo: 'rock', quantidade: 2 });
+
+    const fim = step(antes.fim, [], curto);
+    expect(fim.events.some((e) => e.type === 'goods-produced' && e.predio === 'q1')).toBe(true);
     expect(recursoNoTile(fim, 25, 32)).toEqual({ tipo: 'rock', quantidade: 1 });
     const demolida = step(fim, [{ type: 'DemolishBuilding', predio: 'q1' }], curto);
     expect(demolida.recursos).toEqual(fim.recursos);
@@ -166,13 +202,20 @@ describe('F-T2a — perna 2: o lugar passa a importar, e o numero prova', () => 
     expect(tilesNoLajedo).toBe(13);
     expect(tilesNaBorda).toBe(1);
 
-    // folga generosa: o que se mede e o TOTAL ate esgotar, nao o ritmo
-    const a = produzirDrenando(noLajedo, 167 * 16, 'q1', umPorTile);
-    const b = produzirDrenando(naBorda, 167 * 16, 'q1', umPorTile);
+    // o orcamento de cada uma e o seu proprio ultimo deposito mais um tick
+    const a = produzirDrenando(noLajedo, ULTIMO_DEPOSITO.lajedo + 1, 'q1', umPorTile);
+    const b = produzirDrenando(naBorda, ULTIMO_DEPOSITO.borda + 1, 'q1', umPorTile);
 
     expect(a.produzido).not.toBe(b.produzido);
     expect(a.produzido).toBe(tilesNoLajedo);
     expect(b.produzido).toBe(tilesNaBorda);
+    // e o ritmo tambem: 13 viagens, a primeira e a ultima no tick exato. O lajedo
+    // esgota em 3036 ticks e nao nos 13 x 167 = 2171 de antes da F-T3 — a diferenca
+    // e a viagem, e ela esta declarada, nao tolerada.
+    expect(a.ticksDeDeposito).toHaveLength(tilesNoLajedo);
+    expect(a.ticksDeDeposito[0]).toBe(260);
+    expect(a.ticksDeDeposito.at(-1)).toBe(ULTIMO_DEPOSITO.lajedo);
+    expect(b.ticksDeDeposito).toEqual([ULTIMO_DEPOSITO.borda]);
     expect(disponivelDe(a.fim, 'q1', umPorTile)).toBe(0);
     expect(disponivelDe(b.fim, 'q1', umPorTile)).toBe(0);
   });
@@ -196,11 +239,20 @@ describe('F-T2a — perna 2: o lugar passa a importar, e o numero prova', () => 
       s, { tipo: 'quarry', id: 'q2', unidade: 'pedreiro-q2', gx: 32, gy: 34 }, umPorTile,
     ), RUA);
     let menor = Infinity;
-    for (let i = 0; i < 167 * 16; i++) {
+    const depositos: Record<string, number> = { q1: 0, q2: 0 };
+    for (let i = 1; i <= ULTIMO_DEPOSITO.sobrepostas + 1; i++) {
       s = step(s, [], umPorTile);
+      for (const e of s.events) {
+        if (e.type === 'goods-produced' && depositos[e.predio] !== undefined) {
+          depositos[e.predio] = (depositos[e.predio] ?? 0) + e.quantidade;
+        }
+      }
       s = comEspacoNaSaida(comEspacoNaSaida(s, 'q1'), 'q2');
       for (const r of Object.values(s.recursos)) if (r.quantidade < menor) menor = r.quantidade;
     }
+    // a jazida e uma so, e as duas juntas tiram dela exatamente os 13 tiles: q2, na
+    // borda, alcanca um unico tile e o leva primeiro; q1 fica com os outros 12.
+    expect(depositos).toEqual({ q1: 12, q2: 1 });
     // Com o regime `nunca` o tile zerado SAI do estado, entao o menor valor que
     // chega a ser observado em estado e 1 — o que importa e que nunca ha
     // negativo, mesmo com as duas pedreiras mirando o mesmo tile no mesmo tick.

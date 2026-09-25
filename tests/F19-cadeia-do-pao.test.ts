@@ -38,15 +38,30 @@ const PAO = Object.keys(PADARIA.sai)[0] ?? '';
 const PLANTIO = gameData.recursos.tipos[GRAO]?.reposicao?.ticks ?? 0;
 const RENDIMENTO = gameData.recursos.tipos[GRAO]?.rendimentoPorTile ?? 0;
 
+/**
+ * F-T3 — a VIAGEM do roceiro entrou na conta da fonte, e ela tinha de entrar: o
+ * teto e o que a FAZENDA consegue tirar do tile, e agora cada colheita custa
+ * tambem a ida e a volta ate ele. Sem esta perna o teto ficaria descrevendo uma
+ * fazenda que nao existe mais — 12 % acima do que o campo pode dar — e o piso
+ * abaixo reprovaria a cadeia por um defeito que esta no modelo, nao no jogo.
+ * As duas pernas sao medidas neste cenario, e o `ticksDoCiclo` continua do dado.
+ */
+const VIAGEM_DA_FAZENDA = 105;
+
 /** O que a FONTE permite: um tile de milho custa um plantio mais os ciclos que
- *  ele rende, e e isso — e nao o relogio do moinho — que limita a cadeia. */
-const TICKS_POR_GRAO = (PLANTIO + RENDIMENTO * FAZENDA.ticksDoCiclo) / RENDIMENTO;
+ *  ele rende, viagem incluida, e e isso — e nao o relogio do moinho — que limita
+ *  a cadeia. */
+const TICKS_POR_GRAO = (
+  PLANTIO + RENDIMENTO * (FAZENDA.ticksDoCiclo + VIAGEM_DA_FAZENDA)
+) / RENDIMENTO;
 /** Quantos paes cada grao vira, seguindo a cadeia elo a elo. Derivado, nao
  *  digitado: se o moinho um dia consumir dois milhos por ciclo, isto acompanha. */
 const PAES_POR_GRAO = unidadesPorCiclo(PADARIA) / (MOINHO.entra[GRAO] ?? 1);
-/** A latencia minima da cadeia: plantar, colher, moer, assar. Nenhum transporte
- *  cabe aqui — e por isso que ela e um piso que nada pode furar. */
-const ARRANQUE = PLANTIO + FAZENDA.ticksDoCiclo + MOINHO.ticksDoCiclo + PADARIA.ticksDoCiclo;
+/** A latencia minima da cadeia: plantar, ir ao tile, colher, voltar, moer, assar.
+ *  Nenhum transporte de serf cabe aqui — e por isso que ela e um piso que nada
+ *  pode furar. A viagem do roceiro, sim: desde a F-T3 ela e parte da colheita. */
+const ARRANQUE = PLANTIO + VIAGEM_DA_FAZENDA
+  + FAZENDA.ticksDoCiclo + MOINHO.ticksDoCiclo + PADARIA.ticksDoCiclo;
 
 const JANELA = 12000;
 
@@ -65,6 +80,10 @@ const PROPORCOES = (JSON.parse(readFileSync('data/production.json', 'utf8')) as 
  * predio ao armazem e do armazem ao seguinte, e isso nao e de graca. A medicao
  * que originou o numero deu 99,6 % do teto com 4 serfs; 85 % deixa folga para o
  * caminho crescer sem o teste virar oraculo de desempenho.
+ *
+ * F-T3 — remedida com a viagem do roceiro dentro do teto: 50 paes contra um teto
+ * de 51,0, ou 98,1 %. O piso continua 85 %: a cadeia nao ficou menos eficiente, o
+ * que mudou foi a fonte render menos por hora, e teto e producao cairam juntos.
  */
 const PISO_DA_VAZAO = 0.85;
 
@@ -128,9 +147,12 @@ describe('F19 — a cadeia fecha: milho vira fubá, fubá vira cuscuz', () => {
         if (primeiro[m] === undefined && desdeOInicio(inicial, s, m) > 0) primeiro[m] = t;
       }
     }
-    expect(primeiro[GRAO]).toBe(PLANTIO + FAZENDA.ticksDoCiclo);
-    expect(primeiro[FARINHA]).toBeGreaterThan(primeiro[GRAO] ?? 0);
-    expect(primeiro[PAO]).toBeGreaterThan(primeiro[FARINHA] ?? 0);
+    // o primeiro milho: plantio + viagem + ciclo, no tick da chegada do roceiro
+    expect(primeiro[GRAO]).toBe(PLANTIO + VIAGEM_DA_FAZENDA + FAZENDA.ticksDoCiclo);
+    // e cada elo seguinte nao pode chegar antes do proprio relogio dele, contado
+    // do elo anterior: mais estrito que a ordem, e ainda so com numero derivado.
+    expect(primeiro[FARINHA]).toBeGreaterThanOrEqual((primeiro[GRAO] ?? 0) + MOINHO.ticksDoCiclo);
+    expect(primeiro[PAO]).toBeGreaterThanOrEqual((primeiro[FARINHA] ?? 0) + PADARIA.ticksDoCiclo);
   }, TIMEOUT_DA_CORRIDA);
 });
 
@@ -251,6 +273,8 @@ describe('F19 — evidencia', () => {
         },
         ticksDePlantio: PLANTIO,
         ticksPorGrao: TICKS_POR_GRAO,
+        viagemDaFazendaFT3: VIAGEM_DA_FAZENDA,
+        _notaFT3: 'a viagem do roceiro ate o tile e de volta entrou no custo por grao e no arranque: a fonte rende menos por hora, e o teto acompanhou',
         paesPorGrao: PAES_POR_GRAO,
         arranqueMinimo: ARRANQUE,
         proporcaoDeReferencia: {
@@ -263,6 +287,10 @@ describe('F19 — evidencia', () => {
         janela: JANELA,
         serieDeEntrega: serie,
         tetoDaFonte: Number(tetoDaFonte(JANELA).toFixed(1)),
+        fracaoDoTeto: Number(
+          ((entregasNoArmazem(cenarioDaCadeiaDoPao(), JANELA, [PAO]).entregues[PAO] ?? 0)
+            / tetoDaFonte(JANELA)).toFixed(3),
+        ),
         ticksEsperandoInsumo: esperandoInsumo,
         fracaoOciosa: Object.fromEntries(
           Object.entries(esperandoInsumo).map(([k, v]) => [k, Number((v / JANELA).toFixed(3))]),

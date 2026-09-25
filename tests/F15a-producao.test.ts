@@ -154,18 +154,43 @@ describe('F15a — sim/producao.ts, as derivacoes puras', () => {
 });
 
 describe('F15a — o especialista produz', () => {
-  it('pedreira ocupada e ligada deposita 1 stone a cada 167 ticks', () => {
-    let s = avancar(cenarioDePedreira(), 166);
+  // F-T3 — o ciclo da pedreira deixou de caber dentro do predio: ele inclui a IDA
+  // ao tile e a VOLTA. `ticksDoCiclo` continua vindo do dado; a viagem vem do
+  // MAPA — 49 ticks em cada perna, da porta (26,36) ao tile (24,29) que esta
+  // pedreira escolhe, mais o tick da transicao (medido na trilha de
+  // `test-output/F-T3-ciclo-em-campo.json`).
+  const VIAGEM = 99;
+  const INTERVALO = receita('quarry').ticksDoCiclo + VIAGEM;
+
+  // A assercao ficou mais ESTRITA, e nao mais larga: antes conferia dois
+  // depositos, agora confere quatro; antes o tick anterior so nao tinha pedra,
+  // agora tambem diz onde o relogio esta (ciclo PRONTO, ele volta carregado).
+  it(`pedreira ocupada e ligada deposita 1 stone a cada ${INTERVALO} ticks`, () => {
+    let s = avancar(cenarioDePedreira(), INTERVALO - 1);
     expect(saidaDe(s, 'q1').stone ?? 0).toBe(0);
+    expect(progressoDe(s, 'q1')).toBe(receita('quarry').ticksDoCiclo);
     s = avancar(s, 1);
-    expect(saidaDe(s, 'q1').stone).toBe(1); // tick 167
-    s = avancar(s, 167);
-    expect(saidaDe(s, 'q1').stone).toBe(2); // tick 334, intervalo EXATO
+    expect(saidaDe(s, 'q1').stone).toBe(1);
+    for (const n of [2, 3, 4]) {
+      s = avancar(s, INTERVALO);
+      expect(saidaDe(s, 'q1').stone, `deposito ${n}`).toBe(n); // intervalo EXATO
+    }
   });
 
   it('o especialista que produz nunca fica `ocioso`', () => {
-    const s = avancar(cenarioDePedreira(), 400);
-    expect(fsmDe(s, 'u1')).toBe('trabalhando');
+    // F-T3 — "esta em `trabalhando` no tick 400" deixou de ser a pergunta: o ciclo
+    // passa por quatro estados legitimos e o tick 400 cai no meio da colheita. A
+    // pergunta permanente sempre foi "ele nunca cai em `ocioso`" — e agora ela e
+    // conferida nos 400 ticks, um por um, em vez de num so. E a lista de estados
+    // VISTOS e exata: um estado a mais ou a menos reprova.
+    let s = cenarioDePedreira();
+    const vistos = new Set<string>();
+    for (let t = 0; t < 400; t += 1) {
+      s = avancar(s, 1);
+      vistos.add(fsmDe(s, 'u1'));
+    }
+    expect(vistos.has('ocioso')).toBe(false);
+    expect([...vistos].sort()).toEqual(['colhendo', 'indo_colher', 'trabalhando', 'voltando']);
   });
 
   it('predio sem ocupante nao produz (Nota da F14: quem produz e o ocupante)', () => {
@@ -188,7 +213,9 @@ describe('F15a — o especialista produz', () => {
   });
 
   it('saida cheia: para em `saida_cheia` e NAO perde o ciclo pronto', () => {
-    const s = avancar(cenarioDePedreira(), 167 * 6);
+    // F-T3 — seis CICLOS, e o ciclo agora e `INTERVALO`: cinco couberam na gaveta
+    // e o sexto volta do campo com a pedra na mao e sem lugar para ela.
+    const s = avancar(cenarioDePedreira(), INTERVALO * 6);
     expect(saidaDe(s, 'q1').stone).toBe(5);  // o teto da gaveta
     expect(fsmDe(s, 'u1')).toBe('saida_cheia');
     expect(progressoDe(s, 'q1')).toBe(167);  // ciclo pronto, so nao coube
@@ -226,10 +253,14 @@ describe('F15a — o especialista produz', () => {
 
   it('jazida esgota: evento no tick exato, e depois a pedreira nao produz mais', () => {
     const dadosCurtos = comJazida(gameData, 'rock', [[25, 32]], 2); // 1 tile de 2 pedras e acabou
-    expect(eventosNoTick(cenarioDePedreira(dadosCurtos), 334, dadosCurtos)).toContainEqual(
+    // F-T3 — dois ciclos, e cada um agora inclui a viagem ate (25,32): 28 ticks de
+    // ida, 29 de volta (este tile e mais perto que o do cenario cheio, e por isso o
+    // intervalo aqui e menor que o de cima — a viagem e do MAPA, nao do dado).
+    const CURTO = receita('quarry').ticksDoCiclo + 57;
+    expect(eventosNoTick(cenarioDePedreira(dadosCurtos), CURTO * 2, dadosCurtos)).toContainEqual(
       { type: 'vein-exhausted', predio: 'q1', tipo: 'quarry' },
     );
-    const s = avancar(cenarioDePedreira(dadosCurtos), 167 * 5, dadosCurtos);
+    const s = avancar(cenarioDePedreira(dadosCurtos), CURTO * 5, dadosCurtos);
     expect(saidaDe(s, 'q1').stone).toBe(2);
     expect(disponivelDe(s, 'q1', dadosCurtos)).toBe(0);
     expect(fsmDe(s, 'u1')).toBe('esperando_insumo');
@@ -239,7 +270,7 @@ describe('F15a — o especialista produz', () => {
     const dadosCurtos = comJazida(gameData, 'rock', [[25, 32]], 2);
     let s = cenarioDePedreira(dadosCurtos);
     let quantos = 0;
-    for (let i = 0; i < 167 * 4; i++) {
+    for (let i = 0; i < (receita('quarry').ticksDoCiclo + 57) * 4; i++) {
       s = step(s, [], dadosCurtos);
       quantos += s.events.filter((e) => e.type === 'vein-exhausted').length;
     }

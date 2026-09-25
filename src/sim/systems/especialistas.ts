@@ -6,6 +6,15 @@
  *                                  ^
  *                                  +------->  saida_cheia
  *
+ * F-T3 — predio que tem `colheita` no dado ganha um desvio pelo CAMPO:
+ *
+ *   trabalhando -> indo_colher -> colhendo -> voltando -> trabalhando
+ *
+ * Nele o relogio do ciclo anda em `colhendo`, no tile, e nao em `trabalhando`:
+ * o mesmo `receita.ticksDoCiclo`, so em outro lugar. A viagem e tempo A MAIS,
+ * e o que ela custa em vazao esta medido no BALANCE_LOG. Predio sem `colheita`
+ * (padaria, moinho) nunca entra no desvio — a diferenca vem do DADO.
+ *
  * O GDD chama o primeiro estado de `sem_predio`; aqui ele e `ocioso`, o mesmo de
  * toda unidade recem-nascida (`systems/escolas.ts`) e o que
  * `ficarOcioso`/`ocioso` produzem. Mesmo significado, um nome so (Nota do item
@@ -32,9 +41,10 @@ import { ehTarefaDeColheita } from '../state';
 import type { ColheitaDeRecurso, GameData, ReceitaDePredio, ReposicaoDeRecurso } from '../data/types';
 import { gameData } from '../data';
 import {
-  caminhoAtePredioCompleto, criarTarefaDeColheita, liberar, reclamar, reclamarMelhorOcupacao,
-  removerTarefa, tarefaDeColheitaDoPredio,
+  caminhoAteAproximacaoDoTile, caminhoAtePredioCompleto, criarTarefaDeColheita, liberar, reclamar,
+  reclamarMelhorOcupacao, removerTarefa, tarefaDeColheitaDoPredio,
 } from '../jobs';
+import { tileAlcancavelParaColheita } from '../aproximacao';
 import { ehPredioOcupavel, predioAceita, predioDoOcupante, tiposQueOcupam } from '../ocupacao';
 import { chaveDeTile, predioLigadoAoArmazem, tileDeChave } from '../estradas';
 import {
@@ -211,8 +221,13 @@ function garantirColheita(
   if (existente !== null) {
     id = existente.id; // reaberta por `liberar`: o tile continua sendo deste predio
   } else {
+    // F-T3 — o predicado de POSICAO, o MESMO que o claim usa: tile debaixo de
+    // predio ou sem aproximacao andavel nao entra na escolha. Se so o claim
+    // recusasse, a tarefa nasceria e morreria a cada tick e o predio esperaria o
+    // que nunca chega.
     const chaveDoTile = melhorTileDeColheita(
       state, predio, colheita, quantidade, tilesReservadosParaColheita(state), dados,
+      (k) => tileAlcancavelParaColheita(state, k, dados),
     );
     if (chaveDoTile === null) return null; // nenhum tile livre ao alcance neste tick
     const criada = criarTarefaDeColheita(state, {
@@ -372,6 +387,33 @@ function produzir(state: GameState, u: Unidade, predio: PredioCompleto, dados: G
   const tarefa = colheita === null ? null : colheita.tarefa;
   // ciclo PRONTO de um tick anterior: so falta caber
   if (prod.progresso >= receita.ticksDoCiclo) return depositar(base, u, predio, receita, tarefa, dados);
+  // F-T3 — AQUI o especialista SAI. Predio com `colheita` no dado nao produz mais
+  // de dentro: o ciclo comeca com a viagem, o relogio anda no tile (`colhendo`) e o
+  // deposito acontece na volta. Predio sem `colheita` (padaria, moinho) nao tem
+  // tarefa e segue exatamente como antes — a diferenca nasce do DADO, nao de uma
+  // lista de tipos em codigo.
+  //
+  // Sem caminho ate a aproximacao do tile, o claim ja teria recusado; este ramo
+  // cobre o tile que se fechou DEPOIS de reclamado (obra plantada em cima do unico
+  // acesso). `'caminho-cortado'` NAO reabre a tarefa: o proximo ciclo escolhe outro
+  // tile, em vez de insistir no que ficou ilhado.
+  //
+  // O insumo e cobrado DEPOIS do caminho, e nao antes: cobrar e nao poder sair
+  // queimaria materia-prima por um ciclo que nunca comecou.
+  if (tarefa !== null && prod.progresso === 0) {
+    const caminho = caminhoAteAproximacaoDoTile(base, tarefa.origemTile, u.id, dados);
+    if (caminho === null) {
+      const l = liberar(base, tarefa.id, 'caminho-cortado');
+      return { state: comFsm(l.state, u, 'esperando_insumo').state, events: l.events };
+    }
+    if (!temInsumo(predio, receita)) return comFsm(base, u, 'esperando_insumo');
+    const pago = comPredio(base, consumirInsumos(predio, receita));
+    return semEventos(comUnidade(pago, {
+      ...u,
+      fsm: 'indo_colher',
+      fsmData: dadosDaFsm({ tarefa: tarefa.id, caminho: caminho.tiles, progresso: 0 }),
+    }));
+  }
   // inicio de ciclo: cobra os insumos, como a escola cobra o ouro ao INICIAR o treino (F13a)
   let atual = predio;
   if (prod.progresso === 0) {
@@ -401,6 +443,17 @@ function produzir(state: GameState, u: Unidade, predio: PredioCompleto, dados: G
 function passoProduzindo(state: GameState, u: Unidade, dados: GameData): Passo {
   const predio = predioDoOcupante(state, u.id);
   if (predio !== null) return produzir(state, u, predio, dados);
+  return largarOPredioPerdido(state, u);
+}
+
+/**
+ * F-T3 — "eu ainda tenho predio?", e o que fazer quando nao. Era o prologo de
+ * `passoProduzindo` (F-T2c), extraido sem mudar corpo ao ganhar os outros tres
+ * consumidores: os estados EM CAMPO. Demolir o predio com o especialista no campo
+ * cai todo aqui — tarefa liberada com `'pedido-da-unidade'` (o tile REABRE para o
+ * proximo ocupante) e a unidade fica ociosa NO TILE em que estava.
+ */
+function largarOPredioPerdido(state: GameState, u: Unidade): Passo {
   const minha = colheitaSeguraPor(state, u.id);
   if (minha === null) return ficarOcioso(state, u);
   const l = liberar(state, minha.id, 'pedido-da-unidade');
@@ -417,6 +470,209 @@ function colheitaSeguraPor(state: GameState, unidadeId: string): TarefaColher | 
   return null;
 }
 
+/**
+ * F-T3 — O ESPECIALISTA EM CAMPO.
+ *
+ *   trabalhando -> indo_colher -> colhendo -> voltando -> trabalhando
+ *
+ * O predio e a tarefa moram onde sempre moraram: a posse em `predio.ocupante`, o
+ * tile em `TarefaColher`. Nenhum campo novo no `GameState` — os tres estados usam
+ * `fsmData.caminho`/`progresso`, os mesmos do serf e do laborer.
+ *
+ * Os tres estados comecam pelas MESMAS tres perguntas, nesta ordem, e a ordem e a
+ * regra:
+ *
+ * 1. tenho predio? Nao: `largarOPredioPerdido` (demolido, ou ocupante trocado).
+ * 2. o predio esta pausado? Entao CONGELA onde esta, sem olhar mais nada (F16c:
+ *    pausa nao move ninguem). Vem antes da tarefa de proposito — `sanearTarefas`
+ *    CANCELA a colheita do predio pausado (F16c, `motivoDoDestino`: segurar o tile
+ *    por tempo indeterminado travaria a pedreira do vizinho de graca), e sem este
+ *    degrau o pedreiro pausado no campo seria expulso do proprio predio no tick
+ *    seguinte a pausa.
+ * 3. tenho a tarefa? Nao: volta de maos vazias e o ciclo recomeca inteiro. E o
+ *    preco da regra do degrau 2, e ele e pago em TICKS, nunca em mercadoria.
+ */
+function posseEmCampo(
+  state: GameState, u: Unidade,
+): { readonly predio: PredioCompleto; readonly tarefa: TarefaColher } | null {
+  const predio = predioDoOcupante(state, u.id);
+  if (predio === null) return null;
+  const tarefa = colheitaSeguraPor(state, u.id);
+  if (tarefa === null || tarefa.destino !== predio.id) return null;
+  return { predio, tarefa };
+}
+
+/** Os tres degraus, na ordem. `'perdeu-o-predio'` e `'sem-tarefa'` sao os dois
+ *  ramos de erro; `'congelado'` e a pausa. */
+type SituacaoEmCampo =
+  | { readonly tipo: 'ok'; readonly predio: PredioCompleto; readonly tarefa: TarefaColher }
+  | { readonly tipo: 'congelado' }
+  | { readonly tipo: 'sem-tarefa'; readonly predio: PredioCompleto }
+  | { readonly tipo: 'perdeu-o-predio' };
+
+/**
+ * Pausa CONGELA: nenhum passo, nenhum relogio, nenhum evento (F16c). A unica
+ * escrita e apagar de `fsmData` o ponteiro de uma tarefa que o quadro ja tirou
+ * dele — e o que acontece no tick da pausa, porque `motivoDoDestino` cancela a
+ * colheita do predio pausado. Ponteiro pendurado seria estado mentindo, e por isso
+ * ele nao sobrevive nem congelado.
+ */
+function congelar(state: GameState, u: Unidade): Passo {
+  const alvo = u.fsmData.tarefa;
+  if (alvo === undefined) return semEventos(state);
+  const minha = colheitaSeguraPor(state, u.id);
+  if (minha !== null && minha.id === alvo) return semEventos(state);
+  const { tarefa: _cancelada, ...semAPonteiro } = u.fsmData;
+  return semEventos(comUnidade(state, { ...u, fsmData: semAPonteiro }));
+}
+
+function situacaoEmCampo(state: GameState, u: Unidade): SituacaoEmCampo {
+  const predio = predioDoOcupante(state, u.id);
+  if (predio === null) return { tipo: 'perdeu-o-predio' };
+  if (predio.pausado) return { tipo: 'congelado' };
+  const posse = posseEmCampo(state, u);
+  if (posse === null) return { tipo: 'sem-tarefa', predio };
+  return { tipo: 'ok', predio: posse.predio, tarefa: posse.tarefa };
+}
+
+/** Andando para o tile. Pausa CONGELA onde esta (F16c): pausa e "este predio
+ *  para", e mandar o pedreiro para casa seria movimento que o jogador nao pediu. */
+function passoIndoColher(state: GameState, u: Unidade, dados: GameData): Passo {
+  const s = situacaoEmCampo(state, u);
+  if (s.tipo === 'perdeu-o-predio') return largarOPredioPerdido(state, u);
+  if (s.tipo === 'congelado') return congelar(state, u);
+  if (s.tipo === 'sem-tarefa') return voltarSemTarefa(state, u, s.predio, dados);
+  const { predio, tarefa } = s;
+
+  const proximo = (u.fsmData.caminho ?? [])[0];
+  let atual = u;
+  if (proximo !== undefined && !tileAndavel(state, proximo, 'livre', dados)) {
+    // o caminho morreu debaixo dele (obra plantada na frente): repede UMA vez.
+    const caminho = caminhoAteAproximacaoDoTile(state, tarefa.origemTile, u.id, dados);
+    if (caminho === null) return voltarSemColher(state, u, predio, tarefa, dados);
+    atual = { ...u, fsmData: dadosDaFsm({ tarefa: tarefa.id, caminho: caminho.tiles, progresso: 0 }) };
+  }
+  const andou = andar(state, atual, dados);
+  if (!chegou(andou)) return semEventos(comUnidade(state, andou));
+  return semEventos(comUnidade(state, {
+    ...andou, fsm: 'colhendo', fsmData: dadosDaFsm({ tarefa: tarefa.id }),
+  }));
+}
+
+/** No tile: o relogio do CICLO anda aqui, e e o mesmo relogio de sempre
+ *  (`predio.producao.progresso`, `receita.ticksDoCiclo`). Nenhum numero novo — o
+ *  que mudou e QUANDO ele anda, nao quanto. */
+function passoColhendo(state: GameState, u: Unidade, dados: GameData): Passo {
+  const s = situacaoEmCampo(state, u);
+  if (s.tipo === 'perdeu-o-predio') return largarOPredioPerdido(state, u);
+  if (s.tipo === 'congelado') return congelar(state, u);
+  if (s.tipo === 'sem-tarefa') return voltarSemTarefa(state, u, s.predio, dados);
+  const { predio, tarefa } = s;
+
+  const receita = receitaDoTipo(predio.tipo, dados);
+  const prod = predio.producao;
+  if (receita === null || prod === null) return voltarSemColher(state, u, predio, tarefa, dados);
+
+  const progresso = prod.progresso + 1;
+  const avancado: PredioCompleto = { ...predio, producao: { progresso, plantio: null } };
+  const comRelogio = comPredio(state, avancado);
+  if (progresso < receita.ticksDoCiclo) return semEventos(comRelogio);
+  return voltar(comRelogio, u, avancado, tarefa, dados);
+}
+
+/** Voltando. Com tarefa na mao, a chegada e o DEPOSITO — e e o `depositar` da
+ *  F-T2c, intocado: gaveta, `colherDoTile`, tarefa fora do quadro e
+ *  `vein-exhausted`, tudo no mesmo tick. Sem tarefa (o tile secou enquanto ele
+ *  vinha), a chegada so zera o relogio: mercadoria sem tile seria pedra vinda do
+ *  nada. */
+function passoVoltando(state: GameState, u: Unidade, dados: GameData): Passo {
+  const predio = predioDoOcupante(state, u.id);
+  if (predio === null) return largarOPredioPerdido(state, u);
+  if (predio.pausado) return semEventos(state);
+
+  const proximo = (u.fsmData.caminho ?? [])[0];
+  let atual = u;
+  if (proximo !== undefined && !tileAndavel(state, proximo, 'livre', dados)) {
+    const caminho = caminhoAtePredioCompleto(state, predio.id, u.id, dados);
+    if (caminho === null) return desfazerPosse(state, u, predio);
+    atual = { ...u, fsmData: dadosDaFsm({ ...u.fsmData, caminho: caminho.tiles, progresso: 0 }) };
+  }
+  const andou = andar(state, atual, dados);
+  if (!chegou(andou)) return semEventos(comUnidade(state, andou));
+
+  const receita = receitaDoTipo(predio.tipo, dados);
+  const tarefa = colheitaSeguraPor(state, u.id);
+  if (receita === null) return ficarOcioso(state, andou);
+  if (tarefa === null) {
+    const zerado: PredioCompleto = { ...predio, producao: { progresso: 0, plantio: null } };
+    return semEventos(comUnidade(comPredio(state, zerado), {
+      ...andou, fsm: 'trabalhando', fsmData: {},
+    }));
+  }
+  return depositar(state, andou, predio, receita, tarefa, dados);
+}
+
+/** Fim do ciclo no tile: pede o caminho de volta e sai andando COM a tarefa na
+ *  mao — e a tarefa que faz a chegada virar deposito. Sem caminho de volta cai em
+ *  `voltarSemColher`, e nao direto em `desfazerPosse`, por um motivo: aquele LIBERA
+ *  a tarefa antes de descobrir que tambem nao ha volta, e e esse `liberar` que
+ *  impede o tile de ficar reservado por uma unidade que nunca mais vai colher. */
+function voltar(
+  state: GameState, u: Unidade, predio: PredioCompleto, tarefa: TarefaColher, dados: GameData,
+): Passo {
+  const caminho = caminhoAtePredioCompleto(state, predio.id, u.id, dados);
+  if (caminho === null) return voltarSemColher(state, u, predio, tarefa, dados);
+  return semEventos(comUnidade(state, {
+    ...u, fsm: 'voltando', fsmData: dadosDaFsm({ tarefa: tarefa.id, caminho: caminho.tiles, progresso: 0 }),
+  }));
+}
+
+/** Volta de maos vazias: o ciclo perdeu o tile (secou, ou o caminho de ida
+ *  morreu). Larga a tarefa REABRINDO (o tile continua sendo do predio) e zera o
+ *  relogio — meio ciclo pago nao vira pedra. */
+function voltarSemColher(
+  state: GameState, u: Unidade, predio: PredioCompleto, tarefa: TarefaColher, dados: GameData,
+): Passo {
+  const l = liberar(state, tarefa.id, 'pedido-da-unidade');
+  return voltarSemTarefa(l.state, u, predio, dados, l.events);
+}
+
+/**
+ * Volta sem ter tarefa nenhuma para largar: o quadro ja a tirou dele. Acontece
+ * quando o jogador PAUSA o predio com ele no campo (`motivoDoDestino` cancela a
+ * colheita do predio pausado) e tambem quando o tile secou na mao de outro.
+ * Zera o relogio: o meio ciclo trabalhado sobre um tile que nao e mais dele nao
+ * pode virar mercadoria nem ficar guardado para o proximo tile.
+ */
+function voltarSemTarefa(
+  state: GameState, u: Unidade, predio: PredioCompleto, dados: GameData,
+  eventos: readonly GameEvent[] = [],
+): Passo {
+  const caminho = caminhoAtePredioCompleto(state, predio.id, u.id, dados);
+  if (caminho === null) return desfazerPosse(state, u, predio, eventos);
+  const zerado: PredioCompleto = { ...predio, producao: { progresso: 0, plantio: null } };
+  return {
+    state: comUnidade(comPredio(state, zerado), {
+      ...u, fsm: 'voltando', fsmData: dadosDaFsm({ caminho: caminho.tiles, progresso: 0 }),
+    }),
+    events: eventos,
+  };
+}
+
+/** Ele nao consegue mais voltar: a posse se desfaz dos DOIS lados. O predio fica
+ *  vago (e ai o alerta `sem-trabalhador` acende com razao) e ele fica ocioso onde
+ *  esta, livre para reclamar outra ocupacao — cujo claim confere caminho. */
+function desfazerPosse(
+  state: GameState, u: Unidade, predio: PredioCompleto, eventos: readonly GameEvent[] = [],
+): Passo {
+  const vago = comPredio(state, {
+    ...predio,
+    ocupante: null,
+    producao: predio.producao === null ? null : { progresso: 0, plantio: predio.producao.plantio },
+  });
+  return ficarOcioso(vago, u, eventos);
+}
+
 function passoDoEspecialista(state: GameState, u: Unidade, dados: GameData): Passo {
   switch (u.fsm) {
     case 'ocioso': return passoOcioso(state, u, dados);
@@ -427,6 +683,11 @@ function passoDoEspecialista(state: GameState, u: Unidade, dados: GameData): Pas
     case 'esperando_insumo':
     case 'saida_cheia':
       return passoProduzindo(state, u, dados);
+    // F-T3 — os tres estados EM CAMPO tem transicao PROPRIA: aqui nao ha rotulo
+    // a recalcular do predio, e cada um deles comeca conferindo a posse.
+    case 'indo_colher': return passoIndoColher(state, u, dados);
+    case 'colhendo': return passoColhendo(state, u, dados);
+    case 'voltando': return passoVoltando(state, u, dados);
     default:
       // `fsm` e uma string no estado (JSON): um valor fora do GDD §6.2 e save corrompido
       throw new Error(`sistemaDosEspecialistas: estado de FSM desconhecido '${u.fsm}' no especialista ${u.id}`);
