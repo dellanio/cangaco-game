@@ -65,6 +65,12 @@ const ARRANQUE = PLANTIO + VIAGEM_DA_FAZENDA
 
 const JANELA = 12000;
 
+/** As fases em que o roceiro esta PRODUZINDO, na FSM da F-T3
+ *  (src/sim/systems/especialistas.ts: trabalhando -> indo_colher -> colhendo ->
+ *  voltando -> trabalhando). E o que o cenario sem moinho aceita como "a fazenda
+ *  continua viva". */
+const ESTADOS_PRODUTIVOS_DO_ROCEIRO = ['trabalhando', 'indo_colher', 'colhendo', 'voltando'];
+
 /**
  * O oraculo de calibracao vive em `production.json` e NAO passa pelo carregador:
  * nenhum sistema o le, e nao deve ler — e numero de referencia para medir, nao
@@ -182,7 +188,13 @@ describe('F19 — o elo do meio e real', () => {
     // e a fazenda continua produzindo enquanto vive: o que parou foi a cadeia, nao o
     // mapa — o milho se acumula sem ninguem para moe-lo.
     expect(desdeOInicio(inicial, fim, GRAO)).toBeGreaterThan(0);
-    expect(ultimoFsm.roceiro).toBe('trabalhando');
+    // Qualquer fase PRODUTIVA do ciclo da F-T3 vale: em que fase o roceiro esta no
+    // tick em que morre de fome e coincidencia dos numeros de data/, nao regra. A
+    // versao antiga afirmava 'trabalhando' e caiu na calibracao da Fase B
+    // (2026-09-25): o ciclo mudou de tamanho e ele passou a morrer em 'indo_colher'.
+    // O que a assercao exclui continua excluido: 'esperando_insumo', 'saida_cheia',
+    // 'ocioso' e os estados de fome.
+    expect(ESTADOS_PRODUTIVOS_DO_ROCEIRO).toContain(ultimoFsm.roceiro);
     // a prova de que o dreno CHEGOU: vila sem comida nao tem um civil de pe no fim.
     expect(fim.unidades.ordem).toHaveLength(0);
   }, TIMEOUT_DA_CORRIDA);
