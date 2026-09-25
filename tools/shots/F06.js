@@ -25,6 +25,39 @@ async function roteiro(ctx) {
   const canvas = await retanguloDoCanvas(page);
   afirmar(canvas.top >= hud.bottom - 0.5, `canvas.top (${canvas.top}) deveria ser >= hud.bottom (${hud.bottom})`);
   afirmar(canvas.right <= painel.left + 0.5, `canvas.right (${canvas.right}) deveria ser <= painel.left (${painel.left})`);
+  // Layout 2 (estilo-ui): o balcao e uma LINHA da grade no rodape, nunca
+  // sobreposicao — a afirmacao equivalente a de cima, pedida pelo operador.
+  const balcao = await retanguloDe(page, '#balcao');
+  afirmar(canvas.bottom <= balcao.top + 0.5, `canvas.bottom (${canvas.bottom}) deveria ser <= balcao.top (${balcao.top})`);
+
+  // 1b. a prancha RETRAI para a lombada e o canvas cresce ate ela. O Phaser em
+  //     Scale.RESIZE confere o pai a cada 500 ms, dai a espera. Nos dois
+  //     estados o canvas continua a esquerda da coluna: nada fica por baixo.
+  const esperarOCanvasSeguirAGrade = () => page.waitForTimeout(700);
+  await page.click('[data-fechar="prancha"]');
+  await esperarOCanvasSeguirAGrade();
+  const lombada = await retanguloDe(page, '#menu-build');
+  const canvasLargo = await retanguloDoCanvas(page);
+  afirmar(
+    lombada.width < painel.width && lombada.right >= painel.right - 0.5,
+    `fechada, a prancha deveria virar lombada estreita na borda direita, veio ${JSON.stringify(lombada)} contra ${JSON.stringify(painel)}`,
+  );
+  afirmar(
+    canvasLargo.width > canvas.width && canvasLargo.right <= lombada.left + 0.5,
+    `com a prancha fechada o canvas deveria crescer ate a lombada, veio ${JSON.stringify(canvasLargo)} contra ${JSON.stringify(lombada)}`,
+  );
+  afirmar(
+    await page.isVisible('[data-abrir="prancha"]') && await page.isHidden('[data-predio="quarry"]'),
+    'fechada, a prancha mostra so a lombada — nenhum item do menu fica clicavel',
+  );
+  await capturar('prancha-recolhida');
+  await page.click('[data-abrir="prancha"]');
+  await esperarOCanvasSeguirAGrade();
+  const canvasDeVolta = await retanguloDoCanvas(page);
+  afirmar(
+    Math.abs(canvasDeVolta.width - canvas.width) < 0.5 && await page.isVisible('[data-predio="quarry"]'),
+    `reaberta, a prancha deveria devolver o canvas a largura inicial (${canvas.width}), veio ${canvasDeVolta.width}`,
+  );
 
   // 2. bloqueado: cinza, com "requer <nome do tema do pai>", e clicar nao ativa.
   const serraria = defDe('sawmill');

@@ -16,7 +16,10 @@
     <div id="jogo"></div>
     <aside id="alertas" hidden></aside>
     <aside id="ajuda" hidden></aside>
-    <aside id="painel-predio" hidden></aside>
+    <!-- Layout 2: o balcao e a faixa de contexto no rodape (linha 3 da grade),
+         e o painel de predio mora DENTRO dele. A prancha e a coluna da direita.
+         Os dois retraem por `data-prancha` / `data-balcao` no <body>. -->
+    <footer id="balcao"><section id="painel-predio" hidden></section></footer>
     <aside id="menu-build"></aside>
     <script type="module" src="/src/main.ts"></script>
   </body>

@@ -443,6 +443,17 @@
     "glossarioObrigatorio": true,
     "_doc": "O mundo é colorido e detalhado; a interface é xilogravura. Os dois registros não competem."
   },
+  "paineis": {
+    "_doc": "Layout 2 (docs/propostas/ui-releitura-rts.md, secao 8). A PRANCHA e a coluna de construir, a direita; o BALCAO e a faixa de contexto no rodape. Os dois retraem: a prancha vira lombada de tinta na borda direita (o rotulo vertical dela e menuBuild.titulo, que ja existe), o balcao vira uma alca a esquerda com o nome do que esta escolhido. Aqui moram so os rotulos dos botoes de abrir e recolher e o texto da alca quando nao ha nada escolhido. As setas sao desenho em CSS, nao texto.",
+    "prancha": {
+      "recolher": "Recolher o menu de construir"
+    },
+    "balcao": {
+      "recolher": "Recolher os detalhes",
+      "abrir": "Mostrar os detalhes",
+      "vazio": "Nada escolhido"
+    }
+  },
   "ajuda": {
     "_doc": "F-D1. A tela de ajuda. As chaves de `rotulos` e `gestos` SÃO os ids de `ATALHOS` e `GESTOS` (src/input/atalhos.ts): id sem rótulo aqui, ou rótulo sobrando sem id, reprova o npm run verify — o guarda está em tests/F-D1-ajuda.test.ts, na ida e na volta, como o da F22. O nome da TECLA (Esc, H, F1) não sai daqui: é o que está escrito no teclado do jogador, não texto de tema.",
     "titulo": "Os controles",

@@ -6,8 +6,8 @@
    O que este arquivo NAO faz: nao muda id, atributo `data-` nem estrutura de
    nenhum painel. Os roteiros de tela (F06, F13b, F16b, F22, F-D1) afirmam
    sobre `data-campo` e texto do tema, e o da F06 MEDE o layout em grade
-   (canvas.top >= hud.bottom, canvas.right <= painel.left) e a distancia de
-   cor entre item ativo e inativo do menu. Tudo isso continua de pe aqui. */
+   (canvas.top >= hud.bottom, canvas.right <= painel.left, canvas.bottom <=
+   balcao.top) e a distancia de cor entre item ativo e inativo do menu. */
 
 /* Google Fonts: UMA fonte de display, so para titulo, valor e botao. Tipo de
    madeira pesado, como as capas de cordel. O corpo fica numa serifa do
@@ -18,9 +18,18 @@
 :root {
   /* Grade, nao sobreposicao: o canvas ocupa SO a celula dele. As dimensoes
      sao fixas de proposito: o Phaser mede o pai no boot, e o tamanho nao pode
-     depender de o HUD ja ter texto nessa hora. */
+     depender de o HUD ja ter texto nessa hora.
+
+     Layout 2 (docs/propostas/ui-releitura-rts.md §8): tres linhas — HUD,
+     canvas, balcao — e duas colunas — canvas, prancha. Os dois paineis retraem
+     por atributo no <body>; as variaveis abaixo trocam de valor e o canvas,
+     em Scale.RESIZE, acompanha a celula. Lombada e alca sao CELULAS da grade,
+     nunca sobreposicao: o canvas nao fica sob painel em nenhum dos 4 estados. */
   --altura-hud: 40px;
-  --largura-painel: 260px;
+  --largura-prancha: 260px;
+  --largura-lombada: 22px;
+  --altura-balcao: 132px;
+  --altura-alca: 24px;
 
   /* paleta: os valores sao os de `data/theme-sertao.json > paleta` */
   --papel: #ede3d0;          /* cal */
@@ -46,14 +55,25 @@
 html, body { margin: 0; padding: 0; background: var(--tinta); overflow: hidden; }
 body {
   display: grid; height: 100vh;
-  grid-template-columns: 1fr var(--largura-painel);
-  grid-template-rows: var(--altura-hud) 1fr;
+  grid-template-columns: 1fr var(--largura-prancha);
+  grid-template-rows: var(--altura-hud) 1fr var(--altura-balcao);
   color: var(--tinta);
   font: 14px/1.35 var(--fonte-corpo);
 }
+body[data-prancha="fechada"] { --largura-prancha: var(--largura-lombada); }
+body[data-balcao="fechado"] { --altura-balcao: var(--altura-alca); }
+
+/* as setas dos botoes de abrir e recolher: desenho, nao texto */
+.seta-dir::before, .seta-esq::before, .seta-cima::before, .seta-baixo::before {
+  content: ''; display: inline-block; width: 0; height: 0; border: 5px solid transparent;
+}
+.seta-dir::before { border-left-color: currentColor; border-right-width: 0; }
+.seta-esq::before { border-right-color: currentColor; border-left-width: 0; }
+.seta-cima::before { border-bottom-color: currentColor; border-top-width: 0; }
+.seta-baixo::before { border-top-color: currentColor; border-bottom-width: 0; }
 
 /* ---- o papel: toda caixa da interface herda daqui -------------------------- */
-#hud, #menu-build, #painel-predio, #alertas, #ajuda {
+#hud, #menu-build, #balcao, #alertas, #ajuda {
   background-color: var(--papel);
   background-image: var(--grao);
   color: var(--tinta);
@@ -162,9 +182,12 @@ button[aria-disabled="true"] {
 #ajuda .atalho .rotulo { flex: 1 1 0; min-width: 0; }
 #ajuda .rodape { margin: 14px 0 0; font-size: 12px; font-style: italic; color: var(--tinta-fraca); }
 
-/* ---- o menu Construir (F06) ------------------------------------------------- */
+/* ---- a prancha: o menu Construir (F06) -------------------------------------- */
+/* Desce ate o chao (linha 2 ate a ultima): o balcao ocupa so a largura do
+   canvas. Fechada, e a lombada — coluna de 18 px de tinta com o titulo do menu
+   na vertical. */
 #menu-build {
-  grid-column: 2; grid-row: 2; min-height: 0; overflow-y: auto;
+  grid-column: 2; grid-row: 2 / -1; min-height: 0; overflow-y: auto;
   box-sizing: border-box; padding: 8px 10px 12px;
   border-left: var(--traco) solid var(--tinta);
   display: flex; flex-direction: column; gap: 6px;
@@ -173,6 +196,24 @@ button[aria-disabled="true"] {
   margin: 2px 0 6px; padding-bottom: 4px; font-size: 19px;
   border-bottom: var(--traco) solid var(--tinta);
 }
+/* o botao de recolher: gruda no alto a direita, por cima da linha do titulo */
+#menu-build .recolher {
+  position: sticky; top: 0; z-index: 1; align-self: flex-end;
+  width: 24px; height: 24px; padding: 0; margin-bottom: -30px;
+  display: grid; place-items: center; box-shadow: none;
+}
+#menu-build .lombada { display: none; }
+body[data-prancha="fechada"] #menu-build { padding: 0; overflow: hidden; background: var(--tinta); }
+body[data-prancha="fechada"] #menu-build > :not(.lombada) { display: none; }
+body[data-prancha="fechada"] #menu-build .lombada {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  width: 100%; height: 100%; padding: 8px 0; margin: 0; box-sizing: border-box;
+  border: 0; box-shadow: none; background: var(--tinta); color: var(--papel);
+  writing-mode: vertical-rl; font: 12px/1 var(--fonte-display); letter-spacing: 0.16em;
+  text-transform: uppercase; cursor: pointer;
+}
+body[data-prancha="fechada"] #menu-build .lombada:hover { background: var(--tinta-fraca); }
+body[data-prancha="fechada"] #menu-build .lombada:active { transform: none; }
 #menu-build .item {
   display: flex; flex-direction: column; gap: 2px; text-align: left;
   padding: 6px 9px; border: 2px solid var(--tinta);
@@ -200,9 +241,9 @@ button[aria-disabled="true"] {
 }
 
 /* ---- os avisos (F22) --------------------------------------------------------- */
-/* SOBREPOSICAO na celula do canvas, como o painel, mas ancorada no canto oposto
-   (`start end` contra o `end start` dele): os dois aparecem juntos e nao podem
-   se cobrir. O roteiro da F22 MEDE os dois retangulos, nao confia nesta linha. */
+/* SOBREPOSICAO na celula do canvas, no canto superior direito. Ate a fatia 4 do
+   Layout 2 (que os leva para o HUD) continuam aqui; o roteiro da F22 MEDE o
+   retangulo, nao confia nesta linha. */
 #alertas {
   grid-column: 1; grid-row: 2; place-self: start end; margin: 12px;
   box-sizing: border-box; max-width: 248px; padding: 6px 10px 8px;
@@ -224,22 +265,39 @@ button[aria-disabled="true"] {
   font: 12px/1.2 var(--fonte-display); font-variant-numeric: tabular-nums;
 }
 
-/* ---- o painel de predio (F16b) --------------------------------------------- */
-/* F13b: SOBREPOSICAO na celula do canvas, nao coluna nova. Uma terceira coluna
-   encolheria o canvas e reprovaria o roteiro da F06, que afirma
-   canvas.right <= painel.left. A F16b so renomeou (#painel-escola ->
-   #painel-predio): a posicao e a largura seguem as mesmas, de proposito. */
+/* ---- o balcao e o painel de predio (F16b) ---------------------------------- */
+/* Layout 2: o painel deixou de ser sobreposicao no canto do canvas (F13b) e
+   virou o conteudo do BALCAO, a linha 3 da grade, so na largura do canvas.
+   Aberto, 132 px; fechado, so a alca (24 px). A alca fica a ESQUERDA, e e um
+   botao: com algo escolhido, recolhe e reabre; sem nada, so diz que esta vazio. */
+#balcao {
+  grid-column: 1; grid-row: 3; min-width: 0; min-height: 0; overflow: hidden;
+  box-sizing: border-box; border-top: var(--traco) solid var(--tinta);
+  display: flex; flex-direction: column;
+}
+#balcao .alca {
+  flex: 0 0 auto; align-self: flex-start; height: calc(var(--altura-alca) - var(--traco));
+  margin: 0; padding: 0 10px 0 8px; border: 0; border-right: 2px solid var(--tinta);
+  box-shadow: none; background: var(--papel-escuro);
+  display: flex; align-items: center; gap: 7px;
+  font: 11px/1 var(--fonte-display); letter-spacing: 0.06em; text-transform: uppercase;
+}
+#balcao .alca[aria-disabled="true"] { cursor: default; opacity: 0.55; background-image: none; }
+#balcao .alca:active { transform: none; }
+body[data-balcao="fechado"] #painel-predio { display: none; }
+/* O conteudo do painel FLUI EM COLUNAS dentro da faixa: os blocos ficam lado a
+   lado sem que o DOM mude (`columns`, nao flex). E o arranjo minimo da fatia 1;
+   a fatia 3 desenha os blocos horizontais de proposito. */
 #painel-predio {
-  grid-column: 1; grid-row: 2; place-self: end start; margin: 12px;
-  box-sizing: border-box; width: 248px; max-height: calc(100% - 24px);
-  overflow-y: auto; padding: 8px 10px 10px;
-  border: var(--traco) solid var(--tinta);
-  box-shadow: 4px 4px 0 var(--tinta);
-  display: flex; flex-direction: column; gap: 5px;
+  flex: 1 1 auto; min-height: 0; box-sizing: border-box;
+  padding: 4px 12px 6px; overflow-x: auto; overflow-y: hidden;
+  columns: 230px; column-fill: auto; column-gap: 18px;
+  column-rule: 2px solid var(--tinta);
 }
 #painel-predio[hidden] { display: none; }
+#painel-predio > * { break-inside: avoid; margin: 0 0 4px; }
 #painel-predio h2 {
-  margin: 0 0 4px; padding-bottom: 4px; font-size: 18px;
+  margin: 0 0 4px; padding-bottom: 3px; font-size: 16px;
   border-bottom: var(--traco) solid var(--tinta);
 }
 #painel-predio h3 {
@@ -249,7 +307,7 @@ button[aria-disabled="true"] {
 /* a fila da escola (F13b): um slot por vaga; o vazio e hachurado */
 #painel-predio .slot {
   display: flex; align-items: baseline; gap: 6px;
-  padding: 4px 6px; border: 2px solid var(--tinta);
+  padding: 3px 6px; border: 2px solid var(--tinta);
   background: var(--papel-escuro);
 }
 #painel-predio .slot[data-estado="vazio"] {

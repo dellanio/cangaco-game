@@ -17,7 +17,14 @@ const path = require('node:path');
 const { spawn } = require('node:child_process');
 const { chromium } = require('@playwright/test');
 
-const PORTA = 5175; // fixa e fora da faixa padrao do vite dev, evita colisao
+// Fixa e fora da faixa padrao do vite dev, evita colisao. `CANGACO_SHOT_PORTA`
+// troca a porta para uma segunda arvore de trabalho rodar roteiro ao mesmo
+// tempo: achado da branch estilo-ui (2026-09-25), em que um vite de OUTRA
+// sessao ocupava a 5175 e o runner, esperando so a porta responder, mediu o
+// index.html errado — com --strictPort o vite daqui morre calado e quem
+// responde e o vizinho. Por isso a espera abaixo tambem reprova se o filho
+// sair antes de a porta responder.
+const PORTA = Number(process.env.CANGACO_SHOT_PORTA ?? 5175);
 const VIEWPORT = { width: 1280, height: 720 };
 const TIMEOUT_SERVIDOR_MS = 20_000;
 const TIMEOUT_PRONTO_MS = 10_000;
@@ -54,9 +61,12 @@ function subirServidor() {
   return processo;
 }
 
-async function esperarServidor(url, timeoutMs) {
+async function esperarServidor(url, timeoutMs, processo) {
   const inicio = Date.now();
   for (;;) {
+    if (processo.exitCode !== null) {
+      throw new Error(`shot: o dev server saiu com codigo ${processo.exitCode} antes de responder em ${url} — a porta ja estava ocupada?`);
+    }
     try {
       const resposta = await fetch(url);
       if (resposta.ok) return;
@@ -112,7 +122,7 @@ async function main() {
   const { afirmar, afirmacoes } = criarAfirmador();
 
   try {
-    await esperarServidor(`http://localhost:${PORTA}/`, TIMEOUT_SERVIDOR_MS);
+    await esperarServidor(`http://localhost:${PORTA}/`, TIMEOUT_SERVIDOR_MS, servidor);
 
     browser = await chromium.launch();
     const page = await browser.newPage({ viewport: VIEWPORT });

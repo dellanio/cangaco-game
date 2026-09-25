@@ -388,7 +388,7 @@ Aberto + aberto (padrão)        Prancha fechada                 Balcão fechado
 ```
 
 - **Prancha** (coluna da direita, a grade de construir). Aberta: 260 px.
-  Fechada: **18 px**, uma lombada de tinta na borda direita com o rótulo
+  Fechada: **22 px**, uma lombada de tinta na borda direita com o rótulo
   `Construir` (tema) escrito na vertical e a seta. Clicar na lombada abre;
   clicar na seta do cabeçalho fecha. Só o jogador abre e fecha — a prancha
   nunca se mexe sozinha, porque é onde a mão dele vai a cada poucos segundos.
@@ -409,7 +409,7 @@ preferência de quem joga nesta máquina, não de partida.
 
 Nada em `render/`. `src/render/game.ts:36` já configura
 `Phaser.Scale.RESIZE` a 100 % do pai, então o canvas **acompanha a célula da
-grade**: quando a coluna passa de 260 para 18 px ou a linha de baixo de 132
+grade**: quando a coluna passa de 260 para 22 px ou a linha de baixo de 132
 para 22 px, o mapa cresce e a câmera continua válida. A grade CSS passa a ter
 três linhas e as duas medidas viram variáveis que mudam com um atributo no
 `body`:
@@ -417,7 +417,7 @@ três linhas e as duas medidas viram variáveis que mudam com um atributo no
 ```
 body                         { grid-template-columns: 1fr var(--largura-prancha);
                                grid-template-rows: var(--altura-hud) 1fr var(--altura-balcao); }
-body[data-prancha="fechada"] { --largura-prancha: 18px; }
+body[data-prancha="fechada"] { --largura-prancha: 22px; }
 body[data-balcao="fechado"]  { --altura-balcao: 22px; }
 #jogo     { grid-column: 1; grid-row: 2; }        /* canvas: SO a celula dele, como hoje */
 #balcao   { grid-column: 1; grid-row: 3; }        /* nunca sobre o canvas */

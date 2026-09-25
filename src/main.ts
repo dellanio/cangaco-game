@@ -23,6 +23,8 @@ import { montarPainelPredio } from './ui/painel-predio';
 import { montarAlertas } from './ui/alertas';
 import { montarAvisoDoTempo } from './ui/aviso-tempo';
 import { montarAjuda } from './ui/ajuda';
+import { montarPrancha } from './ui/prancha';
+import { montarBalcao } from './ui/balcao';
 import { criarFerramenta } from './input/ferramenta';
 import { criarSelecao } from './input/selecao';
 import { criarEntradaDoMapa } from './input/colocar';
@@ -85,6 +87,14 @@ const painel = montarPainelPredio(selecao, (comando) => {
 // derivado do estado, entao basta ser atualizado junto dos outros.
 const alertas = montarAlertas();
 
+// Layout 2 (docs/propostas/ui-releitura-rts.md §8): a prancha (coluna de
+// construir) e o balcao (faixa de contexto) retraem. Os dois so escrevem
+// `data-` no <body>; o canvas acompanha a celula da grade porque o Phaser esta
+// em Scale.RESIZE. Nascem ANTES do jogo pelo mesmo motivo do HUD: o Phaser
+// mede o pai no boot, e o boot ja tem de ver a grade no estado final.
+montarPrancha();
+const balcao = montarBalcao(selecao);
+
 // F-D2 — a navegacao da camera. Ligada aqui, com os outros ouvintes de
 // `input/`, e no `window` como eles. Os numeros vem de `data/terrain.json` pelo
 // funil `render/mapa.ts`: `input/` nao le `sim/data`.
@@ -97,6 +107,8 @@ function atualizar(s: GameState): void {
   hud.atualizar(s);
   menu.atualizar(s);
   painel.atualizar(s);
+  // depois do painel, de proposito: a alca le o `data-nome` que ele escreveu
+  balcao.atualizar();
   alertas.atualizar(s);
 }
 
@@ -105,6 +117,7 @@ sessao.aoMudar(atualizar);
 // viria nenhum, e o painel so apareceria quando o jogador retomasse.
 selecao.aoMudar(() => {
   painel.atualizar(sessao.estado);
+  balcao.atualizar();
 });
 atualizar(sessao.estado);
 aviso.atualizar(laco.pausado, laco.velocidade);

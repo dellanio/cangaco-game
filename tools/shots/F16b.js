@@ -29,7 +29,7 @@
 // Todo clique no mapa acontece com o painel FECHADO: ele e sobreposicao no canto
 // do canvas, e o que esta debaixo dele nao recebe mouse.
 
-const { retanguloDoCanvas, arrastarDentroDoCanvas } = require('./_canvas');
+const { retanguloDe, retanguloDoCanvas, arrastarDentroDoCanvas } = require('./_canvas');
 const economia = require('../../data/economy.json');
 const tema = require('../../data/theme-sertao.json');
 const { predios } = require('../../data/buildings.json');
@@ -100,6 +100,7 @@ async function roteiro(ctx) {
 
   // ---- 1. um predio SEM producao: o armazem --------------------------------
   afirmar(await page.isHidden('#painel-predio'), 'o painel deveria nascer fechado');
+  const alcaFechada = await retanguloDe(page, '#balcao'); // so a alca: nada escolhido
   await clicarNoTile(meioDoArmazem.gx, meioDoArmazem.gy);
   afirmar(await page.isVisible('#painel-predio'), 'clicar no armazem deveria abrir o painel');
   afirmar(
@@ -130,7 +131,36 @@ async function roteiro(ctx) {
     `as gavetas deveriam sair na ordem de economia.mercadorias, veio ${JSON.stringify(mercadoriasNoArmazem)}`,
   );
   afirmar(await temNoPainel('[data-demolir]'), 'todo predio deveria ter o botao de derrubar');
-  await capturar('armazem'); // o painel de um predio sem producao
+
+  // ---- 1b. Layout 2 (estilo-ui): o balcao ABRE com a selecao ----------------
+  // O painel mora na faixa do rodape, que e linha da grade: o canvas encolhe
+  // ate ela (Scale.RESIZE confere o pai a cada 500 ms) e nunca fica por baixo.
+  await page.waitForTimeout(700);
+  const balcaoAberto = await retanguloDe(page, '#balcao');
+  const canvasComBalcao = await retanguloDoCanvas(page);
+  afirmar(
+    (await page.evaluate(() => window.document.body.dataset.balcao)) === 'aberto',
+    'com um predio escolhido o balcao deveria estar aberto',
+  );
+  afirmar(
+    balcaoAberto.height > alcaFechada.height && canvasComBalcao.height < canvas.height,
+    `o balcao aberto deveria ser mais alto que a alca (${alcaFechada.height}) e encolher o canvas (${canvas.height}), veio ${balcaoAberto.height} e ${canvasComBalcao.height}`,
+  );
+  afirmar(
+    canvasComBalcao.bottom <= balcaoAberto.top + 0.5,
+    `canvas.bottom (${canvasComBalcao.bottom}) deveria ser <= balcao.top (${balcaoAberto.top})`,
+  );
+  await capturar('armazem'); // o painel de um predio sem producao, no balcao
+  // a alca RECOLHE sem perder a selecao, e reabre
+  await page.click('[data-alca="balcao"]');
+  await esperarFrame();
+  afirmar(
+    await page.isHidden('#painel-predio') && (await idAberto()) !== null,
+    'recolhido a mao, o balcao esconde o painel mas a selecao fica',
+  );
+  await page.click('[data-alca="balcao"]');
+  await esperarFrame();
+  afirmar(await page.isVisible('#painel-predio'), 'a alca deveria reabrir o balcao');
 
   // ---- 2. a rua, e a planta da pedreira ------------------------------------
   await page.keyboard.press('Escape'); // fecha o painel: ele sobrepoe o canto do canvas

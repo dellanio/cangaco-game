@@ -272,6 +272,7 @@ export function montarPainelPredio(
       raiz.replaceChildren();
       raiz.hidden = true;
       raiz.removeAttribute('data-predio-aberto');
+      raiz.removeAttribute('data-nome');
       // O predio saiu do estado (demolido) mas a selecao ainda aponta para ele:
       // limpar aqui e o que fecha o painel sozinho. `definir` so avisa quando
       // muda, entao a reentrada para no proximo passo.
@@ -288,6 +289,9 @@ export function montarPainelPredio(
     raiz.dataset.tipo = dados.tipo;
     raiz.dataset.estadoDoPredio = dados.estado;
     raiz.dataset.pausado = String(dados.pausado);
+    // `data-nome`: a alca do balcao (Layout 2, `ui/balcao.ts`) le daqui o nome
+    // do que esta aberto, em vez de conhecer o tema ou este painel.
+    raiz.dataset.nome = nomeDoPredio(dados.tipo);
 
     const titulo = document.createElement('h2');
     titulo.textContent = nomeDoPredio(dados.tipo);
