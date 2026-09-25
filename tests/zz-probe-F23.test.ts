@@ -74,7 +74,14 @@ const semTarefas = (e: GameState): GameState => ({
   ...fielmente(e), jobs: { ...e.jobs, tarefas: { porId: {}, ordem: [] } },
 } as GameState);
 
+/** Timeout do caso lento deste arquivo — ver o comentario junto dele. */
+const ORCAMENTO_DO_CASO = 10_000;
+
 describe('sonda F23 — quais perdas o aceite pega', () => {
+  // ORCAMENTO de infraestrutura, nao assercao de tempo (CLAUDE.md §8: nenhum `expect`
+  // aqui le relogio). Medido 1,7 s na maquina livre em 2026-09-25, e estourou
+  // o padrao de 5 s do Vitest com duas sessoes e oito sims em paralelo (calibracao da
+  // Fase B). 10 s e ~5x o medido — a mesma regra do caso de carga da F09.
   it('mede as quatro sabotagens nos dois eixos do aceite', () => {
     const fiel = comparaCom(fielmente);
 
@@ -141,5 +148,5 @@ describe('sonda F23 — quais perdas o aceite pega', () => {
     // gravado logo acima. O que vale nos dois mapas, e por isso o que se afirma, e a
     // igualdade no instante do load acusando a perda.
     expect(noInstante.semJobBoard).toBe(false);
-  });
+  }, ORCAMENTO_DO_CASO);
 });

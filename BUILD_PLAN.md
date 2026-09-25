@@ -3052,6 +3052,34 @@ Depende da F20b: o marcador lê `unidade.condicao`, que só existe depois dela. 
   revisite-o no mesmo commit, junto com o 4º teste de `tests/F-T4b-geometria.test.ts`,
   que é quem afirma que a mensagem carrega as duas medidas.
 
+### F-CAL — A calibração medida na abertura (aceite; a última medição da Fase B)
+- **Por que existe** (decisão do operador, 2026-09-25, ao mergear a
+  `calibracao-fase-b`): o lote da cadeia de comida foi medido em dois cenários que
+  **não passam pela abertura** — o da cadeia do pão, no norte do mapa, e um cenário
+  da vila montado à mão (`docs/calibracao-fase-b.md`, "Depois do merge"). A F-T4b
+  mudou a abertura para dois grupos com os lenhadores a leste, e a re-medição saiu
+  idêntica **por construção**, não por prova. *"É a única medição que ainda falta
+  para dizer que a Fase B está calibrada, e a caminhada é o termo que pode mudar."*
+- **Escopo**: um cenário que **passa pela abertura** — `aberturaDaFaseA`
+  (`tests/helpers/abertura.ts`, a mesma que `cenarioOraculo` e a F17 usam), mais
+  Roçado, Moinho, Padaria e Bodega plantados **ao lado dos dois grupos**, e o campo
+  desenhado pelo jogador com `PlowField` colado à fazenda. Zero linha de simulação:
+  é cenário e medição. O cenário do F17 já monta quase tudo.
+- **Aceite**: rodar ≥ 24 000 ticks e afirmar, no eixo determinístico, (a) o intervalo
+  de entrega da fazenda (`ticks por milho`, do evento `goods-produced`) dentro de
+  **±10 % do ciclo do moinho** (`receitas.mill.ticksDoCiclo`, do dado — não 246
+  digitado); (b) moinho e padaria com `esperando_insumo` abaixo de 10 % dos ticks;
+  (c) milho nunca acima de 1 no armazém; (d) com os civis da abertura mais os que 20
+  de ouro treinam, **nenhuma morte de fome** em 36 000 ticks. O termo a comparar com
+  `docs/calibracao-fase-b.md` é **ida + volta do roceiro por milho** (~100 nos dois
+  cenários de lá): é o único que a geometria da abertura pode mudar.
+- **Se falhar**: registrar os dois números (longe / vila / abertura) no
+  `BALANCE_LOG.md` e **não girar** `farm.sai.corn` sozinho — a conta do doc diz qual
+  termo mudou, e só ele se ajusta.
+- **Evidência**: `test-output/F-CAL.json` com o tempo do roceiro por fase (como a
+  tabela do doc) e as quatro afirmações.
+- **Fora do escopo**: pedreira, lenhador e minas — mesmo padrão, próximo lote
+  (hipótese registrada no `BALANCE_LOG.md`, 2026-09-25).
 ---
 
 ## Fase C — Militar

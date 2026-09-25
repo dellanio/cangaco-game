@@ -335,6 +335,26 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   `data/terrain.json:estrada.custoStonePorTile`, `data/buildings.json`
   (quarry.stone, woodcutters.stone)
 
+- [2026-09-25] **HIPÓTESE, registrada a pedido do operador ao fechar o Lote 1: pedreira,
+  lenhador e minas têm o mesmo padrão da fazenda, e o conserto deve ser o mesmo** | as taxas
+  de `quarry` (1,8/min → 167 ticks), `woodcutters` (0,55 → 545), `gold_mine`, `coal_mine`,
+  `iron_mine` e `fishermans` foram calibradas antes de a caminhada existir (F-T3), e desde
+  então o intervalo de entrega é `1 + ida + ticksDoCiclo + volta` — pedreira **~250-266**
+  medido contra 167 do dado (entradas acima, 2026-09-25). Na fazenda, o diagnóstico foi que a
+  colheita sozinha já ocupava o orçamento inteiro de quem consome (moinho 246), e por isso
+  nenhum outro parafuso fechava; o conserto foi recalibrar a COLHEITA para que colheita +
+  viagem + plantio diluído coubessem no ciclo do consumidor, com a viagem dentro da conta de
+  propósito. **A hipótese:** se a colheita da pedreira também ocupa o orçamento inteiro de quem
+  consome pedra (obra e estrada não têm ciclo de consumo fixo, então o "consumidor" ali é o
+  ritmo de abertura do GDD §1.3 — 8 a 10 min para os 16 prédios), o conserto é o mesmo:
+  encurtar `ticksDoCiclo` de modo que ciclo + viagem devolva o intervalo de entrega que o
+  número original descrevia. Para a madeira, o consumidor É fixo (serraria 273), e a proporção
+  2:1 da F15b foi medida antes da F-T4b pôr o lenhador para andar: é o primeiro lugar a
+  re-medir. **Não medido; não é decisão.** Entra no próximo lote junto com
+  `rock.rendimentoPorTile`, `alcance` e o resto das entradas de pedreira e minas acima |
+  `production.json:predios.{quarry,woodcutters,gold_mine,coal_mine,iron_mine,fishermans}`,
+  `docs/calibracao-fase-b.md` (o método)
+
 ---
 
 ## Ciclos fechados

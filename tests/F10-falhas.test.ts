@@ -504,10 +504,17 @@ function comSerfNovo(estado: GameState): GameState {
   };
 }
 
+/** Timeout do caso lento deste arquivo — ver o comentario junto dele. */
+const ORCAMENTO_DO_CASO = 10_000;
+
 describe('F10 — propriedade estrutural: eventos aleatorios, e a cada tick invariantes + conservacao de bens', () => {
+  // ORCAMENTO de infraestrutura, nao assercao de tempo (CLAUDE.md §8: nenhum `expect`
+  // aqui le relogio). Medido 2,2 s (semente 3, a mais lenta) na maquina livre em 2026-09-25, e estourou
+  // o padrao de 5 s do Vitest com duas sessoes e oito sims em paralelo (calibracao da
+  // Fase B). 10 s e ~5x o medido — a mesma regra do caso de carga da F09.
   it.each([1, 2, 3])('semente %i: 250 passos sem uma unica violacao', (semente) => {
     rodarCaos(semente, 250, coberturaDoCaos);
-  });
+  }, ORCAMENTO_DO_CASO);
 
   it('o caos exercitou o ciclo inteiro: todos os estados da FSM e os ramos de falha, ao menos uma vez', () => {
     for (const estadoDoSerf of ESTADOS_DO_SERF) {

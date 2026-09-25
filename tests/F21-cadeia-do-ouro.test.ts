@@ -167,7 +167,14 @@ describe('F21, aceite 3 — a escola gasta ouro MINERADO', () => {
   });
 });
 
+/** Timeout do caso lento deste arquivo — ver o comentario junto dele. */
+const ORCAMENTO_DO_CASO = 10_000;
+
 describe('F21 — a evidencia', () => {
+  // ORCAMENTO de infraestrutura, nao assercao de tempo (CLAUDE.md §8: nenhum `expect`
+  // aqui le relogio). Medido 1,8 s na maquina livre em 2026-09-25, e estourou
+  // o padrao de 5 s do Vitest com duas sessoes e oito sims em paralelo (calibracao da
+  // Fase B). 10 s e ~5x o medido — a mesma regra do caso de carga da F09.
   it('grava test-output/F21.json', () => {
     const inicio = cenarioDaCadeiaDoOuro();
     const marcos: Record<string, number> = {};
@@ -236,5 +243,5 @@ describe('F21 — a evidencia', () => {
     });
 
     expect(marcos.ouroNoArmazem).toBeGreaterThan(0);
-  });
+  }, ORCAMENTO_DO_CASO);
 });

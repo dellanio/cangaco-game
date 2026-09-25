@@ -6578,3 +6578,15 @@ resumo em `BALANCE_LOG.md`, "Ciclos fechados", Lote 1.
   lá depois do merge. Remover é decisão do operador.
 - A calibração não foi medida NA abertura da F-T4b (fazenda plantada ao lado dos dois
   grupos). Se for, o termo a comparar é `ticks por milho`, e só a caminhada pode mudar.
+
+**Adendo (mesmo dia, depois do merge — três respostas do operador):**
+- Os seis testes que estouraram os 5 s ganharam `ORCAMENTO_DO_CASO = 10_000` com o
+  número medido no comentário de cada um (1,7 a 2,2 s na máquina livre). Orçamento de
+  infraestrutura, não asserção de tempo; nenhum `expect` deles lê relógio.
+- A ressalva "não medido na abertura" virou item de fila: **F-CAL**, no fim da Fase B
+  do `BUILD_PLAN.md`, com aceite em eixo determinístico e o termo a comparar
+  (ida + volta do roceiro por milho).
+- Worktree `cangaco-game-calibracao` removido e branch apagada (mergeada em `f6de7da`).
+- Pedreira, lenhador e minas: hipótese registrada em "Observações abertas" do
+  `BALANCE_LOG.md` — mesmo padrão (taxa calibrada antes da caminhada), mesmo conserto
+  se a colheita ocupar o orçamento inteiro de quem consome. Não medido.

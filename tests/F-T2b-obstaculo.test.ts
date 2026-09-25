@@ -462,6 +462,9 @@ const RAZAO_NOS_DESVIO_MAXIMA = 5;
 
 const medidas: Record<string, unknown> = {};
 
+/** Timeout do caso lento deste arquivo — ver o comentario junto dele. */
+const ORCAMENTO_DO_CASO = 10_000;
+
 describe('F-T2b — o A* foi re-medido com a floresta em pe', () => {
   it('a amostra e o que ela diz ser: partidas de sobra, e desvio de verdade', () => {
     expect(PARTIDAS_LIMPAS.length).toBeGreaterThanOrEqual(AMOSTRA_CURTA.length);
@@ -489,6 +492,10 @@ describe('F-T2b — o A* foi re-medido com a floresta em pe', () => {
     expect(comFloresta.nosPorBusca / noLiso.nosPorBusca).toBeLessThan(RAZAO_NOS_CURTA_MAXIMA);
   });
 
+  // ORCAMENTO de infraestrutura, nao assercao de tempo (CLAUDE.md §8: nenhum `expect`
+  // aqui le relogio). Medido 2,0 s na maquina livre em 2026-09-25, e estourou
+  // o padrao de 5 s do Vitest com duas sessoes e oito sims em paralelo (calibracao da
+  // Fase B). 10 s e ~5x o medido — a mesma regra do caso de carga da F09.
   it('busca longa: atravessar o mapa com floresta nao alarga a frente', () => {
     const noLiso = medirLonga(SEM_RECURSOS, dadosComMapa(MAPA_LISO));
     const semFloresta = medirLonga(SEM_RECURSOS, { ...gameData });
@@ -503,7 +510,7 @@ describe('F-T2b — o A* foi re-medido com a floresta em pe', () => {
     for (const arm of [m.noLiso, m.semFloresta, m.comFloresta]) expect(arm?.nulos).toBe(0);
     expect((m.comFloresta?.nosPorBusca ?? 0) / (m.noLiso?.nosPorBusca ?? 1))
       .toBeLessThan(RAZAO_NOS_LONGA_MAXIMA);
-  });
+  }, ORCAMENTO_DO_CASO);
 
   it('desvio: com arvore no corredor a busca expande mais, e o teto e proprio', () => {
     const real = (): GameData => ({ ...gameData });

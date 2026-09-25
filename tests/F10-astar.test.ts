@@ -209,7 +209,14 @@ const fresco = (): GameState => comEstradas(inicial, []);
 
 beforeEach(() => zerarEstatisticasDeBusca());
 
+/** Timeout do caso lento deste arquivo — ver o comentario junto dele. */
+const ORCAMENTO_DO_CASO = 10_000;
+
 describe('F10 — A*: o custo e o do oraculo independente (propriedade, RNG semeado)', () => {
+  // ORCAMENTO de infraestrutura, nao assercao de tempo (CLAUDE.md §8: nenhum `expect`
+  // aqui le relogio). Medido 1,9 s (semente 1, a mais lenta) na maquina livre em 2026-09-25, e estourou
+  // o padrao de 5 s do Vitest com duas sessoes e oito sims em paralelo (calibracao da
+  // Fase B). 10 s e ~5x o medido — a mesma regra do caso de carga da F09.
   it.each([1, 2, 3, 4])('modo livre, semente %i: 40 mapas com predios e estradas, custo igual ao oraculo', (semente) => {
     const sorteio = sorteador(semente);
     let comCaminho = 0;
@@ -223,7 +230,7 @@ describe('F10 — A*: o custo e o do oraculo independente (propriedade, RNG seme
       if (achado) comCaminho += 1;
     }
     expect(comCaminho, 'o sorteio quase nunca achou caminho: a propriedade seria vacua').toBeGreaterThan(30);
-  });
+  }, ORCAMENTO_DO_CASO);
 
   it('modo estrada, 4 sementes x 60 redes sorteadas: custo igual ao oraculo (e null quando nao liga)', () => {
     let comCaminho = 0;
