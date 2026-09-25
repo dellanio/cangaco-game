@@ -3184,6 +3184,32 @@ Depende da F20b: o marcador lê `unidade.condicao`, que só existe depois dela. 
   tabela do doc) e as quatro afirmações.
 - **Fora do escopo**: pedreira, lenhador e minas — mesmo padrão, próximo lote
   (hipótese registrada no `BALANCE_LOG.md`, 2026-09-25).
+- **QUEBRADA EM DOIS em 2026-09-25 (branch `fable-lote-sim`), pela §6 — o aceite acima
+  não mudou uma palavra.** Medido antes de escrever (`docs/planos/F-CAL-b.md`): **(a) e
+  (c) reprovam, e é regime, não rampa.** O milho sobe +3 a cada 1000 ticks do 12 000 ao
+  36 000 (99 no fim) com o Moinho 100 % em `trabalhando`; a fazenda entrega um milho a
+  cada **143** ticks contra **246** do moinho. O termo que mudou é o que o item dizia:
+  **ida + volta = 2**, não ~100 — o campo da abertura começa a Chebyshev 1 da porta e
+  `alvosDeAproximacao` (`src/sim/aproximacao.ts:43-53`) deixa o roceiro colher **do tile
+  da porta**, sem andar. O operador reservou este ramo para si (*"se crescer sem parar...
+  balanceamento, e eu decido. Não gire número sem eu ver"*): as três saídas estão no
+  `BALANCE_LOG.md` (2026-09-25). (b) e (d) passam com folga e continuam passando em
+  qualquer das três.
+  - **F-CAL-b1 — a corrida e as duas afirmações que não dependem da decisão (ENTREGUE
+    2026-09-25)**: `tests/F-CAL-b-calibracao.test.ts`, 36 000 ticks da vila da F-CAL-a
+    com o ouro que sobra treinando serfs (população 6 → 26). Afirma **(b)** — moinho 0,2 %
+    e padaria 0,15 % em `esperando_insumo` até 24 000, com a janela provada real (ocupam
+    antes da metade dela) — e **(d)** — zero `unit-starved` em 36 000, população = inicial
+    + ouro — mais zero recusa e a fazenda entregando até o fim. **As quatro medidas** vão
+    para `test-output/F-CAL.json`, cada uma com `passa` e `asserido`, e a tabela do
+    roceiro por fase (abertura: 100 / 1 / 1 / 37 — longe: 100 / 54 / 50 / 36). Corrida de
+    10,4 s isolada; `timeout` explícito de 90 s, que não é asserção de tempo (§8).
+  - **F-CAL-b2 — (a) e (c), depois da decisão do operador**: dois `it` sobre a mesma
+    corrida, com o texto que a decisão fixar. Se a saída for número (`farm.sai.corn`), o
+    aceite fica como está; se for regra (`aproximacao.ts`, tile pisável = só o tile), é
+    feature de `sim/` e o doc volta a valer; se for aceitar 1 Roçado : 1,7 Moinho com
+    campo colado, o aceite se reescreve com a medição ao lado e
+    `proporcoesDeReferencia` diz isso.
 ---
 
 ## Fase C — Militar

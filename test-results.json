@@ -187,5 +187,8 @@
   },
   "F-CAL-a-cenario": {
     "passes": true
+  },
+  "F-CAL-b1-calibracao": {
+    "passes": true
   }
 }

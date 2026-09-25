@@ -414,6 +414,48 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   `quarry.sai.stone`, `woodcutters.sai.tree_trunk`, `proporcoesDeReferencia`;
   sonda em `test-output/zz-pedreira.json` (temporária, apagada — o que ficou são estes números)
 
+- [2026-09-25] **A calibração do lote 1 medida NA ABERTURA (F-CAL-b): a fazenda entrega 1,7×
+  o que o moinho mói, e o milho sobe sem parar** | `test-output/F-CAL.json` (guarda permanente:
+  `tests/F-CAL-b-calibracao.test.ts`), 36 000 ticks da vila da F-CAL-a, 26 civis (6 + 20 do
+  ouro). Milho no armazém a cada 1000 ticks, do 12 000 ao 36 000: 29, 34, 40, 46, 51, 58, 63,
+  70, 76, 82, 87, 94, **99** — **+3 por 1000, constante**; é regime, não rampa (o Moinho ocupa
+  em 4062 e de 12 000 em diante fica **100 %** em `trabalhando`, zero `esperando_insumo`).
+  Intervalo entre milhos **143** (padrão 103, 103, 103, 253) contra **246** do ciclo do moinho:
+  a afirmação (a) do aceite reprova por 42 % e a (c) por 99 contra 1. As (b) e (d) passam com
+  folga: moinho 0,2 % e padaria 0,15 % em espera, zero morte, 110 loaves sobrando. **O termo
+  que mudou é a caminhada, e só ela** — a tabela do doc refeita nos dois cenários:
+
+  | fase por milho | longe (`cenarioDaCadeiaDoPao`) | abertura (`vilaDaCalibracao`) |
+  |---|---|---|
+  | colhendo | 100 | 100 |
+  | ida (`indo_colher`) | 54 | **1** |
+  | volta (`voltando`) | 50 | **1** |
+  | plantando (150 ÷ 4) | 36 | 37 |
+  | **total** | **247** | **143** |
+
+  **A causa está em `src/sim/aproximacao.ts:43-53`, e é regra, não defeito:** o alvo da colheita
+  é *"o próprio tile primeiro (custo zero para quem já está nele), depois os oito vizinhos
+  andáveis"*, e o A* escolhe o mais barato. Na abertura o campo começa em y=34, a Chebyshev 1
+  da porta (37,33): o roceiro fica em `colhendo (37,33)`, **na rua, sem dar um passo** (traço
+  tick a tick na sonda). No cenário longe o campo fica ao NORTE e ele contorna o footprint (7
+  tiles, 54 ticks por perna). A frase do doc *"a caminhada é a mesma com o campo colado e com
+  o campo longe: é a saída pela porta e o contorno do footprint, não a distância"* está
+  **falsa** e foi marcada lá: o `farm.sai.corn 3,0` foi calibrado com ~105 ticks de caminhada
+  na conta, e o campo na porta — que é o que todo jogador vai fazer — tem caminhada zero.
+  | **Nenhum número girado, por ordem do operador** ("se crescer sem parar... eu decido. Não gire
+  número sem eu ver"). As saídas que a medição deixa prontas, para ele escolher: **(i)** girar
+  `farm.sai.corn` de 3,0 para ~1,46 (colheita 100 → ~205 ticks; 205 + 37 + 2 + 2 ≈ 246 com o
+  campo na porta) — aí o campo longe volta a ~350 por milho e a fazenda do norte fica 43 % mais
+  lenta que o moinho: a conta só fecha para UMA geometria, qualquer que seja o número; **(ii)** mudar a regra de aproximação
+  para tile pisável (rocha, milho): o alvo é **só o tile**, os vizinhos ficam para o que
+  bloqueia (árvore, água) — a caminhada passa a ser ≥ 2 tiles em qualquer geometria e o doc
+  volta a valer, mas é `sim/`, e a F-T3 escreveu a regra atual de propósito ("uma regra só para
+  os dois casos"); **(iii)** aceitar que 1 Roçado alimenta 1,7 Moinho quando o campo é colado e
+  reescrever (a) e (c) com a medição ao lado, deixando `proporcoesDeReferencia` dizer isso. A
+  (b) e a (d) passam em qualquer das três. | `production.json:farm.sai.corn`,
+  `production.json:proporcoesDeReferencia`, `src/sim/aproximacao.ts`,
+  `docs/calibracao-fase-b.md`
+
 ---
 
 ## Ciclos fechados

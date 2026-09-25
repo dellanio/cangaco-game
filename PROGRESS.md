@@ -6925,3 +6925,75 @@ sessão externa. Não é item da fila e não vira chave em `test-results.json`.
   primeira com `passes: false`" hoje não aponta para nada e a ordem é a do
   `BUILD_PLAN.md`. Não inventei chave: escrever nesse arquivo passa pelo selo do
   `verify`, e criar 19 `false` seria mudança de convenção, não regularização.
+
+---
+
+## 2026-09-25 (noite) — F-CAL-b1: a calibração medida na abertura, e o que a medição derrubou (branch `fable-lote-sim`)
+
+Segunda sessão do dia na fila; a `main` estava limpa em `46db222`, então trabalho em
+worktree irmão pela §6. Plano: `docs/planos/F-CAL-b.md`. Escopo desta sessão:
+`src/sim/`, `tests/`, `data/` — nada de `render/`, `ui/`, `tools/shots/`.
+
+### Verificado (rodei o comando ou abri o arquivo)
+
+- **O milho não estabiliza: é regime, não rampa.** Duas sondas `zz-` (apagadas antes do
+  commit) rodaram a vila da F-CAL-a por 36 000 ticks. Milho no armazém a cada 1000
+  ticks, do 12 000 ao 36 000: 29, 31, 34, 37, 40, ... 94, 96, **99** — **+3 por 1000,
+  constante**. O Moinho ocupa em 4062, tem 41 ticks de `esperando_insumo` na rampa e
+  **zero** de 12 000 em diante; a Padaria, 28 e zero. A fazenda entrega ~7 milhos por
+  1000 ticks; o moinho mói ~4 (um a cada 246). A hipótese da F-CAL-a ("14 pode ser
+  acúmulo de quando ninguém moía") **morreu**.
+- **O intervalo entre milhos é 143, não ~250.** Padrão 103, 103, 103, 253 (três colheitas
+  de 100 mais uma com o plantio de 150 na frente). A afirmação (a) do aceite reprova por
+  42 % e a (c) por 99 contra 1.
+- **O termo que mudou é a caminhada, e só ela.** A tabela do doc, refeita nos dois
+  cenários com o mesmo código (`test-output/F-CAL.json`, `roceiroPorFase`): colhendo 100
+  / 100, ida **54 / 1**, volta **50 / 1**, plantando 36 / 37, total **247 / 143**
+  (longe / abertura).
+- **A causa, com o traço tick a tick**: o roceiro da abertura fica em `colhendo
+  (37,33)` — o tile da **porta**, na rua — sem dar um passo. O campo começa em y=34,
+  Chebyshev 1 da porta, e `alvosDeAproximacao` (`src/sim/aproximacao.ts:43-53`) põe "o
+  próprio tile primeiro (custo zero para quem já está nele), depois os oito vizinhos
+  andáveis": a porta é vizinha e custa zero, o A* a escolhe. É a regra da F-T3 como foi
+  escrita ("uma regra só para os dois casos"), não defeito. No cenário longe o campo fica
+  ao NORTE da fazenda e o roceiro contorna o footprint: 7 tiles, 54 ticks por perna.
+- **A frase do doc está falsa e foi marcada nele**: "a caminhada é a mesma com o campo
+  colado e com o campo longe: é a saída pela porta e o contorno do footprint, não a
+  distância". Os dois cenários de lá tinham o campo do lado oposto à porta. O `3,0` foi
+  calibrado com ~105 de caminhada na conta; com o campo na porta — que é o que todo
+  jogador vai fazer — a caminhada é zero.
+- **(b) e (d) passam com folga**: moinho 0,21 % e padaria 0,15 % em espera até 24 000;
+  26 civis (6 + 20 do ouro, 17 serfs) e **zero** `unit-starved` em 36 000, com 110
+  loaves sobrando e a Bodega com 4. Zero recusa de comando na corrida inteira.
+- **`tests/F-CAL-b-calibracao.test.ts`** roda a corrida uma vez num `beforeAll`, grava as
+  **quatro** medidas em `test-output/F-CAL.json` (cada uma com `passa` e `asserido`) e
+  afirma (b), (d), zero recusa, população = inicial + ouro, e que a fazenda entregou
+  até o fim (sem isto (b) passaria com um moinho parado num ciclo que nunca fecha).
+  5 testes verdes; corrida de **10,4 s** isolada, `timeout` 90 s explícito — não é
+  asserção de tempo (§8).
+
+### Decidido, e por quê
+
+- **F-CAL-b quebrada em b1 + b2 no `BUILD_PLAN.md`, aceite intacto.** O operador escreveu
+  antes da sessão: "se crescer sem parar, é a fazenda produzindo mais do que a cadeia
+  consome — balanceamento, e eu decido. Não gire número sem eu ver". Cresceu sem parar.
+  Commitar (a) e (c) como estão seria teste vermelho; afrouxá-las seria girar o aceite
+  sem ele ver. (b) e (d) passam em qualquer das saídas, então são a b1.
+- **Nenhum número girado, nenhuma regra de `sim/` tocada.** As três saídas estão na
+  entrada do `BALANCE_LOG.md` (2026-09-25): (i) `farm.sai.corn` 3,0 → ~1,46 — fecha para
+  o campo na porta e deixa o campo longe 43 % mais lento que o moinho, porque a conta só
+  fecha para uma geometria; (ii) aproximação por tile pisável = só o tile (rocha, milho),
+  vizinhos só para o que bloqueia — a caminhada passa a existir em qualquer geometria e o
+  doc volta a valer, mas é `sim/` e desfaz uma escolha escrita da F-T3; (iii) aceitar
+  1 Roçado : 1,7 Moinho com campo colado e reescrever (a) e (c) com a medição ao lado.
+- **Os serfs extras nascem depois que a vila fecha**, não desde o tick 0: o ouro que a
+  vila precisa (7 treinos) sai primeiro, e o pedido só entra quando a fila tem vaga e a
+  vila não pediu treino no mesmo tick. Serf porque é o civil que não precisa de prédio;
+  o tipo não muda quem come.
+
+### Aberto — precisa do operador
+
+- **Qual das três saídas para (a) e (c).** Até lá a F-CAL-b2 não anda.
+- A hipótese do `BALANCE_LOG.md` de 2026-09-25 (pedreira, lenhador e minas "mesmo
+  padrão") ganhou um dado a mais: o padrão depende de **onde o tile fica em relação à
+  porta**, não só do ofício.

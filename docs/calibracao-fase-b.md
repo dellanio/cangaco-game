@@ -134,6 +134,17 @@ tabela foi reescrito no próprio dado para dizer isso.
   fazendeiro andando, e o 1,22 de 2014 já a incluía. Encurtar `ticksDoCiclo`
   para *esconder* a caminhada seria desfazer a F-T3; o que se recalibrou foi a
   colheita, e a caminhada continua na tela.
+  > **PREMISSA MORTA (medido na F-CAL-b, 2026-09-25, `test-output/F-CAL.json`):** a
+  > caminhada **NÃO** é a mesma com o campo colado. Na abertura, com o campo
+  > começando a Chebyshev 1 da porta, o roceiro trabalha o tile **da porta** sem
+  > dar um passo (`src/sim/aproximacao.ts:43-53`: o alvo é o tile mais os oito
+  > vizinhos andáveis, e a porta é vizinha e custa zero): ida 1, volta 1, **143
+  > ticks por milho** contra 247 no cenário longe. Os ~100 dos dois cenários daqui
+  > eram o contorno do footprint porque o campo dos dois ficava do lado oposto à
+  > porta. O `3,0` foi calibrado com ~105 de caminhada na conta e, com o campo na
+  > porta, a fazenda entrega 1,7× o que o moinho mói. O que continua válido: a
+  > colheita de 100, o plantio de 37,5 e a conta do cenário longe. Decisão pendente
+  > do operador, `BALANCE_LOG.md` (2026-09-25).
 - **`corn.rendimentoPorTile` (4) fica.** Dobrar para 8 diluiria o plantio na
   mesma medida que baixar a reposição, mas mudaria a frase de design "quatro
   ciclos de colheita para um de plantio" sem ganho: o mesmo efeito saiu de um
