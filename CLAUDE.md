@@ -128,6 +128,19 @@ Não adicione dependência nova sem registrar o motivo em `PROGRESS.md`.
 6. Atualize `PROGRESS.md`: o que fez, o que decidiu e por quê, o que ficou aberto.
 7. Commit com a mensagem `feat(F##): <resumo>`.
 
+### Uma sessão só na `main` (regra do operador, 2026-09-25)
+
+- **Nunca duas sessões na `main`.** Quem chegar segundo trabalha em branch, num
+  worktree irmão (`git worktree add ../cangaco-game-<branch> <branch>`, com
+  `node_modules` por junction), e mergeia **quando a outra terminar**.
+- "Terminar" é `git status` limpo na `main`, com o commit da outra sessão feito.
+  Arquivo modificado e não commitado é sessão em curso: **não commite, não
+  reverta, não toque**. Se precisar da `main` limpa, espere ou trabalhe em branch.
+- O erro que esta regra mata não é abrir a branch, é **voltar para a `main`
+  depois**, com o diretório "parecendo" livre. Foi assim que a calibração da
+  Fase B (2026-09-25) rodou `npm run verify` em cima de um número que outra
+  sessão estava girando, e quase leu a falha como sua. Antes de qualquer commit
+  na `main`: `git status`, e só arquivos seus na lista.
 Se a feature se revelar maior do que uma sessão, **não improvise**: quebre em
 sub-itens dentro de `BUILD_PLAN.md`, registre em `PROGRESS.md` e entregue o
 primeiro. Feature pela metade sem registro é o pior resultado possível.
