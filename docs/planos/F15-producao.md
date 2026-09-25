@@ -967,6 +967,10 @@ git commit -m "feat(F15a): o aceite do ciclo de producao e a evidencia"
   "um prédio, um ocupante" torna avanço duplo irrepresentável. Nenhuma mudança na
   ordem do `step()`.
 - **D6 — prédio sem estrada congela o relógio e fica em `saida_cheia`.**
+  **REVOGADA pelo operador em 2026-09-25** (*"a estrada serve para escoar, não para
+  trabalhar"*); ele registrou que ela nasceu errada — escrita na F16c raciocinando
+  sobre pausa e modo. O portão saiu de `sim/systems/especialistas.ts` e o aceite foi
+  invertido em `tests/F15a-producao.test.ts`. O texto abaixo é histórico.
   *(Decidido pelo operador, 2026-09-22, corrigindo a minha proposta: eu tinha
   escrito `trabalhando`.)* Prédio que **não escoa** é exatamente o que o GDD §6.2
   descreve por `saida_cheia` — "a logística é o gargalo" — e sem estrada o
@@ -1054,5 +1058,6 @@ Não são perguntas em aberto: são decisões dele, com o porquê que ele deu.
    F15b).
 3. **D6 aprovado, com a razão dele, que é melhor que a minha:** prédio que não
    escoa é **`saida_cheia`**, que o GDD §6.2 já prevê. Sem estado novo.
+   **(REVOGADA em 2026-09-25 — ver a decisão D6 acima.)**
 4. **D4(b): fica o nível 7.** O vazamento se resolve na origem e o HUD continua
    com uma regra só — conta armazéns. Sem nota de integração, sem tocar na tela.

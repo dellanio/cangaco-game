@@ -33,6 +33,14 @@ function obraDe(tipo: string): PredioEmObra {
   };
 }
 
+// F-T3 — o ciclo da pedreira deixou de caber dentro do predio: ele inclui a IDA
+// ao tile e a VOLTA. `ticksDoCiclo` continua vindo do dado; a viagem vem do
+// MAPA — 49 ticks em cada perna, da porta (26,36) ao tile (24,29) que esta
+// pedreira escolhe, mais o tick da transicao (medido na trilha de
+// `test-output/F-T3-ciclo-em-campo.json`).
+const VIAGEM = 99;
+const INTERVALO = receita('quarry').ticksDoCiclo + VIAGEM;
+
 describe('F15a — PredioCompleto.producao', () => {
   // F-T2a: o predio deixou de carregar o total. Ele nasce so com o relogio, e o
   // que ha para colher esta no MAPA desde o tick 0 — e continua la depois que
@@ -154,13 +162,6 @@ describe('F15a — sim/producao.ts, as derivacoes puras', () => {
 });
 
 describe('F15a — o especialista produz', () => {
-  // F-T3 — o ciclo da pedreira deixou de caber dentro do predio: ele inclui a IDA
-  // ao tile e a VOLTA. `ticksDoCiclo` continua vindo do dado; a viagem vem do
-  // MAPA — 49 ticks em cada perna, da porta (26,36) ao tile (24,29) que esta
-  // pedreira escolhe, mais o tick da transicao (medido na trilha de
-  // `test-output/F-T3-ciclo-em-campo.json`).
-  const VIAGEM = 99;
-  const INTERVALO = receita('quarry').ticksDoCiclo + VIAGEM;
 
   // A assercao ficou mais ESTRITA, e nao mais larga: antes conferia dois
   // depositos, agora confere quatro; antes o tick anterior so nao tinha pedra,
@@ -205,11 +206,38 @@ describe('F15a — o especialista produz', () => {
     expect(fsmDe(s, 'u1')).toBe('ocioso');
   });
 
-  it('predio sem ligacao ao armazem nao produz e fica em `saida_cheia`', () => {
-    const s = avancar(semEstrada(cenarioDePedreira()), 400);
-    expect(saidaDe(s, 'q1').stone ?? 0).toBe(0);
-    expect(progressoDe(s, 'q1')).toBe(0);       // o relogio nem comeca
-    expect(fsmDe(s, 'u1')).toBe('saida_cheia'); // D6: nao escoa, GDD §5.1 + §6.2
+  // ESTA ASSERCAO FOI INVERTIDA DE PROPOSITO (2026-09-25). Ela afirmava o
+  // contrario — "nao produz, o relogio nem comeca, fica em `saida_cheia`" — e era
+  // o aceite da decisao D6 da F15a. O operador REVOGOU a D6: "a estrada serve para
+  // escoar, nao para trabalhar; o lenhador corta arvore com machado, nao com
+  // carroca". Ela ficou no lugar, com o mesmo nome de arquivo e a mesma vizinhanca,
+  // para que o historico do git mostre a inversao — apagar e criar outro perderia o
+  // rastro. Agora ela e o ACEITE DA REVOGACAO.
+  it('predio sem ligacao ao armazem PRODUZ, e para quando a gaveta enche', () => {
+    const CAPACIDADE = gameData.producao.estoqueInternoPorPredio.saida;
+    let s = semEstrada(cenarioDePedreira());
+    expect(Object.keys(s.estradas)).toHaveLength(0); // nenhuma rua, do primeiro tick
+    // Sem rua a viagem e mais LENTA, entao o intervalo nao e o `INTERVALO` da
+    // pedreira ligada: ele se mede aqui. O que se afirma e que produz, e o teto do
+    // laco e generoso de proposito — quem afirma tick exato e o caso de cima.
+    let primeiro: number | null = null;
+    for (let i = 1; i <= INTERVALO * 3 && primeiro === null; i += 1) {
+      s = step(s, []);
+      if ((saidaDe(s, 'q1').stone ?? 0) > 0) primeiro = i;
+    }
+    expect(primeiro).not.toBeNull();
+    expect(saidaDe(s, 'q1').stone).toBe(1);
+
+    // e para no TETO DA GAVETA, nao antes: o que segura e a capacidade, nao a rua
+    const cheio = avancar(s, (primeiro ?? 0) * (CAPACIDADE + 1));
+    expect(saidaDe(cheio, 'q1').stone).toBe(CAPACIDADE);
+    expect(fsmDe(cheio, 'u1')).toBe('saida_cheia'); // agora por gaveta, nao por rua
+    expect(progressoDe(cheio, 'q1')).toBe(receita('quarry').ticksDoCiclo);
+
+    // e segue parado: sem rua ninguem vem buscar, entao a gaveta nao esvazia
+    const depois = avancar(cheio, (primeiro ?? 0) * 2);
+    expect(saidaDe(depois, 'q1').stone).toBe(CAPACIDADE);
+    expect(fsmDe(depois, 'u1')).toBe('saida_cheia');
   });
 
   it('saida cheia: para em `saida_cheia` e NAO perde o ciclo pronto', () => {
@@ -286,10 +314,17 @@ describe('F15a — o especialista produz', () => {
  * sentido (mesma razao de `F14-invariantes-destino.test.ts`).
  */
 describe('F15a — o guarda da FSM do especialista ACUSA', () => {
-  const semLigacao = (): GameState => avancar(semEstrada(cenarioDePedreira()), 2);
+  // O veiculo para chegar em `saida_cheia` era a AUSENCIA DE ESTRADA, pelo portao da
+  // D6. Com a D6 revogada (2026-09-25) predio desligado PRODUZ, e o unico caminho
+  // legitimo para esse rotulo e a GAVETA CHEIA: seis ciclos na pedreira ligada, como
+  // no caso de cima — cinco couberam, o sexto volta do campo sem lugar para a pedra.
+  // Encher a gaveta a mao nao serve: o especialista sai para colher antes de descobrir
+  // que nao cabe, entao no tick 2 ele esta em `indo_colher` (medido). O guarda em si
+  // nao mudou: quem e afirmado aqui e `violacoesDaFsmDoEspecialista`.
+  const gavetaCheia = (): GameState => avancar(cenarioDePedreira(), INTERVALO * 6);
 
   it('estado de producao sem predio que o reconheca e acusado', () => {
-    const s = semLigacao();
+    const s = gavetaCheia();
     expect(fsmDe(s, 'u1')).toBe('saida_cheia');
     expect(violacoesDaFsmDoEspecialista(s)).toEqual([]); // ocupada: sadio
     expect(violacoesDaFsmDoEspecialista(semOcupante(s, 'q1'))).toContain(
@@ -298,7 +333,7 @@ describe('F15a — o guarda da FSM do especialista ACUSA', () => {
   });
 
   it('predio cujo ocupante esta em estado que NAO e de producao e acusado', () => {
-    const s = semLigacao();
+    const s = gavetaCheia();
     const u = s.unidades.porId.u1;
     if (u === undefined) throw new Error('fixture: u1 sumiu');
     const ocioso = { ...s, unidades: { ...s.unidades, porId: { ...s.unidades.porId, u1: { ...u, fsm: 'ocioso' } } } };
@@ -306,7 +341,7 @@ describe('F15a — o guarda da FSM do especialista ACUSA', () => {
   });
 
   it('estado fora do GDD §6.2 continua acusado', () => {
-    const s = semLigacao();
+    const s = gavetaCheia();
     const u = s.unidades.porId.u1;
     if (u === undefined) throw new Error('fixture: u1 sumiu');
     const invalido = { ...s, unidades: { ...s.unidades, porId: { ...s.unidades.porId, u1: { ...u, fsm: 'dancando' } } } };

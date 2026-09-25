@@ -682,6 +682,13 @@ estado que o GDD §6.2 já prevê; nenhum estado novo foi criado. Por isso préd
 **sem estrada** até o armazém também cai em `saida_cheia`: a causa é a mesma do
 ponto de vista do especialista — a saída não tem para onde ir.
 
+> **REVOGADA pelo operador em 2026-09-25.** A segunda metade acima (prédio **sem
+> estrada** cai em `saida_cheia` e não produz) deixou de valer: *"a estrada serve
+> para escoar, não para trabalhar; o lenhador corta árvore com machado, não com
+> carroça."* Prédio desligado **produz** e para quando a **gaveta** enche. A
+> primeira metade continua de pé: gaveta cheia é `saida_cheia`, e nenhum estado
+> novo existe. Ver a entrada de 2026-09-25 no fim deste arquivo.
+
 **D4(b) (do operador) — o nível 7 da escada fica onde está.** "O vazamento se
 resolve na origem e o HUD continua com uma regra só — conta armazéns. Sem nota
 de integração, sem tocar na tela."
@@ -2629,6 +2636,13 @@ Um cenário só, **sem uma única estrada no mapa do primeiro ao último tick**:
   (4 passos de estrada). `origemEscolhida: "vizinho"`.
 
 ### Uma diferença honesta entre o aceite escrito e o que a sim faz
+
+> **A premissa desta seção caiu: a D6 foi REVOGADA pelo operador em 2026-09-25.**
+> Prédio desligado **produz**. O que este parágrafo descreve valeu enquanto o portão
+> existiu. A forma do cenário (começar com a gaveta cheia) continua de pé e o aceite
+> continua passando — o que mudou é o **rótulo** do pedreiro sem rua, hoje
+> `esperando_insumo`, porque a pedreira desta fixture está no descampado e não tem
+> rocha ao alcance. Está medido no próprio teste.
 
 O aceite dizia "a saída **enche** e o pedreiro vai a `saida_cheia`". Na prática a
 regra D6 (F15a) curto-circuita antes: prédio não ligado ao armazém **nem produz**
@@ -6698,7 +6712,95 @@ Pedido explícito: **"Não corrija ainda. Traga o diagnóstico."** Nada foi corr
 
 ### Aberto
 
-- **Decisão do operador pendente:** revogar ou manter o D6 (produção exige estrada).
-  Enquanto não vier, a interpretação conservadora é a que está no código: nada mudou.
+- ~~**Decisão do operador pendente:** revogar ou manter o D6 (produção exige estrada).~~
+  **Veio no mesmo dia: REVOGADO.** Ver a seção seguinte.
+- Qual das duas opções da F18g (reserva por tile / arrasto parcial), quando a feature
+  chegar.
+
+## 2026-09-25 (tarde) — A D6 revogada: prédio desligado PRODUZ
+
+Decisão do operador, aplicada no mesmo dia do diagnóstico da manhã. **Nenhuma feature
+virou a chave**: isto é revogação de decisão, não item da fila. Mexeu em `src/sim/`
+(uma função) e em cinco arquivos de teste.
+
+### Decidido pelo operador (com o porquê e as palavras dele)
+
+- **A D6 está revogada. Prédio sem ligação ao armazém PRODUZ, e para quando a gaveta
+  enche.** A razão: *"a estrada serve para escoar, não para trabalhar. O lenhador corta
+  árvore com machado, não com carroça."*
+- **Registro de erro do operador, a pedido dele:** *"O D6 nasceu errado e a decisão era
+  minha — eu o escrevi na F16c raciocinando sobre pausa e modo, sem pensar em produção
+  sem estrada."* O texto real da **GDD §5.1** é *"planta com porta ao sul; precisa de
+  estrada até a rede"* — regra de **posicionamento**, que nunca disse que a produção
+  para. A D6 está marcada como REVOGADA nos quatro lugares onde era afirmada como
+  verdade corrente: `PROGRESS.md` (a decisão original e a seção da F18d-1a),
+  `BUILD_PLAN.md` (a Nota do item da F15a, com a razão dele) e
+  `docs/planos/F15-producao.md` (a decisão e a lista de aprovações).
+- **A asserção foi INVERTIDA no lugar, não apagada.** Ordem dele: *"apagar e criar outro
+  perderia o rastro: quem ler o histórico precisa ver que a asserção foi invertida de
+  propósito, não que um teste sumiu e outro nasceu."* `tests/F15a-producao.test.ts`
+  mantém o caso na mesma posição, com o comentário dizendo que ele era o aceite da D6 e
+  hoje é o **aceite da revogação**.
+- **Segunda correção do operador, sobre o que ele mesmo disse na manhã:** ao receber o
+  diagnóstico do lenhador ele afirmou que o portão era o problema visto jogando. Era o
+  portão, sim — mas *"consertá-lo não destrava a abertura"*. Ver a medição abaixo, que é
+  o que dá o tamanho certo da mudança.
+
+### Verificado (medido nesta sessão, com evidência aberta)
+
+- **A mudança em `src/sim/` é de duas linhas retiradas**, o portão no alto de
+  `produzir()` (`src/sim/systems/especialistas.ts`). No lugar ficou um comentário longo
+  dizendo o que havia ali, quem revogou, quando e por quê — o arquivo é onde a próxima
+  sessão vai procurar a regra. `predioLigadoAoArmazem` **saiu do import**: o portão era
+  o único uso dela neste arquivo.
+- **O raio de alcance foi medido aplicando e rodando a suíte inteira, não estimado:
+  6 reprovações em 4 arquivos.** Exatamente **uma** afirmava a REGRA
+  (`tests/F15a-producao.test.ts`, a invertida); as outras cinco usavam o rótulo
+  `saida_cheia` como **rótulo** ou como **veículo**. Apareceu uma **sétima** durante o
+  conserto, da mesma classe: `fsmData` deixou de ser `{}` porque em campo a unidade
+  segura a tarefa de colheita (F-T3).
+- **Onde o eixo estava errado, e não só o número:**
+  - `tests/F14-aceite.test.ts` e `tests/F14-especialista.test.ts` afirmavam
+    `ESTADOS_DE_PRODUCAO`, mas **o que a F14 promete é a OCUPAÇÃO**. Sem rua o
+    especialista agora vai ao lajedo e passa a maior parte do tempo em
+    `colhendo`/`voltando`, que ocupam tanto quanto `trabalhando`. O helper passou a
+    **exportar `ESTADOS_QUE_OCUPAM`** (produção ∪ campo) — que já existia lá dentro como
+    o privado `ocupa()`, usado pelas invariantes; agora o teste e a invariante fazem a
+    **mesma** pergunta, em vez de duas parecidas.
+  - `expect(fsmData).toEqual({})` virou "o que ela tem na mão **não** é um `ocupar`" —
+    que é o que a linha queria dizer, e é mais estrito que o `{}` para o estado de campo.
+  - `tests/F18d-1a-modo.test.ts`: `saida_cheia` → **`esperando_insumo`**, e isto é **mais
+    verdadeiro**, não uma troca de nome: a pedreira da fixture está em (36,34), no
+    descampado, com **zero** rocha ao alcance — é disso que ele espera. Para que a
+    asserção nova diga a **causa** e não só um rótulo diferente, o caso passou a afirmar
+    também `rochaAoAlcanceDaPedreira: 0`, como o braço "com rua" já fazia.
+  - `tests/F15a-producao.test.ts`, bloco do guarda: a ausência de estrada era **veículo**
+    para chegar a `saida_cheia`. Virou o caminho legítimo — **seis ciclos na pedreira
+    ligada**, gaveta no teto. Encher a gaveta à mão **não serve**, e isto está medido: o
+    especialista sai para colher antes de descobrir que não cabe, então no tick 2 ele
+    está em `indo_colher`.
+- **O aceite da revogação não se ancora no `INTERVALO` da pedreira ligada**, e isto
+  também é medição: `VIAGEM = 99` foi medido **com** rua. Sem rua a viagem é outra, então
+  o caso **mede o tick do primeiro depósito dentro dele**, com laço limitado, e afirma o
+  resto em relação a ele. Afirmar tick exato continua sendo trabalho do caso da pedreira
+  ligada, que tem a viagem conhecida.
+- **A revogação NÃO faz a vila da abertura produzir sem rua** — e é esta medida que dá o
+  tamanho certo da mudança (`test-output/D6-vila-sem-rua.json`, sonda temporária já
+  apagada, cenário de abertura sem **nenhuma** estrada): `estradasNoMapa: 0`,
+  `produzidoNoTotal: {}`, e os **quatro** produtores **sem ocupante**. A causa é a cadeia
+  de treino, não o portão: a escola não está ligada ao armazém
+  (`ligadaAoArmazem: false`) e **nenhuma** tarefa `ouro-para-escola` nasceu
+  (`tarefasDeOuroParaEscola: 0`), então ninguém é formado e não há quem produza — havia
+  só `serf: 4` e `laborer: 2` vivos. **A regra nova vale para prédio que JÁ tem
+  ocupante; a rua continua pré-requisito da abertura, pela cadeia de treino e não pelo
+  portão.**
+- **O alerta sobrevive à revogação, conferido no arquivo:** a causa `'sem-estrada'` de
+  `CAUSAS_DE_ALERTA` deriva direto de `!predioLigadoAoArmazem` em
+  `src/sim/selectors.ts:614-616`, sem passar por `produzir()`. O jogador continua vendo
+  "Sem estrada até o armazém" num prédio que produz e não escoa — que é exatamente o que
+  o operador quer que ele veja.
+
+### Aberto
+
 - Qual das duas opções da F18g (reserva por tile / arrasto parcial), quando a feature
   chegar.

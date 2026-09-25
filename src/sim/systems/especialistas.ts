@@ -46,7 +46,7 @@ import {
 } from '../jobs';
 import { tileAlcancavelParaColheita } from '../aproximacao';
 import { ehPredioOcupavel, predioAceita, predioDoOcupante, tiposQueOcupam } from '../ocupacao';
-import { chaveDeTile, predioLigadoAoArmazem, tileDeChave } from '../estradas';
+import { chaveDeTile, tileDeChave } from '../estradas';
 import {
   cabeNaSaida, consumirInsumos, receitaDoTipo, semRecursoAoAlcance, temInsumo, unidadesPorCiclo,
 } from '../producao';
@@ -359,10 +359,22 @@ function produzir(state: GameState, u: Unidade, predio: PredioCompleto, dados: G
   const prod = predio.producao;
   // predio ocupavel sem receita nao existe no dado de hoje; se existir, ocupa e nao produz
   if (receita === null || prod === null) return comFsm(state, u, 'trabalhando');
-  // GDD §5.1: a estrada e requisito de FUNCIONAMENTO. Predio que nao ESCOA e
-  // `saida_cheia` (GDD §6.2, "a logistica e o gargalo") — sem estrada o
-  // escoamento e impossivel, o caso extremo do mesmo fenomeno. Ver D6.
-  if (!predioLigadoAoArmazem(state, predio, dados)) return comFsm(state, u, 'saida_cheia');
+  // AQUI HAVIA UM PORTAO, e ele foi REVOGADO (decisao do operador, 2026-09-25):
+  // `if (!predioLigadoAoArmazem(...)) return comFsm(state, u, 'saida_cheia')`, a
+  // decisao D6 da F15a. A razao dele: "a estrada serve para ESCOAR, nao para
+  // trabalhar — o lenhador corta arvore com machado, nao com carroca". Predio
+  // desligado PRODUZ, e para quando a gaveta enche, pelo caminho normal de
+  // `saida_cheia` (o teto de `production.estoqueInternoPorPredio`).
+  //
+  // O D6 nasceu errado, e o operador registrou isso: ele o escreveu na F16c
+  // raciocinando sobre PAUSA e MODO, sem pensar em producao sem estrada. O texto
+  // real da GDD §5.1 ("planta com porta ao sul; precisa de estrada ate a rede")
+  // e regra de POSICIONAMENTO e nunca disse que a producao para.
+  //
+  // O jogador continua avisado: a causa `'sem-estrada'` de `CAUSAS_DE_ALERTA`
+  // deriva direto de `!predioLigadoAoArmazem` (`sim/selectors.ts`), sem passar por
+  // aqui — e por isso este arquivo deixou de importar a funcao: o portao era o
+  // UNICO uso dela aqui.
   // F-T2c — o TILE deste ciclo, reclamado no quadro. Vem antes do relogio e antes
   // do deposito: sem tile reservado nao ha colheita, e um ciclo que nao pode
   // colher nao pode andar. Substitui o `semRecursoAoAlcance` que ficava aqui —

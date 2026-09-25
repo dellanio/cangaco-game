@@ -427,14 +427,24 @@ prédio surge sem clique do jogador.
   `ehPredioOcupavel(predio) && predio.ocupante === null` (`sim/ocupacao.ts`). É
   nesta feature que "fica parado" ganha significado observável, e é aqui que
   entram `esperando_insumo` e `saida_cheia` (GDD §6.2).
-- **Nota**: prédio **sem ligação** ao armazém (`predioLigadoAoArmazem`, F08) **não
-  produz** — a estrada é requisito de funcionamento (GDD §5.1).
-- **Nota (D6, decisão do operador)**: prédio sem estrada fica em **`saida_cheia`**,
-  com o relógio do ciclo congelado. Prédio que não escoa é exatamente o que o GDD
-  §6.2 descreve por `saida_cheia` ("a logística é o gargalo"), e sem estrada o
-  escoamento é impossível — o caso extremo, não um caso novo. **Nenhum estado de
-  FSM fora da lista do GDD §6.2.** A causa continua observável sem estado novo
-  (`predioLigadoAoArmazem === false`), que é o que o alerta "sem estrada" da F22 lê.
+- ~~**Nota**: prédio **sem ligação** ao armazém (`predioLigadoAoArmazem`, F08) **não
+  produz** — a estrada é requisito de funcionamento (GDD §5.1).~~ **REVOGADA**
+  (operador, 2026-09-25) — ver abaixo.
+- ~~**Nota (D6, decisão do operador)**: prédio sem estrada fica em **`saida_cheia`**,
+  com o relógio do ciclo congelado.~~ **REVOGADA pelo operador em 2026-09-25**, e o
+  portão saiu de `sim/systems/especialistas.ts`. A razão dele: *"a estrada serve para
+  escoar, não para trabalhar; o lenhador corta árvore com machado, não com carroça."*
+  Ele registrou também que a D6 **nasceu errada**: foi escrita na F16c raciocinando
+  sobre pausa e modo, sem pensar em produção sem estrada; o texto real da GDD §5.1
+  ("planta com porta ao sul; precisa de estrada até a rede") é regra de
+  **posicionamento** e nunca disse que a produção para. O que vale hoje: prédio
+  desligado **produz** e para em `saida_cheia` quando a **gaveta** enche
+  (`production.estoqueInternoPorPredio`), pelo caminho normal. **Nenhum estado de FSM
+  fora da lista do GDD §6.2**, como antes. O jogador continua avisado: a causa
+  `'sem-estrada'` do alerta deriva direto de `predioLigadoAoArmazem === false` em
+  `sim/selectors.ts`, sem passar pela produção. O aceite invertido está em
+  `tests/F15a-producao.test.ts` ("prédio sem ligação ao armazém PRODUZ, e para quando
+  a gaveta enche"), na mesma posição da asserção antiga, de propósito.
 - **Nota (D1)**: a receita é um **ciclo**, derivado **uma vez no carregamento**:
   `ticksDoCiclo` é o período da taxa mais lenta entre `entra` e `sai`, e as
   quantidades são a razão dos períodos, arredondada ali. É isso que faz "1 tronco

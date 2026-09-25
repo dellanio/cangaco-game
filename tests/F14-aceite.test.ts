@@ -11,7 +11,7 @@ import { gameData } from '../src/sim/data';
 import { trabalhadorDoTipo } from '../src/sim/ocupacao';
 import { armazemPorTipo, avancar, escolaDoCenario, novasUnidades, pedir } from './helpers/escola-cenario';
 import { comEstradas, comPredioCompletoEm, linhaH } from './helpers/jobs-cenario';
-import { ESTADOS_DE_PRODUCAO, violacoesDaFsmDoEspecialista } from './helpers/especialista-invariantes';
+import { ESTADOS_QUE_OCUPAM, violacoesDaFsmDoEspecialista } from './helpers/especialista-invariantes';
 import { violacoesDeInvariantes } from './helpers/jobs-invariantes';
 import { compararComESemSave } from './helpers/determinism';
 import { gravarEvidencia } from './helpers/evidence';
@@ -60,9 +60,10 @@ describe('F14 — aceite headless do BUILD_PLAN', () => {
     expect(new Set(ocupantes).size).toBe(2);
     expect([...ocupantes].sort()).toEqual(novos.map((u) => u.id).sort());
 
-    // 4. os dois ocupam (F15a: sem estrada o rotulo e `saida_cheia`, e ocupacao
-    // do mesmo jeito — ver D6), e o quadro nao guardou vaga orfa
-    for (const u of novos) expect(ESTADOS_DE_PRODUCAO).toContain(fim.unidades.porId[u.id]?.fsm);
+    // 4. os dois OCUPAM, e o quadro nao guardou vaga orfa. O eixo e a ocupacao
+    // (producao uniao campo): com a D6 revogada (2026-09-25) a quarry sem estrada
+    // produz, e o pedreiro esta no lajedo boa parte do tempo
+    for (const u of novos) expect(ESTADOS_QUE_OCUPAM).toContain(fim.unidades.porId[u.id]?.fsm);
     const vagas = fim.jobs.tarefas.ordem.filter((id) => fim.jobs.tarefas.porId[id]?.tipo === 'ocupar');
     expect(vagas).toHaveLength(0);
 

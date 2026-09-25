@@ -1,10 +1,13 @@
 /**
  * F14 — a FSM do especialista: sair de ocioso, andar ate o predio vago, ocupar.
  * O que se verifica aqui e o CICLO fechado pelos dois lados: o predio aponta
- * para a unidade, a unidade esta em um estado de PRODUCAO, e a tarefa sumiu do
- * quadro. Desde a F15a (D6) o rotulo exato depende do ciclo — a quarry destes
- * cenarios nao tem estrada, entao o pedreiro ocupa e fica em `saida_cheia`. O
- * que a F14 promete e a OCUPACAO, e e isso que se verifica.
+ * para a unidade, a unidade OCUPA, e a tarefa sumiu do quadro. O rotulo exato
+ * depende do ciclo e nao e o ponto: a quarry destes cenarios nao tem estrada, e
+ * desde que a D6 foi revogada (2026-09-25) ela PRODUZ sem estrada — o pedreiro
+ * sai para o lajedo e passa a maior parte do tempo em `colhendo`/`voltando`, que
+ * OCUPAM tanto quanto `trabalhando`. Por isso o eixo daqui e `ESTADOS_QUE_OCUPAM`
+ * (producao uniao campo) e nao `ESTADOS_DE_PRODUCAO`: o que a F14 promete e a
+ * OCUPACAO. Antes da revogacao o rotulo era `saida_cheia`, pelo portao que sumiu.
  */
 import { describe, expect, it } from 'vitest';
 import { createInitialState } from '../src/sim/state';
@@ -12,7 +15,9 @@ import type { GameState } from '../src/sim/state';
 import { step } from '../src/sim/tick';
 import { predioDoOcupante, trabalhadorDoTipo } from '../src/sim/ocupacao';
 import { comPredioCompletoEm, comUnidadeExtra, semAUnidade, semLaborers, semOPredio } from './helpers/jobs-cenario';
-import { ESTADOS_DE_PRODUCAO, violacoesDaFsmDoEspecialista } from './helpers/especialista-invariantes';
+import {
+  ESTADOS_DE_PRODUCAO, ESTADOS_QUE_OCUPAM, violacoesDaFsmDoEspecialista,
+} from './helpers/especialista-invariantes';
 
 const inicial = createInitialState(1);
 const PEDREIRO = trabalhadorDoTipo('quarry') ?? '';
@@ -30,8 +35,13 @@ describe('F14 — a FSM do especialista', () => {
   it('sai de ocioso, anda e ocupa: o predio aponta para ele e a tarefa sai do quadro', () => {
     const fim = avancar(cenario(1, [{ id: 'q1', gx: 26, gy: 36 }]), 200);
     expect(fim.predios.porId.q1?.estado === 'completo' && fim.predios.porId.q1.ocupante).toBe('esp1');
-    expect(ESTADOS_DE_PRODUCAO).toContain(fim.unidades.porId.esp1?.fsm);
-    expect(fim.unidades.porId.esp1?.fsmData).toEqual({});
+    expect(ESTADOS_QUE_OCUPAM).toContain(fim.unidades.porId.esp1?.fsm);
+    // O `ocupar` saiu da MAO da unidade — era isto que `fsmData === {}` afirmava, e
+    // com a D6 revogada o `{}` deixou de valer: em campo a unidade segura a tarefa de
+    // COLHEITA e o caminho (F-T3). O que continua verdade, e mais estrito, e que o que
+    // ela tem na mao NAO e um `ocupar`.
+    const naMao = fim.unidades.porId.esp1?.fsmData.tarefa;
+    expect(naMao === undefined || fim.jobs.tarefas.porId[naMao]?.tipo === 'colher').toBe(true);
     expect(fim.jobs.tarefas.ordem.filter((id) => fim.jobs.tarefas.porId[id]?.tipo === 'ocupar')).toHaveLength(0);
     expect(violacoesDaFsmDoEspecialista(fim)).toEqual([]);
   });
@@ -67,7 +77,7 @@ describe('F14 — a FSM do especialista', () => {
 
   it('predio demolido DEPOIS de ocupado: o especialista volta a ocioso', () => {
     const ocupado = avancar(cenario(1, [{ id: 'q1', gx: 26, gy: 36 }]), 200);
-    expect(ESTADOS_DE_PRODUCAO).toContain(ocupado.unidades.porId.esp1?.fsm);
+    expect(ESTADOS_QUE_OCUPAM).toContain(ocupado.unidades.porId.esp1?.fsm);
     const depois = avancar(semOPredio(ocupado, 'q1'), 2);
     expect(depois.unidades.porId.esp1?.fsm).toBe('ocioso');
   });

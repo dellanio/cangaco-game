@@ -126,8 +126,14 @@ describe('F18d-1a — as portas e a perna de entrega seguem o modo do nivel', ()
 /**
  * O ACEITE escrito no BUILD_PLAN, num cenario so e sem uma unica estrada no mapa:
  * a primeira casa sobe (serf entrega andando livre) e, no MESMO cenario, a pedreira
- * pronta nao escoa — o pedreiro fica em `saida_cheia` e a gaveta so esvazia depois
- * que a rua existe.
+ * pronta nao escoa — a gaveta so esvazia depois que a rua existe.
+ *
+ * O ROTULO do pedreiro sem rua mudou com a revogacao da D6 (decisao do operador,
+ * 2026-09-25): era `saida_cheia` pelo PORTAO ("predio desligado nao produz"), que
+ * deixou de existir. Agora ele e `esperando_insumo`, e isso e mais verdadeiro para
+ * esta fixture — a pedreira esta em (36,34), no descampado, com ZERO rocha ao
+ * alcance, e e disso que ele espera. O aceite em si nao mudou: o que ele afirma e
+ * que sem rua a gaveta NAO escoa, e ela continua nao escoando.
  */
 function medirOAceite(): {
   readonly semRua: Record<string, unknown>; readonly comRua: Record<string, unknown>;
@@ -153,6 +159,7 @@ function medirOAceite(): {
     estradasNoMapa: Object.keys(atual.estradas).length,
     obraCompletaNoTick: prontaNoTick,
     pedreiro: atual.unidades.porId['pedreiro']?.fsm,
+    rochaAoAlcanceDaPedreira: disponivelDe(atual, 'pedreira'),
     pedraNaGavetaDaPedreira: saidaDe(atual, 'pedreira').stone,
     tarefasDeColeta: atual.jobs.tarefas.ordem
       .filter((id) => atual.jobs.tarefas.porId[id]?.tipo === 'saida-cheia-para-armazem').length,
@@ -188,7 +195,11 @@ describe('F18d-1a — o aceite do BUILD_PLAN', () => {
     expect(semRua).toEqual({
       estradasNoMapa: 0, // o mapa inteiro sem uma rua, do primeiro ao ultimo tick
       obraCompletaNoTick: 247, // a casa subiu: serf entregou andando livre
-      pedreiro: 'saida_cheia', // e a producao NAO escoou
+      // revogacao da D6 (2026-09-25): sem o portao o rotulo vem da FALTA, e a falta
+      // desta fixture e rocha — `rochaAoAlcanceDaPedreira` abaixo e o que faz este
+      // rotulo ser uma causa e nao um numero trocado
+      pedreiro: 'esperando_insumo',
+      rochaAoAlcanceDaPedreira: 0, // (36,34) e descampado: nao ha o que colher ali
       pedraNaGavetaDaPedreira: 5, // a gaveta continua cheia (capacidade 5)
       tarefasDeColeta: 0, // nenhuma tarefa de nivel 6 nasceu
       // F-T4b (2026-09-25): o estoque inicial subiu de 30 para 34 por decisao do

@@ -5,8 +5,12 @@
  *
  * F15a — os estados de PRODUCAO (`esperando_insumo`, `saida_cheia`) passaram a
  * existir. Aqui eles valem tudo o que `trabalhando` valia: quem esta em
- * qualquer um dos tres OCUPA um predio. Uma pedreira sem estrada fica em
- * `saida_cheia` desde a F15a (D6) e continua legitimamente ocupada.
+ * qualquer um dos tres OCUPA um predio.
+ *
+ * A D6 foi REVOGADA (decisao do operador, 2026-09-25): predio sem estrada nao fica
+ * mais em `saida_cheia` — ele PRODUZ, e portanto roda o ciclo em campo como
+ * qualquer outro. Quem afirma OCUPACAO tem de usar `ESTADOS_QUE_OCUPAM`, nao
+ * `ESTADOS_DE_PRODUCAO`: sem rua o rotulo mais comum e `colhendo` ou `voltando`.
  *
  * F-T3 — e agora ha tres estados EM CAMPO (`indo_colher`, `colhendo`,
  * `voltando`). Eles tambem OCUPAM: o predio continua apontando para a unidade
@@ -37,11 +41,11 @@ export const ESTADOS_DO_ESPECIALISTA = [
 ] as const;
 
 /** Estado que exige predio dos dois lados: producao OU campo. E a pergunta que o
- *  lado do PREDIO faz sobre o seu ocupante. */
-const ocupa = (fsm: string): boolean => (
-  (ESTADOS_DE_PRODUCAO as readonly string[]).includes(fsm)
-  || (ESTADOS_EM_CAMPO as readonly string[]).includes(fsm)
-);
+ *  lado do PREDIO faz sobre o seu ocupante — e a que a F14 faz, porque o que ela
+ *  promete e a OCUPACAO e nao o rotulo do ciclo. */
+export const ESTADOS_QUE_OCUPAM = [...ESTADOS_DE_PRODUCAO, ...ESTADOS_EM_CAMPO] as const;
+
+const ocupa = (fsm: string): boolean => (ESTADOS_QUE_OCUPAM as readonly string[]).includes(fsm);
 
 /** F-T3 — onde o caminho pendente e legitimo. `colhendo` nao esta aqui de
  *  proposito: chegar ao tile CONSOME o caminho no mesmo tick. */
