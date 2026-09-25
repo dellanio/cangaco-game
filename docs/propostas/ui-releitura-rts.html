@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<title>Proposta — releitura da interface (mock estático)</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&display=swap" />
+<style>
+  /* MOCK ESTÁTICO. Não é código do jogo: os textos aqui são digitados de
+     propósito, para o operador olhar. Ao implementar, tudo vem do tema. */
+  :root {
+    --papel:#ede3d0; --papel-escuro:#d9c9a8; --tinta:#1a1410; --tinta-fraca:#5a3f2b;
+    --ocre:#c9974b; --terracota:#b4562f; --terra-queimada:#8c4a25; --verde-seco:#7c8b6a;
+    --display:'Alfa Slab One', Georgia, serif; --corpo: Georgia, serif;
+    --hachura: repeating-linear-gradient(135deg, transparent 0 5px, rgba(26,20,16,.14) 5px 7px);
+  }
+  body { margin:0; padding:24px; background:#2b241c; color:var(--papel); font: 14px/1.4 var(--corpo); }
+  h1 { font: 26px var(--display); margin:0 0 4px; }
+  h1 + p { margin:0 0 24px; color:var(--papel-escuro); }
+  .quadro { margin: 0 0 40px; }
+  .quadro > h2 { font: 18px var(--display); margin: 0 0 8px; color: var(--ocre); }
+  .quadro > p { max-width: 900px; color: var(--papel-escuro); margin: 0 0 12px; }
+  /* a tela: 1280x720 reduzida para caber na página */
+  .tela {
+    width:1280px; height:720px; transform: scale(.72); transform-origin: top left;
+    margin-bottom: calc(-720px * .28);
+    display:grid; grid-template-columns: 1fr 260px; grid-template-rows: 40px 1fr;
+    background: var(--tinta); font: 14px/1.35 var(--corpo); color: var(--tinta);
+    box-shadow: 0 10px 40px #000a;
+  }
+  .tela.balcao { grid-template-rows: 40px 1fr 132px; }
+  .hud, .coluna, .rodape { background: var(--papel); }
+  .hud { grid-column: 1 / -1; display:flex; align-items:center; gap:22px; padding:0 16px; border-bottom:3px solid var(--tinta); }
+  .hud .campo { display:flex; gap:6px; align-items:baseline; }
+  .hud .rotulo { font-size:11px; text-transform:uppercase; letter-spacing:.12em; color:var(--tinta-fraca); }
+  .hud .valor { font: 17px var(--display); }
+  .hud .avisos { margin-left:auto; display:flex; gap:6px; }
+  .carimbo { padding:3px 8px; border:2px solid var(--terracota); color:var(--terracota); font-size:12px; display:flex; gap:6px; align-items:baseline; }
+  .carimbo b { background:var(--tinta); color:var(--papel); font: 11px var(--display); padding:1px 5px; }
+  .pausado { background:var(--tinta); color:var(--papel); font: 13px var(--display); padding:3px 10px; text-transform:uppercase; transform: rotate(-1.5deg); }
+  .canvas {
+    grid-column:1; grid-row:2; position:relative; overflow:hidden;
+    background-color:#5e6b4f;
+    background-image: linear-gradient(#0002 1px, transparent 1px), linear-gradient(90deg, #0002 1px, transparent 1px);
+    background-size: 64px 64px;
+  }
+  .canvas .nota { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); color:#ede3d0; font: 20px var(--display); opacity:.5; text-align:center; }
+  .canvas .predio { position:absolute; background:#5a3f2b; border:2px solid #1a1410; color:#ede3d0; font-size:12px; display:flex; align-items:center; justify-content:center; }
+  .coluna { grid-column:2; grid-row:2 / -1; border-left:3px solid var(--tinta); padding:12px; box-sizing:border-box; display:flex; flex-direction:column; gap:4px; overflow:hidden; }
+  .abas { display:flex; border-bottom:3px solid var(--tinta); margin-bottom:2px; }
+  .aba { font: 14px var(--display); padding:6px 12px; color:var(--tinta-fraca); white-space:nowrap; }
+  .aba.ativa { background:var(--tinta); color:var(--papel); }
+  .aba.volta { margin-left:auto; color:var(--terracota); }
+  .regua { display:flex; align-items:center; gap:8px; font: 10px var(--display); text-transform:uppercase; letter-spacing:.14em; color:var(--terra-queimada); height:16px; }
+  .regua::before, .regua::after { content:''; flex:1; border-top:2px solid var(--tinta); }
+  .grade { display:grid; grid-template-columns: repeat(5, 40px); gap: 7px 9px; }
+  .icone {
+    width:40px; height:40px; box-sizing:border-box; border:2px solid var(--tinta); background:var(--papel);
+    display:grid; place-items:center; position:relative;
+  }
+  .icone .fp { display:grid; gap:1px; }
+  .icone .fp i { display:block; width:6px; height:6px; background:var(--tinta); }
+  .icone.ativo { background:var(--tinta); border-color:var(--ocre); box-shadow: inset 5px 0 0 var(--ocre); }
+  .icone.ativo .fp i { background:var(--papel); }
+  .icone.bloq { background-image: var(--hachura); opacity:.55; }
+  .icone.ferr { font: 12px var(--display); }
+  .cartao { margin-top:auto; border:2px solid var(--tinta); padding:8px 10px; box-shadow: 3px 3px 0 var(--tinta); }
+  .cartao h3 { margin:0 0 2px; font: 16px var(--display); }
+  .cartao .custo { font-size:12px; color:var(--tinta-fraca); }
+  .cartao .requer { font-size:12px; font-style:italic; color:var(--terracota); }
+  .cartao .desc { font-size:12px; margin-top:4px; }
+  /* página PRÉDIO */
+  .pagina h3 { margin:0; padding-bottom:4px; border-bottom:3px solid var(--tinta); font: 18px var(--display); display:flex; align-items:center; gap:8px; }
+  .pagina h3 .pausado { font-size:10px; margin-left:auto; }
+  .linha { display:flex; font-size:13px; gap:6px; }
+  .linha .rotulo { flex:1; color:var(--tinta-fraca); }
+  .gaveta { display:flex; gap:4px; font-size:12px; align-items:baseline; }
+  .gaveta .rotulo { color:var(--tinta-fraca); }
+  .gaveta .item { border:1px solid var(--tinta); background:var(--papel-escuro); padding:1px 5px; }
+  .slot { display:flex; align-items:center; gap:6px; border:2px solid var(--tinta); background:var(--papel-escuro); padding:3px 6px; font-size:12px; }
+  .slot .nome { font: 12px var(--display); flex:1; }
+  .slot .motivo { color:var(--terracota); font-style:italic; }
+  .slot .x { border:1px solid var(--tinta); padding:0 4px; font: 11px var(--display); }
+  .slot.vazio { background:transparent; background-image:var(--hachura); border-style:dashed; color:var(--tinta-fraca); }
+  .acoes { margin-top:auto; display:flex; gap:8px; }
+  .botao { font: 13px var(--display); border:2px solid var(--tinta); padding:4px 8px; box-shadow: 2px 2px 0 var(--tinta); background:var(--papel); }
+  .botao.demolir { background:var(--terracota); color:var(--papel); margin-left:auto; }
+  /* layout 2 */
+  .rodape { grid-column:1; grid-row:3; border-top:3px solid var(--tinta); padding:8px 12px; box-sizing:border-box; display:flex; gap:16px; align-items:flex-start; }
+  .rodape > div { display:flex; flex-direction:column; gap:4px; }
+  .rodape .fila { flex-direction:row; gap:6px; }
+  .rodape .slot { width:90px; }
+  .rodape .grade { grid-template-columns: repeat(7, 40px); }
+</style>
+</head>
+<body>
+<h1>Releitura da interface — mock estático</h1>
+<p>Três quadros, cada um uma tela de 1280 × 720 reduzida a 72%. Os textos aqui são digitados só para o mock; no jogo tudo vem do tema. O detalhe da proposta está em <code>ui-releitura-rts.md</code>.</p>
+
+<!-- ============ QUADRO 1: Layout 1, página CONSTRUIR ============ -->
+<section class="quadro">
+  <h2>Layout 1 — Prancha, página CONSTRUIR (recomendado)</h2>
+  <p>Grade 5 × 8 com faixas por grupo, ferramentas na primeira linha, cartão fixo embaixo com o que está sob o mouse. A Bodega está ativa (bloco entintado). Os avisos viraram carimbos no HUD; o canvas não tem nada por cima.</p>
+  <div class="tela">
+    <div class="hud">
+      <span class="campo"><span class="rotulo">Dinheiro</span><span class="valor">20</span></span>
+      <span class="campo"><span class="rotulo">Tábua</span><span class="valor">40</span></span>
+      <span class="campo"><span class="rotulo">Pedra</span><span class="valor">30</span></span>
+      <span class="campo"><span class="rotulo">Comida</span><span class="valor">25</span></span>
+      <span class="campo"><span class="rotulo">Gente</span><span class="valor">6/0</span></span>
+      <span class="avisos">
+        <span class="carimbo">Sem quem trabalhe <b>1</b></span>
+        <span class="carimbo">Sem estrada até o armazém <b>1</b></span>
+      </span>
+      <span class="pausado">Pausado</span>
+    </div>
+    <div class="canvas">
+      <div class="predio" style="left:270px;top:250px;width:192px;height:192px">Armazém</div>
+      <div class="predio" style="left:560px;top:250px;width:192px;height:192px">Casa do Coronel</div>
+      <div class="nota">canvas 1020 × 680<br>igual ao de hoje, sem sobreposição</div>
+    </div>
+    <div class="coluna">
+      <div class="abas"><span class="aba ativa">Construir</span><span class="aba">Prédio</span></div>
+      <div class="grade">
+        <div class="icone ferr">═</div><div class="icone ferr">✕</div><div class="icone ferr">▦</div>
+      </div>
+      <div class="regua">A vila</div>
+      <div class="grade" id="vila"></div>
+      <div class="regua">Mato e pedra</div>
+      <div class="grade" id="materia"></div>
+      <div class="regua">De comer</div>
+      <div class="grade" id="comida"></div>
+      <div class="regua">Oficinas</div>
+      <div class="grade" id="oficinas"></div>
+      <div class="regua">O bando</div>
+      <div class="grade" id="bando"></div>
+      <div class="cartao">
+        <h3>Bodega</h3>
+        <div class="custo">Tábua 6 · Pedra 5 · 4 × 3</div>
+        <div class="desc">Venda e mesa. É onde o povo come e bebe.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ QUADRO 2: Layout 1, página PRÉDIO ============ -->
+<section class="quadro">
+  <h2>Layout 1 — Prancha, página PRÉDIO (Casa do Coronel selecionada)</h2>
+  <p>A coluna trocou de página. A aba Construir continua em cima (ou Esc) para voltar. Fila com 5 slots e os 14 tipos de civil em grade 5 × 3 — placeholder de ícone é o item da mão, quando a arte vier.</p>
+  <div class="tela">
+    <div class="hud">
+      <span class="campo"><span class="rotulo">Dinheiro</span><span class="valor">16</span></span>
+      <span class="campo"><span class="rotulo">Tábua</span><span class="valor">40</span></span>
+      <span class="campo"><span class="rotulo">Pedra</span><span class="valor">22</span></span>
+      <span class="campo"><span class="rotulo">Comida</span><span class="valor">25</span></span>
+      <span class="campo"><span class="rotulo">Gente</span><span class="valor">6/0</span></span>
+      <span class="avisos"></span>
+      <span class="pausado">Pausado</span>
+    </div>
+    <div class="canvas">
+      <div class="predio" style="left:270px;top:250px;width:192px;height:192px">Armazém</div>
+      <div class="predio" style="left:560px;top:250px;width:192px;height:192px;outline:3px solid #ede3d0;outline-offset:3px">Casa do Coronel</div>
+      <div class="nota" style="top:80%">clicar no mapa continua chegando ao canvas em todo canto</div>
+    </div>
+    <div class="coluna pagina">
+      <div class="abas"><span class="aba">Construir</span><span class="aba ativa">Prédio</span><span class="aba volta">◀ Esc</span></div>
+      <h3>Casa do Coronel</h3>
+      <div class="linha"><span class="rotulo">Firmeza</span><b>550/550</b></div>
+      <div class="gaveta"><span class="rotulo">Entra</span><span class="item">Dinheiro 3</span></div>
+      <div class="gaveta"><span class="rotulo">Sai</span><span>—</span></div>
+      <div class="regua">Fila</div>
+      <div class="slot"><span class="nome">Carregador</span><span>treinando 31%</span><span class="x">×</span></div>
+      <div class="slot"><span class="nome">Carregador</span><span class="motivo">na fila</span><span class="x">×</span></div>
+      <div class="slot"><span class="nome">Carregador</span><span class="motivo">na fila</span><span class="x">×</span></div>
+      <div class="slot vazio">—</div>
+      <div class="slot vazio">—</div>
+      <div class="regua">Engajar · custa 1</div>
+      <div class="grade" id="civis"></div>
+      <div class="acoes"><span class="botao">Parar</span><span class="botao demolir">Derrubar</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ QUADRO 3: Layout 2 ============ -->
+<section class="quadro">
+  <h2>Layout 2 — Balcão (o do Age), para comparar</h2>
+  <p>Grade de construir sempre visível na coluna; contexto vira faixa de 132 px no rodapé. O canvas perde 18% da altura. Sem seleção, a faixa fica vazia.</p>
+  <div class="tela balcao">
+    <div class="hud">
+      <span class="campo"><span class="rotulo">Dinheiro</span><span class="valor">16</span></span>
+      <span class="campo"><span class="rotulo">Tábua</span><span class="valor">40</span></span>
+      <span class="campo"><span class="rotulo">Pedra</span><span class="valor">22</span></span>
+      <span class="campo"><span class="rotulo">Comida</span><span class="valor">25</span></span>
+      <span class="campo"><span class="rotulo">Gente</span><span class="valor">6/0</span></span>
+      <span class="avisos"></span>
+      <span class="pausado">Pausado</span>
+    </div>
+    <div class="canvas">
+      <div class="predio" style="left:270px;top:200px;width:192px;height:192px">Armazém</div>
+      <div class="predio" style="left:560px;top:200px;width:192px;height:192px;outline:3px solid #ede3d0;outline-offset:3px">Casa do Coronel</div>
+      <div class="nota">canvas 1020 × 548</div>
+    </div>
+    <div class="coluna">
+      <div class="abas"><span class="aba ativa">Construir</span></div>
+      <div class="grade">
+        <div class="icone ferr">═</div><div class="icone ferr">✕</div><div class="icone ferr">▦</div>
+      </div>
+      <div class="regua">A vila</div>
+      <div class="grade" id="vila2"></div>
+      <div class="regua">Mato e pedra</div>
+      <div class="grade" id="materia2"></div>
+      <div class="regua">De comer</div>
+      <div class="grade" id="comida2"></div>
+      <div class="regua">Oficinas</div>
+      <div class="grade" id="oficinas2"></div>
+      <div class="regua">O bando</div>
+      <div class="grade" id="bando2"></div>
+      <div class="cartao"><h3>Bodega</h3><div class="custo">Tábua 6 · Pedra 5 · 4 × 3</div></div>
+    </div>
+    <div class="rodape pagina">
+      <div>
+        <h3 style="border:0;padding:0">Casa do Coronel</h3>
+        <div class="linha"><span class="rotulo">Firmeza</span><b>550/550</b></div>
+        <div class="gaveta"><span class="rotulo">Entra</span><span class="item">Dinheiro 3</span></div>
+      </div>
+      <div>
+        <div class="regua">Fila</div>
+        <div class="fila" style="display:flex">
+          <div class="slot"><span class="nome">Carreg.</span><span class="x">×</span></div>
+          <div class="slot"><span class="nome">Carreg.</span><span class="x">×</span></div>
+          <div class="slot"><span class="nome">Carreg.</span><span class="x">×</span></div>
+          <div class="slot vazio">—</div>
+          <div class="slot vazio">—</div>
+        </div>
+      </div>
+      <div>
+        <div class="regua">Engajar</div>
+        <div class="grade" id="civis2"></div>
+      </div>
+      <div style="margin-left:auto"><span class="botao demolir">Derrubar</span></div>
+    </div>
+  </div>
+</section>
+
+<script>
+  // Placeholder de ícone = miniatura do footprint (tamanho de buildings.json).
+  // Bloqueado = hachurado. Só o mock digita a lista; no jogo vem do dado.
+  const grupos = {
+    vila:     [['schoolhouse',3,3,1],['inn',4,3,1],['storehouse',3,3,0],['marketplace',4,3,0]],
+    materia:  [['quarry',3,2,1],['woodcutters',3,2,1],['sawmill',4,2,0],['coal_mine',3,2,0],['gold_mine',2,1,0],['iron_mine',3,1,0]],
+    comida:   [['farm',4,3,0],['fishermans',3,2,0],['wineyard',3,2,0],['mill',3,3,0],['swine_farm',4,3,0],['bakery',3,3,0],['butchers',3,3,0]],
+    oficinas: [['weapons_workshop',4,2,0],['metallurgists',3,3,0],['iron_smithy',4,2,0],['tannery',3,2,0],['weapon_smithy',4,2,0],['armor_smithy',4,3,0],['armory_workshop',3,3,0]],
+    bando:    [['watchtower',2,2,0],['barracks',4,4,0],['stables',4,3,0],['town_hall',4,3,0]],
+  };
+  function icone(id, w, h, livre, ativo) {
+    const el = document.createElement('div');
+    el.className = 'icone' + (livre ? '' : ' bloq') + (ativo ? ' ativo' : '');
+    el.title = id;
+    const fp = document.createElement('div');
+    fp.className = 'fp';
+    fp.style.gridTemplateColumns = `repeat(${w}, 6px)`;
+    for (let i = 0; i < w * h; i++) fp.append(document.createElement('i'));
+    el.append(fp);
+    return el;
+  }
+  for (const sufixo of ['', '2']) {
+    for (const [g, lista] of Object.entries(grupos)) {
+      const alvo = document.getElementById(g + sufixo);
+      if (!alvo) continue;
+      for (const [id, w, h, livre] of lista) alvo.append(icone(id, w, h, livre, id === 'inn' && sufixo === ''));
+    }
+  }
+  const civis = ['serf','laborer','stonemason','woodcutter','carpenter','farmer','baker','animal_breeder','butcher','fisherman','miner','metallurgist','blacksmith','recruit'];
+  for (const alvo of [document.getElementById('civis'), document.getElementById('civis2')]) {
+    for (const c of civis) { const el = icone(c, 2, 3, 1, false); el.title = c; alvo.append(el); }
+  }
+</script>
+</body>
+</html>
