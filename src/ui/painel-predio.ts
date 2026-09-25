@@ -6,6 +6,13 @@
 // Le o estado pelo seletor puro `painelDoPredio` e emite comando. Nao muta
 // GameState, nao importa phaser, nao varre predios (CLAUDE.md §3, §10).
 //
+// Desde o Layout 2 (docs/propostas/ui-releitura-rts.md §8) o painel e o
+// conteudo do BALCAO, a faixa do rodape, e se desenha em BLOCOS lado a lado:
+// identidade (nome, firmeza ou obra, estoque), gente (quem trabalha, o que
+// resta ao alcance), a escola (fila e tipos) e as acoes. Os nos de cada bloco
+// sao os mesmos de antes, com os mesmos `data-`: mudou onde ficam, nao o que
+// dizem — e e por isso que os roteiros da F13b, F16b e F22 continuam lendo.
+//
 // A fila de treino da escola virou uma SECAO deste painel
 // (`desenharSecaoDaEscola`), nao um segundo painel: dois paineis disputando o
 // mesmo canto da tela seria o mecanismo duplicado que a nota do item proibe.
@@ -43,6 +50,15 @@ const temaDeMercadorias = temaSertao.mercadorias as TemaDeMercadorias;
 
 function nomeDoPredio(tipo: string): string {
   return temaDePredios[tipo]?.nome ?? tipo;
+}
+
+/** Um bloco do balcao. Vazio, nao entra no DOM: bloco sem nada seria uma
+ *  regua de tinta separando nada de nada. */
+function bloco(classe: string): HTMLElement {
+  const div = document.createElement('div');
+  div.className = `bloco ${classe}`;
+  div.dataset.bloco = classe;
+  return div;
 }
 
 function linha(classe: string, rotulo: string, valor: string): HTMLElement {
@@ -86,7 +102,7 @@ function gaveta(classe: string, rotulo: string, itens: readonly ItemDeEstoque[])
 }
 
 function desenharObra(
-  raiz: HTMLElement, dados: PainelDoPredio, custo: Readonly<Record<string, number>>,
+  identidade: HTMLElement, dados: PainelDoPredio, custo: Readonly<Record<string, number>>,
 ): void {
   // Correcao da F16b: "Em obra 0%" durante todo o nivelamento dizia a mesma
   // coisa para a obra recem-plantada e para a que so espera material —
@@ -107,9 +123,9 @@ function desenharObra(
       `${canteiro.tilesProntos}/${canteiro.tilesTotais}`);
     l.dataset.tilesProntos = String(canteiro.tilesProntos);
     l.dataset.tilesTotais = String(canteiro.tilesTotais);
-    raiz.append(l);
+    identidade.append(l);
   } else {
-    raiz.append(linha('obra', rotulos.emObra, `${Math.round(dados.progresso * 100)}%`));
+    identidade.append(linha('obra', rotulos.emObra, `${Math.round(dados.progresso * 100)}%`));
   }
   const faltam = dados.faltam ?? [];
 
@@ -125,13 +141,13 @@ function desenharObra(
   // `render/predios.ts` e arrastar `sim/data` para dentro de `ui/`.
   const ordem = faltam.map((i) => i.mercadoria);
   const porMercadoria = Object.fromEntries(faltam.map((i) => [i.mercadoria, i.quantidade]));
-  const bloco = document.createElement('div');
-  bloco.className = 'gaveta material';
-  bloco.dataset.gaveta = 'material';
+  const material = document.createElement('div');
+  material.className = 'gaveta material';
+  material.dataset.gaveta = 'material';
   const r = document.createElement('span');
   r.className = 'rotulo';
   r.textContent = rotulos.material;
-  bloco.append(r);
+  material.append(r);
   for (const l of medidorDaObra(porMercadoria, custo, ordem)) {
     const span = document.createElement('span');
     span.className = 'item';
@@ -140,15 +156,16 @@ function desenharObra(
     span.dataset.total = String(l.total);
     span.dataset.cheio = String(l.entregue >= l.total);
     span.textContent = `${temaDeMercadorias[l.mercadoria] ?? l.mercadoria} ${l.entregue}/${l.total}`;
-    bloco.append(span);
+    material.append(span);
   }
-  raiz.append(bloco);
+  identidade.append(material);
 }
 
 function desenharCompleto(
-  raiz: HTMLElement, dados: PainelDoPredio, emitir: (comando: Command) => void,
+  identidade: HTMLElement, gente: HTMLElement, acoes: HTMLElement,
+  dados: PainelDoPredio, emitir: (comando: Command) => void,
 ): void {
-  raiz.append(linha('hp', rotulos.hp, `${dados.hp}/${dados.hpTotal}`));
+  identidade.append(linha('hp', rotulos.hp, `${dados.hp}/${dados.hpTotal}`));
 
   // A linha do ocupante so existe em predio que PEDE trabalhador. Escrever "sem
   // trabalhador" num armazem seria acusar falta onde nao cabe ninguem — sao dois
@@ -159,7 +176,7 @@ function desenharCompleto(
       dados.ocupante === null ? rotulos.semTrabalhador : nomeDoCivil(dados.ocupante.tipo),
     );
     l.dataset.ocupante = dados.ocupante === null ? 'vago' : dados.ocupante.unidade;
-    raiz.append(l);
+    gente.append(l);
   }
 
   // F-TA — o que resta ao alcance. A linha nao tem rotulo separado porque a
@@ -179,19 +196,17 @@ function desenharCompleto(
     v.className = 'valor';
     v.textContent = rotuloDoAlcance(recurso, tiles, unidades);
     l.append(v);
-    raiz.append(l);
+    gente.append(l);
   }
 
   if (dados.estoque !== null) {
-    raiz.append(gaveta('entrada', rotulos.entrada, dados.estoque.entrada));
-    raiz.append(gaveta('saida', rotulos.saida, dados.estoque.saida));
+    identidade.append(gaveta('entrada', rotulos.entrada, dados.estoque.entrada));
+    identidade.append(gaveta('saida', rotulos.saida, dados.estoque.saida));
   }
 
   // O botao de pausar so nasce em predio COM producao, como a nota da F16c
   // registrou: pausar um armazem nao quer dizer nada.
   if (dados.temProducao) {
-    const acoes = document.createElement('div');
-    acoes.className = 'acoes';
     const botao = document.createElement('button');
     botao.type = 'button';
     // O botao manda o VALOR, nunca "inverta o que estiver ai": se a tela
@@ -209,9 +224,10 @@ function desenharCompleto(
       aviso.className = 'pausado';
       aviso.dataset.pausado = 'true';
       aviso.textContent = rotulos.pausado;
-      acoes.append(aviso);
+      // O carimbo vai no TITULO, ao lado do nome: e a primeira coisa que o
+      // jogador tem de ver num predio parado.
+      identidade.querySelector('h2')?.append(aviso);
     }
-    raiz.append(acoes);
   }
 }
 
@@ -293,21 +309,27 @@ export function montarPainelPredio(
     // do que esta aberto, em vez de conhecer o tema ou este painel.
     raiz.dataset.nome = nomeDoPredio(dados.tipo);
 
+    // Os blocos, na ordem em que entram no balcao. Vazio nao entra no DOM.
+    const identidade = bloco('identidade');
+    const gente = bloco('gente');
+    const escola = bloco('escola');
+    const acoes = bloco('acoes');
+
     const titulo = document.createElement('h2');
     titulo.textContent = nomeDoPredio(dados.tipo);
-    raiz.append(titulo);
+    identidade.append(titulo);
 
     if (dados.estado === 'obra') {
       // O custo vem do seletor que o menu Build (F06) ja usa, e nao de um import
       // novo para `sim/data`: `ui/` nao le o dado direto, de proposito (topo de
       // `menu-build.ts`). Varredura de lista curta, so quando ha obra aberta.
       const opcao = opcoesDoMenuBuild(estado).find((o) => o.id === dados.tipo);
-      desenharObra(raiz, dados, opcao?.custo ?? {});
-    } else desenharCompleto(raiz, dados, emitir);
+      desenharObra(identidade, dados, opcao?.custo ?? {});
+    } else desenharCompleto(identidade, gente, acoes, dados, emitir);
 
     // A escola entra como SECAO, e so quando ela existe de fato no estado.
-    const escola = dados.estado === 'completo' ? painelDaEscola(estado, dados.predio) : null;
-    if (escola !== null) desenharSecaoDaEscola(raiz, escola, emitir);
+    const dadosDaEscola = dados.estado === 'completo' ? painelDaEscola(estado, dados.predio) : null;
+    if (dadosDaEscola !== null) desenharSecaoDaEscola(escola, dadosDaEscola, emitir);
 
     // Demolir e UM CLIQUE, sem confirmacao — decisao do operador (2026-09-23),
     // registrada com o custo em IDEIAS.md. Fica por ultimo e separado das outras
@@ -321,7 +343,11 @@ export function montarPainelPredio(
     derrubar.addEventListener('click', () => {
       emitir({ type: 'DemolishBuilding', predio: dados.predio });
     });
-    raiz.append(derrubar);
+    acoes.append(derrubar);
+
+    for (const b of [identidade, gente, escola, acoes]) {
+      if (b.childElementCount > 0) raiz.append(b);
+    }
   }
 
   return { atualizar };

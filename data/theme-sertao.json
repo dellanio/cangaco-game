@@ -355,7 +355,8 @@
     "semOuro": "Sem dinheiro no armazém",
     "cancelarItem": "tirar da fila",
     "custo": "custa",
-    "filaCheia": "Fila cheia"
+    "filaCheia": "Fila cheia",
+    "engajar": "Engajar"
   },
   "painelPredio": {
     "_doc": "F16b. O NOME do prédio NÃO mora aqui: vem de predios.<id>.nome, que já existe. Só os rótulos fixos do painel. 'Sem trabalhador' e a ausência da linha são coisas diferentes: prédio que não pede trabalhador (armazém, Casa do Coronel) não ganha a linha nenhuma — dizer 'sem trabalhador' num armazém seria acusar falta onde não cabe ninguém.",

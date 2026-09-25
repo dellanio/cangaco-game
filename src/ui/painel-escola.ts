@@ -89,15 +89,29 @@ function slotVazio(i: number): HTMLElement {
 export function desenharSecaoDaEscola(
   raiz: HTMLElement, dados: PainelDaEscola, emitir: (comando: Command) => void,
 ): void {
+  // Layout 2: a secao sao DUAS colunas lado a lado, cada uma um no — a fila
+  // (titulo mais um slot por vaga) e o engajar (titulo, a grade de tipos e o
+  // aviso de fila cheia). Um no por coluna e o que deixa as alturas
+  // independentes: numa grade de linhas compartilhadas o primeiro slot esticava
+  // ate a altura da grade de tipos.
+  const colunaDaFila = document.createElement('div');
+  colunaDaFila.className = 'fila';
   const fila = document.createElement('h3');
   fila.textContent = rotulos.fila;
-  raiz.append(fila);
+  colunaDaFila.append(fila);
 
   // Os slots VAZIOS tambem aparecem: o jogador tem que ver quanto ainda cabe.
   for (let i = 0; i < dados.slots; i++) {
     const item = dados.itens[i];
-    raiz.append(item === undefined ? slotVazio(i) : slotDoItem(dados, item, i, emitir));
+    colunaDaFila.append(item === undefined ? slotVazio(i) : slotDoItem(dados, item, i, emitir));
   }
+  raiz.append(colunaDaFila);
+
+  const colunaDoEngajar = document.createElement('div');
+  colunaDoEngajar.className = 'engajar';
+  const engajar = document.createElement('h3');
+  engajar.textContent = `${rotulos.engajar} · ${rotulos.custo} ${dados.custoPorUnidade}`;
+  colunaDoEngajar.append(engajar);
 
   const tipos = document.createElement('div');
   tipos.className = 'tipos';
@@ -116,13 +130,14 @@ export function desenharSecaoDaEscola(
     });
     tipos.append(botao);
   }
-  raiz.append(tipos);
+  colunaDoEngajar.append(tipos);
 
   if (!dados.podeEnfileirar) {
     const cheia = document.createElement('span');
     cheia.className = 'fila-cheia';
     cheia.dataset.filaCheia = 'true';
     cheia.textContent = rotulos.filaCheia;
-    raiz.append(cheia);
+    colunaDoEngajar.append(cheia);
   }
+  raiz.append(colunaDoEngajar);
 }

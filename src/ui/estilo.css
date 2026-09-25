@@ -28,7 +28,7 @@
   --altura-hud: 40px;
   --largura-prancha: 260px;
   --largura-lombada: 22px;
-  --altura-balcao: 132px;
+  --altura-balcao: 148px;
   --altura-alca: 24px;
 
   /* paleta: os valores sao os de `data/theme-sertao.json > paleta` */
@@ -325,42 +325,65 @@ body[data-prancha="fechada"] #menu-build .lombada:active { transform: none; }
 #balcao .alca[aria-disabled="true"] { cursor: default; opacity: 0.55; background-image: none; }
 #balcao .alca:active { transform: none; }
 body[data-balcao="fechado"] #painel-predio { display: none; }
-/* O conteudo do painel FLUI EM COLUNAS dentro da faixa: os blocos ficam lado a
-   lado sem que o DOM mude (`columns`, nao flex). E o arranjo minimo da fatia 1;
-   a fatia 3 desenha os blocos horizontais de proposito. */
+/* O painel e uma fila de BLOCOS lado a lado (fatia 3): identidade, gente,
+   escola, acoes. Cada bloco e uma coluna com regua de tinta a direita; as acoes
+   vao para a ponta direita. Se nao couber (nao cabe so em janela estreita), a
+   faixa rola de lado — nunca cresce para cima do canvas. */
 #painel-predio {
   flex: 1 1 auto; min-height: 0; box-sizing: border-box;
-  padding: 4px 12px 6px; overflow-x: auto; overflow-y: hidden;
-  columns: 230px; column-fill: auto; column-gap: 18px;
-  column-rule: 2px solid var(--tinta);
+  padding: 5px 12px 6px; overflow-x: auto; overflow-y: clip;
+  display: flex; align-items: stretch; gap: 0;
 }
 #painel-predio[hidden] { display: none; }
-#painel-predio > * { break-inside: avoid; margin: 0 0 4px; }
+#painel-predio .bloco {
+  display: flex; flex-direction: column; gap: 3px; min-width: 0;
+  padding: 0 14px; border-right: 2px solid var(--tinta);
+}
+#painel-predio .bloco:first-child { padding-left: 0; }
+#painel-predio .bloco:last-child { border-right: 0; }
+#painel-predio .bloco.identidade { min-width: 180px; max-width: 300px; }
+#painel-predio .bloco.gente { min-width: 150px; max-width: 260px; }
+#painel-predio .bloco.acoes {
+  margin-left: auto; padding-right: 0; justify-content: center; align-items: flex-end; gap: 8px;
+}
 #painel-predio h2 {
-  margin: 0 0 4px; padding-bottom: 3px; font-size: 16px;
+  margin: 0 0 3px; padding-bottom: 3px; font-size: 16px;
   border-bottom: var(--traco) solid var(--tinta);
+  display: flex; align-items: center; gap: 8px; white-space: nowrap;
 }
 #painel-predio h3 {
-  margin: 6px 0 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em;
-  color: var(--terra-queimada);
+  margin: 0; font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em;
+  color: var(--terra-queimada); white-space: nowrap;
+}
+/* o bloco da escola: duas colunas, a fila e o engajar, cada uma um no */
+#painel-predio .bloco.escola { flex-direction: row; gap: 14px; align-items: flex-start; }
+#painel-predio .bloco.escola .fila, #painel-predio .bloco.escola .engajar {
+  display: flex; flex-direction: column; gap: 2px;
 }
 /* a fila da escola (F13b): um slot por vaga; o vazio e hachurado */
 #painel-predio .slot {
-  display: flex; align-items: baseline; gap: 6px;
-  padding: 3px 6px; border: 2px solid var(--tinta);
-  background: var(--papel-escuro);
+  display: flex; align-items: baseline; gap: 6px; width: 232px; box-sizing: border-box;
+  padding: 0 5px; border: 2px solid var(--tinta); line-height: 13px;
+  background: var(--papel-escuro); font-size: 11px;
 }
 #painel-predio .slot[data-estado="vazio"] {
   background: transparent; background-image: var(--hachura);
   border-style: dashed; color: var(--tinta-fraca);
 }
-#painel-predio .slot .nome { font: 13px/1.2 var(--fonte-display); flex: 1; }
-#painel-predio .slot .motivo { color: var(--terracota); font-size: 12px; font-style: italic; text-align: right; }
-#painel-predio .slot .progresso { color: var(--tinta-fraca); font-size: 12px; font-variant-numeric: tabular-nums; }
-#painel-predio .tipos { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
+#painel-predio .slot .nome { font: 11px/13px var(--fonte-display); flex: 0 0 auto; white-space: nowrap; }
+/* o motivo e a parte que encolhe: reticencias, nunca empurrar o x para fora */
+#painel-predio .slot .motivo {
+  color: var(--terracota); font-size: 11px; font-style: italic; text-align: right;
+  flex: 1 1 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#painel-predio .slot .progresso { color: var(--tinta-fraca); font-size: 11px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+#painel-predio .tipos {
+  display: grid; grid-template-columns: repeat(5, max-content); gap: 3px 4px;
+}
 #painel-predio button { font-size: 12px; padding: 3px 7px; }
+#painel-predio .tipos button { font-size: 11px; padding: 2px 6px; box-shadow: 1px 1px 0 var(--tinta); white-space: nowrap; }
 #painel-predio .slot button {
-  padding: 0 5px; line-height: 1.1; box-shadow: none; border-width: 1px;
+  padding: 0 4px; line-height: 12px; box-shadow: none; border-width: 1px; font-size: 10px;
 }
 #painel-predio .fila-cheia { color: var(--terracota); font-size: 12px; font-style: italic; }
 /* F16b: linha = rotulo a esquerda, valor a direita; gaveta = rotulo mais os
@@ -383,15 +406,14 @@ body[data-balcao="fechado"] #painel-predio { display: none; }
 #painel-predio .gaveta.material .item[data-cheio="true"] {
   background: var(--verde-seco); color: var(--papel); border-color: var(--tinta);
 }
-#painel-predio .acoes { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
-#painel-predio .acoes .pausado {
+/* o carimbo de parado vai no titulo, ao lado do nome */
+#painel-predio h2 .pausado {
   padding: 2px 8px; background: var(--tinta); color: var(--papel);
-  font: 11px/1.2 var(--fonte-display); letter-spacing: 0.06em; text-transform: uppercase;
+  font: 10px/1.2 var(--fonte-display); letter-spacing: 0.06em; text-transform: uppercase;
   transform: rotate(-2deg);
 }
-/* o unico botao que destroi trabalho: cor propria, e sozinho no rodape */
+/* o unico botao que destroi trabalho: cor propria, e sozinho na ponta */
 #painel-predio button.demolir {
-  margin-top: 6px; align-self: flex-start;
   background: var(--terracota); color: var(--papel); border-color: var(--tinta);
 }
 #painel-predio button.demolir:hover { background: var(--terra-queimada); }

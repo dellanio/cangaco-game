@@ -210,22 +210,22 @@ custo constante; sem rolagem.
 │                                                            │  visível)    │
 │                                                            │              │
 ├────────────────────────────────────────────────────────────┤              │
-│ Casa do Coronel │ Firmeza 550/550 │ FILA ▣ ▣ ▣ ░ ░ │ ENGAJAR ▣▣▣▣▣▣▣ │ [Derrubar] │  rodapé 132
+│ Casa do Coronel │ Firmeza 550/550 │ FILA ▣ ▣ ▣ ░ ░ │ ENGAJAR ▣▣▣▣▣▣▣ │ [Derrubar] │  rodapé 148
 │ [PARADO]        │ Entra [Dinheiro 3] Sai — │             │         ▣▣▣▣▣▣▣ │            │
 └────────────────────────────────────────────────────────────┴──────────────┘
 ```
 
 A grade de construir fica sempre visível na coluna; o contexto vira faixa
-horizontal de 132 px no rodapé, só na largura do canvas (a coluna desce até o
-chão). O canvas perde 132 px de altura: a grade CSS ganha a terceira linha
-(`40px 1fr 132px`) e o roteiro da F06 ganha a afirmação `canvas.bottom <=
+horizontal de 148 px no rodapé, só na largura do canvas (a coluna desce até o
+chão). O canvas perde 148 px de altura: a grade CSS ganha a terceira linha
+(`40px 1fr 148px`) e o roteiro da F06 ganha a afirmação `canvas.bottom <=
 rodape.top`. O Phaser mede o pai no boot e o rodapé tem altura fixa, então nada
 muda no `render/`.
 
 Prós: zero cliques entre inspecionar e construir; a fila da escola em linha,
 como no Age. Contras: a faixa fica vazia sem seleção (o Age a enche com
 minimapa e retrato — nós não temos nenhum dos dois ainda). A conta de área,
-**corrigida pelo operador**: o rodapé tira 132 de 680 px, **19,4 % da altura**,
+**corrigida pelo operador**: o rodapé tira 148 de 680 px, **21,8 % da altura**,
 mas a coluna de 260 px do Layout 1 tira 20 % da largura, de forma permanente.
 A diferença entre os dois não é *quanto* canvas sobra — é *quando* se perde:
 o Layout 1 perde sempre; o Layout 2 perde só enquanto há algo selecionado, e
@@ -247,7 +247,7 @@ fronteira do desbloqueio some, porque está espalhada em cinco abas.
 | | 1 Prancha | 2 Balcão | 3 Dividida |
 |---|---|---|---|
 | 28 ícones visíveis sem rolar | sim | sim | 7 por vez |
-| Canvas | −20 % da largura, sempre | −19,4 % da altura, só com seleção (seção 8) | −20 % da largura, sempre |
+| Canvas | −20 % da largura, sempre | −21,8 % da altura, só com seleção (seção 8) | −20 % da largura, sempre |
 | Grade CSS da F06 | igual | +1 linha, +1 afirmação | igual |
 | Sobreposição no canvas | nenhuma | nenhuma | nenhuma |
 | Cliques entre inspecionar e construir | 1 | 0 | 0 |
@@ -342,10 +342,10 @@ Duas condições dele antes de implementar, e como esta seção as resolve:
 1. **O roteiro da F06 ganha `canvas.bottom <= rodape.top`**, ao lado de
    `canvas.right <= painel.left` que já existe (8.3).
 2. **A faixa vazia não fica vazia**: sem seleção ela **encolhe** para a alça
-   de 22 px (8.2). Resumo da vila e últimos avisos foram considerados e
+   de 24 px (8.2). Resumo da vila e últimos avisos foram considerados e
    recusados aqui: resumo da vila é o HUD (que já mostra dinheiro, material,
    comida e gente), e avisos já são carimbos no HUD (seção 4) — repetir os
-   dois numa faixa de 132 px seria pagar 19,4 % do mapa por informação que já
+   dois numa faixa de 148 px seria pagar 21,8 % do mapa por informação que já
    está na tela. Encolher devolve o mapa e deixa a alça como lugar do que
    está na mão (pergunta 8.6.1).
 
@@ -382,8 +382,8 @@ Aberto + aberto (padrão)        Prancha fechada                 Balcão fechado
 │ 1020 × 548     │ S  │         │ 1262 × 548          │N        │ 1020 × 658     │ S  │         │ 1262 × 658          │N
 │                │ T  │         │                     │S        │                │ T  │         │                     │S
 ├────────────────┤ R  │         ├─────────────────────┤T        │                │ R  │         │                     │T
-│ balcão 132     │ .  │         │ balcão 132          │R        ├────────────────┤ .  │         ├─────────────────────┤R
-│                │    │         │                     │.        │▲ Pedreira (22) │    │         │▲ Pedreira (22)      │.
+│ balcão 148     │ .  │         │ balcão 148          │R        ├────────────────┤ .  │         ├─────────────────────┤R
+│                │    │         │                     │.        │▲ Pedreira (24) │    │         │▲ Pedreira (24)      │.
 └────────────────┴────┘         └─────────────────────┴┘        └────────────────┴────┘         └─────────────────────┴┘
 ```
 
@@ -392,11 +392,11 @@ Aberto + aberto (padrão)        Prancha fechada                 Balcão fechado
   `Construir` (tema) escrito na vertical e a seta. Clicar na lombada abre;
   clicar na seta do cabeçalho fecha. Só o jogador abre e fecha — a prancha
   nunca se mexe sozinha, porque é onde a mão dele vai a cada poucos segundos.
-- **Balcão** (barra de baixo, o contexto). Aberto: 132 px. Fechado: **22 px**,
+- **Balcão** (barra de baixo, o contexto). Aberto: 148 px. Fechado: **24 px**,
   uma alça encostada à esquerda com o nome do que está selecionado e a seta
   `▲`. O balcão **abre sozinho ao selecionar** um prédio (selecionar é pedir
   detalhe) e **fecha sozinho quando não há seleção** (`Esc`, clique em tile
-  vazio, prédio demolido): barra vazia é 132 px de mapa perdidos por nada.
+  vazio, prédio demolido): barra vazia é 148 px de mapa perdidos por nada.
   Fechado à mão com um prédio selecionado, ele guarda a seleção (o contorno no
   mapa fica) e a alça mostra o nome; selecionar outro prédio reabre.
 
@@ -409,8 +409,8 @@ preferência de quem joga nesta máquina, não de partida.
 
 Nada em `render/`. `src/render/game.ts:36` já configura
 `Phaser.Scale.RESIZE` a 100 % do pai, então o canvas **acompanha a célula da
-grade**: quando a coluna passa de 260 para 22 px ou a linha de baixo de 132
-para 22 px, o mapa cresce e a câmera continua válida. A grade CSS passa a ter
+grade**: quando a coluna passa de 260 para 22 px ou a linha de baixo de 148
+para 24 px, o mapa cresce e a câmera continua válida. A grade CSS passa a ter
 três linhas e as duas medidas viram variáveis que mudam com um atributo no
 `body`:
 
@@ -418,7 +418,7 @@ três linhas e as duas medidas viram variáveis que mudam com um atributo no
 body                         { grid-template-columns: 1fr var(--largura-prancha);
                                grid-template-rows: var(--altura-hud) 1fr var(--altura-balcao); }
 body[data-prancha="fechada"] { --largura-prancha: 22px; }
-body[data-balcao="fechado"]  { --altura-balcao: 22px; }
+body[data-balcao="fechado"]  { --altura-balcao: 24px; }
 #jogo     { grid-column: 1; grid-row: 2; }        /* canvas: SO a celula dele, como hoje */
 #balcao   { grid-column: 1; grid-row: 3; }        /* nunca sobre o canvas */
 #prancha  { grid-column: 2; grid-row: 2 / -1; }   /* desce ate o chao */
