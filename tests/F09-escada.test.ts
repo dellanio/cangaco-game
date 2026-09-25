@@ -20,10 +20,12 @@ const real = gameData.entrega.prioridades as ReadonlyArray<{ readonly nivel: num
 describe('F09 — delivery.json: a escada de prioridade tem id por nivel', () => {
   // F18d-1b: eram 7 niveis ate a estrada virar canteiro; 'assentar-estrada' entrou
   // no fim (nivel 8) justamente para nao deslocar nenhum dos outros. F18h: 'arar'
-  // entrou em nono, pelo mesmo motivo e sem deslocar nenhum.
-  it('o dado real passa e cada um dos 9 niveis tem id', () => {
+  // entrou em nono, pelo mesmo motivo e sem deslocar nenhum. F18g: 'pedra-para-
+  // canteiro' entrou em OITAVO — abaixo dos sete do GDD, que nao se movem, e acima
+  // das duas do laborer, que nao ordenam nada entre si — e sao dez.
+  it('o dado real passa e cada um dos 10 niveis tem id', () => {
     expect(validarTudo(dadosReaisComEscada(real))).toEqual([]);
-    expect(real).toHaveLength(9);
+    expect(real).toHaveLength(10);
     for (const linha of real) expect(typeof linha.id).toBe('string');
   });
 

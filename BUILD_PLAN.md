@@ -3101,6 +3101,43 @@ Depende da F20b: o marcador lê `unidade.condicao`, que só existe depois dela. 
   **Contexto de balanceamento:** o estoque inicial subiu de 30 para 34 por decisão do
   operador em 2026-09-25 (entrada no `BALANCE_LOG.md`), o que tirou a abertura do fio
   de navalha — mas isso é margem, não conserto do portão. O portão continua igual.
+- **ENTREGUE em 2026-09-25 (branch `fable-lote-sim`), pela Opção A — decisão do
+  operador.** Plano: `docs/planos/F18g.md`. Guarda permanente:
+  `tests/F18g-pedra-viaja.test.ts` (as quatro afirmações medidas tick a tick numa
+  corrida só, o serf que devolve quando o tile some com a pedra na mão, e a perna do
+  save); evidência `test-output/F18g.json`.
+  - **O que existe agora**: `pedra-para-canteiro` (carga de serf, nível 8 da escada,
+    `livre`; reserva ao reclamar, como toda carga), `GameState.pedraNoCanteiro` (mapa
+    paralelo ao canteiro), `TarefaAssentarEstrada` só com o tile (nasce para todo tile,
+    sem pagador), `canPlaceRoad` sem `'sem-pedra'` (o motivo saiu do tipo), o laborer
+    em `esperando_material` NO tile e o claim dele exigindo pedra no tile ou a caminho
+    (`tileDeEstradaTrabalhavel`, espelho de `obraTrabalhavel` — sem isso, 2 de pedra e 30
+    tiles deixam dois laborers esperando onde a pedra nunca chega). O 4º caso do demolir:
+    tile desenhado com pedra entregue devolve a pedra **inteira** ao primeiro armazém.
+    `VERSAO_DO_SAVE` 1 → 2, base instalada zero.
+  - **As duas pontas, remedidas (o operador pediu).** A escolha "ligar tudo de uma vez
+    contra escalonado" **não sobreviveu como recusa, e sobreviveu como travamento**. Na
+    abertura (rua de 26 tiles), com a pedra viajando por tile: **27 de pedra fecha a
+    Fase A (serraria ligada em 2691), 26 trava** — 23 tiles de pé, pedreira e segunda
+    casa em obra aos 12 000 ticks, porque a rua assenta com toda pedra que aparece e a
+    obra da pedreira nunca recebe as 2 dela. Com 34, fecha em 1319 e o estoque toca 0
+    no tick 1012. O guarda do gerador (`rua + 4 ≤ estoque`, ou seja ≥ 30) ficou
+    **pessimista por 3** em relação ao limiar medido (27), **de propósito**: o limiar de
+    1 é de ordem de tick, e a mensagem dele agora diz o que ele protege (travamento, não
+    recusa). A ponta "escalonado" não foi remedida: a tensão entre as duas escolhas
+    deixou de ser "cabe ou não cabe" e virou "quanto tempo a vila fica sem pedra".
+  - **Os tetos remedidos**: F-CAL-a fecha em **9465** (era 7148; a Bodega espera a pedra
+    dos 3 tiles dela e dos 5 da obra chegarem da pedreira, atrás do material de obra na
+    escada), teto 9000 → 12 000. F17 (5300) não mudou. E "a rua vem primeiro" no
+    cenário da calibração passou a significar rua DE PÉ: sem esse guarda o Moinho subia
+    e ficava ocupado com a porta no canteiro (medido, 2993 e `ligadoAoArmazem: false`).
+  - **Dívidas registradas, não resolvidas (o operador mandou)**: (1) `command-rejected`
+    continua sem consumidor fora de `sim/`; com a Opção A o feedback do "sem pedra" é o
+    próprio canteiro desenhado esperando, e a **pedra parada no tile** (`pedraNoCanteiro`)
+    é invisível na tela — feature de `render`, com a nota de integração da §10 no item
+    dela; (2) rua desenhada de graça é arrasto sem limite: as guardas ficam (sem pagador
+    a carga não nasce, e o laborer não vai), mas o canteiro cresce até onde o jogador
+    quiser e come a pedra na ordem em que ela aparece.
 
 ### F-CAL — A calibração medida na abertura (aceite; a última medição da Fase B)
 - **Por que existe** (decisão do operador, 2026-09-25, ao mergear a

@@ -107,6 +107,20 @@ const comprometida = (estado: GameState, dados: GameData = gameData): number =>
 const planejados = (estado: GameState): number => Object.keys(estado.estradasPlanejadas).length;
 const assentamentos = (estado: GameState): number =>
   estado.jobs.tarefas.ordem.filter((id) => estado.jobs.tarefas.porId[id]?.tipo === 'assentar-estrada').length;
+/** F18g — as cargas de pedra para o canteiro que o quadro abriu (em qualquer estado):
+ *  e o que "comprometido" passou a significar, porque a reserva no armazem so nasce
+ *  quando um serf reclama, e nunca no comando. Uma por unidade que os tiles pedem,
+ *  limitada ao que os armazens tem livre. */
+const pedras = (estado: GameState): number =>
+  estado.jobs.tarefas.ordem.filter((id) => estado.jobs.tarefas.porId[id]?.tipo === 'pedra-para-canteiro').length;
+const origensDasPedras = (estado: GameState): Record<string, number> => {
+  const porOrigem: Record<string, number> = {};
+  for (const id of estado.jobs.tarefas.ordem) {
+    const t = estado.jobs.tarefas.porId[id];
+    if (t?.tipo === 'pedra-para-canteiro') porOrigem[t.origem] = (porOrigem[t.origem] ?? 0) + 1;
+  }
+  return porOrigem;
+};
 
 describe('F08 — aceite: estrada em L conecta e remover um tile do meio desconecta', () => {
   const L = [...linhaH(10, 14, 40), ...linhaV(14, 41, 44)]; // (10,40) -> (14,40) -> (14,44)
@@ -133,19 +147,24 @@ describe('F08 — aceite: estrada em L conecta e remover um tile do meio descone
 
 /**
  * F18d-1b — FIM do desvio escrito na Nota da F08 ("o custo sai no comando"). O comando
- * agora COMPROMETE a pedra: cada tile vira uma tarefa de assentamento que a reserva no
- * armazem, e o debito sai quando o laborer assenta o tile (`tests/F18d-1b-*.test.ts`).
- * O que este bloco guarda e o que nao mudou: quanto custa, de onde sai, e que comando
- * sem pedra e recusado inteiro.
+ * deixou de debitar: o debito sai quando o laborer assenta o tile.
+ *
+ * F18g — e deixou tambem de COMPROMETER: a pedra viaja por tile, numa carga de serf
+ * (`pedra-para-canteiro`) que so reserva ao ser reclamada, e o comando nao exige
+ * pagador — `'sem-pedra'` nao existe mais. O que este bloco guarda e o que nao mudou
+ * (quanto custa, de onde sai, tile repetido nao custa) e o que INVERTEU por definicao:
+ * comando sem pedra e ACEITO, o canteiro se desenha inteiro, e as cargas nascem so ate
+ * onde a pedra livre chega (`pedras`), no tick do comando e nas remendas do gerador.
  */
-describe('F08 + F18d-1b — o custo em pedra e COMPROMETIDO no comando, do armazem', () => {
+describe('F08 + F18g — o custo em pedra e PEDIDO no comando e pago tile a tile', () => {
   const L = [...linhaH(10, 14, 40), ...linhaV(14, 41, 44)];
 
-  it('a pedra comprometida e exatamente novos x custoStonePorTile do dado; do estoque nao sai nada', () => {
+  it('cada tile novo pede exatamente custoStonePorTile do dado em cargas; do estoque nao sai nada, e nada e reservado', () => {
     const depois = step(inicial, [construir(L)]);
-    expect(comprometida(depois)).toBe(L.length * CUSTO);
+    expect(pedras(depois)).toBe(L.length * CUSTO);
     expect(assentamentos(depois)).toBe(L.length);
-    expect(pedraTotal(depois)).toBe(pedraTotal(inicial)); // quem debita e o assentamento
+    expect(comprometida(depois)).toBe(0);             // aberta nao reserva; so o claim do serf
+    expect(pedraTotal(depois)).toBe(pedraTotal(inicial)); // quem tira do armazem e a coleta
     const semPedra = (e: GameState): Record<string, number> => {
       const { stone: _stone, ...resto } = estoqueTotal(e);
       void _stone;
@@ -154,10 +173,10 @@ describe('F08 + F18d-1b — o custo em pedra e COMPROMETIDO no comando, do armaz
     expect(semPedra(depois)).toEqual(semPedra(inicial));
   });
 
-  it('o custo vem do dado: com outro custoStonePorTile injetado, a reserva muda', () => {
+  it('o custo vem do dado: com outro custoStonePorTile injetado, o numero de cargas por tile muda', () => {
     const dados = dadosDeEstrada({ custoStonePorTile: 3 });
     const depois = step(inicial, [construir(L)], dados);
-    expect(comprometida(depois, dados)).toBe(L.length * 3);
+    expect(pedras(depois)).toBe(L.length * 3);
   });
 
   it('tile que ja esta no canteiro nao custa: repetir o mesmo trecho e no-op (sem tarefa nova, sem evento)', () => {
@@ -179,22 +198,25 @@ describe('F08 + F18d-1b — o custo em pedra e COMPROMETIDO no comando, do armaz
 
   it('tiles repetidos dentro da mesma lista contam uma vez', () => {
     const depois = step(inicial, [construir([tile(10, 40), tile(10, 40), tile(11, 40)])]);
-    expect(comprometida(depois)).toBe(2 * CUSTO);
+    expect(pedras(depois)).toBe(2 * CUSTO);
     expect(planejados(depois)).toBe(2);
   });
 
-  it('cada tarefa reserva no primeiro armazem que ainda pode pagar, em predios.ordem; a gaveta entrada nao paga', () => {
+  it('cada carga sai de um armazem com pedra LIVRE na saida; a gaveta entrada nao paga', () => {
     const primeiro = armazens(inicial)[0];
     if (!primeiro) throw new Error('fixture: cenario sem armazem');
     const base = comPedraNoPredio(inicial, primeiro.id, 2, 2);
     const { estado, id: segundo } = comArmazemExtra(base, 10, 0);
     const dados = dadosDeEstrada({ custoStonePorTile: 1 });
-    // 5 tiles: o primeiro armazem compromete as 2 da SAIDA e o segundo assume as outras 3.
-    // As 2 da `entrada` nao entram: reserva so existe na saida (F18d-1b, `pedraDisponivel`).
+    // 5 tiles, 5 cargas: no maximo 2 saem do primeiro (so a SAIDA dele conta — as 2 da
+    // `entrada` nao sao reservaveis, F18d-1b) e o resto sai do segundo. Qual dos dois
+    // paga cada tile e distancia (`armazemMaisPertoDoTile`), nao ordem de `predios.ordem`.
     const depois = step(estado, [construir(linhaH(10, 14, 40))], dados);
-    expect(reservadoNaOrigem(depois, primeiro.id, 'stone', 'saida', dados)).toBe(2);
-    expect(reservadoNaOrigem(depois, segundo, 'stone', 'saida', dados)).toBe(3);
-    expect(gaveta(depois, primeiro.id, 'saida')).toBe(2);   // comprometida, ainda la
+    const porOrigem = origensDasPedras(depois);
+    expect(pedras(depois)).toBe(5);
+    expect(porOrigem[primeiro.id] ?? 0).toBeLessThanOrEqual(2);
+    expect((porOrigem[primeiro.id] ?? 0) + (porOrigem[segundo] ?? 0)).toBe(5);
+    expect(gaveta(depois, primeiro.id, 'saida')).toBe(2);   // nada saiu no comando
     expect(gaveta(depois, primeiro.id, 'entrada')).toBe(2); // intocada
     expect(gaveta(depois, segundo, 'saida')).toBe(10);
   });
@@ -209,35 +231,45 @@ describe('F08 + F18d-1b — o custo em pedra e COMPROMETIDO no comando, do armaz
       };
       return { ...inicial, predios: { porId: { pedreira: outro }, ordem: ['pedreira'] } } as GameState;
     })();
+    // F18g: o canteiro se desenha mesmo assim — o feedback e o tile esperando —, so
+    // nao nasce carga nenhuma, porque so armazem e origem de pedra.
     const depois = step(semArmazem, [construir([tile(10, 40)])]);
     expect(depois.estradas).toBe(semArmazem.estradas);
-    expect(depois.estradasPlanejadas).toBe(semArmazem.estradasPlanejadas);
-    expect(rejeicoes(depois)).toMatchObject([{ command: 'PlaceRoad', motivo: 'sem-pedra' }]);
+    expect(planejados(depois)).toBe(1);
+    expect(pedras(depois)).toBe(0);
+    expect(rejeicoes(depois)).toEqual([]);
   });
 
-  it('sem pedra suficiente o comando inteiro e recusado: nenhuma estrada parcial', () => {
+  it('sem pedra para o trecho inteiro o comando e ACEITO (F18g): o canteiro sai inteiro e as cargas param no estoque', () => {
+    // Ate a F18d-1b este caso era `sem-pedra` e "nenhuma estrada parcial". Inverteu
+    // por decisao do operador (Opcao A da F18g): a reserva e por tile, e o que o
+    // estoque limita e quantas cargas nascem AGORA — o resto o gerador remenda quando
+    // a pedreira produzir. Nada sai do estoque no comando.
     const primeiro = armazens(inicial)[0];
     if (!primeiro) throw new Error('fixture: cenario sem armazem');
     const pobre = comPedraNoPredio(inicial, primeiro.id, 4 * CUSTO, 0);
-    const depois = step(pobre, [construir(linhaH(10, 14, 40))]); // 5 tiles, so cobre 4
+    const depois = step(pobre, [construir(linhaH(10, 14, 40))]); // 5 tiles, estoque cobre 4
     expect(depois.estradas).toBe(pobre.estradas);
-    expect(depois.estradasPlanejadas).toBe(pobre.estradasPlanejadas); // nem meio canteiro
+    expect(planejados(depois)).toBe(5);
+    expect(assentamentos(depois)).toBe(5);
+    expect(pedras(depois)).toBe(4 * CUSTO);
     expect(pedraTotal(depois)).toBe(pedraTotal(pobre));
-    expect(rejeicoes(depois)).toEqual([
-      { type: 'command-rejected', command: 'PlaceRoad', motivo: 'sem-pedra', tile: null },
-    ]);
+    expect(rejeicoes(depois)).toEqual([]);
   });
 
-  it('fronteira exata: pedra igual ao custo aceita; uma a menos recusa', () => {
+  it('fronteira exata: pedra igual ao custo abre uma carga por tile; uma a menos deixa um tile sem carga', () => {
     const primeiro = armazens(inicial)[0];
     if (!primeiro) throw new Error('fixture: cenario sem armazem');
     const justo = comPedraNoPredio(inicial, primeiro.id, 5 * CUSTO, 0);
     const aceito = step(justo, [construir(linhaH(10, 14, 40))]);
     expect(planejados(aceito)).toBe(5);
-    expect(comprometida(aceito)).toBe(5 * CUSTO); // a ultima pedra do armazem, comprometida
-    expect(pedraTotal(aceito)).toBe(5 * CUSTO);   // e ainda no armazem: nada saiu no comando
+    expect(pedras(aceito)).toBe(5 * CUSTO);
+    expect(pedraTotal(aceito)).toBe(5 * CUSTO);   // ainda no armazem: nada saiu no comando
     const curto = comPedraNoPredio(inicial, primeiro.id, 5 * CUSTO - 1, 0);
-    expect(rejeicoes(step(curto, [construir(linhaH(10, 14, 40))]))).toHaveLength(1);
+    const quaseCabe = step(curto, [construir(linhaH(10, 14, 40))]);
+    expect(rejeicoes(quaseCabe)).toEqual([]);
+    expect(planejados(quaseCabe)).toBe(5);
+    expect(pedras(quaseCabe)).toBe(5 * CUSTO - 1);
   });
 });
 

@@ -6997,3 +6997,114 @@ worktree irmão pela §6. Plano: `docs/planos/F-CAL-b.md`. Escopo desta sessão:
 - A hipótese do `BALANCE_LOG.md` de 2026-09-25 (pedreira, lenhador e minas "mesmo
   padrão") ganhou um dado a mais: o padrão depende de **onde o tile fica em relação à
   porta**, não só do ofício.
+
+---
+
+## 2026-09-25 (noite) — F18g: a pedra da estrada vira carga que viaja (Opção A, branch `fable-lote-sim`)
+
+Decisão do operador antes da sessão: **Opção A — a reserva vira por tile**. Plano:
+`docs/planos/F18g.md`. Feature de `sim/` + `tests/` + `data/` + o guarda de
+`tools/geometria-da-abertura.mjs` (o item mandava revisitá-lo no mesmo commit; não é
+`tools/shots/`). Nada de `render/`, `ui/`, `input/`.
+
+### Verificado (rodei o comando ou abri o arquivo)
+
+- **As quatro afirmações do aceite, medidas tick a tick numa corrida só**
+  (`tests/F18g-pedra-viaja.test.ts`, `test-output/F18g.json`, rua de 8 tiles entre a
+  porta do armazém e a da escola): (a) 134 ticks com serf carregando pedra a caminho de
+  um tile, 8 tiles de destino distintos, o primeiro no tick 10; (b) 87 ticks com laborer
+  em `esperando_material` **no próprio tile**, sempre com a pedra ainda por vir; (c) toda
+  pedra saiu do armazém numa **coleta** (6 ticks de coleta, nunca no comando, nunca no
+  assentamento sem coleta junto); (d) `armazém + mão + tile + rua×custo` constante em
+  todo tick, com até 6 pedras paradas em tile ao mesmo tempo. Mais: o tile demolido com
+  a pedra na mão do serf → `devolvendo` → `cargo-returned` no tick 12, soma intacta.
+- **O save**: `VERSAO_DO_SAVE` 1 → 2; save da versão 1 recusado com o número na
+  mensagem; salvar no primeiro tick com pedra parada em tile (12, escolhido pela
+  condição) dá igualdade no **instante** do load e byte a byte 500 ticks depois.
+- **O mecanismo na vila da F-CAL-a** (sonda apagada): os 39 tiles de rua ficam de pé até
+  o tick 7250, sem recusa e sem travamento; a rua assenta na ordem em que a pedra
+  aparece, atrás do material de obra na escada.
+- **As duas pontas da folga, remedidas** (`test-output/F18g-sonda-pontas.json`, sonda
+  apagada): com a rua de 26 tiles, **27 de pedra fecha a Fase A e 26 trava** (pedreira em
+  obra para sempre). O guarda do gerador (`rua + 4`, ou seja 30) ficou pessimista por 3 —
+  e fica, com a mensagem reescrita para dizer que protege de travamento, não de recusa.
+  Registro no `BALANCE_LOG.md` e na Nota do item.
+- **Os tetos**: F-CAL-a fecha em **9465** (era 7148) e "fechado" passou a incluir
+  **ligado** — o teto foi 9000 → 12 000, com o motivo no comentário. F17 (5300) e
+  F-T4b não mudaram. F-CAL-b1 continua verde (moinho 0,09 %, padaria 0,18 %).
+- **Os testes em órbita migrados, nenhum `skip`, nenhum apagado**: `F08-estradas` (7
+  invertidos: comando sem pedra é ACEITO, o que o estoque limita é quantas cargas
+  nascem), `F09-estrada-reserva` (5), `F09-escada` (10 níveis), `F18d-1a-modo`,
+  `F18d-1b-tarefa` (reescrito: a de assentar não reserva; a carga reserva ao reclamar),
+  `F18d-1b-laborer` (reescrito: `esperando_material` no tile ACONTECE; a pedra sai na
+  coleta; sem pedra em armazém nenhum o laborer NÃO vai esperar), `F18d-1b-demolir`
+  (o 4º caso, com e sem armazém). `F18d-1b-aceite` passou sem mudar uma asserção — a
+  soma `bens + rua×custo` ficou mais forte, atravessando quatro lugares — e o cabeçalho
+  diz o que inverteu.
+- **Um defeito pego pela sonda antes do commit**: o gerador abria uma carga por tile
+  sobre um estoque menor (30 cargas para 4 de pedra), porque aberta não reserva e
+  `disponivelNaOrigem` não caía dentro do mesmo tick. Conserto: o gerador desconta as
+  abertas que já saem do mesmo armazém. É a diferença entre o insumo (pede pouco por
+  prédio) e o canteiro (uma por tile, e tiles são muitos).
+
+### Decidido, com o porquê
+
+- **`pedra-para-canteiro` entra em OITAVO na escada** (`delivery.json`), abaixo de
+  material de obra (3) e dos níveis de produção (4-7), e acima de assentar (9) e arar
+  (10): obra ganha da rua, o produto escoa antes de a rua crescer, e os sete níveis do
+  GDD não se movem. Os dois que se moveram são do laborer e "não ordenam nada".
+- **O laborer só reclama tile com pedra ou pedra a caminho** (`tileDeEstradaTrabalhavel`,
+  espelho de `obraTrabalhavel`). Sem isso, 2 de pedra e 30 tiles deixam dois laborers
+  esperando nos tiles mais perto DELES enquanto a pedra dorme nos mais perto dos serfs —
+  espera indefinida é travamento de regra.
+- **O 4º caso do demolir devolve a pedra inteira ao primeiro armazém completo**, o
+  mesmo destino da devolução da rua de pé; sem armazém, perde-se, como o estoque do
+  prédio demolido (F16a).
+- **`'sem-pedra'` saiu do tipo** `MotivoDeRecusaDeEstrada` e `tile` deixou de ser
+  nulo no `command-rejected` de estrada: toda recusa é de um tile. `armazemQuePagaAEstrada`
+  saiu (único consumidor era a tarefa antiga); `pedraDisponivel` fica como medida (a
+  prévia do render e os testes da F09 leem).
+- **`ehTarefaDeTile` passou a ser por tipo**: a carga nova tem `destinoTile`, e pela
+  forma ela viraria tarefa de laborer. O doc de `TarefaAssentarEstrada` já avisava.
+- **"A rua vem primeiro" no cenário da calibração passou a significar rua DE PÉ.**
+  Medido sem o guarda: Moinho ocupado em 2993 com `ligadoAoArmazem: false` — a F-CAL-b
+  mediria um moinho parado por logística, não por calibração.
+
+### Aberto
+
+- **Dívida de tela** (registrada, não resolvida, como o operador mandou):
+  `command-rejected` sem consumidor fora de `sim/`; a pedra parada no tile é invisível.
+  Feature de `render`, com a nota de integração da §10 no item dela.
+- **A ponta "escalonado" não foi remedida**: a tensão virou "quanto tempo sem pedra",
+  balanceamento do lote 2.
+- `test-output/F18g-sonda-pontas.json` e `F18g-sonda-vila.json` ficam como evidência da
+  sessão (diretório ignorado pelo git).
+
+### O custo medido, e o que ficou de fora (F18g)
+
+- **A F18g deixou o caos da F09 5× mais lento, e a causa e o tamanho do canteiro.**
+  `tests/F09-sistema.test.ts`, semente 1, isolado: **0,5 s na `main` → 2,7 s aqui**
+  (chegou a 4,7 s antes das duas correcoes abaixo). Medido com uma copia instrumentada
+  do teste, apagada: na `main` o caos mantinha 3 a 7 tiles planejados (o `sem-pedra`
+  recusava quase toda rua); aqui mantem 29 a 33, com 50 a 78 tarefas no quadro. O
+  que pesava, em nos expandidos do A* por 200 passos: **o saneamento perguntando o
+  caminho de toda carga de pedra aberta todo tick** (uma busca por porta por tile;
+  ilhado, uma inundacao do mapa) e **o gerador** (589 mil nos, uma busca por porta
+  por carga criada, e o caos recria cargas a cada vez que o estoque cai e volta).
+- **As duas correcoes, e o que cada uma provou:** (1) `src/sim/alcance.ts` — indice de
+  componentes do passo LIVRE, memoizado por (`dados`, `predios.ordem`, camada de
+  bloqueio), o mesmo molde do indice de estradas; a existencia de caminho virou O(1)
+  e o saneamento saiu da conta (4,7 → 3,6 s); (2) `ligacaoEntrePredioETile` faz UMA
+  busca do tile para o conjunto das portas em vez de uma por porta (3,6 → 2,7 s). O
+  que sobra e proporcional ao canteiro: `tarefasDoLaborerEmOrdem` roda um A* por
+  tile trabalhavel por laborer ocioso por tick (a cache do A* se esvazia a cada
+  assentamento, porque `estradas` muda), e o `sanearTarefas` e O(tarefas²) por
+  construcao. As inundacoes de 15 mil nos nos passos que tapam porta de obra
+  (`comAPortaTapada`) sao da classe pre-existente da F18d-1a (material de obra em
+  modo livre), so que agora com dois armazens em vez de um.
+- **Orcamento do caso**: 10 s (`ORCAMENTO_DO_CASO`, ~5× o 1,9 s medido na F-T2b). Com
+  2,7 s isolado e ~2,2× de carga na suite, cabe — e o `verify` passou. Nao mexi no
+  orcamento: se um dia estourar, o eixo e o de nos expandidos, nao o de relogio (§8).
+- **Fica registrado como divida de desempenho, nao de regra**: o canteiro grande e o
+  caso normal do jogo com a Opcao A (o jogador desenha 30 tiles de uma vez). Os dois
+  proximos parafusos estao nomeados acima; nenhum deles muda contrato.

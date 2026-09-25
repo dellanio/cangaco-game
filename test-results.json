@@ -190,5 +190,8 @@
   },
   "F-CAL-b1-calibracao": {
     "passes": true
+  },
+  "F18g-pedra-viaja": {
+    "passes": true
   }
 }

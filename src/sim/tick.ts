@@ -156,6 +156,10 @@ export function step(
     tiposJaConstruidos: atual.tiposJaConstruidos,
     estradas: atual.estradas,
     estradasPlanejadas: atual.estradasPlanejadas,
+    // F18g: a pedra parada no canteiro. Muda na entrega do serf e no assentamento
+    // do laborer (os dois dentro dos sistemas) e na borracha (comando); aqui so
+    // atravessa, como o canteiro.
+    pedraNoCanteiro: atual.pedraNoCanteiro,
     // F18h: o canteiro do campo. Ele muda em `PlowField` (comando) e na aradura
     // (sistema dos laborers); aqui so atravessa, como o da estrada.
     camposPlanejados: atual.camposPlanejados,

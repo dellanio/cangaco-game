@@ -27,11 +27,13 @@
  * nenhum predio fica ABAIXO de outro.
  *
  * A RUA e mínima de proposito: o que liga um predio e UMA porta dele ser estrada
- * no componente do armazem, e o comando `PlaceRoad` e tudo ou nada, pago A VISTA
- * no tick 0. A primeira versao da rua em L custou 31 de pedra contra 30 no
- * armazem: o comando saiu `sem-pedra`, nenhum tile foi erguido e a vila inteira
- * ficou parada com os quatro predios completos e desligados. O orcamento agora e
- * do modulo, e ele estoura se a rua nao couber.
+ * no componente do armazem. Ate a F18g o comando `PlaceRoad` era tudo ou nada,
+ * pago A VISTA no tick 0: a primeira versao da rua em L custou 31 de pedra contra
+ * 30 no armazem, o comando saiu `sem-pedra`, nenhum tile foi erguido e a vila
+ * inteira ficou parada. Desde a F18g a pedra viaja por tile e o comando nao
+ * recusa — mas a rua continua comendo a pedra que a pedreira precisa para
+ * nascer, e o orcamento do modulo continua sendo o que evita ISSO (medido:
+ * com 26 de pedra para 26 tiles a vila trava com a pedreira em obra para sempre).
  *
  * A ORDEM DOS COMANDOS reage ao ESTADO, nao ao relogio: a serraria so pode ser
  * plantada depois que uma casa de lenhador CHEGA a `completo`
@@ -154,9 +156,11 @@ export function aberturaDaFaseA(state: GameState, dados: GameData = gameData): A
     bloqueia: (gx: number, gy: number) => recursoBloqueiaConstrucao(recursoNoTile(state, gx, gy), dados),
     temArvore: (gx: number, gy: number) => recursoNoTile(state, gx, gy)?.tipo === colheitaDoLenhador.recurso,
     alcanceDaMata: colheitaDoLenhador.alcance,
-    // A rua se paga A VISTA no tick 0 e o comando e tudo ou nada: o modulo
-    // precisa do orcamento para nao tracar uma rua que a vila nao tem como
-    // comprar (medido na F-T4b: 31 tiles contra 30 de pedra, `sem-pedra`).
+    // O modulo precisa do orcamento para nao tracar uma rua que come a pedra das
+    // duas obras do arranque antes de a pedreira existir. Ate a F18g o sintoma
+    // era `sem-pedra` no tick 0 (31 tiles contra 30, F-T4b); desde a F18g e
+    // travamento: a rua se assenta tile a tile com toda pedra que aparece e a
+    // pedreira fica em obra para sempre (medido: 26 de pedra para 26 tiles).
     stoneDe: (tipo: string) => defDe(tipo, dados).stone,
     estoqueInicialDeStone: dados.economia.estadoInicial.estoque['stone'] ?? 0,
     custoStonePorTile: dados.terreno.estrada.custoStonePorTile,

@@ -14,7 +14,8 @@
  *
  * O TETO de ticks e MEDIDO, nao chutado: a sonda desta sessao (a mesma geometria,
  * a mesma semente) fechou tudo no tick 7148; 25% de folga = 8935, arredondado
- * para 9000. O eixo e TICK, deterministico e byte a byte — nao e a medida de
+ * para 9000 — e REMEDIDO na F18g, 9465 -> 12 000 (ver a constante). "Fechado"
+ * passou a incluir LIGADO. O eixo e TICK, deterministico e byte a byte — nao e a medida de
  * relogio que a §8 do CLAUDE.md proibiu como assercao. O tempo de parede da
  * corrida vai para a evidencia como NUMERO DA CORRIDA, e nada o afirma.
  */
@@ -31,8 +32,13 @@ import type { VilaDaCalibracao } from './helpers/cal-vila';
 import { TIPOS_DA_CADEIA_DA_COMIDA, comandosDaVilaNoTick, vilaDaCalibracao } from './helpers/cal-vila';
 import { gravarEvidencia } from './helpers/evidence';
 
-/** Sonda de 2026-09-25: tudo de pe, ocupado e arado no tick 7148. +25% de folga. */
-const TETO = 9000;
+/** Sonda de 2026-09-25: tudo de pe, ocupado e arado no tick 7148; +25% = 9000.
+ *  REMEDIDO na F18g (2026-09-25): com a pedra viajando por tile — e a planta so
+ *  saindo com o trecho dela DE PE — a vila fecha (agora incluindo "ligado") no tick
+ *  **9465**; +25% = 11 831, arredondado para 12 000. O que atrasou foi a ponta: a
+ *  Bodega espera a pedra dos tres tiles dela e dos cinco da obra chegarem da
+ *  pedreira, um por vez, atras do material de obra na escada. */
+const TETO = 12000;
 
 /** O predio cujo CANTO e este tile, ou `null` — a mesma pergunta que o helper faz. */
 function predioNoCanto(state: GameState, gx: number, gy: number): Predio | null {
@@ -121,6 +127,7 @@ describe('F-CAL-a — a vila da cadeia da comida', () => {
     const marcos: Record<string, number | null> = { 'campo-arado': null, 'cenario-fechado': null };
     for (const p of plantas) {
       marcos[`completo:${p.tipo}@${p.gx}`] = null;
+      marcos[`ligado:${p.tipo}@${p.gx}`] = null;
       if (p.civil !== null) marcos[`ocupado:${p.tipo}@${p.gx}`] = null;
     }
     const recusas: { tick: number; comando: string; motivo: string }[] = [];
@@ -141,6 +148,12 @@ describe('F-CAL-a — a vila da cadeia da comida', () => {
         const predio = predioNoCanto(s, p.gx, p.gy);
         const completo = predio !== null && predio.estado === 'completo';
         if (completo) marcar(`completo:${p.tipo}@${p.gx}`, s.tick); else fechou = false;
+        // F18g: a rua se assenta tile a tile, atras do material de obra na escada, e
+        // um predio pode ficar completo e ocupado antes de a porta dele virar rua de
+        // pe. "Fechado" inclui a ligacao — e a assercao 3 la embaixo deixou de ser
+        // consequencia do fechamento para ser parte dele.
+        if (completo && predioLigadoAoArmazem(s, predio)) marcar(`ligado:${p.tipo}@${p.gx}`, s.tick);
+        else fechou = false;
         if (p.civil === null) continue;
         if (completo && predio.estado === 'completo' && predio.ocupante !== null) {
           marcar(`ocupado:${p.tipo}@${p.gx}`, s.tick);

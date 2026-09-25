@@ -13,27 +13,28 @@
  * entrada, mesmo estado.
  */
 import type {
-  GameEvent, GameState, Predio, PredioCompleto, PredioEmObra, Tarefa, TarefaDeTransporte,
+  GameEvent, GameState, Predio, PredioCompleto, PredioEmObra, Tarefa, TarefaDeTransporte, TarefaDoSerf,
 } from '../state';
 import {
-  ehTarefaDeAradura, ehTarefaDeAssentamento, ehTarefaDeColheita, ehTarefaDeTransporte, ID_DO_ARMAZEM,
-  MERCADORIA_DE_OURO, ORIGEM_ESPERADA_POR_TIPO, origemDaTarefaVale,
+  ehTarefaDeAradura, ehTarefaDeAssentamento, ehTarefaDeColheita, ehTarefaDePedraParaCanteiro, ehTarefaDeTransporte,
+  ehTarefaDoSerf, ID_DO_ARMAZEM, MERCADORIA_DE_OURO, ORIGEM_ESPERADA_POR_TIPO, origemDaTarefaVale,
 } from '../state';
 import type { GameData } from '../data/types';
 import { gameData } from '../data';
-import { armazensCompletos, chaveDeTile, ehPlanejada, tilesOrdenados } from '../estradas';
+import { armazensCompletos, chaveDeTile, ehPlanejada, MERCADORIA_DA_ESTRADA, tilesOrdenados } from '../estradas';
+import type { TileDeGrid } from '../estradas';
 import { ehCampoPlanejado, tilesPlanejadosParaArar } from '../campos';
 import {
   criarTarefa, criarTarefaComer, criarTarefaDeAradura, criarTarefaDeAssentamento, criarTarefaDeConstrucao,
   criarTarefaDeComida, criarTarefaDeInsumo, criarTarefaDeOcupacao, criarTarefaDeOuro,
-  criarTarefaParaArmazem,
-  distanciaDaTarefa, liberar, ligacaoEntrePredios,
-  modoDoTipo, podeReclamar, TIPO_QUE_CARREGA,
+  criarTarefaDePedraParaCanteiro, criarTarefaParaArmazem,
+  distanciaDaTarefa, liberar, ligacaoEntrePredioETile, ligacaoEntrePredios,
+  modoDoTipo, podeReclamar, tileAlcancavelDaPorta, TIPO_QUE_CARREGA,
 } from '../jobs';
 import type { MotivoDeLiberacao } from '../jobs';
 import type { ModoDeBusca } from '../pathfinding';
 import {
-  demandaNoDestino, disponivelNaOrigem, ofertaNaOrigem, sobraNaOrigem, vagaDoDestino,
+  demandaDoTile, demandaNoDestino, disponivelNaOrigem, ofertaNaOrigem, sobraNaOrigem, vagaDoDestino, vagaNoTile,
 } from '../reservas';
 import {
   demandaDeInsumo, excedenteNaEntrada, insumosDoPredio, produtorParado,
@@ -73,6 +74,12 @@ function motivoDoDestino(state: GameState, t: Tarefa, dados: GameData): MotivoDe
   // ele continua no canteiro? Assentado ou demolido, a tarefa perdeu o objeto e
   // some, devolvendo a pedra reservada (a reserva e derivada da tarefa).
   if (ehTarefaDeAssentamento(t)) {
+    return ehPlanejada(state.estradasPlanejadas, t.destinoTile) ? null : 'destino-sumiu';
+  }
+  // F18g — a pedra a caminho do canteiro faz a mesma pergunta do assentamento:
+  // o tile continua la? Vale para a `carregando` tambem (`motivoDaCarregando`
+  // passa por aqui): o serf que ja tem a pedra na mao devolve ao armazem.
+  if (ehTarefaDePedraParaCanteiro(t)) {
     return ehPlanejada(state.estradasPlanejadas, t.destinoTile) ? null : 'destino-sumiu';
   }
   // F18h — a mesma pergunta para a aradura, no canteiro dela. Nao ha reserva de
@@ -163,12 +170,19 @@ function motivoIndividual(state: GameState, t: Tarefa, dados: GameData): MotivoD
     const ocupante = predio !== undefined && predio.estado === 'completo' ? predio.ocupante : null;
     return ocupante === t.reclamadaPor ? null : 'destino-completo';
   }
-  if (!ehTarefaDeTransporte(t)) return null; // construir/ocupar: nada alem do destino importa
-  const destino = state.predios.porId[t.destino];
+  if (!ehTarefaDoSerf(t)) return null; // construir/ocupar/assentar/arar: nada alem do destino importa
   const origem = state.predios.porId[t.origem];
   // F15b — a forma exigida da origem vem do TIPO (`origemDaTarefaVale`): ate o
-  // nivel 5 e armazem; nos niveis 6 e 7 e o produtor que tem a sobra.
+  // nivel 5 e armazem; nos niveis 6 e 7 e o produtor que tem a sobra. F18g: a
+  // pedra do canteiro sai de armazem, e a ligacao dela e da porta ate o tile.
   if (!origemDaTarefaVale(state, t) || origem === undefined) return 'origem-sumiu';
+  // A EXISTENCIA do caminho, memoizada (`tileAlcancavelDaPorta`): e o que se pergunta
+  // aqui, e perguntar por A* a cada tick para cada carga de pedra foi o que
+  // multiplicou por nove o caos da F09.
+  if (ehTarefaDePedraParaCanteiro(t)) {
+    return tileAlcancavelDaPorta(state, origem, t.destinoTile, dados) ? null : 'caminho-cortado';
+  }
+  const destino = state.predios.porId[t.destino];
   if (!destino || distanciaDaTarefa(state, t, dados) === null) return 'caminho-cortado';
   return null;
 }
@@ -199,10 +213,12 @@ function cancelarAberta(state: GameState, tarefaId: string): GameState {
  *  carrega material, nao ha origem nem caminho a checar). */
 function abertaVale(state: GameState, t: Tarefa, dados: GameData): boolean {
   if (motivoDoDestino(state, t, dados) !== null) return false;
-  if (!ehTarefaDeTransporte(t)) return true;
+  if (!ehTarefaDoSerf(t)) return true;
   // F13: o destino tambem precisa continuar PEDINDO (a fila de treino encolhe quando o
-  // jogador cancela um item; `faltam` de uma obra encolhe na entrega).
-  if (demandaNoDestino(state, t, dados) < 1) return false;
+  // jogador cancela um item; `faltam` de uma obra encolhe na entrega). F18g: o tile
+  // deixa de pedir quando a pedra dele chega (`demandaDoTile`).
+  const demanda = ehTarefaDePedraParaCanteiro(t) ? demandaDoTile(state, t, dados) : demandaNoDestino(state, t, dados);
+  if (demanda < 1) return false;
   if (!origemDaTarefaVale(state, t)) return false;
   // F15b — `sobraNaOrigem` generaliza `disponivelNaOrigem`: le a gaveta do tipo
   // e, no nivel 7, o EXCEDENTE em vez do estoque bruto.
@@ -212,6 +228,12 @@ function abertaVale(state: GameState, t: Tarefa, dados: GameData): boolean {
   // aberta nao reserva nada. Reclamada e carregando nunca passam por aqui.
   if (t.tipo === 'insumo-producao-parada' || t.tipo === 'insumo-producao-baixa') {
     if (produtorParado(state, t.destino, t.mercadoria, dados) !== (t.tipo === 'insumo-producao-parada')) return false;
+  }
+  // F18g — a carga de pedra pergunta a EXISTENCIA memoizada, nao o A*: sao dezenas
+  // de abertas por canteiro, todo tick (ver `tileAlcancavelDaPorta`).
+  if (ehTarefaDePedraParaCanteiro(t)) {
+    const origem = state.predios.porId[t.origem];
+    return origem !== undefined && tileAlcancavelDaPorta(state, origem, t.destinoTile, dados);
   }
   return distanciaDaTarefa(state, t, dados) !== null;
 }
@@ -272,10 +294,14 @@ export function sanearTarefas(state: GameState, dados: GameData = gameData): Res
   //    (`laborersMaximosPorObra`) e constante do dado, nunca encolhe em runtime como
   //    `faltam` encolhe — uma 'construir' reclamada nunca fica retroativamente invalida
   //    por essa via (ver `vagaDeConstrucao`, reservas.ts).
+  // F18g — a pedra do canteiro entra no grupo pelas duas pontas: a origem e um
+  // armazem como o das outras, e a "vaga" e o que o tile ainda pede (`vagaNoTile`).
   const emGrupo = tarefasPorNumero(atual)
-    .filter((t): t is TarefaDeTransporte => ehTarefaDeTransporte(t) && t.estado !== 'aberta')
+    .filter((t): t is TarefaDoSerf => ehTarefaDoSerf(t) && t.estado !== 'aberta')
     .reverse();
   const ordemDeSoltar = [...emGrupo.filter((t) => t.estado === 'reclamada'), ...emGrupo.filter((t) => t.estado === 'carregando')];
+  const vagaDe = (t: TarefaDoSerf): number =>
+    (ehTarefaDePedraParaCanteiro(t) ? vagaNoTile(atual, t, dados) : vagaDoDestino(atual, t, dados));
   for (const t of ordemDeSoltar) {
     // F15b — `sobraNaOrigem` e `oferta - reservado` na gaveta do tipo, o mesmo
     // que a conta antiga fazia a mao para a `saida` do armazem. Negativa =
@@ -283,7 +309,7 @@ export function sanearTarefas(state: GameState, dados: GameData = gameData): Res
     // da escola voltou a querer o ouro que ja era excedente).
     if (t.estado === 'reclamada' && sobraNaOrigem(atual, t, dados) < 0) {
       liberarComMotivo(t.id, 'origem-sem-recurso');
-    } else if (vagaDoDestino(atual, t, dados) < 0) {
+    } else if (vagaDe(t) < 0) {
       // A demanda caiu abaixo do reservado: obra que recebeu, ou fila de treino que
       // encolheu (F13). O excedente sai, do maior numero para o menor.
       liberarComMotivo(t.id, 'destino-completo');
@@ -320,6 +346,14 @@ export function sanearTarefas(state: GameState, dados: GameData = gameData): Res
       const existentes = tarefasPorNumero(atual)
         .filter((o) => ehTarefaDeAradura(o) && chaveDeTile(o.destinoTile) === chave).length;
       if (existentes > 1) atual = cancelarAberta(atual, t.id);
+    } else if (ehTarefaDePedraParaCanteiro(t)) {
+      // F18g: nunca mais pedra a caminho de um tile do que ele ainda pede — o
+      // teto e `demandaDoTile` (custo menos o que ja esta la), como `faltam` e o
+      // teto do material de obra.
+      const chave = chaveDeTile(t.destinoTile);
+      const existentes = tarefasPorNumero(atual)
+        .filter((o) => ehTarefaDePedraParaCanteiro(o) && chaveDeTile(o.destinoTile) === chave).length;
+      if (existentes > demandaDoTile(atual, t, dados)) atual = cancelarAberta(atual, t.id);
     } else if (ehTarefaDeColheita(t)) {
       // F-T2c: um predio colhe UM tile por vez (um ciclo, um ocupante), e um
       // tile serve a UMA tarefa (a reserva e do tile inteiro). As duas contas
@@ -611,11 +645,78 @@ function gerarTarefasDeAssentamento(state: GameState): GameState {
   let atual = state;
   for (const tile of tilesOrdenados(state.estradasPlanejadas)) {
     if (comTarefa.has(chaveDeTile(tile))) continue;
-    const criada = criarTarefaDeAssentamento(atual, tile);
-    // `null` = nenhum armazem tem pedra livre. Nao adianta tentar os proximos tiles:
-    // a busca do pagador e a mesma para todos, e o estado nao mudou.
-    if (criada === null) break;
-    atual = criada.state;
+    // F18g: sem pagador a procurar, a tarefa nasce para todo tile — como a de arar.
+    atual = criarTarefaDeAssentamento(atual, tile).state;
+  }
+  return atual;
+}
+
+/**
+ * F18g — o armazem completo de menor caminho ate o TILE `tile` que tem `mercadoria`
+ * livre; empate: o primeiro em `predios.ordem`. `null` se nenhum serve. Irma de
+ * `origemMaisPerto` com a ponta trocada, no modo do tipo (`livre`).
+ */
+function armazemMaisPertoDoTile(
+  state: GameState, tile: TileDeGrid, modo: ModoDeBusca,
+  livre: (armazemId: string) => number, dados: GameData,
+): string | null {
+  let melhor: { id: string; distancia: number } | null = null;
+  for (const armazem of armazensCompletos(state)) {
+    if (livre(armazem.id) < 1) continue;
+    // a existencia memoizada ANTES do A* do custo: um tile ilhado com pedra livre
+    // no armazem faria um A* de mapa inteiro por tick, para sempre.
+    if (!tileAlcancavelDaPorta(state, armazem, tile, dados)) continue;
+    const distancia = ligacaoEntrePredioETile(state, armazem, tile, modo, dados);
+    if (distancia === null) continue;
+    if (melhor === null || distancia < melhor.distancia) melhor = { id: armazem.id, distancia };
+  }
+  return melhor === null ? null : melhor.id;
+}
+
+/**
+ * F18g — a pedra para o canteiro: para cada tile planejado, tantas cargas quantas
+ * unidades ele ainda pede (`demandaDoTile`) menos as que ja existem, limitadas ao
+ * que o armazem escolhido tem livre — o mesmo desenho do insumo (niveis 4 e 5), e
+ * pelo mesmo motivo: tarefa aberta sem lastro encheria o quadro de pedido que
+ * ninguem pode atender, e o laborer a leria como "pedra a caminho"
+ * (`tileDeEstradaTrabalhavel`) e iria esperar por ela.
+ *
+ * "Livre" aqui desconta tambem as cargas ABERTAS que ja saem daquele armazem: aberta
+ * nao reserva (contrato de toda carga), entao `disponivelNaOrigem` nao cai quando
+ * uma nasce, e sem este desconto um canteiro de 30 tiles abriria 30 cargas sobre 4
+ * de pedra no mesmo tick — 26 delas para cair no saneamento seguinte, depois de
+ * mandar laborers esperarem por elas. E a diferenca do insumo, que pede pouco por
+ * predio; o canteiro pede uma por tile, e tiles sao muitos.
+ *
+ * Varre `tilesOrdenados`, nunca a ordem de insercao: dois saves com o mesmo
+ * canteiro geram os mesmos ids na mesma ordem. Sem armazem com pedra livre nao
+ * cria — o tile fica desenhado esperando, que e o feedback do jogador.
+ */
+function gerarTarefasDePedraParaCanteiro(state: GameState, dados: GameData): GameState {
+  let atual = state;
+  const modo = modoDoTipo('pedra-para-canteiro', dados);
+  const abertasPorOrigem: Record<string, number> = {};
+  const existentesPorTile: Record<string, number> = {};
+  for (const t of tarefasPorNumero(state)) {
+    if (!ehTarefaDePedraParaCanteiro(t)) continue;
+    const chave = chaveDeTile(t.destinoTile);
+    existentesPorTile[chave] = (existentesPorTile[chave] ?? 0) + 1;
+    if (t.estado === 'aberta') abertasPorOrigem[t.origem] = (abertasPorOrigem[t.origem] ?? 0) + 1;
+  }
+  const livre = (armazemId: string): number =>
+    disponivelNaOrigem(atual, armazemId, MERCADORIA_DA_ESTRADA) - (abertasPorOrigem[armazemId] ?? 0);
+  for (const tile of tilesOrdenados(state.estradasPlanejadas)) {
+    const chave = chaveDeTile(tile);
+    const existentes = existentesPorTile[chave] ?? 0;
+    // A demanda e do TILE e nao da tarefa; a assinatura de `demandaDoTile` pede a
+    // tarefa so para ler o tile dela — aqui o tile e conhecido antes de ela existir.
+    const querem = Math.max(0, dados.terreno.estrada.custoStonePorTile - (atual.pedraNoCanteiro[chave] ?? 0));
+    for (let i = existentes; i < querem; i++) {
+      const origem = armazemMaisPertoDoTile(atual, tile, modo, livre, dados);
+      if (origem === null) break;
+      atual = criarTarefaDePedraParaCanteiro(atual, { origem, tile }).state;
+      abertasPorOrigem[origem] = (abertasPorOrigem[origem] ?? 0) + 1;
+    }
   }
   return atual;
 }
@@ -676,6 +777,9 @@ export function gerarTarefas(state: GameState, dados: GameData = gameData): Game
   // seguir a escada aqui so deixa os ids em ordem legivel na evidencia.
   atual = gerarTarefasDeInsumo(atual, dados);
   atual = gerarTarefasParaArmazem(atual, dados);
+  // F18g: a pedra ANTES do assentamento, so para a evidencia ler "a carga nasce,
+  // depois a obra dela"; a ordem de atendimento continua vindo de `nivelDoTipo`.
+  atual = gerarTarefasDePedraParaCanteiro(atual, dados);
   atual = gerarTarefasDeAssentamento(atual);
   atual = gerarTarefasDeAradura(atual);
   // F14 por ultimo, e sobre PREDIOS COMPLETOS — o laco acima so olha obra. Uma

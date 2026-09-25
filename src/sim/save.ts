@@ -23,7 +23,18 @@ import { gameData } from './data';
  * publicado, e um save que os congelasse viraria um segundo lugar onde os
  * numeros moram — exatamente o que a invariante 3 proibe.
  */
-export const VERSAO_DO_SAVE = 1;
+/**
+ * Historico da versao:
+ *  - 1: F23. O `GameState` da epoca.
+ *  - 2: F18g. `GameState.pedraNoCanteiro` nasceu, `TarefaAssentarEstrada` perdeu
+ *    `mercadoria`/`origem` e nasceu `TarefaPedraParaCanteiro`. Um save da versao
+ *    1 carregado aqui teria `pedraNoCanteiro === undefined` (e tarefas de assentar
+ *    com campos que ninguem le mais); `carregar` nao confere a forma do estado,
+ *    entao a versao e o unico portao. Base instalada na epoca: zero (a F23b, que
+ *    grava save em disco, ainda nao existia), por isso subir o numero bastou e
+ *    nao houve ramo de migracao.
+ */
+export const VERSAO_DO_SAVE = 2;
 
 export interface Save {
   readonly versao: number;

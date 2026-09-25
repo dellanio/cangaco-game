@@ -14,14 +14,15 @@ import type { GameState, Tarefa } from '../../src/sim/state';
 import { distanciaDaTarefa, modoDoTipo, nivelDoTipo, podeReclamar } from '../../src/sim/jobs';
 import { ehEscolaCompleta } from '../../src/sim/escola';
 import { ehBodegaCompleta, ehComida } from '../../src/sim/bodega';
-import { chaveDeTile, ehPlanejada } from '../../src/sim/estradas';
+import { chaveDeTile, ehPlanejada, MERCADORIA_DA_ESTRADA } from '../../src/sim/estradas';
 import { ehCampoPlanejado } from '../../src/sim/campos';
 import { insumosDoPredio } from '../../src/sim/insumo';
 import { receitaDoTipo, unidadesPorCiclo } from '../../src/sim/producao';
 import { ehPredioOcupavel } from '../../src/sim/ocupacao';
-import { disponivelNaOrigem, vagaNoDestino } from '../../src/sim/reservas';
+import { demandaDoTile, disponivelNaOrigem, vagaNoDestino } from '../../src/sim/reservas';
 import {
-  ehTarefaDeAradura, ehTarefaDeAssentamento, ehTarefaDeColheita, ID_DO_ARMAZEM, origemDaTarefaVale,
+  ehTarefaDeAradura, ehTarefaDeAssentamento, ehTarefaDeColheita, ehTarefaDePedraParaCanteiro, ID_DO_ARMAZEM,
+  origemDaTarefaVale,
 } from '../../src/sim/state';
 
 /**
@@ -45,6 +46,19 @@ function violacoesDoDestino(estado: GameState, t: Tarefa, dados: GameData): stri
     const chave = chaveDeTile(t.destinoTile);
     return ehPlanejada(estado.estradasPlanejadas, t.destinoTile)
       ? [] : [`${t.id}: tile '${chave}' nao esta no canteiro`];
+  }
+  // F18g: a pedra a caminho do canteiro mira um tile que continua la, sai de um
+  // armazem completo (a forma vem de `origemDaTarefaVale`, o mesmo predicado do
+  // saneamento) e leva a mercadoria da estrada — nunca outra.
+  if (ehTarefaDePedraParaCanteiro(t)) {
+    const v: string[] = [];
+    const chave = chaveDeTile(t.destinoTile);
+    if (!ehPlanejada(estado.estradasPlanejadas, t.destinoTile)) v.push(`${t.id}: tile '${chave}' nao esta no canteiro`);
+    if (t.mercadoria !== MERCADORIA_DA_ESTRADA) v.push(`${t.id}: leva '${t.mercadoria}' para o canteiro`);
+    if (t.estado !== 'carregando' && !origemDaTarefaVale(estado, t)) {
+      v.push(`${t.id}: origem '${t.origem}' nao e armazem completo`);
+    }
+    return v;
   }
   // F18h: a mesma coisa para a aradura, no canteiro dela, e com UMA exigencia a
   // mais que a estrada nao tem — a cultura gravada na tarefa tem de ser a que o
@@ -154,6 +168,9 @@ export function violacoesDeInvariantes(estado: GameState, dados: GameData = game
   // lajedo), e um predio com duas e um ciclo colhendo em dobro.
   const colheitaPorTile = new Map<string, string>();
   const colheitaPorPredio = new Map<string, string>();
+  // F18g: pedra a caminho de um tile, contada por tile (aberta, reclamada ou
+  // carregando — como o material de obra), contra `demandaDoTile`.
+  const contagemDePedraPorTile = new Map<string, { total: number; tarefa: Parameters<typeof demandaDoTile>[1] }>();
 
   for (const id of tarefas.ordem) {
     const t = tarefas.porId[id];
@@ -221,6 +238,12 @@ export function violacoesDeInvariantes(estado: GameState, dados: GameData = game
       const outraNoPredio = colheitaPorPredio.get(t.destino);
       if (outraNoPredio !== undefined) v.push(`${id}: '${t.destino}' ja colhe por ${outraNoPredio}`);
       colheitaPorPredio.set(t.destino, id);
+    } else if (ehTarefaDePedraParaCanteiro(t)) {
+      // F18g: a pedra a caminho reserva na origem como material (so reclamada), e
+      // nunca ha mais tarefas para um tile do que ele ainda pede.
+      if (t.estado === 'reclamada') reservasPorOrigem.add(`${t.origem}|${t.mercadoria}`);
+      const chave = chaveDeTile(t.destinoTile);
+      contagemDePedraPorTile.set(chave, { total: (contagemDePedraPorTile.get(chave)?.total ?? 0) + 1, tarefa: t });
     } else if (t.tipo === 'ocupar' && t.estado !== 'aberta') {
       // F14: a vaga e UMA por predio — a reserva de ocupacao nunca passa disso.
       contagemDeOcupacaoPorPredio.set(t.destino, (contagemDeOcupacaoPorPredio.get(t.destino) ?? 0) + 1);
@@ -242,6 +265,11 @@ export function violacoesDeInvariantes(estado: GameState, dados: GameData = game
     if (reservado > dados.construcao.laborersMaximosPorObra) {
       v.push(`${obra}: ${reservado} laborers reclamados para teto=${dados.construcao.laborersMaximosPorObra}`);
     }
+  }
+  // F18g: nunca mais pedra a caminho de um tile do que ele ainda pede.
+  for (const [chave, { total, tarefa }] of contagemDePedraPorTile) {
+    const pede = demandaDoTile(estado, tarefa, dados);
+    if (total > pede) v.push(`${chave}: ${total} tarefas de pedra para um tile que pede ${pede}`);
   }
   // F14: nunca mais de um ocupante reservado por predio — a vaga e a
   // cardinalidade do campo `ocupante`, nao um teto de dado.

@@ -736,7 +736,7 @@ afterAll(() => {
       porEstrada: { ateAPerto: distanciaEntrePredios(volta, s, perto), ateALonge: distanciaEntrePredios(volta, s, longe) },
       livreEmTicks: { ateAPerto: ligacaoEntrePredios(volta, s, perto, 'livre'), ateALonge: ligacaoEntrePredios(volta, s, longe, 'livre') },
       modoQueDecidiu: modoDoTipo('material-para-obra'),
-      ordemEscolhida: ordemDaVolta.map((t) => t.destino),
+      ordemEscolhida: ordemDaVolta.map((t) => ('destino' in t ? t.destino : null)),
       desempatePorNumeroNumerico: ordemNumerica.map((t) => t.numero),
       aF10Substitui: 'A* real a partir da posicao do serf (perna ate a origem + perna da entrega), com custo de terreno',
     },

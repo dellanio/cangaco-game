@@ -228,11 +228,12 @@ export function geometriaDaAbertura({
   // ---- a rua: uma reta na linha de porta, mais o ramo em L ate o par -------
   // O que LIGA um predio e UMA porta dele ser estrada e estar no componente do
   // armazem (`predioLigadoAoArmazem`) — nao a largura inteira do footprint. A
-  // rua da abertura e mínima de proposito, porque ela se paga A VISTA no tick 0
-  // e o estoque inicial de pedra e curto: a versao larga custou 31 tiles contra
-  // 30 de pedra e o comando saiu `sem-pedra`, com a vila inteira parada
-  // (medido na F-T4b). Comeca no ULTIMO tile de porta do primeiro predio da
-  // pedra e vai ate a primeira porta da escola.
+  // rua da abertura e mínima de proposito, porque o estoque inicial de pedra e
+  // curto e a rua o come antes da pedreira: a versao larga custou 31 tiles contra
+  // 30 de pedra e (ate a F18g) o comando saiu `sem-pedra`, com a vila inteira
+  // parada (medido na F-T4b); desde a F18g o mesmo excesso vira pedreira em obra
+  // para sempre (ver o guarda abaixo). Comeca no ULTIMO tile de porta do primeiro
+  // predio da pedra e vai ate a primeira porta da escola.
   const rua = [];
   const vistos = new Set();
   const por = (gx, gy) => {
@@ -275,11 +276,21 @@ export function geometriaDaAbertura({
     por(gx, yPortaDoPar);
   }
 
-  // A rua CABE no tick 0? O comando e tudo ou nada e paga a vista. O que sobra
-  // ainda tem de subir a primeira casa de lenhador (que desbloqueia a serraria)
-  // e a PEDREIRA, que e quem produz a pedra de todo o resto: sem essa reserva a
-  // vila fica com a rua pronta e nenhuma obra possivel, que e travamento, nao
-  // balanceamento.
+  // A rua e as duas obras do arranque CABEM no estoque inicial? O que tem de
+  // sobrar da rua e a primeira casa de lenhador (que desbloqueia a serraria) e a
+  // PEDREIRA, que e quem produz a pedra de todo o resto.
+  //
+  // Ate a F18g o comando era tudo ou nada, pago a vista no tick 0, e o sintoma de
+  // nao caber era `sem-pedra` com a vila parada. Desde a F18g (2026-09-25) a
+  // pedra viaja por tile e o comando NAO recusa mais — mas o guarda continua
+  // guarda, porque o sintoma virou TRAVAMENTO: a rua se assenta com toda pedra que
+  // aparece (a carga dela e nivel 8, mas nasce antes de a obra nivelar e pedir o
+  // material dela), e a pedreira fica em obra para sempre. MEDIDO na F18g, com a
+  // rua de 26 tiles: 27 de pedra fecha a Fase A (serraria ligada no tick 2691),
+  // 26 trava (23 tiles de pe, pedreira e segunda casa em obra aos 12 000 ticks).
+  // A conta abaixo (rua + 4) e PESSIMISTA por 3 em relacao a esse limiar — de
+  // proposito: o limiar de 1 e de ordem de tick (a obra da pedreira ganha a
+  // corrida por uma pedra), e um guarda no fio da navalha nao e guarda.
   const reserva = stoneDe(GRUPO_DA_MATA[0]) + stoneDe(GRUPO_DA_PEDRA[GRUPO_DA_PEDRA.length - 1]);
   const custoDaRua = rua.length * custoStonePorTile;
   if (custoDaRua + reserva > estoqueInicialDeStone) {
@@ -288,11 +299,12 @@ export function geometriaDaAbertura({
     // sem os dois numeros, "nao coube" nao diz qual dos dois mexer.
     const excesso = custoDaRua + reserva - estoqueInicialDeStone;
     throw new Error(
-      `abertura: a rua nao cabe no estoque inicial. A rua precisa de ${rua.length} tiles ` +
+      `abertura: a rua comeria a pedra das obras do arranque. A rua precisa de ${rua.length} tiles ` +
         `a ${custoStonePorTile} de pedra = ${custoDaRua}; o estado inicial tem ` +
         `${estoqueInicialDeStone} de pedra; a reserva de ${reserva} (${GRUPO_DA_MATA[0]} + ` +
         `${GRUPO_DA_PEDRA[GRUPO_DA_PEDRA.length - 1]}) tem de sobrar, porque e o que sobe ` +
-        `antes de existir producao de pedra. Faltam ${excesso} de pedra, ou seja ` +
+        'antes de existir producao de pedra — desde a F18g a rua nao e recusada, ela e ' +
+        `assentada com a pedra que a pedreira precisava, e a vila trava. Faltam ${excesso} de pedra, ou seja ` +
         `${Math.ceil(excesso / custoStonePorTile)} tiles de rua a menos — ou mais pedra em ` +
         'data/economy.json (estadoInicial.estoque.stone).',
     );

@@ -27,19 +27,19 @@
  * bloqueada — ele libera aqui, por `liberar`. Toda tarefa reclamada tem caminho de volta.
  */
 import type {
-  GameEvent, GameState, Predio, PredioCompleto, PredioEmObra, Tarefa, TarefaDeTransporte, Unidade,
+  GameEvent, GameState, Predio, PredioCompleto, PredioEmObra, Tarefa, TarefaDeTransporte, TarefaDoSerf, Unidade,
 } from '../state';
-import { ehTarefaDeTransporte, gavetaDeOrigem, MERCADORIA_DE_OURO } from '../state';
+import { ehTarefaDePedraParaCanteiro, ehTarefaDoSerf, gavetaDeOrigem, MERCADORIA_DE_OURO } from '../state';
 import { ID_DO_ARMAZEM } from '../state';
 import type { GameData } from '../data/types';
 import { gameData } from '../data';
-import { ehEstrada, isConnected } from '../estradas';
+import { chaveDeTile, comPedraNoTile, ehEstrada, ehPlanejada, isConnected } from '../estradas';
 // F20b: `armazemMaisProximo` era daqui e subiu para `deposito.ts` ao ganhar o
 // segundo consumidor (a morte por fome devolve a carga pelo mesmo criterio).
 import { armazemMaisProximo } from '../deposito';
 import { ehEstadoDeFome } from '../condicao';
 import {
-  liberar, marcarCarregando, modoDoTipo, planoDaTarefa, portasDaTarefa, reclamarMelhor,
+  alvosDeEntrega, liberar, marcarCarregando, modoDoTipo, planoDaTarefa, reclamarMelhor,
   removerTarefa, TIPO_QUE_CARREGA,
 } from '../jobs';
 import type { MotivoDeLiberacao } from '../jobs';
@@ -61,10 +61,11 @@ function comPredio(state: GameState, predio: Predio): GameState {
  *  dele. So serf reclama transporte (`elegivelParaTarefa`, F11b/F13) — o filtro de
  *  tipo aqui e so para o compilador estreitar o tipo, o serf nunca segura uma tarefa
  *  'construir' em runtime. */
-function tarefaDoSerf(state: GameState, u: Unidade, estado: Tarefa['estado']): TarefaDeTransporte | null {
+function tarefaDoSerf(state: GameState, u: Unidade, estado: Tarefa['estado']): TarefaDoSerf | null {
   const id = u.fsmData.tarefa;
   const t = id === undefined ? undefined : state.jobs.tarefas.porId[id];
-  return t !== undefined && ehTarefaDeTransporte(t) && t.estado === estado && t.reclamadaPor === u.id ? t : null;
+  // F18g: `ehTarefaDoSerf` — a pedra do canteiro e carga dele como qualquer outra.
+  return t !== undefined && ehTarefaDoSerf(t) && t.estado === estado && t.reclamadaPor === u.id ? t : null;
 }
 
 /** Libera a tarefa (que sai de `reclamada` ou `carregando`) e devolve os eventos. */
@@ -91,7 +92,7 @@ function passoOcioso(state: GameState, u: Unidade, dados: GameData): Passo {
   // reclamarMelhor (F11b: filtrado por elegivelParaTarefa) so devolve tarefa de
   // transporte para um serf; o filtro aqui e so para o compilador estreitar o tipo.
   const bruta = r.state.jobs.tarefas.porId[r.tarefa];
-  const tarefa = bruta !== undefined && ehTarefaDeTransporte(bruta) ? bruta : undefined;
+  const tarefa = bruta !== undefined && ehTarefaDoSerf(bruta) ? bruta : undefined;
   const plano = tarefa === undefined ? null : planoDaTarefa(r.state, tarefa, u.id, dados);
   if (tarefa === undefined || plano === null) {
     // o claim ja exigiu um plano; se ele sumiu, devolve a reserva em vez de segurar a tarefa
@@ -136,7 +137,7 @@ function passoCarregando(state: GameState, u: Unidade, dados: GameData): Passo {
   }
   // o caminho de volta para a entrega tem que existir ANTES de o material sair do armazem
   const modo = modoDoTipo(tarefa.tipo, dados);
-  const rota = buscarCaminho(state, noTile(u), portasDaTarefa(state, tarefa.destino, modo, dados), modo, dados);
+  const rota = buscarCaminho(state, noTile(u), alvosDeEntrega(state, tarefa, modo, dados), modo, dados);
   if (rota === null) {
     const l = liberarTarefa(state, tarefa.id, 'caminho-cortado');
     return ficarOcioso(l.state, u, l.events);
@@ -164,7 +165,7 @@ function passoIndoEntregar(state: GameState, u: Unidade, dados: GameData): Passo
 
   const agora = noTile(u);
   const modo = modoDoTipo(tarefa.tipo, dados);
-  const portas = portasDaTarefa(state, tarefa.destino, modo, dados);
+  const portas = alvosDeEntrega(state, tarefa, modo, dados);
   // Em `'estrada'`, a rede pode ter sido cortada LONGE daqui e a rota inteira morre
   // junto; o componente responde isso barato, e por isso a pergunta e por tick.
   // Em `'livre'` (F18d-1a) nao ha rede a perder: o que corta uma rota a pe e um
@@ -269,24 +270,53 @@ function destinoQueRecebe(state: GameState, tarefa: TarefaDeTransporte, dados: G
   }
 }
 
+/**
+ * F18g — a entrega no TILE do canteiro: a pedra sai da mao do serf e passa a
+ * `pedraNoCanteiro[chave]`, de onde o laborer a consome ao assentar. `null` se o
+ * tile saiu do canteiro (demolido, ou ja assentado por pedra de outro serf) —
+ * o serf devolve ao armazem, como toda carga que o destino nao quer mais.
+ * A VAGA nao se confere de novo aqui: `vagaNoTile` e negativa so quando o tile
+ * deixou de pedir debaixo da reserva, e `sanearTarefas` ja cancelou por isso
+ * antes da FSM andar neste tick.
+ */
+function entregarNoCanteiro(state: GameState, tarefa: TarefaDoSerf): GameState | null {
+  if (!ehTarefaDePedraParaCanteiro(tarefa)) return null;
+  if (!ehPlanejada(state.estradasPlanejadas, tarefa.destinoTile)) return null;
+  return { ...state, pedraNoCanteiro: comPedraNoTile(state, tarefa.destinoTile, 1) };
+}
+
+/** Onde a carga desta tarefa e registrada como entregue, no evento: o id do
+ *  predio, ou (F18g) a chave do tile do canteiro. */
+function destinoNoEvento(tarefa: TarefaDoSerf): string {
+  return ehTarefaDePedraParaCanteiro(tarefa) ? chaveDeTile(tarefa.destinoTile) : tarefa.destino;
+}
+
 function passoEntregando(state: GameState, u: Unidade, dados: GameData): Passo {
   const carga = u.fsmData.carga;
   if (carga === undefined) return ficarOcioso(state, u);
   const tarefa = tarefaDoSerf(state, u, 'carregando');
   if (tarefa === null) return semEventos(comecarADevolver(state, u, carga, dados));
 
-  // O destino ainda PEDE, e onde ele recebe? Os dois vem do TIPO da tarefa.
-  const recebida = destinoQueRecebe(state, tarefa, dados);
-  if (recebida === null) {
+  // O destino ainda PEDE, e onde ele recebe? Os dois vem do TIPO da tarefa. Em
+  // predio a resposta e o predio com a gaveta cheia; no canteiro (F18g) e o
+  // estado com a pedra no tile.
+  const entregue = ehTarefaDePedraParaCanteiro(tarefa)
+    ? entregarNoCanteiro(state, tarefa)
+    : comPredioOuNulo(state, destinoQueRecebe(state, tarefa, dados));
+  if (entregue === null) {
     const l = liberarTarefa(state, tarefa.id, 'destino-completo');
     return { state: comecarADevolver(l.state, u, carga, dados), events: l.events };
   }
 
-  const concluida = removerTarefa(comPredio(state, recebida), tarefa.id);
+  const concluida = removerTarefa(entregue, tarefa.id);
   return {
     state: comUnidade(concluida, ocioso(u)),
-    events: [{ type: 'task-completed', tarefa: tarefa.id, destino: tarefa.destino, mercadoria: tarefa.mercadoria }],
+    events: [{ type: 'task-completed', tarefa: tarefa.id, destino: destinoNoEvento(tarefa), mercadoria: tarefa.mercadoria }],
   };
+}
+
+function comPredioOuNulo(state: GameState, predio: Predio | null): GameState | null {
+  return predio === null ? null : comPredio(state, predio);
 }
 
 function passoDevolvendo(state: GameState, u: Unidade, dados: GameData): Passo {

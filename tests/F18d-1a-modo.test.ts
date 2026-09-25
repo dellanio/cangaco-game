@@ -55,8 +55,11 @@ describe('F18d-1a — o modo mora no dado, lido pelo id do nivel', () => {
       ['insumo-producao-baixa', 'estrada'],
       ['saida-cheia-para-armazem', 'estrada'],
       ['excedente-para-armazem', 'estrada'],
-      // F18d-1b: o oitavo nivel entrou no fim, e e 'livre' pelo MESMO criterio do
-      // nivel 3 — tile planejado nao tem rua por onde se chegar nele.
+      // F18g: a pedra do canteiro e carga de serf e entrou em OITAVO, 'livre'
+      // pelo MESMO criterio do nivel 3 — o canteiro nao tem rua por onde chegar.
+      ['pedra-para-canteiro', 'livre'],
+      // F18d-1b: o (entao) oitavo nivel entrou no fim, e e 'livre' pelo MESMO
+      // criterio do nivel 3 — tile planejado nao tem rua por onde se chegar nele.
       ['assentar-estrada', 'livre'],
       // F18h: o nono, e 'livre' pelo MESMO criterio — nao ha rua ate a roca que
       // ainda nao existe.

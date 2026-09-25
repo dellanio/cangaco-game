@@ -397,7 +397,7 @@ describe('F09 — desempate: menor caminho REAL, depois menor numero', () => {
       tarefaDe({ numero: 1, destino: 'perto' }), // numero MENOR e reta menor: nada disso pode decidir
       tarefaDe({ numero: 2, destino: 'longe' }),
     ]);
-    const ordem = tarefasEmOrdem(estado).map((t) => t.destino);
+    const ordem = tarefasEmOrdem(estado).map((t) => ('destino' in t ? t.destino : null));
     expect(ordem).toEqual(['longe', 'perto']);
     const r = reclamarMelhor(estado, serf1);
     if (!r.ok) throw new Error(`esperava claim, veio '${r.motivo}'`);

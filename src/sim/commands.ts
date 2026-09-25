@@ -24,10 +24,13 @@ export type Command =
     }
   | {
       /**
-       * Constroi estrada sobre `tiles` (um arrasto = um comando). Tudo ou nada: um
-       * tile invalido recusa o comando inteiro. DEBITA pedra no comando, do
-       * armazem (F08: a estrada nao tem canteiro nem viagem de material; ver a Nota
-       * de desvio no item F08 do BUILD_PLAN). Tile que ja e estrada nao custa.
+       * Pede estrada sobre `tiles` (um arrasto = um comando). Tudo ou nada quanto ao
+       * CHAO: um tile invalido (fora do mapa, terreno, recurso, predio) recusa o
+       * comando inteiro. Quanto a PEDRA, nada: desde a F18g o comando desenha o
+       * canteiro (`estradasPlanejadas`) sem pagador, a pedra viaja ate cada tile na
+       * mao de um serf (`pedra-para-canteiro`) e o laborer assenta quando ela chega.
+       * (F08 debitava aqui; F18d-1b reservava aqui e recusava `sem-pedra`; os dois
+       * desvios acabaram.) Tile que ja e estrada ou canteiro nao custa nem recusa.
        */
       readonly type: 'PlaceRoad';
       readonly tiles: readonly TileDeGrid[];

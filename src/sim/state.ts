@@ -47,12 +47,14 @@ export type GameEvent =
       readonly motivo: MotivoDeRecusa;
     }
   | {
-      /** `PlaceRoad` recusado. `tile` e o primeiro tile culpado (fora do mapa ou
-       *  sobre um predio); `null` quando o motivo e do trecho todo (`sem-pedra`). */
+      /** `PlaceRoad` recusado. `tile` e o primeiro tile culpado (fora do mapa,
+       *  terreno, recurso ou sobre um predio). F18g: toda recusa e de UM tile —
+       *  `'sem-pedra'`, o unico motivo do trecho todo, deixou de existir quando a
+       *  pedra passou a viajar por tile e o canteiro a ser desenhado sem pagador. */
       readonly type: 'command-rejected';
       readonly command: 'PlaceRoad';
       readonly motivo: MotivoDeRecusaDeEstrada;
-      readonly tile: TileDeGrid | null;
+      readonly tile: TileDeGrid;
     }
   | {
       /** F18h — `PlowField` recusado. `tile` e o primeiro tile culpado; `null`
@@ -107,7 +109,9 @@ export type GameEvent =
   | {
       /** O serf entregou em `destino` e a tarefa foi removida. Obra: `faltam[mercadoria]`
        *  caiu 1. Escola (F13): `estoque.entrada[mercadoria]` subiu 1. O campo se chamava
-       *  `obra` ate a F13 — deixou de ser verdade quando o destino pode ser escola. */
+       *  `obra` ate a F13 — deixou de ser verdade quando o destino pode ser escola.
+       *  F18g: para a pedra do canteiro, `destino` e a CHAVE do tile (`"gx,gy"`,
+       *  `chaveDeTile`), e `pedraNoCanteiro[chave]` subiu 1. */
       readonly type: 'task-completed';
       readonly tarefa: string;
       readonly destino: string;
@@ -537,10 +541,11 @@ export const GAVETA_DE_ORIGEM_POR_TIPO: Readonly<Record<TipoComOrigem, Gaveta>> 
   'insumo-producao-baixa': 'saida',
   'saida-cheia-para-armazem': 'saida',
   'excedente-para-armazem': 'entrada',
-  // F18d-1b: a pedra da estrada sai da `saida` do armazem, a mesma gaveta de onde
-  // `debitarPedra` tira e a unica reservavel. O laborer nao a carrega — ela e
-  // debitada no assentamento —, mas a RESERVA e da mesma natureza das outras.
-  'assentar-estrada': 'saida',
+  // F18g: a pedra da estrada sai da `saida` do armazem, a mesma gaveta de onde
+  // sai tudo o que o serf carrega para fora dele. Ate a F18g a linha aqui era a
+  // de `'assentar-estrada'`, que reservava sem carregar; agora quem reserva e
+  // quem carrega, e e a mesma tarefa.
+  'pedra-para-canteiro': 'saida',
 };
 
 export function gavetaDeOrigem(tipo: TipoComOrigem): Gaveta {
@@ -552,8 +557,12 @@ export function gavetaDeOrigem(tipo: TipoComOrigem): Gaveta {
  * armazem (o serf abastece a cidade a partir do deposito); nos niveis 6 e 7 e o
  * proprio predio que tem a sobra, e o armazem e o destino. Exaustiva por
  * construcao, como `GAVETA_DE_ORIGEM_POR_TIPO`.
+ *
+ * F18g — indexada por `TipoComOrigem`, e nao mais por `TipoDeTransporte`: a
+ * pedra do canteiro tambem sai de um armazem, e a pergunta "a origem tem a forma
+ * do tipo?" e a mesma para ela.
  */
-export const ORIGEM_ESPERADA_POR_TIPO: Readonly<Record<TipoDeTransporte, 'armazem' | 'outro-predio'>> = {
+export const ORIGEM_ESPERADA_POR_TIPO: Readonly<Record<TipoComOrigem, 'armazem' | 'outro-predio'>> = {
   'comida-para-inn': 'armazem',
   'material-para-obra': 'armazem',
   'ouro-para-escola': 'armazem',
@@ -561,6 +570,7 @@ export const ORIGEM_ESPERADA_POR_TIPO: Readonly<Record<TipoDeTransporte, 'armaze
   'insumo-producao-baixa': 'armazem',
   'saida-cheia-para-armazem': 'outro-predio',
   'excedente-para-armazem': 'outro-predio',
+  'pedra-para-canteiro': 'armazem',
 };
 
 /**
@@ -571,7 +581,7 @@ export const ORIGEM_ESPERADA_POR_TIPO: Readonly<Record<TipoDeTransporte, 'armaze
  * invariantes dos testes facam a MESMA pergunta — nao duas copias da regra que
  * um dia divergem.
  */
-export function origemDaTarefaVale(state: GameState, tarefa: TarefaDeTransporte): boolean {
+export function origemDaTarefaVale(state: GameState, tarefa: TarefaDoSerf): boolean {
   const origem = state.predios.porId[tarefa.origem];
   if (origem === undefined || origem.estado !== 'completo') return false;
   return ORIGEM_ESPERADA_POR_TIPO[tarefa.tipo] === 'armazem'
@@ -628,16 +638,18 @@ export interface TarefaOcupar extends TarefaBase {
 /**
  * F18d-1b — assentar UM tile de estrada planejado (`estradasPlanejadas`). So o
  * laborer (`TIPO_QUE_CONSTROI`) e elegivel: o canteiro de estrada e obra, nao
- * carga. Molde da `TarefaConstruir` num ponto e da de carga noutro, e e a unica
- * que mistura os dois:
+ * carga. Molde da `TarefaConstruir`: SEM `'carregando'`, o laborer nao leva nada
+ * na mao.
  *
- *  - SEM `'carregando'`: o laborer nao leva a pedra na mao. Ela e debitada do
- *    armazem no assentamento, e por isso a viagem e so de ida.
- *  - COM `mercadoria`/`origem`: a pedra e RESERVADA no armazem que vai pagar
- *    (`armazemQuePagaAEstrada`), e a reserva vale desde `'aberta'` — diferente
- *    de toda tarefa de carga, que so reserva ao ser reclamada. E o clique do
- *    jogador que compromete a pedra: sem isso dois `PlaceRoad` no mesmo tick
- *    gastariam a mesma unidade, e o segundo tracado nasceria impagavel.
+ * F18g — a pedra deixou de morar aqui. Ate a F18g esta tarefa tinha `mercadoria`
+ * e `origem` e RESERVAVA a pedra no armazem desde `'aberta'` (o unico caso
+ * especial de `reservas.ts`), e o assentamento debitava do armazem. Agora a pedra
+ * VIAJA: uma `TarefaPedraParaCanteiro` (carga de serf, abaixo) a leva do armazem
+ * ate o tile, ela descansa em `pedraNoCanteiro`, e e de la que o assentamento a
+ * consome. Esta tarefa ficou com a forma da `TarefaArar`: so o tile. Ela nasce
+ * para TODO tile do canteiro, sem pagador — quem decide se o laborer vai e o
+ * claim, que exige pedra no tile ou a caminho (`tileDeEstradaTrabalhavel`).
+ *
  *  - O destino e um TILE, em `destinoTile`, e NAO ha `destino: string`. Tile nao
  *    e predio: nao tem gaveta, nao tem vaga, nao tem porta. Os lugares que fazem
  *    `predios.porId[tarefa.destino]` nao compilam contra este tipo, de proposito.
@@ -645,12 +657,42 @@ export interface TarefaOcupar extends TarefaBase {
 export interface TarefaAssentarEstrada extends TarefaBase {
   readonly tipo: 'assentar-estrada';
   readonly estado: 'aberta' | 'reclamada';
+  /** O tile planejado a assentar. */
+  readonly destinoTile: TileDeGrid;
+}
+
+/**
+ * F18g — UMA unidade de pedra, de um armazem ATE um tile do canteiro de estrada.
+ * So o serf (`TIPO_QUE_CARREGA`) e elegivel: e carga como qualquer outra — mesma
+ * FSM, mesmo claim, mesma reserva na origem ao reclamar, mesma coleta que tira
+ * a unidade da gaveta `saida` e a poe na mao dele. O que muda e a PONTA: o
+ * destino e um TILE (`destinoTile`), e a entrega nao cai em gaveta nenhuma — cai
+ * em `pedraNoCanteiro[chave]`, de onde o laborer a consome ao assentar.
+ *
+ * Por que nao e `TarefaDeTransporte` com `destino: string`: `destino` de
+ * transporte e id de PREDIO em dezenas de lugares (`predios.porId[t.destino]`), e
+ * a chave de um tile la dentro seria um `undefined` silencioso em cada um. Com
+ * `destinoTile` esses lugares nao compilam contra este tipo, de proposito — a
+ * mesma regra da `TarefaAssentarEstrada`. Quem quer "a tarefa que o serf
+ * carrega, qualquer que seja a ponta" pergunta `ehTarefaDoSerf`.
+ *
+ * A VAGA do tile e `custoStonePorTile − entregue − a caminho` (`vagaNoTile`,
+ * reservas.ts): um tile pede exatamente o custo dele, e nem uma a mais.
+ *
+ * Ciclo (o do serf): `aberta` -> `reclamada` -> `carregando` -> (entrega: a
+ * tarefa some). Tile que sai do canteiro no meio da viagem: `sanearTarefas` a
+ * cancela (`destino-sumiu`) e o serf devolve a pedra ao armazem mais perto,
+ * como toda carga orfa.
+ */
+export interface TarefaPedraParaCanteiro extends TarefaBase {
+  readonly tipo: 'pedra-para-canteiro';
+  readonly estado: 'aberta' | 'reclamada' | 'carregando';
   /** Sempre `MERCADORIA_DA_ESTRADA`; o campo existe para a reserva ser a mesma
    *  conta de `reservadoNaOrigem`, e nao uma segunda regra paralela. */
   readonly mercadoria: string;
-  /** Id do armazem que reserva a pedra e que vai paga-la no assentamento. */
+  /** Id do armazem de onde a pedra sai. */
   readonly origem: string;
-  /** O tile planejado a assentar. */
+  /** O tile planejado que recebe a pedra. */
   readonly destinoTile: TileDeGrid;
 }
 
@@ -751,7 +793,7 @@ export interface TarefaComer extends TarefaBase {
 
 export type Tarefa =
   TarefaDeTransporte | TarefaConstruir | TarefaOcupar | TarefaAssentarEstrada | TarefaColher
-  | TarefaComer | TarefaArar;
+  | TarefaComer | TarefaArar | TarefaPedraParaCanteiro;
 
 /**
  * O tipo da tarefa, DERIVADO da uniao: acrescentar um produtor novo (F15, F20)
@@ -765,16 +807,24 @@ export type TipoDeTarefa = Tarefa['tipo'];
  * `'construir'` e `'ocupar'` ficam de fora (nao disputam nivel com ninguem), e e
  * por isso que `modoDoTipo` nao aceita `TipoDeTarefa` inteiro: pedir o modo de um
  * tipo fora da escada e erro de chamada, e continua falhando alto.
+ *
+ * F18g — `'assentar-estrada'` saiu de `TipoComOrigem` (nao reserva mais nada) e
+ * entra aqui pelo nome, ao lado de `'arar'`: as duas estao na escada so pelo
+ * `modo`.
  */
-export type TipoNaEscada = TipoComOrigem | TarefaArar['tipo'];
+export type TipoNaEscada = TipoComOrigem | TarefaAssentarEstrada['tipo'] | TarefaArar['tipo'];
 
 /**
  * F18h — os tipos que reservam alguma coisa numa GAVETA de predio de origem, e
  * so eles. `'arar'` esta na escada (ela precisa de `modo`) e NAO esta aqui: ela
  * nao tem origem nem mercadoria, e uma linha em `GAVETA_DE_ORIGEM_POR_TIPO` para
  * ela seria dado morto respondendo a uma pergunta que ninguem faz.
+ *
+ * F18g — e exatamente o conjunto das tarefas que o SERF carrega (`TarefaDoSerf`):
+ * quem tem origem e quem reserva, e quem reserva e quem carrega. O caso especial
+ * da F18d-1b (assentar reservando sem carregar) deixou de existir.
  */
-export type TipoComOrigem = TipoDeTransporte | TarefaAssentarEstrada['tipo'];
+export type TipoComOrigem = TarefaDoSerf['tipo'];
 
 /**
  * Uma tarefa que o serf CARREGA: tem `mercadoria` e entrega num PREDIO. Testa a
@@ -783,12 +833,30 @@ export type TipoComOrigem = TipoDeTransporte | TarefaAssentarEstrada['tipo'];
  * passaria por `vagaDoDestino`/`disponivelNaOrigem`, que leriam `undefined`.
  *
  * F18d-1b — `'mercadoria' in tarefa` sozinho deixou de bastar: a tarefa de
- * assentar tem mercadoria (a pedra que o armazem paga) e NAO tem `destino` de
- * predio. As duas perguntas juntas sao a forma inteira de uma carga: de onde sai
- * e em que predio entra.
+ * assentar tinha mercadoria e NAO tem `destino` de predio. F18g — a de pedra
+ * para o canteiro tem mercadoria e `destinoTile`, e pela mesma razao NAO e
+ * transporte: as duas perguntas juntas sao a forma inteira de uma carga que
+ * entra em PREDIO. Quem quer "qualquer carga do serf" pergunta `ehTarefaDoSerf`.
  */
 export function ehTarefaDeTransporte(tarefa: Tarefa): tarefa is TarefaDeTransporte {
   return 'mercadoria' in tarefa && 'destino' in tarefa;
+}
+
+/** F18g — pelo TIPO: a carga cujo destino e um tile do canteiro de estrada. */
+export function ehTarefaDePedraParaCanteiro(tarefa: Tarefa): tarefa is TarefaPedraParaCanteiro {
+  return tarefa.tipo === 'pedra-para-canteiro';
+}
+
+/**
+ * F18g — tudo o que o SERF carrega: as cargas que entram em predio
+ * (`TarefaDeTransporte`) e a pedra que entra em tile. E a uniao que a FSM do
+ * serf, o claim e a reserva na origem percorrem; o que muda entre os dois
+ * membros e so a ponta da entrega.
+ */
+export type TarefaDoSerf = TarefaDeTransporte | TarefaPedraParaCanteiro;
+
+export function ehTarefaDoSerf(tarefa: Tarefa): tarefa is TarefaDoSerf {
+  return ehTarefaDeTransporte(tarefa) || ehTarefaDePedraParaCanteiro(tarefa);
 }
 
 /**
@@ -807,12 +875,16 @@ export function ehTarefaDeAradura(tarefa: Tarefa): tarefa is TarefaArar {
   return tarefa.tipo === 'arar';
 }
 
-/** F18h — as duas cujo destino e um TILE e nao um predio: quem pergunta isto quer
- *  a VIAGEM (o laborer anda ate o tile) ou o saneamento do destino, e a resposta
- *  e a mesma para as duas. Os lugares que fazem `predios.porId[tarefa.destino]`
- *  nao compilam contra este tipo, de proposito. */
+/** F18h — as duas tarefas DE LABORER cujo destino e um TILE e nao um predio: quem
+ *  pergunta isto quer a VIAGEM (o laborer anda ate o tile) ou o saneamento do
+ *  destino, e a resposta e a mesma para as duas. Os lugares que fazem
+ *  `predios.porId[tarefa.destino]` nao compilam contra este tipo, de proposito.
+ *
+ *  F18g — pelo TIPO, e nao mais por `'destinoTile' in tarefa`: a carga de pedra
+ *  para o canteiro tambem tem `destinoTile`, e pela forma ela viraria tarefa de
+ *  laborer (`ehTarefaDeLaborer`) e entraria na FSM errada. */
 export function ehTarefaDeTile(tarefa: Tarefa): tarefa is TarefaAssentarEstrada | TarefaArar {
-  return 'destinoTile' in tarefa;
+  return tarefa.tipo === 'assentar-estrada' || tarefa.tipo === 'arar';
 }
 
 /** F-T2c — pelo TIPO, e nao pela forma: `origemTile` existe justamente para esta
@@ -962,6 +1034,22 @@ export interface GameState {
    * `passoPermitido`.
    */
   readonly estradasPlanejadas: Readonly<Record<string, true>>;
+  /**
+   * F18g — a PEDRA PARADA NO CANTEIRO: quantas unidades de `MERCADORIA_DA_ESTRADA`
+   * um serf ja entregou em cada tile planejado e nenhum laborer assentou ainda.
+   * Chave `"gx,gy"`, como `estradasPlanejadas`; so tiles com quantidade > 0
+   * estao aqui (a entrada some no assentamento e na demolicao).
+   *
+   * Mapa PARALELO ao canteiro, e nao um valor mais rico em `estradasPlanejadas`:
+   * trocar o `true` de la por objeto quebraria os 31 arquivos que o leem (7 com
+   * `=== true`), e nenhum deles precisa saber da pedra. Quem precisa e o
+   * assentamento (`comOTileAssentado` consome daqui), o claim do laborer
+   * (`tileDeEstradaTrabalhavel`), a borracha (devolve o que esta aqui) e a
+   * conservacao de bens (esta pedra e pedra).
+   *
+   * Nunca itere por `Object.keys` esperando uma ordem: use `tilesOrdenados`.
+   */
+  readonly pedraNoCanteiro: Readonly<Record<string, number>>;
   /**
    * F18h — o CANTEIRO do campo: os tiles que o jogador mandou arar e que nenhum
    * laborer arou ainda. Irmao de `estradasPlanejadas`, com uma diferenca: o
@@ -1187,6 +1275,7 @@ export function createInitialState(seed: number, dados: GameData = gameData): Ga
     tiposJaConstruidos: tiposCompletos(predios),
     estradas: {},
     estradasPlanejadas: {},
+    pedraNoCanteiro: {},
     camposPlanejados: {},
     recursos: recursosIniciais(dados),
     jobs: { tarefas: { porId: {}, ordem: [] } },

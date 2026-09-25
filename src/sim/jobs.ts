@@ -11,16 +11,17 @@
  * depois de todas as checagens) e `liberar` devolve as DUAS reservas de uma vez.
  */
 import type {
-  GameEvent, GameState, Predio, Tarefa, TarefaConstruir, TarefaDeTransporte,
+  GameEvent, GameState, Predio, Tarefa, TarefaConstruir,
   TarefaExcedenteParaArmazem, TarefaInsumoProducaoBaixa, TarefaInsumoProducaoParada,
   TarefaComidaParaInn, TarefaMaterialParaObra, TarefaOcupar, TarefaOuroParaEscola,
   TarefaArar, TarefaAssentarEstrada, TarefaColher, TarefaComer, TarefaDeLaborer, TarefaSaidaCheiaParaArmazem,
+  TarefaDoSerf, TarefaPedraParaCanteiro,
   TipoDeTarefa,
   TipoNaEscada,
 } from './state';
 import {
-  ehTarefaDeAradura, ehTarefaDeAssentamento, ehTarefaDeColheita, ehTarefaDeLaborer, ehTarefaDeTile,
-  ehTarefaDeTransporte, MERCADORIA_DE_OURO,
+  ehTarefaDeAradura, ehTarefaDeAssentamento, ehTarefaDeColheita, ehTarefaDeLaborer, ehTarefaDePedraParaCanteiro,
+  ehTarefaDeTile, ehTarefaDoSerf, MERCADORIA_DE_OURO,
 } from './state';
 import type { GameData } from './data/types';
 import { gameData } from './data';
@@ -28,16 +29,19 @@ import { gameData } from './data';
 // entrar aqui nao fecha ciclo.
 import { ehCivil, precisaComer } from './condicao';
 import {
-  armazemQuePagaAEstrada, chaveDeTile, componenteDe, distanciaEntrePredios, ehEstrada, ehPlanejada,
-  MERCADORIA_DA_ESTRADA, tilesDaPorta,
+  chaveDeTile, componenteDe, distanciaEntrePredios, ehEstrada,
+  MERCADORIA_DA_ESTRADA, tileDeEstradaTrabalhavel, tilesDaPorta,
 } from './estradas';
 import type { TileDeGrid } from './estradas';
 import { ehCampoPlanejado } from './campos';
 import { obraTrabalhavel } from './obra';
 import { alvosDeAproximacao } from './aproximacao';
+import { alcancavelAPe } from './alcance';
 import { buscarCaminho } from './pathfinding';
 import type { Caminho, ModoDeBusca } from './pathfinding';
-import { sobraNaOrigem, vagaDeConstrucao, vagaDeOcupacao, vagaDeRefeicao, vagaDoDestino } from './reservas';
+import {
+  sobraNaOrigem, vagaDeConstrucao, vagaDeOcupacao, vagaDeRefeicao, vagaDoDestino, vagaNoTile,
+} from './reservas';
 import { predioAceita } from './ocupacao';
 import { temComidaNaBodega } from './bodega';
 import { tilesReservadosParaColheita } from './recursos';
@@ -103,9 +107,12 @@ const UNIDADE_ELEGIVEL_POR_TIPO: Readonly<Record<TipoDeTarefa, string | null>> =
   'excedente-para-armazem': TIPO_QUE_CARREGA,
   construir: TIPO_QUE_CONSTROI,
   // F18d-1b: assentar tile planejado e trabalho de canteiro — mesmo laborer,
-  // mesma FSM (`indo_a_obra` -> `martelando`), mesmo claim. A pedra nao viaja
-  // com ele: sai do armazem no assentamento.
+  // mesma FSM (`indo_a_obra` -> `martelando`), mesmo claim. F18g: a pedra
+  // chega ao tile pela carga abaixo; ele a consome do chao.
   'assentar-estrada': TIPO_QUE_CONSTROI,
+  // F18g: a pedra do canteiro e carga como qualquer outra — mesmo serf, mesma
+  // FSM, mesmo claim. O que muda e a ponta: a entrega e num tile, nao em gaveta.
+  'pedra-para-canteiro': TIPO_QUE_CARREGA,
   // F14: 'ocupar' nao tem UM tipo elegivel — quem pode ocupar depende do PREDIO
   // de destino. `null` aqui significa "esta pergunta nao se responde so com o
   // tipo da tarefa", e por isso `elegivelParaTarefa` NUNCA autoriza uma
@@ -335,24 +342,36 @@ export function criarTarefaComer(
 }
 
 /**
- * F18d-1b — cria a tarefa de assentar o tile PLANEJADO `tile`, aberta, e com
- * ela a reserva de uma pedra no armazem que vai pagar. `null` quando nenhum
- * armazem tem pedra reservavel: sem pagador nao ha tarefa, e o tile fica no
- * canteiro esperando (`gerarTarefas` tenta de novo quando a pedra chegar).
+ * F18d-1b — cria a tarefa de assentar o tile PLANEJADO `tile`, aberta.
  *
- * A reserva vale ja em `'aberta'`, diferente de toda tarefa de carga — ver
- * `TarefaAssentarEstrada`. Por isso `criar` e a operacao que compromete a pedra,
- * e nao `reclamar`.
+ * F18g — sem pagador e sem `null`: a tarefa nao reserva mais nada (a pedra viaja
+ * pela carga abaixo), entao nao ha armazem a procurar. Ela nasce para todo tile
+ * do canteiro, como a de arar; quem decide se o laborer VAI e o claim, que exige
+ * pedra no tile ou a caminho (`tileDeEstradaTrabalhavel`).
  */
 export function criarTarefaDeAssentamento(
   state: GameState, tile: TileDeGrid,
-): { readonly state: GameState; readonly id: string } | null {
-  const origem = armazemQuePagaAEstrada(state);
-  if (origem === null) return null;
+): { readonly state: GameState; readonly id: string } {
   const numero = state.proximoId;
   const tarefa: TarefaAssentarEstrada = {
-    id: `t${numero}`, numero, tipo: 'assentar-estrada', mercadoria: MERCADORIA_DA_ESTRADA,
-    origem, destinoTile: tile, estado: 'aberta', reclamadaPor: null,
+    id: `t${numero}`, numero, tipo: 'assentar-estrada', destinoTile: tile, estado: 'aberta', reclamadaPor: null,
+  };
+  return inserirTarefa(state, tarefa);
+}
+
+/**
+ * F18g — cria a carga de UMA pedra do armazem `origem` ate o tile planejado
+ * `tile`, aberta. Aberta nao reserva nada (como toda carga); a reserva na origem
+ * nasce no claim e a vaga do tile (`vagaNoTile`) e derivada das tarefas dele.
+ * Quem a cria e `gerarTarefas`, so ate onde a pedra livre do armazem chega.
+ */
+export function criarTarefaDePedraParaCanteiro(
+  state: GameState, campos: { readonly origem: string; readonly tile: TileDeGrid },
+): { readonly state: GameState; readonly id: string } {
+  const numero = state.proximoId;
+  const tarefa: TarefaPedraParaCanteiro = {
+    id: `t${numero}`, numero, tipo: 'pedra-para-canteiro', mercadoria: MERCADORIA_DA_ESTRADA,
+    origem: campos.origem, destinoTile: campos.tile, estado: 'aberta', reclamadaPor: null,
   };
   return inserirTarefa(state, tarefa);
 }
@@ -465,11 +484,60 @@ export function ligacaoEntrePredios(
  *  E a pergunta de EXISTENCIA ("da para entregar?"), que nao depende de serf: e o que o
  *  gerador, o saneamento e o verificador usam. A ORDEM de escolha do serf usa o custo A*
  *  em ticks de `custoDaTarefa`, que parte da posicao dele. */
-export function distanciaDaTarefa(state: GameState, tarefa: TarefaDeTransporte, dados: GameData = gameData): number | null {
+export function distanciaDaTarefa(state: GameState, tarefa: TarefaDoSerf, dados: GameData = gameData): number | null {
   const origem = state.predios.porId[tarefa.origem];
+  if (!origem) return null;
+  // F18g: a ponta de entrega da pedra do canteiro e um TILE — a ligacao e da porta
+  // do armazem ate ele, no modo do nivel (`livre`: canteiro nao tem rua).
+  if (ehTarefaDePedraParaCanteiro(tarefa)) {
+    return ligacaoEntrePredioETile(state, origem, tarefa.destinoTile, modoDoTipo(tarefa.tipo, dados), dados);
+  }
   const destino = state.predios.porId[tarefa.destino];
-  if (!origem || !destino) return null;
+  if (!destino) return null;
   return ligacaoEntrePredios(state, origem, destino, modoDoTipo(tarefa.tipo, dados), dados);
+}
+
+/**
+ * F18g — a ligacao entre UM tile e as portas de um predio, no modo dado: o menor
+ * custo A* em ticks ate a porta mais barata, ou `null` sem caminho. Irma de
+ * `ligacaoEntrePredios` com a ponta trocada; e a pergunta que o gerador faz ao
+ * escolher de qual armazem a pedra sai, e nao depende de serf.
+ *
+ * UMA busca, do tile para o CONJUNTO das portas (o A* aceita varios alvos), e nao
+ * uma por porta como `ligacaoEntrePredios` faz: o gerador chama isto por carga
+ * criada, e um canteiro cria dezenas. Medido no caos da F09: a versao por porta
+ * pesava 589 mil nos expandidos em 200 passos. O custo no sentido inverso pode
+ * diferir do sentido serf->tile em UM passo (o custo e do tile em que se pisa), e
+ * isso so pode mudar o desempate entre dois armazens quase equidistantes —
+ * deterministico do mesmo jeito, e a ordem de `predios.ordem` continua o
+ * desempate final.
+ */
+export function ligacaoEntrePredioETile(
+  state: GameState, a: Predio, tile: TileDeGrid, modo: ModoDeBusca, dados: GameData = gameData,
+): number | null {
+  return buscarCaminho(state, tile, tilesDaPorta(a, dados), modo, dados)?.custo ?? null;
+}
+
+/**
+ * F18g — a EXISTENCIA de caminho a pe de alguma porta de `a` ate `tile`.
+ *
+ * E a pergunta que `sanearTarefas` faz de TODA carga de pedra aberta, todo tick —
+ * e um canteiro tem dezenas de tiles. Respondida por A*, custava uma busca por
+ * porta por tile (medido no caos da F09, semente 1: 0,5 s viraram 4,7 s; e uma
+ * memoizacao por par ainda refazia 90 buscas a cada predio que nascia). A resposta
+ * vem do indice de componentes de `alcance.ts`: O(1) por consulta, uma varredura
+ * do mapa por mudanca de footprint ou de recurso que bloqueia.
+ *
+ * O modo vem do dado (nunca digitado): o indice so vale para `'livre'`, cuja
+ * existencia nao depende da rede. Se um dia o dado puser a pedra do canteiro em
+ * `'estrada'`, a pergunta passa a depender de `estradas` e cai para o A* direto.
+ */
+export function tileAlcancavelDaPorta(
+  state: GameState, a: Predio, tile: TileDeGrid, dados: GameData = gameData,
+): boolean {
+  const modo = modoDoTipo('pedra-para-canteiro', dados);
+  if (modo !== 'livre') return ligacaoEntrePredioETile(state, a, tile, modo, dados) !== null;
+  return tilesDaPorta(a, dados).some((porta) => alcancavelAPe(state, porta, tile, dados));
 }
 
 /** As duas pernas da viagem de uma unidade para uma tarefa, em ticks (F10). */
@@ -500,13 +568,27 @@ export function portasDaTarefa(
   return modo === 'estrada' ? portas.filter((t) => ehEstrada(state.estradas, t)) : portas;
 }
 
+/**
+ * F18g — onde a carga DESTA tarefa e entregue: as portas do predio de destino
+ * (`portasDaTarefa`) ou, para a pedra do canteiro, o proprio tile — quem entrega
+ * no canteiro pisa no tile que vai virar rua, como o laborer que o assenta. E a
+ * unica pergunta em que os dois membros de `TarefaDoSerf` divergem; a FSM do serf
+ * e o plano passam por aqui para nao divergirem entre si.
+ */
+export function alvosDeEntrega(
+  state: GameState, tarefa: TarefaDoSerf, modo: ModoDeBusca, dados: GameData = gameData,
+): TileDeGrid[] {
+  if (ehTarefaDePedraParaCanteiro(tarefa)) return [{ gx: tarefa.destinoTile.gx, gy: tarefa.destinoTile.gy }];
+  return portasDaTarefa(state, tarefa.destino, modo, dados);
+}
+
 /** As portas de COLETA e de ENTREGA da tarefa, no modo do nivel dela. Em
  *  `'estrada'` a coleta ainda se filtra ao componente da entrega — sem isso a
  *  perna carregada nao teria como existir. Em `'livre'` nao ha componente: a
  *  existencia do caminho quem responde e o A*, tile a tile. */
-function portasDeColeta(state: GameState, tarefa: TarefaDeTransporte, dados: GameData): { coleta: TileDeGrid[]; entrega: TileDeGrid[] } {
+function portasDeColeta(state: GameState, tarefa: TarefaDoSerf, dados: GameData): { coleta: TileDeGrid[]; entrega: TileDeGrid[] } {
   const modo = modoDoTipo(tarefa.tipo, dados);
-  const entrega = portasDaTarefa(state, tarefa.destino, modo, dados);
+  const entrega = alvosDeEntrega(state, tarefa, modo, dados);
   if (modo === 'livre') return { coleta: portasDaTarefa(state, tarefa.origem, modo, dados), entrega };
   const componentesDaEntrega = new Set(entrega.map((t) => componenteDe(state, t, dados)));
   const coleta = portasDaTarefa(state, tarefa.origem, modo, dados).filter((t) => componentesDaEntrega.has(componenteDe(state, t, dados)));
@@ -523,7 +605,7 @@ function portasDeColeta(state: GameState, tarefa: TarefaDeTransporte, dados: Gam
  * pernas; empate: a primeira de `tilesDaPorta`, por `gx`).
  */
 export function planoDaTarefa(
-  state: GameState, tarefa: TarefaDeTransporte, unidadeId: string, dados: GameData = gameData,
+  state: GameState, tarefa: TarefaDoSerf, unidadeId: string, dados: GameData = gameData,
 ): PlanoDaTarefa | null {
   const unidade = state.unidades.porId[unidadeId];
   if (!unidade) return null;
@@ -622,7 +704,7 @@ export function caminhoDoLaborer(
  * unica coisa que existe sem um serf em campo. `null` se nao ha caminho.
  */
 export function custoDaTarefa(
-  state: GameState, tarefa: TarefaDeTransporte, unidadeId: string | null, dados: GameData = gameData,
+  state: GameState, tarefa: TarefaDoSerf, unidadeId: string | null, dados: GameData = gameData,
 ): number | null {
   if (unidadeId !== null) return planoDaTarefa(state, tarefa, unidadeId, dados)?.custo ?? null;
   const { coleta, entrega } = portasDeColeta(state, tarefa, dados);
@@ -675,7 +757,7 @@ export function reclamar(
     return { ok: false, motivo: 'unidade-invalida' };
   }
 
-  if (ehTarefaDeTransporte(tarefa)) {
+  if (ehTarefaDoSerf(tarefa)) {
     // F15b — a oferta da origem depende do TIPO: a gaveta muda (nivel 7 tira da
     // `entrada`) e no nivel 7 o que se pode levar e o EXCEDENTE, nao o estoque
     // bruto. `sobraNaOrigem` e a mesma conta que `sanearTarefas` usa; perguntar
@@ -684,10 +766,12 @@ export function reclamar(
     if (sobraNaOrigem(state, tarefa, dados) < 1) {
       return { ok: false, motivo: 'origem-sem-recurso' };
     }
-    // A vaga depende do TIPO: `faltam` numa obra, a demanda da fila numa escola (F13).
-    if (vagaDoDestino(state, tarefa, dados) < 1) {
-      return { ok: false, motivo: 'destino-sem-vaga' };
-    }
+    // A vaga depende do TIPO: `faltam` numa obra, a demanda da fila numa escola
+    // (F13) — e, F18g, o que o TILE ainda pede de pedra (`vagaNoTile`).
+    const vaga = ehTarefaDePedraParaCanteiro(tarefa)
+      ? vagaNoTile(state, tarefa, dados)
+      : vagaDoDestino(state, tarefa, dados);
+    if (vaga < 1) return { ok: false, motivo: 'destino-sem-vaga' };
     if (custoDaTarefa(state, tarefa, unidadeId, dados) === null) return { ok: false, motivo: 'sem-caminho' };
   } else if (tarefa.tipo === 'ocupar') {
     // F14: UMA vaga por predio; o tipo certo de civil ja foi checado em
@@ -709,13 +793,18 @@ export function reclamar(
     }
   } else if (tarefa.tipo === 'assentar-estrada') {
     // F18d-1b: o tile tem de continuar no CANTEIRO. Se ja foi assentado ou
-    // demolido entre a criacao e o claim, nao ha o que fazer la.
-    if (!ehPlanejada(state.estradasPlanejadas, tarefa.destinoTile)) {
+    // demolido entre a criacao e o claim, nao ha o que fazer la. F18g: e tem de
+    // haver pedra nele ou a caminho (`tileDeEstradaTrabalhavel`, o espelho de
+    // `obraTrabalhavel`): sem isto o laborer reclamaria, iria e esperaria para
+    // sempre num tile que nenhum serf vai abastecer. O portao vive AQUI e na
+    // ordenacao (`tarefasDoLaborerEmOrdem`), como o da obra, para que ele nao
+    // reclame, largue e reclame o mesmo tile a cada tick.
+    if (!tileDeEstradaTrabalhavel(state, tarefa.destinoTile, dados)) {
       return { ok: false, motivo: 'destino-sem-trabalho' };
     }
     // O laborer tem de CHEGAR no tile — mesma exigencia que `'construir'` faz da
     // porta da obra. Sem isto ele reclamaria um tile ilhado e largaria no tick
-    // seguinte, reservando a pedra a cada volta.
+    // seguinte.
     if (caminhoAteOTile(state, tarefa.destinoTile, unidadeId, dados) === null) {
       return { ok: false, motivo: 'sem-caminho' };
     }
@@ -784,10 +873,10 @@ export function reclamar(
  *  So MATERIAL tem `'carregando'` (F11b: 'construir' nao carrega nada, nunca chega aqui). */
 export function marcarCarregando(state: GameState, tarefaId: string): GameState {
   const tarefa = state.jobs.tarefas.porId[tarefaId];
-  if (!tarefa || !ehTarefaDeTransporte(tarefa) || tarefa.estado !== 'reclamada') {
-    throw new Error(`marcarCarregando: '${tarefaId}' nao esta reclamada (ou nao e tarefa de transporte)`);
+  if (!tarefa || !ehTarefaDoSerf(tarefa) || tarefa.estado !== 'reclamada') {
+    throw new Error(`marcarCarregando: '${tarefaId}' nao esta reclamada (ou nao e tarefa do serf)`);
   }
-  const carregando: TarefaDeTransporte = { ...tarefa, estado: 'carregando' };
+  const carregando: TarefaDoSerf = { ...tarefa, estado: 'carregando' };
   return { ...state, jobs: { tarefas: { porId: { ...state.jobs.tarefas.porId, [tarefaId]: carregando }, ordem: state.jobs.tarefas.ordem } } };
 }
 
@@ -885,11 +974,13 @@ export function liberar(
  */
 export function tarefasEmOrdem(
   state: GameState, unidadeId: string | null = null, dados: GameData = gameData,
-): TarefaDeTransporte[] {
+): TarefaDoSerf[] {
   const unidade = unidadeId === null ? null : state.unidades.porId[unidadeId];
+  // F18g: `ehTarefaDoSerf`, e nao `ehTarefaDeTransporte` — a pedra do canteiro
+  // disputa a mesma escada, pelo nivel dela em `delivery.json`.
   const candidatas = state.jobs.tarefas.ordem
     .map((id) => state.jobs.tarefas.porId[id])
-    .filter((t): t is TarefaDeTransporte => t !== undefined && ehTarefaDeTransporte(t) && t.estado === 'aberta')
+    .filter((t): t is TarefaDoSerf => t !== undefined && ehTarefaDoSerf(t) && t.estado === 'aberta')
     .filter((t) => unidade == null || elegivelParaTarefa(t.tipo, unidade.tipo));
   const chaves = new Map(candidatas.map((t) => [t.id, {
     nivel: nivelDoTipo(t.tipo, dados),
@@ -948,7 +1039,9 @@ export function tarefasDoLaborerEmOrdem(
     .filter((t) => {
       // O tile ja pode ter saido do canteiro entre a criacao e agora — e cada
       // tarefa de tile olha o SEU canteiro. F18h: o do campo e outro objeto.
-      if (ehTarefaDeAssentamento(t)) return ehPlanejada(state.estradasPlanejadas, t.destinoTile);
+      // F18g: o de estrada exige tambem pedra no tile ou a caminho — o mesmo
+      // portao de `reclamar`, aqui so para nem oferecer o tile vazio.
+      if (ehTarefaDeAssentamento(t)) return tileDeEstradaTrabalhavel(state, t.destinoTile, dados);
       if (ehTarefaDeAradura(t)) return ehCampoPlanejado(state.camposPlanejados, t.destinoTile);
       return obraTrabalhavel(state, t.destino, dados);
     });

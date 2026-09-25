@@ -18,9 +18,10 @@
  * `test-output/F09.json` e a nota da F10 no BUILD_PLAN. Se pedir indice, e otimizacao
  * (por predio e mercadoria), nao mudanca de contrato.
  */
-import type { Gaveta, GameState, TarefaAssentarEstrada, TarefaDeTransporte } from './state';
+import type { Gaveta, GameState, TarefaDeTransporte, TarefaDoSerf, TarefaPedraParaCanteiro } from './state';
 import {
-  ehTarefaDeAssentamento, ehTarefaDeTransporte, gavetaDeOrigem, ID_DO_ARMAZEM, origemDaTarefaVale,
+  ehTarefaDePedraParaCanteiro, ehTarefaDeTransporte, ehTarefaDoSerf, gavetaDeOrigem, ID_DO_ARMAZEM,
+  origemDaTarefaVale,
 } from './state';
 import type { GameData } from './data/types';
 import { gameData } from './data';
@@ -40,34 +41,68 @@ import { vagasDoPredio } from './ocupacao';
  * abaixo de zero sem que nada estivesse errado. A gaveta vem do TIPO da tarefa
  * (`gavetaDeOrigem`), nunca de um campo.
  *
- * F18d-1b — a tarefa de assentar estrada conta AQUI TAMBEM, e conta desde
- * `'aberta'`: a pedra de um tile planejado ja e dele no instante do clique. Sem
- * isso, dois `PlaceRoad` no mesmo tick veriam a mesma unidade livre e o segundo
- * tracado nasceria impagavel. Ela sempre sai da gaveta `saida` do armazem — a
- * unica reservavel, e a mesma de onde `debitarPedra` tira.
- *
- * A QUANTIDADE dela e `terreno.estrada.custoStonePorTile`, o MESMO campo que o
- * assentamento debita (`comOTileAssentado`): reservar uma unidade fixa aqui e
- * cobrar outra la deixaria o armazem negativo no dia em que o custo mudasse.
- * Uma CARGA, essa sim, e sempre uma unidade — isso e da forma da tarefa.
+ * F18g — a pedra do canteiro (`pedra-para-canteiro`) conta aqui como qualquer
+ * carga: uma unidade, so enquanto `reclamada`. O caso especial da F18d-1b — a
+ * tarefa de assentar reservando `custoStonePorTile` desde `'aberta'`, sem
+ * carregar nada — deixou de existir com ela: quem reserva e quem carrega.
+ * `dados` fica na assinatura por compatibilidade de chamada; nada aqui o le.
  */
 export function reservadoNaOrigem(
   state: GameState, predioId: string, mercadoria: string, gaveta: Gaveta = 'saida',
-  dados: GameData = gameData,
+  _dados: GameData = gameData,
 ): number {
   let soma = 0;
   for (const id of state.jobs.tarefas.ordem) {
     const t = state.jobs.tarefas.porId[id];
-    if (t === undefined) continue;
-    // a unica diferenca entre os dois ramos e QUANDO a reserva comeca: a de
-    // assentar reserva desde `aberta`, a de carga so quando reclamada.
-    const daOrigem = (x: TarefaDeTransporte | TarefaAssentarEstrada): boolean =>
-      x.origem === predioId && x.mercadoria === mercadoria && gavetaDeOrigem(x.tipo) === gaveta;
-    if (ehTarefaDeAssentamento(t)) {
-      if (daOrigem(t)) soma += dados.terreno.estrada.custoStonePorTile;
-    } else if (ehTarefaDeTransporte(t) && t.estado === 'reclamada' && daOrigem(t)) soma += 1;
+    if (t === undefined || !ehTarefaDoSerf(t) || t.estado !== 'reclamada') continue;
+    if (t.origem === predioId && t.mercadoria === mercadoria && gavetaDeOrigem(t.tipo) === gaveta) soma += 1;
   }
   return soma;
+}
+
+/**
+ * F18g — a pedra ja RESERVADA para um tile do canteiro: as tarefas de pedra dele
+ * que nao estao abertas (reclamada ou carregando), uma unidade cada. Irma de
+ * `reservadoNoDestino`, com o tile no lugar do predio.
+ */
+export function pedraReservadaParaOTile(state: GameState, chaveDoTile: string): number {
+  let soma = 0;
+  for (const id of state.jobs.tarefas.ordem) {
+    const t = state.jobs.tarefas.porId[id];
+    if (t && ehTarefaDePedraParaCanteiro(t) && t.estado !== 'aberta' && chaveDoTile === chaveDe(t)) soma += 1;
+  }
+  return soma;
+}
+
+/** A chave `"gx,gy"` do tile de destino — escrita aqui, e nao importada de
+ *  `estradas.ts`, pelo ciclo que o cabecalho deste arquivo explica. E a mesma
+ *  forma de `chaveDeTile`; a propriedade de igualdade esta em `tests/`. */
+function chaveDe(t: TarefaPedraParaCanteiro): string {
+  return `${t.destinoTile.gx},${t.destinoTile.gy}`;
+}
+
+/**
+ * F18g — quanto um tile do canteiro ainda PEDE de pedra, antes de descontar
+ * reserva: `custoStonePorTile − entregue`. Zero para tile fora do canteiro (o
+ * mesmo silencio de `demandaNoDestino` para obra que virou predio). Nunca
+ * negativa: pedra alem do custo num tile nao e caso de jogo (a vaga barra), e
+ * se um save trouxer, a demanda e zero e a borracha devolve o excesso.
+ */
+export function demandaDoTile(
+  state: GameState, tarefa: TarefaPedraParaCanteiro, dados: GameData = gameData,
+): number {
+  const chave = chaveDe(tarefa);
+  if (state.estradasPlanejadas[chave] !== true) return 0;
+  return Math.max(0, dados.terreno.estrada.custoStonePorTile - (state.pedraNoCanteiro[chave] ?? 0));
+}
+
+/** F18g — a vaga ainda reservavel no tile: `demanda − reservado`. Negativa quando
+ *  o tile deixou de pedir debaixo de uma reserva — o sinal que `sanearTarefas` usa,
+ *  como em `vagaDoDestino`. */
+export function vagaNoTile(
+  state: GameState, tarefa: TarefaPedraParaCanteiro, dados: GameData = gameData,
+): number {
+  return demandaDoTile(state, tarefa, dados) - pedraReservadaParaOTile(state, chaveDe(tarefa));
 }
 
 /** Vagas de `mercadoria` reservadas no DESTINO `predioId`: tarefas reclamadas E
@@ -160,7 +195,7 @@ export function demandaNoDestino(
  * vaivem que `alvoDeEntrada` existe para impedir.
  */
 export function ofertaNaOrigem(
-  state: GameState, tarefa: TarefaDeTransporte, dados: GameData = gameData,
+  state: GameState, tarefa: TarefaDoSerf, dados: GameData = gameData,
 ): number {
   if (!origemDaTarefaVale(state, tarefa)) return 0;
   if (tarefa.tipo === 'excedente-para-armazem') {
@@ -178,7 +213,7 @@ export function ofertaNaOrigem(
  * serf a caminho) — e esse sinal que `sanearTarefas` usa.
  */
 export function sobraNaOrigem(
-  state: GameState, tarefa: TarefaDeTransporte, dados: GameData = gameData,
+  state: GameState, tarefa: TarefaDoSerf, dados: GameData = gameData,
 ): number {
   return ofertaNaOrigem(state, tarefa, dados)
     - reservadoNaOrigem(state, tarefa.origem, tarefa.mercadoria, gavetaDeOrigem(tarefa.tipo));

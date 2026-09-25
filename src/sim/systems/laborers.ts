@@ -4,7 +4,8 @@
  *   ocioso -> indo_a_obra -> nivelando -> esperando_material -> martelando -> ocioso
  *
  * Nenhum estado alem destes cinco (o GDD proibe). `esperando_material` e estado real e
- * visivel: o laborer fica parado na obra enquanto ha material a caminho.
+ * visivel: o laborer fica parado na obra enquanto ha material a caminho — e, desde a
+ * F18g, parado no TILE do canteiro enquanto a pedra dele vem na mao de um serf.
  *
  * NIVELAMENTO e HP sao da OBRA, nao do laborer — varios laborers na mesma obra somam no
  * MESMO tick (a dobra sequencial de `sistemaDosLaborers`, como o `sistemaDosSerfs`).
@@ -31,7 +32,7 @@ import type {
 import {
   completarObra, ehTarefaDeAradura, ehTarefaDeAssentamento, ehTarefaDeLaborer, ehTarefaDeTile,
 } from '../state';
-import { comOTileAssentado } from '../estradas';
+import { comOTileAssentado, pedraNoTile, tileDeEstradaTrabalhavel } from '../estradas';
 import { comOTileArado } from '../campos';
 import type { GameData } from '../data/types';
 import { gameData } from '../data';
@@ -138,8 +139,10 @@ function passoIndoAObra(state: GameState, u: Unidade, dados: GameData): Passo {
  * (`'destino-sumiu'`), e o laborer cai no `tarefaDoLaborer === null` acima — o mesmo
  * caminho de volta que a obra demolida no meio da viagem ja usava.
  *
- * Chegou = `martelando` direto. Nao ha nivelamento nem material a esperar: a pedra nao
- * viaja com ele, sai do armazem que a tarefa reservou, no tick do assentamento.
+ * Chegou: a aradura vai a `martelando` direto (nao ha material). O assentamento
+ * (F18g) REAVALIA como a obra reavalia: pedra no tile -> `martelando`; pedra a
+ * caminho -> `esperando_material` no tile; nada -> larga (`pedido-da-unidade`,
+ * reabre) — e o claim so o deixa voltar quando houver pedra ou tarefa de pedra.
  */
 function passoIndoAoTile(
   state: GameState, u: Unidade, tarefa: TarefaAssentarEstrada | TarefaArar, dados: GameData,
@@ -150,9 +153,33 @@ function passoIndoAoTile(
     return ficarOcioso(l.state, u, l.events);
   }
   if (!passo.chegou) return semEventos(comUnidade(state, passo.u));
+  if (ehTarefaDeAssentamento(tarefa)) return reavaliarNoTile(state, passo.u, tarefa, dados);
   return semEventos(comUnidade(state, {
     ...passo.u, fsm: 'martelando', fsmData: dadosDaFsm({ tarefa: tarefa.id, progresso: 0 }),
   }));
+}
+
+/**
+ * F18g — o que o laborer faz NO tile do canteiro, a partir do estado atual: o
+ * espelho de `reavaliar` (obra). Diferente dela, este PODE liberar — e so no ramo
+ * "nem pedra, nem pedra a caminho", que e a mesma condicao de
+ * `passoEsperandoMaterial` para a obra sem tarefa de material. E seguro liberar
+ * aqui porque a tarefa de pedra nasce em `gerarTarefas`, no fim do tick anterior:
+ * "nao existe tarefa de pedra" ja e informacao verdadeira quando a FSM anda.
+ */
+function reavaliarNoTile(
+  state: GameState, u: Unidade, tarefa: TarefaAssentarEstrada, dados: GameData,
+): Passo {
+  if (pedraNoTile(state, tarefa.destinoTile) >= dados.terreno.estrada.custoStonePorTile) {
+    return semEventos(comUnidade(state, {
+      ...u, fsm: 'martelando', fsmData: dadosDaFsm({ tarefa: tarefa.id, progresso: 0 }),
+    }));
+  }
+  if (tileDeEstradaTrabalhavel(state, tarefa.destinoTile, dados)) {
+    return semEventos(comUnidade(state, { ...u, fsm: 'esperando_material', fsmData: dadosDaFsm({ tarefa: tarefa.id }) }));
+  }
+  const l = liberarTarefa(state, tarefa.id, 'pedido-da-unidade');
+  return ficarOcioso(l.state, u, l.events);
 }
 
 function passoNivelando(state: GameState, u: Unidade, dados: GameData): Passo {
@@ -173,9 +200,13 @@ function passoNivelando(state: GameState, u: Unidade, dados: GameData): Passo {
 
 function passoEsperandoMaterial(state: GameState, u: Unidade, dados: GameData): Passo {
   const tarefa = tarefaDoLaborer(state, u);
-  // tarefa de TILE nunca passa por aqui (nivelar e esperar material sao da OBRA); o
-  // `if` e o que deixa isso dito, e nao suposto.
-  if (tarefa === null || ehTarefaDeTile(tarefa)) return ficarOcioso(state, u);
+  if (tarefa === null) return ficarOcioso(state, u);
+  // F18g: o laborer espera a pedra NO TILE do canteiro, e a mesma reavaliacao da
+  // chegada decide se ela chegou, se ainda vem ou se ninguem a traz mais.
+  if (ehTarefaDeAssentamento(tarefa)) return reavaliarNoTile(state, u, tarefa, dados);
+  // a aradura nunca passa por aqui (nao ha material a esperar); o `if` e o que
+  // deixa isso dito, e nao suposto.
+  if (ehTarefaDeTile(tarefa)) return ficarOcioso(state, u);
   const obra = obraDaTarefa(state, tarefa);
   if (obra === null) return ficarOcioso(state, u);
 
@@ -235,8 +266,9 @@ function passoMartelando(state: GameState, u: Unidade, dados: GameData): Passo {
  * pedir tempo proprio para a estrada, o campo nasce em `terrain.json` e so esta linha
  * muda).
  *
- * No tick que fecha, a pedra sai do armazem que a tarefa reservou e o tile passa do
- * canteiro para a rede — os dois no MESMO estado novo, nunca um sem o outro.
+ * No tick que fecha, a pedra sai do TILE (`pedraNoCanteiro`, F18g — ate entao saia do
+ * armazem gravado na tarefa) e o tile passa do canteiro para a rede — os dois no
+ * MESMO estado novo, nunca um sem o outro.
  */
 function passoAssentando(
   state: GameState, u: Unidade, tarefa: TarefaAssentarEstrada, dados: GameData,
@@ -245,12 +277,13 @@ function passoAssentando(
   if (progresso < dados.construcao.ticksPorMartelada) {
     return semEventos(comUnidade(state, { ...u, fsmData: dadosDaFsm({ tarefa: tarefa.id, progresso }) }));
   }
-  const assentado = comOTileAssentado(state, tarefa.destinoTile, tarefa.origem, dados);
+  const assentado = comOTileAssentado(state, tarefa.destinoTile, dados);
   if (assentado === null) {
-    // o armazem que reservou ficou sem a pedra (demolido, esvaziado): estrada de graca,
-    // nunca. A tarefa CAI (`'origem-sem-recurso'` nao reabre) e o tile continua no
-    // canteiro — `gerarTarefas` cria outra quando houver quem pague.
-    const l = liberarTarefa(state, tarefa.id, 'origem-sem-recurso');
+    // a pedra sumiu do tile entre o comeco da martelada e agora (so um save
+    // adulterado faz isso: a borracha tira o tile do canteiro junto, e o
+    // saneamento ja teria cancelado a tarefa). Estrada de graca, nunca: a tarefa
+    // REABRE e o claim so a devolve a alguem quando houver pedra de novo.
+    const l = liberarTarefa(state, tarefa.id, 'pedido-da-unidade');
     return ficarOcioso(l.state, u, l.events);
   }
   return semEventos(comUnidade(removerTarefa(assentado, tarefa.id), ocioso(u)));

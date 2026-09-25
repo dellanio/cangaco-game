@@ -8,7 +8,7 @@
  * JSON e nao muda o resultado de nada.
  */
 import type { GameState, Predio, PredioCompleto } from './state';
-import { ID_DO_ARMAZEM } from './state';
+import { ehTarefaDePedraParaCanteiro, ID_DO_ARMAZEM } from './state';
 import type { GameData } from './data/types';
 import { gameData } from './data';
 import { bordaSul, caixaDoPredio } from './footprint';
@@ -35,8 +35,11 @@ export type MotivoDeRecusaDeEstrada =
   // diferente — terreno nao se remove, arvore se corta. Rotulo unico para as
   // duas esconderia justamente a diferenca que o jogador precisa ler.
   | 'recurso'
-  | 'sobreposicao'
-  | 'sem-pedra';
+  | 'sobreposicao';
+// F18g — `'sem-pedra'` SAIU: o comando deixou de exigir a pedra do trecho inteiro
+// no instante do clique (decisao do operador, Opcao A do item F18g). A pedra
+// viaja por tile, e um tile sem pagador fica desenhado esperando — o canteiro e o
+// feedback. Um motivo sem produtor seria folclore no tipo.
 
 /** A mercadoria que a estrada custa ("1 stone por tile", terrain.json). E um id
  *  estrutural, como `ID_DO_ARMAZEM` — o NUMERO vem do dado. */
@@ -383,83 +386,99 @@ export function predioLigadoAoArmazem(
 
 // --- pode construir estrada? (pura; o render pergunta, nao decide) ---
 
-/** Pedra que os armazens completos tem para gastar. So armazem: pedra na saida de uma
- *  Quarry esta esperando o serf, nao e estoque gastavel. Na `saida` conta so o que
- *  NAO esta reservado por uma tarefa (JobBoard, F09): a unidade que um serf ja
- *  reservou e dele. A `entrada` nao e reservavel. */
-/**
- * F18d-1b — O armazem que PAGA o proximo tile de estrada: o primeiro de
- * `predios.ordem` com pedra ainda reservavel na gaveta `saida`. O id dele fica
- * GRAVADO na tarefa (`origem`), e e de la que `comOTileAssentado` debita: reserva e
- * debito nao "seguem a mesma ordem de varredura", eles olham para o MESMO armazem
- * por construcao — o "exatamente uma vez" nao depende de duas buscas coincidirem.
- *
- * So a `saida` conta aqui, e nao `entrada`, porque so ela e reservavel
- * (`reservadoNaOrigem`). Entrega em armazem cai na `saida`
- * (`depositarNoArmazem`), entao `entrada` de armazem nao e caso de jogo normal;
- * reservar contra ela faria `disponivelNaOrigem` ficar negativo, que e o sinal
- * que o saneamento usa para "reservado acima do estoque".
- */
-export function armazemQuePagaAEstrada(state: GameState, dados: GameData = gameData): string | null {
-  const custo = dados.terreno.estrada.custoStonePorTile;
-  for (const armazem of armazensCompletos(state)) {
-    if (disponivelNaOrigem(state, armazem.id, MERCADORIA_DA_ESTRADA) >= custo) return armazem.id;
-  }
-  return null;
+// --- F18g: a pedra parada no canteiro ---
+
+/** F18g — quanta pedra ja foi entregue neste tile do canteiro e ainda nao virou rua. */
+export function pedraNoTile(state: GameState, tile: TileDeGrid): number {
+  return state.pedraNoCanteiro[chaveDeTile(tile)] ?? 0;
+}
+
+/** F18g — `pedraNoCanteiro` com `delta` somado no tile; a entrada some ao chegar a
+ *  zero, para que "so tiles com pedra estao aqui" seja verdade por construcao. */
+export function comPedraNoTile(
+  state: GameState, tile: TileDeGrid, delta: number,
+): GameState['pedraNoCanteiro'] {
+  const chave = chaveDeTile(tile);
+  const total = (state.pedraNoCanteiro[chave] ?? 0) + delta;
+  if (total < 0) throw new Error(`comPedraNoTile: a pedra do tile ${chave} ficaria negativa (${total})`);
+  const proximo: Record<string, number> = { ...state.pedraNoCanteiro };
+  if (total === 0) delete proximo[chave];
+  else proximo[chave] = total;
+  return proximo;
+}
+
+/** F18g — existe tarefa de pedra (em qualquer estado) mirando este tile? E o espelho
+ *  exato de `existeTarefaDeMaterial` (obra.ts): tarefa aberta so nasce com pedra
+ *  livre num armazem, entao "existe tarefa" e "a pedra vem". */
+export function existeTarefaDePedraParaOTile(state: GameState, tile: TileDeGrid): boolean {
+  const chave = chaveDeTile(tile);
+  return state.jobs.tarefas.ordem.some((id) => {
+    const t = state.jobs.tarefas.porId[id];
+    return t !== undefined && ehTarefaDePedraParaCanteiro(t) && chaveDeTile(t.destinoTile) === chave;
+  });
 }
 
 /**
- * F18d-1b — o tile planejado vira estrada DE PE, e o armazem `origemId` (o que a
- * tarefa reservou) paga `custoStonePorTile`. `null` quando ele nao tem mais a
- * pedra: sem pedra nao nasce estrada, e quem chama libera a tarefa.
+ * F18g — ha algo que um laborer possa fazer neste tile do canteiro agora? O espelho
+ * de `obraTrabalhavel` (obra.ts), e pelo mesmo motivo: sem esta regra, com 2 de
+ * pedra e 30 tiles desenhados, dois laborers iriam aos dois tiles mais perto DELES
+ * e esperariam para sempre a pedra que os serfs levaram aos dois tiles mais perto
+ * DELES — espera indefinida e travamento de regra, nao balanceamento.
  *
- * Le a `saida` CRUA, e nao `disponivelNaOrigem`: a reserva que esta la e a da
- * PROPRIA tarefa que assenta (`reservadoNaOrigem` a conta desde `'aberta'`), e
- * descontar de novo seria cobrar duas vezes pelo mesmo tile.
+ * Duas clausulas: a pedra ja esta no tile (da para assentar), ou esta a caminho
+ * (da para esperar). Sem nenhuma, nao ha nada que o laborer possa fazer ali, e o
+ * claim recusa com `'destino-sem-trabalho'`.
+ */
+export function tileDeEstradaTrabalhavel(
+  state: GameState, tile: TileDeGrid, dados: GameData = gameData,
+): boolean {
+  if (!ehPlanejada(state.estradasPlanejadas, tile)) return false;
+  if (pedraNoTile(state, tile) >= dados.terreno.estrada.custoStonePorTile) return true;
+  return existeTarefaDePedraParaOTile(state, tile);
+}
+
+/**
+ * F18d-1b, refeito na F18g — o tile planejado vira estrada DE PE, consumindo
+ * `custoStonePorTile` da PEDRA PARADA NO TILE (`pedraNoCanteiro`). `null` quando
+ * ela nao esta la: sem pedra nao nasce estrada, e quem chama libera a tarefa.
+ *
+ * Ate a F18g o debito era do ARMAZEM gravado na tarefa (`origemId`), e a pedra
+ * nunca saia de la antes do assentamento. Agora ela ja saiu — na coleta pelo
+ * serf — e o que este passo faz e transformar pedra do chao em rua, sem tocar em
+ * predio nenhum.
  */
 export function comOTileAssentado(
-  state: GameState, tile: TileDeGrid, origemId: string, dados: GameData = gameData,
+  state: GameState, tile: TileDeGrid, dados: GameData = gameData,
 ): GameState | null {
-  const armazem = state.predios.porId[origemId];
-  if (!armazem || armazem.estado !== 'completo' || armazem.tipo !== ID_DO_ARMAZEM) return null;
   const custo = dados.terreno.estrada.custoStonePorTile;
-  const naSaida = armazem.estoque.saida[MERCADORIA_DA_ESTRADA] ?? 0;
-  if (naSaida < custo) return null;
+  if (pedraNoTile(state, tile) < custo) return null;
 
   const chave = chaveDeTile(tile);
   const planejadas = { ...state.estradasPlanejadas };
   delete planejadas[chave];
-  const pago: Predio = {
-    ...armazem,
-    estoque: {
-      ...armazem.estoque,
-      saida: { ...armazem.estoque.saida, [MERCADORIA_DA_ESTRADA]: naSaida - custo },
-    },
-  };
   return {
     ...state,
     estradas: { ...state.estradas, [chave]: true },
     estradasPlanejadas: planejadas,
-    predios: { porId: { ...state.predios.porId, [origemId]: pago }, ordem: state.predios.ordem },
+    pedraNoCanteiro: comPedraNoTile(state, tile, -custo),
   };
 }
 
 /**
- * A pedra que o canteiro ainda PODE comprometer, contada como `armazemQuePagaAEstrada`
- * paga: so a gaveta `saida`, so o que nenhuma tarefa reservou, e so em multiplos do
- * custo de um tile.
+ * A pedra que os armazens completos tem para gastar em estrada: so a gaveta `saida`,
+ * so o que nenhuma tarefa reservou, e so em multiplos do custo de um tile.
  *
  * F18d-1b — as tres restricoes sao o MESMO predicado do pagador, escrito uma vez:
  *  - a gaveta `entrada` saiu da conta. Ate aqui ela entrava porque o `debitarPedra` do
  *    comando podia esvazia-la; agora o custo e uma RESERVA, e so `saida` e reservavel.
  *    (No jogo a `entrada` de um armazem nunca recebe pedra — `estoqueParaTipo` nasce
  *    vazia e o deposito do serf cai na `saida`; ela so existia em fixture de teste.)
- *  - o piso por armazem impede o aceite que ninguem consegue pagar: dois armazens com
- *    1 de pedra cada, custo 2, somam 2 e nao levantam um tile sequer. Aceitar ali
- *    deixaria o tile desenhado esperando para sempre uma tarefa que nao nasce.
+ *  - o piso por armazem impede contar o que ninguem consegue pagar: dois armazens com
+ *    1 de pedra cada, custo 2, somam 2 e nao levantam um tile sequer.
  *
- * Aceito => existe pagador para cada tile, por construcao: cada tarefa consome um
- * multiplo inteiro do custo no armazem que a paga.
+ * F18g — deixou de ser PORTAO: `canPlaceRoad` nao a consulta mais. Continua sendo a
+ * MEDIDA de "quantos tiles a vila consegue pagar agora" — e o que a previa do render
+ * e os testes da F09 leem —, e a tarefa de pedra nasce so ate onde ela chega.
  */
 export function pedraDisponivel(state: GameState, dados: GameData = gameData): number {
   const custo = dados.terreno.estrada.custoStonePorTile;
@@ -482,7 +501,7 @@ export function tileEmPredio(state: GameState, tile: TileDeGrid, dados: GameData
 
 export type ResultadoDeEstrada =
   | { readonly ok: true; readonly novos: readonly TileDeGrid[]; readonly custoEmPedra: number }
-  | { readonly ok: false; readonly motivo: MotivoDeRecusaDeEstrada; readonly tile: TileDeGrid | null };
+  | { readonly ok: false; readonly motivo: MotivoDeRecusaDeEstrada; readonly tile: TileDeGrid };
 
 /**
  * Pode-se construir estrada sobre `tiles`? Pura. Devolve os tiles NOVOS (os que ainda
@@ -490,7 +509,12 @@ export type ResultadoDeEstrada =
  * o motivo e o primeiro tile culpado. Tudo ou nada: um tile invalido recusa o trecho.
  *
  * Ordem: cada tile (mapa, depois terreno, depois recurso, depois predio — obra
- * incluida), e so entao a pedra.
+ * incluida). A PEDRA NAO ENTRA (F18g): ate a F18d-1b o trecho era recusado com
+ * `'sem-pedra'` quando `custoEmPedra > pedraDisponivel`, e era ESSE portao — nao o
+ * debito — que apertava a abertura (31 tiles contra 30 de pedra derrubaram a vila
+ * inteira na F-T4b). Agora o canteiro se desenha sem pagador e a pedra chega por
+ * tile, quando houver; `custoEmPedra` continua na resposta porque a previa do
+ * render mostra ao jogador quanto o trecho vai custar.
  *
  * F-T2b — a estrada NAO se assenta sobre recurso que bloqueia o PASSO, e nao e
  * enfeite: sem esta recusa existe o tile passavel no modo `estrada` e bloqueado no
@@ -536,6 +560,5 @@ export function canPlaceRoad(
     if (!ehEstrada(state.estradas, tile) && !ehPlanejada(state.estradasPlanejadas, tile)) novos.push(tile);
   }
   const custoEmPedra = novos.length * dados.terreno.estrada.custoStonePorTile;
-  if (custoEmPedra > pedraDisponivel(state, dados)) return { ok: false, motivo: 'sem-pedra', tile: null };
   return { ok: true, novos, custoEmPedra };
 }

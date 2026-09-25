@@ -315,6 +315,14 @@ export function comandosDaVilaNoTick(
       }
       break;
     }
+    // F18g — "a rua vem primeiro" passou a significar rua DE PE, nao rua comandada.
+    // Desde que a pedra viaja por tile, `canPlaceRoad` aceita o trecho sem pagador
+    // e o desenha inteiro; a pedra chega tile a tile, ATRAS do material de obra na
+    // escada. Sem este guarda a planta subia e ficava completa e ocupada com a porta
+    // ainda no canteiro (medido: Moinho ocupado em 2993 e `ligadoAoArmazem: false`
+    // no fechamento), e a F-CAL-b mediria um moinho parado por logistica de rua, nao
+    // por calibracao. O trecho tem de estar assentado inteiro antes de a planta sair.
+    if (p.rua.some((t) => !ehEstrada(state.estradas, t))) break;
     if (predioNoCanto(state, p.gx, p.gy) === null) {
       if (canPlace(state, p.tipo, p.gx, p.gy, dados).ok) {
         comandos.push({ type: 'PlaceBlueprint', buildingId: p.tipo, gx: p.gx, gy: p.gy });

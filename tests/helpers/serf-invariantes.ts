@@ -8,6 +8,7 @@ import { gameData } from '../../src/sim/data';
 import type { GameData } from '../../src/sim/data/types';
 import type { GameState } from '../../src/sim/state';
 import { custoDoPasso } from '../../src/sim/pathfinding';
+import { MERCADORIA_DA_ESTRADA } from '../../src/sim/estradas';
 
 export const ESTADOS_DO_SERF = ['ocioso', 'indo_buscar', 'carregando', 'indo_entregar', 'entregando', 'devolvendo'] as const;
 
@@ -110,5 +111,10 @@ export function bensPorMercadoria(estado: GameState): Record<string, number> {
     const carga = estado.unidades.porId[id]?.fsmData.carga;
     if (carga !== undefined) somar(carga, 1);
   }
+  // F18g: a pedra parada no canteiro e pedra. Entregar no tile tira 1 da carga e
+  // poe 1 aqui (soma igual); assentar tira 1 daqui e vira rua (a rua nao e bem —
+  // quem quer a soma fechada com ela conta `estradas x custo`, como o aceite da
+  // F18d-1b faz).
+  for (const quantidade of Object.values(estado.pedraNoCanteiro)) somar(MERCADORIA_DA_ESTRADA, quantidade);
   return total;
 }

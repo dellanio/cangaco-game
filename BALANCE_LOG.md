@@ -456,6 +456,27 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   `production.json:proporcoesDeReferencia`, `src/sim/aproximacao.ts`,
   `docs/calibracao-fase-b.md`
 
+- [2026-09-25] **A folga de pedra da abertura, remedida com a pedra viajando por tile
+  (F18g): o limiar é 27 para 26 tiles, e o guarda do gerador ficou pessimista por 3** |
+  `test-output/F18g-sonda-pontas.json` (sonda temporária, apagada; os números ficaram).
+  A abertura com a rua de 26 tiles, estoque inicial variado e o guarda desligado: **34
+  fecha a Fase A em 1319** (estoque toca 0 no tick 1012), 30 em 2129, 28 em 2563, **27 em
+  2691, 26 TRAVA** — 23 tiles de pé, pedreira e segunda casa de lenhador em obra aos
+  12 000 ticks, zero recusa de comando. O mecanismo: a carga de pedra da rua (nível 8)
+  nasce no tick do comando, e o material da obra (nível 3) só nasce depois do
+  nivelamento; nesse intervalo os serfs levam a pedra para o canteiro, e a pedreira —
+  que é quem produziria o resto — nunca recebe as 2 dela. A "folga de 4" da entrada de
+  2026-09-25 (34 − 26 − 4) media uma **recusa** que não existe mais; o que ela mede agora
+  é a distância ao **travamento**, e a conta `rua + 4` está 3 acima do limiar medido. |
+  **Nenhum número girado.** O guarda fica como está, de propósito: o limiar de 1 é de
+  ordem de tick (a obra da pedreira ganha a corrida por uma pedra), e um guarda no fio
+  da navalha não é guarda; a mensagem dele passou a dizer o que protege. A ponta
+  "escalonado" (18 tiles, 12 de folga) não foi remedida — a tensão entre as duas
+  escolhas deixou de ser "cabe / não cabe" e virou "quanto tempo a vila fica sem pedra",
+  que é balanceamento do lote 2 (pedreira, lenhador, minas). | `data/economy.json:
+  estadoInicial.estoque.stone`, `tools/geometria-da-abertura.mjs`, `data/delivery.json`
+  (o nível da `pedra-para-canteiro`)
+
 ---
 
 ## Ciclos fechados

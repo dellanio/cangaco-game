@@ -4,6 +4,13 @@
  * "A rua desenhada nao liga nada no tick do comando e liga depois que o laborer assenta;
  *  a pedra sai do armazem exatamente uma vez, no assentamento." (BUILD_PLAN.md)
  *
+ * F18g INVERTEU a segunda frase por definicao (o item da F18g o diz): a pedra sai do
+ * armazem na COLETA do serf, viaja na mao dele, descansa no tile e so entao vira rua. O
+ * que este arquivo afirma sobreviveu inteiro — e ficou mais forte — porque `bens`
+ * (`bensPorMercadoria`) passou a contar a mao do serf E a pedra parada no tile: a soma
+ * `bens + rua x custo` continua constante em todo tick, atravessando agora quatro
+ * lugares em vez de dois. Quem afirma ONDE a pedra sai e `tests/F18g-pedra-viaja.test.ts`.
+ *
  * O cenario e a rua que ligaria a escola ao armazem do estado inicial. As duas metades
  * do aceite viram invariante de TODO tick do percurso, nao asserçao de ponta:
  *
@@ -13,8 +20,9 @@
  *    rua desenhada e a uniao das duas portas, e o traçado que liga e um pedaço dela — o
  *    que o aceite pede e que quem virou a chave tenha sido um assentamento.)
  *  - PEDRA: `bens.stone + tilesDePe x custo` e constante o percurso inteiro. Isso e mais
- *    forte que medir o total no fim: prende a saida da pedra ao tick do assentamento
- *    (nao antes, no comando) e a uma vez so (duas debitariam sem tile novo).
+ *    forte que medir o total no fim: nenhuma pedra some nem nasce em tick nenhum, do
+ *    comando ao ultimo assentamento (duas ruas por uma pedra, ou pedra que evapora na
+ *    mao do serf, quebram isto igual).
  */
 import { describe, it, expect, afterAll } from 'vitest';
 import { gameData } from '../src/sim/data';
@@ -71,7 +79,7 @@ describe('F18d-1b — a rua desenhada nao liga; quem liga e o assentamento', () 
     };
   });
 
-  it('o laborer assenta tile a tile; a pedra sai uma vez, no assentamento, e so entao liga', () => {
+  it('o laborer assenta tile a tile; nenhuma pedra some nem nasce no caminho, e so o assentamento liga', () => {
     let estado = step(inicial, [{ type: 'PlaceRoad', tiles: RUA }]);
     const constante = pedraMaisRua(inicial);
     // um tick pode ter mais de um assentamento: sao dois laborers, cada um com o seu tile
@@ -145,7 +153,7 @@ describe('F18d-1b — a rua desenhada nao liga; quem liga e o assentamento', () 
 afterAll(() => {
   gravarEvidencia('F18d-1b', {
     feature: 'F18d-1b-estrada-canteiro',
-    aceite: 'a rua desenhada nao liga nada no tick do comando e liga depois que o laborer assenta; a pedra sai do armazem exatamente uma vez, no assentamento',
+    aceite: 'a rua desenhada nao liga nada no tick do comando e liga depois que o laborer assenta; a pedra nao some nem nasce em tick nenhum (F18g: ela sai do armazem na coleta do serf e vira rua no assentamento — ver test-output/F18g.json)',
     cenario: {
       rua: { tiles: RUA.length, de: RUA[0], ate: RUA[RUA.length - 1] },
       liga: { predio: escola.id, tipo: escola.tipo, ao: armazem.id },
