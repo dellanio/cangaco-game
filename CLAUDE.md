@@ -141,6 +141,7 @@ Não adicione dependência nova sem registrar o motivo em `PROGRESS.md`.
   Fase B (2026-09-25) rodou `npm run verify` em cima de um número que outra
   sessão estava girando, e quase leu a falha como sua. Antes de qualquer commit
   na `main`: `git status`, e só arquivos seus na lista.
+
 Se a feature se revelar maior do que uma sessão, **não improvise**: quebre em
 sub-itens dentro de `BUILD_PLAN.md`, registre em `PROGRESS.md` e entregue o
 primeiro. Feature pela metade sem registro é o pior resultado possível.
