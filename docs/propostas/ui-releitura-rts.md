@@ -447,6 +447,16 @@ afirmação `canvas.bottom <= balcao.top` e passa a medir os quatro estados.
 
 ### 8.5 Fatias de implementação (uma por sessão)
 
+> **Estado (2026-09-25): as quatro fatias estão implementadas na branch
+> `estilo-ui`**, um commit por fatia (`feat(ui): Layout 2, fatia N`). O que
+> saiu diferente do plano, e por quê: a faixa tem **148 px**, não 132 (a fila
+> de cinco vagas mais o título não cabia em 108 px de conteúdo), e a alça
+> **24 px**; a lombada tem **22 px** (a 18 o título vertical não lia). O
+> `#alertas` foi para dentro do `#hud` no `index.html` sem mudar
+> `ui/alertas.ts`. `tools/shot.js` ganhou `CANGACO_SHOT_PORTA` porque um
+> Vite órfão de outra sessão ocupava a porta 5175 e o runner media o
+> `index.html` do diretório vizinho. As perguntas de 8.6 seguem abertas.
+
 1. **Grade e retração.** `index.html` e `estilo.css` com a grade de três
    linhas e os dois atributos; `ui/prancha.ts` e `ui/balcao.ts` só com abrir,
    fechar e a alça, e o conteúdo de hoje movido para dentro sem mudar. F06
