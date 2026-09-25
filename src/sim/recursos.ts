@@ -223,6 +223,19 @@ export function tilePlantavel(
 }
 
 /**
+ * F-T3 — o predicado de POSICAO entra por PARAMETRO, como `reservados`: quem
+ * escolhe o tile nao conhece pathfinding (importar daqui seria ciclo — veja o
+ * cabecalho de `sim/aproximacao.ts`), e quem conhece passa a pergunta pronta.
+ * `SEMPRE` mantem a resposta de antes para o chamador a quem posicao nao
+ * importa — a previa da planta fantasma conta o que ha no chao, nao o que da
+ * para pisar.
+ */
+export type TileElegivel = (chaveDoTile: string) => boolean;
+
+/** O predicado neutro, uma vez so: nao aloca closure por chamada. */
+const SEMPRE: TileElegivel = () => true;
+
+/**
  * F-T2c — O TILE que este predio deve colher agora: o primeiro de
  * `tilesDeColheita` (oeste para leste) que tem `minimo` unidades e que NINGUEM
  * reservou. E a varredura da F-T2a, intacta na ordem — o que mudou e que ela
@@ -236,9 +249,11 @@ export function tilePlantavel(
 export function melhorTileDeColheita(
   state: GameState, predio: PredioCompleto, colheita: ColheitaDeRecurso, minimo: number,
   reservados: ReadonlySet<string> = SEM_RESERVA, dados: GameData = gameData,
+  elegivel: TileElegivel = SEMPRE,
 ): string | null {
   for (const chaveDoTile of tilesDeColheita(predio, colheita, dados)) {
     if (reservados.has(chaveDoTile)) continue;
+    if (!elegivel(chaveDoTile)) continue;
     // ESTRITO de proposito: quem escolhe onde COLHER nao pode aceitar terra em
     // pousio. O predicado largo (`tileTrabalhavel`) responde outra pergunta —
     // "este predio ainda tem o que fazer" —, e confundir as duas seria a
@@ -285,9 +300,11 @@ export function algumTileTrabalhavel(
 export function melhorTileParaPlantio(
   state: GameState, predio: PredioCompleto, colheita: ColheitaDeRecurso,
   reservados: ReadonlySet<string> = SEM_RESERVA, dados: GameData = gameData,
+  elegivel: TileElegivel = SEMPRE,
 ): string | null {
   for (const chaveDoTile of tilesDeColheita(predio, colheita, dados)) {
     if (reservados.has(chaveDoTile)) continue;
+    if (!elegivel(chaveDoTile)) continue;
     if (tilePlantavel(state, chaveDoTile, colheita, dados)) return chaveDoTile;
   }
   return null;

@@ -211,6 +211,25 @@ function footprintsDe(state: Pick<GameState, 'predios'>, dados: GameData): Footp
   return criado;
 }
 
+/**
+ * F-T3 — o tile esta debaixo do footprint de ALGUM predio?
+ *
+ * Mora aqui porque o indice de footprints ja e cache deste arquivo; a alternativa
+ * era o chamador varrer `predios.ordem` para cada tile do alcance, a cada tick.
+ * NAO e a negacao de `tileAndavel`: agua, rocha e arvore tambem reprovam la, e
+ * aqui nao — a pergunta e so de footprint. Fora da grade do mapa, `false`: nao ha
+ * predio fora do mapa, e quem cuida de limite e o proprio `tileAndavel`.
+ */
+export function tileCobertoPorPredio(
+  state: Pick<GameState, 'predios'>, tile: TileDeGrid, dados: GameData = gameData,
+): boolean {
+  const { largura, altura } = dados.terreno.mapaPadrao;
+  const emMapa = Number.isInteger(tile.gx) && Number.isInteger(tile.gy)
+    && tile.gx >= 0 && tile.gy >= 0 && tile.gx < largura && tile.gy < altura;
+  if (!emMapa) return false;
+  return footprintsDe(state, dados).bloqueado[tile.gy * largura + tile.gx] === 1;
+}
+
 function entradaDeCache(state: Pick<GameState, 'predios' | 'estradas'>, dados: GameData): EntradaDeCache {
   const { largura, altura } = dados.terreno.mapaPadrao;
   let porOrdem = cachePorEstradas.get(dados);
