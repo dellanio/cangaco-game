@@ -21,6 +21,7 @@ import { trabalhadorDoTipo } from '../../src/sim/ocupacao';
 import { disponivelAoAlcance, tilesDeColheita } from '../../src/sim/recursos';
 import { receitaDoTipo } from '../../src/sim/producao';
 import { registrarTipoConstruido } from '../../src/sim/desbloqueio';
+import { aberturaDaFaseA } from './abertura';
 
 const tile = (gx: number, gy: number): TileDeGrid => ({ gx, gy });
 
@@ -130,13 +131,28 @@ export function cenarioDePedreira(dados: GameData = gameData): GameState {
  */
 export function cenarioOraculo(dados: GameData = gameData): GameState {
   let s = createInitialState(1, dados);
-  s = comProdutorOcupado(s, { tipo: 'woodcutters', id: 'w2', unidade: 'lenhador-2', gx: 18, gy: 34 }, dados);
-  s = comProdutorOcupado(s, { tipo: 'woodcutters', id: 'w1', unidade: 'lenhador-1', gx: 22, gy: 34 }, dados);
+  // Os dois lenhadores NAO tem coordenada propria: eles nascem onde a REGRA da
+  // abertura pos a mata (`aberturaDaFaseA`, a mesma que a Fase A usa). Antes da
+  // F-T4b eles ficavam em (18,34) e (22,34), que tem ZERO arvore ao alcance 6 —
+  // com `colheita` declarada na receita isso deixou de ser detalhe e virou
+  // `acumulado.timber === 0` no aceite: o carpinteiro esperava tronco que nunca
+  // vinha. Fixture com coordenada digitada nao acompanha mudanca de regra.
+  const daMata = aberturaDaFaseA(s, dados).plantas.filter((pl) => pl.tipo === 'woodcutters');
+  const [m1, m2] = daMata;
+  if (m1 === undefined || m2 === undefined) {
+    throw new Error('fixture do oraculo: a abertura precisa derivar DOIS lenhadores');
+  }
+  s = comProdutorOcupado(s, { tipo: 'woodcutters', id: 'w2', unidade: 'lenhador-2', gx: m1.gx, gy: m1.gy }, dados);
+  s = comProdutorOcupado(s, { tipo: 'woodcutters', id: 'w1', unidade: 'lenhador-1', gx: m2.gx, gy: m2.gy }, dados);
   s = comProdutorOcupado(s, { tipo: 'quarry', id: 'q1', unidade: 'pedreiro', gx: 26, gy: 34 }, dados);
   s = comProdutorOcupado(s, { tipo: 'sawmill', id: 's1', unidade: 'carpinteiro', gx: 32, gy: 34 }, dados);
+  // A rua do oraculo (y=36 na porta de todos, subindo em x=29 ate a porta do
+  // armazem) mais a rua da propria abertura, que e quem alcanca a porta dos
+  // lenhadores la em cima. As duas se encontram em (29,33) e viram UMA rede.
   const rua: TileDeGrid[] = [];
   for (let x = 18; x <= 35; x++) rua.push(tile(x, 36));
   for (let y = 33; y <= 35; y++) rua.push(tile(29, y));
+  for (const t of aberturaDaFaseA(s, dados).rua) rua.push(tile(t.gx, t.gy));
   s = comEstradas(s, rua);
   for (const id of ['w1', 'w2', 'q1', 's1']) exigirLigado(s, id, dados);
   return s;

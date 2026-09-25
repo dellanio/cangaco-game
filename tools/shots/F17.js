@@ -23,14 +23,20 @@
 // A gaveta `saida` de predio de producao nao e afirmada em lugar nenhum: ela fica
 // vazia quase sempre (nota da F16b no item da F17). Estoque se prova no ARMAZEM.
 //
-// A vila tem 26 tiles de largura (BUG-F: a fila recuou para fora do lajedo) e o
-// canvas mostra ~15: `centrarEm` anda a camera com o botao do meio antes de cada
-// clique, como o jogador faria.
-const { retanguloDoCanvas, arrastarDentroDoCanvas } = require('./_canvas');
+// A vila NAO e mais uma fila: desde a F-T4b o grupo da pedra fica a oeste, na
+// linha de porta do armazem, e o par de lenhadores na linha acima dele, virado
+// para o mato (regra em `tools/geometria-da-abertura.mjs`). A rua ganhou um ramo
+// em L, e por isso os arrastos deste roteiro passaram a ser `arrastosDaRede`: ha
+// trecho VERTICAL. O canvas mostra ~15 tiles e a vila e mais larga que isso:
+// `centrarEm` anda a camera com o botao do meio antes de cada clique, como o
+// jogador faria.
+const { retanguloDe, retanguloDoCanvas, arrastarDentroDoCanvas } = require('./_canvas');
 const economia = require('../../data/economy.json');
 const tema = require('../../data/theme-sertao.json');
 const { predios } = require('../../data/buildings.json');
-const { bloqueiaConstrucao, arrastosDaRua } = require('./_recursos');
+const { bloqueiaConstrucao, temRecurso, arrastosDaRede } = require('./_recursos');
+const terreno = require('../../data/terrain.json');
+const producao = require('../../data/production.json');
 
 const TILE_PX = 64;
 const defDe = (id) => predios.find((p) => p.id === id);
@@ -149,8 +155,16 @@ async function roteiro(ctx) {
   // duplicada a mao entre este roteiro e `tests/helpers/abertura.ts`; duas
   // copias de um algoritmo com mais de uma reta divergem, e a divergencia
   // apareceria como o roteiro clicando num tile e o headless plantando noutro.
-  // Os PREDICADOS e que sao daqui: tamanho sai de `data/buildings.json` e
-  // `bloqueia` sai do mapa, porque na tela nao ha sim ao alcance.
+  // Os PREDICADOS e que sao daqui: tamanho sai de `data/buildings.json`,
+  // `bloqueia` e `temArvore` saem do arquivo de mapa e o alcance da mata sai de
+  // `data/production.json` — na tela nao ha sim ao alcance. `window.__cangaco`
+  // expoe leitura de RENDER, nao API de simulacao.
+  // ARMADILHA, para a proxima varredura: NAO tente filtrar posicao por `canPlace`.
+  // A serraria nasce bloqueada (`desbloqueadoPor: woodcutters`), entao no tick 0
+  // ela responde `{ok:false, motivo:'bloqueado'}` em QUALQUER tile do mapa, e uma
+  // varredura que exija `.ok` devolve zero para o mapa inteiro — medido na F-T4b:
+  // 14 720 posicoes varridas, 0 aprovadas, com a vila existindo e funcionando.
+  // Zero ali nao e "nao ha lugar": e a pergunta errada.
   const { geometriaDaAbertura } = await import('../geometria-da-abertura.mjs');
   const armazem = noDado('storehouse');
   const escola = noDado('schoolhouse');
@@ -160,17 +174,24 @@ async function roteiro(ctx) {
     return { largura, altura };
   };
   const caixaDe = (id) => ({ gx: noDado(id).gx, gy: noDado(id).gy, ...tamanhoDe(id) });
+  const colheitaDoLenhador = producao.predios.woodcutters.colheita;
+  if (!colheitaDoLenhador) throw new Error('sem colheita do lenhador em data/production.json');
   const geo = geometriaDaAbertura({
     armazem: caixaDe('storehouse'),
     escola: caixaDe('schoolhouse'),
     tamanhoDe,
     bloqueia: bloqueiaConstrucao,
+    temArvore: (gx, gy) => temRecurso(colheitaDoLenhador.recurso, gx, gy),
+    alcanceDaMata: colheitaDoLenhador.alcance_tiles,
+    stoneDe: (tipo) => defDe(tipo).stone,
+    estoqueInicialDeStone: economia.estadoInicial.estoque.stone,
+    custoStonePorTile: terreno.estrada.custoStonePorTile,
   });
   const yRua = geo.yRua;
   const plantas = geo.plantas.map((p) => ({ ...p, civil: defDe(p.tipo).trabalhador }));
   const tilesDaRuaLista = geo.rua;
   const tilesDaRua = tilesDaRuaLista.length;
-  const arrastos = arrastosDaRua(tilesDaRuaLista);
+  const arrastos = arrastosDaRede(tilesDaRuaLista);
   const meioDaEscola = { gx: escola.gx + Math.floor(largEs / 2), gy: escola.gy + Math.floor(altEs / 2) };
   const timberInicial = economia.estadoInicial.estoque.timber;
 
@@ -199,11 +220,11 @@ async function roteiro(ctx) {
   // porque nao cabe no canvas de uma vez. Cada arrasto e um comando PlaceRoad.
   await page.click('[data-ferramenta="estrada"]');
   await esperarFrame();
-  for (const { gy, de, ate } of arrastos) {
-    await centrarEm(Math.floor((de + ate) / 2), gy);
+  for (const { de, ate } of arrastos) {
+    await centrarEm(Math.floor((de.gx + ate.gx) / 2), Math.floor((de.gy + ate.gy) / 2));
     const { camera } = await estado();
     await arrastarDentroDoCanvas(page, canvas, [
-      pontoDoTile(de, gy, camera), pontoDoTile(ate, gy, camera),
+      pontoDoTile(de.gx, de.gy, camera), pontoDoTile(ate.gx, ate.gy, camera),
     ]);
     await avancar(1);
     await esperarFrame();
@@ -238,7 +259,32 @@ async function roteiro(ctx) {
 
   // ---- 4. a escola enfileira os quatro cabras -------------------------------
   await clicarNoTile(meioDaEscola.gx, meioDaEscola.gy);
-  for (const planta of plantas) {
+  // §8 do CLAUDE.md: o runner abre `/?pausado` e `page.click()` aperta e solta no
+  // mesmo instante — nessa condicao o laco nunca redesenha entre o `mousedown` e o
+  // `mouseup`, e a classe de defeito do BUG-B (o painel se refazendo por baixo do
+  // dedo) fica verde por construcao. O PRIMEIRO pedido de treino vai com o jogo
+  // ANDANDO e com o aperto de uma mao; os outros tres seguem pausados.
+  const primeiro = plantas[0];
+  await page.keyboard.press('p');
+  await esperarFrame();
+  afirmar((await estado()).pausado === false, 'o pedido de treino so vale com o laco ANDANDO');
+  const caixaDoBotao = await retanguloDe(page, `#painel-predio [data-treinar="${primeiro.civil}"]`);
+  await page.mouse.move(
+    caixaDoBotao.left + caixaDoBotao.width / 2, caixaDoBotao.top + caixaDoBotao.height / 2,
+  );
+  await page.mouse.down();
+  await page.waitForTimeout(150); // o tempo de uma mao, e varios ticks do laco
+  await page.mouse.up();
+  await esperarFrame();
+  afirmar(
+    Object.values((await estado()).filaDeTreino).flat().length === 1,
+    'com o jogo andando, apertar e segurar o botao de treino deveria enfileirar UM pedido, '
+      + `veio ${JSON.stringify(Object.values((await estado()).filaDeTreino).flat())}`,
+  );
+  await page.keyboard.press('p');
+  await esperarFrame();
+  afirmar((await estado()).pausado === true, 'o roteiro segue pausado depois do passo despausado');
+  for (const planta of plantas.slice(1)) {
     const temBotao = (await page.$$(`#painel-predio [data-treinar="${planta.civil}"]`)).length > 0;
     afirmar(temBotao, `a escola deveria oferecer ${planta.civil} na fila de treino`);
     await page.click(`#painel-predio [data-treinar="${planta.civil}"]`);

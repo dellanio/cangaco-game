@@ -6,27 +6,32 @@
  * aconteceu. Quem afirma e `tests/F17-aceite.test.ts`; quem repete os mesmos
  * cliques na tela e `tools/shots/F17.js`.
  *
- * A GEOMETRIA (D1 do plano): os quatro predios em UMA fila, na linha de porta do
- * armazem, encostados na horizontal, o mais a leste que a fila couber. A regra da
- * porta (F16a) e respeitada por construcao: nenhum predio fica ABAIXO de outro.
+ * A GEOMETRIA nao e escrita aqui: vem de `tools/geometria-da-abertura.mjs`, o
+ * MESMO modulo que o roteiro da tela usa. Este arquivo so liga os predicados da
+ * SIM nele (tamanho, recurso que bloqueia, tile de mata) e afirma o que a sim
+ * sabe e o modulo nao: que a mata escolhida e ALCANCAVEL de verdade.
  *
- * BUG-F (2026-09-24) mudou duas premissas desta fila, e as duas por MEDICAO:
- *   - ela nao termina mais encostada no armazem. Encostada, a pedreira caia em
- *     cima do lajedo da vila (rocha em 22..26 x 29..33, medido), e rocha passou a
- *     recusar construcao — era este cenario, o do aceite, que mais exibia o
- *     defeito: a pedreira lavrando a rocha debaixo das proprias paredes. O comeco
- *     da fila agora RECUA ate caber sem pisar em recurso que bloqueia, pelo mesmo
- *     predicado que a sim usa (`recursoBloqueiaConstrucao`), e nao por x digitado.
- *   - a pedreira passou a ser a ULTIMA, e a serraria a penultima. O motivo antigo
- *     da serraria por ultimo era trafego de tronco e tabua; com a fila recuada,
- *     ela esta a 8 tiles do armazem de qualquer jeito, e o que a ordem decide
- *     agora e quanta rocha a pedreira alcanca: pedreira por ultimo (colada no
- *     lajedo) alcanca os 13 tiles do lajedo, como antes; pedreira no meio da fila
- *     alcanca 4. Medido nesta sessao, `alcance_tiles: 6` a partir do footprint.
+ * A REGRA da posicao (F-T4b, 2026-09-25, decisao do operador): "vila de verdade
+ * nasce em volta do armazem, com a pedreira na pedra e o lenhador virado para o
+ * mato". Ate ali os quatro predios nasciam em UMA fila na linha de porta do
+ * armazem — conveniencia do cenario, nao desenho — e o par de lenhadores ficava
+ * a 14 tiles da arvore mais proxima. Com `colheita` declarada na receita isso
+ * deixou de ser detalhe: o lenhador saia, nao achava mata e a cadeia da tabua
+ * parava. Agora sao dois grupos:
+ *  - a pedra (serraria + pedreira) a oeste, na linha de porta do armazem, com o
+ *    comeco RECUANDO ate caber sem pisar em recurso que bloqueia (BUG-F, pelo
+ *    mesmo predicado da sim, `recursoBloqueiaConstrucao`, nunca por x digitado);
+ *  - a mata (duas casas de lenhador) na linha ACIMA do armazem, na posicao de
+ *    MAIOR MINIMO de arvores ao alcance da propria `colheita` do lenhador.
+ * A regra da porta (F16a) segue respeitada por construcao: dentro de cada grupo
+ * nenhum predio fica ABAIXO de outro.
  *
- * A rua e uma reta na linha da porta, com DESVIO de um tile para o sul onde a reta
- * cai em rocha (o tile 24,33 do lajedo) — a estrada tambem recusa recurso que
- * bloqueia construcao, e um buraco na reta partiria a rede em dois componentes.
+ * A RUA e mínima de proposito: o que liga um predio e UMA porta dele ser estrada
+ * no componente do armazem, e o comando `PlaceRoad` e tudo ou nada, pago A VISTA
+ * no tick 0. A primeira versao da rua em L custou 31 de pedra contra 30 no
+ * armazem: o comando saiu `sem-pedra`, nenhum tile foi erguido e a vila inteira
+ * ficou parada com os quatro predios completos e desligados. O orcamento agora e
+ * do modulo, e ele estoura se a rua nao couber.
  *
  * A ORDEM DOS COMANDOS reage ao ESTADO, nao ao relogio: a serraria so pode ser
  * plantada depois que uma casa de lenhador CHEGA a `completo`
@@ -41,12 +46,13 @@ import type { Command } from '../../src/sim/commands';
 import type { TileDeGrid } from '../../src/sim/estradas';
 import { armazensCompletos, ehEstrada } from '../../src/sim/estradas';
 import { canPlaceRoad } from '../../src/sim/estradas';
-import { recursoBloqueiaConstrucao, recursoNoTile } from '../../src/sim/recursos';
+import { recursoBloqueiaConstrucao, recursoNoTile, tilesDeColheitaNaCaixa } from '../../src/sim/recursos';
+import { tileAlcancavelParaColheita } from '../../src/sim/aproximacao';
 import { caixaDeTipo } from '../../src/sim/footprint';
 import { estoqueDosArmazens } from '../../src/sim/selectors';
 import { estaDesbloqueado } from '../../src/sim/desbloqueio';
 import type { CaixaDePredio } from '../../tools/geometria-da-abertura.d.mts';
-import { TIPOS_DA_ABERTURA, geometriaDaAbertura } from '../../tools/geometria-da-abertura.mjs';
+import { GRUPO_DA_MATA, TIPOS_DA_ABERTURA, geometriaDaAbertura } from '../../tools/geometria-da-abertura.mjs';
 
 /**
  * Os quatro predios do aceite (BUILD_PLAN F17, GDD §1.3), na ordem em que entram
@@ -129,11 +135,31 @@ export function aberturaDaFaseA(state: GameState, dados: GameData = gameData): A
   // escrita a mao aqui E la, e manter duas copias identicas a olho nao
   // sobrevive a uma geometria com mais de uma reta: o roteiro clicaria num tile
   // e o headless plantaria noutro.
+  // O alcance da mata sai do DADO (a `colheita` que a F-T4b declarou para o
+  // lenhador), nunca de um numero aqui: e o mesmo alcance que a sim usa para
+  // mandar o ocupante ao tile, e a vila nasce medindo por ele.
+  const tipoDoLenhador = GRUPO_DA_MATA[0];
+  if (tipoDoLenhador === undefined) throw new Error('abertura: o grupo da mata esta vazio');
+  const colheitaDoLenhador = dados.producao.receitas[tipoDoLenhador]?.colheita ?? null;
+  if (colheitaDoLenhador === null) {
+    throw new Error(
+      `abertura: '${tipoDoLenhador}' precisa declarar 'colheita' em data/production.json — ` +
+        'sem ela a vila nasceria sem saber onde ha mata, que foi o defeito da F-T4b',
+    );
+  }
   const geo = geometriaDaAbertura({
     armazem: caixaDeEntrada(armazem, dados),
     escola: caixaDeEntrada(escola, dados),
     tamanhoDe: (tipo: string) => tamanhoDe(tipo, dados),
     bloqueia: (gx: number, gy: number) => recursoBloqueiaConstrucao(recursoNoTile(state, gx, gy), dados),
+    temArvore: (gx: number, gy: number) => recursoNoTile(state, gx, gy)?.tipo === colheitaDoLenhador.recurso,
+    alcanceDaMata: colheitaDoLenhador.alcance,
+    // A rua se paga A VISTA no tick 0 e o comando e tudo ou nada: o modulo
+    // precisa do orcamento para nao tracar uma rua que a vila nao tem como
+    // comprar (medido na F-T4b: 31 tiles contra 30 de pedra, `sem-pedra`).
+    stoneDe: (tipo: string) => defDe(tipo, dados).stone,
+    estoqueInicialDeStone: dados.economia.estadoInicial.estoque['stone'] ?? 0,
+    custoStonePorTile: dados.terreno.estrada.custoStonePorTile,
   });
   const yRua = geo.yRua;
 
@@ -145,6 +171,26 @@ export function aberturaDaFaseA(state: GameState, dados: GameData = gameData): A
     }
     return { tipo: p.tipo, gx: p.gx, gy: p.gy, civil, timber: def.timber, stone: def.stone };
   });
+
+  // O modulo conta mata BRUTA: `temArvore` e o unico predicado que o roteiro
+  // consegue fornecer, porque na tela nao ha API de sim ao alcance. Quem afirma
+  // ALCANCAVEL e aqui, com a sim — mata que e so miolo cercado nao da trabalho a
+  // ninguem, e o lenhador esperaria por um tile que nunca fica livre. Fixture
+  // tem de estourar alto, nao morrer de fome em silencio.
+  for (const p of plantas) {
+    if (p.tipo !== tipoDoLenhador) continue;
+    const caixa = caixaDeTipo(p.tipo, p.gx, p.gy, dados);
+    if (caixa === null) throw new Error(`abertura: '${p.tipo}' nao tem tamanho`);
+    const alcancaveis = tilesDeColheitaNaCaixa(state, caixa, colheitaDoLenhador, dados).filter((k) =>
+      tileAlcancavelParaColheita(state, k, dados),
+    );
+    if (alcancaveis.length === 0) {
+      throw new Error(
+        `abertura: o lenhador em ${p.gx},${p.gy} nao tem NENHUMA arvore ALCANCAVEL ao alcance ` +
+          `${colheitaDoLenhador.alcance}; quem ajusta nesse caso e o gerador de mapa, nao a vila`,
+      );
+    }
+  }
 
   // O modulo desvia a rua pelo MESMO predicado de recurso que a sim usa, mas
   // quem recusa estrada e `canPlaceRoad`, que sabe de mais coisa. Conferir aqui
@@ -319,8 +365,10 @@ export function criarMedidor(
       return id === null ? null : state.predios.porId[id] ?? null;
     });
     if (daAbertura.some((p) => p !== null)) marcar('primeira-planta', tick);
-    const sawmill = daAbertura[abertura.plantas.length - 1];
-    if (sawmill) marcar('sawmill-plantada', tick);
+    // Por TIPO, nao pela ultima posicao da fila: a abertura deixou de terminar
+    // na serraria quando o BUG-F a reordenou, e agora nem fila unica ha mais.
+    const iSawmill = abertura.plantas.findIndex((p) => p.tipo === 'sawmill');
+    if (iSawmill >= 0 && daAbertura[iSawmill]) marcar('sawmill-plantada', tick);
     daAbertura.forEach((p, i) => {
       const planta = abertura.plantas[i] as PlantaDaAbertura;
       if (p && p.estado === 'completo') marcar(`completo:${planta.tipo}@${planta.gx}`, tick);

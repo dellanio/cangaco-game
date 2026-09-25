@@ -6351,3 +6351,108 @@ de balanceamento foi girado, por ordem dele.
   detalhe que a medição já viu: o par em (32,27) tem linha de porta em y=30, que
   cruza a coluna da escola — `canPlace` aprova, mas a rua deixa de ser uma reta.
   Implementei nada; o item está desbloqueado com a decisão e o número escritos.
+
+
+## 2026-09-25 — F-T4b: o lenhador sai para colher (a abertura virou dois grupos)
+
+**Entregue.** `test-results.json: F-T4b-lenhador -> true`, com `npm run verify`
+verde (102 arquivos, 1 412 testes) e `npm run shot -- F17` OK.
+
+### Verificado (abri o arquivo ou rodei o comando)
+
+- **A geometria da abertura agora tem UM lugar só**: `tools/geometria-da-abertura.mjs`,
+  com `tools/geometria-da-abertura.d.mts` escrito à mão. Ele **não lê arquivo e não
+  conhece a sim**: recebe as caixas do armazém e da escola e os predicados
+  (`tamanhoDe`, `bloqueia`, `temArvore`, `alcanceDaMata`, `stoneDe`,
+  `estoqueInicialDeStone`, `custoStonePorTile`). O headless liga os predicados da
+  sim; o roteiro da tela liga os JSON crus. `tests/F-T4b-geometria.test.ts` afirma
+  que os dois caminhos caem nos mesmos tiles — e o terceiro teste dele **cega um
+  predicado de um lado só e exige que a geometria mude**, para o guarda não ser um
+  que nunca reprova.
+- **Por que `.mjs` e não `.ts` nem `.js`** — medido nesta árvore, com as quatro
+  ferramentas: `vitest` importa o `.mjs` de um teste TS; `tsc --noEmit` aceita com
+  o `.d.mts` ao lado (o `tsconfig` não tem `allowJs` e não inclui `tools/`); o
+  roteiro CommonJS carrega com `await import()`; `eslint .` passa. Um `.js` CJS
+  quebraria do lado do vitest (o transform trata `.js` local como ESM e
+  `module.exports` some).
+- **Onde a vila nasce agora**: serraria (15,31) e pedreira (19,31) — **as mesmas
+  de antes**, o grupo da pedra não se moveu — e o par de lenhadores em **(34,27)**
+  e **(37,27)**, com **9 árvores ao alcance cada um**. `yRua` 33, linha de porta do
+  par 29, rua de **26 tiles** em L.
+- **O orçamento da pedra, que é a lição desta sessão.** A primeira rua em L custou
+  **31** de pedra contra **30** no armazém. `PlaceRoad` é **tudo ou nada** e paga
+  **à vista**: o comando saiu `sem-pedra` no tick 1, **nenhum** tile foi erguido, e
+  a sonda mostrou os quatro prédios `completo` no tick 1340 com `ligado: false`,
+  nenhum civil treinado e a vila parada para sempre. O aceite da F17 reprovava com
+  *"woodcutters@34 ficou vago"* — sintoma três passos depois da causa.
+  **A correção não foi afrouxar nada**: o que liga um prédio é **uma porta dele ser
+  estrada no componente do armazém** (`predioLigadoAoArmazem` sobre `tilesDaPorta`,
+  li o arquivo), não a largura inteira do footprint. A rua encurtou para o mínimo
+  (começa no último tile de porta da serraria; o ramo toca **uma** porta de cada
+  lenhador) e o módulo passou a **estourar** se ela não couber, descontando a
+  reserva da primeira casa de lenhador e da pedreira — que é o que precisa subir
+  antes de existir produção de pedra. Deu **26 tiles**, a mesma folga de 4 que a
+  fila antiga tinha **por acidente**.
+- **As três reprovações medidas na sessão anterior, verdes sem asserção afrouxada**:
+  - F15a: `expect(r?.colheita).toBeNull()` virou `toEqual({recurso:'tree', alcance:6})`
+    — a forma inteira, **mais estrita** que a que substituiu. Entrou junto um teste
+    de classe: **toda** `colheita` declarada nomeia recurso que existe em
+    `resources.json`, com alcance inteiro ≥ 1.
+  - F15b: o oráculo tinha `(18,34)` e `(22,34)` **digitados**, com **0 árvore** ao
+    alcance 6 — mover a abertura não o consertaria. Ele passou a derivar a posição
+    dos lenhadores da **mesma regra** (`aberturaDaFaseA`) e a somar a rua dela à
+    sua; `exigirLigado` continua valendo para os quatro.
+  - F17: **sem um toque**, como a medição prometia — os 9 `expect` dele afirmam
+    resultado, não geometria. Marcos novos: rua pronta em 618, todos completos em
+    1998, timber acima do inicial em **4266** (teto 5300).
+- **A perna nova do aceite** (`tests/F-T4b-lenhador.test.ts`, evidência em
+  `test-output/F-T4b-lenhador.json`): partindo do **estado inicial**, o ocupante
+  ocupa no tick 499, reclama a árvore **(39,22)** — a **5 tiles** do footprint —,
+  anda até lá sem saltar mais de 1 tile por tick, colhe **encostado** nela
+  (Chebyshev 1), de tile pisável, com a árvore **não** pisável, primeira tora no
+  **1247**, e a cadeia entrega **3 toras e 2 tábuas** ao armazém.
+  **A medida do timber aqui é o acumulado ENTREGUE, não o saldo**: neste trecho da
+  partida o timber está sendo gasto nas obras (40 no tick 0, 29 no 2500), e o saldo
+  só volta a passar do inicial no 4266 — que é a perna da F17, com o teto dela.
+- **O roteiro da tela**: `arrastosDaRua` virou adaptador de `arrastosDaRede`, que
+  é o mesmo algoritmo aceitando trecho **vertical** (a rua em L precisa). A forma
+  antiga **recusa** trecho vertical em vez de achatá-lo, para que um roteiro futuro
+  com L estoure em vez de desenhar a rua errada em silêncio. Os quatro roteiros que
+  usavam a forma antiga (F-T3, F-T4a, F-TA, F22) rodaram com código de saída 0, e
+  também F06, F17b, F17d, F17f e F-D2, que citam `woodcutters`.
+- **§8 cumprida no F17.js**: o primeiro pedido de treino agora despausa (`press('p')`),
+  aperta e **segura 150 ms** com `mouse.down`/`mouse.up` sobre
+  `#painel-predio [data-treinar]`, afirma que entrou **um** pedido na fila e pausa
+  de volta. O roteiro inteiro rodava pausado, onde `page.click()` não redesenha
+  entre o aperto e a solta — a condição em que o BUG-B passou por todo roteiro.
+  **Um a menos no inventário da §8** (o restante segue em aberto).
+- **Evidência visual aberta com Read** (`screenshots/F17-5-final.png`): as duas
+  Casas do Lenhador ao norte, o ramo vertical da rua descendo até a linha principal,
+  carregadores levando `tree_trunk` e o HUD com **41 de tábua** contra 40 iniciais.
+
+### Decidido, e por quê
+
+- **A posição é regra, não coordenada** (decisão do operador): grupo da pedra recua
+  para oeste até caber; par da mata varre para leste na linha acima do armazém,
+  dentro do alcance da **própria `colheita`** do lenhador, e escolhe o **maior
+  mínimo** de árvores entre os dois. Maximizar dispensa limiar — não há "5 árvores"
+  digitado em lugar nenhum. Se nenhuma posição servir, o módulo **lança**, porque
+  pela cláusula do operador *"quem ajusta nesse caso é o gerador, não a vila"*.
+- **A armadilha da varredura virou nota nos dois arquivos de medição**, como ele
+  pediu: `canPlace` com `sawmill` no tick 0 responde `bloqueado` em **qualquer**
+  tile (14 720 varridos, 0 aprovados), e zero ali não é "não há lugar" — é a
+  pergunta errada.
+- **A contagem de árvore é bruta no módulo e ALCANÇÁVEL na sim.** O roteiro não tem
+  API de simulação (`window.__cangaco` é leitura de render), então o predicado
+  compartilhado só sabe "tem árvore neste tile"; depois de escolher, o helper afirma
+  com `tileAlcancavelParaColheita` que cada lenhador tem ao menos uma. Mata de miolo
+  inalcançável estoura no fixture em vez de matar o lenhador de fome em silêncio.
+
+### Aberto
+
+- **A folga de pedra da abertura é 4**, e o módulo agora a protege — mas ela é
+  apertada: qualquer prédio a mais na abertura, ou qualquer encarecimento da
+  estrada, faz o módulo lançar no carregamento do fixture. É o comportamento certo
+  (falha alta e explicada), e fica registrado que a próxima feature que mexer na
+  abertura vai encontrar esse teto.
+- **O inventário da §8 continua aberto** para os demais roteiros; a F17 saiu dele.

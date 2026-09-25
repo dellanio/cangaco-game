@@ -15,6 +15,15 @@ const BLOQUEADOS = new Set(
     .flatMap(([tipo]) => (mapa.recursos[tipo] ?? []).map(([gx, gy]) => `${gx},${gy}`)),
 );
 
+/** Os tiles de UM tipo de recurso, como o arquivo de mapa os publica. */
+const PORTIPO = new Map();
+function temRecurso(tipo, gx, gy) {
+  if (!PORTIPO.has(tipo)) {
+    PORTIPO.set(tipo, new Set((mapa.recursos[tipo] ?? []).map(([x, y]) => `${x},${y}`)));
+  }
+  return PORTIPO.get(tipo).has(`${gx},${gy}`);
+}
+
 /** Este tile recusa obra e estrada? */
 function bloqueiaConstrucao(gx, gy) {
   return BLOQUEADOS.has(`${gx},${gy}`);
@@ -44,22 +53,52 @@ function ruaComDesvio(de, ate, gy) {
 }
 
 /**
- * Os arrastos que desenham esses tiles: um por trecho reto, e trecho mais comprido
- * que `maximo` vira dois com um tile em comum (o canvas mostra ~15 tiles, e um
- * arrasto que sai do quadro nao e clique de jogador).
+ * Os arrastos que desenham esses tiles: um por trecho reto — HORIZONTAL OU
+ * VERTICAL, porque desde a F-T4b a rua da abertura tem ramo em L — e trecho mais
+ * comprido que `maximo` vira dois com um tile em comum (o canvas mostra ~15
+ * tiles, e um arrasto que sai do quadro nao e clique de jogador).
+ *
+ * Devolve `{ de: {gx,gy}, ate: {gx,gy} }`. Quem tem rua so reta usa
+ * `arrastosDaRua`, que e este mesmo algoritmo na forma antiga.
  */
-function arrastosDaRua(tiles, maximo = 12) {
+function arrastosDaRede(tiles, maximo = 12) {
   const trechos = [];
   for (const t of tiles) {
     const ultimo = trechos[trechos.length - 1];
-    if (ultimo && ultimo.gy === t.gy && ultimo.ate === t.gx - 1) ultimo.ate = t.gx;
-    else trechos.push({ gy: t.gy, de: t.gx, ate: t.gx });
+    const dx = ultimo === undefined ? 0 : t.gx - ultimo.ate.gx;
+    const dy = ultimo === undefined ? 0 : t.gy - ultimo.ate.gy;
+    const continua =
+      ultimo !== undefined &&
+      ((dx === 1 && dy === 0 && ultimo.eixo !== 'y') || (dx === 0 && dy === 1 && ultimo.eixo !== 'x'));
+    if (continua) {
+      ultimo.ate = { gx: t.gx, gy: t.gy };
+      ultimo.eixo = dx === 1 ? 'x' : 'y';
+    } else {
+      trechos.push({ de: { gx: t.gx, gy: t.gy }, ate: { gx: t.gx, gy: t.gy }, eixo: null });
+    }
   }
-  return trechos.flatMap(({ gy, de, ate }) => {
-    if (ate - de + 1 <= maximo) return [{ gy, de, ate }];
-    const meio = Math.floor((de + ate) / 2);
-    return [{ gy, de, ate: meio }, { gy, de: meio, ate }];
+  return trechos.flatMap(({ de, ate }) => {
+    const passos = Math.max(Math.abs(ate.gx - de.gx), Math.abs(ate.gy - de.gy)) + 1;
+    if (passos <= maximo) return [{ de, ate }];
+    const meio = { gx: Math.floor((de.gx + ate.gx) / 2), gy: Math.floor((de.gy + ate.gy) / 2) };
+    return [{ de, ate: meio }, { de: meio, ate }];
   });
 }
 
-module.exports = { bloqueiaConstrucao, caixaLivre, ruaComDesvio, arrastosDaRua };
+/**
+ * A forma antiga, `{ gy, de, ate }`, para os roteiros de rua reta. RECUSA trecho
+ * vertical em vez de achatar: roteiro com L que chamasse esta funcao desenharia
+ * a rua errada em silencio, e e mais barato estourar aqui.
+ */
+function arrastosDaRua(tiles, maximo = 12) {
+  return arrastosDaRede(tiles, maximo).map(({ de, ate }) => {
+    if (de.gy !== ate.gy) {
+      throw new Error('arrastosDaRua: trecho vertical nesta rua — use arrastosDaRede');
+    }
+    return { gy: de.gy, de: de.gx, ate: ate.gx };
+  });
+}
+
+module.exports = {
+  bloqueiaConstrucao, temRecurso, caixaLivre, ruaComDesvio, arrastosDaRede, arrastosDaRua,
+};

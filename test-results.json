@@ -183,6 +183,6 @@
     "passes": true
   },
   "F-T4b-lenhador": {
-    "passes": false
+    "passes": true
   }
 }

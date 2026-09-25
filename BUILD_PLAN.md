@@ -2097,7 +2097,7 @@ a geografia já corrigida do que regravar 900 tiles depois.
   2), **301 alcançáveis hoje e 350 no fim**, porque árvore cortada vira andável.
   Alcance 6 é **a calibrar**, com a conta em `BALANCE_LOG.md` (2026-09-25).
 
-### F-T4b — O lenhador sai para colher (DESBLOQUEADO 2026-09-25: saída (a))
+### F-T4b — O lenhador sai para colher (ENTREGUE 2026-09-25)
 - **O que falta**: `woodcutters` ganhar `colheita: { recurso: tree, ... }`, pelo
   mesmo caminho da F-T4a. O código já serve; o **dado** é que não fecha.
 - **Por que está bloqueado, medido antes de escrever qualquer linha** (Medição 2
@@ -2200,6 +2200,45 @@ a geografia já corrigida do que regravar 900 tiles depois.
   `sawmill` nasce `bloqueado` (`desbloqueadoPor: woodcutters`) e só é plantada
   depois que uma casa de lenhador fica completa. Quem medir geometria tem de
   aceitar o motivo `'bloqueado'`; senão o resultado nulo parece resposta.
+- **ENTREGUE 2026-09-25.** `woodcutters` ganhou `colheita { tree, alcance 6 }` e a
+  abertura virou **dois grupos**, pela regra, não por coordenada. O que a sessão
+  mediu e onde a evidência está:
+  - **A geometria saiu de UMA cópia**: `tools/geometria-da-abertura.mjs` (+ `.d.mts`
+    escrito à mão), com os predicados injetados pelo chamador — a sim do lado do
+    headless, os JSON crus do lado do roteiro. `tests/F-T4b-geometria.test.ts` é o
+    guarda das duas pontas, e ele **acusa** (o terceiro teste cega um predicado de
+    um lado só e exige que a geometria mude).
+  - **Onde a vila nasceu**: serraria (15,31) e pedreira (19,31), **as mesmas de
+    antes**; par de lenhadores em **(34,27) e (37,27)**, com **9 árvores ao alcance
+    cada um** — não (32,27), como a nota acima previa, porque a escolha é do MAIOR
+    MÍNIMO e a rua precisa caber no orçamento (abaixo).
+  - **O orçamento da rua, que quase derrubou a feature**: `PlaceRoad` é tudo ou
+    nada e paga **à vista no tick 0**. A primeira rua em L custou **31 de pedra**
+    contra **30** no armazém — o comando saiu `sem-pedra`, **nenhum** tile subiu e
+    os quatro prédios ficaram completos e **desligados** para sempre. A correção
+    não foi afrouxar: o que liga um prédio é **UMA porta dele ser estrada**
+    (`predioLigadoAoArmazem`), então a rua encurtou para o mínimo e o módulo passou
+    a **estourar** se ela não couber, com a reserva da primeira casa de lenhador e
+    da pedreira descontada. Resultado: **26 tiles**, a mesma folga de 4 que a fila
+    antiga tinha por acidente.
+  - **As três reprovações, verdes sem asserção afrouxada**: F15a com a forma
+    inteira da `colheita` (mais estrita que o `toBeNull()` que substituiu, e com um
+    teste de classe novo para TODA `colheita` declarada); F15b com o oráculo
+    derivando a posição dos lenhadores da mesma regra da abertura (ele tinha
+    (18,34)/(22,34) digitados, com **0 árvore** ao alcance); F17 sem um toque —
+    os 9 `expect` dele não nomeiam geometria, como a medição prometia.
+  - **A perna nova** (`tests/F-T4b-lenhador.test.ts`, evidência em
+    `test-output/F-T4b-lenhador.json`): partindo do estado inicial, o ocupante
+    **anda** — ocupa no tick 499, reclama a árvore (39,22) a **5 tiles** do
+    footprint, colhe encostado nela (Chebyshev 1, de tile pisável, com a árvore não
+    pisável), primeira tora no **1247**, e entrega **3 toras e 2 tábuas** ao
+    armazém. O teste (d) guarda a premissa: se a mata encostar na casa, ele reprova
+    em vez de virar um sai-e-volta.
+  - **O roteiro da tela** ganhou o ramo vertical (`arrastosDaRede`, o mesmo
+    algoritmo de `arrastosDaRua` generalizado — a forma antiga agora **recusa**
+    trecho vertical em vez de achatar) e o **passo despausado da §8** no primeiro
+    pedido de treino. `screenshots/F17-5-final.png`: o par ao norte, a rua em L, os
+    carregadores levando `tree_trunk` e o HUD com **41 de tábua** contra 40 iniciais.
 - **Nota de herança**: quem pegar este item herda da F-T4a a regra de classe já
   provada, o predicado `tileAlcancavelParaColheita` e os números da árvore acima —
   e herda também que, ao contrário do peixe, **a árvore abre o anel seguinte ao

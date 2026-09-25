@@ -31,12 +31,16 @@ describe('F15a — a receita e um ciclo', () => {
     expect(r?.colheita).toBeNull();
   });
 
-  it('woodcutters: 545 ticks por tronco, sem colheita — ele replanta', () => {
+  it('woodcutters: 545 ticks por tronco, colhendo a arvore do tile (F-T4b)', () => {
     const r = gameData.producao.receitas.woodcutters;
     expect(r?.ticksDoCiclo).toBe(545);
     expect(r?.entra).toEqual({});
     expect(r?.sai).toEqual({ tree_trunk: 1 });
-    expect(r?.colheita).toBeNull();
+    // ESTRITA onde a antiga era frouxa: `toBeNull` afirmava a AUSENCIA de um
+    // campo, e passava com qualquer receita que nao colhesse nada. Esta afirma
+    // a FORMA inteira — recurso, alcance e nenhuma outra chave —, que e o que a
+    // regra de classe da F-T3 le para mandar o lenhador ate a arvore.
+    expect(r?.colheita).toEqual({ recurso: 'tree', alcance: 6 });
   });
 
   it('as proporcoes que o GDD escreve em palavras saem do dado', () => {
@@ -63,6 +67,24 @@ describe('F15a — a receita e um ciclo', () => {
         expect(q, `${id}.${m}`).toBe(Math.trunc(q));
       }
     }
+  });
+
+  it('TODA colheita declarada nomeia recurso que existe, com alcance inteiro >= 1', () => {
+    // Regra de CLASSE (F-T3): quem declara `colheita` manda o ocupante ao tile.
+    // Recurso com nome errado nao estoura no carregamento — o predio so nunca
+    // acha nada e fica parado, que e o defeito da F-T4b visto de outro angulo.
+    const comColheita = Object.entries(gameData.producao.receitas).filter(
+      ([, r]) => r.colheita !== null,
+    );
+    expect(comColheita.length).toBeGreaterThan(0);
+    for (const [id, r] of comColheita) {
+      const c = r.colheita;
+      expect(Object.keys(gameData.recursos.tipos), id).toContain(c?.recurso);
+      expect(Number.isInteger(c?.alcance), id).toBe(true);
+      expect(c?.alcance, id).toBeGreaterThanOrEqual(1);
+    }
+    // e o lenhador entrou nessa lista na F-T4b: antes ele fabricava tora do nada
+    expect(comColheita.map(([id]) => id)).toContain('woodcutters');
   });
 
   it('o ciclo e o periodo da taxa MAIS LENTA — mexer na escala move os dois juntos', () => {

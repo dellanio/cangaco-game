@@ -25,6 +25,7 @@ import { gameData } from '../src/sim/data';
 interface PredioNoJson {
   readonly id: string;
   readonly tamanho: readonly [number, number];
+  readonly stone: number;
 }
 interface PredioInicialNoJson {
   readonly id: string;
@@ -48,17 +49,32 @@ function predicadosDoRoteiro(): {
   escola: CaixaDePredio;
   tamanhoDe: (tipo: string) => { largura: number; altura: number };
   bloqueia: (gx: number, gy: number) => boolean;
+  temArvore: (gx: number, gy: number) => boolean;
+  alcanceDaMata: number;
+  stoneDe: (tipo: string) => number;
+  estoqueInicialDeStone: number;
+  custoStonePorTile: number;
 } {
   const { predios } = lerJson<{ predios: readonly PredioNoJson[] }>('../data/buildings.json');
-  const economia = lerJson<{ estadoInicial: { predios: readonly PredioInicialNoJson[] } }>(
-    '../data/economy.json',
-  );
+  const economia = lerJson<{
+    estadoInicial: {
+      predios: readonly PredioInicialNoJson[];
+      estoque: Readonly<Record<string, number>>;
+    };
+  }>('../data/economy.json');
+  const terreno = lerJson<{ estrada: { custoStonePorTile: number } }>('../data/terrain.json');
   const { tipos } = lerJson<{ tipos: Readonly<Record<string, TipoDeRecursoNoJson>> }>(
     '../data/resources.json',
   );
   const mapa = lerJson<{ recursos: Readonly<Record<string, readonly (readonly [number, number])[]>> }>(
     '../data/maps/sertao-128.json',
   );
+  const producao = lerJson<{
+    predios: Readonly<Record<string, { colheita?: { recurso: string; alcance_tiles: number } }>>;
+  }>('../data/production.json');
+  const colheita = producao.predios['woodcutters']?.colheita;
+  if (!colheita) throw new Error('sem colheita do lenhador em data/production.json');
+  const mata = new Set((mapa.recursos[colheita.recurso] ?? []).map(([gx, gy]) => `${gx},${gy}`));
 
   const bloqueados = new Set(
     Object.entries(tipos)
@@ -81,6 +97,17 @@ function predicadosDoRoteiro(): {
     escola: caixaDe('schoolhouse'),
     tamanhoDe,
     bloqueia: (gx, gy) => bloqueados.has(`${gx},${gy}`),
+    temArvore: (gx, gy) => mata.has(`${gx},${gy}`),
+    // o roteiro le `alcance_tiles` do JSON cru; a sim le `alcance` ja carregado.
+    // Se o carregador um dia mexer nesse numero, e este teste que acusa.
+    alcanceDaMata: colheita.alcance_tiles,
+    stoneDe: (tipo: string) => {
+      const def = predios.find((p) => p.id === tipo);
+      if (!def) throw new Error(`sem '${tipo}' em data/buildings.json`);
+      return def.stone;
+    },
+    estoqueInicialDeStone: economia.estadoInicial.estoque['stone'] ?? 0,
+    custoStonePorTile: terreno.estrada.custoStonePorTile,
   };
 }
 
