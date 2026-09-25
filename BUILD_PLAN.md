@@ -2350,7 +2350,7 @@ Depende da F20b: o marcador lê `unidade.condicao`, que só existe depois dela. 
   HUD já mostra `gold` desde a F05b e nenhuma linha de `src/render/` ou
   `src/ui/` foi tocada — a feature é só de `sim/` + teste.
 
-### F21b — A mina esgota: minério no tile (sim + dado; posição na fila a definir)
+### F21b — A mina esgota: minério no tile (sim + dado)
 - **Por que existe**: a F21 fechou a cadeia do ouro, mas `gold_mine`,
   `coal_mine` e `iron_mine` **produzem para sempre**. O contrato herdado da F15a
   dizia que o veio viria pronto da F-T2; não veio (ver a nota corrigida da F21).
@@ -2364,9 +2364,18 @@ Depende da F20b: o marcador lê `unidade.condicao`, que só existe depois dela. 
   3. **receita**: `production.json` precisa de `colheita` nas três minas, e aí o
      mineiro passa a sair do prédio — a caminhada já existe desde a F-T3, é de
      classe e vem do dado.
-- **Pergunta de design que eu não respondo sozinho**: a mina deve colher o tile
-  de montanha **sob** o prédio, ou só os adjacentes dentro do alcance (como a
-  pedreira)? Isso muda onde o jogador pode plantar mina e é decisão do operador.
+- **Pergunta de design RESPONDIDA pelo operador em 2026-09-25: só os adjacentes,
+  nunca o tile sob o prédio.** O argumento dele é que o BUG-F já respondeu: desde
+  a correção de 2026-09-24 a construção é **recusada sobre recurso que bloqueia**
+  (`src/sim/placement.ts:108`, `recursoBloqueiaConstrucao`, bandeira por tipo em
+  `data/resources.json`). Se o minério nascer com `bloqueiaConstrucao: true` —
+  como a rocha e a árvore —, **nenhuma mina pode ser plantada em cima dele**, e
+  colher o tile de baixo seria colher um tile que não pode existir. A mina fica
+  igual à pedreira: colhe o que alcança em volta.
+- **Posição na fila, decidida pelo operador em 2026-09-25: é a PRÓXIMA**, antes da
+  F23b. O porquê dele: *"hoje o garimpo produz do nada — é a última
+  inconsistência do módulo de recursos, e a mesma que a F-T2a corrigiu na
+  pedreira"*.
 - **Depende de**: nada além da F21. **Não** depende da F23.
 
 ### F22 — Alertas do HUD
@@ -2468,7 +2477,7 @@ Depende da F20b: o marcador lê `unidade.condicao`, que só existe depois dela. 
   exigiria a nota de feature de integração **escrita antes** (§10). O jogador
   ainda não salva partida pela tela: isso é a **F23b**.
 
-### F23b — Salvar e carregar pela tela (ui + input; posição na fila a definir)
+### F23b — Salvar e carregar pela tela (ui + input)
 - **Por que existe**: a F23 entregou o formato e a garantia, não o gesto. Hoje
   só um teste chama `salvar`/`carregar`; o jogador não tem como guardar partida.
 - **Escopo previsto**: botão (ou tecla) no HUD que chama `salvar(estado)` e
@@ -2480,6 +2489,9 @@ Depende da F20b: o marcador lê `unidade.condicao`, que só existe depois dela. 
 - **Aceite previsto**: roteiro de Playwright que salva, recarrega a página, carrega
   e mostra a mesma aldeia; mais um passo **despausado** com `mouse.down` /
   `waitForTimeout(150)` / `mouse.up` no botão (§8), e screenshot.
+- **Posição na fila, decidida pelo operador em 2026-09-25: DEPOIS da F21b.** O
+  porquê dele: *"save funciona headless, e a tela é conveniência"* — a garantia
+  já está entregue e testada na F23; o que falta aqui é o gesto.
 
 ### F18g — A pedra da estrada vira carga que viaja (sim)
 - **Escopo**: hoje a pedra da estrada **não viaja**: ela é reservada no armazém

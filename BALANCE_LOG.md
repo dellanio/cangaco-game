@@ -286,6 +286,11 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   metalurgia nunca vai alcançar. Ou as minas são lentas demais para justificar duas, ou falta uma
   segunda metalurgia no aceite do jogador. **Não mexi em número nenhum** (Fase B congelada desde a
   F18) | `production.json:predios.{gold_mine,coal_mine,metallurgists}`
+  **Resolvido pelo operador em 2026-09-25, e não é defeito**: duas minas para uma metalurgia **é o
+  desenho**, e vem do GDD §4.5 — a fundição consome minério **E** carvão, então precisa das duas
+  alimentando; a mesma seção já prevê *"+1 Farm cada 5 prédios que consomem milho; idem Coal
+  mine"*. Os 11 minérios parados aos 8 000 ticks são **proporção a calibrar**, e ficam aqui com o
+  resto até o ajuste em lote. Nada a corrigir item a item
 - [2026-09-25] **a primeira moeda de ouro só chega ao armazém no tick 1030** | medido na F21: carvão
   em 250, minério em 300, os dois na metalurgia em 362 e 697, primeiro ouro fundido em **981**,
   primeiro ouro guardado em **1030**. A 10 Hz e na escala `economia` 2.0 isso é ~1 min 43 s de

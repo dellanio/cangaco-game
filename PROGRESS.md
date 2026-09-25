@@ -5678,3 +5678,30 @@ abrindo arquivo ou rodando** do que **decidi**.
   com o campo novo. Preenchi com `hashDeTexto` do próprio conteúdo sintético, e
   não com string fixa: dois cenários diferentes não podem sair com a mesma
   impressão digital nem em teste.
+
+## Decisões do operador sobre a F21/F23 (2026-09-25)
+
+Ele respondeu as quatro perguntas abertas das duas sessões. Ficam registradas
+como decisões **dele**, com o porquê que ele deu — não como pergunta pendente.
+
+1. **A fila: F21b vem primeiro, F23b depois.** O porquê: *"hoje o garimpo produz
+   do nada — é a última inconsistência do módulo de recursos, e a mesma que a
+   F-T2a corrigiu na pedreira"*; save já funciona headless, e a tela é
+   conveniência. Os dois itens do `BUILD_PLAN.md` deixaram de dizer "posição a
+   definir". **A próxima feature da fila é a F21b.**
+2. **A pergunta de design da F21b está respondida: a mina colhe só os tiles
+   adjacentes, nunca o de baixo.** O argumento dele é que o BUG-F já tinha
+   respondido — desde 2026-09-24 a construção é recusada sobre recurso que
+   bloqueia (`src/sim/placement.ts:108`, bandeira por tipo em
+   `data/resources.json`, conferido). Minério com `bloqueiaConstrucao: true`
+   significa que **nenhuma mina pode ser plantada sobre ele**, então o tile de
+   baixo não existe para ser colhido. A mina fica igual à pedreira.
+3. **D-10 aprovado**: o hash é do objeto parseado. Reindentar o JSON não
+   invalidar save é o comportamento certo, e mudar terreno invalidar também.
+4. **Duas minas para uma metalurgia é o desenho, não defeito.** Vem do GDD §4.5:
+   a fundição consome minério **E** carvão, então precisa das duas alimentando.
+   Os 11 minérios parados aos 8 000 ticks são proporção a calibrar; a anotação
+   dele está junto da entrada no `BALANCE_LOG.md`. Isso **fecha** a pergunta 3 da
+   seção da F21 acima.
+5. **`docs/spec-arte-predios.md` entra no git** — é o documento que a próxima
+   sessão de arte vai abrir.
