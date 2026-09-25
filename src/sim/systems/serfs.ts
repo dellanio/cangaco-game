@@ -222,10 +222,12 @@ function entregarOuro(state: GameState, tarefa: TarefaDeTransporte): PredioCompl
   };
 }
 
-/** F15b — a entrega num PRODUTOR (niveis 4 e 5): o insumo entra na gaveta
- *  `entrada`, de onde `producao.ts` o cobra no inicio do ciclo. `null` se o
- *  destino deixou de ser predio completo. */
-function entregarInsumo(state: GameState, tarefa: TarefaDeTransporte): PredioCompleto | null {
+/** F15b — a entrega na gaveta `entrada` de um predio completo: o insumo, de onde
+ *  `producao.ts` o cobra no inicio do ciclo, e (F20a) a comida da Bodega, de onde
+ *  o civil vai comer. O gesto e um so, e por isso a funcao tambem. `null` se o
+ *  destino deixou de ser predio completo — quem confere que ele ainda PEDE e
+ *  `demandaNoDestino`, no `switch` abaixo. */
+function entregarNaEntrada(state: GameState, tarefa: TarefaDeTransporte): PredioCompleto | null {
   const destino = state.predios.porId[tarefa.destino];
   if (destino === undefined || destino.estado !== 'completo') return null;
   const tinha = destino.estoque.entrada[tarefa.mercadoria] ?? 0;
@@ -264,9 +266,10 @@ function destinoQueRecebe(state: GameState, tarefa: TarefaDeTransporte, dados: G
       return entregarMaterial(state, tarefa);
     case 'ouro-para-escola':
       return demandaNoDestino(state, tarefa, dados) >= 1 ? entregarOuro(state, tarefa) : null;
+    case 'comida-para-inn':
     case 'insumo-producao-parada':
     case 'insumo-producao-baixa':
-      return demandaNoDestino(state, tarefa, dados) >= 1 ? entregarInsumo(state, tarefa) : null;
+      return demandaNoDestino(state, tarefa, dados) >= 1 ? entregarNaEntrada(state, tarefa) : null;
     case 'saida-cheia-para-armazem':
     case 'excedente-para-armazem':
       return depositarNoArmazem(state, tarefa.destino, tarefa.mercadoria);

@@ -5104,3 +5104,116 @@ comidas **existem produzidas**.
 - Nenhuma linha de `src/`: nem `sim/`, nem `render/`, nem `ui/`. Só `tests/`, a fila,
   os registros e o `_aviso` do dado.
 - Não ajustou proporção nenhuma. Não construiu `tannery`. Não mexeu na F20.
+
+## A F20 virou três, e a F20a entregou: a Bodega recebe comida (2026-09-24)
+
+Feature: `F20a-bodega-recebe-comida`. Plano em
+`docs/planos/F20a-bodega-recebe-comida.md`. Só `src/sim/` — nenhum arquivo de
+`src/render/` ou `src/ui/` foi tocado.
+
+### Por que a F20 foi quebrada em três (decisão minha, marcada para revisão)
+
+A F20 como o operador a escreveu tem três entregas dentro: a Bodega receber
+comida, o dreno de condição com morte, e o marcador no mundo. A ordem entre
+elas **não é preferência, é aritmética do dado**, e isso está **verificado**:
+`condition.json` dá `duracaoCondicaoCheia_min_base.civil = 40`, que na escala
+`economia = 2.0` de `time.json` são 20 min efetivos, ou **12 000 ticks** a
+10 Hz. Os cenários longos que já rodam verdes hoje são a F19 a 12 000 ticks e a
+F19b a 20 000, e **nenhum deles tem Bodega** — entregar o dreno antes de existir
+lugar para comer mata todo civil dentro da janela desses testes. Não é risco
+estimado; é a divisão.
+
+Efeito colateral bom: cada sub-item ficou dentro de **uma** camada, então a
+exceção da §10 que o operador escreveu no item (dreno = sim, marcador = render,
+autorizados juntos) **deixou de ser necessária** para a F20a e a F20b. Isso é
+mais estrito que a nota dele, não menos — a nota continua escrita no item da
+F20c, que é a única que mexe em render.
+
+O corte está em `BUILD_PLAN.md`: `### F20` guarda a nota herdada da F19 (o
+prédio mudo), e as notas originais do operador foram **redistribuídas sem
+reescrita** — restauração e os três casos de "a unidade sumiu" na F20b, o bloco
+inteiro do marcador na F20c.
+
+### O que foi verificado (evidência aberta, `test-output/F20a.json`)
+
+- **O nível 1 nunca tinha existido.** `grep comida-para-inn src/` não devolvia
+  nada antes desta sessão: o id estava em `delivery.json` desde a F03 e não
+  havia tipo de tarefa, gerador nem leitor. Era o único dos oito níveis da
+  escada nessa condição.
+- **O caminho real fecha do estado inicial, só por comando.** `PlaceRoad` +
+  `PlaceBlueprint` no tick 0, e mais nada: a Bodega fica completa no **tick 452**
+  (os laborers a constroem com o timber e a pedra da abertura) e a gaveta
+  `entrada` chega ao teto em **578** (`loaves`) e **641** (`sausages`).
+- **Para no teto, e conserva.** `entrada` final `{loaves: 5, sausages: 5}` — o
+  teto de `condition.json:inn.estoquePorTipoDeComida`. O armazém saiu de
+  `{loaves: 15, sausages: 10}` para `{loaves: 10, sausages: 5}`: exatamente 5 de
+  cada, nada criado e nada perdido. **Zero** tarefas de nível 1 abertas no fim.
+- **Comida sem produtor não gera espera.** `restauracaoPorComida` declara quatro
+  comidas; `wine` e `fish` não existem em armazém nenhum e **não geram tarefa**,
+  porque `origemMaisPerto` devolve `null` quando nenhum armazém ligado tem o
+  bem. Ninguém fica esperando o que não chega.
+- **Sem estrada até a Bodega, nada nasce e nada trava**: 0 tarefas e 0 violações
+  de invariante depois de 20 ticks.
+- **A prioridade é obedecida**: com uma obra pedindo material e a Bodega vazia,
+  `tarefasEmOrdem` põe `comida-para-inn` na frente, e o serf ocioso pega essa.
+- **O ramo de erro tem caminho de volta**: `DemolishBuilding` na Bodega com um
+  serf em `indo_entregar` com pão na mão — a tarefa sai do quadro, as
+  invariantes ficam limpas e o total de `loaves` no mundo (as duas gavetas de
+  todo prédio **mais** a carga em `fsmData.carga`) não muda.
+- **O guarda acusa.** Sonda desta sessão: desliguei `gerarTarefasDeComida` em
+  `systems/jobs.ts` e **5 dos 15** testes reprovaram (os cinco que dependem de
+  tarefa nascer). Restaurado em seguida. Isso é evidência da sessão, não
+  cobertura contínua — a cobertura é o arquivo de teste, que roda no
+  `npm run verify`.
+- **Não-regressão escrita cumprida.** `tests/F18d-1a-modo.test.ts` afirmava
+  *"`comida-para-inn` ainda não é tipo de tarefa"* num comentário e o deixava
+  **fora** da lista de tipos. O tipo entrou na lista e o comentário saiu; a
+  asserção ficou **mais estrita** (agora `modoDoTipo` é chamada com o tipo de
+  tarefa, e cada tipo da lista também afirma a elegibilidade do serf).
+  `tests/F18d-1b-tarefa.test.ts` lê a escada do dado e passou intocado.
+
+`npm run verify` verde: 81 arquivos, 1262 testes.
+
+### Decisões minhas, marcadas para revisão do operador
+
+- **D1 — `ID_DA_BODEGA = 'inn'` é constante estrutural**, em `state.ts` ao lado
+  de `ID_DO_ARMAZEM` e `ID_DA_ESCOLA`, não número de balanceamento. O `inn` é
+  também a **chave** de `condition.json:inn`: o id liga dado e código.
+- **D2 — o teto mora em `bodega.ts`, e `alvoDeEntrada` ganhou um ramo.**
+  `insumo.ts` já é o lugar único que responde "quanto este prédio quer na gaveta
+  `entrada`" (ramo do produtor pela receita, ramo da escola pela fila); a Bodega
+  é o terceiro. De graça isso dá o **nível 7** correto: comida acima do teto
+  (dado editado, save de outra versão) volta ao armazém por `excedenteNaEntrada`
+  sem uma linha escrita para isso. O teto **não podia** vir de
+  `capacidade.entrada`: a Bodega não tem receita, e `capacidadeParaTipo` dá
+  `null` nas duas gavetas para quem não tem receita e não é armazém.
+- **D3 — "comida" é o conjunto de chaves de `restauracaoPorComida`.** É o único
+  lugar do dado que declara isso, e é o mesmo que a F20b vai ler para restaurar
+  condição. Nenhum id de comida digitado em `.ts`.
+- **D4 — o gerador roda primeiro em `gerarTarefas`**, como `gerarTarefasDeOuro`:
+  espelha a escada na leitura do quadro. A prioridade de atendimento continua
+  vindo de `nivelDoTipo`, não da ordem de criação, e o teste afirma isso por
+  `tarefasEmOrdem`, não pela ordem dos ids.
+- **D5 — `entregarInsumo` virou `entregarNaEntrada`** (`systems/serfs.ts`, duas
+  chamadas, um arquivo). O gesto é "a carga entra na gaveta `entrada` de um
+  prédio completo", igual para insumo e para comida; chamar `entregarInsumo`
+  para pão seria mentira no nome. Não é refatoração ampla.
+- **D6 — a Bodega não recebe nada além de comida, e isso é asserção.**
+  `alvoDeEntrada` e `comidaNecessaria` devolvem **zero** para ouro e para toda
+  mercadoria de `economy.json` que não é comida, então nenhum nível (1, 4 ou 5)
+  cria tarefa delas para ela. Sem essa asserção, um ramo mal escrito faria a
+  Bodega virar um segundo armazém.
+
+### Contrato que a F20b e a F20c herdam
+
+- `sim/bodega.ts` é o módulo derivado da Bodega e **não pode importar**
+  `estradas`, `pathfinding` nem `jobs`: `reservas.ts` o importa e `estradas.ts`
+  importa `reservas.ts`. Mesmo contrato do cabeçalho de `escola.ts`, pelo mesmo
+  motivo. A F20b põe o dreno de condição em outro arquivo.
+- `tests/helpers/bodega-cenario.ts` deriva a planta da Bodega andando para o
+  leste na linha de porta do armazém enquanto `canPlace` — o predicado do
+  próprio jogo — recusa, e lança se não couber. Nenhuma coordenada de prédio
+  digitada. A F20b e a F20c reusam `cenarioComBodega` e `rodarAberturaDaBodega`.
+- A F20b tem de **adaptar os cenários longos** (F19 a 12 000 ticks, F19b a
+  20 000): hoje eles não têm Bodega, e com o dreno ligado os civis morrem
+  dentro da janela. Está escrito no item.

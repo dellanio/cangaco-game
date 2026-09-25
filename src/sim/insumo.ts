@@ -16,6 +16,7 @@ import type { GameState } from './state';
 import { MERCADORIA_DE_OURO } from './state';
 import type { GameData } from './data/types';
 import { gameData } from './data';
+import { ehBodegaCompleta, ehComida, tetoDeComidaNaBodega } from './bodega';
 import { custoDeTreino, ehEscolaCompleta, filaDaEscola } from './escola';
 import { receitaDoTipo } from './producao';
 
@@ -64,6 +65,14 @@ export function alvoDeEntrada(
     // vez de gerar um numero infinito delas.
     if (predio.capacidade.entrada === null) return 0;
     return alvoDoProdutor(receita.entra, predio.capacidade.entrada, mercadoria);
+  }
+  // F20a — a Bodega e o segundo predio sem receita que recebe carga. Ela nao tem
+  // teto de gaveta (`capacidade.entrada === null`, por nao ter receita), entao o
+  // alvo dela vem de `condition.json:inn.estoquePorTipoDeComida`, por TIPO de
+  // comida. O nivel 7 sai de graca: comida acima do teto (dado editado, save de
+  // outra versao) volta ao armazem por `excedenteNaEntrada`, sem uma linha a mais.
+  if (ehBodegaCompleta(predio) && ehComida(mercadoria, dados)) {
+    return tetoDeComidaNaBodega(dados);
   }
   if (mercadoria === MERCADORIA_DE_OURO && ehEscolaCompleta(predio)) {
     // O ALVO e o que a fila quer TER, e nao `ouroNecessario`, que e o que ela

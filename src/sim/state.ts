@@ -385,6 +385,25 @@ export interface TarefaMaterialParaObra extends TarefaDeCarga {
 }
 
 /**
+ * F20a — nivel 1 da escada (`delivery.json: comida-para-inn`), a prioridade mais
+ * ALTA de todas: uma unidade de comida do armazem ate a gaveta `entrada` de uma
+ * Bodega COMPLETA. Mesmo serf, mesmo claim, mesma reserva dupla da tarefa de ouro.
+ *
+ * A diferenca da tarefa de ouro esta no que limita o destino. A escola e limitada
+ * pela FILA de treino (demanda que some quando o jogador cancela); a Bodega, por um
+ * TETO POR TIPO de comida, que vem de `condition.json:inn.estoquePorTipoDeComida` e
+ * nao muda no meio da viagem. Por isso a `mercadoria` aqui e parametro — sao varias
+ * comidas, cada uma com o seu teto —, e nao uma constante como `MERCADORIA_DE_OURO`.
+ *
+ * O teto NAO pode vir de `capacidade.entrada`: a Bodega nao tem receita, e por isso
+ * nasce com capacidade `null` nas duas gavetas (ver `capacidadeParaTipo`). Quem
+ * responde e `sim/bodega.ts`.
+ */
+export interface TarefaComidaParaInn extends TarefaDeCarga {
+  readonly tipo: 'comida-para-inn';
+}
+
+/**
  * F13 — nivel 2 da escada (`delivery.json: ouro-para-escola`): uma unidade de ouro
  * do armazem ate uma escola COMPLETA. Mesmo serf, mesmo claim, mesma reserva dupla
  * da tarefa de material; o que muda e onde a carga entra na chegada (a gaveta
@@ -444,6 +463,7 @@ export interface TarefaExcedenteParaArmazem extends TarefaDeCarga {
 
 /** As tarefas que um serf CARREGA: mesma forma, destinos diferentes. */
 export type TarefaDeTransporte =
+  | TarefaComidaParaInn
   | TarefaMaterialParaObra
   | TarefaOuroParaEscola
   | TarefaInsumoProducaoParada
@@ -467,6 +487,9 @@ export type Gaveta = 'entrada' | 'saida';
  * explica).
  */
 export const GAVETA_DE_ORIGEM_POR_TIPO: Readonly<Record<TipoNaEscada, Gaveta>> = {
+  // F20a: a comida sai da gaveta `saida` do armazem, a mesma de onde sai tudo o
+  // que o serf carrega para fora dele.
+  'comida-para-inn': 'saida',
   'material-para-obra': 'saida',
   'ouro-para-escola': 'saida',
   'insumo-producao-parada': 'saida',
@@ -490,6 +513,7 @@ export function gavetaDeOrigem(tipo: TipoNaEscada): Gaveta {
  * construcao, como `GAVETA_DE_ORIGEM_POR_TIPO`.
  */
 export const ORIGEM_ESPERADA_POR_TIPO: Readonly<Record<TipoDeTransporte, 'armazem' | 'outro-predio'>> = {
+  'comida-para-inn': 'armazem',
   'material-para-obra': 'armazem',
   'ouro-para-escola': 'armazem',
   'insumo-producao-parada': 'armazem',
@@ -849,6 +873,11 @@ export const ID_DO_ARMAZEM = 'storehouse';
  *  estrutural, como `ID_DO_ARMAZEM`: os numeros (custo, slots, duracao)
  *  continuam vindo do dado. */
 export const ID_DA_ESCOLA = 'schoolhouse';
+
+/** F20a — a Bodega, onde os civis comem (chave de `condition.json:inn`). Id
+ *  estrutural, como `ID_DA_ESCOLA`: o teto de comida e a lista de comidas
+ *  continuam vindo do dado (`sim/bodega.ts`). */
+export const ID_DA_BODEGA = 'inn';
 
 /** F13 — a mercadoria que a escola consome. Id estrutural, nao numero. */
 export const MERCADORIA_DE_OURO = 'gold';

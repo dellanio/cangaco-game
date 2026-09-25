@@ -25,6 +25,7 @@ import {
 import type { GameData } from './data/types';
 import { gameData } from './data';
 import { ouroNecessario } from './escola';
+import { comidaNecessaria } from './bodega';
 import { demandaDeInsumo, excedenteNaEntrada } from './insumo';
 import { vagasDoPredio } from './ocupacao';
 
@@ -125,6 +126,10 @@ export function demandaNoDestino(
       if (!predio || predio.estado !== 'obra') return 0;
       return predio.obra.faltam[tarefa.mercadoria] ?? 0;
     }
+    // F20a — nivel 1: o teto por tipo de comida, menos o que ja esta na gaveta.
+    // `comidaNecessaria` (sim/bodega.ts) e o MESMO predicado que o gerador usa.
+    case 'comida-para-inn':
+      return comidaNecessaria(state, tarefa.destino, tarefa.mercadoria, dados);
     case 'ouro-para-escola':
       return ouroNecessario(state, tarefa.destino, dados);
     case 'insumo-producao-parada':

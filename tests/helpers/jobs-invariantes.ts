@@ -13,6 +13,7 @@ import type { GameData } from '../../src/sim/data/types';
 import type { GameState, Tarefa } from '../../src/sim/state';
 import { distanciaDaTarefa, modoDoTipo, nivelDoTipo, podeReclamar } from '../../src/sim/jobs';
 import { ehEscolaCompleta } from '../../src/sim/escola';
+import { ehBodegaCompleta, ehComida } from '../../src/sim/bodega';
 import { chaveDeTile, ehPlanejada } from '../../src/sim/estradas';
 import { insumosDoPredio } from '../../src/sim/insumo';
 import { receitaDoTipo, unidadesPorCiclo } from '../../src/sim/producao';
@@ -51,6 +52,12 @@ function violacoesDoDestino(estado: GameState, t: Tarefa, dados: GameData): stri
       return !destino || destino.estado !== 'obra' ? [`${t.id}: destino '${t.destino}' nao e obra`] : [];
     case 'ouro-para-escola':
       return !ehEscolaCompleta(destino) ? [`${t.id}: destino '${t.destino}' nao e escola completa`] : [];
+    // F20a, nivel 1: o destino e uma Bodega completa, e a mercadoria e comida.
+    // `ehBodegaCompleta`/`ehComida` (sim/bodega.ts) sao os predicados da sim.
+    case 'comida-para-inn': {
+      if (!ehBodegaCompleta(destino)) return [`${t.id}: destino '${t.destino}' nao e bodega completa`];
+      return ehComida(t.mercadoria, dados) ? [] : [`${t.id}: '${t.mercadoria}' nao e comida`];
+    }
     // F15b, niveis 4 e 5: o destino tem que ser um produtor completo que PEDE
     // esta mercadoria. `insumosDoPredio` (sim/insumo.ts) e o mesmo predicado que
     // o gerador usa — nao uma copia da regra.

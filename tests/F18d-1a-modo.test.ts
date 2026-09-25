@@ -11,7 +11,10 @@ import { describe, it, expect, afterAll } from 'vitest';
 import { gameData } from '../src/sim/data';
 import type { GameData } from '../src/sim/data/types';
 import type { GameState, Predio, TarefaSaidaCheiaParaArmazem } from '../src/sim/state';
-import { custoDaTarefa, ligacaoEntrePredios, modoDoTipo, planoDaTarefa, portasDaTarefa } from '../src/sim/jobs';
+import {
+  custoDaTarefa, elegivelParaTarefa, ligacaoEntrePredios, modoDoTipo, planoDaTarefa, portasDaTarefa,
+  TIPO_QUE_CARREGA,
+} from '../src/sim/jobs';
 import { tilesDaPorta } from '../src/sim/estradas';
 import { buscarCaminho } from '../src/sim/pathfinding';
 import { step } from '../src/sim/tick';
@@ -32,13 +35,14 @@ const obraDe = (estado: GameState, id: string): Predio => {
 describe('F18d-1a — o modo mora no dado, lido pelo id do nivel', () => {
   it('nivel 3 (material para obra) e livre; os outros tipos QUE EXISTEM sao estrada', () => {
     expect(modoDoTipo('material-para-obra')).toBe('livre');
-    for (const tipo of ['ouro-para-escola', 'insumo-producao-parada', 'insumo-producao-baixa',
-      'saida-cheia-para-armazem', 'excedente-para-armazem'] as const) {
+    // F20a: `comida-para-inn` passou a ser tipo de tarefa e entra na lista. A
+    // assercao fica mais ESTRITA que a de antes — `modoDoTipo` agora e chamada
+    // com o tipo de tarefa, nao so com o id da escada.
+    for (const tipo of ['comida-para-inn', 'ouro-para-escola', 'insumo-producao-parada',
+      'insumo-producao-baixa', 'saida-cheia-para-armazem', 'excedente-para-armazem'] as const) {
       expect(modoDoTipo(tipo)).toBe('estrada');
+      expect(elegivelParaTarefa(tipo, TIPO_QUE_CARREGA)).toBe(true);
     }
-    // `comida-para-inn` (nivel 1) ainda nao e tipo de tarefa — nasce na F20 — e por
-    // isso nao entra na lista acima. O modo dele esta coberto pelo `it` seguinte,
-    // que le a escada inteira do dado.
   });
 
   it('toda linha da escada publica um modo — a lista do teste e a do dado, nao uma copia', () => {

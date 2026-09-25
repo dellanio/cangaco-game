@@ -24,7 +24,8 @@ import { gameData } from '../data';
 import { armazensCompletos, chaveDeTile, ehPlanejada, tilesOrdenados } from '../estradas';
 import {
   criarTarefa, criarTarefaDeAssentamento, criarTarefaDeConstrucao,
-  criarTarefaDeInsumo, criarTarefaDeOcupacao, criarTarefaDeOuro, criarTarefaParaArmazem,
+  criarTarefaDeComida, criarTarefaDeInsumo, criarTarefaDeOcupacao, criarTarefaDeOuro,
+  criarTarefaParaArmazem,
   distanciaDaTarefa, liberar, ligacaoEntrePredios,
   modoDoTipo, podeReclamar, TIPO_QUE_CARREGA,
 } from '../jobs';
@@ -38,6 +39,7 @@ import {
 } from '../insumo';
 import { obraNivelada } from '../obra';
 import { ehEscolaCompleta, ouroNecessario } from '../escola';
+import { comidaNecessaria, comidasConhecidas, ehBodegaCompleta } from '../bodega';
 import { receitaDoTipo } from '../producao';
 import { ehPredioOcupavel, vagasDoPredio } from '../ocupacao';
 
@@ -78,6 +80,10 @@ function motivoDoDestino(state: GameState, t: Tarefa, dados: GameData): MotivoDe
     case 'material-para-obra':
     case 'construir':
       return ehObra(destino) ? null : 'destino-completo';
+    // F20a — nivel 1: a Bodega demolida (ou replantada, ou ainda em obra) nao
+    // recebe comida. `ehBodegaCompleta` e o mesmo predicado do gerador.
+    case 'comida-para-inn':
+      return ehBodegaCompleta(destino) ? null : 'destino-sumiu';
     case 'ouro-para-escola':
       return ehEscolaCompleta(destino) ? null : 'destino-sumiu';
     // F15b — o destino de insumo tem que continuar CONSUMINDO a mercadoria.
@@ -460,6 +466,39 @@ function gerarTarefasParaArmazem(state: GameState, dados: GameData): GameState {
  * portao tambem no laco de construir seria deadlock (F11c, Task 6).
  */
 /**
+ * F20a — o NIVEL 1 da escada, o mais alto: para cada Bodega completa e cada tipo de
+ * comida, tantas tarefas quantas faltam para o teto (`comidaNecessaria`) menos as
+ * que ja existem daquela comida. Sem armazem ligado, ou sem aquela comida livre em
+ * nenhum deles, nao cria — a mesma regra do ouro e do material, e e ela que faz o
+ * gerador ignorar de graca a comida que o jogo ainda nao produz (`wine`, `fish`):
+ * `origemMaisPerto` devolve `null` e ninguem fica esperando o que nao existe.
+ *
+ * Roda ANTES de todos os outros geradores so para espelhar a escada de
+ * `delivery.json` na leitura do quadro; a ORDEM de atendimento continua vindo de
+ * `nivelDoTipo` em `tarefasEmOrdem`, nunca da ordem de criacao.
+ */
+function gerarTarefasDeComida(state: GameState, dados: GameData): GameState {
+  let atual = state;
+  for (const id of state.predios.ordem) {
+    const bodega = atual.predios.porId[id];
+    if (!ehBodegaCompleta(bodega)) continue;
+    for (const comida of comidasConhecidas(dados)) {
+      const querem = comidaNecessaria(atual, id, comida, dados);
+      const existentes = tarefasPorNumero(atual).filter(
+        (t) => t.tipo === 'comida-para-inn' && t.destino === id && t.mercadoria === comida,
+      ).length;
+      if (querem <= existentes) continue;
+      const origem = origemMaisPerto(atual, bodega, comida, 'comida-para-inn', dados);
+      if (origem === null) continue;
+      for (let i = existentes; i < querem; i++) {
+        atual = criarTarefaDeComida(atual, { mercadoria: comida, origem, destino: id }).state;
+      }
+    }
+  }
+  return atual;
+}
+
+/**
  * F13 — as tarefas de nivel "ouro para escola": para cada escola completa, tantas
  * quantas a fila de treino ainda pede (`ouroNecessario`) menos as que ja existem.
  * Sem armazem ligado e com ouro livre, nao cria: a fila espera, e a tarefa surge
@@ -536,7 +575,10 @@ function gerarTarefasDeAssentamento(state: GameState): GameState {
 }
 
 export function gerarTarefas(state: GameState, dados: GameData = gameData): GameState {
-  let atual = gerarTarefasDeOuro(state, dados);
+  // Na ordem da escada de `delivery.json`: nivel 1 (comida), nivel 2 (ouro), e
+  // dentro do laco os niveis 3 (material) e a construcao.
+  let atual = gerarTarefasDeComida(state, dados);
+  atual = gerarTarefasDeOuro(atual, dados);
   for (const id of state.predios.ordem) {
     const obra = atual.predios.porId[id];
     if (!ehObra(obra)) continue;

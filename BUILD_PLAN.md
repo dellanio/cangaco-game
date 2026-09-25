@@ -2057,6 +2057,87 @@ a geografia já corrigida do que regravar 900 tiles depois.
   **F24**. Aqui o couro só precisa chegar ao armazém sem travar a granja.
 
 ### F20 — Inn, fome e consumo
+- **QUEBRADA EM TRÊS SUB-ITENS — F20a, F20b, F20c (decisão minha, 2026-09-24, para o
+  operador revisar).** A F20 como escrita é de várias sessões, e a ordem entre as partes
+  **não é preferência, é dependência medida**: `condition.json` dá 20 min efetivos de
+  condição cheia para um civil na escala 2, o que são **12 000 ticks** a 10 Hz. Entregar o
+  dreno antes de existir lugar para comer mata todo civil dentro da janela dos testes
+  longos que já rodam (F19 a 12 000 ticks, F19b a 20 000) — não é risco, é aritmética do
+  dado. Então a Bodega recebendo comida vem primeiro, sozinha e completa.
+  - **F20a** — a Bodega recebe comida (só `src/sim/`). Não muda o comportamento de nada
+    que exista hoje, porque **nenhum cenário atual tem Bodega**.
+  - **F20b** — condição, dreno, comer na Bodega, morte e os três casos de "a unidade
+    sumiu" (só `src/sim/`). Indivisível: dreno sem morte não fecha o aceite escrito, e
+    morte sem os três casos deixa prédio com ocupante fantasma.
+  - **F20c** — o marcador de fome no mundo (só `src/render/`), com screenshot.
+  - **Consequência da quebra**: cada sub-item fica dentro de **uma** camada, então a
+    exceção da §10 escrita abaixo **deixa de ser necessária** — o que é mais estrito que a
+    nota, não menos. Ela continua valendo se o operador preferir reunir os itens.
+- **Nota herdada da F19 (2026-09-24) — o prédio que para por falta de insumo é
+  MUDO**: as causas da F22 são `sem-trabalhador`, `sem-estrada`, `veio-esgotado`
+  e `sem-campo`. Uma padaria sem fubá não produz alerta nenhum, e a medição da
+  F19 mostra por que a causa não é trivial: na cadeia calibrada, o moinho passa
+  **26 %** e a padaria **29 %** do tempo em `esperando_insumo` — esse é o regime
+  normal, não a falha. Uma causa nova precisaria de **limiar** (tempo parado, ou
+  estoque zero na cadeia inteira), e limiar é desenho. **Decisão do operador**, e
+  cai aqui porque é com a fome que o silêncio fica caro.
+
+#### F20a — A Bodega recebe comida (sim)
+O **nível 1** da escada de `delivery.json` (`comida-para-inn`, a prioridade mais alta de
+todas) é o único que nunca teve implementação: o id está no dado desde a F03 e não há
+gerador, tipo de tarefa nem leitor. Esta feature o escreve. A Bodega (`inn`, Taverna em
+`theme-sertao.json`) já existe em `data/buildings.json` (4×3, timber 6, stone 5,
+`desbloqueadoPor: storehouse`, `trabalhador: null` — ela não tem especialista e não tem
+receita), e `data/condition.json` já diz quanto ela guarda:
+`inn.estoquePorTipoDeComida: 5`, por **tipo** de comida.
+- **Conferido no dado e no código (2026-09-24)**: `condition.json` chega ao carregador
+  como `dados.condicao` (`src/sim/data/loader.ts:414-434`), e **nenhum sistema o lê** —
+  esta feature é a primeira leitora de `inn`, como a F20b será a de `limiares`. A
+  `capacidade` da Bodega é `{ entrada: null, saida: null }` (`state.ts:capacidadeParaTipo`:
+  prédio sem receita e sem ser armazém não tem teto de gaveta), então **o teto de 5 vem de
+  `condition.json`, não de `capacidade`** — e é isso que o alvo desta feature calcula.
+- **Aceite 1 — o tipo novo entra nas tabelas exaustivas.** `nivelDoTipo('comida-para-inn')`
+  é 1 e `modoDoTipo` é `estrada`, os dois lidos do dado; e o tipo aparece em
+  `GAVETA_DE_ORIGEM_POR_TIPO`, `ORIGEM_ESPERADA_POR_TIPO` e `UNIDADE_ELEGIVEL_POR_TIPO`.
+  As três são `Record` exaustivo: tipo novo sem linha **não compila**, e o guarda é
+  estrutural, não textual.
+- **Aceite 2 — a demanda é derivada, nunca digitada.** Para cada comida de
+  `condition.restauracaoPorComida`, o alvo na gaveta `entrada` da Bodega é
+  `condition.inn.estoquePorTipoDeComida`; para qualquer outra mercadoria (ouro, pedra,
+  tronco) o alvo é **zero** e nenhuma tarefa nasce. O teste deriva a lista de comidas das
+  chaves do dado e afirma o alvo contra o número do dado.
+- **Aceite 3 — pelo caminho real, do estado inicial.** Partindo de `createInitialState`, o
+  jogador planta a Bodega (`PlaceBlueprint`) e a rua (`PlaceRoad`), os 2 laborers a
+  constroem com o timber e a pedra da abertura, e os serfs levam `loaves` e `sausages` do
+  armazém até ela. Aceite: a gaveta `entrada` da Bodega chega a **5 de cada uma das duas
+  comidas que a abertura tem** e **para aí** — não vira 6, nenhuma tarefa nova nasce, e o
+  saldo do armazém cai exatamente 5 + 5 (conservação de bens). É caminho real de verdade,
+  ao contrário do da F19b: a Bodega só pede `storehouse`, que já está de pé no tick 0.
+- **Aceite 4 — a prioridade 1 é obedecida.** Com uma obra nivelada pedindo material
+  (nível 3) e a Bodega vazia no mesmo tick, o serf ocioso escolhe a **comida**. Eixo
+  determinístico: a ordem de `tarefasEmOrdem`, não tempo de relógio.
+- **Aceite 5 — comida que não existe não gera tarefa.** `restauracaoPorComida` lista
+  `wine` e `fish`, que não têm produtor nem estoque em nenhum cenário. Nenhuma tarefa nasce
+  para elas — a tarefa só nasce com origem que **ofereça** (`origemMaisPerto` devolve
+  `null`), e é o mesmo predicado que impede unidade esperando o que nunca chega.
+- **Aceite 6 — o ramo de erro devolve a reserva.** Bodega demolida com serf em rota: a
+  tarefa é cancelada, a reserva volta e a carga é devolvida ao armazém pelo caminho que
+  `destinoQueRecebe`/`comecarADevolver` já dão — afirmado **para o tipo novo**, porque
+  "toda tarefa reclamada precisa ter caminho de volta" (CLAUDE.md §5).
+- **Não-regressão que esta feature tem de escrever** (a regra: o roteiro que afirma o texto
+  substituído codifica o defeito). `tests/F18d-1a-modo.test.ts:32-39` afirma hoje, em
+  comentário e **por omissão da lista**, que *"`comida-para-inn` (nível 1) ainda não é tipo
+  de tarefa — nasce na F20"*. Esta feature **move `comida-para-inn` para dentro da lista
+  dos tipos que existem** e apaga o comentário: a asserção nova é mais estrita, não só
+  diferente.
+- **Fora do escopo, e é o que sobra para a F20b**: ninguém **come**. A comida entra na
+  Bodega, chega ao teto e fica lá. Nenhuma unidade tem `condicao`, nada dreno, ninguém
+  morre. A Bodega também não ganha painel nem ícone — `render/` não é tocado.
+
+#### F20b — Fome: condição, dreno, comer na Bodega e morte (sim)
+Depende da F20a: sem comida na Bodega, o dreno é só uma forma lenta de matar a aldeia.
+Indivisível — dreno sem morte não fecha o aceite escrito, e morte sem os três casos de "a
+unidade sumiu" deixa prédio com ocupante fantasma.
 - Restauração por tipo de comida e regra das duas comidas diferentes, conforme o
   GDD. Aceite: cenário longo em que a população sobrevive; cenário sem comida em
   que morre — e a morte é registrada em evento, não em log solto.
@@ -2066,14 +2147,59 @@ a geografia já corrigida do que regravar 900 tiles depois.
   operador: fica assim **por enquanto**, porque não existe item no chão e nenhuma unidade morre antes
   desta feature ou do combate. Esta feature decide se a carga cai no tile e é recolhida (item no chão,
   tarefa ou estado novo no GDD §6.2) ou se continua perdida — e ajusta o teste de conservação de bens.
-- **Nota herdada da F19 (2026-09-24) — o prédio que para por falta de insumo é
-  MUDO**: as causas da F22 são `sem-trabalhador`, `sem-estrada`, `veio-esgotado`
-  e `sem-campo`. Uma padaria sem fubá não produz alerta nenhum, e a medição da
-  F19 mostra por que a causa não é trivial: na cadeia calibrada, o moinho passa
-  **26 %** e a padaria **29 %** do tempo em `esperando_insumo` — esse é o regime
-  normal, não a falha. Uma causa nova precisaria de **limiar** (tempo parado, ou
-  estoque zero na cadeia inteira), e limiar é desenho. **Decisão do operador**, e
-  cai aqui porque é com a fome que o silêncio fica caro.
+- **A morte a 0 % está confirmada no GDD, em dois lugares** (conferido 2026-09-24):
+  §2, linha 54 — *"Sem comida, os civis morrem"* — e §11.3, linha 795 — *"Alerta visual a
+  35 %, o civil sai para comer a 50 %, morre a 0 %."* O dado concorda: `limiares.morte: 0.0`.
+  Então **sim**: unidade que chega a 0 % morre, e isso não é interpretação.
+- **O que "morrer" significa para quem estava no meio de alguma coisa** — três casos, e
+  hoje **nenhum tem caminho**, porque nunca morreu ninguém. O saneamento que existe cobre o
+  caso espelho ("o prédio sumiu": `sanearTarefas`, `sanearFilas`, `passoProduzindo`, ver o
+  cabeçalho de `systems/demolicao.ts`). A morte estreia **"a unidade sumiu"**, e ele não existe:
+  1. **O especialista dentro do prédio.** `predio.ocupante` guarda o **id** da unidade e é
+     **fonte de verdade única** (`ocupacao.ts:59`, e o comentário de lá diz por quê). Morto o
+     ocupante sem mexer no prédio, `ocupante` aponta para unidade que não existe: o prédio
+     parece com trabalhador, não produz, e a vaga nunca volta ao mercado. A morte **tem** de
+     zerar `ocupante` no mesmo tick.
+  2. **O produtor no meio do ciclo** (o fazendeiro do pedido). Decidir se o progresso parcial
+     do ciclo **se perde** (ciclo recomeça com o próximo ocupante) ou **fica** no prédio. E se
+     o tile de campo reservado por ele volta ao mercado — se não voltar, terra arada fica
+     presa para sempre.
+  3. **O serf com pedra na mão.** Já está na nota da carga, acima: hoje a carga **se perde**,
+     e a decisão do operador foi "assim por enquanto, porque ninguém morre". Esta feature é a
+     que tira o "por enquanto".
+  Os três entram no aceite como caso de teste separado, e o evento de morte que o aceite já
+  pede é o que o render usa para o retorno na tela.
+- **Custo que a quebra deixa visível, e entra no escopo desta feature**: os cenários longos
+  que já rodam passam de 12 000 ticks (F19 a 12 000, F19b a 20 000) e **não têm Bodega**.
+  Com o dreno ligado, os civis deles morrem e os testes das duas cadeias quebram. Adaptar
+  esses cenários (Bodega abastecida, ou a decisão explícita de que aquele cenário roda com
+  a fome desligada por dado) **faz parte desta feature**, e é a prova de que a fome é real:
+  cadeia que continuava produzindo com todos mortos seria a evidência de que o dreno não
+  chegou à unidade.
+- **Como a condição é guardada (decisão a tomar, e a conservadora está escrita)**: em
+  **ticks restantes** (inteiro), nunca em fração de ponto flutuante acumulada tick a tick —
+  fração somada 12 000 vezes é erro de arredondamento entrando no determinismo. A fração
+  que o GDD e os limiares falam (`0.50`, `0.35`) é **derivada** na leitura
+  (`ticksRestantes / ticksDeCondicaoCheia`), e os limiares viram inteiro **uma vez, no
+  carregamento**, com `Math.round`, como manda a §5.
+- **A regra das duas comidas, conferida no dado**: `restauracaoPorComida` dá
+  `wine 0.30`, `loaves 0.40`, `fish 0.50`, `sausages 0.60` — o **máximo de uma comida só é
+  0.60**, e `loaves + sausages` dá exatamente **1.00**. Então a leitura conservadora, e a
+  única que o dado sustenta, é *"cada tipo de comida contribui a sua restauração no máximo
+  uma vez por refeição"*: o civil só enche 100 % com duas comidas diferentes porque nenhuma
+  sozinha chega a 1.0, e não por uma regra escrita à parte. `regraCivil` e `regraMilitar`
+  são **prosa** em `condition.json`, que nenhum sistema lê; esta feature decide se a prosa
+  vira campo lido ou se o número já responde. Se o dado não sustentar o que o GDD diz,
+  **vale o dado** e a divergência é registrada.
+
+#### F20c — Marcador de fome no mundo (render)
+Depende da F20b: o marcador lê `unidade.condicao`, que só existe depois dela. Só
+`src/render/` — e por isso a exceção da §10 escrita abaixo não é usada.
+- **Como o roteiro chega a um civil com fome**: `window.__cangaco.avancar(n)` (o mesmo
+  gancho que todo roteiro usa) adianta os milhares de ticks com o laço pausado, sem
+  depender de tempo de parede. Se a corrida ficar longa demais para o roteiro, a
+  alternativa é um cenário de captura com a condição semeada — **nunca** um número de
+  limiar digitado em `.ts`.
 - **Retorno visual que falta — marcador de fome no mundo, sobre a unidade** (pedido do
   operador, 2026-09-24). Não basta o alerta do HUD: o jogador precisa ver **quem**
   está passando fome, no mapa. **Não é marcador permanente** — todo civil fica com
@@ -2099,28 +2225,6 @@ a geografia já corrigida do que regravar 900 tiles depois.
   - Aceite do marcador: unidade acima do limiar **não** tem marcador; a mesma unidade
     abaixo dele tem; e **screenshot** — é mudança de tela (§8). O roteiro roda pelo
     menos um passo despausado se tocar em `#hud` ou `#alertas`.
-- **A morte a 0 % está confirmada no GDD, em dois lugares** (conferido 2026-09-24):
-  §2, linha 54 — *"Sem comida, os civis morrem"* — e §11.3, linha 795 — *"Alerta visual a
-  35 %, o civil sai para comer a 50 %, morre a 0 %."* O dado concorda: `limiares.morte: 0.0`.
-  Então **sim**: unidade que chega a 0 % morre, e isso não é interpretação.
-- **O que "morrer" significa para quem estava no meio de alguma coisa** — três casos, e
-  hoje **nenhum tem caminho**, porque nunca morreu ninguém. O saneamento que existe cobre o
-  caso espelho ("o prédio sumiu": `sanearTarefas`, `sanearFilas`, `passoProduzindo`, ver o
-  cabeçalho de `systems/demolicao.ts`). A morte estreia **"a unidade sumiu"**, e ele não existe:
-  1. **O especialista dentro do prédio.** `predio.ocupante` guarda o **id** da unidade e é
-     **fonte de verdade única** (`ocupacao.ts:59`, e o comentário de lá diz por quê). Morto o
-     ocupante sem mexer no prédio, `ocupante` aponta para unidade que não existe: o prédio
-     parece com trabalhador, não produz, e a vaga nunca volta ao mercado. A morte **tem** de
-     zerar `ocupante` no mesmo tick.
-  2. **O produtor no meio do ciclo** (o fazendeiro do pedido). Decidir se o progresso parcial
-     do ciclo **se perde** (ciclo recomeça com o próximo ocupante) ou **fica** no prédio. E se
-     o tile de campo reservado por ele volta ao mercado — se não voltar, terra arada fica
-     presa para sempre.
-  3. **O serf com pedra na mão.** Já está na nota da carga, acima: hoje a carga **se perde**,
-     e a decisão do operador foi "assim por enquanto, porque ninguém morre". Esta feature é a
-     que tira o "por enquanto".
-  Os três entram no aceite como caso de teste separado, e o evento de morte que o aceite já
-  pede é o que o render usa para o retorno na tela.
 ### F21 — Gold mine, Coal mine e Metallurgist's (ouro renovável)
 - **Nota (origem: F15a — contrato herdado)**: o veio mora no **prédio**, em
   `PredioCompleto.producao.veio`, semeado de `data/production.json`

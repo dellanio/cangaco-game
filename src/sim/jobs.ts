@@ -13,7 +13,7 @@
 import type {
   GameEvent, GameState, Predio, Tarefa, TarefaConstruir, TarefaDeTransporte,
   TarefaExcedenteParaArmazem, TarefaInsumoProducaoBaixa, TarefaInsumoProducaoParada,
-  TarefaMaterialParaObra, TarefaOcupar, TarefaOuroParaEscola,
+  TarefaComidaParaInn, TarefaMaterialParaObra, TarefaOcupar, TarefaOuroParaEscola,
   TarefaAssentarEstrada, TarefaColher, TarefaDeLaborer, TarefaSaidaCheiaParaArmazem, TipoDeTarefa,
   TipoNaEscada,
 } from './state';
@@ -80,6 +80,9 @@ export const TIPO_QUE_CARREGA = 'serf';
 export const TIPO_QUE_CONSTROI = 'laborer';
 
 const UNIDADE_ELEGIVEL_POR_TIPO: Readonly<Record<TipoDeTarefa, string | null>> = {
+  // F20a: comida e carga como qualquer outra — o que muda e o nivel (1, o mais
+  // alto de todos) e a gaveta de destino (`entrada` da Bodega).
+  'comida-para-inn': TIPO_QUE_CARREGA,
   'material-para-obra': TIPO_QUE_CARREGA,
   // F13: ouro tambem e carga — mesmo serf, mesma FSM, mesmo claim.
   'ouro-para-escola': TIPO_QUE_CARREGA,
@@ -191,6 +194,23 @@ export function criarTarefa(
   const numero = state.proximoId;
   const tarefa: TarefaMaterialParaObra = {
     id: `t${numero}`, numero, tipo: 'material-para-obra', mercadoria: campos.mercadoria,
+    origem: campos.origem, destino: campos.destino, estado: 'aberta', reclamadaPor: null,
+  };
+  return inserirTarefa(state, tarefa);
+}
+
+/**
+ * F20a — cria uma tarefa de COMIDA aberta, do armazem `origem` ate a Bodega
+ * `destino`. Irma de `criarTarefaDeOuro`; a mercadoria e parametro porque a Bodega
+ * quer VARIAS comidas, uma gaveta de cada, e nao uma mercadoria so.
+ */
+export function criarTarefaDeComida(
+  state: GameState,
+  campos: { readonly mercadoria: string; readonly origem: string; readonly destino: string },
+): { readonly state: GameState; readonly id: string } {
+  const numero = state.proximoId;
+  const tarefa: TarefaComidaParaInn = {
+    id: `t${numero}`, numero, tipo: 'comida-para-inn', mercadoria: campos.mercadoria,
     origem: campos.origem, destino: campos.destino, estado: 'aberta', reclamadaPor: null,
   };
   return inserirTarefa(state, tarefa);
