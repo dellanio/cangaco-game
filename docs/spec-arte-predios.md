@@ -165,3 +165,12 @@ o conjunto.
 - Em teste: pedreira no ludo.ai, com a configuração da seção 1.
 - A primeira imagem boa vira a referência das outras 167. Gerar algumas
   variantes e escolher com calma antes de seguir.
+
+## 8. Outra ferramenta, outro prompt
+
+O molde da seção 4 pressupõe o **painel** do ludo.ai resolvendo ângulo, rotação e
+elevação. Numa ferramenta sem painel a câmera volta para o texto, e o prompt fica
+diferente por necessidade, não por gosto. O caso já rodado está em
+`docs/arte-prompt-higgsfield.md` (HiggsField, casa do lenhador): mesmos `STYLE`,
+`PALETTE` e `LIGHT` daqui, `CAMERA` longa, e duas negativas a mais (vegetação sob o
+prédio, mata em volta). Se os blocos comuns mudarem aqui, mudam lá junto.
