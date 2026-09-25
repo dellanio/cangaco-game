@@ -285,10 +285,17 @@ async function roteiro(ctx) {
     rAviso.width > 0 && rAviso.height > 0,
     `o aviso deveria ter area na tela, veio ${JSON.stringify(rAviso)}`,
   );
+  // Layout 2 (estilo-ui, fatia 4): o aviso e carimbo DENTRO do HUD, e nao
+  // sobreposicao no canto do mapa — o canvas fica inteiro para o jogo.
+  const rHud = await retanguloDe(page, '#hud');
   afirmar(
-    rAviso.left >= canvas.left && rAviso.right <= canvas.right
-      && rAviso.top >= canvas.top && rAviso.bottom <= canvas.bottom,
-    `o aviso deveria caber na celula do canvas ${JSON.stringify(canvas)}, veio ${JSON.stringify(rAviso)}`,
+    rAviso.left >= rHud.left - 0.5 && rAviso.right <= rHud.right + 0.5
+      && rAviso.top >= rHud.top - 0.5 && rAviso.bottom <= rHud.bottom + 0.5,
+    `o aviso deveria caber na barra do HUD ${JSON.stringify(rHud)}, veio ${JSON.stringify(rAviso)}`,
+  );
+  afirmar(
+    rAviso.bottom <= canvas.top + 0.5,
+    `o aviso nao pode invadir o canvas: aviso.bottom ${rAviso.bottom} contra canvas.top ${canvas.top}`,
   );
   const cruzam = rAviso.left < rPainel.right && rAviso.right > rPainel.left
     && rAviso.top < rPainel.bottom && rAviso.bottom > rPainel.top;

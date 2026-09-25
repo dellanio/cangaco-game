@@ -12,9 +12,11 @@
     <link rel="stylesheet" href="/src/ui/estilo.css" />
   </head>
   <body>
-    <div id="hud"></div>
+    <!-- Layout 2, fatia 4: os avisos (F22) sao carimbos DENTRO do HUD, nao
+         caixa sobre o mapa. ui/alertas.ts so procura #alertas; e o CSS quem
+         os poe a direita dos recursos. -->
+    <div id="hud"><aside id="alertas" hidden></aside></div>
     <div id="jogo"></div>
-    <aside id="alertas" hidden></aside>
     <aside id="ajuda" hidden></aside>
     <!-- Layout 2: o balcao e a faixa de contexto no rodape (linha 3 da grade),
          e o painel de predio mora DENTRO dele. A prancha e a coluna da direita.
