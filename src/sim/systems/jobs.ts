@@ -16,14 +16,15 @@ import type {
   GameEvent, GameState, Predio, PredioCompleto, PredioEmObra, Tarefa, TarefaDeTransporte,
 } from '../state';
 import {
-  ehTarefaDeAssentamento, ehTarefaDeColheita, ehTarefaDeTransporte, ID_DO_ARMAZEM,
+  ehTarefaDeAradura, ehTarefaDeAssentamento, ehTarefaDeColheita, ehTarefaDeTransporte, ID_DO_ARMAZEM,
   MERCADORIA_DE_OURO, ORIGEM_ESPERADA_POR_TIPO, origemDaTarefaVale,
 } from '../state';
 import type { GameData } from '../data/types';
 import { gameData } from '../data';
 import { armazensCompletos, chaveDeTile, ehPlanejada, tilesOrdenados } from '../estradas';
+import { ehCampoPlanejado, tilesPlanejadosParaArar } from '../campos';
 import {
-  criarTarefa, criarTarefaComer, criarTarefaDeAssentamento, criarTarefaDeConstrucao,
+  criarTarefa, criarTarefaComer, criarTarefaDeAradura, criarTarefaDeAssentamento, criarTarefaDeConstrucao,
   criarTarefaDeComida, criarTarefaDeInsumo, criarTarefaDeOcupacao, criarTarefaDeOuro,
   criarTarefaParaArmazem,
   distanciaDaTarefa, liberar, ligacaoEntrePredios,
@@ -73,6 +74,12 @@ function motivoDoDestino(state: GameState, t: Tarefa, dados: GameData): MotivoDe
   // some, devolvendo a pedra reservada (a reserva e derivada da tarefa).
   if (ehTarefaDeAssentamento(t)) {
     return ehPlanejada(state.estradasPlanejadas, t.destinoTile) ? null : 'destino-sumiu';
+  }
+  // F18h — a mesma pergunta para a aradura, no canteiro dela. Nao ha reserva de
+  // material a devolver (o milho nao custa nada); o que a liberacao devolve e o
+  // laborer, e e por isso que ela existe aqui e nao so no claim.
+  if (ehTarefaDeAradura(t)) {
+    return ehCampoPlanejado(state.camposPlanejados, t.destinoTile) ? null : 'destino-sumiu';
   }
   const destino = state.predios.porId[t.destino];
   if (!destino) return 'destino-sumiu';
@@ -305,6 +312,13 @@ export function sanearTarefas(state: GameState, dados: GameData = gameData): Res
       const chave = chaveDeTile(t.destinoTile);
       const existentes = tarefasPorNumero(atual)
         .filter((o) => ehTarefaDeAssentamento(o) && chaveDeTile(o.destinoTile) === chave).length;
+      if (existentes > 1) atual = cancelarAberta(atual, t.id);
+    } else if (ehTarefaDeAradura(t)) {
+      // F18h: um tile do canteiro do campo comporta UMA tarefa, pelo mesmo motivo
+      // do tile de estrada logo acima — dois laborers arariam a mesma roca.
+      const chave = chaveDeTile(t.destinoTile);
+      const existentes = tarefasPorNumero(atual)
+        .filter((o) => ehTarefaDeAradura(o) && chaveDeTile(o.destinoTile) === chave).length;
       if (existentes > 1) atual = cancelarAberta(atual, t.id);
     } else if (ehTarefaDeColheita(t)) {
       // F-T2c: um predio colhe UM tile por vez (um ciclo, um ocupante), e um
@@ -606,6 +620,28 @@ function gerarTarefasDeAssentamento(state: GameState): GameState {
   return atual;
 }
 
+/**
+ * F18h — o mesmo remendo, para o canteiro do campo. Aqui ele nao cobre buraco de
+ * pagador (nao ha material a pagar): ele cobre o tile cuja tarefa CAIU — o laborer
+ * morreu com ela e o cancelamento a apagou, um save antigo trouxe canteiro sem
+ * tarefa. Sem ele, o tile ficaria desenhado para sempre esperando quem nunca vem.
+ *
+ * Ordem canonica por `tilesPlanejadosParaArar`, pelo motivo de sempre: dois saves
+ * com o mesmo canteiro geram os mesmos ids na mesma ordem.
+ */
+function gerarTarefasDeAradura(state: GameState): GameState {
+  const comTarefa = new Set<string>();
+  for (const t of tarefasPorNumero(state)) {
+    if (ehTarefaDeAradura(t)) comTarefa.add(chaveDeTile(t.destinoTile));
+  }
+  let atual = state;
+  for (const { tile, recurso } of tilesPlanejadosParaArar(state.camposPlanejados)) {
+    if (comTarefa.has(chaveDeTile(tile))) continue;
+    atual = criarTarefaDeAradura(atual, tile, recurso).state;
+  }
+  return atual;
+}
+
 export function gerarTarefas(state: GameState, dados: GameData = gameData): GameState {
   // Na ordem da escada de `delivery.json`: nivel 1 (comida), nivel 2 (ouro), e
   // dentro do laco os niveis 3 (material) e a construcao.
@@ -641,6 +677,7 @@ export function gerarTarefas(state: GameState, dados: GameData = gameData): Game
   atual = gerarTarefasDeInsumo(atual, dados);
   atual = gerarTarefasParaArmazem(atual, dados);
   atual = gerarTarefasDeAssentamento(atual);
+  atual = gerarTarefasDeAradura(atual);
   // F14 por ultimo, e sobre PREDIOS COMPLETOS — o laco acima so olha obra. Uma
   // obra que o laborer completou neste tick ja entra aqui e ganha a vaga de
   // ocupante no mesmo tick; o especialista a reclama no tick seguinte.

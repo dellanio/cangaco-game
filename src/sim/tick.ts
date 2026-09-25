@@ -8,6 +8,7 @@ import { aplicarPlaceBlueprint } from './systems/build';
 import { aplicarDemolishBuilding } from './systems/demolicao';
 import { aplicarCancelTraining, aplicarEnqueueTraining, sistemaDasEscolas } from './systems/escolas';
 import { aplicarDemolishRoad, aplicarPlaceRoad } from './systems/estradas';
+import { aplicarPlowField } from './systems/campos';
 import { gerarTarefas, sanearTarefas } from './systems/jobs';
 import { aplicarSetBuildingPaused } from './systems/pausa';
 import { sistemaDosEspecialistas } from './systems/especialistas';
@@ -44,6 +45,12 @@ export function step(
       }
       case 'PlaceRoad': {
         const resultado = aplicarPlaceRoad(atual, command, dados);
+        atual = resultado.state;
+        events.push(...resultado.events);
+        break;
+      }
+      case 'PlowField': {
+        const resultado = aplicarPlowField(atual, command, dados);
         atual = resultado.state;
         events.push(...resultado.events);
         break;
@@ -143,6 +150,9 @@ export function step(
     tiposJaConstruidos: atual.tiposJaConstruidos,
     estradas: atual.estradas,
     estradasPlanejadas: atual.estradasPlanejadas,
+    // F18h: o canteiro do campo. Ele muda em `PlowField` (comando) e na aradura
+    // (sistema dos laborers); aqui so atravessa, como o da estrada.
+    camposPlanejados: atual.camposPlanejados,
     jobs: atual.jobs,
     treino: atual.treino,
     // F-T2a: a colheita ja aconteceu dentro dos sistemas (quem colhe e o

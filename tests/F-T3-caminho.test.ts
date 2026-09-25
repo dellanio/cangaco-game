@@ -55,7 +55,7 @@ function colheitaDe(tipo: string): ColheitaDeRecurso {
 function primeiroTileColhivel(
   estado: GameState, predio: PredioCompleto, colheita: ColheitaDeRecurso,
 ): string {
-  for (const k of tilesDeColheita(predio, colheita, DADOS)) {
+  for (const k of tilesDeColheita(estado, predio, colheita, DADOS)) {
     if (tileColhivelAgora(estado, k, colheita, 1)) return k;
   }
   throw new Error('teste: o cenario nao tem tile colhivel ao alcance');

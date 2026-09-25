@@ -471,7 +471,7 @@ export function pedraDisponivel(state: GameState, dados: GameData = gameData): n
   return soma;
 }
 
-function tileEmPredio(state: GameState, tile: TileDeGrid, dados: GameData): boolean {
+export function tileEmPredio(state: GameState, tile: TileDeGrid, dados: GameData): boolean {
   for (const id of state.predios.ordem) {
     const predio = state.predios.porId[id];
     const caixa = predio ? caixaDoPredio(predio, dados) : null;

@@ -169,5 +169,11 @@
   },
   "F-D4-nome-do-oficio": {
     "passes": true
+  },
+  "F18h-terra-de-plantio": {
+    "passes": true
+  },
+  "F18i-terra-na-tela": {
+    "passes": false
   }
 }

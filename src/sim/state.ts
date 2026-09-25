@@ -8,6 +8,9 @@ import { condicaoCheiaDoTipo } from './condicao';
 import type { GameData } from './data/types';
 import type { MotivoDeRecusa } from './placement';
 import type { MotivoDeRecusaDeEstrada, TileDeGrid } from './estradas';
+// F18h: `import type` puro, como o de cima — nao ha aresta de runtime, e por isso
+// o motivo mora ao lado da regra que o produz e nao aqui.
+import type { MotivoDeRecusaDeCampo } from './campos';
 import type { MotivoDeLiberacao } from './jobs';
 import type { MotivoDeRecusaDeTreino } from './escola';
 import type { MotivoDeRecusaDePausa } from './pausa';
@@ -49,6 +52,14 @@ export type GameEvent =
       readonly type: 'command-rejected';
       readonly command: 'PlaceRoad';
       readonly motivo: MotivoDeRecusaDeEstrada;
+      readonly tile: TileDeGrid | null;
+    }
+  | {
+      /** F18h — `PlowField` recusado. `tile` e o primeiro tile culpado; `null`
+       *  quando o motivo e do comando todo (`cultura-desconhecida`). */
+      readonly type: 'command-rejected';
+      readonly command: 'PlowField';
+      readonly motivo: MotivoDeRecusaDeCampo;
       readonly tile: TileDeGrid | null;
     }
   | {
@@ -516,7 +527,7 @@ export type Gaveta = 'entrada' | 'saida';
  * deliberadamente nao importa `jobs.ts` (o ciclo que o cabecalho de `reservas.ts`
  * explica).
  */
-export const GAVETA_DE_ORIGEM_POR_TIPO: Readonly<Record<TipoNaEscada, Gaveta>> = {
+export const GAVETA_DE_ORIGEM_POR_TIPO: Readonly<Record<TipoComOrigem, Gaveta>> = {
   // F20a: a comida sai da gaveta `saida` do armazem, a mesma de onde sai tudo o
   // que o serf carrega para fora dele.
   'comida-para-inn': 'saida',
@@ -532,7 +543,7 @@ export const GAVETA_DE_ORIGEM_POR_TIPO: Readonly<Record<TipoNaEscada, Gaveta>> =
   'assentar-estrada': 'saida',
 };
 
-export function gavetaDeOrigem(tipo: TipoNaEscada): Gaveta {
+export function gavetaDeOrigem(tipo: TipoComOrigem): Gaveta {
   return GAVETA_DE_ORIGEM_POR_TIPO[tipo];
 }
 
@@ -644,6 +655,36 @@ export interface TarefaAssentarEstrada extends TarefaBase {
 }
 
 /**
+ * F18h — arar UM tile planejado (`camposPlanejados`) ate ele virar campo. So o
+ * laborer, como o assentamento: o jogador manda, o obreiro faz. Molde da
+ * `TarefaAssentarEstrada`, com um campo a menos e um a mais:
+ *
+ *  - SEM `mercadoria`/`origem`: o milho nao custa material nenhum (GDD 5.4), e
+ *    reserva de material sem material a reservar seria caminho sem consumidor.
+ *    Quando a cana entrar — com o Canavial ja colhendo, que e o que falta —, ela
+ *    ganha os dois campos e a reserva-e-debito do armazem, exatamente como a
+ *    pedra da estrada (decisao do operador, 2026-09-25).
+ *  - COM `recurso`: qual cultura o tile vira ao fim. Fotografado na criacao,
+ *    como `TarefaColher.recurso` — o canteiro guarda a mesma resposta, e as
+ *    duas so divergiriam se alguem mudasse o canteiro com a tarefa viva.
+ *
+ * O destino e um TILE, em `destinoTile`, como o da estrada. E por isto que
+ * `ehTarefaDeAssentamento` deixou de classificar por FORMA nesta feature: o
+ * proprio doc da tarefa de estrada avisava que um segundo tipo com este campo
+ * passaria a ser lido como tarefa de estrada em `sanearTarefas`, no claim e no
+ * verificador. Quem ainda quer a pergunta de forma — "o destino e um tile?" —
+ * chama `ehTarefaDeTile`.
+ */
+export interface TarefaArar extends TarefaBase {
+  readonly tipo: 'arar';
+  readonly estado: 'aberta' | 'reclamada';
+  /** O tile planejado a arar. */
+  readonly destinoTile: TileDeGrid;
+  /** O recurso que o tile vira quando a aradura fecha. */
+  readonly recurso: string;
+}
+
+/**
  * F-T2c — UM CICLO de colheita de UM tile de recurso natural, para o predio que
  * o colhe. Fecha a divida declarada na F-T2a: ate aqui a pedreira varria o
  * proprio alcance dentro do sistema de producao, sem passar pelo quadro, e duas
@@ -710,7 +751,7 @@ export interface TarefaComer extends TarefaBase {
 
 export type Tarefa =
   TarefaDeTransporte | TarefaConstruir | TarefaOcupar | TarefaAssentarEstrada | TarefaColher
-  | TarefaComer;
+  | TarefaComer | TarefaArar;
 
 /**
  * O tipo da tarefa, DERIVADO da uniao: acrescentar um produtor novo (F15, F20)
@@ -725,7 +766,15 @@ export type TipoDeTarefa = Tarefa['tipo'];
  * por isso que `modoDoTipo` nao aceita `TipoDeTarefa` inteiro: pedir o modo de um
  * tipo fora da escada e erro de chamada, e continua falhando alto.
  */
-export type TipoNaEscada = TipoDeTransporte | TarefaAssentarEstrada['tipo'];
+export type TipoNaEscada = TipoComOrigem | TarefaArar['tipo'];
+
+/**
+ * F18h — os tipos que reservam alguma coisa numa GAVETA de predio de origem, e
+ * so eles. `'arar'` esta na escada (ela precisa de `modo`) e NAO esta aqui: ela
+ * nao tem origem nem mercadoria, e uma linha em `GAVETA_DE_ORIGEM_POR_TIPO` para
+ * ela seria dado morto respondendo a uma pergunta que ninguem faz.
+ */
+export type TipoComOrigem = TipoDeTransporte | TarefaAssentarEstrada['tipo'];
 
 /**
  * Uma tarefa que o serf CARREGA: tem `mercadoria` e entrega num PREDIO. Testa a
@@ -742,8 +791,27 @@ export function ehTarefaDeTransporte(tarefa: Tarefa): tarefa is TarefaDeTranspor
   return 'mercadoria' in tarefa && 'destino' in tarefa;
 }
 
-/** F18d-1b — a irma da de cima, pela mesma forma: o destino e um tile. */
+/**
+ * F18d-1b, corrigido na F18h — pelo TIPO, e nao mais pela forma. Ate a F18h
+ * `'destinoTile' in tarefa` bastava porque so uma tarefa tinha destino de tile;
+ * com a aradura sao duas, e o proprio doc de `TarefaAssentarEstrada` avisava
+ * que a segunda passaria a ser lida como estrada em `sanearTarefas`, no claim e
+ * no verificador. Quem quer a pergunta de FORMA chama `ehTarefaDeTile`.
+ */
 export function ehTarefaDeAssentamento(tarefa: Tarefa): tarefa is TarefaAssentarEstrada {
+  return tarefa.tipo === 'assentar-estrada';
+}
+
+/** F18h — a irma dela, pelo mesmo criterio. */
+export function ehTarefaDeAradura(tarefa: Tarefa): tarefa is TarefaArar {
+  return tarefa.tipo === 'arar';
+}
+
+/** F18h — as duas cujo destino e um TILE e nao um predio: quem pergunta isto quer
+ *  a VIAGEM (o laborer anda ate o tile) ou o saneamento do destino, e a resposta
+ *  e a mesma para as duas. Os lugares que fazem `predios.porId[tarefa.destino]`
+ *  nao compilam contra este tipo, de proposito. */
+export function ehTarefaDeTile(tarefa: Tarefa): tarefa is TarefaAssentarEstrada | TarefaArar {
   return 'destinoTile' in tarefa;
 }
 
@@ -756,10 +824,10 @@ export function ehTarefaDeColheita(tarefa: Tarefa): tarefa is TarefaColher {
 /** As tarefas que SO o laborer reclama (`UNIDADE_ELEGIVEL_POR_TIPO`): construir e
  *  assentar. Nao e a negacao de `ehTarefaDeTransporte` — `'ocupar'` tambem nao e
  *  carga, e nao e do laborer. */
-export type TarefaDeLaborer = TarefaConstruir | TarefaAssentarEstrada;
+export type TarefaDeLaborer = TarefaConstruir | TarefaAssentarEstrada | TarefaArar;
 
 export function ehTarefaDeLaborer(tarefa: Tarefa): tarefa is TarefaDeLaborer {
-  return tarefa.tipo === 'construir' || ehTarefaDeAssentamento(tarefa);
+  return tarefa.tipo === 'construir' || ehTarefaDeTile(tarefa);
 }
 
 /** A central de tarefas. Serializavel: so `Colecao` de objetos planos. */
@@ -894,6 +962,21 @@ export interface GameState {
    * `passoPermitido`.
    */
   readonly estradasPlanejadas: Readonly<Record<string, true>>;
+  /**
+   * F18h — o CANTEIRO do campo: os tiles que o jogador mandou arar e que nenhum
+   * laborer arou ainda. Irmao de `estradasPlanejadas`, com uma diferenca: o
+   * valor e o ID DO RECURSO que o tile vai virar, e nao `true`.
+   *
+   * O valor carrega a cultura porque a ferramenta e por cultura, e porque a
+   * alternativa — um canteiro por tipo — faria o numero de campos do estado
+   * crescer com o numero de culturas. Quando a aradura fecha, o tile sai daqui
+   * e entra em `state.recursos`; os dois sao disjuntos por construcao, como o
+   * canteiro da estrada e a rede.
+   *
+   * Nunca itere por `Object.keys` esperando uma ordem: use
+   * `tilesPlanejadosParaArar` (`sim/campos.ts`).
+   */
+  readonly camposPlanejados: Readonly<Record<string, string>>;
   /**
    * F-T2a — o que sobrou de recurso natural, por tile. Esparso: tile sem recurso
    * NAO tem entrada, e tile de regime `nunca` que zerou PERDE a sua (o tile
@@ -1104,6 +1187,7 @@ export function createInitialState(seed: number, dados: GameData = gameData): Ga
     tiposJaConstruidos: tiposCompletos(predios),
     estradas: {},
     estradasPlanejadas: {},
+    camposPlanejados: {},
     recursos: recursosIniciais(dados),
     jobs: { tarefas: { porId: {}, ordem: [] } },
     treino: {},

@@ -58,6 +58,9 @@ describe('F18d-1a — o modo mora no dado, lido pelo id do nivel', () => {
       // F18d-1b: o oitavo nivel entrou no fim, e e 'livre' pelo MESMO criterio do
       // nivel 3 — tile planejado nao tem rua por onde se chegar nele.
       ['assentar-estrada', 'livre'],
+      // F18h: o nono, e 'livre' pelo MESMO criterio — nao ha rua ate a roca que
+      // ainda nao existe.
+      ['arar', 'livre'],
     ]);
   });
 

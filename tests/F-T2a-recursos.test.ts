@@ -189,7 +189,7 @@ function tilesAoAlcance(estado: GameState, id: string, dados: GameData): number 
   const p = estado.predios.porId[id];
   const colheita = receitaDoTipo(p?.tipo ?? '', dados)?.colheita;
   if (p === undefined || p.estado !== 'completo' || colheita == null) throw new Error('fixture');
-  return tilesDeColheita(p, colheita, dados).length;
+  return tilesDeColheita(estado, p, colheita, dados).length;
 }
 
 describe('F-T2a — perna 2: o lugar passa a importar, e o numero prova', () => {

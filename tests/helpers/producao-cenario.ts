@@ -187,7 +187,7 @@ export function cenarioDeFazendaSemCampo(dados: GameData = gameData): GameState 
   if (predio?.estado !== 'completo' || colheita === null) {
     throw new Error('fixture: `farm` precisa de receita com colheita');
   }
-  for (const chave of tilesDeColheita(predio, colheita, dados)) {
+  for (const chave of tilesDeColheita(s, predio, colheita, dados)) {
     if (s.recursos[chave] !== undefined) {
       throw new Error(`fixture: a fazenda da aldeia alcanca o tile de recurso ${chave}`);
     }

@@ -65,6 +65,11 @@ const CAMPOS_ESCALONADOS = [
   // contrato deste arquivo. Caminho por tipo nao vira curinga.
   { arquivo: 'resources', caminho: 'tipos.corn.reposicao.segundos_base',
     unidade: 'segundos', declaraEscalaEm: 'escala' },
+  // F18h — arar UM tile do tipo. Mesma regra por tipo da linha acima, e pelo
+  // mesmo motivo: cultura nova so se desenha depois que alguem escreve a linha
+  // dela aqui. Caminho por tipo nao vira curinga.
+  { arquivo: 'resources', caminho: 'tipos.corn.aradura.segundos_base',
+    unidade: 'segundos', declaraEscalaEm: 'escala' },
 ];
 
 // production.json nao entra em CAMPOS_ESCALONADOS: as taxas de entra/sai sao

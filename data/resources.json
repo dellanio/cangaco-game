@@ -53,6 +53,11 @@
       "_docTerreno": "F18 — ONDE o campo pode existir e o TERRENO que diz, e o carregador deriva a camada de milho das linhas do mapa. Assim o terreno arado ganha o leitor que lhe faltava (ate aqui ele so existia na matriz de custo do A*) e a terra aravel tem uma verdade so, em vez de uma lista de tiles no arquivo de mapa que poderia divergir do desenho do terreno.",
       "quantidadeInicial": 0,
       "_docQuantidadeInicial": "O campo nasce em POUSIO, nao maduro: terra arada e por semear. Com o regime `porAcao`, `quantidade: 0` e exatamente a diferenca entre `aravel, sem nada plantado` e `nao e campo` — a mesma distincao que a arvore cortada usa. O primeiro ciclo de toda fazenda e de plantio, e nao milho de graca.",
+      "aradura": {
+        "terrenoPermitido": ["grama"],
+        "segundos_base": 4.0,
+        "_doc": "F18h — o campo deixou de nascer do mapa: quem o desenha e o JOGADOR, e quem o ara e o laborer, no molde do assentar estrada. A presenca deste bloco e o que diz que um tipo de recurso PODE ser desenhado; tipo sem `aradura` nao tem ferramenta e o comando o recusa. `terrenoPermitido` e lista e nao um unico terreno porque a pergunta e de mapa, nao de cultura — hoje so grama, e areia fica de fora ate alguem querer roca na praia do acude. `segundos_base` cobre arar UM tile (escala `economia`, como todo este arquivo): 4,0 da 20 ticks, quatro vezes a martelada da estrada, porque arar um tile e mais do que assentar uma pedra. O terreno do mapa NAO muda ao arar: terreno vive em GameData e nao no estado (F-T1), entao o que nasce e a camada de recurso. Calibrar no BALANCE_LOG."
+      },
       "reposicao": {
         "segundos_base": 60,
         "custo": {},

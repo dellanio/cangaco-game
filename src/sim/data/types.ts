@@ -175,6 +175,21 @@ export interface TipoDeRecurso {
   /** F18 — o que um predio gasta e demora para repor UM tile, ou `null` para
    *  quem nao se repoe por acao nenhuma. */
   readonly reposicao: ReposicaoDeRecurso | null;
+  /** F18h — como o JOGADOR cria um tile deste recurso, ou `null` para quem so
+   *  vem do mapa (rocha, arvore, cardume). A presenca deste bloco e a permissao:
+   *  tipo sem `aradura` nao tem ferramenta no menu e `canPlowField` o recusa. */
+  readonly aradura: AraduraDeRecurso | null;
+}
+
+/** F18h — o que o laborer precisa para arar UM tile deste recurso, ja em ticks.
+ *  Sem custo em material: o milho nao cobra nada (GDD 5.4), e o dia em que a
+ *  cana cobrar 1 timber por tile e o dia em que este bloco ganha o campo — com o
+ *  Canavial ja sendo consumidor, que e o que falta (ver o item F18h da fila). */
+export interface AraduraDeRecurso {
+  /** Ticks de trabalho para UM tile virar campo em pousio. */
+  readonly ticks: Ticks;
+  /** Os terrenos do mapa em que este recurso pode ser desenhado. */
+  readonly terrenoPermitido: readonly string[];
 }
 
 /** F18 — o custo de repor um tile, ja em ticks. So o regime `porAcao` tem. */

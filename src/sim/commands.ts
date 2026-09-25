@@ -34,6 +34,23 @@ export type Command =
     }
   | {
       /**
+       * F18h — manda ARAR `tiles` para a cultura `recurso` (um arrasto e um
+       * comando). Tudo ou nada, como o `PlaceRoad`: um tile invalido recusa o
+       * trecho inteiro com `command-rejected` e o motivo. Tile que ja esta no
+       * canteiro nao custa e nao recusa.
+       *
+       * NAO cria o campo: escreve o pedido em `camposPlanejados` e abre uma tarefa
+       * de aradura por tile. Quem ara e o laborer, tile por tile, e e na aradura
+       * que o tile entra em `state.recursos` — em POUSIO, por semear. `recurso` e
+       * o id NEUTRO da cultura (`corn`), e so vale tipo com bloco `aradura` em
+       * `data/resources.json`.
+       */
+      readonly type: 'PlowField';
+      readonly recurso: string;
+      readonly tiles: readonly TileDeGrid[];
+    }
+  | {
+      /**
        * Demole os tiles de estrada de `tiles`; o que nao e estrada e ignorado.
        * Devolve `floor(removidos * terreno.estrada.devolucaoAoDemolir)` de pedra ao
        * armazem de onde sairia o debito. Nunca e recusado.
