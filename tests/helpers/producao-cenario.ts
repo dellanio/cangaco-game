@@ -731,14 +731,28 @@ function armazemDaAldeia(estado: GameState): string {
 /**
  * F21 — A CADEIA DO OURO, longe da aldeia e ligada por uma rua so.
  *
- * `gold_mine` e `coal_mine` tiram do nada (receita sem `entra` e sem `colheita`,
- * como o lenhador), a `metallurgists` come 1 minerio + 1 carvao e devolve 2
- * ouros, e a `schoolhouse` do fim da rua e quem gasta. Todos os predios tem a
- * borda sul em y=61, entao a porta de todos cai em y=62 e uma linha de estrada
- * liga a cadeia inteira ao armazem `arm`.
+ * `gold_mine` e `coal_mine` colhem o VEIO do tile (F21b), a `metallurgists` come
+ * 1 minerio + 1 carvao e devolve 2 ouros, e a `schoolhouse` do fim da rua e quem
+ * gasta. A porta de quase todos cai em y=105, e uma linha de estrada liga a
+ * cadeia inteira ao armazem `arm`; a mina de carvao fica tres linhas ao sul,
+ * encostada no veio dela, ligada por um cano que desce por x=93.
  *
- * A area (x=50..72, y=58..63) foi conferida no mapa emitido: grama, sem recurso
- * e sem terreno intransponivel. Duas consequencias de fixture que importam:
+ * F21b — a cadeia MUDOU DE LUGAR: ela morava em x=50..72, y=58..63, onde nunca
+ * vai haver minerio. Com as tres minas colhendo do tile, aquele cenario passou a
+ * ser uma mina produzindo do nada com outro nome. Semear minerio na grama ao lado
+ * dela seria andaime: estado que partida nenhuma alcanca, so para o aceite
+ * passar. Entao a cadeia desceu para a encosta OESTE da serra (x=78..96,
+ * y=102..108), onde ha veio de verdade: 7 tiles de carvao ao alcance de `co1` e
+ * os 6 tiles do veio de ouro ao alcance de `go1`, medidos no mapa emitido. O
+ * resto da area e grama, sem recurso e sem terreno intransponivel, e a porta de
+ * cada predio cai em tile de estrada.
+ *
+ * As duas minas ficam onde ficam por causa de `sim/aproximacao.ts`: um tile so e
+ * colhivel se alguem consegue encostar nele, e o que a serra oferece disso e a
+ * SAIA de rocha, nao o miolo de montanha. Por isso as duas encaram a encosta em
+ * vez de subirem nela.
+ *
+ * Duas consequencias de fixture que importam:
  *   - o OURO INICIAL do armazem da aldeia vai a ZERO. Sem isso o teste nao sabe
  *     dizer se a escola pagou com ouro minerado ou com os 20 da abertura.
  *   - a Bodega entra abastecida, como nas cadeias do pao e da carne: sem ela a
@@ -753,17 +767,21 @@ export function cenarioDaCadeiaDoOuro(
   // o ouro da abertura mora em `saida` (F05a: e de la que o serf retira), e so o
   // OURO vai a zero: tirar pao e carne junto mataria a vila de fome.
   s = comSaida(s, aldeia, { ...completoDe(s, aldeia).estoque.saida, gold: 0 });
-  s = comArmazemExtra(s, 'arm', 50, 59, dados);
-  s = comProdutorOcupado(s, { tipo: 'gold_mine', id: 'go1', unidade: 'mineiro-ouro', gx: 54, gy: 61 }, dados);
-  s = comProdutorOcupado(s, { tipo: 'coal_mine', id: 'co1', unidade: 'mineiro-carvao', gx: 57, gy: 60 }, dados);
-  s = comProdutorOcupado(s, { tipo: 'metallurgists', id: 'me1', unidade: 'metalurgico', gx: 61, gy: 59 }, dados);
-  s = comPredioSemTrabalhador(s, 'schoolhouse', 'esc1', 65, 59, dados);
+  s = comArmazemExtra(s, 'arm', 78, 102, dados);
+  s = comProdutorOcupado(s, { tipo: 'metallurgists', id: 'me1', unidade: 'metalurgico', gx: 86, gy: 102 }, dados);
+  s = comPredioSemTrabalhador(s, 'schoolhouse', 'esc1', 90, 102, dados);
+  s = comProdutorOcupado(s, { tipo: 'gold_mine', id: 'go1', unidade: 'mineiro-ouro', gx: 93, gy: 104 }, dados);
+  s = comProdutorOcupado(s, { tipo: 'coal_mine', id: 'co1', unidade: 'mineiro-carvao', gx: 94, gy: 106 }, dados);
+  // A rua principal em y=105 pega a porta de todos, menos a da mina de carvao:
+  // ela esta em y=108, encostada no veio, e o cano desce por x=93 - ao lado do
+  // footprint dela, nunca por baixo.
   const rua: TileDeGrid[] = [];
-  for (let gx = 50; gx <= 72; gx += 1) rua.push(tile(gx, 62));
+  for (let gx = 78; gx <= 96; gx += 1) rua.push(tile(gx, 105));
+  for (const t of [tile(93, 106), tile(93, 107), tile(93, 108), tile(94, 108)]) rua.push(t);
   s = comEstradas(s, rua);
   for (const id of ['arm', 'go1', 'co1', 'me1', 'esc1']) s = exigirLigado(s, id, dados);
   s = comBodegaAbastecida(s, 'bodega', 'arm', dados);
-  return comHistoricoDosPredios(comSerfs(s, serfs, 50, 62));
+  return comHistoricoDosPredios(comSerfs(s, serfs, 78, 105));
 }
 
 /** Sem a mina de carvao: o metalurgico recebe minerio e nada mais. E o que impede

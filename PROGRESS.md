@@ -6089,3 +6089,106 @@ metade do pescador.
   1. F-T4, 2. F21b (mina esgota), 3. …  — e o texto corta em *"Siga o"*. A
   terceira feature **não foi nomeada**. Sigo para a F21b, que está escrita por
   inteiro; a terceira precisa dele.
+
+---
+
+## F21b — A mina esgota: minério no tile (2026-09-25)
+
+Segunda feature da ordem de três do operador (2026-09-25), com o veto explícito:
+*"há outra branch mexendo em `src/ui/` e `index.html` — NÃO toque nesses dois"*.
+Não toquei: `git status` no fim da sessão mostra **nenhum arquivo de `src/`**
+alterado — só `data/`, `tests/`, `tools/`, `docs/` e os três arquivos de
+governança. O plano foi escrito antes do código, como ele pede:
+`docs/planos/F21b-mina-esgota.md`.
+
+### Verificado (rodei, abri o arquivo, ou li a captura)
+
+- **A feature é dado + mapa + aceite: zero linha de `src/`.** O escopo escrito no
+  item previa isso e a previsão se confirmou: colheita é regra de classe desde a
+  F-T3, o alerta `veio-esgotado` já sai de `fonteSemTrabalho`, e a cor e o nome do
+  tipo novo saem de `theme-sertao.json`, lidos por código que já existia.
+  `data/resources.json` ganhou `coal`, `iron_ore` e `gold_ore` (`regime: nunca`,
+  sem `reposicao`); `data/production.json` ganhou `colheita` nas três minas
+  (`alcance_tiles: 6`); `tools/gerar-mapa.js` semeia os veios.
+- **`npm run verify` verde**: 13 arquivos de dado, **99 arquivos de teste, 1 396
+  testes**, zero regressão. A corrida que valeu é a de **depois** do teste do painel
+  (a perna que faltava, abaixo): a anterior, de 1 395, já não cobria o arquivo como ele está.
+- **O minério semeado é minerável, não é mapa bonito e morto**
+  (`test-output/F21b-veios-no-mapa.json`): **carvão 25 tiles / 375 unidades,
+  ferro 20 / 240, ouro 11 / 88**, e **100 % dos 56 tiles são alcançáveis** pelo
+  mesmo predicado da sim (`tileAlcancavelParaColheita`). O veio nasce na saia da
+  serra; no miolo ele existiria e ninguém encostaria nele.
+- **O que a mina entrega sai do chão** (`test-output/F21b-mina-esgota.json`): em
+  1 200 ticks, **4 ciclos, 4 unidades na gaveta**, e o total de carvão no mapa
+  caiu de **375 para 371** — queda medida **contra a linha de base do tick 0**,
+  como o aceite manda, não contra zero.
+- **Veio zerado para a mina e acusa sozinho**
+  (`test-output/F21b-veio-esgotado.json`): 7 tiles ao alcance, esgotados no tick
+  **2109**; o alerta `veio-esgotado` aparece para `co1` **sem clique do jogador**,
+  e o mineiro fica em `esperando_insumo` — a FSM não gira em falso.
+- **`canPlace` recusa a mina sobre o veio, nos 56 tiles**
+  (`test-output/F21b-recusa-sobre-o-veio.json`): 25 / 20 / 11 recusas, todas com
+  motivo `terreno`. O arquivo registra que o motivo é **medida, não regra** (ver
+  D2 abaixo).
+- **`tests/F21b-mina-esgota.test.ts`, 13 testes**, uma perna por frase do aceite,
+  incluindo a do painel: `painelDoPredio(...).colheita` — o **mesmo número que a
+  UI imprime** — dá `{coal, 7 tiles, unidades não colhidas}` no tick 0 e
+  `{coal, 0, 0}` depois do veio secar. Essa perna estava **sem asserção** até o
+  fim da sessão; achei relendo o aceite na hora de virar a chave, e o teste foi
+  escrito então.
+- **`test-output/F21b-shot.json`: 45 afirmações, 0 erro de console, 3 capturas**,
+  as três abertas com Read. `F21b-1`: os losangos marrons do veio na montanha, ao
+  lado dos brancos da rocha. `F21b-2`: fantasma verde, moldura laranja de alcance,
+  rótulo **"Veio de ferro: 10 ao alcance (120)"** — 10 × `rendimentoPorTile` 12,
+  o número que o dado prevê — e a carta "Mina de Ferro · Tábua 3 · Pedra 2 · 3×1".
+  `F21b-3`: fantasma **vermelho** sobre o veio. O roteiro cumpre a §8: um passo
+  despausado com `press('p')` + `mouse.down` / 150 ms / `mouse.up`, e volta a
+  pausar.
+- **Nenhuma coordenada digitada no roteiro.** `tools/shots/F21b.js` deriva a
+  cadeia de desbloqueio de `desbloqueadoPor`, o ponto da mina pelo veio mais
+  denso legalmente alcançável, e a legalidade pelas mesmas recusas que estão no
+  dado. Mudar a semente do gerador move o roteiro junto.
+
+### Decidido, com o porquê
+
+- **D1 — um veio por afloramento, em rodízio, e não "os N maiores".** A primeira
+  versão semeava por tamanho de afloramento e o **ouro ficava com zero tile** em
+  mapa inteiro: os afloramentos grandes comiam as três cotas. O rodízio dá 25 /
+  20 / 11 e garante que os três tipos existam em qualquer semente. O preço está
+  no `BALANCE_LOG.md`: **46 tiles de rocha viraram veio** (265 de pedra contra 311
+  antes), sem tocar no lajedo da vila.
+- **D2 — o minério nasce com `bloqueiaConstrucao: false`, contra a premissa do
+  operador, mantendo a resposta dele.** A resposta ("só os adjacentes, nunca o
+  tile sob o prédio") vale inteira e está implementada. O argumento dela não: ele
+  supôs que a recusa viria de `recurso`, com o minério em `true` como a rocha.
+  `canPlace` confere **terreno antes de recurso**, e o veio mora em
+  `montanha`/`rocha`, os dois intransponíveis — a recusa sai em `terreno` nos 56
+  tiles, **medido**. Pôr `true` seria bandeira que nenhum caminho de código
+  alcança; dado sem leitor vira folclore. A nota está também no item do
+  `BUILD_PLAN.md`, para a sessão que reabrir o assunto.
+- **D3 — a fixture da cadeia do ouro mudou de lugar, para veio de verdade.** Ela
+  plantava a mina onde não havia minério, o que antes dava no mesmo (a mina
+  fabricava do nada) e agora daria produção zero. `tests/helpers/producao-cenario.ts`
+  aponta para os veios semeados.
+- **D4 — a asserção cega de 500 ticks do probe da F23 virou medição registrada.**
+  O probe afirmava algo que dependia de o minério **não** existir. A premissa
+  morreu nesta feature; troquei a asserção pelo número da corrida, em vez de
+  afrouxar o teto (§8, medida de relógio e premissa morta).
+- **D5 — a linha de Evidência do item do `BUILD_PLAN.md` foi corrigida.** Ela
+  prometia um `test-output/F21b.json` único; a medição saiu em quatro arquivos,
+  um por perna. Corrigi o item em vez de renomear arquivo para caber na promessa.
+
+### Aberto — precisa do operador
+
+- **A terceira feature da ordem continua sem nome.** O texto da ordem corta em
+  *"Siga o"* depois da F21b. Não há o que puxar da fila sem ele: `test-results.json`
+  segue sem nenhum `false`.
+- **F-T4b (o lenhador) continua bloqueada, e o bloqueio é de design** — as três
+  reprovações e as três saídas estão no item do `BUILD_PLAN.md`, nenhuma
+  implementada. Nada nesta sessão mexeu nisso.
+- **Balanceamento do minério é palpite proporcional, e está registrado como tal.**
+  `rendimentoPorTile` 15 / 12 / 8 nasceu *a calibrar*. A medida: uma mina de
+  carvão bem plantada alcança 12 tiles (180 unidades) e gasta 1 por ciclo de
+  ~300 ticks — **seca o que alcança em 1 h 30 de relógio a 1x**, e o mapa inteiro
+  dá 375 ciclos de carvão para a partida. Dois parafusos no `BALANCE_LOG.md`;
+  nenhum girado, porque balanceamento se ajusta em lote.

@@ -7,11 +7,20 @@
  * do passo, a carga na mao, e o JobBoard inteiro — e a sonda mede quais delas a
  * comparacao de 500 ticks pega.
  *
- * O achado que importa esta na ultima: apagar o JobBoard no tick do save NAO
- * reprova em 500 ticks. A vila se recompoe — a tarefa e regerada, o contador de
- * id volta ao mesmo lugar, e os dois lados chegam ao mesmo byte. Quem pega essa
- * perda e a OUTRA assercao do aceite, a igualdade no INSTANTE do load. As duas
- * juntas fecham; a de 500 ticks sozinha tem esse ponto cego.
+ * O achado que importa esta na ultima: apagar o JobBoard no tick do save nao
+ * reprovava em 500 ticks. A vila se recompunha — a tarefa era regerada, o contador
+ * de id voltava ao mesmo lugar, e os dois lados chegavam ao mesmo byte. Quem pegava
+ * essa perda era a OUTRA assercao do aceite, a igualdade no INSTANTE do load.
+ *
+ * F21b — ESSA PREMISSA CAIU, e o jeito como ela caiu e o proprio recado. A F21b
+ * mudou a cadeia do ouro de lugar (`cenarioDaCadeiaDoOuro`), e com outra geografia
+ * o eixo de 500 ticks passou a acusar o JobBoard apagado: `semJobBoard` saiu
+ * `false` onde saia `true`. Nada mudou no save nem no JobBoard; mudou o cenario.
+ * Ou seja: se o eixo de 500 ticks pega essa perda e ACIDENTE DE CENARIO, e quem
+ * garante e a igualdade no instante, que acusa nos dois mapas. Por isso o eixo de
+ * 500 ticks entra aqui como MEDIDA gravada, e nao como assercao — afirmar o
+ * ponto cego era afirmar um numero de cenario, exatamente o que a §8 do CLAUDE.md
+ * manda deixar no arquivo de evidencia.
  *
  * Grava test-output/zz-probe-F23.json.
  */
@@ -95,8 +104,8 @@ describe('sonda F23 — quais perdas o aceite pega', () => {
       return { ...revivido, unidades: { ...revivido.unidades, porId } } as GameState;
     });
 
-    // (4) o JobBoard inteiro some. A vila se recompoe: 500 ticks depois os dois
-    //     lados batem byte a byte, e este eixo NAO acusa.
+    // (4) o JobBoard inteiro some. Se 500 ticks depois os dois lados ainda batem
+    //     byte a byte depende do CENARIO (ver o cabecalho): medido, nunca afirmado.
     const semJobBoard = comparaCom(semTarefas);
 
     const resultados = { fiel, semRng, semProgresso, semCarga, semJobBoard };
@@ -114,9 +123,12 @@ describe('sonda F23 — quais perdas o aceite pega', () => {
       leitura: [
         'fiel = true nos dois eixos: o par salvar/carregar e fiel.',
         'semRng / semProgresso / semCarga = false: a comparacao de 500 ticks tem dentes.',
-        'semJobBoard = true em 500 ticks e false no instante: a vila REGENERA a tarefa'
-        + ' apagada e reconverge, entao essa perda so e pega pela igualdade no instante'
-        + ' do load. E por isso que o teste da F23 afirma as duas coisas, e nao so uma.',
+        'semJobBoard no instante = false SEMPRE: a igualdade no instante do load pega'
+        + ' a perda do JobBoard em qualquer mapa. Ja `igualDepoisDe500Ticks.semJobBoard`'
+        + ' e medida de cenario: era true ate a F21b (a vila regenerava a tarefa e'
+        + ' reconvergia) e virou false quando a cadeia do ouro mudou de encosta, sem que'
+        + ' save ou JobBoard mudassem. E por isso que o teste da F23 afirma as duas'
+        + ' coisas, e nao so uma: uma delas nao depende de onde a vila fica.',
       ].join(' '),
     });
 
@@ -125,8 +137,9 @@ describe('sonda F23 — quais perdas o aceite pega', () => {
     expect(semRng).toBe(false);
     expect(semProgresso).toBe(false);
     expect(semCarga).toBe(false);
-    // o ponto cego, medido e nomeado — nao suposto:
-    expect(semJobBoard).toBe(true);
+    // `semJobBoard` no eixo de 500 ticks NAO e afirmado: e numero de cenario, e esta
+    // gravado logo acima. O que vale nos dois mapas, e por isso o que se afirma, e a
+    // igualdade no instante do load acusando a perda.
     expect(noInstante.semJobBoard).toBe(false);
   });
 });

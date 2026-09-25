@@ -2615,6 +2615,43 @@ Depende da F20b: o marcador lê `unidade.condicao`, que só existe depois dela. 
   inconsistência do módulo de recursos, e a mesma que a F-T2a corrigiu na
   pedreira"*.
 - **Depende de**: nada além da F21. **Não** depende da F23.
+- **Escopo**: `dado + mapa`. `src/sim/` **não é tocado** — colheita já é regra de
+  classe desde a F-T3, e o alerta `veio-esgotado` já sai de `fonteSemTrabalho`
+  (`sim/selectors.ts`) para todo recurso sem `reposicao`. `src/render/` e
+  `src/ui/` também não: a cor do tipo novo sai de `theme-sertao.json:recursos` e
+  o nome de `theme-sertao.json:plantaFantasma.recursos`, os dois lidos por
+  código que já existe. O minério mora **na montanha** e só nela: todo tile de
+  `rocha` já tem `rock` (298 de 298), e veio solto na grama seria recurso
+  bloqueando construção no meio do pasto.
+- **Aceite**: com uma mina plantada ao lado de um veio, o painel dela diz
+  quantos tiles de minério há ao alcance e quantas unidades sobram; a mina
+  produz, e o total no mapa **cai** na mesma medida do que ela entregou (medido
+  contra a linha de base do tick 0, não contra zero); com o veio zerado a
+  entrada **sai** de `state.recursos` (regime `nunca`), a mina para e o HUD da
+  F22 acusa `veio-esgotado` **sem o jogador clicar nela**; `canPlace` recusa a
+  mina sobre o veio. Guarda estrutural: todo tipo de recurso tem **cor e nome no
+  tema** — hoje a falta só aparece quando o render carrega.
+- **Evidência** (nomes corrigidos ao fim da sessão: a medição saiu em quatro
+  arquivos, um por perna do aceite, e não em um `F21b.json` único):
+  `test-output/F21b-veios-no-mapa.json` (o minério semeado é alcançável),
+  `test-output/F21b-mina-esgota.json` (o que ela entrega sai do chão),
+  `test-output/F21b-veio-esgotado.json` (veio zerado → mina para e alerta),
+  `test-output/F21b-recusa-sobre-o-veio.json` (`canPlace` recusa) +
+  `test-output/F21b-shot.json` + `screenshots/F21b-*.png`
+- **Nota (Escopo, Aceite e Evidência foram escritos na sessão da F21b,
+  2026-09-25)**: o item só tinha Por que existe, O que falta, a Pergunta de
+  design e a Posição na fila. Os três blocos acima são interpretação da linha
+  "o que falta", pela leitura mais conservadora (§14) — mesmo precedente da Nota
+  da F22. O resto do item está intocado. Plano em
+  `docs/planos/F21b-mina-esgota.md`.
+- **Nota (premissa da pergunta de design, 2026-09-25)**: a resposta do operador
+  ("só os adjacentes, nunca o tile sob o prédio") vale inteira, mas o argumento
+  dela — minério com `bloqueiaConstrucao: true` — não é o que a faz valer.
+  `canPlace` confere **terreno antes de recurso** e montanha é intransponível:
+  a recusa acontece uma linha antes, e a bandeira nunca seria lida. O minério
+  nasce com `bloqueiaConstrucao: false`, pelo mesmo `_doc` que o `fish` já tem
+  para o cardume na água (duas regras para o mesmo fato divergem na primeira
+  mudança). Registrado em `PROGRESS.md` para o operador derrubar se discordar.
 
 ### F22 — Alertas do HUD
 - Prédio sem trabalhador, sem estrada, fome, mina esgotada.

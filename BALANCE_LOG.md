@@ -334,6 +334,29 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   não é neutro: a **margem** é que limita a cabana, não o lago |
   `production.json:fishermans`, `resources.json:fish`, `test-output/F-T4a.json`
 
+- [2026-09-25] **o minério do mapa inteiro cabe em 56 tiles, e uma mina alcança no máximo 12
+  deles** | os três `rendimentoPorTile` da F21b (carvão 15, ferro 12, ouro 8) nasceram *a
+  calibrar*: são proporção entre si (o carvão é o que mais se gasta, o ouro o mais raro), medida
+  contra nada. O que está medido: o gerador semeia **25 tiles de carvão / 375 unidades**, **20 de
+  ferro / 240** e **11 de ouro / 88** (`test-output/F21b-veios-no-mapa.json`), e **100 % deles são
+  alcançáveis** — o veio nasce na saia da serra, nunca no miolo. Isso é o mundo **inteiro**: não há
+  segundo depósito. Um ciclo da mina de carvão leva **300 ticks** (4 ciclos em 1 200,
+  `test-output/F21b-mina-esgota.json`) e consome **1** unidade do tile, e o melhor ponto legal de
+  cada mina alcança **12 tiles de carvão (180 unidades), 10 de ferro (120) e 10 de ouro (80)**.
+  Logo **uma mina de carvão bem plantada seca o que alcança em ~54 000 ticks — 1 h 30 de relógio a
+  1x** —, e o mapa todo dá 375 ciclos de carvão para a partida inteira. Se isso for curto demais,
+  os dois parafusos são `rendimentoPorTile` (multiplica o estoque sem mexer no mapa) e o tamanho
+  do veio em `tools/gerar-mapa.js:VEIOS_DE_MINERIO` (muda o mapa e exige regerar). O terceiro,
+  `alcance_tiles` 6, não ajuda: a encosta é que limita, como no açude do pescador |
+  `resources.json:coal,iron_ore,gold_ore`, `tools/gerar-mapa.js`, `test-output/F21b-*.json`
+
+- [2026-09-25] **46 tiles de rocha viraram veio, e a pedra do mapa caiu de 311 para 265** | o
+  minério nasce na saia da serra, e tile de saia já tinha `rock`. Nenhuma pedreira da abertura
+  perde nada (o lajedo da vila está intocado, e as duas contagens de `tree`/`fish` saíram idênticas
+  byte a byte), mas o estoque de pedra **do mapa inteiro** é 15 % menor do que era antes da F21b.
+  Não mexi em nada por isso: entra aqui para o lote, junto com `rock.rendimentoPorTile` (15) |
+  `data/maps/sertao-128.json:contagemDeRecursos`
+
 ---
 
 ## Ciclos fechados
