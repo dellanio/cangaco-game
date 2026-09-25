@@ -42,16 +42,18 @@ import type { TileDeGrid } from '../../src/sim/estradas';
 import { armazensCompletos, ehEstrada } from '../../src/sim/estradas';
 import { canPlaceRoad } from '../../src/sim/estradas';
 import { recursoBloqueiaConstrucao, recursoNoTile } from '../../src/sim/recursos';
-import { caixaDoPredio, caixaDeTipo } from '../../src/sim/footprint';
+import { caixaDeTipo } from '../../src/sim/footprint';
 import { estoqueDosArmazens } from '../../src/sim/selectors';
 import { estaDesbloqueado } from '../../src/sim/desbloqueio';
+import type { CaixaDePredio } from '../../tools/geometria-da-abertura.d.mts';
+import { TIPOS_DA_ABERTURA, geometriaDaAbertura } from '../../tools/geometria-da-abertura.mjs';
 
 /**
  * Os quatro predios do aceite (BUILD_PLAN F17, GDD §1.3), na ordem em que entram
  * na fila — que e tambem a ordem espacial, da esquerda para a direita. Nao e
  * numero de balanceamento: e a lista que o criterio nomeia.
  */
-export const TIPOS_DA_ABERTURA: readonly string[] = ['woodcutters', 'woodcutters', 'sawmill', 'quarry'];
+export { TIPOS_DA_ABERTURA };
 
 export interface PlantaDaAbertura {
   readonly tipo: string;
@@ -89,11 +91,10 @@ function tamanhoDe(tipo: string, dados: GameData): { largura: number; altura: nu
   return { largura: caixa.x1, altura: caixa.y1 };
 }
 
-/** A linha de porta de um predio: a primeira linha ABAIXO do footprint. */
-function linhaDaPorta(predio: PredioCompleto, dados: GameData): number {
-  const caixa = caixaDoPredio(predio, dados);
-  if (caixa === null) throw new Error(`abertura: '${predio.tipo}' nao tem tamanho`);
-  return caixa.y1;
+/** A caixa de um predio no formato que o modulo de geometria pede. */
+function caixaDeEntrada(predio: PredioCompleto, dados: GameData): CaixaDePredio {
+  const { largura, altura } = tamanhoDe(predio.tipo, dados);
+  return { gx: predio.gx, gy: predio.gy, largura, altura };
 }
 
 function predioCompletoDoTipo(state: GameState, tipo: string): PredioCompleto {
@@ -113,25 +114,6 @@ function predioNoCanto(state: GameState, gx: number, gy: number): string | null 
   return null;
 }
 
-/** A fila inteira cabe neste x? Sem recurso que bloqueie construcao debaixo de
- *  nenhum dos quatro footprints — o resto da recusa (`sobreposicao`,
- *  `porta-sem-saida`) nao se pergunta aqui porque a fila nasce longe do armazem e
- *  com a rua ainda por vir, e `canPlace` responderia `bloqueado` para a serraria,
- *  que so desbloqueia depois. */
-function filaCabe(state: GameState, x0: number, gy: number, dados: GameData): boolean {
-  let x = x0;
-  for (const tipo of TIPOS_DA_ABERTURA) {
-    const { largura, altura } = tamanhoDe(tipo, dados);
-    for (let gy2 = gy; gy2 < gy + altura; gy2++) {
-      for (let gx = x; gx < x + largura; gx++) {
-        if (recursoBloqueiaConstrucao(recursoNoTile(state, gx, gy2), dados)) return false;
-      }
-    }
-    x += largura;
-  }
-  return true;
-}
-
 /**
  * Monta a abertura a partir do estado inicial. Tudo derivado: largura e altura de
  * `tamanho`, custo de `timber`/`stone`, civil de `trabalhador`, linha da porta da
@@ -142,63 +124,38 @@ export function aberturaDaFaseA(state: GameState, dados: GameData = gameData): A
   if (!armazem) throw new Error('abertura: o cenario precisa de um armazem completo');
   const escola = predioCompletoDoTipo(state, ID_DA_ESCOLA);
 
-  const yRua = linhaDaPorta(armazem, dados);
-  // A rua tem que passar pela porta da ESCOLA tambem: sem estrada ate ela o ouro
-  // do treino nao chega e a fila fica em `sem-estrada` para sempre (F13b) — os
-  // predios sobem e ninguem os ocupa. Medido na sonda desta feature.
-  if (linhaDaPorta(escola, dados) !== yRua) {
-    throw new Error('abertura: esta geometria assume armazem e escola na MESMA linha de porta');
-  }
+  // A GEOMETRIA vem do modulo compartilhado com o roteiro da F17
+  // (`tools/geometria-da-abertura.mjs`). Ate a F-T4b esta derivacao estava
+  // escrita a mao aqui E la, e manter duas copias identicas a olho nao
+  // sobrevive a uma geometria com mais de uma reta: o roteiro clicaria num tile
+  // e o headless plantaria noutro.
+  const geo = geometriaDaAbertura({
+    armazem: caixaDeEntrada(armazem, dados),
+    escola: caixaDeEntrada(escola, dados),
+    tamanhoDe: (tipo: string) => tamanhoDe(tipo, dados),
+    bloqueia: (gx: number, gy: number) => recursoBloqueiaConstrucao(recursoNoTile(state, gx, gy), dados),
+  });
+  const yRua = geo.yRua;
 
-  // A fila unica so fecha se os quatro tiverem a MESMA altura: com alturas
-  // diferentes, `gy` deixaria de ser um so e a rua nao serviria a todos. E
-  // invariante de forma, nao numero magico — por isso lanca em vez de adivinhar.
-  const alturas = [...new Set(TIPOS_DA_ABERTURA.map((t) => tamanhoDe(t, dados).altura))];
-  if (alturas.length !== 1) {
-    throw new Error(
-      `abertura: a fila unica exige altura igual nos quatro predios, veio ${JSON.stringify(alturas)}`,
-    );
-  }
-  const altura = alturas[0] as number;
-  const larguraTotal = TIPOS_DA_ABERTURA.reduce((s, t) => s + tamanhoDe(t, dados).largura, 0);
-
-  // Encostada no armazem a fila cai no lajedo (BUG-F). Recua de um em um ate o
-  // primeiro x em que NENHUM footprint pisa em recurso que bloqueia construcao:
-  // derivado do dado e do mesmo predicado da sim, nunca um x digitado aqui.
-  const gyDaFila = yRua - altura;
-  let x = armazem.gx - larguraTotal;
-  while (x >= 0 && !filaCabe(state, x, gyDaFila, dados)) x -= 1;
-  if (x < 0) {
-    throw new Error('abertura: a fila nao cabe a esquerda do armazem sem pisar em recurso que bloqueia construcao');
-  }
-  const plantas = TIPOS_DA_ABERTURA.map((tipo) => {
-    const def = defDe(tipo, dados);
+  const plantas: PlantaDaAbertura[] = geo.plantas.map((p) => {
+    const def = defDe(p.tipo, dados);
     const civil = def.trabalhador;
     if (civil === null) {
-      throw new Error(`abertura: '${tipo}' nao pede trabalhador; sem isso "ocupados" nao e provavel`);
+      throw new Error(`abertura: '${p.tipo}' nao pede trabalhador; sem isso "ocupados" nao e provavel`);
     }
-    const planta: PlantaDaAbertura = {
-      tipo, gx: x, gy: yRua - altura, civil, timber: def.timber, stone: def.stone,
-    };
-    x += tamanhoDe(tipo, dados).largura;
-    return planta;
+    return { tipo: p.tipo, gx: p.gx, gy: p.gy, civil, timber: def.timber, stone: def.stone };
   });
 
-  // Uma reta, da ponta esquerda da fila ate o primeiro tile de porta da escola: e
-  // o traçado mais barato em pedra que liga as quatro obras, o armazem e a escola
-  // na mesma rede. Onde a reta bate em recurso que a estrada recusa (a rocha em
-  // 24,33), desce UM tile e volta: a rede continua um componente so, porque tile
-  // na diagonal conta como ligado (F-T2b), e um buraco na reta nao contaria.
-  const primeiro = plantas[0] as PlantaDaAbertura;
-  const rua: TileDeGrid[] = [];
-  for (let gx = primeiro.gx; gx <= escola.gx; gx++) {
-    const reto: TileDeGrid = { gx, gy: yRua };
-    const recusa = canPlaceRoad(state, [reto], dados);
-    if (recusa.ok) { rua.push(reto); continue; }
-    if (recusa.motivo !== 'recurso') {
-      throw new Error(`abertura: a rua nao passa em ${gx},${yRua} por '${recusa.motivo}', e nao ha desvio previsto`);
+  // O modulo desvia a rua pelo MESMO predicado de recurso que a sim usa, mas
+  // quem recusa estrada e `canPlaceRoad`, que sabe de mais coisa. Conferir aqui
+  // mantem o guarda que a fila tinha antes: recusa por outro motivo estoura o
+  // fixture, em vez de entregar uma rede partida em dois componentes.
+  const rua: TileDeGrid[] = geo.rua.map((t) => ({ gx: t.gx, gy: t.gy }));
+  for (const t of rua) {
+    const recusa = canPlaceRoad(state, [t], dados);
+    if (!recusa.ok) {
+      throw new Error(`abertura: a rua nao passa em ${t.gx},${t.gy} por '${recusa.motivo}'`);
     }
-    rua.push({ gx, gy: yRua + 1 });
   }
 
   return {
