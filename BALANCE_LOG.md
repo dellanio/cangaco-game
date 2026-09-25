@@ -277,6 +277,24 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   aldeia que morreu no meio**, e foi por isso que a medida acima para em 9 000. O aviso está escrito
   também no próprio `cenarioOraculo`, que é onde a próxima sessão vai medir | `condition.json:inn`,
   `tests/helpers/producao-cenario.ts:cenarioOraculo`
+- [2026-09-25] **a metalurgia é o gargalo da cadeia do ouro, e o minério empilha no armazém** |
+  medido na F21 (`test-output/F21.json` e `test-output/zz-probe-F21.json`, cenário
+  `cenarioDaCadeiaDoOuro`): `gold_mine` entrega 1 minério a cada **300** ticks e `coal_mine` 1
+  carvão a cada **250**, mas `metallurgists` consome 1 de cada a cada **600** e devolve 2 de ouro.
+  A razão de produção para consumo fica em ~**2:1** nos dois insumos, e o excedente **não some**:
+  aos 8 000 ticks o armazém tinha `coal 15, gold_ore 11, gold 24` — onze minérios parados que a
+  metalurgia nunca vai alcançar. Ou as minas são lentas demais para justificar duas, ou falta uma
+  segunda metalurgia no aceite do jogador. **Não mexi em número nenhum** (Fase B congelada desde a
+  F18) | `production.json:predios.{gold_mine,coal_mine,metallurgists}`
+- [2026-09-25] **a primeira moeda de ouro só chega ao armazém no tick 1030** | medido na F21: carvão
+  em 250, minério em 300, os dois na metalurgia em 362 e 697, primeiro ouro fundido em **981**,
+  primeiro ouro guardado em **1030**. A 10 Hz e na escala `economia` 2.0 isso é ~1 min 43 s de
+  relógio para a primeira moeda com a cadeia inteira já construída e abastecida — sem contar o
+  tempo de construir os quatro prédios. Como a escola cobra **1 de ouro por unidade**
+  (`economy.schoolhouse.custoOuroPorUnidade`), o ouro de abertura (20) é que sustenta a aldeia
+  inteira até lá; a cadeia não é alternativa ao estoque inicial no começo de partida |
+  `production.json`, `economy.json:schoolhouse`
+
 
 ---
 

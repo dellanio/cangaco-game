@@ -160,5 +160,8 @@
   },
   "F-T3-especialista-sai": {
     "passes": true
+  },
+  "F21-cadeia-do-ouro": {
+    "passes": true
   }
 }

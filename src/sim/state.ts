@@ -160,8 +160,15 @@ export type GameEvent =
       /**
        * F15a — o veio deste predio deixou de render um ciclo inteiro. Sai UMA
        * vez, no tick do ultimo deposito. Dali em diante o ocupante fica em
-       * `esperando_insumo` (a rocha e o insumo que nao vem mais) e o alerta
-       * "mina esgotada" da F22 le `producao.veio === 0`.
+       * `esperando_insumo` (a rocha e o insumo que nao vem mais).
+       *
+       * CORRIGIDO na F21 (2026-09-25): `producao.veio` NAO EXISTE mais — a F-T2a
+       * levou o total para o TILE e apagou o campo. Quem responde "acabou" e
+       * `semRecursoAoAlcance` (`sim/producao.ts`), que pergunta ao MAPA, e e dela
+       * que saem tanto este evento quanto o alerta `veio-esgotado` da F22. Predio
+       * cuja receita nao tem `colheita` (as minas de hoje, o lenhador) nunca
+       * esgota, porque nao ha tile de onde tirar: a mina infinita esta medida na
+       * F21 e o item que a conserta esta escrito na fila.
        */
       readonly type: 'vein-exhausted';
       readonly predio: string;

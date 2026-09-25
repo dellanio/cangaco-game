@@ -5551,3 +5551,69 @@ por 300 ticks. Isso roda no `npm run verify`; não é prova de momento.
    não mudou, então *"13 ao alcance"* continua contando lajedo que o pedreiro não
    consegue rodear. Mudar isso muda o número do painel **e** o da prévia da planta
    fantasma (F-TP), que têm aceite escrito nos dois — então não mexi.
+
+## F21 — A cadeia do ouro já fechava: a entrega é o guarda (2026-09-25)
+
+Peguei a F21 do `BUILD_PLAN.md` e comecei medindo, como na F19 e na F19b. A
+medição mudou a feature inteira, então este registro separa o que eu **verifiquei
+abrindo arquivo ou rodando** do que **decidi**.
+
+### Verificado
+
+- **A cadeia do ouro funciona hoje, sem uma linha de código novo.** Sonda
+  `tests/zz-probe-F21.test.ts` → `test-output/zz-probe-F21.json`, cenário com
+  `gold_mine`, `coal_mine`, `metallurgists` e escola ligados por estrada:
+  primeiro carvão no tick **250**, primeiro minério em **300**, carvão na
+  metalurgia em 362, minério em 697, **primeiro ouro fundido em 981**, primeiro
+  ouro no armazém em **1030**. Aos 8 000 ticks o armazém tinha
+  `coal 15, gold_ore 11, gold 24`. Nenhum sistema foi tocado para isso.
+- **A premissa escrita no item da fila é falsa, e conferi campo por campo.** O
+  item dizia *"ouro, carvão e ferro herdam a camada da F-T2 prontos"*. Não
+  herdam: `data/resources.json` tem só `rock`, `tree`, `fish`, `corn`; o mapa
+  emitido (`data/maps/sertao-128.json`) carrega só `rock`, `tree`, `fish`; e
+  `data/production.json` dá `gold_mine.colheita === null` — **sem `colheita` não
+  há tile de onde tirar**, então a mina produz para sempre. A correção está
+  escrita no próprio item (§12: premissa morta se marca no dado que a sustentava).
+- **`PredioCompleto.producao.veio` não existe mais**, removido pela F-T2a quando
+  o total foi para o tile. O docblock do evento `vein-exhausted` em
+  `src/sim/state.ts` ainda descrevia o campo como se existisse; corrigi na
+  mesma sessão dizendo quem responde "acabou" hoje (`semRecursoAoAlcance`,
+  `src/sim/producao.ts`) e que prédio sem `colheita` nunca esgota.
+- **O guarda permanente passa**: `tests/F21-cadeia-do-ouro.test.ts`, 6 testes
+  verdes. Evidência aberta com Read em `test-output/F21.json`: ouro no mundo
+  **0** no tick 0; no tick 4000 `arm {coal 6, gold_ore 5, gold 10}` e 12 de ouro
+  no mundo; treino de `stonemason` concluído 229 ticks depois do pedido, com
+  pedreiros **0 → 1** e exatamente **1** de ouro a menos no mundo; contra-exemplos
+  `semCarvao {ouro 0, minério 13}` e `semMina {ouro 0, carvão 16}`.
+- **Nada de tela mudou.** O HUD já mostra `gold` desde a F05b; nenhuma linha de
+  `src/render/` ou `src/ui/` foi tocada, então não há screenshot a capturar
+  (§8 exige para feature que muda o que aparece; esta não muda).
+- **O ouro de abertura mora na gaveta `saida` do armazém** (decisão F05a).
+  Zerar só o ouro em `entrada` não mudava nada — foi por isso que a linha de base
+  do teste ficou em 20 na primeira tentativa. O cenário zera `gold` em `saida`
+  **preservando pão e carne**: tirar a comida junto mataria a vila de fome e o
+  teste mediria outra coisa.
+
+### Decisões minhas, marcadas para o operador revisar
+
+- **D-7. A feature encolheu para o guarda permanente, e a mina que esgota virou
+  a `F21b`.** Fazer a mina esgotar exigiria: tipo de minério novo em
+  `resources.json`, emissão de tile de minério no gerador de mapa, e `colheita`
+  nas três receitas — três pedaços de dado novo, mais uma pergunta de design que
+  ninguém pode responder às 3 da manhã (a mina colhe o tile **sob** o prédio ou
+  só os adjacentes, como a pedreira?). A interpretação conservadora era **não
+  inventar dado** e registrar a dívida num item próprio, com a pergunta dentro.
+  O item `F21b` está no `BUILD_PLAN.md` **sem posição na fila** — reordenar é sua
+  decisão (§11), como no `F-T4` da sessão passada.
+- **D-8. Não ajustei número nenhum**, apesar de a medição ter achado um
+  desequilíbrio claro: as minas produzem ~2× o que a metalurgia consome e o
+  minério empilha parado no armazém. Foi para o `BALANCE_LOG.md` como duas
+  entradas abertas, junto com o tempo até a primeira moeda (1030 ticks). A Fase B
+  está congelada desde a F18 e você mandou não mexer.
+
+### Perguntas em aberto (para o operador)
+
+3. **Duas minas para uma metalurgia é o desenho pretendido?** Com `ticksDoCiclo`
+   300/250 contra 600, uma metalurgia sozinha deixa metade do minério parado. Ou
+   as minas são lentas demais, ou a cadeia quer duas metalurgias — é
+   balanceamento, e está no `BALANCE_LOG.md`, não corrigido.

@@ -70,6 +70,26 @@ export function comProdutorOcupado(
   };
 }
 
+/**
+ * F21 — um predio COMPLETO que nao pede trabalhador (armazem, escola, Bodega).
+ * Generico de proposito: `comArmazemExtra` continua como esta, porque quem o
+ * chama passa so a coordenada e nao deve ter que repetir o tipo.
+ */
+function comPredioSemTrabalhador(
+  estado: GameState, tipo: string, id: string, gx: number, gy: number, dados: GameData,
+): GameState {
+  const def = dados.predios.find((p) => p.id === tipo);
+  if (!def) throw new Error(`fixture: predio '${tipo}' nao existe em buildings.json`);
+  if (trabalhadorDoTipo(tipo, dados) !== null) throw new Error(`fixture: '${tipo}' pede trabalhador`);
+  const predio = completarObra({
+    id, tipo, gx, gy, estado: 'obra', hp: def.hp, obra: { faltam: {}, nivelamento: 0 },
+  }, dados);
+  return {
+    ...estado,
+    predios: { porId: { ...estado.predios.porId, [id]: predio }, ordem: [...estado.predios.ordem, id] },
+  };
+}
+
 /** A fixture confere a si mesma: coordenada errada falha AQUI, com o motivo
  *  escrito, e nao tres `expect` adiante como "produziu 0". */
 function exigirLigado(estado: GameState, id: string, dados: GameData): GameState {
@@ -613,4 +633,66 @@ export function comCustoDePlantio(
       },
     },
   };
+}
+
+/**
+ * F21 — o id do armazem que `createInitialState` criou (`p1`, nao `storehouse`:
+ * `ID_DO_ARMAZEM` e o TIPO). A fixture confere a si mesma — se a aldeia inicial
+ * um dia nascer sem armazem, isto falha aqui com o motivo escrito.
+ */
+function armazemDaAldeia(estado: GameState): string {
+  for (const id of estado.predios.ordem) {
+    if (estado.predios.porId[id]?.tipo === ID_DO_ARMAZEM) return id;
+  }
+  throw new Error('fixture: a aldeia inicial nao tem armazem');
+}
+
+/**
+ * F21 — A CADEIA DO OURO, longe da aldeia e ligada por uma rua so.
+ *
+ * `gold_mine` e `coal_mine` tiram do nada (receita sem `entra` e sem `colheita`,
+ * como o lenhador), a `metallurgists` come 1 minerio + 1 carvao e devolve 2
+ * ouros, e a `schoolhouse` do fim da rua e quem gasta. Todos os predios tem a
+ * borda sul em y=61, entao a porta de todos cai em y=62 e uma linha de estrada
+ * liga a cadeia inteira ao armazem `arm`.
+ *
+ * A area (x=50..72, y=58..63) foi conferida no mapa emitido: grama, sem recurso
+ * e sem terreno intransponivel. Duas consequencias de fixture que importam:
+ *   - o OURO INICIAL do armazem da aldeia vai a ZERO. Sem isso o teste nao sabe
+ *     dizer se a escola pagou com ouro minerado ou com os 20 da abertura.
+ *   - a Bodega entra abastecida, como nas cadeias do pao e da carne: sem ela a
+ *     vila morre de fome antes da janela de medicao acabar (`cenarioOraculo` tem
+ *     o aviso e o numero).
+ */
+export function cenarioDaCadeiaDoOuro(
+  dados: GameData = gameData, serfs: number = 6,
+): GameState {
+  let s = semCivis(createInitialState(1, dados));
+  const aldeia = armazemDaAldeia(s);
+  // o ouro da abertura mora em `saida` (F05a: e de la que o serf retira), e so o
+  // OURO vai a zero: tirar pao e carne junto mataria a vila de fome.
+  s = comSaida(s, aldeia, { ...completoDe(s, aldeia).estoque.saida, gold: 0 });
+  s = comArmazemExtra(s, 'arm', 50, 59, dados);
+  s = comProdutorOcupado(s, { tipo: 'gold_mine', id: 'go1', unidade: 'mineiro-ouro', gx: 54, gy: 61 }, dados);
+  s = comProdutorOcupado(s, { tipo: 'coal_mine', id: 'co1', unidade: 'mineiro-carvao', gx: 57, gy: 60 }, dados);
+  s = comProdutorOcupado(s, { tipo: 'metallurgists', id: 'me1', unidade: 'metalurgico', gx: 61, gy: 59 }, dados);
+  s = comPredioSemTrabalhador(s, 'schoolhouse', 'esc1', 65, 59, dados);
+  const rua: TileDeGrid[] = [];
+  for (let gx = 50; gx <= 72; gx += 1) rua.push(tile(gx, 62));
+  s = comEstradas(s, rua);
+  for (const id of ['arm', 'go1', 'co1', 'me1', 'esc1']) s = exigirLigado(s, id, dados);
+  s = comBodegaAbastecida(s, 'bodega', 'arm', dados);
+  return comHistoricoDosPredios(comSerfs(s, serfs, 50, 62));
+}
+
+/** Sem a mina de carvao: o metalurgico recebe minerio e nada mais. E o que impede
+ *  o aceite de passar por uma metalurgia que fabrique ouro do nada. */
+export function cenarioDoOuroSemCarvao(dados: GameData = gameData): GameState {
+  return semPredioEOcupante(cenarioDaCadeiaDoOuro(dados), 'co1', 'mineiro-carvao');
+}
+
+/** Sem a mina de ouro: carvao sobrando e nenhum minerio. O outro lado do mesmo
+ *  contra-exemplo — as duas entradas sao obrigatorias, nao uma. */
+export function cenarioDoOuroSemMina(dados: GameData = gameData): GameState {
+  return semPredioEOcupante(cenarioDaCadeiaDoOuro(dados), 'go1', 'mineiro-ouro');
 }

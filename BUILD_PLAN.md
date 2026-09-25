@@ -2316,6 +2316,59 @@ Depende da F20b: o marcador lê `unidade.condicao`, que só existe depois dela. 
   o exploit morre sozinho, e a asserção que prova a morte é a primeira perna do
   aceite de lá. A entrada correspondente sai do `IDEIAS.md` no commit da F-T2.
 
+- **Corrigido de novo em 2026-09-25, e desta vez conferido em arquivo**: a
+  premissa acima — *"ouro, carvão e ferro herdam a camada da F-T2 prontos"* — é
+  **falsa**. Verificado: `data/resources.json` declara só `rock`, `tree`, `fish`
+  e `corn`; o mapa emitido por `data/maps/sertao-128.json` carrega só `rock`,
+  `tree` e `fish`; `data/production.json` dá `gold_mine.colheita === null`, e sem
+  `colheita` na receita não existe tile de onde tirar. O campo
+  `PredioCompleto.producao.veio` **também não existe mais** (removido pela
+  F-T2a: o total foi para o tile). Nada de veio foi herdado — só a cadeia. A
+  mina de hoje produz para sempre, e essa perna virou a **F21b**.
+- **Escopo (decisão minha, 2026-09-25, marcada para o operador revisar)**: medir
+  antes de escrever, como na F19/F19b. A sonda `tests/zz-probe-F21.test.ts`
+  mostrou que a cadeia `gold_mine` + `coal_mine` → `metallurgists` → escola
+  **já fecha sem uma linha de código novo**: primeiro carvão no tick 250,
+  primeiro minério em 300, primeiro ouro fundido em 981, ouro no armazém em
+  1030. Então a entrega desta feature é o **guarda permanente** da cadeia mais o
+  registro honesto do que não fecha — não inventei a mina que esgota nem dado de
+  minério que ninguém produz.
+- **Aceite** (o que o teste afirma, em `tests/F21-cadeia-do-ouro.test.ts`):
+  1. partindo de **ouro zero no mundo inteiro** (o estoque de abertura é zerado
+     na gaveta `saida` do armazém), rodar a cadeia faz o ouro aparecer no
+     armazém sem nenhum comando além do posicionamento, com minério e carvão
+     também em trânsito, e as invariantes do JobBoard limpas no fim;
+  2. o primeiro ouro do mundo está **dentro da metalurgia**, não no armazém —
+     quem fabrica é ela;
+  3. **contra-exemplo nos dois lados**: sem a mina de carvão o ouro fica em 0 com
+     minério sobrando, e sem a mina de ouro fica em 0 com carvão sobrando. As
+     duas entradas são obrigatórias;
+  4. a escola treina um `stonemason` pagando com ouro **minerado** — contagem de
+     pedreiros 0 → 1 e exatamente 1 de ouro a menos no mundo.
+- **Evidência**: `test-output/F21.json` (linha de base, marcos, estoques no tick
+  4000, os dois contra-exemplos e a seção `oQueNaoFecha`). **Sem screenshot**: o
+  HUD já mostra `gold` desde a F05b e nenhuma linha de `src/render/` ou
+  `src/ui/` foi tocada — a feature é só de `sim/` + teste.
+
+### F21b — A mina esgota: minério no tile (sim + dado; posição na fila a definir)
+- **Por que existe**: a F21 fechou a cadeia do ouro, mas `gold_mine`,
+  `coal_mine` e `iron_mine` **produzem para sempre**. O contrato herdado da F15a
+  dizia que o veio viria pronto da F-T2; não veio (ver a nota corrigida da F21).
+  Esta é a dívida, escrita para não virar folclore.
+- **O que falta, em três pedaços**:
+  1. **dado**: `data/resources.json` não tem tipo de minério. Precisa de
+     `gold_ore`, `coal` e `iron_ore` como recurso de tile, com rendimento e
+     regra de reposição (minério **não** repõe, ao contrário da árvore);
+  2. **mapa**: `tools/` não emite nenhum tile de minério em `sertao-128.json`. A
+     montanha tem 453 tiles e hoje é só obstáculo;
+  3. **receita**: `production.json` precisa de `colheita` nas três minas, e aí o
+     mineiro passa a sair do prédio — a caminhada já existe desde a F-T3, é de
+     classe e vem do dado.
+- **Pergunta de design que eu não respondo sozinho**: a mina deve colher o tile
+  de montanha **sob** o prédio, ou só os adjacentes dentro do alcance (como a
+  pedreira)? Isso muda onde o jogador pode plantar mina e é decisão do operador.
+- **Depende de**: nada além da F21. **Não** depende da F23.
+
 ### F22 — Alertas do HUD
 - Prédio sem trabalhador, sem estrada, fome, mina esgotada.
 - **Escopo**: o jogador descobre que um prédio está parado **sem clicar nele**.
