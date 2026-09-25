@@ -380,10 +380,39 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   encurtar `ticksDoCiclo` de modo que ciclo + viagem devolva o intervalo de entrega que o
   número original descrevia. Para a madeira, o consumidor É fixo (serraria 273), e a proporção
   2:1 da F15b foi medida antes da F-T4b pôr o lenhador para andar: é o primeiro lugar a
-  re-medir. **Não medido; não é decisão.** Entra no próximo lote junto com
+  re-medir. **Não medido; não é decisão.** *(MEDIDA no mesmo dia, na entrada seguinte: de pé para a
+  MADEIRA, e CAI para a pedra — a viagem da pedreira depende do lugar, não do prédio.)*
+  Entra no próximo lote junto com
   `rock.rendimentoPorTile`, `alcance` e o resto das entradas de pedreira e minas acima |
   `production.json:predios.{quarry,woodcutters,gold_mine,coal_mine,iron_mine,fishermans}`,
   `docs/calibracao-fase-b.md` (o método)
+
+- [2026-09-25] **MEDIDO, a pedido do operador: a hipótese acima vale para a MADEIRA e não
+  vale para a PEDRA — e o que ela erra é achar que existe um número por prédio** | sonda
+  temporária na **abertura de verdade** (`aberturaDaFaseA`, a mesma do F17, semente do
+  dado), 12 000 ticks, intervalo entre eventos `goods-produced` do mesmo prédio, já
+  descontada a rampa (o primeiro evento de cada um é o marco, não entra em intervalo):
+  **pedreira 211,2** (204–222, 53 entregas) contra **167** do `ticksDoCiclo` = **1,26×**;
+  **lenhador 690,3 e 652,6** (dois prédios) contra **545** = **1,27× e 1,20×**; **serraria
+  341,8** contra **273**, com **mínimo exatamente 273** e máximo 512.
+  **(1) A pedra não repete o caso da fazenda.** A hipótese esperava a viagem comendo o
+  orçamento inteiro; ela come **26 %**, não os ~60 % que o número antigo sugeria (266
+  contra 167, medido na fixture da F15a). A diferença **não é do prédio, é do LUGAR**: na
+  fixture a pedreira estava a 7 tiles do lajedo; na abertura ela nasce **colada** nele,
+  pela regra de posição da F-T4b. Um `ticksDoCiclo` calibrado para "ciclo + viagem" ficaria
+  certo num mapa e errado no outro, e é isso que o `alcance_tiles: 6` já queria dizer.
+  **Girar `quarry.sai.stone` não está justificado por esta medida.**
+  **(2) O que a medida ACUSA é a proporção 2:1 da madeira**, e esse sim é o padrão da
+  fazenda: a serraria consome uma tora a cada **273** e os dois lenhadores entregam uma a
+  cada **~335** (dois fluxos de ~670 intercalados). O mínimo 273 é a serraria andando
+  cheia; a média 341,8 é ela **esperando insumo ~20 % do tempo**, e é isso que o
+  `esperando_insumo` do painel mostra hoje na abertura. **2:1 não sobrevive à caminhada
+  do lenhador (F-T4b): o par entrega 81 % de uma serraria.** O parafuso é `woodcutters.sai
+  .tree_trunk` (ou a proporção), não `sawmill`, que já anda no ciclo do dado quando tem
+  tora. | **não girei nada** — é medição, e o lote 2 ajusta em bloco; a hipótese acima fica
+  de pé para a madeira e **cai para a pedra**, com o motivo escrito | `production.json`:
+  `quarry.sai.stone`, `woodcutters.sai.tree_trunk`, `proporcoesDeReferencia`;
+  sonda em `test-output/zz-pedreira.json` (temporária, apagada — o que ficou são estes números)
 
 ---
 
