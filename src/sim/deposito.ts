@@ -7,7 +7,12 @@
  * — a estrada nao tem porta de onde medir distancia, o predio tem. O deposito em
  * si e um so: em dois lugares, divergiria.
  */
-import type { Colecao, Predio } from './state';
+import type { Colecao, GameState, Predio } from './state';
+import type { GameData } from './data/types';
+import { gameData } from './data';
+import { armazensCompletos, tilesDaPorta } from './estradas';
+import type { TileDeGrid } from './estradas';
+import { buscarCaminho } from './pathfinding';
 
 /**
  * Soma `quantidades` na gaveta `saida` de `destino`. `destino === null` (ou
@@ -37,4 +42,26 @@ export function devolverMercadorias(
     porId: { ...predios.porId, [destino]: { ...predio, estoque: { ...predio.estoque, saida } } },
     ordem: predios.ordem,
   };
+}
+
+/**
+ * O armazem completo de menor custo A* (livre) a partir do TILE `de`, com a rota;
+ * empate: o primeiro em `predios.ordem`. `null` quando nenhum e alcancavel.
+ *
+ * Era privado em `systems/serfs.ts` (o estado `devolvendo`, F10) e subiu aqui ao
+ * ganhar o segundo consumidor — a morte por fome (F20b), que devolve a carga do
+ * morto pelo MESMO criterio de quem a levaria a pe. Duas copias divergiriam, e o
+ * cabecalho deste modulo ja diz que o deposito e um so.
+ */
+export function armazemMaisProximo(
+  state: GameState, de: TileDeGrid, dados: GameData = gameData,
+): { readonly id: string; readonly caminho: readonly TileDeGrid[] } | null {
+  let melhor: { id: string; caminho: readonly TileDeGrid[]; custo: number } | null = null;
+  for (const armazem of armazensCompletos(state)) {
+    const rota = buscarCaminho(state, de, tilesDaPorta(armazem, dados), 'livre', dados);
+    if (rota !== null && (melhor === null || rota.custo < melhor.custo)) {
+      melhor = { id: armazem.id, caminho: rota.tiles, custo: rota.custo };
+    }
+  }
+  return melhor === null ? null : { id: melhor.id, caminho: melhor.caminho };
 }

@@ -11,6 +11,7 @@ import { aplicarDemolishRoad, aplicarPlaceRoad } from './systems/estradas';
 import { gerarTarefas, sanearTarefas } from './systems/jobs';
 import { aplicarSetBuildingPaused } from './systems/pausa';
 import { sistemaDosEspecialistas } from './systems/especialistas';
+import { sistemaDaFome } from './systems/fome';
 import { sistemaDosLaborers } from './systems/laborers';
 import { sistemaDosSerfs } from './systems/serfs';
 
@@ -99,7 +100,13 @@ export function step(
   // ja abre a tarefa de material no mesmo tick; so entao se cria o que falta, para que o que
   // um serf ou laborer libera seja recriado no mesmo tick.
   const saneado = sanearTarefas(atual, dados);
-  const serfs = sistemaDosSerfs(saneado.state, dados);
+  // F20b: a fome ANTES das tres familias e depois do saneamento. Antes, porque o
+  // civil que cruza o limiar neste tick sai para comer neste tick, e quem morre nao
+  // deve ser passado por uma FSM de familia; depois, porque a tarefa que ela libera
+  // (colheita do faminto, tarefa do morto) tem de ser revalidada pelo gerador no fim
+  // deste mesmo tick, e nao pelo saneamento do seguinte.
+  const fome = sistemaDaFome(saneado.state, dados);
+  const serfs = sistemaDosSerfs(fome.state, dados);
   const laborers = sistemaDosLaborers(serfs.state, dados);
   // F14: os especialistas DEPOIS dos laborers (o predio que ficou pronto neste
   // tick so ganha vaga de ocupante no `gerarTarefas` do fim deste tick, e a vaga
@@ -113,7 +120,10 @@ export function step(
   // demanda do proximo pedido antes de o gerador olhar o quadro).
   const escolas = sistemaDasEscolas(especialistas.state, dados);
   atual = gerarTarefas(escolas.state, dados);
-  events.push(...saneado.events, ...serfs.events, ...laborers.events, ...especialistas.events, ...escolas.events);
+  events.push(
+    ...saneado.events, ...fome.events, ...serfs.events, ...laborers.events,
+    ...especialistas.events, ...escolas.events,
+  );
 
   // F12: o desbloqueio le os eventos do TICK INTEIRO, depois de todos os sistemas — assim
   // nao depende de QUAL sistema concluiu a obra (hoje so o laborer, F11c). Nenhum sistema le

@@ -151,5 +151,8 @@
   },
   "F20a-bodega-recebe-comida": {
     "passes": true
+  },
+  "F20b-fome-e-morte": {
+    "passes": true
   }
 }

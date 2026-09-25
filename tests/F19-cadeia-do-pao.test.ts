@@ -21,7 +21,7 @@ import { receitaDoTipo, unidadesPorCiclo } from '../src/sim/producao';
 import { opcoesDoMenuBuild } from '../src/sim/selectors';
 import { gravarEvidencia } from './helpers/evidence';
 import {
-  avancar, cenarioDaCadeiaDoPao, cenarioDaCadeiaSemMoinho, fsmDe,
+  avancar, cenarioDaCadeiaDoPao, cenarioDaCadeiaSemMoinho, entregasNoArmazem, fsmDe, fsmSeVivo,
 } from './helpers/producao-cenario';
 
 const FAZENDA = receitaDoTipo('farm', gameData);
@@ -91,6 +91,15 @@ function tetoDaFonte(ticks: number): number {
   return (PAES_POR_GRAO * (ticks - ARRANQUE)) / TICKS_POR_GRAO;
 }
 
+/**
+ * O `timeout` destas corridas NAO e assercao de desempenho (CLAUDE.md secao 8): ele
+ * existe para o caso travar, como o dos 20 s de `tests/F09-sistema.test.ts`. Cada
+ * corrida roda a janela inteira de simulacao, e o padrao de 5 s do Vitest reprova
+ * por carga da maquina — o arquivo inteiro leva ~7 s medidos nesta sessao contra
+ * ~4,6 s antes da fome, e em suite paralela isso estoura sozinho.
+ */
+const TIMEOUT_DA_CORRIDA = 60_000;
+
 describe('F19 — a cadeia fecha: milho vira fubá, fubá vira cuscuz', () => {
   it('os tres elos sao mesmo uma cadeia no dado, e nao tres receitas soltas', () => {
     // A guarda e estrutural: se alguem trocar a saida do moinho, os marcos
@@ -106,7 +115,7 @@ describe('F19 — a cadeia fecha: milho vira fubá, fubá vira cuscuz', () => {
     const inicial = cenarioDaCadeiaDoPao();
     expect(desdeOInicio(inicial, avancar(inicial, ARRANQUE - 1), PAO)).toBe(0);
     expect(desdeOInicio(inicial, avancar(inicial, JANELA), PAO)).toBeGreaterThan(0);
-  });
+  }, TIMEOUT_DA_CORRIDA);
 
   it('e cada elo chega na sua vez: milho, depois fubá, depois cuscuz', () => {
     // A ordem e o que separa uma cadeia de tres prédios que produzem sozinhos.
@@ -122,35 +131,56 @@ describe('F19 — a cadeia fecha: milho vira fubá, fubá vira cuscuz', () => {
     expect(primeiro[GRAO]).toBe(PLANTIO + FAZENDA.ticksDoCiclo);
     expect(primeiro[FARINHA]).toBeGreaterThan(primeiro[GRAO] ?? 0);
     expect(primeiro[PAO]).toBeGreaterThan(primeiro[FARINHA] ?? 0);
-  });
+  }, TIMEOUT_DA_CORRIDA);
 });
 
 describe('F19 — o elo do meio e real', () => {
-  it('sem moinho a mesma vila nao faz um cuscuz, e a padaria fica esperando', () => {
+  it('sem moinho a mesma vila nao faz um cuscuz, a padaria espera, e a vila passa fome', () => {
     // Sem esta perna, o teste acima passaria com uma padaria que fabricasse pao
     // do nada — o mesmo defeito que a F18 encontrou na fazenda.
+    //
+    // F20b: esta vila nao produz UMA comida (o pao e o unico alimento da cadeia, e
+    // ele depende do moinho), entao a Bodega dela nunca recebe nada e todo civil
+    // morre de fome ao fim da janela — que e exatamente uma condicao cheia de civil.
+    // Por isso as FSMs sao lidas no ultimo tick em que cada um estava VIVO, e nao no
+    // fim: a morte entra como assercao propria, mais estrita do que a leitura antiga.
     const inicial = cenarioDaCadeiaSemMoinho();
-    const fim = avancar(inicial, JANELA);
+    const ultimoFsm: Record<string, string> = {};
+    let fim = inicial;
+    for (let t = 1; t <= JANELA; t += 1) {
+      fim = avancar(fim, 1);
+      for (const u of ['forneiro', 'roceiro']) {
+        const f = fsmSeVivo(fim, u);
+        if (f !== null) ultimoFsm[u] = f;
+      }
+    }
     expect(desdeOInicio(inicial, fim, PAO)).toBe(0);
     expect(desdeOInicio(inicial, fim, FARINHA)).toBe(0);
-    expect(fsmDe(fim, 'forneiro')).toBe('esperando_insumo');
-    // e a fazenda continua produzindo: o que parou foi a cadeia, nao o mapa —
-    // o milho se acumula sem ninguem para moe-lo.
+    expect(ultimoFsm.forneiro).toBe('esperando_insumo');
+    // e a fazenda continua produzindo enquanto vive: o que parou foi a cadeia, nao o
+    // mapa — o milho se acumula sem ninguem para moe-lo.
     expect(desdeOInicio(inicial, fim, GRAO)).toBeGreaterThan(0);
-    expect(fsmDe(fim, 'roceiro')).toBe('trabalhando');
-  });
+    expect(ultimoFsm.roceiro).toBe('trabalhando');
+    // a prova de que o dreno CHEGOU: vila sem comida nao tem um civil de pe no fim.
+    expect(fim.unidades.ordem).toHaveLength(0);
+  }, TIMEOUT_DA_CORRIDA);
 });
 
 describe('F19 — a vazao e limitada pela FONTE, e nada se acumula', () => {
   it('o cuscuz entregue cabe no teto do milho, e chega perto dele', () => {
-    const inicial = cenarioDaCadeiaDoPao();
-    const paes = desdeOInicio(inicial, avancar(inicial, JANELA), PAO);
+    // F20b: o eixo mudou de SALDO para ACUMULADO ENTREGUE, e por uma razao de regra,
+    // nao de numero: a vila agora COME o cuscuz, e saldo de gaveta passou a medir o
+    // que sobrou depois das refeicoes (54), nao o que a cadeia produziu (68). O teto
+    // da fonte e sobre PRODUCAO, entao a medida tem de ser de producao. `paes` conta
+    // so o que chegou a um ARMAZEM: o salto armazem -> Bodega e o mesmo pao de novo.
+    const { entregues } = entregasNoArmazem(cenarioDaCadeiaDoPao(), JANELA, [PAO]);
+    const paes = entregues[PAO] ?? 0;
     // TETO: dois paes por milho, e o milho e o que a fazenda consegue tirar do
     // tile. Passar disso seria mercadoria nascendo do nada.
     expect(paes).toBeLessThanOrEqual(tetoDaFonte(JANELA));
     // PISO: o transporte custa, mas nao pode ser o gargalo.
     expect(paes).toBeGreaterThanOrEqual(PISO_DA_VAZAO * tetoDaFonte(JANELA));
-  });
+  }, TIMEOUT_DA_CORRIDA);
 
   it('o cenario E a proporcao que o dado publica: 1 fazenda : 1 moinho : 1 padaria', () => {
     // A medicao so vale contra o oraculo se for o oraculo que ela monta.
@@ -173,7 +203,7 @@ describe('F19 — a vazao e limitada pela FONTE, e nada se acumula', () => {
       expect(soma(p.estoque.entrada), `${id} entrada`).toBeLessThan(p.capacidade.entrada ?? Infinity);
       expect(soma(p.estoque.saida), `${id} saida`).toBeLessThan(p.capacidade.saida ?? Infinity);
     }
-  });
+  }, TIMEOUT_DA_CORRIDA);
 });
 
 describe('F19 — o jogador alcanca a cadeia', () => {
@@ -246,5 +276,5 @@ describe('F19 — evidencia', () => {
       },
     });
     expect(true).toBe(true);
-  });
+  }, TIMEOUT_DA_CORRIDA);
 });

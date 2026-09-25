@@ -7,12 +7,15 @@
  * Os civis do cenario inicial saem: serf e laborer mexeriam no estoque por conta
  * propria e o que se mede aqui e o relogio do ciclo, sozinho.
  */
-import { completarObra, createInitialState } from '../../src/sim/state';
+import { completarObra, createInitialState, ID_DA_BODEGA, ID_DO_ARMAZEM } from '../../src/sim/state';
+import { condicaoCheiaDoTipo } from '../../src/sim/condicao';
 import type { GameEvent, GameState, PredioCompleto, Producao, Unidade } from '../../src/sim/state';
 import { gameData } from '../../src/sim/data';
 import type { GameData } from '../../src/sim/data/types';
 import { step } from '../../src/sim/tick';
 import { chaveDeTile, predioLigadoAoArmazem, tilesDaPorta } from '../../src/sim/estradas';
+import { caixaDeTipo, caixaDoPredio } from '../../src/sim/footprint';
+import { canPlace } from '../../src/sim/placement';
 import type { TileDeGrid } from '../../src/sim/estradas';
 import { trabalhadorDoTipo } from '../../src/sim/ocupacao';
 import { disponivelAoAlcance, tilesDeColheita } from '../../src/sim/recursos';
@@ -55,6 +58,7 @@ export function comProdutorOcupado(
   if (porta === undefined) throw new Error(`fixture: '${opcoes.id}' nao tem porta`);
   const u: Unidade = {
     id: opcoes.unidade, tipo: tipoDoCivil, gx: porta.gx, gy: porta.gy, fsm: 'trabalhando', fsmData: {},
+    condicao: condicaoCheiaDoTipo(tipoDoCivil),
   };
   return {
     ...estado,
@@ -188,6 +192,9 @@ export function cenarioDaCadeiaDoPao(
   for (let gx = 104; gx <= 119; gx++) rua.push(tile(gx, 37));
   s = comEstradas(s, rua);
   for (const id of ['f1', 'm1', 'b1']) s = exigirLigado(s, id, dados);
+  // F20b: a Bodega entra no cenario porque a janela dele (12 000 ticks) E uma
+  // condicao cheia de civil. Ela come do proprio cuscuz que a cadeia entrega.
+  s = comBodegaAbastecida(s, 'bodega', 'arm', dados);
   return comHistoricoDosPredios(comSerfs(s, serfs, 112, 37));
 }
 
@@ -216,6 +223,9 @@ export function cenarioDaCadeiaDaCarne(
   for (let gx = 103; gx <= 119; gx++) rua.push(tile(gx, 37));
   s = comEstradas(s, rua);
   for (const id of ['f1', 'sf1', 'bu1']) s = exigirLigado(s, id, dados);
+  // F20b: mesma razao da cadeia do pao, e aqui a janela e maior ainda (20 000
+  // ticks). A carne de sol e comida em `condition.json`: a cadeia alimenta a vila.
+  s = comBodegaAbastecida(s, 'bodega', 'arm', dados);
   return comHistoricoDosPredios(comSerfs(s, serfs, 112, 37));
 }
 
@@ -257,7 +267,7 @@ export function comSerfs(
   const porId = { ...estado.unidades.porId };
   const ordem = [...estado.unidades.ordem];
   for (let i = 1; i <= quantos; i++) {
-    const u: Unidade = { id: `serf-${i}`, tipo: 'serf', gx, gy, fsm: 'ocioso', fsmData: {} };
+    const u: Unidade = { id: `serf-${i}`, tipo: 'serf', gx, gy, fsm: 'ocioso', fsmData: {}, condicao: condicaoCheiaDoTipo('serf') };
     porId[u.id] = u;
     ordem.push(u.id);
   }
@@ -318,6 +328,57 @@ export function comArmazemExtra(
   };
 }
 
+/**
+ * F20b — uma Bodega COMPLETA a leste de um armazem do cenario, com a rua na porta
+ * dela. Os cenarios LONGOS precisam dela por aritmetica do dado, nao por gosto:
+ * `condicao.ticksCondicaoCheia.civil` e 12 000 ticks, que e exatamente a janela da
+ * F19 (a da F19b e maior ainda), entao uma vila sem lugar para comer morre INTEIRA
+ * dentro da janela que esses testes medem.
+ *
+ * A comida nao e semeada: ela chega pelo nivel 1 de `delivery.json`, do armazem
+ * para a Bodega, pelo caminho que a F20a abriu — e o pao (ou a carne) que a
+ * propria cadeia do cenario produziu. Bodega abastecida a mao provaria a
+ * sobrevivencia contra um estoque que o jogo nao fez.
+ *
+ * O `x` nao e digitado: anda para o leste ate o primeiro em que `canPlace` — o
+ * MESMO predicado que recusa a planta do jogador — diz sim, o molde de
+ * `plantaDaBodega`. Lanca se nao couber, porque cenario que cala aqui mede a
+ * fixture tres `expect` adiante.
+ */
+export function comBodegaAbastecida(
+  estado: GameState, id: string, armazemId: string, dados: GameData = gameData,
+): GameState {
+  const armazem = estado.predios.porId[armazemId];
+  if (armazem === undefined || armazem.estado !== 'completo') {
+    throw new Error(`fixture: '${armazemId}' nao e armazem completo`);
+  }
+  const caixaDoArmazem = caixaDoPredio(armazem, dados);
+  if (caixaDoArmazem === null) throw new Error(`fixture: '${armazemId}' nao tem tamanho`);
+  const def = dados.predios.find((p) => p.id === ID_DA_BODEGA);
+  if (!def) throw new Error(`fixture: '${ID_DA_BODEGA}' nao existe em buildings.json`);
+
+  // na MESMA linha do armazem: a porta dos dois cai na mesma rua, que e o que liga
+  // a Bodega a rede sem uma volta de estrada nova
+  const gy = caixaDoArmazem.y0;
+  const limite = dados.terreno.mapaPadrao.largura;
+  let gx = caixaDoArmazem.x1;
+  while (gx < limite && !canPlace(estado, ID_DA_BODEGA, gx, gy, dados).ok) gx += 1;
+  if (gx >= limite) throw new Error('fixture: a Bodega nao cabe a leste do armazem');
+  if (caixaDeTipo(ID_DA_BODEGA, gx, gy, dados) === null) throw new Error('fixture: Bodega sem tamanho');
+
+  const predio = completarObra({
+    id, tipo: ID_DA_BODEGA, gx, gy, estado: 'obra', hp: def.hp, obra: { faltam: {}, nivelamento: 0 },
+  }, dados);
+  const comBodega: GameState = {
+    ...estado,
+    predios: {
+      porId: { ...estado.predios.porId, [id]: predio },
+      ordem: [...estado.predios.ordem, id],
+    },
+  };
+  return exigirLigado(comEstradas(comBodega, tilesDaPorta(predio, dados)), id, dados);
+}
+
 /** Serraria `s1` (32,34) ocupada por `u2`, ligada, e com a entrada VAZIA. */
 export function cenarioDeSerraria(dados: GameData = gameData): GameState {
   let s = semCivis(createInitialState(1, dados));
@@ -373,6 +434,44 @@ export function disponivelDe(estado: GameState, id: string, dados: GameData = ga
   const receita = receitaDoTipo(predio.tipo, dados);
   if (receita?.colheita == null) return null;
   return disponivelAoAlcance(estado, predio, receita.colheita, dados);
+}
+
+/**
+ * O `fsm` desta unidade, ou `null` se ela nao esta mais no estado. Irmao FROUXO de
+ * `fsmDe`, e existe por um motivo estreito: desde a F20b a unidade MORRE, e o
+ * cenario a que falta um elo da cadeia nao produz comida nenhuma — quem ele
+ * observa morre antes do fim da janela. Quem quer afirmar o estado de uma unidade
+ * viva continua usando `fsmDe`, que lanca.
+ */
+export function fsmSeVivo(estado: GameState, unidadeId: string): string | null {
+  return estado.unidades.porId[unidadeId]?.fsm ?? null;
+}
+
+/**
+ * F20b — o acumulado que CHEGOU a um armazem, por mercadoria, contado por evento
+ * `task-completed` ao longo de `ticks`.
+ *
+ * Por que nao o saldo das gavetas: desde que a vila COME, a comida entregue sai da
+ * gaveta outra vez, e saldo passa a medir o que SOBROU, nao o que a cadeia
+ * produziu — e o teto da fonte e sobre producao. O destino e filtrado por ARMAZEM
+ * porque a mesma mercadoria viaja duas vezes (padaria -> armazem, armazem ->
+ * Bodega, nivel 1 da F20a), e o segundo salto contaria o mesmo pao de novo.
+ */
+export function entregasNoArmazem(
+  estado: GameState, ticks: number, mercadorias: readonly string[], dados: GameData = gameData,
+): { readonly fim: GameState; readonly entregues: Readonly<Record<string, number>> } {
+  const entregues: Record<string, number> = Object.fromEntries(mercadorias.map((m) => [m, 0]));
+  let s = estado;
+  for (let t = 0; t < ticks; t += 1) {
+    s = step(s, [], dados);
+    for (const ev of s.events) {
+      if (ev.type !== 'task-completed') continue;
+      if (entregues[ev.mercadoria] === undefined) continue;
+      if (s.predios.porId[ev.destino]?.tipo !== ID_DO_ARMAZEM) continue;
+      entregues[ev.mercadoria] = (entregues[ev.mercadoria] ?? 0) + 1;
+    }
+  }
+  return { fim: s, entregues };
 }
 
 export function fsmDe(estado: GameState, unidadeId: string): string {

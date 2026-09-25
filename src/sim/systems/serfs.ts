@@ -33,8 +33,11 @@ import { ehTarefaDeTransporte, gavetaDeOrigem, MERCADORIA_DE_OURO } from '../sta
 import { ID_DO_ARMAZEM } from '../state';
 import type { GameData } from '../data/types';
 import { gameData } from '../data';
-import { armazensCompletos, ehEstrada, isConnected, tilesDaPorta } from '../estradas';
-import type { TileDeGrid } from '../estradas';
+import { ehEstrada, isConnected } from '../estradas';
+// F20b: `armazemMaisProximo` era daqui e subiu para `deposito.ts` ao ganhar o
+// segundo consumidor (a morte por fome devolve a carga pelo mesmo criterio).
+import { armazemMaisProximo } from '../deposito';
+import { ehEstadoDeFome } from '../condicao';
 import {
   liberar, marcarCarregando, modoDoTipo, planoDaTarefa, portasDaTarefa, reclamarMelhor,
   removerTarefa, TIPO_QUE_CARREGA,
@@ -70,16 +73,6 @@ function liberarTarefa(state: GameState, tarefaId: string, motivo: MotivoDeLiber
 }
 
 // --- devolvendo: o armazem completo mais proximo ---
-
-/** O armazem completo de menor custo A* (livre) a partir de `de`; empate: o primeiro em `predios.ordem`. */
-function armazemMaisProximo(state: GameState, de: TileDeGrid, dados: GameData): { id: string; caminho: readonly TileDeGrid[] } | null {
-  let melhor: { id: string; caminho: readonly TileDeGrid[]; custo: number } | null = null;
-  for (const armazem of armazensCompletos(state)) {
-    const rota = buscarCaminho(state, de, tilesDaPorta(armazem, dados), 'livre', dados);
-    if (rota !== null && (melhor === null || rota.custo < melhor.custo)) melhor = { id: armazem.id, caminho: rota.tiles, custo: rota.custo };
-  }
-  return melhor === null ? null : { id: melhor.id, caminho: melhor.caminho };
-}
 
 /** Entra em `devolvendo` com a carga que tem. Sem armazem alcancavel, espera onde esta. */
 function comecarADevolver(state: GameState, u: Unidade, carga: string, dados: GameData): GameState {
@@ -345,6 +338,10 @@ export function sistemaDosSerfs(state: GameState, dados: GameData = gameData): R
   for (const id of state.unidades.ordem) {
     const u = atual.unidades.porId[id];
     if (u === undefined || u.tipo !== TIPO_QUE_CARREGA) continue;
+    // F20b: quem esta comendo (ou a caminho da Bodega) tem o passo dado pelo
+    // `sistemaDaFome`, e nao por esta FSM — o `default` do `switch` LANCA, entao
+    // esquecer este pulo nao daria bug silencioso. `ehEstadoDeFome` e a lista unica.
+    if (ehEstadoDeFome(u.fsm)) continue;
     const r = passoDoSerf(atual, u, dados);
     atual = r.state;
     events.push(...r.events);

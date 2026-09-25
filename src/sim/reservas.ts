@@ -243,3 +243,29 @@ export function vagaDeOcupacao(
 ): number {
   return vagasDoPredio(state.predios.porId[predioId], dados) - ocupantesReservados(state, predioId);
 }
+
+/** F20b — assentos de refeicao reservados na Bodega `predioId`: tarefas `'comer'`
+ *  que nao estao abertas. Irma exata de `ocupantesReservados`. */
+export function comensaisReservados(state: GameState, predioId: string): number {
+  let soma = 0;
+  for (const id of state.jobs.tarefas.ordem) {
+    const t = state.jobs.tarefas.porId[id];
+    if (t && t.tipo === 'comer' && t.estado !== 'aberta' && t.destino === predioId) soma += 1;
+  }
+  return soma;
+}
+
+/**
+ * F20b — assento ainda reservavel na Bodega: `comensaisSimultaneos - reservado`. O
+ * teto vem de `condition.json:inn.comensaisSimultaneos`, nunca de `.ts`.
+ *
+ * So o ASSENTO e reservado; a comida, nao (decisao D8 do plano): uma refeicao
+ * consome um conjunto variavel de tipos, e reservar uma unidade de um deles seria
+ * uma reserva que mente sobre o que vai sair da gaveta. Quem cobre a corrida e o
+ * portao do gerador (`temComidaNaBodega`) mais o consumo atomico na chegada.
+ */
+export function vagaDeRefeicao(
+  state: GameState, predioId: string, dados: GameData = gameData,
+): number {
+  return dados.condicao.inn.comensaisSimultaneos - comensaisReservados(state, predioId);
+}

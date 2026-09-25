@@ -1,5 +1,10 @@
 import { createRng, type RngState } from './rng';
 import { gameData } from './data';
+// F20b — importacao de VALOR, e a unica que `state.ts` faz para um modulo derivado.
+// `condicao.ts` importa de volta so TIPO (`import type`, que o compilador apaga),
+// entao nao existe ciclo em tempo de execucao. O motivo de ela existir: a unidade
+// nasce com condicao cheia, e o numero e do dado, nao deste arquivo.
+import { condicaoCheiaDoTipo } from './condicao';
 import type { GameData } from './data/types';
 import type { MotivoDeRecusa } from './placement';
 import type { MotivoDeRecusaDeEstrada, TileDeGrid } from './estradas';
@@ -161,6 +166,24 @@ export type GameEvent =
       readonly type: 'vein-exhausted';
       readonly predio: string;
       readonly tipo: string;
+    }
+  | {
+      /**
+       * F20b — um civil chegou a `condicao === 0` e foi removido de `unidades` no
+       * mesmo tick. O aceite escrito no item pede que a morte seja "registrada em
+       * evento, nao em log solto": este e o registro, e o unico sinal que o render
+       * (F20c) e o alerta (F22) tem para anunciar a perda — depois do tick, a
+       * unidade nao existe mais no estado para ser lida.
+       *
+       * `carga` e o que ele levava na mao (`null` para quem nao levava nada) e
+       * `armazem` o que recebeu de volta — `null` quando nao havia armazem
+       * alcancavel e a carga se perdeu, no mesmo molde de `building-demolished`.
+       */
+      readonly type: 'unit-starved';
+      readonly unidade: string;
+      readonly tipo: string;
+      readonly carga: string | null;
+      readonly armazem: string | null;
     };
 
 /**
@@ -650,8 +673,37 @@ export interface TarefaColher extends TarefaBase {
   readonly quantidade: number;
 }
 
+/**
+ * F20b — UMA refeicao numa Bodega COMPLETA: o assento de um civil com fome.
+ *
+ * Molde da `TarefaOcupar`: SEM `mercadoria`/`origem`, SEM `'carregando'`, e FORA da
+ * escada de `delivery.json` — quem reclama nao disputa carga com serf nenhum, e por
+ * isso nao ha nivel a comparar.
+ *
+ * A VAGA e `condition.inn.comensaisSimultaneos` (dado), e nao um campo no predio:
+ * ela e derivada das tarefas de comer daquele destino, como a vaga da obra e
+ * derivada das de construir. Ela e reservada desde o `claim` e vale ATE a refeicao
+ * acabar — o assento fica comprometido durante a caminhada, exactamente como a vaga
+ * do `ocupar`.
+ *
+ * O que NAO e reservado e a COMIDA, e isso e decisao escrita (F20b, D5): uma
+ * refeicao consome um CONJUNTO variavel de tipos (cada tipo no maximo uma vez, ate
+ * encher), entao reservar uma unidade de um tipo seria uma reserva que mente sobre o
+ * que vai ser consumido. O que cobre a corrida e o gerador — tarefa so nasce em
+ * Bodega que TEM comida, o mesmo portao que na F20a impediu tarefa para `wine` — e o
+ * consumo ATOMICO na chegada: quem chega e nao acha comida volta a `ocioso` no mesmo
+ * tick, nunca espera.
+ */
+export interface TarefaComer extends TarefaBase {
+  readonly tipo: 'comer';
+  readonly estado: 'aberta' | 'reclamada';
+  /** Id da Bodega COMPLETA onde a refeicao acontece. */
+  readonly destino: string;
+}
+
 export type Tarefa =
-  TarefaDeTransporte | TarefaConstruir | TarefaOcupar | TarefaAssentarEstrada | TarefaColher;
+  TarefaDeTransporte | TarefaConstruir | TarefaOcupar | TarefaAssentarEstrada | TarefaColher
+  | TarefaComer;
 
 /**
  * O tipo da tarefa, DERIVADO da uniao: acrescentar um produtor novo (F15, F20)
@@ -762,6 +814,17 @@ export interface Unidade {
    *  movimento em curso vive em `fsmData` (`caminho` + `progresso`). */
   readonly fsm: string;
   readonly fsmData: DadosDaFsm;
+  /**
+   * F20b — a condicao (fome) em TICKS RESTANTES, inteiro. Cheia no nascimento
+   * (`condicao.ticksCondicaoCheia` da classe), decrementada de 1 por tick pelo
+   * `sistemaDaFome`, zero e morte.
+   *
+   * Ticks e nao fracao de propósito: a fracao de que o GDD fala (35 %, 50 %) e
+   * DERIVADA na leitura (`fracaoDeCondicao`, `sim/condicao.ts`). Somar 1/12000 doze
+   * mil vezes poria erro de ponto flutuante dentro do determinismo, que e a
+   * invariante 2 do projeto.
+   */
+  readonly condicao: number;
 }
 
 /**
@@ -1007,6 +1070,7 @@ function criarUnidades(
         gy: spawnDeUnidades.gy,
         fsm: 'ocioso',
         fsmData: {},
+        condicao: condicaoCheiaDoTipo(tipo, dados),
       });
       deslocamento += 1;
     }

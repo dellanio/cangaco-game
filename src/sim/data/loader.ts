@@ -3,7 +3,7 @@ import type {
   CombateData, CondicaoData, ConstrucaoData, ConversaoRegistrada, EconomiaData,
   EntregaData, GameData, MovimentoData, ProducaoData, ReceitaDePredio,
   MapaData, RecursosData, RegimeDeRecurso, TerrenoData, TerrenoDeMapa, TerrenoTipo,
-  Ticks, TileDeMapa, TipoDeRecurso, UnidadesData,
+  LimiaresEmTicks, Ticks, TileDeMapa, TipoDeRecurso, UnidadesData,
 } from './types';
 import { TERRENOS_DE_MAPA } from './terrenos';
 
@@ -182,6 +182,42 @@ function derivarRecursosDoTerreno(
     }
   }
   for (const [id, lista] of listas) recursos[id] = lista;
+}
+
+/**
+ * F20b — os limiares de condicao em TICKS, a partir da fracao do dado e da duracao
+ * ja convertida. `Math.round` como toda conversao do carregador: o que a simulacao
+ * compara e inteiro contra inteiro.
+ *
+ * `morte: 0.0` vira 0, que e o que `Unidade.condicao` alcanca por decremento — nao
+ * ha arredondamento que possa transformar a morte num numero inalcancavel.
+ */
+/**
+ * F20b — quanto cada comida devolve, em TICKS, para uma condicao cheia de `cheia`.
+ * Mesmo motivo e mesma regra de `limiaresEmTicks`: a conta e do carregamento.
+ *
+ * `Math.round` por comida, e nao a soma arredondada no fim: a refeicao pode
+ * consumir dois tipos (`loaves + sausages`), e arredondar duas vezes o mesmo
+ * numero em dois momentos diferentes daria dois resultados.
+ */
+function restauracaoEmTicks(
+  restauracao: RawGameData['condition']['restauracaoPorComida'], cheia: Ticks,
+): Readonly<Record<string, Ticks>> {
+  const porComida: Record<string, Ticks> = {};
+  for (const [comida, fracao] of Object.entries(restauracao)) {
+    porComida[comida] = Math.round(fracao * cheia);
+  }
+  return porComida;
+}
+
+function limiaresEmTicks(
+  limiares: RawGameData['condition']['limiares'], cheia: Ticks,
+): LimiaresEmTicks {
+  return {
+    alertaVisual: Math.round(limiares.alertaVisual * cheia),
+    civilVaiComer: Math.round(limiares.civilVaiComer * cheia),
+    morte: Math.round(limiares.morte * cheia),
+  };
 }
 
 /**
@@ -414,21 +450,32 @@ export function loadGameData(raw: RawGameData): GameData {
   // --- condicao ---
   const escalaCondicaoNome = raw.condition.escala;
   const escalaCondicao = escalaDe(escalas, escalaCondicaoNome) as number;
+  const ticksCondicaoCheiaCivil = registrar(
+    'condition.duracaoCondicaoCheia_min_base.civil', escalaCondicaoNome,
+    raw.condition.duracaoCondicaoCheia_min_base.civil, 'min',
+    paraTicksDeDuracao(raw.condition.duracaoCondicaoCheia_min_base.civil, 'min', escalaCondicao, tickHz),
+  );
+  const ticksCondicaoCheiaMilitar = registrar(
+    'condition.duracaoCondicaoCheia_min_base.militar', escalaCondicaoNome,
+    raw.condition.duracaoCondicaoCheia_min_base.militar, 'min',
+    paraTicksDeDuracao(raw.condition.duracaoCondicaoCheia_min_base.militar, 'min', escalaCondicao, tickHz),
+  );
   const condicao: CondicaoData = {
-    ticksCondicaoCheia: {
-      civil: registrar(
-        'condition.duracaoCondicaoCheia_min_base.civil', escalaCondicaoNome,
-        raw.condition.duracaoCondicaoCheia_min_base.civil, 'min',
-        paraTicksDeDuracao(raw.condition.duracaoCondicaoCheia_min_base.civil, 'min', escalaCondicao, tickHz),
-      ),
-      militar: registrar(
-        'condition.duracaoCondicaoCheia_min_base.militar', escalaCondicaoNome,
-        raw.condition.duracaoCondicaoCheia_min_base.militar, 'min',
-        paraTicksDeDuracao(raw.condition.duracaoCondicaoCheia_min_base.militar, 'min', escalaCondicao, tickHz),
-      ),
-    },
+    ticksCondicaoCheia: { civil: ticksCondicaoCheiaCivil, militar: ticksCondicaoCheiaMilitar },
     limiares: raw.condition.limiares,
+    // F20b — os mesmos limiares JA EM TICKS, por classe. A conta acontece aqui e
+    // so aqui (CLAUDE.md secao 5: converter em tempo de execucao quebra o
+    // determinismo). NAO entra em `conversoes`: aquela tabela registra base ->
+    // tick com unidade de tempo, e isto e fracao x duracao ja convertida.
+    ticksNoLimiar: {
+      civil: limiaresEmTicks(raw.condition.limiares, ticksCondicaoCheiaCivil),
+      militar: limiaresEmTicks(raw.condition.limiares, ticksCondicaoCheiaMilitar),
+    },
     restauracaoPorComida: raw.condition.restauracaoPorComida,
+    ticksRestauradosPorComida: {
+      civil: restauracaoEmTicks(raw.condition.restauracaoPorComida, ticksCondicaoCheiaCivil),
+      militar: restauracaoEmTicks(raw.condition.restauracaoPorComida, ticksCondicaoCheiaMilitar),
+    },
     regraCivil: raw.condition.regraCivil,
     regraMilitar: raw.condition.regraMilitar,
     inn: raw.condition.inn,

@@ -4,6 +4,7 @@
  * exato de tarefas, e o gerador (que roda no `step`) criaria as suas.
  */
 import { completarObra, createInitialState, ID_DO_ARMAZEM } from '../../src/sim/state';
+import { condicaoCheiaDoTipo } from '../../src/sim/condicao';
 import { gameData } from '../../src/sim/data';
 import type {
   GameState, PredioCompleto, PredioEmObra, Tarefa, TarefaConstruir, TarefaMaterialParaObra, Unidade,
@@ -297,7 +298,8 @@ export function comUnidadeEm(estado: GameState, id: string, gx: number, gy: numb
  *  `fsmData`. O cenario inicial so tem 2 laborers; testes de teto
  *  (`laborersMaximosPorObra`) precisam de mais do que isso. */
 export function comUnidadeExtra(estado: GameState, id: string, tipo: string, gx: number, gy: number): GameState {
-  const unidade: Unidade = { id, tipo, gx, gy, fsm: 'ocioso', fsmData: {} };
+  // F20b: a fixture nasce com a condicao CHEIA do tipo, como a unidade do jogo.
+  const unidade: Unidade = { id, tipo, gx, gy, fsm: 'ocioso', fsmData: {}, condicao: condicaoCheiaDoTipo(tipo) };
   return {
     ...estado,
     unidades: { porId: { ...estado.unidades.porId, [id]: unidade }, ordem: [...estado.unidades.ordem, id] },

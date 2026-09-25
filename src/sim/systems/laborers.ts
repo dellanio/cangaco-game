@@ -38,6 +38,7 @@ import type { MotivoDeLiberacao } from '../jobs';
 import { alvoDeNivelamento, hpTotalDoTipo, obraNivelada, obraTrabalhavel, tetoDeHp } from '../obra';
 import { tileAndavel } from '../pathfinding';
 import { andar, chegou, comPredio, comUnidade, dadosDaFsm, ficarOcioso, ocioso } from '../units/movimento';
+import { ehEstadoDeFome } from '../condicao';
 import type { ResultadoDeSistema } from './jobs';
 
 type Passo = ResultadoDeSistema;
@@ -291,6 +292,10 @@ export function sistemaDosLaborers(state: GameState, dados: GameData = gameData)
   for (const id of state.unidades.ordem) {
     const u = atual.unidades.porId[id];
     if (u === undefined || u.tipo !== TIPO_QUE_CONSTROI) continue;
+    // F20b: quem esta comendo (ou a caminho da Bodega) tem o passo dado pelo
+    // `sistemaDaFome`, e nao por esta FSM — o `default` do `switch` LANCA, entao
+    // esquecer este pulo nao daria bug silencioso. `ehEstadoDeFome` e a lista unica.
+    if (ehEstadoDeFome(u.fsm)) continue;
     const r = passoDoLaborer(atual, u, dados);
     atual = r.state;
     events.push(...r.events);

@@ -219,10 +219,35 @@ export interface CombateData {
   readonly formacao: RawGameData['combat']['formacao'];
 }
 
+/**
+ * F20b — os limiares de `condition.json` JA EM TICKS, por classe de unidade.
+ *
+ * A fracao (`0.50`, `0.35`) e do dado; o que a simulacao compara e inteiro, porque
+ * `Unidade.condicao` e ticks restantes. A multiplicacao acontece UMA VEZ, aqui no
+ * carregamento, com `Math.round` (CLAUDE.md secao 5): fazer a conta a cada tick
+ * poria ponto flutuante no caminho do determinismo sem nenhum ganho.
+ */
+export interface LimiaresEmTicks {
+  readonly alertaVisual: Ticks;
+  readonly civilVaiComer: Ticks;
+  readonly morte: Ticks;
+}
+
 export interface CondicaoData {
   readonly ticksCondicaoCheia: { readonly civil: Ticks; readonly militar: Ticks };
   readonly limiares: RawGameData['condition']['limiares'];
+  /** F20b — `limiares` x `ticksCondicaoCheia`, arredondado no carregamento. */
+  readonly ticksNoLimiar: { readonly civil: LimiaresEmTicks; readonly militar: LimiaresEmTicks };
   readonly restauracaoPorComida: RawGameData['condition']['restauracaoPorComida'];
+  /**
+   * F20b — `restauracaoPorComida` x `ticksCondicaoCheia`, arredondado no
+   * carregamento: quantos TICKS de condicao cada comida devolve, por classe. A
+   * refeicao soma inteiro em inteiro; a fracao nunca chega a `sim/`.
+   */
+  readonly ticksRestauradosPorComida: {
+    readonly civil: Readonly<Record<string, Ticks>>;
+    readonly militar: Readonly<Record<string, Ticks>>;
+  };
   readonly regraCivil: string;
   readonly regraMilitar: string;
   readonly inn: RawGameData['condition']['inn'];

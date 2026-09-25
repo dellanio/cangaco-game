@@ -44,6 +44,7 @@ import {
   colherDoTile, melhorTileDeColheita, melhorTileParaPlantio, reporNoTile, tilesReservadosParaColheita,
 } from '../recursos';
 import { tileAndavel } from '../pathfinding';
+import { ehEstadoDeFome } from '../condicao';
 import { andar, chegou, comPredio, comUnidade, dadosDaFsm, ficarOcioso } from '../units/movimento';
 import type { ResultadoDeSistema } from './jobs';
 
@@ -443,6 +444,10 @@ export function sistemaDosEspecialistas(state: GameState, dados: GameData = game
   for (const id of state.unidades.ordem) {
     const u = atual.unidades.porId[id];
     if (u === undefined || !ocupam.has(u.tipo)) continue;
+    // F20b: quem esta comendo (ou a caminho da Bodega) tem o passo dado pelo
+    // `sistemaDaFome`, e nao por esta FSM — o `default` do `switch` LANCA, entao
+    // esquecer este pulo nao daria bug silencioso. `ehEstadoDeFome` e a lista unica.
+    if (ehEstadoDeFome(u.fsm)) continue;
     const r = passoDoEspecialista(atual, u, dados);
     atual = r.state;
     events.push(...r.events);

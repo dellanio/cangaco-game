@@ -31,6 +31,23 @@ const serfNo = (i: number): string => {
 };
 const serfA = serfNo(0);
 
+/**
+ * As unidades serializadas SEM `condicao`: o que este arquivo compara e posicao e
+ * FSM, e desde a F20b a condicao de todo civil desce um ponto por tick — comparar a
+ * colecao inteira mediria o dreno, que tem teste proprio.
+ */
+const semACondicao = (estado: GameState): string => JSON.stringify(
+  estado.unidades.ordem.map((id) => {
+    const u = estado.unidades.porId[id];
+    if (u === undefined) throw new Error(`fixture: unidade '${id}' fora de porId`);
+    const { condicao: _condicao, ...resto } = u;
+    return resto;
+  }),
+);
+
+const condicoes = (estado: GameState): readonly number[] => estado.unidades.ordem
+  .map((id) => estado.unidades.porId[id]?.condicao ?? -1);
+
 /** So o primeiro serf: os outros tres saem do estado. */
 const soUmSerf = (estado: GameState): GameState => serfs.slice(1).reduce((e, id) => semAUnidade(e, id), estado);
 
@@ -364,9 +381,15 @@ describe('F10 — determinismo, save/load no meio da viagem e imutabilidade', ()
 describe('F10 — quem nao e serf, e o serf sem trabalho, nao se mexem', () => {
   it('sem obra nenhuma, 50 ticks: todos os serfs ociosos, no mesmo tile, e os laborers intocados', () => {
     let e = createInitialState(1);
-    const antes = JSON.stringify(e.unidades);
+    const antes = semACondicao(e);
+    const condicaoAntes = condicoes(e);
     for (let t = 0; t < 50; t++) e = step(e, []);
-    expect(JSON.stringify(e.unidades)).toBe(antes);
+    // TUDO menos `condicao` continua identico, byte a byte: tile, fsm, fsmData, ordem.
+    expect(semACondicao(e)).toBe(antes);
+    // e a condicao DRENA, a um ponto por tick (F20b) — o que era "nada mudou" virou
+    // "nada mudou, exceto o relogio da fome, que anda sozinho". A assercao nova diz as
+    // duas coisas; a antiga so dizia a primeira, e passaria com o dreno desligado.
+    expect(condicoes(e)).toEqual(condicaoAntes.map((c) => c - 50));
   });
 
   it('um estado de FSM que o GDD nao conhece e recusado alto (save corrompido), nao ignorado', () => {

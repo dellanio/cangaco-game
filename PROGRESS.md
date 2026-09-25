@@ -5217,3 +5217,105 @@ inteiro do marcador na F20c.
 - A F20b tem de **adaptar os cenários longos** (F19 a 12 000 ticks, F19b a
   20 000): hoje eles não têm Bodega, e com o dreno ligado os civis morrem
   dentro da janela. Está escrito no item.
+
+## F20b — A fome: condição, dreno, refeição na Bodega e morte (2026-09-25)
+
+Feature: `F20b-fome-e-morte`. Plano em `docs/planos/F20b-fome-e-morte.md`. Só `src/sim/`
+e `tests/` — nenhum arquivo de `src/render/` ou `src/ui/` foi tocado, então a exceção da
+§10 escrita no item da F20 continua sem ser usada.
+
+### O que foi VERIFICADO (comando rodado, arquivo aberto)
+
+- `npm run verify` verde: **82 arquivos, 1278 testes, 27,05 s**. `.verify-ok` criado.
+- `test-output/F20b.json` **aberto com Read**, e é dele que saem os números abaixo.
+- **Cenário sem comida**: vila inicial (6 civis, nenhuma Bodega no mundo) anda 12 000
+  ticks. As 6 mortes acontecem **todas no tick 12 000**, que é exatamente
+  `ticksCondicaoCheia.civil` — a condição cai 1 por tick desde a cheia, então o tick da
+  morte é o próprio número do dado, e não um limiar medido. População no fim: 0. Cada
+  morte é um evento `unit-starved` com `unidade`, `tipo`, `carga` e `armazem`; não há log
+  solto em lugar nenhum.
+- **Cenário longo com Bodega**: a mesma vila com a Bodega da F20a, cheia pelo caminho
+  real no tick **167** (os serfs a encheram; nenhuma comida foi semeada à mão), anda
+  **7 000 ticks** — mais do que o limiar de 6 000 em que o primeiro civil sai para comer.
+  **0 mortes, 6 vivos, 6 refeições servidas**, e no fim `resumoDeCondicao` dá
+  `{ civis: 6, comFome: 0, emAlerta: 0 }`.
+- **Uma refeição, medida**: civil sai em `condicao = 6 000`, chega em 2 ticks e termina em
+  **12 000** (cheia). A Bodega vai de `{loaves: 5, sausages: 5}` para `{loaves: 4,
+  sausages: 4}` — **um de cada comida, nunca dois da mesma**. Como `loaves` restaura
+  4 800 ticks e `sausages` 7 200, e a cheia é 12 000, a "regra das duas comidas" do GDD
+  **é o próprio número do dado**: nenhuma comida sozinha enche, e o teste afirma isso
+  contra `restauracaoPorComida`, sem campo novo e sem prosa lida.
+- **Teto de comensais**: com 14 civis famintos ao mesmo tempo, `comensaisReservados` e a
+  contagem de unidades em `indo_comer`/`comendo` batem no máximo em **8**, que é
+  `inn.comensaisSimultaneos`. `violacoesDeInvariantes` limpo em todos os 60 ticks.
+- **Os três casos de "a unidade sumiu"**, cada um com teste próprio:
+  1. ocupante morto → `predio.ocupante` volta a `null` no mesmo tick, e nenhuma tarefa
+     fica na mão de quem não existe mais;
+  2. produtor no meio do ciclo → `producao.progresso` e o disponível ao alcance ficam
+     **iguais** antes e depois da morte (o progresso mora no prédio, o tile volta ao
+     mercado);
+  3. serf com carga → o evento traz `carga` e `armazem`, e o estoque do armazém sobe
+     exatamente **+1** daquela mercadoria.
+- **O especialista sai para comer e volta**: vaga o prédio (`ocupante = null`) com o
+  `progresso` intacto, nasce a tarefa `ocupar` que já existia desde a F14, ele come e
+  **reocupa a mesma pedreira** — round trip completo dentro do teste.
+
+### A decisão que a medição derrubou (e é a mais importante desta sessão)
+
+O plano (D9) mandava o portão da fome recusar **todo** trabalho a quem está com fome.
+Escrevi, rodei, e a cadeia do pão **congelou**: no tick em que o primeiro civil cruza
+`civilVaiComer` num cenário sem Bodega, todo serf fica ocioso para sempre e a tarefa fica
+aberta para sempre — **32 pães entregues contra os 68 do mesmo cenário sem o portão**.
+Isso é espera indefinida, não balanceamento: a unidade esperava o que nunca chegaria.
+
+O que ficou: o portão recusa **o assento**, não o trabalho. Tarefa `comer` só é
+reclamável por quem tem fome (motivo `'unidade-invalida'` — o motivo novo
+`'unidade-com-fome'` não existe), e a **prioridade** de comer vem da ordem do tick
+(`sistemaDaFome` roda depois de `sanearTarefas` e antes das três famílias), não de um
+portão. O guarda permanente é estrutural: com fome e sem Bodega, o estado inteiro menos
+`condicao` é **byte a byte igual** ao da mesma vila saciada, 400 ticks adiante
+(`tests/F20b-fome.test.ts`, F20b-2). O plano foi atualizado com `D9-revisado` e o número
+medido ao lado.
+
+### Decisões minhas, marcadas para revisão do operador
+
+- **D-a — a refeição mora em `src/sim/systems/fome.ts`**, e não em `bodega.ts`: `bodega.ts`
+  é derivado puro e não pode importar `jobs`/`estradas` (contrato herdado da F20a).
+- **D-b — `ticksRestauradosPorComida` entrou no carregador**, convertido uma vez, com
+  `Math.round`, como manda a §5. `condition.json` não mudou.
+- **D-c — `armazemMaisProximo` subiu de `systems/serfs.ts` para `deposito.ts`** ao ganhar
+  o segundo consumidor (a morte devolve a carga pelo mesmo critério de quem a levaria a
+  pé). Duas cópias divergiriam.
+- **D-d — os cenários longos ganharam Bodega em vez de dreno desligado.** F19 e F19b
+  rodam com `comBodegaAbastecida`, **sem comida semeada**: são os pães e as linguiças da
+  própria cadeia que alimentam a vila. Sobrevivência provada pelo caminho real.
+- **D-e — o eixo de vazão da F19 virou entregue acumulado.** Com a vila comendo, saldo de
+  gaveta deixou de medir produção (a comida sai). A asserção passou a contar
+  `task-completed` com destino em armazém: **68 pães, 99,6 % do teto** — piso mais estrito,
+  não mais frouxo.
+- **D-f — `fsmSeVivo` substituiu `fsmDe` nos testes de cadeia**, com asserção de morte e
+  de população ao lado. Unidade que morre no tick 12 000 fazia `fsmDe` lançar; a
+  substituição é **mais estrita**, não só diferente: agora o teste afirma quem morreu.
+
+### Medido nesta sessão, sem virar asserção (§8)
+
+- As duas cadeias longas passaram de **4,57 s** (HEAD anterior) para **7,15 s** com o
+  dreno ligado. Número da corrida, em `test-output/`; nenhuma asserção de tempo foi
+  escrita. O `timeout` de 60 s nos testes longos é guarda de travamento, não afirmação de
+  desempenho.
+- O estoque de comida de abertura do armazém (15 `loaves`, 10 `sausages`) sustenta 6
+  civis por cerca de **7 000 ticks**: no fim da janela o armazém está com
+  `{loaves: 4, sausages: 0}` e a Bodega cheia. É observação de balanceamento, e por isso
+  **nenhum número foi ajustado** — a Fase B inteira ajusta em lote.
+
+### O que esta feature NÃO fez
+
+- **Não existe item no chão.** A carga do morto volta ao armazém alcançável mais próximo;
+  sem armazém alcançável, ela se perde, como na demolição (F16a). Item no chão é mecânica
+  nova do GDD §6.2 e não se inventa aqui — isso tira o "por enquanto" que o item pedia.
+- **O militar não drena.** `regraMilitar` diz que ele não vai à Bodega e depende do
+  comando `Feed`, que é da F17 em diante. Drenar quem não tem como comer seria o mesmo
+  travamento que a medição do D9 acabou de mostrar. O teste afirma isso com um tipo
+  militar real do dado.
+- **Nenhum marcador na tela.** O dreno já roda, mas quem o mostra é a F20c, que lê
+  `unidade.condicao` e `emAlertaDeFome` — os dois já existem e estão exercitados.

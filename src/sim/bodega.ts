@@ -70,3 +70,27 @@ export function comidaNecessaria(
   if (!ehBodegaCompleta(bodega) || !ehComida(mercadoria, dados)) return 0;
   return Math.max(0, tetoDeComidaNaBodega(dados) - (bodega.estoque.entrada[mercadoria] ?? 0));
 }
+
+/**
+ * F20b — as comidas que esta Bodega TEM na gaveta `entrada` agora, na ordem do
+ * dado. E o portao do gerador de `'comer'` (ninguem caminha para achar
+ * prateleira vazia) e a lista que a refeicao consome.
+ *
+ * Mede por QUANTIDADE, e nao pelas chaves de `entrada`: a gaveta guarda chave com
+ * zero depois de uma refeicao, e contar chave diria "tem comida" para uma Bodega
+ * vazia.
+ */
+export function comidasNaBodega(
+  state: GameState, predioId: string, dados: GameData = gameData,
+): readonly string[] {
+  const bodega = state.predios.porId[predioId];
+  if (!ehBodegaCompleta(bodega)) return [];
+  return comidasConhecidas(dados).filter((c) => (bodega.estoque.entrada[c] ?? 0) > 0);
+}
+
+/** Se ha o que comer nesta Bodega. O predicado do gerador (F20b, D4). */
+export function temComidaNaBodega(
+  state: GameState, predioId: string, dados: GameData = gameData,
+): boolean {
+  return comidasNaBodega(state, predioId, dados).length > 0;
+}

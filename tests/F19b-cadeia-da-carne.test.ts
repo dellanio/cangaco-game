@@ -26,7 +26,7 @@ import { receitaDoTipo, unidadesPorCiclo } from '../src/sim/producao';
 import { estoqueDosArmazens, opcoesDoMenuBuild } from '../src/sim/selectors';
 import { gravarEvidencia } from './helpers/evidence';
 import {
-  cenarioDaCadeiaDaCarne, cenarioDaCarneSemFazenda, cenarioDaCarneSemGranja, fsmDe,
+  cenarioDaCadeiaDaCarne, cenarioDaCarneSemFazenda, cenarioDaCarneSemGranja, fsmSeVivo,
 } from './helpers/producao-cenario';
 
 const FAZENDA = receitaDoTipo('farm', gameData);
@@ -68,6 +68,16 @@ interface Corrida {
   readonly serie: Readonly<Record<number, Readonly<Record<string, number>>>>;
   readonly baseDosArmazens: Readonly<Record<string, number>>;
   readonly fim: GameState;
+  /**
+   * F20b — o ultimo `fsm` que cada especialista teve ENQUANTO VIVO. O cenario a
+   * que falta um elo nao produz comida nenhuma (a carne de sol e o unico alimento
+   * desta cadeia), entao quem ele observa morre de fome dentro da janela: ler `fsm`
+   * no fim lancaria, e ler num tick digitado seria numero magico.
+   */
+  readonly ultimoFsm: Readonly<Record<string, string>>;
+  /** Civis de pe no fim da janela, e mortes de fome na janela inteira. */
+  readonly populacao: number;
+  readonly mortes: number;
 }
 
 const OBSERVADAS: readonly string[] = [GRAO, BODE, COURO, CARNE];
@@ -84,8 +94,15 @@ function rodar(inicial: GameState, ticks: number, especialistas: readonly string
   const esperandoInsumo: Record<string, number> = {};
   const serie: Record<number, Record<string, number>> = {};
   const baseDosArmazens = { ...estoqueDosArmazens(inicial) };
+  const ultimoFsm: Record<string, string> = {};
+  let mortes = 0;
   for (const m of OBSERVADAS) primeiroNoArmazem[m] = null;
-  for (const u of especialistas) esperandoInsumo[u] = 0;
+  for (const u of especialistas) {
+    esperandoInsumo[u] = 0;
+    // a fixture confere a si mesma: nome errado falha AQUI, e nao como um contador
+    // que fica em zero porque a unidade nunca existiu.
+    if (fsmSeVivo(inicial, u) === null) throw new Error(`fixture: unidade '${u}' nao existe no cenario`);
+  }
 
   let s = inicial;
   for (let t = 1; t <= ticks; t += 1) {
@@ -94,6 +111,7 @@ function rodar(inicial: GameState, ticks: number, especialistas: readonly string
       if (ev.type === 'goods-produced') {
         produzido[ev.mercadoria] = (produzido[ev.mercadoria] ?? 0) + ev.quantidade;
       }
+      if (ev.type === 'unit-starved') mortes += 1;
     }
     const noArmazemAgora = estoqueDosArmazens(s);
     for (const m of OBSERVADAS) {
@@ -102,13 +120,19 @@ function rodar(inicial: GameState, ticks: number, especialistas: readonly string
       }
     }
     for (const u of especialistas) {
-      if (fsmDe(s, u) === 'esperando_insumo') esperandoInsumo[u] = (esperandoInsumo[u] ?? 0) + 1;
+      const fsm = fsmSeVivo(s, u);
+      if (fsm === null) continue;
+      ultimoFsm[u] = fsm;
+      if (fsm === 'esperando_insumo') esperandoInsumo[u] = (esperandoInsumo[u] ?? 0) + 1;
     }
     if (t % (ticks / 4) === 0) {
       serie[t] = Object.fromEntries(OBSERVADAS.map((m) => [m, produzido[m] ?? 0]));
     }
   }
-  return { produzido, primeiroNoArmazem, esperandoInsumo, serie, baseDosArmazens, fim: s };
+  return {
+    produzido, primeiroNoArmazem, esperandoInsumo, serie, baseDosArmazens, fim: s,
+    ultimoFsm, populacao: s.unidades.ordem.length, mortes,
+  };
 }
 
 /** Uma corrida por cenario, calculada na primeira vez que alguem pergunta: a sim
@@ -117,6 +141,15 @@ function umaVez(monta: () => Corrida): () => Corrida {
   let cache: Corrida | null = null;
   return () => (cache ??= monta());
 }
+
+/**
+ * O `timeout` destas corridas NAO e assercao de desempenho (CLAUDE.md secao 8): ele
+ * existe para o caso travar, como o dos 20 s de `tests/F09-sistema.test.ts`. Cada
+ * corrida roda a janela inteira de simulacao, e o padrao de 5 s do Vitest reprova
+ * por carga da maquina — o arquivo inteiro leva ~7 s medidos nesta sessao contra
+ * ~4,6 s antes da fome, e em suite paralela isso estoura sozinho.
+ */
+const TIMEOUT_DA_CORRIDA = 60_000;
 
 const TRES: readonly string[] = ['roceiro', 'criador', 'carneador'];
 const completa = umaVez(() => rodar(cenarioDaCadeiaDaCarne(), JANELA, TRES));
@@ -143,7 +176,18 @@ describe('F19b — a cadeia fecha: milho vira bode, bode vira carne de sol', () 
     const primeira = c.primeiroNoArmazem[CARNE];
     expect(primeira).not.toBeNull();
     expect(primeira ?? 0).toBeGreaterThan(PISO_DA_CADEIA);
-  });
+  }, TIMEOUT_DA_CORRIDA);
+
+  it('e a vila sobrevive a janela inteira: a propria cadeia alimenta quem a move', () => {
+    // F20b — a carne de sol E comida (`condition.json restauracaoPorComida.sausages`),
+    // e a Bodega do cenario a puxa do armazem pelo nivel 1 da F20a. A janela de
+    // 20 000 ticks e mais de uma condicao cheia de civil (12 000): cadeia que
+    // continuasse entregando com todos mortos seria a prova de que o dreno nao chegou.
+    const c = completa();
+    expect(c.mortes).toBe(0);
+    expect(c.populacao).toBe(cenarioDaCadeiaDaCarne().unidades.ordem.length);
+    expect(TRES.map((u) => fsmSeVivo(c.fim, u))).not.toContain(null);
+  }, TIMEOUT_DA_CORRIDA);
 
   it('e cada elo chega na sua vez: milho, depois bode, depois carne', () => {
     const c = completa();
@@ -153,7 +197,7 @@ describe('F19b — a cadeia fecha: milho vira bode, bode vira carne de sol', () 
     expect(milho).toBeGreaterThan(0);
     expect(bode).toBeGreaterThan(milho);
     expect(carne).toBeGreaterThan(bode);
-  });
+  }, TIMEOUT_DA_CORRIDA);
 });
 
 describe('F19b — os dois elos do meio sao reais', () => {
@@ -165,16 +209,23 @@ describe('F19b — os dois elos do meio sao reais', () => {
     // a fazenda continua produzindo: o que parou foi a cadeia, nao o mapa.
     expect(c.produzido[GRAO] ?? 0).toBeGreaterThan(0);
     expect(acimaDaBase(c, GRAO)).toBeGreaterThan(0);
-    expect(fsmDe(c.fim, 'carneador')).toBe('esperando_insumo');
-  });
+    expect(c.ultimoFsm.carneador).toBe('esperando_insumo');
+    // F20b: sem a Malhada nao ha carne, e sem carne nao ha comida — a vila inteira
+    // morre de fome dentro da janela. A morte entra como assercao propria, mais
+    // estrita do que a leitura antiga do `fsm` no fim.
+    expect(c.mortes).toBeGreaterThan(0);
+    expect(c.populacao).toBe(0);
+  }, TIMEOUT_DA_CORRIDA);
 
   it('sem a Fazenda nao nasce um bode, e os dois especialistas esperam', () => {
     const c = semFazenda();
     expect(Object.keys(c.produzido)).toEqual([]);
     expect(acimaDaBase(c, CARNE)).toBe(0);
-    expect(fsmDe(c.fim, 'criador')).toBe('esperando_insumo');
-    expect(fsmDe(c.fim, 'carneador')).toBe('esperando_insumo');
-  });
+    expect(c.ultimoFsm.criador).toBe('esperando_insumo');
+    expect(c.ultimoFsm.carneador).toBe('esperando_insumo');
+    // F20b: mesma razao do cenario acima — vila sem comida nao tem civil de pe.
+    expect(c.populacao).toBe(0);
+  }, TIMEOUT_DA_CORRIDA);
 });
 
 describe('F19b — a vazao e limitada pela FONTE, e nada se perde', () => {
@@ -189,7 +240,7 @@ describe('F19b — a vazao e limitada pela FONTE, e nada se perde', () => {
     expect(carnes).toBeLessThanOrEqual(CARNES_POR_BODE * bodes);
     // PISO: o transporte custa, mas nao pode ser o gargalo.
     expect(carnes).toBeGreaterThanOrEqual(PISO_DA_VAZAO * CARNES_POR_BODE * tetoDeBodes);
-  });
+  }, TIMEOUT_DA_CORRIDA);
 
   it('o bode nao represa: nem na gaveta da Casa de Carne nem no armazem', () => {
     // Se o bode empilhasse, a cadeia estaria entregando sem consumir — e o teto
@@ -200,7 +251,7 @@ describe('F19b — a vazao e limitada pela FONTE, e nada se perde', () => {
     const teto = acougue.capacidade.entrada ?? Infinity;
     expect(acougue.estoque.entrada[BODE] ?? 0).toBeLessThan(teto);
     expect(acimaDaBase(c, BODE)).toBeLessThanOrEqual(GRANJA.sai[BODE] ?? 0);
-  });
+  }, TIMEOUT_DA_CORRIDA);
 });
 
 describe('F19b — a granja tem DUAS saidas, e as duas chegam', () => {
@@ -212,7 +263,7 @@ describe('F19b — a granja tem DUAS saidas, e as duas chegam', () => {
     const c = completa();
     expect(c.produzido[COURO] ?? 0).toBe(c.produzido[BODE] ?? 0);
     expect(acimaDaBase(c, COURO)).toBeGreaterThan(0);
-  });
+  }, TIMEOUT_DA_CORRIDA);
 });
 
 describe('F19b — o jogador alcanca a cadeia', () => {
@@ -269,20 +320,23 @@ describe('F19b — evidencia', () => {
         fracaoEsperandoInsumo: Object.fromEntries(
           Object.entries(c.esperandoInsumo).map(([k, v]) => [k, fracao(v)]),
         ),
+        fome: { populacaoNoFim: c.populacao, mortesDeFome: c.mortes, ultimoFsm: c.ultimoFsm },
       },
       semAMalhada: {
         janela: JANELA,
         produzido: semGranja().produzido,
         milhoEmpilhadoNoArmazem: acimaDaBase(semGranja(), GRAO),
-        carneador: fsmDe(semGranja().fim, 'carneador'),
+        carneador: semGranja().ultimoFsm.carneador,
+        fome: { populacaoNoFim: semGranja().populacao, mortesDeFome: semGranja().mortes },
       },
       semAFazenda: {
         janela: JANELA,
         produzido: semFazenda().produzido,
-        criador: fsmDe(semFazenda().fim, 'criador'),
-        carneador: fsmDe(semFazenda().fim, 'carneador'),
+        criador: semFazenda().ultimoFsm.criador,
+        carneador: semFazenda().ultimoFsm.carneador,
+        fome: { populacaoNoFim: semFazenda().populacao, mortesDeFome: semFazenda().mortes },
       },
     });
     expect(true).toBe(true);
-  });
+  }, TIMEOUT_DA_CORRIDA);
 });

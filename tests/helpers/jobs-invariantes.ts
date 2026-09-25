@@ -85,6 +85,11 @@ function violacoesDoDestino(estado: GameState, t: Tarefa, dados: GameData): stri
     case 'ocupar':
       if (!ehPredioOcupavel(destino, dados)) return [`${t.id}: destino '${t.destino}' nao e predio ocupavel`];
       return destino.ocupante !== null ? [`${t.id}: destino '${t.destino}' ja tem ocupante`] : [];
+    // F20b: o assento de refeicao so vale numa Bodega completa. A Bodega TER comida
+    // NAO e invariante — quem esta a caminho pode chegar e achar a prateleira vazia
+    // (D5 do plano), e afirmar comida aqui condenaria o estado legitimo.
+    case 'comer':
+      return !ehBodegaCompleta(destino) ? [`${t.id}: destino '${t.destino}' nao e bodega completa`] : [];
     // F-T2c: o destino de uma colheita e um predio COMPLETO cuja receita colhe, e
     // o tile ainda tem o ciclo inteiro. `reclamada` exige mais: quem a segura tem
     // de ser o OCUPANTE daquele predio — a tarefa nasce para um par
@@ -127,6 +132,7 @@ export function violacoesDeInvariantes(estado: GameState, dados: GameData = game
   const contagemPorDestino = new Map<string, { total: number; obra: string; mercadoria: string }>();
   const contagemDeConstrucaoPorObra = new Map<string, number>();
   const contagemDeOcupacaoPorPredio = new Map<string, number>();
+  const contagemDeRefeicaoPorBodega = new Map<string, number>();
   const reservasPorOrigem = new Set<string>();
   const reservasPorDestino = new Set<string>();
   // F-T2c: a reserva de colheita e do TILE INTEIRO. Um tile com duas tarefas e
@@ -204,6 +210,9 @@ export function violacoesDeInvariantes(estado: GameState, dados: GameData = game
     } else if (t.tipo === 'ocupar' && t.estado !== 'aberta') {
       // F14: a vaga e UMA por predio — a reserva de ocupacao nunca passa disso.
       contagemDeOcupacaoPorPredio.set(t.destino, (contagemDeOcupacaoPorPredio.get(t.destino) ?? 0) + 1);
+    } else if (t.tipo === 'comer' && t.estado !== 'aberta') {
+      // F20b: assento reservado — o teto e do dado, como o dos laborers por obra.
+      contagemDeRefeicaoPorBodega.set(t.destino, (contagemDeRefeicaoPorBodega.get(t.destino) ?? 0) + 1);
     }
   }
 
@@ -224,6 +233,11 @@ export function violacoesDeInvariantes(estado: GameState, dados: GameData = game
   // cardinalidade do campo `ocupante`, nao um teto de dado.
   for (const [predio, reservado] of contagemDeOcupacaoPorPredio) {
     if (reservado > 1) v.push(`${predio}: ${reservado} ocupantes reclamados para uma vaga`);
+  }
+  // F20b: comensal reservado nunca acima de `inn.comensaisSimultaneos`.
+  for (const [predio, reservado] of contagemDeRefeicaoPorBodega) {
+    const assentos = dados.condicao.inn.comensaisSimultaneos;
+    if (reservado > assentos) v.push(`${predio}: ${reservado} comensais reclamados para ${assentos} assentos`);
   }
   // reservado <= disponivel nas DUAS pontas (disponivel/vaga nunca negativos)
   for (const chave of reservasPorOrigem) {

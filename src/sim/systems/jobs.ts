@@ -23,7 +23,7 @@ import type { GameData } from '../data/types';
 import { gameData } from '../data';
 import { armazensCompletos, chaveDeTile, ehPlanejada, tilesOrdenados } from '../estradas';
 import {
-  criarTarefa, criarTarefaDeAssentamento, criarTarefaDeConstrucao,
+  criarTarefa, criarTarefaComer, criarTarefaDeAssentamento, criarTarefaDeConstrucao,
   criarTarefaDeComida, criarTarefaDeInsumo, criarTarefaDeOcupacao, criarTarefaDeOuro,
   criarTarefaParaArmazem,
   distanciaDaTarefa, liberar, ligacaoEntrePredios,
@@ -39,7 +39,7 @@ import {
 } from '../insumo';
 import { obraNivelada } from '../obra';
 import { ehEscolaCompleta, ouroNecessario } from '../escola';
-import { comidaNecessaria, comidasConhecidas, ehBodegaCompleta } from '../bodega';
+import { comidaNecessaria, comidasConhecidas, ehBodegaCompleta, temComidaNaBodega } from '../bodega';
 import { receitaDoTipo } from '../producao';
 import { ehPredioOcupavel, vagasDoPredio } from '../ocupacao';
 
@@ -86,6 +86,13 @@ function motivoDoDestino(state: GameState, t: Tarefa, dados: GameData): MotivoDe
       return ehBodegaCompleta(destino) ? null : 'destino-sumiu';
     case 'ouro-para-escola':
       return ehEscolaCompleta(destino) ? null : 'destino-sumiu';
+    // F20b — o assento de refeicao vale enquanto a Bodega existe de pe. A Bodega
+    // que FICOU SEM COMIDA nao cancela a tarefa de quem esta no caminho: quem
+    // chega e nao acha nada volta a `ocioso` no mesmo tick (decisao D5 do plano),
+    // e cancelar aqui faria o comensal desistir e recomecar a cada broa que outro
+    // pega — com a comida do nivel 1 a caminho, ele chegaria e a acharia.
+    case 'comer':
+      return ehBodegaCompleta(destino) ? null : 'destino-sumiu';
     // F15b — o destino de insumo tem que continuar CONSUMINDO a mercadoria.
     // `insumosDoPredio` e o mesmo predicado que o gerador usa.
     case 'insumo-producao-parada':
@@ -535,6 +542,31 @@ function gerarTarefasDeOuro(state: GameState, dados: GameData): GameState {
  *
  * Nao exige estrada: o especialista anda em modo `'livre'`, como o laborer.
  */
+/**
+ * F20b — os ASSENTOS de refeicao: cada Bodega completa QUE TEM COMIDA oferece
+ * `condition.json:inn.comensaisSimultaneos` assentos, menos os que ja existem.
+ *
+ * Irma de `gerarTarefasDeOcupacao`, e pelo mesmo desenho: o quadro declara o
+ * trabalho DISPONIVEL, nao reage ao estado das unidades — a vaga de ocupante
+ * tambem nasce sem haver especialista livre. Quem decide que vai comer e o civil,
+ * no `reclamar` (portao da fome).
+ *
+ * O portao `temComidaNaBodega` e o mesmo que na F20a impediu tarefa de `wine`:
+ * ninguem caminha para encontrar prateleira vazia.
+ */
+function gerarTarefasDeComer(state: GameState, dados: GameData): GameState {
+  let atual = state;
+  const assentos = dados.condicao.inn.comensaisSimultaneos;
+  for (const id of state.predios.ordem) {
+    if (!temComidaNaBodega(atual, id, dados)) continue;
+    const existentes = tarefasPorNumero(atual).filter((t) => t.tipo === 'comer' && t.destino === id).length;
+    for (let i = existentes; i < assentos; i++) {
+      atual = criarTarefaComer(atual, id).state;
+    }
+  }
+  return atual;
+}
+
 function gerarTarefasDeOcupacao(state: GameState, dados: GameData): GameState {
   let atual = state;
   for (const id of state.predios.ordem) {
@@ -612,5 +644,9 @@ export function gerarTarefas(state: GameState, dados: GameData = gameData): Game
   // F14 por ultimo, e sobre PREDIOS COMPLETOS — o laco acima so olha obra. Uma
   // obra que o laborer completou neste tick ja entra aqui e ganha a vaga de
   // ocupante no mesmo tick; o especialista a reclama no tick seguinte.
-  return gerarTarefasDeOcupacao(atual, dados);
+  atual = gerarTarefasDeOcupacao(atual, dados);
+  // F20b por ultimo: o assento depende da comida que o nivel 1 acabou de entregar
+  // (a entrega deste tick ja conta), e nao e um nivel da escada — nada abaixo dele
+  // depende dele.
+  return gerarTarefasDeComer(atual, dados);
 }

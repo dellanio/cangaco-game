@@ -14,7 +14,8 @@ import type {
   GameEvent, GameState, Predio, Tarefa, TarefaConstruir, TarefaDeTransporte,
   TarefaExcedenteParaArmazem, TarefaInsumoProducaoBaixa, TarefaInsumoProducaoParada,
   TarefaComidaParaInn, TarefaMaterialParaObra, TarefaOcupar, TarefaOuroParaEscola,
-  TarefaAssentarEstrada, TarefaColher, TarefaDeLaborer, TarefaSaidaCheiaParaArmazem, TipoDeTarefa,
+  TarefaAssentarEstrada, TarefaColher, TarefaComer, TarefaDeLaborer, TarefaSaidaCheiaParaArmazem,
+  TipoDeTarefa,
   TipoNaEscada,
 } from './state';
 import {
@@ -22,6 +23,9 @@ import {
 } from './state';
 import type { GameData } from './data/types';
 import { gameData } from './data';
+// F20b — `condicao.ts` nao importa valor de ninguem (so `import type`), entao
+// entrar aqui nao fecha ciclo.
+import { ehCivil, precisaComer } from './condicao';
 import {
   armazemQuePagaAEstrada, chaveDeTile, componenteDe, distanciaEntrePredios, ehEstrada, ehPlanejada,
   MERCADORIA_DA_ESTRADA, tilesDaPorta,
@@ -30,8 +34,9 @@ import type { TileDeGrid } from './estradas';
 import { obraTrabalhavel } from './obra';
 import { buscarCaminho } from './pathfinding';
 import type { Caminho, ModoDeBusca } from './pathfinding';
-import { sobraNaOrigem, vagaDeConstrucao, vagaDeOcupacao, vagaDoDestino } from './reservas';
+import { sobraNaOrigem, vagaDeConstrucao, vagaDeOcupacao, vagaDeRefeicao, vagaDoDestino } from './reservas';
 import { predioAceita } from './ocupacao';
+import { temComidaNaBodega } from './bodega';
 import { tilesReservadosParaColheita } from './recursos';
 
 /**
@@ -108,6 +113,12 @@ const UNIDADE_ELEGIVEL_POR_TIPO: Readonly<Record<TipoDeTarefa, string | null>> =
   // mais: so o OCUPANTE daquele predio. A segunda metade e do `reclamar`, que e
   // quem tem a unidade na mao.
   colher: null,
+  // F20b: 'comer' nao tem UM tipo elegivel porque QUALQUER civil come — a lista
+  // de civis esta em `units.json`, nao aqui, e por isso a resposta vem de
+  // `podeReclamar` (via `ehCivil`) e nunca de `elegivelParaTarefa`. A segunda
+  // metade da pergunta — "esta unidade esta com fome?" — precisa da UNIDADE e
+  // mora no `reclamar`.
+  comer: null,
 };
 
 /** Generaliza a checagem "a unidade e serf": cada tipo de tarefa tem UM tipo
@@ -133,6 +144,10 @@ export function podeReclamar(
   // F-T2c — 'colher' entra aqui pelo mesmo caminho de 'ocupar': o tipo de civil
   // vem do predio. "E o ocupante DESTE predio" nao cabe nesta pergunta (ela nao
   // recebe a unidade, so o tipo dela) e mora no `reclamar`.
+  // F20b — 'comer' e a primeira tarefa cujo elegivel e uma CLASSE de unidade e
+  // nao um tipo: todo civil come. O dado que responde e `units.json:civis.tipos`,
+  // lido por `ehCivil`. O militar depende do comando `Feed` (F17+) e nao entra.
+  if (tarefa.tipo === 'comer') return ehCivil(tipoDaUnidade, dados);
   if (tarefa.tipo !== 'ocupar' && tarefa.tipo !== 'colher') {
     return elegivelParaTarefa(tarefa.tipo, tipoDaUnidade);
   }
@@ -299,6 +314,20 @@ export function criarTarefaDeOcupacao(
 }
 
 /**
+ * F20b — cria um ASSENTO de refeicao aberto na Bodega completa `destino`. Irma de
+ * `criarTarefaDeOcupacao`: sem mercadoria e sem origem, porque a comida nao viaja
+ * com ninguem — ela ja esta na gaveta `entrada` da Bodega, posta la pelo nivel 1 da
+ * escada (F20a), e sai dela no tick da chegada.
+ */
+export function criarTarefaComer(
+  state: GameState, destino: string,
+): { readonly state: GameState; readonly id: string } {
+  const numero = state.proximoId;
+  const tarefa: TarefaComer = { id: `t${numero}`, numero, tipo: 'comer', destino, estado: 'aberta', reclamadaPor: null };
+  return inserirTarefa(state, tarefa);
+}
+
+/**
  * F18d-1b — cria a tarefa de assentar o tile PLANEJADO `tile`, aberta, e com
  * ela a reserva de uma pedra no armazem que vai pagar. `null` quando nenhum
  * armazem tem pedra reservavel: sem pagador nao ha tarefa, e o tile fica no
@@ -357,11 +386,25 @@ export function tarefaDeColheitaDoPredio(state: GameState, predioId: string): Ta
   return null;
 }
 
-function unidadeJaTemTarefa(state: GameState, unidadeId: string): boolean {
-  return state.jobs.tarefas.ordem.some((id) => {
+/**
+ * A tarefa que esta unidade SEGURA (`reclamada` ou `carregando`), ou `null`. Uma
+ * unidade nunca segura duas — `reclamar` recusa quem ja tem — entao a primeira e a
+ * unica.
+ *
+ * F20b: a morte precisa dela para liberar explicitamente no mesmo tick (CLAUDE.md
+ * secao 5: "toda tarefa reclamada precisa ter caminho de volta"), e nao esperar a
+ * rede do `sanearTarefas` no tick seguinte.
+ */
+export function tarefaReclamadaPor(state: GameState, unidadeId: string): Tarefa | null {
+  for (const id of state.jobs.tarefas.ordem) {
     const t = state.jobs.tarefas.porId[id];
-    return t !== undefined && t.estado !== 'aberta' && t.reclamadaPor === unidadeId;
-  });
+    if (t !== undefined && t.estado !== 'aberta' && t.reclamadaPor === unidadeId) return t;
+  }
+  return null;
+}
+
+function unidadeJaTemTarefa(state: GameState, unidadeId: string): boolean {
+  return tarefaReclamadaPor(state, unidadeId) !== null;
 }
 
 /**
@@ -562,6 +605,24 @@ export function reclamar(
   if (!unidade || !podeReclamar(state, tarefa, unidade.tipo, dados)) return { ok: false, motivo: 'unidade-invalida' };
   if (unidadeJaTemTarefa(state, unidadeId)) return { ok: false, motivo: 'unidade-ocupada' };
 
+  // F20b — assento de Bodega e so de quem esta com fome: para quem nao esta, a
+  // unidade nao e elegivel a ESTA tarefa, que e o que 'unidade-invalida' quer
+  // dizer aqui. Nenhuma FSM de familia muda: o `passoOcioso` de cada uma continua
+  // pedindo, e simplesmente nao reclama assento.
+  //
+  // O SIMETRICO NAO EXISTE, e isso foi medido (probe da cadeia do pao, 2026-09-25):
+  // com um portao que recusasse trabalho a quem tem fome, a vila SEM Bodega congela
+  // inteira no tick em que o primeiro civil cruza `civilVaiComer` — serf ocioso para
+  // sempre, tarefa aberta para sempre, 32 paes entregues em vez de 68. Unidade
+  // esperando o que nunca chega e travamento de regra, nao balanceamento. Quem da
+  // prioridade a refeicao e a ORDEM do tick: `sistemaDaFome` roda ANTES das tres
+  // familias, entao o civil ocioso e com fome sai para comer antes de o
+  // `passoOcioso` dele pedir trabalho. Sem Bodega alcancavel ele trabalha ate
+  // morrer — que e o que o GDD manda acontecer.
+  if (tarefa.tipo === 'comer' && !precisaComer(unidade, dados)) {
+    return { ok: false, motivo: 'unidade-invalida' };
+  }
+
   if (ehTarefaDeTransporte(tarefa)) {
     // F15b — a oferta da origem depende do TIPO: a gaveta muda (nivel 7 tira da
     // `entrada`) e no nivel 7 o que se pode levar e o EXCEDENTE, nao o estoque
@@ -580,6 +641,17 @@ export function reclamar(
     // F14: UMA vaga por predio; o tipo certo de civil ja foi checado em
     // `podeReclamar`. Sem estrada exigida, como a de construir.
     if (vagaDeOcupacao(state, tarefa.destino, dados) < 1) return { ok: false, motivo: 'destino-sem-vaga' };
+    if (caminhoAtePredioCompleto(state, tarefa.destino, unidadeId, dados) === null) {
+      return { ok: false, motivo: 'sem-caminho' };
+    }
+  } else if (tarefa.tipo === 'comer') {
+    // F20b — o assento (`inn.comensaisSimultaneos`), a comida e o caminho. A Bodega
+    // VAZIA recusa aqui, e nao so no gerador: entre a criacao da tarefa e o claim,
+    // outro comensal pode ter levado a ultima broa. 'destino-sem-trabalho' e o mesmo
+    // motivo que o tile ja assentado e a pedreira sem ocupante usam — "nao ha o que
+    // fazer no destino" — e ele NAO reabre a tarefa.
+    if (vagaDeRefeicao(state, tarefa.destino, dados) < 1) return { ok: false, motivo: 'destino-sem-vaga' };
+    if (!temComidaNaBodega(state, tarefa.destino, dados)) return { ok: false, motivo: 'destino-sem-trabalho' };
     if (caminhoAtePredioCompleto(state, tarefa.destino, unidadeId, dados) === null) {
       return { ok: false, motivo: 'sem-caminho' };
     }
@@ -866,6 +938,52 @@ export function reclamarMelhorOcupacao(
   state: GameState, unidadeId: string, dados: GameData = gameData,
 ): ResultadoDoClaimMelhor {
   const candidatas = tarefasDeOcupacaoEmOrdem(state, unidadeId, dados);
+  const primeira = candidatas[0];
+  if (primeira === undefined) return { ok: false, motivo: 'sem-tarefa-aberta' };
+  let primeiraRecusa: MotivoDeRecusaDoClaim | null = null;
+  for (const tarefa of candidatas) {
+    const r = reclamar(state, tarefa.id, unidadeId, dados);
+    if (r.ok) return { ok: true, state: r.state, tarefa: tarefa.id };
+    primeiraRecusa ??= r.motivo;
+  }
+  return { ok: false, motivo: primeiraRecusa ?? 'sem-tarefa-aberta' };
+}
+
+/**
+ * F20b — os assentos abertos na ordem de escolha do civil com fome: `(custo do
+ * caminho A* a pe ate a porta, numero)`. SEM nivel — `'comer'` nao esta na escada de
+ * `delivery.json`, como `'ocupar'` e `'construir'` nao estao: quem vai comer nao
+ * disputa carga com serf nenhum.
+ *
+ * Copia deliberada de `tarefasDeOcupacaoEmOrdem`, inclusive no filtro por
+ * `podeReclamar` — que aqui responde "e civil?" (o militar depende do `Feed`, F17+).
+ */
+export function tarefasDeComerEmOrdem(
+  state: GameState, unidadeId: string | null = null, dados: GameData = gameData,
+): TarefaComer[] {
+  const unidade = unidadeId === null ? null : state.unidades.porId[unidadeId];
+  const candidatas = state.jobs.tarefas.ordem
+    .map((id) => state.jobs.tarefas.porId[id])
+    .filter((t): t is TarefaComer => t !== undefined && t.tipo === 'comer' && t.estado === 'aberta')
+    .filter((t) => unidade == null || podeReclamar(state, t, unidade.tipo, dados));
+  const chaves = new Map(candidatas.map((t) => [
+    t.id,
+    unidadeId === null ? 0 : caminhoAtePredioCompleto(state, t.destino, unidadeId, dados)?.custo ?? Number.POSITIVE_INFINITY,
+  ]));
+  return [...candidatas].sort((a, b) => {
+    const ca = chaves.get(a.id) ?? Number.POSITIVE_INFINITY;
+    const cb = chaves.get(b.id) ?? Number.POSITIVE_INFINITY;
+    if (ca !== cb) return ca < cb ? -1 : 1;
+    return a.numero - b.numero;
+  });
+}
+
+/** F20b — reclama, para o civil com fome `unidadeId`, o melhor assento aberto QUE
+ *  DER para reclamar. Irma de `reclamarMelhorOcupacao`. */
+export function reclamarMelhorComer(
+  state: GameState, unidadeId: string, dados: GameData = gameData,
+): ResultadoDoClaimMelhor {
+  const candidatas = tarefasDeComerEmOrdem(state, unidadeId, dados);
   const primeira = candidatas[0];
   if (primeira === undefined) return { ok: false, motivo: 'sem-tarefa-aberta' };
   let primeiraRecusa: MotivoDeRecusaDoClaim | null = null;

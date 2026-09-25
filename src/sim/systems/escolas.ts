@@ -12,6 +12,7 @@ import type { GameData } from '../data/types';
 import { gameData } from '../data';
 import type { GameState, ItemDeFila, PredioCompleto } from '../state';
 import { ID_DA_ESCOLA, MERCADORIA_DE_OURO } from '../state';
+import { condicaoCheiaDoTipo } from '../condicao';
 import { comFila, custoDeTreino, ehCivilConhecido, ehEscolaCompleta, filaDaEscola } from '../escola';
 import type { MotivoDeRecusaDeTreino } from '../escola';
 import { tilesDaPorta } from '../estradas';
@@ -160,7 +161,12 @@ export function sistemaDasEscolas(state: GameState, dados: GameData = gameData):
         unidades: {
           porId: {
             ...atual.unidades.porId,
-            [id]: { id, tipo: primeiro.unidade, gx: tile.gx, gy: tile.gy, fsm: 'ocioso', fsmData: {} },
+            // F20b: nasce com a condicao CHEIA da classe dele (numero do dado). A
+            // escola nao e a Bodega: quem nasce nao chega com fome.
+            [id]: {
+              id, tipo: primeiro.unidade, gx: tile.gx, gy: tile.gy, fsm: 'ocioso', fsmData: {},
+              condicao: condicaoCheiaDoTipo(primeiro.unidade, dados),
+            },
           },
           ordem: [...atual.unidades.ordem, id],
         },
