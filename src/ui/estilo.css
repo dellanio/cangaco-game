@@ -1,0 +1,299 @@
+/* A pele da interface: xilogravura de cordel (GDD §9.7, theme-sertao.json
+   `ui.estilo`). O mundo, no canvas, e pintado e colorido; a interface e
+   GRAFICA — papel cru, tinta preta, traco grosso, ocre e terracota da paleta
+   do tema como as unicas cores. Os dois registros nao competem.
+
+   O que este arquivo NAO faz: nao muda id, atributo `data-` nem estrutura de
+   nenhum painel. Os roteiros de tela (F06, F13b, F16b, F22, F-D1) afirmam
+   sobre `data-campo` e texto do tema, e o da F06 MEDE o layout em grade
+   (canvas.top >= hud.bottom, canvas.right <= painel.left) e a distancia de
+   cor entre item ativo e inativo do menu. Tudo isso continua de pe aqui. */
+
+/* Google Fonts: UMA fonte de display, so para titulo, valor e botao. Tipo de
+   madeira pesado, como as capas de cordel. O corpo fica numa serifa do
+   sistema, legivel a 13-14 px em papel. Se a fonte nao carregar, o fallback
+   e a mesma pilha de serifa: a tela nunca quebra por fonte faltando. */
+@import url('https://fonts.googleapis.com/css2?family=Alfa+Slab+One&display=swap');
+
+:root {
+  /* Grade, nao sobreposicao: o canvas ocupa SO a celula dele. As dimensoes
+     sao fixas de proposito: o Phaser mede o pai no boot, e o tamanho nao pode
+     depender de o HUD ja ter texto nessa hora. */
+  --altura-hud: 40px;
+  --largura-painel: 260px;
+
+  /* paleta: os valores sao os de `data/theme-sertao.json > paleta` */
+  --papel: #ede3d0;          /* cal */
+  --papel-escuro: #d9c9a8;   /* algodaoCru */
+  --tinta: #1a1410;          /* preto de tinta, nao #000: papel nunca imprime puro */
+  --tinta-fraca: #5a3f2b;    /* madeira */
+  --ocre: #c9974b;
+  --terracota: #b4562f;      /* telha */
+  --terra-queimada: #8c4a25;
+  --verde-seco: #7c8b6a;
+
+  --fonte-display: 'Alfa Slab One', 'Rockwell Extra Bold', 'Rockwell', Georgia, serif;
+  --fonte-corpo: Georgia, 'Times New Roman', 'Noto Serif', serif;
+
+  /* o traco: a borda grossa de toda caixa impressa */
+  --traco: 3px;
+  /* o grao do papel: turbulencia em SVG, muito fraca, por cima da cor chapada */
+  --grao: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.1 0 0 0 0 0.08 0 0 0 0 0.06 0 0 0 0.12 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23g)'/%3E%3C/svg%3E");
+  /* a hachura: listras finas de tinta, para o que esta bloqueado ou vazio */
+  --hachura: repeating-linear-gradient(135deg, transparent 0 5px, rgba(26, 20, 16, 0.14) 5px 7px);
+}
+
+html, body { margin: 0; padding: 0; background: var(--tinta); overflow: hidden; }
+body {
+  display: grid; height: 100vh;
+  grid-template-columns: 1fr var(--largura-painel);
+  grid-template-rows: var(--altura-hud) 1fr;
+  color: var(--tinta);
+  font: 14px/1.35 var(--fonte-corpo);
+}
+
+/* ---- o papel: toda caixa da interface herda daqui -------------------------- */
+#hud, #menu-build, #painel-predio, #alertas, #ajuda {
+  background-color: var(--papel);
+  background-image: var(--grao);
+  color: var(--tinta);
+  font: 14px/1.35 var(--fonte-corpo);
+  scrollbar-width: thin;
+  scrollbar-color: var(--tinta) var(--papel-escuro);
+}
+
+h2, h3 { font-family: var(--fonte-display); font-weight: 400; letter-spacing: 0.02em; }
+
+/* botao impresso: borda de tinta, sombra dura deslocada como bloco de madeira.
+   Apertar afunda o bloco. Os itens do menu Build NAO herdam a sombra — la o
+   roteiro da F06 exige que so o item ativo tenha `box-shadow`. */
+button {
+  font: 13px/1.2 var(--fonte-display);
+  letter-spacing: 0.02em;
+  color: var(--tinta);
+  background: var(--papel);
+  border: 2px solid var(--tinta);
+  border-radius: 0;
+  padding: 4px 8px;
+  box-shadow: 2px 2px 0 var(--tinta);
+  cursor: pointer;
+}
+button:hover { background: var(--papel-escuro); }
+button:active { transform: translate(2px, 2px); box-shadow: none; }
+button:focus-visible { outline: 2px dashed var(--terracota); outline-offset: 2px; }
+button[aria-disabled="true"] {
+  cursor: not-allowed; opacity: 0.55;
+  background-image: var(--hachura);
+  box-shadow: none;
+}
+
+/* ---- a barra de recursos ---------------------------------------------------- */
+#hud {
+  grid-column: 1 / -1; grid-row: 1;
+  box-sizing: border-box; height: var(--altura-hud);
+  display: flex; align-items: center; gap: 22px; padding: 0 16px;
+  border-bottom: var(--traco) solid var(--tinta);
+}
+#hud .campo { display: flex; align-items: baseline; gap: 6px; }
+#hud .rotulo {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em;
+  color: var(--tinta-fraca);
+}
+#hud .valor {
+  font: 17px/1 var(--fonte-display);
+  font-variant-numeric: tabular-nums;
+}
+/* F11a: aviso de pausa/velocidade, na barra, a direita. Some (hidden) em 1x
+   despausado. Bloco de tinta com letra de papel: e o carimbo. */
+#hud .aviso-tempo {
+  order: 2; margin-left: 12px; padding: 3px 10px;
+  background: var(--tinta); color: var(--papel);
+  font: 13px/1.2 var(--fonte-display); letter-spacing: 0.06em; text-transform: uppercase;
+  transform: rotate(-1.5deg);
+}
+#hud .aviso-tempo[hidden] { display: none; }
+/* F-D1: o lembrete da primeira partida. Na BARRA, nao sobre o mapa — o
+   canvas tem medidas afirmadas por roteiro (F06, F22) e um aviso novo por
+   cima delas seria regressao de layout em troca de nada. */
+#hud .dica-ajuda {
+  order: 1; margin-left: auto; padding: 2px 10px;
+  border: 2px solid var(--terracota);
+  color: var(--terracota); font-size: 13px; font-style: italic;
+}
+#hud .dica-ajuda[hidden] { display: none; }
+/* Na tela, o lembrete e o carimbo ficam a DIREITA dos recursos, nesta ordem,
+   embora a ajuda (F-D1) nasca antes do HUD no DOM. Escondido o lembrete, o
+   carimbo herda o empurrao para a direita. */
+#hud .dica-ajuda[hidden] ~ .aviso-tempo { margin-left: auto; }
+
+/* ---- o mapa ------------------------------------------------------------------ */
+#jogo { grid-column: 1; grid-row: 2; min-width: 0; min-height: 0; overflow: hidden; }
+#jogo canvas { display: block; }
+
+/* ---- a tela de ajuda (F-D1) ------------------------------------------------- */
+/* Sobreposicao na celula do canvas, centrada, e `hidden` por padrao: fechada,
+   ela nao existe para medida nenhuma. */
+#ajuda {
+  grid-column: 1; grid-row: 2; place-self: center;
+  box-sizing: border-box; max-width: 460px; max-height: calc(100% - 48px);
+  overflow-y: auto; padding: 14px 20px 16px;
+  border: var(--traco) solid var(--tinta);
+  outline: 2px solid var(--papel); outline-offset: -8px;
+  box-shadow: 6px 6px 0 var(--tinta), 0 12px 40px rgba(0, 0, 0, 0.6);
+}
+#ajuda[hidden] { display: none; }
+#ajuda h2 {
+  margin: 0 0 10px; padding-bottom: 6px; font-size: 22px;
+  border-bottom: var(--traco) solid var(--tinta);
+}
+#ajuda h3 {
+  margin: 12px 0 4px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.12em;
+  color: var(--terra-queimada);
+}
+#ajuda .atalho { display: flex; align-items: baseline; gap: 10px; padding: 3px 0; }
+/* a tecla QUEBRA linha dentro do bloco (`camera-mover` lista oito teclas):
+   sem isto ela empurra o rotulo para fora do papel. */
+#ajuda .atalho .tecla {
+  flex: 0 1 auto; min-width: 84px; max-width: 46%; padding: 3px 6px;
+  white-space: normal; overflow-wrap: anywhere;
+  background: var(--tinta); color: var(--papel);
+  font: 11px/1.3 var(--fonte-display); letter-spacing: 0.04em; text-align: center;
+}
+#ajuda .atalho .rotulo { flex: 1 1 0; min-width: 0; }
+#ajuda .rodape { margin: 14px 0 0; font-size: 12px; font-style: italic; color: var(--tinta-fraca); }
+
+/* ---- o menu Construir (F06) ------------------------------------------------- */
+#menu-build {
+  grid-column: 2; grid-row: 2; min-height: 0; overflow-y: auto;
+  box-sizing: border-box; padding: 8px 10px 12px;
+  border-left: var(--traco) solid var(--tinta);
+  display: flex; flex-direction: column; gap: 6px;
+}
+#menu-build h2 {
+  margin: 2px 0 6px; padding-bottom: 4px; font-size: 19px;
+  border-bottom: var(--traco) solid var(--tinta);
+}
+#menu-build .item {
+  display: flex; flex-direction: column; gap: 2px; text-align: left;
+  padding: 6px 9px; border: 2px solid var(--tinta);
+  background: var(--papel); color: inherit; font: inherit;
+  box-shadow: none; transform: none; cursor: pointer;
+}
+#menu-build .item:hover { background: var(--papel-escuro); }
+#menu-build .item .nome { font: 14px/1.2 var(--fonte-display); }
+#menu-build .item .custo { font-size: 12px; color: var(--tinta-fraca); }
+#menu-build .item .requer { font-size: 12px; font-style: italic; color: var(--terracota); }
+/* BUG-A, parte 3. O item ativo e o BLOCO ENTINTADO: fundo de tinta, letra de
+   papel, borda de ocre e a barra lateral. O roteiro da F06 MEDE a distancia
+   entre o ativo e um inativo (fundo e borda >= 60 por canal somado) e exige
+   que SO o ativo tenha `box-shadow`; esta linha nao e a prova. */
+#menu-build .item[aria-pressed="true"] {
+  border-color: var(--ocre); background: var(--tinta); color: var(--papel);
+  box-shadow: inset 6px 0 0 var(--ocre);
+}
+#menu-build .item[aria-pressed="true"] .custo { color: var(--papel-escuro); }
+#menu-build .item[aria-pressed="true"] .requer { color: var(--ocre); }
+/* bloqueado: hachurado e apagado, e o `requer` diz do que depende */
+#menu-build .item[aria-disabled="true"] {
+  cursor: not-allowed; opacity: 0.6;
+  background-image: var(--hachura);
+}
+
+/* ---- os avisos (F22) --------------------------------------------------------- */
+/* SOBREPOSICAO na celula do canvas, como o painel, mas ancorada no canto oposto
+   (`start end` contra o `end start` dele): os dois aparecem juntos e nao podem
+   se cobrir. O roteiro da F22 MEDE os dois retangulos, nao confia nesta linha. */
+#alertas {
+  grid-column: 1; grid-row: 2; place-self: start end; margin: 12px;
+  box-sizing: border-box; max-width: 248px; padding: 6px 10px 8px;
+  border: var(--traco) solid var(--terracota);
+  box-shadow: 4px 4px 0 var(--tinta);
+  display: flex; flex-direction: column; gap: 3px;
+}
+#alertas[hidden] { display: none; }
+#alertas h2 {
+  margin: 0 0 4px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.12em;
+  color: var(--terracota);
+}
+#alertas .alerta { display: flex; align-items: baseline; gap: 8px; font-size: 13px; }
+#alertas .alerta[hidden] { display: none; }
+#alertas .alerta .rotulo { flex: 1; }
+#alertas .alerta .contagem {
+  min-width: 18px; padding: 1px 5px; text-align: center;
+  background: var(--tinta); color: var(--papel);
+  font: 12px/1.2 var(--fonte-display); font-variant-numeric: tabular-nums;
+}
+
+/* ---- o painel de predio (F16b) --------------------------------------------- */
+/* F13b: SOBREPOSICAO na celula do canvas, nao coluna nova. Uma terceira coluna
+   encolheria o canvas e reprovaria o roteiro da F06, que afirma
+   canvas.right <= painel.left. A F16b so renomeou (#painel-escola ->
+   #painel-predio): a posicao e a largura seguem as mesmas, de proposito. */
+#painel-predio {
+  grid-column: 1; grid-row: 2; place-self: end start; margin: 12px;
+  box-sizing: border-box; width: 248px; max-height: calc(100% - 24px);
+  overflow-y: auto; padding: 8px 10px 10px;
+  border: var(--traco) solid var(--tinta);
+  box-shadow: 4px 4px 0 var(--tinta);
+  display: flex; flex-direction: column; gap: 5px;
+}
+#painel-predio[hidden] { display: none; }
+#painel-predio h2 {
+  margin: 0 0 4px; padding-bottom: 4px; font-size: 18px;
+  border-bottom: var(--traco) solid var(--tinta);
+}
+#painel-predio h3 {
+  margin: 6px 0 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em;
+  color: var(--terra-queimada);
+}
+/* a fila da escola (F13b): um slot por vaga; o vazio e hachurado */
+#painel-predio .slot {
+  display: flex; align-items: baseline; gap: 6px;
+  padding: 4px 6px; border: 2px solid var(--tinta);
+  background: var(--papel-escuro);
+}
+#painel-predio .slot[data-estado="vazio"] {
+  background: transparent; background-image: var(--hachura);
+  border-style: dashed; color: var(--tinta-fraca);
+}
+#painel-predio .slot .nome { font: 13px/1.2 var(--fonte-display); flex: 1; }
+#painel-predio .slot .motivo { color: var(--terracota); font-size: 12px; font-style: italic; text-align: right; }
+#painel-predio .slot .progresso { color: var(--tinta-fraca); font-size: 12px; font-variant-numeric: tabular-nums; }
+#painel-predio .tipos { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
+#painel-predio button { font-size: 12px; padding: 3px 7px; }
+#painel-predio .slot button {
+  padding: 0 5px; line-height: 1.1; box-shadow: none; border-width: 1px;
+}
+#painel-predio .fila-cheia { color: var(--terracota); font-size: 12px; font-style: italic; }
+/* F16b: linha = rotulo a esquerda, valor a direita; gaveta = rotulo mais os
+   itens do estoque. */
+#painel-predio .linha { display: flex; align-items: baseline; gap: 6px; font-size: 13px; }
+#painel-predio .linha .rotulo { flex: 1; color: var(--tinta-fraca); }
+#painel-predio .linha .valor { font-variant-numeric: tabular-nums; font-weight: 700; }
+#painel-predio .linha[data-ocupante="vago"] .valor { color: var(--terracota); font-weight: 400; font-style: italic; }
+#painel-predio .gaveta {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px; font-size: 12px;
+}
+#painel-predio .gaveta .rotulo { color: var(--tinta-fraca); }
+#painel-predio .gaveta .item {
+  padding: 1px 5px; border: 1px solid var(--tinta); background: var(--papel-escuro);
+  font-variant-numeric: tabular-nums;
+}
+#painel-predio .gaveta .vazia { color: var(--tinta-fraca); }
+/* F17b: o medidor de material da obra. Herda `.gaveta`; so o material que ja
+   chegou inteiro ganha destaque, para "falta pedra" saltar aos olhos. */
+#painel-predio .gaveta.material .item[data-cheio="true"] {
+  background: var(--verde-seco); color: var(--papel); border-color: var(--tinta);
+}
+#painel-predio .acoes { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+#painel-predio .acoes .pausado {
+  padding: 2px 8px; background: var(--tinta); color: var(--papel);
+  font: 11px/1.2 var(--fonte-display); letter-spacing: 0.06em; text-transform: uppercase;
+  transform: rotate(-2deg);
+}
+/* o unico botao que destroi trabalho: cor propria, e sozinho no rodape */
+#painel-predio button.demolir {
+  margin-top: 6px; align-self: flex-start;
+  background: var(--terracota); color: var(--papel); border-color: var(--tinta);
+}
+#painel-predio button.demolir:hover { background: var(--terra-queimada); }
