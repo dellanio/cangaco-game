@@ -407,6 +407,87 @@ export function comBodegaAbastecida(
   return exigirLigado(comEstradas(comBodega, tilesDaPorta(predio, dados)), id, dados);
 }
 
+/**
+ * F-T4a — a fixture confere a si mesma: cenario de pescador so vale se o cardume
+ * ao alcance for o que o cenario diz que e. Numero EXATO, e nao minimo: se o
+ * mapa mudar, o teste que conta margem contra interior falha AQUI, com a
+ * coordenada escrita, e nao tres `expect` adiante como "escolheu o tile errado".
+ */
+function exigirColheitaAoAlcance(
+  estado: GameState, id: string, esperado: number, dados: GameData,
+): GameState {
+  const predio = estado.predios.porId[id];
+  const colheita = predio === undefined ? null : receitaDoTipo(predio.tipo, dados)?.colheita ?? null;
+  if (predio?.estado !== 'completo') throw new Error(`fixture: '${id}' nao e predio completo`);
+  if (colheita === null) throw new Error(`fixture: '${predio.tipo}' precisa de receita com colheita`);
+  const tiles = tilesDeColheita(estado, predio, colheita, dados);
+  if (tiles.length !== esperado) {
+    throw new Error(
+      `fixture: '${id}' deveria alcancar ${esperado} tiles de '${colheita.recurso}', alcanca ${tiles.length}`,
+    );
+  }
+  return estado;
+}
+
+/**
+ * F-T4a — Casa do Pescador `p1` (32,27), na margem SUL do lago pequeno, ligada
+ * ao armazem da abertura (29,30) pela rua que desce a coluna 32.
+ *
+ * O lago pequeno esta a QUATRO tiles do armazem inicial (medido no plano da
+ * F-T4): ao contrario da fazenda, o cenario do pescador nao precisa ir para o
+ * norte do mapa nem levar armazem proprio. Uma cabana so, em (32,27), alcanca os
+ * 31 tiles do lago com alcance 6 — e por isso e ela que responde "ele sai, anda
+ * e pesca DA MARGEM", que e a perna nova desta feature: agua nao se pisa.
+ *
+ * O id e `pesc1`, e nao `p1`: `p1` e o ARMAZEM da abertura (`createInitialState`),
+ * e `comProdutorOcupado` substitui por id — a cabana comia o armazem e o cenario
+ * inteiro deixava de ter para onde entregar.
+ */
+export function cenarioDePescador(dados: GameData = gameData): GameState {
+  let s = semCivis(createInitialState(1, dados));
+  s = comProdutorOcupado(s, { tipo: 'fishermans', id: 'pesc1', unidade: 'pescador', gx: 32, gy: 27 }, dados);
+  s = comEstradas(s, [tile(32, 29), tile(32, 30), tile(32, 31), tile(32, 32), tile(32, 33), tile(31, 33)]);
+  return exigirColheitaAoAlcance(exigirLigado(s, 'pesc1', dados), 'pesc1', 31, dados);
+}
+
+/**
+ * F-T4a — a mesma cabana com UM cardume so ao alcance: `p1` (45,26) alcanca
+ * apenas o tile (39,26), a ponta leste do lago pequeno, e leva armazem proprio.
+ *
+ * E o cenario do ESGOTAMENTO. Com um tile so, zerar o alcance inteiro cabe num
+ * teste: o regime do peixe e `nunca`, entao a entrada tem de SAIR do estado, e o
+ * que se prova depois e que ninguem fica esperando o que nao volta.
+ */
+export function cenarioDePescadorDeUmCardume(dados: GameData = gameData): GameState {
+  let s = semCivis(createInitialState(1, dados));
+  s = comArmazemExtra(s, 'armazem-do-lago', 49, 25, dados);
+  s = comProdutorOcupado(s, { tipo: 'fishermans', id: 'pesc1', unidade: 'pescador', gx: 45, gy: 26 }, dados);
+  const rua: TileDeGrid[] = [];
+  for (let gx = 45; gx <= 51; gx++) rua.push(tile(gx, 28));
+  s = comEstradas(s, rua);
+  return exigirColheitaAoAlcance(exigirLigado(s, 'pesc1', dados), 'pesc1', 1, dados);
+}
+
+/**
+ * F-T4a — a cabana no LAGO GRANDE: `p1` (91,37), com 70 tiles de cardume ao
+ * alcance, dos quais a maior parte e INTERIOR de agua — tile que nenhuma
+ * aproximacao andavel alcanca, hoje e sempre (agua nao vira andavel ao ser
+ * pescada, ao contrario da arvore, que ao cair abre o anel seguinte).
+ *
+ * E o cenario que cobra a licao do BUG-C: o que importa nao e a media de tiles
+ * ao alcance, e a FORMA. Uma cabana que escolhesse tile de interior mandaria o
+ * pescador andar ate um lugar que nao existe caminho para alcancar.
+ */
+export function cenarioDePescadorNoLagoGrande(dados: GameData = gameData): GameState {
+  let s = semCivis(createInitialState(1, dados));
+  s = comArmazemExtra(s, 'armazem-do-lagamar', 95, 36, dados);
+  s = comProdutorOcupado(s, { tipo: 'fishermans', id: 'pesc1', unidade: 'pescador', gx: 91, gy: 37 }, dados);
+  const rua: TileDeGrid[] = [];
+  for (let gx = 91; gx <= 97; gx++) rua.push(tile(gx, 39));
+  s = comEstradas(s, rua);
+  return exigirColheitaAoAlcance(exigirLigado(s, 'pesc1', dados), 'pesc1', 70, dados);
+}
+
 /** Serraria `s1` (32,34) ocupada por `u2`, ligada, e com a entrada VAZIA. */
 export function cenarioDeSerraria(dados: GameData = gameData): GameState {
   let s = semCivis(createInitialState(1, dados));

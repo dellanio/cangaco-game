@@ -2058,31 +2058,76 @@ a geografia já corrigida do que regravar 900 tiles depois.
   oráculo, fazenda 246 → 351. Calibrar isso agora quebraria o lote fechado pelo
   operador em 2026-09-24.
 
-### F-T4 — O roceiro e o lenhador herdam a caminhada (sim; posição a definir)
-- **Por que existe**: a F-T3 entregou a caminhada como **regra de classe** — quem
-  tem `colheita` na receita sai do prédio —, então o roceiro **já sai** sem código
-  novo (medido: fazenda 246 → 351 ticks por colheita). O que sobrou é **meia
-  regra** em dois lugares, e meia regra sem item na fila é o pior resultado
-  possível (CLAUDE.md §6):
-  1. **O plantio da fazenda continua acontecendo de dentro do prédio.**
-     `avancarPlantio` (`src/sim/systems/especialistas.ts`) não anda: o roceiro
-     caminha até o tile para **tirar** o milho e **ara sem sair do lugar**. O
-     comentário do `reposicaoDe` foi corrigido para dizer isso, em vez de
-     descrever um jogo que deixou de existir.
-  2. **O lenhador não sai porque não tem o que colher no dado.**
-     `data/production.json:predios.woodcutters` tem `sai: { tree_trunk: 0.55 }` e
-     **nenhuma `colheita`** — verificado —, então ele produz tronco do nada e a
-     regra de classe não o alcança. Dar-lhe `colheita: { recurso: 'tree', ... }`
-     o faria andar de graça, mas muda **o que custa a madeira** e depende de
-     reposição de árvore (`resources.json:tipos.tree`): é decisão de design e de
-     dado, não consequência da F-T3.
-- **Posição na fila: em aberto, para o operador.** Não a coloquei antes da F21 nem
-  da F23 porque o brief da sessão desatendida (2026-09-25) fixou a ordem F-T3 →
-  F21 → F23, e reordenar fila é decisão dele (CLAUDE.md §11).
-- **Escopo provável** (ainda não um aceite): o plantio virar uma ida ao tile com o
-  mesmo predicado de aproximação da F-T3 (`src/sim/aproximacao.ts`), reusando
-  `tileAlcancavelParaColheita`; e o lenhador entrar só depois de o dado da árvore
-  responder quanto tronco sai por tile e em quanto tempo volta.
+### F-T4a — O pescador sai para colher (dado + aceite; ENTREGUE 2026-09-25)
+- **Por que existe**: a F-T3 entregou a caminhada como **regra de classe** — prédio
+  com `colheita` na receita manda o ocupante ao tile —, mas a Casa do Pescador
+  ainda produzia peixe **do nada** (`production.json:fishermans` tinha `sai` e
+  nenhuma `colheita`). Esta é a metade do F-T4 que **não depende de decisão de
+  design**: o açude já existe no mapa desde a F-T2a e ninguém mais depende do
+  peixe.
+- **Escopo entregue**: `fishermans` ganhou
+  `colheita: { recurso: fish, alcance_tiles: 6 }`. **Zero linha de simulação** —
+  caminhada, reserva de JobBoard, regime de esgotamento e aproximação por vizinho
+  andável já existiam. Feature de **dado mais aceite**.
+- **O que ela estreia, e a F-T3 não cobria**: o peixe é o primeiro recurso
+  **inalcançável por dentro**. Rocha e milho se pisam; água não, e `fish.regime`
+  é `nunca` (o tile some do estado em vez de ficar em zero, como a árvore). Então
+  a margem não é detalhe de caminho: é a única posição de trabalho que existe.
+- **Critério de aceite** (os quatro acenos do operador, 2026-09-25; plano em
+  `docs/planos/F-T4-lenhador-e-pescador.md`):
+  1. o pescador larga a porta, anda tile a tile e o tile em que fica `colhendo`
+     está a Chebyshev **1** do cardume reservado, **não é** o tile do cardume, e é
+     andável — e o peixe entra na gaveta no tick da **volta**;
+  2. esgotado o único cardume ao alcance, a entrada **sai** de `state.recursos`,
+     nenhuma tarefa fica reclamada, o pescador volta ao **mesmo** estado de espera
+     de quem espera insumo (afirmado contra a serraria de gaveta vazia, não contra
+     o rótulo digitado) e o prédio passa a dizer `veio-esgotado`;
+  3. no lago grande, em 200 ticks, **todo** tile escolhido é de margem — a
+     asserção compara com `tileAlcancavelParaColheita`, não com coordenada;
+  4. **FORMA** da distribuição medida, não média (lição do BUG-C).
+- **Evidência**: `tests/F-T4-pescador.test.ts` (11 testes), `test-output/F-T4a.json`
+  (forma), `test-output/F-T4a-shot.json` (57 afirmações) e
+  `screenshots/F-T4a-1-pescador-na-margem.png` — o tile **desenhado** do pescador
+  fora do footprint, em areia, encostado em três tiles de cardume que são todos
+  água, com o painel ainda dizendo quem trabalha ali.
+- **Números medidos** (ficam aqui porque a F-T4b herda os da árvore):
+  `fish` 274 tiles em **2 lagos** (243 e 31), **95 alcançáveis** (1 900 de 5 480
+  unidades), o lago grande com **70 tiles de margem em 243** — e água nunca abre.
+  `tree` 350 tiles em **12 capoeiras** (68, 56, 47, 45, 41, 40, 20, 18, 6, 5, 2,
+  2), **301 alcançáveis hoje e 350 no fim**, porque árvore cortada vira andável.
+  Alcance 6 é **a calibrar**, com a conta em `BALANCE_LOG.md` (2026-09-25).
+
+### F-T4b — O lenhador sai para colher (BLOQUEADO: decisão do operador)
+- **O que falta**: `woodcutters` ganhar `colheita: { recurso: tree, ... }`, pelo
+  mesmo caminho da F-T4a. O código já serve; o **dado** é que não fecha.
+- **Por que está bloqueado, medido antes de escrever qualquer linha** (Medição 2
+  do plano, sonda da sessão): com `colheita` no lenhador, **3 aceites reprovam** —
+  `F15a-receita`, `F15b-aceite` (oráculo) e `F17-aceite` (Fase A). Só com o
+  pescador: **0 de 1 358**. A causa é uma e não é de código: a capoeira mais
+  próxima da vila está a **12 tiles** do armazém, e os dois Woodcutter's que o
+  cenário oráculo (18,34 e 22,34) e a abertura da Fase A plantam **ao lado** do
+  armazém têm **zero árvore** em alcance 6 (em alcance 12 teriam 7). Com
+  `colheita`, eles param de produzir — e com eles param a serraria, o `timber` e o
+  aceite do marco.
+- **A pergunta que a fila não responde sozinha**: *onde a abertura da Fase A
+  planta o lenhador, agora que ele precisa de mata a 12 tiles da vila?* Consertar
+  é **mudar a geometria da abertura** (`tests/helpers/abertura.ts`, com a
+  invariante escrita de "altura igual nos quatro" e a rua reta até a escola):
+  a pedreira quer o lajedo da vila e o lenhador quer a mata. Isso não é
+  não-regressão de fixture, é **redesenhar o aceite do marco F17** — e marco é
+  decisão do operador (CLAUDE.md §12 e §14).
+- **As três saídas possíveis, para ele escolher** (nenhuma implementada):
+  (a) mover a abertura da Fase A para perto de uma capoeira, e reescrever a
+  invariante de geometria junto; (b) dar ao lenhador alcance maior que 6 —
+  resolve o aceite e torna o alcance quase irrelevante, porque 12 tiles cobre
+  metade da vila; (c) semear uma capoeira pequena na reserva da vila, o que muda
+  `tools/gerar-mapa.js` e **move tiles que fixtures já usam**.
+- **Nota de herança**: quem pegar este item herda da F-T4a a regra de classe já
+  provada, o predicado `tileAlcancavelParaColheita` e os números da árvore acima —
+  e herda também que, ao contrário do peixe, **a árvore abre o anel seguinte ao
+  ser cortada** (`tree.regime: porAcao`, quantidade 0 e tile andável), então o
+  alcance útil do lenhador CRESCE com o uso. O aceite dele não pode afirmar
+  contagem fixa de tiles ao alcance ao longo do tempo.
 
 ### F19b — A segunda comida: Malhada e Casa de Carne (medir primeiro)
 - **Posição na fila — decisão do operador, 2026-09-24**: **antes da F20**, com a

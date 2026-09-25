@@ -318,6 +318,21 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   `corn.reposicao.segundos_base` (60) — e o segundo pesa 15× mais que o primeiro |
   `resources.json:corn`
 
+- [2026-09-25] **alcance 6 do pescador: o açude da vila dura 620 ciclos, e o lago grande é quase
+  todo enfeite** | `fishermans.colheita.alcance_tiles` nasceu **6** na F-T4a, e o número é *a
+  calibrar*, não medido contra nada. O que está medido: a cabana em (31,27), na margem sul do açude
+  da vila, vê **31 tiles** ao alcance — os 31 do açude inteiro — e a linha do painel abre em **620
+  unidades** (31 × `fish.rendimentoPorTile` 20). Um ciclo tira **1** unidade e entrega 1 peixe
+  (620 → 619 na captura `F-T4a-2`), então **uma cabana leva 620 ciclos para secar o açude da
+  vila**. No mapa inteiro há **274 tiles de cardume / 5 480 unidades nominais**, mas só **95 tiles
+  / 1 900 unidades** são alcançáveis por qualquer cabana: o cardume mora em **2 lagos** (243 e 31
+  tiles) e o grande tem **70 tiles de margem em 243**. Água nunca vira andável (`fish.regime:
+  nunca` apaga a entrada), então o interior do lago grande é **permanentemente** inútil — ao
+  contrário da árvore, que ao ser cortada abre o anel seguinte (350 tiles, 12 capoeiras, **301
+  alcançáveis hoje e 350 no fim**). Os dois parafusos, quando o lote for ajustado: `alcance_tiles`
+  (mais alcance = mais margem, não mais lago) e `fish.rendimentoPorTile` (20). Alcance menor que 6
+  não é neutro: a **margem** é que limita a cabana, não o lago |
+  `production.json:fishermans`, `resources.json:fish`, `test-output/F-T4a.json`
 
 ---
 

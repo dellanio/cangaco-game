@@ -6006,3 +6006,86 @@ escrita no item da fila **antes** do código. O que entrou em `sim/` é só a bo
   exaurido, porque `codigoDoRecurso` manda todo `quantidade <= 0` para lá. Está na
   `screenshots/F18i-3`. Não quebra critério escrito de ninguém (por isso não é `BUGS.md`);
   registrado em `IDEIAS.md`.
+
+---
+
+## F-T4a — O pescador sai para colher, da margem (2026-09-25)
+
+Ordem do operador (2026-09-25): *"Os quatro acenos já foram dados e o plano está
+escrito. Executar."* O plano **não** estava no repositório — `docs/planos/` não
+tinha arquivo de F-T4 e o item do `BUILD_PLAN.md` ainda descrevia o escopo antigo
+(roceiro + lenhador). Escrevi o plano antes de executar, como ele pediu:
+`docs/planos/F-T4-lenhador-e-pescador.md`. Duas medições feitas **antes** de
+escrever código reordenaram a entrega, e é por isso que a sessão fecha só a
+metade do pescador.
+
+### Verificado (rodei, abri o arquivo, ou li a captura)
+
+- **A feature é dado mais aceite: zero linha de simulação.** `fishermans` ganhou
+  `colheita: { recurso: fish, alcance_tiles: 6 }` em `data/production.json`
+  (edição cirúrgica de 2 linhas; o arquivo não foi reserializado). Caminhada de
+  classe, reserva de JobBoard, regime de esgotamento e aproximação por vizinho
+  andável já existiam desde F-T3/F-T2c/F-T2a. `npm run validate:data`: 11
+  arquivos, 0 erros.
+- **`npm run verify` verde**: 96 arquivos, **1 369 testes**. Nenhuma regressão —
+  o que a Medição 2 previa para a metade do pescador (0 reprovações de 1 358).
+- **`tests/F-T4-pescador.test.ts`, 11 testes**, as quatro pernas do plano. A
+  trilha de cada ciclo afirma `violacoesDaFsmDoEspecialista` e
+  `violacoesDeInvariantes` vazias em **todo** tick, não só no fim.
+- **A afirmação que só este ofício permite** (perna a): no tick de `colhendo` o
+  pescador está a Chebyshev **1** do tile reservado, em tile andável, **e o tile
+  do cardume não é andável**. As três juntas; a terceira é que dá sentido às
+  outras duas — sem ela "ficou a 1 de distância" seria coincidência de caminho.
+- **`test-output/F-T4a-shot.json`: 57 afirmações, 0 erro de console**, e duas
+  capturas abertas com Read. Em `F-T4a-1` o tile **desenhado** do pescador está em
+  (28,24), areia, fora do footprint da cabana (31,27), encostado em **três** tiles
+  de cardume que são **todos água**, com o painel dizendo "Casa do Pescador / Quem
+  trabalha: Pescador / Pesca: 31 ao alcance (620)". Em `F-T4a-2`, depois de uma
+  volta: **619**, contagem de tiles ainda 31, e `Sai: Peixe 1` na gaveta.
+- **A árvore de desbloqueio provada na tela**: o roteiro afirma
+  `aria-disabled="true"` na Casa do Pescador na abertura, **ainda** bloqueada com
+  só o lenhador de pé, e liberada depois da serraria. O item bloqueado continua no
+  DOM desde a F12 — `noMenu()` por existência do botão seria uma afirmação que
+  nunca reprova, e foi assim que ela nasceu antes de eu ler `menu-build.ts`.
+- **A primeira captura mentia por enquadramento, e o quadro é parte da
+  evidência.** Todas as 57 afirmações passaram na primeira rodada e o PNG **não
+  continha o pescador**: ele trabalha na margem norte do açude, e o roteiro só
+  sabia centrar a câmera no eixo X (molde herdado do F-T3, onde a pedreira
+  trabalhava na mesma faixa de linhas da vila). `centrarNoEixo(alvo, eixo)` +
+  `enquadrar(a, b)` corrigem, e o comentário no roteiro diz por quê. Afirmação
+  verde com quadro vazio é exatamente o que a §8 proíbe descrever de memória.
+- **O roteiro cumpre a §8**: aperta `#painel-predio` com `mouse.down` / 150 ms /
+  `mouse.up` **despausado**, e volta a pausar.
+
+### Decidido, com o porquê
+
+- **A geometria do roteiro sai do mapa, nunca digitada.** A cabana é escolhida
+  pela mancha de cardume mais perto do armazém (flood fill 8-conectado), varrendo
+  a margem sul pelo ponto que vê mais peixe; a coluna da rua é a porta que desce
+  livre até a linha de porta da vila. Mudar a semente do gerador move a cabana
+  junto. O roteiro lê `terrain.json:intransponivel` + a legenda do mapa em vez de
+  repetir a regra de "onde não se pisa".
+- **`F-T4b` NÃO entrou em `test-results.json` como `false`.** Hoje o arquivo não
+  tem nenhum `false`, então o primeiro `false` é o ponteiro da fila (CLAUDE.md
+  §6). Registrar a F-T4b ali mandaria a próxima sessão direto para uma parede que
+  só o operador pode abrir, e à frente da F21b que ele já pediu. Ela está
+  registrada no `BUILD_PLAN.md` com as três reprovações nomeadas e as três saídas
+  possíveis.
+- **A fixture do pescador se chama `pesc1`, e não `p1`.** `p1` é o **armazém** da
+  abertura, e `comProdutorOcupado` substitui por id sem validar posicionamento: a
+  cabana comia o armazém e o cenário inteiro ficava sem para onde entregar. O
+  porquê está escrito no cabeçalho das três fixtures, não só aqui.
+
+### Aberto — precisa do operador
+
+- **F-T4b (o lenhador) está bloqueada, e o bloqueio é de design.** Com `colheita`
+  no `woodcutters`, **3 aceites reprovam** (`F15a-receita`, `F15b-aceite`,
+  `F17-aceite`); só com o pescador, 0 de 1 358. A causa medida: a capoeira mais
+  próxima está a **12 tiles** do armazém e os Woodcutter's da abertura da Fase A e
+  do cenário oráculo têm **zero** árvore em alcance 6. Consertar é redesenhar a
+  geometria da abertura do marco F17. As três saídas estão no item do
+  `BUILD_PLAN.md`; nenhuma implementada.
+- **A ordem da sessão veio truncada.** Ela nomeia três features seguidas —
+  1. F-T4, 2. F21b (mina esgota), 3. …  — e o texto corta em *"Siga o"*. A
+  terceira feature **não foi nomeada**. Sigo para a F21b, que está escrita por
+  inteiro; a terceira precisa dele.
