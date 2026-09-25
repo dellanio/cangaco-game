@@ -205,6 +205,12 @@ Na máquina livre eles medem:
 | F10-falhas caos semente 3 | 2,2 s | 2,3× |
 | F21 evidência | 1,8 s | 2,8× |
 | zz-probe-F23 | 1,7 s | 2,9× |
+> **A linha do `zz-probe-F23` é história desde 2026-09-25.** A sonda saiu da
+> suíte naquele dia, junto com as da F21 e da F-T3, pelo mesmo motivo pelo qual
+> as da F19 saíram: sonda é evidência da sessão, não cobertura contínua
+> (`CLAUDE.md` §8). O que ficou no lugar dela é `tests/F23-save-e-load.test.ts`.
+> As outras cinco linhas continuam medindo teste que existe.
+
 
 É orçamento: 2,3× a 2,9× de folga, que duas sessões e oito sims em paralelo
 comeram. A F09 já resolveu o mesmo caso com `20_000` (~5× o medido) e a nota

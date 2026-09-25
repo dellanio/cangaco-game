@@ -6878,3 +6878,50 @@ entregue. O plano é `docs/planos/F-CAL.md`.
   uma vez no teto padrão de 5 s.
 - Qual das duas opções da F18g (reserva por tile / arrasto parcial), quando a
   feature chegar.
+
+---
+
+## 2026-09-25 (noite) — Regularização: as três sondas `zz-` saem da suíte
+
+Pedido do operador ("comite e regularize tudo"), antes de entregar a fila a uma
+sessão externa. Não é item da fila e não vira chave em `test-results.json`.
+
+### Verificado
+
+- **Trabalho commitado, árvore limpa.** `cce6f40` (F-CAL-a) é o topo da `main` e
+  `git status --porcelain --untracked-files=all` vem vazio. Pela §6 do
+  `CLAUDE.md` isto é "terminar": a `main` está livre para outra sessão.
+- **Três sondas estavam rastreadas e rodando em toda suíte**, contra o que o
+  cabeçalho de cada uma diz de si mesma: `tests/zz-probe-F21.test.ts`
+  ("temporaria, prefixo zz-, sai no fim da feature"),
+  `tests/zz-probe-F23.test.ts` ("evidencia da sessao, nao cobertura continua")
+  e `tests/zz-probe-F-T3.test.ts` ("Arquivo `zz-` para sair da suíte quando
+  sessao fechar"). As da F19 e da F19b saíram no fim da feature
+  (`docs/planos/F19b-cadeia-da-carne.md`, Passo 2); estas ficaram.
+- **Cada uma tem guarda permanente no lugar**, conferido por arquivo:
+  `F21-cadeia-do-ouro.test.ts` + `F21b-mina-esgota.test.ts`,
+  `F23-save-e-load.test.ts`, e os quatro `F-T3-*.test.ts`. Apagar as sondas não
+  tira cobertura: o único caso de cada uma era um `it` que **mede e grava**.
+- **`npm run verify` verde depois da remoção**, com a contagem menor — o
+  número está no commit.
+- **A linha do `zz-probe-F23` na tabela de testes lentos de
+  `docs/calibracao-fase-b.md` ficou marcada, não apagada**: ela media um teste
+  que não existe mais, e tabela de referência com premissa morta avisa no
+  próprio arquivo.
+
+### Decidido
+
+- **As citações às sondas em `BUILD_PLAN.md`, `BALANCE_LOG.md` e
+  `PROGRESS.md` ficam.** Elas são procedência de medição ("foi assim que este
+  número apareceu"), e o git é o arquivo morto de quem quiser reabrir.
+- **Os JSON de `test-output/` ficam** (o diretório é ignorado pelo git): são a
+  evidência legível que aqueles registros citam.
+
+### Aberto
+
+- **`test-results.json` não tem chave para a F-CAL-b nem para 18 outros itens da
+  fila** (`F18c`, `F-D`, `F-T2`, `F-TR`, `F20`, `F23b`, `F18g`, `F24`…`F34`). A
+  convenção do projeto é a chave nascer quando a feature entrega; por isso "a
+  primeira com `passes: false`" hoje não aponta para nada e a ordem é a do
+  `BUILD_PLAN.md`. Não inventei chave: escrever nesse arquivo passa pelo selo do
+  `verify`, e criar 19 `false` seria mudança de convenção, não regularização.
