@@ -184,5 +184,8 @@
   },
   "F-T4b-lenhador": {
     "passes": true
+  },
+  "F-CAL-a-cenario": {
+    "passes": true
   }
 }

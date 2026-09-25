@@ -6804,3 +6804,77 @@ virou a chave**: isto é revogação de decisão, não item da fila. Mexeu em `s
 
 - Qual das duas opções da F18g (reserva por tile / arrasto parcial), quando a feature
   chegar.
+
+## 2026-09-25 (fim de tarde) — F-CAL-a: a vila da cadeia da comida sobe pela abertura
+
+A F-CAL foi **quebrada em dois sub-itens** no `BUILD_PLAN.md` e o primeiro está
+entregue. O plano é `docs/planos/F-CAL.md`.
+
+### Decidido (e por quê)
+
+- **A F-CAL não cabia em uma sessão, e o motivo é medido, não impressão.** O aceite
+  escrito pressupõe uma vila que **não nasce sozinha**: na abertura pura `mill` e
+  `bakery` nunca desbloqueiam (dependem de `farm` e `mill` CONSTRUÍDOS) e `farm` só
+  abre no tick 1110. Montar o cenário é uma sessão; medir é outra. **O aceite não
+  mudou uma palavra** — ele é, inteiro, o da F-CAL-b.
+- **A cadeia entra a LESTE da escola, na linha de porta, e a rua cresce.** O plano
+  tinha suposto o contrário ("a rua não precisa crescer"); a sonda derrubou a
+  suposição e o parágrafo está **corrigido no lugar, com a correção escrita**, não
+  reescrito como se sempre tivesse dito isso.
+- **A Bodega entra por último** mesmo estando desbloqueada desde o tick 1, porque a
+  rua é sequencial: o trecho de cada prédio começa onde o do anterior terminou.
+
+### Verificado (medido nesta sessão, com evidência aberta)
+
+- **O cenário fecha no tick 7148**, com zero recusa de comando
+  (`test-output/F-CAL-cenario.json`, aberto com Read): oito prédios completos, os
+  **sete** que pedem trabalhador ocupados (a Bodega tem `trabalhador: null` no dado
+  e por isso não conta — é o dado que decide, não uma lista no teste), campo arado
+  no 2636, e todos os oito `ligadoAoArmazem: true`. Teto do teste = 7148 + 25 % ≈
+  **9000**, pelo mesmo critério que a F17 usou.
+- **A geometria: Roçado (37,30), Moinho (41,30), Padaria (44,30), Bodega (47,30)**,
+  13 tiles de rua a leste sobre y=33, campo de 12 tiles em (37..40, 34..36).
+  Nenhuma coordenada é digitada no helper: a posição sai varrendo `yRua` para leste
+  com o próprio `canPlace` da sim, e o campo sai da `colheita` do Roçado validada
+  por `canPlowField`.
+- **Por que não a oeste, que é o que o plano supunha**: naquela linha o lajedo
+  bloqueia de x19 a x26 e serraria e pedreira tomam o resto; entre armazém e escola
+  sobram **dois** tiles e o menor destes quatro prédios tem **três** de largura.
+- **As asserções ACUSAM — provado tirando o guarda, não só rodando verde:**
+  - sem o filtro de "onde a rua vai passar", o canteiro nasce em cima de `yRua` e
+    **dois** casos reprovam (`o canteiro em 37,33 cai na rua`). A rua ainda não
+    existe no estado quando o campo se deriva — no tick 0 não há um tile de estrada
+    no mapa inteiro —, então `canPlowField` aprova a própria linha de porta. Quem
+    sabe por onde a rua vai passar é o cenário, não a sim.
+  - sem o guarda do desbloqueio na rua nova, ela **rouba a pedra da abertura** e a
+    vila trava com um lenhador em obra para sempre (`woodcutters@34 nao ficou
+    completo: expected 'obra'`).
+- **O `break` do laço da rua NÃO é o que segura o defeito hoje**, e isso está
+  escrito no comentário dele: trocando-o por `continue` a suíte continua verde,
+  porque com o dado atual o desbloqueio já serializa os trechos. Ele fica por ser
+  estrutural (pular um trecho deixaria buraco na rua), não por estar provado.
+- **Duas recusas `sem-pedra` no tick 1, e a causa não era o estoque.** Os comandos
+  de um tick são validados contra o estado do COMEÇO dele: um `canPlaceRoad` que
+  aprova pode encontrar a pedra já reservada pelo `PlaceBlueprint` que veio antes na
+  mesma lista. Enquanto a abertura gasta, a cadeia da comida espera.
+- **`npm run verify` verde** (103 arquivos / 1418 testes) e `test-results.json` com
+  `F-CAL-a-cenario: passes true`.
+
+### Hipótese (NÃO verificada — não tratar como fato)
+
+- **O item (c) do aceite da F-CAL-b tende a reprovar.** No tick 7148 o armazém tinha
+  **corn 14**, e o critério pede "milho nunca acima de 1". O Moinho só ocupou em
+  4062, então há ~4000 ticks de milho entrando sem quem moa. Não sei se o número 14
+  é da **rampa** ou do **regime** — medir isso é trabalho da F-CAL-b, e o que fazer
+  se for do regime é decisão do operador, não conserto do teste.
+
+### Aberto
+
+- **O orçamento de relógio da F-CAL-b.** A corrida de 7148 ticks levou 2,0 s isolada
+  e **4,4 s dentro da suíte** (103 workers). Na mesma proporção, os 36 000 ticks do
+  critério (d) passam de 20 s. Registrado como Nota no item da F-CAL-b: duas
+  janelas, dois casos, `timeout` explícito em cada. `timeout` não é asserção de
+  tempo (§8) — foi exatamente o conserto que a F-CAL-a precisou depois de reprovar
+  uma vez no teto padrão de 5 s.
+- Qual das duas opções da F18g (reserva por tile / arrasto parcial), quando a
+  feature chegar.

@@ -3115,6 +3115,60 @@ Depende da F20b: o marcador lê `unidade.condicao`, que só existe depois dela. 
   Roçado, Moinho, Padaria e Bodega plantados **ao lado dos dois grupos**, e o campo
   desenhado pelo jogador com `PlowField` colado à fazenda. Zero linha de simulação:
   é cenário e medição. O cenário do F17 já monta quase tudo.
+- **QUEBRADA EM DOIS SUB-ITENS em 2026-09-25**, pela regra do `CLAUDE.md` §6 ("se a
+  feature se revelar maior do que uma sessão, não improvise"). O motivo é **medido**,
+  não impressão: o cenário que o aceite pressupõe **não existe e não nasce sozinho** —
+  na abertura pura `mill` e `bakery` **nunca** desbloqueiam, porque dependem de `farm`
+  e `mill` **construídos**, e a `farm` só abre no tick **1110**. Montar a vila da
+  cadeia de comida é trabalho de uma sessão; medir é de outra. **O aceite escrito
+  abaixo não mudou uma palavra** — ele é, inteiro, o da F-CAL-b. Plano de
+  implementação e números da sonda: `docs/planos/F-CAL.md`.
+
+#### F-CAL-a — a vila da cadeia de comida sobe pela abertura
+- **Escopo**: `tests/helpers/cal-vila.ts` — a abertura mais Roçado, Moinho, Padaria e
+  Bodega, os três treinos novos (roceiro e dois padeiros) e o `PlowField` colado à
+  fazenda. As posições saem dos **predicados da sim** (`caixaDeTipo`,
+  `recursoBloqueiaConstrucao`, `canPlaceRoad`, `canPlowField`), varrendo a linha de
+  porta a partir das bordas dos dois grupos — **nenhuma coordenada digitada**, pela
+  mesma regra que a F-T4b usou. A ordem dos comandos reage ao **estado**, como
+  `comandosNoTick` já faz: cada prédio é plantado quando está desbloqueado e o
+  material cabe, nunca num tick escolhido a dedo.
+- **Aceite**: os oito prédios completos, os sete com ocupante, o campo arado e
+  **zero recusa de comando**, dentro de um teto de ticks medido nesta sessão.
+  Cada caixa tem **uma porta que é tile da rua da abertura**, afirmado por predicado
+  e não por coordenada.
+- **Evidência**: `test-output/F-CAL-cenario.json` com o tick de cada marco, a lista de
+  recusas (vazia) e o custo de parede da corrida — este último **como número da
+  corrida, nunca em `expect`** (`CLAUDE.md` §8).
+- **Nota (medido antes de planejar, 2026-09-25, sonda já apagada)**: `farm` desbloqueia
+  em 1110, `inn` em 1; a abertura fecha o critério da F17 em 3993; no tick 8000 o
+  armazém tem 63 timber, 32 stone e 16 de ouro, com **0** recusa em 8000 ticks. Os
+  quatro prédios custam 18 timber + 14 stone e os treinos 3 de ouro: **cabe**. O custo
+  de parede da abertura pura é 117 ms/1000 ticks, então as janelas da F-CAL-b (24 000 e
+  36 000) encostam no orçamento de 10 s dos casos lentos — se encostarem, são **dois
+  casos**, não um teto afrouxado.
+- **Fora do escopo**: nenhuma afirmação de calibração. A F-CAL-a prova que a vila
+  **chega lá**; se os números estão certos é pergunta da F-CAL-b.
+
+#### F-CAL-b — as quatro afirmações do aceite
+- **Depende de**: F-CAL-a, ENTREGUE em 2026-09-25. O que ela herda é
+  `tests/helpers/cal-vila.ts` (`vilaDaCalibracao` + `comandosDaVilaNoTick`) e o teto
+  medido lá: a vila inteira fecha — oito completos, sete ocupados, campo arado, zero
+  recusa — no tick **7148**, com o Moinho ocupado em 4062 e a Padaria em 5392.
+- **Nota (medido na F-CAL-a, e as duas coisas mudam o tamanho desta)**:
+  1. **O orçamento de relógio é o risco real, e ele dobra sob carga.** A corrida de
+     7148 ticks levou 2,0 s isolada e **4,4 s dentro da suíte** (103 workers
+     disputando a máquina) — 619 ms/1000 ticks contra 210 ms. Na mesma proporção,
+     36 000 ticks passam de **20 s**. O teto padrão do Vitest (5 s) já reprovou a
+     F-CAL-a uma vez por isso, e o conserto foi `timeout` explícito, que **não é
+     asserção de tempo** (§8). Planeje as duas janelas como **dois casos**, cada um
+     com `timeout` próprio — e o número de relógio vai para o JSON, nunca para um
+     `expect`.
+  2. **O item (c) do aceite já tem um sinal contrário, e ele é medida, não palpite**:
+     no tick 7148 o armazém tinha **corn 14**, não ≤ 1. O Moinho só ocupou em 4062,
+     então há 4000 ticks de milho entrando sem quem moa. Se o critério (c) reprovar,
+     a pergunta é se ele descreve o regime ou a rampa — e isso é decisão do operador,
+     não conserto do teste.
 - **Aceite**: rodar ≥ 24 000 ticks e afirmar, no eixo determinístico, (a) o intervalo
   de entrega da fazenda (`ticks por milho`, do evento `goods-produced`) dentro de
   **±10 % do ciclo do moinho** (`receitas.mill.ticksDoCiclo`, do dado — não 246
