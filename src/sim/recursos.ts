@@ -309,8 +309,13 @@ const SEM_RESERVA: ReadonlySet<string> = new Set<string>();
 export function algumTileTrabalhavel(
   state: GameState, predio: PredioCompleto, colheita: ColheitaDeRecurso, minimo: number,
   dados: GameData = gameData,
+  // F-T4d — o mesmo `elegivel` de `melhorTileDeColheita`: o alerta e o ciclo tem de
+  // olhar os MESMOS tiles, senao o interior de agua conta como trabalho para o
+  // alerta e como nada para quem escolhe onde pescar.
+  elegivel: TileElegivel = SEMPRE,
 ): boolean {
   for (const chaveDoTile of tilesDeColheita(state, predio, colheita, dados)) {
+    if (!elegivel(chaveDoTile)) continue;
     if (tileTrabalhavel(state, chaveDoTile, colheita, minimo, dados)) return true;
   }
   return false;

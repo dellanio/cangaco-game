@@ -2256,6 +2256,41 @@ a geografia já corrigida do que regravar 900 tiles depois.
   alcance útil do lenhador CRESCE com o uso. O aceite dele não pode afirmar
   contagem fixa de tiles ao alcance ao longo do tempo.
 
+### F-T4d — O pescador sai para a água, em partida (ENTREGUE 2026-09-25)
+- **Por que existe** (pedido do operador, 2026-09-25): o pescador tem `colheita` desde
+  a F-T4a e a água existe desde a F-T1, mas ele só foi exercitado em FIXTURE (cabana
+  injetada e ocupada à mão). *"Meça antes de planejar: ele anda até a margem? Colhe? O
+  cardume esgota? E o que acontece com o prédio quando o último cardume ao alcance seca
+  — o mesmo caminho do veio esgotado da F21b, ou outro? Se já funcionar inteiro, a
+  feature é a medição e o guarda permanente."* Plano e números: `docs/planos/F-T4d.md`.
+- **Medido em partida** (abertura + cabana por comando, posição derivada por `canPlace`
+  e cardume alcançável, rendimento 1 por tile como na F-T4a): anda (sai em 2087), pesca
+  DA MARGEM em (28,24), a Chebyshev 1 do cardume, tile andável e não água; o peixe chega
+  ao armazém pela rua (2647); os **19** cardumes com margem secam (o último em 10744) e
+  saem do estado. **E aí o caminho era OUTRO, e era defeito**: sobravam **12** tiles de
+  interior de água ao alcance, que ninguém alcança, e `semRecursoAoAlcance` os contava
+  como recurso — o pescador parava em `esperando_insumo` sem `vein-exhausted` e sem
+  `veio-esgotado`. A escolha do tile (`especialistas.ts`) filtra por
+  `tileAlcancavelParaColheita`; a pergunta do esgotamento não filtrava. Predicado de
+  elegibilidade discordando de si mesmo nos dois lados — a classe da F-T2c, no eixo da
+  aproximação.
+- **Escopo entregue**: **três linhas de `sim/`** (`producao.ts`: `semRecursoAoAlcance`
+  e `semTrabalhoAoAlcance` passam o mesmo `elegivel` da escolha; `recursos.ts`:
+  `algumTileTrabalhavel` ganha o parâmetro, neutro por padrão) e o guarda
+  `tests/F-T4d-pescador-em-partida.test.ts`, visto vermelho antes de cada uma das duas
+  correções (evento, depois alerta).
+- **Aceite**: (a) em partida, o pescador colhe da margem — tile a Chebyshev 1 do cardume
+  reservado, andável, não água — e o peixe entra no armazém; (b) os cardumes com margem
+  secam e **saem** de `state.recursos`; os de interior **ficam**; (c) no tick do último
+  peixe o prédio emite `vein-exhausted` **uma vez**, diz `veio-esgotado`, o pescador fica
+  no **mesmo** estado de espera do mineiro da F21b (afirmado contra aquele cenário, não
+  contra o rótulo) e nada fica reclamado — o **mesmo caminho** da F21b; (d) em todo tick
+  da corrida, `semRecursoAoAlcance` ⇔ a escolha do tile devolve `null`.
+- **Evidência**: `test-output/F-T4d.json`.
+- **Fora do escopo**: a fome da abertura (sem Bodega, os civis morrem no 12 000 — o teste
+  para antes); o alerta `sem-campo` do Roçado (`algumTileTrabalhavel`), que tem a mesma
+  forma e não filtra aproximação: milho se pisa, e é a nota herdada da F18.
+
 ### F19b — A segunda comida: Malhada e Casa de Carne (medir primeiro)
 - **Posição na fila — decisão do operador, 2026-09-24**: **antes da F20**, com a
   razão escrita: *"O GDD §4.3 diz que civil só satura com pelo menos DUAS comidas

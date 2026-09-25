@@ -12,6 +12,7 @@ import type { GameData, ReceitaDePredio } from './data/types';
 import { gameData } from './data';
 import type { GameState, Predio, PredioCompleto } from './state';
 import { algumTileTrabalhavel, melhorTileDeColheita } from './recursos';
+import { tileAlcancavelParaColheita } from './aproximacao';
 
 /** A receita do tipo, ou `null` — inclusive para tipo que nem existe no dado
  *  (save de outra versao). `null` e nunca `undefined`, como `trabalhadorDoTipo`. */
@@ -102,7 +103,19 @@ export function semRecursoAoAlcance(
 ): boolean {
   const { colheita } = receita;
   if (colheita === null) return false;
-  return melhorTileDeColheita(state, predio, colheita, unidadesPorCiclo(receita), undefined, dados) === null;
+  // F-T4d — o MESMO predicado de elegibilidade que a escolha do tile usa
+  // (`especialistas.ts`: `tileAlcancavelParaColheita`). Medido em partida
+  // (2026-09-25): a cabana do pescador na abertura tem 31 cardumes ao alcance e
+  // so 19 com margem; secos os 19, o pescador parava em `esperando_insumo` e o
+  // predio NAO dizia `veio-esgotado` nem emitia `vein-exhausted`, porque esta
+  // pergunta contava os 12 tiles de interior de agua que ninguem alcanca. Era o
+  // predicado de elegibilidade discordando de si mesmo nos dois lados — a mesma
+  // classe do paragrafo da F-T2c acima, agora no eixo da APROXIMACAO em vez da
+  // quantidade. Rocha e milho se pisam e nunca sentiram a diferenca; agua sente.
+  return melhorTileDeColheita(
+    state, predio, colheita, unidadesPorCiclo(receita), undefined, dados,
+    (k) => tileAlcancavelParaColheita(state, k, dados),
+  ) === null;
 }
 
 /**
@@ -120,5 +133,11 @@ export function semTrabalhoAoAlcance(
 ): boolean {
   const { colheita } = receita;
   if (colheita === null) return false;
-  return !algumTileTrabalhavel(state, predio, colheita, unidadesPorCiclo(receita), dados);
+  // F-T4d — o mesmo `elegivel` de `semRecursoAoAlcance`, pelo mesmo motivo: e daqui
+  // que sai o alerta `veio-esgotado` (F22), e sem o filtro a cabana com so interior
+  // de agua ao alcance ficava muda enquanto o pescador esperava.
+  return !algumTileTrabalhavel(
+    state, predio, colheita, unidadesPorCiclo(receita), dados,
+    (k) => tileAlcancavelParaColheita(state, k, dados),
+  );
 }

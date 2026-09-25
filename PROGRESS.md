@@ -7108,3 +7108,68 @@ Decisão do operador antes da sessão: **Opção A — a reserva vira por tile**
 - **Fica registrado como divida de desempenho, nao de regra**: o canteiro grande e o
   caso normal do jogo com a Opcao A (o jogador desenha 30 tiles de uma vez). Os dois
   proximos parafusos estao nomeados acima; nenhum deles muda contrato.
+
+---
+
+## 2026-09-25 (noite) — F-T4d: o pescador sai para a água, em partida (branch `fable-lote-sim`)
+
+Pedido do operador: medir antes de planejar, e se funcionar inteiro a feature é a
+medição e o guarda. Plano e tabela: `docs/planos/F-T4d.md`. O item entrou no
+`BUILD_PLAN.md` depois da F-T4b, com o aceite escrito a partir da medição.
+
+### Verificado (rodei o comando ou abri o arquivo)
+
+- **Em partida ele anda, colhe da margem e entrega** (`test-output/F-T4d.json`): a
+  abertura + a Casa do Pescador por comando na posição que a sim escolhe (varredura por
+  `canPlace`, porta na rua, mais cardume alcançável: (31,27), 31 ao alcance, 22 com
+  margem no tick da plantação), rendimento 1 por tile como na F-T4a. Desbloqueia em
+  1236, completa 1864, ocupada 2086, primeira saída 2087, primeiro peixe 2527 pescado
+  de (28,24) — Chebyshev 1 do cardume, andável, não água —, no armazém pela rua em
+  2647. Zero recusa.
+- **O cardume esgota, e o regime `nunca` funciona em partida**: os **19** cardumes com
+  margem saem do estado (o último no 10744); os **12** de interior ficam com
+  quantidade 1 e `tileAlcancavelParaColheita === false`.
+- **A resposta à pergunta "o mesmo caminho da F21b, ou outro?": ERA OUTRO, e era
+  defeito.** Medido na sonda antes de mexer: seco o último cardume com margem, o
+  pescador parava em `esperando_insumo` e o prédio **não** emitia `vein-exhausted` nem
+  dizia `veio-esgotado` — ficava mudo até o pescador morrer de fome (14058; a abertura
+  não tem Bodega). Causa lida no código: a escolha do tile (`especialistas.ts:228`)
+  filtra por `tileAlcancavelParaColheita`; `semRecursoAoAlcance` (o evento) e
+  `semTrabalhoAoAlcance` → `algumTileTrabalhavel` (o alerta da F22) **não** filtravam
+  e contavam os 12 tiles de interior. Predicado de elegibilidade discordando de si
+  mesmo nos dois lados — a classe que a F-T2c consertou no eixo da quantidade, agora
+  no eixo da aproximação. Rocha e milho se pisam e nunca sentiram; água sente.
+- **O conserto são três linhas de `sim/`**: `semRecursoAoAlcance` e
+  `semTrabalhoAoAlcance` (`producao.ts`) passam o mesmo `elegivel` da escolha;
+  `algumTileTrabalhavel` (`recursos.ts`) ganhou o parâmetro, neutro por padrão. Com
+  elas, o lago seco é **o mesmo caminho da mina seca**: `vein-exhausted` uma vez no
+  10744, `veio-esgotado` no mesmo tick, pescador no mesmo estado do mineiro da F21b
+  (afirmado contra o cenário dela rodado até secar, não contra o rótulo), nada
+  reclamado.
+- **O guarda acusa, e foi visto vermelho duas vezes antes de ficar verde**:
+  `tests/F-T4d-pescador-em-partida.test.ts` reprovou (c) e (d) com a sonda original
+  (sem evento, sem alerta) e reprovou (c) de novo com só o evento consertado (alerta
+  ainda mudo) — cada correção fechou uma reprovação nomeada. A propriedade (d) —
+  em todo tick, `semRecursoAoAlcance` ⇔ a escolha devolve `null` — é o que impede a
+  reincidência.
+- `F-T4-pescador`, `F21b`, `F22`, `F18-rocado`, `F-TA` continuam verdes com o
+  predicado novo: rocha e milho se pisam, então para eles o filtro é identidade.
+
+### Decidido, com o porquê
+
+- **A posição da cabana é derivada, não digitada**: (32,27) da fixture da F-T4a cai
+  dentro da abertura de hoje (`canPlace` recusa). A varredura escolhe pela sim, e o
+  teste afirma o que a escolha garante (porta na rua, cardume alcançável > 0, interior
+  > 0 para a pergunta não ser de vácuo).
+- **O teste para 200 ticks depois do esgotamento** (~10 945), antes do 12 000 em que a
+  abertura sem Bodega perde os seis civis iniciais (F20b). A fome é o cenário da
+  F-CAL, não deste.
+- **`algumTileTrabalhavel` ganhou parâmetro em vez de mudar o padrão**: o Roçado
+  (`sem-campo`) continua sem filtro de aproximação — milho se pisa, e o tile de milho
+  debaixo de footprint é a nota herdada da F18, não desta feature.
+
+### Aberto
+
+- Nada que precise do operador. O rendimento sobrescrito (1 por tile) é andaime de
+  medição declarado, o mesmo da F-T4a; com os 20 do dado o lago da abertura dura
+  ~170 mil ticks.
