@@ -30,33 +30,42 @@ async function roteiro(ctx) {
   const balcao = await retanguloDe(page, '#balcao');
   afirmar(canvas.bottom <= balcao.top + 0.5, `canvas.bottom (${canvas.bottom}) deveria ser <= balcao.top (${balcao.top})`);
 
-  // 1b. a prancha RETRAI para a lombada e o canvas cresce ate ela. O Phaser em
-  //     Scale.RESIZE confere o pai a cada 500 ms, dai a espera. Nos dois
-  //     estados o canvas continua a esquerda da coluna: nada fica por baixo.
-  const esperarOCanvasSeguirAGrade = () => page.waitForTimeout(700);
+  // 1b. a prancha RETRAI: a coluna some, o canvas cresce ate a borda direita e
+  //     o botao flutuante da barra e o que a traz de volta. O Phaser em
+  //     Scale.RESIZE confere o pai a cada 500 ms, dai a espera. Aberta ou
+  //     fechada, nada fica por baixo do canvas.
+  const esperarOCanvasSeguirAGrade = () => page.waitForTimeout(900);
+  const flutuante = '#hud [data-abrir="prancha"]';
+  afirmar(
+    await page.isVisible(flutuante) && (await page.getAttribute(flutuante, 'aria-pressed')) === 'true',
+    'o botao flutuante deveria estar na barra, apertado enquanto a prancha esta aberta',
+  );
   await page.click('[data-fechar="prancha"]');
   await esperarOCanvasSeguirAGrade();
-  const lombada = await retanguloDe(page, '#menu-build');
   const canvasLargo = await retanguloDoCanvas(page);
   afirmar(
-    lombada.width < painel.width && lombada.right >= painel.right - 0.5,
-    `fechada, a prancha deveria virar lombada estreita na borda direita, veio ${JSON.stringify(lombada)} contra ${JSON.stringify(painel)}`,
+    await page.isHidden('#menu-build') && await page.isHidden('[data-predio="quarry"]'),
+    'fechada, a prancha some inteira — nenhum item do menu fica na tela',
   );
   afirmar(
-    canvasLargo.width > canvas.width && canvasLargo.right <= lombada.left + 0.5,
-    `com a prancha fechada o canvas deveria crescer ate a lombada, veio ${JSON.stringify(canvasLargo)} contra ${JSON.stringify(lombada)}`,
+    canvasLargo.width > canvas.width && canvasLargo.right <= hud.right + 0.5,
+    `com a prancha fechada o canvas deveria ir ate a borda direita, veio ${JSON.stringify(canvasLargo)} contra hud.right ${hud.right}`,
   );
   afirmar(
-    await page.isVisible('[data-abrir="prancha"]') && await page.isHidden('[data-predio="quarry"]'),
-    'fechada, a prancha mostra so a lombada — nenhum item do menu fica clicavel',
+    (await page.getAttribute(flutuante, 'aria-pressed')) === 'false',
+    'fechada a prancha, o botao flutuante deveria ficar solto',
   );
   await capturar('prancha-recolhida');
-  await page.click('[data-abrir="prancha"]');
+  await page.click(flutuante);
   await esperarOCanvasSeguirAGrade();
   const canvasDeVolta = await retanguloDoCanvas(page);
   afirmar(
     Math.abs(canvasDeVolta.width - canvas.width) < 0.5 && await page.isVisible('[data-predio="quarry"]'),
-    `reaberta, a prancha deveria devolver o canvas a largura inicial (${canvas.width}), veio ${canvasDeVolta.width}`,
+    `reaberta pelo flutuante, a prancha deveria devolver o canvas a largura inicial (${canvas.width}), veio ${canvasDeVolta.width}`,
+  );
+  afirmar(
+    (await page.getAttribute(flutuante, 'aria-pressed')) === 'true',
+    'reaberta, o botao flutuante volta a apertado',
   );
 
   // 2. bloqueado: cinza, com "requer <nome do tema do pai>", e clicar nao ativa.

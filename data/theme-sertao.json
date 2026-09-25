@@ -461,7 +461,8 @@
   "paineis": {
     "_doc": "Layout 2 (docs/propostas/ui-releitura-rts.md, secao 8). A PRANCHA e a coluna de construir, a direita; o BALCAO e a faixa de contexto no rodape. Os dois retraem: a prancha vira lombada de tinta na borda direita (o rotulo vertical dela e menuBuild.titulo, que ja existe), o balcao vira uma alca a esquerda com o nome do que esta escolhido. Aqui moram so os rotulos dos botoes de abrir e recolher e o texto da alca quando nao ha nada escolhido. As setas sao desenho em CSS, nao texto.",
     "prancha": {
-      "recolher": "Recolher o menu de construir"
+      "recolher": "Recolher o menu de construir",
+      "abrir": "Abrir o menu de construir"
     },
     "balcao": {
       "recolher": "Recolher os detalhes",

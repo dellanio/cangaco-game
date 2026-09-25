@@ -453,7 +453,10 @@ afirmação `canvas.bottom <= balcao.top` e passa a medir os quatro estados.
 > de cinco vagas mais o título não cabia em 108 px de conteúdo), e a alça
 > **24 px**; a lombada tem **22 px** (a 18 o título vertical não lia). O
 > `#alertas` foi para dentro do `#hud` no `index.html` sem mudar
-> `ui/alertas.ts`. `tools/shot.js` ganhou `CANGACO_SHOT_PORTA` porque um
+> `ui/alertas.ts`. **A lombada foi substituída** (operador, 2026-09-25: lia
+> como "menu comprimido numa barra"): fechada, a prancha some inteira e o
+> canvas vai até a borda; um **botão flutuante no canto superior direito da
+> barra** a traz de volta, com animação de entrada. `tools/shot.js` ganhou `CANGACO_SHOT_PORTA` porque um
 > Vite órfão de outra sessão ocupava a porta 5175 e o runner media o
 > `index.html` do diretório vizinho. As perguntas de 8.6 seguem abertas.
 

@@ -27,7 +27,6 @@
      nunca sobreposicao: o canvas nao fica sob painel em nenhum dos 4 estados. */
   --altura-hud: 40px;
   --largura-prancha: 260px;
-  --largura-lombada: 22px;
   --altura-balcao: 148px;
   --altura-alca: 24px;
 
@@ -60,7 +59,10 @@ body {
   color: var(--tinta);
   font: 14px/1.35 var(--fonte-corpo);
 }
-body[data-prancha="fechada"] { --largura-prancha: var(--largura-lombada); }
+/* fechada, a coluna vai a ZERO: o mapa toma a largura toda e o que sobra e o
+   botao flutuante na barra. A largura da grade anima; o canvas segue (RESIZE). */
+body { transition: grid-template-columns 240ms ease-out; }
+body[data-prancha="fechada"] { --largura-prancha: 0px; }
 body[data-balcao="fechado"] { --altura-balcao: var(--altura-alca); }
 
 /* as setas dos botoes de abrir e recolher: desenho, nao texto */
@@ -219,18 +221,35 @@ button[aria-disabled="true"] {
   width: 24px; height: 24px; padding: 0; margin-bottom: -30px;
   display: grid; place-items: center; box-shadow: none;
 }
-#menu-build .lombada { display: none; }
-body[data-prancha="fechada"] #menu-build { padding: 0; overflow: hidden; background: var(--tinta); }
-body[data-prancha="fechada"] #menu-build > :not(.lombada) { display: none; }
-body[data-prancha="fechada"] #menu-build .lombada {
-  display: flex; flex-direction: column; align-items: center; gap: 8px;
-  width: 100%; height: 100%; padding: 8px 0; margin: 0; box-sizing: border-box;
-  border: 0; box-shadow: none; background: var(--tinta); color: var(--papel);
-  writing-mode: vertical-rl; font: 12px/1 var(--fonte-display); letter-spacing: 0.16em;
-  text-transform: uppercase; cursor: pointer;
+body[data-prancha="fechada"] #menu-build { display: none; }
+/* a entrada: a prancha desliza da borda e assenta, como carimbo que baixa */
+@keyframes prancha-entra {
+  0% { transform: translateX(48px); opacity: 0; }
+  60% { transform: translateX(-4px); opacity: 1; }
+  100% { transform: none; opacity: 1; }
 }
-body[data-prancha="fechada"] #menu-build .lombada:hover { background: var(--tinta-fraca); }
-body[data-prancha="fechada"] #menu-build .lombada:active { transform: none; }
+#menu-build.entrando { animation: prancha-entra 280ms ease-out; }
+/* o botao flutuante, na ponta direita da barra: o MESMO carimbo do "Pausado"
+   (tinta, letra de papel, levemente torto), com o titulo do menu e o glifo de
+   grade. Apertado (prancha aberta) assenta reto e afundado. */
+#hud .abrir-prancha {
+  order: 3; margin-left: 12px; flex: 0 0 auto;
+  display: flex; align-items: center; gap: 7px; padding: 3px 10px;
+  background: var(--tinta); color: var(--papel); border: 0;
+  font: 13px/1.2 var(--fonte-display); letter-spacing: 0.06em; text-transform: uppercase;
+  box-shadow: 2px 2px 0 var(--tinta-fraca); transform: rotate(-1.5deg);
+}
+#hud .abrir-prancha::before {
+  content: ''; width: 12px; height: 12px;
+  background:
+    linear-gradient(currentColor, currentColor) 0 0 / 5px 5px no-repeat,
+    linear-gradient(currentColor, currentColor) 7px 0 / 5px 5px no-repeat,
+    linear-gradient(currentColor, currentColor) 0 7px / 5px 5px no-repeat,
+    linear-gradient(currentColor, currentColor) 7px 7px / 5px 5px no-repeat;
+}
+#hud .abrir-prancha:hover { background: var(--tinta-fraca); }
+#hud .abrir-prancha[aria-pressed="true"] { box-shadow: none; transform: translate(2px, 2px); }
+#hud .abrir-prancha:active { transform: translate(3px, 3px); box-shadow: none; }
 /* A GRADE DE ICONES (Layout 2, fatia 2): 5 colunas de 40 px na coluna de 260,
    uma faixa por grupo com a regua gravada entre elas, e o cartao fixo no pe.
    Numeros medidos na proposta (§1): 5 x 40 + 4 x 9 = 236 de largura util. */

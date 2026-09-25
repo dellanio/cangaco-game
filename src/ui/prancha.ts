@@ -1,8 +1,12 @@
 // A prancha (Layout 2, docs/propostas/ui-releitura-rts.md §8): a coluna de
 // construir, a direita, RETRATIL. Aberta, e a coluna de 260 px que a F06 mede;
-// fechada, e uma lombada de tinta na borda direita com o titulo do menu na
-// vertical. Quem cresce no lugar dela e o canvas — o Phaser esta em
-// `Scale.RESIZE` a 100 % do pai e acompanha a celula da grade sozinho.
+// fechada, ela SOME — a coluna da grade vai a zero e o canvas toma a largura
+// toda — e o que fica e um BOTAO FLUTUANTE no canto superior direito, dentro
+// da barra do HUD, que a traz de volta com uma animacao de entrada (pedido do
+// operador, 2026-09-25: a lombada de 22 px lia como "menu comprimido").
+//
+// Quem cresce no lugar dela e o canvas — o Phaser esta em `Scale.RESIZE` a
+// 100 % do pai e acompanha a celula da grade sozinho.
 //
 // So o jogador abre e fecha. A prancha nunca se mexe por conta propria: e onde
 // a mao dele vai a cada poucos segundos, e um menu que some sozinho e um menu
@@ -49,9 +53,15 @@ export interface Prancha {
   fechar(): void;
 }
 
+/** A classe que dispara a animacao de entrada; sai sozinha no `animationend`,
+ *  para a proxima abertura animar de novo. */
+const CLASSE_DE_ENTRADA = 'entrando';
+
 export function montarPrancha(preferencia: PreferenciaDaPrancha = preferenciaNoNavegador()): Prancha {
   const raiz = document.getElementById('menu-build');
   if (!raiz) throw new Error('prancha: #menu-build nao existe no index.html');
+  const barra = document.getElementById('hud');
+  if (!barra) throw new Error('prancha: #hud nao existe no index.html');
 
   // O botao de recolher: fica no canto superior direito da coluna aberta.
   const recolher = document.createElement('button');
@@ -60,31 +70,41 @@ export function montarPrancha(preferencia: PreferenciaDaPrancha = preferenciaNoN
   recolher.dataset.fechar = 'prancha';
   recolher.setAttribute('aria-label', temaSertao.paineis.prancha.recolher);
   recolher.title = temaSertao.paineis.prancha.recolher;
+  raiz.prepend(recolher);
 
-  // A lombada: a coluna inteira quando fechada. O rotulo e o TITULO do menu,
-  // que ja existe no tema — a lombada e o menu dobrado, nao um botao novo.
-  const lombada = document.createElement('button');
-  lombada.type = 'button';
-  lombada.className = 'lombada seta-esq';
-  lombada.dataset.abrir = 'prancha';
-  lombada.textContent = temaSertao.menuBuild.titulo;
-
-  raiz.prepend(recolher, lombada);
+  // O botao flutuante: na barra, na ponta direita, sempre presente. Com a
+  // prancha aberta ele fica "apertado" (`aria-pressed`) e o clique recolhe;
+  // fechada, o clique abre. O rotulo e o TITULO do menu, que ja existe no
+  // tema — o botao e o menu dobrado, nao um botao novo.
+  const flutuante = document.createElement('button');
+  flutuante.type = 'button';
+  flutuante.className = 'abrir-prancha';
+  flutuante.dataset.abrir = 'prancha';
+  flutuante.textContent = temaSertao.menuBuild.titulo;
+  barra.append(flutuante);
 
   let estado: EstadoDaPrancha = preferencia.ler() ?? 'aberta';
 
-  function aplicar(novo: EstadoDaPrancha): void {
+  function aplicar(novo: EstadoDaPrancha, animar: boolean): void {
     estado = novo;
     document.body.dataset.prancha = novo;
+    flutuante.setAttribute('aria-pressed', String(novo === 'aberta'));
+    const rotulo = novo === 'aberta' ? temaSertao.paineis.prancha.recolher : temaSertao.paineis.prancha.abrir;
+    flutuante.setAttribute('aria-label', rotulo);
+    flutuante.title = rotulo;
+    if (animar && novo === 'aberta') raiz!.classList.add(CLASSE_DE_ENTRADA);
     preferencia.gravar(novo);
   }
-  aplicar(estado);
+  raiz.addEventListener('animationend', () => {
+    raiz.classList.remove(CLASSE_DE_ENTRADA);
+  });
+  aplicar(estado, false);
 
   recolher.addEventListener('click', () => {
-    aplicar('fechada');
+    aplicar('fechada', false);
   });
-  lombada.addEventListener('click', () => {
-    aplicar('aberta');
+  flutuante.addEventListener('click', () => {
+    aplicar(estado === 'aberta' ? 'fechada' : 'aberta', true);
   });
 
   return {
@@ -92,10 +112,10 @@ export function montarPrancha(preferencia: PreferenciaDaPrancha = preferenciaNoN
       return estado;
     },
     abrir() {
-      aplicar('aberta');
+      aplicar('aberta', true);
     },
     fechar() {
-      aplicar('fechada');
+      aplicar('fechada', false);
     },
   };
 }
