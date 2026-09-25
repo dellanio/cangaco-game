@@ -4,6 +4,10 @@ Branch `estilo-ui`, 2026-09-25. Proposta para o operador escolher; **nada aqui
 está implementado**. O mock estático está em `ui-releitura-rts.html` (abre no
 Vite: `/docs/propostas/ui-releitura-rts.html`).
 
+> **Decidido (operador, 2026-09-25): Layout 2, com os dois painéis retráteis.**
+> A seção 8 é a decisão e o refinamento; as seções 1 a 7 são o estudo que a
+> antecedeu e ficam como registro do que foi comparado.
+
 ## 0. O defeito e o que os RTS fazem com ele
 
 O menu Construir de hoje é uma lista vertical de 28 prédios com texto, que rola.
@@ -219,12 +223,13 @@ rodape.top`. O Phaser mede o pai no boot e o rodapé tem altura fixa, então nad
 muda no `render/`.
 
 Prós: zero cliques entre inspecionar e construir; a fila da escola em linha,
-como no Age. Contras: **18% da altura** do mapa vai embora numa projeção
-top-down onde o jogador varre o mapa de norte a sul (a porta é ao sul; a rua
-corre em linha); a faixa fica vazia sem seleção (o Age a enche com minimapa e
-retrato — nós não temos nenhum dos dois ainda); e a página CONSTRUIR sem o
-cartão fixo embaixo obriga o nome/custo a virar tooltip, que é texto sobre o
-mapa.
+como no Age. Contras: a faixa fica vazia sem seleção (o Age a enche com
+minimapa e retrato — nós não temos nenhum dos dois ainda). A conta de área,
+**corrigida pelo operador**: o rodapé tira 132 de 680 px, **19,4 % da altura**,
+mas a coluna de 260 px do Layout 1 tira 20 % da largura, de forma permanente.
+A diferença entre os dois não é *quanto* canvas sobra — é *quando* se perde:
+o Layout 1 perde sempre; o Layout 2 perde só enquanto há algo selecionado, e
+com a faixa encolhendo sem seleção (seção 8) não perde nada no resto do tempo.
 
 ### Layout 3 — "Coluna dividida"
 
@@ -242,7 +247,7 @@ fronteira do desbloqueio some, porque está espalhada em cinco abas.
 | | 1 Prancha | 2 Balcão | 3 Dividida |
 |---|---|---|---|
 | 28 ícones visíveis sem rolar | sim | sim | 7 por vez |
-| Canvas | igual ao de hoje | −132 px de altura | igual |
+| Canvas | −20 % da largura, sempre | −19,4 % da altura, só com seleção (seção 8) | −20 % da largura, sempre |
 | Grade CSS da F06 | igual | +1 linha, +1 afirmação | igual |
 | Sobreposição no canvas | nenhuma | nenhuma | nenhuma |
 | Cliques entre inspecionar e construir | 1 | 0 | 0 |
@@ -251,10 +256,14 @@ fronteira do desbloqueio some, porque está espalhada em cinco abas.
 | Minimapa (P2) | acima das abas a 1080p | no rodapé, como no Age | não cabe |
 | GDD §7.1 | é ele | não | meio |
 
-**Recomendação: Layout 1.** É a estrutura que o GDD já prevê, é a que o
-original usou, não mexe no canvas nem na grade que a F06 mede, e tira as duas
-sobreposições do mapa. O clique da aba é o preço, e é o mesmo preço que os
-dois RTS de referência cobram.
+**Recomendação original: Layout 1**, pela estrutura do GDD, pelo original e
+por não mexer na grade que a F06 mede. **Recusada pelo operador** (seção 8) por
+duas razões que a proposta não tinha pesado: no Layout 1 selecionar um prédio
+*tira a grade de construir da tela* — clicar na pedreira para ver o estoque e
+perder o menu incomoda num RTS, e é por isso que o Age faz as duas coexistirem;
+e o painel de contexto da Fase C é seleção **militar** (grupo, formação,
+ordens, condição da tropa), que é faixa horizontal, não coluna de 260 px —
+nascer no Layout 1 obrigaria a refazer quando o Quartel existir.
 
 ## 4. Avisos e HUD
 
@@ -316,3 +325,148 @@ de ocre (a medida da F06 continua), faixas como régua gravada, carimbos no HUD.
 3. A resolução mínima suportada é 1280 × 720? O orçamento fecha com 15 px de
    folga nela; abaixo disso a grade precisaria de rolagem e voltaríamos ao
    defeito.
+
+## 8. Decisão do operador (2026-09-25): Layout 2, retrátil
+
+O operador aprovou o desenho geral — grade por grupo, ícone derivado do
+footprint, avisos como carimbo no HUD — e escolheu o **Balcão** (Layout 2)
+pelas duas razões registradas no fim da seção 3: a grade de construir e o
+contexto **coexistem**, e o contexto militar da Fase C é faixa, não coluna.
+Com uma exigência a mais: os dois painéis precisam **retrair e ficar
+minimizados** — a coluna da direita vira uma linha fina na borda direita, e a
+barra de baixo, ao retrair, fica encostada no **lado esquerdo** da tela. E
+pediu que a barra de baixo sirva para "maiores detalhes de um edifício".
+
+Duas condições dele antes de implementar, e como esta seção as resolve:
+
+1. **O roteiro da F06 ganha `canvas.bottom <= rodape.top`**, ao lado de
+   `canvas.right <= painel.left` que já existe (8.3).
+2. **A faixa vazia não fica vazia**: sem seleção ela **encolhe** para a alça
+   de 22 px (8.2). Resumo da vila e últimos avisos foram considerados e
+   recusados aqui: resumo da vila é o HUD (que já mostra dinheiro, material,
+   comida e gente), e avisos já são carimbos no HUD (seção 4) — repetir os
+   dois numa faixa de 132 px seria pagar 19,4 % do mapa por informação que já
+   está na tela. Encolher devolve o mapa e deixa a alça como lugar do que
+   está na mão (pergunta 8.6.1).
+
+### 8.1 Para que serve a barra de baixo
+
+A barra de baixo **é** o painel de contexto do GDD §7.2 — o que hoje é o
+`#painel-predio` sobreposto no canto do mapa (F16b). Ela mostra o que está
+selecionado, e só isso. Com um prédio selecionado, é exatamente "maiores
+detalhes de um edifício":
+
+| Bloco | Conteúdo hoje (F16b, F13b, F17b) | Vem depois (GDD §2.3, §7.2) |
+|---|---|---|
+| Identidade | nome, carimbo `Parado` / `Em obra`, firmeza ou progresso | descrição do tema, ligar/desligar reparo |
+| Gente | quem trabalha ou `Sem trabalhador` | *Dismiss* do civil |
+| Estoque | gavetas Entra / Sai; medidor de material da obra | Armazém: 28 mercadorias com bloquear/liberar |
+| Ações | Parar / Voltar ao trabalho, Derrubar | modo do Lenhador; quantas armas produzir |
+| Fila | Casa do Coronel: 5 slots + 14 tipos | Quartel: tipo de soldado |
+| Grupo militar | — | Halt / Split / Link / Formação / Feed / Storm (§2.4) |
+
+A largura de 1020 px é o que torna isso possível: no painel de 248 px de hoje
+tudo é empilhado; na barra os blocos ficam **lado a lado**, e o painel do
+armazém com 28 mercadorias, que não caberia numa coluna, cabe numa faixa. É
+essa a razão de o Age pôr o contexto no rodapé.
+
+### 8.2 Os dois painéis e os quatro estados
+
+```
+Aberto + aberto (padrão)        Prancha fechada                 Balcão fechado                  Os dois fechados
+┌────────────────┬────┐         ┌─────────────────────┬┐        ┌────────────────┬────┐         ┌─────────────────────┬┐
+│ HUD            │    │         │ HUD                 ││        │ HUD            │    │         │ HUD                 ││
+├────────────────┤ C  │         ├─────────────────────┤│        ├────────────────┤ C  │         ├─────────────────────┤│
+│                │ O  │         │                     │C        │                │ O  │         │                     │C
+│ canvas         │ N  │         │ canvas              │O        │ canvas         │ N  │         │ canvas              │O
+│ 1020 × 548     │ S  │         │ 1262 × 548          │N        │ 1020 × 658     │ S  │         │ 1262 × 658          │N
+│                │ T  │         │                     │S        │                │ T  │         │                     │S
+├────────────────┤ R  │         ├─────────────────────┤T        │                │ R  │         │                     │T
+│ balcão 132     │ .  │         │ balcão 132          │R        ├────────────────┤ .  │         ├─────────────────────┤R
+│                │    │         │                     │.        │▲ Pedreira (22) │    │         │▲ Pedreira (22)      │.
+└────────────────┴────┘         └─────────────────────┴┘        └────────────────┴────┘         └─────────────────────┴┘
+```
+
+- **Prancha** (coluna da direita, a grade de construir). Aberta: 260 px.
+  Fechada: **18 px**, uma lombada de tinta na borda direita com o rótulo
+  `Construir` (tema) escrito na vertical e a seta. Clicar na lombada abre;
+  clicar na seta do cabeçalho fecha. Só o jogador abre e fecha — a prancha
+  nunca se mexe sozinha, porque é onde a mão dele vai a cada poucos segundos.
+- **Balcão** (barra de baixo, o contexto). Aberto: 132 px. Fechado: **22 px**,
+  uma alça encostada à esquerda com o nome do que está selecionado e a seta
+  `▲`. O balcão **abre sozinho ao selecionar** um prédio (selecionar é pedir
+  detalhe) e **fecha sozinho quando não há seleção** (`Esc`, clique em tile
+  vazio, prédio demolido): barra vazia é 132 px de mapa perdidos por nada.
+  Fechado à mão com um prédio selecionado, ele guarda a seleção (o contorno no
+  mapa fica) e a alça mostra o nome; selecionar outro prédio reabre.
+
+O estado dos dois é **estado de interface**, como a ferramenta e a seleção:
+vive em `ui/`, nunca em `GameState`, e a preferência da prancha (aberta ou
+fechada) vai para `localStorage` como o lembrete da ajuda (F-D1) — é
+preferência de quem joga nesta máquina, não de partida.
+
+### 8.3 O que acontece com o canvas
+
+Nada em `render/`. `src/render/game.ts:36` já configura
+`Phaser.Scale.RESIZE` a 100 % do pai, então o canvas **acompanha a célula da
+grade**: quando a coluna passa de 260 para 18 px ou a linha de baixo de 132
+para 22 px, o mapa cresce e a câmera continua válida. A grade CSS passa a ter
+três linhas e as duas medidas viram variáveis que mudam com um atributo no
+`body`:
+
+```
+body                         { grid-template-columns: 1fr var(--largura-prancha);
+                               grid-template-rows: var(--altura-hud) 1fr var(--altura-balcao); }
+body[data-prancha="fechada"] { --largura-prancha: 18px; }
+body[data-balcao="fechado"]  { --altura-balcao: 22px; }
+#jogo     { grid-column: 1; grid-row: 2; }        /* canvas: SO a celula dele, como hoje */
+#balcao   { grid-column: 1; grid-row: 3; }        /* nunca sobre o canvas */
+#prancha  { grid-column: 2; grid-row: 2 / -1; }   /* desce ate o chao */
+```
+
+O canvas **nunca fica sob painel** em nenhum dos quatro estados: a lombada e a
+alça são células da grade, não sobreposição. O roteiro da F06 ganha a
+afirmação `canvas.bottom <= balcao.top` e passa a medir os quatro estados.
+
+### 8.4 O que muda de estrutura e exige roteiro novo
+
+- `#menu-build` → `#prancha`, com cabeçalho (título do tema + botão de
+  fechar), grade de ícones em faixas (seção 2) e cartão fixo. Atributos
+  `data-predio`, `data-ferramenta`, `aria-pressed`, `aria-disabled` ficam no
+  botão-ícone; o texto `requer X` vai para o cartão `[data-planta]`, e a
+  afirmação da F06 sobre `textContent` passa a ler o cartão.
+- `#painel-predio` → `#balcao`, mesmo conteúdo em blocos horizontais, mais a
+  alça `[data-alca]`. `data-predio-aberto`, `data-tipo`, `data-cancelar`,
+  `data-treinar`, `data-demolir`, `data-pausar` ficam. A trava de ponteiro do
+  BUG-B continua. A afirmação da F13b "o tile vazio não pode cair sob o painel"
+  vira trivialmente verdadeira e fica.
+- `#alertas` vai para o HUD como carimbos (seção 4); a F22 troca a medida
+  "não cobre o painel" por "está dentro do HUD".
+- Atributos novos, para os roteiros: `body[data-prancha]`,
+  `body[data-balcao]`, `[data-alca]`, `[data-fechar]`.
+
+### 8.5 Fatias de implementação (uma por sessão)
+
+1. **Grade e retração.** `index.html` e `estilo.css` com a grade de três
+   linhas e os dois atributos; `ui/prancha.ts` e `ui/balcao.ts` só com abrir,
+   fechar e a alça, e o conteúdo de hoje movido para dentro sem mudar. F06
+   ganha as medidas dos quatro estados. É a fatia que prova que o canvas
+   cresce e que nada fica por baixo.
+2. **Grade de ícones.** `data/menu-build.json` com os grupos, regra em
+   `validate:data`, rótulos no tema, `menu-build.ts` vira grade com faixas,
+   placeholder de footprint e cartão fixo. F06 ajustada.
+3. **Balcão horizontal.** `painel-predio.ts` em blocos lado a lado; fila da
+   escola em linha; F13b e F16b ajustadas.
+4. **Avisos no HUD.** `alertas.ts` monta em `#hud`; F22 ajustada.
+
+Só `src/ui/`, `index.html`, `data/` e `tools/shots/`. Nada em `render/`,
+`sim/` nem `input/`.
+
+### 8.6 Perguntas em aberto
+
+1. A prancha fechada some com o cartão fixo; o nome e o custo do prédio na
+   mão passam a existir só na planta fantasma (F-TP já escreve a colheita sob o
+   cursor). Basta, ou a alça do balcão mostra o que está na mão?
+2. Tecla para abrir e fechar a prancha (`B`, proposta no GDD §2.2) entra no
+   inventário `input/atalhos.ts`, que é `input/`. Fica para a fila, ou entra
+   nesta branch com a nota de exceção?

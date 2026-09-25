@@ -90,6 +90,13 @@
   .rodape .fila { flex-direction:row; gap:6px; }
   .rodape .slot { width:90px; }
   .rodape .grade { grid-template-columns: repeat(7, 40px); }
+  /* estados retraidos (secao 8) */
+  .tela.fechada { grid-template-columns: 1fr 18px; grid-template-rows: 40px 1fr 22px; }
+  .tela.balcao-fechado { grid-template-rows: 40px 1fr 22px; }
+  .lombada { grid-column:2; grid-row:2 / -1; background:var(--tinta); color:var(--papel); writing-mode: vertical-rl; font: 12px var(--display); letter-spacing:.1em; display:flex; align-items:center; padding-top:10px; }
+  .alca { grid-column:1; grid-row:3; background:var(--papel); border-top:3px solid var(--tinta); display:flex; align-items:center; padding:0 8px; box-sizing:border-box; }
+  .alca .botao { font-size:11px; padding:0 8px; line-height:16px; box-shadow:none; }
+  .alca .botao.vazia { border-style:dashed; color:var(--tinta-fraca); }
 </style>
 </head>
 <body>
@@ -241,6 +248,71 @@
   </div>
 </section>
 
+
+<!-- ============ QUADRO 4: Layout 2 retraído ============ -->
+<section class="quadro">
+  <h2>Layout 2 — os dois painéis retraídos (decisão do operador)</h2>
+  <p>A prancha vira uma lombada de 18 px na borda direita; o balcão vira uma alça de 22 px encostada à esquerda, com o nome do que está selecionado. O canvas cresce para 1262 × 658 (Phaser em <code>Scale.RESIZE</code>). Nada fica por baixo: lombada e alça são células da grade.</p>
+  <div class="tela fechada">
+    <div class="hud">
+      <span class="campo"><span class="rotulo">Dinheiro</span><span class="valor">16</span></span>
+      <span class="campo"><span class="rotulo">Tábua</span><span class="valor">40</span></span>
+      <span class="campo"><span class="rotulo">Pedra</span><span class="valor">22</span></span>
+      <span class="campo"><span class="rotulo">Comida</span><span class="valor">25</span></span>
+      <span class="campo"><span class="rotulo">Gente</span><span class="valor">6/0</span></span>
+      <span class="avisos"><span class="carimbo">Sem quem trabalhe <b>1</b></span></span>
+      <span class="pausado">Pausado</span>
+    </div>
+    <div class="canvas">
+      <div class="predio" style="left:270px;top:250px;width:192px;height:192px">Armazém</div>
+      <div class="predio" style="left:560px;top:250px;width:192px;height:192px;outline:3px solid #ede3d0;outline-offset:3px">Casa do Coronel</div>
+      <div class="nota">canvas 1262 × 658</div>
+    </div>
+    <div class="lombada"><span>◀ Construir</span></div>
+    <div class="alca"><span class="botao">▲ Casa do Coronel</span></div>
+  </div>
+</section>
+
+<!-- ============ QUADRO 5: Layout 2, só o balcão retraído ============ -->
+<section class="quadro">
+  <h2>Layout 2 — prancha aberta, balcão retraído (nada selecionado)</h2>
+  <p>É o estado mais comum de jogo: a mão na prancha, o mapa inteiro em altura. Sem seleção o balcão fecha sozinho e a alça fica vazia; clicar num prédio o reabre.</p>
+  <div class="tela balcao-fechado">
+    <div class="hud">
+      <span class="campo"><span class="rotulo">Dinheiro</span><span class="valor">20</span></span>
+      <span class="campo"><span class="rotulo">Tábua</span><span class="valor">40</span></span>
+      <span class="campo"><span class="rotulo">Pedra</span><span class="valor">30</span></span>
+      <span class="campo"><span class="rotulo">Comida</span><span class="valor">25</span></span>
+      <span class="campo"><span class="rotulo">Gente</span><span class="valor">6/0</span></span>
+      <span class="avisos"></span>
+      <span class="pausado">Pausado</span>
+    </div>
+    <div class="canvas">
+      <div class="predio" style="left:270px;top:250px;width:192px;height:192px">Armazém</div>
+      <div class="predio" style="left:560px;top:250px;width:192px;height:192px">Casa do Coronel</div>
+      <div class="nota">canvas 1020 × 658</div>
+    </div>
+    <div class="coluna">
+      <div class="abas"><span class="aba ativa">Construir</span><span class="aba volta">▶</span></div>
+      <div class="grade">
+        <div class="icone ferr">═</div><div class="icone ferr">✕</div><div class="icone ferr">▦</div>
+      </div>
+      <div class="regua">A vila</div>
+      <div class="grade" id="vila3"></div>
+      <div class="regua">Mato e pedra</div>
+      <div class="grade" id="materia3"></div>
+      <div class="regua">De comer</div>
+      <div class="grade" id="comida3"></div>
+      <div class="regua">Oficinas</div>
+      <div class="grade" id="oficinas3"></div>
+      <div class="regua">O bando</div>
+      <div class="grade" id="bando3"></div>
+      <div class="cartao"><h3>Bodega</h3><div class="custo">Tábua 6 · Pedra 5 · 4 × 3</div><div class="desc">Venda e mesa. É onde o povo come e bebe.</div></div>
+    </div>
+    <div class="alca"><span class="botao vazia">—</span></div>
+  </div>
+</section>
+
 <script>
   // Placeholder de ícone = miniatura do footprint (tamanho de buildings.json).
   // Bloqueado = hachurado. Só o mock digita a lista; no jogo vem do dado.
@@ -262,7 +334,7 @@
     el.append(fp);
     return el;
   }
-  for (const sufixo of ['', '2']) {
+  for (const sufixo of ['', '2', '3']) {
     for (const [g, lista] of Object.entries(grupos)) {
       const alvo = document.getElementById(g + sufixo);
       if (!alvo) continue;
