@@ -5705,3 +5705,61 @@ como decisões **dele**, com o porquê que ele deu — não como pergunta penden
    seção da F21 acima.
 5. **`docs/spec-arte-predios.md` entra no git** — é o documento que a próxima
    sessão de arte vai abrir.
+
+## F18g — quanto a F23 encareceu (medição a pedido do operador, 2026-09-25)
+
+Ele pediu o número antes de decidir a posição da F18g na fila: *"A F23 fechou, e
+campo novo de GameState virou migração de formato. Quanto isso encarece a F18g?"*
+A medição está escrita por inteiro na **Nota (quanto a F23 encareceu a F18g)** do
+item da F18g no `BUILD_PLAN.md`, que é onde quem for pegar a feature vai olhar.
+O resumo, e o que é medido contra o que é recomendação:
+
+**Medido** (não estimado):
+- Campo novo obrigatório no `GameState` quebra **2** lugares, os dois em `sim/`:
+  `state.ts:1098` e `tick.ts:136`. Zero teste. Método: acrescentei
+  `pedraNoCanteiro` de verdade, rodei `tsc`, contei os `TS2741` e **removi**.
+- `save.ts` não muda: `salvar` serializa o estado inteiro e `carregar` valida só
+  envelope + `tick`. Ninguém enumera `keyof GameState` no projeto (grep vazio).
+- Base instalada de saves hoje: **zero**. Só dois testes chamam `salvar`; nada em
+  `src/` grava save (o único `localStorage` é o da F-D1, em `ui/ajuda.ts`).
+- `compararComESemSave` cobre estruturalmente e **não exercita**: o cenário da
+  F23 injeta estrada pronta e nunca planeja (`producao-cenario.ts:33`), e a perna
+  da F08 (`F08-estradas.test.ts:507`) atravessa canteiro em 12 ticks, antes de
+  qualquer entrega.
+
+**Recomendação minha, para ele decidir**: se a F18g entrar, que entre **antes da
+F23b**. Enquanto não há save gravado em máquina de jogador, subir
+`VERSAO_DO_SAVE` custa 1 linha e nenhum teste; depois da F23b, a mesma linha vira
+regressão visível e obriga ramo de migração. O custo grande da F18g continua
+sendo o de sempre (12 ramificações, 2 FSMs, ~89 testes em órbita), e não mudou.
+
+## F-D4 — A unidade diz o ofício, não o id (2026-09-25)
+
+Pedido do operador na mesma vez: as unidades mostravam `u3`, `u7`. Agora mostram
+o ofício do tema. Render puro; `sim/` não foi tocado.
+
+- **`src/render/nome-de-unidade.ts`** é o funil, no mesmo desenho do
+  `nomeDoRecurso` da F-TA: procura o tipo neutro em `civis`, `militares` e
+  `mercenarios` do tema e **joga** se não achar. Nada de rótulo genérico — nome
+  de ofício errado é pior que erro alto.
+- **`tests/F-D4-nome-da-unidade.test.ts`** guarda o lado do dado: os 28 tipos de
+  `data/units.json` têm verbete, os nomes não se repetem, e tipo desconhecido
+  reprova (o caso que prova que o guarda acusa).
+- **A decisão que ele pediu por escrito — texto FORA do quadrado**. Medida, não
+  impressão: o quadrado tem 32 px; `Obreiro` desenha **51 px** e `Carregador`,
+  **71 px** (`test-output/F-D4-shot.json`). Nem o nome mais curto dos civis cabe
+  dentro. Apelido curto no tema exigiria ~5 caracteres, que não é palavra do
+  sertão, e morreria junto com o placeholder quando o sprite chegar. O rótulo foi
+  para baixo, ancorado pelo topo, onde continua valendo com sprite.
+- **A ponte ganhou `nome` e `larguraDoRotuloPx`** em `UnidadeRenderizada` — é o
+  que permite o roteiro afirmar o encaixe com número em vez de com adjetivo.
+- **O roteiro `tools/shots/F-D4.js` cumpre a §8**: aperta `[data-predio="quarry"]`
+  dentro do `#menu-build` **despausado**, com `mouse.down` / 150 ms / `mouse.up`.
+- **Aprendido no caminho, e vale para o próximo roteiro**: a vila da abertura fica
+  **parada**. Duas versões do roteiro esperaram 600 ticks por um movimento que não
+  podia acontecer — sem estrada ligando a obra ao armazém, a tarefa de material
+  não nasce (F18d). Roteiro que precisa de unidade andando desenha a rua primeiro,
+  planta depois, e espera **por condição**.
+- **Observação sem mudança**: dois `Obreiro` vizinhos já se encostam na tela.
+  Registrado em `IDEIAS.md` (nome no hover / na seleção / acima de um zoom), não
+  aqui.

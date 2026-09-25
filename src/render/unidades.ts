@@ -6,9 +6,15 @@
  * do tick anterior e a do atual. A posicao do tick anterior e memoria de RENDER (como o `Map`
  * de containers), nunca estado de jogo.
  *
- * Placeholder do CLAUDE.md §9: um retangulo com o id da unidade. Se a unidade leva carga
+ * Placeholder do CLAUDE.md §9: um retangulo por unidade. Se a unidade leva carga
  * (`fsmData.carga`), o nome da mercadoria aparece em cima. `desenhados` e memoria de render
  * local — handle dos objetos que esta camada criou, nao estado de jogo (§10).
+ *
+ * F-D4: sob o retangulo vai o OFICIO (`nome-de-unidade.ts`, vindo do tema pelo tipo neutro),
+ * no lugar do id, que nao dizia nada ao jogador. Vai FORA do quadrado por medida, nao por
+ * gosto: o quadrado tem meio tile (32 px) e o rotulo mais largo do tema passa dele — o
+ * roteiro da F-D4 mede as duas coisas e o item do BUILD_PLAN registra a decisao. O id segue
+ * na ponte de debug (`UnidadeRenderizada.id`), que e por onde os roteiros identificam unidade.
  *
  * F20c acrescenta o marcador de fome, mais acima que o da carga: quem decide se ele acende e
  * `temMarcadorDeFome` (`marcador-de-fome.ts`, reexportacao do predicado da sim), nunca um
@@ -26,6 +32,7 @@ import { criarMemoriaDePosicoes, interpolarPosicao } from './interpolacao';
 import {
   ALTURA_DA_CARGA_EM_LADOS, ALTURA_DA_FOME_EM_LADOS, temMarcadorDeFome,
 } from './marcador-de-fome';
+import { nomeDaUnidade } from './nome-de-unidade';
 import { posicaoDaUnidade } from '../sim/selectors';
 import { fracaoDeCondicao } from '../sim/condicao';
 import type { GameState } from '../sim/state';
@@ -61,6 +68,14 @@ export interface UnidadeRenderizada {
   /** F20c — a condicao de 0 a 1 (`fracaoDeCondicao`), para o roteiro afirmar o limiar contra
    *  `data/condition.json` em vez de contra um numero escrito no roteiro. */
   readonly fracaoDeCondicao: number;
+  /** F-D4 — o oficio escrito sob a unidade, vindo do tema pelo `tipo`. */
+  readonly nome: string;
+  /**
+   * F-D4 — largura DESENHADA desse rotulo, em px de mundo. E o que permite o roteiro afirmar
+   * o encaixe com uma medida em vez de com uma impressao: o quadrado da unidade tem
+   * `tilePx * LADO_DA_UNIDADE_EM_TILES` de lado, e o rotulo do oficio nao cabe dentro dele.
+   */
+  readonly larguraDoRotuloPx: number;
 }
 
 export interface CamadaDeUnidades {
@@ -76,6 +91,13 @@ export interface CamadaDeUnidades {
  */
 const SALTO_MAXIMO_EM_TILES = 2;
 
+/**
+ * Onde o nome do oficio fica ABAIXO do centro da unidade, em multiplos do lado dela. O
+ * quadrado vai ate 0,5 lado; o resto e a folga entre a borda e a primeira linha do texto.
+ * Apresentacao, nao balanceamento.
+ */
+const ALTURA_DO_NOME_EM_LADOS = 0.6;
+
 const cor = (hex: string): number => Phaser.Display.Color.HexStringToColor(hex).color;
 
 /** A cor do marcador de fome vem do tema por NOME da paleta (`marcadores.fome.cor`). */
@@ -85,6 +107,7 @@ const corDoMarcadorDeFome: string = (
 
 interface Desenhado {
   readonly container: Phaser.GameObjects.Container;
+  readonly nome: Phaser.GameObjects.Text;
   readonly marcadorDeCarga: Phaser.GameObjects.Text;
   readonly marcadorDeFome: Phaser.GameObjects.Text;
 }
@@ -94,12 +117,16 @@ export function criarCamadaDeUnidades(cena: Phaser.Scene, tilePx: number): Camad
   const memoria = criarMemoriaDePosicoes();
   const lado = tilePx * LADO_DA_UNIDADE_EM_TILES;
 
-  function criar(id: string, tipo: string): Desenhado {
+  function criar(tipo: string): Desenhado {
     const ehSerf = tipo === 'serf';
     const retangulo = cena.add.rectangle(0, 0, lado, lado, cor(ehSerf ? temaSertao.paleta.ocre : temaSertao.paleta.couro), 1);
     retangulo.setStrokeStyle(2, cor(temaSertao.paleta.madeira));
-    const rotulo = cena.add.text(0, 0, id, { fontSize: '11px', color: '#2c1d12' });
-    rotulo.setOrigin(0.5, 0.5);
+    // O texto e do JOGADOR: vem do tema pelo tipo neutro, nunca digitado aqui. `setOrigin(0.5, 0)`
+    // ancora pelo TOPO, entao a folga sob o quadrado nao depende do tamanho da fonte.
+    const rotulo = cena.add.text(0, lado * ALTURA_DO_NOME_EM_LADOS, nomeDaUnidade(tipo), {
+      fontSize: '11px', color: temaSertao.paleta.cal, backgroundColor: '#2c1d12', padding: { x: 2, y: 0 },
+    });
+    rotulo.setOrigin(0.5, 0);
     const marcadorDeCarga = cena.add.text(0, -lado * ALTURA_DA_CARGA_EM_LADOS, '', {
       fontSize: '11px', color: '#ede3d0', backgroundColor: '#2c1d12', padding: { x: 3, y: 1 },
     });
@@ -116,7 +143,7 @@ export function criarCamadaDeUnidades(cena: Phaser.Scene, tilePx: number): Camad
     marcadorDeFome.setOrigin(0.5, 0.5);
     marcadorDeFome.setVisible(false);
     const container = cena.add.container(0, 0, [retangulo, rotulo, marcadorDeCarga, marcadorDeFome]);
-    return { container, marcadorDeCarga, marcadorDeFome };
+    return { container, nome: rotulo, marcadorDeCarga, marcadorDeFome };
   }
 
   return {
@@ -136,7 +163,7 @@ export function criarCamadaDeUnidades(cena: Phaser.Scene, tilePx: number): Camad
         if (!unidade) continue;
         let item = desenhados.get(id);
         if (!item) {
-          item = criar(id, unidade.tipo);
+          item = criar(unidade.tipo);
           desenhados.set(id, item);
         }
         const posicao = posicaoDaUnidade(estado, unidade);
@@ -159,6 +186,7 @@ export function criarCamadaDeUnidades(cena: Phaser.Scene, tilePx: number): Camad
           gxDesenhado: desenhada.gx, gyDesenhado: desenhada.gy, fsm: unidade.fsm, carga,
           deslocamentoPx: { x: desvio.x, y: desvio.y },
           marcadorDeFome: comFome, fracaoDeCondicao: fracaoDeCondicao(unidade),
+          nome: item.nome.text, larguraDoRotuloPx: item.nome.width,
         });
       }
       return renderizadas;

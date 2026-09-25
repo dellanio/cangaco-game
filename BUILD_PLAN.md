@@ -1548,6 +1548,48 @@ a geografia já corrigida do que regravar 900 tiles depois.
   alcance 6, medido em 2026-09-24. A F-D3 mexe exatamente nessa geografia, então o
   conserto do BUG-C espera por ela em vez de mover a pedreira duas vezes.
 
+#### F-D4 — A unidade diz o ofício, não o id (render) — ENTREGUE 2026-09-25
+- **Por quê**: pedido do operador em 2026-09-25, com o relato dele: *"as unidades
+  mostram ids (u3, u7) no retângulo, e isso não diz nada ao jogador"*. O nome do
+  ofício já existia no tema desde sempre; a tela é que não o lia.
+- **Escopo**: o retângulo da unidade passa a trazer o nome do ofício
+  (`Carregador`, `Obreiro`, `Cabra da Pedreira`), vindo de
+  `data/theme-sertao.json` **pelo tipo neutro**, como todo texto visível (§9).
+  Nada digitado em `.ts`: `src/render/nome-de-unidade.ts` é o funil, e tipo sem
+  verbete no tema **reprova** em vez de virar rótulo genérico — mesmo desenho do
+  `nomeDoRecurso` da F-TA. O id continua na ponte de debug
+  (`UnidadeRenderizada.id`), que é por onde os roteiros identificam unidade.
+- **Não é feature de integração**: só `src/render/`. `sim/` não foi tocado.
+- **A decisão do encaixe, que o operador pediu por escrito — texto FORA do
+  quadrado, e não apelido curto no tema**. Medido pelo roteiro, não estimado: o
+  quadrado tem meio tile, **32 px**; `Obreiro` desenha **51 px** e `Carregador`,
+  **71 px** (`test-output/F-D4-shot.json`). Ou seja, **nem o nome mais curto dos
+  civis cabe dentro** — caber exigiria apelido de ~5 caracteres, que não é
+  palavra do tema, e que morreria junto com o placeholder no dia em que o sprite
+  substituir o retângulo (§9). O texto foi para baixo do quadrado, ancorado pelo
+  topo (`ALTURA_DO_NOME_EM_LADOS`), onde continua valendo quando o quadrado virar
+  sprite.
+- **Aceite** (verificado): (a) o texto desenhado é **igual** ao de
+  `theme-sertao.json` para o tipo da unidade, comparado no roteiro contra o
+  arquivo; (b) nenhum rótulo contém o id; (c) todo tipo de `data/units.json` tem
+  verbete no tema, e tipo desconhecido **joga** (`tests/F-D4-nome-da-unidade.test.ts`);
+  (d) o rótulo acompanha a unidade que anda; (e) screenshot.
+- **Evidência**: `test-output/F-D4.json`, `test-output/F-D4-shot.json`,
+  `screenshots/F-D4-*.png`.
+- **Nota (§8, o gesto despausado)**: o roteiro aperta `[data-predio="quarry"]`
+  dentro do `#menu-build`, então roda esse passo **despausado**, com
+  `mouse.down` / 150 ms / `mouse.up`. Ele também desenha a rua **antes** de
+  plantar: sem estrada ligando a obra ao armazém a tarefa de material não nasce
+  (F18d) e a vila ficaria parada por regra — o roteiro estaria medindo outra
+  coisa. Isso foi medido: as duas primeiras versões do roteiro esperaram 600
+  ticks por um movimento que não podia acontecer.
+- **Observação registrada, sem mudança**: com a vila de 6 unidades os rótulos
+  ficam legíveis, mas dois `Obreiro` em tiles vizinhos já se encostam
+  (`screenshots/F-D4-3-oficio-de-perto.png`). Numa vila de 40 unidades isso vira
+  parede de texto. Mostrar o nome só ao passar o mouse, só na unidade
+  selecionada, ou só acima de um nível de zoom é mudança de desenho — está em
+  `IDEIAS.md`, não aqui.
+
 ### F-T2 — Camada de recursos no mapa (sim + render mínimo, integração)
 
 > **Quebra em sub-itens (CLAUDE.md §6, 2026-09-24)**: o item atravessa dado,
@@ -2559,6 +2601,50 @@ Depende da F20b: o marcador lê `unidade.condicao`, que só existe depois dela. 
   pagador a tarefa não nasce; pagador que seca derruba a tarefa e o tile fica no
   canteiro). Fidelidade ao original importa, **mas não antes de o jogo ter
   comida**. Quem quiser antecipar, decide de novo e registra aqui.
+- **Nota (quanto a F23 encareceu a F18g — medido em 2026-09-25, a pedido do
+  operador)**: **quase nada, e o que encarece não é a F23 e sim a F23b.**
+  - **O campo novo custa 2 lugares, os dois em `sim/`.** Medido pondo
+    `readonly pedraNoCanteiro: Readonly<Record<string, number>>` no `GameState` e
+    rodando `tsc`: exatamente **2** erros `TS2741` — `createInitialState`
+    (`src/sim/state.ts:1098`) e o literal que o `step` devolve
+    (`src/sim/tick.ts:136`). **Zero** arquivo de teste quebra: os 21 arquivos que
+    citam `: GameState = {` montam por *spread* de um estado existente. (O campo
+    foi removido depois da medição; nada ficou no fonte.)
+  - **`save.ts` não muda uma linha.** `salvar` põe o `estado` inteiro no
+    envelope e serializa; `carregar` valida versão, id do mapa, hash e
+    `typeof estado.tick === 'number'` — e **nada mais da forma do estado**.
+    Ninguém enumera `keyof GameState` em `src/`, `tests/` ou `tools/` (grep sem
+    resultado). Campo novo entra e sai de graça.
+  - **A versão do save: 1 linha, e só enquanto a F18g vier ANTES da F23b.** Um
+    save de versão 1 escrito antes da F18g não tem o campo, e `carregar` o
+    aceitaria (ele não confere a forma do estado): o jogo receberia
+    `pedraNoCanteiro === undefined`, que só aparece quando alguém assenta
+    estrada. A saída barata é subir `VERSAO_DO_SAVE` para 2 — a recusa e a
+    mensagem já existem, e o teste da F23 lê a constante, não o número, então
+    **nenhum teste muda**. O que decide o preço é a base instalada, e ela hoje é
+    **zero**: os únicos chamadores de `salvar`/`carregar` são dois arquivos de
+    teste, e nada em `src/` grava save em `localStorage` ou em disco (o único
+    `localStorage` de `src/` é o lembrete da F-D1, em `ui/ajuda.ts`). **Depois da
+    F23b** existem partidas salvas na máquina de quem joga, e a mesma subida de
+    versão vira regressão visível: aí seria preciso um ramo de migração e o teste
+    dele. **Recomendação: se a F18g entrar, que entre antes da F23b.**
+  - **`compararComESemSave` cobre, mas precisa de perna nova.** Cobre
+    *estruturalmente*: ela compara o estado inteiro em JSON, então campo que não
+    sobrevive ao round-trip quebra lá sem mudar o helper — que já aceita
+    `roundTrip` desde a F23. O que falta é **exercitar**: o cenário da F23
+    (`cenarioDaCadeiaDoOuro`) injeta estradas **prontas** e nunca planeja uma
+    (`tests/helpers/producao-cenario.ts:33`), então `pedraNoCanteiro` ficaria
+    `{}` durante toda a comparação; e a perna de determinismo da F08
+    (`tests/F08-estradas.test.ts:507`) atravessa o save com canteiro, mas com
+    `reviverPorJson` e em 12 ticks, antes de qualquer entrega. A perna nova é **1
+    teste na suíte da F18g** (~25 linhas, **0** linha no helper): salvar num tick
+    escolhido pela condição *"há pedra parada em tile"*, afirmar que o campo não
+    está vazio nesse tick (o padrão da F08, linhas 518-521) **e** afirmar a
+    igualdade no **instante** do load — o ponto cego medido na sonda da F23 vale
+    aqui igual, porque reserva e tarefa a vila sabe refazer sozinha.
+  - **O que NÃO mudou**: os ~12 pontos de ramificação, as 2 FSMs, o 4º caso do
+    demolir e os ~89 testes em órbita da nota de 2026-09-24 seguem valendo. A F23
+    acrescentou **1 linha** (a versão) e **1 perna de teste**.
 
 ---
 

@@ -131,3 +131,11 @@ caminho. Ideia boa é justamente a mais perigosa.
   da F-T3): nada muda de mão durante a caminhada, e por isso não existe mercadoria órfã. Fazer
   seria render lendo um campo que a sim ainda não tem — a carga na mão do especialista **não
   existe** no estado, diferente da do serf.
+- **O nome do ofício só quando o jogador pede** (F-D4, 2026-09-25). A F-D4 pôs o ofício sob
+  cada unidade, e na vila da abertura (6 unidades) isso se lê bem. Medido no roteiro:
+  `Carregador` desenha 71 px e `Obreiro` 51 px, num tile de 64 px — dois `Obreiro` em tiles
+  vizinhos já se encostam (`screenshots/F-D4-3-oficio-de-perto.png`). Numa vila de 40
+  unidades vira parede de texto. As saídas, todas de render: nome só ao passar o mouse, só na
+  unidade selecionada, ou só acima de um nível de zoom. Não entra agora porque trocaria uma
+  informação sempre visível por uma escondida sem que ninguém tenha reclamado ainda — e o
+  retângulo é placeholder: quando virar sprite, a pergunta muda.
