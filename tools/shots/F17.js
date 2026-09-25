@@ -49,8 +49,16 @@ const TIPOS_DA_ABERTURA = ['woodcutters', 'woodcutters', 'sawmill', 'quarry'];
 // RE-MEDIDO em 2026-09-24 (BUG-F, geometria recuada): desbloqueio no tick 775 e
 // criterio fechado no 4187. O eixo e TICK, deterministico — nao e medida de
 // relogio, que a §8 do CLAUDE.md proibiu como assercao.
+// RE-MEDIDO em 2026-09-25 (F-T3, o especialista sai do predio): criterio fechado
+// no bloco 5350 — o roteiro amostra de 50 em 50 —, contra os 4187 de antes. Nao e
+// travamento e foi conferido: com teto de 20 000 o timber chega a 41 e os quatro
+// predios ficam completos e ocupados. O que mudou entre as duas medicoes foi a
+// F-T3: todo ciclo de colheita passou a incluir a viagem ate o tile (a pedreira
+// desta abertura entrega 1,59x mais devagar, BALANCE_LOG 2026-09-25). A cadeia
+// exata do atraso nao foi isolada aqui; o teto abaixo e o numero MEDIDO com folga,
+// e nao uma tolerancia alargada para o roteiro passar.
 const TETO_ATE_DESBLOQUEAR = 1100;
-const TETO_ATE_O_CRITERIO = 5300;
+const TETO_ATE_O_CRITERIO = 6800;
 const PASSO_DE_AVANCO = 50; // um avancar seco e grande estoura o frame (F16b)
 
 async function roteiro(ctx) {
