@@ -8210,3 +8210,39 @@ arquivos de dados foram revertidos pelos backups, e o `git status` ficou limpo.
   - A primeira é geometria sem mapa. A segunda é a borda do mapa, que continua em (0,0) com o mundo transladado.
   - Nenhum desses arquivos cai na translação.
 - **O caos da F10-falhas** sorteia o armazém novo e os pontos de obra relativos à vila. A sequência do RNG não mudou, só a origem dos pontos. Nenhum valor esperado da suite foi editado, e ela passou inteira; não comparei a anotação de tarefas e buscas do caos, antes contra depois.
+
+## 2026-09-26 (noite, 10) — F18c-1c: os arquivos de mapa e o guarda permanente
+
+### Feito e verificado
+
+- **A translação virou etapa do `npm run verify`**: `npm run test:transladado` roda a suite inteira com `vitest.transladado.config.mts`, num mundo andado de +32. Nada é escrito em `data/`.
+  - Um plugin Vite (`load`, `enforce: 'pre'`) troca o texto de `economy.json`, `maps/sertao-128.json` e `terrain.json` quando entram por `import`.
+  - `tests/helpers/mundo-transladado.ts` (setup da config) troca o que `fs.readFileSync` devolve para os mesmos três arquivos, no processo do teste, com `syncBuiltinESMExports`. Sem ele, o F-T4b (sim contra roteiro, JSON cru por `fs`) via dois mundos e reprovava sem literal nenhum.
+  - Os textos saem de `transladarTextos`, extraída pura de `tools/transladar-mundo.js`. A linha de comando continua como instrumento de medida.
+  - `gravarEvidencia` respeita `CANGACO_EVIDENCIA_DIR`. A corrida transladada grava em `test-output/transladado/` e não sobrescreve a evidência da suite.
+- **Guarda de vacuidade**: `tests/F18c-1c-mundo-transladado.test.ts`.
+  - Na corrida transladada, confere que o mapa, o tamanho declarado, a vila e a âncora andaram de +K, e que o `fs` vê o mesmo mundo.
+  - Na corrida normal, confere que nada vazou.
+  - Provado com uma config `zz-` cujo plugin devolvia `null`: 2 dos 4 testes reprovam. A config foi apagada.
+- **Aceite, provado com o literal plantado** em `pedreiraDaVila()` (`{ gx: 26, gy: 34 }`):
+  - suite normal: 1491 passam;
+  - suite transladada: sai com 1, 64 testes reprovam em 12 arquivos.
+  - Sem o literal, o `verify` fica verde: `test` com 1491 passam, `test:transladado` com 1487 passam e 7 fora.
+  - Evidência em `test-output/F18c-1c.json`.
+- **F-T1 era literal, não contrato.** O lago (92,46), OESTE/LESTE da travessia e a FAIXA da perna 3 viraram deslocamento do lagamar. A linha afogada pelo guarda do `validate:data` sai do `economy.json` cru que o próprio teste lê.
+- **Custo**: o `verify` completo passou a levar 1m51 nesta máquina. A etapa nova soma cerca de 55 s, porque é a suite inteira de novo. É número da corrida, não asserção.
+
+### Fora da corrida transladada (`FORA_DO_MUNDO_TRANSLADADO`, por nome completo)
+
+- A lista é por nome de teste, não por arquivo: o resto de cada arquivo continua rodando transladado. Um nome que mudar volta a rodar e reprova alto. Todos rodam na suite normal.
+- **Estrutural, decisão minha (para revisão)**: F05a `npm run sim -- inicial --ticks 0`. O subprocesso lê `data/` do disco e compara com o `gameData` transladado.
+- **Pendentes do operador** (os quatro arquivos que afirmam o próprio mapa):
+  - F-D3: o gerador emite o arquivo versionado byte a byte;
+  - F04: o pin de 128, que duplica o F18b;
+  - F18b: "publica 128x128" e "área ×4";
+  - F18b: o guarda de borda 64x64 e 128x128. Verificado que, no mundo transladado, o canto declarado (63,63) cai dentro do armazém (original (31,31), com o armazém em 29..31 × 30..32) e (127,127) cai na montanha (original (95,95)). O guarda presume chão livre no canto do mapa **publicado**.
+
+### Decisões minhas (para revisão)
+
+- **Translado no carregamento, não em disco.** A alternativa era o instrumento escrever e reverter `data/`. Ela foi descartada: um `verify` morto no meio deixaria o mapa transladado versionável, e um dev server aberto recarregaria.
+- **O `fs` também transladado.** Assim a corrida reproduz o que o instrumento em disco media, e a lista de fora ficou só com o subprocesso e os contratos.

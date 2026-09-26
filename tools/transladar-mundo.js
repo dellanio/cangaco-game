@@ -7,7 +7,9 @@
 // positivo (a serra e as minas dando a volta), por isso o mapa cresce.
 //
 // Escreve os tres JSON, roda o vitest e REVERTE sempre — no `finally` e no
-// Ctrl+C. Nao e parte do `npm run verify`: e instrumento de medida.
+// Ctrl+C. Esta linha de comando e instrumento de medida (lista quem reprova);
+// a regra permanente e `vitest.transladado.config.mts` (F18c-1c), que usa a
+// mesma `transladarTextos` sem escrever em `data/`.
 //
 //   node tools/transladar-mundo.js [--k 32] [--saida arquivo.json] [--detalhe] [-- <filtro do vitest>]
 //
@@ -37,8 +39,9 @@ function argumentos(argv) {
   return { k: Number(valor('--k', '32')), saida: valor('--saida', null), detalhe: proprios.includes('--detalhe'), filtro };
 }
 
-function transladar(originais, k) {
-  const e = JSON.parse(originais.economia);
+/** Os tres textos transladados de +K. Pura: nao le nem escreve arquivo. */
+function transladarTextos(originais, k) {
+  const e =JSON.parse(originais.economia);
   for (const p of e.estadoInicial.predios) { p.gx += k; p.gy += k; }
   e.estadoInicial.spawnDeUnidades.gx += k;
   e.estadoInicial.spawnDeUnidades.gy += k;
@@ -61,9 +64,12 @@ function transladar(originais, k) {
   if (!originais.terreno.includes(de)) throw new Error(`transladar: terrain.json nao tem ${de}`);
   const terreno = originais.terreno.replace(de, `"mapaPadrao": { "largura": ${novo}, "altura": ${novo} }`);
 
-  fs.writeFileSync(ARQ.economia, `${JSON.stringify(e, null, 2)}\n`);
-  fs.writeFileSync(ARQ.mapa, JSON.stringify(m));
-  fs.writeFileSync(ARQ.terreno, terreno);
+  return { economia: `${JSON.stringify(e, null, 2)}\n`, mapa: JSON.stringify(m), terreno };
+}
+
+function transladar(originais, k) {
+  const t = transladarTextos(originais, k);
+  for (const [id, f] of Object.entries(ARQ)) fs.writeFileSync(f, t[id]);
 }
 
 function resumir(relatorio, detalhe) {
@@ -114,4 +120,6 @@ function main() {
   process.stdout.write(`${texto}\n`);
 }
 
-main();
+module.exports = { ARQ, transladarTextos };
+
+if (require.main === module) main();

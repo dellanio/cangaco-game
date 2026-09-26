@@ -24,10 +24,14 @@ import type { Caminho } from '../src/sim/pathfinding';
 import type { GameState } from '../src/sim/state';
 import { inicial, tile } from './helpers/jobs-cenario';
 import { gravarEvidencia } from './helpers/evidence';
+import { ancoraDoLagamar, relativoA } from './helpers/ancoras';
 import { validarTudo } from '../tools/data-rules.js';
 import { ARQUIVOS } from '../tools/data-schema.js';
 
 const { largura: LARGURA, altura: ALTURA } = gameData.terreno.mapaPadrao;
+/** Os casos no mapa de verdade ficam em volta do lagamar, e nao em coordenada
+ *  digitada: o mundo transladado (F18c) os leva junto. */
+const NO_LAGAMAR = relativoA(ancoraDoLagamar());
 
 /** Um mapa sintetico com a legenda do mapa de verdade — a legenda e dado, e
  *  reescrever uma aqui so criaria um segundo vocabulario para divergir.
@@ -84,7 +88,7 @@ function tamanhoDe(id: string): readonly [number, number] {
 describe('F-T1 — a recusa nomeia o terreno', () => {
   // O `motivo: 'terreno'` existe em `placement.ts` desde a F06, declarado e
   // INALCANCAVEL: nao havia terreno. Esta e a primeira vez que ele sai.
-  const lago = { gx: 92, gy: 46 };
+  const lago = NO_LAGAMAR(11, 6); // (92,46) hoje
 
   it('o centro do lago do mapa padrao e agua mesmo (a premissa do caso)', () => {
     expect(tipoDoTile(lago.gx, lago.gy)).toBe('agua');
@@ -123,8 +127,8 @@ describe('F-T1 — a recusa nomeia o terreno', () => {
 // --- perna 2 ---------------------------------------------------------------
 
 /** Os dois lados do lago, na latitude do centro dele. */
-const OESTE = tile(74, 46);
-const LESTE = tile(110, 46);
+const OESTE = NO_LAGAMAR(-7, 6); // (74,46) hoje
+const LESTE = NO_LAGAMAR(29, 6); // (110,46) hoje
 
 describe('F-T1 — o caminho desvia, e desiste', () => {
   it('as duas pontas estao em terreno pisavel (a premissa do caso)', () => {
@@ -165,7 +169,7 @@ describe('F-T1 — o caminho desvia, e desiste', () => {
 // A mesma caminhada curta e inedita da F17c, movida para a faixa de terreno
 // VARIADO (o mapa liso e a linha de base). Origem inedita a cada `i`: o cache
 // por par origem-destino nunca acerta, entao toda chamada executa de verdade.
-const FAIXA = { x0: 66, y0: 60, colunas: 40 };
+const FAIXA = { x0: NO_LAGAMAR(-15, 20).gx, y0: NO_LAGAMAR(-15, 20).gy, colunas: 40 }; // (66,60) hoje
 const AQUECIMENTO = 100;
 const BUSCAS = 400;
 
@@ -337,9 +341,14 @@ describe('F-T1 — guardas', () => {
     expect(validarTudo(dados)).toEqual([]);
 
     const mapa = dados['maps/sertao-128'] as { linhas: string[]; largura: number };
+    // A linha do armazem sai do `economy.json` CRU lido acima, nao de literal:
+    // e o mesmo dado que a regra confere.
+    const economia = dados['economy'] as { estadoInicial: { predios: { id: string; gy: number }[] } };
+    const linhaDaVila = economia.estadoInicial.predios.find((p) => p.id === 'storehouse')?.gy ?? -1;
+    expect(linhaDaVila).toBeGreaterThanOrEqual(0);
     const daVila = (linhas: string[]): string[] => {
       const copia = [...linhas];
-      copia[30] = AGUA.repeat(mapa.largura); // afoga a vila inicial de economy.json
+      copia[linhaDaVila] = AGUA.repeat(mapa.largura); // afoga a vila inicial de economy.json
       return copia;
     };
     const quebrados: Record<string, unknown>[] = [
@@ -367,9 +376,9 @@ afterAll(() => {
       fonte: 'data/maps/sertao-128.json (emitido por tools/gerar-mapa.js, semente no arquivo)',
     },
     pernaUm: {
-      tileDeAgua: { gx: 92, gy: 46 },
-      canPlace: canPlace(inicial, 'quarry', 92, 46),
-      canPlaceNoMesmoTileComMapaLiso: canPlace(inicial, 'quarry', 92, 46, DADOS_LISOS),
+      tileDeAgua: NO_LAGAMAR(11, 6),
+      canPlace: canPlace(inicial, 'quarry', NO_LAGAMAR(11, 6).gx, NO_LAGAMAR(11, 6).gy),
+      canPlaceNoMesmoTileComMapaLiso: canPlace(inicial, 'quarry', NO_LAGAMAR(11, 6).gx, NO_LAGAMAR(11, 6).gy, DADOS_LISOS),
     },
     pernaDois: {
       de: OESTE,

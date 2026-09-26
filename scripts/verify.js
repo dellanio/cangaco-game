@@ -3,7 +3,9 @@
 const { execSync } = require('child_process');
 const fs = require('fs');
 
-const etapas = ['typecheck', 'lint', 'validate:data', 'test'];
+// F18c-1c: test:transladado roda a suite num mundo andado de +K; so reprova
+// quem escreveu coordenada absoluta (vitest.transladado.config.mts).
+const etapas = ['typecheck', 'lint', 'validate:data', 'test', 'test:transladado'];
 
 try { fs.unlinkSync('.verify-ok'); } catch {}
 

@@ -3800,6 +3800,12 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
   `tools/data-rules.js`, mais os 9 arquivos de geografia verdes no mapa novo.
 - **Nota (fica aqui de propósito)**: o item está depois da Fase C por decisão do
   operador (2026-09-26); a origem e a medida estão na F18c, na Fase B.
+- **Nota (herdada da F18c-1c)**: `npm run verify` roda a suite no mundo transladado
+  (`vitest.transladado.config.mts`). Os testes em `FORA_DO_MUNDO_TRANSLADADO`
+  afirmam o arquivo do mapa, e o mapa novo desta feature os toca: o F-D3 (byte a
+  byte), o pin de 128 do F04/F18b e o guarda de borda do F18b, que presume chão livre
+  no canto declarado do mapa **publicado**. A vila no centro pode cair em (63,63).
+  Confira a lista antes de gerar o mapa.
 
 ## Fase D — Profundidade
 

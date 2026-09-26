@@ -220,5 +220,8 @@
   },
   "F18c-1b-literais-diretos": {
     "passes": true
+  },
+  "F18c-1c-guarda-transladado": {
+    "passes": true
   }
 }

@@ -6,6 +6,7 @@
     "dev": "vite",
     "build": "vite build",
     "test": "vitest run",
+    "test:transladado": "vitest run -c vitest.transladado.config.mts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "validate:data": "node tools/validate-data.js",
