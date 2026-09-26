@@ -56,6 +56,37 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
 - evidência: `test-output/F-CAL-b2-sonda.json` (`atras-d2`, `atras-d3`: 3 milhos, 26 mortes)
 - status: aberto
 
+## BUG-I — quatro roteiros de screenshot reprovam desde a F18g
+- feature: F18g (a pedra da estrada viaja por tile); roteiros de F10, F13b, F16b e F18d-2
+- severidade: errado (a chave da F18g NÃO foi virada: a decisão é do operador, porque o
+  aceite escrito da F18g é da sim e os roteiros são de outras features)
+- repro: `npm run shot -- F10` (e `F13b`, `F16b`, `F18d-2`) na `main` em `fb9bbc4`
+- esperado: os roteiros existentes saem com código 0
+- observado (mensagens do roteiro, 2026-09-26):
+  · F10: "no fim a rua deveria estar toda de pe (11 tiles, 0 planejados), veio 0 e 11"
+  · F13b: "com a rua puxada o motivo deveria virar a-caminho, veio []"
+  · F16b: "em 300 ticks a rua deveria estar toda de pe (12 tiles), veio 10 de pe e 2 planejados"
+  · F18d-2: "a pedra deveria ter caido so pelos 1 tiles assentados (34 - 1 x 1), veio 26"
+- causa: a F18g, MEDIDA por comparação — os quatro saem com 0 no worktree em `cd2d5bb`
+  (o pai da F18g) e com 1 na `main`, cada árvore com o próprio vite em porta própria
+  (`CANGACO_SHOT_PORTA` 5176 e 5177). Por roteiro, NÃO diagnosticado: a F18d-2 afirma a
+  regra que a F18g substituiu (a pedra sai na coleta, não no assentamento) e é roteiro
+  que codifica o comportamento velho; F10 e F16b podem ser prazo que a pedra viajando
+  alonga ou travamento; F13b perdeu o motivo `a-caminho`. Hipóteses, não lidas no código.
+- evidência: os logs da sessão ficaram fora do repo; rode o repro
+- status: aberto
+
+## BUG-J — o roteiro F-TP reprova desde a F21b: a pedreira na jazida sai `porta-sem-saida`
+- feature: F21b (a mina colhe o veio do tile); roteiro da F-TP
+- severidade: errado (a chave não foi virada; mesma ressalva do BUG-I)
+- repro: `npm run shot -- F-TP`
+- esperado: "sobre a jazida o clique nao pode ser recusado"
+- observado: `{"tipo":"quarry","gx":79,"gy":91,"valida":false,"motivo":"porta-sem-saida", …}`
+- causa: `git bisect run` com o roteiro, entre `888f50c` (F-TP) e `cd2d5bb`: primeiro
+  commit que reprova é `5f498ae` feat(F21b). O porquê NÃO foi lido — hipótese: a F21b
+  mudou o que bloqueia no lajedo e a porta da pedreira em (79,91) caiu em rocha.
+- status: aberto
+
 ---
 
 ## Polimento

@@ -7248,3 +7248,32 @@ Pedido do operador, três coisas antes de o Codex começar a arte (`docs/BRIEF-A
   `git show-ref`); o operador apagou o worktree. Sobrou um worktree travado do Orca em
   `C:/Users/della/orca/workspaces/.orca-preparing/...`, em `57c3cec` sem branch. Não
   toquei.
+
+## 2026-09-26 — Merge da `fable-lote-sim`, verify, roteiros e as pontas da abertura
+
+Pedido do operador: mergear a `fable-lote-sim` (F-CAL-b, F18g, F-T4d), conferir a F-CAL-b2
+e o guarda do gerador, rodar verify e roteiros, e remedir as pontas. `icones-ui` não tocada.
+
+**Verificado:**
+- **Merge: nada a fazer.** `git merge-base --is-ancestor fable-lote-sim main` verdadeiro, 0
+  commits à frente: a branch já estava na `main` desde o fast-forward de `4a1b65d`.
+- **F-CAL-b2 NÃO está aplicada** em nenhuma branch: nenhum "lado da porta" em `IDEIAS.md` nem
+  em `BUILD_PLAN.md`; `BUILD_PLAN.md:3279` ainda diz "BLOQUEADA pela medição dela"; não há
+  chave F-CAL-b2 em `test-results.json`. Só o `farm.sai.corn = 3.0` coincide. Não apliquei
+  — o operador mandou reportar.
+- **Guarda do gerador coerente com a F18g:** `tools/geometria-da-abertura.mjs` exige rua (26)
+  + reserva (woodcutters 2 + quarry 2) = 30 contra 34 em estoque; o limiar medido é 27, o
+  guarda é pessimista por 3 de propósito, e o comentário dele diz isso. A sonda da F18g gravou
+  `ruaMaisReserva: 35`, que não bate com a conta do guarda (30) — origem não achada.
+- **`npm run verify`: código 0**, 103 arquivos, 1434 testes.
+- **Roteiros: 36, 31 com 0, cinco com 1.** F10, F13b, F16b e F18d-2 passam no pai da F18g e
+  reprovam na `main` → BUG-I. F-TP já reprovava antes; `git bisect` aponta a F21b → BUG-J.
+  Chaves em `test-results.json` NÃO viradas: decisão do operador.
+- **Pontas da abertura:** a escolha não sobreviveu; números em `BALANCE_LOG.md` (2026-09-26).
+
+**Armadilha medida, não corrigida:** a primeira comparação no pai da F18g foi inválida. Um
+vite da minha própria rodada (spawn do roteiro F04, pai morto) ficou vivo na 5175 servindo a
+`main`; com `--strictPort` o vite do worktree morreu calado e os roteiros mediram a `main`.
+Refeito com `CANGACO_SHOT_PORTA` 5176/5177. O órfão (PID 41848, npx 45544) continua na 5175:
+encerrá-lo foi negado pela permissão, fica para o operador. Por que o `tools/shot.js` deixa o
+neto vivo no Windows é **hipótese** (mata o `npx`, não a árvore) — não lido.

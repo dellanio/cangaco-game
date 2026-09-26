@@ -477,6 +477,28 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   estadoInicial.estoque.stone`, `tools/geometria-da-abertura.mjs`, `data/delivery.json`
   (o nível da `pedra-para-canteiro`)
 
+- [2026-09-26] **As pontas da abertura remedidas depois da F18g: a escolha NÃO
+  sobreviveu — ligar tudo no tick 0 domina toda ponta escalonada** | sonda temporária
+  (`tests/zz-sonda-pontas-pos-f18g.test.ts`, apagada no commit que registra isto; os
+  números ficaram). Estoque de pedra varrido de 34 para baixo até travar, janela de
+  12 000 ticks, critério igual ao da tabela de 2026-09-25 (F17 `criterio-fechado` mais
+  os quatro ligados). Controle: a ponta A trava em 26 e fecha em 27, como a F18g mediu.
+  · **A, rua inteira no tick 0** (26 tiles): com 34 fecha no **4208** (era 3992); limiar **27**.
+  · **B, escalonar pela pedra disponível** (15 tiles — a poda desta sonda achou uma rua
+    mínima 3 tiles menor que os 18 de antes; o resto quando `pedraDisponivel` cobre):
+    o resto entra no **tick 1** — o comando não desconta mais pedra, então não há o que
+    esperar. Fecha no **4891**; limiar **28**. **C** (guarda 8) é idêntica à B.
+  · **D, escalonar de verdade**: o resto só quando os 15 tiles estão de pé (tick 206).
+    Fecha no **4856**; limiar **27**.
+  O "4 contra 12" deixou de existir: nada é pago no tick 0, então nada "sobra na mão".
+  Nenhuma ponta escalonada compra margem (limiar 27 ou 28, contra 27) nem tempo (≥ 648
+  ticks mais lenta). A tensão que motivou o 30 → 34 sumiu com a F18g; o que resta é o
+  limiar, e ele é o mesmo nas pontas. **Os 1319 ticks da entrada da F18g não se comparam
+  com esta tabela** — lidos do texto dela, eles medem a última ligação, não o critério
+  da F17 (hipótese pela redação, a sonda dela foi apagada). | **Nenhum número girado.**
+  Se o lote quiser a escolha de volta, o parafuso é o mesmo trio de antes | 
+  `data/economy.json:estadoInicial.estoque.stone`, `data/delivery.json`
+
 - [2026-09-25] **A faixa da fazenda nas geometrias do jogador: 143 a 346 ticks por milho,
   e no alcance máximo a fazenda NÃO sustenta o moinho** | `test-output/F-CAL-b2-sonda.json`
   (sonda apagada), a vila da F-CAL-a por 36 000 ticks, só o campo mudando de lugar.
