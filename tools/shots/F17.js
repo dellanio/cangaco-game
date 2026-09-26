@@ -2,7 +2,7 @@
 // Roteiro da F17 — O ACEITE DA FASE A NA TELA.
 //
 // A mesma abertura que `tests/F17-aceite.test.ts` roda headless, aqui feita com
-// o mouse: arrastar a rua, plantar as quatro casas, enfileirar os quatro cabras
+// o mouse: arrastar a rua, plantar as quatro casas e a Bodega, enfileirar os quatro cabras
 // na escola, esperar a vila trabalhar. Nenhum atalho — nao existe ponte para
 // injetar predio, unidade ou estoque, e e de proposito: se a cadeia quebrar em
 // qualquer elo, este roteiro reprova.
@@ -192,6 +192,12 @@ async function roteiro(ctx) {
   const tilesDaRuaLista = geo.rua;
   const tilesDaRua = tilesDaRuaLista.length;
   const arrastos = arrastosDaRede(tilesDaRuaLista);
+  const [larguraDaBodega, alturaDaBodega] = defDe('inn').tamanho;
+  const bodega = {
+    tipo: 'inn',
+    gx: Math.max(...tilesDaRuaLista.map((tile) => tile.gx)),
+    gy: yRua - alturaDaBodega,
+  };
   const meioDaEscola = { gx: escola.gx + Math.floor(largEs / 2), gy: escola.gy + Math.floor(altEs / 2) };
   const timberInicial = economia.estadoInicial.estoque.timber;
 
@@ -240,8 +246,9 @@ async function roteiro(ctx) {
       + `${canteiro.estradasPlanejadasRenderizadas} e ${canteiro.estradasRenderizadas}`,
   );
 
-  // ---- 3. as tres casas que ja da para plantar ------------------------------
-  for (const planta of plantas.filter((p) => p.tipo !== 'sawmill')) {
+  // ---- 3. as tres casas e a Bodega que ja da para plantar -------------------
+  const obrasIniciais = [...plantas.filter((p) => p.tipo !== 'sawmill'), bodega];
+  for (const planta of obrasIniciais) {
     await page.click(`[data-predio="${planta.tipo}"]`);
     await esperarFrame();
     await clicarNoTile(planta.gx, planta.gy);
@@ -255,7 +262,7 @@ async function roteiro(ctx) {
         + `veio ${JSON.stringify(posta)}`,
     );
   }
-  await capturar('tres-obras');
+  await capturar('quatro-obras');
 
   // ---- 4. a escola enfileira os quatro cabras -------------------------------
   await clicarNoTile(meioDaEscola.gx, meioDaEscola.gy);
@@ -345,7 +352,8 @@ async function roteiro(ctx) {
   const criterioFechado = async () => {
     const quatro = await daAberturaAgora();
     const prontos = quatro.every((b) => b !== undefined && b.estado === 'completo' && b.ocupante !== null);
-    return prontos && (await noHud('timber')) > timberInicial;
+    const bodegaAgora = await predioNoCanto(bodega.gx, bodega.gy);
+    return prontos && bodegaAgora?.estado === 'completo' && (await noHud('timber')) > timberInicial;
   };
   while (ticks < TETO_ATE_O_CRITERIO && !(await criterioFechado())) {
     await avancar(PASSO_DE_AVANCO);
@@ -385,7 +393,16 @@ async function roteiro(ctx) {
     `o HUD deveria mostrar timber acima dos ${timberInicial} iniciais em ate `
       + `${TETO_ATE_O_CRITERIO} ticks, veio ${timberFinal}`,
   );
+  const bodegaPronta = await predioNoCanto(bodega.gx, bodega.gy);
+  afirmar(
+    bodegaPronta !== null && bodegaPronta.tipo === 'inn' && bodegaPronta.estado === 'completo',
+    `a Bodega deveria estar completa em (${bodega.gx},${bodega.gy}), veio ${JSON.stringify(bodegaPronta)}`,
+  );
   const noFim = await estado();
+  afirmar(
+    noFim.spritesDePredio[bodegaPronta.id] !== null,
+    'a Bodega completa deveria estar desenhada por sprite, nao por placeholder',
+  );
   afirmar(
     noFim.estradasRenderizadas === tilesDaRua && noFim.estradasPlanejadasRenderizadas === 0,
     `a rua que liga tudo deveria estar inteira e DE PE no fim (${tilesDaRua} tiles), veio `
@@ -405,6 +422,17 @@ async function roteiro(ctx) {
     'o painel deveria abrir na serraria, pelo nome do sertao',
   );
   await capturar('serraria-ocupada');
+
+  // A prova que faltava para o sexto predio com arte: Bodega pronta e painel aberto.
+  await clicarNoTile(
+    bodega.gx + Math.floor(larguraDaBodega / 2),
+    bodega.gy + Math.floor(alturaDaBodega / 2),
+  );
+  afirmar(
+    (await page.textContent('#painel-predio h2')) === tema.predios.inn.nome,
+    'o painel deveria abrir na Bodega, pelo nome do sertao',
+  );
+  await capturar('bodega-completa');
 }
 
 module.exports = { roteiro };
