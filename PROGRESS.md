@@ -7353,3 +7353,27 @@ BALANCE_LOG.
 
 **Em aberto:** com 30, a margem da ponta B sobre o limiar é de 2. Qualquer rua que o gerador
 alongar em 3 tiles quebra a ponta B antes das outras.
+
+## 2026-09-26 (madrugada) — Leva noturna, item 4: F-CAL-b2, a decisão do operador aplicada
+
+O plano está em `docs/planos/F-CAL-b2.md`.
+
+**Feito:**
+- `BUILD_PLAN.md` (F-CAL-b2): o critério (b) vale para o campo do lado da porta, o
+  `farm.sai.corn` continua 3.0, e (a) e (c) foram reescritos com a tabela das três
+  geometrias ao lado.
+- `IDEIAS.md`: a prévia de alcance que distingue o lado da porta.
+
+**Verificado:** `tests/F-CAL-b-calibracao.test.ts` ganhou o `it` de (a) sobre a mesma corrida.
+A evidência `test-output/F-CAL.json` foi aberta: (a) dá 141,6 ≤ 246, `asserido: true`, e (c)
+fica `asserido: false`, com o porquê. `npm run verify` saiu com 0 e 1 435 testes. A chave
+nova é `F-CAL-b2-faixa`. A asserção de (a) acusaria o campo no alcance máximo (346 > 246, da
+tabela), mas **isso não foi rodado** nesta sessão: a geometria longe não está na suíte.
+
+**Decisões minhas, PARA O OPERADOR REVISAR:**
+1. **(a)** agora tem teto no ciclo do moinho e nenhum piso. Saiu o ±10 %, porque a sobra do lado
+   da porta é recompensa.
+2. **(c)** deixou de ser teto. O "longe da porta o milho não cresce" ficou como medida de
+   sonda, não como asserção permanente, porque a geometria longe não roda na suíte e o
+   BUG-G (trava) mata a vila a 2 e 3 tiles. Se o operador quiser essa proteção, ela é uma
+   corrida nova de 36 000 ticks, com o campo atrás, e depende do BUG-G corrigido.

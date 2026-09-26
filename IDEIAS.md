@@ -170,3 +170,12 @@ caminho. Ideia boa é justamente a mais perigosa.
   compilação (`sim/data/loader.ts:384`) e nenhum leitor forçado — o preço nunca
   foi técnico. **Não é pendência**: fica aqui com o número, e só volta se a vazão
   da comida for consertada e o sintoma continuar.
+- **A prévia de alcance da fazenda distingue o lado da porta** (decisão do operador na
+  F-CAL-b2, registrada em 2026-09-26). Com a regra atual, o campo colado à porta dá um milho
+  a cada 143 ticks e sustenta 1,72 moinho. Um tile atrás do Roçado, o roceiro contorna o
+  footprint, e o milho sai a cada 299 ticks. No alcance máximo sai a cada 346 ticks, e o
+  moinho fica 22,5 % esperando (tabela em `BUILD_PLAN.md`, F-CAL-b2). A diferença de 2,4×
+  vem do lado em que o campo está, não da distância. Hoje a prévia pinta o alcance todo da
+  mesma cor. A ideia é o jogador ver, antes de arar, que o lado da porta rende mais. É
+  coisa de render e UI: a sim já tem a regra, e `alvosDeAproximacao` deixa colher do tile
+  da porta.

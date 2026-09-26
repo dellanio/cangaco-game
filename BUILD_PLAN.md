@@ -3292,6 +3292,31 @@ Depende da F20b: o marcador lê `unidade.condicao`, que só existe depois dela. 
     nas duas" é falsa; o aceite não foi escrito e o número voltou à mesa. O doc da
     calibração já tem o número medido ao lado da premissa morta. Achado de lado: BUG-G
     (`BUGS.md`, trava), que matou a vila nas medidas a 2 e 3 tiles.
+  - **F-CAL-b2 — a decisão do operador que não tinha chegado, APLICADA em 2026-09-26.** A
+    decisão diz: **o critério (b) vale para o campo do lado da porta; `farm.sai.corn`
+    continua 3.0**; a prévia de alcance que distingue o lado da porta foi para o `IDEIAS.md`.
+    (a) e (c) foram reescritos, com a tabela das três geometrias ao lado (`BALANCE_LOG.md`,
+    2026-09-25, sonda apagada, vila da F-CAL-a por 36 000 ticks, só o campo mudando de lugar):
+
+    | campo | ticks por milho | 1 Roçado alimenta | moinho esperando | milho máx. | mortes |
+    |---|---|---|---|---|---|
+    | colado à porta (sul) | 143 | 1,72 moinho | 0,1 % | 98, subindo | 0 |
+    | atrás, 1 tile | 299 | 0,82 moinho | 10,1 % | 5 | 0 |
+    | atrás, 4 tiles (alcance máx.) | 346 | 0,71 moinho | 22,5 % | 4 | 0 |
+
+    - **Aceite (a), reescrito:** com o campo do lado da porta, a fazenda **sustenta** o
+      moinho: o intervalo médio de entrega até 24 000 é **≤** `receitas.mill.ticksDoCiclo`.
+      Sem piso, porque a sobra do lado da porta é recompensa por posicionar bem. Com o campo
+      atrás a fazenda não sustenta, como a tabela mostra, e isso é aceito.
+    - **Aceite (b):** fica como está, valendo para o campo do lado da porta. A F-CAL-b1 já afirma.
+    - **Aceite (c), reescrito:** "milho nunca acima de 1" deixa de ser critério. Do lado da
+      porta o milho sobra e sobe (98 em 36 000), e isso é recompensa, não defeito. Longe da
+      porta o moinho come tudo (máximo de 4 a 5), mas isso é medida de sonda, sem asserção
+      permanente: a suíte não roda a geometria longe, e o BUG-G (trava) matou a vila a 2 e
+      3 tiles. A evidência grava o (c) com `asserido: false` e o porquê.
+    - **Entregue:** `tests/F-CAL-b-calibracao.test.ts` ganhou o `it` de (a) sobre a mesma
+      corrida (141,6 ≤ 246). A reescrita de (a) e (c) é interpretação minha, a mais
+      conservadora, e fica **marcada para o operador revisar** (`PROGRESS.md`, 2026-09-26).
   - **(texto anterior) F-CAL-b2 — (a) e (c), depois da decisão do operador**: dois `it` sobre a mesma
     corrida, com o texto que a decisão fixar. Se a saída for número (`farm.sai.corn`), o
     aceite fica como está; se for regra (`aproximacao.ts`, tile pisável = só o tile), é
