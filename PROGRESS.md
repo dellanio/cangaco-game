@@ -7644,3 +7644,51 @@ de tempo em `tools/data-schema.js`, cor e nome no tema, `wineyard.colheita = gra
   fica para quem mexer no menu. Não é bug de aceite.
 - F-VIVO (render do prédio vivo) é a próxima da ordem do operador. O item está no
   `BUILD_PLAN.md`, com o aceite a escrever.
+
+## 2026-09-26 (noite, 2) — respostas do operador sobre a F-CANA
+
+### Feito
+- **Tábua da cana revogada** (operador): o GDD §5.4 risca "campo de uva: 1 timber" e diz
+  por quê; a tabela de mercadorias do GDD também. As notas de `production.json:wineyard` e
+  `resources.json:grapes.reposicao` e a observação do `BALANCE_LOG.md` dizem "revogado em
+  definitivo".
+- **Ícones de arar com cor por cultura** (operador): os sulcos do glifo `campo` levam
+  `--cor-cultura`, lida de `theme-sertao.json:recursos` (a mesma cor que pinta o campo no
+  mapa). Milho = ouro, cana = verde. `tools/shots/F18i.js` ganhou a asserção: um
+  `backgroundImage` pintado distinto por cultura arável.
+
+### Verificado (rodei o comando)
+- `npm run shot -- F18i` (porta 5176): OK. **O guarda acusa:** com a linha da cor removida,
+  o roteiro reprovou com "cada cultura aravel deveria ter sulcos de cor propria" (os dois
+  `rgb(26, 20, 16)`). Recortei a linha de ferramentas do `F18i-1` e abri: ouro e verde.
+- **Veio sem chão andável — medido, ZERO caso.** Sonda (apagada) no mapa publicado, estado
+  inicial, tudo desbloqueado. Para cada mina: tile de veio → tem aproximação
+  (`tileAlcancavelParaColheita`) → a aproximação está no componente andável da vila (flood
+  `livre` da porta do armazém, 14 962 tiles). E, para cada posição LEGAL da mina, se a
+  prévia mostra veio e nenhum é usável.
+
+  | mina | tiles de veio | com aproximação | na vila | posições legais | com prévia | paradas com prévia | prévia > usável |
+  |---|---|---|---|---|---|---|---|
+  | gold_mine | 11 | 11 | 11 | 14 351 | 191 | 0 | 0 |
+  | coal_mine | 25 | 25 | 25 | 13 653 | 287 | 0 | 0 |
+  | iron_mine | 20 | 20 | 20 | 14 035 | 216 | 0 | 0 |
+
+  **A sonda acusa** (controle positivo): rodada sobre `fishermans`, deu 274 cardumes, 95 com
+  margem, e **547 das 772 posições com prévia mostrando mais tiles do que o pescador
+  alcança**. Nenhuma parada.
+- Isso é medida do mapa de hoje, não guarda contínua. A proteção permanente que já existe é a
+  F21b (2) ("cada tipo tem veio que uma mina LEGAL alcança"), que é mais fraca: ela pede UM
+  veio, não todos.
+
+### Decisão minha, marcada para o operador revisar
+- **Não criei guarda nova para "todo veio tem aproximação".** O mapa é gerado e hoje passa
+  inteiro; um guarda assim vale se o gerador mudar. Fica como sugestão.
+
+### Achado (medido, não corrigido)
+- **A prévia do pescador superestima.** `colheitaAoAlcanceDaCaixa` (a prévia da planta
+  fantasma e o painel) conta cardume de interior de lago que ninguém alcança; o
+  `semRecursoAoAlcance` já filtra pela aproximação desde a F-T4d. É a mesma classe de
+  divergência de predicado, do lado da tela. Não trava (nenhuma posição fica parada), mas o
+  jogador lê "31 ao alcance" e o pescador usa 19. Registrado no `BUGS.md` como `errado`?
+  **Não**: o aceite escrito da F-TP não fala de aproximação — é lacuna de aceite. Fica aqui
+  para o operador.

@@ -202,7 +202,7 @@ Os três que o jogador sente o tempo todo: **Gold**, **Timber** e **Stone**.
 |---|---|---|
 | Stone | Quarry | Prédios, estradas, munição de Watchtower |
 | Tree trunks | Woodcutter's | Sawmill |
-| Timber | Sawmill (1 tronco → 2 timber) | Prédios, campos de uva, oficinas |
+| Timber | Sawmill (1 tronco → 2 timber) | Prédios, oficinas (campo de uva **revogado**, §5.4) |
 | Gold | Metallurgist's (gold ore + coal → 2 gold) | Schoolhouse, Town hall |
 | Corn | Farm (~15 campos) | Mill, Swine farm, Stables |
 | Loaves | Mill → Bakery (2 pães por farinha) | Inn |
@@ -408,7 +408,11 @@ revisita aquela regra; não é esquecimento.
   liga só em **4 direções**. A fidelidade ao original fica congelada em `IDEIAS.md` até a
   Fase A fechar.
 - Campo de milho: arado por laborer, sem custo de material **[proposta]**.
-- Campo de uva: **1 timber** por campo **[fonte]**.
+- ~~Campo de uva: **1 timber** por campo **[fonte]**.~~ **REVOGADO (operador, 2026-09-26).**
+  A uva daqui é a **cana** (`grapes`), e o partido de cana se ara **sem custo de material**,
+  como o milho. O custo veio do original, onde a vinha funcionava de outro jeito. Aqui o
+  plantio cobra da gaveta de entrada do prédio, e o Canavial não recebe insumo: ninguém
+  entregaria a tábua e o plantio esperaria para sempre (F-CANA, `BALANCE_LOG.md`).
 - Boa prática do original: estrada ao redor de todos os prédios desde cedo e pelo
   menos 2 rotas entre prédios relacionados **[fonte]**.
 

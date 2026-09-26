@@ -84,7 +84,7 @@
       "reposicao": {
         "segundos_base": 30,
         "custo": {},
-        "_doc": "Os numeros do milho (ver corn.reposicao). O `timber: 1` por plantio que o production.json guardava para a videira NAO entra aqui: o custo sai da gaveta de entrada do predio, e o Canavial nao tem `entra` — ninguem entregaria a tabua. Registrado no BALANCE_LOG."
+        "_doc": "Os numeros do milho (ver corn.reposicao). O `timber: 1` por plantio que o production.json guardava para a videira NAO entra aqui: o custo sai da gaveta de entrada do predio, e o Canavial nao tem `entra` — ninguem entregaria a tabua. REVOGADO em definitivo no GDD §5.4 (operador, 2026-09-26)."
       }
     },
     "coal": {

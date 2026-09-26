@@ -550,7 +550,8 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
 - [2026-09-26] o `timber: 1` por plantio da videira (antigo `timberPorCampo`, guardado nas
   notas do `wineyard`) **não entrou** em `grapes.reposicao.custo`. O custo sai da gaveta de
   entrada, e o Canavial não tem `entra`, então ninguém entregaria a tábua e o plantio
-  esperaria para sempre. Pôr o custo exige `wineyard.entra.timber` junto. | `production.json:wineyard`
+  esperaria para sempre. Pôr o custo exige `wineyard.entra.timber` junto. **Fechado (operador,
+  2026-09-26): o custo fica fora, em definitivo, e está revogado no GDD §5.4.** | `production.json:wineyard`
 - [2026-09-26] a mina colhe sem sair (`colheita.aDistancia`, F-CANA). O ciclo do minério
   ficou mais curto pelo tempo da ida e da volta ao veio, que não foi medido. | `production.json:*_mine.sai`
 
