@@ -3440,6 +3440,13 @@ fumaça, pilha por unidade na entrada e na saída, animais do curral. Só render
   no `IDEIAS.md` como pré-requisito da Fase C. Quando o Quartel existir e as armas
   tiverem id em `economy.json`, cada uma ganha a sua `pilha` (uma imagem por mercadoria)
   e os pontos de saída desses três prédios passam a mostrar alguma coisa.
+- **Nota (medido em 2026-09-26, panorama dos 28 prédios, `PROGRESS.md`): hoje a saída SOME.**
+  `depositar` (`src/sim/systems/especialistas.ts`) só deposita o que está em
+  `economia.mercadorias`. Por isso as três casas consomem o insumo, fecham o ciclo e não
+  entregam nada, sem evento `goods-produced`. O aceite da F24 herda duas coisas:
+  - a saída das três casas chega ao armazém, pelo caminho real;
+  - uma regra no `validate:data` que recusa id em `production.receitas.*.sai` fora de
+    `economy.mercadorias`. Hoje nenhuma regra confere isso, e por isso o buraco passou.
 ### F25 — Barracks e criação de soldado
 - **Nota (decisão do operador, 2026-09-26): a arte dos mercenários espera o Quartel.**
   Os cinco mercenários (`rebel`, `rogue`, `vagabond`, `barbarian`, `warrior`) ficaram

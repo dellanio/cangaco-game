@@ -7692,3 +7692,97 @@ de tempo em `tools/data-schema.js`, cor e nome no tema, `wineyard.colheita = gra
   jogador lê "31 ao alcance" e o pescador usa 19. Registrado no `BUGS.md` como `errado`?
   **Não**: o aceite escrito da F-TP não fala de aproximação — é lacuna de aceite. Fica aqui
   para o operador.
+
+## 2026-09-26 (noite, 3) — Panorama funcional dos 28 prédios, sem arte (pedido do operador)
+
+### Como foi medido (verificado: rodei a sonda e abri o JSON)
+Sonda temporária `tests/zz-panorama-28.test.ts` (apagada antes do commit; não é cobertura contínua). Um
+estado novo por tipo (`createInitialState(1)`), com:
+
+- todos os tipos desbloqueados;
+- armazém com 60 de cada mercadoria (200 de tábua e pedra);
+- o lugar escolhido pelo próprio `canPlace`, o mais perto da porta do armazém:
+  - quem colhe precisa de ≥ 2 tiles alcançáveis pelo mesmo `tileAlcancavelParaColheita` da sim;
+  - quem ara precisa de ≥ 4 tiles `canPlowField`.
+
+Daí em diante tudo segue pelo **caminho real**:
+
+1. `PlaceBlueprint`;
+2. laborers erguem, serfs entregam;
+3. `EnqueueTraining` na escola;
+4. o especialista anda e ocupa;
+5. para fazenda e Canavial, `PlowField` com 4 tiles;
+6. serfs levam o insumo do armazém.
+
+"Produz" = a gaveta `saida` do prédio > 0.
+
+**O que NÃO é caminho real:** a estrada. A sonda injeta os tiles já assentados, por BFS sobre `canPlaceRoad`, ligando a porta do prédio e a da escola à do armazém.
+
+A primeira corrida deu "ninguém ocupa" em todos, porque a escola ficou sem estrada e o ouro não chegava. Era defeito da sonda, e sumiu ao ligar a escola.
+
+### A tabela (seed 1; ticks a 10 Hz)
+| prédio | constrói | ocupa | produz |
+|---|---|---|---|
+| storehouse | sim, 396 | — | recebe e guarda (F05+) |
+| schoolhouse | sim, 396 | — | treina (a sonda usou em todos) |
+| inn | sim, 419 | — | alimenta (F20a) |
+| quarry | sim, 222 | sim, +226 | stone, +265 |
+| woodcutters | sim, 284 | sim, +293 | tree_trunk, +625 |
+| sawmill | sim, 291 | sim, +277 | timber, +272 |
+| farm | sim, 319 | sim, +244 | corn, +377 (campo arado pelo comando) |
+| wineyard | sim, 272 | sim, +226 | wine (cachaça), +856 (partido arado pelo comando) |
+| fishermans | sim, 265 | sim, +222 | fish, +434 |
+| gold_mine | sim, 2007 | sim, +1157 | gold_ore, +299 |
+| coal_mine | sim, 2502 | sim, +1382 | coal, +249 |
+| iron_mine | sim, 1759 | sim, +1022 | iron_ore, +299 |
+| mill | sim, 296 | sim, +277 | flour, +245 |
+| bakery | sim, 296 | sim, +277 | loaves, +245 |
+| swine_farm | sim, 319 | sim, +296 | pigs + skins, +599 |
+| stables | sim, 419 | sim, +296 | horses, +599 |
+| butchers | sim, 296 | sim, +277 | sausages, +199 |
+| tannery | sim, 272 | sim, +258 | leather, +599 |
+| armory_workshop | sim, 296 | sim, +277 | leather_armor + wooden_shield, +299 |
+| metallurgists | sim, 296 | sim, +277 | gold, +599 |
+| iron_smithy | sim, 291 | sim, +277 | iron, +299 |
+| **weapons_workshop** | sim, 291 | sim, +277 | **NÃO** (3500 ticks) |
+| **weapon_smithy** | sim, 291 | sim, +277 | **NÃO** (3500 ticks) |
+| **armor_smithy** | sim, 319 | sim, +296 | **NÃO** (3500 ticks) |
+| watchtower | sim, 169 | sim (recruit), +179 | não há regra: não atira, não vê |
+| barracks | sim, 471 | — | não há regra |
+| marketplace | sim, 419 | — | não há regra |
+| town_hall | sim, 419 | — | não há regra |
+
+As minas levam mais tempo em obra e na ocupação porque os veios ficam a 50–70 tiles da aldeia, e isso é caminhada. Não é defeito.
+
+**Resumo:**
+- **21 de 28 fazem o ciclo inteiro:** constroem, são ocupados e produzem.
+- **3 consomem o insumo e não entregam nada.**
+- **4 são casca:** constroem e param aí.
+
+### Achado (medido): as três casas de arma COMEM o insumo e a saída some
+As três casas de arma rodam o ciclo normalmente:
+- o insumo é consumido;
+- o especialista fica em `trabalhando`;
+- o `progresso` volta a zero a cada ciclo.
+
+Mas a gaveta `saida` fica vazia. A causa é `depositar` (`src/sim/systems/especialistas.ts:161`): ele percorre só `economia.mercadorias`, e `arma_madeira`, `arma_ferro` e `armadura_ferro` não estão lá. Nenhum evento `goods-produced` sai.
+
+O registro anterior dizia só "sem pilha no estoque visível". É pior que isso: **o jogador que ergue essas casas perde tábua, ferro e carvão por nada.**
+
+O `validate:data` não acusa porque nenhuma regra confere `production.receitas.*.sai` contra `economy.mercadorias`. A regra de `tools/data-rules.js:897` é da `reposicao`.
+
+Por que não fui para o `BUGS.md`: nenhum aceite escrito cobre esses prédios, o que torna isso lacuna de aceite. Isso deixa as três casas fora do "trava".
+
+### Decisão minha, marcada para o operador revisar
+- **Não corrigi.** A correção natural tem duas partes:
+  - uma regra no validate: `sai` só com id de `economy.mercadorias`;
+  - dar id às armas.
+
+  Isso é a escolha de arma da F24, que o operador já pôs na Fase C. Um conserto parcial agora (pôr os três agregados em `mercadorias`) criaria três mercadorias que a F24 vai apagar.
+- Deixei o contrato na nota da F24 em `BUILD_PLAN.md`: o aceite dela inclui "a saída das três casas chega ao armazém" e a regra do validate.
+- **Hipótese, não medida:** esconder as três do menu até a F24 evitaria a perda. Não fiz. É decisão de design do operador.
+
+### As quatro cascas (verificado por grep)
+- `barracks`, `marketplace`, `town_hall` e `watchtower` não têm sistema em `src/sim/`.
+- O único leitor em código fora de `data/` é `src/render/estagio-obra.ts`, que desenha a obra.
+- São Fase C (F25 e as seguintes) por desenho, não por defeito.
