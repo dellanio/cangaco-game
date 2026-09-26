@@ -56,7 +56,7 @@ vertical da imagem, nunca em diagonal.
 de derivado, o prédio completo cobre só cerca de 39 % do quadrado de chão de 3×3 tiles
 que ele ocupa, e o resto fica vazio. A medida está na nota do `assets/manifest.json`.
 Esse defeito é o **BUG-H** no `BUGS.md`, com severidade `feio`. A correção é arte,
-não código: refazer os seis estágios do armazém. Em conversa antiga ele aparece como
+não código: refazer as duas imagens do armazém (seção 4). Em conversa antiga ele aparece como
 "BUG-F", mas esse id é de outro bug, já corrigido. Use BUG-H.
 
 **A referência aprovada** é `assets/base/woodcutters/` (Casa do Lenhador), em especial
@@ -110,8 +110,8 @@ não código: refazer os seis estágios do armazém. Em conversa antiga ele apar
   (`docs/spec-arte-predios.md`) **[lido]**. As duas bases existentes não seguem essa
   convenção: usam o nome em português (`armazem_03_completo.png`,
   `casa_lenhador_03_completo.png`). Arte nova segue a convenção.
-- **Derivado:** `assets/sprites/<id>/<id>_<estagio>.png`, com o estágio da seção 4
-  **[lido do manifest]**.
+- **Derivado:** `assets/sprites/<id>/<id>_<estagio>.png`, com a chave da seção 4
+  (`madeira` ou `completo`) **[lido do manifest]**.
 - **Ícone do menu:** `assets/sprites/<id>/icone.png`, 72×72.
 
 ### O comando que funciona
@@ -133,7 +133,7 @@ para o manifest, 192×135.
 
 1. **A lista de alvos é escrita à mão.** A constante `ALVOS` no topo de
    `tools/derivar-sprites.js` só tem os três arquivos do armazém. Para um prédio novo,
-   é preciso acrescentar um par `{ base, saida }` por estágio.
+   é preciso acrescentar um par `{ base, saida }` por imagem (duas por prédio).
 2. **A largura é fixa em 192 px** (`LARGURA_ALVO = 192`). Serve só para prédio de
    3 tiles de largura. Prédios de 2 ou 4 tiles exigem que a largura venha de
    `footprint[0] × 64`. Isso é mudança de ferramenta e precisa de plano.
@@ -176,8 +176,8 @@ Regras que o teste `tests/F17f-manifesto.test.ts` confere **[lido]**:
 - `tamanho[0]` é igual a `footprint[0] × 64`.
 - `footprint` é igual ao do `data/buildings.json`.
 
-`footprint` é `[largura, profundidade]` em tiles. `estados` pode ter só parte dos seis
-estágios. O estágio que falta vira retângulo placeholder na tela.
+`footprint` é `[largura, profundidade]` em tiles. `estados` pode ter só uma das duas
+imagens. A que falta vira retângulo placeholder na tela.
 
 ### Arte nova não reprova teste nenhum
 
@@ -198,53 +198,67 @@ lê o cabeçalho. **Não há parada por arte nova.** Se um teste reprovar ao ent
 é um defeito de verdade no manifest ou nos arquivos, e a mensagem diz qual.
 
 A única regra que sobra sobre nomes de estado: toda chave de `estados` tem de ser um
-dos seis estágios da seção 4. Chave com outro nome reprova, porque nunca apareceria na
-tela.
+nome que o render desenha. Hoje são os seis estágios antigos; com a F17g passam a ser
+`madeira` e `completo` (seção 4). Chave com outro nome reprova, porque nunca
+apareceria na tela. O teste de fumaça acima é de antes da decisão das duas imagens.
 
 ---
 
-## 4. Os seis estágios
+## 4. A obra: duas imagens reveladas
 
-Um prédio passa por seis imagens enquanto é construído. O render escolhe o estágio pelo
-progresso da obra (`src/render/estagio-obra.ts`) **[lido]**.
+> **Decisão do operador, 2026-09-26: a obra deixa de ter seis estágios.** Cada prédio
+> tem **duas imagens**: a **madeira** e a de **pedra**, que é o prédio pronto. As duas
+> se **revelam conforme o `hp` sobe**, como no original (kam_remake, medido em
+> `BUILD_PLAN.md`, F-VIVO). O motivo é triplo:
+> - custa menos: são 2 imagens por prédio, 56 no total, contra 168;
+> - a casa sobe a cada martelada, e não em cinco saltos;
+> - o registro entre estágios, que a casa do lenhador errou (o 01 noutro canvas), deixa
+>   de ter cinco transições para acertar e passa a ter **um par**.
+>
+> **Não derive mais `marcacao`, `fundacao`, `paredes` nem `cobertura`.** O `estrutura`
+> que já existe **vira a `madeira`**: é a mesma coisa, a armação em pé.
+>
+> O código ainda desenha os seis até o item **F17g** do `BUILD_PLAN.md` entrar. Até lá,
+> o `madeira` não aparece na tela. Entregue as duas imagens assim mesmo: o manifesto
+> passa a aceitá-las na F17g.
 
-**Mesmo canvas.** Os seis arquivos-base de um prédio têm o **mesmo tamanho de canvas**
-e o prédio **na mesma posição** dentro dele. O derivador recorta todos pela **união das
-bounding boxes**, de modo que o prédio não pula de um estágio para o outro. Se os
-canvas forem diferentes, a união não significa nada e o prédio pula.
+| Chave no manifest | O que a imagem mostra | Quando aparece |
+|---|---|---|
+| `madeira` | A **armação inteira de madeira** em pé, sobre o alicerce: esteios, vigas, caibros do telhado, sem parede nem telha. | É revelada de baixo para cima enquanto a tábua é pregada. |
+| `completo` | O **prédio pronto**: paredes, telhado, porta. | É revelada de baixo para cima **por cima da madeira** enquanto a pedra é assentada. No fim cobre a madeira inteira. |
 
-**O caso real.** As bases da casa do lenhador violam essa regra **[testado, cabeçalho
-dos PNG]**:
+**A conta da revelação** (render, pura; a entrada é o `hp` da obra e o custo do prédio):
+- A obra tem `hpTotal`, e a fase da madeira é a parte da tábua: `hpMadeira = hpTotal ×
+  tábua / (tábua + pedra)`. Nos 28 prédios, isso dá 50 de hp por material entregue.
+- `hp ≤ hpMadeira`: a madeira aparece até a fração `hp / hpMadeira`, e o prédio pronto
+  não aparece.
+- `hp > hpMadeira`: a madeira aparece inteira, e o prédio pronto aparece até a fração
+  `(hp − hpMadeira) / (hpTotal − hpMadeira)`.
+- Com `hp` igual a 0, nada aparece. Quem mostra a obra antes da primeira martelada é o
+  canteiro sendo aplainado (F17d) e a pilha do material entregue (F-VIVO-a).
 
-| Arquivo | Canvas |
-|---|---|
-| `casa_lenhador_01_obra.png` | 1536 × 1024 |
-| `casa_lenhador_02_estrutura.png` | 1223 × 1286 |
-| `casa_lenhador_03_completo.png` | 1223 × 1286 |
+**O que isso pede da arte:**
+- **Mesmo canvas, mesma posição.** As duas bases de um prédio têm o mesmo tamanho de
+  canvas e o prédio no mesmo lugar dentro dele. O derivador recorta as duas pela união
+  das bounding boxes. Um par desalinhado aparece como uma madeira que "sai" pela
+  lateral do prédio pronto.
+- **O prédio pronto cobre a madeira.** Toda a silhueta da `madeira` fica dentro da
+  silhueta do `completo`. Esteio que passa da parede continua visível com a casa pronta.
+- **A base de baixo é a do chão.** A revelação é um recorte horizontal que sobe da
+  borda inferior do sprite. Não há máscara no alfa: a ordem de revelação é a altura, e
+  a arte não precisa de nada além das duas imagens.
 
-Só os estágios 02 e 03 são coerentes entre si. **[testado]** Derivados juntos, deram
-192×179. O 01 precisa ser refeito no canvas dos outros.
-
-**O que cada estágio mostra** (`docs/spec-arte-predios.md`, `estagio-obra.ts` e os
-rótulos em `data/theme-sertao.json`) **[lido]**:
-
-| # | Estágio (chave no manifest) | O que aparece | Rótulo na tela |
-|---|---|---|---|
-| 1 | `marcacao` | Estacas e barbante no chão, marcando o contorno. | marcação no chão |
-| 2 | `fundacao` | Alicerce de pedra baixo, no contorno do prédio. | alicerce pronto |
-| 3 | `estrutura` | Armação de madeira em pé sobre o alicerce, sem parede. | armação de madeira |
-| 4 | `paredes` | Taipa subindo entre os esteios, telhado ainda aberto. | paredes subindo |
-| 5 | `cobertura` | Paredes prontas, telhado com parte das telhas. | telhado por fechar |
-| 6 | `completo` | O prédio pronto. | — |
+**Os rótulos da tela.** O painel e o medidor da obra continuam dizendo em que pé ela
+está. Os rótulos por estágio de `data/theme-sertao.json` são reescritos pela F17g,
+não pela arte.
 
 - **O sprite do prédio é estático.** Nenhum trabalhador, animal, fumaça ou mercadoria
   dentro dele. O prédio **tem** animação e estoque visível (decisão do operador,
   2026-09-26), mas os dois são **camadas à parte**, desenhadas pelo render por cima do
-  estágio `completo`, nas áreas que o prédio reserva vazias. As camadas, as áreas e os
-  arquivos estão na seção 4a.
-- O GDD §9.6 ainda fala em três estágios. Está desatualizado: o código usa seis.
-- O armazém usa hoje só `marcacao`, `estrutura` e `completo`. Os outros três caem no
-  placeholder.
+  `completo`, nas áreas que o prédio reserva vazias. As camadas, as áreas e os arquivos
+  estão na seção 4a.
+- O GDD §9.6 fala em três estágios, e o código ainda usa seis. Os dois ficam
+  desatualizados quando a F17g entrar.
 
 ---
 
@@ -408,7 +422,7 @@ Os três seguem os oito campos da seção 3 e a mesma pasta `assets/sprites/<id>
 
 | Parte | Imagens |
 |---|---|
-| Estágios dos 28 prédios (seção 6) | 168 |
+| Obra dos 28 prédios: `madeira` + `completo` (seção 6) | 56 |
 | `pilha`: 28 mercadorias × 1 unidade | 28 |
 | Caso 2: 2 prédios × 3 laços × 8 | 48 |
 | Caso 3: 11 prédios × 2 laços × 8 | 176 |
@@ -416,7 +430,7 @@ Os três seguem os oito campos da seção 3 e a mesma pasta `assets/sprites/<id>
 | Caso 5, alimentar: 2 prédios × 2 laços × 8 | 32 |
 | Caso 5, `animal`: 2 bichos × 3 idades × 4 | 24 |
 | Fumaça genérica: 1 laço × 8 | 8 |
-| **Total** | **496** |
+| **Total** | **384** |
 
 A animação sozinha soma 300 (48 + 176 + 12 + 32 + 24 + 8). O operador escolheu esse
 nível, e não o mínimo de um laço por prédio, porque um laço só parece repetitivo e
@@ -510,7 +524,7 @@ base aprovada e ícone, mas **não tem sprite de jogo** em `assets/sprites/woodc
 | weapon_smithy | Ferraria | 4×2 | 256 |
 | armor_smithy | Casa do Ferro | 4×3 | 256 |
 
-São seis estágios por prédio: 168 imagens no total. As duas facções usam **os mesmos
+São duas imagens por prédio, `madeira` e `completo` (seção 4): 56 imagens no total. As duas facções usam **os mesmos
 prédios**. Só a cor do lenço e da bandeira muda: vermelho `#D64B3F` e azul `#3F72D6`.
 
 ### Unidades (28)
@@ -734,9 +748,9 @@ Os três são os que a abertura planta primeiro e os que o roteiro F17 mostra.
 
 | id | Nome | Footprint | Sprite | Estado de hoje |
 |---|---|---|---|---|
-| storehouse | Armazém | 3×3 | 192 px de largura | isométrico, BUG-H: refazer os seis estágios |
-| woodcutters | Casa do Lenhador | 3×2 | 192 px de largura | base aprovada para estrutura e completo: refazer a marcação no canvas deles e gerar fundação, paredes e cobertura |
-| quarry | Pedreira | 3×2 | 192 px de largura | nada: seis estágios novos, **sem pedra desenhada** |
+| storehouse | Armazém | 3×3 | 192 px de largura | isométrico, BUG-H: refazer `madeira` e `completo` |
+| woodcutters | Casa do Lenhador | 3×2 | 192 px de largura | base aprovada para estrutura (vira `madeira`) e completo: pronto, falta só conferir o registro do par |
+| quarry | Pedreira | 3×2 | 192 px de largura | nada: `madeira` e `completo` novos, **sem pedra desenhada** |
 
 Os três precisam das áreas vazias da seção 4a desde o primeiro desenho: o armazém, o
 pátio do estoque; a casa do lenhador, o ponto de saída das toras e a chaminé; a
