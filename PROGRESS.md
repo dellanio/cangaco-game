@@ -8588,3 +8588,9 @@ for pequena, o cartão ganha teto com rolagem própria, em vez de um número mai
 - Roteiros visuais verdes: `F06`, `UI-barra-a`, `F-T1` e `F-SPR`.
 - Evidências principais: `screenshots/UI-barra-a-1-sombra-grade.png`, `screenshots/F-T1-2-lago-e-praia.png`, `screenshots/F-SPR-2-unidades-andando.png`, além de `screenshots/UI-world-polish-before.png` e `screenshots/UI-world-polish-after.png`.
 - `src/sim/` e `tests/` não foram alterados.
+
+### Auditoria de cobertura pós-entrega
+
+- Cobertura ativa conferida por cruzamento de dados e manifesto: 28/28 prédios têm sprite e ícone; 23/23 unidades com `direcoesDeSprite` têm sprite; os seis terrenos têm quatro estados raster cada.
+- Os cinco mercenários continuam deliberadamente fora do render: `tests/F-SPR-carregamento.test.ts` exige `direcoesDeSprite === null` e reprova manifesto de unidade para esses ids. A regra “não tocar em `tests/`” foi preservada.
+- Foi criada uma base canônica pronta para a futura ativação em `assets/base/unit-atlas-mercenaries/`, com Retirante, Emboscador, Andarilho montado, Bruto do Mato e Jagunço. O layout deriva as cinco células pelo pipeline, mas os derivados não entram em `assets/sprites/` enquanto o contrato acima permanecer.

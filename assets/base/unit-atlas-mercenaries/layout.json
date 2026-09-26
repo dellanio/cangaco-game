@@ -1,0 +1,10 @@
+{
+  "source": "assets/base/unit-atlas-mercenaries/source.png",
+  "cells": [
+    { "id": "rebel", "crop": [0, 0, 434, 724], "output": "assets/sprites/units/rebel/parado.png", "size": [64, 96], "fit": "contain" },
+    { "id": "rogue", "crop": [434, 0, 434, 724], "output": "assets/sprites/units/rogue/parado.png", "size": [64, 96], "fit": "contain" },
+    { "id": "vagabond", "crop": [868, 0, 434, 724], "output": "assets/sprites/units/vagabond/parado.png", "size": [96, 128], "fit": "contain" },
+    { "id": "barbarian", "crop": [1302, 0, 434, 724], "output": "assets/sprites/units/barbarian/parado.png", "size": [64, 96], "fit": "contain" },
+    { "id": "warrior", "crop": [1736, 0, 436, 724], "output": "assets/sprites/units/warrior/parado.png", "size": [64, 96], "fit": "contain" }
+  ]
+}
