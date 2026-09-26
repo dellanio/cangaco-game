@@ -8389,3 +8389,16 @@ Plano: `docs/planos/F-VIVO-b-trabalho.md`. Segunda das três tarefas do pedido d
 ### Aberto
 
 - O rótulo do quadro sobrepõe o nome "Pedreira" do placeholder. É cosmético e some com a arte.
+
+## 2026-09-26 (noite, 12) — barra lateral única: medição e proposta (sem código)
+
+Terceira tarefa do pedido do operador: só medir e propor, e parar. O documento é `docs/propostas/barra-lateral-unica.md`. Ele separa o medido (Playwright, sonda no scratchpad e apagada) do que é hipótese.
+
+- **Mapa hoje**: 72,6 % / 58,9 % (1280×720, sem ou com prédio escolhido) e 81,3 % / 71,4 % (1920×1080).
+- **Barra única** de 220, 260 e 300 px: 82,8 / 79,7 / 76,6 % (1280) e 88,5 / 86,5 / 84,4 % (1920).
+- **Pisos de largura**:
+  - grade: 259 com 5 colunas, 210 com 4;
+  - painel empilhado: ~185;
+  - fila da escola: slot fixo em 232 e tipos com 126 px no mais largo.
+- **Achado**: o orçamento vertical não fecha a 720, nem a 1080, com grade e painel visíveis juntos. A recomendação é o painel ocupar o corpo da aba quando há seleção.
+- **Nada implementado.** A aprovação, a largura e a fila sugerida (UI-barra-a..e) esperam o operador.
