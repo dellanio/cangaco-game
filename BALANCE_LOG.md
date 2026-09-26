@@ -477,6 +477,35 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   estadoInicial.estoque.stone`, `tools/geometria-da-abertura.mjs`, `data/delivery.json`
   (o nível da `pedra-para-canteiro`)
 
+- [2026-09-25] **A faixa da fazenda nas geometrias do jogador: 143 a 346 ticks por milho,
+  e no alcance máximo a fazenda NÃO sustenta o moinho** | `test-output/F-CAL-b2-sonda.json`
+  (sonda apagada), a vila da F-CAL-a por 36 000 ticks, só o campo mudando de lugar.
+  Pedido do operador ao escolher a saída (iii): o aceite descreveria a FAIXA — a fazenda
+  sustenta o moinho com o campo colado e no alcance máximo, e o milho não cresce sem
+  limite no segundo. Medido:
+
+  | campo | ticks por milho | 1 Roçado alimenta | moinho esperando | milho máx. | mortes |
+  |---|---|---|---|---|---|
+  | colado à porta (sul) | 143 | 1,72 moinho | 0,1 % | 98, subindo | 0 |
+  | atrás, a 1 tile | 299 | 0,82 moinho | 10,1 % | 5 | 0 |
+  | atrás, a 4 tiles (alcance máx.) | 346 | 0,71 moinho | 22,5 % | 4 | 0 |
+
+  **A metade "sustenta nas duas" é FALSA, não vazia**: no alcance máximo o moinho fica
+  22,5 % esperando (o critério (b) é 10 %), e já a 1 tile atrás passa do limite. A
+  metade do milho vale nas duas (no longe ele fica em 0 a 4, porque o moinho come tudo)
+  e a da fome também (26 civis, zero morte). A faixa é de **2,4×**, e o que a abre não
+  é a distância, é o LADO da porta: a 1 tile atrás o roceiro já contorna o footprint
+  (156 de caminhada contra 2). As distâncias 2 e 3 não mediram calibração — a vila
+  morreu por um travamento de regra (BUG-G, `BUGS.md`), e os números delas estão fora.
+  | **Nenhum número girado; o número volta à mesa, pela regra que o operador deixou**
+  ("se 'sustenta nas duas' virar afirmação vazia, pare e me diga"). O que a medida dá
+  para ele decidir: a colheita é o único termo livre (100 ticks); para o alcance máximo
+  fechar em 246 ela teria de cair para ~0, então nenhum `farm.sai.corn` faz as duas
+  pontas sustentarem o moinho — ou o aceite aceita que o campo mal posto não sustenta
+  (e (b) vale só para o campo do lado da porta), ou o termo que muda é a caminhada.
+  | `production.json:farm.sai.corn`, `production.json:proporcoesDeReferencia`,
+  `docs/calibracao-fase-b.md`
+
 ---
 
 ## Ciclos fechados

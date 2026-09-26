@@ -145,6 +145,21 @@ tabela foi reescrito no próprio dado para dizer isso.
   > porta, a fazenda entrega 1,7× o que o moinho mói. O que continua válido: a
   > colheita de 100, o plantio de 37,5 e a conta do cenário longe. Decisão pendente
   > do operador, `BALANCE_LOG.md` (2026-09-25).
+  >
+  > **O número medido, 2026-09-25 (F-CAL-b2, `test-output/F-CAL-b2-sonda.json`),** na
+  > mesma vila da abertura, só mudando onde o campo fica:
+  >
+  > | campo | ida + volta por milho | ticks por milho | moinho esperando |
+  > |---|---|---|---|
+  > | colado à porta (ao sul) | **2** | **143** | 0,1 % |
+  > | atrás da fazenda, a 1 tile | **156** | **299** | 10,1 % |
+  > | atrás da fazenda, no alcance máximo (4) | **199** | **346** | 22,5 % |
+  >
+  > A caminhada vai de 2 a 199 ticks por milho, e o que a decide é o lado da porta,
+  > não a distância: a 1 tile atrás o roceiro já contorna o footprint 4×3. **O lote 1
+  > mediu a geometria do cenário, e não a do jogador.** Os dois cenários daqui tinham
+  > o campo do lado oposto à porta, numa distância intermediária (54 + 50), e a conta
+  > do `3,0` fechou para essa geometria só.
 - **`corn.rendimentoPorTile` (4) fica.** Dobrar para 8 diluiria o plantio na
   mesma medida que baixar a reposição, mas mudaria a frase de design "quatro
   ciclos de colheita para um de plantio" sem ganho: o mesmo efeito saiu de um

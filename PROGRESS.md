@@ -7173,3 +7173,41 @@ medição e o guarda. Plano e tabela: `docs/planos/F-T4d.md`. O item entrou no
 - Nada que precise do operador. O rendimento sobrescrito (1 por tile) é andaime de
   medição declarado, o mesmo da F-T4a; com os 20 do dado o lago da abertura dura
   ~170 mil ticks.
+
+---
+
+## 2026-09-25 (noite) — F-CAL-b2: a decisão do operador, a medição dela e a parada (branch `fable-lote-sim`)
+
+### Decidido pelo operador (com o porquê dele)
+
+- **Saída (iii)**: aceitar 1 Roçado para 1,7 Moinho e reescrever (a) e (c) como FAIXA.
+  *"A vazão da fazenda depende de onde o jogador põe o campo, e isso é decisão dele, não
+  número a fixar."* A (i) repetiria o erro do lote 1; a (ii) desfaz a F-T3 por motivo de
+  balanceamento. Campo colado sobrando milho é recompensa por posicionar bem.
+- **A saída que ele deixou**: se "sustenta nas duas" ficar vazia, parar e dizer.
+
+### Verificado (rodei o comando ou abri o arquivo)
+
+- **No alcance máximo a fazenda não sustenta o moinho** (`test-output/F-CAL-b2-sonda.json`,
+  sonda apagada): 346 ticks por milho, moinho 22,5 % esperando; a 1 tile atrás, 299 e
+  10,1 %; colado, 143 e 0,1 %. O milho não cresce no longe (máx. 4) e ninguém morre em
+  nenhuma das três. Parei aqui, pela regra dele: o aceite não foi escrito, e F-CAL-b2
+  continua sem chave em `test-results.json`.
+- **O que abre a faixa é o lado da porta, não a distância**: a 1 tile atrás a caminhada
+  já é 156 por milho, contra 2 colado.
+- **`docs/calibracao-fase-b.md` corrigido como ele pediu**: a tabela medida ao lado da
+  premissa morta, com a data, e a frase "o lote 1 mediu a geometria do cenário, e não a
+  do jogador".
+- **BUG-G registrado, não corrigido** (`BUGS.md`, severidade trava): com o campo a 2 e 3
+  tiles atrás, o Moinho é plantado em cima do roceiro, que fica preso em `voltando` até
+  morrer — o A* libera a caixa inteira onde a unidade está e o passo pergunta
+  `tileAndavel` do tile seguinte, então os dois discordam para sempre. Essas duas
+  medidas estão fora da tabela.
+
+### Aberto — precisa do operador
+
+- **O número da F-CAL-b2 voltou à mesa.** Nenhum `farm.sai.corn` faz as duas pontas
+  sustentarem o moinho (a colheita teria de ir a ~0 para o alcance máximo fechar em 246).
+  As saídas que a medida deixa: o critério (b) valer só para o campo do lado da porta,
+  com o campo mal posto aceito como "não sustenta"; ou o termo que muda ser a caminhada.
+- **BUG-G é `trava`**: pela §6, precede a fila.

@@ -3276,7 +3276,23 @@ Depende da F20b: o marcador lê `unidade.condicao`, que só existe depois dela. 
     para `test-output/F-CAL.json`, cada uma com `passa` e `asserido`, e a tabela do
     roceiro por fase (abertura: 100 / 1 / 1 / 37 — longe: 100 / 54 / 50 / 36). Corrida de
     10,4 s isolada; `timeout` explícito de 90 s, que não é asserção de tempo (§8).
-  - **F-CAL-b2 — (a) e (c), depois da decisão do operador**: dois `it` sobre a mesma
+  - **F-CAL-b2 — decisão do operador tomada (2026-09-25), e BLOQUEADA pela medição dela.**
+    Ele escolheu a saída (iii), com o porquê dele: *"a vazão da fazenda depende de onde o
+    jogador põe o campo, e isso é decisão dele, não número a fixar. Girar
+    farm.sai.corn fecharia para uma geometria e quebraria a outra — que é exatamente o
+    erro do lote 1, agora medido."* A (ii) está fora: *"desfaz uma escolha da F-T3 por
+    motivo de balanceamento, e a F-T3 tem razão própria (o roceiro não pisa no que vai
+    colher)."* O aceite pedido: (a) e (c) descrevem a FAIXA — a fazenda sustenta o
+    moinho com o campo colado e no alcance máximo, e o milho não cresce sem limite no
+    segundo; campo colado sobrando milho é **recompensa por posicionar bem**, não
+    defeito. E a saída dele: *"se 'sustenta nas duas' virar afirmação vazia, pare e me
+    diga, e aí o número volta à mesa."*
+    **Medido (`BALANCE_LOG.md`, 2026-09-25): no alcance máximo a fazenda entrega um milho a
+    cada 346 ticks e o moinho fica 22,5 % esperando** (colado: 143 e 0,1 %). "Sustenta
+    nas duas" é falsa; o aceite não foi escrito e o número voltou à mesa. O doc da
+    calibração já tem o número medido ao lado da premissa morta. Achado de lado: BUG-G
+    (`BUGS.md`, trava), que matou a vila nas medidas a 2 e 3 tiles.
+  - **(texto anterior) F-CAL-b2 — (a) e (c), depois da decisão do operador**: dois `it` sobre a mesma
     corrida, com o texto que a decisão fixar. Se a saída for número (`farm.sai.corn`), o
     aceite fica como está; se for regra (`aproximacao.ts`, tile pisável = só o tile), é
     feature de `sim/` e o doc volta a valer; se for aceitar 1 Roçado : 1,7 Moinho com
