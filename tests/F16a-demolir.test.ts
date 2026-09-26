@@ -39,7 +39,7 @@ import {
   armazemDoJogo, ate, cenarioLongo, fsmDe, liberacoes, quieto, saidaDe, serfDoJogo,
 } from './helpers/serf-cenario';
 import {
-  comEstoqueNaSaida, comEstradas, comPredioCompletoEm, comUnidadeExtra, destinoPredioDa, linhaH,
+  comEstoqueNaSaida, comEstradas, comPredioCompletoEm, comUnidadeExtra, destinoPredioDa, 
   semLaborers, serfsDoCenario,
 } from './helpers/jobs-cenario';
 import {
@@ -48,6 +48,7 @@ import {
 import { cenarioDePedreira, comSaida } from './helpers/producao-cenario';
 import { validarTudo } from '../tools/data-rules.js';
 import { ARQUIVOS } from '../tools/data-schema.js';
+import { linhaHDe, naVila } from './helpers/ancoras';
 
 const inicial = createInitialState(1);
 const ARMAZEM = armazemDoJogo.id;
@@ -245,7 +246,7 @@ describe('F16a — obra demolida com o serf a caminho (aceite, pelo comando real
 describe('F16a — escola demolida com a tarefa de ouro ja reclamada (nota da revisao da F13a)', () => {
   /** A mesma rua do aceite da F13a: armazem (x 29..31) e escola (x 34..36), porta em y=33. */
   const cenarioDaEscola = comOuroNoArmazem(
-    comEstradas(semLaborers(inicial), linhaH(29, 36, 33)), armazemPorTipo(inicial).id, 1,
+    comEstradas(semLaborers(inicial), linhaHDe(naVila, 0, 7, 3)), armazemPorTipo(inicial).id, 1,
   );
 
   it('o serf com o ouro na mao: destino-sumiu, fila apagada e o ouro conservado', () => {
@@ -456,7 +457,7 @@ describe('F16a — o comando nunca e recusado, e o estado sobrevive ao JSON', ()
 
   it('o predio ocupado demolido nao deixa especialista apontando para ele', () => {
     const cenario = comUnidadeExtra(
-      comPredioCompletoEm(semLaborers(inicial), 'q2', { tipo: 'quarry', gx: 26, gy: 36 }),
+      comPredioCompletoEm(semLaborers(inicial), 'q2', { tipo: 'quarry', ...naVila(-3, 6) }),
       'esp1', PEDREIRO, 30, 34,
     );
     const emCaminho = step(step(step(cenario, []), []), []);

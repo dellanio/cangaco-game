@@ -31,15 +31,18 @@ import { step } from '../src/sim/tick';
 import { chaveDeTile, predioLigadoAoArmazem } from '../src/sim/estradas';
 import { melhorTileDeColheita, tilesReservadosParaColheita } from '../src/sim/recursos';
 import { receitaDoTipo } from '../src/sim/producao';
-import { comEstradas, linhaH, linhaV } from './helpers/jobs-cenario';
+import { comEstradas } from './helpers/jobs-cenario';
+import { ancoraDoLajedo, linhaHDe, linhaVDe, naVila, relativoA } from './helpers/ancoras';
 import { comEspacoNaSaida, comJazida, comProdutorOcupado, fsmDe } from './helpers/producao-cenario';
 import { violacoesDeInvariantes } from './helpers/jobs-invariantes';
 import { gravarEvidencia } from './helpers/evidence';
 
-const chave = (gx: number, gy: number): string => chaveDeTile({ gx, gy });
+/** A rua da F-T2a, a partir da vila: y=36 de x=18 a x=35 hoje, mais a coluna do
+ *  armazem ate a porta. */
+const RUA = [...linhaHDe(naVila, -11, 6, 6), ...linhaVDe(naVila, 0, 3, 5)];
 
-/** A rua da F-T2a: y=36 de x=18 a x=35, mais a coluna x=29 ate a porta do armazem. */
-const RUA = [...linhaH(18, 35, 36), ...linhaV(29, 33, 35)];
+/** O lajedo do mapa publicado: pedreiras e mancha andam com ele (F18c-1b). */
+const LAJEDO = relativoA(ancoraDoLajedo());
 
 /**
  * A mancha de rocha do cenario, escolhida para ficar ao alcance das DUAS: a
@@ -47,7 +50,10 @@ const RUA = [...linhaH(18, 35, 36), ...linhaV(29, 33, 35)];
  * x=26..28, ambos em y=34..35, e o alcance e 6. De (24,30) a (27,30) todo tile
  * dista <= 6 das duas — nao ha tile "so meu" para onde fugir da disputa.
  */
-const ROCHA: readonly (readonly [number, number])[] = [[24, 30], [25, 30], [26, 30], [27, 30]];
+const ROCHA: readonly (readonly [number, number])[] = [2, 3, 4, 5].map((dx) => {
+  const t = LAJEDO(dx, 1); // (24,30) a (27,30) hoje
+  return [t.gx, t.gy] as const;
+});
 
 /** Dois por tile: a jazida inteira sao 8 unidades, e o cenario vai ate o
  *  esgotamento sem virar medicao de paciencia. */
@@ -69,8 +75,8 @@ function colheitaDaPedreira(dados: GameData): ColheitaDeRecurso {
  *  a MESMA mancha de rocha — o cenario que o aceite pede. */
 function duasPedreiras(dados: GameData = DADOS): GameState {
   const vazio: GameState = { ...createInitialState(1, dados), unidades: { porId: {}, ordem: [] } };
-  let s = comProdutorOcupado(vazio, { tipo: 'quarry', id: 'q1', unidade: 'pedreiro-1', gx: 22, gy: 34 }, dados);
-  s = comProdutorOcupado(s, { tipo: 'quarry', id: 'q2', unidade: 'pedreiro-2', gx: 26, gy: 34 }, dados);
+  let s = comProdutorOcupado(vazio, { tipo: 'quarry', id: 'q1', unidade: 'pedreiro-1', ...LAJEDO(0, 5) }, dados);
+  s = comProdutorOcupado(s, { tipo: 'quarry', id: 'q2', unidade: 'pedreiro-2', ...LAJEDO(4, 5) }, dados);
   s = comEstradas(s, RUA);
   const colheita = colheitaDaPedreira(dados);
   for (const id of ['q1', 'q2']) {
@@ -189,7 +195,7 @@ describe('F-T2c — duas pedreiras de alcances sobrepostos nunca colhem o mesmo 
     const semQuadro1 = melhorTileDeColheita(s, predioDe(s, 'q1'), colheita, 1, undefined, DADOS);
     const semQuadro2 = melhorTileDeColheita(s, predioDe(s, 'q2'), colheita, 1, undefined, DADOS);
     expect(semQuadro1).toBe(semQuadro2);
-    expect(semQuadro1).toBe(chave(24, 30));
+    expect(semQuadro1).toBe(chaveDeTile(LAJEDO(2, 1)));
   });
 
   it('o tile de cada uma e exclusivo, e a reserva o diz desde o primeiro tick', () => {

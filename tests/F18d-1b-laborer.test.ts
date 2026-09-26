@@ -18,15 +18,16 @@ import { chaveDeTile, ehEstrada, ehPlanejada, MERCADORIA_DA_ESTRADA, pedraNoTile
 import { disponivelNaOrigem, reservadoNaOrigem } from '../src/sim/reservas';
 import { ehTarefaDePedraParaCanteiro } from '../src/sim/state';
 import type { GameState } from '../src/sim/state';
-import { comPedraNaSaida, comPlanejadas, inicial, laborersDoCenario, tile } from './helpers/jobs-cenario';
+import { comPedraNaSaida, comPlanejadas, inicial, laborersDoCenario } from './helpers/jobs-cenario';
 import { violacoesDeInvariantes } from './helpers/jobs-invariantes';
 import { ESTADOS_DO_LABORER, violacoesDaFsmDoLaborer } from './helpers/laborer-invariantes';
 import { bensPorMercadoria, violacoesDaFsm } from './helpers/serf-invariantes';
 import { ate, fsmDe } from './helpers/serf-cenario';
+import { naVila } from './helpers/ancoras';
 
 /** Colado no laborer u7 (34,34): a viagem dele e curta de proposito, e por isso ele
  *  chega ANTES da pedra, que vem do armazem (29,30) na mao de um serf. */
-const CANTEIRO = tile(34, 33);
+const CANTEIRO = naVila(5, 3);
 const ARMAZEM = 'p1';
 
 function comOCanteiro(): { readonly estado: GameState; readonly tarefa: string } {

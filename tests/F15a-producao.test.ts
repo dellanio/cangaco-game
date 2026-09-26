@@ -21,6 +21,7 @@ import { step } from '../src/sim/tick';
 import {
   avancar, cenarioDePedreira, cenarioDeSerraria, comEntrada, comJazida, comSaida, disponivelDe, entradaDe,
   eventosNoTick, fsmDe, progressoDe, saidaDe, semAUnidade, semEstrada, semOcupante,
+  rochaDaPedreiraDaVila,
 } from './helpers/producao-cenario';
 import { violacoesDaFsmDoEspecialista } from './helpers/especialista-invariantes';
 
@@ -280,7 +281,7 @@ describe('F15a — o especialista produz', () => {
   });
 
   it('jazida esgota: evento no tick exato, e depois a pedreira nao produz mais', () => {
-    const dadosCurtos = comJazida(gameData, 'rock', [[25, 32]], 2); // 1 tile de 2 pedras e acabou
+    const dadosCurtos = comJazida(gameData, 'rock', [rochaDaPedreiraDaVila()], 2); // 1 tile de 2 pedras e acabou
     // F-T3 — dois ciclos, e cada um agora inclui a viagem ate (25,32): 28 ticks de
     // ida, 29 de volta (este tile e mais perto que o do cenario cheio, e por isso o
     // intervalo aqui e menor que o de cima — a viagem e do MAPA, nao do dado).
@@ -295,7 +296,7 @@ describe('F15a — o especialista produz', () => {
   });
 
   it('o evento de veio esgotado sai UMA vez, nao a cada tick depois', () => {
-    const dadosCurtos = comJazida(gameData, 'rock', [[25, 32]], 2);
+    const dadosCurtos = comJazida(gameData, 'rock', [rochaDaPedreiraDaVila()], 2);
     let s = cenarioDePedreira(dadosCurtos);
     let quantos = 0;
     for (let i = 0; i < (receita('quarry').ticksDoCiclo + 57) * 4; i++) {

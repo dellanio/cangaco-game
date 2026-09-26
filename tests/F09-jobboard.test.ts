@@ -15,6 +15,7 @@ import {
   armazemDoCenario, cenarioDaRuaMaisBarata, cenarioDeVolta, comAPortaTapada, cenarioLigado, comObra, comPedraNaSaida, comTarefas, estradasDe,
   inicial, laborersDoCenario, serfsDoCenario, tarefaDe, tile,
 } from './helpers/jobs-cenario';
+import { naVila } from './helpers/ancoras';
 
 const armazem = armazemDoCenario(inicial);
 const [serf1, serf2, serf3] = serfsDoCenario(inicial);
@@ -436,7 +437,7 @@ describe('F09 — desempate: menor caminho REAL, depois menor numero', () => {
   });
 
   it('tarefa sem caminho vai para o fim da fila (e nao trava a de baixo)', () => {
-    const base = comObra(cenarioLigado(), 'isolada', { gx: 50, gy: 50, faltam: { stone: 1 } });
+    const base = comObra(cenarioLigado(), 'isolada', { ...naVila(21, 20), faltam: { stone: 1 } });
     const estado = comTarefas(base, [
       tarefaDe({ numero: 1, destino: 'isolada' }), // numero menor, mas sem estrada ate la
       tarefaDe({ numero: 2 }),

@@ -15,9 +15,10 @@ import { custoDaTarefa, planoDaTarefa, reclamar, reclamarMelhor, tarefasEmOrdem 
 import { cenarioDoMuro, SERF_DO_LADO_DE_A as serfX, SERF_DO_LADO_DE_B as serfY } from './helpers/serf-cenario';
 import {
   armazemDoCenario, cenarioLigado, comArmazemCompleto, comEstradas, comObra, comPedraNaSaida, comPredioCompletoEm,
-  comTarefas, comUnidadeEm, inicial, linhaH,
-  linhaV, tarefaDe, tile,
+  comTarefas, comUnidadeEm, inicial, 
+  tarefaDe, 
 } from './helpers/jobs-cenario';
+import { linhaHDe, linhaVDe, naVila, xy } from './helpers/ancoras';
 
 /** A obra de destino do cenario do muro, exigida (os testes daqui morrem sem ela). */
 const destDoMuro = (estado: GameState) => {
@@ -36,8 +37,8 @@ describe('F10 — a perna do serf: unidade -> origem por A*, nunca pela reta', (
 
   it('PREMISSAS do cenario: a reta prefere A, o caminho a pe prefere B, e a perna do serf DOMINA a da entrega', () => {
     const euclid = (a: { gx: number; gy: number }, b: { gx: number; gy: number }): number => Math.hypot(a.gx - b.gx, a.gy - b.gy);
-    const y = { gx: 20, gy: 20 };
-    expect(euclid(y, { gx: 20, gy: 13 })).toBeLessThan(euclid(y, { gx: 20, gy: 33 })); // a armadilha
+    const y = { ...naVila(-9, -10) };
+    expect(euclid(y, { ...naVila(-9, -17) })).toBeLessThan(euclid(y, { ...naVila(-9, 3) })); // a armadilha
     const planoA = planoDaTarefa(estado, tarefaA, serfY);
     const planoB = planoDaTarefa(estado, tarefaB, serfY);
     if (!planoA || !planoB) throw new Error('fixture: as duas tarefas deveriam ter plano');
@@ -92,17 +93,17 @@ describe('F10 — a perna do serf: unidade -> origem por A*, nunca pela reta', (
     const { aPe: diagonal } = gameData.movimento.ticksPorTileDiagonal;
     expect(plano.deEntrega.custo).toBe(172);
     expect(plano.deEntrega.custo).toBeLessThan(36 * reto.estrada + diagonal.estrada);
-    expect(buscarCaminho(estado, tile(20, 33), tilesDaPorta(destDoMuro(estado)), 'livre')?.custo)
+    expect(buscarCaminho(estado, naVila(-9, 3), tilesDaPorta(destDoMuro(estado)), 'livre')?.custo)
       .toBe(plano.deEntrega.custo);
     // e a perna livre e mesmo o A* do serf ate a porta:
-    expect(buscarCaminho(estado, tile(20, 20), [tile(20, 33)], 'livre')?.custo).toBe(plano.ateAOrigem.custo);
+    expect(buscarCaminho(estado, naVila(-9, -10), [naVila(-9, 3)], 'livre')?.custo).toBe(plano.ateAOrigem.custo);
   });
 
   it('a perna da entrega parte da PORTA em que o serf chegou, acaba na porta da obra, e corta a grama', () => {
     const plano = planoDaTarefa(estado, tarefaB, serfY);
     if (!plano) throw new Error('fixture: sem plano');
-    const ultimaDaPernaLivre = plano.ateAOrigem.tiles[plano.ateAOrigem.tiles.length - 1] ?? tile(20, 20);
-    expect(ultimaDaPernaLivre).toEqual(tile(20, 33));
+    const ultimaDaPernaLivre = plano.ateAOrigem.tiles[plano.ateAOrigem.tiles.length - 1] ?? naVila(-9, -10);
+    expect(ultimaDaPernaLivre).toEqual(naVila(-9, 3));
     expect(plano.deEntrega.tiles[plano.deEntrega.tiles.length - 1])
       .toEqual(tilesDaPorta(destDoMuro(estado))[0]); // acaba numa porta da obra
     // F18d-1a: 10 dos 28 tiles estao FORA da rua. A regra velha exigia os 28 em estrada.
@@ -124,19 +125,19 @@ describe('F10 — as portas de coleta: so as que estao na rede do DESTINO (nivel
   /** Pedreira com pedra na saida (porta em (18..20, 12)) e armazem a sudeste (porta em
    *  (30..32, 23)). O serf fica colado na porta a oeste, que e a ilhota. */
   const cenario = (ruas: readonly TileDeGrid[]): GameState => {
-    let estado = comPredioCompletoEm(inicial, 'pedreira', { tipo: 'quarry', gx: 18, gy: 10 });
+    let estado = comPredioCompletoEm(inicial, 'pedreira', { tipo: 'quarry', ...naVila(-11, -20) });
     estado = comPedraNaSaida(estado, 'pedreira', 5);
-    estado = comArmazemCompleto(estado, 'arm', { gx: 30, gy: 20, stone: 0 });
-    estado = comUnidadeEm(comEstradas(estado, ruas), serfY, 17, 13);
+    estado = comArmazemCompleto(estado, 'arm', { ...naVila(1, -10), stone: 0 });
+    estado = comUnidadeEm(comEstradas(estado, ruas), serfY, ...xy(naVila(-12, -17)));
     return comTarefas(estado, [tarefa]);
   };
 
   it('uma porta que e estrada mas esta numa ilha desligada do armazem nao serve', () => {
     // (18,12) e uma ilhota colada no serf; (20,12) e a porta que liga ao armazem.
-    const estado = cenario([tile(18, 12), ...linhaH(20, 31, 12), ...linhaV(31, 12, 23)]);
+    const estado = cenario([naVila(-11, -18), ...linhaHDe(naVila, -9, 2, -18), ...linhaVDe(naVila, 2, -18, -7)]);
     const plano = planoDaTarefa(estado, tarefa, serfY);
     expect(plano).not.toBeNull();
-    expect(plano?.ateAOrigem.tiles[plano.ateAOrigem.tiles.length - 1]).toEqual(tile(20, 12));
+    expect(plano?.ateAOrigem.tiles[plano.ateAOrigem.tiles.length - 1]).toEqual(naVila(-9, -18));
   });
 
   it('sem nenhuma estrada: coleta de producao nao tem plano (o nivel 3, no mesmo lugar, teria)', () => {
@@ -145,7 +146,7 @@ describe('F10 — as portas de coleta: so as que estao na rede do DESTINO (nivel
     expect(custoDaTarefa(estado, tarefa, null)).toBeNull();
     // o contraste que da sentido ao caso: a mesma geometria, no nivel 3, anda livre
     const material = tarefaDe({ numero: 2, origem: 'arm', destino: 'obra-x' });
-    const comObraNoLugar = comTarefas(comObra(estado, 'obra-x', { gx: 18, gy: 10 + 20, faltam: { stone: 1 } }), [material]);
+    const comObraNoLugar = comTarefas(comObra(estado, 'obra-x', { ...naVila(-11, 0), faltam: { stone: 1 } }), [material]);
     expect(planoDaTarefa(comObraNoLugar, material, serfY)).not.toBeNull();
   });
 });
@@ -174,7 +175,7 @@ describe('F10 — o claim recusa `sem-caminho` quando o serf nao consegue chegar
 
   it('uma tarefa SEM plano vai para o fim da fila, mesmo com numero menor (e nao trava a de baixo)', () => {
     // t1 vai para uma obra que nenhuma estrada alcanca; t2 vai para a obra ligada
-    const base = comObra(cenarioLigado({ stone: 2 }), 'ilhada', { gx: 50, gy: 50, faltam: { stone: 1 } });
+    const base = comObra(cenarioLigado({ stone: 2 }), 'ilhada', { ...naVila(21, 20), faltam: { stone: 1 } });
     const estado = comTarefas(base, [
       tarefaDe({ numero: 1, origem: armazemDoCenario(inicial).id, destino: 'ilhada' }),
       tarefaDe({ numero: 2, origem: armazemDoCenario(inicial).id, destino: 'obra-a' }),

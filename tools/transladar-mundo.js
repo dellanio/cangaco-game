@@ -9,10 +9,11 @@
 // Escreve os tres JSON, roda o vitest e REVERTE sempre — no `finally` e no
 // Ctrl+C. Nao e parte do `npm run verify`: e instrumento de medida.
 //
-//   node tools/transladar-mundo.js [--k 32] [--saida arquivo.json] [-- <filtro do vitest>]
+//   node tools/transladar-mundo.js [--k 32] [--saida arquivo.json] [--detalhe] [-- <filtro do vitest>]
 //
 // A saida lista os arquivos que reprovam, com a primeira mensagem, e separa os
-// que caem por `fixture: '<id>' nao ficou ligado` (o helper de cenario).
+// que caem por `fixture: '<id>' nao ficou ligado` (o helper de cenario). Com
+// `--detalhe`, cada arquivo traz tambem o nome e a mensagem de cada teste que caiu.
 
 const fs = require('fs');
 const path = require('path');
@@ -33,7 +34,7 @@ function argumentos(argv) {
     const i = proprios.indexOf(nome);
     return i < 0 ? padrao : proprios[i + 1];
   };
-  return { k: Number(valor('--k', '32')), saida: valor('--saida', null), filtro };
+  return { k: Number(valor('--k', '32')), saida: valor('--saida', null), detalhe: proprios.includes('--detalhe'), filtro };
 }
 
 function transladar(originais, k) {
@@ -65,7 +66,7 @@ function transladar(originais, k) {
   fs.writeFileSync(ARQ.terreno, terreno);
 }
 
-function resumir(relatorio) {
+function resumir(relatorio, detalhe) {
   const reprovados = {};
   for (const f of relatorio.testResults) {
     const falhas = f.assertionResults.filter((a) => a.status === 'failed');
@@ -73,6 +74,10 @@ function resumir(relatorio) {
     const nome = path.relative(RAIZ, f.name).replace(/\\/g, '/');
     const msg = (falhas[0]?.failureMessages?.[0] ?? f.message ?? '').split('\n')[0].slice(0, 200);
     reprovados[nome] = { falhas: falhas.length, mensagem: msg };
+    if (detalhe) {
+      const primeira = (a) => (a.failureMessages?.[0] ?? '').split('\n')[0].slice(0, 200);
+      reprovados[nome].testes = falhas.map((a) => `${a.fullName} :: ${primeira(a)}`);
+    }
   }
   const nomes = Object.keys(reprovados).sort();
   return {
@@ -83,7 +88,7 @@ function resumir(relatorio) {
 }
 
 function main() {
-  const { k, saida, filtro } = argumentos(process.argv.slice(2));
+  const { k, saida, detalhe, filtro } = argumentos(process.argv.slice(2));
   const originais = Object.fromEntries(Object.entries(ARQ).map(([id, f]) => [id, fs.readFileSync(f, 'utf8')]));
   const reverter = () => { for (const [id, f] of Object.entries(ARQ)) fs.writeFileSync(f, originais[id]); };
   const noSinal = () => { reverter(); process.exit(130); };
@@ -95,7 +100,7 @@ function main() {
     spawnSync('npx', ['vitest', 'run', '--reporter=json', `--outputFile=${json}`, ...filtro], {
       cwd: RAIZ, stdio: ['ignore', 'ignore', 'inherit'], shell: true,
     });
-    resumo = { k, ...resumir(JSON.parse(fs.readFileSync(json, 'utf8'))) };
+    resumo = { k, ...resumir(JSON.parse(fs.readFileSync(json, 'utf8')), detalhe) };
   } finally {
     reverter();
     process.off('SIGINT', noSinal);

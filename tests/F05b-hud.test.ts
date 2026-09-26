@@ -7,6 +7,7 @@ import { estoqueTotal, comidaTotal, populacaoPorGrupo, centroDaVila } from '../s
 import { gameData } from '../src/sim/data';
 import temaSertao from '../data/theme-sertao.json';
 import { gravarEvidencia } from './helpers/evidence';
+import { naVila } from './helpers/ancoras';
 
 describe('F05b — selectors do HUD', () => {
   const estado = createInitialState(1);
@@ -42,7 +43,7 @@ describe('F05b — selectors do HUD', () => {
       gy: (Math.min(...caixas.map((c) => c.y0)) + Math.max(...caixas.map((c) => c.y1))) / 2,
     };
     expect(centroDaVila(estado)).toEqual(esperado);
-    expect(centroDaVila(estado)).toEqual({ gx: 33, gy: 31.5 });
+    expect(centroDaVila(estado)).toEqual(naVila(4, 1.5)); // (33, 31.5) hoje
   });
 
   it('sem predio, cai para o bounding box das unidades', () => {

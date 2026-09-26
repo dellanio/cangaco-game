@@ -12,7 +12,8 @@ import { painelDaEscola, predioNoTile } from '../src/sim/selectors';
 import {
   armazemPorTipo, avancar, comOuroNaEscola, comOuroNoArmazem, escolaDoCenario, pedir,
 } from './helpers/escola-cenario';
-import { comEstradas, linhaH } from './helpers/jobs-cenario';
+import { comEstradas } from './helpers/jobs-cenario';
+import { linhaHDe, naVila } from './helpers/ancoras';
 
 const inicial = createInitialState(1);
 const ESCOLA = escolaDoCenario(inicial).id;
@@ -21,7 +22,7 @@ const TICKS = gameData.economia.schoolhouse.ticksPorTreino;
 const SLOTS = gameData.economia.schoolhouse.slotsDeFila;
 const CUSTO = gameData.economia.schoolhouse.custoOuroPorUnidade;
 /** A linha de porta dos dois predios, como no aceite da F13a. */
-const RUAS = linhaH(29, 36, 33);
+const RUAS = linhaHDe(naVila, 0, 7, 3);
 
 describe('F13b — predioNoTile', () => {
   it('acha o predio pelo footprint inteiro, nao so pelo canto', () => {

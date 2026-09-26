@@ -35,6 +35,7 @@ import { canPlace } from '../src/sim/placement';
 import { registrarTipoConstruido } from '../src/sim/desbloqueio';
 import { gameData } from '../src/sim/data';
 import type { ColheitaDeRecurso } from '../src/sim/data/types';
+import { ancoraDoRocadoDoNorte, relativoA } from './helpers/ancoras';
 
 const DADOS = gameData;
 
@@ -105,11 +106,12 @@ function tileDeRecursoSemAproximacao(estado: GameState, tipo: string): TileDeGri
  *   (111,26) em pousio, livre   -> onde o plantio DEVE cair
  *   (112,26) cheio e livre      -> onde a colheita DEVE cair
  */
-const GALPAO = { id: 'galpao-no-campo', gx: 108, gy: 26 } as const;
-const CHEIO_E_COBERTO = chaveDeTile({ gx: 108, gy: 26 });
-const POUSIO_E_COBERTO = chaveDeTile({ gx: 109, gy: 26 });
-const POUSIO_E_LIVRE = chaveDeTile({ gx: 111, gy: 26 });
-const CHEIO_E_LIVRE = chaveDeTile({ gx: 112, gy: 26 });
+const NORTE = relativoA(ancoraDoRocadoDoNorte());
+const GALPAO = { id: 'galpao-no-campo', ...NORTE(0, 4) } as const; // (108,26) hoje
+const CHEIO_E_COBERTO = chaveDeTile(NORTE(0, 4));
+const POUSIO_E_COBERTO = chaveDeTile(NORTE(1, 4));
+const POUSIO_E_LIVRE = chaveDeTile(NORTE(3, 4));
+const CHEIO_E_LIVRE = chaveDeTile(NORTE(4, 4));
 
 function comMilhoDebaixoDaFazenda(estado: GameState): GameState {
   const def = DADOS.predios.find((p) => p.id === 'storehouse');

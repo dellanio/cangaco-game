@@ -20,23 +20,25 @@ import type { GameState, PredioCompleto } from '../src/sim/state';
 import { step } from '../src/sim/tick';
 import { gameData } from '../src/sim/data';
 import { trabalhadorDoTipo } from '../src/sim/ocupacao';
-import { comEstradas, linhaH, tile } from './helpers/jobs-cenario';
+import { comEstradas } from './helpers/jobs-cenario';
 import { escolaDoCenario, pedir } from './helpers/escola-cenario';
 import {
   avancar, cenarioDePedreira, cenarioDeSerraria, comJazida, disponivelDe, fsmDe, progressoDe, saidaDe,
+  pedreiraDaVila, rochaDaPedreiraDaVila,
 } from './helpers/producao-cenario';
 import { violacoesDaFsmDoEspecialista } from './helpers/especialista-invariantes';
 import { violacoesDeInvariantes } from './helpers/jobs-invariantes';
 import { compararComESemSave } from './helpers/determinism';
 import { gravarEvidencia } from './helpers/evidence';
+import { linhaHDe, naVila } from './helpers/ancoras';
 
 const inicial = createInitialState(1);
 const ESCOLA = escolaDoCenario(inicial).id;
 const PEDREIRO = trabalhadorDoTipo('quarry') ?? '';
-const QUARRY = { gx: 26, gy: 34 } as const;
+const QUARRY = pedreiraDaVila(); // (26,34) hoje, ao lado do lajedo
 /** y=33 liga a porta do armazem a da escola; a perna em x=29 desce ate a porta
  *  da pedreira (28,36). */
-const RUAS = [...linhaH(29, 36, 33), tile(29, 34), tile(29, 35), tile(29, 36), tile(28, 36)];
+const RUAS = [...linhaHDe(naVila, 0, 7, 3), naVila(0, 4), naVila(0, 5), naVila(0, 6), naVila(-1, 6)];
 /**
  * 1300, e nao 1000: o ciclo da quarry custa 167 ticks e o teto da gaveta e 5, ou
  * seja 835 ticks SO de producao, depois de treinar (t=179), levantar a obra
@@ -196,7 +198,7 @@ describe('F15a — aceite headless do BUILD_PLAN', () => {
 
     // --- as duas clausulas de dado injetado, sobre cenarios controlados ---
     const serraria = avancar(cenarioDeSerraria(), 300);
-    const dadosCurtos = comJazida(gameData, 'rock', [[25, 32]], 2);
+    const dadosCurtos = comJazida(gameData, 'rock', [rochaDaPedreiraDaVila()], 2);
     const curto = avancar(cenarioDePedreira(dadosCurtos), CICLO * 5, dadosCurtos);
     let esgotados = 0;
     let e = cenarioDePedreira(dadosCurtos);

@@ -17,8 +17,9 @@ import { gravarEvidencia } from './helpers/evidence';
 import {
   armazemDoCenario, cenarioDeVolta, cenarioLigado, comArmazemCompleto, comEstoqueNaSaida, comEstradas, comObra,
   comAPortaTapada, comPedraNaSaida, comTarefas, inicial, linhaH, linhaV, semAUnidade, semOPredio,
-  serfsDoCenario, tarefaDe, tile,
+  serfsDoCenario, tarefaDe, 
 } from './helpers/jobs-cenario';
+import { linhaHDe, linhaVDe, naVila } from './helpers/ancoras';
 
 const armazem = armazemDoCenario(inicial);
 const serfsIniciais = serfsDoCenario(inicial);
@@ -115,7 +116,7 @@ describe('F09 — release em TODO ramo de falha: um teste por ramo, as duas rese
 
   it('6a. destino encheu (faltam abaixo do reservado) -> CANCELA', () => {
     const { estado, tarefa } = comUmaTarefaReclamada();
-    const semFaltar = comObra(semOPredio(estado, 'obra-a'), 'obra-a', { gx: 26, gy: 34, faltam: { stone: 0 } });
+    const semFaltar = comObra(semOPredio(estado, 'obra-a'), 'obra-a', { ...naVila(-3, 4), faltam: { stone: 0 } });
     const depois = step(semFaltar, []);
     expect(liberacoes(depois)).toEqual([{ type: 'task-released', tarefa, motivo: 'destino-completo', resultado: 'cancelada' }]);
     afirmarAsDuasReservasDeVolta(depois, 'destino-completo (faltam 0)');
@@ -124,7 +125,7 @@ describe('F09 — release em TODO ramo de falha: um teste por ramo, as duas rese
   it('6b. destino completou (o predio ja nao e obra) -> CANCELA', () => {
     const { estado, tarefa } = comUmaTarefaReclamada();
     const completo: PredioCompleto = {
-      id: 'obra-a', tipo: 'quarry', gx: 26, gy: 34, estado: 'completo', hp: 250,
+      id: 'obra-a', tipo: 'quarry', ...naVila(-3, 4), estado: 'completo', hp: 250,
       capacidade: { entrada: 5, saida: 5 }, estoque: { entrada: {}, saida: {} },
       ocupante: null, producao: { progresso: 0, plantio: null }, pausado: false,
     };
@@ -165,7 +166,7 @@ describe('F09 — release em TODO ramo de falha: um teste por ramo, as duas rese
     if (!a.ok) throw new Error('claim 1');
     const b = reclamar(a.state, t2, serf2);
     if (!b.ok) throw new Error('claim 2');
-    const menosUma = comObra(semOPredio(b.state, 'obra-a'), 'obra-a', { gx: 26, gy: 34, faltam: { stone: 1 } });
+    const menosUma = comObra(semOPredio(b.state, 'obra-a'), 'obra-a', { ...naVila(-3, 4), faltam: { stone: 1 } });
     const depois = step(menosUma, []);
     expect(liberacoes(depois)).toEqual([{ type: 'task-released', tarefa: t2, motivo: 'destino-completo', resultado: 'cancelada' }]);
     expect(depois.jobs.tarefas.porId[t1]?.estado).toBe('reclamada');
@@ -175,14 +176,14 @@ describe('F09 — release em TODO ramo de falha: um teste por ramo, as duas rese
 
 describe('F09 — o gerador de tarefas (nivel 3: material -> obra)', () => {
   it('obra sem estrada nenhuma: as tarefas nascem — o nivel 3 anda livre (F18d-1a)', () => {
-    const semRua = comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: { stone: 2, timber: 3 } });
+    const semRua = comObra(inicial, 'obra-a', { ...naVila(-3, 4), faltam: { stone: 2, timber: 3 } });
     const depois = step(semRua, []);
     expect(Object.keys(depois.estradas)).toEqual([]); // a premissa, afirmada
     expect(tarefasDe(depois).map((t) => t.mercadoria)).toEqual(['timber', 'timber', 'timber', 'stone', 'stone']);
   });
 
   it('obra com a porta tapada por um predio: nenhuma tarefa — e a pe que nao da', () => {
-    const semRua = comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: { stone: 2, timber: 3 } });
+    const semRua = comObra(inicial, 'obra-a', { ...naVila(-3, 4), faltam: { stone: 2, timber: 3 } });
     expect(tarefasDe(step(comAPortaTapada(semRua, 'obra-a'), []))).toEqual([]);
   });
 
@@ -216,7 +217,7 @@ describe('F09 — o gerador de tarefas (nivel 3: material -> obra)', () => {
   });
 
   it('a tarefa surge quando o CAMINHO passa a existir, sem estrada nenhuma (a obra espera, sem erro)', () => {
-    const tapado = comAPortaTapada(comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: { stone: 1 } }), 'obra-a');
+    const tapado = comAPortaTapada(comObra(inicial, 'obra-a', { ...naVila(-3, 4), faltam: { stone: 1 } }), 'obra-a');
     let estado = step(tapado, []);
     expect(tarefasDe(estado)).toEqual([]);
     estado = semOPredio(estado, 'tampa-de-obra-a');
@@ -232,10 +233,10 @@ describe('F09 — o gerador de tarefas (nivel 3: material -> obra)', () => {
     // A rua deixou de decidir quem entrega material em obra. Os numeros abaixo saem
     // do proprio medidor da sim, e sao afirmados nos DOIS modos: e a diferenca entre
     // eles que prova que a escolha mudou de rede, e nao so de valor.
-    let estado = comObra(cenarioLigado({ stone: 1 }), 'obra-b', { gx: 48, gy: 34, faltam: { stone: 1 } });
-    estado = comArmazemCompleto(estado, 'perto', { gx: 51, gy: 33, stone: 10 });
-    estado = comArmazemCompleto(estado, 'vizinho', { gx: 23, gy: 32, stone: 10 });
-    estado = comEstradas(estado, linhaH(28, 53, 36));
+    let estado = comObra(cenarioLigado({ stone: 1 }), 'obra-b', { ...naVila(19, 4), faltam: { stone: 1 } });
+    estado = comArmazemCompleto(estado, 'perto', { ...naVila(22, 3), stone: 10 });
+    estado = comArmazemCompleto(estado, 'vizinho', { ...naVila(-6, 2), stone: 10 });
+    estado = comEstradas(estado, linhaHDe(naVila, -1, 24, 6));
     const predioDe = (id: string): Predio => {
       const p = estado.predios.porId[id];
       if (p === undefined) throw new Error(`fixture: predio '${id}' nao existe`);
@@ -273,12 +274,12 @@ interface Cobertura {
   acoes: number;
 }
 
-const RUA_BASE = [...linhaH(20, 42, 36), ...linhaV(29, 33, 36)];
+const RUA_BASE = [...linhaHDe(naVila, -9, 13, 6), ...linhaVDe(naVila, 0, 3, 6)];
 const SLOTS_DE_OBRA = [20, 26, 32, 38];
 
 function baseDoCaos(): GameState {
   let e = comEstradas(cenarioLigado({ stone: 3, timber: 3 }), RUA_BASE);
-  e = comObra(e, 'obra-b', { gx: 32, gy: 34, faltam: { stone: 2, timber: 2 } });
+  e = comObra(e, 'obra-b', { ...naVila(3, 4), faltam: { stone: 2, timber: 2 } });
   return comEstoqueNaSaida(e, armazem.id, { stone: 60, timber: 60 });
 }
 
@@ -410,7 +411,7 @@ function rodarCaos(semente: number, passos: number, cobertura: Cobertura): void 
     }
     // reposicao minima do ambiente, para o caos nao morrer de esvaziamento
     if (!estado.predios.ordem.some((p) => estado.predios.porId[p]?.tipo === 'storehouse')) {
-      estado = comArmazemCompleto(estado, `reposto-${i}`, { gx: 29, gy: 30, stone: 40, timber: 40 });
+      estado = comArmazemCompleto(estado, `reposto-${i}`, { ...naVila(0, 0), stone: 40, timber: 40 });
     }
     if (obrasComPendencia(estado) < 2) {
       const gx = SLOTS_DE_OBRA[sorteio(SLOTS_DE_OBRA.length)] ?? 20;
@@ -482,13 +483,14 @@ describe('F09 — cenario de carga: muitas obras simultaneas e ninguem reclamand
     if (!quarry) throw new Error('fixture: sem quarry no dado');
     const faltam = { ...custoDoPredio(quarry) };
 
-    // 20 obras ao longo de uma rua (y=40), ligada a porta do armazem por uma vertical em x=31
-    const xs = [...Array.from({ length: 10 }, (_, i) => i * 3), ...Array.from({ length: 10 }, (_, i) => 33 + i * 3)];
+    // 20 obras ao longo de uma rua (y=40), ligada a porta do armazem por uma vertical em x=31.
+    // `xs` e deslocamento a partir do armazem (F18c-1b): hoje x 0..27 e 33..60.
+    const xs = [...Array.from({ length: 10 }, (_, i) => -29 + i * 3), ...Array.from({ length: 10 }, (_, i) => 4 + i * 3)];
     const semSerfs = serfsDoCenario(inicial).reduce((e, id) => semAUnidade(e, id), inicial);
     let estado = comEstoqueNaSaida(semSerfs, armazem.id, { stone: 500, timber: 500 });
-    estado = comEstradas(estado, [...linhaH(0, 62, 40), ...linhaV(31, 33, 40)]);
+    estado = comEstradas(estado, [...linhaHDe(naVila, -29, 33, 10), ...linhaVDe(naVila, 2, 3, 10)]);
     xs.forEach((x, i) => {
-      estado = comObra(estado, `obra-${i}`, { gx: x, gy: 38, faltam });
+      estado = comObra(estado, `obra-${i}`, { ...naVila(x, 8), faltam });
     });
     expect(xs).toHaveLength(20);
 
@@ -527,8 +529,8 @@ describe('F09 — cenario de carga: muitas obras simultaneas e ninguem reclamand
 const plantarERuar = (t: number): Command[] => {
   if (t !== 0) return [];
   return [
-    { type: 'PlaceBlueprint', buildingId: 'quarry', gx: 26, gy: 34 },
-    { type: 'PlaceRoad', tiles: [tile(29, 33), tile(29, 34), tile(29, 35), tile(29, 36), tile(28, 36)] },
+    { type: 'PlaceBlueprint', buildingId: 'quarry', ...naVila(-3, 4) },
+    { type: 'PlaceRoad', tiles: [naVila(0, 3), naVila(0, 4), naVila(0, 5), naVila(0, 6), naVila(-1, 6)] },
   ];
 };
 const SAVE_NO_TICK = 112;
@@ -626,11 +628,11 @@ function tabelaDeRamos(): Record<string, unknown>[] {
   const pelosStep = (e: GameState): Resultado => ({ state: e, events: e.events });
   const provocacoes: readonly (readonly [MotivoDeLiberacao, (e: GameState) => Resultado])[] = [
     ['unidade-removida', (e) => pelosStep(step(semAUnidade(e, serf1), []))],
-    ['caminho-cortado', (e) => pelosStep(step(e, [{ type: 'DemolishRoad', tiles: [tile(29, 35)] }]))],
+    ['caminho-cortado', (e) => pelosStep(step(e, [{ type: 'DemolishRoad', tiles: [naVila(0, 5)] }]))],
     ['origem-sumiu', (e) => pelosStep(step(semOPredio(e, armazem.id), []))],
     ['origem-sem-recurso', (e) => pelosStep(step(comPedraNaSaida(e, armazem.id, 0), []))],
     ['destino-sumiu', (e) => pelosStep(step(semOPredio(e, 'obra-a'), []))],
-    ['destino-completo', (e) => pelosStep(step(comObra(semOPredio(e, 'obra-a'), 'obra-a', { gx: 26, gy: 34, faltam: { stone: 0 } }), []))],
+    ['destino-completo', (e) => pelosStep(step(comObra(semOPredio(e, 'obra-a'), 'obra-a', { ...naVila(-3, 4), faltam: { stone: 0 } }), []))],
     ['pedido-da-unidade', (e) => liberar(e, e.jobs.tarefas.ordem[0] ?? 't?', 'pedido-da-unidade')],
   ];
   return provocacoes.map(([motivo, provocar]) => {

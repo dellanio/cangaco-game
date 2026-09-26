@@ -18,9 +18,10 @@ import {
   armazemPorTipo, avancar, comOuroNoArmazem, escolaDoCenario, novasUnidades,
   ouroNaEscola, pedir, recusasDeTreino, totalDeOuro,
 } from './helpers/escola-cenario';
-import { comEstradas, linhaH } from './helpers/jobs-cenario';
+import { comEstradas } from './helpers/jobs-cenario';
 import { compararComESemSave } from './helpers/determinism';
 import { gravarEvidencia } from './helpers/evidence';
+import { linhaHDe, naVila } from './helpers/ancoras';
 
 const inicial = createInitialState(1);
 const ESCOLA = escolaDoCenario(inicial).id;
@@ -28,7 +29,7 @@ const ARMAZEM = armazemPorTipo(inicial).id;
 const TICKS = gameData.economia.schoolhouse.ticksPorTreino;
 const SLOTS = gameData.economia.schoolhouse.slotsDeFila;
 /** A linha de porta dos dois predios: armazem em x 29..31, escola em x 34..36, y=33. */
-const RUAS = linhaH(29, 36, 33);
+const RUAS = linhaHDe(naVila, 0, 7, 3);
 const TRES = ['stonemason', 'woodcutter', 'serf'] as const;
 const PEDIDOS = TRES.map((tipo) => pedir(ESCOLA, tipo));
 

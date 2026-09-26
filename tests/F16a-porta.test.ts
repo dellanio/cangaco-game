@@ -24,15 +24,16 @@ import {
   armazemPorTipo, avancar, avancarAte, comOuroNoArmazem, escolaDoCenario,
   novasUnidades, pedir, totalDeOuro,
 } from './helpers/escola-cenario';
-import { comEstradas, comObra, linhaH } from './helpers/jobs-cenario';
+import { comEstradas, comObra } from './helpers/jobs-cenario';
 import { gravarEvidencia } from './helpers/evidence';
+import { linhaHDe, naVila } from './helpers/ancoras';
 
 const inicial = createInitialState(1);
 const ESCOLA = escolaDoCenario(inicial).id;
 const ARMAZEM = armazemPorTipo(inicial).id;
 const TICKS = gameData.economia.schoolhouse.ticksPorTreino;
 /** A mesma linha de porta do aceite da F13a: armazem em x 29..31, escola em x 34..36. */
-const RUAS = linhaH(29, 36, 33);
+const RUAS = linhaHDe(naVila, 0, 7, 3);
 const PORTAS = tilesDaPorta(escolaDoCenario(inicial));
 
 const demolirEstrada = (tiles: readonly TileDeGrid[]) =>

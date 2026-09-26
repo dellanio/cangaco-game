@@ -10,17 +10,18 @@ import { step } from '../src/sim/tick';
 import { gameData } from '../src/sim/data';
 import { trabalhadorDoTipo } from '../src/sim/ocupacao';
 import { armazemPorTipo, avancar, escolaDoCenario, novasUnidades, pedir } from './helpers/escola-cenario';
-import { comEstradas, comPredioCompletoEm, linhaH } from './helpers/jobs-cenario';
+import { comEstradas, comPredioCompletoEm } from './helpers/jobs-cenario';
 import { ESTADOS_QUE_OCUPAM, violacoesDaFsmDoEspecialista } from './helpers/especialista-invariantes';
 import { violacoesDeInvariantes } from './helpers/jobs-invariantes';
 import { compararComESemSave } from './helpers/determinism';
 import { gravarEvidencia } from './helpers/evidence';
+import { linhaHDe, naVila } from './helpers/ancoras';
 
 const inicial = createInitialState(1);
 const ESCOLA = escolaDoCenario(inicial).id;
-const RUAS = linhaH(29, 36, 33);
+const RUAS = linhaHDe(naVila, 0, 7, 3);
 const PEDREIRO = trabalhadorDoTipo('quarry') ?? '';
-const QUARRIES = [{ id: 'q1', gx: 26, gy: 36 }, { id: 'q2', gx: 34, gy: 36 }] as const;
+const QUARRIES = [{ id: 'q1', ...naVila(-3, 6) }, { id: 'q2', ...naVila(5, 6) }] as const;
 const PEDIDOS = [pedir(ESCOLA, PEDREIRO), pedir(ESCOLA, PEDREIRO)];
 /** 2 x (1 tick de cobranca + ticksPorTreino) + entrega do ouro + as duas
  *  caminhadas ate as pedreiras. 1200 e folga larga, como na F13a. */

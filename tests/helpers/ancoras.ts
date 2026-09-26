@@ -129,3 +129,17 @@ export function ancoraDoRocadoDoNorte(dados: GameData = gameData): TileDeGrid {
 export function ancoraDaSerra(dados: GameData = gameData): TileDeGrid {
   return cantoDa(unica(manchasDeTerreno(dados, 'montanha'), (a, b) => b.tiles - a.tiles, 'serra'));
 }
+
+/** `linhaH` relativa: de `dx0` a `dx1` na linha `dy`, a partir da ancora. */
+export const linhaHDe = (r: Relativo, dx0: number, dx1: number, dy: number): TileDeGrid[] =>
+  Array.from({ length: dx1 - dx0 + 1 }, (_, i) => r(dx0 + i, dy));
+
+/** `linhaV` relativa: de `dy0` a `dy1` na coluna `dx`, a partir da ancora. */
+export const linhaVDe = (r: Relativo, dx: number, dy0: number, dy1: number): TileDeGrid[] =>
+  Array.from({ length: dy1 - dy0 + 1 }, (_, i) => r(dx, dy0 + i));
+
+/** A ancora da vila ja aplicada, para os arquivos que so precisam dela. */
+export const naVila: Relativo = relativoA(ancoraDaVila());
+
+/** O tile como par `[gx, gy]`, para as fixtures que recebem a posicao em dois argumentos. */
+export const xy = (t: TileDeGrid): [number, number] => [t.gx, t.gy];

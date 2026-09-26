@@ -14,14 +14,15 @@ import {
   armazemPorTipo, avancarAte, cancelar, comOuroNaEscola, comOuroNoArmazem, escolaDoCenario,
   ouroNaEscola, pedir, totalDeOuro,
 } from './helpers/escola-cenario';
-import { comEstradas, comObra, linhaH, serfsDoCenario, tile } from './helpers/jobs-cenario';
+import { comEstradas, comObra, serfsDoCenario } from './helpers/jobs-cenario';
+import { linhaHDe, naVila } from './helpers/ancoras';
 
 const inicial = createInitialState(1);
 const ESCOLA = escolaDoCenario(inicial).id;
 const ARMAZEM = armazemPorTipo(inicial).id;
 const CUSTO = custoDeTreino();
 /** A linha de porta dos dois predios do cenario (armazem em 29..31, escola em 34..36). */
-const RUAS = linhaH(29, 36, 33);
+const RUAS = linhaHDe(naVila, 0, 7, 3);
 const SERF = serfsDoCenario(inicial)[0] as string;
 
 const tresPedidos = [pedir(ESCOLA, 'serf'), pedir(ESCOLA, 'serf'), pedir(ESCOLA, 'serf')];
@@ -106,11 +107,11 @@ describe('F13a — o gerador e o saneamento', () => {
     // Uma obra pedindo pedra e uma fila pedindo ouro, ambas ligadas ao mesmo armazem.
     // A obra fica em (26,34), porta em (28,36); os tiles abaixo ligam a rua do armazem
     // ate essa porta (o mesmo desvio de `cenarioLigado`).
-    const ateAObra = [tile(29, 34), tile(29, 35), tile(29, 36), tile(28, 36)];
+    const ateAObra = [naVila(0, 4), naVila(0, 5), naVila(0, 6), naVila(-1, 6)];
     const comAmbos = step(
       comEstradas(
         comObra(ligado(5, step(inicial, [pedir(ESCOLA, 'serf')])), 'obra1', {
-          gx: 26, gy: 34, faltam: { stone: 2 },
+          ...naVila(-3, 4), faltam: { stone: 2 },
         }),
         ateAObra,
       ),

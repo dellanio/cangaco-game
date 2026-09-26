@@ -12,13 +12,14 @@ import { tilesDaPorta } from '../src/sim/estradas';
 import {
   armazemDoCenario, comEstoqueNaSaida, comEstradas, comObra, comTarefas, comUnidadeEm, destinoPredioDa,
   inicial, laborersDoCenario,
-  semAUnidade, semOPredio, serfsDoCenario, tarefaDe, tile,
+  semAUnidade, semOPredio, serfsDoCenario, tarefaDe, 
 } from './helpers/jobs-cenario';
 import { ate, liberacoes } from './helpers/serf-cenario';
 import { bensPorMercadoria, violacoesDaFsm } from './helpers/serf-invariantes';
 import { violacoesDeInvariantes } from './helpers/jobs-invariantes';
 import { violacoesDaFsmDoLaborer } from './helpers/laborer-invariantes';
 import { gravarEvidencia } from './helpers/evidence';
+import { naVila, xy } from './helpers/ancoras';
 
 /** So para este arquivo: muda o `hp` (o martelado) de uma obra, sem tocar no resto. */
 function comHp(estado: GameState, id: string, hp: number): GameState {
@@ -47,14 +48,14 @@ describe('F11c — alvoDeNivelamento', () => {
 
 describe('F11c — entreguesNaObra e tetoDeHp', () => {
   it('nada entregue (faltam === custo): entregues 0, teto 0', () => {
-    const estado = comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: { timber: 3, stone: 2 } });
+    const estado = comObra(inicial, 'obra-a', { ...naVila(-3, 4), faltam: { timber: 3, stone: 2 } });
     const obra = estado.predios.porId['obra-a'] as PredioEmObra;
     expect(entreguesNaObra(obra)).toBe(0);
     expect(tetoDeHp(obra)).toBe(0);
   });
 
   it('tudo entregue (faltam vazio): entregues 5, teto 250 (o hp total do quarry)', () => {
-    const estado = comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: {} });
+    const estado = comObra(inicial, 'obra-a', { ...naVila(-3, 4), faltam: {} });
     const obra = estado.predios.porId['obra-a'] as PredioEmObra;
     expect(entreguesNaObra(obra)).toBe(5);
     expect(hpTotalDoTipo('quarry')).toBe(250);
@@ -64,26 +65,26 @@ describe('F11c — entreguesNaObra e tetoDeHp', () => {
 
 describe('F11c — obraNivelada', () => {
   it('nivelamento 0: nao nivelada; no alvo: nivelada', () => {
-    const zerada = comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: {}, nivelamento: 0 });
+    const zerada = comObra(inicial, 'obra-a', { ...naVila(-3, 4), faltam: {}, nivelamento: 0 });
     expect(obraNivelada(zerada.predios.porId['obra-a'] as PredioEmObra)).toBe(false);
-    const nivelada = comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: {} }); // default: ja nivelada
+    const nivelada = comObra(inicial, 'obra-a', { ...naVila(-3, 4), faltam: {} }); // default: ja nivelada
     expect(obraNivelada(nivelada.predios.porId['obra-a'] as PredioEmObra)).toBe(true);
   });
 });
 
 describe('F11c — obraTrabalhavel: uma clausula por vez', () => {
   it('nao nivelada, sem tarefa nenhuma: true (ha o que nivelar)', () => {
-    const estado = comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: { stone: 2, timber: 3 }, nivelamento: 0 });
+    const estado = comObra(inicial, 'obra-a', { ...naVila(-3, 4), faltam: { stone: 2, timber: 3 }, nivelamento: 0 });
     expect(obraTrabalhavel(estado, 'obra-a')).toBe(true);
   });
 
   it('nivelada, hp < teto, sem tarefa: true (ha o que martelar)', () => {
-    const estado = comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: {} }); // ja nivelada, hp 0, teto 250
+    const estado = comObra(inicial, 'obra-a', { ...naVila(-3, 4), faltam: {} }); // ja nivelada, hp 0, teto 250
     expect(obraTrabalhavel(estado, 'obra-a')).toBe(true);
   });
 
   it("nivelada, hp === teto, com tarefa de material 'carregando': true (material a caminho)", () => {
-    let estado = comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: {} });
+    let estado = comObra(inicial, 'obra-a', { ...naVila(-3, 4), faltam: {} });
     estado = comHp(estado, 'obra-a', 250);
     estado = comTarefas(estado, [{
       id: 't1', numero: 1, tipo: 'material-para-obra', mercadoria: 'stone',
@@ -93,13 +94,13 @@ describe('F11c — obraTrabalhavel: uma clausula por vez', () => {
   });
 
   it('nivelada, hp === teto, SEM tarefa de material: false (nada a fazer)', () => {
-    let estado = comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: {} });
+    let estado = comObra(inicial, 'obra-a', { ...naVila(-3, 4), faltam: {} });
     estado = comHp(estado, 'obra-a', 250);
     expect(obraTrabalhavel(estado, 'obra-a')).toBe(false);
   });
 
   it('false volta a true assim que uma tarefa de material nasce para a obra', () => {
-    let estado = comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: {} });
+    let estado = comObra(inicial, 'obra-a', { ...naVila(-3, 4), faltam: {} });
     estado = comHp(estado, 'obra-a', 250);
     expect(obraTrabalhavel(estado, 'obra-a')).toBe(false);
     estado = comTarefas(estado, [tarefaDe({ numero: 1, destino: 'obra-a' })]);
@@ -109,7 +110,7 @@ describe('F11c — obraTrabalhavel: uma clausula por vez', () => {
 
 describe('F11c — Obra.nivelamento sobrevive ao JSON', () => {
   it('ida e volta preserva o campo', () => {
-    const estado = comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: { stone: 1 }, nivelamento: 12 });
+    const estado = comObra(inicial, 'obra-a', { ...naVila(-3, 4), faltam: { stone: 1 }, nivelamento: 12 });
     expect(JSON.parse(JSON.stringify(estado))).toEqual(estado);
     expect((estado.predios.porId['obra-a'] as PredioEmObra).obra.nivelamento).toBe(12);
   });
@@ -119,7 +120,7 @@ describe('F11c — jobs.ts: o laborer acha e reclama tarefa (Task 4)', () => {
   it('laborer numa ilha, sem caminho a pe: sem-caminho', () => {
     const [laborer1] = laborersDoCenario(inicial);
     if (!laborer1) throw new Error('fixture: sem laborer');
-    let estado = comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: { stone: 2, timber: 3 } });
+    let estado = comObra(inicial, 'obra-a', { ...naVila(-3, 4), faltam: { stone: 2, timber: 3 } });
     // o mesmo cerco da F10 (F10-desempate.test.ts): laborer em (0,0), fechado por
     // duas obras que ocupam (1,0) e (0,1) — sem ligacao a nenhuma porta de 'obra-a'.
     estado = comObra(estado, 'cerca1', { gx: 1, gy: 0, faltam: {} });
@@ -133,7 +134,7 @@ describe('F11c — jobs.ts: o laborer acha e reclama tarefa (Task 4)', () => {
     const [laborer1] = laborersDoCenario(inicial);
     if (!laborer1) throw new Error('fixture: sem laborer');
     // faltam {}: ja tudo entregue, hp 0 < teto 250 — ha o que martelar (obraTrabalhavel).
-    const estado = comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: {} });
+    const estado = comObra(inicial, 'obra-a', { ...naVila(-3, 4), faltam: {} });
     const { state, id } = criarTarefaDeConstrucao(estado, 'obra-a');
     expect(reclamar(state, id, laborer1).ok).toBe(true);
   });
@@ -141,7 +142,7 @@ describe('F11c — jobs.ts: o laborer acha e reclama tarefa (Task 4)', () => {
   it('obra nivelada, no teto, SEM tarefa de material: destino-sem-trabalho, e nem entra na ordenacao', () => {
     const [laborer1] = laborersDoCenario(inicial);
     if (!laborer1) throw new Error('fixture: sem laborer');
-    let estado = comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: {} }); // ja nivelada (default)
+    let estado = comObra(inicial, 'obra-a', { ...naVila(-3, 4), faltam: {} }); // ja nivelada (default)
     estado = comHp(estado, 'obra-a', 250); // no teto, sem tarefa de material
     const { state, id } = criarTarefaDeConstrucao(estado, 'obra-a');
     expect(reclamar(state, id, laborer1)).toEqual({ ok: false, motivo: 'destino-sem-trabalho' });
@@ -151,9 +152,9 @@ describe('F11c — jobs.ts: o laborer acha e reclama tarefa (Task 4)', () => {
   it('tarefasDoLaborerEmOrdem ordena pela obra mais perto', () => {
     const [laborer1] = laborersDoCenario(inicial);
     if (!laborer1) throw new Error('fixture: sem laborer');
-    let estado = comObra(inicial, 'perto', { gx: 30, gy: 35, faltam: {} }); // trabalhavel: hp 0 < teto
-    estado = comObra(estado, 'longe', { gx: 30, gy: 60, faltam: {} });
-    estado = comUnidadeEm(estado, laborer1, 30, 34);
+    let estado = comObra(inicial, 'perto', { ...naVila(1, 5), faltam: {} }); // trabalhavel: hp 0 < teto
+    estado = comObra(estado, 'longe', { ...naVila(1, 30), faltam: {} });
+    estado = comUnidadeEm(estado, laborer1, ...xy(naVila(1, 4)));
     const { state: comA, id: idPerto } = criarTarefaDeConstrucao(estado, 'perto');
     const { state: comAmbas, id: idLonge } = criarTarefaDeConstrucao(comA, 'longe');
     expect(tarefasDoLaborerEmOrdem(comAmbas, laborer1).map((t) => t.id)).toEqual([idPerto, idLonge]);
@@ -162,7 +163,7 @@ describe('F11c — jobs.ts: o laborer acha e reclama tarefa (Task 4)', () => {
   it('desempata por numero quando o custo e igual (duas tarefas para a mesma obra)', () => {
     const [laborer1] = laborersDoCenario(inicial);
     if (!laborer1) throw new Error('fixture: sem laborer');
-    const estado = comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: {} });
+    const estado = comObra(inicial, 'obra-a', { ...naVila(-3, 4), faltam: {} });
     const { state: comUma, id: primeira } = criarTarefaDeConstrucao(estado, 'obra-a');
     const { state: comDuas, id: segunda } = criarTarefaDeConstrucao(comUma, 'obra-a');
     expect(tarefasDoLaborerEmOrdem(comDuas, laborer1).map((t) => t.id)).toEqual([primeira, segunda]);
@@ -171,7 +172,7 @@ describe('F11c — jobs.ts: o laborer acha e reclama tarefa (Task 4)', () => {
   it('um serf continua recusado com unidade-invalida', () => {
     const [serf1] = serfsDoCenario(inicial);
     if (!serf1) throw new Error('fixture: sem serf');
-    const estado = comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: {} });
+    const estado = comObra(inicial, 'obra-a', { ...naVila(-3, 4), faltam: {} });
     const { state, id } = criarTarefaDeConstrucao(estado, 'obra-a');
     expect(reclamar(state, id, serf1)).toEqual({ ok: false, motivo: 'unidade-invalida' });
   });
@@ -179,12 +180,12 @@ describe('F11c — jobs.ts: o laborer acha e reclama tarefa (Task 4)', () => {
 
 describe('F11c — completarObra', () => {
   it('quarry nivelado e martelado ao teto vira completo, com capacidade/estoque do tipo', () => {
-    let estado = comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: {} });
+    let estado = comObra(inicial, 'obra-a', { ...naVila(-3, 4), faltam: {} });
     estado = comHp(estado, 'obra-a', 250);
     const obra = estado.predios.porId['obra-a'] as PredioEmObra;
     const completo = completarObra(obra);
     expect(completo).toEqual({
-      id: 'obra-a', tipo: 'quarry', gx: 26, gy: 34, estado: 'completo', hp: 250,
+      id: 'obra-a', tipo: 'quarry', ...naVila(-3, 4), estado: 'completo', hp: 250,
       capacidade: gameData.producao.estoqueInternoPorPredio,
       estoque: { entrada: {}, saida: {} },
       ocupante: null,
@@ -195,7 +196,7 @@ describe('F11c — completarObra', () => {
 
   it('storehouse completado recebe a capacidade do armazem, sem estoque', () => {
     const obra: PredioEmObra = {
-      id: 'obra-b', tipo: 'storehouse', gx: 10, gy: 10, estado: 'obra', hp: 1,
+      id: 'obra-b', tipo: 'storehouse', ...naVila(-19, -20), estado: 'obra', hp: 1,
       obra: { faltam: {}, nivelamento: alvoDeNivelamento('storehouse') },
     };
     const completo = completarObra(obra);
@@ -212,7 +213,7 @@ describe('F11c — sistemaDosLaborers (Task 5)', () => {
     const [laborer1, laborer2] = laborersDoCenario(inicial);
     if (!laborer1 || !laborer2) throw new Error('fixture: precisa de 2 laborers');
     const estado = semAUnidade(
-      comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: { timber: 3, stone: 2 }, nivelamento: 0 }),
+      comObra(inicial, 'obra-a', { ...naVila(-3, 4), faltam: { timber: 3, stone: 2 }, nivelamento: 0 }),
       laborer2, // so um laborer, para medir o nivelamento sozinho
     );
     const alvo = alvoDeNivelamento('quarry');
@@ -243,7 +244,7 @@ describe('F11c — sistemaDosLaborers (Task 5)', () => {
     // faz um nivelar sozinho por um tempo antes do outro se juntar (nao 'metade do tempo'
     // certinho). Poe os dois JA na porta, no MESMO tile: nao ha checagem de ocupacao de
     // tile por unidade (pathfinding.ts:tileAndavel), e assim os dois chegam no mesmo tick.
-    let estado = comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: { timber: 3, stone: 2 }, nivelamento: 0 });
+    let estado = comObra(inicial, 'obra-a', { ...naVila(-3, 4), faltam: { timber: 3, stone: 2 }, nivelamento: 0 });
     const alvo = alvoDeNivelamento('quarry');
     const porta = tilesDaPorta(estado.predios.porId['obra-a'] as PredioEmObra)[0];
     if (!porta) throw new Error('fixture: obra sem porta');
@@ -282,8 +283,8 @@ describe('F11c — sistemaDosLaborers (Task 5)', () => {
     const [laborer1, laborer2] = laborersDoCenario(inicial);
     if (!laborer1 || !laborer2) throw new Error('fixture: precisa de 2 laborers');
     // ja nivelada (default do helper); falta so 1 pedra: entregues 4, teto 200.
-    let estado = comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: { stone: 1 } });
-    estado = comEstradas(estado, [tile(29, 33), tile(29, 34), tile(29, 35), tile(29, 36), tile(28, 36)]);
+    let estado = comObra(inicial, 'obra-a', { ...naVila(-3, 4), faltam: { stone: 1 } });
+    estado = comEstradas(estado, [naVila(0, 3), naVila(0, 4), naVila(0, 5), naVila(0, 6), naVila(-1, 6)]);
     estado = comHp(estado, 'obra-a', 200); // ja no teto atual: nao ha o que martelar agora
     estado = semAUnidade(estado, laborer2); // isola um laborer, para nao adiantar o hp
     // do spawn padrao, a viagem em modo 'livre' e mais lenta que a entrega do serf por
@@ -310,7 +311,7 @@ describe('F11c — sistemaDosLaborers (Task 5)', () => {
     const [laborer1, laborer2] = laborersDoCenario(inicial);
     if (!laborer1 || !laborer2) throw new Error('fixture: precisa de 2 laborers');
     // ja nivelada, tudo entregue (faltam {}): teto 250, o hp total do quarry.
-    const estado = semAUnidade(comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: {} }), laborer2);
+    const estado = semAUnidade(comObra(inicial, 'obra-a', { ...naVila(-3, 4), faltam: {} }), laborer2);
     const { ticksPorMartelada, hpPorMartelada } = gameData.construcao;
 
     let atual = ate(estado, (e) => e.unidades.porId[laborer1]?.fsm === 'martelando', 'laborer chega e comeca a martelar');
@@ -333,7 +334,7 @@ describe('F11c — sistemaDosLaborers (Task 5)', () => {
     const [laborer1, laborer2] = laborersDoCenario(inicial);
     if (!laborer1 || !laborer2) throw new Error('fixture: precisa de 2 laborers');
     const estado = semAUnidade(
-      comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: { timber: 3, stone: 2 }, nivelamento: 0 }),
+      comObra(inicial, 'obra-a', { ...naVila(-3, 4), faltam: { timber: 3, stone: 2 }, nivelamento: 0 }),
       laborer2,
     );
 
@@ -349,8 +350,8 @@ describe('F11c — sistemaDosLaborers (Task 5)', () => {
 
   it('invariantes (FSM do laborer, FSM do serf, JobBoard, conservacao de bens) vazias em todo tick, do nivelamento zero ao teto', () => {
     const estado = comEstradas(
-      comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: { stone: 2, timber: 3 }, nivelamento: 0 }),
-      [tile(29, 33), tile(29, 34), tile(29, 35), tile(29, 36), tile(28, 36)],
+      comObra(inicial, 'obra-a', { ...naVila(-3, 4), faltam: { stone: 2, timber: 3 }, nivelamento: 0 }),
+      [naVila(0, 3), naVila(0, 4), naVila(0, 5), naVila(0, 6), naVila(-1, 6)],
     );
     const totalInicial = bensPorMercadoria(estado);
     let atual = estado;
@@ -376,7 +377,7 @@ describe('F11c — sistemaDosLaborers (Task 5)', () => {
     // e a mercadoria nao existir em lugar nenhum. O cenario mudou de causa; o que ele prova
     // — laborer nao fica preso em obra impossivel — e o mesmo, e a premissa agora e medida.
     const semPedra = comEstoqueNaSaida(inicial, armazemDoCenario(inicial).id, { stone: 0, timber: 40 });
-    const fase1 = comObra(semPedra, 'obra-a', { gx: 26, gy: 34, faltam: { stone: 2 }, nivelamento: 0 });
+    const fase1 = comObra(semPedra, 'obra-a', { ...naVila(-3, 4), faltam: { stone: 2 }, nivelamento: 0 });
     // premissa medida: `bensPorMercadoria` lanca `faltam` como divida, entao -2 e
     // exatamente "nenhuma pedra existe no mundo, e a obra-a deve 2". Zero seria obra sem pedido.
     expect(bensPorMercadoria(fase1).stone).toBe(-2);
@@ -403,7 +404,7 @@ describe('F11c — sistemaDosLaborers (Task 5)', () => {
     // fase 2: obra-b nasce, nivelada do zero, pedindo TABUA — que existe. Os ociosos vao
     // para ela, porque obra-a continua nao-trabalhavel (`reclamar` a recusa, Task 4). E vao
     // sem estrada nenhuma: a obra-b termina com o mapa limpo de ruas.
-    const fase2 = comObra(atual, 'obra-b', { gx: 26, gy: 45, faltam: { timber: 3 }, nivelamento: 0 });
+    const fase2 = comObra(atual, 'obra-b', { ...naVila(-3, 15), faltam: { timber: 3 }, nivelamento: 0 });
     const comObraBFeita = ate(fase2, (e) => e.predios.porId['obra-b']?.estado === 'completo', 'obra-b termina — a partida nao travou');
     expect(comObraBFeita.predios.porId['obra-b']?.estado).toBe('completo');
     expect(Object.keys(comObraBFeita.estradas)).toEqual([]);
@@ -423,8 +424,8 @@ describe('F11c — sistemaDosLaborers (Task 5)', () => {
 describe('F11c — gerarTarefas: o portao "obra ja nivelada" (Task 6)', () => {
   it('obra NAO nivelada, armazem ligado com estoque: zero tarefas de material, mas o teto de construir', () => {
     const estado = comEstradas(
-      comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: { stone: 2, timber: 3 }, nivelamento: 0 }),
-      [tile(29, 33), tile(29, 34), tile(29, 35), tile(29, 36), tile(28, 36)],
+      comObra(inicial, 'obra-a', { ...naVila(-3, 4), faltam: { stone: 2, timber: 3 }, nivelamento: 0 }),
+      [naVila(0, 3), naVila(0, 4), naVila(0, 5), naVila(0, 6), naVila(-1, 6)],
     );
     const depois = gerarTarefas(estado);
     const tarefas = depois.jobs.tarefas.ordem.map((id) => depois.jobs.tarefas.porId[id]);
@@ -434,8 +435,8 @@ describe('F11c — gerarTarefas: o portao "obra ja nivelada" (Task 6)', () => {
 
   it('ao nivelar, as tarefas de material aparecem no mesmo tick (mesma chamada de gerarTarefas)', () => {
     const nivelada = comEstradas(
-      comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: { stone: 2, timber: 3 } }), // default: ja nivelada
-      [tile(29, 33), tile(29, 34), tile(29, 35), tile(29, 36), tile(28, 36)],
+      comObra(inicial, 'obra-a', { ...naVila(-3, 4), faltam: { stone: 2, timber: 3 } }), // default: ja nivelada
+      [naVila(0, 3), naVila(0, 4), naVila(0, 5), naVila(0, 6), naVila(-1, 6)],
     );
     const depois = gerarTarefas(nivelada);
     const tarefas = depois.jobs.tarefas.ordem.map((id) => depois.jobs.tarefas.porId[id]);
@@ -457,8 +458,8 @@ describe('F11c — BUG-001: a conclusao da obra leva junto as tarefas irmas', ()
 
   it('no TICK da conclusao nao sobra nenhuma tarefa de construir apontando para o predio', () => {
     const estado = comEstradas(
-      comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: { timber: 3, stone: 2 }, nivelamento: 0 }),
-      [tile(29, 33), tile(29, 34), tile(29, 35), tile(29, 36), tile(28, 36)],
+      comObra(inicial, 'obra-a', { ...naVila(-3, 4), faltam: { timber: 3, stone: 2 }, nivelamento: 0 }),
+      [naVila(0, 3), naVila(0, 4), naVila(0, 5), naVila(0, 6), naVila(-1, 6)],
     );
     let atual = estado;
     let noTickDaConclusao: Tarefa[] | null = null;
@@ -482,7 +483,7 @@ describe('F11c — BUG-001: a conclusao da obra leva junto as tarefas irmas', ()
     // sem isto, "nenhuma violacao em tick nenhum" poderia ser verdade so porque o
     // verificador ficou cego. Monta a mao o estado que o bug produzia.
     const geradas = gerarTarefas(
-      comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: { timber: 3, stone: 2 }, nivelamento: alvoDeNivelamento('quarry') }),
+      comObra(inicial, 'obra-a', { ...naVila(-3, 4), faltam: { timber: 3, stone: 2 }, nivelamento: alvoDeNivelamento('quarry') }),
     );
     // F18d-1a: `gerarTarefas` passou a criar tambem as tarefas de MATERIAL aqui (o nivel 3
     // nao exige mais estrada, e o armazem do cenario esta abastecido). O quadro fica so com
@@ -506,8 +507,8 @@ describe('F11c — BUG-001: a conclusao da obra leva junto as tarefas irmas', ()
 
   it('o laborer que nao terminou a obra fica ocioso, sem tarefa pendurada', () => {
     const estado = comEstradas(
-      comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: { timber: 3, stone: 2 }, nivelamento: 0 }),
-      [tile(29, 33), tile(29, 34), tile(29, 35), tile(29, 36), tile(28, 36)],
+      comObra(inicial, 'obra-a', { ...naVila(-3, 4), faltam: { timber: 3, stone: 2 }, nivelamento: 0 }),
+      [naVila(0, 3), naVila(0, 4), naVila(0, 5), naVila(0, 6), naVila(-1, 6)],
     );
     let atual = estado;
     for (let i = 0; i < 2000 && atual.predios.porId['obra-a']?.estado !== 'completo'; i += 1) {
@@ -529,8 +530,8 @@ describe('F11c — BUG-001: a conclusao da obra leva junto as tarefas irmas', ()
 describe('F11c — aceite headless do BUILD_PLAN (Task 7)', () => {
   const alvo = alvoDeNivelamento('quarry');
   const estado = comEstradas(
-    comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: { timber: 3, stone: 2 }, nivelamento: 0 }),
-    [tile(29, 33), tile(29, 34), tile(29, 35), tile(29, 36), tile(28, 36)],
+    comObra(inicial, 'obra-a', { ...naVila(-3, 4), faltam: { timber: 3, stone: 2 }, nivelamento: 0 }),
+    [naVila(0, 3), naVila(0, 4), naVila(0, 5), naVila(0, 6), naVila(-1, 6)],
   );
   const totalInicial = bensPorMercadoria(estado);
   const tiposAntes = estado.tiposJaConstruidos;

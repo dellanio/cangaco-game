@@ -217,5 +217,8 @@
   },
   "F18c-1a-helpers-derivam-posicao": {
     "passes": true
+  },
+  "F18c-1b-literais-diretos": {
+    "passes": true
   }
 }

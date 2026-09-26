@@ -8184,3 +8184,29 @@ arquivos de dados foram revertidos pelos backups, e o `git status` ficou limpo.
 - **Deslocamento fixo a partir da âncora, não busca por `canPlace`.** O escopo do item dizia "passam a procurar posição". Uma busca mudaria a posição no mapa de hoje e, com ela, os números medidos da F15a, F-T2a e F22, como os ticks de depósito e o total ao alcance. Já o deslocamento a partir da feição mantém a posição exata e anda junto com ela. A âncora é a feição, não o armazém, como o operador aprovou.
 - **O lajedo vem sempre do `gameData` publicado, nunca do `dados` do teste.** O lajedo é camada de recurso, e `comJazida` a substitui. Com a âncora lida do `dados`, a F15a e a F22 punham a pedreira sobre a jazida injetada, fora da rua. A primeira corrida pegou isso: 8 reprovações.
 - **Rua da vila, produtor da feição.** A rua até a porta do armazém ancora na vila. O prédio que precisa do recurso ancora na feição. Um exemplo é o pescador da vila: a cabana ancora no lago pequeno, e a rua dela desce na vila. Quando a F18c-2 separar vila e feição, essas ruas vão precisar de trajeto. Isso é hipótese, não medi.
+
+## 2026-09-26 (noite, 10) — F18c-1b: literais diretos nos testes
+
+### Feito e verificado
+
+- **24 arquivos** de teste e 2 helpers (`jobs-cenario.ts`, `serf-cenario.ts`) trocaram coordenada absoluta por deslocamento a partir de uma âncora.
+  - A maior parte é vila. O script de conversão só fez aritmética: `x-29`, `y-30`, contra o armazém em (29,30). Por isso o valor no mapa de hoje é idêntico por construção.
+  - O que precisa de recurso ancora na feição:
+    - F-T2c: as duas pedreiras e a mancha injetada, no lajedo;
+    - F-T3-caminho: o galpão sobre o campo, no roçado do norte;
+    - F18h: a recusa por `terreno` no lago pequeno e a por `recurso` no lajedo;
+    - F15a, F22 e F-T2a: o tile de `comJazida` sai de `rochaDaPedreiraDaVila`;
+    - F17b: o posto do serf fica na porta de `pedreiraDaVila`.
+- `ancoras.ts` ganhou `linhaHDe`, `linhaVDe`, `naVila` e `xy`. O último é para as fixtures que recebem a posição em dois argumentos.
+- `tools/transladar-mundo.js` ganhou `--detalhe`, com o nome e a mensagem de cada teste que cai.
+- **Evidência** em `test-output/F18c-1b.json`. Com o mundo transladado, **28 → 4** arquivos reprovados, e os 4 são só os de mapa: F-D3-geografia, F-T1-terreno, F04 e F18b.
+- `npm run verify`: verde.
+
+### Decisões minhas (para revisão)
+
+- **Coordenada pequena abstrata fica como está.** Entra aqui o que tem as duas componentes abaixo de 10:
+  - a rede de estradas pura da F09, com `tile(0,0)..(9,9)`;
+  - o serf no **canto do mapa** (0,0), cercado pelas obras (1,0) e (0,1), na F10-falhas e na F11c.
+  - A primeira é geometria sem mapa. A segunda é a borda do mapa, que continua em (0,0) com o mundo transladado.
+  - Nenhum desses arquivos cai na translação.
+- **O caos da F10-falhas** sorteia o armazém novo e os pontos de obra relativos à vila. A sequência do RNG não mudou, só a origem dos pontos. Nenhum valor esperado da suite foi editado, e ela passou inteira; não comparei a anotação de tarefas e buscas do caos, antes contra depois.
