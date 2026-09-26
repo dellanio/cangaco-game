@@ -65,3 +65,16 @@ No worktree de medida, não na `main`:
 `npm run verify` verde na `main`, commit `test(F17f): ...`. O brief
 (`docs/BRIEF-ARTE.md`) passa a dizer que a lista é derivada e que os dois testes do
 armazém esperam decisão.
+
+## Adendo — decisão do operador, 2026-09-26
+
+Aprovado derivar também os dois testes do armazém:
+
+- o guarda da F17e passa a afirmar que **nenhuma entrada** tem chave de `estados` fora
+  de `ORDEM_DOS_ESTAGIOS` (importada de `src/render/estagio-obra.ts`), e acusa
+  `madeira` numa entrada sintética;
+- o placeholder por estágio usa um **manifesto sintético** com dois estágios e afirma
+  `null` nos outros quatro.
+
+Commit `828a3d4`. Teste de fumaça a partir dele: armazém com seis estágios, depois mais
+pedreira e casa do lenhador — `npm run verify` com código 0 nos dois passos.

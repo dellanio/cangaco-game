@@ -73,11 +73,9 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
   medida e a causa estão na nota de `origem` do armazém em `assets/manifest.json`:
   nenhuma escala concilia losango com footprint quadrado.
 - correção: arte, não código. Refazer os seis estágios do armazém no ângulo da
-  referência aprovada, pelo `docs/BRIEF-ARTE.md`. Ao entrar, dois testes do
-  `tests/F17f-manifesto.test.ts` reprovam por construção ("o armazem tem arte em tres
-  dos seis estagios" e "estagio sem arte resolve null, mesmo num predio que tem
-  arte"): eles afirmam os nomes e os estágios que faltam ao armazém ATUAL. O que
-  fazer com eles é decisão do operador (`docs/planos/F17f-lista-derivada.md`).
+  referência aprovada, pelo `docs/BRIEF-ARTE.md`. Nenhum teste reprova por isso
+  desde `828a3d4`: trocar o armazém por seis estágios passou no `npm run verify`
+  (teste de fumaça, 2026-09-26).
 - nome: o operador chamava este defeito de "BUG-F"; esse id já é de outro bug,
   corrigido em 2026-09-24 (obra e estrada recusam recurso que bloqueia). Este é o H.
 - evidência: a nota de medida em `assets/manifest.json` (entrada `storehouse`); e a

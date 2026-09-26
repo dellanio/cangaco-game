@@ -7235,11 +7235,16 @@ Pedido do operador, três coisas antes de o Codex começar a arte (`docs/BRIEF-A
   em `57c3cec`, 99 commits atrás da `main`, sem commit próprio e sem arquivo modificado.
   A branch foi criada em 2026-09-26 00:03. Não toquei nele.
 
-### Aberto — precisa do operador
+### Decisão do operador, aplicada no mesmo dia
 
-- **Os dois testes do armazém** afirmam outra coisa que o manifesto: o guarda da troca
-  de nome da F17e (chave `madeira`) e o placeholder por estágio, usando os estágios que
-  faltam ao armazém atual. Reprovam quando o BUG-H for corrigido. Proposta, não
-  aplicada: o guarda da F17e vira "nenhuma entrada tem chave fora dos seis estágios", e o
-  placeholder por estágio usa um manifesto sintético, como o teste novo. Os dois ficam
-  derivados sem perder o que afirmam.
+- **Os dois testes do armazém foram derivados** como proposto (`828a3d4`): o guarda
+  da F17e vale para toda entrada contra `ORDEM_DOS_ESTAGIOS`, e o placeholder por
+  estágio usa manifesto sintético.
+- **Verificado, o teste de fumaça do brief:** a partir de `828a3d4`, num worktree
+  limpo, o armazém com seis estágios de nomes novos (sprites antigos apagados) e, em
+  seguida, mais a pedreira e a casa do lenhador: `npm run verify` com código 0 nos dois
+  passos, 1434 testes. PNG vazios de dimensão certa; o teste só lê o cabeçalho.
+- **A branch `feature/derivacao-sprites`** não existe mais no git (conferido com
+  `git show-ref`); o operador apagou o worktree. Sobrou um worktree travado do Orca em
+  `C:/Users/della/orca/workspaces/.orca-preparing/...`, em `57c3cec` sem branch. Não
+  toquei.

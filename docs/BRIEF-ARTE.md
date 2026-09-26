@@ -149,25 +149,27 @@ Regras que o teste `tests/F17f-manifesto.test.ts` confere **[lido]**:
 `footprint` é `[largura, profundidade]` em tiles. `estados` pode ter só parte dos seis
 estágios. O estágio que falta vira retângulo placeholder na tela.
 
-### Prédio novo não reprova o teste; o armazém refeito reprova
+### Arte nova não reprova teste nenhum
 
-**Prédio novo.** A lista de quem tem arte é **derivada do manifesto** desde 2026-09-26
-(`docs/planos/F17f-lista-derivada.md`). **[testado]** Acrescentar a pedreira com seis
-estágios, ou a casa do lenhador com dois, deixa o F17f inteiro verde. Prédio novo
-entra sem mexer em teste nenhum.
+Desde 2026-09-26 o `tests/F17f-manifesto.test.ts` não fixa quem tem arte. A lista vem
+do manifesto, e as regras do resolvedor são provadas com um manifesto escrito no
+próprio teste (`docs/planos/F17f-lista-derivada.md`).
 
-**O armazém refeito (BUG-H).** **[testado]** Trocar a entrada do armazém por seis
-estágios reprova dois testes do F17f:
+**[testado] O teste de fumaça.** A partir da `main` em `828a3d4`, num worktree limpo:
 
-- "o armazem tem arte em tres dos seis estagios", porque ele afirma os nomes dos
-  arquivos atuais, incluindo `storehouse_madeira.png`;
-- "estagio sem arte resolve null, mesmo num predio que tem arte", porque ele usa
-  `paredes` e `cobertura`, que faltam ao armazém atual.
+1. o armazém trocado por seis estágios com nomes novos
+   (`storehouse_<estagio>.png`), e os três sprites antigos apagados;
+2. depois disso, a pedreira com seis estágios e a casa do lenhador com dois,
+   acrescentadas.
 
-Esses dois testes afirmam outra coisa além do manifesto, e o que fazer com eles é
-**decisão do operador**. **Não edite esses testes.** Se a tarefa refizer o armazém e o
-plano não disser o que fazer com eles, pare e reporte. Não faça isso pela metade
-também: sem essa decisão, o armazém refeito não entra no manifest.
+Nos dois passos, `npm run verify` terminou com código 0: 103 arquivos e 1434 testes
+verdes. Os PNG da medida eram imagens vazias com a dimensão certa, porque o teste só
+lê o cabeçalho. **Não há parada por arte nova.** Se um teste reprovar ao entrar arte,
+é um defeito de verdade no manifest ou nos arquivos, e a mensagem diz qual.
+
+A única regra que sobra sobre nomes de estado: toda chave de `estados` tem de ser um
+dos seis estágios da seção 4. Chave com outro nome reprova, porque nunca apareceria na
+tela.
 
 ---
 
@@ -437,9 +439,7 @@ Sequência **[testada]** em 2026-09-26, num worktree descartável, com a casa do
    ```bash
    npm run verify
    ```
-   Resultado testado antes de 2026-09-26: uma reprovação no F17f, a da lista fixa. Com
-   a lista derivada, o F17f passa com a casa do lenhador (testado só o F17f, não o
-   verify inteiro com a entrada). Com o armazém refeito, veja a seção 3.
+   Resultado testado: verde, com código 0 (o teste de fumaça da seção 3).
 6. Tire o screenshot do cenário de abertura, que planta armazém, casa do lenhador,
    pedreira, escola e estrada:
    ```bash
@@ -490,7 +490,7 @@ Os três são os que a abertura planta primeiro e os que o roteiro F17 mostra.
 
 | id | Nome | Footprint | Sprite | Estado de hoje |
 |---|---|---|---|---|
-| storehouse | Armazém | 3×3 | 192 px de largura | isométrico, BUG-H: refazer os seis estágios; entrar no manifest espera a decisão sobre dois testes (seção 3) |
+| storehouse | Armazém | 3×3 | 192 px de largura | isométrico, BUG-H: refazer os seis estágios |
 | woodcutters | Casa do Lenhador | 3×2 | 192 px de largura | base aprovada para estrutura e completo: refazer a marcação no canvas deles e gerar fundação, paredes e cobertura |
 | quarry | Pedreira | 3×2 | 192 px de largura | nada: seis estágios novos, **sem pedra desenhada** |
 
@@ -523,7 +523,7 @@ repouso e batendo a marreta basta.
 - **`src/sim/`.** Sessão de arte é `assets/`, `tools/` e, com plano, `src/render/`.
 - **`test-results.json`.** Quem marca feature como pronta é o operador.
 - **`.claude/` e `AGENTS.md`.**
-- **O teste F17f**, sem plano ou decisão do operador (seção 3).
+- **Os testes**, em geral. Arte nova não precisa de mudança em teste nenhum (seção 3).
 
 **Uma unidade parada dentro de um prédio** na tela é o **BUG-G**, aberto no `BUGS.md`.
 É defeito da simulação, não de sprite nem de profundidade de desenho.
