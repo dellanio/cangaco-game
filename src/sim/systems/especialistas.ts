@@ -53,9 +53,9 @@ import {
 import {
   colherDoTile, melhorTileDeColheita, melhorTileParaPlantio, reporNoTile, tilesReservadosParaColheita,
 } from '../recursos';
-import { tileAndavel } from '../pathfinding';
+import { passoAndavel } from '../pathfinding';
 import { ehEstadoDeFome } from '../condicao';
-import { andar, chegou, comPredio, comUnidade, dadosDaFsm, ficarOcioso } from '../units/movimento';
+import { andar, chegou, comPredio, comUnidade, dadosDaFsm, ficarOcioso, noTile } from '../units/movimento';
 import type { ResultadoDeSistema } from './jobs';
 
 type Passo = ResultadoDeSistema;
@@ -115,7 +115,7 @@ function passoIndoOcupar(state: GameState, u: Unidade, dados: GameData): Passo {
 
   let atual = u;
   const proximo = (u.fsmData.caminho ?? [])[0];
-  if (proximo !== undefined && !tileAndavel(state, proximo, 'livre', dados)) {
+  if (proximo !== undefined && !passoAndavel(state, noTile(u), proximo, 'livre', dados)) {
     // um predio foi plantado no caminho: replaneja a partir de onde esta
     const caminho = caminhoAtePredioCompleto(state, tarefa.destino, u.id, dados);
     if (caminho === null) {
@@ -562,7 +562,7 @@ function passoIndoColher(state: GameState, u: Unidade, dados: GameData): Passo {
 
   const proximo = (u.fsmData.caminho ?? [])[0];
   let atual = u;
-  if (proximo !== undefined && !tileAndavel(state, proximo, 'livre', dados)) {
+  if (proximo !== undefined && !passoAndavel(state, noTile(u), proximo, 'livre', dados)) {
     // o caminho morreu debaixo dele (obra plantada na frente): repede UMA vez.
     const caminho = caminhoAteAproximacaoDoTile(state, tarefa.origemTile, u.id, dados);
     if (caminho === null) return voltarSemColher(state, u, predio, tarefa, dados);
@@ -608,7 +608,7 @@ function passoVoltando(state: GameState, u: Unidade, dados: GameData): Passo {
 
   const proximo = (u.fsmData.caminho ?? [])[0];
   let atual = u;
-  if (proximo !== undefined && !tileAndavel(state, proximo, 'livre', dados)) {
+  if (proximo !== undefined && !passoAndavel(state, noTile(u), proximo, 'livre', dados)) {
     const caminho = caminhoAtePredioCompleto(state, predio.id, u.id, dados);
     if (caminho === null) return desfazerPosse(state, u, predio);
     atual = { ...u, fsmData: dadosDaFsm({ ...u.fsmData, caminho: caminho.tiles, progresso: 0 }) };

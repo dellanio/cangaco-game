@@ -3365,6 +3365,14 @@ Depende da F20b: o marcador lê `unidade.condicao`, que só existe depois dela. 
       porta o moinho come tudo (máximo de 4 a 5), mas isso é medida de sonda, sem asserção
       permanente: a suíte não roda a geometria longe, e o BUG-G (trava) matou a vila a 2 e
       3 tiles. A evidência grava o (c) com `asserido: false` e o porquê.
+      **Dependência, não escolha (operador, 2026-09-26):** a sonda do (c) está sem asserção
+      **porque o BUG-G mata a vila** com o campo a 2 e 3 tiles. Não é por ser frouxa de
+      propósito. O BUG-G foi corrigido em 2026-09-26 (`passoAndavel`,
+      `tests/BUG-G-preso-no-footprint.test.ts`), então o (c) longe da porta **pode** virar
+      asserção: uma corrida de 36 000 ticks com o campo atrás, afirmando o teto de milho medido
+      e zero mortes. Essa corrida é cara, então é decisão do operador, não herança automática.
+      A tabela acima foi medida antes da pedra 30 e do conserto. Uma asserção nova parte de
+      uma medição nova, não dessa tabela.
     - **Entregue:** `tests/F-CAL-b-calibracao.test.ts` ganhou o `it` de (a) sobre a mesma
       corrida (141,6 ≤ 246). A reescrita de (a) e (c) é interpretação minha, a mais
       conservadora, e fica **marcada para o operador revisar** (`PROGRESS.md`, 2026-09-26).

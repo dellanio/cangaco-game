@@ -43,7 +43,7 @@ import {
   removerTarefa, TIPO_QUE_CARREGA,
 } from '../jobs';
 import type { MotivoDeLiberacao } from '../jobs';
-import { buscarCaminho, tileAndavel } from '../pathfinding';
+import { buscarCaminho, passoAndavel } from '../pathfinding';
 import { ehEscolaCompleta } from '../escola';
 import { demandaNoDestino } from '../reservas';
 import { andar, chegou, comUnidade, dadosDaFsm, ficarOcioso, noTile, ocioso } from '../units/movimento';
@@ -110,7 +110,7 @@ function passoIndoBuscar(state: GameState, u: Unidade, dados: GameData): Passo {
 
   let atual = u;
   const proximo = (u.fsmData.caminho ?? [])[0];
-  if (proximo !== undefined && !tileAndavel(state, proximo, 'livre', dados)) {
+  if (proximo !== undefined && !passoAndavel(state, noTile(u), proximo, 'livre', dados)) {
     // um predio foi plantado no caminho: replaneja a partir de onde esta
     const plano = planoDaTarefa(state, tarefa, u.id, dados);
     if (plano === null) {
@@ -180,7 +180,7 @@ function passoIndoEntregar(state: GameState, u: Unidade, dados: GameData): Passo
 
   let atual = u;
   const proximo = (u.fsmData.caminho ?? [])[0];
-  if (proximo !== undefined && !tileAndavel(state, proximo, modo, dados)) {
+  if (proximo !== undefined && !passoAndavel(state, noTile(u), proximo, modo, dados)) {
     // o proximo tile da rota deixou de servir (estrada demolida, ou predio plantado
     // em cima): replaneja no mesmo modo, e desiste se nao houver outro caminho
     const rota = buscarCaminho(state, agora, portas, modo, dados);
@@ -327,7 +327,7 @@ function passoDevolvendo(state: GameState, u: Unidade, dados: GameData): Passo {
   const alvo = u.fsmData.armazem === undefined ? undefined : state.predios.porId[u.fsmData.armazem];
   const alvoValido = alvo !== undefined && alvo.estado === 'completo' && alvo.tipo === ID_DO_ARMAZEM;
   const proximo = (u.fsmData.caminho ?? [])[0];
-  if (!alvoValido || (proximo !== undefined && !tileAndavel(state, proximo, 'livre', dados))) {
+  if (!alvoValido || (proximo !== undefined && !passoAndavel(state, noTile(u), proximo, 'livre', dados))) {
     // o armazem sumiu, ou algo entrou no caminho: escolhe de novo a partir de onde esta
     const novo = armazemMaisProximo(state, noTile(u), dados);
     if (novo === null) return semEventos(comUnidade(state, { ...u, fsmData: dadosDaFsm({ carga }) })); // sem armazem: espera

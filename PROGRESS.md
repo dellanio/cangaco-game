@@ -7435,3 +7435,51 @@ O `assets/manifest.json` **não foi tocado**.
   - o teste "a largura em px…" da F17f.
 - É a regra que o operador marcou como errada. Ela muda quando ele passar o fator medido.
   O código da F-SPR não calcula tamanho nenhum e não precisa mudar junto.
+
+## 2026-09-26 (manhã) — Revisão do operador da leva noturna; BUG-G corrigido
+
+### Decidido pelo operador
+- **As cinco decisões da leva noturna estão aprovadas como estão**: BUG-J no roteiro;
+  F-CAL-b2 (a) como teto; F-CAL-b2 (c) como sonda; F-SPR (a), (b) e (c); a direção do
+  civil na diagonal. Sobre a (c) da F-SPR, o operador disse: "o espelhamento economiza 40%
+  dos arquivos e a razão contra a folha de sprite é a certa".
+- **F-CAL-b2 (c):** a sonda sem asserção é **dependência do BUG-G**, e não escolha. Isso
+  está escrito no item (`BUILD_PLAN.md`) para ninguém ler a sonda como frouxa.
+- **A regra "largura = footprint × 64"** está em três lugares, e eles mudam juntos quando o
+  fator vier. O teste da F17f é o que garante isso.
+- **`docs/fase-animacao-vida-do-mundo.md`** é a pesquisa do operador. Commitado como está,
+  em `c75e98e`.
+
+### Verificado (rodei o comando ou abri o arquivo)
+- **Na `main`, o repro do `BUGS.md` NÃO dispara mais o BUG-G.** Com o mesmo campo
+  (`40,28 41,28 42,28 42,29`), a vila chega viva ao tick 9 000: 13 civis, nenhuma morte e
+  ninguém debaixo de footprint.
+- **No commit onde a sonda rodou (`4a1b65d`, worktree descartável e já removido), o mesmo
+  teste reproduz:** `u162` fica em `voltando` com o `fsmData` idêntico do tick 3391 ao 7988.
+- **O defeito estava no código, não no ritmo.** A pedra 30 só tirou o Moinho do tick em que o
+  roceiro estava no canto. Por isso o teste novo não usa essa geometria.
+- **O conserto é `passoAndavel(state, de, proximo, modo)` em `sim/pathfinding.ts`**: o
+  `tileAndavel` mais a exceção do A* (`liberados`). No modo `livre`, quem está dentro de uma
+  caixa pisa nela. Ele entrou nos oito passos de movimento:
+  - `especialistas.ts`: `indo_ocupar`, `indo_colher` e `voltando`;
+  - `fome.ts`: `indo_comer`;
+  - `laborers.ts`: `indo_a_obra`;
+  - `serfs.ts`: `indo_buscar`, `indo_entregar` e `devolvendo`.
+- **`tests/BUG-G-preso-no-footprint.test.ts` provoca o cenário.** A vila da F-CAL-a roda como
+  é. Para cada estado de caminhada, o teste planta um prédio (tipo e canto vindos do
+  `canPlace`) em cima de uma unidade andando, cobrindo também o próximo tile dela. A
+  evidência está em `test-output/BUG-G-preso-no-footprint.json`, que abri:
+  - quatro estados acontecem (`indo_a_obra`, `indo_ocupar`, `indo_colher` e `voltando`);
+  - todos saem da caixa entre 21 e 35 ticks, sem nenhum tick parado.
+- **O teste acusa.** Com `src/sim` no stash, as quatro unidades ficam 400 de 400 ticks
+  paradas e o teste falha.
+- **`npm run verify`** passou: 105 arquivos, 1 451 testes.
+
+### Aberto
+- **O serf não aparece no teste.** `indo_buscar`, `indo_entregar` e `devolvendo` não acham
+  onde plantar: o serf da vila anda pela rua, e o `canPlace` recusa prédio sobre rua. Os
+  três passos usam o predicado novo, mas **nenhum teste exercita o serf debaixo de
+  footprint**. `indo_comer` também fica de fora, porque só acontece com fome.
+- **Hipótese não medida:** com a caixa liberada, a unidade atravessa o prédio até o outro
+  lado se esse for o caminho mais curto. Era o que o A* já pedia desde a F-T3. Agora o
+  passo obedece.

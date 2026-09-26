@@ -300,6 +300,29 @@ export function tileAndavel(
   return footprintsDe(state, dados).bloqueado[tile.gy * largura + tile.gx] === 0;
 }
 
+/**
+ * BUG-G — o passo de `de` para `proximo` e andavel? E o `tileAndavel`, mais a mesma
+ * excecao do A* (`liberados`, em `executarComRascunho`): no modo `livre`, quem esta
+ * dentro de um footprint pisa na caixa em que esta. Sem ela, o A* devolvia um
+ * caminho pela caixa e o passo o recusava — a unidade recalculava o mesmo caminho
+ * todo tick, ate morrer. Todo passo de movimento pergunta por aqui, nunca pelo
+ * `tileAndavel` sozinho, que nao sabe de onde a unidade parte.
+ */
+export function passoAndavel(
+  state: Pick<GameState, 'predios' | 'estradas' | 'recursos'>, de: TileDeGrid, proximo: TileDeGrid,
+  modo: ModoDeBusca, dados: GameData = gameData,
+): boolean {
+  if (tileAndavel(state, proximo, modo, dados)) return true;
+  if (modo !== 'livre') return false;
+  const { largura, altura } = dados.terreno.mapaPadrao;
+  if (!(Number.isInteger(proximo.gx) && Number.isInteger(proximo.gy) && proximo.gx >= 0 && proximo.gy >= 0
+    && proximo.gx < largura && proximo.gy < altura)) return false;
+  if (!transponivelNoMapa(proximo.gx, proximo.gy, dados)) return false;
+  if (bloqueadoPorRecurso(camadaDeBloqueio(state, dados), proximo.gx, proximo.gy)) return false;
+  const dentro = (t: TileDeGrid, c: CaixaEmTiles): boolean => t.gx >= c.x0 && t.gx < c.x1 && t.gy >= c.y0 && t.gy < c.y1;
+  return footprintsDe(state, dados).caixas.some((c) => dentro(de, c) && dentro(proximo, c));
+}
+
 /** F-T1 — o tile e transponivel no MAPA? Fora da grade do mapa, nao. Indexado pela
  *  largura DO MAPA, que nao e obrigatoriamente a de `mapaPadrao`: teste que
  *  redeclara o tamanho do mundo (F17c) segue com o mapa carregado de 128. */
