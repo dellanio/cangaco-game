@@ -3422,10 +3422,131 @@ fumaça, pilha por unidade na entrada e na saída, animais do curral. Só render
     quantidade, com desempate pela ordem de `economia.mercadorias`. **Se isso fizer o
     armazém piscar quando duas mercadorias se alternam, reportar ao operador**; a saída é
     fixar a ordem pelo dado.
-- **Nota:** os tipos novos `trabalho`, `pilha` e `animal` entram no `manifest.json` só
-  nesta feature, junto com o `TIPOS_DE_CAMADA` do render. Antes disso, `F17f` recusa o
-  `tipo` desconhecido.
-- **Aceite:** a escrever quando a feature for escolhida, a partir do brief.
+- **Nota (revogada pelo operador em 2026-09-26):** os tipos novos iam entrar no
+  manifesto só nesta feature. Eles entram antes, na **F-VIVO-0**, para destravar a
+  derivação da arte.
+- **Medição do kam_remake: os estágios de obra** (2026-09-26, lida no código da `master`
+  em `src/houses/KM_Houses.pas` e `src/render/KM_RenderPool.pas`, com o detalhe no
+  `PROGRESS.md`).
+  - O original **não tem 20 imagens de obra.** Cada casa tem duas imagens, a de madeira
+    (`WoodPic`) e a de pedra (`StonePic`). As duas se **revelam aos poucos** por alpha
+    test, com um progresso contínuo de 0 a 1: primeiro toda a madeira, depois a pedra
+    por cima, com a madeira ainda visível embaixo.
+  - Cada martelada soma 5 de esforço, e cada material vale 50, ou seja, 10 marteladas.
+    Os "mais de 20 estágios" são esses **degraus da revelação**
+    (10 × (madeira + pedra) por casa), e não arte.
+  - **O material na obra é uma pilha por quantidade:** o sprite `260+n-1` para a
+    madeira e `267+n-1` para a pedra, cada um num ponto próprio da casa
+    (`BuildSupply[material, n]`). O que aparece é o que foi entregue e ainda não foi
+    pregado. É o **mesmo mecanismo** do estoque da casa pronta (`AddHouseSupply`), e
+    fica ao lado do trabalho (`AddHouseWork`). Peça de obra, estoque e trabalho são,
+    portanto, camadas sobre a imagem da casa. A obra, porém, não é uma pilha de 20
+    imagens.
+  - **O que isso muda aqui:** a pilha da obra entra na F-VIVO como quarto uso da
+    `pilha`. A tábua e a pedra já estão entre as 28 mercadorias, então não há arte
+    nova. As **seis imagens da F17e ficam** (decisão minha, marcada para o operador
+    revisar, no `PROGRESS.md`). Trocar essas seis pelas duas camadas reveladas mudaria
+    o pipeline de arte, com uma máscara de revelação no alfa de cada base, e esse
+    pipeline já está em curso. Fica como pergunta, não como feito.
+
+A feature é grande (três camadas e quatro usos da pilha) e sai em **cinco sub-itens**,
+cada um com seu aceite, na ordem da tabela. A F-VIVO-0 destrava o Codex. Os outros só
+leem `GameState`: **nenhum toca em `sim/`**.
+
+| sub-item | o que entra | depende de |
+|---|---|---|
+| F-VIVO-0 | o manifesto aceita `trabalho`, `pilha` e `animal`, e o campo `ancoras` na entrada de prédio; o `F17f` valida os dois | — |
+| F-VIVO-a | a pilha: estoque de entrada e saída, armazém com as quatro maiores, Bodega e obra | 0 |
+| F-VIVO-b | o trabalho: laços por caso, repetição pela duração do ciclo, fumaça e luz das minas | 0 |
+| F-VIVO-c | os animais: 5 no curral, com a idade derivada do progresso | 0, a |
+| F-VIVO-d | o roteiro de conjunto: uma aldeia com os cinco casos, capturada a 0,75, para que a hipótese do zoom no brief vire medida | a, b, c |
+
+**Regras comuns aos sub-itens** (decisões minhas, marcadas para o operador revisar):
+- **Arte que falta vira placeholder, nunca buraco** (CLAUDE.md §9), para que cada
+  sub-item se verifique sem arte:
+  - a pilha sem PNG é um quadrado de ¼ de tile, com a cor de `theme-sertao.json`;
+  - o quadro de trabalho sem PNG é um retângulo na `area`, com `<laco>_<n>` escrito;
+  - o animal sem PNG é um losango do tamanho da idade.
+- **Prédio sem `ancoras` usa âncoras padrão, derivadas do footprint.** A entrada fica à
+  esquerda da porta e a saída à direita, ambas na linha da base; o curral vai em fila
+  sobre a metade de trás. O padrão serve só ao placeholder: quando a entrada declara
+  `ancoras`, valem as declaradas.
+- **Cada camada é uma função pura**, que lê o estado e devolve o que desenhar, como
+  `estagio-obra.ts`. O Phaser só desenha a lista. O teste afirma a função em Node, sem
+  tela, e o roteiro afirma o contador `debug`.
+
+**Aceite da F-VIVO-0.**
+- `EntradaDeCamada` aceita os tipos `trabalho`, `pilha` e `animal`. O
+  `tests/F17f-manifesto.test.ts` valida cada um pelas regras do brief §4a:
+  - `pilha`: o `id` está em `economia.mercadorias`, e o único estado é `unidade`;
+  - `animal`: o `id` é mercadoria de saída de uma receita de criação, com os estados
+    `idade{1..3}_{1..4}`;
+  - `trabalho`: o `id` é prédio com receita, ou `fumaca`; os estados são os laços do
+    caso daquele prédio, de 1 a 8 (`luz_1..4` nas minas); e todos os quadros do mesmo
+    prédio têm o mesmo `tamanho`.
+- `EntradaDeAsset` aceita `ancoras` opcional, e o teste valida que:
+  - as frações estão em [0, 1];
+  - em `area`, `x0 < x1` e `y0 < y1`;
+  - a contagem de pontos de estoque bate com `entra` e `sai` da receita (4 de entrada na
+    Bodega, 4 no armazém);
+  - `curral` tem 5 pontos e só aparece na Malhada e na Cocheira;
+  - `obra` tem um ponto por material de `custoDoPredio`;
+  - as áreas não se sobrepõem: os pontos de estoque e do curral ficam fora de `area`.
+- Cada regra tem um **caso que reprova** no teste, num manifesto escrito no próprio
+  teste (o molde da F17f de 2026-09-26). **Não toca em `assets/`.**
+
+**Aceite da F-VIVO-a (a pilha).**
+- `pilhasDoPredio(predio, dados)` é pura e devolve (ponto, mercadoria, n), com
+  `n = min(quantidade, 5)`, empilhados três embaixo e dois em cima:
+  - no prédio completo, as gavetas `entrada` e `saida`, na ordem da receita;
+  - no armazém, as quatro mercadorias de maior quantidade, com desempate pela ordem de
+    `economia.mercadorias`;
+  - na Bodega, as quatro comidas;
+  - **na obra**, a tábua e a pedra entregues e ainda não pregadas:
+    `entregues − ⌈hp / hpPorMaterialEntregue⌉`, com o consumo saindo **primeiro da
+    tábua**, como no original. A unidade sai da pilha quando a primeira martelada começa
+    nela, como no `IncBuildingProgress`. O valor é derivado, sem campo novo na sim.
+- O teste afirma a tabela de cada caso, os dois lados do teto 5, o desempate do armazém
+  e a obra em três momentos: nada entregue, entregue sem martelada e tudo pregado.
+- **Teste do pisca.** Num cenário longo (a vila da calibração, 6 000 ticks), conta
+  quantas vezes o conjunto das quatro do armazém muda. Se passar de uma troca por 100
+  ticks em média, **o sub-item para e reporta ao operador** (nota do operador acima). O
+  número vai para `test-output/F-VIVO-a.json`.
+- `npm run shot -- F-VIVO-a` mostra uma obra com pilha, uma pedreira com saída e o
+  armazém, e afirma `debug.pilhasDesenhadas` por prédio. A screenshot é aberta.
+
+**Aceite da F-VIVO-b (o trabalho).**
+- `quadroDeTrabalho(predio, unidade, tick, dados)` é pura e devolve (laco, n) ou `null`:
+  - caso 1: `null`, e só fumaça, quando o prédio declara `fumaca`;
+  - caso 2: `inicio`, `meio` e `fim` pelos terços do `progresso` da receita, com o `meio`
+    repetido até encher o terço;
+  - casos 3 e 5: `laco1` e `laco2` se alternando a cada laço completo;
+  - caso 4: `luz`.
+- Sem ocupante, parado por falta de insumo, com a saída cheia ou pausado, o resultado é
+  `null`. **Prédio parado não anima.** O número de repetições vem de `ticksDoCiclo`; o
+  render não inventa duração.
+- O teste afirma, por caso:
+  - a sequência de um ciclo inteiro;
+  - o `null` nos quatro estados parados;
+  - que o `n` avança e volta a 1 sem pulo.
+- O roteiro despausa 3 s e afirma que `debug.quadrosDeTrabalho` avançou nos prédios
+  ocupados e ficou parado no pausado. Faz a captura.
+
+**Aceite da F-VIVO-c (os animais).**
+- `animaisDoCurral(predio, dados)` é pura e devolve 5 posições, com a idade de 1 a 3
+  **derivada do progresso**: a posição i tem idade `1 + ⌊3·frac(p + i/5)⌋`. A
+  defasagem existe para que os cinco não cresçam juntos. Prédio vazio ou sem insumo tem
+  o curral vazio.
+- O teste afirma:
+  - a idade nos dois lados de cada fronteira;
+  - que ela nunca volta dentro de um ciclo, exceto na posição que acabou de virar
+    mercadoria;
+  - o curral vazio.
+- Roteiro com a Malhada ocupada e alimentada, com a screenshot aberta.
+
+**Aceite da F-VIVO-d.** Uma aldeia com os cinco casos, capturada a 0,75. O roteiro
+grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
+`docs/BRIEF-ARTE.md` troca a "hipótese até medir" da regra do zoom pelo número medido.
 
 ---
 

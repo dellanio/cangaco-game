@@ -7786,3 +7786,58 @@ Por que não fui para o `BUGS.md`: nenhum aceite escrito cobre esses prédios, o
 - `barracks`, `marketplace`, `town_hall` e `watchtower` não têm sistema em `src/sim/`.
 - O único leitor em código fora de `data/` é `src/render/estagio-obra.ts`, que desenha a obra.
 - São Fase C (F25 e as seguintes) por desenho, não por defeito.
+
+## 2026-09-26 (noite, 4) — F-VIVO: plano, aceite e a medição dos estágios de obra no kam_remake
+
+### Verificado: li o código-fonte (`reyandme/kam_remake`, `master`, baixado nesta sessão)
+- **`src/houses/KM_Houses.pas`**
+  - `IncBuildingProgress` (linha ~1234): cada martelada faz `Inc(fBuildingProgress, 5)`.
+    Uma unidade de material abre uma reserva de 50, então são 10 marteladas por material.
+    O estado vai de `hbsWood` para `hbsStone` quando o progresso chega a `WoodCost*50`, e
+    fica `hbsDone` com `StoneCost*50` a mais. A unidade sai de `fBuildSupplyWood/Stone`
+    quando a reserva começa, isto é, na primeira martelada nela.
+  - `Paint` (linha ~2396): na fase de madeira, `progress = fBuildingProgress/50/WoodCost`
+    e `AddHouse(tipo, pos, progress, 0, 0)`. Na fase de pedra, `AddHouse(tipo, pos, 1,
+    progressoDaPedra, 0)`. Nas duas fases, `AddHouseBuildSupply(tipo, pos,
+    fBuildSupplyWood, fBuildSupplyStone)`. Pronta, a casa chama `AddHouse(…, 1, 1, …)`,
+    depois `AddHouseSupply` (o estoque) e `AddHouseWork` (a animação).
+- **`src/render/KM_RenderPool.pas`**
+  - `AddHouse` (linha ~760): são duas imagens, `WoodPic` e `StonePic`. Em obra, a madeira
+    vai com `AddSpriteG(…, aWoodStep)` e a pedra por cima com `AddSprite(…,
+    aStoneStep)`. O comentário diz que é **alpha test**: o passo é o limiar de revelação
+    ("RenderSpriteAlphaTest will skip rendering when WoodStep = 0").
+  - `AddHouseBuildSupply` (linha ~716): o sprite da madeira é `260 + aWood - 1` e o da
+    pedra é `267 + aStone - 1`, cada um posto em `BuildSupply[material, n].MoveX/MoveY`.
+    Isso é uma **âncora por (material, quantidade)**, própria de cada casa.
+- **Hipótese, não verificada:** a ordem de revelação (de baixo para cima) está no canal
+  alfa de cada sprite. Não abri a arte do original, e nem posso (CLAUDE.md §9).
+
+### Conclusão
+- "Mais de 20 etapas" é a **revelação contínua de duas imagens**: 10 × (madeira + pedra)
+  marteladas, com um degrau visível a cada 5 de esforço. Não são 20 desenhos.
+- As **camadas empilháveis** existem, e são quatro:
+  1. a madeira revelada;
+  2. a pedra revelada por cima;
+  3. a pilha do material entregue e ainda não pregado;
+  4. na casa pronta, o estoque e o trabalho.
+- A pilha da obra e a pilha do estoque **são o mesmo mecanismo**: um sprite por
+  quantidade num ponto do prédio. Isso confirma o palpite do operador para a pilha.
+- Para a obra em si, o palpite não se confirma: ela não é uma pilha de etapas desenhadas.
+
+### Decisões minhas, marcadas para o operador revisar
+1. **As seis imagens da F17e ficam.** Adotar a revelação do original muda o pipeline de
+   arte: seriam duas bases por prédio, com a máscara de revelação no alfa, no lugar das
+   seis. O Codex está derivando as seis agora. Não é interpretação conservadora, então
+   fica como **pergunta**: *trocar os seis estágios por madeira e pedra reveladas?* O
+   ganho seria uma obra que sobe a cada martelada, em vez de cinco saltos. O custo seria
+   refazer as bases e escrever a máscara.
+2. **A pilha da obra entra na F-VIVO-a** como quarto uso da `pilha`, sem arte nova (a
+   tábua e a pedra já são mercadorias) e sem campo novo na sim. O número vem de
+   `entregues − ⌈hp/hpPorMaterialEntregue⌉`, com a tábua consumida primeiro.
+3. **A F-VIVO sai em cinco sub-itens**, de F-VIVO-0 a F-VIVO-d, cada um com aceite
+   escrito no `BUILD_PLAN.md`. A F-VIVO-0 é o item 3 do encadeamento do operador:
+   manifesto e `ancoras`.
+4. **Placeholder por camada e âncora padrão** derivada do footprint, para que cada
+   sub-item se verifique sem arte.
+5. **O `ancoras` ganha o bloco `obra`**, um ponto por material, que o brief §4a ainda não
+   tinha. É o que o original tem em `BuildSupply`.
