@@ -17,7 +17,7 @@
 // PRODUZ: o roteiro termina com pedra na saida. Antes ela ficava a leste da escola,
 // sem rocha ao alcance, e a foto do `completo` retratava uma pedreira morta.
 
-const { retanguloDoCanvas, arrastarDentroDoCanvas } = require('./_canvas');
+const { retanguloDoCanvas, arrastarDentroDoCanvas, pontoParaApertar } = require('./_canvas');
 const { arrastosDaRua } = require('./_recursos');
 const { pedreiraNoLajedo, esperarPedraNaSaida } = require('./_pedreira');
 const economia = require('../../data/economy.json');
@@ -164,10 +164,8 @@ async function roteiro(ctx) {
   const pEscola = await pontoDoTile(meioDaEscola);
   await page.mouse.click(pEscola.x, pEscola.y);
   await esperarFrame();
-  const botao = await page.$eval(`#painel-predio [data-treinar="${civil}"]`, (n) => {
-    const r = n.getBoundingClientRect();
-    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-  });
+  // UI-barra-a: o engajar rola no corpo da barra; o aperto cru nao rola sozinho.
+  const botao = await pontoParaApertar(page, `#painel-predio [data-treinar="${civil}"]`);
   await page.keyboard.press('p');
   afirmar(!(await estado()).pausado, 'o clique do treino precisa do relogio correndo');
   await page.mouse.move(botao.x, botao.y);

@@ -14,6 +14,33 @@ async function retanguloDe(page, seletor) {
 
 const retanguloDoCanvas = (page) => retanguloDe(page, '#jogo canvas');
 
+/**
+ * UI-barra-a — o ponto de PAGINA onde apertar o elemento com `mouse.down/up`, como o
+ * jogador faz: rola o corpo da barra ate o elemento aparecer (a grade do engajar
+ * rola, decisao do operador) e confere que o que esta sob o ponto e o proprio
+ * elemento ou um filho dele. `page.click()` rolava sozinho; o aperto cru nao, e
+ * sem isto o aperto caiu no lema da marca, embaixo do corpo (medido no F11c:
+ * botao em y 683..704, corpo visivel ate 672). Coberto por outra coisa, reprova.
+ */
+async function pontoParaApertar(page, seletor) {
+  const resultado = await page.evaluate((s) => {
+    const alvo = window.document.querySelector(s);
+    if (!alvo) return { erro: `nenhum elemento casa com ${s}` };
+    alvo.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    const r = alvo.getBoundingClientRect();
+    const x = r.left + r.width / 2;
+    const y = r.top + r.height / 2;
+    const sob = window.document.elementFromPoint(x, y);
+    if (!sob || !alvo.contains(sob)) {
+      const quem = sob ? `${sob.tagName.toLowerCase()}${sob.id ? `#${sob.id}` : ''}.${sob.className}` : 'nada';
+      return { erro: `${s} esta coberto em (${Math.round(x)},${Math.round(y)}) por ${quem}` };
+    }
+    return { x, y };
+  }, seletor);
+  if (resultado.erro) throw new Error(`pontoParaApertar: ${resultado.erro}`);
+  return resultado;
+}
+
 const dentro = (retangulo, ponto) => ponto.x > retangulo.left && ponto.x < retangulo.right
   && ponto.y > retangulo.top && ponto.y < retangulo.bottom;
 
@@ -97,5 +124,5 @@ function bordaVisivel(canvas, camera) {
 }
 
 module.exports = {
-  retanguloDe, retanguloDoCanvas, arrastarDentroDoCanvas, pontoDoTileNaTela, bordaVisivel,
+  retanguloDe, retanguloDoCanvas, arrastarDentroDoCanvas, pontoDoTileNaTela, bordaVisivel, pontoParaApertar,
 };

@@ -17,7 +17,7 @@
 // 2046 e o armazem, plantado ali, cruza meia madeira no 2347, a virada no 2422,
 // meia pedra no 2685 e completa no 3148. Os tetos abaixo sao esses numeros com
 // folga; o roteiro PARA no marco, nao no teto.
-const { retanguloDe, retanguloDoCanvas, arrastarDentroDoCanvas } = require('./_canvas');
+const { retanguloDoCanvas, arrastarDentroDoCanvas, pontoParaApertar } = require('./_canvas');
 const economia = require('../../data/economy.json');
 const { predios } = require('../../data/buildings.json');
 const { bloqueiaConstrucao, temRecurso, arrastosDaRede } = require('./_recursos');
@@ -177,8 +177,9 @@ async function roteiro(ctx) {
   await page.keyboard.press('p');
   await esperarFrame();
   afirmar((await estado()).pausado === false, 'o pedido de treino so vale com o laco ANDANDO');
-  const caixaDoBotao = await retanguloDe(page, `#painel-predio [data-treinar="${plantas[0].civil}"]`);
-  await page.mouse.move(caixaDoBotao.left + caixaDoBotao.width / 2, caixaDoBotao.top + caixaDoBotao.height / 2);
+  // UI-barra-a: o engajar rola no corpo da barra; o aperto cru nao rola sozinho.
+  const botao = await pontoParaApertar(page, `#painel-predio [data-treinar="${plantas[0].civil}"]`);
+  await page.mouse.move(botao.x, botao.y);
   await page.mouse.down();
   await page.waitForTimeout(150);
   await page.mouse.up();

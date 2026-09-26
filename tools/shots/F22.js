@@ -280,22 +280,23 @@ async function roteiro(ctx) {
   afirmar((await idAberto()) === ID_PEDREIRA, 'o painel deveria abrir na pedreira');
   const rAviso = await retanguloDe(page, '#alertas');
   const rPainel = await retanguloDe(page, '#painel-predio');
-  const rMenu = await retanguloDe(page, '#menu-build');
   afirmar(
     rAviso.width > 0 && rAviso.height > 0,
     `o aviso deveria ter area na tela, veio ${JSON.stringify(rAviso)}`,
   );
-  // Layout 2 (estilo-ui, fatia 4): o aviso e carimbo DENTRO do HUD, e nao
+  // UI-barra-a: o aviso mora na FAIXA de altura fixa da barra lateral, e nao
   // sobreposicao no canto do mapa — o canvas fica inteiro para o jogo.
-  const rHud = await retanguloDe(page, '#hud');
+  const rFaixa = await retanguloDe(page, '#faixa-alertas');
   afirmar(
-    rAviso.left >= rHud.left - 0.5 && rAviso.right <= rHud.right + 0.5
-      && rAviso.top >= rHud.top - 0.5 && rAviso.bottom <= rHud.bottom + 0.5,
-    `o aviso deveria caber na barra do HUD ${JSON.stringify(rHud)}, veio ${JSON.stringify(rAviso)}`,
+    rAviso.left >= rFaixa.left - 0.5 && rAviso.right <= rFaixa.right + 0.5
+      && rAviso.top >= rFaixa.top - 0.5 && rAviso.bottom <= rFaixa.bottom + 0.5,
+    `o aviso deveria caber na faixa de alertas ${JSON.stringify(rFaixa)}, veio ${JSON.stringify(rAviso)}`,
   );
+  const rBarra = await retanguloDe(page, '#barra');
+  const canvasAgora = await retanguloDoCanvas(page);
   afirmar(
-    rAviso.bottom <= canvas.top + 0.5,
-    `o aviso nao pode invadir o canvas: aviso.bottom ${rAviso.bottom} contra canvas.top ${canvas.top}`,
+    rAviso.right <= canvasAgora.left + 0.5,
+    `o aviso nao pode invadir o canvas: aviso.right ${rAviso.right} contra canvas.left ${canvasAgora.left}`,
   );
   const cruzam = rAviso.left < rPainel.right && rAviso.right > rPainel.left
     && rAviso.top < rPainel.bottom && rAviso.bottom > rPainel.top;
@@ -303,11 +304,11 @@ async function roteiro(ctx) {
     !cruzam,
     `aviso e painel nao podem se cobrir: aviso ${JSON.stringify(rAviso)}, painel ${JSON.stringify(rPainel)}`,
   );
-  // O canvas nao pode ter encolhido: o aviso e SOBREPOSICAO, nao coluna nova —
+  // O canvas nao pode ter encolhido: o aviso e faixa da barra, nao coluna nova —
   // e a invariante que o roteiro da F06 afirma do outro lado.
   afirmar(
-    canvas.right <= rMenu.left,
-    `o canvas deveria continuar a esquerda do menu, veio ${canvas.right} contra ${rMenu.left}`,
+    canvasAgora.left >= rBarra.right - 0.5 && canvasAgora.width === canvas.width,
+    `o canvas deveria continuar a direita da barra e do mesmo tamanho, veio ${JSON.stringify(canvasAgora)} contra barra.right ${rBarra.right}`,
   );
 
   // ---- 5. PAUSA DELIBERADA cala o aviso -------------------------------------

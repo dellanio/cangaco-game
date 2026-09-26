@@ -26,10 +26,10 @@
 // produz. A pedra na saida e fugaz (o carregador a leva logo), por isso se espera
 // por ela em passo fino, e o PAINEL nao afirma o conteudo da gaveta `saida`.
 //
-// Todo clique no mapa acontece com o painel FECHADO: ele e sobreposicao no canto
-// do canvas, e o que esta debaixo dele nao recebe mouse.
+// Todo clique no mapa acontece com o painel FECHADO: com ele aberto a grade de
+// construir sai do corpo da aba (UI-barra-a), e a ferramenta de rua mora nela.
 
-const { retanguloDe, retanguloDoCanvas, arrastarDentroDoCanvas } = require('./_canvas');
+const { retanguloDoCanvas, arrastarDentroDoCanvas, pontoParaApertar } = require('./_canvas');
 const { arrastosDaRua } = require('./_recursos');
 const { pedreiraNoLajedo, esperarPedraNaSaida } = require('./_pedreira');
 const economia = require('../../data/economy.json');
@@ -113,7 +113,6 @@ async function roteiro(ctx) {
 
   // ---- 1. um predio SEM producao: o armazem --------------------------------
   afirmar(await page.isHidden('#painel-predio'), 'o painel deveria nascer fechado');
-  const alcaFechada = await retanguloDe(page, '#balcao'); // so a alca: nada escolhido
   await clicarNoTile(meioDoArmazem.gx, meioDoArmazem.gy);
   afirmar(await page.isVisible('#painel-predio'), 'clicar no armazem deveria abrir o painel');
   afirmar(
@@ -145,38 +144,23 @@ async function roteiro(ctx) {
   );
   afirmar(await temNoPainel('[data-demolir]'), 'todo predio deveria ter o botao de derrubar');
 
-  // ---- 1b. Layout 2 (estilo-ui): o balcao ABRE com a selecao ----------------
-  // O painel mora na faixa do rodape, que e linha da grade: o canvas encolhe
-  // ate ela (Scale.RESIZE confere o pai a cada 500 ms) e nunca fica por baixo.
+  // ---- 1b. UI-barra-a: o painel SUBSTITUI a grade no corpo da aba ----------
+  // Nada de faixa que abre e empurra: o canvas tem a mesma area com e sem
+  // selecao (Scale.RESIZE confere o pai a cada 500 ms, dai a espera).
   await page.waitForTimeout(700);
-  const balcaoAberto = await retanguloDe(page, '#balcao');
-  const canvasComBalcao = await retanguloDoCanvas(page);
+  const canvasComPainel = await retanguloDoCanvas(page);
   afirmar(
-    (await page.evaluate(() => window.document.body.dataset.balcao)) === 'aberto',
-    'com um predio escolhido o balcao deveria estar aberto',
+    (await page.getAttribute('body', 'data-corpo')) === 'painel' && await page.isHidden('#menu-build'),
+    'com um predio escolhido o corpo da aba deveria mostrar o painel no lugar da grade',
   );
   afirmar(
-    balcaoAberto.height > alcaFechada.height && canvasComBalcao.height < canvas.height,
-    `o balcao aberto deveria ser mais alto que a alca (${alcaFechada.height}) e encolher o canvas (${canvas.height}), veio ${balcaoAberto.height} e ${canvasComBalcao.height}`,
+    canvasComPainel.width === canvas.width && canvasComPainel.height === canvas.height,
+    `a area do canvas nao deveria mudar com a selecao: ${canvas.width}x${canvas.height} -> ${canvasComPainel.width}x${canvasComPainel.height}`,
   );
-  afirmar(
-    canvasComBalcao.bottom <= balcaoAberto.top + 0.5,
-    `canvas.bottom (${canvasComBalcao.bottom}) deveria ser <= balcao.top (${balcaoAberto.top})`,
-  );
-  await capturar('armazem'); // o painel de um predio sem producao, no balcao
-  // a alca RECOLHE sem perder a selecao, e reabre
-  await page.click('[data-alca="balcao"]');
-  await esperarFrame();
-  afirmar(
-    await page.isHidden('#painel-predio') && (await idAberto()) !== null,
-    'recolhido a mao, o balcao esconde o painel mas a selecao fica',
-  );
-  await page.click('[data-alca="balcao"]');
-  await esperarFrame();
-  afirmar(await page.isVisible('#painel-predio'), 'a alca deveria reabrir o balcao');
+  await capturar('armazem'); // o painel de um predio sem producao, no corpo da aba
 
   // ---- 2. a rua, e a planta da pedreira ------------------------------------
-  await page.keyboard.press('Escape'); // fecha o painel: ele sobrepoe o canto do canvas
+  await page.keyboard.press('Escape'); // fecha o painel: a grade volta ao corpo da aba
   await esperarFrame();
   await page.click('[data-ferramenta="estrada"]');
   await esperarFrame();
@@ -260,10 +244,8 @@ async function roteiro(ctx) {
     'a fila de treino deveria aparecer como SECAO do painel do predio, nao num segundo painel',
   );
   // O clique de painel que roda despausado e segurando 150 ms (§8).
-  const botao = await page.$eval(`#painel-predio [data-treinar="${civilDaPedreira}"]`, (n) => {
-    const r = n.getBoundingClientRect();
-    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-  });
+  // UI-barra-a: o engajar rola no corpo da barra; o aperto cru nao rola sozinho.
+  const botao = await pontoParaApertar(page, `#painel-predio [data-treinar="${civilDaPedreira}"]`);
   await page.keyboard.press('p');
   afirmar(!(await estado()).pausado, 'o clique do treino precisa do relogio correndo');
   await page.mouse.move(botao.x, botao.y);

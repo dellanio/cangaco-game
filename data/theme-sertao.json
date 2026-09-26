@@ -413,7 +413,7 @@
   },
   "painelPredio": {
     "_doc": "F16b. O NOME do prédio NÃO mora aqui: vem de predios.<id>.nome, que já existe. Só os rótulos fixos do painel. 'Sem trabalhador' e a ausência da linha são coisas diferentes: prédio que não pede trabalhador (armazém, Casa do Coronel) não ganha a linha nenhuma — dizer 'sem trabalhador' num armazém seria acusar falta onde não cabe ninguém.",
-    "hp": "Firmeza",
+    "hp": "Vida",
     "emObra": "Em obra",
     "nivelando": "Aplainando o chão",
     "material": "Material",
@@ -506,17 +506,20 @@
     "glossarioObrigatorio": true,
     "_doc": "O mundo é colorido e detalhado; a interface é xilogravura. Os dois registros não competem."
   },
-  "paineis": {
-    "_doc": "Layout 2 (docs/propostas/ui-releitura-rts.md, secao 8). A PRANCHA e a coluna de construir, a direita; o BALCAO e a faixa de contexto no rodape. Os dois retraem: a prancha vira lombada de tinta na borda direita (o rotulo vertical dela e menuBuild.titulo, que ja existe), o balcao vira uma alca a esquerda com o nome do que esta escolhido. Aqui moram so os rotulos dos botoes de abrir e recolher e o texto da alca quando nao ha nada escolhido. As setas sao desenho em CSS, nao texto.",
-    "prancha": {
-      "recolher": "Recolher o menu de construir",
-      "abrir": "Abrir o menu de construir"
+  "barra": {
+    "_doc": "UI-barra-a (docs/propostas/barra-lateral-unica.md). A barra lateral unica, a esquerda. As chaves de `abas` SAO os ids de ABAS (src/ui/barra.ts), na ida e na volta (tests/UI-barra-a.test.ts). `trancada` e o `title` da aba com cadeado; `logo` e `minimapa` sao o texto do placeholder ate a arte entrar (CLAUDE.md §9).",
+    "abas": {
+      "construir": "Construir",
+      "distribuicao": "Distribuição",
+      "estatisticas": "Estatísticas",
+      "opcoes": "Opções"
     },
-    "balcao": {
-      "recolher": "Recolher os detalhes",
-      "abrir": "Mostrar os detalhes",
-      "vazio": "Nada escolhido"
-    }
+    "trancada": "Ainda não disponível",
+    "lema": "Terra forte, gente valente",
+    "logo": "Cangaço",
+    "minimapa": "minimapa",
+    "abrirAjuda": "Controles e partida",
+    "maisAlertas": "+{n}"
   },
   "ajuda": {
     "_doc": "F-D1. A tela de ajuda. As chaves de `rotulos` e `gestos` SÃO os ids de `ATALHOS` e `GESTOS` (src/input/atalhos.ts): id sem rótulo aqui, ou rótulo sobrando sem id, reprova o npm run verify — o guarda está em tests/F-D1-ajuda.test.ts, na ida e na volta, como o da F22. O nome da TECLA (Esc, H, F1) não sai daqui: é o que está escrito no teclado do jogador, não texto de tema.",

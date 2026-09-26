@@ -21,7 +21,7 @@ const { predios } = require('../../data/buildings.json');
 
 const TILE_PX = 64;
 const defDe = (id) => predios.find((p) => p.id === id);
-const AVISO = '#hud [data-campo="aviso-tempo"]';
+const AVISO = '#minimapa [data-campo="aviso-tempo"]';
 // o mesmo limiar de `render/unidades.ts` (SALTO_MAXIMO_EM_TILES): a unidade desenhada nunca
 // fica mais longe que isto da posicao do tick
 const SALTO_EM_TILES = 2;

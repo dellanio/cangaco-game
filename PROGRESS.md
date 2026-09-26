@@ -8468,7 +8468,74 @@ Pedido do operador, antes da UI-barra-a: o Codex está parado esperando poder re
 - **Oráculo do roteiro reimplementado em JS**, de propósito: comparar a cena com o próprio `revelacaoDaObra` seria o código se aprovando.
 - **O par exige as duas texturas carregadas**, e não só as duas chaves no manifesto. Se o PNG faltar, a obra cai no fallback em vez de desenhar metade.
 
-### Aberto
+### Decisões do operador (2026-09-26, depois da entrega)
 
-- **Pergunta:** o `marcacao` do armazém ficou no manifesto. Com o par ele é inerte, porque o armazém em obra é sempre revelado. Apagar ou manter é decisão de arte: o Codex pode tirar ao registrar o par.
-- O placeholder de dois retângulos subindo, do texto do plano, não foi feito, pela decisão acima. Se o operador quiser que prédio sem PNG também revele, isso vira item à parte.
+- **`marcacao` do armazém: apagado** do manifesto. A razão dele: é chave morta desde a F17g, e quem registrar a arte não saberia que pode tirar. `storehouse_marcacao.png` e a base continuam, porque `tools/derivar-sprites.js` usa a base na união das bboxes, e tirá-la deslocaria o recorte do par. O derivado fica sem leitor, e o comentário no script diz isso.
+- **Placeholder de dois retângulos subindo: descartado**, não vira item. A razão dele: o fallback dos seis estágios já mostra a obra crescendo, e o placeholder some quando a arte chega.
+- **Rótulos madeira/pedra no tema:** confirmado não criar, porque nada os lê.
+- Verificado: `tests/F17f-manifesto.test.ts`, `F17g-revelacao` e `F-SPR-carregamento` deram 48 verdes depois de apagar a chave.
+
+## 2026-09-26 (noite, 14) — UI-barra-a: a barra lateral única
+
+A branch `ui-barra-a` saiu do WIP `09aa8f9` (feito antes da F17g) e foi rebaseada sobre
+a F17g. Esta sessão conferiu os roteiros, que estavam vermelhos, e fez os três pedidos
+do operador.
+
+### Verificado (rodado, evidência aberta)
+- **F11c vermelho = consequência esperada do layout.** Não era defeito.
+  - Medido: o botão do Pedreiro fica em y 683–704, e o `#corpo-aba` só mostra até 672
+    (scrollHeight 463 contra clientHeight 256).
+  - O ponto sob o dedo era `#marca .lema`, e a fila da escola ficava `{}`.
+  - O operador decidiu que o corpo rola, então o conserto foi no **roteiro**.
+- **O helper `pontoParaApertar(page, seletor)`** (`tools/shots/_canvas.js`):
+  - `scrollIntoView({block:'nearest'})`;
+  - depois, `elementFromPoint` no centro do botão tem de cair dentro dele. Se não cair,
+    reprova dizendo quem cobre.
+  - Mesma causa e mesmo conserto em F16b, F17, F17e, F17g, F-VIVO-a e F-VIVO-b. Os
+    sete passam.
+- **F21b vermelho = defeito real da barra.** O conserto foi no **código**.
+  - O helper acusou `div.desc`: o cartão, que gruda no pé do corpo, cobria a última
+    linha da grade (mina em y 609–649, cartão em 606–670).
+  - Como o botão conta como "visível", o navegador não rola até ele. O Tab também põe o
+    foco num ícone escondido.
+  - Conserto: `scroll-padding-bottom: 112px` no corpo, só com a grade. O cartão mais
+    alto medido é o do armazém, com 105 px. O F21b passa.
+- **F18 vermelho é anterior à barra.** Na `main` (`3c38d27`), num worktree irmão já
+  removido, falha igual: `["corn","grapes"]`.
+  - Registrado como BUG-L, severidade `errado` (operador). É defeito da F-CANA, e a
+    chave dela foi para `false`. A F18 fica `true`.
+  - A correção está escrita como `F-CANA-b` no `BUILD_PLAN.md` e não foi implementada.
+- **Cartão piscando = hipótese confirmada, e consertada.**
+  - Sonda (apagada): o centro de cada ícone ficava 10 px acima do cartão vazio, com o
+    mouse parado, 20 amostras em 1 s. 22 dos 28 ícones trocavam de 5 a 16 vezes.
+  - Os seis do topo não piscaram porque a rolagem não os alcança no pé.
+  - Causa: o cartão cresce por cima do ícone, o `pointerleave` limpa, o cartão
+    encolhe, o `pointerenter` volta, e o ciclo se repete.
+  - Conserto (`ui/menu-build.ts`): sair do ícone para o cartão não é sair. Quem limpa é
+    o `pointerleave` do próprio cartão. Depois do conserto, a sonda deu zero trocas
+    nos 28.
+  - Guarda permanente: o passo 2c do roteiro UI-barra-a amostra despausado o último
+    ícone.
+- **A sombra do pé.** `haConteudoAbaixo(scrollTop, visivel, total)` (`ui/barra.ts`,
+  pura, testada no vitest) liga `data-ha-mais`.
+  - Recalcula no `scroll` e num `ResizeObserver` sobre o corpo e os três filhos.
+  - CSS: uma faixa de 22 px em degradê. No painel ela gruda no pé; na grade fica colada
+    no topo do cartão.
+  - O roteiro afirma que ela está acesa na grade e no painel da escola a 720, apaga no
+    fim da rolagem e volta no topo.
+  - Aberto com Read: `screenshots/UI-barra-a-1-sombra-grade.png` e
+    `UI-barra-a-2-escola.png`. Nas duas, a faixa aparece na ampliação (recorte no
+    scratchpad); em tamanho real ela é discreta.
+  - A primeira versão, um `box-shadow` no cartão, pintava (os pixels diferiam), mas era
+    fraca demais para ler, e foi trocada.
+- **Varredura de roteiros na branch.** Todos OK, exceto o F18 (BUG-L).
+
+### Decisões minhas, para revisão
+- A intensidade da sombra (`rgba(58,40,25,0.7)`, 22 px) está discreta em 1×. Se o
+  operador quiser mais forte, o número mora só no CSS.
+- O `scroll-padding-bottom` fixo em 112 cobre o cartão mais alto de hoje. Um texto de
+  tema mais longo pode passar disso. **Hipótese**: nada mede isso hoje.
+
+### F17e
+Falhou uma vez na `main` na sessão anterior e passou em todas as rodadas desta sessão.
+Conta como uma ocorrência. Pela regra do operador, abre bug se falhar de novo.

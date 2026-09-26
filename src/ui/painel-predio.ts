@@ -6,12 +6,13 @@
 // Le o estado pelo seletor puro `painelDoPredio` e emite comando. Nao muta
 // GameState, nao importa phaser, nao varre predios (CLAUDE.md §3, §10).
 //
-// Desde o Layout 2 (docs/propostas/ui-releitura-rts.md §8) o painel e o
-// conteudo do BALCAO, a faixa do rodape, e se desenha em BLOCOS lado a lado:
-// identidade (nome, firmeza ou obra, estoque), gente (quem trabalha, o que
-// resta ao alcance), a escola (fila e tipos) e as acoes. Os nos de cada bloco
-// sao os mesmos de antes, com os mesmos `data-`: mudou onde ficam, nao o que
-// dizem — e e por isso que os roteiros da F13b, F16b e F22 continuam lendo.
+// Desde a UI-barra-a (docs/propostas/barra-lateral-unica.md) o painel mora no
+// CORPO DA ABA da barra lateral, no lugar da grade de construir, e se desenha em
+// BLOCOS empilhados: identidade (nome, vida ou obra, estoque), gente (quem
+// trabalha, o que resta ao alcance), a escola (fila e tipos) e as acoes. Os nos
+// de cada bloco sao os mesmos de antes, com os mesmos `data-`: mudou onde ficam,
+// nao o que dizem — e e por isso que os roteiros da F13b, F16b e F22 continuam
+// lendo.
 //
 // A fila de treino da escola virou uma SECAO deste painel
 // (`desenharSecaoDaEscola`), nao um segundo painel: dois paineis disputando o
@@ -52,7 +53,7 @@ function nomeDoPredio(tipo: string): string {
   return temaDePredios[tipo]?.nome ?? tipo;
 }
 
-/** Um bloco do balcao. Vazio, nao entra no DOM: bloco sem nada seria uma
+/** Um bloco do painel. Vazio, nao entra no DOM: bloco sem nada seria uma
  *  regua de tinta separando nada de nada. */
 function bloco(classe: string): HTMLElement {
   const div = document.createElement('div');
@@ -288,7 +289,6 @@ export function montarPainelPredio(
       raiz.replaceChildren();
       raiz.hidden = true;
       raiz.removeAttribute('data-predio-aberto');
-      raiz.removeAttribute('data-nome');
       // O predio saiu do estado (demolido) mas a selecao ainda aponta para ele:
       // limpar aqui e o que fecha o painel sozinho. `definir` so avisa quando
       // muda, entao a reentrada para no proximo passo.
@@ -305,11 +305,8 @@ export function montarPainelPredio(
     raiz.dataset.tipo = dados.tipo;
     raiz.dataset.estadoDoPredio = dados.estado;
     raiz.dataset.pausado = String(dados.pausado);
-    // `data-nome`: a alca do balcao (Layout 2, `ui/balcao.ts`) le daqui o nome
-    // do que esta aberto, em vez de conhecer o tema ou este painel.
-    raiz.dataset.nome = nomeDoPredio(dados.tipo);
 
-    // Os blocos, na ordem em que entram no balcao. Vazio nao entra no DOM.
+    // Os blocos, na ordem em que se empilham. Vazio nao entra no DOM.
     const identidade = bloco('identidade');
     const gente = bloco('gente');
     const escola = bloco('escola');

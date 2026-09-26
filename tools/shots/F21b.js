@@ -28,7 +28,7 @@
 // gesto acontece DESPAUSADO, com `mouse.down` / `waitForTimeout(150)` /
 // `mouse.up` — nunca `page.click()`, que aperta e solta no mesmo instante.
 
-const { retanguloDoCanvas, pontoDoTileNaTela } = require('./_canvas');
+const { retanguloDoCanvas, pontoDoTileNaTela, pontoParaApertar } = require('./_canvas');
 const { caixaLivre } = require('./_recursos');
 const terreno = require('../../data/terrain.json');
 const tema = require('../../data/theme-sertao.json');
@@ -310,11 +310,9 @@ async function roteiro(ctx) {
   /** O gesto do jogador num botao do menu: aperta, o laco redesenha por baixo
    *  do dedo, solta. E a §8 escrita em codigo. */
   async function apertarESoltar(seletor) {
-    const alvo = page.locator(seletor);
-    await alvo.scrollIntoViewIfNeeded(); // a prancha rola: a mina fica longe do topo
-    const caixa = await alvo.boundingBox();
-    afirmar(caixa !== null, `o botao '${seletor}' deveria existir no menu`);
-    await page.mouse.move(caixa.x + caixa.width / 2, caixa.y + caixa.height / 2);
+    // a grade rola: a mina fica longe do topo. UI-barra-a: e reprova se coberto.
+    const ponto = await pontoParaApertar(page, seletor);
+    await page.mouse.move(ponto.x, ponto.y);
     await page.mouse.down();
     await page.waitForTimeout(150);
     await page.mouse.up();

@@ -27,8 +27,7 @@ import { montarPainelPredio } from './ui/painel-predio';
 import { montarAlertas } from './ui/alertas';
 import { montarAvisoDoTempo } from './ui/aviso-tempo';
 import { montarAjuda } from './ui/ajuda';
-import { montarPrancha } from './ui/prancha';
-import { montarBalcao } from './ui/balcao';
+import { montarBarra } from './ui/barra';
 import { montarArquivo } from './ui/arquivo';
 import { criarArquivoDaPartida } from './arquivo-da-partida';
 import { criarFerramenta } from './input/ferramenta';
@@ -44,7 +43,7 @@ const sessao = criarSessao(createInitialState(gameData.economia.estadoInicial.se
 const ferramenta = criarFerramenta();
 // O predio aberto no painel (F13b). Estado de interface, como a ferramenta.
 const selecao = criarSelecao();
-// A ajuda (F-D1) precisa do `#hud` ja no DOM, e ele e estatico no index.html —
+// A ajuda (F-D1) precisa do `#logo` ja no DOM, e ele e estatico no index.html —
 // entao ela pode nascer antes do resto da interface. Quem a abre e o teclado, e
 // e por isso que ela e o quarto parametro: com a ajuda aberta, o `Esc` e dela.
 const ajuda = montarAjuda();
@@ -99,13 +98,13 @@ const painel = montarPainelPredio(selecao, (comando) => {
 // derivado do estado, entao basta ser atualizado junto dos outros.
 const alertas = montarAlertas();
 
-// Layout 2 (docs/propostas/ui-releitura-rts.md §8): a prancha (coluna de
-// construir) e o balcao (faixa de contexto) retraem. Os dois so escrevem
-// `data-` no <body>; o canvas acompanha a celula da grade porque o Phaser esta
-// em Scale.RESIZE. Nascem ANTES do jogo pelo mesmo motivo do HUD: o Phaser
-// mede o pai no boot, e o boot ja tem de ver a grade no estado final.
-montarPrancha();
-const balcao = montarBalcao(selecao);
+// UI-barra-a (docs/propostas/barra-lateral-unica.md): a barra lateral unica.
+// Ela so escreve `data-corpo` no <body> — grade, painel ou opcoes no corpo da
+// aba —, e a area do canvas nao muda com isso. Nasce ANTES do jogo pelo mesmo
+// motivo do HUD: o Phaser mede o pai no boot.
+montarBarra(selecao, () => {
+  ajuda.abrir();
+});
 
 // F-D2 — a navegacao da camera. Ligada aqui, com os outros ouvintes de
 // `input/`, e no `window` como eles. Os numeros vem de `data/terrain.json` pelo
@@ -119,8 +118,6 @@ function atualizar(s: GameState): void {
   hud.atualizar(s);
   menu.atualizar(s);
   painel.atualizar(s);
-  // depois do painel, de proposito: a alca le o `data-nome` que ele escreveu
-  balcao.atualizar();
   alertas.atualizar(s);
 }
 
@@ -144,7 +141,6 @@ const painelDoArquivo = montarArquivo(
 // viria nenhum, e o painel so apareceria quando o jogador retomasse.
 selecao.aoMudar(() => {
   painel.atualizar(sessao.estado);
-  balcao.atualizar();
 });
 atualizar(sessao.estado);
 aviso.atualizar(laco.pausado, laco.velocidade);
