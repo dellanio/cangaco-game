@@ -3229,7 +3229,13 @@ que vetar custe uma linha.
 
 ## Perguntas em aberto
 
-_(nenhuma no momento: as três que sobravam foram decididas pelo operador — ver "Ajuste pós-F10".)_
+- **F-VIVO-b, caso 2 (pedreira, canavial): o laço de dentro com o trabalhador fora?**
+  (2026-09-26) Na sim, o `progresso` do caso 2 só anda com o trabalhador no tile
+  (`colhendo`), e não existe fase "dentro". O aceite manda `inicio`/`meio`/`fim` pelos
+  terços do `progresso`. Segui o aceite à letra: o prédio anima enquanto o cabra está
+  no lajedo. Saídas possíveis: aceitar como está (o prédio "trabalha a pedra que chega"),
+  ou o brief §4a ganha outra leitura e o caso 2 passa a animar só num trecho. Isso é
+  decisão de arte/design, não minha.
 
 
 ## F-T1 — Camada de terreno base (dado + sim + render mínimo) (2026-09-24)
@@ -8316,3 +8322,70 @@ Plano: `docs/planos/F24a-armas.md`. Pedido do operador: três tarefas seguidas (
 ### Aberto
 
 - **F24a-ui**, o painel da cota, é sub-item que ainda não foi escrito na fila. Hoje a cota só se fixa por comando.
+
+## 2026-09-26 (noite, 12) — F-VIVO-b: o trabalho, laços por caso
+
+Plano: `docs/planos/F-VIVO-b-trabalho.md`. Segunda das três tarefas do pedido do operador. Só render, teste e roteiro: **nada em `sim/`**.
+
+### O que mudou
+
+- `src/render/trabalho.ts` (puro, só `import type` e as tabelas de `manifesto-camadas.ts`):
+  - `quadroDeTrabalho(predio, unidade, tick, dados)` devolve `{laco, n}` ou `null`;
+  - `quadroDaFumaca(...)` devolve 1..8 ou `null`, e só existe com `ancoras.trabalho.fumaca` declarada;
+  - `areaDoTrabalho(ancoras)`: a declarada, ou a padrão `[0.30, 0.35, 0.70, 0.75]`.
+- Funil `dadosDoTrabalho(manifesto)` em `predios.ts`: `CASO_DO_PREDIO`, `ticksDoCiclo` das receitas e âncoras do manifesto.
+- Cena (`WorldScene.atualizarPredios`/`criarPredio`):
+  - o quadro entra na assinatura do redesenho;
+  - com PNG, desenha `trabalho:<tipo>:<laco>_<n>` na `area`; sem PNG, um retângulo escuro com `<laco>_<n>` escrito;
+  - a fumaça só vai no ponto declarado.
+  - O corpo do prédio (placeholder ou sprite) ficou como estava.
+- `debug.quadrosDeTrabalho[id] = {laco, n, sprite}`.
+
+### Verificado (rodado, evidência aberta)
+
+- `tests/F-VIVO-b-trabalho.test.ts` (27 testes), evidência em `test-output/F-VIVO-b.json`:
+  - **ciclo inteiro por caso**:
+    - quarry: T = 167, terços 55/111, `meio` com 7 voltas;
+    - sawmill: 34 voltas alternando `laco1`/`laco2`;
+    - gold_mine: `luz` 1..4;
+    - swine_farm: alternância;
+    - farm: `null` sempre, e a fumaça sintética declarada dá 1..8,1,2.
+  - **`null` nos quatro parados**, para os 20 prédios de caso animado:
+    - sem ocupante, que também cobre a unidade errada;
+    - `esperando_insumo`;
+    - saída cheia (`progresso == T`);
+    - pausado com o rótulo `trabalhando`.
+  - **Sem pulo** nas 20 receitas reais: um ciclo inteiro começa em 1 e termina com `n = F`.
+  - **Tabela de casos contra o dado**, e cada troca reprova com o id no texto:
+    - serraria que colhe;
+    - pedreira que não colhe;
+    - mina que colhe andando;
+    - criação que colhe;
+    - receita nova sem caso.
+  - **Contra a sim**:
+    - a pedreira real (`cenarioDePedreira`) anima em `colhendo` a partir do tick 51;
+    - sem ocupante ou pausada, no mesmo instante, dá `null`;
+    - a serraria sem insumo fica em `esperando_insumo` e dá `null`.
+- `npm run shot -- F-VIVO-b`: OK, 2 capturas. O roteiro:
+  - planta a pedreira pelo caminho do jogador;
+  - treina pelo painel, despausado e segurando 150 ms;
+  - numa janela de 3 s despausada, vê ≥ 2 quadros distintos;
+  - pausa a pedreira pelo `[data-pausar]`, despausado e segurando 150 ms;
+  - numa nova janela de 3 s despausada, não vê nenhum quadro;
+  - confirma que o armazém e a escola não publicam quadro.
+  - Abri `screenshots/F-VIVO-b-1-animando.png`: o retângulo `inicio_8` sobre a pedreira, com o cabra no lajedo.
+- `npm run verify` verde: 1527 testes, mais a corrida transladada (4 pulados lá, o `skipIf` já existente de `estilo-ui-menu`).
+
+### Decisões minhas (para revisão)
+
+- **Caso 2 anima com o trabalhador no campo.** Ver "Perguntas em aberto".
+- **`TICKS_POR_QUADRO = 1`**: um quadro por tick, 8 quadros em 0,8 s, como o passo do kam_remake. É número de tela, não de balanceamento, e por isso fica no `.ts` do render.
+- **`inicio` e `fim` tocam uma vez cada, esticados no seu terço.** Só o `meio` repete, como diz o aceite.
+- **O quadro sai do `progresso`, não do `tick`.** É isso que garante que prédio parado não anima. O parâmetro `tick` fica na assinatura do aceite como `_tick`, e só a fumaça usa o relógio.
+- **"Fallback fica como hoje"** foi lido assim: o corpo do prédio sem PNG não mudou, e o quadro sem PNG é o retângulo com o nome, pela regra comum da F-VIVO.
+- **Área padrão acima da linha das pilhas**, para que as duas camadas não se cubram. Não há ponto de fumaça padrão: fumaça só quando declarada.
+- **"Criação sem o animal"**, do plano, virou "criação que colhe". `ANIMAL_DA_CRIACAO` é constante do render e não dado. A troca de caso que o dado pode provocar é a colheita.
+
+### Aberto
+
+- O rótulo do quadro sobrepõe o nome "Pedreira" do placeholder. É cosmético e some com a arte.

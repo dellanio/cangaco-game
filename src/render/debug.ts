@@ -37,6 +37,13 @@ export interface PilhaNoDebug {
   readonly sprite: boolean;
 }
 
+/** F-VIVO-b — o quadro de trabalho desenhado, como o roteiro o le. */
+export interface QuadroNoDebug {
+  readonly laco: string;
+  readonly n: number;
+  readonly sprite: boolean;
+}
+
 export interface EstadoDebug {
   /** false ate a cena terminar o primeiro desenho. O roteiro espera por isto
    *  antes de fotografar — sem isso a captura sai do canvas em branco. */
@@ -87,6 +94,10 @@ export interface EstadoDebug {
    *  mercadoria, quantas unidades e se foi PNG (`sprite`) ou o quadrado do §9. Vem
    *  da mesma lista que o desenho usa (`pilhas.ts`), e so tem predio com pilha. */
   pilhasDesenhadas: Readonly<Record<string, readonly PilhaNoDebug[]>>;
+  /** F-VIVO-b — o quadro de trabalho que a cena DESENHOU agora, por id de predio. So
+   *  tem predio animando: parado (sem ocupante, sem insumo, saida cheia, pausado) nao
+   *  aparece. Vem da mesma chamada que o desenho usa (`trabalho.ts`). */
+  quadrosDeTrabalho: Readonly<Record<string, QuadroNoDebug>>;
   /** F-T1 — quantos tiles de cada TIPO DE TERRENO estao dentro da vista da
    *  camera agora, lidos de volta da camada de chao ja desenhada. E o que
    *  permite ao roteiro afirmar "a camera esta em cima do lago" sem olhar
@@ -225,6 +236,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     canteirosDeObra: {},
     spritesDePredio: {},
     pilhasDesenhadas: {},
+    quadrosDeTrabalho: {},
     terrenoVisivel: {},
     recursosVisiveis: {},
     arteDasCamadas: { terreno: [], recurso: [], vegetacao: [] },

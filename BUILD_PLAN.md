@@ -3670,6 +3670,11 @@ leem `GameState`: **nenhum toca em `sim/`**.
   - que o `n` avança e volta a 1 sem pulo.
 - O roteiro despausa 3 s e afirma que `debug.quadrosDeTrabalho` avançou nos prédios
   ocupados e ficou parado no pausado. Faz a captura.
+- **Entregue (2026-09-26, noite 12).** `src/render/trabalho.ts`,
+  `tests/F-VIVO-b-trabalho.test.ts`, evidência em `test-output/F-VIVO-b.json`, roteiro
+  `tools/shots/F-VIVO-b.js`. Um quadro por tick (`TICKS_POR_QUADRO = 1`). No caso 2
+  o relógio anda com o trabalhador no tile (`colhendo`), e o laço aparece no prédio
+  enquanto ele está no campo: pergunta em aberto no `PROGRESS.md`.
 
 **Aceite da F-VIVO-c (os animais).**
 - `animaisDoCurral(predio, dados)` é pura e devolve 5 posições, com a idade de 1 a 3

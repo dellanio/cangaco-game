@@ -13,8 +13,10 @@ import temaSertao from '../../data/theme-sertao.json';
 import { ID_DA_BODEGA, ID_DO_ARMAZEM } from '../sim/state';
 import { ehEntradaDePredio } from './manifesto';
 import type { AncorasDoPredio, Manifesto } from './manifesto';
+import { CASO_DO_PREDIO } from './manifesto-camadas';
 import type { ContextoDasCamadas } from './manifesto-camadas';
 import type { DadosDasPilhas } from './pilhas';
+import type { DadosDoTrabalho } from './trabalho';
 
 export interface AparenciaDoPredio {
   readonly largura: number; // em tiles
@@ -98,6 +100,20 @@ export function dadosDasPilhas(manifesto: Manifesto): DadosDasPilhas {
     contexto: contextoDasCamadas,
     custos: Object.fromEntries(Object.entries(aparencias).map(([id, a]) => [id, a.custo])),
     hpPorMaterialEntregue: gameData.construcao.hpPorMaterialEntregue,
+    ancoras,
+  };
+}
+
+/** F-VIVO-b — o dado do quadro de trabalho: a tabela de casos, o `ticksDoCiclo` de
+ *  cada receita (ja convertido pelo carregador: o render nao inventa duracao) e as
+ *  ancoras do manifesto, por parametro. */
+export function dadosDoTrabalho(manifesto: Manifesto): DadosDoTrabalho {
+  const ancoras: Record<string, AncorasDoPredio | undefined> = {};
+  for (const e of manifesto.assets) if (ehEntradaDePredio(e)) ancoras[e.id] = e.ancoras;
+  return {
+    casos: CASO_DO_PREDIO,
+    ticksDoCiclo: Object.fromEntries(Object.entries(gameData.producao.receitas)
+      .flatMap(([id, r]) => (r === undefined ? [] : [[id, r.ticksDoCiclo]]))),
     ancoras,
   };
 }

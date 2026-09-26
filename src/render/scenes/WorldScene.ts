@@ -11,11 +11,13 @@ import { proximoNivel, mundoSobPonto, scrollAncorado } from '../zoom';
 import type { Navegacao } from '../../input/navegacao';
 import type { Tile } from '../grid';
 import { publicarEstadoDebug } from '../debug';
-import type { EstadoDebug, PilhaNoDebug, PredioNoDebug, RelogioVisivel } from '../debug';
-import { aparenciaDoPredio, corDaPilha, dadosDasPilhas, ordemDasMercadorias } from '../predios';
+import type { EstadoDebug, PilhaNoDebug, PredioNoDebug, QuadroNoDebug, RelogioVisivel } from '../debug';
+import { aparenciaDoPredio, corDaPilha, dadosDasPilhas, dadosDoTrabalho, ordemDasMercadorias } from '../predios';
 import { pilhasDoPredio, posicoesNaPilha } from '../pilhas';
 import type { PilhaDesenhada } from '../pilhas';
-import { ESTADO_DA_PILHA } from '../manifesto-camadas';
+import { areaDoTrabalho, quadroDaFumaca, quadroDeTrabalho } from '../trabalho';
+import type { QuadroDeTrabalho } from '../trabalho';
+import { ESTADO_DA_PILHA, ID_DA_FUMACA } from '../manifesto-camadas';
 import { medidorDaObra } from '../medidor-obra';
 import type { LinhaDoMedidor } from '../medidor-obra';
 import { canteiroDaObra, chaveDoCanteiro } from '../nivelamento-obra';
@@ -48,6 +50,8 @@ const CHAVE_TEXTURA_RECURSO = 'tiles-recurso';
 const DEPTH_DOS_RECURSOS = 0.5;
 /** F-VIVO-a — o dado das pilhas, com as ancoras do manifesto. Montado uma vez. */
 const DADOS_DAS_PILHAS = dadosDasPilhas(manifestoDoJogo);
+/** F-VIVO-b — o dado do quadro de trabalho, com as ancoras do manifesto. Montado uma vez. */
+const DADOS_DO_TRABALHO = dadosDoTrabalho(manifestoDoJogo);
 /** F-VIVO-a — o lado de UMA unidade da pilha, em tiles. O brief dizia 1/4; com
  *  1/4 as quatro pilhas do armazem (3 tiles de base) se sobrepoem, com 1/5 cabem.
  *  Desenho, nao balanceamento: fica aqui, como o resto do placeholder. */
@@ -649,6 +653,8 @@ export class WorldScene extends Phaser.Scene {
     const sprites: Record<string, string | null> = {};
     // F-VIVO-a: o que cada pilha desenhou, da MESMA lista que vai para `criarPredio`.
     const pilhasNoDebug: Record<string, readonly PilhaNoDebug[]> = {};
+    // F-VIVO-b: o quadro de trabalho de cada predio animando, da MESMA chamada do desenho.
+    const quadrosNoDebug: Record<string, QuadroNoDebug> = {};
     for (const id of estadoDoJogo.predios.ordem) {
       const predio = estadoDoJogo.predios.porId[id];
       if (!predio) continue;
@@ -701,14 +707,26 @@ export class WorldScene extends Phaser.Scene {
         }));
       }
       const chaveDasPilhas = pilhas.map((x) => `${x.mercadoria}:${x.n}`).join(',');
-      const assinatura = `${linhas.map((l) => l.entregue).join(',')}|${chaveDoCanteiro(canteiro)}|${chaveDasPilhas}`;
+      // F-VIVO-b: o quadro muda a cada tick de trabalho sem mexer em estado nem em
+      // estagio — entra na chave pelo mesmo motivo da pilha. Predio parado da `null`
+      // e a chave congela: e isso que faz o parado nao redesenhar.
+      const ocupante = predio.estado === 'completo' && predio.ocupante !== null
+        ? estadoDoJogo.unidades.porId[predio.ocupante] ?? null
+        : null;
+      const quadro = quadroDeTrabalho(predio, ocupante, estadoDoJogo.tick, DADOS_DO_TRABALHO);
+      const fumaca = quadroDaFumaca(predio, ocupante, estadoDoJogo.tick, DADOS_DO_TRABALHO);
+      if (quadro !== null) {
+        quadrosNoDebug[id] = { ...quadro, sprite: this.texturaDoQuadro(predio.tipo, quadro) !== null };
+      }
+      const chaveDoTrabalho = `${quadro === null ? '-' : `${quadro.laco}_${quadro.n}`}/${fumaca ?? '-'}`;
+      const assinatura = `${linhas.map((l) => l.entregue).join(',')}|${chaveDoCanteiro(canteiro)}|${chaveDasPilhas}|${chaveDoTrabalho}`;
       const existente = this.desenhados.get(id);
       if (existente && existente.estado === predio.estado && existente.estagio === estagio
         && existente.assinatura === assinatura) continue;
       existente?.objeto.destroy();
       this.desenhados.set(id, {
         estado: predio.estado, estagio, assinatura,
-        objeto: this.criarPredio(predio, estagio, linhas, canteiro, pilhas, tilePx),
+        objeto: this.criarPredio(predio, estagio, linhas, canteiro, pilhas, quadro, fumaca, tilePx),
       });
     }
     debug.prediosRenderizados = this.desenhados.size;
@@ -728,6 +746,7 @@ export class WorldScene extends Phaser.Scene {
     debug.canteirosDeObra = canteiros;
     debug.spritesDePredio = sprites;
     debug.pilhasDesenhadas = pilhasNoDebug;
+    debug.quadrosDeTrabalho = quadrosNoDebug;
   }
 
   /** F17f — a chave de textura de um (tipo, estagio), ou `null` quando esse
@@ -758,7 +777,8 @@ export class WorldScene extends Phaser.Scene {
    *  completo (o predio de pe, sem rotulo extra). */
   private criarPredio(
     predio: Predio, estagio: EstagioDaObra, linhas: readonly LinhaDoMedidor[],
-    canteiro: CanteiroDaObra | null, pilhas: readonly PilhaDesenhada[], tilePx: number,
+    canteiro: CanteiroDaObra | null, pilhas: readonly PilhaDesenhada[],
+    quadro: QuadroDeTrabalho | null, fumaca: number | null, tilePx: number,
   ): Phaser.GameObjects.Container {
     const { largura, altura, nome } = aparenciaDoPredio(predio.tipo);
     const canto = gridToScreen({ gx: predio.gx, gy: predio.gy }, tilePx, ESCALA_DO_MUNDO);
@@ -780,6 +800,7 @@ export class WorldScene extends Phaser.Scene {
     const container = this.add.container(canto.x, canto.y, [
       ...this.desenharCanteiro(canteiro, largura, tilePx),
       ...corpo,
+      ...this.desenharTrabalho(predio.tipo, quadro, fumaca, caixa),
       ...this.desenharPilhas(pilhas, caixa, tilePx),
       ...this.desenharMedidor(linhas, larguraPx, alturaPx, canteiro === null || canteiro.nivelada),
     ]);
@@ -825,6 +846,60 @@ export class WorldScene extends Phaser.Scene {
   private texturaDaPilha(mercadoria: string): string | null {
     const chave = chaveDeTextura('pilha', mercadoria, ESTADO_DA_PILHA);
     return this.textures.exists(chave) ? chave : null;
+  }
+
+  /** F-VIVO-b — a textura de um quadro de trabalho, ou `null` (retangulo do §9). */
+  private texturaDoQuadro(tipo: string, quadro: QuadroDeTrabalho): string | null {
+    const chave = chaveDeTextura('trabalho', tipo, `${quadro.laco}_${quadro.n}`);
+    return this.textures.exists(chave) ? chave : null;
+  }
+
+  /** F-VIVO-b — o quadro de trabalho na `area` da ancora (ou na padrao), com o
+   *  tamanho exato da area (brief §4a). Sem PNG, um retangulo com `<laco>_<n>`
+   *  escrito. A fumaca so existe no ponto DECLARADO; sem PNG, um circulo claro que
+   *  sobe com o quadro. O corpo do predio nao muda: o placeholder dele fica como era. */
+  private desenharTrabalho(
+    tipo: string, quadro: QuadroDeTrabalho | null, fumaca: number | null,
+    caixa: { readonly x: number; readonly y: number; readonly w: number; readonly h: number },
+  ): Phaser.GameObjects.GameObject[] {
+    const objetos: Phaser.GameObjects.GameObject[] = [];
+    const ancoras = DADOS_DO_TRABALHO.ancoras[tipo];
+    if (quadro !== null) {
+      const [x0, y0, x1, y1] = areaDoTrabalho(ancoras);
+      const x = caixa.x + caixa.w * x0;
+      const y = caixa.y + caixa.h * y0;
+      const w = caixa.w * (x1 - x0);
+      const h = caixa.h * (y1 - y0);
+      const textura = this.texturaDoQuadro(tipo, quadro);
+      if (textura !== null) {
+        const imagem = this.add.image(x, y, textura);
+        imagem.setOrigin(0, 0);
+        imagem.setDisplaySize(w, h);
+        objetos.push(imagem);
+      } else {
+        const fundo = this.add.rectangle(x + w / 2, y + h / 2, w, h, 0x2c1d12, 0.55);
+        fundo.setStrokeStyle(1, 0xf2d6a2);
+        const rotulo = this.add.text(x + w / 2, y + h / 2, `${quadro.laco}_${quadro.n}`, {
+          fontFamily: 'monospace', fontSize: '11px', color: '#f2d6a2',
+        });
+        rotulo.setOrigin(0.5, 0.5);
+        objetos.push(fundo, rotulo);
+      }
+    }
+    const ponto = ancoras?.trabalho?.fumaca;
+    if (fumaca !== null && ponto !== undefined) {
+      const x = caixa.x + caixa.w * ponto[0];
+      const y = caixa.y + caixa.h * ponto[1];
+      const chave = chaveDeTextura('trabalho', ID_DA_FUMACA, `${ID_DA_FUMACA}_${fumaca}`);
+      if (this.textures.exists(chave)) {
+        const imagem = this.add.image(x, y, chave);
+        imagem.setOrigin(0.5, 1);
+        objetos.push(imagem);
+      } else {
+        objetos.push(this.add.circle(x, y - fumaca * 2, 3 + fumaca / 2, 0xd8d0c0, 0.7));
+      }
+    }
+    return objetos;
   }
 
   /** F-VIVO-a — as pilhas: `n` unidades por ponto, tres embaixo e dois em cima
