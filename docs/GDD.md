@@ -688,7 +688,11 @@ redecididos:
 
 ### 9.6 Estados de prédio
 
-Três imagens por prédio: marcação no chão, estrutura de madeira, completo.
+Duas imagens por prédio, **madeira** e **completo**, reveladas de baixo para cima
+conforme o hp sobe: primeiro a madeira, depois a pedra por cima dela, como no original.
+Antes da primeira martelada, o canteiro sendo aplainado mostra a obra (decisão do
+operador, 2026-09-26; `BUILD_PLAN.md` F17g). Isso revoga a regra das três imagens e
+os seis estágios da F17e.
 Variante danificada entra na Fase C.
 
 ### 9.7 Interface

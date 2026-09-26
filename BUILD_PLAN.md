@@ -983,6 +983,9 @@ prédio surge sem clique do jogador.
   O laborer percorrendo o canteiro está congelado em `IDEIAS.md`.
 
 ### F17e — Estágios visuais da obra: cinco, não três
+- **Nota (2026-09-26): substituída pela F17g.** O operador trocou os seis estágios
+  pela revelação contínua de duas imagens. O que está abaixo é o registro do que foi
+  entregue; o modelo vigente é o da F17g.
 - **Escopo**: `estagioDaObra` (`render/estagio-obra.ts`) passa de três valores a
   **seis** — cinco em obra mais o completo. **Sem tocar em `sim/`**: as fronteiras
   saem de `hp`, de `hpTotal` e do "já nivelou" da F17d.
@@ -3018,7 +3021,10 @@ Depende da F20b: o marcador lê `unidade.condicao`, que só existe depois dela. 
 
   Os botões ficam numa seção "Partida" **no topo da tela de ajuda (H), e não na
   barra**. O motivo é medido: com a prancha fechada, o lembrete e o carimbo, a barra
-  de 1280 px chega a 1163, e os botões iam até 1364.
+  de 1280 px chega a 1163, e os botões iam até 1364. **Fica assim por decisão do
+  operador (2026-09-26)**, com a razão de design dele: *"salvar não é ação de jogo, é
+  ação de sessão."* A barra é do jogo. Botão de sessão que surgir depois vai para a
+  mesma seção da ajuda, não para a barra.
   - Teste: `tests/F23b-arquivo-da-partida.test.ts`.
   - Roteiro: `tools/shots/F23b.js`, com um passo despausado e a obra plantada antes
     de guardar.
@@ -3420,6 +3426,50 @@ Casos 2 e 4 do prédio vivo (`docs/BRIEF-ARTE.md` §4a). Decisão do operador: c
 - **Nota para a feature de render do prédio vivo:** o Canavial é caso 2 e as minas são
   caso 4 a partir daqui. A tabela do brief já está assim.
 
+### F17g — A obra revelada pelo hp: madeira e pedra (render)
+- **Origem (decisão do operador, 2026-09-26)**: *"troque pela revelação contínua. Duas
+  imagens — madeira e pedra — reveladas conforme o hp sobe."* Ela substitui os seis
+  estágios da F17e. O aceite da F17e não é reaberto: a F17e entregou o que pedia. Esta
+  feature troca o modelo. A arte já segue a regra nova (`docs/BRIEF-ARTE.md` §4).
+- **Escopo**: `render/estagio-obra.ts` troca as seis fronteiras por uma **função de
+  revelação**. Ela continua em `render/`, pura, com **zero imports**, e a entrada
+  continua sendo o `hp`:
+  `revelacaoDaObra(hp, hpTotal, timber, stone) -> { madeira: [num, den], pedra: [num, den] }`.
+  - As frações saem em **par inteiro** (numerador, denominador), e o render divide só na
+    hora de desenhar. É a mesma razão da F17e: a comparação de fronteira não pode ser
+    feita em float.
+  - Fase da madeira: `hpMadeira = hpTotal × timber / (timber + stone)`. Nos 28 prédios,
+    `hp = 50 × (timber + stone)`, então isso é o hp da última tábua.
+  - Com `hp ≤ hpMadeira`, a madeira vale `hp / hpMadeira` e a pedra vale 0.
+  - Com `hp > hpMadeira`, a madeira vale 1 e a pedra vale
+    `(hp − hpMadeira) / (hpTotal − hpMadeira)`.
+  - O custo chega pelo funil `render/predios.ts`, como o alvo de nivelamento: a função
+    não lê `data/`.
+- **O desenho**: `madeira` e `completo` do manifesto, os dois no mesmo canvas, recortados
+  **de baixo para cima** pela fração. A madeira fica embaixo e a pedra (o `completo`) por
+  cima. Sem PNG, o placeholder faz o mesmo com dois retângulos de cor distinta,
+  subindo. Antes da primeira martelada (`hp === 0`), a tela mostra o canteiro da F17d e
+  a pilha da F-VIVO-a, como hoje.
+- **Contrato que muda**: as chaves de `estados` passam a ser `madeira` e `completo`. A
+  regra do manifesto (F17f) recusa as outras quatro. O `storehouse_madeira.png` que já
+  existe volta a valer como `madeira`. `debug.estagiosDeObraRenderizados` vira
+  `debug.revelacaoDasObras`: o prédio e as duas frações.
+- **Os rótulos**: o painel e o medidor da obra deixam de nomear seis estágios e passam a
+  duas fases. O tema troca as seis chaves por `madeira` e `pedra` ("madeira subindo",
+  "pedra subindo"). O texto final é do tema, não desta nota.
+- **Aceite**:
+  - Tabela headless dos **dois lados da virada** madeira→pedra em 3 prédios de custo
+    diferente: 3/2, 4/3 e 6/6.
+  - **Monotonicidade**: varrendo `hp` de 0 a `hpTotal`, nenhuma das duas frações
+    diminui, e a soma cresce estritamente a cada 50 de hp.
+  - Roteiro que planta uma obra e fotografa três momentos: metade da madeira, virada e
+    metade da pedra. Ele afirma pelo `debug` que as frações da tela são as da função.
+- **Evidência**: `test-output/F17g.json` + `screenshots/F17g-*.png`. Abrir com Read só o
+  do meio da pedra.
+- **Nota (o que se perde da arte, medido no worktree do Codex em 59ff42e)**: 24 bases e
+  24 derivados de `marcacao`, `fundacao`, `paredes` e `cobertura`, em seis prédios. O
+  `estrutura` e o `completo` continuam valendo.
+
 ### F-VIVO — O prédio vivo: trabalho, estoque e animais (render)
 
 Camadas ancoradas sobre o sprite estático (`docs/BRIEF-ARTE.md` §4a): laço de trabalho,
@@ -3565,6 +3615,58 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
 
 ## Fase C — Militar
 
+### F24a — As armas separadas nas seis do GDD (dado + sim)
+- **Origem (decisão do operador, 2026-09-26)**: *"separe nas seis do GDD §4.1 — facão,
+  peixeira, aguilhada, ferrão, bodoque, bacamarte. O Anexo A diz qual tropa usa cada uma,
+  e sem isso o Quartel não tem o que consumir."* É pré-requisito da Fase C e entra
+  **antes da F24**. O detalhe medido está no `IDEIAS.md` (armas genéricas), e este item o
+  tira de lá.
+- **O que já existe, medido em 2026-09-26**: os seis ids e as quatro proteções **já estão**
+  em `economy.json` `mercadorias`: `hand_axe`, `sword`, `lance`, `pike`, `longbow`,
+  `crossbow`, `leather_armor`, `iron_armor`, `wooden_shield` e `iron_shield`. O tema já os
+  nomeia: Facão, Peixeira, Aguilhada, Ferrão, Bodoque, Bacamarte. O que falta é **quem
+  produz**. Três receitas saem com ids agregados, fora da lista, e a saída some
+  (`depositar`, nota da F24):
+
+  | Prédio | Receita hoje | Passa a sair (GDD §4.1) |
+  |---|---|---|
+  | `weapons_workshop` | `arma_madeira` | `hand_axe` (facão), `lance` (aguilhada), `longbow` (bodoque) |
+  | `weapon_smithy` | `arma_ferro` | `sword` (peixeira), `pike` (ferrão), `crossbow` (bacamarte) |
+  | `armor_smithy` | `armadura_ferro` | `iron_armor`, `iron_shield` |
+
+  A `armory_workshop` já sai com ids certos (`leather_armor` + `wooden_shield`).
+- **Quem usa cada uma (Anexo A §12.1)**:
+
+  | Arma | Tropa |
+  |---|---|
+  | facão (`hand_axe`) | Militia, Axe fighter, Scout |
+  | peixeira (`sword`) | Sword fighter, Knight |
+  | aguilhada (`lance`) | Lance carrier |
+  | ferrão (`pike`) | Pikeman |
+  | bodoque (`longbow`) | Bowman |
+  | bacamarte (`crossbow`) | Crossbowman |
+
+- **Escopo**:
+  - As três receitas passam a declarar as saídas possíveis.
+  - A oficina escolhe **qual** fazer a cada ciclo, pela **cota por arma** do GDD §2.3
+    (*"Oficinas: quantas de cada arma produzir"*). O comando novo fixa a cota. Sem cota,
+    o default é rodízio fixo na ordem da tabela. É determinístico e não usa RNG.
+  - Uma regra no `validate:data` recusa qualquer id em `production.receitas.*.sai` fora
+    de `economy.mercadorias`. É a regra que a nota da F24 pede.
+  - Os três ids agregados saem do dado e do tema.
+- **Aceite**:
+  - Cada uma das três oficinas, pelo caminho real (construída, ocupada, abastecida),
+    deposita no armazém **cada** uma das suas saídas numa corrida longa, com o rodízio
+    default.
+  - Com a cota fixada pelo comando, só sai a arma pedida.
+  - `validate:data` reprova um `data/` sintético com `arma_madeira` numa receita.
+  - Nenhum id de `production.receitas.*.sai` fica fora de `economy.mercadorias`, provado
+    por igualdade de conjuntos e não por varredura de texto.
+- **Fora**: o painel da cota (ui) é sub-item, se a feature não couber numa sessão.
+  Nenhuma tropa consome arma aqui: isso é a F25.
+- **Nota (pilha)**: com os ids reais, a pilha de cada arma é a da mercadoria
+  (`docs/BRIEF-ARTE.md` §4a). A nota da F24 sobre pilhas fica atendida aqui.
+
 ### F24 — Weapons workshop e cadeia de couro
 - **Nota (decisão do operador, 2026-09-26): as pilhas das armas nascem com as armas.**
   A Casa de Armas de Madeira, a Ferraria e a Casa do Ferro produzem `arma_madeira`,
@@ -3596,6 +3698,23 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
 ### F27 — Formação, virar e storm attack
 ### F28 — Combate e IA inimiga simples
 
+### F28b — Torre de Pedra: o recruta atira pedra de cima (sim + render)
+- **Origem (decisão do operador, 2026-09-26)**: *"A Torre é defesa e entra com a Fase
+  C."* Hoje a `watchtower` constrói, mas é casca (panorama dos 28 prédios, `PROGRESS.md`
+  2026-09-26 noite 3). Ela vem depois da F28 porque atira em inimigo, e inimigo só
+  existe lá.
+- **O que o dado já diz** (GDD §5.2, `data/combat.json` `watchtower`): 2×2, ocupada por
+  um **Recruit**. Guarda até **5 pedras** (`municao_stone_max`), atira até **6 tiles**
+  (`alcance_tiles`) e **mata num golpe** (`mataEmUmGolpe`). O abastecimento de pedra
+  passa pelo JobBoard, como o de qualquer prédio consumidor.
+- **Escopo**: o Recruit ocupa a torre, a pedra chega como insumo e cada tiro gasta uma.
+  A escolha do alvo usa ordem determinística: o inimigo mais perto e, no empate, o de
+  menor id. O tiro é evento (`state.events`). A pedra que cai não volta.
+- **Aceite**: uma torre abastecida mata inimigos dentro do alcance até a pedra acabar e
+  não atira fora dele. A contagem de pedras gastas é igual à de mortos. Sem pedra, a
+  torre não atira, e o painel diz por quê.
+- **Fora**: a névoa de guerra que a torre revela (GDD §6.5) fica para depois, com
+  registro.
 ---
 
 ## Fase D — Profundidade
@@ -3607,6 +3726,28 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
 ### F33 — Minimapa
 ### F34 — Condições de vitória e derrota (escaramuça)
 
+### F35 — Feira: trocar mercadoria (sim + ui)
+- **Origem (decisão do operador, 2026-09-26)**: item escrito para a casca não ficar sem
+  fila. *"A Feira e a Prefeitura podem esperar."* Hoje o `marketplace` constrói e não
+  faz nada.
+- **O que o dado já diz** (GDD §4.4, `economy.json` `marketplace`): **taxa fixa** e no
+  máximo **10 serfs** negociando. Existe só no Remake (GDD §5.2 \*).
+- **Escopo a medir antes de detalhar**: a tabela de troca (qual mercadoria vale quanto
+  de qual) não está em `data/`, nem o GDD a fixa. **Pergunta para o operador quando o
+  item for o primeiro da fila**: taxa única para todo par, ou tabela por mercadoria?
+- **Aceite (esboço)**: o jogador pede N de B em troca de A. Os serfs levam A à feira e
+  trazem B ao armazém pela taxa do dado, nunca mais de 10 de uma vez. Com A em falta, a
+  troca espera, e o painel diz por quê.
+
+### F36 — Prefeitura: mercenários pagos em ouro (sim + ui)
+- **Origem (decisão do operador, 2026-09-26)**: pode esperar. Depende da F25 (soldado
+  existir) e dos mercenários ganharem arte e arma (nota da F25).
+- **O que o dado já diz** (GDD Anexo A): ouro por mercenário, **pronto na hora**. Rebel
+  custa 2, Rogue 3, Vagabond 5, Barbarian 7 e Warrior 8. O `town_hall` recebe ouro do
+  Metallurgist's (GDD §4.2).
+- **Aceite (esboço)**: com ouro no prédio, o comando de contratar tira o custo e põe o
+  mercenário na porta, no mesmo tick. Sem ouro, o comando é recusado com motivo. O
+  mercenário não consome arma nem recruta.
 ---
 
 ## Regras da fila

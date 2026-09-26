@@ -7937,3 +7937,60 @@ Por que não fui para o `BUGS.md`: nenhum aceite escrito cobre esses prédios, o
 4. Os rótulos são "Guardar" e "Retomar", no tom do tema, com o recado "Partida
    guardada" ou "Partida retomada". Numa recusa: "Não retomou: <motivo>". O motivo vem
    da F23, sem acento.
+
+## 2026-09-26 (noite, 7) — Respostas do operador: a obra revelada, as armas e três itens na fila
+
+Esta seção é a execução das seis respostas do operador às perguntas das seções 4 a 6.
+Nenhum código mudou nesta parte; só docs e fila.
+
+### Verificado
+- **O brief foi reescrito antes de tudo** (commit `e9d1b9e`, pedido explícito do operador),
+  porque o Codex estava derivando os seis estágios. A §4 do `docs/BRIEF-ARTE.md` agora fala
+  das duas imagens, `madeira` e `completo`, e de como cada uma é revelada. Mudaram também:
+  - a nomeação (§3);
+  - a conta da §4a: de 168 para 56, com total de 496 para 384;
+  - a §6;
+  - a tabela da §9.
+- **O que o Codex já tinha feito e se perde** (lido em `git show --stat` no worktree
+  `derivacao-sprites`, HEAD `59ff42e`, status limpo):
+  - **Perdidos:** os estágios `marcacao`, `fundacao`, `paredes` e `cobertura` dos seis
+    prédios (inn, quarry, sawmill, schoolhouse, storehouse, woodcutters). São 24 bases e
+    24 derivados.
+  - **Aproveitados:** o `estrutura` vira a `madeira`, e o `completo` continua valendo.
+  - **O que falta:** registrar o par (mesmo canvas). É uma transição, e não mais cinco.
+  - Não toquei no worktree nem na branch dele.
+- **Os dois branches** `estilo-ui` e `regra-uma-sessao-na-main` foram apagados com
+  `git branch -d`. Antes conferi com `git log main..<branch>`: nenhum commit fora da
+  `main`.
+
+### Itens escritos na fila (`BUILD_PLAN.md`)
+- **F17g**, a obra revelada pelo hp. O item fica antes da F-VIVO, e a F17e ganhou uma
+  nota dizendo que foi substituída.
+- **F24a**, as armas nas seis do GDD. O item fica antes da F24 e traz duas tabelas: a das
+  receitas e a do Anexo A.
+  - Medida nova: os seis ids e as quatro proteções **já estão** em
+    `economy.mercadorias`, e o tema já os nomeia. O que falta é **quem produz**.
+  - A entrada correspondente no `IDEIAS.md` foi riscada e aponta para o item.
+- **F28b**, a Torre, que fica logo após a F28 porque precisa de inimigo.
+- **F35**, a Feira, e **F36**, a Prefeitura, que ficam no fim da Fase D.
+- **F23b**: a razão do operador ficou registrada na nota do item: *"salvar não é ação de
+  jogo, é ação de sessão"*.
+- **GDD §9.6**: a regra das três imagens foi revogada e agora aponta para a F17g.
+
+### Decisões minhas, marcadas para revisão (só as que mudam tela ou contrato herdado)
+1. **Na F17g, a pedra é a imagem `completo`, e não uma terceira imagem.**
+   - Por quê: são duas imagens, como o operador pediu. O `completo` já existe, e as
+     âncoras de §4a já se referem a ele.
+   - O contrato que muda: as chaves de `estados` passam a ser `madeira` e `completo`.
+2. **A revelação é de baixo para cima, por recorte, sem máscara no alfa.**
+   - O original usa alpha test com a ordem desenhada no alfa (hipótese, noite 4). Aqui a
+     ordem é a altura.
+   - Por quê: a arte não precisa de nada além das duas imagens, e o render faz com
+     `setCrop`.
+   - Se o operador quiser a máscara, ela entra como um terceiro canal no brief.
+3. **Na F24a, a oficina escolhe a arma por cota do jogador, e sem cota vale o rodízio
+   fixo** na ordem da tabela.
+   - O GDD §2.3 diz *"quantas de cada arma produzir"* e marca isso como `[geral]`.
+   - O rodízio é a leitura conservadora: produz tudo e não precisa de RNG.
+4. **Na Feira, a tabela de troca é pergunta**, e ficou escrita no item. Nem o GDD nem
+   `data/` fixam a taxa entre mercadorias.
