@@ -272,6 +272,11 @@ Todo prédio com receita em `data/production.json` cai em exatamente um caso.
 |---|---|---|---|
 | 1. Sai, volta e só guarda | Roçado (`farm`), Casa do Lenhador (`woodcutters`), Casa do Pescador (`fishermans`) | colhe no campo e deposita | **nenhuma** |
 | 2. Sai, volta e transforma | Pedreira (`quarry`), Canavial (`wineyard`) | colhe no campo e trabalha dentro | 3 laços: `inicio`, `meio`, `fim` |
+
+O Canavial é **engenho de cana**: o trabalhador sai para cortar cana no campo e, dentro,
+mói e destila. O laço mostra moenda, tacho ou alambique, e a saída são barris ou
+garrafas de cachaça. Nada de uva, parreira ou lagar de vinho, embora o id seja
+`wineyard` e a mercadoria `wine`.
 | 3. Nunca sai | Serraria, Moinho, Padaria, Casa de Carne, Curtume, Fundição, Forja, Casa de Armas de Madeira, Casa do Gibão, Ferraria, Casa do Ferro | espera o insumo dentro | 2 laços: `laco1`, `laco2` |
 | 4. Nunca sai, sem trabalhador | Garimpo, Jazida de Carvão, Mina de Ferro | trabalha dentro da montanha | 1 laço de luz: `luz` |
 | 5. Criação | Malhada (`swine_farm`), Cocheira (`stables`) | alimenta os animais | 2 laços de alimentar + animais crescendo |
@@ -279,9 +284,9 @@ Todo prédio com receita em `data/production.json` cai em exatamente um caso.
 - **Caso 1 não tem animação dentro** (decisão do operador, confirmado no kam_remake: o
   plano do roceiro, do lenhador e do pescador não tem nenhuma sub-ação no prédio). A
   vida dele está no trabalhador no campo e na pilha que cresce.
-- **O Canavial e as minas** mudam de caso numa correção de dado ainda por fazer: o
-  Canavial passa a sair para colher, e as minas deixam de sair. A arte segue a tabela
-  acima desde já.
+- **O Canavial e as minas** mudam de caso numa correção de simulação em curso: o
+  Canavial passa a sair para cortar cana, e o mineiro passa a colher de dentro da mina,
+  sem andar até o veio. A arte segue a tabela acima desde já.
 - **Prédios sem receita** (armazém, bodega, Casa do Coronel, quartel, feira,
   mercenários, torre) não têm animação de trabalho. O armazém e a bodega mostram
   estoque.
@@ -338,9 +343,12 @@ pixel, porque a largura do prédio ainda vai mudar com o fator da seção 3.
 - **As três áreas não se sobrepõem.** A pilha não cobre a porta, e o animal não pisa
   na bancada. É isso que deixa a ordem de desenho trivial.
 - **A bodega** declara 4 pontos de entrada, um por comida (`loaves`, `sausages`,
-  `wine`, `fish`), e nada de saída. **O armazém** declara os pontos que couberem no
-  pátio. Quantos, e o que acontece com a 29.ª mercadoria, é pergunta em aberto do
-  operador.
+  `wine`, `fish`), e nada de saída.
+- **O armazém** declara **4 pontos**, como os outros (decisão do operador,
+  2026-09-26). Eles mostram as **quatro mercadorias mais abundantes**, por quantidade,
+  com desempate pela ordem de `economia.mercadorias`. O resto não aparece no mapa: a
+  lista completa está no painel do prédio. O mapa é para ver de relance, não para
+  inventariar.
 
 ### Os três tipos novos de asset
 
@@ -359,7 +367,9 @@ Os três seguem os oito campos da seção 3 e a mesma pasta `assets/sprites/<id>
 
 **`pilha`** — UMA unidade de uma mercadoria.
 
-- `id`: a mercadoria neutra de `data/economy.json` (`stone`, `loaves`).
+- `id`: a mercadoria neutra de `data/economy.json` (`stone`, `loaves`). O id é neutro,
+  o desenho é do tema: **`wine` é cachaça**, em barril pequeno ou garrafa, nunca vinho
+  nem taça.
 - `estados`: um só, `unidade`. Arquivo `sprites/<id>/<id>_unidade.png`.
 - **Uma unidade, não uma pilha.** O render empilha de 1 a 5 a partir do ponto de
   estoque: três embaixo, duas em cima. A imagem precisa **empilhar bem**: vista no
@@ -567,7 +577,7 @@ A estrada não é terreno. Ela é desenhada por cima na cor `terra` `#B5763A`. O
 planejado e ainda não construído é terra translúcida com contorno `terraQueimada`
 `#8C4A25`.
 
-### Recursos (7)
+### Recursos (8)
 
 Hoje cada recurso é um marcador colorido sobre o tile. O tile que esgotou vira um
 marcador escuro (`#2A2622`).
@@ -578,9 +588,16 @@ marcador escuro (`#2A2622`).
 | tree | árvore, madeira do lenhador | `#3E5D34` | sim, por corte |
 | fish | cardume | `#7FB8C9` | sim |
 | corn | milho do roçado | `#C9A227` | sim, por colheita |
+| grapes | **cana-de-açúcar** do Canavial (ver abaixo) | ainda não existe no dado | sim, por colheita |
 | coal | carvão | `#3B3A38` | sim |
 | iron_ore | minério de ferro | `#A0603C` | sim |
 | gold_ore | ouro | `#E8C25A` | sim |
+
+**`grapes` é CANA, não uva** (operador, 2026-09-26). O id é herdado do KaM; o jogo é
+sertão. Na tela o jogador vê Cana, Canavial e Cachaça (`data/theme-sertao.json`). Quem
+ler `grapes` no dado desenha **touceiras altas de colmo, folha comprida**: nunca
+parreira, videira ou cacho de uva. O tile é plantado pelo jogador, como o milho: nasce
+do arado, não do mapa. O recurso entra no dado com a correção do Canavial (seção 4a).
 
 Cada recurso precisa de um desenho **com** recurso e um **esgotado**. O lajedo
 esgotado e o roçado em pousio hoje desenham o mesmo marcador; a nota do F-TR pede que
