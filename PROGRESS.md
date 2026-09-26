@@ -7336,3 +7336,20 @@ sonda foi apagada neste commit):**
 **BUG-K registrado, sem correção:** o `tools/shot.js` deixa o vite órfão no Windows. O meu
 (PID 48500) continua vivo na 5177, porque encerrar processo foi negado pela permissão do
 agente. A 5175 é do Codex, e não mexi nela.
+
+## 2026-09-26 (madrugada) — Leva noturna, item 3: pedra inicial de 34 para 30
+
+A decisão foi do operador. O plano está em `docs/planos/pedra-34-para-30.md` e os números no
+BALANCE_LOG.
+
+**Verificado:**
+- A sonda (apagada) mostra que as três pontas fecham a Fase A com 30: A no tick 4404, B no
+  5193, D no 5158. Os limiares são 27, 28 e 27, os mesmos com 34. Nenhuma travou, então o
+  fallback de 32 não foi usado.
+- O guarda do gerador exige 30 e passa no limite.
+- `npm run verify` saiu com 0 e 1 435 testes. Nenhum teste dependia do 34.
+- Os roteiros que leem a pedra (F07, F08, F10, F17, F18d-2, F18e) saíram com 0, rodados na
+  5177.
+
+**Em aberto:** com 30, a margem da ponta B sobre o limiar é de 2. Qualquer rua que o gerador
+alongar em 3 tiles quebra a ponta B antes das outras.
