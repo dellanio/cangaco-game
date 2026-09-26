@@ -7311,3 +7311,28 @@ Todo roteiro desta sessão roda com `CANGACO_SHOT_PORTA=5177`.
 **Consequência de balanceamento, registrada e não girada:** a F18g deixou a pedreira do
 cenário da F16b ~130 ticks mais lenta (220 → 353), porque o laborer que ergue a obra é o mesmo
 que assenta a rua.
+
+## 2026-09-26 (madrugada) — Leva noturna, item 2: BUG-J medido; conserto no roteiro, não no jogo
+
+Plano e tabela em `docs/planos/BUG-J-pedreira-na-jazida.md`.
+
+**Verificado (sonda `zz-` com o `canPlace` real, em todos os cantos da pedreira no mapa; a
+sonda foi apagada neste commit):**
+- 16 002 cantos. Com rocha ao alcance: 1 604 válidos contra 108 recusados por
+  `porta-sem-saida` (6 %). Dos 25 lajedos, nenhum ficou sem posição válida, e em nenhum a porta
+  tirou a posição que mais cobre aquele lajedo. É raro e não custa nada ao jogador.
+- **A premissa do pedido, "o veio nasce na borda sul", é desmentida pelo código.** A porta só
+  confere o **terreno** (`ehTransponivel`), e o veio é **recurso**. A F21b trocou rocha por veio
+  (311 → 265 `rock`) e manteve o terreno idêntico, conferido contra `5f498ae~1`. Com menos rocha,
+  o alvo que o roteiro escolhe sozinho mudou de (105,92), com porta em grama, para (79,91). A
+  porta nova passa por (81,93), que é terreno `rocha`, e o jogo recusa com razão. O bisect
+  estava certo quanto ao commit, e o mecanismo é esse.
+- O seletor do `tools/shots/F-TP.js` conferia só o footprint em grama. Com o `cabeComPorta`,
+  ele confere também a porta no mapa e em terreno transponível. O roteiro sai com 0.
+
+**Decisão minha, PARA O OPERADOR REVISAR:** como o caso é raro, não mexi no gerador nem no
+`canPlace`. O defeito estava no roteiro, e o BUG-J saiu do `BUGS.md`.
+
+**BUG-K registrado, sem correção:** o `tools/shot.js` deixa o vite órfão no Windows. O meu
+(PID 48500) continua vivo na 5177, porque encerrar processo foi negado pela permissão do
+agente. A 5175 é do Codex, e não mexi nela.

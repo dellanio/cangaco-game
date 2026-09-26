@@ -24,6 +24,7 @@ const predios = require('../../data/buildings.json');
 const producao = require('../../data/production.json');
 
 const TILE_PX = terreno.tile_px;
+const INTRANSPONIVEL = new Set(terreno.intransponivel);
 const ROCHA = new Set(mapa.recursos.rock.map(([gx, gy]) => `${gx},${gy}`));
 
 /** O primeiro predio cuja RECEITA tem `colheita`. Nao e 'quarry' digitado: e a
@@ -80,21 +81,34 @@ function contarRochaAoAlcance(gx, gy, tamanho, alcance) {
   return total;
 }
 
+/** O predio cabe em (gx,gy): footprint todo em grama E porta (a borda sul, GDD §5.1)
+ *  dentro do mapa e em terreno transponivel — a mesma pergunta que `canPlace` faz no
+ *  fim (`porta-sem-saida`). Sem a porta, o alvo podia ser um tile que o jogo recusa
+ *  com razao: foi o BUG-J (2026-09-26), quando a F21b trocou 46 rochas por veio e o
+ *  melhor ponto pulou de (105,92) para (79,91), com a porta sobre o terreno `rocha`. */
+function cabeComPorta(gx, gy, tamanho) {
+  for (let y = gy; y < gy + tamanho.altura; y += 1) {
+    for (let x = gx; x < gx + tamanho.largura; x += 1) {
+      if (mapa.linhas[y][x] !== 'g') return false;
+    }
+  }
+  const yPorta = gy + tamanho.altura;
+  if (yPorta >= mapa.altura) return false;
+  for (let x = gx; x < gx + tamanho.largura; x += 1) {
+    if (INTRANSPONIVEL.has(mapa.legenda[mapa.linhas[yPorta][x]])) return false;
+  }
+  return true;
+}
+
 /** O tile ONDE O JOGADOR PLANTARIA a pedreira: o que tem mais rocha ao alcance
- *  entre os que a aceitam. O proprio lajedo nao serve — terreno `rocha` recusa
+ *  entre os que a aceitam (`cabeComPorta`). O proprio lajedo nao serve — terreno `rocha` recusa
  *  predio desde a F07, e o alvo aqui e um clique que VALE. */
 function melhorPontoDeColheita(tamanho, alcance) {
   let melhor = null;
   let maior = -1;
   for (let gy = 0; gy + tamanho.altura <= mapa.altura; gy += 1) {
     for (let gx = 0; gx + tamanho.largura <= mapa.largura; gx += 1) {
-      let soGrama = true;
-      for (let y = gy; y < gy + tamanho.altura && soGrama; y += 1) {
-        for (let x = gx; x < gx + tamanho.largura && soGrama; x += 1) {
-          if (mapa.linhas[y][x] !== 'g') soGrama = false;
-        }
-      }
-      if (!soGrama) continue;
+      if (!cabeComPorta(gx, gy, tamanho)) continue;
       const rochas = contarRochaAoAlcance(gx, gy, tamanho, alcance);
       if (rochas > maior) { maior = rochas; melhor = { gx, gy }; }
     }
@@ -112,13 +126,7 @@ function longeDaRocha(jazida, tamanho, alcance) {
     for (let gx = 0; gx + tamanho.largura <= mapa.largura; gx += 1) {
       const d = Math.max(Math.abs(gx - jazida.gx), Math.abs(gy - jazida.gy));
       if (d >= menor) continue;
-      let soGrama = true;
-      for (let y = gy; y < gy + tamanho.altura && soGrama; y += 1) {
-        for (let x = gx; x < gx + tamanho.largura && soGrama; x += 1) {
-          if (mapa.linhas[y][x] !== 'g') soGrama = false;
-        }
-      }
-      if (!soGrama) continue;
+      if (!cabeComPorta(gx, gy, tamanho)) continue;
       if (rochaAoAlcance(gx, gy, tamanho, alcance)) continue;
       menor = d;
       melhor = { gx, gy };

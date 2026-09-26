@@ -56,15 +56,21 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
 - evidência: `test-output/F-CAL-b2-sonda.json` (`atras-d2`, `atras-d3`: 3 milhos, 26 mortes)
 - status: aberto
 
-## BUG-J — o roteiro F-TP reprova desde a F21b: a pedreira na jazida sai `porta-sem-saida`
-- feature: F21b (a mina colhe o veio do tile); roteiro da F-TP
-- severidade: errado (a chave não foi virada; mesma ressalva do BUG-I)
-- repro: `npm run shot -- F-TP`
-- esperado: "sobre a jazida o clique nao pode ser recusado"
-- observado: `{"tipo":"quarry","gx":79,"gy":91,"valida":false,"motivo":"porta-sem-saida", …}`
-- causa: `git bisect run` com o roteiro, entre `888f50c` (F-TP) e `cd2d5bb`: primeiro
-  commit que reprova é `5f498ae` feat(F21b). O porquê NÃO foi lido — hipótese: a F21b
-  mudou o que bloqueia no lajedo e a porta da pedreira em (79,91) caiu em rocha.
+## BUG-K — `tools/shot.js` deixa o vite vivo no Windows, e a proxima corrida mede ele
+- feature: ferramenta de roteiro (`tools/shot.js`); achado em 2026-09-26
+- severidade: errado (nao vira chave de feature nenhuma: e do harness; o risco e evidencia falsa)
+- repro: `CANGACO_SHOT_PORTA=5177 npm run shot -- F04`; depois do codigo de saida,
+  `netstat -ano | grep :5177` ainda mostra o `node ... vite.js --port 5177 --strictPort`
+- esperado: o roteiro derruba o servidor que subiu
+- observado: o vite fica orfao (o `npx`/`cmd` pai morre, o neto `node` fica). A corrida
+  seguinte na mesma porta sobe um vite que morre calado pelo `--strictPort`, e o roteiro
+  mede o orfao — que serve a arvore de QUEM O SUBIU. Medido duas vezes: 41848 na 5175
+  (servindo a `main` enquanto um roteiro rodava num worktree, 2026-09-26 00:40) e 48500 na
+  5177 (subido na 1a corrida desta sessao, 03:13, vivo depois de todas as outras).
+- causa: nao lida. Hipotese: o `kill` do filho no Windows mata o `cmd`/`npx`, nao a arvore.
+- mitigacao ate o conserto: porta propria por arvore (`CANGACO_SHOT_PORTA`); conferir com
+  `netstat` antes de comparar duas arvores. Encerrar o orfao foi negado pela permissao do
+  agente — fica para o operador.
 - status: aberto
 
 ---
