@@ -7,6 +7,10 @@
 // por `import`; `tests/helpers/mundo-transladado.ts` troca o que `fs.readFileSync`
 // devolve, no processo do teste. Subprocesso (`npm run sim`) le o disco e ve o
 // mundo versionado — por isso esta em FORA_DO_MUNDO_TRANSLADADO.
+//
+// Custo aceito pelo operador (2026-09-26): ~55 s a mais no verify. Se o verify
+// inteiro passar de TRES MINUTOS, o operador revê. Numero de relogio: fica no
+// PROGRESS, nunca em asserção (CLAUDE.md §8).
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
@@ -41,21 +45,16 @@ const mundoTransladado: Plugin = {
  * reprova alto, nunca some calado. Todos continuam rodando na suite normal.
  */
 const FORA_DO_MUNDO_TRANSLADADO = [
-  // subprocesso: le data/ do disco, versionado; o teste compara com o gameData transladado
+  // LIMITACAO DO MECANISMO, nao escolha: o subprocesso le data/ do disco e ve o
+  // mundo versionado, e o teste compara com o gameData transladado. Se um dia a
+  // troca passar por variavel de ambiente que o subprocesso herde, ele volta.
   'F05a — npm run sim, ponta a ponta > npm run sim -- inicial --ticks 0 imprime os valores da tabela e sai 0',
-  // Os quatro abaixo afirmam o PROPRIO arquivo do mapa, e o destino de cada um e
-  // decisao do operador, pendente desde a F18c-1c (PROGRESS.md, 2026-09-26):
-  // - o gerador emite, byte a byte, o arquivo versionado
+  // CONTRATO DO ARQUIVO PUBLICADO, fora de vez (decisao do operador, 2026-09-26):
+  // - o gerador emite, byte a byte, o arquivo versionado (determinismo do gerador)
   'F-D3 — mesma semente, mesmo mapa (aceite 3) > o que a semente emite hoje e, byte a byte, o arquivo versionado',
-  // - fixa 128 em duplicata do F18b
-  'F04 — tile vem de data/terrain.json, nao hardcoded > configDoMapa.largura/altura batem com gameData.terreno.mapaPadrao',
   // - o tamanho publicado e a area x4 da Fase A
   'F18b — o mapa publicado > data/terrain.json publica 128x128, e o render espelha',
   'F18b — o mapa publicado > a area jogavel quadruplicou em relacao ao 64x64 da Fase A',
-  // - o guarda de borda presume chao livre no canto declarado DO MAPA PUBLICADO
-  //   (transladado, 63,63 cai na vila e 127,127 na serra)
-  'F18b — GUARDA: nada presume o tamanho do mapa > a borda e a do dado DECLARADO, nao a do publicado: 64x64',
-  'F18b — GUARDA: nada presume o tamanho do mapa > a borda e a do dado DECLARADO, nao a do publicado: 128x128',
 ];
 
 const escapar = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

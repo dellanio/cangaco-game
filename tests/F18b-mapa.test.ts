@@ -15,9 +15,23 @@ import { step } from '../src/sim/tick';
 import { buscarCaminho, tileAndavel } from '../src/sim/pathfinding';
 import { configDoMapa } from '../src/render/mapa';
 import { gravarEvidencia } from './helpers/evidence';
+import { hashDeTexto } from '../src/sim/data/hash';
 
 function dadosCom(largura: number, altura: number): GameData {
   return { ...gameData, terreno: { ...gameData.terreno, mapaPadrao: { largura, altura } } };
+}
+
+/** O mesmo dado com um mapa todo grama do tamanho declarado: a guarda de borda
+ *  mede a borda, nao a geografia do mapa publicado. */
+function dadosLisos(largura: number, altura: number): GameData {
+  const grama = Object.entries(gameData.mapa.legenda).find(([, t]) => t === 'grama')?.[0];
+  if (grama === undefined) throw new Error('a legenda do mapa nao tem grama');
+  const linhas = new Array<string>(altura).fill(grama.repeat(largura));
+  const id = `liso-${largura}x${altura}`;
+  return {
+    ...dadosCom(largura, altura),
+    mapa: { ...gameData.mapa, id, largura, altura, linhas, recursos: {}, hash: hashDeTexto(`${id}|${linhas.join('|')}`) },
+  };
 }
 
 /** 97x61 e o caso que importa: retangular, e nenhum dos dois lados e potencia de
@@ -64,14 +78,16 @@ describe('F18b — GUARDA: nada presume o tamanho do mapa', () => {
   });
 
   it.each(TAMANHOS)('a borda e a do dado DECLARADO, nao a do publicado: %ix%i', (largura, altura) => {
-    const dados = dadosCom(largura, altura);
-    // F-T2b — SEM a camada de recurso, e isto e o que a guarda quer dizer. Ela
-    // afirma onde fica a BORDA do mapa declarado, e a borda nao muda porque
-    // nasceu uma arvore perto dela. Com a floresta ligada, (94,60) — o canto de
-    // 97x61 — e arvore, e o caso passaria a reprovar por obstaculo, medindo
-    // outra coisa com a mesma frase. O caso do obstaculo e da F-T2b e tem
-    // arquivo proprio.
-    const estado = { ...createInitialState(1, dados), recursos: {} };
+    // F18c-1c (decisao do operador) — mapa LISO do tamanho declarado, sem recurso e
+    // sem predio. A guarda afirma onde fica a BORDA, e a borda nao muda com o que
+    // esta perto dela. Antes o cenario era o mapa publicado, e supunha sem
+    // escrever que o canto declarado era chao livre: no mundo transladado (63,63)
+    // cai dentro do armazem e (127,127) na serra, e a F18c-2 recentra a vila.
+    // Mesmo motivo da F-T2b, que tirou a arvore de (94,60), o canto de 97x61.
+    const dados = dadosLisos(largura, altura);
+    const estado = {
+      ...createInitialState(1, dados), recursos: {}, predios: { porId: {}, ordem: [] },
+    };
     const dentro = { gx: largura - 1, gy: altura - 1 };
     const fora = { gx: largura, gy: altura - 1 };
     expect(buscarCaminho(estado, dentro, [dentro], 'livre', dados)?.custo).toBe(0);

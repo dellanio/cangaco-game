@@ -8246,3 +8246,23 @@ arquivos de dados foram revertidos pelos backups, e o `git status` ficou limpo.
 
 - **Translado no carregamento, não em disco.** A alternativa era o instrumento escrever e reverter `data/`. Ela foi descartada: um `verify` morto no meio deixaria o mapa transladado versionável, e um dev server aberto recarregaria.
 - **O `fs` também transladado.** Assim a corrida reproduz o que o instrumento em disco media, e a lista de fora ficou só com o subprocesso e os contratos.
+
+### Decisões do operador sobre os quatro arquivos de mapa (2026-09-26), aplicadas
+
+- **F-D3, gerador byte a byte: fica fora da corrida transladada de vez.** É o contrato de determinismo do gerador e não tem como valer num mundo deslocado.
+- **F04: o pin de 128 foi apagado** (`tests/F04-grid-ortogonal.test.ts`). Duplicava o F18b. O contrato são as duas linhas de cima: o render espelha o dado.
+- **F18b, "publica 128x128" e "área ×4": ficam fora de vez.** São contrato do arquivo publicado.
+- **F18b, guarda de borda: agora roda num mapa liso** do tamanho declarado (`dadosLisos`), sem recurso e sem prédio. O motivo, nas palavras do operador: supor que o canto é chão livre é premissa não escrita, e quebraria na F18c-2 sem ninguém entender por quê.
+  - Os três casos voltaram para a corrida transladada.
+  - Prova de que ainda acusa: com o `tileAndavel` da coluna de fora lendo o `gameData` publicado em vez do declarado, reprovam 64x64 e 97x61. Revertido.
+- **F05a fica fora por limitação do mecanismo, não por escolha:** o subprocesso lê o disco. Se um dia a troca passar por variável de ambiente que o subprocesso herde, ele volta. Está escrito junto da lista, na config.
+- **Custo aceito**: cerca de 55 s a mais no `verify`. O operador revê se o `verify` inteiro passar de **três minutos**. Nesta sessão, com o Codex rodando em paralelo (8 processos node), mediu 2m05. É número da corrida, não asserção.
+- `FORA_DO_MUNDO_TRANSLADADO` ficou com 4 testes: F05a, F-D3 e os dois do F18b.
+
+### Observado, não resolvido
+
+- **Um `verify` desta sessão caiu por timeout**, não por asserção: F09-sistema, "semente 1: 200 passos", no orçamento de 10 s. Aconteceu com o Codex ocupando a máquina.
+  - Sozinha, a mesma semente leva 3,0 s no HEAD.
+  - A mudança desta sessão não toca o F09.
+  - O `verify` seguinte passou.
+  - Hipótese, não confirmada: carga da máquina, o mesmo caso que motivou o orçamento de 10 s em `5e25147`. Não alarguei o orçamento.

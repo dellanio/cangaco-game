@@ -3803,9 +3803,9 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
 - **Nota (herdada da F18c-1c)**: `npm run verify` roda a suite no mundo transladado
   (`vitest.transladado.config.mts`). Os testes em `FORA_DO_MUNDO_TRANSLADADO`
   afirmam o arquivo do mapa, e o mapa novo desta feature os toca: o F-D3 (byte a
-  byte), o pin de 128 do F04/F18b e o guarda de borda do F18b, que presume chão livre
-  no canto declarado do mapa **publicado**. A vila no centro pode cair em (63,63).
-  Confira a lista antes de gerar o mapa.
+  byte) e o "publica 128x128" / "área ×4" do F18b. O guarda de borda do F18b já roda
+  em mapa liso sem prédio (decisão do operador), e por isso a vila recentrada em
+  (63,63) não o derruba. Confira a lista antes de gerar o mapa.
 
 ## Fase D — Profundidade
 
