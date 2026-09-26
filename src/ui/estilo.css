@@ -118,7 +118,7 @@ button[aria-disabled="true"] {
 #barra {
   grid-column: 1; grid-row: 1; min-height: 0; overflow: hidden;
   box-sizing: border-box; height: 100vh; padding: var(--moldura);
-  display: flex; flex-direction: column; gap: 4px;
+  display: flex; flex-direction: column; gap: 2px;
   background: var(--veio), linear-gradient(90deg, var(--madeira) 0, var(--madeira-clara) 45%, var(--madeira) 100%);
   border-right: 2px solid var(--tinta);
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.5), inset 0 0 12px rgba(0, 0, 0, 0.45);
@@ -142,7 +142,7 @@ button[aria-disabled="true"] {
 
 /* 1. a logo: placa de pergaminho, cactos nos cantos */
 #logo {
-  height: 46px; display: grid; place-items: center;
+  height: 40px; display: grid; place-items: center;
   background-color: var(--pergaminho);
   border: 2px solid var(--tinta);
   box-shadow: inset 0 0 0 2px var(--madeira-clara), inset 0 0 10px rgba(90, 63, 43, 0.35);
@@ -158,17 +158,17 @@ button[aria-disabled="true"] {
 /* 2. a dica do H, logo abaixo da logo (F-D1, decisao do operador 2026-09-26):
    o topo e onde o jogador novo olha. Some no primeiro H. */
 #barra .dica-ajuda {
-  padding: 2px 6px; text-align: center;
+  padding: 1px 6px; text-align: center;
   background: var(--terracota); color: var(--papel);
   border: 2px solid var(--tinta);
-  font-size: 12px; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-size: 11px; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 #barra .dica-ajuda[hidden] { display: none; }
 
 /* 3. o minimapa: quadro escuro rebaixado e a faixa da rosa dos ventos (F33
    desenha o mapa; aqui e so a moldura). O carimbo de pausa fica POR CIMA dele. */
 #minimapa {
-  height: 112px; display: grid; grid-template-columns: 1fr 28px;
+  height: 88px; display: grid; grid-template-columns: 1fr 24px;
   background-color: var(--madeira-clara);
   border: 2px solid var(--tinta); padding: 4px;
   box-shadow: inset 0 0 0 1px rgba(255, 220, 160, 0.2);
@@ -180,7 +180,7 @@ button[aria-disabled="true"] {
 }
 #minimapa .rosa {
   grid-column: 2; margin-left: 3px;
-  background: var(--rosa) center 12px / 18px 18px no-repeat, var(--cacto-baixo) center bottom 6px / 14px 14px no-repeat, var(--veio-tabua), var(--tabua);
+  background: var(--rosa) center 9px / 16px 16px no-repeat, var(--cacto-baixo) center bottom 5px / 12px 12px no-repeat, var(--veio-tabua), var(--tabua);
   border: 2px solid var(--tinta);
 }
 /* F11a: o carimbo de pausa/velocidade. Some (hidden) em 1x despausado. */
@@ -193,9 +193,12 @@ button[aria-disabled="true"] {
 #minimapa .aviso-tempo[hidden] { display: none; }
 
 /* 4. os recursos: uma tabua escura por recurso, dois rebites cada */
-#hud { display: flex; flex-direction: column; gap: 2px; }
+#hud {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px;
+}
+#hud .campo[data-recurso="populacao"] { grid-column: 1 / -1; }
 #hud .campo {
-  height: 20px; display: flex; align-items: center; gap: 6px; padding: 0 16px 0 12px;
+  height: 19px; min-width: 0; display: flex; align-items: center; gap: 4px; padding: 0 8px 0 9px;
   color: var(--papel);
   background: var(--latao) 3px 50% / 8px 8px no-repeat, var(--latao) calc(100% - 3px) 50% / 8px 8px no-repeat,
     var(--veio-tabua), linear-gradient(180deg, var(--tabua-clara), var(--tabua));
@@ -205,8 +208,8 @@ button[aria-disabled="true"] {
    `icones.hud`), um por `data-recurso`, sobre um disco de papel para ler na
    tabua escura. Desenho, nao no de texto. */
 #hud .campo::before {
-  content: ''; flex: 0 0 auto; width: 16px; height: 16px; border-radius: 50%;
-  background: var(--papel) center / 13px 13px no-repeat;
+  content: ''; flex: 0 0 auto; width: 14px; height: 14px; border-radius: 50%;
+  background: var(--papel) center / 11px 11px no-repeat;
 }
 #hud .campo[data-recurso="gold"]::before { background-image: url('../../assets/sprites/ui/hud-gold.svg'); }
 #hud .campo[data-recurso="timber"]::before { background-image: url('../../assets/sprites/ui/hud-timber.svg'); }
@@ -214,18 +217,18 @@ button[aria-disabled="true"] {
 #hud .campo[data-recurso="comida"]::before { background-image: url('../../assets/sprites/ui/hud-comida.svg'); }
 #hud .campo[data-recurso="populacao"]::before { background-image: url('../../assets/sprites/ui/hud-populacao.svg'); }
 #hud .rotulo {
-  flex: 1; font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em;
+  flex: 1; min-width: 0; font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em;
   color: var(--papel-escuro);
 }
 #hud .valor {
-  font: 14px/1 var(--fonte-display); color: var(--ocre);
+  flex: 0 0 auto; font: 12px/1 var(--fonte-display); color: var(--ocre);
   font-variant-numeric: tabular-nums;
 }
 
 /* 5. os avisos (F22): faixa de ALTURA FIXA, uma tabua rebaixada. Vazia quando
    nao ha aviso (operador, 2026-09-26); o aviso que aparece nao empurra a grade. */
 #faixa-alertas {
-  height: 48px; overflow: hidden; padding: 3px;
+  height: 38px; overflow: hidden; padding: 2px;
   background: var(--veio-tabua), #1c140e;
   border: 1px solid var(--tinta); box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.7);
 }
@@ -236,9 +239,9 @@ button[aria-disabled="true"] {
   position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); margin: 0;
 }
 #alertas .alerta {
-  height: 18px; box-sizing: border-box; display: flex; align-items: center; gap: 6px; min-width: 0;
-  padding: 0 3px 0 7px; background: var(--papel); border: 2px solid var(--terracota);
-  font-size: 12px; color: var(--terra-queimada);
+  height: 15px; box-sizing: border-box; display: flex; align-items: center; gap: 4px; min-width: 0;
+  padding: 0 3px 0 5px; background: var(--papel); border: 1px solid var(--terracota);
+  font-size: 11px; line-height: 13px; color: var(--terra-queimada);
 }
 #alertas .alerta[hidden] { display: none; }
 #alertas .alerta .rotulo {
@@ -247,10 +250,10 @@ button[aria-disabled="true"] {
 #alertas .alerta .contagem, #alertas .mais {
   flex: 0 0 auto; min-width: 16px; padding: 0 5px; text-align: center;
   background: var(--tinta); color: var(--papel);
-  font: 11px/14px var(--fonte-display); font-variant-numeric: tabular-nums;
+  font: 10px/12px var(--fonte-display); font-variant-numeric: tabular-nums;
 }
 /* o "+N": as causas que nao couberam nas duas linhas, no canto da ultima */
-#alertas .mais { position: absolute; right: 8px; bottom: 6px; background: var(--terracota); }
+#alertas .mais { position: absolute; right: 7px; bottom: 4px; background: var(--terracota); }
 #alertas .mais[hidden] { display: none; }
 #faixa-alertas { position: relative; }
 
@@ -317,7 +320,7 @@ body:not([data-corpo="opcoes"]) #opcoes { display: none; }
 
 /* 8. a marca: placa de pergaminho com o lema, cortada na borda da barra */
 #marca {
-  height: 40px; display: grid; place-items: center; overflow: hidden;
+  height: 32px; display: grid; place-items: center; overflow: hidden;
   background-color: var(--pergaminho);
   border: 2px solid var(--tinta);
   box-shadow: inset 0 0 0 2px var(--madeira-clara), inset 0 0 10px rgba(90, 63, 43, 0.35);
