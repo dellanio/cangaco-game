@@ -11,7 +11,8 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import { gameData } from '../src/sim/data';
 import { assetDoPredio, arquivoDoEstagio, chaveDaTextura } from '../src/render/manifesto';
-import type { Manifesto } from '../src/render/manifesto';
+import type { EntradaDeAsset, Manifesto } from '../src/render/manifesto';
+import { ORDEM_DOS_ESTAGIOS } from '../src/render/estagio-obra';
 import { gravarEvidencia } from './helpers/evidence';
 
 const manifesto = JSON.parse(readFileSync('assets/manifest.json', 'utf8')) as Manifesto;
@@ -24,6 +25,30 @@ const manifesto = JSON.parse(readFileSync('assets/manifest.json', 'utf8')) as Ma
 function dimensaoDoPng(caminho: string): [number, number] {
   const b = readFileSync(caminho);
   return [b.readUInt32BE(16), b.readUInt32BE(20)];
+}
+
+/**
+ * Entrada de manifesto escrita no teste, para provar o RESOLVEDOR sem depender de
+ * qual predio tem arte hoje. Nenhum arquivo e lido: `assetDoPredio` e
+ * `arquivoDoEstagio` so olham o objeto (docs/planos/F17f-lista-derivada.md).
+ */
+function entradaSintetica(id: string, estados: Record<string, string>): EntradaDeAsset {
+  return {
+    id,
+    tipo: 'predio',
+    footprint: [3, 3],
+    tamanho: [192, 128],
+    anchor: [0.5, 1],
+    estados,
+    licenca: 'sintetica, so no teste',
+    origem: { base: `base/${id}/${id}.png`, semente: null },
+  };
+}
+
+/** As chaves de `estados` que nao sao estagio do render: arte que nunca aparece na tela. */
+function chavesForaDosEstagios(entrada: EntradaDeAsset): string[] {
+  const validas = new Set<string>(ORDEM_DOS_ESTAGIOS);
+  return Object.keys(entrada.estados).filter((k) => !validas.has(k));
 }
 
 describe('F17f — o manifesto descreve a arte que existe', () => {
@@ -70,18 +95,21 @@ describe('F17f — o manifesto descreve a arte que existe', () => {
     }
   });
 
-  it('o armazem tem arte em tres dos seis estagios', () => {
-    const armazem = assetDoPredio(manifesto, 'storehouse');
-    expect(armazem).not.toBeNull();
-    expect(arquivoDoEstagio(armazem!, 'marcacao')).toBe('sprites/storehouse/storehouse_marcacao.png');
-    // F17e: o estagio do meio passou a se chamar `estrutura`. O arquivo e o
-    // mesmo (a base dele sempre se chamou `armazem_02_estrutura.png`); a chave e
-    // que acompanha o vocabulario dos seis estagios.
-    expect(arquivoDoEstagio(armazem!, 'estrutura')).toBe('sprites/storehouse/storehouse_madeira.png');
-    expect(arquivoDoEstagio(armazem!, 'completo')).toBe('sprites/storehouse/storehouse_completo.png');
-    // e o nome antigo nao pode ter ficado para tras: chave orfa e arte que nunca
-    // mais aparece na tela, sem ninguem reprovar.
-    expect(arquivoDoEstagio(armazem!, 'madeira')).toBeNull();
+  // O guarda da F17e: o estagio do meio passou a se chamar `estrutura`, e o nome
+  // antigo (`madeira`) nao pode ter ficado para tras — chave orfa e arte que nunca
+  // mais aparece na tela, sem ninguem reprovar. Ate 2026-09-26 ele era afirmado so
+  // no armazem, com os nomes dos arquivos de hoje, e reprovava quando o armazem
+  // fosse refeito (BUG-H). Agora vale para TODA entrada, contra a lista do render.
+  it('nenhuma entrada tem chave de estado fora dos seis estagios do render', () => {
+    for (const e of manifesto.assets) {
+      expect(chavesForaDosEstagios(e), e.id).toEqual([]);
+    }
+    // e o guarda acusa: a chave antiga da F17e numa entrada sintetica
+    const comChaveVelha = entradaSintetica('storehouse', {
+      marcacao: 'sprites/x/marcacao.png',
+      madeira: 'sprites/x/madeira.png',
+    });
+    expect(chavesForaDosEstagios(comChaveVelha)).toEqual(['madeira']);
   });
 
   // O outro lado do §9: placeholder e comportamento normal, nao e falha.
@@ -111,7 +139,7 @@ describe('F17f — o manifesto descreve a arte que existe', () => {
     const [primeiro, ...outros] = gameData.predios;
     const umaEntrada: Manifesto = {
       versao: 1,
-      assets: [{ ...manifesto.assets[0]!, id: primeiro!.id }],
+      assets: [entradaSintetica(primeiro!.id, { completo: 'sprites/x/completo.png' })],
     };
     expect(assetDoPredio(umaEntrada, primeiro!.id)?.id).toBe(primeiro!.id);
     expect(outros.length).toBeGreaterThan(0);
@@ -120,14 +148,23 @@ describe('F17f — o manifesto descreve a arte que existe', () => {
     }
   });
 
+  // F17e: estagio sem arte resolve null e a cena cai no retangulo DAQUELE
+  // estagio — herdar o sprite do estagio vizinho mentiria sobre o progresso da
+  // obra. Ate 2026-09-26 isto usava `paredes` e `cobertura` do armazem, que faltam
+  // HOJE; com manifesto sintetico, continua provado quando o armazem tiver os seis.
   it('estagio sem arte resolve null, mesmo num predio que tem arte', () => {
-    const armazem = assetDoPredio(manifesto, 'storehouse');
-    // F17e: `paredes` e `cobertura` existem no render e NAO tem arte. O
-    // resolvedor devolve null e a cena cai no retangulo DAQUELE estagio — herdar
-    // o sprite do estagio vizinho mentiria sobre o progresso da obra.
-    expect(arquivoDoEstagio(armazem!, 'paredes')).toBeNull();
-    expect(arquivoDoEstagio(armazem!, 'cobertura')).toBeNull();
-    expect(arquivoDoEstagio(armazem!, 'estagio_que_nao_existe')).toBeNull();
+    const comArte = ['marcacao', 'completo'];
+    const estados = Object.fromEntries(comArte.map((s) => [s, `sprites/x/${s}.png`]));
+    const entrada = entradaSintetica('storehouse', estados);
+    const semArte = ORDEM_DOS_ESTAGIOS.filter((s) => !comArte.includes(s));
+    expect(semArte.length).toBeGreaterThan(0);
+    for (const s of comArte) {
+      expect(arquivoDoEstagio(entrada, s), s).toBe(`sprites/x/${s}.png`);
+    }
+    for (const s of semArte) {
+      expect(arquivoDoEstagio(entrada, s), s).toBeNull();
+    }
+    expect(arquivoDoEstagio(entrada, 'estagio_que_nao_existe')).toBeNull();
   });
 
   // Uma unica funcao monta a chave para quem carrega e para quem desenha:
