@@ -8149,3 +8149,38 @@ arquivos de dados foram revertidos pelos backups, e o `git status` ficou limpo.
   alcance (`alcance_tiles` 6), e o roteiro nunca treina ninguém: ele é sobre o
   medidor da obra, não sobre produção. Não havia prédio morto ali. Eram três
   roteiros, não quatro.
+
+## 2026-09-26 (noite, 10) — F18c-1a: os helpers de cenário derivam posição
+
+### Pendentes que o operador pediu para confirmar (já feitos em `b0e0a9f`)
+
+- Os dois ícones de arar: a cor por cultura vem do tema (`src/ui/menu-build.ts`,
+  `--cor-cultura`), e `tools/shots/F18i.js` guarda a diferença.
+- O veio que só entra no ciclo com chão andável encostado: a sonda daquela sessão
+  contou **0** veios de ouro, carvão e ferro de fora no mapa publicado.
+
+### Feito e verificado
+
+- `tests/helpers/ancoras.ts` (novo). Seis âncoras, cada uma tirada do dado:
+  - a **vila** é o canto do armazém do cenário inicial;
+  - o **lajedo** é a mancha de recurso `rock` mais perto da vila;
+  - o **lago pequeno** é a mancha de água mais perto da vila;
+  - o **lagamar** é a maior mancha de água;
+  - o **roçado do norte** é a mancha de `campoArado` mais ao norte, porque há duas de 65 tiles e "a maior" empataria;
+  - a **serra** é a maior mancha de montanha.
+  - Empate na ordem escolhida lança erro, em vez de cair na sorte da varredura.
+- `producao-cenario.ts` e `fome-cenario.ts` escrevem deslocamento a partir da âncora. O comentário ao lado dá a coordenada de hoje, para leitura.
+- `tests/F-T2a-recursos.test.ts` também mudou. Ele tem uma fixture local com a mesma mensagem `nao ficou ligado`, e o aceite da 1a a cobre, então entrou nesta sessão e não na 1b.
+- `tools/transladar-mundo.js` (novo) é o instrumento do aceite. Ele escreve os três JSON transladados, roda o vitest e **reverte no `finally` e no Ctrl+C**, depois confere byte a byte que reverteu. Não entra no `verify`.
+- `tests/F18c-1a-ancoras.test.ts` (novo) é o guarda permanente das âncoras. Ele translada o mundo em memória e afirma que cada âncora anda +K. Também afirma que o lajedo vem do mapa publicado, mesmo com uma jazida injetada.
+- Evidência em `test-output/F18c-1a.json`. Com o mundo transladado:
+  - antes: **46** arquivos reprovados, 20 deles por `nao ficou ligado`;
+  - depois: **28** reprovados, **0** por `nao ficou ligado`, e nenhum arquivo novo na lista.
+- **Posições no mapa de hoje.** A sonda da sessão (`zz-`, apagada) montou os 19 cenários dos dois helpers antes e depois. Prédios e estradas saíram **byte a byte iguais**, então nenhuma asserção muda de valor. Isso é evidência da sessão, não cobertura contínua.
+- `npm run verify`: verde, 109 arquivos, 1490 testes.
+
+### Decisões minhas (para revisão)
+
+- **Deslocamento fixo a partir da âncora, não busca por `canPlace`.** O escopo do item dizia "passam a procurar posição". Uma busca mudaria a posição no mapa de hoje e, com ela, os números medidos da F15a, F-T2a e F22, como os ticks de depósito e o total ao alcance. Já o deslocamento a partir da feição mantém a posição exata e anda junto com ela. A âncora é a feição, não o armazém, como o operador aprovou.
+- **O lajedo vem sempre do `gameData` publicado, nunca do `dados` do teste.** O lajedo é camada de recurso, e `comJazida` a substitui. Com a âncora lida do `dados`, a F15a e a F22 punham a pedreira sobre a jazida injetada, fora da rua. A primeira corrida pegou isso: 8 reprovações.
+- **Rua da vila, produtor da feição.** A rua até a porta do armazém ancora na vila. O prédio que precisa do recurso ancora na feição. Um exemplo é o pescador da vila: a cabana ancora no lago pequeno, e a rua dela desce na vila. Quando a F18c-2 separar vila e feição, essas ruas vão precisar de trajeto. Isso é hipótese, não medi.

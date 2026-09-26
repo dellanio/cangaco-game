@@ -23,8 +23,47 @@ import { receitaDoTipo } from '../../src/sim/producao';
 import { registrarTipoConstruido } from '../../src/sim/desbloqueio';
 import { canPlowField, comOTileArado } from '../../src/sim/campos';
 import { aberturaDaFaseA } from './abertura';
+import {
+  ancoraDaSerra, ancoraDaVila, ancoraDoLagamar, ancoraDoLagoPequeno, ancoraDoLajedo, ancoraDoRocadoDoNorte,
+  relativoA,
+} from './ancoras';
+import type { Relativo } from './ancoras';
 
 const tile = (gx: number, gy: number): TileDeGrid => ({ gx, gy });
+
+/*
+ * F18c-1a — toda posicao dos cenarios e DESLOCAMENTO a partir de uma ancora
+ * (`ancoras.ts`), nunca coordenada absoluta. O comentario ao lado diz onde o
+ * tile cai no mapa de hoje, para quem le; o numero que vale e o deslocamento.
+ */
+const vila = (dados: GameData): Relativo => relativoA(ancoraDaVila(dados));
+/** O lajedo e camada de RECURSO, e `comJazida` a substitui: a ancora sai do mapa
+ *  publicado, nunca do `dados` do teste, senao a pedreira anda junto com a jazida
+ *  injetada e sai da rua. */
+const lajedo = (): Relativo => relativoA(ancoraDoLajedo(gameData));
+const norte = (dados: GameData): Relativo => relativoA(ancoraDoRocadoDoNorte(dados));
+const lago = (dados: GameData): Relativo => relativoA(ancoraDoLagoPequeno(dados));
+const lagamar = (dados: GameData): Relativo => relativoA(ancoraDoLagamar(dados));
+const serra = (dados: GameData): Relativo => relativoA(ancoraDaSerra(dados));
+
+/** A pedreira da vila: ao lado do lajedo, com a porta na rua que sobe ate o armazem.
+ *  Exportada porque `fome-cenario.ts` pede a MESMA pedreira. */
+export function pedreiraDaVila(): TileDeGrid {
+  return lajedo()(4, 5); // (26,34) hoje
+}
+
+/** A rua da porta do armazem ate a porta de `pedreiraDaVila`. */
+export function ruaDaPedreiraDaVila(dados: GameData = gameData): TileDeGrid[] {
+  const v = vila(dados); // (29,33) .. (28,36) hoje
+  return [v(0, 3), v(0, 4), v(0, 5), v(0, 6), v(-1, 6)];
+}
+
+/** O tile de rocha colado no footprint de `pedreiraDaVila`: o que os cenarios de
+ *  esgotamento transformam em jazida unica (`comJazida`). */
+export function rochaDaPedreiraDaVila(): readonly [number, number] {
+  const t = lajedo()(3, 3); // (25,32) hoje
+  return [t.gx, t.gy];
+}
 
 function semCivis(estado: GameState): GameState {
   return { ...estado, unidades: { porId: {}, ordem: [] } };
@@ -101,14 +140,14 @@ function exigirLigado(estado: GameState, id: string, dados: GameData): GameState
   return estado;
 }
 
-/** Pedreira `q1` (26,34) ocupada por `u1`, ligada a porta do armazem (29,33). */
+/** Pedreira `q1` (`pedreiraDaVila`) ocupada por `u1`, ligada a porta do armazem. */
 export function cenarioDePedreira(dados: GameData = gameData): GameState {
   // `dados` VAI para `createInitialState`: desde a F-T2a a camada de recurso
   // nasce com o estado, entao um cenario de dado trocado que esquecesse de
   // passa-lo abriria com a jazida do arquivo, nao com a do teste.
   let s = semCivis(createInitialState(1, dados));
-  s = comProdutorOcupado(s, { tipo: 'quarry', id: 'q1', unidade: 'u1', gx: 26, gy: 34 }, dados);
-  s = comEstradas(s, [tile(29, 33), tile(29, 34), tile(29, 35), tile(29, 36), tile(28, 36)]);
+  s = comProdutorOcupado(s, { tipo: 'quarry', id: 'q1', unidade: 'u1', ...pedreiraDaVila() }, dados);
+  s = comEstradas(s, ruaDaPedreiraDaVila(dados));
   return exigirLigado(s, 'q1', dados);
 }
 
@@ -145,14 +184,15 @@ export function cenarioOraculo(dados: GameData = gameData): GameState {
   }
   s = comProdutorOcupado(s, { tipo: 'woodcutters', id: 'w2', unidade: 'lenhador-2', gx: m1.gx, gy: m1.gy }, dados);
   s = comProdutorOcupado(s, { tipo: 'woodcutters', id: 'w1', unidade: 'lenhador-1', gx: m2.gx, gy: m2.gy }, dados);
-  s = comProdutorOcupado(s, { tipo: 'quarry', id: 'q1', unidade: 'pedreiro', gx: 26, gy: 34 }, dados);
-  s = comProdutorOcupado(s, { tipo: 'sawmill', id: 's1', unidade: 'carpinteiro', gx: 32, gy: 34 }, dados);
+  const v = vila(dados);
+  s = comProdutorOcupado(s, { tipo: 'quarry', id: 'q1', unidade: 'pedreiro', ...pedreiraDaVila() }, dados);
+  s = comProdutorOcupado(s, { tipo: 'sawmill', id: 's1', unidade: 'carpinteiro', ...v(3, 4) }, dados); // (32,34)
   // A rua do oraculo (y=36 na porta de todos, subindo em x=29 ate a porta do
   // armazem) mais a rua da propria abertura, que e quem alcanca a porta dos
   // lenhadores la em cima. As duas se encontram em (29,33) e viram UMA rede.
   const rua: TileDeGrid[] = [];
-  for (let x = 18; x <= 35; x++) rua.push(tile(x, 36));
-  for (let y = 33; y <= 35; y++) rua.push(tile(29, y));
+  for (let dx = -11; dx <= 6; dx++) rua.push(v(dx, 6)); // x 18..35, y=36
+  for (let dy = 3; dy <= 5; dy++) rua.push(v(0, dy)); // x=29, y 33..35
   for (const t of aberturaDaFaseA(s, dados).rua) rua.push(tile(t.gx, t.gy));
   s = comEstradas(s, rua);
   for (const id of ['w1', 'w2', 'q1', 's1']) exigirLigado(s, id, dados);
@@ -176,11 +216,12 @@ export function cenarioOraculo(dados: GameData = gameData): GameState {
  */
 export function cenarioDeFazenda(dados: GameData = gameData): GameState {
   let s = semCivis(createInitialState(1, dados));
-  s = comArmazemExtra(s, 'armazem-do-roçado', 116, 34, dados);
-  s = comProdutorOcupado(s, { tipo: 'farm', id: 'f1', unidade: 'roceiro', gx: 112, gy: 30 }, dados);
+  const n = norte(dados);
+  s = comArmazemExtra(s, 'armazem-do-roçado', n(8, 12).gx, n(8, 12).gy, dados); // (116,34)
+  s = comProdutorOcupado(s, { tipo: 'farm', id: 'f1', unidade: 'roceiro', ...n(4, 8) }, dados); // (112,30)
   const rua: TileDeGrid[] = [];
-  for (let gy = 33; gy <= 37; gy++) rua.push(tile(112, gy));
-  for (let gx = 112; gx <= 119; gx++) rua.push(tile(gx, 37));
+  for (let dy = 11; dy <= 15; dy++) rua.push(n(4, dy)); // x=112, y 33..37
+  for (let dx = 4; dx <= 11; dx++) rua.push(n(dx, 15)); // x 112..119, y=37
   s = comEstradas(s, rua);
   return exigirLigado(s, 'f1', dados);
 }
@@ -194,11 +235,12 @@ export function cenarioDeFazenda(dados: GameData = gameData): GameState {
  */
 export function cenarioDeCanavial(dados: GameData = gameData, partidos: number = 2): GameState {
   let s = semCivis(createInitialState(1, dados));
-  s = comArmazemExtra(s, 'armazem-do-canavial', 116, 34, dados);
-  s = comProdutorOcupado(s, { tipo: 'wineyard', id: 'c1', unidade: 'canavieiro', gx: 112, gy: 31 }, dados);
+  const n = norte(dados);
+  s = comArmazemExtra(s, 'armazem-do-canavial', n(8, 12).gx, n(8, 12).gy, dados); // (116,34)
+  s = comProdutorOcupado(s, { tipo: 'wineyard', id: 'c1', unidade: 'canavieiro', ...n(4, 9) }, dados); // (112,31)
   const rua: TileDeGrid[] = [];
-  for (let gy = 33; gy <= 37; gy++) rua.push(tile(112, gy));
-  for (let gx = 112; gx <= 119; gx++) rua.push(tile(gx, 37));
+  for (let dy = 11; dy <= 15; dy++) rua.push(n(4, dy)); // x=112, y 33..37
+  for (let dx = 4; dx <= 11; dx++) rua.push(n(dx, 15)); // x 112..119, y=37
   s = comEstradas(s, rua);
   s = exigirLigado(s, 'c1', dados);
   const colheita = receitaDoTipo('wineyard', dados)?.colheita ?? null;
@@ -236,8 +278,9 @@ export function cenarioDeCanavial(dados: GameData = gameData, partidos: number =
  */
 export function cenarioDeFazendaSemCampo(dados: GameData = gameData): GameState {
   let s = semCivis(createInitialState(1, dados));
-  s = comProdutorOcupado(s, { tipo: 'farm', id: 'f1', unidade: 'roceiro', gx: 33, gy: 30 }, dados);
-  s = comEstradas(s, [tile(29, 33), tile(30, 33), tile(31, 33), tile(32, 33), tile(33, 33)]);
+  const v = vila(dados);
+  s = comProdutorOcupado(s, { tipo: 'farm', id: 'f1', unidade: 'roceiro', ...v(4, 0) }, dados); // (33,30)
+  s = comEstradas(s, [v(0, 3), v(1, 3), v(2, 3), v(3, 3), v(4, 3)]); // y=33, x 29..33
   s = exigirLigado(s, 'f1', dados);
   const predio = s.predios.porId.f1;
   const colheita = receitaDoTipo('farm', dados)?.colheita ?? null;
@@ -268,19 +311,20 @@ export function cenarioDaCadeiaDoPao(
   dados: GameData = gameData, serfs: number = 4,
 ): GameState {
   let s = semCivis(createInitialState(1, dados));
-  s = comArmazemExtra(s, 'arm', 116, 34, dados);
-  s = comProdutorOcupado(s, { tipo: 'farm', id: 'f1', unidade: 'roceiro', gx: 112, gy: 30 }, dados);
-  s = comProdutorOcupado(s, { tipo: 'mill', id: 'm1', unidade: 'moleiro', gx: 108, gy: 34 }, dados);
-  s = comProdutorOcupado(s, { tipo: 'bakery', id: 'b1', unidade: 'forneiro', gx: 104, gy: 34 }, dados);
+  const n = norte(dados);
+  s = comArmazemExtra(s, 'arm', n(8, 12).gx, n(8, 12).gy, dados); // (116,34)
+  s = comProdutorOcupado(s, { tipo: 'farm', id: 'f1', unidade: 'roceiro', ...n(4, 8) }, dados); // (112,30)
+  s = comProdutorOcupado(s, { tipo: 'mill', id: 'm1', unidade: 'moleiro', ...n(0, 12) }, dados); // (108,34)
+  s = comProdutorOcupado(s, { tipo: 'bakery', id: 'b1', unidade: 'forneiro', ...n(-4, 12) }, dados); // (104,34)
   const rua: TileDeGrid[] = [];
-  for (let gy = 33; gy <= 37; gy++) rua.push(tile(112, gy));
-  for (let gx = 104; gx <= 119; gx++) rua.push(tile(gx, 37));
+  for (let dy = 11; dy <= 15; dy++) rua.push(n(4, dy)); // x=112, y 33..37
+  for (let dx = -4; dx <= 11; dx++) rua.push(n(dx, 15)); // x 104..119, y=37
   s = comEstradas(s, rua);
   for (const id of ['f1', 'm1', 'b1']) s = exigirLigado(s, id, dados);
   // F20b: a Bodega entra no cenario porque a janela dele (12 000 ticks) E uma
   // condicao cheia de civil. Ela come do proprio cuscuz que a cadeia entrega.
   s = comBodegaAbastecida(s, 'bodega', 'arm', dados);
-  return comHistoricoDosPredios(comSerfs(s, serfs, 112, 37));
+  return comHistoricoDosPredios(comSerfs(s, serfs, n(4, 15).gx, n(4, 15).gy)); // (112,37)
 }
 
 /**
@@ -299,19 +343,20 @@ export function cenarioDaCadeiaDaCarne(
   dados: GameData = gameData, serfs: number = 4,
 ): GameState {
   let s = semCivis(createInitialState(1, dados));
-  s = comArmazemExtra(s, 'arm', 116, 34, dados);
-  s = comProdutorOcupado(s, { tipo: 'farm', id: 'f1', unidade: 'roceiro', gx: 112, gy: 30 }, dados);
-  s = comProdutorOcupado(s, { tipo: 'swine_farm', id: 'sf1', unidade: 'criador', gx: 107, gy: 34 }, dados);
-  s = comProdutorOcupado(s, { tipo: 'butchers', id: 'bu1', unidade: 'carneador', gx: 103, gy: 34 }, dados);
+  const n = norte(dados);
+  s = comArmazemExtra(s, 'arm', n(8, 12).gx, n(8, 12).gy, dados); // (116,34)
+  s = comProdutorOcupado(s, { tipo: 'farm', id: 'f1', unidade: 'roceiro', ...n(4, 8) }, dados); // (112,30)
+  s = comProdutorOcupado(s, { tipo: 'swine_farm', id: 'sf1', unidade: 'criador', ...n(-1, 12) }, dados); // (107,34)
+  s = comProdutorOcupado(s, { tipo: 'butchers', id: 'bu1', unidade: 'carneador', ...n(-5, 12) }, dados); // (103,34)
   const rua: TileDeGrid[] = [];
-  for (let gy = 33; gy <= 37; gy++) rua.push(tile(112, gy));
-  for (let gx = 103; gx <= 119; gx++) rua.push(tile(gx, 37));
+  for (let dy = 11; dy <= 15; dy++) rua.push(n(4, dy)); // x=112, y 33..37
+  for (let dx = -5; dx <= 11; dx++) rua.push(n(dx, 15)); // x 103..119, y=37
   s = comEstradas(s, rua);
   for (const id of ['f1', 'sf1', 'bu1']) s = exigirLigado(s, id, dados);
   // F20b: mesma razao da cadeia do pao, e aqui a janela e maior ainda (20 000
   // ticks). A carne de sol e comida em `condition.json`: a cadeia alimenta a vila.
   s = comBodegaAbastecida(s, 'bodega', 'arm', dados);
-  return comHistoricoDosPredios(comSerfs(s, serfs, 112, 37));
+  return comHistoricoDosPredios(comSerfs(s, serfs, n(4, 15).gx, n(4, 15).gy)); // (112,37)
 }
 
 /**
@@ -502,8 +547,10 @@ function exigirColheitaAoAlcance(
  */
 export function cenarioDePescador(dados: GameData = gameData): GameState {
   let s = semCivis(createInitialState(1, dados));
-  s = comProdutorOcupado(s, { tipo: 'fishermans', id: 'pesc1', unidade: 'pescador', gx: 32, gy: 27 }, dados);
-  s = comEstradas(s, [tile(32, 29), tile(32, 30), tile(32, 31), tile(32, 32), tile(32, 33), tile(31, 33)]);
+  const v = vila(dados);
+  s = comProdutorOcupado(s, { tipo: 'fishermans', id: 'pesc1', unidade: 'pescador', ...lago(dados)(4, 3) }, dados); // (32,27)
+  // a rua desce da porta da cabana ate a linha de porta do armazem: e rua da VILA
+  s = comEstradas(s, [v(3, -1), v(3, 0), v(3, 1), v(3, 2), v(3, 3), v(2, 3)]); // x=32 y 29..33, e (31,33)
   return exigirColheitaAoAlcance(exigirLigado(s, 'pesc1', dados), 'pesc1', 31, dados);
 }
 
@@ -517,10 +564,11 @@ export function cenarioDePescador(dados: GameData = gameData): GameState {
  */
 export function cenarioDePescadorDeUmCardume(dados: GameData = gameData): GameState {
   let s = semCivis(createInitialState(1, dados));
-  s = comArmazemExtra(s, 'armazem-do-lago', 49, 25, dados);
-  s = comProdutorOcupado(s, { tipo: 'fishermans', id: 'pesc1', unidade: 'pescador', gx: 45, gy: 26 }, dados);
+  const l = lago(dados);
+  s = comArmazemExtra(s, 'armazem-do-lago', l(21, 1).gx, l(21, 1).gy, dados); // (49,25)
+  s = comProdutorOcupado(s, { tipo: 'fishermans', id: 'pesc1', unidade: 'pescador', ...l(17, 2) }, dados); // (45,26)
   const rua: TileDeGrid[] = [];
-  for (let gx = 45; gx <= 51; gx++) rua.push(tile(gx, 28));
+  for (let dx = 17; dx <= 23; dx++) rua.push(l(dx, 4)); // x 45..51, y=28
   s = comEstradas(s, rua);
   return exigirColheitaAoAlcance(exigirLigado(s, 'pesc1', dados), 'pesc1', 1, dados);
 }
@@ -537,19 +585,21 @@ export function cenarioDePescadorDeUmCardume(dados: GameData = gameData): GameSt
  */
 export function cenarioDePescadorNoLagoGrande(dados: GameData = gameData): GameState {
   let s = semCivis(createInitialState(1, dados));
-  s = comArmazemExtra(s, 'armazem-do-lagamar', 95, 36, dados);
-  s = comProdutorOcupado(s, { tipo: 'fishermans', id: 'pesc1', unidade: 'pescador', gx: 91, gy: 37 }, dados);
+  const g = lagamar(dados);
+  s = comArmazemExtra(s, 'armazem-do-lagamar', g(14, -4).gx, g(14, -4).gy, dados); // (95,36)
+  s = comProdutorOcupado(s, { tipo: 'fishermans', id: 'pesc1', unidade: 'pescador', ...g(10, -3) }, dados); // (91,37)
   const rua: TileDeGrid[] = [];
-  for (let gx = 91; gx <= 97; gx++) rua.push(tile(gx, 39));
+  for (let dx = 10; dx <= 16; dx++) rua.push(g(dx, -1)); // x 91..97, y=39
   s = comEstradas(s, rua);
   return exigirColheitaAoAlcance(exigirLigado(s, 'pesc1', dados), 'pesc1', 70, dados);
 }
 
-/** Serraria `s1` (32,34) ocupada por `u2`, ligada, e com a entrada VAZIA. */
+/** Serraria `s1` (a leste do armazem) ocupada por `u2`, ligada, e com a entrada VAZIA. */
 export function cenarioDeSerraria(dados: GameData = gameData): GameState {
   let s = semCivis(createInitialState(1, dados));
-  s = comProdutorOcupado(s, { tipo: 'sawmill', id: 's1', unidade: 'u2', gx: 32, gy: 34 }, dados);
-  s = comEstradas(s, [tile(31, 33), tile(31, 34), tile(31, 35), tile(31, 36), tile(32, 36)]);
+  const v = vila(dados);
+  s = comProdutorOcupado(s, { tipo: 'sawmill', id: 's1', unidade: 'u2', ...v(3, 4) }, dados); // (32,34)
+  s = comEstradas(s, [v(2, 3), v(2, 4), v(2, 5), v(2, 6), v(3, 6)]); // x=31 y 33..36, e (32,36)
   return exigirLigado(s, 's1', dados);
 }
 
@@ -695,7 +745,8 @@ export function comEspacoNaSaida(estado: GameState, id: string): GameState {
  * Um tile de dois vale dois, e e assim que os cenarios de esgotamento da F15a e
  * da F22 continuam medindo o que mediam: `comJazida(gameData, 'rock',
  * [[25, 32]], 2)` da a mesma pedreira de duas pedras que `comRendimento(…, 2)`
- * dava — (25,32) e vizinho do footprint de `q1` em (26,34).
+ * dava — (25,32) e vizinho do footprint de `q1` em (26,34). Desde a F18c-1a o
+ * tile sai de `rochaDaPedreiraDaVila`, e nao do numero.
  */
 export function comJazida(
   dados: GameData, recurso: string, tiles: readonly (readonly [number, number])[], rendimentoPorTile: number,
@@ -824,21 +875,22 @@ export function cenarioDaCadeiaDoOuro(
   // o ouro da abertura mora em `saida` (F05a: e de la que o serf retira), e so o
   // OURO vai a zero: tirar pao e carne junto mataria a vila de fome.
   s = comSaida(s, aldeia, { ...completoDe(s, aldeia).estoque.saida, gold: 0 });
-  s = comArmazemExtra(s, 'arm', 78, 102, dados);
-  s = comProdutorOcupado(s, { tipo: 'metallurgists', id: 'me1', unidade: 'metalurgico', gx: 86, gy: 102 }, dados);
-  s = comPredioSemTrabalhador(s, 'schoolhouse', 'esc1', 90, 102, dados);
-  s = comProdutorOcupado(s, { tipo: 'gold_mine', id: 'go1', unidade: 'mineiro-ouro', gx: 93, gy: 104 }, dados);
-  s = comProdutorOcupado(s, { tipo: 'coal_mine', id: 'co1', unidade: 'mineiro-carvao', gx: 94, gy: 106 }, dados);
+  const m = serra(dados);
+  s = comArmazemExtra(s, 'arm', m(-10, 18).gx, m(-10, 18).gy, dados); // (78,102)
+  s = comProdutorOcupado(s, { tipo: 'metallurgists', id: 'me1', unidade: 'metalurgico', ...m(-2, 18) }, dados); // (86,102)
+  s = comPredioSemTrabalhador(s, 'schoolhouse', 'esc1', m(2, 18).gx, m(2, 18).gy, dados); // (90,102)
+  s = comProdutorOcupado(s, { tipo: 'gold_mine', id: 'go1', unidade: 'mineiro-ouro', ...m(5, 20) }, dados); // (93,104)
+  s = comProdutorOcupado(s, { tipo: 'coal_mine', id: 'co1', unidade: 'mineiro-carvao', ...m(6, 22) }, dados); // (94,106)
   // A rua principal em y=105 pega a porta de todos, menos a da mina de carvao:
   // ela esta em y=108, encostada no veio, e o cano desce por x=93 - ao lado do
   // footprint dela, nunca por baixo.
   const rua: TileDeGrid[] = [];
-  for (let gx = 78; gx <= 96; gx += 1) rua.push(tile(gx, 105));
-  for (const t of [tile(93, 106), tile(93, 107), tile(93, 108), tile(94, 108)]) rua.push(t);
+  for (let dx = -10; dx <= 8; dx += 1) rua.push(m(dx, 21)); // x 78..96, y=105
+  for (const t of [m(5, 22), m(5, 23), m(5, 24), m(6, 24)]) rua.push(t); // x=93 y 106..108, e (94,108)
   s = comEstradas(s, rua);
   for (const id of ['arm', 'go1', 'co1', 'me1', 'esc1']) s = exigirLigado(s, id, dados);
   s = comBodegaAbastecida(s, 'bodega', 'arm', dados);
-  return comHistoricoDosPredios(comSerfs(s, serfs, 78, 105));
+  return comHistoricoDosPredios(comSerfs(s, serfs, m(-10, 21).gx, m(-10, 21).gy)); // (78,105)
 }
 
 /** Sem a mina de carvao: o metalurgico recebe minerio e nada mais. E o que impede
