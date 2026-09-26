@@ -3522,6 +3522,20 @@ Casos 2 e 4 do prédio vivo (`docs/BRIEF-ARTE.md` §4a). Decisão do operador: c
     `FORA_DO_MUNDO_TRANSLADADO` vale aqui também.
 - **Chave**: a F-CANA fica `false` pelo BUG-L (`errado`) e volta a `true` quando esta
   entregar. A F18 fica `true`: o aceite escrito dela passa (decisão do operador).
+- **Entregue (2026-09-26, noite 16).**
+  - A mancha é a `CANAVIAL_DA_VILA`, (36,40) com raio 2, 13 tiles. Espelha o roçado do
+    outro lado do eixo da vila.
+  - Ela entra na camada **esparsa**, como o lajedo, e não como terreno novo. A cana não
+    tem `terreno`, e um chão novo pediria cor no render.
+  - Vai por último em `gerarRecursos`, depois dos veios, e o resto do mapa sai
+    idêntico.
+  - A hipótese da Nota se confirmou: o roteiro F18 passou a afirmar "vazio = cultura
+    com `aradura`" e soma a cana do quadro ao `esgotado`.
+  - O teste da F-CANA fotografava toda a cana do mundo. Passou a fotografar a cana ao
+    alcance do `c1`.
+  - **Medido:** o quadro de abertura (1280×720) cobre y 25,9..37,1, e o roçado e a
+    cana começam em y=38. "À vista da abertura" vale no critério do roçado (a folga
+    encostada), não no quadro. O roteiro `F-CANA-b` desce a câmera.
 
 ### F17g — A obra revelada pelo hp: madeira e pedra (render)
 - **Origem (decisão do operador, 2026-09-26)**: *"troque pela revelação contínua. Duas
@@ -3806,6 +3820,38 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
   Os dois têm asserção no roteiro. O helper `pontoParaApertar`, em
   `tools/shots/_canvas.js`, é o aperto que rola até o botão e reprova se ele estiver
   coberto.
+
+### F-DEV — O `npm run dev` recusa porta ocupada e não deixa órfão (ferramenta)
+- **Origem (operador, 2026-09-26):** o BUG-K consertou o `tools/shot.js`, mas o
+  `npm run dev` continua deixando órfão.
+- **O padrão, verificado nesta sessão:**
+  - `"dev": "vite"` sobe o servidor por `npm` → `cmd.exe` → `node vite.js`.
+  - Parar o `npm` mata o `cmd` e deixa o `node vite.js`, neto, escutando a porta.
+  - Foi o caso do `npm run dev` da UI-barra-a (PIDs 4064/32576). Ele ficou de pé
+    depois de o agente dizer que estava desligado, e a carga dele derrubou o
+    `npm run verify` por timeout duas vezes.
+  - Sem `--strictPort`, o vite seguinte pula calado para a próxima porta livre. O
+    órfão continua servindo a árvore velha, e ninguém avisa.
+  - É o mesmo defeito que o BUG-K matou no roteiro, com as duas armas prontas em
+    `tools/shot.js`: `portaJaResponde` (recusa antes de subir) e `derrubarServidor`
+    (`taskkill /pid <p> /T /F`, desce a árvore).
+- **Escopo:**
+  - Um `tools/dev.js` que o `"dev"` do `package.json` chama. Ele pergunta à porta
+    (5173, ou `CANGACO_DEV_PORTA`) antes de subir.
+  - Se ela já responde, recusa com a mesma frase do roteiro, que nomeia o
+    `netstat -ano | findstr :<porta>`, e sai com código ≠ 0.
+  - Se está livre, sobe o vite com `--strictPort` e, no `SIGINT`/`SIGTERM`/`exit`,
+    derruba a árvore inteira por `taskkill /T`.
+  - As duas funções saem de `tools/shot.js` para um módulo comum, e o roteiro passa a
+    importá-las. Duas cópias da mesma defesa divergem.
+- **Aceite:**
+  - (a) com um servidor qualquer escutando a porta, `npm run dev` sai com código ≠ 0,
+    a mensagem nomeia a porta, e nenhum vite novo fica de pé;
+  - (b) com a porta livre, `npm run dev` sobe e responde, e depois de parado (Ctrl+C,
+    ou kill do pid do `npm`) nenhum processo escuta a porta, conferido por `netstat`;
+  - (c) os roteiros seguem verdes com o módulo comum.
+- **Fora:** matar o dono da porta ocupada. Recusar e nomear basta: o dono pode ser
+  a sessão de outra pessoa (os 5188/5189 desta noite eram do operador).
 
 ## Fase C — Militar
 

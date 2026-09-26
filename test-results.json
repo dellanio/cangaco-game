@@ -204,7 +204,7 @@
     "passes": true
   },
   "F-CANA-canavial-e-mina": {
-    "passes": false
+    "passes": true
   },
   "F-VIVO-0": {
     "passes": true
@@ -237,6 +237,6 @@
     "passes": true
   },
   "F-CANA-b-mancha-de-cana-da-vila": {
-    "passes": false
+    "passes": true
   }
 }

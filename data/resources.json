@@ -75,7 +75,7 @@
       "_docBloqueiaPasso": "Mesmo do milho: o cortador entra no proprio partido.",
       "quantidadeInicial": 0,
       "_docQuantidadeInicial": "Nasce em POUSIO, como o milho: o primeiro ciclo do Canavial e de plantio.",
-      "_docSemTerreno": "Sem `terreno`: nao ha partido de cana desenhado no mapa, so o que o jogador ara. Por isso o tipo nao tem tile em nenhum mapa, e `recurso/sem-instancia` o isenta pelo bloco `aradura` (quem ara e o jogador), nao por lista.",
+      "_docSemTerreno": "Sem `terreno`: a cana nao deriva de chao nenhum (so o milho deriva do `campoArado`). O partido do mapa e a MANCHA DA VILA da F-CANA-b, que o gerador pousa na camada ESPARSA (`CANAVIAL_DA_VILA`, tools/gerar-mapa.js), como o lajedo; o resto e o que o jogador ara. `recurso/sem-instancia` continua isentando o tipo pelo bloco `aradura`, nao por lista — a mancha e para a abertura ter o que plantar, nao para passar a regra.",
       "aradura": {
         "terrenoPermitido": ["grama"],
         "segundos_base": 4.0,

@@ -96,10 +96,12 @@ function centroDoMaiorBloco(tiles) {
  *  mesmo codigo hoje (ver `render/mapa.ts`), e por isso a conta precisa saber
  *  quem mais pode estar em zero.
  *
- *  Na ABERTURA a resposta e "ninguem": todo tipo que nao e campo nasce cheio
- *  (`quantidadeInicial` ausente = `rendimentoPorTile`), e so predio trabalhando
- *  zera tile. Como o roteiro nao constroi nada, esgotado na tela so pode ser
- *  campo. A pergunta e feita ao DADO, e nao assumida. */
+ *  Na ABERTURA a resposta e "so cultura arada": todo tipo sem `aradura` nasce
+ *  cheio (`quantidadeInicial` ausente = `rendimentoPorTile`), e so predio
+ *  trabalhando zera tile. Como o roteiro nao constroi nada, esgotado na tela so
+ *  pode ser partido em pousio — o milho do terreno ou a cana da mancha da vila
+ *  (F-CANA-b: mancha e terreno, nao estoque, e a cana nasce em 0 como o milho).
+ *  A pergunta e feita ao DADO, e nao assumida. */
 function tiposQueNascemVazios() {
   const vazios = [];
   for (const [id, def] of Object.entries(recursos.tipos)) {
@@ -107,6 +109,12 @@ function tiposQueNascemVazios() {
     if (inicial === 0) vazios.push(id);
   }
   return vazios;
+}
+
+/** As culturas que o jogador ara: a presenca do bloco `aradura`, o mesmo que
+ *  `culturasAraveis` (sim/campos.ts) le no runtime. */
+function culturasAradas() {
+  return Object.entries(recursos.tipos).filter(([, def]) => def && def.aradura != null).map(([id]) => id);
 }
 
 async function roteiro(ctx) {
@@ -182,13 +190,23 @@ async function roteiro(ctx) {
   const y0 = Math.floor(vista.scrollY / TILE_PX);
   const x1 = Math.ceil((vista.scrollX + canvas.width / vista.zoom) / TILE_PX);
   const y1 = Math.ceil((vista.scrollY + canvas.height / vista.zoom) / TILE_PX);
-  const vazios = tiposQueNascemVazios();
+  const vazios = tiposQueNascemVazios().sort();
+  const arados = culturasAradas().sort();
   afirmar(
-    vazios.length === 1 && vazios[0] === CAMPO.id,
-    `na abertura so o campo nasce vazio; se outro tipo nascer em zero, "esgotado" fica ambiguo. Veio ${JSON.stringify(vazios)}`,
+    JSON.stringify(vazios) === JSON.stringify(arados) && vazios.includes(CAMPO.id),
+    `na abertura so cultura arada nasce vazia (${JSON.stringify(arados)}); se outro tipo nascer em zero, "esgotado" fica ambiguo. Veio ${JSON.stringify(vazios)}`,
   );
-  const noQuadro = TILES.filter((t) => t.gx >= x0 && t.gx <= x1 && t.gy >= y0 && t.gy <= y1).length;
-  afirmar(noQuadro > 0, `o quadro deveria conter tile de campo, veio ${noQuadro}`);
+  const noVisor = (t) => t.gx >= x0 && t.gx <= x1 && t.gy >= y0 && t.gy <= y1;
+  const doCampo = TILES.filter(noVisor).length;
+  afirmar(doCampo > 0, `o quadro deveria conter tile de campo, veio ${doCampo}`);
+  // As OUTRAS culturas aradas vem da camada esparsa do mapa (a cana da vila):
+  // se cairem no quadro, tambem entram no "esgotado", e a conta as soma.
+  let dasOutras = 0;
+  for (const id of vazios) {
+    if (id === CAMPO.id) continue;
+    dasOutras += (mapa.recursos[id] || []).filter(([gx, gy]) => noVisor({ gx, gy })).length;
+  }
+  const noQuadro = doCampo + dasOutras;
 
   const daArea = s.recursosVisiveis;
   afirmar(
@@ -200,7 +218,7 @@ async function roteiro(ctx) {
   // certa, e nao "algum tile".
   afirmar(
     Math.abs(daArea.esgotado - noQuadro) <= 2 * ((x1 - x0) + (y1 - y0)),
-    `esgotado(${daArea.esgotado}) deveria bater com os ${noQuadro} tiles de campo do quadro`,
+    `esgotado(${daArea.esgotado}) deveria bater com os ${noQuadro} tiles em pousio do quadro (${doCampo} de campo, ${dasOutras} de outras culturas)`,
   );
   afirmar(
     (daArea[CAMPO.id] || 0) === 0,

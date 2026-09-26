@@ -288,6 +288,14 @@ const MATO_DO_NASCENTE = { gx: 39, gy: 25, raio: 3 };
  *  do bloco que a escreve para por que ela fica FORA da folga e ele dentro. */
 const ROCADO_DA_VILA = { gx: 26, gy: 40, raio: 2 };
 
+/** F-CANA-b — centro e raio do partido de cana da vila: irmao do
+ *  `ROCADO_DA_VILA` (raio 2, 13 tiles), do outro lado do eixo da vila, e pelo
+ *  mesmo motivo — a partida abre com o que o Canavial colher. A cana nao e
+ *  terreno (so o milho deriva do `campoArado`), entao a mancha entra na camada
+ *  ESPARSA, como o lajedo; e fica FORA da folga porque `grapes` nao esta em
+ *  `recursoPermitido`. */
+const CANAVIAL_DA_VILA = { gx: 36, gy: 40, raio: 2 };
+
 /** Centro e raio do lajedo da vila. Ver o cabecalho: e a unica pedra dentro do
  *  quadrante protegido, e existe para que a partida abra com o que cortar. */
 const LAJEDO_DA_VILA = { gx: 24, gy: 31, raio: 2 };
@@ -344,7 +352,7 @@ function conferirQuemColhe(recurso) {
  */
 function gerarRecursos({ largura, altura, grade, rng }) {
   const recursos = {
-    rock: [], tree: [], fish: [], coal: [], iron_ore: [], gold_ore: [],
+    rock: [], tree: [], fish: [], coal: [], iron_ore: [], gold_ore: [], grapes: [],
   };
   const ocupado = new Set();
   const por = (tipo, gx, gy) => {
@@ -547,6 +555,16 @@ function gerarRecursos({ largura, altura, grade, rng }) {
     }
   }
 
+  // --- a cana da vila: o partido que a abertura MOSTRA ------------------------
+  // F-CANA-b, decisao do operador (BUG-L): o mesmo conserto do rocado. Por
+  // ULTIMO, depois dos veios, porque os veios sorteiam e isto nao sorteia nada:
+  // entrar antes deslocaria o RNG de todo o minerio. Tile ja ocupado ou dentro
+  // da folga `por()` recusa — o teste da F-CANA-b conta os 13 para a recusa
+  // calada nao encolher a mancha sem ninguem ver.
+  for (const [gx, gy] of disco(CANAVIAL_DA_VILA.gx, CANAVIAL_DA_VILA.gy, CANAVIAL_DA_VILA.raio)) {
+    if (grade[gy]?.[gx] === 'grama') por('grapes', gx, gy);
+  }
+
   return recursos;
 }
 
@@ -627,4 +645,5 @@ module.exports = {
   // F-D3: o teste da guarda importa a reserva DAQUI em vez de remontar a
   // conta dele — se o gerador e o teste discordarem, discordam no mesmo lugar.
   RESERVA, tilesDaVila, naVila, naReserva,
+  CANAVIAL_DA_VILA, ROCADO_DA_VILA, disco,
 };

@@ -17,6 +17,7 @@ import { gameData } from '../src/sim/data';
 import type { GameState } from '../src/sim/state';
 import { culturasAraveis } from '../src/sim/campos';
 import { receitaDoTipo, unidadesPorCiclo } from '../src/sim/producao';
+import { tilesDeColheita } from '../src/sim/recursos';
 import { avancar, cenarioDeCanavial, saidaDe } from './helpers/producao-cenario';
 import { violacoesDaFsmDoEspecialista } from './helpers/especialista-invariantes';
 import { violacoesDeInvariantes } from './helpers/jobs-invariantes';
@@ -33,6 +34,17 @@ const COLHEITA = RECEITA.colheita;
 function tilesDo(estado: GameState, tipo: string): Record<string, number> {
   const r: Record<string, number> = {};
   for (const [k, v] of Object.entries(estado.recursos)) if (v.tipo === tipo) r[k] = v.quantidade;
+  return r;
+}
+
+/** O PARTIDO do `c1`: a cana ao alcance dele, e so ela. F-CANA-b — o mapa passou
+ *  a ter a mancha de cana da vila, e `tilesDo` a contaria junto; o sujeito aqui
+ *  e o partido que a fixture arou, nao toda cana do mundo. */
+function partidoDe(estado: GameState): Record<string, number> {
+  const c1 = estado.predios.porId['c1'];
+  if (c1?.estado !== 'completo') throw new Error('fixture: c1 deveria estar completo');
+  const r: Record<string, number> = {};
+  for (const k of tilesDeColheita(estado, c1, COLHEITA, gameData)) r[k] = estado.recursos[k]?.quantidade ?? 0;
   return r;
 }
 
@@ -70,10 +82,10 @@ describe('F-CANA — o dado', () => {
 
 describe('F-CANA — o Canavial planta e colhe do partido arado', () => {
   const inicial = cenarioDeCanavial(gameData, 2);
-  const partidoNoInicio = tilesDo(inicial, 'grapes');
+  const partidoNoInicio = partidoDe(inicial);
   const milhoNoInicio = tilesDo(inicial, 'corn');
   const { fim, ticks, fases } = ateAPrimeiraCachaca(inicial);
-  const partidoNoFim = tilesDo(fim, 'grapes');
+  const partidoNoFim = partidoDe(fim);
 
   it('a fixture abre com dois partidos em pousio e milho do mapa ao alcance', () => {
     expect(Object.values(partidoNoInicio)).toEqual([0, 0]);

@@ -268,6 +268,22 @@ export function cenarioDeCanavial(dados: GameData = gameData, partidos: number =
 }
 
 /**
+ * F-CANA-b — o Canavial `c1` posto na VILA, ao lado da mancha de cana que o
+ * gerador semeia, e nenhum tile arado pela fixture: o partido e o do mapa. A
+ * rua desce do armazem em x=29 e corre em y=37, na porta do Canavial.
+ */
+export function cenarioDeCanavialDaVila(dados: GameData = gameData): GameState {
+  let s = semCivis(createInitialState(1, dados));
+  const v = vila(dados);
+  s = comProdutorOcupado(s, { tipo: 'wineyard', id: 'c1', unidade: 'canavieiro', ...v(6, 5) }, dados); // (35,35)
+  const rua: TileDeGrid[] = [];
+  for (let dy = 3; dy <= 7; dy++) rua.push(v(0, dy)); // x=29, y 33..37
+  for (let dx = 1; dx <= 8; dx++) rua.push(v(dx, 7)); // x 30..37, y=37
+  s = comEstradas(s, rua);
+  return exigirLigado(s, 'c1', dados);
+}
+
+/**
  * F18 — a MESMA fazenda, posta na aldeia: ligada, ocupada, e sem um unico tile
  * de campo ao alcance. E o erro que o jogador comete antes de a planta fantasma
  * da F-TP existir, e e o cenario que produz o alerta `sem-campo`.

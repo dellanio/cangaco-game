@@ -8571,3 +8571,90 @@ for pequena, o cartão ganha teto com rolagem própria, em vez de um número mai
     cartão para no teto, o texto é cortado, e a linha "O Bando" fica inteira acima
     dele.
 - **Numeração das capturas:** a da escola agora é `UI-barra-a-3-escola.png`.
+
+## 2026-09-26 (noite, 16) — F-CANA-b: a mancha de cana da vila
+
+Pedido do operador, em três partes:
+- derrubar os Vite em 5188/5189 e registrar o padrão do `npm run dev`;
+- implementar a F-CANA-b (BUG-L);
+- deixar a F17e aberta.
+
+Outra sessão trabalha em `src/ui/`, `src/render/` e no CSS, na branch
+`feat/ui-world-polish`. **Nada disso foi tocado aqui.**
+
+### Verificado (rodado, evidência aberta)
+- **5188/5189 derrubados.** PIDs 35240, 10436, 33980 e 12132. `netstat` confirma as
+  portas fechadas.
+- **A mancha (`tools/gerar-mapa.js`):**
+  - `CANAVIAL_DA_VILA = { gx: 36, gy: 40, raio: 2 }`, 13 tiles de `grapes`. Espelha o
+    roçado (26,40) do outro lado do eixo da vila, fora da folga.
+  - Entra na camada **esparsa** (como o lajedo), por último em `gerarRecursos`.
+  - O diff do mapa é só a lista `grapes` nova e a contagem. Nenhum outro recurso se
+    moveu, e `--conferir` confere.
+  - **Terreno novo foi descartado.** Pediria `TerrenoTipo`, matriz de custo, lista de
+    códigos e cor no tema, e a cor é lida pelo funil do render. A lista esparsa não
+    toca render: `grapes` já tem marcador no tema.
+- **O teste `tests/F-CANA-b-mancha-de-cana.test.ts` (5 verdes):**
+  - a cana do mapa tem a **forma** do `disco` inteiro que o gerador exporta, e não a
+    posição: o `test:transladado` desloca o mundo em +K, e até o `readFileSync` do
+    dado vem transladado. A recusa calada do `por()` acusaria aqui. A posição relativa
+    à vila é provada pelo cenário (a), montado por deslocamento da âncora;
+  - os tiles estão em grama, fora da folga, com quantidade 0;
+  - o Canavial `c1`, em (35,35) com rua até o armazém e nenhum campo planejado, tem 9
+    tiles da mancha ao alcance, semeia no tick 150 e faz a primeira cachaça no tick
+    753 (`test-output/F-CANA-b.json`).
+  - **Prova de que acusa:** com o mapa do HEAD, reprova ("o Canavial da vila nao fez
+    cachaca em 3000 ticks").
+- **O teste da F-CANA quebrou com o mapa novo e foi corrigido no guarda.** `tilesDo`
+  fotografava toda a cana do mundo, e veio `Array(15)` em vez de `[0,0]`. Passou a
+  fotografar `partidoDe(c1)`, a cana ao alcance dele, que é o sujeito do teste. 8/8
+  verdes.
+- **Dois testes carregavam a mesma premissa velha e reprovaram no verify.** Os dois
+  foram corrigidos no guarda, sem afrouxar:
+  - `F18-camada-de-campo` ("nenhum outro tipo nasce zerado"): agora afirma quantidade
+    0 para toda cultura de `culturasAraveis` e `rendimentoPorTile` para o resto.
+  - `F03`, caso "cultura sem tile e sem aradura": a quebra passou a tirar também a
+    mancha do mapa. Sem isso, a mancha sozinha dava a instância e a regra não
+    disparava. Esse era o vermelho.
+- **O roteiro F18, com a hipótese da nota confirmada:**
+  - a regra agora é "tipos que nascem vazios = culturas com `aradura`";
+  - a conta do `esgotado` soma a cana esparsa do quadro ao campo do terreno.
+  - Sonda inline (sem arquivo): com o dado publicado dá `true`. Dá `false` com
+    `tree.quantidadeInicial: 0` e `false` com a cana nascendo cheia.
+  - `npm run shot -- F18` voltou ao OK.
+- **Roteiro novo `tools/shots/F-CANA-b.js`:**
+  - desce a câmera até um quadro com a vila e as duas manchas;
+  - afirma as duas inteiras no quadro, `grapes` maduro 0, e `esgotado` ≥ 26.
+  - Aberto com Read: `screenshots/F-CANA-b-1-abertura-com-a-cana.png`.
+- **`resources.json` (`grapes._docSemTerreno`)** dizia "não tem tile em nenhum
+  mapa". Reescrito.
+- **O item F-DEV foi escrito no BUILD_PLAN; nada implementado.** É o padrão do
+  `npm run dev` órfão, com as duas armas do BUG-K para um módulo comum.
+
+### Achados (medidos, para decisão do operador)
+- **Nem o roçado nem a cana estão no quadro de abertura.** A 1280×720, o quadro cobre
+  y 25,9..37,1, e as duas manchas começam em y=38.
+  - O "basta para estar à vista" do comentário do roçado (F18h) era distância, não
+    quadro.
+  - Para caber no quadro, a mancha teria de entrar na folga, o que pede `grapes` em
+    `recursoPermitido`. Isso é decisão de design e não foi feito.
+- **Na tela, a cana em pousio é o losango escuro de "esgotado" sobre grama.**
+  - O milho tem o chão arado por baixo; a cana, não. Uma mancha de cana nova se
+    confunde com um mato cortado.
+  - É render (tile cortado e tile em pousio têm o mesmo código, `render/mapa.ts`),
+    então fica para a sessão do render decidir.
+
+### Não-regressão (roteiros, pelo código de saída)
+- 43 roteiros: 40 OK e 3 vermelhos (F11c, F17e, F17f).
+- **Os três reprovam igual na `main` limpa** (`72ae483`, worktree irmão, porta 5191),
+  então não vêm desta feature.
+- Bisseção: o F11c e o F17f passam em `9844c6b` e reprovam em `f83f8a4`, o merge do
+  lote de sprites.
+- É a segunda falha do F17e, e ele entrou no **BUG-M** junto com os outros dois,
+  conforme a regra do operador ("abre bug na segunda").
+- Nenhuma chave virada; nada corrigido. É território do render.
+
+### Aberto
+- BUG-M (três roteiros desde o lote de sprites): espera o operador decidir quem
+  responde.
+- F-DEV: item escrito, não implementado.

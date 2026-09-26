@@ -104,12 +104,14 @@ const fixtures: Fixture[] = [
       d['maps/sertao-128'].linhas = d['maps/sertao-128'].linhas
         .map((l: string) => l.split(char).join('g'));
     } },
-  // e a isencao e o BLOCO, nao o nome: a cana sem `aradura` nao tem tile em mapa
-  // nenhum nem quem a plante, e volta a reprovar.
+  // e a isencao e o BLOCO, nao o nome: a cana sem `aradura` e sem a mancha da
+  // vila (F-CANA-b) nao tem tile em mapa nenhum nem quem a plante, e volta a
+  // reprovar. A mancha sai junto, senao ela sozinha daria a instancia.
   { nome: 'cultura sem tile e sem aradura', regraEsperada: 'recurso/sem-instancia',
     quebrar: (d) => {
       delete d.resources.tipos.grapes.aradura;
       delete d.resources.tipos.grapes.reposicao;
+      delete d['maps/sertao-128'].recursos.grapes;
     } },
   { nome: 'mapa poe recurso que nao existe em resources.tipos', regraEsperada: 'recurso/mapa',
     quebrar: (d) => { d['maps/sertao-128'].recursos.fantasma = [[1, 1]]; } },
