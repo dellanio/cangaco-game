@@ -1,32 +1,68 @@
 {
-  "_doc": "Indice de arte do jogo (CLAUDE.md §9). `estados` mapeia o estagio do render (src/render/estagio-obra.ts) para o arquivo derivado; todo caminho e relativo a esta pasta. `tamanho` e o px REAL do arquivo derivado e `footprint` e em tiles: a largura em px e sempre footprint[0] * tile_px, e a altura e o que a arte der. As chaves sao os ids NEUTROS da simulacao, nunca o nome do tema. O jogo carrega so `sprites/`; `base/` e o registro da geracao.",
+  "_doc": "Indice de arte do jogo (CLAUDE.md §9). `estados` mapeia o estagio do render (src/render/estagio-obra.ts) para o arquivo derivado; todo caminho e relativo a esta pasta. `tamanho` e o px REAL do arquivo derivado e `footprint` e em tiles: largura em px e sempre footprint[0] * tile_px, e a altura e o que arte der. As chaves sao os ids NEUTROS da simulacao, nunca o nome do tema. O jogo carrega so `sprites/`; `base/` e o registro da geracao.",
   "versao": 1,
   "assets": [
     {
       "id": "storehouse",
       "tipo": "predio",
-      "footprint": [
-        3,
-        3
-      ],
-      "tamanho": [
-        192,
-        135
-      ],
-      "anchor": [
-        0.5,
-        1
-      ],
+      "footprint": [3, 3],
+      "tamanho": [192, 105],
+      "anchor": [0.5, 1],
       "estados": {
         "marcacao": "sprites/storehouse/storehouse_marcacao.png",
-        "estrutura": "sprites/storehouse/storehouse_madeira.png",
+        "fundacao": "sprites/storehouse/storehouse_fundacao.png",
+        "estrutura": "sprites/storehouse/storehouse_estrutura.png",
+        "paredes": "sprites/storehouse/storehouse_paredes.png",
+        "cobertura": "sprites/storehouse/storehouse_cobertura.png",
         "completo": "sprites/storehouse/storehouse_completo.png"
       },
-      "licenca": "arte propria do projeto, fornecida pelo operador em 2026-09-23",
+      "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
       "origem": {
-        "base": "base/storehouse/armazem_03_completo.png",
+        "base": "base/storehouse/storehouse_06_completo.png",
         "semente": null,
-        "nota": "Derivado por tools/derivar-sprites.js a partir de assets/base/storehouse/ (1536x1024 -> 192x135, recorte UNICO pela uniao das bboxes de alpha dos tres estagios, x71,y32 1380x968, alpha > 16). O recorte comum preserva o registro entre estagios; recortar cada um pelo seu faria o predio pular. E COSMETICO: devolveu ~12% de tamanho linear (o completo cobria 31,8% do quadrado de chao e passou a cobrir 39,3%). PERSPECTIVA ISOMETRICA, divergente do §4 (3/4 sobre grid ortogonal): o plano de chao e um losango ~2:1, e nenhuma escala concilia losango com footprint quadrado — e esta, medida, a causa de o predio nao preencher o 3x3, nao a margem transparente. Conhecida e a substituir. Gerada fora do repositorio e a semente nao foi fornecida, entao hoje um frame so se ajusta refazendo o conjunto."
+        "nota": "Seis estagios autorais em camera alta frontal para grid ortogonal, derivados em conjunto por tools/derivar-sprites.js. Uniao alpha > 16 calculada somente para storehouse: x35,y117 1468x801; saida 192x105."
+      }
+    },
+    {
+      "id": "woodcutters",
+      "tipo": "predio",
+      "footprint": [3, 2],
+      "tamanho": [192, 179],
+      "anchor": [0.5, 1],
+      "estados": {
+        "marcacao": "sprites/woodcutters/woodcutters_marcacao.png",
+        "fundacao": "sprites/woodcutters/woodcutters_fundacao.png",
+        "estrutura": "sprites/woodcutters/woodcutters_estrutura.png",
+        "paredes": "sprites/woodcutters/woodcutters_paredes.png",
+        "cobertura": "sprites/woodcutters/woodcutters_cobertura.png",
+        "completo": "sprites/woodcutters/woodcutters_completo.png"
+      },
+      "licenca": "arte propria do projeto, bases aprovadas pelo operador e estagios complementares gerados em 2026-09-26",
+      "origem": {
+        "base": "base/woodcutters/casa_lenhador_03_completo.png",
+        "semente": null,
+        "nota": "Seis estagios derivados em conjunto por tools/derivar-sprites.js. Uniao alpha > 16 calculada somente para woodcutters: x45,y130 1132x1056; saida 192x179."
+      }
+    },
+    {
+      "id": "quarry",
+      "tipo": "predio",
+      "footprint": [3, 2],
+      "tamanho": [192, 94],
+      "anchor": [0.5, 1],
+      "estados": {
+        "marcacao": "sprites/quarry/quarry_marcacao.png",
+        "fundacao": "sprites/quarry/quarry_fundacao.png",
+        "estrutura": "sprites/quarry/quarry_estrutura.png",
+        "paredes": "sprites/quarry/quarry_paredes.png",
+        "cobertura": "sprites/quarry/quarry_cobertura.png",
+        "completo": "sprites/quarry/quarry_completo.png"
+      },
+      "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+      "origem": {
+        "base": "base/quarry/quarry_06_completo.png",
+        "semente": null,
+        "nota": "Seis estagios autorais sem rocha natural ou recurso incorporado, derivados em conjunto por tools/derivar-sprites.js. Uniao alpha > 16 calculada somente para quarry: x21,y128 1492x730; saida 192x94."
       }
     }
   ],
@@ -34,10 +70,7 @@
     "predios": {
       "storehouse": {
         "arquivo": "sprites/storehouse/icone.png",
-        "tamanho": [
-          72,
-          72
-        ],
+        "tamanho": [72, 72],
         "licenca": "arte propria do projeto, fornecida pelo operador",
         "origem": {
           "base": "base/storehouse/armazem_03_completo.png",
@@ -47,10 +80,7 @@
       },
       "woodcutters": {
         "arquivo": "sprites/woodcutters/icone.png",
-        "tamanho": [
-          72,
-          72
-        ],
+        "tamanho": [72, 72],
         "licenca": "arte propria do projeto, fornecida pelo operador",
         "origem": {
           "base": "base/woodcutters/casa_lenhador_03_completo.png",
@@ -63,68 +93,33 @@
     "hud": {
       "gold": {
         "arquivo": "sprites/ui/hud-gold.svg",
-        "tamanho": [
-          20,
-          20
-        ],
+        "tamanho": [20, 20],
         "licenca": "arte propria do projeto, desenhada em SVG na sessao de 2026-09-25",
-        "origem": {
-          "base": null,
-          "semente": null,
-          "nota": "Vetor autoral, sem base: e glifo de interface, nao personagem nem predio."
-        }
+        "origem": {"base": null, "semente": null, "nota": "Vetor autoral, sem base: e glifo de interface, nao personagem nem predio."}
       },
       "timber": {
         "arquivo": "sprites/ui/hud-timber.svg",
-        "tamanho": [
-          20,
-          20
-        ],
+        "tamanho": [20, 20],
         "licenca": "arte propria do projeto, desenhada em SVG na sessao de 2026-09-25",
-        "origem": {
-          "base": null,
-          "semente": null,
-          "nota": "Vetor autoral, sem base: e glifo de interface, nao personagem nem predio."
-        }
+        "origem": {"base": null, "semente": null, "nota": "Vetor autoral, sem base: e glifo de interface, nao personagem nem predio."}
       },
       "stone": {
         "arquivo": "sprites/ui/hud-stone.svg",
-        "tamanho": [
-          20,
-          20
-        ],
+        "tamanho": [20, 20],
         "licenca": "arte propria do projeto, desenhada em SVG na sessao de 2026-09-25",
-        "origem": {
-          "base": null,
-          "semente": null,
-          "nota": "Vetor autoral, sem base: e glifo de interface, nao personagem nem predio."
-        }
+        "origem": {"base": null, "semente": null, "nota": "Vetor autoral, sem base: e glifo de interface, nao personagem nem predio."}
       },
       "comida": {
         "arquivo": "sprites/ui/hud-comida.svg",
-        "tamanho": [
-          20,
-          20
-        ],
+        "tamanho": [20, 20],
         "licenca": "arte propria do projeto, desenhada em SVG na sessao de 2026-09-25",
-        "origem": {
-          "base": null,
-          "semente": null,
-          "nota": "Vetor autoral, sem base: e glifo de interface, nao personagem nem predio."
-        }
+        "origem": {"base": null, "semente": null, "nota": "Vetor autoral, sem base: e glifo de interface, nao personagem nem predio."}
       },
       "populacao": {
         "arquivo": "sprites/ui/hud-populacao.svg",
-        "tamanho": [
-          20,
-          20
-        ],
+        "tamanho": [20, 20],
         "licenca": "arte propria do projeto, desenhada em SVG na sessao de 2026-09-25",
-        "origem": {
-          "base": null,
-          "semente": null,
-          "nota": "Vetor autoral, sem base: e glifo de interface, nao personagem nem predio."
-        }
+        "origem": {"base": null, "semente": null, "nota": "Vetor autoral, sem base: e glifo de interface, nao personagem nem predio."}
       }
     }
   }
