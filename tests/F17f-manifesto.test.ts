@@ -85,13 +85,39 @@ describe('F17f — o manifesto descreve a arte que existe', () => {
   });
 
   // O outro lado do §9: placeholder e comportamento normal, nao e falha.
-  it('predio sem arte resolve null, e e a maioria', () => {
-    expect(assetDoPredio(manifesto, 'quarry')).toBeNull();
-    expect(assetDoPredio(manifesto, 'schoolhouse')).toBeNull();
+  //
+  // 2026-09-26 (docs/planos/F17f-lista-derivada.md): a lista de quem tem arte sai
+  // do MANIFESTO, nao do teste. Antes ela era fixada aqui (`quarry` e `schoolhouse`
+  // sem arte, e "todos menos um") e reprovava a cada predio novo que a arte
+  // trouxesse — o teste afirmava o retrato do dia, nao a regra. A regra e: o
+  // resolvedor concorda com o manifesto, nos dois sentidos.
+  it('predio resolve arte se e so se o manifesto tem entrada para ele', () => {
+    const idsNoManifesto = new Set(manifesto.assets.map((e) => e.id));
+    for (const p of gameData.predios) {
+      const entrada = assetDoPredio(manifesto, p.id);
+      if (idsNoManifesto.has(p.id)) {
+        expect(entrada?.id, p.id).toBe(p.id);
+      } else {
+        expect(entrada, p.id).toBeNull();
+      }
+    }
     expect(assetDoPredio(manifesto, 'tipo_que_nao_existe')).toBeNull();
+  });
 
-    const semArte = gameData.predios.filter((p) => assetDoPredio(manifesto, p.id) === null);
-    expect(semArte.length).toBe(gameData.predios.length - 1);
+  // O lado `null` provado com um manifesto de UMA entrada: quando os 28 predios
+  // tiverem arte, o teste de cima deixa de exercitar o ramo `null` com predio real,
+  // e este continua exercitando.
+  it('predio fora do manifesto resolve null, mesmo com outro predio dentro', () => {
+    const [primeiro, ...outros] = gameData.predios;
+    const umaEntrada: Manifesto = {
+      versao: 1,
+      assets: [{ ...manifesto.assets[0]!, id: primeiro!.id }],
+    };
+    expect(assetDoPredio(umaEntrada, primeiro!.id)?.id).toBe(primeiro!.id);
+    expect(outros.length).toBeGreaterThan(0);
+    for (const p of outros) {
+      expect(assetDoPredio(umaEntrada, p.id), p.id).toBeNull();
+    }
   });
 
   it('estagio sem arte resolve null, mesmo num predio que tem arte', () => {

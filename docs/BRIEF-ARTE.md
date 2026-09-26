@@ -40,9 +40,9 @@ vertical da imagem, nunca em diagonal.
 **O caso medido.** O armazém atual (`assets/base/storehouse/`) veio isométrico. Depois
 de derivado, o prédio completo cobre só cerca de 39 % do quadrado de chão de 3×3 tiles
 que ele ocupa, e o resto fica vazio. A medida está na nota do `assets/manifest.json`.
-O operador chama esse defeito de "BUG-F". O arquivo `BUGS.md` **não** registra esse
-nome para o armazém: lá o BUG-F é outro defeito, já corrigido. Trate o armazém como
-**arte a refazer**, não como bug de código.
+Esse defeito é o **BUG-H** no `BUGS.md`, com severidade `feio`. A correção é arte,
+não código: refazer os seis estágios do armazém. Em conversa antiga ele aparece como
+"BUG-F", mas esse id é de outro bug, já corrigido. Use BUG-H.
 
 **A referência aprovada** é `assets/base/woodcutters/` (Casa do Lenhador), em especial
 `casa_lenhador_03_completo.png`. O prompt que a gerou está em
@@ -149,20 +149,25 @@ Regras que o teste `tests/F17f-manifesto.test.ts` confere **[lido]**:
 `footprint` é `[largura, profundidade]` em tiles. `estados` pode ter só parte dos seis
 estágios. O estágio que falta vira retângulo placeholder na tela.
 
-### O teste que vai reprovar, e por que isso é esperado
+### Prédio novo não reprova o teste; o armazém refeito reprova
 
-**[testado]** Acrescentar a casa do lenhador ao manifest faz `npm run verify` reprovar
-**exatamente um** teste: `tests/F17f-manifesto.test.ts`, linha 94, com a mensagem
-`expected 26 to be 27`. Esse teste conta quantos prédios estão **sem** arte e hoje
-espera "todos menos o armazém".
-**[lido]** A linha 89 afirma que a pedreira (`quarry`) não tem arte. Acrescentar a
-pedreira reprova também essa linha.
+**Prédio novo.** A lista de quem tem arte é **derivada do manifesto** desde 2026-09-26
+(`docs/planos/F17f-lista-derivada.md`). **[testado]** Acrescentar a pedreira com seis
+estágios, ou a casa do lenhador com dois, deixa o F17f inteiro verde. Prédio novo
+entra sem mexer em teste nenhum.
 
-Essas duas asserções descrevem o estado de hoje, não uma regra. Elas **precisam mudar**
-quando a arte entrar. Mas o `AGENTS.md` proíbe afrouxar teste sem plano. Então:
-**não edite esse teste por conta própria**. A atualização dele tem de estar escrita no
-plano da tarefa (`docs/planos/`) ou vir de decisão do operador. Sem isso, pare e
-reporte.
+**O armazém refeito (BUG-H).** **[testado]** Trocar a entrada do armazém por seis
+estágios reprova dois testes do F17f:
+
+- "o armazem tem arte em tres dos seis estagios", porque ele afirma os nomes dos
+  arquivos atuais, incluindo `storehouse_madeira.png`;
+- "estagio sem arte resolve null, mesmo num predio que tem arte", porque ele usa
+  `paredes` e `cobertura`, que faltam ao armazém atual.
+
+Esses dois testes afirmam outra coisa além do manifesto, e o que fazer com eles é
+**decisão do operador**. **Não edite esses testes.** Se a tarefa refizer o armazém e o
+plano não disser o que fazer com eles, pare e reporte. Não faça isso pela metade
+também: sem essa decisão, o armazém refeito não entra no manifest.
 
 ---
 
@@ -322,8 +327,11 @@ cima. Não existe ainda caminho de código para carregar sprite de unidade (seç
 | knight | Capitão do Bando | peixeira e cano de fogo | sim |
 
 **Mercenários (5):** rebel Retirante, rogue Emboscador, vagabond Andarilho (montado),
-barbarian Bruto do Mato, warrior Jagunço. O dado **não declara** o número de direções
-deles, e o tema não descreve a arma. Pergunte ao operador antes de gerar.
+barbarian Bruto do Mato, warrior Jagunço. **Fora de qualquer leva por enquanto**
+(decisão do operador, 2026-09-26). O dado não declara o número de direções deles, o
+tema não descreve a arma, e eles ainda não existem no jogo, porque a Fase C, a
+militar, não começou. O operador decide quando o Quartel existir. A lacuna está
+registrada como nota no item F25 do `BUILD_PLAN.md`. **Não gere mercenário.**
 
 ### Terrenos (6)
 
@@ -429,8 +437,9 @@ Sequência **[testada]** em 2026-09-26, num worktree descartável, com a casa do
    ```bash
    npm run verify
    ```
-   Resultado testado: exatamente uma reprovação, a esperada (seção 3, "O teste que vai
-   reprovar").
+   Resultado testado antes de 2026-09-26: uma reprovação no F17f, a da lista fixa. Com
+   a lista derivada, o F17f passa com a casa do lenhador (testado só o F17f, não o
+   verify inteiro com a entrada). Com o armazém refeito, veja a seção 3.
 6. Tire o screenshot do cenário de abertura, que planta armazém, casa do lenhador,
    pedreira, escola e estrada:
    ```bash
@@ -481,7 +490,7 @@ Os três são os que a abertura planta primeiro e os que o roteiro F17 mostra.
 
 | id | Nome | Footprint | Sprite | Estado de hoje |
 |---|---|---|---|---|
-| storehouse | Armazém | 3×3 | 192 px de largura | isométrico: refazer os seis estágios |
+| storehouse | Armazém | 3×3 | 192 px de largura | isométrico, BUG-H: refazer os seis estágios; entrar no manifest espera a decisão sobre dois testes (seção 3) |
 | woodcutters | Casa do Lenhador | 3×2 | 192 px de largura | base aprovada para estrutura e completo: refazer a marcação no canvas deles e gerar fundação, paredes e cobertura |
 | quarry | Pedreira | 3×2 | 192 px de largura | nada: seis estágios novos, **sem pedra desenhada** |
 

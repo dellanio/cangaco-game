@@ -60,7 +60,30 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
 
 ## Polimento
 
-_Nenhum._
+## BUG-H — o sprite do armazém é isométrico e não preenche o footprint 3×3
+- feature: F17f (o primeiro sprite real)
+- severidade: feio
+- repro: `npm run shot -- F17`, captura `screenshots/F17-5-final.png`; a base é
+  `assets/base/storehouse/armazem_0{1,2,3}_*.png`
+- esperado: top-down 3/4 sobre grid ortogonal (CLAUDE.md §4, GDD §9.3) — a base do
+  prédio é um retângulo de arestas horizontais, como em `assets/base/woodcutters/`,
+  e o prédio completo ocupa o footprint.
+- observado: o chão do sprite é um losango ~2:1 (isométrico). Derivado a 192 px de
+  largura, o completo cobre ~39 % do quadrado de chão; o resto do 3×3 fica vazio. A
+  medida e a causa estão na nota de `origem` do armazém em `assets/manifest.json`:
+  nenhuma escala concilia losango com footprint quadrado.
+- correção: arte, não código. Refazer os seis estágios do armazém no ângulo da
+  referência aprovada, pelo `docs/BRIEF-ARTE.md`. Ao entrar, dois testes do
+  `tests/F17f-manifesto.test.ts` reprovam por construção ("o armazem tem arte em tres
+  dos seis estagios" e "estagio sem arte resolve null, mesmo num predio que tem
+  arte"): eles afirmam os nomes e os estágios que faltam ao armazém ATUAL. O que
+  fazer com eles é decisão do operador (`docs/planos/F17f-lista-derivada.md`).
+- nome: o operador chamava este defeito de "BUG-F"; esse id já é de outro bug,
+  corrigido em 2026-09-24 (obra e estrada recusam recurso que bloqueia). Este é o H.
+- evidência: a nota de medida em `assets/manifest.json` (entrada `storehouse`); e a
+  captura `F17-5-final.png` aberta em 2026-09-26 num worktree descartável em
+  `4a1b65d`, já apagado — rode o repro para ter a sua.
+- status: aberto
 
 Os três bugs de oscilação de tempo que moravam aqui (BUG-D na F-T1, BUG-E na F-T2b e,
 antes deles, o BUG-001 na F09) saíram em 2026-09-24 com a regra que os dissolveu:

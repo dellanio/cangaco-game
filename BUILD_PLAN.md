@@ -3304,6 +3304,11 @@ Depende da F20b: o marcador lê `unidade.condicao`, que só existe depois dela. 
 
 ### F24 — Weapons workshop e cadeia de couro
 ### F25 — Barracks e criação de soldado
+- **Nota (decisão do operador, 2026-09-26): a arte dos mercenários espera o Quartel.**
+  Os cinco mercenários (`rebel`, `rogue`, `vagabond`, `barbarian`, `warrior`) ficaram
+  fora da arte: `data/units.json` não declara `direcoesDeSprite` para eles e
+  `data/theme-sertao.json` não descreve a arma. O operador decide as duas lacunas
+  quando o Quartel existir. Até lá, `docs/BRIEF-ARTE.md` manda não gerar mercenário.
 ### F26 — Seleção e movimento de grupo
 - **Nota (herdada da F18f, 2026-09-24)**: o desenho da unidade sai do centro do
   tile por um deslocamento de até ±16 px derivado do id. **O teste de acerto do

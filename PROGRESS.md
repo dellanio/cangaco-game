@@ -7211,3 +7211,35 @@ medição e o guarda. Plano e tabela: `docs/planos/F-T4d.md`. O item entrou no
   As saídas que a medida deixa: o critério (b) valer só para o campo do lado da porta,
   com o campo mal posto aceito como "não sustenta"; ou o termo que muda ser a caminhada.
 - **BUG-G é `trava`**: pela §6, precede a fila.
+
+## 2026-09-26 — Antes da arte: F17f com lista derivada, BUG-H e mercenários fora
+
+Pedido do operador, três coisas antes de o Codex começar a arte (`docs/BRIEF-ARTE.md`).
+
+### Verificado (rodei o comando ou abri o arquivo)
+
+- **O F17f fixava a arte do dia em três testes.** Medido num worktree descartável, com
+  PNGs de dimensão certa: a pedreira reprova na linha 89 (`expected {quarry} to be null`),
+  a casa do lenhador na 94 (`expected 26 to be 27`), e o armazém refeito com seis
+  estágios reprova "o armazem tem arte em tres dos seis estagios" e "estagio sem arte
+  resolve null, mesmo num predio que tem arte". Tabela em `docs/planos/F17f-lista-derivada.md`.
+- **A lista agora é derivada do manifesto** (`tests/F17f-manifesto.test.ts`): prédio
+  resolve arte se e só se o manifesto tem entrada, mais um manifesto sintético de uma
+  entrada para o ramo `null` não ficar vazio quando os 28 tiverem arte. Com pedreira e
+  com lenhador o F17f fica verde; com resolvedor que ignora o id e com resolvedor que
+  sempre devolve `null`, os dois testes novos reprovam. `npm run verify` verde, 1434 testes.
+- **BUG-H aberto** no `BUGS.md`, severidade `feio`: o armazém isométrico. "BUG-F" era
+  apelido; o id F é do bug de recurso que bloqueia, corrigido em `d08a610`.
+- **Mercenários fora da arte**, nota no item F25 do `BUILD_PLAN.md`.
+- **O worktree `feature/derivacao-sprites`** (`C:/Users/della/orca/workspaces/...`) está
+  em `57c3cec`, 99 commits atrás da `main`, sem commit próprio e sem arquivo modificado.
+  A branch foi criada em 2026-09-26 00:03. Não toquei nele.
+
+### Aberto — precisa do operador
+
+- **Os dois testes do armazém** afirmam outra coisa que o manifesto: o guarda da troca
+  de nome da F17e (chave `madeira`) e o placeholder por estágio, usando os estágios que
+  faltam ao armazém atual. Reprovam quando o BUG-H for corrigido. Proposta, não
+  aplicada: o guarda da F17e vira "nenhuma entrada tem chave fora dos seis estágios", e o
+  placeholder por estágio usa um manifesto sintético, como o teste novo. Os dois ficam
+  derivados sem perder o que afirmam.
