@@ -64,6 +64,10 @@ export interface ReceitaDePredio {
    *  Substituiu `rendimentoDoVeio`, que punha o total no PREDIO e fazia com que
    *  demolir e reconstruir renovasse a fonte. */
   readonly colheita: ColheitaDeRecurso | null;
+  /** F24a — cada ciclo entrega UMA das saidas de `sai`, e nao todas. Qual e a
+   *  cota do predio (`Producao.escolha`). `false` e a receita de sempre: o ciclo
+   *  deposita todas as saidas juntas (a granja: porco e couro). */
+  readonly escolheSaida: boolean;
 }
 
 /** F-T2a — a colheita de um predio: o que ele corta e ate onde alcanca. */

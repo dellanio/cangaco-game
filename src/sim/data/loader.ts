@@ -381,8 +381,15 @@ export function loadGameData(raw: RawGameData): GameData {
         `loadGameData: a receita '${predioId}' colhe '${colheita.recurso}', que nao existe em resources.tipos`,
       );
     }
+    // F24a — a marca de escolha so tem sentido com duas saidas ou mais: com uma,
+    // "escolher" e o ciclo de sempre, e o dado estaria dizendo outra coisa.
+    const escolheSaida = 'escolheSaida' in def && def.escolheSaida === true;
+    if (escolheSaida && Object.keys(periodos.sai).length < 2) {
+      throw new Error(`loadGameData: a receita '${predioId}' escolhe a saida, mas declara menos de duas`);
+    }
     receitas[predioId] = {
       ticksDoCiclo,
+      escolheSaida,
       entra: quantidades(periodos.entra),
       sai: quantidades(periodos.sai),
       colheita: colheita === null ? null : {

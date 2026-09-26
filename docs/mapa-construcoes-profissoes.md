@@ -66,13 +66,13 @@ na escala 1.0 (`production.json`), antes do multiplicador de tempo.
 | Casa do Lenhador | `woodcutters` | 3x2 | 3 | 2 | 250 | Casa do Coronel | Lenhador | — | Tora 0.55 |
 | Torre de Pedra | `watchtower` | 2x2 | 3 | 2 | 250 | Pedreira | Aprendiz | — | — |
 | Serraria | `sawmill` | 4x2 | 4 | 3 | 350 | Casa do Lenhador | Carpina | Tora 1.1 | Tábua 2.2 |
-| Roçado de Milho | `farm` | 4x3 | 4 | 3 | 350 | Serraria | Roceiro | — | Milho 1.22 |
+| Roçado de Milho | `farm` | 4x3 | 4 | 3 | 350 | Serraria | Roceiro | — | Milho 3 |
 | Canavial | `wineyard` | 3x2 | 4 | 3 | 350 | Serraria | Roceiro | — | Cachaça 0.5 |
 | Casa do Pescador | `fishermans` | 3x2 | 4 | 3 | 350 | Serraria | Pescador | — | Peixe 1 |
 | Garimpo | `gold_mine` | 2x1 | 3 | 2 | 250 | Serraria | Mineiro | — | Ouro bruto 1 |
 | Jazida de Carvão | `coal_mine` | 3x2 | 3 | 2 | 250 | Serraria | Mineiro | — | Carvão 1.2 |
 | Mina de Ferro | `iron_mine` | 3x1 | 3 | 2 | 250 | Serraria | Mineiro | — | Minério 1 |
-| Casa de Armas de Madeira | `weapons_workshop` | 4x2 | 4 | 3 | 350 | Serraria | Carpina | Tábua 1.6 | Arma de madeira 0.8 |
+| Casa de Armas de Madeira | `weapons_workshop` | 4x2 | 4 | 3 | 350 | Serraria | Carpina | Tábua 1.6 | Facão 0.8, Aguilhada 0.8, Bodoque 0.8 |
 | Quartel do Bando | `barracks` | 4x4 | 6 | 6 | 600 | Serraria | — | — | — |
 | Feira | `marketplace` | 4x3 | 6 | 5 | 550 | Serraria | — | — | — |
 | Moinho | `mill` | 3x3 | 4 | 3 | 350 | Roçado de Milho | Forneiro | Milho 1.22 | Fubá 1.22 |
@@ -85,8 +85,8 @@ na escala 1.0 (`production.json`), antes do multiplicador de tempo.
 | Fundição | `metallurgists` | 3x3 | 4 | 3 | 350 | Garimpo | Fundidor | Ouro bruto 0.5, Carvão 0.5 | Dinheiro 1 |
 | Mercenários | `town_hall` | 4x3 | 6 | 5 | 550 | Fundição | — | — | — |
 | Forja | `iron_smithy` | 4x2 | 4 | 3 | 350 | Mina de Ferro | Fundidor | Minério 1, Carvão 1 | Ferro 1 |
-| Ferraria | `weapon_smithy` | 4x2 | 4 | 3 | 350 | Forja | Ferreiro | Ferro 0.8, Carvão 0.8 | Arma de ferro 0.8 |
-| Casa do Ferro | `armor_smithy` | 4x3 | 4 | 3 | 350 | Forja | Ferreiro | Ferro 0.8, Carvão 0.8 | Proteção reforçada 0.8 |
+| Ferraria | `weapon_smithy` | 4x2 | 4 | 3 | 350 | Forja | Ferreiro | Ferro 0.8, Carvão 0.8 | Peixeira 0.8, Ferrão 0.8, Bacamarte 0.8 |
+| Casa do Ferro | `armor_smithy` | 4x3 | 4 | 3 | 350 | Forja | Ferreiro | Ferro 0.8, Carvão 0.8 | Gibão reforçado 0.8, Peitoral de couro cru 0.8 |
 
 ---
 
@@ -131,7 +131,7 @@ de `production.json`.
 
 - Pedreira → **Pedra**
 - Casa do Lenhador → Tora → Serraria → Tábua → Casa do Gibão → **Gibão de couro + Chapéu de aba**
-- Casa do Lenhador → Tora → Serraria → Tábua → Casa de Armas de Madeira → **Arma de madeira**
+- Casa do Lenhador → Tora → Serraria → Tábua → Casa de Armas de Madeira → **Facão + Aguilhada + Bodoque**
 - Roçado de Milho → Milho → Moinho → Fubá → Padaria → **Cuscuz**
 - Roçado de Milho → Milho → Malhada → Bode → Casa de Carne → **Carne de sol**
 - Roçado de Milho → Milho → Malhada → Couro cru → Curtume → Couro → Casa do Gibão → **Gibão de couro + Chapéu de aba**
@@ -140,9 +140,9 @@ de `production.json`.
 - Casa do Pescador → **Peixe**
 - Garimpo → Ouro bruto → Fundição → **Dinheiro**
 - Jazida de Carvão → Carvão → Fundição → **Dinheiro**
-- Jazida de Carvão → Carvão → Forja → Ferro → Ferraria → **Arma de ferro**
-- Jazida de Carvão → Carvão → Forja → Ferro → Casa do Ferro → **Proteção reforçada**
-- Jazida de Carvão → Carvão → Ferraria → **Arma de ferro**
-- Jazida de Carvão → Carvão → Casa do Ferro → **Proteção reforçada**
-- Mina de Ferro → Minério → Forja → Ferro → Ferraria → **Arma de ferro**
-- Mina de Ferro → Minério → Forja → Ferro → Casa do Ferro → **Proteção reforçada**
+- Jazida de Carvão → Carvão → Forja → Ferro → Ferraria → **Peixeira + Ferrão + Bacamarte**
+- Jazida de Carvão → Carvão → Forja → Ferro → Casa do Ferro → **Gibão reforçado + Peitoral de couro cru**
+- Jazida de Carvão → Carvão → Ferraria → **Peixeira + Ferrão + Bacamarte**
+- Jazida de Carvão → Carvão → Casa do Ferro → **Gibão reforçado + Peitoral de couro cru**
+- Mina de Ferro → Minério → Forja → Ferro → Ferraria → **Peixeira + Ferrão + Bacamarte**
+- Mina de Ferro → Minério → Forja → Ferro → Casa do Ferro → **Gibão reforçado + Peitoral de couro cru**

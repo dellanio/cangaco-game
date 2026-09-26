@@ -10,7 +10,7 @@
  */
 import type { GameData, ReceitaDePredio } from './data/types';
 import { gameData } from './data';
-import type { GameState, Predio, PredioCompleto } from './state';
+import type { EscolhaDeSaida, GameState, Predio, PredioCompleto } from './state';
 import { algumTileTrabalhavel, melhorTileDeColheita } from './recursos';
 import { tileAlcancavelParaColheita } from './aproximacao';
 
@@ -31,9 +31,65 @@ export function ehPredioProdutivo(
 }
 
 /** Unidades de saida de UM ciclo (a soma de `sai`). A quarry rende 1, a sawmill
- *  2, a granja 1 porco + 1 couro = 2. */
+ *  2, a granja 1 porco + 1 couro = 2. F24a — na receita que escolhe a saida, o
+ *  ciclo entrega UMA delas: vale a maior, que e o teto do que cabe na gaveta. */
 export function unidadesPorCiclo(receita: ReceitaDePredio): number {
-  return Object.values(receita.sai).reduce((soma, q) => soma + q, 0);
+  const qs = Object.values(receita.sai);
+  if (receita.escolheSaida) return Math.max(0, ...qs);
+  return qs.reduce((soma, q) => soma + q, 0);
+}
+
+/** F24a — a escolha com que o predio nasce: cota 1 para cada saida, ou seja, o
+ *  rodizio na ordem de `economia.mercadorias`. Vale tambem para save de antes da
+ *  F24a, em que o campo nao existia. */
+export function escolhaInicial(receita: ReceitaDePredio, dados: GameData = gameData): EscolhaDeSaida {
+  const cota: Record<string, number> = {};
+  for (const m of dados.economia.mercadorias) if (m in receita.sai) cota[m] = 1;
+  return { cota, proxima: 0 };
+}
+
+/** F24a — o rodizio expandido: cada saida repetida `cota[m]` vezes, na ordem de
+ *  `economia.mercadorias` (nunca `Object.keys` da cota, que veio do save). */
+export function rodizioDaEscolha(escolha: EscolhaDeSaida, dados: GameData = gameData): string[] {
+  const rodizio: string[] = [];
+  for (const m of dados.economia.mercadorias) {
+    for (let i = 0; i < (escolha.cota[m] ?? 0); i++) rodizio.push(m);
+  }
+  return rodizio;
+}
+
+/** A escolha em vigor: a do predio, ou a inicial quando falta ou nao escolhe nada
+ *  (save adulterado — o comando nunca deixa a cota toda em zero). */
+function escolhaEmVigor(predio: PredioCompleto, receita: ReceitaDePredio, dados: GameData): EscolhaDeSaida {
+  const escolha = predio.producao?.escolha;
+  if (escolha === undefined || rodizioDaEscolha(escolha, dados).length === 0) return escolhaInicial(receita, dados);
+  return escolha;
+}
+
+/**
+ * F24a — o que ESTE ciclo deposita. Receita sem escolha: `sai` inteiro, como
+ * sempre. Com escolha: so a saida da vez no rodizio.
+ */
+export function saidasDoCiclo(
+  predio: PredioCompleto, receita: ReceitaDePredio, dados: GameData = gameData,
+): Readonly<Record<string, number>> {
+  if (!receita.escolheSaida) return receita.sai;
+  const escolha = escolhaEmVigor(predio, receita, dados);
+  const rodizio = rodizioDaEscolha(escolha, dados);
+  const vez = rodizio[escolha.proxima % rodizio.length];
+  const q = vez === undefined ? undefined : receita.sai[vez];
+  return vez === undefined || q === undefined ? {} : { [vez]: q };
+}
+
+/** F24a — a escolha depois de um deposito: a vez passa para a proxima do rodizio.
+ *  `undefined` na receita que nao escolhe, para o campo continuar ausente. */
+export function escolhaDepoisDoDeposito(
+  predio: PredioCompleto, receita: ReceitaDePredio, dados: GameData = gameData,
+): EscolhaDeSaida | undefined {
+  if (!receita.escolheSaida) return undefined;
+  const escolha = escolhaEmVigor(predio, receita, dados);
+  const tamanho = rodizioDaEscolha(escolha, dados).length;
+  return { ...escolha, proxima: (escolha.proxima + 1) % tamanho };
 }
 
 /** A gaveta `entrada` tem TUDO que o ciclo consome? Verdade de vacuo para

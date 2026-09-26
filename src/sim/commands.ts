@@ -136,4 +136,17 @@ export type Command =
       readonly type: 'SetBuildingPaused';
       readonly predio: string;
       readonly pausado: boolean;
+    }
+  | {
+      /**
+       * F24a — fixa a cota da oficina `predio` (GDD §2.3, "quantas de cada arma
+       * produzir"). A cota e o PESO de cada saida no rodizio: `{ lance: 1 }` faz
+       * so aguilhada; `{ hand_axe: 2, longbow: 1 }` faz dois facoes para cada
+       * bodoque. Saida omitida vale zero. Recusado (`command-rejected`) se o
+       * predio nao existe, esta em obra, nao escolhe a saida, se a cota nomeia o
+       * que a receita nao faz, tem valor que nao e inteiro >= 0, ou e toda zero.
+       */
+      readonly type: 'SetProductionQuota';
+      readonly predio: string;
+      readonly cota: Readonly<Record<string, number>>;
     };

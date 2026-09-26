@@ -8266,3 +8266,53 @@ arquivos de dados foram revertidos pelos backups, e o `git status` ficou limpo.
   - A mudança desta sessão não toca o F09.
   - O `verify` seguinte passou.
   - Hipótese, não confirmada: carga da máquina, o mesmo caso que motivou o orçamento de 10 s em `5e25147`. Não alarguei o orçamento.
+
+## 2026-09-26 (noite, 11) — F24a: as armas separadas nas seis do GDD
+
+Plano: `docs/planos/F24a-armas.md`. Pedido do operador: três tarefas seguidas (F24a, F-VIVO-b, medição da barra lateral), com decisões conservadoras registradas aqui para revisão.
+
+### O que mudou
+
+- **Dado.** As três receitas declaram as saídas possíveis e `"escolheSaida": true`:
+  - `weapons_workshop`: `hand_axe`, `lance`, `longbow`;
+  - `weapon_smithy`: `sword`, `pike`, `crossbow`;
+  - `armor_smithy`: `iron_armor`, `iron_shield`.
+  Os ids agregados `arma_madeira`, `arma_ferro` e `armadura_ferro` saíram do dado e do tema.
+- **Carregador.** `ReceitaDePredio.escolheSaida`. Marca com menos de duas saídas é erro de carregamento.
+- **Estado.** `Producao.escolha?: { cota, proxima }` existe só no prédio cuja receita escolhe, e é omitido nos outros.
+- **Sim.**
+  - `depositar` entrega `saidasDoCiclo`: a saída inteira, ou só a vez do rodízio.
+  - Toda reconstrução de `producao` em `especialistas.ts` passou a espalhar a anterior, e por isso a `escolha` sobrevive.
+- **Comando** `SetProductionQuota { predio, cota }` (`sim/cota.ts`, `sim/systems/cota.ts`). Motivos de recusa: `predio-inexistente`, `predio-em-obra`, `sem-escolha`, `mercadoria-invalida`, `cota-invalida` e `cota-vazia`.
+- **validate:data** ganhou:
+  - `producao/saida-desconhecida`: id de `sai` fora de `economy.mercadorias`;
+  - `producao/escolha-sem-opcao`.
+- `docs/mapa-construcoes-profissoes.md` foi regerado. Em `docs/BRIEF-ARTE.md` §4a, o parágrafo "Mercadorias sem pilha" virou histórico.
+
+### Verificado (rodado, evidência aberta: `test-output/F24a.json`)
+
+- **Caminho real, 6000 ticks.** As três oficinas saem de `PlaceBlueprint` e os três especialistas são treinados na escola. O serf abastece da `saida` do armazém.
+  - As oito saídas chegaram ao armazém: hand_axe 5, lance 5, longbow 4, sword 4, pike 4, crossbow 3, iron_armor 5 e iron_shield 4.
+  - A primeira entrega foi no tick 1115 (hand_axe) e a última no 2256 (iron_shield).
+  - Fixture declarada: estradas, `tiposJaConstruidos` com a serraria e a Casa de Fundição, e 20 de ferro e 20 de carvão no armazém.
+- **Cota só com `lance`**: 3000 ticks, 7 lanças, nenhuma outra mercadoria.
+- **Recusas**: os seis motivos, cada um com o comando que o provoca. O caso `predio-em-obra` usa uma planta recém-posta.
+- **Dado**:
+  - a união de `receitas.*.sai` está contida em `economia.mercadorias`, por conjunto;
+  - o dado sintético com `arma_madeira` reprova com `producao/saida-desconhecida`;
+  - o dado real passa.
+- **Pilha**: pelo funil `dadosDasPilhas`/`pilhasDoPredio` (import), a saída das três casas mostra as suas armas.
+- **Determinismo**: save/load no tick 1900, no meio do rodízio, dá o mesmo estado.
+- `npm run verify` verde: 1500 testes, mais a corrida transladada.
+
+### Decisões minhas (para revisão)
+
+- **A cota é peso permanente de um rodízio ponderado**, e não uma encomenda que se esgota como no KaM. `{lance: 2, longbow: 1}` gera lance, lance, longbow, e assim para sempre. É a leitura mais simples de "quantas de cada arma produzir" (GDD §2.3) que não precisa de estado de "encomenda cumprida". Se o operador quiser encomenda com contador, o campo `cota` continua servindo, e muda só o avanço.
+- **Cota toda zero é recusada (`cota-vazia`).** Para parar a oficina já existe `SetBuildingPaused`, e dois caminhos para o mesmo efeito dariam dois estados para a mesma tela.
+- **A escolha se resolve no depósito, não no início do ciclo.** O insumo é o mesmo para todas as saídas de uma casa, e por isso nada muda antes do depósito. Mudar a cota no meio do ciclo vale para o ciclo em curso.
+- **`unidadesPorCiclo` de receita que escolhe é a maior das saídas**, e não a soma: sai uma por vez.
+- **O campo `escolha` é opcional**, para não obrigar os ~25 literais de `Producao` nos testes. Recebe a convenção de `DadosDaFsm`: ausente, nunca `undefined`.
+
+### Aberto
+
+- **F24a-ui**, o painel da cota, é sub-item que ainda não foi escrito na fila. Hoje a cota só se fixa por comando.

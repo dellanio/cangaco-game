@@ -355,10 +355,7 @@
     "leather_armor": "Gibão de couro",
     "iron_armor": "Gibão reforçado",
     "wooden_shield": "Chapéu de aba",
-    "iron_shield": "Peitoral de couro cru",
-    "arma_madeira": "Arma de madeira",
-    "arma_ferro": "Arma de ferro",
-    "armadura_ferro": "Proteção reforçada"
+    "iron_shield": "Peitoral de couro cru"
   },
   "hud": {
     "comida": "Comida",

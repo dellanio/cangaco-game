@@ -48,7 +48,8 @@ import { tileAlcancavelParaColheita } from '../aproximacao';
 import { ehPredioOcupavel, predioAceita, predioDoOcupante, tiposQueOcupam } from '../ocupacao';
 import { chaveDeTile, tileDeChave } from '../estradas';
 import {
-  cabeNaSaida, consumirInsumos, receitaDoTipo, semRecursoAoAlcance, temInsumo, unidadesPorCiclo,
+  cabeNaSaida, consumirInsumos, escolhaDepoisDoDeposito, receitaDoTipo, saidasDoCiclo, semRecursoAoAlcance,
+  temInsumo, unidadesPorCiclo,
 } from '../producao';
 import {
   colherDoTile, melhorTileDeColheita, melhorTileParaPlantio, reporNoTile, tilesReservadosParaColheita,
@@ -158,12 +159,16 @@ function depositar(
   const events: GameEvent[] = [];
   // ordem de `economia.mercadorias`, nunca `Object.keys` da receita: a ordem dos
   // eventos e do estoque tem que ser a mesma em qualquer maquina (contrato da F05a)
+  //
+  // F24a — a oficina de arma entrega UMA das saidas por ciclo, a da vez na cota.
+  const produzido = saidasDoCiclo(predio, receita, dados);
   for (const mercadoria of dados.economia.mercadorias) {
-    const q = receita.sai[mercadoria];
+    const q = produzido[mercadoria];
     if (q === undefined) continue;
     saida[mercadoria] = (saida[mercadoria] ?? 0) + q;
     events.push({ type: 'goods-produced', predio: predio.id, mercadoria, quantidade: q });
   }
+  const escolha = escolhaDepoisDoDeposito(predio, receita, dados);
   // F-T2a — a colheita: o que saiu da gaveta saiu do MAPA. Acontece aqui, no
   // deposito, e nao no avanco do relogio, para que o tile so perca o que virou
   // mercadoria de verdade.
@@ -174,7 +179,8 @@ function depositar(
   // reservado — e o mesmo contrato da tarefa de ocupar, que some quando o
   // especialista chega.
   const depositado: PredioCompleto = {
-    ...predio, estoque: { ...predio.estoque, saida }, producao: { progresso: 0, plantio: null },
+    ...predio, estoque: { ...predio.estoque, saida },
+    producao: escolha === undefined ? { progresso: 0, plantio: null } : { progresso: 0, plantio: null, escolha },
   };
   const comColheita: GameState = colheita === null ? state : {
     ...state,
@@ -301,7 +307,7 @@ function iniciarPlantio(
     predio: {
       ...predio,
       estoque: { ...predio.estoque, entrada },
-      producao: { progresso: prod.progresso, plantio },
+      producao: { ...prod, plantio },
     },
     plantio,
   };
@@ -327,14 +333,14 @@ function avancarPlantio(
   const progresso = plantio.progresso + 1;
   if (progresso < reposicao.ticks) {
     const avancado: PredioCompleto = {
-      ...predio, producao: { progresso: prod.progresso, plantio: { ...plantio, progresso } },
+      ...predio, producao: { ...prod, plantio: { ...plantio, progresso } },
     };
     return comFsm(comPredio(state, avancado), u, 'trabalhando');
   }
   const chaveDoTile = chaveDeTile(plantio.tile);
   const semeado: GameState = { ...state, recursos: reporNoTile(state, chaveDoTile, dados) };
   const pronto: PredioCompleto = {
-    ...predio, producao: { progresso: prod.progresso, plantio: null },
+    ...predio, producao: { ...prod, plantio: null },
   };
   return comFsm(comPredio(semeado, pronto), u, 'trabalhando');
 }
@@ -441,7 +447,7 @@ function produzir(state: GameState, u: Unidade, predio: PredioCompleto, dados: G
     atual = consumirInsumos(predio, receita);
   }
   const avancado: PredioCompleto = {
-    ...atual, producao: { progresso: prod.progresso + 1, plantio: null },
+    ...atual, producao: { ...prod, progresso: prod.progresso + 1, plantio: null },
   };
   const comRelogio = comPredio(base, avancado);
   return prod.progresso + 1 < receita.ticksDoCiclo
@@ -594,7 +600,7 @@ function passoColhendo(state: GameState, u: Unidade, dados: GameData): Passo {
   if (receita === null || prod === null) return voltarSemColher(state, u, predio, tarefa, dados);
 
   const progresso = prod.progresso + 1;
-  const avancado: PredioCompleto = { ...predio, producao: { progresso, plantio: null } };
+  const avancado: PredioCompleto = { ...predio, producao: { ...prod, progresso, plantio: null } };
   const comRelogio = comPredio(state, avancado);
   if (progresso < receita.ticksDoCiclo) return semEventos(comRelogio);
   return voltar(comRelogio, u, avancado, tarefa, dados);
@@ -624,7 +630,7 @@ function passoVoltando(state: GameState, u: Unidade, dados: GameData): Passo {
   const tarefa = colheitaSeguraPor(state, u.id);
   if (receita === null) return ficarOcioso(state, andou);
   if (tarefa === null) {
-    const zerado: PredioCompleto = { ...predio, producao: { progresso: 0, plantio: null } };
+    const zerado: PredioCompleto = { ...predio, producao: { ...predio.producao, progresso: 0, plantio: null } };
     return semEventos(comUnidade(comPredio(state, zerado), {
       ...andou, fsm: 'trabalhando', fsmData: {},
     }));
@@ -670,7 +676,7 @@ function voltarSemTarefa(
 ): Passo {
   const caminho = caminhoAtePredioCompleto(state, predio.id, u.id, dados);
   if (caminho === null) return desfazerPosse(state, u, predio, eventos);
-  const zerado: PredioCompleto = { ...predio, producao: { progresso: 0, plantio: null } };
+  const zerado: PredioCompleto = { ...predio, producao: { ...predio.producao, progresso: 0, plantio: null } };
   return {
     state: comUnidade(comPredio(state, zerado), {
       ...u, fsm: 'voltando', fsmData: dadosDaFsm({ caminho: caminho.tiles, progresso: 0 }),

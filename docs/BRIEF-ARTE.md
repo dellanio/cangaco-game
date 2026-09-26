@@ -436,11 +436,12 @@ A animação sozinha soma 300 (48 + 176 + 12 + 32 + 24 + 8). O operador escolheu
 nível, e não o mínimo de um laço por prédio, porque um laço só parece repetitivo e
 redesenhar custa mais que desenhar certo.
 
-**Mercadorias sem pilha, por enquanto.** A Casa de Armas de Madeira, a Ferraria e a
-Casa do Ferro produzem, no dado, `arma_madeira`, `arma_ferro` e `armadura_ferro`, que
-não estão entre as 28 de `data/economy.json`. A escolha da arma pelo jogador ainda não
-existe na simulação. Até existir, a saída desses três não tem pilha, e isso não é
-defeito de arte.
+**Pilha das armas (F24a, 2026-09-26).** Até a F24a, a Casa de Armas de Madeira, a
+Ferraria e a Casa do Ferro produziam `arma_madeira`, `arma_ferro` e `armadura_ferro`,
+que não eram mercadorias, e a saída delas não tinha pilha. Hoje saem as armas de
+verdade — `hand_axe`/`lance`/`longbow`, `sword`/`pike`/`crossbow` e
+`iron_armor`/`iron_shield`, uma por ciclo, pela cota do prédio — e a saída das três
+tem pilha, com a cor do tema.
 
 ---
 

@@ -3742,8 +3742,16 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
   Nenhuma tropa consome arma aqui: isso é a F25.
 - **Nota (pilha)**: com os ids reais, a pilha de cada arma é a da mercadoria
   (`docs/BRIEF-ARTE.md` §4a). A nota da F24 sobre pilhas fica atendida aqui.
+- **Entregue (2026-09-26)**: `tests/F24a-armas.test.ts`, evidência em
+  `test-output/F24a.json`. Comando `SetProductionQuota { predio, cota }`; marca
+  `escolheSaida` na receita; `producao/saida-desconhecida` no `validate:data`. O painel
+  da cota ficou de fora e é o sub-item **F24a-ui**, que ainda não foi escrito.
 
 ### F24 — Weapons workshop e cadeia de couro
+- **Nota (F24a entregue, 2026-09-26)**: as duas notas abaixo **já estão atendidas pela
+  F24a**, e ficam aqui como histórico. As três casas saem armas reais, que chegam ao
+  armazém pelo caminho real. A regra `producao/saida-desconhecida` existe, e a saída
+  tem pilha. O que resta da F24 é a cadeia de couro.
 - **Nota (decisão do operador, 2026-09-26): as pilhas das armas nascem com as armas.**
   A Casa de Armas de Madeira, a Ferraria e a Casa do Ferro produzem `arma_madeira`,
   `arma_ferro` e `armadura_ferro`, que não estão em `economia.mercadorias`. Por isso a
