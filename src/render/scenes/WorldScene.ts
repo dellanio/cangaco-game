@@ -44,6 +44,8 @@ import type { ChaveDaRevelacao, DesenhoDoRecurso, EntradaDeAsset, TexturaCarrega
 import { manifestoDoJogo, texturasParaCarregar } from '../sprites';
 
 const CHAVE_TEXTURA_TERRENO = 'tiles-terreno';
+const ESTADOS_DO_TERRENO = [ESTADO_DO_TERRENO, 'v1', 'v2', 'v3'] as const;
+const VARIANTES_DE_TERRENO = ESTADOS_DO_TERRENO.length;
 const CHAVE_TEXTURA_DETALHES = 'tiles-detalhes-terreno';
 const VARIANTES_DE_DETALHE = 3;
 const CHAVE_TEXTURA_RECURSO = 'tiles-recurso';
@@ -180,10 +182,14 @@ export class WorldScene extends Phaser.Scene {
     const texturaDosDetalhes = this.criarTexturaDeDetalhesDoTerreno(tilePx);
     this.criarCamadaDeDetalhesDoTerreno(tilePx, largura, altura, texturaDosDetalhes);
     const gradeDaFerramenta = this.criarGradeDaFerramenta(tilePx, largura, altura);
-    gradeDaFerramenta.setVisible(this.ferramenta.modo !== 'nenhum');
-    const desligarGrade = this.ferramenta.aoMudar((_predio, modo) => {
-      gradeDaFerramenta.setVisible(modo !== 'nenhum');
-    });
+    const aplicarForcaDaGrade = (modo: string): void => {
+      // Com textura real a linha embutida no placeholder deixa de existir. A
+      // malha continua sendo a linguagem do jogo: sutil em repouso, inteira
+      // quando uma ferramenta pede leitura tile a tile.
+      gradeDaFerramenta.setAlpha(modo === 'nenhum' ? 0.35 : 1);
+    };
+    aplicarForcaDaGrade(this.ferramenta.modo);
+    const desligarGrade = this.ferramenta.aoMudar((_predio, modo) => aplicarForcaDaGrade(modo));
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, desligarGrade);
     const texturaDoRecurso = this.criarTexturaDeRecurso(tilePx, carregada, estado);
     const camadaDeRecursos = this.criarCamadaDeRecursos(tilePx, largura, altura, texturaDoRecurso);
@@ -421,22 +427,36 @@ export class WorldScene extends Phaser.Scene {
   private criarTexturaDeTerreno(tilePx: number, carregada: TexturaCarregada, debug: EstadoDebug): string {
     const g = this.make.graphics({ x: 0, y: 0 }, false);
     terrenoDeRender.cores.forEach((hex, codigo) => {
-      g.fillStyle(Phaser.Display.Color.HexStringToColor(hex).color, 1);
-      g.fillRect(codigo * tilePx, 0, tilePx, tilePx);
-      // O grid continua sendo a linguagem do jogo, mas em repouso nao compete
-      // com predios e terreno. A ferramenta ativa recebe uma segunda camada,
-      // mais clara e forte, em `criarGradeDaFerramenta`.
-      g.lineStyle(1, 0x000000, 0.035);
-      g.strokeRect(codigo * tilePx, 0, tilePx, tilePx);
+      for (let variante = 0; variante < VARIANTES_DE_TERRENO; variante += 1) {
+        const x = (codigo * VARIANTES_DE_TERRENO + variante) * tilePx;
+        g.fillStyle(Phaser.Display.Color.HexStringToColor(hex).color, 1);
+        g.fillRect(x, 0, tilePx, tilePx);
+        // O grid continua sendo a linguagem do jogo, mas em repouso nao compete
+        // com predios e terreno. A ferramenta ativa recebe uma segunda camada,
+        // mais clara e forte, em `criarGradeDaFerramenta`.
+        g.lineStyle(1, 0x000000, 0.035);
+        g.strokeRect(x, 0, tilePx, tilePx);
+      }
     });
-    g.generateTexture(CHAVE_TEXTURA_TERRENO, tilePx * terrenoDeRender.cores.length, tilePx);
-    g.destroy();
-    const arte = terrenoDeRender.tipos.map(
-      (id) => texturaDaCamada(manifestoDoJogo, 'terreno', id, ESTADO_DO_TERRENO, carregada),
+    g.generateTexture(
+      CHAVE_TEXTURA_TERRENO,
+      tilePx * terrenoDeRender.cores.length * VARIANTES_DE_TERRENO,
+      tilePx,
     );
+    g.destroy();
+    const arte = terrenoDeRender.tipos.flatMap((id) => {
+      const padrao = texturaDaCamada(
+        manifestoDoJogo, 'terreno', id, ESTADO_DO_TERRENO, carregada,
+      );
+      return ESTADOS_DO_TERRENO.map(
+        (estado) => texturaDaCamada(manifestoDoJogo, 'terreno', id, estado, carregada) ?? padrao,
+      );
+    });
     debug.arteDasCamadas = {
       ...debug.arteDasCamadas,
-      terreno: terrenoDeRender.tipos.filter((_id, codigo) => arte[codigo] !== null),
+      terreno: terrenoDeRender.tipos.filter((_id, codigo) => arte
+        .slice(codigo * VARIANTES_DE_TERRENO, (codigo + 1) * VARIANTES_DE_TERRENO)
+        .some((chave) => chave !== null)),
     };
     return this.sobreporArteNaTira(CHAVE_TEXTURA_TERRENO, tilePx, arte, []);
   }
@@ -754,12 +774,13 @@ export class WorldScene extends Phaser.Scene {
     // Preenche com o codigo 0 e so visita o que difere: no mapa base a grande
     // maioria dos tiles e grama, e `fill` custa uma passada contra as duas de
     // um `putTileAt` por tile.
-    camada.fill(0, 0, 0, largura, altura);
     const { codigos, largura: larguraDoTerreno, altura: alturaDoTerreno } = terrenoDeRender;
-    for (let gy = 0; gy < Math.min(altura, alturaDoTerreno); gy += 1) {
-      for (let gx = 0; gx < Math.min(largura, larguraDoTerreno); gx += 1) {
-        const codigo = codigos[gy * larguraDoTerreno + gx] as number;
-        if (codigo !== 0) camada.putTileAt(codigo, gx, gy);
+    for (let gy = 0; gy < altura; gy += 1) {
+      for (let gx = 0; gx < largura; gx += 1) {
+        const dentroDoDado = gx < larguraDoTerreno && gy < alturaDoTerreno;
+        const codigo = dentroDoDado ? codigos[gy * larguraDoTerreno + gx] as number : 0;
+        const variante = this.hashVisual(gx, gy, codigo) % VARIANTES_DE_TERRENO;
+        camada.putTileAt(codigo * VARIANTES_DE_TERRENO + variante, gx, gy);
       }
     }
     return camada;
@@ -774,7 +795,8 @@ export class WorldScene extends Phaser.Scene {
     const contagem: Record<string, number> = {};
     for (const tipo of terrenoDeRender.tipos) contagem[tipo] = 0;
     for (const tile of camada.getTilesWithinWorldXY(vista.x, vista.y, vista.width, vista.height)) {
-      const tipo = terrenoDeRender.tipos[tile.index];
+      const codigo = Math.floor(tile.index / VARIANTES_DE_TERRENO);
+      const tipo = terrenoDeRender.tipos[codigo];
       if (tipo !== undefined) contagem[tipo] = (contagem[tipo] as number) + 1;
     }
     return contagem;

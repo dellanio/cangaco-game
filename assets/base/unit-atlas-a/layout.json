@@ -1,0 +1,13 @@
+{
+  "source": "assets/base/unit-atlas-a/source.png",
+  "cells": [
+    { "id": "serf", "crop": [0, 0, 384, 512], "output": "assets/sprites/units/serf/parado.png", "size": [64, 96], "fit": "contain" },
+    { "id": "laborer", "crop": [384, 0, 384, 512], "output": "assets/sprites/units/laborer/parado.png", "size": [64, 96], "fit": "contain" },
+    { "id": "stonemason", "crop": [768, 0, 384, 512], "output": "assets/sprites/units/stonemason/parado.png", "size": [64, 96], "fit": "contain" },
+    { "id": "woodcutter", "crop": [1152, 0, 384, 512], "output": "assets/sprites/units/woodcutter/parado.png", "size": [64, 96], "fit": "contain" },
+    { "id": "carpenter", "crop": [0, 512, 384, 512], "output": "assets/sprites/units/carpenter/parado.png", "size": [64, 96], "fit": "contain" },
+    { "id": "farmer", "crop": [384, 512, 384, 512], "output": "assets/sprites/units/farmer/parado.png", "size": [64, 96], "fit": "contain" },
+    { "id": "baker", "crop": [768, 512, 384, 512], "output": "assets/sprites/units/baker/parado.png", "size": [64, 96], "fit": "contain" },
+    { "id": "animal_breeder", "crop": [1152, 512, 384, 512], "output": "assets/sprites/units/animal_breeder/parado.png", "size": [64, 96], "fit": "contain" }
+  ]
+}

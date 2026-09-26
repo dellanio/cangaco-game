@@ -1,0 +1,13 @@
+{
+  "source": "assets/base/terrain-water-field/terrain-water-field-source.png",
+  "cells": [
+    { "id": "campo-v0", "crop": [6, 6, 431, 431], "output": "assets/sprites/terrain/campo-arado.png", "size": [64, 64], "fit": "stretch" },
+    { "id": "campo-v1", "crop": [6, 6, 370, 370], "output": "assets/sprites/terrain/campo-arado-v1.png", "size": [64, 64], "fit": "stretch" },
+    { "id": "campo-v2", "crop": [67, 6, 370, 370], "output": "assets/sprites/terrain/campo-arado-v2.png", "size": [64, 64], "fit": "stretch" },
+    { "id": "campo-v3", "crop": [36, 67, 370, 370], "output": "assets/sprites/terrain/campo-arado-v3.png", "size": [64, 64], "fit": "stretch" },
+    { "id": "agua-v0", "crop": [6, 449, 431, 431], "output": "assets/sprites/terrain/agua.png", "size": [64, 64], "fit": "stretch" },
+    { "id": "agua-v1", "crop": [6, 449, 370, 370], "output": "assets/sprites/terrain/agua-v1.png", "size": [64, 64], "fit": "stretch" },
+    { "id": "agua-v2", "crop": [67, 449, 370, 370], "output": "assets/sprites/terrain/agua-v2.png", "size": [64, 64], "fit": "stretch" },
+    { "id": "agua-v3", "crop": [36, 510, 370, 370], "output": "assets/sprites/terrain/agua-v3.png", "size": [64, 64], "fit": "stretch" }
+  ]
+}

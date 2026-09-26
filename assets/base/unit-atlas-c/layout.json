@@ -1,0 +1,12 @@
+{
+  "source": "assets/base/unit-atlas-c/source.png",
+  "cells": [
+    { "id": "sword_fighter", "crop": [0, 0, 417, 471], "output": "assets/sprites/units/sword_fighter/parado.png", "size": [64, 96], "fit": "contain" },
+    { "id": "bowman", "crop": [417, 0, 417, 471], "output": "assets/sprites/units/bowman/parado.png", "size": [64, 96], "fit": "contain" },
+    { "id": "crossbowman", "crop": [834, 0, 417, 471], "output": "assets/sprites/units/crossbowman/parado.png", "size": [64, 96], "fit": "contain" },
+    { "id": "lance_carrier", "crop": [1251, 0, 417, 471], "output": "assets/sprites/units/lance_carrier/parado.png", "size": [64, 96], "fit": "contain" },
+    { "id": "pikeman", "crop": [0, 472, 417, 471], "output": "assets/sprites/units/pikeman/parado.png", "size": [64, 96], "fit": "contain" },
+    { "id": "scout", "crop": [417, 472, 417, 471], "output": "assets/sprites/units/scout/parado.png", "size": [96, 128], "fit": "contain" },
+    { "id": "knight", "crop": [834, 472, 417, 471], "output": "assets/sprites/units/knight/parado.png", "size": [96, 128], "fit": "contain" }
+  ]
+}

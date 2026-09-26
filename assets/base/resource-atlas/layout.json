@@ -1,0 +1,11 @@
+{
+  "source": "assets/base/resource-atlas/source.png",
+  "cells": [
+    { "id": "fish", "crop": [0, 0, 443, 443], "output": "assets/sprites/resources/fish.png", "size": [64, 64], "contentSize": [20, 20], "fit": "contain" },
+    { "id": "corn", "crop": [443, 0, 443, 443], "output": "assets/sprites/resources/corn.png", "size": [64, 64], "fit": "contain" },
+    { "id": "grapes", "crop": [887, 0, 443, 443], "output": "assets/sprites/resources/grapes.png", "size": [64, 64], "fit": "contain" },
+    { "id": "coal", "crop": [1330, 0, 443, 443], "output": "assets/sprites/resources/coal.png", "size": [64, 64], "fit": "contain" },
+    { "id": "iron_ore", "crop": [0, 443, 443, 443], "output": "assets/sprites/resources/iron_ore.png", "size": [64, 64], "fit": "contain" },
+    { "id": "gold_ore", "crop": [443, 443, 443, 443], "output": "assets/sprites/resources/gold_ore.png", "size": [64, 64], "fit": "contain" }
+  ]
+}

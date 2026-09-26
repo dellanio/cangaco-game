@@ -1,0 +1,13 @@
+{
+  "source": "assets/base/unit-atlas-b/source.png",
+  "cells": [
+    { "id": "butcher", "crop": [0, 0, 384, 512], "output": "assets/sprites/units/butcher/parado.png", "size": [64, 96], "fit": "contain" },
+    { "id": "fisherman", "crop": [384, 0, 384, 512], "output": "assets/sprites/units/fisherman/parado.png", "size": [64, 96], "fit": "contain" },
+    { "id": "miner", "crop": [768, 0, 384, 512], "output": "assets/sprites/units/miner/parado.png", "size": [64, 96], "fit": "contain" },
+    { "id": "metallurgist", "crop": [1152, 0, 384, 512], "output": "assets/sprites/units/metallurgist/parado.png", "size": [64, 96], "fit": "contain" },
+    { "id": "blacksmith", "crop": [0, 512, 384, 512], "output": "assets/sprites/units/blacksmith/parado.png", "size": [64, 96], "fit": "contain" },
+    { "id": "recruit", "crop": [384, 512, 384, 512], "output": "assets/sprites/units/recruit/parado.png", "size": [64, 96], "fit": "contain" },
+    { "id": "militia", "crop": [768, 512, 384, 512], "output": "assets/sprites/units/militia/parado.png", "size": [64, 96], "fit": "contain" },
+    { "id": "axe_fighter", "crop": [1152, 512, 384, 512], "output": "assets/sprites/units/axe_fighter/parado.png", "size": [64, 96], "fit": "contain" }
+  ]
+}

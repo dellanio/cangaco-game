@@ -1,0 +1,21 @@
+{
+  "source": "assets/base/terrain-atlas/terrain-atlas-source.png",
+  "cells": [
+    { "id": "grama-v0", "crop": [6, 6, 350, 350], "output": "assets/sprites/terrain/grama.png", "size": [64, 64], "fit": "stretch" },
+    { "id": "grama-v1", "crop": [6, 6, 300, 300], "output": "assets/sprites/terrain/grama-v1.png", "size": [64, 64], "fit": "stretch" },
+    { "id": "grama-v2", "crop": [56, 6, 300, 300], "output": "assets/sprites/terrain/grama-v2.png", "size": [64, 64], "fit": "stretch" },
+    { "id": "grama-v3", "crop": [31, 56, 300, 300], "output": "assets/sprites/terrain/grama-v3.png", "size": [64, 64], "fit": "stretch" },
+    { "id": "areia-v0", "crop": [6, 368, 350, 350], "output": "assets/sprites/terrain/areia.png", "size": [64, 64], "fit": "stretch" },
+    { "id": "areia-v1", "crop": [6, 368, 300, 300], "output": "assets/sprites/terrain/areia-v1.png", "size": [64, 64], "fit": "stretch" },
+    { "id": "areia-v2", "crop": [56, 368, 300, 300], "output": "assets/sprites/terrain/areia-v2.png", "size": [64, 64], "fit": "stretch" },
+    { "id": "areia-v3", "crop": [31, 418, 300, 300], "output": "assets/sprites/terrain/areia-v3.png", "size": [64, 64], "fit": "stretch" },
+    { "id": "rocha-v0", "crop": [6, 730, 350, 350], "output": "assets/sprites/terrain/rocha.png", "size": [64, 64], "fit": "stretch" },
+    { "id": "rocha-v1", "crop": [6, 730, 300, 300], "output": "assets/sprites/terrain/rocha-v1.png", "size": [64, 64], "fit": "stretch" },
+    { "id": "rocha-v2", "crop": [56, 730, 300, 300], "output": "assets/sprites/terrain/rocha-v2.png", "size": [64, 64], "fit": "stretch" },
+    { "id": "rocha-v3", "crop": [31, 780, 300, 300], "output": "assets/sprites/terrain/rocha-v3.png", "size": [64, 64], "fit": "stretch" },
+    { "id": "montanha-v0", "crop": [1092, 730, 350, 350], "output": "assets/sprites/terrain/montanha.png", "size": [64, 64], "fit": "stretch" },
+    { "id": "montanha-v1", "crop": [1092, 730, 300, 300], "output": "assets/sprites/terrain/montanha-v1.png", "size": [64, 64], "fit": "stretch" },
+    { "id": "montanha-v2", "crop": [1142, 730, 300, 300], "output": "assets/sprites/terrain/montanha-v2.png", "size": [64, 64], "fit": "stretch" },
+    { "id": "montanha-v3", "crop": [1117, 780, 300, 300], "output": "assets/sprites/terrain/montanha-v3.png", "size": [64, 64], "fit": "stretch" }
+  ]
+}

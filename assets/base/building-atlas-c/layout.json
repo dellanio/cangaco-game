@@ -1,0 +1,11 @@
+{
+  "source": "assets/base/building-atlas-c/source.png",
+  "cells": [
+    { "id": "armory_workshop", "crop": [0, 0, 512, 512], "output": "assets/sprites/armory_workshop/completo.png", "size": [192, 192], "fit": "contain" },
+    { "id": "metallurgists", "crop": [512, 0, 512, 512], "output": "assets/sprites/metallurgists/completo.png", "size": [192, 192], "fit": "contain" },
+    { "id": "town_hall", "crop": [1024, 0, 512, 512], "output": "assets/sprites/town_hall/completo.png", "size": [256, 192], "fit": "contain" },
+    { "id": "iron_smithy", "crop": [0, 512, 512, 512], "output": "assets/sprites/iron_smithy/completo.png", "size": [256, 128], "fit": "contain" },
+    { "id": "weapon_smithy", "crop": [512, 512, 512, 512], "output": "assets/sprites/weapon_smithy/completo.png", "size": [256, 128], "fit": "contain" },
+    { "id": "armor_smithy", "crop": [1024, 512, 512, 512], "output": "assets/sprites/armor_smithy/completo.png", "size": [256, 192], "fit": "contain" }
+  ]
+}

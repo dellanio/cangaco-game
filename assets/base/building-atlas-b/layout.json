@@ -1,0 +1,13 @@
+{
+  "source": "assets/base/building-atlas-b/source.png",
+  "cells": [
+    { "id": "barracks", "crop": [0, 0, 417, 471], "output": "assets/sprites/barracks/completo.png", "size": [256, 256], "fit": "contain" },
+    { "id": "marketplace", "crop": [417, 0, 417, 471], "output": "assets/sprites/marketplace/completo.png", "size": [256, 192], "fit": "contain" },
+    { "id": "mill", "crop": [834, 0, 417, 471], "output": "assets/sprites/mill/completo.png", "size": [192, 192], "fit": "contain" },
+    { "id": "bakery", "crop": [1251, 0, 417, 471], "output": "assets/sprites/bakery/completo.png", "size": [192, 192], "fit": "contain" },
+    { "id": "swine_farm", "crop": [0, 472, 417, 471], "output": "assets/sprites/swine_farm/completo.png", "size": [256, 192], "fit": "contain" },
+    { "id": "stables", "crop": [417, 472, 417, 471], "output": "assets/sprites/stables/completo.png", "size": [256, 192], "fit": "contain" },
+    { "id": "butchers", "crop": [834, 472, 417, 471], "output": "assets/sprites/butchers/completo.png", "size": [192, 192], "fit": "contain" },
+    { "id": "tannery", "crop": [1251, 472, 417, 471], "output": "assets/sprites/tannery/completo.png", "size": [192, 128], "fit": "contain" }
+  ]
+}

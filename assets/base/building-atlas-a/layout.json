@@ -1,0 +1,13 @@
+{
+  "source": "assets/base/building-atlas-a/source.png",
+  "cells": [
+    { "id": "watchtower", "crop": [0, 0, 443, 443], "output": "assets/sprites/watchtower/completo.png", "size": [128, 128], "fit": "contain" },
+    { "id": "farm", "crop": [443, 0, 443, 443], "output": "assets/sprites/farm/completo.png", "size": [256, 192], "fit": "contain" },
+    { "id": "wineyard", "crop": [887, 0, 443, 443], "output": "assets/sprites/wineyard/completo.png", "size": [192, 128], "fit": "contain" },
+    { "id": "fishermans", "crop": [1330, 0, 443, 443], "output": "assets/sprites/fishermans/completo.png", "size": [192, 128], "fit": "contain" },
+    { "id": "gold_mine", "crop": [0, 443, 443, 443], "output": "assets/sprites/gold_mine/completo.png", "size": [128, 96], "fit": "contain" },
+    { "id": "coal_mine", "crop": [443, 443, 443, 443], "output": "assets/sprites/coal_mine/completo.png", "size": [192, 128], "fit": "contain" },
+    { "id": "iron_mine", "crop": [887, 443, 443, 443], "output": "assets/sprites/iron_mine/completo.png", "size": [192, 96], "fit": "contain" },
+    { "id": "weapons_workshop", "crop": [1330, 443, 443, 443], "output": "assets/sprites/weapons_workshop/completo.png", "size": [256, 128], "fit": "contain" }
+  ]
+}
