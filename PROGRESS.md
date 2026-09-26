@@ -8571,3 +8571,20 @@ for pequena, o cartão ganha teto com rolagem própria, em vez de um número mai
     cartão para no teto, o texto é cortado, e a linha "O Bando" fica inteira acima
     dele.
 - **Numeração das capturas:** a da escola agora é `UI-barra-a-3-escola.png`.
+
+## 2026-09-26 (noite, 16) — `feat/ui-world-polish`: pacote visual e pipeline do Piancó
+
+### Entregue
+
+- Skill local `skills/pianco-art-pipeline/` registrada no `CLAUDE.md`, com contrato de perspectiva, receitas de prompt, layout de derivação, processador de folhas e registro idempotente no manifesto.
+- UI lateral única preservada em 260 px e revestida por PNGs: placa do Piancó, moldura do minimapa, tábuas de recursos, abas, painel, molduras de ícone e rodapé com cavalo e o lema “Terra forte, gente valente”. Texto vivo continua em `data/theme-sertao.json`.
+- Seis terrenos com quatro variantes raster por tipo. A escolha é determinística por coordenada no render e não altera o código lógico do tile. O grid permanece discreto em repouso e forte com ferramenta ativa.
+- Árvore, afloramento, seis recursos, 28 prédios/ícones e 23 unidades derivados de bases versionadas e declarados em `assets/manifest.json`. Os cinco mercenários sem `direcoesDeSprite` continuam no fallback; nenhuma regra da simulação foi alterada para esconder essa lacuna.
+- A variação de terreno foi rederivada dentro da mesma base tonal para evitar aparência de tabuleiro; o peixe foi reduzido para 20×20 dentro da célula 64×64.
+
+### Verificado
+
+- `npm run verify`: verde; suíte normal 1.547/1.547 e suíte transladada 1.546 aprovados, quatro `skip` já existentes.
+- Roteiros visuais verdes: `F06`, `UI-barra-a`, `F-T1` e `F-SPR`.
+- Evidências principais: `screenshots/UI-barra-a-1-sombra-grade.png`, `screenshots/F-T1-2-lago-e-praia.png`, `screenshots/F-SPR-2-unidades-andando.png`, além de `screenshots/UI-world-polish-before.png` e `screenshots/UI-world-polish-after.png`.
+- `src/sim/` e `tests/` não foram alterados.
