@@ -62,6 +62,39 @@ const GRUPOS = [
       { base: 'base/quarry/quarry_06_completo.png', saida: 'sprites/quarry/quarry_completo.png' },
     ],
   },
+  {
+    id: 'sawmill',
+    alvos: [
+      { base: 'base/sawmill/sawmill_01_marcacao.png', saida: 'sprites/sawmill/sawmill_marcacao.png' },
+      { base: 'base/sawmill/sawmill_02_fundacao.png', saida: 'sprites/sawmill/sawmill_fundacao.png' },
+      { base: 'base/sawmill/sawmill_03_estrutura.png', saida: 'sprites/sawmill/sawmill_estrutura.png' },
+      { base: 'base/sawmill/sawmill_04_paredes.png', saida: 'sprites/sawmill/sawmill_paredes.png' },
+      { base: 'base/sawmill/sawmill_05_cobertura.png', saida: 'sprites/sawmill/sawmill_cobertura.png' },
+      { base: 'base/sawmill/sawmill_06_completo.png', saida: 'sprites/sawmill/sawmill_completo.png' },
+    ],
+  },
+  {
+    id: 'schoolhouse',
+    alvos: [
+      { base: 'base/schoolhouse/schoolhouse_01_marcacao.png', saida: 'sprites/schoolhouse/schoolhouse_marcacao.png' },
+      { base: 'base/schoolhouse/schoolhouse_02_fundacao.png', saida: 'sprites/schoolhouse/schoolhouse_fundacao.png' },
+      { base: 'base/schoolhouse/schoolhouse_03_estrutura.png', saida: 'sprites/schoolhouse/schoolhouse_estrutura.png' },
+      { base: 'base/schoolhouse/schoolhouse_04_paredes.png', saida: 'sprites/schoolhouse/schoolhouse_paredes.png' },
+      { base: 'base/schoolhouse/schoolhouse_05_cobertura.png', saida: 'sprites/schoolhouse/schoolhouse_cobertura.png' },
+      { base: 'base/schoolhouse/schoolhouse_06_completo.png', saida: 'sprites/schoolhouse/schoolhouse_completo.png' },
+    ],
+  },
+  {
+    id: 'inn',
+    alvos: [
+      { base: 'base/inn/inn_01_marcacao.png', saida: 'sprites/inn/inn_marcacao.png' },
+      { base: 'base/inn/inn_02_fundacao.png', saida: 'sprites/inn/inn_fundacao.png' },
+      { base: 'base/inn/inn_03_estrutura.png', saida: 'sprites/inn/inn_estrutura.png' },
+      { base: 'base/inn/inn_04_paredes.png', saida: 'sprites/inn/inn_paredes.png' },
+      { base: 'base/inn/inn_05_cobertura.png', saida: 'sprites/inn/inn_cobertura.png' },
+      { base: 'base/inn/inn_06_completo.png', saida: 'sprites/inn/inn_completo.png' },
+    ],
+  },
 ];
 
 function carregarPredios() {
