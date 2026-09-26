@@ -24,7 +24,7 @@
 //
 // Um clique em painel (o treino na escola): despausado e segurando 150 ms (§8).
 
-const { retanguloDoCanvas, arrastarDentroDoCanvas } = require('./_canvas');
+const { retanguloDoCanvas, arrastarDentroDoCanvas, pontoParaApertar } = require('./_canvas');
 const { caixaLivre, ruaComDesvio, arrastosDaRua } = require('./_recursos');
 const { erguerRua } = require('./_estradas');
 const economia = require('../../data/economy.json');
@@ -204,10 +204,8 @@ async function roteiro(ctx) {
   const meioDaEscola = { gx: escola.gx + Math.floor(largEs / 2), gy: escola.gy + Math.floor(altEs / 2) };
   await centrarEm(meioDaEscola.gx);
   await clicarNoTile(meioDaEscola.gx, meioDaEscola.gy);
-  const botao = await page.$eval(`#painel-predio [data-treinar="${civil}"]`, (n) => {
-    const r = n.getBoundingClientRect();
-    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-  });
+  // UI-barra-a: o engajar rola no corpo da barra; o aperto cru nao rola sozinho.
+  const botao = await pontoParaApertar(page, `#painel-predio [data-treinar="${civil}"]`);
   await page.keyboard.press('p');
   afirmar(!(await estado()).pausado, 'o clique do treino precisa do relogio correndo');
   await page.mouse.move(botao.x, botao.y);

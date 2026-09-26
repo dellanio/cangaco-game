@@ -204,7 +204,7 @@
     "passes": true
   },
   "F-CANA-canavial-e-mina": {
-    "passes": true
+    "passes": false
   },
   "F-VIVO-0": {
     "passes": true
@@ -232,5 +232,11 @@
   },
   "F17g-revelacao-da-obra": {
     "passes": true
+  },
+  "UI-barra-a-barra-lateral-unica": {
+    "passes": true
+  },
+  "F-CANA-b-mancha-de-cana-da-vila": {
+    "passes": false
   }
 }

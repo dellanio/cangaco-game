@@ -138,6 +138,56 @@ async function roteiro(ctx) {
     `aviso aparecendo empurrou a grade: faixa ${faixa.height}->${faixaComAlerta.height}, corpo ${topoDoCorpo}->${topoComAlerta}`,
   );
 
+  // ---- 2b. a sombra do pe: ha mais embaixo, e some no fim -------------------
+  // Decisao do operador: o jogador nao sabe que o corpo rola. A 720 a grade nao
+  // cabe no corpo, entao a sombra nasce acesa; rolando ate o fim, apaga.
+  const haMais = () => page.$eval('#corpo-aba', (c) => c.hasAttribute('data-ha-mais'));
+  const rolarCorpo = async (onde) => {
+    await page.$eval('#corpo-aba', (c, o) => { c.scrollTop = o === 'fim' ? c.scrollHeight : 0; }, onde);
+    await esperarFrame();
+  };
+  afirmar(await haMais(), 'a 720 a grade nao cabe: a sombra do pe deveria estar acesa');
+  await capturar('sombra-grade');
+  await rolarCorpo('fim');
+  afirmar(!(await haMais()), 'no fim da rolagem a sombra do pe deveria apagar');
+  await rolarCorpo('topo');
+  afirmar(await haMais(), 'de volta ao topo a sombra do pe deveria acender de novo');
+
+  // ---- 2c. o cartao nao pisca sob o mouse parado ---------------------------
+  // O cartao gruda no pe e cresce com o texto do icone, POR CIMA da linha sob o
+  // mouse. Sem a guarda de `menu-build.ts` isso era loop: medido na sonda, 22 dos
+  // 28 icones trocavam de 5 a 16 vezes por segundo com o mouse parado. Pega o
+  // ultimo icone (cartao alto), poe o centro 10 px acima do topo do cartao vazio,
+  // e amostra DESPAUSADO (§8: o laco redesenhando e o que acusa).
+  const ultimo = await page.$$eval('#menu-build [data-predio]', (bs) => bs[bs.length - 1].dataset.predio);
+  const ponto = await page.evaluate((id) => {
+    const c = window.document.querySelector('#corpo-aba');
+    const cartao = window.document.querySelector('#menu-build .cartao');
+    const b = window.document.querySelector(`[data-predio="${id}"]`);
+    const r = b.getBoundingClientRect();
+    c.scrollTop += (r.top + r.height / 2) - (cartao.getBoundingClientRect().top - 10);
+    const r2 = b.getBoundingClientRect();
+    return { x: r2.left + r2.width / 2, y: r2.top + r2.height / 2, topo: cartao.getBoundingClientRect().top };
+  }, ultimo);
+  afirmar(ponto.y < ponto.topo, `o icone '${ultimo}' deveria ficar acima do cartao vazio: ${JSON.stringify(ponto)}`);
+  await page.keyboard.press('p');
+  afirmar(!(await estado()).pausado, 'a amostra do cartao precisa do relogio correndo');
+  await page.mouse.move(ponto.x, ponto.y);
+  const amostras = [];
+  for (let i = 0; i < 20; i += 1) {
+    await page.waitForTimeout(50);
+    amostras.push(await page.$eval('#menu-build .cartao', (c) => c.dataset.planta));
+  }
+  await page.keyboard.press('p');
+  await esperarFrame();
+  afirmar((await estado()).pausado, 'o roteiro deveria ter pausado de volta');
+  afirmar(
+    amostras.every((a) => a === ultimo),
+    `com o mouse parado sobre '${ultimo}' o cartao deveria ficar nele, veio ${JSON.stringify(amostras)}`,
+  );
+  await page.mouse.move(5, 5);
+  await rolarCorpo('topo');
+
   // ---- 3. escolher troca a grade pelo painel; Esc volta ---------------------
   await escolherEscola();
   afirmar((await corpo()) === 'painel', `escolher a escola deveria por o painel no corpo, esta em ${await corpo()}`);
@@ -168,7 +218,12 @@ async function roteiro(ctx) {
     `o botao do pedreiro deveria dizer "${tema.civis.stonemason.curto}" com o nome longo no title: ${JSON.stringify(tipos.pedreiro)}`,
   );
   medidas.corpoDaAba720 = (await retanguloDe(page, '#corpo-aba')).height;
+  // o engajar nao cabe a 720: a sombra do pe acende no painel tambem (sem cartao)
+  afirmar(await haMais(), 'a 720 o painel da escola nao cabe: a sombra do pe deveria estar acesa');
   await capturar('escola');
+  await rolarCorpo('fim');
+  afirmar(!(await haMais()), 'no fim do painel a sombra do pe deveria apagar');
+  await rolarCorpo('topo');
 
   await page.keyboard.press('Escape');
   await esperarFrame();

@@ -30,7 +30,21 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
 
 ## Abertos
 
-_Nenhum._
+## BUG-L — roteiro F18 vermelho: a uva também nasce vazia na abertura
+- feature: F-CANA-canavial-e-mina (a cana ficou sem tile de mapa; `dc64136`)
+- severidade: errado (operador, 2026-09-26). A chave da F-CANA vai a `false`. A da F18
+  fica `true`: o aceite dela passa, e o defeito é da F-CANA.
+- repro: `npm run shot -- F18` (na `main` em `3c38d27` e na branch `ui-barra-a`)
+- esperado: `tiposQueNascemVazios()` (`tools/shots/F18.js:103`, lê
+  `data/resources.json`) devolve só `['corn']` — premissa de que "esgotado" na tela
+  só pode ser campo de milho.
+- observado: `shot: afirmacao falhou — na abertura so o campo nasce vazio; se outro
+  tipo nascer em zero, "esgotado" fica ambiguo. Veio ["corn","grapes"]`
+- evidência: rodado em 2026-09-26 num worktree irmão da `main` (já removido); não é
+  causado pela barra lateral.
+- correção: item `F-CANA-b` no `BUILD_PLAN.md`. O gerador semeia uma mancha de cana
+  perto da vila, como o lajedo e o roçado. Ainda não implementado.
+- status: aberto
 
 ---
 

@@ -9,7 +9,7 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { ABAS, ABAS_TRANCADAS, corpoDaAba, rotuloCurtoDoCivil } from '../src/ui/barra';
+import { ABAS, ABAS_TRANCADAS, corpoDaAba, haConteudoAbaixo, rotuloCurtoDoCivil } from '../src/ui/barra';
 import { LINHAS_NA_FAIXA, causasNaFaixa } from '../src/ui/alertas';
 import { CAUSAS_DE_ALERTA, type CausaDeAlerta } from '../src/sim/selectors';
 import temaSertao from '../data/theme-sertao.json';
@@ -39,6 +39,19 @@ describe('UI-barra-a — a barra lateral unica', () => {
     expect(rotuloCurtoDoCivil('stonemason')).toBe(temaSertao.civis.stonemason.curto);
     expect(rotuloCurtoDoCivil('serf')).toBe(temaSertao.civis.serf.nome);
     expect(rotuloCurtoDoCivil('id-que-nao-existe')).toBe('id-que-nao-existe');
+  });
+
+  it('a sombra do pe acende com conteudo abaixo e apaga no fim da rolagem', () => {
+    // corpo de 256 px sobre 463 de conteudo: o engajar da escola a 720, medido
+    expect(haConteudoAbaixo(0, 256, 463)).toBe(true);
+    expect(haConteudoAbaixo(205, 256, 463)).toBe(true);
+    // fim da rolagem: scrollTop maximo = 463 - 256 = 207
+    expect(haConteudoAbaixo(207, 256, 463)).toBe(false);
+    // o scrollTop fracionario do zoom (a 1 px do fim) nao deixa a sombra acesa
+    expect(haConteudoAbaixo(206.5, 256, 463)).toBe(false);
+    // conteudo que cabe: nunca acende
+    expect(haConteudoAbaixo(0, 256, 200)).toBe(false);
+    expect(haConteudoAbaixo(0, 256, 256)).toBe(false);
   });
 
   it('a faixa mostra no maximo LINHAS_NA_FAIXA causas, na ordem fixa, e conta o resto', () => {

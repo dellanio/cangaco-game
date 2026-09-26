@@ -291,6 +291,23 @@ button[aria-disabled="true"] {
   border: 2px solid var(--tinta);
   box-shadow: inset 0 0 0 2px var(--madeira-clara), inset 0 0 14px rgba(90, 63, 43, 0.35);
 }
+/* Com a grade, o pe do corpo e do cartao sticky: rolar ate um icone (foco pelo
+   Tab, scrollIntoView) tem de parar ACIMA dele, nao por baixo. O cartao cresce
+   com o texto do icone sob o mouse: 112 cobre o mais alto medido (armazem, 105). */
+body[data-corpo="grade"] #corpo-aba { scroll-padding-bottom: 112px; }
+/* A sombra do pe: ha mais embaixo (decisao do operador — o jogador nao sabe que
+   o corpo rola). Some quando a rolagem chega ao fim; quem liga e `ui/barra.ts`.
+   Um bloco que gruda no pe da rolagem e nao ocupa lugar (margem negativa). Na
+   grade, quem esta no pe e o cartao: a mesma faixa, colada no topo dele. */
+#corpo-aba::after,
+#menu-build .cartao::before {
+  content: ''; display: block; height: 22px; pointer-events: none; visibility: hidden;
+  background: linear-gradient(to bottom, rgba(58, 40, 25, 0), rgba(58, 40, 25, 0.7));
+}
+#corpo-aba::after { position: sticky; bottom: -8px; z-index: 2; margin-top: -22px; }
+#menu-build .cartao::before { position: absolute; left: -2px; right: -2px; bottom: calc(100% + 5px); }
+body:not([data-corpo="grade"]) #corpo-aba[data-ha-mais]::after,
+body[data-corpo="grade"] #corpo-aba[data-ha-mais] #menu-build .cartao::before { visibility: visible; }
 body:not([data-corpo="grade"]) #menu-build,
 body:not([data-corpo="painel"]) #painel-predio,
 body:not([data-corpo="opcoes"]) #opcoes { display: none; }

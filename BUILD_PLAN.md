@@ -3498,6 +3498,31 @@ Casos 2 e 4 do prédio vivo (`docs/BRIEF-ARTE.md` §4a). Decisão do operador: c
 - **Nota para a feature de render do prédio vivo:** o Canavial é caso 2 e as minas são
   caso 4 a partir daqui. A tabela do brief já está assim.
 
+### F-CANA-b — A mancha de cana da vila (gerador + dado)
+- **Origem (decisão do operador, 2026-09-26, BUG-L)**: *"o conserto é o mesmo da
+  fazenda: o gerador semeia uma mancha de cana perto da vila, como fez com o lajedo e o
+  roçado."* A F-CANA deixou `grapes` sem nenhum tile de mapa: só existe o que o jogador
+  ara. É a situação do milho antes do `ROCADO_DA_VILA` da F18h
+  (`tools/gerar-mapa.js:218`).
+- **Escopo**: `tools/gerar-mapa.js` pousa uma mancha pequena de cana perto da vila, com o
+  mesmo recorte do roçado: fora da folga, à vista da abertura, e depois de tudo o que
+  sorteia, para não deslocar o RNG. O mapa é gerado de novo.
+- **Aceite**:
+  - (a) no mapa padrão existe pelo menos um tile de `grapes` ao alcance de um Canavial
+    posto perto da vila, e o Canavial planta ali sem o jogador arar antes.
+  - (b) o roteiro `F18` volta ao verde.
+  - (c) os 9 arquivos de geografia continuam verdes no mapa novo.
+- **Nota (hipótese, não medida)**: a mancha sozinha pode não bastar para o (b).
+  - `tiposQueNascemVazios()` (`tools/shots/F18.js:103`) lê `quantidadeInicial` do dado,
+    e a cana continua nascendo em 0, como o milho.
+  - O mais provável é que a premissa do roteiro passe de "só o milho nasce vazio" para
+    "só cultura com `aradura` nasce vazia". A conta do "esgotado" teria então de somar
+    os tiles das duas.
+  - Confira no passo 0, antes de gerar o mapa. A nota da F18c-2 sobre
+    `FORA_DO_MUNDO_TRANSLADADO` vale aqui também.
+- **Chave**: a F-CANA fica `false` pelo BUG-L (`errado`) e volta a `true` quando esta
+  entregar. A F18 fica `true`: o aceite escrito dela passa (decisão do operador).
+
 ### F17g — A obra revelada pelo hp: madeira e pedra (render)
 - **Origem (decisão do operador, 2026-09-26)**: *"troque pela revelação contínua. Duas
   imagens — madeira e pedra — reveladas conforme o hp sobe."* Ela substitui os seis
@@ -3772,6 +3797,15 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
   - Screenshot a 1280×720 com a escola escolhida, aberto.
 - **Fora:** o minimapa real (F33), Distribuição (F31), Estatísticas (F32), a arte da
   marca e a tela cheia (`IDEIAS.md`).
+- **Entregue (2026-09-26, noite 14).** Duas coisas que o operador pediu depois de ver
+  a barra entraram aqui, porque o defeito nasceu com ela:
+  - a **sombra do pé**: `data-ha-mais` no `#corpo-aba`, com a regra pura
+    `haConteudoAbaixo` em `ui/barra.ts`; ela some no fim da rolagem;
+  - o **cartão que piscava** sob o mouse parado: a guarda fica no `pointerleave` do
+    ícone, em `ui/menu-build.ts`.
+  Os dois têm asserção no roteiro. O helper `pontoParaApertar`, em
+  `tools/shots/_canvas.js`, é o aperto que rola até o botão e reprova se ele estiver
+  coberto.
 
 ## Fase C — Militar
 

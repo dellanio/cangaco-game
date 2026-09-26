@@ -17,7 +17,7 @@
 //
 // O clique no painel (treino e pausa) e despausado e segurando 150 ms (§8).
 
-const { retanguloDoCanvas, arrastarDentroDoCanvas } = require('./_canvas');
+const { retanguloDoCanvas, arrastarDentroDoCanvas, pontoParaApertar } = require('./_canvas');
 const { arrastosDaRua } = require('./_recursos');
 const { erguerRua } = require('./_estradas');
 const { pedreiraNoLajedo } = require('./_pedreira');
@@ -87,10 +87,8 @@ async function roteiro(ctx) {
 
   /** Aperta um botao do painel com o relogio correndo, segurando 150 ms (§8). */
   async function apertarDespausado(seletor) {
-    const alvo = await page.$eval(seletor, (n) => {
-      const r = n.getBoundingClientRect();
-      return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-    });
+    // UI-barra-a: o engajar rola no corpo da barra; o aperto cru nao rola sozinho.
+    const alvo = await pontoParaApertar(page, seletor);
     await page.keyboard.press('p');
     afirmar(!(await estado()).pausado, `o clique em ${seletor} precisa do relogio correndo`);
     await page.mouse.move(alvo.x, alvo.y);

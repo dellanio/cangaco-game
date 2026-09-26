@@ -30,7 +30,7 @@
 // trecho VERTICAL. O canvas mostra ~15 tiles e a vila e mais larga que isso:
 // `centrarEm` anda a camera com o botao do meio antes de cada clique, como o
 // jogador faria.
-const { retanguloDe, retanguloDoCanvas, arrastarDentroDoCanvas } = require('./_canvas');
+const { retanguloDoCanvas, arrastarDentroDoCanvas, pontoParaApertar } = require('./_canvas');
 const economia = require('../../data/economy.json');
 const tema = require('../../data/theme-sertao.json');
 const { predios } = require('../../data/buildings.json');
@@ -268,10 +268,9 @@ async function roteiro(ctx) {
   await page.keyboard.press('p');
   await esperarFrame();
   afirmar((await estado()).pausado === false, 'o pedido de treino so vale com o laco ANDANDO');
-  const caixaDoBotao = await retanguloDe(page, `#painel-predio [data-treinar="${primeiro.civil}"]`);
-  await page.mouse.move(
-    caixaDoBotao.left + caixaDoBotao.width / 2, caixaDoBotao.top + caixaDoBotao.height / 2,
-  );
+  // UI-barra-a: o engajar rola no corpo da barra; o aperto cru nao rola sozinho.
+  const botao = await pontoParaApertar(page, `#painel-predio [data-treinar="${primeiro.civil}"]`);
+  await page.mouse.move(botao.x, botao.y);
   await page.mouse.down();
   await page.waitForTimeout(150); // o tempo de uma mao, e varios ticks do laco
   await page.mouse.up();

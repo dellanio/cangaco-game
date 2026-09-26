@@ -29,7 +29,7 @@
 // Todo clique no mapa acontece com o painel FECHADO: com ele aberto a grade de
 // construir sai do corpo da aba (UI-barra-a), e a ferramenta de rua mora nela.
 
-const { retanguloDoCanvas, arrastarDentroDoCanvas } = require('./_canvas');
+const { retanguloDoCanvas, arrastarDentroDoCanvas, pontoParaApertar } = require('./_canvas');
 const { arrastosDaRua } = require('./_recursos');
 const { pedreiraNoLajedo, esperarPedraNaSaida } = require('./_pedreira');
 const economia = require('../../data/economy.json');
@@ -244,10 +244,8 @@ async function roteiro(ctx) {
     'a fila de treino deveria aparecer como SECAO do painel do predio, nao num segundo painel',
   );
   // O clique de painel que roda despausado e segurando 150 ms (§8).
-  const botao = await page.$eval(`#painel-predio [data-treinar="${civilDaPedreira}"]`, (n) => {
-    const r = n.getBoundingClientRect();
-    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-  });
+  // UI-barra-a: o engajar rola no corpo da barra; o aperto cru nao rola sozinho.
+  const botao = await pontoParaApertar(page, `#painel-predio [data-treinar="${civilDaPedreira}"]`);
   await page.keyboard.press('p');
   afirmar(!(await estado()).pausado, 'o clique do treino precisa do relogio correndo');
   await page.mouse.move(botao.x, botao.y);

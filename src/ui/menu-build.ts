@@ -165,6 +165,12 @@ export function montarMenuBuild(
   const cartaoDesc = document.createElement('div');
   cartaoDesc.className = 'desc';
   cartao.append(cartaoNome, cartaoCusto, cartaoRequer, cartaoDesc);
+  // A outra metade da guarda do `pointerleave` do icone (ver `botaoIcone`).
+  cartao.addEventListener('pointerleave', () => {
+    if (sobOMouse === null) return;
+    sobOMouse = null;
+    escreverCartao();
+  });
 
   let sobOMouse: string | null = null;
 
@@ -227,7 +233,13 @@ export function montarMenuBuild(
       sobOMouse = id;
       escreverCartao();
     });
-    botao.addEventListener('pointerleave', () => {
+    botao.addEventListener('pointerleave', (evento) => {
+      // UI-barra-a: o cartao gruda no pe do corpo e cresce com o texto, por cima
+      // da linha sob o mouse. Sair do icone PARA o cartao nao e sair: se fosse, o
+      // cartao encolhia, o icone voltava a aparecer, o mouse entrava de novo e o
+      // cartao crescia — pisca sem o mouse mexer (medido: ate 16 trocas por
+      // segundo). Quem limpa, nesse caso, e a saida do proprio cartao.
+      if (evento.relatedTarget instanceof Node && cartao.contains(evento.relatedTarget)) return;
       if (sobOMouse === id) sobOMouse = null;
       escreverCartao();
     });

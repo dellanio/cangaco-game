@@ -32,6 +32,13 @@ export function corpoDaAba(aba: Aba, haSelecao: boolean): CorpoDaAba {
   return haSelecao ? 'painel' : 'grade';
 }
 
+/** Ha conteudo abaixo do que o corpo mostra? E o que acende a sombra no pe do
+ *  corpo (decisao do operador: o jogador nao sabe que o corpo rola). A folga de
+ *  1 px e do `scrollTop` fracionario do navegador com zoom, nao balanceamento. */
+export function haConteudoAbaixo(scrollTop: number, alturaVisivel: number, alturaTotal: number): boolean {
+  return scrollTop + alturaVisivel < alturaTotal - 1;
+}
+
 type TemaDeCivis = Readonly<Record<string, { readonly nome: string; readonly curto?: string } | undefined>>;
 const temaDeCivis = temaSertao.civis as TemaDeCivis;
 
@@ -61,6 +68,8 @@ export function montarBarra(selecao: Selecao, abrirAjuda: () => void): Barra {
   if (!opcoes) throw new Error('barra: #opcoes nao existe no index.html');
   const marca = document.getElementById('marca');
   if (!marca) throw new Error('barra: #marca nao existe no index.html');
+  const corpo = document.getElementById('corpo-aba');
+  if (!corpo) throw new Error('barra: #corpo-aba nao existe no index.html');
 
   // Logo e minimapa: placeholder com o id escrito ate a arte entrar (§9).
   const textoDaLogo = document.createElement('span');
@@ -125,7 +134,19 @@ export function montarBarra(selecao: Selecao, abrirAjuda: () => void): Barra {
     aplicar();
   });
 
+  // A sombra do pe: `data-ha-mais` no corpo, que o CSS le. Recalcula quando o
+  // corpo rola e quando ele ou o conteudo muda de tamanho — trocar de grade para
+  // painel, o painel crescer com a fila, a janela mudar de altura.
+  const marcarRolagem = (): void => {
+    corpo.toggleAttribute('data-ha-mais', haConteudoAbaixo(corpo.scrollTop, corpo.clientHeight, corpo.scrollHeight));
+  };
+  corpo.addEventListener('scroll', marcarRolagem, { passive: true });
+  const observador = new ResizeObserver(marcarRolagem);
+  observador.observe(corpo);
+  for (const filho of corpo.children) observador.observe(filho);
+
   aplicar();
+  marcarRolagem();
 
   return {
     get aba() {
