@@ -256,13 +256,19 @@ serrador serrando não é o padeiro amassando. O comportamento vem do kam_remake
 (código aberto, `KM_Units_WorkPlan.pas`, `KM_RenderPool.pas`), usado como referência de
 **comportamento**. Nenhum sprite de lá entra aqui (CLAUDE.md §9).
 
-**Nada disto aparece na tela ainda.** O render das camadas é feature própria no
-`BUILD_PLAN.md`. Até ela entrar, a arte desta seção pode ser desenhada e derivada, mas
-**as entradas dos três tipos novos não vão para o `assets/manifest.json`**: o
-`tests/F17f-manifesto.test.ts` recusa tipo que o render não conhece, e está certo em
-recusar. O campo `ancoras` na entrada do prédio pode entrar desde já **[lido, não
-testado]**: nenhum código o lê, e nenhum teste compara a lista exata de campos da
-entrada. Rode `npm run verify` depois de acrescentar.
+**Nada disto aparece na tela ainda.** O render das camadas são os sub-itens F-VIVO-a a
+F-VIVO-d do `BUILD_PLAN.md`. Mas o manifesto **já aceita** os três tipos novos e o campo
+`ancoras` (F-VIVO-0, 2026-09-26) **[testado]**: as entradas podem ir para o
+`assets/manifest.json` assim que a arte existir. O `tests/F17f-manifesto.test.ts`
+confere cada uma pelas regras desta seção, e as regras moram em
+`src/render/manifesto-camadas.ts`. Rode `npm run verify` depois de acrescentar: a
+mensagem de erro diz o id, o campo e o que o dado pede.
+
+- **Arte em parte vale, por laço inteiro.** Um prédio do caso 3 pode entrar só com
+  `laco1_1` … `laco1_8`; o `laco2` fica placeholder. Laço pela metade (`meio_1` …
+  `meio_6` de 8) é recusado.
+- **Prédio do caso 1 não tem entrada `trabalho`**: o teste recusa. A fumaça dele é a
+  genérica, pelo ponto `trabalho.fumaca`.
 
 ### Os cinco casos
 
@@ -327,9 +333,13 @@ pixel, porque a largura do prédio ainda vai mudar com o fator da seção 3.
 "ancoras": {
   "trabalho": { "area": [0.30, 0.45, 0.60, 0.75], "fumaca": [0.72, 0.10] },
   "estoque":  { "entrada": [[0.15, 0.90]], "saida": [[0.80, 0.92]] },
-  "curral":   [[0.20, 0.70], [0.35, 0.75], [0.50, 0.72], [0.65, 0.76], [0.80, 0.70]]
+  "curral":   [[0.20, 0.70], [0.35, 0.75], [0.50, 0.72], [0.65, 0.76], [0.80, 0.70]],
+  "obra":     { "timber": [0.10, 0.95], "stone": [0.25, 0.95] }
 }
 ```
+
+Todo bloco é opcional: prédio sem `ancoras` usa âncoras padrão derivadas do footprint
+(ver o `BUILD_PLAN.md`, F-VIVO). Um bloco declarado, porém, tem de estar completo.
 
 - **`trabalho.area`** é `[x0, y0, x1, y1]`: o retângulo da porta, janela, alpendre ou
   forno onde o quadro de trabalho é desenhado. O quadro tem exatamente o tamanho dessa
@@ -344,8 +354,12 @@ pixel, porque a largura do prédio ainda vai mudar com o fator da seção 3.
   na bancada. É isso que deixa a ordem de desenho trivial.
 - **A bodega** declara 4 pontos de entrada, um por comida (`loaves`, `sausages`,
   `wine`, `fish`), e nada de saída.
-- **O armazém** declara **4 pontos**, como os outros (decisão do operador,
-  2026-09-26). Eles mostram as **quatro mercadorias mais abundantes**, por quantidade,
+- **`obra`** é um ponto por material do custo do prédio (`timber`, `stone`; só os que
+  o prédio pede): onde fica a pilha do material entregue e ainda não pregado. É o
+  `BuildSupply` do kam_remake. O ponto é do sprite `completo`, como os outros, e a pilha
+  usa a arte `pilha` da mercadoria, sem arte nova.
+- **O armazém** declara **4 pontos em `estoque.entrada`**, e nada de saída (decisão do
+  operador, 2026-09-26; a gaveta escolhida é decisão da F-VIVO-0). Eles mostram as **quatro mercadorias mais abundantes**, por quantidade,
   com desempate pela ordem de `economia.mercadorias`. O resto não aparece no mapa: a
   lista completa está no painel do prédio. O mapa é para ver de relance, não para
   inventariar.

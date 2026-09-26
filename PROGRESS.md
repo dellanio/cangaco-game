@@ -7841,3 +7841,50 @@ Por que não fui para o `BUGS.md`: nenhum aceite escrito cobre esses prédios, o
    sub-item se verifique sem arte.
 5. **O `ancoras` ganha o bloco `obra`**, um ponto por material, que o brief §4a ainda não
    tinha. É o que o original tem em `BuildSupply`.
+
+## 2026-09-26 (noite, 5) — F-VIVO-0: o manifesto aceita o prédio vivo
+
+### Feito e verificado
+- `src/render/manifesto.ts`: `TIPOS_DE_CAMADA` ganha `trabalho`, `pilha` e `animal`, e
+  `EntradaDeAsset` ganha o campo opcional `ancoras` (`trabalho.area/fumaca`,
+  `estoque.entrada/saida`, `curral`, `obra`).
+- `src/render/manifesto-camadas.ts` (novo, só `import type`) guarda as regras do brief
+  §4a como funções puras: `violacoesDaCamadaViva`, `violacoesDasAncoras`,
+  `violacoesDosCasos`. As mesmas tabelas (`CASO_DO_PREDIO`, `LACOS_DO_CASO`,
+  `ANIMAL_DA_CRIACAO`) serão lidas pelo render da F-VIVO-a/b/c.
+- `tests/F17f-manifesto.test.ts`, bloco F-VIVO-0, com 6 testes:
+  - o manifesto real passa;
+  - a tabela de casos concorda com `data/production.json`, e o guarda acusa uma mina
+    sem `aDistancia`;
+  - 7 entradas sintéticas boas passam;
+  - 10 casos de tipo e 12 casos de âncora **reprovam**, cada um com a mensagem conferida
+    por regex.
+- `npm run verify`: 106 arquivos e 1468 testes verdes, exit 0.
+- `test-output/F17f.json`: `camadasVivas: 0`, `prediosComAncoras: []`. O manifesto real
+  ainda não declara nada disto, e as regras foram exercidas **só** pelo manifesto
+  sintético do teste.
+- `docs/BRIEF-ARTE.md` §4a diz que os tipos já entram e ganha o bloco `obra`. Não toquei
+  em `assets/` nem em `tools/derivar-sprites.js`.
+- **O Codex está destravado:** entrada `trabalho`, `pilha` ou `animal` no manifest agora
+  passa, se seguir o brief.
+
+### Decisões minhas, marcadas para o operador revisar
+1. **A tabela dos cinco casos é constante do render, conferida contra o dado.** Ela não
+   é campo em `data/production.json`, porque é apresentação e a sim não lê. O guarda
+   `violacoesDosCasos` amarra a tabela ao dado:
+   - todo prédio com receita tem caso, e vice-versa;
+   - luz ⇔ `colheita.aDistancia`;
+   - casos 1 e 2 colhem andando;
+   - casos 3 e 5 não colhem;
+   - o animal da criação está no `sai`.
+2. **Arte em parte entra por laço inteiro.** O `laco1` completo sem o `laco2` passa, e o
+   que falta vira placeholder. Um laço incompleto é recusado. O motivo é não bloquear o
+   Codex, que deriva por partes.
+3. **O armazém e a Bodega declaram os 4 pontos em `estoque.entrada`**, com `saida` 0. O
+   brief dizia "4 pontos" sem dizer a gaveta.
+4. **Prédio do caso 1 recusa entrada `trabalho`**, com a mensagem "caso 1 (so guarda)
+   nao tem animacao dentro". A fumaça dele é a genérica.
+5. **Pontos fora de `area`:** a regra de não sobrepor foi implementada como "nenhum
+   ponto de estoque, curral ou obra estritamente dentro de `trabalho.area`". A fumaça
+   fica de fora, porque a chaminé pode ficar sobre a porta no desenho. Pilha contra
+   pilha não é conferida: ponto não tem área.

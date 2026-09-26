@@ -40,10 +40,42 @@ export interface EntradaDeAsset {
   readonly estados: Readonly<Record<string, string>>;
   readonly licenca: string;
   readonly origem: OrigemDoAsset;
+  /**
+   * F-VIVO-0 — ONDE cada camada do predio vivo aparece (docs/BRIEF-ARTE.md §4a).
+   * Opcional: predio sem `ancoras` usa as padrao do render. As regras (fracao,
+   * contagem por receita, nao sobrepor) estao em `manifesto-camadas.ts`.
+   */
+  readonly ancoras?: AncorasDoPredio;
 }
 
-/** Os tipos de asset fora do predio (F-SPR). */
-export const TIPOS_DE_CAMADA = ['terreno', 'recurso', 'vegetacao', 'unidade'] as const;
+/** Um ponto em FRACAO do sprite `completo`: `[x, y]` de 0 a 1, origem no canto
+ *  superior esquerdo. Fracao, e nao pixel, porque a largura do predio ainda muda. */
+export type PontoFracionario = readonly [number, number];
+
+/** F-VIVO-0 — as ancoras do predio vivo. Cada bloco e opcional. */
+export interface AncorasDoPredio {
+  /** `area` e `[x0, y0, x1, y1]`, onde o quadro de trabalho e desenhado; `fumaca`
+   *  e a chamine ou a boca da mina. */
+  readonly trabalho?: {
+    readonly area?: readonly [number, number, number, number];
+    readonly fumaca?: PontoFracionario;
+  };
+  /** Um ponto por mercadoria da gaveta, na ordem de `entra`/`sai` da receita. */
+  readonly estoque?: {
+    readonly entrada?: readonly PontoFracionario[];
+    readonly saida?: readonly PontoFracionario[];
+  };
+  /** Cinco pontos, so na criacao: onde fica cada animal. */
+  readonly curral?: readonly PontoFracionario[];
+  /** Um ponto por material da obra (`timber`, `stone`): a pilha do entregue e ainda
+   *  nao pregado, como o `BuildSupply` do kam_remake. */
+  readonly obra?: Readonly<Record<string, PontoFracionario>>;
+}
+
+/** Os tipos de asset fora do predio (F-SPR). F-VIVO-0 acrescentou os tres do predio
+ *  vivo: `trabalho` (os quadros de um predio), `pilha` (UMA unidade de mercadoria) e
+ *  `animal` (a criacao, nas tres idades). As regras deles estao em `manifesto-camadas.ts`. */
+export const TIPOS_DE_CAMADA = ['terreno', 'recurso', 'vegetacao', 'unidade', 'trabalho', 'pilha', 'animal'] as const;
 export type TipoDeCamada = (typeof TIPOS_DE_CAMADA)[number];
 
 /**
