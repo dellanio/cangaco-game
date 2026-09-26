@@ -3548,6 +3548,12 @@ Casos 2 e 4 do prédio vivo (`docs/BRIEF-ARTE.md` §4a). Decisão do operador: c
   `madeira` + `completo` **e** cujas duas texturas carregaram. Os rótulos madeira/pedra
   do tema não foram criados, porque a revelação não escreve texto. Para registrar o par:
   as chaves `madeira` e `completo` em `estados`, e nada mais.
+- **Nota (operador, 2026-09-26, depois da entrega):**
+  - O `marcacao` do armazém foi **apagado** do manifesto. Era chave morta desde a F17g, e
+    quem registrasse a arte não saberia que podia tirar.
+  - O placeholder de dois retângulos subindo foi **descartado, não vira item**. O fallback
+    dos seis estágios já mostra a obra crescendo, e o placeholder some quando a arte chega.
+  - Os rótulos madeira/pedra no tema: confirmado não criar, porque nada os lê.
 
 ### F-VIVO — O prédio vivo: trabalho, estoque e animais (render)
 

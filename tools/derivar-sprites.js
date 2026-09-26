@@ -44,6 +44,9 @@ const ALFA_MINIMO = 16;
 const LIMIARES_DO_LOG = [0, 16, 64];
 
 const ALVOS = [
+  // F17g: esta saida nao tem mais chave no manifesto (o armazem revela madeira e
+  // pedra pelo hp). A base continua na lista porque entra na UNIAO das bboxes: tira-la
+  // mudaria o recorte comum e deslocaria o par. O arquivo derivado fica sem leitor.
   { base: 'base/storehouse/armazem_01_obra.png', saida: 'sprites/storehouse/storehouse_marcacao.png' },
   // F17g: a chave do manifesto para esta saida volta a ser `madeira`, a metade de
   // baixo do par da revelacao (a F17e a chamava `estrutura`). O NOME do arquivo

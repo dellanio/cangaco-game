@@ -8468,7 +8468,9 @@ Pedido do operador, antes da UI-barra-a: o Codex está parado esperando poder re
 - **Oráculo do roteiro reimplementado em JS**, de propósito: comparar a cena com o próprio `revelacaoDaObra` seria o código se aprovando.
 - **O par exige as duas texturas carregadas**, e não só as duas chaves no manifesto. Se o PNG faltar, a obra cai no fallback em vez de desenhar metade.
 
-### Aberto
+### Decisões do operador (2026-09-26, depois da entrega)
 
-- **Pergunta:** o `marcacao` do armazém ficou no manifesto. Com o par ele é inerte, porque o armazém em obra é sempre revelado. Apagar ou manter é decisão de arte: o Codex pode tirar ao registrar o par.
-- O placeholder de dois retângulos subindo, do texto do plano, não foi feito, pela decisão acima. Se o operador quiser que prédio sem PNG também revele, isso vira item à parte.
+- **`marcacao` do armazém: apagado** do manifesto. A razão dele: é chave morta desde a F17g, e quem registrar a arte não saberia que pode tirar. `storehouse_marcacao.png` e a base continuam, porque `tools/derivar-sprites.js` usa a base na união das bboxes, e tirá-la deslocaria o recorte do par. O derivado fica sem leitor, e o comentário no script diz isso.
+- **Placeholder de dois retângulos subindo: descartado**, não vira item. A razão dele: o fallback dos seis estágios já mostra a obra crescendo, e o placeholder some quando a arte chega.
+- **Rótulos madeira/pedra no tema:** confirmado não criar, porque nada os lê.
+- Verificado: `tests/F17f-manifesto.test.ts`, `F17g-revelacao` e `F-SPR-carregamento` deram 48 verdes depois de apagar a chave.

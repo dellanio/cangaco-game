@@ -18,7 +18,6 @@
         1
       ],
       "estados": {
-        "marcacao": "sprites/storehouse/storehouse_marcacao.png",
         "madeira": "sprites/storehouse/storehouse_madeira.png",
         "completo": "sprites/storehouse/storehouse_completo.png"
       },
