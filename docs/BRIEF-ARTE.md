@@ -242,6 +242,11 @@ apareceria na tela. O teste de fumaça acima é de antes da decisão das duas im
   canvas e o prédio no mesmo lugar dentro dele. O derivador recorta as duas pela união
   das bounding boxes. Um par desalinhado aparece como uma madeira que "sai" pela
   lateral do prédio pronto.
+- **Medição que justifica uma guarda automática (2026-09-26).** O par da Pedreira que
+  estava no repositório tinha o centro do conteúdo deslocado em aproximadamente **28 px**
+  entre `madeira` e `completo`, embora os dois arquivos tivessem o mesmo canvas. Quando
+  a F17g entrar, o teste do manifesto deve conferir tanto o tamanho igual do par quanto
+  o centro do conteúdo; canvas igual sozinho não prova registro.
 - **O prédio pronto cobre a madeira.** Toda a silhueta da `madeira` fica dentro da
   silhueta do `completo`. Esteio que passa da parede continua visível com a casa pronta.
 - **A base de baixo é a do chão.** A revelação é um recorte horizontal que sobe da

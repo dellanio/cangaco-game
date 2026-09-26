@@ -8415,3 +8415,60 @@ Terceira tarefa do pedido do operador: só medir e propor, e parar. O documento 
   - `civis.stonemason.curto` = "Pedreiro", **aplicado no tema**. O leitor é a UI-barra-a, e até lá o campo não tem leitor em código.
   - A faixa de alertas fica **vazia quando não há alerta**. A dica do H segue a regra da F-D1 (só na primeira partida, independente de alerta) e vai para o topo da faixa da marca; **esse lugar é decisão minha, para revisão**.
   - O resto do mapeamento do HUD foi aprovado. A UI-barra-a fica antes da Fase C.
+
+## 2026-09-26 (noite, 13) — F17g: a obra revelada pelo hp, madeira e pedra
+
+Pedido do operador, antes da UI-barra-a: o Codex está parado esperando poder registrar o par. A UI-barra-a ficou estacionada na branch `ui-barra-a` (commit `wip(UI-barra-a)`), fora da `main`. Só render, dado de arte, teste e roteiro: **nada em `sim/`**.
+
+### O que mudou
+
+- `src/render/estagio-obra.ts`: `revelacaoDaObra(hp, hpTotal, timber, stone)`, pura e sem import. Devolve `{madeira:[n,d], pedra:[n,d]}` em par inteiro, e `chaveDaRevelacao` serve para a assinatura do redesenho. `estagioDaObra` e os seis estágios **ficam**: são o fallback.
+- `src/render/manifesto.ts`: `CHAVES_DA_REVELACAO = ['madeira','completo']` e `temParDeRevelacao(entrada)`.
+- `WorldScene`:
+  - uma obra cujo manifesto tem o par e cujas duas texturas carregaram é desenhada pela revelação: `madeira` embaixo e `completo` por cima, cada uma com `setCrop` de baixo para cima pela fração, na mesma escala e âncora do `desenharSprite`;
+  - fração zero não desenha nada, então em `hp 0` ficam só o canteiro e a pilha;
+  - todo o resto segue nos seis estágios, sem mudança;
+  - a revelação entra na assinatura do redesenho.
+- `debug`:
+  - `revelacaoDasObras[id]` guarda as frações passadas ao desenho;
+  - `prediosDoEstado[id].hp` é o `hp` cru, para o oráculo do roteiro;
+  - `obrasRenderizadas` agora soma os estágios em obra e as obras reveladas.
+- `assets/manifest.json`: no armazém, `estrutura` virou `madeira` (o mesmo `storehouse_madeira.png`), e o `_doc` explica o par. O comentário de `tools/derivar-sprites.js` foi atualizado.
+- `tests/F17f-manifesto.test.ts`: o guarda de chave órfã aceita estágios e par. Uma entrada sintética com `madeira`+`completo` passa, e uma com `pedra` é acusada.
+
+### Verificado (rodado, evidência aberta)
+
+- `tests/F17g-revelacao.test.ts`, 18 testes, evidência em `test-output/F17g.json`:
+  - custos lidos do funil `aparenciaDoPredio`: quarry 3/2 hp 250, sawmill 4/3 hp 350 e barracks 6/6 hp 600;
+  - dois lados da virada nos três: antes, madeira < 1 e pedra 0; depois, madeira 1 e pedra > 0; na virada inteira (150, 200, 300), madeira 1 e pedra 0;
+  - hp 0 dá nada e hpTotal dá tudo;
+  - meia madeira e meia pedra exatas;
+  - monotonia de 50 em 50: nenhuma fração desce e a soma sobe estritamente;
+  - o par liga a revelação e uma chave só não liga, incluindo a entrada antiga `marcacao/estrutura/completo`;
+  - o armazém de hoje tem o par;
+  - 251 chaves distintas em 251 hp da quarry.
+- O guarda de zero import de `estagio-obra.ts` (F11c) continua verde.
+- `npm run shot -- F17g`: OK, 3 capturas.
+  - O roteiro faz a abertura da F17 com o mouse até a serraria completa, estica a rua 3 tiles a leste e planta o armazém em (37,30).
+  - Em cada passo de 10 ticks ele compara `revelacaoDasObras` com a conta refeita no JS, do `hp` cru e de `buildings.json`, por produto cruzado. Também afirma que a obra não conta nos seis estágios e que é sprite, não retângulo.
+  - Marcos lidos: meia madeira em hp 150 (1650/3300), virada em hp 305 (pedra 55/2750) e meia pedra em hp 435 (1485/2750).
+  - Abri `screenshots/F17g-3-meia-pedra.png`: a estrutura de madeira está inteira, com a parede e o telhado do `completo` cobrindo a metade de baixo.
+- A sonda headless (`tests/zz-sonda-F17g.test.ts`, **apagada**) deu serraria completa no tick 2046. O armazém plantado ali cruzou meia madeira no 2347, a virada no 2422 e meia pedra no 2685, e completou no 3148. Os tetos do roteiro vêm desses números. A sonda era da sessão; a cobertura contínua é o roteiro e o teste.
+- `npm run verify` verde: 1544 testes, 4 pulados (o `skipIf` já existente).
+- Não-regressão por código de saída: F17f, F11c, F-SPR, F17 e F-VIVO-a deram OK na primeira corrida. A F17e **reprovou uma vez** (`Cannot read properties of undefined (reading 'estagiosDeObraRenderizados')`, isto é, `estado()` devolveu `undefined` na linha de base, antes de plantar) e **passou sozinha** logo depois, com 7 capturas. **Hipótese não conferida:** é intermitência do `estado()` no começo do roteiro, e não esta feature, porque o armazém inicial é `completo` e não passa pela revelação. Se reincidir, vira `/bug`.
+
+### Decisões minhas (para revisão)
+
+- **O fallback manda sobre o texto do plano.** O plano da F17g pede que o manifesto recuse as outras quatro chaves, que o placeholder desenhe dois retângulos e que `estagiosDeObraRenderizados` vire `revelacaoDasObras`. O operador disse depois: *"prédio sem o par continua como está hoje"*. Por isso:
+  - as seis chaves continuam aceitas;
+  - o placeholder sem PNG continua com os seis estágios;
+  - `estagiosDeObraRenderizados` continua, contando só as obras do fallback;
+  - `revelacaoDasObras` foi **acrescentado** ao lado.
+- **Os rótulos madeira/pedra do tema não foram criados.** O caminho da revelação desenha sprite sem texto, então eles não teriam leitor (ver "dado sem leitor vira folclore"). Os seis rótulos de `temaSertao.obra` ficam, porque o placeholder do fallback os lê (`WorldScene`, `desenharPlaceholder`).
+- **Oráculo do roteiro reimplementado em JS**, de propósito: comparar a cena com o próprio `revelacaoDaObra` seria o código se aprovando.
+- **O par exige as duas texturas carregadas**, e não só as duas chaves no manifesto. Se o PNG faltar, a obra cai no fallback em vez de desenhar metade.
+
+### Aberto
+
+- **Pergunta:** o `marcacao` do armazém ficou no manifesto. Com o par ele é inerte, porque o armazém em obra é sempre revelado. Apagar ou manter é decisão de arte: o Codex pode tirar ao registrar o par.
+- O placeholder de dois retângulos subindo, do texto do plano, não foi feito, pela decisão acima. Se o operador quiser que prédio sem PNG também revele, isso vira item à parte.

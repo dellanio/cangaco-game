@@ -1,26 +1,22 @@
 {
-  "_doc": "Indice de arte do jogo (CLAUDE.md §9). `estados` mapeia o estagio do render (src/render/estagio-obra.ts) para o arquivo derivado; todo caminho e relativo a esta pasta. `tamanho` e o px REAL do arquivo derivado e `footprint` e em tiles: largura em px e sempre footprint[0] * tile_px, e a altura e o que arte der. As chaves sao os ids NEUTROS da simulacao, nunca o nome do tema. O jogo carrega so `sprites/`; `base/` e o registro da geracao.",
+  "_doc": "Indice de arte do jogo (CLAUDE.md §9). `estados` mapeia o estagio do render (src/render/estagio-obra.ts) para o arquivo derivado. Predio com o PAR `madeira` + `completo` tem a obra revelada pelo hp (F17g, `revelacaoDaObra`: madeira embaixo, `completo` por cima, os dois recortados de baixo para cima); sem o par, \u0061 obra fica nos seis estagios da F17e; todo caminho e relativo \u0061 esta pasta. `tamanho` e o px REAL do arquivo derivado e `footprint` e em tiles: \u0061 largura em px e sempre footprint[0] * tile_px, e \u0061 altura e o que \u0061 arte der. As chaves sao os ids NEUTROS da simulacao, nunca o nome do tema. O jogo carrega so `sprites/`; `base/` e o registro da geracao.",
   "versao": 1,
   "assets": [
     {
       "id": "storehouse",
       "tipo": "predio",
       "footprint": [3, 3],
-      "tamanho": [192, 194],
+      "tamanho": [192, 198],
       "anchor": [0.5, 1],
       "estados": {
-        "marcacao": "sprites/storehouse/storehouse_marcacao.png",
-        "fundacao": "sprites/storehouse/storehouse_fundacao.png",
-        "estrutura": "sprites/storehouse/storehouse_estrutura.png",
-        "paredes": "sprites/storehouse/storehouse_paredes.png",
-        "cobertura": "sprites/storehouse/storehouse_cobertura.png",
+        "madeira": "sprites/storehouse/storehouse_madeira.png",
         "completo": "sprites/storehouse/storehouse_completo.png"
       },
       "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
       "origem": {
-        "base": "base/storehouse/storehouse_06_completo.png",
+        "base": "base/storehouse/storehouse_02_completo.png",
         "semente": null,
-        "nota": "Seis estagios autorais do armazem monumental frontal, gerados por imagegen e derivados em conjunto por tools/derivar-sprites.js. Base completa: exec-65a21081-b7d5-4a62-ae69-20b8c0401759. Uniao alpha > 16 calculada somente para storehouse: x52,y24 1156x1171; saida 192x194."
+        "nota": "Par autoral de revelacao continua do armazem monumental frontal. Derivado em conjunto por tools/derivar-sprites.js; uniao alpha > 16 calculada somente para storehouse: x58,y25 1138x1171; saida 192x198."
       }
     },
     {
@@ -30,102 +26,82 @@
       "tamanho": [192, 182],
       "anchor": [0.5, 1],
       "estados": {
-        "marcacao": "sprites/woodcutters/woodcutters_marcacao.png",
-        "fundacao": "sprites/woodcutters/woodcutters_fundacao.png",
-        "estrutura": "sprites/woodcutters/woodcutters_estrutura.png",
-        "paredes": "sprites/woodcutters/woodcutters_paredes.png",
-        "cobertura": "sprites/woodcutters/woodcutters_cobertura.png",
+        "madeira": "sprites/woodcutters/woodcutters_madeira.png",
         "completo": "sprites/woodcutters/woodcutters_completo.png"
       },
-      "licenca": "arte propria do projeto, bases aprovadas pelo operador e estagios complementares gerados em 2026-09-26",
+      "licenca": "arte propria do projeto, bases aprovadas pelo operador e par de revelacao gerado em 2026-09-26",
       "origem": {
-        "base": "base/woodcutters/casa_lenhador_03_completo.png",
+        "base": "base/woodcutters/woodcutters_02_completo.png",
         "semente": null,
-        "nota": "Seis estagios derivados em conjunto por tools/derivar-sprites.js; o completo recebeu o ornamento de palha exec-54a07ddc-a4fe-48dd-9252-5ca7faa1e648. Uniao alpha > 16 calculada somente para woodcutters: x45,y115 1132x1071; saida 192x182."
+        "nota": "Par autoral da Casa do Lenhador, com ferramentas fixas e sem mercadoria incorporada. Derivado em conjunto por tools/derivar-sprites.js; uniao alpha > 16 calculada somente para woodcutters: x46,y113 1131x1075; saida 192x182."
       }
     },
     {
       "id": "quarry",
       "tipo": "predio",
       "footprint": [3, 2],
-      "tamanho": [192, 136],
+      "tamanho": [192, 149],
       "anchor": [0.5, 1],
       "estados": {
-        "marcacao": "sprites/quarry/quarry_marcacao.png",
-        "fundacao": "sprites/quarry/quarry_fundacao.png",
-        "estrutura": "sprites/quarry/quarry_estrutura.png",
-        "paredes": "sprites/quarry/quarry_paredes.png",
-        "cobertura": "sprites/quarry/quarry_cobertura.png",
+        "madeira": "sprites/quarry/quarry_madeira.png",
         "completo": "sprites/quarry/quarry_completo.png"
       },
       "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
       "origem": {
-        "base": "base/quarry/quarry_06_completo.png",
+        "base": "base/quarry/quarry_02_completo.png",
         "semente": null,
-        "nota": "Pedreira autoral com portico, rampa e baias vazias, sem rocha natural ou recurso incorporado. Base completa imagegen: exec-db236ce5-75ec-4059-bb0d-9188d7ed41d3. Uniao alpha > 16 calculada somente para quarry: x56,y4 1441x1020; saida 192x136."
+        "nota": "Pedreira autoral refeita com portico, guincho e rampa, sem bloco cortado ou carga incorporada. Derivado em conjunto por tools/derivar-sprites.js; uniao alpha > 16 calculada somente para quarry: x153,y22 1269x983; saida 192x149."
       }
     },
     {
       "id": "sawmill",
       "tipo": "predio",
       "footprint": [4, 2],
-      "tamanho": [256, 158],
+      "tamanho": [256, 157],
       "anchor": [0.5, 1],
       "estados": {
-        "marcacao": "sprites/sawmill/sawmill_marcacao.png",
-        "fundacao": "sprites/sawmill/sawmill_fundacao.png",
-        "estrutura": "sprites/sawmill/sawmill_estrutura.png",
-        "paredes": "sprites/sawmill/sawmill_paredes.png",
-        "cobertura": "sprites/sawmill/sawmill_cobertura.png",
+        "madeira": "sprites/sawmill/sawmill_madeira.png",
         "completo": "sprites/sawmill/sawmill_completo.png"
       },
       "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
       "origem": {
         "base": "base/sawmill/sawmill_06_completo.png",
         "semente": null,
-        "nota": "Serraria autoral com duas serras centrais e baias vazias para estoque dinamico. Base completa imagegen: exec-7da5b0e6-c536-4ec3-98a0-ab3e9f0e5975. Uniao alpha > 16 calculada somente para sawmill: x20,y43 1496x926; saida 256x158."
+        "nota": "Serraria autoral com duas serras centrais e baias vazias para estoque dinamico. Estrutura anterior reaproveitada como madeira e derivada no mesmo recorte do completo; uniao alpha > 16 calculada somente para sawmill: x21,y54 1495x915; saida 256x157."
       }
     },
     {
       "id": "schoolhouse",
       "tipo": "predio",
       "footprint": [3, 3],
-      "tamanho": [192, 191],
+      "tamanho": [192, 192],
       "anchor": [0.5, 1],
       "estados": {
-        "marcacao": "sprites/schoolhouse/schoolhouse_marcacao.png",
-        "fundacao": "sprites/schoolhouse/schoolhouse_fundacao.png",
-        "estrutura": "sprites/schoolhouse/schoolhouse_estrutura.png",
-        "paredes": "sprites/schoolhouse/schoolhouse_paredes.png",
-        "cobertura": "sprites/schoolhouse/schoolhouse_cobertura.png",
+        "madeira": "sprites/schoolhouse/schoolhouse_madeira.png",
         "completo": "sprites/schoolhouse/schoolhouse_completo.png"
       },
       "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
       "origem": {
         "base": "base/schoolhouse/schoolhouse_06_completo.png",
         "semente": null,
-        "nota": "Casa do Coronel autoral, sobrado civico com varanda e balcao vazio. Base completa imagegen: exec-05a1e437-c994-4746-8cf9-2b33f78d1e7d. Uniao alpha > 16 calculada somente para schoolhouse: x17,y28 1203x1199; saida 192x191."
+        "nota": "Casa do Coronel autoral, sobrado civico com varanda e balcao vazio. Estrutura anterior reaproveitada como madeira e derivada no mesmo recorte do completo; uniao alpha > 16 calculada somente para schoolhouse: x17,y28 1201x1198; saida 192x192."
       }
     },
     {
       "id": "inn",
       "tipo": "predio",
       "footprint": [4, 3],
-      "tamanho": [256, 179],
+      "tamanho": [256, 178],
       "anchor": [0.5, 1],
       "estados": {
-        "marcacao": "sprites/inn/inn_marcacao.png",
-        "fundacao": "sprites/inn/inn_fundacao.png",
-        "estrutura": "sprites/inn/inn_estrutura.png",
-        "paredes": "sprites/inn/inn_paredes.png",
-        "cobertura": "sprites/inn/inn_cobertura.png",
+        "madeira": "sprites/inn/inn_madeira.png",
         "completo": "sprites/inn/inn_completo.png"
       },
       "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
       "origem": {
         "base": "base/inn/inn_06_completo.png",
         "semente": null,
-        "nota": "Bodega autoral com varanda, rede e prateleiras e ganchos vazios para estoque dinamico. Base completa imagegen: exec-c748f518-527a-462f-ba6a-28b36c8269ef. Uniao alpha > 16 calculada somente para inn: x9,y60 1434x1005; saida 256x179."
+        "nota": "Bodega autoral com varanda, rede e areas vazias para estoque dinamico. Estrutura anterior reaproveitada como madeira e derivada no mesmo recorte do completo; uniao alpha > 16 calculada somente para inn: x10,y60 1427x992; saida 256x178."
       }
     }
   ],
@@ -152,37 +128,37 @@
         }
       }
     },
-    "_doc": "Icones da interface (CLAUDE.md §9). `predios` e por id NEUTRO, derivado da base por tools/derivar-icones.js (rode de novo ao trocar a base); `hud` e por campo de src/ui/hud.ts, desenhado a mao em SVG no registro da xilogravura (tinta, papel, ocre, terracota). Quem resolve `predios` e src/ui/icones.ts, por parametro; `hud` e desenhado pelo CSS por url(). O teste tests/icones-ui.test.ts confere arquivo, dimensao e base.",
+    "_doc": "Icones da interface (CLAUDE.md §9). `predios` e por id NEUTRO, derivado da base por tools/derivar-icones.js (rode de novo ao trocar a base); `hud` e por campo de src/ui/hud.ts, desenhado \u0061 mao em SVG no registro da xilogravura (tinta, papel, ocre, terracota). Quem resolve `predios` e src/ui/icones.ts, por parametro; `hud` e desenhado pelo CSS por url(). O teste tests/icones-ui.test.ts confere arquivo, dimensao e base.",
     "hud": {
       "gold": {
         "arquivo": "sprites/ui/hud-gold.svg",
         "tamanho": [20, 20],
         "licenca": "arte propria do projeto, desenhada em SVG na sessao de 2026-09-25",
-        "origem": {"base": null, "semente": null, "nota": "Vetor autoral, sem base: e glifo de interface, nao personagem nem predio."}
+        "origem": { "base": null, "semente": null, "nota": "Vetor autoral, sem base: e glifo de interface, nao personagem nem predio." }
       },
       "timber": {
         "arquivo": "sprites/ui/hud-timber.svg",
         "tamanho": [20, 20],
         "licenca": "arte propria do projeto, desenhada em SVG na sessao de 2026-09-25",
-        "origem": {"base": null, "semente": null, "nota": "Vetor autoral, sem base: e glifo de interface, nao personagem nem predio."}
+        "origem": { "base": null, "semente": null, "nota": "Vetor autoral, sem base: e glifo de interface, nao personagem nem predio." }
       },
       "stone": {
         "arquivo": "sprites/ui/hud-stone.svg",
         "tamanho": [20, 20],
         "licenca": "arte propria do projeto, desenhada em SVG na sessao de 2026-09-25",
-        "origem": {"base": null, "semente": null, "nota": "Vetor autoral, sem base: e glifo de interface, nao personagem nem predio."}
+        "origem": { "base": null, "semente": null, "nota": "Vetor autoral, sem base: e glifo de interface, nao personagem nem predio." }
       },
       "comida": {
         "arquivo": "sprites/ui/hud-comida.svg",
         "tamanho": [20, 20],
         "licenca": "arte propria do projeto, desenhada em SVG na sessao de 2026-09-25",
-        "origem": {"base": null, "semente": null, "nota": "Vetor autoral, sem base: e glifo de interface, nao personagem nem predio."}
+        "origem": { "base": null, "semente": null, "nota": "Vetor autoral, sem base: e glifo de interface, nao personagem nem predio." }
       },
       "populacao": {
         "arquivo": "sprites/ui/hud-populacao.svg",
         "tamanho": [20, 20],
         "licenca": "arte propria do projeto, desenhada em SVG na sessao de 2026-09-25",
-        "origem": {"base": null, "semente": null, "nota": "Vetor autoral, sem base: e glifo de interface, nao personagem nem predio."}
+        "origem": { "base": null, "semente": null, "nota": "Vetor autoral, sem base: e glifo de interface, nao personagem nem predio." }
       }
     }
   }

@@ -18,6 +18,7 @@ import {
 import type { ContextoDasCamadas } from '../src/render/manifesto-camadas';
 import { contextoDasCamadas } from '../src/render/predios';
 import { ORDEM_DOS_ESTAGIOS } from '../src/render/estagio-obra';
+import { CHAVES_DA_REVELACAO } from '../src/render/manifesto';
 import { gravarEvidencia } from './helpers/evidence';
 
 const manifesto = JSON.parse(readFileSync('assets/manifest.json', 'utf8')) as Manifesto;
@@ -58,9 +59,10 @@ function entradaSintetica(id: string, estados: Record<string, string>): EntradaD
   };
 }
 
-/** As chaves de `estados` que nao sao estagio do render: arte que nunca aparece na tela. */
+/** As chaves de `estados` que o render nao le (nem estagio, nem par da F17g):
+ *  arte que nunca aparece na tela. */
 function chavesForaDosEstagios(entrada: EntradaDeAsset): string[] {
-  const validas = new Set<string>(ORDEM_DOS_ESTAGIOS);
+  const validas = new Set<string>([...ORDEM_DOS_ESTAGIOS, ...CHAVES_DA_REVELACAO]);
   return Object.keys(entrada.estados).filter((k) => !validas.has(k));
 }
 
@@ -112,21 +114,26 @@ describe('F17f — o manifesto descreve a arte que existe', () => {
     }
   });
 
-  // O guarda da F17e: o estagio do meio passou a se chamar `estrutura`, e o nome
-  // antigo (`madeira`) nao pode ter ficado para tras — chave orfa e arte que nunca
-  // mais aparece na tela, sem ninguem reprovar. Ate 2026-09-26 ele era afirmado so
-  // no armazem, com os nomes dos arquivos de hoje, e reprovava quando o armazem
-  // fosse refeito (BUG-H). Agora vale para TODA entrada, contra a lista do render.
-  it('nenhuma entrada tem chave de estado fora dos seis estagios do render', () => {
+  // O guarda da F17e: chave que o render nao le e arte que nunca aparece na tela,
+  // sem ninguem reprovar. Ate 2026-09-26 ele era afirmado so no armazem (BUG-H);
+  // vale para TODA entrada, contra as listas do render. F17g: o render le as seis
+  // chaves de estagio (fallback) E as duas do par da revelacao — `madeira` voltou.
+  it('nenhuma entrada tem chave de estado fora dos estagios e do par do render', () => {
     for (const e of predios) {
       expect(chavesForaDosEstagios(e), e.id).toEqual([]);
     }
-    // e o guarda acusa: a chave antiga da F17e numa entrada sintetica
-    const comChaveVelha = entradaSintetica('storehouse', {
-      marcacao: 'sprites/x/marcacao.png',
+    // o par passa: e o que o Codex vai registrar
+    const comPar = entradaSintetica('storehouse', {
       madeira: 'sprites/x/madeira.png',
+      completo: 'sprites/x/completo.png',
     });
-    expect(chavesForaDosEstagios(comChaveVelha)).toEqual(['madeira']);
+    expect(chavesForaDosEstagios(comPar)).toEqual([]);
+    // e o guarda acusa: `pedra` e o nome do tema, nao a chave (a pedra e o `completo`)
+    const comChaveErrada = entradaSintetica('storehouse', {
+      madeira: 'sprites/x/madeira.png',
+      pedra: 'sprites/x/pedra.png',
+    });
+    expect(chavesForaDosEstagios(comChaveErrada)).toEqual(['pedra']);
   });
 
   // O outro lado do §9: placeholder e comportamento normal, nao e falha.

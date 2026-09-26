@@ -23,9 +23,9 @@ import type { LinhaDoMedidor } from '../medidor-obra';
 import { canteiroDaObra, chaveDoCanteiro } from '../nivelamento-obra';
 import type { CanteiroDaObra } from '../nivelamento-obra';
 import {
-  contagemDeEstagios, estagioDaObra, estaEmObra, ORDEM_DOS_ESTAGIOS,
+  chaveDaRevelacao, contagemDeEstagios, estagioDaObra, estaEmObra, ORDEM_DOS_ESTAGIOS, revelacaoDaObra,
 } from '../estagio-obra';
-import type { EstagioDaObra } from '../estagio-obra';
+import type { EstagioDaObra, Fracao, RevelacaoDaObra } from '../estagio-obra';
 import { centroDaVila } from '../../sim/selectors';
 import { tileDeChave } from '../../sim/estradas';
 import type { EstadoDePredio, GameState, Predio } from '../../sim/state';
@@ -37,9 +37,10 @@ import { criarCamadaDeEstradas, criarPreviaDeEstrada } from '../estradas';
 import { criarCamadaDeCampos, criarPreviaDeCampo } from '../campos';
 import { criarCamadaDeUnidades } from '../unidades';
 import {
-  assetDoPredio, arquivoDoEstagio, chaveDaTextura, chaveDeTextura, desenhoDoRecurso, texturaDaCamada, ESTADO_DO_TERRENO,
+  assetDoPredio, arquivoDoEstagio, chaveDaTextura, chaveDeTextura, desenhoDoRecurso, temParDeRevelacao,
+  texturaDaCamada, ESTADO_DO_TERRENO,
 } from '../manifesto';
-import type { DesenhoDoRecurso, EntradaDeAsset, TexturaCarregada } from '../manifesto';
+import type { ChaveDaRevelacao, DesenhoDoRecurso, EntradaDeAsset, TexturaCarregada } from '../manifesto';
 import { manifestoDoJogo, texturasParaCarregar } from '../sprites';
 
 const CHAVE_TEXTURA_TERRENO = 'tiles-terreno';
@@ -655,6 +656,8 @@ export class WorldScene extends Phaser.Scene {
     const pilhasNoDebug: Record<string, readonly PilhaNoDebug[]> = {};
     // F-VIVO-b: o quadro de trabalho de cada predio animando, da MESMA chamada do desenho.
     const quadrosNoDebug: Record<string, QuadroNoDebug> = {};
+    // F17g: as obras desenhadas pela revelacao, da MESMA conta que vai para `criarPredio`.
+    const revelacoes: Record<string, RevelacaoDaObra> = {};
     for (const id of estadoDoJogo.predios.ordem) {
       const predio = estadoDoJogo.predios.porId[id];
       if (!predio) continue;
@@ -663,6 +666,7 @@ export class WorldScene extends Phaser.Scene {
         estado: predio.estado,
         gx: predio.gx,
         gy: predio.gy,
+        hp: predio.hp,
         pausado: predio.estado === 'completo' ? predio.pausado : false,
         ocupante: predio.estado === 'completo' ? predio.ocupante : null,
       };
@@ -680,8 +684,21 @@ export class WorldScene extends Phaser.Scene {
       const estagio = estagioDaObra(
         predio.hp, aparencia.hpTotal, canteiro === null || canteiro.nivelada,
       );
-      porEstagio[estagio] += 1;
-      sprites[id] = this.spriteDoPredio(predio.tipo, estagio)?.chave ?? null;
+      // F17g: obra de predio com o PAR carregado e revelada pelo `hp`; sem o par,
+      // os seis estagios de antes. Predio de pe continua o `completo` inteiro.
+      const par = predio.estado === 'obra' ? this.parDeRevelacao(predio.tipo) : null;
+      const revelacao = par === null
+        ? null
+        : revelacaoDaObra(
+          predio.hp, aparencia.hpTotal, aparencia.custo['timber'] ?? 0, aparencia.custo['stone'] ?? 0,
+        );
+      if (par === null || revelacao === null) {
+        porEstagio[estagio] += 1;
+        sprites[id] = this.spriteDoPredio(predio.tipo, estagio)?.chave ?? null;
+      } else {
+        revelacoes[id] = revelacao;
+        sprites[id] = par.madeira.chave;
+      }
       // F17b: o medidor so existe para obra. Predio completo nao tem `obra.faltam`
       // (uniao discriminada em `sim/state.ts`) e nem pergunta de material pendente.
       const linhas = predio.estado === 'obra'
@@ -719,14 +736,16 @@ export class WorldScene extends Phaser.Scene {
         quadrosNoDebug[id] = { ...quadro, sprite: this.texturaDoQuadro(predio.tipo, quadro) !== null };
       }
       const chaveDoTrabalho = `${quadro === null ? '-' : `${quadro.laco}_${quadro.n}`}/${fumaca ?? '-'}`;
-      const assinatura = `${linhas.map((l) => l.entregue).join(',')}|${chaveDoCanteiro(canteiro)}|${chaveDasPilhas}|${chaveDoTrabalho}`;
+      // F17g: cada martelada muda a revelacao sem mudar o estagio de fallback.
+      const chaveDoCorpo = revelacao === null ? '-' : chaveDaRevelacao(revelacao);
+      const assinatura = `${linhas.map((l) => l.entregue).join(',')}|${chaveDoCanteiro(canteiro)}|${chaveDasPilhas}|${chaveDoTrabalho}|${chaveDoCorpo}`;
       const existente = this.desenhados.get(id);
       if (existente && existente.estado === predio.estado && existente.estagio === estagio
         && existente.assinatura === assinatura) continue;
       existente?.objeto.destroy();
       this.desenhados.set(id, {
         estado: predio.estado, estagio, assinatura,
-        objeto: this.criarPredio(predio, estagio, linhas, canteiro, pilhas, quadro, fumaca, tilePx),
+        objeto: this.criarPredio(predio, estagio, revelacao, linhas, canteiro, pilhas, quadro, fumaca, tilePx),
       });
     }
     debug.prediosRenderizados = this.desenhados.size;
@@ -740,8 +759,9 @@ export class WorldScene extends Phaser.Scene {
     // aqui seria a segunda lista, e e dela que a primeira diverge.
     debug.obrasRenderizadas = ORDEM_DOS_ESTAGIOS
       .filter(estaEmObra)
-      .reduce((total, e) => total + porEstagio[e], 0);
+      .reduce((total, e) => total + porEstagio[e], 0) + Object.keys(revelacoes).length;
     debug.estagiosDeObraRenderizados = porEstagio;
+    debug.revelacaoDasObras = revelacoes;
     debug.medidoresDeObra = medidores;
     debug.canteirosDeObra = canteiros;
     debug.spritesDePredio = sprites;
@@ -760,13 +780,27 @@ export class WorldScene extends Phaser.Scene {
    *  nao mostra.
    */
   private spriteDoPredio(
-    tipo: string, estagio: EstagioDaObra,
+    tipo: string, estagio: EstagioDaObra | ChaveDaRevelacao,
   ): { readonly chave: string; readonly entrada: EntradaDeAsset } | null {
     const entrada = assetDoPredio(manifestoDoJogo, tipo);
     if (!entrada) return null;
     if (!arquivoDoEstagio(entrada, estagio)) return null;
     const chave = chaveDaTextura(entrada.id, estagio);
     return this.textures.exists(chave) ? { chave, entrada } : null;
+  }
+
+  /** F17g — as duas texturas da revelacao, ou `null` quando falta uma: sem o par
+   *  no manifesto E no loader, a obra fica nos seis estagios (decisao do operador).
+   *  A mesma pergunta para quem publica no debug e para quem desenha. */
+  private parDeRevelacao(tipo: string): {
+    readonly madeira: { readonly chave: string; readonly entrada: EntradaDeAsset };
+    readonly pedra: { readonly chave: string; readonly entrada: EntradaDeAsset };
+  } | null {
+    const entrada = assetDoPredio(manifestoDoJogo, tipo);
+    if (!entrada || !temParDeRevelacao(entrada)) return null;
+    const madeira = this.spriteDoPredio(tipo, 'madeira');
+    const pedra = this.spriteDoPredio(tipo, 'completo');
+    return madeira && pedra ? { madeira, pedra } : null;
   }
 
   /** Placeholder do §9: retangulo do tamanho do footprint com o nome
@@ -776,7 +810,8 @@ export class WorldScene extends Phaser.Scene {
    *  (`estagio-obra.ts`): marcacao (nada martelado), madeira (em obra) e
    *  completo (o predio de pe, sem rotulo extra). */
   private criarPredio(
-    predio: Predio, estagio: EstagioDaObra, linhas: readonly LinhaDoMedidor[],
+    predio: Predio, estagio: EstagioDaObra, revelacao: RevelacaoDaObra | null,
+    linhas: readonly LinhaDoMedidor[],
     canteiro: CanteiroDaObra | null, pilhas: readonly PilhaDesenhada[],
     quadro: QuadroDeTrabalho | null, fumaca: number | null, tilePx: number,
   ): Phaser.GameObjects.Container {
@@ -786,9 +821,16 @@ export class WorldScene extends Phaser.Scene {
     const alturaPx = altura * tilePx;
 
     const sprite = this.spriteDoPredio(predio.tipo, estagio);
-    const corpo = sprite === null
-      ? this.desenharPlaceholder(estagio, nome, larguraPx, alturaPx)
-      : [this.desenharSprite(sprite.chave, sprite.entrada, larguraPx, alturaPx)];
+    // F17g: com revelacao, madeira embaixo e pedra (o `completo`) por cima.
+    const par = revelacao === null ? null : this.parDeRevelacao(predio.tipo);
+    const corpo = revelacao !== null && par !== null
+      ? [
+        ...this.desenharRevelado(par.madeira, revelacao.madeira, larguraPx, alturaPx),
+        ...this.desenharRevelado(par.pedra, revelacao.pedra, larguraPx, alturaPx),
+      ]
+      : sprite === null
+        ? this.desenharPlaceholder(estagio, nome, larguraPx, alturaPx)
+        : [this.desenharSprite(sprite.chave, sprite.entrada, larguraPx, alturaPx)];
     // F-VIVO-a: a fracao da ancora e do sprite `completo` (brief §4a). Sem ele, do lote.
     const completo = this.spriteDoPredio(predio.tipo, 'completo');
     const caixa = completo === null
@@ -829,6 +871,21 @@ export class WorldScene extends Phaser.Scene {
     imagem.setOrigin(entrada.anchor[0], entrada.anchor[1]);
     imagem.setScale(larguraPx / entrada.tamanho[0]);
     return imagem;
+  }
+
+  /** F17g — uma imagem do par recortada DE BAIXO PARA CIMA pela fracao: a obra
+   *  sobe do chao. O recorte e no quadro da textura (px do arquivo); escala e
+   *  ancoragem continuam as de `desenharSprite`. Fracao zero nao desenha nada. */
+  private desenharRevelado(
+    sprite: { readonly chave: string; readonly entrada: EntradaDeAsset }, fracao: Fracao,
+    larguraPx: number, alturaPx: number,
+  ): Phaser.GameObjects.Image[] {
+    const [num, den] = fracao;
+    if (num <= 0) return [];
+    const imagem = this.desenharSprite(sprite.chave, sprite.entrada, larguraPx, alturaPx);
+    const visivel = imagem.height * num / den;
+    imagem.setCrop(0, imagem.height - visivel, imagem.width, visivel);
+    return [imagem];
   }
 
   /** F-VIVO-a — o retangulo que o sprite ocupa dentro do container, pela mesma
