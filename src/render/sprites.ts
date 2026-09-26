@@ -6,7 +6,7 @@
  */
 import manifestoJson from '../../assets/manifest.json';
 import type { Manifesto } from './manifesto';
-import { chaveDaTextura } from './manifesto';
+import { chaveDeTextura } from './manifesto';
 import { urlsDeSprites } from './sprites-urls';
 
 /**
@@ -24,14 +24,21 @@ export interface TexturaParaCarregar {
 
 /** O que o `preload()` da cena tem de enfileirar: so o que o manifesto declara
  *  E o bundler resolveu. O resto fica placeholder, que e comportamento normal
- *  (§9) — e nao vira 404. */
-export function texturasParaCarregar(): TexturaParaCarregar[] {
+ *  (§9) — e nao vira 404.
+ *
+ *  F-SPR: todo tipo do manifesto (predio, terreno, recurso, vegetacao, unidade),
+ *  com a chave `<tipo>:<id>:<estado>` — para predio, a mesma de antes. Manifesto e
+ *  URLs por parametro so para o teste provar o lado do arquivo que falta. */
+export function texturasParaCarregar(
+  manifesto: Manifesto = manifestoDoJogo,
+  urls: Readonly<Record<string, string>> = urlsDeSprites,
+): TexturaParaCarregar[] {
   const fila: TexturaParaCarregar[] = [];
-  for (const entrada of manifestoDoJogo.assets) {
-    for (const [estagio, rel] of Object.entries(entrada.estados)) {
-      const url = urlsDeSprites[rel];
+  for (const entrada of manifesto.assets) {
+    for (const [estado, rel] of Object.entries(entrada.estados)) {
+      const url = urls[rel];
       if (!url) continue;
-      fila.push({ chave: chaveDaTextura(entrada.id, estagio), url });
+      fila.push({ chave: chaveDeTextura(entrada.tipo, entrada.id, estado), url });
     }
   }
   return fila;

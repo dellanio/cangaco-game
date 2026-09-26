@@ -18,9 +18,10 @@ import { compararComESemSave, deepFreeze } from './helpers/determinism';
 import { violacoesDeInvariantes } from './helpers/jobs-invariantes';
 import { bensPorMercadoria, violacoesDaFsm } from './helpers/serf-invariantes';
 import {
-  armazemDoCenario, cenarioLigado, comEstradas, comObra, comPedraNaSaida, inicial, linhaH, linhaV, semAUnidade,
-  serfsDoCenario, tile,
+  armazemDoCenario, cenarioLigado, comEstradas, comObra, comPedraNaSaida, inicial, semAUnidade,
+  serfsDoCenario, 
 } from './helpers/jobs-cenario';
+import { linhaHDe, linhaVDe, naVila } from './helpers/ancoras';
 
 const armazem = armazemDoCenario(inicial);
 const serfs = serfsDoCenario(inicial);
@@ -187,13 +188,13 @@ describe('F10 — a sequencia de estados de um serf sozinho, numa viagem so', ()
 describe('F10 — o movimento: um passo custa o que o dado diz, e a posicao nunca teleporta', () => {
   /** Uma rua longa: do armazem (porta em (29,33)) ate uma obra a leste, 18 passos de estrada. */
   const cenarioLongo = (): GameState => soUmSerf(comEstradas(
-    comObra(comPedraNaSaida(inicial, armazem.id, 10), 'obra-a', { gx: 44, gy: 34, faltam: { stone: 1 } }),
-    [...linhaV(29, 33, 36), ...linhaH(29, 46, 36)],
+    comObra(comPedraNaSaida(inicial, armazem.id, 10), 'obra-a', { ...naVila(15, 4), faltam: { stone: 1 } }),
+    [...linhaVDe(naVila, 0, 3, 6), ...linhaHDe(naVila, 0, 17, 6)],
   ));
   const inicioLongo = cenarioLongo();
   // F18d-1a: a entrega de material em obra anda LIVRE (delivery.json, nivel 3), entao o
   // trajeto de verdade e o A* livre — que corta a quina do L da rua em vez de contorna-la.
-  const passosDaEntrega = buscarCaminho(inicioLongo, tile(29, 33), [tile(44, 36), tile(45, 36), tile(46, 36)], 'livre')?.tiles.length ?? 0;
+  const passosDaEntrega = buscarCaminho(inicioLongo, naVila(0, 3), [naVila(15, 6), naVila(16, 6), naVila(17, 6)], 'livre')?.tiles.length ?? 0;
   const { passos: passosLongos } = rodar(inicioLongo, quieto);
 
   // o cenario curto (5 tiles de rua) para os testes de posicao
@@ -321,8 +322,8 @@ describe('F10 — quatro serfs trabalhando ao mesmo tempo, a cada tick sob as in
 
 describe('F10 — determinismo, save/load no meio da viagem e imutabilidade', () => {
   const plantarERuar = (t: number): Command[] => (t !== 0 ? [] : [
-    { type: 'PlaceBlueprint', buildingId: 'quarry', gx: 26, gy: 34 },
-    { type: 'PlaceRoad', tiles: [tile(29, 33), tile(29, 34), tile(29, 35), tile(29, 36), tile(28, 36)] },
+    { type: 'PlaceBlueprint', buildingId: 'quarry', ...naVila(-3, 4) },
+    { type: 'PlaceRoad', tiles: [naVila(0, 3), naVila(0, 4), naVila(0, 5), naVila(0, 6), naVila(-1, 6)] },
   ]);
 
   // F11c: o quarry nasce sem nivelar (nivelamento 0) quando plantado pela UI — o laborer

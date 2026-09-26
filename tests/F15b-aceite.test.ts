@@ -26,13 +26,14 @@ import { gameData } from '../src/sim/data';
 import { estoqueDosArmazens } from '../src/sim/selectors';
 import { ehPredioOcupavel } from '../src/sim/ocupacao';
 import { TIPO_QUE_CARREGA } from '../src/sim/jobs';
-import { armazemDoCenario, comEstradas, comUnidadeExtra, linhaH } from './helpers/jobs-cenario';
+import { armazemDoCenario, comEstradas, comUnidadeExtra } from './helpers/jobs-cenario';
 import { comOuroNaEscola, escolaDoCenario, ouroNaEscola } from './helpers/escola-cenario';
 import {
   cenarioDePedreira, cenarioDeSerraria, cenarioOraculo, comSaida, disponivelDe, entradaDe, progressoDe, saidaDe,
 } from './helpers/producao-cenario';
 import { violacoesDeInvariantes } from './helpers/jobs-invariantes';
 import { gravarEvidencia } from './helpers/evidence';
+import { linhaHDe, naVila } from './helpers/ancoras';
 
 const TICKS_DO_ORACULO = 3000;
 const X_DO_OCIO = gameData.entrega.ticksAlertaTarefaSemCandidato;
@@ -109,7 +110,7 @@ describe('F15b-1 — aceite da escada do produtor', () => {
     const timberNoArmazem = estoqueDosArmazens(fimDoTronco).timber ?? 0;
 
     // (c) escola com ouro e fila vazia: o nivel 7 devolve, e a gaveta fica vazia
-    const comOuro = comOuroNaEscola(comEstradas(createInitialState(1), linhaH(29, 36, 33)), ESCOLA, 1);
+    const comOuro = comOuroNaEscola(comEstradas(createInitialState(1), linhaHDe(naVila, 0, 7, 3)), ESCOLA, 1);
     const ouroAntes = totalNoMundo(comOuro, MERCADORIA_DE_OURO);
     const fimDoOuro = rodar(comOuro, 300);
     const ouroNoArmazem = estoqueDosArmazens(fimDoOuro)[MERCADORIA_DE_OURO] ?? 0;

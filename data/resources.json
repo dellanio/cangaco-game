@@ -65,6 +65,28 @@
       },
       "_doc": "O milho do rocado. Regime `porAcao` porque quem o repoe e o roceiro que ara e semeia (GDD 5.4), nao o relogio. 4 por tile: quatro ciclos de colheita para um de plantio."
     },
+    "grapes": {
+      "_doc": "E CANA-DE-ACUCAR, nao uva (operador, 2026-09-26). O id neutro vem do jogo de referencia; o tema e o sertao. Quem desenha este recurso desenha touceiras altas de colmo com folha comprida — nunca parreira, vinhedo ou cacho. O Canavial (wineyard) colhe daqui e o que sai e cachaca (`wine`). Os numeros sao os do milho, de proposito: mesma cultura plantada pelo jogador, mesmo regime, e a diferenca de ritmo fica para o lote de balanceamento (BALANCE_LOG).",
+      "regime": "porAcao",
+      "rendimentoPorTile": 4,
+      "bloqueiaConstrucao": false,
+      "_docBloqueiaConstrucao": "Mesmo recorte do milho: tile que o JOGADOR plantou, e o partido em pousio continua recurso com `quantidade: 0`.",
+      "bloqueiaPasso": false,
+      "_docBloqueiaPasso": "Mesmo do milho: o cortador entra no proprio partido.",
+      "quantidadeInicial": 0,
+      "_docQuantidadeInicial": "Nasce em POUSIO, como o milho: o primeiro ciclo do Canavial e de plantio.",
+      "_docSemTerreno": "Sem `terreno`: nao ha partido de cana desenhado no mapa, so o que o jogador ara. Por isso o tipo nao tem tile em nenhum mapa, e `recurso/sem-instancia` o isenta pelo bloco `aradura` (quem ara e o jogador), nao por lista.",
+      "aradura": {
+        "terrenoPermitido": ["grama"],
+        "segundos_base": 4.0,
+        "_doc": "Os numeros do milho (ver corn.aradura). Calibrar no BALANCE_LOG."
+      },
+      "reposicao": {
+        "segundos_base": 30,
+        "custo": {},
+        "_doc": "Os numeros do milho (ver corn.reposicao). O `timber: 1` por plantio que o production.json guardava para a videira NAO entra aqui: o custo sai da gaveta de entrada do predio, e o Canavial nao tem `entra` — ninguem entregaria a tabua. REVOGADO em definitivo no GDD §5.4 (operador, 2026-09-26)."
+      }
+    },
     "coal": {
       "regime": "nunca",
       "rendimentoPorTile": 15,

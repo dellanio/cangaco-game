@@ -180,6 +180,13 @@ button[aria-disabled="true"] {
   outline: 2px solid var(--papel); outline-offset: -8px;
   box-shadow: 6px 6px 0 var(--tinta), 0 12px 40px rgba(0, 0, 0, 0.6);
 }
+/* F23b: guardar e retomar, a primeira secao da ajuda. */
+#ajuda .arquivo .botoes { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+#ajuda .arquivo .recado { font-size: 13px; font-style: italic; }
+#ajuda .arquivo .recado[hidden] { display: none; }
+#ajuda .arquivo .recado[data-ok="false"] { color: var(--terracota); }
+#ajuda .arquivo .recado.pisca { animation: recado-pisca 0.6s ease-out; }
+@keyframes recado-pisca { from { background: var(--terracota); color: var(--papel); } }
 #ajuda[hidden] { display: none; }
 #ajuda h2 {
   margin: 0 0 10px; padding-bottom: 6px; font-size: 22px;
@@ -292,12 +299,15 @@ body[data-prancha="fechada"] #menu-build { display: none; }
   background: var(--terracota); transform: rotate(45deg);
 }
 /* arar: os sulcos da terra; apagar roca: os sulcos tracejados, riscados */
+/* os sulcos levam a cor da cultura (`--cor-cultura`, do tema), contornados de tinta:
+   milho e cana tinham o mesmo glifo, e o jogador arava uma achando que arava a outra */
 #menu-build .glifo-campo::before {
   content: ''; position: absolute; inset: 2px 0;
-  background: repeating-linear-gradient(180deg, var(--tinta) 0 3px, transparent 3px 6px);
+  background: repeating-linear-gradient(180deg, var(--cor-cultura, var(--tinta)) 0 3px, transparent 3px 6px);
+  outline: 1px solid var(--tinta);
 }
 #menu-build .icone[aria-pressed="true"] .glifo-campo::before {
-  background: repeating-linear-gradient(180deg, var(--papel) 0 3px, transparent 3px 6px);
+  outline-color: var(--papel);
 }
 #menu-build .glifo-apagar-campo::before {
   content: ''; position: absolute; inset: 2px 0; opacity: 0.45;

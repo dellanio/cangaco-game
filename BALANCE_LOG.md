@@ -499,6 +499,19 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   Se o lote quiser a escolha de volta, o parafuso é o mesmo trio de antes | 
   `data/economy.json:estadoInicial.estoque.stone`, `data/delivery.json`
 
+- [2026-09-26] **Pedra inicial 34 → 30, POR DECISÃO DO OPERADOR, e as três pontas fecham
+  com 30** | O operador escreveu: "a tensão que eu defendi dependia do pagamento à vista, e o
+  pagamento à vista era o defeito". A sonda temporária foi a das pontas pós-F18g, reconstruída
+  e apagada no mesmo commit. Janela de 12 000, critério da F17 mais os quatro ligados,
+  varrida de 30 para baixo.
+  · **A**, a rua inteira no tick 0: fecha no **4404** (com 34 era 4208), e o limiar é **27**.
+  · **B**, 15 tiles, e o resto entra no tick 1: fecha no **5193**, limiar **28**.
+  · **D**, o resto só com os 15 de pé (tick 206): fecha no **5158**, limiar **27**.
+  Os limiares são os mesmos de antes. A margem ficou em 3 (A e D) e 2 (B). O guarda de
+  `tools/geometria-da-abertura.mjs` exige 30 (rua 26 + reserva 4) e passa no limite exato.
+  **Ressalva:** a Fase A demora ~200 ticks a mais na ponta A com 30. Nenhum outro número foi girado. |
+  `data/economy.json:estadoInicial.estoque.stone`
+
 - [2026-09-25] **A faixa da fazenda nas geometrias do jogador: 143 a 346 ticks por milho,
   e no alcance máximo a fazenda NÃO sustenta o moinho** | `test-output/F-CAL-b2-sonda.json`
   (sonda apagada), a vila da F-CAL-a por 36 000 ticks, só o campo mudando de lugar.
@@ -527,6 +540,20 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   (e (b) vale só para o campo do lado da porta), ou o termo que muda é a caminhada.
   | `production.json:farm.sai.corn`, `production.json:proporcoesDeReferencia`,
   `docs/calibracao-fase-b.md`
+- [2026-09-26] o Canavial deixou de fazer cachaça do nada (F-CANA). Agora ele precisa de
+  partido de cana arado, planta, anda e colhe, com os números do milho copiados de
+  propósito. | medido (`test-output/F-CANA.json`): **791 ticks** até a primeira cachaça,
+  com dois partidos colados na porta; antes era um ciclo de receita, sem campo. A cachaça é
+  comida (`economy.comida`, `condition.restauracaoPorComida.wine 0.30`), e o efeito na
+  bodega não foi medido. | `production.json:wineyard.sai.wine`,
+  `resources.json:tipos.grapes.reposicao`, `resources.json:tipos.grapes.rendimentoPorTile`
+- [2026-09-26] o `timber: 1` por plantio da videira (antigo `timberPorCampo`, guardado nas
+  notas do `wineyard`) **não entrou** em `grapes.reposicao.custo`. O custo sai da gaveta de
+  entrada, e o Canavial não tem `entra`, então ninguém entregaria a tábua e o plantio
+  esperaria para sempre. Pôr o custo exige `wineyard.entra.timber` junto. **Fechado (operador,
+  2026-09-26): o custo fica fora, em definitivo, e está revogado no GDD §5.4.** | `production.json:wineyard`
+- [2026-09-26] a mina colhe sem sair (`colheita.aDistancia`, F-CANA). O ciclo do minério
+  ficou mais curto pelo tempo da ida e da volta ao veio, que não foi medido. | `production.json:*_mine.sai`
 
 ---
 

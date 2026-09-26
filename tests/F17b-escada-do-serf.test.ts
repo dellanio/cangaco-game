@@ -26,9 +26,10 @@ import { step } from '../src/sim/tick';
 import { gameData } from '../src/sim/data';
 import { predioLigadoAoArmazem, tilesDaPorta } from '../src/sim/estradas';
 import { buscarCaminho } from '../src/sim/pathfinding';
-import { cenarioDePedreira } from './helpers/producao-cenario';
-import { comEstradas, comObra, comUnidadeExtra, tile } from './helpers/jobs-cenario';
+import { cenarioDePedreira, pedreiraDaVila } from './helpers/producao-cenario';
+import { comEstradas, comObra, comUnidadeExtra } from './helpers/jobs-cenario';
 import { gravarEvidencia } from './helpers/evidence';
+import { linhaHDe, naVila, relativoA } from './helpers/ancoras';
 
 const SERF = 'serf-da-escada';
 const OBRA = 'obra-longe';
@@ -36,7 +37,7 @@ const PEDREIRA = 'q1';
 
 /** Onde o serf nasce: em cima da porta da pedreira, que e a ORIGEM das duas
  *  tarefas de nivel 6 e 7. Colado nelas, e a 15 tiles da obra. */
-const POSTO_DO_SERF = { gx: 27, gy: 36 };
+const POSTO_DO_SERF = relativoA(pedreiraDaVila())(1, 2); // (27,36) hoje
 
 const PARA_O_ARMAZEM = ['saida-cheia-para-armazem', 'excedente-para-armazem'];
 
@@ -67,9 +68,9 @@ function comCargaNaPedreira(estado: GameState, id: string): GameState {
  */
 function cenario(comAObra: boolean): GameState {
   let s = comCargaNaPedreira(cenarioDePedreira(), PEDREIRA);
-  s = comEstradas(s, Array.from({ length: 45 - 29 + 1 }, (_, i) => tile(29 + i, 36)));
+  s = comEstradas(s, linhaHDe(naVila, 0, 16, 6)); // y=36, x 29..45 hoje
   if (comAObra) {
-    s = comObra(s, OBRA, { gx: 42, gy: 34, tipo: 'quarry', faltam: { stone: 2 } });
+    s = comObra(s, OBRA, { ...naVila(13, 4), tipo: 'quarry', faltam: { stone: 2 } });
     const obra = s.predios.porId[OBRA];
     if (obra === undefined || !predioLigadoAoArmazem(s, obra)) {
       throw new Error('fixture: a obra longe nao ficou ligada ao armazem — geometria errada');

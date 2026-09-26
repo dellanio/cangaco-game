@@ -36,10 +36,42 @@
     "tree": "#3E5D34",
     "fish": "#7FB8C9",
     "corn": "#C9A227",
+    "grapes": "#6E8B3D",
     "coal": "#3B3A38",
     "iron_ore": "#A0603C",
     "gold_ore": "#E8C25A",
     "esgotado": "#2A2622"
+  },
+  "pilhas": {
+    "_doc": "F-VIVO-a — o placeholder da pilha: um quadrado por unidade, com a cor da mercadoria, enquanto nao ha PNG `pilha` no manifesto. A chave e o id NEUTRO de economy.json `mercadorias`, pelo mesmo motivo dos blocos de cor acima: sim/ nao le este arquivo, e quem casa id com cor e o funil src/render/predios.ts. Mercadoria sem cor aqui reprova no carregamento do funil.",
+    "tree_trunk": "#6B4A2E",
+    "timber": "#C89B5E",
+    "stone": "#B9B2A4",
+    "gold_ore": "#C9A94A",
+    "gold": "#F2CF4A",
+    "coal": "#2E2C2A",
+    "iron_ore": "#9A5A3A",
+    "iron": "#7D8590",
+    "corn": "#E0B63A",
+    "flour": "#EFE6D2",
+    "pigs": "#D99A8C",
+    "skins": "#A57A55",
+    "leather": "#7A4B2A",
+    "horses": "#5C3B24",
+    "loaves": "#D08B3E",
+    "sausages": "#A8433A",
+    "wine": "#E7E1C8",
+    "fish": "#7FB8C9",
+    "hand_axe": "#8C6A45",
+    "sword": "#B7BDC4",
+    "lance": "#9C7B4F",
+    "pike": "#A3A9B0",
+    "longbow": "#7E5E36",
+    "crossbow": "#5F666E",
+    "leather_armor": "#8A5A34",
+    "iron_armor": "#6C737B",
+    "wooden_shield": "#B0864F",
+    "iron_shield": "#8E959C"
   },
   "plantaFantasma": {
     "_doc": "F-TP. O rotulo da previa de colheita da planta fantasma. `{recurso}` sai de `recursos` aqui, `{n}` e quantos tiles ainda tem o que colher ao alcance e `{u}` e quanto isso da somado. A chave de `recursos` e o id NEUTRO de data/resources.json, pelo mesmo motivo do bloco `recursos` de cor: sim/ nao le este arquivo, e quem casa id com texto e o funil src/render/alcance-de-colheita.ts. Tipo sem nome aqui reprova no carregamento.",
@@ -50,6 +82,7 @@
       "tree": "Mata",
       "fish": "Pesca",
       "corn": "Roçado",
+      "grapes": "Partido de cana",
       "coal": "Carvoeira",
       "iron_ore": "Veio de ferro",
       "gold_ore": "Veio de ouro"
@@ -180,6 +213,7 @@
     },
     "stonemason": {
       "nome": "Cabra da Pedreira",
+      "curto": "Pedreiro",
       "item": "ponteiro e marreta"
     },
     "woodcutter": {
@@ -303,6 +337,7 @@
     "iron_ore": "Minério",
     "iron": "Ferro",
     "corn": "Milho",
+    "grapes": "Cana",
     "flour": "Fubá",
     "pigs": "Bode",
     "skins": "Couro cru",
@@ -321,15 +356,22 @@
     "leather_armor": "Gibão de couro",
     "iron_armor": "Gibão reforçado",
     "wooden_shield": "Chapéu de aba",
-    "iron_shield": "Peitoral de couro cru",
-    "arma_madeira": "Arma de madeira",
-    "arma_ferro": "Arma de ferro",
-    "armadura_ferro": "Proteção reforçada"
+    "iron_shield": "Peitoral de couro cru"
   },
   "hud": {
     "comida": "Comida",
     "populacao": "Gente",
-    "pausado": "Pausado"
+    "pausado": "Pausado",
+    "arquivo": {
+      "titulo": "Partida",
+      "salvar": "Guardar",
+      "carregar": "Retomar",
+      "salvou": "Partida guardada",
+      "carregou": "Partida retomada",
+      "semSave": "Nenhuma partida guardada",
+      "recusado": "Não retomou: {detalhe}",
+      "gaveta": "O navegador não guardou: {detalhe}"
+    }
   },
   "menuBuild": {
     "_doc": "Layout 2, fatia 2: o menu e uma grade de icones por grupo (data/menu-build.json) com um cartao fixo embaixo. As chaves de `grupos` SAO os ids de menu-build.json > grupos[].id — id sem rotulo, ou rotulo sem id, reprova o validate:data (interface/menu-build). `cartaoVazio` e o que o cartao diz quando nada esta sob o mouse nem na mao.",

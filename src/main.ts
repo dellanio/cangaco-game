@@ -29,6 +29,8 @@ import { montarAvisoDoTempo } from './ui/aviso-tempo';
 import { montarAjuda } from './ui/ajuda';
 import { montarPrancha } from './ui/prancha';
 import { montarBalcao } from './ui/balcao';
+import { montarArquivo } from './ui/arquivo';
+import { criarArquivoDaPartida } from './arquivo-da-partida';
 import { criarFerramenta } from './input/ferramenta';
 import { criarSelecao } from './input/selecao';
 import { criarEntradaDoMapa } from './input/colocar';
@@ -123,6 +125,21 @@ function atualizar(s: GameState): void {
 }
 
 sessao.aoMudar(atualizar);
+
+// F23b — guardar e retomar a partida. A gaveta e o `localStorage`, injetado aqui
+// para o arquivo continuar testavel sem navegador. Retomar fecha o painel: o
+// predio aberto e da partida velha e pode nao existir na nova.
+const arquivo = criarArquivoDaPartida(sessao, window.localStorage);
+const painelDoArquivo = montarArquivo(
+  () => {
+    painelDoArquivo.mostrar(arquivo.salvar());
+  },
+  () => {
+    const resultado = arquivo.carregar();
+    if (resultado.ok) selecao.selecionar(null);
+    painelDoArquivo.mostrar(resultado);
+  },
+);
 // O painel abre NO CLIQUE, sem esperar o proximo tick: com o jogo pausado nao
 // viria nenhum, e o painel so apareceria quando o jogador retomasse.
 selecao.aoMudar(() => {

@@ -92,13 +92,24 @@ const fixtures: Fixture[] = [
     quebrar: (d) => { d.resources.tipos.corn.regime = 'nunca'; } },
   { nome: 'reposicao cobra mercadoria que nao existe', regraEsperada: 'recurso/reposicao',
     quebrar: (d) => { d.resources.tipos.corn.reposicao.custo = { fubaDeOuro: 1 }; } },
+  // 2026-09-26: cultura com `aradura` passou a ser isenta (quem a instancia e o
+  // jogador). O milho tem o bloco, entao a prova de "terreno nao e passe livre"
+  // tira o bloco junto — senao ela mediria a isencao nova, nao a derivacao.
   { nome: 'terreno do recurso derivado sem nenhum tile desenhado', regraEsperada: 'recurso/sem-instancia',
     quebrar: (d) => {
+      delete d.resources.tipos.corn.aradura;
       const char = Object.entries(d['maps/sertao-128'].legenda)
         .find(([, t]) => t === d.resources.tipos.corn.terreno)?.[0];
       if (char === undefined) throw new Error('fixture: a legenda perdeu o campo arado');
       d['maps/sertao-128'].linhas = d['maps/sertao-128'].linhas
         .map((l: string) => l.split(char).join('g'));
+    } },
+  // e a isencao e o BLOCO, nao o nome: a cana sem `aradura` nao tem tile em mapa
+  // nenhum nem quem a plante, e volta a reprovar.
+  { nome: 'cultura sem tile e sem aradura', regraEsperada: 'recurso/sem-instancia',
+    quebrar: (d) => {
+      delete d.resources.tipos.grapes.aradura;
+      delete d.resources.tipos.grapes.reposicao;
     } },
   { nome: 'mapa poe recurso que nao existe em resources.tipos', regraEsperada: 'recurso/mapa',
     quebrar: (d) => { d['maps/sertao-128'].recursos.fantasma = [[1, 1]]; } },

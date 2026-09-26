@@ -64,6 +64,10 @@ export interface ReceitaDePredio {
    *  Substituiu `rendimentoDoVeio`, que punha o total no PREDIO e fazia com que
    *  demolir e reconstruir renovasse a fonte. */
   readonly colheita: ColheitaDeRecurso | null;
+  /** F24a — cada ciclo entrega UMA das saidas de `sai`, e nao todas. Qual e a
+   *  cota do predio (`Producao.escolha`). `false` e a receita de sempre: o ciclo
+   *  deposita todas as saidas juntas (a granja: porco e couro). */
+  readonly escolheSaida: boolean;
 }
 
 /** F-T2a — a colheita de um predio: o que ele corta e ate onde alcanca. */
@@ -72,6 +76,10 @@ export interface ColheitaDeRecurso {
   readonly recurso: string;
   /** Distancia de Chebyshev a partir do TILE MAIS PROXIMO do footprint. */
   readonly alcance: number;
+  /** 2026-09-26 (operador) — colhe o tile SEM sair do predio: o relogio anda la
+   *  dentro e o deposito consome o tile, como a mina do jogo original. Regra de
+   *  classe, nao de tipo: qualquer receita com `colheita` pode declarar. */
+  readonly aDistancia: boolean;
 }
 export type ProducaoReceitas = Readonly<Record<string, ReceitaDePredio>>;
 

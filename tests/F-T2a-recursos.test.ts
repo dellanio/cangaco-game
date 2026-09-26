@@ -22,10 +22,13 @@ import {
   colherDoTile, recursoNoTile, recursosIniciais, regenerar, regimeDoTipo, tilesDeColheita,
 } from '../src/sim/recursos';
 import { receitaDoTipo } from '../src/sim/producao';
-import { comEstradas, linhaH, linhaV } from './helpers/jobs-cenario';
+import { comEstradas } from './helpers/jobs-cenario';
 import {
-  comEspacoNaSaida, comJazida, comProdutorOcupado, comRendimentoPorTile, disponivelDe, saidaDe,
+  comEspacoNaSaida, comJazida, comProdutorOcupado, comRendimentoPorTile, disponivelDe, pedreiraDaVila,
+  rochaDaPedreiraDaVila, saidaDe,
 } from './helpers/producao-cenario';
+import { ancoraDaVila, ancoraDoLajedo, relativoA } from './helpers/ancoras';
+import type { TileDeGrid } from '../src/sim/estradas';
 import { compararComESemSave } from './helpers/determinism';
 import { gravarEvidencia } from './helpers/evidence';
 // `render/mapa.ts` e o funil (F04) e nao importa phaser: da para afirmar sobre
@@ -35,12 +38,24 @@ import temaSertao from '../data/theme-sertao.json';
 
 const chave = (gx: number, gy: number): string => chaveDeTile({ gx, gy });
 
-/** A rua do cenario oraculo: y=36 de x=18 a x=35, mais a coluna x=29 ate a porta
- *  do armazem. Toda pedreira posta em y=34 nesta faixa abre a porta nela. */
-const RUA = [...linhaH(18, 35, 36), ...linhaV(29, 33, 35)];
+/** A rua do cenario oraculo, a partir da VILA (F18c-1a): a linha y=36 de x=18 a
+ *  x=35 hoje, mais a coluna do armazem ate a porta. Toda pedreira posta na linha
+ *  y=34 desta faixa abre a porta nela. */
+const vila = relativoA(ancoraDaVila());
+const RUA: TileDeGrid[] = [
+  ...Array.from({ length: 18 }, (_, i) => vila(i - 11, 6)),
+  ...[3, 4, 5].map((dy) => vila(0, dy)),
+];
+
+/** As duas pedreiras do arquivo, a partir do LAJEDO: a de dentro, (26,34) hoje,
+ *  com 13 tiles de rocha ao alcance; e a da borda, (32,34) hoje, com um so. */
+const NO_LAJEDO = pedreiraDaVila();
+const NA_BORDA = relativoA(ancoraDoLajedo())(10, 5);
+/** O tile de rocha vizinho de `NO_LAJEDO`: (25,32) hoje. */
+const ROCHA = rochaDaPedreiraDaVila();
 
 /** Uma pedreira completa e ocupada, sozinha no mapa (sem civis), ligada a rua. */
-function cenarioEm(gx: number, gy: number, dados: GameData, id = 'q1'): GameState {
+function cenarioEm({ gx, gy }: TileDeGrid, dados: GameData, id = 'q1'): GameState {
   const vazio: GameState = { ...createInitialState(1, dados), unidades: { porId: {}, ordem: [] } };
   const comQuarry = comProdutorOcupado(
     vazio, { tipo: 'quarry', id, unidade: `pedreiro-${id}`, gx, gy }, dados,
@@ -140,11 +155,11 @@ describe('F-T2a — perna 1: o exploit de demolir-e-reconstruir morre', () => {
   // Um unico tile de rocha, de 2 pedras, vizinho da pedreira de (26,34): dois
   // ciclos e a jazida acaba. Com o veio no PREDIO, demolir e reconstruir devolvia
   // o rendimento inteiro por meio custo de construcao (F16a).
-  const curto = comJazida(gameData, 'rock', [[25, 32]], 2);
+  const curto = comJazida(gameData, 'rock', [ROCHA], 2);
 
   it('esgotada, demolida e reconstruida no MESMO tile, a pedreira nao devolve uma pedra', () => {
     const { fim: esgotada, produzido, ticksDeDeposito } = produzirDrenando(
-      cenarioEm(26, 34, curto), ULTIMO_DEPOSITO.curtoSegundo + 1, 'q1', curto,
+      cenarioEm(NO_LAJEDO, curto), ULTIMO_DEPOSITO.curtoSegundo + 1, 'q1', curto,
     );
     expect(produzido).toBe(2);
     expect(ticksDeDeposito).toEqual([ULTIMO_DEPOSITO.curtoPrimeiro, ULTIMO_DEPOSITO.curtoSegundo]);
@@ -154,7 +169,7 @@ describe('F-T2a — perna 1: o exploit de demolir-e-reconstruir morre', () => {
     const demolida = step(esgotada, [{ type: 'DemolishBuilding', predio: 'q1' }], curto);
     expect(demolida.predios.porId['q1']).toBeUndefined();
     const refeita = comEstradas(comProdutorOcupado(
-      demolida, { tipo: 'quarry', id: 'q2', unidade: 'pedreiro-novo', gx: 26, gy: 34 }, curto,
+      demolida, { tipo: 'quarry', id: 'q2', unidade: 'pedreiro-novo', ...NO_LAJEDO }, curto,
     ), RUA);
 
     // nada a colher: a pedreira refeita fica em `esperando_insumo` o tempo todo, e
@@ -167,13 +182,13 @@ describe('F-T2a — perna 1: o exploit de demolir-e-reconstruir morre', () => {
   it('a camada do tile atravessa a demolicao sem mudar um byte', () => {
     // F-T3: o tile so perde a pedra no tick da CHEGADA, junto com o deposito. Um
     // tick antes ela ainda esta na pedra, e e isso que os dois passos afirmam.
-    const antes = produzirDrenando(cenarioEm(26, 34, curto), ULTIMO_DEPOSITO.curtoPrimeiro - 1, 'q1', curto);
+    const antes = produzirDrenando(cenarioEm(NO_LAJEDO, curto), ULTIMO_DEPOSITO.curtoPrimeiro - 1, 'q1', curto);
     expect(antes.produzido).toBe(0);
-    expect(recursoNoTile(antes.fim, 25, 32)).toEqual({ tipo: 'rock', quantidade: 2 });
+    expect(recursoNoTile(antes.fim, ...ROCHA)).toEqual({ tipo: 'rock', quantidade: 2 });
 
     const fim = step(antes.fim, [], curto);
     expect(fim.events.some((e) => e.type === 'goods-produced' && e.predio === 'q1')).toBe(true);
-    expect(recursoNoTile(fim, 25, 32)).toEqual({ tipo: 'rock', quantidade: 1 });
+    expect(recursoNoTile(fim, ...ROCHA)).toEqual({ tipo: 'rock', quantidade: 1 });
     const demolida = step(fim, [{ type: 'DemolishBuilding', predio: 'q1' }], curto);
     expect(demolida.recursos).toEqual(fim.recursos);
   });
@@ -194,8 +209,8 @@ function tilesAoAlcance(estado: GameState, id: string, dados: GameData): number 
 
 describe('F-T2a — perna 2: o lugar passa a importar, e o numero prova', () => {
   it('duas pedreiras iguais em dois lugares produzem totais DIFERENTES, cada um = tiles ao alcance', () => {
-    const noLajedo = cenarioEm(26, 34, umPorTile, 'q1');
-    const naBorda = cenarioEm(32, 34, umPorTile, 'q1');
+    const noLajedo = cenarioEm(NO_LAJEDO, umPorTile, 'q1');
+    const naBorda = cenarioEm(NA_BORDA, umPorTile, 'q1');
 
     const tilesNoLajedo = tilesAoAlcance(noLajedo, 'q1', umPorTile);
     const tilesNaBorda = tilesAoAlcance(naBorda, 'q1', umPorTile);
@@ -222,8 +237,8 @@ describe('F-T2a — perna 2: o lugar passa a importar, e o numero prova', () => 
 
   it('com o dado de verdade, o total de cada lugar e tiles x rendimentoPorTile', () => {
     const rendimento = gameData.recursos.tipos.rock?.rendimentoPorTile ?? 0;
-    const noLajedo = cenarioEm(26, 34, gameData, 'q1');
-    const naBorda = cenarioEm(32, 34, gameData, 'q1');
+    const noLajedo = cenarioEm(NO_LAJEDO, gameData, 'q1');
+    const naBorda = cenarioEm(NA_BORDA, gameData, 'q1');
     expect(disponivelDe(noLajedo, 'q1')).toBe(13 * rendimento); // 195
     expect(disponivelDe(naBorda, 'q1')).toBe(1 * rendimento); //   15
   });
@@ -234,9 +249,9 @@ describe('F-T2a — perna 2: o lugar passa a importar, e o numero prova', () => 
   // quantidade nunca negativa —, nao que o desenho esteja pronto. Quem o fecha
   // e a F-T2c.
   it('duas pedreiras com alcances sobrepostos nunca deixam um tile negativo', () => {
-    let s = cenarioEm(26, 34, umPorTile, 'q1');
+    let s = cenarioEm(NO_LAJEDO, umPorTile, 'q1');
     s = comEstradas(comProdutorOcupado(
-      s, { tipo: 'quarry', id: 'q2', unidade: 'pedreiro-q2', gx: 32, gy: 34 }, umPorTile,
+      s, { tipo: 'quarry', id: 'q2', unidade: 'pedreiro-q2', ...NA_BORDA }, umPorTile,
     ), RUA);
     let menor = Infinity;
     const depositos: Record<string, number> = { q1: 0, q2: 0 };
@@ -331,7 +346,7 @@ describe('F-T2a — perna 3: os tres regimes se distinguem no ESTADO', () => {
 function comPedreiraNoTickZero(estado: GameState): GameState {
   if (estado.predios.porId['q1'] !== undefined) return estado;
   return comEstradas(comProdutorOcupado(
-    estado, { tipo: 'quarry', id: 'q1', unidade: 'pedreiro-det', gx: 26, gy: 34 }, gameData,
+    estado, { tipo: 'quarry', id: 'q1', unidade: 'pedreiro-det', ...NO_LAJEDO }, gameData,
   ), RUA);
 }
 
@@ -371,15 +386,15 @@ it('F-T2a — evidencia', () => {
   const porTipo = Object.fromEntries(
     Object.entries(gameData.mapa.recursos).map(([tipo, t]) => [tipo, t.length]),
   );
-  const noLajedo = cenarioEm(26, 34, umPorTile, 'q1');
-  const naBorda = cenarioEm(32, 34, umPorTile, 'q1');
+  const noLajedo = cenarioEm(NO_LAJEDO, umPorTile, 'q1');
+  const naBorda = cenarioEm(NA_BORDA, umPorTile, 'q1');
   const a = produzirDrenando(noLajedo, 167 * 16, 'q1', umPorTile);
   const b = produzirDrenando(naBorda, 167 * 16, 'q1', umPorTile);
-  const curto = comJazida(gameData, 'rock', [[25, 32]], 2);
-  const esgotada = produzirDrenando(cenarioEm(26, 34, curto), 167 * 3, 'q1', curto).fim;
+  const curto = comJazida(gameData, 'rock', [ROCHA], 2);
+  const esgotada = produzirDrenando(cenarioEm(NO_LAJEDO, curto), 167 * 3, 'q1', curto).fim;
   const demolida = step(esgotada, [{ type: 'DemolishBuilding', predio: 'q1' }], curto);
   const refeita = comEstradas(comProdutorOcupado(
-    demolida, { tipo: 'quarry', id: 'q2', unidade: 'pedreiro-novo', gx: 26, gy: 34 }, curto,
+    demolida, { tipo: 'quarry', id: 'q2', unidade: 'pedreiro-novo', ...NO_LAJEDO }, curto,
   ), RUA);
   const depoisDeRefazer = produzirDrenando(refeita, 167 * 5, 'q2', curto);
 
@@ -408,8 +423,8 @@ it('F-T2a — evidencia', () => {
       pedreiraEm_32_34: { tilesDeRochaAoAlcance: 1, produzidoAteEsgotar: b.produzido },
       comODadoReal: {
         rendimentoPorTile: gameData.recursos.tipos.rock?.rendimentoPorTile,
-        totalEm_26_34: disponivelDe(cenarioEm(26, 34, gameData, 'q1'), 'q1'),
-        totalEm_32_34: disponivelDe(cenarioEm(32, 34, gameData, 'q1'), 'q1'),
+        totalEm_26_34: disponivelDe(cenarioEm(NO_LAJEDO, gameData, 'q1'), 'q1'),
+        totalEm_32_34: disponivelDe(cenarioEm(NA_BORDA, gameData, 'q1'), 'q1'),
         _substitui: 'o `veio: { rendimento: 200 }` da F15a, que era o mesmo total em qualquer lugar',
       },
     },

@@ -14,6 +14,7 @@ import { contagemDeEstagios } from './estagio-obra';
 import type { EstagioDaObra } from './estagio-obra';
 import type { LinhaDoMedidor } from './medidor-obra';
 import type { CanteiroDaObra } from './nivelamento-obra';
+import type { GavetaDaPilha } from './pilhas';
 import type { ItemDeFila } from '../sim/state';
 import { ATALHOS, GESTOS } from '../input/atalhos';
 
@@ -26,6 +27,21 @@ export interface PredioNoDebug {
   readonly gy: number;
   readonly pausado: boolean;
   readonly ocupante: string | null;
+}
+
+/** F-VIVO-a — uma pilha desenhada, como o roteiro a le. */
+export interface PilhaNoDebug {
+  readonly gaveta: GavetaDaPilha;
+  readonly mercadoria: string;
+  readonly n: number;
+  readonly sprite: boolean;
+}
+
+/** F-VIVO-b — o quadro de trabalho desenhado, como o roteiro o le. */
+export interface QuadroNoDebug {
+  readonly laco: string;
+  readonly n: number;
+  readonly sprite: boolean;
 }
 
 export interface EstadoDebug {
@@ -74,6 +90,14 @@ export interface EstadoDebug {
    *  mesma estrutura: e assim que o roteiro prova que sprite e placeholder
    *  convivem, sem olhar pixel (§8). */
   spritesDePredio: Readonly<Record<string, string | null>>;
+  /** F-VIVO-a — as pilhas que a cena DESENHOU agora, por id de predio: gaveta,
+   *  mercadoria, quantas unidades e se foi PNG (`sprite`) ou o quadrado do §9. Vem
+   *  da mesma lista que o desenho usa (`pilhas.ts`), e so tem predio com pilha. */
+  pilhasDesenhadas: Readonly<Record<string, readonly PilhaNoDebug[]>>;
+  /** F-VIVO-b — o quadro de trabalho que a cena DESENHOU agora, por id de predio. So
+   *  tem predio animando: parado (sem ocupante, sem insumo, saida cheia, pausado) nao
+   *  aparece. Vem da mesma chamada que o desenho usa (`trabalho.ts`). */
+  quadrosDeTrabalho: Readonly<Record<string, QuadroNoDebug>>;
   /** F-T1 — quantos tiles de cada TIPO DE TERRENO estao dentro da vista da
    *  camera agora, lidos de volta da camada de chao ja desenhada. E o que
    *  permite ao roteiro afirmar "a camera esta em cima do lago" sem olhar
@@ -88,6 +112,17 @@ export interface EstadoDebug {
    *  a ve sumir depois — sem olhar pixel (§8). Vazio ate o primeiro
    *  POST_RENDER. */
   recursosVisiveis: Readonly<Record<string, number>>;
+  /** F-SPR — os ids que resolveram ARTE do manifesto em cada camada de tile, lidos
+   *  uma vez no `create` (a arte chega no `preload`). Lista vazia e o placeholder de
+   *  hoje — cor chapada e marcador —, que e comportamento normal (§9). Vegetacao e o
+   *  recurso que virou sprite em pe, e nao celula da tira. */
+  arteDasCamadas: {
+    readonly terreno: readonly string[];
+    readonly recurso: readonly string[];
+    readonly vegetacao: readonly string[];
+  };
+  /** F-SPR — quantos sprites de vegetacao a cena tem de pe agora (mapa inteiro). */
+  vegetacaoRenderizada: number;
   /** Quantos tiles de estrada DE PE (F08) a cena tem desenhados agora. */
   estradasRenderizadas: number;
   /** F18d-2 — quantos tiles de CANTEIRO (`estradasPlanejadas`, F18d-1b) a cena tem
@@ -95,6 +130,11 @@ export interface EstadoDebug {
    *  Os dois numeros juntos sao o que o roteiro afirma: o arrasto planeja, o tempo
    *  ergue, e a soma fecha em todo passo. */
   estradasPlanejadasRenderizadas: number;
+  /** F18g — quanta pedra um serf ja entregou no canteiro e nenhum laborer assentou
+   *  (soma de `state.pedraNoCanteiro`). `NoEstado` porque nao e desenhada: existe para
+   *  o roteiro fechar a conta da pedra — a que saiu do armazem e a de pe, mais esta,
+   *  mais a que esta na mao de serf. */
+  pedraNoCanteiroNoEstado: number;
   /** A previa do arrasto de estrada em curso, ou null. `custo` e a pedra que o
    *  trecho custaria; `valida` e o que `canPlaceRoad` respondeu. */
   previaDeEstrada: PreviaDeEstrada | null;
@@ -195,10 +235,15 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     medidoresDeObra: {},
     canteirosDeObra: {},
     spritesDePredio: {},
+    pilhasDesenhadas: {},
+    quadrosDeTrabalho: {},
     terrenoVisivel: {},
     recursosVisiveis: {},
+    arteDasCamadas: { terreno: [], recurso: [], vegetacao: [] },
+    vegetacaoRenderizada: 0,
     estradasRenderizadas: 0,
     estradasPlanejadasRenderizadas: 0,
+    pedraNoCanteiroNoEstado: 0,
     previaDeEstrada: null,
     camposPlanejadosRenderizados: 0,
     camposProntosNoEstado: 0,

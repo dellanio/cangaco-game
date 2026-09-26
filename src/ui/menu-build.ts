@@ -37,6 +37,10 @@ type TemaDePredios = Readonly<Record<string, { readonly nome: string; readonly d
 type TemaDeMercadorias = Readonly<Record<string, string | undefined>>;
 const temaDePredios = temaSertao.predios as TemaDePredios;
 const temaDeMercadorias = temaSertao.mercadorias as TemaDeMercadorias;
+/** A cor de cada recurso no mapa — a MESMA que pinta o campo arado. A ferramenta
+ *  de arar usa ela nos sulcos: duas culturas com glifo igual faziam o jogador arar
+ *  cana achando que arava milho (operador, 2026-09-26). Ate a arte chegar. */
+const corDasCulturas = temaSertao.recursos as Readonly<Record<string, string | undefined>>;
 const rotulosDosGrupos = temaSertao.menuBuild.grupos as Readonly<Record<string, string | undefined>>;
 
 function nomeDe(id: string): string {
@@ -329,6 +333,8 @@ export function montarMenuBuild(
     botao.dataset.ferramenta = id;
     const desenho = document.createElement('span');
     desenho.className = `glifo glifo-${glifo}`;
+    const cor = cultura === null ? undefined : corDasCulturas[cultura];
+    if (cor !== undefined) desenho.style.setProperty('--cor-cultura', cor);
     botao.append(desenho);
     botao.addEventListener('click', aoClicar);
     linha.append(botao);

@@ -26,6 +26,7 @@ import { gravarEvidencia } from './helpers/evidence';
 import {
   avancar, cenarioDeFazenda, cenarioDeFazendaSemCampo, cenarioDePedreira, comJazida, disponivelDe,
   semAUnidade, semEstrada, semOcupante,
+  pedreiraDaVila, rochaDaPedreiraDaVila,
 } from './helpers/producao-cenario';
 
 const pausar = (predio: string, pausado: boolean): Command => ({
@@ -51,7 +52,7 @@ const alertas = alertasDoEstado;
  * o guarda em silencio.
  */
 function cenariosDoAceite(): Readonly<Record<string, readonly Alerta[]>> {
-  const dadosCurtos = comJazida(gameData, 'rock', [[25, 32]], 2);
+  const dadosCurtos = comJazida(gameData, 'rock', [rochaDaPedreiraDaVila()], 2);
   return {
     aberturaDaVila: alertas(createInitialState(gameData.economia.estadoInicial.semente)),
     pedreiraOcupadaELigada: alertas(cenarioDePedreira()),
@@ -92,7 +93,7 @@ describe('F22 — sem-trabalhador', () => {
   });
 
   it('obra nao alerta: nao ha trabalhador a esperar antes de o predio existir', () => {
-    const planta: Command = { type: 'PlaceBlueprint', buildingId: 'quarry', gx: 26, gy: 34 };
+    const planta: Command = { type: 'PlaceBlueprint', buildingId: 'quarry', ...pedreiraDaVila() };
     const estado = step(createInitialState(1), [planta]);
     const obra = estado.predios.ordem
       .map((id) => estado.predios.porId[id])
@@ -147,7 +148,7 @@ describe('F22 — veio-esgotado', () => {
   it('veio esgotado alerta, com o rendimento injetado pelo dado', () => {
     // Como a F15a: o rendimento vem do MESMO `GameData` com outro numero, nunca
     // de veio fabricado a mao nem de 200 unidades de espera.
-    const dadosCurtos = comJazida(gameData, 'rock', [[25, 32]], 2);
+    const dadosCurtos = comJazida(gameData, 'rock', [rochaDaPedreiraDaVila()], 2);
     const inicio = cenarioDePedreira(dadosCurtos);
     expect(causasDe(alertas(inicio, dadosCurtos), 'q1')).toEqual([]);
 
@@ -163,7 +164,7 @@ describe('F22 — veio-esgotado', () => {
     // que separa os dois e uma receita que consome mais de uma unidade por
     // ciclo: `semRecursoAoAlcance` reprova ja em `disponivel < unidadesPorCiclo`, e e ai que
     // a producao para de verdade — alertar so em zero avisaria tarde.
-    const comTres = comJazida(gameData, 'rock', [[25, 32]], 3); // um unico tile, de 3 pedras
+    const comTres = comJazida(gameData, 'rock', [rochaDaPedreiraDaVila()], 3); // um unico tile, de 3 pedras
     const dobrada: GameData = {
       ...comTres,
       producao: {
@@ -239,7 +240,7 @@ describe('F18 — sem-campo e veio-esgotado nao se confundem', () => {
   });
 
   it('pedreira sem pedra alerta veio-esgotado, e NAO sem-campo', () => {
-    const dadosCurtos = comJazida(gameData, 'rock', [[25, 32]], 2);
+    const dadosCurtos = comJazida(gameData, 'rock', [rochaDaPedreiraDaVila()], 2);
     const esgotada = avancar(cenarioDePedreira(dadosCurtos), 167 * 5, dadosCurtos);
     expect(alertas(esgotada, dadosCurtos)).toEqual([
       { predio: 'q1', tipo: 'quarry', causa: 'veio-esgotado' },

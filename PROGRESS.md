@@ -3229,7 +3229,13 @@ que vetar custe uma linha.
 
 ## Perguntas em aberto
 
-_(nenhuma no momento: as três que sobravam foram decididas pelo operador — ver "Ajuste pós-F10".)_
+- **F-VIVO-b, caso 2 (pedreira, canavial): o laço de dentro com o trabalhador fora?**
+  (2026-09-26) Na sim, o `progresso` do caso 2 só anda com o trabalhador no tile
+  (`colhendo`), e não existe fase "dentro". O aceite manda `inicio`/`meio`/`fim` pelos
+  terços do `progresso`. Segui o aceite à letra: o prédio anima enquanto o cabra está
+  no lajedo. Saídas possíveis: aceitar como está (o prédio "trabalha a pedra que chega"),
+  ou o brief §4a ganha outra leitura e o caso 2 passa a animar só num trecho. Isso é
+  decisão de arte/design, não minha.
 
 
 ## F-T1 — Camada de terreno base (dado + sim + render mínimo) (2026-09-24)
@@ -7277,3 +7283,1135 @@ vite da minha própria rodada (spawn do roteiro F04, pai morto) ficou vivo na 51
 Refeito com `CANGACO_SHOT_PORTA` 5176/5177. O órfão (PID 41848, npx 45544) continua na 5175:
 encerrá-lo foi negado pela permissão, fica para o operador. Por que o `tools/shot.js` deixa o
 neto vivo no Windows é **hipótese** (mata o `npx`, não a árvore) — não lido.
+
+## 2026-09-26 (madrugada) — Leva noturna do operador, item 1: BUG-I corrigido
+
+Plano: `docs/planos/BUG-I-roteiros-pos-f18g.md` (a tabela de causa medida está lá).
+
+**Porta 5175:** o vite órfão da `main` (41848) já não existia quando esta sessão começou;
+a 5175 é agora do vite do worktree `derivacao-sprites` (Codex, criado 03:03). Não tocado.
+Todo roteiro desta sessão roda com `CANGACO_SHOT_PORTA=5177`.
+
+**Verificado (roteiros com código 0, `npm run verify` código 0, 1434 testes):**
+- **F10** — afirmava a REGRA velha, implícita: saía do laço quando o HUD chegava ao valor
+  final, o que antes da F18g implicava rua de pé. Agora o canteiro vazio entra na condição;
+  as asserções de depois são as mesmas. A ordem "HUD final" × "rua de pé" VARIOU entre
+  corridas da mesma árvore (falhou duas vezes, passou sem correção uma vez); a causa da
+  variação não foi lida — hipótese: amostra de 20 em 20 ticks com quadro publicado a 200 ms.
+  A condição conjunta vale nas duas ordens; rodado duas vezes depois da correção, 0 e 0.
+- **F13b** — nem regra nem número: o MOMENTO da checagem. A escola se liga com 5 de 8 tiles
+  de pé (os de fora do trecho entre portas não fazem falta), `a-caminho` dura ~28 ticks e a
+  `erguerRua` só voltava com o canteiro vazio. O painel abre antes, o roteiro anda de 1 em 1
+  tick afirmando que o motivo é só `sem-estrada`/`a-caminho`, e a rua inteira de pé virou o
+  passo 9a. A sequência provada é a mesma, com uma asserção a mais (nenhum motivo estranho).
+- **F16b** — afirmava um NÚMERO: prazo de 300 medido antes da F18g. Remedido: obra completa
+  no 353, ocupada no 378 (os 2 últimos tiles esperam o laborer da pedreira do 128 ao 353).
+  Prazo 500, mesma folga de ~25 %.
+- **F18d-2** — afirmava a REGRA velha, explícita ("a pedra cai só pelos assentados"). A conta
+  do meio passou à regra da F18g — saiu = de pé + parada no canteiro + na mão de serf — e uma
+  asserção nova afirma que a pedra saiu ANTES de assentar. Para isso o render publica
+  `pedraNoCanteiroNoEstado` em `window.__cangaco` (`src/render/debug.ts`, `WorldScene.ts`),
+  no molde de `camposProntosNoEstado`. Não houve teste de que a asserção nova ACUSA; o dado
+  que a derrubaria é a corrida pré-correção (26 com 1 de pé), que ela aceita e a velha não.
+
+**Consequência de balanceamento, registrada e não girada:** a F18g deixou a pedreira do
+cenário da F16b ~130 ticks mais lenta (220 → 353), porque o laborer que ergue a obra é o mesmo
+que assenta a rua.
+
+## 2026-09-26 (madrugada) — Leva noturna, item 2: BUG-J medido; conserto no roteiro, não no jogo
+
+Plano e tabela em `docs/planos/BUG-J-pedreira-na-jazida.md`.
+
+**Verificado (sonda `zz-` com o `canPlace` real, em todos os cantos da pedreira no mapa; a
+sonda foi apagada neste commit):**
+- 16 002 cantos. Com rocha ao alcance: 1 604 válidos contra 108 recusados por
+  `porta-sem-saida` (6 %). Dos 25 lajedos, nenhum ficou sem posição válida, e em nenhum a porta
+  tirou a posição que mais cobre aquele lajedo. É raro e não custa nada ao jogador.
+- **A premissa do pedido, "o veio nasce na borda sul", é desmentida pelo código.** A porta só
+  confere o **terreno** (`ehTransponivel`), e o veio é **recurso**. A F21b trocou rocha por veio
+  (311 → 265 `rock`) e manteve o terreno idêntico, conferido contra `5f498ae~1`. Com menos rocha,
+  o alvo que o roteiro escolhe sozinho mudou de (105,92), com porta em grama, para (79,91). A
+  porta nova passa por (81,93), que é terreno `rocha`, e o jogo recusa com razão. O bisect
+  estava certo quanto ao commit, e o mecanismo é esse.
+- O seletor do `tools/shots/F-TP.js` conferia só o footprint em grama. Com o `cabeComPorta`,
+  ele confere também a porta no mapa e em terreno transponível. O roteiro sai com 0.
+
+**Decisão minha, PARA O OPERADOR REVISAR:** como o caso é raro, não mexi no gerador nem no
+`canPlace`. O defeito estava no roteiro, e o BUG-J saiu do `BUGS.md`.
+
+**BUG-K registrado, sem correção:** o `tools/shot.js` deixa o vite órfão no Windows. O meu
+(PID 48500) continua vivo na 5177, porque encerrar processo foi negado pela permissão do
+agente. A 5175 é do Codex, e não mexi nela.
+
+## 2026-09-26 (madrugada) — Leva noturna, item 3: pedra inicial de 34 para 30
+
+A decisão foi do operador. O plano está em `docs/planos/pedra-34-para-30.md` e os números no
+BALANCE_LOG.
+
+**Verificado:**
+- A sonda (apagada) mostra que as três pontas fecham a Fase A com 30: A no tick 4404, B no
+  5193, D no 5158. Os limiares são 27, 28 e 27, os mesmos com 34. Nenhuma travou, então o
+  fallback de 32 não foi usado.
+- O guarda do gerador exige 30 e passa no limite.
+- `npm run verify` saiu com 0 e 1 435 testes. Nenhum teste dependia do 34.
+- Os roteiros que leem a pedra (F07, F08, F10, F17, F18d-2, F18e) saíram com 0, rodados na
+  5177.
+
+**Em aberto:** com 30, a margem da ponta B sobre o limiar é de 2. Qualquer rua que o gerador
+alongar em 3 tiles quebra a ponta B antes das outras.
+
+## 2026-09-26 (madrugada) — Leva noturna, item 4: F-CAL-b2, a decisão do operador aplicada
+
+O plano está em `docs/planos/F-CAL-b2.md`.
+
+**Feito:**
+- `BUILD_PLAN.md` (F-CAL-b2): o critério (b) vale para o campo do lado da porta, o
+  `farm.sai.corn` continua 3.0, e (a) e (c) foram reescritos com a tabela das três
+  geometrias ao lado.
+- `IDEIAS.md`: a prévia de alcance que distingue o lado da porta.
+
+**Verificado:** `tests/F-CAL-b-calibracao.test.ts` ganhou o `it` de (a) sobre a mesma corrida.
+A evidência `test-output/F-CAL.json` foi aberta: (a) dá 141,6 ≤ 246, `asserido: true`, e (c)
+fica `asserido: false`, com o porquê. `npm run verify` saiu com 0 e 1 435 testes. A chave
+nova é `F-CAL-b2-faixa`. A asserção de (a) acusaria o campo no alcance máximo (346 > 246, da
+tabela), mas **isso não foi rodado** nesta sessão: a geometria longe não está na suíte.
+
+**Decisões minhas, PARA O OPERADOR REVISAR:**
+1. **(a)** agora tem teto no ciclo do moinho e nenhum piso. Saiu o ±10 %, porque a sobra do lado
+   da porta é recompensa.
+2. **(c)** deixou de ser teto. O "longe da porta o milho não cresce" ficou como medida de
+   sonda, não como asserção permanente, porque a geometria longe não roda na suíte e o
+   BUG-G (trava) mata a vila a 2 e 3 tiles. Se o operador quiser essa proteção, ela é uma
+   corrida nova de 36 000 ticks, com o campo atrás, e depende do BUG-G corrigido.
+
+## 2026-09-26 (madrugada) — Leva noturna, item 5: F-SPR, carregamento de sprite sem arte
+
+O plano está em `docs/planos/F-SPR-carregamento.md`, e o item novo no `BUILD_PLAN.md` (F-SPR,
+logo antes da F-TR) traz o contrato inteiro. Render puro: `src/sim/` e `data/` não mudaram, e
+`assets/` e `tools/derivar-sprites.js` também não, porque são do Codex, na `derivacao-sprites`.
+O `assets/manifest.json` **não foi tocado**.
+
+**Feito:**
+- `src/render/manifesto.ts` continua sem import:
+  - `EntradaDeAsset` (prédio) está intacta;
+  - ganhou `EntradaDeCamada`, com os quatro tipos novos, e a união `EntradaDoManifesto`;
+  - ganhou `chaveDeTextura(tipo, id, estado)`, e `chaveDaTextura` de prédio devolve a mesma chave de antes;
+  - ganhou os resolvedores `texturaDaCamada`, `desenhoDoRecurso`, `spriteDaUnidade` e `direcaoDoPasso`.
+- `src/render/direcoes-de-sprite.ts`: dá a `direcoesDeSprite` de `data/units.json` o
+  primeiro leitor que ela teve.
+- `sprites.ts` enfileira todos os tipos.
+- `WorldScene`:
+  - as tiras de terreno e de recurso recebem a arte por célula, e sem arte a tira é a mesma de antes;
+  - a vegetação é sprite, com diff por tile.
+- `unidades.ts`: o sprite troca o retângulo quando resolve, e a direção sai do passo.
+- Debug: entram `arteDasCamadas` e `vegetacaoRenderizada`, e `UnidadeRenderizada` ganha `direcao` e `sprite`.
+- `tests/F17f-manifesto.test.ts`: as regras de prédio passaram a valer sobre
+  `manifesto.assets.filter(ehEntradaDePredio)`. Nenhuma foi afrouxada; hoje as duas listas são iguais.
+
+**Verificado (rodado, e a evidência aberta):**
+- `tests/F-SPR-carregamento.test.ts` passa.
+  - Os dois lados foram provados com manifesto sintético em todas as camadas.
+  - Os guardas do manifesto real rodam, e cada um acusa a entrada sintética errada.
+- O roteiro `F-SPR` saiu com 0. Abri `screenshots/F-SPR-2-unidades-andando.png`: cor de
+  terreno, losango de recurso e retângulo de unidade estão como antes, e o armazém tem o
+  sprite de antes.
+  - O roteiro puxa uma rua para as unidades andarem. Na abertura ninguém anda, e a primeira
+    versão do roteiro reprovou por isso.
+- Não-regressão, todos com código de saída 0, sem abrir imagem: `F-T1`, `F-T2a`, `F10`, `F17`, `F17f`, `F-D4` e `F18f`.
+
+**Decisões minhas, PARA O OPERADOR REVISAR** (o texto completo está no item F-SPR):
+1. **(a) Terreno e recurso são textura de tile.** Muda só a tira que vira tileset. Ela
+   passa a ser composta por célula, com a imagem redimensionada para `tilePx`. Índice,
+   código e contagens seguem iguais. Transição entre terrenos e esgotado por tipo ficam para a F-TR.
+2. **(b) Vegetação é sprite, não textura.** A árvore é mais alta que o tile, e a unidade
+   atrás dela precisa de depth por `y`, que camada de tile não dá. Quem diz o que é
+   vegetação é o manifesto (`tipo: "vegetacao"`), não uma lista no código.
+3. **(c) Unidade usa um arquivo por direção, não folha de sprite.**
+   - Estado `"<pose>:<direcao>"`, e o oeste é espelho.
+   - A folha precisaria de campos novos no manifesto (quadro e ordem das direções), e ordem
+     errada troca direção em silêncio. O arquivo por direção cabe nos oito campos da §9 e
+     confere a dimensão pelo cabeçalho, como a F17f.
+   - É o contrato que os 28 tipos herdam.
+4. **Direção de 4 na diagonal cai na horizontal** (empate |dx| = |dy| vai para `l`/`o`).
+   Parada, a unidade mantém a última direção, e o padrão é `s`.
+
+**Aberto, e não mexido de propósito:**
+- O prédio ainda força "largura = footprint × tilePx" em dois lugares:
+  - `WorldScene.desenharSprite` (`setScale(larguraPx / entrada.tamanho[0])`);
+  - o teste "a largura em px…" da F17f.
+- É a regra que o operador marcou como errada. Ela muda quando ele passar o fator medido.
+  O código da F-SPR não calcula tamanho nenhum e não precisa mudar junto.
+
+## 2026-09-26 (manhã) — Revisão do operador da leva noturna; BUG-G corrigido
+
+### Decidido pelo operador
+- **As cinco decisões da leva noturna estão aprovadas como estão**: BUG-J no roteiro;
+  F-CAL-b2 (a) como teto; F-CAL-b2 (c) como sonda; F-SPR (a), (b) e (c); a direção do
+  civil na diagonal. Sobre a (c) da F-SPR, o operador disse: "o espelhamento economiza 40%
+  dos arquivos e a razão contra a folha de sprite é a certa".
+- **F-CAL-b2 (c):** a sonda sem asserção é **dependência do BUG-G**, e não escolha. Isso
+  está escrito no item (`BUILD_PLAN.md`) para ninguém ler a sonda como frouxa.
+- **A regra "largura = footprint × 64"** está em três lugares, e eles mudam juntos quando o
+  fator vier. O teste da F17f é o que garante isso.
+- **`docs/fase-animacao-vida-do-mundo.md`** é a pesquisa do operador. Commitado como está,
+  em `c75e98e`.
+
+### Verificado (rodei o comando ou abri o arquivo)
+- **Na `main`, o repro do `BUGS.md` NÃO dispara mais o BUG-G.** Com o mesmo campo
+  (`40,28 41,28 42,28 42,29`), a vila chega viva ao tick 9 000: 13 civis, nenhuma morte e
+  ninguém debaixo de footprint.
+- **No commit onde a sonda rodou (`4a1b65d`, worktree descartável e já removido), o mesmo
+  teste reproduz:** `u162` fica em `voltando` com o `fsmData` idêntico do tick 3391 ao 7988.
+- **O defeito estava no código, não no ritmo.** A pedra 30 só tirou o Moinho do tick em que o
+  roceiro estava no canto. Por isso o teste novo não usa essa geometria.
+- **O conserto é `passoAndavel(state, de, proximo, modo)` em `sim/pathfinding.ts`**: o
+  `tileAndavel` mais a exceção do A* (`liberados`). No modo `livre`, quem está dentro de uma
+  caixa pisa nela. Ele entrou nos oito passos de movimento:
+  - `especialistas.ts`: `indo_ocupar`, `indo_colher` e `voltando`;
+  - `fome.ts`: `indo_comer`;
+  - `laborers.ts`: `indo_a_obra`;
+  - `serfs.ts`: `indo_buscar`, `indo_entregar` e `devolvendo`.
+- **`tests/BUG-G-preso-no-footprint.test.ts` provoca o cenário.** A vila da F-CAL-a roda como
+  é. Para cada estado de caminhada, o teste planta um prédio (tipo e canto vindos do
+  `canPlace`) em cima de uma unidade andando, cobrindo também o próximo tile dela. A
+  evidência está em `test-output/BUG-G-preso-no-footprint.json`, que abri:
+  - quatro estados acontecem (`indo_a_obra`, `indo_ocupar`, `indo_colher` e `voltando`);
+  - todos saem da caixa entre 21 e 35 ticks, sem nenhum tick parado.
+- **O teste acusa.** Com `src/sim` no stash, as quatro unidades ficam 400 de 400 ticks
+  paradas e o teste falha.
+- **`npm run verify`** passou: 105 arquivos, 1 451 testes.
+
+### Aberto
+- **O serf não aparece no teste — o quinto caso fica registrado como NÃO COBERTO**
+  (operador pediu o caso em 2026-09-26; a tentativa não fechou). `indo_buscar`,
+  `indo_entregar` e `devolvendo` usam o predicado novo, mas nenhum teste exercita o serf
+  debaixo de footprint. `indo_comer` também fica de fora, porque só acontece com fome.
+  - **Medido (sonda na vila da F-CAL-a, 9 000 ticks, apagada):** o serf anda FORA da rua —
+    655 ticks-unidade em `indo_buscar` e 327 em `indo_entregar`, carregado — mas todo
+    plantio sobre ele foi recusado pelo `canPlace` (`bloqueado`, `sobreposicao`, `estrada`,
+    `recurso`); nenhum `ok`.
+  - **Respondido ao operador, lido no código:** o jogador NÃO planta prédio sobre rua nem
+    sobre rua planejada (`canPlace`, motivo `'estrada'`). O serf na rua não pode ficar
+    coberto. O caso existe mesmo assim: as entregas em modo `livre` (`material-para-obra`,
+    `pedra-para-canteiro`, `assentar-estrada`, `arar`) andam fora da rua.
+  - **Tentado e revertido:** injetar uma obra a ≥ 8 tiles de toda rua e plantar sobre o serf
+    carregado em `indo_entregar`. O teste reprovou sem achar o serf coberto (`expected
+    undefined`) e **não foi depurado** — hipótese: a obra nunca foi posta, ou a condição de
+    tick sem comando da vila nunca valeu. O arquivo voltou ao verde de `e64d456`.
+- **Hipótese não medida:** com a caixa liberada, a unidade atravessa o prédio até o outro
+  lado se esse for o caminho mais curto. Era o que o A* já pedia desde a F-T3. Agora o
+  passo obedece.
+
+## 2026-09-26 (manhã) — BUG-K corrigido: o `shot.js` derruba o vite e recusa porta ocupada
+
+### Verificado (rodei o comando)
+- **O defeito foi reproduzido.** `CANGACO_SHOT_PORTA=5178 npm run shot -- F04` saiu com
+  código 0 e deixou o vite escutando na 5178 (PID 7724, órfão).
+- **A causa foi confirmada no código.** `subirServidor` usa `spawn('npx', ..., { shell: true })`;
+  no Windows o filho é o `cmd.exe`. O `servidor.kill()` matava só ele, e o `node vite.js`
+  neto ficava vivo.
+- **Conserto em duas partes (`tools/shot.js`):**
+  - `derrubarServidor` roda `taskkill /pid <filho> /T /F` no Windows, que desce a árvore;
+    fora do Windows continua o `kill()`.
+  - `portaJaResponde` roda **antes** de subir o vite. Se a porta já responde, o roteiro
+    sai com código 1 e diz como achar o dono (`netstat -ano | findstr :<porta>`).
+- **Medido depois do conserto:**
+  - duas corridas seguidas de F04 na 5179 saíram com código 0 e a porta ficou livre nas duas;
+  - com o órfão na 5178, o roteiro recusou com código 1 e a mensagem.
+- **Limpeza:** encerrei o órfão 7724, que eu mesmo criei na medição. A 5175 do Codex não
+  foi tocada.
+
+### Aberto
+- **Não há cobertura contínua.** A medição acima é evidência desta sessão; nenhum teste do
+  `npm run verify` sobe o vite. A proteção que fica é a recusa da porta ocupada, que roda
+  em todo roteiro.
+- **Efeito colateral esperado:** a porta padrão (5175) é a que o Codex usa. Se o vite dele
+  estiver vivo, `npm run shot` sem `CANGACO_SHOT_PORTA` agora **recusa**, em vez de medir a
+  árvore dele em silêncio.
+
+## 2026-09-26 (tarde) — Prédio vivo: brief escrito; correção do Canavial e das minas medida e PARADA
+
+### Feito
+- **`docs/BRIEF-ARTE.md` (`a4c9abf`)**, pelas decisões do operador: seção 4a nova (cinco
+  casos, 8 quadros por laço e 4 na luz, regra do zoom, três âncoras `trabalho`/`estoque`/
+  `curral` em fração do sprite, tipos novos `trabalho`/`pilha`/`animal`, conta de 496
+  imagens, 300 delas de animação); §4 (sprite estático, camadas à parte); §5 (mercadoria
+  fora do sprite, áreas vazias reservadas, "pilha de lenha cortada" revogada); §9 (os três
+  da primeira leva precisam das áreas); "Não mexa" (BUG-G corrigido).
+- **Pendentes fechados (`d584c85`):** nota da F-CAL-b2 (c) (fica sonda por prioridade,
+  caminho livre) e o serf do BUG-G registrado como não coberto, com a medida.
+
+### Verificado (rodei o comando) — a correção do dado, aplicada e revertida
+Mudança mínima: recurso `grapes` (cópia do `corn`, terreno próprio `vinhedo`), registro
+de tempo em `tools/data-schema.js`, cor e nome no tema, `wineyard.colheita = grapes`, e
+`colheita` apagada das três minas. Resultado: typecheck 1 erro, validate:data 1 erro,
+**11 arquivos de teste reprovados** de 105. Tudo revertido; árvore limpa.
+
+- **Canavial / uva — mecânico.** Reprovam só contagens e fixtures: `F10` (conversões 8→10
+  pelo terreno novo), `F-T1` (os custos de movimento "todos exercidos" — `vinhedo` não
+  aparece no mapa), `F17c` (fixture tipada sem `vinhedo`), e os seis "o dado real passa"
+  pelo `recurso/sem-instancia`. Essa regra conta tile no mapa; o `corn` passa porque o
+  mapa tem `campoArado`. A uva só nasce quando o jogador ara (`PlowField`), então a regra
+  **proíbe o dado correto** — a correção proposta é isentar tipo com bloco `aradura`,
+  que é o que o runtime instancia.
+- **Minas — NÃO é correção de dado.** `colheita` é o que liga a mina ao veio: o gerador
+  de mapa (`F-D3`, "precisa de exatamente UMA receita colhendo 'coal'"), o esgotamento
+  (`F21b`, fixture exige receita que colhe `coal`), o alerta de veio seco (`F-T4d`), a
+  prévia de alcance. Apagar o campo faz a mina produzir sem fim e sem mapa, contra a
+  regra da F21b. **Proposta:** a mina **mantém** `colheita` e ganha um campo que diz que o
+  especialista não anda (o ciclo corre em `trabalhando`, o tile continua sendo gasto),
+  como o `SkipWalk` do kam_remake. É mudança de `sim/systems/especialistas.ts`, não de dado.
+
+### Não verificado (hipótese)
+- O Canavial passa a depender de o jogador arar campo de uva; sem isso não produz vinho.
+  O efeito na comida da bodega é balanceamento (`BALANCE_LOG.md`), não medido.
+- Nenhum teste de calibração quebrou com o Canavial mudando; ou nenhum deles produz
+  vinho, ou produz sem precisar do campo. Não conferido.
+
+### Aberto — precisa do operador (RESPONDIDO em 2026-09-26, ver a seção seguinte)
+- As minas: aceitar o campo novo ("não anda") no lugar de apagar `colheita`?
+- A isenção do `recurso/sem-instancia` para cultura arável.
+- O armazém: quantos pontos de estoque, e o que acontece com a mercadoria que não cabe.
+- `arma_madeira`, `arma_ferro` e `armadura_ferro` não estão nas 28 mercadorias: a saída
+  desses três prédios fica sem pilha até a escolha de arma existir.
+
+## 2026-09-26 (noite) — F-CANA: o Canavial colhe cana, a mina colhe sem sair
+
+### Decisões do operador (respostas às quatro perguntas da seção anterior)
+
+1. **Minas.** Elas mantêm `colheita`, porque ela dá o esgotamento, o alerta e a prévia de
+   alcance, e ganham `colheita.aDistancia: true`. É **regra de classe**: qualquer receita
+   com `colheita` pode declarar e passar a colher sem sair.
+2. **`recurso/sem-instancia`** isenta a cultura que o jogador ara. A isenção vem do dado
+   (o bloco `aradura`, o mesmo que `culturasAraveis` lê), não de uma lista em código.
+3. **Armazém.** Tem 4 pontos e mostra as quatro mercadorias mais abundantes, por quantidade,
+   com desempate por `economia.mercadorias`. Se isso fizer o armazém piscar, reportar ao
+   operador; a saída pronta é fixar a ordem pelo dado. Isso é da F-VIVO, não daqui.
+4. **Os três prédios de arma sem pilha** ficam registrados no item da Fase C, feito em
+   `c66b64a`.
+5. **`grapes` é cana-de-açúcar**, e a saída do Canavial é cachaça. Está no brief (`9690a45`)
+   e agora também no `_doc` do recurso em `data/resources.json`.
+
+### Feito
+
+- **Mina, `aDistancia`:**
+  - o campo foi declarado em `ColheitaDeRecurso` e no carregador; ausente, vale `false`;
+  - `tools/data-rules.js` só aceita booleano;
+  - as três minas o declaram;
+  - em `especialistas.ts`, o ramo que manda o especialista sair (`indo_colher`) é pulado
+    quando a bandeira vale. O relógio anda no prédio e o `depositar` consome o tile reclamado.
+- **Cana:**
+  - `resources.json:tipos.grapes` é uma cópia dos números do milho, **sem `terreno`**. A
+    previsão da sessão anterior (terreno novo, 11 arquivos de teste quebrando) caiu: arar
+    não muda o terreno (`campos.ts: comOTileArado` cria camada de recurso), então a cultura
+    não precisa de terreno de mapa;
+  - `wineyard.colheita { recurso: grapes, alcance_tiles: 4 }`;
+  - as duas linhas de duração no `data-schema.js`;
+  - o tema ganhou cor, rótulo de alcance ("Partido de cana") e nome ("Cana"). O nome dá o
+    texto da ferramenta "Arar Cana", que aparece no menu **sozinha**, porque o menu lê
+    `culturasAraveis`.
+- **Testes:**
+  - `F-CANA-canavial-e-mina.test.ts` é novo;
+  - F21b (8) foi reescrito: afirmava o mineiro andando;
+  - F03: o caso "terreno sem tile" agora tira o `aradura` do milho, para medir a derivação e
+    não a isenção; o caso novo "cultura sem tile e sem aradura" reprova;
+  - F15a e F-TP ganharam `aDistancia: false` no `toEqual` e na fixture.
+
+### Verificado (rodei o comando)
+
+- `npm run verify`: verde, 106 arquivos e 1462 testes.
+- `test-output/F-CANA.json` (aberto):
+  - fases do canavieiro: `trabalhando` (plantio) → `indo_colher` → `colhendo` → `voltando`
+    → `trabalhando`;
+  - 791 ticks até a primeira cachaça;
+  - partido `112,30` com 0 → 3 e `113,30` com 0;
+  - as minas com a bandeira são `gold_mine`, `coal_mine` e `iron_mine`.
+- F21b (8)(e): com a bandeira desligada, a mesma fixture volta a
+  `indo_colher → colhendo → voltando`. É o dado que decide.
+- `npm run shot -- F18i` (porta 5176): OK. O roteiro deriva as ferramentas de
+  `culturasAraveis` e afirma `campo-grapes`. Abri `F18i-1`: a linha de ferramentas tem dois
+  ícones de arar, e o layout do menu segue inteiro.
+- Nenhum teste nem cenário além do novo produz cachaça (`grep wineyard|'wine'` em `tests/`,
+  `tools/` e `src/sim/`). Isso confirma a hipótese da seção anterior.
+
+### Não verificado (hipótese)
+
+- A mina com `aDistancia` ainda exige que o tile tenha aproximação andável
+  (`tileAlcancavelParaColheita` na escolha e no claim), embora o mineiro não ande mais. Não
+  mudei, porque é o predicado que a prévia e o alerta usam também. Se um veio só for
+  alcançável por dentro da serra, a mina o ignora. Não medi se isso acontece no mapa
+  publicado.
+- O efeito do Canavial precisar de partido sobre a comida da bodega foi para o
+  `BALANCE_LOG.md`, sem medida.
+
+### Aberto
+
+- Os dois ícones de arar são iguais, e só o texto distingue Milho de Cana. É interface;
+  fica para quem mexer no menu. Não é bug de aceite.
+- F-VIVO (render do prédio vivo) é a próxima da ordem do operador. O item está no
+  `BUILD_PLAN.md`, com o aceite a escrever.
+
+## 2026-09-26 (noite, 2) — respostas do operador sobre a F-CANA
+
+### Feito
+- **Tábua da cana revogada** (operador): o GDD §5.4 risca "campo de uva: 1 timber" e diz
+  por quê; a tabela de mercadorias do GDD também. As notas de `production.json:wineyard` e
+  `resources.json:grapes.reposicao` e a observação do `BALANCE_LOG.md` dizem "revogado em
+  definitivo".
+- **Ícones de arar com cor por cultura** (operador): os sulcos do glifo `campo` levam
+  `--cor-cultura`, lida de `theme-sertao.json:recursos` (a mesma cor que pinta o campo no
+  mapa). Milho = ouro, cana = verde. `tools/shots/F18i.js` ganhou a asserção: um
+  `backgroundImage` pintado distinto por cultura arável.
+
+### Verificado (rodei o comando)
+- `npm run shot -- F18i` (porta 5176): OK. **O guarda acusa:** com a linha da cor removida,
+  o roteiro reprovou com "cada cultura aravel deveria ter sulcos de cor propria" (os dois
+  `rgb(26, 20, 16)`). Recortei a linha de ferramentas do `F18i-1` e abri: ouro e verde.
+- **Veio sem chão andável — medido, ZERO caso.** Sonda (apagada) no mapa publicado, estado
+  inicial, tudo desbloqueado. Para cada mina: tile de veio → tem aproximação
+  (`tileAlcancavelParaColheita`) → a aproximação está no componente andável da vila (flood
+  `livre` da porta do armazém, 14 962 tiles). E, para cada posição LEGAL da mina, se a
+  prévia mostra veio e nenhum é usável.
+
+  | mina | tiles de veio | com aproximação | na vila | posições legais | com prévia | paradas com prévia | prévia > usável |
+  |---|---|---|---|---|---|---|---|
+  | gold_mine | 11 | 11 | 11 | 14 351 | 191 | 0 | 0 |
+  | coal_mine | 25 | 25 | 25 | 13 653 | 287 | 0 | 0 |
+  | iron_mine | 20 | 20 | 20 | 14 035 | 216 | 0 | 0 |
+
+  **A sonda acusa** (controle positivo): rodada sobre `fishermans`, deu 274 cardumes, 95 com
+  margem, e **547 das 772 posições com prévia mostrando mais tiles do que o pescador
+  alcança**. Nenhuma parada.
+- Isso é medida do mapa de hoje, não guarda contínua. A proteção permanente que já existe é a
+  F21b (2) ("cada tipo tem veio que uma mina LEGAL alcança"), que é mais fraca: ela pede UM
+  veio, não todos.
+
+### Decisão minha, marcada para o operador revisar
+- **Não criei guarda nova para "todo veio tem aproximação".** O mapa é gerado e hoje passa
+  inteiro; um guarda assim vale se o gerador mudar. Fica como sugestão.
+
+### Achado (medido, não corrigido)
+- **A prévia do pescador superestima.** `colheitaAoAlcanceDaCaixa` (a prévia da planta
+  fantasma e o painel) conta cardume de interior de lago que ninguém alcança; o
+  `semRecursoAoAlcance` já filtra pela aproximação desde a F-T4d. É a mesma classe de
+  divergência de predicado, do lado da tela. Não trava (nenhuma posição fica parada), mas o
+  jogador lê "31 ao alcance" e o pescador usa 19. Registrado no `BUGS.md` como `errado`?
+  **Não**: o aceite escrito da F-TP não fala de aproximação — é lacuna de aceite. Fica aqui
+  para o operador.
+
+## 2026-09-26 (noite, 3) — Panorama funcional dos 28 prédios, sem arte (pedido do operador)
+
+### Como foi medido (verificado: rodei a sonda e abri o JSON)
+Sonda temporária `tests/zz-panorama-28.test.ts` (apagada antes do commit; não é cobertura contínua). Um
+estado novo por tipo (`createInitialState(1)`), com:
+
+- todos os tipos desbloqueados;
+- armazém com 60 de cada mercadoria (200 de tábua e pedra);
+- o lugar escolhido pelo próprio `canPlace`, o mais perto da porta do armazém:
+  - quem colhe precisa de ≥ 2 tiles alcançáveis pelo mesmo `tileAlcancavelParaColheita` da sim;
+  - quem ara precisa de ≥ 4 tiles `canPlowField`.
+
+Daí em diante tudo segue pelo **caminho real**:
+
+1. `PlaceBlueprint`;
+2. laborers erguem, serfs entregam;
+3. `EnqueueTraining` na escola;
+4. o especialista anda e ocupa;
+5. para fazenda e Canavial, `PlowField` com 4 tiles;
+6. serfs levam o insumo do armazém.
+
+"Produz" = a gaveta `saida` do prédio > 0.
+
+**O que NÃO é caminho real:** a estrada. A sonda injeta os tiles já assentados, por BFS sobre `canPlaceRoad`, ligando a porta do prédio e a da escola à do armazém.
+
+A primeira corrida deu "ninguém ocupa" em todos, porque a escola ficou sem estrada e o ouro não chegava. Era defeito da sonda, e sumiu ao ligar a escola.
+
+### A tabela (seed 1; ticks a 10 Hz)
+| prédio | constrói | ocupa | produz |
+|---|---|---|---|
+| storehouse | sim, 396 | — | recebe e guarda (F05+) |
+| schoolhouse | sim, 396 | — | treina (a sonda usou em todos) |
+| inn | sim, 419 | — | alimenta (F20a) |
+| quarry | sim, 222 | sim, +226 | stone, +265 |
+| woodcutters | sim, 284 | sim, +293 | tree_trunk, +625 |
+| sawmill | sim, 291 | sim, +277 | timber, +272 |
+| farm | sim, 319 | sim, +244 | corn, +377 (campo arado pelo comando) |
+| wineyard | sim, 272 | sim, +226 | wine (cachaça), +856 (partido arado pelo comando) |
+| fishermans | sim, 265 | sim, +222 | fish, +434 |
+| gold_mine | sim, 2007 | sim, +1157 | gold_ore, +299 |
+| coal_mine | sim, 2502 | sim, +1382 | coal, +249 |
+| iron_mine | sim, 1759 | sim, +1022 | iron_ore, +299 |
+| mill | sim, 296 | sim, +277 | flour, +245 |
+| bakery | sim, 296 | sim, +277 | loaves, +245 |
+| swine_farm | sim, 319 | sim, +296 | pigs + skins, +599 |
+| stables | sim, 419 | sim, +296 | horses, +599 |
+| butchers | sim, 296 | sim, +277 | sausages, +199 |
+| tannery | sim, 272 | sim, +258 | leather, +599 |
+| armory_workshop | sim, 296 | sim, +277 | leather_armor + wooden_shield, +299 |
+| metallurgists | sim, 296 | sim, +277 | gold, +599 |
+| iron_smithy | sim, 291 | sim, +277 | iron, +299 |
+| **weapons_workshop** | sim, 291 | sim, +277 | **NÃO** (3500 ticks) |
+| **weapon_smithy** | sim, 291 | sim, +277 | **NÃO** (3500 ticks) |
+| **armor_smithy** | sim, 319 | sim, +296 | **NÃO** (3500 ticks) |
+| watchtower | sim, 169 | sim (recruit), +179 | não há regra: não atira, não vê |
+| barracks | sim, 471 | — | não há regra |
+| marketplace | sim, 419 | — | não há regra |
+| town_hall | sim, 419 | — | não há regra |
+
+As minas levam mais tempo em obra e na ocupação porque os veios ficam a 50–70 tiles da aldeia, e isso é caminhada. Não é defeito.
+
+**Resumo:**
+- **21 de 28 fazem o ciclo inteiro:** constroem, são ocupados e produzem.
+- **3 consomem o insumo e não entregam nada.**
+- **4 são casca:** constroem e param aí.
+
+### Achado (medido): as três casas de arma COMEM o insumo e a saída some
+As três casas de arma rodam o ciclo normalmente:
+- o insumo é consumido;
+- o especialista fica em `trabalhando`;
+- o `progresso` volta a zero a cada ciclo.
+
+Mas a gaveta `saida` fica vazia. A causa é `depositar` (`src/sim/systems/especialistas.ts:161`): ele percorre só `economia.mercadorias`, e `arma_madeira`, `arma_ferro` e `armadura_ferro` não estão lá. Nenhum evento `goods-produced` sai.
+
+O registro anterior dizia só "sem pilha no estoque visível". É pior que isso: **o jogador que ergue essas casas perde tábua, ferro e carvão por nada.**
+
+O `validate:data` não acusa porque nenhuma regra confere `production.receitas.*.sai` contra `economy.mercadorias`. A regra de `tools/data-rules.js:897` é da `reposicao`.
+
+Por que não fui para o `BUGS.md`: nenhum aceite escrito cobre esses prédios, o que torna isso lacuna de aceite. Isso deixa as três casas fora do "trava".
+
+### Decisão minha, marcada para o operador revisar
+- **Não corrigi.** A correção natural tem duas partes:
+  - uma regra no validate: `sai` só com id de `economy.mercadorias`;
+  - dar id às armas.
+
+  Isso é a escolha de arma da F24, que o operador já pôs na Fase C. Um conserto parcial agora (pôr os três agregados em `mercadorias`) criaria três mercadorias que a F24 vai apagar.
+- Deixei o contrato na nota da F24 em `BUILD_PLAN.md`: o aceite dela inclui "a saída das três casas chega ao armazém" e a regra do validate.
+- **Hipótese, não medida:** esconder as três do menu até a F24 evitaria a perda. Não fiz. É decisão de design do operador.
+
+### As quatro cascas (verificado por grep)
+- `barracks`, `marketplace`, `town_hall` e `watchtower` não têm sistema em `src/sim/`.
+- O único leitor em código fora de `data/` é `src/render/estagio-obra.ts`, que desenha a obra.
+- São Fase C (F25 e as seguintes) por desenho, não por defeito.
+
+## 2026-09-26 (noite, 4) — F-VIVO: plano, aceite e a medição dos estágios de obra no kam_remake
+
+### Verificado: li o código-fonte (`reyandme/kam_remake`, `master`, baixado nesta sessão)
+- **`src/houses/KM_Houses.pas`**
+  - `IncBuildingProgress` (linha ~1234): cada martelada faz `Inc(fBuildingProgress, 5)`.
+    Uma unidade de material abre uma reserva de 50, então são 10 marteladas por material.
+    O estado vai de `hbsWood` para `hbsStone` quando o progresso chega a `WoodCost*50`, e
+    fica `hbsDone` com `StoneCost*50` a mais. A unidade sai de `fBuildSupplyWood/Stone`
+    quando a reserva começa, isto é, na primeira martelada nela.
+  - `Paint` (linha ~2396): na fase de madeira, `progress = fBuildingProgress/50/WoodCost`
+    e `AddHouse(tipo, pos, progress, 0, 0)`. Na fase de pedra, `AddHouse(tipo, pos, 1,
+    progressoDaPedra, 0)`. Nas duas fases, `AddHouseBuildSupply(tipo, pos,
+    fBuildSupplyWood, fBuildSupplyStone)`. Pronta, a casa chama `AddHouse(…, 1, 1, …)`,
+    depois `AddHouseSupply` (o estoque) e `AddHouseWork` (a animação).
+- **`src/render/KM_RenderPool.pas`**
+  - `AddHouse` (linha ~760): são duas imagens, `WoodPic` e `StonePic`. Em obra, a madeira
+    vai com `AddSpriteG(…, aWoodStep)` e a pedra por cima com `AddSprite(…,
+    aStoneStep)`. O comentário diz que é **alpha test**: o passo é o limiar de revelação
+    ("RenderSpriteAlphaTest will skip rendering when WoodStep = 0").
+  - `AddHouseBuildSupply` (linha ~716): o sprite da madeira é `260 + aWood - 1` e o da
+    pedra é `267 + aStone - 1`, cada um posto em `BuildSupply[material, n].MoveX/MoveY`.
+    Isso é uma **âncora por (material, quantidade)**, própria de cada casa.
+- **Hipótese, não verificada:** a ordem de revelação (de baixo para cima) está no canal
+  alfa de cada sprite. Não abri a arte do original, e nem posso (CLAUDE.md §9).
+
+### Conclusão
+- "Mais de 20 etapas" é a **revelação contínua de duas imagens**: 10 × (madeira + pedra)
+  marteladas, com um degrau visível a cada 5 de esforço. Não são 20 desenhos.
+- As **camadas empilháveis** existem, e são quatro:
+  1. a madeira revelada;
+  2. a pedra revelada por cima;
+  3. a pilha do material entregue e ainda não pregado;
+  4. na casa pronta, o estoque e o trabalho.
+- A pilha da obra e a pilha do estoque **são o mesmo mecanismo**: um sprite por
+  quantidade num ponto do prédio. Isso confirma o palpite do operador para a pilha.
+- Para a obra em si, o palpite não se confirma: ela não é uma pilha de etapas desenhadas.
+
+### Decisões minhas, marcadas para o operador revisar
+1. **As seis imagens da F17e ficam.** Adotar a revelação do original muda o pipeline de
+   arte: seriam duas bases por prédio, com a máscara de revelação no alfa, no lugar das
+   seis. O Codex está derivando as seis agora. Não é interpretação conservadora, então
+   fica como **pergunta**: *trocar os seis estágios por madeira e pedra reveladas?* O
+   ganho seria uma obra que sobe a cada martelada, em vez de cinco saltos. O custo seria
+   refazer as bases e escrever a máscara.
+2. **A pilha da obra entra na F-VIVO-a** como quarto uso da `pilha`, sem arte nova (a
+   tábua e a pedra já são mercadorias) e sem campo novo na sim. O número vem de
+   `entregues − ⌈hp/hpPorMaterialEntregue⌉`, com a tábua consumida primeiro.
+3. **A F-VIVO sai em cinco sub-itens**, de F-VIVO-0 a F-VIVO-d, cada um com aceite
+   escrito no `BUILD_PLAN.md`. A F-VIVO-0 é o item 3 do encadeamento do operador:
+   manifesto e `ancoras`.
+4. **Placeholder por camada e âncora padrão** derivada do footprint, para que cada
+   sub-item se verifique sem arte.
+5. **O `ancoras` ganha o bloco `obra`**, um ponto por material, que o brief §4a ainda não
+   tinha. É o que o original tem em `BuildSupply`.
+
+## 2026-09-26 (noite, 5) — F-VIVO-0: o manifesto aceita o prédio vivo
+
+### Feito e verificado
+- `src/render/manifesto.ts`: `TIPOS_DE_CAMADA` ganha `trabalho`, `pilha` e `animal`, e
+  `EntradaDeAsset` ganha o campo opcional `ancoras` (`trabalho.area/fumaca`,
+  `estoque.entrada/saida`, `curral`, `obra`).
+- `src/render/manifesto-camadas.ts` (novo, só `import type`) guarda as regras do brief
+  §4a como funções puras: `violacoesDaCamadaViva`, `violacoesDasAncoras`,
+  `violacoesDosCasos`. As mesmas tabelas (`CASO_DO_PREDIO`, `LACOS_DO_CASO`,
+  `ANIMAL_DA_CRIACAO`) serão lidas pelo render da F-VIVO-a/b/c.
+- `tests/F17f-manifesto.test.ts`, bloco F-VIVO-0, com 6 testes:
+  - o manifesto real passa;
+  - a tabela de casos concorda com `data/production.json`, e o guarda acusa uma mina
+    sem `aDistancia`;
+  - 7 entradas sintéticas boas passam;
+  - 10 casos de tipo e 12 casos de âncora **reprovam**, cada um com a mensagem conferida
+    por regex.
+- `npm run verify`: 106 arquivos e 1468 testes verdes, exit 0.
+- `test-output/F17f.json`: `camadasVivas: 0`, `prediosComAncoras: []`. O manifesto real
+  ainda não declara nada disto, e as regras foram exercidas **só** pelo manifesto
+  sintético do teste.
+- `docs/BRIEF-ARTE.md` §4a diz que os tipos já entram e ganha o bloco `obra`. Não toquei
+  em `assets/` nem em `tools/derivar-sprites.js`.
+- **O Codex está destravado:** entrada `trabalho`, `pilha` ou `animal` no manifest agora
+  passa, se seguir o brief.
+
+### Decisões minhas, marcadas para o operador revisar
+1. **A tabela dos cinco casos é constante do render, conferida contra o dado.** Ela não
+   é campo em `data/production.json`, porque é apresentação e a sim não lê. O guarda
+   `violacoesDosCasos` amarra a tabela ao dado:
+   - todo prédio com receita tem caso, e vice-versa;
+   - luz ⇔ `colheita.aDistancia`;
+   - casos 1 e 2 colhem andando;
+   - casos 3 e 5 não colhem;
+   - o animal da criação está no `sai`.
+2. **Arte em parte entra por laço inteiro.** O `laco1` completo sem o `laco2` passa, e o
+   que falta vira placeholder. Um laço incompleto é recusado. O motivo é não bloquear o
+   Codex, que deriva por partes.
+3. **O armazém e a Bodega declaram os 4 pontos em `estoque.entrada`**, com `saida` 0. O
+   brief dizia "4 pontos" sem dizer a gaveta.
+4. **Prédio do caso 1 recusa entrada `trabalho`**, com a mensagem "caso 1 (so guarda)
+   nao tem animacao dentro". A fumaça dele é a genérica.
+5. **Pontos fora de `area`:** a regra de não sobrepor foi implementada como "nenhum
+   ponto de estoque, curral ou obra estritamente dentro de `trabalho.area`". A fumaça
+   fica de fora, porque a chaminé pode ficar sobre a porta no desenho. Pilha contra
+   pilha não é conferida: ponto não tem área.
+
+## 2026-09-26 (noite, 6) — F23b: guardar e retomar a partida pela tela
+
+### Feito e verificado
+- `src/sessao.ts`: `substituir(estado)` troca a partida, descarta a fila e publica.
+  Probe (evidência da sessão, não cobertura): com o descarte comentado, o teste "retomar
+  descarta a fila" reprovou. Restaurei e ele voltou a passar.
+- `src/arquivo-da-partida.ts` é novo, puro e fica no laço externo. `salvar` e `carregar`
+  sobre uma `Gaveta` injetada (o `localStorage` no `main.ts`). Toda recusa devolve a
+  causa e o detalhe, sem lançar, e sem mexer na partida em curso. As causas são
+  `sem-save`, `recusado` (com o motivo da F23, sem o prefixo) e `gaveta` (cota ou
+  armazenamento bloqueado).
+- `src/ui/arquivo.ts` monta a seção "Partida" no topo da ajuda (H): Guardar, Retomar e
+  o recado do resultado. Os textos vêm de `theme-sertao.json` (`hud.arquivo`).
+- `tests/F23b-arquivo-da-partida.test.ts` (6 testes) cobre:
+  - guardar no tick 300; uma sessão nova no tick 0 retoma igual no instante e 200 ticks
+    depois;
+  - a fila descartada;
+  - as quatro recusas: vazia, lixo, mapa mudado, gaveta bloqueada;
+  - a gaveta cheia;
+  - os recados.
+- `npm run shot -- F23b` passou com 31 afirmações. O roteiro:
+  - planta uma Casa do Lenhador e avança até o tick 300;
+  - "Retomar" sem save dá o recado e deixa a partida;
+  - guarda e recarrega a página: tick 0, sem a obra, com o save na gaveta;
+  - retoma **despausado**, segurando 150 ms;
+  - retoma pausado: mesmo tick, mesmos prédios campo a campo, mesma barra; guardar de
+    novo dá **o mesmo texto byte a byte**;
+  - com o save estragado, o recado traz o motivo e a partida não muda.
+- Abri `screenshots/F23b-1-guardada.png`, `F23b-2-recado-retomada.png` e
+  `F23b-3-retomada.png`. A aldeia retomada tem a obra, os avisos dela e o estoque gasto.
+- `npm run verify`: 1474 testes verdes. Não-regressão por código de saída: F-D1, F11a,
+  F22 e F06 OK.
+
+### Decisões minhas, marcadas para o operador revisar
+1. **Os botões ficam na ajuda (H), não na barra.** A medida está no BUILD_PLAN: a
+   barra transbordava 100 px, e o recado de recusa pede mais uns 250. O lembrete da
+   primeira partida já manda o jogador ao H, e é o que mais se parece com o menu em jogo
+   do KaM. Custo: guardar exige dois gestos (H e o clique). Saída pronta, se o operador
+   quiser na barra: é só trocar o pai em `montarArquivo`, mas a barra precisa ceder
+   espaço antes (o lembrete, ou os `gap` de 22 px).
+2. **Uma partida só**, sempre na chave `cangaco:partida`. Guardar sobrescreve sem
+   perguntar. Slots e confirmação ficam para quando houver pedido.
+3. **Retomar descarta a fila e fecha o painel do prédio.** Comando dado sobre a partida
+   velha não se aplica à nova, e o prédio aberto pode não existir nela. O relógio não
+   muda: retomar pausado continua pausado.
+4. Os rótulos são "Guardar" e "Retomar", no tom do tema, com o recado "Partida
+   guardada" ou "Partida retomada". Numa recusa: "Não retomou: <motivo>". O motivo vem
+   da F23, sem acento.
+
+## 2026-09-26 (noite, 7) — Respostas do operador: a obra revelada, as armas e três itens na fila
+
+Esta seção é a execução das seis respostas do operador às perguntas das seções 4 a 6.
+Nenhum código mudou nesta parte; só docs e fila.
+
+### Verificado
+- **O brief foi reescrito antes de tudo** (commit `e9d1b9e`, pedido explícito do operador),
+  porque o Codex estava derivando os seis estágios. A §4 do `docs/BRIEF-ARTE.md` agora fala
+  das duas imagens, `madeira` e `completo`, e de como cada uma é revelada. Mudaram também:
+  - a nomeação (§3);
+  - a conta da §4a: de 168 para 56, com total de 496 para 384;
+  - a §6;
+  - a tabela da §9.
+- **O que o Codex já tinha feito e se perde** (lido em `git show --stat` no worktree
+  `derivacao-sprites`, HEAD `59ff42e`, status limpo):
+  - **Perdidos:** os estágios `marcacao`, `fundacao`, `paredes` e `cobertura` dos seis
+    prédios (inn, quarry, sawmill, schoolhouse, storehouse, woodcutters). São 24 bases e
+    24 derivados.
+  - **Aproveitados:** o `estrutura` vira a `madeira`, e o `completo` continua valendo.
+  - **O que falta:** registrar o par (mesmo canvas). É uma transição, e não mais cinco.
+  - Não toquei no worktree nem na branch dele.
+- **Os dois branches** `estilo-ui` e `regra-uma-sessao-na-main` foram apagados com
+  `git branch -d`. Antes conferi com `git log main..<branch>`: nenhum commit fora da
+  `main`.
+
+### Itens escritos na fila (`BUILD_PLAN.md`)
+- **F17g**, a obra revelada pelo hp. O item fica antes da F-VIVO, e a F17e ganhou uma
+  nota dizendo que foi substituída.
+- **F24a**, as armas nas seis do GDD. O item fica antes da F24 e traz duas tabelas: a das
+  receitas e a do Anexo A.
+  - Medida nova: os seis ids e as quatro proteções **já estão** em
+    `economy.mercadorias`, e o tema já os nomeia. O que falta é **quem produz**.
+  - A entrada correspondente no `IDEIAS.md` foi riscada e aponta para o item.
+- **F28b**, a Torre, que fica logo após a F28 porque precisa de inimigo.
+- **F35**, a Feira, e **F36**, a Prefeitura, que ficam no fim da Fase D.
+- **F23b**: a razão do operador ficou registrada na nota do item: *"salvar não é ação de
+  jogo, é ação de sessão"*.
+- **GDD §9.6**: a regra das três imagens foi revogada e agora aponta para a F17g.
+
+### Decisões minhas, marcadas para revisão (só as que mudam tela ou contrato herdado)
+1. **Na F17g, a pedra é a imagem `completo`, e não uma terceira imagem.**
+   - Por quê: são duas imagens, como o operador pediu. O `completo` já existe, e as
+     âncoras de §4a já se referem a ele.
+   - O contrato que muda: as chaves de `estados` passam a ser `madeira` e `completo`.
+2. **A revelação é de baixo para cima, por recorte, sem máscara no alfa.**
+   - O original usa alpha test com a ordem desenhada no alfa (hipótese, noite 4). Aqui a
+     ordem é a altura.
+   - Por quê: a arte não precisa de nada além das duas imagens, e o render faz com
+     `setCrop`.
+   - Se o operador quiser a máscara, ela entra como um terceiro canal no brief.
+3. **Na F24a, a oficina escolhe a arma por cota do jogador, e sem cota vale o rodízio
+   fixo** na ordem da tabela.
+   - O GDD §2.3 diz *"quantas de cada arma produzir"* e marca isso como `[geral]`.
+   - O rodízio é a leitura conservadora: produz tudo e não precisa de RNG.
+4. **Na Feira, a tabela de troca é pergunta**, e ficou escrita no item. Nem o GDD nem
+   `data/` fixam a taxa entre mercadorias.
+
+## 2026-09-26 (noite, 8) — F-VIVO-a: a pilha, sem arte
+
+**Feito e verificado.**
+- `src/render/pilhas.ts` (novo, puro): `pilhasDoPredio(predio, dados)` devolve
+  `{gaveta, mercadoria, n, ponto}` com `n = min(q, 5)`, e `posicoesNaPilha(n)` põe três
+  embaixo e dois em cima. Quatro usos: receita (entra/sai na ordem do dado), armazém
+  (as 4 maiores somando as duas gavetas, desempate por `economia.mercadorias`), Bodega
+  (o grupo `comida`, da `entrada`) e obra (`entregues − ⌈hp/50⌉`, a tábua consumida
+  primeiro).
+- Funil `predios.ts`: `contextoDasCamadas` (antes montado no teste da F17f, agora um
+  objeto só para teste e cena), `dadosDasPilhas(manifesto)` e `corDaPilha`. As 28
+  cores vêm do bloco novo `pilhas` do `theme-sertao.json`; mercadoria sem cor lança
+  erro no carregamento.
+- Cena: a pilha entra na assinatura do diff de `atualizarPredios`, pelo mesmo motivo do
+  medidor. O que redesenha é só o que se desenha: acima de 5 não redesenha.
+  `debug.pilhasDesenhadas` publica a lista por prédio. PNG `pilha:<m>:unidade`
+  quando existir; sem ele, um quadrado com a cor do tema.
+- `tests/F-VIVO-a-pilhas.test.ts`: 8 testes verdes. O pisca deu **6 trocas em 6 000
+  ticks (0,1 por 100)**, abaixo do limite de 1. As trocas caem nos ticks 50, 158, 246,
+  4338, 4958 e 4961; as duas últimas são uma alternância rápida, e ficam como
+  observação. Os números estão em `test-output/F-VIVO-a.json`.
+- `npm run shot -- F-VIVO-a` passou, com as 3 capturas abertas (armazém, obra e
+  pedreira). `npm run verify` deu 108 arquivos e 1482 testes verdes.
+
+**Decisões minhas, marcadas para revisão.**
+- **O lado da unidade é ⅕ de tile, e não ¼** (muda o que se vê). Com ¼, as quatro
+  pilhas do armazém se sobrepõem na base de 3 tiles. A constante fica na cena
+  (`LADO_DA_UNIDADE_EM_TILES`), como o resto do placeholder, e sai quando a arte
+  chegar.
+- As âncoras padrão ficam em y=0,92. Com uma gaveta só, a pilha ocupa a base inteira;
+  com as duas, a entrada vai para a metade esquerda e a saída para a direita. O
+  armazém tem sempre 4 pontos fixos, mesmo guardando menos de 4 mercadorias.
+
+**Medido nesta sessão (sonda `zz-`, apagada).**
+- A geometria dos roteiros F16b, F17b, F17e e F11c põe a pedreira à direita da
+  escola, em (38,31). **Ali não há rocha ao alcance.** A sonda mostrou a pedreira
+  ocupada no tick 363 e `progresso` em 0 até o tick 2600. Esses roteiros não afirmam
+  produção, então continuam verdes, mas nenhum deles tem uma pedreira que produz. O
+  roteiro da F-VIVO-a usa a geometria da F-T3, com a pedreira ao lado do lajedo.
+- Na vila da calibração, a obra tem pilha em cerca de 30% dos ticks em que está em
+  obra, em rajadas; a saída da pedreira tem pilha em cerca de 20% dos ticks. Por isso
+  o roteiro espera pela condição com passo de 5 ticks, e não por um número fixo de
+  ticks.
+
+### F18c — parada antes de começar (encadeamento c do operador)
+
+**Medido (verificado).** Movi a vila +32 em cada eixo só no `data/economy.json`
+(storehouse, schoolhouse e spawn), sem gerar o mapa de novo, e rodei `npx vitest
+run`. Resultado: **48 de 108 arquivos reprovam (147 testes; 11 pulados)**. O
+`economy.json` foi revertido na hora e o `git status` está limpo. Os roteiros não
+rodaram. O teto do operador era 20 arquivos e 15 roteiros, então a feature **parou
+aqui**, como ele pediu.
+
+Os arquivos que reprovam: BUG-G-preso-no-footprint, F05b-hud, F06-build,
+F09-jobboard, F09-sistema, F10-desempate, F10-falhas, F10-fsm, F11c-laborer,
+F13a-aceite, F13a-ouro, F13b-painel, F14-aceite, F15a-aceite, F15a-producao,
+F15b-aceite, F15b-entrega, F15b-insumo, F16a-demolir, F16a-porta, F16b-painel,
+F16c-pausar, F17-aceite, F17b-escada-do-serf, F18b-mapa, F18d-1a-modo,
+F18d-1b-laborer, F18h-terra-de-plantio, F18i-terra-na-tela, F18-rocado,
+F20b-fome, F22-alertas, F-CAL-a-cenario, F-CAL-b-calibracao, F-D3-geografia,
+F-T1-terreno, F-T2a-recursos, F-T2c-colheita-jobboard, F-T3-caminho,
+F-T3-ciclo-em-campo, F-T3-determinismo, F-T3-ocupado-mas-fora, F-T4b-geometria,
+F-T4b-lenhador, F-T4d-pescador-em-partida, F-T4-pescador, F-TA-painel-alcance e
+F-VIVO-a-pilhas.
+
+**Por que a conta da F18b (20 + 15) ficou velha (verificado no código).** A F18c foi
+escrita antes do terreno existir. Hoje `tools/gerar-mapa.js` fixa a geografia da
+abertura em volta da vila:
+- o `LAJEDO_DA_VILA` em (24,31), com raio 2;
+- o açude do norte, o mato do nascente e o roçado da abertura;
+- o quadrante noroeste "até o tile 71", mantido em grama porque os testes usam
+  coordenada literal.
+
+Só a reserva em volta da vila é derivada do `economy.json`. Mover a vila sem mover
+isso deixa a pedreira, o lenhador e o pescador da abertura sem nada ao alcance.
+
+**Hipótese (não conferi arquivo por arquivo): duas classes de falha.**
+1. Coordenada literal em fixture. É o defeito que a F18c nomeia, e é o que se migra
+   derivando do armazém.
+2. Geografia autoral. Os F-T*, F-D3, F-CAL-a/b, F18h/F18i e, provavelmente, os
+   F-T4*. Não se consertam no teste: exigem que o gerador derive o lajedo, o açude e o
+   mato da vila, gerar o mapa de novo e **refazer a calibração da F-CAL-b**, porque a
+   caminhada muda.
+
+A classe 2 é decisão de design e de balanceamento, e fica com o operador. Uma saída
+possível, **não decidida**: quebrar em F18c-1 (a classe 1, com a vila parada, só
+trocando literal por derivado) e F18c-2 (a geografia relativa à vila, mais o
+recentramento, depois da F20).
+
+## 2026-09-26 (noite, 9) — Respostas do operador: F18c quebrada, pedreira que produz nos roteiros
+
+### Decisões do operador (registradas como dele)
+- **F18c quebrada.** A F18c-1 (derivar os literais dos testes) sai agora; a F18c-2
+  (mover a vila, gerar o mapa de novo e refazer a calibração) fica para **depois da
+  Fase C**. O porquê dele: derivar os literais protege contra a próxima mudança de
+  abertura, e isso já mordeu na F-T4b. Recentrar não vale antes de o combate existir.
+  A F18c-2 está no `BUILD_PLAN.md` fisicamente depois da Fase C, com nota.
+- **As quatro decisões da noite 8 foram aprovadas**, incluindo a pilha de ⅕.
+- **Os roteiros com pedreira morta** tinham de ser consertados, com a pedreira na
+  posição da F-T3 e uma asserção de que ela produz.
+
+### F18c — a divisão, medida (verificado)
+O operador pediu para confirmar a hipótese das duas classes antes de começar. O
+oráculo certo não é mover só a vila. É **transladar o mundo inteiro sem dar a
+volta**: o mapa vai para 160×160 com uma faixa de grama de 32 tiles a oeste e ao
+norte, e vila, recursos e `mapaPadrao` andam +32 juntos. Assim toda distância
+relativa se mantém, e só cai quem escreveu coordenada absoluta. A primeira
+tentativa, com wrap de +32 dentro do 128, contaminou a medida: 14 arquivos caíram
+só porque a serra e as minas deram a volta. Essa medida foi descartada. Os
+arquivos de dados foram revertidos pelos backups, e o `git status` ficou limpo.
+
+- **46 arquivos reprovam com o mundo transladado.** Eles têm literal absoluto e são
+  o escopo da F18c-1: os 39 dos 48 originais, mais 7 que só caem transladados
+  (F04, F18-ciclo-do-roceiro, F19, F19b, F21, F21b e F23).
+- **9 dos 48 originais passam transladados.** Eles dependem só da geografia em
+  volta da vila e ficam na F18c-2: BUG-G-preso-no-footprint, F06-build,
+  F17-aceite, F-CAL-a, F-CAL-b, F-T4b-geometria, F-T4b-lenhador,
+  F-T4d-pescador-em-partida e F-VIVO-a-pilhas.
+- **Correção da minha hipótese da noite 8.** Os literais da
+  `producao-cenario.ts`, como `q1` em (26,34), não são "geografia autoral". São
+  literais absolutos que, por acaso, ficam perto de uma feição. Transladados, eles
+  caem, então são F18c-1. Mas a âncora certa deles é a **feição** (a rocha mais
+  perto), não o armazém. Derivar do armazém passaria na translação e cairia na
+  F18c-2.
+- A F18c-1 é grande demais para uma sessão e foi quebrada no `BUILD_PLAN.md` em três
+  partes. A **1a** cobre os dois helpers de cenário, com cerca de 22 arquivos caindo
+  por eles. A **1b** cobre os literais diretos. A **1c** decide caso a caso os 4
+  testes que afirmam o próprio arquivo do mapa e cria o guarda permanente. O aceite
+  de cada parte é **proposta minha**, porque o aceite original, a regra do centro da
+  caixa, foi para a F18c-2.
+
+### Roteiros com a pedreira que produz (feito e verificado)
+- `tools/shots/_pedreira.js` (novo) tem duas funções:
+  - `pedreiraNoLajedo` usa a geometria da F-T3 (a primeira caixa livre a oeste do
+    armazém) e afirma que há rocha ao alcance.
+  - `esperarPedraNaSaida` espera, com passo de 5 ticks e teto de 1500, pela pedra na
+    gaveta de saída (`pilhasDesenhadas`). É essa a prova de que a pedreira produz.
+- **F16b, F17e e F11c** usam as duas funções. Os três trocaram a espera por número
+  fixo de ticks (`TICKS_ATE_OCUPAR = 500` na F16b) por espera por condição com teto,
+  e o treino da escola passou a ser o gesto despausado e segurado (§8). A F17e e a
+  F11c ganharam o passo de treino e a captura `produzindo`. O enquadramento da F17e
+  agora é medido com a câmera já parada na obra, depois da rua.
+- **Os três roteiros passaram** (`CANGACO_SHOT_PORTA=5176`): F16b com 5 capturas,
+  F17e com 7 e F11c com 4. Abri `F11c-4-produzindo.png`: a pedreira está ao lado do
+  lajedo, com pedra na gaveta e o cabra na porta, e a rua desvia da rocha.
+- **A asserção acusa (sonda da sessão, revertida).** Com a posição antiga,
+  (38,31), a F11c reprovou: "a pedreira 'p9' deveria produzir: sem pedra na saída
+  em 1500 ticks", com a pedreira completa e ocupada. A proteção permanente são as
+  asserções nos três roteiros; a sonda só prova que elas acusam hoje.
+- **A F17b não mudou, e o erro foi meu no relatório da noite 8.** Ela planta um
+  **lenhador**, não uma pedreira. Na posição dela, (38,31), há 4 árvores ao
+  alcance (`alcance_tiles` 6), e o roteiro nunca treina ninguém: ele é sobre o
+  medidor da obra, não sobre produção. Não havia prédio morto ali. Eram três
+  roteiros, não quatro.
+
+## 2026-09-26 (noite, 10) — F18c-1a: os helpers de cenário derivam posição
+
+### Pendentes que o operador pediu para confirmar (já feitos em `b0e0a9f`)
+
+- Os dois ícones de arar: a cor por cultura vem do tema (`src/ui/menu-build.ts`,
+  `--cor-cultura`), e `tools/shots/F18i.js` guarda a diferença.
+- O veio que só entra no ciclo com chão andável encostado: a sonda daquela sessão
+  contou **0** veios de ouro, carvão e ferro de fora no mapa publicado.
+
+### Feito e verificado
+
+- `tests/helpers/ancoras.ts` (novo). Seis âncoras, cada uma tirada do dado:
+  - a **vila** é o canto do armazém do cenário inicial;
+  - o **lajedo** é a mancha de recurso `rock` mais perto da vila;
+  - o **lago pequeno** é a mancha de água mais perto da vila;
+  - o **lagamar** é a maior mancha de água;
+  - o **roçado do norte** é a mancha de `campoArado` mais ao norte, porque há duas de 65 tiles e "a maior" empataria;
+  - a **serra** é a maior mancha de montanha.
+  - Empate na ordem escolhida lança erro, em vez de cair na sorte da varredura.
+- `producao-cenario.ts` e `fome-cenario.ts` escrevem deslocamento a partir da âncora. O comentário ao lado dá a coordenada de hoje, para leitura.
+- `tests/F-T2a-recursos.test.ts` também mudou. Ele tem uma fixture local com a mesma mensagem `nao ficou ligado`, e o aceite da 1a a cobre, então entrou nesta sessão e não na 1b.
+- `tools/transladar-mundo.js` (novo) é o instrumento do aceite. Ele escreve os três JSON transladados, roda o vitest e **reverte no `finally` e no Ctrl+C**, depois confere byte a byte que reverteu. Não entra no `verify`.
+- `tests/F18c-1a-ancoras.test.ts` (novo) é o guarda permanente das âncoras. Ele translada o mundo em memória e afirma que cada âncora anda +K. Também afirma que o lajedo vem do mapa publicado, mesmo com uma jazida injetada.
+- Evidência em `test-output/F18c-1a.json`. Com o mundo transladado:
+  - antes: **46** arquivos reprovados, 20 deles por `nao ficou ligado`;
+  - depois: **28** reprovados, **0** por `nao ficou ligado`, e nenhum arquivo novo na lista.
+- **Posições no mapa de hoje.** A sonda da sessão (`zz-`, apagada) montou os 19 cenários dos dois helpers antes e depois. Prédios e estradas saíram **byte a byte iguais**, então nenhuma asserção muda de valor. Isso é evidência da sessão, não cobertura contínua.
+- `npm run verify`: verde, 109 arquivos, 1490 testes.
+
+### Decisões minhas (para revisão)
+
+- **Deslocamento fixo a partir da âncora, não busca por `canPlace`.** O escopo do item dizia "passam a procurar posição". Uma busca mudaria a posição no mapa de hoje e, com ela, os números medidos da F15a, F-T2a e F22, como os ticks de depósito e o total ao alcance. Já o deslocamento a partir da feição mantém a posição exata e anda junto com ela. A âncora é a feição, não o armazém, como o operador aprovou.
+- **O lajedo vem sempre do `gameData` publicado, nunca do `dados` do teste.** O lajedo é camada de recurso, e `comJazida` a substitui. Com a âncora lida do `dados`, a F15a e a F22 punham a pedreira sobre a jazida injetada, fora da rua. A primeira corrida pegou isso: 8 reprovações.
+- **Rua da vila, produtor da feição.** A rua até a porta do armazém ancora na vila. O prédio que precisa do recurso ancora na feição. Um exemplo é o pescador da vila: a cabana ancora no lago pequeno, e a rua dela desce na vila. Quando a F18c-2 separar vila e feição, essas ruas vão precisar de trajeto. Isso é hipótese, não medi.
+
+## 2026-09-26 (noite, 10) — F18c-1b: literais diretos nos testes
+
+### Feito e verificado
+
+- **24 arquivos** de teste e 2 helpers (`jobs-cenario.ts`, `serf-cenario.ts`) trocaram coordenada absoluta por deslocamento a partir de uma âncora.
+  - A maior parte é vila. O script de conversão só fez aritmética: `x-29`, `y-30`, contra o armazém em (29,30). Por isso o valor no mapa de hoje é idêntico por construção.
+  - O que precisa de recurso ancora na feição:
+    - F-T2c: as duas pedreiras e a mancha injetada, no lajedo;
+    - F-T3-caminho: o galpão sobre o campo, no roçado do norte;
+    - F18h: a recusa por `terreno` no lago pequeno e a por `recurso` no lajedo;
+    - F15a, F22 e F-T2a: o tile de `comJazida` sai de `rochaDaPedreiraDaVila`;
+    - F17b: o posto do serf fica na porta de `pedreiraDaVila`.
+- `ancoras.ts` ganhou `linhaHDe`, `linhaVDe`, `naVila` e `xy`. O último é para as fixtures que recebem a posição em dois argumentos.
+- `tools/transladar-mundo.js` ganhou `--detalhe`, com o nome e a mensagem de cada teste que cai.
+- **Evidência** em `test-output/F18c-1b.json`. Com o mundo transladado, **28 → 4** arquivos reprovados, e os 4 são só os de mapa: F-D3-geografia, F-T1-terreno, F04 e F18b.
+- `npm run verify`: verde.
+
+### Decisões minhas (para revisão)
+
+- **Coordenada pequena abstrata fica como está.** Entra aqui o que tem as duas componentes abaixo de 10:
+  - a rede de estradas pura da F09, com `tile(0,0)..(9,9)`;
+  - o serf no **canto do mapa** (0,0), cercado pelas obras (1,0) e (0,1), na F10-falhas e na F11c.
+  - A primeira é geometria sem mapa. A segunda é a borda do mapa, que continua em (0,0) com o mundo transladado.
+  - Nenhum desses arquivos cai na translação.
+- **O caos da F10-falhas** sorteia o armazém novo e os pontos de obra relativos à vila. A sequência do RNG não mudou, só a origem dos pontos. Nenhum valor esperado da suite foi editado, e ela passou inteira; não comparei a anotação de tarefas e buscas do caos, antes contra depois.
+
+## 2026-09-26 (noite, 10) — F18c-1c: os arquivos de mapa e o guarda permanente
+
+### Feito e verificado
+
+- **A translação virou etapa do `npm run verify`**: `npm run test:transladado` roda a suite inteira com `vitest.transladado.config.mts`, num mundo andado de +32. Nada é escrito em `data/`.
+  - Um plugin Vite (`load`, `enforce: 'pre'`) troca o texto de `economy.json`, `maps/sertao-128.json` e `terrain.json` quando entram por `import`.
+  - `tests/helpers/mundo-transladado.ts` (setup da config) troca o que `fs.readFileSync` devolve para os mesmos três arquivos, no processo do teste, com `syncBuiltinESMExports`. Sem ele, o F-T4b (sim contra roteiro, JSON cru por `fs`) via dois mundos e reprovava sem literal nenhum.
+  - Os textos saem de `transladarTextos`, extraída pura de `tools/transladar-mundo.js`. A linha de comando continua como instrumento de medida.
+  - `gravarEvidencia` respeita `CANGACO_EVIDENCIA_DIR`. A corrida transladada grava em `test-output/transladado/` e não sobrescreve a evidência da suite.
+- **Guarda de vacuidade**: `tests/F18c-1c-mundo-transladado.test.ts`.
+  - Na corrida transladada, confere que o mapa, o tamanho declarado, a vila e a âncora andaram de +K, e que o `fs` vê o mesmo mundo.
+  - Na corrida normal, confere que nada vazou.
+  - Provado com uma config `zz-` cujo plugin devolvia `null`: 2 dos 4 testes reprovam. A config foi apagada.
+- **Aceite, provado com o literal plantado** em `pedreiraDaVila()` (`{ gx: 26, gy: 34 }`):
+  - suite normal: 1491 passam;
+  - suite transladada: sai com 1, 64 testes reprovam em 12 arquivos.
+  - Sem o literal, o `verify` fica verde: `test` com 1491 passam, `test:transladado` com 1487 passam e 7 fora.
+  - Evidência em `test-output/F18c-1c.json`.
+- **F-T1 era literal, não contrato.** O lago (92,46), OESTE/LESTE da travessia e a FAIXA da perna 3 viraram deslocamento do lagamar. A linha afogada pelo guarda do `validate:data` sai do `economy.json` cru que o próprio teste lê.
+- **Custo**: o `verify` completo passou a levar 1m51 nesta máquina. A etapa nova soma cerca de 55 s, porque é a suite inteira de novo. É número da corrida, não asserção.
+
+### Fora da corrida transladada (`FORA_DO_MUNDO_TRANSLADADO`, por nome completo)
+
+- A lista é por nome de teste, não por arquivo: o resto de cada arquivo continua rodando transladado. Um nome que mudar volta a rodar e reprova alto. Todos rodam na suite normal.
+- **Estrutural, decisão minha (para revisão)**: F05a `npm run sim -- inicial --ticks 0`. O subprocesso lê `data/` do disco e compara com o `gameData` transladado.
+- **Pendentes do operador** (os quatro arquivos que afirmam o próprio mapa):
+  - F-D3: o gerador emite o arquivo versionado byte a byte;
+  - F04: o pin de 128, que duplica o F18b;
+  - F18b: "publica 128x128" e "área ×4";
+  - F18b: o guarda de borda 64x64 e 128x128. Verificado que, no mundo transladado, o canto declarado (63,63) cai dentro do armazém (original (31,31), com o armazém em 29..31 × 30..32) e (127,127) cai na montanha (original (95,95)). O guarda presume chão livre no canto do mapa **publicado**.
+
+### Decisões minhas (para revisão)
+
+- **Translado no carregamento, não em disco.** A alternativa era o instrumento escrever e reverter `data/`. Ela foi descartada: um `verify` morto no meio deixaria o mapa transladado versionável, e um dev server aberto recarregaria.
+- **O `fs` também transladado.** Assim a corrida reproduz o que o instrumento em disco media, e a lista de fora ficou só com o subprocesso e os contratos.
+
+### Decisões do operador sobre os quatro arquivos de mapa (2026-09-26), aplicadas
+
+- **F-D3, gerador byte a byte: fica fora da corrida transladada de vez.** É o contrato de determinismo do gerador e não tem como valer num mundo deslocado.
+- **F04: o pin de 128 foi apagado** (`tests/F04-grid-ortogonal.test.ts`). Duplicava o F18b. O contrato são as duas linhas de cima: o render espelha o dado.
+- **F18b, "publica 128x128" e "área ×4": ficam fora de vez.** São contrato do arquivo publicado.
+- **F18b, guarda de borda: agora roda num mapa liso** do tamanho declarado (`dadosLisos`), sem recurso e sem prédio. O motivo, nas palavras do operador: supor que o canto é chão livre é premissa não escrita, e quebraria na F18c-2 sem ninguém entender por quê.
+  - Os três casos voltaram para a corrida transladada.
+  - Prova de que ainda acusa: com o `tileAndavel` da coluna de fora lendo o `gameData` publicado em vez do declarado, reprovam 64x64 e 97x61. Revertido.
+- **F05a fica fora por limitação do mecanismo, não por escolha:** o subprocesso lê o disco. Se um dia a troca passar por variável de ambiente que o subprocesso herde, ele volta. Está escrito junto da lista, na config.
+- **Custo aceito**: cerca de 55 s a mais no `verify`. O operador revê se o `verify` inteiro passar de **três minutos**. Nesta sessão, com o Codex rodando em paralelo (8 processos node), mediu 2m05. É número da corrida, não asserção.
+- `FORA_DO_MUNDO_TRANSLADADO` ficou com 4 testes: F05a, F-D3 e os dois do F18b.
+
+### Observado, não resolvido
+
+- **Um `verify` desta sessão caiu por timeout**, não por asserção: F09-sistema, "semente 1: 200 passos", no orçamento de 10 s. Aconteceu com o Codex ocupando a máquina.
+  - Sozinha, a mesma semente leva 3,0 s no HEAD.
+  - A mudança desta sessão não toca o F09.
+  - O `verify` seguinte passou.
+  - Hipótese, não confirmada: carga da máquina, o mesmo caso que motivou o orçamento de 10 s em `5e25147`. Não alarguei o orçamento.
+
+## 2026-09-26 (noite, 11) — F24a: as armas separadas nas seis do GDD
+
+Plano: `docs/planos/F24a-armas.md`. Pedido do operador: três tarefas seguidas (F24a, F-VIVO-b, medição da barra lateral), com decisões conservadoras registradas aqui para revisão.
+
+### O que mudou
+
+- **Dado.** As três receitas declaram as saídas possíveis e `"escolheSaida": true`:
+  - `weapons_workshop`: `hand_axe`, `lance`, `longbow`;
+  - `weapon_smithy`: `sword`, `pike`, `crossbow`;
+  - `armor_smithy`: `iron_armor`, `iron_shield`.
+  Os ids agregados `arma_madeira`, `arma_ferro` e `armadura_ferro` saíram do dado e do tema.
+- **Carregador.** `ReceitaDePredio.escolheSaida`. Marca com menos de duas saídas é erro de carregamento.
+- **Estado.** `Producao.escolha?: { cota, proxima }` existe só no prédio cuja receita escolhe, e é omitido nos outros.
+- **Sim.**
+  - `depositar` entrega `saidasDoCiclo`: a saída inteira, ou só a vez do rodízio.
+  - Toda reconstrução de `producao` em `especialistas.ts` passou a espalhar a anterior, e por isso a `escolha` sobrevive.
+- **Comando** `SetProductionQuota { predio, cota }` (`sim/cota.ts`, `sim/systems/cota.ts`). Motivos de recusa: `predio-inexistente`, `predio-em-obra`, `sem-escolha`, `mercadoria-invalida`, `cota-invalida` e `cota-vazia`.
+- **validate:data** ganhou:
+  - `producao/saida-desconhecida`: id de `sai` fora de `economy.mercadorias`;
+  - `producao/escolha-sem-opcao`.
+- `docs/mapa-construcoes-profissoes.md` foi regerado. Em `docs/BRIEF-ARTE.md` §4a, o parágrafo "Mercadorias sem pilha" virou histórico.
+
+### Verificado (rodado, evidência aberta: `test-output/F24a.json`)
+
+- **Caminho real, 6000 ticks.** As três oficinas saem de `PlaceBlueprint` e os três especialistas são treinados na escola. O serf abastece da `saida` do armazém.
+  - As oito saídas chegaram ao armazém: hand_axe 5, lance 5, longbow 4, sword 4, pike 4, crossbow 3, iron_armor 5 e iron_shield 4.
+  - A primeira entrega foi no tick 1115 (hand_axe) e a última no 2256 (iron_shield).
+  - Fixture declarada: estradas, `tiposJaConstruidos` com a serraria e a Casa de Fundição, e 20 de ferro e 20 de carvão no armazém.
+- **Cota só com `lance`**: 3000 ticks, 7 lanças, nenhuma outra mercadoria.
+- **Recusas**: os seis motivos, cada um com o comando que o provoca. O caso `predio-em-obra` usa uma planta recém-posta.
+- **Dado**:
+  - a união de `receitas.*.sai` está contida em `economia.mercadorias`, por conjunto;
+  - o dado sintético com `arma_madeira` reprova com `producao/saida-desconhecida`;
+  - o dado real passa.
+- **Pilha**: pelo funil `dadosDasPilhas`/`pilhasDoPredio` (import), a saída das três casas mostra as suas armas.
+- **Determinismo**: save/load no tick 1900, no meio do rodízio, dá o mesmo estado.
+- `npm run verify` verde: 1500 testes, mais a corrida transladada.
+
+### Decisões minhas (para revisão)
+
+- **A cota é peso permanente de um rodízio ponderado**, e não uma encomenda que se esgota como no KaM. `{lance: 2, longbow: 1}` gera lance, lance, longbow, e assim para sempre. É a leitura mais simples de "quantas de cada arma produzir" (GDD §2.3) que não precisa de estado de "encomenda cumprida". Se o operador quiser encomenda com contador, o campo `cota` continua servindo, e muda só o avanço.
+- **Cota toda zero é recusada (`cota-vazia`).** Para parar a oficina já existe `SetBuildingPaused`, e dois caminhos para o mesmo efeito dariam dois estados para a mesma tela.
+- **A escolha se resolve no depósito, não no início do ciclo.** O insumo é o mesmo para todas as saídas de uma casa, e por isso nada muda antes do depósito. Mudar a cota no meio do ciclo vale para o ciclo em curso.
+- **`unidadesPorCiclo` de receita que escolhe é a maior das saídas**, e não a soma: sai uma por vez.
+- **O campo `escolha` é opcional**, para não obrigar os ~25 literais de `Producao` nos testes. Recebe a convenção de `DadosDaFsm`: ausente, nunca `undefined`.
+
+### Aberto
+
+- **F24a-ui**, o painel da cota, é sub-item que ainda não foi escrito na fila. Hoje a cota só se fixa por comando.
+
+## 2026-09-26 (noite, 12) — F-VIVO-b: o trabalho, laços por caso
+
+Plano: `docs/planos/F-VIVO-b-trabalho.md`. Segunda das três tarefas do pedido do operador. Só render, teste e roteiro: **nada em `sim/`**.
+
+### O que mudou
+
+- `src/render/trabalho.ts` (puro, só `import type` e as tabelas de `manifesto-camadas.ts`):
+  - `quadroDeTrabalho(predio, unidade, tick, dados)` devolve `{laco, n}` ou `null`;
+  - `quadroDaFumaca(...)` devolve 1..8 ou `null`, e só existe com `ancoras.trabalho.fumaca` declarada;
+  - `areaDoTrabalho(ancoras)`: a declarada, ou a padrão `[0.30, 0.35, 0.70, 0.75]`.
+- Funil `dadosDoTrabalho(manifesto)` em `predios.ts`: `CASO_DO_PREDIO`, `ticksDoCiclo` das receitas e âncoras do manifesto.
+- Cena (`WorldScene.atualizarPredios`/`criarPredio`):
+  - o quadro entra na assinatura do redesenho;
+  - com PNG, desenha `trabalho:<tipo>:<laco>_<n>` na `area`; sem PNG, um retângulo escuro com `<laco>_<n>` escrito;
+  - a fumaça só vai no ponto declarado.
+  - O corpo do prédio (placeholder ou sprite) ficou como estava.
+- `debug.quadrosDeTrabalho[id] = {laco, n, sprite}`.
+
+### Verificado (rodado, evidência aberta)
+
+- `tests/F-VIVO-b-trabalho.test.ts` (27 testes), evidência em `test-output/F-VIVO-b.json`:
+  - **ciclo inteiro por caso**:
+    - quarry: T = 167, terços 55/111, `meio` com 7 voltas;
+    - sawmill: 34 voltas alternando `laco1`/`laco2`;
+    - gold_mine: `luz` 1..4;
+    - swine_farm: alternância;
+    - farm: `null` sempre, e a fumaça sintética declarada dá 1..8,1,2.
+  - **`null` nos quatro parados**, para os 20 prédios de caso animado:
+    - sem ocupante, que também cobre a unidade errada;
+    - `esperando_insumo`;
+    - saída cheia (`progresso == T`);
+    - pausado com o rótulo `trabalhando`.
+  - **Sem pulo** nas 20 receitas reais: um ciclo inteiro começa em 1 e termina com `n = F`.
+  - **Tabela de casos contra o dado**, e cada troca reprova com o id no texto:
+    - serraria que colhe;
+    - pedreira que não colhe;
+    - mina que colhe andando;
+    - criação que colhe;
+    - receita nova sem caso.
+  - **Contra a sim**:
+    - a pedreira real (`cenarioDePedreira`) anima em `colhendo` a partir do tick 51;
+    - sem ocupante ou pausada, no mesmo instante, dá `null`;
+    - a serraria sem insumo fica em `esperando_insumo` e dá `null`.
+- `npm run shot -- F-VIVO-b`: OK, 2 capturas. O roteiro:
+  - planta a pedreira pelo caminho do jogador;
+  - treina pelo painel, despausado e segurando 150 ms;
+  - numa janela de 3 s despausada, vê ≥ 2 quadros distintos;
+  - pausa a pedreira pelo `[data-pausar]`, despausado e segurando 150 ms;
+  - numa nova janela de 3 s despausada, não vê nenhum quadro;
+  - confirma que o armazém e a escola não publicam quadro.
+  - Abri `screenshots/F-VIVO-b-1-animando.png`: o retângulo `inicio_8` sobre a pedreira, com o cabra no lajedo.
+- `npm run verify` verde: 1527 testes, mais a corrida transladada (4 pulados lá, o `skipIf` já existente de `estilo-ui-menu`).
+
+### Decisões minhas (para revisão)
+
+- **Caso 2 anima com o trabalhador no campo.** Ver "Perguntas em aberto".
+- **`TICKS_POR_QUADRO = 1`**: um quadro por tick, 8 quadros em 0,8 s, como o passo do kam_remake. É número de tela, não de balanceamento, e por isso fica no `.ts` do render.
+- **`inicio` e `fim` tocam uma vez cada, esticados no seu terço.** Só o `meio` repete, como diz o aceite.
+- **O quadro sai do `progresso`, não do `tick`.** É isso que garante que prédio parado não anima. O parâmetro `tick` fica na assinatura do aceite como `_tick`, e só a fumaça usa o relógio.
+- **"Fallback fica como hoje"** foi lido assim: o corpo do prédio sem PNG não mudou, e o quadro sem PNG é o retângulo com o nome, pela regra comum da F-VIVO.
+- **Área padrão acima da linha das pilhas**, para que as duas camadas não se cubram. Não há ponto de fumaça padrão: fumaça só quando declarada.
+- **"Criação sem o animal"**, do plano, virou "criação que colhe". `ANIMAL_DA_CRIACAO` é constante do render e não dado. A troca de caso que o dado pode provocar é a colheita.
+
+### Aberto
+
+- O rótulo do quadro sobrepõe o nome "Pedreira" do placeholder. É cosmético e some com a arte.
+
+## 2026-09-26 (noite, 12) — barra lateral única: medição e proposta (sem código)
+
+Terceira tarefa do pedido do operador: só medir e propor, e parar. O documento é `docs/propostas/barra-lateral-unica.md`. Ele separa o medido (Playwright, sonda no scratchpad e apagada) do que é hipótese.
+
+- **Mapa hoje**: 72,6 % / 58,9 % (1280×720, sem ou com prédio escolhido) e 81,3 % / 71,4 % (1920×1080).
+- **Barra única** de 220, 260 e 300 px: 82,8 / 79,7 / 76,6 % (1280) e 88,5 / 86,5 / 84,4 % (1920).
+- **Pisos de largura**:
+  - grade: 259 com 5 colunas, 210 com 4;
+  - painel empilhado: ~185;
+  - fila da escola: slot fixo em 232 e tipos com 126 px no mais largo.
+- **Achado**: o orçamento vertical não fecha a 720, nem a 1080, com grade e painel visíveis juntos. A recomendação é o painel ocupar o corpo da aba quando há seleção.
+- **Nada implementado.** A aprovação, a largura e a fila sugerida (UI-barra-a..e) esperam o operador.
+
+## 2026-09-26 (noite, 12) — barra lateral: decisões do operador registradas (sem código)
+
+- As decisões do operador estão em `docs/propostas/barra-lateral-unica.md`, na seção "Decisões do operador". A razão da barra é a seleção, não o repouso. Ela fica à esquerda, fixa em 260 px e sem recolher. O painel substitui a grade, as abas são as do GDD §7.1, a marca não transborda e o `Esc` fica sem Fullscreen API.
+- O GDD §7.2 passa a pedir cadeado no lugar do cinza. A tela cheia foi para o `IDEIAS.md`, com o conflito do `Esc`.
+- A `UI-barra-a` está escrita no `BUILD_PLAN.md`, antes da Fase C. **A posição na fila é do operador.**
+- **Decisão minha, para revisão:** onde fica cada peça do HUD que some (tabela na proposta). Os alertas e a dica do H dividem uma faixa fixa, o carimbo PAUSADO vai sobre o minimapa, o botão Construir vira a aba e a ajuda continua pelo H.
+- **Aguardando o operador:** a lista de rótulos curtos do engajar. Pela medição, só "Cabra da Pedreira" → "Pedreira" precisa mudar. Nada foi aplicado ao tema.
+- **Operador (2026-09-26, depois):**
+  - O engajar fica em **2 colunas com rolagem**. O layout resolve o fio de navalha do Carregador, que continua com o nome de hoje.
+  - `civis.stonemason.curto` = "Pedreiro", **aplicado no tema**. O leitor é a UI-barra-a, e até lá o campo não tem leitor em código.
+  - A faixa de alertas fica **vazia quando não há alerta**. A dica do H segue a regra da F-D1 (só na primeira partida, independente de alerta) e vai para o topo da faixa da marca; **esse lugar é decisão minha, para revisão**.
+  - O resto do mapeamento do HUD foi aprovado. A UI-barra-a fica antes da Fase C.

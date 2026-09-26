@@ -146,7 +146,7 @@ describe('F-TP — a previa da planta fantasma', () => {
 
   it('predio FABRICADO com colheita ganha a previa sem uma linha de codigo', () => {
     const dados = comPredioFicticio(
-      comJazida(gameData, 'rock', [[30, 30]], 7), 'inventado', [2, 2], { recurso: 'rock', alcance: 4 },
+      comJazida(gameData, 'rock', [[30, 30]], 7), 'inventado', [2, 2], { recurso: 'rock', alcance: 4, aDistancia: false },
     );
     const previa = previaDeAlcance(estadoCom(dados), 'inventado', 29, 29, dados);
     expect(previa).not.toBeNull();

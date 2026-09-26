@@ -191,10 +191,43 @@
   "F-CAL-b1-calibracao": {
     "passes": true
   },
+  "F-CAL-b2-faixa": {
+    "passes": true
+  },
   "F18g-pedra-viaja": {
     "passes": true
   },
   "F-T4d-pescador-em-partida": {
+    "passes": true
+  },
+  "F-SPR-carregamento": {
+    "passes": true
+  },
+  "F-CANA-canavial-e-mina": {
+    "passes": true
+  },
+  "F-VIVO-0": {
+    "passes": true
+  },
+  "F23b-salvar-pela-tela": {
+    "passes": true
+  },
+  "F-VIVO-a-pilhas": {
+    "passes": true
+  },
+  "F18c-1a-helpers-derivam-posicao": {
+    "passes": true
+  },
+  "F18c-1b-literais-diretos": {
+    "passes": true
+  },
+  "F18c-1c-guarda-transladado": {
+    "passes": true
+  },
+  "F24a-armas": {
+    "passes": true
+  },
+  "F-VIVO-b-trabalho": {
     "passes": true
   }
 }

@@ -22,8 +22,8 @@ import { drenaCondicao, limiaresDaUnidade } from '../../src/sim/condicao';
 import { predioLigadoAoArmazem } from '../../src/sim/estradas';
 import { estoqueDosArmazens } from '../../src/sim/selectors';
 import { bodegaDoCenario, cenarioComBodega, ID_DA_BODEGA_NO_CENARIO } from './bodega-cenario';
-import { comEstradas, tile } from './jobs-cenario';
-import { comProdutorOcupado } from './producao-cenario';
+import { comEstradas } from './jobs-cenario';
+import { comProdutorOcupado, pedreiraDaVila, ruaDaPedreiraDaVila } from './producao-cenario';
 
 /** A pedreira montada por `cenarioDaPedreiraComBodega`, e quem a ocupa. */
 export const ID_DA_PEDREIRA = 'q1';
@@ -118,9 +118,9 @@ export function cenarioDaPedreiraComBodega(
 ): { readonly estado: GameState; readonly ticks: number } {
   let s = cenarioComBodega();
   s = comProdutorOcupado(
-    s, { tipo: 'quarry', id: ID_DA_PEDREIRA, unidade: ID_DO_ESPECIALISTA, gx: 26, gy: 34 }, dados,
+    s, { tipo: 'quarry', id: ID_DA_PEDREIRA, unidade: ID_DO_ESPECIALISTA, ...pedreiraDaVila() }, dados,
   );
-  s = comEstradas(s, [tile(29, 33), tile(29, 34), tile(29, 35), tile(29, 36), tile(28, 36)]);
+  s = comEstradas(s, ruaDaPedreiraDaVila(dados));
   for (const id of [ID_DA_PEDREIRA, ID_DA_BODEGA_NO_CENARIO]) {
     const p = s.predios.porId[id];
     if (p === undefined || !predioLigadoAoArmazem(s, p, dados)) {

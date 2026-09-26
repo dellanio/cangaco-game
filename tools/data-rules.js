@@ -187,6 +187,10 @@ function validarProducao(dados, erros) {
   const escalas = (dados.time && dados.time.escalas) || {};
   const escala = escalas[dados.production && dados.production.escala];
   const tickHz = dados.time && dados.time.tickHz;
+  // F24a: a saida que nao e mercadoria SOME no deposito (`depositar` so conhece
+  // `economia.mercadorias`). Foi assim que tres oficinas consumiam insumo e nao
+  // entregavam nada, com `arma_madeira`, `arma_ferro` e `armadura_ferro`.
+  const mercadorias = new Set((dados.economy && dados.economy.mercadorias) || []);
   for (const [id, def] of Object.entries(predios)) {
     if (id.startsWith('_')) continue;
     if (!idsDePredios.has(id)) {
@@ -199,6 +203,14 @@ function validarProducao(dados, erros) {
           erros.push(`producao/taxa-nao-positiva: production.predios.${id}.${grupo}.${mercadoria}=${taxa}`);
         }
       }
+    }
+    for (const mercadoria of Object.keys((def && def.sai) || {})) {
+      if (!mercadorias.has(mercadoria)) {
+        erros.push(`producao/saida-desconhecida: production.predios.${id}.sai.${mercadoria} nao esta em economy.mercadorias`);
+      }
+    }
+    if (def && def.escolheSaida === true && Object.keys(def.sai || {}).length < 2) {
+      erros.push(`producao/escolha-sem-opcao: production.predios.${id} escolhe a saida mas declara menos de duas`);
     }
     validarCicloDaReceita(id, def, escala, tickHz, erros);
     // F-T2a: `producao/veio-invalido` saiu daqui junto com o campo `veio`. Quem
@@ -962,6 +974,12 @@ function validarRecursos(dados, erros) {
     if (!Number.isInteger(def.colheita.alcance_tiles) || def.colheita.alcance_tiles < 1) {
       erros.push(`recurso/colheita: production.predios.${id}.colheita.alcance_tiles precisa ser inteiro >= 1`);
     }
+    // 2026-09-26 (operador): `aDistancia` e regra de CLASSE — o especialista colhe o
+    // tile sem sair do predio. Opcional; presente, so pode ser booleano, porque
+    // qualquer outro valor leria como verdadeiro ou falso sem ninguem notar.
+    if ('aDistancia' in def.colheita && typeof def.colheita.aDistancia !== 'boolean') {
+      erros.push(`recurso/colheita: production.predios.${id}.colheita.aDistancia precisa ser true ou false`);
+    }
   }
 
   // E cada tipo tem de aparecer em algum mapa. Sem mapa carregado nao ha o que
@@ -991,8 +1009,12 @@ function validarRecursos(dados, erros) {
       }
     }
   }
+  // 2026-09-26 (operador) — cultura que o JOGADOR ara nao precisa nascer no
+  // mapa: a instancia vem do comando de arar. A isencao vem do dado (o bloco
+  // `aradura`, o mesmo que `culturasAraveis` le no runtime), nao de lista aqui.
   for (const id of Object.keys(tipos)) {
     if (id.startsWith('_') || usados.has(id)) continue;
+    if (tipos[id] && tipos[id].aradura != null) continue;
     erros.push(`recurso/sem-instancia: resources.tipos.${id} nao tem nenhum tile em nenhum mapa`);
   }
 }

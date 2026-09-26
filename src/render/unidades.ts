@@ -20,6 +20,13 @@
  * `temMarcadorDeFome` (`marcador-de-fome.ts`, reexportacao do predicado da sim), nunca um
  * limiar digitado aqui.
  *
+ * F-SPR: com arte no manifesto (`tipo: "unidade"`, um arquivo por pose e direcao), o
+ * retangulo da lugar ao sprite; sem arte, o retangulo continua, que e o placeholder do §9.
+ * A direcao sai do passo entre o tick anterior e o atual (a mesma memoria da interpolacao),
+ * e parada a unidade mantem a ultima. Quantas direcoes o tipo tem vem de `data/units.json`
+ * (`direcoes-de-sprite.ts`). O `anchor` do arquivo cai na posicao desenhada da unidade, e a
+ * imagem sai no tamanho do arquivo: nenhuma conta de lado ou de tile decide o tamanho.
+ *
  * Este arquivo NAO importa `sim/data` (so `mapa.ts` e `predios.ts` podem, teste estrutural da
  * F04): a paleta vem do tema e a posicao do selector.
  */
@@ -33,6 +40,10 @@ import {
   ALTURA_DA_CARGA_EM_LADOS, ALTURA_DA_FOME_EM_LADOS, temMarcadorDeFome,
 } from './marcador-de-fome';
 import { nomeDaUnidade } from './nome-de-unidade';
+import { direcoesDoTipo } from './direcoes-de-sprite';
+import { direcaoDoPasso, spriteDaUnidade, POSE_PARADO } from './manifesto';
+import type { Direcao } from './manifesto';
+import { manifestoDoJogo } from './sprites';
 import { posicaoDaUnidade } from '../sim/selectors';
 import { fracaoDeCondicao } from '../sim/condicao';
 import type { GameState } from '../sim/state';
@@ -70,6 +81,10 @@ export interface UnidadeRenderizada {
   readonly fracaoDeCondicao: number;
   /** F-D4 — o oficio escrito sob a unidade, vindo do tema pelo `tipo`. */
   readonly nome: string;
+  /** F-SPR — a direcao para onde ela olha, ou null se o tipo nao declara `direcoesDeSprite`. */
+  readonly direcao: Direcao | null;
+  /** F-SPR — a chave da textura desenhada, ou null quando e o retangulo (placeholder). */
+  readonly sprite: string | null;
   /**
    * F-D4 — largura DESENHADA desse rotulo, em px de mundo. E o que permite o roteiro afirmar
    * o encaixe com uma medida em vez de com uma impressao: o quadrado da unidade tem
@@ -107,6 +122,11 @@ const corDoMarcadorDeFome: string = (
 
 interface Desenhado {
   readonly container: Phaser.GameObjects.Container;
+  readonly retangulo: Phaser.GameObjects.Rectangle;
+  /** F-SPR — criado na primeira vez que a arte resolve; memoria de render. */
+  imagem: Phaser.GameObjects.Image | null;
+  /** F-SPR — a ultima direcao do passo; parada, a unidade continua olhando para ela. */
+  direcao: Direcao;
   readonly nome: Phaser.GameObjects.Text;
   readonly marcadorDeCarga: Phaser.GameObjects.Text;
   readonly marcadorDeFome: Phaser.GameObjects.Text;
@@ -143,7 +163,28 @@ export function criarCamadaDeUnidades(cena: Phaser.Scene, tilePx: number): Camad
     marcadorDeFome.setOrigin(0.5, 0.5);
     marcadorDeFome.setVisible(false);
     const container = cena.add.container(0, 0, [retangulo, rotulo, marcadorDeCarga, marcadorDeFome]);
-    return { container, nome: rotulo, marcadorDeCarga, marcadorDeFome };
+    return { container, retangulo, imagem: null, direcao: 's', nome: rotulo, marcadorDeCarga, marcadorDeFome };
+  }
+
+  /** F-SPR — troca o retangulo pelo sprite quando a arte resolve, e volta quando nao. */
+  function desenharSprite(item: Desenhado, tipo: string, direcoes: 4 | 8 | null): string | null {
+    const carregada = (chave: string): boolean => cena.textures.exists(chave);
+    const sprite = spriteDaUnidade(manifestoDoJogo, tipo, POSE_PARADO, item.direcao, direcoes, carregada);
+    item.retangulo.setVisible(sprite === null);
+    if (sprite === null) {
+      item.imagem?.setVisible(false);
+      return null;
+    }
+    if (item.imagem === null) {
+      item.imagem = cena.add.image(0, 0, sprite.chave);
+      item.container.addAt(item.imagem, 0);
+    } else if (item.imagem.texture.key !== sprite.chave) {
+      item.imagem.setTexture(sprite.chave);
+    }
+    item.imagem.setOrigin(sprite.entrada.anchor[0], sprite.entrada.anchor[1]);
+    item.imagem.setFlipX(sprite.espelhar);
+    item.imagem.setVisible(true);
+    return sprite.chave;
   }
 
   return {
@@ -169,6 +210,11 @@ export function criarCamadaDeUnidades(cena: Phaser.Scene, tilePx: number): Camad
         const posicao = posicaoDaUnidade(estado, unidade);
         const anterior = memoria.observar(id, estado.tick, posicao);
         const desenhada = interpolarPosicao(anterior, posicao, alfa, SALTO_MAXIMO_EM_TILES);
+        const direcoes = direcoesDoTipo(unidade.tipo);
+        if (direcoes !== null) {
+          item.direcao = direcaoDoPasso(posicao.gx - anterior.gx, posicao.gy - anterior.gy, direcoes) ?? item.direcao;
+        }
+        const sprite = desenharSprite(item, unidade.tipo, direcoes);
         const centro = gridToScreenCentro(desenhada, tilePx, ESCALA_DO_MUNDO);
         // F18f: duas unidades no mesmo tile caem no mesmo pixel e a de cima esconde a de baixo
         // inteira. O desvio e de DESENHO: some ao pixel e ao depth (assim a que desenha mais ao
@@ -187,6 +233,7 @@ export function criarCamadaDeUnidades(cena: Phaser.Scene, tilePx: number): Camad
           deslocamentoPx: { x: desvio.x, y: desvio.y },
           marcadorDeFome: comFome, fracaoDeCondicao: fracaoDeCondicao(unidade),
           nome: item.nome.text, larguraDoRotuloPx: item.nome.width,
+          direcao: direcoes === null ? null : item.direcao, sprite,
         });
       }
       return renderizadas;

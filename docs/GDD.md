@@ -202,7 +202,7 @@ Os três que o jogador sente o tempo todo: **Gold**, **Timber** e **Stone**.
 |---|---|---|
 | Stone | Quarry | Prédios, estradas, munição de Watchtower |
 | Tree trunks | Woodcutter's | Sawmill |
-| Timber | Sawmill (1 tronco → 2 timber) | Prédios, campos de uva, oficinas |
+| Timber | Sawmill (1 tronco → 2 timber) | Prédios, oficinas (campo de uva **revogado**, §5.4) |
 | Gold | Metallurgist's (gold ore + coal → 2 gold) | Schoolhouse, Town hall |
 | Corn | Farm (~15 campos) | Mill, Swine farm, Stables |
 | Loaves | Mill → Bakery (2 pães por farinha) | Inn |
@@ -408,7 +408,11 @@ revisita aquela regra; não é esquecimento.
   liga só em **4 direções**. A fidelidade ao original fica congelada em `IDEIAS.md` até a
   Fase A fechar.
 - Campo de milho: arado por laborer, sem custo de material **[proposta]**.
-- Campo de uva: **1 timber** por campo **[fonte]**.
+- ~~Campo de uva: **1 timber** por campo **[fonte]**.~~ **REVOGADO (operador, 2026-09-26).**
+  A uva daqui é a **cana** (`grapes`), e o partido de cana se ara **sem custo de material**,
+  como o milho. O custo veio do original, onde a vinha funcionava de outro jeito. Aqui o
+  plantio cobra da gaveta de entrada do prédio, e o Canavial não recebe insumo: ninguém
+  entregaria a tábua e o plantio esperaria para sempre (F-CANA, `BALANCE_LOG.md`).
 - Boa prática do original: estrada ao redor de todos os prédios desde cedo e pelo
   menos 2 rotas entre prédios relacionados **[fonte]**.
 
@@ -557,7 +561,7 @@ contextual do item selecionado abaixo.
 | Elemento | Conteúdo | Prioridade |
 |---|---|---|
 | Barra de recursos | Gold, Timber, Stone, comida total, população civil/militar | P0 |
-| Menu Build | Prédios desbloqueados, custo, tooltip de entrada/saída; bloqueados em cinza com "requer X" | P0 |
+| Menu Build | Prédios desbloqueados, custo, tooltip de entrada/saída; bloqueados com cadeado e "requer X" (decisão do operador, 2026-09-26: o cadeado diz "ainda não" melhor que o cinza) | P0 |
 | Planta fantasma | Segue o mouse, verde/vermelho, porta ao sul | P0 |
 | Painel de prédio | Nome, HP ou progresso, ocupante, estoques, pausar, demolir, modo | P0 |
 | Painel da Schoolhouse | Fila de 5 slots, botões por tipo, custo 1 gold | P0 |
@@ -684,7 +688,11 @@ redecididos:
 
 ### 9.6 Estados de prédio
 
-Três imagens por prédio: marcação no chão, estrutura de madeira, completo.
+Duas imagens por prédio, **madeira** e **completo**, reveladas de baixo para cima
+conforme o hp sobe: primeiro a madeira, depois a pedra por cima dela, como no original.
+Antes da primeira martelada, o canteiro sendo aplainado mostra a obra (decisão do
+operador, 2026-09-26; `BUILD_PLAN.md` F17g). Isso revoga a regra das três imagens e
+os seis estágios da F17e.
 Variante danificada entra na Fase C.
 
 ### 9.7 Interface

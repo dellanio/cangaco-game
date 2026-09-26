@@ -34,10 +34,11 @@ import {
 import {
   cenarioLigado, comAPortaTapada, comArmazemCompleto, comEstoqueNaSaida, comEstradas, comObra, comPedraNaSaida,
   comUnidadeEm, destinoPredioDa, inicial, linhaH,
-  linhaV, semAUnidade,
-  semOPredio, serfsDoCenario, tile,
+  semAUnidade,
+  semOPredio, serfsDoCenario, 
 } from './helpers/jobs-cenario';
 import type { TileDeGrid } from '../src/sim/estradas';
+import { linhaHDe, linhaVDe, naVila, xy } from './helpers/ancoras';
 
 const P1 = armazemDoJogo.id;
 // F11b: quantas tarefas de MATERIAL (qualquer estado) estao no quadro — 'construir' fica de
@@ -109,7 +110,7 @@ describe('F10 — obra demolida com o serf a caminho: a carga volta ao armazem e
 
   it('devolve ao armazem MAIS PROXIMO do serf, que nao e o de origem', () => {
     // um segundo armazem perto do fim da rua; o serf esta quase la quando a obra some
-    const base = comArmazemCompleto(cenarioLongo(), 'perto', { gx: 46, gy: 30, stone: 0 });
+    const base = comArmazemCompleto(cenarioLongo(), 'perto', { ...naVila(17, 0), stone: 0 });
     const quaseLa = ate(base, (e) => fsmDe(e) === 'indo_entregar' && restante(e) <= 4, 'serf carregado quase na obra');
     const u = quaseLa.unidades.porId[serfDoJogo];
     if (!u) throw new Error('fixture');
@@ -226,10 +227,10 @@ describe('F10 — o caminho cortado NO MEIO DA VIAGEM (a rua nao corta mais; a p
   });
 
   it('com uma rota ALTERNATIVA (rua de duas pistas), o serf replaneja e entrega SEM liberar nada', () => {
-    const duasPistas = comEstradas(cenarioLongo(), linhaH(29, 46, 37));
+    const duasPistas = comEstradas(cenarioLongo(), linhaHDe(naVila, 0, 17, 7));
     const viajando = ate(duasPistas, emViagem, 'serf carregado a meio caminho');
     const proximo = (dadosDoSerf(viajando).caminho ?? [])[0] as TileDeGrid;
-    expect(proximo.gy).toBe(36); // esta na pista de cima; demolir o PROXIMO tile o obriga a desviar
+    expect(proximo.gy).toBe(naVila(0, 6).gy); // y=36 hoje: esta na pista de cima; demolir o PROXIMO tile o obriga a desviar
     const { estado, eventos } = rodarAte(viajando, quieto, demolir([proximo]));
     expect(liberacoes(eventos)).toEqual([]);
     expect(eventos.filter((e) => e.type === 'cargo-returned')).toEqual([]);
@@ -241,7 +242,7 @@ describe('F10 — o caminho cortado NO MEIO DA VIAGEM (a rua nao corta mais; a p
 
 describe('F10 — o que so o serf sabe: a perna livre bloqueada, e o `devolvendo` sem chao', () => {
   it('um predio plantado NO caminho do serf que vai buscar: ele desvia, sem liberar nada', () => {
-    const longe = comUnidadeEm(cenarioLongo(), serfDoJogo, 20, 20);
+    const longe = comUnidadeEm(cenarioLongo(), serfDoJogo, ...xy(naVila(-9, -10)));
     const andando = ate(longe, (e) => fsmDe(e) === 'indo_buscar' && restante(e) >= 5, 'serf longe da porta');
     const alvo = (dadosDoSerf(andando).caminho ?? [])[2] as TileDeGrid;
     const caixa = caixaDeTipo('quarry', alvo.gx, alvo.gy, gameData);
@@ -295,7 +296,7 @@ describe('F10 — o que so o serf sabe: a perna livre bloqueada, e o `devolvendo
       expect(dadosDoSerf(atual).carga).toBe('stone');
       expect(atual.events.filter((e) => e.type === 'cargo-returned')).toEqual([]);
     }
-    const comNovo = comArmazemCompleto(atual, 'novo', { gx: 40, gy: 30, stone: 0 });
+    const comNovo = comArmazemCompleto(atual, 'novo', { ...naVila(11, 0), stone: 0 });
     const { estado, eventos } = rodarAte(comNovo, quieto);
     expect(eventos.filter((e) => e.type === 'cargo-returned')).toMatchObject([{ armazem: 'novo', mercadoria: 'stone' }]);
     expect(saidaDe(estado, 'novo')).toBe(1);
@@ -303,7 +304,7 @@ describe('F10 — o que so o serf sabe: a perna livre bloqueada, e o `devolvendo
   });
 
   it('o armazem-alvo some NO CAMINHO da devolucao: o serf escolhe outro e deposita nele', () => {
-    const base = comArmazemCompleto(cenarioLongo(), 'perto', { gx: 46, gy: 30, stone: 0 });
+    const base = comArmazemCompleto(cenarioLongo(), 'perto', { ...naVila(17, 0), stone: 0 });
     const quaseLa = ate(base, (e) => fsmDe(e) === 'indo_entregar' && restante(e) <= 4, 'serf carregado quase na obra');
     let atual = step(semOPredio(quaseLa, 'obra-a'), []);
     expect(dadosDoSerf(atual).armazem).toBe('perto');
@@ -321,7 +322,7 @@ describe('F10 — o que so o serf sabe: a perna livre bloqueada, e o `devolvendo
     const extra = 'u99';
     const comExtra: GameState = {
       ...base, proximoId: 100,
-      unidades: { porId: { ...base.unidades.porId, [extra]: { ...u, id: extra, gx: 31, gy: 34 } }, ordem: [...base.unidades.ordem, extra] },
+      unidades: { porId: { ...base.unidades.porId, [extra]: { ...u, id: extra, ...naVila(2, 4) } }, ordem: [...base.unidades.ordem, extra] },
     };
     const meio = ate(comExtra, emViagem, 'serf carregado a meio caminho');
     const bensAntes = bensPorMercadoria(meio).stone as number;
@@ -350,12 +351,13 @@ interface CoberturaDoCaos {
 const coberturaVazia = (): CoberturaDoCaos => ({ passos: 0, estadosVistos: {}, liberacoes: {}, concluidas: 0, devolvidas: 0, comandos: 0 });
 export const coberturaDoCaos = coberturaVazia();
 
-const RUA_BASE = [...linhaH(20, 42, 36), ...linhaV(29, 33, 36)];
-const SLOTS_DE_OBRA = [20, 26, 32, 38];
+const RUA_BASE = [...linhaHDe(naVila, -9, 13, 6), ...linhaVDe(naVila, 0, 3, 6)];
+/** Os pontos ao longo da rua, em x a partir do armazem: hoje x 20, 26, 32, 38 na linha y=34. */
+const SLOTS_DE_OBRA = [-9, -3, 3, 9].map((dx) => naVila(dx, 4));
 
 function baseDoCaos(): GameState {
   let e = comEstradas(comEstoqueNaSaida(cenarioLigado({ stone: 2, timber: 2 }), P1, { stone: 60, timber: 60 }), RUA_BASE);
-  e = comObra(e, 'obra-b', { gx: 32, gy: 34, faltam: { stone: 2, timber: 2 } });
+  e = comObra(e, 'obra-b', { ...naVila(3, 4), faltam: { stone: 2, timber: 2 } });
   return e;
 }
 
@@ -424,14 +426,14 @@ function rodarCaos(semente: number, passos: number, cobertura: CoberturaDoCaos):
         break;
       }
       case 10: { // um armazem novo, num ponto sorteado
-        estado = comArmazemCompleto(estado, `novo-${i}`, { gx: 4 + 8 * sorteio(6), gy: 44 + sorteio(2), stone: 5, timber: 5 });
+        estado = comArmazemCompleto(estado, `novo-${i}`, { ...naVila(-25 + 8 * sorteio(6), 14 + sorteio(2)), stone: 5, timber: 5 });
         break;
       }
       case 11: { // uma obra nova, num dos pontos ao longo da rua
         if (obrasComPendencia(estado) < 3) {
-          const gx = SLOTS_DE_OBRA[sorteio(SLOTS_DE_OBRA.length)] ?? 20;
-          const ocupado = estado.predios.ordem.some((id) => estado.predios.porId[id]?.gx === gx && estado.predios.porId[id]?.gy === 34);
-          if (!ocupado) estado = comObra(estado, `obra-r${i}`, { gx, gy: 34, faltam: { stone: 2, timber: 2 } });
+          const slot = SLOTS_DE_OBRA[sorteio(SLOTS_DE_OBRA.length)] ?? naVila(-9, 4);
+          const ocupado = estado.predios.ordem.some((id) => estado.predios.porId[id]?.gx === slot.gx && estado.predios.porId[id]?.gy === slot.gy);
+          if (!ocupado) estado = comObra(estado, `obra-r${i}`, { ...slot, faltam: { stone: 2, timber: 2 } });
         }
         break;
       }
@@ -540,10 +542,11 @@ describe('F10 — cenario de carga: 20 obras e 4 serfs entregando de verdade', (
     const quarry = gameData.predios.find((p) => p.id === 'quarry');
     if (!quarry) throw new Error('fixture: sem quarry no dado');
     const faltam = { ...custoDoPredio(quarry) };
-    const xs = [...Array.from({ length: 10 }, (_, i) => i * 3), ...Array.from({ length: 10 }, (_, i) => 33 + i * 3)];
+    // `xs` e deslocamento a partir do armazem (F18c-1b): hoje x 0..27 e 33..60, na linha y=38
+    const xs = [...Array.from({ length: 10 }, (_, i) => -29 + i * 3), ...Array.from({ length: 10 }, (_, i) => 4 + i * 3)];
     let estado = comEstoqueNaSaida(inicial, P1, { stone: 500, timber: 500 });
-    estado = comEstradas(estado, [...linhaH(0, 62, 40), ...linhaV(31, 33, 40)]);
-    xs.forEach((x, i) => { estado = comObra(estado, `obra-${i}`, { gx: x, gy: 38, faltam }); });
+    estado = comEstradas(estado, [...linhaHDe(naVila, -29, 33, 10), ...linhaVDe(naVila, 2, 3, 10)]);
+    xs.forEach((x, i) => { estado = comObra(estado, `obra-${i}`, { ...naVila(x, 8), faltam }); });
     const bensAntes = bensPorMercadoria(estado);
     const serfsDoInicio = serfsDoCenario(estado).length;
 
@@ -651,7 +654,7 @@ afterAll(() => {
   const cortada = step(meio, [{ type: 'DemolishRoad', tiles: [aFrente] }]);
   const cortadaAteOFim = rodarAte(meio, quieto, [{ type: 'DemolishRoad', tiles: [aFrente] }]);
   const refeita = rodarAte(comEstradas(cortadaAteOFim.estado, [aFrente]), quieto);
-  const duasPistas = ate(comEstradas(cenarioLongo(), linhaH(29, 46, 37)), emViagem, 'serf carregado, duas pistas');
+  const duasPistas = ate(comEstradas(cenarioLongo(), linhaHDe(naVila, 0, 17, 7)), emViagem, 'serf carregado, duas pistas');
   const proximoTile = (dadosDoSerf(duasPistas).caminho ?? [])[0] as TileDeGrid;
   const alternativa = rodarAte(duasPistas, quieto, [{ type: 'DemolishRoad', tiles: [proximoTile] }]);
   const canto = ate(comUnidadeEm(cenarioLongo(), serfDoJogo, 0, 0), (e) => fsmDe(e) === 'indo_buscar', 'serf do canto indo buscar');
@@ -680,10 +683,10 @@ afterAll(() => {
   // ---- o cache, numa amostra: a segunda pergunta e um acerto, e trocar o estoque nao invalida
   zerarEstatisticasDeBusca();
   const amostra = comEstradas(cenarioLongo(), []);
-  const primeiraBusca = buscarCaminho(amostra, tile(29, 33), [tile(44, 36)], 'estrada');
-  const segundaBusca = buscarCaminho(amostra, tile(29, 33), [tile(44, 36)], 'estrada');
+  const primeiraBusca = buscarCaminho(amostra, naVila(0, 3), [naVila(15, 6)], 'estrada');
+  const segundaBusca = buscarCaminho(amostra, naVila(0, 3), [naVila(15, 6)], 'estrada');
   const comOutroEstoque = comPedraNaSaida(amostra, P1, 3);
-  buscarCaminho(comOutroEstoque, tile(29, 33), [tile(44, 36)], 'estrada');
+  buscarCaminho(comOutroEstoque, naVila(0, 3), [naVila(15, 6)], 'estrada');
   const cacheDaAmostra = { ...estatisticasDeBusca(), mesmoObjetoNaSegundaPergunta: primeiraBusca === segundaBusca, referenciaDePrediosMudou: comOutroEstoque.predios !== amostra.predios, ordemDePrediosIgual: comOutroEstoque.predios.ordem === amostra.predios.ordem };
 
   gravarEvidencia('F10', {
@@ -749,7 +752,7 @@ afterAll(() => {
     distancia: {
       medida: 'A* em ticks: da posicao do serf ate a porta de coleta (livre) + da porta ate a porta da obra (so estrada)',
       cenarioDoMuro: {
-        euclidianaAteA: euclid({ gx: 20, gy: 20 }, { gx: 20, gy: 13 }), euclidianaAteB: euclid({ gx: 20, gy: 20 }, { gx: 20, gy: 33 }),
+        euclidianaAteA: euclid({ ...naVila(-9, -10) }, { ...naVila(-9, -17) }), euclidianaAteB: euclid({ ...naVila(-9, -10) }, { ...naVila(-9, 3) }),
         pernaDoSerfAteA: planoA?.ateAOrigem.custo ?? null, pernaDoSerfAteB: planoB?.ateAOrigem.custo ?? null,
         pernaDeEntregaA: planoA?.deEntrega.custo ?? null, pernaDeEntregaB: planoB?.deEntrega.custo ?? null,
         ordemParaOSerfDoOutroLadoDoMuro: tarefasEmOrdem(muro, SERF_DO_LADO_DE_B).map((t) => t.id),

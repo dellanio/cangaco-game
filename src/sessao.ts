@@ -30,6 +30,12 @@ export interface Sessao {
    *  `step` lancar (comando fora da uniao), a fila ja foi drenada e o estado nao
    *  muda: comando invalido e bug, nao algo a reenfileirar. */
   passo(): GameState;
+  /**
+   * F23b — troca a partida inteira (o load). Descarta a fila: comando enfileirado
+   * antes do load foi dado sobre OUTRA partida, e aplicado nesta plantaria predio
+   * que o jogador nao pediu nela. Publica o estado novo como o `passo()` publica.
+   */
+  substituir(estado: GameState): void;
   /** Devolve o desinscrever. */
   aoMudar(ouvinte: OuvinteDaSessao): () => void;
 }
@@ -51,6 +57,11 @@ export function criarSessao(estadoInicial: GameState): Sessao {
       estado = step(estado, comandos);
       for (const ouvinte of ouvintes) ouvinte(estado);
       return estado;
+    },
+    substituir(novo) {
+      fila.length = 0;
+      estado = novo;
+      for (const ouvinte of ouvintes) ouvinte(estado);
     },
     aoMudar(ouvinte) {
       ouvintes.add(ouvinte);

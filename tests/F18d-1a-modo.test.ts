@@ -20,11 +20,12 @@ import { buscarCaminho } from '../src/sim/pathfinding';
 import { step } from '../src/sim/tick';
 import {
   armazemDoCenario, cenarioLigado, comAPortaTapada, comArmazemCompleto, comEstradas, comObra, comPedraNaSaida,
-  comPredioCompletoEm, comTarefas, inicial, linhaH, linhaV, semLaborers, serfsDoCenario, tarefaDe,
+  comPredioCompletoEm, comTarefas, inicial, semLaborers, serfsDoCenario, tarefaDe,
 } from './helpers/jobs-cenario';
 import { comProdutorOcupado, disponivelDe } from './helpers/producao-cenario';
 import { gravarEvidencia } from './helpers/evidence';
 import { violacoesDeInvariantes } from './helpers/jobs-invariantes';
+import { linhaHDe, linhaVDe, naVila } from './helpers/ancoras';
 
 const obraDe = (estado: GameState, id: string): Predio => {
   const predio = estado.predios.porId[id];
@@ -84,7 +85,7 @@ describe('F18d-1a — o modo mora no dado, lido pelo id do nivel', () => {
 });
 
 describe('F18d-1a — as portas e a perna de entrega seguem o modo do nivel', () => {
-  const semRua = comObra(semLaborers(inicial), 'obra-a', { gx: 26, gy: 34, faltam: { stone: 1 } });
+  const semRua = comObra(semLaborers(inicial), 'obra-a', { ...naVila(-3, 4), faltam: { stone: 1 } });
   const serf = serfsDoCenario(semRua)[0] ?? '';
 
   it('sem nenhuma estrada, o nivel 3 tem plano; a perna de entrega e o A* LIVRE entre as portas', () => {
@@ -115,7 +116,7 @@ describe('F18d-1a — as portas e a perna de entrega seguem o modo do nivel', ()
   });
 
   it('no mesmo cenario um nivel 6 (coleta de producao) continua sem plano', () => {
-    const comPedreira = comPredioCompletoEm(semRua, 'pedreira', { tipo: 'quarry', gx: 40, gy: 34 });
+    const comPedreira = comPredioCompletoEm(semRua, 'pedreira', { tipo: 'quarry', ...naVila(11, 4) });
     const tarefa: TarefaSaidaCheiaParaArmazem = {
       id: 't9', numero: 9, tipo: 'saida-cheia-para-armazem', mercadoria: 'stone',
       origem: 'pedreira', destino: armazemDoCenario(inicial).id, estado: 'aberta', reclamadaPor: null,
@@ -145,9 +146,9 @@ function medirOAceite(): {
     const p = estado.predios.porId[id];
     return p !== undefined && p.estado === 'completo' ? p.estoque.saida : {};
   };
-  const inicioDaObra = comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam: { stone: 2, timber: 3 }, nivelamento: 0 });
+  const inicioDaObra = comObra(inicial, 'obra-a', { ...naVila(-3, 4), faltam: { stone: 2, timber: 3 }, nivelamento: 0 });
   const comPedreira = comProdutorOcupado(
-    inicioDaObra, { tipo: 'quarry', id: 'pedreira', unidade: 'pedreiro', gx: 36, gy: 34 }, gameData,
+    inicioDaObra, { tipo: 'quarry', id: 'pedreira', unidade: 'pedreiro', ...naVila(7, 4) }, gameData,
   );
   const partida = comPedraNaSaida(comPedreira, 'pedreira', 5); // gaveta CHEIA: capacidade 5
   const armazem = armazemDoCenario(partida).id;
@@ -170,7 +171,7 @@ function medirOAceite(): {
   };
 
   // a rua chega: porta da pedreira (y=36) ate a porta do armazem (29,33)
-  let comRuaAgora = comEstradas(atual, [...linhaH(29, 38, 36), ...linhaV(29, 33, 35)]);
+  let comRuaAgora = comEstradas(atual, [...linhaHDe(naVila, 0, 9, 6), ...linhaVDe(naVila, 0, 3, 5)]);
   let escoouNoTick: number | null = null;
   for (let i = 1; i <= 400; i += 1) {
     comRuaAgora = step(comRuaAgora, []);
@@ -233,8 +234,8 @@ afterAll(() => {
   // a origem do nivel 3 sai da distancia A PE, e nao da rede de estradas: o armazem
   // 'vizinho' nao encosta na rua, e mesmo assim ganha do que esta ligado
   let escolha = cenarioLigado({ stone: 1 }); // `obra-a` ligada a porta do armazem do cenario
-  escolha = comArmazemCompleto(escolha, 'vizinho', { gx: 23, gy: 32, stone: 10 });
-  escolha = comEstradas(escolha, linhaH(28, 53, 36));
+  escolha = comArmazemCompleto(escolha, 'vizinho', { ...naVila(-6, 2), stone: 10 });
+  escolha = comEstradas(escolha, linhaHDe(naVila, -1, 24, 6));
   const predioDe = (id: string): Predio => {
     const p = escolha.predios.porId[id];
     if (p === undefined) throw new Error(`evidencia: predio '${id}' nao existe`);

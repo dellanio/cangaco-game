@@ -11,8 +11,13 @@ import { proximoNivel, mundoSobPonto, scrollAncorado } from '../zoom';
 import type { Navegacao } from '../../input/navegacao';
 import type { Tile } from '../grid';
 import { publicarEstadoDebug } from '../debug';
-import type { EstadoDebug, PredioNoDebug, RelogioVisivel } from '../debug';
-import { aparenciaDoPredio, ordemDasMercadorias } from '../predios';
+import type { EstadoDebug, PilhaNoDebug, PredioNoDebug, QuadroNoDebug, RelogioVisivel } from '../debug';
+import { aparenciaDoPredio, corDaPilha, dadosDasPilhas, dadosDoTrabalho, ordemDasMercadorias } from '../predios';
+import { pilhasDoPredio, posicoesNaPilha } from '../pilhas';
+import type { PilhaDesenhada } from '../pilhas';
+import { areaDoTrabalho, quadroDaFumaca, quadroDeTrabalho } from '../trabalho';
+import type { QuadroDeTrabalho } from '../trabalho';
+import { ESTADO_DA_PILHA, ID_DA_FUMACA } from '../manifesto-camadas';
 import { medidorDaObra } from '../medidor-obra';
 import type { LinhaDoMedidor } from '../medidor-obra';
 import { canteiroDaObra, chaveDoCanteiro } from '../nivelamento-obra';
@@ -31,8 +36,10 @@ import { criarPlantaFantasma } from '../planta-fantasma';
 import { criarCamadaDeEstradas, criarPreviaDeEstrada } from '../estradas';
 import { criarCamadaDeCampos, criarPreviaDeCampo } from '../campos';
 import { criarCamadaDeUnidades } from '../unidades';
-import { assetDoPredio, arquivoDoEstagio, chaveDaTextura } from '../manifesto';
-import type { EntradaDeAsset } from '../manifesto';
+import {
+  assetDoPredio, arquivoDoEstagio, chaveDaTextura, chaveDeTextura, desenhoDoRecurso, texturaDaCamada, ESTADO_DO_TERRENO,
+} from '../manifesto';
+import type { DesenhoDoRecurso, EntradaDeAsset, TexturaCarregada } from '../manifesto';
 import { manifestoDoJogo, texturasParaCarregar } from '../sprites';
 
 const CHAVE_TEXTURA_TERRENO = 'tiles-terreno';
@@ -41,6 +48,14 @@ const CHAVE_TEXTURA_RECURSO = 'tiles-recurso';
 // jogador assentou cobre o marcador, como cobre o chao. O recurso continua no
 // estado; quem o le e a simulacao, nao o pixel.
 const DEPTH_DOS_RECURSOS = 0.5;
+/** F-VIVO-a — o dado das pilhas, com as ancoras do manifesto. Montado uma vez. */
+const DADOS_DAS_PILHAS = dadosDasPilhas(manifestoDoJogo);
+/** F-VIVO-b — o dado do quadro de trabalho, com as ancoras do manifesto. Montado uma vez. */
+const DADOS_DO_TRABALHO = dadosDoTrabalho(manifestoDoJogo);
+/** F-VIVO-a — o lado de UMA unidade da pilha, em tiles. O brief dizia 1/4; com
+ *  1/4 as quatro pilhas do armazem (3 tiles de base) se sobrepoem, com 1/5 cabem.
+ *  Desenho, nao balanceamento: fica aqui, como o resto do placeholder. */
+const LADO_DA_UNIDADE_EM_TILES = 1 / 5;
 
 /** F17e — a cara de cada estagio no placeholder geometrico (§9). `altura` e a
  *  fracao da altura do footprint que o volume ocupa, ancorado no PE: sao os tres
@@ -71,6 +86,14 @@ export class WorldScene extends Phaser.Scene {
    *  continua em `state.recursos`, e isto aqui so evita repintar 883 tiles a
    *  cada frame para mudar um. */
   private readonly recursosDesenhados = new Map<string, number>();
+
+  /** F-SPR — como cada CODIGO de recurso se desenha, resolvido uma vez no `create`
+   *  (a arte ja chegou no `preload`). Indice e o codigo, como na tira. */
+  private desenhoPorCodigo: readonly DesenhoDoRecurso[] = [];
+
+  /** F-SPR — o sprite de vegetacao de pe por tile, para o diff. Memoria de render,
+   *  como `recursosDesenhados`: a verdade continua em `state.recursos`. */
+  private readonly vegetacaoDesenhada = new Map<string, Phaser.GameObjects.Image>();
 
   private readonly desenhados = new Map<
     string,
@@ -146,10 +169,13 @@ export class WorldScene extends Phaser.Scene {
     const { tilePx, largura, altura, larguraPx, alturaPx } = configDoMapa;
     const estado = publicarEstadoDebug(this.relogio);
 
-    this.criarTexturaDeTerreno(tilePx);
-    const camadaChao = this.criarTilemap(tilePx, largura, altura);
-    this.criarTexturaDeRecurso(tilePx);
-    const camadaDeRecursos = this.criarCamadaDeRecursos(tilePx, largura, altura);
+    // F-SPR — o loader so conhece o que o manifesto declarou e o bundler achou;
+    // `exists` e a unica pergunta que os resolvedores de `manifesto.ts` fazem ao Phaser.
+    const carregada: TexturaCarregada = (chave) => this.textures.exists(chave);
+    const texturaDoTerreno = this.criarTexturaDeTerreno(tilePx, carregada, estado);
+    const camadaChao = this.criarTilemap(tilePx, largura, altura, texturaDoTerreno);
+    const texturaDoRecurso = this.criarTexturaDeRecurso(tilePx, carregada, estado);
+    const camadaDeRecursos = this.criarCamadaDeRecursos(tilePx, largura, altura, texturaDoRecurso);
 
     const camera = this.cameras.main;
     camera.setBounds(0, 0, larguraPx, alturaPx);
@@ -328,6 +354,7 @@ export class WorldScene extends Phaser.Scene {
       // onde ha rocha e imutavel, quanto sobrou nao e, e o jogador tem de ver o
       // tile esgotar.
       estado.recursosVisiveis = this.atualizarRecursos(camadaDeRecursos);
+      estado.vegetacaoRenderizada = this.vegetacaoDesenhada.size;
       estado.pronto = true;
       if (this.ponte.atual) this.atualizarPredios(this.ponte.atual, tilePx, estado);
 
@@ -342,6 +369,8 @@ export class WorldScene extends Phaser.Scene {
       const estradas = camadaDeEstradas.atualizar(this.ponte.atual ?? null);
       estado.estradasRenderizadas = estradas.dePe;
       estado.estradasPlanejadasRenderizadas = estradas.planejadas;
+      estado.pedraNoCanteiroNoEstado = Object.values(this.ponte.atual?.pedraNoCanteiro ?? {})
+        .reduce((a, n) => a + n, 0);
       estado.previaDeEstrada = previaDeEstrada.atualizar(this.entrada.trecho(), this.ferramenta.modo, this.ponte.atual);
 
       // Campo (F18i): o canteiro que o jogador desenhou, e a previa do arrasto de arar
@@ -373,8 +402,12 @@ export class WorldScene extends Phaser.Scene {
    * Uma cor chapada por tipo e o escopo inteiro do desenho desta feature. Sem
    * textura, sem transicao de borda, sem arte — o suficiente para a tela nao
    * mentir: o jogador ve a agua antes de a construcao ser recusada por ela.
+   *
+   * F-SPR — a cor chapada continua sendo o placeholder; o tipo que tem textura no
+   * manifesto (`tipo: "terreno"`) tem a celula dele trocada pela imagem, e so ela.
+   * Devolve a chave da tira que vira tileset.
    */
-  private criarTexturaDeTerreno(tilePx: number): void {
+  private criarTexturaDeTerreno(tilePx: number, carregada: TexturaCarregada, debug: EstadoDebug): string {
     const g = this.make.graphics({ x: 0, y: 0 }, false);
     terrenoDeRender.cores.forEach((hex, codigo) => {
       g.fillStyle(Phaser.Display.Color.HexStringToColor(hex).color, 1);
@@ -384,6 +417,44 @@ export class WorldScene extends Phaser.Scene {
     });
     g.generateTexture(CHAVE_TEXTURA_TERRENO, tilePx * terrenoDeRender.cores.length, tilePx);
     g.destroy();
+    const arte = terrenoDeRender.tipos.map(
+      (id) => texturaDaCamada(manifestoDoJogo, 'terreno', id, ESTADO_DO_TERRENO, carregada),
+    );
+    debug.arteDasCamadas = {
+      ...debug.arteDasCamadas,
+      terreno: terrenoDeRender.tipos.filter((_id, codigo) => arte[codigo] !== null),
+    };
+    return this.sobreporArteNaTira(CHAVE_TEXTURA_TERRENO, tilePx, arte, []);
+  }
+
+  /**
+   * F-SPR — a tira de placeholder com as celulas que tem arte trocadas pela imagem,
+   * redimensionada para o tile (o `tamanho` do arquivo nao entra: textura de tile
+   * cobre exatamente um tile, e so). `vazias` sao celulas limpas — o recurso que
+   * virou sprite de vegetacao nao pode deixar o marcador por baixo da arvore.
+   *
+   * Sem nenhuma arte, devolve a propria tira e nada muda: o placeholder de hoje e
+   * o fallback, pixel a pixel.
+   */
+  private sobreporArteNaTira(
+    chaveDaTira: string, tilePx: number, arte: readonly (string | null)[], vazias: readonly number[],
+  ): string {
+    if (arte.every((c) => c === null) && vazias.length === 0) return chaveDaTira;
+    const base = this.textures.get(chaveDaTira).getSourceImage() as HTMLCanvasElement;
+    const chave = `${chaveDaTira}:arte`;
+    const tira = this.textures.createCanvas(chave, base.width, base.height);
+    if (!tira) throw new Error(`WorldScene: falha ao criar a tira '${chave}'.`);
+    const ctx = tira.getContext();
+    ctx.drawImage(base, 0, 0);
+    for (const codigo of vazias) ctx.clearRect(codigo * tilePx, 0, tilePx, tilePx);
+    arte.forEach((chaveDaArte, codigo) => {
+      if (chaveDaArte === null) return;
+      const imagem = this.textures.get(chaveDaArte).getSourceImage() as HTMLImageElement;
+      ctx.clearRect(codigo * tilePx, 0, tilePx, tilePx);
+      ctx.drawImage(imagem, codigo * tilePx, 0, tilePx, tilePx);
+    });
+    tira.refresh();
+    return chave;
   }
 
   /**
@@ -396,8 +467,12 @@ export class WorldScene extends Phaser.Scene {
    * tile inteiro esconderia o terreno por baixo, e a F-T1 existe justamente para
    * o jogador ler o terreno. Arte de recurso e decisao humana (§9); isto e a
    * forma geometrica que diz "tem alguma coisa aqui" ate la.
+   *
+   * F-SPR — o recurso com textura no manifesto troca o losango pela imagem; o que
+   * e VEGETACAO (`tipo: "vegetacao"`) deixa a celula vazia e vira sprite em pe
+   * (`pintarVegetacao`). O esgotado continua marcador. Devolve a chave da tira.
    */
-  private criarTexturaDeRecurso(tilePx: number): void {
+  private criarTexturaDeRecurso(tilePx: number, carregada: TexturaCarregada, debug: EstadoDebug): string {
     const g = this.make.graphics({ x: 0, y: 0 }, false);
     const meio = tilePx / 2;
     const raio = Math.max(2, Math.round(tilePx * 0.3));
@@ -417,11 +492,26 @@ export class WorldScene extends Phaser.Scene {
     });
     g.generateTexture(CHAVE_TEXTURA_RECURSO, tilePx * recursosDeRender.cores.length, tilePx);
     g.destroy();
+    // Codigo 0 e o esgotado ficam fora: vazio e marcador unico, sem entrada propria.
+    this.desenhoPorCodigo = recursosDeRender.cores.map((_cor, codigo): DesenhoDoRecurso => {
+      const id = recursosDeRender.tipos[codigo - 1];
+      if (codigo === 0 || codigo === recursosDeRender.codigoEsgotado || id === undefined) return { como: 'marcador' };
+      return desenhoDoRecurso(manifestoDoJogo, id, carregada);
+    });
+    const arte = this.desenhoPorCodigo.map((d) => (d.como === 'textura' ? d.chave : null));
+    const vazias = this.desenhoPorCodigo.flatMap((d, codigo) => (d.como === 'vegetacao' ? [codigo] : []));
+    const idsCom = (como: DesenhoDoRecurso['como']): string[] => this.desenhoPorCodigo.flatMap(
+      (d, codigo) => (d.como === como ? [recursosDeRender.tipos[codigo - 1] as string] : []),
+    );
+    debug.arteDasCamadas = { ...debug.arteDasCamadas, recurso: idsCom('textura'), vegetacao: idsCom('vegetacao') };
+    return this.sobreporArteNaTira(CHAVE_TEXTURA_RECURSO, tilePx, arte, vazias);
   }
 
-  private criarCamadaDeRecursos(tilePx: number, largura: number, altura: number): Phaser.Tilemaps.TilemapLayer {
+  private criarCamadaDeRecursos(
+    tilePx: number, largura: number, altura: number, textura: string,
+  ): Phaser.Tilemaps.TilemapLayer {
     const mapa = this.make.tilemap({ tileWidth: tilePx, tileHeight: tilePx, width: largura, height: altura });
-    const tileset = mapa.addTilesetImage('recurso', CHAVE_TEXTURA_RECURSO, tilePx, tilePx, 0, 0);
+    const tileset = mapa.addTilesetImage('recurso', textura, tilePx, tilePx, 0, 0);
     if (!tileset) throw new Error('WorldScene: falha ao criar o tileset de recurso.');
     const camada = mapa.createBlankLayer('recursos', tileset);
     if (!camada) throw new Error('WorldScene: falha ao criar a camada de recursos.');
@@ -443,14 +533,40 @@ export class WorldScene extends Phaser.Scene {
       const { gx, gy } = tileDeChave(chave);
       camada.putTileAt(codigo, gx, gy);
       this.recursosDesenhados.set(chave, codigo);
+      this.pintarVegetacao(chave, codigo);
     }
     for (const chave of [...this.recursosDesenhados.keys()]) {
       if (recursos[chave] !== undefined) continue;
       const { gx, gy } = tileDeChave(chave);
       camada.putTileAt(0, gx, gy);
       this.recursosDesenhados.delete(chave);
+      this.pintarVegetacao(chave, 0);
     }
     return this.contarRecursosVisiveis(camada);
+  }
+
+  /** F-SPR — poe, troca ou tira o sprite de vegetacao de um tile, pelo codigo que a
+   *  camada acabou de receber. O `anchor` do manifesto cai no meio da borda de BAIXO
+   *  do tile, como o do predio no footprint; a imagem sai no tamanho do arquivo e pode
+   *  transbordar o tile — por isso e sprite, e nao celula da tira. Depth pelo pe: a
+   *  unidade no tile de cima passa atras, a do tile de baixo passa na frente. */
+  private pintarVegetacao(chave: string, codigo: number): void {
+    const desenho = this.desenhoPorCodigo[codigo];
+    const atual = this.vegetacaoDesenhada.get(chave);
+    if (desenho?.como !== 'vegetacao') {
+      atual?.destroy();
+      this.vegetacaoDesenhada.delete(chave);
+      return;
+    }
+    if (atual?.texture.key === desenho.chave) return;
+    atual?.destroy();
+    const { tilePx } = configDoMapa;
+    const canto = gridToScreen(tileDeChave(chave), tilePx, ESCALA_DO_MUNDO);
+    const pe = { x: canto.x + tilePx / 2, y: canto.y + tilePx };
+    const imagem = this.add.image(pe.x, pe.y, desenho.chave)
+      .setOrigin(desenho.entrada.anchor[0], desenho.entrada.anchor[1])
+      .setDepth(depthDeY(pe.y));
+    this.vegetacaoDesenhada.set(chave, imagem);
   }
 
   /** Lido de volta da camada desenhada, como `contarTerrenoVisivel`: o roteiro
@@ -469,9 +585,11 @@ export class WorldScene extends Phaser.Scene {
     return contagem;
   }
 
-  private criarTilemap(tilePx: number, largura: number, altura: number): Phaser.Tilemaps.TilemapLayer {
+  private criarTilemap(
+    tilePx: number, largura: number, altura: number, textura: string,
+  ): Phaser.Tilemaps.TilemapLayer {
     const mapa = this.make.tilemap({ tileWidth: tilePx, tileHeight: tilePx, width: largura, height: altura });
-    const tileset = mapa.addTilesetImage('terreno', CHAVE_TEXTURA_TERRENO, tilePx, tilePx, 0, 0);
+    const tileset = mapa.addTilesetImage('terreno', textura, tilePx, tilePx, 0, 0);
     if (!tileset) throw new Error('WorldScene: falha ao criar o tileset de terreno.');
     const camada = mapa.createBlankLayer('chao', tileset);
     if (!camada) throw new Error('WorldScene: falha ao criar a camada de chao.');
@@ -533,6 +651,10 @@ export class WorldScene extends Phaser.Scene {
     // F17f: com que textura cada predio foi desenhado, ou null quando caiu no
     // retangulo. O roteiro afirma sobre isto, nunca por pixel.
     const sprites: Record<string, string | null> = {};
+    // F-VIVO-a: o que cada pilha desenhou, da MESMA lista que vai para `criarPredio`.
+    const pilhasNoDebug: Record<string, readonly PilhaNoDebug[]> = {};
+    // F-VIVO-b: o quadro de trabalho de cada predio animando, da MESMA chamada do desenho.
+    const quadrosNoDebug: Record<string, QuadroNoDebug> = {};
     for (const id of estadoDoJogo.predios.ordem) {
       const predio = estadoDoJogo.predios.porId[id];
       if (!predio) continue;
@@ -575,14 +697,36 @@ export class WorldScene extends Phaser.Scene {
       // assim mesmo. A fracao entra QUANTIZADA em oitavos (`chaveDoCanteiro`):
       // redesenho limitado a 8 por tile, e chave testavel, em vez de um float
       // diferente a cada tick.
-      const assinatura = `${linhas.map((l) => l.entregue).join(',')}|${chaveDoCanteiro(canteiro)}`;
+      // F-VIVO-a: a pilha muda sem mexer em estado nem em estagio (o serf entrega,
+      // o padeiro assa), entao ela entra na chave pelo mesmo motivo do medidor. So
+      // o que se DESENHA entra: quantidade acima de 5 nao redesenha nada.
+      const pilhas = pilhasDoPredio(predio, DADOS_DAS_PILHAS);
+      if (pilhas.length > 0) {
+        pilhasNoDebug[id] = pilhas.map((x) => ({
+          gaveta: x.gaveta, mercadoria: x.mercadoria, n: x.n, sprite: this.texturaDaPilha(x.mercadoria) !== null,
+        }));
+      }
+      const chaveDasPilhas = pilhas.map((x) => `${x.mercadoria}:${x.n}`).join(',');
+      // F-VIVO-b: o quadro muda a cada tick de trabalho sem mexer em estado nem em
+      // estagio — entra na chave pelo mesmo motivo da pilha. Predio parado da `null`
+      // e a chave congela: e isso que faz o parado nao redesenhar.
+      const ocupante = predio.estado === 'completo' && predio.ocupante !== null
+        ? estadoDoJogo.unidades.porId[predio.ocupante] ?? null
+        : null;
+      const quadro = quadroDeTrabalho(predio, ocupante, estadoDoJogo.tick, DADOS_DO_TRABALHO);
+      const fumaca = quadroDaFumaca(predio, ocupante, estadoDoJogo.tick, DADOS_DO_TRABALHO);
+      if (quadro !== null) {
+        quadrosNoDebug[id] = { ...quadro, sprite: this.texturaDoQuadro(predio.tipo, quadro) !== null };
+      }
+      const chaveDoTrabalho = `${quadro === null ? '-' : `${quadro.laco}_${quadro.n}`}/${fumaca ?? '-'}`;
+      const assinatura = `${linhas.map((l) => l.entregue).join(',')}|${chaveDoCanteiro(canteiro)}|${chaveDasPilhas}|${chaveDoTrabalho}`;
       const existente = this.desenhados.get(id);
       if (existente && existente.estado === predio.estado && existente.estagio === estagio
         && existente.assinatura === assinatura) continue;
       existente?.objeto.destroy();
       this.desenhados.set(id, {
         estado: predio.estado, estagio, assinatura,
-        objeto: this.criarPredio(predio, estagio, linhas, canteiro, tilePx),
+        objeto: this.criarPredio(predio, estagio, linhas, canteiro, pilhas, quadro, fumaca, tilePx),
       });
     }
     debug.prediosRenderizados = this.desenhados.size;
@@ -601,6 +745,8 @@ export class WorldScene extends Phaser.Scene {
     debug.medidoresDeObra = medidores;
     debug.canteirosDeObra = canteiros;
     debug.spritesDePredio = sprites;
+    debug.pilhasDesenhadas = pilhasNoDebug;
+    debug.quadrosDeTrabalho = quadrosNoDebug;
   }
 
   /** F17f — a chave de textura de um (tipo, estagio), ou `null` quando esse
@@ -631,7 +777,8 @@ export class WorldScene extends Phaser.Scene {
    *  completo (o predio de pe, sem rotulo extra). */
   private criarPredio(
     predio: Predio, estagio: EstagioDaObra, linhas: readonly LinhaDoMedidor[],
-    canteiro: CanteiroDaObra | null, tilePx: number,
+    canteiro: CanteiroDaObra | null, pilhas: readonly PilhaDesenhada[],
+    quadro: QuadroDeTrabalho | null, fumaca: number | null, tilePx: number,
   ): Phaser.GameObjects.Container {
     const { largura, altura, nome } = aparenciaDoPredio(predio.tipo);
     const canto = gridToScreen({ gx: predio.gx, gy: predio.gy }, tilePx, ESCALA_DO_MUNDO);
@@ -642,12 +789,19 @@ export class WorldScene extends Phaser.Scene {
     const corpo = sprite === null
       ? this.desenharPlaceholder(estagio, nome, larguraPx, alturaPx)
       : [this.desenharSprite(sprite.chave, sprite.entrada, larguraPx, alturaPx)];
+    // F-VIVO-a: a fracao da ancora e do sprite `completo` (brief §4a). Sem ele, do lote.
+    const completo = this.spriteDoPredio(predio.tipo, 'completo');
+    const caixa = completo === null
+      ? { x: 0, y: 0, w: larguraPx, h: alturaPx }
+      : this.caixaDoSprite(completo.entrada, larguraPx, alturaPx);
 
     // O canteiro vai PRIMEIRO no container: ele e o chao, e o corpo da obra fica
     // por cima. O medidor da F17b continua por ultimo.
     const container = this.add.container(canto.x, canto.y, [
       ...this.desenharCanteiro(canteiro, largura, tilePx),
       ...corpo,
+      ...this.desenharTrabalho(predio.tipo, quadro, fumaca, caixa),
+      ...this.desenharPilhas(pilhas, caixa, tilePx),
       ...this.desenharMedidor(linhas, larguraPx, alturaPx, canteiro === null || canteiro.nivelada),
     ]);
     container.setDepth(depthDeY(canto.y + alturaPx));
@@ -675,6 +829,110 @@ export class WorldScene extends Phaser.Scene {
     imagem.setOrigin(entrada.anchor[0], entrada.anchor[1]);
     imagem.setScale(larguraPx / entrada.tamanho[0]);
     return imagem;
+  }
+
+  /** F-VIVO-a — o retangulo que o sprite ocupa dentro do container, pela mesma
+   *  ancoragem e escala de `desenharSprite`. */
+  private caixaDoSprite(
+    entrada: EntradaDeAsset, larguraPx: number, alturaPx: number,
+  ): { readonly x: number; readonly y: number; readonly w: number; readonly h: number } {
+    const escala = larguraPx / entrada.tamanho[0];
+    const w = entrada.tamanho[0] * escala;
+    const h = entrada.tamanho[1] * escala;
+    return { x: larguraPx / 2 - w * entrada.anchor[0], y: alturaPx - h * entrada.anchor[1], w, h };
+  }
+
+  /** F-VIVO-a — a textura da unidade de uma mercadoria, ou `null` (quadrado do §9). */
+  private texturaDaPilha(mercadoria: string): string | null {
+    const chave = chaveDeTextura('pilha', mercadoria, ESTADO_DA_PILHA);
+    return this.textures.exists(chave) ? chave : null;
+  }
+
+  /** F-VIVO-b — a textura de um quadro de trabalho, ou `null` (retangulo do §9). */
+  private texturaDoQuadro(tipo: string, quadro: QuadroDeTrabalho): string | null {
+    const chave = chaveDeTextura('trabalho', tipo, `${quadro.laco}_${quadro.n}`);
+    return this.textures.exists(chave) ? chave : null;
+  }
+
+  /** F-VIVO-b — o quadro de trabalho na `area` da ancora (ou na padrao), com o
+   *  tamanho exato da area (brief §4a). Sem PNG, um retangulo com `<laco>_<n>`
+   *  escrito. A fumaca so existe no ponto DECLARADO; sem PNG, um circulo claro que
+   *  sobe com o quadro. O corpo do predio nao muda: o placeholder dele fica como era. */
+  private desenharTrabalho(
+    tipo: string, quadro: QuadroDeTrabalho | null, fumaca: number | null,
+    caixa: { readonly x: number; readonly y: number; readonly w: number; readonly h: number },
+  ): Phaser.GameObjects.GameObject[] {
+    const objetos: Phaser.GameObjects.GameObject[] = [];
+    const ancoras = DADOS_DO_TRABALHO.ancoras[tipo];
+    if (quadro !== null) {
+      const [x0, y0, x1, y1] = areaDoTrabalho(ancoras);
+      const x = caixa.x + caixa.w * x0;
+      const y = caixa.y + caixa.h * y0;
+      const w = caixa.w * (x1 - x0);
+      const h = caixa.h * (y1 - y0);
+      const textura = this.texturaDoQuadro(tipo, quadro);
+      if (textura !== null) {
+        const imagem = this.add.image(x, y, textura);
+        imagem.setOrigin(0, 0);
+        imagem.setDisplaySize(w, h);
+        objetos.push(imagem);
+      } else {
+        const fundo = this.add.rectangle(x + w / 2, y + h / 2, w, h, 0x2c1d12, 0.55);
+        fundo.setStrokeStyle(1, 0xf2d6a2);
+        const rotulo = this.add.text(x + w / 2, y + h / 2, `${quadro.laco}_${quadro.n}`, {
+          fontFamily: 'monospace', fontSize: '11px', color: '#f2d6a2',
+        });
+        rotulo.setOrigin(0.5, 0.5);
+        objetos.push(fundo, rotulo);
+      }
+    }
+    const ponto = ancoras?.trabalho?.fumaca;
+    if (fumaca !== null && ponto !== undefined) {
+      const x = caixa.x + caixa.w * ponto[0];
+      const y = caixa.y + caixa.h * ponto[1];
+      const chave = chaveDeTextura('trabalho', ID_DA_FUMACA, `${ID_DA_FUMACA}_${fumaca}`);
+      if (this.textures.exists(chave)) {
+        const imagem = this.add.image(x, y, chave);
+        imagem.setOrigin(0.5, 1);
+        objetos.push(imagem);
+      } else {
+        objetos.push(this.add.circle(x, y - fumaca * 2, 3 + fumaca / 2, 0xd8d0c0, 0.7));
+      }
+    }
+    return objetos;
+  }
+
+  /** F-VIVO-a — as pilhas: `n` unidades por ponto, tres embaixo e dois em cima
+   *  (`posicoesNaPilha`), com o pe da pilha no ponto. PNG quando o manifesto tem a
+   *  `pilha` da mercadoria; senao um quadrado com a cor do tema. */
+  private desenharPilhas(
+    pilhas: readonly PilhaDesenhada[],
+    caixa: { readonly x: number; readonly y: number; readonly w: number; readonly h: number },
+    tilePx: number,
+  ): Phaser.GameObjects.GameObject[] {
+    const lado = tilePx * LADO_DA_UNIDADE_EM_TILES;
+    const objetos: Phaser.GameObjects.GameObject[] = [];
+    for (const pilha of pilhas) {
+      const px = caixa.x + caixa.w * pilha.ponto[0];
+      const py = caixa.y + caixa.h * pilha.ponto[1];
+      const textura = this.texturaDaPilha(pilha.mercadoria);
+      const cor = Phaser.Display.Color.HexStringToColor(corDaPilha(pilha.mercadoria)).color;
+      for (const [dx, dy] of posicoesNaPilha(pilha.n)) {
+        const x = px + dx * lado;
+        const y = py + dy * lado - lado / 2;
+        if (textura !== null) {
+          const imagem = this.add.image(x, y + lado / 2, textura);
+          imagem.setOrigin(0.5, 1);
+          imagem.setDisplaySize(lado, lado * (imagem.height / imagem.width));
+          objetos.push(imagem);
+        } else {
+          const unidade = this.add.rectangle(x, y, lado - 1, lado - 1, cor, 1);
+          unidade.setStrokeStyle(1, 0x2c1d12);
+          objetos.push(unidade);
+        }
+      }
+    }
+    return objetos;
   }
 
   /** O placeholder do §9: o lote e o volume que sobe nele. A F11c desenhava o

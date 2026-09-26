@@ -104,6 +104,16 @@ async function roteiro(ctx) {
     'nao deveria haver ferramenta de terra sem cultura correspondente no dado',
   );
   afirmar(botoesDeTerra.includes('apagar-campo'), 'o menu deveria ter a borracha do campo');
+  // 2026-09-26 (operador): duas culturas com o mesmo glifo e confusao real. A cor dos
+  // sulcos sai do tema, uma por cultura, e o que se mede e a cor PINTADA, nao a variavel.
+  const coresDosSulcos = await page.$$eval(
+    '#menu-build [data-ferramenta^="campo-"] .glifo-campo',
+    (nos) => nos.map((n) => getComputedStyle(n, '::before').backgroundImage),
+  );
+  afirmar(
+    new Set(coresDosSulcos).size === culturasAraveis.length,
+    `cada cultura aravel deveria ter sulcos de cor propria, veio [${coresDosSulcos.join(' | ')}]`,
+  );
 
   const abertura = await contagem('na abertura');
   afirmar(abertura.planejados === 0, `a abertura nao deveria ter canteiro de campo, veio ${abertura.planejados}`);

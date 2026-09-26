@@ -21,7 +21,7 @@ import {
 } from './helpers/escola-cenario';
 import { violacoesDeInvariantes } from './helpers/jobs-invariantes';
 import {
-  armazemDoCenario, comEstradas, comTarefas, comUnidadeExtra, linhaH,
+  armazemDoCenario, comEstradas, comTarefas, comUnidadeExtra, 
 } from './helpers/jobs-cenario';
 import { demandaNoDestino, disponivelNaOrigem, reservadoNaOrigem } from '../src/sim/reservas';
 import { demandaDeInsumo } from '../src/sim/insumo';
@@ -29,6 +29,7 @@ import {
   cenarioDePedreira, cenarioDeSerraria, comEntrada, comSaida, entradaDe, saidaDe, semAUnidade,
   semEstrada, semOcupante,
 } from './helpers/producao-cenario';
+import { linhaHDe, naVila } from './helpers/ancoras';
 
 const CAPACIDADE_DA_ENTRADA = gameData.producao.estoqueInternoPorPredio.entrada;
 
@@ -385,7 +386,7 @@ describe('F15b — nivel 7: o excedente volta', () => {
   // A linha de porta dos dois predios do cenario inicial (armazem em 29..31,
   // escola em 34..36), a mesma da F13a: sem estrada nao ha destino, e o
   // excedente ficaria parado com razao.
-  const ligado = (): GameState => comEstradas(createInitialState(1), linhaH(29, 36, 33));
+  const ligado = (): GameState => comEstradas(createInitialState(1), linhaHDe(naVila, 0, 7, 3));
 
   it('escola com ouro e fila vazia devolve o ouro ao armazem', () => {
     const s = gerarTarefas(comOuroNaEscola(ligado(), escola, 1));
@@ -429,7 +430,7 @@ describe('F15b — nivel 7: o excedente volta', () => {
  */
 describe('F15b — o serf coleta da gaveta do tipo e entrega no destino do tipo', () => {
   const escola = escolaDoCenario(createInitialState(1)).id;
-  const ligado = (): GameState => comEstradas(createInitialState(1), linhaH(29, 36, 33));
+  const ligado = (): GameState => comEstradas(createInitialState(1), linhaHDe(naVila, 0, 7, 3));
 
   const ateEntregarEm = (s: GameState, destino: string, limite = 400): GameState =>
     avancarAte(s, (e) => e.events.some((ev) => ev.type === 'task-completed' && ev.destino === destino), limite);
@@ -532,7 +533,7 @@ describe('F15b — o serf coleta da gaveta do tipo e entrega no destino do tipo'
  */
 describe('F15b — o ciclo fechado', () => {
   const escolaLigada = escolaDoCenario(createInitialState(1)).id;
-  const ligadoAEscola = (): GameState => comEstradas(createInitialState(1), linhaH(29, 36, 33));
+  const ligadoAEscola = (): GameState => comEstradas(createInitialState(1), linhaHDe(naVila, 0, 7, 3));
 
   const comSerf = (s: GameState, gx: number, gy: number): GameState =>
     comUnidadeExtra(s, 'serf-a', TIPO_QUE_CARREGA, gx, gy);

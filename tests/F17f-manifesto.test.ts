@@ -10,12 +10,25 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import { gameData } from '../src/sim/data';
-import { assetDoPredio, arquivoDoEstagio, chaveDaTextura } from '../src/render/manifesto';
-import type { EntradaDeAsset, Manifesto } from '../src/render/manifesto';
+import { assetDoPredio, arquivoDoEstagio, chaveDaTextura, ehEntradaDePredio, TIPOS_DE_CAMADA } from '../src/render/manifesto';
+import type { EntradaDeAsset, EntradaDeCamada, Manifesto } from '../src/render/manifesto';
+import {
+  ANIMAL_DA_CRIACAO, CASO_DO_PREDIO, violacoesDaCamadaViva, violacoesDasAncoras, violacoesDosCasos,
+} from '../src/render/manifesto-camadas';
+import type { ContextoDasCamadas } from '../src/render/manifesto-camadas';
+import { contextoDasCamadas } from '../src/render/predios';
 import { ORDEM_DOS_ESTAGIOS } from '../src/render/estagio-obra';
 import { gravarEvidencia } from './helpers/evidence';
 
 const manifesto = JSON.parse(readFileSync('assets/manifest.json', 'utf8')) as Manifesto;
+/**
+ * F-SPR: o manifesto passou a aceitar terreno, recurso, vegetacao e unidade. As
+ * regras de PREDIO (anchor, largura, footprint de buildings.json, estagios) valem
+ * para as entradas `predio`, e so para elas — sem afrouxar nenhuma. As regras da §9
+ * que valem para qualquer asset (oito campos, arquivo existe com a dimensao
+ * declarada, base versionada) continuam sobre todas.
+ */
+const predios = manifesto.assets.filter(ehEntradaDePredio);
 
 /**
  * Largura e altura do IHDR, que sao os bytes 16..24 de todo PNG. Ler o
@@ -53,16 +66,20 @@ function chavesForaDosEstagios(entrada: EntradaDeAsset): string[] {
 
 describe('F17f — o manifesto descreve a arte que existe', () => {
   it('toda entrada tem os oito campos da §9', () => {
-    expect(manifesto.assets.length).toBeGreaterThan(0);
+    expect(predios.length).toBeGreaterThan(0);
+    const tipos = new Set<string>(['predio', ...TIPOS_DE_CAMADA]);
     for (const e of manifesto.assets) {
       expect(typeof e.id).toBe('string');
-      expect(e.tipo).toBe('predio');
+      expect(tipos.has(e.tipo), `${e.id}: tipo '${e.tipo}'`).toBe(true);
       expect(e.footprint).toHaveLength(2);
       expect(e.tamanho).toHaveLength(2);
-      expect(e.anchor).toEqual([0.5, 1]);
+      expect(e.anchor).toHaveLength(2);
       expect(Object.keys(e.estados).length).toBeGreaterThan(0);
       expect(typeof e.licenca).toBe('string');
       expect(e.origem.base).toBeTruthy();
+    }
+    for (const e of predios) {
+      expect(e.anchor, e.id).toEqual([0.5, 1]);
     }
   });
 
@@ -82,13 +99,13 @@ describe('F17f — o manifesto descreve a arte que existe', () => {
   // A convencao que esta feature existe para fixar: a LARGURA manda. A altura
   // e o que a arte der — forcar um quadrado esticaria a arte 1,5x na vertical.
   it('a largura em px e a largura do footprint em tiles vezes o tile', () => {
-    for (const e of manifesto.assets) {
+    for (const e of predios) {
       expect(e.tamanho[0], e.id).toBe(e.footprint[0] * gameData.terreno.tilePx);
     }
   });
 
   it('o footprint do manifesto bate com o de buildings.json', () => {
-    for (const e of manifesto.assets) {
+    for (const e of predios) {
       const def = gameData.predios.find((p) => p.id === e.id);
       expect(def, `o manifesto declara '${e.id}', que nao existe em buildings.json`).toBeTruthy();
       expect([...e.footprint]).toEqual([...(def?.tamanho ?? [])]);
@@ -101,7 +118,7 @@ describe('F17f — o manifesto descreve a arte que existe', () => {
   // no armazem, com os nomes dos arquivos de hoje, e reprovava quando o armazem
   // fosse refeito (BUG-H). Agora vale para TODA entrada, contra a lista do render.
   it('nenhuma entrada tem chave de estado fora dos seis estagios do render', () => {
-    for (const e of manifesto.assets) {
+    for (const e of predios) {
       expect(chavesForaDosEstagios(e), e.id).toEqual([]);
     }
     // e o guarda acusa: a chave antiga da F17e numa entrada sintetica
@@ -120,7 +137,7 @@ describe('F17f — o manifesto descreve a arte que existe', () => {
   // trouxesse — o teste afirmava o retrato do dia, nao a regra. A regra e: o
   // resolvedor concorda com o manifesto, nos dois sentidos.
   it('predio resolve arte se e so se o manifesto tem entrada para ele', () => {
-    const idsNoManifesto = new Set(manifesto.assets.map((e) => e.id));
+    const idsNoManifesto = new Set(predios.map((e) => e.id));
     for (const p of gameData.predios) {
       const entrada = assetDoPredio(manifesto, p.id);
       if (idsNoManifesto.has(p.id)) {
@@ -176,8 +193,10 @@ describe('F17f — o manifesto descreve a arte que existe', () => {
   it('grava a evidencia', () => {
     gravarEvidencia('F17f', {
       feature: 'F17f-primeiro-sprite',
+      camadasVivas: manifesto.assets.filter((e) => ['trabalho', 'pilha', 'animal'].includes(e.tipo)).length,
+      prediosComAncoras: predios.filter((e) => e.ancoras !== undefined).map((e) => e.id),
       tilePx: gameData.terreno.tilePx,
-      entradas: manifesto.assets.map((e) => ({
+      entradas: predios.map((e) => ({
         id: e.id,
         footprint: e.footprint,
         tamanho: e.tamanho,
@@ -195,5 +214,117 @@ describe('F17f — o manifesto descreve a arte que existe', () => {
         'ISOMETRICA — divergente do §9.3 do CLAUDE.md (3/4 sobre grid ortogonal). ' +
         'Conhecida e a substituir: esta feature valida manifesto, dimensao e ancoragem, nao a arte.',
     });
+  });
+});
+
+/**
+ * F-VIVO-0 — os tres tipos do predio vivo e o campo `ancoras` (docs/BRIEF-ARTE.md §4a).
+ * O contexto sai do dado, nunca digitado, e e o MESMO do funil que o render le
+ * (`contextoDasCamadas`, `src/render/predios.ts`); as regras moram em
+ * `src/render/manifesto-camadas.ts`, que o render da F-VIVO le tambem. Cada regra tem
+ * o caso que REPROVA, num manifesto escrito aqui: a arte de hoje nao declara nada
+ * disto, e um teste so com o manifesto real passaria sem exercitar regra nenhuma.
+ */
+const contexto: ContextoDasCamadas = contextoDasCamadas;
+
+function camadaSintetica(tipo: EntradaDeCamada['tipo'], id: string, estados: string[]): EntradaDeCamada {
+  return {
+    id, tipo, footprint: [1, 1], tamanho: [16, 16], anchor: [0.5, 1],
+    estados: Object.fromEntries(estados.map((k) => [k, `sprites/${id}/${id}_${k}.png`])),
+    licenca: 'sintetica, so no teste', origem: { base: `base/${id}/${id}.png`, semente: null },
+  };
+}
+const quadros = (laco: string, n: number): string[] => Array.from({ length: n }, (_, i) => `${laco}_${i + 1}`);
+const comAncoras = (id: string, ancoras: NonNullable<EntradaDeAsset['ancoras']>): EntradaDeAsset => ({
+  ...entradaSintetica(id, { completo: `sprites/${id}/completo.png` }), ancoras,
+});
+
+describe('F-VIVO-0 — o manifesto aceita o predio vivo', () => {
+  it('o manifesto real passa nas regras novas', () => {
+    const camadas = manifesto.assets.filter((e): e is EntradaDeCamada => !ehEntradaDePredio(e));
+    expect(camadas.flatMap((e) => violacoesDaCamadaViva(e, contexto))).toEqual([]);
+    expect(predios.flatMap((e) => violacoesDasAncoras(e, contexto))).toEqual([]);
+  });
+
+  it('a tabela de casos concorda com o dado: todo predio com receita num caso so', () => {
+    expect(violacoesDosCasos(contexto)).toEqual([]);
+    expect(Object.keys(CASO_DO_PREDIO).sort()).toEqual(Object.keys(contexto.receitas).sort());
+    // e o guarda acusa: uma mina que deixasse de colher de dentro
+    const mina = contexto.receitas['gold_mine'];
+    expect(mina).toBeDefined();
+    const semLuz: ContextoDasCamadas = {
+      ...contexto, receitas: { ...contexto.receitas, gold_mine: { ...mina!, colheita: { aDistancia: false } } },
+    };
+    expect(violacoesDosCasos(semLuz).join(' | ')).toMatch(/gold_mine.*aDistancia/);
+  });
+
+  it('entradas completas dos tres tipos passam', () => {
+    const boas = [
+      camadaSintetica('pilha', 'stone', ['unidade']),
+      camadaSintetica('animal', 'pigs', [...quadros('idade1', 4), ...quadros('idade2', 4), ...quadros('idade3', 4)]),
+      camadaSintetica('trabalho', 'quarry', [...quadros('inicio', 8), ...quadros('meio', 8), ...quadros('fim', 8)]),
+      camadaSintetica('trabalho', 'sawmill', [...quadros('laco1', 8), ...quadros('laco2', 8)]),
+      camadaSintetica('trabalho', 'gold_mine', quadros('luz', 4)),
+      camadaSintetica('trabalho', 'fumaca', quadros('fumaca', 8)),
+      // arte em parte: um laco inteiro de dois vale; o outro fica placeholder
+      camadaSintetica('trabalho', 'bakery', quadros('laco1', 8)),
+    ];
+    expect(boas.flatMap((e) => violacoesDaCamadaViva(e, contexto))).toEqual([]);
+  });
+
+  it('cada regra dos tres tipos acusa', () => {
+    const acusa = (e: EntradaDeCamada, padrao: RegExp): void => {
+      expect(violacoesDaCamadaViva(e, contexto).join(' | '), `${e.tipo} ${e.id}`).toMatch(padrao);
+    };
+    acusa(camadaSintetica('pilha', 'arma_madeira', ['unidade']), /nao e mercadoria/);
+    acusa(camadaSintetica('pilha', 'stone', ['unidade', 'pilha5']), /unico estado/);
+    acusa(camadaSintetica('animal', 'corn', quadros('idade1', 4)), /nao e o animal/);
+    acusa(camadaSintetica('animal', 'horses', quadros('idade1', 3)), /idade1.*3 de 4/);
+    acusa(camadaSintetica('animal', 'horses', ['idade4_1']), /idade4_1/);
+    acusa(camadaSintetica('trabalho', 'storehouse', quadros('laco1', 8)), /nem 'fumaca'/);
+    acusa(camadaSintetica('trabalho', 'farm', quadros('laco1', 8)), /caso 1/);
+    acusa(camadaSintetica('trabalho', 'sawmill', quadros('luz', 4)), /luz_1/);
+    acusa(camadaSintetica('trabalho', 'gold_mine', quadros('luz', 8)), /luz_5/);
+    acusa(camadaSintetica('trabalho', 'quarry', [...quadros('inicio', 8), ...quadros('meio', 6)]), /meio.*6 de 8/);
+  });
+
+  it('ancoras completas passam, e predio sem ancoras nao tem regra', () => {
+    const pedreira = comAncoras('quarry', {
+      trabalho: { area: [0.3, 0.45, 0.6, 0.75], fumaca: [0.72, 0.1] },
+      estoque: { entrada: [], saida: [[0.8, 0.92]] },
+      obra: Object.fromEntries((contexto.materiaisDaObra['quarry'] ?? []).map((m, i) => [m, [0.1 + i * 0.1, 0.95] as const])),
+    });
+    const malhada = comAncoras('swine_farm', {
+      trabalho: { area: [0.3, 0.2, 0.6, 0.5] },
+      estoque: { entrada: [[0.1, 0.9]], saida: [[0.8, 0.9], [0.9, 0.9]] },
+      curral: [[0.2, 0.7], [0.35, 0.75], [0.5, 0.72], [0.65, 0.76], [0.8, 0.7]],
+    });
+    const quatro = [[0.1, 0.9], [0.3, 0.9], [0.6, 0.9], [0.8, 0.9]] as const;
+    const armazem = comAncoras('storehouse', { estoque: { entrada: quatro } });
+    const bodega = comAncoras('inn', { estoque: { entrada: quatro } });
+    const roca = comAncoras('farm', { trabalho: { fumaca: [0.5, 0.1] }, estoque: { saida: [[0.8, 0.9]] } });
+    for (const e of [pedreira, malhada, armazem, bodega, roca]) expect(violacoesDasAncoras(e, contexto), e.id).toEqual([]);
+    expect(violacoesDasAncoras(entradaSintetica('quarry', { completo: 'x.png' }), contexto)).toEqual([]);
+    expect(Object.keys(ANIMAL_DA_CRIACAO).sort()).toEqual(['stables', 'swine_farm']);
+  });
+
+  it('cada regra das ancoras acusa', () => {
+    const acusa = (e: EntradaDeAsset, padrao: RegExp): void => {
+      expect(violacoesDasAncoras(e, contexto).join(' | '), e.id).toMatch(padrao);
+    };
+    acusa(comAncoras('sawmill', { trabalho: { area: [0.3, 0.45, 1.2, 0.75] } }), /fracoes de 0 a 1/);
+    acusa(comAncoras('sawmill', { trabalho: { area: [0.6, 0.45, 0.3, 0.75] } }), /x0 < x1/);
+    acusa(comAncoras('farm', { trabalho: { area: [0.3, 0.45, 0.6, 0.75] } }), /sem animacao dentro/);
+    acusa(comAncoras('sawmill', { trabalho: { fumaca: [0.5, -0.1] } }), /trabalho.fumaca nao e ponto/);
+    acusa(comAncoras('sawmill', { estoque: { entrada: [[0.1, 0.9], [0.2, 0.9]], saida: [[0.8, 0.9]] } }), /entrada tem 2.*pede 1/);
+    acusa(comAncoras('storehouse', { estoque: { entrada: [[0.1, 0.9]] } }), /entrada tem 1.*pede 4/);
+    acusa(comAncoras('inn', { estoque: { entrada: [[0.1, 0.9], [0.2, 0.9], [0.3, 0.9], [0.4, 0.9]], saida: [[0.8, 0.9]] } }), /saida tem 1.*pede 0/);
+    acusa(comAncoras('barracks', { estoque: { entrada: [] } }), /nao guarda mercadoria/);
+    acusa(comAncoras('sawmill', { curral: [[0.1, 0.1], [0.2, 0.1], [0.3, 0.1], [0.4, 0.1], [0.5, 0.1]] }), /curral fora da criacao/);
+    acusa(comAncoras('stables', { curral: [[0.1, 0.1], [0.2, 0.1]] }), /2 pontos, precisa de 5/);
+    acusa(comAncoras('sawmill', { obra: { timber: [0.1, 0.9] } }), /o custo pede/);
+    acusa(comAncoras('sawmill', {
+      trabalho: { area: [0.3, 0.45, 0.6, 0.75] }, estoque: { entrada: [[0.4, 0.5]], saida: [[0.8, 0.9]] },
+    }), /entrada\[0\] cai dentro de trabalho.area/);
   });
 });

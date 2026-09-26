@@ -14,6 +14,7 @@ import type { MotivoDeRecusaDeCampo } from './campos';
 import type { MotivoDeLiberacao } from './jobs';
 import type { MotivoDeRecusaDeTreino } from './escola';
 import type { MotivoDeRecusaDePausa } from './pausa';
+import type { MotivoDeRecusaDeCota } from './cota';
 // F-T2a: a camada de recurso nasce do MAPA, e quem sabe ler o mapa e
 // `sim/recursos.ts`. Import de valor (nao de tipo) e o unico deste arquivo alem
 // do RNG e do dado — `createInitialState` e o lugar certo para ele.
@@ -84,6 +85,13 @@ export type GameEvent =
       readonly command: 'SetBuildingPaused';
       readonly predio: string;
       readonly motivo: MotivoDeRecusaDePausa;
+    }
+  | {
+      /** F24a — `SetProductionQuota` recusado; o estado nao mudou. */
+      readonly type: 'command-rejected';
+      readonly command: 'SetProductionQuota';
+      readonly predio: string;
+      readonly motivo: MotivoDeRecusaDeCota;
     }
   | {
       /**
@@ -320,6 +328,23 @@ export interface Producao {
    *  colhe o que nao plantou: quando nao ha tile maduro ao alcance mas ha terra
    *  livre, o roceiro ara e semeia, e so depois volta a colher. */
   readonly plantio: Plantio | null;
+  /** F24a — so no predio cuja receita `escolheSaida` (as tres oficinas de arma);
+   *  AUSENTE nos outros, nunca `undefined` — a convencao de `DadosDaFsm`. Quem
+   *  reconstroi `Producao` espalha a anterior para nao perder o rodizio. */
+  readonly escolha?: EscolhaDeSaida;
+}
+
+/**
+ * F24a — qual saida o proximo ciclo entrega (GDD §2.3, "quantas de cada arma
+ * produzir"). A cota e PESO, nao encomenda que se esgota: o rodizio expandido e
+ * cada saida repetida `cota[m]` vezes, na ordem de `economia.mercadorias`, e o
+ * ciclo que deposita entrega a posicao `proxima`. Deterministico e sem RNG.
+ */
+export interface EscolhaDeSaida {
+  /** Peso de cada saida da receita; inteiro >= 0, e pelo menos um positivo. */
+  readonly cota: Readonly<Record<string, number>>;
+  /** Posicao no rodizio expandido, de 0 ate o tamanho dele menos 1. */
+  readonly proxima: number;
 }
 
 /**
@@ -1148,7 +1173,13 @@ function producaoParaTipo(tipoId: string, dados: GameData): Producao | null {
   // F-T2a: nao ha mais nada para semear alem do relogio. O que o predio tem para
   // colher nao nasce com ele — esta no mapa desde o tick 0 e continua la depois
   // que ele for demolido.
-  return receita === undefined ? null : { progresso: 0, plantio: null };
+  if (receita === undefined) return null;
+  // F24a — a oficina que escolhe a saida nasce no rodizio: cota 1 para cada uma,
+  // na ordem de `economia.mercadorias`. O 1 nao e balanceamento, e "todas iguais".
+  if (!receita.escolheSaida) return { progresso: 0, plantio: null };
+  const cota: Record<string, number> = {};
+  for (const m of dados.economia.mercadorias) if (m in receita.sai) cota[m] = 1;
+  return { progresso: 0, plantio: null, escolha: { cota, proxima: 0 } };
 }
 
 function estoqueParaTipo(

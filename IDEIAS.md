@@ -86,29 +86,8 @@ caminho. Ideia boa é justamente a mais perigosa.
   da F18a se aplica sozinho. **Nenhum comando novo, nada em `sim/`**: a sim não sabe onde está a
   câmera e não pode saber. O que falta decidir quando entrar: com uma causa em vários prédios,
   um clique leva a qual, e o segundo clique leva ao próximo ou repete o primeiro.
-- Separar as armas genéricas nas seis do GDD — **pré-requisito da Fase C**
-  (decisão do operador, 2026-09-24). Não é nome de tema faltando: é **dado
-  incompleto**. Três ids agregados (`arma_madeira`, `arma_ferro`,
-  `armadura_ferro`) existem em **um único lugar**, `data/production.json:22,24,25`,
-  e as próprias `notas` de lá dizem o que eles escondem — *"jogador escolhe
-  hand_axe, lance ou longbow"*, *"sword, pike ou crossbow"*, *"iron_armor ou
-  iron_shield"*. O GDD §4.1 lista as seis armas como mercadoria (Hand axes,
-  Swords, Lances, Pikes, Longbows, Crossbows), e o **Anexo A §12.1** diz qual
-  tropa exige qual: Bowman pede `longbow + leather_armor`, Pikeman pede
-  `pike + iron_armor`, e assim por diante. A Fase A não precisou distinguir
-  porque ninguém consome arma ainda; o **Quartel consumindo arma específica por
-  tropa** é o que torna o agregado insustentável, e isso é Fase C.
-  **O que medi hoje**, e que dimensiona o trabalho: os três ids **não estão em
-  `economia.mercadorias`** — a lista tem 28 ids e bate exatamente com o tema.
-  Sem entrada lá eles não têm estoque, não têm linha de HUD e não viram linha de
-  painel: a gaveta (`src/sim/selectors.ts:409`) itera `economia.mercadorias`, e
-  saída fora da lista simplesmente **não aparece** — a Casa de Armas de Madeira
-  mostra "Sai: —", não um id cru. Então separar não é só trocar três ids por
-  seis: é **declarar as seis (mais as armaduras) em `economy.json`**, e aí cada
-  uma ganha estoque, ordem no painel e o botão de "quantas de cada" que o GDD
-  §2.3 pede em `[geral]` para as oficinas. Até lá os três ids têm nome
-  provisório no tema (Arma de madeira, Arma de ferro, Proteção reforçada), pelo
-  mesmo motivo de sempre: se um dia chegarem à tela, chegam com nome.
+- ~~Separar as armas genéricas nas seis do GDD~~ — **virou o item F24a do `BUILD_PLAN.md`**
+  (decisão do operador, 2026-09-26). A medida que estava aqui foi para a nota do item.
 - Painel do prédio dizer **"está no campo"** quando o especialista sai — **fora da F-T3 por
   decisão do operador (2026-09-24)**, com a razão dele: *"o jogador vê o pedreiro andando no
   mapa, que é o lugar mais forte"*. O painel continua lendo só `predio.ocupante`
@@ -170,3 +149,24 @@ caminho. Ideia boa é justamente a mais perigosa.
   compilação (`sim/data/loader.ts:384`) e nenhum leitor forçado — o preço nunca
   foi técnico. **Não é pendência**: fica aqui com o número, e só volta se a vazão
   da comida for consertada e o sintoma continuar.
+- **A prévia de alcance da fazenda distingue o lado da porta** (decisão do operador na
+  F-CAL-b2, registrada em 2026-09-26). Com a regra atual, o campo colado à porta dá um milho
+  a cada 143 ticks e sustenta 1,72 moinho. Um tile atrás do Roçado, o roceiro contorna o
+  footprint, e o milho sai a cada 299 ticks. No alcance máximo sai a cada 346 ticks, e o
+  moinho fica 22,5 % esperando (tabela em `BUILD_PLAN.md`, F-CAL-b2). A diferença de 2,4×
+  vem do lado em que o campo está, não da distância. Hoje a prévia pinta o alcance todo da
+  mesma cor. A ideia é o jogador ver, antes de arar, que o lado da porta rende mais. É
+  coisa de render e UI: a sim já tem a regra, e `alvosDeAproximacao` deixa colher do tile
+  da porta.
+- **Tela cheia** (decisão do operador, 2026-09-26, na proposta da barra lateral única,
+  `docs/propostas/barra-lateral-unica.md`). O KaM roda em tela cheia; nós rodamos numa
+  aba, e a barra do navegador come altura.
+  - **O conflito:** na Fullscreen API, `Esc` sai da tela cheia, e a página não consegue
+    impedir. A exceção é a Keyboard Lock, que só existe no Chromium.
+  - No jogo, `Esc` é o cancelar: solta a ferramenta e fecha o painel.
+  - O operador decidiu manter o `Esc` do jogo e **não usar a API**. O navegador ganha
+    essa briga, e trocar o atalho de cancelar por causa dela seria a interface
+    obedecendo ao container.
+  - O F11 do próprio navegador continua funcionando sem código nosso. O Phaser em
+    `Scale.RESIZE` acompanha a troca de tamanho.
+  - Só volta com uma saída para o conflito do `Esc`.

@@ -13,6 +13,7 @@ import { chaveDeTile, tilesDaPorta } from '../../src/sim/estradas';
 import type { TileDeGrid } from '../../src/sim/estradas';
 import { alvoDeNivelamento } from '../../src/sim/obra';
 import { tileAndavel } from '../../src/sim/pathfinding';
+import { linhaHDe, linhaVDe, naVila } from './ancoras';
 
 export const inicial = createInitialState(1);
 
@@ -156,8 +157,8 @@ export function comTarefas(estado: GameState, tarefas: readonly Tarefa[]): GameS
  * (29,33) a porta da obra (28,36). Sem nenhuma tarefa.
  */
 export function cenarioLigado(faltam: Record<string, number> = { stone: 2, timber: 3 }): GameState {
-  const comObraA = comObra(inicial, 'obra-a', { gx: 26, gy: 34, faltam });
-  return comEstradas(comObraA, [tile(29, 33), tile(29, 34), tile(29, 35), tile(29, 36), tile(28, 36)]);
+  const comObraA = comObra(inicial, 'obra-a', { ...naVila(-3, 4), faltam });
+  return comEstradas(comObraA, [naVila(0, 3), naVila(0, 4), naVila(0, 5), naVila(0, 6), naVila(-1, 6)]);
 }
 
 /** Um armazem completo a mais, com a pedra e a tabua dadas na saida. */
@@ -248,19 +249,19 @@ export function semAUnidade(estado: GameState, id: string): GameState {
  * estrada quase reta. Em linha reta a PERTO ganha; pelo caminho a pe, a LONGE.
  */
 export function cenarioDeVolta(): GameState {
-  let estado = comObra(inicial, 'perto', { gx: 29, gy: 34, faltam: { stone: 1 } }); // porta y=36, x 29..31
-  estado = comObra(estado, 'longe', { gx: 28, gy: 45, faltam: { stone: 1 } }); // porta y=47, x 28..30
+  let estado = comObra(inicial, 'perto', { ...naVila(0, 4), faltam: { stone: 1 } }); // porta y=36, x 29..31
+  estado = comObra(estado, 'longe', { ...naVila(-1, 15), faltam: { stone: 1 } }); // porta y=47, x 28..30
   const voltaGrande = [
-    ...linhaH(29, 40, 33), ...linhaV(40, 34, 36), ...linhaH(31, 39, 36), // porta (31,36) so por aqui
+    ...linhaHDe(naVila, 0, 11, 3), ...linhaVDe(naVila, 11, 4, 6), ...linhaHDe(naVila, 2, 10, 6), // porta (31,36) so por aqui
   ];
-  const retaQuase = [tile(28, 33), tile(27, 33), ...linhaV(27, 34, 47), tile(28, 47)];
+  const retaQuase = [naVila(-1, 3), naVila(-2, 3), ...linhaVDe(naVila, -2, 4, 17), naVila(-1, 17)];
   return comEstradas(estado, [...voltaGrande, ...retaQuase]);
 }
 
-/** A diagonal de `n` tiles que sai de (x0, y0) indo para sudeste. A estrada liga
+/** A diagonal de `n` tiles que sai do tile dado indo para sudeste. A estrada liga
  *  em 8 direcoes desde a F18e, entao uma rua diagonal e uma rua de verdade. */
-const linhaD = (x0: number, y0: number, n: number): TileDeGrid[] =>
-  Array.from({ length: n }, (_, i) => tile(x0 + i, y0 + i));
+const linhaD = ({ gx, gy }: TileDeGrid, n: number): TileDeGrid[] =>
+  Array.from({ length: n }, (_, i) => tile(gx + i, gy + i));
 
 /**
  * F18d-1a — a armadilha da reta, agora na rede LIVRE. Entregar material em obra
@@ -277,12 +278,12 @@ const linhaD = (x0: number, y0: number, n: number): TileDeGrid[] =>
  * valendo para os niveis que exigem rua.
  */
 export function cenarioDaRuaMaisBarata(): GameState {
-  let estado = comObra(inicial, 'perto', { gx: 10, gy: 60, faltam: { stone: 1 } }); // porta y=62, x 10..12
-  estado = comObra(estado, 'longe', { gx: 60, gy: 60, faltam: { stone: 1 } });      // porta y=62, x 60..62
+  let estado = comObra(inicial, 'perto', { ...naVila(-19, 30), faltam: { stone: 1 } }); // porta y=62, x 10..12
+  estado = comObra(estado, 'longe', { ...naVila(31, 30), faltam: { stone: 1 } });      // porta y=62, x 60..62
   const ruaAteALonge = [
-    tile(31, 33),               // uma porta do armazem, para a rua tambem ligar na rede de estradas
-    ...linhaD(32, 34, 28),      // (32,34) ate (59,61)
-    tile(59, 62), tile(60, 62), // entra na porta de lado: a diagonal cortaria a quina do predio (F18e)
+    naVila(2, 3),               // uma porta do armazem, para a rua tambem ligar na rede de estradas
+    ...linhaD(naVila(3, 4), 28),      // (32,34) ate (59,61)
+    naVila(30, 32), naVila(31, 32), // entra na porta de lado: a diagonal cortaria a quina do predio (F18e)
   ];
   return comEstradas(estado, ruaAteALonge);
 }

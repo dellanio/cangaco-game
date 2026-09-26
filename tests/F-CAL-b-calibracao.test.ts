@@ -19,6 +19,13 @@
  * gravadas na evidencia, e as DUAS assercoes que passam em qualquer saida de
  * balanceamento. As de (a) e (c) sao a F-CAL-b2, depois da decisao.
  *
+ * F-CAL-b2 (2026-09-26): a decisao chegou — (b) vale para o campo do LADO DA PORTA,
+ * `farm.sai.corn` fica 3.0. (a) virou "do lado da porta a fazenda sustenta o
+ * moinho" (intervalo <= ciclo; a sobra e recompensa por posicionar bem) e ganhou
+ * assercao sobre esta mesma corrida, que e a do campo colado a porta. (c) deixou de
+ * ser teto: a sobra do lado da porta e recompensa, e o limite longe da porta e medida
+ * de sonda (tabela das tres geometrias em BUILD_PLAN.md, F-CAL-b2).
+ *
  * Os limites 10 % e 24 000 / 36 000 sao os do criterio escrito; o ciclo do moinho
  * vem do dado (`receitas.mill.ticksDoCiclo`), nunca de 246 digitado.
  */
@@ -38,8 +45,6 @@ const JANELA_ABC = 24_000;
 const JANELA_D = 36_000;
 /** O limite de (b), do criterio escrito. */
 const TETO_DE_ESPERA = 0.10;
-/** O limite de (a), do criterio escrito: +-10 % do ciclo do moinho. */
-const TOLERANCIA_A = 0.10;
 /** Depois deste tick a sonda nao viu mais nenhum tick de `esperando_insumo`: e o regime. */
 const INICIO_DO_REGIME = 12_000;
 
@@ -194,6 +199,7 @@ const fracaoDeEspera = (o: Ocupacao): number =>
 describe('F-CAL-b1 — a calibracao medida na abertura', () => {
   let m: Medicao;
   const cicloDoMoinho = gameData.producao.receitas.mill?.ticksDoCiclo ?? Number.NaN;
+  let intervaloMedioAte24k = Number.NaN;
 
   beforeAll(() => {
     m = correr();
@@ -202,9 +208,10 @@ describe('F-CAL-b1 — a calibracao medida na abertura', () => {
     const noRegime = intervalos.filter((_, k) => (m.milhosProduzidosEm[k + 1] ?? 0) > INICIO_DO_REGIME);
     const intervaloAte24k = media(intervalos.filter((_, k) => (m.milhosProduzidosEm[k + 1] ?? 0) <= JANELA_ABC));
     const desvioDoCiclo = Math.abs(intervaloAte24k - cicloDoMoinho) / cicloDoMoinho;
+    intervaloMedioAte24k = intervaloAte24k;
 
     gravarEvidencia('F-CAL', {
-      feature: 'F-CAL-b1 — a calibracao medida na abertura (as quatro medidas; asserido: b e d)',
+      feature: 'F-CAL-b1/b2 — a calibracao medida na abertura (as quatro medidas; asserido: a, b e d)',
       semente: gameData.economia.estadoInicial.semente,
       janelas: { abc: JANELA_ABC, d: JANELA_D },
       cicloDoMoinho,
@@ -216,13 +223,12 @@ describe('F-CAL-b1 — a calibracao medida na abertura', () => {
       },
       afirmacoes: {
         a: {
-          criterio: `intervalo de entrega da fazenda dentro de +-${TOLERANCIA_A * 100}% do ciclo do moinho`,
+          criterio: 'campo do lado da porta: a fazenda sustenta o moinho (intervalo medio ate 24 000 <= ciclo do moinho)',
           intervaloMedioAte24k: intervaloAte24k,
           intervaloMedioNoRegime: media(noRegime),
           desvioDoCiclo: +desvioDoCiclo.toFixed(3),
-          passa: desvioDoCiclo <= TOLERANCIA_A,
-          asserido: false,
-          porQue: 'balanceamento pendente do operador — F-CAL-b2',
+          passa: intervaloAte24k <= cicloDoMoinho,
+          asserido: true,
         },
         b: {
           criterio: `moinho e padaria abaixo de ${TETO_DE_ESPERA * 100}% dos ticks em esperando_insumo (ate ${JANELA_ABC})`,
@@ -238,7 +244,7 @@ describe('F-CAL-b1 — a calibracao medida na abertura', () => {
           cornACada1000: m.cornACada1000,
           passa: m.cornMaxAte24k <= 1,
           asserido: false,
-          porQue: 'balanceamento pendente do operador — F-CAL-b2',
+          porQue: 'F-CAL-b2: o teto saiu do criterio — do lado da porta a sobra e recompensa; longe dela e medida de sonda',
         },
         d: {
           criterio: `civis da abertura + os que ${m.ouroInicial} de ouro treinam, zero morte de fome em ${JANELA_D}`,
@@ -286,6 +292,14 @@ describe('F-CAL-b1 — a calibracao medida na abertura', () => {
   it('(d) com os civis da abertura mais os que 20 de ouro treinam, ninguem morre de fome em 36 000 ticks', () => {
     expect(m.mortes).toEqual([]);
     expect(m.unidadesNoFim).toBe(m.unidadesNoInicio + m.ouroInicial);
+  });
+
+  it('(a) F-CAL-b2: com o campo do lado da porta, a fazenda entrega ao menos um milho por ciclo do moinho', () => {
+    // A decisao do operador: a sobra do lado da porta e recompensa, entao o teto e o
+    // ciclo, sem piso. Com o campo atras a fazenda NAO sustenta (346 ticks por milho,
+    // tabela em BUILD_PLAN.md) — e isso e aceito, nao afirmado aqui.
+    expect(Number.isFinite(intervaloMedioAte24k)).toBe(true);
+    expect(intervaloMedioAte24k).toBeLessThanOrEqual(cicloDoMoinho);
   });
 
   it('a fazenda entregou milho durante a corrida inteira (a medida de (a) e (c) nao e de uma vila parada)', () => {

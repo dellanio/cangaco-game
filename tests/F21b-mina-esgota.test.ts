@@ -43,7 +43,6 @@ import {
   recursoNoTile, regimeDoTipo, tilesDeColheita, tilesDeColheitaNaCaixa,
 } from '../src/sim/recursos';
 import { tileAlcancavelParaColheita } from '../src/sim/aproximacao';
-import { tileAndavel } from '../src/sim/pathfinding';
 import { registrarTipoConstruido } from '../src/sim/desbloqueio';
 import { alertasDoEstado, painelDoPredio } from '../src/sim/selectors';
 import { criarRecursosDeRender } from '../src/render/mapa';
@@ -378,14 +377,16 @@ describe('F21b — (7) todo recurso tem cor e nome no tema', () => {
 });
 
 /**
- * (8) F21b — O MINEIRO ANDA ATE O VEIO. Pedido do operador em 2026-09-25: a
- * terceira feature da ordem dele era "os tres mineiros herdam caminhada", e ela
- * se dissolveu nesta aqui — declarar `colheita` fez a regra de classe agir. Isso
- * so pode ser riscado com o mineiro medido ANDANDO, nao com a mina produzindo:
- * producao com o especialista parado dentro do predio e exatamente o defeito que
- * a F-T3 corrigiu, e voltaria sem ninguem perceber.
+ * (8) O MINEIRO NAO ANDA ATE O VEIO. Ate 2026-09-26 esta secao afirmava o
+ * contrario (pedido do operador de 2026-09-25: "os tres mineiros herdam
+ * caminhada"). O operador reverteu em 2026-09-26: a mina declara
+ * `colheita.aDistancia: true` e o mineiro fica DENTRO, como no jogo original —
+ * mas a mina CONTINUA com `colheita`, porque e ela que da o esgotamento, o alerta
+ * e a previa de alcance. O que se afirma e as duas metades juntas: ninguem sai, e
+ * o veio perde exatamente o que o ciclo entregou. E (e) prova que quem decide e o
+ * DADO: a mesma fixture com a bandeira desligada volta a andar.
  */
-describe('F21b — (8) o mineiro sai do predio e colhe da beirada do veio', () => {
+describe('F21b — (8) o mineiro colhe o veio sem sair do predio (`aDistancia`)', () => {
   interface PassoDaMina {
     readonly tick: number; readonly fsm: string; readonly gx: number; readonly gy: number;
     readonly veio: string | null;
@@ -393,23 +394,26 @@ describe('F21b — (8) o mineiro sai do predio e colhe da beirada do veio', () =
 
   /** Roda ate a gaveta `saida` subir, um registro por tick. */
   function trilhaDaMina(
-    inicial: GameState, predioId: string, unidadeId: string, mercadoria: string, limite = 900,
+    inicial: GameState, predioId: string, unidadeId: string, mercadoria: string,
+    dados: GameData = gameData, limite = 900,
   ): { trilha: PassoDaMina[]; fim: GameState } {
     const trilha: PassoDaMina[] = [];
     let estado = inicial;
     const saida0 = saidaDe(estado, predioId)[mercadoria] ?? 0;
     for (let tick = 1; tick <= limite; tick += 1) {
-      estado = step(estado, [], gameData);
+      estado = step(estado, [], dados);
       const u = estado.unidades.porId[unidadeId];
       if (u === undefined) throw new Error(`fixture: '${unidadeId}' sumiu no tick ${tick}`);
-      const tarefaId = u.fsmData.tarefa ?? null;
-      const tarefa = tarefaId === null ? undefined : estado.jobs.tarefas.porId[tarefaId];
+      // a posse mora no QUADRO (`reclamadaPor`), nao no `fsmData`: dentro do predio
+      // o mineiro segura a tarefa sem carrega-la na FSM
+      const tarefa = Object.values(estado.jobs.tarefas.porId)
+        .find((t) => t.tipo === 'colher' && t.estado === 'reclamada' && t.reclamadaPor === unidadeId);
       const veio = tarefa !== undefined && tarefa.tipo === 'colher' ? tarefa.origemTile : null;
       trilha.push({
         tick, fsm: u.fsm, gx: u.gx, gy: u.gy, veio: veio === null ? null : chaveDeTile(veio),
       });
-      expect(violacoesDaFsmDoEspecialista(estado, gameData), `tick ${tick}`).toEqual([]);
-      expect(violacoesDeInvariantes(estado, gameData), `tick ${tick}`).toEqual([]);
+      expect(violacoesDaFsmDoEspecialista(estado, dados), `tick ${tick}`).toEqual([]);
+      expect(violacoesDeInvariantes(estado, dados), `tick ${tick}`).toEqual([]);
       if ((saidaDe(estado, predioId)[mercadoria] ?? 0) > saida0) return { trilha, fim: estado };
     }
     throw new Error(`o ciclo de '${predioId}' nao fechou em ${limite} ticks`);
@@ -425,53 +429,72 @@ describe('F21b — (8) o mineiro sai do predio e colhe da beirada do veio', () =
     return Math.max(dx, dy);
   }
 
-  const cheb = (a: { gx: number; gy: number }, b: { gx: number; gy: number }): number =>
-    Math.max(Math.abs(a.gx - b.gx), Math.abs(a.gy - b.gy));
+  /** O mesmo dado, com a bandeira da mina de ouro desligada. */
+  function semADistancia(dados: GameData): GameData {
+    const receita = dados.producao.receitas['gold_mine'];
+    if (receita === undefined || receita.colheita === null) throw new Error('fixture: gold_mine sem colheita');
+    return {
+      ...dados,
+      producao: {
+        ...dados.producao,
+        receitas: {
+          ...dados.producao.receitas,
+          gold_mine: { ...receita, colheita: { ...receita.colheita, aDistancia: false } },
+        },
+      },
+    };
+  }
 
-  // o mineiro do OURO: e o que anda de verdade neste cenario (o veio do carvao
-  // encosta na mina). A afirmacao (d) abaixo guarda essa premissa da fixture.
+  // o mineiro do OURO: o veio dele NAO encosta na mina (afirmado em (d)), entao a
+  // regra antiga o faria andar — e o caso que distingue as duas regras.
   const inicial = comEspacoNaSaida(cenarioDaCadeiaDoOuro(gameData), 'go1');
   const { trilha, fim } = trilhaDaMina(inicial, 'go1', 'mineiro-ouro', 'gold_ore');
-  const colhendo = trilha.filter((p) => p.fsm === 'colhendo');
+  const partida = inicial.unidades.porId['mineiro-ouro'];
+  const comVeio = trilha.filter((p) => p.veio !== null);
 
-  it('(a) sai, colhe e volta, e nunca salta mais de um tile por tick', () => {
-    const sequencia: string[] = [];
-    for (const p of trilha) if (p.fsm !== sequencia[sequencia.length - 1]) sequencia.push(p.fsm);
-    expect(sequencia).toEqual(['indo_colher', 'colhendo', 'voltando', 'trabalhando']);
-    const partida = inicial.unidades.porId['mineiro-ouro'];
+  it('a bandeira esta no dado das tres minas', () => {
+    for (const minerio of MINERIOS) {
+      expect(colheitaDaMina(minerio).aDistancia, minerio).toBe(true);
+    }
+  });
+
+  it('(a) o ciclo inteiro e `trabalhando`, sem sair do lugar', () => {
     if (partida === undefined) throw new Error('fixture: mineiro-ouro nao existe');
-    let anterior = { gx: partida.gx, gy: partida.gy };
+    expect([...new Set(trilha.map((p) => p.fsm))]).toEqual(['trabalhando']);
     for (const p of trilha) {
-      expect(cheb(anterior, p), `tick ${p.tick}`).toBeLessThanOrEqual(1);
-      anterior = { gx: p.gx, gy: p.gy };
+      expect({ gx: p.gx, gy: p.gy }, `tick ${p.tick}`).toEqual({ gx: partida.gx, gy: partida.gy });
     }
   });
 
-  it('(b) colhe DE FORA do predio, encostado no veio, de tile que se pisa', () => {
-    expect(colhendo.length).toBeGreaterThan(0);
-    for (const p of colhendo) {
-      expect(p.veio, `tick ${p.tick}`).not.toBeNull();
-      const veio = tileDeChave(p.veio ?? '0,0');
-      expect(cheb(p, veio), `tick ${p.tick}`).toBe(1);
-      expect(doFootprint(fim, 'go1', p), `tick ${p.tick}`).toBeGreaterThan(0);
-      expect(tileAndavel(fim, { gx: p.gx, gy: p.gy }, 'livre', gameData), `tick ${p.tick}`).toBe(true);
-      // e o que da sentido as duas de cima: o veio NAO se pisa (serra)
-      expect(tileAndavel(fim, veio, 'livre', gameData), `tick ${p.tick}`).toBe(false);
-    }
+  it('(b) segura UM tile de veio o ciclo todo, e o deposito o larga', () => {
+    expect(comVeio.length).toBeGreaterThan(0);
+    expect(new Set(comVeio.map((p) => p.veio)).size).toBe(1);
+    // todo tick menos o do deposito segura a tarefa; o do deposito ja a removeu
+    expect(comVeio.length).toBe(trilha.length - 1);
+    expect(trilha[trilha.length - 1]?.veio).toBeNull();
   });
 
-  it('(c) ele foi ATE o veio: parou tao perto dele quanto a serra deixa', () => {
-    const p = colhendo[0];
-    if (p === undefined) throw new Error('trilha sem tick de colheita');
-    const veio = tileDeChave(p.veio ?? '0,0');
-    // o piso geometrico: quem encosta no veio esta a pelo menos (d - 1) da casa
-    expect(doFootprint(fim, 'go1', p)).toBeGreaterThanOrEqual(doFootprint(fim, 'go1', veio) - 1);
+  it('(c) o veio perde exatamente o que o ciclo entregou', () => {
+    const veio = tileDeChave(comVeio[0]?.veio ?? '0,0');
+    const receita = receitaDoTipo('gold_mine', gameData);
+    if (receita === null) throw new Error('fixture: gold_mine sem receita');
+    const antes = recursoNoTile(inicial, veio.gx, veio.gy)?.quantidade ?? 0;
+    const depois = recursoNoTile(fim, veio.gx, veio.gy)?.quantidade ?? 0;
+    expect(antes - depois).toBe(unidadesPorCiclo(receita));
+    expect(noChao(inicial, 'gold_ore') - noChao(fim, 'gold_ore')).toBe(unidadesPorCiclo(receita));
   });
 
-  it('(d) e a fixture continua exercitando CAMINHADA: o veio nao encosta na mina', () => {
-    const p = colhendo[0];
-    if (p === undefined) throw new Error('trilha sem tick de colheita');
-    // sem isto, (b) e (c) passariam com o mineiro saindo pela porta e voltando
-    expect(doFootprint(fim, 'go1', tileDeChave(p.veio ?? '0,0'))).toBeGreaterThan(1);
+  it('(d) premissa da fixture: o veio NAO encosta na mina', () => {
+    // sem isto, (a) passaria tambem com a regra antiga, por nao haver o que andar
+    expect(doFootprint(fim, 'go1', tileDeChave(comVeio[0]?.veio ?? '0,0'))).toBeGreaterThan(1);
+  });
+
+  it('(e) quem decide e o DADO: sem a bandeira, a mesma fixture volta a andar', () => {
+    const dados = semADistancia(gameData);
+    const outro = comEspacoNaSaida(cenarioDaCadeiaDoOuro(dados), 'go1');
+    const { trilha: andando } = trilhaDaMina(outro, 'go1', 'mineiro-ouro', 'gold_ore', dados);
+    const sequencia: string[] = [];
+    for (const p of andando) if (p.fsm !== sequencia[sequencia.length - 1]) sequencia.push(p.fsm);
+    expect(sequencia).toEqual(['indo_colher', 'colhendo', 'voltando', 'trabalhando']);
   });
 });

@@ -4,7 +4,12 @@
 //
 // A ordem que a F18d-1b instalou, vista da tela, no MESMO cenario:
 //   o arrasto DESENHA (canteiro sobe, pedra intacta) -> o laborer assenta (de pe
-//   sobe, canteiro desce) -> a pedra cai, uma vez so, no assentamento.
+//   sobe, canteiro desce) -> a pedra cai, uma vez so, pelo traçado inteiro.
+//
+// Desde a F18g (BUG-I, 2026-09-26) a pedra de cada tile sai do armazem na COLETA do
+// serf, nao no assentamento: ela viaja, fica parada no tile e o laborer a consome.
+// A conta do meio afirma essa regra — a pedra que saiu e a de pe, mais a parada no
+// canteiro, mais a que esta na mao de serf — e que ela ja saiu ANTES de assentar.
 //
 // A soma `de pe + planejados` e afirmada em TODO passo: e ela que impede um tile
 // de sumir entre os dois conjuntos sem ninguem notar. E a captura do passo 3 e o
@@ -87,7 +92,7 @@ async function roteiro(ctx) {
   );
   afirmar(
     (await pedraDoHud()) === String(pedraInicial),
-    `o comando reserva, nao gasta: a Pedra deveria seguir em ${pedraInicial}, veio ${await pedraDoHud()}`,
+    `o comando nao gasta: a Pedra deveria seguir em ${pedraInicial}, veio ${await pedraDoHud()}`,
   );
   await capturar('canteiro-desenhado');
 
@@ -106,10 +111,22 @@ async function roteiro(ctx) {
     + `${meio.dePe} de pe e ${meio.planejados} planejados`,
   );
   const pedraNoMeio = Number(await pedraDoHud());
+  const quadro = await estado();
+  const noCanteiro = quadro.pedraNoCanteiroNoEstado;
+  const naMao = quadro.unidadesRenderizadas.filter((u) => u.carga === 'stone').length;
+  const saiu = meio.dePe * custoPorTile + noCanteiro + naMao;
+  // neste cenario so a rua gasta pedra: toda pedra que falta no armazem esta numa das tres
   afirmar(
-    pedraNoMeio === pedraInicial - meio.dePe * custoPorTile,
-    `a pedra deveria ter caido so pelos ${meio.dePe} tiles assentados `
-    + `(${pedraInicial} - ${meio.dePe} x ${custoPorTile}), veio ${pedraNoMeio}`,
+    pedraNoMeio === pedraInicial - saiu,
+    `a pedra que saiu deveria ser a de pe + a parada no canteiro + a na mao de serf `
+    + `(${meio.dePe} x ${custoPorTile} + ${noCanteiro} + ${naMao} = ${saiu}), `
+    + `veio ${pedraInicial} - ${pedraNoMeio} = ${pedraInicial - pedraNoMeio}`,
+  );
+  // a regra da F18g, e nao so a conta: a pedra sai na coleta, antes de o tile subir
+  afirmar(
+    pedraNoMeio < pedraInicial - meio.dePe * custoPorTile,
+    `a pedra deveria ter saido do armazem antes de assentar (F18g): com ${meio.dePe} de pe `
+    + `veio ${pedraNoMeio}, que e so o assentado`,
   );
   await capturar('metade-erguida');
 

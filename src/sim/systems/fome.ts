@@ -43,7 +43,7 @@ import {
   caminhoAtePredioCompleto, liberar, reclamarMelhorComer, removerTarefa, tarefaReclamadaPor,
 } from '../jobs';
 import { predioDoOcupante } from '../ocupacao';
-import { tileAndavel } from '../pathfinding';
+import { passoAndavel } from '../pathfinding';
 import { andar, chegou, comPredio, comUnidade, dadosDaFsm, ficarOcioso, noTile } from '../units/movimento';
 import type { ResultadoDeSistema } from './jobs';
 
@@ -177,7 +177,7 @@ function passoIndoComer(state: GameState, u: Unidade, dados: GameData): Passo {
 
   let atual = u;
   const proximo = (u.fsmData.caminho ?? [])[0];
-  if (proximo !== undefined && !tileAndavel(state, proximo, 'livre', dados)) {
+  if (proximo !== undefined && !passoAndavel(state, noTile(u), proximo, 'livre', dados)) {
     // um prédio foi plantado no caminho: replaneja de onde está
     const caminho = caminhoAtePredioCompleto(state, tarefa.destino, u.id, dados);
     if (caminho === null) {

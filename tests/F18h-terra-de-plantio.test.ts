@@ -37,6 +37,7 @@ import { tipoDoTile } from '../src/sim/mapa';
 import { gravarEvidencia } from './helpers/evidence';
 import { cenarioDeFazendaSemCampo } from './helpers/producao-cenario';
 import { violacoesDeInvariantes } from './helpers/jobs-invariantes';
+import { ancoraDoLagoPequeno, ancoraDoLajedo, naVila, relativoA } from './helpers/ancoras';
 
 const RECEITA = receitaDoTipo('farm', gameData);
 if (RECEITA === null || RECEITA.colheita === null) {
@@ -122,7 +123,7 @@ const evidencia: Record<string, unknown> = {
 
 describe('F18h (a) — a fazenda que nao produzia passa a produzir, e o jogador e quem manda', () => {
   it('um PlowField sobre grama ao alcance tira o alerta `sem-campo` e entrega milho', () => {
-    const base = comLaborer(cenarioDeFazendaSemCampo(), 'obreiro', 30, 34, gameData);
+    const base = comLaborer(cenarioDeFazendaSemCampo(), 'obreiro', naVila(1, 4).gx, naVila(1, 4).gy, gameData);
     const alvos = gramaAoAlcanceDaFazenda(base).slice(0, 3);
     expect(alvos.length, 'grama livre ao alcance da fazenda').toBe(3);
 
@@ -176,7 +177,7 @@ describe('F18h (a) — a fazenda que nao produzia passa a produzir, e o jogador 
   });
 
   it('e o milho nasce em POUSIO, nao maduro: terra arada e por semear', () => {
-    const base = comLaborer(cenarioDeFazendaSemCampo(), 'obreiro', 30, 34, gameData);
+    const base = comLaborer(cenarioDeFazendaSemCampo(), 'obreiro', naVila(1, 4).gx, naVila(1, 4).gy, gameData);
     const alvo = gramaAoAlcanceDaFazenda(base)[0];
     if (alvo === undefined) throw new Error('fixture: sem grama ao alcance');
     let atual = step(base, [{ type: 'PlowField', recurso: GRAO, tiles: [alvo] }], gameData);
@@ -192,7 +193,7 @@ describe('F18h (a) — a fazenda que nao produzia passa a produzir, e o jogador 
 });
 
 describe('F18h (b) — as recusas e o caminho de volta', () => {
-  const base = () => comLaborer(cenarioDeFazendaSemCampo(), 'obreiro', 30, 34, gameData);
+  const base = () => comLaborer(cenarioDeFazendaSemCampo(), 'obreiro', naVila(1, 4).gx, naVila(1, 4).gy, gameData);
 
   it('cada recusa nomeia o motivo e NAO suja o canteiro', () => {
     const inicial = base();
@@ -200,15 +201,15 @@ describe('F18h (b) — as recusas e o caminho de volta', () => {
       // fora do mapa
       { motivo: 'fora-do-mapa', tiles: [tile(-1, 40)] },
       // terreno: a agua do acude do norte nao se ara
-      { motivo: 'terreno', tiles: [tile(33, 26)] },
+      { motivo: 'terreno', tiles: [relativoA(ancoraDoLagoPequeno())(5, 2)] },
       // recurso: o lajedo da vila ja tem pedra
-      { motivo: 'recurso', tiles: [tile(24, 31)] },
+      { motivo: 'recurso', tiles: [relativoA(ancoraDoLajedo())(2, 2)] },
       // sobreposicao: o footprint do armazem da vila
-      { motivo: 'sobreposicao', tiles: [tile(30, 31)] },
+      { motivo: 'sobreposicao', tiles: [naVila(1, 1)] },
       // estrada: a rua que liga a fazenda ao armazem
-      { motivo: 'estrada', tiles: [tile(31, 33)] },
+      { motivo: 'estrada', tiles: [naVila(2, 3)] },
       // cultura-desconhecida: nenhum tile chega a ser olhado
-      { motivo: 'cultura-desconhecida', tiles: [tile(26, 44)] },
+      { motivo: 'cultura-desconhecida', tiles: [naVila(-3, 14)] },
     ];
     const vistos: Record<string, unknown> = {};
     for (const caso of casos) {

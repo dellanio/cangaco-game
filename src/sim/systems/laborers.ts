@@ -41,8 +41,8 @@ import {
 } from '../jobs';
 import type { MotivoDeLiberacao } from '../jobs';
 import { alvoDeNivelamento, hpTotalDoTipo, obraNivelada, obraTrabalhavel, tetoDeHp } from '../obra';
-import { tileAndavel } from '../pathfinding';
-import { andar, chegou, comPredio, comUnidade, dadosDaFsm, ficarOcioso, ocioso } from '../units/movimento';
+import { passoAndavel } from '../pathfinding';
+import { andar, chegou, comPredio, comUnidade, dadosDaFsm, ficarOcioso, noTile, ocioso } from '../units/movimento';
 import { ehEstadoDeFome } from '../condicao';
 import type { ResultadoDeSistema } from './jobs';
 
@@ -105,7 +105,7 @@ function avancar(
 ): { readonly u: Unidade; readonly chegou: boolean } | null {
   let atual = u;
   const proximo = (u.fsmData.caminho ?? [])[0];
-  if (proximo !== undefined && !tileAndavel(state, proximo, 'livre', dados)) {
+  if (proximo !== undefined && !passoAndavel(state, noTile(u), proximo, 'livre', dados)) {
     // um predio foi plantado no caminho: replaneja a partir de onde esta
     const caminho = caminhoDoLaborer(state, tarefa, u.id, dados);
     if (caminho === null) return null;

@@ -5,9 +5,10 @@ import { step } from '../../src/sim/tick';
 import type { Command } from '../../src/sim/commands';
 import type { GameEvent, GameState, PredioCompleto, PredioEmObra } from '../../src/sim/state';
 import {
-  armazemDoCenario, comArmazemCompleto, comEstradas, comObra, comPedraNaSaida, comTarefas, comUnidadeEm, inicial, linhaH,
-  linhaV, semAUnidade, semLaborers, serfsDoCenario, tarefaDe, tile,
+  armazemDoCenario, comArmazemCompleto, comEstradas, comObra, comPedraNaSaida, comTarefas, comUnidadeEm, inicial, 
+  semAUnidade, semLaborers, serfsDoCenario, tarefaDe, 
 } from './jobs-cenario';
+import { linhaHDe, linhaVDe, naVila, xy } from './ancoras';
 
 export const armazemDoJogo = armazemDoCenario(inicial);
 export const serfDoJogo = ((): string => {
@@ -28,8 +29,8 @@ export const soUmSerf = (estado: GameState): GameState =>
  */
 export function cenarioLongo(faltam: Record<string, number> = { stone: 1 }): GameState {
   return soUmSerf(semLaborers(comEstradas(
-    comObra(comPedraNaSaida(inicial, armazemDoJogo.id, 10), 'obra-a', { gx: 44, gy: 34, faltam }),
-    [...linhaV(29, 33, 36), ...linhaH(29, 46, 36)],
+    comObra(comPedraNaSaida(inicial, armazemDoJogo.id, 10), 'obra-a', { ...naVila(15, 4), faltam }),
+    [...linhaVDe(naVila, 0, 3, 6), ...linhaHDe(naVila, 0, 17, 6)],
   )));
 }
 
@@ -103,18 +104,18 @@ export const SERF_DO_LADO_DE_B = serfNoCenario(1);
  * ficaria 3 ticks mais barata, e o cenario deixaria de medir o que diz medir.
  */
 export function cenarioDoMuro(): GameState {
-  let estado = comArmazemCompleto(semLaborers(inicial), 'a', { gx: 18, gy: 10, stone: 5 });
-  estado = comArmazemCompleto(estado, 'b', { gx: 18, gy: 30, stone: 5 });
-  for (let i = 0; i < 11; i++) estado = comObra(estado, `muro${i}`, { gx: 8 + 3 * i, gy: 16, faltam: {} });
-  estado = comObra(estado, 'dest', { gx: 44, gy: 21, faltam: { stone: 2 } });
-  estado = comObra(estado, 'quina-sul', { gx: 44, gy: 24, faltam: {} }); // ver F18e, acima
+  let estado = comArmazemCompleto(semLaborers(inicial), 'a', { ...naVila(-11, -20), stone: 5 });
+  estado = comArmazemCompleto(estado, 'b', { ...naVila(-11, 0), stone: 5 });
+  for (let i = 0; i < 11; i++) estado = comObra(estado, `muro${i}`, { ...naVila(-21 + 3 * i, -14), faltam: {} });
+  estado = comObra(estado, 'dest', { ...naVila(15, -9), faltam: { stone: 2 } });
+  estado = comObra(estado, 'quina-sul', { ...naVila(15, -6), faltam: {} }); // ver F18e, acima
   estado = comEstradas(estado, [
-    ...linhaH(20, 47, 13), ...linhaV(47, 13, 23), // de 'a' ate a porta da obra
-    ...linhaH(20, 47, 33), ...linhaV(47, 23, 33), // de 'b' ate a porta da obra
-    tile(46, 23), tile(45, 23), tile(44, 23),
+    ...linhaHDe(naVila, -9, 18, -17), ...linhaVDe(naVila, 18, -17, -7), // de 'a' ate a porta da obra
+    ...linhaHDe(naVila, -9, 18, 3), ...linhaVDe(naVila, 18, -7, 3), // de 'b' ate a porta da obra
+    naVila(17, -7), naVila(16, -7), naVila(15, -7),
   ]);
-  estado = comUnidadeEm(estado, SERF_DO_LADO_DE_B, 20, 20);
-  estado = comUnidadeEm(estado, SERF_DO_LADO_DE_A, 20, 11);
+  estado = comUnidadeEm(estado, SERF_DO_LADO_DE_B, ...xy(naVila(-9, -10)));
+  estado = comUnidadeEm(estado, SERF_DO_LADO_DE_A, ...xy(naVila(-9, -19)));
   return comTarefas(estado, [
     tarefaDe({ numero: 1, origem: 'a', destino: 'dest' }),
     tarefaDe({ numero: 2, origem: 'b', destino: 'dest' }),
