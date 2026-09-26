@@ -36,6 +36,7 @@
     "tree": "#3E5D34",
     "fish": "#7FB8C9",
     "corn": "#C9A227",
+    "grapes": "#6E8B3D",
     "coal": "#3B3A38",
     "iron_ore": "#A0603C",
     "gold_ore": "#E8C25A",
@@ -50,6 +51,7 @@
       "tree": "Mata",
       "fish": "Pesca",
       "corn": "Roçado",
+      "grapes": "Partido de cana",
       "coal": "Carvoeira",
       "iron_ore": "Veio de ferro",
       "gold_ore": "Veio de ouro"
@@ -303,6 +305,7 @@
     "iron_ore": "Minério",
     "iron": "Ferro",
     "corn": "Milho",
+    "grapes": "Cana",
     "flour": "Fubá",
     "pigs": "Bode",
     "skins": "Couro cru",

@@ -962,6 +962,12 @@ function validarRecursos(dados, erros) {
     if (!Number.isInteger(def.colheita.alcance_tiles) || def.colheita.alcance_tiles < 1) {
       erros.push(`recurso/colheita: production.predios.${id}.colheita.alcance_tiles precisa ser inteiro >= 1`);
     }
+    // 2026-09-26 (operador): `aDistancia` e regra de CLASSE — o especialista colhe o
+    // tile sem sair do predio. Opcional; presente, so pode ser booleano, porque
+    // qualquer outro valor leria como verdadeiro ou falso sem ninguem notar.
+    if ('aDistancia' in def.colheita && typeof def.colheita.aDistancia !== 'boolean') {
+      erros.push(`recurso/colheita: production.predios.${id}.colheita.aDistancia precisa ser true ou false`);
+    }
   }
 
   // E cada tipo tem de aparecer em algum mapa. Sem mapa carregado nao ha o que
@@ -991,8 +997,12 @@ function validarRecursos(dados, erros) {
       }
     }
   }
+  // 2026-09-26 (operador) — cultura que o JOGADOR ara nao precisa nascer no
+  // mapa: a instancia vem do comando de arar. A isencao vem do dado (o bloco
+  // `aradura`, o mesmo que `culturasAraveis` le no runtime), nao de lista aqui.
   for (const id of Object.keys(tipos)) {
     if (id.startsWith('_') || usados.has(id)) continue;
+    if (tipos[id] && tipos[id].aradura != null) continue;
     erros.push(`recurso/sem-instancia: resources.tipos.${id} nao tem nenhum tile em nenhum mapa`);
   }
 }

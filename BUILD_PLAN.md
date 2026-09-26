@@ -3384,6 +3384,49 @@ Depende da F20b: o marcador lê `unidade.condicao`, que só existe depois dela. 
     feature de `sim/` e o doc volta a valer; se for aceitar 1 Roçado : 1,7 Moinho com
     campo colado, o aceite se reescreve com a medição ao lado e
     `proporcoesDeReferencia` diz isso.
+### F-CANA — O Canavial colhe cana, a mina colhe sem sair (sim + dado; ENTREGUE 2026-09-26)
+
+Casos 2 e 4 do prédio vivo (`docs/BRIEF-ARTE.md` §4a). Decisão do operador: corrigir o
+**dado**, não os casos.
+
+- **Aceite:**
+  - (a) o Canavial (`wineyard`) tem `colheita` de `grapes`. `grapes` é **cana-de-açúcar**,
+    cultura que o jogador ara (bloco `aradura`), sem terreno de mapa. O Canavial planta,
+    sai, corta e volta, e a cachaça sai do partido arado, não do nada. O milho ao alcance
+    fica intocado. Sem partido, ele espera em `esperando_insumo`.
+  - (b) as três minas mantêm `colheita` e declaram `colheita.aDistancia: true`. O mineiro
+    fica em `trabalhando` o ciclo inteiro, sem sair do lugar. O tile do veio continua
+    reclamado e perde exatamente o que o ciclo entregou. Com a bandeira desligada, a
+    mesma fixture volta a andar.
+  - (c) `recurso/sem-instancia` isenta pelo **dado** (bloco `aradura`) a cultura que o
+    jogador ara. A cultura sem `aradura` e sem tile continua reprovando.
+- **Entregue:**
+  - `tests/F-CANA-canavial-e-mina.test.ts` cobre (a) e o recorte "só as minas têm a bandeira".
+  - `tests/F21b-mina-esgota.test.ts` (8) foi reescrito para (b); ele afirmava a regra antiga.
+  - `tests/F03-dados-validados.test.ts` cobre (c), nos dois sentidos.
+- **Nota para a feature de render do prédio vivo:** o Canavial é caso 2 e as minas são
+  caso 4 a partir daqui. A tabela do brief já está assim.
+
+### F-VIVO — O prédio vivo: trabalho, estoque e animais (render)
+
+Camadas ancoradas sobre o sprite estático (`docs/BRIEF-ARTE.md` §4a): laço de trabalho,
+fumaça, pilha por unidade na entrada e na saída, animais do curral. Só render: nada em `sim/`.
+
+- **Nota (decisões do operador, 2026-09-26):**
+  - Estoque **por unidade**: 28 imagens, e o render empilha até 5.
+  - Laço de 8 quadros, e 4 na luz. A duração vem de repetir o laço.
+  - A idade dos animais o render **deriva** do progresso da receita. A sim não muda.
+  - O caso 1 não tem animação.
+  - A regra do zoom está no brief.
+  - Armazém: 4 pontos, mostrando as quatro mercadorias mais abundantes. A ordem é por
+    quantidade, com desempate pela ordem de `economia.mercadorias`. **Se isso fizer o
+    armazém piscar quando duas mercadorias se alternam, reportar ao operador**; a saída é
+    fixar a ordem pelo dado.
+- **Nota:** os tipos novos `trabalho`, `pilha` e `animal` entram no `manifest.json` só
+  nesta feature, junto com o `TIPOS_DE_CAMADA` do render. Antes disso, `F17f` recusa o
+  `tipo` desconhecido.
+- **Aceite:** a escrever quando a feature for escolhida, a partir do brief.
+
 ---
 
 ## Fase C — Militar

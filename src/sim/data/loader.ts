@@ -385,7 +385,11 @@ export function loadGameData(raw: RawGameData): GameData {
       ticksDoCiclo,
       entra: quantidades(periodos.entra),
       sai: quantidades(periodos.sai),
-      colheita: colheita === null ? null : { recurso: colheita.recurso, alcance: colheita.alcance_tiles },
+      colheita: colheita === null ? null : {
+        recurso: colheita.recurso,
+        alcance: colheita.alcance_tiles,
+        aDistancia: 'aDistancia' in colheita && colheita.aDistancia === true,
+      },
     };
   }
   const producao: ProducaoData = {

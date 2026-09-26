@@ -21,6 +21,7 @@ import { trabalhadorDoTipo } from '../../src/sim/ocupacao';
 import { disponivelAoAlcance, tilesDeColheita } from '../../src/sim/recursos';
 import { receitaDoTipo } from '../../src/sim/producao';
 import { registrarTipoConstruido } from '../../src/sim/desbloqueio';
+import { canPlowField, comOTileArado } from '../../src/sim/campos';
 import { aberturaDaFaseA } from './abertura';
 
 const tile = (gx: number, gy: number): TileDeGrid => ({ gx, gy });
@@ -182,6 +183,46 @@ export function cenarioDeFazenda(dados: GameData = gameData): GameState {
   for (let gx = 112; gx <= 119; gx++) rua.push(tile(gx, 37));
   s = comEstradas(s, rua);
   return exigirLigado(s, 'f1', dados);
+}
+
+/**
+ * 2026-09-26 — o CANAVIAL no lugar da fazenda (`c1`, `wineyard`, porta em y=33
+ * na mesma rua), com `partidos` tiles de cana ARADOS pelo caminho do jogo:
+ * `canPlowField` aprova e `comOTileArado` assenta — so o laborer que ara e
+ * pulado. Os tiles sao os de grama mais perto do footprint, dentro do alcance da
+ * receita, escolhidos pelo estado e nao digitados.
+ */
+export function cenarioDeCanavial(dados: GameData = gameData, partidos: number = 2): GameState {
+  let s = semCivis(createInitialState(1, dados));
+  s = comArmazemExtra(s, 'armazem-do-canavial', 116, 34, dados);
+  s = comProdutorOcupado(s, { tipo: 'wineyard', id: 'c1', unidade: 'canavieiro', gx: 112, gy: 31 }, dados);
+  const rua: TileDeGrid[] = [];
+  for (let gy = 33; gy <= 37; gy++) rua.push(tile(112, gy));
+  for (let gx = 112; gx <= 119; gx++) rua.push(tile(gx, 37));
+  s = comEstradas(s, rua);
+  s = exigirLigado(s, 'c1', dados);
+  const colheita = receitaDoTipo('wineyard', dados)?.colheita ?? null;
+  const predio = s.predios.porId.c1;
+  const caixa = predio === undefined ? null : caixaDoPredio(predio, dados);
+  if (colheita === null || caixa === null) throw new Error('fixture: o Canavial nao colhe nada');
+  const candidatos: { t: TileDeGrid; d: number }[] = [];
+  for (let gy = caixa.y0 - colheita.alcance; gy < caixa.y1 + colheita.alcance; gy++) {
+    for (let gx = caixa.x0 - colheita.alcance; gx < caixa.x1 + colheita.alcance; gx++) {
+      const dx = gx < caixa.x0 ? caixa.x0 - gx : gx >= caixa.x1 ? gx - (caixa.x1 - 1) : 0;
+      const dy = gy < caixa.y0 ? caixa.y0 - gy : gy >= caixa.y1 ? gy - (caixa.y1 - 1) : 0;
+      const d = Math.max(dx, dy);
+      if (d > 0 && canPlowField(s, colheita.recurso, [tile(gx, gy)], dados).ok) candidatos.push({ t: tile(gx, gy), d });
+    }
+  }
+  if (candidatos.length < partidos) throw new Error(`fixture: so ${candidatos.length} tiles araveis ao alcance`);
+  candidatos.sort((a, b) => a.d - b.d || a.t.gy - b.t.gy || a.t.gx - b.t.gx);
+  for (const { t } of candidatos.slice(0, partidos)) {
+    const planejado = { ...s, camposPlanejados: { ...s.camposPlanejados, [chaveDeTile(t)]: colheita.recurso } };
+    const arado = comOTileArado(planejado, t, dados);
+    if (arado === null) throw new Error(`fixture: o tile ${chaveDeTile(t)} nao foi arado`);
+    s = arado;
+  }
+  return s;
 }
 
 /**

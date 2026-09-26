@@ -284,9 +284,9 @@ garrafas de cachaça. Nada de uva, parreira ou lagar de vinho, embora o id seja
 - **Caso 1 não tem animação dentro** (decisão do operador, confirmado no kam_remake: o
   plano do roceiro, do lenhador e do pescador não tem nenhuma sub-ação no prédio). A
   vida dele está no trabalhador no campo e na pilha que cresce.
-- **O Canavial e as minas** mudam de caso numa correção de simulação em curso: o
-  Canavial passa a sair para cortar cana, e o mineiro passa a colher de dentro da mina,
-  sem andar até o veio. A arte segue a tabela acima desde já.
+- **O Canavial e as minas** já estão nos casos da tabela (correção de simulação F-CANA,
+  2026-09-26). O Canavial sai para cortar cana no partido que o jogador arou. O mineiro
+  colhe de dentro da mina, sem andar até o veio.
 - **Prédios sem receita** (armazém, bodega, Casa do Coronel, quartel, feira,
   mercenários, torre) não têm animação de trabalho. O armazém e a bodega mostram
   estoque.

@@ -7562,9 +7562,85 @@ de tempo em `tools/data-schema.js`, cor e nome no tema, `wineyard.colheita = gra
 - Nenhum teste de calibração quebrou com o Canavial mudando; ou nenhum deles produz
   vinho, ou produz sem precisar do campo. Não conferido.
 
-### Aberto — precisa do operador
+### Aberto — precisa do operador (RESPONDIDO em 2026-09-26, ver a seção seguinte)
 - As minas: aceitar o campo novo ("não anda") no lugar de apagar `colheita`?
 - A isenção do `recurso/sem-instancia` para cultura arável.
 - O armazém: quantos pontos de estoque, e o que acontece com a mercadoria que não cabe.
 - `arma_madeira`, `arma_ferro` e `armadura_ferro` não estão nas 28 mercadorias: a saída
   desses três prédios fica sem pilha até a escolha de arma existir.
+
+## 2026-09-26 (noite) — F-CANA: o Canavial colhe cana, a mina colhe sem sair
+
+### Decisões do operador (respostas às quatro perguntas da seção anterior)
+
+1. **Minas.** Elas mantêm `colheita`, porque ela dá o esgotamento, o alerta e a prévia de
+   alcance, e ganham `colheita.aDistancia: true`. É **regra de classe**: qualquer receita
+   com `colheita` pode declarar e passar a colher sem sair.
+2. **`recurso/sem-instancia`** isenta a cultura que o jogador ara. A isenção vem do dado
+   (o bloco `aradura`, o mesmo que `culturasAraveis` lê), não de uma lista em código.
+3. **Armazém.** Tem 4 pontos e mostra as quatro mercadorias mais abundantes, por quantidade,
+   com desempate por `economia.mercadorias`. Se isso fizer o armazém piscar, reportar ao
+   operador; a saída pronta é fixar a ordem pelo dado. Isso é da F-VIVO, não daqui.
+4. **Os três prédios de arma sem pilha** ficam registrados no item da Fase C, feito em
+   `c66b64a`.
+5. **`grapes` é cana-de-açúcar**, e a saída do Canavial é cachaça. Está no brief (`9690a45`)
+   e agora também no `_doc` do recurso em `data/resources.json`.
+
+### Feito
+
+- **Mina, `aDistancia`:**
+  - o campo foi declarado em `ColheitaDeRecurso` e no carregador; ausente, vale `false`;
+  - `tools/data-rules.js` só aceita booleano;
+  - as três minas o declaram;
+  - em `especialistas.ts`, o ramo que manda o especialista sair (`indo_colher`) é pulado
+    quando a bandeira vale. O relógio anda no prédio e o `depositar` consome o tile reclamado.
+- **Cana:**
+  - `resources.json:tipos.grapes` é uma cópia dos números do milho, **sem `terreno`**. A
+    previsão da sessão anterior (terreno novo, 11 arquivos de teste quebrando) caiu: arar
+    não muda o terreno (`campos.ts: comOTileArado` cria camada de recurso), então a cultura
+    não precisa de terreno de mapa;
+  - `wineyard.colheita { recurso: grapes, alcance_tiles: 4 }`;
+  - as duas linhas de duração no `data-schema.js`;
+  - o tema ganhou cor, rótulo de alcance ("Partido de cana") e nome ("Cana"). O nome dá o
+    texto da ferramenta "Arar Cana", que aparece no menu **sozinha**, porque o menu lê
+    `culturasAraveis`.
+- **Testes:**
+  - `F-CANA-canavial-e-mina.test.ts` é novo;
+  - F21b (8) foi reescrito: afirmava o mineiro andando;
+  - F03: o caso "terreno sem tile" agora tira o `aradura` do milho, para medir a derivação e
+    não a isenção; o caso novo "cultura sem tile e sem aradura" reprova;
+  - F15a e F-TP ganharam `aDistancia: false` no `toEqual` e na fixture.
+
+### Verificado (rodei o comando)
+
+- `npm run verify`: verde, 106 arquivos e 1462 testes.
+- `test-output/F-CANA.json` (aberto):
+  - fases do canavieiro: `trabalhando` (plantio) → `indo_colher` → `colhendo` → `voltando`
+    → `trabalhando`;
+  - 791 ticks até a primeira cachaça;
+  - partido `112,30` com 0 → 3 e `113,30` com 0;
+  - as minas com a bandeira são `gold_mine`, `coal_mine` e `iron_mine`.
+- F21b (8)(e): com a bandeira desligada, a mesma fixture volta a
+  `indo_colher → colhendo → voltando`. É o dado que decide.
+- `npm run shot -- F18i` (porta 5176): OK. O roteiro deriva as ferramentas de
+  `culturasAraveis` e afirma `campo-grapes`. Abri `F18i-1`: a linha de ferramentas tem dois
+  ícones de arar, e o layout do menu segue inteiro.
+- Nenhum teste nem cenário além do novo produz cachaça (`grep wineyard|'wine'` em `tests/`,
+  `tools/` e `src/sim/`). Isso confirma a hipótese da seção anterior.
+
+### Não verificado (hipótese)
+
+- A mina com `aDistancia` ainda exige que o tile tenha aproximação andável
+  (`tileAlcancavelParaColheita` na escolha e no claim), embora o mineiro não ande mais. Não
+  mudei, porque é o predicado que a prévia e o alerta usam também. Se um veio só for
+  alcançável por dentro da serra, a mina o ignora. Não medi se isso acontece no mapa
+  publicado.
+- O efeito do Canavial precisar de partido sobre a comida da bodega foi para o
+  `BALANCE_LOG.md`, sem medida.
+
+### Aberto
+
+- Os dois ícones de arar são iguais, e só o texto distingue Milho de Cana. É interface;
+  fica para quem mexer no menu. Não é bug de aceite.
+- F-VIVO (render do prédio vivo) é a próxima da ordem do operador. O item está no
+  `BUILD_PLAN.md`, com o aceite a escrever.

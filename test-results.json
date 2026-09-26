@@ -202,5 +202,8 @@
   },
   "F-SPR-carregamento": {
     "passes": true
+  },
+  "F-CANA-canavial-e-mina": {
+    "passes": true
   }
 }

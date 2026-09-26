@@ -72,6 +72,10 @@ export interface ColheitaDeRecurso {
   readonly recurso: string;
   /** Distancia de Chebyshev a partir do TILE MAIS PROXIMO do footprint. */
   readonly alcance: number;
+  /** 2026-09-26 (operador) — colhe o tile SEM sair do predio: o relogio anda la
+   *  dentro e o deposito consome o tile, como a mina do jogo original. Regra de
+   *  classe, nao de tipo: qualquer receita com `colheita` pode declarar. */
+  readonly aDistancia: boolean;
 }
 export type ProducaoReceitas = Readonly<Record<string, ReceitaDePredio>>;
 

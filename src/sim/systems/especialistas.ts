@@ -416,7 +416,11 @@ function produzir(state: GameState, u: Unidade, predio: PredioCompleto, dados: G
   //
   // O insumo e cobrado DEPOIS do caminho, e nao antes: cobrar e nao poder sair
   // queimaria materia-prima por um ciclo que nunca comecou.
-  if (tarefa !== null && prod.progresso === 0) {
+  //
+  // 2026-09-26 (operador) — `colheita.aDistancia` fica DENTRO: nao ha viagem, o
+  // relogio anda no predio abaixo e o `depositar` consome o tile da tarefa, que
+  // segue reclamada — o esgotamento, o alerta e a previa de alcance nao mudam.
+  if (tarefa !== null && prod.progresso === 0 && receita.colheita?.aDistancia !== true) {
     const caminho = caminhoAteAproximacaoDoTile(base, tarefa.origemTile, u.id, dados);
     if (caminho === null) {
       const l = liberar(base, tarefa.id, 'caminho-cortado');

@@ -540,6 +540,19 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   (e (b) vale só para o campo do lado da porta), ou o termo que muda é a caminhada.
   | `production.json:farm.sai.corn`, `production.json:proporcoesDeReferencia`,
   `docs/calibracao-fase-b.md`
+- [2026-09-26] o Canavial deixou de fazer cachaça do nada (F-CANA). Agora ele precisa de
+  partido de cana arado, planta, anda e colhe, com os números do milho copiados de
+  propósito. | medido (`test-output/F-CANA.json`): **791 ticks** até a primeira cachaça,
+  com dois partidos colados na porta; antes era um ciclo de receita, sem campo. A cachaça é
+  comida (`economy.comida`, `condition.restauracaoPorComida.wine 0.30`), e o efeito na
+  bodega não foi medido. | `production.json:wineyard.sai.wine`,
+  `resources.json:tipos.grapes.reposicao`, `resources.json:tipos.grapes.rendimentoPorTile`
+- [2026-09-26] o `timber: 1` por plantio da videira (antigo `timberPorCampo`, guardado nas
+  notas do `wineyard`) **não entrou** em `grapes.reposicao.custo`. O custo sai da gaveta de
+  entrada, e o Canavial não tem `entra`, então ninguém entregaria a tábua e o plantio
+  esperaria para sempre. Pôr o custo exige `wineyard.entra.timber` junto. | `production.json:wineyard`
+- [2026-09-26] a mina colhe sem sair (`colheita.aDistancia`, F-CANA). O ciclo do minério
+  ficou mais curto pelo tempo da ida e da volta ao veio, que não foi medido. | `production.json:*_mine.sai`
 
 ---
 

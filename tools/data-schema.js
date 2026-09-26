@@ -76,6 +76,12 @@ const CAMPOS_ESCALONADOS = [
   // dela aqui. Caminho por tipo nao vira curinga.
   { arquivo: 'resources', caminho: 'tipos.corn.aradura.segundos_base',
     unidade: 'segundos', declaraEscalaEm: 'escala' },
+  // 2026-09-26 — `grapes` (cana, nao uva): as duas linhas por tipo que as de
+  // cima pediam, com o Canavial passando a colher do tile.
+  { arquivo: 'resources', caminho: 'tipos.grapes.reposicao.segundos_base',
+    unidade: 'segundos', declaraEscalaEm: 'escala' },
+  { arquivo: 'resources', caminho: 'tipos.grapes.aradura.segundos_base',
+    unidade: 'segundos', declaraEscalaEm: 'escala' },
 ];
 
 // production.json nao entra em CAMPOS_ESCALONADOS: as taxas de entra/sai sao
