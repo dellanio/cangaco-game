@@ -423,6 +423,23 @@ Os três seguem os oito campos da seção 3 e a mesma pasta `assets/sprites/<id>
 - O mesmo desenho serve às 5 posições do curral. A idade de cada posição vem do
   progresso do ciclo, pelo render; a simulação não tem idade de animal.
 
+**`cultura`** — a planta de UM tile de roça, por estado (**proposta**, item `F-CAMPO`
+do `BUILD_PLAN.md`, 2026-09-26; entra quando o operador aprovar o item).
+
+- `id`: o recurso neutro: `corn` (milho) e `grapes`. **`grapes` é cana-de-açúcar**, em
+  touceira alta de colmo e folha comprida, nunca parreira, vinhedo ou cacho.
+- `estados`: `semeado`, `crescendo_1`, `crescendo_2`, `maduro`. Arquivo
+  `sprites/<id>/<id>_<estado>.png`.
+- **Uma imagem por estado, desenhada pelo render sobre o tile**, com a mesma disciplina
+  da `pilha`: o chão continua do mapa e a planta vem por cima. **Terra não tem sprite**:
+  é o chão `campoArado`, que o mapa já desenha.
+- Quem escolhe o quadro é o render, pela fração do tempo de crescer, como a idade do
+  animal. A simulação sabe só quando o tile foi semeado.
+- Tamanho: 1 tile (64 px no zoom 1), âncora no pé (`[0.5, 1]`). O `maduro` pode passar da
+  borda de cima do tile, e o `semeado` não passa da metade de baixo.
+- **O maduro tem de se ler de longe**: é o estado que diz ao jogador "tem o que colher".
+  Milho com espiga e palha amarelando; cana alta e verde-escura.
+
 ### A conta
 
 | Parte | Imagens |
@@ -436,6 +453,7 @@ Os três seguem os oito campos da seção 3 e a mesma pasta `assets/sprites/<id>
 | Caso 5, `animal`: 2 bichos × 3 idades × 4 | 24 |
 | Fumaça genérica: 1 laço × 8 | 8 |
 | **Total** | **384** |
+| `cultura` (proposta F-CAMPO): 2 culturas × 4 estados | +8 |
 
 A animação sozinha soma 300 (48 + 176 + 12 + 32 + 24 + 8). O operador escolheu esse
 nível, e não o mínimo de um laço por prédio, porque um laço só parece repetitivo e

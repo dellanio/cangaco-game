@@ -3229,6 +3229,13 @@ que vetar custe uma linha.
 
 ## Perguntas em aberto
 
+- **(2026-09-26, noite 18) A frase cortada do BRIEF-ARTE:** o operador escreveu que os
+  sprites de estado da roça vão "desenhada[s] pelo render sobre o tile, nunca" — e a
+  mensagem parou aí. O BRIEF-ARTE não completa a frase; falta o que vem depois do nunca.
+- **(2026-09-26, noite 18) F-CAMPO, duas visitas contra rendimento 4:** hoje o tile
+  maduro rende 4 e cada milho é uma ida. A segunda visita traz o tile inteiro (≈174
+  ticks por milho), um só (≈350), ou continuam 4 idas (≈250, calibração intacta)? Conta
+  no item F-CAMPO.
 - **F-VIVO-b, caso 2 (pedreira, canavial): o laço de dentro com o trabalhador fora?**
   (2026-09-26) Na sim, o `progresso` do caso 2 só anda com o trabalhador no tile
   (`colhendo`), e não existe fase "dentro". O aceite manda `inicio`/`meio`/`fim` pelos
@@ -8754,3 +8761,45 @@ Pacote do operador, quatro itens. Nada em `src/ui/`, `src/render/` nem CSS.
 - `npm run verify` verde (inclui `test:transladado`), depois de tudo acima.
 - Todos os roteiros: 41 OK; FALHA só F11c e F17e (BUG-M, esperado).
 
+
+## 2026-09-26 (noite, 18) — BUG-M paliativo, BUG-O e o item F-CAMPO
+
+Três decisões do operador depois da noite 17. Nada em `src/ui/`, CSS, barra lateral ou
+`WorldScene.ts`.
+
+### BUG-M: paliativo em `estagio-obra.ts` (decisão do operador)
+- `revelacaoDaObra` devolve `null` com `hp <= 0`. A cena já tinha o ramo
+  `revelacao === null` e cai nos seis estágios (lote, nome, canteiro): **nenhuma linha
+  da cena mudou**.
+- O que mudou no teste da F17g (relatado ao operador):
+  - hp 0 dá `null` em vez de `[0,1]/[0,1]`, e a monotonia parte de "nada revelado";
+  - a chave de redesenho usa `'-'` no hp 0, como a cena;
+  - a assinatura do Escopo passa a `RevelacaoDaObra | null`;
+  - o roteiro `F17g`, no hp 0, afirma o fallback (fora de `revelacaoDasObras`, dentro da
+    contagem por estágio) e só lê o par da primeira martelada em diante.
+- Verificado: F17g, F17f, F17d, F17b, F-VIVO-a OK. F11c e F17e **continuam vermelhos**
+  e agora reprovam depois (estrutura em diante). O resto é em `WorldScene.ts`, com a
+  outra sessão (`BUGS.md`, BUG-M).
+
+### F09: fica em 15 s, com a tendência escrita
+- 1,9 s (2026-09-25) → ~3 s sozinho e 8,8 s na suíte (2026-09-26). Comentário no próprio
+  teste: se continuar subindo, o problema é o teste, não o limite.
+
+### BUG-O e o item F-CAMPO (escritos, não implementados)
+- BUG-O em `BUGS.md`, com a medida dos cinco que colhem. A F18 fica `true`: o aceite
+  escrito passa com um tile, e isso é lacuna de aceite.
+- `BALANCE_LOG.md`, lote 1: o "usa 1 tile de 37" está marcado como classificação errada.
+- `BUILD_PLAN.md`, item `F-CAMPO` (a: sim + dado; b: render), antes da F17g. Ele traz as
+  três respostas que o operador pediu, com a conta.
+- **Verificado:** o custo de `semeadoEm` obrigatório em `RecursoNoTile` é 41 erros de
+  typecheck (5 na sim, 36 em teste), medido compilando e revertido.
+- **Conta, não medida:** a vazão no modelo novo. Ela usa os números medidos da
+  calibração (colheita 100, caminhada ≈ 105, refeição ≈ 10) e a sonda de hoje (24 em
+  6000).
+- `docs/BRIEF-ARTE.md` §4a: o tipo `cultura` (4 imagens por cultura), como proposta.
+
+### Aberto
+- A frase do operador sobre os sprites chegou cortada em "desenhada pelo render sobre
+  o tile, nunca". Ver Perguntas em aberto.
+- F-CAMPO espera: sim ao item; `crescer` e `semear`; "duas visitas" contra
+  `rendimentoPorTile` 4.

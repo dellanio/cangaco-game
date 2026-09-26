@@ -579,7 +579,7 @@ roceiro, a conta dos dois números, a tabela de antes e depois e o que NÃO mudo
   ≈ 37. **É o primeiro número que diz que o jogo é jogável até o fim de uma partida:** os 26
   civis que o ouro inicial treina cabem numa cadeia só.
 - **Não mudou, e por quê:** `corn.aradura` (20 ticks, uma vez na vida do tile), `alcance_tiles`
-  e o número de tiles (o roceiro é serial e usa 1 tile de 37), `rendimentoPorTile` (4), moinho,
+  e o número de tiles (o roceiro é serial e usa 1 tile de 37) **[2026-09-26: classificação errada — não é característica, é o BUG-O; serial seria percorrer um tile por vez, e o roceiro fica preso em um. Ver F-CAMPO no BUILD_PLAN]**, `rendimentoPorTile` (4), moinho,
   padaria e `condition.json`. A caminhada (~100 ticks por milho, igual com o campo colado ou
   longe) fica na conta de propósito: o original também tinha fazendeiro andando.
 - **Ainda aberto, do mesmo padrão:** pedreira, lenhador e minas também ganharam a viagem em cima

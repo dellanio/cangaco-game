@@ -60,7 +60,50 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
 - F17f: **corrigido** no roteiro (premissa morta: a escola ganhou arte). O lado do
   retângulo passou para a obra de uma torre de vigia, o primeiro prédio sem arte que o
   jogador planta; o roteiro afirma pelo manifesto quem não tem arte.
-- status: aberto (F11c, F17e). Espera o render livre e a decisão de quem responde.
+- **paliativo aplicado (2026-09-26, decisão do operador):** `revelacaoDaObra` devolve
+  `null` com `hp <= 0` (`estagio-obra.ts`), e a cena cai nos seis estágios pelo ramo que
+  já existia em `WorldScene.ts` (`revelacao === null`) — sem tocar a cena. O instante do
+  plantio voltou a desenhar lote, nome e canteiro, que é o que o aceite da F17g já pedia
+  ("antes da primeira martelada, o canteiro da F17d"). F17g, F17f, F17d, F17b e F-VIVO-a:
+  OK. Contrato mudado: a assinatura da F17g passa a `RevelacaoDaObra | null`.
+- **o que continua vermelho (medido):** da primeira martelada em diante a obra revelada
+  sai de `estagiosDeObraRenderizados`, e o roteiro avança mais e reprova depois:
+  F11c em "a obra deveria passar a ESTRUTURA (primeira martelada)"; F17e em "estes
+  estagios nunca apareceram: [estrutura, paredes, cobertura]". O resto é a correção
+  proposta acima, em `WorldScene.ts` — com a outra sessão.
+- status: aberto (F11c, F17e), paliativo. Espera o render livre e a decisão de quem responde.
+
+## BUG-O — o jogador ara doze campos e vê um funcionar
+- feature: F18 (roçado) e F-CANA (canavial); a regra de escolha é de classe (F-T2c)
+- severidade: errado — promessa quebrada (operador, 2026-09-26). **Nenhuma chave virada:**
+  o aceite escrito da F18 ("produz, para quando esgota, volta quando replanta") passa com
+  um tile só. É lacuna de aceite, e a decisão é do operador.
+- repro: `cenarioDeFazenda` e `cenarioDeCanavial(gameData, 12)`
+  (`tests/helpers/producao-cenario.ts`), 6000 ticks, contando os tiles distintos tocados
+- esperado: os tiles arados ao alcance giram. O crescimento corre no tile, em paralelo,
+  sem o roceiro lá (modelo decidido pelo operador, item `F-CAMPO` no BUILD_PLAN).
+- **observado (medido, 2026-09-26, sonda apagada), em 6000 ticks:**
+
+  | Quem | Tiles ao alcance | Tiles tocados | Produziu |
+  |---|---|---|---|
+  | roceiro | 37 | 1 | 24 |
+  | canavial com 12 arados | 12 | 1 | 8 |
+  | canavial com 1 arado | 1 | 1 | 8 |
+  | pedreiro | 13 | 2, o primeiro esgotado | 22 |
+  | mineiro de carvão | 7 | 2, o primeiro esgotado | 24 |
+  | lenhador | 9 | 3 próprios, mais 1 que caiu (hipótese: outro lenhador, não conferido) | 8 |
+
+- **causa:** duas coisas juntas.
+  - A escolha: `melhorTileDeColheita` e `melhorTileParaPlantio` (`sim/recursos.ts:277`,
+    `:333`) devolvem o primeiro tile na ordem canônica.
+  - O modelo: o plantio ocupa o roceiro por 150 ticks, que cobrem semear e crescer
+    (`sim/systems/especialistas.ts:395-406`), e a fazenda só planta sem maduro.
+  - O resultado: quem esgota avança sozinho, e quem repõe volta sempre ao mesmo tile.
+- classificado errado antes: o lote 1 do `BALANCE_LOG.md` chamou isto de característica
+  ("o roceiro é serial e usa 1 tile de 37"). Serial seria percorrer um tile por vez.
+- correção: o item `F-CAMPO` (proposta, não implementada), com crescimento no tile e
+  escolha por rodízio.
+- status: aberto. Espera o sim do operador ao F-CAMPO e os números de semear/crescer.
 
 ---
 

@@ -101,11 +101,17 @@ const INTEIRA: Fracao = [1, 1];
  * As duas contas multiplicadas por `timber + stone`, para ficar em inteiros:
  * `hp * material` contra `hpTotal * timber`. O custo chega por parametro (funil
  * `render/predios.ts`); este arquivo continua sem import nenhum.
+ *
+ * BUG-M (paliativo, decisao do operador, 2026-09-26): com `hp <= 0` NAO ha
+ * revelacao — devolve `null`, e a cena cai nos seis estagios (`marcacao` ou
+ * `fundacao`), que desenham o contorno do lote, o nome e o canteiro. Revelar
+ * `[0,1]`/`[0,1]` desenhava nada: o jogador plantava e nao via a obra. E o que o
+ * aceite da F17g ja pedia ("antes da primeira martelada, o canteiro da F17d").
  */
 export function revelacaoDaObra(
   hp: number, hpTotal: number, timber: number, stone: number,
-): RevelacaoDaObra {
-  if (hp <= 0) return { madeira: NADA, pedra: NADA };
+): RevelacaoDaObra | null {
+  if (hp <= 0) return null;
   if (hp >= hpTotal) return { madeira: INTEIRA, pedra: INTEIRA };
   const material = timber + stone;
   // predio sem custo nao tem fase de madeira: a pedra sobe com o hp inteiro

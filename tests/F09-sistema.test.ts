@@ -451,6 +451,9 @@ describe('F09 — propriedade estrutural: eventos aleatorios, invariantes depois
   // sozinha, IGUAL no HEAD 0cb838f e na arvore da noite 17 (2,7-3,8 s nas duas), e
   // 8,8 s na suite inteira ja no HEAD. O caso cresceu com as features, nao com a
   // mudanca; a regra dos ~5x da 15 s.
+  // TENDENCIA (operador, 2026-09-26): 1,9 s -> ~3 s sozinho, e 3 s -> 8,8 s na suite.
+  // Se continuar subindo, o problema e o TESTE (200 passos sobre um mundo que cresce),
+  // nao o limite: reduzir o mundo do caos antes de alargar de novo.
   it.each([1, 2, 3])('semente %i: 200 passos sem uma unica violacao', (semente) => {
     rodarCaos(semente, 200, cobertura);
   }, ORCAMENTO_DO_CASO);

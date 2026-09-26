@@ -3537,6 +3537,124 @@ Casos 2 e 4 do prédio vivo (`docs/BRIEF-ARTE.md` §4a). Decisão do operador: c
     cana começam em y=38. "À vista da abertura" vale no critério do roçado (a folga
     encostada), não no quadro. O roteiro `F-CANA-b` desce a câmera.
 
+### F-CAMPO — O campo cresce no tile, sozinho (proposta; não implementar antes do sim do operador)
+- **Origem (operador, 2026-09-26, BUG-O)**: *"O roceiro preso não é bug de escolha: é o
+  modelo. O certo é o crescimento correr NO TILE, em paralelo, independente do roceiro —
+  como no KaM."* E o modelo, decidido por ele:
+  - o tile tem quatro estados: **terra, semeado, crescendo, maduro**;
+  - terra → semeado: o trabalhador vai até o tile e semeia (**primeira visita**);
+  - semeado → crescendo → maduro: **por tempo**, sozinho, em todos os tiles semeados ao
+    mesmo tempo, sem o trabalhador lá;
+  - maduro → terra: o trabalhador volta, colhe e leva ao prédio (**segunda visita**);
+  - vale para o milho e para a cana do mesmo jeito; muda só o tempo de crescer e o sprite.
+- **Quebra (§10: sim e render não se tocam na mesma feature)**:
+  - **F-CAMPO-a (sim + dado)**: estado do tile, escolha do tile, crescimento por tempo.
+  - **F-CAMPO-b (render)**: o sprite do estado, desenhado sobre o tile (BRIEF-ARTE §4a,
+    tipo `cultura`). Placeholder até a arte existir, como todo asset.
+- **O que é hoje (medido, 2026-09-26)**:
+  - `avancarPlantio` (`sim/systems/especialistas.ts:395-406`) ocupa o roceiro por
+    `reposicao.ticks` = 150 (30 s na escala `economia` 2,0), que cobre arar, semear **e
+    crescer**. O tile não guarda relógio (`resources.json: corn.reposicao._doc`,
+    `regenerar` em `sim/recursos.ts`).
+  - `melhorTileDeColheita` (`sim/recursos.ts:277`) e `melhorTileParaPlantio` (`:333`)
+    devolvem o **primeiro** tile na ordem canônica, e a fazenda só planta se não há
+    maduro. O tile que acabou de secar é o primeiro de novo: fica preso.
+  - Em 6000 ticks: roceiro 1 tile de 37 (24 milhos); canavial com 12 arados, 1 tile (8
+    de cana, o mesmo que com 1 arado).
+- **Pergunta 1 — quantos sprites por cultura (resposta proposta)**: **quatro imagens**,
+  mas não uma por estado.
+  - **Terra não é sprite.** Ela já é o chão `campoArado` que o mapa desenha (F18i).
+  - **Crescendo precisa de dois.** Com um só, entre semear e amadurecer o tile muda uma
+    vez, e o jogador vê troca, não crescimento. Dois (`crescendo_1`, `crescendo_2`)
+    dão três passos visíveis até o maduro.
+  - O conjunto fica `semeado`, `crescendo_1`, `crescendo_2`, `maduro`. É a regra do
+    animal da Malhada: a sim não tem idade, e o render escolhe o quadro pela fração do
+    tempo de crescer (`(tick - semeadoEm) / crescer`).
+  - Maduro colhido pela metade (quantidade 3, 2, 1) usa o mesmo `maduro`. Isto é
+    hipótese de legibilidade: dá para medir no roteiro da F-CAMPO-b e acrescentar
+    `colhido` só se não se ler.
+- **Pergunta 2 — vazão da fazenda com doze tiles (conta, número intocado)**:
+  - Escala `economia` 2,0: 1 s de dado = 5 ticks. Colheita de `farm.sai.corn` 3.0 =
+    100 ticks. Ida e volta ao tile ≈ 105 (medido na calibração, igual com o campo colado
+    ou longe). Refeição ≈ 10 por milho.
+  - **Hoje:** 150 de plantio + 4 × (100 + 105) = 970 por tile, ou 242,5 por milho, e
+    ≈ 250 com a refeição. A sonda desta noite deu 24 milhos em 6000 ticks, 250 por
+    milho, e bate.
+  - **No modelo novo**, o trabalhador gasta por tile W = (105 + S) + 4 × (100 + 105) =
+    925 + S, onde S é o tempo de semear. **O crescer (C) sai da conta dele.**
+    - S = 45 ticks (9 s): 242,5 + 10 ≈ 250 por milho, **igual a hoje**, e o 3.0 da
+      calibração continua fechando 1 Roçado : 1 Moinho (ciclo do moinho 246).
+    - S = 20 (4 s, o da aradura): ≈ 246 por milho, 2 % mais rápido.
+  - **Doze tiles não fazem doze vezes mais milho.** O roceiro é um só, e a vazão é
+    `min(teto do trabalhador, 4·N / (W + C))` milhos por tick.
+    - O que os doze compram é esconder o crescer: o trabalhador não fica ocioso quando
+      (N − 1) · W ≥ C.
+    - Com W ≈ 950: 2 tiles bastam se C ≤ 950; 5 tiles se C = 3000 (5 min de jogo a
+      1x); os 12 saturam até C ≈ 10 400.
+  - **Com 1 tile**, o crescer volta para a conta: por milho = (925 + S + C) / 4 + 10.
+    C = 150 dá ≈ 290; C = 3000 dá ≈ 1000.
+  - **O que o operador decide com isto:**
+    - C, que diz quantos tiles uma fazenda "pede". O jogador ara doze e os doze giram,
+      mas com C curto a vazão já satura em dois.
+    - S, que deixa o 3.0 intacto com 45.
+  - **Questão que a conta abre (não decidida):** "duas visitas por ciclo" contra
+    `rendimentoPorTile` 4.
+    - Hoje o tile maduro rende 4, e cada milho é uma ida ao tile: são 5 visitas por
+      ciclo, não 2.
+    - Se a segunda visita traz o tile inteiro, W = 210 + S + 400 e o milho sai a
+      ≈ 174 ticks. Isso é 43 % mais rápido, o moinho vira o gargalo, e o 3.0 cai.
+    - Se o tile passa a render 1, o milho sai a ≈ 350 ticks, 40 % mais lento.
+    - Os três caminhos mexem na calibração de modo diferente. A escolha é do operador,
+      e o número não gira antes dela.
+- **Pergunta 3 — semear ou colher (regra proposta)**: **rodízio**. O prédio guarda o
+  último tile que tocou (`prod.cursor`, uma chave), e a busca começa **depois** dele na
+  ordem canônica. O primeiro tile que precisa de trabalho, maduro para colher **ou**
+  terra para semear, é o escolhido.
+  - Nenhum dos dois esfomeia: cada tile ao alcance é visitado no máximo uma volta
+    depois de ficar pronto. "Sempre colher antes" semearia só até o primeiro
+    amadurecer, e com C curto dois tiles bastariam para nunca faltar maduro: os outros
+    dez nunca seriam semeados, que é a objeção do operador.
+  - É **regra de classe**: vale para pedreira, lenhador e mina, onde não muda vazão
+    (quem esgota já avança), e mata o "sempre o primeiro" em todos.
+  - A alternativa, "quem espera há mais tempo", pede um carimbo de tick também na
+    terra, e não compra nada que o rodízio não dê.
+  - O rodízio troca a intenção escrita em `melhorTileParaPlantio` ("replantar o tile
+    que acabou de secar antes do seguinte"). Essa intenção era o defeito.
+- **O campo como estado que avança por tick (medido)**:
+  - Nada avança por tick. O tile guarda **quando** foi semeado (`semeadoEm: number |
+    null`; `null` é terra), e maduro é derivado: `tick ≥ semeadoEm + crescer`.
+  - Sem varredura por tick, sem contador por tile, e serializável (é número).
+  - A colheita reclama pelo JobBoard só tile derivado maduro. A quantidade 4 nasce no
+    primeiro claim ou na maturação. É decisão de implementação, que a F-CAMPO-a mede
+    contra o save da F23.
+  - **Custo do campo novo, medido compilando** (campo obrigatório em `RecursoNoTile`,
+    revertido): **41 erros**.
+    - 5 na `sim/`: `campos.ts` 1, `recursos.ts` 4.
+    - 36 em teste: 24 só na `F-T2b`, por tiles literais.
+  - Alternativa: coleção própria `state.semeaduras`, só dos tiles semeados. Não foi
+    medida.
+  - O `_doc` de `corn.reposicao` diz que "relógio por tile custaria um campo de estado
+    em cada um deles". É esse o preço, e agora ele tem número.
+- **A cana**: o mesmo modelo, o mesmo código. `grapes` já é `porAcao` com os números do
+  milho. Muda só `crescer` no dado e o sprite. O BUG-N (cana em pousio parecendo mato
+  cortado) é o estado **terra** da cana, e continua com a sessão do render.
+- **Dado**: `resources.json: tipos.<t>.reposicao` ganha `crescer` e `semear` em
+  segundos, grupo `economia`, convertidos no carregamento. `segundos_base` 30 sai: hoje
+  ele soma os dois, e ninguém mais o lê. Os valores são decisão do operador (Pergunta 2).
+- **Aceite (proposto)**:
+  - (a) com 12 tiles arados ao alcance, em 6000 ticks os 12 são semeados e ≥ 10 chegam
+    a maduro. Eixo determinístico: tiles distintos tocados.
+  - (b) o crescimento corre com o roceiro longe: dois tiles semeados em ticks
+    diferentes amadurecem cada um no seu `semeadoEm + crescer`, sem visita no meio.
+  - (c) a vazão com 12 tiles e C ≤ W fica a ≤ 5 % da de hoje (≈ 24 em 6000), e o
+    1 Roçado : 1 Moinho segue fechando. O mesmo vale para a cana.
+  - (d) nenhum tile ao alcance fica mais de uma volta do rodízio sem ser tocado, em
+    pedreira, lenhador e mina também.
+- **Chave**: F18 fica `true`. O aceite escrito dela ("produz, para quando esgota, volta
+  quando replanta") passa com um tile só, e isso é lacuna de aceite (BUG-O).
+- **Pergunta em aberto**: a frase do operador sobre os sprites chegou cortada em
+  *"desenhada pelo render sobre o tile, nunca"*. O BRIEF-ARTE não completa a frase.
+
 ### F17g — A obra revelada pelo hp: madeira e pedra (render)
 - **Origem (decisão do operador, 2026-09-26)**: *"troque pela revelação contínua. Duas
   imagens — madeira e pedra — reveladas conforme o hp sobe."* Ela substitui os seis
