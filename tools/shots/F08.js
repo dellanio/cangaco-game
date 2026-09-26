@@ -29,7 +29,7 @@ const defDe = (id) => predios.find((p) => p.id === id);
 async function roteiro(ctx) {
   const { page, capturar, estado, afirmar } = ctx;
   const canvas = await retanguloDoCanvas(page);
-  const painel = await retanguloDe(page, '#menu-build');
+  const barra = await retanguloDe(page, '#barra'); // UI-barra-a: a UI inteira fica a esquerda
 
   const ler = (campo) => page.textContent(`#hud .valor[data-campo="${campo}"]`);
   const hud = async () => ({
@@ -173,7 +173,7 @@ async function roteiro(ctx) {
   // dois tiles livres a esquerda do armazem, bem dentro da area visivel
   const livre0 = await pontoDoTile({ gx: armazem.gx - 3, gy: yRua });
   const livre1 = await pontoDoTile({ gx: armazem.gx - 1, gy: yRua });
-  const foraDoCanvas = { x: painel.left + painel.width / 2, y: painel.top + 200 };
+  const foraDoCanvas = { x: barra.left + barra.width / 2, y: barra.bottom - 100 };
   await arrastarDentroDoCanvas(page, canvas, [livre0, livre1], { soltar: false });
   await esperarFrame();
   afirmar((await estado()).previaDeEstrada !== null, 'antes de sair, o arrasto deveria ter previa');

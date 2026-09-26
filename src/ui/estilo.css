@@ -3,11 +3,15 @@
    GRAFICA — papel cru, tinta preta, traco grosso, ocre e terracota da paleta
    do tema como as unicas cores. Os dois registros nao competem.
 
-   O que este arquivo NAO faz: nao muda id, atributo `data-` nem estrutura de
-   nenhum painel. Os roteiros de tela (F06, F13b, F16b, F22, F-D1) afirmam
-   sobre `data-campo` e texto do tema, e o da F06 MEDE o layout em grade
-   (canvas.top >= hud.bottom, canvas.right <= painel.left, canvas.bottom <=
-   balcao.top) e a distancia de cor entre item ativo e inativo do menu. */
+   UI-barra-a: a moldura da barra lateral segue a referencia que o operador
+   aprovou (a barra desenhada pelo Codex, 2026-09-26): madeira em volta, placas
+   de pergaminho no topo e no pe, o minimapa num quadro escuro rebaixado, os
+   recursos em tabuas rebitadas, as abas numa regua escura e o corpo numa folha
+   de pergaminho pregada. Tudo em CSS: nenhum PNG entra por aqui (§9).
+
+   O que este arquivo NAO faz: nao muda id nem atributo `data-` que os
+   roteiros leem. O da UI-barra-a MEDE a barra (canvas.left >= barra.right,
+   area do canvas igual com e sem selecao, rolagem so no corpo da aba). */
 
 /* Google Fonts: UMA fonte de display, so para titulo, valor e botao. Tipo de
    madeira pesado, como as capas de cordel. O corpo fica numa serifa do
@@ -16,19 +20,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Alfa+Slab+One&display=swap');
 
 :root {
-  /* Grade, nao sobreposicao: o canvas ocupa SO a celula dele. As dimensoes
-     sao fixas de proposito: o Phaser mede o pai no boot, e o tamanho nao pode
-     depender de o HUD ja ter texto nessa hora.
-
-     Layout 2 (docs/propostas/ui-releitura-rts.md §8): tres linhas — HUD,
-     canvas, balcao — e duas colunas — canvas, prancha. Os dois paineis retraem
-     por atributo no <body>; as variaveis abaixo trocam de valor e o canvas,
-     em Scale.RESIZE, acompanha a celula. Lombada e alca sao CELULAS da grade,
-     nunca sobreposicao: o canvas nao fica sob painel em nenhum dos 4 estados. */
-  --altura-hud: 40px;
-  --largura-prancha: 260px;
-  --altura-balcao: 148px;
-  --altura-alca: 24px;
+  /* A barra: fixa em 260 px (decisao do operador, 2026-09-26). A grade de
+     predios pede 5 x 40 + 4 x 7 = 228 de largura util; a moldura fica fina
+     para caber isso mais a rolagem do corpo. */
+  --largura-barra: 260px;
+  --moldura: 4px;
 
   /* paleta: os valores sao os de `data/theme-sertao.json > paleta` */
   --papel: #ede3d0;          /* cal */
@@ -40,6 +36,14 @@
   --terra-queimada: #8c4a25;
   --verde-seco: #7c8b6a;
 
+  /* a madeira da moldura e as tabuas: derivadas de `madeira` e `tinta` */
+  --madeira: #6b4a2e;
+  --madeira-clara: #8a6440;
+  --tabua: #2e2119;
+  --tabua-clara: #3d2c20;
+  --latao: radial-gradient(circle at 35% 35%, #f0cf8a 0 1px, #b8863c 2px, #5e3f18 3.5px, transparent 4px);
+  --pergaminho: #e6d2a8;
+
   --fonte-display: 'Alfa Slab One', 'Rockwell Extra Bold', 'Rockwell', Georgia, serif;
   --fonte-corpo: Georgia, 'Times New Roman', 'Noto Serif', serif;
 
@@ -47,41 +51,40 @@
   --traco: 3px;
   /* o grao do papel: turbulencia em SVG, muito fraca, por cima da cor chapada */
   --grao: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.1 0 0 0 0 0.08 0 0 0 0 0.06 0 0 0 0.12 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23g)'/%3E%3C/svg%3E");
+  /* o veio da madeira: listras finas quase na vertical */
+  --veio: repeating-linear-gradient(93deg, rgba(0, 0, 0, 0.16) 0 1px, transparent 1px 5px, rgba(255, 220, 160, 0.06) 5px 6px, transparent 6px 11px);
+  /* o veio das tabuas: na horizontal, como na referencia */
+  --veio-tabua: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.22) 0 1px, transparent 1px 3px, rgba(255, 220, 160, 0.04) 3px 4px);
   /* a hachura: listras finas de tinta, para o que esta bloqueado ou vazio */
   --hachura: repeating-linear-gradient(135deg, transparent 0 5px, rgba(26, 20, 16, 0.14) 5px 7px);
+  /* o cadeado (GDD §7.2): arco e corpo, em tinta */
+  --cadeado: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 14'%3E%3Cpath d='M3 6V4a3 3 0 0 1 6 0v2' fill='none' stroke='%231a1410' stroke-width='1.8'/%3E%3Crect x='1' y='6' width='10' height='7.5' fill='%231a1410'/%3E%3Crect x='5.2' y='8.3' width='1.6' height='3' fill='%23c9974b'/%3E%3C/svg%3E");
+  /* os cactos das placas: silhueta de tinta, como nos cantos da referencia */
+  --cacto: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 32'%3E%3Cpath d='M10 32V6a2 2 0 0 1 4 0v26zM10 20H6a2 2 0 0 1-2-2v-6a1.5 1.5 0 0 1 3 0v5h3zM14 16h3v-6a1.5 1.5 0 0 1 3 0v6a2 2 0 0 1-2 2h-4z' fill='%231a1410'/%3E%3Cpath d='M0 32q6-3 12-2t12 2z' fill='%231a1410'/%3E%3C/svg%3E");
+  --cacto-baixo: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M6 16V5a1.5 1.5 0 0 1 3 0v11zM6 11H3.5A1.5 1.5 0 0 1 2 9.5V7a1 1 0 0 1 2 0v2h2zM9 9h2V6.5a1 1 0 0 1 2 0v2A1.5 1.5 0 0 1 11.5 10H9z' fill='%231a1410'/%3E%3C/svg%3E");
+  /* a rosa dos ventos da faixa do minimapa */
+  --rosa: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10 0l2 8 8 2-8 2-2 8-2-8-8-2 8-2z' fill='%23ede3d0'/%3E%3Cpath d='M10 4l1 5 5 1-5 1-1 5-1-5-5-1 5-1z' fill='%231a1410'/%3E%3C/svg%3E");
 }
 
 html, body { margin: 0; padding: 0; background: var(--tinta); overflow: hidden; }
+/* Duas colunas, uma linha: a barra e o canvas. A area do canvas NAO depende
+   de selecao nem de aba — e a razao de ser da barra unica. */
 body {
   display: grid; height: 100vh;
-  grid-template-columns: 1fr var(--largura-prancha);
-  grid-template-rows: var(--altura-hud) 1fr var(--altura-balcao);
+  grid-template-columns: var(--largura-barra) 1fr;
+  grid-template-rows: 100%;
   color: var(--tinta);
   font: 14px/1.35 var(--fonte-corpo);
 }
-/* fechada, a coluna vai a ZERO: o mapa toma a largura toda e o que sobra e o
-   botao flutuante na barra. A largura da grade anima; o canvas segue (RESIZE). */
-body { transition: grid-template-columns 240ms ease-out; }
-body[data-prancha="fechada"] { --largura-prancha: 0px; }
-body[data-balcao="fechado"] { --altura-balcao: var(--altura-alca); }
-
-/* as setas dos botoes de abrir e recolher: desenho, nao texto */
-.seta-dir::before, .seta-esq::before, .seta-cima::before, .seta-baixo::before {
-  content: ''; display: inline-block; width: 0; height: 0; border: 5px solid transparent;
-}
-.seta-dir::before { border-left-color: currentColor; border-right-width: 0; }
-.seta-esq::before { border-right-color: currentColor; border-left-width: 0; }
-.seta-cima::before { border-bottom-color: currentColor; border-top-width: 0; }
-.seta-baixo::before { border-top-color: currentColor; border-bottom-width: 0; }
 
 /* ---- o papel: toda caixa da interface herda daqui -------------------------- */
-#hud, #menu-build, #balcao, #alertas, #ajuda {
+#ajuda, #corpo-aba, #logo, #marca {
   background-color: var(--papel);
   background-image: var(--grao);
   color: var(--tinta);
   font: 14px/1.35 var(--fonte-corpo);
   scrollbar-width: thin;
-  scrollbar-color: var(--tinta) var(--papel-escuro);
+  scrollbar-color: var(--tinta-fraca) var(--papel-escuro);
 }
 
 h2, h3 { font-family: var(--fonte-display); font-weight: 400; letter-spacing: 0.02em; }
@@ -109,22 +112,101 @@ button[aria-disabled="true"] {
   box-shadow: none;
 }
 
-/* ---- a barra de recursos ---------------------------------------------------- */
-#hud {
-  grid-column: 1 / -1; grid-row: 1;
-  box-sizing: border-box; height: var(--altura-hud);
-  display: flex; align-items: center; gap: 22px; padding: 0 16px;
-  border-bottom: var(--traco) solid var(--tinta);
+/* ---- a barra: a moldura de madeira ------------------------------------------ */
+/* Altura da tela, nunca mais: o que nao cabe rola DENTRO do corpo da aba.
+   Nada transborda para o canvas — nem a marca, nem sombra, nem rebite. */
+#barra {
+  grid-column: 1; grid-row: 1; min-height: 0; overflow: hidden;
+  box-sizing: border-box; height: 100vh; padding: var(--moldura);
+  display: flex; flex-direction: column; gap: 4px;
+  background: var(--veio), linear-gradient(90deg, var(--madeira) 0, var(--madeira-clara) 45%, var(--madeira) 100%);
+  border-right: 2px solid var(--tinta);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.5), inset 0 0 12px rgba(0, 0, 0, 0.45);
 }
-/* A ordem na barra e por `order`, nao pelo DOM: recursos, avisos, lembrete,
-   carimbo de pausa. O DOM nasce em outra ordem (o #alertas e estatico no
-   index.html, a dica da ajuda e montada antes do HUD). */
-#hud .campo { display: flex; align-items: center; gap: 6px; order: -1; }
+#barra > * { flex: 0 0 auto; box-sizing: border-box; }
+/* os rebites de latao, nos quatro cantos de toda peca que a referencia prega */
+#logo, #marca, #corpo-aba, #minimapa {
+  position: relative;
+  background-image: var(--latao), var(--latao), var(--latao), var(--latao), var(--grao);
+  background-repeat: no-repeat;
+  background-position: 3px 3px, calc(100% - 3px) 3px, 3px calc(100% - 3px), calc(100% - 3px) calc(100% - 3px), 0 0;
+  background-size: 8px 8px, 8px 8px, 8px 8px, 8px 8px, auto;
+}
+#minimapa { background-image: var(--latao), var(--latao), var(--latao), var(--latao); }
+
+/* o placeholder: o id escrito, ate a arte entrar por decisao humana (§9) */
+#barra .placeholder {
+  font: 10px/1 var(--fonte-display); letter-spacing: 0.14em; text-transform: uppercase;
+  opacity: 0.6;
+}
+
+/* 1. a logo: placa de pergaminho, cactos nos cantos */
+#logo {
+  height: 46px; display: grid; place-items: center;
+  background-color: var(--pergaminho);
+  border: 2px solid var(--tinta);
+  box-shadow: inset 0 0 0 2px var(--madeira-clara), inset 0 0 10px rgba(90, 63, 43, 0.35);
+}
+#logo::before, #logo::after, #marca::before, #marca::after {
+  content: ''; position: absolute; bottom: 3px; width: 18px; height: 24px;
+  background: var(--cacto) bottom / contain no-repeat; pointer-events: none;
+}
+#logo::before, #marca::before { left: 10px; }
+#logo::after, #marca::after { right: 10px; transform: scaleX(-1); }
+#logo .placeholder { font-size: 16px; opacity: 1; color: var(--tinta); letter-spacing: 0.1em; }
+
+/* 2. a dica do H, logo abaixo da logo (F-D1, decisao do operador 2026-09-26):
+   o topo e onde o jogador novo olha. Some no primeiro H. */
+#barra .dica-ajuda {
+  padding: 2px 6px; text-align: center;
+  background: var(--terracota); color: var(--papel);
+  border: 2px solid var(--tinta);
+  font-size: 12px; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#barra .dica-ajuda[hidden] { display: none; }
+
+/* 3. o minimapa: quadro escuro rebaixado e a faixa da rosa dos ventos (F33
+   desenha o mapa; aqui e so a moldura). O carimbo de pausa fica POR CIMA dele. */
+#minimapa {
+  height: 112px; display: grid; grid-template-columns: 1fr 28px;
+  background-color: var(--madeira-clara);
+  border: 2px solid var(--tinta); padding: 4px;
+  box-shadow: inset 0 0 0 1px rgba(255, 220, 160, 0.2);
+}
+#minimapa .placeholder {
+  grid-column: 1; display: grid; place-items: center; color: var(--papel-escuro);
+  background: var(--veio-tabua), #120c08;
+  border: 2px solid var(--tinta); box-shadow: inset 0 0 14px rgba(0, 0, 0, 0.9);
+}
+#minimapa .rosa {
+  grid-column: 2; margin-left: 3px;
+  background: var(--rosa) center 12px / 18px 18px no-repeat, var(--cacto-baixo) center bottom 6px / 14px 14px no-repeat, var(--veio-tabua), var(--tabua);
+  border: 2px solid var(--tinta);
+}
+/* F11a: o carimbo de pausa/velocidade. Some (hidden) em 1x despausado. */
+#minimapa .aviso-tempo {
+  position: absolute; left: 50%; top: 50%; transform: translate(calc(-50% - 14px), -50%) rotate(-3deg);
+  padding: 3px 10px; background: var(--papel); color: var(--tinta);
+  border: 2px solid var(--tinta); box-shadow: 2px 2px 0 var(--tinta);
+  font: 13px/1.2 var(--fonte-display); letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap;
+}
+#minimapa .aviso-tempo[hidden] { display: none; }
+
+/* 4. os recursos: uma tabua escura por recurso, dois rebites cada */
+#hud { display: flex; flex-direction: column; gap: 2px; }
+#hud .campo {
+  height: 20px; display: flex; align-items: center; gap: 6px; padding: 0 16px 0 12px;
+  color: var(--papel);
+  background: var(--latao) 3px 50% / 8px 8px no-repeat, var(--latao) calc(100% - 3px) 50% / 8px 8px no-repeat,
+    var(--veio-tabua), linear-gradient(180deg, var(--tabua-clara), var(--tabua));
+  border: 1px solid var(--tinta); box-shadow: inset 0 1px 0 rgba(255, 220, 160, 0.12);
+}
 /* o glifo de cada recurso: SVG em xilogravura (assets/sprites/ui, manifesto
-   `icones.hud`), um por `data-recurso`. Desenho, nao no de texto. */
+   `icones.hud`), um por `data-recurso`, sobre um disco de papel para ler na
+   tabua escura. Desenho, nao no de texto. */
 #hud .campo::before {
-  content: ''; flex: 0 0 auto; width: 20px; height: 20px;
-  background: center / contain no-repeat;
+  content: ''; flex: 0 0 auto; width: 16px; height: 16px; border-radius: 50%;
+  background: var(--papel) center / 13px 13px no-repeat;
 }
 #hud .campo[data-recurso="gold"]::before { background-image: url('../../assets/sprites/ui/hud-gold.svg'); }
 #hud .campo[data-recurso="timber"]::before { background-image: url('../../assets/sprites/ui/hud-timber.svg'); }
@@ -132,48 +214,109 @@ button[aria-disabled="true"] {
 #hud .campo[data-recurso="comida"]::before { background-image: url('../../assets/sprites/ui/hud-comida.svg'); }
 #hud .campo[data-recurso="populacao"]::before { background-image: url('../../assets/sprites/ui/hud-populacao.svg'); }
 #hud .rotulo {
-  font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em;
-  color: var(--tinta-fraca);
+  flex: 1; font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em;
+  color: var(--papel-escuro);
 }
 #hud .valor {
-  font: 17px/1 var(--fonte-display);
+  font: 14px/1 var(--fonte-display); color: var(--ocre);
   font-variant-numeric: tabular-nums;
 }
-/* F11a: aviso de pausa/velocidade, na barra, a direita. Some (hidden) em 1x
-   despausado. Bloco de tinta com letra de papel: e o carimbo. */
-#hud .aviso-tempo {
-  order: 2; margin-left: 12px; padding: 3px 10px;
+
+/* 5. os avisos (F22): faixa de ALTURA FIXA, uma tabua rebaixada. Vazia quando
+   nao ha aviso (operador, 2026-09-26); o aviso que aparece nao empurra a grade. */
+#faixa-alertas {
+  height: 48px; overflow: hidden; padding: 3px;
+  background: var(--veio-tabua), #1c140e;
+  border: 1px solid var(--tinta); box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.7);
+}
+#alertas { display: flex; flex-direction: column; gap: 2px; font: inherit; }
+#alertas[hidden] { display: none; }
+/* o titulo fica para o leitor de tela: na faixa estreita, o carimbo diz sozinho */
+#alertas h2 {
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); margin: 0;
+}
+#alertas .alerta {
+  height: 18px; box-sizing: border-box; display: flex; align-items: center; gap: 6px; min-width: 0;
+  padding: 0 3px 0 7px; background: var(--papel); border: 2px solid var(--terracota);
+  font-size: 12px; color: var(--terra-queimada);
+}
+#alertas .alerta[hidden] { display: none; }
+#alertas .alerta .rotulo {
+  flex: 1 1 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#alertas .alerta .contagem, #alertas .mais {
+  flex: 0 0 auto; min-width: 16px; padding: 0 5px; text-align: center;
   background: var(--tinta); color: var(--papel);
-  font: 13px/1.2 var(--fonte-display); letter-spacing: 0.06em; text-transform: uppercase;
-  transform: rotate(-1.5deg);
+  font: 11px/14px var(--fonte-display); font-variant-numeric: tabular-nums;
 }
-#hud .aviso-tempo[hidden] { display: none; }
-/* F-D1: o lembrete da primeira partida. Na BARRA, nao sobre o mapa — o
-   canvas tem medidas afirmadas por roteiro (F06, F22) e um aviso novo por
-   cima delas seria regressao de layout em troca de nada. */
-#hud .dica-ajuda {
-  order: 1; margin-left: auto; padding: 2px 10px;
-  border: 2px solid var(--terracota);
-  color: var(--terracota); font-size: 13px; font-style: italic; white-space: nowrap;
+/* o "+N": as causas que nao couberam nas duas linhas, no canto da ultima */
+#alertas .mais { position: absolute; right: 8px; bottom: 6px; background: var(--terracota); }
+#alertas .mais[hidden] { display: none; }
+#faixa-alertas { position: relative; }
+
+/* 6. as abas: quatro placas de pergaminho numa regua escura */
+#abas {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; padding: 3px;
+  background: var(--veio-tabua), var(--tabua);
+  border: 1px solid var(--tinta);
 }
-#hud .dica-ajuda[hidden] { display: none; }
-/* Na tela, o lembrete e o carimbo ficam a DIREITA dos recursos, nesta ordem,
-   embora a ajuda (F-D1) nasca antes do HUD no DOM. Escondido o lembrete, o
-   carimbo herda o empurrao para a direita; visiveis os avisos, sao eles que
-   empurram, e o lembrete so segue. */
-#hud .dica-ajuda[hidden] ~ .aviso-tempo { margin-left: auto; }
-#hud:has(#alertas:not([hidden])) .dica-ajuda,
-#hud:has(#alertas:not([hidden])) .aviso-tempo { margin-left: 12px; }
+/* o rotulo e a serifa do corpo, em negrito: "Distribuicao" na fonte de display
+   nao cabe nos 58 px da placa (o roteiro mede `scrollWidth`) */
+#abas button {
+  position: relative; min-width: 0; height: 28px; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--pergaminho); border: 2px solid var(--madeira-clara);
+  outline: 1px solid var(--tinta); box-shadow: none;
+  font: 700 9px/1 var(--fonte-corpo); letter-spacing: -0.04em; white-space: nowrap; overflow: hidden;
+}
+#abas button[aria-pressed="true"] {
+  background: var(--papel); border-color: var(--ocre);
+  box-shadow: inset 0 -3px 0 var(--terracota);
+}
+#abas button[aria-disabled="true"] { opacity: 0.7; background-image: var(--hachura); }
+/* o cadeado no canto da placa, por cima: dentro do rotulo ele roubaria largura */
+#abas button[aria-disabled="true"]::after {
+  content: ''; position: absolute; right: 1px; top: 1px; width: 7px; height: 8px;
+  background: var(--cadeado) center / contain no-repeat;
+}
+#abas button[aria-disabled="true"]:active { transform: none; }
+
+/* 7. o corpo da aba: a folha de pergaminho pregada. E o UNICO lugar que rola.
+   Mostra uma coisa so, pelo `data-corpo` do <body> (`ui/barra.ts`). */
+#corpo-aba {
+  flex: 1 1 0; min-height: 0; overflow-y: auto; overflow-x: hidden;
+  scrollbar-gutter: stable;
+  padding: 8px 3px 8px 6px;
+  background-color: var(--pergaminho);
+  border: 2px solid var(--tinta);
+  box-shadow: inset 0 0 0 2px var(--madeira-clara), inset 0 0 14px rgba(90, 63, 43, 0.35);
+}
+body:not([data-corpo="grade"]) #menu-build,
+body:not([data-corpo="painel"]) #painel-predio,
+body:not([data-corpo="opcoes"]) #opcoes { display: none; }
+#opcoes { display: flex; flex-direction: column; gap: 8px; padding: 4px; }
+
+/* 8. a marca: placa de pergaminho com o lema, cortada na borda da barra */
+#marca {
+  height: 40px; display: grid; place-items: center; overflow: hidden;
+  background-color: var(--pergaminho);
+  border: 2px solid var(--tinta);
+  box-shadow: inset 0 0 0 2px var(--madeira-clara), inset 0 0 10px rgba(90, 63, 43, 0.35);
+}
+#marca .lema {
+  font: 9px/1.1 var(--fonte-display); letter-spacing: 0.06em; text-transform: uppercase;
+  text-align: center; padding: 0 28px; white-space: nowrap; color: var(--tinta-fraca);
+}
 
 /* ---- o mapa ------------------------------------------------------------------ */
-#jogo { grid-column: 1; grid-row: 2; min-width: 0; min-height: 0; overflow: hidden; }
+#jogo { grid-column: 2; grid-row: 1; min-width: 0; min-height: 0; overflow: hidden; }
 #jogo canvas { display: block; }
 
 /* ---- a tela de ajuda (F-D1) ------------------------------------------------- */
 /* Sobreposicao na celula do canvas, centrada, e `hidden` por padrao: fechada,
    ela nao existe para medida nenhuma. */
 #ajuda {
-  grid-column: 1; grid-row: 2; place-self: center;
+  grid-column: 2; grid-row: 1; place-self: center;
   box-sizing: border-box; max-width: 460px; max-height: calc(100% - 48px);
   overflow-y: auto; padding: 14px 20px 16px;
   border: var(--traco) solid var(--tinta);
@@ -208,60 +351,17 @@ button[aria-disabled="true"] {
 #ajuda .atalho .rotulo { flex: 1 1 0; min-width: 0; }
 #ajuda .rodape { margin: 14px 0 0; font-size: 12px; font-style: italic; color: var(--tinta-fraca); }
 
-/* ---- a prancha: o menu Construir (F06) -------------------------------------- */
-/* Desce ate o chao (linha 2 ate a ultima): o balcao ocupa so a largura do
-   canvas. Fechada, e a lombada — coluna de 18 px de tinta com o titulo do menu
-   na vertical. */
-#menu-build {
-  grid-column: 2; grid-row: 2 / -1; min-height: 0; overflow-y: auto;
-  box-sizing: border-box; padding: 8px 10px 12px;
-  border-left: var(--traco) solid var(--tinta);
-  display: flex; flex-direction: column; gap: 6px;
-}
+/* ---- o menu Construir (F06), no corpo da aba ---------------------------------- */
+#menu-build { display: flex; flex-direction: column; gap: 6px; }
+/* o titulo e a propria aba Construir: o h2 fica so para o leitor de tela */
 #menu-build h2 {
-  margin: 2px 0 6px; padding-bottom: 4px; font-size: 19px;
-  border-bottom: var(--traco) solid var(--tinta);
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); margin: 0;
 }
-/* o botao de recolher: gruda no alto a direita, por cima da linha do titulo */
-#menu-build .recolher {
-  position: sticky; top: 0; z-index: 1; align-self: flex-end;
-  width: 24px; height: 24px; padding: 0; margin-bottom: -30px;
-  display: grid; place-items: center; box-shadow: none;
-}
-body[data-prancha="fechada"] #menu-build { display: none; }
-/* a entrada: a prancha desliza da borda e assenta, como carimbo que baixa */
-@keyframes prancha-entra {
-  0% { transform: translateX(48px); opacity: 0; }
-  60% { transform: translateX(-4px); opacity: 1; }
-  100% { transform: none; opacity: 1; }
-}
-#menu-build.entrando { animation: prancha-entra 280ms ease-out; }
-/* o botao flutuante, na ponta direita da barra: o MESMO carimbo do "Pausado"
-   (tinta, letra de papel, levemente torto), com o titulo do menu e o glifo de
-   grade. Apertado (prancha aberta) assenta reto e afundado. */
-#hud .abrir-prancha {
-  order: 3; margin-left: 12px; flex: 0 0 auto;
-  display: flex; align-items: center; gap: 7px; padding: 3px 10px;
-  background: var(--tinta); color: var(--papel); border: 0;
-  font: 13px/1.2 var(--fonte-display); letter-spacing: 0.06em; text-transform: uppercase;
-  box-shadow: 2px 2px 0 var(--tinta-fraca); transform: rotate(-1.5deg);
-}
-#hud .abrir-prancha::before {
-  content: ''; width: 12px; height: 12px;
-  background:
-    linear-gradient(currentColor, currentColor) 0 0 / 5px 5px no-repeat,
-    linear-gradient(currentColor, currentColor) 7px 0 / 5px 5px no-repeat,
-    linear-gradient(currentColor, currentColor) 0 7px / 5px 5px no-repeat,
-    linear-gradient(currentColor, currentColor) 7px 7px / 5px 5px no-repeat;
-}
-#hud .abrir-prancha:hover { background: var(--tinta-fraca); }
-#hud .abrir-prancha[aria-pressed="true"] { box-shadow: none; transform: translate(2px, 2px); }
-#hud .abrir-prancha:active { transform: translate(3px, 3px); box-shadow: none; }
-/* A GRADE DE ICONES (Layout 2, fatia 2): 5 colunas de 40 px na coluna de 260,
-   uma faixa por grupo com a regua gravada entre elas, e o cartao fixo no pe.
-   Numeros medidos na proposta (§1): 5 x 40 + 4 x 9 = 236 de largura util. */
+/* A GRADE DE ICONES: 5 colunas de 40 px (decisao do operador: fica como esta),
+   uma faixa por grupo com a regua gravada entre elas, e o cartao no pe. Cada
+   celula e uma placa de pergaminho, como as da referencia. */
 #menu-build .grade {
-  display: grid; grid-template-columns: repeat(5, 40px); gap: 7px 9px;
+  display: grid; grid-template-columns: repeat(5, 40px); gap: 7px 7px;
   justify-content: start;
 }
 #menu-build .regua {
@@ -272,15 +372,23 @@ body[data-prancha="fechada"] #menu-build { display: none; }
 #menu-build .regua::before, #menu-build .regua::after { content: ''; flex: 1; border-top: 2px solid var(--tinta); }
 #menu-build .regua[data-grupo=""] { display: none; }
 #menu-build .icone {
+  position: relative;
   width: 40px; height: 40px; box-sizing: border-box; padding: 0;
   border: 2px solid var(--tinta); background: var(--papel);
+  outline: 1px solid var(--madeira-clara); outline-offset: -4px;
   display: grid; place-items: center;
   box-shadow: none; transform: none; cursor: pointer;
 }
 #menu-build .icone:hover { background: var(--papel-escuro); }
 /* o retrato: a imagem do predio, derivada da base (72 px, mostrada a 34) */
 #menu-build .retrato { display: block; width: 34px; height: 34px; object-fit: contain; pointer-events: none; }
-#menu-build .icone[aria-disabled="true"] .retrato { filter: grayscale(1) contrast(0.8); }
+/* bloqueado: CADEADO sobre o retrato (GDD §7.2, decisao do operador), nao cinza.
+   O "requer X" continua no cartao. */
+#menu-build .icone[aria-disabled="true"]::after {
+  content: ''; position: absolute; right: 1px; bottom: 1px; width: 13px; height: 15px;
+  background: var(--papel) var(--cadeado) center / 10px 12px no-repeat;
+  border: 1px solid var(--tinta); pointer-events: none;
+}
 /* o placeholder: a miniatura do footprint, N x M quadradinhos de tinta */
 #menu-build .footprint { display: grid; grid-template-columns: repeat(var(--colunas, 1), 6px); gap: 1px; }
 #menu-build .footprint i { display: block; width: 6px; height: 6px; background: var(--tinta); }
@@ -327,115 +435,55 @@ body[data-prancha="fechada"] #menu-build { display: none; }
 }
 #menu-build .icone[aria-pressed="true"] .footprint i { background: var(--papel); }
 #menu-build .icone[aria-pressed="true"] .glifo-estrada::before { background: var(--papel); }
-/* bloqueado: hachurado e apagado; do que depende, o cartao diz */
+/* bloqueado: hachurado; do que depende, o cartao diz */
 #menu-build .icone[aria-disabled="true"] {
-  cursor: not-allowed; opacity: 0.55;
+  cursor: not-allowed;
   background-image: var(--hachura);
 }
-/* o cartao fixo: nome, custo e tamanho, requisito, descricao. `margin-top: auto`
-   o empurra para o pe da coluna quando sobra espaco. */
+/* o cartao: nome, custo e tamanho, requisito, descricao. Gruda no PE do corpo
+   enquanto a grade rola: e o que diz o que esta sob o mouse. */
 #menu-build .cartao {
-  margin-top: auto; padding: 8px 10px; min-height: 80px; box-sizing: border-box;
-  border: 2px solid var(--tinta); box-shadow: 3px 3px 0 var(--tinta);
+  position: sticky; bottom: -8px; z-index: 1;
+  margin-top: auto; padding: 6px 8px; min-height: 64px; box-sizing: border-box;
+  background: var(--papel); background-image: var(--grao);
+  border: 2px solid var(--tinta); box-shadow: 0 -3px 0 var(--pergaminho);
 }
-#menu-build .cartao h3 { margin: 0 0 2px; font-size: 15px; text-transform: none; letter-spacing: 0.02em; color: var(--tinta); }
+#menu-build .cartao h3 { margin: 0 0 2px; font-size: 14px; text-transform: none; letter-spacing: 0.02em; color: var(--tinta); }
 #menu-build .cartao .custo { font-size: 12px; color: var(--tinta-fraca); }
 #menu-build .cartao .requer { font-size: 12px; font-style: italic; color: var(--terracota); }
 #menu-build .cartao .requer:empty { display: none; }
 #menu-build .cartao .desc { font-size: 12px; margin-top: 3px; }
 #menu-build .cartao[data-planta=""] .desc { font-style: italic; color: var(--tinta-fraca); }
 
-/* ---- os avisos (F22) --------------------------------------------------------- */
-/* Layout 2, fatia 4: CARIMBOS no HUD, a direita dos recursos — nao caixa sobre
-   o mapa. Um carimbo por causa, com a contagem em bloco de tinta. Se a barra
-   apertar, o rotulo encolhe com reticencias; o texto continua inteiro no DOM,
-   que e o que o roteiro da F22 le. */
-#alertas {
-  order: 0; margin-left: auto; min-width: 0;
-  display: flex; align-items: center; gap: 6px; overflow: hidden;
-  background: none; font: inherit;
-}
-#alertas[hidden] { display: none; }
-#alertas h2 {
-  margin: 0 4px 0 0; font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em;
-  color: var(--terracota); white-space: nowrap;
-}
-#alertas .alerta {
-  display: flex; align-items: center; gap: 6px; min-width: 0;
-  padding: 2px 4px 2px 8px; border: 2px solid var(--terracota);
-  font-size: 12px; color: var(--terra-queimada);
-}
-#alertas .alerta[hidden] { display: none; }
-/* o rotulo do aviso e frase, nao legenda de recurso: desfaz o `#hud .rotulo` */
-#alertas .alerta .rotulo {
-  min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  font-size: 12px; text-transform: none; letter-spacing: 0; color: inherit;
-}
-#alertas .alerta { min-width: 120px; }
-#alertas .alerta .contagem {
-  flex: 0 0 auto; min-width: 16px; padding: 0 5px; text-align: center;
-  background: var(--tinta); color: var(--papel);
-  font: 11px/16px var(--fonte-display); font-variant-numeric: tabular-nums;
-}
-
-/* ---- o balcao e o painel de predio (F16b) ---------------------------------- */
-/* Layout 2: o painel deixou de ser sobreposicao no canto do canvas (F13b) e
-   virou o conteudo do BALCAO, a linha 3 da grade, so na largura do canvas.
-   Aberto, 132 px; fechado, so a alca (24 px). A alca fica a ESQUERDA, e e um
-   botao: com algo escolhido, recolhe e reabre; sem nada, so diz que esta vazio. */
-#balcao {
-  grid-column: 1; grid-row: 3; min-width: 0; min-height: 0; overflow: hidden;
-  box-sizing: border-box; border-top: var(--traco) solid var(--tinta);
-  display: flex; flex-direction: column;
-}
-#balcao .alca {
-  flex: 0 0 auto; align-self: flex-start; height: calc(var(--altura-alca) - var(--traco));
-  margin: 0; padding: 0 10px 0 8px; border: 0; border-right: 2px solid var(--tinta);
-  box-shadow: none; background: var(--papel-escuro);
-  display: flex; align-items: center; gap: 7px;
-  font: 11px/1 var(--fonte-display); letter-spacing: 0.06em; text-transform: uppercase;
-}
-#balcao .alca[aria-disabled="true"] { cursor: default; opacity: 0.55; background-image: none; }
-#balcao .alca:active { transform: none; }
-body[data-balcao="fechado"] #painel-predio { display: none; }
-/* O painel e uma fila de BLOCOS lado a lado (fatia 3): identidade, gente,
-   escola, acoes. Cada bloco e uma coluna com regua de tinta a direita; as acoes
-   vao para a ponta direita. Se nao couber (nao cabe so em janela estreita), a
-   faixa rola de lado — nunca cresce para cima do canvas. */
-#painel-predio {
-  flex: 1 1 auto; min-height: 0; box-sizing: border-box;
-  padding: 5px 12px 6px; overflow-x: auto; overflow-y: clip;
-  display: flex; align-items: stretch; gap: 0;
-}
+/* ---- o painel de predio (F16b), no corpo da aba -------------------------------- */
+/* Os BLOCOS empilhados: identidade, gente, escola, acoes. Cada um separado do
+   proximo por uma regua de tinta. Substitui a grade; nunca as duas juntas. */
+#painel-predio { display: flex; flex-direction: column; gap: 0; }
 #painel-predio[hidden] { display: none; }
 #painel-predio .bloco {
   display: flex; flex-direction: column; gap: 3px; min-width: 0;
-  padding: 0 14px; border-right: 2px solid var(--tinta);
+  padding: 6px 0; border-bottom: 2px solid var(--tinta);
 }
-#painel-predio .bloco:first-child { padding-left: 0; }
-#painel-predio .bloco:last-child { border-right: 0; }
-#painel-predio .bloco.identidade { min-width: 180px; max-width: 300px; }
-#painel-predio .bloco.gente { min-width: 150px; max-width: 260px; }
-#painel-predio .bloco.acoes {
-  margin-left: auto; padding-right: 0; justify-content: center; align-items: flex-end; gap: 8px;
-}
+#painel-predio .bloco:first-child { padding-top: 0; }
+#painel-predio .bloco:last-child { border-bottom: 0; }
+#painel-predio .bloco.acoes { flex-direction: row; flex-wrap: wrap; justify-content: space-between; gap: 6px; }
 #painel-predio h2 {
   margin: 0 0 3px; padding-bottom: 3px; font-size: 16px;
   border-bottom: var(--traco) solid var(--tinta);
-  display: flex; align-items: center; gap: 8px; white-space: nowrap;
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
 }
 #painel-predio h3 {
   margin: 0; font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em;
   color: var(--terra-queimada); white-space: nowrap;
 }
-/* o bloco da escola: duas colunas, a fila e o engajar, cada uma um no */
-#painel-predio .bloco.escola { flex-direction: row; gap: 14px; align-items: flex-start; }
+/* o bloco da escola: a fila em cima, o engajar embaixo */
 #painel-predio .bloco.escola .fila, #painel-predio .bloco.escola .engajar {
   display: flex; flex-direction: column; gap: 2px;
 }
+#painel-predio .bloco.escola .engajar { margin-top: 6px; }
 /* a fila da escola (F13b): um slot por vaga; o vazio e hachurado */
 #painel-predio .slot {
-  display: flex; align-items: baseline; gap: 6px; width: 232px; box-sizing: border-box;
+  display: flex; align-items: baseline; gap: 6px; width: 100%; box-sizing: border-box;
   padding: 0 5px; border: 2px solid var(--tinta); line-height: 13px;
   background: var(--papel-escuro); font-size: 11px;
 }
@@ -450,11 +498,16 @@ body[data-balcao="fechado"] #painel-predio { display: none; }
   flex: 1 1 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 #painel-predio .slot .progresso { color: var(--tinta-fraca); font-size: 11px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* o engajar: DUAS colunas (decisao do operador, 2026-09-26: tres so cabiam
+   raspando). O botao usa o nome curto do tema; o longo fica no `title`. */
 #painel-predio .tipos {
-  display: grid; grid-template-columns: repeat(5, max-content); gap: 3px 4px;
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3px 4px;
 }
 #painel-predio button { font-size: 12px; padding: 3px 7px; }
-#painel-predio .tipos button { font-size: 11px; padding: 2px 6px; box-shadow: 1px 1px 0 var(--tinta); white-space: nowrap; }
+#painel-predio .tipos button {
+  min-width: 0; font-size: 11px; padding: 2px 6px; box-shadow: 1px 1px 0 var(--tinta);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 #painel-predio .slot button {
   padding: 0 4px; line-height: 12px; box-shadow: none; border-width: 1px; font-size: 10px;
 }
@@ -487,6 +540,7 @@ body[data-balcao="fechado"] #painel-predio { display: none; }
 }
 /* o unico botao que destroi trabalho: cor propria, e sozinho na ponta */
 #painel-predio button.demolir {
+  margin-left: auto;
   background: var(--terracota); color: var(--papel); border-color: var(--tinta);
 }
 #painel-predio button.demolir:hover { background: var(--terra-queimada); }

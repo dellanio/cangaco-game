@@ -1,4 +1,4 @@
-// F22 — o aviso de prédio parado, no canto do mapa. Irmao de `ui/hud.ts`: so le
+// F22 — o aviso de prédio parado, na faixa fixa da barra (UI-barra-a). Irmao de `ui/hud.ts`: so le
 // o estado por seletor puro de `sim/` e escreve texto — nunca muta GameState,
 // nunca importa phaser, nunca varre predios por conta propria (CLAUDE.md §3).
 //
@@ -21,6 +21,20 @@ export interface Alertas {
  *  (`sem-trabalhador`) e quem fala com o jogador e `data/theme-sertao.json`
  *  (CLAUDE.md §9). `tests/F22-alertas.test.ts` exige a ida e a volta. */
 const ROTULOS = temaSertao.alertas.causas as Readonly<Record<CausaDeAlerta, string>>;
+
+/** Quantas causas a faixa da barra mostra (UI-barra-a): a faixa tem altura
+ *  fixa, e o resto vira "+N" no canto. Medida de tela, nao balanceamento. */
+export const LINHAS_NA_FAIXA = 2;
+
+/** Quais causas aparecem e quantas sobram. Pura: e o que o teste headless prova.
+ *  A ordem e a de `CAUSAS_DE_ALERTA`, nunca a da contagem — aviso que troca de
+ *  lugar entre um tick e outro e aviso que o jogador nao aprende a procurar. */
+export function causasNaFaixa(
+  contagens: Readonly<Record<CausaDeAlerta, number>>,
+): { readonly visiveis: readonly CausaDeAlerta[]; readonly sobram: number } {
+  const ativas = CAUSAS_DE_ALERTA.filter((c) => contagens[c] > 0);
+  return { visiveis: ativas.slice(0, LINHAS_NA_FAIXA), sobram: Math.max(0, ativas.length - LINHAS_NA_FAIXA) };
+}
 
 /** Monta as linhas uma vez em `#alertas` e devolve `{ atualizar }`, que so
  *  reescreve contagem e visibilidade — nunca recria o DOM, como o HUD. */
@@ -55,19 +69,33 @@ export function montarAlertas(): Alertas {
     linhas.set(causa, { caixa, contagem });
   }
 
+  const mais = document.createElement('span');
+  mais.className = 'mais';
+  mais.dataset.mais = '0';
+  mais.hidden = true;
+  raiz.append(mais);
+
   return {
     atualizar(estado) {
       const alertas = alertasDoEstado(estado);
+      const contagens = Object.fromEntries(
+        CAUSAS_DE_ALERTA.map((c) => [c, alertas.filter((a) => a.causa === c).length]),
+      ) as Record<CausaDeAlerta, number>;
+      const { visiveis, sobram } = causasNaFaixa(contagens);
       let total = 0;
       for (const causa of CAUSAS_DE_ALERTA) {
-        const quantos = alertas.filter((a) => a.causa === causa).length;
+        const quantos = contagens[causa];
         total += quantos;
         const linha = linhas.get(causa);
         if (!linha) continue;
-        linha.caixa.hidden = quantos === 0;
+        linha.caixa.hidden = !visiveis.includes(causa);
         const texto = String(quantos);
         if (linha.contagem.textContent !== texto) linha.contagem.textContent = texto;
       }
+      mais.hidden = sobram === 0;
+      mais.dataset.mais = String(sobram);
+      const textoDoMais = temaSertao.barra.maisAlertas.replace('{n}', String(sobram));
+      if (mais.textContent !== textoDoMais) mais.textContent = textoDoMais;
       // Some inteiro quando nao ha nada: um painel mostrando "0 avisos" e ruido
       // permanente em cima do mapa, e o jogador para de olhar para ele.
       raiz.hidden = total === 0;

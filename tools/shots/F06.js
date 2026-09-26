@@ -17,56 +17,14 @@ const nomeNoTema = (id) => tema.predios[id].nome;
 async function roteiro(ctx) {
   const { page, capturar, estado, afirmar } = ctx;
 
-  // 1. o layout nao sobrepoe: o canvas fica abaixo do HUD e a esquerda do painel.
-  //    E isto — e nao "ignorar y < 38" — que impede o ponteiro sobre a UI de
-  //    chegar ao Phaser.
+  // 1. o layout nao sobrepoe: o canvas fica a DIREITA da barra lateral
+  //    (UI-barra-a). E isto — e nao "ignorar x < 260" — que impede o ponteiro
+  //    sobre a UI de chegar ao Phaser. A barra nao retrai: a area do canvas e a
+  //    mesma com e sem selecao (medido no roteiro da UI-barra-a).
   const hud = await retanguloDe(page, '#hud');
-  const painel = await retanguloDe(page, '#menu-build');
+  const barra = await retanguloDe(page, '#barra');
   const canvas = await retanguloDoCanvas(page);
-  afirmar(canvas.top >= hud.bottom - 0.5, `canvas.top (${canvas.top}) deveria ser >= hud.bottom (${hud.bottom})`);
-  afirmar(canvas.right <= painel.left + 0.5, `canvas.right (${canvas.right}) deveria ser <= painel.left (${painel.left})`);
-  // Layout 2 (estilo-ui): o balcao e uma LINHA da grade no rodape, nunca
-  // sobreposicao — a afirmacao equivalente a de cima, pedida pelo operador.
-  const balcao = await retanguloDe(page, '#balcao');
-  afirmar(canvas.bottom <= balcao.top + 0.5, `canvas.bottom (${canvas.bottom}) deveria ser <= balcao.top (${balcao.top})`);
-
-  // 1b. a prancha RETRAI: a coluna some, o canvas cresce ate a borda direita e
-  //     o botao flutuante da barra e o que a traz de volta. O Phaser em
-  //     Scale.RESIZE confere o pai a cada 500 ms, dai a espera. Aberta ou
-  //     fechada, nada fica por baixo do canvas.
-  const esperarOCanvasSeguirAGrade = () => page.waitForTimeout(900);
-  const flutuante = '#hud [data-abrir="prancha"]';
-  afirmar(
-    await page.isVisible(flutuante) && (await page.getAttribute(flutuante, 'aria-pressed')) === 'true',
-    'o botao flutuante deveria estar na barra, apertado enquanto a prancha esta aberta',
-  );
-  await page.click('[data-fechar="prancha"]');
-  await esperarOCanvasSeguirAGrade();
-  const canvasLargo = await retanguloDoCanvas(page);
-  afirmar(
-    await page.isHidden('#menu-build') && await page.isHidden('[data-predio="quarry"]'),
-    'fechada, a prancha some inteira — nenhum item do menu fica na tela',
-  );
-  afirmar(
-    canvasLargo.width > canvas.width && canvasLargo.right <= hud.right + 0.5,
-    `com a prancha fechada o canvas deveria ir ate a borda direita, veio ${JSON.stringify(canvasLargo)} contra hud.right ${hud.right}`,
-  );
-  afirmar(
-    (await page.getAttribute(flutuante, 'aria-pressed')) === 'false',
-    'fechada a prancha, o botao flutuante deveria ficar solto',
-  );
-  await capturar('prancha-recolhida');
-  await page.click(flutuante);
-  await esperarOCanvasSeguirAGrade();
-  const canvasDeVolta = await retanguloDoCanvas(page);
-  afirmar(
-    Math.abs(canvasDeVolta.width - canvas.width) < 0.5 && await page.isVisible('[data-predio="quarry"]'),
-    `reaberta pelo flutuante, a prancha deveria devolver o canvas a largura inicial (${canvas.width}), veio ${canvasDeVolta.width}`,
-  );
-  afirmar(
-    (await page.getAttribute(flutuante, 'aria-pressed')) === 'true',
-    'reaberta, o botao flutuante volta a apertado',
-  );
+  afirmar(canvas.left >= barra.right - 0.5, `canvas.left (${canvas.left}) deveria ser >= barra.right (${barra.right})`);
 
   // 2. bloqueado: cinza, com "requer <nome do tema do pai>", e clicar nao ativa.
   const serraria = defDe('sawmill');
@@ -161,8 +119,9 @@ async function roteiro(ctx) {
       && new Set(glifos.map((g) => g.fundo)).size === 5,
     `cada campo do HUD deveria ter o seu glifo SVG, veio ${JSON.stringify(glifos.map((g) => [g.recurso, g.fundo.slice(0, 40)]))}`,
   );
-  // Todos os 28 estao na grade, em faixas por grupo (data/menu-build.json), e a
-  // grade nao rola: e a razao de ser do Layout 2 — o relogio nao espera.
+  // Todos os 28 estao na grade, em faixas por grupo (data/menu-build.json). Desde
+  // a UI-barra-a a grade mora no corpo da aba, que e o UNICO lugar que rola: a
+  // barra inteira cabe na janela.
   const gruposDoDado = require('../../data/menu-build.json').grupos;
   for (const g of gruposDoDado) {
     const naFaixa = await page.$$eval(
@@ -182,8 +141,8 @@ async function roteiro(ctx) {
     `a grade deveria ter os ${predios.length} predios`,
   );
   afirmar(
-    await page.$eval('#menu-build', (n) => n.scrollHeight <= n.clientHeight + 0.5),
-    'a prancha inteira deveria caber sem rolagem a 1280x720',
+    await page.$eval('#barra', (n) => n.scrollHeight <= n.clientHeight + 0.5),
+    'a barra inteira deveria caber sem rolagem a 1280x720; so o corpo da aba rola',
   );
   await page.mouse.move(hud.left + 100, hud.top + hud.height / 2); // tira o mouse da grade
   await page.waitForTimeout(100);
@@ -330,11 +289,11 @@ async function roteiro(ctx) {
   await page.mouse.move(pontoLivre.x, pontoLivre.y);
   await page.waitForTimeout(200);
   afirmar((await estado()).plantaFantasma !== null, 'de volta ao mapa a planta deveria reaparecer');
-  await page.mouse.move(painel.left + painel.width / 2, painel.top + 200);
+  await page.mouse.move(barra.left + barra.width / 2, barra.bottom - 100);
   await page.waitForTimeout(200);
   s = await estado();
-  afirmar(s.tileSobMouse === null, `sobre o painel tileSobMouse deveria ser null, veio ${JSON.stringify(s.tileSobMouse)}`);
-  afirmar(s.plantaFantasma === null, `sobre o painel a planta deveria estar escondida, veio ${JSON.stringify(s.plantaFantasma)}`);
+  afirmar(s.tileSobMouse === null, `sobre a barra tileSobMouse deveria ser null, veio ${JSON.stringify(s.tileSobMouse)}`);
+  afirmar(s.plantaFantasma === null, `sobre a barra a planta deveria estar escondida, veio ${JSON.stringify(s.plantaFantasma)}`);
 
   // 7. Esc cancela: a ferramenta volta a null, a planta some, o painel desmarca.
   await page.mouse.move(pontoLivre.x, pontoLivre.y);

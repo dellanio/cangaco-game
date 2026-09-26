@@ -25,6 +25,8 @@ const CHAVE_DA_DICA = 'cangaco:ajuda-vista';
 
 export interface Ajuda extends AjudaParaTeclado {
   readonly aberta: boolean;
+  /** A aba Opcoes (UI-barra-a) abre a mesma caixa que o H. */
+  abrir(): void;
 }
 
 /** O que sai impresso na tecla. `Escape` vira `Esc` porque e o que esta escrito
@@ -82,8 +84,8 @@ function linha(cap: string, texto: string, id: string): HTMLElement {
 export function montarAjuda(marca: Marca = marcaNoNavegador()): Ajuda {
   const raiz = document.getElementById('ajuda');
   if (!raiz) throw new Error('ajuda: #ajuda nao existe no index.html');
-  const barra = document.getElementById('hud');
-  if (!barra) throw new Error('ajuda: #hud nao existe no index.html');
+  const logo = document.getElementById('logo');
+  if (!logo) throw new Error('ajuda: #logo nao existe no index.html');
 
   const titulo = document.createElement('h2');
   titulo.textContent = tema.titulo;
@@ -122,15 +124,15 @@ export function montarAjuda(marca: Marca = marcaNoNavegador()): Ajuda {
   rodape.textContent = tema.rodape;
   raiz.append(rodape);
 
-  // O lembrete mora na BARRA, nao sobre o mapa: sobreposicao nova na celula do
-  // canvas mexeria nas medidas de retangulo que os roteiros da F06 e da F22
-  // afirmam, e um aviso de primeira partida nao vale uma regressao de layout.
-  const dica = document.createElement('span');
+  // O lembrete mora na BARRA, nao sobre o mapa, e logo ABAIXO DA LOGO
+  // (UI-barra-a, decisao do operador 2026-09-26): o topo e onde o jogador novo
+  // olha, e como some no primeiro H, ocupar o topo nao custa nada depois.
+  const dica = document.createElement('div');
   dica.className = 'dica-ajuda';
   dica.id = 'dica-ajuda';
   dica.textContent = tema.dica;
   dica.hidden = marca.vista();
-  barra.append(dica);
+  logo.after(dica);
 
   let aberta = false;
 
@@ -149,6 +151,9 @@ export function montarAjuda(marca: Marca = marcaNoNavegador()): Ajuda {
     },
     alternar() {
       mostrar(!aberta);
+    },
+    abrir() {
+      mostrar(true);
     },
     fechar() {
       if (!aberta) return false;

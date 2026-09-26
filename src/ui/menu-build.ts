@@ -1,4 +1,4 @@
-// A prancha: o menu Construir (F06), desde o Layout 2 uma GRADE DE ICONES por
+// O menu Construir (F06), no corpo da aba da barra (UI-barra-a), desde o Layout 2 uma GRADE DE ICONES por
 // grupo com um cartao fixo embaixo (docs/propostas/ui-releitura-rts.md §1-2).
 // Num RTS o relogio nao espera: a lista rolante de 28 prédios com texto foi
 // trocada por 5 colunas de icones em faixas, tudo visivel de uma vez, e o
@@ -137,7 +137,7 @@ function retrato(url: string): HTMLElement {
   return img;
 }
 
-/** Monta a prancha em `#menu-build` na primeira `atualizar` (e la que se sabe a
+/** Monta a grade em `#menu-build` na primeira `atualizar` (e la que se sabe a
  *  lista de predios) e depois so reescreve o que mudou. */
 export function montarMenuBuild(
   ferramenta: Ferramenta, iconeDe: ResolvedorDeIcone = () => null,

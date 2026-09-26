@@ -12,6 +12,7 @@
 // de cada item parado — nunca o id neutro da simulacao.
 import type { Command } from '../sim/commands';
 import type { ItemDoPainelDeTreino, PainelDaEscola } from '../sim/selectors';
+import { rotuloCurtoDoCivil } from './barra';
 import temaSertao from '../../data/theme-sertao.json';
 
 const rotulos = temaSertao.painelEscola;
@@ -89,11 +90,9 @@ function slotVazio(i: number): HTMLElement {
 export function desenharSecaoDaEscola(
   raiz: HTMLElement, dados: PainelDaEscola, emitir: (comando: Command) => void,
 ): void {
-  // Layout 2: a secao sao DUAS colunas lado a lado, cada uma um no — a fila
-  // (titulo mais um slot por vaga) e o engajar (titulo, a grade de tipos e o
-  // aviso de fila cheia). Um no por coluna e o que deixa as alturas
-  // independentes: numa grade de linhas compartilhadas o primeiro slot esticava
-  // ate a altura da grade de tipos.
+  // A secao sao DOIS nos — a fila (titulo mais um slot por vaga) e o engajar
+  // (titulo, a grade de tipos e o aviso de fila cheia). Na barra (UI-barra-a)
+  // eles se empilham: a fila em cima, o engajar embaixo.
   const colunaDaFila = document.createElement('div');
   colunaDaFila.className = 'fila';
   const fila = document.createElement('h3');
@@ -119,8 +118,10 @@ export function desenharSecaoDaEscola(
     const botao = document.createElement('button');
     botao.type = 'button';
     botao.dataset.treinar = tipo;
-    botao.textContent = nomeDoCivil(tipo);
-    botao.title = `${rotulos.custo} ${dados.custoPorUnidade}`;
+    // O curto do tema (UI-barra-a: "Pedreiro"), porque a barra tem 260 px; o
+    // nome inteiro fica no `title`, e no slot da fila, onde cabe.
+    botao.textContent = rotuloCurtoDoCivil(tipo);
+    botao.title = `${nomeDoCivil(tipo)} · ${rotulos.custo} ${dados.custoPorUnidade}`;
     // aria-disabled e nao `disabled`, como no menu Build (F06): o clique CHEGA
     // e e ignorado aqui, entao o roteiro consegue provar que nao enfileirou.
     botao.setAttribute('aria-disabled', String(!dados.podeEnfileirar));

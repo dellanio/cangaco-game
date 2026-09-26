@@ -3725,16 +3725,18 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
   - não recolhe;
   - de cima para baixo:
     1. logo com moldura;
-    2. minimapa (reservado), com o carimbo PAUSADO e a velocidade;
-    3. os cinco recursos em lista;
-    4. a faixa fixa de alertas, **vazia quando não há alerta**;
-    5. as abas do GDD §7.1: Construir, Distribuição (cadeado), Estatísticas (cadeado)
+    2. logo abaixo da logo, a dica do H, com a regra da F-D1: só na primeira partida,
+       até o primeiro H, independente de alerta (operador, 2026-09-26: o pé é o último
+       lugar onde o jogador novo olha);
+    3. minimapa (reservado), com o carimbo PAUSADO e a velocidade;
+    4. os cinco recursos em lista;
+    5. a faixa fixa de alertas, **vazia quando não há alerta**;
+    6. as abas do GDD §7.1: Construir, Distribuição (cadeado), Estatísticas (cadeado)
        e Opções;
-    6. o corpo da aba: a grade de hoje (5 × 40 px, bloqueado com cadeado) **ou**, com
+    7. o corpo da aba: a grade de hoje (5 × 40 px, bloqueado com cadeado) **ou**, com
        seleção, o painel do prédio empilhado, com a fila da escola dentro do painel da
        Casa do Coronel;
-    7. a faixa da marca com o lema. No topo dela, a dica do H, com a regra da F-D1: só
-       na primeira partida, até o primeiro H, independente de alerta.
+    8. a faixa da marca com o lema.
   - O balcão (`#balcao`, `data-balcao`, a alça) e o `data-prancha` saem.
   - O `#hud` como faixa sai. O destino de cada peça está na tabela da proposta.
   - A aba Construir com seleção volta à grade, como o `Esc`.

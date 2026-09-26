@@ -1,4 +1,5 @@
-// O aviso de pausa e de velocidade (F11a): um elemento so, na barra do HUD. Mostra o texto de
+// O aviso de pausa e de velocidade (F11a): um elemento so, carimbado sobre o
+// minimapa da barra (UI-barra-a). Mostra o texto de
 // pausa quando pausado, a velocidade quando ela e diferente de 1x, e SOME em 1x despausado.
 // O que ficou fora foi o widget de controle, nao o retorno visual: o GDD §10 exige retorno
 // imediato para toda acao, e "o jogador aperta P e nada aparece" e o que a rubrica reprova.
@@ -26,17 +27,17 @@ export function textoDoAviso(pausado: boolean, velocidade: number, rotulos: Rotu
   return partes.join(' · ');
 }
 
-/** Cria o elemento uma vez, dentro de `#hud`, e devolve `{ atualizar }`, que so escreve quando o texto muda. */
+/** Cria o elemento uma vez, dentro de `#minimapa`, e devolve `{ atualizar }`, que so escreve quando o texto muda. */
 export function montarAvisoDoTempo(): AvisoDoTempo {
-  const hud = document.getElementById('hud');
-  if (!hud) throw new Error('aviso-tempo: #hud nao existe no index.html');
+  const minimapa = document.getElementById('minimapa');
+  if (!minimapa) throw new Error('aviso-tempo: #minimapa nao existe no index.html');
 
   const elemento = document.createElement('div');
   elemento.className = 'aviso-tempo';
   elemento.dataset.campo = 'aviso-tempo';
   elemento.setAttribute('role', 'status');
   elemento.hidden = true;
-  hud.append(elemento);
+  minimapa.append(elemento);
 
   const rotulos: RotulosDoAviso = { pausado: temaSertao.hud.pausado };
   let ultimo = '';
