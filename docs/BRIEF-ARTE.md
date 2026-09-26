@@ -237,10 +237,172 @@ rótulos em `data/theme-sertao.json`) **[lido]**:
 | 5 | `cobertura` | Paredes prontas, telhado com parte das telhas. | telhado por fechar |
 | 6 | `completo` | O prédio pronto. | — |
 
-- **Prédio não tem animação.** Nenhum trabalhador, animal ou fumaça dentro do sprite.
+- **O sprite do prédio é estático.** Nenhum trabalhador, animal, fumaça ou mercadoria
+  dentro dele. O prédio **tem** animação e estoque visível (decisão do operador,
+  2026-09-26), mas os dois são **camadas à parte**, desenhadas pelo render por cima do
+  estágio `completo`, nas áreas que o prédio reserva vazias. As camadas, as áreas e os
+  arquivos estão na seção 4a.
 - O GDD §9.6 ainda fala em três estágios. Está desatualizado: o código usa seis.
 - O armazém usa hoje só `marcacao`, `estrutura` e `completo`. Os outros três caem no
   placeholder.
+
+---
+
+## 4a. O prédio vivo: trabalho, estoque e animais
+
+Decisão do operador, 2026-09-26. Todo prédio produtor mostra **o próprio estoque** e
+**a própria animação de trabalho**, como no KaM. Cada prédio tem a **sua** animação: o
+serrador serrando não é o padeiro amassando. O comportamento vem do kam_remake
+(código aberto, `KM_Units_WorkPlan.pas`, `KM_RenderPool.pas`), usado como referência de
+**comportamento**. Nenhum sprite de lá entra aqui (CLAUDE.md §9).
+
+**Nada disto aparece na tela ainda.** O render das camadas é feature própria no
+`BUILD_PLAN.md`. Até ela entrar, a arte desta seção pode ser desenhada e derivada, mas
+**as entradas dos três tipos novos não vão para o `assets/manifest.json`**: o
+`tests/F17f-manifesto.test.ts` recusa tipo que o render não conhece, e está certo em
+recusar. O campo `ancoras` na entrada do prédio pode entrar desde já **[lido, não
+testado]**: nenhum código o lê, e nenhum teste compara a lista exata de campos da
+entrada. Rode `npm run verify` depois de acrescentar.
+
+### Os cinco casos
+
+Todo prédio com receita em `data/production.json` cai em exatamente um caso.
+
+| Caso | Prédios | O que o trabalhador faz | Animação dentro |
+|---|---|---|---|
+| 1. Sai, volta e só guarda | Roçado (`farm`), Casa do Lenhador (`woodcutters`), Casa do Pescador (`fishermans`) | colhe no campo e deposita | **nenhuma** |
+| 2. Sai, volta e transforma | Pedreira (`quarry`), Canavial (`wineyard`) | colhe no campo e trabalha dentro | 3 laços: `inicio`, `meio`, `fim` |
+| 3. Nunca sai | Serraria, Moinho, Padaria, Casa de Carne, Curtume, Fundição, Forja, Casa de Armas de Madeira, Casa do Gibão, Ferraria, Casa do Ferro | espera o insumo dentro | 2 laços: `laco1`, `laco2` |
+| 4. Nunca sai, sem trabalhador | Garimpo, Jazida de Carvão, Mina de Ferro | trabalha dentro da montanha | 1 laço de luz: `luz` |
+| 5. Criação | Malhada (`swine_farm`), Cocheira (`stables`) | alimenta os animais | 2 laços de alimentar + animais crescendo |
+
+- **Caso 1 não tem animação dentro** (decisão do operador, confirmado no kam_remake: o
+  plano do roceiro, do lenhador e do pescador não tem nenhuma sub-ação no prédio). A
+  vida dele está no trabalhador no campo e na pilha que cresce.
+- **O Canavial e as minas** mudam de caso numa correção de dado ainda por fazer: o
+  Canavial passa a sair para colher, e as minas deixam de sair. A arte segue a tabela
+  acima desde já.
+- **Prédios sem receita** (armazém, bodega, Casa do Coronel, quartel, feira,
+  mercenários, torre) não têm animação de trabalho. O armazém e a bodega mostram
+  estoque.
+
+### Os quadros
+
+- **8 quadros por laço.** Nunca menos de 6: com 2 ou 3 quadros, o boneco treme.
+- **4 quadros para luz** (caso 4).
+- **Animação longa é o mesmo laço repetido, não mais quadros.** No KaM, a pedreira
+  repete o laço do meio 9 vezes, a serraria 25, o moinho 47. Quem decide quantas
+  repetições é o render, pela duração do ciclo no dado. A arte só entrega o laço.
+- **Os dois laços do caso 3 são gestos diferentes do mesmo ofício**, não o mesmo gesto
+  em outro ângulo: o padeiro amassa e depois mexe no forno; o ferreiro martela e depois
+  mergulha a peça. Um laço só, repetido o ciclo inteiro, parece máquina.
+- **O primeiro e o último quadro de cada laço se encaixam**: o laço volta ao começo sem
+  pulo.
+
+### A regra do zoom
+
+A 0,75 o prédio tem cerca de 144 px e um boneco de 16 px vira mancha. Por isso:
+
+> **Todo laço tem um elemento grande ou uma mudança de luz.** Grande é cerca de ¼ da
+> área de trabalho: a vela do moinho, a tora na serra, o forno que acende, o fole, a
+> fumaça, o animal. O gesto da mão (amassar, curtir, martelar peça pequena) é **bônus**
+> para zoom 1 ou mais, nunca a única coisa que muda.
+
+Hipótese até medir numa captura a 0,75: sobrevivem luz, fumaça, vela, serra com tora
+grande, animal que quase dobra de tamanho entre as idades, e pilha de ~12 px.
+
+### As três âncoras
+
+O prédio declara, na própria entrada do manifest, **onde** cada camada aparece. As
+coordenadas são **frações do sprite `completo`**, de 0 a 1, com a origem no canto
+superior esquerdo: `[0.5, 0.8]` é o meio da largura, a 80 % da altura. Fração, e não
+pixel, porque a largura do prédio ainda vai mudar com o fator da seção 3.
+
+```json
+"ancoras": {
+  "trabalho": { "area": [0.30, 0.45, 0.60, 0.75], "fumaca": [0.72, 0.10] },
+  "estoque":  { "entrada": [[0.15, 0.90]], "saida": [[0.80, 0.92]] },
+  "curral":   [[0.20, 0.70], [0.35, 0.75], [0.50, 0.72], [0.65, 0.76], [0.80, 0.70]]
+}
+```
+
+- **`trabalho.area`** é `[x0, y0, x1, y1]`: o retângulo da porta, janela, alpendre ou
+  forno onde o quadro de trabalho é desenhado. O quadro tem exatamente o tamanho dessa
+  área. **`trabalho.fumaca`** é o ponto da chaminé ou da boca da mina. Caso 1 declara só
+  `fumaca`.
+- **`estoque.entrada` e `estoque.saida`** são **pontos**, um por mercadoria que a
+  gaveta pode guardar, na ordem de `data/production.json` (`entra` e `sai`). A Casa do
+  Gibão tem 2 de entrada e 2 de saída; a Malhada, 1 e 2; a Pedreira, 0 e 1. A pilha
+  daquela mercadoria cresce a partir do ponto.
+- **`curral`** são **5 pontos**, só na Malhada e na Cocheira: onde fica cada animal.
+- **As três áreas não se sobrepõem.** A pilha não cobre a porta, e o animal não pisa
+  na bancada. É isso que deixa a ordem de desenho trivial.
+- **A bodega** declara 4 pontos de entrada, um por comida (`loaves`, `sausages`,
+  `wine`, `fish`), e nada de saída. **O armazém** declara os pontos que couberem no
+  pátio. Quantos, e o que acontece com a 29.ª mercadoria, é pergunta em aberto do
+  operador.
+
+### Os três tipos novos de asset
+
+Os três seguem os oito campos da seção 3 e a mesma pasta `assets/sprites/<id>/`.
+
+**`trabalho`** — os quadros de trabalho de UM prédio.
+
+- `id`: o id do prédio (`sawmill`). A fumaça, que é genérica, tem `id` `fumaca`.
+- `estados`: um arquivo por quadro, chave `<laco>_<n>`, de 1 a 8 (1 a 4 na luz):
+  `inicio_1` … `fim_8` no caso 2; `laco1_1` … `laco2_8` nos casos 3 e 5; `luz_1` …
+  `luz_4` no caso 4; `fumaca_1` … `fumaca_8` na fumaça.
+- Arquivo: `sprites/<id>/<id>_<laco>_<n>.png`.
+- `tamanho`: o da área `trabalho.area` do prédio, no sprite derivado. Todos os quadros
+  do mesmo prédio têm o mesmo tamanho.
+- Fundo transparente. O quadro mostra o trabalhador e o que ele mexe, nunca a parede.
+
+**`pilha`** — UMA unidade de uma mercadoria.
+
+- `id`: a mercadoria neutra de `data/economy.json` (`stone`, `loaves`).
+- `estados`: um só, `unidade`. Arquivo `sprites/<id>/<id>_unidade.png`.
+- **Uma unidade, não uma pilha.** O render empilha de 1 a 5 a partir do ponto de
+  estoque: três embaixo, duas em cima. A imagem precisa **empilhar bem**: vista no
+  mesmo ângulo do prédio, base plana, âncora no pé (`[0.5, 1]`).
+- Tamanho: cerca de ¼ de tile de largura (16 px no zoom 1). Legível a ~12 px.
+- **Estoque é por unidade, não por faixa** (decisão do operador, 2026-09-26): o teto da
+  gaveta é 5, e 5 unidades desenhadas dizem o número exato. O armazém, que não tem teto,
+  desenha no máximo 5 por mercadoria.
+
+**`animal`** — um animal da criação, nas três idades.
+
+- `id`: a mercadoria que ele vira: `pigs` (Malhada) e `horses` (Cocheira).
+- `estados`: `idade1_1` … `idade1_4`, `idade2_…`, `idade3_…`: 3 idades × 4 quadros de
+  um laço parado (respirar, mexer a cabeça, comer).
+- Arquivo: `sprites/<id>/<id>_<idade>_<n>.png`. Âncora no pé.
+- **O adulto (idade 3) tem quase o dobro do filhote (idade 1)**: é a diferença que se
+  vê de longe. O adulto ocupa cerca de 0,6 tile de largura.
+- O mesmo desenho serve às 5 posições do curral. A idade de cada posição vem do
+  progresso do ciclo, pelo render; a simulação não tem idade de animal.
+
+### A conta
+
+| Parte | Imagens |
+|---|---|
+| Estágios dos 28 prédios (seção 6) | 168 |
+| `pilha`: 28 mercadorias × 1 unidade | 28 |
+| Caso 2: 2 prédios × 3 laços × 8 | 48 |
+| Caso 3: 11 prédios × 2 laços × 8 | 176 |
+| Caso 4: 3 minas × 1 luz × 4 | 12 |
+| Caso 5, alimentar: 2 prédios × 2 laços × 8 | 32 |
+| Caso 5, `animal`: 2 bichos × 3 idades × 4 | 24 |
+| Fumaça genérica: 1 laço × 8 | 8 |
+| **Total** | **496** |
+
+A animação sozinha soma 300 (48 + 176 + 12 + 32 + 24 + 8). O operador escolheu esse
+nível, e não o mínimo de um laço por prédio, porque um laço só parece repetitivo e
+redesenhar custa mais que desenhar certo.
+
+**Mercadorias sem pilha, por enquanto.** A Casa de Armas de Madeira, a Ferraria e a
+Casa do Ferro produzem, no dado, `arma_madeira`, `arma_ferro` e `armadura_ferro`, que
+não estão entre as 28 de `data/economy.json`. A escolha da arma pelo jogador ainda não
+existe na simulação. Até existir, a saída desses três não tem pilha, e isso não é
+defeito de arte.
 
 ---
 
@@ -259,9 +421,25 @@ ter pedra para sempre, inclusive depois de o lajedo secar e o jogo parar de extr
 O jogador passa a ver uma coisa e o jogo a fazer outra. Pelo mesmo motivo, a casa do
 lenhador não tem mata em volta: a mata acaba.
 
+**Mercadoria também fica fora** (decisão do operador, 2026-09-26). O estoque do prédio
+aparece na tela, mas quem desenha é o render, unidade por unidade, a partir do estoque
+de verdade (seção 4a). Uma pilha pintada no sprite mente do mesmo jeito que a pedra
+pintada: o prédio parece abarrotado com a gaveta vazia. Isso **revoga** a "pilha de
+lenha cortada" que esta seção permitia antes: na casa do lenhador, as toras são estoque.
+
+**Os trabalhadores e os animais também ficam fora.** Eles são camadas da seção 4a.
+
+**O que o sprite precisa ter no lugar deles: áreas vazias.** Uma bancada, um pátio, um
+tablado ou um trecho de chão de terra batida **dentro do contorno do prédio**, sem nada
+em cima, onde a pilha vai aparecer. Uma porta, janela, alpendre ou forno aberto onde o
+trabalho aparece. Na Malhada e na Cocheira, um curral cercado e vazio. Um prédio
+desenhado sem essas áreas tem de ser refeito quando a camada chegar. É a única parte
+desta decisão que fica cara depois.
+
 **Pode entrar**, porque é parte do prédio e não muda com o jogo: a cerca de vara do
-próprio prédio, a pilha de lenha cortada, uma ferramenta encostada, o varal. Na dúvida,
-pergunte: "isso some quando o recurso acaba?". Se some, fica de fora.
+próprio prédio, uma ferramenta encostada, o varal, a bancada **vazia**, o cocho **vazio**.
+Na dúvida, pergunte: "isso some quando o recurso acaba, ou quando a gaveta esvazia?".
+Se some, fica de fora.
 
 O molde de prompt da spec já traz isso: `No raw, uncut rock`, e o prompt negativo com
 mata e folhas (`docs/spec-arte-predios.md`, `docs/arte-prompt-higgsfield.md`).
@@ -529,6 +707,12 @@ Os três são os que a abertura planta primeiro e os que o roteiro F17 mostra.
 | woodcutters | Casa do Lenhador | 3×2 | 192 px de largura | base aprovada para estrutura e completo: refazer a marcação no canvas deles e gerar fundação, paredes e cobertura |
 | quarry | Pedreira | 3×2 | 192 px de largura | nada: seis estágios novos, **sem pedra desenhada** |
 
+Os três precisam das áreas vazias da seção 4a desde o primeiro desenho: o armazém, o
+pátio do estoque; a casa do lenhador, o ponto de saída das toras e a chaminé; a
+pedreira, a área de trabalho (caso 2) e o ponto de saída dos blocos. A base aprovada da
+casa do lenhador tem lenha empilhada? Se tiver, ela é estoque pintado (seção 5) e sai
+no refazer.
+
 ### Duas unidades
 
 | id | Nome | Direções | Desenhos com espelho | Item |
@@ -560,8 +744,9 @@ repouso e batendo a marreta basta.
 - **`.claude/` e `AGENTS.md`.**
 - **Os testes**, em geral. Arte nova não precisa de mudança em teste nenhum (seção 3).
 
-**Uma unidade parada dentro de um prédio** na tela é o **BUG-G**, aberto no `BUGS.md`.
-É defeito da simulação, não de sprite nem de profundidade de desenho.
+**Uma unidade parada dentro de um prédio** na tela era o **BUG-G**, corrigido em
+2026-09-26 (`e64d456`). Se voltar a acontecer, é defeito da simulação, não de sprite nem
+de profundidade de desenho: registre com `/bug`.
 
 **Dívida de tela que a simulação já tem e a tela ainda não mostra.** Cada item precisa
 de item próprio no `BUILD_PLAN.md` antes de código:
