@@ -7476,10 +7476,22 @@ O `assets/manifest.json` **não foi tocado**.
 - **`npm run verify`** passou: 105 arquivos, 1 451 testes.
 
 ### Aberto
-- **O serf não aparece no teste.** `indo_buscar`, `indo_entregar` e `devolvendo` não acham
-  onde plantar: o serf da vila anda pela rua, e o `canPlace` recusa prédio sobre rua. Os
-  três passos usam o predicado novo, mas **nenhum teste exercita o serf debaixo de
-  footprint**. `indo_comer` também fica de fora, porque só acontece com fome.
+- **O serf não aparece no teste — o quinto caso fica registrado como NÃO COBERTO**
+  (operador pediu o caso em 2026-09-26; a tentativa não fechou). `indo_buscar`,
+  `indo_entregar` e `devolvendo` usam o predicado novo, mas nenhum teste exercita o serf
+  debaixo de footprint. `indo_comer` também fica de fora, porque só acontece com fome.
+  - **Medido (sonda na vila da F-CAL-a, 9 000 ticks, apagada):** o serf anda FORA da rua —
+    655 ticks-unidade em `indo_buscar` e 327 em `indo_entregar`, carregado — mas todo
+    plantio sobre ele foi recusado pelo `canPlace` (`bloqueado`, `sobreposicao`, `estrada`,
+    `recurso`); nenhum `ok`.
+  - **Respondido ao operador, lido no código:** o jogador NÃO planta prédio sobre rua nem
+    sobre rua planejada (`canPlace`, motivo `'estrada'`). O serf na rua não pode ficar
+    coberto. O caso existe mesmo assim: as entregas em modo `livre` (`material-para-obra`,
+    `pedra-para-canteiro`, `assentar-estrada`, `arar`) andam fora da rua.
+  - **Tentado e revertido:** injetar uma obra a ≥ 8 tiles de toda rua e plantar sobre o serf
+    carregado em `indo_entregar`. O teste reprovou sem achar o serf coberto (`expected
+    undefined`) e **não foi depurado** — hipótese: a obra nunca foi posta, ou a condição de
+    tick sem comando da vila nunca valeu. O arquivo voltou ao verde de `e64d456`.
 - **Hipótese não medida:** com a caixa liberada, a unidade atravessa o prédio até o outro
   lado se esse for o caminho mais curto. Era o que o A* já pedia desde a F-T3. Agora o
   passo obedece.

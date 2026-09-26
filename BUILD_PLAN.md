@@ -3370,9 +3370,11 @@ Depende da F20b: o marcador lê `unidade.condicao`, que só existe depois dela. 
       propósito. O BUG-G foi corrigido em 2026-09-26 (`passoAndavel`,
       `tests/BUG-G-preso-no-footprint.test.ts`), então o (c) longe da porta **pode** virar
       asserção: uma corrida de 36 000 ticks com o campo atrás, afirmando o teto de milho medido
-      e zero mortes. Essa corrida é cara, então é decisão do operador, não herança automática.
-      A tabela acima foi medida antes da pedra 30 e do conserto. Uma asserção nova parte de
-      uma medição nova, não dessa tabela.
+      e zero mortes. A tabela acima foi medida antes da pedra 30 e do conserto. Uma asserção
+      nova parte de uma medição nova, não dessa tabela.
+      **Fica como sonda (operador, 2026-09-26).** O bloqueio **deixou de ser o BUG-G e passou a
+      ser prioridade**: virar asserção exige a corrida longa e a medição nova, e a Fase C está
+      começando. O caminho está livre para quando alguém quiser; nada no código impede.
     - **Entregue:** `tests/F-CAL-b-calibracao.test.ts` ganhou o `it` de (a) sobre a mesma
       corrida (141,6 ≤ 246). A reescrita de (a) e (c) é interpretação minha, a mais
       conservadora, e fica **marcada para o operador revisar** (`PROGRESS.md`, 2026-09-26).
