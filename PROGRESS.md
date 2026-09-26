@@ -8594,3 +8594,26 @@ for pequena, o cartão ganha teto com rolagem própria, em vez de um número mai
 - Cobertura ativa conferida por cruzamento de dados e manifesto: 28/28 prédios têm sprite e ícone; 23/23 unidades com `direcoesDeSprite` têm sprite; os seis terrenos têm quatro estados raster cada.
 - Os cinco mercenários continuam deliberadamente fora do render: `tests/F-SPR-carregamento.test.ts` exige `direcoesDeSprite === null` e reprova manifesto de unidade para esses ids. A regra “não tocar em `tests/`” foi preservada.
 - Foi criada uma base canônica pronta para a futura ativação em `assets/base/unit-atlas-mercenaries/`, com Retirante, Emboscador, Andarilho montado, Bruto do Mato e Jagunço. O layout deriva as cinco células pelo pipeline, mas os derivados não entram em `assets/sprites/` enquanto o contrato acima permanecer.
+
+## 2026-09-26 (noite, 17) — HUD raster e estradas conectáveis
+
+### Entregue
+
+- Os cinco glifos do HUD, as quatro abas, os cadeados, a rosa dos ventos e o grão de pergaminho agora são PNGs versionados. Não resta `.svg` nem `data:image/svg` em `src/`, `assets/`, `data/`, `tests/` ou `tools/`.
+- A marca do topo passou a usar `logo-pianco-completo.png`, com o lettering “PIANCÓ — FERRO E MANDACARU” incorporado no asset e sem sobrepor a barra de 260 px.
+- O cartão da grade tem altura compacta e estável de 80 px, com rolagem no miolo. Isso elimina o crescimento sobre o último ícone que fazia o hover oscilar no F06.
+- A skill `pianco-art-pipeline` ganhou processadores reutilizáveis para ícones de tinta e estradas. As fontes canônicas ficam em `assets/base/`; os derivados consumidos ficam em `assets/sprites/`.
+- A estrada virou uma camada raster própria do manifesto, sem se passar por terreno e sem tocar em `src/sim/`. O render escolhe uma das 16 máscaras cardinais N/L/S/O e usa um sprite separado na ligação diagonal; se qualquer textura faltar, preserva o retângulo/losango de fallback anterior.
+
+### Verificado
+
+- `npm run verify`: verde; suíte normal 1.547/1.547 e suíte transladada 1.546 aprovados, quatro `skip` já existentes.
+- `npm run typecheck`: OK.
+- `npm run validate:data`: 13 arquivos, 0 erros.
+- Testes focados de manifesto, carregamento e ícones: 34/34 verdes.
+- `npm run shot -- F06`: OK, 4 capturas.
+- `npm run shot -- UI-barra-a`: OK, 3 capturas; aberta `screenshots/UI-barra-a-1-sombra-grade.png`.
+- `npm run shot -- F-T1`: OK, 4 capturas; aberta `screenshots/F-T1-2-lago-e-praia.png`.
+- `npm run shot -- F-SPR`: OK, 2 capturas.
+- `npm run shot -- F08`: OK, 3 capturas; abertas `screenshots/F08-2-estrada-desenhada.png` e `screenshots/F08-3-estrada-partida.png`.
+- A folha de contato `screenshots/road-sprites-preview.png` foi aberta: pontas, retas, curvas, T e cruzamentos conservam largura e bordas orgânicas sobre o terreno real.

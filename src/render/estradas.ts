@@ -12,6 +12,7 @@ import { canPlaceRoad, ehEstrada, pontesDiagonais, tilesOrdenados } from '../sim
 import type { TileDeGrid } from '../sim/estradas';
 import type { ModoDaFerramenta } from '../input/ferramenta';
 import { gridToScreen, ESCALA_DO_MUNDO } from './grid';
+import { chaveDeTextura } from './manifesto';
 
 // Acima do chao (depth 0) e abaixo dos predios (depth = y em px, >= dezenas de
 // milhares aqui) e da planta/prévia.
@@ -25,6 +26,33 @@ const OPACIDADE_DO_CANTEIRO = 0.3;
 const ESPESSURA_DO_CANTEIRO = 2;
 /** Meia-diagonal da ponte, em fracao do tile. Cobre o pinch sem engordar a rua. */
 const RAIO_DA_PONTE = 0.34;
+const ID_DA_ESTRADA = 'estrada';
+const ESTADO_DA_DIAGONAL = 'diagonal';
+
+/**
+ * Bits N/L/S/O da familia raster. So vizinho cardinal muda o corpo do tile;
+ * ligacoes diagonais continuam vindo de `pontesDiagonais`, dona da regra da quina.
+ */
+const CONEXOES_CARDINAIS = [
+  { dx: 0, dy: -1, bit: 1 },
+  { dx: 1, dy: 0, bit: 2 },
+  { dx: 0, dy: 1, bit: 4 },
+  { dx: -1, dy: 0, bit: 8 },
+] as const;
+
+export function mascaraDaEstrada(
+  estradas: GameState['estradas'], tile: TileDeGrid,
+): number {
+  return CONEXOES_CARDINAIS.reduce((mascara, conexao) => (
+    ehEstrada(estradas, { gx: tile.gx + conexao.dx, gy: tile.gy + conexao.dy })
+      ? mascara | conexao.bit
+      : mascara
+  ), 0);
+}
+
+function chaveDaEstrada(estado: string): string {
+  return chaveDeTextura('estrada', ID_DA_ESTRADA, estado);
+}
 
 /** O que a cena publica em `window.__cangaco.previaDeEstrada`. */
 export interface PreviaDeEstrada {
@@ -84,6 +112,7 @@ export function criarCamadaDeEstradas(cena: Phaser.Scene, tilePx: number): Camad
   const corDoContorno = Phaser.Display.Color.HexStringToColor(temaSertao.paleta.terraQueimada).color;
   const grafico = cena.add.graphics();
   grafico.setDepth(DEPTH_DA_ESTRADA);
+  let imagens: Phaser.GameObjects.Image[] = [];
   let desenhada: GameState['estradas'] | null = null;
   let desenhadoOCanteiro: GameState['estradasPlanejadas'] | null = null;
   let desenhadaComPredios: GameState['predios']['ordem'] | null = null;
@@ -98,6 +127,19 @@ export function criarCamadaDeEstradas(cena: Phaser.Scene, tilePx: number): Camad
         const tiles = tilesOrdenados(estradas);
         const canteiro = tilesOrdenados(planejadas);
         grafico.clear();
+        for (const imagem of imagens) imagem.destroy();
+        imagens = [];
+
+        const desenharImagem = (
+          chave: string, x: number, y: number, origemX: number, origemY: number,
+        ): boolean => {
+          if (!cena.textures.exists(chave)) return false;
+          imagens.push(cena.add.image(x, y, chave)
+            .setOrigin(origemX, origemY)
+            .setDisplaySize(tilePx, tilePx)
+            .setDepth(DEPTH_DA_ESTRADA));
+          return true;
+        };
 
         grafico.fillStyle(cor, OPACIDADE_DO_CANTEIRO);
         grafico.lineStyle(ESPESSURA_DO_CANTEIRO, corDoContorno, 1);
@@ -110,10 +152,22 @@ export function criarCamadaDeEstradas(cena: Phaser.Scene, tilePx: number): Camad
         grafico.fillStyle(cor, 1);
         for (const tile of tiles) {
           const canto = gridToScreen(tile, tilePx, ESCALA_DO_MUNDO);
-          grafico.fillRect(canto.x, canto.y, tilePx, tilePx);
+          const mascara = mascaraDaEstrada(estradas, tile);
+          if (!desenharImagem(chaveDaEstrada(`m${mascara}`), canto.x, canto.y, 0, 0)) {
+            grafico.fillRect(canto.x, canto.y, tilePx, tilePx);
+          }
         }
         if (estado !== null) {
-          for (const [a, b] of pontesDiagonais(estado)) desenharPonte(grafico, a, b, tilePx);
+          for (const [a, b] of pontesDiagonais(estado)) {
+            const noroeste = { gx: Math.min(a.gx, b.gx), gy: Math.min(a.gy, b.gy) };
+            const canto = gridToScreen(noroeste, tilePx, ESCALA_DO_MUNDO);
+            if (!desenharImagem(
+              chaveDaEstrada(ESTADO_DA_DIAGONAL),
+              canto.x + tilePx, canto.y + tilePx, 0.5, 0.5,
+            )) {
+              desenharPonte(grafico, a, b, tilePx);
+            }
+          }
         }
 
         desenhada = estradas;
