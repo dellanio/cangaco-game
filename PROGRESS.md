@@ -8410,3 +8410,8 @@ Terceira tarefa do pedido do operador: só medir e propor, e parar. O documento 
 - A `UI-barra-a` está escrita no `BUILD_PLAN.md`, antes da Fase C. **A posição na fila é do operador.**
 - **Decisão minha, para revisão:** onde fica cada peça do HUD que some (tabela na proposta). Os alertas e a dica do H dividem uma faixa fixa, o carimbo PAUSADO vai sobre o minimapa, o botão Construir vira a aba e a ajuda continua pelo H.
 - **Aguardando o operador:** a lista de rótulos curtos do engajar. Pela medição, só "Cabra da Pedreira" → "Pedreira" precisa mudar. Nada foi aplicado ao tema.
+- **Operador (2026-09-26, depois):**
+  - O engajar fica em **2 colunas com rolagem**. O layout resolve o fio de navalha do Carregador, que continua com o nome de hoje.
+  - `civis.stonemason.curto` = "Pedreiro", **aplicado no tema**. O leitor é a UI-barra-a, e até lá o campo não tem leitor em código.
+  - A faixa de alertas fica **vazia quando não há alerta**. A dica do H segue a regra da F-D1 (só na primeira partida, independente de alerta) e vai para o topo da faixa da marca; **esse lugar é decisão minha, para revisão**.
+  - O resto do mapeamento do HUD foi aprovado. A UI-barra-a fica antes da Fase C.

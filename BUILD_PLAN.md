@@ -3714,21 +3714,23 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
     1. logo com moldura;
     2. minimapa (reservado), com o carimbo PAUSADO e a velocidade;
     3. os cinco recursos em lista;
-    4. a faixa fixa de alertas e da dica do H;
+    4. a faixa fixa de alertas, **vazia quando não há alerta**;
     5. as abas do GDD §7.1: Construir, Distribuição (cadeado), Estatísticas (cadeado)
        e Opções;
     6. o corpo da aba: a grade de hoje (5 × 40 px, bloqueado com cadeado) **ou**, com
        seleção, o painel do prédio empilhado, com a fila da escola dentro do painel da
        Casa do Coronel;
-    7. a faixa da marca com o lema.
+    7. a faixa da marca com o lema. No topo dela, a dica do H, com a regra da F-D1: só
+       na primeira partida, até o primeiro H, independente de alerta.
   - O balcão (`#balcao`, `data-balcao`, a alça) e o `data-prancha` saem.
   - O `#hud` como faixa sai. O destino de cada peça está na tabela da proposta.
   - A aba Construir com seleção volta à grade, como o `Esc`.
 - **Tema:**
   - `painelPredio.hp` = "Vida";
   - o lema "TERRA FORTE, GENTE VALENTE";
-  - rótulos curtos `civis.<id>.curto`, **só depois de o operador aprovar a lista** da
-    proposta.
+  - o rótulo curto `civis.<id>.curto`: por enquanto só `stonemason` = "Pedreiro",
+    **já no tema** (2026-09-26). **Esta feature é quem o lê.** O botão de engajar usa o
+    curto, se houver; o slot da fila e o `title` usam o `nome`.
 - **Arte:** logo, moldura e silhueta do cangaceiro entram por decisão humana (§9). Até
   lá, placeholder com o `id` escrito. A marca é **cortada na borda da barra**: nada
   transborda sobre o canvas.
@@ -3741,7 +3743,9 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
   - A barra não passa da altura da tela. O que não cabe rola **dentro do corpo da aba**.
     O roteiro mede e registra a altura do corpo a 720 e a 1080.
   - Escolher um prédio troca a grade pelo painel. `Esc` e a aba Construir voltam à
-    grade. A escola mostra a fila e o engajar em 3 colunas.
+    grade. A escola mostra a fila, e o engajar em **2 colunas com rolagem** (decisão do
+    operador: 3 colunas só cabiam raspando). Nenhum botão de engajar tem
+    `scrollWidth > clientWidth`.
   - Os alertas continuam clicáveis e levando a câmera (o roteiro da F22 passa com os
     seletores novos). Um alerta que aparece não desloca a grade (altura fixa medida).
   - Os roteiros que citam `#hud`, `#menu-build`/`data-prancha` ou `#balcao` são

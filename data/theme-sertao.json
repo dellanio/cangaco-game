@@ -213,6 +213,7 @@
     },
     "stonemason": {
       "nome": "Cabra da Pedreira",
+      "curto": "Pedreiro",
       "item": "ponteiro e marreta"
     },
     "woodcutter": {

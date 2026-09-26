@@ -232,8 +232,8 @@ O que **diverge** da proposta ou do GDD, e depende do operador:
 | Hoje no `#hud` | Na barra |
 |---|---|
 | Os cinco recursos | Bloco 3, em lista vertical com ícone e número (os SVG `hud-*` de hoje). |
-| Alertas (F22, clicáveis) | **Uma faixa de altura fixa** entre os recursos e as abas, com até 2 alertas e "+N" se houver mais. O clique leva a câmera, como hoje. A altura fixa impede que a grade pule quando um alerta aparece ou some. |
-| Dica "Aperte H" | Na mesma faixa, quando não há alerta. O alerta tem precedência. Some depois do primeiro H, como hoje. |
+| Alertas (F22, clicáveis) | **Uma faixa de altura fixa** entre os recursos e as abas, com até 2 alertas e "+N" se houver mais. O clique leva a câmera, como hoje. A altura fixa impede que a grade pule quando um alerta aparece ou some. **Sem alerta, a faixa fica vazia** (correção do operador, 2026-09-26). |
+| Dica "Aperte H" | **A regra de hoje, da F-D1**: aparece só na primeira partida, até o primeiro H, **independente de alerta**. Não divide a faixa dos alertas: se dividisse, sumiria justamente quando a vila tem problema, que é quando o jogador novo mais precisa dela (correção do operador). Lugar: **uma linha no topo da faixa da marca**, fixa, fora da faixa de alertas e fora do corpo da aba. A decisão é minha, para revisão. |
 | Carimbo PAUSADO / velocidade (`aviso-tempo`) | **Carimbado sobre o minimapa**. Fica dentro da barra e à vista, sem cobrir o canvas. |
 | Botão Construir (`abrir-prancha`) | **Vira a aba Construir.** Com seleção, clicar nela fecha o painel e volta à grade, como o `Esc`. Não há botão de abrir, porque a barra não recolhe. |
 | Ajuda (`#ajuda`, salvar/carregar) | Continua como está, abrindo pelo H. A aba Opções ganha um botão que abre a mesma caixa. Levar o conteúdo para dentro da aba fica para depois, fora do escopo. |
@@ -261,3 +261,12 @@ Medido com o CSS de hoje, no Chromium. A coluna de 3 cabe em (237 − 2·4) / 3 
 - O Carregador cabe com 1 px de folga. Se a fonte de display mudar, é ele quem quebra primeiro.
 - O campo no tema seria `civis.<id>.curto`, opcional. Sem ele, vale o `nome`.
 - O nome longo continua no slot da fila, no `title` do botão e no resto da tela.
+
+### Engajar e rótulos curtos — decisão do operador (2026-09-26)
+
+- **Três colunas não servem.** O Carregador caberia com 1 px de folga, e isso é fio de navalha: qualquer mudança de fonte o quebra. O problema se resolve pelo layout, não pelo nome: o engajar fica em **duas colunas, com rolagem**. Cada botão tem (237 − 4) / 2 ≈ 116 px.
+- **O Carregador fica como está.**
+- **O Cabra da Pedreira ganha o nome curto "Pedreiro"**, que também não colide com o nome do prédio. **Aplicado**: `data/theme-sertao.json` › `civis.stonemason.curto`.
+  - Em 2 colunas, o nome longo (112 px a 10 px) caberia raspando, com 4 px de folga: o mesmo fio de navalha. Por isso o curto continua valendo.
+  - **Quem lê o campo é a UI-barra-a.** Até ela, o campo não tem leitor em código.
+  - O nome longo continua onde há espaço: no slot da fila da escola e no `title` do botão.
