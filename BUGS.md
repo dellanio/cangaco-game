@@ -30,22 +30,7 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
 
 ## Abertos
 
-## BUG-K — `tools/shot.js` deixa o vite vivo no Windows, e a proxima corrida mede ele
-- feature: ferramenta de roteiro (`tools/shot.js`); achado em 2026-09-26
-- severidade: errado (nao vira chave de feature nenhuma: e do harness; o risco e evidencia falsa)
-- repro: `CANGACO_SHOT_PORTA=5177 npm run shot -- F04`; depois do codigo de saida,
-  `netstat -ano | grep :5177` ainda mostra o `node ... vite.js --port 5177 --strictPort`
-- esperado: o roteiro derruba o servidor que subiu
-- observado: o vite fica orfao (o `npx`/`cmd` pai morre, o neto `node` fica). A corrida
-  seguinte na mesma porta sobe um vite que morre calado pelo `--strictPort`, e o roteiro
-  mede o orfao — que serve a arvore de QUEM O SUBIU. Medido duas vezes: 41848 na 5175
-  (servindo a `main` enquanto um roteiro rodava num worktree, 2026-09-26 00:40) e 48500 na
-  5177 (subido na 1a corrida desta sessao, 03:13, vivo depois de todas as outras).
-- causa: nao lida. Hipotese: o `kill` do filho no Windows mata o `cmd`/`npx`, nao a arvore.
-- mitigacao ate o conserto: porta propria por arvore (`CANGACO_SHOT_PORTA`); conferir com
-  `netstat` antes de comparar duas arvores. Encerrar o orfao foi negado pela permissao do
-  agente — fica para o operador.
-- status: aberto
+_Nenhum._
 
 ---
 

@@ -14,7 +14,7 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
-const { spawn } = require('node:child_process');
+const { spawn, spawnSync } = require('node:child_process');
 const { chromium } = require('@playwright/test');
 
 // Fixa e fora da faixa padrao do vite dev, evita colisao. `CANGACO_SHOT_PORTA`
@@ -59,6 +59,35 @@ function subirServidor() {
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   return processo;
+}
+
+/**
+ * BUG-K — derruba o servidor INTEIRO. Com `shell: true` o filho e o `cmd.exe`
+ * (Windows), e o `kill()` mata so ele: o `node vite.js`, neto, ficava orfao
+ * escutando a porta, e a corrida seguinte media ele. `taskkill /T` desce a
+ * arvore a partir do pid do filho.
+ */
+function derrubarServidor(processo) {
+  if (process.platform === 'win32' && processo.pid !== undefined) {
+    spawnSync('taskkill', ['/pid', String(processo.pid), '/T', '/F'], { stdio: 'ignore' });
+    return;
+  }
+  processo.kill();
+}
+
+/**
+ * BUG-K — a porta ja responde ANTES de o vite daqui subir? Entao quem responde e
+ * outro processo (orfao de corrida anterior, ou vite de outra sessao), servindo
+ * outra arvore. O `--strictPort` faria o nosso morrer calado; recusar aqui e o
+ * que impede o roteiro de medir o vizinho.
+ */
+async function portaJaResponde(url) {
+  try {
+    await fetch(url);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 async function esperarServidor(url, timeoutMs, processo) {
@@ -113,6 +142,16 @@ async function main() {
   const nomeFeature = lerNomeDoRoteiro(process.argv.slice(2));
   const roteiro = carregarRoteiro(nomeFeature);
 
+  const url = `http://localhost:${PORTA}/`;
+  if (await portaJaResponde(url)) {
+    console.error(
+      `shot: a porta ${PORTA} ja responde antes de o vite subir — outro processo a ocupa `
+      + `(vite orfao ou de outra sessao) e serviria OUTRA arvore. Veja quem e com `
+      + `\`netstat -ano | findstr :${PORTA}\`, ou rode com CANGACO_SHOT_PORTA=<outra>.`,
+    );
+    process.exit(1);
+  }
+
   const errosDeConsole = [];
   const servidor = subirServidor();
   let browser;
@@ -122,7 +161,7 @@ async function main() {
   const { afirmar, afirmacoes } = criarAfirmador();
 
   try {
-    await esperarServidor(`http://localhost:${PORTA}/`, TIMEOUT_SERVIDOR_MS, servidor);
+    await esperarServidor(url, TIMEOUT_SERVIDOR_MS, servidor);
 
     browser = await chromium.launch();
     const page = await browser.newPage({ viewport: VIEWPORT });
@@ -166,7 +205,7 @@ async function main() {
     motivoDaFalha = erro instanceof Error ? erro.message : String(erro);
   } finally {
     if (browser) await browser.close();
-    servidor.kill();
+    derrubarServidor(servidor);
   }
 
   fs.mkdirSync('test-output', { recursive: true });

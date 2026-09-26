@@ -7483,3 +7483,30 @@ O `assets/manifest.json` **não foi tocado**.
 - **Hipótese não medida:** com a caixa liberada, a unidade atravessa o prédio até o outro
   lado se esse for o caminho mais curto. Era o que o A* já pedia desde a F-T3. Agora o
   passo obedece.
+
+## 2026-09-26 (manhã) — BUG-K corrigido: o `shot.js` derruba o vite e recusa porta ocupada
+
+### Verificado (rodei o comando)
+- **O defeito foi reproduzido.** `CANGACO_SHOT_PORTA=5178 npm run shot -- F04` saiu com
+  código 0 e deixou o vite escutando na 5178 (PID 7724, órfão).
+- **A causa foi confirmada no código.** `subirServidor` usa `spawn('npx', ..., { shell: true })`;
+  no Windows o filho é o `cmd.exe`. O `servidor.kill()` matava só ele, e o `node vite.js`
+  neto ficava vivo.
+- **Conserto em duas partes (`tools/shot.js`):**
+  - `derrubarServidor` roda `taskkill /pid <filho> /T /F` no Windows, que desce a árvore;
+    fora do Windows continua o `kill()`.
+  - `portaJaResponde` roda **antes** de subir o vite. Se a porta já responde, o roteiro
+    sai com código 1 e diz como achar o dono (`netstat -ano | findstr :<porta>`).
+- **Medido depois do conserto:**
+  - duas corridas seguidas de F04 na 5179 saíram com código 0 e a porta ficou livre nas duas;
+  - com o órfão na 5178, o roteiro recusou com código 1 e a mensagem.
+- **Limpeza:** encerrei o órfão 7724, que eu mesmo criei na medição. A 5175 do Codex não
+  foi tocada.
+
+### Aberto
+- **Não há cobertura contínua.** A medição acima é evidência desta sessão; nenhum teste do
+  `npm run verify` sobe o vite. A proteção que fica é a recusa da porta ocupada, que roda
+  em todo roteiro.
+- **Efeito colateral esperado:** a porta padrão (5175) é a que o Codex usa. Se o vite dele
+  estiver vivo, `npm run shot` sem `CANGACO_SHOT_PORTA` agora **recusa**, em vez de medir a
+  árvore dele em silêncio.
