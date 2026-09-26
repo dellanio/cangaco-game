@@ -173,3 +173,33 @@ Esta é uma sugestão de fila, que não foi escrita no `BUILD_PLAN.md`:
 - **UI-barra-c**: minimapa (render);
 - **UI-barra-d**: a arte da marca, por decisão humana;
 - **UI-barra-e**: fullscreen e o atalho de cancelar.
+
+## Referência do operador (2026-09-26, depois da proposta)
+
+O operador mostrou a ideia da barra num mockup (`ui.jpg`, arquivo local dele, fora do repositório; não versionado por ser arte, §9). Medidas **estimadas a olho** sobre a imagem, não medidas em pixel:
+- a imagem tem ~1672×941;
+- a barra ocupa ~325 px, ou **~19 % da largura**.
+
+O que o mockup **resolve** das perguntas acima:
+- **Nada em cima nem embaixo**: confirmado.
+- **Grade e painel juntos**, sem o painel substituir a grade. A grade mostra 4 grupos de 4 ícones (A Vila, Mato e Pedra, De Comer, Oficinas), e não os 33 ícones. Então ela rola, ou mostra só parte.
+- **Grade em 4 colunas**, com ícones maiores que os 40 px de hoje.
+- **Cadeado** no lugar do cinza.
+- **Minimapa** com a vista marcada e uma **rosa dos ventos** ao lado, sem ocupar a largura toda.
+- **Painel do prédio no rodapé**, compacto:
+  - retrato, nome, Vida, Entra e Sai;
+  - "ENGAJAR · CUSTA 1" com os tipos em **3 colunas**.
+  - A fila de 5 slots (GDD §7.2, P0) não aparece.
+- **Marca**: o cangaceiro montado e a placa "Terra Forte / Gente Valente" **transbordam a barra sobre o mapa**, no canto inferior esquerdo.
+- **Logo**: "Piancó / Ferro e Mandacaru", com moldura de madeira e mandacaru.
+
+O que **diverge** da proposta ou do GDD, e depende do operador:
+1. **A barra fica à esquerda**, não à direita.
+   - Nos roteiros, a asserção da F06 inverte: `canvas.left >= barra.right`.
+   - `_canvas.js` mede o retângulo do canvas e não assume `left = 0` (não conferi linha a linha).
+2. **Abas**: Construir, Unidades, Pesquisa, Diplomacia e Opções. O GDD §7.1 diz Construir, Distribuição, Estatísticas e Opções. Pesquisa e Diplomacia não têm mecânica no GDD. Isso é mudança de design (`IDEIAS.md`/GDD), não só de tela.
+3. **Largura**: 19 % dá ~249 px a 1280 e ~373 px a 1920. Falta decidir se a largura é fixa em px ou proporcional à tela. Fixa em 373 a 1280, o mapa cairia para ~71 %.
+4. **A fila da escola some** no desenho. Ela é P0 no GDD §7.2, e hoje o painel tem 5 slots. Falta decidir onde ela fica: aba, sobreposição ou rolagem.
+5. **Engajar em 3 colunas**: o mockup mostra 9 dos 14 tipos, e o botão mais largo tem 126 px (medido na seção c). Três colunas de 126 pedem ~390 px, mais que a barra. O desenho usa botões de ~88 px, com fonte menor e rótulo curto.
+6. **A marca sobre o mapa**: a transparência de clique na parte que transborda precisa ser decidida (`pointer-events: none`, ou o canto do mapa deixa de receber mouse). Isso contraria o comentário do Layout 2 ("o canvas não fica sob painel").
+7. **Textos**: "Vida" em vez de "Firmeza", e o nome do lugar "Piancó / Ferro e Mandacaru". São do tema (`data/theme-sertao.json`), nunca do `.ts`.
