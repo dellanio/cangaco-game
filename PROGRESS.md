@@ -8083,3 +8083,69 @@ A classe 2 é decisão de design e de balanceamento, e fica com o operador. Uma 
 possível, **não decidida**: quebrar em F18c-1 (a classe 1, com a vila parada, só
 trocando literal por derivado) e F18c-2 (a geografia relativa à vila, mais o
 recentramento, depois da F20).
+
+## 2026-09-26 (noite, 9) — Respostas do operador: F18c quebrada, pedreira que produz nos roteiros
+
+### Decisões do operador (registradas como dele)
+- **F18c quebrada.** A F18c-1 (derivar os literais dos testes) sai agora; a F18c-2
+  (mover a vila, gerar o mapa de novo e refazer a calibração) fica para **depois da
+  Fase C**. O porquê dele: derivar os literais protege contra a próxima mudança de
+  abertura, e isso já mordeu na F-T4b. Recentrar não vale antes de o combate existir.
+  A F18c-2 está no `BUILD_PLAN.md` fisicamente depois da Fase C, com nota.
+- **As quatro decisões da noite 8 foram aprovadas**, incluindo a pilha de ⅕.
+- **Os roteiros com pedreira morta** tinham de ser consertados, com a pedreira na
+  posição da F-T3 e uma asserção de que ela produz.
+
+### F18c — a divisão, medida (verificado)
+O operador pediu para confirmar a hipótese das duas classes antes de começar. O
+oráculo certo não é mover só a vila. É **transladar o mundo inteiro sem dar a
+volta**: o mapa vai para 160×160 com uma faixa de grama de 32 tiles a oeste e ao
+norte, e vila, recursos e `mapaPadrao` andam +32 juntos. Assim toda distância
+relativa se mantém, e só cai quem escreveu coordenada absoluta. A primeira
+tentativa, com wrap de +32 dentro do 128, contaminou a medida: 14 arquivos caíram
+só porque a serra e as minas deram a volta. Essa medida foi descartada. Os
+arquivos de dados foram revertidos pelos backups, e o `git status` ficou limpo.
+
+- **46 arquivos reprovam com o mundo transladado.** Eles têm literal absoluto e são
+  o escopo da F18c-1: os 39 dos 48 originais, mais 7 que só caem transladados
+  (F04, F18-ciclo-do-roceiro, F19, F19b, F21, F21b e F23).
+- **9 dos 48 originais passam transladados.** Eles dependem só da geografia em
+  volta da vila e ficam na F18c-2: BUG-G-preso-no-footprint, F06-build,
+  F17-aceite, F-CAL-a, F-CAL-b, F-T4b-geometria, F-T4b-lenhador,
+  F-T4d-pescador-em-partida e F-VIVO-a-pilhas.
+- **Correção da minha hipótese da noite 8.** Os literais da
+  `producao-cenario.ts`, como `q1` em (26,34), não são "geografia autoral". São
+  literais absolutos que, por acaso, ficam perto de uma feição. Transladados, eles
+  caem, então são F18c-1. Mas a âncora certa deles é a **feição** (a rocha mais
+  perto), não o armazém. Derivar do armazém passaria na translação e cairia na
+  F18c-2.
+- A F18c-1 é grande demais para uma sessão e foi quebrada no `BUILD_PLAN.md` em três
+  partes. A **1a** cobre os dois helpers de cenário, com cerca de 22 arquivos caindo
+  por eles. A **1b** cobre os literais diretos. A **1c** decide caso a caso os 4
+  testes que afirmam o próprio arquivo do mapa e cria o guarda permanente. O aceite
+  de cada parte é **proposta minha**, porque o aceite original, a regra do centro da
+  caixa, foi para a F18c-2.
+
+### Roteiros com a pedreira que produz (feito e verificado)
+- `tools/shots/_pedreira.js` (novo) tem duas funções:
+  - `pedreiraNoLajedo` usa a geometria da F-T3 (a primeira caixa livre a oeste do
+    armazém) e afirma que há rocha ao alcance.
+  - `esperarPedraNaSaida` espera, com passo de 5 ticks e teto de 1500, pela pedra na
+    gaveta de saída (`pilhasDesenhadas`). É essa a prova de que a pedreira produz.
+- **F16b, F17e e F11c** usam as duas funções. Os três trocaram a espera por número
+  fixo de ticks (`TICKS_ATE_OCUPAR = 500` na F16b) por espera por condição com teto,
+  e o treino da escola passou a ser o gesto despausado e segurado (§8). A F17e e a
+  F11c ganharam o passo de treino e a captura `produzindo`. O enquadramento da F17e
+  agora é medido com a câmera já parada na obra, depois da rua.
+- **Os três roteiros passaram** (`CANGACO_SHOT_PORTA=5176`): F16b com 5 capturas,
+  F17e com 7 e F11c com 4. Abri `F11c-4-produzindo.png`: a pedreira está ao lado do
+  lajedo, com pedra na gaveta e o cabra na porta, e a rua desvia da rocha.
+- **A asserção acusa (sonda da sessão, revertida).** Com a posição antiga,
+  (38,31), a F11c reprovou: "a pedreira 'p9' deveria produzir: sem pedra na saída
+  em 1500 ticks", com a pedreira completa e ocupada. A proteção permanente são as
+  asserções nos três roteiros; a sonda só prova que elas acusam hoje.
+- **A F17b não mudou, e o erro foi meu no relatório da noite 8.** Ela planta um
+  **lenhador**, não uma pedreira. Na posição dela, (38,31), há 4 árvores ao
+  alcance (`alcance_tiles` 6), e o roteiro nunca treina ninguém: ele é sobre o
+  medidor da obra, não sobre produção. Não havia prédio morto ali. Eram três
+  roteiros, não quatro.

@@ -1120,7 +1120,7 @@ prédio surge sem clique do jogador.
   neutro com o dado ainda em 64² (33 testes, 2,96 s contra 3,02 s) **antes** de
   o dado mudar.
 
-### F18c — Fixtures param de depender da posição absoluta da vila
+### F18c — Fixtures param de depender da posição absoluta da vila (quebrada em F18c-1 e F18c-2)
 - **Escopo**: `tests/helpers/*` e os roteiros de `tools/shots/` deixam de
   escrever a coordenada da vila à mão e passam a derivá-la do armazém do
   cenário. A prova de que funcionou é mover a vila para o **centro** do mapa
@@ -1146,6 +1146,67 @@ prédio surge sem clique do jogador.
   mapa de novo, o que muda os números que a F-CAL-b calibrou nesse mapa. Isso é
   decisão do operador, não uma migração mecânica. Lista e hipótese de divisão no
   `PROGRESS.md` (noite 8).
+
+- **Decisão do operador (2026-09-26)**: quebrar em duas. **F18c-1 agora**: os
+  literais dos testes passam a ser derivados, e a vila não se move. **F18c-2 depois
+  da Fase C**: mover a vila de verdade, o que exige gerar o mapa de novo e refazer a
+  calibração. O porquê: derivar os literais é o que protege contra a próxima mudança
+  de abertura, e isso já mordeu na F-T4b. Recentrar não vale antes de o combate
+  existir. O aceite original, a regra do centro da caixa em `tools/data-rules.js`,
+  passa para a F18c-2.
+- **Nota (a divisão medida em 2026-09-26, não estimada)**: o oráculo de "não há
+  literal absoluto" é **transladar o mundo inteiro** sem dar a volta. O mapa vai para
+  160×160, com uma faixa de grama de 32 tiles a oeste e ao norte, e vila, recursos e
+  `mapaPadrao` andam +32 juntos. Assim, toda distância relativa fica igual, e só cai
+  quem escreveu coordenada absoluta. Com isso:
+  - **46 arquivos reprovam com o mundo transladado.** Eles têm literal absoluto e são
+    o escopo da F18c-1. São os 39 que também caem com só a vila movida, mais 7 que só
+    caem aqui (F18-ciclo-do-roceiro, F19, F19b, F21, F21b, F23 e F04). Esses 7
+    escrevem a posição de uma feição do mapa: a fazenda do nascente, a mina da serra.
+  - **9 dos 48 arquivos originais passam com o mundo transladado.** Eles só dependem
+    da geografia em volta da vila e são da F18c-2: BUG-G-preso-no-footprint, F06-build,
+    F17-aceite, F-CAL-a, F-CAL-b, F-T4b-geometria, F-T4b-lenhador,
+    F-T4d-pescador-em-partida e F-VIVO-a-pilhas.
+  - Dos 46, 4 afirmam o próprio arquivo do mapa (F04 com 128×128, F-D3-geografia com
+    o texto gerado, F-T1-terreno e F18b-mapa com tiles do mapa). Para esses, trocar
+    de mapa é mudar o contrato. Cada um se confere na F18c-1c, sem migração às cegas.
+  - Uma coordenada tem duas âncoras possíveis. Ou é **relativa à vila** e se deriva do
+    armazém (a câmera da F05b, o prédio vizinho da F09). Ou é **relativa a uma
+    feição** e se deriva do mapa (a pedreira `q1` perto da rocha, a fazenda `f1` na
+    terra de plantio, o pescador na água). Derivar a segunda do armazém passaria na
+    translação e cairia na F18c-2.
+
+### F18c-1a — Os dois helpers de cenário derivam a posição
+- **Escopo**: `tests/helpers/producao-cenario.ts` e `tests/helpers/fome-cenario.ts`
+  deixam de escrever `(26,34)`, `(32,34)`, `(112,30)`, as ruas até `(108,34)` e o
+  pescador em `(32,27)`/`(45,26)`/`(91,37)`. Passam a procurar a posição. A
+  pedreira fica perto da rocha mais próxima do armazém, a fazenda e o vinhedo na
+  terra de plantio, o pescador na margem. Tudo com o `canPlace` e o alcance que a
+  sim já expõe. Só `tests/` e o instrumento de medida em `tools/`; nada em `src/`.
+- **Aceite**: com o mundo transladado +32 (instrumento
+  `tools/transladar-mundo.js`, que escreve e reverte), nenhum arquivo reprova com
+  `fixture: '<id>' nao ficou ligado`. Com o mundo no lugar, `npm run verify` fica
+  verde e **nenhuma asserção muda de valor**: a posição derivada no mapa de hoje é a
+  mesma de antes, ou a diferença vai escrita no `PROGRESS.md` com o motivo.
+- **Evidência**: `test-output/F18c-1a.json` com a lista de arquivos que reprovam
+  transladados, antes e depois.
+
+### F18c-1b — Literais diretos nos testes
+- **Escopo**: os arquivos dos 46 que não caem pelos helpers: F05b, F09-jobboard,
+  F09-sistema, F10-desempate, F10-falhas, F10-fsm, F11c, F13a-aceite, F13a-ouro,
+  F13b, F14, F15a-aceite, F16a-porta, F18d-1a, F18d-1b, e os 7 que só caem
+  transladados. A lista exata é a que sobrar depois da F18c-1a. Cada literal se lê e
+  ganha uma âncora: a vila ou a feição.
+- **Aceite**: com o mundo transladado, só os arquivos de mapa da F18c-1c
+  reprovam. `npm run verify` fica verde com o mundo no lugar.
+
+### F18c-1c — Os arquivos de mapa e o guarda permanente
+- **Escopo**: decidir, um a um, o que F04, F-D3, F-T1 e F18b afirmam do arquivo do
+  mapa, e se isso é contrato ou literal. Depois, transformar a translação em regra
+  que roda sempre. Uma saída, **não decidida**: um `vitest` com `alias` que troca os
+  três JSON por cópias transladadas geradas na hora, sem escrever em `data/`.
+- **Aceite**: a translação roda automaticamente e reprova ao se reintroduzir um
+  literal (prova com o literal plantado), e fica verde sem ele.
 
 ### F18e — Estrada diagonal
 - **Escopo**: a estrada passa a ligar em 8 direções, **sem cortar quina** — a
@@ -3731,6 +3792,14 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
 - **Fora**: a névoa de guerra que a torre revela (GDD §6.5) fica para depois, com
   registro.
 ---
+
+### F18c-2 — Recentrar a vila
+- **Escopo**: o gerador deriva da vila o lajedo, o açude, o mato e o roçado, a vila
+  vai para o centro, o mapa é gerado de novo e a calibração da F-CAL-b é refeita.
+- **Aceite**: o original da F18c, com a regra do centro da caixa em
+  `tools/data-rules.js`, mais os 9 arquivos de geografia verdes no mapa novo.
+- **Nota (fica aqui de propósito)**: o item está depois da Fase C por decisão do
+  operador (2026-09-26); a origem e a medida estão na F18c, na Fase B.
 
 ## Fase D — Profundidade
 
