@@ -216,6 +216,11 @@ escrita.
 
 ## 9. Arte e assets
 
+Toda criação ou alteração de arte raster deste repositório usa a skill local
+`skills/pianco-art-pipeline/SKILL.md`. Ela fixa perspectiva, proporções,
+prompts, derivação e portões visuais para que agentes diferentes produzam o
+mesmo jogo, não estilos paralelos.
+
 - Nenhum asset do jogo original de 1998 entra aqui, em nenhuma forma: nem sprite,
   nem som, nem mapa, nem texto, nem como referência de transferência de estilo.
   Mecânica e estilo, sim. Cópia, não.
