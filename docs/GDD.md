@@ -561,7 +561,7 @@ contextual do item selecionado abaixo.
 | Elemento | Conteúdo | Prioridade |
 |---|---|---|
 | Barra de recursos | Gold, Timber, Stone, comida total, população civil/militar | P0 |
-| Menu Build | Prédios desbloqueados, custo, tooltip de entrada/saída; bloqueados em cinza com "requer X" | P0 |
+| Menu Build | Prédios desbloqueados, custo, tooltip de entrada/saída; bloqueados com cadeado e "requer X" (decisão do operador, 2026-09-26: o cadeado diz "ainda não" melhor que o cinza) | P0 |
 | Planta fantasma | Segue o mouse, verde/vermelho, porta ao sul | P0 |
 | Painel de prédio | Nome, HP ou progresso, ocupante, estoques, pausar, demolir, modo | P0 |
 | Painel da Schoolhouse | Fila de 5 slots, botões por tipo, custo 1 gold | P0 |

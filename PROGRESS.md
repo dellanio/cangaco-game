@@ -8402,3 +8402,11 @@ Terceira tarefa do pedido do operador: só medir e propor, e parar. O documento 
   - fila da escola: slot fixo em 232 e tipos com 126 px no mais largo.
 - **Achado**: o orçamento vertical não fecha a 720, nem a 1080, com grade e painel visíveis juntos. A recomendação é o painel ocupar o corpo da aba quando há seleção.
 - **Nada implementado.** A aprovação, a largura e a fila sugerida (UI-barra-a..e) esperam o operador.
+
+## 2026-09-26 (noite, 12) — barra lateral: decisões do operador registradas (sem código)
+
+- As decisões do operador estão em `docs/propostas/barra-lateral-unica.md`, na seção "Decisões do operador". A razão da barra é a seleção, não o repouso. Ela fica à esquerda, fixa em 260 px e sem recolher. O painel substitui a grade, as abas são as do GDD §7.1, a marca não transborda e o `Esc` fica sem Fullscreen API.
+- O GDD §7.2 passa a pedir cadeado no lugar do cinza. A tela cheia foi para o `IDEIAS.md`, com o conflito do `Esc`.
+- A `UI-barra-a` está escrita no `BUILD_PLAN.md`, antes da Fase C. **A posição na fila é do operador.**
+- **Decisão minha, para revisão:** onde fica cada peça do HUD que some (tabela na proposta). Os alertas e a dica do H dividem uma faixa fixa, o carimbo PAUSADO vai sobre o minimapa, o botão Construir vira a aba e a ajuda continua pelo H.
+- **Aguardando o operador:** a lista de rótulos curtos do engajar. Pela medição, só "Cabra da Pedreira" → "Pedreira" precisa mudar. Nada foi aplicado ao tema.

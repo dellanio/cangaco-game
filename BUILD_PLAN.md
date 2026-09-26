@@ -3694,6 +3694,66 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
 
 ---
 
+### UI-barra-a — A barra lateral única (ui + roteiros)
+
+- **Origem:** decisão do operador, 2026-09-26, sobre a medição e a proposta em
+  `docs/propostas/barra-lateral-unica.md`. O desenho que vale está na seção "Decisões
+  do operador" desse arquivo.
+- **Posição na fila:** escrita aqui depois da F-VIVO. A ordem entre ela, a F-VIVO-c/d
+  e a Fase C é decisão do operador.
+- **A razão é a seleção.** A 1280×720, o mapa cai para 58,9 % quando há prédio
+  escolhido, porque o balcão se soma à coluna. O ganho em repouso é pequeno.
+- **Escopo:** `index.html`, `src/ui/`, CSS, `data/theme-sertao.json` e roteiros.
+  **Nada em `sim/` nem em `src/render/`.**
+  - O minimapa é da F33 (render). Aqui é só a moldura com o placeholder.
+- **O desenho:**
+  - uma coluna à **esquerda**, **fixa em 260 px**, na altura inteira;
+  - nada no topo nem embaixo;
+  - não recolhe;
+  - de cima para baixo:
+    1. logo com moldura;
+    2. minimapa (reservado), com o carimbo PAUSADO e a velocidade;
+    3. os cinco recursos em lista;
+    4. a faixa fixa de alertas e da dica do H;
+    5. as abas do GDD §7.1: Construir, Distribuição (cadeado), Estatísticas (cadeado)
+       e Opções;
+    6. o corpo da aba: a grade de hoje (5 × 40 px, bloqueado com cadeado) **ou**, com
+       seleção, o painel do prédio empilhado, com a fila da escola dentro do painel da
+       Casa do Coronel;
+    7. a faixa da marca com o lema.
+  - O balcão (`#balcao`, `data-balcao`, a alça) e o `data-prancha` saem.
+  - O `#hud` como faixa sai. O destino de cada peça está na tabela da proposta.
+  - A aba Construir com seleção volta à grade, como o `Esc`.
+- **Tema:**
+  - `painelPredio.hp` = "Vida";
+  - o lema "TERRA FORTE, GENTE VALENTE";
+  - rótulos curtos `civis.<id>.curto`, **só depois de o operador aprovar a lista** da
+    proposta.
+- **Arte:** logo, moldura e silhueta do cangaceiro entram por decisão humana (§9). Até
+  lá, placeholder com o `id` escrito. A marca é **cortada na borda da barra**: nada
+  transborda sobre o canvas.
+- **Aceite:**
+  - A 1280×720 e a 1920×1080, com e sem prédio escolhido, o canvas mede
+    (W − 260) × H. A área **não muda** com a seleção.
+  - `canvas.left >= barra.right`. Nenhum elemento da barra, marca inclusa, intercepta
+    clique sobre o canvas: amostra de `elementFromPoint` na coluna de x = barra.right
+    + 1.
+  - A barra não passa da altura da tela. O que não cabe rola **dentro do corpo da aba**.
+    O roteiro mede e registra a altura do corpo a 720 e a 1080.
+  - Escolher um prédio troca a grade pelo painel. `Esc` e a aba Construir voltam à
+    grade. A escola mostra a fila e o engajar em 3 colunas.
+  - Os alertas continuam clicáveis e levando a câmera (o roteiro da F22 passa com os
+    seletores novos). Um alerta que aparece não desloca a grade (altura fixa medida).
+  - Os roteiros que citam `#hud`, `#menu-build`/`data-prancha` ou `#balcao` são
+    atualizados:
+    - na medição, 11, 10 e 2;
+    - no F06, "canvas abaixo do HUD" sai e a asserção de lado se inverte;
+    - os passos que clicam na barra seguem a §8 do CLAUDE.md: despausado, segurando
+      150 ms.
+  - Screenshot a 1280×720 com a escola escolhida, aberto.
+- **Fora:** o minimapa real (F33), Distribuição (F31), Estatísticas (F32), a arte da
+  marca e a tela cheia (`IDEIAS.md`).
+
 ## Fase C — Militar
 
 ### F24a — As armas separadas nas seis do GDD (dado + sim)

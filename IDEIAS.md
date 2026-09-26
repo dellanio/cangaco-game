@@ -158,3 +158,15 @@ caminho. Ideia boa é justamente a mais perigosa.
   mesma cor. A ideia é o jogador ver, antes de arar, que o lado da porta rende mais. É
   coisa de render e UI: a sim já tem a regra, e `alvosDeAproximacao` deixa colher do tile
   da porta.
+- **Tela cheia** (decisão do operador, 2026-09-26, na proposta da barra lateral única,
+  `docs/propostas/barra-lateral-unica.md`). O KaM roda em tela cheia; nós rodamos numa
+  aba, e a barra do navegador come altura.
+  - **O conflito:** na Fullscreen API, `Esc` sai da tela cheia, e a página não consegue
+    impedir. A exceção é a Keyboard Lock, que só existe no Chromium.
+  - No jogo, `Esc` é o cancelar: solta a ferramenta e fecha o painel.
+  - O operador decidiu manter o `Esc` do jogo e **não usar a API**. O navegador ganha
+    essa briga, e trocar o atalho de cancelar por causa dela seria a interface
+    obedecendo ao container.
+  - O F11 do próprio navegador continua funcionando sem código nosso. O Phaser em
+    `Scale.RESIZE` acompanha a troca de tamanho.
+  - Só volta com uma saída para o conflito do `Esc`.

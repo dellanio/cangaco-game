@@ -203,3 +203,61 @@ O que **diverge** da proposta ou do GDD, e depende do operador:
 5. **Engajar em 3 colunas**: o mockup mostra 9 dos 14 tipos, e o botão mais largo tem 126 px (medido na seção c). Três colunas de 126 pedem ~390 px, mais que a barra. O desenho usa botões de ~88 px, com fonte menor e rótulo curto.
 6. **A marca sobre o mapa**: a transparência de clique na parte que transborda precisa ser decidida (`pointer-events: none`, ou o canto do mapa deixa de receber mouse). Isso contraria o comentário do Layout 2 ("o canvas não fica sob painel").
 7. **Textos**: "Vida" em vez de "Firmeza", e o nome do lugar "Piancó / Ferro e Mandacaru". São do tema (`data/theme-sertao.json`), nunca do `.ts`.
+
+## Decisões do operador (2026-09-26) — o desenho que vale
+
+**Aprovada, com o escopo corrigido pela medição.**
+- O ganho em repouso é pequeno: +7,1 pontos a 1280 e **+5,2 a 1920**.
+- O número ruim é **58,9 % a 1280 com prédio escolhido**. Ele vem do balcão, que se soma à coluna quando há seleção.
+- **A razão da barra é a seleção, não o repouso.** Com a barra, a área do mapa não muda quando o jogador escolhe um prédio: fica em 79,7 % a 1280 e 86,5 % a 1920, com ou sem seleção.
+
+| Decisão | O que vale |
+|---|---|
+| Lado | **Esquerda**, como no KaM e no mockup. O roteiro da F06 passa a afirmar `canvas.left >= barra.right`. |
+| Largura | **Fixa em 260 px**, não proporcional. A grade tem mínimo legível de 259 e não fica mais legível numa tela maior. Proporcional daria ~71 % de mapa a 1280, pior que hoje. |
+| Grade | Fica como está: 5 colunas de 40 px. |
+| Painel × grade | **O painel substitui a grade no corpo da aba**, como no original. Nunca as duas coisas ao mesmo tempo. |
+| Fila da escola | Dentro do painel da Casa do Coronel. Aparece quando a escola está escolhida, no lugar da grade, como qualquer seleção. |
+| Recolher | **A barra não recolhe.** O `data-prancha` e a lombada saem. Se o espaço apertar no playtest, o operador revê. |
+| Abas | **As do GDD §7.1**: Construir, Distribuição, Estatísticas e Opções. Pesquisa e Diplomacia, do mockup, não entram: aba para mecânica inexistente promete o que o jogo não faz. |
+| Espaço reservado | O minimapa, Distribuição e Estatísticas não existem. A barra **reserva o espaço**: a moldura do minimapa com o placeholder, e as duas abas com cadeado. Quem preenche são a F33, a F31 e a F32. |
+| Cadeado | No lugar do cinza. O GDD §7.2 foi corrigido. |
+| Esc e tela cheia | `Esc` continua sendo o cancelar do jogo. **Não se usa a Fullscreen API.** Tela cheia foi para o `IDEIAS.md`, com o conflito anotado. |
+| Marca | **Não transborda.** A arte é cortada na borda da barra. A regra "o canvas nunca fica embaixo de painel" vale mais que o ornamento: clique perdido é bug que ninguém reproduz. |
+| Botões de engajar | Rótulo curto e fonte menor. A abreviação fica no **tema**, e a lista vai ao operador antes de aplicar. Se não couber, duas colunas com rolagem. |
+| "Firmeza" | Vira **"Vida"** (`painelPredio.hp` no tema). |
+
+### Onde fica o que hoje mora no HUD (proposta minha, para revisão)
+
+| Hoje no `#hud` | Na barra |
+|---|---|
+| Os cinco recursos | Bloco 3, em lista vertical com ícone e número (os SVG `hud-*` de hoje). |
+| Alertas (F22, clicáveis) | **Uma faixa de altura fixa** entre os recursos e as abas, com até 2 alertas e "+N" se houver mais. O clique leva a câmera, como hoje. A altura fixa impede que a grade pule quando um alerta aparece ou some. |
+| Dica "Aperte H" | Na mesma faixa, quando não há alerta. O alerta tem precedência. Some depois do primeiro H, como hoje. |
+| Carimbo PAUSADO / velocidade (`aviso-tempo`) | **Carimbado sobre o minimapa**. Fica dentro da barra e à vista, sem cobrir o canvas. |
+| Botão Construir (`abrir-prancha`) | **Vira a aba Construir.** Com seleção, clicar nela fecha o painel e volta à grade, como o `Esc`. Não há botão de abrir, porque a barra não recolhe. |
+| Ajuda (`#ajuda`, salvar/carregar) | Continua como está, abrindo pelo H. A aba Opções ganha um botão que abre a mesma caixa. Levar o conteúdo para dentro da aba fica para depois, fora do escopo. |
+
+### Orçamento vertical com a decisão (estimativa, a medir na UI-barra-a)
+
+Logo (48), minimapa (~180), recursos (120), alertas (~44), abas (40) e marca (56) somam **~488 px fixos**.
+- A **720**, o corpo da aba fica com ~232 px. Ele **rola na vertical**, tanto a grade (~420 hoje) quanto o painel da escola (~300 estimado).
+- A **1080**, o corpo fica com ~590, e nada rola.
+- A UI-barra-a mede isso e registra. Rolar dentro do corpo é aceito; empurrar a barra para fora da tela, não.
+
+### Rótulos curtos do engajar (a lista para o operador aprovar — NÃO aplicada)
+
+Medido com o CSS de hoje, no Chromium. A coluna de 3 cabe em (237 − 2·4) / 3 = **76 px** por botão.
+
+| Tipo | Nome no tema | px (11 px, pad 6, hoje) | px (10 px, pad 4) | Curto proposto |
+|---|---|---|---|---|
+| stonemason | Cabra da Pedreira | 126 | 112 | **Pedreira** (60) |
+| serf | Carregador | 85 | **75** | — (cabe por 1 px) |
+| butcher | Carneador | 80 | 70 | — |
+| woodcutter | Lenhador | 74 | 65 | — |
+| os outros 10 | Obreiro, Carpina, Roceiro, Forneiro, Criador, Pescador, Mineiro, Fundidor, Ferreiro, Aprendiz | 62–72 | 54–67 | — |
+
+- Com 10 px e padding lateral 4, **basta abreviar um nome**: Cabra da Pedreira → Pedreira. Assim os 14 tipos cabem em 3 colunas e 5 linhas.
+- O Carregador cabe com 1 px de folga. Se a fonte de display mudar, é ele quem quebra primeiro.
+- O campo no tema seria `civis.<id>.curto`, opcional. Sem ele, vale o `nome`.
+- O nome longo continua no slot da fila, no `title` do botão e no resto da tela.
