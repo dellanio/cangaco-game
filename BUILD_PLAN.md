@@ -3389,6 +3389,14 @@ Depende da F20b: o marcador lê `unidade.condicao`, que só existe depois dela. 
 ## Fase C — Militar
 
 ### F24 — Weapons workshop e cadeia de couro
+- **Nota (decisão do operador, 2026-09-26): as pilhas das armas nascem com as armas.**
+  A Casa de Armas de Madeira, a Ferraria e a Casa do Ferro produzem `arma_madeira`,
+  `arma_ferro` e `armadura_ferro`, que não estão em `economia.mercadorias`. Por isso a
+  saída delas não tem pilha no estoque visível (`docs/BRIEF-ARTE.md` §4a), e isso não é
+  defeito de arte nem de render. É a mesma lacuna das seis armas do GDD §4.1, registrada
+  no `IDEIAS.md` como pré-requisito da Fase C. Quando o Quartel existir e as armas
+  tiverem id em `economy.json`, cada uma ganha a sua `pilha` (uma imagem por mercadoria)
+  e os pontos de saída desses três prédios passam a mostrar alguma coisa.
 ### F25 — Barracks e criação de soldado
 - **Nota (decisão do operador, 2026-09-26): a arte dos mercenários espera o Quartel.**
   Os cinco mercenários (`rebel`, `rogue`, `vagabond`, `barbarian`, `warrior`) ficaram
