@@ -17,9 +17,16 @@
 // ENQUADRAMENTO: o BALANCE_LOG de 2026-09-23 registra que o quadro herdado poe a
 // obra parcialmente fora. Aqui o footprint inteiro e medido contra o canvas antes
 // da primeira foto, e a medida vai na mensagem do afirmar.
+//
+// A pedreira fica ao lado do lajedo (`_pedreira.js`) e, de pe, recebe o cabra e
+// PRODUZ: o roteiro termina com pedra na saida. Antes ela ficava encostada na
+// escola, sem rocha ao alcance, e a foto do `completo` retratava uma pedreira que
+// nunca daria pedra.
 
 const { retanguloDoCanvas, arrastarDentroDoCanvas } = require('./_canvas');
 const { erguerRua } = require('./_estradas');
+const { arrastosDaRua } = require('./_recursos');
+const { pedreiraNoLajedo, esperarPedraNaSaida } = require('./_pedreira');
 const economia = require('../../data/economy.json');
 const { predios } = require('../../data/buildings.json');
 
@@ -36,6 +43,9 @@ const PASSO = 5;
 /** O roteiro da F11c leva a MESMA obra de hp 0 ate o fim dentro de 3000 ticks.
  *  Falhar por teto E FALHAR, nao motivo para dormir mais. */
 const TETO = 4000;
+/** Teto da espera pelo cabra ocupar, o mesmo da F-VIVO-a (mesma geometria). */
+const TETO_ATE_OCUPAR = 900;
+const PASSO_DE_AVANCO = 50; // um `avancar` seco e grande estoura o frame (F16b)
 
 async function roteiro(ctx) {
   const { page, capturar, estado, afirmar } = ctx;
@@ -68,50 +78,42 @@ async function roteiro(ctx) {
     await esperarFrame();
   }
 
+  /** Anda a camera com as setas ate a coluna cair no meio do quadro (molde da F-T3). */
+  async function centrarEm(gx) {
+    const alvo = Math.max(0, gx * TILE_PX - (canvas.right - canvas.left) / 2);
+    for (let i = 0; i < 30; i += 1) {
+      const { camera } = await estado();
+      const delta = alvo - camera.scrollX;
+      if (Math.abs(delta) < TILE_PX) return;
+      const tecla = delta > 0 ? 'ArrowRight' : 'ArrowLeft';
+      await page.keyboard.down(tecla);
+      await page.waitForTimeout(120);
+      await page.keyboard.up(tecla);
+      await esperarFrame();
+    }
+  }
+
   // ---- geometria, tirada dos JSON ------------------------------------------
   const armazem = noDado('storehouse');
   const escola = noDado('schoolhouse');
-  const [, altAr] = defDe('storehouse').tamanho;
   const [largEs, altEs] = defDe('schoolhouse').tamanho;
   const [largObra, altObra] = defDe(TIPO_DA_OBRA).tamanho;
-  const yRua = armazem.gy + altAr;
-  afirmar(escola.gy + altEs === yRua, 'este roteiro assume armazem e escola na mesma linha de porta');
-  // A obra encostada na escola, sem o tile de folga que os roteiros anteriores
-  // deixavam. Medido, e nao escolhido: com a folga de 1 tile (a geometria da
-  // F11c) o footprint transborda o canvas em 2 px a direita, e a ultima coluna
-  // da obra sai do quadro — exatamente o que o BALANCE_LOG de 2026-09-23
-  // registrou. 2 px nao atrapalhavam um retangulo unico; atrapalham uma foto que
-  // existe para mostrar a silhueta do estagio.
-  const obra = { gx: escola.gx + largEs, gy: yRua - altObra };
+  const { pedreira: obra, tilesDaRua: rua } = pedreiraNoLajedo({ armazem, escola, tamanhoDe: (id) => defDe(id).tamanho, afirmar });
   const meioDaObra = { gx: obra.gx + Math.floor(largObra / 2), gy: obra.gy };
-  const pontaEsquerda = { gx: armazem.gx, gy: yRua };
-  const pontaDireita = { gx: obra.gx + largObra - 1, gy: yRua };
-  const tilesDaRua = pontaDireita.gx - pontaEsquerda.gx + 1;
-
-  // ---- 0. ENQUADRAMENTO: o footprint INTEIRO cabe no canvas? ---------------
-  const canto = await telaDoTile(obra.gx, obra.gy);
-  const fim = await telaDoTile(obra.gx + largObra, obra.gy + altObra);
-  const sobra = {
-    esquerda: Math.round(canto.x - canvas.left),
-    direita: Math.round(canvas.right - fim.x),
-    topo: Math.round(canto.y - canvas.top),
-    base: Math.round(canvas.bottom - fim.y),
-  };
-  afirmar(true, `enquadramento medido: canvas ${Math.round(canvas.width)}x${Math.round(canvas.height)}, `
-    + `footprint ${largObra}x${altObra} tiles em (${obra.gx},${obra.gy}), sobra ${JSON.stringify(sobra)}`);
-  afirmar(
-    sobra.esquerda >= 0 && sobra.direita >= 0 && sobra.topo >= 0 && sobra.base >= 0,
-    `o footprint inteiro da obra tem de caber no canvas para a foto do estagio valer: sobra ${JSON.stringify(sobra)}`,
-  );
+  const meioDaEscola = { gx: escola.gx + Math.floor(largEs / 2), gy: escola.gy + Math.floor(altEs / 2) };
+  const tilesDaRua = rua.length;
+  const civil = defDe(TIPO_DA_OBRA).trabalhador;
+  afirmar(typeof civil === 'string', 'a pedreira precisa declarar `trabalhador` no dado');
 
   // ---- 1. a rua ------------------------------------------------------------
   await page.click('[data-ferramenta="estrada"]');
   await esperarFrame();
-  const pEsq = await pontoDoTile(pontaEsquerda.gx, pontaEsquerda.gy);
-  const pDir = await pontoDoTile(pontaDireita.gx, pontaDireita.gy);
-  await arrastarDentroDoCanvas(page, canvas, [pEsq, pDir]);
-  await avancar(1);
-  await esperarFrame();
+  for (const { gy, de, ate } of arrastosDaRua(rua)) {
+    await centrarEm(Math.floor((de + ate) / 2));
+    await arrastarDentroDoCanvas(page, canvas, [await pontoDoTile(de, gy), await pontoDoTile(ate, gy)]);
+    await avancar(1);
+    await esperarFrame();
+  }
   const desenhada = await estado();
   afirmar(
     desenhada.estradasPlanejadasRenderizadas === tilesDaRua && desenhada.estradasRenderizadas === 0,
@@ -128,6 +130,25 @@ async function roteiro(ctx) {
   );
   await page.keyboard.press('Escape');
   await esperarFrame();
+
+  // ---- 1b. ENQUADRAMENTO: o footprint INTEIRO cabe no canvas? --------------
+  // Medido com a camera ja parada na obra, que e o quadro de todas as fotos.
+  await centrarEm(meioDaObra.gx);
+  const canto = await telaDoTile(obra.gx, obra.gy);
+  const fim = await telaDoTile(obra.gx + largObra, obra.gy + altObra);
+  const sobra = {
+    esquerda: Math.round(canto.x - canvas.left),
+    direita: Math.round(canvas.right - fim.x),
+    topo: Math.round(canto.y - canvas.top),
+    base: Math.round(canvas.bottom - fim.y),
+  };
+  afirmar(true, `enquadramento medido: canvas ${Math.round(canvas.width)}x${Math.round(canvas.height)}, `
+    + `footprint ${largObra}x${altObra} tiles em (${obra.gx},${obra.gy}), sobra ${JSON.stringify(sobra)}`);
+  afirmar(
+    sobra.esquerda >= 0 && sobra.direita >= 0 && sobra.topo >= 0 && sobra.base >= 0,
+    `o footprint inteiro da obra tem de caber no canvas para a foto do estagio valer: sobra ${JSON.stringify(sobra)}`,
+  );
+
 
   // ---- 2. a linha de base, ANTES de plantar --------------------------------
   const inicial = await estado();
@@ -218,6 +239,40 @@ async function roteiro(ctx) {
     (await page.getAttribute('#painel-predio', 'data-estado-do-predio')) === 'completo',
     'no fim o painel deveria abrir um predio completo, nao uma obra',
   );
+  await page.keyboard.press('Escape');
+  await esperarFrame();
+
+  // ---- 6. a escola treina o cabra, e a pedreira PRODUZ -----------------------
+  // O clique de painel que roda despausado e segurando 150 ms (§8).
+  await centrarEm(meioDaEscola.gx);
+  await clicarNoTile(meioDaEscola.gx, meioDaEscola.gy);
+  const botao = await page.$eval(`#painel-predio [data-treinar="${civil}"]`, (n) => {
+    const r = n.getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  });
+  await page.keyboard.press('p');
+  afirmar(!(await estado()).pausado, 'o clique do treino precisa do relogio correndo');
+  await page.mouse.move(botao.x, botao.y);
+  await page.mouse.down();
+  await page.waitForTimeout(150);
+  await page.mouse.up();
+  await esperarFrame();
+  await page.keyboard.press('p');
+  await esperarFrame();
+  afirmar((await estado()).pausado, 'o roteiro deveria ter pausado de volta');
+  await page.keyboard.press('Escape');
+  await esperarFrame();
+  const ID_OBRA = achado[0];
+  let s = await estado();
+  for (let t = 0; s.prediosDoEstado[ID_OBRA]?.ocupante == null && t < TETO_ATE_OCUPAR; t += PASSO_DE_AVANCO) {
+    await avancar(PASSO_DE_AVANCO);
+    await esperarFrame();
+    s = await estado();
+  }
+  afirmar(s.prediosDoEstado[ID_OBRA]?.ocupante != null, `em ${TETO_ATE_OCUPAR} ticks o cabra treinado deveria ter ocupado a pedreira, veio ${JSON.stringify(s.prediosDoEstado[ID_OBRA])}`);
+  await centrarEm(meioDaObra.gx);
+  await esperarPedraNaSaida(ctx, ID_OBRA);
+  await capturar('produzindo');
 }
 
 module.exports = { roteiro };

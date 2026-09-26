@@ -12,8 +12,14 @@
 // F11c fixou: nada martelado, em obra, de pe.
 //
 // Tempo por `window.__cangaco.avancar(n)` (laco nasce pausado, `?pausado`).
+//
+// A pedreira fica ao lado do lajedo (`_pedreira.js`) e, de pe, recebe o cabra e
+// PRODUZ: o roteiro termina com pedra na saida. Antes ela ficava a leste da escola,
+// sem rocha ao alcance, e a foto do `completo` retratava uma pedreira morta.
 
 const { retanguloDoCanvas, arrastarDentroDoCanvas } = require('./_canvas');
+const { arrastosDaRua } = require('./_recursos');
+const { pedreiraNoLajedo, esperarPedraNaSaida } = require('./_pedreira');
 const economia = require('../../data/economy.json');
 const { predios } = require('../../data/buildings.json');
 
@@ -55,20 +61,31 @@ async function roteiro(ctx) {
     return afirmar(false, `a condicao '${descricao}' nunca valeu em ${maximo} tentativas de ${passo} ticks`);
   }
 
-  // --- a geometria, tirada dos JSON (mesmo layout do roteiro F10: obra a leste da
-  // escola, na fileira do armazem, com a rua ligando as duas portas) ---
+  /** Anda a camera com as setas ate a coluna cair no meio do quadro (molde da F-T3). */
+  async function centrarEm(gx) {
+    const alvo = Math.max(0, gx * TILE_PX - (canvas.right - canvas.left) / 2);
+    for (let i = 0; i < 30; i += 1) {
+      const { camera } = await estado();
+      const delta = alvo - camera.scrollX;
+      if (Math.abs(delta) < TILE_PX) return;
+      const tecla = delta > 0 ? 'ArrowRight' : 'ArrowLeft';
+      await page.keyboard.down(tecla);
+      await page.waitForTimeout(120);
+      await page.keyboard.up(tecla);
+      await esperarFrame();
+    }
+  }
+
+  // --- a geometria, tirada dos JSON: a pedreira ao lado do lajedo, com a borda sul
+  // na linha de porta do armazem, e a rua da pedreira ate a escola ---
   const armazem = economia.estadoInicial.predios.find((p) => p.id === 'storehouse');
   const escola = economia.estadoInicial.predios.find((p) => p.id === 'schoolhouse');
-  const [, alturaDoArmazem] = defDe('storehouse').tamanho;
-  const [, alturaDaPedreira] = defDe('quarry').tamanho;
-
-  const yPortaDoArmazem = armazem.gy + alturaDoArmazem;
-  const pedreira = { gx: escola.gx + 4, gy: armazem.gy };
-  const yPortaDaPedreira = pedreira.gy + alturaDaPedreira;
-  afirmar(yPortaDaPedreira === yPortaDoArmazem - 1, 'a geometria supoe a porta da obra uma fileira ACIMA da do armazem');
-  const inicioDaRua = { gx: armazem.gx, gy: yPortaDoArmazem };
-  const cantoDaRua = { gx: pedreira.gx, gy: yPortaDoArmazem };
-  const pontaDaRua = { gx: pedreira.gx, gy: yPortaDaPedreira };
+  const [largEs, altEs] = defDe('schoolhouse').tamanho;
+  const [largQu] = defDe('quarry').tamanho;
+  const { pedreira, tilesDaRua: rua } = pedreiraNoLajedo({ armazem, escola, tamanhoDe: (id) => defDe(id).tamanho, afirmar });
+  const meioDaEscola = { gx: escola.gx + Math.floor(largEs / 2), gy: escola.gy + Math.floor(altEs / 2) };
+  const civil = defDe('quarry').trabalhador;
+  afirmar(typeof civil === 'string', 'a pedreira precisa declarar `trabalhador` no dado');
 
   // 0. ponto de partida: nenhuma obra, so os 2 predios completos do cenario
   const s0 = await estado();
@@ -80,6 +97,7 @@ async function roteiro(ctx) {
 
   // 1. planta o Quarry pela UI — nasce hp=0 e com o terreno por aplainar: MARCACAO
   // (F17e: com o chao ja nivelado e hp=0 o estagio seria FUNDACAO)
+  await centrarEm(pedreira.gx + largQu);
   await page.click('[data-predio="quarry"]');
   await esperarFrame();
   const pPedreira = await pontoDoTile(pedreira);
@@ -102,12 +120,14 @@ async function roteiro(ctx) {
   // trabalhavel — a MESMA regra que evita a partida travar em silencio, CLAUDE.md/plano F11c)
   await page.click('[data-ferramenta="estrada"]');
   await esperarFrame();
-  await arrastarDentroDoCanvas(
-    page, canvas, [await pontoDoTile(inicioDaRua), await pontoDoTile(cantoDaRua), await pontoDoTile(pontaDaRua)],
-  );
-  await avancar(1); // o arrasto so enfileira o PlaceRoad
-  await esperarFrame();
+  for (const { gy, de, ate } of arrastosDaRua(rua)) {
+    await centrarEm(Math.floor((de + ate) / 2));
+    await arrastarDentroDoCanvas(page, canvas, [await pontoDoTile({ gx: de, gy }), await pontoDoTile({ gx: ate, gy })]);
+    await avancar(1); // o arrasto so enfileira o PlaceRoad
+    await esperarFrame();
+  }
   await page.keyboard.press('Escape');
+  await centrarEm(pedreira.gx + largQu);
 
   // 3. avanca ate o laborer martelar o primeiro golpe: hp sai de 0, estagio ESTRUTURA.
   // F17e: a primeira martelada cai em ESTRUTURA, e nao mais no generico 'madeira' —
@@ -135,6 +155,35 @@ async function roteiro(ctx) {
   );
   afirmar(s.prediosRenderizados === 3, `deveriam existir 3 predios desenhados (armazem, escola, pedreira), veio ${s.prediosRenderizados}`);
   await capturar('completo');
+
+  // 5. a escola treina o cabra, e a pedreira PRODUZ. O clique de painel roda
+  // despausado e segurando 150 ms (§8).
+  const ID_PEDREIRA = Object.entries(s.prediosDoEstado).find(([, p]) => p.gx === pedreira.gx && p.gy === pedreira.gy)?.[0];
+  afirmar(ID_PEDREIRA !== undefined, `a pedreira de pe deveria estar em (${pedreira.gx},${pedreira.gy})`);
+  await centrarEm(meioDaEscola.gx);
+  const pEscola = await pontoDoTile(meioDaEscola);
+  await page.mouse.click(pEscola.x, pEscola.y);
+  await esperarFrame();
+  const botao = await page.$eval(`#painel-predio [data-treinar="${civil}"]`, (n) => {
+    const r = n.getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  });
+  await page.keyboard.press('p');
+  afirmar(!(await estado()).pausado, 'o clique do treino precisa do relogio correndo');
+  await page.mouse.move(botao.x, botao.y);
+  await page.mouse.down();
+  await page.waitForTimeout(150);
+  await page.mouse.up();
+  await esperarFrame();
+  await page.keyboard.press('p');
+  await esperarFrame();
+  afirmar((await estado()).pausado, 'o roteiro deveria ter pausado de volta');
+  await page.keyboard.press('Escape');
+  await esperarFrame();
+  await ate((e) => e.prediosDoEstado[ID_PEDREIRA]?.ocupante != null, 50, 18, 'o cabra treinado deveria ocupar a pedreira');
+  await centrarEm(pedreira.gx + largQu);
+  await esperarPedraNaSaida(ctx, ID_PEDREIRA);
+  await capturar('produzindo');
 }
 
 module.exports = { roteiro };

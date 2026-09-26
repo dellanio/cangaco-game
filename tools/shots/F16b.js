@@ -18,18 +18,20 @@
 //
 // De quebra, a cadeia inteira do aceite da Fase A acontece aqui pelo caminho do
 // jogador: rua -> planta -> obra que sobe -> escola treina o cabra -> ele ocupa
-// a pedreira. Os ticks de cada etapa foram medidos antes, na sonda desta sessao
-// (docs/planos/F16b-painel-predio.md §7); `TICKS_ATE_OCUPAR` e aquele numero
-// com folga.
+// a pedreira -> ela PRODUZ. A espera e por condicao, com teto, nunca por numero de
+// ticks: a geometria mudou (2026-09-26) e um numero fixo mudaria junto.
 //
-// NAO se afirma o conteudo da gaveta `saida` da pedreira: a sonda mediu que ela
-// fica vazia quase sempre (o carregador leva a pedra assim que ela sai), entao a
-// assercao oscilaria. Estoque cheio se prova no ARMAZEM, que e onde ele para.
+// A pedreira fica ao lado do lajedo (`_pedreira.js`). Antes ela ficava a direita
+// da escola, sem rocha ao alcance, e este roteiro retratava uma vila que nao
+// produz. A pedra na saida e fugaz (o carregador a leva logo), por isso se espera
+// por ela em passo fino, e o PAINEL nao afirma o conteudo da gaveta `saida`.
 //
 // Todo clique no mapa acontece com o painel FECHADO: ele e sobreposicao no canto
 // do canvas, e o que esta debaixo dele nao recebe mouse.
 
 const { retanguloDe, retanguloDoCanvas, arrastarDentroDoCanvas } = require('./_canvas');
+const { arrastosDaRua } = require('./_recursos');
+const { pedreiraNoLajedo, esperarPedraNaSaida } = require('./_pedreira');
 const economia = require('../../data/economy.json');
 const tema = require('../../data/theme-sertao.json');
 const { predios } = require('../../data/buildings.json');
@@ -37,13 +39,9 @@ const { predios } = require('../../data/buildings.json');
 const TILE_PX = 64;
 const defDe = (id) => predios.find((p) => p.id === id);
 const noDado = (id) => economia.estadoInicial.predios.find((p) => p.id === id);
-/** Medido na sonda da F16b: obra completa no tick 220, o cabra da pedreira ocupa
- *  no 241, e 300 era aquele numero com folga. Remedido depois da F18g (a pedra da
- *  rua viaja por tile; BUG-I, 2026-09-26): os 2 ultimos tiles esperam do 128 ao 353
- *  pelo laborer que ergue a pedreira, a obra completa no 353 e o cabra ocupa no 378
- *  (amostra de 25 em 25). 500 e a mesma folga de ~25 %, no multiplo do passo de
- *  avanco — nao um chute. */
-const TICKS_ATE_OCUPAR = 500;
+/** Teto da espera pelo cabra ocupar, o mesmo da F-VIVO-a (mesma geometria).
+ *  Falhar por teto e falhar. */
+const TETO_ATE_OCUPAR = 900;
 const PASSO_DE_AVANCO = 50; // avanca em blocos: um `avancar(300)` seco estoura o frame
 
 async function roteiro(ctx) {
@@ -63,6 +61,21 @@ async function roteiro(ctx) {
     return { x, y };
   }
 
+  /** Anda a camera com as setas ate a coluna cair no meio do quadro (molde da F-T3). */
+  async function centrarEm(gx) {
+    const alvo = Math.max(0, gx * TILE_PX - (canvas.right - canvas.left) / 2);
+    for (let i = 0; i < 30; i += 1) {
+      const { camera } = await estado();
+      const delta = alvo - camera.scrollX;
+      if (Math.abs(delta) < TILE_PX) return;
+      const tecla = delta > 0 ? 'ArrowRight' : 'ArrowLeft';
+      await page.keyboard.down(tecla);
+      await page.waitForTimeout(120);
+      await page.keyboard.up(tecla);
+      await esperarFrame();
+    }
+  }
+
   /** Clica no mapa com o painel fechado e a mao vazia. */
   async function clicarNoTile(gx, gy) {
     const p = await pontoDoTile(gx, gy);
@@ -80,22 +93,18 @@ async function roteiro(ctx) {
   const idAberto = () => page.getAttribute('#painel-predio', 'data-predio-aberto');
 
   // ---- geometria, tirada dos JSON ------------------------------------------
-  // A pedreira entra a DIREITA da escola, com a borda sul na mesma linha de
-  // porta do armazem: uma rua so serve os tres. Mesma geometria da sonda.
+  // A pedreira entra ao lado do lajedo, com a borda sul na mesma linha de porta
+  // do armazem: uma rua so serve os tres.
   const armazem = noDado('storehouse');
   const escola = noDado('schoolhouse');
   const [largAr, altAr] = defDe('storehouse').tamanho;
   const [largEs, altEs] = defDe('schoolhouse').tamanho;
-  const [largQu, altQu] = defDe('quarry').tamanho;
-  const yRua = armazem.gy + altAr;
-  afirmar(escola.gy + altEs === yRua, 'este roteiro assume armazem e escola na mesma linha de porta');
-  const pedreira = { gx: escola.gx + largEs + 1, gy: yRua - altQu }; // uma coluna livre entre as duas
+  const [largQu] = defDe('quarry').tamanho;
+  const { pedreira, tilesDaRua: rua } = pedreiraNoLajedo({ armazem, escola, tamanhoDe: (id) => defDe(id).tamanho, afirmar });
   const meioDaPedreira = { gx: pedreira.gx + Math.floor(largQu / 2), gy: pedreira.gy };
   const meioDaEscola = { gx: escola.gx + Math.floor(largEs / 2), gy: escola.gy + Math.floor(altEs / 2) };
   const meioDoArmazem = { gx: armazem.gx + Math.floor(largAr / 2), gy: armazem.gy + Math.floor(altAr / 2) };
-  const pontaEsquerda = { gx: armazem.gx, gy: yRua };
-  const pontaDireita = { gx: pedreira.gx + largQu - 1, gy: yRua };
-  const tilesDaRua = pontaDireita.gx - pontaEsquerda.gx + 1;
+  const tilesDaRua = rua.length;
   const civilDaPedreira = defDe('quarry').trabalhador;
   afirmar(
     typeof civilDaPedreira === 'string',
@@ -171,11 +180,12 @@ async function roteiro(ctx) {
   await esperarFrame();
   await page.click('[data-ferramenta="estrada"]');
   await esperarFrame();
-  const pEsq = await pontoDoTile(pontaEsquerda.gx, pontaEsquerda.gy);
-  const pDir = await pontoDoTile(pontaDireita.gx, pontaDireita.gy);
-  await arrastarDentroDoCanvas(page, canvas, [pEsq, pDir]);
-  await avancar(1);
-  await esperarFrame();
+  for (const { gy, de, ate } of arrastosDaRua(rua)) {
+    await centrarEm(Math.floor((de + ate) / 2));
+    await arrastarDentroDoCanvas(page, canvas, [await pontoDoTile(de, gy), await pontoDoTile(ate, gy)]);
+    await avancar(1);
+    await esperarFrame();
+  }
   // F18d-1b: o arrasto DESENHA; quem ergue e o laborer, durante o passo 5. O ouro da
   // escola so anda por rua de pe, entao a rua erguida e precondicao do "cabra ocupou" —
   // e e la que ela e conferida, ja de pe.
@@ -188,6 +198,7 @@ async function roteiro(ctx) {
 
   await page.keyboard.press('Escape');
   await esperarFrame();
+  await centrarEm(pedreira.gx + largQu);
   await page.click('[data-predio="quarry"]');
   await esperarFrame();
   await clicarNoTile(pedreira.gx, pedreira.gy);
@@ -242,14 +253,27 @@ async function roteiro(ctx) {
   // ---- 4. a escola treina o cabra da pedreira ------------------------------
   await page.keyboard.press('Escape');
   await esperarFrame();
+  await centrarEm(meioDaEscola.gx);
   await clicarNoTile(meioDaEscola.gx, meioDaEscola.gy);
   afirmar(
     await temNoPainel(`[data-treinar="${civilDaPedreira}"]`),
     'a fila de treino deveria aparecer como SECAO do painel do predio, nao num segundo painel',
   );
-  await page.click(`#painel-predio [data-treinar="${civilDaPedreira}"]`);
-  await avancar(1);
+  // O clique de painel que roda despausado e segurando 150 ms (§8).
+  const botao = await page.$eval(`#painel-predio [data-treinar="${civilDaPedreira}"]`, (n) => {
+    const r = n.getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  });
+  await page.keyboard.press('p');
+  afirmar(!(await estado()).pausado, 'o clique do treino precisa do relogio correndo');
+  await page.mouse.move(botao.x, botao.y);
+  await page.mouse.down();
+  await page.waitForTimeout(150);
+  await page.mouse.up();
   await esperarFrame();
+  await page.keyboard.press('p');
+  await esperarFrame();
+  afirmar((await estado()).pausado, 'o roteiro deveria ter pausado de volta');
   afirmar(
     await temNoPainel('[data-slot][data-unidade]'),
     'o pedido deveria entrar na fila da escola',
@@ -258,26 +282,31 @@ async function roteiro(ctx) {
   await esperarFrame();
 
   // ---- 5. deixar a vila trabalhar ------------------------------------------
-  for (let t = 0; t < TICKS_ATE_OCUPAR; t += PASSO_DE_AVANCO) {
+  let depoisDoTrabalho = await estado();
+  for (let t = 0; depoisDoTrabalho.prediosDoEstado[ID_PEDREIRA]?.ocupante == null && t < TETO_ATE_OCUPAR; t += PASSO_DE_AVANCO) {
     await avancar(PASSO_DE_AVANCO);
+    await esperarFrame();
+    depoisDoTrabalho = await estado();
   }
-  await esperarFrame();
-  const depoisDoTrabalho = await estado();
   afirmar(
     depoisDoTrabalho.estradasRenderizadas === tilesDaRua
       && depoisDoTrabalho.estradasPlanejadasRenderizadas === 0,
-    `em ${TICKS_ATE_OCUPAR} ticks a rua deveria estar toda de pe (${tilesDaRua} tiles), veio `
+    `com o cabra na pedreira a rua deveria estar toda de pe (${tilesDaRua} tiles), veio `
       + `${depoisDoTrabalho.estradasRenderizadas} de pe e ${depoisDoTrabalho.estradasPlanejadasRenderizadas} planejados`,
   );
   const noEstado = await predioDoEstado(ID_PEDREIRA);
   afirmar(
     noEstado !== null && noEstado.estado === 'completo',
-    `em ${TICKS_ATE_OCUPAR} ticks a obra deveria ter terminado, veio ${JSON.stringify(noEstado)}`,
+    `com o cabra na pedreira a obra deveria ter terminado, veio ${JSON.stringify(noEstado)}`,
   );
   afirmar(
     noEstado.ocupante !== null,
-    `em ${TICKS_ATE_OCUPAR} ticks o cabra treinado deveria ter ocupado a pedreira, veio ${JSON.stringify(noEstado)}`,
+    `em ${TETO_ATE_OCUPAR} ticks o cabra treinado deveria ter ocupado a pedreira, veio ${JSON.stringify(noEstado)}`,
   );
+
+  // ---- 5b. a pedreira PRODUZ ------------------------------------------------
+  await centrarEm(meioDaPedreira.gx);
+  await esperarPedraNaSaida(ctx, ID_PEDREIRA);
 
   // ---- 6. ACEITE: o painel do predio completo e ocupado --------------------
   await clicarNoTile(meioDaPedreira.gx, meioDaPedreira.gy);
