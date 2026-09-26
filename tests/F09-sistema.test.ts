@@ -438,7 +438,7 @@ const coberturaVazia = (): Cobertura => ({
 export const coberturaDoCaos = coberturaVazia();
 
 /** Timeout do caso lento deste arquivo — ver o comentario junto dele. */
-const ORCAMENTO_DO_CASO = 10_000;
+const ORCAMENTO_DO_CASO = 15_000;
 
 describe('F09 — propriedade estrutural: eventos aleatorios, invariantes depois de CADA tick', () => {
   const cobertura = coberturaDoCaos;
@@ -447,6 +447,10 @@ describe('F09 — propriedade estrutural: eventos aleatorios, invariantes depois
   // aqui le relogio). Medido 1,9 s (semente 3, a mais lenta) na maquina livre em 2026-09-25, e estourou
   // o padrao de 5 s do Vitest com duas sessoes e oito sims em paralelo (calibracao da
   // Fase B). 10 s e ~5x o medido — a mesma regra do caso de carga da F09.
+  // Re-medido em 2026-09-26 (noite 17): a semente 1 passou a ser a mais lenta, ~3 s
+  // sozinha, IGUAL no HEAD 0cb838f e na arvore da noite 17 (2,7-3,8 s nas duas), e
+  // 8,8 s na suite inteira ja no HEAD. O caso cresceu com as features, nao com a
+  // mudanca; a regra dos ~5x da 15 s.
   it.each([1, 2, 3])('semente %i: 200 passos sem uma unica violacao', (semente) => {
     rodarCaos(semente, 200, cobertura);
   }, ORCAMENTO_DO_CASO);

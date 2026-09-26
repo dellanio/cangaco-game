@@ -3852,6 +3852,10 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
   - (c) os roteiros seguem verdes com o módulo comum.
 - **Fora:** matar o dono da porta ocupada. Recusar e nomear basta: o dono pode ser
   a sessão de outra pessoa (os 5188/5189 desta noite eram do operador).
+- **Entregue (2026-09-26, noite 17).** `tools/dev.js` + `tools/_servidor.js`. Além do
+  escopo, uma vigia: matar só o pid do `npm` não manda sinal a ninguém, então o
+  `dev.js` pergunta a cada segundo se o pai (`cmd`) e o avô (`npm`) seguem vivos, e
+  derruba a árvore do vite quando um morre. Ctrl+C não tem prova automatizada.
 
 ## Fase C — Militar
 

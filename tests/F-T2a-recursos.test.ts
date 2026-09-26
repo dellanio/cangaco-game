@@ -106,8 +106,10 @@ const ULTIMO_DEPOSITO = {
   curtoSegundo: 436,
   /** 13 tiles a uma pedra cada, pedreira no lajedo (26,34) */
   lajedo: 3036,
-  /** um unico tile ao alcance, pedreira na borda (32,34) */
-  borda: 244,
+  /** um unico tile ao alcance, pedreira na borda (32,34). 246 e nao 244 desde a
+   *  noite 17: a roca da vila entrou na faixa sul (x 26..30, y 35..36) e o
+   *  caminho da borda cruza chao arado, mais caro que grama no A*. */
+  borda: 246,
   /** as duas sobrepostas: q1 no lajedo leva 12 tiles, q2 na borda leva 1 */
   sobrepostas: 2804,
 } as const;

@@ -270,15 +270,19 @@ export function cenarioDeCanavial(dados: GameData = gameData, partidos: number =
 /**
  * F-CANA-b — o Canavial `c1` posto na VILA, ao lado da mancha de cana que o
  * gerador semeia, e nenhum tile arado pela fixture: o partido e o do mapa. A
- * rua desce do armazem em x=29 e corre em y=37, na porta do Canavial.
+ * rua sai da porta do armazem por y=33, desce em x=33 e corre em y=37, na porta
+ * do Canavial.
  */
 export function cenarioDeCanavialDaVila(dados: GameData = gameData): GameState {
   let s = semCivis(createInitialState(1, dados));
   const v = vila(dados);
-  s = comProdutorOcupado(s, { tipo: 'wineyard', id: 'c1', unidade: 'canavieiro', ...v(6, 5) }, dados); // (35,35)
+  // Ao lado da faixa de cana (x 34..38, y 35..36), e nao em cima dela; a rua desce
+  // pela coluna livre entre a roca e a cana, que nenhuma das duas ocupa.
+  s = comProdutorOcupado(s, { tipo: 'wineyard', id: 'c1', unidade: 'canavieiro', ...v(10, 5) }, dados); // (39,35)
   const rua: TileDeGrid[] = [];
-  for (let dy = 3; dy <= 7; dy++) rua.push(v(0, dy)); // x=29, y 33..37
-  for (let dx = 1; dx <= 8; dx++) rua.push(v(dx, 7)); // x 30..37, y=37
+  for (let dx = 0; dx <= 3; dx++) rua.push(v(dx, 3)); // y=33, x 29..32: a porta do armazem
+  for (let dy = 3; dy <= 7; dy++) rua.push(v(4, dy)); // x=33, y 33..37
+  for (let dx = 5; dx <= 12; dx++) rua.push(v(dx, 7)); // x 34..41, y=37
   s = comEstradas(s, rua);
   return exigirLigado(s, 'c1', dados);
 }
@@ -295,8 +299,10 @@ export function cenarioDeCanavialDaVila(dados: GameData = gameData): GameState {
 export function cenarioDeFazendaSemCampo(dados: GameData = gameData): GameState {
   let s = semCivis(createInitialState(1, dados));
   const v = vila(dados);
-  s = comProdutorOcupado(s, { tipo: 'farm', id: 'f1', unidade: 'roceiro', ...v(4, 0) }, dados); // (33,30)
-  s = comEstradas(s, [v(0, 3), v(1, 3), v(2, 3), v(3, 3), v(4, 3)]); // y=33, x 29..33
+  // A LESTE da escola desde a noite 17: a roca da vila entrou na faixa sul
+  // (x 26..30, y 35..36), e no lugar antigo, (33,30), o milho caia ao alcance.
+  s = comProdutorOcupado(s, { tipo: 'farm', id: 'f1', unidade: 'roceiro', ...v(9, 0) }, dados); // (38,30)
+  s = comEstradas(s, Array.from({ length: 10 }, (_, dx) => v(dx, 3))); // y=33, x 29..38
   s = exigirLigado(s, 'f1', dados);
   const predio = s.predios.porId.f1;
   const colheita = receitaDoTipo('farm', dados)?.colheita ?? null;

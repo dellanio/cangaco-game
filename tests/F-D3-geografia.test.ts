@@ -126,6 +126,16 @@ describe('F-D3 — a folga vale ate o raio do DADO', () => {
           if (recurso === null) continue;
           expect(gerador.naVila(gx, gy), `(${gx},${gy}) tem ${recurso.tipo} EM CIMA da vila`)
             .toBe(false);
+          // O recurso DERIVADO do terreno (o milho do `campoArado`) nao vem da
+          // lista esparsa: ele passa pela porta do terreno, que a guarda acima ja
+          // confere em `terrenoPermitido`. Os dois caminhos, cada um na sua regra.
+          const doTerreno = gameData.recursos.tipos[recurso.tipo]?.terreno ?? null;
+          if (doTerreno !== null) {
+            expect(tipoDoTile(gx, gy), `(${gx},${gy}) ${recurso.tipo} sem o seu chao`)
+              .toBe(doTerreno);
+            expect(terrenoPermitido, `(${gx},${gy}) na folga`).toContain(doTerreno);
+            continue;
+          }
           expect(recursoPermitido, `(${gx},${gy}) na folga`).toContain(recurso.tipo);
         }
       }

@@ -8658,3 +8658,99 @@ Outra sessão trabalha em `src/ui/`, `src/render/` e no CSS, na branch
 - BUG-M (três roteiros desde o lote de sprites): espera o operador decidir quem
   responde.
 - F-DEV: item escrito, não implementado.
+
+## 2026-09-26 (noite, 17) — BUG-M diagnosticado, F17f, F-DEV, manchas na faixa sul
+
+Pacote do operador, quatro itens. Nada em `src/ui/`, `src/render/` nem CSS.
+
+### Verificado
+- **BUG-M, a obra que não aparece: é o RENDER.** Sonda (roteiro `zz-obra`, apagado)
+  plantou a Pedreira pela UI, como o F11c:
+  - `revelacaoDasObras.p9 = {madeira:[0,1], pedra:[0,1]}`, `spritesDePredio.p9 =
+    'predio:quarry:madeira'`, `estagiosDeObraRenderizados` todo zero fora `completo: 2`.
+  - Screenshot aberto com Read: só o medidor de material (cinco quadradinhos de 8 px),
+    sem o contorno do lote e sem o nome que o placeholder desenha.
+  - Causa lida no código: obra com par `madeira`/`completo` vai pela revelação da F17g;
+    com `hp = 0` a revelação é `[0,1]`/`[0,1]` e `desenharRevelado` devolve `[]`; o
+    canteiro zerado também. O roteiro reprova porque a obra revelada não entra em
+    `estagiosDeObraRenderizados` — é o sintoma, não o defeito.
+  - Correção proposta no BUG-M; não aplicada (render é da outra sessão).
+- **F17f corrigido (roteiro envelhecido).** A escola ganhou arte; os quatro prédios
+  plantáveis na abertura também. Escolha: o lado do retângulo foi para a obra de uma
+  **torre de vigia** (primeiro prédio sem arte que o jogador planta; o roteiro levanta a
+  pedreira pelo `_pedreira.js` para desbloqueá-la). A escola agora afirma o sprite
+  dela. O roteiro afirma pelo `assets/manifest.json` que a torre não tem arte — se
+  ganhar, ele acusa. `npm run shot -- F17f` OK; `F17f-2-...png` aberto com Read: a torre
+  como retângulo com "Torre de Pedra (marcação no chão)" ao lado da escola desenhada.
+- **F-DEV entregue.** `tools/dev.js` + `tools/_servidor.js` (as duas defesas do BUG-K,
+  agora comuns; `tools/shot.js` importa), `"dev": "node tools/dev.js"`, bloco do eslint
+  com `fetch`/`setInterval` só para esses dois arquivos.
+  - (a) com um `http.createServer` escutando 5197, `CANGACO_DEV_PORTA=5197 npm run dev`
+    saiu com código 1 e a mensagem nomeando a porta e o `netstat`; só o servidor falso
+    continuou escutando.
+  - (b) em 5198: subiu e respondeu; `Stop-Process` só no pid do `npm` (sem a árvore) →
+    em 4 s ninguém escutava 5198 (`netstat`), e nenhum `dev.js` nem vite na lista de
+    processos. A vigia pegou o ancestral morto ("o processo 36836 ... morreu").
+  - Ctrl+C **não foi exercido** por automação (o console manda CTRL_C a todo o grupo,
+    e o `SIGINT` cai no `sair`); é o caminho menos arriscado dos três, mas fica sem prova.
+  - (c) roteiros com o módulo comum: ver Não-regressão.
+- **Manchas no quadro de abertura: não cabem.** Quadro medido (sonda `zz-quadro`,
+  apagada): canvas x 260..1280, câmera `scrollX 1602 scrollY 1656` zoom 1 → tiles
+  inteiros x 26..40, y 26..36. Busca exaustiva de disco de raio 2 (a forma das duas),
+  todo em grama, sem recurso, dentro do quadro, a Chebyshev ≥ 2 de footprint e spawn:
+  **nenhum**. Encostando (≥ 1): (38,33) (33,34) (37,34) (38,34). Raio 1 com folga:
+  16 centros. A faixa livre ao sul tem 4 linhas (33..36) e o disco pede 5.
+- **Manchas na faixa sul, alongadas (decisão do operador: opção (c)).** O disco saiu;
+  `ROCADO_DA_VILA` e `CANAVIAL_DA_VILA` viraram retângulos 5x2 (`faixa()` exportada
+  pelo gerador): roça em x 26..30, cana em x 34..38, as duas em y 35..36. Coube em 4
+  linhas: y 33 é a linha das portas, y 34 fica grama (é onde os civis nascem e
+  andam), 35..36 as manchas. `data/terrain.json` `reservaDaVila` passou a aceitar
+  `campoArado` (terreno) e `grapes` (recurso) — o `_doc` diz por quê. Mapa
+  regenerado: só as manchas mudaram (campoArado 140, grapes 10).
+  - F-CANA-b, roteiro: **sem mexer na câmera**, as duas faixas inteiras no quadro de
+    abertura. OK; `F-CANA-b-1-abertura-com-a-cana.png` aberto com Read: a terra
+    arada à esquerda e a cana em pousio à direita, abaixo do armazém e da escola.
+  - Fallout nos testes, cada um pelo modelo e não afrouxando:
+    - F-D3 (teste): o milho da folga vem do **terreno** `campoArado`, não da lista
+      esparsa; a guarda passou a conferir recurso derivado pelo chão dele (e o chão em
+      `terrenoPermitido`), e o esparso segue em `recursoPermitido`.
+    - F-CANA-b (teste): `faixa` no lugar de `disco`; a asserção "fora da folga"
+      caiu com a decisão — (34,36) já está fora do raio 3, então a faixa cruza a
+      borda. No lugar: nenhum tile em cima da vila (`naVila`). O quadro, quem mede é
+      o roteiro.
+    - F-T2a (teste): a pedreira da borda deposita no tick **246**, não 244 — o
+      caminho cruza chão arado (1,45 no A* contra 1,30 da grama). Medido por sonda
+      (apagada), número declarado com o porquê; a asserção continua exata.
+    - Fixtures (`tests/helpers/producao-cenario.ts`): a fazenda sem campo foi para
+      (38,30) (em (33,30) o milho caía ao alcance) e o Canavial da vila para (39,35),
+      ao lado da cana em vez de em cima; ruas refeitas.
+    - Roteiros F-D3 e F-T2a assumiam "nada esgotado na abertura". Tipo que nasce em
+      zero é desenhado como `esgotado`: o F-D3 aceita esse estado para esses tipos, e
+      o F-T2a passou a exigir o `esgotado` **entre** os tiles que nascem vazios dentro
+      e tocando o quadro, contados do arquivo de mapa (20 na abertura: 10 + 10).
+- **BUG-M: não corrigido — PAREI, como o operador mandou.** O conserto (contorno do
+  lote e nome por baixo da obra revelada, e publicar o estágio) é em
+  `src/render/scenes/WorldScene.ts`, e a branch da outra sessão
+  (`feat/ui-world-polish`) mexe nesse arquivo (209 linhas no diff: variantes e
+  decalques de terreno). Verificado com `git diff main...feat/ui-world-polish --stat`. Alternativa
+  só em `src/render/estagio-obra.ts` (que a branch não toca): `revelacaoDaObra` devolver
+  `null` com `hp <= 0`, e a obra recém-plantada cai no placeholder com lote e nome.
+  Limites: cobre só o instante do plantio; F11c/F17e continuam reprovando, porque a
+  obra revelada não entra em `estagiosDeObraRenderizados` (isso é `WorldScene.ts`); e
+  muda o contrato da F17g (`tests/F17g-revelacao.test.ts`). Espera decisão.
+- **BUG-N** registrado (Polimento): cana em pousio = losango de esgotado sobre grama;
+  falta o chão arado que o milho tem (`campoArado`).
+
+- **F09, orçamento do caso lento re-medido: 10 s → 15 s.** O verify reprovou por
+  timeout na semente 1 (não por violação). Sozinha ela leva ~3 s **igual** no HEAD
+  0cb838f e nesta árvore (worktree irmão, 2,7–3,8 s nas duas), e já 8,8 s na suíte
+  inteira do HEAD: cresceu com as features anteriores, não com as manchas. Aplicada a
+  regra escrita no próprio teste (~5x o medido); não é asserção de tempo.
+- **F18i no mundo transladado:** o obreiro nascia no literal absoluto (30,34); com a
+  fazenda em (38,30) a caminhada passou do limite. Agora nasce por deslocamento da
+  âncora da vila.
+
+### Não-regressão
+- `npm run verify` verde (inclui `test:transladado`), depois de tudo acima.
+- Todos os roteiros: 41 OK; FALHA só F11c e F17e (BUG-M, esperado).
+

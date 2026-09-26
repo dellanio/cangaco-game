@@ -238,5 +238,8 @@
   },
   "F-CANA-b-mancha-de-cana-da-vila": {
     "passes": true
+  },
+  "F-DEV-dev-server-sem-orfao": {
+    "passes": true
   }
 }

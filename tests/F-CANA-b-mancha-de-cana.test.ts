@@ -7,9 +7,9 @@
  * `BUILD_PLAN.md`: ha cana ao alcance de um Canavial posto perto da vila, e ele
  * planta ali sem o jogador arar antes.
  *
- * A mancha e comparada com o `disco` e o centro que o PROPRIO gerador exporta:
- * se `por()` recusar um tile calado (folga, tile ocupado), a mancha encolhe e
- * isto acusa, em vez de o numero 13 morar digitado aqui.
+ * A mancha e comparada com a `faixa` que o PROPRIO gerador exporta: se `por()`
+ * recusar um tile calado (folga, tile ocupado), a mancha encolhe e isto acusa,
+ * em vez de o numero de tiles morar digitado aqui.
  */
 import { createRequire } from 'node:module';
 import { describe, expect, it } from 'vitest';
@@ -25,9 +25,9 @@ import { gravarEvidencia } from './helpers/evidence';
 // `createRequire` pelo mesmo motivo do F-D3-geografia: o gerador e CommonJS.
 const requireCjs = createRequire(import.meta.url);
 const gerador = requireCjs('../tools/gerar-mapa.js') as {
-  CANAVIAL_DA_VILA: { gx: number; gy: number; raio: number };
-  disco: (gx: number, gy: number, raio: number) => [number, number][];
-  naReserva: (gx: number, gy: number) => boolean;
+  CANAVIAL_DA_VILA: { gx: number; gy: number; largura: number; altura: number };
+  faixa: (r: { gx: number; gy: number; largura: number; altura: number }) => [number, number][];
+  naVila: (gx: number, gy: number) => boolean;
 };
 
 const RECEITA = receitaDoTipo('wineyard', gameData);
@@ -41,9 +41,8 @@ const RENDIMENTO = gameData.recursos.tipos[COLHEITA.recurso]?.rendimentoPorTile 
 // coordenada do mundo publicado, e o `test:transladado` desloca o mundo em +K
 // (ate o `readFileSync` do dado vem transladado). Onde a mancha cai relativo a
 // vila quem prova e o cenario (a), que poe o Canavial por deslocamento da
-// ancora. Aqui: a cana do mapa, normalizada ao proprio canto, e o disco inteiro.
-const { gx, gy, raio } = gerador.CANAVIAL_DA_VILA;
-const DISCO = gerador.disco(gx, gy, raio);
+// ancora. Aqui: a cana do mapa, normalizada ao proprio canto, e a faixa inteira.
+const FAIXA = gerador.faixa(gerador.CANAVIAL_DA_VILA);
 
 /** Os tiles, deslocados para o canto da propria caixa, em ordem estavel. */
 function forma(tiles: readonly (readonly [number, number])[]): string[] {
@@ -83,19 +82,22 @@ function ateSemearEColher(inicial: GameState, limite = 3000): {
 describe('F-CANA-b — o mapa tem a mancha de cana da vila', () => {
   const inicial = cenarioDeCanavialDaVila();
 
-  it('a cana do mapa e o disco inteiro do gerador, sem tile recusado', () => {
+  it('a cana do mapa e a faixa inteira do gerador, sem tile recusado', () => {
     const cana = canaDoMapa(inicial).map((k) => k.split(',').map(Number) as [number, number]);
-    expect(DISCO.length).toBeGreaterThan(0);
-    expect(forma(cana)).toEqual(forma(DISCO));
+    expect(FAIXA.length).toBeGreaterThan(0);
+    expect(forma(cana)).toEqual(forma(FAIXA));
   });
 
-  it('em grama, fora da folga, e em pousio: mancha e terreno, nao estoque', () => {
+  it('em grama, fora da vila, e em pousio: mancha e terreno, nao estoque', () => {
     for (const k of canaDoMapa(inicial)) {
       const [x, y] = k.split(',').map(Number) as [number, number];
       expect(tipoDoTile(x, y, gameData), k).toBe('grama');
-      // a folga do gerador e derivada do `economy.json`, que vem transladado
-      // junto: ela e a mesma vila do estado, nos dois mundos.
-      expect(gerador.naReserva(x, y), k).toBe(false);
+      // a vila do gerador e derivada do `economy.json`, que vem transladado
+      // junto: e a mesma do estado, nos dois mundos. Desde a noite 17 a mancha
+      // atravessa a borda da folga (decisao do operador: tem de caber no quadro
+      // de abertura, e quem mede o quadro e o roteiro F-CANA-b); o que continua
+      // proibido e pousar em cima do footprint.
+      expect(gerador.naVila(x, y), k).toBe(false);
       expect(inicial.recursos[k]?.quantidade, k).toBe(0);
     }
   });
@@ -125,7 +127,7 @@ describe('F-CANA-b (a) — o Canavial da vila planta sem o jogador arar', () => 
     gravarEvidencia('F-CANA-b', {
       feature: 'F-CANA-b-mancha-de-cana-da-vila',
       aceite: 'BUILD_PLAN.md F-CANA-b (a): cana ao alcance de um Canavial perto da vila, que planta sem arar',
-      mancha: { centroNoGerador: { gx, gy }, raio, tiles: DISCO.length, noMapa: canaDoMapa(inicial).length },
+      mancha: { faixaNoGerador: gerador.CANAVIAL_DA_VILA, tiles: FAIXA.length, noMapa: canaDoMapa(inicial).length },
       canavial: { id: 'c1', gx: inicial.predios.porId['c1']?.gx, gy: inicial.predios.porId['c1']?.gy },
       partidoNoInicio,
       semeouNoTick: semeouEm,

@@ -38,6 +38,7 @@ import { tipoDoTile } from '../src/sim/mapa';
 import { gravarEvidencia } from './helpers/evidence';
 import { cenarioDeFazendaSemCampo } from './helpers/producao-cenario';
 import { violacoesDeInvariantes } from './helpers/jobs-invariantes';
+import { ancoraDaVila, relativoA } from './helpers/ancoras';
 
 const RECEITA = receitaDoTipo('farm', gameData);
 if (RECEITA === null || RECEITA.colheita === null) {
@@ -100,7 +101,11 @@ function ararAteNascer(estado: GameState, alvo: { gx: number; gy: number }): Gam
   return atual;
 }
 
-const base = () => comLaborer(cenarioDeFazendaSemCampo(), 'obreiro', 30, 34, gameData);
+// O obreiro nasce no spawn da vila, POR DESLOCAMENTO da ancora: (30,34) hoje. O
+// literal absoluto o punha fora da vila no mundo transladado, e desde a noite 17
+// (fazenda em (38,30)) a caminhada passou do limite de `ararAteNascer`.
+const SPAWN = relativoA(ancoraDaVila())(1, 4);
+const base = () => comLaborer(cenarioDeFazendaSemCampo(), 'obreiro', SPAWN.gx, SPAWN.gy, gameData);
 
 const evidencia: Record<string, unknown> = {
   _doc: 'F18i — a borracha do campo. Numeros medidos na corrida, nao asseridos.',

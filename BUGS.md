@@ -30,31 +30,37 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
 
 ## Abertos
 
-## BUG-M — três roteiros vermelhos desde o merge do lote de sprites
-- feature: ? — os roteiros são de F11c, F17e e F17f, e o que os quebrou foi o lote de
-  sprites de prédio (`ec79428`, `59ff42e`, que chegou à `main` pelo merge `f83f8a4` de
-  `dellanio/derivacao-sprites`). O lote não tem chave própria.
-- severidade: errado (aceite escrito de roteiro reprovando). **Nenhuma chave foi
-  virada:** qual feature responde é decisão do operador.
-- repro: `npm run shot -- F11c`, `-- F17e`, `-- F17f`, na `main` limpa em `72ae483`.
-- bisseção (2026-09-26, worktree irmão, porta 5191): em `9844c6b` o F11c e o F17f
-  passam; em `f83f8a4` os dois reprovam. O F17e não foi bissectado.
-- observado:
-  - F11c: `recem-plantada (hp=0, terreno por aplainar) a obra deveria contar como
-    'marcacao', veio {"marcacao":0,...,"completo":2}`
-  - F17e: `em 4000 ticks estes estagios nunca apareceram: ["marcacao","fundacao",
-    "estrutura","paredes","cobertura"] (vistos: ["completo"])`. É a **segunda**
-    ocorrência; a primeira foi registrada como ruído na noite 14.
-  - F17f: `a escola nao tem arte e deveria cair no retangulo, veio
-    predio:schoolhouse:completo`
-- hipótese (não medida):
-  - F17f é premissa morta no roteiro: a escola ganhou sprite
-    (`assets/sprites/schoolhouse/`).
-  - F11c e F17e são a mesma coisa: a obra com sprite deixou de publicar o estágio em
-    `estagiosDeObraRenderizados`. É `src/render/`.
-- evidência: saída do `npm run shot` acima; nada aberto com Read.
-- status: aberto. Não corrigido: o conserto é de `src/render/` ou do roteiro, e a
-  outra sessão está no render (instrução do operador, 2026-09-26).
+## BUG-M — a obra de prédio com sprite não desenha nada ao ser plantada
+- feature: ? — quebrou com o lote de sprites de prédio (`ec79428`, `59ff42e`, na `main`
+  pelo merge `f83f8a4`), na revelação da F17g. O lote não tem chave própria.
+- severidade: errado (aceite escrito de roteiro reprovando: F11c e F17e). **Nenhuma
+  chave foi virada:** qual feature responde é decisão do operador.
+- repro: `npm run shot -- F11c` ou `-- F17e`, na `main`. Os dois plantam uma Pedreira.
+- **medido (2026-09-26, noite 17), é o RENDER, e o roteiro só o acusa:**
+  - a Pedreira (e o armazém, a escola, a taverna, o lenhador, a serraria) tem o par
+    `madeira`/`completo` no manifesto, e `atualizarPredios` a desenha pela revelação
+    da F17g, não pelo estágio (`WorldScene.ts`, `par === null || revelacao === null`);
+  - com `hp = 0`, `revelacaoDaObra` devolve `{ madeira: [0,1], pedra: [0,1] }`
+    (`estagio-obra.ts:108`), e `desenharRevelado` com numerador 0 devolve `[]`;
+  - o canteiro com `tilesProntos: 0` e `oitavos: 0` também devolve `[]`;
+  - o que sobra na tela é **só o medidor de material** — cinco quadradinhos de 8 px.
+    Sem o contorno do lote e sem o nome, que o placeholder (`desenharPlaceholder`)
+    desenha sempre, inclusive na marcação.
+  - sonda (apagada): `obrasRenderizadas: 1`, `revelacao.p9 = {madeira:[0,1],pedra:[0,1]}`,
+    `sprites.p9 = 'predio:quarry:madeira'`, `estagiosDeObraRenderizados` todo zero fora
+    `completo: 2`. Screenshot aberto com Read: a obra é um borrão de quadradinhos no
+    gramado, sem lote.
+  - por que o roteiro reprova: obra revelada não entra em `estagiosDeObraRenderizados`
+    (só em `revelacaoDasObras`), e F11c/F17e afirmam por estágio. O canal envelhecido
+    do roteiro é consequência; o defeito que o jogador vê é o lote que sumiu.
+- correção proposta (não aplicada — `src/render/` está com a outra sessão): a obra
+  revelada desenha o lote do placeholder (contorno + nome/estágio) por baixo do corpo
+  enquanto a revelação não cobre o chão, e continua publicando o estágio em
+  `estagiosDeObraRenderizados`. Com isso F11c e F17e voltam a valer sem mudar asserção.
+- F17f: **corrigido** no roteiro (premissa morta: a escola ganhou arte). O lado do
+  retângulo passou para a obra de uma torre de vigia, o primeiro prédio sem arte que o
+  jogador planta; o roteiro afirma pelo manifesto quem não tem arte.
+- status: aberto (F11c, F17e). Espera o render livre e a decisão de quem responde.
 
 ---
 
@@ -88,3 +94,20 @@ antes deles, o BUG-001 na F09) saíram em 2026-09-24 com a regra que os dissolve
 **medida de relógio é evidência da sessão, nunca asserção** — `CLAUDE.md` §8, decisão
 do operador. A regra antiga daqui ("alargar o teto com o número medido") está **revogada**:
 ela consertava a asserção em vez de perguntar se aquele eixo podia ser asserção.
+
+## BUG-N — cana em pousio parece mato cortado
+- feature: F-CANA-b (a mancha de cana da vila); o desenho é de `src/render/mapa.ts`
+- severidade: feio
+- repro: `npm run shot -- F-CANA-b`, captura `screenshots/F-CANA-b-1-abertura-com-a-cana.png`
+- esperado: a mancha de cana nova se lê como roça esperando plantio, como o roçado do milho.
+- observado: a cana nasce em pousio (`quantidadeInicial: 0`) e o render a pinta com o
+  código único de ESGOTADO (`render/mapa.ts`, `codigoEsgotado`: "havia recurso") — o
+  mesmo losango escuro da árvore cortada, sobre grama.
+- causa: falta o chão arado que o milho tem. O milho em pousio fica sobre o terreno
+  `campoArado` (marrom), derivado do mapa; a cana não tem terreno (`grapes` sem `terreno`
+  em `resources.json`) e fica sobre `grama`, e aí o esgotado não tem contexto.
+- correção: é do render, com a sessão do render (instrução do operador, 2026-09-26).
+  Dois caminhos, a decidir lá: um código de "em pousio" separado do "esgotado" para
+  cultura (tipo com `aradura` em `resources.json`), ou o chão de roça desenhado sob
+  tile de cultura.
+

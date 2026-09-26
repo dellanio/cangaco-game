@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "scripts": {
-    "dev": "vite",
+    "dev": "node tools/dev.js",
     "build": "vite build",
     "test": "vitest run",
     "test:transladado": "vitest run -c vitest.transladado.config.mts",
