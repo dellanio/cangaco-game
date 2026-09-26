@@ -57,17 +57,23 @@ async function roteiro(ctx) {
     textoSerraria.includes(nomeNoTema('sawmill')),
     `o cartao deveria trazer o nome tematico do proprio item, veio: ${textoSerraria}`,
   );
-  // O placeholder de icone e a miniatura do FOOTPRINT, do tamanho do dado.
+  // Arte real vence; sem ela, o fallback continua sendo o footprint do dado.
   const [largSerraria, altSerraria] = serraria.tamanho;
-  const miniatura = await page.$eval(
-    `${seletorSerraria} .footprint`,
-    (n) => ({ largura: n.dataset.largura, altura: n.dataset.altura, celulas: n.children.length }),
-  );
-  afirmar(
-    miniatura.largura === String(largSerraria) && miniatura.altura === String(altSerraria)
-      && miniatura.celulas === largSerraria * altSerraria,
-    `a miniatura da serraria deveria ser ${largSerraria}x${altSerraria}, veio ${JSON.stringify(miniatura)}`,
-  );
+  const temRetratoSerraria = await page.$(`${seletorSerraria} img.retrato`);
+  if (temRetratoSerraria) {
+    const carregou = await page.$eval(`${seletorSerraria} img.retrato`, (n) => n.complete && n.naturalWidth > 0);
+    afirmar(carregou, 'o retrato da serraria deveria carregar');
+  } else {
+    const miniatura = await page.$eval(
+      `${seletorSerraria} .footprint`,
+      (n) => ({ largura: n.dataset.largura, altura: n.dataset.altura, celulas: n.children.length }),
+    );
+    afirmar(
+      miniatura.largura === String(largSerraria) && miniatura.altura === String(altSerraria)
+        && miniatura.celulas === largSerraria * altSerraria,
+      `a miniatura da serraria deveria ser ${largSerraria}x${altSerraria}, veio ${JSON.stringify(miniatura)}`,
+    );
+  }
   // O texto neutro `semRequisito` ("ainda nao disponivel") era provado aqui pelo
   // armazem, unico predio sem pai na arvore. Desde a correcao do BUG-002 nao ha
   // mais nenhum: o armazem ADICIONAL exige Serraria (GDD 5.2). Entao o que se

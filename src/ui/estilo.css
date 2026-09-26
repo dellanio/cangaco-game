@@ -119,7 +119,7 @@ button[aria-disabled="true"] {
   grid-column: 1; grid-row: 1; min-height: 0; overflow: hidden;
   box-sizing: border-box; height: 100vh; padding: var(--moldura);
   display: flex; flex-direction: column; gap: 2px;
-  background: var(--veio), linear-gradient(90deg, var(--madeira) 0, var(--madeira-clara) 45%, var(--madeira) 100%);
+  background: #25170f url('../../assets/sprites/ui/resource-plank.png') center top / 100% 96px repeat-y;
   border-right: 2px solid var(--tinta);
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.5), inset 0 0 12px rgba(0, 0, 0, 0.45);
 }
@@ -142,18 +142,20 @@ button[aria-disabled="true"] {
 
 /* 1. a logo: placa de pergaminho, cactos nos cantos */
 #logo {
-  height: 40px; display: grid; place-items: center;
-  background-color: var(--pergaminho);
-  border: 2px solid var(--tinta);
-  box-shadow: inset 0 0 0 2px var(--madeira-clara), inset 0 0 10px rgba(90, 63, 43, 0.35);
+  height: 62px; display: grid; place-items: center;
+  background: transparent url('../../assets/sprites/ui/logo-plaque.png') center / 100% 100% no-repeat;
+  border: 0;
+  box-shadow: none;
 }
 #logo::before, #logo::after, #marca::before, #marca::after {
-  content: ''; position: absolute; bottom: 3px; width: 18px; height: 24px;
-  background: var(--cacto) bottom / contain no-repeat; pointer-events: none;
+  content: none;
 }
 #logo::before, #marca::before { left: 10px; }
 #logo::after, #marca::after { right: 10px; transform: scaleX(-1); }
-#logo .placeholder { font-size: 16px; opacity: 1; color: var(--tinta); letter-spacing: 0.1em; }
+#logo .placeholder {
+  margin-top: -2px; font-size: 18px; opacity: 1; color: var(--tinta);
+  letter-spacing: 0.12em; text-shadow: 1px 1px 0 rgba(237, 227, 208, 0.55);
+}
 
 /* 2. a dica do H, logo abaixo da logo (F-D1, decisao do operador 2026-09-26):
    o topo e onde o jogador novo olha. Some no primeiro H. */
@@ -168,10 +170,10 @@ button[aria-disabled="true"] {
 /* 3. o minimapa: quadro escuro rebaixado e a faixa da rosa dos ventos (F33
    desenha o mapa; aqui e so a moldura). O carimbo de pausa fica POR CIMA dele. */
 #minimapa {
-  height: 88px; display: grid; grid-template-columns: 1fr 24px;
-  background-color: var(--madeira-clara);
-  border: 2px solid var(--tinta); padding: 4px;
-  box-shadow: inset 0 0 0 1px rgba(255, 220, 160, 0.2);
+  height: 92px; display: grid; grid-template-columns: 1fr 24px;
+  background: transparent url('../../assets/sprites/ui/minimap-frame.png') center / 100% 100% no-repeat;
+  border: 0; padding: 12px 13px 11px;
+  box-shadow: none;
 }
 #minimapa .placeholder {
   grid-column: 1; display: grid; place-items: center; color: var(--papel-escuro);
@@ -200,9 +202,8 @@ button[aria-disabled="true"] {
 #hud .campo {
   height: 19px; min-width: 0; display: flex; align-items: center; gap: 4px; padding: 0 8px 0 9px;
   color: var(--papel);
-  background: var(--latao) 3px 50% / 8px 8px no-repeat, var(--latao) calc(100% - 3px) 50% / 8px 8px no-repeat,
-    var(--veio-tabua), linear-gradient(180deg, var(--tabua-clara), var(--tabua));
-  border: 1px solid var(--tinta); box-shadow: inset 0 1px 0 rgba(255, 220, 160, 0.12);
+  background: transparent url('../../assets/sprites/ui/resource-plank.png') center / 100% 100% no-repeat;
+  border: 0; box-shadow: none;
 }
 /* o glifo de cada recurso: SVG em xilogravura (assets/sprites/ui, manifesto
    `icones.hud`), um por `data-recurso`, sobre um disco de papel para ler na
@@ -260,21 +261,21 @@ button[aria-disabled="true"] {
 /* 6. as abas: quatro placas de pergaminho numa regua escura */
 #abas {
   display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; padding: 3px;
-  background: var(--veio-tabua), var(--tabua);
-  border: 1px solid var(--tinta);
+  background: transparent url('../../assets/sprites/ui/divider.png') center / 100% 100% no-repeat;
+  border: 0;
 }
 /* o rotulo e a serifa do corpo, em negrito: "Distribuicao" na fonte de display
    nao cabe nos 58 px da placa (o roteiro mede `scrollWidth`) */
 #abas button {
   position: relative; min-width: 0; height: 28px; padding: 0;
   display: flex; align-items: center; justify-content: center;
-  background: var(--pergaminho); border: 2px solid var(--madeira-clara);
-  outline: 1px solid var(--tinta); box-shadow: none;
+  background: transparent url('../../assets/sprites/ui/tab-idle.png') center / 100% 100% no-repeat; border: 0;
+  outline: 0; box-shadow: none;
   font: 700 9px/1 var(--fonte-corpo); letter-spacing: -0.04em; white-space: nowrap; overflow: hidden;
 }
 #abas button[aria-pressed="true"] {
-  background: var(--papel); border-color: var(--ocre);
-  box-shadow: inset 0 -3px 0 var(--terracota);
+  background: transparent url('../../assets/sprites/ui/tab-active.png') center / 100% 100% no-repeat;
+  box-shadow: inset 0 -2px 0 var(--terracota);
 }
 #abas button[aria-disabled="true"] { opacity: 0.7; background-image: var(--hachura); }
 /* o cadeado no canto da placa, por cima: dentro do rotulo ele roubaria largura */
@@ -290,9 +291,9 @@ button[aria-disabled="true"] {
   flex: 1 1 0; min-height: 0; overflow-y: auto; overflow-x: hidden;
   scrollbar-gutter: stable;
   padding: 8px 3px 8px 6px;
-  background-color: var(--pergaminho);
-  border: 2px solid var(--tinta);
-  box-shadow: inset 0 0 0 2px var(--madeira-clara), inset 0 0 14px rgba(90, 63, 43, 0.35);
+  background: var(--pergaminho) url('../../assets/sprites/ui/panel-frame.png') center / 100% 100% no-repeat;
+  border: 0;
+  box-shadow: none;
 }
 /* Com a grade, o pe do corpo e do cartao sticky: rolar ate um icone (foco pelo
    Tab, scrollIntoView) tem de parar ACIMA dele, nao por baixo. A folga e o TETO
@@ -320,14 +321,13 @@ body:not([data-corpo="opcoes"]) #opcoes { display: none; }
 
 /* 8. a marca: placa de pergaminho com o lema, cortada na borda da barra */
 #marca {
-  height: 32px; display: grid; place-items: center; overflow: hidden;
-  background-color: var(--pergaminho);
-  border: 2px solid var(--tinta);
-  box-shadow: inset 0 0 0 2px var(--madeira-clara), inset 0 0 10px rgba(90, 63, 43, 0.35);
+  height: 70px; display: grid; place-items: center; overflow: hidden;
+  background: transparent url('../../assets/sprites/ui/footer-motto.png') center / 100% 100% no-repeat;
+  border: 0;
+  box-shadow: none;
 }
 #marca .lema {
-  font: 9px/1.1 var(--fonte-display); letter-spacing: 0.06em; text-transform: uppercase;
-  text-align: center; padding: 0 28px; white-space: nowrap; color: var(--tinta-fraca);
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%);
 }
 
 /* ---- o mapa ------------------------------------------------------------------ */
@@ -396,12 +396,12 @@ body:not([data-corpo="opcoes"]) #opcoes { display: none; }
 #menu-build .icone {
   position: relative;
   width: 40px; height: 40px; box-sizing: border-box; padding: 0;
-  border: 2px solid var(--tinta); background: var(--papel);
+  border: 0; background: var(--papel) url('../../assets/sprites/ui/build-icon-frame.png') center / 100% 100% no-repeat;
   outline: 1px solid var(--madeira-clara); outline-offset: -4px;
   display: grid; place-items: center;
   box-shadow: none; transform: none; cursor: pointer;
 }
-#menu-build .icone:hover { background: var(--papel-escuro); }
+#menu-build .icone:hover { filter: brightness(1.08); }
 /* o retrato: a imagem do predio, derivada da base (72 px, mostrada a 34) */
 #menu-build .retrato { display: block; width: 34px; height: 34px; object-fit: contain; pointer-events: none; }
 /* bloqueado: CADEADO sobre o retrato (GDD §7.2, decisao do operador), nao cinza.
@@ -452,7 +452,7 @@ body:not([data-corpo="opcoes"]) #opcoes { display: none; }
    entre o ativo e um inativo (fundo e borda >= 60 por canal somado) e exige
    que SO o ativo tenha `box-shadow`; esta linha nao e a prova. */
 #menu-build .icone[aria-pressed="true"] {
-  border-color: var(--ocre); background: var(--tinta); color: var(--papel);
+  background: var(--tinta) url('../../assets/sprites/ui/tab-active.png') center / 100% 100% no-repeat; color: var(--papel);
   box-shadow: inset 5px 0 0 var(--ocre);
 }
 #menu-build .icone[aria-pressed="true"] .footprint i { background: var(--papel); }
@@ -460,7 +460,7 @@ body:not([data-corpo="opcoes"]) #opcoes { display: none; }
 /* bloqueado: hachurado; do que depende, o cartao diz */
 #menu-build .icone[aria-disabled="true"] {
   cursor: not-allowed;
-  background-image: var(--hachura);
+  background-image: url('../../assets/sprites/ui/locked-icon-frame.png');
 }
 /* o cartao: nome, custo e tamanho, requisito, descricao. Gruda no PE do corpo
    enquanto a grade rola: e o que diz o que esta sob o mouse. */
