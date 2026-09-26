@@ -7522,3 +7522,49 @@ O `assets/manifest.json` **não foi tocado**.
 - **Efeito colateral esperado:** a porta padrão (5175) é a que o Codex usa. Se o vite dele
   estiver vivo, `npm run shot` sem `CANGACO_SHOT_PORTA` agora **recusa**, em vez de medir a
   árvore dele em silêncio.
+
+## 2026-09-26 (tarde) — Prédio vivo: brief escrito; correção do Canavial e das minas medida e PARADA
+
+### Feito
+- **`docs/BRIEF-ARTE.md` (`a4c9abf`)**, pelas decisões do operador: seção 4a nova (cinco
+  casos, 8 quadros por laço e 4 na luz, regra do zoom, três âncoras `trabalho`/`estoque`/
+  `curral` em fração do sprite, tipos novos `trabalho`/`pilha`/`animal`, conta de 496
+  imagens, 300 delas de animação); §4 (sprite estático, camadas à parte); §5 (mercadoria
+  fora do sprite, áreas vazias reservadas, "pilha de lenha cortada" revogada); §9 (os três
+  da primeira leva precisam das áreas); "Não mexa" (BUG-G corrigido).
+- **Pendentes fechados (`d584c85`):** nota da F-CAL-b2 (c) (fica sonda por prioridade,
+  caminho livre) e o serf do BUG-G registrado como não coberto, com a medida.
+
+### Verificado (rodei o comando) — a correção do dado, aplicada e revertida
+Mudança mínima: recurso `grapes` (cópia do `corn`, terreno próprio `vinhedo`), registro
+de tempo em `tools/data-schema.js`, cor e nome no tema, `wineyard.colheita = grapes`, e
+`colheita` apagada das três minas. Resultado: typecheck 1 erro, validate:data 1 erro,
+**11 arquivos de teste reprovados** de 105. Tudo revertido; árvore limpa.
+
+- **Canavial / uva — mecânico.** Reprovam só contagens e fixtures: `F10` (conversões 8→10
+  pelo terreno novo), `F-T1` (os custos de movimento "todos exercidos" — `vinhedo` não
+  aparece no mapa), `F17c` (fixture tipada sem `vinhedo`), e os seis "o dado real passa"
+  pelo `recurso/sem-instancia`. Essa regra conta tile no mapa; o `corn` passa porque o
+  mapa tem `campoArado`. A uva só nasce quando o jogador ara (`PlowField`), então a regra
+  **proíbe o dado correto** — a correção proposta é isentar tipo com bloco `aradura`,
+  que é o que o runtime instancia.
+- **Minas — NÃO é correção de dado.** `colheita` é o que liga a mina ao veio: o gerador
+  de mapa (`F-D3`, "precisa de exatamente UMA receita colhendo 'coal'"), o esgotamento
+  (`F21b`, fixture exige receita que colhe `coal`), o alerta de veio seco (`F-T4d`), a
+  prévia de alcance. Apagar o campo faz a mina produzir sem fim e sem mapa, contra a
+  regra da F21b. **Proposta:** a mina **mantém** `colheita` e ganha um campo que diz que o
+  especialista não anda (o ciclo corre em `trabalhando`, o tile continua sendo gasto),
+  como o `SkipWalk` do kam_remake. É mudança de `sim/systems/especialistas.ts`, não de dado.
+
+### Não verificado (hipótese)
+- O Canavial passa a depender de o jogador arar campo de uva; sem isso não produz vinho.
+  O efeito na comida da bodega é balanceamento (`BALANCE_LOG.md`), não medido.
+- Nenhum teste de calibração quebrou com o Canavial mudando; ou nenhum deles produz
+  vinho, ou produz sem precisar do campo. Não conferido.
+
+### Aberto — precisa do operador
+- As minas: aceitar o campo novo ("não anda") no lugar de apagar `colheita`?
+- A isenção do `recurso/sem-instancia` para cultura arável.
+- O armazém: quantos pontos de estoque, e o que acontece com a mercadoria que não cabe.
+- `arma_madeira`, `arma_ferro` e `armadura_ferro` não estão nas 28 mercadorias: a saída
+  desses três prédios fica sem pilha até a escolha de arma existir.
