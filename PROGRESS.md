@@ -7277,3 +7277,37 @@ vite da minha própria rodada (spawn do roteiro F04, pai morto) ficou vivo na 51
 Refeito com `CANGACO_SHOT_PORTA` 5176/5177. O órfão (PID 41848, npx 45544) continua na 5175:
 encerrá-lo foi negado pela permissão, fica para o operador. Por que o `tools/shot.js` deixa o
 neto vivo no Windows é **hipótese** (mata o `npx`, não a árvore) — não lido.
+
+## 2026-09-26 (madrugada) — Leva noturna do operador, item 1: BUG-I corrigido
+
+Plano: `docs/planos/BUG-I-roteiros-pos-f18g.md` (a tabela de causa medida está lá).
+
+**Porta 5175:** o vite órfão da `main` (41848) já não existia quando esta sessão começou;
+a 5175 é agora do vite do worktree `derivacao-sprites` (Codex, criado 03:03). Não tocado.
+Todo roteiro desta sessão roda com `CANGACO_SHOT_PORTA=5177`.
+
+**Verificado (roteiros com código 0, `npm run verify` código 0, 1434 testes):**
+- **F10** — afirmava a REGRA velha, implícita: saía do laço quando o HUD chegava ao valor
+  final, o que antes da F18g implicava rua de pé. Agora o canteiro vazio entra na condição;
+  as asserções de depois são as mesmas. A ordem "HUD final" × "rua de pé" VARIOU entre
+  corridas da mesma árvore (falhou duas vezes, passou sem correção uma vez); a causa da
+  variação não foi lida — hipótese: amostra de 20 em 20 ticks com quadro publicado a 200 ms.
+  A condição conjunta vale nas duas ordens; rodado duas vezes depois da correção, 0 e 0.
+- **F13b** — nem regra nem número: o MOMENTO da checagem. A escola se liga com 5 de 8 tiles
+  de pé (os de fora do trecho entre portas não fazem falta), `a-caminho` dura ~28 ticks e a
+  `erguerRua` só voltava com o canteiro vazio. O painel abre antes, o roteiro anda de 1 em 1
+  tick afirmando que o motivo é só `sem-estrada`/`a-caminho`, e a rua inteira de pé virou o
+  passo 9a. A sequência provada é a mesma, com uma asserção a mais (nenhum motivo estranho).
+- **F16b** — afirmava um NÚMERO: prazo de 300 medido antes da F18g. Remedido: obra completa
+  no 353, ocupada no 378 (os 2 últimos tiles esperam o laborer da pedreira do 128 ao 353).
+  Prazo 500, mesma folga de ~25 %.
+- **F18d-2** — afirmava a REGRA velha, explícita ("a pedra cai só pelos assentados"). A conta
+  do meio passou à regra da F18g — saiu = de pé + parada no canteiro + na mão de serf — e uma
+  asserção nova afirma que a pedra saiu ANTES de assentar. Para isso o render publica
+  `pedraNoCanteiroNoEstado` em `window.__cangaco` (`src/render/debug.ts`, `WorldScene.ts`),
+  no molde de `camposProntosNoEstado`. Não houve teste de que a asserção nova ACUSA; o dado
+  que a derrubaria é a corrida pré-correção (26 com 1 de pé), que ela aceita e a velha não.
+
+**Consequência de balanceamento, registrada e não girada:** a F18g deixou a pedreira do
+cenário da F16b ~130 ticks mais lenta (220 → 353), porque o laborer que ergue a obra é o mesmo
+que assenta a rua.

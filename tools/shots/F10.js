@@ -109,10 +109,10 @@ async function roteiro(ctx) {
   afirmar(s.obrasRenderizadas === 1, `deveria haver 1 obra, veio ${s.obrasRenderizadas}`);
   await page.keyboard.press('Escape');
 
-  // 2. desenha a rua ate a obra, pela UI. Desde a F18d-1b o arrasto DESENHA o traçado e
-  //    reserva a pedra; quem ergue e paga e o laborer, e isso acontece enquanto os serfs
-  //    trabalham (passos 3 a 5). Por isso aqui a Pedra ainda esta inteira, e a conta do
-  //    custo da rua so fecha no passo 5 — onde ela e conferida junto com a rua DE PE.
+  // 2. desenha a rua ate a obra, pela UI. Desde a F18d-1b o arrasto DESENHA o traçado;
+  //    desde a F18g a pedra de cada tile sai do armazem na COLETA do serf, e quem ergue e
+  //    o laborer — tudo enquanto os serfs trabalham (passos 3 a 5). Por isso aqui a Pedra
+  //    ainda esta inteira, e a conta do custo da rua so fecha no passo 5.
   await page.click('[data-ferramenta="estrada"]');
   await esperarFrame();
   await arrastarDentroDoCanvas(
@@ -126,7 +126,7 @@ async function roteiro(ctx) {
   await page.keyboard.press('Escape');
   const hudDaRua = await hud();
   afirmar(hudDaRua.stone === String(estoque.stone),
-    `o comando reserva e nao gasta: a Pedra deveria seguir em ${estoque.stone}, veio ${hudDaRua.stone}`);
+    `o comando nao gasta: a Pedra deveria seguir em ${estoque.stone}, veio ${hudDaRua.stone}`);
   const tickDaRua = s.tick;
 
   // a obra esta ligada: a sim ja gerou as tarefas, mas nenhum serf se mexeu (o tempo so passou por `avancar(1)` dos dois comandos)
@@ -155,15 +155,18 @@ async function roteiro(ctx) {
   const hudEmTransito = await hud();
   const somaAntes = Number(hudDaRua.timber) + Number(hudDaRua.stone);
   const somaAgora = Number(hudEmTransito.timber) + Number(hudEmTransito.stone);
-  // o assentamento tambem come pedra nesta janela: por isso o criterio e "caiu AO MENOS
-  // o que esta na mao dos serfs", e nao uma igualdade
+  // a pedra do canteiro tambem sai nesta janela (F18g: na coleta): por isso o criterio e
+  // "caiu AO MENOS o que esta na mao dos serfs", e nao uma igualdade
   afirmar(somaAgora <= somaAntes - carregados.length,
     `com ${carregados.length} serf(s) carregado(s) o HUD deveria ter caido ao menos isso: era ${somaAntes}, agora ${somaAgora}`);
   await capturar('carga-em-transito');
 
   // 5. deixa acabar: a obra recebe o custo inteiro e os serfs voltam a ociosos. Um serf recem-entregue
   // pode parecer ocioso por um tick antes de reclamar a proxima tarefa; por isso o criterio e
-  // "todos ociosos E o HUD no valor final", conferidos juntos.
+  // "todos ociosos E o HUD no valor final E o canteiro vazio", conferidos juntos. O canteiro
+  // entrou com a F18g: a pedra sai na coleta, entao o HUD pode chegar ao valor final com a rua
+  // ainda no chao, esperando o laborer que ergue a pedreira (medido: 0 de 11 de pe nesse
+  // instante). Quem chega primeiro varia; a condicao conjunta vale nas duas ordens.
   const def = defDe('quarry');
   const timberFinal = estoque.timber - def.timber;
   const stoneFinal = estoque.stone - custoDaRua - def.stone;
@@ -173,7 +176,8 @@ async function roteiro(ctx) {
     const e = await estado();
     const h = await hud();
     if (serfsDe(e).every((u) => u.fsm === 'ocioso' && u.carga === null)
-        && h.timber === String(timberFinal) && h.stone === String(stoneFinal)) {
+        && h.timber === String(timberFinal) && h.stone === String(stoneFinal)
+        && e.estradasPlanejadasRenderizadas === 0) {
       fim = e;
       hudFinal = h;
     } else {
@@ -181,12 +185,13 @@ async function roteiro(ctx) {
       await esperarFrame();
     }
   }
-  afirmar(fim !== null, `a obra nao recebeu tudo em 2000 ticks: HUD esperado Tabua ${timberFinal} e Pedra ${stoneFinal}, agora ${JSON.stringify(await hud())}`);
+  afirmar(fim !== null, `a obra e a rua nao terminaram em 2000 ticks: HUD esperado Tabua ${timberFinal} e Pedra ${stoneFinal}, `
+    + `agora ${JSON.stringify(await hud())}, canteiro com ${(await estado()).estradasPlanejadasRenderizadas} tiles`);
   afirmar(hudFinal.timber === String(timberFinal) && hudFinal.stone === String(stoneFinal),
     `no fim o HUD deveria ser Tabua ${timberFinal} e Pedra ${stoneFinal} (o custo da Pedreira sai na entrega)`);
   afirmar(serfsDe(fim).every((u) => Number.isInteger(u.gx) && Number.isInteger(u.gy)), 'parados de novo, os serfs estao em tiles inteiros');
-  // a Pedra final so bate se a rua inteira ficou DE PE: e o assentamento que debita, e o
-  // canteiro vazio e o que prova que nao sobrou tile pago pela metade
+  // a rua inteira DE PE junto com a Pedra final: nenhum tile ficou sem pedra, nem pedra sem
+  // tile (desde a F18g a coleta debita, e o assentamento consome a pedra parada no canteiro)
   afirmar(fim.estradasRenderizadas === tilesDaRua && fim.estradasPlanejadasRenderizadas === 0,
     `no fim a rua deveria estar toda de pe (${tilesDaRua} tiles, 0 planejados), veio `
     + `${fim.estradasRenderizadas} e ${fim.estradasPlanejadasRenderizadas}`);

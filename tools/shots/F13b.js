@@ -32,6 +32,9 @@ const SLOTS = economia.schoolhouse.slotsDeFila;
 /** Medido (probe desta sessao, estrada de fixture): o serf entrega o ouro e o
  *  primeiro item comeca a treinar ~24 ticks depois. 40 e a folga do roteiro. */
 const TICKS_ATE_TREINAR = 40;
+/** Teto da espera do passo 8, em ticks de 1 em 1. Medido depois da F18g: a escola se
+ *  liga no tick 87 do roteiro. 300 e o caso de nunca ligar, nao um prazo. */
+const TETO_ATE_LIGAR = 300;
 
 async function roteiro(ctx) {
   const { page, capturar, estado, afirmar } = ctx;
@@ -163,23 +166,27 @@ async function roteiro(ctx) {
     `o arrasto deveria DESENHAR ${tilesDaRua} tiles e erguer 0, veio `
       + `${desenhada.estradasPlanejadasRenderizadas} e ${desenhada.estradasRenderizadas}`,
   );
-  // o ouro so anda por rua DE PE (o nivel dele e `estrada`), e desde a F18d-1b quem
-  // ergue e o laborer: sem esta espera o passo 8 mediria o canteiro, que nao liga nada
-  await erguerRua(ctx, { tiles: tilesDaRua });
-  const comRua = await estado();
-  afirmar(
-    comRua.estradasRenderizadas === tilesDaRua && comRua.estradasPlanejadasRenderizadas === 0,
-    `a rua deveria ter ${tilesDaRua} tiles de pe (x ${terreno.estrada.custoStonePorTile} de pedra), veio ${comRua.estradasRenderizadas}`,
-  );
-
-  // 8. reabrir o painel: com rua e ouro no armazem o motivo vira `a-caminho`
+  // 8. reabrir o painel ANTES de a rua subir, e ver o motivo virar `a-caminho`. O ouro so
+  //    anda por rua DE PE (o nivel dele e `estrada`), e quem ergue e o laborer. A escola se
+  //    liga antes de o canteiro esvaziar — medido depois da F18g: com 5 de 8 tiles de pe
+  //    (os que ficam alem das portas nao fazem falta), e o `a-caminho` dura ~28 ticks. Por
+  //    isso o roteiro anda de 1 em 1 tick com o painel aberto: esperar o canteiro vazio
+  //    (`erguerRua`) chegava com o item ja treinando (BUG-I, 2026-09-26).
   await page.keyboard.press('Escape'); // larga a ferramenta de estrada
   await esperarFrame();
   await page.mouse.click(pEscola.x, pEscola.y);
-  await avancar(2); // o quadro de tarefas ganha o `ouro-para-escola` no proximo passo
   await esperarFrame();
   afirmar(await page.isVisible('#painel-predio'), 'clicar na escola de novo deveria reabrir o painel');
-  const depoisDaRua = await motivosNaTela();
+  let depoisDaRua = await motivosNaTela();
+  for (let i = 0; i < TETO_ATE_LIGAR && !depoisDaRua.includes('a-caminho'); i++) {
+    await avancar(1);
+    await esperarFrame();
+    depoisDaRua = await motivosNaTela();
+    afirmar(
+      depoisDaRua.every((m) => m === 'sem-estrada' || m === 'a-caminho'),
+      `enquanto a rua sobe o motivo e sem-estrada ou a-caminho, nunca outro; veio ${JSON.stringify(depoisDaRua)}`,
+    );
+  }
   afirmar(
     depoisDaRua.includes('a-caminho') && !depoisDaRua.includes('sem-estrada'),
     `com a rua puxada o motivo deveria virar a-caminho, veio ${JSON.stringify(depoisDaRua)}`,
@@ -196,6 +203,14 @@ async function roteiro(ctx) {
   afirmar(
     (await page.textContent('#painel-predio')).includes(tema.painelEscola.treinando),
     'o slot que treina deveria mostrar o rotulo do tema com o progresso',
+  );
+
+  // 9a. o resto do canteiro sobe: a rua inteira de pe, como o arrasto desenhou
+  await erguerRua(ctx, { tiles: tilesDaRua });
+  const comRua = await estado();
+  afirmar(
+    comRua.estradasRenderizadas === tilesDaRua && comRua.estradasPlanejadasRenderizadas === 0,
+    `a rua deveria ter ${tilesDaRua} tiles de pe (x ${terreno.estrada.custoStonePorTile} de pedra), veio ${comRua.estradasRenderizadas}`,
   );
 
   // 9b. BUG-B — o mesmo cancelamento COM O LACO ANDANDO, e com o aperto de uma

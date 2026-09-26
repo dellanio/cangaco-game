@@ -95,6 +95,11 @@ export interface EstadoDebug {
    *  Os dois numeros juntos sao o que o roteiro afirma: o arrasto planeja, o tempo
    *  ergue, e a soma fecha em todo passo. */
   estradasPlanejadasRenderizadas: number;
+  /** F18g — quanta pedra um serf ja entregou no canteiro e nenhum laborer assentou
+   *  (soma de `state.pedraNoCanteiro`). `NoEstado` porque nao e desenhada: existe para
+   *  o roteiro fechar a conta da pedra — a que saiu do armazem e a de pe, mais esta,
+   *  mais a que esta na mao de serf. */
+  pedraNoCanteiroNoEstado: number;
   /** A previa do arrasto de estrada em curso, ou null. `custo` e a pedra que o
    *  trecho custaria; `valida` e o que `canPlaceRoad` respondeu. */
   previaDeEstrada: PreviaDeEstrada | null;
@@ -199,6 +204,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     recursosVisiveis: {},
     estradasRenderizadas: 0,
     estradasPlanejadasRenderizadas: 0,
+    pedraNoCanteiroNoEstado: 0,
     previaDeEstrada: null,
     camposPlanejadosRenderizados: 0,
     camposProntosNoEstado: 0,

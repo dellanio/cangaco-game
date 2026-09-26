@@ -342,6 +342,8 @@ export class WorldScene extends Phaser.Scene {
       const estradas = camadaDeEstradas.atualizar(this.ponte.atual ?? null);
       estado.estradasRenderizadas = estradas.dePe;
       estado.estradasPlanejadasRenderizadas = estradas.planejadas;
+      estado.pedraNoCanteiroNoEstado = Object.values(this.ponte.atual?.pedraNoCanteiro ?? {})
+        .reduce((a, n) => a + n, 0);
       estado.previaDeEstrada = previaDeEstrada.atualizar(this.entrada.trecho(), this.ferramenta.modo, this.ponte.atual);
 
       // Campo (F18i): o canteiro que o jogador desenhou, e a previa do arrasto de arar

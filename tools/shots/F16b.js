@@ -37,9 +37,13 @@ const { predios } = require('../../data/buildings.json');
 const TILE_PX = 64;
 const defDe = (id) => predios.find((p) => p.id === id);
 const noDado = (id) => economia.estadoInicial.predios.find((p) => p.id === id);
-/** Medido na sonda desta sessao: obra completa no tick 220, o cabra da pedreira
- *  ocupa no 241. 300 e aquele numero com folga — nao um chute. */
-const TICKS_ATE_OCUPAR = 300;
+/** Medido na sonda da F16b: obra completa no tick 220, o cabra da pedreira ocupa
+ *  no 241, e 300 era aquele numero com folga. Remedido depois da F18g (a pedra da
+ *  rua viaja por tile; BUG-I, 2026-09-26): os 2 ultimos tiles esperam do 128 ao 353
+ *  pelo laborer que ergue a pedreira, a obra completa no 353 e o cabra ocupa no 378
+ *  (amostra de 25 em 25). 500 e a mesma folga de ~25 %, no multiplo do passo de
+ *  avanco — nao um chute. */
+const TICKS_ATE_OCUPAR = 500;
 const PASSO_DE_AVANCO = 50; // avanca em blocos: um `avancar(300)` seco estoura o frame
 
 async function roteiro(ctx) {
