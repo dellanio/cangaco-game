@@ -44,6 +44,8 @@ import type { ChaveDaRevelacao, DesenhoDoRecurso, EntradaDeAsset, TexturaCarrega
 import { manifestoDoJogo, texturasParaCarregar } from '../sprites';
 
 const CHAVE_TEXTURA_TERRENO = 'tiles-terreno';
+const CHAVE_TEXTURA_DETALHES = 'tiles-detalhes-terreno';
+const VARIANTES_DE_DETALHE = 3;
 const CHAVE_TEXTURA_RECURSO = 'tiles-recurso';
 // Acima do chao (0) e abaixo da estrada (1, `render/estradas.ts`): a rua que o
 // jogador assentou cobre o marcador, como cobre o chao. O recurso continua no
@@ -175,6 +177,8 @@ export class WorldScene extends Phaser.Scene {
     const carregada: TexturaCarregada = (chave) => this.textures.exists(chave);
     const texturaDoTerreno = this.criarTexturaDeTerreno(tilePx, carregada, estado);
     const camadaChao = this.criarTilemap(tilePx, largura, altura, texturaDoTerreno);
+    const texturaDosDetalhes = this.criarTexturaDeDetalhesDoTerreno(tilePx);
+    this.criarCamadaDeDetalhesDoTerreno(tilePx, largura, altura, texturaDosDetalhes);
     const gradeDaFerramenta = this.criarGradeDaFerramenta(tilePx, largura, altura);
     gradeDaFerramenta.setVisible(this.ferramenta.modo !== 'nenhum');
     const desligarGrade = this.ferramenta.aoMudar((_predio, modo) => {
@@ -459,6 +463,126 @@ export class WorldScene extends Phaser.Scene {
       grade.lineBetween(0, y, larguraPx, y);
     }
     return grade.setDepth(0.25);
+  }
+
+  /**
+   * Tira transparente de decalques do terreno. Nao e asset novo: sao marcas
+   * geometricas nas cores do tema, fallback ate existir arte propria no
+   * manifesto. Tres variantes por tipo quebram a repeticao sem `Math.random`.
+   */
+  private criarTexturaDeDetalhesDoTerreno(tilePx: number): string {
+    type Detalhe = {
+      readonly claro: string;
+      readonly escuro: string;
+      readonly densidade: number;
+      readonly padrao: 'capim' | 'sulco' | 'grao' | 'onda' | 'cascalho' | 'serra';
+    };
+    const detalhes = temaSertao.detalhesTerreno as unknown as Readonly<Record<string, Detalhe | string | undefined>>;
+    const g = this.make.graphics({ x: 0, y: 0 }, false);
+
+    terrenoDeRender.tipos.forEach((tipo, codigo) => {
+      const detalhe = detalhes[tipo];
+      if (typeof detalhe !== 'object' || detalhe === null) {
+        throw new Error(`WorldScene: falta detalhe visual para o terreno '${tipo}'.`);
+      }
+      const claro = Phaser.Display.Color.HexStringToColor(detalhe.claro).color;
+      const escuro = Phaser.Display.Color.HexStringToColor(detalhe.escuro).color;
+      for (let variante = 0; variante < VARIANTES_DE_DETALHE; variante += 1) {
+        const x = (codigo * VARIANTES_DE_DETALHE + variante) * tilePx;
+        const deslocamento = variante * 5;
+        g.fillStyle(variante === 1 ? claro : escuro, 0.045);
+        g.fillRect(x, 0, tilePx, tilePx);
+
+        if (detalhe.padrao === 'capim') {
+          g.lineStyle(1, escuro, 0.34);
+          for (let i = 0; i < 3; i += 1) {
+            const px = x + 12 + ((i * 17 + deslocamento) % 38);
+            const py = 22 + ((i * 13 + deslocamento) % 28);
+            g.lineBetween(px, py + 4, px - 2, py);
+            g.lineBetween(px, py + 4, px + 2, py + 1);
+          }
+        } else if (detalhe.padrao === 'sulco') {
+          g.lineStyle(1, escuro, 0.25);
+          for (let i = 0; i < 4; i += 1) {
+            const py = 13 + i * 12 + variante;
+            g.lineBetween(x + 8 + deslocamento, py, x + 46 + deslocamento, py);
+          }
+        } else if (detalhe.padrao === 'grao') {
+          g.fillStyle(escuro, 0.28);
+          for (let i = 0; i < 5; i += 1) {
+            g.fillCircle(x + 10 + ((i * 19 + deslocamento) % 45), 10 + ((i * 23 + deslocamento) % 45), 1);
+          }
+        } else if (detalhe.padrao === 'onda') {
+          g.lineStyle(1, claro, 0.34);
+          for (let i = 0; i < 3; i += 1) {
+            const py = 16 + i * 15 + variante;
+            g.lineBetween(x + 8 + deslocamento, py, x + 24 + deslocamento, py);
+            g.lineBetween(x + 30 + deslocamento, py + 3, x + 48 + deslocamento, py + 3);
+          }
+        } else if (detalhe.padrao === 'cascalho') {
+          g.lineStyle(1, escuro, 0.32);
+          for (let i = 0; i < 3; i += 1) {
+            const px = x + 11 + ((i * 21 + deslocamento) % 42);
+            const py = 14 + ((i * 17 + deslocamento) % 35);
+            g.strokeTriangle(px - 3, py + 3, px, py - 3, px + 4, py + 3);
+          }
+        } else {
+          g.lineStyle(1, claro, 0.27);
+          for (let i = 0; i < 3; i += 1) {
+            const px = x + 6 + ((i * 18 + deslocamento) % 38);
+            const py = 18 + i * 12;
+            g.lineBetween(px, py + 7, px + 7, py);
+            g.lineBetween(px + 7, py, px + 13, py + 6);
+          }
+        }
+      }
+    });
+
+    g.generateTexture(
+      CHAVE_TEXTURA_DETALHES,
+      tilePx * terrenoDeRender.tipos.length * VARIANTES_DE_DETALHE,
+      tilePx,
+    );
+    g.destroy();
+    return CHAVE_TEXTURA_DETALHES;
+  }
+
+  /** Camada separada para preservar indices, contagens e culling do chao. */
+  private criarCamadaDeDetalhesDoTerreno(
+    tilePx: number, largura: number, altura: number, textura: string,
+  ): Phaser.Tilemaps.TilemapLayer {
+    type Detalhe = { readonly densidade: number };
+    const detalhes = temaSertao.detalhesTerreno as unknown as Readonly<Record<string, Detalhe | string | undefined>>;
+    const mapa = this.make.tilemap({ tileWidth: tilePx, tileHeight: tilePx, width: largura, height: altura });
+    const tileset = mapa.addTilesetImage('detalhes-terreno', textura, tilePx, tilePx, 0, 0);
+    if (!tileset) throw new Error('WorldScene: falha ao criar o tileset de detalhes do terreno.');
+    const camada = mapa.createBlankLayer('detalhes-terreno', tileset);
+    if (!camada) throw new Error('WorldScene: falha ao criar a camada de detalhes do terreno.');
+
+    const { codigos, largura: larguraDoTerreno, altura: alturaDoTerreno } = terrenoDeRender;
+    for (let gy = 0; gy < Math.min(altura, alturaDoTerreno); gy += 1) {
+      for (let gx = 0; gx < Math.min(largura, larguraDoTerreno); gx += 1) {
+        const codigo = codigos[gy * larguraDoTerreno + gx] as number;
+        const tipo = terrenoDeRender.tipos[codigo];
+        const detalhe = tipo === undefined ? undefined : detalhes[tipo];
+        if (typeof detalhe !== 'object' || detalhe === null) continue;
+        const hash = this.hashVisual(gx, gy, codigo);
+        if ((hash % 10_000) / 10_000 >= detalhe.densidade) continue;
+        const variante = Math.floor(hash / 10_000) % VARIANTES_DE_DETALHE;
+        const tile = camada.putTileAt(codigo * VARIANTES_DE_DETALHE + variante, gx, gy);
+        tile.flipX = (hash & 1) !== 0;
+        tile.flipY = (hash & 2) !== 0;
+      }
+    }
+    return camada.setDepth(0.1);
+  }
+
+  /** Hash so de apresentacao: mesma coordenada, mesmo decalque, em toda carga. */
+  private hashVisual(gx: number, gy: number, codigo: number): number {
+    let hash = Math.imul(gx + 1, 73_856_093) ^ Math.imul(gy + 1, 19_349_663);
+    hash ^= Math.imul(codigo + 1, 83_492_791);
+    hash = Math.imul(hash ^ (hash >>> 13), 1_274_126_177);
+    return (hash ^ (hash >>> 16)) >>> 0;
   }
 
   /**

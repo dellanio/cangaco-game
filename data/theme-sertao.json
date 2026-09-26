@@ -30,6 +30,15 @@
     "rocha": "#8A8175",
     "montanha": "#5C544B"
   },
+  "detalhesTerreno": {
+    "_doc": "Polimento visual do placeholder de terreno. Cores e densidade alimentam decalques procedurais deterministas no render; nao criam recurso, obstaculo nem regra de simulacao. Quando houver PNG proprio no manifesto, a arte continua com precedencia.",
+    "grama": { "claro": "#758064", "escuro": "#46513E", "densidade": 0.38, "padrao": "capim" },
+    "campoArado": { "claro": "#8A633E", "escuro": "#4D3424", "densidade": 0.72, "padrao": "sulco" },
+    "areia": { "claro": "#D5AE6B", "escuro": "#A97835", "densidade": 0.45, "padrao": "grao" },
+    "agua": { "claro": "#6497AE", "escuro": "#2D5874", "densidade": 0.55, "padrao": "onda" },
+    "rocha": { "claro": "#AAA195", "escuro": "#675F57", "densidade": 0.62, "padrao": "cascalho" },
+    "montanha": { "claro": "#776E64", "escuro": "#423C36", "densidade": 0.68, "padrao": "serra" }
+  },
   "recursos": {
     "_doc": "F-T2a — desenho MINIMO: um marcador por tipo de recurso sobre o tile, e so. Sem arte, sem silhueta; o tratamento decente e a F-TR. A chave e o id NEUTRO do recurso (data/resources.json), pelo mesmo motivo do bloco terreno: sim/ nao le este arquivo, e quem casa id com cor e o funil src/render/mapa.ts. Tipo sem cor aqui reprova no carregamento do funil.",
     "rock": "#D8D2C4",
