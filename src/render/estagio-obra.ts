@@ -9,6 +9,11 @@
  * As tres entradas sao as unicas que existem: `hp`, `hpTotal` e o "ja nivelou"
  * que a F17d passou a calcular (`render/nivelamento-obra.ts`). Nenhuma delas e
  * dado novo — a fronteira `marcacao`/`fundacao` e a unica que olha o terreno.
+ *
+ * F17g (decisao do operador, 2026-09-26): a obra de um predio com o PAR no
+ * manifesto (`madeira` e `completo`) deixa de pular de estagio e passa a ser
+ * REVELADA pelo `hp` (`revelacaoDaObra`, no fim do arquivo). Os seis estagios
+ * continuam aqui como o desenho de quem nao tem o par — hoje, 27 dos 28 predios.
  */
 export type EstagioDaObra =
   | 'marcacao'
@@ -68,4 +73,50 @@ export function estaEmObra(estagio: EstagioDaObra): estagio is EstagioEmObra {
  */
 export function contagemDeEstagios(): Record<EstagioDaObra, number> {
   return { marcacao: 0, fundacao: 0, estrutura: 0, paredes: 0, cobertura: 0, completo: 0 };
+}
+
+/**
+ * F17g — uma fracao em par INTEIRO: `[numerador, denominador]`, denominador > 0.
+ * O render divide so na hora de desenhar; a comparacao de fronteira nunca e
+ * feita em float, pelo mesmo motivo das `PARTES` acima.
+ */
+export type Fracao = readonly [number, number];
+
+/** Quanto de cada imagem do par aparece, de baixo para cima. `pedra` e o
+ *  `completo` do manifesto: o predio pronto, revelado por cima da madeira. */
+export interface RevelacaoDaObra {
+  readonly madeira: Fracao;
+  readonly pedra: Fracao;
+}
+
+const NADA: Fracao = [0, 1];
+const INTEIRA: Fracao = [1, 1];
+
+/**
+ * F17g — a obra revelada pelo `hp` (docs/BRIEF-ARTE.md §4). A fase da madeira e a
+ * parte da tabua no custo: `hpMadeira = hpTotal * timber / (timber + stone)`.
+ * Ate ela, a madeira sobe `hp / hpMadeira`; depois, a madeira fica inteira e a
+ * pedra sobe `(hp - hpMadeira) / (hpTotal - hpMadeira)`.
+ *
+ * As duas contas multiplicadas por `timber + stone`, para ficar em inteiros:
+ * `hp * material` contra `hpTotal * timber`. O custo chega por parametro (funil
+ * `render/predios.ts`); este arquivo continua sem import nenhum.
+ */
+export function revelacaoDaObra(
+  hp: number, hpTotal: number, timber: number, stone: number,
+): RevelacaoDaObra {
+  if (hp <= 0) return { madeira: NADA, pedra: NADA };
+  if (hp >= hpTotal) return { madeira: INTEIRA, pedra: INTEIRA };
+  const material = timber + stone;
+  // predio sem custo nao tem fase de madeira: a pedra sobe com o hp inteiro
+  if (material <= 0) return { madeira: INTEIRA, pedra: [hp, hpTotal] };
+  const subido = hp * material;
+  const virada = hpTotal * timber;
+  if (subido <= virada) return { madeira: [subido, virada], pedra: NADA };
+  return { madeira: INTEIRA, pedra: [subido - virada, hpTotal * stone] };
+}
+
+/** A revelacao em texto, para a chave do diff da cena e para o debug. */
+export function chaveDaRevelacao(r: RevelacaoDaObra): string {
+  return `${r.madeira[0]}/${r.madeira[1]}|${r.pedra[0]}/${r.pedra[1]}`;
 }

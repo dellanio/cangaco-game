@@ -132,6 +132,19 @@ export function arquivoDoEstagio(entrada: EntradaDeAsset, estagio: string): stri
   return entrada.estados[estagio] ?? null;
 }
 
+/**
+ * F17g — as duas imagens da obra revelada (docs/BRIEF-ARTE.md §4): a `madeira` e
+ * o `completo`, que e a de pedra. Um predio com as DUAS no manifesto e desenhado
+ * pela revelacao; sem o par, continua pelos seis estagios de antes (decisao do
+ * operador, 2026-09-26: "predio sem o par continua como esta hoje").
+ */
+export const CHAVES_DA_REVELACAO = ['madeira', 'completo'] as const;
+export type ChaveDaRevelacao = (typeof CHAVES_DA_REVELACAO)[number];
+
+export function temParDeRevelacao(entrada: EntradaDeAsset): boolean {
+  return CHAVES_DA_REVELACAO.every((k) => arquivoDoEstagio(entrada, k) !== null);
+}
+
 /** A chave de textura no Phaser. Uma funcao so para quem carrega e para quem
  *  desenha: duas formas de montar a mesma chave e como elas divergem. */
 export function chaveDaTextura(id: string, estagio: string): string {

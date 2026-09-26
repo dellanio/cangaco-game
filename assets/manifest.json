@@ -1,5 +1,5 @@
 {
-  "_doc": "Indice de arte do jogo (CLAUDE.md §9). `estados` mapeia o estagio do render (src/render/estagio-obra.ts) para o arquivo derivado; todo caminho e relativo a esta pasta. `tamanho` e o px REAL do arquivo derivado e `footprint` e em tiles: a largura em px e sempre footprint[0] * tile_px, e a altura e o que a arte der. As chaves sao os ids NEUTROS da simulacao, nunca o nome do tema. O jogo carrega so `sprites/`; `base/` e o registro da geracao.",
+  "_doc": "Indice de arte do jogo (CLAUDE.md §9). `estados` mapeia o estagio do render (src/render/estagio-obra.ts) para o arquivo derivado. Predio com o PAR `madeira` + `completo` tem a obra revelada pelo hp (F17g, `revelacaoDaObra`: madeira embaixo, `completo` por cima, os dois recortados de baixo para cima); sem o par, a obra fica nos seis estagios da F17e; todo caminho e relativo a esta pasta. `tamanho` e o px REAL do arquivo derivado e `footprint` e em tiles: a largura em px e sempre footprint[0] * tile_px, e a altura e o que a arte der. As chaves sao os ids NEUTROS da simulacao, nunca o nome do tema. O jogo carrega so `sprites/`; `base/` e o registro da geracao.",
   "versao": 1,
   "assets": [
     {
@@ -19,7 +19,7 @@
       ],
       "estados": {
         "marcacao": "sprites/storehouse/storehouse_marcacao.png",
-        "estrutura": "sprites/storehouse/storehouse_madeira.png",
+        "madeira": "sprites/storehouse/storehouse_madeira.png",
         "completo": "sprites/storehouse/storehouse_completo.png"
       },
       "licenca": "arte propria do projeto, fornecida pelo operador em 2026-09-23",

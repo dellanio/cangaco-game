@@ -3541,6 +3541,13 @@ Casos 2 e 4 do prédio vivo (`docs/BRIEF-ARTE.md` §4a). Decisão do operador: c
 - **Nota (o que se perde da arte, medido no worktree do Codex em 59ff42e)**: 24 bases e
   24 derivados de `marcacao`, `fundacao`, `paredes` e `cobertura`, em seis prédios. O
   `estrutura` e o `completo` continuam valendo.
+- **Nota (entrega, 2026-09-26): o fallback do operador manda.** *"Prédio sem o par continua
+  como está hoje."* Na entrega, as seis chaves continuam aceitas, o placeholder sem PNG
+  continua com seis estágios e `estagiosDeObraRenderizados` continua existindo (só o
+  fallback), com `revelacaoDasObras` ao lado. Só revela a obra cujo manifesto tem
+  `madeira` + `completo` **e** cujas duas texturas carregaram. Os rótulos madeira/pedra
+  do tema não foram criados, porque a revelação não escreve texto. Para registrar o par:
+  as chaves `madeira` e `completo` em `estados`, e nada mais.
 
 ### F-VIVO — O prédio vivo: trabalho, estoque e animais (render)
 

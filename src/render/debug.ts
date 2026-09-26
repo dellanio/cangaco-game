@@ -11,7 +11,7 @@ import type { PreviaDeEstrada } from './estradas';
 import type { PreviaDeCampo } from './campos';
 import type { UnidadeRenderizada } from './unidades';
 import { contagemDeEstagios } from './estagio-obra';
-import type { EstagioDaObra } from './estagio-obra';
+import type { EstagioDaObra, RevelacaoDaObra } from './estagio-obra';
 import type { LinhaDoMedidor } from './medidor-obra';
 import type { CanteiroDaObra } from './nivelamento-obra';
 import type { GavetaDaPilha } from './pilhas';
@@ -25,6 +25,8 @@ export interface PredioNoDebug {
   readonly estado: 'obra' | 'completo';
   readonly gx: number;
   readonly gy: number;
+  /** F17g — o `hp` cru: o roteiro recalcula a revelacao a partir dele. */
+  readonly hp: number;
   readonly pausado: boolean;
   readonly ocupante: string | null;
 }
@@ -67,12 +69,17 @@ export interface EstadoDebug {
    *  perguntar ao painel — o painel e justamente o que esta sendo provado. */
   prediosDoEstado: Readonly<Record<string, PredioNoDebug>>;
   /** Quantos deles estao em obra (F07): a soma dos cinco estagios EM OBRA
-   *  (F17e); o `completo` fica de fora. */
+   *  (F17e), mais as obras reveladas (F17g); o `completo` fica de fora. */
   obrasRenderizadas: number;
   /** F11c: a mesma contagem acima, quebrada pelos SEIS estagios da F17e
    *  (`estagio-obra.ts`) — o roteiro de screenshot afirma sobre isto, nunca por
    *  pixel (§8). */
   estagiosDeObraRenderizados: Readonly<Record<EstagioDaObra, number>>;
+  /** F17g — as obras de predio com o PAR no manifesto, por id: quanto da madeira
+   *  e quanto da pedra a tela revelou, as MESMAS fracoes de `revelacaoDaObra`.
+   *  Quem esta aqui nao conta em `estagiosDeObraRenderizados`: e um desenho ou
+   *  o outro. */
+  revelacaoDasObras: Readonly<Record<string, RevelacaoDaObra>>;
   /** F17b — o medidor de cada OBRA desenhada agora, por id: quanto de cada
    *  material chegou e quanto o predio custa. Obra apenas; predio completo nao
    *  entra. O roteiro afirma sobre isto em vez de contar bloco por pixel (§8). */
@@ -232,6 +239,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     prediosDoEstado: {},
     obrasRenderizadas: 0,
     estagiosDeObraRenderizados: contagemDeEstagios(),
+    revelacaoDasObras: {},
     medidoresDeObra: {},
     canteirosDeObra: {},
     spritesDePredio: {},
