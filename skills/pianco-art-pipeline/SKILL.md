@@ -34,6 +34,27 @@ node skills/pianco-art-pipeline/scripts/process-sheet.mjs <layout.json>
 
 O script recorta, redimensiona, cria diretórios e reprova dimensão divergente. O formato do layout está em [references/layout-schema.md](references/layout-schema.md).
 
+Para ícones em xilogravura sobre papel, remova o fundo do papel e derive PNGs
+transparentes com o processador de tinta:
+
+```text
+node skills/pianco-art-pipeline/scripts/process-ink-icons.mjs <layout.json>
+```
+
+O layout aceita `source`, `output`, `size`, `padding`, `threshold`, `softness`
+e `ink`; use `mode: "rgba"` apenas para redimensionar uma fonte que já possui
+transparência, como uma logomarca pronta.
+
+Para estradas ortogonais, derive as 16 conexoes cardinais e a ponte diagonal a
+partir de uma unica textura canonica:
+
+```text
+node skills/pianco-art-pipeline/scripts/process-road-tiles.mjs <layout.json>
+```
+
+O processador cria PNGs transparentes, preserva largura nas bordas dos tiles e
+gera uma contact sheet sobre o terreno real para o portao visual.
+
 Depois de derivar, registre o lote de forma idempotente:
 
 ```text

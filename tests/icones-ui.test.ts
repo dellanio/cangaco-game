@@ -3,7 +3,7 @@
  * resolvedor puro de `ui/icones.ts`.
  *
  * Como na F17f, nenhuma imagem e aberta: a dimensao do PNG sai do cabecalho
- * IHDR e a do SVG dos atributos `width`/`height` da raiz. O que se prova:
+ * IHDR. O que se prova:
  *  - todo icone de predio aponta um predio que existe, um arquivo que existe
  *    com a dimensao declarada, e uma BASE versionada (sem ela nao ha como
  *    refazer o icone sem refazer o conjunto);
@@ -26,13 +26,6 @@ function dimensaoDoPng(caminho: string): [number, number] {
   return [b.readUInt32BE(16), b.readUInt32BE(20)];
 }
 
-function dimensaoDoSvg(caminho: string): [number, number] {
-  const raiz = readFileSync(caminho, 'utf8').match(/<svg\b[^>]*>/)?.[0] ?? '';
-  const largura = Number(raiz.match(/\bwidth="(\d+)"/)?.[1]);
-  const altura = Number(raiz.match(/\bheight="(\d+)"/)?.[1]);
-  return [largura, altura];
-}
-
 describe('icones da interface — o manifesto descreve o que existe', () => {
   it('todo icone de predio aponta predio, arquivo, dimensao e base reais', () => {
     const predios = icones.predios ?? {};
@@ -49,14 +42,15 @@ describe('icones da interface — o manifesto descreve o que existe', () => {
     }
   });
 
-  it('cada campo do HUD tem icone SVG com a dimensao declarada, e so eles', () => {
+  it('cada campo do HUD tem icone PNG com a dimensao declarada, e so eles', () => {
     const hud = icones.hud ?? {};
     expect(Object.keys(hud).sort()).toEqual([...CAMPOS].sort());
     for (const campo of CAMPOS) {
       const e = hud[campo]!;
       const caminho = `assets/${e.arquivo}`;
+      expect(e.arquivo.endsWith('.png'), caminho).toBe(true);
       expect(existsSync(caminho), caminho).toBe(true);
-      expect(dimensaoDoSvg(caminho), caminho).toEqual([...e.tamanho]);
+      expect(dimensaoDoPng(caminho), caminho).toEqual([...e.tamanho]);
     }
   });
 });

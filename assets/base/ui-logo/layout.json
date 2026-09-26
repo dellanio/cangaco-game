@@ -1,0 +1,11 @@
+{
+  "icons": [
+    {
+      "id": "logo-pianco-completo",
+      "source": "assets/base/ui-logo/pianco-logo-source.png",
+      "output": "assets/sprites/ui/logo-pianco-completo.png",
+      "size": [252, 84],
+      "mode": "rgba"
+    }
+  ]
+}

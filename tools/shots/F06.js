@@ -113,17 +113,16 @@ async function roteiro(ctx) {
       && await page.$$eval('#menu-build img.retrato', (ns) => ns.every((n) => n.complete && n.naturalWidth > 0)),
     'todo retrato deveria ter carregado (URL resolvida pelo bundler, sem 404)',
   );
-  // O glifo de cada recurso do HUD e um `::before` com imagem de fundo SVG. O
-  // Vite embute SVG pequeno como data URI, entao o nome do arquivo nao aparece
-  // no estilo computado: o que se afirma e que os cinco tem imagem, que e SVG,
-  // e que sao cinco imagens DIFERENTES (um glifo por recurso, nao um so).
+  // O glifo de cada recurso do HUD e um `::before` com imagem raster. O formato
+  // nao faz parte do contrato do roteiro: afirma-se que os cinco carregaram,
+  // que nenhum regrediu para SVG e que sao cinco imagens DIFERENTES.
   const glifos = await page.$$eval('#hud .campo[data-recurso]', (ns) => ns.map((n) => ({
     recurso: n.dataset.recurso, fundo: getComputedStyle(n, '::before').backgroundImage,
   })));
   afirmar(
-    glifos.length === 5 && glifos.every((g) => g.fundo.startsWith('url(') && g.fundo.includes('svg'))
+    glifos.length === 5 && glifos.every((g) => g.fundo.startsWith('url(') && !g.fundo.includes('svg'))
       && new Set(glifos.map((g) => g.fundo)).size === 5,
-    `cada campo do HUD deveria ter o seu glifo SVG, veio ${JSON.stringify(glifos.map((g) => [g.recurso, g.fundo.slice(0, 40)]))}`,
+    `cada campo do HUD deveria ter o seu glifo raster distinto, veio ${JSON.stringify(glifos.map((g) => [g.recurso, g.fundo.slice(0, 80)]))}`,
   );
   // Todos os 28 estao na grade, em faixas por grupo (data/menu-build.json). Desde
   // a UI-barra-a a grade mora no corpo da aba, que e o UNICO lugar que rola: a

@@ -7,7 +7,7 @@
    aprovou (a barra desenhada pelo Codex, 2026-09-26): madeira em volta, placas
    de pergaminho no topo e no pe, o minimapa num quadro escuro rebaixado, os
    recursos em tabuas rebitadas, as abas numa regua escura e o corpo numa folha
-   de pergaminho pregada. Tudo em CSS: nenhum PNG entra por aqui (§9).
+ de pergaminho pregada. A aparencia vem de PNGs versionados; CSS cuida do encaixe e dos estados.
 
    O que este arquivo NAO faz: nao muda id nem atributo `data-` que os
    roteiros leem. O da UI-barra-a MEDE a barra (canvas.left >= barra.right,
@@ -49,8 +49,8 @@
 
   /* o traco: a borda grossa de toda caixa impressa */
   --traco: 3px;
-  /* o grao do papel: turbulencia em SVG, muito fraca, por cima da cor chapada */
-  --grao: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.1 0 0 0 0 0.08 0 0 0 0 0.06 0 0 0 0.12 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23g)'/%3E%3C/svg%3E");
+  /* grao raster derivado do pergaminho canonico; CSS so repete a textura */
+  --grao: url('../../assets/sprites/ui/parchment-grain.png');
   /* o veio da madeira: listras finas quase na vertical */
   --veio: repeating-linear-gradient(93deg, rgba(0, 0, 0, 0.16) 0 1px, transparent 1px 5px, rgba(255, 220, 160, 0.06) 5px 6px, transparent 6px 11px);
   /* o veio das tabuas: na horizontal, como na referencia */
@@ -58,12 +58,6 @@
   /* a hachura: listras finas de tinta, para o que esta bloqueado ou vazio */
   --hachura: repeating-linear-gradient(135deg, transparent 0 5px, rgba(26, 20, 16, 0.14) 5px 7px);
   /* o cadeado (GDD §7.2): arco e corpo, em tinta */
-  --cadeado: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 14'%3E%3Cpath d='M3 6V4a3 3 0 0 1 6 0v2' fill='none' stroke='%231a1410' stroke-width='1.8'/%3E%3Crect x='1' y='6' width='10' height='7.5' fill='%231a1410'/%3E%3Crect x='5.2' y='8.3' width='1.6' height='3' fill='%23c9974b'/%3E%3C/svg%3E");
-  /* os cactos das placas: silhueta de tinta, como nos cantos da referencia */
-  --cacto: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 32'%3E%3Cpath d='M10 32V6a2 2 0 0 1 4 0v26zM10 20H6a2 2 0 0 1-2-2v-6a1.5 1.5 0 0 1 3 0v5h3zM14 16h3v-6a1.5 1.5 0 0 1 3 0v6a2 2 0 0 1-2 2h-4z' fill='%231a1410'/%3E%3Cpath d='M0 32q6-3 12-2t12 2z' fill='%231a1410'/%3E%3C/svg%3E");
-  --cacto-baixo: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M6 16V5a1.5 1.5 0 0 1 3 0v11zM6 11H3.5A1.5 1.5 0 0 1 2 9.5V7a1 1 0 0 1 2 0v2h2zM9 9h2V6.5a1 1 0 0 1 2 0v2A1.5 1.5 0 0 1 11.5 10H9z' fill='%231a1410'/%3E%3C/svg%3E");
-  /* a rosa dos ventos da faixa do minimapa */
-  --rosa: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10 0l2 8 8 2-8 2-2 8-2-8-8-2 8-2z' fill='%23ede3d0'/%3E%3Cpath d='M10 4l1 5 5 1-5 1-1 5-1-5-5-1 5-1z' fill='%231a1410'/%3E%3C/svg%3E");
 }
 
 html, body { margin: 0; padding: 0; background: var(--tinta); overflow: hidden; }
@@ -140,10 +134,10 @@ button[aria-disabled="true"] {
   opacity: 0.6;
 }
 
-/* 1. a logo: placa de pergaminho, cactos nos cantos */
+/* 1. logomarca completa: lettering e subtitulo fazem parte do PNG. */
 #logo {
-  height: 62px; display: grid; place-items: center;
-  background: transparent url('../../assets/sprites/ui/logo-plaque.png') center / 100% 100% no-repeat;
+ height: 76px; display: grid; place-items: center;
+ background: transparent url('../../assets/sprites/ui/logo-pianco-completo.png') center / 100% 100% no-repeat;
   border: 0;
   box-shadow: none;
 }
@@ -153,8 +147,8 @@ button[aria-disabled="true"] {
 #logo::before, #marca::before { left: 10px; }
 #logo::after, #marca::after { right: 10px; transform: scaleX(-1); }
 #logo .placeholder {
-  margin-top: -2px; font-size: 18px; opacity: 1; color: var(--tinta);
-  letter-spacing: 0.12em; text-shadow: 1px 1px 0 rgba(237, 227, 208, 0.55);
+ position: absolute; width: 1px; height: 1px; overflow: hidden;
+ clip-path: inset(50%); white-space: nowrap;
 }
 
 /* 2. a dica do H, logo abaixo da logo (F-D1, decisao do operador 2026-09-26):
@@ -182,7 +176,7 @@ button[aria-disabled="true"] {
 }
 #minimapa .rosa {
   grid-column: 2; margin-left: 3px;
-  background: var(--rosa) center 9px / 16px 16px no-repeat, var(--cacto-baixo) center bottom 5px / 12px 12px no-repeat, var(--veio-tabua), var(--tabua);
+  background: transparent url('../../assets/sprites/ui/minimap-compass-panel.png') center / 100% 100% no-repeat;
   border: 2px solid var(--tinta);
 }
 /* F11a: o carimbo de pausa/velocidade. Some (hidden) em 1x despausado. */
@@ -205,18 +199,16 @@ button[aria-disabled="true"] {
   background: transparent url('../../assets/sprites/ui/resource-plank.png') center / 100% 100% no-repeat;
   border: 0; box-shadow: none;
 }
-/* o glifo de cada recurso: SVG em xilogravura (assets/sprites/ui, manifesto
-   `icones.hud`), um por `data-recurso`, sobre um disco de papel para ler na
-   tabua escura. Desenho, nao no de texto. */
+/* Pictogramas raster de xilogravura, transparentes sobre a tabua escura. */
 #hud .campo::before {
-  content: ''; flex: 0 0 auto; width: 14px; height: 14px; border-radius: 50%;
-  background: var(--papel) center / 11px 11px no-repeat;
+ content: ''; flex: 0 0 auto; width: 18px; height: 18px;
+ background: transparent center / contain no-repeat;
 }
-#hud .campo[data-recurso="gold"]::before { background-image: url('../../assets/sprites/ui/hud-gold.svg'); }
-#hud .campo[data-recurso="timber"]::before { background-image: url('../../assets/sprites/ui/hud-timber.svg'); }
-#hud .campo[data-recurso="stone"]::before { background-image: url('../../assets/sprites/ui/hud-stone.svg'); }
-#hud .campo[data-recurso="comida"]::before { background-image: url('../../assets/sprites/ui/hud-comida.svg'); }
-#hud .campo[data-recurso="populacao"]::before { background-image: url('../../assets/sprites/ui/hud-populacao.svg'); }
+#hud .campo[data-recurso="gold"]::before { background-image: url('../../assets/sprites/ui/hud-gold.png'); }
+#hud .campo[data-recurso="timber"]::before { background-image: url('../../assets/sprites/ui/hud-timber.png'); }
+#hud .campo[data-recurso="stone"]::before { background-image: url('../../assets/sprites/ui/hud-stone.png'); }
+#hud .campo[data-recurso="comida"]::before { background-image: url('../../assets/sprites/ui/hud-comida.png'); }
+#hud .campo[data-recurso="populacao"]::before { background-image: url('../../assets/sprites/ui/hud-populacao.png'); }
 #hud .rotulo {
   flex: 1; min-width: 0; font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em;
   color: var(--papel-escuro);
@@ -264,24 +256,34 @@ button[aria-disabled="true"] {
   background: transparent url('../../assets/sprites/ui/divider.png') center / 100% 100% no-repeat;
   border: 0;
 }
-/* o rotulo e a serifa do corpo, em negrito: "Distribuicao" na fonte de display
-   nao cabe nos 58 px da placa (o roteiro mede `scrollWidth`) */
+/* Pictograma dominante e rotulo vivo do tema, como na referencia aprovada. */
 #abas button {
-  position: relative; min-width: 0; height: 28px; padding: 0;
-  display: flex; align-items: center; justify-content: center;
+ position: relative; min-width: 0; height: 42px; padding: 2px 1px 1px;
+ display: grid; grid-template-rows: 25px 1fr; align-items: center; justify-items: center;
   background: transparent url('../../assets/sprites/ui/tab-idle.png') center / 100% 100% no-repeat; border: 0;
   outline: 0; box-shadow: none;
-  font: 700 9px/1 var(--fonte-corpo); letter-spacing: -0.04em; white-space: nowrap; overflow: hidden;
+ font: 700 8px/1 var(--fonte-corpo); letter-spacing: -0.04em; white-space: nowrap; overflow: hidden;
 }
+#abas button::before {
+ content: ''; width: 25px; height: 25px; display: block;
+ background: transparent center / contain no-repeat;
+}
+#abas button[data-aba="construir"]::before { background-image: url('../../assets/sprites/ui/tab-construir.png'); }
+#abas button[data-aba="distribuicao"]::before { background-image: url('../../assets/sprites/ui/tab-distribuicao.png'); }
+#abas button[data-aba="estatisticas"]::before { background-image: url('../../assets/sprites/ui/tab-estatisticas.png'); }
+#abas button[data-aba="opcoes"]::before { background-image: url('../../assets/sprites/ui/tab-opcoes.png'); }
 #abas button[aria-pressed="true"] {
   background: transparent url('../../assets/sprites/ui/tab-active.png') center / 100% 100% no-repeat;
   box-shadow: inset 0 -2px 0 var(--terracota);
 }
-#abas button[aria-disabled="true"] { opacity: 0.7; background-image: var(--hachura); }
+#abas button[aria-disabled="true"] {
+ opacity: 0.82;
+ background: transparent url('../../assets/sprites/ui/tab-idle.png') center / 100% 100% no-repeat;
+}
 /* o cadeado no canto da placa, por cima: dentro do rotulo ele roubaria largura */
 #abas button[aria-disabled="true"]::after {
-  content: ''; position: absolute; right: 1px; top: 1px; width: 7px; height: 8px;
-  background: var(--cadeado) center / contain no-repeat;
+ content: ''; position: absolute; right: 2px; top: 2px; width: 12px; height: 12px;
+ background: transparent url('../../assets/sprites/ui/tab-cadeado.png') center / contain no-repeat;
 }
 #abas button[aria-disabled="true"]:active { transform: none; }
 
@@ -296,11 +298,10 @@ button[aria-disabled="true"] {
   box-shadow: none;
 }
 /* Com a grade, o pe do corpo e do cartao sticky: rolar ate um icone (foco pelo
-   Tab, scrollIntoView) tem de parar ACIMA dele, nao por baixo. A folga e o TETO
-   do cartao, a mesma variavel: o tema nao tem limite de texto, entao o cartao tem
-   teto e rola por dentro, e a folga nunca fica menor que ele. Medido: o pior caso
-   do tema de hoje (todos os campos no mais longo) da 105 px, 5 linhas. */
-body[data-corpo="grade"] #corpo-aba { --cartao-teto: 112px; scroll-padding-bottom: var(--cartao-teto); }
+   Tab, scrollIntoView) tem de parar ACIMA dele, nao por baixo. A altura compacta
+   e estavel impede que o cartao cresca sobre o ultimo icone durante o hover;
+   texto maior que esse espaco rola no miolo. */
+body[data-corpo="grade"] #corpo-aba { --cartao-teto: 80px; scroll-padding-bottom: var(--cartao-teto); }
 /* A sombra do pe: ha mais embaixo (decisao do operador — o jogador nao sabe que
    o corpo rola). Some quando a rolagem chega ao fim; quem liga e `ui/barra.ts`.
    Um bloco que gruda no pe da rolagem e nao ocupa lugar (margem negativa). Na
@@ -408,7 +409,7 @@ body:not([data-corpo="opcoes"]) #opcoes { display: none; }
    O "requer X" continua no cartao. */
 #menu-build .icone[aria-disabled="true"]::after {
   content: ''; position: absolute; right: 1px; bottom: 1px; width: 13px; height: 15px;
-  background: var(--papel) var(--cadeado) center / 10px 12px no-repeat;
+  background: var(--papel) url('../../assets/sprites/ui/tab-cadeado.png') center / 12px 12px no-repeat;
   border: 1px solid var(--tinta); pointer-events: none;
 }
 /* o placeholder: a miniatura do footprint, N x M quadradinhos de tinta */
@@ -466,8 +467,9 @@ body:not([data-corpo="opcoes"]) #opcoes { display: none; }
    enquanto a grade rola: e o que diz o que esta sob o mouse. */
 #menu-build .cartao {
   position: sticky; bottom: -8px; z-index: 1;
-  margin-top: auto; padding: 6px 8px; min-height: 64px; box-sizing: border-box;
-  max-height: var(--cartao-teto); display: flex; flex-direction: column;
+  margin-top: auto; padding: 6px 8px; box-sizing: border-box;
+  height: var(--cartao-teto); min-height: var(--cartao-teto); max-height: var(--cartao-teto);
+  display: flex; flex-direction: column;
   background: var(--papel); background-image: var(--grao);
   border: 2px solid var(--tinta); box-shadow: 0 -3px 0 var(--pergaminho);
 }

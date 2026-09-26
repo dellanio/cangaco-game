@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#1a1410" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-  <!-- gente: o civil de chapeu de palha (GDD §9.5: a silhueta do chapeu e o que distingue civil a 32 px) -->
-  <circle cx="10" cy="8.5" r="3.2" fill="#d9c9a8"/>
-  <path d="M3.5 6.5 H16.5 M7 6.5 C7 3.5 13 3.5 13 6.5" fill="#c9974b"/>
-  <path d="M4 18 C4 13.5 16 13.5 16 18" fill="#1a1410"/>
-</svg>

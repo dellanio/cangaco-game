@@ -327,6 +327,48 @@
       }
     },
     {
+      "id": "estrada",
+      "tipo": "estrada",
+      "footprint": [
+        1,
+        1
+      ],
+      "tamanho": [
+        64,
+        64
+      ],
+      "anchor": [
+        0.5,
+        1
+      ],
+      "estados": {
+        "m0": "sprites/road/road-m0.png",
+        "m1": "sprites/road/road-m1.png",
+        "m2": "sprites/road/road-m2.png",
+        "m3": "sprites/road/road-m3.png",
+        "m4": "sprites/road/road-m4.png",
+        "m5": "sprites/road/road-m5.png",
+        "m6": "sprites/road/road-m6.png",
+        "m7": "sprites/road/road-m7.png",
+        "m8": "sprites/road/road-m8.png",
+        "m9": "sprites/road/road-m9.png",
+        "m10": "sprites/road/road-m10.png",
+        "m11": "sprites/road/road-m11.png",
+        "m12": "sprites/road/road-m12.png",
+        "m13": "sprites/road/road-m13.png",
+        "m14": "sprites/road/road-m14.png",
+        "m15": "sprites/road/road-m15.png",
+        "diagonal": "sprites/road/road-diagonal.png"
+      },
+      "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+      "origem": {
+        "base": "base/road-tiles/road-material-source.png",
+        "semente": null,
+        "nota": "Dezesseis conexoes cardinais N/L/S/O e ponte diagonal derivadas de uma textura canonica pela skill pianco-art-pipeline."
+      }
+    },
+
+    {
       "id": "tree",
       "tipo": "vegetacao",
       "footprint": [
@@ -2086,82 +2128,83 @@
     "_doc": "Icones da interface (CLAUDE.md §9). `predios` e por id NEUTRO, derivado da base por tools/derivar-icones.js (rode de novo ao trocar a base); `hud` e por campo de src/ui/hud.ts, desenhado a mao em SVG no registro da xilogravura (tinta, papel, ocre, terracota). Quem resolve `predios` e src/ui/icones.ts, por parametro; `hud` e desenhado pelo CSS por url(). O teste tests/icones-ui.test.ts confere arquivo, dimensao e base.",
     "hud": {
       "gold": {
-        "arquivo": "sprites/ui/hud-gold.svg",
+      "arquivo": "sprites/ui/hud-gold.png",
         "tamanho": [
-          20,
-          20
+        24,
+        24
         ],
-        "licenca": "arte propria do projeto, desenhada em SVG na sessao de 2026-09-25",
+      "licenca": "arte propria do projeto, fornecida pelo operador e processada em 2026-09-26",
         "origem": {
-          "base": null,
+        "base": "base/ui-icons-cordel/recurso_dinheiro_source.png",
           "semente": null,
-          "nota": "Vetor autoral, sem base: e glifo de interface, nao personagem nem predio."
+        "nota": "PNG transparente derivado pelo processador de tinta da skill pianco-art-pipeline."
         }
       },
       "timber": {
-        "arquivo": "sprites/ui/hud-timber.svg",
+      "arquivo": "sprites/ui/hud-timber.png",
         "tamanho": [
-          20,
-          20
+        24,
+        24
         ],
-        "licenca": "arte propria do projeto, desenhada em SVG na sessao de 2026-09-25",
+      "licenca": "arte propria do projeto, fornecida pelo operador e processada em 2026-09-26",
         "origem": {
-          "base": null,
+        "base": "base/ui-icons-cordel/recurso_tabua_source.png",
           "semente": null,
-          "nota": "Vetor autoral, sem base: e glifo de interface, nao personagem nem predio."
+        "nota": "PNG transparente derivado pelo processador de tinta da skill pianco-art-pipeline."
         }
       },
       "stone": {
-        "arquivo": "sprites/ui/hud-stone.svg",
+      "arquivo": "sprites/ui/hud-stone.png",
         "tamanho": [
-          20,
-          20
+        24,
+        24
         ],
-        "licenca": "arte propria do projeto, desenhada em SVG na sessao de 2026-09-25",
+      "licenca": "arte propria do projeto, fornecida pelo operador e processada em 2026-09-26",
         "origem": {
-          "base": null,
+        "base": "base/ui-icons-cordel/recurso_pedra_source.png",
           "semente": null,
-          "nota": "Vetor autoral, sem base: e glifo de interface, nao personagem nem predio."
+        "nota": "PNG transparente derivado pelo processador de tinta da skill pianco-art-pipeline."
         }
       },
       "comida": {
-        "arquivo": "sprites/ui/hud-comida.svg",
+      "arquivo": "sprites/ui/hud-comida.png",
         "tamanho": [
-          20,
-          20
+        24,
+        24
         ],
-        "licenca": "arte propria do projeto, desenhada em SVG na sessao de 2026-09-25",
+      "licenca": "arte propria do projeto, fornecida pelo operador e processada em 2026-09-26",
         "origem": {
-          "base": null,
+        "base": "base/ui-icons-cordel/recurso_comida_source.png",
           "semente": null,
-          "nota": "Vetor autoral, sem base: e glifo de interface, nao personagem nem predio."
+        "nota": "PNG transparente derivado pelo processador de tinta da skill pianco-art-pipeline."
         }
       },
       "populacao": {
-        "arquivo": "sprites/ui/hud-populacao.svg",
+      "arquivo": "sprites/ui/hud-populacao.png",
         "tamanho": [
-          20,
-          20
+        24,
+        24
         ],
-        "licenca": "arte propria do projeto, desenhada em SVG na sessao de 2026-09-25",
+      "licenca": "arte propria do projeto, fornecida pelo operador e processada em 2026-09-26",
         "origem": {
-          "base": null,
+        "base": "base/ui-icons-cordel/recurso_gente_source.png",
           "semente": null,
-          "nota": "Vetor autoral, sem base: e glifo de interface, nao personagem nem predio."
+        "nota": "PNG transparente derivado pelo processador de tinta da skill pianco-art-pipeline."
         }
       }
     },
     "interface": {
       "logo": {
-        "arquivo": "sprites/ui/logo-plaque.png",
+      "arquivo": "sprites/ui/logo-pianco-completo.png",
         "tamanho": [
           252,
-          126
+        84
         ],
         "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
         "origem": {
-          "base": "base/ui-kit/ui-kit-source.png",
-          "semente": null
+        "base": "base/ui-logo/pianco-logo-source.png",
+        "semente": null,
+        "nota": "Marca completa PIANCÓ — FERRO E MANDACARU, derivada pela skill pianco-art-pipeline."
         }
       },
       "minimapa": {
@@ -2174,6 +2217,32 @@
         "origem": {
           "base": "base/ui-kit/ui-kit-source.png",
           "semente": null
+        }
+      },
+      "rosaDosVentos": {
+        "arquivo": "sprites/ui/minimap-compass-panel.png",
+        "tamanho": [
+          32,
+          80
+        ],
+        "licenca": "arte propria do projeto, derivada para o projeto em 2026-09-26",
+        "origem": {
+          "base": "base/ui-sidebar-reference/sidebar-reference-skin-source.png",
+          "semente": null,
+          "nota": "Painel raster da rosa dos ventos recortado da referencia aprovada da sidebar."
+        }
+      },
+      "graoPergaminho": {
+        "arquivo": "sprites/ui/parchment-grain.png",
+        "tamanho": [
+          64,
+          64
+        ],
+        "licenca": "arte propria do projeto, derivada para o projeto em 2026-09-26",
+        "origem": {
+          "base": "base/ui-sidebar-reference/sidebar-reference-skin-source.png",
+          "semente": null,
+          "nota": "Textura raster repetivel para retirar a ultima dependencia visual de SVG embutido no CSS."
         }
       },
       "recursos": {
@@ -2212,6 +2281,38 @@
           "semente": null
         }
       },
+    "iconesDeAba": {
+      "construir": {
+        "arquivo": "sprites/ui/tab-construir.png",
+        "tamanho": [36, 36],
+        "licenca": "arte propria do projeto, fornecida pelo operador e processada em 2026-09-26",
+        "origem": { "base": "base/ui-icons-cordel/construcao_source.png", "semente": null }
+      },
+      "distribuicao": {
+        "arquivo": "sprites/ui/tab-distribuicao.png",
+        "tamanho": [36, 36],
+        "licenca": "arte propria do projeto, fornecida pelo operador e processada em 2026-09-26",
+        "origem": { "base": "base/ui-icons-cordel/aba_distribuicao_source.png", "semente": null }
+      },
+      "estatisticas": {
+        "arquivo": "sprites/ui/tab-estatisticas.png",
+        "tamanho": [36, 36],
+        "licenca": "arte propria do projeto, fornecida pelo operador e processada em 2026-09-26",
+        "origem": { "base": "base/ui-icons-cordel/aba_estatisticas_source.png", "semente": null }
+      },
+      "opcoes": {
+        "arquivo": "sprites/ui/tab-opcoes.png",
+        "tamanho": [36, 36],
+        "licenca": "arte propria do projeto, fornecida pelo operador e processada em 2026-09-26",
+        "origem": { "base": "base/ui-icons-cordel/aba_opcoes_source.png", "semente": null }
+      },
+      "cadeado": {
+        "arquivo": "sprites/ui/tab-cadeado.png",
+        "tamanho": [16, 16],
+        "licenca": "arte propria do projeto, fornecida pelo operador e processada em 2026-09-26",
+        "origem": { "base": "base/ui-icons-cordel/cadeado_source.png", "semente": null }
+      }
+    },
       "painel": {
         "arquivo": "sprites/ui/panel-frame.png",
         "tamanho": [

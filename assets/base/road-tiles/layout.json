@@ -1,0 +1,8 @@
+{
+  "source": "assets/base/road-tiles/road-material-source.png",
+  "outputDir": "assets/sprites/road",
+  "size": 64,
+  "roadWidth": 34,
+  "previewBackground": "assets/sprites/terrain/grama.png",
+  "preview": "screenshots/road-sprites-preview.png"
+}

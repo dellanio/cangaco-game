@@ -1,0 +1,80 @@
+{
+  "icons": [
+    {
+      "id": "hud-gold",
+      "source": "assets/base/ui-icons-cordel/recurso_dinheiro_source.png",
+      "output": "assets/sprites/ui/hud-gold.png",
+      "size": [24, 24],
+      "ink": [234, 214, 168],
+      "padding": 0.05
+    },
+    {
+      "id": "hud-timber",
+      "source": "assets/base/ui-icons-cordel/recurso_tabua_source.png",
+      "output": "assets/sprites/ui/hud-timber.png",
+      "size": [24, 24],
+      "ink": [234, 214, 168],
+      "padding": 0.04
+    },
+    {
+      "id": "hud-stone",
+      "source": "assets/base/ui-icons-cordel/recurso_pedra_source.png",
+      "output": "assets/sprites/ui/hud-stone.png",
+      "size": [24, 24],
+      "ink": [234, 214, 168],
+      "padding": 0.04
+    },
+    {
+      "id": "hud-comida",
+      "source": "assets/base/ui-icons-cordel/recurso_comida_source.png",
+      "output": "assets/sprites/ui/hud-comida.png",
+      "size": [24, 24],
+      "ink": [234, 214, 168],
+      "padding": 0.03
+    },
+    {
+      "id": "hud-populacao",
+      "source": "assets/base/ui-icons-cordel/recurso_gente_source.png",
+      "output": "assets/sprites/ui/hud-populacao.png",
+      "size": [24, 24],
+      "ink": [234, 214, 168],
+      "padding": 0.02
+    },
+    {
+      "id": "tab-construir",
+      "source": "assets/base/ui-icons-cordel/construcao_source.png",
+      "output": "assets/sprites/ui/tab-construir.png",
+      "size": [36, 36],
+      "padding": 0.03
+    },
+    {
+      "id": "tab-distribuicao",
+      "source": "assets/base/ui-icons-cordel/aba_distribuicao_source.png",
+      "output": "assets/sprites/ui/tab-distribuicao.png",
+      "size": [36, 36],
+      "padding": 0.03
+    },
+    {
+      "id": "tab-estatisticas",
+      "source": "assets/base/ui-icons-cordel/aba_estatisticas_source.png",
+      "output": "assets/sprites/ui/tab-estatisticas.png",
+      "size": [36, 36],
+      "padding": 0.03
+    },
+    {
+      "id": "tab-opcoes",
+      "source": "assets/base/ui-icons-cordel/aba_opcoes_source.png",
+      "output": "assets/sprites/ui/tab-opcoes.png",
+      "size": [36, 36],
+      "padding": 0.03
+    },
+    {
+      "id": "tab-cadeado",
+      "source": "assets/base/ui-icons-cordel/cadeado_source.png",
+      "output": "assets/sprites/ui/tab-cadeado.png",
+      "size": [16, 16],
+      "padding": 0.02,
+      "ink": [98, 57, 25]
+    }
+  ]
+}

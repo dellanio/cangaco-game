@@ -75,14 +75,17 @@ export interface AncorasDoPredio {
 /** Os tipos de asset fora do predio (F-SPR). F-VIVO-0 acrescentou os tres do predio
  *  vivo: `trabalho` (os quadros de um predio), `pilha` (UMA unidade de mercadoria) e
  *  `animal` (a criacao, nas tres idades). As regras deles estao em `manifesto-camadas.ts`. */
-export const TIPOS_DE_CAMADA = ['terreno', 'recurso', 'vegetacao', 'unidade', 'trabalho', 'pilha', 'animal'] as const;
+export const TIPOS_DE_CAMADA = [
+  'terreno', 'estrada', 'recurso', 'vegetacao', 'unidade', 'trabalho', 'pilha', 'animal',
+] as const;
 export type TipoDeCamada = (typeof TIPOS_DE_CAMADA)[number];
 
 /**
  * F-SPR — os mesmos oito campos da §9, para tudo que nao e predio. O que muda e o
  * que cada campo quer dizer:
- * - `terreno`/`recurso`: textura de TILE. `id` e o tipo neutro (`grama`, `rock`); a
- *   imagem e redimensionada para o tile, entao `tamanho` e so o que o arquivo tem.
+ * - `terreno`/`estrada`/`recurso`: textura de TILE. `id` e o tipo neutro
+ *   (`grama`, `estrada`, `rock`); a imagem e redimensionada para o tile, entao
+ *   `tamanho` e so o que o arquivo tem.
  * - `vegetacao`: SPRITE em pe sobre o tile de um recurso (`tree`). Desenhada no
  *   `tamanho` do arquivo, ancorada pelo `anchor` — pode transbordar o tile.
  * - `unidade`: SPRITE, um arquivo por pose e direcao (`chaveDaPose`). O oeste e

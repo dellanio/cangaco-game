@@ -1,0 +1,19 @@
+{
+  "source": "assets/base/ui-sidebar-reference/sidebar-reference-skin-source.png",
+  "cells": [
+    {
+      "id": "minimap-compass-panel",
+      "crop": [675, 166, 100, 250],
+      "output": "assets/sprites/ui/minimap-compass-panel.png",
+      "size": [32, 80],
+      "fit": "stretch"
+    },
+    {
+      "id": "parchment-grain",
+      "crop": [205, 930, 80, 80],
+      "output": "assets/sprites/ui/parchment-grain.png",
+      "size": [64, 64],
+      "fit": "stretch"
+    }
+  ]
+}
