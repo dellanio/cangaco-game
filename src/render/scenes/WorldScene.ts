@@ -175,6 +175,12 @@ export class WorldScene extends Phaser.Scene {
     const carregada: TexturaCarregada = (chave) => this.textures.exists(chave);
     const texturaDoTerreno = this.criarTexturaDeTerreno(tilePx, carregada, estado);
     const camadaChao = this.criarTilemap(tilePx, largura, altura, texturaDoTerreno);
+    const gradeDaFerramenta = this.criarGradeDaFerramenta(tilePx, largura, altura);
+    gradeDaFerramenta.setVisible(this.ferramenta.modo !== 'nenhum');
+    const desligarGrade = this.ferramenta.aoMudar((_predio, modo) => {
+      gradeDaFerramenta.setVisible(modo !== 'nenhum');
+    });
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, desligarGrade);
     const texturaDoRecurso = this.criarTexturaDeRecurso(tilePx, carregada, estado);
     const camadaDeRecursos = this.criarCamadaDeRecursos(tilePx, largura, altura, texturaDoRecurso);
 
@@ -413,7 +419,10 @@ export class WorldScene extends Phaser.Scene {
     terrenoDeRender.cores.forEach((hex, codigo) => {
       g.fillStyle(Phaser.Display.Color.HexStringToColor(hex).color, 1);
       g.fillRect(codigo * tilePx, 0, tilePx, tilePx);
-      g.lineStyle(1, 0x000000, 0.08);
+      // O grid continua sendo a linguagem do jogo, mas em repouso nao compete
+      // com predios e terreno. A ferramenta ativa recebe uma segunda camada,
+      // mais clara e forte, em `criarGradeDaFerramenta`.
+      g.lineStyle(1, 0x000000, 0.035);
       g.strokeRect(codigo * tilePx, 0, tilePx, tilePx);
     });
     g.generateTexture(CHAVE_TEXTURA_TERRENO, tilePx * terrenoDeRender.cores.length, tilePx);
@@ -426,6 +435,30 @@ export class WorldScene extends Phaser.Scene {
       terreno: terrenoDeRender.tipos.filter((_id, codigo) => arte[codigo] !== null),
     };
     return this.sobreporArteNaTira(CHAVE_TEXTURA_TERRENO, tilePx, arte, []);
+  }
+
+  /**
+   * O grid operacional. Fica oculto em repouso e aparece com qualquer
+   * ferramenta ativa, sem tocar no tilemap nem no GameState. Uma unica malha
+   * para o mapa inteiro custa 258 linhas no mapa 128x128; estrada, recurso e
+   * predio continuam por cima pelos respectivos depths.
+   */
+  private criarGradeDaFerramenta(
+    tilePx: number, largura: number, altura: number,
+  ): Phaser.GameObjects.Graphics {
+    const grade = this.add.graphics();
+    grade.lineStyle(1, 0xede3d0, 0.16);
+    const larguraPx = largura * tilePx;
+    const alturaPx = altura * tilePx;
+    for (let gx = 0; gx <= largura; gx += 1) {
+      const x = gx * tilePx;
+      grade.lineBetween(x, 0, x, alturaPx);
+    }
+    for (let gy = 0; gy <= altura; gy += 1) {
+      const y = gy * tilePx;
+      grade.lineBetween(0, y, larguraPx, y);
+    }
+    return grade.setDepth(0.25);
   }
 
   /**
