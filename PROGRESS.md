@@ -7994,3 +7994,47 @@ Nenhum código mudou nesta parte; só docs e fila.
    - O rodízio é a leitura conservadora: produz tudo e não precisa de RNG.
 4. **Na Feira, a tabela de troca é pergunta**, e ficou escrita no item. Nem o GDD nem
    `data/` fixam a taxa entre mercadorias.
+
+## 2026-09-26 (noite, 8) — F-VIVO-a: a pilha, sem arte
+
+**Feito e verificado.**
+- `src/render/pilhas.ts` (novo, puro): `pilhasDoPredio(predio, dados)` devolve
+  `{gaveta, mercadoria, n, ponto}` com `n = min(q, 5)`, e `posicoesNaPilha(n)` põe três
+  embaixo e dois em cima. Quatro usos: receita (entra/sai na ordem do dado), armazém
+  (as 4 maiores somando as duas gavetas, desempate por `economia.mercadorias`), Bodega
+  (o grupo `comida`, da `entrada`) e obra (`entregues − ⌈hp/50⌉`, a tábua consumida
+  primeiro).
+- Funil `predios.ts`: `contextoDasCamadas` (antes montado no teste da F17f, agora um
+  objeto só para teste e cena), `dadosDasPilhas(manifesto)` e `corDaPilha`. As 28
+  cores vêm do bloco novo `pilhas` do `theme-sertao.json`; mercadoria sem cor lança
+  erro no carregamento.
+- Cena: a pilha entra na assinatura do diff de `atualizarPredios`, pelo mesmo motivo do
+  medidor. O que redesenha é só o que se desenha: acima de 5 não redesenha.
+  `debug.pilhasDesenhadas` publica a lista por prédio. PNG `pilha:<m>:unidade`
+  quando existir; sem ele, um quadrado com a cor do tema.
+- `tests/F-VIVO-a-pilhas.test.ts`: 8 testes verdes. O pisca deu **6 trocas em 6 000
+  ticks (0,1 por 100)**, abaixo do limite de 1. As trocas caem nos ticks 50, 158, 246,
+  4338, 4958 e 4961; as duas últimas são uma alternância rápida, e ficam como
+  observação. Os números estão em `test-output/F-VIVO-a.json`.
+- `npm run shot -- F-VIVO-a` passou, com as 3 capturas abertas (armazém, obra e
+  pedreira). `npm run verify` deu 108 arquivos e 1482 testes verdes.
+
+**Decisões minhas, marcadas para revisão.**
+- **O lado da unidade é ⅕ de tile, e não ¼** (muda o que se vê). Com ¼, as quatro
+  pilhas do armazém se sobrepõem na base de 3 tiles. A constante fica na cena
+  (`LADO_DA_UNIDADE_EM_TILES`), como o resto do placeholder, e sai quando a arte
+  chegar.
+- As âncoras padrão ficam em y=0,92. Com uma gaveta só, a pilha ocupa a base inteira;
+  com as duas, a entrada vai para a metade esquerda e a saída para a direita. O
+  armazém tem sempre 4 pontos fixos, mesmo guardando menos de 4 mercadorias.
+
+**Medido nesta sessão (sonda `zz-`, apagada).**
+- A geometria dos roteiros F16b, F17b, F17e e F11c põe a pedreira à direita da
+  escola, em (38,31). **Ali não há rocha ao alcance.** A sonda mostrou a pedreira
+  ocupada no tick 363 e `progresso` em 0 até o tick 2600. Esses roteiros não afirmam
+  produção, então continuam verdes, mas nenhum deles tem uma pedreira que produz. O
+  roteiro da F-VIVO-a usa a geometria da F-T3, com a pedreira ao lado do lajedo.
+- Na vila da calibração, a obra tem pilha em cerca de 30% dos ticks em que está em
+  obra, em rajadas; a saída da pedreira tem pilha em cerca de 20% dos ticks. Por isso
+  o roteiro espera pela condição com passo de 5 ticks, e não por um número fixo de
+  ticks.

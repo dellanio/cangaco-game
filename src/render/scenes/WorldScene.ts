@@ -11,8 +11,11 @@ import { proximoNivel, mundoSobPonto, scrollAncorado } from '../zoom';
 import type { Navegacao } from '../../input/navegacao';
 import type { Tile } from '../grid';
 import { publicarEstadoDebug } from '../debug';
-import type { EstadoDebug, PredioNoDebug, RelogioVisivel } from '../debug';
-import { aparenciaDoPredio, ordemDasMercadorias } from '../predios';
+import type { EstadoDebug, PilhaNoDebug, PredioNoDebug, RelogioVisivel } from '../debug';
+import { aparenciaDoPredio, corDaPilha, dadosDasPilhas, ordemDasMercadorias } from '../predios';
+import { pilhasDoPredio, posicoesNaPilha } from '../pilhas';
+import type { PilhaDesenhada } from '../pilhas';
+import { ESTADO_DA_PILHA } from '../manifesto-camadas';
 import { medidorDaObra } from '../medidor-obra';
 import type { LinhaDoMedidor } from '../medidor-obra';
 import { canteiroDaObra, chaveDoCanteiro } from '../nivelamento-obra';
@@ -32,7 +35,7 @@ import { criarCamadaDeEstradas, criarPreviaDeEstrada } from '../estradas';
 import { criarCamadaDeCampos, criarPreviaDeCampo } from '../campos';
 import { criarCamadaDeUnidades } from '../unidades';
 import {
-  assetDoPredio, arquivoDoEstagio, chaveDaTextura, desenhoDoRecurso, texturaDaCamada, ESTADO_DO_TERRENO,
+  assetDoPredio, arquivoDoEstagio, chaveDaTextura, chaveDeTextura, desenhoDoRecurso, texturaDaCamada, ESTADO_DO_TERRENO,
 } from '../manifesto';
 import type { DesenhoDoRecurso, EntradaDeAsset, TexturaCarregada } from '../manifesto';
 import { manifestoDoJogo, texturasParaCarregar } from '../sprites';
@@ -43,6 +46,12 @@ const CHAVE_TEXTURA_RECURSO = 'tiles-recurso';
 // jogador assentou cobre o marcador, como cobre o chao. O recurso continua no
 // estado; quem o le e a simulacao, nao o pixel.
 const DEPTH_DOS_RECURSOS = 0.5;
+/** F-VIVO-a — o dado das pilhas, com as ancoras do manifesto. Montado uma vez. */
+const DADOS_DAS_PILHAS = dadosDasPilhas(manifestoDoJogo);
+/** F-VIVO-a — o lado de UMA unidade da pilha, em tiles. O brief dizia 1/4; com
+ *  1/4 as quatro pilhas do armazem (3 tiles de base) se sobrepoem, com 1/5 cabem.
+ *  Desenho, nao balanceamento: fica aqui, como o resto do placeholder. */
+const LADO_DA_UNIDADE_EM_TILES = 1 / 5;
 
 /** F17e — a cara de cada estagio no placeholder geometrico (§9). `altura` e a
  *  fracao da altura do footprint que o volume ocupa, ancorado no PE: sao os tres
@@ -638,6 +647,8 @@ export class WorldScene extends Phaser.Scene {
     // F17f: com que textura cada predio foi desenhado, ou null quando caiu no
     // retangulo. O roteiro afirma sobre isto, nunca por pixel.
     const sprites: Record<string, string | null> = {};
+    // F-VIVO-a: o que cada pilha desenhou, da MESMA lista que vai para `criarPredio`.
+    const pilhasNoDebug: Record<string, readonly PilhaNoDebug[]> = {};
     for (const id of estadoDoJogo.predios.ordem) {
       const predio = estadoDoJogo.predios.porId[id];
       if (!predio) continue;
@@ -680,14 +691,24 @@ export class WorldScene extends Phaser.Scene {
       // assim mesmo. A fracao entra QUANTIZADA em oitavos (`chaveDoCanteiro`):
       // redesenho limitado a 8 por tile, e chave testavel, em vez de um float
       // diferente a cada tick.
-      const assinatura = `${linhas.map((l) => l.entregue).join(',')}|${chaveDoCanteiro(canteiro)}`;
+      // F-VIVO-a: a pilha muda sem mexer em estado nem em estagio (o serf entrega,
+      // o padeiro assa), entao ela entra na chave pelo mesmo motivo do medidor. So
+      // o que se DESENHA entra: quantidade acima de 5 nao redesenha nada.
+      const pilhas = pilhasDoPredio(predio, DADOS_DAS_PILHAS);
+      if (pilhas.length > 0) {
+        pilhasNoDebug[id] = pilhas.map((x) => ({
+          gaveta: x.gaveta, mercadoria: x.mercadoria, n: x.n, sprite: this.texturaDaPilha(x.mercadoria) !== null,
+        }));
+      }
+      const chaveDasPilhas = pilhas.map((x) => `${x.mercadoria}:${x.n}`).join(',');
+      const assinatura = `${linhas.map((l) => l.entregue).join(',')}|${chaveDoCanteiro(canteiro)}|${chaveDasPilhas}`;
       const existente = this.desenhados.get(id);
       if (existente && existente.estado === predio.estado && existente.estagio === estagio
         && existente.assinatura === assinatura) continue;
       existente?.objeto.destroy();
       this.desenhados.set(id, {
         estado: predio.estado, estagio, assinatura,
-        objeto: this.criarPredio(predio, estagio, linhas, canteiro, tilePx),
+        objeto: this.criarPredio(predio, estagio, linhas, canteiro, pilhas, tilePx),
       });
     }
     debug.prediosRenderizados = this.desenhados.size;
@@ -706,6 +727,7 @@ export class WorldScene extends Phaser.Scene {
     debug.medidoresDeObra = medidores;
     debug.canteirosDeObra = canteiros;
     debug.spritesDePredio = sprites;
+    debug.pilhasDesenhadas = pilhasNoDebug;
   }
 
   /** F17f — a chave de textura de um (tipo, estagio), ou `null` quando esse
@@ -736,7 +758,7 @@ export class WorldScene extends Phaser.Scene {
    *  completo (o predio de pe, sem rotulo extra). */
   private criarPredio(
     predio: Predio, estagio: EstagioDaObra, linhas: readonly LinhaDoMedidor[],
-    canteiro: CanteiroDaObra | null, tilePx: number,
+    canteiro: CanteiroDaObra | null, pilhas: readonly PilhaDesenhada[], tilePx: number,
   ): Phaser.GameObjects.Container {
     const { largura, altura, nome } = aparenciaDoPredio(predio.tipo);
     const canto = gridToScreen({ gx: predio.gx, gy: predio.gy }, tilePx, ESCALA_DO_MUNDO);
@@ -747,12 +769,18 @@ export class WorldScene extends Phaser.Scene {
     const corpo = sprite === null
       ? this.desenharPlaceholder(estagio, nome, larguraPx, alturaPx)
       : [this.desenharSprite(sprite.chave, sprite.entrada, larguraPx, alturaPx)];
+    // F-VIVO-a: a fracao da ancora e do sprite `completo` (brief §4a). Sem ele, do lote.
+    const completo = this.spriteDoPredio(predio.tipo, 'completo');
+    const caixa = completo === null
+      ? { x: 0, y: 0, w: larguraPx, h: alturaPx }
+      : this.caixaDoSprite(completo.entrada, larguraPx, alturaPx);
 
     // O canteiro vai PRIMEIRO no container: ele e o chao, e o corpo da obra fica
     // por cima. O medidor da F17b continua por ultimo.
     const container = this.add.container(canto.x, canto.y, [
       ...this.desenharCanteiro(canteiro, largura, tilePx),
       ...corpo,
+      ...this.desenharPilhas(pilhas, caixa, tilePx),
       ...this.desenharMedidor(linhas, larguraPx, alturaPx, canteiro === null || canteiro.nivelada),
     ]);
     container.setDepth(depthDeY(canto.y + alturaPx));
@@ -780,6 +808,56 @@ export class WorldScene extends Phaser.Scene {
     imagem.setOrigin(entrada.anchor[0], entrada.anchor[1]);
     imagem.setScale(larguraPx / entrada.tamanho[0]);
     return imagem;
+  }
+
+  /** F-VIVO-a — o retangulo que o sprite ocupa dentro do container, pela mesma
+   *  ancoragem e escala de `desenharSprite`. */
+  private caixaDoSprite(
+    entrada: EntradaDeAsset, larguraPx: number, alturaPx: number,
+  ): { readonly x: number; readonly y: number; readonly w: number; readonly h: number } {
+    const escala = larguraPx / entrada.tamanho[0];
+    const w = entrada.tamanho[0] * escala;
+    const h = entrada.tamanho[1] * escala;
+    return { x: larguraPx / 2 - w * entrada.anchor[0], y: alturaPx - h * entrada.anchor[1], w, h };
+  }
+
+  /** F-VIVO-a — a textura da unidade de uma mercadoria, ou `null` (quadrado do §9). */
+  private texturaDaPilha(mercadoria: string): string | null {
+    const chave = chaveDeTextura('pilha', mercadoria, ESTADO_DA_PILHA);
+    return this.textures.exists(chave) ? chave : null;
+  }
+
+  /** F-VIVO-a — as pilhas: `n` unidades por ponto, tres embaixo e dois em cima
+   *  (`posicoesNaPilha`), com o pe da pilha no ponto. PNG quando o manifesto tem a
+   *  `pilha` da mercadoria; senao um quadrado com a cor do tema. */
+  private desenharPilhas(
+    pilhas: readonly PilhaDesenhada[],
+    caixa: { readonly x: number; readonly y: number; readonly w: number; readonly h: number },
+    tilePx: number,
+  ): Phaser.GameObjects.GameObject[] {
+    const lado = tilePx * LADO_DA_UNIDADE_EM_TILES;
+    const objetos: Phaser.GameObjects.GameObject[] = [];
+    for (const pilha of pilhas) {
+      const px = caixa.x + caixa.w * pilha.ponto[0];
+      const py = caixa.y + caixa.h * pilha.ponto[1];
+      const textura = this.texturaDaPilha(pilha.mercadoria);
+      const cor = Phaser.Display.Color.HexStringToColor(corDaPilha(pilha.mercadoria)).color;
+      for (const [dx, dy] of posicoesNaPilha(pilha.n)) {
+        const x = px + dx * lado;
+        const y = py + dy * lado - lado / 2;
+        if (textura !== null) {
+          const imagem = this.add.image(x, y + lado / 2, textura);
+          imagem.setOrigin(0.5, 1);
+          imagem.setDisplaySize(lado, lado * (imagem.height / imagem.width));
+          objetos.push(imagem);
+        } else {
+          const unidade = this.add.rectangle(x, y, lado - 1, lado - 1, cor, 1);
+          unidade.setStrokeStyle(1, 0x2c1d12);
+          objetos.push(unidade);
+        }
+      }
+    }
+    return objetos;
   }
 
   /** O placeholder do §9: o lote e o volume que sobe nele. A F11c desenhava o

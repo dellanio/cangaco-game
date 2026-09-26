@@ -14,6 +14,7 @@ import { contagemDeEstagios } from './estagio-obra';
 import type { EstagioDaObra } from './estagio-obra';
 import type { LinhaDoMedidor } from './medidor-obra';
 import type { CanteiroDaObra } from './nivelamento-obra';
+import type { GavetaDaPilha } from './pilhas';
 import type { ItemDeFila } from '../sim/state';
 import { ATALHOS, GESTOS } from '../input/atalhos';
 
@@ -26,6 +27,14 @@ export interface PredioNoDebug {
   readonly gy: number;
   readonly pausado: boolean;
   readonly ocupante: string | null;
+}
+
+/** F-VIVO-a — uma pilha desenhada, como o roteiro a le. */
+export interface PilhaNoDebug {
+  readonly gaveta: GavetaDaPilha;
+  readonly mercadoria: string;
+  readonly n: number;
+  readonly sprite: boolean;
 }
 
 export interface EstadoDebug {
@@ -74,6 +83,10 @@ export interface EstadoDebug {
    *  mesma estrutura: e assim que o roteiro prova que sprite e placeholder
    *  convivem, sem olhar pixel (§8). */
   spritesDePredio: Readonly<Record<string, string | null>>;
+  /** F-VIVO-a — as pilhas que a cena DESENHOU agora, por id de predio: gaveta,
+   *  mercadoria, quantas unidades e se foi PNG (`sprite`) ou o quadrado do §9. Vem
+   *  da mesma lista que o desenho usa (`pilhas.ts`), e so tem predio com pilha. */
+  pilhasDesenhadas: Readonly<Record<string, readonly PilhaNoDebug[]>>;
   /** F-T1 — quantos tiles de cada TIPO DE TERRENO estao dentro da vista da
    *  camera agora, lidos de volta da camada de chao ja desenhada. E o que
    *  permite ao roteiro afirmar "a camera esta em cima do lago" sem olhar
@@ -211,6 +224,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     medidoresDeObra: {},
     canteirosDeObra: {},
     spritesDePredio: {},
+    pilhasDesenhadas: {},
     terrenoVisivel: {},
     recursosVisiveis: {},
     arteDasCamadas: { terreno: [], recurso: [], vegetacao: [] },

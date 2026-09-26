@@ -16,8 +16,7 @@ import {
   ANIMAL_DA_CRIACAO, CASO_DO_PREDIO, violacoesDaCamadaViva, violacoesDasAncoras, violacoesDosCasos,
 } from '../src/render/manifesto-camadas';
 import type { ContextoDasCamadas } from '../src/render/manifesto-camadas';
-import { custoDoPredio } from '../src/sim/obra';
-import { ID_DA_BODEGA, ID_DO_ARMAZEM } from '../src/sim/state';
+import { contextoDasCamadas } from '../src/render/predios';
 import { ORDEM_DOS_ESTAGIOS } from '../src/render/estagio-obra';
 import { gravarEvidencia } from './helpers/evidence';
 
@@ -220,24 +219,13 @@ describe('F17f — o manifesto descreve a arte que existe', () => {
 
 /**
  * F-VIVO-0 — os tres tipos do predio vivo e o campo `ancoras` (docs/BRIEF-ARTE.md §4a).
- * O contexto sai do dado, nunca digitado; as regras moram em
+ * O contexto sai do dado, nunca digitado, e e o MESMO do funil que o render le
+ * (`contextoDasCamadas`, `src/render/predios.ts`); as regras moram em
  * `src/render/manifesto-camadas.ts`, que o render da F-VIVO le tambem. Cada regra tem
  * o caso que REPROVA, num manifesto escrito aqui: a arte de hoje nao declara nada
  * disto, e um teste so com o manifesto real passaria sem exercitar regra nenhuma.
  */
-const contexto: ContextoDasCamadas = {
-  mercadorias: gameData.economia.mercadorias,
-  receitas: Object.fromEntries(Object.entries(gameData.producao.receitas).flatMap(([id, r]) => (r === undefined ? [] : [[id, {
-    entra: Object.keys(r.entra), sai: Object.keys(r.sai),
-    colheita: r.colheita === null ? null : { aDistancia: r.colheita.aDistancia },
-  }]]))),
-  materiaisDaObra: Object.fromEntries(gameData.predios.map((p) => [
-    p.id, Object.entries(custoDoPredio(p)).filter(([, q]) => q > 0).map(([m]) => m),
-  ])),
-  idDoArmazem: ID_DO_ARMAZEM,
-  idDaBodega: ID_DA_BODEGA,
-  comidas: gameData.economia.grupos.comida,
-};
+const contexto: ContextoDasCamadas = contextoDasCamadas;
 
 function camadaSintetica(tipo: EntradaDeCamada['tipo'], id: string, estados: string[]): EntradaDeCamada {
   return {

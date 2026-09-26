@@ -10,6 +10,11 @@ import { alvoDeNivelamento, custoDoPredio } from '../sim/obra';
 import type { CaixaEmTiles } from '../sim/footprint';
 import { caixaDeTipo } from '../sim/footprint';
 import temaSertao from '../../data/theme-sertao.json';
+import { ID_DA_BODEGA, ID_DO_ARMAZEM } from '../sim/state';
+import { ehEntradaDePredio } from './manifesto';
+import type { AncorasDoPredio, Manifesto } from './manifesto';
+import type { ContextoDasCamadas } from './manifesto-camadas';
+import type { DadosDasPilhas } from './pilhas';
 
 export interface AparenciaDoPredio {
   readonly largura: number; // em tiles
@@ -64,6 +69,56 @@ function construirAparencias(): Readonly<Record<string, AparenciaDoPredio>> {
 }
 
 const aparencias = construirAparencias();
+
+/**
+ * F-VIVO — o dado de que as regras do predio vivo precisam (`manifesto-camadas.ts`),
+ * montado aqui, uma vez. E o MESMO objeto que o teste do manifesto valida e que a
+ * cena desenha: duas montagens seriam duas listas, e e da segunda que a primeira
+ * diverge.
+ */
+export const contextoDasCamadas: ContextoDasCamadas = {
+  mercadorias: gameData.economia.mercadorias,
+  receitas: Object.fromEntries(Object.entries(gameData.producao.receitas).flatMap(([id, r]) => (r === undefined ? [] : [[id, {
+    entra: Object.keys(r.entra), sai: Object.keys(r.sai),
+    colheita: r.colheita === null ? null : { aDistancia: r.colheita.aDistancia },
+  }]]))),
+  materiaisDaObra: Object.fromEntries(gameData.predios.map((p) => [
+    p.id, Object.entries(custoDoPredio(p)).filter(([, q]) => q > 0).map(([m]) => m),
+  ])),
+  idDoArmazem: ID_DO_ARMAZEM,
+  idDaBodega: ID_DA_BODEGA,
+  comidas: gameData.economia.grupos.comida,
+};
+
+/** F-VIVO-a — o dado das pilhas; as ancoras vem do manifesto, por parametro. */
+export function dadosDasPilhas(manifesto: Manifesto): DadosDasPilhas {
+  const ancoras: Record<string, AncorasDoPredio | undefined> = {};
+  for (const e of manifesto.assets) if (ehEntradaDePredio(e)) ancoras[e.id] = e.ancoras;
+  return {
+    contexto: contextoDasCamadas,
+    custos: Object.fromEntries(Object.entries(aparencias).map(([id, a]) => [id, a.custo])),
+    hpPorMaterialEntregue: gameData.construcao.hpPorMaterialEntregue,
+    ancoras,
+  };
+}
+
+/** F-VIVO-a — a cor do placeholder da pilha, por mercadoria, do tema. Mercadoria
+ *  sem cor reprova AQUI, no carregamento, como o terreno do `mapa.ts`: tela que
+ *  mente por omissao e pior do que tela feia. */
+const coresDasPilhas: Readonly<Record<string, string>> = (() => {
+  const tema = temaSertao.pilhas as Readonly<Record<string, string | undefined>>;
+  const cores: Record<string, string> = {};
+  for (const m of gameData.economia.mercadorias) {
+    const cor = tema[m];
+    if (cor === undefined) throw new Error(`predios.ts: mercadoria '${m}' sem cor em theme-sertao.json pilhas`);
+    cores[m] = cor;
+  }
+  return cores;
+})();
+
+export function corDaPilha(mercadoria: string): string {
+  return coresDasPilhas[mercadoria] ?? '#ff00ff';
+}
 
 /** Tipo sem entrada no dado ou no tema cai no id neutro, footprint 1x1:
  *  placeholder e comportamento normal (CLAUDE.md §9), o jogo nao quebra por

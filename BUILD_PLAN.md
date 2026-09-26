@@ -3507,10 +3507,10 @@ fumaça, pilha por unidade na entrada e na saída, animais do curral. Só render
     imagens.
   - **O que isso muda aqui:** a pilha da obra entra na F-VIVO como quarto uso da
     `pilha`. A tábua e a pedra já estão entre as 28 mercadorias, então não há arte
-    nova. As **seis imagens da F17e ficam** (decisão minha, marcada para o operador
-    revisar, no `PROGRESS.md`). Trocar essas seis pelas duas camadas reveladas mudaria
-    o pipeline de arte, com uma máscara de revelação no alfa de cada base, e esse
-    pipeline já está em curso. Fica como pergunta, não como feito.
+    nova. ~~As seis imagens da F17e ficam~~ — **respondido pelo operador
+    (2026-09-26, noite 7): as seis saem, e a obra passa a ser duas imagens reveladas
+    pelo hp (F17g, BRIEF-ARTE §4).** A pilha da obra não muda com isso: ela lê
+    `faltam` e `hp`, não o estágio.
 
 A feature é grande (três camadas e quatro usos da pilha) e sai em **cinco sub-itens**,
 cada um com seu aceite, na ordem da tabela. A F-VIVO-0 destrava o Codex. Os outros só
@@ -3527,7 +3527,9 @@ leem `GameState`: **nenhum toca em `sim/`**.
 **Regras comuns aos sub-itens** (decisões minhas, marcadas para o operador revisar):
 - **Arte que falta vira placeholder, nunca buraco** (CLAUDE.md §9), para que cada
   sub-item se verifique sem arte:
-  - a pilha sem PNG é um quadrado de ¼ de tile, com a cor de `theme-sertao.json`;
+  - a pilha sem PNG é um quadrado de ¼ de tile, com a cor de `theme-sertao.json`
+    (**entregue com ⅕**, na F-VIVO-a: com ¼, as quatro pilhas do armazém se sobrepõem
+    numa base de 3 tiles — decisão de implementação, registrada no PROGRESS);
   - o quadro de trabalho sem PNG é um retângulo na `area`, com `<laco>_<n>` escrito;
   - o animal sem PNG é um losango do tamanho da idade.
 - **Prédio sem `ancoras` usa âncoras padrão, derivadas do footprint.** A entrada fica à
@@ -3577,6 +3579,8 @@ leem `GameState`: **nenhum toca em `sim/`**.
   número vai para `test-output/F-VIVO-a.json`.
 - `npm run shot -- F-VIVO-a` mostra uma obra com pilha, uma pedreira com saída e o
   armazém, e afirma `debug.pilhasDesenhadas` por prédio. A screenshot é aberta.
+- **Entregue (2026-09-26, noite 8).** Pisca: 6 trocas em 6 000 ticks (0,1 por 100).
+  Roteiro na geometria da F-T3 (a da F16b não tem rocha ao alcance).
 
 **Aceite da F-VIVO-b (o trabalho).**
 - `quadroDeTrabalho(predio, unidade, tick, dados)` é pura e devolve (laco, n) ou `null`:
