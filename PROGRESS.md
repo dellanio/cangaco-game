@@ -8038,3 +8038,48 @@ Nenhum código mudou nesta parte; só docs e fila.
   obra, em rajadas; a saída da pedreira tem pilha em cerca de 20% dos ticks. Por isso
   o roteiro espera pela condição com passo de 5 ticks, e não por um número fixo de
   ticks.
+
+### F18c — parada antes de começar (encadeamento c do operador)
+
+**Medido (verificado).** Movi a vila +32 em cada eixo só no `data/economy.json`
+(storehouse, schoolhouse e spawn), sem gerar o mapa de novo, e rodei `npx vitest
+run`. Resultado: **48 de 108 arquivos reprovam (147 testes; 11 pulados)**. O
+`economy.json` foi revertido na hora e o `git status` está limpo. Os roteiros não
+rodaram. O teto do operador era 20 arquivos e 15 roteiros, então a feature **parou
+aqui**, como ele pediu.
+
+Os arquivos que reprovam: BUG-G-preso-no-footprint, F05b-hud, F06-build,
+F09-jobboard, F09-sistema, F10-desempate, F10-falhas, F10-fsm, F11c-laborer,
+F13a-aceite, F13a-ouro, F13b-painel, F14-aceite, F15a-aceite, F15a-producao,
+F15b-aceite, F15b-entrega, F15b-insumo, F16a-demolir, F16a-porta, F16b-painel,
+F16c-pausar, F17-aceite, F17b-escada-do-serf, F18b-mapa, F18d-1a-modo,
+F18d-1b-laborer, F18h-terra-de-plantio, F18i-terra-na-tela, F18-rocado,
+F20b-fome, F22-alertas, F-CAL-a-cenario, F-CAL-b-calibracao, F-D3-geografia,
+F-T1-terreno, F-T2a-recursos, F-T2c-colheita-jobboard, F-T3-caminho,
+F-T3-ciclo-em-campo, F-T3-determinismo, F-T3-ocupado-mas-fora, F-T4b-geometria,
+F-T4b-lenhador, F-T4d-pescador-em-partida, F-T4-pescador, F-TA-painel-alcance e
+F-VIVO-a-pilhas.
+
+**Por que a conta da F18b (20 + 15) ficou velha (verificado no código).** A F18c foi
+escrita antes do terreno existir. Hoje `tools/gerar-mapa.js` fixa a geografia da
+abertura em volta da vila:
+- o `LAJEDO_DA_VILA` em (24,31), com raio 2;
+- o açude do norte, o mato do nascente e o roçado da abertura;
+- o quadrante noroeste "até o tile 71", mantido em grama porque os testes usam
+  coordenada literal.
+
+Só a reserva em volta da vila é derivada do `economy.json`. Mover a vila sem mover
+isso deixa a pedreira, o lenhador e o pescador da abertura sem nada ao alcance.
+
+**Hipótese (não conferi arquivo por arquivo): duas classes de falha.**
+1. Coordenada literal em fixture. É o defeito que a F18c nomeia, e é o que se migra
+   derivando do armazém.
+2. Geografia autoral. Os F-T*, F-D3, F-CAL-a/b, F18h/F18i e, provavelmente, os
+   F-T4*. Não se consertam no teste: exigem que o gerador derive o lajedo, o açude e o
+   mato da vila, gerar o mapa de novo e **refazer a calibração da F-CAL-b**, porque a
+   caminhada muda.
+
+A classe 2 é decisão de design e de balanceamento, e fica com o operador. Uma saída
+possível, **não decidida**: quebrar em F18c-1 (a classe 1, com a vila parada, só
+trocando literal por derivado) e F18c-2 (a geografia relativa à vila, mais o
+recentramento, depois da F20).

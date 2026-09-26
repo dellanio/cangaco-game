@@ -1135,6 +1135,17 @@ prédio surge sem clique do jogador.
   literais de tile), e há ~100 chamadas diretas de `createInitialState(1)`. Não
   é um `sed`: cada literal tem de ser lido. Se não couber numa sessão, quebre
   por arquivo.
+- **Nota (medida em 2026-09-26, noite 8 — o item parou antes de começar)**: com a
+  vila movida +32 só no `economy.json`, **48 de 108 arquivos de teste reprovam (147
+  testes)**, mais do que o teto de 20 arquivos e 15 roteiros que o operador deu. Os
+  roteiros não foram rodados. A contagem cresceu porque, desde este item, o mapa
+  passou a ter **geografia autoral presa à vila**. `tools/gerar-mapa.js` escreve à mão
+  o `LAJEDO_DA_VILA` (24,31), o açude do norte, o mato do nascente e o roçado da
+  abertura, e protege o quadrante noroeste "até o tile 71" porque os testes usam
+  coordenada literal. Mover a vila é, portanto, também mover a geografia e gerar o
+  mapa de novo, o que muda os números que a F-CAL-b calibrou nesse mapa. Isso é
+  decisão do operador, não uma migração mecânica. Lista e hipótese de divisão no
+  `PROGRESS.md` (noite 8).
 
 ### F18e — Estrada diagonal
 - **Escopo**: a estrada passa a ligar em 8 direções, **sem cortar quina** — a
