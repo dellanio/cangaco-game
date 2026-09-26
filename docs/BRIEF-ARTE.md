@@ -25,6 +25,21 @@ aqui**, nem como referência de estilo.
 
 ## 2. A projeção
 
+> **ERRADO — correção do operador, 2026-09-26.** A frase "retângulo com arestas
+> horizontais" abaixo, e o "nunca em diagonal" do fim do parágrafo, estão errados. Os
+> prédios do jogo de referência são **girados**: um inclina para a direita, outro para a
+> esquerda. Mandar "não rotacionado, arestas horizontais" produziu prédios **achatados**.
+> **A convenção nova espera a medição do operador** nas telas de referência. Até ela
+> chegar, não há número nem ângulo para seguir, e nenhum foi inventado aqui.
+>
+> **O grid continua ortogonal.** Prédio girado sobre tile quadrado funciona: o
+> `footprint` é o retângulo de tiles que ele cobre no chão, e o sprite pode transbordar
+> esse retângulo. **Nada muda em `src/sim/`**: ocupação, porta, caminho e `canPlace`
+> continuam lendo o footprint em tiles, e o desenho é só render.
+>
+> O resto desta seção (não é isométrico, não é elevação frontal, a câmera vê o telhado)
+> continua valendo.
+
 **A regra.** A base do prédio é um **retângulo com arestas horizontais**, alinhado ao
 grid quadrado. A câmera fica alta e à frente, olhando para baixo, e enxerga a fachada
 da frente **e para dentro do telhado**. As linhas do chão correm na horizontal e na
@@ -54,6 +69,21 @@ não código: refazer os seis estágios do armazém. Em conversa antiga ele apar
 ## 3. A convenção de arquivo
 
 ### Tamanho e âncora
+
+> **ERRADO — correção do operador, 2026-09-26.** "Largura = `footprint[0] × 64`" faz o
+> prédio caber exato no footprint e parecer **pequeno**. O prédio **transborda** o
+> próprio footprint. A largura passa a ser `footprint × 64 × fator`, e **o fator espera
+> a medição do operador**. Até ela chegar, nenhum número novo vale, e nenhum foi
+> inventado aqui. Três lugares ainda aplicam a regra antiga e mudam juntos quando o
+> fator vier:
+> - o derivador (`LARGURA_ALVO` em `tools/derivar-sprites.js`);
+> - o desenho do prédio, `WorldScene.desenharSprite`, que escala o sprite para a largura
+>   do footprint;
+> - a regra `tamanho[0] = footprint[0] × 64` da F17f (lista abaixo).
+>
+> Terreno, recurso, vegetação e unidade **não** usam essa regra (item F-SPR do
+> `BUILD_PLAN.md`): tile é redimensionado para 64 × 64, e sprite sai no `tamanho` do
+> arquivo.
 
 - **A largura manda.** A largura do sprite derivado é `footprint[0] × 64` px. Um prédio
   de 3 tiles de largura tem 192 px. Um de 4 tem 256 px.
@@ -284,7 +314,12 @@ prédios**. Só a cor do lenço e da bandeira muda: vermelho `#D64B3F` e azul `#
 ### Unidades (28)
 
 Hoje **nenhuma** unidade tem sprite. O jogo desenha um quadrado de 32 px com o nome em
-cima. Não existe ainda caminho de código para carregar sprite de unidade (seção 8).
+cima. **Desde 2026-09-26 (F-SPR) o caminho de código existe**, sem arte nenhuma: uma
+entrada `tipo: "unidade"` no manifesto, **um arquivo por direção**, com estado
+`"<pose>:<direcao>"` (`parado:n`, `parado:l`, `parado:s`...). Direções: `n ne l se s so
+o no`. O oeste sem arquivo é o leste espelhado. Sem arquivo, o quadrado continua. O
+contrato inteiro, com terreno, recurso e vegetação, está no item F-SPR do
+`BUILD_PLAN.md`.
 
 **Regras do GDD §9.5:**
 
