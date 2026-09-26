@@ -14,7 +14,7 @@
 // O clique na aba Construir e feito DESPAUSADO e segurado 150 ms (CLAUDE.md §8):
 // um redesenho entre o mousedown e o mouseup e a classe de defeito do BUG-B.
 
-const { retanguloDe, retanguloDoCanvas } = require('./_canvas');
+const { retanguloDe, retanguloDoCanvas, pontoParaApertar } = require('./_canvas');
 const economia = require('../../data/economy.json');
 const tema = require('../../data/theme-sertao.json');
 const { predios } = require('../../data/buildings.json');
@@ -186,6 +186,32 @@ async function roteiro(ctx) {
     `com o mouse parado sobre '${ultimo}' o cartao deveria ficar nele, veio ${JSON.stringify(amostras)}`,
   );
   await page.mouse.move(5, 5);
+  await rolarCorpo('topo');
+
+  // ---- 2d. o cartao tem teto e rola por dentro -----------------------------
+  // O tema nao tem limite de comprimento: o pior caso de hoje mede 105 px, e uma
+  // linha a mais de descricao ja dava 121. A garantia nao pode depender do texto:
+  // com uma descricao 6x a mais longa, o cartao para no teto, o miolo rola, e o
+  // ultimo icone continua apertavel (a folga do corpo e o mesmo teto).
+  const teto = await page.evaluate(() => {
+    const c = window.document.querySelector('#menu-build .cartao');
+    const d = c.querySelector('.desc');
+    d.dataset.antes = d.textContent;
+    d.textContent = Array(6).fill(d.textContent || 'texto').join(' ');
+    const m = c.querySelector('.miolo');
+    return {
+      altura: c.getBoundingClientRect().height,
+      maximo: parseFloat(window.getComputedStyle(c).maxHeight),
+      rola: m.scrollHeight > m.clientHeight,
+    };
+  });
+  afirmar(
+    teto.altura <= teto.maximo && teto.rola,
+    `com texto longo o cartao deveria parar no teto e o miolo rolar: ${JSON.stringify(teto)}`,
+  );
+  await pontoParaApertar(page, `[data-predio="${ultimo}"]`);
+  await capturar('cartao-no-teto');
+  await page.$eval('#menu-build .cartao .desc', (d) => { d.textContent = d.dataset.antes; delete d.dataset.antes; });
   await rolarCorpo('topo');
 
   // ---- 3. escolher troca a grade pelo painel; Esc volta ---------------------

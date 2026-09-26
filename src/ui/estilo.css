@@ -292,9 +292,11 @@ button[aria-disabled="true"] {
   box-shadow: inset 0 0 0 2px var(--madeira-clara), inset 0 0 14px rgba(90, 63, 43, 0.35);
 }
 /* Com a grade, o pe do corpo e do cartao sticky: rolar ate um icone (foco pelo
-   Tab, scrollIntoView) tem de parar ACIMA dele, nao por baixo. O cartao cresce
-   com o texto do icone sob o mouse: 112 cobre o mais alto medido (armazem, 105). */
-body[data-corpo="grade"] #corpo-aba { scroll-padding-bottom: 112px; }
+   Tab, scrollIntoView) tem de parar ACIMA dele, nao por baixo. A folga e o TETO
+   do cartao, a mesma variavel: o tema nao tem limite de texto, entao o cartao tem
+   teto e rola por dentro, e a folga nunca fica menor que ele. Medido: o pior caso
+   do tema de hoje (todos os campos no mais longo) da 105 px, 5 linhas. */
+body[data-corpo="grade"] #corpo-aba { --cartao-teto: 112px; scroll-padding-bottom: var(--cartao-teto); }
 /* A sombra do pe: ha mais embaixo (decisao do operador — o jogador nao sabe que
    o corpo rola). Some quando a rolagem chega ao fim; quem liga e `ui/barra.ts`.
    Um bloco que gruda no pe da rolagem e nao ocupa lugar (margem negativa). Na
@@ -462,9 +464,13 @@ body:not([data-corpo="opcoes"]) #opcoes { display: none; }
 #menu-build .cartao {
   position: sticky; bottom: -8px; z-index: 1;
   margin-top: auto; padding: 6px 8px; min-height: 64px; box-sizing: border-box;
+  max-height: var(--cartao-teto); display: flex; flex-direction: column;
   background: var(--papel); background-image: var(--grao);
   border: 2px solid var(--tinta); box-shadow: 0 -3px 0 var(--pergaminho);
 }
+/* o texto rola no MIOLO, nao no cartao: `overflow` no cartao cortaria a sombra
+   do pe, que e um `::before` pendurado acima dele */
+#menu-build .cartao .miolo { min-height: 0; overflow-y: auto; }
 #menu-build .cartao h3 { margin: 0 0 2px; font-size: 14px; text-transform: none; letter-spacing: 0.02em; color: var(--tinta); }
 #menu-build .cartao .custo { font-size: 12px; color: var(--tinta-fraca); }
 #menu-build .cartao .requer { font-size: 12px; font-style: italic; color: var(--terracota); }

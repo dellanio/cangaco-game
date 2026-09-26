@@ -164,7 +164,12 @@ export function montarMenuBuild(
   cartaoRequer.className = 'requer';
   const cartaoDesc = document.createElement('div');
   cartaoDesc.className = 'desc';
-  cartao.append(cartaoNome, cartaoCusto, cartaoRequer, cartaoDesc);
+  // O miolo rola quando o texto passa do teto do cartao (CSS `--cartao-teto`):
+  // o tema nao tem limite de comprimento.
+  const cartaoMiolo = document.createElement('div');
+  cartaoMiolo.className = 'miolo';
+  cartaoMiolo.append(cartaoNome, cartaoCusto, cartaoRequer, cartaoDesc);
+  cartao.append(cartaoMiolo);
   // A outra metade da guarda do `pointerleave` do icone (ver `botaoIcone`).
   cartao.addEventListener('pointerleave', () => {
     if (sobOMouse === null) return;

@@ -8533,9 +8533,41 @@ do operador.
 ### Decisões minhas, para revisão
 - A intensidade da sombra (`rgba(58,40,25,0.7)`, 22 px) está discreta em 1×. Se o
   operador quiser mais forte, o número mora só no CSS.
-- O `scroll-padding-bottom` fixo em 112 cobre o cartão mais alto de hoje. Um texto de
-  tema mais longo pode passar disso. **Hipótese**: nada mede isso hoje.
+- ~~O `scroll-padding-bottom` fixo em 112 cobre o cartão mais alto de hoje.~~ **Fechado
+  na sessão seguinte**, na seção abaixo.
 
 ### F17e
 Falhou uma vez na `main` na sessão anterior e passou em todas as rodadas desta sessão.
 Conta como uma ocorrência. Pela regra do operador, abre bug se falhar de novo.
+
+## 2026-09-26 (noite, 15) — UI-barra-a: teto do cartão (pendência da folga de 112)
+
+Pedido do operador: medir pelo pior caso do TEMA e não pelo maior de hoje. Se a folga
+for pequena, o cartão ganha teto com rolagem própria, em vez de um número maior.
+
+### Verificado (rodado, evidência aberta)
+- **O pior caso do tema de hoje mede 105 px.** Sonda apagada: cada campo no mais longo
+  do `theme-sertao.json`, todos juntos.
+  - Os textos: nome "Casa de Armas de Madeira"; custo "Tábua 6 · Pedra 6 · 4×4"
+    (máximos do `buildings.json`); requer desse nome; e a desc do armazém.
+  - São 5 linhas: 1 de nome, 1 de custo, 1 de requer e 2 de desc. É o mesmo número do
+    armazém, então a folga era de 7 px.
+  - **Uma linha a mais de desc dá 121 px**, acima dos 112. A folga era menor que uma
+    linha.
+  - Nenhuma regra de `tools/data-rules.js` nem de `data-schema.js` limita comprimento de
+    texto do tema. **O pior caso do tema não tem teto.**
+- **Conserto (CSS + `ui/menu-build.ts`):**
+  - `--cartao-teto: 112px` no corpo com a grade. A mesma variável é o `max-height` do
+    cartão e o `scroll-padding-bottom` do corpo.
+  - O texto rola num miolo (`.cartao .miolo`) e não no cartão. `overflow` no cartão
+    cortaria a sombra do pé, que é um `::before` pendurado acima dele.
+  - Os seletores `.cartao h3/.custo/.requer/.desc` continuam valendo (descendente).
+- **Guarda permanente:** passo 2d do roteiro UI-barra-a.
+  - Uma desc 6× mais longa: o cartão tem de parar no teto, o miolo tem de rolar, e
+    `pontoParaApertar` no último ícone tem de passar.
+  - **Prova de que acusa:** sem o `max-height`, o roteiro reprova com o cartão em
+    164,7 px e `rola: false`. Com ele, passa.
+  - Aberto com Read (recorte de `screenshots/UI-barra-a-2-cartao-no-teto.png`): o
+    cartão para no teto, o texto é cortado, e a linha "O Bando" fica inteira acima
+    dele.
+- **Numeração das capturas:** a da escola agora é `UI-barra-a-3-escola.png`.
