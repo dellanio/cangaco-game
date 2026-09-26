@@ -332,7 +332,17 @@
   "hud": {
     "comida": "Comida",
     "populacao": "Gente",
-    "pausado": "Pausado"
+    "pausado": "Pausado",
+    "arquivo": {
+      "titulo": "Partida",
+      "salvar": "Guardar",
+      "carregar": "Retomar",
+      "salvou": "Partida guardada",
+      "carregou": "Partida retomada",
+      "semSave": "Nenhuma partida guardada",
+      "recusado": "Não retomou: {detalhe}",
+      "gaveta": "O navegador não guardou: {detalhe}"
+    }
   },
   "menuBuild": {
     "_doc": "Layout 2, fatia 2: o menu e uma grade de icones por grupo (data/menu-build.json) com um cartao fixo embaixo. As chaves de `grupos` SAO os ids de menu-build.json > grupos[].id — id sem rotulo, ou rotulo sem id, reprova o validate:data (interface/menu-build). `cartaoVazio` e o que o cartao diz quando nada esta sob o mouse nem na mao.",

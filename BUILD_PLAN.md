@@ -3010,6 +3010,19 @@ Depende da F20b: o marcador lê `unidade.condicao`, que só existe depois dela. 
 - **Posição na fila, decidida pelo operador em 2026-09-25: DEPOIS da F21b.** O
   porquê dele: *"save funciona headless, e a tela é conveniência"* — a garantia
   já está entregue e testada na F23; o que falta aqui é o gesto.
+- **ENTREGUE em 2026-09-26.** Não tocou em `sim/` nem em `render/`. O que entrou:
+  - `Sessao.substituir`, que descarta a fila;
+  - `src/arquivo-da-partida.ts`, puro e com a gaveta injetada: uma partida só, na
+    chave `cangaco:partida`;
+  - `src/ui/arquivo.ts`, com os botões **Guardar** e **Retomar**.
+
+  Os botões ficam numa seção "Partida" **no topo da tela de ajuda (H), e não na
+  barra**. O motivo é medido: com a prancha fechada, o lembrete e o carimbo, a barra
+  de 1280 px chega a 1163, e os botões iam até 1364.
+  - Teste: `tests/F23b-arquivo-da-partida.test.ts`.
+  - Roteiro: `tools/shots/F23b.js`, com um passo despausado e a obra plantada antes
+    de guardar.
+  - Evidência: `test-output/F23b.json` e `screenshots/F23b-{1,2,3}`.
 
 ### F18g — A pedra da estrada vira carga que viaja (sim)
 - **Escopo**: hoje a pedra da estrada **não viaja**: ela é reservada no armazém

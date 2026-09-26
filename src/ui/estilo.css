@@ -180,6 +180,13 @@ button[aria-disabled="true"] {
   outline: 2px solid var(--papel); outline-offset: -8px;
   box-shadow: 6px 6px 0 var(--tinta), 0 12px 40px rgba(0, 0, 0, 0.6);
 }
+/* F23b: guardar e retomar, a primeira secao da ajuda. */
+#ajuda .arquivo .botoes { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+#ajuda .arquivo .recado { font-size: 13px; font-style: italic; }
+#ajuda .arquivo .recado[hidden] { display: none; }
+#ajuda .arquivo .recado[data-ok="false"] { color: var(--terracota); }
+#ajuda .arquivo .recado.pisca { animation: recado-pisca 0.6s ease-out; }
+@keyframes recado-pisca { from { background: var(--terracota); color: var(--papel); } }
 #ajuda[hidden] { display: none; }
 #ajuda h2 {
   margin: 0 0 10px; padding-bottom: 6px; font-size: 22px;

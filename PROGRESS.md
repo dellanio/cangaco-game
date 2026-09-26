@@ -7888,3 +7888,52 @@ Por que não fui para o `BUGS.md`: nenhum aceite escrito cobre esses prédios, o
    ponto de estoque, curral ou obra estritamente dentro de `trabalho.area`". A fumaça
    fica de fora, porque a chaminé pode ficar sobre a porta no desenho. Pilha contra
    pilha não é conferida: ponto não tem área.
+
+## 2026-09-26 (noite, 6) — F23b: guardar e retomar a partida pela tela
+
+### Feito e verificado
+- `src/sessao.ts`: `substituir(estado)` troca a partida, descarta a fila e publica.
+  Probe (evidência da sessão, não cobertura): com o descarte comentado, o teste "retomar
+  descarta a fila" reprovou. Restaurei e ele voltou a passar.
+- `src/arquivo-da-partida.ts` é novo, puro e fica no laço externo. `salvar` e `carregar`
+  sobre uma `Gaveta` injetada (o `localStorage` no `main.ts`). Toda recusa devolve a
+  causa e o detalhe, sem lançar, e sem mexer na partida em curso. As causas são
+  `sem-save`, `recusado` (com o motivo da F23, sem o prefixo) e `gaveta` (cota ou
+  armazenamento bloqueado).
+- `src/ui/arquivo.ts` monta a seção "Partida" no topo da ajuda (H): Guardar, Retomar e
+  o recado do resultado. Os textos vêm de `theme-sertao.json` (`hud.arquivo`).
+- `tests/F23b-arquivo-da-partida.test.ts` (6 testes) cobre:
+  - guardar no tick 300; uma sessão nova no tick 0 retoma igual no instante e 200 ticks
+    depois;
+  - a fila descartada;
+  - as quatro recusas: vazia, lixo, mapa mudado, gaveta bloqueada;
+  - a gaveta cheia;
+  - os recados.
+- `npm run shot -- F23b` passou com 31 afirmações. O roteiro:
+  - planta uma Casa do Lenhador e avança até o tick 300;
+  - "Retomar" sem save dá o recado e deixa a partida;
+  - guarda e recarrega a página: tick 0, sem a obra, com o save na gaveta;
+  - retoma **despausado**, segurando 150 ms;
+  - retoma pausado: mesmo tick, mesmos prédios campo a campo, mesma barra; guardar de
+    novo dá **o mesmo texto byte a byte**;
+  - com o save estragado, o recado traz o motivo e a partida não muda.
+- Abri `screenshots/F23b-1-guardada.png`, `F23b-2-recado-retomada.png` e
+  `F23b-3-retomada.png`. A aldeia retomada tem a obra, os avisos dela e o estoque gasto.
+- `npm run verify`: 1474 testes verdes. Não-regressão por código de saída: F-D1, F11a,
+  F22 e F06 OK.
+
+### Decisões minhas, marcadas para o operador revisar
+1. **Os botões ficam na ajuda (H), não na barra.** A medida está no BUILD_PLAN: a
+   barra transbordava 100 px, e o recado de recusa pede mais uns 250. O lembrete da
+   primeira partida já manda o jogador ao H, e é o que mais se parece com o menu em jogo
+   do KaM. Custo: guardar exige dois gestos (H e o clique). Saída pronta, se o operador
+   quiser na barra: é só trocar o pai em `montarArquivo`, mas a barra precisa ceder
+   espaço antes (o lembrete, ou os `gap` de 22 px).
+2. **Uma partida só**, sempre na chave `cangaco:partida`. Guardar sobrescreve sem
+   perguntar. Slots e confirmação ficam para quando houver pedido.
+3. **Retomar descarta a fila e fecha o painel do prédio.** Comando dado sobre a partida
+   velha não se aplica à nova, e o prédio aberto pode não existir nela. O relógio não
+   muda: retomar pausado continua pausado.
+4. Os rótulos são "Guardar" e "Retomar", no tom do tema, com o recado "Partida
+   guardada" ou "Partida retomada". Numa recusa: "Não retomou: <motivo>". O motivo vem
+   da F23, sem acento.
