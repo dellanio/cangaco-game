@@ -10,12 +10,20 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import { gameData } from '../src/sim/data';
-import { assetDoPredio, arquivoDoEstagio, chaveDaTextura } from '../src/render/manifesto';
+import { assetDoPredio, arquivoDoEstagio, chaveDaTextura, ehEntradaDePredio, TIPOS_DE_CAMADA } from '../src/render/manifesto';
 import type { EntradaDeAsset, Manifesto } from '../src/render/manifesto';
 import { ORDEM_DOS_ESTAGIOS } from '../src/render/estagio-obra';
 import { gravarEvidencia } from './helpers/evidence';
 
 const manifesto = JSON.parse(readFileSync('assets/manifest.json', 'utf8')) as Manifesto;
+/**
+ * F-SPR: o manifesto passou a aceitar terreno, recurso, vegetacao e unidade. As
+ * regras de PREDIO (anchor, largura, footprint de buildings.json, estagios) valem
+ * para as entradas `predio`, e so para elas — sem afrouxar nenhuma. As regras da §9
+ * que valem para qualquer asset (oito campos, arquivo existe com a dimensao
+ * declarada, base versionada) continuam sobre todas.
+ */
+const predios = manifesto.assets.filter(ehEntradaDePredio);
 
 /**
  * Largura e altura do IHDR, que sao os bytes 16..24 de todo PNG. Ler o
@@ -53,16 +61,20 @@ function chavesForaDosEstagios(entrada: EntradaDeAsset): string[] {
 
 describe('F17f — o manifesto descreve a arte que existe', () => {
   it('toda entrada tem os oito campos da §9', () => {
-    expect(manifesto.assets.length).toBeGreaterThan(0);
+    expect(predios.length).toBeGreaterThan(0);
+    const tipos = new Set<string>(['predio', ...TIPOS_DE_CAMADA]);
     for (const e of manifesto.assets) {
       expect(typeof e.id).toBe('string');
-      expect(e.tipo).toBe('predio');
+      expect(tipos.has(e.tipo), `${e.id}: tipo '${e.tipo}'`).toBe(true);
       expect(e.footprint).toHaveLength(2);
       expect(e.tamanho).toHaveLength(2);
-      expect(e.anchor).toEqual([0.5, 1]);
+      expect(e.anchor).toHaveLength(2);
       expect(Object.keys(e.estados).length).toBeGreaterThan(0);
       expect(typeof e.licenca).toBe('string');
       expect(e.origem.base).toBeTruthy();
+    }
+    for (const e of predios) {
+      expect(e.anchor, e.id).toEqual([0.5, 1]);
     }
   });
 
@@ -82,13 +94,13 @@ describe('F17f — o manifesto descreve a arte que existe', () => {
   // A convencao que esta feature existe para fixar: a LARGURA manda. A altura
   // e o que a arte der — forcar um quadrado esticaria a arte 1,5x na vertical.
   it('a largura em px e a largura do footprint em tiles vezes o tile', () => {
-    for (const e of manifesto.assets) {
+    for (const e of predios) {
       expect(e.tamanho[0], e.id).toBe(e.footprint[0] * gameData.terreno.tilePx);
     }
   });
 
   it('o footprint do manifesto bate com o de buildings.json', () => {
-    for (const e of manifesto.assets) {
+    for (const e of predios) {
       const def = gameData.predios.find((p) => p.id === e.id);
       expect(def, `o manifesto declara '${e.id}', que nao existe em buildings.json`).toBeTruthy();
       expect([...e.footprint]).toEqual([...(def?.tamanho ?? [])]);
@@ -101,7 +113,7 @@ describe('F17f — o manifesto descreve a arte que existe', () => {
   // no armazem, com os nomes dos arquivos de hoje, e reprovava quando o armazem
   // fosse refeito (BUG-H). Agora vale para TODA entrada, contra a lista do render.
   it('nenhuma entrada tem chave de estado fora dos seis estagios do render', () => {
-    for (const e of manifesto.assets) {
+    for (const e of predios) {
       expect(chavesForaDosEstagios(e), e.id).toEqual([]);
     }
     // e o guarda acusa: a chave antiga da F17e numa entrada sintetica
@@ -120,7 +132,7 @@ describe('F17f — o manifesto descreve a arte que existe', () => {
   // trouxesse — o teste afirmava o retrato do dia, nao a regra. A regra e: o
   // resolvedor concorda com o manifesto, nos dois sentidos.
   it('predio resolve arte se e so se o manifesto tem entrada para ele', () => {
-    const idsNoManifesto = new Set(manifesto.assets.map((e) => e.id));
+    const idsNoManifesto = new Set(predios.map((e) => e.id));
     for (const p of gameData.predios) {
       const entrada = assetDoPredio(manifesto, p.id);
       if (idsNoManifesto.has(p.id)) {
@@ -177,7 +189,7 @@ describe('F17f — o manifesto descreve a arte que existe', () => {
     gravarEvidencia('F17f', {
       feature: 'F17f-primeiro-sprite',
       tilePx: gameData.terreno.tilePx,
-      entradas: manifesto.assets.map((e) => ({
+      entradas: predios.map((e) => ({
         id: e.id,
         footprint: e.footprint,
         tamanho: e.tamanho,

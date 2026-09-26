@@ -31,8 +31,10 @@ import { criarPlantaFantasma } from '../planta-fantasma';
 import { criarCamadaDeEstradas, criarPreviaDeEstrada } from '../estradas';
 import { criarCamadaDeCampos, criarPreviaDeCampo } from '../campos';
 import { criarCamadaDeUnidades } from '../unidades';
-import { assetDoPredio, arquivoDoEstagio, chaveDaTextura } from '../manifesto';
-import type { EntradaDeAsset } from '../manifesto';
+import {
+  assetDoPredio, arquivoDoEstagio, chaveDaTextura, desenhoDoRecurso, texturaDaCamada, ESTADO_DO_TERRENO,
+} from '../manifesto';
+import type { DesenhoDoRecurso, EntradaDeAsset, TexturaCarregada } from '../manifesto';
 import { manifestoDoJogo, texturasParaCarregar } from '../sprites';
 
 const CHAVE_TEXTURA_TERRENO = 'tiles-terreno';
@@ -71,6 +73,14 @@ export class WorldScene extends Phaser.Scene {
    *  continua em `state.recursos`, e isto aqui so evita repintar 883 tiles a
    *  cada frame para mudar um. */
   private readonly recursosDesenhados = new Map<string, number>();
+
+  /** F-SPR — como cada CODIGO de recurso se desenha, resolvido uma vez no `create`
+   *  (a arte ja chegou no `preload`). Indice e o codigo, como na tira. */
+  private desenhoPorCodigo: readonly DesenhoDoRecurso[] = [];
+
+  /** F-SPR — o sprite de vegetacao de pe por tile, para o diff. Memoria de render,
+   *  como `recursosDesenhados`: a verdade continua em `state.recursos`. */
+  private readonly vegetacaoDesenhada = new Map<string, Phaser.GameObjects.Image>();
 
   private readonly desenhados = new Map<
     string,
@@ -146,10 +156,13 @@ export class WorldScene extends Phaser.Scene {
     const { tilePx, largura, altura, larguraPx, alturaPx } = configDoMapa;
     const estado = publicarEstadoDebug(this.relogio);
 
-    this.criarTexturaDeTerreno(tilePx);
-    const camadaChao = this.criarTilemap(tilePx, largura, altura);
-    this.criarTexturaDeRecurso(tilePx);
-    const camadaDeRecursos = this.criarCamadaDeRecursos(tilePx, largura, altura);
+    // F-SPR — o loader so conhece o que o manifesto declarou e o bundler achou;
+    // `exists` e a unica pergunta que os resolvedores de `manifesto.ts` fazem ao Phaser.
+    const carregada: TexturaCarregada = (chave) => this.textures.exists(chave);
+    const texturaDoTerreno = this.criarTexturaDeTerreno(tilePx, carregada, estado);
+    const camadaChao = this.criarTilemap(tilePx, largura, altura, texturaDoTerreno);
+    const texturaDoRecurso = this.criarTexturaDeRecurso(tilePx, carregada, estado);
+    const camadaDeRecursos = this.criarCamadaDeRecursos(tilePx, largura, altura, texturaDoRecurso);
 
     const camera = this.cameras.main;
     camera.setBounds(0, 0, larguraPx, alturaPx);
@@ -328,6 +341,7 @@ export class WorldScene extends Phaser.Scene {
       // onde ha rocha e imutavel, quanto sobrou nao e, e o jogador tem de ver o
       // tile esgotar.
       estado.recursosVisiveis = this.atualizarRecursos(camadaDeRecursos);
+      estado.vegetacaoRenderizada = this.vegetacaoDesenhada.size;
       estado.pronto = true;
       if (this.ponte.atual) this.atualizarPredios(this.ponte.atual, tilePx, estado);
 
@@ -375,8 +389,12 @@ export class WorldScene extends Phaser.Scene {
    * Uma cor chapada por tipo e o escopo inteiro do desenho desta feature. Sem
    * textura, sem transicao de borda, sem arte — o suficiente para a tela nao
    * mentir: o jogador ve a agua antes de a construcao ser recusada por ela.
+   *
+   * F-SPR — a cor chapada continua sendo o placeholder; o tipo que tem textura no
+   * manifesto (`tipo: "terreno"`) tem a celula dele trocada pela imagem, e so ela.
+   * Devolve a chave da tira que vira tileset.
    */
-  private criarTexturaDeTerreno(tilePx: number): void {
+  private criarTexturaDeTerreno(tilePx: number, carregada: TexturaCarregada, debug: EstadoDebug): string {
     const g = this.make.graphics({ x: 0, y: 0 }, false);
     terrenoDeRender.cores.forEach((hex, codigo) => {
       g.fillStyle(Phaser.Display.Color.HexStringToColor(hex).color, 1);
@@ -386,6 +404,44 @@ export class WorldScene extends Phaser.Scene {
     });
     g.generateTexture(CHAVE_TEXTURA_TERRENO, tilePx * terrenoDeRender.cores.length, tilePx);
     g.destroy();
+    const arte = terrenoDeRender.tipos.map(
+      (id) => texturaDaCamada(manifestoDoJogo, 'terreno', id, ESTADO_DO_TERRENO, carregada),
+    );
+    debug.arteDasCamadas = {
+      ...debug.arteDasCamadas,
+      terreno: terrenoDeRender.tipos.filter((_id, codigo) => arte[codigo] !== null),
+    };
+    return this.sobreporArteNaTira(CHAVE_TEXTURA_TERRENO, tilePx, arte, []);
+  }
+
+  /**
+   * F-SPR — a tira de placeholder com as celulas que tem arte trocadas pela imagem,
+   * redimensionada para o tile (o `tamanho` do arquivo nao entra: textura de tile
+   * cobre exatamente um tile, e so). `vazias` sao celulas limpas — o recurso que
+   * virou sprite de vegetacao nao pode deixar o marcador por baixo da arvore.
+   *
+   * Sem nenhuma arte, devolve a propria tira e nada muda: o placeholder de hoje e
+   * o fallback, pixel a pixel.
+   */
+  private sobreporArteNaTira(
+    chaveDaTira: string, tilePx: number, arte: readonly (string | null)[], vazias: readonly number[],
+  ): string {
+    if (arte.every((c) => c === null) && vazias.length === 0) return chaveDaTira;
+    const base = this.textures.get(chaveDaTira).getSourceImage() as HTMLCanvasElement;
+    const chave = `${chaveDaTira}:arte`;
+    const tira = this.textures.createCanvas(chave, base.width, base.height);
+    if (!tira) throw new Error(`WorldScene: falha ao criar a tira '${chave}'.`);
+    const ctx = tira.getContext();
+    ctx.drawImage(base, 0, 0);
+    for (const codigo of vazias) ctx.clearRect(codigo * tilePx, 0, tilePx, tilePx);
+    arte.forEach((chaveDaArte, codigo) => {
+      if (chaveDaArte === null) return;
+      const imagem = this.textures.get(chaveDaArte).getSourceImage() as HTMLImageElement;
+      ctx.clearRect(codigo * tilePx, 0, tilePx, tilePx);
+      ctx.drawImage(imagem, codigo * tilePx, 0, tilePx, tilePx);
+    });
+    tira.refresh();
+    return chave;
   }
 
   /**
@@ -398,8 +454,12 @@ export class WorldScene extends Phaser.Scene {
    * tile inteiro esconderia o terreno por baixo, e a F-T1 existe justamente para
    * o jogador ler o terreno. Arte de recurso e decisao humana (§9); isto e a
    * forma geometrica que diz "tem alguma coisa aqui" ate la.
+   *
+   * F-SPR — o recurso com textura no manifesto troca o losango pela imagem; o que
+   * e VEGETACAO (`tipo: "vegetacao"`) deixa a celula vazia e vira sprite em pe
+   * (`pintarVegetacao`). O esgotado continua marcador. Devolve a chave da tira.
    */
-  private criarTexturaDeRecurso(tilePx: number): void {
+  private criarTexturaDeRecurso(tilePx: number, carregada: TexturaCarregada, debug: EstadoDebug): string {
     const g = this.make.graphics({ x: 0, y: 0 }, false);
     const meio = tilePx / 2;
     const raio = Math.max(2, Math.round(tilePx * 0.3));
@@ -419,11 +479,26 @@ export class WorldScene extends Phaser.Scene {
     });
     g.generateTexture(CHAVE_TEXTURA_RECURSO, tilePx * recursosDeRender.cores.length, tilePx);
     g.destroy();
+    // Codigo 0 e o esgotado ficam fora: vazio e marcador unico, sem entrada propria.
+    this.desenhoPorCodigo = recursosDeRender.cores.map((_cor, codigo): DesenhoDoRecurso => {
+      const id = recursosDeRender.tipos[codigo - 1];
+      if (codigo === 0 || codigo === recursosDeRender.codigoEsgotado || id === undefined) return { como: 'marcador' };
+      return desenhoDoRecurso(manifestoDoJogo, id, carregada);
+    });
+    const arte = this.desenhoPorCodigo.map((d) => (d.como === 'textura' ? d.chave : null));
+    const vazias = this.desenhoPorCodigo.flatMap((d, codigo) => (d.como === 'vegetacao' ? [codigo] : []));
+    const idsCom = (como: DesenhoDoRecurso['como']): string[] => this.desenhoPorCodigo.flatMap(
+      (d, codigo) => (d.como === como ? [recursosDeRender.tipos[codigo - 1] as string] : []),
+    );
+    debug.arteDasCamadas = { ...debug.arteDasCamadas, recurso: idsCom('textura'), vegetacao: idsCom('vegetacao') };
+    return this.sobreporArteNaTira(CHAVE_TEXTURA_RECURSO, tilePx, arte, vazias);
   }
 
-  private criarCamadaDeRecursos(tilePx: number, largura: number, altura: number): Phaser.Tilemaps.TilemapLayer {
+  private criarCamadaDeRecursos(
+    tilePx: number, largura: number, altura: number, textura: string,
+  ): Phaser.Tilemaps.TilemapLayer {
     const mapa = this.make.tilemap({ tileWidth: tilePx, tileHeight: tilePx, width: largura, height: altura });
-    const tileset = mapa.addTilesetImage('recurso', CHAVE_TEXTURA_RECURSO, tilePx, tilePx, 0, 0);
+    const tileset = mapa.addTilesetImage('recurso', textura, tilePx, tilePx, 0, 0);
     if (!tileset) throw new Error('WorldScene: falha ao criar o tileset de recurso.');
     const camada = mapa.createBlankLayer('recursos', tileset);
     if (!camada) throw new Error('WorldScene: falha ao criar a camada de recursos.');
@@ -445,14 +520,40 @@ export class WorldScene extends Phaser.Scene {
       const { gx, gy } = tileDeChave(chave);
       camada.putTileAt(codigo, gx, gy);
       this.recursosDesenhados.set(chave, codigo);
+      this.pintarVegetacao(chave, codigo);
     }
     for (const chave of [...this.recursosDesenhados.keys()]) {
       if (recursos[chave] !== undefined) continue;
       const { gx, gy } = tileDeChave(chave);
       camada.putTileAt(0, gx, gy);
       this.recursosDesenhados.delete(chave);
+      this.pintarVegetacao(chave, 0);
     }
     return this.contarRecursosVisiveis(camada);
+  }
+
+  /** F-SPR — poe, troca ou tira o sprite de vegetacao de um tile, pelo codigo que a
+   *  camada acabou de receber. O `anchor` do manifesto cai no meio da borda de BAIXO
+   *  do tile, como o do predio no footprint; a imagem sai no tamanho do arquivo e pode
+   *  transbordar o tile — por isso e sprite, e nao celula da tira. Depth pelo pe: a
+   *  unidade no tile de cima passa atras, a do tile de baixo passa na frente. */
+  private pintarVegetacao(chave: string, codigo: number): void {
+    const desenho = this.desenhoPorCodigo[codigo];
+    const atual = this.vegetacaoDesenhada.get(chave);
+    if (desenho?.como !== 'vegetacao') {
+      atual?.destroy();
+      this.vegetacaoDesenhada.delete(chave);
+      return;
+    }
+    if (atual?.texture.key === desenho.chave) return;
+    atual?.destroy();
+    const { tilePx } = configDoMapa;
+    const canto = gridToScreen(tileDeChave(chave), tilePx, ESCALA_DO_MUNDO);
+    const pe = { x: canto.x + tilePx / 2, y: canto.y + tilePx };
+    const imagem = this.add.image(pe.x, pe.y, desenho.chave)
+      .setOrigin(desenho.entrada.anchor[0], desenho.entrada.anchor[1])
+      .setDepth(depthDeY(pe.y));
+    this.vegetacaoDesenhada.set(chave, imagem);
   }
 
   /** Lido de volta da camada desenhada, como `contarTerrenoVisivel`: o roteiro
@@ -471,9 +572,11 @@ export class WorldScene extends Phaser.Scene {
     return contagem;
   }
 
-  private criarTilemap(tilePx: number, largura: number, altura: number): Phaser.Tilemaps.TilemapLayer {
+  private criarTilemap(
+    tilePx: number, largura: number, altura: number, textura: string,
+  ): Phaser.Tilemaps.TilemapLayer {
     const mapa = this.make.tilemap({ tileWidth: tilePx, tileHeight: tilePx, width: largura, height: altura });
-    const tileset = mapa.addTilesetImage('terreno', CHAVE_TEXTURA_TERRENO, tilePx, tilePx, 0, 0);
+    const tileset = mapa.addTilesetImage('terreno', textura, tilePx, tilePx, 0, 0);
     if (!tileset) throw new Error('WorldScene: falha ao criar o tileset de terreno.');
     const camada = mapa.createBlankLayer('chao', tileset);
     if (!camada) throw new Error('WorldScene: falha ao criar a camada de chao.');

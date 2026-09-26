@@ -1764,7 +1764,58 @@ a geografia já corrigida do que regravar 900 tiles depois.
   recebem tiles distintos.
 - **Evidência**: `test-output/F-T2c.json`
 
+### F-SPR — Carregamento de sprite de terreno, recurso, vegetação e unidade (render; ENTREGUE 2026-09-26)
+- **Origem — ordem do operador, leva noturna de 2026-09-26, item 5**: "Sem arte
+  nenhuma: só o carregamento, com fallback para o placeholder atual quando não houver
+  PNG." Plano em `docs/planos/F-SPR-carregamento.md`. **Render puro**: nada em
+  `src/sim/`, nada em `data/`, e `assets/manifest.json` intocado (não há arte para
+  declarar; o que mudou foi o tipo que o lê).
+- **Aceite**: (1) o manifesto aceita `terreno`, `recurso`, `vegetacao` e `unidade`
+  **sem mudar a entrada de prédio** — mesmos oito campos, mesma chave
+  `predio:<id>:<estagio>`, e as regras de prédio da F17f continuam valendo sobre as
+  entradas `predio`; (2) o teste prova os dois lados para cada camada (arte declarada
+  e carregada resolve; sem entrada, estado ou arquivo, cai no placeholder); (3) o
+  roteiro mostra a tela de hoje intacta, com a cena publicando arte só para o id que o
+  manifesto declara.
+- **Evidência**: `test-output/F-SPR-carregamento.json` +
+  `screenshots/F-SPR-*.png` (roteiro `F-SPR`).
+- **O contrato que a arte herda (decisões minhas, marcadas para o operador revisar)**:
+  - **Chave**: `<tipo>:<id>:<estado>` para todo tipo. Para prédio é a de antes.
+  - **Terreno** (`tipo: "terreno"`, `id` = tipo de `render/mapa.ts`, estado
+    `padrao`) e **recurso** (`tipo: "recurso"`, estado `presente`) são **textura de
+    tile**: a imagem é redimensionada para `tilePx × tilePx` dentro da tira que vira
+    tileset. Índice do tile, código, `putTileAt` e as contagens do roteiro não mudam.
+    O esgotado continua sendo o marcador único.
+  - **Vegetação** (`tipo: "vegetacao"`, `id` = id do recurso, `tree`, estado
+    `presente`) é **sprite**, não textura: uma imagem por tile presente, no tamanho
+    do arquivo, com o `anchor` no meio da borda de baixo do tile e depth pelo pé. A
+    célula da tira fica vazia. Um id não pode ser `recurso` e `vegetacao` ao mesmo
+    tempo (guarda em `tests/F-SPR-carregamento.test.ts`).
+  - **Unidade** (`tipo: "unidade"`, `id` = tipo neutro) usa **um arquivo por
+    direção**, não folha. Estado `"<pose>:<direcao>"`, com as direções
+    `n ne l se s so o no`, e hoje só a pose `parado`. **Oeste é espelho**: `o`, `no`
+    e `so` sem arquivo usam `l`, `ne` e `se` com `flipX`, de modo que 4 direções
+    custam 3 arquivos e 8 custam 5. Quantas direções cada tipo tem vem de
+    `data/units.json` (`direcoesDeSprite`: civis 4, militares 8); os mercenários não
+    declaram e ficam no retângulo. O `anchor` cai na posição desenhada da unidade.
+  - **Nenhum tamanho é calculado** fora do prédio: sprite sai no `tamanho` do
+    arquivo, e textura de tile sai no `tilePx`. O fator de transbordo do prédio
+    (correção do BRIEF-ARTE, 2026-09-26) **não passa por este código**.
+- **O que NÃO mudou e vai mudar com o fator de transbordo**: o desenho de **prédio**
+  continua forçando a largura do footprint (`WorldScene.desenharSprite`,
+  `setScale(larguraPx / entrada.tamanho[0])`), e a F17f continua afirmando
+  `tamanho[0] === footprint[0] × tilePx` (`tests/F17f-manifesto.test.ts`, teste "a
+  largura em px…"). As duas coisas são a regra "largura = footprint × 64" que o
+  operador marcou como errada. Não foram mexidas aqui porque a convenção nova espera a
+  medição do operador; quando ela vier, mudam juntas.
+
 ### F-TR — Tratamento visual do terreno e dos recursos (render)
+- **Nota herdada da F-SPR (2026-09-26)**: o **carregamento** já existe. Esta feature
+  é **arte + transição**: declarar as entradas `terreno`/`recurso`/`vegetacao` no
+  manifesto (contrato no item F-SPR, logo acima) e acrescentar o que a F-SPR não fez —
+  o tile de transição entre terrenos, que precisa de estado novo na entrada de
+  terreno (hoje só `padrao`), e o esgotado por tipo. A árvore com depth sorting já
+  está resolvida como sprite de vegetação.
 - **Posição e forma — decisão do operador, 2026-09-24**: **um item, não três.**
   Ele vem **depois da F-T2**, quando as duas camadas já existirem; o desenho do
   **especialista fora do prédio** não está aqui, vai junto da F-T3.

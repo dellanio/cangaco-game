@@ -199,5 +199,8 @@
   },
   "F-T4d-pescador-em-partida": {
     "passes": true
+  },
+  "F-SPR-carregamento": {
+    "passes": true
   }
 }

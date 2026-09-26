@@ -7377,3 +7377,61 @@ tabela), mas **isso não foi rodado** nesta sessão: a geometria longe não est�
    sonda, não como asserção permanente, porque a geometria longe não roda na suíte e o
    BUG-G (trava) mata a vila a 2 e 3 tiles. Se o operador quiser essa proteção, ela é uma
    corrida nova de 36 000 ticks, com o campo atrás, e depende do BUG-G corrigido.
+
+## 2026-09-26 (madrugada) — Leva noturna, item 5: F-SPR, carregamento de sprite sem arte
+
+O plano está em `docs/planos/F-SPR-carregamento.md`, e o item novo no `BUILD_PLAN.md` (F-SPR,
+logo antes da F-TR) traz o contrato inteiro. Render puro: `src/sim/` e `data/` não mudaram, e
+`assets/` e `tools/derivar-sprites.js` também não, porque são do Codex, na `derivacao-sprites`.
+O `assets/manifest.json` **não foi tocado**.
+
+**Feito:**
+- `src/render/manifesto.ts` continua sem import:
+  - `EntradaDeAsset` (prédio) está intacta;
+  - ganhou `EntradaDeCamada`, com os quatro tipos novos, e a união `EntradaDoManifesto`;
+  - ganhou `chaveDeTextura(tipo, id, estado)`, e `chaveDaTextura` de prédio devolve a mesma chave de antes;
+  - ganhou os resolvedores `texturaDaCamada`, `desenhoDoRecurso`, `spriteDaUnidade` e `direcaoDoPasso`.
+- `src/render/direcoes-de-sprite.ts`: dá a `direcoesDeSprite` de `data/units.json` o
+  primeiro leitor que ela teve.
+- `sprites.ts` enfileira todos os tipos.
+- `WorldScene`:
+  - as tiras de terreno e de recurso recebem a arte por célula, e sem arte a tira é a mesma de antes;
+  - a vegetação é sprite, com diff por tile.
+- `unidades.ts`: o sprite troca o retângulo quando resolve, e a direção sai do passo.
+- Debug: entram `arteDasCamadas` e `vegetacaoRenderizada`, e `UnidadeRenderizada` ganha `direcao` e `sprite`.
+- `tests/F17f-manifesto.test.ts`: as regras de prédio passaram a valer sobre
+  `manifesto.assets.filter(ehEntradaDePredio)`. Nenhuma foi afrouxada; hoje as duas listas são iguais.
+
+**Verificado (rodado, e a evidência aberta):**
+- `tests/F-SPR-carregamento.test.ts` passa.
+  - Os dois lados foram provados com manifesto sintético em todas as camadas.
+  - Os guardas do manifesto real rodam, e cada um acusa a entrada sintética errada.
+- O roteiro `F-SPR` saiu com 0. Abri `screenshots/F-SPR-2-unidades-andando.png`: cor de
+  terreno, losango de recurso e retângulo de unidade estão como antes, e o armazém tem o
+  sprite de antes.
+  - O roteiro puxa uma rua para as unidades andarem. Na abertura ninguém anda, e a primeira
+    versão do roteiro reprovou por isso.
+- Não-regressão, todos com código de saída 0, sem abrir imagem: `F-T1`, `F-T2a`, `F10`, `F17`, `F17f`, `F-D4` e `F18f`.
+
+**Decisões minhas, PARA O OPERADOR REVISAR** (o texto completo está no item F-SPR):
+1. **(a) Terreno e recurso são textura de tile.** Muda só a tira que vira tileset. Ela
+   passa a ser composta por célula, com a imagem redimensionada para `tilePx`. Índice,
+   código e contagens seguem iguais. Transição entre terrenos e esgotado por tipo ficam para a F-TR.
+2. **(b) Vegetação é sprite, não textura.** A árvore é mais alta que o tile, e a unidade
+   atrás dela precisa de depth por `y`, que camada de tile não dá. Quem diz o que é
+   vegetação é o manifesto (`tipo: "vegetacao"`), não uma lista no código.
+3. **(c) Unidade usa um arquivo por direção, não folha de sprite.**
+   - Estado `"<pose>:<direcao>"`, e o oeste é espelho.
+   - A folha precisaria de campos novos no manifesto (quadro e ordem das direções), e ordem
+     errada troca direção em silêncio. O arquivo por direção cabe nos oito campos da §9 e
+     confere a dimensão pelo cabeçalho, como a F17f.
+   - É o contrato que os 28 tipos herdam.
+4. **Direção de 4 na diagonal cai na horizontal** (empate |dx| = |dy| vai para `l`/`o`).
+   Parada, a unidade mantém a última direção, e o padrão é `s`.
+
+**Aberto, e não mexido de propósito:**
+- O prédio ainda força "largura = footprint × tilePx" em dois lugares:
+  - `WorldScene.desenharSprite` (`setScale(larguraPx / entrada.tamanho[0])`);
+  - o teste "a largura em px…" da F17f.
+- É a regra que o operador marcou como errada. Ela muda quando ele passar o fator medido.
+  O código da F-SPR não calcula tamanho nenhum e não precisa mudar junto.

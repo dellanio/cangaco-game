@@ -88,6 +88,17 @@ export interface EstadoDebug {
    *  a ve sumir depois — sem olhar pixel (§8). Vazio ate o primeiro
    *  POST_RENDER. */
   recursosVisiveis: Readonly<Record<string, number>>;
+  /** F-SPR — os ids que resolveram ARTE do manifesto em cada camada de tile, lidos
+   *  uma vez no `create` (a arte chega no `preload`). Lista vazia e o placeholder de
+   *  hoje — cor chapada e marcador —, que e comportamento normal (§9). Vegetacao e o
+   *  recurso que virou sprite em pe, e nao celula da tira. */
+  arteDasCamadas: {
+    readonly terreno: readonly string[];
+    readonly recurso: readonly string[];
+    readonly vegetacao: readonly string[];
+  };
+  /** F-SPR — quantos sprites de vegetacao a cena tem de pe agora (mapa inteiro). */
+  vegetacaoRenderizada: number;
   /** Quantos tiles de estrada DE PE (F08) a cena tem desenhados agora. */
   estradasRenderizadas: number;
   /** F18d-2 — quantos tiles de CANTEIRO (`estradasPlanejadas`, F18d-1b) a cena tem
@@ -202,6 +213,8 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     spritesDePredio: {},
     terrenoVisivel: {},
     recursosVisiveis: {},
+    arteDasCamadas: { terreno: [], recurso: [], vegetacao: [] },
+    vegetacaoRenderizada: 0,
     estradasRenderizadas: 0,
     estradasPlanejadasRenderizadas: 0,
     pedraNoCanteiroNoEstado: 0,

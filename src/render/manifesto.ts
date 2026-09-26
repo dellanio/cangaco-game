@@ -42,15 +42,56 @@ export interface EntradaDeAsset {
   readonly origem: OrigemDoAsset;
 }
 
+/** Os tipos de asset fora do predio (F-SPR). */
+export const TIPOS_DE_CAMADA = ['terreno', 'recurso', 'vegetacao', 'unidade'] as const;
+export type TipoDeCamada = (typeof TIPOS_DE_CAMADA)[number];
+
+/**
+ * F-SPR — os mesmos oito campos da §9, para tudo que nao e predio. O que muda e o
+ * que cada campo quer dizer:
+ * - `terreno`/`recurso`: textura de TILE. `id` e o tipo neutro (`grama`, `rock`); a
+ *   imagem e redimensionada para o tile, entao `tamanho` e so o que o arquivo tem.
+ * - `vegetacao`: SPRITE em pe sobre o tile de um recurso (`tree`). Desenhada no
+ *   `tamanho` do arquivo, ancorada pelo `anchor` — pode transbordar o tile.
+ * - `unidade`: SPRITE, um arquivo por pose e direcao (`chaveDaPose`). O oeste e
+ *   espelho do leste quando nao declarado.
+ * `footprint` fica `[1, 1]` nos quatro: nenhum deles ocupa mais de um tile na sim.
+ */
+export interface EntradaDeCamada {
+  readonly id: string;
+  readonly tipo: TipoDeCamada;
+  readonly footprint: readonly [number, number];
+  /** Em px, do arquivo DERIVADO. Nenhuma conta o deduz: e o que o arquivo tem. */
+  readonly tamanho: readonly [number, number];
+  readonly anchor: readonly [number, number];
+  readonly estados: Readonly<Record<string, string>>;
+  readonly licenca: string;
+  readonly origem: OrigemDoAsset;
+}
+
+export type EntradaDoManifesto = EntradaDeAsset | EntradaDeCamada;
+
 export interface Manifesto {
   readonly versao: number;
-  readonly assets: readonly EntradaDeAsset[];
+  readonly assets: readonly EntradaDoManifesto[];
+}
+
+export function ehEntradaDePredio(e: EntradaDoManifesto): e is EntradaDeAsset {
+  return e.tipo === 'predio';
 }
 
 /** A entrada de um tipo de predio, ou `null` quando ele nao tem arte — e ai o
  *  render desenha o retangulo com o nome, que e comportamento normal (§9). */
 export function assetDoPredio(manifesto: Manifesto, tipo: string): EntradaDeAsset | null {
-  return manifesto.assets.find((e) => e.tipo === 'predio' && e.id === tipo) ?? null;
+  return manifesto.assets.find((e): e is EntradaDeAsset => ehEntradaDePredio(e) && e.id === tipo) ?? null;
+}
+
+/** F-SPR — a entrada de um id numa camada, ou `null`. O `tipo` discrimina: um predio,
+ *  ou um recurso, com o mesmo id de um terreno nao responde por ele. */
+export function assetDaCamada(manifesto: Manifesto, tipo: TipoDeCamada, id: string): EntradaDeCamada | null {
+  return manifesto.assets.find(
+    (e): e is EntradaDeCamada => e.tipo === tipo && e.id === id,
+  ) ?? null;
 }
 
 /** O arquivo de um estagio, ou `null` quando aquele estagio nao tem arte — um
@@ -62,5 +103,122 @@ export function arquivoDoEstagio(entrada: EntradaDeAsset, estagio: string): stri
 /** A chave de textura no Phaser. Uma funcao so para quem carrega e para quem
  *  desenha: duas formas de montar a mesma chave e como elas divergem. */
 export function chaveDaTextura(id: string, estagio: string): string {
-  return `predio:${id}:${estagio}`;
+  return chaveDeTextura('predio', id, estagio);
+}
+
+/** F-SPR — a mesma chave para todo tipo. Para predio da exatamente a de antes. */
+export function chaveDeTextura(tipo: string, id: string, estado: string): string {
+  return `${tipo}:${id}:${estado}`;
+}
+
+/** O estado lido na textura de terreno. Transicao e variacao sao da F-TR. */
+export const ESTADO_DO_TERRENO = 'padrao';
+/** O estado lido no recurso e na vegetacao com quantidade > 0. O esgotado continua
+ *  sendo o marcador unico da camada de tile (F-T2a) ate a F-TR separar por tipo. */
+export const ESTADO_PRESENTE = 'presente';
+
+/** Pergunta da cena ao loader: a textura desta chave chegou? Parametro para o
+ *  resolvedor continuar puro e testavel sem Phaser. */
+export type TexturaCarregada = (chave: string) => boolean;
+
+/** A chave de textura de um id de camada, ou `null` quando nao ha entrada, estado ou
+ *  arquivo carregado — `null` e o placeholder de hoje, nao falha (§9). */
+export function texturaDaCamada(
+  manifesto: Manifesto, tipo: 'terreno' | 'recurso' | 'vegetacao', id: string,
+  estado: string, carregada: TexturaCarregada,
+): string | null {
+  const entrada = assetDaCamada(manifesto, tipo, id);
+  if (!entrada || entrada.estados[estado] === undefined) return null;
+  const chave = chaveDeTextura(tipo, id, estado);
+  return carregada(chave) ? chave : null;
+}
+
+/**
+ * F-SPR — como a cena desenha um tipo de recurso PRESENTE:
+ * - `vegetacao`: sprite em pe por tile, e a celula da tira fica vazia;
+ * - `textura`: a celula da tira recebe a imagem;
+ * - `marcador`: o losango da F-T2a, que e o placeholder.
+ * Quem decide se e vegetacao e o manifesto (`tipo: "vegetacao"`), nao uma lista aqui.
+ */
+export type DesenhoDoRecurso =
+  | { readonly como: 'vegetacao'; readonly chave: string; readonly entrada: EntradaDeCamada }
+  | { readonly como: 'textura'; readonly chave: string }
+  | { readonly como: 'marcador' };
+
+export function desenhoDoRecurso(
+  manifesto: Manifesto, id: string, carregada: TexturaCarregada,
+): DesenhoDoRecurso {
+  const vegetacao = texturaDaCamada(manifesto, 'vegetacao', id, ESTADO_PRESENTE, carregada);
+  const entrada = assetDaCamada(manifesto, 'vegetacao', id);
+  if (vegetacao !== null && entrada !== null) return { como: 'vegetacao', chave: vegetacao, entrada };
+  const textura = texturaDaCamada(manifesto, 'recurso', id, ESTADO_PRESENTE, carregada);
+  if (textura !== null) return { como: 'textura', chave: textura };
+  return { como: 'marcador' };
+}
+
+/** As oito direcoes, em sentido horario a partir do norte (y cresce para o sul). */
+export const DIRECOES = ['n', 'ne', 'l', 'se', 's', 'so', 'o', 'no'] as const;
+export type Direcao = (typeof DIRECOES)[number];
+/** Com 4 direcoes, so os eixos. */
+export const DIRECOES_DE_QUATRO: readonly Direcao[] = ['n', 'l', 's', 'o'];
+/** O lado oeste e espelho (BRIEF-ARTE §6): falta `o`, desenha `l` virado. */
+export const ESPELHO_DO_OESTE: Readonly<Partial<Record<Direcao, Direcao>>> = { o: 'l', no: 'ne', so: 'se' };
+/** A unica pose que o render pede hoje. Animacao acrescenta poses, nao muda a chave. */
+export const POSE_PARADO = 'parado';
+
+/** A chave de `estados` de uma unidade: `"<pose>:<direcao>"`. */
+export function chaveDaPose(pose: string, direcao: Direcao): string {
+  return `${pose}:${direcao}`;
+}
+
+/**
+ * A direcao de um passo `(dx, dy)` em tiles, ou `null` parado. Com 4 direcoes o eixo
+ * dominante manda e o empate cai na horizontal (a diagonal do grid vira leste/oeste);
+ * com 8, o eixo menor que metade do maior conta como zero e o resto e o sinal.
+ */
+export function direcaoDoPasso(dx: number, dy: number, direcoes: 4 | 8): Direcao | null {
+  if (dx === 0 && dy === 0) return null;
+  const ax = Math.abs(dx);
+  const ay = Math.abs(dy);
+  if (direcoes === 4) {
+    if (ax >= ay) return dx > 0 ? 'l' : 'o';
+    return dy > 0 ? 's' : 'n';
+  }
+  const sx = ax * 2 < ay ? 0 : Math.sign(dx);
+  const sy = ay * 2 < ax ? 0 : Math.sign(dy);
+  if (sy === 0) return sx > 0 ? 'l' : 'o';
+  const vertical = sy < 0 ? 'n' : 's';
+  if (sx === 0) return vertical;
+  return `${vertical}${sx > 0 ? 'e' : 'o'}` as Direcao;
+}
+
+/** O que a cena desenha para uma unidade: a chave da textura e se vira o arquivo. */
+export interface SpriteDaUnidade {
+  readonly chave: string;
+  readonly espelhar: boolean;
+  readonly entrada: EntradaDeCamada;
+}
+
+/**
+ * F-SPR — o sprite de uma unidade numa pose e direcao, ou `null` (placeholder). A
+ * direcao declarada vence; sem ela, o oeste cai no espelho do leste. Direcao fora do
+ * conjunto do tipo (`ne` num civil de 4) nao existe e resolve `null`, e tipo sem
+ * `direcoesDeSprite` no dado (os mercenarios, decisao do operador) tambem.
+ */
+export function spriteDaUnidade(
+  manifesto: Manifesto, tipo: string, pose: string, direcao: Direcao,
+  direcoesDoTipo: 4 | 8 | null, carregada: TexturaCarregada,
+): SpriteDaUnidade | null {
+  if (direcoesDoTipo === null) return null;
+  if (direcoesDoTipo === 4 && !DIRECOES_DE_QUATRO.includes(direcao)) return null;
+  const entrada = assetDaCamada(manifesto, 'unidade', tipo);
+  if (!entrada) return null;
+  const tentar = (d: Direcao, espelhar: boolean): SpriteDaUnidade | null => {
+    const estado = chaveDaPose(pose, d);
+    if (entrada.estados[estado] === undefined) return null;
+    const chave = chaveDeTextura('unidade', tipo, estado);
+    return carregada(chave) ? { chave, espelhar, entrada } : null;
+  };
+  const espelho = ESPELHO_DO_OESTE[direcao];
+  return tentar(direcao, false) ?? (espelho ? tentar(espelho, true) : null);
 }
