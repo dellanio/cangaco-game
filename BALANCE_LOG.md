@@ -22,11 +22,20 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
 
 ## Observações abertas
 
-- [2026-09-27] com o campo crescendo no tile, doze tiles de cana rendem só 1,5× um (15 contra 10
-  em 12 000 ticks; 2 tiles 13, 4 ou mais 15), contra 2,9× da fazenda | ciclo do Canavial 600 ticks
-  (`wineyard.sai.wine` 0,5) contra 150 da fazenda; o canavieiro satura com 2 a 4 tiles | medido por
-  sonda apagada, `cenarioDeCanavial` | `data/production.json` | pergunta ao operador (PROGRESS,
-  noite 6).
+- [2026-09-27] **PRÓXIMO LOTE COMEÇA AQUI** — com o campo crescendo no tile, doze tiles de cana
+  rendem só 1,5× um: 15 contra 10 em 12 000 ticks (2 tiles dão 13; 4 ou mais, 15). A fazenda
+  rende 2,9× | medido por sonda apagada, `cenarioDeCanavial`.
+  - **Decisão do operador:** entra no próximo lote, não agora.
+  - **Suspeita do operador, a medir primeiro:** a colheita de 600 ticks satura o canavieiro com
+    2 a 4 tiles. Se for isso, o número a girar é o **tempo de colheita**, que está 4× o da
+    fazenda (150) sem razão medida.
+  - **Verificado no código (2026-09-27):** hoje o tempo de colheita **não é um número
+    separado**. O relógio que anda no tile é `receita.ticksDoCiclo`
+    (`sim/systems/especialistas.ts:516`). Ele vem da taxa de saída no carregamento
+    (`sim/data/loader.ts:371`), e por isso 600 = 300 / `wineyard.sai.wine` 0,5.
+  - **Consequência:** girar a colheita sem mexer na vazão de cachaça pede um campo novo no
+    dado, e isso é mudança de modelo. O lote decide entre isso e girar a própria taxa.
+  - `data/production.json` (`wineyard.sai.wine`).
 
 - [2026-09-24] o terreno passou a existir (F-T1) e viagem deixou de ser linha reta | medido: a
   travessia de 36 tiles ao redor do lago custa **292 ticks** contra **252** no mesmo trajeto sem
@@ -685,6 +694,17 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
 ---
 
 ## Ciclos fechados
+
+### Característica, não defeito: fazenda grande atrasa o 1º milho (decisão do operador, 2026-09-27)
+- **Medido:** com alcance 2 e o rodízio, o 1º milho sai no 1 949 com 14 tiles, no 2 464 com
+  20, no 3 205 com 30 e no **3 791** com 40, que é o anel inteiro. Acima de ~15 tiles, cada
+  tile soma ~115 ticks. No longo prazo mais tiles rendem mais: **135 contra 113** até o tick
+  30 000. A tabela está no `BUILD_PLAN.md`, F-CAMPO.
+- **Decisão:** aceito. É o "semeia tudo e espera" que o próprio KaM faz. O jogador que ara
+  quarenta campos está investindo no longo prazo, e a espera é o preço.
+- **Recusado:** colher o maduro antes de semear o resto na primeira volta. Parece atalho, mas
+  cria o defeito oposto: o roceiro nunca termina de semear enquanto houver algo maduro.
+  **Não reabrir** sem medida nova.
 
 ### `farm.sai.corn` 3.0 → 2.0 — o 1:1:1 no modelo do campo crescendo (fechado em 2026-09-27, `main`)
 - **Aberta como:** com crescer 1 650 e alcance 2, a entrada do moinho da F19 terminava

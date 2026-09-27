@@ -9136,9 +9136,18 @@ achar a projeção real, que talvez não seja isométrica. A F-ESC espera esse r
 - Semear mais de ~15 tiles passa do crescer, e a conta por tile (~115 ticks de viagem
   de semear) explica a inclinação da tabela. Não foi medido por fase.
 
-## Perguntas em aberto (2026-09-27, noite 6)
-1. Fazenda grande: o 1º milho atrasa ~115 ticks por tile acima de ~15, até 3 791 com
-   o anel de 2 cheio. É aceitável, como o "semeia todos e espera" do KaM? Ou a
-   primeira volta do rodízio deveria colher o maduro antes de semear o resto?
-2. Canavial: com ciclo de 600, doze tiles rendem 1,5× um. É o que se quer da cana, ou
-   o `wineyard.sai.wine` entra no próximo lote?
+## 2026-09-27 (noite, 7) — decisões do operador sobre a fazenda grande e o Canavial
+
+As duas perguntas da noite 6 foram respondidas e saíram desta seção.
+
+- **Fazenda grande: aceito, como característica.** O 1º milho vai até 3 791 com o anel
+  de 2 cheio, e no longo prazo rende 135 contra 113. Colher o maduro antes de semear o
+  resto foi recusado: o roceiro nunca terminaria de semear. Registrado no
+  `BALANCE_LOG.md`, em Ciclos fechados.
+- **Canavial a 1,5×: próximo lote**, que começa por ele. A suspeita do operador é o
+  tempo de colheita (600 contra 150).
+  - **Verificado no código:** esse tempo é o `receita.ticksDoCiclo`, que vem de
+    `wineyard.sai.wine`. Não existe número separado, e girar só a colheita pede um
+    campo novo. Anotado na observação do `BALANCE_LOG.md`.
+- **F-ESC:** começa quando o Codex sair do `render/`, onde ele está no azimute da câmera
+  do Blender e vai mexer nos assets. Não foi começada.

@@ -3760,7 +3760,10 @@ Casos 2 e 4 do prédio vivo (`docs/BRIEF-ARTE.md` §4a). Decisão do operador: c
     - O alcance 2 **limita** o atraso (no máximo 3 791, contra 5 051 com alcance 4),
       mas **não o elimina**. É o "semeia todos e espera" do rodízio.
     - No regime, mais tiles ainda rendem mais.
-    - **Espera o operador:** decidir se é aceitável.
+    - **Decisão do operador (2026-09-27): aceito, como característica.** É o "semeia tudo
+      e espera" do KaM: 40 campos são investimento de longo prazo. Colher antes de semear
+      foi recusado, porque o roceiro nunca terminaria de semear (`BALANCE_LOG.md`, Ciclos
+      fechados). O Canavial a 1,5× abre o próximo lote pelo tempo de colheita.
 - **O que é hoje (medido, 2026-09-26)**:
   - `avancarPlantio` (`sim/systems/especialistas.ts:395-406`) ocupa o roceiro por
     `reposicao.ticks` = 150 (30 s na escala `economia` 2,0), que cobre arar, semear **e
@@ -3923,6 +3926,9 @@ Casos 2 e 4 do prédio vivo (`docs/BRIEF-ARTE.md` §4a). Decisão do operador: c
   - Os rótulos madeira/pedra no tema: confirmado não criar, porque nada os lê.
 
 ### F-ESC — A escala do prédio: altura máxima pela largura (render + ferramenta; proposta, não implementar antes do sim do operador)
+- **Quando começar (operador, 2026-09-27):** assim que o Codex sair do `render/`. Ele está
+  ajustando o azimute da câmera do Blender e vai mexer nos assets. Até lá, a F-ESC não
+  começa.
 - **Liberada (operador, 2026-09-27, noite 6):** o Codex leu o kam_remake, e o KaM é
   **ortogonal**:
   - tiles quadrados de 40×40, `glOrtho`, e conversão que não mistura X com Y;
