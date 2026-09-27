@@ -554,6 +554,54 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   2026-09-26): o custo fica fora, em definitivo, e está revogado no GDD §5.4.** | `production.json:wineyard`
 - [2026-09-26] a mina colhe sem sair (`colheita.aDistancia`, F-CANA). O ciclo do minério
   ficou mais curto pelo tempo da ida e da volta ao veio, que não foi medido. | `production.json:*_mine.sai`
+- [2026-09-27] **LOTE 2 MEDIDO — o padrão da fazenda só se repete na MADEIRA; proposta com
+  a conta, nada girado** | pedido do operador: *"para cada um, quanto do ciclo é colheita,
+  quanto é caminhada, e se a colheita sozinha já ocupa o orçamento de quem consome a saída"*.
+  Sonda temporária (apagada), 12 000 ticks, rótulo da FSM do especialista contado tick a
+  tick, gaveta `saida` esvaziada a cada tick (isola o campo da logística), intervalo entre
+  `goods-produced` do mesmo prédio. Cenários de `tests/helpers/producao-cenario.ts`.
+
+  | prédio | cenário | colheita | caminhada | espera | intervalo medido | `ticksDoCiclo` | quem consome, e o orçamento |
+  |---|---|---|---|---|---|---|---|
+  | pedreira | `cenarioDePedreira` (7 tiles do lajedo) | 65 % | 35 % | 0 | 257,7 | 167 | obra/estrada: sem ciclo fixo |
+  | pedreira | `cenarioOraculo` (colada) | 67 % | 32 % | 0 | 247,4 | 167 | idem |
+  | lenhador w1 / w2 | `cenarioOraculo` | 78 % / 77 % | 17 % / 18,5 % | 5 % / 4 % | 660,9 / 697,1 | 545 | serraria, 273 por tora; 2:1 → **272,5 por lenhador** |
+  | serraria | `cenarioOraculo`, sem drenar | — | — | **25 %** `esperando_insumo` | 330,6 (mín. 273) | 273 | — |
+  | mina de ouro | `cenarioDaCadeiaDoOuro` | 100 % | 0 (`aDistancia`) | 0 | 300 exato | 300 | metalurgia, 600 por minério |
+  | mina de carvão | idem | 100 % | 0 | 0 | 250 exato | 250 | metalurgia 600, ferraria 300, oficinas 375 |
+  | mina de ferro | não medida: `aDistancia`, mesmo código do ouro | 100 % (derivado) | 0 | — | = 300 (derivado) | 300 | ferraria, 300 por minério (1:1) |
+  | pescador | `cenarioDePescador` (açude da vila) | 67 % | 33 % | 0 | 450,3 | 300 | Bodega: sem ciclo fixo |
+  | pescador | `cenarioDePescadorNoLagoGrande` | 93 % | 7 % | 0 | 322,4 | 300 | idem |
+
+  **Leitura (verificado nas linhas acima):**
+  - **Madeira: o padrão se repete.** A colheita sozinha (545) já é o orçamento inteiro que a
+    proporção 2:1 dá a cada lenhador (2 × 273 = 546). A caminhada (~125 por tora: w1 2024 ÷ 17,
+    w2 2218 ÷ 17) fica fora do orçamento, e a serraria espera 25 % do tempo. É a entrada de
+    2026-09-25 (par = 81 % de uma serraria), agora com a divisão por fase.
+  - **Pedreira e pescador: sem consumidor de ciclo fixo, então a pergunta não tem orçamento
+    para comparar.** A caminhada pesa 32–35 % na pedreira e 7–33 % no pescador conforme o
+    lugar, e é o que a entrada de 2026-09-25 já dizia: número por prédio não existe quando a
+    viagem é geografia. **Não proponho giro.** Nota não resolvida: a pedreira colada deu
+    247,4 aqui e 211,2 na medida de 2026-09-25 (`aberturaDaFaseA`). **Hipótese não conferida:**
+    em 12 000 ticks o lajedo mais perto se esgota e a escolha anda para tiles mais longe.
+  - **Minas: o padrão não se repete.** Desde a F-CANA não andam, e o intervalo é o ciclo do dado
+    ao tick. Ouro 300 contra 600 da metalurgia (sobra); ferro 300 contra 300 da ferraria (1:1,
+    sem folga, mas sem perda). Não há proporção de mina em `proporcoesDeReferencia`.
+
+  **Proposta (não girada), só a madeira:**
+  - `production.json:woodcutters.sai.tree_trunk` **0,55 → 0,71/min**. Conta: o lenhador tem
+    546 ticks por tora (2 × 273); desconta-se a caminhada medida (~125) e a transição (1), e
+    sobram **420** para a colheita. 0,71/min = 84,5 s × 5 ticks/s (`economia` 2,0) = **423**
+    ticks, o que dá 423 + 125 + 1 = 549 por lenhador e 274,5 pelo par, ou seja, a serraria
+    anda cheia. É o mesmo conserto do lote 1: a caminhada fica dentro da conta, de propósito.
+  - Fora da conta, de propósito: a **espera** do lenhador (4–5 %, ~32 ticks por tora) é árvore
+    faltando ao alcance, não colheita. Se entrasse, o número seria 0,77/min (388 ticks). Ela
+    é parafuso de outro eixo (replantio, `tree` e regeneração) e fica para o lote com eles.
+  - Alternativa: a proporção 2:1 → 2,5:1 e o número intocado (680 ÷ 2,5 = 272). Recomendo a
+    taxa: o 2:1 é a referência do GDD §4.5, e o lote 1 abriu o precedente de ajustar a colheita
+    e não a proporção.
+  - **Pergunta ao operador:** gira a madeira sozinha ou espera o lote com a espera do lenhador?
+  | `production.json:woodcutters.sai.tree_trunk`, `production.json:proporcoesDeReferencia`
 
 ---
 

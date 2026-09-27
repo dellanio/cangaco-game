@@ -3551,6 +3551,19 @@ Casos 2 e 4 do prédio vivo (`docs/BRIEF-ARTE.md` §4a). Decisão do operador: c
   - **F-CAMPO-a (sim + dado)**: estado do tile, escolha do tile, crescimento por tempo.
   - **F-CAMPO-b (render)**: o sprite do estado, desenhado sobre o tile (BRIEF-ARTE §4a,
     tipo `cultura`). Placeholder até a arte existir, como todo asset.
+- **Estado da F-CAMPO-a (2026-09-27): implementada na branch `f-campo-a` (commit
+  `10b5869`, `wip`), aceite REPROVA, chave `false`, fora da `main`.** Números do operador
+  (semear 9 s, crescer 30 s, rodízio, claim recusa tile verde) marcados para revisão. O
+  que a medida mostrou (tabelas em `docs/planos/F-CAMPO-a.md`, na branch):
+  - com C = 150, **nenhuma** regra de escolha faz 12 tiles renderem mais que 1: o gargalo
+    é o roceiro (uma viagem por unidade colhida), não o relógio;
+  - o rodízio semeia o anel inteiro antes de colher: a fazenda de 37 tiles tem a primeira
+    saída no t5051 (era ~500), e 11 testes caem (F18 ×6, F19 ×2, F-CANA, F-CANA-b, F-T3);
+  - "colher antes" devolve a primeira saída ao t501 e 24 milhos em 6000, mas é a regra
+    que a Pergunta 3 recusou.
+  - **Espera o operador**, uma de quatro: aceitar o custo de partida do rodízio (e
+    reescrever F18/F19); trocar a regra para colher antes; subir C (12 > 1 só com C
+    grande); ou reescrever o aceite (com C = 150, o BUG-O é espera visual, não vazão).
 - **O que é hoje (medido, 2026-09-26)**:
   - `avancarPlantio` (`sim/systems/especialistas.ts:395-406`) ocupa o roceiro por
     `reposicao.ticks` = 150 (30 s na escala `economia` 2,0), que cobre arar, semear **e
@@ -3712,10 +3725,84 @@ Casos 2 e 4 do prédio vivo (`docs/BRIEF-ARTE.md` §4a). Decisão do operador: c
     dos seis estágios já mostra a obra crescendo, e o placeholder some quando a arte chega.
   - Os rótulos madeira/pedra no tema: confirmado não criar, porque nada os lê.
 
+### F-ESC — A escala do prédio: altura máxima pela largura (render + ferramenta; proposta, não implementar antes do sim do operador)
+- **Origem:** pedido do operador, 2026-09-27: medir a altura real dos seis sprites
+  contra a largura do footprint e propor a regra "altura máxima como múltiplo da
+  largura". Nesta sessão houve **medida e proposta**, nenhum código.
+- **Medida (verificada, 2026-09-27)**, lida do cabeçalho IHDR de
+  `assets/sprites/<id>/<id>_completo.png`. Nenhum PNG foi aberto. Tile = 64 px.
+
+  | sprite | footprint | arquivo (px) | largura do footprint | altura / largura | altura − fundo×64 |
+  |---|---|---|---|---|---|
+  | storehouse | 3×3 | 192×198 | 192 | **1,03** | +6 |
+  | schoolhouse | 3×3 | 192×192 | 192 | 1,00 | 0 |
+  | woodcutters | 3×2 | 192×182 | 192 | 0,95 | +54 |
+  | quarry | 3×2 | 192×149 | 192 | 0,78 | +21 |
+  | inn | 4×3 | 256×178 | 256 | 0,70 | −14 |
+  | sawmill | 4×2 | 256×157 | 256 | **0,61** | +29 |
+
+  Hoje a altura sai da proporção da arte: o derivador corta pelo alfa e escala para
+  a largura do footprint (`tools/derivar-sprites.js:84-93`,
+  `alturaAlvo = round(recorte.altura × larguraAlvo / recorte.largura)`). Nada limita
+  a altura. A faixa é **0,61 a 1,03** da largura.
+- **Divergência que fica como hipótese.** O operador citou a Casa do Coronel com
+  cerca de 380 px de altura. O arquivo tem 192. **Hipótese não conferida:** ele viu o
+  prédio no zoom 2× (tile de 128 px; os degraus são 32/48/64/96/128), onde 192 × 2 = 384.
+  Se ele mediu a base (`assets/base/`, cerca de 1223×1286), o número é outro. A regra
+  abaixo vale sobre o **sprite derivado**, não sobre a base.
+- **Regra proposta** (para revisão):
+  `altura ≤ k × largura desenhada`, com **k = 1,0** e **exceção por prédio no
+  dado**, para a torre (F28/F28b) e para o que vier com vocação vertical.
+  - Por que 1,0: é o teto que a arte já respeita quase inteira (cinco de seis). No
+    3/4 sobre grid quadrado, um prédio mais alto do que largo lê como torre. A
+    exceção existe para quando isso for intencional.
+  - O que muda **hoje** com k = 1,0: só o armazém, 198 → 192. Isso é −3 % em escala
+    uniforme, 186×192 desenhado, e continua ancorado em [0,5, 1]. Nenhum outro sprite
+    muda.
+  - Alternativa: k = 1,05, que não muda nenhum sprite de hoje e aceita a
+    folga do armazém. Recomendo 1,0, porque a folga não tem motivo na arte.
+  - **Sobre o fator de transbordo** (correção do BRIEF-ARTE, 2026-09-26): ele
+    continua esperando o número do operador. Ele multiplica a largura, e a regra
+    acima limita a altura **relativa** a essa largura. As duas compõem:
+    `largura = footprint × 64 × fator`, `altura ≤ k × largura`. Esta proposta não
+    inventa o fator.
+  - Onde vive k: `data/terrain.json`, ao lado de `tile_px`. A cena e o teste o leem
+    pelo `gameData.terreno.tilePx`. O derivador **não** lê o dado: tem `TILE_PX = 64`
+    fixo (`tools/derivar-sprites.js:24`), e passa a ler os dois números do JSON. A
+    exceção fica na entrada do prédio no `assets/manifest.json`. **A sim não usa k**:
+    ele entra pelo loader só porque o `terreno` já vem de lá; se o operador preferir,
+    k fica só no manifesto.
+- **Os três lugares que mudam juntos** (mapeados e lidos, nenhum editado):
+  1. `src/render/scenes/WorldScene.ts:868-872`, `desenharSprite`:
+     `setScale(larguraPx / tamanho[0])` passa a
+     `min(larguraPx / tamanho[0], k × larguraPx / tamanho[1])`. **Render**: fica para
+     quando a outra sessão sair de `src/render/`.
+  2. `tests/F17f-manifesto.test.ts:103-105`: além de
+     `tamanho[0] === footprint[0] × tilePx` (ou × fator, quando vier), afirma
+     `tamanho[1] ≤ k × tamanho[0]`, salvo a exceção declarada.
+  3. `tools/derivar-sprites.js:84-93`: se `alturaAlvo > k × larguraAlvo`, escala pela
+     altura e a largura cai junto. Isso **regenera o armazém**, e o derivado versionado
+     muda, o que é decisão de arte (CLAUDE.md §9).
+  - Só o item 1 está em `src/render/`. Os itens 2 e 3 não são render, mas o 3 muda
+    asset versionado e o 2 afirma o que o 3 produz. Por isso os três vão num commit só.
+- **Aceite (a escrever na implementação, rascunho):**
+  - a) nenhum sprite de prédio no manifesto passa de `k × largura` sem exceção
+    declarada (F17f);
+  - b) o armazém derivado sai com altura ≤ largura;
+  - c) screenshot do roteiro da F17 mostra os seis prédios, e o
+    `test-output/F-ESC.json` grava a caixa desenhada de cada um, medida no passo e
+    não descrita.
+- **Espera:** o sim do operador para k (1,0 ou 1,05), para a exceção por prédio, e
+  para o fator de transbordo, se ele quiser as duas mudanças no mesmo commit.
+
 ### F-VIVO — O prédio vivo: trabalho, estoque e animais (render)
 
 Camadas ancoradas sobre o sprite estático (`docs/BRIEF-ARTE.md` §4a): laço de trabalho,
 fumaça, pilha por unidade na entrada e na saída, animais do curral. Só render: nada em `sim/`.
+
+- **F-VIVO-c e F-VIVO-d fora da fila (decisão do operador, 2026-09-27)**: são render, e
+  outra sessão trabalha em `src/render/` e `src/ui/` numa branch. Voltam à fila quando
+  ela mergear. A ordem delas não muda.
 
 - **Nota (decisões do operador, 2026-09-26):**
   - Estoque **por unidade**: 28 imagens, e o render empilha até 5.
@@ -4116,12 +4203,40 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
   faz nada.
 - **O que o dado já diz** (GDD §4.4, `economy.json` `marketplace`): **taxa fixa** e no
   máximo **10 serfs** negociando. Existe só no Remake (GDD §5.2 \*).
-- **Escopo a medir antes de detalhar**: a tabela de troca (qual mercadoria vale quanto
-  de qual) não está em `data/`, nem o GDD a fixa. **Pergunta para o operador quando o
-  item for o primeiro da fila**: taxa única para todo par, ou tabela por mercadoria?
-- **Aceite (esboço)**: o jogador pede N de B em troca de A. Os serfs levam A à feira e
-  trazem B ao armazém pela taxa do dado, nunca mais de 10 de uma vez. Com A em falta, a
-  troca espera, e o painel diz por quê.
+- **Escopo (escrito em 2026-09-27, leitura conservadora, para revisão)**:
+  - **Dado.** Hoje `economy.json:marketplace` tem só `taxaFixa: true` e `maxSerfs: 10`
+    (conferido). A taxa entra no mesmo objeto como **número único**: quantas unidades de
+    A se entregam por uma de B, para qualquer par de `economia.mercadorias`. O schema a
+    valida em `tools/data-schema.js`. O valor é do operador; sem ele o item não começa.
+  - **Comando.** `SetTrade { predio, da, para, quantidade }` (união de `commands.ts`) fixa
+    uma ordem permanente na feira: trocar A por B até `quantidade` de B. Quantidade 0
+    cancela. Uma ordem por feira. Tudo é recusado com motivo: prédio que não é feira
+    completa, A = B, mercadoria fora da lista.
+  - **Fluxo, pelo JobBoard.** A feira é consumidora de A e produtora de B: pede A ao
+    armazém como qualquer insumo (tarefa de serf, reserva na origem e na vaga), e com
+    `taxa` de A na gaveta de entrada fecha **uma** troca no tick: debita A e credita
+    1 de B na gaveta de saída, que os serfs escoam como de qualquer prédio. Sem ciclo e
+    sem trabalhador: `buildings.json` não lhe dá `trabalhador`. Trocar no tick em que o
+    insumo completa é a leitura mais conservadora, porque o GDD não fala em tempo de
+    troca, e duração nova seria número inventado.
+  - **Os 10 serfs.** No máximo `maxSerfs` tarefas reclamadas com a feira como origem ou
+    destino ao mesmo tempo. A 11ª fica aberta até uma fechar. É a leitura literal do
+    GDD §4.4 ("máximo de 10 serfs negociando").
+  - **UI.** O painel da feira mostra a ordem, o que falta de A e quantas trocas já saíram.
+  - **Fora**: tabela por mercadoria (pergunta abaixo), preço que varia com o uso e troca
+    com outro jogador.
+- **Pergunta para o operador (aberta)**: taxa única para todo par, ou tabela por
+  mercadoria? O escopo acima assume a única, porque é o que `taxaFixa` diz ao pé da
+  letra. A tabela muda só o dado e a leitura dele, não o fluxo.
+- **Aceite**:
+  - (a) com a ordem "B por A" e A no armazém, B chega ao armazém. O A debitado é igual a
+    `taxa` × o B creditado, somado na corrida inteira.
+  - (b) nunca há mais de `maxSerfs` tarefas da feira reclamadas no mesmo tick, conferido
+    em todo tick de um cenário com 20 serfs ociosos.
+  - (c) sem A no armazém a troca espera, nenhum B aparece, e o painel diz por quê
+    (screenshot, com o roteiro despausado da §8).
+  - (d) cancelar a ordem com A a caminho larga as tarefas pelo `release`, sem A perdido:
+    a soma de A no mundo, no armazém, nas gavetas e nos serfs, fica igual.
 
 ### F36 — Prefeitura: mercenários pagos em ouro (sim + ui)
 - **Origem (decisão do operador, 2026-09-26)**: pode esperar. Depende da F25 (soldado
@@ -4129,9 +4244,43 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
 - **O que o dado já diz** (GDD Anexo A): ouro por mercenário, **pronto na hora**. Rebel
   custa 2, Rogue 3, Vagabond 5, Barbarian 7 e Warrior 8. O `town_hall` recebe ouro do
   Metallurgist's (GDD §4.2).
-- **Aceite (esboço)**: com ouro no prédio, o comando de contratar tira o custo e põe o
-  mercenário na porta, no mesmo tick. Sem ouro, o comando é recusado com motivo. O
-  mercenário não consome arma nem recruta.
+- **Escopo (escrito em 2026-09-27, leitura conservadora, para revisão)**:
+  - **Dado (conferido).** `units.json:mercenarios.tipos` já traz os cinco com
+    `custoOuro` 2/3/5/7/8 e os atributos. `buildings.json:town_hall` não tem
+    `trabalhador` (4×3, desbloqueado pela Metalurgia). Não entra número novo.
+  - **O ouro chega como insumo.** A Prefeitura pede `gold` ao armazém pelo JobBoard, com
+    a tarefa de ouro da escola (F13a) como molde, e o custo sai da gaveta de **entrada**
+    dela, não do armazém. É a leitura do GDD §4.2, "o `town_hall` recebe ouro do
+    Metallurgist's".
+    Há uma diferença, conferida em `src/sim/escola.ts:66` (`ouroNecessario`): a escola
+    pede ouro pela **fila**, isto é, itens que não começaram vezes o custo, menos o que
+    está na gaveta. A Prefeitura contrata na hora e não tem fila, então precisa de um
+    **alvo de estoque**, e esse número não existe em `data/`.
+    **Pergunta ao operador:** qual é o alvo? As saídas possíveis são o custo do mais caro
+    (8, lido do dado, sem número novo) ou um campo novo em `economy.json`. Leitura
+    conservadora até a resposta: o custo do mais caro.
+  - **Comando.** `HireMercenary { predio, tipo }` em `commands.ts`. Com `custoOuro` na
+    gaveta, debita e cria a unidade militar do tipo na aproximação da porta, **no mesmo
+    tick** ("pronto na hora", GDD Anexo A). Sem fila e sem duração. Recusa com motivo:
+    prédio que não é Prefeitura completa, tipo desconhecido, ouro insuficiente.
+  - **Dois comandos no mesmo tick** leem o estado velho. O segundo é recusado se o
+    primeiro esvaziou a gaveta, e a regra é conferida em sequência, dentro do `step`.
+  - **O mercenário** é unidade militar comum a partir dali: ordem direta (F26), combate
+    (F28). Não consome arma, recruta nem escola.
+  - **UI.** O painel da Prefeitura mostra o ouro na gaveta e um botão por tipo, com o
+    custo. O botão sem ouro fica desabilitado e diz o que falta.
+  - **Fora**: a arte e a arma dos mercenários (nota da F25; `docs/BRIEF-ARTE.md` manda
+    não gerar) e o limite de mercenários por partida, que o GDD não fixa.
+- **Aceite**:
+  - (a) com ouro na gaveta, `HireMercenary` debita exatamente o `custoOuro` do tipo e a
+    unidade existe no tick do comando, junto à porta.
+  - (b) sem ouro suficiente, o comando é recusado com motivo e o estado fica igual
+    (comparação byte a byte).
+  - (c) com ouro para um só, dois comandos no mesmo tick: o primeiro passa e o segundo é
+    recusado.
+  - (d) nenhum recruta, arma ou escola muda de estado na contratação.
+  - (e) o painel mostra os cinco custos e desabilita o que não cabe (screenshot, com o
+    roteiro despausado da §8).
 ---
 
 ## Regras da fila

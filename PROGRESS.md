@@ -8803,3 +8803,60 @@ Três decisões do operador depois da noite 17. Nada em `src/ui/`, CSS, barra la
   o tile, nunca". Ver Perguntas em aberto.
 - F-CAMPO espera: sim ao item; `crescer` e `semear`; "duas visitas" contra
   `rendimentoPorTile` 4.
+
+## 2026-09-27 — F-CAMPO-a reprova (branch), lote 2 medido, F35/F36 escritas, F-ESC proposta
+
+Pedido do operador em quatro partes. Nada em `src/ui/` nem `src/render/`, onde outra
+sessão trabalha. F-VIVO-c/d saíram da fila enquanto ela estiver lá (nota no item F-VIVO).
+
+### 1. F-CAMPO-a: implementada, aceite reprova, fica na branch `f-campo-a`
+- **Verificado:**
+  - commit `10b5869` na branch `f-campo-a`, marcado `wip`, **não mergeado**;
+  - chave `false` e `test-results.json` intocado;
+  - os quatro números do operador entraram como pedido e ficam **marcados para
+    revisão**: semear 9 s, crescer 30 s, rodízio, e claim que recusa tile verde.
+- **Verificado por sonda** (apagada; as tabelas estão em `docs/planos/F-CAMPO-a.md` na
+  branch):
+  - com C = 150, nenhuma regra de escolha faz 12 tiles renderem mais que 1;
+  - o rodízio adia a primeira saída da fazenda de 37 tiles para o t5051;
+  - na branch, 11 testes vermelhos (F18 ×6, F19 ×2, F-CANA, F-CANA-b, F-T3-ciclo-em-campo).
+- **Não mudei regra nem número** para o aceite passar: a Pergunta 3 recusou "colher
+  antes". O BUG-O continua no `BUGS.md`.
+- **Espera decisão** (quatro saídas, escritas no item F-CAMPO do `BUILD_PLAN.md`).
+
+### 2. Lote 2 de balanceamento: medido, nada girado
+- Entrada aberta no `BALANCE_LOG.md` (2026-09-27), com colheita, caminhada e espera por
+  prédio.
+- **Verificado:** o padrão da fazenda só se repete na madeira. A colheita (545) já é o
+  orçamento 2:1 da serraria (546), e a serraria espera 25 %.
+- **Proposta, não aplicada:** `woodcutters.sai.tree_trunk` de 0,55 para 0,71/min. A conta
+  está ao lado do número.
+- Pedreira, minas e pescador: sem proposta (o motivo está na entrada).
+- **Hipótese não conferida:** a pedreira colada deu 247 contra 211 em 2026-09-25, porque o
+  lajedo perto se esgota.
+
+### 3. As três cascas
+- F35 (Feira) e F36 (Prefeitura) ganharam escopo e aceite. F28b (Torre) já tinha os dois
+  e ficou intocada.
+- Premissa corrigida na F36: a escola puxa ouro **pela fila**, não por alvo de estoque
+  (`src/sim/escola.ts:66`, `ouroNecessario`). Por isso a Prefeitura precisa de um alvo que
+  hoje não existe em `data/`.
+- **Para o operador conferir:** o título da F28b diz "(sim + render)", mas não traz a nota
+  explícita de "feature de integração" que a §10 pede.
+
+### 4. F-ESC: escala dos prédios, medida e proposta
+- **Verificado:** as alturas saíram do IHDR dos seis `_completo.png` (tabela no item).
+  Altura/largura vai de 0,61 a 1,03.
+- **Proposta:** `altura ≤ k × largura`, com k = 1,0 e exceção por prédio. Hoje só o armazém
+  muda, 198 → 192.
+- **Verificado:** o derivador tem `TILE_PX = 64` fixo e não lê `terrain.json`.
+- **Hipótese:** os 380 px da Casa do Coronel são os 192 vistos no zoom 2×.
+- Nenhum dos três lugares foi editado.
+
+## Perguntas em aberto (2026-09-27)
+1. F-CAMPO-a: qual das quatro saídas (item F-CAMPO do `BUILD_PLAN.md`)?
+2. Madeira: girar sozinha o 0,71/min ou esperar o lote com a espera do lenhador?
+3. F35: uma taxa só na Feira ou tabela por mercadoria?
+4. F36: alvo de ouro da Prefeitura (leitura conservadora: o custo do mercenário mais
+   caro, 8).
+5. F-ESC: k = 1,0 ou 1,05? Exceção no manifesto? Junto com o fator de transbordo?
