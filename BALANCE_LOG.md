@@ -815,3 +815,14 @@ proporções da seção 4.5 do GDD. Um cenário que as respeite **não pode**:
 - deixar trabalhador ocioso por muito tempo
 - ter `saida_cheia` persistente (isso é logística, não produção — a correção é
   mais serfs ou mais estrada, não mexer na taxa)
+- [2026-09-27] **F-CAMPO: crescer 30 → 330 s girado na branch `f-campo-a`, não na `main`**
+  | decisão do operador ("um campo que demora é jogo; um campo inútil é bug"). A suíte dá
+  12 reprovações: 11 do modelo, que já caíam com 30, e várias afirmam comportamento; 1
+  nova, a janela de 1º milho da F18h. Pela regra do operador, parou antes de commitar na
+  `main`. F-CAL-a com 1 650: 1ª comida na Bodega no 8 421 (8 327 com 30), sem morte até
+  16 000. Detalhe no item F-CAMPO do `BUILD_PLAN.md`.
+  | `resources.json:corn/grapes.reposicao.crescer_segundos_base` (só na branch)
+- [2026-09-27] **Fonte de proporção: sprites do KaM medidos** | os números de altura,
+  largura, lote e âncora estão no `docs/BRIEF-ARTE.md` ("MEDIDO NO KAM"), lidos por
+  `tools/kam-medir.js` (README em `tools/kam-medir.md`). O leitor também refaz a tabela
+  "REFERÊNCIA" acima (ritmo e `ResProductionX`).

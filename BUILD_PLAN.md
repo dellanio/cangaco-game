@@ -3641,6 +3641,42 @@ Casos 2 e 4 do prédio vivo (`docs/BRIEF-ARTE.md` §4a). Decisão do operador: c
     tiles saturam o roceiro. Com semear 9 s, ele custa ~21 ticks de rodízio. O teto do
     KaM (6 400 com rendimento 1) fica acima e não se copia, porque aqui o tile rende 4.
     **Antes de girar**, falta rodar F18, F19 e F-CAL-a com 330 e contar o que cai.
+  - **Decisão do operador (2026-09-27, noite): crescer 1 650.** *"Um campo que demora é
+    jogo; um campo inútil é bug."* Regra para o giro: se um teste reprovar afirmando
+    comportamento, parar; se for número de primeira saída, corrigir com a medida ao
+    lado.
+  - **Girado na branch, PARADO antes da `main`** (`f-campo-a`, commit `f70322c`, com a
+    `main` mesclada). A suíte inteira dá **12 reprovações**:
+    - **1 nova, e é número:** F18h, "um PlowField ... entrega milho". A janela é de
+      2 000 ticks, e o 1º milho sai `null` dentro dela. Pode ser
+      corrigida com a medida, e **não foi**, porque o giro parou pelas outras 11.
+    - **11 que já caíam com crescer 30**, com os mesmos valores. Vêm do **modelo**
+      F-CAMPO-a, não do 1 650, e várias afirmam **comportamento** do modelo antigo:
+      - F18-ciclo-do-roceiro ×3: "replanta o MESMO tile", "o prédio LARGA", "durante o
+        PLANTIO o roceiro não sai";
+      - F18-rocado ×3: "a série tem o degrau e o patamar", "o patamar é o campo vazio",
+        "planta e DEBITA";
+      - F-CANA, F-CANA-b e F-T3, uma cada: plantio dentro do prédio, ciclo perdido;
+      - F19 ×2: o 1º milho no 5 051 (esperado 250), o mesmo com 30 e com 1 650, e 48
+        cuscuz para um teto de 88,5.
+    - **O F19 não melhora com 1 650.** A fazenda dele tem 37 tiles ao alcance, e o 1º milho sai
+      no 5 051 tanto com 30 quanto com 1 650. **Hipótese** (não medida): semear o anel
+      inteiro leva mais que o crescer, então o rodízio semeia tudo antes de colher. Se
+      for isso, o 1 650 só resolve fazenda pequena.
+  - **F-CAL-a com 1 650 (medido por sonda, apagada):**
+
+    | crescer | 1º milho | 1º cuscuz | Bodega pronta | 1ª comida na Bodega | morte até 16 000 |
+    |---|---|---|---|---|---|
+    | 30 (branch) | 3 994 | 6 580 | 8 222 | 8 327 | nenhuma |
+    | 1 650 (branch) | 5 218 | 6 545 | 8 279 | 8 421 | nenhuma |
+
+    - A fome não aperta: a comida chega à Bodega 3 579 ticks antes do teto de 12 000.
+    - O milho atrasa 1 224 ticks e não chega ao cuscuz, porque a padaria só fica pronta
+      no 6 188. Quem segura a Bodega é a obra, não o campo.
+    - A `main` (modelo antigo) dá a Bodega no 8 009.
+  - **Espera o operador:** as 11 reprovações de comportamento são reescrever F18/F19
+    para o modelo novo. E o F19 pede
+    decidir a fazenda de 37 tiles.
 - **O que é hoje (medido, 2026-09-26)**:
   - `avancarPlantio` (`sim/systems/especialistas.ts:395-406`) ocupa o roceiro por
     `reposicao.ticks` = 150 (30 s na escala `economia` 2,0), que cobre arar, semear **e
@@ -3924,6 +3960,21 @@ Casos 2 e 4 do prédio vivo (`docs/BRIEF-ARTE.md` §4a). Decisão do operador: c
     o padrão; o sobrado, de dois andares, e a torre declaram o próprio fator. **O
     footprint não muda para caber arte:** é dado de simulação. A saída "sobrado em
     largura 4" está descartada.
+  - **A árvore (operador, 2026-09-27):** 1,05 H contra 3,0 H da tabela, **−65 %**. É o
+    maior desvio da régua e o mais visível na tela: o serf é quase do tamanho da árvore
+    que ele derruba. **Não se mexe agora:** a arte é da outra sessão. O número fica
+    registrado aqui para quando ela entrar.
+  - **Medida no KaM original (2026-09-27, `tools/kam-medir.js`, cabeçalho dos `.rx`
+    da instalação do operador).** A tabela e a leitura estão no `docs/BRIEF-ARTE.md`,
+    bloco "MEDIDO NO KAM". O que toca esta feature:
+    - **k = 1,0 é o KaM.** Sem a torre, a altura sobre a largura do sprite vai de 0,61 a
+      1,02 (mediana 0,76) nos 27 prédios. **A única exceção é a torre de vigia: 1,27.**
+      É a mesma regra que o operador decidiu: padrão 1,0, exceção declarada.
+    - **Árvore:** a adulta do KaM mede 2,2–3,25 H (mediana 2,65 H), com H = serf. O
+      alvo 3,0 H está dentro da faixa, perto do topo. A nossa, com 1,05 H, fica abaixo
+      da menor árvore do KaM.
+    - **O footprint não vem do `houses.dat`:** o `BuildArea` do binário não é o lote.
+      O lote é o `PlanYX` do código do kam_remake, conferido no `KM_Terrain.pas`.
   - **Classificação em aberto (operador):** Casa do Coronel como sobrado é hipótese
     minha, pelo nome. O umbuzeiro como árvore adulta também. Facheiro e xique-xique
     ficam para o operador: o facheiro é colunar como o mandacaru, e o xique-xique é
@@ -4368,6 +4419,9 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
 - **Decisão do operador (2026-09-27)**: **uma taxa só, fixa**, para todo par. A tabela
   por mercadoria sai de vez. Continua faltando o **valor** da taxa, que é do operador:
   sem ele o item não começa.
+- **Decisão do operador (2026-09-27, noite): taxa 2 para 1.** O jogador dá duas unidades
+  de A e recebe uma de B. *"Troca deve custar, senão a Feira vira atalho para toda
+  escassez."* O item pode começar: `economy.json:marketplace.taxa = 2`.
 - **Aceite**:
   - (a) com a ordem "B por A" e A no armazém, B chega ao armazém. O A debitado é igual a
     `taxa` × o B creditado, somado na corrida inteira.

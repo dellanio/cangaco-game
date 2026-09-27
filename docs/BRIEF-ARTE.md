@@ -106,6 +106,47 @@ não código: refazer as duas imagens do armazém (seção 4). Em conversa antig
 > entrar, o item "A altura é livre" abaixo vale para o derivado **existente**, não
 > para arte nova.
 
+> **MEDIDO NO KAM — referência, 2026-09-27.** Fonte: o cabeçalho dos sprites
+> (`houses.rx`, `units.rx`, `trees.rx`) e o `unit.dat`/`mapelem.dat` da instalação do
+> operador, lidos por `tools/kam-medir.js`. O lote vem do `PlanYX` do kam_remake. Nenhum
+> pixel foi lido e nada do KaM está no repositório: só estes números.
+>
+> - **Régua:** no KaM o tile tem 40 px e o serf tem **37–41 px**, andando para o sul.
+>   **Um tile vale uma altura de homem.** Aqui, H = 73 px num tile de 64: o homem é
+>   1,14 tile, 14 % maior em relação ao chão que no KaM.
+> - **Prédio pronto, por tamanho de lote** (em px do KaM; "H" = px ÷ 40):
+>
+> | lote | n | altura | altura em H | altura ÷ largura | largura ÷ lote | passa acima do lote |
+> |---|---|---|---|---|---|---|
+> | 3×2 | 8 | 91–113 (med 100) | **2,5 H** | 0,62–1,02 (0,72) | 0,93–1,36 (**1,15**) | 14–45 px (med 26 = **0,65 tile**) |
+> | 4×2 | 4 | 98–107 (102) | 2,55 H | 0,61–0,71 (0,68) | 0,91–1,01 (0,96) | 20–30 (26) |
+> | 3×3 | 6 | 108–142 (130) | 3,25 H | 0,73–0,94 (0,88) | 1,17–1,43 (1,22) | −9–27 (17) |
+> | 4×3 | 6 | 123–149 (137) | **3,4 H** | 0,71–0,84 (0,76) | 0,96–1,19 (1,13) | −1–26 (19,5) |
+> | 4×4 | 1 (quartel) | 191 | 4,8 H | 0,82 | 1,45 | 35 (0,9 tile) |
+> | 2×2 | 1 (torre) | 139 | 3,5 H | **1,27** | 1,36 | 72 (1,8 tile) |
+>
+> - **Âncora:** a base do sprite encosta na borda de baixo do lote, de 13 px acima a 4
+>   px abaixo (mediana 3 px acima). Na horizontal, a borda esquerda fica perto da
+>   borda esquerda do lote (de −18 a +13 px), e o excesso de largura cai **à direita**
+>   (mediana de 14 a 24 px). **Hipótese:** o excesso à direita é a sombra, que o KaM
+>   desenha dentro do sprite. Não foi confirmado, porque confirmar exigiria ler pixel.
+>   A regra `anchor [0.5, 1]` desta seção fica a ~0,1 tile do KaM.
+> - **Árvore adulta** (13 espécies): 87–130 px, mediana 106 = **2,65 H** (faixa
+>   2,2–3,25 H).
+> - **O que isto confirma da tabela-alvo:**
+>   - casa térrea 2,5 H = o 3×2 do KaM, **exato**;
+>   - sobrado 3,5 H ≈ o 4×3 do KaM (3,4 H);
+>   - árvore 3,0 H: dentro da faixa, acima da mediana;
+>   - k = 1,0: nenhum prédio do KaM passa de 1,02, **salvo a torre** (1,27). É a
+>     exceção que o operador já decidiu declarar no dado.
+> - **O que isto NÃO decide (operador):** o fator de largura que a nota "ERRADO" acima
+>   espera. O KaM dá **1,15** no lote 3×2 e 1,17 na mediana geral, e esses números
+>   incluem a sombra (hipótese). Há um conflito de tradução:
+>   - pela régua do homem: térrea 2,5 H = 182 px;
+>   - pelo lote: 0,83 × 192 = 159 px, porque aqui o tile vale 0,88 H, e no KaM 1,0 H.
+>
+>   Aplicar os dois não fecha, e escolher entre eles é decisão do operador.
+
 - **A largura manda.** A largura do sprite derivado é `footprint[0] × 64` px. Um prédio
   de 3 tiles de largura tem 192 px. Um de 4 tem 256 px.
 - **A altura é livre.** Ela é o que a arte der, na mesma escala. Não estique para

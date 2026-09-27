@@ -474,7 +474,9 @@ Escada de prioridade (`data/delivery.json`):
 
 A pedra da obra vem **antes** de qualquer mercadoria que só volta ao armazém. Se
 ficasse depois, uma serraria cheia tiraria os serfs da estrada da Bodega, e a vila
-morreria de fome com tábua sobrando (lote 2, `BALANCE_LOG.md`).
+morreria de fome com tábua sobrando (lote 2, `BALANCE_LOG.md`). Ela **não** sobe acima
+dos insumos (4 e 5): isso pararia a produção para construir e trocaria um problema por
+outro **[decisão do operador, 2026-09-27]**.
 
 Os dois primeiros níveis são do próprio Remake: entregar comida ao Inn é a maior
 prioridade e entregar ouro à escola é a segunda **[fonte]**.
