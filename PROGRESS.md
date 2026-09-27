@@ -9151,3 +9151,20 @@ As duas perguntas da noite 6 foram respondidas e saíram desta seção.
     campo novo. Anotado na observação do `BALANCE_LOG.md`.
 - **F-ESC:** começa quando o Codex sair do `render/`, onde ele está no azimute da câmera
   do Blender e vai mexer nos assets. Não foi começada.
+
+## 2026-09-27 (noite, 8) — tempo de colheita derivado da taxa: constatação do modelo; F-ESC espera
+
+- **Registrado no `BALANCE_LOG.md` como constatação do modelo** (pedido do operador). O
+  relógio da colheita é `ticksDoCiclo`, derivado da taxa, para os cinco que saem a
+  colher: `quarry`, `woodcutters`, `farm`, `wineyard` e `fishermans`.
+  - **Verificado** em `especialistas.ts:516/:710` e `loader.ts:371`, e na lista de
+    receitas com `colheita` do `production.json`: são 8, e as 3 minas colhem de
+    dentro.
+  - As duas saídas estão escritas com o custo de cada: (a) campo novo; (b) girar a
+    taxa. **Nenhuma foi feita.** O próximo lote começa por essa decisão.
+- **F-ESC não começou.** O `git status` do worktree do Codex
+  (`feat/ui-world-polish`) tem arquivos dele modificados e não commitados em
+  `src/render/`: `debug.ts` e `scenes/WorldScene.ts`. Também em `BUILD_PLAN.md`,
+  `docs/BRIEF-ARTE.md` e `assets/manifest.json`, que a F-ESC também toca. Pela regra
+  do operador ("se houver arquivo dele modificado em render/, espere"), fica esperando.
+  A `main` está limpa.

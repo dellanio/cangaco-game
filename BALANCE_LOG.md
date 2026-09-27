@@ -22,20 +22,56 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
 
 ## Observações abertas
 
-- [2026-09-27] **PRÓXIMO LOTE COMEÇA AQUI** — com o campo crescendo no tile, doze tiles de cana
-  rendem só 1,5× um: 15 contra 10 em 12 000 ticks (2 tiles dão 13; 4 ou mais, 15). A fazenda
-  rende 2,9× | medido por sonda apagada, `cenarioDeCanavial`.
-  - **Decisão do operador:** entra no próximo lote, não agora.
-  - **Suspeita do operador, a medir primeiro:** a colheita de 600 ticks satura o canavieiro com
-    2 a 4 tiles. Se for isso, o número a girar é o **tempo de colheita**, que está 4× o da
-    fazenda (150) sem razão medida.
-  - **Verificado no código (2026-09-27):** hoje o tempo de colheita **não é um número
-    separado**. O relógio que anda no tile é `receita.ticksDoCiclo`
-    (`sim/systems/especialistas.ts:516`). Ele vem da taxa de saída no carregamento
-    (`sim/data/loader.ts:371`), e por isso 600 = 300 / `wineyard.sai.wine` 0,5.
-  - **Consequência:** girar a colheita sem mexer na vazão de cachaça pede um campo novo no
-    dado, e isso é mudança de modelo. O lote decide entre isso e girar a própria taxa.
-  - `data/production.json` (`wineyard.sai.wine`).
+- [2026-09-27] **PRÓXIMO LOTE COMEÇA AQUI — constatação do modelo, não observação do Canavial:
+  o tempo de colheita é DERIVADO da taxa de saída, e isso vale para os CINCO que saem a colher.**
+  - **Verificado no código:**
+    - o relógio que anda no tile é o `receita.ticksDoCiclo`
+      (`sim/systems/especialistas.ts:516` e `:710`);
+    - o carregamento o calcula como o maior período entre as taxas da receita
+      (`sim/data/loader.ts:371`); não existe número de colheita separado.
+  - **Os cinco que saem a colher** (`colheita` sem `aDistancia`; colheita em ticks na escala
+    2,0, igual a 300 / taxa):
+
+    | receita | taxa | colheita |
+    |---|---|---|
+    | `quarry` | `stone` 1,8 | ~167 |
+    | `woodcutters` | `tree_trunk` 0,71 | ~423 |
+    | `farm` | `corn` 2,0 | 150 |
+    | `wineyard` | `wine` 0,5 | 600 |
+    | `fishermans` | `fish` 1,0 | 300 |
+
+    - As três minas (`gold_mine`, `coal_mine`, `iron_mine`) também derivam o tempo da taxa,
+      mas colhem **de dentro** (`aDistancia`, `especialistas.ts:531`). Sem viagem, tempo e
+      vazão são a mesma coisa, e não há o que separar.
+  - **Consequência:** nenhum dos cinco pode ser afinado sem que o outro número se mova junto.
+    Encurtar a colheita acelera a vazão, e baixar a vazão alonga a colheita.
+  - **O que revelou:** o Canavial. Doze tiles de cana rendem só 1,5× um (15 contra 10 em
+    12 000 ticks), contra 2,9× da fazenda (sonda apagada, `cenarioDeCanavial`). A suspeita do
+    operador é que a colheita de 600 sature o canavieiro com 2 a 4 tiles, e **medir isso é o
+    primeiro passo do lote**. Hoje o 4× da fazenda não tem razão medida: é consequência da
+    taxa 0,5.
+  - **As duas saídas.** O operador decide quando o lote começar; **nenhuma foi feita**.
+    - **(a) Campo novo no dado, separando o tempo de colheita da vazão.** É mudança de modelo
+      e afeta os cinco.
+      - Custo contado por menção (grep, 2026-09-27), não compilando:
+        - na `sim/`: `ticksDoCiclo` aparece em 5 arquivos (`loader.ts`, `types.ts`,
+          `producao.ts`, `state.ts`, `especialistas.ts`);
+        - no `render/`: 2 arquivos (`predios.ts`, `trabalho.ts`), que é o território da
+          outra sessão;
+        - nos testes: 13 arquivos.
+      - Mais o schema e as regras do `validate:data`, e um valor por receita.
+      - **Hipótese** (não medida): com o tempo separado, a vazão dos cinco passa a
+        **emergir** de colheita + viagem + semear, e a taxa `sai` perde o sentido de vazão
+        para eles. O lote teria de decidir o que ela passa a significar, e o oráculo
+        1:1:1 (`proporcoesDeReferencia`) seria recalculado.
+      - Antes de escolher, medir o custo real compilando (acrescentar o campo, contar os
+        erros, reverter).
+    - **(b) Girar a taxa e aceitar que o tempo vai junto.** É barato: um número por receita,
+      o mesmo caminho do `farm.sai.corn` 3,0 → 2,0.
+      - O afinamento fica grosso: cada giro mexe na vazão **e** em quantos tiles saturam o
+        trabalhador.
+      - E cada giro remede a cadeia de quem consome (moinho, serraria, bodega).
+  - `data/production.json` (`sai` dos cinco), `sim/data/loader.ts`.
 
 - [2026-09-24] o terreno passou a existir (F-T1) e viagem deixou de ser linha reta | medido: a
   travessia de 36 tiles ao redor do lago custa **292 ticks** contra **252** no mesmo trajeto sem
