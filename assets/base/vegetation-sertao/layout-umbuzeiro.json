@@ -1,0 +1,14 @@
+{
+  "source": "assets/base/vegetation-sertao/umbuzeiro-source.png",
+  "cells": [
+    {
+      "id": "umbuzeiro",
+      "crop": [7, 130, 1356, 953],
+      "output": "assets/sprites/vegetation/umbuzeiro.png",
+      "size": [96, 128],
+      "contentSize": [88, 120],
+      "bottomPadding": 4,
+      "fit": "contain"
+    }
+  ]
+}

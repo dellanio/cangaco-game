@@ -1,0 +1,14 @@
+{
+  "source": "assets/base/vegetation-sertao/mandacaru-source.png",
+  "cells": [
+    {
+      "id": "mandacaru",
+      "crop": [198, 49, 660, 1423],
+      "output": "assets/sprites/vegetation/mandacaru.png",
+      "size": [96, 128],
+      "contentSize": [88, 120],
+      "bottomPadding": 4,
+      "fit": "contain"
+    }
+  ]
+}

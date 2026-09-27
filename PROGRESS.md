@@ -8617,3 +8617,19 @@ for pequena, o cartão ganha teto com rolagem própria, em vez de um número mai
 - `npm run shot -- F-SPR`: OK, 2 capturas.
 - `npm run shot -- F08`: OK, 3 capturas; abertas `screenshots/F08-2-estrada-desenhada.png` e `screenshots/F08-3-estrada-partida.png`.
 - A folha de contato `screenshots/road-sprites-preview.png` foi aberta: pontas, retas, curvas, T e cruzamentos conservam largura e bordas orgânicas sobre o terreno real.
+
+## 2026-09-27 — vegetação do sertão sem recorte
+
+### Entregue
+
+- O recurso lógico `tree` continua único na simulação, mas o render escolhe de forma determinística por coordenada entre juazeiro, umbuzeiro, mandacaru, facheiro, xique-xique e macambira.
+- As seis fontes canônicas ficam em `assets/base/vegetation-sertao/`; os derivados 96×128 ficam em `assets/sprites/vegetation/` e preservam proporção, pé inferior central e margem transparente mínima de quatro pixels.
+- O processador da skill `pianco-art-pipeline` ganhou `bottomPadding`, para que sprites ancorados pelo pé não voltem a tocar a borda inferior do canvas.
+- `src/sim/` e `tests/` não foram alterados.
+
+### Verificado
+
+- Limites alfa medidos: nenhum dos seis derivados toca qualquer borda do canvas.
+- `npm run shot -- F-T2b`: OK, 4 capturas; abertas e comparadas `screenshots/vegetation-before.png` e `screenshots/vegetation-after.png`.
+- `npm run shot -- F-SPR`: OK, 2 capturas.
+- `npm run verify`: verde; suíte normal 1.547/1.547 e suíte transladada 1.546 aprovados, quatro `skip` já existentes.

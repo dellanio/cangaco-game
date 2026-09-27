@@ -384,13 +384,18 @@
         1
       ],
       "estados": {
-        "presente": "sprites/vegetation/tree.png"
+        "presente": "sprites/vegetation/tree.png",
+        "umbuzeiro": "sprites/vegetation/umbuzeiro.png",
+        "mandacaru": "sprites/vegetation/mandacaru.png",
+        "facheiro": "sprites/vegetation/facheiro.png",
+        "xique-xique": "sprites/vegetation/xique-xique.png",
+        "macambira": "sprites/vegetation/macambira.png"
       },
       "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
       "origem": {
-        "base": "base/vegetation-atlas/vegetation-atlas-source.png",
+        "base": "base/vegetation-sertao/juazeiro-source.png",
         "semente": null,
-        "nota": "Juazeiro autoral, primeira celula da folha de vegetacao; derivacao 96x128 transparente."
+        "nota": "Seis especies do sertao derivadas em 96x128 com proporcao preservada, pe inferior central e quatro pixels de margem minima. As demais bases e layouts ficam em base/vegetation-sertao/."
       }
     },
     {

@@ -1,0 +1,14 @@
+{
+  "source": "assets/base/vegetation-sertao/facheiro-source.png",
+  "cells": [
+    {
+      "id": "facheiro",
+      "crop": [257, 24, 545, 1450],
+      "output": "assets/sprites/vegetation/facheiro.png",
+      "size": [96, 128],
+      "contentSize": [88, 120],
+      "bottomPadding": 4,
+      "fit": "contain"
+    }
+  ]
+}

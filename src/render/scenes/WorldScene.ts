@@ -736,7 +736,8 @@ export class WorldScene extends Phaser.Scene {
       this.vegetacaoDesenhada.delete(chave);
       return;
     }
-    if (atual?.texture.key === desenho.chave) {
+    const textura = this.texturaDaVegetacao(desenho, chave);
+    if (atual?.texture.key === textura) {
       this.ajustarAfloramento(atual, chave, codigo);
       return;
     }
@@ -744,11 +745,30 @@ export class WorldScene extends Phaser.Scene {
     const { tilePx } = configDoMapa;
     const canto = gridToScreen(tileDeChave(chave), tilePx, ESCALA_DO_MUNDO);
     const pe = { x: canto.x + tilePx / 2, y: canto.y + tilePx };
-    const imagem = this.add.image(pe.x, pe.y, desenho.chave)
+    const imagem = this.add.image(pe.x, pe.y, textura)
       .setOrigin(desenho.entrada.anchor[0], desenho.entrada.anchor[1])
       .setDepth(depthDeY(pe.y));
     this.ajustarAfloramento(imagem, chave, codigo);
     this.vegetacaoDesenhada.set(chave, imagem);
+  }
+
+  /**
+   * Variacao puramente visual e estavel: o mesmo tile sempre recebe a mesma
+   * especie, sem RNG e sem acrescentar ids a simulacao. `presente` continua
+   * sendo o fallback quando algum derivado nao foi carregado.
+   */
+  private texturaDaVegetacao(
+    desenho: Extract<DesenhoDoRecurso, { readonly como: 'vegetacao' }>,
+    chave: string,
+  ): string {
+    const estados = Object.keys(desenho.entrada.estados).filter((estado) => (
+      this.textures.exists(chaveDeTextura('vegetacao', desenho.entrada.id, estado))
+    ));
+    if (estados.length === 0) return desenho.chave;
+    const { gx, gy } = tileDeChave(chave);
+    const hash = (Math.imul(gx + 1, 73_856_093) ^ Math.imul(gy + 1, 19_349_663)) >>> 0;
+    const estado = estados[hash % estados.length] ?? 'presente';
+    return chaveDeTextura('vegetacao', desenho.entrada.id, estado);
   }
 
   /**
