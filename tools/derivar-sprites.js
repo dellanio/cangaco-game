@@ -22,6 +22,10 @@ const { chromium } = require('@playwright/test');
 const RAIZ = path.join(__dirname, '..', 'assets');
 const ARQUIVO_PREDIOS = path.join(__dirname, '..', 'data', 'buildings.json');
 const TILE_PX = 64;
+// A Casa do Lenhador e a régua visual aprovada: 192x182. O derivado mantém
+// a largura lógica do footprint, preserva a proporção da arte e limita apenas
+// o transbordo vertical. Prédio alto demais ganha margem lateral, não deformação.
+const ALTURA_MAXIMA_POR_LARGURA = 182 / 192;
 
 // Limiar que separa conteúdo de resíduo semitransparente do gerador. A bbox é
 // estável nessa vizinhança; o log imprime as uniões nos três limiares.
@@ -32,8 +36,8 @@ const GRUPOS = [
   {
     id: 'storehouse',
     alvos: [
-      { base: 'base/storehouse/storehouse_01_madeira.png', saida: 'sprites/storehouse/storehouse_madeira.png' },
-      { base: 'base/storehouse/storehouse_02_completo.png', saida: 'sprites/storehouse/storehouse_completo.png' },
+      { base: 'base/storehouse/storehouse_03_madeira.png', saida: 'sprites/storehouse/storehouse_madeira.png' },
+      { base: 'base/storehouse/storehouse_03_completo.png', saida: 'sprites/storehouse/storehouse_completo.png' },
     ],
   },
   {
@@ -157,7 +161,15 @@ async function processarGrupo(pagina, grupo, larguraAlvo) {
 
   const [ux0, uy0, ux1, uy1] = uniao(medidas.map((medida) => medida.caixas[ALFA_MINIMO]));
   const recorte = { x: ux0, y: uy0, largura: ux1 - ux0 + 1, altura: uy1 - uy0 + 1 };
-  const alturaAlvo = Math.round(recorte.altura * (larguraAlvo / recorte.largura));
+  const alturaMaxima = Math.round(larguraAlvo * ALTURA_MAXIMA_POR_LARGURA);
+  const escalaPelaLargura = larguraAlvo / recorte.largura;
+  const alturaPelaLargura = Math.round(recorte.altura * escalaPelaLargura);
+  const escala = alturaPelaLargura <= alturaMaxima
+    ? escalaPelaLargura
+    : alturaMaxima / recorte.altura;
+  const larguraDesenhada = Math.max(1, Math.round(recorte.largura * escala));
+  const alturaAlvo = Math.max(1, Math.round(recorte.altura * escala));
+  const destinoX = Math.floor((larguraAlvo - larguraDesenhada) / 2);
 
   for (const alvo of grupo.alvos) {
     const b64 = fs.readFileSync(path.join(RAIZ, alvo.base)).toString('base64');
@@ -172,12 +184,29 @@ async function processarGrupo(pagina, grupo, larguraAlvo) {
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
       const { x, y, largura, altura } = arg.recorte;
-      ctx.drawImage(img, x, y, largura, altura, 0, 0, arg.largura, arg.altura);
+      ctx.drawImage(
+        img,
+        x,
+        y,
+        largura,
+        altura,
+        arg.destinoX,
+        0,
+        arg.larguraDesenhada,
+        arg.altura,
+      );
       return {
         dados: canvas.toDataURL('image/png').split(',')[1],
         fonte: [img.width, img.height],
       };
-    }, { b64, largura: larguraAlvo, altura: alturaAlvo, recorte });
+    }, {
+      b64,
+      largura: larguraAlvo,
+      altura: alturaAlvo,
+      larguraDesenhada,
+      destinoX,
+      recorte,
+    });
 
     const destino = path.join(RAIZ, alvo.saida);
     fs.mkdirSync(path.dirname(destino), { recursive: true });
@@ -185,7 +214,8 @@ async function processarGrupo(pagina, grupo, larguraAlvo) {
     const kb = Math.round(fs.statSync(destino).size / 1024);
     console.log(
       `${alvo.base} ${resultado.fonte[0]}x${resultado.fonte[1]} recorte ${recorte.largura}x${recorte.altura}`
-      + ` em ${recorte.x},${recorte.y} -> ${alvo.saida} ${larguraAlvo}x${alturaAlvo} (${kb} KB)`,
+      + ` em ${recorte.x},${recorte.y} -> ${alvo.saida} ${larguraAlvo}x${alturaAlvo}`
+      + ` (conteúdo ${larguraDesenhada}x${alturaAlvo}, ${kb} KB)`,
     );
   }
 

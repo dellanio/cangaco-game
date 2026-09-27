@@ -11,7 +11,7 @@
       ],
       "tamanho": [
         192,
-        198
+        182
       ],
       "anchor": [
         0.5,
@@ -21,11 +21,11 @@
         "madeira": "sprites/storehouse/storehouse_madeira.png",
         "completo": "sprites/storehouse/storehouse_completo.png"
       },
-      "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+      "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-27",
       "origem": {
-        "base": "base/storehouse/storehouse_02_completo.png",
+        "base": "base/storehouse/storehouse_03_completo.png",
         "semente": null,
-        "nota": "Par autoral de revelacao continua do armazem monumental frontal. Derivado em conjunto por tools/derivar-sprites.js; uniao alpha > 16 calculada somente para storehouse: x58,y25 1138x1171; saida 192x198."
+        "nota": "Par autoral do armazem como galpao alto de um unico salao, com portao de carga dominante e sem segundo andar. Geracoes exec-5416b0ad-41e0-4a58-8c19-92e52d63f3b2 (completo) e exec-6b432585-fa18-4d4e-9cd7-7dd2ff8a948d (madeira). Derivado em conjunto por tools/derivar-sprites.js; uniao alpha > 16 somente para storehouse: x26,y29 1217x1186; saida 192x182, conteudo 187x182."
       }
     },
     {
@@ -115,7 +115,7 @@
       ],
       "tamanho": [
         192,
-        192
+        182
       ],
       "anchor": [
         0.5,
@@ -129,7 +129,7 @@
       "origem": {
         "base": "base/schoolhouse/schoolhouse_06_completo.png",
         "semente": null,
-        "nota": "Casa do Coronel autoral, sobrado civico com varanda e balcao vazio. Estrutura anterior reaproveitada como madeira e derivada no mesmo recorte do completo; uniao alpha > 16 calculada somente para schoolhouse: x17,y28 1201x1198; saida 192x192."
+        "nota": "Casa do Coronel autoral, sobrado civico com varanda e balcao vazio. Estrutura anterior reaproveitada como madeira e derivada no mesmo recorte do completo; uniao alpha > 16 calculada somente para schoolhouse: x17,y28 1201x1198; saida limitada pela regua da Casa do Lenhador a 192x182, conteudo 182x182."
       }
     },
     {
