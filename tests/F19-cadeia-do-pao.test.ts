@@ -36,6 +36,7 @@ const FARINHA = Object.keys(MOINHO.sai)[0] ?? '';
 const PAO = Object.keys(PADARIA.sai)[0] ?? '';
 
 const PLANTIO = gameData.recursos.tipos[GRAO]?.reposicao?.ticksDeSemear ?? 0;
+const CRESCER = gameData.recursos.tipos[GRAO]?.reposicao?.ticksDeCrescer ?? 0;
 const RENDIMENTO = gameData.recursos.tipos[GRAO]?.rendimentoPorTile ?? 0;
 
 /**
@@ -45,8 +46,19 @@ const RENDIMENTO = gameData.recursos.tipos[GRAO]?.rendimentoPorTile ?? 0;
  * fazenda que nao existe mais — 12 % acima do que o campo pode dar — e o piso
  * abaixo reprovaria a cadeia por um defeito que esta no modelo, nao no jogo.
  * As duas pernas sao medidas neste cenario, e o `ticksDoCiclo` continua do dado.
+ *
+ * F-CAMPO-a — com `alcance_tiles` 2 o primeiro tile e (110,28), trabalhado de
+ * (111,29): a viagem era 1 + 53 + 51 = 105 e agora e 1 + 35 + 33 = 69, medida por
+ * sonda em 2026-09-27 (a mesma do F18-ciclo, porque o cenario e o mesmo).
  */
-const VIAGEM_DA_FAZENDA = 105;
+const VIAGEM_DA_FAZENDA = 69;
+/**
+ * F-CAMPO-a — antes da primeira colheita o roceiro ANDA ate o tile para semear
+ * (a ida, 35, medida com a viagem acima), semeia la, e o tile CRESCE. As tres
+ * parcelas sao a latencia que o modelo novo pos na frente de todo o resto.
+ */
+const IDA_DE_SEMEAR = 35;
+const ATE_O_MILHO_CRESCER = IDA_DE_SEMEAR + PLANTIO + CRESCER;
 
 /** O que a FONTE permite: um tile de milho custa um plantio mais os ciclos que
  *  ele rende, viagem incluida, e e isso — e nao o relogio do moinho — que limita
@@ -57,10 +69,11 @@ const TICKS_POR_GRAO = (
 /** Quantos paes cada grao vira, seguindo a cadeia elo a elo. Derivado, nao
  *  digitado: se o moinho um dia consumir dois milhos por ciclo, isto acompanha. */
 const PAES_POR_GRAO = unidadesPorCiclo(PADARIA) / (MOINHO.entra[GRAO] ?? 1);
-/** A latencia minima da cadeia: plantar, ir ao tile, colher, voltar, moer, assar.
- *  Nenhum transporte de serf cabe aqui — e por isso que ela e um piso que nada
- *  pode furar. A viagem do roceiro, sim: desde a F-T3 ela e parte da colheita. */
-const ARRANQUE = PLANTIO + VIAGEM_DA_FAZENDA
+/** A latencia minima da cadeia: semear, crescer, ir ao tile, colher, voltar, moer,
+ *  assar. Nenhum transporte de serf cabe aqui — e por isso que ela e um piso que
+ *  nada pode furar. A viagem do roceiro, sim: desde a F-T3 ela e parte da colheita,
+ *  e desde a F-CAMPO-a a ida de semear e o crescer tambem. */
+const ARRANQUE = ATE_O_MILHO_CRESCER + VIAGEM_DA_FAZENDA
   + FAZENDA.ticksDoCiclo + MOINHO.ticksDoCiclo + PADARIA.ticksDoCiclo;
 
 const JANELA = 12000;
@@ -68,8 +81,14 @@ const JANELA = 12000;
 /** As fases em que o roceiro esta PRODUZINDO, na FSM da F-T3
  *  (src/sim/systems/especialistas.ts: trabalhando -> indo_colher -> colhendo ->
  *  voltando -> trabalhando). E o que o cenario sem moinho aceita como "a fazenda
- *  continua viva". */
-const ESTADOS_PRODUTIVOS_DO_ROCEIRO = ['trabalhando', 'indo_colher', 'colhendo', 'voltando'];
+ *  continua viva".
+ *
+ *  F-CAMPO-a — REESCRITO (2026-09-27): semear saiu do predio e virou viagem
+ *  (trabalhando -> indo_semear -> semeando -> voltando), e semear e produzir. A
+ *  lista ganhou as duas fases; o que ela exclui continua excluido. */
+const ESTADOS_PRODUTIVOS_DO_ROCEIRO = [
+  'trabalhando', 'indo_semear', 'semeando', 'indo_colher', 'colhendo', 'voltando',
+];
 
 /**
  * O oraculo de calibracao vive em `production.json` e NAO passa pelo carregador:
@@ -153,8 +172,12 @@ describe('F19 — a cadeia fecha: milho vira fubá, fubá vira cuscuz', () => {
         if (primeiro[m] === undefined && desdeOInicio(inicial, s, m) > 0) primeiro[m] = t;
       }
     }
-    // o primeiro milho: plantio + viagem + ciclo, no tick da chegada do roceiro
-    expect(primeiro[GRAO]).toBe(PLANTIO + VIAGEM_DA_FAZENDA + FAZENDA.ticksDoCiclo);
+    // o primeiro milho: ida de semear + semear + crescer + viagem + ciclo, no tick
+    // da chegada do roceiro. F-CAMPO-a — REESCRITO (2026-09-27): era plantio +
+    // viagem + ciclo (250), com o plantio dentro do predio e o tile maduro na hora.
+    // A forma e a mesma — tick exato, so com numero derivado ou medido —, e deu
+    // 1899 na sonda de 2026-09-27.
+    expect(primeiro[GRAO]).toBe(ATE_O_MILHO_CRESCER + VIAGEM_DA_FAZENDA + FAZENDA.ticksDoCiclo);
     // e cada elo seguinte nao pode chegar antes do proprio relogio dele, contado
     // do elo anterior: mais estrito que a ordem, e ainda so com numero derivado.
     expect(primeiro[FARINHA]).toBeGreaterThanOrEqual((primeiro[GRAO] ?? 0) + MOINHO.ticksDoCiclo);

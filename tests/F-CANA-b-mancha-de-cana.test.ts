@@ -114,12 +114,19 @@ describe('F-CANA-b (a) — o Canavial da vila planta sem o jogador arar', () => 
     expect(inicial.camposPlanejados).toEqual({});
   });
 
-  it('planta um tile da mancha e faz cachaca dele', () => {
+  it('planta a mancha e faz cachaca dela', () => {
     expect(semeouEm).toBeGreaterThan(0);
     expect(semeouEm).toBeLessThan(primeiraCachacaEm);
-    const soma = Object.values(partidoDe(fim)).reduce((a, b) => a + b, 0);
+    const partido = partidoDe(fim);
+    const soma = Object.values(partido).reduce((a, b) => a + b, 0);
     expect(soma).toBeGreaterThan(0);
-    expect(soma).toBeLessThan(RENDIMENTO);
+    // F-CAMPO-a — REESCRITO (2026-09-27, operador): o `soma < RENDIMENTO` de antes
+    // dizia "um tile so foi semeado", o que valia com o plantio dentro do predio.
+    // No rodizio a mancha e semeada enquanto o primeiro tile cresce. O que se
+    // afirma agora e a conservacao: os tiles semeados, menos a cachaca feita.
+    const semeados = Object.keys(partido).filter((k) => fim.recursos[k]?.semeadoEm !== undefined).length;
+    expect(semeados).toBeGreaterThan(0);
+    expect(soma).toBe(semeados * RENDIMENTO - (saidaDe(fim, 'c1')['wine'] ?? 0));
     expect(fim.camposPlanejados).toEqual({});
   });
 

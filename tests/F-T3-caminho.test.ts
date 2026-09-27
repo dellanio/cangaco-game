@@ -98,20 +98,26 @@ function tileDeRecursoSemAproximacao(estado: GameState, tipo: string): TileDeGri
  * medir: `cenarioDeFazenda` NAO produz a escolha debaixo do footprint
  * (test-output/zz-probe-F-T3.json).
  *
- * O galpao cai em (108,26) — 3x3 sobre campo arado, dentro do alcance de `f1` e
+ * O galpao cai em (109,26) — 3x3 sobre campo arado, dentro do alcance de `f1` e
  * ANTES dele na varredura (norte->sul, oeste->leste). As quantidades sao semeadas
  * para que a primeira escolha de cada lado caia debaixo do galpao:
- *   (108,26) cheio e coberto    -> a colheita erraria aqui
- *   (109,26) em pousio, coberto -> o plantio erraria aqui
- *   (111,26) em pousio, livre   -> onde o plantio DEVE cair
- *   (112,26) cheio e livre      -> onde a colheita DEVE cair
+ *   (110,28) cheio e coberto    -> a colheita erraria aqui
+ *   (111,28) em pousio, coberto -> o plantio erraria aqui
+ *   (112,28) em pousio, livre   -> onde o plantio DEVE cair
+ *   (113,28) cheio e livre      -> onde a colheita DEVE cair
+ *
+ * 2026-09-27 — o caso andou para dentro do alcance: o `farm.colheita.alcance_tiles`
+ * caiu de 4 para 2 (decisao do operador, F-CAMPO), e (108,26) saiu do alcance de
+ * `f1`. A forma e a mesma — os dois primeiros tiles da varredura cobertos, o
+ * primeiro pousio e o primeiro cheio livres logo depois; o galpao so cobre dois
+ * tiles da fileira, e nao tres como antes.
  */
 const NORTE = relativoA(ancoraDoRocadoDoNorte());
-const GALPAO = { id: 'galpao-no-campo', ...NORTE(0, 4) } as const; // (108,26) hoje
-const CHEIO_E_COBERTO = chaveDeTile(NORTE(0, 4));
-const POUSIO_E_COBERTO = chaveDeTile(NORTE(1, 4));
-const POUSIO_E_LIVRE = chaveDeTile(NORTE(3, 4));
-const CHEIO_E_LIVRE = chaveDeTile(NORTE(4, 4));
+const GALPAO = { id: 'galpao-no-campo', ...NORTE(1, 4) } as const; // (109,26) hoje
+const CHEIO_E_COBERTO = chaveDeTile(NORTE(2, 6));
+const POUSIO_E_COBERTO = chaveDeTile(NORTE(3, 6));
+const POUSIO_E_LIVRE = chaveDeTile(NORTE(4, 6));
+const CHEIO_E_LIVRE = chaveDeTile(NORTE(5, 6));
 
 function comMilhoDebaixoDaFazenda(estado: GameState): GameState {
   const def = DADOS.predios.find((p) => p.id === 'storehouse');

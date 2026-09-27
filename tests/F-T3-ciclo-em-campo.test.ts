@@ -185,7 +185,11 @@ describe('F-T3 — o ciclo em campo da pedreira', () => {
 describe('F-T3 — o mesmo ciclo no roçado', () => {
   it('o roceiro sai da fazenda, vai ao milho e volta com a colheita', () => {
     const inicial = comEspacoNaSaida(cenarioDeFazenda(), 'f1');
-    const { trilha, fim } = trilhaDeUmCiclo(inicial, 'f1', 'roceiro', 'corn', 1200);
+    // F-CAMPO-a — o milho agora CRESCE no tile depois de semeado, e o primeiro
+    // ciclo que entrega vem depois do crescer inteiro. O teto de seguranca soma o
+    // crescer do dado aos 1200 de antes: e teto contra travar, nao assercao (§8).
+    const crescer = gameData.recursos.tipos.corn?.reposicao?.ticksDeCrescer ?? 0;
+    const { trilha, fim } = trilhaDeUmCiclo(inicial, 'f1', 'roceiro', 'corn', 1200 + crescer);
     const receita = receitaDoTipo('farm', gameData);
     if (receita === null) throw new Error('fixture: farm perdeu a receita');
     // a fazenda pode PLANTAR antes de ter o que colher (F18): a sequencia do ciclo
