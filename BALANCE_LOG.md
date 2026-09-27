@@ -22,16 +22,6 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
 
 ## Observações abertas
 
-- [2026-09-27] com o campo crescendo no tile (crescer 1 650) e `farm.colheita.alcance_tiles` 2, a
-  entrada do moinho da F19 termina **cheia** (m1 5 de 5), e o cuscuz entregue fica em 74 contra um
-  piso de ~90 do teto | medido na branch `f-campo-a` (`0733718`), `tests/F19-cadeia-do-pao.test.ts`,
-  os dois testes da vazão. **Hipótese** da causa, não medida por fase: a fazenda passou a entregar
-  mais que o moinho consome, e o 1:1:1 do oráculo com `farm.sai.corn` 3,0 foi fechado no modelo
-  antigo (plantio de 150 ticks dentro do prédio, ~250 ticks por milho contra 246 do moinho) |
-  `data/production.json` (`farm.sai.corn`, `proporcoesDeReferencia`), `data/resources.json`
-  (`corn.reposicao`) | **espera o operador:** recalibrar junto com o lote, não sozinho. É o que
-  segura o crescer 1 650 fora da `main`.
-
 - [2026-09-24] o terreno passou a existir (F-T1) e viagem deixou de ser linha reta | medido: a
   travessia de 36 tiles ao redor do lago custa **292 ticks** contra **252** no mesmo trajeto sem
   terreno (`test-output/F-T1.json`), 16% a mais só por contornar | `data/maps/sertao-128.json`,
@@ -689,6 +679,28 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
 ---
 
 ## Ciclos fechados
+
+### `farm.sai.corn` 3.0 → 2.0 — o 1:1:1 no modelo do campo crescendo (fechado em 2026-09-27, `main`)
+- **Aberta como:** com crescer 1 650 e alcance 2, a entrada do moinho da F19 terminava
+  cheia (m1 5 de 5) e o cuscuz ficava em 74. A hipótese, depois confirmada pela
+  medida abaixo: o 3.0 foi fechado no modelo antigo, com o plantio de 150 ticks dentro
+  do prédio.
+- **Decisão do operador:** girar agora, fora do lote, porque a F19 estava vermelha e o
+  crescer 1 650 dependia dela. *"A taxa foi calibrada num modelo que mudou."*
+- **Conta:** 150 da colheita + 69 da viagem + 28,5 da viagem de semear rateada pelos 4
+  do tile = 247,5 ticks por milho, contra 246 do ciclo do moinho.
+- **Medida** (branch `f-campo-a`, sonda apagada), em ticks por milho entregue:
+
+  | `farm.sai.corn` | ticks/milho | F19 |
+  |---|---|---|
+  | 3.0 (antes) | 214,3 | represa |
+  | 2.4 | 235,3 | represa |
+  | 2.2 | 244,9 | represa |
+  | 2.1 | 250,0 | ainda represa a gaveta |
+  | **2.0** | **260,9** | passa: moinho 1,8 % ocioso, entrada 4; 74 cuscuz de 77,2 (95,8 %) |
+
+- **Fonte:** `data/production.json` (`farm.notes`, com a tabela) e
+  `tests/F19-cadeia-do-pao.test.ts` (`TICKS_POR_GRAO` com a viagem de semear).
 
 ### Lote 1 — cadeia de comida (fechado em 2026-09-25, branch `calibracao-fase-b`)
 

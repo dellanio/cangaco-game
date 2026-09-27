@@ -9052,10 +9052,52 @@ As duas perguntas da noite 3 foram respondidas pelo operador; as decisões estã
   por fase.
 - Quem arar muito mais que ~20 tiles no anel de 2 pode repetir o atraso do 1º milho.
 
-## Perguntas em aberto (2026-09-27, noite 4)
-1. F18-rocado ×3: trocar a fixture por uma fazenda de 1 tile ao alcance, mantendo a
-   afirmação (produz, para quando zeram, volta após replantio, debita)?
-2. F19: recalibrar `farm.sai.corn` (ou a proporção de referência) para o modelo novo,
-   no lote de balanceamento? Sem isso, o crescer 1 650 não entra na `main`.
-3. Canavial: `alcance_tiles` continua 4 ("é o da fazenda"). Acompanha a fazenda e vai
-   para 2? Os testes da cana passam com 4.
+## 2026-09-27 (noite, 5) — crescer 1 650 na `main`: F18 em 1 tile, farm 2.0, canavial alcance 2
+
+As três perguntas da noite 4 foram respondidas pelo operador (sim às três, com medida
+antes do canavial). Saíram desta seção, e as respostas estão abaixo.
+
+**Feito (verificado):**
+- **F18-rocado ×3, cenário de 1 tile** (decisão do operador): `cenarioDeFazendaDeUmTile`
+  em `tests/helpers/producao-cenario.ts`. É a fazenda do norte com só o primeiro tile
+  ao alcance. **Mudou o cenário, não a asserção.** Os marcos são derivados de novo:
+  semeado 80, maduro, 1º milho 1 899, seca 2 406, volta 4 305. Única troca de rótulo:
+  no patamar o roceiro está em `semeando`, que é a fase de plantio do modelo novo.
+- **`farm.sai.corn` 3.0 → 2.0** (decisão do operador: girar agora, fora do lote).
+  - Conta por milho: 150 da colheita + 69 da viagem + 28,5 da viagem de semear
+    rateada pelos 4 do tile = **247,5**, contra 246 do ciclo do moinho.
+  - Medido (sonda apagada), em ticks por milho: 3.0 → 214,3; 2.4 → 235,3;
+    2.2 → 244,9; **2.1 → 250,0, e a F19 ainda represa a gaveta**; **2.0 → 260,9**.
+    Com 2.0 o moinho fica 1,8 % ocioso e a entrada tem 4.
+  - A F19 volta a passar: 74 cuscuz contra teto de 77,2, **95,8 %** (o piso é 85 %).
+    O `TICKS_POR_GRAO` do oráculo ganhou a viagem de semear.
+  - A nota do dado leva a tabela, e a calibração de 2026-09-25 fica como histórico.
+- **Canavial `alcance_tiles` 4 → 2** (decisão do operador, medida antes). Na vila, com
+  o Canavial em (39,35), em tiles alcançáveis/2330: alcance 1 → 2; **2 → 4**; 3 → 6;
+  4 → 8. Com 2 não fica sem tile arável, então não voltou para 3.
+- **F18h, janela do 1º milho:** eram 2 000 ticks fixos, e passou a ser
+  `2000 + semear + crescer` do dado (3 695). O 1º milho medido sai no **2 037**, e a
+  medida fica ao lado. É número de primeira saída, corrigido pela regra do giro.
+- **Merge `f-campo-a` → `main`** (`merge(F-CAMPO-a)`). O `npm run verify` passou:
+  - `test`: 1 553 de 1 553;
+  - `test:transladado`: 1 552, mais 4 pulados pela lista `FORA_DO_MUNDO_TRANSLADADO`,
+    que já existia;
+  - `.verify-ok` criado.
+- **Aceite do operador para a F-CAMPO-a** (`docs/planos/F-CAMPO-a.md`: com 12 tiles,
+  mais de um produz em 6 000 ticks e a produção passa a de 1 tile). **Sonda da
+  sessão, apagada, não é cobertura:** `cenarioDeCanavial`, 6 000 ticks, gaveta
+  esvaziada. 1 tile → 4 canas; 12 tiles → **6**, com os 12 semeados; 1ª saída ~2 360.
+  - Passa, mas por pouco: o 1º corte vem depois de ~2 360 ticks de crescer.
+  - **Não há teste permanente do aceite**, e a F-CAMPO-a não tem chave em
+    `test-results.json`, que não foi escrito.
+
+**Hipóteses (não verificadas):**
+- O aceite (c) proposto no BUILD_PLAN (vazão ≈ 24 em 6 000) foi escrito no modelo
+  antigo e não cabe com crescer 1 650 e farm 2.0. É lacuna do aceite proposto, e cabe
+  ao operador reescrevê-lo.
+- Quem arar muito mais que ~20 tiles no anel de 2 pode repetir o atraso do 1º milho.
+  Continua sem medida.
+
+**Escala:** não mexida. O operador avisou que o Codex está lendo o kam_remake para
+achar a projeção real, que talvez não seja isométrica. A F-ESC espera esse relatório.
+

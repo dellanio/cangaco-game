@@ -3717,6 +3717,22 @@ Casos 2 e 4 do prédio vivo (`docs/BRIEF-ARTE.md` §4a). Decisão do operador: c
       balanceamento (`BALANCE_LOG.md`, 2026-09-27), decisão do operador.
     - **Consequência:** o crescer 1 650 **não** entra na `main` nesta sessão, porque a
       suíte ficaria vermelha com 5.
+  - **Decisões do operador (2026-09-27, noite 5), aplicadas e na `main`**
+    (`merge(F-CAMPO-a)`, com o `npm run verify` verde):
+    - **F18-rocado ×3:** o cenário virou `cenarioDeFazendaDeUmTile`. Mudou o cenário,
+      não a asserção.
+    - **`farm.sai.corn` 3.0 → 2.0:** a conta dá 247,5 ticks por milho contra 246 do
+      moinho. Medido: 260,9. O 2.1 ainda represa. A tabela está no `BALANCE_LOG.md`,
+      em Ciclos fechados. A F19 fica em 95,8 % do teto.
+    - **Canavial `alcance_tiles` 4 → 2:** medido na vila, fica com 4 tiles alcançáveis
+      (eram 8 com 4).
+    - **F18h:** a janela do 1º milho passou a ser `2000 + semear + crescer`. Medido:
+      2 037.
+  - **Estado:** crescer 1 650, alcance 2 e farm 2.0 estão na `main`. **Chave: nenhuma
+    ainda.** O aceite do operador (`docs/planos/F-CAMPO-a.md`) passou numa sonda da
+    sessão, já apagada: Canavial, 6 000 ticks, 12 tiles → 6 canas, 1 tile → 4. Ainda
+    **não tem teste permanente**. O aceite (c) proposto acima (≈ 24 em 6 000) é do
+    modelo antigo e precisa de reescrita pelo operador.
 - **O que é hoje (medido, 2026-09-26)**:
   - `avancarPlantio` (`sim/systems/especialistas.ts:395-406`) ocupa o roceiro por
     `reposicao.ticks` = 150 (30 s na escala `economia` 2,0), que cobre arar, semear **e
@@ -3879,6 +3895,9 @@ Casos 2 e 4 do prédio vivo (`docs/BRIEF-ARTE.md` §4a). Decisão do operador: c
   - Os rótulos madeira/pedra no tema: confirmado não criar, porque nada os lê.
 
 ### F-ESC — A escala do prédio: altura máxima pela largura (render + ferramenta; proposta, não implementar antes do sim do operador)
+- **Espera (operador, 2026-09-27, noite 5):** não mexer em escala. O Codex está lendo o
+  código do kam_remake para achar a projeção real do KaM, que talvez não seja
+  isométrica. Se a resposta mudar o BRIEF-ARTE, o operador avisa.
 - **Origem:** pedido do operador, 2026-09-27: medir a altura real dos seis sprites
   contra a largura do footprint e propor a regra "altura máxima como múltiplo da
   largura". Nesta sessão houve **medida e proposta**, nenhum código.
