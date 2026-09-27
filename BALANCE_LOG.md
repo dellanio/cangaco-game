@@ -22,6 +22,12 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
 
 ## Observações abertas
 
+- [2026-09-27] com o campo crescendo no tile, doze tiles de cana rendem só 1,5× um (15 contra 10
+  em 12 000 ticks; 2 tiles 13, 4 ou mais 15), contra 2,9× da fazenda | ciclo do Canavial 600 ticks
+  (`wineyard.sai.wine` 0,5) contra 150 da fazenda; o canavieiro satura com 2 a 4 tiles | medido por
+  sonda apagada, `cenarioDeCanavial` | `data/production.json` | pergunta ao operador (PROGRESS,
+  noite 6).
+
 - [2026-09-24] o terreno passou a existir (F-T1) e viagem deixou de ser linha reta | medido: a
   travessia de 36 tiles ao redor do lago custa **292 ticks** contra **252** no mesmo trajeto sem
   terreno (`test-output/F-T1.json`), 16% a mais só por contornar | `data/maps/sertao-128.json`,

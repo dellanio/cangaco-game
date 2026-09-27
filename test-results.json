@@ -241,5 +241,8 @@
   },
   "F-DEV-dev-server-sem-orfao": {
     "passes": true
+  },
+  "F-CAMPO-a-campo-cresce-no-tile": {
+    "passes": true
   }
 }

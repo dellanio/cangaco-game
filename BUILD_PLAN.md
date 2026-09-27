@@ -3733,6 +3733,34 @@ Casos 2 e 4 do prédio vivo (`docs/BRIEF-ARTE.md` §4a). Decisão do operador: c
     sessão, já apagada: Canavial, 6 000 ticks, 12 tiles → 6 canas, 1 tile → 4. Ainda
     **não tem teste permanente**. O aceite (c) proposto acima (≈ 24 em 6 000) é do
     modelo antigo e precisa de reescrita pelo operador.
+  - **Aceite reescrito pelo operador (2026-09-27, noite 6), e PASSA — chave `true`:**
+    *"afirme a RAZÃO — com N tiles ao alcance, a produção é maior que com 1 tile, por uma
+    margem que você meça agora."* O (c) antigo, ≈ 24 em 6 000, sai.
+    - Teste: `tests/F-CAMPO-a-razao.test.ts`, na fazenda do norte, com gaveta esvaziada e
+      janela de 12 000. Medido: 14 tiles → 46 milhos; 1 tile → 16. A razão é
+      **2,875**, e o piso é **2**. Evidência em `test-output/F-CAMPO-a.json`.
+    - **O guarda acusa:** com o crescer de volta a 30 s, deu 46 contra 43 e reprovou.
+      O `data/resources.json` foi restaurado depois.
+    - O Canavial ficou de fora: dá só 1,5× (15 contra 10). Com ciclo de 600 ticks, a
+      colheita domina a volta, e ele satura com 2 a 4 tiles.
+  - **Fazenda grande com alcance 2, medida** (sonda apagada; gaveta esvaziada, condição
+    reposta):
+
+    | tiles arados | 1º milho | milho até 6 000 | milho até 30 000 |
+    |---|---|---|---|
+    | 14 (fixture) | 1 949 | 18 | 113 |
+    | 16 | 2 103 | 18 | 119 |
+    | 20 | 2 464 | 16 | 119 |
+    | 30 | 3 205 | 13 | 121 |
+    | 40 (todo o anel de 2) | 3 791 | 11 | 135 |
+
+    - O atraso do 1º milho **volta**: acima de ~15 tiles, cada tile a mais soma a sua
+      viagem de semear (~115 ticks). Semear o lote passa a custar mais que o crescer
+      (1 650).
+    - O alcance 2 **limita** o atraso (no máximo 3 791, contra 5 051 com alcance 4),
+      mas **não o elimina**. É o "semeia todos e espera" do rodízio.
+    - No regime, mais tiles ainda rendem mais.
+    - **Espera o operador:** decidir se é aceitável.
 - **O que é hoje (medido, 2026-09-26)**:
   - `avancarPlantio` (`sim/systems/especialistas.ts:395-406`) ocupa o roceiro por
     `reposicao.ticks` = 150 (30 s na escala `economia` 2,0), que cobre arar, semear **e
@@ -3895,9 +3923,15 @@ Casos 2 e 4 do prédio vivo (`docs/BRIEF-ARTE.md` §4a). Decisão do operador: c
   - Os rótulos madeira/pedra no tema: confirmado não criar, porque nada os lê.
 
 ### F-ESC — A escala do prédio: altura máxima pela largura (render + ferramenta; proposta, não implementar antes do sim do operador)
-- **Espera (operador, 2026-09-27, noite 5):** não mexer em escala. O Codex está lendo o
-  código do kam_remake para achar a projeção real do KaM, que talvez não seja
-  isométrica. Se a resposta mudar o BRIEF-ARTE, o operador avisa.
+- **Liberada (operador, 2026-09-27, noite 6):** o Codex leu o kam_remake, e o KaM é
+  **ortogonal**:
+  - tiles quadrados de 40×40, `glOrtho`, e conversão que não mistura X com Y;
+  - estrada por máscara dos quatro vizinhos cardinais;
+  - o que parece isométrico é a arte, desenhada em perspectiva oblíqua dentro de
+    retângulos.
+
+  O grid quadrado está alinhado com o código real. A F-ESC pode seguir, e a régua do
+  homem continua valendo.
 - **Origem:** pedido do operador, 2026-09-27: medir a altura real dos seis sprites
   contra a largura do footprint e propor a regra "altura máxima como múltiplo da
   largura". Nesta sessão houve **medida e proposta**, nenhum código.

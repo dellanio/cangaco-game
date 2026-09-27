@@ -9101,3 +9101,44 @@ antes do canavial). Saíram desta seção, e as respostas estão abaixo.
 **Escala:** não mexida. O operador avisou que o Codex está lendo o kam_remake para
 achar a projeção real, que talvez não seja isométrica. A F-ESC espera esse relatório.
 
+## 2026-09-27 (noite, 6) — aceite da F-CAMPO-a por razão; fazenda grande medida; KaM ortogonal
+
+**Feito (verificado):**
+- **Teste permanente do aceite** (`tests/F-CAMPO-a-razao.test.ts`). O critério foi
+  reescrito pelo operador: vale a razão, não o total.
+  - Fazenda do norte, 12 000 ticks, gaveta esvaziada a cada tick.
+  - 14 tiles → 46 milhos, 12 deles colhidos; 1 tile → 16. Razão **2,875**, piso 2.
+  - A janela é 12 000 porque o cenário não tem comida. Sem repor a condição, a
+    produção para entre 12 000 e 20 000; com a condição reposta, ela segue. Os dois
+    foram medidos.
+  - **Prova de que acusa (sonda da sessão, não cobertura):** com o crescer do milho
+    em 30 s, deu 46 contra 43 e reprovou. `data/resources.json` foi restaurado, e o
+    `git diff` ficou vazio.
+- **Canavial contra fazenda, medido** (sonda apagada), 12 000 ticks, 1/2/4/8/12
+  tiles:
+  - Canavial: 10/13/15/15/15, ou 1,5×.
+  - Fazenda, 1/4/14 tiles: 16/32/46, ou 2,9×.
+  - O Canavial satura em 2 a 4 tiles, porque o ciclo dele é 600 ticks
+    (`wineyard.sai.wine` 0,5). **Hipótese** (não medida por fase): a colheita
+    domina a volta do canavieiro, e o crescer se esconde com poucos tiles.
+- **Fazenda grande com alcance 2** (tabela no BUILD_PLAN, F-CAMPO):
+  - 1º milho: 1 949 com 14 tiles, 2 464 com 20, 3 205 com 30, 3 791 com 40;
+  - milho até 6 000: cai de 18 para 11;
+  - milho até 30 000: sobe de 113 para 135.
+  - A hipótese da noite 4 se confirma. O alcance 2 limitou o atraso, mas não o
+    resolveu.
+- `npm run verify` verde: 1 554 testes, e no transladado 1 553 + 4 pulados da lista
+  `FORA_DO_MUNDO_TRANSLADADO`. Chave `F-CAMPO-a-campo-cresce-no-tile: true`.
+- **KaM ortogonal** (relatório do Codex, trazido pelo operador), registrado na F-ESC.
+  A F-ESC está liberada, e **nada de escala foi mexido** nesta sessão.
+
+**Hipóteses (não verificadas):**
+- Semear mais de ~15 tiles passa do crescer, e a conta por tile (~115 ticks de viagem
+  de semear) explica a inclinação da tabela. Não foi medido por fase.
+
+## Perguntas em aberto (2026-09-27, noite 6)
+1. Fazenda grande: o 1º milho atrasa ~115 ticks por tile acima de ~15, até 3 791 com
+   o anel de 2 cheio. É aceitável, como o "semeia todos e espera" do KaM? Ou a
+   primeira volta do rodízio deveria colher o maduro antes de semear o resto?
+2. Canavial: com ciclo de 600, doze tiles rendem 1,5× um. É o que se quer da cana, ou
+   o `wineyard.sai.wine` entra no próximo lote?

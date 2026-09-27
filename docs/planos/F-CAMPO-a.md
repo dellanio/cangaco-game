@@ -36,6 +36,11 @@ números que você propôs — os quatro ficam, marcados para revisão".
 Com 12 tiles arados e um roceiro, mais de um tile produz em 6000 ticks, e a produção
 é maior que com 1 tile. Medido em `cenarioDeCanavial(12)` contra `(1)` e na fazenda.
 
+**Reescrito pelo operador (2026-09-27, noite 6):** afirma a RAZÃO. Com N tiles ao
+alcance, a produção é maior que com 1 tile, por margem medida. Em
+`tests/F-CAMPO-a-razao.test.ts`: fazenda do norte, 12 000 ticks, 14 tiles contra 1,
+46 contra 16 milhos (2,875×), com piso de 2×. O Canavial dá 1,5× e não entrou.
+
 ## Risco já visto na conta
 Com crescer = 150 < W ≈ 970, o rodízio semeia os 12 antes da primeira colheita
 (≈ 12 × 150 ticks sem produzir). A conta prevê que em 6000 ticks 12 tiles podem
