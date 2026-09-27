@@ -332,6 +332,12 @@ export interface Producao {
    *  AUSENTE nos outros, nunca `undefined` — a convencao de `DadosDaFsm`. Quem
    *  reconstroi `Producao` espalha a anterior para nao perder o rodizio. */
   readonly escolha?: EscolhaDeSaida;
+  /** F-CAMPO-a — so no predio que REPOE o tile (roçado, canavial): o ultimo tile
+   *  que o rodizio escolheu, chave `"gx,gy"`. AUSENTE nos outros e antes da
+   *  primeira escolha. A proxima busca termina este tile se ainda ha o que colher
+   *  nele, e senao comeca DEPOIS dele — nenhum tile ao alcance espera mais de uma
+   *  volta. Quem reconstroi `Producao` espalha a anterior para nao perde-lo. */
+  readonly cursor?: string;
 }
 
 /**
@@ -348,7 +354,12 @@ export interface EscolhaDeSaida {
 }
 
 /**
- * F18 — a reposicao de UM tile em curso, dentro do predio.
+ * F18 — a reposicao de UM tile em curso.
+ *
+ * F-CAMPO-a — deixou de ser "dentro do predio": semear e VIAGEM (`indo_semear`,
+ * `semeando`, `voltando`), e esta reserva cobre a ida e a semeadura. O crescer
+ * nao esta aqui: corre no tile (`RecursoNoTile.semeadoEm`), sem o roceiro. O
+ * texto abaixo e o da F18 e continua valendo quanto ao pretendente unico.
  *
  * Por que aqui e nao como tarefa do quadro, ao contrario da colheita (F-T2c): a
  * tarefa de colheita existe porque DUAS pedreiras podem mirar o mesmo tile, e
@@ -362,7 +373,7 @@ export interface EscolhaDeSaida {
 export interface Plantio {
   /** O tile sendo reposto. Reservado desde o primeiro tick do plantio. */
   readonly tile: TileDeGrid;
-  /** Ticks ja trabalhados, de 0 ate `reposicao.ticks` do tipo de recurso. */
+  /** Ticks ja trabalhados NO TILE, de 0 ate `reposicao.ticksDeSemear`. */
   readonly progresso: number;
 }
 
@@ -378,6 +389,14 @@ export interface Plantio {
 export interface RecursoNoTile {
   readonly tipo: string;
   readonly quantidade: number;
+  /** F-CAMPO-a — o tick em que o roceiro terminou de semear este tile. So em
+   *  tile semeado e ainda nao colhido ate o fim; AUSENTE em rocha, arvore, terra
+   *  em pousio e todo tile de antes da F-CAMPO. Maduro e DERIVADO
+   *  (`tick >= semeadoEm + ticksDeCrescer`, `tileMaduro` em sim/recursos.ts):
+   *  nada avanca por tick, e o crescer corre em todos os tiles ao mesmo tempo.
+   *  Opcional, e nao `number | null` obrigatorio: obrigatorio custava 41 erros
+   *  de compilacao (5 na sim, 36 em teste), medido na noite 18. */
+  readonly semeadoEm?: number;
 }
 
 /**

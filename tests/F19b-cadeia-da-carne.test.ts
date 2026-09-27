@@ -43,7 +43,7 @@ const CARNE = Object.keys(ACOUGUE.sai)[0] ?? '';
  *  exclusao, nunca digitado. */
 const COURO = Object.keys(GRANJA.sai).filter((m) => m !== BODE)[0] ?? '';
 
-const PLANTIO = gameData.recursos.tipos[GRAO]?.reposicao?.ticks ?? 0;
+const PLANTIO = gameData.recursos.tipos[GRAO]?.reposicao?.ticksDeSemear ?? 0;
 const GRAOS_POR_BODE = GRANJA.entra[GRAO] ?? 0;
 const CARNES_POR_BODE = ACOUGUE.sai[CARNE] ?? 0;
 

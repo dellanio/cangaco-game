@@ -35,7 +35,7 @@ const GRAO = FAZENDA.colheita.recurso;
 const FARINHA = Object.keys(MOINHO.sai)[0] ?? '';
 const PAO = Object.keys(PADARIA.sai)[0] ?? '';
 
-const PLANTIO = gameData.recursos.tipos[GRAO]?.reposicao?.ticks ?? 0;
+const PLANTIO = gameData.recursos.tipos[GRAO]?.reposicao?.ticksDeSemear ?? 0;
 const RENDIMENTO = gameData.recursos.tipos[GRAO]?.rendimentoPorTile ?? 0;
 
 /**

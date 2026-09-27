@@ -20,6 +20,11 @@
  * A invariante propria do campo e de POSICAO: quem esta `colhendo` esta no tile
  * da sua tarefa ou ao lado dele. Foi so isso que a F-T3 afrouxou; tudo que valia
  * antes para `trabalhando` continua valendo.
+ *
+ * F-CAMPO-a — e mais dois (`indo_semear`, `semeando`), o desvio de semear. A
+ * reserva deles nao e tarefa do quadro: e o `plantio` do predio. Entao em vez de
+ * "tem colheita na mao" eles exigem "o predio segura um plantio", e a posicao de
+ * quem `semeia` e o tile DO PLANTIO ou um vizinho.
  */
 import { gameData } from '../../src/sim/data';
 import type { GameData } from '../../src/sim/data/types';
@@ -33,8 +38,9 @@ import { caixaDoPredio, type CaixaEmTiles } from '../../src/sim/footprint';
  *  e o ciclo, nao a ocupacao. */
 export const ESTADOS_DE_PRODUCAO = ['trabalhando', 'esperando_insumo', 'saida_cheia'] as const;
 
-/** F-T3 — os tres estados em que ele esta FORA do predio, mas ainda o ocupa. */
-export const ESTADOS_EM_CAMPO = ['indo_colher', 'colhendo', 'voltando'] as const;
+/** F-T3 — os estados em que ele esta FORA do predio, mas ainda o ocupa
+ *  (F-CAMPO-a acrescentou os dois de semear). */
+export const ESTADOS_EM_CAMPO = ['indo_colher', 'colhendo', 'voltando', 'indo_semear', 'semeando'] as const;
 
 export const ESTADOS_DO_ESPECIALISTA = [
   'ocioso', 'indo_ocupar', ...ESTADOS_DE_PRODUCAO, ...ESTADOS_EM_CAMPO,
@@ -49,7 +55,7 @@ const ocupa = (fsm: string): boolean => (ESTADOS_QUE_OCUPAM as readonly string[]
 
 /** F-T3 — onde o caminho pendente e legitimo. `colhendo` nao esta aqui de
  *  proposito: chegar ao tile CONSOME o caminho no mesmo tick. */
-const ANDANDO = ['indo_ocupar', 'indo_colher', 'voltando'] as const;
+const ANDANDO = ['indo_ocupar', 'indo_colher', 'voltando', 'indo_semear'] as const;
 
 /** Distancia de Chebyshev de um tile a uma caixa MEIO-ABERTA. Zero dentro dela,
  *  1 na borda de fora — que e onde a porta do predio esta. */
@@ -129,6 +135,23 @@ export function violacoesDaFsmDoEspecialista(estado: GameState, dados: GameData 
           v.push(`${id}: ${u.fsm} aponta para a tarefa ${u.fsmData.tarefa}, que nao e dele`);
         }
         break;
+      // F-CAMPO-a — semeando: predio dele, nenhuma tarefa na mao (nem de ocupar,
+      // nem de colheita) e o predio segurando o plantio — salvo pausado, que
+      // congela onde esta.
+      case 'indo_semear':
+      case 'semeando': {
+        if (predio === null) { v.push(`${id}: ${u.fsm} sem predio que o reconheca`); break; }
+        if (suas.length > 0) v.push(`${id}: ${u.fsm} e ainda segura a tarefa de ocupar ${suas[0]}`);
+        if (colheitas.length > 0) v.push(`${id}: ${u.fsm} e segura a colheita ${colheitas[0]}`);
+        const plantio = predio.producao?.plantio ?? null;
+        if (plantio === null && !predio.pausado) v.push(`${id}: ${u.fsm} sem plantio no predio ${predio.id}`);
+        const vazio = (u.fsmData.caminho ?? []).length === 0;
+        if (plantio !== null && (u.fsm === 'semeando' || vazio)) {
+          const d = Math.max(Math.abs(u.gx - plantio.tile.gx), Math.abs(u.gy - plantio.tile.gy));
+          if (d > 1) v.push(`${id}: ${u.fsm} a ${d} tiles do plantio ${plantio.tile.gx},${plantio.tile.gy}`);
+        }
+        break;
+      }
       default:
         break;
     }

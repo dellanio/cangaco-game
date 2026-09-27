@@ -90,7 +90,8 @@ interface RawTipoDeRecurso {
   readonly terreno?: string;
   readonly quantidadeInicial?: number;
   readonly reposicao?: {
-    readonly segundos_base: number;
+    readonly semear_segundos_base: number;
+    readonly crescer_segundos_base: number;
     readonly custo: Readonly<Record<string, number>>;
   };
   readonly aradura?: {
@@ -561,12 +562,21 @@ export function loadGameData(raw: RawGameData): GameData {
       bloqueiaConstrucao: cru.bloqueiaConstrucao === true,
       terreno: cru.terreno ?? null,
       quantidadeInicial: cru.quantidadeInicial ?? null,
+      // F-CAMPO-a — dois tempos, dois caminhos registrados: semear (o roceiro no
+      // tile) e crescer (o tile sozinho).
       reposicao: reposicao === undefined ? null : {
-        ticks: registrar(
-          `resources.tipos.${id}.reposicao.segundos_base`, raw.resources.escala,
-          reposicao.segundos_base, 'segundos',
+        ticksDeSemear: registrar(
+          `resources.tipos.${id}.reposicao.semear_segundos_base`, raw.resources.escala,
+          reposicao.semear_segundos_base, 'segundos',
           paraTicksDeDuracao(
-            reposicao.segundos_base, 'segundos', escalaDe(escalas, raw.resources.escala), tickHz,
+            reposicao.semear_segundos_base, 'segundos', escalaDe(escalas, raw.resources.escala), tickHz,
+          ),
+        ),
+        ticksDeCrescer: registrar(
+          `resources.tipos.${id}.reposicao.crescer_segundos_base`, raw.resources.escala,
+          reposicao.crescer_segundos_base, 'segundos',
+          paraTicksDeDuracao(
+            reposicao.crescer_segundos_base, 'segundos', escalaDe(escalas, raw.resources.escala), tickHz,
           ),
         ),
         custo: semChavesDeDoc(reposicao.custo),

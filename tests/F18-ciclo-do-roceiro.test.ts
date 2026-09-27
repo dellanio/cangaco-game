@@ -31,7 +31,7 @@ if (RECEITA === null || RECEITA.colheita === null) {
   throw new Error('fixture: `farm` precisa de receita com colheita em data/production.json');
 }
 const COLHEITA = RECEITA.colheita;
-const TICKS_DE_PLANTIO = gameData.recursos.tipos[COLHEITA.recurso]?.reposicao?.ticks ?? 0;
+const TICKS_DE_PLANTIO = gameData.recursos.tipos[COLHEITA.recurso]?.reposicao?.ticksDeSemear ?? 0;
 const TICKS_DO_CICLO = RECEITA.ticksDoCiclo;
 const RENDIMENTO = gameData.recursos.tipos[COLHEITA.recurso]?.rendimentoPorTile ?? 0;
 const POR_CICLO = unidadesPorCiclo(RECEITA);

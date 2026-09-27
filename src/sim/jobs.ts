@@ -44,7 +44,7 @@ import {
 } from './reservas';
 import { predioAceita } from './ocupacao';
 import { temComidaNaBodega } from './bodega';
-import { tilesReservadosParaColheita } from './recursos';
+import { tileMaduro, tilesReservadosParaColheita } from './recursos';
 
 /**
  * Por que uma tarefa reclamada foi liberada. Cada motivo devolve as DUAS reservas
@@ -831,7 +831,13 @@ export function reclamar(
     // nao confia na criacao: entre um tick e outro o tile pode ter secado, e um
     // save de outra versao pode trazer duas tarefas no mesmo tile.
     const chave = chaveDeTile(tarefa.origemTile);
-    if ((state.recursos[chave]?.quantidade ?? 0) < tarefa.quantidade) {
+    const recurso = state.recursos[chave];
+    if ((recurso?.quantidade ?? 0) < tarefa.quantidade) {
+      return { ok: false, motivo: 'origem-sem-recurso' };
+    }
+    // F-CAMPO-a: tile semeado tem a quantidade cheia desde o semear, mas nao se
+    // colhe antes de crescer — o mesmo `tileMaduro` que a escolha do tile usa.
+    if (recurso !== undefined && !tileMaduro(state, recurso, dados)) {
       return { ok: false, motivo: 'origem-sem-recurso' };
     }
     if (tilesReservadosParaColheita(state, tarefa.id).has(chave)) {
