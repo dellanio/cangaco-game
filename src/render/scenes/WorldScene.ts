@@ -736,7 +736,10 @@ export class WorldScene extends Phaser.Scene {
       this.vegetacaoDesenhada.delete(chave);
       return;
     }
-    if (atual?.texture.key === desenho.chave) return;
+    if (atual?.texture.key === desenho.chave) {
+      this.ajustarAfloramento(atual, chave, codigo);
+      return;
+    }
     atual?.destroy();
     const { tilePx } = configDoMapa;
     const canto = gridToScreen(tileDeChave(chave), tilePx, ESCALA_DO_MUNDO);
@@ -744,7 +747,43 @@ export class WorldScene extends Phaser.Scene {
     const imagem = this.add.image(pe.x, pe.y, desenho.chave)
       .setOrigin(desenho.entrada.anchor[0], desenho.entrada.anchor[1])
       .setDepth(depthDeY(pe.y));
+    this.ajustarAfloramento(imagem, chave, codigo);
     this.vegetacaoDesenhada.set(chave, imagem);
+  }
+
+  /**
+   * A rocha do manifesto e um afloramento, nao uma pedrinha por tile. Quando
+   * varios tiles de `rock` se tocam, os sprites crescem o bastante para as bases
+   * se fundirem num lajedo. A variacao vem das coordenadas e continua determinista.
+   */
+  private ajustarAfloramento(
+    imagem: Phaser.GameObjects.Image,
+    chave: string,
+    codigo: number,
+  ): void {
+    const tipo = recursosDeRender.tipos[codigo - 1];
+    if (tipo !== 'rock') {
+      imagem.setScale(1).setFlipX(false).setRotation(0);
+      return;
+    }
+
+    const { gx, gy } = tileDeChave(chave);
+    const recursos = this.ponte.atual?.recursos ?? {};
+    let vizinhos = 0;
+    for (let dy = -1; dy <= 1; dy += 1) {
+      for (let dx = -1; dx <= 1; dx += 1) {
+        if (dx === 0 && dy === 0) continue;
+        const recurso = recursos[`${gx + dx},${gy + dy}`];
+        if (recurso?.tipo === 'rock' && recurso.quantidade > 0) vizinhos += 1;
+      }
+    }
+
+    const escala = vizinhos === 0 ? 1 : 1.2 + Math.min(vizinhos, 5) * 0.04;
+    const variante = this.hashVisual(gx, gy, codigo);
+    imagem
+      .setScale(escala)
+      .setFlipX((variante & 1) === 1)
+      .setRotation(((variante >>> 1) % 5 - 2) * 0.012);
   }
 
   /** Lido de volta da camada desenhada, como `contarTerrenoVisivel`: o roteiro
