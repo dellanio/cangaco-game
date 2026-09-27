@@ -618,6 +618,63 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   escada de prioridade do `delivery.json`; (c) a Bodega mais cedo na ordem da cal-vila.
   A folga de 957 é o dado que pesa: a vila já passava no limite antes do giro.
   | `production.json:woodcutters.sai.tree_trunk`, `delivery.json`, `tests/F-CAL-a-cenario.test.ts`
+- [2026-09-27] **LOTE 2 FECHADO — madeira 0,55 → 0,71/min na `main`, com a escada consertada**
+  | decisão do operador: "os carregadores largarem pedra da estrada para levar madeira que
+  sobra é o defeito — material para obra tem de vir antes de excedente para o armazém". Mais
+  carregador inicial foi recusado: muda a vila da F-CAL-b e esconde o problema.
+  - **O que a escada tinha:** o excedente já tinha nível próprio (7), e a saída cheia também
+    (6). A pedra do canteiro estava em 8 **de propósito**, desde a F18g ("o produto escoa
+    antes de a rua crescer"). Era ordem errada por decisão, não nível faltando.
+  - **Conserto:** `pedra-para-canteiro` 8 → **6**, saída cheia 6 → 7, excedente 7 → 8. Os
+    insumos (4, 5) ficam acima da pedra: é a leitura mais conservadora da decisão, que só
+    fala de excedente.
+  - **Medido (F-CAL-a, `test-output/F-CAL-cenario.json`):** com 0,71 e a escada nova, a
+    Bodega fica pronta no tick **8 009**, com teto de 12 000. Antes: 0,55 e a escada velha
+    davam 11 043 (folga de 957); 0,71 e a escada velha, fome no 12 000. O `npm run verify`
+    inteiro passou com as duas mudanças juntas.
+  | `delivery.json:prioridades`, `production.json:woodcutters.sai.tree_trunk`
+- [2026-09-27] **REFERÊNCIA — números do KaM original, lidos do binário** | fonte:
+  `data/defines/houses.dat` e `unit.dat` da instalação do operador
+  (`D:\SteamLibrary\steamapps\common\Knights and Merchants Historical Version`), lidos por
+  script com o layout do `kam_remake` (`TKMHouseSpecLegacy` em `KM_ResHouses.pas`,
+  `TKMUnitSpecLegacy` e `TKMUnitSprite` em `KM_ResUnits.pas`). O layout está conferido pelo
+  tamanho: 51 052 = 2 100 + 29 × 1 688, e 339 498 = 15 680 + 41 × 7 898. **Só os números
+  entram aqui**: nenhum arquivo do KaM entra no repositório.
+
+  Como se leem as colunas:
+  - **ResProductionX** é a quantidade entregue por ciclo (`KM_UnitWorkPlan.pas:128`).
+  - **Trabalho** é `ciclos da ação × quadros da animação` (`KM_UnitTaskMining.pas:296`),
+    em ticks.
+  - **Descanso** é `WorkerRest × 10` (`KM_UnitWorkPlan.pas:250`), em ticks.
+
+  | prédio | ResProductionX | trabalho (ticks) | descanso (ticks) | crescimento do tile |
+  |---|---|---|---|---|
+  | farm (corte) | **1** | 6 × 16 = **96** | 50 | milho: **6 400 ticks** (`CORN_AGE_FULL`) |
+  | farm (plantio) | — | 10 × 10 = **100** | 50 | — |
+  | vineyard | **1** | 5 × 20 = **100** (a uva só tem animação virada ao norte) | 50 | uva: **5 000 ticks** (`WINE_AGE_FULL`) |
+  | woodcutters | 1 | — | 50 | árvore: 8 000 ticks (`TREE_AGE_FULL`) |
+  | quarry | **3** | 8 × 10 = 80 | 50 | — |
+  | sawmill | 2 | — | 50 | — |
+  | bakery | 2 | — | 50 | — |
+  | butchers | 3 | — | 50 | — |
+  | tannery | 2 | — | 50 | — |
+  | metallurgists | 2 | — | 50 | — |
+  | fishermans | 2 no binário, **1** no Remake (override em `KM_ResHouses.pas:801`) | — | 50 | — |
+
+  Leitura:
+  - **A premissa do fazendeiro está fechada:** o KaM entrega **1 milho por viagem**, um
+    tile por corte. Antes era `[Provável]`; agora é número lido.
+  - O corte do KaM (96 ticks) é quase o nosso (`farm.sai.corn` 3,0 = 100).
+  - O que separa os dois jogos é o crescimento: 6 400 lá, 150 aqui.
+  - A quarry do KaM entrega **3** por ciclo, contra 1 aqui. Anotado, **não** é pedido de
+    giro.
+
+  Duas ressalvas:
+  - O tick do KaM é tomado como 100 ms. Isso é **hipótese**: o código só diz, em
+    comentário, que `CORN_AGE_1` = 1 400 ticks "≈ 150 s".
+  - A pasta `hd/` da instalação tem outro `houses.dat`. Nele, fazenda, vinhedo e quarry
+    têm os mesmos números, e o pescador (1, trabalho 60) e alguns prédios militares mudam.
+  | referência, sem arquivo nosso alterado
 
 ---
 

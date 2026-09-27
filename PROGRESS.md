@@ -8912,3 +8912,28 @@ estão em cada item do `BUILD_PLAN.md`. Nenhum código de `src/` foi tocado na `
    - o sobrado (3,5 H = 1,33 × largura) contra k = 1,0: transbordo, exceção ou
      footprint 4?
 5. F-ESC: a exceção por prédio no manifesto, e o fator de transbordo no mesmo commit?
+
+## 2026-09-27 (noite) — escada da entrega consertada, lote 2 fechado; fonte KaM disponível
+
+**Feito (verificado):**
+- `delivery.json`: a pedra do canteiro vai de 8 para **6** (antes da saída cheia e do
+  excedente), por decisão do operador. O giro da madeira 0,71, que estava na branch
+  `lote2-madeira`, foi trazido para cá (cherry-pick sem commit). F-CAL-a: Bodega
+  pronta no **8 009** (era 11 043, e com o giro e a escada velha, fome no 12 000). O
+  `npm run verify` passou inteiro. A reprovação com a escada velha é evidência desta
+  sessão e das anteriores, não um teste novo. O guarda permanente é a F-CAL-a com o
+  giro, que agora roda na `main`. A branch `lote2-madeira` ficou redundante e não foi
+  apagada.
+- **Fonte nova para dúvida de comportamento do original:** o KaM está instalado em
+  `D:\SteamLibrary\steamapps\common\Knights and Merchants Historical Version`. O
+  `data/defines/houses.dat` e o `unit.dat` se leem com o layout do `kam_remake`, e os
+  scripts e o layout estão no `BALANCE_LOG.md` (entrada "REFERÊNCIA", 2026-09-27).
+  Próxima dúvida de número do original: ler dali antes de ir ao wiki. Os binários do
+  jogo se leem **no lugar** e não entram no repositório; só o número medido, com
+  fonte.
+- Fazendeiro do KaM: **1 milho por viagem, lido** (antes era `[Provável]`).
+
+**Hipótese:** o tick do KaM é de 100 ms. Só o comentário de `CORN_AGE_1` sustenta isso.
+
+**Ainda aberto:** a pergunta de a pedra subir acima dos insumos (4, 5) também. Fiz a
+leitura conservadora: subiu só acima do excedente.

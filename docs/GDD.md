@@ -466,8 +466,15 @@ Escada de prioridade (`data/delivery.json`):
 3. Material → obra já nivelada **[proposta]**
 4. Insumo → produção parada por falta de insumo **[proposta]**
 5. Insumo → produção com estoque baixo **[proposta]**
-6. Saída cheia → armazém **[proposta]**
-7. Excedente → armazém **[proposta]**
+6. Pedra → tile de estrada planejado **[decisão do operador, 2026-09-27]**
+7. Saída cheia → armazém **[proposta]**
+8. Excedente → armazém **[proposta]**
+9. Laborer assenta estrada · 10. Laborer ara campo. Esses dois só dão o `modo` da
+   busca de caminho, porque entre as tarefas do laborer vale a distância.
+
+A pedra da obra vem **antes** de qualquer mercadoria que só volta ao armazém. Se
+ficasse depois, uma serraria cheia tiraria os serfs da estrada da Bodega, e a vila
+morreria de fome com tábua sobrando (lote 2, `BALANCE_LOG.md`).
 
 Os dois primeiros níveis são do próprio Remake: entregar comida ao Inn é a maior
 prioridade e entregar ouro à escola é a segunda **[fonte]**.
