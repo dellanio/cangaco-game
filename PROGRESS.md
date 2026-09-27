@@ -9168,3 +9168,29 @@ As duas perguntas da noite 6 foram respondidas e saíram desta seção.
   `docs/BRIEF-ARTE.md` e `assets/manifest.json`, que a F-ESC também toca. Pela regra
   do operador ("se houver arquivo dele modificado em render/, espere"), fica esperando.
   A `main` está limpa.
+
+## 2026-09-27 (noite, 9) — o KaM não tem taxa: tempo no tile, na casa, descanso e carga são separados
+
+**Feito (verificado):**
+- **Leitura do kam_remake** (os dois repositórios num clone fora do repo) e do binário.
+  A tabela está no `BALANCE_LOG.md`, dentro da constatação do tempo de colheita.
+  - No KaM não há taxa. A vazão emerge de caminhada + trabalho no tile (`WorkCyc ×
+    quadros`, por profissão) + trabalho na casa (`SubActAdd`) + descanso
+    (`WorkerRest × 10`), com `ResProductionX` por viagem.
+  - O fazendeiro corta 96, não trabalha dentro da casa e descansa 50.
+  - O vinhateiro fica 100 no tile e ≈ 320 dentro da casa.
+- **Bug no `tools/kam-medir.js`, corrigido:** o `animWorkCount` lia os índices 1..5
+  (nota "0 é haIdle"). No enum, `haWork1` é 0 (`KM_Defaults.pas:765`), então a leitura
+  estava deslocada em uma posição. Nenhum número publicado dependia dele: o grep por
+  `animWorkCount` nos `.md` volta vazio. O leitor ganhou o campo `trabalho`, e a medida
+  é reproduzível por ele.
+- **Linha do pescador na REFERÊNCIA corrigida:** o descanso no binário é 590, e 50 é o
+  override do `reyandme`.
+
+**Hipóteses (não verificadas):**
+- O tick do KaM é de 100 ms.
+- O vinhateiro do KaM satura com ~11 tiles contra ~44 do fazendeiro. É conta de
+  crescimento ÷ ciclo, sem caminhada.
+- O significado de `WorkerWork` no `houses.dat`, que nenhum remake lê.
+
+**Não feito:** nem (a) nem (b). O operador decide no começo do lote.

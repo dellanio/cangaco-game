@@ -47,6 +47,13 @@ node tools/kam-medir.js "D:/SteamLibrary/steamapps/common/Knights and Merchants 
 
 A saída vai para fora do repositório (`--saida`) ou para o terminal.
 
+**Tempo de trabalho** (2026-09-27): o campo `trabalho` traz os quadros das ações de
+trabalho (`Work`, `Work1`, `Work2`) do lenhador, do fazendeiro, do pescador e do pedreiro,
+nas 8 direções. O tempo no tile é `WorkCyc × quadros`, e o `WorkCyc` de cada profissão
+está no código do remake (`FindPlan` em `KM_UnitWorkPlan.pas`), não no binário. O
+`animWorkCount` das casas lia os índices 1..5 até essa data, deslocado em uma posição,
+e passou a ler `haWork1..haWork5` = 0..4, como o enum de `KM_Defaults.pas`.
+
 **Como os números se leem:**
 
 - O tile do KaM tem **40 px** (`CELL_SIZE_PX`).

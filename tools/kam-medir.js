@@ -51,8 +51,10 @@ const H = {
   stonePic: 0, anim: 88, woodCost: 1528, stoneCost: 1529,
   workerWork: 1634, workerRest: 1636, resProductionX: 1646,
 };
-// THouseAnim: haWork1..haWork5 sao os indices 1..5 (0 e haIdle).
-const HOUSE_ANIM_WORK = [1, 2, 3, 4, 5];
+// TKMHouseActionType (KM_Defaults.pas): haWork1..haWork5 sao os indices 0..4. Ate
+// 2026-09-27 este leitor lia 1..5, com a nota "0 e haIdle", o que deslocava
+// `animWorkCount` em uma posicao. Nenhum numero publicado dependia dele.
+const HOUSE_ANIM_WORK = [0, 1, 2, 3, 4];
 // KM_UnitWorkPlan.pas: o descanso e WorkerRest x 10 ticks.
 const REST_TICKS = 10;
 
@@ -66,6 +68,13 @@ const UNIT_COUNT = 41;
 const UNIDADES = { Serf: 0, Woodcutter: 1, Farmer: 4 };
 const UA_WALK = 0;
 const DIR_S = 4;
+// Quadros das acoes de TRABALHO dos que colhem, nas 8 direcoes. No kam_remake o tempo
+// no tile e `WorkCyc x quadros` (KM_UnitTaskMining.pas, fase 4), e o WorkCyc de cada
+// profissao esta no codigo (KM_UnitWorkPlan.pas, FindPlan), nao no binario.
+// UNIT_ID_TO_TYPE: 8 Fisher, 10 Stonemason. TKMUnitActionType a partir de uaWalk:
+// uaWork 1, uaWork1 4, uaWork2 5.
+const COLHEDORES = { Woodcutter: 1, Farmer: 4, Fisher: 8, Stonemason: 10 };
+const ACOES_DE_TRABALHO = { Work: 1, Work1: 4, Work2: 5 };
 
 // KM_ResMapElements.pas: mapelem.dat e uma sequencia de registros de 99 bytes, e o
 // TKMAnimLoop e o primeiro campo.
@@ -229,6 +238,20 @@ function medirUnidades(pasta, rx) {
   return saida;
 }
 
+function medirTrabalho(pasta) {
+  const arquivo = path.join(pasta, 'data', 'defines', 'unit.dat');
+  const b = fs.readFileSync(arquivo);
+  conferirTamanho(arquivo, b, UNIT_CARRY + UNIT_COUNT * UNIT_REC);
+  return Object.entries(COLHEDORES).map(([nome, i]) => {
+    const quadrosPorDirecao = {};
+    for (const [acao, a] of Object.entries(ACOES_DE_TRABALHO)) {
+      quadrosPorDirecao[acao] = [0, 1, 2, 3, 4, 5, 6, 7]
+        .map((d) => b.readInt16LE(UNIT_CARRY + i * UNIT_REC + 22 + (a * 8 + d) * ANIM + ANIM_COUNT));
+    }
+    return { unidade: nome, quadrosPorDirecao };
+  });
+}
+
 function medirArvores(pasta, rx, adultas) {
   const arquivo = path.join(pasta, 'data', 'defines', 'mapelem.dat');
   const b = fs.readFileSync(arquivo);
@@ -261,6 +284,7 @@ function main() {
     casas: medirCasas(pasta, lerCabecalhosRx(path.join(res, 'houses.rx')),
       remake === null ? null : lotesDoRemake(remake)),
     unidades: medirUnidades(pasta, lerCabecalhosRx(path.join(res, 'units.rx'))),
+    trabalho: medirTrabalho(pasta),
     arvores: remake === null ? null
       : medirArvores(pasta, lerCabecalhosRx(path.join(res, 'trees.rx')), arvoresAdultasDoRemake(remake)),
   };

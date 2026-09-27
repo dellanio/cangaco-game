@@ -72,6 +72,65 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
         trabalhador.
       - E cada giro remede a cadeia de quem consome (moinho, serraria, bodega).
   - `data/production.json` (`sai` dos cinco), `sim/data/loader.ts`.
+  - **REFERÊNCIA — como o KaM modela isso** (medido em 2026-09-27, a pedido do operador,
+    antes de escolher entre (a) e (b)).
+    - **Fontes:**
+      - o código de `Kromster80/kam_remake` (`b199128`, 2022-06-01), cujo README aponta
+        o `reyandme/kam_remake` como a linha principal, e do `reyandme` (`731a8a4`); ambos
+        lidos num clone fora do repositório;
+      - `houses.dat` e `unit.dat` da instalação do operador, lidos com
+        `tools/kam-medir.js` (campos `casas[].animWorkCount`, `casas[].workerRestTicks`
+        e `trabalho`).
+    - **1. Tempo e vazão são separados, e mais que isso: no KaM não existe taxa.**
+      - Nenhum campo diz "unidades por minuto". A vazão **emerge** da soma das fases de
+        uma viagem, e cada fase vem de uma fonte diferente:
+        - caminhada: velocidade `Speed / 240` tiles por tick, com `Speed` = 24 nos quatro
+          colhedores, ou seja, 10 ticks por tile;
+        - trabalho no tile: `WorkCyc × quadros da animação` (fase 4 de
+          `KM_UnitTaskMining.pas`), com o `WorkCyc` de cada profissão escrito no código
+          (`FindPlan`, `KM_UnitWorkPlan.pas`);
+        - trabalho dentro da casa: `SubActAdd`, que multiplica ciclos pelos quadros da
+          animação da casa;
+        - descanso: `WorkerRest × 10`, do `houses.dat`;
+        - quantidade por viagem: `ResProductionX`, do `houses.dat`.
+      - O `houses.dat` também tem um campo `WorkerWork` (Farm 2, Quarry 18, Vineyard 30).
+        **Nenhum dos dois remakes o lê** (grep), e o significado dele não foi apurado.
+    - **2. O ciclo do fazendeiro** (o crescimento de 6 400 corre à parte, em paralelo, no
+      tile): sai da casa, caminha até o tile (10 ticks por tile, alcance 10), corta
+      **96** (6 × 16), volta, **não trabalha dentro da casa**, entrega 1 e descansa
+      **50**. O "resto do ciclo" é caminhada + 50 de descanso.
+    - **3. O tempo no tile varia por profissão**, e duas das cinco fazem parte do trabalho
+      dentro da casa:
+
+      | profissão | no tile | dentro da casa | descanso | por viagem | ticks por unidade, sem caminhada |
+      |---|---|---|---|---|---|
+      | fazendeiro (milho) | 6 × 16 = **96** | 0 | 50 | 1 | **146** |
+      | fazendeiro (semear) | 10 × 10 = 100 | 0 | 50 | — | — |
+      | vinhateiro | 5 × 20 = **100** | 30 + 11 × 24 + 28 ≈ **320** | 50 | 1 | **≈ 470** |
+      | pedreiro | 8 × 10 = **80** | 0 + 9 × 18 + 30 ≈ **190** | 50 | 3 | **≈ 107** |
+      | lenhador (corte) | 15 × 10 + 10 (queda) + 20 = **180** | 0 | 50 | 1 | **230** |
+      | pescador (`reyandme`) | 13 + 10 × 30 + 15 = **328** | 0 | 50 | 1 | **378** |
+      | pescador (`Kromster80`, binário cru) | 13 + 12 × 30 + 15 = 388 | 0 | 590 | 2 | 489 |
+
+      - O "≈" vem de `TimeToWork − 1` e `− 2` nas subações da casa (fase 9).
+      - O pescador difere entre os dois remakes. O `reyandme` sobrescreve o binário
+        (`KM_ResHouses.pas:801-802`): 1 peixe e descanso 50.
+    - **O que isto diz do Canavial:**
+      - no KaM, o tempo **no tile** do vinhateiro é o do fazendeiro (100 contra 96), e o
+        ciclo inteiro é ~3,2× o do fazendeiro;
+      - a diferença está **dentro da casa** (≈ 320, a prensa), não no tile;
+      - aqui os 600 correm todos no tile.
+    - **Conta, não medida no jogo:** mesmo no KaM o vinhateiro satura com menos tiles.
+      Com crescimento ÷ ciclo, ignorando a caminhada, dá 5 000 / 470 ≈ 11 tiles, contra
+      6 400 / 146 ≈ 44 do fazendeiro.
+    - **Consequência para (a) e (b):** o KaM **não** deriva o tempo da taxa. Nele a saída
+      (a) é alinhamento com a referência, não modelo novo. E a pergunta "o que a taxa passa
+      a significar" tem resposta: no KaM, nada. A vazão é resultado de caminhada +
+      tile + casa + descanso, e só se mede. **Hipótese, não decidida:** aqui a taxa `sai`
+      viraria o número que o oráculo confere, como o 1:1:1 da fazenda já foi conferido
+      por medida.
+    - **Ressalva:** o tick do KaM é tomado como 100 ms (a mesma hipótese da REFERÊNCIA
+      abaixo).
 
 - [2026-09-24] o terreno passou a existir (F-T1) e viagem deixou de ser linha reta | medido: a
   travessia de 36 tiles ao redor do lago custa **292 ticks** contra **252** no mesmo trajeto sem
@@ -703,14 +762,14 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   | farm (corte) | **1** | 6 × 16 = **96** | 50 | milho: **6 400 ticks** (`CORN_AGE_FULL`) |
   | farm (plantio) | — | 10 × 10 = **100** | 50 | — |
   | vineyard | **1** | 5 × 20 = **100** (a uva só tem animação virada ao norte) | 50 | uva: **5 000 ticks** (`WINE_AGE_FULL`) |
-  | woodcutters | 1 | — | 50 | árvore: 8 000 ticks (`TREE_AGE_FULL`) |
+  | woodcutters | 1 | 15 × 10 = 150, + 10 da queda + 20 de espera | 50 | árvore: 8 000 ticks (`TREE_AGE_FULL`) |
   | quarry | **3** | 8 × 10 = 80 | 50 | — |
   | sawmill | 2 | — | 50 | — |
   | bakery | 2 | — | 50 | — |
   | butchers | 3 | — | 50 | — |
   | tannery | 2 | — | 50 | — |
   | metallurgists | 2 | — | 50 | — |
-  | fishermans | 2 no binário, **1** no Remake (override em `KM_ResHouses.pas:801`) | — | 50 | — |
+  | fishermans | 2 no binário, **1** no Remake (override em `KM_ResHouses.pas:801`) | 13 + 10 × 30 + 15 = 328 | **590 no binário**, 50 no `reyandme` (override em `:802`; corrigido em 2026-09-27, a linha dizia só 50) | — |
 
   Leitura:
   - **A premissa do fazendeiro está fechada:** o KaM entrega **1 milho por viagem**, um
