@@ -8803,3 +8803,172 @@ Três decisões do operador depois da noite 17. Nada em `src/ui/`, CSS, barra la
   o tile, nunca". Ver Perguntas em aberto.
 - F-CAMPO espera: sim ao item; `crescer` e `semear`; "duas visitas" contra
   `rendimentoPorTile` 4.
+
+## 2026-09-27 — F-CAMPO-a reprova (branch), lote 2 medido, F35/F36 escritas, F-ESC proposta
+
+Pedido do operador em quatro partes. Nada em `src/ui/` nem `src/render/`, onde outra
+sessão trabalha. F-VIVO-c/d saíram da fila enquanto ela estiver lá (nota no item F-VIVO).
+
+### 1. F-CAMPO-a: implementada, aceite reprova, fica na branch `f-campo-a`
+- **Verificado:**
+  - commit `10b5869` na branch `f-campo-a`, marcado `wip`, **não mergeado**;
+  - chave `false` e `test-results.json` intocado;
+  - os quatro números do operador entraram como pedido e ficam **marcados para
+    revisão**: semear 9 s, crescer 30 s, rodízio, e claim que recusa tile verde.
+- **Verificado por sonda** (apagada; as tabelas estão em `docs/planos/F-CAMPO-a.md` na
+  branch):
+  - com C = 150, nenhuma regra de escolha faz 12 tiles renderem mais que 1;
+  - o rodízio adia a primeira saída da fazenda de 37 tiles para o t5051;
+  - na branch, 11 testes vermelhos (F18 ×6, F19 ×2, F-CANA, F-CANA-b, F-T3-ciclo-em-campo).
+- **Não mudei regra nem número** para o aceite passar: a Pergunta 3 recusou "colher
+  antes". O BUG-O continua no `BUGS.md`.
+- **Espera decisão** (quatro saídas, escritas no item F-CAMPO do `BUILD_PLAN.md`).
+
+### 2. Lote 2 de balanceamento: medido, nada girado
+- Entrada aberta no `BALANCE_LOG.md` (2026-09-27), com colheita, caminhada e espera por
+  prédio.
+- **Verificado:** o padrão da fazenda só se repete na madeira. A colheita (545) já é o
+  orçamento 2:1 da serraria (546), e a serraria espera 25 %.
+- **Proposta, não aplicada:** `woodcutters.sai.tree_trunk` de 0,55 para 0,71/min. A conta
+  está ao lado do número.
+- Pedreira, minas e pescador: sem proposta (o motivo está na entrada).
+- **Hipótese não conferida:** a pedreira colada deu 247 contra 211 em 2026-09-25, porque o
+  lajedo perto se esgota.
+
+### 3. As três cascas
+- F35 (Feira) e F36 (Prefeitura) ganharam escopo e aceite. F28b (Torre) já tinha os dois
+  e ficou intocada.
+- Premissa corrigida na F36: a escola puxa ouro **pela fila**, não por alvo de estoque
+  (`src/sim/escola.ts:66`, `ouroNecessario`). Por isso a Prefeitura precisa de um alvo que
+  hoje não existe em `data/`.
+- **Para o operador conferir:** o título da F28b diz "(sim + render)", mas não traz a nota
+  explícita de "feature de integração" que a §10 pede.
+
+### 4. F-ESC: escala dos prédios, medida e proposta
+- **Verificado:** as alturas saíram do IHDR dos seis `_completo.png` (tabela no item).
+  Altura/largura vai de 0,61 a 1,03.
+- **Proposta:** `altura ≤ k × largura`, com k = 1,0 e exceção por prédio. Hoje só o armazém
+  muda, 198 → 192.
+- **Verificado:** o derivador tem `TILE_PX = 64` fixo e não lê `terrain.json`.
+- **Hipótese:** os 380 px da Casa do Coronel são os 192 vistos no zoom 2×.
+- Nenhum dos três lugares foi editado.
+
+## Perguntas em aberto (2026-09-27)
+1. F-CAMPO-a: qual das quatro saídas (item F-CAMPO do `BUILD_PLAN.md`)?
+2. Madeira: girar sozinha o 0,71/min ou esperar o lote com a espera do lenhador?
+3. F35: uma taxa só na Feira ou tabela por mercadoria?
+4. F36: alvo de ouro da Prefeitura (leitura conservadora: o custo do mercenário mais
+   caro, 8).
+5. F-ESC: k = 1,0 ou 1,05? Exceção no manifesto? Junto com o fator de transbordo?
+
+## 2026-09-27 (tarde) — decisões do operador aplicadas; KaM medido; régua do homem
+
+As perguntas 1 a 5 acima foram **respondidas pelo operador** nesta data. As respostas
+estão em cada item do `BUILD_PLAN.md`. Nenhum código de `src/` foi tocado na `main`.
+`src/ui/` e `src/render/` seguem com a outra sessão (branch `feat/ui-world-polish`).
+
+**Feito (verificado abrindo o arquivo ou rodando):**
+- F35: uma taxa só, fixa (decisão). O valor falta, e sem ele o item não começa.
+- F36: alvo 8, lido do máximo de `custoOuro` (decisão).
+- F28b: nota de integração da §10, que vale só para ela.
+- F-ESC:
+  - k = 1,0 decidido;
+  - os 380 px eram o zoom 2× (confirmado pelo operador);
+  - o `TILE_PX = 64` do derivador sai no mesmo commit da F-ESC ("corrija junto"). Não
+    foi feito agora, porque o commit da F-ESC inclui render.
+- Lote 2: a madeira foi girada a 0,71 na branch `lote2-madeira` (`9578276`), mas a
+  F-CAL-a reprova. A vila de 4 carregadores morre no tick 12 000 sem a Bodega. A
+  linha de base passa com 957 ticks de folga, e +1 carregador põe a Bodega no 7 892.
+  Números e opções estão no `BALANCE_LOG.md`. O TETO não foi afrouxado. A `main`
+  segue em 0,55.
+- KaM, lido no código do `kam_remake` (master):
+  - um corte, de um tile, por viagem;
+  - o tile cresce em ~6400 ticks;
+  - a entrega é `ProdCount1 = ResProductionX`.
+- Régua do homem:
+  - H = 73 px (serf), com as alturas visíveis medidas por script na branch
+    `feat/ui-world-polish` `f9e7b5a`. Nenhum PNG foi aberto;
+  - a tabela de desvio está no item F-ESC;
+  - a regra está em `docs/BRIEF-ARTE.md`.
+
+**Hipóteses (não confirmadas):**
+- O fazendeiro do KaM leva **1** por viagem. O valor sai de `houses.dat`, que não está no
+  repositório, e as fontes secundárias dizem 1. Se for isso, **a premissa do operador
+  ("leva a carga") não se confirma no KaM**. O que dá valor a 12–15 campos lá é o
+  crescimento 30× maior que a viagem.
+- "Mandacaru mais alto que a casa" não se reproduz em altura total (120 contra 149–182).
+  É compatível com o olho comparando a *elevação* da casa, que não foi medida.
+- A Casa do Coronel como sobrado, e o umbuzeiro como árvore adulta: classificação minha.
+
+## Perguntas em aberto (2026-09-27, tarde)
+1. F-CAMPO: a carga do tile numa viagem (4 por viagem, ~164 ticks por milho, e não é do
+   KaM) ou a razão do KaM (crescimento ≫ viagem, rendimento 1, mais tiles)?
+2. Lote 2: como a vila da `cal-vila` absorve o giro da madeira? Mais carregador
+   inicial, a escada do `delivery.json` ou a Bodega mais cedo?
+3. F35: o valor da taxa.
+4. Régua do homem:
+   - a tabela vale como está?
+   - classificar facheiro e xique-xique;
+   - o sobrado (3,5 H = 1,33 × largura) contra k = 1,0: transbordo, exceção ou
+     footprint 4?
+5. F-ESC: a exceção por prédio no manifesto, e o fator de transbordo no mesmo commit?
+
+## 2026-09-27 (noite) — escada da entrega consertada, lote 2 fechado; fonte KaM disponível
+
+**Feito (verificado):**
+- `delivery.json`: a pedra do canteiro vai de 8 para **6** (antes da saída cheia e do
+  excedente), por decisão do operador. O giro da madeira 0,71, que estava na branch
+  `lote2-madeira`, foi trazido para cá (cherry-pick sem commit). F-CAL-a: Bodega
+  pronta no **8 009** (era 11 043, e com o giro e a escada velha, fome no 12 000). O
+  `npm run verify` passou inteiro. A reprovação com a escada velha é evidência desta
+  sessão e das anteriores, não um teste novo. O guarda permanente é a F-CAL-a com o
+  giro, que agora roda na `main`. A branch `lote2-madeira` ficou redundante e não foi
+  apagada.
+- **Fonte nova para dúvida de comportamento do original:** o KaM está instalado em
+  `D:\SteamLibrary\steamapps\common\Knights and Merchants Historical Version`. O
+  `data/defines/houses.dat` e o `unit.dat` se leem com o layout do `kam_remake`, e os
+  layout está no `BALANCE_LOG.md` (entrada "REFERÊNCIA", 2026-09-27). **Correção:**
+  só o layout está lá, os scripts não. Os leitores (Python) eram de rascunho e não foram
+  guardados. Quem voltar lá reescreve o leitor a partir do layout, ou o operador decide
+  guardar um em `tools/`.
+  Próxima dúvida de número do original: ler dali antes de ir ao wiki. Os binários do
+  jogo se leem **no lugar** e não entram no repositório; só o número medido, com
+  fonte.
+- Fazendeiro do KaM: **1 milho por viagem, lido** (antes era `[Provável]`).
+
+**Hipótese:** o tick do KaM é de 100 ms. Só o comentário de `CORN_AGE_1` sustenta isso.
+
+**Ainda aberto:** a pergunta de a pedra subir acima dos insumos (4, 5) também. Fiz a
+leitura conservadora: subiu só acima do excedente.
+
+## 2026-09-27 (noite, 2) — F-CAMPO: crescer medido; sobrado por exceção
+
+**Feito (verificado):**
+- Sonda do tempo de crescimento na branch `f-campo-a`, num worktree temporário. A sonda
+  foi apagada, o worktree removido e a junction desfeita antes; `node_modules` está
+  intacto. A tabela está no item F-CAMPO do `BUILD_PLAN.md`.
+  - Método: gaveta esvaziada e fome neutralizada. A condição inicial da unidade vem do
+    `gameData` global, e não do `dados` injetado; sem repor, o roceiro some no 12 000.
+  - O teto da fazenda saturada é ~195–211 ticks por milho, com crescer de 150 até 3 000.
+    O `farm.sai.corn` não precisa girar.
+  - Com 600 ou 800, quatro tiles saturam, e doze não valem mais que quatro.
+  - Com **1 650** (330 s base), doze saturam e o atraso do rodízio some.
+  - **Não girado.** O operador pediu a conta antes de girar.
+- F-ESC: a decisão do sobrado (exceção por prédio no dado, footprint intocado) está
+  escrita no item.
+
+**Hipótese (não rodada):** crescer 330 s atrasa o 1º milho de ~378 para ~1 880 ticks.
+Isso deve mexer nas asserções de primeira saída da F18/F19 e na Bodega da F-CAL-a.
+Nenhum desses testes foi rodado com o valor novo.
+
+## Perguntas em aberto (2026-09-27, noite)
+1. F-CAMPO: girar o crescer para 330 s (1 650 ticks)? A faixa medida é 330–600 s. E
+   rodar F18/F19/F-CAL-a com ele antes, como tarefa 1 da feature?
+2. Escada: a pedra do canteiro sobe também acima dos insumos (4, 5)? Hoje está só acima
+   do excedente.
+3. A mensagem do operador cortou em "E a árvore a 1,05 3,0". A intenção não está
+   escrita, e nada foi feito sobre a árvore.
+4. Apagar a branch `lote2-madeira`, que já está na `main`?
+5. F35: o valor da taxa, ainda pendente.
+6. Guardar um leitor do `houses.dat`/`unit.dat` em `tools/`? Ele leria binário externo
+   e não versionaria dado do KaM.

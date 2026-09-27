@@ -43,7 +43,7 @@ const pedrasDe = (e: GameState): string[] => e.jobs.tarefas.ordem
   .filter((id) => { const t = e.jobs.tarefas.porId[id]; return t !== undefined && ehTarefaDePedraParaCanteiro(t); });
 
 describe('F18d-1b — a escada acolhe `assentar-estrada` sem mexer em nivel nenhum', () => {
-  it('os SETE niveis do GDD continuam onde estavam; os tres de canteiro entram depois deles', () => {
+  it('a escada inteira, na ordem: a pedra da obra antes do excedente; o laborer no fim', () => {
     // a lista inteira, lida do dado, comparada de uma vez: se uma linha nova tivesse
     // entrado no meio, os numeros dos sete mudariam de uma vez so.
     const escada = gameData.entrega.prioridades.map((p) => [p.id, nivelDoTipo(p.id as never)]);
@@ -53,12 +53,13 @@ describe('F18d-1b — a escada acolhe `assentar-estrada` sem mexer em nivel nenh
       ['material-para-obra', 3],
       ['insumo-producao-parada', 4],
       ['insumo-producao-baixa', 5],
-      ['saida-cheia-para-armazem', 6],
-      ['excedente-para-armazem', 7],
-      // F18g: a pedra do canteiro entrou em OITAVO — a unica das tres de canteiro
-      // que e do serf e que portanto disputa nivel com as sete acima; abaixo delas
-      // de proposito (obra e producao ganham da rua).
-      ['pedra-para-canteiro', 8],
+      // F18g entrou em OITAVO, abaixo do excedente. Decisao do operador, 2026-09-27
+      // (lote 2): pedra de obra vem ANTES de excedente para o armazem, porque em
+      // oitavo os serfs largavam a estrada da Bodega para levar tabua sobrando, e a
+      // vila da F-CAL-a morria de fome. Os insumos (4-5) continuam acima dela.
+      ['pedra-para-canteiro', 6],
+      ['saida-cheia-para-armazem', 7],
+      ['excedente-para-armazem', 8],
       // F18d-1b e F18h: as duas do laborer. O nivel delas nao ordena nada (o
       // laborer escolhe por distancia); estao na escada so pelo `modo`.
       ['assentar-estrada', 9],

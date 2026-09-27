@@ -31,9 +31,9 @@ describe('F15a — a receita e um ciclo', () => {
     expect(r?.colheita).toBeNull();
   });
 
-  it('woodcutters: 545 ticks por tronco, colhendo a arvore do tile (F-T4b)', () => {
+  it('woodcutters: 423 ticks por tronco, colhendo a arvore do tile (F-T4b; lote 2, 2026-09-27)', () => {
     const r = gameData.producao.receitas.woodcutters;
-    expect(r?.ticksDoCiclo).toBe(545);
+    expect(r?.ticksDoCiclo).toBe(423);
     expect(r?.entra).toEqual({});
     expect(r?.sai).toEqual({ tree_trunk: 1 });
     // ESTRITA onde a antiga era frouxa: `toBeNull` afirmava a AUSENCIA de um

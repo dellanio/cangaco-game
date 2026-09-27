@@ -554,6 +554,127 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   2026-09-26): o custo fica fora, em definitivo, e está revogado no GDD §5.4.** | `production.json:wineyard`
 - [2026-09-26] a mina colhe sem sair (`colheita.aDistancia`, F-CANA). O ciclo do minério
   ficou mais curto pelo tempo da ida e da volta ao veio, que não foi medido. | `production.json:*_mine.sai`
+- [2026-09-27] **LOTE 2 MEDIDO — o padrão da fazenda só se repete na MADEIRA; proposta com
+  a conta, nada girado** | pedido do operador: *"para cada um, quanto do ciclo é colheita,
+  quanto é caminhada, e se a colheita sozinha já ocupa o orçamento de quem consome a saída"*.
+  Sonda temporária (apagada), 12 000 ticks, rótulo da FSM do especialista contado tick a
+  tick, gaveta `saida` esvaziada a cada tick (isola o campo da logística), intervalo entre
+  `goods-produced` do mesmo prédio. Cenários de `tests/helpers/producao-cenario.ts`.
+
+  | prédio | cenário | colheita | caminhada | espera | intervalo medido | `ticksDoCiclo` | quem consome, e o orçamento |
+  |---|---|---|---|---|---|---|---|
+  | pedreira | `cenarioDePedreira` (7 tiles do lajedo) | 65 % | 35 % | 0 | 257,7 | 167 | obra/estrada: sem ciclo fixo |
+  | pedreira | `cenarioOraculo` (colada) | 67 % | 32 % | 0 | 247,4 | 167 | idem |
+  | lenhador w1 / w2 | `cenarioOraculo` | 78 % / 77 % | 17 % / 18,5 % | 5 % / 4 % | 660,9 / 697,1 | 545 | serraria, 273 por tora; 2:1 → **272,5 por lenhador** |
+  | serraria | `cenarioOraculo`, sem drenar | — | — | **25 %** `esperando_insumo` | 330,6 (mín. 273) | 273 | — |
+  | mina de ouro | `cenarioDaCadeiaDoOuro` | 100 % | 0 (`aDistancia`) | 0 | 300 exato | 300 | metalurgia, 600 por minério |
+  | mina de carvão | idem | 100 % | 0 | 0 | 250 exato | 250 | metalurgia 600, ferraria 300, oficinas 375 |
+  | mina de ferro | não medida: `aDistancia`, mesmo código do ouro | 100 % (derivado) | 0 | — | = 300 (derivado) | 300 | ferraria, 300 por minério (1:1) |
+  | pescador | `cenarioDePescador` (açude da vila) | 67 % | 33 % | 0 | 450,3 | 300 | Bodega: sem ciclo fixo |
+  | pescador | `cenarioDePescadorNoLagoGrande` | 93 % | 7 % | 0 | 322,4 | 300 | idem |
+
+  **Leitura (verificado nas linhas acima):**
+  - **Madeira: o padrão se repete.** A colheita sozinha (545) já é o orçamento inteiro que a
+    proporção 2:1 dá a cada lenhador (2 × 273 = 546). A caminhada (~125 por tora: w1 2024 ÷ 17,
+    w2 2218 ÷ 17) fica fora do orçamento, e a serraria espera 25 % do tempo. É a entrada de
+    2026-09-25 (par = 81 % de uma serraria), agora com a divisão por fase.
+  - **Pedreira e pescador: sem consumidor de ciclo fixo, então a pergunta não tem orçamento
+    para comparar.** A caminhada pesa 32–35 % na pedreira e 7–33 % no pescador conforme o
+    lugar, e é o que a entrada de 2026-09-25 já dizia: número por prédio não existe quando a
+    viagem é geografia. **Não proponho giro.** Nota não resolvida: a pedreira colada deu
+    247,4 aqui e 211,2 na medida de 2026-09-25 (`aberturaDaFaseA`). **Hipótese não conferida:**
+    em 12 000 ticks o lajedo mais perto se esgota e a escolha anda para tiles mais longe.
+  - **Minas: o padrão não se repete.** Desde a F-CANA não andam, e o intervalo é o ciclo do dado
+    ao tick. Ouro 300 contra 600 da metalurgia (sobra); ferro 300 contra 300 da ferraria (1:1,
+    sem folga, mas sem perda). Não há proporção de mina em `proporcoesDeReferencia`.
+
+  **Proposta (não girada), só a madeira:**
+  - `production.json:woodcutters.sai.tree_trunk` **0,55 → 0,71/min**. Conta: o lenhador tem
+    546 ticks por tora (2 × 273); desconta-se a caminhada medida (~125) e a transição (1), e
+    sobram **420** para a colheita. 0,71/min = 84,5 s × 5 ticks/s (`economia` 2,0) = **423**
+    ticks, o que dá 423 + 125 + 1 = 549 por lenhador e 274,5 pelo par, ou seja, a serraria
+    anda cheia. É o mesmo conserto do lote 1: a caminhada fica dentro da conta, de propósito.
+  - Fora da conta, de propósito: a **espera** do lenhador (4–5 %, ~32 ticks por tora) é árvore
+    faltando ao alcance, não colheita. Se entrasse, o número seria 0,77/min (388 ticks). Ela
+    é parafuso de outro eixo (replantio, `tree` e regeneração) e fica para o lote com eles.
+  - Alternativa: a proporção 2:1 → 2,5:1 e o número intocado (680 ÷ 2,5 = 272). Recomendo a
+    taxa: o 2:1 é a referência do GDD §4.5, e o lote 1 abriu o precedente de ajustar a colheita
+    e não a proporção.
+  - **Pergunta ao operador:** gira a madeira sozinha ou espera o lote com a espera do lenhador?
+  | `production.json:woodcutters.sai.tree_trunk`, `production.json:proporcoesDeReferencia`
+- [2026-09-27] **LOTE 2 — decisão do operador: gira a madeira agora, 0,55 → 0,71/min.
+  Pedreira, minas e pescador ficam.** Girada na branch `lote2-madeira` (commit `9578276`,
+  `wip`: `production.json` + `F15a` 545 → 423). **Não entrou na `main`: a F-CAL-a
+  reprova.** O que as sondas mostraram (temporárias, apagadas):
+  - a vila da calibração (`cal-vila`, 4 carregadores iniciais) morre de fome no tick
+    12 000 (condição cheia de 20 min efetivos, `condition.json`) sem a Bodega pronta;
+  - causa: com mais tora, a serraria enche a saída, e o transporte `saida-cheia-para-armazem`
+    (nível 6 em `delivery.json`) passa na frente da `pedra-para-canteiro` (nível 8) da
+    estrada da Bodega. Os 4 carregadores não chegam lá;
+  - a linha de base (0,55) passa com **957 ticks de folga**: Bodega pronta no 11 043.
+    Com +1 carregador inicial e 0,55, ela fica pronta no 7 892.
+  Não afrouxei o TETO nem mexi no cenário. **Espera o operador**, uma de três: (a) mais
+  carregador inicial na `cal-vila`, o que muda a vila que a F-CAL-b calibra; (b) mexer na
+  escada de prioridade do `delivery.json`; (c) a Bodega mais cedo na ordem da cal-vila.
+  A folga de 957 é o dado que pesa: a vila já passava no limite antes do giro.
+  | `production.json:woodcutters.sai.tree_trunk`, `delivery.json`, `tests/F-CAL-a-cenario.test.ts`
+- [2026-09-27] **LOTE 2 FECHADO — madeira 0,55 → 0,71/min na `main`, com a escada consertada**
+  | decisão do operador: "os carregadores largarem pedra da estrada para levar madeira que
+  sobra é o defeito — material para obra tem de vir antes de excedente para o armazém". Mais
+  carregador inicial foi recusado: muda a vila da F-CAL-b e esconde o problema.
+  - **O que a escada tinha:** o excedente já tinha nível próprio (7), e a saída cheia também
+    (6). A pedra do canteiro estava em 8 **de propósito**, desde a F18g ("o produto escoa
+    antes de a rua crescer"). Era ordem errada por decisão, não nível faltando.
+  - **Conserto:** `pedra-para-canteiro` 8 → **6**, saída cheia 6 → 7, excedente 7 → 8. Os
+    insumos (4, 5) ficam acima da pedra: é a leitura mais conservadora da decisão, que só
+    fala de excedente.
+  - **Medido (F-CAL-a, `test-output/F-CAL-cenario.json`):** com 0,71 e a escada nova, a
+    Bodega fica pronta no tick **8 009**, com teto de 12 000. Antes: 0,55 e a escada velha
+    davam 11 043 (folga de 957); 0,71 e a escada velha, fome no 12 000. O `npm run verify`
+    inteiro passou com as duas mudanças juntas.
+  | `delivery.json:prioridades`, `production.json:woodcutters.sai.tree_trunk`
+- [2026-09-27] **REFERÊNCIA — números do KaM original, lidos do binário** | fonte:
+  `data/defines/houses.dat` e `unit.dat` da instalação do operador
+  (`D:\SteamLibrary\steamapps\common\Knights and Merchants Historical Version`), lidos por
+  script com o layout do `kam_remake` (`TKMHouseSpecLegacy` em `KM_ResHouses.pas`,
+  `TKMUnitSpecLegacy` e `TKMUnitSprite` em `KM_ResUnits.pas`). O layout está conferido pelo
+  tamanho: 51 052 = 2 100 + 29 × 1 688, e 339 498 = 15 680 + 41 × 7 898. **Só os números
+  entram aqui**: nenhum arquivo do KaM entra no repositório.
+
+  Como se leem as colunas:
+  - **ResProductionX** é a quantidade entregue por ciclo (`KM_UnitWorkPlan.pas:128`).
+  - **Trabalho** é `ciclos da ação × quadros da animação` (`KM_UnitTaskMining.pas:296`),
+    em ticks.
+  - **Descanso** é `WorkerRest × 10` (`KM_UnitWorkPlan.pas:250`), em ticks.
+
+  | prédio | ResProductionX | trabalho (ticks) | descanso (ticks) | crescimento do tile |
+  |---|---|---|---|---|
+  | farm (corte) | **1** | 6 × 16 = **96** | 50 | milho: **6 400 ticks** (`CORN_AGE_FULL`) |
+  | farm (plantio) | — | 10 × 10 = **100** | 50 | — |
+  | vineyard | **1** | 5 × 20 = **100** (a uva só tem animação virada ao norte) | 50 | uva: **5 000 ticks** (`WINE_AGE_FULL`) |
+  | woodcutters | 1 | — | 50 | árvore: 8 000 ticks (`TREE_AGE_FULL`) |
+  | quarry | **3** | 8 × 10 = 80 | 50 | — |
+  | sawmill | 2 | — | 50 | — |
+  | bakery | 2 | — | 50 | — |
+  | butchers | 3 | — | 50 | — |
+  | tannery | 2 | — | 50 | — |
+  | metallurgists | 2 | — | 50 | — |
+  | fishermans | 2 no binário, **1** no Remake (override em `KM_ResHouses.pas:801`) | — | 50 | — |
+
+  Leitura:
+  - **A premissa do fazendeiro está fechada:** o KaM entrega **1 milho por viagem**, um
+    tile por corte. Antes era `[Provável]`; agora é número lido.
+  - O corte do KaM (96 ticks) é quase o nosso (`farm.sai.corn` 3,0 = 100).
+  - O que separa os dois jogos é o crescimento: 6 400 lá, 150 aqui.
+  - A quarry do KaM entrega **3** por ciclo, contra 1 aqui. Anotado, **não** é pedido de
+    giro.
+
+  Duas ressalvas:
+  - O tick do KaM é tomado como 100 ms. Isso é **hipótese**: o código só diz, em
+    comentário, que `CORN_AGE_1` = 1 400 ticks "≈ 150 s".
+  - A pasta `hd/` da instalação tem outro `houses.dat`. Nele, fazenda, vinhedo e quarry
+    têm os mesmos números, e o pescador (1, trabalho 60) e alguns prédios militares mudam.
+  | referência, sem arquivo nosso alterado
 
 ---
 

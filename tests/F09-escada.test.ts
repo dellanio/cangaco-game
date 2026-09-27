@@ -21,8 +21,9 @@ describe('F09 — delivery.json: a escada de prioridade tem id por nivel', () =>
   // F18d-1b: eram 7 niveis ate a estrada virar canteiro; 'assentar-estrada' entrou
   // no fim (nivel 8) justamente para nao deslocar nenhum dos outros. F18h: 'arar'
   // entrou em nono, pelo mesmo motivo e sem deslocar nenhum. F18g: 'pedra-para-
-  // canteiro' entrou em OITAVO — abaixo dos sete do GDD, que nao se movem, e acima
-  // das duas do laborer, que nao ordenam nada entre si — e sao dez.
+  // canteiro' entrou em OITAVO, e no lote 2 (2026-09-27, decisao do operador) subiu
+  // para SEXTO, acima da saida cheia e do excedente. Acima das duas do laborer, que
+  // nao ordenam nada entre si. Sao dez.
   it('o dado real passa e cada um dos 10 niveis tem id', () => {
     expect(validarTudo(dadosReaisComEscada(real))).toEqual([]);
     expect(real).toHaveLength(10);
