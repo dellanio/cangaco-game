@@ -227,6 +227,28 @@ export function cenarioDeFazenda(dados: GameData = gameData): GameState {
 }
 
 /**
+ * F-CAMPO-a — a MESMA fazenda, com UM so tile de milho ao alcance: os outros tiles
+ * que o alcance pega saem de `recursos` (voltam a ser terra, sem campo). Com o
+ * crescer no tile o rodizio semeia tudo o que alcanca antes de colher, e o aceite
+ * da F18 (produz, para quando zera, volta apos replantio) ficaria esperando o
+ * roceiro semear catorze. Um tile prova a mesma regra sem a espera. O tile que
+ * fica e o PRIMEIRO da ordem de `tilesDeColheita`, escolhido pelo estado.
+ */
+export function cenarioDeFazendaDeUmTile(dados: GameData = gameData): GameState {
+  const s = cenarioDeFazenda(dados);
+  const predio = s.predios.porId.f1;
+  const colheita = receitaDoTipo('farm', dados)?.colheita ?? null;
+  if (predio?.estado !== 'completo' || colheita === null) {
+    throw new Error('fixture: `farm` precisa de receita com colheita');
+  }
+  const [fica, ...saem] = tilesDeColheita(s, predio, colheita, dados);
+  if (fica === undefined) throw new Error('fixture: a fazenda do norte nao alcanca campo nenhum');
+  const recursos = { ...s.recursos };
+  for (const k of saem) delete recursos[k];
+  return { ...s, recursos };
+}
+
+/**
  * 2026-09-26 — o CANAVIAL no lugar da fazenda (`c1`, `wineyard`, porta em y=33
  * na mesma rua), com `partidos` tiles de cana ARADOS pelo caminho do jogo:
  * `canPlowField` aprova e `comOTileArado` assenta — so o laborer que ara e

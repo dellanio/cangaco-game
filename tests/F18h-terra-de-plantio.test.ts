@@ -50,6 +50,9 @@ if (ARADURA === null) {
   throw new Error(`fixture: '${GRAO}' precisa do bloco 'aradura' em data/resources.json`);
 }
 
+const PLANTIO = gameData.recursos.tipos[GRAO]?.reposicao?.ticksDeSemear ?? 0;
+const CRESCER = gameData.recursos.tipos[GRAO]?.reposicao?.ticksDeCrescer ?? 0;
+
 const tile = (gx: number, gy: number) => ({ gx, gy });
 
 /** Um laborer OCIOSO no estado, somado. `cenarioDeFazendaSemCampo` passa por
@@ -144,7 +147,11 @@ describe('F18h (a) — a fazenda que nao produzia passa a produzir, e o jogador 
     let tickDoPrimeiroCampo: number | null = null;
     let tickSemAlerta: number | null = null;
     let tickDoPrimeiroGrao: number | null = null;
-    for (let i = 0; i < 2000; i += 1) {
+    // A JANELA: os 2000 de antes cobriam aradura + viagem + colheita; o F-CAMPO-a pos
+    // o campo a CRESCER no tile, e o primeiro grao so sai depois de semear e crescer.
+    // A janela soma os dois do dado em vez de chutar um teto novo (medido 2026-09-27:
+    // primeiro milho no tick 2037, com crescer 1650; janela de 3695).
+    for (let i = 0; i < 2000 + PLANTIO + CRESCER; i += 1) {
       atual = avancar(atual, 1);
       if (tickDoPrimeiroCampo === null && alvos.some((t) => recursoNoTile(atual, t.gx, t.gy) !== null)) {
         tickDoPrimeiroCampo = atual.tick;

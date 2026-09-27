@@ -202,7 +202,11 @@ export interface AraduraDeRecurso {
 
 /** F18 — o custo de repor um tile, ja em ticks. So o regime `porAcao` tem. */
 export interface ReposicaoDeRecurso {
-  readonly ticks: Ticks;
+  /** F-CAMPO-a — ticks do roceiro NO TILE para semea-lo. */
+  readonly ticksDeSemear: Ticks;
+  /** F-CAMPO-a — ticks do tile semeado ate maduro, sem ninguem la. Nao ha
+   *  contador: o tile guarda `semeadoEm` e maduro e derivado. */
+  readonly ticksDeCrescer: Ticks;
   /** Mercadoria -> quantidade que o predio gasta por tile reposto. Vazio quando
    *  a reposicao nao cobra nada (o milho de hoje: a semente vem do proprio
    *  roçado, decisao registrada no item da fila). */

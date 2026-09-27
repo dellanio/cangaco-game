@@ -102,8 +102,16 @@ describe('F-CANA — o Canavial planta e colhe do partido arado', () => {
   it('a cachaca sai do partido: ele foi semeado e perdeu um ciclo', () => {
     const rendimento = gameData.recursos.tipos['grapes']?.rendimentoPorTile ?? 0;
     const somaNoFim = Object.values(partidoNoFim).reduce((a, b) => a + b, 0);
-    // um tile semeado (rendimento) menos o que o ciclo levou
-    expect(somaNoFim).toBe(rendimento - unidadesPorCiclo(RECEITA));
+    // F-CAMPO-a — REESCRITO (2026-09-27, operador): antes o partido tinha UM tile
+    // semeado na primeira cachaca, porque o plantio corria dentro do predio e o
+    // tile era colhido logo depois. No rodizio o canavieiro semeia os partidos em
+    // pousio enquanto o primeiro cresce, entao na primeira cachaca ha N semeados.
+    // A prova continua a mesma — o que saiu do partido e o que virou cachaca —,
+    // agora sobre os N: N rendimentos menos um ciclo.
+    const semeados = Object.keys(partidoNoFim)
+      .filter((k) => fim.recursos[k]?.semeadoEm !== undefined).length;
+    expect(semeados).toBeGreaterThan(0);
+    expect(somaNoFim).toBe(semeados * rendimento - unidadesPorCiclo(RECEITA));
     expect(saidaDe(fim, 'c1')['wine']).toBe(unidadesPorCiclo(RECEITA));
   });
 

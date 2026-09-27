@@ -14,6 +14,14 @@
  *
  * Tudo medido contra o TICK 0, e em milho ENTREGUE (o que saiu do tile e esta
  * numa gaveta), nunca contra zero absoluto.
+ *
+ * F-CAMPO-a (decisao do operador, 2026-09-27) — a perna (b) e o custo trocaram de
+ * CENARIO, nao de assercao. Com o crescer no tile o rodizio semeia todo campo ao
+ * alcance antes de colher, e a fazenda do norte alcanca catorze: o aceite ficaria
+ * esperando o roceiro semear catorze. `cenarioDeFazendaDeUmTile` deixa um so, e o
+ * teste prova a mesma regra — produz, para quando zera, volta apos replantio,
+ * debita — sem a espera. Os marcos foram derivados de novo para o modelo (o
+ * semear e viagem, e entre semear e colher ha o crescer).
  */
 import { describe, expect, it } from 'vitest';
 import { gameData } from '../src/sim/data';
@@ -24,8 +32,8 @@ import { receitaDoTipo } from '../src/sim/producao';
 import { recursoNoTile } from '../src/sim/recursos';
 import { gravarEvidencia } from './helpers/evidence';
 import {
-  avancar, cenarioDeFazenda, cenarioDeFazendaSemCampo, comCustoDePlantio, comEntrada, entradaDe,
-  fsmDe,
+  avancar, cenarioDeFazendaDeUmTile, cenarioDeFazendaSemCampo, comCustoDePlantio, comEntrada,
+  entradaDe, fsmDe,
 } from './helpers/producao-cenario';
 
 const RECEITA = receitaDoTipo('farm', gameData);
@@ -33,7 +41,8 @@ if (RECEITA === null || RECEITA.colheita === null) {
   throw new Error('fixture: `farm` precisa de receita com colheita em data/production.json');
 }
 const GRAO = RECEITA.colheita.recurso;
-const PLANTIO = gameData.recursos.tipos[GRAO]?.reposicao?.ticks ?? 0;
+const PLANTIO = gameData.recursos.tipos[GRAO]?.reposicao?.ticksDeSemear ?? 0;
+const CRESCER = gameData.recursos.tipos[GRAO]?.reposicao?.ticksDeCrescer ?? 0;
 const CICLO = RECEITA.ticksDoCiclo;
 const RENDIMENTO = gameData.recursos.tipos[GRAO]?.rendimentoPorTile ?? 0;
 
@@ -68,16 +77,25 @@ function serieDeEntrega(
  * SAI da fazenda. Uma volta inteira e o tick da transicao + a IDA ate o tile + o
  * relogio do ciclo, que agora anda NO tile + a VOLTA ate a porta, onde o milho
  * entra na gaveta. As duas pernas sao deste cenario (f1 em (112,30), porta em
- * (112,33), tile (108,26) trabalhado de (109,27)) e estao medidas na evidencia;
- * `CICLO`, `PLANTIO` e `RENDIMENTO` continuam vindo do dado, intocados.
+ * (112,33)) e estao medidas na evidencia; `CICLO`, `PLANTIO`, `CRESCER` e
+ * `RENDIMENTO` continuam vindo do dado, intocados.
+ *
+ * F-CAMPO-a — com `alcance_tiles` 2 o tile e (110,28), trabalhado de (111,29): as
+ * pernas eram 53 / 51 e sao 35 / 33, medidas por sonda em 2026-09-27. O semear
+ * tambem e viagem, pela mesma ida: no tick 1 ele sai, e o tile fica semeado em
+ * `IDA + PLANTIO` (o `semeadoEm`), maduro `CRESCER` depois. O replantio repete os
+ * mesmos passos a partir do tick em que secou.
  */
-const IDA = 53;
-const VOLTA = 51;
+const IDA = 35;
+const VOLTA = 33;
 const VOLTA_INTEIRA = 1 + IDA + CICLO + VOLTA;
-const PRIMEIRA = PLANTIO + VOLTA_INTEIRA;
-const SECOU = PLANTIO + RENDIMENTO * VOLTA_INTEIRA;
-const PARADA = SECOU + Math.floor(PLANTIO / 2);
-const VOLTOU = SECOU + PLANTIO + VOLTA_INTEIRA;
+const SEMEADO_EM = IDA + PLANTIO;
+const MADURO = SEMEADO_EM + CRESCER;
+const PRIMEIRA = MADURO + VOLTA_INTEIRA;
+const SECOU = MADURO + RENDIMENTO * VOLTA_INTEIRA;
+/** No meio do semear do replantio: o roceiro esta parado no tile, semeando. */
+const PARADA = SECOU + 1 + IDA + Math.floor(PLANTIO / 2);
+const VOLTOU = SECOU + MADURO + VOLTA_INTEIRA;
 
 describe('F18 (a) — fazenda sem tile aravel ao alcance nao produz', () => {
   it('nao entrega um grao sequer, e o campo continua vazio', () => {
@@ -108,15 +126,17 @@ describe('F18 (a) — fazenda sem tile aravel ao alcance nao produz', () => {
 
 describe('F18 (b) — com terra ao alcance: produz, para, e volta', () => {
   it('a serie de entrega tem o degrau, o patamar e o degrau seguinte', () => {
-    const inicial = cenarioDeFazenda();
+    const inicial = cenarioDeFazendaDeUmTile();
     const serie = serieDeEntrega(
-      inicial, [0, PLANTIO, PRIMEIRA - 1, PRIMEIRA, SECOU, PARADA, VOLTOU - 1, VOLTOU],
+      inicial, [0, PLANTIO, MADURO, PRIMEIRA - 1, PRIMEIRA, SECOU, PARADA, VOLTOU - 1, VOLTOU],
     );
 
     // o tick 0 e a linha de base, e ela e zero: o campo nasce em pousio.
     expect(serie[0]).toBe(0);
-    // durante o primeiro plantio nao ha o que colher, e nada foi entregue.
+    // durante o primeiro plantio nao ha o que colher, e nada foi entregue — nem
+    // durante o crescer: no tick em que o tile amadurece ainda nao saiu nada.
     expect(serie[PLANTIO]).toBe(0);
+    expect(serie[MADURO]).toBe(0);
     // PRODUZ: o primeiro milho entra na gaveta no tick EXATO em que o roceiro
     // chega de volta — um tick antes ele ainda esta na estrada, de maos cheias.
     expect(serie[PRIMEIRA - 1]).toBe(0);
@@ -124,7 +144,8 @@ describe('F18 (b) — com terra ao alcance: produz, para, e volta', () => {
     // e segue, ate o tile secar — um ciclo por colheita, o rendimento inteiro.
     expect(serie[SECOU]).toBe(RENDIMENTO);
     // PARA: com o tile zerado o roceiro replanta, e no meio do replantio o
-    // acumulado e o MESMO de quando secou. E o patamar.
+    // acumulado e o MESMO de quando secou. E o patamar — e ele dura o crescer
+    // inteiro, ate o tick anterior a volta (`VOLTOU - 1`, abaixo).
     expect(serie[PARADA]).toBe(RENDIMENTO);
     // VOLTA: replantado o campo, a colheita seguinte entrega de novo, e tambem
     // ela no tick exato da chegada.
@@ -135,14 +156,15 @@ describe('F18 (b) — com terra ao alcance: produz, para, e volta', () => {
   it('o patamar e o campo vazio, e nao a gaveta cheia nem o caminho cortado', () => {
     // Um patamar por gaveta cheia ou estrada faltando contaria a mesma historia
     // na serie acima. Aqui se afirma a CAUSA do patamar: o tile esta em zero e o
-    // roceiro esta plantando.
-    const parada = avancar(cenarioDeFazenda(), PARADA);
+    // roceiro esta plantando. F-CAMPO-a: plantar deixou de ser `trabalhando` dentro
+    // do predio e virou a fase `semeando`, no tile; a afirmacao e a mesma.
+    const parada = avancar(cenarioDeFazendaDeUmTile(), PARADA);
     const predio = parada.predios.porId.f1;
     if (predio?.estado !== 'completo') throw new Error('fixture: f1 deveria estar completo');
     const plantio = predio.producao?.plantio ?? null;
     expect(plantio).not.toBeNull();
     expect(recursoNoTile(parada, plantio!.tile.gx, plantio!.tile.gy)?.quantidade).toBe(0);
-    expect(fsmDe(parada, 'roceiro')).toBe('trabalhando');
+    expect(fsmDe(parada, 'roceiro')).toBe('semeando');
     // a gaveta ainda tem espaco, e por isso o patamar nao e dela.
     const naGaveta = Object.values(predio.estoque.saida).reduce((s, q) => s + q, 0);
     expect(naGaveta).toBeLessThan(predio.capacidade.saida ?? Infinity);
@@ -161,15 +183,15 @@ describe('F18 — o custo do plantio sai da gaveta de entrada', () => {
   });
 
   it('com o insumo na gaveta, planta e DEBITA', () => {
-    const inicial = comEntrada(cenarioDeFazenda(comCusto), 'f1', { timber: 1 });
-    const depois = avancar(inicial, PLANTIO, comCusto);
+    const inicial = comEntrada(cenarioDeFazendaDeUmTile(comCusto), 'f1', { timber: 1 });
+    const depois = avancar(inicial, SEMEADO_EM, comCusto);
     expect(entradaDe(inicial, 'f1').timber).toBe(1);
     expect(entradaDe(depois, 'f1').timber).toBe(0);
     expect(entregue(avancar(inicial, PRIMEIRA, comCusto), GRAO)).toBe(1);
   });
 
   it('sem o insumo NAO planta: o campo fica em pousio e o roceiro espera', () => {
-    const inicial = cenarioDeFazenda(comCusto);
+    const inicial = cenarioDeFazendaDeUmTile(comCusto);
     const depois = avancar(inicial, PRIMEIRA, comCusto);
     expect(entregue(depois, GRAO)).toBe(0);
     expect(fsmDe(depois, 'roceiro')).toBe('esperando_insumo');
@@ -184,13 +206,14 @@ describe('F18 — o custo do plantio sai da gaveta de entrada', () => {
 describe('F18 — evidencia', () => {
   it('grava a evidencia do aceite', () => {
     const semCampo = cenarioDeFazendaSemCampo();
-    const comCampo = cenarioDeFazenda();
+    const comCampo = cenarioDeFazendaDeUmTile();
     gravarEvidencia('F18', {
       feature: 'F18-rocado-de-milho',
       aceite: 'BUILD_PLAN.md F18: fazenda sem tile aravel alcancavel nao produz',
       derivadoDoDado: {
         recurso: GRAO,
         ticksDePlantio: PLANTIO,
+        ticksDeCrescer: CRESCER,
         ticksDoCiclo: CICLO,
         rendimentoPorTile: RENDIMENTO,
         alcanceEmTiles: RECEITA.colheita?.alcance ?? null,
@@ -203,17 +226,17 @@ describe('F18 — evidencia', () => {
         alertas: alertasDoEstado(avancar(semCampo, VOLTOU), gameData),
       },
       b_comCampo: {
-        fazenda: { gx: 112, gy: 30, nota: 'na borda do bloco aravel do nordeste' },
-        marcos: { PLANTIO, PRIMEIRA, SECOU, PARADA, VOLTOU },
+        fazenda: { gx: 112, gy: 30, nota: 'na borda do bloco aravel do nordeste, com UM tile de campo ao alcance (F-CAMPO-a)' },
+        marcos: { SEMEADO_EM, MADURO, PRIMEIRA, SECOU, PARADA, VOLTOU },
         voltaInteiraFT3: {
           ticks: VOLTA_INTEIRA,
           transicao: 1,
           idaAteOTile: IDA,
           relogioNoTile: CICLO,
           voltaAtePorta: VOLTA,
-          nota: 'F-T3: o roceiro sai da fazenda; o milho entra na gaveta no tick da chegada, e o intervalo entre colheitas passou de 246 para 351 ticks',
+          nota: 'F-T3: o roceiro sai da fazenda; o milho entra na gaveta no tick da chegada, e o intervalo entre colheitas passou de 246 para 351 ticks (F-CAMPO-a, alcance 2: 169)',
         },
-        serieDeEntrega: serieDeEntrega(comCampo, [0, PLANTIO, PRIMEIRA, SECOU, PARADA, VOLTOU]),
+        serieDeEntrega: serieDeEntrega(comCampo, [0, PLANTIO, MADURO, PRIMEIRA, SECOU, PARADA, VOLTOU]),
         alertasNoPatamar: alertasDoEstado(avancar(comCampo, PARADA), gameData),
       },
       custoDePlantioInjetado: {

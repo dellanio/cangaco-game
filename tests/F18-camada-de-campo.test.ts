@@ -91,8 +91,8 @@ describe('F18 — a camada do roçado sai do terreno', () => {
   it('a reposicao virou ticks inteiros no carregamento, uma vez', () => {
     const reposicao = TIPO?.reposicao;
     expect(reposicao).not.toBeNull();
-    expect(Number.isInteger(reposicao?.ticks)).toBe(true);
-    expect(reposicao?.ticks).toBeGreaterThan(0);
+    expect(Number.isInteger(reposicao?.ticksDeSemear)).toBe(true);
+    expect(reposicao?.ticksDeSemear).toBeGreaterThan(0);
     // Quem NAO se repoe por acao de predio nenhum continua com `null`: o campo
     // e o unico caso de hoje, e a diferenca e do DADO.
     expect(gameData.recursos.tipos.rock?.reposicao).toBeNull();

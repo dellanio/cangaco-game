@@ -253,7 +253,7 @@ describe('F18 — sem-campo e veio-esgotado nao se confundem', () => {
     // a ignorar o alerta.
     const com = cenarioDeFazenda();
     const receita = receitaDoTipo('farm', gameData);
-    const plantio = gameData.recursos.tipos[receita?.colheita?.recurso ?? '']?.reposicao?.ticks ?? 0;
+    const plantio = gameData.recursos.tipos[receita?.colheita?.recurso ?? '']?.reposicao?.ticksDeSemear ?? 0;
     expect(plantio).toBeGreaterThan(0);
     for (const t of [1, Math.floor(plantio / 2), plantio, plantio + 1]) {
       expect(alertas(avancar(com, t)), `tick ${t}`).toEqual([]);

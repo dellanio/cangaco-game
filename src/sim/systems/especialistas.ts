@@ -52,7 +52,7 @@ import {
   temInsumo, unidadesPorCiclo,
 } from '../producao';
 import {
-  colherDoTile, melhorTileDeColheita, melhorTileParaPlantio, reporNoTile, tilesReservadosParaColheita,
+  colherDoTile, melhorTileDeColheita, proximoTrabalhoDoRodizio, semearNoTile, tilesReservadosParaColheita,
 } from '../recursos';
 import { passoAndavel } from '../pathfinding';
 import { ehEstadoDeFome } from '../condicao';
@@ -178,9 +178,17 @@ function depositar(
   // na gaveta. Nao existe instante com a mercadoria feita e o tile ainda
   // reservado — e o mesmo contrato da tarefa de ocupar, que some quando o
   // especialista chega.
+  //
+  // F-CAMPO-a — o `cursor` do rodizio atravessa o deposito: perde-lo aqui faria
+  // toda colheita recomecar do primeiro tile, que e o BUG-O de novo.
+  const cursor = predio.producao?.cursor;
   const depositado: PredioCompleto = {
     ...predio, estoque: { ...predio.estoque, saida },
-    producao: escolha === undefined ? { progresso: 0, plantio: null } : { progresso: 0, plantio: null, escolha },
+    producao: {
+      progresso: 0, plantio: null,
+      ...(escolha === undefined ? {} : { escolha }),
+      ...(cursor === undefined ? {} : { cursor }),
+    },
   };
   const comColheita: GameState = colheita === null ? state : {
     ...state,
@@ -217,6 +225,8 @@ function depositar(
 function garantirColheita(
   state: GameState, u: Unidade, predio: PredioCompleto, colheita: ColheitaDeRecurso,
   quantidade: number, dados: GameData,
+  // F-CAMPO-a — o tile que o rodizio ja escolheu; `null` e a escolha de sempre.
+  tileEscolhido: string | null = null,
 ): { readonly state: GameState; readonly tarefa: TarefaColher } | null {
   const existente = tarefaDeColheitaDoPredio(state, predio.id);
   if (existente !== null && existente.estado === 'reclamada') {
@@ -231,7 +241,7 @@ function garantirColheita(
     // predio ou sem aproximacao andavel nao entra na escolha. Se so o claim
     // recusasse, a tarefa nasceria e morreria a cada tick e o predio esperaria o
     // que nunca chega.
-    const chaveDoTile = melhorTileDeColheita(
+    const chaveDoTile = tileEscolhido ?? melhorTileDeColheita(
       state, predio, colheita, quantidade, tilesReservadosParaColheita(state), dados,
       (k) => tileAlcancavelParaColheita(state, k, dados),
     );
@@ -255,30 +265,29 @@ function garantirColheita(
  *
  * A fazenda tem a mesma forma da pedreira — colhe um recurso de tile ao alcance
  * — com uma diferenca: o recurso dela nao esta no chao esperando. Terra arada
- * nasce em pousio (`quantidadeInicial: 0`), e quem a enche e o proprio roceiro,
- * num ciclo de reposicao que corre ANTES do de colheita.
+ * nasce em pousio (`quantidadeInicial: 0`), e quem a enche e o proprio roceiro.
  *
- * O ciclo inteiro do item — ara, semeia, espera crescer, colhe — cabe em duas
- * fases porque as tres primeiras sao uma DURACAO so (`reposicao.ticks`), e nao
- * tres relogios. Relogio por tile e o que `regenerar` ja se proibe: custaria um
- * campo de estado por tile do mapa para representar o mesmo intervalo.
+ * F-CAMPO-a — o ciclo do tile tem DUAS visitas e um intervalo no meio:
  *
- * MEIA REGRA, e de proposito (F-T3, 2026-09-25): o roceiro AGORA SAI para
- * colher — a saida e de classe, vem do dado (receita com `colheita`) —, mas o
- * PLANTIO continua acontecendo de dentro do predio: `avancarPlantio` nao anda.
- * Ou seja, ele caminha ate o tile para tirar o milho e ara sem sair do lugar.
- * A outra metade esta escrita no item da fila que herda (`F-T?? — o roceiro e o
- * lenhador herdam a caminhada`, BUILD_PLAN.md); nao improvisar aqui.
+ *   trabalhando -> indo_semear -> semeando -> voltando -> trabalhando
+ *
+ *   - semear: o roceiro vai ao tile, semeia `ticksDeSemear` e volta (o `voltando`
+ *     da colheita, sem tarefa na mao);
+ *   - crescer: `ticksDeCrescer`, NO TILE, sem ninguem la (`semeadoEm`; maduro e
+ *     derivado, `tileMaduro`, e nada avanca por tick);
+ *   - colher: o ciclo da F-T3, intocado, sobre o tile ja maduro.
+ * Ate a F-CAMPO o plantio corria DENTRO do predio e cobria semear e crescer num
+ * relogio so, com o roceiro preso a ele: doze tiles rendiam o mesmo que um (BUG-O).
  */
 function reposicaoDe(colheita: ColheitaDeRecurso, dados: GameData): ReposicaoDeRecurso | null {
   return dados.recursos.tipos[colheita.recurso]?.reposicao ?? null;
 }
 
 /**
- * Comeca um plantio, ou `null` se nao da agora. Cobra o custo de `entrada` no
- * mesmo tick em que reserva o tile, como o ciclo de producao cobra o insumo ao
- * iniciar (F15a) e a escola cobra o ouro ao iniciar o treino (F13a): quem nao
- * pode pagar nao segura o tile.
+ * Comeca um plantio no tile que o rodizio escolheu, ou `null` se nao da agora.
+ * Cobra o custo de `entrada` no mesmo tick em que reserva o tile, como o ciclo de
+ * producao cobra o insumo ao iniciar (F15a) e a escola cobra o ouro ao iniciar o
+ * treino (F13a): quem nao pode pagar nao segura o tile.
  *
  * O custo e do DADO (`resources.json: tipos.<t>.reposicao.custo`) e hoje esta
  * vazio para o milho — a semente sai do proprio roçado. O caminho existe porque
@@ -286,17 +295,13 @@ function reposicaoDe(colheita: ColheitaDeRecurso, dados: GameData): ReposicaoDeR
  * o exercita com um custo INJETADO, nao com o dado real.
  */
 function iniciarPlantio(
-  state: GameState, predio: PredioCompleto, receita: ReceitaDePredio, dados: GameData,
+  predio: PredioCompleto, receita: ReceitaDePredio, chaveDoTile: string, dados: GameData,
 ): { readonly predio: PredioCompleto; readonly plantio: Plantio } | null {
   const { colheita } = receita;
   const prod = predio.producao;
   if (colheita === null || prod === null) return null;
   const reposicao = reposicaoDe(colheita, dados);
   if (reposicao === null) return null; // tipo que nao se repoe (a rocha): nada a plantar
-  const chaveDoTile = melhorTileParaPlantio(
-    state, predio, colheita, tilesReservadosParaColheita(state), dados,
-  );
-  if (chaveDoTile === null) return null;
   const entrada: Record<string, number> = { ...predio.estoque.entrada };
   for (const [mercadoria, q] of Object.entries(reposicao.custo)) {
     if ((entrada[mercadoria] ?? 0) < q) return null; // sem o que plantar: `esperando_insumo`
@@ -307,42 +312,140 @@ function iniciarPlantio(
     predio: {
       ...predio,
       estoque: { ...predio.estoque, entrada },
-      producao: { ...prod, plantio },
+      producao: { ...prod, plantio, cursor: chaveDoTile },
     },
     plantio,
   };
 }
 
 /**
- * Um tick de plantio. No ultimo, o tile vai ao rendimento cheio do TIPO e a
- * reserva some junto — a safra fica no CHAO, nao no predio, entao demolir a
- * fazenda no tick seguinte nao a desfaz.
+ * Sai do predio para o tile do plantio. Sem caminho, o plantio cai (a reserva e
+ * do predio, e solta-la e apaga-lo) e o proximo tick escolhe de novo — o
+ * `elegivel` do rodizio ja recusa o tile ilhado, entao isto so cobre o tile que
+ * se fechou depois de escolhido.
  *
- * Sem evento: nenhum consumidor existe para ele nesta feature (o render nao
- * muda aqui, D6), e evento sem consumidor e gancho especulativo. Quem quiser
- * ver o campo semeado le `state.recursos`, que e onde a safra esta.
+ * E tambem por aqui que continua o plantio que o predio ja segura: o de um
+ * ocupante que saiu para comer (a fome vaga o predio e deixa o `plantio`) e o de
+ * um save de antes da F-CAMPO, com o plantio correndo dentro do predio.
  */
-function avancarPlantio(
-  state: GameState, u: Unidade, predio: PredioCompleto, receita: ReceitaDePredio,
-  plantio: Plantio, dados: GameData,
+function sairParaSemear(
+  state: GameState, u: Unidade, predio: PredioCompleto, plantio: Plantio, dados: GameData,
 ): Passo {
-  const { colheita } = receita;
-  const prod = predio.producao;
-  const reposicao = colheita === null ? null : reposicaoDe(colheita, dados);
-  if (reposicao === null || prod === null) return comFsm(state, u, 'esperando_insumo');
-  const progresso = plantio.progresso + 1;
-  if (progresso < reposicao.ticks) {
-    const avancado: PredioCompleto = {
-      ...predio, producao: { ...prod, plantio: { ...plantio, progresso } },
+  const caminho = caminhoAteAproximacaoDoTile(state, plantio.tile, u.id, dados);
+  if (caminho === null) {
+    const semPlantio: PredioCompleto = {
+      ...predio, producao: predio.producao === null ? null : { ...predio.producao, plantio: null },
     };
-    return comFsm(comPredio(state, avancado), u, 'trabalhando');
+    return comFsm(comPredio(state, semPlantio), u, 'esperando_insumo');
   }
-  const chaveDoTile = chaveDeTile(plantio.tile);
-  const semeado: GameState = { ...state, recursos: reporNoTile(state, chaveDoTile, dados) };
-  const pronto: PredioCompleto = {
-    ...predio, producao: { ...prod, plantio: null },
-  };
-  return comFsm(comPredio(semeado, pronto), u, 'trabalhando');
+  return semEventos(comUnidade(comPredio(state, predio), {
+    ...u, fsm: 'indo_semear', fsmData: dadosDaFsm({ caminho: caminho.tiles, progresso: 0 }),
+  }));
+}
+
+/** Os degraus do campo (`situacaoEmCampo`), com o PLANTIO no lugar da tarefa:
+ *  tenho predio, ele esta pausado (congela, F16c), ele ainda tem plantio. */
+type SituacaoDoPlantio =
+  | { readonly tipo: 'ok'; readonly predio: PredioCompleto; readonly plantio: Plantio }
+  | { readonly tipo: 'congelado' }
+  | { readonly tipo: 'sem-plantio'; readonly predio: PredioCompleto }
+  | { readonly tipo: 'perdeu-o-predio' };
+
+function situacaoDoPlantio(state: GameState, u: Unidade): SituacaoDoPlantio {
+  const predio = predioDoOcupante(state, u.id);
+  if (predio === null) return { tipo: 'perdeu-o-predio' };
+  if (predio.pausado) return { tipo: 'congelado' };
+  const plantio = predio.producao?.plantio ?? null;
+  if (plantio === null) return { tipo: 'sem-plantio', predio };
+  return { tipo: 'ok', predio, plantio };
+}
+
+/** Andando para o tile do plantio. */
+function passoIndoSemear(state: GameState, u: Unidade, dados: GameData): Passo {
+  const s = situacaoDoPlantio(state, u);
+  if (s.tipo === 'perdeu-o-predio') return largarOPredioPerdido(state, u);
+  if (s.tipo === 'congelado') return semEventos(state);
+  if (s.tipo === 'sem-plantio') return voltarSemTarefa(state, u, s.predio, dados);
+  const { predio, plantio } = s;
+
+  const proximo = (u.fsmData.caminho ?? [])[0];
+  let atual = u;
+  if (proximo !== undefined && !passoAndavel(state, noTile(u), proximo, 'livre', dados)) {
+    // o caminho morreu debaixo dele: repede UMA vez. Sem volta ao tile,
+    // `voltarSemTarefa` zera o plantio, e a reserva sai junto.
+    const caminho = caminhoAteAproximacaoDoTile(state, plantio.tile, u.id, dados);
+    if (caminho === null) return voltarSemTarefa(state, u, predio, dados);
+    atual = { ...u, fsmData: dadosDaFsm({ caminho: caminho.tiles, progresso: 0 }) };
+  }
+  const andou = andar(state, atual, dados);
+  if (!chegou(andou)) return semEventos(comUnidade(state, andou));
+  return semEventos(comUnidade(state, { ...andou, fsm: 'semeando', fsmData: {} }));
+}
+
+/**
+ * No tile, semeando: o relogio e `plantio.progresso`, ate `ticksDeSemear`. No
+ * ultimo tick o tile vai ao rendimento cheio com `semeadoEm` (a quantidade entra
+ * ja; quem a segura ate amadurecer e `tileMaduro`) e ele volta — `voltarSemTarefa`
+ * zera o `plantio`, que e a reserva. A safra fica no CHAO: demolir a fazenda no
+ * tick seguinte nao a desfaz.
+ *
+ * Sem evento: o consumidor dele seria o sprite do campo (F-CAMPO-b), que le
+ * `state.recursos`, e evento sem consumidor nao nasce.
+ */
+function passoSemeando(state: GameState, u: Unidade, dados: GameData): Passo {
+  const s = situacaoDoPlantio(state, u);
+  if (s.tipo === 'perdeu-o-predio') return largarOPredioPerdido(state, u);
+  if (s.tipo === 'congelado') return semEventos(state);
+  if (s.tipo === 'sem-plantio') return voltarSemTarefa(state, u, s.predio, dados);
+  const { predio, plantio } = s;
+  const receita = receitaDoTipo(predio.tipo, dados);
+  const reposicao = receita === null || receita.colheita === null ? null : reposicaoDe(receita.colheita, dados);
+  if (reposicao === null || predio.producao === null) return voltarSemTarefa(state, u, predio, dados);
+
+  const progresso = plantio.progresso + 1;
+  if (progresso < reposicao.ticksDeSemear) {
+    return semEventos(comPredio(state, {
+      ...predio, producao: { ...predio.producao, plantio: { ...plantio, progresso } },
+    }));
+  }
+  const semeado: GameState = { ...state, recursos: semearNoTile(state, chaveDeTile(plantio.tile), dados) };
+  return voltarSemTarefa(semeado, u, predio, dados);
+}
+
+/**
+ * Um tick de `trabalhando` no predio que REPOE o tile. Tres casos, nesta ordem:
+ *   1. o predio ja segura um plantio: vai semear;
+ *   2. ja existe tarefa de colheita deste predio (ciclo em curso, ou reaberta por
+ *      `liberar`): devolve `null`, e o `produzir` segue o ciclo de sempre;
+ *   3. senao, o RODIZIO escolhe tile e acao. Colher reclama a tarefa NO tile
+ *      escolhido; semear reserva o plantio e sai. Os dois gravam o `cursor`.
+ */
+function escolherNoCampo(
+  state: GameState, u: Unidade, predio: PredioCompleto, receita: ReceitaDePredio, dados: GameData,
+):
+  | { readonly passo: Passo }
+  | { readonly colheita: { readonly state: GameState; readonly tarefa: TarefaColher }; readonly predio: PredioCompleto }
+  | null {
+  const prod = predio.producao;
+  const colheita = receita.colheita;
+  if (prod === null || colheita === null) return null;
+  if (prod.plantio !== null) return { passo: sairParaSemear(state, u, predio, prod.plantio, dados) };
+  if (tarefaDeColheitaDoPredio(state, predio.id) !== null) return null;
+  const quantidade = unidadesPorCiclo(receita);
+  const trabalho = proximoTrabalhoDoRodizio(
+    state, predio, colheita, quantidade, tilesReservadosParaColheita(state), dados,
+    (k) => tileAlcancavelParaColheita(state, k, dados),
+  );
+  if (trabalho === null) return { passo: comFsm(state, u, 'esperando_insumo') };
+  if (trabalho.acao === 'semear') {
+    const iniciado = iniciarPlantio(predio, receita, trabalho.tile, dados);
+    if (iniciado === null) return { passo: comFsm(state, u, 'esperando_insumo') };
+    return { passo: sairParaSemear(state, u, iniciado.predio, iniciado.plantio, dados) };
+  }
+  const r = garantirColheita(state, u, predio, colheita, quantidade, dados, trabalho.tile);
+  if (r === null) return { passo: comFsm(state, u, 'esperando_insumo') };
+  const comCursor: PredioCompleto = { ...predio, producao: { ...prod, cursor: trabalho.tile } };
+  return { colheita: { state: comPredio(r.state, comCursor), tarefa: r.tarefa }, predio: comCursor };
 }
 
 /**
@@ -354,7 +457,8 @@ function avancarPlantio(
  * `esperando_insumo` gravado que discorde do estoque de verdade, pela mesma
  * razao que a posse mora so no predio.
  */
-function produzir(state: GameState, u: Unidade, predio: PredioCompleto, dados: GameData): Passo {
+function produzir(state: GameState, u: Unidade, predioAntes: PredioCompleto, dados: GameData): Passo {
+  let predio = predioAntes;
   // F16c — a PRIMEIRA pergunta, antes da receita e antes da estrada: e o fato
   // mais especifico sobre este predio e e acao deliberada do jogador. Congela o
   // relogio e nada mais: `progresso` nao zera, o insumo ja consumido continua
@@ -362,7 +466,7 @@ function produzir(state: GameState, u: Unidade, predio: PredioCompleto, dados: G
   // rotulo e `trabalhando`, e nao um estado novo (`docs/planos/F16c-pausar.md`).
   if (predio.pausado) return comFsm(state, u, 'trabalhando');
   const receita = receitaDoTipo(predio.tipo, dados);
-  const prod = predio.producao;
+  let prod = predio.producao;
   // predio ocupavel sem receita nao existe no dado de hoje; se existir, ocupa e nao produz
   if (receita === null || prod === null) return comFsm(state, u, 'trabalhando');
   // AQUI HAVIA UM PORTAO, e ele foi REVOGADO (decisao do operador, 2026-09-25):
@@ -389,21 +493,22 @@ function produzir(state: GameState, u: Unidade, predio: PredioCompleto, dados: G
   // `esperando_insumo`: para o jogador, os dois casos sao "falta materia-prima",
   // e o segundo se resolve sozinho no ciclo seguinte.
   //
-  // F18 — o plantio EM CURSO vem antes de tudo isso: um tile que amadureceu do
-  // outro lado do alcance nao interrompe o que o roceiro ja comecou, e o tile
-  // semeado pela metade nao volta a ser pousio de graca.
-  if (prod.plantio !== null) return avancarPlantio(state, u, predio, receita, prod.plantio, dados);
-  const colheita = receita.colheita === null ? null : garantirColheita(
-    state, u, predio, receita.colheita, unidadesPorCiclo(receita), dados,
-  );
+  // F-CAMPO-a — o predio que REPOE o tile (roçado, canavial) escolhe pelo
+  // RODIZIO: colher ou semear, e em que tile (`escolherNoCampo`). O plantio em
+  // curso vem antes de tudo: o tile reservado nao volta a ser pousio de graca.
+  let colheita: { readonly state: GameState; readonly tarefa: TarefaColher } | null = null;
+  if (receita.colheita !== null && reposicaoDe(receita.colheita, dados) !== null) {
+    const escolha = escolherNoCampo(state, u, predio, receita, dados);
+    if (escolha !== null && 'passo' in escolha) return escolha.passo;
+    if (escolha !== null) {
+      colheita = escolha.colheita;
+      predio = escolha.predio;
+      prod = escolha.predio.producao ?? prod;
+    }
+  }
   if (receita.colheita !== null && colheita === null) {
-    // F18 — nao ha tile maduro ao alcance. Se ha terra em pousio livre, o
-    // roceiro PLANTA em vez de esperar: e a diferenca entre o roçado e o veio,
-    // e e o que impede a fazenda de parar para sempre no tick seguinte a
-    // primeira colheita. Sem terra tambem, ai sim e espera.
-    const iniciado = iniciarPlantio(state, predio, receita, dados);
-    if (iniciado === null) return comFsm(state, u, 'esperando_insumo');
-    return avancarPlantio(state, u, iniciado.predio, receita, iniciado.plantio, dados);
+    colheita = garantirColheita(state, u, predio, receita.colheita, unidadesPorCiclo(receita), dados);
+    if (colheita === null) return comFsm(state, u, 'esperando_insumo');
   }
   const base = colheita === null ? state : colheita.state;
   const tarefa = colheita === null ? null : colheita.tarefa;
@@ -694,7 +799,8 @@ function desfazerPosse(
   const vago = comPredio(state, {
     ...predio,
     ocupante: null,
-    producao: predio.producao === null ? null : { progresso: 0, plantio: predio.producao.plantio },
+    // F-CAMPO-a — `cursor` e `plantio` ficam: sao do PREDIO, para o proximo ocupante
+    producao: predio.producao === null ? null : { ...predio.producao, progresso: 0 },
   });
   return ficarOcioso(vago, u, eventos);
 }
@@ -714,6 +820,9 @@ function passoDoEspecialista(state: GameState, u: Unidade, dados: GameData): Pas
     case 'indo_colher': return passoIndoColher(state, u, dados);
     case 'colhendo': return passoColhendo(state, u, dados);
     case 'voltando': return passoVoltando(state, u, dados);
+    // F-CAMPO-a — o desvio de semear; a volta e o `voltando` de cima, sem tarefa.
+    case 'indo_semear': return passoIndoSemear(state, u, dados);
+    case 'semeando': return passoSemeando(state, u, dados);
     default:
       // `fsm` e uma string no estado (JSON): um valor fora do GDD §6.2 e save corrompido
       throw new Error(`sistemaDosEspecialistas: estado de FSM desconhecido '${u.fsm}' no especialista ${u.id}`);

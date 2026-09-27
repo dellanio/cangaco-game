@@ -896,11 +896,15 @@ function validarReposicao(dados, id, def, erros) {
     erros.push(`recurso/reposicao: resources.tipos.${id}.reposicao nao e um objeto`);
     return;
   }
-  if (typeof r.segundos_base !== 'number' || !(r.segundos_base > 0)) {
-    erros.push(
-      `recurso/reposicao: resources.tipos.${id}.reposicao.segundos_base precisa ser numero > 0, `
-      + `achou ${JSON.stringify(r.segundos_base)}`,
-    );
+  // F-CAMPO-a — dois tempos: `semear` (o roceiro no tile) e `crescer` (o tile
+  // sozinho, sem ninguem la). O `segundos_base` unico que cobria os dois saiu.
+  for (const campo of ['semear_segundos_base', 'crescer_segundos_base']) {
+    if (typeof r[campo] !== 'number' || !(r[campo] > 0)) {
+      erros.push(
+        `recurso/reposicao: resources.tipos.${id}.reposicao.${campo} precisa ser numero > 0, `
+        + `achou ${JSON.stringify(r[campo])}`,
+      );
+    }
   }
   if (!r.custo || typeof r.custo !== 'object') {
     erros.push(`recurso/reposicao: resources.tipos.${id}.reposicao.custo precisa ser objeto (vazio quando de graca)`);
