@@ -8972,3 +8972,50 @@ Nenhum desses testes foi rodado com o valor novo.
 5. F35: o valor da taxa, ainda pendente.
 6. Guardar um leitor do `houses.dat`/`unit.dat` em `tools/`? Ele leria binário externo
    e não versionaria dado do KaM.
+
+## 2026-09-27 (noite, 3) — F-CAMPO girado e parado; leitor do KaM em tools/; sprites medidos
+
+**Feito (verificado):**
+- **F-CAMPO, crescer 1 650:** girado na branch `f-campo-a` (`f70322c`, com a `main`
+  mesclada). **Parei antes da `main`**, pela regra do operador ("se reprovar afirmando
+  comportamento, PARE").
+  - A suíte dá 12 reprovações: 11 já caíam com 30, com os mesmos valores, e vêm do
+    modelo; várias afirmam comportamento do modelo antigo. A nova é só a janela de 1º
+    milho da F18h (número), e não foi corrigida porque o giro parou.
+  - F-CAL-a medida por sonda (apagada): a Bodega recebe comida no 8 421 e ninguém morre
+    até 16 000. A lista e a tabela estão no item F-CAMPO.
+- **Escada:** a pedra fica no 6, por decisão do operador. O porquê de não subir acima
+  dos insumos está no GDD §6.3.
+- **F35:** taxa 2 para 1 registrada no item. O item pode começar.
+- **F-ESC:** a árvore registrada (1,05 H contra 3,0, −65 %, maior desvio). Não mexi,
+  porque a arte é da outra sessão.
+- **Branch `lote2-madeira` apagada.** Antes conferi que `git log main..lote2-madeira` só
+  tinha o `9578276`, cujo conteúdo já está na `main`.
+- **`tools/kam-medir.js` e `tools/kam-medir.md`:**
+  - lê `houses.dat`, `unit.dat`, `mapelem.dat` e o cabeçalho dos `.rx`, no lugar;
+  - o lote e a árvore adulta vêm de um checkout do kam_remake (`--remake`), sem copiar
+    a tabela dele para cá;
+  - rodei contra a instalação do operador: layout fechado byte a byte nos três `.rx`, e
+    os números da tabela "REFERÊNCIA" batem;
+  - `eslint` limpo.
+- **Sprites do KaM medidos**, tabela no BRIEF-ARTE ("MEDIDO NO KAM"):
+  - serf 37–41 px num tile de 40;
+  - térrea (3×2) 2,5 H, igual ao alvo;
+  - k = 1,0 vale para todo prédio do KaM menos a torre (1,27);
+  - árvore adulta, mediana 2,65 H;
+  - âncora na borda de baixo do lote.
+  - **Corrigi a premissa do pedido:** o footprint **não** está no `houses.dat` (o
+    `BuildArea` não é o lote); ele vem do `PlanYX` do remake, conferido no
+    `KM_Terrain.pas`.
+
+**Hipóteses (não verificadas):**
+- O excesso de largura à direita dos prédios do KaM é sombra.
+- A caixa do sprite é justa, sem margem transparente.
+- O tick do KaM é de 100 ms.
+
+## Perguntas em aberto (2026-09-27, noite 3)
+1. F-CAMPO: reescrever F18-ciclo, F18-rocado, F-CANA, F-CANA-b e F-T3 para o modelo novo?
+   Eles afirmam comportamento do modelo antigo. E o F19, com 37 tiles, pede decidir a fazenda
+   grande (hipótese: semear 37 tiles leva mais que o crescer).
+2. Fator de largura do prédio: o KaM dá 1,15 (3×2), com sombra. E a tradução: pela
+   régua (térrea 182 px) ou pelo lote (159 px)? Aqui o tile vale 0,88 H, e no KaM 1,0 H.
