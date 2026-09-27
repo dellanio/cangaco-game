@@ -8633,3 +8633,27 @@ for pequena, o cartão ganha teto com rolagem própria, em vez de um número mai
 - `npm run shot -- F-T2b`: OK, 4 capturas; abertas e comparadas `screenshots/vegetation-before.png` e `screenshots/vegetation-after.png`.
 - `npm run shot -- F-SPR`: OK, 2 capturas.
 - `npm run verify`: verde; suíte normal 1.547/1.547 e suíte transladada 1.546 aprovados, quatro `skip` já existentes.
+
+## 2026-09-27 — F-TR-a: margem cardinal da água
+
+### Entregue
+
+- A água mantém as quatro variantes de miolo e recebe uma camada transparente de
+  margem: 16 máscaras N/L/S/O (`N=1`, `L=2`, `S=4`, `O=8`) derivadas da areia
+  canônica. O terreno lógico e o tamanho 64×64 não mudaram.
+- `src/render/mascara-cardinal.ts` concentra a convenção de vizinhança que as
+  próximas partes da F-TR reutilizarão em areia–grama e lajedo; cada família
+  conserva sua própria arte.
+- A skill `pianco-art-pipeline` ganhou derivador, layout e contrato próprios para
+  margem d'água. Base, derivados e manifesto foram versionados juntos.
+- `src/sim/` e `tests/` não foram alterados.
+
+### Verificado
+
+- A primeira tentativa de `npm run verify` não executou teste: o Vitest falhou ao
+  carregar `vitest.config.mts` com `spawn EPERM`. Não houve asserção de
+  comportamento nem de número.
+- Repetido fora dessa restrição: `npm run verify` verde; suíte normal 1.547/1.547
+  e suíte transladada 1.546 aprovados, quatro `skip` já existentes.
+- `npm run shot -- F-T1`: OK, quatro capturas. Evidência aberta e versionada em
+  `screenshots/F-TR-a-agua-com-margem.png`.

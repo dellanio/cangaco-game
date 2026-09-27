@@ -55,6 +55,16 @@ node skills/pianco-art-pipeline/scripts/process-road-tiles.mjs <layout.json>
 O processador cria PNGs transparentes, preserva largura nas bordas dos tiles e
 gera uma contact sheet sobre o terreno real para o portao visual.
 
+Para margens d'agua ortogonais, derive as 16 mascaras cardinais de praia sobre
+o miolo de agua existente:
+
+```text
+node skills/pianco-art-pipeline/scripts/process-water-shores.mjs <layout.json>
+```
+
+O formato esta em
+[references/water-shore-layout-schema.md](references/water-shore-layout-schema.md).
+
 Depois de derivar, registre o lote de forma idempotente:
 
 ```text

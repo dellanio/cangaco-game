@@ -42,10 +42,13 @@ import {
 } from '../manifesto';
 import type { ChaveDaRevelacao, DesenhoDoRecurso, EntradaDeAsset, TexturaCarregada } from '../manifesto';
 import { manifestoDoJogo, texturasParaCarregar } from '../sprites';
+import { mascaraCardinal } from '../mascara-cardinal';
 
 const CHAVE_TEXTURA_TERRENO = 'tiles-terreno';
 const ESTADOS_DO_TERRENO = [ESTADO_DO_TERRENO, 'v1', 'v2', 'v3'] as const;
 const VARIANTES_DE_TERRENO = ESTADOS_DO_TERRENO.length;
+const CHAVE_TEXTURA_BORDA_AGUA = 'tiles-borda-agua';
+const ESTADOS_DA_BORDA_AGUA = Array.from({ length: 16 }, (_v, mascara) => `borda-m${mascara}`);
 const CHAVE_TEXTURA_DETALHES = 'tiles-detalhes-terreno';
 const VARIANTES_DE_DETALHE = 3;
 const CHAVE_TEXTURA_RECURSO = 'tiles-recurso';
@@ -181,6 +184,8 @@ export class WorldScene extends Phaser.Scene {
     const camadaChao = this.criarTilemap(tilePx, largura, altura, texturaDoTerreno);
     const texturaDosDetalhes = this.criarTexturaDeDetalhesDoTerreno(tilePx);
     this.criarCamadaDeDetalhesDoTerreno(tilePx, largura, altura, texturaDosDetalhes);
+    const texturaDaBordaDaAgua = this.criarTexturaDaBordaDaAgua(tilePx, carregada);
+    this.criarCamadaDaBordaDaAgua(tilePx, largura, altura, texturaDaBordaDaAgua);
     const gradeDaFerramenta = this.criarGradeDaFerramenta(tilePx, largura, altura);
     const aplicarForcaDaGrade = (modo: string): void => {
       // Com textura real a linha embutida no placeholder deixa de existir. A
@@ -459,6 +464,49 @@ export class WorldScene extends Phaser.Scene {
         .some((chave) => chave !== null)),
     };
     return this.sobreporArteNaTira(CHAVE_TEXTURA_TERRENO, tilePx, arte, []);
+  }
+
+  /** As 16 mascaras N/L/S/O sao PNGs; o render apenas escolhe a combinacao. */
+  private criarTexturaDaBordaDaAgua(tilePx: number, carregada: TexturaCarregada): string {
+    const g = this.make.graphics({ x: 0, y: 0 }, false);
+    g.fillStyle(0xffffff, 0);
+    g.fillRect(0, 0, tilePx * ESTADOS_DA_BORDA_AGUA.length, tilePx);
+    g.generateTexture(CHAVE_TEXTURA_BORDA_AGUA, tilePx * ESTADOS_DA_BORDA_AGUA.length, tilePx);
+    g.destroy();
+    const arte = ESTADOS_DA_BORDA_AGUA.map((estado) => texturaDaCamada(
+      manifestoDoJogo, 'terreno', 'agua', estado, carregada,
+    ));
+    return this.sobreporArteNaTira(CHAVE_TEXTURA_BORDA_AGUA, tilePx, arte, []);
+  }
+
+  /**
+   * A borda mora sobre o tile de agua e nunca altera o codigo do terreno. Um
+   * vizinho cardinal que nao e agua liga o bit correspondente: N=1, L=2,
+   * S=4, O=8. O miolo continua com as quatro variantes do chao.
+   */
+  private criarCamadaDaBordaDaAgua(
+    tilePx: number, largura: number, altura: number, textura: string,
+  ): Phaser.Tilemaps.TilemapLayer {
+    const mapa = this.make.tilemap({ tileWidth: tilePx, tileHeight: tilePx, width: largura, height: altura });
+    const tileset = mapa.addTilesetImage('borda-agua', textura, tilePx, tilePx, 0, 0);
+    if (!tileset) throw new Error('WorldScene: falha ao criar o tileset da borda da agua.');
+    const camada = mapa.createBlankLayer('borda-agua', tileset);
+    if (!camada) throw new Error('WorldScene: falha ao criar a camada da borda da agua.');
+
+    const { codigos, largura: larguraDoTerreno, altura: alturaDoTerreno } = terrenoDeRender;
+    const codigoDaAgua = terrenoDeRender.tipos.indexOf('agua');
+    const ehAgua = (gx: number, gy: number): boolean => (
+      gx >= 0 && gy >= 0 && gx < larguraDoTerreno && gy < alturaDoTerreno
+      && codigos[gy * larguraDoTerreno + gx] === codigoDaAgua
+    );
+    for (let gy = 0; gy < Math.min(altura, alturaDoTerreno); gy += 1) {
+      for (let gx = 0; gx < Math.min(largura, larguraDoTerreno); gx += 1) {
+        if (!ehAgua(gx, gy)) continue;
+        const mascara = mascaraCardinal((dx, dy) => !ehAgua(gx + dx, gy + dy));
+        if (mascara !== 0) camada.putTileAt(mascara, gx, gy);
+      }
+    }
+    return camada.setDepth(0.2);
   }
 
   /**

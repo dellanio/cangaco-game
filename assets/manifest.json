@@ -261,13 +261,29 @@
         "padrao": "sprites/terrain/agua.png",
         "v1": "sprites/terrain/agua-v1.png",
         "v2": "sprites/terrain/agua-v2.png",
-        "v3": "sprites/terrain/agua-v3.png"
+        "v3": "sprites/terrain/agua-v3.png",
+        "borda-m0": "sprites/terrain/water-shore/water-shore-m0.png",
+        "borda-m1": "sprites/terrain/water-shore/water-shore-m1.png",
+        "borda-m2": "sprites/terrain/water-shore/water-shore-m2.png",
+        "borda-m3": "sprites/terrain/water-shore/water-shore-m3.png",
+        "borda-m4": "sprites/terrain/water-shore/water-shore-m4.png",
+        "borda-m5": "sprites/terrain/water-shore/water-shore-m5.png",
+        "borda-m6": "sprites/terrain/water-shore/water-shore-m6.png",
+        "borda-m7": "sprites/terrain/water-shore/water-shore-m7.png",
+        "borda-m8": "sprites/terrain/water-shore/water-shore-m8.png",
+        "borda-m9": "sprites/terrain/water-shore/water-shore-m9.png",
+        "borda-m10": "sprites/terrain/water-shore/water-shore-m10.png",
+        "borda-m11": "sprites/terrain/water-shore/water-shore-m11.png",
+        "borda-m12": "sprites/terrain/water-shore/water-shore-m12.png",
+        "borda-m13": "sprites/terrain/water-shore/water-shore-m13.png",
+        "borda-m14": "sprites/terrain/water-shore/water-shore-m14.png",
+        "borda-m15": "sprites/terrain/water-shore/water-shore-m15.png"
       },
       "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
       "origem": {
         "base": "base/terrain-water-field/terrain-water-field-source.png",
         "semente": null,
-        "nota": "Primeira celula da linha de agua do atlas autoral; derivacao 64x64."
+        "nota": "Miolo de agua em quatro variantes 64x64 e 16 margens cardinais transparentes derivadas da areia canonica."
       }
     },
     {
