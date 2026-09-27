@@ -26,10 +26,17 @@ for (const cell of spec.cells) {
   const [x, y, width, height] = cell.crop;
   const [outWidth, outHeight] = cell.size;
   const [contentWidth, contentHeight] = cell.contentSize ?? cell.size;
+  const bottomPadding = cell.bottomPadding ?? 0;
+  if (!Number.isInteger(bottomPadding) || bottomPadding < 0) {
+    fail(`${cell.id}: bottomPadding precisa ser inteiro nao negativo`);
+  }
+  if (contentWidth > outWidth || contentHeight + bottomPadding > outHeight) {
+    fail(`${cell.id}: contentSize e bottomPadding nao cabem em size`);
+  }
   const output = resolve(cell.output);
   mkdirSync(dirname(output), { recursive: true });
   const scale = cell.fit === 'contain'
-    ? `scale=${contentWidth}:${contentHeight}:force_original_aspect_ratio=decrease:flags=lanczos,pad=${outWidth}:${outHeight}:(ow-iw)/2:(oh-ih):color=0x00000000`
+    ? `scale=${contentWidth}:${contentHeight}:force_original_aspect_ratio=decrease:flags=lanczos,pad=${outWidth}:${outHeight}:(ow-iw)/2:(oh-ih-${bottomPadding}):color=0x00000000`
     : `scale=${outWidth}:${outHeight}:flags=lanczos`;
   execFileSync('ffmpeg', [
     '-hide_banner', '-loglevel', 'error', '-y', '-i', source,
