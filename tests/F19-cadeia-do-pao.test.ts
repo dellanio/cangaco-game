@@ -62,9 +62,15 @@ const ATE_O_MILHO_CRESCER = IDA_DE_SEMEAR + PLANTIO + CRESCER;
 
 /** O que a FONTE permite: um tile de milho custa um plantio mais os ciclos que
  *  ele rende, viagem incluida, e e isso — e nao o relogio do moinho — que limita
- *  a cadeia. */
+ *  a cadeia.
+ *
+ *  F-CAMPO-a — o plantio deixou de ser `PLANTIO` parado dentro do predio e virou a
+ *  viagem de semear: a transicao, a ida, o semear no tile e a volta — as mesmas
+ *  pernas da colheita. O crescer NAO entra aqui: com varios tiles o rodizio semeia
+ *  um enquanto o outro cresce, e ele so atrasa o arranque (abaixo). */
+const VIAGEM_DE_SEMEAR = VIAGEM_DA_FAZENDA + PLANTIO;
 const TICKS_POR_GRAO = (
-  PLANTIO + RENDIMENTO * (FAZENDA.ticksDoCiclo + VIAGEM_DA_FAZENDA)
+  VIAGEM_DE_SEMEAR + RENDIMENTO * (FAZENDA.ticksDoCiclo + VIAGEM_DA_FAZENDA)
 ) / RENDIMENTO;
 /** Quantos paes cada grao vira, seguindo a cadeia elo a elo. Derivado, nao
  *  digitado: se o moinho um dia consumir dois milhos por ciclo, isto acompanha. */
@@ -109,6 +115,9 @@ const PROPORCOES = (JSON.parse(readFileSync('data/production.json', 'utf8')) as 
  * F-T3 — remedida com a viagem do roceiro dentro do teto: 50 paes contra um teto
  * de 51,0, ou 98,1 %. O piso continua 85 %: a cadeia nao ficou menos eficiente, o
  * que mudou foi a fonte render menos por hora, e teto e producao cairam juntos.
+ *
+ * F-CAMPO-a — remedida com o campo crescendo no tile e `farm.sai.corn` 2.0: 74
+ * cuscuz contra um teto de 77,2, ou 95,8 % (2026-09-27). O piso continua 85 %.
  */
 const PISO_DA_VAZAO = 0.85;
 
