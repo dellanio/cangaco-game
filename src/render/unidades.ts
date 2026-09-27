@@ -187,6 +187,45 @@ export function criarCamadaDeUnidades(cena: Phaser.Scene, tilePx: number): Camad
     return sprite.chave;
   }
 
+  /**
+   * Mantém os nomes completos do tema, mas impede que unidades próximas
+   * imprimam um rótulo por cima do outro. A primeira linha continua na posição
+   * histórica; só quem colide desce para a próxima linha livre.
+   */
+  function organizarRotulos(): void {
+    const ocupados: { x0: number; y0: number; x1: number; y1: number }[] = [];
+    const itens = [...desenhados.entries()].sort(([idA, a], [idB, b]) => (
+      a.container.y - b.container.y
+      || a.container.x - b.container.x
+      || idA.localeCompare(idB)
+    ));
+    const baseY = lado * ALTURA_DO_NOME_EM_LADOS;
+    const folga = 2;
+
+    for (const [, item] of itens) {
+      item.nome.setY(baseY);
+      const largura = item.nome.displayWidth;
+      const altura = item.nome.displayHeight;
+      const x0 = item.container.x - largura / 2;
+      const x1 = x0 + largura;
+      let y0 = item.container.y + baseY;
+
+      for (;;) {
+        const colisoes = ocupados.filter((r) => (
+          x0 < r.x1 + folga
+          && x1 > r.x0 - folga
+          && y0 < r.y1 + folga
+          && y0 + altura > r.y0 - folga
+        ));
+        if (colisoes.length === 0) break;
+        y0 = Math.max(...colisoes.map((r) => r.y1 + folga));
+      }
+
+      item.nome.setY(y0 - item.container.y);
+      ocupados.push({ x0, y0, x1, y1: y0 + altura });
+    }
+  }
+
   return {
     atualizar(estado, alfa) {
       if (estado === null) return [];
@@ -236,6 +275,7 @@ export function criarCamadaDeUnidades(cena: Phaser.Scene, tilePx: number): Camad
           direcao: direcoes === null ? null : item.direcao, sprite,
         });
       }
+    organizarRotulos();
       return renderizadas;
     },
   };
