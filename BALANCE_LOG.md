@@ -602,6 +602,22 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
     e não a proporção.
   - **Pergunta ao operador:** gira a madeira sozinha ou espera o lote com a espera do lenhador?
   | `production.json:woodcutters.sai.tree_trunk`, `production.json:proporcoesDeReferencia`
+- [2026-09-27] **LOTE 2 — decisão do operador: gira a madeira agora, 0,55 → 0,71/min.
+  Pedreira, minas e pescador ficam.** Girada na branch `lote2-madeira` (commit `9578276`,
+  `wip`: `production.json` + `F15a` 545 → 423). **Não entrou na `main`: a F-CAL-a
+  reprova.** O que as sondas mostraram (temporárias, apagadas):
+  - a vila da calibração (`cal-vila`, 4 carregadores iniciais) morre de fome no tick
+    12 000 (condição cheia de 20 min efetivos, `condition.json`) sem a Bodega pronta;
+  - causa: com mais tora, a serraria enche a saída, e o transporte `saida-cheia-para-armazem`
+    (nível 6 em `delivery.json`) passa na frente da `pedra-para-canteiro` (nível 8) da
+    estrada da Bodega. Os 4 carregadores não chegam lá;
+  - a linha de base (0,55) passa com **957 ticks de folga**: Bodega pronta no 11 043.
+    Com +1 carregador inicial e 0,55, ela fica pronta no 7 892.
+  Não afrouxei o TETO nem mexi no cenário. **Espera o operador**, uma de três: (a) mais
+  carregador inicial na `cal-vila`, o que muda a vila que a F-CAL-b calibra; (b) mexer na
+  escada de prioridade do `delivery.json`; (c) a Bodega mais cedo na ordem da cal-vila.
+  A folga de 957 é o dado que pesa: a vila já passava no limite antes do giro.
+  | `production.json:woodcutters.sai.tree_trunk`, `delivery.json`, `tests/F-CAL-a-cenario.test.ts`
 
 ---
 

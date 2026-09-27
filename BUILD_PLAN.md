@@ -3564,6 +3564,39 @@ Casos 2 e 4 do prédio vivo (`docs/BRIEF-ARTE.md` §4a). Decisão do operador: c
   - **Espera o operador**, uma de quatro: aceitar o custo de partida do rodízio (e
     reescrever F18/F19); trocar a regra para colher antes; subir C (12 > 1 só com C
     grande); ou reescrever o aceite (com C = 150, o BUG-O é espera visual, não vazão).
+  - **Decisão do operador (2026-09-27): nenhuma das quatro.** O defeito, na leitura
+    dele, é o roceiro fazer uma viagem por unidade colhida, quando no KaM o fazendeiro
+    "colhe e leva a carga". Mandou medir no kam_remake antes de mexer.
+  - **Medida no kam_remake (2026-09-27, fonte lida, `reyandme/kam_remake` master):**
+    - *Verificado no código:* `CutCorn` (`KM_Terrain.pas`) exige o tile no estágio 5 e
+      zera a idade: **um corte, de um tile, por viagem**. O plano do fazendeiro
+      (`KM_UnitWorkPlan.pas:356`) é `ResourcePlan(wtNone,0,wtNone,0,wtCorn)`, com
+      `ProdCount1 := gRes.Houses[fHome].ResProductionX` (`:128`), e a entrega é
+      `WareAddToOut(Product1, ProdCount1)` (`KM_UnitTaskMining.pas:415`). A colheita tem 6
+      ciclos de animação, o plantio 10. O crescimento é `CORN_AGE_FULL = 6400 div
+      TERRAIN_PACE`, com o tile atualizado a cada 200 ticks: **~6400 ticks, ~640 s**.
+    - *Não verificado:* o valor de `ResProductionX` da fazenda vem do binário
+      `data/defines/houses.dat`, que não está no repositório. O único override no código é
+      o pescador (`:= 1`). As fontes secundárias dizem **um milho por colheita**
+      ([guia Steam](https://steamcommunity.com/sharedfiles/filedetails/?id=1227250653),
+      [wiki Corn](https://kamremake.wiki.gg/wiki/Corn),
+      [wiki Farmer](https://kamremake.wiki.gg/wiki/Farmer)).
+    - **A premissa não se confirma.** No KaM o tile rende 1 e a viagem traz 1 (o
+      número por viagem é hipótese forte, não fato lido). O que faz 12 a 15 campos
+      valerem lá é outra coisa: o crescimento (~6400 ticks) é **30× a viagem**. Aqui
+      C = 150 é mais curto que uma viagem (~205), e por isso 12 tiles rendem como 1.
+      A rajada de partida também é do KaM: o fazendeiro semeia todos os campos e espera
+      ([fórum Steam](https://steamcommunity.com/app/253900/discussions/0/540734792682225900/)).
+      O atraso do rodízio (t5051) é o mesmo comportamento, não um sintoma de outro defeito.
+    - **Onde o nosso difere do KaM:** aqui o tile maduro rende **4**
+      (`resources.json: corn.rendimentoPorTile`), colhidos em 4 viagens. No KaM, 1 em 1.
+      "Levar a carga" teria leitura aqui: uma viagem traz os 4 do tile. Conta, sem rodar:
+      150 + 4 × 100 + 105 = 655 por tile, ou ~164 por milho, contra 242,5 hoje. Isso
+      **não** está no KaM e muda a vazão de toda fazenda, então é decisão, não conserto.
+  - **Espera o operador, de novo:** (i) a carga do tile numa viagem, que não é do KaM; ou
+    (ii) a razão do KaM, com crescimento muito maior que a viagem, rendimento 1 por tile e
+    mais tiles. Isso é o C grande da lista anterior, agora com o porquê medido. Nada foi
+    implementado. A branch `f-campo-a` segue parada.
 - **O que é hoje (medido, 2026-09-26)**:
   - `avancarPlantio` (`sim/systems/especialistas.ts:395-406`) ocupa o roceiro por
     `reposicao.ticks` = 150 (30 s na escala `economia` 2,0), que cobre arar, semear **e
@@ -3745,8 +3778,8 @@ Casos 2 e 4 do prédio vivo (`docs/BRIEF-ARTE.md` §4a). Decisão do operador: c
   a largura do footprint (`tools/derivar-sprites.js:84-93`,
   `alturaAlvo = round(recorte.altura × larguraAlvo / recorte.largura)`). Nada limita
   a altura. A faixa é **0,61 a 1,03** da largura.
-- **Divergência que fica como hipótese.** O operador citou a Casa do Coronel com
-  cerca de 380 px de altura. O arquivo tem 192. **Hipótese não conferida:** ele viu o
+- **Divergência — confirmada pelo operador (2026-09-27): era o zoom 2×.** O operador citou a Casa do Coronel com
+  cerca de 380 px de altura. O arquivo tem 192. **Confirmado pelo operador:** ele viu o
   prédio no zoom 2× (tile de 128 px; os degraus são 32/48/64/96/128), onde 192 × 2 = 384.
   Se ele mediu a base (`assets/base/`, cerca de 1223×1286), o número é outro. A regra
   abaixo vale sobre o **sprite derivado**, não sobre a base.
@@ -3761,6 +3794,8 @@ Casos 2 e 4 do prédio vivo (`docs/BRIEF-ARTE.md` §4a). Decisão do operador: c
     muda.
   - Alternativa: k = 1,05, que não muda nenhum sprite de hoje e aceita a
     folga do armazém. Recomendo 1,0, porque a folga não tem motivo na arte.
+  - **Decisão do operador (2026-09-27): k = 1,0.** "Regra que não muda nenhum sprite não
+    é regra." A alternativa 1,05 sai.
   - **Sobre o fator de transbordo** (correção do BRIEF-ARTE, 2026-09-26): ele
     continua esperando o número do operador. Ele multiplica a largura, e a regra
     acima limita a altura **relativa** a essa largura. As duas compõem:
@@ -3768,7 +3803,9 @@ Casos 2 e 4 do prédio vivo (`docs/BRIEF-ARTE.md` §4a). Decisão do operador: c
     inventa o fator.
   - Onde vive k: `data/terrain.json`, ao lado de `tile_px`. A cena e o teste o leem
     pelo `gameData.terreno.tilePx`. O derivador **não** lê o dado: tem `TILE_PX = 64`
-    fixo (`tools/derivar-sprites.js:24`), e passa a ler os dois números do JSON. A
+    fixo (`tools/derivar-sprites.js:24`), e passa a ler os dois números do JSON.
+    **Decisão do operador (2026-09-27): "corrija junto"**. O `TILE_PX = 64` do derivador
+    vira leitura de `data/terrain.json: tile_px` no mesmo commit da F-ESC, não antes. A
     exceção fica na entrada do prédio no `assets/manifest.json`. **A sim não usa k**:
     ele entra pelo loader só porque o `terreno` já vem de lá; se o operador preferir,
     k fica só no manifesto.
@@ -3792,8 +3829,60 @@ Casos 2 e 4 do prédio vivo (`docs/BRIEF-ARTE.md` §4a). Decisão do operador: c
   - c) screenshot do roteiro da F17 mostra os seis prédios, e o
     `test-output/F-ESC.json` grava a caixa desenhada de cada um, medida no passo e
     não descrita.
-- **Espera:** o sim do operador para k (1,0 ou 1,05), para a exceção por prédio, e
-  para o fator de transbordo, se ele quiser as duas mudanças no mesmo commit.
+- **Espera:** k já está decidido (1,0). Faltam a exceção por prédio, o fator de
+  transbordo (se ele quiser as duas mudanças no mesmo commit) e a tabela da régua do
+  homem abaixo. Continua sem implementar: o item 1 é render, e a outra sessão está lá.
+- **Extensão (pedido do operador, 2026-09-27): a régua é o HOMEM, não o tile.** Na tela
+  dele, a árvore saiu do tamanho do serf e o mandacaru mais alto que a casa. Pediu a
+  tabela em alturas de cangaceiro (H) e o desvio de cada asset atual. **Nada aplicado.**
+  - **Medida (verificada, 2026-09-27):** altura visível = linhas com alfa > 16, lida
+    do PNG por script. Nenhuma imagem foi aberta com Read. A fonte é a branch
+    `feat/ui-world-polish` em `f9e7b5a`, que é a arte que a tela mostra hoje. Nessa
+    branch o armazém derivado tem 192×182, e na `main` ainda 192×198: a tabela de
+    cima é da `main`. **H = serf, 73 px.** As unidades vão de 69 (laborer) a 77 (Cabra),
+    e o knight tem 98, montado.
+  - Alvo (operador): casa térrea ~2,5 H = 182 px; sobrado ~3,5 H = 255; mandacaru ~2,2 H
+    = 161; árvore adulta ~3,0 H = 219; arbusto ~0,6 H = 44.
+
+    | asset | classe (alvo) | visível (px) | em H | alvo (px) | desvio |
+    |---|---|---|---|---|---|
+    | storehouse | térrea | 182 | 2,49 | 182 | 0 % |
+    | woodcutters | térrea | 182 | 2,49 | 182 | 0 % |
+    | inn | térrea | 178 | 2,44 | 182 | −2 % |
+    | sawmill | térrea | 157 | 2,15 | 182 | −14 % |
+    | quarry | térrea | 149 | 2,04 | 182 | −18 % |
+    | schoolhouse | sobrado (hipótese) | 179 | 2,45 | 255 | **−30 %** |
+    | tree | árvore | 77 | 1,05 | 219 | **−65 %** |
+    | umbuzeiro | árvore (hipótese) | 62 | 0,85 | 219 | **−72 %** |
+    | mandacaru | mandacaru | 120 | 1,64 | 161 | −25 % |
+    | facheiro | mandacaru? (operador) | 120 | 1,64 | 161 | −25 % |
+    | xique-xique | mandacaru ou arbusto? (operador) | 120 | 1,64 | 161 / 44 | −25 % / +173 % |
+    | macambira | arbusto | 64 | 0,88 | 44 | **+46 %** |
+
+  - **O que a tabela confirma:** "árvore do tamanho do serf" é medida: 77 contra 73. A
+    árvore é o maior desvio da tabela.
+  - **O que ela não confirma:** "mandacaru mais alto que a casa" **não** se reproduz em
+    altura total (120 contra 149 a 182). **Hipótese:** o olho compara com a *elevação*
+    da casa (do chão ao cume), não com a caixa inteira. A caixa inclui a profundidade do
+    telhado em 3/4. A conta ingênua `altura − fundo × 64` dá de −14 a +54 px, abaixo do
+    mandacaru, o que é compatível. Para ter a elevação de verdade, é preciso medir
+    beiral e cume na arte, e isso não foi medido. **A comparação casa × planta em H
+    fica frouxa até essa medida existir**, porque a altura total da casa não é a mesma
+    grandeza da altura da planta.
+  - **Conflito com k = 1,0 (para decisão):** o sobrado a 3,5 H = 255 px num footprint
+    3 (192 px) dá 1,33 × largura, e k = 1,0 o recusa. As saídas são um fator de
+    transbordo ≥ 1,33 para ele, uma exceção por prédio no manifesto, ou o sobrado
+    ocupar 4 de largura. A térrea a 2,5 H = 182 cabe em k = 1,0 só com footprint ≥ 3:
+    prédio de 2 de largura (128 px) teria o mesmo conflito. Hoje não há nenhum entre os
+    seis. A vegetação **não** está sob k, que é regra de prédio; a árvore a 219 px sobre
+    1 tile é o que o alvo pede.
+  - **Classificação em aberto (operador):** Casa do Coronel como sobrado é hipótese
+    minha, pelo nome. O umbuzeiro como árvore adulta também. Facheiro e xique-xique
+    ficam para o operador: o facheiro é colunar como o mandacaru, e o xique-xique é
+    baixo e rasteiro, o que puxaria para arbusto.
+  - **Registro de arte:** a regra ("a régua é o homem; toda arte nova declara sua
+    altura em H antes de ser gerada") está em `docs/BRIEF-ARTE.md`, seção "Tamanho e
+    âncora".
 
 ### F-VIVO — O prédio vivo: trabalho, estoque e animais (render)
 
@@ -4156,6 +4245,9 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
 ### F28 — Combate e IA inimiga simples
 
 ### F28b — Torre de Pedra: o recruta atira pedra de cima (sim + render)
+- **Feature de integração (§10 do CLAUDE.md; decisão do operador, 2026-09-27)**: toca
+  `src/sim/` (munição, alvo, tiro) e `src/render/` (o tiro na tela) no mesmo item, por
+  exceção escrita aqui. A exceção vale **só** para esta feature; nenhuma outra a herda.
 - **Origem (decisão do operador, 2026-09-26)**: *"A Torre é defesa e entra com a Fase
   C."* Hoje a `watchtower` constrói, mas é casca (panorama dos 28 prédios, `PROGRESS.md`
   2026-09-26 noite 3). Ela vem depois da F28 porque atira em inimigo, e inimigo só
@@ -4223,11 +4315,11 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
     destino ao mesmo tempo. A 11ª fica aberta até uma fechar. É a leitura literal do
     GDD §4.4 ("máximo de 10 serfs negociando").
   - **UI.** O painel da feira mostra a ordem, o que falta de A e quantas trocas já saíram.
-  - **Fora**: tabela por mercadoria (pergunta abaixo), preço que varia com o uso e troca
+  - **Fora**: tabela por mercadoria (decisão abaixo), preço que varia com o uso e troca
     com outro jogador.
-- **Pergunta para o operador (aberta)**: taxa única para todo par, ou tabela por
-  mercadoria? O escopo acima assume a única, porque é o que `taxaFixa` diz ao pé da
-  letra. A tabela muda só o dado e a leitura dele, não o fluxo.
+- **Decisão do operador (2026-09-27)**: **uma taxa só, fixa**, para todo par. A tabela
+  por mercadoria sai de vez. Continua faltando o **valor** da taxa, que é do operador:
+  sem ele o item não começa.
 - **Aceite**:
   - (a) com a ordem "B por A" e A no armazém, B chega ao armazém. O A debitado é igual a
     `taxa` × o B creditado, somado na corrida inteira.
@@ -4256,9 +4348,8 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
     pede ouro pela **fila**, isto é, itens que não começaram vezes o custo, menos o que
     está na gaveta. A Prefeitura contrata na hora e não tem fila, então precisa de um
     **alvo de estoque**, e esse número não existe em `data/`.
-    **Pergunta ao operador:** qual é o alvo? As saídas possíveis são o custo do mais caro
-    (8, lido do dado, sem número novo) ou um campo novo em `economy.json`. Leitura
-    conservadora até a resposta: o custo do mais caro.
+    **Decisão do operador (2026-09-27): o alvo é 8**, o custo do mais caro. Ele é lido do
+    dado (o máximo de `custoOuro`), não é digitado nem vira campo novo.
   - **Comando.** `HireMercenary { predio, tipo }` em `commands.ts`. Com `custoOuro` na
     gaveta, debita e cria a unidade militar do tipo na aproximação da porta, **no mesmo
     tick** ("pronto na hora", GDD Anexo A). Sem fila e sem duração. Recusa com motivo:

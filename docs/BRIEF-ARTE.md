@@ -85,6 +85,27 @@ não código: refazer as duas imagens do armazém (seção 4). Em conversa antig
 > `BUILD_PLAN.md`): tile é redimensionado para 64 × 64, e sprite sai no `tamanho` do
 > arquivo.
 
+> **A RÉGUA É O HOMEM — regra do operador, 2026-09-27.** A escala entre objetos se
+> mede em **alturas de homem (H)**, e não em tiles. H é a altura visível do Carregador
+> (serf), hoje **73 px** no sprite derivado. **Toda arte nova declara a sua altura em H
+> antes de ser gerada**, no pedido e na entrada do manifesto. Pedido sem altura em H
+> não se gera. A tabela-alvo do operador, ainda **proposta e não aplicada**, é esta:
+>
+> | classe | altura-alvo | em px (H = 73) |
+> |---|---|---|
+> | casa térrea | ~2,5 H | ~182 |
+> | sobrado | ~3,5 H | ~255 |
+> | mandacaru | ~2,2 H | ~161 |
+> | árvore adulta | ~3,0 H | ~219 |
+> | arbusto | ~0,6 H | ~44 |
+>
+> O desvio de cada asset atual está medido no item F-ESC do `BUILD_PLAN.md`: a árvore
+> está a −65 % e a macambira a +46 %. A altura do prédio **também** tem teto pela
+> largura desenhada (F-ESC, k = 1,0, decidido e não implementado). O sobrado a 3,5 H
+> esbarra nesse teto, e o conflito está anotado lá, esperando decisão. Até a F-ESC
+> entrar, o item "A altura é livre" abaixo vale para o derivado **existente**, não
+> para arte nova.
+
 - **A largura manda.** A largura do sprite derivado é `footprint[0] × 64` px. Um prédio
   de 3 tiles de largura tem 192 px. Um de 4 tem 256 px.
 - **A altura é livre.** Ela é o que a arte der, na mesma escala. Não estique para
