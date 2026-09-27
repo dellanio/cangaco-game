@@ -95,6 +95,7 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
         - quantidade por viagem: `ResProductionX`, do `houses.dat`.
       - O `houses.dat` também tem um campo `WorkerWork` (Farm 2, Quarry 18, Vineyard 30).
         **Nenhum dos dois remakes o lê** (grep), e o significado dele não foi apurado.
+        Fica como curiosidade: o operador pediu para **não** investigar (2026-09-27).
     - **2. O ciclo do fazendeiro** (o crescimento de 6 400 corre à parte, em paralelo, no
       tile): sai da casa, caminha até o tile (10 ticks por tile, alcance 10), corta
       **96** (6 × 16), volta, **não trabalha dentro da casa**, entrega 1 e descansa
@@ -131,6 +132,33 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
       por medida.
     - **Ressalva:** o tick do KaM é tomado como 100 ms (a mesma hipótese da REFERÊNCIA
       abaixo).
+      - Todo número desta subseção está em **ticks do KaM**.
+      - Toda conversão para segundos, ou para ticks nossos, pressupõe os 100 ms, e é
+        **HIPÓTESE**, não medida.
+      - Razões entre ticks do KaM (100 : 320 : 50, ~11 contra ~44 tiles) não dependem
+        dela.
+    - **DECISÃO do operador (2026-09-27): saída (a).**
+      - **Não é mudança de modelo.** É alinhar com a referência, que separa as fases
+        desde sempre.
+      - O desenho vem do KaM, com as fases medidas acima:
+        - tempo no tile, por profissão;
+        - tempo dentro da casa (só alguns prédios têm);
+        - descanso;
+        - quantidade por viagem.
+      - A caminhada sai do pathfinding e não ganha campo.
+      - Começa pelo Canavial, o caso que revelou o problema.
+      - **Proposta, esperando revisão:** plano em `docs/planos/LOTE3-fases-de-colheita.md`.
+        - A proporção vem do KaM e o total fica no de hoje: 26 / 82 / 12 s, 130 / 410 / 60
+          ticks, 600 somados. Assim a vazão não se move.
+        - A `sai` vira o número que o oráculo confere.
+        - Os absolutos do KaM (≈ 470 ticks do KaM, ≈ 47 s **sob a HIPÓTESE dos 100 ms**)
+          ficam para o lote dos cinco.
+      - **Custo medido compilando** (revertido):
+        - tirar `ticksDoCiclo` dá 42 erros (sim 4, render 1, testes 37);
+        - um campo novo obrigatório em `ColheitaDeRecurso` dá 2 erros (`loader.ts`, um
+          literal de teste).
+      - **Previsão, não medida:** repartir o ciclo **não** muda a razão 12 : 1 do
+        Canavial. O gargalo é o canavieiro, e o tempo dele por unidade não muda.
 
 - [2026-09-24] o terreno passou a existir (F-T1) e viagem deixou de ser linha reta | medido: a
   travessia de 36 tiles ao redor do lago custa **292 ticks** contra **252** no mesmo trajeto sem

@@ -9194,3 +9194,45 @@ As duas perguntas da noite 6 foram respondidas e saíram desta seção.
 - O significado de `WorkerWork` no `houses.dat`, que nenhum remake lê.
 
 **Não feito:** nem (a) nem (b). O operador decide no começo do lote.
+
+## 2026-09-27 (noite, 10) — saída (a) escolhida: plano das fases da colheita, Canavial primeiro
+
+**Decisão do operador:**
+- Vai a saída (a).
+- **Não é mudança de modelo:** é alinhar com a referência, que separa as fases desde
+  sempre.
+- Fases do KaM: tile, casa, descanso e quantidade por viagem. A caminhada vem do
+  pathfinding.
+- O Canavial vai primeiro.
+- `WorkerWork` fica como curiosidade, e o operador pediu para não investigar.
+- O tick de 100 ms é hipótese, escrita ao lado de toda conta que o usa (BALANCE_LOG,
+  ressalva da REFERÊNCIA).
+
+**Feito (verificado):**
+- **Custo medido compilando** (`npx tsc --noEmit`; `types.ts` restaurado do backup;
+  `git status` limpo depois):
+  - tirar `ReceitaDePredio.ticksDoCiclo` dá **42** erros: sim 4 (`loader.ts` 1,
+    `especialistas.ts` 3), render 1 (`predios.ts`) e testes 37 em 12 arquivos;
+  - acrescentar três campos obrigatórios a `ColheitaDeRecurso` dá **2** erros
+    (`loader.ts:396`, `tests/F-TP-alcance-previa.test.ts:149`);
+  - a contagem por texto ("5 sim, 2 render, 13 testes") errava para os dois lados.
+- **Plano escrito:** `docs/planos/LOTE3-fases-de-colheita.md`.
+  - `ticksDoCiclo` fica e passa a ser a soma das fases.
+  - Entra um campo, `ColheitaDeRecurso.ticksNoTile`.
+  - O Canavial fica em 26 / 82 / 12 s: a proporção é do KaM e o total é o de hoje.
+  - A `sai` vira o número conferido: regras novas `producao/fases` e
+    `producao/sai-conferido`.
+  - Zero linha de render: a animação `'transforma'` da F-VIVO-b já anima em
+    `trabalhando`, com o mesmo total.
+
+**Hipóteses (não verificadas):**
+- Repartir o ciclo não muda a razão 12 : 1 do Canavial, porque o gargalo é o
+  canavieiro. O Task 1 do plano mede.
+- Segurar a tarefa dentro da casa não faz o `produzir` reclamar um segundo tile. A mina
+  `aDistancia` já segura a tarefa em `trabalhando`, mas o caminho do rodízio
+  (`escolherNoCampo`) não foi exercido assim. O Task 1 do plano sonda.
+
+**Não feito:** nenhuma linha de código. O plano espera a revisão do operador.
+
+**F-ESC:** continua esperando o Codex sair de `src/render/`. O worktree dele tinha
+`debug.ts` e `WorldScene.ts` modificados na última conferência.
