@@ -3677,6 +3677,46 @@ Casos 2 e 4 do prédio vivo (`docs/BRIEF-ARTE.md` §4a). Decisão do operador: c
   - **Espera o operador:** as 11 reprovações de comportamento são reescrever F18/F19
     para o modelo novo. E o F19 pede
     decidir a fazenda de 37 tiles.
+  - **Decisões do operador (2026-09-27, noite 4):** reescrever os testes que afirmam o
+    modelo revogado, *"cada um com o motivo ao lado"*, e parar em qualquer um que afirme
+    algo que continua valendo. A fazenda de 37 tiles se conserta pelo alcance, no dado.
+    O crescer 1 650 entra na `main` junto com os testes reescritos.
+  - **Alcance medido na F19** (branch `f-campo-a`, sonda apagada; o cuscuz é o
+    acumulado até 12 000):
+
+    | `farm.colheita.alcance_tiles` | tiles arados ao alcance | 1º milho | cuscuz até 12 000 |
+    |---|---|---|---|
+    | 1 | 5 | 1 878 | 61 |
+    | **2** | **14** | **1 899** | **60** |
+    | 3 | 25 | 3 282 | 49 |
+    | 4 (antes) | 37 | 5 051 | 34 |
+
+    - O alcance 1 quebra a vila da calibração: *"o Roçado em 37,30 não tem NENHUM tile
+      arável e alcançável ao alcance 1"* (BUG-G, F-CAL-a, F-CAL-b, F-VIVO-a caem no
+      carregamento).
+    - **Escolhi 2:** é o menor que não quebra nada, e dá 14 tiles, perto dos ~15 campos
+      por fazenda do GDD. **Hipótese** (não medida): o anel de 2 ainda comporta ~44
+      tiles, e quem arar muito mais que ~20 ali pode repetir o atraso.
+    - O Canavial também tem `alcance_tiles: 4`, com a nota "é o da fazenda". Ficou 4:
+      pergunta em aberto.
+  - **Reescrita (branch `f-campo-a`, `0733718`, verificada):** F18-ciclo ×3, F-CANA,
+    F-CANA-b e F19 (1º milho, fases produtivas), cada um com o que caiu e o que continua
+    ao lado. O F-T3-caminho ×2 e o F-T3-ciclo mudaram só de geometria ou de teto
+    (alcance 2 e crescer), com a mesma afirmação. A F18h, que o 1 650 sozinho derrubava,
+    volta a passar com o alcance 2. typecheck, lint e validate:data limpos.
+  - **PARADO — 5 testes afirmam o que continua valendo, e ainda reprovam:**
+    - **F18-rocado ×3:** o aceite da F18 ("produz, para quando zeram, volta após
+      replantio" e "planta e DEBITA") continua válido. Reprova só no relógio, porque a
+      fixture tem 14 tiles e o rodízio semeia todos antes de colher. **Proposta:** uma
+      fixture de 1 tile ao alcance, com os ticks derivados de novo. A afirmação fica a
+      mesma.
+    - **F19 "vazão ≥ 85 % do teto" e "nenhuma gaveta represada":** a entrada do moinho
+      termina cheia (m1 5 de 5), e o cuscuz dá 74. **Hipótese da causa:** a fazenda
+      passou a entregar mais que o moinho consome, e o oráculo 1:1:1 com
+      `farm.sai.corn` 3,0 foi calibrado no modelo antigo. Recalibrar é lote de
+      balanceamento (`BALANCE_LOG.md`, 2026-09-27), decisão do operador.
+    - **Consequência:** o crescer 1 650 **não** entra na `main` nesta sessão, porque a
+      suíte ficaria vermelha com 5.
 - **O que é hoje (medido, 2026-09-26)**:
   - `avancarPlantio` (`sim/systems/especialistas.ts:395-406`) ocupa o roceiro por
     `reposicao.ticks` = 150 (30 s na escala `economia` 2,0), que cobre arar, semear **e
@@ -3975,6 +4015,18 @@ Casos 2 e 4 do prédio vivo (`docs/BRIEF-ARTE.md` §4a). Decisão do operador: c
       da menor árvore do KaM.
     - **O footprint não vem do `houses.dat`:** o `BuildArea` do binário não é o lote.
       O lote é o `PlanYX` do código do kam_remake, conferido no `KM_Terrain.pas`.
+  - **Decisão do operador (2026-09-27): fator de transbordo de largura 1,0, com
+    exceções.** Não 1,15. O 1,15 do KaM provavelmente inclui a sombra, que o KaM desenha
+    dentro do sprite e nós não. Sem ela, o 1,02 medido confirma o limite. Com isso
+    `largura = footprint × 64` continua valendo para o padrão, e a exceção se declara no
+    dado, prédio a prédio.
+  - **Decisão do operador (2026-09-27): a tradução é pelo HOMEM, não pelo lote.** A
+    térrea fica com **182 px** (2,5 H), e não com 159 (0,83 × 192). *"O jogador julga o
+    prédio contra as pessoas que andam ao lado, não contra um tile que ele não
+    enxerga."* **Consequência, esperada e não defeito:** o nosso tile vale 0,88 H, e o do
+    KaM 1,0 H, então os nossos prédios transbordam mais do lote do que os de lá.
+  - **Espera, depois destas duas decisões:** só a outra sessão sair de `src/render/`
+    (item 1) e a lista das exceções por prédio (sobrado, torre).
   - **Classificação em aberto (operador):** Casa do Coronel como sobrado é hipótese
     minha, pelo nome. O umbuzeiro como árvore adulta também. Facheiro e xique-xique
     ficam para o operador: o facheiro é colunar como o mandacaru, e o xique-xique é

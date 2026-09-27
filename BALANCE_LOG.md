@@ -22,6 +22,16 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
 
 ## Observações abertas
 
+- [2026-09-27] com o campo crescendo no tile (crescer 1 650) e `farm.colheita.alcance_tiles` 2, a
+  entrada do moinho da F19 termina **cheia** (m1 5 de 5), e o cuscuz entregue fica em 74 contra um
+  piso de ~90 do teto | medido na branch `f-campo-a` (`0733718`), `tests/F19-cadeia-do-pao.test.ts`,
+  os dois testes da vazão. **Hipótese** da causa, não medida por fase: a fazenda passou a entregar
+  mais que o moinho consome, e o 1:1:1 do oráculo com `farm.sai.corn` 3,0 foi fechado no modelo
+  antigo (plantio de 150 ticks dentro do prédio, ~250 ticks por milho contra 246 do moinho) |
+  `data/production.json` (`farm.sai.corn`, `proporcoesDeReferencia`), `data/resources.json`
+  (`corn.reposicao`) | **espera o operador:** recalibrar junto com o lote, não sozinho. É o que
+  segura o crescer 1 650 fora da `main`.
+
 - [2026-09-24] o terreno passou a existir (F-T1) e viagem deixou de ser linha reta | medido: a
   travessia de 36 tiles ao redor do lago custa **292 ticks** contra **252** no mesmo trajeto sem
   terreno (`test-output/F-T1.json`), 16% a mais só por contornar | `data/maps/sertao-128.json`,

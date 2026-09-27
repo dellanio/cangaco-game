@@ -139,13 +139,17 @@ não código: refazer as duas imagens do armazém (seção 4). Em conversa antig
 >   - árvore 3,0 H: dentro da faixa, acima da mediana;
 >   - k = 1,0: nenhum prédio do KaM passa de 1,02, **salvo a torre** (1,27). É a
 >     exceção que o operador já decidiu declarar no dado.
-> - **O que isto NÃO decide (operador):** o fator de largura que a nota "ERRADO" acima
->   espera. O KaM dá **1,15** no lote 3×2 e 1,17 na mediana geral, e esses números
->   incluem a sombra (hipótese). Há um conflito de tradução:
->   - pela régua do homem: térrea 2,5 H = 182 px;
->   - pelo lote: 0,83 × 192 = 159 px, porque aqui o tile vale 0,88 H, e no KaM 1,0 H.
->
->   Aplicar os dois não fecha, e escolher entre eles é decisão do operador.
+> - **Decisão do operador (2026-09-27): fator de largura 1,0, com exceções.** Não 1,15.
+>   O 1,15 do KaM (lote 3×2; 1,17 na mediana geral) provavelmente inclui a sombra, que
+>   o KaM desenha dentro do sprite e nós não. Sem a sombra, o 1,02 medido confirma o
+>   limite. A exceção se declara no dado, prédio a prédio, como a torre.
+> - **Decisão do operador (2026-09-27): a tradução é pelo HOMEM, não pelo lote.** A
+>   casa térrea fica com **182 px** (2,5 H), e não 159 px (0,83 × 192). O porquê: *o
+>   jogador julga o prédio contra as pessoas que andam ao lado, não contra um tile que
+>   ele não enxerga.*
+>   - **Consequência, esperada e não defeito:** aqui o tile vale 0,88 H, e no KaM 1,0 H.
+>     Com a mesma altura em H, os nossos prédios transbordam mais do lote do que os
+>     de lá.
 
 - **A largura manda.** A largura do sprite derivado é `footprint[0] × 64` px. Um prédio
   de 3 tiles de largura tem 192 px. Um de 4 tem 256 px.

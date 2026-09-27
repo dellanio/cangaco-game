@@ -9013,9 +9013,49 @@ Nenhum desses testes foi rodado com o valor novo.
 - A caixa do sprite é justa, sem margem transparente.
 - O tick do KaM é de 100 ms.
 
-## Perguntas em aberto (2026-09-27, noite 3)
-1. F-CAMPO: reescrever F18-ciclo, F18-rocado, F-CANA, F-CANA-b e F-T3 para o modelo novo?
-   Eles afirmam comportamento do modelo antigo. E o F19, com 37 tiles, pede decidir a fazenda
-   grande (hipótese: semear 37 tiles leva mais que o crescer).
-2. Fator de largura do prédio: o KaM dá 1,15 (3×2), com sombra. E a tradução: pela
-   régua (térrea 182 px) ou pelo lote (159 px)? Aqui o tile vale 0,88 H, e no KaM 1,0 H.
+## 2026-09-27 (noite, 4) — testes do modelo antigo reescritos; alcance da fazenda 2; escala pelo homem
+
+As duas perguntas da noite 3 foram respondidas pelo operador; as decisões estão abaixo.
+
+**Feito (verificado):**
+- **Alcance da fazenda 4 → 2** (`data/production.json`, branch `f-campo-a`, commit
+  `0733718`). Medido na F19, com a tabela no item F-CAMPO: 1º milho em 1 899 (antes
+  5 051), 14 tiles ao alcance. O alcance 1 quebra a vila da calibração. A nota do
+  dado ganhou a PREMISSA MORTA e a tabela.
+- **Reescritos, cada um com o motivo ao lado** (o que caiu e o que continua):
+  - F18-ciclo ×3: a série do tile com o crescer; a reserva morre com o plantio e
+    ninguém reclama o tile antes de maduro, afirmado tick a tick; a viagem de semear.
+  - F-CANA e F-CANA-b: a conservação sobre os N tiles semeados, no lugar de "um tile".
+  - F19: o 1º milho exato, derivado como ida + semear + crescer + viagem + ciclo (deu
+    1 899); `indo_semear` e `semeando` entraram nas fases produtivas; o `ARRANQUE`
+    ganhou o crescer.
+- **Só geometria ou teto, com a mesma afirmação:** F-T3-caminho ×2 (galpão em
+  (109,26)) e F-T3-ciclo-em-campo (teto + crescer).
+- **Estado da branch:** suíte com 5 reprovações, todas paradas de propósito (abaixo).
+  typecheck, lint e validate:data limpos. Sondas `zz-` apagadas.
+- **Não entrou na `main`:** crescer 1 650, alcance 2 e os testes. O operador pediu
+  "junto com os testes", e com as 5 abertas a suíte da `main` ficaria vermelha.
+- **Escala (decisão do operador):**
+  - fator de largura 1,0 com exceções, não 1,15, porque o 1,15 do KaM inclui a sombra;
+  - tradução pelo homem: térrea 182 px;
+  - a consequência (tile 0,88 H contra 1,0 H: transbordamos mais do lote) é esperada.
+  - Registrado no BRIEF-ARTE e na F-ESC.
+
+**PARADO pela regra "se afirmar algo que continua valendo, PARE":**
+- F18-rocado ×3: o aceite da F18 continua válido e reprova só no relógio, porque a
+  fixture tem 14 tiles. Proposta: fixture de 1 tile.
+- F19, vazão e represada: a entrada do moinho termina cheia. O oráculo 1:1:1 pede
+  recalibrar `farm.sai.corn` (BALANCE_LOG 2026-09-27).
+
+**Hipóteses (não verificadas):**
+- A F19 represa porque a fazenda passou a entregar mais que o moinho consome. Não medi
+  por fase.
+- Quem arar muito mais que ~20 tiles no anel de 2 pode repetir o atraso do 1º milho.
+
+## Perguntas em aberto (2026-09-27, noite 4)
+1. F18-rocado ×3: trocar a fixture por uma fazenda de 1 tile ao alcance, mantendo a
+   afirmação (produz, para quando zeram, volta após replantio, debita)?
+2. F19: recalibrar `farm.sai.corn` (ou a proporção de referência) para o modelo novo,
+   no lote de balanceamento? Sem isso, o crescer 1 650 não entra na `main`.
+3. Canavial: `alcance_tiles` continua 4 ("é o da fazenda"). Acompanha a fazenda e vai
+   para 2? Os testes da cana passam com 4.
