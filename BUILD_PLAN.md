@@ -3597,6 +3597,50 @@ Casos 2 e 4 do prédio vivo (`docs/BRIEF-ARTE.md` §4a). Decisão do operador: c
     (ii) a razão do KaM, com crescimento muito maior que a viagem, rendimento 1 por tile e
     mais tiles. Isso é o C grande da lista anterior, agora com o porquê medido. Nada foi
     implementado. A branch `f-campo-a` segue parada.
+  - **Atualização (2026-09-27, noite): o "1 por viagem" do KaM está LIDO**, não é mais
+    provável: `ResProductionX` da farm = 1 no `houses.dat` da instalação do operador (tabela
+    no `BALANCE_LOG.md`, entrada "REFERÊNCIA"). O corte do KaM leva 96 ticks, contra 100
+    nossos, e o milho cresce em 6 400 ticks.
+  - **Decisão do operador (2026-09-27): subir o crescer**, não 4 por viagem nem o KaM
+    inteiro. O campo passa a ser investimento de longo prazo, e o rodízio "semeia doze e
+    espera", como no original. Pediu medida antes de girar.
+  - **Medida (sonda temporária, apagada; branch `f-campo-a` com semear 9 s):**
+    - método: `cenarioDeFazenda`, com só os N tiles de milho mais perto;
+    - gaveta de saída esvaziada e condição do roceiro reposta a cada tick. A fome fica
+      fora: a condição inicial vem do `gameData` global, e não do dado injetado;
+    - 30 000 ticks. A vazão é medida na **segunda metade**, em ticks por milho.
+
+    | crescer (ticks) | 1 tile | 2 tiles | 4 tiles | 12 tiles | 12 ÷ 1 | 1º milho, 12 tiles |
+    |---|---|---|---|---|---|---|
+    | 150 (hoje) | 211 | 181 | 188 | 203 | **1,04×** | 1 523 (1 tile: 378) |
+    | 600 | 313 | 242 | 205 | 203 | 1,54× | 1 523 |
+    | 800 | 375 | 268 | 208 | 203 | 1,85× | 1 523 |
+    | **1 650** | 600 | 375 | 246 | **195** | **3,1×** | **1 899** (1 tile: 1 878) |
+    | 3 000 | 938 | 500 | 341 | 211 | 4,4× | 3 249 |
+    | 10 700 | 3 750 | 1 875 | 938 | 577 | 6,5× | 10 949 |
+
+  - **Leitura (verificada nas linhas acima):**
+    - **O teto é o roceiro, não o relógio.** A fazenda saturada dá **~195–211 ticks por
+      milho** em qualquer crescer até 3 000. Esse é o `farm.sai.corn` 3,0 mais a
+      caminhada, e ele **não muda com o crescer**. O crescer só decide quantos tiles
+      são precisos para chegar ao teto.
+    - **Com 600 ou 800, doze não valem mais que quatro.** Quatro já saturam o roceiro
+      (205–208). Doze valem 1,5–1,9× um tile, e os oito a mais ficam parados.
+    - **Doze passam a valer com crescer ≈ 1 650.** Com 12 tiles o roceiro chega ao teto
+      (195); com 4 fica a 246. **O atraso do rodízio some:** o 1º milho vem no 1 899,
+      contra 1 878 com 1 tile, porque o crescer já é maior que semear doze (~1 500). É
+      o "semeia doze e espera" do KaM. Com 3 000, doze mal chegam ao teto (211); com
+      10 700 não chegam (577).
+    - **Efeito no `farm.sai.corn`: nenhum giro necessário** se a fazenda tiver tiles
+      para saturar, porque o teto é o mesmo de hoje. O custo cai em quem tem poucos
+      tiles e no começo da cadeia. O 1º milho vai de ~378 para ~1 880, e isso mexe em
+      tudo que mede a partida: F18, F19, a Bodega da F-CAL-a, e a vila da F-CAL-a, que
+      tem 8 tiles. **Nada disso foi rodado com o crescer novo.**
+  - **Proposta (não girada):** `corn` e `grapes`, `reposicao.crescer_segundos_base` 30 →
+    **330**, ou seja, 1 650 ticks na escala 2,0. É o menor crescer medido em que doze
+    tiles saturam o roceiro. Com semear 9 s, ele custa ~21 ticks de rodízio. O teto do
+    KaM (6 400 com rendimento 1) fica acima e não se copia, porque aqui o tile rende 4.
+    **Antes de girar**, falta rodar F18, F19 e F-CAL-a com 330 e contar o que cai.
 - **O que é hoje (medido, 2026-09-26)**:
   - `avancarPlantio` (`sim/systems/especialistas.ts:395-406`) ocupa o roceiro por
     `reposicao.ticks` = 150 (30 s na escala `economia` 2,0), que cobre arar, semear **e
@@ -3876,6 +3920,10 @@ Casos 2 e 4 do prédio vivo (`docs/BRIEF-ARTE.md` §4a). Decisão do operador: c
     prédio de 2 de largura (128 px) teria o mesmo conflito. Hoje não há nenhum entre os
     seis. A vegetação **não** está sob k, que é regra de prédio; a árvore a 219 px sobre
     1 tile é o que o alvo pede.
+  - **Decisão do operador (2026-09-27): exceção por prédio, declarada no dado.** k = 1,0 é
+    o padrão; o sobrado, de dois andares, e a torre declaram o próprio fator. **O
+    footprint não muda para caber arte:** é dado de simulação. A saída "sobrado em
+    largura 4" está descartada.
   - **Classificação em aberto (operador):** Casa do Coronel como sobrado é hipótese
     minha, pelo nome. O umbuzeiro como árvore adulta também. Facheiro e xique-xique
     ficam para o operador: o facheiro é colunar como o mandacaru, e o xique-xique é

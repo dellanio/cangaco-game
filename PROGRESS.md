@@ -8927,7 +8927,10 @@ estão em cada item do `BUILD_PLAN.md`. Nenhum código de `src/` foi tocado na `
 - **Fonte nova para dúvida de comportamento do original:** o KaM está instalado em
   `D:\SteamLibrary\steamapps\common\Knights and Merchants Historical Version`. O
   `data/defines/houses.dat` e o `unit.dat` se leem com o layout do `kam_remake`, e os
-  scripts e o layout estão no `BALANCE_LOG.md` (entrada "REFERÊNCIA", 2026-09-27).
+  layout está no `BALANCE_LOG.md` (entrada "REFERÊNCIA", 2026-09-27). **Correção:**
+  só o layout está lá, os scripts não. Os leitores (Python) eram de rascunho e não foram
+  guardados. Quem voltar lá reescreve o leitor a partir do layout, ou o operador decide
+  guardar um em `tools/`.
   Próxima dúvida de número do original: ler dali antes de ir ao wiki. Os binários do
   jogo se leem **no lugar** e não entram no repositório; só o número medido, com
   fonte.
@@ -8937,3 +8940,35 @@ estão em cada item do `BUILD_PLAN.md`. Nenhum código de `src/` foi tocado na `
 
 **Ainda aberto:** a pergunta de a pedra subir acima dos insumos (4, 5) também. Fiz a
 leitura conservadora: subiu só acima do excedente.
+
+## 2026-09-27 (noite, 2) — F-CAMPO: crescer medido; sobrado por exceção
+
+**Feito (verificado):**
+- Sonda do tempo de crescimento na branch `f-campo-a`, num worktree temporário. A sonda
+  foi apagada, o worktree removido e a junction desfeita antes; `node_modules` está
+  intacto. A tabela está no item F-CAMPO do `BUILD_PLAN.md`.
+  - Método: gaveta esvaziada e fome neutralizada. A condição inicial da unidade vem do
+    `gameData` global, e não do `dados` injetado; sem repor, o roceiro some no 12 000.
+  - O teto da fazenda saturada é ~195–211 ticks por milho, com crescer de 150 até 3 000.
+    O `farm.sai.corn` não precisa girar.
+  - Com 600 ou 800, quatro tiles saturam, e doze não valem mais que quatro.
+  - Com **1 650** (330 s base), doze saturam e o atraso do rodízio some.
+  - **Não girado.** O operador pediu a conta antes de girar.
+- F-ESC: a decisão do sobrado (exceção por prédio no dado, footprint intocado) está
+  escrita no item.
+
+**Hipótese (não rodada):** crescer 330 s atrasa o 1º milho de ~378 para ~1 880 ticks.
+Isso deve mexer nas asserções de primeira saída da F18/F19 e na Bodega da F-CAL-a.
+Nenhum desses testes foi rodado com o valor novo.
+
+## Perguntas em aberto (2026-09-27, noite)
+1. F-CAMPO: girar o crescer para 330 s (1 650 ticks)? A faixa medida é 330–600 s. E
+   rodar F18/F19/F-CAL-a com ele antes, como tarefa 1 da feature?
+2. Escada: a pedra do canteiro sobe também acima dos insumos (4, 5)? Hoje está só acima
+   do excedente.
+3. A mensagem do operador cortou em "E a árvore a 1,05 3,0". A intenção não está
+   escrita, e nada foi feito sobre a árvore.
+4. Apagar a branch `lote2-madeira`, que já está na `main`?
+5. F35: o valor da taxa, ainda pendente.
+6. Guardar um leitor do `houses.dat`/`unit.dat` em `tools/`? Ele leria binário externo
+   e não versionaria dado do KaM.
