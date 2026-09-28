@@ -58,6 +58,15 @@ export interface Laco {
    * harness do roteiro de screenshot (BUILD_PLAN, notas da F11a).
    */
   avancar(passos: number): void;
+  /**
+   * C9 — a partida acabou: o laco pausa e FICA pausado — `retomar`, `alternarPausa` e
+   * `avancar` nao fazem nada ate `reabrir`. A sim nao sabe disso (CLAUDE.md §5): quem para
+   * o jogo e o laco externo.
+   */
+  encerrar(): void;
+  /** C9 — tira o encerramento (outra partida foi carregada). O laco continua pausado. */
+  reabrir(): void;
+  readonly encerrado: boolean;
 }
 
 export function criarLaco(config: ConfigDoLaco): Laco {
@@ -68,6 +77,7 @@ export function criarLaco(config: ConfigDoLaco): Laco {
   if (indice < 0) throw new Error(`laco: o padrao '${velocidadePadrao}' nao esta nas velocidades [${velocidades.join(', ')}]`);
 
   let pausado = config.nascerPausado === true;
+  let encerrado = false;
   let acumulado = 0;
   /** `null` = ainda sem referencia: o proximo `tique` so fixa o zero (primeiro quadro ou depois de retomar). */
   let ultimo: number | null = null;
@@ -100,6 +110,7 @@ export function criarLaco(config: ConfigDoLaco): Laco {
       pausado = true;
     },
     retomar() {
+      if (encerrado) return; // C9: a partida acabou; so `reabrir` devolve o jogo
       pausado = false;
       // O tempo parado nao se recupera. Sem quadros durante a pausa (aba oculta: o rAF para),
       // `ultimo` estaria velho e o primeiro quadro depois viria como uma rajada.
@@ -122,11 +133,35 @@ export function criarLaco(config: ConfigDoLaco): Laco {
       return pausado ? 1 : acumulado / tickMs;
     },
     avancar(passos) {
+      if (encerrado) return; // C9: nem o roteiro faz andar a partida que acabou
       if (!pausado) throw new Error('avancar: o timer esta rodando; so se avanca a mao com o jogo pausado');
       if (!Number.isInteger(passos) || passos < 0) throw new Error(`avancar: '${passos}' nao e um inteiro >= 0`);
       for (let i = 0; i < passos; i++) passo();
     },
+    encerrar() {
+      encerrado = true;
+      pausado = true;
+    },
+    reabrir() {
+      encerrado = false;
+    },
+    get encerrado() {
+      return encerrado;
+    },
   };
+}
+
+/**
+ * C9 — liga o fim da partida ao laco: estado com `partida` encerra; estado SEM `partida`
+ * com o laco encerrado (outro save carregado pela ajuda) reabre, ainda pausado. Recebe so o
+ * que le do estado, para este arquivo continuar sem depender da sim.
+ */
+export function acompanharFimDePartida(laco: Laco, estado: { readonly partida?: unknown }): void {
+  if (estado.partida !== undefined) {
+    if (!laco.encerrado) laco.encerrar();
+  } else if (laco.encerrado) {
+    laco.reabrir();
+  }
 }
 
 /**

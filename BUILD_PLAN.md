@@ -5484,7 +5484,14 @@ Ordem do operador. Cada item tem plano em `docs/planos/2026-09-28-C<n>-*.md`.
      - As duas listas estão em `combat.json: ia`, com regra de dado.
      - Teste `tests/C8-ia-prioridades.test.ts`.
      - PARA REVISÃO: a Torre no raio (`SCAN_HOUSES`) fica fora.
-  9. **C9 — o fim de partida parando o jogo.**
+  9. **C9 — o fim de partida parando o jogo. ENTREGUE.**
+     - O laço (`src/laco.ts`) ganhou `encerrar`/`reabrir`: encerrado, `retomar`,
+       `alternarPausa` e `avancar` não fazem nada.
+     - `acompanharFimDePartida` encerra no estado com `partida` e reabre, pausado, quando
+       outro save sem fim é carregado.
+     - A sim não muda.
+     - Teste `tests/C9-fim-para-o-jogo.test.ts`; o roteiro F34 afirma que o P depois do fim
+       não faz o tick andar.
   10. **C10 — a exceção de largura por prédio no dado.**
 - **Depois da fila:** o Feed e a fome militar, com o plano esperando aprovação. Eles
   destravam o ponto 5 da F28-IA.

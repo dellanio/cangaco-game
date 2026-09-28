@@ -11605,3 +11605,27 @@ dados.
 - A distância é medida do **centro do grupo**, não da posição inicial da IA (a IA
   clássica mede da posição inicial).
 - A Torre no raio (`SCAN_HOUSES`) fica fora.
+
+## 2026-09-28 — C9: o fim de partida para o jogo
+
+Plano: `docs/planos/2026-09-28-C9-fim-para-o-jogo.md`, salvo antes do código. Laço externo
+(`src/laco.ts`) e `main.ts`; a sim não muda (CLAUDE.md §5: a pausa é do laço).
+
+**Verificado:**
+- **`Laco`** ganhou `encerrar()`, `reabrir()` e `encerrado`. Encerrado, o laço fica pausado,
+  e `retomar`, `alternarPausa` e `avancar` não fazem nada. `reabrir` mantém a pausa.
+- **`acompanharFimDePartida(laco, estado)`:** o estado com `partida` encerra; o estado sem
+  `partida`, com o laço encerrado, reabre. É o caso de carregar outro save pela ajuda. O
+  `main.ts` chama no `sessao.aoMudar`.
+- **`tests/C9-fim-para-o-jogo.test.ts`, 2 testes verdes:**
+  - (a) encerrado não anda: cada tentativa (retomar, alternar, avançar) foi isolada, com
+    tempo passando; reaberto, volta a andar;
+  - (b) o helper encerra, é idempotente e reabre.
+- **Sondas:**
+  - "retomar ignora o fim" **passou verde na 1ª versão do teste**, porque o `retomar()` era
+    seguido de `alternarPausa()`, que o desfazia. As tentativas foram isoladas, e a sonda
+    ficou vermelha;
+  - "avançar ignora o fim" e "não reabre": vermelhas;
+  - **fiação ausente no `main.ts`:** o roteiro F34 reprovou ("o tick andou de 2 a 10").
+- **`npm run shot -- F34` verde.** Depois do aviso, o P não faz o tick andar, e o aviso fica.
+  Abri a `F34-1-vitoria.png`: "VITÓRIA" com o carimbo "PAUSADO" no HUD.

@@ -15,7 +15,7 @@ import { createInitialState, LADO_DO_JOGADOR } from './sim/state';
 import type { GameState } from './sim/state';
 import { gameData } from './sim/data';
 import { criarSessao } from './sessao';
-import { criarLaco, nascerPausadoPelaUrl, pausarAoOcultar } from './laco';
+import { acompanharFimDePartida, criarLaco, nascerPausadoPelaUrl, pausarAoOcultar } from './laco';
 import { iniciarJogo } from './render/game';
 import { montarHud } from './ui/hud';
 import { montarMenuBuild } from './ui/menu-build';
@@ -171,6 +171,8 @@ function atualizar(s: GameState): void {
   painel.atualizar(s);
   alertas.atualizar(s);
   fimDePartida.atualizar(s);
+  // C9: a partida acabou -> o laco para (e so outro save o reabre)
+  acompanharFimDePartida(laco, s);
 }
 
 sessao.aoMudar(atualizar);

@@ -40,6 +40,13 @@ async function roteiro(ctx) {
     afirmar(await page.isVisible('#fim-de-partida'), 'o aviso deveria estar visivel');
     const titulo = (await page.textContent('#fim-de-partida h2')) ?? '';
     afirmar(titulo === tema.partida[esperado], `o titulo deveria ser o do tema, veio "${titulo}"`);
+    // C9: acabou, o jogo PARA — apertar P nao o retoma, e o tick nao anda
+    const tickNoFim = (await ctx.estado()).tick;
+    await page.keyboard.press('p');
+    await page.waitForTimeout(800);
+    const tickDepois = (await ctx.estado()).tick;
+    afirmar(tickDepois === tickNoFim, `depois do fim o tick nao deveria andar (${tickNoFim} -> ${tickDepois})`);
+    afirmar(await page.isVisible('#fim-de-partida'), 'o aviso deveria continuar na tela');
   }
 
   await carregar('test-output/F34-vitoria.save.txt');
