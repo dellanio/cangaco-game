@@ -11529,3 +11529,38 @@ e dados; nenhuma linha de render.
   tile esperam para sempre.
 - A busca de ocupação varre `unidades.ordem` a cada passo bloqueado (O(n)). Não foi
   medido com centenas de soldados.
+
+## 2026-09-28 — C6: revidar enquanto marcha
+
+Plano: `docs/planos/2026-09-28-C6-revidar-marchando.md`, salvo antes do código. Só `src/sim`.
+
+**Medido no kam_remake:** `TKMUnitWarrior.CheckForEnemy`/`FindEnemy`
+(`KM_UnitWarrior.pas:664-702`). O corpo a corpo procura inimigo mesmo andando, porque o
+`WalkTo` é interrompível na passagem de tile. O atirador não procura enquanto anda.
+
+**Verificado:**
+- **Contato em marcha** (`systems/combate.ts`): o corpo a corpo em `marchando` com inimigo
+  encostado passa a `lutando` e guarda o destino em `Unidade.retomarMarcha?`. É um campo
+  opcional, fora do `fsmData`, e o save não muda de versão.
+- **Retomar:** o `ocioso` com `retomarMarcha` e sem inimigo encostado volta a `marchando`.
+- **Ordem nova apaga o destino guardado** (`semRetomar`): `MoveUnits`, `AttackUnit` e
+  `AttackBuilding`.
+- **`tests/C6-revidar-marchando.test.ts`, 4 testes verdes:**
+  - (a)(b) revida no caminho (primeiro golpe a ≤ 1 tile do inimigo), vence, retoma e chega;
+  - (c) o `AttackBuilding` durante a luta apaga o destino no mesmo tick;
+  - (d) o arqueiro marchando não para;
+  - (e) determinismo.
+- **Sondas**, vermelhas **depois de endurecer o teste**. Na 1ª versão três passavam verde:
+  - "marcha não revida" passava porque o inimigo miliciano iniciava a luta sozinho e
+    perseguia o marchador. O inimigo virou um arqueiro colado, que não luta de perto, e o
+    teste passou a exigir o golpe no caminho;
+  - "ordem nova não apaga" passava porque o `MoveUnits` recolocava a unidade em marcha e
+    ela revidava de novo, regravando o campo. A ordem virou `AttackBuilding`;
+  - a sonda do arqueiro estava mal desenhada e foi refeita como "atira andando".
+- **Não-regressão:** os testes das F26, F28, F-CERCO, F34, C1, C2, C3, C5, C7 e F36 ficaram
+  verdes, e o `npm run shot -- F26b` também.
+
+**PARA REVISÃO:**
+- Revida só o inimigo **encostado**. O KaM também pega luta com quem está no alcance da
+  "AutoAttackRange" da IA; não trouxe.
+- Não há desenho novo: é a mesma luta da F28a, agora iniciada em marcha.

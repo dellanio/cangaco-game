@@ -25,6 +25,7 @@ import { alvosDeAproximacao } from '../aproximacao';
 import { buscarCaminho, passoAndavel } from '../pathfinding';
 import { andar, comUnidade, noTile, ocioso } from '../units/movimento';
 import type { ResultadoDeSistema } from './jobs';
+import { FSM_MARCHANDO } from './marcha';
 
 export type AttackUnit = Extract<Command, { readonly type: 'AttackUnit' }>;
 
@@ -73,9 +74,22 @@ export function aplicarAttackUnit(state: GameState, comando: AttackUnit, dados: 
   let atual = state;
   for (const id of new Set(comando.unidades)) {
     const u = atual.unidades.porId[id];
-    if (u !== undefined) atual = comUnidade(atual, { ...u, fsm: FSM_INDO_LUTAR, fsmData: { alvoUnidade: comando.alvo } });
+    if (u !== undefined) atual = comUnidade(atual, { ...semRetomar(u), fsm: FSM_INDO_LUTAR, fsmData: { alvoUnidade: comando.alvo } });
   }
   return { state: atual, events: [] };
+}
+
+/** C6 — volta a marchar para o destino guardado; o campo some. */
+function retomar(u: Unidade): Unidade {
+  const { retomarMarcha, ...resto } = u;
+  return { ...resto, fsm: FSM_MARCHANDO, fsmData: { caminho: [], progresso: 0, ...(retomarMarcha === undefined ? {} : { alvoTile: retomarMarcha }) } };
+}
+
+/** C6 — ordem nova do jogador: a marcha interrompida nao volta mais. */
+export function semRetomar(u: Unidade): Unidade {
+  const { retomarMarcha: _r, ...resto } = u;
+  void _r;
+  return resto;
 }
 
 function lutarCom(u: Unidade, alvo: Unidade, dados: GameData): Unidade {
@@ -223,10 +237,21 @@ export function sistemaDoCombate(state: GameState, dados: GameData): ResultadoDe
   const events: GameEvent[] = [];
   for (const id of state.unidades.ordem) {
     const u = atual.unidades.porId[id];
-    if (u === undefined || u.fsm !== 'ocioso') continue;
+    if (u === undefined) continue;
+    // C6: o corpo a corpo em MARCHA tambem revida o inimigo encostado (KaM: CheckForEnemy
+    // anda junto do WalkTo, KM_UnitWarrior.pas:664-702), e guarda o destino para retomar
+    if (u.fsm === FSM_MARCHANDO && lutaCorpoACorpo(u, dados)) {
+      const inimigo = inimigoEncostado(atual, u, dados);
+      const destino = u.fsmData.alvoTile;
+      if (inimigo !== null) atual = comUnidade(atual, { ...lutarCom(u, inimigo, dados), ...(destino === undefined ? {} : { retomarMarcha: destino }) });
+      continue;
+    }
+    if (u.fsm !== 'ocioso') continue;
     if (lutaCorpoACorpo(u, dados)) {
       const inimigo = inimigoEncostado(atual, u, dados);
       if (inimigo !== null) atual = comUnidade(atual, lutarCom(u, inimigo, dados));
+      // C6: sem ninguem encostado, quem teve a marcha interrompida volta a ela
+      else if (u.retomarMarcha !== undefined) atual = comUnidade(atual, retomar(u));
     } else if (atira(u, dados)) {
       // F28d: o atirador ocioso com alguem no arco e no alcance comeca a recarregar
       const alvo = alvoDoAtirador(atual, u, dados);

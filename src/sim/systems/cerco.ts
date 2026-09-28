@@ -23,6 +23,7 @@ import type { GameData } from '../data/types';
 import type { TileDeGrid } from '../estradas';
 import { classeDaUnidade } from '../condicao';
 import { cadenciaDoTiro, distanciaEmTiles, ehADistancia } from '../combate';
+import { semRetomar } from './combate';
 import { caixaDoPredio } from '../footprint';
 import { buscarCaminho, passoAndavel, tileAndavel } from '../pathfinding';
 import { andar, comPredio, comUnidade, noTile, ocioso } from '../units/movimento';
@@ -91,7 +92,7 @@ export function aplicarAttackBuilding(
     const u = atual.unidades.porId[id];
     if (u === undefined) continue;
     // o caminho e planejado no primeiro tick do sistema, de onde a unidade estiver
-    atual = comUnidade(atual, { ...u, fsm: FSM_INDO_ATACAR, fsmData: { alvo: comando.predio } });
+    atual = comUnidade(atual, { ...semRetomar(u), fsm: FSM_INDO_ATACAR, fsmData: { alvo: comando.predio } });
   }
   return semEventos(atual);
 }

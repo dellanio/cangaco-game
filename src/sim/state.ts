@@ -1267,6 +1267,12 @@ export interface Unidade {
    * AUSENTE e 4 (sul, de frente para a camera), e so muda quando a unidade anda ou luta.
    */
   readonly direcao?: number;
+  /**
+   * C6 — o destino da marcha que o contato interrompeu. AUSENTE fora disso. O militar ocioso
+   * que o tem, sem inimigo encostado, volta a marchar para la (`systems/combate.ts`); ordem
+   * nova do jogador apaga. Fora do `fsmData` de proposito: a luta o reescreve varias vezes.
+   */
+  readonly retomarMarcha?: TileDeGrid;
 }
 
 /**

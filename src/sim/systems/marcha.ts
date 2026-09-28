@@ -15,7 +15,7 @@ import { classeDaUnidade } from '../condicao';
 import { buscarCaminho, passoAndavel, tileAndavel } from '../pathfinding';
 import { andar, chegou, comUnidade, noTile, ocioso } from '../units/movimento';
 import type { ResultadoDeSistema } from './jobs';
-import { viradaPeloPasso } from './combate';
+import { semRetomar, viradaPeloPasso } from './combate';
 
 export type MoveUnits = Extract<Command, { readonly type: 'MoveUnits' }>;
 
@@ -70,7 +70,7 @@ export function aplicarMoveUnits(state: GameState, comando: MoveUnits, dados: Ga
     const alvo = alvos[Math.min(i, alvos.length - 1)];
     if (u === undefined || alvo === undefined) return;
     // o caminho e planejado no primeiro tick do sistema, de onde a unidade estiver
-    atual = comUnidade(atual, { ...u, fsm: FSM_MARCHANDO, fsmData: { caminho: [], progresso: 0, alvoTile: alvo } });
+    atual = comUnidade(atual, { ...semRetomar(u), fsm: FSM_MARCHANDO, fsmData: { caminho: [], progresso: 0, alvoTile: alvo } });
   });
   return { state: atual, events: [] };
 }

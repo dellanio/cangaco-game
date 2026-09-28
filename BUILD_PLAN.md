@@ -5462,7 +5462,14 @@ Ordem do operador. Cada item tem plano em `docs/planos/2026-09-28-C<n>-*.md`.
      - Teste `tests/C5-colisao-militar.test.ts`.
      - PARA REVISÃO: sem a troca de lugar e o empurrão do KaM, e dois de frente num
        corredor de 1 tile esperam.
-  6. **C6 — revidar enquanto marcha.**
+  6. **C6 — revidar enquanto marcha. ENTREGUE.**
+     - O corpo a corpo em `marchando` com inimigo encostado luta, como o `CheckForEnemy`
+       do KaM (`KM_UnitWarrior.pas:664-702`).
+     - Guarda o destino em `Unidade.retomarMarcha?`, e retoma a marcha quando fica sem
+       inimigo encostado.
+     - Uma ordem nova apaga o destino guardado.
+     - O atirador não revida andando.
+     - Teste `tests/C6-revidar-marchando.test.ts`.
   7. **C7 — o `lado` filtrando o JobBoard. ENTREGUE, adiantado por ser o conserto do BUG-N1**
      (reprovação da F25a pelo avaliador).
      - O claim exige que todo prédio tocado seja do lado da unidade.
