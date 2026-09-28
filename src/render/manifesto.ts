@@ -44,6 +44,9 @@ export interface EntradaDeAsset {
    * contagem por receita, nao sobrepor) estao em `manifesto-camadas.ts`.
    */
   readonly ancoras?: AncorasDoPredio;
+  /** F-ESC — a excecao ao `regraDeAltura.k` do manifesto, em multiplos da largura do
+   *  lote. So existe onde a arte precisa (sobrado, torre); `escala-predio.ts`. */
+  readonly alturaMaxPorLargura?: number;
 }
 
 /** Um ponto em FRACAO do sprite `completo`: `[x, y]` de 0 a 1, origem no canto
@@ -106,6 +109,8 @@ export type EntradaDoManifesto = EntradaDeAsset | EntradaDeCamada;
 
 export interface Manifesto {
   readonly versao: number;
+  /** F-ESC — o teto padrao da altura do predio (`escala-predio.ts`). */
+  readonly regraDeAltura?: { readonly k: number };
   readonly assets: readonly EntradaDoManifesto[];
 }
 

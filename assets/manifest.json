@@ -1,6 +1,10 @@
 {
   "_doc": "Indice de arte do jogo (CLAUDE.md §9). `estados` mapeia o estagio do render (src/render/estagio-obra.ts) para o arquivo derivado. Predio com o PAR `madeira` + `completo` tem a obra revelada pelo hp (F17g, `revelacaoDaObra`: madeira embaixo, `completo` por cima, os dois recortados de baixo para cima); sem o par, a obra fica nos seis estagios da F17e; todo caminho e relativo a esta pasta. `tamanho` e o px REAL do arquivo derivado e `footprint` e em tiles: a largura em px e sempre footprint[0] * tile_px, e a altura e o que a arte der. As chaves sao os ids NEUTROS da simulacao, nunca o nome do tema. O jogo carrega so `sprites/`; `base/` e o registro da geracao.",
   "versao": 1,
+  "regraDeAltura": {
+    "k": 1.0,
+    "_doc": "F-ESC (decisao do operador, 2026-09-27): a altura do arquivo do predio nao passa de k vezes a largura do LOTE (footprint[0] * tile_px de data/terrain.json). Excecao por predio em `alturaMaxPorLargura`, so onde a arte precisa (sobrado, torre); o footprint nao muda para caber arte. O render encolhe o sprite que passar (src/render/escala-predio.ts) e tests/F-ESC-escala.test.ts reprova predio alto sem excecao e excecao que ja cabe em k."
+  },
   "assets": [
     {
       "id": "storehouse",
@@ -13,6 +17,7 @@
         214,
         254
       ],
+      "alturaMaxPorLargura": 1.33,
       "anchor": [
         0.5,
         1
@@ -117,6 +122,7 @@
         214,
         240
       ],
+      "alturaMaxPorLargura": 1.33,
       "anchor": [
         0.5,
         0.875

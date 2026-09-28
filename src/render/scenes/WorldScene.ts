@@ -42,6 +42,7 @@ import {
 } from '../manifesto';
 import type { ChaveDaRevelacao, DesenhoDoRecurso, EntradaDeAsset, TexturaCarregada } from '../manifesto';
 import { manifestoDoJogo, texturasParaCarregar } from '../sprites';
+import { escalaDoSprite, regraDoManifesto } from '../escala-predio';
 import { mascaraCardinal, VIZINHOS_CARDINAIS } from '../mascara-cardinal';
 
 const CHAVE_TEXTURA_TERRENO = 'tiles-terreno';
@@ -68,6 +69,8 @@ const DEPTH_DOS_RECURSOS = 0.5;
 const DADOS_DAS_PILHAS = dadosDasPilhas(manifestoDoJogo);
 /** F-VIVO-b — o dado do quadro de trabalho, com as ancoras do manifesto. Montado uma vez. */
 const DADOS_DO_TRABALHO = dadosDoTrabalho(manifestoDoJogo);
+/** F-ESC — o teto da altura do predio, do manifesto. Montado uma vez. */
+const REGRA_DE_ALTURA = regraDoManifesto(manifestoDoJogo);
 /** F-VIVO-a — o lado de UMA unidade da pilha, em tiles. O brief dizia 1/4; com
  *  1/4 as quatro pilhas do armazem (3 tiles de base) se sobrepoem, com 1/5 cabem.
  *  Desenho, nao balanceamento: fica aqui, como o resto do placeholder. */
@@ -1245,7 +1248,7 @@ export class WorldScene extends Phaser.Scene {
   ): Phaser.GameObjects.Image {
     const imagem = this.add.image(larguraPx / 2, alturaPx, chave);
     imagem.setOrigin(entrada.anchor[0], entrada.anchor[1]);
-    imagem.setScale(larguraPx / (entrada.footprint[0] * 64));
+    imagem.setScale(escalaDoSprite(entrada, REGRA_DE_ALTURA, configDoMapa.tilePx, larguraPx));
     return imagem;
   }
 
@@ -1269,7 +1272,7 @@ export class WorldScene extends Phaser.Scene {
   private caixaDoSprite(
     entrada: EntradaDeAsset, larguraPx: number, alturaPx: number,
   ): { readonly x: number; readonly y: number; readonly w: number; readonly h: number } {
-    const escala = larguraPx / (entrada.footprint[0] * 64);
+    const escala = escalaDoSprite(entrada, REGRA_DE_ALTURA, configDoMapa.tilePx, larguraPx);
     const w = entrada.tamanho[0] * escala;
     const h = entrada.tamanho[1] * escala;
     return { x: larguraPx / 2 - w * entrada.anchor[0], y: alturaPx - h * entrada.anchor[1], w, h };

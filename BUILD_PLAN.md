@@ -4481,6 +4481,73 @@ F-REPL e antes da Fase C.
   - **Registro de arte:** a regra ("a régua é o homem; toda arte nova declara sua
     altura em H antes de ser gerada") está em `docs/BRIEF-ARTE.md`, seção "Tamanho e
     âncora".
+- **Implementada a parte de código (2026-09-28, fila noturna 4; plano em
+  `docs/planos/2026-09-28-4-F-ESC.md`).** A arte já estabilizou (os 28 prédios têm arte).
+  - `assets/manifest.json: regraDeAltura.k = 1,0` e `alturaMaxPorLargura: 1,33` no
+    armazém e na Casa do Coronel. O 1,33 é **derivado**, não escolhido: o alvo do
+    sobrado do operador, 3,5 H = 255 px, sobre o lote de 3 (192 px).
+  - `src/render/escala-predio.ts` (puro): `escalaDoSprite` = mínimo entre a escala do
+    lote e `teto × lote / altura`; `violacoesDaAltura` acusa predio alto sem exceção e
+    exceção que já cabe em k. A cena (`desenharSprite`, `caixaDoSprite`) escala por ela,
+    com o `tilePx` do dado. Com a arte de hoje nenhum sprite muda de tamanho na tela.
+  - `tools/derivar-sprites.js` lê `tile_px` de `data/terrain.json` e o teto do
+    manifesto (a decisão "corrija junto"). **Não foi rodado:** os caminhos de base dos
+    `GRUPOS` apontam para arquivos que o commit `c9b52b3` apagou; o derivador está
+    parado desde a rota do Blender.
+  - `tests/F-ESC-escala.test.ts`: a regra no manifesto real, as três cópias adulteradas
+    (alto sem exceção, exceção morta, exceção retirada) e a escala pura.
+  - **PARA REVISÃO (decisões de sessão):** k mora no manifesto e não no
+    `data/terrain.json` (a saída que o item deixava; assim a feature não toca `src/sim/`).
+    A régua mede o **canvas** (`tamanho`), porque é ele que o render escala.
+  - **Achado:** o canvas do armazém (254 px) é puxado pela imagem `madeira`, que ocupa
+    212×252; o `completo` visível mede só 196×190 (2,60 H). O armazém completo parece
+    uma térrea, não um sobrado — a exceção de 1,33 existe para a madeira.
+  - **Achado:** o transbordo de largura decidido é 1,0 com exceção declarada, e o
+    armazém e a Casa do Coronel têm canvas de 214 px (1,11 × o lote) sem exceção de
+    largura no dado. Ninguém acusa isso hoje (`F17f` só pede `≥`).
+- **Tabela da régua, arte nova (medida 2026-09-28 por script, alfa > 16, nenhum PNG
+  aberto; H = serf = 73 px).** "visível" é a caixa do `completo`; "lateral" é quanto o
+  visível passa (+) ou fica aquém (−) da largura do lote, somados os dois lados.
+  Nenhum sprite foi regenerado.
+
+  | prédio | fp | arquivo | visível | em H | alvo (H) | desvio | h/w visível | canvas h / lote | lateral (px) |
+  |---|---|---|---|---|---|---|---|---|---|
+  | storehouse | 3×3 | 214×254 | 196×190 | 2,60 | 3,5 sobrado | −26 % | 0,97 | 1,32 | 4 |
+  | woodcutters | 3×2 | 192×176 | 192×176 | 2,41 | 2,5 térrea | −4 % | 0,92 | 0,92 | 0 |
+  | quarry | 3×2 | 192×151 | 189×149 | 2,04 | 2,5 térrea | −18 % | 0,79 | 0,79 | −3 |
+  | sawmill | 4×2 | 256×157 | 256×157 | 2,15 | 2,5 térrea | −14 % | 0,61 | 0,61 | 0 |
+  | schoolhouse | 3×3 | 214×240 | 214×240 | 3,29 | 3,5 sobrado | −6 % | 1,12 | 1,25 | 22 |
+  | inn | 4×3 | 256×178 | 256×178 | 2,44 | 2,5 térrea | −2 % | 0,70 | 0,70 | 0 |
+  | watchtower | 2×2 | 128×128 | 103×122 | 1,67 | — | — | 1,18 | 1,00 | −25 |
+  | farm | 4×3 | 256×192 | 185×145 | 1,99 | 2,5 térrea | −21 % | 0,78 | 0,75 | −71 |
+  | wineyard | 3×2 | 192×128 | 125×90 | 1,23 | 2,5 térrea | **−51 %** | 0,72 | 0,67 | −67 |
+  | fishermans | 3×2 | 192×128 | 123×86 | 1,18 | 2,5 térrea | **−53 %** | 0,70 | 0,67 | −69 |
+  | gold_mine | 2×1 | 128×96 | 90×84 | 1,15 | 2,5 térrea | **−54 %** | 0,93 | 0,75 | −38 |
+  | coal_mine | 3×2 | 192×128 | 116×111 | 1,52 | 2,5 térrea | **−39 %** | 0,96 | 0,67 | −76 |
+  | iron_mine | 3×1 | 192×96 | 87×84 | 1,15 | 2,5 térrea | **−54 %** | 0,97 | 0,50 | −105 |
+  | weapons_workshop | 4×2 | 256×128 | 120×115 | 1,58 | 2,5 térrea | **−37 %** | 0,96 | 0,50 | −136 |
+  | barracks | 4×4 | 256×256 | 221×224 | 3,07 | — | — | 1,01 | 1,00 | −35 |
+  | marketplace | 4×3 | 256×192 | 159×109 | 1,49 | 2,5 térrea | **−40 %** | 0,69 | 0,75 | −97 |
+  | mill | 3×3 | 192×192 | 170×125 | 1,71 | 2,5 térrea | **−32 %** | 0,74 | 1,00 | −22 |
+  | bakery | 3×3 | 192×192 | 161×137 | 1,88 | 2,5 térrea | −25 % | 0,85 | 1,00 | −31 |
+  | swine_farm | 4×3 | 256×192 | 153×103 | 1,41 | 2,5 térrea | **−44 %** | 0,67 | 0,75 | −103 |
+  | stables | 4×3 | 256×192 | 167×111 | 1,52 | 2,5 térrea | **−39 %** | 0,66 | 0,75 | −89 |
+  | butchers | 3×3 | 192×192 | 163×128 | 1,75 | 2,5 térrea | **−30 %** | 0,79 | 1,00 | −29 |
+  | tannery | 3×2 | 192×128 | 101×80 | 1,10 | 2,5 térrea | **−56 %** | 0,79 | 0,67 | −91 |
+  | armory_workshop | 3×3 | 192×192 | 178×154 | 2,11 | 2,5 térrea | −16 % | 0,87 | 1,00 | −14 |
+  | metallurgists | 3×3 | 192×192 | 192×175 | 2,40 | 2,5 térrea | −4 % | 0,91 | 1,00 | 0 |
+  | town_hall | 4×3 | 256×192 | 191×185 | 2,53 | 2,5 térrea | +1 % | 0,97 | 0,75 | −65 |
+  | iron_smithy | 4×2 | 256×128 | 121×110 | 1,51 | 2,5 térrea | **−40 %** | 0,91 | 0,50 | −135 |
+  | weapon_smithy | 4×2 | 256×128 | 122×104 | 1,42 | 2,5 térrea | **−43 %** | 0,85 | 0,50 | −134 |
+  | armor_smithy | 4×3 | 256×192 | 185×173 | 2,37 | 2,5 térrea | −5 % | 0,94 | 0,75 | −71 |
+
+  - **Leitura:** as seis primeiras (a régua aprovada) ficam entre −18 % e −2 % da térrea,
+    salvo o armazém. **Os 22 prédios da leva nova ficam, em 14 casos, 30 % ou mais abaixo
+    do alvo**, e boiam no lote: ferraria, oficina, curtume, mercado e as criações ocupam
+    menos de 2/3 da largura (lateral de −90 a −136 px). A torre (1,67 H) e o quartel
+    (3,07 H) não têm classe de altura decidida.
+  - Vegetação (sem mudança desde 2026-09-27): árvore 77 px (1,05 H), umbuzeiro 62,
+    mandacaru, facheiro e xique-xique 120, macambira 64.
 
 ### F-VIVO — O prédio vivo: trabalho, estoque e animais (render)
 

@@ -9958,3 +9958,25 @@ subagentes; conferi no fonte do KaM, abrindo a linha, só o que marquei [C] lá:
 - **Material de obra:** corrigir para `estrada` (cai o aceite da F18d-1a) ou declarar `livre`
   divergência deliberada e tirar o "fonte" do dado, do GDD e do BUILD_PLAN?
 - **Prioridade ouro/comida:** inverter os níveis 1 e 2 do `delivery.json` ou declarar divergência?
+
+## 2026-09-28 (noite, fila 4) — F-ESC: a regra de altura no código, a tabela da arte nova
+
+Plano: `docs/planos/2026-09-28-4-F-ESC.md`. Detalhe e tabela no item F-ESC do BUILD_PLAN.
+- **Verificado:** `npm run verify` verde; `tests/F-ESC-escala.test.ts` (6 testes) prova a
+  regra no manifesto real e que ela acusa nas três cópias adulteradas;
+  `test-output/F-ESC.json` aberto: k 1, tilePx 64, 28 prédios com escala 1, e o caso
+  alto sem exceção encolhe para 0,5. Roteiros F17, F17g e F-VIVO-a verdes depois da
+  mudança na escala da cena.
+- **Feito:** k = 1,0 e a exceção 1,33 (armazém, Casa do Coronel) no manifesto;
+  `src/render/escala-predio.ts`; a cena escala por ela; o derivador lê o tile e o teto do
+  dado (não rodado: seus caminhos de base foram apagados em `c9b52b3`).
+- **PARA REVISÃO:** k no manifesto, não no `terrain.json`; o 1,33 derivado do alvo do
+  sobrado (3,5 H / lote 3); a régua mede o canvas.
+- **Não fechado — a chave NÃO foi virada:** o rascunho do aceite (c) pede o
+  `test-output/F-ESC.json` com a caixa **desenhada** de cada prédio medida no roteiro; o
+  que existe é a caixa do manifesto medida no teste. E o (b) ("armazém ≤ largura") foi
+  substituído pela exceção decidida. Falta o operador fechar o texto do aceite.
+- **Achados da tabela:** 14 dos 22 prédios da leva nova ficam 30 % ou mais abaixo do
+  alvo da térrea e boiam no lote; o armazém completo mede 2,60 H (é a madeira que puxa o
+  canvas a 254); armazém e Casa do Coronel transbordam a largura (214 px) sem exceção de
+  largura declarada.

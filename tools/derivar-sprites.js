@@ -21,11 +21,19 @@ const { chromium } = require('@playwright/test');
 
 const RAIZ = path.join(__dirname, '..', 'assets');
 const ARQUIVO_PREDIOS = path.join(__dirname, '..', 'data', 'buildings.json');
-const TILE_PX = 64;
-// A Casa do Lenhador e a régua visual aprovada: 192x182. O derivado mantém
-// a largura lógica do footprint, preserva a proporção da arte e limita apenas
-// o transbordo vertical. Prédio alto demais ganha margem lateral, não deformação.
-const ALTURA_MAXIMA_POR_LARGURA = 182 / 192;
+// F-ESC: o tile e o teto de altura vêm do dado, não daqui. O tile é o de
+// `data/terrain.json` (o mesmo que a cena usa para escalar); o teto é
+// `regraDeAltura.k` do manifesto, ou a exceção do prédio (`alturaMaxPorLargura`).
+// O derivado mantém a largura lógica do footprint, preserva a proporção da arte e
+// limita apenas o transbordo vertical. Prédio alto demais ganha margem lateral,
+// não deformação.
+const TILE_PX = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'terrain.json'), 'utf8')).tile_px;
+const MANIFESTO = JSON.parse(fs.readFileSync(path.join(RAIZ, 'manifest.json'), 'utf8'));
+
+function alturaMaximaPorLargura(id) {
+  const entrada = MANIFESTO.assets.find((e) => e.tipo === 'predio' && e.id === id);
+  return entrada?.alturaMaxPorLargura ?? MANIFESTO.regraDeAltura.k;
+}
 
 // Limiar que separa conteúdo de resíduo semitransparente do gerador. A bbox é
 // estável nessa vizinhança; o log imprime as uniões nos três limiares.
@@ -161,7 +169,7 @@ async function processarGrupo(pagina, grupo, larguraAlvo) {
 
   const [ux0, uy0, ux1, uy1] = uniao(medidas.map((medida) => medida.caixas[ALFA_MINIMO]));
   const recorte = { x: ux0, y: uy0, largura: ux1 - ux0 + 1, altura: uy1 - uy0 + 1 };
-  const alturaMaxima = Math.round(larguraAlvo * ALTURA_MAXIMA_POR_LARGURA);
+  const alturaMaxima = Math.round(larguraAlvo * alturaMaximaPorLargura(grupo.id));
   const escalaPelaLargura = larguraAlvo / recorte.largura;
   const alturaPelaLargura = Math.round(recorte.altura * escalaPelaLargura);
   const escala = alturaPelaLargura <= alturaMaxima
