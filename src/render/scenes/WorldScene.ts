@@ -40,6 +40,7 @@ import { criarPlantaFantasma } from '../planta-fantasma';
 import { criarCamadaDeEstradas, criarPreviaDeEstrada } from '../estradas';
 import { criarCamadaDeCampos, criarPreviaDeCampo } from '../campos';
 import { criarCamadaDeUnidades } from '../unidades';
+import { posicaoDoProjetil } from '../projeteis';
 import {
   assetDaCamada, assetDoPredio, arquivoDoEstagio, chaveDaTextura, chaveDeTextura, desenhoDoRecurso, temParDeRevelacao,
   texturaDaCamada, ESTADO_DO_TERRENO,
@@ -93,7 +94,10 @@ const PROFUNDIDADE_DA_SELECAO = 999_999;
 const COR_DA_SELECAO = 0xf2d16b;
 /** F28b — a pedra da torre na tela: cor e quanto tempo o traco fica. Numeros de TELA. */
 const COR_DA_PEDRA = 0xe8e2d0;
-const MS_DO_TRACO_DA_PEDRA = 500;
+/** C2b — o projetil no ar: contorno escuro e miolo claro; a flecha tem esta fracao de tile. */
+const COR_DA_FLECHA = 0x2a1a0a;
+const COR_DO_MIOLO_DA_FLECHA = 0xf2e2b8;
+const TAMANHO_DA_FLECHA = 0.8;
 
 /** F-VIVO-c — o lado do losango do animal sem PNG: a unidade da pilha no filhote, o
  *  dobro no adulto. Uma funcao so para o desenho e o `debug.camadasEmPx`. */
@@ -293,6 +297,7 @@ export class WorldScene extends Phaser.Scene {
     // F26b: o anel dos selecionados e a caixa ficam ACIMA de tudo do mundo
     const marcasDeSelecao = this.add.graphics().setDepth(PROFUNDIDADE_DA_SELECAO);
     const caixaDeSelecao = this.add.graphics().setDepth(PROFUNDIDADE_DA_SELECAO);
+    const projeteisNoAr = this.add.graphics().setDepth(PROFUNDIDADE_DA_SELECAO);
     // Ultimo tile valido sob o ponteiro. Efemero: some no gameout e nunca entra
     // no GameState (a planta e estado de interface, ver input/ferramenta.ts).
     let tileAtual: Tile | null = null;
@@ -497,7 +502,9 @@ export class WorldScene extends Phaser.Scene {
       // F26b: o acerto do proximo clique mira ESTE desenho
       this.unidadesDesenhadas = estado.unidadesRenderizadas;
       // F28b: a pedra da torre, lida do evento do tick (uma vez por tick)
-      this.desenharPedras(tilePx, estado);
+      this.desenharPedras(estado);
+      // C2b: cada projetil no ar, interpolado com o mesmo alfa das unidades
+      estado.projeteisNoAr = this.desenharProjeteis(projeteisNoAr, tilePx, this.relogio.alfa());
       estado.selecaoMilitar = this.desenharSelecao(marcasDeSelecao, estado.unidadesRenderizadas, tilePx);
       estado.caixaDeSelecao = this.desenharCaixa(caixaDeSelecao);
     });
@@ -532,26 +539,60 @@ export class WorldScene extends Phaser.Scene {
    * por tick. Tick que o laco rodou sem quadro no meio (velocidade alta) perde o traco:
    * e so desenho, a pedra e a morte ja aconteceram na sim.
    */
-  private desenharPedras(tilePx: number, debug: EstadoDebug): void {
+  private desenharPedras(debug: EstadoDebug): void {
     const atual = this.ponte.atual;
     if (atual === null || atual.tick === this.tickDasPedras) return;
     this.tickDasPedras = atual.tick;
     for (const e of atual.events) {
       if (e.type !== 'stone-thrown') continue;
-      const torre = atual.predios.porId[e.predio];
-      if (torre === undefined) continue;
-      const { largura } = aparenciaDoPredio(torre.tipo);
-      const de = gridToScreen({ gx: torre.gx, gy: torre.gy }, tilePx, ESCALA_DO_MUNDO);
-      const para = gridToScreen(e.alvo, tilePx, ESCALA_DO_MUNDO);
-      const traco = this.add.graphics().setDepth(PROFUNDIDADE_DA_SELECAO);
-      traco.lineStyle(2, COR_DA_PEDRA, 1);
-      traco.lineBetween(de.x + (largura * tilePx) / 2, de.y, para.x + tilePx / 2, para.y + tilePx / 2);
-      traco.fillStyle(COR_DA_PEDRA, 1);
-      traco.fillCircle(para.x + tilePx / 2, para.y + tilePx / 2, tilePx / 6);
-      this.time.delayedCall(MS_DO_TRACO_DA_PEDRA, () => traco.destroy());
+      // C2b: o traco instantaneo saiu — a pedra VOA e e desenhada por `desenharProjeteis`.
+      // Aqui ficam so os contadores que o roteiro F28b le.
       debug.pedrasDaTorre += 1;
       debug.ultimaPedra = { predio: e.predio, alvo: { gx: e.alvo.gx, gy: e.alvo.gy }, vitima: e.vitima };
     }
+  }
+
+  /**
+   * C2b — o projetil no ar, lido de `state.projeteis` a cada quadro: a flecha e o virote
+   * sao um traco curto na direcao do voo; a funda e a pedra, um circulo. Sobem num arco
+   * (`render/projeteis.ts`). A pedra sai do meio do lote da torre.
+   */
+  private desenharProjeteis(
+    g: Phaser.GameObjects.Graphics, tilePx: number, alfa: number,
+  ): EstadoDebug['projeteisNoAr'] {
+    g.clear();
+    const atual = this.ponte.atual;
+    const desenhados: EstadoDebug['projeteisNoAr'][number][] = [];
+    for (const p of atual?.projeteis ?? []) {
+      const torre = p.predio === undefined ? undefined : atual?.predios.porId[p.predio];
+      const centro = torre === undefined ? undefined : (() => {
+        const { largura, altura } = aparenciaDoPredio(torre.tipo);
+        return { gx: torre.gx + largura / 2, gy: torre.gy + altura / 2 };
+      })();
+      const pos = posicaoDoProjetil(p, alfa, centro);
+      // a mesma conversao grid -> tela de tudo (`gridToScreen`), com tile fracionario
+      const tela = gridToScreen({ gx: pos.gx, gy: pos.gy - pos.altura }, tilePx, ESCALA_DO_MUNDO);
+      if (p.projetil === 'flecha' || p.projetil === 'virote') {
+        const dx = p.alvoTile.gx - p.origem.gx;
+        const dy = p.alvoTile.gy - p.origem.gy;
+        const n = Math.hypot(dx, dy) || 1;
+        const meio = gridToScreen({ gx: TAMANHO_DA_FLECHA / 2, gy: 0 }, tilePx, ESCALA_DO_MUNDO).x;
+        // contorno escuro e miolo claro: a flecha tem de se ler sobre grama, areia e pedra
+        const [x0, y0, x1, y1] = [tela.x - (dx / n) * meio, tela.y - (dy / n) * meio, tela.x + (dx / n) * meio, tela.y + (dy / n) * meio];
+        g.lineStyle(5, COR_DA_FLECHA, 1);
+        g.lineBetween(x0, y0, x1, y1);
+        g.lineStyle(2, COR_DO_MIOLO_DA_FLECHA, 1);
+        g.lineBetween(x0, y0, x1, y1);
+      } else {
+        const raio = gridToScreen({ gx: 1 / 8, gy: 0 }, tilePx, ESCALA_DO_MUNDO).x;
+        g.fillStyle(COR_DA_FLECHA, 1);
+        g.fillCircle(tela.x, tela.y, raio + 2);
+        g.fillStyle(COR_DA_PEDRA, 1);
+        g.fillCircle(tela.x, tela.y, raio);
+      }
+      desenhados.push({ projetil: p.projetil, fracao: pos.fracao, gx: pos.gx, gy: pos.gy, altura: pos.altura });
+    }
+    return desenhados;
   }
 
   /** F26b — o retangulo da caixa em curso, ou nada. */

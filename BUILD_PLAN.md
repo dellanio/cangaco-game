@@ -5431,7 +5431,13 @@ Ordem do operador. Cada item tem plano em `docs/planos/2026-09-28-C<n>-*.md`.
        - **PARA REVISÃO:**
          - não há previsão de movimento nem dispersão do KaM;
          - a flecha em prédio continua instantânea.
-     - **C2b (render):** desenhar o projétil no ar a partir de `state.projeteis`.
+     - **C2b (render): ENTREGUE.** `render/projeteis.ts` (`posicaoDoProjetil`) interpola a
+       fração com o `alfa` do relógio e faz um arco em `sen(π·fração)`.
+       - A flecha e o virote viram um traço claro com contorno; a funda e a pedra, um
+         círculo.
+       - O traço instantâneo da pedra (F28b) saiu, e os contadores de debug ficam.
+       - Teste `tests/C2b-projetil-na-tela.test.ts` e roteiro `tools/shots/C2.js`, com a
+         screenshot `C2-1-flecha-no-ar.png`.
   3. **C3 — os defeitos do quartel:**
      - o teto de armas puxadas;
      - o recruta perdido na demolição;

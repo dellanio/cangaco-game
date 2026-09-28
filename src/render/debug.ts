@@ -161,6 +161,9 @@ export interface EstadoDebug {
   /** F28b — quantas pedras de torre a cena desenhou desde que abriu, e a ultima. */
   pedrasDaTorre: number;
   ultimaPedra: { readonly predio: string; readonly alvo: { readonly gx: number; readonly gy: number }; readonly vitima: string } | null;
+  /** C2b — os projeteis desenhados neste quadro, com a fracao do voo (0 a 1) e a posicao
+   *  em tiles. O roteiro afirma por aqui, nunca pelo pixel. */
+  projeteisNoAr: readonly { readonly projetil: string; readonly fracao: number; readonly gx: number; readonly gy: number; readonly altura: number }[];
   /** F26b — as unidades que ganharam o anel de selecao NESTE quadro (lido do desenho). */
   selecaoMilitar: readonly string[];
   /** F26b — a caixa de selecao desenhada agora, em px de mundo, ou `null`. */
@@ -330,6 +333,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     selecaoMilitar: [],
     pedrasDaTorre: 0,
     ultimaPedra: null,
+    projeteisNoAr: [],
     caixaDeSelecao: null,
     terrenoVisivel: {},
     recursosVisiveis: {},

@@ -11380,3 +11380,32 @@ e dados; o desenho é a C2b.
   instante em que o painel chegava a 0 pedras, e agora a última pedra ainda está no ar
   nesse momento. O roteiro passou a esperar 1,5 s, e o F28b, o F26b e o F34 ficaram
   verdes.
+
+## 2026-09-28 — C2b: o projétil no ar, na tela
+
+Plano: `docs/planos/2026-09-28-C2b-projetil-na-tela.md`, salvo antes do código. Toca só
+`src/render/`, o teste e o roteiro.
+
+**Verificado:**
+- **`render/projeteis.ts`:** `posicaoDoProjetil(p, alfa, centroDaOrigem?)` é pura.
+  - A fração é `(voo − restantes + alfa) / voo`, presa em [0, 1].
+  - A posição segue a reta entre os centros, com arco de `0,2 × distância × sen(π·fração)`
+    (a parábola do KaM).
+- **Cena:** o `desenharProjeteis` redesenha um `Graphics` a cada quadro.
+  - A flecha e o virote são um traço com contorno escuro e miolo claro; a funda e a pedra,
+    um círculo com contorno.
+  - A pedra sai do meio do lote da torre.
+  - O traço instantâneo da F28b saiu. `pedrasDaTorre` e `ultimaPedra` continuam, lidos do
+    `stone-thrown`.
+  - Debug novo: `projeteisNoAr`.
+- **`tests/C2b-projetil-na-tela.test.ts`, 4 testes verdes:**
+  - a fração vai de 0 a 1, e o meio fica no alto do arco;
+  - o alfa avança;
+  - a pedra sai do centro da torre;
+  - grava o duelo do roteiro.
+- **`npm run shot -- C2` verde, despausado:** a flecha aparece com fração 0,60 e altura
+  1,14 tile.
+  - Abri a `C2-1-flecha-no-ar.png`. **Na 1ª versão a flecha mal se via** (um traço marrom
+    fino sobre a pedra), e o contraste foi reforçado. Na 2ª ela se lê, entre o arqueiro e o
+    alvo.
+- **Não-regressão:** o F28b ficou verde.
