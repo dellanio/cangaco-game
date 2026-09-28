@@ -9689,5 +9689,8 @@ de 2". A sonda foi apagada.
     problema") vale só para lenhador sozinho. Marquei isso no próprio registro.
 
 **Aberto.**
-- A decisão do lote 2.
-- A VARREDURA-KAM, que é a próxima.
+- Lote 2: **decidido pelo operador (2026-09-28): não gira agora.** Fica como
+  observação aberta no BALANCE_LOG, com os três números (87–90 %, 98 %, ~2,25:1),
+  até a VARREDURA-KAM voltar.
+- VARREDURA-KAM: a frente 1 (GDD) roda num subagente. **O operador quer ver o
+  resultado da frente 1 antes que as frentes 2 a 4 comecem.**

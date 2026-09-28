@@ -330,7 +330,11 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
               alcance, `cortar` e `cortar_e_plantar` dão a mesma corrida até a
               última adulta cair. Não é defeito, e não há número a girar.
               - **PREMISSA CORRIGIDA (2026-09-27, noite 17), vale só para lenhador
-                SOZINHO na mata.** O mecanismo é a volta do cursor, não "adulta
+                SOZINHO na mata.**
+                - Registro do operador (2026-09-28): "Eu ditei a observação errada
+                  ontem, e ela valia só para um lenhador sozinho." O erro foi da
+                  observação ditada por ele; a medição da F-REPL-a estava certa.
+                - O mecanismo é a volta do cursor, não "adulta
                 antes". Com um lenhador, dá no mesmo: o primeiro toco só volta a ser
                 visitado quando a volta termina, e a volta termina quando a mata
                 acaba.
@@ -445,8 +449,20 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
           4. quebraria o 2:1: **inverteu**. Quem está fora do 2:1 agora é o lote 1
              (87–90 %); o lote 2 o devolve (98 %). É o único motivo de número dos
              quatro.
-        - **Espera o operador.** Contra o lote 2 sobram só os motivos de desenho, 2 e
-          3. As saídas são três:
+        - **OBSERVAÇÃO ABERTA — decisão do operador (2026-09-28): não gira agora;
+          espera a VARREDURA-KAM.** Os três números que ficam registrados:
+          - **87–90 %** do consumo da serraria, com lote de 1 (o dado de hoje);
+          - **98 %**, com lote de 2;
+          - **~2,25:1**, a proporção que fecharia com lote de 1.
+          - Os dois porquês dele:
+            - 10–13 % de serraria parada não aparece na tela, e girar número sem
+              sintoma é o que se combinou não fazer;
+            - a varredura pode trazer informação que muda a conta. O lote por
+              viagem é justamente o tipo de coisa que o KaM resolve de outro jeito.
+          - Reabre quando a VARREDURA-KAM voltar, ou quando a tela mostrar serraria
+            parada.
+        - Histórico (noite 17, antes da decisão). Contra o lote 2 sobram só os
+          motivos de desenho, 2 e 3. As saídas eram três:
           - nada: 10–13 % de serraria parada ainda não é problema na tela;
           - lote 2 no lenhador;
           - a proporção de referência para ~2,25:1.
