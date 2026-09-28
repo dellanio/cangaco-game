@@ -25,6 +25,10 @@ ms-playwright/
 
 # Renders, comparacoes e cenas descartaveis do pipeline Blender.
 /tmp/blender/
+
+# Estado local do Codex e bytecode transitório do Blender/Python.
+/.codex/
+/tools/blender/__pycache__/
 .playwright/
 
 # --- Ambiente e Logs ---
