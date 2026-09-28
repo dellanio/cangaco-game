@@ -330,8 +330,17 @@ export type GameEvent =
       readonly hp: number;
     }
   | {
-      /** F28b — a torre `predio` atirou uma pedra no tile `alvo`, e ela caiu em `vitima`
-       *  (quem estava ali; pode ser do proprio lado). O render desenha o tiro por ele. */
+      /** C2 — `de` lancou um `projetil` em `alvo`; ele chega em `voo` ticks. */
+      readonly type: 'projectile-fired';
+      readonly projetil: string;
+      readonly de: string;
+      readonly alvo: TileDeGrid;
+      readonly voo: number;
+    }
+  | {
+      /** F28b — a torre `predio` atirou uma pedra no tile `alvo`, mirando `vitima` (quem
+       *  estava ali no lancamento; pode ser do proprio lado). C2: a pedra voa, e a morte
+       *  (`unit-killed`) sai na chegada. O render desenha o tiro por ele. */
       readonly type: 'stone-thrown';
       readonly predio: string;
       readonly alvo: TileDeGrid;
@@ -1389,6 +1398,34 @@ export interface GameState {
    * a tela.
    */
   readonly partida?: { readonly fim: 'vitoria' | 'derrota'; readonly tick: number };
+  /**
+   * C2 — os projeteis no ar (`sim/projeteis.ts`), na ordem em que sairam. AUSENTE quando
+   * nenhum voa: o estado sem combate nao carrega o campo, e o save nao muda de versao.
+   */
+  readonly projeteis?: readonly Projetil[];
+}
+
+/**
+ * C2 — um projetil no ar. `de` e uma COPIA de quem atirou no instante do tiro: e o que
+ * entra na chance de acerto, e vale mesmo se o atirador morrer antes da chegada. A flecha
+ * cai em `alvoTile` e atinge quem estiver la (erra quem andou). A pedra da torre persegue
+ * `alvoUnidade` (a decisao da F28b: "a pedra nunca erra") e cai no tile dele na chegada.
+ */
+export interface Projetil {
+  readonly projetil: string;
+  readonly de: {
+    readonly id: string; readonly tipo: string; readonly lado: number;
+    readonly gx: number; readonly gy: number; readonly direcao?: number;
+  };
+  readonly origem: TileDeGrid;
+  readonly alvoTile: TileDeGrid;
+  /** So a pedra da torre: quem ela persegue. */
+  readonly alvoUnidade?: string;
+  /** So a pedra da torre: a torre que a lancou (o `por` do `unit-killed`). */
+  readonly predio?: string;
+  /** Ticks de voo, no total e os que faltam; chega quando `restantes` zera. */
+  readonly voo: number;
+  readonly restantes: number;
 }
 
 /** F28-IA — o tipo de grupo, derivado do dado da tropa (`sim/ia.ts`). */

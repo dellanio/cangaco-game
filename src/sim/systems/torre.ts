@@ -1,26 +1,23 @@
 /**
  * F28b — a Torre de Pedra atira. A cada tick, cada torre completa, OCUPADA pelo recruta,
  * com pedra e com a recarga em zero, mira o inimigo mais perto no alcance
- * (`sim/torre.ts`) e gasta UMA pedra. A pedra cai no tile do alvo e mata a primeira
- * unidade com HP daquele tile em `unidades.ordem` — do proprio lado inclusive (fogo
- * amigo, decisao do operador). NUNCA erra (`combat.json: watchtower`): por isso pedras
- * gastas = mortos. Sem sorteio: o RNG nao e tocado.
+ * (`sim/torre.ts`) e gasta UMA pedra. NUNCA erra (`combat.json: watchtower`): por isso
+ * pedras gastas = mortos. Sem sorteio: o RNG nao e tocado.
+ *
+ * C2: a pedra VOA (`sim/projeteis.ts`). Ela persegue o alvo marcado e, na chegada, mata a
+ * primeira unidade com HP do tile dele — do proprio lado inclusive (fogo amigo, decisao do
+ * operador). O `stone-thrown` sai no lancamento; o `unit-killed`, na chegada.
  *
  * A recarga e a PROPRIA da torre (C1): `watchtower.ticksRecarga`, 2,3 s na escala 1,0 (o
- * `TKMTaskThrowRock` do kam_remake: 2 + 1 + 20 ticks, sem o voo).
+ * `TKMTaskThrowRock` do kam_remake: 2 + 1 + 20 ticks), mais o voo (C2).
  */
 import type { GameEvent, GameState, PredioCompleto, Unidade } from '../state';
 import type { GameData } from '../data/types';
-import { hpDaUnidade, hpMaximoDoTipo } from '../vida';
-import { alvoDaTorre, ehTorreCompleta, MUNICAO_DA_TORRE, pedrasNaTorre, porQueNaoAtira } from '../torre';
-import { comPredio, comUnidade } from '../units/movimento';
+import { hpMaximoDoTipo } from '../vida';
+import { alvoDaTorre, distanciaDaTorre, ehTorreCompleta, MUNICAO_DA_TORRE, pedrasNaTorre, porQueNaoAtira } from '../torre';
+import { comProjetil, PROJETIL_DA_TORRE } from '../projeteis';
+import { comPredio } from '../units/movimento';
 import type { ResultadoDeSistema } from './jobs';
-
-function semAUnidade(state: GameState, id: string): GameState {
-  const porId = { ...state.unidades.porId };
-  delete porId[id];
-  return { ...state, unidades: { porId, ordem: state.unidades.ordem.filter((i) => i !== id) } };
-}
 
 export function sistemaDaTorre(state: GameState, dados: GameData): ResultadoDeSistema {
   let atual = state;
@@ -41,20 +38,25 @@ export function sistemaDaTorre(state: GameState, dados: GameData): ResultadoDeSi
       .map((u) => atual.unidades.porId[u])
       .find((u): u is Unidade => u !== undefined && u.gx === alvo.gx && u.gy === alvo.gy && temHp(u)) ?? alvo;
     const municao = { ...torre.estoque.entrada, [MUNICAO_DA_TORRE]: pedrasNaTorre(torre) - 1 };
+    // C2: a pedra VOA; quem morre e decidido na chegada (`systems/projeteis.ts`). O recruta
+    // "olha a pedra ir" (TKMTaskThrowRock), entao a recarga soma o voo.
     // `recarga` = ticks de ESPERA ate o proximo tiro; o tiro sai no tick seguinte ao ultimo
-    // de espera, entao o intervalo entre pedras e exatamente `ticksRecarga` (C1: antes era +1)
+    // de espera, entao o intervalo entre pedras e exatamente `ticksRecarga + voo` (C1: antes
+    // era +1)
+    const alvoTile = { gx: alvo.gx, gy: alvo.gy };
+    const voo = Math.max(1, Math.round((distanciaDaTorre(torre, alvoTile) * (dados.combate.milesimosDeTickPorTile[PROJETIL_DA_TORRE] ?? 0)) / 1000));
     const atirou: PredioCompleto = {
-      ...torre, estoque: { ...torre.estoque, entrada: municao }, recarga: dados.combate.watchtower.ticksRecarga - 1,
+      ...torre, estoque: { ...torre.estoque, entrada: municao }, recarga: dados.combate.watchtower.ticksRecarga + voo - 1,
     };
-    atual = comPredio(atual, atirou);
-    events.push({ type: 'stone-thrown', predio: torre.id, alvo: { gx: alvo.gx, gy: alvo.gy }, vitima: vitima.id });
-    const hp = dados.combate.watchtower.mataEmUmGolpe ? 0 : (hpDaUnidade(vitima, dados) ?? 1) - 1;
-    if (hp > 0) {
-      atual = comUnidade(atual, { ...vitima, hp });
-      continue;
-    }
-    atual = semAUnidade(atual, vitima.id);
-    events.push({ type: 'unit-killed', unidade: vitima.id, tipo: vitima.tipo, lado: vitima.lado, por: torre.id });
+    atual = comProjetil(comPredio(atual, atirou), {
+      projetil: PROJETIL_DA_TORRE,
+      de: { id: torre.id, tipo: torre.tipo, lado: torre.lado, gx: torre.gx, gy: torre.gy },
+      origem: { gx: torre.gx, gy: torre.gy }, alvoTile, alvoUnidade: alvo.id, predio: torre.id, voo, restantes: voo,
+    });
+    events.push(
+      { type: 'stone-thrown', predio: torre.id, alvo: alvoTile, vitima: vitima.id },
+      { type: 'projectile-fired', projetil: PROJETIL_DA_TORRE, de: torre.id, alvo: alvoTile, voo },
+    );
   }
   return { state: atual, events };
 }

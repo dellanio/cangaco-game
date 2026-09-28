@@ -11318,3 +11318,65 @@ antes**, contra a regra do operador. O registro honesto está no próprio arquiv
 **PARA REVISÃO:**
 - A tarefa de tile sem prédio (estrada, campo) não tem lado no estado.
 - Tarefa entre lados vinda de save antigo não é saneada.
+
+## 2026-09-28 — C2a: o projétil voa (sim)
+
+Plano: `docs/planos/2026-09-28-C2-projetil-voa.md`, salvo **antes** do código. Só `src/sim`
+e dados; o desenho é a C2b.
+
+**Medido no fonte do kam_remake:**
+- velocidade de 0,75 / 0,75 / 0,6 / 0,8 tiles por tick (`KM_Projectiles.pas:70`);
+- voo = comprimento / velocidade (`:276`);
+- na chegada, uma unidade no ponto ou nada (`:305-337`).
+- **A pedra atinge UMA unidade (`UnitsHitTestF`).** O "mata só o primeiro do tile" de hoje
+  é o KaM e fica.
+
+**Verificado:**
+- **Dado:** `aDistancia.velocidade_tilesPorSegundo_base` = 7,5 / 7,5 / 6 / 8.
+  - O loader converte em `milesimosDeTickPorTile` = 889 / 889 / 1111 / 833 na escala 1,5.
+  - Arredondar para ticks por tile daria 1 para todos.
+- **Estado:** `GameState.projeteis?`, opcional. O campo some quando nada voa, e o save não
+  muda de versão.
+  - O projétil guarda uma cópia do atirador (`de`), `alvoTile`, `voo` e `restantes`;
+    `alvoUnidade` e `predio` só na pedra.
+  - `step` passa o campo adiante. Na 1ª corrida ele era descartado na montagem do
+    retorno, e as flechas nunca chegavam.
+- **Sistema:** `sistemaDosProjeteis` roda no **começo** do tick. O lançado no tick T chega
+  exatamente em T + voo.
+  - A flecha, o virote e a funda caem no tile do lançamento e atingem a primeira unidade
+    com HP ali (o fogo amigo continua); ninguém lá = errou.
+  - A pedra persegue o alvo marcado e mata a primeira unidade com HP do tile dele na
+    chegada.
+- **Disparo:** o atirador lança (evento `projectile-fired`) e sorteia só a próxima recarga;
+  o sorteio do acerto passou para a chegada.
+  - A torre lança, emite `stone-thrown` no lançamento e tem recarga = `ticksRecarga + voo`.
+- **`tests/C2-projetil-voa.test.ts`, 7 testes verdes:**
+  - (a) o dado;
+  - (b) a 6 tiles, o golpe sai exatamente 5 ticks depois do tiro;
+  - (c) o alvo que anda 1 tile não é atingido, e o amigo que entra leva a flecha;
+  - (d) o arqueiro morto não cancela a flecha;
+  - (e) a pedra mata o alvo que andou;
+  - (f) o save e load com a flecha no ar faz a viagem byte a byte e a corrida segue
+    igual;
+  - (g) determinismo.
+- **Os testes das F28b, F28d e F28a ficaram verdes sem mudança.**
+- **Sondas**, as quatro vermelhas:
+  - flecha teleguiada;
+  - voo sempre 1;
+  - pedra sem perseguir;
+  - atirador morto cancela.
+- **A C1 (b) mudou a regra, e o teste mudou com ela:** o intervalo entre pedras passou de
+  `recarga` a `recarga + voo da pedra anterior`. Isso estava previsto no plano da C1.
+
+**PARA REVISÃO:**
+- Não há previsão de movimento nem a dispersão do KaM. O KaM acertaria quem anda em linha
+  reta.
+- A pedra que persegue mantém a decisão da F28b ("nunca erra"); no KaM ela erraria quem
+  andou.
+- A flecha em prédio (cerco) continua instantânea.
+- Não adotei o sorteio de ±0,05 na velocidade.
+- **Não-regressão de tela (C2a):** o `npm run shot -- F28b` reprovou uma vez, com "o amigo
+  no tile do alvo deveria ter morrido". Era tempo, não regra: o roteiro conferia a morte no
+  instante em que o painel chegava a 0 pedras, e agora a última pedra ainda está no ar
+  nesse momento. O roteiro passou a esperar 1,5 s, e o F28b, o F26b e o F34 ficaram
+  verdes.

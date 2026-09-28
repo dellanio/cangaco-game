@@ -11,15 +11,16 @@
  *   tira a unidade do estado (`unit-killed`); o atacante volta a `ocioso`.
  */
 import type { Command } from '../commands';
-import type { GameEvent, GameState, MotivoDeRecusaDeLuta, Unidade } from '../state';
+import type { GameEvent, GameState, MotivoDeRecusaDeLuta, Projetil, Unidade } from '../state';
 import type { GameData } from '../data/types';
 import type { TileDeGrid } from '../estradas';
 import { classeDaUnidade } from '../condicao';
 import {
-  cadenciaDoTiro, chanceDeAcerto, direcaoEntre, distanciaEmTiles, ehADistancia, encostadas, noAlcance, noArco,
+  cadenciaDoTiro, chanceDeAcerto, direcaoEntre, distanciaEmTiles, ehADistancia, encostadas, noAlcance, noArco, projetilDe,
 } from '../combate';
 import { hpDaUnidade, hpMaximoDoTipo } from '../vida';
 import { nextFloat } from '../rng';
+import { comProjetil, vooEmTicks } from '../projeteis';
 import { alvosDeAproximacao } from '../aproximacao';
 import { buscarCaminho, passoAndavel } from '../pathfinding';
 import { andar, comUnidade, noTile, ocioso } from '../units/movimento';
@@ -172,7 +173,7 @@ function alvoDoAtirador(state: GameState, u: Unidade, dados: GameData): Unidade 
  * amigo, decisao do operador; KM_Defaults.pas:397, KM_Projectiles.pas:320). Sem voo: o
  * projetil cai no tick do disparo (PARA REVISAO).
  */
-function quemEstaNoPonto(state: GameState, tile: TileDeGrid, dados: GameData): Unidade | null {
+export function quemEstaNoPonto(state: GameState, tile: TileDeGrid, dados: GameData): Unidade | null {
   for (const id of state.unidades.ordem) {
     const u = state.unidades.porId[id];
     if (u !== undefined && u.gx === tile.gx && u.gy === tile.gy && hpMaximoDoTipo(u.tipo, dados) !== null) return u;
@@ -181,7 +182,7 @@ function quemEstaNoPonto(state: GameState, tile: TileDeGrid, dados: GameData): U
 }
 
 /** Tira `vitima` do estado (HP zero) ou grava o HP novo. */
-function comHp(state: GameState, vitima: Unidade, hp: number): GameState {
+export function comHp(state: GameState, vitima: Unidade, hp: number): GameState {
   if (hp > 0) return comUnidade(state, { ...vitima, hp });
   const porId = { ...state.unidades.porId };
   delete porId[vitima.id];
@@ -199,18 +200,20 @@ function passoAtirando(
   if (recarga > 0) {
     return { state: comUnidade(state, { ...u, fsmData: { alvoUnidade: alvo.id, recarga } }), events: [] };
   }
-  const vitima = quemEstaNoPonto(state, alvo, dados) ?? alvo;
-  const sorteio = nextFloat(state.rng);
-  const acertou = sorteio.value < chanceDeAcerto(u, vitima, dados);
-  // C1: a proxima recarga e sorteada DEPOIS do acerto, no mesmo RNG
-  const cadencia = cadenciaDoTiro(u.tipo, sorteio.rng, dados);
+  // C2: o tiro LANCA um projetil no tile do alvo; o acerto (quem estiver la, e o sorteio)
+  // e da chegada (`systems/projeteis.ts`). Aqui so a proxima recarga (C1) sai do RNG.
+  const cadencia = cadenciaDoTiro(u.tipo, state.rng, dados);
   const recarregado = { ...u, fsmData: { alvoUnidade: alvo.id, recarga: cadencia.ticks } };
-  const hpAntes = hpDaUnidade(vitima, dados) ?? 0;
-  const hp = acertou ? hpAntes - 1 : hpAntes;
-  const golpe: GameEvent = { type: 'unit-struck', atacante: u.id, alvo: vitima.id, acertou, hp };
-  const depois = comUnidade(acertou ? comHp({ ...state, rng: cadencia.rng }, vitima, hp) : { ...state, rng: cadencia.rng }, recarregado);
-  const morte: GameEvent[] = hp > 0 ? [] : [{ type: 'unit-killed', unidade: vitima.id, tipo: vitima.tipo, lado: vitima.lado, por: u.id }];
-  return { state: depois, events: [golpe, ...morte] };
+  const projetil = projetilDe(u.tipo, dados) ?? 'flecha';
+  const alvoTile = { gx: alvo.gx, gy: alvo.gy };
+  const voo = vooEmTicks(projetil, u, alvoTile, dados);
+  const noAr: Projetil = {
+    projetil,
+    de: { id: u.id, tipo: u.tipo, lado: u.lado, gx: u.gx, gy: u.gy, ...(u.direcao === undefined ? {} : { direcao: u.direcao }) },
+    origem: { gx: u.gx, gy: u.gy }, alvoTile, voo, restantes: voo,
+  };
+  const depois = comProjetil(comUnidade({ ...state, rng: cadencia.rng }, recarregado), noAr);
+  return { state: depois, events: [{ type: 'projectile-fired', projetil, de: u.id, alvo: alvoTile, voo }] };
 }
 
 /** Um tick da luta, em `unidades.ordem`: primeiro o contato (quem esta `ocioso` e

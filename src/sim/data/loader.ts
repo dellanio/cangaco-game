@@ -257,6 +257,13 @@ function paraTicksDeDuracao(
  *  guardada para dividir depois em tempo de execucao. */
 /** LOTE3 — as fases da colheita como o JSON as escreve (`production.json`,
  *  `colheita.fases`). Duracao em segundos na escala 1,0; `porViagem` em unidades. */
+/** C2 — `round(1000 x tickHz / (v x escala))`: milesimos de tick para voar um tile. */
+function milesimosDeTickPorTile(tilesPorSegundo: number, escala: number, tickHz: number): Ticks {
+  const m = Math.round((1000 * tickHz) / (tilesPorSegundo * escala));
+  if (!Number.isFinite(m) || m < 1) throw new Error(`loadGameData: velocidade de projetil invalida (${tilesPorSegundo} tiles/s)`);
+  return m;
+}
+
 /** C1 — uma entrada de `combat.aDistancia.cadencia` (as outras chaves sao `_doc`). */
 interface CadenciaDeProjetilCrua {
   readonly miraAleatoria_segundos_base: number;
@@ -577,6 +584,16 @@ export function loadGameData(raw: RawGameData): GameData {
           );
           return [projetil, { miraAleatoria: t('miraAleatoria_segundos_base'), recarga: t('recarga_segundos_base') }];
         }),
+    ),
+    // C2 — o voo de cada projetil em MILESIMOS de tick por tile, inteiro: arredondar para
+    // ticks por tile daria 1 para todos e apagaria a diferenca entre eles.
+    milesimosDeTickPorTile: Object.fromEntries(
+      Object.entries(raw.combat.aDistancia.velocidade_tilesPorSegundo_base)
+        .filter((e): e is [string, number] => typeof e[1] === 'number')
+        .map(([projetil, v]) => [projetil, registrar(
+          `combat.aDistancia.velocidade_tilesPorSegundo_base.${projetil}`, raw.combat.escala, v, 'tilesPorSegundo',
+          milesimosDeTickPorTile(v, escalaCombate, tickHz),
+        )]),
     ),
     formacao: raw.combat.formacao,
     escudo: raw.combat.escudo,

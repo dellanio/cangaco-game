@@ -83,15 +83,19 @@ describe('C1 — cadencia por tipo de ataque', () => {
     expect(alvos).toHaveLength(5);
     s = com(s, ...alvos);
     const quando: number[] = [];
+    const voos: number[] = [];
     for (let t = 0; t < 400; t += 1) {
       s = step(s, [], gameData);
       if (s.events.some((e) => e.type === 'stone-thrown')) quando.push(s.tick);
+      for (const e of s.events) if (e.type === 'projectile-fired' && e.de === 'torre') voos.push(e.voo);
     }
     expect(quando).toHaveLength(5);
     const intervalos = quando.slice(1).map((q, i) => q - (quando[i] as number));
-    for (const i of intervalos) expect(i).toBe(C.watchtower.ticksRecarga);
+    // C2 mudou a regra: o recruta "olha a pedra ir", entao o intervalo e recarga + o voo da
+    // pedra anterior (antes da C2 era exatamente a recarga)
+    intervalos.forEach((i, k) => expect(i).toBe(C.watchtower.ticksRecarga + (voos[k] as number)));
     expect((quando[4] as number) - (quando[0] as number)).toBeGreaterThanOrEqual(4 * C.watchtower.ticksRecarga);
-    gravarEvidencia('C1-torre', { pedrasNosTicks: quando, intervalos });
+    gravarEvidencia('C1-torre', { pedrasNosTicks: quando, intervalos, voos });
   });
 
   function arqueiroContraAlvo(tipo: string, ticks: number): { quando: number[]; s: GameState } {

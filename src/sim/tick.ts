@@ -17,6 +17,7 @@ import { sistemaDaIA } from './systems/ia';
 import { resultadoDaPartida } from './partida';
 import { aplicarSetTrade, sistemaDaFeira } from './systems/feira';
 import { aplicarHireMercenary } from './systems/prefeitura';
+import { sistemaDosProjeteis } from './systems/projeteis';
 import { aplicarCancelTraining, aplicarEnqueueTraining, sistemaDasEscolas } from './systems/escolas';
 import { aplicarDemolishRoad, aplicarPlaceRoad } from './systems/estradas';
 import { aplicarPlowField, aplicarUnplanField } from './systems/campos';
@@ -188,7 +189,11 @@ export function step(
   // JobBoard. A luta depois da marcha: quem chegou encostado neste tick ja pega o contato.
   // F28-IA: a IA da as ordens dela ANTES da marcha e da luta, como o comando do
   // jogador vem antes dos sistemas
-  const comIA = sistemaDaIA(sistemaDaRegeneracao(atual, tick, dados), dados);
+  // C2: os projeteis no ar chegam ANTES de tudo: o lancado neste tick so conta a partir do
+  // proximo, e quem morre na chegada ja nao age neste tick
+  const noAr = sistemaDosProjeteis(atual, dados);
+  events.push(...noAr.events);
+  const comIA = sistemaDaIA(sistemaDaRegeneracao(noAr.state, tick, dados), dados);
   events.push(...comIA.events);
   const luta = sistemaDoCombate(sistemaDaMarcha(comIA.state, dados).state, dados);
   events.push(...luta.events);
@@ -270,5 +275,7 @@ export function step(
     // F28-IA: so atravessa quando existe — estado sem IA nao ganha o campo
     ...(atual.ia === undefined ? {} : { ia: atual.ia }),
     ...(atual.partida === undefined ? {} : { partida: atual.partida }),
+    // C2: os projeteis no ar, so quando ha algum voando
+    ...(atual.projeteis === undefined ? {} : { projeteis: atual.projeteis }),
   };
 }

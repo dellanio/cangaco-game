@@ -82,6 +82,8 @@ async function roteiro(ctx) {
     await page.waitForTimeout(100);
     vazia = (await page.getAttribute('#painel-predio .linha.torre', 'data-pedras')) === '0';
   }
+  // C2: a pedra VOA — a ultima ainda esta no ar quando o painel chega a 0; espera cair
+  await page.waitForTimeout(1500);
   await page.keyboard.press('p');
   await esperarFrame();
   afirmar(vazia, 'o painel da torre deveria chegar a 0 pedras');

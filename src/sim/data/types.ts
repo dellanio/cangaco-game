@@ -289,6 +289,9 @@ export interface CombateData {
   /** C1 — a cadencia do atirador por projetil (`aDistancia.cadencia`), em ticks: recarga +
    *  sorteio de 0 a `miraAleatoria - 1`. */
   readonly ticksCadenciaAtirador: Readonly<Record<string, CadenciaDoAtirador>>;
+  /** C2 — milesimos de tick para o projetil voar um tile, por tipo (`flecha`, `virote`,
+   *  `funda`, `pedraDaTorre`). Voo = max(1, round(distancia x m / 1000)). */
+  readonly milesimosDeTickPorTile: Readonly<Record<string, number>>;
   readonly formacao: RawGameData['combat']['formacao'];
   /** F28-IA — o tamanho do grupo de defesa da IA. */
   readonly ia: RawGameData['combat']['ia'];

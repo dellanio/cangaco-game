@@ -5420,6 +5420,18 @@ Ordem do operador. Cada item tem plano em `docs/planos/2026-09-28-C<n>-*.md`.
   2. **C2 — o projétil voa**, com tempo de voo, e erra quem andou. A pedra da torre atinge
      uma unidade só: é o KaM (`KM_Projectiles.pas:333-337`, `UnitsHitTestF`, morte
      instantânea).
+     - **C2a (sim): ENTREGUE.** A velocidade vem do KaM (`KM_Projectiles.pas:70`) e é
+       convertida em milésimos de tick por tile.
+       - `GameState.projeteis?` (opcional; o save não muda de versão) e
+         `sistemaDosProjeteis` no começo do tick.
+       - A flecha cai no tile do alvo **no lançamento** e atinge quem estiver lá.
+       - A pedra persegue o alvo marcado, porque a decisão da F28b ("nunca erra") vale.
+       - A recarga da torre soma o voo.
+       - Teste `tests/C2-projetil-voa.test.ts`.
+       - **PARA REVISÃO:**
+         - não há previsão de movimento nem dispersão do KaM;
+         - a flecha em prédio continua instantânea.
+     - **C2b (render):** desenhar o projétil no ar a partir de `state.projeteis`.
   3. **C3 — os defeitos do quartel:**
      - o teto de armas puxadas;
      - o recruta perdido na demolição;
