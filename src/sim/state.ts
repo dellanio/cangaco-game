@@ -19,6 +19,7 @@ import type { MotivoDeRecusaDeModo } from './modo';
 import type { MotivoDeRecusaDeReparo } from './reparo';
 import type { MotivoDeRecusaDeSoldado } from './quartel';
 import type { MotivoDeRecusaDeTroca } from './feira';
+import type { MotivoDeRecusaDeMercenario } from './prefeitura';
 // F-T2a: a camada de recurso nasce do MAPA, e quem sabe ler o mapa e
 // `sim/recursos.ts`. Import de valor (nao de tipo) e o unico deste arquivo alem
 // do RNG e do dado — `createInitialState` e o lugar certo para ele.
@@ -144,6 +145,14 @@ export type GameEvent =
       readonly command: 'SetTrade';
       readonly predio: string;
       readonly motivo: MotivoDeRecusaDeTroca;
+    }
+  | {
+      /** F36 — `HireMercenary` recusado; o estado nao mudou. */
+      readonly type: 'command-rejected';
+      readonly command: 'HireMercenary';
+      readonly predio: string;
+      readonly tipo: string;
+      readonly motivo: MotivoDeRecusaDeMercenario;
     }
   | {
       /** F25a — `TrainSoldier` recusado; o estado nao mudou. */

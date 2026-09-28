@@ -48,6 +48,7 @@ type TemaDePredios = Readonly<Record<string, { readonly nome: string } | undefin
 type TemaDeMercadorias = Readonly<Record<string, string | undefined>>;
 const temaDePredios = temaSertao.predios as TemaDePredios;
 const temaDeMercadorias = temaSertao.mercadorias as TemaDeMercadorias;
+const temaDeMercenarios = temaSertao.mercenarios as TemaDePredios;
 
 /** F35 — o nome de uma mercadoria no tema, ou o id neutro quando falta. */
 function nomeDaMercadoria(id: string): string {
@@ -240,6 +241,32 @@ function desenharCompleto(
         : f.naoTroca === 'ordem-cumprida' ? rotulos.feiraCumprida
           : rotulos.feiraSemMercadoria.replace('{da}', f.da === null ? '' : nomeDaMercadoria(f.da));
       gente.append(aviso);
+    }
+  }
+
+  // F36 — a Prefeitura: o ouro na gaveta e um botao por mercenario, com o custo. O que
+  // nao cabe fica desabilitado e diz quanto falta (aceite (e)). Custo e falta em `data-`.
+  if (dados.prefeitura !== null) {
+    const p = dados.prefeitura;
+    const l = linha('prefeitura', rotulos.ouroDaPrefeitura, String(p.ouro));
+    l.dataset.ouro = String(p.ouro);
+    gente.append(l);
+    for (const t of p.tipos) {
+      const botao = document.createElement('button');
+      botao.type = 'button';
+      botao.className = 'contratar';
+      botao.dataset.tipo = t.tipo;
+      botao.dataset.custo = String(t.custo);
+      botao.dataset.falta = String(t.falta);
+      botao.disabled = t.falta > 0;
+      const nome = temaDeMercenarios[t.tipo]?.nome ?? t.tipo;
+      botao.textContent = t.falta > 0
+        ? `${nome} · ${t.custo} (${rotulos.faltaOuro.replace('{n}', String(t.falta))})`
+        : `${rotulos.contratar} ${nome} · ${t.custo}`;
+      botao.addEventListener('click', () => {
+        emitir({ type: 'HireMercenary', predio: dados.predio, tipo: t.tipo });
+      });
+      acoes.append(botao);
     }
   }
 

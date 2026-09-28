@@ -242,4 +242,15 @@ export type Command =
       readonly da: string;
       readonly para: string;
       readonly quantidade: number;
+    }
+  | {
+      /**
+       * F36 — contrata um mercenario `tipo` (`units.json: mercenarios`) na Prefeitura
+       * `predio`: debita `custoOuro` da gaveta de entrada e a unidade nasce na porta no
+       * mesmo tick. Recusado (`command-rejected`) se o predio nao e Prefeitura completa,
+       * o tipo nao e mercenario, falta ouro ou a porta esta bloqueada.
+       */
+      readonly type: 'HireMercenary';
+      readonly predio: string;
+      readonly tipo: string;
     };

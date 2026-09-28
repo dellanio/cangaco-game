@@ -5442,6 +5442,18 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
     a soma de A no mundo, no armazém, nas gavetas e nos serfs, fica igual.
 
 ### F36 — Prefeitura: mercenários pagos em ouro (sim + ui)
+- **ENTREGUE (2026-09-28, sessão autônoma; plano em `docs/planos/2026-09-28-A18-F36-prefeitura.md`).**
+  - `sim/prefeitura.ts` + `systems/prefeitura.ts`: `HireMercenary` debita `custoOuro` da
+    entrada e cria a unidade na porta andável no mesmo tick (`unit-trained`). Recusas:
+    `predio-nao-e-prefeitura`, `tipo-desconhecido`, `sem-ouro`, `porta-bloqueada`.
+  - O ouro é insumo (molde da torre), com alvo = o maior `custoOuro` (8), lido do dado.
+  - **O mercenário virou militar** em `classeDaUnidade` e em `populacaoPorGrupo`: recebe
+    ordem, luta, cerca e conta como tropa na F34.
+  - Painel: o ouro e cinco botões com custo; os que não cabem ficam desabilitados e dizem
+    quanto falta.
+  - Teste `tests/F36-prefeitura.test.ts` e roteiro `tools/shots/F36.js`.
+  - **PARA REVISÃO:** mercenário = militar (não drena condição, entra na IA como tropa
+    do lado dela). O evento é o mesmo do quartel.
 - **Origem (decisão do operador, 2026-09-26)**: pode esperar. Depende da F25 (soldado
   existir) e dos mercenários ganharem arte e arma (nota da F25).
 - **O que o dado já diz** (GDD Anexo A): ouro por mercenário, **pronto na hora**. Rebel

@@ -22,6 +22,7 @@ import { receitaDoTipo } from './producao';
 import { ehQuartelCompleto, ehRequisitoDoQuartel } from './quartel';
 import { ehTorreCompleta, ID_DA_TORRE, MUNICAO_DA_TORRE } from './torre';
 import { alvoDaFeira, ehFeiraCompleta, ID_DA_FEIRA } from './feira';
+import { alvoDeOuroDaPrefeitura, ehPrefeituraCompleta, ID_DA_PREFEITURA } from './prefeitura';
 
 /**
  * A capacidade da gaveta `entrada` repartida na proporcao da receita. Com uma
@@ -96,6 +97,9 @@ export function alvoDeEntrada(
   // F35 — a feira quer `taxa x` as trocas que faltam de A; sem ordem, zero (e o A que
   // sobrou volta ao armazem pelo nivel 7)
   if (ehFeiraCompleta(predio)) return alvoDaFeira(predio, mercadoria, dados);
+  // F36 — a Prefeitura quer ter o ouro do mercenario mais caro (o dado); o que passa
+  // disso volta ao armazem pelo nivel 7
+  if (ehPrefeituraCompleta(predio) && mercadoria === MERCADORIA_DE_OURO) return alvoDeOuroDaPrefeitura(dados);
   return 0;
 }
 
@@ -159,6 +163,8 @@ export function insumosDoPredio(
   // e os niveis 4 e 5 da escada a abastecem
   if (predio.tipo === ID_DA_TORRE) return [MUNICAO_DA_TORRE];
   // F35 — a feira com ordem ativa consome A, como qualquer insumo
+  // F36 — a Prefeitura consome ouro, como a torre consome pedra
+  if (predio.tipo === ID_DA_PREFEITURA) return [MERCADORIA_DE_OURO];
   if (predio.tipo === ID_DA_FEIRA) {
     const t = predio.troca;
     return t !== undefined && t.feitas < t.quantidade ? [t.da] : [];

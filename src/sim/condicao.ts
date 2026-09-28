@@ -35,8 +35,8 @@ export function ehEstadoDeFome(fsm: string): boolean {
 }
 
 /**
- * A classe da unidade para efeito de condicao, lida do dado: `civis.tipos` e
- * `militares.tipos` de `units.json`. Tipo desconhecido (save de outra versao) nao
+ * A classe da unidade para efeito de condicao, lida do dado: `civis.tipos`,
+ * `militares.tipos` e (F36) `mercenarios.tipos` de `units.json`. Tipo desconhecido (save de outra versao) nao
  * vira civil por omissao — devolve `null`, e quem devolve `null` nao drena nem
  * morre. Mesma regra de `populacaoPorGrupo` (`sim/selectors.ts`).
  */
@@ -45,6 +45,9 @@ export function classeDaUnidade(
 ): 'civil' | 'militar' | null {
   if (dados.unidades.civis.tipos.some((t) => t.id === tipo)) return 'civil';
   if (dados.unidades.militares.tipos.some((t) => t.id === tipo)) return 'militar';
+  // F36 — o mercenario e militar comum depois de contratado: recebe ordem, luta e conta
+  // como tropa (BUILD_PLAN F36)
+  if (dados.unidades.mercenarios.tipos.some((t) => t.id === tipo)) return 'militar';
   return null;
 }
 

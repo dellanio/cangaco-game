@@ -447,7 +447,10 @@
     "troca": "Troca",
     "feiraSemOrdem": "Sem ordem de troca",
     "feiraCumprida": "Ordem cumprida",
-    "feiraSemMercadoria": "Sem {da} no armazém: a troca espera"
+    "feiraSemMercadoria": "Sem {da} no armazém: a troca espera",
+    "ouroDaPrefeitura": "Ouro",
+    "contratar": "Contratar",
+    "faltaOuro": "faltam {n} de ouro"
   },
   "partida": {
     "_doc": "F34. O aviso do fim da escaramuca, sobre o jogo. So a tela: quem decide o fim e sim/partida.ts.",

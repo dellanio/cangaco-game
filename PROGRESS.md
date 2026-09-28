@@ -11036,3 +11036,52 @@ Plano: `docs/planos/2026-09-28-A17-F35-feira.md`. Sim e UI (`src/ui`); nada em `
   os losangos escuros ficam à direita dela. É da sessão de arte; não mexi.
 - O `delivery.maxSerfsNoMarketplace` duplica `economy.marketplace.maxSerfs`. A sim lê só
   o segundo. Vai para o item 20 (a varredura de dados sem leitor).
+
+## 2026-09-28 (sessão autônoma, item 18) — F36: a Prefeitura
+
+Plano: `docs/planos/2026-09-28-A18-F36-prefeitura.md`. Sim e UI (`src/ui`); nada em `src/render`.
+
+**Verificado:**
+- **`HireMercenary { predio, tipo }`:** debita o `custoOuro` da gaveta de entrada e cria a
+  unidade na porta andável (`tileDeSaida`) no mesmo tick. Ela nasce com o lado da
+  Prefeitura, HP cheio e condição de militar, e emite `unit-trained`. Recusas:
+  `predio-nao-e-prefeitura`, `tipo-desconhecido` (o `militia` do quartel é recusado),
+  `sem-ouro` e `porta-bloqueada`.
+- **Ouro como insumo:** `insumosDoPredio(town_hall) = ['gold']`, e o alvo é
+  `alvoDeOuroDaPrefeitura` = o máximo de `custoOuro` = 8, lido do dado.
+- **O mercenário é militar:** `classeDaUnidade` e `populacaoPorGrupo` passaram a olhar
+  `mercenarios.tipos`. Isso fecha a nota da F34 ("mercenário devolve `null`").
+- **`tests/F36-prefeitura.test.ts`, 8 testes verdes:**
+  - (a) cada um dos cinco tipos debita o seu custo e nasce colado à porta, com HP cheio;
+  - (b) três recusas, com o estado igual byte a byte;
+  - (c) dois `rebel` com 2 de ouro: um passa e o outro é recusado com `sem-ouro`;
+  - (d) nenhum outro prédio nem unidade muda;
+  - o ouro chega pela rua até 8 e para (12 ficam no armazém), e depois de contratar
+    volta a 8;
+  - o mercenário conta como militar e recebe `MoveUnits`;
+  - determinismo, e o save do roteiro.
+- **Sondas de mutação**, as seis vermelhas:
+  - debitar 1;
+  - alvo 0;
+  - alvo 20;
+  - mercenário não militar;
+  - sem checar ouro;
+  - ignorar o motivo.
+- **`npm run shot -- F36` verde, com o jogo andando.** O roteiro abre o painel e confere
+  os custos 2/3/5/7/8, com 7 e 8 desabilitados ("faltam 2/3 de ouro"). Depois clica em
+  Retirante (mouse.down/up): o ouro vai de 5 a 3, aparece uma unidade (6 → 7) e o 5 passa
+  a desabilitado. Abri `F36-1` e `F36-2`: o painel está certo, e o Retirante aparece como
+  placeholder junto à porta.
+- **Armadilha de roteiro:** `$$eval` e `locator.boundingBox` gastam duas idas ao
+  navegador. Com o painel redesenhando a 10 Hz, o nó medido já saiu da árvore e a caixa
+  vem `null`. A caixa agora é medida num `page.evaluate` só. **Todo roteiro que clica em
+  botão do painel com o jogo andando deve medir assim.**
+
+**PARA REVISÃO:**
+- **Mercenário = militar para tudo:**
+  - não drena condição;
+  - entra nas posições e no ataque da IA do lado dele;
+  - segura o lado na F34.
+- **O evento é `unit-trained`**, o mesmo do quartel. Não criei evento novo.
+- **O nome do prédio no tema é "Mercenários"** (`predios.town_hall.nome`), não
+  "Prefeitura". Já estava assim; não mexi.

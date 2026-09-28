@@ -16,6 +16,7 @@ import { sistemaDaTorre } from './systems/torre';
 import { sistemaDaIA } from './systems/ia';
 import { resultadoDaPartida } from './partida';
 import { aplicarSetTrade, sistemaDaFeira } from './systems/feira';
+import { aplicarHireMercenary } from './systems/prefeitura';
 import { aplicarCancelTraining, aplicarEnqueueTraining, sistemaDasEscolas } from './systems/escolas';
 import { aplicarDemolishRoad, aplicarPlaceRoad } from './systems/estradas';
 import { aplicarPlowField, aplicarUnplanField } from './systems/campos';
@@ -129,6 +130,12 @@ export function step(
       }
       case 'SetTrade': {
         const resultado = aplicarSetTrade(atual, command, dados);
+        atual = resultado.state;
+        events.push(...resultado.events);
+        break;
+      }
+      case 'HireMercenary': {
+        const resultado = aplicarHireMercenary(atual, command, dados);
         atual = resultado.state;
         events.push(...resultado.events);
         break;

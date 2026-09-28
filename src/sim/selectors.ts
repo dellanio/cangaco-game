@@ -1,5 +1,6 @@
 import { ehTorreCompleta, pedrasNaTorre, porQueNaoAtira } from './torre';
 import { ehFeiraCompleta, porQueNaoTroca } from './feira';
+import { ehPrefeituraCompleta, ouroNaPrefeitura } from './prefeitura';
 import type { PorQueNaoTroca } from './feira';
 import type { PorQueATorreNaoAtira } from './torre';
 import type { GameState, Predio, PredioCompleto, PredioEmObra, Unidade } from './state';
@@ -130,7 +131,7 @@ export interface Populacao {
  *  total de unidades). */
 export function populacaoPorGrupo(state: GameState, dados: GameData = gameData): Populacao {
   const idsCivis = new Set(dados.unidades.civis.tipos.map((t) => t.id));
-  const idsMilitares = new Set(dados.unidades.militares.tipos.map((t) => t.id));
+  const idsMilitares = new Set([...dados.unidades.militares.tipos, ...dados.unidades.mercenarios.tipos].map((t) => t.id));
   let civil = 0;
   let militar = 0;
   for (const id of state.unidades.ordem) {
@@ -436,6 +437,12 @@ export interface PainelDoPredio {
     readonly taxa: number;
     readonly naoTroca: PorQueNaoTroca | null;
   } | null;
+  /** F36 — o ouro da Prefeitura e cada mercenario com custo e se cabe; `null` em quem
+   *  nao e Prefeitura. A ordem e a de `units.json: mercenarios.tipos`. */
+  readonly prefeitura: {
+    readonly ouro: number;
+    readonly tipos: readonly { readonly tipo: string; readonly custo: number; readonly falta: number }[];
+  } | null;
   /** F28b — a munição da torre e por que ela não atira; `null` em quem não é torre. */
   readonly torre: {
     readonly pedras: number;
@@ -528,6 +535,7 @@ export function painelDoPredio(
       pausado: false,
       torre: null,
       feira: null,
+      prefeitura: null,
     };
   }
 
@@ -557,6 +565,14 @@ export function painelDoPredio(
         naEntrada: predio.troca === undefined ? 0 : predio.estoque.entrada[predio.troca.da] ?? 0,
         taxa: dados.economia.marketplace.taxa,
         naoTroca: porQueNaoTroca(predio, dados),
+      }
+      : null,
+    prefeitura: ehPrefeituraCompleta(predio)
+      ? {
+        ouro: ouroNaPrefeitura(predio),
+        tipos: dados.unidades.mercenarios.tipos.map((t) => ({
+          tipo: t.id, custo: t.custoOuro, falta: Math.max(0, t.custoOuro - ouroNaPrefeitura(predio)),
+        })),
       }
       : null,
   };
