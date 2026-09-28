@@ -5477,7 +5477,13 @@ Ordem do operador. Cada item tem plano em `docs/planos/2026-09-28-C<n>-*.md`.
      - Teste `tests/C7-lado-no-jobboard.test.ts`.
      - Fora, PARA REVISÃO: a tarefa de tile sem prédio (estrada, campo), que não tem lado
        no estado.
-  8. **C8 — a IA com prioridade de alvo e de tipo de tropa**, medida no kam_remake.
+  8. **C8 — a IA com prioridade de alvo e de tipo de tropa. ENTREGUE.**
+     - **Alvo:** o da IA nova do KaM. Primeiro o mais perto entre quartel, armazém, escola e
+       prefeitura (`TARGET_HOUSES`); sem nenhum deles, qualquer prédio.
+     - **Tropa:** `AI_TROOP_TRAIN_ORDER`, o mais forte que o equipamento permite.
+     - As duas listas estão em `combat.json: ia`, com regra de dado.
+     - Teste `tests/C8-ia-prioridades.test.ts`.
+     - PARA REVISÃO: a Torre no raio (`SCAN_HOUSES`) fica fora.
   9. **C9 — o fim de partida parando o jogo.**
   10. **C10 — a exceção de largura por prédio no dado.**
 - **Depois da fila:** o Feed e a fome militar, com o plano esperando aprovação. Eles

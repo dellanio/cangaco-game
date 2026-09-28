@@ -18,10 +18,10 @@
  * `AttackUnit` —, so que sem comando: e a IA, nao o jogador, quem as emite.
  */
 import type { GameEvent, GameState, IADoLado, PosicaoDeDefesa, Unidade } from '../state';
-import { ehQuartelCompleto, motivoDaRecusaDeSoldado } from '../quartel';
+import { ehQuartelCompleto } from '../quartel';
 import { caixaDoPredio } from '../footprint';
 import { FSM_INDO_ATACAR } from './cerco';
-import { aplicarTrainSoldier } from './quartel';
+import { aplicarTrainSoldier, motivoParaFormar } from './quartel';
 import type { ResultadoDeSistema } from './jobs';
 import type { GameData } from '../data/types';
 import { classeDaUnidade } from '../condicao';
@@ -112,9 +112,8 @@ function defenderEPosicionar(state: GameState, p: PosicaoDeDefesa, lado: number,
 
 /**
  * F28-IA, ponto 4 — REPOR pelo quartel: a posicao com menos de `tamanhoDoGrupo` membros
- * pede UM soldado por tick ao primeiro quartel completo do lado. O tipo e o primeiro de
- * `units.json: militares` (a ordem do dado) do tipo de grupo da posicao que o quartel
- * consegue formar agora (requisito e recruta la dentro). E o mesmo `TrainSoldier` do
+ * pede UM soldado por tick ao primeiro quartel completo do lado. O tipo e o mais forte que
+ * o quartel consegue formar agora (C8: `combat.json: ia.ordemDeTreino`, a ordem do KaM). E o mesmo `TrainSoldier` do
  * jogador, dado pela IA; o soldado novo nasce ocioso e o `guarnecer` do tick seguinte o
  * poe na posicao. Sem quartel, sem requisito ou sem recruta, a posicao espera.
  */
@@ -129,9 +128,10 @@ function reporPeloQuartel(
   const events: GameEvent[] = [];
   for (const p of ia.posicoes) {
     if (p.membros.length >= dados.combate.ia.tamanhoDoGrupo) continue;
-    const tipo = dados.unidades.militares.tipos
-      .map((t) => t.id)
-      .find((t) => tipoDeGrupo(t, dados) === p.tipoDeGrupo && motivoDaRecusaDeSoldado(atual, quartel.id, t, dados) === null);
+    // C8: o mais forte que o quartel consegue formar agora, na ordem do KaM
+    // (`combat.json: ia.ordemDeTreino`, o AI_TROOP_TRAIN_ORDER), pela MESMA regra do comando
+    const ordem: readonly string[] = (dados.combate.ia.ordemDeTreino as Readonly<Record<string, readonly string[]>>)[p.tipoDeGrupo] ?? [];
+    const tipo = ordem.find((t) => tipoDeGrupo(t, dados) === p.tipoDeGrupo && motivoParaFormar(atual, quartel.id, t, dados) === null);
     if (tipo === undefined) continue;
     const r = aplicarTrainSoldier(atual, { type: 'TrainSoldier', predio: quartel.id, tipo }, dados);
     atual = r.state;
@@ -159,16 +159,23 @@ function atacarComASobra(state: GameState, lado: number, ia: IADoLado, dados: Ga
     gx: Math.round(livres.reduce((s, u) => s + u.gx, 0) / livres.length),
     gy: Math.round(livres.reduce((s, u) => s + u.gy, 0) / livres.length),
   };
-  let alvo: { id: string; d: number } | null = null;
-  for (const id of state.predios.ordem) {
-    const p = state.predios.porId[id];
-    if (p === undefined || p.lado === lado) continue;
-    const c = caixaDoPredio(p, dados);
-    if (c === null) continue;
-    const perto = { gx: Math.min(Math.max(centro.gx, c.x0), c.x1 - 1), gy: Math.min(Math.max(centro.gy, c.y0), c.y1 - 1) };
-    const d = distanciaEmTiles(centro, perto);
-    if (alvo === null || d < alvo.d) alvo = { id, d };
-  }
+  // C8: o mais perto entre os PRIORITARIOS (a IA nova do KaM: quartel, armazem, escola,
+  // prefeitura); sem nenhum de pe, qualquer predio de outro lado
+  const prioritarios = new Set<string>(dados.combate.ia.alvosPrioritarios);
+  const maisPerto = (serve: (tipo: string) => boolean): { id: string; d: number } | null => {
+    let melhor: { id: string; d: number } | null = null;
+    for (const id of state.predios.ordem) {
+      const p = state.predios.porId[id];
+      if (p === undefined || p.lado === lado || !serve(p.tipo)) continue;
+      const c = caixaDoPredio(p, dados);
+      if (c === null) continue;
+      const perto = { gx: Math.min(Math.max(centro.gx, c.x0), c.x1 - 1), gy: Math.min(Math.max(centro.gy, c.y0), c.y1 - 1) };
+      const d = distanciaEmTiles(centro, perto);
+      if (melhor === null || d < melhor.d) melhor = { id, d };
+    }
+    return melhor;
+  };
+  const alvo = maisPerto((t) => prioritarios.has(t)) ?? maisPerto(() => true);
   if (alvo === null) return state;
   let atual = state;
   for (const u of livres) atual = comUnidade(atual, { ...u, fsm: FSM_INDO_ATACAR, fsmData: { alvo: alvo.id } });

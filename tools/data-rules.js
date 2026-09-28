@@ -610,6 +610,27 @@ function validarAtiradores(dados, erros) {
 
 // F35: a taxa da feira e quantas unidades de A se dao por uma de B — inteiro >= 1, ou a
 // troca criaria mercadoria (taxa < 1) ou nao fecharia nunca.
+// C8: a ordem de treino da IA lista militares do tipo de grupo da chave (o mesmo criterio de
+// `sim/ia.ts: tipoDeGrupo`: montado, a distancia, ataque contra cavalo, ou corpo a corpo), e
+// os alvos prioritarios sao predios que existem.
+function validarPrioridadesDaIA(dados, erros) {
+  const ia = (dados.combat && dados.combat.ia) || {};
+  const militares = ((dados.units && dados.units.militares && dados.units.militares.tipos) || []);
+  const porId = new Map(militares.map((t) => [t.id, t]));
+  const grupoDe = (t) => (t.montado ? 'montado' : t.aDistancia ? 'distancia' : (t.attackVsCavalo || 0) > 0 ? 'antiCavalo' : 'corpoACorpo');
+  for (const [grupo, lista] of Object.entries(ia.ordemDeTreino || {})) {
+    for (const id of lista) {
+      const t = porId.get(id);
+      if (t === undefined) erros.push(`combate/ia: '${id}' em ordemDeTreino.${grupo} nao e militar de units.json`);
+      else if (grupoDe(t) !== grupo) erros.push(`combate/ia: '${id}' em ordemDeTreino.${grupo} e do grupo '${grupoDe(t)}'`);
+    }
+  }
+  const predios = new Set(((dados.buildings && dados.buildings.predios) || []).map((p) => p.id));
+  for (const id of ia.alvosPrioritarios || []) {
+    if (!predios.has(id)) erros.push(`combate/ia: o alvo prioritario '${id}' nao esta em buildings.json`);
+  }
+}
+
 function validarFeira(dados, erros) {
   const feira = (dados.economy && dados.economy.marketplace) || {};
   if (!Number.isInteger(feira.taxa) || feira.taxa < 1) erros.push('economia/feira: marketplace.taxa precisa ser inteiro >= 1');
@@ -1283,6 +1304,7 @@ function validarTudo(dados) {
   validarRequisitosDoQuartel(dados, erros);
   validarAtiradores(dados, erros);
   validarFeira(dados, erros);
+  validarPrioridadesDaIA(dados, erros);
   validarMapas(dados, erros);
   return erros;
 }

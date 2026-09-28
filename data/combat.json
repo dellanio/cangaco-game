@@ -101,6 +101,32 @@
   },
   "ia": {
     "tamanhoDoGrupo": 9,
-    "_doc": "F28-IA (decisao do operador, 2026-09-28): o grupo de defesa da IA tem 9 homens, o padrao da IA do KaM (KM_AIDefensePos.pas:223-224). E da IA, nao regra do jogador. Os '3 por fileira' do KaM NAO estao aqui: a sim nao tem formacao em fileiras (a marcha usa `tilesDoGrupo`), e o campo que dizia 3 foi removido por nao ter leitor (operador, 2026-09-28)."
+    "alvosPrioritarios": [
+      "barracks",
+      "storehouse",
+      "schoolhouse",
+      "town_hall"
+    ],
+    "ordemDeTreino": {
+      "corpoACorpo": [
+        "sword_fighter",
+        "axe_fighter",
+        "militia"
+      ],
+      "antiCavalo": [
+        "pikeman",
+        "lance_carrier"
+      ],
+      "distancia": [
+        "crossbowman",
+        "bowman"
+      ],
+      "montado": [
+        "knight",
+        "scout"
+      ]
+    },
+    "_doc": "F28-IA (decisao do operador, 2026-09-28): o grupo de defesa da IA tem 9 homens, o padrao da IA do KaM (KM_AIDefensePos.pas:223-224). E da IA, nao regra do jogador. Os '3 por fileira' do KaM NAO estao aqui: a sim nao tem formacao em fileiras (a marcha usa `tilesDoGrupo`), e o campo que dizia 3 foi removido por nao ter leitor (operador, 2026-09-28).",
+    "_docPrioridades": "C8 (operador, 2026-09-28: 'meca no kam_remake como eles escolhem'). Alvo: o da IA nova do KaM, primeiro o mais perto entre Quartel, Armazem, Escola e Prefeitura (TARGET_HOUSES, ai/newAI/KM_ArmyAttack.pas:155-160), e so sem nenhum deles qualquer predio. Tropa: AI_TROOP_TRAIN_ORDER (common/KM_Defaults.pas:701-705), o mais forte que o equipamento permite, caindo para o seguinte (KM_AIGeneral.pas:282-300)."
   }
 }

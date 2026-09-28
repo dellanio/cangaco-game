@@ -11564,3 +11564,44 @@ Plano: `docs/planos/2026-09-28-C6-revidar-marchando.md`, salvo antes do código.
 - Revida só o inimigo **encostado**. O KaM também pega luta com quem está no alcance da
   "AutoAttackRange" da IA; não trouxe.
 - Não há desenho novo: é a mesma luta da F28a, agora iniciada em marcha.
+
+## 2026-09-28 — C8: a IA com prioridade de alvo e de tipo de tropa
+
+Plano: `docs/planos/2026-09-28-C8-ia-prioridades.md`, salvo antes do código. Só `src/sim` e
+dados.
+
+**Medido no kam_remake:**
+- **Alvo:**
+  - a IA clássica ataca o prédio inimigo mais perto da posição inicial, de qualquer tipo
+    (`KM_AIGeneral.pas:489,683-695`);
+  - a IA nova vai primeiro ao mais perto entre Quartel, Armazém, Escola e Prefeitura
+    (`TARGET_HOUSES`, `ai/newAI/KM_ArmyAttack.pas:155-160`).
+- **Tropa:** `AI_TROOP_TRAIN_ORDER` (`KM_Defaults.pas:701-705`) forma o mais forte primeiro
+  e cai para o seguinte quando falta equipamento (`KM_AIGeneral.pas:282-300`).
+
+**Verificado:**
+- **Dado:** `combat.json: ia` ganhou:
+  - `alvosPrioritarios` = `barracks`, `storehouse`, `schoolhouse`, `town_hall`;
+  - `ordemDeTreino` por tipo de grupo, na ordem do KaM.
+  - Regra nova: `validarPrioridadesDaIA`, com o mesmo critério de grupo do `tipoDeGrupo`
+    da sim.
+- **Sim:**
+  - `reporPeloQuartel` forma o primeiro da ordem que `motivoParaFormar` (C3) aceita;
+  - `atacarComASobra` escolhe o mais perto entre os prioritários, ou qualquer um se não
+    houver.
+- **`tests/C8-ia-prioridades.test.ts`, 3 testes verdes:**
+  - (a) só com machado forma Miliciano; com gibão e escudo, Machadeiro; com o kit de
+    ferro, Espadachim;
+  - (b) com a pedreira colada e o armazém longe, vai ao armazém; sem armazém, vai à
+    pedreira;
+  - (c) determinismo do estado final.
+- **Sondas**, as duas vermelhas:
+  - sem prioridade de alvo;
+  - forma o mais barato.
+- **Os testes da F28-IA ficaram verdes sem mudança.** Os cenários deles só têm machado, e a
+  escola já era o prioritário mais perto.
+
+**PARA REVISÃO:**
+- A distância é medida do **centro do grupo**, não da posição inicial da IA (a IA
+  clássica mede da posição inicial).
+- A Torre no raio (`SCAN_HOUSES`) fica fora.
