@@ -424,6 +424,7 @@ describe('F10 — A*: casos que se leem', () => {
     // grama 20 no passo reto e 28 (= round(20 x sqrt2)) no diagonal: os DOIS, senao a diagonal
     // ficaria mais barata que a reta e o zigue-zague venceria — com razao.
     const lento: GameData = { ...gameData, movimento: {
+      ...gameData.movimento, // C5: o resto do movimento (a espera do militar) como o dado real
       ticksPorTile: { ...gameData.movimento.ticksPorTile, aPe: { ...gameData.movimento.ticksPorTile.aPe, grama: 20 } },
       ticksPorTileDiagonal: { ...gameData.movimento.ticksPorTileDiagonal, aPe: { ...gameData.movimento.ticksPorTileDiagonal.aPe, grama: 28 } },
     } };

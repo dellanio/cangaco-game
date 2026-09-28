@@ -11478,3 +11478,54 @@ Plano: `docs/planos/2026-09-28-C4-botao-de-reparo.md`, salvo antes do código. O
 fica abaixo da dobra, a y = 741 numa tela de 720. É preciso rolar o corpo da aba; a sombra
 de "há mais" avisa, e o roteiro rola como o jogador. Se isso incomodar, a opção é mover o
 reparo para junto do título.
+
+## 2026-09-28 — C5: colisão militar (GDD §6.4)
+
+Plano: `docs/planos/2026-09-28-C5-colisao-militar.md`, salvo antes do código. Só `src/sim`
+e dados; nenhuma linha de render.
+
+**Medido no kam_remake** (`KM_UnitActionWalkTo.pas:119-131`), a ordem da interação:
+- troca de lugar, com espera 0;
+- empurrão, com espera 1;
+- desvio ("Go around busy units"), com espera 10, a cada 50;
+- passo para o lado, com espera 10;
+- troca forçada, com espera 40.
+
+**Verificado:**
+- **Dado:** `units.json: colisaoMilitar`:
+  - `desviarDepois_segundos_base` = 1,0 (grupo movimento; 5 ticks na escala 2,0);
+  - `margemDoDesvio_tiles` = 4, que é o limite da busca, não tempo.
+- **Regra em `andar`** (`units/movimento.ts`): no salto para o próximo tile, se há outro
+  militar lá, o progresso fica segurado e `fsmData.bloqueado` conta. Passado o limite:
+  - se o destino tem militar **parado** e é o próximo passo, a unidade para ali;
+  - senão, faz o desvio: uma busca em largura na caixa do atual e do destino, com margem 4,
+    tratando os tiles de militares como bloqueados;
+  - sem desvio, tenta de novo depois de outro período.
+- **Um defeito da 1ª versão, pego pelo teste da F28-IA.** A 1ª versão dava um passo para o
+  lado só por vizinho "não mais longe do destino", e o centro de uma formação de 9 ficou
+  inalcançável (cercado; o acesso pelo norte exigia se afastar primeiro). Travou o ia3, e
+  o ia8 esperava o tile dele. Trocado pelo desvio por busca, a formação fecha nos 9 tiles.
+  - E o "para no destino ocupado" passou a valer só para ocupante **parado**. Quem está
+    passando, espera-se.
+- **`tests/C5-colisao-militar.test.ts`, 6 testes verdes:**
+  - (a) dois de frente nunca dividem tile e chegam;
+  - (b) contorna o parado e chega;
+  - (c) destino ocupado → para colado, ocioso;
+  - (d) militar entra no tile do serf;
+  - (e) um grupo de 9 atravessa um muro de 9 sem sobrepor e chega;
+  - (f) determinismo.
+- **Sondas**, as quatro vermelhas:
+  - sem colisão;
+  - sem desvio;
+  - sem parar no destino ocupado;
+  - civil também bloqueando.
+- **Os testes das F26, F28, F-CERCO, F34, C1, C2, C3 e C7 ficaram verdes.** O F10 só ganhou
+  o espalhamento do `movimento` real na fixture que monta o tipo à mão.
+- **Tela:** o `npm run shot -- F26b` ficou verde. Abri a `F26b-4-grupo-marchou.png`: os três
+  soldados em tiles distintos.
+
+**PARA REVISÃO:**
+- Sem a troca de lugar nem o empurrão do KaM, dois militares de frente num corredor de 1
+  tile esperam para sempre.
+- A busca de ocupação varre `unidades.ordem` a cada passo bloqueado (O(n)). Não foi
+  medido com centenas de soldados.

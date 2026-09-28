@@ -1212,6 +1212,8 @@ export type ItemDeFila =
  * gastos no passo em curso; `armazem` o alvo do `devolvendo`.
  */
 export interface DadosDaFsm {
+  /** C5 — ticks que o militar ja esperou um tile ocupado por outro militar. */
+  readonly bloqueado?: number;
   readonly tarefa?: string;
   readonly carga?: string;
   readonly caminho?: readonly TileDeGrid[];

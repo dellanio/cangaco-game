@@ -87,6 +87,9 @@ const CAMPOS_ESCALONADOS = [
     unidade: 'tilesPorSegundo', declaraEscalaEm: 'escalaVelocidade' },
   { arquivo: 'units', caminho: 'velocidadeBase_tilesPorSegundo.montado',
     unidade: 'tilesPorSegundo', declaraEscalaEm: 'escalaVelocidade' },
+  // C5 — quanto o militar espera um tile ocupado antes de dar o passo para o lado.
+  { arquivo: 'units', caminho: 'colisaoMilitar.desviarDepois_segundos_base',
+    unidade: 'segundos', declaraEscalaEm: 'escalaVelocidade' },
   // A taxa e do REGIME e nao do tipo, e e por isso que ela cabe aqui: caminho
   // fixo se registra, caminho por tipo (como as taxas de production.json) nao.
   { arquivo: 'resources', caminho: 'regimes.porTempo.segundosPorUnidade_base',

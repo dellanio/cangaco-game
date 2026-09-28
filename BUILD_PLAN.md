@@ -5452,7 +5452,16 @@ Ordem do operador. Cada item tem plano em `docs/planos/2026-09-28-C<n>-*.md`.
        valor, como o pausar.
      - Teste `tests/C4-reparo.test.ts` e roteiro `tools/shots/C4.js`.
      - PARA REVISÃO: no painel da escola o botão fica abaixo da dobra, e é preciso rolar.
-  5. **C5 — colisão militar** (GDD §6.4).
+  5. **C5 — colisão militar (GDD §6.4). ENTREGUE.**
+     - Em `andar`, o militar não salta para um tile com outro militar; espera
+       `desviarDepois` (1 s, o `AVOID_TIMEOUT` do KaM).
+     - Depois contorna por uma busca local, que trata os tiles de militares como
+       bloqueados.
+     - Se o destino tem um militar parado, ele para colado.
+     - Civil não colide.
+     - Teste `tests/C5-colisao-militar.test.ts`.
+     - PARA REVISÃO: sem a troca de lugar e o empurrão do KaM, e dois de frente num
+       corredor de 1 tile esperam.
   6. **C6 — revidar enquanto marcha.**
   7. **C7 — o `lado` filtrando o JobBoard. ENTREGUE, adiantado por ser o conserto do BUG-N1**
      (reprovação da F25a pelo avaliador).

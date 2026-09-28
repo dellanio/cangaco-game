@@ -258,6 +258,11 @@ export interface MovimentoData {
     readonly aPe: Readonly<Record<TerrenoTipo, Ticks>>;
     readonly montado: Readonly<Record<TerrenoTipo, Ticks>>;
   };
+  /** C5 — quantos ticks o militar espera um tile ocupado por outro militar antes do passo
+   *  para o lado (`units.json: colisaoMilitar`). */
+  readonly ticksDesvioMilitar: Ticks;
+  /** C5 — a margem, em tiles, da caixa da busca local do desvio (limite de busca). */
+  readonly margemDoDesvioMilitar: number;
 }
 
 export interface CadenciaDoAtirador {

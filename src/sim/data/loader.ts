@@ -537,6 +537,12 @@ export function loadGameData(raw: RawGameData): GameData {
       aPe: matrizDiagonalPorModo('aPe', raw.units.velocidadeBase_tilesPorSegundo.aPe),
       montado: matrizDiagonalPorModo('montado', raw.units.velocidadeBase_tilesPorSegundo.montado),
     },
+    ticksDesvioMilitar: registrar(
+      'units.colisaoMilitar.desviarDepois_segundos_base', raw.units.escalaVelocidade,
+      raw.units.colisaoMilitar.desviarDepois_segundos_base, 'segundos',
+      paraTicksDeDuracao(raw.units.colisaoMilitar.desviarDepois_segundos_base, 'segundos', escalaMovimento, tickHz),
+    ),
+    margemDoDesvioMilitar: raw.units.colisaoMilitar.margemDoDesvio_tiles,
   };
 
   // --- combate ---
