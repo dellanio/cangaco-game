@@ -30,6 +30,15 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
 
 ## Abertos
 
+## BUG-N1 — o JobBoard ignora o lado: recruta e armas do jogador vão para o quartel inimigo
+- feature: F25a-quartel-sim (alcança F28-IA ponto 4, F28b, F35, F36, F-CERCO-b)
+- severidade: errado
+- repro: sonda do avaliador (2026-09-28): quartel de lado 1 perto da vila do jogador → `recrutas 1`, `hand_axe 2` na entrada; `TrainSoldier` forma soldado de lado 1
+- esperado: serf, recruta e laborer só servem prédio do próprio lado
+- observado: `reclamarMelhorAlistamento` (`src/sim/jobs.ts:355`) e `gerarTarefasDoQuartel`/`origemMaisPerto` (`src/sim/systems/jobs.ts:746`) não olham `lado`
+- evidência: `docs/avaliacoes/2026-09-28-sessao-autonoma.md`
+- status: aberto — é o item C7 da fila C, adiantado por ser reprovação
+
 ---
 
 ## Polimento

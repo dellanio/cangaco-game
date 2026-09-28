@@ -27,7 +27,7 @@ import type { LinhaDoMedidor } from '../medidor-obra';
 import { canteiroDaObra, chaveDoCanteiro } from '../nivelamento-obra';
 import type { CanteiroDaObra } from '../nivelamento-obra';
 import {
-  chaveDaRevelacao, contagemDeEstagios, estagioDaObra, estaEmObra, ORDEM_DOS_ESTAGIOS, revelacaoDaObra,
+  chaveDaRevelacao, contagemDeEstagios, estagioDoPredio, estaEmObra, ORDEM_DOS_ESTAGIOS, revelacaoDaObra,
 } from '../estagio-obra';
 import type { EstagioDaObra, Fracao, RevelacaoDaObra } from '../estagio-obra';
 import { centroDaVila } from '../../sim/selectors';
@@ -140,6 +140,10 @@ export class WorldScene extends Phaser.Scene {
   /** F-SPR — o sprite de vegetacao de pe por tile, para o diff. Memoria de render,
    *  como `recursosDesenhados`: a verdade continua em `state.recursos`. */
   private readonly vegetacaoDesenhada = new Map<string, Phaser.GameObjects.Image>();
+  /** BUG-N3 — os tiles cujo sprite de vegetacao NASCEU de rocha. Guardado na hora de
+   *  pintar, e nao perguntado a `recursos` depois: a rocha esgotada sai de `recursos`, e
+   *  um sprite que sobrasse dela sumiria da conferencia por construcao. */
+  private readonly rochaDesenhada = new Set<string>();
 
   /** F-REPL-e — o estado de crescimento que cada sprite de vegetacao desenhou. O
    *  crescimento anda sem o codigo do tile mudar; e esta memoria que o diff compara. */
@@ -1038,9 +1042,12 @@ export class WorldScene extends Phaser.Scene {
     if (desenho?.como !== 'vegetacao') {
       atual?.destroy();
       this.vegetacaoDesenhada.delete(chave);
+      this.rochaDesenhada.delete(chave);
       this.crescimentoDesenhado.delete(chave);
       return;
     }
+    if (this.ponte.atual?.recursos[chave]?.tipo === 'rock') this.rochaDesenhada.add(chave);
+    else this.rochaDesenhada.delete(chave);
     // F-REPL-e — PNG do estado, se houver; senao a adulta do tile encolhida pelo
     // estado (placeholder). Sem arte de vegetacao nenhuma, nem se chega aqui: o
     // marcador da camada de tile e o fallback de hoje.
@@ -1120,11 +1127,12 @@ export class WorldScene extends Phaser.Scene {
 
   /** F-TR-b — o estado da textura de cada sprite de rocha de pe, lido da imagem. */
   private lajedoDesenhado(): Record<string, string> {
-    const recursos = this.ponte.atual?.recursos ?? {};
+    // BUG-N3: le o que FOI pintado como rocha, nao o `recursos` de agora — assim o
+    // sprite que sobrasse de uma rocha esgotada aparece aqui e o roteiro o reprova
     const desenhado: Record<string, string> = {};
-    for (const [chave, imagem] of this.vegetacaoDesenhada) {
-      if (recursos[chave]?.tipo !== 'rock') continue;
-      desenhado[chave] = imagem.texture.key.split(':').pop() ?? '';
+    for (const chave of this.rochaDesenhada) {
+      const imagem = this.vegetacaoDesenhada.get(chave);
+      desenhado[chave] = imagem === undefined ? '(sem sprite)' : imagem.texture.key.split(':').pop() ?? '';
     }
     return desenhado;
   }
@@ -1262,8 +1270,9 @@ export class WorldScene extends Phaser.Scene {
         )
         : null;
       if (canteiro !== null) canteiros[id] = canteiro;
-      const estagio = estagioDaObra(
-        predio.hp, aparencia.hpTotal, canteiro === null || canteiro.nivelada,
+      // BUG-N2: o completo danificado em combate continua `completo` (nao vira obra)
+      const estagio = estagioDoPredio(
+        predio.estado, predio.hp, aparencia.hpTotal, canteiro === null || canteiro.nivelada,
       );
       // F17g: obra de predio com o PAR carregado e revelada pelo `hp`; sem o par,
       // os seis estagios de antes. Predio de pe continua o `completo` inteiro.

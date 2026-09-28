@@ -59,6 +59,17 @@ export function estagioDaObra(hp: number, hpTotal: number, nivelada: boolean): E
 }
 
 /**
+ * BUG-N2 — o estagio que a TELA desenha para um predio. O completo e SEMPRE `completo`,
+ * com qualquer `hp`: desde a F-CERCO-a2 o predio de pe perde HP em combate, e o `hp`
+ * abaixo do total ja nao quer dizer "em obra". So a obra passa por `estagioDaObra`.
+ */
+export function estagioDoPredio(
+  estado: 'obra' | 'completo', hp: number, hpTotal: number, nivelada: boolean,
+): EstagioDaObra {
+  return estado === 'completo' ? 'completo' : estagioDaObra(hp, hpTotal, nivelada);
+}
+
+/**
  * Type guard, e nao um `!==` solto em cada chamador: e o que deixa o compilador
  * provar que o tema tem rotulo para todo estagio EM OBRA.
  */

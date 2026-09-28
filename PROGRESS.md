@@ -11246,3 +11246,38 @@ sobre as 19 features da noite, e o plano do Feed; os dois só leem.
 - **A mira mínima entrou somada na `recarga`.** A mira da funda é zero, e o F03 exige
   toda duração ≥ 1 tick. Não abri exceção na invariante.
 - **O golpe corpo a corpo está abaixo do piso do KaM** → BALANCE_LOG, sem mexer.
+
+## 2026-09-28 — o avaliador sobre a sessão autônoma, e os três achados `errado`
+
+Relatório completo em `docs/avaliacoes/2026-09-28-sessao-autonoma.md`. **Veredito:
+NEEDS_WORK.** Duas reprovadas (F25a, F26b), 18 aprovadas com ressalva, nenhuma trava. Pelo
+CLAUDE.md §6, a reprovação passou à frente da fila C.
+
+**Corrigido neste commit (verificado):**
+- **BUG-N2** (F26b, com origem na F-CERCO-a2): o prédio completo danificado virava placeholder
+  de obra.
+  - `estagioDoPredio` (`render/estagio-obra.ts`) devolve `completo` para o completo, com
+    qualquer hp, e a cena usa essa função.
+  - Teste `tests/BUG-N2-predio-danificado.test.ts`.
+  - `npm run shot -- F26b` verde. Abri a `F26b-5`: a escola atacada está com a arte de
+    completa.
+  - Toca só `src/render/`.
+- **BUG-N3** (F-TR-b, na evidência): `lajedoDesenhado` lê um `Set` de tiles pintados como
+  rocha, gravado na hora de pintar, e não o `recursos` de agora.
+  - **Sonda:** a rocha esgotada deixando o sprite reprova o roteiro com "24,29 saiu do
+    estado e ainda tem sprite de rocha". Sem a sonda, o F-TR passa.
+  - As capturas F-TR-2 e F-TR-3 são o mesmo quadro (tiradas em sequência sem mudança).
+    Registrado; não mexi.
+- **F35:** o cabeçalho do teste agora traz o aceite (d) corrigido.
+
+**Aberto:**
+- **BUG-N1** (F25a, `errado`): o JobBoard ignora o lado. A chave `F25a-quartel-sim` foi para
+  `false`. **O C7 foi adiantado para o próximo item**, porque é o conserto dele.
+
+**Ressalvas do avaliador que não são desta leva, levadas ao operador:**
+- **A F35 não tem UI que emita `SetTrade`:** o jogador não dá ordem à Feira.
+- **O `canPlace` aceita prédio sobre tile de `corn` com quantidade 0**, e a Feira e a
+  Prefeitura foram parar em cima do roçado. É defeito antigo.
+- **O teste da F28c "regenera em luta" não testa a luta de fato.**
+- **O aceite (b) da F25b é tautológico**, e o botão desabilitado parece igual ao
+  habilitado.

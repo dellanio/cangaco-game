@@ -5,8 +5,9 @@
  *      o B creditado, na corrida inteira;
  *  (b) nunca mais de `maxSerfs` tarefas da feira reclamadas no mesmo tick, com 20 serfs;
  *  (c) sem A no armazem a troca espera, nenhum B aparece, e o motivo e o do painel;
- *  (d) cancelar a ordem com A a caminho larga as tarefas pelo release, sem A perdido: a
- *      soma de A no mundo (armazem, gavetas, serfs) mais `taxa x` as trocas fica igual.
+ *  (d) cancelar a ordem com A a caminho nao perde A: a soma de A no mundo (armazem,
+ *      gavetas, serfs) mais `taxa x` as trocas fica igual. A tarefa em curso termina na
+ *      feira e o A volta como excedente (aceite corrigido pelo operador, 2026-09-28).
  */
 import { describe, expect, it } from 'vitest';
 import { mkdirSync, writeFileSync } from 'node:fs';
