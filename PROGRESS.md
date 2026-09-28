@@ -12033,3 +12033,10 @@ de aquecimento:
    forçada entre ociosos precisa de outra regra, ou a porta precisa de outra saída.
 3. **O empilhamento de dois que andam** depois da troca forçada com dois ocupantes.
 4. **A chave não liga.**
+
+## 2026-09-28 — Decisão do operador: sigla nunca aparece sozinha em relatório
+
+- **Vale já.** Em relatório ao operador e em PROGRESS, toda sigla vem com o nome ao lado.
+  Exemplos: "D1c (aceite da colisão civil)", "F20b (fome e morte)".
+- O esquema novo de siglas (fase-MÓDULO-número) **está em proposta**, com o custo medido e a
+  decisão pendente. Nada foi renomeado.
