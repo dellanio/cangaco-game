@@ -1,7 +1,7 @@
 {
   "_doc": "Cada golpe bem sucedido tira 1 ponto. attack e chance de acerto, nao dano.",
   "formula": "chanceAcerto = clamp( (attackEfetivo * multiplicadorDirecao) / (defence * 100), pisoAcerto, tetoAcerto )",
-  "attackEfetivo": "se o alvo for montado e attackVsCavalo > 0, usa attackVsCavalo; senao usa attack",
+  "attackEfetivo": "se o alvo for montado, attack + attackVsCavalo (soma, como no KaM: KM_UnitActionFight.pas:291-294); senao attack",
   "pisoAcerto": 0.08,
   "tetoAcerto": 0.92,
   "multiplicadorDirecao": { "frente": 1.0, "flanco": 1.35, "costas": 1.75 },

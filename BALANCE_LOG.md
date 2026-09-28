@@ -22,6 +22,37 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
 
 ## Observações abertas
 
+- [2026-09-28] **FASE C, COMBATE — dois números que a VARREDURA-KAM corrigiu no GDD e o dado ainda não segue.** Os dois ficam no dado como estão, porque nenhum código os lê hoje (conferido com grep: `mercenarios.custoOuro` e `attackVsCavalo` não têm leitor em `src/sim/`). Vão acertados quando o primeiro item de tropa da Fase C escrever o combate.
+  - **Contra montado, o ataque SOMA.** O KaM faz `damage := Attack`; se o alvo é montado, `damage := damage + AttackHorse` (`units/actions/KM_UnitActionFight.pas:291-294`, clone reyandme 731a8a4). O GDD e a string `_doc` de `data/combat.json` modelavam substituição; os dois textos foram corrigidos para soma. **O que muda no número:** o `attackVsCavalo` de `units.json` passa a ser parcela, não total. Piqueiro contra cavaleiro fica em 35 + 80 = 115, não 80; lanceiro, 25 + 60 = 85, não 60. Quem escrever a fórmula decide se a coluna fica como está (e a lança fica ~40% mais forte contra cavalo que o previsto) ou se é reduzida para manter o total antigo.
+  - **Bárbaro custa 8 de ouro, não 7** (`res/KM_ResUnits.pas:216`). O GDD foi corrigido. `data/units.json:44` continua `custoOuro: 7`.
+- [2026-09-28] **FOME NO LIMIAR DO KaM — medido, mexe pouco; não gira.** A pergunta do operador: o civil do KaM vai comer a 13,3% e o nosso a 50%. Isso mudaria a calibração da Fase B?
+  - **Premissa corrigida antes da medida** (verificado no fonte, clone reyandme 731a8a4): o limiar não decide quantas vezes se come.
+    - O civil do KaM come até passar de 90% (`UNIT_CONDITION_FULL_THRESHOLD = 0.9`, `common/KM_Defaults.pas:370`), com as mesmas restaurações que as nossas (`:383-386`).
+    - O limiar só decide QUANDO ele sai; quanto ele come ao chegar não muda. A frequência de refeição é dreno ÷ restauração por refeição.
+    - "Quase quatro vezes mais idas" não acontece.
+  - **Medida:** vila da calibração F-CAL-b, 36 000 ticks, sonda `zz-` apagada depois. 26 civis no fim e 0 mortes nos quatro casos.
+
+    | caso | refeições | 1ª refeição | comido | ticks em `indo_comer` | ticks até reocupar | % do tempo civil no ir e voltar | espera no moinho / padaria |
+    |---|---|---|---|---|---|---|---|
+    | hoje (50%, 8 lugares) | 146 | t7175 | 142 pães + 10 linguiças | 8 503 | 3 674 | 1,46% | 7,7% / 6,2% |
+    | KaM (13,3%, 6 lugares) | 119 | t10401 | 116 pães + 10 linguiças | 6 918 | 2 601 | 1,14% | 8,1% / 6,8% |
+    | só o limiar (13,3%, 8) | 119 | igual ao KaM | igual | igual | igual | igual | igual |
+    | só os lugares (50%, 6) | 147 | t7175 | 144 pães + 10 linguiças | 8 455 | 3 674 | 1,45% | 7,6% / 6,1% |
+
+  - **Produção em 36 000 ticks, hoje → KaM:**
+    - pão 230 → 230; farinha 117 → 117; milho 123 → 122;
+    - pedra 186 → 192; tábua 212 → 214; tronco 107 → 108.
+  - **Leitura:**
+    - −18% de refeições, quase tudo pela 1ª refeição mais tarde (a vila começa cheia e demora mais a cair a 13,3%). Consumo de comida −17% (152 → 126 unidades).
+    - O ir e voltar da Bodega é ~1,5% do tempo civil nos dois casos; a diferença é 0,3 ponto.
+    - **Os 6 lugares não mudam nada aqui:** a vila nunca enche a Bodega.
+  - **LOTE3:** os três testes (`LOTE3-fases-canavial`, `LOTE3-fases-quatro`, `LOTE3-c-pedreiro-lote`) rodaram com `condition.json` trocado para 13,3% / 6 e restaurado. Os três JSON de evidência saíram **iguais byte a byte**: nenhum cenário do LOTE3 tem Bodega. Nenhuma razão medida muda.
+  - **Divergências que ficam registradas, sem giro:**
+    - nosso civil enche até 100% e come cada comida no máximo uma vez; o do KaM para em 90% e só come vinho e peixe se ainda não comeu duas vezes (`MAX_FEED_CNT = 2`, `units/tasks/KM_UnitTaskGoEat.pas:101`);
+    - o KaM tem uma condição única de 45 min para todos (`KM_Defaults.pas:371`), contra os nossos 40 min civil / 60 min militar;
+    - o KaM manda o guerreiro pedir comida abaixo de 55% (`TROOPS_FEED_MAX`, `:373`).
+    - Nenhuma dessas mexe a Fase B pelo que se mediu. `civilVaiComer` 0,50 e `comensaisSimultaneos` 8 continuam no dado; se o lote da VARREDURA-KAM quiser alinhar, o custo medido é o desta tabela.
+
 - [2026-09-27] **PRÓXIMO LOTE COMEÇA AQUI — constatação do modelo, não observação do Canavial:
   o tempo de colheita é DERIVADO da taxa de saída, e isso vale para os CINCO que saem a colher.**
   - **Verificado no código:**

@@ -215,7 +215,10 @@ Os três que o jogador sente o tempo todo: **Gold**, **Timber** e **Stone**.
 
 - Todos os civis ficam com fome. **Não existe limite de população**: ela é
   limitada pela comida.
-- Inn: 8 comensais simultâneos, 5 unidades de cada comida estocadas.
+- Inn: 6 comensais simultâneos, 5 unidades de cada comida estocadas.
+  (Corrigido de 8 na VARREDURA-KAM, 2026-09-28: `INN_MAX_EATERS = 6` em
+  `houses/KM_HouseInn.pas:11`. O dado da sim, `data/condition.json`, continua
+  com 8 — medido sem efeito na vila da calibração; ver `BALANCE_LOG.md`.)
 - Restauração: Wine **30%**, Loaves **40%**, Fish **50%**, Sausages **60%**.
   (O vinho foi aumentado de 20% para 30% no Remake **[fonte]**.)
 - Civil precisa de **2 comidas diferentes** para chegar a 100%. Militar enche com
@@ -835,7 +838,7 @@ de batalha **[fonte]**.
 Nossa fórmula, em `data/combat.json`:
 
 ```
-attackEfetivo   = alvo montado e attackVsCavalo > 0 ? attackVsCavalo : attack
+attackEfetivo   = alvo montado ? attack + attackVsCavalo : attack
 chanceAcerto    = clamp( (attackEfetivo × multiplicadorDirecao) / (defence × 100), 0.08, 0.92 )
 multiplicadorDirecao = frente 1.0 · flanco 1.35 · costas 1.75
 ```
@@ -847,8 +850,12 @@ não muda nada — com a fórmula original um espadachim já acerta 55% contra u
 miliciano que acerta 11,7% contra ele; o problema nunca foi a média, foi a
 amostra pequena.
 
-A coluna "vs Cavalo" do Anexo A é um valor de Attack **alternativo** usado quando
-o alvo é montado, não um bônus percentual.
+A coluna "vs Cavalo" do Anexo A é um Attack **somado** ao Attack normal quando o
+alvo é montado, não um bônus percentual nem um valor que o substitui: o KaM faz
+`damage := Attack` e, contra montado, `damage := damage + AttackHorse`
+(`units/actions/KM_UnitActionFight.pas:291-294`). Piqueiro contra cavaleiro é
+35 + 80 = 115, não 80. (Corrigido na VARREDURA-KAM, 2026-09-28; antes o texto
+modelava substituição.)
 
 ### 11.5 Onde cada coisa mora
 
@@ -885,7 +892,8 @@ Nenhum desses números pode aparecer em código.
 | Knight | Sword + Iron armor + Iron shield + Horse |
 
 Town hall, mercenários pagos em ouro e prontos na hora **[fonte]**: Rebel 2,
-Rogue 3, Vagabond 5, Barbarian 7, Warrior 8.
+Rogue 3, Vagabond 5, Barbarian 8, Warrior 8. (Barbarian corrigido de 7 na
+VARREDURA-KAM, 2026-09-28: `res/KM_ResUnits.pas:216`.)
 
 ### 12.2 Atributos [fonte]
 

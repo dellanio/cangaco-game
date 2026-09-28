@@ -9694,3 +9694,39 @@ de 2". A sonda foi apagada.
   até a VARREDURA-KAM voltar.
 - VARREDURA-KAM: a frente 1 (GDD) roda num subagente. **O operador quer ver o
   resultado da frente 1 antes que as frentes 2 a 4 comecem.**
+
+## 2026-09-28 — VARREDURA-KAM, frente 1: fome medida, três correções no GDD
+
+**Decisões do operador aplicadas.**
+
+- A divergência da fome foi medida antes de seguir; regra dele: "se mexer pouco, registre e siga". Mexeu pouco.
+- As três correções entram no GDD como texto. A do montado também vai para o BALANCE_LOG, porque muda número na Fase C.
+- As ~13 hipóteses da frente 1 ficam abertas, marcadas **HIPÓTESE — ABERTA** em `docs/varredura-kam.md`.
+- Próximo: frente 4, só combate, começando pelo ataque a prédio.
+
+**Fome — verificado.**
+
+- **No fonte do KaM:** o civil come até passar de 90%, com as mesmas restaurações (`KM_Defaults.pas:370`, `:383-386`; `KM_UnitTaskGoEat.pas:101`). O limiar só decide quando ele sai.
+- **Medido:** vila da calibração, 36 000 ticks, sonda `zz-` apagada.
+  - 146 → 119 refeições; ir e voltar da Bodega 1,46% → 1,14% do tempo civil.
+  - Produção igual, e os 6 lugares não fazem diferença.
+- **LOTE3:** os três testes rodaram com `condition.json` em 13,3% / 6 e depois restaurado (diff vazio). A evidência saiu igual byte a byte, porque nenhum cenário tem Bodega.
+- Tabela no BALANCE_LOG. `civilVaiComer` 0,50 e `comensaisSimultaneos` 8 continuam no dado.
+
+**Correções — feito.**
+
+- **GDD:**
+  - `docs/GDD.md:218`: Inn com 6 lugares;
+  - `:838` e `:850`: ataque contra montado soma;
+  - `:888`: Bárbaro custa 8.
+- **Dado:** a string `_doc` `attackEfetivo` de `data/combat.json` dizia substituição e agora diz soma. É texto sem leitor (grep).
+- **Números que não mudaram**, porque também não têm leitor na sim (conferido com grep): `units.json` `barbarian.custoOuro` 7 e as colunas `attackVsCavalo`. Ficam para o primeiro item de tropa, registrados no BALANCE_LOG.
+
+**Hipótese, não verificado.**
+
+- A leitura de que a lança fica ~40% mais forte contra cavalo com a soma é aritmética: 25 + 60 contra 60. Não rodei combate, porque ele não existe na sim.
+
+**Aberto.**
+
+- Frente 4 (combate): ataque a prédio, alcance mínimo do arqueiro, alcance da torre.
+- Frentes 2 e 3 não começaram.
