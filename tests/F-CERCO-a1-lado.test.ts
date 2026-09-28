@@ -79,7 +79,8 @@ describe('F-CERCO-a1 — o lado de predio e unidade', () => {
   });
 
   it('o save da versao 2 carrega com o lado do jogador em tudo; o resto do estado fica igual', () => {
-    expect(VERSAO_DO_SAVE).toBe(3);
+    // desde a F-CERCO-b a versao e 4, e a 2 passa pela 3 (o reparo) na migracao
+    expect(VERSAO_DO_SAVE).toBeGreaterThanOrEqual(3);
     const partida = avancar(inicial, 5);
     const envelope = JSON.parse(salvar(partida)) as { estado: GameState } & Record<string, unknown>;
     // o save como a versao 2 gravava: sem o campo
@@ -88,8 +89,11 @@ describe('F-CERCO-a1 — o lado de predio e unidade', () => {
     };
     semLado(envelope.estado.predios as unknown as { porId: Record<string, object> });
     semLado(envelope.estado.unidades as unknown as { porId: Record<string, object> });
+    // e sem o reparo (F-CERCO-b, versao 4), que a versao 2 tambem nao conhecia
+    for (const p of Object.values(envelope.estado.predios.porId)) delete (p as { reparo?: boolean }).reparo;
     const textoV2 = JSON.stringify({ ...envelope, versao: 2 });
     expect(textoV2).not.toMatch(/"lado"/);
+    expect(textoV2).not.toMatch(/"reparo"/);
 
     const migrado = carregar(textoV2, gameData);
     const { predios, unidades } = ladosDe(migrado);

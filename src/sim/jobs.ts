@@ -15,14 +15,15 @@ import type {
   TarefaExcedenteParaArmazem, TarefaInsumoProducaoBaixa, TarefaInsumoProducaoParada,
   TarefaComidaParaInn, TarefaMaterialParaObra, TarefaOcupar, TarefaOuroParaEscola,
   TarefaArar, TarefaAssentarEstrada, TarefaColher, TarefaComer, TarefaDeLaborer, TarefaSaidaCheiaParaArmazem,
-  TarefaDoSerf, TarefaPedraParaCanteiro,
+  TarefaDoSerf, TarefaPedraParaCanteiro, TarefaReparar,
   TipoDeTarefa,
   TipoNaEscada,
 } from './state';
 import {
   ehTarefaDeAradura, ehTarefaDeAssentamento, ehTarefaDeColheita, ehTarefaDeLaborer, ehTarefaDePedraParaCanteiro,
-  ehTarefaDeTile, ehTarefaDoSerf, MERCADORIA_DE_OURO,
+  ehTarefaDeReparo, ehTarefaDeTile, ehTarefaDoSerf, MERCADORIA_DE_OURO,
 } from './state';
+import { predioReparavel } from './reparo';
 import type { GameData } from './data/types';
 import { gameData } from './data';
 // F20b — `condicao.ts` nao importa valor de ninguem (so `import type`), entao
@@ -133,6 +134,9 @@ const UNIDADE_ELEGIVEL_POR_TIPO: Readonly<Record<TipoDeTarefa, string | null>> =
   // laborer, mesma FSM, mesmo claim. Sem material a carregar: o milho nao custa
   // nada, e quando a cana cobrar, ela sai do armazem no fim, como a pedra.
   arar: TIPO_QUE_CONSTROI,
+  // F-CERCO-b: reparar e martelar predio completo — mesmo laborer, mesma FSM
+  // (`indo_a_obra` -> `martelando`), mesmo claim. Sem material: no KaM tambem nao.
+  reparar: TIPO_QUE_CONSTROI,
 };
 
 /** Generaliza a checagem "a unidade e serf": cada tipo de tarefa tem UM tipo
@@ -314,6 +318,16 @@ export function criarTarefaDeConstrucao(
 ): { readonly state: GameState; readonly id: string } {
   const numero = state.proximoId;
   const tarefa: TarefaConstruir = { id: `t${numero}`, numero, tipo: 'construir', destino, estado: 'aberta', reclamadaPor: null };
+  return inserirTarefa(state, tarefa);
+}
+
+/** F-CERCO-b — cria uma vaga de REPARO aberta no predio completo `destino`. Irma de
+ *  `criarTarefaDeConstrucao`. */
+export function criarTarefaDeReparo(
+  state: GameState, destino: string,
+): { readonly state: GameState; readonly id: string } {
+  const numero = state.proximoId;
+  const tarefa: TarefaReparar = { id: `t${numero}`, numero, tipo: 'reparar', destino, estado: 'aberta', reclamadaPor: null };
   return inserirTarefa(state, tarefa);
 }
 
@@ -693,9 +707,10 @@ export function caminhoAteAproximacaoDoTile(
 export function caminhoDoLaborer(
   state: GameState, tarefa: TarefaDeLaborer, unidadeId: string, dados: GameData = gameData,
 ): Caminho | null {
-  return ehTarefaDeTile(tarefa)
-    ? caminhoAteOTile(state, tarefa.destinoTile, unidadeId, dados)
-    : caminhoAteAObra(state, tarefa.destino, unidadeId, dados);
+  if (ehTarefaDeTile(tarefa)) return caminhoAteOTile(state, tarefa.destinoTile, unidadeId, dados);
+  // F-CERCO-b: o reparo e na PORTA do predio completo, a mesma do especialista
+  if (ehTarefaDeReparo(tarefa)) return caminhoAtePredioCompleto(state, tarefa.destino, unidadeId, dados);
+  return caminhoAteAObra(state, tarefa.destino, unidadeId, dados);
 }
 
 /**
@@ -852,6 +867,14 @@ export function reclamar(
     if (caminhoAteAproximacaoDoTile(state, tarefa.origemTile, unidadeId, dados) === null) {
       return { ok: false, motivo: 'sem-caminho' };
     }
+  } else if (ehTarefaDeReparo(tarefa)) {
+    // F-CERCO-b: o predio tem de continuar pedindo reparo (ligado e abaixo do total)
+    // e o laborer tem de chegar a porta. O gerador cria so ate o teto de laborers,
+    // entao cada tarefa ja e uma vaga: nao ha conta de vaga aqui.
+    if (!predioReparavel(state, tarefa.destino, dados)) return { ok: false, motivo: 'destino-sem-trabalho' };
+    if (caminhoAtePredioCompleto(state, tarefa.destino, unidadeId, dados) === null) {
+      return { ok: false, motivo: 'sem-caminho' };
+    }
   } else {
     // 'construir': sem mercadoria/origem (o laborer nao carrega nada).
     if (vagaDeConstrucao(state, tarefa.destino, dados) < 1) return { ok: false, motivo: 'destino-sem-vaga' };
@@ -910,12 +933,14 @@ export function removerTarefa(state: GameState, tarefaId: string): GameState {
  */
 export function cancelarConstrucoesDe(
   state: GameState, predioId: string,
+  // F-CERCO-b: o reparo que chega ao teto derruba as irmas do mesmo jeito
+  tipo: 'construir' | 'reparar' = 'construir',
 ): { readonly state: GameState; readonly events: readonly GameEvent[] } {
   let atual = state;
   const events: GameEvent[] = [];
   for (const id of [...state.jobs.tarefas.ordem]) {
     const t = atual.jobs.tarefas.porId[id];
-    if (!t || t.tipo !== 'construir' || t.destino !== predioId) continue;
+    if (!t || t.tipo !== tipo || t.destino !== predioId) continue;
     if (t.estado === 'aberta') {
       atual = removerTarefa(atual, id); // aberta nao reserva nada: nada a liberar, nada a emitir
       continue;
@@ -1049,6 +1074,7 @@ export function tarefasDoLaborerEmOrdem(
       // portao de `reclamar`, aqui so para nem oferecer o tile vazio.
       if (ehTarefaDeAssentamento(t)) return tileDeEstradaTrabalhavel(state, t.destinoTile, dados);
       if (ehTarefaDeAradura(t)) return ehCampoPlanejado(state.camposPlanejados, t.destinoTile);
+      if (ehTarefaDeReparo(t)) return predioReparavel(state, t.destino, dados);
       return obraTrabalhavel(state, t.destino, dados);
     });
   const chaves = new Map(candidatas.map((t) => [

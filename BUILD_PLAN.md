@@ -5082,6 +5082,15 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
   - a mesma corrida duas vezes dá o mesmo estado.
 
 ### F-CERCO-b — Reparo: ligado prédio a prédio, começa desligado (sim)
+- **ENTREGUE (2026-09-28, sessão autônoma; plano em `docs/planos/2026-09-28-A6-F-CERCO-b.md`).**
+  - `PredioCompleto.reparo`: obrigatório e desligado. O save foi à versão 4, com a
+    migração 3 → 4.
+  - Comando `SetBuildingRepair`, tarefa `'reparar'` (só o laborer) e regra em
+    `sim/reparo.ts`.
+  - O gerador cria até `laborersMaximosPorObra`, o mesmo teto da obra.
+  - A martelada é a da obra (`ticksPorMartelada`, `hpPorMartelada`).
+  - Teste: `tests/F-CERCO-b-reparo.test.ts`, com os quatro aceites mais a recusa e a
+    migração.
 - **Origem (decisão do operador, 2026-09-28)**: *"item próprio, logo depois. É o
   contrapeso, e sem ele o ataque fica sem resposta. Ligado prédio a prédio e começa
   desligado, como lá."*

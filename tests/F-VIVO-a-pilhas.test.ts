@@ -27,7 +27,7 @@ function completo(tipo: string, entrada: Record<string, number>, saida: Record<s
   return {
     lado: LADO_DO_JOGADOR, id: 'p1', tipo, gx: 0, gy: 0, hp: 1, estado: 'completo',
     capacidade: { entrada: null, saida: null }, estoque: { entrada, saida },
-    ocupante: null, producao: null, pausado: false,
+    ocupante: null, producao: null, pausado: false, reparo: false,
   };
 }
 

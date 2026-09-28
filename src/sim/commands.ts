@@ -178,4 +178,16 @@ export type Command =
       readonly type: 'AttackBuilding';
       readonly unidades: readonly string[];
       readonly predio: string;
+    }
+  | {
+      /**
+       * F-CERCO-b — liga ou desliga o REPARO do predio `predio` (GDD, "ligar/desligar
+       * reparo"). Nasce desligado. Ligado e danificado, o predio pede laborer no
+       * JobBoard; desligar no meio derruba a tarefa no saneamento do mesmo tick.
+       * `ligado` e o VALOR, como em `SetBuildingPaused`: o mesmo valor e no-op.
+       * Recusado (`command-rejected`) se o predio nao existe ou esta em obra.
+       */
+      readonly type: 'SetBuildingRepair';
+      readonly predio: string;
+      readonly ligado: boolean;
     };

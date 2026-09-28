@@ -170,7 +170,7 @@ export function comArmazemCompleto(
     lado: LADO_DO_JOGADOR, id, tipo: 'storehouse', gx: opcoes.gx, gy: opcoes.gy, estado: 'completo', hp: 0,
     capacidade: { entrada: null, saida: null },
     estoque: { entrada: {}, saida: { stone: opcoes.stone ?? 0, timber: opcoes.timber ?? 0 } },
-    ocupante: null, producao: null, pausado: false,
+    ocupante: null, producao: null, pausado: false, reparo: false,
   };
   return {
     ...estado,

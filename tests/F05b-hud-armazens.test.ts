@@ -25,7 +25,7 @@ function comPedreiraComEstoque(estado: GameState, saida: Record<string, number>)
   const pedreira: PredioCompleto = {
     lado: LADO_DO_JOGADOR, id: 'p99', tipo: 'quarry', gx: 50, gy: 50, estado: 'completo', hp: 250,
     capacidade: { entrada: null, saida: null }, estoque: { entrada: {}, saida },
-    ocupante: null, producao: { progresso: 0, plantio: null }, pausado: false,
+    ocupante: null, producao: { progresso: 0, plantio: null }, pausado: false, reparo: false,
   };
   return { ...estado, predios: { porId: { ...estado.predios.porId, p99: pedreira }, ordem: [...estado.predios.ordem, 'p99'] } };
 }
@@ -55,7 +55,7 @@ describe('estoqueDosArmazens — o seletor', () => {
     const segundo: PredioCompleto = {
       lado: LADO_DO_JOGADOR, id: 'p98', tipo: 'storehouse', gx: 40, gy: 10, estado: 'completo', hp: 0,
       capacidade: { entrada: null, saida: null }, estoque: { entrada: {}, saida: { stone: 5 } },
-      ocupante: null, producao: null, pausado: false,
+      ocupante: null, producao: null, pausado: false, reparo: false,
     };
     const estado = { ...inicial, predios: { porId: { ...inicial.predios.porId, p98: segundo }, ordem: [...inicial.predios.ordem, 'p98'] } };
     expect(estoqueDosArmazens(estado).stone).toBe((estoqueDosArmazens(inicial).stone ?? 0) + 5);

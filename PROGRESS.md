@@ -10481,3 +10481,48 @@ render.
   Fica para quando o inimigo tiver economia (F28-IA).
 - **Unidade de distância é recusada** no `AttackBuilding` até o arqueiro existir (F28).
   O dano de projétil (1) está no dado e sem leitor.
+
+## 2026-09-28 (sessão autônoma, item 6) — F-CERCO-b: o reparo
+
+Plano: `docs/planos/2026-09-28-A6-F-CERCO-b.md`. Só `src/sim/` e testes.
+
+**Verificado:**
+- **`PredioCompleto.reparo: boolean`**, obrigatório, como `pausado`. `completarObra` e a
+  abertura põem `false`.
+- **Save na versão 4.** `migrarDaVersao3` põe `reparo: false` em todo completo, e a 2 passa
+  pela 3 antes. O histórico da versão está no comentário de `save.ts`.
+- **`SetBuildingRepair { predio, ligado }`** (`systems/reparo.ts`). Recusa
+  prédio inexistente e obra. O mesmo valor é no-op.
+- **Regra única em `sim/reparo.ts`** (`predioReparavel`: completo, ligado e abaixo do
+  total). Quem pergunta a ela: gerador, saneamento, claim, ordenação e o verificador de
+  invariantes dos testes.
+- **JobBoard:** a tarefa `'reparar'` é só do laborer, sem carga. O gerador cria até
+  `laborersMaximosPorObra` e poda o excesso como na `construir`. O saneamento derruba a
+  tarefa com `'destino-completo'` quando o prédio deixa de pedir reparo.
+- **Laborer:** `passoIndoReparar` usa a mesma viagem da obra, até a porta do completo.
+  `passoReparando` usa o mesmo ciclo e os mesmos 5 HP. No teto, as tarefas irmãs caem
+  no mesmo tick, como no BUG-001, e `cancelarConstrucoesDe` ganhou o parâmetro de tipo.
+- `tests/F-CERCO-b-reparo.test.ts`, 7 testes, verdes:
+  - (1) desligado, 600 ticks sem martelada;
+  - (2) ligado, com dano 23: subidas `[5, 5, 5, 5, 3]` até o teto. Depois disso, 300 ticks
+    sem tarefa, e as invariantes valem a cada tick;
+  - (3) desligar depois da primeira martelada libera todas as reclamadas no mesmo tick,
+    os laborers ficam `ocioso` e o hp para;
+  - (4) sem dano e ligado, nenhuma tarefa em 100 ticks;
+  - a recusa deixa o estado igual byte a byte, e a migração da v3 também.
+- `tests/F-CERCO-a1-lado.test.ts`: o save "v2" sintético agora também não tem `reparo`,
+  e a versão é afirmada como `>= 3`. Não tirei asserção nenhuma. `tests/F11c-laborer`
+  ganhou o campo no `toEqual`. 11 fixtures de teste ganharam `reparo: false` ao lado de
+  `pausado: false`.
+- **Sondas** (restauradas):
+  - `predioReparavel` ignorando o `ligado`: (1) e (3) reprovam;
+  - martelada de 6: (2) e (3) reprovam.
+
+**PARA REVISÃO:**
+- **Teto de laborers por reparo = o da obra** (4). Com 2 laborers na abertura, os dois
+  vão.
+- **O reparo não gasta material.** No KaM também não.
+- **O botão de ligar no painel do prédio é item de UI à parte**, pela §10. Sem ele, o
+  jogador não liga o reparo pela tela.
+- **Achado:** a obra atacada (F-CERCO-a2) é martelada pela `construir`, não pela
+  `reparar`, porque é obra. Só o completo usa o reparo.

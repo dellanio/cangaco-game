@@ -159,7 +159,7 @@ describe('F10 — sanearTarefas sobre uma tarefa carregando: so olha unidade, de
     const completo: PredioCompleto = {
       lado: LADO_DO_JOGADOR, id: 'obra-a', tipo: 'quarry', gx: 26, gy: 34, estado: 'completo', hp: 250,
       capacidade: { entrada: 5, saida: 5 }, estoque: { entrada: {}, saida: {} },
-      ocupante: null, producao: { progresso: 0, plantio: null }, pausado: false,
+      ocupante: null, producao: { progresso: 0, plantio: null }, pausado: false, reparo: false,
     };
     const estado = comUmaCarregando();
     const depois = tickDoQuadro({ ...estado, predios: { ...estado.predios, porId: { ...estado.predios.porId, 'obra-a': completo } } });

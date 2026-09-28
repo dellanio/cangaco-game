@@ -248,6 +248,9 @@
   "F-CERCO-a2-ataque": {
     "passes": true
   },
+  "F-CERCO-b-reparo": {
+    "passes": true
+  },
   "F-TR-a-textura-e-transicao": {
     "passes": true
   },

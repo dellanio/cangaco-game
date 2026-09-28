@@ -41,8 +41,11 @@ import { gameData } from './data';
  *    jogador em todo predio e toda unidade (decisao do operador, 2026-09-28 — recusa
  *    com mensagem e para dado corrompido, nao para versao anterior do proprio jogo).
  *    A versao 1 continua recusada: e anterior a F23b, nao ha save dela em disco.
+ * - 4: F-CERCO-b. `PredioCompleto.reparo` nasceu, obrigatorio e desligado. A versao 3
+ *    e migrada (`migrarDaVersao3`: `reparo: false` em todo completo), e a 2 passa
+ *    pela 3 antes — cada migracao conhece so a versao seguinte.
  */
-export const VERSAO_DO_SAVE = 3;
+export const VERSAO_DO_SAVE = 4;
 
 export interface Save {
   readonly versao: number;
@@ -122,7 +125,21 @@ function migrarDaVersao2(estado: GameState): GameState {
   return { ...estado, predios: comLado(estado.predios), unidades: comLado(estado.unidades) };
 }
 
-/** Versao antiga que ainda se le, e o passo que a traz para `VERSAO_DO_SAVE`. */
+/** Versao 3 -> 4 (F-CERCO-b): o reparo nasce desligado, e numa partida anterior a ele
+ *  nenhum predio o tinha ligado. So o COMPLETO ganha o campo — obra nao tem reparo. O
+ *  campo entra por ultimo, a ordem de `completarObra`: o save migrado sai byte a byte
+ *  igual ao de uma partida nova. */
+function migrarDaVersao3(estado: GameState): GameState {
+  const porId = Object.fromEntries(Object.entries(estado.predios.porId).map(([id, p]) => {
+    if (p.estado !== 'completo' || 'reparo' in p) return [id, p];
+    return [id, { ...(p as Omit<typeof p, 'reparo'>), reparo: false }];
+  }));
+  return { ...estado, predios: { ...estado.predios, porId } };
+}
+
+/** Versao antiga que ainda se le, e o passo que a traz para `VERSAO_DO_SAVE`. A 2 passa
+ *  pela 3: cada migracao conhece so a versao seguinte. */
 const MIGRACOES: Readonly<Record<string, (estado: GameState) => GameState>> = {
-  '2': migrarDaVersao2,
+  '2': (estado) => migrarDaVersao3(migrarDaVersao2(estado)),
+  '3': migrarDaVersao3,
 };

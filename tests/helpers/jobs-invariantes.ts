@@ -19,6 +19,7 @@ import { ehCampoPlanejado } from '../../src/sim/campos';
 import { insumosDoPredio } from '../../src/sim/insumo';
 import { receitaDoTipo, unidadesPorCiclo } from '../../src/sim/producao';
 import { ehPredioOcupavel } from '../../src/sim/ocupacao';
+import { predioReparavel } from '../../src/sim/reparo';
 import { demandaDoTile, disponivelNaOrigem, vagaNoDestino } from '../../src/sim/reservas';
 import {
   ehTarefaDeAradura, ehTarefaDeAssentamento, ehTarefaDeColheita, ehTarefaDePedraParaCanteiro, ID_DO_ARMAZEM,
@@ -78,6 +79,10 @@ function violacoesDoDestino(estado: GameState, t: Tarefa, dados: GameData): stri
     case 'material-para-obra':
     case 'construir':
       return !destino || destino.estado !== 'obra' ? [`${t.id}: destino '${t.destino}' nao e obra`] : [];
+    // F-CERCO-b: o destino PEDE reparo (completo, ligado, abaixo do total) — o mesmo
+    // predicado do gerador e do saneamento, nao uma copia da regra.
+    case 'reparar':
+      return predioReparavel(estado, t.destino, dados) ? [] : [`${t.id}: destino '${t.destino}' nao pede reparo`];
     case 'ouro-para-escola':
       return !ehEscolaCompleta(destino) ? [`${t.id}: destino '${t.destino}' nao e escola completa`] : [];
     // F20a, nivel 1: o destino e uma Bodega completa, e a mercadoria e comida.

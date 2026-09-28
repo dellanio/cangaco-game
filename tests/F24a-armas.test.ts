@@ -278,7 +278,7 @@ describe('F24a — dado', () => {
         lado: LADO_DO_JOGADOR, id: 'p1', tipo, gx: 0, gy: 0, hp: 1, estado: 'completo',
         capacidade: { entrada: null, saida: null },
         estoque: { entrada: {}, saida: Object.fromEntries(sai.map((m) => [m, 1])) },
-        ocupante: null, producao: null, pausado: false,
+        ocupante: null, producao: null, pausado: false, reparo: false,
       };
       expect(mercadoriasDoEstoque(predio, dados.contexto).saida.map(([m]) => m).sort()).toEqual([...sai].sort());
       porTipo[tipo] = pilhasDoPredio(predio, dados).filter((p) => p.gaveta === 'saida').map((p) => p.mercadoria);

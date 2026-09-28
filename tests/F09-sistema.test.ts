@@ -128,7 +128,7 @@ describe('F09 — release em TODO ramo de falha: um teste por ramo, as duas rese
     const completo: PredioCompleto = {
       lado: LADO_DO_JOGADOR, id: 'obra-a', tipo: 'quarry', ...naVila(-3, 4), estado: 'completo', hp: 250,
       capacidade: { entrada: 5, saida: 5 }, estoque: { entrada: {}, saida: {} },
-      ocupante: null, producao: { progresso: 0, plantio: null }, pausado: false,
+      ocupante: null, producao: { progresso: 0, plantio: null }, pausado: false, reparo: false,
     };
     const depois = step({ ...estado, predios: { ...estado.predios, porId: { ...estado.predios.porId, 'obra-a': completo } } }, []);
     expect(liberacoes(depois)).toEqual([{ type: 'task-released', tarefa, motivo: 'destino-completo', resultado: 'cancelada' }]);

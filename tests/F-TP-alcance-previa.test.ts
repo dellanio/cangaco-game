@@ -46,7 +46,7 @@ function predioEm(tipo: string, gx: number, gy: number): PredioCompleto {
   return {
     lado: LADO_DO_JOGADOR, id: `p-${gx}-${gy}`, tipo, gx, gy, hp: 1, estado: 'completo',
     capacidade: { entrada: null, saida: null }, estoque: { entrada: {}, saida: {} },
-    ocupante: null, producao: null, pausado: false,
+    ocupante: null, producao: null, pausado: false, reparo: false,
   };
 }
 

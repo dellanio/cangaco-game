@@ -27,10 +27,10 @@
  */
 import type {
   GameEvent, GameState, PredioEmObra, TarefaArar, TarefaAssentarEstrada, TarefaConstruir, TarefaDeLaborer,
-  Unidade,
+  TarefaReparar, Unidade,
 } from '../state';
 import {
-  completarObra, ehTarefaDeAradura, ehTarefaDeAssentamento, ehTarefaDeLaborer, ehTarefaDeTile,
+  completarObra, ehTarefaDeAradura, ehTarefaDeAssentamento, ehTarefaDeLaborer, ehTarefaDeReparo, ehTarefaDeTile,
 } from '../state';
 import { comOTileAssentado, pedraNoTile, tileDeEstradaTrabalhavel } from '../estradas';
 import { comOTileArado } from '../campos';
@@ -119,6 +119,7 @@ function passoIndoAObra(state: GameState, u: Unidade, dados: GameData): Passo {
   const tarefa = tarefaDoLaborer(state, u);
   if (tarefa === null) return ficarOcioso(state, u); // o quadro a cancelou (destino sumiu/completou)
   if (ehTarefaDeTile(tarefa)) return passoIndoAoTile(state, u, tarefa, dados);
+  if (ehTarefaDeReparo(tarefa)) return passoIndoReparar(state, u, tarefa, dados);
   const obra = obraDaTarefa(state, tarefa);
   if (obra === null) return ficarOcioso(state, u); // outro laborer completou a obra neste tick
 
@@ -186,7 +187,7 @@ function passoNivelando(state: GameState, u: Unidade, dados: GameData): Passo {
   const tarefa = tarefaDoLaborer(state, u);
   // tarefa de TILE nunca passa por aqui (nivelar e esperar material sao da OBRA); o
   // `if` e o que deixa isso dito, e nao suposto.
-  if (tarefa === null || ehTarefaDeTile(tarefa)) return ficarOcioso(state, u);
+  if (tarefa === null || ehTarefaDeTile(tarefa) || ehTarefaDeReparo(tarefa)) return ficarOcioso(state, u);
   const obra = obraDaTarefa(state, tarefa);
   if (obra === null) return ficarOcioso(state, u);
 
@@ -206,7 +207,8 @@ function passoEsperandoMaterial(state: GameState, u: Unidade, dados: GameData): 
   if (ehTarefaDeAssentamento(tarefa)) return reavaliarNoTile(state, u, tarefa, dados);
   // a aradura nunca passa por aqui (nao ha material a esperar); o `if` e o que
   // deixa isso dito, e nao suposto.
-  if (ehTarefaDeTile(tarefa)) return ficarOcioso(state, u);
+  // o reparo tambem nao espera material (nao gasta nenhum)
+  if (ehTarefaDeTile(tarefa) || ehTarefaDeReparo(tarefa)) return ficarOcioso(state, u);
   const obra = obraDaTarefa(state, tarefa);
   if (obra === null) return ficarOcioso(state, u);
 
@@ -227,6 +229,7 @@ function passoMartelando(state: GameState, u: Unidade, dados: GameData): Passo {
   if (tarefa === null) return ficarOcioso(state, u);
   if (ehTarefaDeAssentamento(tarefa)) return passoAssentando(state, u, tarefa, dados);
   if (ehTarefaDeAradura(tarefa)) return passoArando(state, u, tarefa, dados);
+  if (ehTarefaDeReparo(tarefa)) return passoReparando(state, u, tarefa, dados);
   const obra = obraDaTarefa(state, tarefa);
   if (obra === null) return ficarOcioso(state, u);
 
@@ -322,6 +325,50 @@ function passoArando(
     return ficarOcioso(l.state, u, l.events);
   }
   return semEventos(comUnidade(removerTarefa(arado, tarefa.id), ocioso(u)));
+}
+
+/**
+ * F-CERCO-b — a viagem ate a porta do predio a reparar. E a MESMA viagem da obra
+ * (`avancar`, que replaneja por `caminhoDoLaborer`); ao chegar, martela direto: o
+ * predio completo nao tem nivelamento nem material a esperar. Se o predio deixou de
+ * pedir reparo no caminho, o saneamento do tick ja derrubou a tarefa e o laborer
+ * nem chega aqui (`tarefaDoLaborer === null`).
+ */
+function passoIndoReparar(state: GameState, u: Unidade, tarefa: TarefaReparar, dados: GameData): Passo {
+  const passo = avancar(state, u, tarefa, dados);
+  if (passo === null) {
+    const l = liberarTarefa(state, tarefa.id, 'pedido-da-unidade'); // so a UNIDADE nao chega: reabre
+    return ficarOcioso(l.state, u, l.events);
+  }
+  if (!passo.chegou) return semEventos(comUnidade(state, passo.u));
+  return semEventos(comUnidade(state, {
+    ...passo.u, fsm: 'martelando', fsmData: dadosDaFsm({ tarefa: tarefa.id, progresso: 0 }),
+  }));
+}
+
+/**
+ * F-CERCO-b — uma martelada de reparo: o MESMO ciclo e o MESMO ganho da obra
+ * (`construcao.ticksPorMartelada`, `construcao.hpPorMartelada` — 5 HP, o numero do
+ * KaM, `KM_UnitTaskBuild.pas:995-1001`). No teto do tipo a tarefa sai, as irmas saem
+ * no MESMO tick (o molde do BUG-001) e o laborer volta a `ocioso`.
+ */
+function passoReparando(state: GameState, u: Unidade, tarefa: TarefaReparar, dados: GameData): Passo {
+  const predio = state.predios.porId[tarefa.destino];
+  // outro laborer, mais cedo neste tick, levou ao teto: a tarefa deste ja caiu com as irmas
+  if (predio === undefined || predio.estado !== 'completo') return ficarOcioso(state, u);
+  const progresso = (u.fsmData.progresso ?? 0) + 1;
+  if (progresso < dados.construcao.ticksPorMartelada) {
+    return semEventos(comUnidade(state, { ...u, fsmData: dadosDaFsm({ tarefa: tarefa.id, progresso }) }));
+  }
+  const hpTotal = hpTotalDoTipo(predio.tipo, dados);
+  const hp = Math.min(predio.hp + dados.construcao.hpPorMartelada, hpTotal);
+  const reparado = comPredio(state, { ...predio, hp });
+  if (hp < hpTotal) {
+    return semEventos(comUnidade(reparado, { ...u, fsmData: dadosDaFsm({ tarefa: tarefa.id, progresso: 0 }) }));
+  }
+  const semATarefa = removerTarefa(reparado, tarefa.id);
+  const irmas = cancelarConstrucoesDe(semATarefa, predio.id, 'reparar');
+  return { state: comUnidade(semOsOrfaos(irmas.state, u.id), ocioso(u)), events: irmas.events };
 }
 
 /**

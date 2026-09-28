@@ -16,6 +16,7 @@ import type { MotivoDeRecusaDeTreino } from './escola';
 import type { MotivoDeRecusaDePausa } from './pausa';
 import type { MotivoDeRecusaDeCota } from './cota';
 import type { MotivoDeRecusaDeModo } from './modo';
+import type { MotivoDeRecusaDeReparo } from './reparo';
 // F-T2a: a camada de recurso nasce do MAPA, e quem sabe ler o mapa e
 // `sim/recursos.ts`. Import de valor (nao de tipo) e o unico deste arquivo alem
 // do RNG e do dado — `createInitialState` e o lugar certo para ele.
@@ -103,6 +104,13 @@ export type GameEvent =
       readonly command: 'SetProductionQuota';
       readonly predio: string;
       readonly motivo: MotivoDeRecusaDeCota;
+    }
+  | {
+      /** F-CERCO-b — `SetBuildingRepair` recusado; o estado nao mudou. */
+      readonly type: 'command-rejected';
+      readonly command: 'SetBuildingRepair';
+      readonly predio: string;
+      readonly motivo: MotivoDeRecusaDeReparo;
     }
   | {
       /** F-CERCO-a2 — `AttackBuilding` recusado INTEIRO; o estado nao mudou. `unidade`
@@ -361,6 +369,15 @@ export interface PredioCompleto extends PredioBase {
    * compoe deste campo mais o ocupante, uma fonte de verdade so.
    */
   readonly pausado: boolean;
+  /**
+   * F-CERCO-b — o jogador ligou o REPARO deste predio (`SetBuildingRepair`). Ligado e
+   * com `hp` abaixo do total do tipo, o predio pede laborer no JobBoard (`'reparar'`),
+   * e cada martelada devolve `construcao.hpPorMartelada` (a MESMA da obra).
+   *
+   * Nasce DESLIGADO, como no KaM para o jogador humano (`KM_Houses.pas:532`,
+   * `:1307-1308`), e ligado predio a predio. SEMPRE presente, como `pausado`.
+   */
+  readonly reparo: boolean;
 }
 
 /**
@@ -704,6 +721,18 @@ export interface TarefaConstruir extends TarefaBase {
 }
 
 /**
+ * F-CERCO-b — uma vaga de REPARO num predio COMPLETO com `reparo` ligado e `hp` abaixo
+ * do total. Molde da `TarefaConstruir`: so o laborer, sem carga, sem origem, sem
+ * `'carregando'`. O reparo nao gasta material (no KaM tambem nao).
+ */
+export interface TarefaReparar extends TarefaBase {
+  readonly tipo: 'reparar';
+  readonly estado: 'aberta' | 'reclamada';
+  /** Id do predio completo a reparar. */
+  readonly destino: string;
+}
+
+/**
  * CONTRATO HERDADO (F10, F11b, F11c, F13, F15) — uma unidade de trabalho do
  * JobBoard. Uniao discriminada por `tipo`, no molde de `Predio` (F07): uma
  * tarefa de construir com `mercadoria`, ou uma de material sem `origem`, NAO
@@ -892,7 +921,7 @@ export interface TarefaComer extends TarefaBase {
 
 export type Tarefa =
   TarefaDeTransporte | TarefaConstruir | TarefaOcupar | TarefaAssentarEstrada | TarefaColher
-  | TarefaComer | TarefaArar | TarefaPedraParaCanteiro;
+  | TarefaComer | TarefaArar | TarefaPedraParaCanteiro | TarefaReparar;
 
 /**
  * O tipo da tarefa, DERIVADO da uniao: acrescentar um produtor novo (F15, F20)
@@ -995,10 +1024,15 @@ export function ehTarefaDeColheita(tarefa: Tarefa): tarefa is TarefaColher {
 /** As tarefas que SO o laborer reclama (`UNIDADE_ELEGIVEL_POR_TIPO`): construir e
  *  assentar. Nao e a negacao de `ehTarefaDeTransporte` — `'ocupar'` tambem nao e
  *  carga, e nao e do laborer. */
-export type TarefaDeLaborer = TarefaConstruir | TarefaAssentarEstrada | TarefaArar;
+export type TarefaDeLaborer = TarefaConstruir | TarefaAssentarEstrada | TarefaArar | TarefaReparar;
 
 export function ehTarefaDeLaborer(tarefa: Tarefa): tarefa is TarefaDeLaborer {
-  return tarefa.tipo === 'construir' || ehTarefaDeTile(tarefa);
+  return tarefa.tipo === 'construir' || tarefa.tipo === 'reparar' || ehTarefaDeTile(tarefa);
+}
+
+/** F-CERCO-b — pelo TIPO, como as irmas. */
+export function ehTarefaDeReparo(tarefa: Tarefa): tarefa is TarefaReparar {
+  return tarefa.tipo === 'reparar';
 }
 
 /** A central de tarefas. Serializavel: so `Colecao` de objetos planos. */
@@ -1299,6 +1333,7 @@ export function completarObra(predio: PredioEmObra, dados: GameData = gameData):
     ocupante: null,
     producao: producaoParaTipo(predio.tipo, dados),
     pausado: false,
+    reparo: false,
   };
 }
 
@@ -1333,6 +1368,7 @@ function criarPredios(
       ocupante: null,
       producao: producaoParaTipo(p.id, dados),
       pausado: false,
+      reparo: false,
     });
   }
   return { predios: construirColecao(lista), proximoContador: contador };

@@ -25,7 +25,7 @@ import { armazensCompletos, chaveDeTile, ehPlanejada, MERCADORIA_DA_ESTRADA, til
 import type { TileDeGrid } from '../estradas';
 import { ehCampoPlanejado, tilesPlanejadosParaArar } from '../campos';
 import {
-  criarTarefa, criarTarefaComer, criarTarefaDeAradura, criarTarefaDeAssentamento, criarTarefaDeConstrucao,
+  criarTarefa, criarTarefaComer, criarTarefaDeAradura, criarTarefaDeAssentamento, criarTarefaDeConstrucao, criarTarefaDeReparo,
   criarTarefaDeComida, criarTarefaDeInsumo, criarTarefaDeOcupacao, criarTarefaDeOuro,
   criarTarefaDePedraParaCanteiro, criarTarefaParaArmazem,
   distanciaDaTarefa, liberar, ligacaoEntrePredioETile, ligacaoEntrePredios,
@@ -44,6 +44,7 @@ import { ehEscolaCompleta, ouroNecessario } from '../escola';
 import { comidaNecessaria, comidasConhecidas, ehBodegaCompleta, temComidaNaBodega } from '../bodega';
 import { receitaDoTipo } from '../producao';
 import { ehPredioOcupavel, vagasDoPredio } from '../ocupacao';
+import { predioReparavel } from '../reparo';
 
 export interface ResultadoDeSistema {
   readonly state: GameState;
@@ -94,6 +95,11 @@ function motivoDoDestino(state: GameState, t: Tarefa, dados: GameData): MotivoDe
     case 'material-para-obra':
     case 'construir':
       return ehObra(destino) ? null : 'destino-completo';
+    // F-CERCO-b — o reparo vale enquanto o predio pede: completo, LIGADO e abaixo do
+    // total. Desligado no meio ou reparado ate o teto, cai (`'destino-completo'` nao
+    // reabre), e o laborer volta a `ocioso` no proprio passo.
+    case 'reparar':
+      return predioReparavel(state, destino.id, dados) ? null : 'destino-completo';
     // F20a — nivel 1: a Bodega demolida (ou replantada, ou ainda em obra) nao
     // recebe comida. `ehBodegaCompleta` e o mesmo predicado do gerador.
     case 'comida-para-inn':
@@ -329,8 +335,9 @@ export function sanearTarefas(state: GameState, dados: GameData = gameData): Res
     if (ehTarefaDeTransporte(t)) {
       const { teto, existentes } = grupoDeAbertas(atual, t, dados);
       if (existentes > teto) atual = cancelarAberta(atual, t.id);
-    } else if (t.tipo === 'construir') {
-      const existentes = tarefasPorNumero(atual).filter((o) => o.tipo === 'construir' && o.destino === t.destino).length;
+    } else if (t.tipo === 'construir' || t.tipo === 'reparar') {
+      // F-CERCO-b: o reparo tem o MESMO teto da obra, por predio e por tipo de tarefa
+      const existentes = tarefasPorNumero(atual).filter((o) => o.tipo === t.tipo && o.destino === t.destino).length;
       if (existentes > dados.construcao.laborersMaximosPorObra) atual = cancelarAberta(atual, t.id);
     } else if (ehTarefaDeAssentamento(t)) {
       // F18d-1b: um tile planejado comporta UMA tarefa. Duas assentariam a mesma
@@ -722,6 +729,24 @@ function gerarTarefasDePedraParaCanteiro(state: GameState, dados: GameData): Gam
 }
 
 /**
+ * F-CERCO-b — o reparo: todo predio completo que pede reparo (`predioReparavel`:
+ * ligado e abaixo do total) ganha vagas ate `construcao.laborersMaximosPorObra`, o
+ * MESMO teto da obra — nenhum numero novo. Sem armazem e sem estrada: o laborer nao
+ * carrega nada, como na `'construir'`.
+ */
+function gerarTarefasDeReparo(state: GameState, dados: GameData): GameState {
+  let atual = state;
+  for (const id of state.predios.ordem) {
+    if (!predioReparavel(atual, id, dados)) continue;
+    const existentes = tarefasPorNumero(atual).filter((t) => t.tipo === 'reparar' && t.destino === id).length;
+    for (let i = existentes; i < dados.construcao.laborersMaximosPorObra; i++) {
+      atual = criarTarefaDeReparo(atual, id).state;
+    }
+  }
+  return atual;
+}
+
+/**
  * F18h — o mesmo remendo, para o canteiro do campo. Aqui ele nao cobre buraco de
  * pagador (nao ha material a pagar): ele cobre o tile cuja tarefa CAIU — o laborer
  * morreu com ela e o cancelamento a apagou, um save antigo trouxe canteiro sem
@@ -782,6 +807,7 @@ export function gerarTarefas(state: GameState, dados: GameData = gameData): Game
   atual = gerarTarefasDePedraParaCanteiro(atual, dados);
   atual = gerarTarefasDeAssentamento(atual);
   atual = gerarTarefasDeAradura(atual);
+  atual = gerarTarefasDeReparo(atual, dados);
   // F14 por ultimo, e sobre PREDIOS COMPLETOS — o laco acima so olha obra. Uma
   // obra que o laborer completou neste tick ja entra aqui e ganha a vaga de
   // ocupante no mesmo tick; o especialista a reclama no tick seguinte.
