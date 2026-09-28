@@ -1199,8 +1199,11 @@ export class WorldScene extends Phaser.Scene {
     const sprite = this.spriteDoPredio(predio.tipo, estagio);
     // F17g: com revelacao, madeira embaixo e pedra (o `completo`) por cima.
     const par = revelacao === null ? null : this.parDeRevelacao(predio.tipo);
+    // BUG-M: o lote vai por baixo do corpo revelado. Sem ele, a obra de poucas
+    // marteladas e so o medidor no gramado, sem dizer quanto chao vai ocupar.
     const corpo = revelacao !== null && par !== null
       ? [
+        this.desenharLote(estagio, larguraPx, alturaPx),
         ...this.desenharRevelado(par.madeira, revelacao.madeira, larguraPx, alturaPx),
         ...this.desenharRevelado(par.pedra, revelacao.pedra, larguraPx, alturaPx),
       ]
@@ -1370,6 +1373,16 @@ export class WorldScene extends Phaser.Scene {
    *  uma silhueta propria — contorno vazado sempre, volume em tres patamares de
    *  altura e uma cor por camada. Continua sendo o desenho de 27 dos 28 predios,
    *  e continua NAO sendo falha. */
+  /** O contorno do footprint, vazado: do placeholder e, desde o BUG-M, tambem por
+   *  baixo da obra revelada. */
+  private desenharLote(
+    estagio: EstagioDaObra, larguraPx: number, alturaPx: number,
+  ): Phaser.GameObjects.Rectangle {
+    const lote = this.add.rectangle(larguraPx / 2, alturaPx / 2, larguraPx, alturaPx, CARA_DO_ESTAGIO[estagio].cor, 0);
+    lote.setStrokeStyle(2, estaEmObra(estagio) ? 0xede3d0 : 0x2c1d12);
+    return lote;
+  }
+
   private desenharPlaceholder(
     estagio: EstagioDaObra, nome: string, larguraPx: number, alturaPx: number,
   ): Phaser.GameObjects.GameObject[] {
@@ -1379,9 +1392,7 @@ export class WorldScene extends Phaser.Scene {
 
     // O lote, sempre: e o que diz ao jogador quanto chao a obra vai ocupar,
     // inclusive quando ainda nao ha volume nenhum em cima dele.
-    const lote = this.add.rectangle(larguraPx / 2, alturaPx / 2, larguraPx, alturaPx, cara.cor, 0);
-    lote.setStrokeStyle(2, emObra ? 0xede3d0 : 0x2c1d12);
-    objetos.push(lote);
+    objetos.push(this.desenharLote(estagio, larguraPx, alturaPx));
 
     // O volume, ancorado no PE do footprint: a obra sobe do chao para cima, e nao
     // cresce a partir do meio.

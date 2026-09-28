@@ -9907,3 +9907,35 @@ Aplicado (verificado com `npm run verify` verde e `validate:data`):
   névoa, como no KaM — divergência deliberada do GDD §6.5, registrada no item.
 - Toquei `src/sim/data/{types,loader}.ts` (forma do dado pedida pelo operador); nenhum
   sistema lê `ataqueAPredio` ainda (a F-CERCO-a é quem lê).
+
+## 2026-09-28 (noite, fila 1) — a arte nova na tela: roteiros, BUGS.md revisado
+
+Plano: `docs/planos/2026-09-28-1-arte-nova-na-tela.md`.
+
+**Medido:** os 49 roteiros de `tools/shots/` rodaram em série. Reprovaram 7; re-rodados
+sem tocar `src/` durante a corrida:
+- **artefato da sessão** (a página recarregou porque editei `.ts` com o laço rodando):
+  F17, F17g, F18f — verdes na segunda corrida, sem mudança.
+- **F11c (BUG-M), consertado:** o lote do placeholder passa a ser desenhado por baixo do
+  corpo revelado (`WorldScene.desenharLote`); o roteiro lê a estrutura de madeira pelo
+  canal da F17g (`revelacaoDasObras`: madeira > 0, pedra = 0), afirma pelo manifesto que a
+  pedreira tem arte e mantém `obrasRenderizadas === 1`. Mais estrito, não mais frouxo.
+- **F22, regressão da arte, consertada:** `c9b52b3` (chore(art)) acrescentou
+  `#faixa-alertas { display: none; }` ao `estilo.css` — o aviso da F22 sumia para sempre.
+  Linha removida; F22 e UI-barra-a verdes; `screenshots/F22-2-sem-trabalhador.png` aberta:
+  "Sem quem trabalhe 1" na faixa da barra. **PARA REVISÃO:** se o operador escondeu a faixa
+  de propósito no novo visual, a decisão contradiz o aceite da F22 e precisa ir para lá.
+- **F17e e F17f — PARADOS, premissa de REGRA:** os seis estágios do fallback e o
+  "prédio sem arte vira retângulo" só existem para prédio sem arte, e os 28 do manifesto
+  têm arte. Os roteiros não foram mexidos. Ver Perguntas em aberto abaixo.
+
+**BUGS.md:** BUG-O saiu (fechado pela F-CAMPO). BUG-H saiu: o armazém foi refeito em
+vista frontal (manifesto; o armazém aparece de frente em `F22-2-sem-trabalhador.png`).
+BUG-M atualizado (o defeito de tela corrigido; F17e/F17f vermelhos pela regra). BUG-N
+conferido: continua valendo (`render/mapa.ts` `codigoDoRecurso`, `grapes` sem `terreno`).
+
+### Perguntas em aberto
+- **F17e/F17f:** aposentar os roteiros do fallback (a regra está coberta pelos testes
+  headless do placeholder?) ou exercitá-los com um prédio cuja arte some só no roteiro
+  (manifesto filtrado na página)? Conservador desta sessão: nenhum dos dois; ficam
+  vermelhos e registrados em BUG-M.

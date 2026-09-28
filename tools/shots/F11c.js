@@ -25,6 +25,8 @@ const { predios } = require('../../data/buildings.json');
 
 const TILE_PX = 64;
 const defDe = (id) => predios.find((p) => p.id === id);
+const { assets } = require('../../assets/manifest.json');
+const temArte = (id) => assets.some((e) => e.id === id);
 
 async function roteiro(ctx) {
   const { page, capturar, estado, afirmar } = ctx;
@@ -129,17 +131,28 @@ async function roteiro(ctx) {
   await page.keyboard.press('Escape');
   await centrarEm(pedreira.gx + largQu);
 
-  // 3. avanca ate o laborer martelar o primeiro golpe: hp sai de 0, estagio ESTRUTURA.
-  // F17e: a primeira martelada cai em ESTRUTURA, e nao mais no generico 'madeira' —
-  // 250 de HP na pedreira poem a fronteira estrutura/paredes em 83.
+  // 3. avanca ate o laborer martelar o primeiro golpe: hp sai de 0, a ESTRUTURA DE
+  // MADEIRA aparece. Desde a F17g (e o lote de arte que deu PNG a pedreira), a
+  // estrutura de um predio com arte e a REVELACAO da imagem de madeira, nao o estagio
+  // 'estrutura' do fallback: a obra sai de `estagiosDeObraRenderizados` e entra em
+  // `revelacaoDasObras` (BUG-M, 2026-09-28). A leitura continua estrita: madeira
+  // subindo, pedra ainda nada, e nenhuma obra no fallback.
   // Horizonte generoso: nivelar (60 ticks / 2 laborers) + caminhada + a primeira entrega.
+  afirmar(temArte('quarry'), 'este roteiro assume a pedreira com arte (revelacao da F17g)');
   s = await ate(
-    (e) => e.estagiosDeObraRenderizados.estrutura === 1,
-    10, 60, 'a obra deveria passar a ESTRUTURA (primeira martelada)',
+    (e) => Object.values(e.revelacaoDasObras).some((r) => r.madeira[0] > 0),
+    10, 60, 'a obra deveria passar a ESTRUTURA DE MADEIRA (primeira martelada revela a madeira)',
   );
+  {
+    const revs = Object.values(s.revelacaoDasObras);
+    afirmar(
+      revs.length === 1 && revs[0].madeira[0] > 0 && revs[0].pedra[0] === 0,
+      `no primeiro terco a obra deveria revelar so madeira, veio ${JSON.stringify(s.revelacaoDasObras)}`,
+    );
+  }
   afirmar(
-    so(s.estagiosDeObraRenderizados, { estrutura: 1, completo: 2 }),
-    `com hp>0 e no primeiro terco a obra deveria contar como 'estrutura', veio ${JSON.stringify(s.estagiosDeObraRenderizados)}`,
+    so(s.estagiosDeObraRenderizados, { completo: 2 }),
+    `a obra revelada nao conta no fallback; so os 2 predios de pe, veio ${JSON.stringify(s.estagiosDeObraRenderizados)}`,
   );
   afirmar(s.obrasRenderizadas === 1, `a obra em estrutura ainda e 'obra' (nao completou), veio ${s.obrasRenderizadas}`);
   await capturar('estrutura');

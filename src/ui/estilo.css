@@ -299,7 +299,6 @@ button[aria-disabled="true"] {
   border: 2px solid var(--terra-queimada);
   box-shadow: inset 0 0 0 2px rgba(255, 244, 211, 0.38);
 }
-#faixa-alertas { display: none; }
 /* Com a grade, o pe do corpo e do cartao sticky: rolar ate um icone (foco pelo
    Tab, scrollIntoView) tem de parar ACIMA dele, nao por baixo. A altura compacta
    e estavel impede que o cartao cresca sobre o ultimo icone durante o hover;
