@@ -15,7 +15,7 @@ import type { GameData } from '../src/sim/data/types';
 import { createInitialState, LADO_DO_JOGADOR } from '../src/sim/state';
 import type { GameState, Unidade } from '../src/sim/state';
 import { andar, comUnidade } from '../src/sim/units/movimento';
-import { POSICAO_DO_ESTADO, sistemaDoEmpurrao } from '../src/sim/colisao';
+import { POSICAO_DO_ESTADO, sistemaDaPorta, sistemaDoEmpurrao } from '../src/sim/colisao';
 import { tileAndavel } from '../src/sim/pathfinding';
 import { condicaoCheiaDoTipo } from '../src/sim/condicao';
 import { salvar } from '../src/sim/save';
@@ -202,7 +202,7 @@ describe('D1a — a colisao civil', () => {
     const r = correr(s0, todosChegaram);
     expect(r.violacoes).toEqual([]);
     expect(em(r.s, 'w')).toEqual(tiles[5]);
-    expect(r.s.unidades.porId['w']?.fsmData.trocaCom).toBe('x');
+    expect(r.s.unidades.porId['w']?.trocaCom).toBe('x');
   });
 
   it('sem a troca forcada, a invariante acusa o bloqueado para sempre', () => {
@@ -223,7 +223,7 @@ describe('D1a — a colisao civil', () => {
     for (let t = 0; t < 400 && !todosChegaram(x); t += 1) {
       x = tickDeMovimento(x, gameData);
       empilhou ||= em(x, 'a').gx === em(x, 'b').gx;
-      expect(salvar(x)).not.toMatch(/bloqueado|trocaCom/);
+      expect(salvar(x)).not.toMatch(/bloqueado|trocaCom|saindo/);
     }
     expect(todosChegaram(x)).toBe(true);
     expect(empilhou).toBe(true);
@@ -241,5 +241,88 @@ describe('D1a — a colisao civil', () => {
       return correr(comUnidades(s, us), todosChegaram).s;
     };
     expect(salvar(montar())).toBe(salvar(montar()));
+  });
+
+  // ---------- D1a-2: o empilhamento de fora do passo ----------
+  describe('D1a-2 — o empilhamento que nasce fora do passo', () => {
+    it('dois ociosos empilhados: o segundo e empurrado no tick seguinte, e a invariante fica limpa', () => {
+      const { s, tiles } = rua(6);
+      const s0 = comUnidades(s, [civil('a', tiles[2] as Tile, 'ocioso'), civil('b', tiles[2] as Tile, 'ocioso'), civil('c', tiles[2] as Tile, 'ocioso')]);
+      expect(violacoesDaColisao(s0, LIGADA)).toHaveLength(1);
+      const s1 = tickDeMovimento(s0, LIGADA);
+      expect(violacoesDaColisao(s1, LIGADA)).toEqual([]);
+      expect(em(s1, 'a')).toEqual(tiles[2]); // fica o primeiro
+      expect(em(s1, 'b')).not.toEqual(em(s1, 'c'));
+    });
+
+    it('fica no tile quem nao e ocioso, e o ocioso sai', () => {
+      const { s, tiles } = rua(6);
+      const s1 = tickDeMovimento(comUnidades(s, [civil('o', tiles[2] as Tile, 'ocioso'), civil('x', tiles[2] as Tile, 'colhendo')]), LIGADA);
+      expect(em(s1, 'x')).toEqual(tiles[2]);
+      expect(em(s1, 'o')).not.toEqual(tiles[2]);
+    });
+
+    it('o trocaCom sobrevive a troca de estado da FSM', () => {
+      const { s, tiles } = rua(6);
+      const r = correr(comUnidades(s, [civil('w', tiles[0] as Tile, 'indo_entregar', trecho(tiles, 0, 5)), civil('x', tiles[5] as Tile, 'colhendo')]), todosChegaram);
+      const w = r.s.unidades.porId['w'] as Unidade;
+      const depois = comUnidade(r.s, { ...w, fsm: 'entregando', fsmData: {} }); // a FSM reescreve o fsmData
+      expect(depois.unidades.porId['w']?.trocaCom).toBe('x');
+      expect(violacoesDaColisao(depois, LIGADA)).toEqual([]);
+    });
+
+    it('quem sai de dentro para a porta ocupada espera ela vagar, sem ocupar nem andar, e depois sai', () => {
+      const { s, tiles } = rua(8);
+      const antes = comUnidades(s, [civil('e', tiles[3] as Tile, 'trabalhando'), civil('x', tiles[3] as Tile, 'colhendo')]);
+      const saiu = comUnidade(antes, { ...(antes.unidades.porId['e'] as Unidade), fsm: 'indo_colher', fsmData: { caminho: trecho(tiles, 3, 7), progresso: 0 } });
+      let x = sistemaDaPorta(antes, saiu, LIGADA);
+      expect(x.unidades.porId['e']?.saindo).toBe(0);
+      expect(violacoesDaColisao(x, LIGADA)).toEqual([]);
+      for (let t = 0; t < 5; t += 1) x = sistemaDaPorta(x, tickDeMovimento(x, LIGADA), LIGADA);
+      expect(em(x, 'e')).toEqual(tiles[3]); // nao andou
+      expect(x.unidades.porId['e']?.saindo).toBe(5);
+      // o ocupante vai embora: no tick seguinte a porta libera, e ai ele anda
+      x = comUnidade(x, { ...(x.unidades.porId['x'] as Unidade), gx: (tiles[0] as Tile).gx });
+      x = sistemaDaPorta(x, tickDeMovimento(x, LIGADA), LIGADA);
+      expect(x.unidades.porId['e']?.saindo).toBeUndefined();
+      const r = correr(x, todosChegaram);
+      expect(em(r.s, 'e')).toEqual(tiles[7]);
+      expect(r.violacoes).toEqual([]);
+    });
+
+    it('a espera da porta tem o teto da troca forcada: passado ele, sai em troca com o ocupante', () => {
+      const { s, tiles } = rua(8);
+      const antes = comUnidades(s, [civil('e', tiles[3] as Tile, 'trabalhando'), civil('x', tiles[3] as Tile, 'colhendo')]);
+      let x = sistemaDaPorta(antes, comUnidade(antes, { ...(antes.unidades.porId['e'] as Unidade), fsm: 'indo_colher', fsmData: { caminho: trecho(tiles, 3, 7), progresso: 0 } }), LIGADA);
+      const violacoes: string[] = [];
+      let maior = 0;
+      for (let t = 0; t < 200 && !todosChegaram(x); t += 1) {
+        x = sistemaDaPorta(x, tickDeMovimento(x, LIGADA), LIGADA);
+        maior = Math.max(maior, x.unidades.porId['e']?.saindo ?? 0);
+        violacoes.push(...violacoesDaColisao(x, LIGADA));
+      }
+      expect(violacoes).toEqual([]);
+      expect(maior).toBe(C.ticksTrocaForcada - 1);
+      expect(em(x, 'e')).toEqual(tiles[7]);
+    });
+
+    it('quem nasce numa porta ocupada tambem espera; e a porta livre nao marca ninguem', () => {
+      const { s, tiles } = rua(6);
+      const antes = comUnidades(s, [civil('x', tiles[2] as Tile, 'colhendo')]);
+      const depois = comUnidades(s, [civil('x', tiles[2] as Tile, 'colhendo'), civil('novo', tiles[2] as Tile, 'indo_buscar', trecho(tiles, 2, 5)), civil('livre', tiles[4] as Tile, 'indo_buscar', trecho(tiles, 4, 5))]);
+      const x = sistemaDaPorta(antes, depois, LIGADA);
+      expect(x.unidades.porId['novo']?.saindo).toBe(0);
+      expect(x.unidades.porId['livre']?.saindo).toBeUndefined();
+    });
+
+    it('o ocioso que sai de dentro para a porta ocupada nao tem o que esperar: e empurrado', () => {
+      const { s, tiles } = rua(6);
+      const antes = comUnidades(s, [civil('l', tiles[2] as Tile, 'martelando'), civil('x', tiles[2] as Tile, 'colhendo')]);
+      const x = sistemaDaPorta(antes, comUnidade(antes, { ...(antes.unidades.porId['l'] as Unidade), fsm: 'ocioso' }), LIGADA);
+      expect(x.unidades.porId['l']?.saindo).toBe(0);
+      const y = tickDeMovimento(x, LIGADA);
+      expect(em(y, 'l')).not.toEqual(tiles[2]);
+      expect(y.unidades.porId['l']?.saindo).toBeUndefined();
+    });
   });
 });

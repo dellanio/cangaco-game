@@ -9,6 +9,7 @@
  */
 import { describe, it, expect, afterAll } from 'vitest';
 import { gameData } from '../src/sim/data';
+import { colisaoCivilLigada } from '../src/sim/colisao';
 import type { GameData } from '../src/sim/data/types';
 import type { GameState, Predio, TarefaSaidaCheiaParaArmazem } from '../src/sim/state';
 import {
@@ -221,7 +222,11 @@ describe('F18d-1a — o aceite do BUILD_PLAN', () => {
     // com o predio, agora ele fica esperando uma rocha que nao existe no lugar
     // onde a fixture o pos. O campo `rochaAoAlcanceDaPedreira` fixa a causa.
     expect(comRua).toEqual({
-      escoouNoTick: 43, // a rua existe: a tarefa de coleta nasce e o serf vem
+      // a rua existe: a tarefa de coleta nasce e o serf vem. D1a-2 — um valor POR ESTADO DA
+      // CHAVE da colisao civil (decisao do operador; a faixa foi recusada porque aceitaria
+      // deriva futura sem avisar). Ligada, chega 4 ticks ANTES (medido): HIPOTESE, o ocioso
+      // empurrado da porta fica mais perto. Acaso da geometria, nao ganho de desenho.
+      escoouNoTick: colisaoCivilLigada(gameData) ? 39 : 43,
       pedreiro: 'esperando_insumo', // sem rocha ao alcance, nao ha ciclo novo
       pedraNaGavetaDaPedreira: 0,
       pedraNoArmazem: STONE_INICIAL - 2 + 5, // e nada mais: nao houve producao nova

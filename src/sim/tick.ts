@@ -27,7 +27,7 @@ import { aplicarSetProductionQuota } from './systems/cota';
 import { aplicarSetBuildingMode } from './systems/modo';
 import { sistemaDosEspecialistas } from './systems/especialistas';
 import { sistemaDaFome } from './systems/fome';
-import { sistemaDoEmpurrao } from './colisao';
+import { sistemaDaPorta, sistemaDoEmpurrao } from './colisao';
 import { sistemaDosLaborers } from './systems/laborers';
 import { sistemaDosSerfs } from './systems/serfs';
 
@@ -210,7 +210,8 @@ export function step(
   // (colheita do faminto, tarefa do morto) tem de ser revalidada pelo gerador no fim
   // deste mesmo tick, e nao pelo saneamento do seguinte.
   // D1 — o empurrao do ocioso vem antes das FSMs: o bloqueado anda no mesmo tick
-  const fome = sistemaDaFome(sistemaDoEmpurrao(saneado.state, dados), dados);
+  const empurrado = sistemaDoEmpurrao(saneado.state, dados);
+  const fome = sistemaDaFome(empurrado, dados);
   const serfs = sistemaDosSerfs(fome.state, dados);
   const laborers = sistemaDosLaborers(serfs.state, dados);
   // F14: os especialistas DEPOIS dos laborers (o predio que ficou pronto neste
@@ -226,7 +227,8 @@ export function step(
   const escolas = sistemaDasEscolas(especialistas.state, dados);
   // F35: a feira fecha a troca DEPOIS das entregas do tick (o A que chegou agora ja
   // conta) e ANTES do gerador (o B novo ja ganha a tarefa de escoar neste tick)
-  atual = gerarTarefas(sistemaDaFeira(escolas.state, dados), dados);
+  // D1a-2 — a porta: quem nasceu ou saiu de "dentro" para um tile ocupado espera ele vagar
+  atual = gerarTarefas(sistemaDaFeira(sistemaDaPorta(empurrado, escolas.state, dados), dados), dados);
   events.push(
     ...saneado.events, ...fome.events, ...serfs.events, ...laborers.events,
     ...especialistas.events, ...escolas.events,

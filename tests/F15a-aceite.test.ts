@@ -19,6 +19,7 @@ import { createInitialState } from '../src/sim/state';
 import type { GameState, PredioCompleto } from '../src/sim/state';
 import { step } from '../src/sim/tick';
 import { gameData } from '../src/sim/data';
+import { colisaoCivilLigada } from '../src/sim/colisao';
 import { trabalhadorDoTipo } from '../src/sim/ocupacao';
 import { comEstradas } from './helpers/jobs-cenario';
 import { escolaDoCenario, pedir } from './helpers/escola-cenario';
@@ -48,6 +49,10 @@ const RUAS = [...linhaHDe(naVila, 0, 7, 3), naVila(0, 4), naVila(0, 5), naVila(0
  */
 const TICKS = 1300;
 const TETO_DA_GAVETA = gameData.producao.estoqueInternoPorPredio.saida;
+/** D1a-2 — o valor esperado POR ESTADO DA CHAVE da colisao civil (decisao do operador,
+ *  2026-09-28): ligada, a primeira pedra atravessa a vila com fila e chega 4 ticks depois
+ *  (medido). NAO e faixa: a faixa foi recusada porque aceitaria deriva futura sem avisar. */
+const ATRASO_DA_COLISAO = colisaoCivilLigada(gameData) ? 4 : 0;
 const CICLO = gameData.producao.receitas.quarry?.ticksDoCiclo ?? 0;
 /**
  * F-T3 — entre um deposito e o seguinte ha agora a IDA ao tile e a VOLTA. O
@@ -162,7 +167,7 @@ describe('F15a — aceite headless do BUILD_PLAN', () => {
     const primeiro = r.tickDaOcupacao + PRIMEIRO_CICLO;
     expect(r.depositos).toHaveLength(1 + Math.floor((TICKS - primeiro) / INTERVALO));
     expect(intervalos(r.depositos)).toEqual(Array<number>(r.depositos.length - 1).fill(INTERVALO));
-    expect(r.depositos[0]).toBe(primeiro);
+    expect(r.depositos[0]).toBe(primeiro + ATRASO_DA_COLISAO);
 
     // 4. depois de ocupar, o pedreiro nunca volta a `ocioso` nem espera insumo
     //    (a quarry tira do veio; `ocioso` antes de ocupar e como toda unidade nasce)

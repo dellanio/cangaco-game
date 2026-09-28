@@ -27,6 +27,12 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
     calibração reprovou. A lista completa está no PROGRESS (D1b).
   - Entra no lote de recalibração **só se** a chave for ligada de vez (D1c/D1d). Nunca
     número a número.
+  - **Depois do D1a-2:**
+    - cenário fechado +9,1%, pedreira +16,5%, bodega +6,5%;
+    - o machado de mão chega +48% mais tarde (1115 → 1655). Ele fica pronto no mesmo tick
+      e espera um serf 887 ticks na gaveta, contra 370;
+    - **as armas "2 a 5% mais cedo" do primeiro D1b viraram de sinal.** Era acaso da
+      geometria do empurrão, não ganho. Fica como observação.
 - [2026-09-28] **O golpe corpo a corpo (0,5 s) está abaixo do piso do KaM** | `combat.cadenciaDeAtaque_segundos_base` | combat.json
   - Achado na C1, ao medir a cadência dos atiradores. O golpe cai no quadro 5, e há pausas
     de 0–1 tick nos quadros 0, 3 e 6 (`KM_UnitActionFight.pas:50,289,309-321`). Então a

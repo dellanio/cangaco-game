@@ -11824,3 +11824,116 @@ A chave foi ligada só para medir. `units.json` voltou a `false` antes do commit
 - **F15a e F18d-1a afirmam tick exato.** Com a chave ligada, o número muda por construção.
   Proposta: um valor por estado da chave, e não afrouxar para faixa.
 - **F35(b)**: o custo 3,3× no A* com dispersão pede medida antes do D1c.
+
+## 2026-09-28 — D1a-2: o empilhamento de fora do passo, e o D1b repetido
+
+Plano: `docs/planos/2026-09-28-D1-colisao-civil.md`, §7. Decisões do operador:
+- as três correções entram, e a terceira mede o esperar primeiro;
+- tick exato ganha valor por estado da chave;
+- os 3,3× têm a causa medida.
+
+### Feito
+- **`trocaCom` saiu do `fsmData` e foi para a `Unidade`.** Sobrevive à transição de
+  estado, e um teste o prova.
+- **O empurrão separa os ociosos empilhados.** Fica o primeiro que não é ocioso, ou o
+  primeiro de todos.
+- **A porta (`sistemaDaPorta`, depois das FSMs e das escolas):**
+  - quem nasce, ou sai de "dentro", num tile ocupado ganha `saindo`: não ocupa e não anda
+    até o tile vagar;
+  - o teto é a troca forçada, e a invariante acusa `saindo` acima dele;
+  - o ocioso `saindo` é empurrado.
+- **Contadores da porta** (`estatisticasDaPorta`) fora do estado, no molde de
+  `estatisticasDeBusca`. São medida, nunca regra.
+- **F15a e F18d-1a** ganharam um valor esperado por estado da chave. **A faixa foi
+  recusada** (decisão do operador) porque aceitaria deriva futura sem avisar.
+- 7 testes novos no `D1a-colisao-civil`, 21 no total. Sondas de mutação, como evidência da
+  sessão:
+
+  | Mutação | Resultado |
+  |---|---|
+  | sem empurrão dos empilhados | reprova 3 |
+  | sem porta | reprova 4 |
+  | porta sem teto | reprova 1 |
+  | `saindo` anda | reprova 2 |
+  | `saindo` ocupa | reprova 2 |
+
+### Esperar contra dividir na porta (medido; decide a terceira correção)
+Vila da F-CAL com a chave ligada. A variante dividir foi uma sonda sem commit.
+
+| | esperar (KaM) | dividir |
+|---|---|---|
+| cenário fechado | 8165 | 8212 |
+| padaria completa | 5655 | 5800 |
+| madeira / pedra no fim | 210 / 148 | 216 / 151 |
+| espera na porta, F-CAL-b | 132 saídas; soma 481 ticks; maior 19; 10 no teto | — |
+| espera na porta, F-CAL-a | 42 saídas; soma 14; maior 5 | — |
+
+**Esperar não segura a produção de forma que apareça na vila**: fecha 47 ticks **antes**,
+e o estoque final fica a 3%. Então fica o KaM, e a exceção de dividir **não entrou**.
+
+### Os 3,3× no A* (causa medida; a hipótese dos nove tiles caiu)
+- F35(b), 1500 ticks:
+
+  | | desligada | ligada |
+  |---|---|---|
+  | buscas que erram o cache | 10 | 71 |
+  | acertos de cache | 287 594 | 1 045 289 |
+  | Σ ociosos × tarefas abertas por tick | 144 408 | 523 224 |
+
+  O fator do produto (3,6×) é o fator das buscas.
+- A causa é a varredura que o JobBoard faz a cada tick: **cada ocioso ordena por A* todas as
+  tarefas abertas**. É isso que acontece quando o teto `maxSerfs` segura a feira.
+- A colisão só alonga a janela:
+  - desligada, 98% das buscas caem nos primeiros 300 ticks;
+  - ligada, elas se espalham por 1200 ticks, porque a troca demora mais (fecha no tick 140,
+    contra 125).
+- **O custo existe com a chave desligada também.** A colisão só o expõe.
+- O conserto é no JobBoard (não ordenar por A* a tarefa que o `reclamar` vai recusar pelo
+  teto). **NÃO feito**: a causa não é a que o operador condicionou, então volta para ele.
+
+### O D1b repetido (chave ligada só para medir; voltou a `false`)
+- **Na corrida, 7 testes do jogo reprovaram**, contra 24, mais os 2 do D1a que afirmam a
+  chave desligada. Os 2 de tick exato ganharam depois o valor por estado da chave e passam
+  com ela ligada (conferido numa corrida só deles). **Sobram 5.**
+- A invariante do teto não disparou em nenhum teste, nem no passo nem na porta.
+
+| Classe | Testes | O que é |
+|---|---|---|
+| Empilhamento | **1**: F20b "mais famintos que assentos" | A fixture põe 9 serfs num tile, e o empurrão não acha vizinho livre para todos |
+| "Na porta" | F13a (3 civis nascem na porta da escola), C3(b) (2 recrutas na porta do quartel demolido) | O segundo e o terceiro são empurrados para o lado. O teste afirma posição |
+| Tick exato | F15a, F18d-1a | Ligada, **passam agora** (valor por estado da chave) |
+| Cenário que mudou | F09 "reserva pendente atravessando o save" | A guarda contra teste vazio |
+| Custo | F35(b), timeout de 5 s | A varredura do JobBoard, acima |
+
+### Deriva da calibração depois do D1a-2 (desligada → ligada; nenhum teste de calibração reprovou)
+- **F-CAL:**
+  - cenário fechado 7486 → 8165 (+9,1%);
+  - pedreira 715 → 833 (+16,5%);
+  - serraria +4,9%, moinho +3,2%, padaria +3,6%;
+  - intervalo no regime +0,5%;
+  - madeira −4,1% e pedra −3,9% no fim.
+- **F20a:** bodega +6,5%. **F-T4d:** marcos +2 a +5%. **F35:** troca +12%. **F36:** ouro
+  +1,5%.
+- **F18d-1b:** os assentamentos de estrada levam quase o dobro. Foram 7 na janela, contra 8.
+- **F24a:** as armas agora saem **mais tarde**, de +0,6% a +6%, com o escudo de ferro −2% e
+  o **machado de mão +48%** (1115 → 1655).
+  - Rastreado: o machado fica pronto no mesmo tick (714 desligada, 722 ligada). Ele **espera
+    um serf** na gaveta por 887 ticks, contra 370.
+  - É o transporte mais lento, e não uma unidade presa.
+- **Observação, não ganho:** no primeiro D1b as armas saíram 2 a 5% **mais cedo**. Com o
+  D1a-2 o sinal virou. Aquilo foi acaso da geometria (o ocioso empurrado cair mais perto),
+  **não** desenho, e o sinal que virou confirma isso. A F18d-1a, 4 ticks mais cedo, é o
+  mesmo tipo de acaso.
+
+### Aberto (para o operador)
+1. **Ligar a chave.** O empilhamento caiu de 21 para 1, e esse 1 é fixture.
+2. **F13a e C3(b)** afirmam "todos na porta". Com a colisão, só o primeiro fica. Proposta:
+   valor por estado da chave, como no tick exato ("na porta" desligada; "na porta ou
+   vizinho, sem empilhar" ligada).
+3. **F20b:** espalhar os 9 serfs extras da fixture, ou deixar o empurrão procurar a 2 tiles.
+4. **O JobBoard** ordena por A* a tarefa que vai recusar. É o custo da F35(b), com a chave
+   ligada ou não.
+5. **F09:** a guarda "reserva pendente no save" precisa de outro tick de save com a chave
+   ligada.
+6. **A deriva** (+9% no fechamento da vila, +48% na primeira arma) vai para o lote de
+   recalibração só se a chave ligar.

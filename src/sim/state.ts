@@ -1215,9 +1215,6 @@ export interface DadosDaFsm {
   /** C5 — ticks que o militar ja esperou um tile ocupado por outro militar. D1 — o mesmo
    *  para o civil com a colisao civil ligada (zera so num passo normal). */
   readonly bloqueado?: number;
-  /** D1 — a unidade com quem esta dividindo o tile: a troca de frente ou a troca forcada
-   *  (o unico empilhamento que a colisao civil aceita). */
-  readonly trocaCom?: string;
   readonly tarefa?: string;
   readonly carga?: string;
   readonly caminho?: readonly TileDeGrid[];
@@ -1246,6 +1243,13 @@ export interface Unidade {
    *  movimento em curso vive em `fsmData` (`caminho` + `progresso`). */
   readonly fsm: string;
   readonly fsmData: DadosDaFsm;
+  /** D1 — a unidade com quem esta dividindo o tile: a troca de frente ou a troca forcada
+   *  (o unico empilhamento que a colisao civil aceita). Fica na unidade, e nao no
+   *  `fsmData`, para sobreviver a troca de estado da FSM (D1a-2). */
+  readonly trocaCom?: string;
+  /** D1a-2 — ticks esperando a porta: quem nasceu ou saiu de "dentro" para um tile ocupado
+   *  espera ele vagar, como no `GoInOut` do KaM. Enquanto isso nao ocupa nem anda. */
+  readonly saindo?: number;
   /**
    * F20b — a condicao (fome) em TICKS RESTANTES, inteiro. Cheia no nascimento
    * (`condicao.ticksCondicaoCheia` da classe), decrementada de 1 por tick pelo

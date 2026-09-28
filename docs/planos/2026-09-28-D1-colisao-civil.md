@@ -241,3 +241,49 @@ O operador decidiu:
 ### D1b
 - Ligar a chave, rodar a suíte inteira, desligar, e classificar cada teste que mudou.
 - O resultado vai para o PROGRESS e o BALANCE_LOG. Nenhum número de balanceamento muda.
+
+## 7. D1a-2: o empilhamento de fora do passo (decisões do operador, 2026-09-28)
+O operador decidiu:
+- as três correções entram;
+- a terceira (sair de "dentro" para uma porta ocupada) **mede primeiro o esperar, como o
+  KaM**. Dividir o tile só se justifica se o esperar segurar a produção de um jeito que
+  apareça na vila, e aí fica registrado com o número;
+- tick exato ganha um valor por estado da chave. A faixa foi recusada;
+- os 3,3× no A* têm a causa medida. Se estiverem no JobBoard, o conserto é lá.
+
+### Execução
+1. **`trocaCom` sai do `fsmData` e vai para a `Unidade`** (campo opcional). As FSMs montam
+   a unidade com `{ ...u, fsm, fsmData }`, então o campo sobrevive à transição de estado. O
+   `andar` o limpa no próximo passo normal.
+2. **O empurrão separa ociosos empilhados.**
+   - O civil `ocioso`, parado, que divide o tile com outro civil fora da troca é empurrado
+     para o primeiro vizinho livre.
+   - Fica o primeiro na ordem de `unidades.ordem` que não é ocioso, ou o primeiro de todos.
+3. **Sair de "dentro" espera a porta, como o KaM (`GoInOut`).**
+   - Uma passada central no `step`, depois das FSMs, compara o estado de cada civil antes e
+     depois:
+     - quem **nasceu** neste tick, ou **passou de dentro para fora**;
+     - e está num tile com outro civil fora;
+     - ganha `saindo` (ticks de espera).
+   - Enquanto está `saindo`:
+     - não ocupa o tile para ninguém;
+     - não dá passo (o `andar` segura);
+     - não conta no empilhamento.
+   - Com o tile livre, `saindo` some e a unidade sai.
+   - **Teto:** passado `ticksTrocaForcada`, sai como na troca forçada, que é a mesma regra
+     de todo bloqueado. Ninguém espera para sempre.
+   - O ocioso `saindo` é empurrado na hora pelo item 2, porque não tem lugar para esperar.
+   - Invariante: `saindo` nunca passa do teto.
+4. **Medida do item 3 (sonda, antes de decidir):**
+   - a vila da F-CAL com esperar, contra a mesma vila com dividir (a variante em sonda,
+     sem commit);
+   - o que se compara: os marcos, o cenário fechado e a maior e a soma das esperas de
+     `saindo`.
+5. **A causa dos 3,3×:**
+   - contar as chamadas de `buscarCaminho` por origem (ociosos × tarefas × ticks) na F35(b),
+     com a chave desligada e ligada;
+   - se a causa for a procura de tarefa a partir de N tiles, o conserto é no JobBoard e vale
+     também com a chave desligada.
+6. **Tick exato:** F15a e F18d-1a passam a ter um valor esperado por estado da chave,
+   medido depois do D1a-2.
+7. **Repetir o D1b** e trazer a lista.

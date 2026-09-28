@@ -337,5 +337,8 @@
   },
   "D1a-colisao-civil": {
     "passes": true
+  },
+  "D1a-2-empilhamento-fora-do-passo": {
+    "passes": true
   }
 }

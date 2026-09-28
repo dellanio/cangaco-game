@@ -5516,7 +5516,12 @@ Ordem do operador. Cada item tem plano em `docs/planos/2026-09-28-C<n>-*.md`.
       efeito dele).
     - 2 testes afirmam tick exato, 1 mudou de cenário e 1 é de custo.
     - Nenhum teste de calibração reprovou.
-  - **D1a-2 — o empilhamento de fora do passo.** Proposto e à espera do operador.
+  - **D1a-2 — o empilhamento de fora do passo. ENTREGUE.**
+    - `trocaCom` na `Unidade`; o empurrão separa ociosos empilhados; a porta espera como o
+      KaM.
+    - Esperar contra dividir foi medido na F-CAL, e esperar não segura a produção.
+    - O D1b repetido: sobram 5 reprovações, contra 24, e o empilhamento caiu de 21 para 1.
+    - F15a e F18d-1a têm valor por estado da chave (a faixa foi recusada).
   - **D1c — o aceite do operador:**
     - (1) congestiona: uma rua entrega menos que duas. Se as duas derem o mesmo, prova que
       a fila existe e que a espera cresce com o número de serfs;

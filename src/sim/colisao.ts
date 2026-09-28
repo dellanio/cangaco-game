@@ -75,9 +75,15 @@ export function ocupaTile(u: Unidade): boolean {
   return posicao === 'fora';
 }
 
-/** Civil que ocupa tile: quem a colisao civil ve. */
-export function ehCivilQueOcupa(u: Unidade, dados: GameData): boolean {
+/** Civil "fora", esteja ou nao esperando a porta. */
+function ehCivilFora(u: Unidade, dados: GameData): boolean {
   return classeDaUnidade(u.tipo, dados) === 'civil' && ocupaTile(u);
+}
+
+/** Civil que ocupa tile: quem a colisao civil ve. Quem espera a porta (`saindo`) ainda esta
+ *  "dentro", para os outros. */
+export function ehCivilQueOcupa(u: Unidade, dados: GameData): boolean {
+  return u.saindo === undefined && ehCivilFora(u, dados);
 }
 
 const mesmoTile = (a: TileDeGrid, b: TileDeGrid): boolean => a.gx === b.gx && a.gy === b.gy;
@@ -146,9 +152,16 @@ function desvioCivil(state: GameState, u: Unidade, caminho: readonly TileDeGrid[
 }
 
 function semEspera(d: DadosDaFsm): DadosDaFsm {
-  const { bloqueado: _b, trocaCom: _t, ...resto } = d;
+  const { bloqueado: _b, ...resto } = d;
   void _b;
+  return resto;
+}
+
+/** A unidade sem `trocaCom` e sem `saindo` (os dois campos opcionais da colisao). */
+function semMarcas(u: Unidade): Unidade {
+  const { trocaCom: _t, saindo: _s, ...resto } = u;
   void _t;
+  void _s;
   return resto;
 }
 
@@ -159,9 +172,12 @@ function semEspera(d: DadosDaFsm): DadosDaFsm {
 export function passoCivil(state: GameState, u: Unidade, custo: number, dados: GameData): Unidade {
   const caminho = u.fsmData.caminho ?? [];
   const proximo = caminho[0] as TileDeGrid;
-  const entrar = (trocaCom: string | null, d: DadosDaFsm = u.fsmData): Unidade => ({
-    ...u, gx: proximo.gx, gy: proximo.gy,
-    fsmData: { ...semEspera(d), caminho: caminho.slice(1), progresso: 0, ...(trocaCom === null ? {} : { trocaCom }) },
+  // D1a-2 — quem espera a porta nao anda: `sistemaDaPorta` libera quando o tile vagar
+  if (u.saindo !== undefined) return { ...u, fsmData: { ...u.fsmData, progresso: custo - 1 } };
+  const entrar = (trocaCom: string | null): Unidade => ({
+    ...semMarcas(u), gx: proximo.gx, gy: proximo.gy,
+    fsmData: { ...semEspera(u.fsmData), caminho: caminho.slice(1), progresso: 0 },
+    ...(trocaCom === null ? {} : { trocaCom }),
   });
   const ocupantes = civisNoTile(state, proximo, u.id, dados);
   if (ocupantes.length === 0) return entrar(null);
@@ -183,11 +199,29 @@ export function passoCivil(state: GameState, u: Unidade, custo: number, dados: G
   return { ...u, fsmData: { ...u.fsmData, progresso: custo - 1, bloqueado } };
 }
 
+/** O primeiro vizinho livre de `o` (vizinhanca 8 em ordem fixa), fora de `evitar`. */
+function vizinhoLivre(state: GameState, o: Unidade, evitar: TileDeGrid | null, dados: GameData): TileDeGrid | undefined {
+  return VIZINHOS_8
+    .map((d) => ({ gx: o.gx + d.gx, gy: o.gy + d.gy }))
+    .find((t) => (evitar === null || !mesmoTile(t, evitar)) && passoAndavel(state, o, t, 'livre', dados)
+      && civisNoTile(state, t, o.id, dados).length === 0);
+}
+
+function empurrar(state: GameState, o: Unidade, para: TileDeGrid): GameState {
+  const movido: Unidade = { ...semMarcas(o), gx: para.gx, gy: para.gy };
+  return { ...state, unidades: { ...state.unidades, porId: { ...state.unidades.porId, [o.id]: movido } } };
+}
+
+const parado = (u: Unidade): boolean => (u.fsmData.caminho ?? []).length === 0;
+
 /**
- * O EMPURRAO (IntSolutionPush): o civil ocioso e parado no tile que um civil bloqueado ha
- * `ticksEmpurrar` quer vai ao primeiro vizinho livre (vizinhanca 8 em ordem fixa, unidades na
- * ordem de `unidades.ordem`). Roda antes das FSMs. Sem vizinho livre, fica: a troca forcada
- * de quem espera resolve.
+ * O EMPURRAO (IntSolutionPush), com duas causas, na ordem de `unidades.ordem`:
+ *  1. o civil ocioso e parado no tile que um civil bloqueado ha `ticksEmpurrar` quer;
+ *  2. (D1a-2) o civil ocioso e parado que divide o tile com outro civil fora de troca: o
+ *     empilhamento que nasce fora do passo (fixture, obra que termina, porta). Fica no tile
+ *     o primeiro que nao e ocioso, ou o primeiro de todos.
+ * O empurrado vai ao primeiro vizinho livre. Sem vizinho livre, fica: a troca forcada de
+ * quem espera resolve. Roda antes das FSMs.
  */
 export function sistemaDoEmpurrao(state: GameState, dados: GameData): GameState {
   if (!colisaoCivilLigada(dados)) return state;
@@ -198,13 +232,79 @@ export function sistemaDoEmpurrao(state: GameState, dados: GameData): GameState 
     const alvo = w.fsmData.caminho?.[0];
     if (alvo === undefined) continue;
     for (const o of civisNoTile(atual, alvo, w.id, dados)) {
-      if (o.fsm !== EMPURRAVEL || (o.fsmData.caminho ?? []).length > 0) continue;
-      const livre = VIZINHOS_8
-        .map((d) => ({ gx: o.gx + d.gx, gy: o.gy + d.gy }))
-        .find((t) => !mesmoTile(t, w) && passoAndavel(atual, o, t, 'livre', dados) && civisNoTile(atual, t, o.id, dados).length === 0);
-      if (livre === undefined) continue;
-      atual = { ...atual, unidades: { ...atual.unidades, porId: { ...atual.unidades.porId, [o.id]: { ...o, gx: livre.gx, gy: livre.gy } } } };
+      if (o.fsm !== EMPURRAVEL || !parado(o)) continue;
+      const livre = vizinhoLivre(atual, o, w, dados);
+      if (livre !== undefined) atual = empurrar(atual, o, livre);
     }
+  }
+  for (const id of state.unidades.ordem) {
+    const o = atual.unidades.porId[id];
+    if (o === undefined || o.fsm !== EMPURRAVEL || !parado(o) || !ehCivilFora(o, dados)) continue;
+    const noTile: Unidade[] = [];
+    for (const outroId of atual.unidades.ordem) {
+      const x = atual.unidades.porId[outroId];
+      if (x !== undefined && mesmoTile(x, o) && ehCivilFora(x, dados)) noTile.push(x);
+    }
+    if (noTile.length < 2) continue;
+    const fica = noTile.find((x) => x.fsm !== EMPURRAVEL) ?? (noTile[0] as Unidade);
+    if (fica.id === o.id) continue;
+    if (o.trocaCom !== undefined && noTile.some((x) => x.id === o.trocaCom)) continue;
+    const livre = vizinhoLivre(atual, o, null, dados);
+    if (livre !== undefined) atual = empurrar(atual, o, livre);
+  }
+  return atual;
+}
+
+/** D1a-2 — contadores da porta, FORA do estado (o molde de `estatisticasDeBusca` do A*):
+ *  medida da sessao, nunca regra. `saidas` e quem ganhou `saindo`; `somaDeEspera` e
+ *  `maiorEspera` em ticks; `noTeto` e quem saiu pela troca forcada. */
+const porta = { saidas: 0, somaDeEspera: 0, maiorEspera: 0, noTeto: 0 };
+export function estatisticasDaPorta(): Readonly<typeof porta> {
+  return { ...porta };
+}
+export function zerarEstatisticasDaPorta(): void {
+  porta.saidas = 0;
+  porta.somaDeEspera = 0;
+  porta.maiorEspera = 0;
+  porta.noTeto = 0;
+}
+
+/**
+ * D1a-2 — a PORTA (o `GoInOut` do KaM: quem sai de casa espera a porta vagar). Roda depois
+ * das FSMs e das escolas, comparando com `antes` (o estado de entrada das FSMs):
+ *  - o civil que NASCEU neste tick, ou passou de "dentro" para "fora", num tile com outro
+ *    civil que ocupa, ganha `saindo: 0`;
+ *  - quem ja estava `saindo`: com o tile livre, sai (o campo some); senao conta mais um
+ *    tick; no teto, `ticksTrocaForcada`, sai em troca com o ocupante, como todo bloqueado.
+ */
+export function sistemaDaPorta(antes: GameState, depois: GameState, dados: GameData): GameState {
+  if (!colisaoCivilLigada(dados)) return depois;
+  let atual = depois;
+  const teto = dados.movimento.colisaoCivil.ticksTrocaForcada;
+  for (const id of depois.unidades.ordem) {
+    const u = atual.unidades.porId[id];
+    if (u === undefined || classeDaUnidade(u.tipo, dados) !== 'civil') continue;
+    const ocupantes = civisNoTile(atual, u, u.id, dados);
+    let novo: Unidade | null = null;
+    if (u.saindo !== undefined) {
+      const espera = u.saindo + 1;
+      if (ocupantes.length === 0 || espera >= teto) {
+        porta.somaDeEspera += u.saindo;
+        porta.maiorEspera = Math.max(porta.maiorEspera, u.saindo);
+        if (ocupantes.length > 0) porta.noTeto += 1;
+      }
+      if (ocupantes.length === 0) novo = semMarcas(u);
+      else if (espera >= teto) novo = { ...semMarcas(u), trocaCom: (ocupantes[0] as Unidade).id };
+      else novo = { ...u, saindo: espera };
+    } else {
+      const eraAntes = antes.unidades.porId[id];
+      const saiu = eraAntes === undefined || (POSICAO_DO_ESTADO[eraAntes.fsm] === 'dentro' && ocupaTile(u));
+      if (saiu && ocupaTile(u) && ocupantes.length > 0) {
+        porta.saidas += 1;
+        novo = { ...u, saindo: 0 };
+      }
+    }
+    if (novo !== null) atual = { ...atual, unidades: { ...atual.unidades, porId: { ...atual.unidades.porId, [id]: novo } } };
   }
   return atual;
 }
