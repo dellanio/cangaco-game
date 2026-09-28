@@ -11,7 +11,7 @@
 // A ferramenta ativa (F06) tambem nasce aqui, mas NAO e estado de jogo: e o que o
 // jogador tem na mao (qual planta fantasma), some com Esc e nunca entra em
 // GameState.
-import { createInitialState } from './sim/state';
+import { createInitialState, LADO_DO_JOGADOR } from './sim/state';
 import type { GameState } from './sim/state';
 import { gameData } from './sim/data';
 import { criarSessao } from './sessao';
@@ -38,11 +38,16 @@ import { ligarTeclasDoTempo } from './input/teclas-do-tempo';
 import { ligarNavegacao } from './input/navegacao';
 import { configDoMapa } from './render/mapa';
 import { predioNoTile } from './sim/selectors';
+import { classeDaUnidade } from './sim/condicao';
+import { criarSelecaoMilitar } from './input/selecao-militar';
 
 const sessao = criarSessao(createInitialState(gameData.economia.estadoInicial.semente));
 const ferramenta = criarFerramenta();
 // O predio aberto no painel (F13b). Estado de interface, como a ferramenta.
 const selecao = criarSelecao();
+// F26b — o grupo militar na mao. Estado de interface, como a selecao de predio: as duas
+// nao convivem (selecionar soldado fecha o painel; abrir predio solta o grupo).
+const selecaoMilitar = criarSelecaoMilitar();
 // A ajuda (F-D1) precisa do `#logo` ja no DOM, e ele e estatico no index.html —
 // entao ela pode nascer antes do resto da interface. Quem a abre e o teclado, e
 // e por isso que ela e o quarto parametro: com a ajuda aberta, o `Esc` e dela.
@@ -68,6 +73,16 @@ pausarAoOcultar(laco, document);
 // So enfileira. Quem roda o passo que aplica o comando e o laco.
 // O terceiro parametro e o clique de MAO VAZIA (F13b): quem sabe que predio esta
 // naquele tile e este arquivo, que tem o estado — `input/` nao conhece GameState.
+/** F26b — so os soldados do JOGADOR entram no grupo: civil nao recebe ordem direta
+ *  (§1), e o inimigo nao e do jogador. A lista vem do desenho (`jogo.unidadesNoPonto`),
+ *  e o filtro, do estado. */
+function soldadosDoJogador(ids: readonly string[]): string[] {
+  return ids.filter((id) => {
+    const u = sessao.estado.unidades.porId[id];
+    return u !== undefined && u.lado === LADO_DO_JOGADOR && classeDaUnidade(u.tipo, gameData) === 'militar';
+  });
+}
+
 const entrada = criarEntradaDoMapa(
   ferramenta,
   (comando) => {
@@ -75,6 +90,38 @@ const entrada = criarEntradaDoMapa(
   },
   (tile) => {
     selecao.selecionar(predioNoTile(sessao.estado, tile.gx, tile.gy));
+  },
+  {
+    aoClicarVazio(tile, ponto, somar) {
+      // soldado sob o pixel vence o predio do tile: e ele que o jogador mirou
+      const [soldado] = ponto === null ? [] : soldadosDoJogador(jogo.unidadesNoPonto(ponto));
+      if (soldado !== undefined) {
+        selecao.limpar();
+        if (somar) selecaoMilitar.somar([soldado]);
+        else selecaoMilitar.definir([soldado]);
+        return;
+      }
+      if (!somar) selecaoMilitar.limpar();
+      selecao.selecionar(predioNoTile(sessao.estado, tile.gx, tile.gy));
+    },
+    aoCaixa(a, b, somar) {
+      const soldados = soldadosDoJogador(jogo.unidadesNaCaixa(a, b));
+      selecao.limpar();
+      if (somar) selecaoMilitar.somar(soldados);
+      else selecaoMilitar.definir(soldados);
+    },
+    aoOrdenar(tile) {
+      const grupo = soldadosDoJogador(selecaoMilitar.ids);
+      if (grupo.length === 0) return;
+      // botao direito em predio de OUTRO lado e ataque; no resto e marcha (GDD §2.1)
+      const alvo = predioNoTile(sessao.estado, tile.gx, tile.gy);
+      const predio = alvo === null ? undefined : sessao.estado.predios.porId[alvo];
+      if (predio !== undefined && predio.lado !== LADO_DO_JOGADOR) {
+        sessao.enviar({ type: 'AttackBuilding', unidades: grupo, predio: predio.id });
+      } else {
+        sessao.enviar({ type: 'MoveUnits', unidades: grupo, destino: { gx: tile.gx, gy: tile.gy } });
+      }
+    },
   },
 );
 
@@ -111,7 +158,7 @@ montarBarra(selecao, () => {
 // funil `render/mapa.ts`: `input/` nao le `sim/data`.
 const navegacao = ligarNavegacao(window, configDoMapa.camera);
 
-const jogo = iniciarJogo(ferramenta, entrada, laco, navegacao);
+const jogo = iniciarJogo(ferramenta, entrada, laco, navegacao, selecaoMilitar);
 
 function atualizar(s: GameState): void {
   jogo.atualizar(s);

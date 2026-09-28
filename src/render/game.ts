@@ -9,12 +9,18 @@ import type { Ferramenta } from '../input/ferramenta';
 import type { EntradaDoMapa } from '../input/colocar';
 import type { RelogioVisivel } from './debug';
 import type { Navegacao } from '../input/navegacao';
+import type { SelecaoMilitar } from '../input/selecao-militar';
 
 export interface JogoLigado {
   readonly jogo: Phaser.Game;
   /** Entrega o estado mais recente para a cena desenhar. Nao guarda
    *  referencia aqui: so escreve na ponte (render/ponte.ts). */
   atualizar(estado: GameState): void;
+  /** F26b — as unidades DESENHADAS sob o ponto de mundo (a mais perto primeiro). E
+   *  leitura do desenho, nao decisao: quem decide o que o clique faz e o `main.ts`. */
+  unidadesNoPonto(ponto: { readonly x: number; readonly y: number }): string[];
+  /** F26b — as unidades desenhadas dentro da caixa. */
+  unidadesNaCaixa(a: { readonly x: number; readonly y: number }, b: { readonly x: number; readonly y: number }): string[];
 }
 
 export function iniciarJogo(
@@ -24,9 +30,11 @@ export function iniciarJogo(
   /** F-D2 — a navegacao por teclado, ligada no `main.ts` como os outros
    *  ouvintes de `input/`. A cena so pergunta. */
   navegacao: Navegacao,
+  /** F26b — o grupo militar na mao do jogador, que a cena desenha. */
+  selecaoMilitar: SelecaoMilitar,
 ): JogoLigado {
   const ponte = criarPonte();
-  const cena = new WorldScene(ponte, ferramenta, entrada, relogio, navegacao);
+  const cena = new WorldScene(ponte, ferramenta, entrada, relogio, navegacao, selecaoMilitar);
   const jogo = new Phaser.Game({
     type: Phaser.AUTO,
     parent: 'jogo',
@@ -43,6 +51,12 @@ export function iniciarJogo(
     jogo,
     atualizar(estado) {
       ponte.atual = estado;
+    },
+    unidadesNoPonto(ponto) {
+      return cena.unidadesNoPonto(ponto);
+    },
+    unidadesNaCaixa(a, b) {
+      return cena.unidadesNaCaixa(a, b);
     },
   };
 }

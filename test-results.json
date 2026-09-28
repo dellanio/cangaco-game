@@ -264,7 +264,7 @@
     "passes": true
   },
   "F26b-selecionar-pela-tela": {
-    "passes": false
+    "passes": true
   },
   "F-TR-a-textura-e-transicao": {
     "passes": true

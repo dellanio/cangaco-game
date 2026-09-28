@@ -5151,10 +5151,16 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
     - A ordem nova substitui a anterior, inclusive o ataque.
     - Recusa inteira com motivo.
     - Teste: `tests/F26a-marcha.test.ts`.
-  - **F26b — selecionar e comandar pela tela (render + input + ui).**
-    - Clique em soldado, com acerto pelo `deslocamentoDaUnidade`; caixa de arrasto.
-    - Botão direito no chão manda `MoveUnits`; em prédio inimigo, `AttackBuilding`.
-    - Seleção desenhada e publicada no debug. Roteiro com passo despausado.
+  - **F26b — selecionar e comandar pela tela (render + input + ui). ENTREGUE.**
+    - O acerto mira o desenho (`render/acerto.ts`: centro do tile interpolado mais
+      `deslocamentoDaUnidade`) e escolhe o centro mais perto do clique.
+    - Shift soma ao grupo; a caixa pega quem tem o centro dentro.
+    - O botão direito de mão vazia manda `AttackBuilding` em prédio de outro lado e
+      `MoveUnits` no resto.
+    - Anel sob cada selecionado; `debug.selecaoMilitar` e `debug.caixaDeSelecao` são lidos
+      do desenho.
+    - Testes `tests/F26b-selecao.test.ts` e roteiro `tools/shots/F26b.js`. Sonda: o acerto
+      pelo centro do tile erra `sold2` no mesmo tile de `sold1`.
 - **Nota (herdada da F18f, 2026-09-24)**: o desenho da unidade sai do centro do
   tile por um deslocamento de até ±16 px derivado do id. **O teste de acerto do
   clique tem de usar a MESMA função de deslocamento** — se ele mirar o centro do

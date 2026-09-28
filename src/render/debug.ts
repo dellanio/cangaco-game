@@ -158,6 +158,10 @@ export interface EstadoDebug {
    *  lida de volta da imagem desenhada (`displayWidth`/`displayHeight`), e a largura do
    *  lote. O roteiro confere `h <= teto x lote` com o teto que ele le do manifesto. */
   caixasDesenhadas: Readonly<Record<string, CaixaDesenhada>>;
+  /** F26b — as unidades que ganharam o anel de selecao NESTE quadro (lido do desenho). */
+  selecaoMilitar: readonly string[];
+  /** F26b — a caixa de selecao desenhada agora, em px de mundo, ou `null`. */
+  caixaDeSelecao: { readonly a: { readonly x: number; readonly y: number }; readonly b: { readonly x: number; readonly y: number } } | null;
   /** F-T1 — quantos tiles de cada TIPO DE TERRENO estao dentro da vista da
    *  camera agora, lidos de volta da camada de chao ja desenhada. E o que
    *  permite ao roteiro afirmar "a camera esta em cima do lago" sem olhar
@@ -320,6 +324,8 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     animaisDoCurral: {},
     camadasEmPx: {},
     caixasDesenhadas: {},
+    selecaoMilitar: [],
+    caixaDeSelecao: null,
     terrenoVisivel: {},
     recursosVisiveis: {},
     mascarasDoLajedo: {},

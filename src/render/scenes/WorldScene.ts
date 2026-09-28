@@ -50,6 +50,10 @@ import {
 } from '../crescimento';
 import { manifestoDoJogo, prediosSemArteDaBusca, texturasParaCarregar } from '../sprites';
 import { escalaDoSprite, regraDoManifesto } from '../escala-predio';
+import { centroDesenhado, unidadesNaCaixa, unidadesNoPonto } from '../acerto';
+import { LADO_DA_UNIDADE_EM_TILES as LADO_DO_SOLDADO } from '../grid';
+import type { UnidadeDesenhada } from '../acerto';
+import type { SelecaoMilitar } from '../../input/selecao-militar';
 import { mascaraCardinal, VIZINHOS_CARDINAIS } from '../mascara-cardinal';
 
 const CHAVE_TEXTURA_TERRENO = 'tiles-terreno';
@@ -83,6 +87,10 @@ const REGRA_DE_ALTURA = regraDoManifesto(manifestoDoJogo);
  *  1/4 as quatro pilhas do armazem (3 tiles de base) se sobrepoem, com 1/5 cabem.
  *  Desenho, nao balanceamento: fica aqui, como o resto do placeholder. */
 const LADO_DA_UNIDADE_EM_TILES = 1 / 5;
+/** F26b — o anel do selecionado e a caixa, por cima do mundo e abaixo do highlight do
+ *  tile (1 000 000). Cor de TELA, como as outras do render. */
+const PROFUNDIDADE_DA_SELECAO = 999_999;
+const COR_DA_SELECAO = 0xf2d16b;
 
 /** F-VIVO-c — o lado do losango do animal sem PNG: a unidade da pilha no filhote, o
  *  dobro no adulto. Uma funcao so para o desenho e o `debug.camadasEmPx`. */
@@ -154,8 +162,24 @@ export class WorldScene extends Phaser.Scene {
     /** F-D2 — a navegacao por teclado. A cena PERGUNTA; quem escuta tecla e
      *  `input/navegacao.ts`, que nao conhece camera nenhuma. */
     private readonly navegacao: Navegacao,
+    /** F26b — o grupo militar na mao do jogador. A cena so o DESENHA. */
+    private readonly selecaoMilitar: SelecaoMilitar,
   ) {
     super('world');
+  }
+
+  /** F26b — o que a camada de unidades desenhou no ultimo quadro: a lista contra a qual
+   *  o clique e a caixa fazem o teste de acerto (`render/acerto.ts`). */
+  private unidadesDesenhadas: readonly UnidadeDesenhada[] = [];
+
+  /** F26b — as unidades desenhadas sob o ponto, da mais perto do centro para a mais longe. */
+  unidadesNoPonto(ponto: { readonly x: number; readonly y: number }): string[] {
+    return unidadesNoPonto(this.unidadesDesenhadas, ponto, configDoMapa.tilePx);
+  }
+
+  /** F26b — as unidades desenhadas dentro da caixa. */
+  unidadesNaCaixa(a: { readonly x: number; readonly y: number }, b: { readonly x: number; readonly y: number }): string[] {
+    return unidadesNaCaixa(this.unidadesDesenhadas, a, b, configDoMapa.tilePx);
   }
 
   /** F17f — o primeiro carregamento de asset do projeto. Enfileira SO o que o
@@ -259,6 +283,9 @@ export class WorldScene extends Phaser.Scene {
     const camadaDeCampos = criarCamadaDeCampos(this, tilePx);
     const previaDeCampo = criarPreviaDeCampo(this, tilePx);
     const camadaDeUnidades = criarCamadaDeUnidades(this, tilePx);
+    // F26b: o anel dos selecionados e a caixa ficam ACIMA de tudo do mundo
+    const marcasDeSelecao = this.add.graphics().setDepth(PROFUNDIDADE_DA_SELECAO);
+    const caixaDeSelecao = this.add.graphics().setDepth(PROFUNDIDADE_DA_SELECAO);
     // Ultimo tile valido sob o ponteiro. Efemero: some no gameout e nunca entra
     // no GameState (a planta e estado de interface, ver input/ferramenta.ts).
     let tileAtual: Tile | null = null;
@@ -330,7 +357,7 @@ export class WorldScene extends Phaser.Scene {
         // F-D2: com o `Espaco` segurado o botao esquerdo tambem e camera, e
         // puxar estrada sem querer e exatamente o que o aceite 3 proibe.
         if (pointer.leftButtonDown() && !this.navegacao.espacoApertado) {
-          this.entrada.aoArrastar(tile);
+          this.entrada.aoArrastar(tile, { x: mundo.x, y: mundo.y });
         }
       } else {
         estado.tileSobMouse = null;
@@ -367,7 +394,11 @@ export class WorldScene extends Phaser.Scene {
     // ferramenta ou sobra para a ordem militar da F26 e `input/colocar.ts`
     // (BUG-A) — a cena nao conhece a ferramenta ativa e nao deve conhecer.
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-      if (pointer.rightButtonDown()) this.entrada.aoClicarDireito();
+      if (!pointer.rightButtonDown()) return;
+      // F26b: o tile do botao direito e a ordem militar de mao vazia
+      const mundo = camera.getWorldPoint(pointer.x, pointer.y);
+      const tile: Tile = screenToGrid({ x: mundo.x, y: mundo.y }, tilePx, ESCALA_DO_MUNDO);
+      this.entrada.aoClicarDireito(tileDentroDoMapa(tile, largura, altura) ? tile : undefined);
     });
 
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
@@ -378,7 +409,9 @@ export class WorldScene extends Phaser.Scene {
       // F18a: ESCALA_DO_MUNDO — `getWorldPoint` ja desfez o zoom (ver pointermove).
       const mundo = camera.getWorldPoint(pointer.x, pointer.y);
       const tile: Tile = screenToGrid({ x: mundo.x, y: mundo.y }, tilePx, ESCALA_DO_MUNDO);
-      if (tileDentroDoMapa(tile, largura, altura)) this.entrada.aoClicar(tile);
+      // F26b: o ponto de mundo (o soldado se acerta pelo pixel, nao pelo tile) e o shift
+      const somar = (pointer.event as MouseEvent | undefined)?.shiftKey === true;
+      if (tileDentroDoMapa(tile, largura, altura)) this.entrada.aoClicar(tile, { x: mundo.x, y: mundo.y }, somar);
     });
 
     // Soltar o botao esquerdo: fecha o arrasto no tile do ponteiro. Solto fora do mapa
@@ -389,7 +422,7 @@ export class WorldScene extends Phaser.Scene {
       // F18a: ESCALA_DO_MUNDO — `getWorldPoint` ja desfez o zoom (ver pointermove).
       const mundo = camera.getWorldPoint(pointer.x, pointer.y);
       const tile: Tile = screenToGrid({ x: mundo.x, y: mundo.y }, tilePx, ESCALA_DO_MUNDO);
-      if (tileDentroDoMapa(tile, largura, altura)) this.entrada.aoSoltar(tile);
+      if (tileDentroDoMapa(tile, largura, altura)) this.entrada.aoSoltar(tile, { x: mundo.x, y: mundo.y });
       else this.entrada.aoSairDoMapa();
     });
 
@@ -454,7 +487,44 @@ export class WorldScene extends Phaser.Scene {
       // sobre o que o painel escreveu. Leitura, como todo o resto daqui.
       estado.filaDeTreino = this.ponte.atual?.treino ?? {};
       estado.unidadesRenderizadas = camadaDeUnidades.atualizar(this.ponte.atual, this.relogio.alfa());
+      // F26b: o acerto do proximo clique mira ESTE desenho
+      this.unidadesDesenhadas = estado.unidadesRenderizadas;
+      estado.selecaoMilitar = this.desenharSelecao(marcasDeSelecao, estado.unidadesRenderizadas, tilePx);
+      estado.caixaDeSelecao = this.desenharCaixa(caixaDeSelecao);
     });
+  }
+
+  /** F26b — um anel sob cada unidade selecionada, na posicao DESENHADA (a mesma do
+   *  acerto). Devolve os ids que de fato ganharam anel, para o roteiro afirmar o que a
+   *  tela mostra e nao o que a selecao guarda. */
+  private desenharSelecao(
+    marcas: Phaser.GameObjects.Graphics, desenhadas: readonly UnidadeDesenhada[], tilePx: number,
+  ): string[] {
+    marcas.clear();
+    const ids = new Set(this.selecaoMilitar.ids);
+    const marcadas: string[] = [];
+    const raio = (tilePx * LADO_DO_SOLDADO) / 2 + 3;
+    marcas.lineStyle(2, COR_DA_SELECAO, 1);
+    for (const u of desenhadas) {
+      if (!ids.has(u.id)) continue;
+      const c = centroDesenhado(u, tilePx);
+      marcas.strokeEllipse(c.x, c.y + raio * 0.6, raio * 2, raio);
+      marcadas.push(u.id);
+    }
+    return marcadas;
+  }
+
+  /** F26b — o retangulo da caixa em curso, ou nada. */
+  private desenharCaixa(caixa: Phaser.GameObjects.Graphics): { a: { x: number; y: number }; b: { x: number; y: number } } | null {
+    caixa.clear();
+    const atual = this.entrada.caixa();
+    if (atual === null) return null;
+    caixa.lineStyle(1, COR_DA_SELECAO, 1);
+    caixa.strokeRect(
+      Math.min(atual.a.x, atual.b.x), Math.min(atual.a.y, atual.b.y),
+      Math.abs(atual.b.x - atual.a.x), Math.abs(atual.b.y - atual.a.y),
+    );
+    return { a: { ...atual.a }, b: { ...atual.b } };
   }
 
   /**

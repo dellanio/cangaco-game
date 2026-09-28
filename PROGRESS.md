@@ -10645,3 +10645,50 @@ Plano: `docs/planos/2026-09-28-A9-F26-grupo.md`. **A F26 foi quebrada em a (sim)
   formação é da F27.
 - **Militares ainda não colidem** (GDD §6.4 diz que colidem). Dois soldados podem cruzar
   o mesmo tile no caminho. Só o destino é distinto.
+
+## 2026-09-28 (sessão autônoma, item 9b) — F26b: selecionar e comandar o grupo pela tela
+
+Plano: `docs/planos/2026-09-28-A9-F26-grupo.md`. Só `src/render/`, `src/input/`,
+`src/main.ts`, teste e roteiro. **Nenhum arquivo de `src/sim/`.**
+
+**Verificado:**
+- **`render/acerto.ts`** (sem Phaser): `centroDesenhado` é o tile interpolado mais
+  `deslocamentoDaUnidade`, a mesma conta do desenho. É a nota da F18f.
+  - `unidadesNoPonto` ordena pelo centro mais perto do clique.
+  - `unidadesNaCaixa` pega quem tem o centro dentro.
+- **`input/`:**
+  - `selecao-militar.ts` guarda o grupo, como estado de interface;
+  - `colocar.ts` ganhou `GestosMilitares`: clique de mão vazia com ponto e shift, caixa
+    além de `LIMIAR_DA_CAIXA_PX` (8 px de mundo), e botão direito de mão vazia que vira
+    ordem. Os parâmetros novos são opcionais, e quem já chamava não mudou.
+- **Cena:** passa o ponto de mundo e o shift, desenha o anel dos selecionados e a caixa, e
+  publica `debug.selecaoMilitar` (quem ganhou anel no quadro) e `debug.caixaDeSelecao`.
+- **`main.ts`:** soldado sob o pixel vence o prédio do tile. Só entram no grupo soldados
+  do jogador. O botão direito manda `AttackBuilding` em prédio de outro lado e
+  `MoveUnits` no resto.
+- `tests/F26b-selecao.test.ts`, 7 testes, verdes:
+  - seis unidades no mesmo tile: o centro desenhado de cada uma devolve ela primeiro;
+  - a caixa;
+  - os gestos: o limiar, o shift, e o direito com e sem ferramenta;
+  - a seleção soma sem repetir;
+  - grava `test-output/F26b.save.txt`, com sold1 e sold2 no mesmo tile e uma escola
+    inimiga.
+- **`npm run shot -- F26b` verde**, com 5 capturas:
+  - clique em sold1 e depois em sold2, no mesmo tile, cada um pega o seu;
+  - shift soma;
+  - a caixa pega os três;
+  - botão direito no chão, despausado: os três marcham e param em tiles próprios;
+  - botão direito na escola inimiga, despausado: o hp cai para 548 e há soldado
+    `atacando`.
+- **Sonda:** com o acerto mirando o centro do tile (sem o desvio), o roteiro reprovou com
+  `o clique em sold2 (mesmo tile) deveria seleciona-lo, veio ["sold1"]`. É o erro que a
+  nota previa.
+- Abri `F26b-2-caixa-em-curso.png` (a caixa amarela em volta dos três) e
+  `F26b-3-grupo-selecionado.png` (os anéis sob os três).
+
+**PARA REVISÃO:**
+- **O anel fica um pouco abaixo dos pés**, sobre o rótulo do ofício. É posição de tela.
+- **Clique no chão vazio solta o grupo.** Com shift, mantém.
+- **`Esc` não solta o grupo:** o teclado da F-D1 tem a ordem de precedência do `Esc`, e não
+  mexi nela.
+- **Não há ordem pelo painel nem atalho de teclado**, só mouse.
