@@ -1,4 +1,6 @@
 import { ehTorreCompleta, pedrasNaTorre, porQueNaoAtira } from './torre';
+import { ehFeiraCompleta, porQueNaoTroca } from './feira';
+import type { PorQueNaoTroca } from './feira';
 import type { PorQueATorreNaoAtira } from './torre';
 import type { GameState, Predio, PredioCompleto, PredioEmObra, Unidade } from './state';
 import { ID_DO_ARMAZEM } from './state';
@@ -424,6 +426,16 @@ export interface PainelDoPredio {
    * jogador precisa ler, e foi por nao ler que este campo existe.
    */
   readonly colheita: ColheitaDoPainel | null;
+  /** F35 — a ordem da feira, o que falta de A e por que nao troca; `null` em quem nao e feira. */
+  readonly feira: {
+    readonly da: string | null;
+    readonly para: string | null;
+    readonly quantidade: number;
+    readonly feitas: number;
+    readonly naEntrada: number;
+    readonly taxa: number;
+    readonly naoTroca: PorQueNaoTroca | null;
+  } | null;
   /** F28b — a munição da torre e por que ela não atira; `null` em quem não é torre. */
   readonly torre: {
     readonly pedras: number;
@@ -515,6 +527,7 @@ export function painelDoPredio(
       temProducao: false,
       pausado: false,
       torre: null,
+      feira: null,
     };
   }
 
@@ -534,6 +547,17 @@ export function painelDoPredio(
     colheita: colheitaDoPainel(state, predio, dados),
     torre: ehTorreCompleta(predio)
       ? { pedras: pedrasNaTorre(predio), maximo: dados.combate.watchtower.municao_stone_max, naoAtira: porQueNaoAtira(predio) }
+      : null,
+    feira: ehFeiraCompleta(predio)
+      ? {
+        da: predio.troca?.da ?? null,
+        para: predio.troca?.para ?? null,
+        quantidade: predio.troca?.quantidade ?? 0,
+        feitas: predio.troca?.feitas ?? 0,
+        naEntrada: predio.troca === undefined ? 0 : predio.estoque.entrada[predio.troca.da] ?? 0,
+        taxa: dados.economia.marketplace.taxa,
+        naoTroca: porQueNaoTroca(predio, dados),
+      }
       : null,
   };
 }

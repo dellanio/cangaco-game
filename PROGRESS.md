@@ -10986,3 +10986,53 @@ Plano: `docs/planos/2026-09-28-A16-F34-fim.md`. Sim e UI (`src/ui`); nada em `sr
 - **"Todas as tropas" = militares.** Mercenário também é militar pela classe? Não:
   `classeDaUnidade` só conhece civis e militares, e o mercenário devolve `null`. Hoje não
   há mercenário em jogo (F36).
+
+## 2026-09-28 (sessão autônoma, item 17) — F35: a Feira
+
+Plano: `docs/planos/2026-09-28-A17-F35-feira.md`. Sim e UI (`src/ui`); nada em `src/render`.
+
+**Verificado:**
+- **Dado:** `economy.json:marketplace.taxa = 2` (decisão do operador) e a regra
+  `validarFeira` em `tools/data-rules.js` (inteiro ≥ 1).
+- **Sim:**
+  - `SetTrade { predio, da, para, quantidade }` fixa a ordem em `PredioCompleto.troca?`, e 0
+    cancela. As recusas têm motivo e deixam o estado igual (testado): não é feira, A = B,
+    mercadoria desconhecida, quantidade inválida.
+  - `sistemaDaFeira` fecha uma troca por tick: debita `taxa` de A da entrada e credita 1
+    de B na saída, que os serfs escoam pelo nível 6.
+  - A feira pede A como insumo, com alvo `taxa ×` as trocas restantes.
+  - O `reclamar` recusa com `destino-sem-vaga` quando a feira já tem `maxSerfs` tarefas em
+    curso.
+- **Painel:** mostra a linha `feira` (A → B, feitas/quantidade) e o aviso `.feira-nao-troca`
+  com `data-motivo` (`sem-ordem`, `ordem-cumprida` ou `sem-mercadoria`).
+- **`tests/F35-feira.test.ts`, 7 testes verdes:**
+  - (a) 3 de B chegam ao armazém, e `A + 2 × trocas` fica constante a cada tick;
+  - (b) com 20 serfs extras, o pico é **exatamente 10** em curso;
+  - (c) sem A, zero trocas em 500 ticks, e o motivo é `sem-mercadoria`;
+  - (d) cancelar com A **na gaveta e na mão** ao mesmo tempo: `A + 2 × B` constante por
+    2000 ticks, e tudo que não virou troca volta ao armazém;
+  - recusas, determinismo e o save do roteiro.
+- **Sondas de mutação**, todas vermelhas:
+  - debitar 1 em vez de `taxa`;
+  - teto desligado;
+  - cancelar jogando fora a entrada;
+  - trocar sem A.
+  - A de "cancelar" passou verde na primeira versão do (d), porque o cancelamento caía
+    com a gaveta vazia. Endureci o cenário.
+- **Armadilha pega:** a sonda "trocar sem A" regravou `test-output/F35.save.txt` com a
+  gaveta em −2, e o roteiro reprovou com 1/3 trocas. Não era bug. Regravei o save com o
+  código restaurado. Lição: **depois de sondas, rodar o teste de novo antes do roteiro.**
+- **`npm run shot -- F35` verde**, com passo despausado (mouse.down/up). Abri
+  `F35-1-feira-sem-mercadoria.png`: o painel mostra "Troca 2 Tábua → 1 Dinheiro (0/3)" e
+  "Sem Tábua no armazém: a troca espera".
+
+**PARA REVISÃO:**
+- **Troca instantânea**, sem tempo de troca: o GDD não dá um, e duração nova seria número
+  inventado.
+- **Cancelamento:** o A que já está na mão chega à feira e volta como excedente (nível 7).
+  Não há `release` no meio do caminho. O aceite (d) falava em `release`; a conservação
+  vale do mesmo jeito.
+- **Hipótese não conferida:** na screenshot, a arte da feira parece menor que a pegada, e
+  os losangos escuros ficam à direita dela. É da sessão de arte; não mexi.
+- O `delivery.maxSerfsNoMarketplace` duplica `economy.marketplace.maxSerfs`. A sim lê só
+  o segundo. Vai para o item 20 (a varredura de dados sem leitor).

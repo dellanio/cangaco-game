@@ -24,7 +24,7 @@
     "reembolsoSeNaoIniciado": true
   },
   "storehouse": { "capacidade": null, "bloqueioPorItem": true },
-  "marketplace": { "taxaFixa": true, "maxSerfs": 10 },
+  "marketplace": { "taxaFixa": true, "taxa": 2, "_docTaxa": "F35 (decisao do operador, 2026-09-27, noite): o jogador da DUAS unidades de A e recebe UMA de B, para qualquer par. \"Troca deve custar, senao a Feira vira atalho para toda escassez.\"", "maxSerfs": 10 },
   "mercadorias": [
     "tree_trunk", "timber", "stone",
     "gold_ore", "gold", "coal", "iron_ore", "iron",

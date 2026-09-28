@@ -228,4 +228,18 @@ export type Command =
       readonly type: 'AttackUnit';
       readonly unidades: readonly string[];
       readonly alvo: string;
+    }
+  | {
+      /**
+       * F35 — a ordem permanente da feira `predio`: trocar `da` (A) por `para` (B) ate
+       * `quantidade` de B, a `economy.marketplace.taxa` unidades de A por uma de B.
+       * Quantidade 0 cancela. Uma ordem por feira: a nova substitui a velha. Recusado
+       * (`command-rejected`) se o predio nao e feira completa, A = B, a mercadoria nao
+       * esta em `economia.mercadorias` ou a quantidade nao e inteira >= 0.
+       */
+      readonly type: 'SetTrade';
+      readonly predio: string;
+      readonly da: string;
+      readonly para: string;
+      readonly quantidade: number;
     };

@@ -443,7 +443,11 @@
     "demolirDesc": "devolve parte do material",
     "pedrasDaTorre": "Pedras",
     "torreSemPedra": "Sem pedra: a torre não atira",
-    "torreSemRecruta": "Sem recruta: a torre não atira"
+    "torreSemRecruta": "Sem recruta: a torre não atira",
+    "troca": "Troca",
+    "feiraSemOrdem": "Sem ordem de troca",
+    "feiraCumprida": "Ordem cumprida",
+    "feiraSemMercadoria": "Sem {da} no armazém: a troca espera"
   },
   "partida": {
     "_doc": "F34. O aviso do fim da escaramuca, sobre o jogo. So a tela: quem decide o fim e sim/partida.ts.",

@@ -49,6 +49,11 @@ type TemaDeMercadorias = Readonly<Record<string, string | undefined>>;
 const temaDePredios = temaSertao.predios as TemaDePredios;
 const temaDeMercadorias = temaSertao.mercadorias as TemaDeMercadorias;
 
+/** F35 — o nome de uma mercadoria no tema, ou o id neutro quando falta. */
+function nomeDaMercadoria(id: string): string {
+  return temaDeMercadorias[id] ?? id;
+}
+
 function nomeDoPredio(tipo: string): string {
   return temaDePredios[tipo]?.nome ?? tipo;
 }
@@ -212,6 +217,28 @@ function desenharCompleto(
       aviso.className = 'linha torre-nao-atira';
       aviso.dataset.motivo = dados.torre.naoAtira;
       aviso.textContent = dados.torre.naoAtira === 'sem-pedra' ? rotulos.torreSemPedra : rotulos.torreSemRecruta;
+      gente.append(aviso);
+    }
+  }
+
+  // F35 — a feira: a ordem (A -> B, feitas/quantidade), quanto de A ja esta la, e POR
+  // QUE nao troca (o aceite (c) pede que o painel diga). Numeros e motivo em `data-`.
+  if (dados.feira !== null) {
+    const f = dados.feira;
+    const ordem = f.da === null || f.para === null ? '—'
+      : `${f.taxa} ${nomeDaMercadoria(f.da)} → 1 ${nomeDaMercadoria(f.para)} (${f.feitas}/${f.quantidade})`;
+    const l = linha('feira', rotulos.troca, ordem);
+    l.dataset.feitas = String(f.feitas);
+    l.dataset.quantidade = String(f.quantidade);
+    l.dataset.naEntrada = String(f.naEntrada);
+    gente.append(l);
+    if (f.naoTroca !== null) {
+      const aviso = document.createElement('div');
+      aviso.className = 'linha feira-nao-troca';
+      aviso.dataset.motivo = f.naoTroca;
+      aviso.textContent = f.naoTroca === 'sem-ordem' ? rotulos.feiraSemOrdem
+        : f.naoTroca === 'ordem-cumprida' ? rotulos.feiraCumprida
+          : rotulos.feiraSemMercadoria.replace('{da}', f.da === null ? '' : nomeDaMercadoria(f.da));
       gente.append(aviso);
     }
   }

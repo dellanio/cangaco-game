@@ -15,6 +15,7 @@ import { aplicarAttackUnit, sistemaDoCombate } from './systems/combate';
 import { sistemaDaTorre } from './systems/torre';
 import { sistemaDaIA } from './systems/ia';
 import { resultadoDaPartida } from './partida';
+import { aplicarSetTrade, sistemaDaFeira } from './systems/feira';
 import { aplicarCancelTraining, aplicarEnqueueTraining, sistemaDasEscolas } from './systems/escolas';
 import { aplicarDemolishRoad, aplicarPlaceRoad } from './systems/estradas';
 import { aplicarPlowField, aplicarUnplanField } from './systems/campos';
@@ -126,6 +127,12 @@ export function step(
         events.push(...resultado.events);
         break;
       }
+      case 'SetTrade': {
+        const resultado = aplicarSetTrade(atual, command, dados);
+        atual = resultado.state;
+        events.push(...resultado.events);
+        break;
+      }
       case 'TrainSoldier': {
         const resultado = aplicarTrainSoldier(atual, command, dados);
         atual = resultado.state;
@@ -203,7 +210,9 @@ export function step(
   // neste tick) e ANTES de `gerarTarefas` (o ouro cobrado neste tick ja abre a
   // demanda do proximo pedido antes de o gerador olhar o quadro).
   const escolas = sistemaDasEscolas(especialistas.state, dados);
-  atual = gerarTarefas(escolas.state, dados);
+  // F35: a feira fecha a troca DEPOIS das entregas do tick (o A que chegou agora ja
+  // conta) e ANTES do gerador (o B novo ja ganha a tarefa de escoar neste tick)
+  atual = gerarTarefas(sistemaDaFeira(escolas.state, dados), dados);
   events.push(
     ...saneado.events, ...fome.events, ...serfs.events, ...laborers.events,
     ...especialistas.events, ...escolas.events,

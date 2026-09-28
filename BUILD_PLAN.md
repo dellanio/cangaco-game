@@ -5385,6 +5385,19 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
     tela).
 
 ### F35 — Feira: trocar mercadoria (sim + ui)
+- **ENTREGUE (2026-09-28, sessão autônoma; plano em `docs/planos/2026-09-28-A17-F35-feira.md`).**
+  Taxa 2 para 1 (decisão do operador), em `economy.json:marketplace.taxa`, com regra no
+  `validate:data`.
+  - `sim/feira.ts` + `systems/feira.ts`: `SetTrade` (0 cancela; recusa com motivo) e uma
+    troca por tick com `taxa` de A na entrada. A feira pede A pela escada como insumo,
+    alvo = `taxa ×` as trocas restantes.
+  - `jobs.ts` (`reclamar`): teto de `maxSerfs` tarefas em curso com a feira na ponta.
+  - Painel: a ordem, feitas/quantidade e por que não troca (texto do tema).
+  - Teste `tests/F35-feira.test.ts` (aceites a–d, conservação de `A + taxa × B` a cada
+    tick) e roteiro `tools/shots/F35.js`.
+  - **PARA REVISÃO:** troca instantânea (sem tempo, o GDD não dá), e o cancelamento deixa
+    o A a caminho chegar à feira e voltar como excedente, em vez de largar a tarefa no
+    meio do caminho — nada se perde, mas o aceite (d) dizia "pelo `release`".
 - **Origem (decisão do operador, 2026-09-26)**: item escrito para a casca não ficar sem
   fila. *"A Feira e a Prefeitura podem esperar."* Hoje o `marketplace` constrói e não
   faz nada.

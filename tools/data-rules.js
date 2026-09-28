@@ -596,6 +596,14 @@ function validarAtiradores(dados, erros) {
   }
 }
 
+// F35: a taxa da feira e quantas unidades de A se dao por uma de B — inteiro >= 1, ou a
+// troca criaria mercadoria (taxa < 1) ou nao fecharia nunca.
+function validarFeira(dados, erros) {
+  const feira = (dados.economy && dados.economy.marketplace) || {};
+  if (!Number.isInteger(feira.taxa) || feira.taxa < 1) erros.push('economia/feira: marketplace.taxa precisa ser inteiro >= 1');
+  if (!Number.isInteger(feira.maxSerfs) || feira.maxSerfs < 1) erros.push('economia/feira: marketplace.maxSerfs precisa ser inteiro >= 1');
+}
+
 // F08: fracao da pedra devolvida ao demolir tiles de estrada. Campo proprio de
 // terrain.estrada (nao o de buildings.construcao): estrada e predio podem
 // divergir. Uma fracao fora de [0, 1] devolveria mais do que custou, ou negativo.
@@ -1262,6 +1270,7 @@ function validarTudo(dados) {
   validarPoliticaDeTreino(dados, erros);
   validarRequisitosDoQuartel(dados, erros);
   validarAtiradores(dados, erros);
+  validarFeira(dados, erros);
   validarMapas(dados, erros);
   return erros;
 }

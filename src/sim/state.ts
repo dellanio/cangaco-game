@@ -18,6 +18,7 @@ import type { MotivoDeRecusaDeCota } from './cota';
 import type { MotivoDeRecusaDeModo } from './modo';
 import type { MotivoDeRecusaDeReparo } from './reparo';
 import type { MotivoDeRecusaDeSoldado } from './quartel';
+import type { MotivoDeRecusaDeTroca } from './feira';
 // F-T2a: a camada de recurso nasce do MAPA, e quem sabe ler o mapa e
 // `sim/recursos.ts`. Import de valor (nao de tipo) e o unico deste arquivo alem
 // do RNG e do dado — `createInitialState` e o lugar certo para ele.
@@ -136,6 +137,13 @@ export type GameEvent =
       readonly command: 'MoveUnits';
       readonly unidade: string | null;
       readonly motivo: MotivoDeRecusaDeMarcha;
+    }
+  | {
+      /** F35 — `SetTrade` recusado; o estado nao mudou. */
+      readonly type: 'command-rejected';
+      readonly command: 'SetTrade';
+      readonly predio: string;
+      readonly motivo: MotivoDeRecusaDeTroca;
     }
   | {
       /** F25a — `TrainSoldier` recusado; o estado nao mudou. */
@@ -456,6 +464,9 @@ export interface PredioCompleto extends PredioBase {
   readonly recrutas?: number;
   /** F28b — ticks ate a torre atirar de novo. So a torre tem o campo; AUSENTE e pronta. */
   readonly recarga?: number;
+  /** F35 — a ordem da feira: trocar A (`da`) por B (`para`) ate `quantidade` de B, e
+   *  quantas ja sairam. So a feira tem o campo; AUSENTE e sem ordem. */
+  readonly troca?: { readonly da: string; readonly para: string; readonly quantidade: number; readonly feitas: number };
 }
 
 /**

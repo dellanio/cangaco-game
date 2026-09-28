@@ -21,6 +21,7 @@ import { custoDeTreino, ehEscolaCompleta, filaDaEscola } from './escola';
 import { receitaDoTipo } from './producao';
 import { ehQuartelCompleto, ehRequisitoDoQuartel } from './quartel';
 import { ehTorreCompleta, ID_DA_TORRE, MUNICAO_DA_TORRE } from './torre';
+import { alvoDaFeira, ehFeiraCompleta, ID_DA_FEIRA } from './feira';
 
 /**
  * A capacidade da gaveta `entrada` repartida na proporcao da receita. Com uma
@@ -92,6 +93,9 @@ export function alvoDeEntrada(
   if (ehQuartelCompleto(predio) && ehRequisitoDoQuartel(mercadoria, dados)) return Number.POSITIVE_INFINITY;
   // F28b — a torre guarda ate `watchtower.municao_stone_max` pedras (o dado)
   if (ehTorreCompleta(predio) && mercadoria === MUNICAO_DA_TORRE) return dados.combate.watchtower.municao_stone_max;
+  // F35 — a feira quer `taxa x` as trocas que faltam de A; sem ordem, zero (e o A que
+  // sobrou volta ao armazem pelo nivel 7)
+  if (ehFeiraCompleta(predio)) return alvoDaFeira(predio, mercadoria, dados);
   return 0;
 }
 
@@ -154,6 +158,11 @@ export function insumosDoPredio(
   // F28b — a torre nao tem receita e consome pedra: e consumidora como qualquer outra,
   // e os niveis 4 e 5 da escada a abastecem
   if (predio.tipo === ID_DA_TORRE) return [MUNICAO_DA_TORRE];
+  // F35 — a feira com ordem ativa consome A, como qualquer insumo
+  if (predio.tipo === ID_DA_FEIRA) {
+    const t = predio.troca;
+    return t !== undefined && t.feitas < t.quantidade ? [t.da] : [];
+  }
   const receita = receitaDoTipo(predio.tipo, dados);
   return receita === null ? [] : Object.keys(receita.entra);
 }

@@ -24,6 +24,7 @@ import {
   ehTarefaDeReparo, ehTarefaDeTile, ehTarefaDoSerf, ID_DO_RECRUTA, MERCADORIA_DE_OURO,
 } from './state';
 import { ehQuartelCompleto } from './quartel';
+import { ehFeiraCompleta, serfsNaFeira } from './feira';
 import { predioReparavel } from './reparo';
 import type { GameData } from './data/types';
 import { gameData } from './data';
@@ -824,6 +825,14 @@ export function reclamar(
   // morrer — que e o que o GDD manda acontecer.
   if (tarefa.tipo === 'comer' && !precisaComer(unidade, dados)) {
     return { ok: false, motivo: 'unidade-invalida' };
+  }
+
+  // F35 — no maximo `economy.marketplace.maxSerfs` tarefas EM CURSO com a feira como
+  // origem ou destino (GDD §4.4, "maximo de 10 serfs negociando"). A proxima fica
+  // aberta ate uma fechar. Vale para qualquer carga: o A que chega e o B que sai.
+  for (const ponta of [('origem' in tarefa ? tarefa.origem : undefined), ('destino' in tarefa ? tarefa.destino : undefined)]) {
+    if (ponta === undefined || !ehFeiraCompleta(state.predios.porId[ponta])) continue;
+    if (serfsNaFeira(state, ponta) >= dados.economia.marketplace.maxSerfs) return { ok: false, motivo: 'destino-sem-vaga' };
   }
 
   if (ehTarefaDoSerf(tarefa)) {
