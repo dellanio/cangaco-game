@@ -242,6 +242,9 @@
   "F-TR-b-quadros-e-lajedo": {
     "passes": true
   },
+  "F-ESC-altura-pela-largura": {
+    "passes": true
+  },
   "F-TR-a-textura-e-transicao": {
     "passes": true
   },

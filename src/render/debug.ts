@@ -65,6 +65,15 @@ export interface AnimalNoDebug {
 
 /** F-VIVO-d — o tamanho em px de MUNDO de cada camada de um predio com receita, lido
  *  da mesma geometria que o desenho usa. Na tela e isto vezes `camera.zoom`. */
+/** F-ESC (c) — ver `caixasDesenhadas`. */
+export interface CaixaDesenhada {
+  readonly tipo: string;
+  readonly textura: string;
+  readonly w: number;
+  readonly h: number;
+  readonly lote: number;
+}
+
 export interface CamadasEmPx {
   readonly tipo: string;
   readonly caso: string;
@@ -145,6 +154,10 @@ export interface EstadoDebug {
   animaisDoCurral: Readonly<Record<string, readonly AnimalNoDebug[]>>;
   /** F-VIVO-d — as camadas desenhadas, em px de mundo, por id de predio com receita. */
   camadasEmPx: Readonly<Record<string, CamadasEmPx>>;
+  /** F-ESC (c) — a caixa que o sprite do predio COMPLETO ocupa na tela, em px de mundo,
+   *  lida de volta da imagem desenhada (`displayWidth`/`displayHeight`), e a largura do
+   *  lote. O roteiro confere `h <= teto x lote` com o teto que ele le do manifesto. */
+  caixasDesenhadas: Readonly<Record<string, CaixaDesenhada>>;
   /** F-T1 — quantos tiles de cada TIPO DE TERRENO estao dentro da vista da
    *  camera agora, lidos de volta da camada de chao ja desenhada. E o que
    *  permite ao roteiro afirmar "a camera esta em cima do lago" sem olhar
@@ -306,6 +319,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     quadrosDeTrabalho: {},
     animaisDoCurral: {},
     camadasEmPx: {},
+    caixasDesenhadas: {},
     terrenoVisivel: {},
     recursosVisiveis: {},
     mascarasDoLajedo: {},

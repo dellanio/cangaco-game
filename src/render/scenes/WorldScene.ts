@@ -12,7 +12,7 @@ import type { Navegacao } from '../../input/navegacao';
 import type { Tile } from '../grid';
 import { publicarEstadoDebug } from '../debug';
 import type {
-  AnimalNoDebug, CamadasEmPx, CrescimentoNoDebug, EstadoDebug, PilhaNoDebug, PredioNoDebug, QuadroNoDebug, RelogioVisivel,
+  AnimalNoDebug, CaixaDesenhada, CamadasEmPx, CrescimentoNoDebug, EstadoDebug, PilhaNoDebug, PredioNoDebug, QuadroNoDebug, RelogioVisivel,
 } from '../debug';
 import { aparenciaDoPredio, corDaPilha, dadosDasPilhas, dadosDosAnimais, dadosDoTrabalho, ordemDasMercadorias } from '../predios';
 import { animaisDoCurral, quadroDoAnimal } from '../animais';
@@ -1261,6 +1261,31 @@ export class WorldScene extends Phaser.Scene {
     debug.quadrosDeTrabalho = quadrosNoDebug;
     debug.animaisDoCurral = animaisNoDebug;
     debug.camadasEmPx = camadasNoDebug;
+    debug.caixasDesenhadas = this.caixasDesenhadas(estadoDoJogo, sprites, tilePx);
+  }
+
+  /** F-ESC (c) — a caixa do sprite do predio completo, lida da IMAGEM que o container
+   *  tem, e nao recalculada: e o que a tela mostra. Predio em obra ou sem arte fica de
+   *  fora (placeholder do §9 nao tem regra de altura). */
+  private caixasDesenhadas(
+    estadoDoJogo: GameState, sprites: Readonly<Record<string, string | null>>, tilePx: number,
+  ): Record<string, CaixaDesenhada> {
+    const caixas: Record<string, CaixaDesenhada> = {};
+    for (const [id, desenhado] of this.desenhados) {
+      const predio = estadoDoJogo.predios.porId[id];
+      const textura = sprites[id];
+      if (predio?.estado !== 'completo' || textura === null || textura === undefined) continue;
+      const imagem = desenhado.objeto.list.find((o): o is Phaser.GameObjects.Image => (
+        o instanceof Phaser.GameObjects.Image && o.texture.key === textura
+      ));
+      if (imagem === undefined) continue;
+      caixas[id] = {
+        tipo: predio.tipo, textura,
+        w: imagem.displayWidth, h: imagem.displayHeight,
+        lote: aparenciaDoPredio(predio.tipo).largura * tilePx,
+      };
+    }
+    return caixas;
   }
 
   /** F17f — a chave de textura de um (tipo, estagio), ou `null` quando esse

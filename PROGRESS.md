@@ -10392,3 +10392,43 @@ Plano: `docs/planos/2026-09-28-A3-F-TR-b.md`. Só `src/render/` e roteiro; a sim
 **Visto de passagem, não é desta feature:** na mesma captura, três unidades aparecem "com
 fome". É o cenário da F-T3, que não tem Bodega, e o `cenarioOraculo` já registra que
 aldeia sem Bodega morre de fome.
+
+## 2026-09-28 (sessão autônoma, item 4) — F-ESC completa: o aceite (c) na tela
+
+Plano: `docs/planos/2026-09-28-A4-F-ESC-completa.md`. Só `src/render/` e roteiro.
+
+**Verificado:**
+- O k e a exceção já estavam no manifesto: `regraDeAltura.k = 1`, e
+  `alturaMaxPorLargura = 1.33` em `storehouse` e `schoolhouse`. Conferi pelo `node`. Nada
+  mudou em dado.
+- **`debug.caixasDesenhadas`**: a caixa do sprite completo, lida da `Image` desenhada.
+- **`npm run shot -- F-ESC`** roda a abertura da F17 inteira e ficou verde, com 8
+  capturas em ~1,5 min. As caixas desenhadas, em px de mundo:
+
+  | prédio | w × h | lote | teto |
+  |---|---|---|---|
+  | storehouse | 214 × 254 | 192 | 1,33 |
+  | schoolhouse | 214 × 240 | 192 | 1,33 |
+  | woodcutters | 192 × 176 | 192 | 1 |
+  | quarry | 192 × 151 | 192 | 1 |
+  | inn | 256 × 178 | 256 | 1 |
+  | sawmill | 256 × 157 | 256 | 1 |
+
+  A tabela está em `test-output/F-ESC-caixas.json`.
+- **Sonda:** com o manifesto sem a exceção do armazém e `escalaDoSprite` ignorando o
+  teto, o roteiro reprovou com `'p1' (storehouse) desenha 254.0 px de altura num lote de
+  192: passa de 1 x lote`. Os dois arquivos foram restaurados, e o `git status` voltou
+  limpo neles.
+- Abri `screenshots/F-ESC-8-seis-predios-a-0,5.png`: serraria, pedreira, lajedo, armazém,
+  Casa do Coronel, Bodega e os dois lenhadores no mesmo quadro.
+
+**PARA REVISÃO:**
+- **O (b) do rascunho foi trocado pela exceção.** O texto dizia "armazém com altura ≤
+  largura", e a decisão do operador é outra: exceção de 1,33 no dado. O motivo está no
+  aceite.
+- **A evidência vai para `F-ESC-caixas.json`, e não para `F-ESC.json`**, porque o teste
+  reescreve o `F-ESC.json` a cada corrida.
+- **Largura continua sem regra.** O armazém e a Casa do Coronel desenham 214 px num lote
+  de 192 (1,11), e a decisão de transbordo de largura foi "1,0 com exceção declarada".
+  Ninguém acusa isso, porque o F17f só pede `≥`. Não mexi: decidir a exceção de largura
+  é do operador (achado já registrado na fila 4).

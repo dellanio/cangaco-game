@@ -4438,13 +4438,28 @@ F-REPL e antes da Fase C.
      muda, o que é decisão de arte (CLAUDE.md §9).
   - Só o item 1 está em `src/render/`. Os itens 2 e 3 não são render, mas o 3 muda
     asset versionado e o 2 afirma o que o 3 produz. Por isso os três vão num commit só.
-- **Aceite (a escrever na implementação, rascunho):**
-  - a) nenhum sprite de prédio no manifesto passa de `k × largura` sem exceção
-    declarada (F17f);
-  - b) o armazém derivado sai com altura ≤ largura;
-  - c) screenshot do roteiro da F17 mostra os seis prédios, e o
-    `test-output/F-ESC.json` grava a caixa desenhada de cada um, medida no passo e
-    não descrita.
+- **Aceite (escrito na sessão autônoma de 2026-09-28; o rascunho abaixo, riscado, é o
+  de antes):**
+  - a) nenhum sprite de prédio no manifesto passa de `k × largura do lote` sem exceção
+    declarada, e nenhuma exceção declarada já cabe em k
+    (`tests/F-ESC-escala.test.ts`, com as três cópias adulteradas que reprovam);
+  - b) **k = 1,0 no manifesto (`regraDeAltura.k`), e a exceção de 1,33 declarada no
+    próprio prédio (`alturaMaxPorLargura`)**, no armazém e na Casa do Coronel. Isso
+    substitui o "armazém derivado com altura ≤ largura" do rascunho, por decisão do
+    operador ("exceção por prédio no dado; o sobrado usa 1,33"). **Motivo:** o armazém
+    novo tem 254 px de canvas (a madeira da revelação puxa), e 1,33 é o alvo do sobrado,
+    3,5 H = 255 px sobre o lote de 192;
+  - c) `npm run shot -- F-ESC` roda a abertura da F17 inteira. Com os seis prédios da
+    régua de pé, ele lê a caixa **desenhada** de cada sprite completo, tirada da imagem
+    (`debug.caixasDesenhadas`: `displayWidth`/`displayHeight`), e afirma
+    `h ≤ teto × lote`, com o teto lido do manifesto pelo próprio roteiro. Depois ele
+    captura os seis num quadro a 0,5. A tabela vai para `test-output/F-ESC-caixas.json`
+    e não para o `F-ESC.json`: o `F-ESC.json` é do teste, que o reescreve a cada
+    `npm run test`. Sonda: sem a exceção do armazém e com o render ignorando o teto, o
+    roteiro reprova (`'p1' (storehouse) desenha 254.0 px ... passa de 1 x lote`).
+  - ~~b) o armazém derivado sai com altura ≤ largura;~~
+  - ~~c) screenshot do roteiro da F17 mostra os seis prédios, e o
+    `test-output/F-ESC.json` grava a caixa desenhada de cada um.~~
 - **Espera:** k já está decidido (1,0). Faltam a exceção por prédio, o fator de
   transbordo (se ele quiser as duas mudanças no mesmo commit) e a tabela da régua do
   homem abaixo. Continua sem implementar: o item 1 é render, e a outra sessão está lá.
