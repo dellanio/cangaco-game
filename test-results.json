@@ -343,5 +343,8 @@
   },
   "D-MOVIMENTO-01d-jobboard-e-porta-por-estado": {
     "passes": true
+  },
+  "D-MOVIMENTO-01g-empilhamento-residual": {
+    "passes": true
   }
 }
