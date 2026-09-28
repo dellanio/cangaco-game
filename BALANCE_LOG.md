@@ -22,6 +22,18 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
 
 ## Observações abertas
 
+- [2026-09-28] **O golpe corpo a corpo (0,5 s) está abaixo do piso do KaM** | `combat.cadenciaDeAtaque_segundos_base` | combat.json
+  - Achado na C1, ao medir a cadência dos atiradores. O golpe cai no quadro 5, e há pausas
+    de 0–1 tick nos quadros 0, 3 e 6 (`KM_UnitActionFight.pas:50,289,309-321`). Então a
+    animação de luta tem **pelo menos 7 quadros**, ou 0,7 s + ~0,15 s de pausa média nos
+    ticks de 100 ms.
+  - Os 0,5 s de hoje ficam abaixo desse piso. Contra prédio, o KaM dá 12 ticks (1,2 s), e o
+    nosso dado bate.
+  - **Não mexi:** é balanceamento, e vai no lote. O número exato depende do `unit.dat` do
+    original, que não está na nuvem.
+  - Quem mexer: a recarga de arco e besta (0,5 s de animação, stand-in da C1) usa o mesmo
+    número e deve andar junto.
+
 - [2026-09-28] **FASE C, COMBATE — dois números que a VARREDURA-KAM corrigiu no GDD.** Nenhum código lê esses números hoje (conferido com grep: `mercenarios.custoOuro` e `attackVsCavalo` não têm leitor em `src/sim/`). O "vs cavalo" já foi decidido e aplicado no dado (abaixo). O custo do Bárbaro continua 7 no dado e espera o primeiro item de tropa.
   - **Contra montado, o ataque SOMA.** O KaM faz `damage := Attack`; se o alvo é montado, `damage := damage + AttackHorse` (`units/actions/KM_UnitActionFight.pas:291-294`, clone reyandme 731a8a4). O GDD e a string `_doc` de `data/combat.json` modelavam substituição; os dois textos foram corrigidos para soma. **O que muda no número:** o `attackVsCavalo` de `units.json` passa a ser parcela, não total. Piqueiro contra cavaleiro fica em 35 + 80 = 115, não 80; lanceiro, 25 + 60 = 85, não 60. **Decidido pelo operador (2026-09-28): a coluna foi reduzida para manter o total antigo.**
     - Em `data/units.json`: lanceiro 60 → 35, piqueiro 80 → 45, rebelde 50 → 25. Os totais contra montado continuam 60, 80 e 50.

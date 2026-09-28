@@ -5397,6 +5397,44 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
   - **PARA REVISÃO:** sem IA o jogo nunca acaba, e a sim não para no fim (quem para é a
     tela).
 
+### Fila C — dez itens do operador (2026-09-28, depois da sessão autônoma)
+Ordem do operador. Cada item tem plano em `docs/planos/2026-09-28-C<n>-*.md`.
+
+- **Decisões do operador que valem para a fila:**
+  - colisão militar (GDD §6.4) é item;
+  - revidar marchando entra;
+  - prédio destruído não devolve material ("demolir é escolha, destruir é perda");
+  - o `lado` filtra o JobBoard agora;
+  - o `town_hall` segue "Mercenários" no tema;
+  - a exceção de largura vira dado, como a de altura.
+- **Os itens:**
+  1. **C1 — cadência própria para projétil e torre. ENTREGUE.** Medida no fonte do
+     kam_remake:
+     - a torre recarrega 2,3 s (2 + 1 + 20 ticks, `KM_UnitTaskThrowRock.pas:86-98`);
+     - o atirador recarrega a mira mínima mais a animação, com a mira sorteada
+       (`KM_UnitWarrior.pas:790-800`).
+     - A animação de arco e besta ficou igual à do golpe (0,5 s), um stand-in PARA
+       REVISÃO: os quadros estão no `unit.dat` do original, e a medida está pendente.
+     - Consertado de passagem: a torre atirava a cada `recarga + 1` ticks.
+     - Teste `tests/C1-cadencia.test.ts`.
+  2. **C2 — o projétil voa**, com tempo de voo, e erra quem andou. A pedra da torre atinge
+     uma unidade só: é o KaM (`KM_Projectiles.pas:333-337`, `UnitsHitTestF`, morte
+     instantânea).
+  3. **C3 — os defeitos do quartel:**
+     - o teto de armas puxadas;
+     - o recruta perdido na demolição;
+     - os nove botões passando da altura.
+     - O painel em si (F25b) já está entregue.
+  4. **C4 — o botão de reparo** (F-CERCO-b).
+  5. **C5 — colisão militar** (GDD §6.4).
+  6. **C6 — revidar enquanto marcha.**
+  7. **C7 — o `lado` filtrando o JobBoard.**
+  8. **C8 — a IA com prioridade de alvo e de tipo de tropa**, medida no kam_remake.
+  9. **C9 — o fim de partida parando o jogo.**
+  10. **C10 — a exceção de largura por prédio no dado.**
+- **Depois da fila:** o Feed e a fome militar, com o plano esperando aprovação. Eles
+  destravam o ponto 5 da F28-IA.
+
 ### F35 — Feira: trocar mercadoria (sim + ui)
 - **ENTREGUE (2026-09-28, sessão autônoma; plano em `docs/planos/2026-09-28-A17-F35-feira.md`).**
   Taxa 2 para 1 (decisão do operador), em `economy.json:marketplace.taxa`, com regra no

@@ -260,6 +260,13 @@ export interface MovimentoData {
   };
 }
 
+export interface CadenciaDoAtirador {
+  /** A parte SORTEADA da mira: o sorteio vai de 0 a `miraAleatoria - 1`. */
+  readonly miraAleatoria: Ticks;
+  /** A animacao de luta mais a mira minima do KaM. */
+  readonly recarga: Ticks;
+}
+
 export interface CombateData {
   readonly formula: string;
   readonly attackEfetivo: string;
@@ -277,9 +284,13 @@ export interface CombateData {
     readonly rolagem: boolean;
     readonly ticksCadencia: Ticks;
   };
-  readonly watchtower: RawGameData['combat']['watchtower'];
+  /** F28b + C1 — a torre, com a recarga ja em ticks. */
+  readonly watchtower: RawGameData['combat']['watchtower'] & { readonly ticksRecarga: Ticks };
+  /** C1 — a cadencia do atirador por projetil (`aDistancia.cadencia`), em ticks: recarga +
+   *  sorteio de 0 a `miraAleatoria - 1`. */
+  readonly ticksCadenciaAtirador: Readonly<Record<string, CadenciaDoAtirador>>;
   readonly formacao: RawGameData['combat']['formacao'];
-  /** F28-IA — o tamanho do grupo de defesa da IA e os homens por fileira. */
+  /** F28-IA — o tamanho do grupo de defesa da IA. */
   readonly ia: RawGameData['combat']['ia'];
   /** F28d — quem tem escudo (pelos requisitos) e a defesa extra por tipo de projetil. */
   readonly escudo: RawGameData['combat']['escudo'];

@@ -11194,3 +11194,55 @@ sem regra nova) e na UI; nada em `src/render`.
 - ~~F25b~~: já estava entregue (commit `feat(F25b)`).
 - A fome do militar e o comando `Feed` (GDD §4.3), que desbloqueia o ponto 5 da F28-IA.
 - O avaliador sobre as 18 features da sessão autônoma.
+
+## 2026-09-28 — Fila C do operador, item 1 (C1): cadência própria para projétil e torre
+
+Plano: `docs/planos/2026-09-28-C1-cadencia-por-ataque.md`. A fila C (dez itens, com as
+decisões do operador) está no BUILD_PLAN, antes da F35. Em paralelo rodam o avaliador,
+sobre as 19 features da noite, e o plano do Feed; os dois só leem.
+
+**Medido no fonte do kam_remake** (clone parcial de `src/` no scratchpad):
+- a torre gasta 2 + 1 + voo + 20 ticks por pedra (`KM_UnitTaskThrowRock.pas:86-98`);
+- a mira sorteia 6–11 ticks no arco, 8–15 na besta e 0–3 na funda
+  (`KM_UnitWarrior.pas:790-800`);
+- a funda solta a pedra no quadro 15;
+- o golpe em prédio leva 6 + 6 ticks.
+- O que falta é o número de quadros das animações de luta. Ele está no `unit.dat` do
+  original, que não está no repositório: **PENDENTE, medir no KaM original.**
+
+**Verificado:**
+- **Dado:**
+  - `aDistancia.cadencia.<projetil>` = `{recarga, miraAleatoria}`: flecha 1,1 + 0,6,
+    virote 1,3 + 0,8, funda 1,6 + 0,4;
+  - `watchtower.recarga_segundos_base` = 2,3.
+  - Os caminhos novos foram registrados em `data-schema.js`.
+  - Regra nova: todo projétil em uso tem cadência. Testei tirando a `funda`, e ela
+    reprovou.
+- **Sim:**
+  - `cadenciaDoTiro` (`sim/combate.ts`) sorteia `recarga + [0, miraAleatoria)` no RNG do
+    estado;
+  - vale ao começar a atirar, depois de cada tiro e para o atirador contra prédio (o
+    cerco);
+  - a torre usa `watchtower.ticksRecarga`.
+- **Conserto de passagem:** a torre atirava a cada `recarga + 1` ticks. Agora o intervalo é
+  exatamente a recarga, a mesma semântica do atirador.
+- **`tests/C1-cadencia.test.ts`, 6 testes verdes:**
+  - (a) o dado em ticks: torre 15, flecha 7 + 0..3, virote 9 + 0..4, funda 11 + 0..2;
+  - (b) a torre solta 5 pedras com intervalo exato de 15 ticks;
+  - (c) e (c2) o arqueiro e o besteiro contra unidade e contra prédio ficam na faixa, e o
+    sorteio produz mais de um valor;
+  - (d) determinismo;
+  - (e) o golpe continua em 3 ticks.
+  - Os testes existentes das F28a, F28b, F28d, F-CERCO, F26, F34 e F36 ficaram verdes sem
+    mudança, porque leem o dado.
+- **Sondas de mutação**, as quatro vermelhas:
+  - sem sorteio;
+  - atirador no ritmo do golpe;
+  - torre no ritmo do golpe;
+  - cerco sem a cadência do projétil.
+
+**PARA REVISÃO:**
+- **A animação de arco e besta ficou em 0,5 s, igual ao golpe (stand-in).**
+- **A mira mínima entrou somada na `recarga`.** A mira da funda é zero, e o F03 exige
+  toda duração ≥ 1 tick. Não abri exceção na invariante.
+- **O golpe corpo a corpo está abaixo do piso do KaM** → BALANCE_LOG, sem mexer.

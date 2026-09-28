@@ -257,6 +257,12 @@ function paraTicksDeDuracao(
  *  guardada para dividir depois em tempo de execucao. */
 /** LOTE3 — as fases da colheita como o JSON as escreve (`production.json`,
  *  `colheita.fases`). Duracao em segundos na escala 1,0; `porViagem` em unidades. */
+/** C1 — uma entrada de `combat.aDistancia.cadencia` (as outras chaves sao `_doc`). */
+interface CadenciaDeProjetilCrua {
+  readonly miraAleatoria_segundos_base: number;
+  readonly recarga_segundos_base: number;
+}
+
 interface FasesNoDado {
   readonly noTile_segundos_base: number;
   readonly naCasa_segundos_base: number;
@@ -552,7 +558,26 @@ export function loadGameData(raw: RawGameData): GameData {
         paraTicksDeDuracao(raw.combat.ataqueAPredio.cadencia_segundos_base, 'segundos', escalaCombate, tickHz),
       ),
     },
-    watchtower: raw.combat.watchtower,
+    watchtower: {
+      ...raw.combat.watchtower,
+      ticksRecarga: registrar(
+        'combat.watchtower.recarga_segundos_base', raw.combat.escala,
+        raw.combat.watchtower.recarga_segundos_base, 'segundos',
+        paraTicksDeDuracao(raw.combat.watchtower.recarga_segundos_base, 'segundos', escalaCombate, tickHz),
+      ),
+    },
+    // C1 — a cadencia do atirador por projetil, em ticks (recarga e parte sorteada da mira)
+    ticksCadenciaAtirador: Object.fromEntries(
+      Object.entries(raw.combat.aDistancia.cadencia)
+        .filter((e): e is [string, CadenciaDeProjetilCrua] => typeof e[1] === 'object')
+        .map(([projetil, c]) => {
+          const t = (campo: keyof CadenciaDeProjetilCrua): Ticks => registrar(
+            `combat.aDistancia.cadencia.${projetil}.${campo}`, raw.combat.escala, c[campo], 'segundos',
+            paraTicksDeDuracao(c[campo], 'segundos', escalaCombate, tickHz),
+          );
+          return [projetil, { miraAleatoria: t('miraAleatoria_segundos_base'), recarga: t('recarga_segundos_base') }];
+        }),
+    ),
     formacao: raw.combat.formacao,
     escudo: raw.combat.escudo,
     ia: raw.combat.ia,

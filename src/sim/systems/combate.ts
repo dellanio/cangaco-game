@@ -16,7 +16,7 @@ import type { GameData } from '../data/types';
 import type { TileDeGrid } from '../estradas';
 import { classeDaUnidade } from '../condicao';
 import {
-  chanceDeAcerto, direcaoEntre, distanciaEmTiles, ehADistancia, encostadas, noAlcance, noArco,
+  cadenciaDoTiro, chanceDeAcerto, direcaoEntre, distanciaEmTiles, ehADistancia, encostadas, noAlcance, noArco,
 } from '../combate';
 import { hpDaUnidade, hpMaximoDoTipo } from '../vida';
 import { nextFloat } from '../rng';
@@ -199,14 +199,16 @@ function passoAtirando(
   if (recarga > 0) {
     return { state: comUnidade(state, { ...u, fsmData: { alvoUnidade: alvo.id, recarga } }), events: [] };
   }
-  const recarregado = { ...u, fsmData: { alvoUnidade: alvo.id, recarga: dados.combate.ticksCadenciaDeAtaque } };
   const vitima = quemEstaNoPonto(state, alvo, dados) ?? alvo;
   const sorteio = nextFloat(state.rng);
   const acertou = sorteio.value < chanceDeAcerto(u, vitima, dados);
+  // C1: a proxima recarga e sorteada DEPOIS do acerto, no mesmo RNG
+  const cadencia = cadenciaDoTiro(u.tipo, sorteio.rng, dados);
+  const recarregado = { ...u, fsmData: { alvoUnidade: alvo.id, recarga: cadencia.ticks } };
   const hpAntes = hpDaUnidade(vitima, dados) ?? 0;
   const hp = acertou ? hpAntes - 1 : hpAntes;
   const golpe: GameEvent = { type: 'unit-struck', atacante: u.id, alvo: vitima.id, acertou, hp };
-  const depois = comUnidade(acertou ? comHp({ ...state, rng: sorteio.rng }, vitima, hp) : { ...state, rng: sorteio.rng }, recarregado);
+  const depois = comUnidade(acertou ? comHp({ ...state, rng: cadencia.rng }, vitima, hp) : { ...state, rng: cadencia.rng }, recarregado);
   const morte: GameEvent[] = hp > 0 ? [] : [{ type: 'unit-killed', unidade: vitima.id, tipo: vitima.tipo, lado: vitima.lado, por: u.id }];
   return { state: depois, events: [golpe, ...morte] };
 }
@@ -226,8 +228,10 @@ export function sistemaDoCombate(state: GameState, dados: GameData): ResultadoDe
       // F28d: o atirador ocioso com alguem no arco e no alcance comeca a recarregar
       const alvo = alvoDoAtirador(atual, u, dados);
       if (alvo !== null) {
-        atual = comUnidade(atual, {
-          ...u, fsm: FSM_ATIRANDO, fsmData: { alvoUnidade: alvo.id, recarga: dados.combate.ticksCadenciaDeAtaque },
+        // C1: a primeira mira ja e a do projetil (recarga + mira + sorteio)
+        const cadencia = cadenciaDoTiro(u.tipo, atual.rng, dados);
+        atual = comUnidade({ ...atual, rng: cadencia.rng }, {
+          ...u, fsm: FSM_ATIRANDO, fsmData: { alvoUnidade: alvo.id, recarga: cadencia.ticks },
         });
       }
     }

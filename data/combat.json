@@ -27,7 +27,22 @@
     },
     "arcoDeTiro_graus_total": 90,
     "_docArco": "TOTAL do setor, nao meio angulo: 45 graus para cada lado da direcao em que o arqueiro esta virado. Do KaM: KM_Terrain.pas:2021-2033 (+-45). O nome do campo carrega 'total' porque a ambiguidade entre meio angulo e total era o defeito (operador, 2026-09-28).",
-    "_doc": "Arqueiro so atira na direcao em que esta virado. Posicionar e virar, nao mandar atacar."
+    "_doc": "Arqueiro so atira na direcao em que esta virado. Posicionar e virar, nao mandar atacar.",
+    "cadencia": {
+      "flecha": {
+        "recarga_segundos_base": 1.1,
+        "miraAleatoria_segundos_base": 0.6
+      },
+      "virote": {
+        "recarga_segundos_base": 1.3,
+        "miraAleatoria_segundos_base": 0.8
+      },
+      "funda": {
+        "recarga_segundos_base": 1.6,
+        "miraAleatoria_segundos_base": 0.4
+      },
+      "_doc": "C1 (operador, 2026-09-28: 'cadencia propria para projetil'). Ciclo do atirador = recarga + sorteio de 0 a miraAleatoria-1 (ticks), no RNG da sim. Do kam_remake (KM_UnitWarrior.pas:790-800, ticks de 100 ms): mira do arco 6+random(6), da besta 8+random(8), da funda 0+random(4). A recarga SOMA a mira minima e a animacao de luta: arco 0,6 + 0,5 = 1,1 s; besta 0,8 + 0,5 = 1,3 s; funda 0 + 1,6 = 1,6 s. A animacao do arco e da besta (0,5 s) e a MESMA do golpe, stand-in PARA REVISAO: o numero de quadros esta no unit.dat do original, nao no fonte. A da funda (1,6 s) e o piso que o fonte garante: a pedra sai no quadro 15 (KM_UnitWarrior.pas:774). A mira minima entra na recarga porque a da funda e zero e toda duracao convertida e >= 1 tick (F03)."
+    }
   },
   "stormAttack": {
     "multiplicadorVelocidade": 1.5,
@@ -42,6 +57,8 @@
   "watchtower": {
     "municao_stone_max": 5,
     "alcance_tiles": 7,
+    "recarga_segundos_base": 2.3,
+    "_docRecarga": "C1 (operador, 2026-09-28): a torre gastava 5 pedras em 1,5 s. No kam_remake cada pedra custa 2 ticks (pegar) + 1 (arremessar) + o voo + 20 parado (KM_UnitTaskThrowRock.pas:86-98): 23 ticks de 100 ms = 2,3 s, sem o voo (o voo entra com o projetil que voa).",
     "_docAlcance": "F28b (decisao do operador, 2026-09-28): 7 tiles, fixo (era 6). Distancia euclidiana do tile mais perto do footprint ao alvo. A pedra NUNCA erra (simplificacao escrita do operador: no KaM erra se o alvo andou, KM_Projectiles.pas:305-306) e mata quem estiver no ponto, do proprio lado inclusive.",
     "mataEmUmGolpe": true
   },
@@ -64,8 +81,15 @@
     "_doc": "F28c (decisao do operador, 2026-09-28): 1 HP a cada 10 s, INCLUSIVE em luta, como no KaM (1 a cada 100 ticks de 100 ms: common/KM_Defaults.pas:360, units/KM_Units.pas:2306-2314). Na escala `combate` deste arquivo. O efeito com o multiplicadorHP 2 esta medido em test-output/F28c.json: o tempo ate encher DOBRA contra o KaM. Numero fixado com a medida a vista, PARA REVISAO do operador."
   },
   "escudo": {
-    "mercadorias": ["wooden_shield", "iron_shield"],
-    "defesaContraProjetil": { "flecha": 1, "funda": 1, "virote": 0.5 },
+    "mercadorias": [
+      "wooden_shield",
+      "iron_shield"
+    ],
+    "defesaContraProjetil": {
+      "flecha": 1,
+      "funda": 1,
+      "virote": 0.5
+    },
     "_doc": "F28d (decisao do operador, 2026-09-28): a tropa com escudo ganha defesa extra contra projetil, SOMADA a `defence` na formula: +1 contra arco e funda, +0,5 contra besta (KM_ResUnits.pas:258-260). Quem tem escudo e quem leva um destes itens nos `requisitos` de units.json — derivado, sem campo por tropa."
   },
   "ia": {

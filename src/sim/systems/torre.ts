@@ -6,7 +6,8 @@
  * amigo, decisao do operador). NUNCA erra (`combat.json: watchtower`): por isso pedras
  * gastas = mortos. Sem sorteio: o RNG nao e tocado.
  *
- * A recarga e `ticksCadenciaDeAtaque`: o dado nao tem cadencia de torre (PARA REVISAO).
+ * A recarga e a PROPRIA da torre (C1): `watchtower.ticksRecarga`, 2,3 s na escala 1,0 (o
+ * `TKMTaskThrowRock` do kam_remake: 2 + 1 + 20 ticks, sem o voo).
  */
 import type { GameEvent, GameState, PredioCompleto, Unidade } from '../state';
 import type { GameData } from '../data/types';
@@ -40,8 +41,10 @@ export function sistemaDaTorre(state: GameState, dados: GameData): ResultadoDeSi
       .map((u) => atual.unidades.porId[u])
       .find((u): u is Unidade => u !== undefined && u.gx === alvo.gx && u.gy === alvo.gy && temHp(u)) ?? alvo;
     const municao = { ...torre.estoque.entrada, [MUNICAO_DA_TORRE]: pedrasNaTorre(torre) - 1 };
+    // `recarga` = ticks de ESPERA ate o proximo tiro; o tiro sai no tick seguinte ao ultimo
+    // de espera, entao o intervalo entre pedras e exatamente `ticksRecarga` (C1: antes era +1)
     const atirou: PredioCompleto = {
-      ...torre, estoque: { ...torre.estoque, entrada: municao }, recarga: dados.combate.ticksCadenciaDeAtaque,
+      ...torre, estoque: { ...torre.estoque, entrada: municao }, recarga: dados.combate.watchtower.ticksRecarga - 1,
     };
     atual = comPredio(atual, atirou);
     events.push({ type: 'stone-thrown', predio: torre.id, alvo: { gx: alvo.gx, gy: alvo.gy }, vitima: vitima.id });

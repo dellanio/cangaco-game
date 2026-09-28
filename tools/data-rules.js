@@ -589,8 +589,20 @@ function validarAtiradores(dados, erros) {
     if (t.aDistancia !== true) continue;
     if (typeof t.projetil !== 'string') erros.push(`combate/atirador: '${t.id}' atira e nao declara 'projetil'`);
     else if (!(t.projetil in contra)) erros.push(`combate/atirador: o projetil '${t.projetil}' de '${t.id}' nao esta em escudo.defesaContraProjetil`);
+    // C1: todo projetil em uso tem cadencia propria
+    else if (!(combate.aDistancia && combate.aDistancia.cadencia && typeof combate.aDistancia.cadencia[t.projetil] === 'object')) {
+      erros.push(`combate/cadencia: o projetil '${t.projetil}' de '${t.id}' nao tem aDistancia.cadencia`);
+    }
   }
   const d = combate.aDistancia || {};
+  for (const [projetil, c] of Object.entries(d.cadencia || {})) {
+    if (projetil.startsWith('_')) continue;
+    if (!(c.miraAleatoria_segundos_base > 0 && c.recarga_segundos_base > 0)) {
+      erros.push(`combate/cadencia: '${projetil}' precisa de miraAleatoria > 0 e recarga > 0`);
+    }
+  }
+  const torre = combate.watchtower || {};
+  if (!(torre.recarga_segundos_base > 0)) erros.push('combate/torre: watchtower.recarga_segundos_base precisa ser > 0');
   if (!(d.alcanceMinimo_tiles >= 0 && d.alcanceMaximo_tiles > d.alcanceMinimo_tiles)) {
     erros.push('combate/alcance: aDistancia precisa de 0 <= alcanceMinimo_tiles < alcanceMaximo_tiles');
   }

@@ -6,6 +6,8 @@
 import type { Unidade } from './state';
 import type { GameData } from './data/types';
 import { gameData } from './data';
+import { nextInt } from './rng';
+import type { RngState } from './rng';
 
 /** Direcao ausente: 4, sul, de frente para a camera (`Unidade.direcao`). */
 export const DIRECAO_PADRAO = 4;
@@ -128,4 +130,22 @@ export function ehADistancia(tipo: string, dados: GameData = gameData): boolean 
 /** Encostado: Chebyshev 1 (os oito vizinhos). */
 export function encostadas(a: { readonly gx: number; readonly gy: number }, b: { readonly gx: number; readonly gy: number }): boolean {
   return Math.max(Math.abs(a.gx - b.gx), Math.abs(a.gy - b.gy)) === 1;
+}
+
+/**
+ * C1 — quantos ticks o atirador leva ate o proximo tiro: `recarga + sorteio`, com o
+ * sorteio de 0 a `miraAleatoria - 1` no RNG do estado (o `KaMRandom(ADD)` de
+ * `KM_UnitWarrior.pas:790-800`). Sem cadencia no dado para o projetil (a regra de dado
+ * impede), cai na do golpe. Parte aleatoria zero nao consome o RNG.
+ */
+export function cadenciaDoTiro(
+  tipo: string, rng: RngState, dados: GameData = gameData,
+): { readonly ticks: number; readonly rng: RngState } {
+  const projetil = projetilDe(tipo, dados);
+  const c = projetil === null ? undefined : dados.combate.ticksCadenciaAtirador[projetil];
+  if (c === undefined) return { ticks: dados.combate.ticksCadenciaDeAtaque, rng };
+  const fixo = c.recarga;
+  if (c.miraAleatoria <= 0) return { ticks: fixo, rng };
+  const sorteio = nextInt(rng, 0, c.miraAleatoria);
+  return { ticks: fixo + sorteio.value, rng: sorteio.rng };
 }

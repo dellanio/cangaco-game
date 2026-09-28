@@ -22,7 +22,7 @@ import type { GameEvent, GameState, MotivoDeRecusaDeAtaque, Predio, Unidade } fr
 import type { GameData } from '../data/types';
 import type { TileDeGrid } from '../estradas';
 import { classeDaUnidade } from '../condicao';
-import { distanciaEmTiles, ehADistancia } from '../combate';
+import { cadenciaDoTiro, distanciaEmTiles, ehADistancia } from '../combate';
 import { caixaDoPredio } from '../footprint';
 import { buscarCaminho, passoAndavel, tileAndavel } from '../pathfinding';
 import { andar, comPredio, comUnidade, noTile, ocioso } from '../units/movimento';
@@ -138,17 +138,26 @@ function alvoDaOrdem(state: GameState, u: Unidade): Predio | null {
   return predio === undefined || predio.lado === u.lado ? null : predio;
 }
 
-function comecarAGolpear(u: Unidade, dados: GameData): Unidade {
-  return {
+/** A recarga do proximo golpe em predio: a do golpe (`ataqueAPredio`) para quem luta de
+ *  perto; a do projetil (C1: recarga + mira + sorteio no RNG) para quem atira. */
+function recargaContraPredio(state: GameState, u: Unidade, dados: GameData): { readonly ticks: number; readonly state: GameState } {
+  if (!ehADistancia(u.tipo, dados)) return { ticks: dados.combate.ataqueAPredio.ticksCadencia, state };
+  const c = cadenciaDoTiro(u.tipo, state.rng, dados);
+  return { ticks: c.ticks, state: { ...state, rng: c.rng } };
+}
+
+function comecarAGolpear(state: GameState, u: Unidade, dados: GameData): GameState {
+  const r = recargaContraPredio(state, u, dados);
+  return comUnidade(r.state, {
     ...u, fsm: FSM_ATACANDO,
-    fsmData: { alvo: u.fsmData.alvo as string, recarga: dados.combate.ataqueAPredio.ticksCadencia },
-  };
+    fsmData: { alvo: u.fsmData.alvo as string, recarga: r.ticks },
+  });
 }
 
 function passoIndoAtacar(state: GameState, u: Unidade, dados: GameData): ResultadoDeSistema {
   const alvo = alvoDaOrdem(state, u);
   if (alvo === null) return semEventos(comUnidade(state, ocioso(u)));
-  if (emPosicaoDeAtaque(u, alvo, dados)) return semEventos(comUnidade(state, comecarAGolpear(u, dados)));
+  if (emPosicaoDeAtaque(u, alvo, dados)) return semEventos(comecarAGolpear(state, u, dados));
 
   let atual = u;
   const caminho = u.fsmData.caminho;
@@ -158,11 +167,11 @@ function passoIndoAtacar(state: GameState, u: Unidade, dados: GameData): Resulta
     const rota = buscarCaminho(state, noTile(u), anelDeAtaque(state, alvo, dados, ehADistancia(u.tipo, dados)), 'livre', dados);
     if (rota === null) return semEventos(comUnidade(state, ocioso(u)));
     atual = { ...u, fsmData: { alvo: alvo.id, caminho: rota.tiles, progresso: 0 } };
-    if (rota.tiles.length === 0) return semEventos(comUnidade(state, comecarAGolpear(atual, dados)));
+    if (rota.tiles.length === 0) return semEventos(comecarAGolpear(state, atual, dados));
   }
   const andou = andar(state, atual, dados);
   if (emPosicaoDeAtaque(andou, alvo, dados)) {
-    return semEventos(comUnidade(state, comecarAGolpear(andou, dados)));
+    return semEventos(comecarAGolpear(state, andou, dados));
   }
   return semEventos(comUnidade(state, andou));
 }
@@ -182,8 +191,8 @@ function passoAtacando(state: GameState, u: Unidade, dados: GameData): Resultado
   const hp = Math.max(0, alvo.hp - dano);
   const golpe: GameEvent = { type: 'building-attacked', predio: alvo.id, unidade: u.id, dano: alvo.hp - hp, hp };
   if (hp > 0) {
-    const s = comPredio(state, { ...alvo, hp });
-    return { state: comUnidade(s, { ...u, fsmData: { alvo: alvo.id, recarga: ticksCadencia } }), events: [golpe] };
+    const r = recargaContraPredio(comPredio(state, { ...alvo, hp }), u, dados);
+    return { state: comUnidade(r.state, { ...u, fsmData: { alvo: alvo.id, recarga: r.ticks } }), events: [golpe] };
   }
   // hp zero: o predio sai pelo caminho da demolicao, SEM devolucao (PARA REVISAO:
   // no KaM a casa destruida se perde). O evento e o mesmo da demolicao, com a perda
