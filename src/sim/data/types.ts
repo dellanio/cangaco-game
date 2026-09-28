@@ -68,6 +68,24 @@ export interface ReceitaDePredio {
    *  cota do predio (`Producao.escolha`). `false` e a receita de sempre: o ciclo
    *  deposita todas as saidas juntas (a granja: porco e couro). */
   readonly escolheSaida: boolean;
+  /** F-REPL-b — o que o jogador escolhe neste predio (`Producao.modo`), ou `null`
+   *  para quem nao escolhe nada. Hoje so o lenhador declara. */
+  readonly modos: ModosDoPredio | null;
+}
+
+/**
+ * F-REPL-b — os modos de um predio. O codigo le o que cada modo FAZ, nunca o nome:
+ * o nome e o id que o comando `SetBuildingMode` leva e que o tema traduz.
+ */
+export interface ModosDoPredio {
+  readonly porModo: Readonly<Record<string, ModoDeTrabalho>>;
+  /** O modo de quem nasce. Esta em `porModo` (o loader recusa o contrario). */
+  readonly padrao: string;
+}
+
+export interface ModoDeTrabalho {
+  /** Repoe o tile que cortou (o rodizio). `false` so colhe, e o que colhe esgota. */
+  readonly planta: boolean;
 }
 
 /** F-T2a — a colheita de um predio: o que ele corta e ate onde alcanca. */
@@ -80,6 +98,13 @@ export interface ColheitaDeRecurso {
    *  dentro e o deposito consome o tile, como a mina do jogo original. Regra de
    *  classe, nao de tipo: qualquer receita com `colheita` pode declarar. */
   readonly aDistancia: boolean;
+  /** LOTE3 — o ciclo em fases, na ordem: `ticksDeDescanso` dentro do predio (o
+   *  descanso do KaM, que vem DEPOIS da entrega — aqui, no comeco do ciclo seguinte),
+   *  `ticksNoTile` no tile (`colhendo`) e o resto, ate `ReceitaDePredio.ticksDoCiclo`,
+   *  de volta dentro do predio (o trabalho na casa; zero para quem volta e deposita).
+   *  Receita sem `fases` no dado: descanso 0 e o ciclo inteiro no tile, como antes. */
+  readonly ticksDeDescanso: Ticks;
+  readonly ticksNoTile: Ticks;
 }
 export type ProducaoReceitas = Readonly<Record<string, ReceitaDePredio>>;
 
@@ -202,7 +227,11 @@ export interface AraduraDeRecurso {
 
 /** F18 — o custo de repor um tile, ja em ticks. So o regime `porAcao` tem. */
 export interface ReposicaoDeRecurso {
-  readonly ticks: Ticks;
+  /** F-CAMPO-a — ticks do roceiro NO TILE para semea-lo. */
+  readonly ticksDeSemear: Ticks;
+  /** F-CAMPO-a — ticks do tile semeado ate maduro, sem ninguem la. Nao ha
+   *  contador: o tile guarda `semeadoEm` e maduro e derivado. */
+  readonly ticksDeCrescer: Ticks;
   /** Mercadoria -> quantidade que o predio gasta por tile reposto. Vazio quando
    *  a reposicao nao cobra nada (o milho de hoje: a semente vem do proprio
    *  roçado, decisao registrada no item da fila). */

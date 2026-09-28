@@ -63,7 +63,9 @@ interface Passo {
  * mudo) — nao e afirmacao de desempenho (CLAUDE.md §8).
  */
 function trilhaDeUmCiclo(
-  inicial: GameState, predioId: string, unidadeId: string, mercadoria: string, limite = 400,
+  inicial: GameState, predioId: string, unidadeId: string, mercadoria: string,
+  // LOTE3-c: o teto e de seguranca e acompanha o ciclo do dado (a pedreira passou a 501)
+  limite = (gameData.producao.receitas.quarry?.ticksDoCiclo ?? 0) + 400,
 ): { readonly trilha: readonly Passo[]; readonly fim: GameState } {
   const trilha: Passo[] = [];
   let estado = inicial;
@@ -118,7 +120,9 @@ describe('F-T3 — o ciclo em campo da pedreira', () => {
   const emCampo = trilha.filter((p) => p.fsm === 'colhendo');
 
   it('sai, colhe no tile e volta, nessa ordem', () => {
-    expect(sequencia(trilha)).toEqual(['indo_colher', 'colhendo', 'voltando', 'trabalhando']);
+    // LOTE3-b2: o ciclo abre com o descanso DENTRO do predio (`trabalhando`), e o
+    // pedreiro volta do tile para trabalhar na casa (as fases do KaM)
+    expect(sequencia(trilha)).toEqual(['trabalhando', 'indo_colher', 'colhendo', 'voltando', 'trabalhando']);
   });
 
   it('anda um tile por passo, sem salto, e sai da porta', () => {
@@ -185,7 +189,11 @@ describe('F-T3 — o ciclo em campo da pedreira', () => {
 describe('F-T3 — o mesmo ciclo no roçado', () => {
   it('o roceiro sai da fazenda, vai ao milho e volta com a colheita', () => {
     const inicial = comEspacoNaSaida(cenarioDeFazenda(), 'f1');
-    const { trilha, fim } = trilhaDeUmCiclo(inicial, 'f1', 'roceiro', 'corn', 1200);
+    // F-CAMPO-a — o milho agora CRESCE no tile depois de semeado, e o primeiro
+    // ciclo que entrega vem depois do crescer inteiro. O teto de seguranca soma o
+    // crescer do dado aos 1200 de antes: e teto contra travar, nao assercao (§8).
+    const crescer = gameData.recursos.tipos.corn?.reposicao?.ticksDeCrescer ?? 0;
+    const { trilha, fim } = trilhaDeUmCiclo(inicial, 'f1', 'roceiro', 'corn', 1200 + crescer);
     const receita = receitaDoTipo('farm', gameData);
     if (receita === null) throw new Error('fixture: farm perdeu a receita');
     // a fazenda pode PLANTAR antes de ter o que colher (F18): a sequencia do ciclo

@@ -129,10 +129,28 @@ async function roteiro(ctx) {
       `veio ${JSON.stringify(s.recursosVisiveis)}`,
     );
   }
+  // Nada foi colhido ainda: o unico `esgotado` da abertura e o que NASCE vazio
+  // (o milho do chao arado e a cana em pousio), que desde a noite 17 entra no
+  // quadro de abertura. A conta vem do arquivo de mapa, tipo a tipo pela
+  // `quantidadeInicial`: um tile colhido a mais, ou um tipo cheio desenhado
+  // como esgotado, sai da faixa.
+  const vistaDeAbertura = mundoVisivel(canvas, s.camera);
+  const letras = (nome) => Object.keys(mapa.legenda).filter((l) => mapa.legenda[l] === nome);
+  const vazios = [];
+  for (const [id, def] of Object.entries(recursos.tipos)) {
+    if ((def.quantidadeInicial ?? def.rendimentoPorTile) !== 0) continue;
+    vazios.push(...(mapa.recursos[id] || []));
+    if (def.terreno === undefined) continue;
+    const dele = letras(def.terreno);
+    mapa.linhas.forEach((linha, gy) => [...linha].forEach((l, gx) => {
+      if (dele.includes(l)) vazios.push([gx, gy]);
+    }));
+  }
+  const pousio = contarDoMapa(vazios, vistaDeAbertura);
   afirmar(
-    s.recursosVisiveis.esgotado === 0,
-    'nada foi colhido ainda: nenhum tile deveria estar marcado como esgotado, ' +
-    `veio ${JSON.stringify(s.recursosVisiveis)}`,
+    s.recursosVisiveis.esgotado >= pousio.dentro && s.recursosVisiveis.esgotado <= pousio.tocando,
+    `nada foi colhido ainda: 'esgotado' deveria ser so o que nasce vazio, entre ${pousio.dentro} e `
+      + `${pousio.tocando} tiles; veio ${JSON.stringify(s.recursosVisiveis)}`,
   );
   await capturar('vila-de-abertura');
 

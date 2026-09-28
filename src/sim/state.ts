@@ -15,6 +15,7 @@ import type { MotivoDeLiberacao } from './jobs';
 import type { MotivoDeRecusaDeTreino } from './escola';
 import type { MotivoDeRecusaDePausa } from './pausa';
 import type { MotivoDeRecusaDeCota } from './cota';
+import type { MotivoDeRecusaDeModo } from './modo';
 // F-T2a: a camada de recurso nasce do MAPA, e quem sabe ler o mapa e
 // `sim/recursos.ts`. Import de valor (nao de tipo) e o unico deste arquivo alem
 // do RNG e do dado — `createInitialState` e o lugar certo para ele.
@@ -92,6 +93,14 @@ export type GameEvent =
       readonly command: 'SetProductionQuota';
       readonly predio: string;
       readonly motivo: MotivoDeRecusaDeCota;
+    }
+  | {
+      /** F-REPL-b — `SetBuildingMode` recusado; o estado nao mudou. Pedir o modo
+       *  que o predio JA tem nao e recusa, e no-op: nao emite nada. */
+      readonly type: 'command-rejected';
+      readonly command: 'SetBuildingMode';
+      readonly predio: string;
+      readonly motivo: MotivoDeRecusaDeModo;
     }
   | {
       /**
@@ -332,6 +341,17 @@ export interface Producao {
    *  AUSENTE nos outros, nunca `undefined` — a convencao de `DadosDaFsm`. Quem
    *  reconstroi `Producao` espalha a anterior para nao perder o rodizio. */
   readonly escolha?: EscolhaDeSaida;
+  /** F-CAMPO-a — so no predio que REPOE o tile (roçado, canavial): o ultimo tile
+   *  que o rodizio escolheu, chave `"gx,gy"`. AUSENTE nos outros e antes da
+   *  primeira escolha. A proxima busca termina este tile se ainda ha o que colher
+   *  nele, e senao comeca DEPOIS dele — nenhum tile ao alcance espera mais de uma
+   *  volta. Quem reconstroi `Producao` espalha a anterior para nao perde-lo. */
+  readonly cursor?: string;
+  /** F-REPL-b — o modo que o jogador escolheu (`SetBuildingMode`), chave de
+   *  `ReceitaDePredio.modos.porModo`. So no predio cuja receita declara `modos` (o
+   *  lenhador), e nasce no `padrao`; AUSENTE nos outros, como `escolha`. Quem
+   *  reconstroi `Producao` espalha a anterior para nao perde-lo. */
+  readonly modo?: string;
 }
 
 /**
@@ -348,7 +368,12 @@ export interface EscolhaDeSaida {
 }
 
 /**
- * F18 — a reposicao de UM tile em curso, dentro do predio.
+ * F18 — a reposicao de UM tile em curso.
+ *
+ * F-CAMPO-a — deixou de ser "dentro do predio": semear e VIAGEM (`indo_semear`,
+ * `semeando`, `voltando`), e esta reserva cobre a ida e a semeadura. O crescer
+ * nao esta aqui: corre no tile (`RecursoNoTile.semeadoEm`), sem o roceiro. O
+ * texto abaixo e o da F18 e continua valendo quanto ao pretendente unico.
  *
  * Por que aqui e nao como tarefa do quadro, ao contrario da colheita (F-T2c): a
  * tarefa de colheita existe porque DUAS pedreiras podem mirar o mesmo tile, e
@@ -362,7 +387,7 @@ export interface EscolhaDeSaida {
 export interface Plantio {
   /** O tile sendo reposto. Reservado desde o primeiro tick do plantio. */
   readonly tile: TileDeGrid;
-  /** Ticks ja trabalhados, de 0 ate `reposicao.ticks` do tipo de recurso. */
+  /** Ticks ja trabalhados NO TILE, de 0 ate `reposicao.ticksDeSemear`. */
   readonly progresso: number;
 }
 
@@ -378,6 +403,14 @@ export interface Plantio {
 export interface RecursoNoTile {
   readonly tipo: string;
   readonly quantidade: number;
+  /** F-CAMPO-a — o tick em que o roceiro terminou de semear este tile. So em
+   *  tile semeado e ainda nao colhido ate o fim; AUSENTE em rocha, arvore, terra
+   *  em pousio e todo tile de antes da F-CAMPO. Maduro e DERIVADO
+   *  (`tick >= semeadoEm + ticksDeCrescer`, `tileMaduro` em sim/recursos.ts):
+   *  nada avanca por tick, e o crescer corre em todos os tiles ao mesmo tempo.
+   *  Opcional, e nao `number | null` obrigatorio: obrigatorio custava 41 erros
+   *  de compilacao (5 na sim, 36 em teste), medido na noite 18. */
+  readonly semeadoEm?: number;
 }
 
 /**
@@ -1176,10 +1209,12 @@ function producaoParaTipo(tipoId: string, dados: GameData): Producao | null {
   if (receita === undefined) return null;
   // F24a — a oficina que escolhe a saida nasce no rodizio: cota 1 para cada uma,
   // na ordem de `economia.mercadorias`. O 1 nao e balanceamento, e "todas iguais".
-  if (!receita.escolheSaida) return { progresso: 0, plantio: null };
+  // F-REPL-b — quem declara modos nasce no padrao do dado.
+  const modo = receita.modos === null ? {} : { modo: receita.modos.padrao };
+  if (!receita.escolheSaida) return { progresso: 0, plantio: null, ...modo };
   const cota: Record<string, number> = {};
   for (const m of dados.economia.mercadorias) if (m in receita.sai) cota[m] = 1;
-  return { progresso: 0, plantio: null, escolha: { cota, proxima: 0 } };
+  return { progresso: 0, plantio: null, escolha: { cota, proxima: 0 }, ...modo };
 }
 
 function estoqueParaTipo(

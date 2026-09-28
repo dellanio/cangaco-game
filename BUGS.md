@@ -30,21 +30,80 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
 
 ## Abertos
 
-## BUG-L — roteiro F18 vermelho: a uva também nasce vazia na abertura
-- feature: F-CANA-canavial-e-mina (a cana ficou sem tile de mapa; `dc64136`)
-- severidade: errado (operador, 2026-09-26). A chave da F-CANA vai a `false`. A da F18
-  fica `true`: o aceite dela passa, e o defeito é da F-CANA.
-- repro: `npm run shot -- F18` (na `main` em `3c38d27` e na branch `ui-barra-a`)
-- esperado: `tiposQueNascemVazios()` (`tools/shots/F18.js:103`, lê
-  `data/resources.json`) devolve só `['corn']` — premissa de que "esgotado" na tela
-  só pode ser campo de milho.
-- observado: `shot: afirmacao falhou — na abertura so o campo nasce vazio; se outro
-  tipo nascer em zero, "esgotado" fica ambiguo. Veio ["corn","grapes"]`
-- evidência: rodado em 2026-09-26 num worktree irmão da `main` (já removido); não é
-  causado pela barra lateral.
-- correção: item `F-CANA-b` no `BUILD_PLAN.md`. O gerador semeia uma mancha de cana
-  perto da vila, como o lajedo e o roçado. Ainda não implementado.
-- status: aberto
+## BUG-M — a obra de prédio com sprite não desenha nada ao ser plantada
+- feature: ? — quebrou com o lote de sprites de prédio (`ec79428`, `59ff42e`, na `main`
+  pelo merge `f83f8a4`), na revelação da F17g. O lote não tem chave própria.
+- severidade: errado (aceite escrito de roteiro reprovando: F11c e F17e). **Nenhuma
+  chave foi virada:** qual feature responde é decisão do operador.
+- repro: `npm run shot -- F11c` ou `-- F17e`, na `main`. Os dois plantam uma Pedreira.
+- **medido (2026-09-26, noite 17), é o RENDER, e o roteiro só o acusa:**
+  - a Pedreira (e o armazém, a escola, a taverna, o lenhador, a serraria) tem o par
+    `madeira`/`completo` no manifesto, e `atualizarPredios` a desenha pela revelação
+    da F17g, não pelo estágio (`WorldScene.ts`, `par === null || revelacao === null`);
+  - com `hp = 0`, `revelacaoDaObra` devolve `{ madeira: [0,1], pedra: [0,1] }`
+    (`estagio-obra.ts:108`), e `desenharRevelado` com numerador 0 devolve `[]`;
+  - o canteiro com `tilesProntos: 0` e `oitavos: 0` também devolve `[]`;
+  - o que sobra na tela é **só o medidor de material** — cinco quadradinhos de 8 px.
+    Sem o contorno do lote e sem o nome, que o placeholder (`desenharPlaceholder`)
+    desenha sempre, inclusive na marcação.
+  - sonda (apagada): `obrasRenderizadas: 1`, `revelacao.p9 = {madeira:[0,1],pedra:[0,1]}`,
+    `sprites.p9 = 'predio:quarry:madeira'`, `estagiosDeObraRenderizados` todo zero fora
+    `completo: 2`. Screenshot aberto com Read: a obra é um borrão de quadradinhos no
+    gramado, sem lote.
+  - por que o roteiro reprova: obra revelada não entra em `estagiosDeObraRenderizados`
+    (só em `revelacaoDasObras`), e F11c/F17e afirmam por estágio. O canal envelhecido
+    do roteiro é consequência; o defeito que o jogador vê é o lote que sumiu.
+- correção proposta (não aplicada — `src/render/` está com a outra sessão): a obra
+  revelada desenha o lote do placeholder (contorno + nome/estágio) por baixo do corpo
+  enquanto a revelação não cobre o chão, e continua publicando o estágio em
+  `estagiosDeObraRenderizados`. Com isso F11c e F17e voltam a valer sem mudar asserção.
+- F17f: **corrigido** no roteiro (premissa morta: a escola ganhou arte). O lado do
+  retângulo passou para a obra de uma torre de vigia, o primeiro prédio sem arte que o
+  jogador planta; o roteiro afirma pelo manifesto quem não tem arte.
+- **paliativo aplicado (2026-09-26, decisão do operador):** `revelacaoDaObra` devolve
+  `null` com `hp <= 0` (`estagio-obra.ts`), e a cena cai nos seis estágios pelo ramo que
+  já existia em `WorldScene.ts` (`revelacao === null`) — sem tocar a cena. O instante do
+  plantio voltou a desenhar lote, nome e canteiro, que é o que o aceite da F17g já pedia
+  ("antes da primeira martelada, o canteiro da F17d"). F17g, F17f, F17d, F17b e F-VIVO-a:
+  OK. Contrato mudado: a assinatura da F17g passa a `RevelacaoDaObra | null`.
+- **o que continua vermelho (medido):** da primeira martelada em diante a obra revelada
+  sai de `estagiosDeObraRenderizados`, e o roteiro avança mais e reprova depois:
+  F11c em "a obra deveria passar a ESTRUTURA (primeira martelada)"; F17e em "estes
+  estagios nunca apareceram: [estrutura, paredes, cobertura]". O resto é a correção
+  proposta acima, em `WorldScene.ts` — com a outra sessão.
+- status: aberto (F11c, F17e), paliativo. Espera o render livre e a decisão de quem responde.
+
+## BUG-O — o jogador ara doze campos e vê um funcionar
+- feature: F18 (roçado) e F-CANA (canavial); a regra de escolha é de classe (F-T2c)
+- severidade: errado — promessa quebrada (operador, 2026-09-26). **Nenhuma chave virada:**
+  o aceite escrito da F18 ("produz, para quando esgota, volta quando replanta") passa com
+  um tile só. É lacuna de aceite, e a decisão é do operador.
+- repro: `cenarioDeFazenda` e `cenarioDeCanavial(gameData, 12)`
+  (`tests/helpers/producao-cenario.ts`), 6000 ticks, contando os tiles distintos tocados
+- esperado: os tiles arados ao alcance giram. O crescimento corre no tile, em paralelo,
+  sem o roceiro lá (modelo decidido pelo operador, item `F-CAMPO` no BUILD_PLAN).
+- **observado (medido, 2026-09-26, sonda apagada), em 6000 ticks:**
+
+  | Quem | Tiles ao alcance | Tiles tocados | Produziu |
+  |---|---|---|---|
+  | roceiro | 37 | 1 | 24 |
+  | canavial com 12 arados | 12 | 1 | 8 |
+  | canavial com 1 arado | 1 | 1 | 8 |
+  | pedreiro | 13 | 2, o primeiro esgotado | 22 |
+  | mineiro de carvão | 7 | 2, o primeiro esgotado | 24 |
+  | lenhador | 9 | 3 próprios, mais 1 que caiu (hipótese: outro lenhador, não conferido) | 8 |
+
+- **causa:** duas coisas juntas.
+  - A escolha: `melhorTileDeColheita` e `melhorTileParaPlantio` (`sim/recursos.ts:277`,
+    `:333`) devolvem o primeiro tile na ordem canônica.
+  - O modelo: o plantio ocupa o roceiro por 150 ticks, que cobrem semear e crescer
+    (`sim/systems/especialistas.ts:395-406`), e a fazenda só planta sem maduro.
+  - O resultado: quem esgota avança sozinho, e quem repõe volta sempre ao mesmo tile.
+- classificado errado antes: o lote 1 do `BALANCE_LOG.md` chamou isto de característica
+  ("o roceiro é serial e usa 1 tile de 37"). Serial seria percorrer um tile por vez.
+- correção: o item `F-CAMPO` (proposta, não implementada), com crescimento no tile e
+  escolha por rodízio.
+- status: aberto. Espera o sim do operador ao F-CAMPO e os números de semear/crescer.
 
 ---
 
@@ -78,3 +137,20 @@ antes deles, o BUG-001 na F09) saíram em 2026-09-24 com a regra que os dissolve
 **medida de relógio é evidência da sessão, nunca asserção** — `CLAUDE.md` §8, decisão
 do operador. A regra antiga daqui ("alargar o teto com o número medido") está **revogada**:
 ela consertava a asserção em vez de perguntar se aquele eixo podia ser asserção.
+
+## BUG-N — cana em pousio parece mato cortado
+- feature: F-CANA-b (a mancha de cana da vila); o desenho é de `src/render/mapa.ts`
+- severidade: feio
+- repro: `npm run shot -- F-CANA-b`, captura `screenshots/F-CANA-b-1-abertura-com-a-cana.png`
+- esperado: a mancha de cana nova se lê como roça esperando plantio, como o roçado do milho.
+- observado: a cana nasce em pousio (`quantidadeInicial: 0`) e o render a pinta com o
+  código único de ESGOTADO (`render/mapa.ts`, `codigoEsgotado`: "havia recurso") — o
+  mesmo losango escuro da árvore cortada, sobre grama.
+- causa: falta o chão arado que o milho tem. O milho em pousio fica sobre o terreno
+  `campoArado` (marrom), derivado do mapa; a cana não tem terreno (`grapes` sem `terreno`
+  em `resources.json`) e fica sobre `grama`, e aí o esgotado não tem contexto.
+- correção: é do render, com a sessão do render (instrução do operador, 2026-09-26).
+  Dois caminhos, a decidir lá: um código de "em pousio" separado do "esgotado" para
+  cultura (tipo com `aradura` em `resources.json`), ou o chão de roça desenhado sob
+  tile de cultura.
+

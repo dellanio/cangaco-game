@@ -215,7 +215,10 @@ Os três que o jogador sente o tempo todo: **Gold**, **Timber** e **Stone**.
 
 - Todos os civis ficam com fome. **Não existe limite de população**: ela é
   limitada pela comida.
-- Inn: 8 comensais simultâneos, 5 unidades de cada comida estocadas.
+- Inn: 6 comensais simultâneos, 5 unidades de cada comida estocadas.
+  (Corrigido de 8 na VARREDURA-KAM, 2026-09-28: `INN_MAX_EATERS = 6` em
+  `houses/KM_HouseInn.pas:11`. O dado da sim, `data/condition.json`, continua
+  com 8 — medido sem efeito na vila da calibração; ver `BALANCE_LOG.md`.)
 - Restauração: Wine **30%**, Loaves **40%**, Fish **50%**, Sausages **60%**.
   (O vinho foi aumentado de 20% para 30% no Remake **[fonte]**.)
 - Civil precisa de **2 comidas diferentes** para chegar a 100%. Militar enche com
@@ -466,8 +469,17 @@ Escada de prioridade (`data/delivery.json`):
 3. Material → obra já nivelada **[proposta]**
 4. Insumo → produção parada por falta de insumo **[proposta]**
 5. Insumo → produção com estoque baixo **[proposta]**
-6. Saída cheia → armazém **[proposta]**
-7. Excedente → armazém **[proposta]**
+6. Pedra → tile de estrada planejado **[decisão do operador, 2026-09-27]**
+7. Saída cheia → armazém **[proposta]**
+8. Excedente → armazém **[proposta]**
+9. Laborer assenta estrada · 10. Laborer ara campo. Esses dois só dão o `modo` da
+   busca de caminho, porque entre as tarefas do laborer vale a distância.
+
+A pedra da obra vem **antes** de qualquer mercadoria que só volta ao armazém. Se
+ficasse depois, uma serraria cheia tiraria os serfs da estrada da Bodega, e a vila
+morreria de fome com tábua sobrando (lote 2, `BALANCE_LOG.md`). Ela **não** sobe acima
+dos insumos (4 e 5): isso pararia a produção para construir e trocaria um problema por
+outro **[decisão do operador, 2026-09-27]**.
 
 Os dois primeiros níveis são do próprio Remake: entregar comida ao Inn é a maior
 prioridade e entregar ouro à escola é a segunda **[fonte]**.
@@ -826,7 +838,7 @@ de batalha **[fonte]**.
 Nossa fórmula, em `data/combat.json`:
 
 ```
-attackEfetivo   = alvo montado e attackVsCavalo > 0 ? attackVsCavalo : attack
+attackEfetivo   = alvo montado ? attack + attackVsCavalo : attack
 chanceAcerto    = clamp( (attackEfetivo × multiplicadorDirecao) / (defence × 100), 0.08, 0.92 )
 multiplicadorDirecao = frente 1.0 · flanco 1.35 · costas 1.75
 ```
@@ -838,8 +850,12 @@ não muda nada — com a fórmula original um espadachim já acerta 55% contra u
 miliciano que acerta 11,7% contra ele; o problema nunca foi a média, foi a
 amostra pequena.
 
-A coluna "vs Cavalo" do Anexo A é um valor de Attack **alternativo** usado quando
-o alvo é montado, não um bônus percentual.
+A coluna "vs Cavalo" do Anexo A é um Attack **somado** ao Attack normal quando o
+alvo é montado, não um bônus percentual nem um valor que o substitui: o KaM faz
+`damage := Attack` e, contra montado, `damage := damage + AttackHorse`
+(`units/actions/KM_UnitActionFight.pas:291-294`). Piqueiro contra cavaleiro é
+35 + 80 = 115, não 80. (Corrigido na VARREDURA-KAM, 2026-09-28; antes o texto
+modelava substituição.)
 
 ### 11.5 Onde cada coisa mora
 
@@ -876,7 +892,8 @@ Nenhum desses números pode aparecer em código.
 | Knight | Sword + Iron armor + Iron shield + Horse |
 
 Town hall, mercenários pagos em ouro e prontos na hora **[fonte]**: Rebel 2,
-Rogue 3, Vagabond 5, Barbarian 7, Warrior 8.
+Rogue 3, Vagabond 5, Barbarian 8, Warrior 8. (Barbarian corrigido de 7 na
+VARREDURA-KAM, 2026-09-28: `res/KM_ResUnits.pas:216`.)
 
 ### 12.2 Atributos [fonte]
 
@@ -899,6 +916,13 @@ Velocidade na notação interna do Remake; a razão 1:1,666 é o que importa.
 | Rogue | 1 | 60 | 0 | 1 | 0.1000 | 9 |
 | Warrior | 4 | 75 | 0 | 2 | 0.1000 | 9 |
 | Vagabond | 4 | 35 | 0 | 1 | 0.1666 | 9 |
+
+**A coluna "vs Cavalo" desta tabela é a do KaM; a nossa é outra** (decisão do
+operador, 2026-09-28). A **soma** é mecânica do KaM e fica: contra montado, o
+ataque é `attack + attackVsCavalo`. O **número** é nosso: `data/units.json`
+reduz a parcela para manter o total que a tabela antiga dava como intenção de
+calibração. Lanceiro 25 + 35 = 60, Piqueiro 35 + 45 = 80, Rebel 25 + 25 = 50.
+Somar a coluna do KaM daria 115 a um Piqueiro, que é unidade barata.
 
 Pedra-papel-tesoura: lanceiros e piqueiros levam bônus contra cavalaria;
 cavalaria é rápida e flanqueia arqueiros; arqueiros castigam infantaria lenta

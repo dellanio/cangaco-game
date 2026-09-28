@@ -46,6 +46,15 @@ export default tseslint.config(
     },
   },
   {
+    // F-DEV: as defesas do dev server rodam so em Node — `fetch` para perguntar
+    // a porta, `setInterval` para vigiar o `npm` que chamou. Sem `window`: nada
+    // aqui vai para o browser.
+    files: ['tools/_servidor.js', 'tools/dev.js'],
+    languageOptions: {
+      globals: { fetch: 'readonly', setInterval: 'readonly' },
+    },
+  },
+  {
     // Mesmo caso do bloco acima, em bloco proprio para nao dar `document` e
     // `Image` aos roteiros de screenshot, que nao precisam: derivar-sprites.js
     // roda em Node (Buffer) e serializa UMA closure para o Chromium, onde

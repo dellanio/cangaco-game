@@ -204,7 +204,7 @@
     "passes": true
   },
   "F-CANA-canavial-e-mina": {
-    "passes": false
+    "passes": true
   },
   "F-VIVO-0": {
     "passes": true
@@ -237,6 +237,27 @@
     "passes": true
   },
   "F-CANA-b-mancha-de-cana-da-vila": {
-    "passes": false
+    "passes": true
+  },
+  "F-DEV-dev-server-sem-orfao": {
+    "passes": true
+  },
+  "F-CAMPO-a-campo-cresce-no-tile": {
+    "passes": true
+  },
+  "LOTE3-b1-canavial-em-fases": {
+    "passes": true
+  },
+  "LOTE3-b2-quatro-em-fases": {
+    "passes": true
+  },
+  "LOTE3-c-pedreiro-tres-por-viagem": {
+    "passes": true
+  },
+  "F-REPL-a-toco-rebrota": {
+    "passes": true
+  },
+  "F-REPL-b-modos": {
+    "passes": true
   }
 }

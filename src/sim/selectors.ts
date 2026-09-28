@@ -10,6 +10,7 @@ import { custoDoPasso } from './pathfinding';
 import { alvoDeNivelamento, custoDoPredio } from './obra';
 import { receitaDoTipo, semTrabalhoAoAlcance } from './producao';
 import { colheitaAoAlcanceDaCaixa } from './recursos';
+import { plantaNoModo } from './modo';
 import { ehPredioOcupavel, trabalhadorDoTipo } from './ocupacao';
 import type { CaixaEmTiles } from './footprint';
 
@@ -543,7 +544,8 @@ function colheitaDoPainel(
   // dado antes de chegar aqui (afirmado em `tests/F-TA-painel-alcance.test.ts`).
   // Fica porque `caixaDoPredio` admite `null` no tipo, e inventar numero seria pior.
   if (caixa === null) return null;
-  const { tiles, unidades } = colheitaAoAlcanceDaCaixa(state, caixa, colheita, dados);
+  // F-REPL-b — o painel conta no modo do predio, como o alerta
+  const { tiles, unidades } = colheitaAoAlcanceDaCaixa(state, caixa, colheita, dados, plantaNoModo(predio, dados));
   return { recurso: colheita.recurso, tiles, unidades };
 }
 
@@ -655,7 +657,9 @@ function fonteSemTrabalho(
   const receita = receitaDoTipo(predio.tipo, dados);
   if (predio.producao === null || receita === null || receita.colheita === null) return false;
   const tipo = dados.recursos.tipos[receita.colheita.recurso];
-  if (tipo === undefined || (tipo.reposicao !== null) !== reponivel) return false;
+  // F-REPL-b — repor e do tipo E do modo: o lenhador em `cortar` sem arvore e
+  // `veio-esgotado` (a mata acabou e ele nao a repoe), nao `sem-campo`.
+  if (tipo === undefined || (tipo.reposicao !== null && plantaNoModo(predio, dados)) !== reponivel) return false;
   return semTrabalhoAoAlcance(state, predio, receita, dados);
 }
 

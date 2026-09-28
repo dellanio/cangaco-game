@@ -139,6 +139,22 @@ export type Command =
     }
   | {
       /**
+       * F-REPL-b — o modo de trabalho do predio `predio` (o lenhador: `cortar` ou
+       * `cortar_e_plantar`). O nome e chave de `modos` na receita, e o gatilho e o
+       * DADO: qualquer predio que declare `modos` aceita, nenhum tipo esta digitado.
+       * Recusado (`command-rejected`) se o predio nao existe, esta em obra, nao tem
+       * modos ou o modo nao e dele.
+       *
+       * `modo` e o VALOR, nao um alternador, como `SetBuildingPaused`: o modo que o
+       * predio ja tem e no-op e devolve o MESMO estado. A viagem de plantio em curso
+       * termina; o modo novo vale para a proxima escolha do rodizio.
+       */
+      readonly type: 'SetBuildingMode';
+      readonly predio: string;
+      readonly modo: string;
+    }
+  | {
+      /**
        * F24a — fixa a cota da oficina `predio` (GDD §2.3, "quantas de cada arma
        * produzir"). A cota e o PESO de cada saida no rodizio: `{ lance: 1 }` faz
        * so aguilhada; `{ hand_axe: 2, longbow: 1 }` faz dois facoes para cada

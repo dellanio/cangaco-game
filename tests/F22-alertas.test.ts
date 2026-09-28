@@ -24,8 +24,8 @@ import { receitaDoTipo } from '../src/sim/producao';
 import temaSertao from '../data/theme-sertao.json';
 import { gravarEvidencia } from './helpers/evidence';
 import {
-  avancar, cenarioDeFazenda, cenarioDeFazendaSemCampo, cenarioDePedreira, comJazida, disponivelDe,
-  semAUnidade, semEstrada, semOcupante,
+  avancar, cenarioDeFazenda, cenarioDeFazendaSemCampo, cenarioDePedreira, comJazida, comSaida, disponivelDe,
+  saidaDe, semAUnidade, semEstrada, semOcupante,
   pedreiraDaVila, rochaDaPedreiraDaVila,
 } from './helpers/producao-cenario';
 
@@ -148,11 +148,18 @@ describe('F22 — veio-esgotado', () => {
   it('veio esgotado alerta, com o rendimento injetado pelo dado', () => {
     // Como a F15a: o rendimento vem do MESMO `GameData` com outro numero, nunca
     // de veio fabricado a mao nem de 200 unidades de espera.
-    const dadosCurtos = comJazida(gameData, 'rock', [rochaDaPedreiraDaVila()], 2);
+    // LOTE3-c: dois lotes de 3 (o pedreiro traz 3 por viagem), e a gaveta de 5 so
+    // aceita um: esvazia a cada tick, porque o cenario isolado nao tem serf
+    const receita = gameData.producao.receitas.quarry;
+    const lote = receita?.sai.stone ?? 0;
+    const dadosCurtos = comJazida(gameData, 'rock', [rochaDaPedreiraDaVila()], 2 * lote);
     const inicio = cenarioDePedreira(dadosCurtos);
     expect(causasDe(alertas(inicio, dadosCurtos), 'q1')).toEqual([]);
 
-    const esgotada = avancar(inicio, 167 * 5, dadosCurtos);
+    let esgotada = inicio;
+    for (let i = 0; i < (receita?.ticksDoCiclo ?? 0) * 3; i++) {
+      esgotada = comSaida(step(esgotada, [], dadosCurtos), 'q1', {});
+    }
     expect(disponivelDe(esgotada, 'q1', dadosCurtos), 'a fixture deveria ter esgotado a jazida').toBe(0);
     expect(alertas(esgotada, dadosCurtos)).toEqual([
       { predio: 'q1', tipo: 'quarry', causa: 'veio-esgotado' },
@@ -160,23 +167,17 @@ describe('F22 — veio-esgotado', () => {
   });
 
   it('o alerta sai pelo predicado do runtime, nao por `veio === 0`', () => {
-    // A quarry rende 1 por ciclo, entao os dois criterios coincidiriam nela. O
-    // que separa os dois e uma receita que consome mais de uma unidade por
-    // ciclo: `semRecursoAoAlcance` reprova ja em `disponivel < unidadesPorCiclo`, e e ai que
-    // a producao para de verdade — alertar so em zero avisaria tarde.
-    const comTres = comJazida(gameData, 'rock', [rochaDaPedreiraDaVila()], 3); // um unico tile, de 3 pedras
-    const dobrada: GameData = {
-      ...comTres,
-      producao: {
-        ...comTres.producao,
-        receitas: {
-          ...comTres.producao.receitas,
-          quarry: { ...comTres.producao.receitas['quarry']!, sai: { stone: 2 } },
-        },
-      },
-    };
-    const s = avancar(cenarioDePedreira(dobrada), 167 * 3, dobrada);
-    expect(disponivelDe(s, 'q1', dobrada), 'sobra 1 na jazida, e a receita pede 2').toBe(1);
+    // A regra: `semRecursoAoAlcance` reprova ja em `disponivel < unidadesPorCiclo`,
+    // e e ai que a producao para de verdade — alertar so em zero avisaria tarde.
+    // LOTE3-c: a quarry REAL tira 3 por ciclo, entao ja separa os dois criterios sem
+    // receita fabricada: um tile de 4 da um lote e sobra 1, que nunca vira lote.
+    const receita = gameData.producao.receitas.quarry;
+    const lote = receita?.sai.stone ?? 0;
+    expect(lote).toBeGreaterThan(1);
+    const dobrada = comJazida(gameData, 'rock', [rochaDaPedreiraDaVila()], lote + 1);
+    const s = avancar(cenarioDePedreira(dobrada), (receita?.ticksDoCiclo ?? 0) * 2, dobrada);
+    expect(saidaDe(s, 'q1').stone, 'um lote saiu').toBe(lote);
+    expect(disponivelDe(s, 'q1', dobrada), 'sobra 1 na jazida, e a receita pede 3').toBe(1);
     expect(causasDe(alertas(s, dobrada), 'q1')).toEqual(['veio-esgotado']);
   });
 });
@@ -253,7 +254,7 @@ describe('F18 — sem-campo e veio-esgotado nao se confundem', () => {
     // a ignorar o alerta.
     const com = cenarioDeFazenda();
     const receita = receitaDoTipo('farm', gameData);
-    const plantio = gameData.recursos.tipos[receita?.colheita?.recurso ?? '']?.reposicao?.ticks ?? 0;
+    const plantio = gameData.recursos.tipos[receita?.colheita?.recurso ?? '']?.reposicao?.ticksDeSemear ?? 0;
     expect(plantio).toBeGreaterThan(0);
     for (const t of [1, Math.floor(plantio / 2), plantio, plantio + 1]) {
       expect(alertas(avancar(com, t)), `tick ${t}`).toEqual([]);

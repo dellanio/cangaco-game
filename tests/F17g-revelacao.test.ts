@@ -33,7 +33,18 @@ const compara = ([a, b]: Fracao, [c, d]: Fracao): number => a * d - c * b;
 const soma = (r: RevelacaoDaObra): Fracao => [
   r.madeira[0] * r.pedra[1] + r.pedra[0] * r.madeira[1], r.madeira[1] * r.pedra[1],
 ];
-const revela = (c: Caso, hp: number): RevelacaoDaObra => revelacaoDaObra(hp, c.hpTotal, c.timber, c.stone);
+/** Obra ja martelada: a revelacao existe. Com `hp <= 0` a funcao devolve `null`
+ *  (BUG-M) — quem pergunta pelo hp 0 usa `revelaOuNada`. */
+const revela = (c: Caso, hp: number): RevelacaoDaObra => {
+  const r = revelacaoDaObra(hp, c.hpTotal, c.timber, c.stone);
+  if (r === null) throw new Error(`${c.tipo}: hp ${hp} deveria revelar`);
+  return r;
+};
+/** O hp 0 medido como a TELA o mede: nada revelado. A monotonia e a chave comecam
+ *  dali, e nao do hp 50 — senao o primeiro degrau sairia da prova. */
+const NADA_REVELADO: RevelacaoDaObra = { madeira: [0, 1], pedra: [0, 1] };
+const revelaOuNada = (c: Caso, hp: number): RevelacaoDaObra =>
+  revelacaoDaObra(hp, c.hpTotal, c.timber, c.stone) ?? NADA_REVELADO;
 /** O hp da virada, em inteiro so quando cai em inteiro: `hpTotal*timber/(timber+stone)`. */
 const virada = (c: Caso): number => (c.hpTotal * c.timber) / (c.timber + c.stone);
 
@@ -72,18 +83,21 @@ describe('F17g — os dois lados da virada madeira -> pedra', () => {
       }
     });
 
-    it(`${c.tipo}: hp 0 nao revela nada, hpTotal revela tudo`, () => {
-      expect(revela(c, 0)).toEqual({ madeira: [0, 1], pedra: [0, 1] });
+    it(`${c.tipo}: hp 0 nao e revelacao (a cena cai no canteiro), hpTotal revela tudo`, () => {
+      // BUG-M: `[0,1]`/`[0,1]` desenhava NADA na tela. `null` manda a cena para os
+      // seis estagios, que desenham o lote, o nome e o canteiro da F17d.
+      expect(revelacaoDaObra(0, c.hpTotal, c.timber, c.stone)).toBeNull();
+      expect(revelacaoDaObra(1, c.hpTotal, c.timber, c.stone)).not.toBeNull();
       expect(revela(c, c.hpTotal)).toEqual({ madeira: [1, 1], pedra: [1, 1] });
     });
 
     it(`${c.tipo}: meia madeira e meia pedra caem onde a conta manda`, () => {
       // metade do trecho da madeira e metade do trecho da pedra, em fracao exata
       const r1 = revelacaoDaObra(c.hpTotal * c.timber, 2 * c.hpTotal * (c.timber + c.stone), c.timber, c.stone);
-      expect(compara(r1.madeira, [1, 2])).toBe(0);
+      expect(r1 && compara(r1.madeira, [1, 2])).toBe(0);
       const hpMeiaPedra = c.hpTotal * (2 * c.timber + c.stone);
       const r2 = revelacaoDaObra(hpMeiaPedra, 2 * c.hpTotal * (c.timber + c.stone), c.timber, c.stone);
-      expect(compara(r2.pedra, [1, 2])).toBe(0);
+      expect(r2 && compara(r2.pedra, [1, 2])).toBe(0);
     });
   }
 });
@@ -91,7 +105,7 @@ describe('F17g — os dois lados da virada madeira -> pedra', () => {
 describe('F17g — monotonia: de 50 em 50, nada desce e a soma sobe', () => {
   for (const c of CASOS) {
     it(c.tipo, () => {
-      let anterior = revela(c, 0);
+      let anterior = revelaOuNada(c, 0);
       for (let hp = 50; hp <= c.hpTotal; hp += 50) {
         const r = revela(c, hp);
         expect(compara(r.madeira, anterior.madeira), `madeira em hp ${hp}`).toBeGreaterThanOrEqual(0);
@@ -128,7 +142,12 @@ describe('F17g — o manifesto liga a revelacao pelo par, e so pelo par', () => 
   it('a chave de redesenho muda a cada martelada, e so ela', () => {
     const c = CASOS[0] as Caso;
     const chaves = new Set<string>();
-    for (let hp = 0; hp <= c.hpTotal; hp += 1) chaves.add(chaveDaRevelacao(revela(c, hp)));
+    // o hp 0 entra com a chave que a CENA usa para "sem revelacao" (`'-'`,
+    // WorldScene): continua sendo um desenho distinto de todos os outros
+    for (let hp = 0; hp <= c.hpTotal; hp += 1) {
+      const r = revelacaoDaObra(hp, c.hpTotal, c.timber, c.stone);
+      chaves.add(r === null ? '-' : chaveDaRevelacao(r));
+    }
     expect(chaves.size).toBe(c.hpTotal + 1);
   });
 
@@ -139,7 +158,7 @@ describe('F17g — o manifesto liga a revelacao pelo par, e so pelo par', () => 
       antes: { hp: Math.ceil(virada(c)) - 1, ...revela(c, Math.ceil(virada(c)) - 1) },
       depois: { hp: Math.floor(virada(c)) + 1, ...revela(c, Math.floor(virada(c)) + 1) },
       aCada50: Array.from({ length: Math.floor(c.hpTotal / 50) + 1 }, (_, i) => ({
-        hp: i * 50, ...revela(c, i * 50),
+        hp: i * 50, ...(revelacaoDaObra(i * 50, c.hpTotal, c.timber, c.stone) ?? { semRevelacao: true }),
       })),
     }));
     gravarEvidencia('F17g', { feature: 'F17g-revelacao-da-obra', chaves: CHAVES_DA_REVELACAO, tabela });

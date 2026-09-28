@@ -224,14 +224,13 @@ function gerar() {
   // razao para explorar o mapa, e com a ferramenta da F18h o jogador escolhe
   // entre aproveitar uma mancha ou abrir a propria roca.
   //
-  // FORA DA FOLGA, e de proposito. O lajedo cabe DENTRO dela porque `rock` esta em
-  // `recursoPermitido`; `campoArado` nao esta em `terrenoPermitido`, e nao se
-  // acrescenta: o que a folga protege e o custo de caminho do patio da vila
-  // (campoArado custa 1,45 contra 1,30 da grama), e nao ha nada a ganhar em
-  // encarecer as ruas da abertura para pousar a roca tres tiles mais ao norte.
-  // Ela encosta na borda SUL da folga, o que basta para estar a vista: o disco de
-  // raio 2 fica a 6 tiles do footprint do armazem, contra os 37 de antes.
-  for (const [gx, gy] of disco(ROCADO_DA_VILA.gx, ROCADO_DA_VILA.gy, ROCADO_DA_VILA.raio)) {
+  // DENTRO DA FOLGA desde a noite 17 (decisao do operador, 2026-09-26): antes
+  // ficava fora, a 6 tiles do armazem, e fora do quadro de abertura — o jogador
+  // abria a partida sem ver terra arada. `campoArado` entrou em
+  // `terrenoPermitido`. O custo que a folga protegia (campoArado 1,45 contra 1,30
+  // da grama) fica fora do caminho do patio: a faixa comeca duas linhas abaixo
+  // da linha de porta, e a linha 34, entre as duas, continua grama.
+  for (const [gx, gy] of faixa(ROCADO_DA_VILA)) {
     if (grade[gy]?.[gx] === 'grama') por(gx, gy, 'campoArado');
   }
 
@@ -282,11 +281,30 @@ function disco(gx, gy, raio) {
 const ACUDE = { gx: 33, gy: 25.5, rx: 6, ry: 2.0 };
 const MATO_DO_NASCENTE = { gx: 39, gy: 25, raio: 3 };
 
-/** F18h — centro e raio da roca da vila: a unica terra arada perto do quadrante
- *  protegido, e existe para que a partida abra com o que arar. Irma do
- *  `LAJEDO_DA_VILA` em tamanho (raio 2, 13 tiles) e em motivo; ver o comentario
- *  do bloco que a escreve para por que ela fica FORA da folga e ele dentro. */
-const ROCADO_DA_VILA = { gx: 26, gy: 40, raio: 2 };
+/** F18h — a roca da vila: a unica terra arada perto da vila, e existe para que a
+ *  partida abra com o que arar. Ate a noite 17 era um disco de raio 2 em (26,40),
+ *  fora da folga — perto, mas fora do quadro de abertura, que vai ate y=36
+ *  (medido, 2026-09-26). Decisao do operador: as manchas entram na folga, em
+ *  FAIXA ao sul da vila, porque roca de verdade e alongada e porque um disco de
+ *  raio 2 nao cabe entre a linha de porta e a borda do quadro sem encostar num
+ *  predio. Canto de cima-esquerda e tamanho, em tiles. */
+const ROCADO_DA_VILA = { gx: 26, gy: 35, largura: 5, altura: 2 };
+
+/** F-CANA-b — o partido de cana da vila: irmao do `ROCADO_DA_VILA`, mesma faixa,
+ *  do outro lado do eixo da vila, e pelo mesmo motivo — a partida abre com o que o
+ *  Canavial colher. A cana nao e terreno (so o milho deriva do `campoArado`),
+ *  entao a mancha entra na camada ESPARSA, como o lajedo; e `grapes` esta em
+ *  `recursoPermitido` para caber na folga. */
+const CANAVIAL_DA_VILA = { gx: 34, gy: 35, largura: 5, altura: 2 };
+
+/** Os tiles de uma mancha retangular (`ROCADO_DA_VILA`, `CANAVIAL_DA_VILA`). */
+function faixa({ gx, gy, largura, altura }) {
+  const tiles = [];
+  for (let dy = 0; dy < altura; dy += 1) {
+    for (let dx = 0; dx < largura; dx += 1) tiles.push([gx + dx, gy + dy]);
+  }
+  return tiles;
+}
 
 /** Centro e raio do lajedo da vila. Ver o cabecalho: e a unica pedra dentro do
  *  quadrante protegido, e existe para que a partida abra com o que cortar. */
@@ -344,7 +362,7 @@ function conferirQuemColhe(recurso) {
  */
 function gerarRecursos({ largura, altura, grade, rng }) {
   const recursos = {
-    rock: [], tree: [], fish: [], coal: [], iron_ore: [], gold_ore: [],
+    rock: [], tree: [], fish: [], coal: [], iron_ore: [], gold_ore: [], grapes: [],
   };
   const ocupado = new Set();
   const por = (tipo, gx, gy) => {
@@ -547,6 +565,16 @@ function gerarRecursos({ largura, altura, grade, rng }) {
     }
   }
 
+  // --- a cana da vila: o partido que a abertura MOSTRA ------------------------
+  // F-CANA-b, decisao do operador (BUG-L): o mesmo conserto do rocado. Por
+  // ULTIMO, depois dos veios, porque os veios sorteiam e isto nao sorteia nada:
+  // entrar antes deslocaria o RNG de todo o minerio. Tile ja ocupado, sob a vila
+  // ou na folga sem `grapes` em `recursoPermitido` `por()` recusa — o teste da
+  // F-CANA-b compara a mancha inteira, para a recusa calada nao a encolher sem ninguem ver.
+  for (const [gx, gy] of faixa(CANAVIAL_DA_VILA)) {
+    if (grade[gy]?.[gx] === 'grama') por('grapes', gx, gy);
+  }
+
   return recursos;
 }
 
@@ -627,4 +655,5 @@ module.exports = {
   // F-D3: o teste da guarda importa a reserva DAQUI em vez de remontar a
   // conta dele — se o gerador e o teste discordarem, discordam no mesmo lugar.
   RESERVA, tilesDaVila, naVila, naReserva,
+  CANAVIAL_DA_VILA, ROCADO_DA_VILA, disco, faixa,
 };

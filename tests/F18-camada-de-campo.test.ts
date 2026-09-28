@@ -19,6 +19,7 @@ import { gameData, loadGameData, rawGameData } from '../src/sim/data';
 import { createInitialState } from '../src/sim/state';
 import { chaveDeTile } from '../src/sim/estradas';
 import { tipoDoTile } from '../src/sim/mapa';
+import { culturasAraveis } from '../src/sim/campos';
 
 const TIPO = gameData.recursos.tipos.corn;
 
@@ -44,8 +45,12 @@ describe('F18 — a camada do roçado sai do terreno', () => {
     expect(daCamada).toEqual(doTerreno);
   });
 
-  it('todo tile de roçado nasce em POUSIO, e nenhum outro tipo nasce zerado', () => {
+  it('todo tile de roçado nasce em POUSIO, e so cultura arada nasce zerada', () => {
     const estado = createInitialState(1, gameData);
+    // F-CANA-b: a cana da mancha da vila tambem nasce em pousio — mancha e
+    // terreno, nao estoque. O que nasce zerado e a cultura que o jogador ara
+    // (bloco `aradura`), e nada mais.
+    const araveis = new Set(culturasAraveis(gameData));
     const doCampo = new Set(tilesDeCampoArado());
     let emPousio = 0;
     for (const [chave, recurso] of Object.entries(estado.recursos)) {
@@ -53,6 +58,8 @@ describe('F18 — a camada do roçado sai do terreno', () => {
         expect(doCampo.has(chave), `${chave} deveria ser campo arado`).toBe(true);
         expect(recurso.quantidade, `${chave} nasceu maduro`).toBe(0);
         emPousio += 1;
+      } else if (araveis.has(recurso.tipo)) {
+        expect(recurso.quantidade, `${chave} (${recurso.tipo}) nasceu maduro`).toBe(0);
       } else {
         // A conta do outro lado: o que veio de lista esparsa continua nascendo
         // cheio. Se `quantidadeInicial` vazasse para todo mundo, cai aqui.
@@ -84,8 +91,8 @@ describe('F18 — a camada do roçado sai do terreno', () => {
   it('a reposicao virou ticks inteiros no carregamento, uma vez', () => {
     const reposicao = TIPO?.reposicao;
     expect(reposicao).not.toBeNull();
-    expect(Number.isInteger(reposicao?.ticks)).toBe(true);
-    expect(reposicao?.ticks).toBeGreaterThan(0);
+    expect(Number.isInteger(reposicao?.ticksDeSemear)).toBe(true);
+    expect(reposicao?.ticksDeSemear).toBeGreaterThan(0);
     // Quem NAO se repoe por acao de predio nenhum continua com `null`: o campo
     // e o unico caso de hoje, e a diferenca e do DADO.
     expect(gameData.recursos.tipos.rock?.reposicao).toBeNull();

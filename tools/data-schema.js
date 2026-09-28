@@ -69,7 +69,11 @@ const CAMPOS_ESCALONADOS = [
   // linha. E de proposito: tipo `porAcao` novo (a uva, a arvore do replantio)
   // so passa no validate:data quando alguem escreve a linha dele aqui, que e o
   // contrato deste arquivo. Caminho por tipo nao vira curinga.
-  { arquivo: 'resources', caminho: 'tipos.corn.reposicao.segundos_base',
+  // F-CAMPO-a — duas linhas por tipo: semear (o roceiro no tile) e crescer (o
+  // tile sozinho). O `segundos_base` unico que cobria os dois saiu.
+  { arquivo: 'resources', caminho: 'tipos.corn.reposicao.semear_segundos_base',
+    unidade: 'segundos', declaraEscalaEm: 'escala' },
+  { arquivo: 'resources', caminho: 'tipos.corn.reposicao.crescer_segundos_base',
     unidade: 'segundos', declaraEscalaEm: 'escala' },
   // F18h — arar UM tile do tipo. Mesma regra por tipo da linha acima, e pelo
   // mesmo motivo: cultura nova so se desenha depois que alguem escreve a linha
@@ -78,9 +82,50 @@ const CAMPOS_ESCALONADOS = [
     unidade: 'segundos', declaraEscalaEm: 'escala' },
   // 2026-09-26 — `grapes` (cana, nao uva): as duas linhas por tipo que as de
   // cima pediam, com o Canavial passando a colher do tile.
-  { arquivo: 'resources', caminho: 'tipos.grapes.reposicao.segundos_base',
+  { arquivo: 'resources', caminho: 'tipos.grapes.reposicao.semear_segundos_base',
+    unidade: 'segundos', declaraEscalaEm: 'escala' },
+  { arquivo: 'resources', caminho: 'tipos.grapes.reposicao.crescer_segundos_base',
     unidade: 'segundos', declaraEscalaEm: 'escala' },
   { arquivo: 'resources', caminho: 'tipos.grapes.aradura.segundos_base',
+    unidade: 'segundos', declaraEscalaEm: 'escala' },
+  // F-REPL-a — a arvore do replantio: o lenhador planta no toco. Sem `aradura`:
+  // mata nao se desenha, so rebrota onde ja houve arvore.
+  { arquivo: 'resources', caminho: 'tipos.tree.reposicao.semear_segundos_base',
+    unidade: 'segundos', declaraEscalaEm: 'escala' },
+  { arquivo: 'resources', caminho: 'tipos.tree.reposicao.crescer_segundos_base',
+    unidade: 'segundos', declaraEscalaEm: 'escala' },
+  // LOTE3 — as fases da colheita, POR RECEITA, pelo mesmo contrato da reposicao:
+  // quem ganha `fases` escreve as linhas dele aqui. O grupo e o `escala` de
+  // production.json (economia), o mesmo das taxas.
+  { arquivo: 'production', caminho: 'predios.quarry.colheita.fases.noTile_segundos_base',
+    unidade: 'segundos', declaraEscalaEm: 'escala' },
+  { arquivo: 'production', caminho: 'predios.quarry.colheita.fases.naCasa_segundos_base',
+    unidade: 'segundos', declaraEscalaEm: 'escala' },
+  { arquivo: 'production', caminho: 'predios.quarry.colheita.fases.descanso_segundos_base',
+    unidade: 'segundos', declaraEscalaEm: 'escala' },
+  { arquivo: 'production', caminho: 'predios.woodcutters.colheita.fases.noTile_segundos_base',
+    unidade: 'segundos', declaraEscalaEm: 'escala' },
+  { arquivo: 'production', caminho: 'predios.woodcutters.colheita.fases.naCasa_segundos_base',
+    unidade: 'segundos', declaraEscalaEm: 'escala' },
+  { arquivo: 'production', caminho: 'predios.woodcutters.colheita.fases.descanso_segundos_base',
+    unidade: 'segundos', declaraEscalaEm: 'escala' },
+  { arquivo: 'production', caminho: 'predios.farm.colheita.fases.noTile_segundos_base',
+    unidade: 'segundos', declaraEscalaEm: 'escala' },
+  { arquivo: 'production', caminho: 'predios.farm.colheita.fases.naCasa_segundos_base',
+    unidade: 'segundos', declaraEscalaEm: 'escala' },
+  { arquivo: 'production', caminho: 'predios.farm.colheita.fases.descanso_segundos_base',
+    unidade: 'segundos', declaraEscalaEm: 'escala' },
+  { arquivo: 'production', caminho: 'predios.fishermans.colheita.fases.noTile_segundos_base',
+    unidade: 'segundos', declaraEscalaEm: 'escala' },
+  { arquivo: 'production', caminho: 'predios.fishermans.colheita.fases.naCasa_segundos_base',
+    unidade: 'segundos', declaraEscalaEm: 'escala' },
+  { arquivo: 'production', caminho: 'predios.fishermans.colheita.fases.descanso_segundos_base',
+    unidade: 'segundos', declaraEscalaEm: 'escala' },
+  { arquivo: 'production', caminho: 'predios.wineyard.colheita.fases.noTile_segundos_base',
+    unidade: 'segundos', declaraEscalaEm: 'escala' },
+  { arquivo: 'production', caminho: 'predios.wineyard.colheita.fases.naCasa_segundos_base',
+    unidade: 'segundos', declaraEscalaEm: 'escala' },
+  { arquivo: 'production', caminho: 'predios.wineyard.colheita.fases.descanso_segundos_base',
     unidade: 'segundos', declaraEscalaEm: 'escala' },
 ];
 

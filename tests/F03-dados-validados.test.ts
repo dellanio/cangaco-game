@@ -76,6 +76,26 @@ const fixtures: Fixture[] = [
     quebrar: (d) => { d.resources.tipos.rock.regime = 'aos-domingos'; } },
   { nome: 'predio que colhe recurso inexistente', regraEsperada: 'recurso/colheita',
     quebrar: (d) => { d.production.predios.quarry.colheita.recurso = 'fantasma'; } },
+  // LOTE3 — as fases da colheita. A ultima e a `sai` como numero CONFERIDO: 60 s de
+  // fases por viagem rendem 1/min, e a taxa declarada pede 2.
+  { nome: 'fases em quem colhe aDistancia', regraEsperada: 'producao/fases',
+    quebrar: (d) => { d.production.predios.wineyard.colheita.aDistancia = true; } },
+  { nome: 'fases sem porViagem', regraEsperada: 'producao/fases',
+    quebrar: (d) => { delete d.production.predios.wineyard.colheita.fases.porViagem; } },
+  { nome: 'fases com duas saidas', regraEsperada: 'producao/fases',
+    quebrar: (d) => { d.production.predios.wineyard.sai.fish = 0.5; } },
+  { nome: 'fases com noTile zero', regraEsperada: 'producao/fases',
+    quebrar: (d) => { d.production.predios.wineyard.colheita.fases.noTile_segundos_base = 0; } },
+  { nome: 'fases mais lentas que a taxa sai declarada', regraEsperada: 'producao/sai-conferido',
+    quebrar: (d) => {
+      d.production.predios.wineyard.colheita.fases = {
+        noTile_segundos_base: 20, naCasa_segundos_base: 30, descanso_segundos_base: 10, porViagem: 1,
+      };
+      d.production.predios.wineyard.sai.wine = 2.0;
+    } },
+  // LOTE3-c: a rocha nunca repoe; 4 por viagem deixaria 3 das 15 no tile para sempre
+  { nome: 'porViagem que nao divide o rendimento de quem nunca repoe', regraEsperada: 'producao/por-viagem-divide',
+    quebrar: (d) => { d.production.predios.quarry.colheita.fases.porViagem = 4; } },
   { nome: 'tipo de recurso declarado sem nenhum tile em mapa nenhum', regraEsperada: 'recurso/sem-instancia',
     quebrar: (d) => { d.resources.tipos.orvalho = { regime: 'porTempo', rendimentoPorTile: 1 }; } },
   // F18: o milho nao esta na lista esparsa de nenhum mapa — a camada dele e
@@ -86,8 +106,10 @@ const fixtures: Fixture[] = [
     quebrar: (d) => { d.resources.tipos.corn.terreno = 'brejo'; } },
   { nome: 'quantidadeInicial acima do rendimento do tile', regraEsperada: 'recurso/quantidade-inicial',
     quebrar: (d) => { d.resources.tipos.corn.quantidadeInicial = d.resources.tipos.corn.rendimentoPorTile + 1; } },
-  { nome: 'reposicao sem segundos_base', regraEsperada: 'recurso/reposicao',
-    quebrar: (d) => { delete d.resources.tipos.corn.reposicao.segundos_base; } },
+  { nome: 'reposicao sem semear_segundos_base', regraEsperada: 'recurso/reposicao',
+    quebrar: (d) => { delete d.resources.tipos.corn.reposicao.semear_segundos_base; } },
+  { nome: 'reposicao sem crescer_segundos_base', regraEsperada: 'recurso/reposicao',
+    quebrar: (d) => { delete d.resources.tipos.corn.reposicao.crescer_segundos_base; } },
   { nome: 'reposicao em regime que nao repoe por acao', regraEsperada: 'recurso/reposicao',
     quebrar: (d) => { d.resources.tipos.corn.regime = 'nunca'; } },
   { nome: 'reposicao cobra mercadoria que nao existe', regraEsperada: 'recurso/reposicao',
@@ -104,12 +126,14 @@ const fixtures: Fixture[] = [
       d['maps/sertao-128'].linhas = d['maps/sertao-128'].linhas
         .map((l: string) => l.split(char).join('g'));
     } },
-  // e a isencao e o BLOCO, nao o nome: a cana sem `aradura` nao tem tile em mapa
-  // nenhum nem quem a plante, e volta a reprovar.
+  // e a isencao e o BLOCO, nao o nome: a cana sem `aradura` e sem a mancha da
+  // vila (F-CANA-b) nao tem tile em mapa nenhum nem quem a plante, e volta a
+  // reprovar. A mancha sai junto, senao ela sozinha daria a instancia.
   { nome: 'cultura sem tile e sem aradura', regraEsperada: 'recurso/sem-instancia',
     quebrar: (d) => {
       delete d.resources.tipos.grapes.aradura;
       delete d.resources.tipos.grapes.reposicao;
+      delete d['maps/sertao-128'].recursos.grapes;
     } },
   { nome: 'mapa poe recurso que nao existe em resources.tipos', regraEsperada: 'recurso/mapa',
     quebrar: (d) => { d['maps/sertao-128'].recursos.fantasma = [[1, 1]]; } },

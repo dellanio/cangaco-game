@@ -23,7 +23,7 @@ import { trabalhadorDoTipo } from '../src/sim/ocupacao';
 import { comEstradas } from './helpers/jobs-cenario';
 import { escolaDoCenario, pedir } from './helpers/escola-cenario';
 import {
-  avancar, cenarioDePedreira, cenarioDeSerraria, comJazida, disponivelDe, fsmDe, progressoDe, saidaDe,
+  avancar, cenarioDePedreira, cenarioDeSerraria, comJazida, comSaida, disponivelDe, fsmDe, progressoDe, saidaDe,
   pedreiraDaVila, rochaDaPedreiraDaVila,
 } from './helpers/producao-cenario';
 import { violacoesDaFsmDoEspecialista } from './helpers/especialista-invariantes';
@@ -182,8 +182,15 @@ describe('F15a — aceite headless do BUILD_PLAN', () => {
     //    EXATO (era "trabalhando", uma entre seis possibilidades hoje) e o
     //    `saida_cheia` passou a ser contado em TODOS os ticks, que e o que a
     //    clausula sempre quis dizer e o `progresso < CICLO` so insinuava.
-    expect(pedreiro?.fsm).toBe('voltando');
-    expect(quarry?.producao?.progresso ?? 0).toBe(CICLO);
+    // LOTE3-b2: o pedreiro trabalha DENTRO da casa depois do tile (as fases do KaM).
+    // Os depositos nao mudaram (549, 815, 1081, medido), e no tick 1300 ele esta na
+    // fase da casa: `trabalhando`, com o relogio ja depois do descanso e do tile e
+    // antes do ciclo pronto (medido: 121 de 167).
+    const colheita = gameData.producao.receitas.quarry?.colheita;
+    const fimDoTile = (colheita?.ticksDeDescanso ?? 0) + (colheita?.ticksNoTile ?? 0);
+    expect(pedreiro?.fsm).toBe('trabalhando');
+    expect(quarry?.producao?.progresso ?? 0).toBeGreaterThan(fimDoTile);
+    expect(quarry?.producao?.progresso ?? 0).toBeLessThan(CICLO);
     expect(r.saidaCheia).toBe(0);
 
     // 6. as invariantes dos dois quadros, tick a tick — agora SEM excecao
@@ -198,17 +205,23 @@ describe('F15a — aceite headless do BUILD_PLAN', () => {
 
     // --- as duas clausulas de dado injetado, sobre cenarios controlados ---
     const serraria = avancar(cenarioDeSerraria(), 300);
-    const dadosCurtos = comJazida(gameData, 'rock', [rochaDaPedreiraDaVila()], 2);
-    const curto = avancar(cenarioDePedreira(dadosCurtos), CICLO * 5, dadosCurtos);
+    // LOTE3-c: dois lotes de 3 no tile, e a gaveta de 5 so aceita um lote — esvazia a
+    // cada tick (o cenario isolado nao tem serf) e soma o que saiu
+    const porViagem = gameData.producao.receitas.quarry?.sai.stone ?? 0;
+    const dadosCurtos = comJazida(gameData, 'rock', [rochaDaPedreiraDaVila()], 2 * porViagem);
     let esgotados = 0;
+    let colhido = 0;
     let e = cenarioDePedreira(dadosCurtos);
     for (let i = 0; i < CICLO * 5; i++) {
       e = step(e, [], dadosCurtos);
       esgotados += e.events.filter((ev) => ev.type === 'vein-exhausted').length;
+      colhido += saidaDe(e, 'q1').stone ?? 0;
+      e = comSaida(e, 'q1', {});
     }
+    const curto = e;
     expect(fsmDe(serraria, 'u2')).toBe('esperando_insumo');
     expect(progressoDe(serraria, 's1')).toBe(0);
-    expect(saidaDe(curto, 'q1').stone).toBe(2);
+    expect(colhido).toBe(2 * porViagem);
     expect(disponivelDe(curto, 'q1', dadosCurtos)).toBe(0);
     expect(esgotados).toBe(1);
 
@@ -245,7 +258,7 @@ describe('F15a — aceite headless do BUILD_PLAN', () => {
         _nota: 'fixture, nao caminho real: a sawmill exigiria desbloquear Woodcutter\'s, e o veio curto e dado injetado pelo parametro `dados`',
         serrariaSemTronco: { ticks: 300, fsm: fsmDe(serraria, 'u2'), progresso: progressoDe(serraria, 's1') },
         veioCurto: {
-          rendimento: 2, ticks: CICLO * 5, stoneNaSaida: saidaDe(curto, 'q1').stone,
+          rendimento: 2 * porViagem, ticks: CICLO * 5, colhido,
           disponivel: disponivelDe(curto, 'q1', dadosCurtos), fsm: fsmDe(curto, 'u1'), eventosDeVeioEsgotado: esgotados,
         },
       },

@@ -507,13 +507,16 @@ function comSerfNovo(estado: GameState): GameState {
 }
 
 /** Timeout do caso lento deste arquivo — ver o comentario junto dele. */
-const ORCAMENTO_DO_CASO = 10_000;
+const ORCAMENTO_DO_CASO = 20_000;
 
 describe('F10 — propriedade estrutural: eventos aleatorios, e a cada tick invariantes + conservacao de bens', () => {
   // ORCAMENTO de infraestrutura, nao assercao de tempo (CLAUDE.md §8: nenhum `expect`
   // aqui le relogio). Medido 2,2 s (semente 3, a mais lenta) na maquina livre em 2026-09-25, e estourou
   // o padrao de 5 s do Vitest com duas sessoes e oito sims em paralelo (calibracao da
   // Fase B). 10 s e ~5x o medido — a mesma regra do caso de carga da F09.
+  // Remedido em 2026-09-27 (F-REPL-b): ~4 s isolado, no HEAD 1c30a87 e na F-REPL-b
+  // (3,3 / 4,4 contra 4,1 / 4,5 s); na suite inteira 9,85 s no HEAD e 10,4 s com os
+  // testes da F-REPL-b. A regra dos ~5x sobre os 4 s leva a 20 s, o teto da F09.
   it.each([1, 2, 3])('semente %i: 250 passos sem uma unica violacao', (semente) => {
     rodarCaos(semente, 250, coberturaDoCaos);
   }, ORCAMENTO_DO_CASO);

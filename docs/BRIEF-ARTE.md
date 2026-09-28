@@ -299,6 +299,78 @@ assentamento; a obra troca fechamento e acabamento por armação, sem inventar
 outra arquitetura. Renders e comparações intermediárias ficam exclusivamente
 em `tmp/blender/`; somente `.blend` canônico e derivados aprovados entram em
 `assets/`.
+> **A RÉGUA É O HOMEM — regra do operador, 2026-09-27.** A escala entre objetos se
+> mede em **alturas de homem (H)**, e não em tiles. H é a altura visível do Carregador
+> (serf), hoje **73 px** no sprite derivado. **Toda arte nova declara a sua altura em H
+> antes de ser gerada**, no pedido e na entrada do manifesto. Pedido sem altura em H
+> não se gera. A tabela-alvo do operador, ainda **proposta e não aplicada**, é esta:
+>
+> | classe | altura-alvo | em px (H = 73) |
+> |---|---|---|
+> | casa térrea | ~2,5 H | ~182 |
+> | sobrado | ~3,5 H | ~255 |
+> | mandacaru | ~2,2 H | ~161 |
+> | árvore adulta | ~3,0 H | ~219 |
+> | arbusto | ~0,6 H | ~44 |
+>
+> O desvio de cada asset atual está medido no item F-ESC do `BUILD_PLAN.md`: a árvore
+> está a −65 % e a macambira a +46 %. A altura do prédio **também** tem teto pela
+> largura desenhada (F-ESC, k = 1,0, decidido e não implementado). O sobrado a 3,5 H
+> esbarra nesse teto, e o conflito está anotado lá, esperando decisão. Até a F-ESC
+> entrar, o item "A altura é livre" abaixo vale para o derivado **existente**, não
+> para arte nova.
+
+> **MEDIDO NO KAM — referência, 2026-09-27.** Fonte: o cabeçalho dos sprites
+> (`houses.rx`, `units.rx`, `trees.rx`) e o `unit.dat`/`mapelem.dat` da instalação do
+> operador, lidos por `tools/kam-medir.js`. O lote vem do `PlanYX` do kam_remake. Nenhum
+> pixel foi lido e nada do KaM está no repositório: só estes números.
+>
+> - **Régua:** no KaM o tile tem 40 px e o serf tem **37–41 px**, andando para o sul.
+>   **Um tile vale uma altura de homem.** Aqui, H = 73 px num tile de 64: o homem é
+>   1,14 tile, 14 % maior em relação ao chão que no KaM.
+> - **Prédio pronto, por tamanho de lote** (em px do KaM; "H" = px ÷ 40):
+>
+> | lote | n | altura | altura em H | altura ÷ largura | largura ÷ lote | passa acima do lote |
+> |---|---|---|---|---|---|---|
+> | 3×2 | 8 | 91–113 (med 100) | **2,5 H** | 0,62–1,02 (0,72) | 0,93–1,36 (**1,15**) | 14–45 px (med 26 = **0,65 tile**) |
+> | 4×2 | 4 | 98–107 (102) | 2,55 H | 0,61–0,71 (0,68) | 0,91–1,01 (0,96) | 20–30 (26) |
+> | 3×3 | 6 | 108–142 (130) | 3,25 H | 0,73–0,94 (0,88) | 1,17–1,43 (1,22) | −9–27 (17) |
+> | 4×3 | 6 | 123–149 (137) | **3,4 H** | 0,71–0,84 (0,76) | 0,96–1,19 (1,13) | −1–26 (19,5) |
+> | 4×4 | 1 (quartel) | 191 | 4,8 H | 0,82 | 1,45 | 35 (0,9 tile) |
+> | 2×2 | 1 (torre) | 139 | 3,5 H | **1,27** | 1,36 | 72 (1,8 tile) |
+>
+> - **Âncora:** a base do sprite encosta na borda de baixo do lote, de 13 px acima a 4
+>   px abaixo (mediana 3 px acima). Na horizontal, a borda esquerda fica perto da
+>   borda esquerda do lote (de −18 a +13 px), e o excesso de largura cai **à direita**
+>   (mediana de 14 a 24 px). **Hipótese:** o excesso à direita é a sombra, que o KaM
+>   desenha dentro do sprite. Não foi confirmado, porque confirmar exigiria ler pixel.
+>   A regra `anchor [0.5, 1]` desta seção fica a ~0,1 tile do KaM.
+> - **Árvore adulta** (13 espécies): 87–130 px, mediana 106 = **2,65 H** (faixa
+>   2,2–3,25 H).
+> - **O que isto confirma da tabela-alvo:**
+>   - casa térrea 2,5 H = o 3×2 do KaM, **exato**;
+>   - sobrado 3,5 H ≈ o 4×3 do KaM (3,4 H);
+>   - árvore 3,0 H: dentro da faixa, acima da mediana;
+>   - k = 1,0: nenhum prédio do KaM passa de 1,02, **salvo a torre** (1,27). É a
+>     exceção que o operador já decidiu declarar no dado.
+> - **Decisão do operador (2026-09-27): fator de largura 1,0, com exceções.** Não 1,15.
+>   O 1,15 do KaM (lote 3×2; 1,17 na mediana geral) provavelmente inclui a sombra, que
+>   o KaM desenha dentro do sprite e nós não. Sem a sombra, o 1,02 medido confirma o
+>   limite. A exceção se declara no dado, prédio a prédio, como a torre.
+> - **Decisão do operador (2026-09-27): a tradução é pelo HOMEM, não pelo lote.** A
+>   casa térrea fica com **182 px** (2,5 H), e não 159 px (0,83 × 192). O porquê: *o
+>   jogador julga o prédio contra as pessoas que andam ao lado, não contra um tile que
+>   ele não enxerga.*
+>   - **Consequência, esperada e não defeito:** aqui o tile vale 0,88 H, e no KaM 1,0 H.
+>     Com a mesma altura em H, os nossos prédios transbordam mais do lote do que os
+>     de lá.
+
+- **A largura manda.** A largura do sprite derivado é `footprint[0] × 64` px. Um prédio
+  de 3 tiles de largura tem 192 px. Um de 4 tem 256 px.
+- **A altura é livre.** Ela é o que a arte der, na mesma escala. Não estique para
+  quadrado.
+- **Âncora na borda inferior, no centro:** `anchor [0.5, 1]`. A borda de baixo do PNG
+  encosta na borda de baixo do footprint.
 - **Fundo transparente.** Nada de chão no sprite (seção 5).
 
 ### F-ESC — revogada como limite de canvas
@@ -705,6 +777,47 @@ Os três seguem os oito campos da seção 3 e a mesma pasta `assets/sprites/<id>
 - O mesmo desenho serve às 5 posições do curral. A idade de cada posição vem do
   progresso do ciclo, pelo render; a simulação não tem idade de animal.
 
+**`cultura`** — a planta de UM tile de roça, por estado (**proposta**, item `F-CAMPO`
+do `BUILD_PLAN.md`, 2026-09-26; entra quando o operador aprovar o item).
+
+- `id`: o recurso neutro: `corn` (milho) e `grapes`. **`grapes` é cana-de-açúcar**, em
+  touceira alta de colmo e folha comprida, nunca parreira, vinhedo ou cacho.
+- `estados`: `semeado`, `crescendo_1`, `crescendo_2`, `maduro`. Arquivo
+  `sprites/<id>/<id>_<estado>.png`.
+- **Uma imagem por estado, desenhada pelo render sobre o tile**, com a mesma disciplina
+  da `pilha`: o chão continua do mapa e a planta vem por cima. **Terra não tem sprite**:
+  é o chão `campoArado`, que o mapa já desenha.
+- Quem escolhe o quadro é o render, pela fração do tempo de crescer, como a idade do
+  animal. A simulação sabe só quando o tile foi semeado.
+- Tamanho: 1 tile (64 px no zoom 1), âncora no pé (`[0.5, 1]`). O `maduro` pode passar da
+  borda de cima do tile, e o `semeado` não passa da metade de baixo.
+- **O maduro tem de se ler de longe**: é o estado que diz ao jogador "tem o que colher".
+  Milho com espiga e palha amarelando; cana alta e verde-escura.
+
+**`arvore`** — a árvore de UM tile de mata, por estado. É **proposta**, do item `F-REPL`
+do `BUILD_PLAN.md` (2026-09-27), e entra quando o operador aprovar o item.
+
+- `id`: o recurso neutro, `tree`.
+- `estados`: `muda`, `crescendo_1`, `crescendo_2`, `adulta` e `toco`.
+  - `adulta` e `toco` são os dois estados que a tabela "Terreno e vegetação" já pede ("com
+    madeira e cortada").
+  - O replantio acrescenta os **três** de crescimento. São três porque o KaM tem três
+    idades antes da adulta (BALANCE_LOG, "REFERÊNCIA KaM — o replantio").
+  - Arquivo: `sprites/tree/tree_<estado>.png`.
+- Mesma disciplina da `cultura`:
+  - uma imagem por estado, desenhada pelo render sobre o chão do mapa;
+  - o render escolhe o quadro pela fração do tempo de crescer;
+  - a simulação sabe só quando o tile foi plantado.
+- Tamanho: âncora no pé (`[0.5, 1]`), como a adulta.
+  - A `muda` cabe na metade de baixo do tile.
+  - A `crescendo_2` já passa da borda de cima.
+  - A adulta fica na altura que a F-ESC medir.
+- **A muda tem de se ler como obstáculo.** Na simulação, a árvore bloqueia o passo desde
+  o plantio, e o jogador precisa ver por que a unidade contorna um tile com planta
+  pequena.
+- **O toco não pode parecer muda.** O toco é o tile que o lenhador vai replantar; a muda
+  é a que já cresce.
+
 ### A conta
 
 | Parte | Imagens |
@@ -718,6 +831,8 @@ Os três seguem os oito campos da seção 3 e a mesma pasta `assets/sprites/<id>
 | Caso 5, `animal`: 2 bichos × 3 idades × 4 | 24 |
 | Fumaça genérica: 1 laço × 8 | 8 |
 | **Total** | **384** |
+| `cultura` (proposta F-CAMPO): 2 culturas × 4 estados | +8 |
+| `arvore` (proposta F-REPL): 3 estados de crescimento; `adulta` e `toco` já estão em "Terreno e vegetação" | +3 |
 
 A animação sozinha soma 300 (48 + 176 + 12 + 32 + 24 + 8). O operador escolheu esse
 nível, e não o mínimo de um laço por prédio, porque um laço só parece repetitivo e

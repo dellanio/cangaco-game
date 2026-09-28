@@ -12,6 +12,7 @@ import { aplicarPlowField, aplicarUnplanField } from './systems/campos';
 import { gerarTarefas, sanearTarefas } from './systems/jobs';
 import { aplicarSetBuildingPaused } from './systems/pausa';
 import { aplicarSetProductionQuota } from './systems/cota';
+import { aplicarSetBuildingMode } from './systems/modo';
 import { sistemaDosEspecialistas } from './systems/especialistas';
 import { sistemaDaFome } from './systems/fome';
 import { sistemaDosLaborers } from './systems/laborers';
@@ -88,6 +89,12 @@ export function step(
       }
       case 'SetBuildingPaused': {
         const resultado = aplicarSetBuildingPaused(atual, command);
+        atual = resultado.state;
+        events.push(...resultado.events);
+        break;
+      }
+      case 'SetBuildingMode': {
+        const resultado = aplicarSetBuildingMode(atual, command, dados);
         atual = resultado.state;
         events.push(...resultado.events);
         break;

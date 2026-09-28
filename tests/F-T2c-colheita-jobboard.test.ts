@@ -55,9 +55,13 @@ const ROCHA: readonly (readonly [number, number])[] = [2, 3, 4, 5].map((dx) => {
   return [t.gx, t.gy] as const;
 });
 
-/** Dois por tile: a jazida inteira sao 8 unidades, e o cenario vai ate o
+/** LOTE3-c: o pedreiro traz `sai.stone` blocos por viagem, e cada viagem tira o
+ *  lote inteiro de um tile. */
+const LOTE = receitaDoTipo('quarry', gameData)?.sai.stone ?? 0;
+
+/** Dois lotes por tile: a jazida inteira sao 8 viagens, e o cenario vai ate o
  *  esgotamento sem virar medicao de paciencia. */
-const DADOS: GameData = comJazida(gameData, 'rock', ROCHA, 2);
+const DADOS: GameData = comJazida(gameData, 'rock', ROCHA, 2 * LOTE);
 
 function predioDe(estado: GameState, id: string): PredioCompleto {
   const p = estado.predios.porId[id];
@@ -138,8 +142,8 @@ interface Corrida {
 
 /**
  * Roda o cenario tick a tick, drenando a gaveta (o serf da F15b em uma linha), e
- * anota tudo o que o aceite pergunta. Uma queda de 2 num tile num tick e a
- * colisao que a F-T2a deixava acontecer: duas pedreiras cavando o mesmo lajedo.
+ * anota tudo o que o aceite pergunta. Uma queda maior que um lote num tile num tick
+ * e a colisao que a F-T2a deixava acontecer: duas pedreiras cavando o mesmo lajedo.
  */
 function correr(estado: GameState, ticks: number, dados: GameData = DADOS): Corrida {
   let s = estado;
@@ -162,7 +166,7 @@ function correr(estado: GameState, ticks: number, dados: GameData = DADOS): Corr
     for (const [tile, queda] of Object.entries(quedas)) {
       colhido += queda;
       quedas_.push({ tick: i, tile, queda });
-      if (queda > 1) colisoes.push({ tick: i, tile, queda });
+      if (queda > LOTE) colisoes.push({ tick: i, tile, queda });
     }
     for (const predio of produtores) depositosPorPredio[predio]?.push(i);
     // duas pedreiras depositando no mesmo tick tem de ter cavado DOIS tiles
@@ -186,6 +190,10 @@ function correr(estado: GameState, ticks: number, dados: GameData = DADOS): Corr
 
 // --- o aceite ----------------------------------------------------------------
 
+/** Ticks da corrida: as oito viagens e a jazida seca no fim. LOTE3-c: 3000 e nao
+ *  1200, porque o ciclo da pedreira passou de 167 para 501. */
+const CORRIDA = 3000;
+
 describe('F-T2c — duas pedreiras de alcances sobrepostos nunca colhem o mesmo tile', () => {
   it('o cenario e mesmo de disputa: as duas veem a mancha e a MESMA preferencia', () => {
     const s = duasPedreiras();
@@ -207,37 +215,39 @@ describe('F-T2c — duas pedreiras de alcances sobrepostos nunca colhem o mesmo 
   });
 
   it('cenario inteiro ate o esgotamento: nenhum tick com duas cavando o mesmo tile', () => {
-    const r = correr(duasPedreiras(), 1200);
+    const r = correr(duasPedreiras(), CORRIDA);
     expect(r.colisoes).toEqual([]);
     expect(r.tiquesComTarefaRepetida).toEqual([]);
     expect(r.violacoes).toEqual([]);
     // o aceite so vale se as duas estiveram em ciclo JUNTAS, cada uma no seu tile —
-    // e nao por um tick: 977 dos 1200, exato. Os 223 que faltam sao 182 de jazida
-    // seca depois do ultimo deposito (t1018) mais os 41 ticks de troca de tile
+    // e nao por um tick: 2313 dos 3000, exato. Os 687 que faltam sao 646 de jazida
+    // seca depois do ultimo deposito (t2354) mais os 41 ticks de troca de tile
     // entre um deposito e o claim seguinte. Nenhuma folga aqui: e a soma de duas
     // contas fechadas.
-    expect(r.ticksComAsDuasEmTarefa).toBe(977);
-    // e se a jazida inteira saiu pelo caminho de verdade, uma unidade por queda —
-    // duas na mesma queda era exatamente o exploit da F-T2a
-    expect(r.colhido).toBe(ROCHA.length * 2);
+    expect(r.ticksComAsDuasEmTarefa).toBe(2313);
+    // e se a jazida inteira saiu pelo caminho de verdade, um lote por queda —
+    // dois na mesma queda era exatamente o exploit da F-T2a
+    expect(r.colhido).toBe(ROCHA.length * 2 * LOTE);
     expect(r.depositos).toBe(ROCHA.length * 2);
-    expect(r.quedas.map((q) => q.queda)).toEqual(r.quedas.map(() => 1));
+    expect(r.quedas.map((q) => q.queda)).toEqual(r.quedas.map(() => LOTE));
     // cada pedreira levou metade da jazida, nos ticks exatos da sua viagem. E aqui
     // que a F-T3 aparece: os depositos das duas NUNCA caem no mesmo tick, porque o
     // caminho de q2 ate o lajedo e 8 ticks mais curto que o de q1.
-    expect(r.depositosPorPredio.q2).toEqual([246, 492, 738, 984]);
-    expect(r.depositosPorPredio.q1).toEqual([254, 508, 768, 1018]);
+    expect(r.depositosPorPredio.q2).toEqual([580, 1160, 1740, 2320]);
+    expect(r.depositosPorPredio.q1).toEqual([588, 1176, 1770, 2354]);
     expect(r.ticksComAsDuas).toBe(0);
-  });
+    // LOTE3-c: 3000 ticks com a invariante a cada tick; o limite e para o caso travar
+  }, 60000);
 
   it('jazida seca: as duas param em esperando_insumo e nenhuma tarefa segura tile', () => {
-    const r = correr(duasPedreiras(), 1200);
+    const r = correr(duasPedreiras(), CORRIDA);
     const sobrou = Object.keys(r.fim.recursos).filter((k) => r.fim.recursos[k]?.tipo === 'rock');
     expect(sobrou).toEqual([]);
     expect(fsmDe(r.fim, 'pedreiro-1')).toBe('esperando_insumo');
     expect(fsmDe(r.fim, 'pedreiro-2')).toBe('esperando_insumo');
     expect(tilesEmTarefa(r.fim)).toEqual([]);
-  });
+    // LOTE3-c: 3000 ticks com a invariante a cada tick; o limite e para o caso travar
+  }, 60000);
 });
 
 // --- o guarda acusa -----------------------------------------------------------
@@ -290,8 +300,18 @@ describe('F-T2c — o tile volta ao conjunto livre em todo ramo de saida', () =>
    */
   const DESPAUSAR_ATE_RECLAMAR = 3;
 
+  /** LOTE3-b2 — o ciclo abre com o descanso DENTRO (a tarefa ja reclamada), e a
+   *  pausa no tick 1 pegaria o pedreiro la dentro, sem volta nenhuma. O caso deste
+   *  teste e o da pausa com ele SAINDO: anda ate o tick da transicao, na porta. */
+  const ateSair = (): GameState => {
+    let s = comTarefas();
+    for (let i = 0; i < 200 && fsmDe(s, 'pedreiro-1') !== 'indo_colher'; i++) s = step(s, [], DADOS);
+    if (fsmDe(s, 'pedreiro-1') !== 'indo_colher') throw new Error('fixture: pedreiro-1 nunca saiu');
+    return s;
+  };
+
   it('predio pausado devolve o tile, e despausado reclama de novo depois da volta', () => {
-    const s = comTarefas();
+    const s = ateSair();
     const pausado = step(s, [{ type: 'SetBuildingPaused', predio: 'q1', pausado: true }], DADOS);
     expect(tilesEmTarefa(pausado)).toHaveLength(1);
     let voltou = step(pausado, [{ type: 'SetBuildingPaused', predio: 'q1', pausado: false }], DADOS);
@@ -302,7 +322,8 @@ describe('F-T2c — o tile volta ao conjunto livre em todo ramo de saida', () =>
     }
     // a volta primeiro, o claim depois: nos dois ticks da volta so q2 segura tile
     expect(porTick).toEqual([1, 1, 2]);
-    expect(fsmDe(voltou, 'pedreiro-1')).toBe('indo_colher');
+    // LOTE3-b2: reclamou, e o ciclo novo abre com o descanso dentro, antes da ida
+    expect(fsmDe(voltou, 'pedreiro-1')).toBe('trabalhando');
     expect(new Set(tilesEmTarefa(voltou)).size).toBe(2);
   });
 
@@ -342,11 +363,11 @@ describe('F-T2c — o tile volta ao conjunto livre em todo ramo de saida', () =>
 
 describe('F-T2c — evidencia', () => {
   it('grava test-output/F-T2c.json com o aceite medido', () => {
-    const r = correr(duasPedreiras(), 1200);
+    const r = correr(duasPedreiras(), CORRIDA);
     gravarEvidencia('F-T2c', {
       cenario: 'q1 (22,34) e q2 (26,34), alcance 6, mancha de rocha em y=30, x=24..27',
       rochaPorTile: 2,
-      ticks: 1200,
+      ticks: CORRIDA,
       ticksComAsDuasProduzindo: r.ticksComAsDuas,
       _notaFT3: 'desde a F-T3 os depositos das duas nao caem no mesmo tick (viagens de comprimentos diferentes); a disputa e medida nos ticks com as duas em tarefa',
       ticksComAsDuasEmTarefa: r.ticksComAsDuasEmTarefa,
@@ -361,5 +382,6 @@ describe('F-T2c — evidencia', () => {
       fsmAoFim: { 'pedreiro-1': fsmDe(r.fim, 'pedreiro-1'), 'pedreiro-2': fsmDe(r.fim, 'pedreiro-2') },
     });
     expect(r.colisoes).toEqual([]);
-  });
+    // LOTE3-c: 3000 ticks com a invariante a cada tick; o limite e para o caso travar
+  }, 60000);
 });

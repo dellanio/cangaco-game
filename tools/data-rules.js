@@ -212,10 +212,96 @@ function validarProducao(dados, erros) {
     if (def && def.escolheSaida === true && Object.keys(def.sai || {}).length < 2) {
       erros.push(`producao/escolha-sem-opcao: production.predios.${id} escolhe a saida mas declara menos de duas`);
     }
-    validarCicloDaReceita(id, def, escala, tickHz, erros);
+    // F-REPL-b: o padrao fora da lista e um predio que nasce num modo que nenhum
+    // comando pede de volta; modo sem `planta` nao tem o que o rodizio le.
+    if (def && (def.modos !== undefined || def.modoPadrao !== undefined)) {
+      const modos = def.modos;
+      if (!modos || typeof modos !== 'object' || Array.isArray(modos) || Object.keys(modos).length === 0) {
+        erros.push(`producao/modos: production.predios.${id}.modos tem de ser objeto com pelo menos um modo`);
+      } else {
+        for (const [nome, m] of Object.entries(modos)) {
+          if (!m || typeof m.planta !== 'boolean') {
+            erros.push(`producao/modos: production.predios.${id}.modos.${nome}.planta tem de ser booleano`);
+          }
+        }
+        if (typeof def.modoPadrao !== 'string' || !(def.modoPadrao in modos)) {
+          erros.push(`producao/modo-padrao: production.predios.${id}.modoPadrao=${def.modoPadrao} nao esta em modos`);
+        }
+      }
+      if (!def.colheita) {
+        erros.push(`producao/modos: production.predios.${id} declara modos, e modos pedem colheita`);
+      }
+    }
+    // LOTE3 — com `fases`, o ciclo e a soma delas e a razao entre taxas deixa de
+    // existir na receita: quem confere e `validarFases`.
+    if (def && def.colheita && def.colheita.fases !== undefined) validarFases(id, def, erros, dados);
+    else validarCicloDaReceita(id, def, escala, tickHz, erros);
     // F-T2a: `producao/veio-invalido` saiu daqui junto com o campo `veio`. Quem
     // guarda o total agora e o TILE, e quem o valida e `validarRecursos`
     // (`recurso/rendimento` e `recurso/colheita`).
+  }
+}
+
+const CAMPOS_DAS_FASES = ['noTile_segundos_base', 'naCasa_segundos_base', 'descanso_segundos_base'];
+
+/**
+ * LOTE3 — a colheita em FASES, como o KaM: tempo no tile, na casa, descanso e
+ * quantidade por viagem. A caminhada nao tem campo (sai do pathfinding).
+ *
+ * `producao/fases` e a forma. `producao/sai-conferido` e o que a taxa `sai` virou:
+ * nao e mais entrada, e o numero que as fases CONFEREM. A caminhada so atrasa, entao
+ * as fases sozinhas (na escala 1,0) tem de render pelo menos a taxa declarada; se
+ * ja sao mais lentas que ela, o dado se contradiz. A conferencia COM caminhada so
+ * existe rodando a sim, e fica nos testes.
+ */
+function validarFases(id, def, erros, dados) {
+  const f = def.colheita.fases;
+  const onde = `production.predios.${id}.colheita.fases`;
+  if (!f || typeof f !== 'object') {
+    erros.push(`producao/fases: ${onde} precisa ser objeto`);
+    return;
+  }
+  let forma = true;
+  for (const campo of CAMPOS_DAS_FASES) {
+    const v = f[campo];
+    const minimo = campo === 'noTile_segundos_base' ? 'maior que 0' : '>= 0';
+    const ok = typeof v === 'number' && (campo === 'noTile_segundos_base' ? v > 0 : v >= 0);
+    if (!ok) {
+      erros.push(`producao/fases: ${onde}.${campo} precisa ser numero ${minimo}, achou ${v}`);
+      forma = false;
+    }
+  }
+  if (!Number.isInteger(f.porViagem) || f.porViagem < 1) {
+    erros.push(`producao/fases: ${onde}.porViagem precisa ser inteiro >= 1, achou ${f.porViagem}`);
+    forma = false;
+  }
+  if (def.colheita.aDistancia === true) {
+    erros.push(`producao/fases: production.predios.${id} colhe aDistancia, e quem colhe de dentro nao tem tile nem fase`);
+    forma = false;
+  }
+  const saidas = Object.keys(def.sai || {});
+  if (Object.keys(def.entra || {}).length > 0 || saidas.length !== 1) {
+    erros.push(`producao/fases: production.predios.${id} declara fases com entrada ou sem exatamente uma saida`);
+    forma = false;
+  }
+  if (!forma) return;
+  // LOTE3-c — o ciclo tira `porViagem` do tile de uma vez, e o claim exige tudo: num
+  // tipo que nunca repoe, a sobra menor que `porViagem` ficaria no mapa para sempre.
+  const tipo = dados.resources && dados.resources.tipos ? dados.resources.tipos[def.colheita.recurso] : undefined;
+  if (tipo && tipo.regime === 'nunca' && tipo.rendimentoPorTile % f.porViagem !== 0) {
+    erros.push(
+      `producao/por-viagem-divide: production.predios.${id}.colheita.fases.porViagem=${f.porViagem} nao divide `
+      + `resources.tipos.${def.colheita.recurso}.rendimentoPorTile=${tipo.rendimentoPorTile}, e o tipo nunca repoe: sobra no tile`,
+    );
+  }
+  const segundos = CAMPOS_DAS_FASES.reduce((soma, campo) => soma + f[campo], 0);
+  const rende = (f.porViagem * 60) / segundos;
+  const taxa = def.sai[saidas[0]];
+  if (rende < taxa * (1 - TOLERANCIA_DA_RAZAO)) {
+    erros.push(
+      `producao/sai-conferido: production.predios.${id}.sai.${saidas[0]}=${taxa}/min, mas as fases `
+      + `(${segundos} s por ${f.porViagem}) rendem so ${rende.toFixed(3)}/min antes da caminhada`,
+    );
   }
 }
 
@@ -896,11 +982,15 @@ function validarReposicao(dados, id, def, erros) {
     erros.push(`recurso/reposicao: resources.tipos.${id}.reposicao nao e um objeto`);
     return;
   }
-  if (typeof r.segundos_base !== 'number' || !(r.segundos_base > 0)) {
-    erros.push(
-      `recurso/reposicao: resources.tipos.${id}.reposicao.segundos_base precisa ser numero > 0, `
-      + `achou ${JSON.stringify(r.segundos_base)}`,
-    );
+  // F-CAMPO-a — dois tempos: `semear` (o roceiro no tile) e `crescer` (o tile
+  // sozinho, sem ninguem la). O `segundos_base` unico que cobria os dois saiu.
+  for (const campo of ['semear_segundos_base', 'crescer_segundos_base']) {
+    if (typeof r[campo] !== 'number' || !(r[campo] > 0)) {
+      erros.push(
+        `recurso/reposicao: resources.tipos.${id}.reposicao.${campo} precisa ser numero > 0, `
+        + `achou ${JSON.stringify(r[campo])}`,
+      );
+    }
   }
   if (!r.custo || typeof r.custo !== 'object') {
     erros.push(`recurso/reposicao: resources.tipos.${id}.reposicao.custo precisa ser objeto (vazio quando de graca)`);
@@ -1019,6 +1109,35 @@ function validarRecursos(dados, erros) {
   }
 }
 
+// F-REPL-b: o modo de trabalho (production.json:predios.<tipo>.modos) e escolhido
+// no painel pelo id, e o jogador ve o nome do tema. Ida e volta, como o menu: todo
+// modo tem `nome` em theme-sertao.predios.<tipo>.modos, e o tema nao nomeia modo
+// que o dado nao tem.
+function validarRotulosDeModo(dados, tema, erros) {
+  const predios = (dados.production && dados.production.predios) || {};
+  const doTema = (tema && tema.predios) || {};
+  for (const [tipo, def] of Object.entries(predios)) {
+    if (tipo.startsWith('_') || !def || typeof def !== 'object') continue;
+    const modos = def.modos && typeof def.modos === 'object' ? Object.keys(def.modos) : [];
+    const rotulos = (doTema[tipo] && doTema[tipo].modos) || {};
+    for (const modo of modos) {
+      const r = rotulos[modo];
+      if (!r || typeof r.nome !== 'string' || r.nome.length === 0) {
+        erros.push(`interface/modo-rotulo: modo '${modo}' de '${tipo}' sem nome em theme-sertao.predios.${tipo}.modos`);
+      }
+    }
+  }
+  for (const [tipo, t] of Object.entries(doTema)) {
+    if (!t || typeof t !== 'object' || !t.modos) continue;
+    const doDado = (predios[tipo] && predios[tipo].modos) || {};
+    for (const modo of Object.keys(t.modos)) {
+      if (!Object.hasOwn(doDado, modo)) {
+        erros.push(`interface/modo-rotulo: theme-sertao.predios.${tipo}.modos.${modo} nao e modo de production.json`);
+      }
+    }
+  }
+}
+
 // Layout 2, fatia 2 (docs/propostas/ui-releitura-rts.md §2): o agrupamento do
 // menu Construir (data/menu-build.json) e dado de INTERFACE, validado a parte
 // de validarTudo porque `sim/` nunca o le. O que a regra guarda: todo predio de
@@ -1030,6 +1149,7 @@ function validarInterface(dados, interfaceUi) {
   const erros = [];
   const menu = interfaceUi && interfaceUi['menu-build'];
   const tema = interfaceUi && interfaceUi['theme-sertao'];
+  validarRotulosDeModo(dados, tema, erros);
   if (!menu || !Array.isArray(menu.grupos)) {
     erros.push('interface/menu-build-forma: menu-build.grupos precisa ser array');
     return erros;

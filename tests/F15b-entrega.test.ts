@@ -47,8 +47,11 @@ describe('F15b — os quatro tipos entram na escada', () => {
   it('cada tipo novo tem nivel em delivery.json, na ordem certa', () => {
     expect(nivelDoTipo('insumo-producao-parada')).toBe(4);
     expect(nivelDoTipo('insumo-producao-baixa')).toBe(5);
-    expect(nivelDoTipo('saida-cheia-para-armazem')).toBe(6);
-    expect(nivelDoTipo('excedente-para-armazem')).toBe(7);
+    // 7 e 8 desde o lote 2 (2026-09-27): a pedra do canteiro subiu para 6
+    expect(nivelDoTipo('saida-cheia-para-armazem')).toBe(7);
+    expect(nivelDoTipo('excedente-para-armazem')).toBe(8);
+    expect(nivelDoTipo('pedra-para-canteiro'))
+      .toBeLessThan(nivelDoTipo('saida-cheia-para-armazem'));
     expect(nivelDoTipo('insumo-producao-parada'))
       .toBeLessThan(nivelDoTipo('insumo-producao-baixa'));
     expect(nivelDoTipo('material-para-obra'))
@@ -557,7 +560,9 @@ describe('F15b — o ciclo fechado', () => {
   it('caminho real: a pedra sai da pedreira e chega ao armazem', () => {
     const cenario = pedreiraViva();
     const antes = noArmazem(cenario, 'stone');
-    const fim = rodar(cenario, 600);
+    // LOTE3-c: o primeiro lote de 3 so cai depois de um ciclo inteiro com a viagem
+    // (~600 ticks); o serf precisa de tempo para levar
+    const fim = rodar(cenario, 1200);
     expect(noArmazem(fim, 'stone')).toBeGreaterThan(antes);
   });
 

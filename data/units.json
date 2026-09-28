@@ -23,14 +23,15 @@
   },
   "militares": {
     "_comum": { "direcoesDeSprite": 8, "vaiAoInn": false, "alimentadoPor": "comando Feed" },
+    "_docAttackVsCavalo": "Parcela SOMADA a attack contra alvo montado (mecanica do KaM, KM_UnitActionFight.pas:291-294). O numero e nosso: reduzido para manter o total antigo (lanceiro 60, piqueiro 80, rebelde 50), decisao do operador 2026-09-28; os valores do KaM estao no Anexo A do GDD.",
     "tipos": [
       { "id": "militia",       "nome": "Miliciano",       "hp": 3, "attack": 35,  "attackVsCavalo": 0,  "defence": 1, "montado": false, "visao": 9,  "requisitos": ["hand_axe"] },
       { "id": "axe_fighter",   "nome": "Machadeiro",      "hp": 3, "attack": 35,  "attackVsCavalo": 0,  "defence": 2, "montado": false, "visao": 9,  "requisitos": ["hand_axe", "leather_armor", "wooden_shield"] },
       { "id": "sword_fighter", "nome": "Espadachim",      "hp": 3, "attack": 55,  "attackVsCavalo": 0,  "defence": 3, "montado": false, "visao": 9,  "requisitos": ["sword", "iron_armor", "iron_shield"] },
       { "id": "bowman",        "nome": "Arqueiro",        "hp": 1, "attack": 60,  "attackVsCavalo": 0,  "defence": 2, "montado": false, "visao": 9,  "requisitos": ["longbow", "leather_armor"], "aDistancia": true },
       { "id": "crossbowman",   "nome": "Besteiro",        "hp": 1, "attack": 120, "attackVsCavalo": 0,  "defence": 3, "montado": false, "visao": 9,  "requisitos": ["crossbow", "iron_armor"], "aDistancia": true },
-      { "id": "lance_carrier", "nome": "Lanceiro",        "hp": 3, "attack": 25,  "attackVsCavalo": 60, "defence": 2, "montado": false, "visao": 9,  "requisitos": ["lance", "leather_armor"] },
-      { "id": "pikeman",       "nome": "Piqueiro",        "hp": 3, "attack": 35,  "attackVsCavalo": 80, "defence": 3, "montado": false, "visao": 9,  "requisitos": ["pike", "iron_armor"] },
+      { "id": "lance_carrier", "nome": "Lanceiro",        "hp": 3, "attack": 25,  "attackVsCavalo": 35, "defence": 2, "montado": false, "visao": 9,  "requisitos": ["lance", "leather_armor"] },
+      { "id": "pikeman",       "nome": "Piqueiro",        "hp": 3, "attack": 35,  "attackVsCavalo": 45, "defence": 3, "montado": false, "visao": 9,  "requisitos": ["pike", "iron_armor"] },
       { "id": "scout",         "nome": "Batedor",         "hp": 4, "attack": 35,  "attackVsCavalo": 0,  "defence": 2, "montado": true,  "visao": 18, "requisitos": ["hand_axe", "leather_armor", "wooden_shield", "horse"] },
       { "id": "knight",        "nome": "Cavaleiro",       "hp": 4, "attack": 55,  "attackVsCavalo": 0,  "defence": 3, "montado": true,  "visao": 9,  "requisitos": ["sword", "iron_armor", "iron_shield", "horse"] }
     ]
@@ -38,7 +39,7 @@
   "mercenarios": {
     "_doc": "Town hall. Pagos em ouro, prontos na hora.",
     "tipos": [
-      { "id": "rebel",     "nome": "Rebelde",  "hp": 3, "attack": 25, "attackVsCavalo": 50, "defence": 1, "montado": false, "visao": 9, "custoOuro": 2 },
+      { "id": "rebel",     "nome": "Rebelde",  "hp": 3, "attack": 25, "attackVsCavalo": 25, "defence": 1, "montado": false, "visao": 9, "custoOuro": 2 },
       { "id": "rogue",     "nome": "Bandido",  "hp": 1, "attack": 60, "attackVsCavalo": 0,  "defence": 1, "montado": false, "visao": 9, "custoOuro": 3, "aDistancia": true },
       { "id": "vagabond",  "nome": "Vagabundo","hp": 4, "attack": 35, "attackVsCavalo": 0,  "defence": 1, "montado": true,  "visao": 9, "custoOuro": 5 },
       { "id": "barbarian", "nome": "Barbaro",  "hp": 4, "attack": 75, "attackVsCavalo": 0,  "defence": 2, "montado": false, "visao": 9, "custoOuro": 7 },

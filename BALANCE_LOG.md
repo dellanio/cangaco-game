@@ -22,6 +22,505 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
 
 ## Observações abertas
 
+- [2026-09-28] **FASE C, COMBATE — dois números que a VARREDURA-KAM corrigiu no GDD.** Nenhum código lê esses números hoje (conferido com grep: `mercenarios.custoOuro` e `attackVsCavalo` não têm leitor em `src/sim/`). O "vs cavalo" já foi decidido e aplicado no dado (abaixo). O custo do Bárbaro continua 7 no dado e espera o primeiro item de tropa.
+  - **Contra montado, o ataque SOMA.** O KaM faz `damage := Attack`; se o alvo é montado, `damage := damage + AttackHorse` (`units/actions/KM_UnitActionFight.pas:291-294`, clone reyandme 731a8a4). O GDD e a string `_doc` de `data/combat.json` modelavam substituição; os dois textos foram corrigidos para soma. **O que muda no número:** o `attackVsCavalo` de `units.json` passa a ser parcela, não total. Piqueiro contra cavaleiro fica em 35 + 80 = 115, não 80; lanceiro, 25 + 60 = 85, não 60. **Decidido pelo operador (2026-09-28): a coluna foi reduzida para manter o total antigo.**
+    - Em `data/units.json`: lanceiro 60 → 35, piqueiro 80 → 45, rebelde 50 → 25. Os totais contra montado continuam 60, 80 e 50.
+    - O porquê, nas palavras dele: "Piqueiro a 115 contra cavalo é muito para uma unidade que custa pouco, e os totais de hoje foram o que a gente calibrou como intenção."
+    - **A soma é mecânica do KaM; o número é nosso.** O GDD (nota depois do Anexo A, §12.2) e o `_docAttackVsCavalo` de `units.json` dizem isso.
+    - O rebelde entrou pelo mesmo princípio, sem ter sido citado.
+  - **Bárbaro custa 8 de ouro, não 7** (`res/KM_ResUnits.pas:216`). O GDD foi corrigido. `data/units.json:44` continua `custoOuro: 7`.
+- [2026-09-28] **FOME NO LIMIAR DO KaM — medido, mexe pouco; não gira.** A pergunta do operador: o civil do KaM vai comer a 13,3% e o nosso a 50%. Isso mudaria a calibração da Fase B?
+  - **A premissa era do operador e caiu** (registro pedido por ele). Ele supôs "quase quatro vezes mais idas ao Inn" com 50% contra 13,3%. Medido: 146 contra 119 refeições (−18%), com produção igual.
+  - **Decisão do operador (2026-09-28): o dado fica em 50% e 8 lugares.**
+  - **Premissa corrigida antes da medida** (verificado no fonte, clone reyandme 731a8a4): o limiar não decide quantas vezes se come.
+    - O civil do KaM come até passar de 90% (`UNIT_CONDITION_FULL_THRESHOLD = 0.9`, `common/KM_Defaults.pas:370`), com as mesmas restaurações que as nossas (`:383-386`).
+    - O limiar só decide QUANDO ele sai; quanto ele come ao chegar não muda. A frequência de refeição é dreno ÷ restauração por refeição.
+    - "Quase quatro vezes mais idas" não acontece.
+  - **Medida:** vila da calibração F-CAL-b, 36 000 ticks, sonda `zz-` apagada depois. 26 civis no fim e 0 mortes nos quatro casos.
+
+    | caso | refeições | 1ª refeição | comido | ticks em `indo_comer` | ticks até reocupar | % do tempo civil no ir e voltar | espera no moinho / padaria |
+    |---|---|---|---|---|---|---|---|
+    | hoje (50%, 8 lugares) | 146 | t7175 | 142 pães + 10 linguiças | 8 503 | 3 674 | 1,46% | 7,7% / 6,2% |
+    | KaM (13,3%, 6 lugares) | 119 | t10401 | 116 pães + 10 linguiças | 6 918 | 2 601 | 1,14% | 8,1% / 6,8% |
+    | só o limiar (13,3%, 8) | 119 | igual ao KaM | igual | igual | igual | igual | igual |
+    | só os lugares (50%, 6) | 147 | t7175 | 144 pães + 10 linguiças | 8 455 | 3 674 | 1,45% | 7,6% / 6,1% |
+
+  - **Produção em 36 000 ticks, hoje → KaM:**
+    - pão 230 → 230; farinha 117 → 117; milho 123 → 122;
+    - pedra 186 → 192; tábua 212 → 214; tronco 107 → 108.
+  - **Leitura:**
+    - −18% de refeições, quase tudo pela 1ª refeição mais tarde (a vila começa cheia e demora mais a cair a 13,3%). Consumo de comida −17% (152 → 126 unidades).
+    - O ir e voltar da Bodega é ~1,5% do tempo civil nos dois casos; a diferença é 0,3 ponto.
+    - **Os 6 lugares não mudam nada aqui:** a vila nunca enche a Bodega.
+  - **LOTE3:** os três testes (`LOTE3-fases-canavial`, `LOTE3-fases-quatro`, `LOTE3-c-pedreiro-lote`) rodaram com `condition.json` trocado para 13,3% / 6 e restaurado. Os três JSON de evidência saíram **iguais byte a byte**: nenhum cenário do LOTE3 tem Bodega. Nenhuma razão medida muda.
+  - **Divergências que ficam registradas, sem giro:**
+    - nosso civil enche até 100% e come cada comida no máximo uma vez; o do KaM para em 90% e só come vinho e peixe se ainda não comeu duas vezes (`MAX_FEED_CNT = 2`, `units/tasks/KM_UnitTaskGoEat.pas:101`);
+    - o KaM tem uma condição única de 45 min para todos (`KM_Defaults.pas:371`), contra os nossos 40 min civil / 60 min militar;
+    - o KaM manda o guerreiro pedir comida abaixo de 55% (`TROOPS_FEED_MAX`, `:373`).
+    - Nenhuma dessas mexe a Fase B pelo que se mediu. `civilVaiComer` 0,50 e `comensaisSimultaneos` 8 continuam no dado; se o lote da VARREDURA-KAM quiser alinhar, o custo medido é o desta tabela.
+
+- [2026-09-27] **PRÓXIMO LOTE COMEÇA AQUI — constatação do modelo, não observação do Canavial:
+  o tempo de colheita é DERIVADO da taxa de saída, e isso vale para os CINCO que saem a colher.**
+  - **Verificado no código:**
+    - o relógio que anda no tile é o `receita.ticksDoCiclo`
+      (`sim/systems/especialistas.ts:516` e `:710`);
+    - o carregamento o calcula como o maior período entre as taxas da receita
+      (`sim/data/loader.ts:371`); não existe número de colheita separado.
+  - **Os cinco que saem a colher** (`colheita` sem `aDistancia`; colheita em ticks na escala
+    2,0, igual a 300 / taxa):
+
+    | receita | taxa | colheita |
+    |---|---|---|
+    | `quarry` | `stone` 1,8 | ~167 |
+    | `woodcutters` | `tree_trunk` 0,71 | ~423 |
+    | `farm` | `corn` 2,0 | 150 |
+    | `wineyard` | `wine` 0,5 | 600 |
+    | `fishermans` | `fish` 1,0 | 300 |
+
+    - As três minas (`gold_mine`, `coal_mine`, `iron_mine`) também derivam o tempo da taxa,
+      mas colhem **de dentro** (`aDistancia`, `especialistas.ts:531`). Sem viagem, tempo e
+      vazão são a mesma coisa, e não há o que separar.
+  - **Consequência:** nenhum dos cinco pode ser afinado sem que o outro número se mova junto.
+    Encurtar a colheita acelera a vazão, e baixar a vazão alonga a colheita.
+  - **O que revelou:** o Canavial. Doze tiles de cana rendem só 1,5× um (15 contra 10 em
+    12 000 ticks), contra 2,9× da fazenda (sonda apagada, `cenarioDeCanavial`). A suspeita do
+    operador é que a colheita de 600 sature o canavieiro com 2 a 4 tiles, e **medir isso é o
+    primeiro passo do lote**. Hoje o 4× da fazenda não tem razão medida: é consequência da
+    taxa 0,5.
+  - **As duas saídas.** O operador decide quando o lote começar; **nenhuma foi feita**.
+    - **(a) Campo novo no dado, separando o tempo de colheita da vazão.** É mudança de modelo
+      e afeta os cinco.
+      - Custo contado por menção (grep, 2026-09-27), não compilando:
+        - na `sim/`: `ticksDoCiclo` aparece em 5 arquivos (`loader.ts`, `types.ts`,
+          `producao.ts`, `state.ts`, `especialistas.ts`);
+        - no `render/`: 2 arquivos (`predios.ts`, `trabalho.ts`), que é o território da
+          outra sessão;
+        - nos testes: 13 arquivos.
+      - Mais o schema e as regras do `validate:data`, e um valor por receita.
+      - **Hipótese** (não medida): com o tempo separado, a vazão dos cinco passa a
+        **emergir** de colheita + viagem + semear, e a taxa `sai` perde o sentido de vazão
+        para eles. O lote teria de decidir o que ela passa a significar, e o oráculo
+        1:1:1 (`proporcoesDeReferencia`) seria recalculado.
+      - Antes de escolher, medir o custo real compilando (acrescentar o campo, contar os
+        erros, reverter).
+    - **(b) Girar a taxa e aceitar que o tempo vai junto.** É barato: um número por receita,
+      o mesmo caminho do `farm.sai.corn` 3,0 → 2,0.
+      - O afinamento fica grosso: cada giro mexe na vazão **e** em quantos tiles saturam o
+        trabalhador.
+      - E cada giro remede a cadeia de quem consome (moinho, serraria, bodega).
+  - `data/production.json` (`sai` dos cinco), `sim/data/loader.ts`.
+  - **REFERÊNCIA — como o KaM modela isso** (medido em 2026-09-27, a pedido do operador,
+    antes de escolher entre (a) e (b)).
+    - **Fontes:**
+      - o código de `Kromster80/kam_remake` (`b199128`, 2022-06-01), cujo README aponta
+        o `reyandme/kam_remake` como a linha principal, e do `reyandme` (`731a8a4`); ambos
+        lidos num clone fora do repositório;
+      - `houses.dat` e `unit.dat` da instalação do operador, lidos com
+        `tools/kam-medir.js` (campos `casas[].animWorkCount`, `casas[].workerRestTicks`
+        e `trabalho`).
+    - **1. Tempo e vazão são separados, e mais que isso: no KaM não existe taxa.**
+      - Nenhum campo diz "unidades por minuto". A vazão **emerge** da soma das fases de
+        uma viagem, e cada fase vem de uma fonte diferente:
+        - caminhada: velocidade `Speed / 240` tiles por tick, com `Speed` = 24 nos quatro
+          colhedores, ou seja, 10 ticks por tile;
+        - trabalho no tile: `WorkCyc × quadros da animação` (fase 4 de
+          `KM_UnitTaskMining.pas`), com o `WorkCyc` de cada profissão escrito no código
+          (`FindPlan`, `KM_UnitWorkPlan.pas`);
+        - trabalho dentro da casa: `SubActAdd`, que multiplica ciclos pelos quadros da
+          animação da casa;
+        - descanso: `WorkerRest × 10`, do `houses.dat`;
+        - quantidade por viagem: `ResProductionX`, do `houses.dat`.
+      - O `houses.dat` também tem um campo `WorkerWork` (Farm 2, Quarry 18, Vineyard 30).
+        **Nenhum dos dois remakes o lê** (grep), e o significado dele não foi apurado.
+        Fica como curiosidade: o operador pediu para **não** investigar (2026-09-27).
+    - **2. O ciclo do fazendeiro** (o crescimento de 6 400 corre à parte, em paralelo, no
+      tile): sai da casa, caminha até o tile (10 ticks por tile, alcance 10), corta
+      **96** (6 × 16), volta, **não trabalha dentro da casa**, entrega 1 e descansa
+      **50**. O "resto do ciclo" é caminhada + 50 de descanso.
+    - **3. O tempo no tile varia por profissão**, e duas das cinco fazem parte do trabalho
+      dentro da casa:
+
+      | profissão | no tile | dentro da casa | descanso | por viagem | ticks por unidade, sem caminhada |
+      |---|---|---|---|---|---|
+      | fazendeiro (milho) | 6 × 16 = **96** | 0 | 50 | 1 | **146** |
+      | fazendeiro (semear) | 10 × 10 = 100 | 0 | 50 | — | — |
+      | vinhateiro | 5 × 20 = **100** | 30 + 11 × 24 + 28 ≈ **320** | 50 | 1 | **≈ 470** |
+      | pedreiro | 8 × 10 = **80** | 0 + 9 × 18 + 30 ≈ **190** | 50 | 3 | **≈ 107** |
+      | lenhador (corte) | 15 × 10 + 10 (queda) + 20 = **180** | 0 | 50 | 1 | **230** |
+      | pescador (`reyandme`) | 13 + 10 × 30 + 15 = **328** | 0 | 50 | 1 | **378** |
+      | pescador (`Kromster80`, binário cru) | 13 + 12 × 30 + 15 = 388 | 0 | 590 | 2 | 489 |
+
+      - O "≈" vem de `TimeToWork − 1` e `− 2` nas subações da casa (fase 9).
+      - O pescador difere entre os dois remakes. O `reyandme` sobrescreve o binário
+        (`KM_ResHouses.pas:801-802`): 1 peixe e descanso 50.
+    - **O que isto diz do Canavial:**
+      - no KaM, o tempo **no tile** do vinhateiro é o do fazendeiro (100 contra 96), e o
+        ciclo inteiro é ~3,2× o do fazendeiro;
+      - a diferença está **dentro da casa** (≈ 320, a prensa), não no tile;
+      - aqui os 600 correm todos no tile.
+    - **Conta, não medida no jogo:** mesmo no KaM o vinhateiro satura com menos tiles.
+      Com crescimento ÷ ciclo, ignorando a caminhada, dá 5 000 / 470 ≈ 11 tiles, contra
+      6 400 / 146 ≈ 44 do fazendeiro.
+    - **Consequência para (a) e (b):** o KaM **não** deriva o tempo da taxa. Nele a saída
+      (a) é alinhamento com a referência, não modelo novo. E a pergunta "o que a taxa passa
+      a significar" tem resposta: no KaM, nada. A vazão é resultado de caminhada +
+      tile + casa + descanso, e só se mede. **Hipótese, não decidida:** aqui a taxa `sai`
+      viraria o número que o oráculo confere, como o 1:1:1 da fazenda já foi conferido
+      por medida.
+    - **Ressalva:** o tick do KaM é tomado como 100 ms (a mesma hipótese da REFERÊNCIA
+      abaixo).
+      - Todo número desta subseção está em **ticks do KaM**.
+      - Toda conversão para segundos, ou para ticks nossos, pressupõe os 100 ms, e é
+        **HIPÓTESE**, não medida.
+      - Razões entre ticks do KaM (100 : 320 : 50, ~11 contra ~44 tiles) não dependem
+        dela.
+    - **DECISÃO do operador (2026-09-27): saída (a).**
+      - **Não é mudança de modelo.** É alinhar com a referência, que separa as fases
+        desde sempre.
+      - O desenho vem do KaM, com as fases medidas acima:
+        - tempo no tile, por profissão;
+        - tempo dentro da casa (só alguns prédios têm);
+        - descanso;
+        - quantidade por viagem.
+      - A caminhada sai do pathfinding e não ganha campo.
+      - Começa pelo Canavial, o caso que revelou o problema.
+      - **Proposta, esperando revisão:** plano em `docs/planos/LOTE3-fases-de-colheita.md`.
+        - A proporção vem do KaM e o total fica no de hoje: 26 / 82 / 12 s, 130 / 410 / 60
+          ticks, 600 somados. Assim a vazão não se move.
+        - A `sai` vira o número que o oráculo confere.
+        - Os absolutos do KaM (≈ 470 ticks do KaM, ≈ 47 s **sob a HIPÓTESE dos 100 ms**)
+          ficam para o lote dos cinco.
+      - **Custo medido compilando** (revertido):
+        - tirar `ticksDoCiclo` dá 42 erros (sim 4, render 1, testes 37);
+        - um campo novo obrigatório em `ColheitaDeRecurso` dá 2 erros (`loader.ts`, um
+          literal de teste).
+      - **Previsão, não medida:** repartir o ciclo **não** muda a razão 12 : 1 do
+        Canavial. O gargalo é o canavieiro, e o tempo dele por unidade não muda.
+    - **LOTE3-b1 ENTREGUE (2026-09-27).** O Canavial está em fases: tile 26 s, casa 82 s,
+      descanso 12 s, 1 por viagem, que dão 130 / 410 / 60 ticks na escala 2,0.
+      - **Medido** (`test-output/LOTE3-fases.json`, 12 000 ticks, gaveta esvaziada):
+
+        | modelo | 1 tile | 12 tiles | razão |
+        |---|---|---|---|
+        | em fases | 10 | 15 | 1,5 |
+        | de antes (ciclo inteiro no tile) | 10 | 15 | 1,5 |
+
+      - A previsão se confirmou: **a razão não se moveu**, e o b1 não a move por
+        construção. Quem move a razão é o b2, pelo tempo total do ciclo.
+      - O custo da fase da casa é +1 tick por ciclo: o tick da chegada é gasto entrando.
+        Não apareceu na vazão.
+      - `wineyard.sai.wine` 0,5 agora é **conferido**. A regra `producao/sai-conferido`
+        reprova 0,6 contra as fases de 120 s (provado no dado real e revertido).
+    - **Pausa no meio do ciclo: CARACTERÍSTICA, não bug (operador, 2026-09-27).** Quem
+      pausa no meio do ciclo paga por isso, o que é coerente com a F16c cancelar a
+      colheita. Fica medido aqui para o caso de alguém reclamar jogando.
+      - **A premissa "perde 1 unidade" NÃO se confirmou.** Nenhuma unidade se perde.
+      - **Medido** (`tests/LOTE3-fases-canavial.test.ts`, caso da pausa): com a pausa na
+        fase da casa, o relógio congela e a F16c cancela a tarefa do tile. O tile ainda
+        não foi consumido, porque o consumo é só no depósito. Ao despausar, o relógio
+        continua de onde parou, ele reclama um tile e deposita: o mapa perde
+        exatamente 1 cana e sai exatamente 1 cachaça.
+      - **Medido** (`tests/F16c-pausar.test.ts`, caso 1): com a pausa na fase do CAMPO,
+        o relógio zera e ele volta de mãos vazias (`voltarSemTarefa`). Com o b2, isso
+        perde também o descanso, que abre o ciclo. O ciclo seguinte é inteiro.
+      - O que o jogador paga, então: o tempo pausado, mais, se pausou no campo, o
+        descanso e o tempo no tile já feitos. Não paga matéria-prima nem produto.
+    - **LOTE3-b2 ENTREGUE (2026-09-27, noite 12).** Pedreiro, lenhador, fazendeiro e
+      pescador em fases. A proporção vem do KaM e o total é o de antes (decisão do
+      operador).
+      - A conta: a fração do KaM × o total de hoje, em segundos na escala 1,0. A fonte
+        dos números do KaM está na REFERÊNCIA acima. O pescador usa a linha do
+        `reyandme` (13 + 10 × 30 + 15 = 328).
+
+        | receita | KaM tile : casa : descanso | aqui, ticks (escala 2,0) | total |
+        |---|---|---|---|
+        | quarry | 80 : ~190 : 50 | 42 : 99 : 26 | 167 |
+        | woodcutters | 180 : 0 : 50 | 331 : 0 : 92 | 423 |
+        | farm | 96 : 0 : 50 | 99 : 0 : 51 | 150 |
+        | fishermans | 328 : 0 : 50 | 260 : 0 : 40 | 300 |
+
+      - **Ordem do ciclo:** o descanso abre o ciclo (dentro, com o tile já reclamado).
+        No KaM ele vem depois da entrega. A vazão é a mesma. Só o primeiro ciclo da
+        partida ganha um descanso a mais.
+      - **Medido** (`test-output/LOTE3-fases-quatro.json`, 12 000 ticks, gaveta
+        esvaziada). A vazão é igual ao modelo de antes em todos:
+
+        | receita | em fases | de antes | razão N:1 em fases | de antes |
+        |---|---|---|---|---|
+        | quarry | 46 | 46 | — | — |
+        | woodcutters | 18 | 18 | — | — |
+        | farm | 46 | 46 | 46 / 16 = 2,875 | 2,875 |
+        | fishermans | 26 | 26 | 26 / 20 = 1,3 | 1,3 |
+
+        - A razão N:1 só existe onde há cenário de um tile (fazenda, pescador). Na
+          pedreira e no lenhador, o recurso de um tile acaba e a razão mediria o
+          esgotamento, não o modelo.
+      - **O b2 também não move a razão, e isso é por construção.** Com o total mantido,
+        o tempo do trabalhador por unidade não muda. O que o b2 entrega é a
+        repartição no lugar: daqui em diante, girar o total de um prédio mexe só nele.
+        Os totais esperam o operador.
+      - Os 3 por viagem do pedreiro do KaM eram absolutos e esperavam o operador. Ele
+        decidiu: ver a entrada do LOTE3-c logo abaixo.
+    - **O que as razões N:1 medidas já dizem (leitura do operador, 2026-09-27).** Os
+      totais **não** giram ainda: o operador quer ver as razões com o pedreiro corrigido
+      antes, porque ele pode ser o caso que mostra o que os outros precisam.
+      - **Fazenda 2,875×** (46 contra 16, `test-output/LOTE3-fases-quatro.json`): boa.
+      - **Pescador 1,3×** (26 contra 20, mesmo arquivo): fraca.
+      - **Canavial 1,5×** (15 contra 10, `test-output/LOTE3-fases.json`): fraca.
+      - **Pedreira e lenhador: sem cenário de um tile.** O recurso de um tile esgota, e a
+        razão mediria o veio, não o modelo.
+      - **A pergunta que o lote vai responder:** uma razão de 1,3× significa que abrir
+        mais tiles quase não vale para o pescador. Isso é característica dele (peixe é
+        escasso) ou defeito a corrigir?
+        - **RESPONDIDA (operador, 2026-09-27, noite 14): característica.** O peixe é regime
+          `nunca` (`resources.json`), e 1,3× é da mesma família da pedreira. A razão
+          N:1 só faz sentido para quem REPÕE: milho e cana (`corn` e `grapes`, `porAcao`
+          com `reposicao`). Ver "Característica: quem esgota" logo abaixo.
+    - **LOTE3-c ENTREGUE (2026-09-27, noite 13): o pedreiro traz 3 blocos por viagem.**
+      - **Decisão do operador:** é peça que o KaM tem e nós não, e ela muda o que o
+        pedreiro significa. Ele corta a pedra no tile e trabalha ela na casa: o lote é o
+        que justifica o tempo na casa.
+      - **O dado:** as fases do b2 triplicaram, e `porViagem` é 3.
+        - Em segundos na escala 1,0: 25,2 no tile, 59,4 na casa e 15,6 de descanso.
+        - Em ticks: 126 no tile, 297 na casa, 78 de descanso; ciclo 501.
+        - `sai.stone` continua 1,8. A taxa DECLARADA é a mesma: 3 por 501 = 1 por 167.
+      - **A premissa "pedra por minuto não muda" NÃO se confirmou.** A taxa ENTREGUE subiu.
+        Medido em `cenarioDePedreira`, 12 000 ticks (`test-output/LOTE3-c-pedreiro-lote.json`):
+
+        | pedreiro | ciclo | pedras entregues | ticks por pedra | ticks andando por pedra |
+        |---|---|---|---|---|
+        | 1 por viagem (dado do b2) | 167 | 46 | 261 | 91,4 |
+        | 3 por viagem (hoje) | 501 | **60 (+30%)** | 200 | **30,2** |
+
+        - A ida e a volta são pagas uma vez por lote, e não uma vez por pedra: a caminhada
+          por pedra caiu a um terço. É exatamente o "vaivém deixa de ser proporcional à
+          produção" que o operador previu. O ganho de vazão é a outra face do mesmo efeito.
+        - **ALTERNATIVA MEDIDA E RECUSADA (operador, 2026-09-27, noite 14): ciclo ~690
+          para manter a entregue de antes.**
+          - A conta: 261 ticks por pedra × 3 = 783 por viagem, menos ~91 de caminhada
+            por viagem, dá ~690 de ciclo.
+          - Medido depois (sonda apagada, `cenarioDePedreira`, 12 000 ticks, fases na
+            mesma proporção): ciclo 690 entrega **45**, e 700 entrega **45**, contra 46 do
+            pedreiro de um bloco. A conta fecha.
+          - **Motivo da recusa:** a vazão declarada é o que o dado diz. O que chega ao
+            armazém depende da distância, e fixar por ela amarraria o número a uma
+            geometria de cenário. E os 30% são o prêmio certo: o pedreiro que traz três
+            blocos anda menos por pedra. É o jogador recompensado por um prédio que
+            trabalha em lote, não inflação. **Ciclo 501, entregue +30%, fica.**
+      - **A razão N:1 com rocha mede o veio, não o ciclo.** Mesmo arquivo, 12 000 ticks:
+        - Com o dado de verdade: 60 contra 15, ou seja 4,0× (era 46 contra 15, 3,07×). O
+          tile único de 15 esgota em 5 viagens; o 4,0 é o lajedo contra um tile vazio.
+        - Com rendimento injetado grande (1500 por tile, nada esgota): 57 contra 63, ou
+          seja 0,90×. Uma pedreira com um pedreiro colhe um tile por vez: tiles a mais não
+          aceleram nada quando nenhum acaba.
+        - **Hipótese, não medida:** o 57 < 63 viria de o lajedo farto oferecer um tile
+          escolhido mais longe da porta que a rocha colada da jazida única.
+        - Na pedreira, abrir mais tiles só vale como reserva de veio. É característica,
+          registrada logo abaixo.
+        - **Correção da noite 13:** eu tinha escrito aqui que "o cardume não esgota na
+          janela". Está errado. O pescador de um cardume entregou 20, exatamente o
+          `rendimentoPorTile` do peixe: o cardume esgotou. A pedreira de um tile entregou
+          15, o da rocha. Os dois são o mesmo caso.
+      - **Consequência na gaveta:** a saída cabe 5, e o lote é 3. Cabe um lote só; o
+        segundo entra depois que o serf leva o primeiro. Medido em `tests/F15a-producao.test.ts`
+        (`TETO_EM_LOTES`).
+      - **Regra nova:** `producao/por-viagem-divide`. O `porViagem` de quem colhe um recurso
+        `nunca` precisa dividir o `rendimentoPorTile` (rocha 15 / 3). Senão o resto fica
+        preso no tile, porque o claim exige o lote inteiro. Coberta pela fixture da
+        `tests/F03-dados-validados.test.ts`.
+    - **Característica, não defeito: quem esgota não acelera com mais tiles (operador,
+      2026-09-27, noite 14).**
+      - **O que se mediu:** a pedreira com rocha farta dá 0,90× (57 contra 63, nenhum
+        tile esgota, `test-output/LOTE3-c-pedreiro-lote.json`).
+      - **O motivo:** o pedreiro colhe um tile por vez e a rocha não repõe. Abrir mais
+        tiles não acelera nada, só estende o estoque. É diferente da fazenda por
+        natureza, não por calibração.
+      - **Para o jogador:** mais tiles de rocha ao alcance significam pedreira que DURA
+        mais, não que produz mais rápido. Vale para todos os que esgotam:
+        - pedreira (`rock`), pescador (`fish`) e minas (`coal`, `iron_ore`, `gold_ore`):
+          regime `nunca`;
+        - lenhador (`tree`): o regime é `porAcao`, mas a árvore não tem `reposicao` em
+          `resources.json` e `modos` segue sem leitor. Hoje ninguém replanta, então ela
+          esgota como as outras.
+          - **Proposto (2026-09-27, noite 15), item F-REPL do BUILD_PLAN:** com o
+            replantio, o lenhador sai desta lista e entra na de quem repõe, junto do
+            milho e da cana. A sonda do item (dado injetado, zero código) deu 21
+            troncos contra 18, e 79 ticks parado contra 2 329.
+          - **Entregue (2026-09-27, noite 16), F-REPL-a:** o toco rebrota, e a linha
+            de cima caiu. `tree.reposicao` tem `semear` 53 s e `crescer` 412,5 s
+            (265 e 2 063 ticks), `[proposta]`, pela proporção do KaM. Números da
+            corrida, 12 000 ticks, `w1` sozinho (`test-output/F-REPL-a.json`):
+            - mata de 2 tiles: 16 troncos contra o teto de 8 sem replantio;
+            - mata de 1 tile: 12; mata inteira (9 tiles): 21. A razão N:1 é **1,75**;
+            - a mata inteira não chega a replantar em 12 000 ticks, porque o rodízio
+              dá a volta na lista antes de voltar ao primeiro toco. Por isso os 21
+              são os mesmos com e sem `reposicao` nessa janela.
+              - Corrigido em 2026-09-27 (noite 17): antes dizia "corta a adulta
+                antes". O rodízio (`proximoTrabalhoDoRodizio`) anda com cursor e
+                aceita colher ou semear, o que vier primeiro depois dele. A
+                observação abaixo depende disso.
+            - **Observação do operador (2026-09-27, noite 16): com mata grande, o
+              replantio só entra quando a mata acaba.** É o comportamento certo:
+              cortar o que já está pronto vem antes. Mas o jogador não vê o
+              replantio funcionar até ter problema. **Se no playtest parecer que o
+              modo (F-REPL-b) não faz nada, é isso:** com 9 tiles adultos ao
+              alcance, `cortar` e `cortar_e_plantar` dão a mesma corrida até a
+              última adulta cair. Não é defeito, e não há número a girar.
+              - **PREMISSA CORRIGIDA (2026-09-27, noite 17), vale só para lenhador
+                SOZINHO na mata.**
+                - Registro do operador (2026-09-28): "Eu ditei a observação errada
+                  ontem, e ela valia só para um lenhador sozinho." O erro foi da
+                  observação ditada por ele; a medição da F-REPL-a estava certa.
+                - O mecanismo é a volta do cursor, não "adulta
+                antes". Com um lenhador, dá no mesmo: o primeiro toco só volta a ser
+                visitado quando a volta termina, e a volta termina quando a mata
+                acaba.
+              - **Com dois lenhadores na mesma mata, o replantio entra cedo.**
+                - Medido por sonda apagada: no `cenarioOraculo`, `w1` e `w2` dividem
+                  os mesmos 9 tiles, e o `lenhador-2` semeia a partir do t2600, com
+                  7 adultas ainda ao alcance dos dois.
+                - Por leitura do código, não medido: cada prédio tem o seu cursor, e
+                  o de um passa pelo toco que o outro deixou.
+                - É o caso da abertura real (`aberturaDaFaseA` põe os dois lenhadores
+                  na mesma mata), então lá o jogador vê o replantio cedo.
+            - A re-medida do lenhador (N:1 contra a serraria, o 2:1, o lote de 2)
+              continua depois da F-REPL-b. Isto é medição; nada gira.
+      - **Quem a razão N:1 mede:** só quem REPÕE, `corn` (fazenda 2,875×, boa) e
+        `grapes` (Canavial 1,5×). O 1,3× do pescador e o 4,0× da pedreira com o dado real
+        medem o tamanho do veio, não o modelo.
+    - **Totais: não giram (operador, 2026-09-27, noite 14).** Com as fases separadas e o
+      lote do pedreiro, o modelo está onde deveria. Os números giram quando o jogo
+      mostrar problema, não porque a tabela pede.
+    - **Lenhador com lote de 2: medido, NÃO proposto (2026-09-27, noite 14).**
+      - **Pergunta do operador:** o lenhador tem o mesmo caso do pedreiro (331 no tile,
+        nada na casa, 1 por viagem). Um lote de 2 faria por ele o que os 3 fizeram pelo
+        pedreiro?
+      - **Medido** (sonda apagada, `cenarioOraculo`, `w1`, 12 000 ticks, gaveta esvaziada;
+        lote de 2 = fases ×2, ciclo 846, `sai` 2):
+
+        | lenhador | troncos entregues | andando por tronco | parado sem árvore | último depósito |
+        |---|---|---|---|---|
+        | 1 por viagem (hoje) | 18 | 113 | 2 329 ticks (19%) | t10157 |
+        | 2 por viagem | 18 | 57 | 3 350 ticks (28%) | t8649 |
+
+      - **O que o lote faz:** a caminhada por tronco cai à metade, como no pedreiro, e o
+        ritmo enquanto há árvore sobe ~16% (≈ 500 contra ≈ 581 ticks por tronco no começo
+        da janela).
+      - **Por que não proponho:**
+        1. **Neste cenário o lenhador é limitado pela mata, não pela caminhada.** As
+           árvores ao alcance de `w1` caem de 30 para 0 em 12 000 ticks (medido a cada
+           2 000: 30, 24, 16, 8, 2, 0), e ninguém replanta. O lote só esgota a mata mais
+           cedo: os mesmos 18 troncos, com o lenhador parado mais tempo no fim. É a
+           característica de quem esgota, logo acima.
+        2. **Não há casa que justifique o lote.** O argumento do operador para o pedreiro
+           foi que o lote paga o tempo na casa, e o lenhador tem 0 na casa. Lote sem casa
+           é só aceleração de graça.
+        3. **O KaM não tem.** O lenhador do KaM traz 1 por viagem (REFERÊNCIA acima); o
+           pedreiro traz 3.
+        4. **Quebraria o 2:1 calibrado.** O lenhador foi calibrado para o par dar ~274,5
+           ticks por tronco, o ciclo da serraria (273). Com +16% enquanto há mata, a
+           serraria vira o gargalo e o tronco acumula. Isso é giro de total, e o operador
+           acabou de decidir que os totais não giram sem problema na tela.
+      - **O que reabriria a pergunta:** o replantio (`modos`, hoje sem leitor). Com a mata
+        repondo, o lenhador deixa de esgotar e a caminhada volta a ser o custo que o lote
+        corta.
+        - **Reaberta pelo item F-REPL (2026-09-27, noite 15).** Depois da F-REPL-b, esta
+          medição roda de novo. O motivo 1 cai; os motivos 2 e 3 continuam; o motivo 4
+          é refeito, porque replantar come tempo do lenhador e muda o 2:1.
+      - **RE-MEDIDO depois da F-REPL-b (2026-09-27, noite 17), a pedido do operador.
+        Medição; nada girou.**
+        - **Como:**
+          - sonda apagada, `cenarioOraculo`, modo `cortar_e_plantar`, gaveta
+            esvaziada a cada tick;
+          - a condição das unidades é reposta a cada tick. O cenário não tem comida,
+            e sem isso todo civil morre no t12 000;
+          - regime estável: 48 000 ticks, medidos de 24 000 a 48 000. A janela de
+            48 000 a 72 000 repete (w1 com 9 tiles: 40 contra 39 troncos, e o par
+            igual ± 3 %);
+          - "lote 2" é fases ×2 e `sai` 2, a mesma derivação da noite 14.
+        - **Razão N:1 por tiles** (`w1` sozinho, `w2` pausado, mata encurtada no
+          estado), em troncos por 24 000 ticks e ticks por tronco:
+
+          | tiles | lote 1 | lote 2 |
+          |---|---|---|
+          | 1 | 22 (1 091) | 20 (1 200) |
+          | 2 | 27 (889) | 32 (750) |
+          | 3 | 32 (750) | 36 (667) |
+          | 5 | 38 (632) | 40 (600) |
+          | 9 | 39 (615) | 44 (545) |
+
+          - 9:1 dá **1,77** no lote 1 e **2,2** no lote 2. Com 5 tiles o lote 1 já
+            está a 97 % do teto.
+          - Com 1 tile o lote 2 rende menos: ele espera o crescer, e 44 % do tempo
+            do lote 1 já é espera.
+        - **Onde vai o tempo por tronco** (`w1`, 9 tiles, regime estável, rótulo da
+          FSM contado tick a tick):
+
+          | | no tile | descanso | caminhada | plantio | total |
+          |---|---|---|---|---|---|
+          | lote 1 | 337 | 93 | 116 | **70** | 615 |
+          | lote 2 | 329 | 93 | 62 | **62** | 546 |
+
+          - **Replantar come ~70 ticks por tronco**: um plantio de 265 ticks
+            repartido pelos 4 troncos da árvore, mais a ida.
+          - Antes do replantio (0 a 12 000, mata em pé), o mesmo `w1` fazia 571,
+            com caminhada de 141. A conta da calibração (423 + 125 + 1 = 549) já
+            ficava 4 % abaixo do medido.
+        - **O 2:1 com a serraria mudou sozinho.** A serraria gasta 273 ticks por
+          tronco (`ticksDoCiclo` do dado), e o orçamento de cada lenhador é 546.
+
+          | par `w1`+`w2`, a abertura real | 0–12 000 | 24 000–48 000 | 48 000–72 000 |
+          |---|---|---|---|
+          | lote 1, ticks por tronco do par | 308 | 304 | 312 |
+          | lote 2, ticks por tronco do par | 300 | 279 | 279 |
+
+          - Com o lote 1, o par entrega 87–90 % do que a serraria consome, em toda
+            janela. A proporção que fecharia é ~2,25:1.
+          - Com o lote 2, entrega 98 %: a caminhada cai à metade (116 → 62) e paga
+            o plantio. `w1` sozinho fica em 545,5, o orçamento ao tick.
+        - **Os quatro motivos da noite 14, de novo:**
+          1. a mata acaba: **caiu**, medido. Com 5 tiles ou mais, `w1` nunca espera
+             árvore (0 ticks com 9 tiles, 1 128 com 5);
+          2. não há casa que justifique o lote: **continua**, argumento de desenho;
+          3. o KaM traz 1 por viagem: **continua**, referência;
+          4. quebraria o 2:1: **inverteu**. Quem está fora do 2:1 agora é o lote 1
+             (87–90 %); o lote 2 o devolve (98 %). É o único motivo de número dos
+             quatro.
+        - **OBSERVAÇÃO ABERTA — decisão do operador (2026-09-28): não gira agora;
+          espera a VARREDURA-KAM.** Os três números que ficam registrados:
+          - **87–90 %** do consumo da serraria, com lote de 1 (o dado de hoje);
+          - **98 %**, com lote de 2;
+          - **~2,25:1**, a proporção que fecharia com lote de 1.
+          - Os dois porquês dele:
+            - 10–13 % de serraria parada não aparece na tela, e girar número sem
+              sintoma é o que se combinou não fazer;
+            - a varredura pode trazer informação que muda a conta. O lote por
+              viagem é justamente o tipo de coisa que o KaM resolve de outro jeito.
+          - Reabre quando a VARREDURA-KAM voltar, ou quando a tela mostrar serraria
+            parada.
+        - Histórico (noite 17, antes da decisão). Contra o lote 2 sobram só os
+          motivos de desenho, 2 e 3. As saídas eram três:
+          - nada: 10–13 % de serraria parada ainda não é problema na tela;
+          - lote 2 no lenhador;
+          - a proporção de referência para ~2,25:1.
+          - Recomendo nada por ora, pela regra "número gira quando o jogo mostra
+            problema". Mas a pergunta dele tem resposta: pelo número, o lote 2 volta
+            a fazer sentido.
+    - **REFERÊNCIA KaM — o replantio (medido no fonte do KaM Remake, clone de
+      2022-06-01, só no scratchpad; nenhum arquivo entra no repositório).**
+      - Crescer, em `KM_ResMapElements.pas:71-82`:
+        - árvore: `TREE_AGE_1` 2 400, `TREE_AGE_2` 5 000, `TREE_AGE_FULL` 8 000;
+        - milho: `CORN_AGE_FULL` 6 400, na mesma unidade;
+        - a árvore leva **1,25×** o milho.
+      - Tempo no tile, em `KM_Units_WorkPlan.pas:249-252`: plantar é `ua_Work` ×12;
+        cortar, ×15 mais 20. Plantar ≈ **0,8×** o corte no tile.
+      - Modos: `TWoodcutterMode = (wcm_Chop, wcm_ChopAndPlant)`, que são dois, sem
+        "só plantar" (`KM_Houses.pas:13`).
+      - Três idades antes da adulta: três estados de crescimento na arte (BRIEF-ARTE,
+        `arvore`).
+      - **Uso:** a proporção entra no `tree.reposicao` da F-REPL-a como `[proposta]`.
+        Os números absolutos do KaM não entram.
+
 - [2026-09-24] o terreno passou a existir (F-T1) e viagem deixou de ser linha reta | medido: a
   travessia de 36 tiles ao redor do lago custa **292 ticks** contra **252** no mesmo trajeto sem
   terreno (`test-output/F-T1.json`), 16% a mais só por contornar | `data/maps/sertao-128.json`,
@@ -554,10 +1053,164 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   2026-09-26): o custo fica fora, em definitivo, e está revogado no GDD §5.4.** | `production.json:wineyard`
 - [2026-09-26] a mina colhe sem sair (`colheita.aDistancia`, F-CANA). O ciclo do minério
   ficou mais curto pelo tempo da ida e da volta ao veio, que não foi medido. | `production.json:*_mine.sai`
+- [2026-09-27] **LOTE 2 MEDIDO — o padrão da fazenda só se repete na MADEIRA; proposta com
+  a conta, nada girado** | pedido do operador: *"para cada um, quanto do ciclo é colheita,
+  quanto é caminhada, e se a colheita sozinha já ocupa o orçamento de quem consome a saída"*.
+  Sonda temporária (apagada), 12 000 ticks, rótulo da FSM do especialista contado tick a
+  tick, gaveta `saida` esvaziada a cada tick (isola o campo da logística), intervalo entre
+  `goods-produced` do mesmo prédio. Cenários de `tests/helpers/producao-cenario.ts`.
+
+  | prédio | cenário | colheita | caminhada | espera | intervalo medido | `ticksDoCiclo` | quem consome, e o orçamento |
+  |---|---|---|---|---|---|---|---|
+  | pedreira | `cenarioDePedreira` (7 tiles do lajedo) | 65 % | 35 % | 0 | 257,7 | 167 | obra/estrada: sem ciclo fixo |
+  | pedreira | `cenarioOraculo` (colada) | 67 % | 32 % | 0 | 247,4 | 167 | idem |
+  | lenhador w1 / w2 | `cenarioOraculo` | 78 % / 77 % | 17 % / 18,5 % | 5 % / 4 % | 660,9 / 697,1 | 545 | serraria, 273 por tora; 2:1 → **272,5 por lenhador** |
+  | serraria | `cenarioOraculo`, sem drenar | — | — | **25 %** `esperando_insumo` | 330,6 (mín. 273) | 273 | — |
+  | mina de ouro | `cenarioDaCadeiaDoOuro` | 100 % | 0 (`aDistancia`) | 0 | 300 exato | 300 | metalurgia, 600 por minério |
+  | mina de carvão | idem | 100 % | 0 | 0 | 250 exato | 250 | metalurgia 600, ferraria 300, oficinas 375 |
+  | mina de ferro | não medida: `aDistancia`, mesmo código do ouro | 100 % (derivado) | 0 | — | = 300 (derivado) | 300 | ferraria, 300 por minério (1:1) |
+  | pescador | `cenarioDePescador` (açude da vila) | 67 % | 33 % | 0 | 450,3 | 300 | Bodega: sem ciclo fixo |
+  | pescador | `cenarioDePescadorNoLagoGrande` | 93 % | 7 % | 0 | 322,4 | 300 | idem |
+
+  **Leitura (verificado nas linhas acima):**
+  - **Madeira: o padrão se repete.** A colheita sozinha (545) já é o orçamento inteiro que a
+    proporção 2:1 dá a cada lenhador (2 × 273 = 546). A caminhada (~125 por tora: w1 2024 ÷ 17,
+    w2 2218 ÷ 17) fica fora do orçamento, e a serraria espera 25 % do tempo. É a entrada de
+    2026-09-25 (par = 81 % de uma serraria), agora com a divisão por fase.
+  - **Pedreira e pescador: sem consumidor de ciclo fixo, então a pergunta não tem orçamento
+    para comparar.** A caminhada pesa 32–35 % na pedreira e 7–33 % no pescador conforme o
+    lugar, e é o que a entrada de 2026-09-25 já dizia: número por prédio não existe quando a
+    viagem é geografia. **Não proponho giro.** Nota não resolvida: a pedreira colada deu
+    247,4 aqui e 211,2 na medida de 2026-09-25 (`aberturaDaFaseA`). **Hipótese não conferida:**
+    em 12 000 ticks o lajedo mais perto se esgota e a escolha anda para tiles mais longe.
+  - **Minas: o padrão não se repete.** Desde a F-CANA não andam, e o intervalo é o ciclo do dado
+    ao tick. Ouro 300 contra 600 da metalurgia (sobra); ferro 300 contra 300 da ferraria (1:1,
+    sem folga, mas sem perda). Não há proporção de mina em `proporcoesDeReferencia`.
+
+  **Proposta (não girada), só a madeira:**
+  - `production.json:woodcutters.sai.tree_trunk` **0,55 → 0,71/min**. Conta: o lenhador tem
+    546 ticks por tora (2 × 273); desconta-se a caminhada medida (~125) e a transição (1), e
+    sobram **420** para a colheita. 0,71/min = 84,5 s × 5 ticks/s (`economia` 2,0) = **423**
+    ticks, o que dá 423 + 125 + 1 = 549 por lenhador e 274,5 pelo par, ou seja, a serraria
+    anda cheia. É o mesmo conserto do lote 1: a caminhada fica dentro da conta, de propósito.
+  - Fora da conta, de propósito: a **espera** do lenhador (4–5 %, ~32 ticks por tora) é árvore
+    faltando ao alcance, não colheita. Se entrasse, o número seria 0,77/min (388 ticks). Ela
+    é parafuso de outro eixo (replantio, `tree` e regeneração) e fica para o lote com eles.
+  - Alternativa: a proporção 2:1 → 2,5:1 e o número intocado (680 ÷ 2,5 = 272). Recomendo a
+    taxa: o 2:1 é a referência do GDD §4.5, e o lote 1 abriu o precedente de ajustar a colheita
+    e não a proporção.
+  - **Pergunta ao operador:** gira a madeira sozinha ou espera o lote com a espera do lenhador?
+  | `production.json:woodcutters.sai.tree_trunk`, `production.json:proporcoesDeReferencia`
+- [2026-09-27] **LOTE 2 — decisão do operador: gira a madeira agora, 0,55 → 0,71/min.
+  Pedreira, minas e pescador ficam.** Girada na branch `lote2-madeira` (commit `9578276`,
+  `wip`: `production.json` + `F15a` 545 → 423). **Não entrou na `main`: a F-CAL-a
+  reprova.** O que as sondas mostraram (temporárias, apagadas):
+  - a vila da calibração (`cal-vila`, 4 carregadores iniciais) morre de fome no tick
+    12 000 (condição cheia de 20 min efetivos, `condition.json`) sem a Bodega pronta;
+  - causa: com mais tora, a serraria enche a saída, e o transporte `saida-cheia-para-armazem`
+    (nível 6 em `delivery.json`) passa na frente da `pedra-para-canteiro` (nível 8) da
+    estrada da Bodega. Os 4 carregadores não chegam lá;
+  - a linha de base (0,55) passa com **957 ticks de folga**: Bodega pronta no 11 043.
+    Com +1 carregador inicial e 0,55, ela fica pronta no 7 892.
+  Não afrouxei o TETO nem mexi no cenário. **Espera o operador**, uma de três: (a) mais
+  carregador inicial na `cal-vila`, o que muda a vila que a F-CAL-b calibra; (b) mexer na
+  escada de prioridade do `delivery.json`; (c) a Bodega mais cedo na ordem da cal-vila.
+  A folga de 957 é o dado que pesa: a vila já passava no limite antes do giro.
+  | `production.json:woodcutters.sai.tree_trunk`, `delivery.json`, `tests/F-CAL-a-cenario.test.ts`
+- [2026-09-27] **LOTE 2 FECHADO — madeira 0,55 → 0,71/min na `main`, com a escada consertada**
+  | decisão do operador: "os carregadores largarem pedra da estrada para levar madeira que
+  sobra é o defeito — material para obra tem de vir antes de excedente para o armazém". Mais
+  carregador inicial foi recusado: muda a vila da F-CAL-b e esconde o problema.
+  - **O que a escada tinha:** o excedente já tinha nível próprio (7), e a saída cheia também
+    (6). A pedra do canteiro estava em 8 **de propósito**, desde a F18g ("o produto escoa
+    antes de a rua crescer"). Era ordem errada por decisão, não nível faltando.
+  - **Conserto:** `pedra-para-canteiro` 8 → **6**, saída cheia 6 → 7, excedente 7 → 8. Os
+    insumos (4, 5) ficam acima da pedra: é a leitura mais conservadora da decisão, que só
+    fala de excedente.
+  - **Medido (F-CAL-a, `test-output/F-CAL-cenario.json`):** com 0,71 e a escada nova, a
+    Bodega fica pronta no tick **8 009**, com teto de 12 000. Antes: 0,55 e a escada velha
+    davam 11 043 (folga de 957); 0,71 e a escada velha, fome no 12 000. O `npm run verify`
+    inteiro passou com as duas mudanças juntas.
+  | `delivery.json:prioridades`, `production.json:woodcutters.sai.tree_trunk`
+- [2026-09-27] **REFERÊNCIA — números do KaM original, lidos do binário** | fonte:
+  `data/defines/houses.dat` e `unit.dat` da instalação do operador
+  (`D:\SteamLibrary\steamapps\common\Knights and Merchants Historical Version`), lidos por
+  script com o layout do `kam_remake` (`TKMHouseSpecLegacy` em `KM_ResHouses.pas`,
+  `TKMUnitSpecLegacy` e `TKMUnitSprite` em `KM_ResUnits.pas`). O layout está conferido pelo
+  tamanho: 51 052 = 2 100 + 29 × 1 688, e 339 498 = 15 680 + 41 × 7 898. **Só os números
+  entram aqui**: nenhum arquivo do KaM entra no repositório.
+
+  Como se leem as colunas:
+  - **ResProductionX** é a quantidade entregue por ciclo (`KM_UnitWorkPlan.pas:128`).
+  - **Trabalho** é `ciclos da ação × quadros da animação` (`KM_UnitTaskMining.pas:296`),
+    em ticks.
+  - **Descanso** é `WorkerRest × 10` (`KM_UnitWorkPlan.pas:250`), em ticks.
+
+  | prédio | ResProductionX | trabalho (ticks) | descanso (ticks) | crescimento do tile |
+  |---|---|---|---|---|
+  | farm (corte) | **1** | 6 × 16 = **96** | 50 | milho: **6 400 ticks** (`CORN_AGE_FULL`) |
+  | farm (plantio) | — | 10 × 10 = **100** | 50 | — |
+  | vineyard | **1** | 5 × 20 = **100** (a uva só tem animação virada ao norte) | 50 | uva: **5 000 ticks** (`WINE_AGE_FULL`) |
+  | woodcutters | 1 | 15 × 10 = 150, + 10 da queda + 20 de espera | 50 | árvore: 8 000 ticks (`TREE_AGE_FULL`) |
+  | quarry | **3** | 8 × 10 = 80 | 50 | — |
+  | sawmill | 2 | — | 50 | — |
+  | bakery | 2 | — | 50 | — |
+  | butchers | 3 | — | 50 | — |
+  | tannery | 2 | — | 50 | — |
+  | metallurgists | 2 | — | 50 | — |
+  | fishermans | 2 no binário, **1** no Remake (override em `KM_ResHouses.pas:801`) | 13 + 10 × 30 + 15 = 328 | **590 no binário**, 50 no `reyandme` (override em `:802`; corrigido em 2026-09-27, a linha dizia só 50) | — |
+
+  Leitura:
+  - **A premissa do fazendeiro está fechada:** o KaM entrega **1 milho por viagem**, um
+    tile por corte. Antes era `[Provável]`; agora é número lido.
+  - O corte do KaM (96 ticks) é quase o nosso (`farm.sai.corn` 3,0 = 100).
+  - O que separa os dois jogos é o crescimento: 6 400 lá, 150 aqui.
+  - A quarry do KaM entrega **3** por ciclo, contra 1 aqui. Anotado, **não** é pedido de
+    giro.
+
+  Duas ressalvas:
+  - O tick do KaM é tomado como 100 ms. Isso é **hipótese**: o código só diz, em
+    comentário, que `CORN_AGE_1` = 1 400 ticks "≈ 150 s".
+  - A pasta `hd/` da instalação tem outro `houses.dat`. Nele, fazenda, vinhedo e quarry
+    têm os mesmos números, e o pescador (1, trabalho 60) e alguns prédios militares mudam.
+  | referência, sem arquivo nosso alterado
 
 ---
 
 ## Ciclos fechados
+
+### Característica, não defeito: fazenda grande atrasa o 1º milho (decisão do operador, 2026-09-27)
+- **Medido:** com alcance 2 e o rodízio, o 1º milho sai no 1 949 com 14 tiles, no 2 464 com
+  20, no 3 205 com 30 e no **3 791** com 40, que é o anel inteiro. Acima de ~15 tiles, cada
+  tile soma ~115 ticks. No longo prazo mais tiles rendem mais: **135 contra 113** até o tick
+  30 000. A tabela está no `BUILD_PLAN.md`, F-CAMPO.
+- **Decisão:** aceito. É o "semeia tudo e espera" que o próprio KaM faz. O jogador que ara
+  quarenta campos está investindo no longo prazo, e a espera é o preço.
+- **Recusado:** colher o maduro antes de semear o resto na primeira volta. Parece atalho, mas
+  cria o defeito oposto: o roceiro nunca termina de semear enquanto houver algo maduro.
+  **Não reabrir** sem medida nova.
+
+### `farm.sai.corn` 3.0 → 2.0 — o 1:1:1 no modelo do campo crescendo (fechado em 2026-09-27, `main`)
+- **Aberta como:** com crescer 1 650 e alcance 2, a entrada do moinho da F19 terminava
+  cheia (m1 5 de 5) e o cuscuz ficava em 74. A hipótese, depois confirmada pela
+  medida abaixo: o 3.0 foi fechado no modelo antigo, com o plantio de 150 ticks dentro
+  do prédio.
+- **Decisão do operador:** girar agora, fora do lote, porque a F19 estava vermelha e o
+  crescer 1 650 dependia dela. *"A taxa foi calibrada num modelo que mudou."*
+- **Conta:** 150 da colheita + 69 da viagem + 28,5 da viagem de semear rateada pelos 4
+  do tile = 247,5 ticks por milho, contra 246 do ciclo do moinho.
+- **Medida** (branch `f-campo-a`, sonda apagada), em ticks por milho entregue:
+
+  | `farm.sai.corn` | ticks/milho | F19 |
+  |---|---|---|
+  | 3.0 (antes) | 214,3 | represa |
+  | 2.4 | 235,3 | represa |
+  | 2.2 | 244,9 | represa |
+  | 2.1 | 250,0 | ainda represa a gaveta |
+  | **2.0** | **260,9** | passa: moinho 1,8 % ocioso, entrada 4; 74 cuscuz de 77,2 (95,8 %) |
+
+- **Fonte:** `data/production.json` (`farm.notes`, com a tabela) e
+  `tests/F19-cadeia-do-pao.test.ts` (`TICKS_POR_GRAO` com a viagem de semear).
 
 ### Lote 1 — cadeia de comida (fechado em 2026-09-25, branch `calibracao-fase-b`)
 
@@ -579,7 +1232,7 @@ roceiro, a conta dos dois números, a tabela de antes e depois e o que NÃO mudo
   ≈ 37. **É o primeiro número que diz que o jogo é jogável até o fim de uma partida:** os 26
   civis que o ouro inicial treina cabem numa cadeia só.
 - **Não mudou, e por quê:** `corn.aradura` (20 ticks, uma vez na vida do tile), `alcance_tiles`
-  e o número de tiles (o roceiro é serial e usa 1 tile de 37), `rendimentoPorTile` (4), moinho,
+  e o número de tiles (o roceiro é serial e usa 1 tile de 37) **[2026-09-26: classificação errada — não é característica, é o BUG-O; serial seria percorrer um tile por vez, e o roceiro fica preso em um. Ver F-CAMPO no BUILD_PLAN]**, `rendimentoPorTile` (4), moinho,
   padaria e `condition.json`. A caminhada (~100 ticks por milho, igual com o campo colado ou
   longe) fica na conta de propósito: o original também tinha fazendeiro andando.
 - **Ainda aberto, do mesmo padrão:** pedreira, lenhador e minas também ganharam a viagem em cima
@@ -694,3 +1347,14 @@ proporções da seção 4.5 do GDD. Um cenário que as respeite **não pode**:
 - deixar trabalhador ocioso por muito tempo
 - ter `saida_cheia` persistente (isso é logística, não produção — a correção é
   mais serfs ou mais estrada, não mexer na taxa)
+- [2026-09-27] **F-CAMPO: crescer 30 → 330 s girado na branch `f-campo-a`, não na `main`**
+  | decisão do operador ("um campo que demora é jogo; um campo inútil é bug"). A suíte dá
+  12 reprovações: 11 do modelo, que já caíam com 30, e várias afirmam comportamento; 1
+  nova, a janela de 1º milho da F18h. Pela regra do operador, parou antes de commitar na
+  `main`. F-CAL-a com 1 650: 1ª comida na Bodega no 8 421 (8 327 com 30), sem morte até
+  16 000. Detalhe no item F-CAMPO do `BUILD_PLAN.md`.
+  | `resources.json:corn/grapes.reposicao.crescer_segundos_base` (só na branch)
+- [2026-09-27] **Fonte de proporção: sprites do KaM medidos** | os números de altura,
+  largura, lote e âncora estão no `docs/BRIEF-ARTE.md` ("MEDIDO NO KAM"), lidos por
+  `tools/kam-medir.js` (README em `tools/kam-medir.md`). O leitor também refaz a tabela
+  "REFERÊNCIA" acima (ritmo e `ResProductionX`).

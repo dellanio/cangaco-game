@@ -4,8 +4,8 @@
   "gerador": "tools/gerar-mapa.js",
   "semente": 20260924,
   "contagemPorTipo": {
-    "grama": 14106,
-    "campoArado": 143,
+    "grama": 14109,
+    "campoArado": 140,
     "areia": 1110,
     "agua": 274,
     "rocha": 298,
@@ -17,7 +17,8 @@
     "fish": 274,
     "coal": 25,
     "iron_ore": 20,
-    "gold_ore": 11
+    "gold_ore": 11,
+    "grapes": 10
   },
   "largura": 128,
   "altura": 128,
@@ -65,14 +66,14 @@
     "gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg",
     "gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg",
     "gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg",
-    "gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg",
-    "gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg",
+    "ggggggggggggggggggggggggggcccccggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg",
+    "ggggggggggggggggggggggggggcccccggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg",
     "ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggaaaaaagggggggggggggggggggggggggggggg",
-    "ggggggggggggggggggggggggggcggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggaaaaaaaaaaagggggggggggggggggggggggggggg",
-    "gggggggggggggggggggggggggcccggggggggggggggggggggggggggggggggggggggggggggggggggggggggggaaaaaaaaaaaaaaaagggggggggggggggggggggggggg",
-    "ggggggggggggggggggggggggcccccgggggggggggggggggggggggggggggggggggggggggggggggggggggaaaaaawwwwwwwwwwaaaaaggggggggggggggggggggggggg",
-    "gggggggggggggggggggggggggcccggggggggggggggggggggggggggggggggggggggggggggggggggggaaaaawwwwwwwwwwwwwwwwaaagggggggggggggggggggggggg",
-    "ggggggggggggggggggggggggggcggggggggggggggggggggggggggggggggggggggggggggggggggggaaawwwwwwwwwwwwwwwwwwwwaaaggggggggggggggggggggggg",
+    "gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggaaaaaaaaaaagggggggggggggggggggggggggggg",
+    "ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggaaaaaaaaaaaaaaaagggggggggggggggggggggggggg",
+    "ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggaaaaaawwwwwwwwwwaaaaaggggggggggggggggggggggggg",
+    "ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggaaaaawwwwwwwwwwwwwwwwaaagggggggggggggggggggggggg",
+    "gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggaaawwwwwwwwwwwwwwwwwwwwaaaggggggggggggggggggggggg",
     "gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggaawwwwwwwwwwwwwwwwwwwwwwaaggggggggggggggggggggggg",
     "gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggaawwwwwwwwwwwwwwwwwwwwwwwaggggggggggggggggggggggg",
     "gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggaawwwwwwwwwwwwwwwwwwwwwwwaagggggggggggggggggggggg",
@@ -293,6 +294,10 @@
     "gold_ore": [
       [94,99], [95,100], [96,101], [96,100], [97,102], [93,98], [90,97], [89,97],
       [88,96], [87,96], [106,97]
+    ],
+    "grapes": [
+      [34,35], [35,35], [36,35], [37,35], [38,35], [34,36], [35,36], [36,36],
+      [37,36], [38,36]
     ]
   }
 }

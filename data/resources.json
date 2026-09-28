@@ -31,7 +31,13 @@
       "_docBloqueiaConstrucao": "BUG-F: nao se constroi sobre arvore em pe. Para a estrada isto ja valia por `bloqueiaPasso`; para o predio faltava, e a arvore sob o footprint teria o mesmo defeito da rocha quando o lenhador for colher tile. Tile CORTADO (`quantidade: 0`) nao bloqueia nada: a bandeira e lida junto com a quantidade, como o passo.",
       "bloqueiaPasso": true,
       "_docBloqueiaPasso": "A arvore EM PE bloqueia o passo (F-T2b). Tile cortado — `quantidade: 0`, entrada que fica — deixa passar: e a mesma diferenca entre cortado e inexistente que o regime `porAcao` guarda. Enquanto nao houver quem corte, ela e obstaculo permanente, como agua e montanha.",
-      "_doc": "A arvore em pe. Regime `porAcao` porque quem a repoe e o replantio do Woodcutter's (GDD 4.2), nao o relogio."
+      "reposicao": {
+        "semear_segundos_base": 53,
+        "crescer_segundos_base": 412.5,
+        "custo": {},
+        "_doc": "F-REPL-a (2026-09-27, [proposta]; decisao do operador: so no TOCO, nunca em tile virgem). O lenhador planta onde cortou, pelo mesmo rodizio do campo. PROPORCAO do KaM (BALANCE_LOG, 'REFERENCIA KaM — o replantio'), nao o numero dele: crescer = 1,25x o do milho (KaM: arvore 8000, milho 6400; 1,25 x 330 = 412,5); semear = 0,8x o `noTile` do lenhador (KaM: plantar 12 golpes, cortar 15; 0,8 x 66,2 = 53). Custo vazio: plantar nao cobra tora (hipotese sobre o KaM, nao conferida no fonte). Toco sob estrada ou estrada planejada NAO rebrota (`tilePlantavel`, sim/recursos.ts)."
+      },
+      "_doc": "A arvore em pe. Regime `porAcao` porque quem a repoe e o replantio do Woodcutter's (GDD 4.2), nao o relogio. Desde a F-REPL-a ela tem `reposicao`: o toco rebrota."
     },
     "fish": {
       "regime": "nunca",
@@ -59,8 +65,11 @@
         "_doc": "F18h — o campo deixou de nascer do mapa: quem o desenha e o JOGADOR, e quem o ara e o laborer, no molde do assentar estrada. A presenca deste bloco e o que diz que um tipo de recurso PODE ser desenhado; tipo sem `aradura` nao tem ferramenta e o comando o recusa. `terrenoPermitido` e lista e nao um unico terreno porque a pergunta e de mapa, nao de cultura — hoje so grama, e areia fica de fora ate alguem querer roca na praia do acude. `segundos_base` cobre arar UM tile (escala `economia`, como todo este arquivo): 4,0 da 20 ticks, quatro vezes a martelada da estrada, porque arar um tile e mais do que assentar uma pedra. O terreno do mapa NAO muda ao arar: terreno vive em GameData e nao no estado (F-T1), entao o que nasce e a camada de recurso. Calibrar no BALANCE_LOG."
       },
       "reposicao": {
-        "segundos_base": 30,
+        "semear_segundos_base": 9,
+        "crescer_segundos_base": 330,
+        "_docCrescer": "GIRADO 2026-09-27 (decisao do operador): 30 -> 330 s, ou 1650 ticks na escala 2.0. Medido (item F-CAMPO do BUILD_PLAN): o teto da fazenda e o roceiro, ~195-211 ticks por milho com qualquer crescer ate 3000, e o crescer so decide quantos tiles o alcancam. Com 30 s, 1 tile ja saturava e 12 valiam 1,04x um; com 330, 12 tiles valem 3,1x um e alcancam o teto (195), e o 1o milho do rodizio de 12 sai no ~1900, o mesmo de 1 tile. O custo e o comeco: 1o milho de ~378 para ~1880 ticks. Cana com o mesmo numero do milho, como no resto deste bloco.",
         "custo": {},
+        "_docFCampo": "F-CAMPO-a (2026-09-27, numeros propostos e aceitos pelo operador, [para revisao]): o `segundos_base` 30 saiu e virou DOIS tempos. `semear` e o roceiro NO TILE (9 s = 45 ticks): com a ida e volta (~105) a visita de semear custa ~150, e o ciclo de um tile continua 150 + 4 x (100 + ~105) = ~970, o mesmo da calibracao — por isso o `farm.sai.corn` 3.0 nao muda. `crescer` corre NO TILE, sem o roceiro (30 s = 150 ticks, o mesmo intervalo de antes): o tile guarda `semeadoEm` e maduro e derivado (`tick >= semeadoEm + crescer`). Com crescer curto, 2 tiles ja ocupam o roceiro o tempo todo; o que 12 compram e so esconder o crescer (conta no item F-CAMPO do BUILD_PLAN). O texto abaixo e a calibracao ANTERIOR, do modelo serial: o numero dele (30) virou `crescer`, e a conta do ciclo continua valendo.",
         "_doc": "CALIBRADO 2026-09-25 (lote da Fase B): 60 -> 30 s, ou 150 ticks na escala 2.0. O plantio ocupa o roceiro dentro do predio, entao entra na conta do milho entregue diluido pelos 4 do tile (37,5 ticks por milho, ~15% do tempo dele). Com 60 s eram 75 por milho, e para a fazenda caber no ciclo do moinho a colheita teria de cair a ~56 ticks — mais curta que a caminhada ate o tile, o que inverte o que o jogador ve. Com 30 s o plantio e 1,5x uma colheita: continua fase visivel (o primeiro ciclo de toda fazenda e de plantio), e o ciclo fechado de um tile fica 150 + 4 x (100 + ~105 de viagem) = ~970 ticks. Nao e 20 s porque ai o plantio ficaria mais curto que uma colheita. F18 — o que o predio gasta para repor UM tile deste recurso, e quanto tempo isso leva. `segundos_base` cobre arar, semear e esperar crescer num ciclo so: o tile guarda `quantidade` e mais nada, e relogio por tile custaria um campo de estado em cada um deles (ver `regenerar`, sim/recursos.ts). `custo` sai da gaveta de entrada do predio, e e por onde a videira vai cobrar seu timber quando o Wineyard existir — era o `terrain.json.campos.<cultura>.custo`, que nao tinha leitor nenhum. [proposta] — calibrar no BALANCE_LOG."
       },
       "_doc": "O milho do rocado. Regime `porAcao` porque quem o repoe e o roceiro que ara e semeia (GDD 5.4), nao o relogio. 4 por tile: quatro ciclos de colheita para um de plantio."
@@ -75,14 +84,16 @@
       "_docBloqueiaPasso": "Mesmo do milho: o cortador entra no proprio partido.",
       "quantidadeInicial": 0,
       "_docQuantidadeInicial": "Nasce em POUSIO, como o milho: o primeiro ciclo do Canavial e de plantio.",
-      "_docSemTerreno": "Sem `terreno`: nao ha partido de cana desenhado no mapa, so o que o jogador ara. Por isso o tipo nao tem tile em nenhum mapa, e `recurso/sem-instancia` o isenta pelo bloco `aradura` (quem ara e o jogador), nao por lista.",
+      "_docSemTerreno": "Sem `terreno`: a cana nao deriva de chao nenhum (so o milho deriva do `campoArado`). O partido do mapa e a MANCHA DA VILA da F-CANA-b, que o gerador pousa na camada ESPARSA (`CANAVIAL_DA_VILA`, tools/gerar-mapa.js), como o lajedo; o resto e o que o jogador ara. `recurso/sem-instancia` continua isentando o tipo pelo bloco `aradura`, nao por lista — a mancha e para a abertura ter o que plantar, nao para passar a regra.",
       "aradura": {
         "terrenoPermitido": ["grama"],
         "segundos_base": 4.0,
         "_doc": "Os numeros do milho (ver corn.aradura). Calibrar no BALANCE_LOG."
       },
       "reposicao": {
-        "segundos_base": 30,
+        "semear_segundos_base": 9,
+        "crescer_segundos_base": 330,
+        "_docCrescer": "GIRADO 2026-09-27 (decisao do operador): 30 -> 330 s, ou 1650 ticks na escala 2.0. Medido (item F-CAMPO do BUILD_PLAN): o teto da fazenda e o roceiro, ~195-211 ticks por milho com qualquer crescer ate 3000, e o crescer so decide quantos tiles o alcancam. Com 30 s, 1 tile ja saturava e 12 valiam 1,04x um; com 330, 12 tiles valem 3,1x um e alcancam o teto (195), e o 1o milho do rodizio de 12 sai no ~1900, o mesmo de 1 tile. O custo e o comeco: 1o milho de ~378 para ~1880 ticks. Cana com o mesmo numero do milho, como no resto deste bloco.",
         "custo": {},
         "_doc": "Os numeros do milho (ver corn.reposicao). O `timber: 1` por plantio que o production.json guardava para a videira NAO entra aqui: o custo sai da gaveta de entrada do predio, e o Canavial nao tem `entra` — ninguem entregaria a tabua. REVOGADO em definitivo no GDD §5.4 (operador, 2026-09-26)."
       }

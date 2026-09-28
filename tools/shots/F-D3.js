@@ -19,6 +19,14 @@
 const { retanguloDoCanvas } = require('./_canvas');
 const terreno = require('../../data/terrain.json');
 const mapa = require('../../data/maps/sertao-128.json');
+const { tipos: TIPOS_DE_RECURSO } = require('../../data/resources.json');
+
+/** Tipo que nasce em zero (a cana em pousio): a cena o desenha como `esgotado`,
+ *  nao pelo nome. Mesma leitura do `tiposQueNascemVazios` do roteiro F18. */
+const nasceVazio = (tipo) => {
+  const def = TIPOS_DE_RECURSO[tipo];
+  return def !== undefined && (def.quantidadeInicial ?? def.rendimentoPorTile) === 0;
+};
 
 const TILE_PX = terreno.tile_px;
 
@@ -129,6 +137,16 @@ async function roteiro(ctx) {
     );
   }
   for (const tipo of doArquivo.recursoDentro) {
+    // Desde a noite 17 a cana da vila entra no quadro de abertura, e ela nasce
+    // em pousio: o que a cena tem de desenhar e o `esgotado`, nao o nome.
+    if (nasceVazio(tipo)) {
+      afirmar(
+        (s.recursosVisiveis.esgotado || 0) > 0,
+        `o mapa poe '${tipo}' (nasce vazio) inteiro dentro do quadro de abertura e a cena nao `
+          + `desenhou nenhum tile esgotado: ${JSON.stringify(s.recursosVisiveis)}`,
+      );
+      continue;
+    }
     afirmar(
       recursos.includes(tipo),
       `o mapa poe recurso '${tipo}' inteiro dentro do quadro de abertura e a cena nao o `

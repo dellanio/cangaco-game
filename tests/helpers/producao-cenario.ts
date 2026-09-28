@@ -227,6 +227,28 @@ export function cenarioDeFazenda(dados: GameData = gameData): GameState {
 }
 
 /**
+ * F-CAMPO-a — a MESMA fazenda, com UM so tile de milho ao alcance: os outros tiles
+ * que o alcance pega saem de `recursos` (voltam a ser terra, sem campo). Com o
+ * crescer no tile o rodizio semeia tudo o que alcanca antes de colher, e o aceite
+ * da F18 (produz, para quando zera, volta apos replantio) ficaria esperando o
+ * roceiro semear catorze. Um tile prova a mesma regra sem a espera. O tile que
+ * fica e o PRIMEIRO da ordem de `tilesDeColheita`, escolhido pelo estado.
+ */
+export function cenarioDeFazendaDeUmTile(dados: GameData = gameData): GameState {
+  const s = cenarioDeFazenda(dados);
+  const predio = s.predios.porId.f1;
+  const colheita = receitaDoTipo('farm', dados)?.colheita ?? null;
+  if (predio?.estado !== 'completo' || colheita === null) {
+    throw new Error('fixture: `farm` precisa de receita com colheita');
+  }
+  const [fica, ...saem] = tilesDeColheita(s, predio, colheita, dados);
+  if (fica === undefined) throw new Error('fixture: a fazenda do norte nao alcanca campo nenhum');
+  const recursos = { ...s.recursos };
+  for (const k of saem) delete recursos[k];
+  return { ...s, recursos };
+}
+
+/**
  * 2026-09-26 — o CANAVIAL no lugar da fazenda (`c1`, `wineyard`, porta em y=33
  * na mesma rua), com `partidos` tiles de cana ARADOS pelo caminho do jogo:
  * `canPlowField` aprova e `comOTileArado` assenta — so o laborer que ara e
@@ -268,6 +290,26 @@ export function cenarioDeCanavial(dados: GameData = gameData, partidos: number =
 }
 
 /**
+ * F-CANA-b — o Canavial `c1` posto na VILA, ao lado da mancha de cana que o
+ * gerador semeia, e nenhum tile arado pela fixture: o partido e o do mapa. A
+ * rua sai da porta do armazem por y=33, desce em x=33 e corre em y=37, na porta
+ * do Canavial.
+ */
+export function cenarioDeCanavialDaVila(dados: GameData = gameData): GameState {
+  let s = semCivis(createInitialState(1, dados));
+  const v = vila(dados);
+  // Ao lado da faixa de cana (x 34..38, y 35..36), e nao em cima dela; a rua desce
+  // pela coluna livre entre a roca e a cana, que nenhuma das duas ocupa.
+  s = comProdutorOcupado(s, { tipo: 'wineyard', id: 'c1', unidade: 'canavieiro', ...v(10, 5) }, dados); // (39,35)
+  const rua: TileDeGrid[] = [];
+  for (let dx = 0; dx <= 3; dx++) rua.push(v(dx, 3)); // y=33, x 29..32: a porta do armazem
+  for (let dy = 3; dy <= 7; dy++) rua.push(v(4, dy)); // x=33, y 33..37
+  for (let dx = 5; dx <= 12; dx++) rua.push(v(dx, 7)); // x 34..41, y=37
+  s = comEstradas(s, rua);
+  return exigirLigado(s, 'c1', dados);
+}
+
+/**
  * F18 — a MESMA fazenda, posta na aldeia: ligada, ocupada, e sem um unico tile
  * de campo ao alcance. E o erro que o jogador comete antes de a planta fantasma
  * da F-TP existir, e e o cenario que produz o alerta `sem-campo`.
@@ -279,8 +321,10 @@ export function cenarioDeCanavial(dados: GameData = gameData, partidos: number =
 export function cenarioDeFazendaSemCampo(dados: GameData = gameData): GameState {
   let s = semCivis(createInitialState(1, dados));
   const v = vila(dados);
-  s = comProdutorOcupado(s, { tipo: 'farm', id: 'f1', unidade: 'roceiro', ...v(4, 0) }, dados); // (33,30)
-  s = comEstradas(s, [v(0, 3), v(1, 3), v(2, 3), v(3, 3), v(4, 3)]); // y=33, x 29..33
+  // A LESTE da escola desde a noite 17: a roca da vila entrou na faixa sul
+  // (x 26..30, y 35..36), e no lugar antigo, (33,30), o milho caia ao alcance.
+  s = comProdutorOcupado(s, { tipo: 'farm', id: 'f1', unidade: 'roceiro', ...v(9, 0) }, dados); // (38,30)
+  s = comEstradas(s, Array.from({ length: 10 }, (_, dx) => v(dx, 3))); // y=33, x 29..38
   s = exigirLigado(s, 'f1', dados);
   const predio = s.predios.porId.f1;
   const colheita = receitaDoTipo('farm', dados)?.colheita ?? null;

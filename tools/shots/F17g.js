@@ -36,7 +36,8 @@ const PASSO_NA_OBRA = 10; // perto dos marcos: a virada dura poucos passos de 50
 /** A revelacao refeita do dado: {madeira:[n,d], pedra:[n,d]} (oraculo do roteiro). */
 function revelacaoEsperada(hp, def) {
   const { hp: total, timber, stone } = def;
-  if (hp <= 0) return { madeira: [0, 1], pedra: [0, 1] };
+  // BUG-M: obra sem martelada nao e revelada, a cena cai no canteiro
+  if (hp <= 0) return null;
   if (hp >= total) return { madeira: [1, 1], pedra: [1, 1] };
   const virada = total * timber / (timber + stone);
   if (hp <= virada) return { madeira: [hp, virada], pedra: [0, 1] };
@@ -222,6 +223,19 @@ async function roteiro(ctx) {
     const p = s.prediosDoEstado[obra.id];
     afirmar(p !== undefined && p.estado === 'obra', `${marco}: o armazem deveria seguir em obra, veio ${JSON.stringify(p)}`);
     const naTela = s.revelacaoDasObras[obra.id];
+    // BUG-M: antes da primeira martelada a obra NAO e revelada — revelar nada era
+    // desenhar nada. Ela cai nos seis estagios (lote, nome e canteiro), e e la
+    // que tem de aparecer: fora da revelacao E dentro da contagem do fallback.
+    if (p.hp <= 0) {
+      afirmar(naTela === undefined, `${marco}: obra com hp 0 nao pode ser revelada, veio ${JSON.stringify(naTela)}`);
+      const e = s.estagiosDeObraRenderizados;
+      afirmar(
+        e.marcacao + e.fundacao >= 1
+          && Object.values(e).reduce((a, n) => a + n, 0) === Object.keys(s.prediosDoEstado).length,
+        `${marco}: obra com hp 0 deveria estar no fallback (marcacao/fundacao), veio ${JSON.stringify(e)}`,
+      );
+      return { hp: p.hp, madeira: [0, 1], pedra: [0, 1] };
+    }
     afirmar(naTela !== undefined, `${marco}: a obra com o par deveria estar em revelacaoDasObras`);
     const esperada = revelacaoEsperada(p.hp, def);
     afirmar(

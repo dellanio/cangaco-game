@@ -27,6 +27,7 @@ import { ehTarefaDeColheita } from './state';
 import { chaveDeTile } from './estradas';
 import type { CaixaEmTiles } from './footprint';
 import { caixaDoPredio } from './footprint';
+import { plantaNoModo } from './modo';
 
 /** `chaveDeTile` por coordenada solta — a mesma chave de `state.estradas`. */
 const chave = (gx: number, gy: number): string => chaveDeTile({ gx, gy });
@@ -178,13 +179,14 @@ export interface ColheitaAoAlcance {
 
 export function colheitaAoAlcanceDaCaixa(
   state: GameState, caixa: CaixaEmTiles, colheita: ColheitaDeRecurso, dados: GameData = gameData,
+  planta = true, // F-REPL-b — o modo do predio; ver `tileTrabalhavel`
 ): ColheitaAoAlcance {
   let tiles = 0;
   let unidades = 0;
   for (const chave of tilesDeColheitaNaCaixa(state, caixa, colheita, dados)) {
     // `minimo` 1: a pergunta da contagem e "ha trabalho neste tile", nao "cabe
     // um ciclo inteiro" — quem exige o ciclo e quem vai ABRIR o ciclo.
-    if (tileTrabalhavel(state, chave, colheita, 1, dados)) tiles += 1;
+    if (tileTrabalhavel(state, chave, colheita, 1, dados, planta)) tiles += 1;
     unidades += state.recursos[chave]?.quantidade ?? 0;
   }
   return { tiles, unidades };
@@ -221,32 +223,78 @@ export function disponivelAoAlcance(
 export function tileTrabalhavel(
   state: GameState, chaveDoTile: string, colheita: ColheitaDeRecurso, minimo: number,
   dados: GameData = gameData,
+  // F-REPL-b — o predio repoe o tile neste modo (`plantaNoModo`)? `false` e o
+  // lenhador em `cortar`: toco nao e trabalho para ele, e o alerta tem de ver o
+  // mesmo que o rodizio. O padrao e a previa da planta fantasma, que nasce no
+  // modo padrao, e o de todo predio sem `modos`.
+  planta = true,
 ): boolean {
-  if (tileColhivelAgora(state, chaveDoTile, colheita, minimo)) return true;
-  return tilePlantavel(state, chaveDoTile, colheita, dados);
+  if (tileColhivelAgora(state, chaveDoTile, colheita, minimo, dados)) return true;
+  // F-CAMPO-a — o tile CRESCENDO e trabalho que vem sozinho: sem esta perna, um
+  // roçado com todos os tiles semeados se declararia esgotado (`vein-exhausted`,
+  // alerta `sem-campo`) justamente no instante em que fez tudo certo. Vale tambem
+  // em `cortar`: a arvore plantada antes da troca amadurece e e colhida.
+  if (tileCrescendo(state, chaveDoTile, colheita, dados)) return true;
+  return planta && tilePlantavel(state, chaveDoTile, colheita, dados);
 }
 
-/** DA para colher deste tile agora: ha entrada daquele recurso e ela tem o
- *  bastante. E a pergunta de quem vai ABRIR o ciclo — colher a descoberto seria
- *  mercadoria vinda do nada. Era o corpo de `melhorTileDeColheita` ate a F18, e
- *  continua sendo a resposta dele, palavra por palavra, para a pedreira. */
+/** DA para colher deste tile agora: ha entrada daquele recurso, ela tem o
+ *  bastante e esta MADURA. E a pergunta de quem vai ABRIR o ciclo — colher a
+ *  descoberto seria mercadoria vinda do nada. Para a pedreira a resposta e a
+ *  mesma de sempre: tile sem `semeadoEm` nao tem relogio, e e maduro. */
 export function tileColhivelAgora(
   state: GameState, chaveDoTile: string, colheita: ColheitaDeRecurso, minimo: number,
+  dados: GameData = gameData,
 ): boolean {
   const atual = state.recursos[chaveDoTile];
-  return atual !== undefined && atual.tipo === colheita.recurso && atual.quantidade >= minimo;
+  return atual !== undefined && atual.tipo === colheita.recurso && atual.quantidade >= minimo
+    && tileMaduro(state, atual, dados);
+}
+
+/**
+ * F-CAMPO-a — o tile ja amadureceu? DERIVADO, nunca guardado: o tile tem so
+ * `semeadoEm`, e maduro e `tick >= semeadoEm + ticksDeCrescer` do TIPO. Nada
+ * avanca por tick, e todos os tiles semeados crescem ao mesmo tempo, com o
+ * roceiro longe. Sem `semeadoEm` (rocha, arvore, save de antes) nao ha relogio.
+ */
+export function tileMaduro(
+  state: GameState, recurso: RecursoNoTile, dados: GameData = gameData,
+): boolean {
+  if (recurso.semeadoEm === undefined) return true;
+  const crescer = dados.recursos.tipos[recurso.tipo]?.reposicao?.ticksDeCrescer ?? 0;
+  return state.tick >= recurso.semeadoEm + crescer;
+}
+
+/** F-CAMPO-a — semeado, com o que colher, e ainda nao maduro. */
+function tileCrescendo(
+  state: GameState, chaveDoTile: string, colheita: ColheitaDeRecurso, dados: GameData,
+): boolean {
+  const atual = state.recursos[chaveDoTile];
+  return atual !== undefined && atual.tipo === colheita.recurso && atual.quantidade > 0
+    && !tileMaduro(state, atual, dados);
 }
 
 /** DA para plantar neste tile: a entrada existe, esta ZERADA e o tipo se repoe
  *  por acao de predio. Zerada e nao "abaixo do ciclo": repor um tile que ainda
  *  tem dois pes de milho daria dois pes de graca, e recurso que nasce do nada e
  *  o que a camada de tile existe para impedir. Tile sem entrada nenhuma nao e
- *  campo em pousio — e chao que nunca foi arado, e arar e a F-T3. */
+ *  campo em pousio — e chao que nunca foi arado, e arar e a F-T3.
+ *
+ *  F-REPL-a — e tile com estrada (assentada ou no canteiro) nao se replanta. O
+ *  toco nao bloqueia nada, entao a estrada passa por cima dele
+ *  (`canPlaceRoad`), e sem esta recusa o lenhador fazia a arvore nascer no meio
+ *  da estrada, com quem estivesse parado nela preso dentro (medido na sonda da
+ *  F-REPL-a). Mora AQUI, e nao no `elegivel` do rodizio, porque este predicado e
+ *  o mesmo dos dois lados (`tileTrabalhavel`): toco sob estrada que contasse
+ *  como trabalho para o alerta e como nada para o rodizio seria o lenhador
+ *  esperando o que nunca chega. Vale para todo tipo, como o `canPlowField`
+ *  recusa arar estrada. */
 export function tilePlantavel(
   state: GameState, chaveDoTile: string, colheita: ColheitaDeRecurso, dados: GameData = gameData,
 ): boolean {
   const atual = state.recursos[chaveDoTile];
   if (atual === undefined || atual.tipo !== colheita.recurso || atual.quantidade > 0) return false;
+  if (state.estradas[chaveDoTile] === true || state.estradasPlanejadas[chaveDoTile] === true) return false;
   return (dados.recursos.tipos[atual.tipo]?.reposicao ?? null) !== null;
 }
 
@@ -286,7 +334,55 @@ export function melhorTileDeColheita(
     // pousio. O predicado largo (`tileTrabalhavel`) responde outra pergunta —
     // "este predio ainda tem o que fazer" —, e confundir as duas seria a
     // fazenda abrindo ciclo sobre um tile vazio.
-    if (tileColhivelAgora(state, chaveDoTile, colheita, minimo)) return chaveDoTile;
+    if (tileColhivelAgora(state, chaveDoTile, colheita, minimo, dados)) return chaveDoTile;
+  }
+  return null;
+}
+
+/** F-CAMPO-a — o que o rodizio mandou fazer, e onde. */
+export interface TrabalhoDoRodizio {
+  readonly acao: 'colher' | 'semear';
+  readonly tile: string;
+}
+
+/**
+ * F-CAMPO-a — O RODIZIO do predio que repoe o tile (roçado, canavial).
+ *
+ * `melhorTileDeColheita` e `melhorTileParaPlantio` devolvem o PRIMEIRO tile na
+ * ordem canonica, e a fazenda so plantava sem maduro: o tile que acabava de secar
+ * era o primeiro de novo, e doze arados rendiam o mesmo que um (BUG-O). Aqui a
+ * busca parte do `cursor` — o ultimo tile escolhido — e aceita as DUAS acoes:
+ *
+ *   1. o tile do cursor, se ainda da para colher dele: termina o tile;
+ *   2. senao, o primeiro DEPOIS dele (dando a volta na lista, e fechando no
+ *      proprio cursor) que esta maduro (colher) ou em pousio (semear).
+ *
+ * Nenhuma das acoes esfomeia a outra: todo tile ao alcance que fica pronto e
+ * visitado no maximo uma volta depois. "Sempre colher antes" semearia so ate o
+ * primeiro amadurecer, e com crescer curto dois tiles bastariam para nunca faltar
+ * maduro — os outros dez nunca seriam semeados (objecao do operador, F-CAMPO).
+ *
+ * Mesmos filtros de sempre: `reservados` (tile de tarefa de colheita e tile em
+ * plantio, de qualquer predio) e `elegivel` (posicao, F-T3).
+ */
+export function proximoTrabalhoDoRodizio(
+  state: GameState, predio: PredioCompleto, colheita: ColheitaDeRecurso, minimo: number,
+  reservados: ReadonlySet<string>, dados: GameData, elegivel: TileElegivel,
+): TrabalhoDoRodizio | null {
+  const tiles = tilesDeColheita(state, predio, colheita, dados);
+  if (tiles.length === 0) return null;
+  const livre = (k: string): boolean => !reservados.has(k) && elegivel(k);
+  const cursor = predio.producao?.cursor;
+  const i0 = cursor === undefined ? -1 : tiles.indexOf(cursor);
+  if (i0 >= 0) {
+    const k = tiles[i0] as string;
+    if (livre(k) && tileColhivelAgora(state, k, colheita, minimo, dados)) return { acao: 'colher', tile: k };
+  }
+  for (let passo = 1; passo <= tiles.length; passo += 1) {
+    const k = tiles[(i0 + passo) % tiles.length] as string;
+    if (!livre(k)) continue;
+    if (tileColhivelAgora(state, k, colheita, minimo, dados)) return { acao: 'colher', tile: k };
+    if (tilePlantavel(state, k, colheita, dados)) return { acao: 'semear', tile: k };
   }
   return null;
 }
@@ -314,9 +410,10 @@ export function algumTileTrabalhavel(
   // alerta e como nada para quem escolhe onde pescar.
   elegivel: TileElegivel = SEMPRE,
 ): boolean {
+  const planta = plantaNoModo(predio, dados);
   for (const chaveDoTile of tilesDeColheita(state, predio, colheita, dados)) {
     if (!elegivel(chaveDoTile)) continue;
-    if (tileTrabalhavel(state, chaveDoTile, colheita, minimo, dados)) return true;
+    if (tileTrabalhavel(state, chaveDoTile, colheita, minimo, dados, planta)) return true;
   }
   return false;
 }
@@ -326,9 +423,10 @@ export function algumTileTrabalhavel(
  * (a mesma ordem oeste-leste da colheita) que esta em pousio e que ninguem
  * reservou. Mesma varredura, mesma ordem, outro predicado.
  *
- * A ordem ser a MESMA da colheita nao e detalhe: e ela que faz o roceiro
- * replantar o tile que acabou de secar antes de ir ao seguinte, em vez de
- * espalhar pousio por todo o alcance.
+ * F-CAMPO-a — o predio ja nao escolhe por aqui: quem escolhe e o rodizio
+ * (`proximoTrabalhoDoRodizio`). "Replantar o tile que acabou de secar antes do
+ * seguinte", a intencao escrita aqui, era o defeito do BUG-O. Fica como a
+ * pergunta pura "ha terra livre?", com o mesmo `elegivel`.
  */
 export function melhorTileParaPlantio(
   state: GameState, predio: PredioCompleto, colheita: ColheitaDeRecurso,
@@ -349,17 +447,22 @@ export function melhorTileParaPlantio(
  * predio que plantou, entao demolir a fazenda no tick seguinte nao desfaz a
  * safra — ela esta no chao.
  *
+ * F-CAMPO-a — era `reporNoTile`, e o tile ja saia MADURO porque o plantio
+ * cobria o crescer. Agora sai SEMEADO: a quantidade cheia entra ja, e o
+ * `semeadoEm` e o que a segura ate `tileMaduro`. A quantidade entrar ja, e nao na
+ * maturacao, e o que dispensa varrer o mapa por tick.
+ *
  * Devolve o MESMO objeto quando nao ha o que repor, pela razao de sempre: tick
  * sem mudanca nao realoca a camada inteira.
  */
-export function reporNoTile(
+export function semearNoTile(
   state: GameState, chaveDoTile: string, dados: GameData = gameData,
 ): Readonly<Record<string, RecursoNoTile>> {
   const atual = state.recursos[chaveDoTile];
   if (atual === undefined) return state.recursos;
   const cheio = dados.recursos.tipos[atual.tipo]?.rendimentoPorTile;
   if (cheio === undefined || atual.quantidade >= cheio) return state.recursos;
-  return { ...state.recursos, [chaveDoTile]: { tipo: atual.tipo, quantidade: cheio } };
+  return { ...state.recursos, [chaveDoTile]: { tipo: atual.tipo, quantidade: cheio, semeadoEm: state.tick } };
 }
 
 /**
@@ -422,7 +525,11 @@ export function colherDoTile(
   const recursos: Record<string, RecursoNoTile> = { ...state.recursos };
   const restante = atual.quantidade - Math.min(atual.quantidade, quantidade);
   if (restante === 0 && regimeDoTipo(atual.tipo, dados) === 'nunca') delete recursos[chaveDoTile];
-  else recursos[chaveDoTile] = { tipo: atual.tipo, quantidade: restante };
+  // F-CAMPO-a — o `semeadoEm` fica enquanto ha o que colher (o render deriva
+  // "maduro" dele) e sai com o ultimo: tile zerado e terra em pousio, sem relogio.
+  else if (restante > 0 && atual.semeadoEm !== undefined) {
+    recursos[chaveDoTile] = { tipo: atual.tipo, quantidade: restante, semeadoEm: atual.semeadoEm };
+  } else recursos[chaveDoTile] = { tipo: atual.tipo, quantidade: restante };
   return recursos;
 }
 

@@ -3534,6 +3534,351 @@ Casos 2 e 4 do prédio vivo (`docs/BRIEF-ARTE.md` §4a). Decisão do operador: c
     `FORA_DO_MUNDO_TRANSLADADO` vale aqui também.
 - **Chave**: a F-CANA fica `false` pelo BUG-L (`errado`) e volta a `true` quando esta
   entregar. A F18 fica `true`: o aceite escrito dela passa (decisão do operador).
+- **Entregue (2026-09-26, noite 16).**
+  - A mancha é a `CANAVIAL_DA_VILA`, (36,40) com raio 2, 13 tiles. Espelha o roçado do
+    outro lado do eixo da vila.
+  - Ela entra na camada **esparsa**, como o lajedo, e não como terreno novo. A cana não
+    tem `terreno`, e um chão novo pediria cor no render.
+  - Vai por último em `gerarRecursos`, depois dos veios, e o resto do mapa sai
+    idêntico.
+  - A hipótese da Nota se confirmou: o roteiro F18 passou a afirmar "vazio = cultura
+    com `aradura`" e soma a cana do quadro ao `esgotado`.
+  - O teste da F-CANA fotografava toda a cana do mundo. Passou a fotografar a cana ao
+    alcance do `c1`.
+  - **Medido:** o quadro de abertura (1280×720) cobre y 25,9..37,1, e o roçado e a
+    cana começam em y=38. "À vista da abertura" vale no critério do roçado (a folga
+    encostada), não no quadro. O roteiro `F-CANA-b` desce a câmera.
+
+### F-CAMPO — O campo cresce no tile, sozinho (proposta; não implementar antes do sim do operador)
+- **Origem (operador, 2026-09-26, BUG-O)**: *"O roceiro preso não é bug de escolha: é o
+  modelo. O certo é o crescimento correr NO TILE, em paralelo, independente do roceiro —
+  como no KaM."* E o modelo, decidido por ele:
+  - o tile tem quatro estados: **terra, semeado, crescendo, maduro**;
+  - terra → semeado: o trabalhador vai até o tile e semeia (**primeira visita**);
+  - semeado → crescendo → maduro: **por tempo**, sozinho, em todos os tiles semeados ao
+    mesmo tempo, sem o trabalhador lá;
+  - maduro → terra: o trabalhador volta, colhe e leva ao prédio (**segunda visita**);
+  - vale para o milho e para a cana do mesmo jeito; muda só o tempo de crescer e o sprite.
+- **Quebra (§10: sim e render não se tocam na mesma feature)**:
+  - **F-CAMPO-a (sim + dado)**: estado do tile, escolha do tile, crescimento por tempo.
+  - **F-CAMPO-b (render)**: o sprite do estado, desenhado sobre o tile (BRIEF-ARTE §4a,
+    tipo `cultura`). Placeholder até a arte existir, como todo asset.
+- **Estado da F-CAMPO-a (2026-09-27): implementada na branch `f-campo-a` (commit
+  `10b5869`, `wip`), aceite REPROVA, chave `false`, fora da `main`.** Números do operador
+  (semear 9 s, crescer 30 s, rodízio, claim recusa tile verde) marcados para revisão. O
+  que a medida mostrou (tabelas em `docs/planos/F-CAMPO-a.md`, na branch):
+  - com C = 150, **nenhuma** regra de escolha faz 12 tiles renderem mais que 1: o gargalo
+    é o roceiro (uma viagem por unidade colhida), não o relógio;
+  - o rodízio semeia o anel inteiro antes de colher: a fazenda de 37 tiles tem a primeira
+    saída no t5051 (era ~500), e 11 testes caem (F18 ×6, F19 ×2, F-CANA, F-CANA-b, F-T3);
+  - "colher antes" devolve a primeira saída ao t501 e 24 milhos em 6000, mas é a regra
+    que a Pergunta 3 recusou.
+  - **Espera o operador**, uma de quatro: aceitar o custo de partida do rodízio (e
+    reescrever F18/F19); trocar a regra para colher antes; subir C (12 > 1 só com C
+    grande); ou reescrever o aceite (com C = 150, o BUG-O é espera visual, não vazão).
+  - **Decisão do operador (2026-09-27): nenhuma das quatro.** O defeito, na leitura
+    dele, é o roceiro fazer uma viagem por unidade colhida, quando no KaM o fazendeiro
+    "colhe e leva a carga". Mandou medir no kam_remake antes de mexer.
+  - **Medida no kam_remake (2026-09-27, fonte lida, `reyandme/kam_remake` master):**
+    - *Verificado no código:* `CutCorn` (`KM_Terrain.pas`) exige o tile no estágio 5 e
+      zera a idade: **um corte, de um tile, por viagem**. O plano do fazendeiro
+      (`KM_UnitWorkPlan.pas:356`) é `ResourcePlan(wtNone,0,wtNone,0,wtCorn)`, com
+      `ProdCount1 := gRes.Houses[fHome].ResProductionX` (`:128`), e a entrega é
+      `WareAddToOut(Product1, ProdCount1)` (`KM_UnitTaskMining.pas:415`). A colheita tem 6
+      ciclos de animação, o plantio 10. O crescimento é `CORN_AGE_FULL = 6400 div
+      TERRAIN_PACE`, com o tile atualizado a cada 200 ticks: **~6400 ticks, ~640 s**.
+    - *Não verificado:* o valor de `ResProductionX` da fazenda vem do binário
+      `data/defines/houses.dat`, que não está no repositório. O único override no código é
+      o pescador (`:= 1`). As fontes secundárias dizem **um milho por colheita**
+      ([guia Steam](https://steamcommunity.com/sharedfiles/filedetails/?id=1227250653),
+      [wiki Corn](https://kamremake.wiki.gg/wiki/Corn),
+      [wiki Farmer](https://kamremake.wiki.gg/wiki/Farmer)).
+    - **A premissa não se confirma.** No KaM o tile rende 1 e a viagem traz 1 (o
+      número por viagem é hipótese forte, não fato lido). O que faz 12 a 15 campos
+      valerem lá é outra coisa: o crescimento (~6400 ticks) é **30× a viagem**. Aqui
+      C = 150 é mais curto que uma viagem (~205), e por isso 12 tiles rendem como 1.
+      A rajada de partida também é do KaM: o fazendeiro semeia todos os campos e espera
+      ([fórum Steam](https://steamcommunity.com/app/253900/discussions/0/540734792682225900/)).
+      O atraso do rodízio (t5051) é o mesmo comportamento, não um sintoma de outro defeito.
+    - **Onde o nosso difere do KaM:** aqui o tile maduro rende **4**
+      (`resources.json: corn.rendimentoPorTile`), colhidos em 4 viagens. No KaM, 1 em 1.
+      "Levar a carga" teria leitura aqui: uma viagem traz os 4 do tile. Conta, sem rodar:
+      150 + 4 × 100 + 105 = 655 por tile, ou ~164 por milho, contra 242,5 hoje. Isso
+      **não** está no KaM e muda a vazão de toda fazenda, então é decisão, não conserto.
+  - **Espera o operador, de novo:** (i) a carga do tile numa viagem, que não é do KaM; ou
+    (ii) a razão do KaM, com crescimento muito maior que a viagem, rendimento 1 por tile e
+    mais tiles. Isso é o C grande da lista anterior, agora com o porquê medido. Nada foi
+    implementado. A branch `f-campo-a` segue parada.
+  - **Atualização (2026-09-27, noite): o "1 por viagem" do KaM está LIDO**, não é mais
+    provável: `ResProductionX` da farm = 1 no `houses.dat` da instalação do operador (tabela
+    no `BALANCE_LOG.md`, entrada "REFERÊNCIA"). O corte do KaM leva 96 ticks, contra 100
+    nossos, e o milho cresce em 6 400 ticks.
+  - **Decisão do operador (2026-09-27): subir o crescer**, não 4 por viagem nem o KaM
+    inteiro. O campo passa a ser investimento de longo prazo, e o rodízio "semeia doze e
+    espera", como no original. Pediu medida antes de girar.
+  - **Medida (sonda temporária, apagada; branch `f-campo-a` com semear 9 s):**
+    - método: `cenarioDeFazenda`, com só os N tiles de milho mais perto;
+    - gaveta de saída esvaziada e condição do roceiro reposta a cada tick. A fome fica
+      fora: a condição inicial vem do `gameData` global, e não do dado injetado;
+    - 30 000 ticks. A vazão é medida na **segunda metade**, em ticks por milho.
+
+    | crescer (ticks) | 1 tile | 2 tiles | 4 tiles | 12 tiles | 12 ÷ 1 | 1º milho, 12 tiles |
+    |---|---|---|---|---|---|---|
+    | 150 (hoje) | 211 | 181 | 188 | 203 | **1,04×** | 1 523 (1 tile: 378) |
+    | 600 | 313 | 242 | 205 | 203 | 1,54× | 1 523 |
+    | 800 | 375 | 268 | 208 | 203 | 1,85× | 1 523 |
+    | **1 650** | 600 | 375 | 246 | **195** | **3,1×** | **1 899** (1 tile: 1 878) |
+    | 3 000 | 938 | 500 | 341 | 211 | 4,4× | 3 249 |
+    | 10 700 | 3 750 | 1 875 | 938 | 577 | 6,5× | 10 949 |
+
+  - **Leitura (verificada nas linhas acima):**
+    - **O teto é o roceiro, não o relógio.** A fazenda saturada dá **~195–211 ticks por
+      milho** em qualquer crescer até 3 000. Esse é o `farm.sai.corn` 3,0 mais a
+      caminhada, e ele **não muda com o crescer**. O crescer só decide quantos tiles
+      são precisos para chegar ao teto.
+    - **Com 600 ou 800, doze não valem mais que quatro.** Quatro já saturam o roceiro
+      (205–208). Doze valem 1,5–1,9× um tile, e os oito a mais ficam parados.
+    - **Doze passam a valer com crescer ≈ 1 650.** Com 12 tiles o roceiro chega ao teto
+      (195); com 4 fica a 246. **O atraso do rodízio some:** o 1º milho vem no 1 899,
+      contra 1 878 com 1 tile, porque o crescer já é maior que semear doze (~1 500). É
+      o "semeia doze e espera" do KaM. Com 3 000, doze mal chegam ao teto (211); com
+      10 700 não chegam (577).
+    - **Efeito no `farm.sai.corn`: nenhum giro necessário** se a fazenda tiver tiles
+      para saturar, porque o teto é o mesmo de hoje. O custo cai em quem tem poucos
+      tiles e no começo da cadeia. O 1º milho vai de ~378 para ~1 880, e isso mexe em
+      tudo que mede a partida: F18, F19, a Bodega da F-CAL-a, e a vila da F-CAL-a, que
+      tem 8 tiles. **Nada disso foi rodado com o crescer novo.**
+  - **Proposta (não girada):** `corn` e `grapes`, `reposicao.crescer_segundos_base` 30 →
+    **330**, ou seja, 1 650 ticks na escala 2,0. É o menor crescer medido em que doze
+    tiles saturam o roceiro. Com semear 9 s, ele custa ~21 ticks de rodízio. O teto do
+    KaM (6 400 com rendimento 1) fica acima e não se copia, porque aqui o tile rende 4.
+    **Antes de girar**, falta rodar F18, F19 e F-CAL-a com 330 e contar o que cai.
+  - **Decisão do operador (2026-09-27, noite): crescer 1 650.** *"Um campo que demora é
+    jogo; um campo inútil é bug."* Regra para o giro: se um teste reprovar afirmando
+    comportamento, parar; se for número de primeira saída, corrigir com a medida ao
+    lado.
+  - **Girado na branch, PARADO antes da `main`** (`f-campo-a`, commit `f70322c`, com a
+    `main` mesclada). A suíte inteira dá **12 reprovações**:
+    - **1 nova, e é número:** F18h, "um PlowField ... entrega milho". A janela é de
+      2 000 ticks, e o 1º milho sai `null` dentro dela. Pode ser
+      corrigida com a medida, e **não foi**, porque o giro parou pelas outras 11.
+    - **11 que já caíam com crescer 30**, com os mesmos valores. Vêm do **modelo**
+      F-CAMPO-a, não do 1 650, e várias afirmam **comportamento** do modelo antigo:
+      - F18-ciclo-do-roceiro ×3: "replanta o MESMO tile", "o prédio LARGA", "durante o
+        PLANTIO o roceiro não sai";
+      - F18-rocado ×3: "a série tem o degrau e o patamar", "o patamar é o campo vazio",
+        "planta e DEBITA";
+      - F-CANA, F-CANA-b e F-T3, uma cada: plantio dentro do prédio, ciclo perdido;
+      - F19 ×2: o 1º milho no 5 051 (esperado 250), o mesmo com 30 e com 1 650, e 48
+        cuscuz para um teto de 88,5.
+    - **O F19 não melhora com 1 650.** A fazenda dele tem 37 tiles ao alcance, e o 1º milho sai
+      no 5 051 tanto com 30 quanto com 1 650. **Hipótese** (não medida): semear o anel
+      inteiro leva mais que o crescer, então o rodízio semeia tudo antes de colher. Se
+      for isso, o 1 650 só resolve fazenda pequena.
+  - **F-CAL-a com 1 650 (medido por sonda, apagada):**
+
+    | crescer | 1º milho | 1º cuscuz | Bodega pronta | 1ª comida na Bodega | morte até 16 000 |
+    |---|---|---|---|---|---|
+    | 30 (branch) | 3 994 | 6 580 | 8 222 | 8 327 | nenhuma |
+    | 1 650 (branch) | 5 218 | 6 545 | 8 279 | 8 421 | nenhuma |
+
+    - A fome não aperta: a comida chega à Bodega 3 579 ticks antes do teto de 12 000.
+    - O milho atrasa 1 224 ticks e não chega ao cuscuz, porque a padaria só fica pronta
+      no 6 188. Quem segura a Bodega é a obra, não o campo.
+    - A `main` (modelo antigo) dá a Bodega no 8 009.
+  - **Espera o operador:** as 11 reprovações de comportamento são reescrever F18/F19
+    para o modelo novo. E o F19 pede
+    decidir a fazenda de 37 tiles.
+  - **Decisões do operador (2026-09-27, noite 4):** reescrever os testes que afirmam o
+    modelo revogado, *"cada um com o motivo ao lado"*, e parar em qualquer um que afirme
+    algo que continua valendo. A fazenda de 37 tiles se conserta pelo alcance, no dado.
+    O crescer 1 650 entra na `main` junto com os testes reescritos.
+  - **Alcance medido na F19** (branch `f-campo-a`, sonda apagada; o cuscuz é o
+    acumulado até 12 000):
+
+    | `farm.colheita.alcance_tiles` | tiles arados ao alcance | 1º milho | cuscuz até 12 000 |
+    |---|---|---|---|
+    | 1 | 5 | 1 878 | 61 |
+    | **2** | **14** | **1 899** | **60** |
+    | 3 | 25 | 3 282 | 49 |
+    | 4 (antes) | 37 | 5 051 | 34 |
+
+    - O alcance 1 quebra a vila da calibração: *"o Roçado em 37,30 não tem NENHUM tile
+      arável e alcançável ao alcance 1"* (BUG-G, F-CAL-a, F-CAL-b, F-VIVO-a caem no
+      carregamento).
+    - **Escolhi 2:** é o menor que não quebra nada, e dá 14 tiles, perto dos ~15 campos
+      por fazenda do GDD. **Hipótese** (não medida): o anel de 2 ainda comporta ~44
+      tiles, e quem arar muito mais que ~20 ali pode repetir o atraso.
+    - O Canavial também tem `alcance_tiles: 4`, com a nota "é o da fazenda". Ficou 4:
+      pergunta em aberto.
+  - **Reescrita (branch `f-campo-a`, `0733718`, verificada):** F18-ciclo ×3, F-CANA,
+    F-CANA-b e F19 (1º milho, fases produtivas), cada um com o que caiu e o que continua
+    ao lado. O F-T3-caminho ×2 e o F-T3-ciclo mudaram só de geometria ou de teto
+    (alcance 2 e crescer), com a mesma afirmação. A F18h, que o 1 650 sozinho derrubava,
+    volta a passar com o alcance 2. typecheck, lint e validate:data limpos.
+  - **PARADO — 5 testes afirmam o que continua valendo, e ainda reprovam:**
+    - **F18-rocado ×3:** o aceite da F18 ("produz, para quando zeram, volta após
+      replantio" e "planta e DEBITA") continua válido. Reprova só no relógio, porque a
+      fixture tem 14 tiles e o rodízio semeia todos antes de colher. **Proposta:** uma
+      fixture de 1 tile ao alcance, com os ticks derivados de novo. A afirmação fica a
+      mesma.
+    - **F19 "vazão ≥ 85 % do teto" e "nenhuma gaveta represada":** a entrada do moinho
+      termina cheia (m1 5 de 5), e o cuscuz dá 74. **Hipótese da causa:** a fazenda
+      passou a entregar mais que o moinho consome, e o oráculo 1:1:1 com
+      `farm.sai.corn` 3,0 foi calibrado no modelo antigo. Recalibrar é lote de
+      balanceamento (`BALANCE_LOG.md`, 2026-09-27), decisão do operador.
+    - **Consequência:** o crescer 1 650 **não** entra na `main` nesta sessão, porque a
+      suíte ficaria vermelha com 5.
+  - **Decisões do operador (2026-09-27, noite 5), aplicadas e na `main`**
+    (`merge(F-CAMPO-a)`, com o `npm run verify` verde):
+    - **F18-rocado ×3:** o cenário virou `cenarioDeFazendaDeUmTile`. Mudou o cenário,
+      não a asserção.
+    - **`farm.sai.corn` 3.0 → 2.0:** a conta dá 247,5 ticks por milho contra 246 do
+      moinho. Medido: 260,9. O 2.1 ainda represa. A tabela está no `BALANCE_LOG.md`,
+      em Ciclos fechados. A F19 fica em 95,8 % do teto.
+    - **Canavial `alcance_tiles` 4 → 2:** medido na vila, fica com 4 tiles alcançáveis
+      (eram 8 com 4).
+    - **F18h:** a janela do 1º milho passou a ser `2000 + semear + crescer`. Medido:
+      2 037.
+  - **Estado:** crescer 1 650, alcance 2 e farm 2.0 estão na `main`. **Chave: nenhuma
+    ainda.** O aceite do operador (`docs/planos/F-CAMPO-a.md`) passou numa sonda da
+    sessão, já apagada: Canavial, 6 000 ticks, 12 tiles → 6 canas, 1 tile → 4. Ainda
+    **não tem teste permanente**. O aceite (c) proposto acima (≈ 24 em 6 000) é do
+    modelo antigo e precisa de reescrita pelo operador.
+  - **Aceite reescrito pelo operador (2026-09-27, noite 6), e PASSA — chave `true`:**
+    *"afirme a RAZÃO — com N tiles ao alcance, a produção é maior que com 1 tile, por uma
+    margem que você meça agora."* O (c) antigo, ≈ 24 em 6 000, sai.
+    - Teste: `tests/F-CAMPO-a-razao.test.ts`, na fazenda do norte, com gaveta esvaziada e
+      janela de 12 000. Medido: 14 tiles → 46 milhos; 1 tile → 16. A razão é
+      **2,875**, e o piso é **2**. Evidência em `test-output/F-CAMPO-a.json`.
+    - **O guarda acusa:** com o crescer de volta a 30 s, deu 46 contra 43 e reprovou.
+      O `data/resources.json` foi restaurado depois.
+    - O Canavial ficou de fora: dá só 1,5× (15 contra 10). Com ciclo de 600 ticks, a
+      colheita domina a volta, e ele satura com 2 a 4 tiles.
+  - **Fazenda grande com alcance 2, medida** (sonda apagada; gaveta esvaziada, condição
+    reposta):
+
+    | tiles arados | 1º milho | milho até 6 000 | milho até 30 000 |
+    |---|---|---|---|
+    | 14 (fixture) | 1 949 | 18 | 113 |
+    | 16 | 2 103 | 18 | 119 |
+    | 20 | 2 464 | 16 | 119 |
+    | 30 | 3 205 | 13 | 121 |
+    | 40 (todo o anel de 2) | 3 791 | 11 | 135 |
+
+    - O atraso do 1º milho **volta**: acima de ~15 tiles, cada tile a mais soma a sua
+      viagem de semear (~115 ticks). Semear o lote passa a custar mais que o crescer
+      (1 650).
+    - O alcance 2 **limita** o atraso (no máximo 3 791, contra 5 051 com alcance 4),
+      mas **não o elimina**. É o "semeia todos e espera" do rodízio.
+    - No regime, mais tiles ainda rendem mais.
+    - **Decisão do operador (2026-09-27): aceito, como característica.** É o "semeia tudo
+      e espera" do KaM: 40 campos são investimento de longo prazo. Colher antes de semear
+      foi recusado, porque o roceiro nunca terminaria de semear (`BALANCE_LOG.md`, Ciclos
+      fechados). O Canavial a 1,5× abre o próximo lote pelo tempo de colheita.
+- **O que é hoje (medido, 2026-09-26)**:
+  - `avancarPlantio` (`sim/systems/especialistas.ts:395-406`) ocupa o roceiro por
+    `reposicao.ticks` = 150 (30 s na escala `economia` 2,0), que cobre arar, semear **e
+    crescer**. O tile não guarda relógio (`resources.json: corn.reposicao._doc`,
+    `regenerar` em `sim/recursos.ts`).
+  - `melhorTileDeColheita` (`sim/recursos.ts:277`) e `melhorTileParaPlantio` (`:333`)
+    devolvem o **primeiro** tile na ordem canônica, e a fazenda só planta se não há
+    maduro. O tile que acabou de secar é o primeiro de novo: fica preso.
+  - Em 6000 ticks: roceiro 1 tile de 37 (24 milhos); canavial com 12 arados, 1 tile (8
+    de cana, o mesmo que com 1 arado).
+- **Pergunta 1 — quantos sprites por cultura (resposta proposta)**: **quatro imagens**,
+  mas não uma por estado.
+  - **Terra não é sprite.** Ela já é o chão `campoArado` que o mapa desenha (F18i).
+  - **Crescendo precisa de dois.** Com um só, entre semear e amadurecer o tile muda uma
+    vez, e o jogador vê troca, não crescimento. Dois (`crescendo_1`, `crescendo_2`)
+    dão três passos visíveis até o maduro.
+  - O conjunto fica `semeado`, `crescendo_1`, `crescendo_2`, `maduro`. É a regra do
+    animal da Malhada: a sim não tem idade, e o render escolhe o quadro pela fração do
+    tempo de crescer (`(tick - semeadoEm) / crescer`).
+  - Maduro colhido pela metade (quantidade 3, 2, 1) usa o mesmo `maduro`. Isto é
+    hipótese de legibilidade: dá para medir no roteiro da F-CAMPO-b e acrescentar
+    `colhido` só se não se ler.
+- **Pergunta 2 — vazão da fazenda com doze tiles (conta, número intocado)**:
+  - Escala `economia` 2,0: 1 s de dado = 5 ticks. Colheita de `farm.sai.corn` 3.0 =
+    100 ticks. Ida e volta ao tile ≈ 105 (medido na calibração, igual com o campo colado
+    ou longe). Refeição ≈ 10 por milho.
+  - **Hoje:** 150 de plantio + 4 × (100 + 105) = 970 por tile, ou 242,5 por milho, e
+    ≈ 250 com a refeição. A sonda desta noite deu 24 milhos em 6000 ticks, 250 por
+    milho, e bate.
+  - **No modelo novo**, o trabalhador gasta por tile W = (105 + S) + 4 × (100 + 105) =
+    925 + S, onde S é o tempo de semear. **O crescer (C) sai da conta dele.**
+    - S = 45 ticks (9 s): 242,5 + 10 ≈ 250 por milho, **igual a hoje**, e o 3.0 da
+      calibração continua fechando 1 Roçado : 1 Moinho (ciclo do moinho 246).
+    - S = 20 (4 s, o da aradura): ≈ 246 por milho, 2 % mais rápido.
+  - **Doze tiles não fazem doze vezes mais milho.** O roceiro é um só, e a vazão é
+    `min(teto do trabalhador, 4·N / (W + C))` milhos por tick.
+    - O que os doze compram é esconder o crescer: o trabalhador não fica ocioso quando
+      (N − 1) · W ≥ C.
+    - Com W ≈ 950: 2 tiles bastam se C ≤ 950; 5 tiles se C = 3000 (5 min de jogo a
+      1x); os 12 saturam até C ≈ 10 400.
+  - **Com 1 tile**, o crescer volta para a conta: por milho = (925 + S + C) / 4 + 10.
+    C = 150 dá ≈ 290; C = 3000 dá ≈ 1000.
+  - **O que o operador decide com isto:**
+    - C, que diz quantos tiles uma fazenda "pede". O jogador ara doze e os doze giram,
+      mas com C curto a vazão já satura em dois.
+    - S, que deixa o 3.0 intacto com 45.
+  - **Questão que a conta abre (não decidida):** "duas visitas por ciclo" contra
+    `rendimentoPorTile` 4.
+    - Hoje o tile maduro rende 4, e cada milho é uma ida ao tile: são 5 visitas por
+      ciclo, não 2.
+    - Se a segunda visita traz o tile inteiro, W = 210 + S + 400 e o milho sai a
+      ≈ 174 ticks. Isso é 43 % mais rápido, o moinho vira o gargalo, e o 3.0 cai.
+    - Se o tile passa a render 1, o milho sai a ≈ 350 ticks, 40 % mais lento.
+    - Os três caminhos mexem na calibração de modo diferente. A escolha é do operador,
+      e o número não gira antes dela.
+- **Pergunta 3 — semear ou colher (regra proposta)**: **rodízio**. O prédio guarda o
+  último tile que tocou (`prod.cursor`, uma chave), e a busca começa **depois** dele na
+  ordem canônica. O primeiro tile que precisa de trabalho, maduro para colher **ou**
+  terra para semear, é o escolhido.
+  - Nenhum dos dois esfomeia: cada tile ao alcance é visitado no máximo uma volta
+    depois de ficar pronto. "Sempre colher antes" semearia só até o primeiro
+    amadurecer, e com C curto dois tiles bastariam para nunca faltar maduro: os outros
+    dez nunca seriam semeados, que é a objeção do operador.
+  - É **regra de classe**: vale para pedreira, lenhador e mina, onde não muda vazão
+    (quem esgota já avança), e mata o "sempre o primeiro" em todos.
+  - A alternativa, "quem espera há mais tempo", pede um carimbo de tick também na
+    terra, e não compra nada que o rodízio não dê.
+  - O rodízio troca a intenção escrita em `melhorTileParaPlantio` ("replantar o tile
+    que acabou de secar antes do seguinte"). Essa intenção era o defeito.
+- **O campo como estado que avança por tick (medido)**:
+  - Nada avança por tick. O tile guarda **quando** foi semeado (`semeadoEm: number |
+    null`; `null` é terra), e maduro é derivado: `tick ≥ semeadoEm + crescer`.
+  - Sem varredura por tick, sem contador por tile, e serializável (é número).
+  - A colheita reclama pelo JobBoard só tile derivado maduro. A quantidade 4 nasce no
+    primeiro claim ou na maturação. É decisão de implementação, que a F-CAMPO-a mede
+    contra o save da F23.
+  - **Custo do campo novo, medido compilando** (campo obrigatório em `RecursoNoTile`,
+    revertido): **41 erros**.
+    - 5 na `sim/`: `campos.ts` 1, `recursos.ts` 4.
+    - 36 em teste: 24 só na `F-T2b`, por tiles literais.
+  - Alternativa: coleção própria `state.semeaduras`, só dos tiles semeados. Não foi
+    medida.
+  - O `_doc` de `corn.reposicao` diz que "relógio por tile custaria um campo de estado
+    em cada um deles". É esse o preço, e agora ele tem número.
+- **A cana**: o mesmo modelo, o mesmo código. `grapes` já é `porAcao` com os números do
+  milho. Muda só `crescer` no dado e o sprite. O BUG-N (cana em pousio parecendo mato
+  cortado) é o estado **terra** da cana, e continua com a sessão do render.
+- **Dado**: `resources.json: tipos.<t>.reposicao` ganha `crescer` e `semear` em
+  segundos, grupo `economia`, convertidos no carregamento. `segundos_base` 30 sai: hoje
+  ele soma os dois, e ninguém mais o lê. Os valores são decisão do operador (Pergunta 2).
+- **Aceite (proposto)**:
+  - (a) com 12 tiles arados ao alcance, em 6000 ticks os 12 são semeados e ≥ 10 chegam
+    a maduro. Eixo determinístico: tiles distintos tocados.
+  - (b) o crescimento corre com o roceiro longe: dois tiles semeados em ticks
+    diferentes amadurecem cada um no seu `semeadoEm + crescer`, sem visita no meio.
+  - (c) a vazão com 12 tiles e C ≤ W fica a ≤ 5 % da de hoje (≈ 24 em 6000), e o
+    1 Roçado : 1 Moinho segue fechando. O mesmo vale para a cana.
+  - (d) nenhum tile ao alcance fica mais de uma volta do rodízio sem ser tocado, em
+    pedreira, lenhador e mina também.
+- **Chave**: F18 fica `true`. O aceite escrito dela ("produz, para quando esgota, volta
+  quando replanta") passa com um tile só, e isso é lacuna de aceite (BUG-O).
+- **Pergunta em aberto**: a frase do operador sobre os sprites chegou cortada em
+  *"desenhada pelo render sobre o tile, nunca"*. O BRIEF-ARTE não completa a frase.
 
 ### F17g — A obra revelada pelo hp: madeira e pedra (render)
 - **Origem (decisão do operador, 2026-09-26)**: *"troque pela revelação contínua. Duas
@@ -3592,10 +3937,559 @@ Casos 2 e 4 do prédio vivo (`docs/BRIEF-ARTE.md` §4a). Decisão do operador: c
     dos seis estágios já mostra a obra crescendo, e o placeholder some quando a arte chega.
   - Os rótulos madeira/pedra no tema: confirmado não criar, porque nada os lê.
 
+### LOTE3 — As fases da colheita: tile, casa, descanso e carga (dado + sim)
+- **Decisão do operador (2026-09-27):** saída (a) do BALANCE_LOG.
+  - **Não é mudança de modelo.** É alinhar com a referência: o KaM separa as fases desde
+    sempre.
+  - A caminhada sai do pathfinding e não tem campo.
+  - Plano: `docs/planos/LOTE3-fases-de-colheita.md`, aprovado.
+- **LOTE3-b1 — Canavial em fases (26 / 82 / 12 s: a proporção do KaM, o total de hoje).**
+  - **O b1 ALINHA O MODELO COM A REFERÊNCIA E NÃO MELHORA A RAZÃO 12 : 1 DO CANAVIAL.**
+    O gargalo é o tempo total do canavieiro por unidade, e a repartição só muda ONDE ele
+    está (no tile ou dentro da casa), não QUANTO tempo ele gasta. Medir a razão depois do
+    b1 e ver ~1,5× é o resultado esperado, não falha da feature. **Quem move a razão é
+    o b2.**
+  - **Dependência registrada (decisão do operador):** o tile fica reservado até o
+    DEPÓSITO, como na mina `aDistancia`. Liberar na chegada pede partir o `depositar`
+    em dois, e arrisca consumo em dobro: um `produzir` sem tarefa no meio do ciclo
+    reclamaria um segundo tile. Isso só destrava algo quando dois prédios disputarem os
+    mesmos tiles. Esse caso não existe hoje, e é ele que reabre a questão.
+  - Aceite: `tests/LOTE3-fases-canavial.test.ts`:
+    - `ticksNoTile` ticks em `colhendo`;
+    - o resto do ciclo em `trabalhando`, dentro da casa;
+    - a vazão igual ±1 contra o modelo de antes em 12 000 ticks;
+    - pausa, demolição e saída cheia na fase da casa;
+    - `validate:data` com `producao/fases` e `producao/sai-conferido`, provadas acusando.
+- **LOTE3-b2 — os outros quatro (`quarry`, `woodcutters`, `farm`, `fishermans`) em
+  fases, pelo caminho do Canavial. ENTREGUE (2026-09-27, noite 12).**
+  - **Decisão do operador (2026-09-27):**
+    - a PROPORÇÃO vem do KaM, e não o valor absoluto:
+      - fazendeiro 96 no tile e 0 na casa;
+      - pedreiro 80 e ~190;
+      - lenhador 180 e 0;
+      - pescador 328 e 0;
+      - descanso 50 em todos.
+    - Só o pedreiro e o vinhateiro trabalham dentro da casa. Os outros três voltam e
+      depositam.
+    - O TOTAL de cada um fica o de antes, para a vazão não mudar.
+    - O que muda o total é decisão do operador, depois de ver as fases no lugar.
+  - **Números** (segundos na escala 1,0 → ticks na escala 2,0):
+
+    | receita | tile | casa | descanso | total |
+    |---|---|---|---|---|
+    | quarry | 8,4 → 42 | 19,8 → 99 | 5,2 → 26 | 167 |
+    | woodcutters | 66,2 → 331 | 0 | 18,4 → 92 | 423 |
+    | farm | 19,8 → 99 | 0 | 10,2 → 51 | 150 |
+    | fishermans | 52 → 260 | 0 | 8 → 40 | 300 |
+
+    - `porViagem` 1 em todos. Os 3 por viagem do pedreiro do KaM eram absolutos e
+      esperavam o operador: entraram no LOTE3-c, abaixo.
+  - **A ordem do ciclo mudou (decisão desta sessão):** o descanso do KaM vem DEPOIS da
+    entrega. Aqui ele abre o ciclo seguinte, dentro do prédio e com a tarefa do tile já
+    reclamada: descanso → ida → tile → volta → casa (só no pedreiro e no vinhateiro) →
+    depósito.
+    - Motivo: "voltam e depositam" não cabe com o descanso entre a volta e o depósito,
+      como estava no b1.
+    - A vazão é a mesma. Só o primeiro ciclo da partida ganha um descanso a mais.
+    - Campo novo: `ColheitaDeRecurso.ticksDeDescanso` (0 sem `fases`).
+  - Aceite: `tests/LOTE3-fases-quatro.test.ts`, com os quatro:
+    - forma do dado;
+    - um ciclo limpo com descanso = `ticksDeDescanso`, `colhendo` = `ticksNoTile`, e
+      dentro depois da volta = casa + 1 (1 nos três que depositam na chegada);
+    - vazão ±1 contra o modelo de antes em 6 000 ticks.
+    - Prova de que acusa: saindo no progresso 0 (sem descanso), 5 casos reprovam
+      (os quatro e o Canavial).
+  - **Aberto, decisão do operador:** girar os totais. A vazão por prédio e a razão N:1
+    ficam em `test-output/LOTE3-fases-quatro.json`.
+- **LOTE3-c — o pedreiro traz 3 blocos por viagem. ENTREGUE (2026-09-27, noite 13).**
+  - **Decisão do operador:** é peça que o KaM tem e nós não. Ele corta a pedra no tile e
+    trabalha ela na casa, e o lote justifica o tempo na casa. Vazão declarada mantida:
+    fases ×3 (126 / 297 / 78 ticks, ciclo 501), `porViagem` 3, `sai.stone` 1,8.
+  - Mecânica: o claim exige o lote inteiro no tile, o tile perde o lote no depósito, e a
+    gaveta aceita o lote só se ele couber inteiro (gaveta 5 = um lote de 3).
+  - Regra de dado nova: `producao/por-viagem-divide` (o lote divide o rendimento de
+    quem nunca repõe; rocha 15 / 3).
+  - Aceite: `tests/LOTE3-c-pedreiro-lote.test.ts`, contra o pedreiro de um bloco
+    derivado do dado (fases / 3, `sai` 1, que é o dado do b2):
+    - taxa declarada igual (±1 tick por pedra);
+    - entregue ≥ 1,2× (medido 60 contra 46 em 12 000 ticks) e caminhada por pedra
+      menor que metade (medido 30,2 contra 91,4).
+    - Prova de que acusa: `porViagem` 1 no dado reprova (20 < 24).
+  - **A premissa "pedra por minuto não muda" não se confirmou:** a declarada é a mesma,
+    a entregue subiu 30% porque a viagem é paga por lote. Ciclo ~700 manteria a entregue
+    neste cenário (hipótese, não medida), mas depende da distância. Ficou 501, como pedido.
+  - **Decidido pelo operador (2026-09-27, noite 14):**
+    - os +30% entregues ficam; o ciclo ~690 (medido: 45 entregues) foi recusado;
+    - a razão 0,90× sem esgotar e o 1,3× do pescador são característica de quem esgota
+      (rocha, peixe, minério e, sem replantio, árvore). A razão N:1 só vale para quem
+      repõe (milho e cana);
+    - os totais NÃO giram: giram quando o jogo mostrar problema.
+  - **Lenhador com lote de 2:** medido e não proposto (BALANCE_LOG, LOTE3-c). Na vila de
+    calibração ele esgota a mata; o lote não tem casa que o justifique; o KaM não tem;
+    e quebraria o 2:1 com a serraria. Reabre com o replantio: item **F-REPL**, abaixo
+    (2026-09-27, noite 15).
+- **Método, registrado:** o custo de um campo se mede COMPILANDO, não por busca de texto.
+  - A contagem por texto dizia "5 sim, 2 render, 13 testes" para `ticksDoCiclo` e
+    errava nos dois sentidos: `trabalho.ts` não quebra (lê o `DadosDoTrabalho`
+    montado), e `predios.ts` quebra.
+  - O `tsc` deu 42 erros ao tirar o campo e 2 ao acrescentar um obrigatório.
+
+### F-REPL — O lenhador replanta: modos cortar e cortar e plantar (dado + sim)
+
+**Decisões do operador (2026-09-27, noite 16), que valem sobre o texto abaixo:**
+1. **A árvore nasce SÓ no toco.** O risco da árvore na estrada morre por construção:
+   toco é tile que já teve árvore, então nenhum tile novo vira mata. Resta o toco COM
+   estrada por cima, e a regra é: **toco sob estrada não rebrota.** Plantar em tile
+   virgem (o F-REPL-c) fica para depois, "se alguém sentir falta".
+2. **Dois modos, não três**, como no kam_remake (`TWoodcutterMode = (wcm_Chop,
+   wcm_ChopAndPlant)`): `cortar` e `cortar_e_plantar`. "Só replantar" era invenção
+   nossa: lenhador que só planta não produz. **Padrão: cortar e plantar.**
+3. **Sim ao item.** E a premissa da árvore, corrigida e reconhecida pelo operador: ela
+   existia antes da F-D3, no noroeste; a F-D3 a trouxe para perto. O operador vinha
+   dizendo que ela nasceu lá.
+
+Pedido do operador (2026-09-27, noite 15):
+- o lenhador ganha os modos do KaM;
+- replantar põe uma árvore num tile vazio ao alcance, e ela cresce por tempo, como o
+  campo;
+- o padrão é `ambos`, para o jogador que não mexe em nada não ficar sem madeira.
+
+- **Premissa corrigida: `recursos.ts` NÃO trata `porAcao` como terminal.** Verificado
+  lendo o código e com uma sonda, já apagada.
+  - O regime `porAcao` guarda o tile em 0: `recursos.ts:507` só apaga o `nunca`.
+  - O replantio do campo já é genérico:
+    - `tilePlantavel` (`recursos.ts:274`) aceita qualquer tipo com `reposicao`, e
+      `semearNoTile` e `tileMaduro` (por `semeadoEm`) também;
+    - `produzir` entra no rodízio sempre que `reposicaoDe(receita.colheita) !== null`,
+      sem olhar se o prédio é fazenda.
+  - A árvore é terminal **só porque `tree` não tem `reposicao` em
+    `data/resources.json`**. O código já espera o replantio: o comentário de
+    `iniciarPlantio` (`especialistas.ts:303`) diz que ele vai cobrar tora.
+  - **A sonda:** `cenarioOraculo`, prédio `w1`, 12 000 ticks, com `tree.reposicao`
+    injetado com os números do milho e nenhuma linha de código:
+
+    | | troncos | tocos replantados | tocos no fim | parado sem árvore |
+    |---|---|---|---|---|
+    | hoje | 18 | 0 | 9 | 2 329 ticks |
+    | com `reposicao` | 21 | 9 | 0 | 79 ticks |
+
+  - O que falta de verdade:
+    - plantar em tile SEM entrada;
+    - os modos;
+    - duas regras de posição (abaixo).
+  - Em `recursos.ts`, isso é um predicado novo e uma linha no rodízio. Nada do que
+    existe muda de sentido.
+
+- **Muda três coisas já registradas.** Cada uma ganha nota no lugar de origem, nesta
+  mesma sessão.
+  1. **O lenhador sai de "quem esgota" e entra em "quem repõe"**, com o milho e a cana
+     (BALANCE_LOG, "Característica, não defeito: quem esgota não acelera").
+  2. **A razão N:1 passa a valer para ele, e o lote de 2 volta à mesa** (BALANCE_LOG,
+     "Lenhador com lote de 2: medido, NÃO proposto"):
+     - o motivo 1 da recusa, a mata que acaba, cai;
+     - os motivos 2 (sem casa) e 3 (o KaM traz 1) continuam;
+     - o motivo 4, o 2:1 com a serraria, precisa ser medido de novo, porque a viagem
+       de replantar come tempo do lenhador.
+  3. **A árvore ganha estados de crescimento, como o campo**, e isso vai para o
+     `docs/BRIEF-ARTE.md`: a entrada `arvore`, proposta, ao lado da `cultura`.
+
+- **Sub-itens, nesta ordem, uma sessão cada.** A quebra evita tocar sim e render na
+  mesma feature (§10).
+  - **F-REPL-a — o toco rebrota (dado + sim). ENTREGUE (2026-09-27, noite 16).**
+    - **Tarefa 1, a sonda, reproduziu o caso**, já apagada: o `PlaceRoad` sobre o toco
+      37,23 foi aceito em t2338, a estrada foi assentada em t2493, e a árvore nasceu na
+      estrada em t2618. Dois serfs parados na rua (u3, u7) somaram 9 578 ticks×unidade
+      dentro do tronco.
+    - **A guarda está em `tilePlantavel`** (`sim/recursos.ts`), não no `elegivel`. É o
+      predicado único dos dois lados: o rodízio, o alerta e a prévia. Com ela no
+      rodízio apenas, o alerta esperaria um trabalho que nunca chega. Vale para todo
+      tipo com `reposicao`, como o `canPlowField` já recusa estrada.
+    - O canteiro já estava fora, pelo `elegivel`: `tileCobertoPorPredio` bloqueia o
+      footprint de todo prédio em `predios.ordem`, qualquer que seja o estado
+      (`pathfinding.ts:200-206`). Isto foi lido, não rodado.
+    - A unidade em pé no tile quando a árvore nasce sai sozinha: o A* não confere o
+      tile de partida. O teste afirma que `buscarCaminho` sai de dentro do tronco. Nas
+      corridas do aceite, 0 ticks×unidade dentro de árvore.
+    - Número: `semear` 53 s, `crescer` 412,5 s (265 e 2 063 ticks), `[proposta]`.
+    - `tree.reposicao` em `data/resources.json`, `[proposta]`, com a proporção do KaM
+      (medida; fonte no fim do item):
+      - `crescer` = 1,25 × o do milho (KaM: árvore 8 000, milho 6 400);
+      - `semear` = 0,8 × o `noTile` do lenhador (KaM: plantar 12 golpes, cortar 15);
+      - `custo` vazio. Que o KaM não cobra nada para plantar é hipótese, não
+        conferida no fonte.
+    - **Guarda de posição, obrigatória: toco coberto por estrada, estrada planejada ou
+      canteiro NÃO rebrota.** Três leituras do código:
+      - hoje dá para assentar estrada sobre um toco (`estradas.ts:549-553`: árvore em
+        0 não bloqueia);
+      - `tilePlantavel` não olha estrada;
+      - o `elegivel` do rodízio (`tileAlcancavelParaColheita`, `aproximacao.ts:71`)
+        exclui só prédio.
+
+      Juntas, elas dizem que o lenhador faria nascer uma árvore no meio da estrada.
+      Isso é **hipótese: lida no código, não rodada**. A Tarefa 1 é a sonda que
+      reproduz o caso.
+    - **Unidade em pé no tile no instante em que a árvore nasce.** A árvore bloqueia o
+      passo desde o plantio (`semearNoTile` põe a quantidade cheia). O aceite afirma
+      que a unidade não trava: ou ela sai do tile, ou o plantio espera.
+    - Sem modos ainda: todo lenhador faz `ambos`, que é o padrão pedido.
+  - **F-REPL-b — os modos (sim + dado). ENTREGUE (2026-09-27, noite 16).**
+    - **Como ficou**, e onde difere do texto abaixo:
+      - `modos` virou objeto, `{ cortar: { planta: false }, cortar_e_plantar: {
+        planta: true } }`, com `modoPadrao`. O código lê só `planta`; nenhum nome de
+        modo está em `sim/`;
+      - o comando é **`SetBuildingMode`**, não `SetWoodcutterMode`. O gatilho é
+        o dado: qualquer receita com `modos` aceita, e nenhum tipo está digitado. As
+        recusas: `predio-inexistente`, `predio-em-obra`, `sem-modos`, `modo-invalido`;
+      - o estado é `Producao.modo`, opcional, no molde da `escolha`: ausente em
+        quem não tem modos. O custo foi 1 erro de compilação, contra os 14 do
+        `PredioCompleto.modo` obrigatório;
+      - o `cortar` não passa pelo rodízio: colhe pelo caminho da rocha. É isso que o
+        faz reproduzir byte a byte a corrida sem `reposicao`;
+      - o modo vale nos dois lados, `tileTrabalhavel` e rodízio: em `cortar`, toco
+        não é trabalho. Vale também para o rótulo do HUD: esgotado em `cortar` é
+        `veio-esgotado`, não `sem-campo`;
+      - a troca no meio de uma viagem de plantio deixa a viagem terminar, e a
+        reserva se solta no `voltarSemTarefa`.
+    - **Nota (decisão 2 acima): são dois modos, `cortar` e `cortar_e_plantar`.** O
+      `modos` do lenhador em `data/production.json` passa a ter esses dois, e o
+      padrão é `cortar_e_plantar`. Onde o texto abaixo diz `ambos`, leia
+      `cortar_e_plantar`. O `replantar` sai do escopo e do aceite. Desde a F-REPL-a
+      todo lenhador já faz `cortar_e_plantar`; o b acrescenta o `cortar`.
+    - `modoPadrao: "ambos"` na receita do lenhador, ao lado de `modos`, com uma regra de
+      dado: o padrão tem de estar na lista.
+    - Estado e comando:
+      - o estado é `PredioCompleto.modo`;
+      - o comando é `SetWoodcutterMode`, que leva o valor (não é alternador) e é
+        recusado nos mesmos casos do `SetBuildingPaused`.
+    - Os modos:
+      - `cortar` = só colher: o de hoje, e esgota;
+      - `replantar` = só plantar, sem tronco;
+      - `ambos` = o rodízio.
+    - O leitor é `proximoTrabalhoDoRodizio`, com um filtro de ação. É a "uma linha no
+      rodízio" citada acima.
+  - **F-REPL-c — plantar em tile vazio (sim + dado). ADIADO (decisão 1 acima): sem
+    posição na fila, volta "se alguém sentir falta".**
+    - `tree.plantio.terrenoPermitido`, no molde da `aradura`.
+    - Predicado novo em `recursos.ts`, irmão do `canPlowField` (`campos.ts:98`). O tile
+      precisa estar:
+      - em terreno permitido;
+      - sem entrada;
+      - sem estrada nem estrada planejada;
+      - fora de prédio e de canteiro;
+      - fora de campo planejado.
+    - O novo aqui é a entrada em `state.recursos` que nasce EM PARTIDA. A camada de
+      bloqueio do A* é derivada do estado (`camadaDeBloqueio`) e troca de referência
+      quando a lista muda, mas antes de confiar nisso leia a memória
+      `cache-do-carregamento-nao-filtra-o-runtime`.
+    - **Decisão de posição que o GDD não responde** (PROGRESS, "Perguntas em aberto"):
+      a árvore nova pode fechar a porta de um prédio ou o único corredor. A
+      interpretação conservadora: não plantar no tile de acesso de prédio nem em
+      vizinho de estrada.
+  - **F-REPL-d — o seletor de modo no painel (ui).** Domínio do Codex.
+    - **Nota (contrato herdado da F-REPL-b):**
+      - o botão manda `{ type: 'SetBuildingMode', predio, modo }` com o VALOR, não
+        alterna;
+      - os modos são as chaves de `receitas[tipo].modos.porModo`, e o atual está em
+        `producao.modo`;
+      - o seletor aparece para toda receita com `modos !== null`, nunca por
+        `tipo === 'woodcutters'`;
+      - os nomes que o jogador vê já estão no tema (2026-09-27, noite 17), em
+        `theme-sertao.predios.<tipo>.modos.<id>`, com `nome` e `desc`. A regra
+        `interface/modo-rotulo` exige nome para todo modo do dado e recusa nome
+        de modo que o dado não tem;
+      - lenhador sozinho numa mata grande: o modo não muda nada até a mata acabar.
+        Dois lenhadores na mesma mata replantam cedo (BALANCE_LOG, premissa
+        corrigida na noite 17). Se o painel quiser mostrar isso, é decisão de
+        tela.
+  - **F-REPL-e — os estados da árvore na tela (render).** Quando a arte existir, pelo
+    BRIEF-ARTE. Até lá, placeholder, como manda a §9.
+  - **Depois do b, não antes: re-medir o lenhador** (BALANCE_LOG):
+    - a razão N:1;
+    - o 2:1 com a serraria;
+    - o lote de 2.
+
+    É medição. Girar número é decisão do operador.
+
+- **Aceite.** Cada sub-item tem o seu; aqui vão os do a e do b, que são de sim.
+  - **F-REPL-a:**
+    - com a mata toda cortada, os tocos voltam a dar tronco: há tronco entregue DEPOIS
+      do tick em que caiu a última árvore adulta. Com `reposicao` nula isto reprova, e
+      a prova de que acusa é tirar o bloco do dado;
+    - toco sob estrada não rebrota em 12 000 ticks;
+    - nenhuma unidade fica num tile de árvore com quantidade > 0;
+    - a razão N:1 do lenhador vai para a evidência como número da corrida, não como
+      aceite: o total não gira.
+  - **F-REPL-b:**
+    - `cortar` reproduz, byte a byte, a corrida de hoje contra o dado sem `reposicao`;
+    - ~~`replantar` não entrega tronco nenhum e deixa zero toco ao alcance~~ (fora:
+      decisão 2);
+    - `cortar_e_plantar` é o modo de um prédio recém-construído;
+    - o comando com o valor atual é no-op: devolve o MESMO estado.
+- **Evidência:** `test-output/F-REPL-a.json` e `test-output/F-REPL-b.json`.
+  Screenshot só no e.
+- **Custo medido compilando.** Método: acrescentar, rodar `npx tsc --noEmit`, contar,
+  reverter. Revertido, e `git status` limpo.
+  - `modo` obrigatório em `PredioCompleto`: **14 erros**.
+    - 2 em `sim/state.ts`, os dois construtores.
+    - 12 em testes que montam prédio literal: F05b ×2, F06, F08 ×2, F09, F10, F24a,
+      F-TA, F-TP, F-VIVO-a e `helpers/jobs-cenario.ts`.
+  - `SetWoodcutterMode` na união `Command`: **1 erro**, o `switch` exaustivo de
+    `tick.ts:110`.
+  - `tree.reposicao`: **0 erros**. O tipo já é `ReposicaoDeRecurso | null`
+    (`data/types.ts:192`), então é só dado, e o loader já converte
+    (`loader.ts:597-650`).
+  - `modos` e `modoPadrao`: **não medido**. O loader hoje não lê `modos`, e
+    `ReceitaDePredio` ganha tipo novo.
+- **Premissas do pedido, conferidas no dado:**
+  - **"a árvore existe desde a F-D3":** existia antes, mas só no quadrante noroeste. A
+    F-D3 tirou a faixa, e a árvore passou a nascer no miolo e perto da vila (nota da
+    F-T2b neste arquivo). O que vale para o replantio: há mata ao alcance do lenhador
+    desde a F-D3, e ela bloqueia o passo desde a F-T2.
+  - **"`modos` sem leitor desde a F16c":** está sem leitor desde a F15a. A F16c tirou os
+    modos do aceite porque não havia árvore no terreno (Nota da emenda, F16c). Hoje o
+    grep não acha nenhum leitor em `src/`.
+  - **"os modos que o KaM tem: só cortar, só replantar, ambos":** o fonte do KaM Remake
+    que consultei tem **dois**. O clone é de 2022-06-01 e fica só no scratchpad.
+    - `TWoodcutterMode = (wcm_Chop, wcm_ChopAndPlant)` (`KM_Houses.pas:13`);
+    - o botão alterna entre os dois (`KM_GUIGameHouse.pas:720-744`);
+    - `replantar` sozinho é nosso, e já estava em `data/production.json`.
+
+    Não conferi o jogo de 1998. O item mantém os três, como pedido; tirar `replantar`
+    barateia o b.
+- **Fonte dos números do KaM.** Anotada também no BALANCE_LOG; nenhum arquivo do KaM
+  entra no repositório.
+  - `KM_ResMapElements.pas:71-82`:
+    - árvore: `TREE_AGE_1/2/FULL` = 2 400 / 5 000 / 8 000;
+    - milho: `CORN_AGE_FULL` = 6 400, na mesma unidade (`TERRAIN_PACE`).
+  - `KM_Units_WorkPlan.pas:249-252`: cortar é `ua_Work` ×15 mais 20; plantar, ×12.
+
+### VARREDURA-KAM — cruzar o que supomos com o fonte do KaM (leitura; sem posição na fila)
+
+Pedido do operador (2026-09-27, noite 15). **Sem posição na fila:** roda depois da
+F-REPL e antes da Fase C.
+
+- **Por quê:** quatro leituras pontuais do KaM corrigiram quatro coisas que estavam
+  erradas havia semanas:
+  - a projeção;
+  - o modelo de taxa;
+  - a árvore;
+  - os modos do lenhador (dois, não três).
+
+  Uma varredura provavelmente acha mais. O operador registrou que errou três vezes
+  contra o KaM: projeção, modelo de taxa e árvore.
+- **Escopo:** cruzar o que está marcado como `[geral]`, `[proposta]` ou hipótese nos
+  nossos documentos com o código do kam_remake e com o `houses.dat`. Quatro frentes:
+  1. **GDD:** tudo o que está marcado `[geral]`, isto é, comportamento suposto e nunca
+     medido.
+  2. **BALANCE_LOG:** as observações abertas e as hipóteses.
+  3. **PROGRESS:** as decisões do operador marcadas para revisão.
+  4. **O que o KaM tem e nós não:** mecânicas inteiras que passaram despercebidas
+     porque ninguém foi procurar.
+- **Resultado:** uma lista, em documento próprio (`docs/varredura-kam.md`), com cada
+  achado em uma de três classes:
+  - **correção:** estamos errados;
+  - **divergência deliberada:** escolhemos diferente, e o registro diz onde e por quê;
+  - **lacuna:** eles têm, nós não.
+
+  Cada achado cita o nosso arquivo e linha, e o arquivo e linha do fonte do KaM.
+- **Sem mudar nada.** Nem dado, nem código, nem critério de aceite. Cada correção ou
+  lacuna vira proposta para o operador, que decide o que entra na fila.
+- **Regras que continuam valendo:**
+  - nenhum dado, arte ou arquivo do KaM entra no repositório. O clone fica no
+    scratchpad, e só entram os números medidos, com a fonte anotada no BALANCE_LOG;
+  - "não conferido no fonte" é hipótese e se escreve como hipótese;
+  - o fonte do Remake não é o jogo de 1998: divergência entre os dois se registra,
+    não se resolve por palpite.
+- **Custo:** leitura grande. Segue a §11 (delegar a leitura ampla a um subagente que
+  devolve só o resumo) e cabe em mais de uma sessão; se passar de uma, quebra por
+  frente, na ordem 1 → 4.
+- **Aceite:** o documento existe; cada item das frentes 1 a 3 tem uma classe ou a
+  marca "sem correspondente no KaM"; nenhum arquivo fora de `docs/` e do PROGRESS
+  mudou no commit.
+
+### F-ESC — A escala do prédio: altura máxima pela largura (render + ferramenta; proposta, não implementar antes do sim do operador)
+- **FORA DA ESPERA POR JANELA (operador, 2026-09-27, noite 10).** O Codex continua em
+  `src/render/`: a rota agora é render do Blender com pintura por cima, e ele vai mexer
+  no manifesto e no derivador. A F-ESC **depende da arte estabilizar**, não de uma
+  janela livre no `render/`: medir a altura dos sprites enquanto a rota de arte muda
+  mediria números que vão ser refeitos. Retoma quando o operador disser que a arte
+  estabilizou. O item abaixo ("Quando começar") fica como histórico.
+- **Quando começar (operador, 2026-09-27):** assim que o Codex sair do `render/`. Ele está
+  ajustando o azimute da câmera do Blender e vai mexer nos assets. Até lá, a F-ESC não
+  começa.
+- **Liberada (operador, 2026-09-27, noite 6):** o Codex leu o kam_remake, e o KaM é
+  **ortogonal**:
+  - tiles quadrados de 40×40, `glOrtho`, e conversão que não mistura X com Y;
+  - estrada por máscara dos quatro vizinhos cardinais;
+  - o que parece isométrico é a arte, desenhada em perspectiva oblíqua dentro de
+    retângulos.
+
+  O grid quadrado está alinhado com o código real. A F-ESC pode seguir, e a régua do
+  homem continua valendo.
+- **Origem:** pedido do operador, 2026-09-27: medir a altura real dos seis sprites
+  contra a largura do footprint e propor a regra "altura máxima como múltiplo da
+  largura". Nesta sessão houve **medida e proposta**, nenhum código.
+- **Medida (verificada, 2026-09-27)**, lida do cabeçalho IHDR de
+  `assets/sprites/<id>/<id>_completo.png`. Nenhum PNG foi aberto. Tile = 64 px.
+
+  | sprite | footprint | arquivo (px) | largura do footprint | altura / largura | altura − fundo×64 |
+  |---|---|---|---|---|---|
+  | storehouse | 3×3 | 192×198 | 192 | **1,03** | +6 |
+  | schoolhouse | 3×3 | 192×192 | 192 | 1,00 | 0 |
+  | woodcutters | 3×2 | 192×182 | 192 | 0,95 | +54 |
+  | quarry | 3×2 | 192×149 | 192 | 0,78 | +21 |
+  | inn | 4×3 | 256×178 | 256 | 0,70 | −14 |
+  | sawmill | 4×2 | 256×157 | 256 | **0,61** | +29 |
+
+  Hoje a altura sai da proporção da arte: o derivador corta pelo alfa e escala para
+  a largura do footprint (`tools/derivar-sprites.js:84-93`,
+  `alturaAlvo = round(recorte.altura × larguraAlvo / recorte.largura)`). Nada limita
+  a altura. A faixa é **0,61 a 1,03** da largura.
+- **Divergência — confirmada pelo operador (2026-09-27): era o zoom 2×.** O operador citou a Casa do Coronel com
+  cerca de 380 px de altura. O arquivo tem 192. **Confirmado pelo operador:** ele viu o
+  prédio no zoom 2× (tile de 128 px; os degraus são 32/48/64/96/128), onde 192 × 2 = 384.
+  Se ele mediu a base (`assets/base/`, cerca de 1223×1286), o número é outro. A regra
+  abaixo vale sobre o **sprite derivado**, não sobre a base.
+- **Regra proposta** (para revisão):
+  `altura ≤ k × largura desenhada`, com **k = 1,0** e **exceção por prédio no
+  dado**, para a torre (F28/F28b) e para o que vier com vocação vertical.
+  - Por que 1,0: é o teto que a arte já respeita quase inteira (cinco de seis). No
+    3/4 sobre grid quadrado, um prédio mais alto do que largo lê como torre. A
+    exceção existe para quando isso for intencional.
+  - O que muda **hoje** com k = 1,0: só o armazém, 198 → 192. Isso é −3 % em escala
+    uniforme, 186×192 desenhado, e continua ancorado em [0,5, 1]. Nenhum outro sprite
+    muda.
+  - Alternativa: k = 1,05, que não muda nenhum sprite de hoje e aceita a
+    folga do armazém. Recomendo 1,0, porque a folga não tem motivo na arte.
+  - **Decisão do operador (2026-09-27): k = 1,0.** "Regra que não muda nenhum sprite não
+    é regra." A alternativa 1,05 sai.
+  - **Sobre o fator de transbordo** (correção do BRIEF-ARTE, 2026-09-26): ele
+    continua esperando o número do operador. Ele multiplica a largura, e a regra
+    acima limita a altura **relativa** a essa largura. As duas compõem:
+    `largura = footprint × 64 × fator`, `altura ≤ k × largura`. Esta proposta não
+    inventa o fator.
+  - Onde vive k: `data/terrain.json`, ao lado de `tile_px`. A cena e o teste o leem
+    pelo `gameData.terreno.tilePx`. O derivador **não** lê o dado: tem `TILE_PX = 64`
+    fixo (`tools/derivar-sprites.js:24`), e passa a ler os dois números do JSON.
+    **Decisão do operador (2026-09-27): "corrija junto"**. O `TILE_PX = 64` do derivador
+    vira leitura de `data/terrain.json: tile_px` no mesmo commit da F-ESC, não antes. A
+    exceção fica na entrada do prédio no `assets/manifest.json`. **A sim não usa k**:
+    ele entra pelo loader só porque o `terreno` já vem de lá; se o operador preferir,
+    k fica só no manifesto.
+- **Os três lugares que mudam juntos** (mapeados e lidos, nenhum editado):
+  1. `src/render/scenes/WorldScene.ts:868-872`, `desenharSprite`:
+     `setScale(larguraPx / tamanho[0])` passa a
+     `min(larguraPx / tamanho[0], k × larguraPx / tamanho[1])`. **Render**: fica para
+     quando a outra sessão sair de `src/render/`.
+  2. `tests/F17f-manifesto.test.ts:103-105`: além de
+     `tamanho[0] === footprint[0] × tilePx` (ou × fator, quando vier), afirma
+     `tamanho[1] ≤ k × tamanho[0]`, salvo a exceção declarada.
+  3. `tools/derivar-sprites.js:84-93`: se `alturaAlvo > k × larguraAlvo`, escala pela
+     altura e a largura cai junto. Isso **regenera o armazém**, e o derivado versionado
+     muda, o que é decisão de arte (CLAUDE.md §9).
+  - Só o item 1 está em `src/render/`. Os itens 2 e 3 não são render, mas o 3 muda
+    asset versionado e o 2 afirma o que o 3 produz. Por isso os três vão num commit só.
+- **Aceite (a escrever na implementação, rascunho):**
+  - a) nenhum sprite de prédio no manifesto passa de `k × largura` sem exceção
+    declarada (F17f);
+  - b) o armazém derivado sai com altura ≤ largura;
+  - c) screenshot do roteiro da F17 mostra os seis prédios, e o
+    `test-output/F-ESC.json` grava a caixa desenhada de cada um, medida no passo e
+    não descrita.
+- **Espera:** k já está decidido (1,0). Faltam a exceção por prédio, o fator de
+  transbordo (se ele quiser as duas mudanças no mesmo commit) e a tabela da régua do
+  homem abaixo. Continua sem implementar: o item 1 é render, e a outra sessão está lá.
+- **Extensão (pedido do operador, 2026-09-27): a régua é o HOMEM, não o tile.** Na tela
+  dele, a árvore saiu do tamanho do serf e o mandacaru mais alto que a casa. Pediu a
+  tabela em alturas de cangaceiro (H) e o desvio de cada asset atual. **Nada aplicado.**
+  - **Medida (verificada, 2026-09-27):** altura visível = linhas com alfa > 16, lida
+    do PNG por script. Nenhuma imagem foi aberta com Read. A fonte é a branch
+    `feat/ui-world-polish` em `f9e7b5a`, que é a arte que a tela mostra hoje. Nessa
+    branch o armazém derivado tem 192×182, e na `main` ainda 192×198: a tabela de
+    cima é da `main`. **H = serf, 73 px.** As unidades vão de 69 (laborer) a 77 (Cabra),
+    e o knight tem 98, montado.
+  - Alvo (operador): casa térrea ~2,5 H = 182 px; sobrado ~3,5 H = 255; mandacaru ~2,2 H
+    = 161; árvore adulta ~3,0 H = 219; arbusto ~0,6 H = 44.
+
+    | asset | classe (alvo) | visível (px) | em H | alvo (px) | desvio |
+    |---|---|---|---|---|---|
+    | storehouse | térrea | 182 | 2,49 | 182 | 0 % |
+    | woodcutters | térrea | 182 | 2,49 | 182 | 0 % |
+    | inn | térrea | 178 | 2,44 | 182 | −2 % |
+    | sawmill | térrea | 157 | 2,15 | 182 | −14 % |
+    | quarry | térrea | 149 | 2,04 | 182 | −18 % |
+    | schoolhouse | sobrado (hipótese) | 179 | 2,45 | 255 | **−30 %** |
+    | tree | árvore | 77 | 1,05 | 219 | **−65 %** |
+    | umbuzeiro | árvore (hipótese) | 62 | 0,85 | 219 | **−72 %** |
+    | mandacaru | mandacaru | 120 | 1,64 | 161 | −25 % |
+    | facheiro | mandacaru? (operador) | 120 | 1,64 | 161 | −25 % |
+    | xique-xique | mandacaru ou arbusto? (operador) | 120 | 1,64 | 161 / 44 | −25 % / +173 % |
+    | macambira | arbusto | 64 | 0,88 | 44 | **+46 %** |
+
+  - **O que a tabela confirma:** "árvore do tamanho do serf" é medida: 77 contra 73. A
+    árvore é o maior desvio da tabela.
+  - **O que ela não confirma:** "mandacaru mais alto que a casa" **não** se reproduz em
+    altura total (120 contra 149 a 182). **Hipótese:** o olho compara com a *elevação*
+    da casa (do chão ao cume), não com a caixa inteira. A caixa inclui a profundidade do
+    telhado em 3/4. A conta ingênua `altura − fundo × 64` dá de −14 a +54 px, abaixo do
+    mandacaru, o que é compatível. Para ter a elevação de verdade, é preciso medir
+    beiral e cume na arte, e isso não foi medido. **A comparação casa × planta em H
+    fica frouxa até essa medida existir**, porque a altura total da casa não é a mesma
+    grandeza da altura da planta.
+  - **Conflito com k = 1,0 (para decisão):** o sobrado a 3,5 H = 255 px num footprint
+    3 (192 px) dá 1,33 × largura, e k = 1,0 o recusa. As saídas são um fator de
+    transbordo ≥ 1,33 para ele, uma exceção por prédio no manifesto, ou o sobrado
+    ocupar 4 de largura. A térrea a 2,5 H = 182 cabe em k = 1,0 só com footprint ≥ 3:
+    prédio de 2 de largura (128 px) teria o mesmo conflito. Hoje não há nenhum entre os
+    seis. A vegetação **não** está sob k, que é regra de prédio; a árvore a 219 px sobre
+    1 tile é o que o alvo pede.
+  - **Decisão do operador (2026-09-27): exceção por prédio, declarada no dado.** k = 1,0 é
+    o padrão; o sobrado, de dois andares, e a torre declaram o próprio fator. **O
+    footprint não muda para caber arte:** é dado de simulação. A saída "sobrado em
+    largura 4" está descartada.
+  - **A árvore (operador, 2026-09-27):** 1,05 H contra 3,0 H da tabela, **−65 %**. É o
+    maior desvio da régua e o mais visível na tela: o serf é quase do tamanho da árvore
+    que ele derruba. **Não se mexe agora:** a arte é da outra sessão. O número fica
+    registrado aqui para quando ela entrar.
+  - **Medida no KaM original (2026-09-27, `tools/kam-medir.js`, cabeçalho dos `.rx`
+    da instalação do operador).** A tabela e a leitura estão no `docs/BRIEF-ARTE.md`,
+    bloco "MEDIDO NO KAM". O que toca esta feature:
+    - **k = 1,0 é o KaM.** Sem a torre, a altura sobre a largura do sprite vai de 0,61 a
+      1,02 (mediana 0,76) nos 27 prédios. **A única exceção é a torre de vigia: 1,27.**
+      É a mesma regra que o operador decidiu: padrão 1,0, exceção declarada.
+    - **Árvore:** a adulta do KaM mede 2,2–3,25 H (mediana 2,65 H), com H = serf. O
+      alvo 3,0 H está dentro da faixa, perto do topo. A nossa, com 1,05 H, fica abaixo
+      da menor árvore do KaM.
+    - **O footprint não vem do `houses.dat`:** o `BuildArea` do binário não é o lote.
+      O lote é o `PlanYX` do código do kam_remake, conferido no `KM_Terrain.pas`.
+  - **Decisão do operador (2026-09-27): fator de transbordo de largura 1,0, com
+    exceções.** Não 1,15. O 1,15 do KaM provavelmente inclui a sombra, que o KaM desenha
+    dentro do sprite e nós não. Sem ela, o 1,02 medido confirma o limite. Com isso
+    `largura = footprint × 64` continua valendo para o padrão, e a exceção se declara no
+    dado, prédio a prédio.
+  - **Decisão do operador (2026-09-27): a tradução é pelo HOMEM, não pelo lote.** A
+    térrea fica com **182 px** (2,5 H), e não com 159 (0,83 × 192). *"O jogador julga o
+    prédio contra as pessoas que andam ao lado, não contra um tile que ele não
+    enxerga."* **Consequência, esperada e não defeito:** o nosso tile vale 0,88 H, e o do
+    KaM 1,0 H, então os nossos prédios transbordam mais do lote do que os de lá.
+  - **Espera, depois destas duas decisões:** só a outra sessão sair de `src/render/`
+    (item 1) e a lista das exceções por prédio (sobrado, torre).
+  - **Classificação em aberto (operador):** Casa do Coronel como sobrado é hipótese
+    minha, pelo nome. O umbuzeiro como árvore adulta também. Facheiro e xique-xique
+    ficam para o operador: o facheiro é colunar como o mandacaru, e o xique-xique é
+    baixo e rasteiro, o que puxaria para arbusto.
+  - **Registro de arte:** a regra ("a régua é o homem; toda arte nova declara sua
+    altura em H antes de ser gerada") está em `docs/BRIEF-ARTE.md`, seção "Tamanho e
+    âncora".
+
 ### F-VIVO — O prédio vivo: trabalho, estoque e animais (render)
 
 Camadas ancoradas sobre o sprite estático (`docs/BRIEF-ARTE.md` §4a): laço de trabalho,
 fumaça, pilha por unidade na entrada e na saída, animais do curral. Só render: nada em `sim/`.
+
+- **F-VIVO-c e F-VIVO-d fora da fila (decisão do operador, 2026-09-27)**: são render, e
+  outra sessão trabalha em `src/render/` e `src/ui/` numa branch. Voltam à fila quando
+  ela mergear. A ordem delas não muda.
 
 - **Nota (decisões do operador, 2026-09-26):**
   - Estoque **por unidade**: 28 imagens, e o render empilha até 5.
@@ -3725,6 +4619,20 @@ leem `GameState`: **nenhum toca em `sim/`**.
   `tools/shots/F-VIVO-b.js`. Um quadro por tick (`TICKS_POR_QUADRO = 1`). No caso 2
   o relógio anda com o trabalhador no tile (`colhendo`), e o laço aparece no prédio
   enquanto ele está no campo: pergunta em aberto no `PROGRESS.md`.
+- **Nota para o render (LOTE3-b1, 2026-09-27):** a receita com colheita ganhou
+  `colheita.ticksNoTile`.
+  - `ticksDoCiclo` continua sendo o ciclo inteiro, e o render não precisou mudar.
+  - No Canavial, de 0 a `ticksNoTile` o canavieiro está no tile, e dali até o fim está
+    dentro da casa (`trabalhando`). Com isso a prensa já anima quase só com ele dentro.
+  - Animar SÓ na fase da casa pede que o render leia `ticksNoTile`. Fica para quando o
+    Codex quiser.
+- **Nota para o render (LOTE3-b2, 2026-09-27):** a ordem do ciclo agora é
+  `colheita.ticksDeDescanso` dentro do prédio (`trabalhando`, a tarefa já reclamada),
+  depois `ticksNoTile` no tile, e o resto até `ticksDoCiclo` dentro da casa.
+  - O resto é zero na fazenda, no lenhador e no pescador.
+  - Quarry, farm, woodcutters e fishermans também têm fases agora.
+  - O relógio de 0 a `ticksDoCiclo` que o render lê não mudou de sentido.
+  - Animar só a casa é `ticksDeDescanso + ticksNoTile` a `ticksDoCiclo`.
 
 **Aceite da F-VIVO-c (os animais).**
 - `animaisDoCurral(predio, dados)` é pura e devolve 5 posições, com a idade de 1 a 3
@@ -3819,6 +4727,42 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
   `tools/shots/_canvas.js`, é o aperto que rola até o botão e reprova se ele estiver
   coberto.
 
+### F-DEV — O `npm run dev` recusa porta ocupada e não deixa órfão (ferramenta)
+- **Origem (operador, 2026-09-26):** o BUG-K consertou o `tools/shot.js`, mas o
+  `npm run dev` continua deixando órfão.
+- **O padrão, verificado nesta sessão:**
+  - `"dev": "vite"` sobe o servidor por `npm` → `cmd.exe` → `node vite.js`.
+  - Parar o `npm` mata o `cmd` e deixa o `node vite.js`, neto, escutando a porta.
+  - Foi o caso do `npm run dev` da UI-barra-a (PIDs 4064/32576). Ele ficou de pé
+    depois de o agente dizer que estava desligado, e a carga dele derrubou o
+    `npm run verify` por timeout duas vezes.
+  - Sem `--strictPort`, o vite seguinte pula calado para a próxima porta livre. O
+    órfão continua servindo a árvore velha, e ninguém avisa.
+  - É o mesmo defeito que o BUG-K matou no roteiro, com as duas armas prontas em
+    `tools/shot.js`: `portaJaResponde` (recusa antes de subir) e `derrubarServidor`
+    (`taskkill /pid <p> /T /F`, desce a árvore).
+- **Escopo:**
+  - Um `tools/dev.js` que o `"dev"` do `package.json` chama. Ele pergunta à porta
+    (5173, ou `CANGACO_DEV_PORTA`) antes de subir.
+  - Se ela já responde, recusa com a mesma frase do roteiro, que nomeia o
+    `netstat -ano | findstr :<porta>`, e sai com código ≠ 0.
+  - Se está livre, sobe o vite com `--strictPort` e, no `SIGINT`/`SIGTERM`/`exit`,
+    derruba a árvore inteira por `taskkill /T`.
+  - As duas funções saem de `tools/shot.js` para um módulo comum, e o roteiro passa a
+    importá-las. Duas cópias da mesma defesa divergem.
+- **Aceite:**
+  - (a) com um servidor qualquer escutando a porta, `npm run dev` sai com código ≠ 0,
+    a mensagem nomeia a porta, e nenhum vite novo fica de pé;
+  - (b) com a porta livre, `npm run dev` sobe e responde, e depois de parado (Ctrl+C,
+    ou kill do pid do `npm`) nenhum processo escuta a porta, conferido por `netstat`;
+  - (c) os roteiros seguem verdes com o módulo comum.
+- **Fora:** matar o dono da porta ocupada. Recusar e nomear basta: o dono pode ser
+  a sessão de outra pessoa (os 5188/5189 desta noite eram do operador).
+- **Entregue (2026-09-26, noite 17).** `tools/dev.js` + `tools/_servidor.js`. Além do
+  escopo, uma vigia: matar só o pid do `npm` não manda sinal a ninguém, então o
+  `dev.js` pergunta a cada segundo se o pai (`cmd`) e o avô (`npm`) seguem vivos, e
+  derruba a árvore do vite quando um morre. Ctrl+C não tem prova automatizada.
+
 ## Fase C — Militar
 
 ### F24a — As armas separadas nas seis do GDD (dado + sim)
@@ -3897,6 +4841,78 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
   - a saída das três casas chega ao armazém, pelo caminho real;
   - uma regra no `validate:data` que recusa id em `production.receitas.*.sai` fora de
     `economy.mercadorias`. Hoje nenhuma regra confere isso, e por isso o buraco passou.
+### F-CERCO-a — Tropa ataca prédio, por ordem (sim)
+- **Origem (decisão do operador, 2026-09-28)**: *"ele vem ANTES da F25 (Quartel), não só
+  antes da F34. Sem ele o combate não tem objetivo — tropa mata tropa e a partida não
+  acaba."* O que a VARREDURA-KAM leu no fonte está em `docs/varredura-kam.md`, frente 4.
+- **Regras do KaM, que o operador mandou usar**:
+  - **Corpo a corpo tira 2 de HP por golpe, sem sorteio.** Attack e Defence não entram
+    (`KM_UnitTaskAttackHouse.pas:191-192`).
+  - **Obra inacabada cai mais rápido.** No KaM, vida = progresso − dano
+    (`KM_Houses.pas:1175`). Aqui isso sai de graça: o `hp` da obra já é o HP martelado
+    (`state.ts`, `PredioBase.hp`). O dano subtrai do `hp`, e não nasce campo novo.
+  - **A ordem é explícita. Tropa nunca ataca prédio sozinha.** No KaM só a ordem
+    `gicArmyAttackHouse` cria a tarefa (`KM_GameInputProcess.pas:1009`,
+    `KM_UnitWarrior.pas:940-962`).
+  - O número 2 vai para `data/combat.json`, com `escala` de combate. Nada de literal no `.ts`.
+- **Pré-requisito que o item traz: dono.** Hoje o estado não tem lado; sem lado não
+  existe prédio inimigo.
+  - O item acrescenta `lado` a `PredioBase` e a `Unidade`. A vila do jogador é o lado 0.
+  - **Custo medido compilando (2026-09-28), depois revertido:**
+    - no prédio, 27 erros: 3 em `src/sim/` (`state.ts` ×2, `systems/build.ts`) e 24 em testes e fixtures;
+    - na unidade, 7 erros: 2 em `src/sim/` (`state.ts`, `systems/escolas.ts`).
+- **Tropa antes do Quartel:** o soldado nasce por fixture de teste. A F25 é quem o
+  cria em partida, e a ordem pela tela é da F26. Aqui a ordem é o comando
+  `AttackBuilding { unidades, predio }` em `commands.ts`.
+- **Escopo**:
+  - o comando valida o alvo: prédio do próprio lado é recusado, e a recusa não muda o estado;
+  - o soldado anda até encostar no prédio e golpeia no ritmo da cadência do combate;
+  - HP zero leva o prédio pelo mesmo caminho da demolição (`systems/demolicao.ts`,
+    F16a). As tarefas são liberadas e o ocupante sai.
+  - Evento novo só nasce se o aceite ou a tela o consumirem.
+- **Fora**:
+  - projétil em prédio (entra com o arqueiro, ver F28);
+  - a tela da ordem (F26);
+  - fogo no prédio (o KaM tem 8 níveis, `KM_Houses.pas:1352`), que é render e fica para depois, com registro.
+- **Pergunta ao operador, antes do código.** A nossa `cadenciaDeAtaque_segundos_base`
+  (0,5 s) foi dobrada junto com o HP das unidades (`combat.json` `multiplicadorHP`). O
+  golpe do KaM em prédio sai a cada ~1,2 s (HIPÓTESE, lida e não medida). Com 2 por
+  golpe na cadência dobrada, o prédio cai ~2,4× mais rápido que no KaM. O `multiplicadorHP`
+  foi feito para unidade, não para prédio. A decisão é: 2 por golpe na nossa cadência,
+  ou um ritmo de golpe em prédio próprio.
+- **Aceite**:
+  - N soldados com a ordem tiram exatamente 2 × golpes do `hp` de um prédio inimigo;
+    o prédio chega a 0 e some, e as invariantes do JobBoard continuam valendo;
+  - um soldado encostado num prédio inimigo por T ticks, **sem a ordem**, não tira HP nenhum;
+  - uma obra com `hp` h cai em ⌈h/2⌉ golpes, menos que o mesmo prédio completo;
+  - uma ordem contra prédio do próprio lado é recusada, e o estado fica igual;
+  - a mesma corrida duas vezes dá o mesmo estado.
+
+### F-CERCO-b — Reparo: ligado prédio a prédio, começa desligado (sim)
+- **Origem (decisão do operador, 2026-09-28)**: *"item próprio, logo depois. É o
+  contrapeso, e sem ele o ataque fica sem resposta. Ligado prédio a prédio e começa
+  desligado, como lá."*
+- **Regras do KaM**:
+  - o reparo devolve 5 de HP por martelada do laborer (`KM_UnitTaskBuild.pas:995-1001`);
+  - o prédio só entra na lista se o reparo estiver ligado nele;
+  - para o jogador humano, o reparo começa desligado (`KM_Houses.pas:532`, `:1307-1308`).
+  - **A nossa martelada já vale 5** (`buildings.json` `hpPorMartelada`). O reparo
+    reaproveita a martelada da obra, sem número novo.
+- **Escopo**:
+  - o comando `SetBuildingRepair { predio, ligado }` (o GDD já lista "ligar/desligar reparo", `GDD.md:153`);
+  - o campo nasce desligado;
+  - o prédio completo com `hp` abaixo do teto e reparo ligado gera tarefa de reparo no
+    JobBoard, e o laborer a reclama;
+  - a tarefa tem `release` em todo ramo de erro: prédio demolido, reparo desligado no
+    meio, unidade morta.
+- **Fora**: o botão no painel do prédio é item de UI à parte, porque §10 não deixa
+  misturar sim e render.
+- **Aceite**:
+  - com o reparo desligado, o prédio danificado não recebe martelada nenhuma;
+  - ligado, o `hp` sobe 5 por martelada até o teto e para, e a tarefa some;
+  - desligar no meio libera a tarefa, e as reservas voltam;
+  - o prédio completo sem dano não gera tarefa, mesmo com o reparo ligado.
+
 ### F25 — Barracks e criação de soldado
 - **Nota (decisão do operador, 2026-09-26): a arte dos mercenários espera o Quartel.**
   Os cinco mercenários (`rebel`, `rogue`, `vagabond`, `barbarian`, `warrior`) ficaram
@@ -3911,8 +4927,21 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
   tile estiver, que é justamente onde selecionar importa.
 ### F27 — Formação, virar e storm attack
 ### F28 — Combate e IA inimiga simples
+- **Nota (decisão do operador, 2026-09-28): o alcance mínimo do arqueiro entra no item
+  do arqueiro, não sozinho.** Hoje o arqueiro está dentro desta F28.
+  - **Divergência registrada:** o KaM atira de 4 a 10,99 tiles ("atira a 4, não a 3";
+    `KM_UnitWarrior.pas:837-857`). O nosso `combat.json` `aDistancia.alcance_tiles` diz 8,
+    sem mínimo.
+  - **A decisão é do operador, quando o arqueiro existir.** O mínimo muda a tática:
+    arqueiro encostado não atira, e o KaM faz ele recuar
+    (`KM_UnitTaskAttackHouse.pas:98-101`).
+  - Herdado da F-CERCO-a: o projétil que cai em prédio inimigo tira **1 de HP, sem
+    sorteio** (`KM_Projectiles.pas:325-330`).
 
 ### F28b — Torre de Pedra: o recruta atira pedra de cima (sim + render)
+- **Feature de integração (§10 do CLAUDE.md; decisão do operador, 2026-09-27)**: toca
+  `src/sim/` (munição, alvo, tiro) e `src/render/` (o tiro na tela) no mesmo item, por
+  exceção escrita aqui. A exceção vale **só** para esta feature; nenhuma outra a herda.
 - **Origem (decisão do operador, 2026-09-26)**: *"A Torre é defesa e entra com a Fase
   C."* Hoje a `watchtower` constrói, mas é casca (panorama dos 28 prédios, `PROGRESS.md`
   2026-09-26 noite 3). Ela vem depois da F28 porque atira em inimigo, e inimigo só
@@ -3925,7 +4954,12 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
   A escolha do alvo usa ordem determinística: o inimigo mais perto e, no empate, o de
   menor id. O tiro é evento (`state.events`). A pedra que cai não volta.
 - **Aceite**: uma torre abastecida mata inimigos dentro do alcance até a pedra acabar e
-  não atira fora dele. A contagem de pedras gastas é igual à de mortos. Sem pedra, a
+  não atira fora dele. A contagem de pedras gastas é igual à de mortos.
+  - **Decisão explícita do operador (2026-09-28): a pedra da torre nunca erra.** No KaM
+    ela pode errar se o alvo andou: o sorteio é pela distância entre onde a unidade
+    está e onde a pedra cai (`KM_Projectiles.pas:305-306`). Aqui não erra, e é por isso
+    que "pedras gastas = mortos" vale. Nas palavras dele: *"erro de pedra é
+    aleatoriedade que ninguém vai notar"*. Simplificação escrita, não implícita. Sem pedra, a
   torre não atira, e o painel diz por quê.
 - **Fora**: a névoa de guerra que a torre revela (GDD §6.5) fica para depois, com
   registro.
@@ -3960,12 +4994,43 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
   faz nada.
 - **O que o dado já diz** (GDD §4.4, `economy.json` `marketplace`): **taxa fixa** e no
   máximo **10 serfs** negociando. Existe só no Remake (GDD §5.2 \*).
-- **Escopo a medir antes de detalhar**: a tabela de troca (qual mercadoria vale quanto
-  de qual) não está em `data/`, nem o GDD a fixa. **Pergunta para o operador quando o
-  item for o primeiro da fila**: taxa única para todo par, ou tabela por mercadoria?
-- **Aceite (esboço)**: o jogador pede N de B em troca de A. Os serfs levam A à feira e
-  trazem B ao armazém pela taxa do dado, nunca mais de 10 de uma vez. Com A em falta, a
-  troca espera, e o painel diz por quê.
+- **Escopo (escrito em 2026-09-27, leitura conservadora, para revisão)**:
+  - **Dado.** Hoje `economy.json:marketplace` tem só `taxaFixa: true` e `maxSerfs: 10`
+    (conferido). A taxa entra no mesmo objeto como **número único**: quantas unidades de
+    A se entregam por uma de B, para qualquer par de `economia.mercadorias`. O schema a
+    valida em `tools/data-schema.js`. O valor é do operador; sem ele o item não começa.
+  - **Comando.** `SetTrade { predio, da, para, quantidade }` (união de `commands.ts`) fixa
+    uma ordem permanente na feira: trocar A por B até `quantidade` de B. Quantidade 0
+    cancela. Uma ordem por feira. Tudo é recusado com motivo: prédio que não é feira
+    completa, A = B, mercadoria fora da lista.
+  - **Fluxo, pelo JobBoard.** A feira é consumidora de A e produtora de B: pede A ao
+    armazém como qualquer insumo (tarefa de serf, reserva na origem e na vaga), e com
+    `taxa` de A na gaveta de entrada fecha **uma** troca no tick: debita A e credita
+    1 de B na gaveta de saída, que os serfs escoam como de qualquer prédio. Sem ciclo e
+    sem trabalhador: `buildings.json` não lhe dá `trabalhador`. Trocar no tick em que o
+    insumo completa é a leitura mais conservadora, porque o GDD não fala em tempo de
+    troca, e duração nova seria número inventado.
+  - **Os 10 serfs.** No máximo `maxSerfs` tarefas reclamadas com a feira como origem ou
+    destino ao mesmo tempo. A 11ª fica aberta até uma fechar. É a leitura literal do
+    GDD §4.4 ("máximo de 10 serfs negociando").
+  - **UI.** O painel da feira mostra a ordem, o que falta de A e quantas trocas já saíram.
+  - **Fora**: tabela por mercadoria (decisão abaixo), preço que varia com o uso e troca
+    com outro jogador.
+- **Decisão do operador (2026-09-27)**: **uma taxa só, fixa**, para todo par. A tabela
+  por mercadoria sai de vez. Continua faltando o **valor** da taxa, que é do operador:
+  sem ele o item não começa.
+- **Decisão do operador (2026-09-27, noite): taxa 2 para 1.** O jogador dá duas unidades
+  de A e recebe uma de B. *"Troca deve custar, senão a Feira vira atalho para toda
+  escassez."* O item pode começar: `economy.json:marketplace.taxa = 2`.
+- **Aceite**:
+  - (a) com a ordem "B por A" e A no armazém, B chega ao armazém. O A debitado é igual a
+    `taxa` × o B creditado, somado na corrida inteira.
+  - (b) nunca há mais de `maxSerfs` tarefas da feira reclamadas no mesmo tick, conferido
+    em todo tick de um cenário com 20 serfs ociosos.
+  - (c) sem A no armazém a troca espera, nenhum B aparece, e o painel diz por quê
+    (screenshot, com o roteiro despausado da §8).
+  - (d) cancelar a ordem com A a caminho larga as tarefas pelo `release`, sem A perdido:
+    a soma de A no mundo, no armazém, nas gavetas e nos serfs, fica igual.
 
 ### F36 — Prefeitura: mercenários pagos em ouro (sim + ui)
 - **Origem (decisão do operador, 2026-09-26)**: pode esperar. Depende da F25 (soldado
@@ -3973,9 +5038,42 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
 - **O que o dado já diz** (GDD Anexo A): ouro por mercenário, **pronto na hora**. Rebel
   custa 2, Rogue 3, Vagabond 5, Barbarian 7 e Warrior 8. O `town_hall` recebe ouro do
   Metallurgist's (GDD §4.2).
-- **Aceite (esboço)**: com ouro no prédio, o comando de contratar tira o custo e põe o
-  mercenário na porta, no mesmo tick. Sem ouro, o comando é recusado com motivo. O
-  mercenário não consome arma nem recruta.
+- **Escopo (escrito em 2026-09-27, leitura conservadora, para revisão)**:
+  - **Dado (conferido).** `units.json:mercenarios.tipos` já traz os cinco com
+    `custoOuro` 2/3/5/7/8 e os atributos. `buildings.json:town_hall` não tem
+    `trabalhador` (4×3, desbloqueado pela Metalurgia). Não entra número novo.
+  - **O ouro chega como insumo.** A Prefeitura pede `gold` ao armazém pelo JobBoard, com
+    a tarefa de ouro da escola (F13a) como molde, e o custo sai da gaveta de **entrada**
+    dela, não do armazém. É a leitura do GDD §4.2, "o `town_hall` recebe ouro do
+    Metallurgist's".
+    Há uma diferença, conferida em `src/sim/escola.ts:66` (`ouroNecessario`): a escola
+    pede ouro pela **fila**, isto é, itens que não começaram vezes o custo, menos o que
+    está na gaveta. A Prefeitura contrata na hora e não tem fila, então precisa de um
+    **alvo de estoque**, e esse número não existe em `data/`.
+    **Decisão do operador (2026-09-27): o alvo é 8**, o custo do mais caro. Ele é lido do
+    dado (o máximo de `custoOuro`), não é digitado nem vira campo novo.
+  - **Comando.** `HireMercenary { predio, tipo }` em `commands.ts`. Com `custoOuro` na
+    gaveta, debita e cria a unidade militar do tipo na aproximação da porta, **no mesmo
+    tick** ("pronto na hora", GDD Anexo A). Sem fila e sem duração. Recusa com motivo:
+    prédio que não é Prefeitura completa, tipo desconhecido, ouro insuficiente.
+  - **Dois comandos no mesmo tick** leem o estado velho. O segundo é recusado se o
+    primeiro esvaziou a gaveta, e a regra é conferida em sequência, dentro do `step`.
+  - **O mercenário** é unidade militar comum a partir dali: ordem direta (F26), combate
+    (F28). Não consome arma, recruta nem escola.
+  - **UI.** O painel da Prefeitura mostra o ouro na gaveta e um botão por tipo, com o
+    custo. O botão sem ouro fica desabilitado e diz o que falta.
+  - **Fora**: a arte e a arma dos mercenários (nota da F25; `docs/BRIEF-ARTE.md` manda
+    não gerar) e o limite de mercenários por partida, que o GDD não fixa.
+- **Aceite**:
+  - (a) com ouro na gaveta, `HireMercenary` debita exatamente o `custoOuro` do tipo e a
+    unidade existe no tick do comando, junto à porta.
+  - (b) sem ouro suficiente, o comando é recusado com motivo e o estado fica igual
+    (comparação byte a byte).
+  - (c) com ouro para um só, dois comandos no mesmo tick: o primeiro passa e o segundo é
+    recusado.
+  - (d) nenhum recruta, arma ou escola muda de estado na contratação.
+  - (e) o painel mostra os cinco custos e desabilita o que não cabe (screenshot, com o
+    roteiro despausado da §8).
 ---
 
 ## Regras da fila

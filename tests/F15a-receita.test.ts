@@ -14,13 +14,15 @@ import { describe, expect, it } from 'vitest';
 import { gameData, loadGameData, rawGameData } from '../src/sim/data';
 
 describe('F15a — a receita e um ciclo', () => {
-  it('quarry: um ciclo de 167 ticks rende 1 stone, e o veio e finito', () => {
+  it('quarry: um ciclo de 501 ticks rende 3 stone, e o veio e finito', () => {
     const r = gameData.producao.receitas.quarry;
     expect(r).toBeDefined();
-    expect(r?.ticksDoCiclo).toBe(167);
+    // LOTE3-c: 3 por viagem, o ciclo triplo (1 a cada 167 como antes, na taxa `sai`)
+    expect(r?.ticksDoCiclo).toBe(501);
     expect(r?.entra).toEqual({});
-    expect(r?.sai).toEqual({ stone: 1 });
-    expect(r?.colheita).toEqual({ recurso: 'rock', alcance: 6, aDistancia: false });
+    expect(r?.sai).toEqual({ stone: 3 });
+    // LOTE3 — descanso, tile e (o resto do ciclo) a casa
+    expect(r?.colheita).toEqual({ recurso: 'rock', alcance: 6, aDistancia: false, ticksDeDescanso: 78, ticksNoTile: 126 });
   });
 
   it('sawmill: 1 tronco -> 2 timber, a razao vindo das taxas e nao de um literal', () => {
@@ -31,16 +33,16 @@ describe('F15a — a receita e um ciclo', () => {
     expect(r?.colheita).toBeNull();
   });
 
-  it('woodcutters: 545 ticks por tronco, colhendo a arvore do tile (F-T4b)', () => {
+  it('woodcutters: 423 ticks por tronco, colhendo a arvore do tile (F-T4b; lote 2, 2026-09-27)', () => {
     const r = gameData.producao.receitas.woodcutters;
-    expect(r?.ticksDoCiclo).toBe(545);
+    expect(r?.ticksDoCiclo).toBe(423);
     expect(r?.entra).toEqual({});
     expect(r?.sai).toEqual({ tree_trunk: 1 });
     // ESTRITA onde a antiga era frouxa: `toBeNull` afirmava a AUSENCIA de um
     // campo, e passava com qualquer receita que nao colhesse nada. Esta afirma
     // a FORMA inteira — recurso, alcance e nenhuma outra chave —, que e o que a
     // regra de classe da F-T3 le para mandar o lenhador ate a arvore.
-    expect(r?.colheita).toEqual({ recurso: 'tree', alcance: 6, aDistancia: false });
+    expect(r?.colheita).toEqual({ recurso: 'tree', alcance: 6, aDistancia: false, ticksDeDescanso: 92, ticksNoTile: 331 });
   });
 
   it('as proporcoes que o GDD escreve em palavras saem do dado', () => {
