@@ -5281,7 +5281,7 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
   - O tipo é o primeiro de `units.json: militares` do tipo de grupo da posição que o
     quartel consegue formar.
   - Teste: `tests/F28-IA-repor.test.ts`.
-- **Ponto 5 BLOQUEADO (sessão autônoma, 2026-09-28):** "alimentar os famintos" não tem
+- **Ponto 5, agora C-IA-01 (IA alimentar tropas; sigla migrada em 2026-09-28), BLOQUEADO (sessão autônoma, 2026-09-28):** "alimentar os famintos" não tem
   onde agir. Na sim só o civil sente fome (`sim/condicao.ts: drenaCondicao`, "quando o
   Feed existir, este predicado é o único lugar a mudar"), e o comando `Feed` não existe.
   **Pré-requisito:** fome militar mais o `Feed` (F27/F28), que é item novo, fora da fila
@@ -5500,9 +5500,9 @@ Ordem do operador. Cada item tem plano em `docs/planos/2026-09-28-C<n>-*.md`.
       - O armazém e a Casa do Coronel (1,1146) ganharam exceção de 1,12, e a tela não muda.
         PARA REVISÃO: tirar as exceções os encolhe ao lote.
       - Teste `tests/C10-largura.test.ts`; o roteiro F-ESC afirma a largura.
-- **D1 — civis colidem entre si (pedido do operador, 2026-09-28; plano em
+- **D-MOVIMENTO-01 (antes D1) — civis colidem entre si (pedido do operador, 2026-09-28; plano em
   `docs/planos/2026-09-28-D1-colisao-civil.md`).** O GDD §6.4 foi revisto.
-  - **D1a — o mecanismo, desligado por dado. ENTREGUE.**
+  - **D-MOVIMENTO-01a (antes D1a) — o mecanismo, desligado por dado. ENTREGUE.**
     - Troca de frente, empurrão do ocioso, desvio e troca forçada.
     - Estados "dentro" não ocupam tile.
     - Chave `units.json colisaoCivil.ligada = false`.
@@ -5511,24 +5511,24 @@ Ordem do operador. Cada item tem plano em `docs/planos/2026-09-28-C<n>-*.md`.
       - desligada, a suíte fica igual sem mudar nenhum teste;
       - ligada, os cenários de corredor, porta, destino ocupado e desvio passam com a
         invariante limpa.
-  - **D1b — ligar e medir. ENTREGUE (só medida; a lista está no PROGRESS).**
+  - **D-MOVIMENTO-01b (antes D1b) — ligar e medir. ENTREGUE (só medida; a lista está no PROGRESS).**
     - 21 testes reprovam por empilhamento vindo de fora do passo (mais 1 guarda do F09, por
       efeito dele).
     - 2 testes afirmam tick exato, 1 mudou de cenário e 1 é de custo.
     - Nenhum teste de calibração reprovou.
-  - **D1a-2 — o empilhamento de fora do passo. ENTREGUE.**
+  - **D-MOVIMENTO-01c (antes D1a-2) — o empilhamento de fora do passo. ENTREGUE.**
     - `trocaCom` na `Unidade`; o empurrão separa ociosos empilhados; a porta espera como o
       KaM.
     - Esperar contra dividir foi medido na F-CAL, e esperar não segura a produção.
     - O D1b repetido: sobram 5 reprovações, contra 24, e o empilhamento caiu de 21 para 1.
     - F15a e F18d-1a têm valor por estado da chave (a faixa foi recusada).
-  - **D1a-3 — "na porta" por estado da chave, fixture da F20b, JobBoard sem A* na tarefa
+  - **D-MOVIMENTO-01d (antes D1a-3) — "na porta" por estado da chave, fixture da F20b, JobBoard sem A* na tarefa
     recusada. ENTREGUE.**
     - A F35(b) cai de 287 594 para 6 124 acertos de cache desligada, e de 1 045 289 para
       6 120 ligada, com o mesmo estado final.
     - A F13a ligada expõe um empilhamento permanente de ociosos pela troca forçada. Está
       aberto no PROGRESS.
-  - **D1c — o aceite do operador. MEDIDO, NÃO FECHA** (tabela no PROGRESS):
+  - **D-MOVIMENTO-01e (antes D1c) — o aceite do operador. MEDIDO, NÃO FECHA** (tabela no PROGRESS):
     - duas ruas não reduzem a espera da mercadoria na gaveta de forma consistente;
     - o sinal troca entre −7% e +16%, e com a chave desligada as duas dão o mesmo;
     - espera o operador.
@@ -5536,9 +5536,11 @@ Ordem do operador. Cada item tem plano em `docs/planos/2026-09-28-C<n>-*.md`.
     - (1) congestiona: uma rua entrega menos que duas. Se as duas derem o mesmo, prova que
       a fila existe e que a espera cresce com o número de serfs;
     - (2) não trava: 20 000 ticks sem ninguém acima do teto.
-  - **D1d — recalibração em lote**, se a chave for ligada de vez.
-- **Depois da fila:** o Feed e a fome militar, com o plano esperando aprovação. Eles
-  destravam o ponto 5 da F28-IA.
+  - **D-MOVIMENTO-01f (antes D1d) — recalibração em lote**, se a chave for ligada de vez.
+- **Depois da fila:** C-COMIDA-01 (antes F-FEED, fome militar), com o plano esperando
+  aprovação. Ele destrava C-IA-01 (antes F28-IA ponto 5, IA alimentar tropas).
+- **Siglas:** o esquema novo está em `docs/siglas.md` (decisão do operador, 2026-09-28). O que
+  fechou mantém a sigla antiga; os itens abertos migraram.
 
 ### F35 — Feira: trocar mercadoria (sim + ui)
 - **ENTREGUE (2026-09-28, sessão autônoma; plano em `docs/planos/2026-09-28-A17-F35-feira.md`).**

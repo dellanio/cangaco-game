@@ -1,5 +1,5 @@
 /**
- * D1 — a colisao civil (GDD §6.4, revisto em 2026-09-28; plano em
+ * D-MOVIMENTO-01 — a colisao civil (GDD §6.4, revisto em 2026-09-28; plano em
  * docs/planos/2026-09-28-D1-colisao-civil.md). O mecanismo e o do `WalkTo` do kam_remake:
  * a colisao se resolve NO PASSO, nao no A*. Quem vem de frente troca de lugar; o ocioso no
  * caminho e empurrado; passada uma espera, o bloqueado contorna os parados; passada a espera
@@ -18,7 +18,7 @@ import { classeDaUnidade } from './condicao';
 /**
  * Onde a unidade esta, para a colisao, em CADA estado de FSM do jogo. `dentro` e quem esta
  * dentro do predio ou do canteiro (no KaM, dentro da casa): fica no tile da porta mas nao o
- * ocupa. `fora` ocupa o tile. Esquecer um estado aqui e travamento, e por isso o teste do D1a
+ * ocupa. `fora` ocupa o tile. Esquecer um estado aqui e travamento, e por isso o teste do D-MOVIMENTO-01a (mecanismo da colisao civil)
  * varre `src/sim` atras de todo estado escrito ou comparado e reprova o que faltar.
  *
  * `carregando` e `entregando` sao `fora` de proposito: e a fila na porta do KaM (`GoInOut`
@@ -172,7 +172,7 @@ function semMarcas(u: Unidade): Unidade {
 export function passoCivil(state: GameState, u: Unidade, custo: number, dados: GameData): Unidade {
   const caminho = u.fsmData.caminho ?? [];
   const proximo = caminho[0] as TileDeGrid;
-  // D1a-2 — quem espera a porta nao anda: `sistemaDaPorta` libera quando o tile vagar
+  // D-MOVIMENTO-01c (empilhamento de fora do passo) — quem espera a porta nao anda: `sistemaDaPorta` libera quando o tile vagar
   if (u.saindo !== undefined) return { ...u, fsmData: { ...u.fsmData, progresso: custo - 1 } };
   const entrar = (trocaCom: string | null): Unidade => ({
     ...semMarcas(u), gx: proximo.gx, gy: proximo.gy,
@@ -217,7 +217,7 @@ const parado = (u: Unidade): boolean => (u.fsmData.caminho ?? []).length === 0;
 /**
  * O EMPURRAO (IntSolutionPush), com duas causas, na ordem de `unidades.ordem`:
  *  1. o civil ocioso e parado no tile que um civil bloqueado ha `ticksEmpurrar` quer;
- *  2. (D1a-2) o civil ocioso e parado que divide o tile com outro civil fora de troca: o
+ *  2. (D-MOVIMENTO-01c, empilhamento de fora do passo) o civil ocioso e parado que divide o tile com outro civil fora de troca: o
  *     empilhamento que nasce fora do passo (fixture, obra que termina, porta). Fica no tile
  *     o primeiro que nao e ocioso, ou o primeiro de todos.
  * O empurrado vai ao primeiro vizinho livre. Sem vizinho livre, fica: a troca forcada de
@@ -255,7 +255,7 @@ export function sistemaDoEmpurrao(state: GameState, dados: GameData): GameState 
   return atual;
 }
 
-/** D1a-2 — contadores da porta, FORA do estado (o molde de `estatisticasDeBusca` do A*):
+/** D-MOVIMENTO-01c (empilhamento de fora do passo) — contadores da porta, FORA do estado (o molde de `estatisticasDeBusca` do A*):
  *  medida da sessao, nunca regra. `saidas` e quem ganhou `saindo`; `somaDeEspera` e
  *  `maiorEspera` em ticks; `noTeto` e quem saiu pela troca forcada. */
 const porta = { saidas: 0, somaDeEspera: 0, maiorEspera: 0, noTeto: 0 };
@@ -270,7 +270,7 @@ export function zerarEstatisticasDaPorta(): void {
 }
 
 /**
- * D1a-2 — a PORTA (o `GoInOut` do KaM: quem sai de casa espera a porta vagar). Roda depois
+ * D-MOVIMENTO-01c (empilhamento de fora do passo) — a PORTA (o `GoInOut` do KaM: quem sai de casa espera a porta vagar). Roda depois
  * das FSMs e das escolas, comparando com `antes` (o estado de entrada das FSMs):
  *  - o civil que NASCEU neste tick, ou passou de "dentro" para "fora", num tile com outro
  *    civil que ocupa, ganha `saindo: 0`;

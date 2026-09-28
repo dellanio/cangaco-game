@@ -1,5 +1,7 @@
 # Plano — D1: civis colidem (levantamento e custo, ANTES de código)
 
+> **Sigla nova (2026-09-28, `docs/siglas.md`): D-MOVIMENTO-01 (colisão civil).** Sub-itens: 01a (antes D1a), 01b (D1b), 01c (D1a-2), 01d (D1a-3), 01e (D1c), 01f (D1d). O nome deste arquivo fica, porque o PROGRESS o cita.
+
 Pedido do operador (2026-09-28): *"As unidades civis colidem entre si. O congestionamento de
 serfs é mecânica do jogo [...] Corrija o GDD e implemente. Antes de escrever código, leia no
 kam_remake COMO eles resolvem o encontro."* **Status: espera o operador.** Nada foi escrito

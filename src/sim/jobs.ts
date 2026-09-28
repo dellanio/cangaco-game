@@ -799,11 +799,11 @@ export function custoDaTarefa(
  * serf preso reclamaria e soltaria a mesma tarefa a cada tick).
  */
 /**
- * D1a-3 — as recusas do claim que NAO precisam do A*: tudo o que `reclamar` confere antes
+ * D-MOVIMENTO-01d (JobBoard e porta por estado da chave) — as recusas do claim que NAO precisam do A*: tudo o que `reclamar` confere antes
  * do caminho, para a tarefa aberta. E a MESMA regra que `reclamar` aplica (ele chama esta
  * funcao), e existe separada para `reclamarMelhor` descartar a tarefa recusada ANTES de
  * orde-la por custo de caminho: ordenar por A* a tarefa que o claim vai recusar pelo teto da
- * feira era o custo medido na F35(b) (plano D1, secao 8). `null` = nada recusa sem caminho.
+ * feira era o custo medido na F35(b) (plano da D-MOVIMENTO-01, colisao civil, secao 8). `null` = nada recusa sem caminho.
  */
 function recusaSemCaminho(
   state: GameState, tarefa: Tarefa, unidadeId: string, dados: GameData,
@@ -1140,7 +1140,7 @@ export function reclamarMelhor(
 ): ResultadoDoClaimMelhor {
   const abertas = tarefasDoSerfAbertas(state, unidadeId);
   if (abertas.length === 0) return { ok: false, motivo: 'sem-tarefa-aberta' };
-  // D1a-3 — a tarefa que o claim recusa SEM caminho (teto da feira, sem vaga, sem
+  // D-MOVIMENTO-01d (JobBoard e porta por estado da chave) — a tarefa que o claim recusa SEM caminho (teto da feira, sem vaga, sem
   // recurso...) sai antes da ordenacao, que custa um A* por tarefa. A ordem total entre as
   // que sobram e a mesma, entao a tarefa reclamada e a mesma. O que muda e o motivo da
   // falha quando todas sao recusadas: o da primeira recusada NA ORDEM DO QUADRO, e nao na

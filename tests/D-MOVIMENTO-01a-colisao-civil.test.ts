@@ -1,11 +1,11 @@
 /**
- * D1a — o mecanismo da colisao civil, atras da chave `units.json colisaoCivil.ligada`
+ * D-MOVIMENTO-01a — o mecanismo da colisao civil, atras da chave `units.json colisaoCivil.ligada`
  * (plano em docs/planos/2026-09-28-D1-colisao-civil.md, secao 6). O mecanismo e o do WalkTo do
  * kam_remake: troca de frente, empurrao do ocioso, desvio e troca forcada.
  *
  * Os cenarios de mecanismo andam com um laco de movimento proprio (o empurrao e o `andar`
  * da sim, as mesmas funcoes que o `step` chama) para isolar o passo das FSMs: a vila inteira
- * com a chave ligada e o D1b e o D1c.
+ * com a chave ligada e o D-MOVIMENTO-01b (ligar e medir) e o D-MOVIMENTO-01e (aceite da colisao civil).
  */
 import { describe, expect, it } from 'vitest';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
@@ -111,7 +111,7 @@ const trecho = (tiles: Tile[], de: number, ate: number): Tile[] => {
   return r;
 };
 
-describe('D1a — a colisao civil', () => {
+describe('D-MOVIMENTO-01a — a colisao civil', () => {
   it('o dado: a chave comeca desligada, e as esperas sao as do KaM na escala do movimento', () => {
     expect(gameData.movimento.colisaoCivil.ligada).toBe(false);
     expect([C.ticksEmpurrar, C.ticksDesviar, C.ticksRepetirDesvio, C.ticksTrocaForcada]).toEqual([1, 5, 25, 20]);
@@ -150,7 +150,7 @@ describe('D1a — a colisao civil', () => {
       }
       // de frente nao se espera: a troca e imediata, e o mesmo sentido anda em fila
       expect(r.maiorEspera).toBeLessThanOrEqual(1);
-      gravarEvidencia(`D1a-rua-${n}`, { serfs: n, ticks: r.ticks, maiorEspera: r.maiorEspera });
+      gravarEvidencia(`D-MOVIMENTO-01a-rua-${n}`, { serfs: n, ticks: r.ticks, maiorEspera: r.maiorEspera });
     });
   }
 
@@ -243,8 +243,8 @@ describe('D1a — a colisao civil', () => {
     expect(salvar(montar())).toBe(salvar(montar()));
   });
 
-  // ---------- D1a-2: o empilhamento de fora do passo ----------
-  describe('D1a-2 — o empilhamento que nasce fora do passo', () => {
+  // ---------- D-MOVIMENTO-01c: o empilhamento de fora do passo ----------
+  describe('D-MOVIMENTO-01c — o empilhamento que nasce fora do passo', () => {
     it('dois ociosos empilhados: o segundo e empurrado no tick seguinte, e a invariante fica limpa', () => {
       const { s, tiles } = rua(6);
       const s0 = comUnidades(s, [civil('a', tiles[2] as Tile, 'ocioso'), civil('b', tiles[2] as Tile, 'ocioso'), civil('c', tiles[2] as Tile, 'ocioso')]);

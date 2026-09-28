@@ -1,5 +1,7 @@
 # Plano — fome do militar e comando Feed (desbloqueia a F28-IA, ponto 5)
 
+> **Sigla nova (2026-09-28, `docs/siglas.md`): C-COMIDA-01 (fome militar, antes F-FEED).** Ela destrava C-IA-01 (IA alimentar tropas, antes F28-IA ponto 5). O nome deste arquivo fica, porque o PROGRESS o cita.
+
 > **Status: ESPERA APROVAÇÃO DO OPERADOR.** É plano de implementação: nada foi
 > implementado. Escrito por um subagente de planejamento em 2026-09-28, com o fonte do
 > kam_remake (clone `reyandme/kam_remake` no scratchpad) e o código do repo.

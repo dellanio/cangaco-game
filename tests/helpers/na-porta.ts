@@ -1,5 +1,5 @@
 /**
- * D1a-3 — "nasce na porta", com um valor POR ESTADO DA CHAVE da colisao civil (decisao do
+ * D-MOVIMENTO-01d (JobBoard e porta por estado da chave) — "nasce na porta", com um valor POR ESTADO DA CHAVE da colisao civil (decisao do
  * operador, 2026-09-28: o mesmo caso e a mesma solucao do tick exato; a faixa foi recusada
  * porque aceitaria deriva futura sem avisar).
  *  - desligada: todos NA porta, como sempre foi;

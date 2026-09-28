@@ -240,7 +240,7 @@ describe('F20b-4 — o teto de comensais da Bodega', () => {
   it('mais famintos que assentos: nunca passa de `inn.comensaisSimultaneos` a caminho', () => {
     const { estado } = cenarioDaVilaComBodegaCheia();
     let s = estado;
-    // D1a-3 (decisao do operador): os extras nascem em tiles DISTINTOS, livres e andaveis, em
+    // D-MOVIMENTO-01d (JobBoard e porta por estado da chave) (decisao do operador): os extras nascem em tiles DISTINTOS, livres e andaveis, em
     // espiral a partir de (33,33) — nove numa porta so e o que a fixture tinha de artificial
     for (let i = 1; i <= TETO_DE_COMENSAIS; i++) {
       const t = tileLivreJunto(s, 33, 33);

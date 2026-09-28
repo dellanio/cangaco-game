@@ -263,7 +263,7 @@ export interface MovimentoData {
   readonly ticksDesvioMilitar: Ticks;
   /** C5 — a margem, em tiles, da caixa da busca local do desvio (limite de busca). */
   readonly margemDoDesvioMilitar: number;
-  /** D1 — a colisao civil (`units.json: colisaoCivil`). `ligada` false: nada muda. */
+  /** D-MOVIMENTO-01 — a colisao civil (`units.json: colisaoCivil`). `ligada` false: nada muda. */
   readonly colisaoCivil: ColisaoCivilData;
 }
 

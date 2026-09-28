@@ -12040,3 +12040,56 @@ de aquecimento:
   Exemplos: "D1c (aceite da colisão civil)", "F20b (fome e morte)".
 - O esquema novo de siglas (fase-MÓDULO-número) **está em proposta**, com o custo medido e a
   decisão pendente. Nada foi renomeado.
+
+## 2026-09-28 — Siglas novas (`docs/siglas.md`) e a porta como o KaM aprovada
+
+### Decisões do operador
+- **O que fechou mantém a sigla.** Os 126 commits órfãos e a narrativa reescrita custariam
+  mais que o ganho.
+- **11 módulos:** OBRA, TRANSPORTE, PRODUCAO, COMIDA, MOVIMENTO, TERRENO, COMBATE, IA, TELA,
+  ARTE, SAVE.
+  - CERCO saiu: ataque a prédio é COMBATE.
+  - A fronteira entre TELA e ARTE está escrita no `docs/siglas.md`.
+  - Módulo novo só por decisão do operador.
+- **Os abertos migraram agora.**
+- **A regra do nome ao lado da sigla** vale para tudo, antigo e novo, e entrou no CLAUDE.md
+  §6.
+- **A porta espera como o KaM** (D-MOVIMENTO-01c, empilhamento de fora do passo), e não
+  divide o tile. Aprovado com a medida: a vila fecha 47 ticks **antes** esperando. A exceção
+  não se justificou.
+
+### Feito
+- `docs/siglas.md`, com três partes:
+  - o esquema e os 11 módulos com a fronteira entre TELA e ARTE;
+  - a tabela dos migrados;
+  - a tabela das siglas antigas, com nome, situação e chave: 131 linhas mais 7 não
+    iniciadas. A estimativa de "116" da proposta era aproximada.
+- **Migrados:**
+  - série D1 → D-MOVIMENTO-01a..f (colisão civil);
+  - F28-IA ponto 5 → C-IA-01 (IA alimentar tropas);
+  - F-FEED → C-COMIDA-01 (fome militar).
+- **Onde a sigla antiga saiu:**
+  - as chaves do `test-results.json`;
+  - os títulos do `BUILD_PLAN.md` (com "antes D1a" ao lado);
+  - os comentários vivos em `src/`, `data/`, `tools/` e `tests/`;
+  - os nomes `tests/D-MOVIMENTO-01a-colisao-civil.test.ts` e
+    `tests/helpers/d-movimento-01e-{cenario,medida}.ts`;
+  - os identificadores `cenarioDaColisaoNaVila` e `medirEsperaNaGaveta`.
+- Os dois planos mantêm o nome de arquivo, porque o PROGRESS os cita, e ganharam uma linha
+  com a sigla nova.
+- **O PROGRESS antigo não foi reescrito.** As entradas anteriores falam D1a e D1c, e a tabela
+  traduz.
+- CLAUDE.md §6: o commit passa a `feat(<sigla>)`, e a regra do nome ao lado entrou como item
+  8.
+
+### Pergunta em aberto
+- **7 features do BUILD_PLAN nunca começaram e não migraram:**
+  - F18c-2 (recentrar a vila)
+  - F27 (formação e storm attack)
+  - F29 (ferro e smithies)
+  - F30 (armazém com toggles)
+  - F31 (menu de distribuição)
+  - F32 (estatísticas)
+  - F33 (minimapa)
+
+  A decisão contou três abertos. Estes 7 estão abertos também.

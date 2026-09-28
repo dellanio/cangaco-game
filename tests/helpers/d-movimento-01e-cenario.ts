@@ -1,5 +1,5 @@
 /**
- * D1c — o cenario do aceite da colisao civil (plano em docs/planos/2026-09-28-D1-colisao-civil.md,
+ * D-MOVIMENTO-01e — o cenario do aceite da colisao civil (plano em docs/planos/2026-09-28-D1-colisao-civil.md,
  * secao 8). Um armazem com tronco de sobra e SEIS serrarias completas e ocupadas, lado a lado,
  * as portas numa linha de rua; 16 serfs em tiles distintos. O tronco vai do armazem as
  * serrarias e a madeira volta: dois fluxos, sem terreno no meio.
@@ -38,16 +38,16 @@ function areaAberta(s: GameState, largura: number, altura: number): TileDeGrid {
       if (livre) return c;
     }
   }
-  throw new Error('d1c: sem area aberta');
+  throw new Error('colisao na vila: sem area aberta');
 }
 
-export interface CenarioD1c {
+export interface CenarioDaColisaoNaVila {
   readonly estado: GameState;
   readonly serrarias: readonly string[];
   readonly armazem: string;
 }
 
-export function cenarioD1c(ruas: 1 | 2, dados: GameData = gameData): CenarioD1c {
+export function cenarioDaColisaoNaVila(ruas: 1 | 2, dados: GameData = gameData): CenarioDaColisaoNaVila {
   let s: GameState = { ...createInitialState(1, dados), unidades: { porId: {}, ordem: [] } };
   // armazem 3x3 a oeste, 12 tiles de rua ate a primeira serraria; a area cobre as duas rotas
   const larguraDasSerrarias = SERRARIAS * LARGURA_DA_SERRARIA;
@@ -75,14 +75,14 @@ export function cenarioD1c(ruas: 1 | 2, dados: GameData = gameData): CenarioD1c 
   const arm = s.predios.porId['arm'] as PredioCompleto;
   s = { ...s, predios: { ...s.predios, porId: { ...s.predios.porId, arm: { ...arm, estoque: { ...arm.estoque, saida: { ...arm.estoque.saida, tree_trunk: TRONCO_NO_ARMAZEM } } } } } };
   for (const id of [...serrarias, 'arm']) {
-    if (!predioLigadoAoArmazem(s, s.predios.porId[id] as PredioCompleto, dados)) throw new Error(`d1c: '${id}' nao ligado`);
+    if (!predioLigadoAoArmazem(s, s.predios.porId[id] as PredioCompleto, dados)) throw new Error(`colisao na vila: '${id}' nao ligado`);
   }
   // 16 serfs em tiles distintos, fora da rua, em duas linhas acima dela entre o armazem e as serrarias
   const unidades = { porId: { ...s.unidades.porId }, ordem: [...s.unidades.ordem] };
   for (let i = 0; i < SERFS; i += 1) {
     const t = { gx: x0 + 4 + (i % 8), gy: yPorta - 1 - Math.floor(i / 8) };
-    if (!tileAndavel(s, t, 'livre', dados)) throw new Error(`d1c: serf ${i} em tile inandavel`);
-    const u: Unidade = { lado: LADO_DO_JOGADOR, id: `serf-d1c-${i}`, tipo: 'serf', ...t, fsm: 'ocioso', fsmData: {}, condicao: condicaoCheiaDoTipo('serf') };
+    if (!tileAndavel(s, t, 'livre', dados)) throw new Error(`colisao na vila: serf ${i} em tile inandavel`);
+    const u: Unidade = { lado: LADO_DO_JOGADOR, id: `serf-vila-${i}`, tipo: 'serf', ...t, fsm: 'ocioso', fsmData: {}, condicao: condicaoCheiaDoTipo('serf') };
     unidades.porId[u.id] = u;
     unidades.ordem.push(u.id);
   }

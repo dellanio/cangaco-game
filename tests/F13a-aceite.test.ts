@@ -76,7 +76,7 @@ describe('F13a — aceite headless do BUILD_PLAN', () => {
     expect(novas.map((u) => u.tipo)).toEqual([...TRES]);
 
     // 3. nascidas na PORTA DA ESCOLA (D1), nao no `spawnDeUnidades` do cenario inicial.
-    // D1a-3 — um valor por estado da chave da colisao civil: na porta desligada; na porta ou
+    // D-MOVIMENTO-01d (JobBoard e porta por estado da chave) — um valor por estado da chave da colisao civil: na porta desligada; na porta ou
     // vizinho, sem empilhar, ligada (o empurrao tira o segundo do tile)
     expect(foraDaPorta(tilesDaPorta(escolaDoCenario(fim)), novas, gameData)).toEqual([]);
     const portas = tilesDaPorta(escolaDoCenario(fim)).map((t) => `${t.gx},${t.gy}`);

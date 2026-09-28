@@ -49,7 +49,7 @@ const RUAS = [...linhaHDe(naVila, 0, 7, 3), naVila(0, 4), naVila(0, 5), naVila(0
  */
 const TICKS = 1300;
 const TETO_DA_GAVETA = gameData.producao.estoqueInternoPorPredio.saida;
-/** D1a-2 — o valor esperado POR ESTADO DA CHAVE da colisao civil (decisao do operador,
+/** D-MOVIMENTO-01c (empilhamento de fora do passo) — o valor esperado POR ESTADO DA CHAVE da colisao civil (decisao do operador,
  *  2026-09-28): ligada, a primeira pedra atravessa a vila com fila e chega 4 ticks depois
  *  (medido). NAO e faixa: a faixa foi recusada porque aceitaria deriva futura sem avisar. */
 const ATRASO_DA_COLISAO = colisaoCivilLigada(gameData) ? 4 : 0;

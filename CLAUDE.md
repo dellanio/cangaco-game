@@ -126,7 +126,13 @@ Não adicione dependência nova sem registrar o motivo em `PROGRESS.md`.
    `test-results.json`. Uma por sessão. Não adiante a próxima.
 5. Implemente, escreva o teste, rode, capture a evidência.
 6. Atualize `PROGRESS.md`: o que fez, o que decidiu e por quê, o que ficou aberto.
-7. Commit com a mensagem `feat(F##): <resumo>`.
+7. Commit com a mensagem `feat(<sigla>): <resumo>`. A sigla segue `docs/siglas.md`:
+   `<fase>-<MÓDULO>-<nn>`, como `feat(D-MOVIMENTO-01e): ...`. Módulo só da lista fechada de
+   11; módulo novo só por decisão do operador. O que fechou antes de 2026-09-28 mantém a
+   sigla antiga (`F17g`, `C5`), e a tabela de equivalência está no mesmo arquivo.
+8. **Sigla nunca aparece sozinha em relatório** (PROGRESS, avaliação, resposta ao
+   operador): vem sempre com o nome ao lado, seja antiga ou nova. Exemplo: "F20b (fome e
+   morte)".
 
 ### Uma sessão só na `main` (regra do operador, 2026-09-25)
 

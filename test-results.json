@@ -281,7 +281,7 @@
   "F28-IA-ponto-4-repor": {
     "passes": true
   },
-  "F28-IA-ponto-5-alimentar": {
+  "C-IA-01-alimentar-tropas": {
     "passes": false
   },
   "F28-IA-ponto-6-ataque": {
@@ -335,13 +335,13 @@
   "F-REPL-b-modos": {
     "passes": true
   },
-  "D1a-colisao-civil": {
+  "D-MOVIMENTO-01a-colisao-civil": {
     "passes": true
   },
-  "D1a-2-empilhamento-fora-do-passo": {
+  "D-MOVIMENTO-01c-empilhamento-fora-do-passo": {
     "passes": true
   },
-  "D1a-3-jobboard-e-porta-por-estado": {
+  "D-MOVIMENTO-01d-jobboard-e-porta-por-estado": {
     "passes": true
   }
 }

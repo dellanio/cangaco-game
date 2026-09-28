@@ -113,7 +113,7 @@ describe('C3 — os defeitos do quartel', () => {
     const soltos = recrutasSoltos(s).slice(antes);
     expect(soltos).toHaveLength(2);
     for (const r of soltos) expect(r.lado).toBe(LADO_DO_JOGADOR);
-    // D1a-3 — na porta desligada; na porta ou vizinho, sem empilhar, com a colisao ligada
+    // D-MOVIMENTO-01d (JobBoard e porta por estado da chave) — na porta desligada; na porta ou vizinho, sem empilhar, com a colisao ligada
     expect(foraDaPorta(tilesDaPorta(quartelDe(s0), gameData), soltos, gameData)).toEqual([]);
   });
 

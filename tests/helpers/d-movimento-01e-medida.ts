@@ -1,5 +1,5 @@
 /**
- * D1c — a medida do transporte: quanto a mercadoria ESPERA na gaveta (lei de Little). A
+ * D-MOVIMENTO-01e (aceite da colisao civil) — a medida do transporte: quanto a mercadoria ESPERA na gaveta (lei de Little). A
  * espera media da madeira na saida das serrarias e a soma, tick a tick, da madeira parada
  * nas saidas, dividida pela madeira produzida na mesma janela. Mede o que o jogador sente:
  * o predio produz e nada chega.
@@ -8,9 +8,9 @@ import type { GameData } from '../../src/sim/data/types';
 import type { GameState, PredioCompleto } from '../../src/sim/state';
 import { step } from '../../src/sim/tick';
 import { violacoesDaColisao } from './jobs-invariantes';
-import type { CenarioD1c } from './d1c-cenario';
+import type { CenarioDaColisaoNaVila } from './d-movimento-01e-cenario';
 
-export interface MedidaD1c {
+export interface MedidaDaEspera {
   readonly ticks: number;
   /** Ticks, em media, que cada madeira passa na gaveta de saida da serraria. */
   readonly esperaDaMadeiraNaGaveta: number;
@@ -20,7 +20,7 @@ export interface MedidaD1c {
   readonly violacoes: readonly string[];
 }
 
-export function medirD1c(c: CenarioD1c, ticks: number, dados: GameData, aquecimento: number): MedidaD1c {
+export function medirEsperaNaGaveta(c: CenarioDaColisaoNaVila, ticks: number, dados: GameData, aquecimento: number): MedidaDaEspera {
   let s: GameState = c.estado;
   let area = 0;
   let produzida = 0;

@@ -309,7 +309,7 @@ export function violacoesDeInvariantes(estado: GameState, dados: GameData = game
 }
 
 /**
- * D1 — as invariantes da colisao civil. So com `colisaoCivil.ligada`: desligada, os civis se
+ * D-MOVIMENTO-01 — as invariantes da colisao civil. So com `colisaoCivil.ligada`: desligada, os civis se
  * atravessam como antes e nada disto vale.
  *  - todo estado de FSM tem classificacao (dentro ou fora);
  *  - nenhum civil espera alem do teto, `ticksTrocaForcada`, nem no passo nem na porta: e o

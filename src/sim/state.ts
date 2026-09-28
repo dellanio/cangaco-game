@@ -1212,7 +1212,7 @@ export type ItemDeFila =
  * gastos no passo em curso; `armazem` o alvo do `devolvendo`.
  */
 export interface DadosDaFsm {
-  /** C5 — ticks que o militar ja esperou um tile ocupado por outro militar. D1 — o mesmo
+  /** C5 — ticks que o militar ja esperou um tile ocupado por outro militar. D-MOVIMENTO-01 (colisao civil) — o mesmo
    *  para o civil com a colisao civil ligada (zera so num passo normal). */
   readonly bloqueado?: number;
   readonly tarefa?: string;
@@ -1243,11 +1243,11 @@ export interface Unidade {
    *  movimento em curso vive em `fsmData` (`caminho` + `progresso`). */
   readonly fsm: string;
   readonly fsmData: DadosDaFsm;
-  /** D1 — a unidade com quem esta dividindo o tile: a troca de frente ou a troca forcada
+  /** D-MOVIMENTO-01 (colisao civil) — a unidade com quem esta dividindo o tile: a troca de frente ou a troca forcada
    *  (o unico empilhamento que a colisao civil aceita). Fica na unidade, e nao no
-   *  `fsmData`, para sobreviver a troca de estado da FSM (D1a-2). */
+   *  `fsmData`, para sobreviver a troca de estado da FSM (D-MOVIMENTO-01c, empilhamento de fora do passo). */
   readonly trocaCom?: string;
-  /** D1a-2 — ticks esperando a porta: quem nasceu ou saiu de "dentro" para um tile ocupado
+  /** D-MOVIMENTO-01c (empilhamento de fora do passo) — ticks esperando a porta: quem nasceu ou saiu de "dentro" para um tile ocupado
    *  espera ele vagar, como no `GoInOut` do KaM. Enquanto isso nao ocupa nem anda. */
   readonly saindo?: number;
   /**

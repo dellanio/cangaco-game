@@ -222,7 +222,7 @@ describe('F18d-1a — o aceite do BUILD_PLAN', () => {
     // com o predio, agora ele fica esperando uma rocha que nao existe no lugar
     // onde a fixture o pos. O campo `rochaAoAlcanceDaPedreira` fixa a causa.
     expect(comRua).toEqual({
-      // a rua existe: a tarefa de coleta nasce e o serf vem. D1a-2 — um valor POR ESTADO DA
+      // a rua existe: a tarefa de coleta nasce e o serf vem. D-MOVIMENTO-01c (empilhamento de fora do passo) — um valor POR ESTADO DA
       // CHAVE da colisao civil (decisao do operador; a faixa foi recusada porque aceitaria
       // deriva futura sem avisar). Ligada, chega 4 ticks ANTES (medido): HIPOTESE, o ocioso
       // empurrado da porta fica mais perto. Acaso da geometria, nao ganho de desenho.
