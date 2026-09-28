@@ -9980,3 +9980,63 @@ Plano: `docs/planos/2026-09-28-4-F-ESC.md`. Detalhe e tabela no item F-ESC do BU
   alvo da térrea e boiam no lote; o armazém completo mede 2,60 H (é a madeira que puxa o
   canvas a 254); armazém e Casa do Coronel transbordam a largura (214 px) sem exceção de
   largura declarada.
+
+## 2026-09-28 (noite, fila 5) — F-VIVO-c: os animais do curral
+
+Plano: `docs/planos/2026-09-28-5-F-VIVO-c.md`. Só render (`src/render/`, `tools/shots/`,
+`tests/`); nada em `sim/`.
+
+**Feito e verificado:**
+- `src/render/animais.ts`:
+  - `animaisDoCurral(predio, dados)` é pura. Devolve 5 `{i, animal, idade, ponto}`,
+    com a idade `1 + ⌊3·frac(p/T + i/5)⌋` calculada em inteiros.
+  - `quadroDoAnimal` é o laço de 4 quadros. Anda com o mesmo predicado da F-VIVO-b
+    (`ROTULOS_QUE_ANIMAM`, `TICKS_POR_QUADRO`); parado, fica no quadro 1.
+  - `dadosDosAnimais` em `predios.ts` reusa o `ticksDoCiclo` e as âncoras do trabalho.
+- Cena:
+  - `desenharAnimais` usa o PNG `animal:<id>:idade<k>_<n>`. Sem PNG, desenha um losango
+    que vai de 1 a 2 unidades de pilha, conforme a idade.
+  - Os animais entram na assinatura do diff.
+  - A cena publica `debug.animaisDoCurral`.
+- `tests/F-VIVO-c-animais.test.ts` (7 testes) cobre:
+  - as fronteiras nos dois lados;
+  - que a idade só cai na virada 3→1, no máximo uma vez por ciclo;
+  - que as três idades aparecem e que as posições começam desencontradas;
+  - o curral vazio: não-criação, obra, sem ocupante, sem insumo com progresso 0;
+  - que o curral pausado mantém a idade, e o laço volta ao quadro 1;
+  - que os pontos padrão ficam fora da área de trabalho.
+
+  A evidência está em `test-output/F-VIVO-c.json`.
+- `tools/shots/F-VIVO-c.js` está verde. Screenshot `F-VIVO-c-2-2-outra-idade.png` aberta:
+  - mostra 5 losangos em tamanhos 1,1,2,3,3 e o quadro `laco2_4` na Malhada;
+  - na janela despausada, o laço passou por 1, 2, 3 e 4;
+  - a idade mudou de 11223 para 11233.
+- `npm run verify` verde (1609 + 4 skipped). Chave `F-VIVO-c-animais` marcada.
+
+**Decisões para revisão (PARA REVISÃO):**
+- **Como o roteiro chega à Malhada.** O roteiro carrega um save pelo botão "carregar" (F23b).
+  - O save é `test-output/F-VIVO-c.save.txt`, gravado pelo teste: a fixture
+    `cenarioDaCadeiaDaCarne` (F19b), avançada até a Malhada ter milho.
+  - Ele não constrói a cadeia serraria → fazenda → milho pela abertura. É o mesmo limite
+    que a F18 registrou.
+  - Por isso o roteiro depende de `npm run test` ter rodado antes. Se o arquivo faltar,
+    ele reprova com o motivo escrito.
+- **O curral pisca na cadeia fina.** Sonda (apagada) na cadeia da F19b: em 3000 ticks, o
+  criador passou 2706 em `esperando_insumo` com progresso 0 e 294 em `trabalhando`.
+  - Pela regra do aceite ("sem insumo, curral vazio"), a Malhada fica vazia entre as
+    entregas de milho.
+  - No KaM, os porcos persistem. Mantive a regra escrita; quem decide é o operador.
+- **Com a arte nova, os pontos padrão caem fora do volume do prédio.** Medido na
+  screenshot:
+  - y 0,25 da caixa do `completo` fica acima da Malhada, que ocupa ~153×103 de um canvas
+    de 256×192 (tabela da F-ESC);
+  - os animais aparecem no gramado atrás do prédio.
+
+  O ponto certo é `ancoras.curral` no manifesto, que é decisão de arte. Não inventei
+  âncora.
+- **Pausado, e com a saída cheia, os animais ficam na idade em que estavam.** O laço
+  volta ao quadro 1.
+
+**Hipótese não verificada:** dentro dos 657 ticks de espera pelo laço, o curral não
+esvaziou. Isso sugere milho na gaveta de entrada com o criador ainda fora. Não abri o
+estado para confirmar.

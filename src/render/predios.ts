@@ -13,8 +13,9 @@ import temaSertao from '../../data/theme-sertao.json';
 import { ID_DA_BODEGA, ID_DO_ARMAZEM } from '../sim/state';
 import { ehEntradaDePredio } from './manifesto';
 import type { AncorasDoPredio, Manifesto } from './manifesto';
-import { CASO_DO_PREDIO } from './manifesto-camadas';
+import { ANIMAL_DA_CRIACAO, CASO_DO_PREDIO } from './manifesto-camadas';
 import type { ContextoDasCamadas } from './manifesto-camadas';
+import type { DadosDosAnimais } from './animais';
 import type { DadosDasPilhas } from './pilhas';
 import type { DadosDoTrabalho } from './trabalho';
 
@@ -116,6 +117,13 @@ export function dadosDoTrabalho(manifesto: Manifesto): DadosDoTrabalho {
       .flatMap(([id, r]) => (r === undefined ? [] : [[id, r.ticksDoCiclo]]))),
     ancoras,
   };
+}
+
+/** F-VIVO-c — o dado do curral: o animal de cada criacao, o mesmo `ticksDoCiclo` do
+ *  trabalho (a idade anda com o ciclo da receita) e as ancoras do manifesto. */
+export function dadosDosAnimais(manifesto: Manifesto): DadosDosAnimais {
+  const { ticksDoCiclo, ancoras } = dadosDoTrabalho(manifesto);
+  return { animais: ANIMAL_DA_CRIACAO, ticksDoCiclo, ancoras };
 }
 
 /** F-VIVO-a — a cor do placeholder da pilha, por mercadoria, do tema. Mercadoria

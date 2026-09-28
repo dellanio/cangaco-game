@@ -4712,6 +4712,12 @@ leem `GameState`: **nenhum toca em `sim/`**.
     mercadoria;
   - o curral vazio.
 - Roteiro com a Malhada ocupada e alimentada, com a screenshot aberta.
+- **Nota de implementação (2026-09-28):** `src/render/animais.ts`, teste
+  `tests/F-VIVO-c-animais.test.ts`, roteiro `tools/shots/F-VIVO-c.js`. O roteiro carrega
+  o save que o teste grava (a cadeia da carne da F19b), pelo botão "carregar". Sem
+  `ancoras.curral` no manifesto, os pontos padrão ficam acima do volume da arte nova:
+  a âncora vem com a arte. Em aberto para o operador: o curral esvazia entre entregas
+  de milho, porque o aceite diz "sem insumo, curral vazio".
 
 **Aceite da F-VIVO-d.** Uma aldeia com os cinco casos, capturada a 0,75. O roteiro
 grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o

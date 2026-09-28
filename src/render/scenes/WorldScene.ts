@@ -11,8 +11,12 @@ import { proximoNivel, mundoSobPonto, scrollAncorado } from '../zoom';
 import type { Navegacao } from '../../input/navegacao';
 import type { Tile } from '../grid';
 import { publicarEstadoDebug } from '../debug';
-import type { EstadoDebug, PilhaNoDebug, PredioNoDebug, QuadroNoDebug, RelogioVisivel } from '../debug';
-import { aparenciaDoPredio, corDaPilha, dadosDasPilhas, dadosDoTrabalho, ordemDasMercadorias } from '../predios';
+import type {
+  AnimalNoDebug, EstadoDebug, PilhaNoDebug, PredioNoDebug, QuadroNoDebug, RelogioVisivel,
+} from '../debug';
+import { aparenciaDoPredio, corDaPilha, dadosDasPilhas, dadosDosAnimais, dadosDoTrabalho, ordemDasMercadorias } from '../predios';
+import { animaisDoCurral, quadroDoAnimal } from '../animais';
+import type { AnimalDoCurral } from '../animais';
 import { pilhasDoPredio, posicoesNaPilha } from '../pilhas';
 import type { PilhaDesenhada } from '../pilhas';
 import { areaDoTrabalho, quadroDaFumaca, quadroDeTrabalho } from '../trabalho';
@@ -67,6 +71,7 @@ const CHAVE_TEXTURA_RECURSO = 'tiles-recurso';
 const DEPTH_DOS_RECURSOS = 0.5;
 /** F-VIVO-a — o dado das pilhas, com as ancoras do manifesto. Montado uma vez. */
 const DADOS_DAS_PILHAS = dadosDasPilhas(manifestoDoJogo);
+const DADOS_DOS_ANIMAIS = dadosDosAnimais(manifestoDoJogo);
 /** F-VIVO-b — o dado do quadro de trabalho, com as ancoras do manifesto. Montado uma vez. */
 const DADOS_DO_TRABALHO = dadosDoTrabalho(manifestoDoJogo);
 /** F-ESC — o teto da altura do predio, do manifesto. Montado uma vez. */
@@ -1035,6 +1040,7 @@ export class WorldScene extends Phaser.Scene {
     const pilhasNoDebug: Record<string, readonly PilhaNoDebug[]> = {};
     // F-VIVO-b: o quadro de trabalho de cada predio animando, da MESMA chamada do desenho.
     const quadrosNoDebug: Record<string, QuadroNoDebug> = {};
+    const animaisNoDebug: Record<string, readonly AnimalNoDebug[]> = {};
     // F17g: as obras desenhadas pela revelacao, da MESMA conta que vai para `criarPredio`.
     const revelacoes: Record<string, RevelacaoDaObra> = {};
     for (const id of estadoDoJogo.predios.ordem) {
@@ -1115,16 +1121,29 @@ export class WorldScene extends Phaser.Scene {
         quadrosNoDebug[id] = { ...quadro, sprite: this.texturaDoQuadro(predio.tipo, quadro) !== null };
       }
       const chaveDoTrabalho = `${quadro === null ? '-' : `${quadro.laco}_${quadro.n}`}/${fumaca ?? '-'}`;
+      // F-VIVO-c: a idade anda com o progresso e o quadro com o tick, sem mexer em
+      // estado nem em estagio — mesma razao da pilha e do trabalho.
+      const animais = animaisDoCurral(predio, DADOS_DOS_ANIMAIS);
+      const quadroAnimal = quadroDoAnimal(predio, ocupante, estadoDoJogo.tick);
+      if (animais.length > 0) {
+        animaisNoDebug[id] = animais.map((a) => ({
+          i: a.i, animal: a.animal, idade: a.idade, quadro: quadroAnimal,
+          sprite: this.texturaDoAnimal(a, quadroAnimal) !== null,
+        }));
+      }
+      const chaveDosAnimais = animais.length === 0 ? '-' : `${animais.map((a) => a.idade).join('')}/${quadroAnimal}`;
       // F17g: cada martelada muda a revelacao sem mudar o estagio de fallback.
       const chaveDoCorpo = revelacao === null ? '-' : chaveDaRevelacao(revelacao);
-      const assinatura = `${linhas.map((l) => l.entregue).join(',')}|${chaveDoCanteiro(canteiro)}|${chaveDasPilhas}|${chaveDoTrabalho}|${chaveDoCorpo}`;
+      const assinatura = `${linhas.map((l) => l.entregue).join(',')}|${chaveDoCanteiro(canteiro)}|${chaveDasPilhas}|${chaveDoTrabalho}|${chaveDosAnimais}|${chaveDoCorpo}`;
       const existente = this.desenhados.get(id);
       if (existente && existente.estado === predio.estado && existente.estagio === estagio
         && existente.assinatura === assinatura) continue;
       existente?.objeto.destroy();
       this.desenhados.set(id, {
         estado: predio.estado, estagio, assinatura,
-        objeto: this.criarPredio(predio, estagio, revelacao, linhas, canteiro, pilhas, quadro, fumaca, tilePx),
+        objeto: this.criarPredio(
+          predio, estagio, revelacao, linhas, canteiro, pilhas, quadro, fumaca, animais, quadroAnimal, tilePx,
+        ),
       });
     }
     debug.prediosRenderizados = this.desenhados.size;
@@ -1146,6 +1165,7 @@ export class WorldScene extends Phaser.Scene {
     debug.spritesDePredio = sprites;
     debug.pilhasDesenhadas = pilhasNoDebug;
     debug.quadrosDeTrabalho = quadrosNoDebug;
+    debug.animaisDoCurral = animaisNoDebug;
   }
 
   /** F17f — a chave de textura de um (tipo, estagio), ou `null` quando esse
@@ -1192,7 +1212,8 @@ export class WorldScene extends Phaser.Scene {
     predio: Predio, estagio: EstagioDaObra, revelacao: RevelacaoDaObra | null,
     linhas: readonly LinhaDoMedidor[],
     canteiro: CanteiroDaObra | null, pilhas: readonly PilhaDesenhada[],
-    quadro: QuadroDeTrabalho | null, fumaca: number | null, tilePx: number,
+    quadro: QuadroDeTrabalho | null, fumaca: number | null,
+    animais: readonly AnimalDoCurral[], quadroAnimal: number, tilePx: number,
   ): Phaser.GameObjects.Container {
     const { largura, altura, nome } = aparenciaDoPredio(predio.tipo);
     const canto = gridToScreen({ gx: predio.gx, gy: predio.gy }, tilePx, ESCALA_DO_MUNDO);
@@ -1225,6 +1246,7 @@ export class WorldScene extends Phaser.Scene {
       ...this.desenharCanteiro(canteiro, largura, tilePx),
       ...corpo,
       ...this.desenharTrabalho(predio.tipo, quadro, fumaca, caixa),
+      ...this.desenharAnimais(animais, quadroAnimal, caixa, tilePx),
       ...this.desenharPilhas(pilhas, caixa, tilePx),
       ...this.desenharMedidor(linhas, larguraPx, alturaPx, canteiro === null || canteiro.nivelada),
     ]);
@@ -1282,6 +1304,40 @@ export class WorldScene extends Phaser.Scene {
   private texturaDaPilha(mercadoria: string): string | null {
     const chave = chaveDeTextura('pilha', mercadoria, ESTADO_DA_PILHA);
     return this.textures.exists(chave) ? chave : null;
+  }
+
+  /** F-VIVO-c — a textura do animal na idade e no quadro, ou `null` (losango do §9). */
+  private texturaDoAnimal(animal: AnimalDoCurral, quadro: number): string | null {
+    const chave = chaveDeTextura('animal', animal.animal, `idade${animal.idade}_${quadro}`);
+    return this.textures.exists(chave) ? chave : null;
+  }
+
+  /** F-VIVO-c — os animais do curral, com o pe no ponto. PNG quando o manifesto tem
+   *  o `animal` na idade; senao um losango cujo lado cresce com a idade (a unidade da
+   *  pilha no filhote, o dobro no adulto), para o filhote se distinguir sem arte. */
+  private desenharAnimais(
+    animais: readonly AnimalDoCurral[], quadro: number,
+    caixa: { readonly x: number; readonly y: number; readonly w: number; readonly h: number },
+    tilePx: number,
+  ): Phaser.GameObjects.GameObject[] {
+    const unidade = tilePx * LADO_DA_UNIDADE_EM_TILES;
+    const objetos: Phaser.GameObjects.GameObject[] = [];
+    for (const a of animais) {
+      const x = caixa.x + caixa.w * a.ponto[0];
+      const y = caixa.y + caixa.h * a.ponto[1];
+      const textura = this.texturaDoAnimal(a, quadro);
+      if (textura !== null) {
+        const imagem = this.add.image(x, y, textura);
+        imagem.setOrigin(0.5, 1);
+        objetos.push(imagem);
+        continue;
+      }
+      const lado = (unidade * (a.idade + 1)) / 2;
+      const losango = this.add.polygon(x, y - lado / 2, [lado / 2, 0, lado, lado / 2, lado / 2, lado, 0, lado / 2], 0xe8d2b0, 1);
+      losango.setStrokeStyle(1, 0x2c1d12);
+      objetos.push(losango);
+    }
+    return objetos;
   }
 
   /** F-VIVO-b — a textura de um quadro de trabalho, ou `null` (retangulo do §9). */

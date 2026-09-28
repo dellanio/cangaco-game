@@ -46,6 +46,16 @@ export interface QuadroNoDebug {
   readonly sprite: boolean;
 }
 
+/** F-VIVO-c — um animal do curral desenhado: posicao, idade, quadro do laco e se
+ *  foi PNG (`sprite`) ou o losango do §9. */
+export interface AnimalNoDebug {
+  readonly i: number;
+  readonly animal: string;
+  readonly idade: number;
+  readonly quadro: number;
+  readonly sprite: boolean;
+}
+
 export interface EstadoDebug {
   /** false ate a cena terminar o primeiro desenho. O roteiro espera por isto
    *  antes de fotografar — sem isso a captura sai do canvas em branco. */
@@ -105,6 +115,9 @@ export interface EstadoDebug {
    *  tem predio animando: parado (sem ocupante, sem insumo, saida cheia, pausado) nao
    *  aparece. Vem da mesma chamada que o desenho usa (`trabalho.ts`). */
   quadrosDeTrabalho: Readonly<Record<string, QuadroNoDebug>>;
+  /** F-VIVO-c — os animais que a cena DESENHOU agora, por id de predio. So tem
+   *  criacao com curral cheio (`animais.ts`); curral vazio nao aparece. */
+  animaisDoCurral: Readonly<Record<string, readonly AnimalNoDebug[]>>;
   /** F-T1 — quantos tiles de cada TIPO DE TERRENO estao dentro da vista da
    *  camera agora, lidos de volta da camada de chao ja desenhada. E o que
    *  permite ao roteiro afirmar "a camera esta em cima do lago" sem olhar
@@ -248,6 +261,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     spritesDePredio: {},
     pilhasDesenhadas: {},
     quadrosDeTrabalho: {},
+    animaisDoCurral: {},
     terrenoVisivel: {},
     recursosVisiveis: {},
     mascarasDoLajedo: {},
