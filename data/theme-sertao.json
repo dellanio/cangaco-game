@@ -440,7 +440,10 @@
     "retomar": "Voltar ao trabalho",
     "pausado": "Parado",
     "demolir": "Derrubar",
-    "demolirDesc": "devolve parte do material"
+    "demolirDesc": "devolve parte do material",
+    "pedrasDaTorre": "Pedras",
+    "torreSemPedra": "Sem pedra: a torre não atira",
+    "torreSemRecruta": "Sem recruta: a torre não atira"
   },
   "marcadores": {
     "_doc": "F20c. Marcador sobre a unidade no MUNDO (src/render/unidades.ts). Nao e o alerta do HUD (alertas, F22): aquele fala de predio parado, este de gente. `fome` acende a partir de limiares.alertaVisual (data/condition.json) — o limiar nunca e digitado em .ts.",

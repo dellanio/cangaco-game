@@ -41,7 +41,8 @@
   },
   "watchtower": {
     "municao_stone_max": 5,
-    "alcance_tiles": 6,
+    "alcance_tiles": 7,
+    "_docAlcance": "F28b (decisao do operador, 2026-09-28): 7 tiles, fixo (era 6). Distancia euclidiana do tile mais perto do footprint ao alvo. A pedra NUNCA erra (simplificacao escrita do operador: no KaM erra se o alvo andou, KM_Projectiles.pas:305-306) e mata quem estiver no ponto, do proprio lado inclusive.",
     "mataEmUmGolpe": true
   },
   "formacao": {

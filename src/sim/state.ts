@@ -313,6 +313,14 @@ export type GameEvent =
       readonly hp: number;
     }
   | {
+      /** F28b — a torre `predio` atirou uma pedra no tile `alvo`, e ela caiu em `vitima`
+       *  (quem estava ali; pode ser do proprio lado). O render desenha o tiro por ele. */
+      readonly type: 'stone-thrown';
+      readonly predio: string;
+      readonly alvo: TileDeGrid;
+      readonly vitima: string;
+    }
+  | {
       /** F28a — a unidade morreu em luta e saiu do estado neste tick. */
       readonly type: 'unit-killed';
       readonly unidade: string;
@@ -441,6 +449,8 @@ export interface PredioCompleto extends PredioBase {
    * Recruta dentro nao e unidade: nao anda, nao come, nao aparece em `unidades`.
    */
   readonly recrutas?: number;
+  /** F28b — ticks ate a torre atirar de novo. So a torre tem o campo; AUSENTE e pronta. */
+  readonly recarga?: number;
 }
 
 /**

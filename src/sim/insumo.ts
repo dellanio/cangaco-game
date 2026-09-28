@@ -20,6 +20,7 @@ import { ehBodegaCompleta, ehComida, tetoDeComidaNaBodega } from './bodega';
 import { custoDeTreino, ehEscolaCompleta, filaDaEscola } from './escola';
 import { receitaDoTipo } from './producao';
 import { ehQuartelCompleto, ehRequisitoDoQuartel } from './quartel';
+import { ehTorreCompleta, ID_DA_TORRE, MUNICAO_DA_TORRE } from './torre';
 
 /**
  * A capacidade da gaveta `entrada` repartida na proporcao da receita. Com uma
@@ -89,6 +90,8 @@ export function alvoDeEntrada(
   // que chegou vira excedente e volta ao armazem pelo nivel 7. Infinito de proposito,
   // como a demanda do armazem (`demandaNoDestino`), e nao um numero grande.
   if (ehQuartelCompleto(predio) && ehRequisitoDoQuartel(mercadoria, dados)) return Number.POSITIVE_INFINITY;
+  // F28b — a torre guarda ate `watchtower.municao_stone_max` pedras (o dado)
+  if (ehTorreCompleta(predio) && mercadoria === MUNICAO_DA_TORRE) return dados.combate.watchtower.municao_stone_max;
   return 0;
 }
 
@@ -148,6 +151,9 @@ export function insumosDoPredio(
 ): readonly string[] {
   const predio = state.predios.porId[predioId];
   if (!predio || predio.estado !== 'completo') return [];
+  // F28b — a torre nao tem receita e consome pedra: e consumidora como qualquer outra,
+  // e os niveis 4 e 5 da escada a abastecem
+  if (predio.tipo === ID_DA_TORRE) return [MUNICAO_DA_TORRE];
   const receita = receitaDoTipo(predio.tipo, dados);
   return receita === null ? [] : Object.keys(receita.entra);
 }

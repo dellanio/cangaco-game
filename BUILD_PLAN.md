@@ -5251,6 +5251,17 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
   estado.
 
 ### F28b — Torre de Pedra: o recruta atira pedra de cima (sim + render)
+- **ENTREGUE (2026-09-28, sessão autônoma; plano em `docs/planos/2026-09-28-A11-F28b-torre.md`).**
+  - Alcance **7** (decisão do operador; era 6 em `combat.json`).
+  - A pedra chega pelos níveis 4/5 da escada, como a de qualquer consumidor:
+    `insumosDoPredio(torre) = stone`, com alvo = `municao_stone_max`.
+  - `systems/torre.ts`: a torre ocupada, com pedra e recarga zero, mira o inimigo mais
+    perto no alcance (no empate, menor id), gasta 1 pedra e mata a primeira unidade com
+    HP do tile, **do próprio lado inclusive**. A pedra não erra, e a recarga é
+    `ticksCadenciaDeAtaque`.
+  - Tela: o traço da pedra por 0,5 s (evento `stone-thrown`), e o painel com "Pedras n/5"
+    e "Sem pedra / Sem recruta: a torre não atira".
+  - Teste `tests/F28b-torre.test.ts` e roteiro `tools/shots/F28b.js`.
 - **Feature de integração (§10 do CLAUDE.md; decisão do operador, 2026-09-27)**: toca
   `src/sim/` (munição, alvo, tiro) e `src/render/` (o tiro na tela) no mesmo item, por
   exceção escrita aqui. A exceção vale **só** para esta feature; nenhuma outra a herda.

@@ -1,3 +1,5 @@
+import { ehTorreCompleta, pedrasNaTorre, porQueNaoAtira } from './torre';
+import type { PorQueATorreNaoAtira } from './torre';
 import type { GameState, Predio, PredioCompleto, PredioEmObra, Unidade } from './state';
 import { ID_DO_ARMAZEM } from './state';
 import type { GameData, PredioData } from './data/types';
@@ -422,6 +424,12 @@ export interface PainelDoPredio {
    * jogador precisa ler, e foi por nao ler que este campo existe.
    */
   readonly colheita: ColheitaDoPainel | null;
+  /** F28b — a munição da torre e por que ela não atira; `null` em quem não é torre. */
+  readonly torre: {
+    readonly pedras: number;
+    readonly maximo: number;
+    readonly naoAtira: PorQueATorreNaoAtira | null;
+  } | null;
 }
 
 /**
@@ -506,6 +514,7 @@ export function painelDoPredio(
       estoque: null,
       temProducao: false,
       pausado: false,
+      torre: null,
     };
   }
 
@@ -523,6 +532,9 @@ export function painelDoPredio(
     temProducao: predio.producao !== null,
     pausado: predio.pausado,
     colheita: colheitaDoPainel(state, predio, dados),
+    torre: ehTorreCompleta(predio)
+      ? { pedras: pedrasNaTorre(predio), maximo: dados.combate.watchtower.municao_stone_max, naoAtira: porQueNaoAtira(predio) }
+      : null,
   };
 }
 

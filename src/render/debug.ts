@@ -158,6 +158,9 @@ export interface EstadoDebug {
    *  lida de volta da imagem desenhada (`displayWidth`/`displayHeight`), e a largura do
    *  lote. O roteiro confere `h <= teto x lote` com o teto que ele le do manifesto. */
   caixasDesenhadas: Readonly<Record<string, CaixaDesenhada>>;
+  /** F28b — quantas pedras de torre a cena desenhou desde que abriu, e a ultima. */
+  pedrasDaTorre: number;
+  ultimaPedra: { readonly predio: string; readonly alvo: { readonly gx: number; readonly gy: number }; readonly vitima: string } | null;
   /** F26b — as unidades que ganharam o anel de selecao NESTE quadro (lido do desenho). */
   selecaoMilitar: readonly string[];
   /** F26b — a caixa de selecao desenhada agora, em px de mundo, ou `null`. */
@@ -325,6 +328,8 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     camadasEmPx: {},
     caixasDesenhadas: {},
     selecaoMilitar: [],
+    pedrasDaTorre: 0,
+    ultimaPedra: null,
     caixaDeSelecao: null,
     terrenoVisivel: {},
     recursosVisiveis: {},

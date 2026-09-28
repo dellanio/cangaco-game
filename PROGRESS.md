@@ -10795,3 +10795,58 @@ item 10.
   há comando de virar (fica para a F27, formação).
 - **Atirador encostado em inimigo não revida** de perto.
 - **O bandido (mercenário) atira**, mas a Prefeitura ainda não o contrata (F36).
+
+## 2026-09-28 (sessão autônoma, item 11) — F28b: a Torre de Pedra
+
+Plano: `docs/planos/2026-09-28-A11-F28b-torre.md`. **Feature de integração** (o BUILD_PLAN
+a declara assim): sim, render, UI, dado, teste e roteiro.
+
+**Verificado:**
+- **Dado:** `combat.json: watchtower.alcance_tiles` foi de 6 a **7** (decisão do operador).
+  O tema ganhou três rótulos do painel.
+- **Abastecimento pelo JobBoard:** `insumosDoPredio(torre) = ['stone']`, e `alvoDeEntrada`
+  = `municao_stone_max` (5). Teste (d): com rua até o armazém, a torre enche até 5 e não
+  passa, com as invariantes válidas a cada tick.
+- **`sim/torre.ts`** (regra) e **`systems/torre.ts`** (tiro):
+  - o tiro exige ocupante, pedra e recarga zero;
+  - o alvo é o inimigo com HP mais perto até 7, pela distância euclidiana do tile mais
+    perto do footprint (no empate, o menor id);
+  - a pedra cai no tile do alvo e mata a primeira unidade com HP dali, do próprio lado
+    inclusive, sem sorteio. A recarga fica em `PredioCompleto.recarga?`;
+  - eventos `stone-thrown` e `unit-killed`.
+- **Tela:**
+  - o traço da torre até o ponto e um círculo por 500 ms, lidos do evento, uma vez por
+    tick;
+  - `debug.pedrasDaTorre` e `debug.ultimaPedra`;
+  - o painel mostra "Pedras n/5" e o motivo quando não atira (`data-motivo`).
+- `tests/F28b-torre.test.ts`, 6 testes, verdes:
+  - (a) 7 inimigos no alcance e 5 pedras: 5 tiros, 5 mortos, 2 pedras sobrando = 0, e
+    os de fora vivos. Só com inimigos fora, nenhum tiro;
+  - (b) amigo antes do inimigo no mesmo tile: as vítimas são `amigo` e depois `inimigo`,
+    e pedras = mortos;
+  - (c) sem pedra e sem recruta, nenhum tiro, com o motivo certo;
+  - (d) abastecimento;
+  - (e) determinismo, e o save do roteiro.
+- **Sondas** (restauradas):
+  - pedra sempre no alvo: (b) reprova;
+  - alcance ignorado: **passou na primeira versão do teste**, porque os de fora estavam
+    mais longe que os de dentro. O teste ganhou o caso "só inimigos fora", e a sonda
+    passou a reprovar.
+- **`npm run shot -- F28b` verde**, com 2 capturas:
+  - clique na torre com o jogo andando (mouse.down/up), e o painel mostra 2/5;
+  - capturada a primeira pedra;
+  - a torre esvazia, o painel diz `sem-pedra` com o texto do tema, e o amigo do ponto
+    morreu.
+  - Abri `F28b-1-pedra-no-ar.png`: o traço sai do alto da torre para o norte, e o painel
+    diz "Pedras 1/5".
+
+**PARA REVISÃO:**
+- **Recarga = `ticksCadenciaDeAtaque` (3 ticks).** O dado não tem cadência de torre: 5
+  pedras se vão em 1,5 s.
+- **Uma pedra mata uma unidade** (a primeira da lista no tile). "Mata quem estiver no
+  tile" poderia ser todos; escolhi um por causa do aceite "pedras gastas = mortos".
+- **"Menor id" é comparação de texto** (`u10 < u9`).
+- **O traço pode sair do quadro** quando o alvo está no limite da vista, e o tick rodado
+  sem quadro no meio não desenha traço.
+- **Recruta da torre aparece em pé ao lado dela**, e não dentro. É como o ocupante já era
+  desenhado.

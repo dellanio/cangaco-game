@@ -200,6 +200,22 @@ function desenharCompleto(
     gente.append(l);
   }
 
+  // F28b — a torre: quantas pedras, e POR QUE nao atira (o aceite pede que o painel
+  // diga). Os numeros e o motivo vao em `data-`, para o roteiro afirmar sem recortar texto.
+  if (dados.torre !== null) {
+    const l = linha('torre', rotulos.pedrasDaTorre, `${dados.torre.pedras}/${dados.torre.maximo}`);
+    l.dataset.pedras = String(dados.torre.pedras);
+    l.dataset.naoAtira = dados.torre.naoAtira ?? '';
+    gente.append(l);
+    if (dados.torre.naoAtira !== null) {
+      const aviso = document.createElement('div');
+      aviso.className = 'linha torre-nao-atira';
+      aviso.dataset.motivo = dados.torre.naoAtira;
+      aviso.textContent = dados.torre.naoAtira === 'sem-pedra' ? rotulos.torreSemPedra : rotulos.torreSemRecruta;
+      gente.append(aviso);
+    }
+  }
+
   if (dados.estoque !== null) {
     identidade.append(gaveta('entrada', rotulos.entrada, dados.estoque.entrada));
     identidade.append(gaveta('saida', rotulos.saida, dados.estoque.saida));

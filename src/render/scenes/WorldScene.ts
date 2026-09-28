@@ -91,6 +91,9 @@ const LADO_DA_UNIDADE_EM_TILES = 1 / 5;
  *  tile (1 000 000). Cor de TELA, como as outras do render. */
 const PROFUNDIDADE_DA_SELECAO = 999_999;
 const COR_DA_SELECAO = 0xf2d16b;
+/** F28b — a pedra da torre na tela: cor e quanto tempo o traco fica. Numeros de TELA. */
+const COR_DA_PEDRA = 0xe8e2d0;
+const MS_DO_TRACO_DA_PEDRA = 500;
 
 /** F-VIVO-c — o lado do losango do animal sem PNG: a unidade da pilha no filhote, o
  *  dobro no adulto. Uma funcao so para o desenho e o `debug.camadasEmPx`. */
@@ -489,6 +492,8 @@ export class WorldScene extends Phaser.Scene {
       estado.unidadesRenderizadas = camadaDeUnidades.atualizar(this.ponte.atual, this.relogio.alfa());
       // F26b: o acerto do proximo clique mira ESTE desenho
       this.unidadesDesenhadas = estado.unidadesRenderizadas;
+      // F28b: a pedra da torre, lida do evento do tick (uma vez por tick)
+      this.desenharPedras(tilePx, estado);
       estado.selecaoMilitar = this.desenharSelecao(marcasDeSelecao, estado.unidadesRenderizadas, tilePx);
       estado.caixaDeSelecao = this.desenharCaixa(caixaDeSelecao);
     });
@@ -512,6 +517,37 @@ export class WorldScene extends Phaser.Scene {
       marcadas.push(u.id);
     }
     return marcadas;
+  }
+
+  /** F28b — o ultimo tick cujos eventos de pedra ja foram desenhados. */
+  private tickDasPedras = -1;
+
+  /**
+   * F28b — a pedra da torre na tela: um traco do alto da torre ate o tile e um circulo
+   * no ponto, por meio segundo. Le `stone-thrown` do estado que a ponte trouxe, UMA vez
+   * por tick. Tick que o laco rodou sem quadro no meio (velocidade alta) perde o traco:
+   * e so desenho, a pedra e a morte ja aconteceram na sim.
+   */
+  private desenharPedras(tilePx: number, debug: EstadoDebug): void {
+    const atual = this.ponte.atual;
+    if (atual === null || atual.tick === this.tickDasPedras) return;
+    this.tickDasPedras = atual.tick;
+    for (const e of atual.events) {
+      if (e.type !== 'stone-thrown') continue;
+      const torre = atual.predios.porId[e.predio];
+      if (torre === undefined) continue;
+      const { largura } = aparenciaDoPredio(torre.tipo);
+      const de = gridToScreen({ gx: torre.gx, gy: torre.gy }, tilePx, ESCALA_DO_MUNDO);
+      const para = gridToScreen(e.alvo, tilePx, ESCALA_DO_MUNDO);
+      const traco = this.add.graphics().setDepth(PROFUNDIDADE_DA_SELECAO);
+      traco.lineStyle(2, COR_DA_PEDRA, 1);
+      traco.lineBetween(de.x + (largura * tilePx) / 2, de.y, para.x + tilePx / 2, para.y + tilePx / 2);
+      traco.fillStyle(COR_DA_PEDRA, 1);
+      traco.fillCircle(para.x + tilePx / 2, para.y + tilePx / 2, tilePx / 6);
+      this.time.delayedCall(MS_DO_TRACO_DA_PEDRA, () => traco.destroy());
+      debug.pedrasDaTorre += 1;
+      debug.ultimaPedra = { predio: e.predio, alvo: { gx: e.alvo.gx, gy: e.alvo.gy }, vitima: e.vitima };
+    }
   }
 
   /** F26b — o retangulo da caixa em curso, ou nada. */

@@ -12,6 +12,7 @@ import { sistemaDaRegeneracao } from './systems/regeneracao';
 import { aplicarTrainSoldier } from './systems/quartel';
 import { aplicarMoveUnits, sistemaDaMarcha } from './systems/marcha';
 import { aplicarAttackUnit, sistemaDoCombate } from './systems/combate';
+import { sistemaDaTorre } from './systems/torre';
 import { aplicarCancelTraining, aplicarEnqueueTraining, sistemaDasEscolas } from './systems/escolas';
 import { aplicarDemolishRoad, aplicarPlaceRoad } from './systems/estradas';
 import { aplicarPlowField, aplicarUnplanField } from './systems/campos';
@@ -171,7 +172,10 @@ export function step(
   // JobBoard. A luta depois da marcha: quem chegou encostado neste tick ja pega o contato.
   const luta = sistemaDoCombate(sistemaDaMarcha(sistemaDaRegeneracao(atual, tick, dados), dados).state, dados);
   events.push(...luta.events);
-  const cerco = sistemaDoCerco(luta.state, dados);
+  // F28b: a torre atira depois da luta e antes do cerco
+  const torre = sistemaDaTorre(luta.state, dados);
+  events.push(...torre.events);
+  const cerco = sistemaDoCerco(torre.state, dados);
   events.push(...cerco.events);
   const saneado = sanearTarefas(cerco.state, dados);
   // F20b: a fome ANTES das tres familias e depois do saneamento. Antes, porque o
