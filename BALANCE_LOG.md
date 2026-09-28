@@ -22,6 +22,11 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
 
 ## Observações abertas
 
+- [2026-09-28] **A colisão civil ligada (D1b) atrasa a abertura em até +16% e fecha a vila 6,8% mais tarde** | F-CAL cenário fechado 7486 → 7997; pedreira 715 → 827; bodega 522 → 557; armas 2–5% mais cedo | units.json colisaoCivil
+  - Medido com a chave ligada só para a medida; a chave segue desligada. Nenhum teste de
+    calibração reprovou. A lista completa está no PROGRESS (D1b).
+  - Entra no lote de recalibração **só se** a chave for ligada de vez (D1c/D1d). Nunca
+    número a número.
 - [2026-09-28] **O golpe corpo a corpo (0,5 s) está abaixo do piso do KaM** | `combat.cadenciaDeAtaque_segundos_base` | combat.json
   - Achado na C1, ao medir a cadência dos atiradores. O golpe cai no quadro 5, e há pausas
     de 0–1 tick nos quadros 0, 3 e 6 (`KM_UnitActionFight.pas:50,289,309-321`). Então a

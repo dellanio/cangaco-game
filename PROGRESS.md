@@ -11735,3 +11735,92 @@ lá (troca de frente, "dentro" não ocupa, chave começa desligada).
 
 ### Aberto
 - O D1b (ligar e medir) vem em seguida, na mesma sessão, por pedido do operador.
+
+## 2026-09-28 — D1b: a chave ligada, medida (nenhum número mudou)
+
+A chave foi ligada só para medir. `units.json` voltou a `false` antes do commit.
+
+### Como medi
+- **Corrida 1:** a chave ligada e a suíte inteira, com a invariante completa.
+- **Corrida 2:** uma sonda sem commit neutralizou a checagem de empilhamento, para ver o que
+  a corrida 1 escondia (os testes que reprovam pela invariante param antes de medir tempo).
+- **Comparação numérica:** o `test-output/` da corrida desligada (o `verify` do D1a) contra a
+  corrida 2, campo a campo, sem os campos de relógio.
+
+### Verificado
+- **Corrida 1: 24 testes do jogo reprovaram, em 15 arquivos**, fora os 2 do próprio D1a que
+  afirmam a chave desligada.
+- **Corrida 2: sobram 4.**
+- **A invariante do teto de espera (`bloqueado` acima de 20 ticks) não disparou em nenhum
+  teste.** Nenhuma unidade ficou bloqueada além do teto na suíte inteira.
+
+| Classe | Testes | O que é |
+|---|---|---|
+| **Empilhamento** (a invariante nova) | 21 testes em 13 arquivos, mais 1 guarda do F09 ("o caos exercitou cada ramo") que só reprovou porque o caos parou cedo: F-CERCO-b, F-T4b, F09 ×3, F10 ×3, F11c ×3, F14, F18d-1b, F18g, F20b ×2, F21 ×2, F21b, F23, F35(a) | Gente no mesmo tile sem troca. Na corrida 2, todos passam |
+| **Tempo exato** | F15a (pedreira 886 → 890), F18d-1a (escoou 43 → 39) | Asserção de igualdade de tick |
+| **Cenário que mudou** | F09 "reserva pendente atravessando o save" | A guarda contra teste vazio: no tick do save não há mais reserva pendente |
+| **Custo** | F35(b), timeout de 5 s | 20 serfs extras numa porta |
+| **Calibração** | **nenhum** | Tudo dentro das faixas |
+
+### O empilhamento vem de fora do passo (o D1a está incompleto)
+- Nos testes de mecanismo do D1a, a invariante fica limpa. Na vila, não. As mensagens mostram
+  três fontes:
+  1. **Fixture empilhada:**
+     - `serf-1..6` no mesmo tile (`producao-cenario.ts:445`), em F21, F21b e F23;
+     - `extra-1..8`, em F20b.
+  2. **Saída de "dentro" para "fora" no mesmo tile:** dois laborers `ocioso` no mesmo
+     tile, u7 e u8, em F-CERCO-b, F11c e F18d-1b. HIPÓTESE, não conferida passo a passo: os
+     dois terminam a mesma obra e viram ociosos onde estavam. O estado inicial não empilha
+     (u3..u8 em tiles distintos, conferido).
+  3. **Dois andando no mesmo tile sem `trocaCom`:** (u3, u35) `indo_buscar`, (u5, u6)
+     `indo_entregar`, (u3, u4) `indo_buscar` + `devolvendo`. HIPÓTESE: a troca forçada
+     marcou o `trocaCom`, e a FSM reescreveu o `fsmData` na transição e o apagou. Ou os dois
+     nasceram no mesmo tile, na porta da escola.
+- O KaM não tem nenhuma das três: a saída de casa espera a porta livre (`GoInOut`) ou
+  empurra.
+
+### Deriva (medida, dentro das faixas; nenhum número de balanceamento mudou)
+- **F-CAL:**
+  - cenário fechado 7486 → 7997 (+6,8%);
+  - pedreira completa 715 → 827 (+15,7%);
+  - serraria 2127 → 2233 (+5,0%);
+  - moinho 4344 → 4460 (+2,7%);
+  - padaria 5458 → 5655 (+3,6%);
+  - intervalo médio no regime 267,5 → 269,2 (+0,6%);
+  - espera da padaria 6,4% → 7,2%.
+- **F-T4d:** marcos +4–5%.
+- **F20a:** bodega completa 522 → 557 (+6,7%).
+- **F18d-1b:** cada assentamento de estrada +15–21 ticks (~+20%).
+- **F24a:** armas **mais cedo**, de 2 a 5%. HIPÓTESE: o ocioso empurrado fica mais perto da
+  tarefa seguinte.
+- **F35:** a troca fecha no tick 140, contra 125.
+- **F36:** o ouro chega no tick 525, contra 517.
+
+### Custo (eixo determinístico)
+- Na F35(b), com 30 serfs e 1500 ticks, as buscas no A* foram de 287 594 para 938 528
+  acertos de cache (3,3×). As execuções foram de 11 para 59, e os nós expandidos de 69
+  para 284.
+- O perfil de CPU põe o custo no JobBoard (`buscarCaminho`, `reclamar`, `planoDaTarefa`),
+  **não** no código da colisão.
+- HIPÓTESE: o ocioso disperso pelo empurrão sai de 1 tile para até 9, e cada um procura
+  tarefa do seu tile. Na corrida ligada, 9 ociosos terminam fora da rua, contra 2.
+- O relógio desse teste foi de ~2,3 s para ~5,5 s. É número da corrida, não asserção
+  (CLAUDE.md §8).
+
+### Leitura
+- **A recalibração é pequena, não é o quarto lote.** Nenhum teste de calibração reprovou.
+  As derivas ficaram entre −5% e +16%, e as maiores foram nos marcos do começo da partida.
+- **O que precisa de trabalho antes do D1c não é número, é mecanismo:** o empilhamento de
+  fora do passo, os dois testes de tick exato e o custo do A* com ociosos dispersos.
+
+### Aberto (para o operador)
+- **Corrigir o empilhamento antes do D1c**, como um D1a-2. Proposta:
+  1. o empurrão também separa **ociosos empilhados**, não só os que estão na frente de quem
+     anda;
+  2. o `trocaCom` passa a sobreviver à troca de estado da FSM;
+  3. quem sai de "dentro" para uma porta ocupada entra em troca com o ocupante. É
+     conservador: o KaM espera a porta vagar, e esperar aqui pode segurar a produção;
+  4. depois, repetir o D1b.
+- **F15a e F18d-1a afirmam tick exato.** Com a chave ligada, o número muda por construção.
+  Proposta: um valor por estado da chave, e não afrouxar para faixa.
+- **F35(b)**: o custo 3,3× no A* com dispersão pede medida antes do D1c.

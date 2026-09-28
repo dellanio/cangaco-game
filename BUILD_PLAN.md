@@ -5500,6 +5500,28 @@ Ordem do operador. Cada item tem plano em `docs/planos/2026-09-28-C<n>-*.md`.
       - O armazém e a Casa do Coronel (1,1146) ganharam exceção de 1,12, e a tela não muda.
         PARA REVISÃO: tirar as exceções os encolhe ao lote.
       - Teste `tests/C10-largura.test.ts`; o roteiro F-ESC afirma a largura.
+- **D1 — civis colidem entre si (pedido do operador, 2026-09-28; plano em
+  `docs/planos/2026-09-28-D1-colisao-civil.md`).** O GDD §6.4 foi revisto.
+  - **D1a — o mecanismo, desligado por dado. ENTREGUE.**
+    - Troca de frente, empurrão do ocioso, desvio e troca forçada.
+    - Estados "dentro" não ocupam tile.
+    - Chave `units.json colisaoCivil.ligada = false`.
+    - Aceite:
+      - todo estado de FSM está classificado, e estado novo sem classificação reprova;
+      - desligada, a suíte fica igual sem mudar nenhum teste;
+      - ligada, os cenários de corredor, porta, destino ocupado e desvio passam com a
+        invariante limpa.
+  - **D1b — ligar e medir. ENTREGUE (só medida; a lista está no PROGRESS).**
+    - 21 testes reprovam por empilhamento vindo de fora do passo (mais 1 guarda do F09, por
+      efeito dele).
+    - 2 testes afirmam tick exato, 1 mudou de cenário e 1 é de custo.
+    - Nenhum teste de calibração reprovou.
+  - **D1a-2 — o empilhamento de fora do passo.** Proposto e à espera do operador.
+  - **D1c — o aceite do operador:**
+    - (1) congestiona: uma rua entrega menos que duas. Se as duas derem o mesmo, prova que
+      a fila existe e que a espera cresce com o número de serfs;
+    - (2) não trava: 20 000 ticks sem ninguém acima do teto.
+  - **D1d — recalibração em lote**, se a chave for ligada de vez.
 - **Depois da fila:** o Feed e a fome militar, com o plano esperando aprovação. Eles
   destravam o ponto 5 da F28-IA.
 

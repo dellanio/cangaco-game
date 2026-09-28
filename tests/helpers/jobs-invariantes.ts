@@ -340,7 +340,13 @@ export function violacoesDaColisao(estado: GameState, dados: GameData = gameData
       const com = estado.unidades.porId[id]?.fsmData.trocaCom;
       return com !== undefined && com !== id && ids.includes(com);
     }).length;
-    if (emTroca < ids.length - 1) v.push(`tile ${tile}: ${ids.length} civis empilhados fora de troca (${ids.join(', ')})`);
+    if (emTroca < ids.length - 1) {
+      const quem = ids.map((id) => {
+        const u = estado.unidades.porId[id];
+        return `${id}:${u?.fsm}${u?.fsmData.trocaCom === undefined ? '' : `>${u.fsmData.trocaCom}`}`;
+      });
+      v.push(`tile ${tile}: ${ids.length} civis empilhados fora de troca (${quem.join(', ')})`);
+    }
   }
   return v;
 }

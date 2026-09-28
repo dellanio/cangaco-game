@@ -334,5 +334,8 @@
   },
   "F-REPL-b-modos": {
     "passes": true
+  },
+  "D1a-colisao-civil": {
+    "passes": true
   }
 }
