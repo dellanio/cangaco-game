@@ -15,6 +15,7 @@ import { classeDaUnidade } from '../condicao';
 import { buscarCaminho, passoAndavel, tileAndavel } from '../pathfinding';
 import { andar, chegou, comUnidade, noTile, ocioso } from '../units/movimento';
 import type { ResultadoDeSistema } from './jobs';
+import { viradaPeloPasso } from './combate';
 
 export type MoveUnits = Extract<Command, { readonly type: 'MoveUnits' }>;
 
@@ -87,7 +88,8 @@ function passoMarchando(state: GameState, u: Unidade, dados: GameData): Resultad
     if (rota === null || rota.tiles.length === 0) return { state: comUnidade(state, ocioso(u)), events: [] };
     atual = { ...u, fsmData: { alvoTile: alvo, caminho: rota.tiles, progresso: 0 } };
   }
-  const andou = andar(state, atual, dados);
+  // F28a: a unidade vira para onde anda (frente/flanco/costas e o arco do arqueiro)
+  const andou = viradaPeloPasso(noTile(atual), andar(state, atual, dados));
   return { state: comUnidade(state, chegou(andou) ? ocioso(andou) : andou), events: [] };
 }
 

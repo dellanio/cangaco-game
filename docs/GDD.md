@@ -462,6 +462,10 @@ unidade)` quando não há torre vaga.
 **Laborer, reparo** (F-CERCO-b, **[proposta]**) — o mesmo `indo_a_obra → martelando`
 da obra, até a porta de um prédio completo com o reparo ligado.
 
+**Militar, luta** (F28a, **[proposta]**) — `ocioso → indo_lutar → lutando → ocioso`, por
+ordem (`AttackUnit`) ou por contato (inimigo militar encostado). O alvo morto, sumido ou
+do próprio lado devolve a `ocioso`.
+
 **Militar, marcha** (F26a, **[proposta]**) — `ocioso → marchando → ocioso`, só por ordem
 do jogador (`MoveUnits`); cada soldado vai a um tile próprio em volta do ponto.
 

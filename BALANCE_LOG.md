@@ -1358,3 +1358,13 @@ proporções da seção 4.5 do GDD. Um cenário que as respeite **não pode**:
   largura, lote e âncora estão no `docs/BRIEF-ARTE.md` ("MEDIDO NO KAM"), lidos por
   `tools/kam-medir.js` (README em `tools/kam-medir.md`). O leitor também refaz a tabela
   "REFERÊNCIA" acima (ritmo e `ResProductionX`).
+
+## 2026-09-28 (sessão autônoma, F28a) — o piso de acerto nunca age
+
+- **Observação, não mudança:** `combat.json: pisoAcerto = 0.08`. Com o `units.json` de
+  hoje, o menor golpe possível é lanceiro (25) contra espadachim, piqueiro ou cavaleiro
+  (defesa 3), de frente: 25/300 = 0,083. O multiplicador de direção só sobe a chance.
+  Então o piso é número sem efeito.
+  - Se a intenção for proteger o golpe fraco, ele precisa ficar acima de 0,083.
+  - Se for só guarda para dado futuro, pode ficar.
+  - Medido em `tests/F28a-corpo-a-corpo.test.ts`.

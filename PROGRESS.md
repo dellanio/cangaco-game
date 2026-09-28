@@ -10692,3 +10692,52 @@ Plano: `docs/planos/2026-09-28-A9-F26-grupo.md`. Só `src/render/`, `src/input/`
 - **`Esc` não solta o grupo:** o teclado da F-D1 tem a ordem de precedência do `Esc`, e não
   mexi nela.
 - **Não há ordem pelo painel nem atalho de teclado**, só mouse.
+
+## 2026-09-28 (sessão autônoma, item 10a) — F28a: o corpo a corpo
+
+Plano: `docs/planos/2026-09-28-A10-F28-tropa.md`. **O item 10 pedia arco, alcance e
+escudo, mas a sim não tinha luta entre unidades.** Quebrei em F28a (corpo a corpo, esta
+entrega) e F28d (arqueiro, a seguir). Só `src/sim/` e teste.
+
+**Verificado:**
+- **`sim/combate.ts`** (puro):
+  - `direcaoEntre` e `ladoDoGolpe` (frente / flanco / costas, pela frente do ALVO);
+  - `chanceDeAcerto`: a fórmula do `combat.json`, com `attackVsCavalo` contra montado,
+    `multiplicadorDirecao`, piso e teto.
+- **`Unidade.direcao?`**, de 0 a 7, com ausente = 4. A marcha e a luta viram a unidade
+  pelo passo (`viradaPeloPasso`).
+- **`systems/combate.ts`**:
+  - `AttackUnit` persegue (`indo_lutar`, replaneja se o alvo anda) e luta (`lutando`);
+  - contato: militar corpo a corpo `ocioso` encostado em militar inimigo luta sem ordem;
+  - golpe a cada `ticksCadenciaDeAtaque` (3 ticks hoje), sorteado com `nextFloat` no
+    `state.rng` (é o primeiro consumidor do RNG na sim). Acerto tira 1 HP; HP 0 tira a
+    unidade e emite `unit-killed`;
+  - eventos `unit-struck` (acertou ou não, e o hp) e `unit-killed`.
+- A luta roda depois da marcha e antes do cerco.
+- `tests/F28a-corpo-a-corpo.test.ts`, 6 testes, verdes:
+  - chance pura: 0,35 / ×1,35 / ×1,75, piqueiro contra cavaleiro 80/300, e o teto;
+  - **taxa sorteada: 526 acertos em 3000 golpes = 0,1753, contra chance de 0,175**
+    (`test-output/F28a-taxa.json`);
+  - `AttackUnit` até a morte: 20 golpes a cada 3 ticks, e o alvo sai do estado no tick
+    81, com as invariantes válidas;
+  - contato encostado, e a 2 tiles nada;
+  - sete recusas, com o estado igual;
+  - a mesma semente dá o mesmo estado, e outra semente dá outro.
+- **Sondas** (restauradas):
+  - acerto com o dobro da chance: a taxa reprova;
+  - sem o contato: (c) reprova;
+  - sem o multiplicador de direção: (a) reprova.
+
+**Achados:**
+- **O `pisoAcerto` (0,08) nunca age com o dado de hoje.** O menor par é lanceiro contra
+  espadachim, 25/300 = 0,083. Com a direção só ≥ 1, nenhum golpe fica abaixo disso.
+  Balanceamento: vai para o `BALANCE_LOG` como observação, sem mexer.
+- **A regeneração da F28c age no meio da luta:** 1 HP a cada 67 ticks, contra golpes a
+  cada 3. O teste conta a cura.
+
+**PARA REVISÃO:**
+- **Frente = até 45° da direção do alvo**, flanco = 90°, costas = o resto.
+- **Direção ausente = sul.**
+- **Contato só vale para quem está `ocioso`:** quem marcha não para para lutar. No KaM,
+  quem é atacado revida, e aqui ele revida quando chega ao destino e fica ocioso.
+- **Militares ainda não colidem** (GDD §6.4).

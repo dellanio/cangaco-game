@@ -5175,6 +5175,23 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
     (`formacao.colunasMax: "tamanhoDoGrupo"`; `KM_UnitGroup.pas:661-666`). Não há tamanho
     recomendado; o "9-15" saiu do GDD e do dado.
 ### F28 — Combate e IA inimiga simples
+- **Quebra (sessão autônoma, 2026-09-28; plano em `docs/planos/2026-09-28-A10-F28-tropa.md`).**
+  O pedido era "os tipos de tropa": arco de 90°, alcance de 4 a 11 e escudo contra
+  projétil. Só que a sim não tinha combate unidade × unidade.
+  - **F28a — o corpo a corpo. ENTREGUE.**
+    - `Unidade.direcao?` (0..7; ausente = 4, sul). A regra do golpe fica em
+      `sim/combate.ts`: frente se a diferença é de até 45°, flanco a 90°, costas no resto.
+      O `attackVsCavalo` soma contra montado, e a chance é a fórmula do dado.
+    - `AttackUnit` persegue e luta. O golpe é sorteado no RNG do estado a cada
+      `ticksCadenciaDeAtaque` e tira 1 HP; HP 0 dá `unit-killed`.
+    - Contato: militar ocioso encostado em militar inimigo luta sem ordem. Contra prédio,
+      continua só por ordem.
+    - Teste: `tests/F28a-corpo-a-corpo.test.ts`. Taxa sorteada de 0,1753 contra chance de
+      0,175 em 3000 golpes.
+    - **Achado:** o `pisoAcerto` (0,08) nunca age com o dado de hoje, porque o menor par é
+      25/300 = 0,083.
+  - **F28d — o arqueiro.** Alcance de 4 a 11, arco de 90° total, projétil no tile com
+    fogo amigo, escudo contra projétil e flecha em prédio (1 HP).
 - **Nota (decisão do operador, 2026-09-28): o alcance mínimo do arqueiro entra no item
   do arqueiro, não sozinho.** Hoje o arqueiro está dentro desta F28.
   - **Divergência registrada:** o KaM atira de 4 a 10,99 tiles ("atira a 4, não a 3";

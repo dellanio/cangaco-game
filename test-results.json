@@ -266,6 +266,12 @@
   "F26b-selecionar-pela-tela": {
     "passes": true
   },
+  "F28a-corpo-a-corpo": {
+    "passes": true
+  },
+  "F28d-arqueiro": {
+    "passes": false
+  },
   "F-TR-a-textura-e-transicao": {
     "passes": true
   },

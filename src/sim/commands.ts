@@ -216,4 +216,16 @@ export type Command =
       readonly type: 'MoveUnits';
       readonly unidades: readonly string[];
       readonly destino: TileDeGrid;
+    }
+  | {
+      /**
+       * F28a — manda `unidades` (militares corpo a corpo) perseguirem e golpearem a
+       * unidade `alvo`, de outro lado e com HP (militar ou mercenario). A ordem nova
+       * substitui a anterior. Recusado INTEIRO (`command-rejected`, o estado nao muda)
+       * se a lista e vazia, o alvo nao existe, nao tem HP ou e do mesmo lado, ou alguma
+       * unidade nao existe, nao e militar ou atira a distancia (o arqueiro e da F28d).
+       */
+      readonly type: 'AttackUnit';
+      readonly unidades: readonly string[];
+      readonly alvo: string;
     };

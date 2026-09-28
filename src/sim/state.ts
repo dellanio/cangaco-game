@@ -35,6 +35,16 @@ import { recursosIniciais } from './recursos';
  * semente e os mesmos comandos produzem os mesmos eventos, na mesma ordem.
  * O teste de determinismo compara o estado inteiro, `events` incluso.
  */
+/** F28a — por que um `AttackUnit` foi recusado. */
+export type MotivoDeRecusaDeLuta =
+  | 'sem-unidades'
+  | 'alvo-inexistente'
+  | 'alvo-sem-hp'
+  | 'unidade-inexistente'
+  | 'unidade-nao-militar'
+  | 'unidade-a-distancia'
+  | 'alvo-do-proprio-lado';
+
 /** F26a — por que um `MoveUnits` foi recusado. */
 export type MotivoDeRecusaDeMarcha =
   | 'sem-unidades'
@@ -113,6 +123,14 @@ export type GameEvent =
       readonly command: 'SetProductionQuota';
       readonly predio: string;
       readonly motivo: MotivoDeRecusaDeCota;
+    }
+  | {
+      /** F28a — `AttackUnit` recusado INTEIRO; o estado nao mudou. */
+      readonly type: 'command-rejected';
+      readonly command: 'AttackUnit';
+      readonly alvo: string;
+      readonly unidade: string | null;
+      readonly motivo: MotivoDeRecusaDeLuta;
     }
   | {
       /** F26a — `MoveUnits` recusado INTEIRO; o estado nao mudou. */
@@ -286,6 +304,23 @@ export type GameEvent =
       readonly tipo: string;
       readonly carga: string | null;
       readonly armazem: string | null;
+    }
+  | {
+      /** F28a — um golpe de luta: `alvo` perdeu 1 HP (ficou em `hp`), ou o golpe errou
+       *  (`acertou: false`). O aceite conta golpes e acertos por ele. */
+      readonly type: 'unit-struck';
+      readonly atacante: string;
+      readonly alvo: string;
+      readonly acertou: boolean;
+      readonly hp: number;
+    }
+  | {
+      /** F28a — a unidade morreu em luta e saiu do estado neste tick. */
+      readonly type: 'unit-killed';
+      readonly unidade: string;
+      readonly tipo: string;
+      readonly lado: number;
+      readonly por: string;
     };
 
 /**
@@ -1146,6 +1181,8 @@ export interface DadosDaFsm {
   readonly recarga?: number;
   /** F26a — o tile que a ordem de mover deu a ESTA unidade (`MoveUnits`). */
   readonly alvoTile?: TileDeGrid;
+  /** F28a — a unidade que esta sendo perseguida ou golpeada (`AttackUnit`, contato). */
+  readonly alvoUnidade?: string;
 }
 
 export interface Unidade {
@@ -1180,6 +1217,12 @@ export interface Unidade {
    * campo ate levar o primeiro golpe, e nenhum save anterior muda de sentido.
    */
   readonly hp?: number;
+  /**
+   * F28a — para onde a unidade esta virada: 0 = norte, e no sentido horario ate 7
+   * (noroeste). E o que decide frente, flanco e costas no golpe, e o arco do arqueiro.
+   * AUSENTE e 4 (sul, de frente para a camera), e so muda quando a unidade anda ou luta.
+   */
+  readonly direcao?: number;
 }
 
 /**
