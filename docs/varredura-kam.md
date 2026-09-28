@@ -271,7 +271,7 @@ que ele não achou no código está marcado **HIPÓTESE — ABERTA**.
   - **Posição de defesa:** ponto, tipo de grupo, raio e linha de frente ou de trás; só a de trás ataca (`ai/KM_AITypes.pas:8-11`). O grupo ocioso volta ao ponto.
   - **Treino:** repõe até 9 por posição.
   - **Ataque:** é roteirizado na missão (atraso, homens mínimos, grupos por tipo); `AutoAttack` repete contra o prédio mais perto do ponto de partida.
-  - **Alvos possíveis:** unidade mais perta, prédio mais perto do exército, prédio mais perto da base, ponto fixo (`ai/KM_AITypes.pas:21-26`). Na resolução, prédio tem preferência sobre unidade.
+  - **Alvos possíveis:** unidade mais perto, prédio mais perto do exército, prédio mais perto da base, ponto fixo (`ai/KM_AITypes.pas:21-26`). Na resolução, prédio tem preferência sobre unidade.
 - **A IA escolhe alvo ignorando a névoa.** Só a busca de cada soldado respeita o que está revelado (`hands/KM_HandsCollection.pas:523-567`). **Divergência a decidir:** o nosso `GDD.md:516` fala da névoa para o jogador, não para a IA.
 - **Proposta de IA mínima para a F28** (do que o KaM faz):
   1. posições de defesa com grupo de 9;
