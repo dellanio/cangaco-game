@@ -10296,3 +10296,43 @@ lê como árvore. A decisão, se o estado serve, é do operador.
 
 **Aberto (próxima leva, por ordem do operador):** F-VIVO-d2, F-TR-b e F-CERCO-a2. O
 operador quer acompanhar a F-CERCO-a2, que é o combate começando: não a iniciar sem ele.
+
+## 2026-09-28 (sessão autônoma de nuvem) — como rodar roteiro aqui
+
+Sessão na nuvem, branch `claude/sessao-autonoma-features-alj020`, sem a máquina do
+operador. Pedido: a fila de 20 itens, decisões conservadoras marcadas PARA REVISÃO.
+
+**Roteiros de screenshot rodam na nuvem, com duas variáveis (verificado, F-REPL-e verde):**
+- `CANGACO_CHROMIUM=/opt/pw-browsers/chromium`. O `@playwright/test` 1.63 pede o headless
+  shell 1243; o ambiente traz o Chromium 1194 e não deixa baixar.
+- `CANGACO_SHOT_NUVEM=1`. O proxy da nuvem não entrega a fonte do Google
+  (`ERR_TOO_MANY_RETRIES`), e o Chromium completo pede `/favicon.ico` (404). Nesse modo, o
+  runner responde 204 vazio a host de fora e ao favicon. O jogo não muda.
+- **Consertado de passagem: órfão do vite no Linux.** Com `shell: true`, o `kill()` matava
+  só o `sh`, e o vite ficava na porta 5175, reprovando a corrida seguinte por "porta
+  ocupada". A defesa do BUG-K existia só no Windows. Agora o roteiro sobe o vite como líder
+  de grupo (`detached`, fora do Windows) e `derrubarServidor` manda o sinal ao grupo. Depois
+  de uma corrida que reprovou, nenhum `vite` ficou vivo (`ps`).
+- Sem as variáveis, o runner é o de antes: na máquina do operador nada muda.
+
+**O jogo original não está aqui:** nada que dependa de `houses.dat` ou `tools/kam-medir.js`
+foi medido nesta sessão. O fonte do kam_remake (GitHub) continua acessível.
+
+## 2026-09-28 (sessão autônoma, item 1) — a muda a 40% da adulta
+
+Plano: `docs/planos/2026-09-28-A1-muda-40.md`. Só `src/render/crescimento.ts`, teste e brief.
+
+**Verificado:**
+- `escalaDoPlaceholder` passou de `(i+1)/(n+1)` (0,25 / 0,5 / 0,75) para
+  `ESCALA_DA_MUDA + (1 − ESCALA_DA_MUDA)·i/n`, com `ESCALA_DA_MUDA = 0.4`: 0,4 / 0,6 / 0,8.
+  O brief continua valendo (muda ≤ 0,5, na metade de baixo do tile).
+- `tests/F-REPL-e-arvore.test.ts` afirma o piso de 0,4. Verde.
+- `npm run shot -- F-REPL-e` verde, 5 capturas; `test-output/F-REPL-e-shot.json` publica as
+  escalas 0.4, 0.6 e 0.8. Abri `screenshots/F-REPL-e-1-muda-no-zoom-1.png`: a muda aparece
+  como um tufo ao lado do lenhador, visível, mas ainda não como árvore nova.
+
+**Registrado (decisão do operador):** a arte final da muda precisa de silhueta própria, não
+da adulta encolhida — escrito em `docs/BRIEF-ARTE.md`, na entrada da árvore.
+
+**Hipótese (leitura minha da captura, não medida em pixel — não há PIL na nuvem):** o tufo
+tem ~28×22 px no zoom 1. Nenhuma arte foi gerada ou mexida.

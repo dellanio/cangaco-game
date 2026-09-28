@@ -59,6 +59,8 @@ function subirServidor() {
     cwd: path.join(__dirname, '..'),
     shell: true,
     stdio: ['ignore', 'pipe', 'pipe'],
+    // fora do Windows, lider de grupo: `derrubarServidor` derruba o grupo inteiro
+    detached: process.platform !== 'win32',
   });
   return processo;
 }
@@ -132,8 +134,21 @@ async function main() {
   try {
     await esperarServidor(url, TIMEOUT_SERVIDOR_MS, servidor);
 
-    browser = await chromium.launch();
+    // CANGACO_CHROMIUM aponta um Chromium ja instalado quando o do Playwright
+    // pinado nao existe (sessao de nuvem: o ambiente traz outra revisao e nao
+    // deixa baixar). Sem a variavel, o comportamento e o de sempre.
+    const executablePath = process.env.CANGACO_CHROMIUM;
+    browser = await chromium.launch(executablePath ? { executablePath } : {});
     const page = await browser.newPage({ viewport: VIEWPORT });
+    // CANGACO_SHOT_NUVEM=1: a sessao de nuvem sai por um proxy que nao entrega a
+    // fonte do Google (estilo.css), e o Chromium completo pede /favicon.ico, que
+    // o headless shell nao pede. Os dois virariam erro de console alheio ao jogo
+    // e reprovariam todo roteiro. Nesse modo, host de fora e favicon recebem 204
+    // vazio. O jogo nao muda; sem a variavel, nada disto roda.
+    if (process.env.CANGACO_SHOT_NUVEM === '1') {
+      await page.route((alvo) => alvo.hostname !== 'localhost' || alvo.pathname === '/favicon.ico',
+        (rota) => rota.fulfill({ status: 204, body: '' }));
+    }
 
     page.on('console', (msg) => {
       if (msg.type() === 'error') errosDeConsole.push(msg.text());

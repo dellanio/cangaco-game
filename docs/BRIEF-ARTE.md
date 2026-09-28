@@ -833,6 +833,12 @@ do `BUILD_PLAN.md` (2026-09-27), e entra quando o operador aprovar o item.
 - **A muda tem de se ler como obstáculo.** Na simulação, a árvore bloqueia o passo desde
   o plantio, e o jogador precisa ver por que a unidade contorna um tile com planta
   pequena.
+  - **Silhueta própria (decisão do operador, 2026-09-28).** O placeholder de hoje é a
+    adulta encolhida a 0,4 / 0,6 / 0,8 (`render/crescimento.ts`, `ESCALA_DA_MUDA`). A 0,25
+    ela media 19 px num tile de 64 e não lia como árvore; a 0,4 lê como "tem planta ali",
+    um tufo, e ainda não como árvore nova. A arte final da muda **não** é a adulta
+    encolhida: é uma silhueta de planta nova (haste, poucas folhas, pé marcado no chão),
+    legível em zoom 1.
 - **O toco não pode parecer muda.** O toco é o tile que o lenhador vai replantar; a muda
   é a que já cresce.
 

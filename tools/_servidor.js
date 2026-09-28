@@ -19,6 +19,17 @@ function derrubarServidor(processo) {
     spawnSync('taskkill', ['/pid', String(processo.pid), '/T', '/F'], { stdio: 'ignore' });
     return;
   }
+  // Linux/macOS: o mesmo defeito, com `sh` no lugar do `cmd.exe`. O roteiro sobe o
+  // vite como lider de grupo (`detached`), e o sinal para `-pid` desce o grupo
+  // inteiro. Quem nao subiu como lider (o dev) cai no `kill()` de antes.
+  if (processo.pid !== undefined) {
+    try {
+      process.kill(-processo.pid, 'SIGTERM');
+      return;
+    } catch {
+      // sem grupo com esse id: o filho nao e lider; segue para o kill simples
+    }
+  }
   processo.kill();
 }
 

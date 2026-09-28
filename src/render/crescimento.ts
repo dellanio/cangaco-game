@@ -29,11 +29,19 @@ export function estadoDeCrescimento(
   return ESTADOS_DE_CRESCIMENTO[Math.min(i, n - 1)] ?? null;
 }
 
-/** O placeholder do estado sem PNG: a adulta do tile encolhida a `(i+1)/(n+1)`, pe
- *  no chao. Numero de TELA, derivado da contagem de estados: a muda sai com 1/4 e
- *  cabe na metade de baixo do tile, como o brief pede. */
+/** A muda do placeholder, em fracao da adulta. Decisao do operador (2026-09-28): a
+ *  1/4 ela media 19 px num tile de 64 e nao lia como arvore, e a sim bloqueia a
+ *  passagem desde o plantio — o jogador precisa ver o que bloqueia. Numero de TELA,
+ *  nao de balanceamento: nada da sim depende dele. A arte final da muda precisa de
+ *  silhueta propria, nao da adulta encolhida (PROGRESS, 2026-09-28, sessao autonoma). */
+export const ESCALA_DA_MUDA = 0.4;
+
+/** O placeholder do estado sem PNG: a adulta do tile encolhida, pe no chao, de
+ *  `ESCALA_DA_MUDA` na muda ate a adulta, em passos iguais pela contagem de estados
+ *  (0,4 → 0,6 → 0,8 → adulta 1). */
 export function escalaDoPlaceholder(estado: EstadoDeCrescimento): number {
-  return (ESTADOS_DE_CRESCIMENTO.indexOf(estado) + 1) / (ESTADOS_DE_CRESCIMENTO.length + 1);
+  const n = ESTADOS_DE_CRESCIMENTO.length;
+  return ESCALA_DA_MUDA + ((1 - ESCALA_DA_MUDA) * ESTADOS_DE_CRESCIMENTO.indexOf(estado)) / n;
 }
 
 /** Os estados do manifesto que sao ESPECIE da adulta: tudo menos o crescimento. Sem
