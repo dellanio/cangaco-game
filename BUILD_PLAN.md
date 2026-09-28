@@ -5262,6 +5262,17 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
   - **Aceites dos pontos 2 e 3 (escritos na sessão, PARA REVISÃO):** morto o intruso, o
     grupo volta aos seus tiles; o arqueiro que ataca de fora do raio vira alvo.
   - Teste: `tests/F28-IA-defesa.test.ts`.
+- **Ponto 4 ENTREGUE (2026-09-28, sessão autônoma).**
+  - A posição com menos de 9 pede um soldado por tick ao primeiro quartel completo do
+    lado, pelo mesmo `TrainSoldier` da F25a.
+  - O tipo é o primeiro de `units.json: militares` do tipo de grupo da posição que o
+    quartel consegue formar.
+  - Teste: `tests/F28-IA-repor.test.ts`.
+- **Ponto 5 BLOQUEADO (sessão autônoma, 2026-09-28):** "alimentar os famintos" não tem
+  onde agir. Na sim só o civil sente fome (`sim/condicao.ts: drenaCondicao`, "quando o
+  Feed existir, este predicado é o único lugar a mudar"), e o comando `Feed` não existe.
+  **Pré-requisito:** fome militar mais o `Feed` (F27/F28), que é item novo, fora da fila
+  de hoje.
 
 ### F28b — Torre de Pedra: o recruta atira pedra de cima (sim + render)
 - **ENTREGUE (2026-09-28, sessão autônoma; plano em `docs/planos/2026-09-28-A11-F28b-torre.md`).**

@@ -10892,3 +10892,33 @@ escrito do ponto 1 já pedia a saída para o intruso.
   Hoje a sim nem tem névoa.
 - **Quem cria as posições é o cenário.** Não há arquivo de missão nem IA que escolha o
   ponto sozinha.
+
+## 2026-09-28 (sessão autônoma, item 14) — F28-IA, pontos 4 e 5: repor feito, alimentar bloqueado
+
+**Ponto 4, verificado:**
+- `reporPeloQuartel` (`systems/ia.ts`): a posição com menos de 9 pede UM soldado por tick
+  ao primeiro quartel completo do lado. Isso usa o `aplicarTrainSoldier` da F25a, sem
+  comando, porque quem dá a ordem é a IA.
+  - O tipo é o primeiro de `militares` (a ordem do dado) do grupo da posição que o quartel
+    forma agora.
+  - O soldado nasce ocioso, e o `guarnecer` do tick seguinte o põe na posição.
+  - `sistemaDaIA` passou a devolver eventos (`unit-trained`).
+- `tests/F28-IA-repor.test.ts`, 4 testes, verdes:
+  - 12 machados e 12 recrutas enchem a posição com 9 milicianos de lado 1 e param. Sobram
+    3 machados e 3 recrutas;
+  - a posição de distância forma arqueiros;
+  - sem recruta, nada se forma;
+  - determinismo.
+- **Sonda:** sem o teto de 9, forma 12 e reprova. Restaurada.
+
+**Ponto 5 — BLOQUEADO, não implementado (verificado no código):** "alimentar os
+famintos" não tem onde agir.
+- `sim/condicao.ts: drenaCondicao` só drena civil ("o militar não vai ao Inn e depende do
+  comando `Feed`… quando o `Feed` existir, este predicado é o único lugar a mudar").
+- O comando `Feed` não existe.
+- Pré-requisito: fome militar mais `Feed` (F27/F28). Está registrado no BUILD_PLAN.
+
+**PARA REVISÃO:**
+- **O tipo formado é o primeiro do dado** (o mais barato: miliciano, arqueiro). No KaM a
+  IA escolhe pelo que a missão manda.
+- **Um soldado por posição por tick**, sem tempo de treino (o da F25a).

@@ -17,7 +17,10 @@
  * mesmas ordens que o jogador daria — o estado da unidade e o mesmo de `MoveUnits` e
  * `AttackUnit` —, so que sem comando: e a IA, nao o jogador, quem as emite.
  */
-import type { GameState, IADoLado, PosicaoDeDefesa, Unidade } from '../state';
+import type { GameEvent, GameState, IADoLado, PosicaoDeDefesa, Unidade } from '../state';
+import { ehQuartelCompleto, motivoDaRecusaDeSoldado } from '../quartel';
+import { aplicarTrainSoldier } from './quartel';
+import type { ResultadoDeSistema } from './jobs';
 import type { GameData } from '../data/types';
 import { classeDaUnidade } from '../condicao';
 import { direcaoEntre, distanciaEmTiles } from '../combate';
@@ -105,9 +108,40 @@ function defenderEPosicionar(state: GameState, p: PosicaoDeDefesa, lado: number,
   return atual;
 }
 
-export function sistemaDaIA(state: GameState, dados: GameData): GameState {
-  if (state.ia === undefined) return state;
+/**
+ * F28-IA, ponto 4 — REPOR pelo quartel: a posicao com menos de `tamanhoDoGrupo` membros
+ * pede UM soldado por tick ao primeiro quartel completo do lado. O tipo e o primeiro de
+ * `units.json: militares` (a ordem do dado) do tipo de grupo da posicao que o quartel
+ * consegue formar agora (requisito e recruta la dentro). E o mesmo `TrainSoldier` do
+ * jogador, dado pela IA; o soldado novo nasce ocioso e o `guarnecer` do tick seguinte o
+ * poe na posicao. Sem quartel, sem requisito ou sem recruta, a posicao espera.
+ */
+function reporPeloQuartel(
+  state: GameState, lado: number, ia: IADoLado, dados: GameData,
+): ResultadoDeSistema {
+  const quartel = state.predios.ordem
+    .map((id) => state.predios.porId[id])
+    .find((p) => ehQuartelCompleto(p) && p.lado === lado);
+  if (quartel === undefined) return { state, events: [] };
   let atual = state;
+  const events: GameEvent[] = [];
+  for (const p of ia.posicoes) {
+    if (p.membros.length >= dados.combate.ia.tamanhoDoGrupo) continue;
+    const tipo = dados.unidades.militares.tipos
+      .map((t) => t.id)
+      .find((t) => tipoDeGrupo(t, dados) === p.tipoDeGrupo && motivoDaRecusaDeSoldado(atual, quartel.id, t, dados) === null);
+    if (tipo === undefined) continue;
+    const r = aplicarTrainSoldier(atual, { type: 'TrainSoldier', predio: quartel.id, tipo }, dados);
+    atual = r.state;
+    events.push(...r.events);
+  }
+  return { state: atual, events };
+}
+
+export function sistemaDaIA(state: GameState, dados: GameData): ResultadoDeSistema {
+  if (state.ia === undefined) return { state, events: [] };
+  let atual = state;
+  const events: GameEvent[] = [];
   for (const chave of Object.keys(state.ia).sort()) {
     const ia = atual.ia?.[chave];
     if (ia === undefined) continue;
@@ -115,6 +149,9 @@ export function sistemaDaIA(state: GameState, dados: GameData): GameState {
     const guarnecida = guarnecer(atual, lado, ia, dados);
     atual = comIA(atual, chave, guarnecida);
     for (const p of guarnecida.posicoes) atual = defenderEPosicionar(atual, p, lado, dados);
+    const reposto = reporPeloQuartel(atual, lado, guarnecida, dados);
+    atual = reposto.state;
+    events.push(...reposto.events);
   }
-  return atual;
+  return { state: atual, events };
 }

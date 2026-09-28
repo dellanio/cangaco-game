@@ -174,7 +174,8 @@ export function step(
   // F28-IA: a IA da as ordens dela ANTES da marcha e da luta, como o comando do
   // jogador vem antes dos sistemas
   const comIA = sistemaDaIA(sistemaDaRegeneracao(atual, tick, dados), dados);
-  const luta = sistemaDoCombate(sistemaDaMarcha(comIA, dados).state, dados);
+  events.push(...comIA.events);
+  const luta = sistemaDoCombate(sistemaDaMarcha(comIA.state, dados).state, dados);
   events.push(...luta.events);
   // F28b: a torre atira depois da luta e antes do cerco
   const torre = sistemaDaTorre(luta.state, dados);

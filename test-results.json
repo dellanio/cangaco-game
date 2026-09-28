@@ -278,6 +278,12 @@
   "F28-IA-defesa-pontos-1-2-3": {
     "passes": true
   },
+  "F28-IA-ponto-4-repor": {
+    "passes": true
+  },
+  "F28-IA-ponto-5-alimentar": {
+    "passes": false
+  },
   "F-TR-a-textura-e-transicao": {
     "passes": true
   },
