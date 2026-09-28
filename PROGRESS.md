@@ -11629,3 +11629,35 @@ Plano: `docs/planos/2026-09-28-C9-fim-para-o-jogo.md`, salvo antes do código. L
   - **fiação ausente no `main.ts`:** o roteiro F34 reprovou ("o tick andou de 2 a 10").
 - **`npm run shot -- F34` verde.** Depois do aviso, o P não faz o tick andar, e o aviso fica.
   Abri a `F34-1-vitoria.png`: "VITÓRIA" com o carimbo "PAUSADO" no HUD.
+
+## 2026-09-28 — C10: a exceção de largura por prédio no dado
+
+Plano: `docs/planos/2026-09-28-C10-excecao-de-largura.md`, salvo antes do código.
+`src/render/`, `assets/manifest.json` (só dado, nenhuma arte gerada nem aberta) e o roteiro.
+
+**Medido (só o manifesto):** só o armazém e a Casa do Coronel passam da largura do lote,
+com 214 px num lote de 192 (1,1146).
+
+**Verificado:**
+- **Manifesto:**
+  - `regraDeLargura.k = 1,0`;
+  - `larguraMaxPorLote: 1.12` no `storehouse` e no `schoolhouse`.
+  - Inserido por texto. A 1ª tentativa, com `json.dumps`, reindentava entradas de UI da
+    sessão de arte e foi desfeita; o diff final tem só as 6 linhas novas.
+- **`escala-predio.ts`:** `RegraDeLargura`, `larguraMaxPorLote` e `violacoesDaLargura`.
+  `escalaDoSprite` passou a ser o mínimo entre largura do lote, teto de altura e **teto de
+  largura**. A cena passa `REGRA_DE_LARGURA` nos dois pontos de desenho.
+- **`tests/C10-largura.test.ts`, 3 testes verdes:**
+  - (a) o manifesto real não tem violação;
+  - (b) largo sem exceção e exceção morta são acusados;
+  - (c) sem a exceção, o armazém encolhe para exatamente o lote; com ela, a escala é
+    idêntica à de antes (a tela não muda).
+- **Roteiro F-ESC:** agora afirma `largura ≤ teto × lote` de cada prédio, e ficou verde.
+- **Sondas**, as três vermelhas:
+  - render ignorando a largura;
+  - não acusar largo;
+  - a tela sem a exceção e sem o limite: o F-ESC reprovou com "'p1' (storehouse) desenha
+    214.0 px de largura num lote de 192".
+
+**PARA REVISÃO:** as duas exceções (1,12) mantêm a arte como está. Tirá-las encolhe o
+armazém e a Casa do Coronel ao lote. A decisão é do operador, e da sessão de arte.

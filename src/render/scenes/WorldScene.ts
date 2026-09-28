@@ -50,7 +50,7 @@ import {
   escalaDoPlaceholder, especiesDaVegetacao, estadoDeCrescimento, type EstadoDeCrescimento,
 } from '../crescimento';
 import { manifestoDoJogo, prediosSemArteDaBusca, texturasParaCarregar } from '../sprites';
-import { escalaDoSprite, regraDoManifesto } from '../escala-predio';
+import { escalaDoSprite, regraDeLarguraDoManifesto, regraDoManifesto } from '../escala-predio';
 import { centroDesenhado, unidadesNaCaixa, unidadesNoPonto } from '../acerto';
 import { LADO_DA_UNIDADE_EM_TILES as LADO_DO_SOLDADO } from '../grid';
 import type { UnidadeDesenhada } from '../acerto';
@@ -84,6 +84,8 @@ const DADOS_DOS_ANIMAIS = dadosDosAnimais(manifestoDoJogo);
 const DADOS_DO_TRABALHO = dadosDoTrabalho(manifestoDoJogo);
 /** F-ESC — o teto da altura do predio, do manifesto. Montado uma vez. */
 const REGRA_DE_ALTURA = regraDoManifesto(manifestoDoJogo);
+/** C10 — o teto de largura do predio, do manifesto. */
+const REGRA_DE_LARGURA = regraDeLarguraDoManifesto(manifestoDoJogo);
 /** F-VIVO-a — o lado de UMA unidade da pilha, em tiles. O brief dizia 1/4; com
  *  1/4 as quatro pilhas do armazem (3 tiles de base) se sobrepoem, com 1/5 cabem.
  *  Desenho, nao balanceamento: fica aqui, como o resto do placeholder. */
@@ -1542,7 +1544,7 @@ export class WorldScene extends Phaser.Scene {
   ): Phaser.GameObjects.Image {
     const imagem = this.add.image(larguraPx / 2, alturaPx, chave);
     imagem.setOrigin(entrada.anchor[0], entrada.anchor[1]);
-    imagem.setScale(escalaDoSprite(entrada, REGRA_DE_ALTURA, configDoMapa.tilePx, larguraPx));
+    imagem.setScale(escalaDoSprite(entrada, REGRA_DE_ALTURA, configDoMapa.tilePx, larguraPx, REGRA_DE_LARGURA));
     return imagem;
   }
 
@@ -1593,7 +1595,7 @@ export class WorldScene extends Phaser.Scene {
   private caixaDoSprite(
     entrada: EntradaDeAsset, larguraPx: number, alturaPx: number,
   ): { readonly x: number; readonly y: number; readonly w: number; readonly h: number } {
-    const escala = escalaDoSprite(entrada, REGRA_DE_ALTURA, configDoMapa.tilePx, larguraPx);
+    const escala = escalaDoSprite(entrada, REGRA_DE_ALTURA, configDoMapa.tilePx, larguraPx, REGRA_DE_LARGURA);
     const w = entrada.tamanho[0] * escala;
     const h = entrada.tamanho[1] * escala;
     return { x: larguraPx / 2 - w * entrada.anchor[0], y: alturaPx - h * entrada.anchor[1], w, h };

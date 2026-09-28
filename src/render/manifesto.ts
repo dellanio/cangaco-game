@@ -47,6 +47,9 @@ export interface EntradaDeAsset {
   /** F-ESC — a excecao ao `regraDeAltura.k` do manifesto, em multiplos da largura do
    *  lote. So existe onde a arte precisa (sobrado, torre); `escala-predio.ts`. */
   readonly alturaMaxPorLargura?: number;
+  /** C10 — a excecao ao `regraDeLargura.k`, em multiplos da largura do lote. So onde a arte
+   *  transborda o lote (armazem, Casa do Coronel); `escala-predio.ts`. */
+  readonly larguraMaxPorLote?: number;
 }
 
 /** Um ponto em FRACAO do sprite `completo`: `[x, y]` de 0 a 1, origem no canto
@@ -111,6 +114,8 @@ export interface Manifesto {
   readonly versao: number;
   /** F-ESC — o teto padrao da altura do predio (`escala-predio.ts`). */
   readonly regraDeAltura?: { readonly k: number };
+  /** C10 — o teto padrao da largura do predio (`escala-predio.ts`). */
+  readonly regraDeLargura?: { readonly k: number };
   readonly assets: readonly EntradaDoManifesto[];
 }
 

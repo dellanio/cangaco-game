@@ -5,6 +5,10 @@
     "k": 1.0,
     "_doc": "F-ESC (decisao do operador, 2026-09-27): a altura do arquivo do predio nao passa de k vezes a largura do LOTE (footprint[0] * tile_px de data/terrain.json). Excecao por predio em `alturaMaxPorLargura`, so onde a arte precisa (sobrado, torre); o footprint nao muda para caber arte. O render encolhe o sprite que passar (src/render/escala-predio.ts) e tests/F-ESC-escala.test.ts reprova predio alto sem excecao e excecao que ja cabe em k."
   },
+  "regraDeLargura": {
+    "k": 1.0,
+    "_doc": "C10 (decisao do operador, 2026-09-28: 'a excecao de largura vira dado, como a de altura'). A largura do arquivo do predio nao passa de k vezes a largura do LOTE (footprint[0] * tile_px). Excecao por predio em `larguraMaxPorLote`. O render encolhe o sprite que passar (src/render/escala-predio.ts) e tests/C10-largura.test.ts reprova predio largo sem excecao e excecao que ja cabe em k. Hoje so o armazem e a Casa do Coronel passam (214 px num lote de 192 = 1,1146), e ganharam excecao de 1,12 para a tela nao mudar sem decisao (PARA REVISAO)."
+  },
   "assets": [
     {
       "id": "storehouse",
@@ -18,6 +22,7 @@
         254
       ],
       "alturaMaxPorLargura": 1.33,
+      "larguraMaxPorLote": 1.12,
       "anchor": [
         0.5,
         1
@@ -123,6 +128,7 @@
         240
       ],
       "alturaMaxPorLargura": 1.33,
+      "larguraMaxPorLote": 1.12,
       "anchor": [
         0.5,
         0.875

@@ -28,6 +28,12 @@ function tetoDoManifesto(tipo) {
   return entrada?.alturaMaxPorLargura ?? manifesto.regraDeAltura.k;
 }
 
+/** C10 — o teto de LARGURA, lido AQUI do manifesto (`larguraMaxPorLote` ou `regraDeLargura.k`). */
+function tetoDeLargura(tipo) {
+  const entrada = manifesto.assets.find((a) => a.tipo === 'predio' && a.id === tipo);
+  return entrada?.larguraMaxPorLote ?? manifesto.regraDeLargura.k;
+}
+
 async function roteiro(ctx) {
   const { page, capturar, estado, afirmar } = ctx;
   await roteiroDaFaseA(ctx);
@@ -46,7 +52,14 @@ async function roteiro(ctx) {
       `'${id}' (${caixa.tipo}) desenha ${caixa.h.toFixed(1)} px de altura num lote de ${caixa.lote}: `
         + `passa de ${teto} x lote`,
     );
-    (porTipo[caixa.tipo] ??= []).push({ id, ...caixa, teto, alturaPorLote: caixa.h / caixa.lote });
+    // C10: a largura desenhada tambem nao passa do teto de largura
+    const tetoL = tetoDeLargura(caixa.tipo);
+    afirmar(
+      caixa.w <= tetoL * caixa.lote + FOLGA_PX,
+      `'${id}' (${caixa.tipo}) desenha ${caixa.w.toFixed(1)} px de largura num lote de ${caixa.lote}: `
+        + `passa de ${tetoL} x lote`,
+    );
+    (porTipo[caixa.tipo] ??= []).push({ id, ...caixa, teto, tetoL, alturaPorLote: caixa.h / caixa.lote, larguraPorLote: caixa.w / caixa.lote });
   }
   for (const tipo of SEIS) {
     afirmar(porTipo[tipo] !== undefined, `a vila da F17 deveria desenhar '${tipo}' com arte, e nao desenhou`);

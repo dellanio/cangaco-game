@@ -5492,7 +5492,14 @@ Ordem do operador. Cada item tem plano em `docs/planos/2026-09-28-C<n>-*.md`.
      - A sim não muda.
      - Teste `tests/C9-fim-para-o-jogo.test.ts`; o roteiro F34 afirma que o P depois do fim
        não faz o tick andar.
-  10. **C10 — a exceção de largura por prédio no dado.**
+  10. **C10 — a exceção de largura por prédio no dado. ENTREGUE.**
+      - `assets/manifest.json` ganhou `regraDeLargura.k = 1,0` e `larguraMaxPorLote` por
+        prédio.
+      - O render encolhe o que passar do teto, e `violacoesDaLargura` acusa "largo sem
+        exceção" e "exceção morta".
+      - O armazém e a Casa do Coronel (1,1146) ganharam exceção de 1,12, e a tela não muda.
+        PARA REVISÃO: tirar as exceções os encolhe ao lote.
+      - Teste `tests/C10-largura.test.ts`; o roteiro F-ESC afirma a largura.
 - **Depois da fila:** o Feed e a fome militar, com o plano esperando aprovação. Eles
   destravam o ponto 5 da F28-IA.
 
