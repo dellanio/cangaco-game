@@ -239,6 +239,9 @@
   "F-VIVO-d2-quadro-unico": {
     "passes": true
   },
+  "F-TR-b-quadros-e-lajedo": {
+    "passes": true
+  },
   "F-TR-a-textura-e-transicao": {
     "passes": true
   },

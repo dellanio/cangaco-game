@@ -1932,8 +1932,22 @@ a geografia já corrigida do que regravar 900 tiles depois.
 
     O lajedo dinâmico segue no mesmo roteiro. Evidência:
     `test-output/F-TR-terreno.json` e `screenshots/F-TR-5/6-*.png`.
-  - **F-TR-b** (espera o operador) é o quadro único com os cinco. O operador escolhe
-    entre aceitar os dois quadros ou apontar um mapa em que água e serra se encontrem.
+  - **F-TR-b (feita, 2026-09-28, sessão autônoma).**
+    - **Aceite corrigido (decisão do operador, 2026-09-28):** *"no mapa real não cabe.
+      Use dois quadros."* O "água, grama, areia, floresta e serra no mesmo quadro" passa
+      a ser **os dois quadros da F-TR-a** (açude e serra), cada um com a janela achada
+      pelo próprio mapa. **Motivo:** a água vai de y 24 a 53 e a montanha de y 84 a 119;
+      a vista a 0,5 tem 40×22 tiles, e nenhuma janela mostra as duas. Um mapa só para a
+      foto seria andaime.
+    - **Lajedo encolhendo (pedido do operador):** a pedreira da F-T3 come **três** tiles,
+      um de cada vez. Depois de cada um, o roteiro afirma que o lajedo perdeu
+      exatamente um tile e que **toda** rocha de pé desenha a máscara que o roteiro tira
+      sozinho do conjunto de rochas. O que se lê é `debug.lajedoDesenhado`, que é o
+      estado da textura lido de volta de cada sprite, e não a máscara recalculada pela
+      cena. Tile que saiu e ainda tem sprite também reprova.
+    - Sonda: com o redesenho dos vizinhos desligado, o roteiro reprovou
+      (`a rocha 24,30 deveria desenhar m14, desenha m15`). A asserção da F-TR-a passava
+      com a mesma mutação, porque comparava máscara do estado com máscara do estado.
   - **Continua aberto, fora da a:** o esgotado por tipo (nota da F18 abaixo). O campo em
     pousio e o lajedo cavado ainda dividem o marcador `esgotado`.
 - **Nota herdada da F18 (2026-09-24, medida na tela)**: hoje **todo tile de

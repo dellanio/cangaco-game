@@ -162,6 +162,10 @@ export interface EstadoDebug {
   /** F-TR — mascara N/L/S/O de cada tile de `rock` ainda presente. O roteiro
    *  compara antes/depois quando um tile esgota; nao e estado da simulacao. */
   mascarasDoLajedo: Readonly<Record<string, number>>;
+  /** F-TR-b — o estado da textura que cada sprite de `rock` DESENHA agora (`m0`..`m15`,
+   *  ou `presente` sem a arte da mascara), lido de volta da imagem e nao recalculado.
+   *  O roteiro confere contra a mascara que ele mesmo tira do conjunto de rochas. */
+  lajedoDesenhado: Readonly<Record<string, string>>;
   /** F-TR — a fonte de cada variante do chao, por tipo de terreno: o arquivo da arte que
    *  a tira recebeu, ou `cor:<hex>` onde ficou o placeholder. Lida uma vez no `create`.
    *  O roteiro afirma que dois tipos nao dividem fonte. */
@@ -305,6 +309,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     terrenoVisivel: {},
     recursosVisiveis: {},
     mascarasDoLajedo: {},
+    lajedoDesenhado: {},
     texturaDoTerreno: {},
     transicoesVisiveis: {},
     crescimentoDasArvores: {},

@@ -415,6 +415,7 @@ export class WorldScene extends Phaser.Scene {
       // tile esgotar.
       estado.recursosVisiveis = this.atualizarRecursos(camadaDeRecursos);
       estado.mascarasDoLajedo = this.mascarasDoLajedo();
+      estado.lajedoDesenhado = this.lajedoDesenhado();
       estado.transicoesVisiveis = this.lerTransicoesVisiveis(camadasDeTransicao);
       estado.vegetacaoRenderizada = this.vegetacaoDesenhada.size;
       estado.crescimentoDasArvores = Object.fromEntries(this.crescimentoDesenhado);
@@ -1009,6 +1010,17 @@ export class WorldScene extends Phaser.Scene {
       });
     }
     return mascaras;
+  }
+
+  /** F-TR-b — o estado da textura de cada sprite de rocha de pe, lido da imagem. */
+  private lajedoDesenhado(): Record<string, string> {
+    const recursos = this.ponte.atual?.recursos ?? {};
+    const desenhado: Record<string, string> = {};
+    for (const [chave, imagem] of this.vegetacaoDesenhada) {
+      if (recursos[chave]?.tipo !== 'rock') continue;
+      desenhado[chave] = imagem.texture.key.split(':').pop() ?? '';
+    }
+    return desenhado;
   }
 
   /** F-TR — o indice de cada tile de borda E a mascara (`putTileAt(mascara)`), entao

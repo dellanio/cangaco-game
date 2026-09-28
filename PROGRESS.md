@@ -10368,3 +10368,27 @@ roteiro.
   tabela da F-ESC ("14 dos 22 boiam no lote").
 
 **Fecha a série F-VIVO:** 0, a, b, c, d1 e d2.
+
+## 2026-09-28 (sessão autônoma, item 3) — F-TR-b: dois quadros e o lajedo encolhendo
+
+Plano: `docs/planos/2026-09-28-A3-F-TR-b.md`. Só `src/render/` e roteiro; a sim não mudou.
+
+**Verificado:**
+- **Aceite corrigido no BUILD_PLAN**, com o motivo: dois quadros (açude e serra), porque a
+  água e a montanha não cabem numa vista (decisão do operador).
+- **`debug.lajedoDesenhado`**: o estado da textura de cada sprite de rocha, lido da
+  imagem.
+- `npm run shot -- F-TR` verde, com 7 capturas. A pedreira comeu 3 tiles: 265 → 264 → 263 → 262
+  rochas, e (23,30) e (24,30) saíram depois do primeiro. Em cada passo, **todas** as
+  rochas de pé desenham a máscara que o roteiro calcula sozinho (264, 263 e 262 conferidas).
+- **Sonda de mutação:** com `marcarComVizinhos` sem os vizinhos, o roteiro reprovou:
+  `esgotamento 1: a rocha 24,30 deveria desenhar m14, desenha m15`. Restaurado, verde.
+  **Achado:** a asserção da F-TR-a ("o vizinho perde só o bit") passava com essa mesma
+  mutação, porque ela comparava máscara do estado com máscara do estado. Agora quem
+  prova é o desenho.
+- Abri `screenshots/F-TR-5-lajedo-encolhido-3-tiles.png`: o lajedo a leste da pedreira,
+  com a borda oeste comida.
+
+**Visto de passagem, não é desta feature:** na mesma captura, três unidades aparecem "com
+fome". É o cenário da F-T3, que não tem Bodega, e o `cenarioOraculo` já registra que
+aldeia sem Bodega morre de fome.
