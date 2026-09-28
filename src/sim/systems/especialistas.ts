@@ -10,10 +10,16 @@
  *
  *   trabalhando -> indo_colher -> colhendo -> voltando -> trabalhando
  *
- * Nele o relogio do ciclo anda em `colhendo`, no tile, e nao em `trabalhando`:
- * o mesmo `receita.ticksDoCiclo`, so em outro lugar. A viagem e tempo A MAIS,
- * e o que ela custa em vazao esta medido no BALANCE_LOG. Predio sem `colheita`
- * (padaria, moinho) nunca entra no desvio — a diferenca vem do DADO.
+ * Nele o relogio do ciclo anda em `colhendo`, no tile, ate `colheita.ticksNoTile`.
+ * A viagem e tempo A MAIS, e o que ela custa em vazao esta medido no BALANCE_LOG.
+ * Predio sem `colheita` (padaria, moinho) nunca entra no desvio — a diferenca vem
+ * do DADO.
+ *
+ * LOTE3 — a receita com `fases` no dado (o Canavial) tem trabalho DENTRO da casa,
+ * como o KaM: `ticksNoTile` e so parte do ciclo, e na volta ele entra com a tarefa
+ * na mao e o resto do relogio anda em `trabalhando`, ate o deposito — o tile so e
+ * consumido ali, como na mina `aDistancia`. Sem `fases`, `ticksNoTile` e o ciclo
+ * inteiro e ele chega com o ciclo pronto, como antes.
  *
  * O GDD chama o primeiro estado de `sem_predio`; aqui ele e `ocioso`, o mesmo de
  * toda unidade recem-nascida (`systems/escolas.ts`) e o que
@@ -691,8 +697,8 @@ function passoIndoColher(state: GameState, u: Unidade, dados: GameData): Passo {
 }
 
 /** No tile: o relogio do CICLO anda aqui, e e o mesmo relogio de sempre
- *  (`predio.producao.progresso`, `receita.ticksDoCiclo`). Nenhum numero novo — o
- *  que mudou e QUANDO ele anda, nao quanto. */
+ *  (`predio.producao.progresso`), ate `colheita.ticksNoTile` — o ciclo inteiro, ou
+ *  so a parte do tile quando a receita tem `fases` (LOTE3). */
 function passoColhendo(state: GameState, u: Unidade, dados: GameData): Passo {
   const s = situacaoEmCampo(state, u);
   if (s.tipo === 'perdeu-o-predio') return largarOPredioPerdido(state, u);
@@ -707,7 +713,7 @@ function passoColhendo(state: GameState, u: Unidade, dados: GameData): Passo {
   const progresso = prod.progresso + 1;
   const avancado: PredioCompleto = { ...predio, producao: { ...prod, progresso, plantio: null } };
   const comRelogio = comPredio(state, avancado);
-  if (progresso < receita.ticksDoCiclo) return semEventos(comRelogio);
+  if (progresso < (receita.colheita?.ticksNoTile ?? receita.ticksDoCiclo)) return semEventos(comRelogio);
   return voltar(comRelogio, u, avancado, tarefa, dados);
 }
 
@@ -739,6 +745,12 @@ function passoVoltando(state: GameState, u: Unidade, dados: GameData): Passo {
     return semEventos(comUnidade(comPredio(state, zerado), {
       ...andou, fsm: 'trabalhando', fsmData: {},
     }));
+  }
+  // LOTE3 — o ciclo tem trabalho DENTRO da casa: ele entra com a tarefa na mao (o
+  // tile so e consumido no deposito, como na mina `aDistancia`) e o `produzir` anda
+  // o resto do relogio. Receita sem `fases`: chegou com o ciclo pronto, deposita.
+  if ((predio.producao?.progresso ?? 0) < receita.ticksDoCiclo) {
+    return semEventos(comUnidade(state, { ...andou, fsm: 'trabalhando', fsmData: {} }));
   }
   return depositar(state, andou, predio, receita, tarefa, dados);
 }

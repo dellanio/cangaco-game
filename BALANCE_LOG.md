@@ -159,6 +159,21 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
           literal de teste).
       - **Previsão, não medida:** repartir o ciclo **não** muda a razão 12 : 1 do
         Canavial. O gargalo é o canavieiro, e o tempo dele por unidade não muda.
+    - **LOTE3-b1 ENTREGUE (2026-09-27).** O Canavial está em fases: tile 26 s, casa 82 s,
+      descanso 12 s, 1 por viagem, que dão 130 / 410 / 60 ticks na escala 2,0.
+      - **Medido** (`test-output/LOTE3-fases.json`, 12 000 ticks, gaveta esvaziada):
+
+        | modelo | 1 tile | 12 tiles | razão |
+        |---|---|---|---|
+        | em fases | 10 | 15 | 1,5 |
+        | de antes (ciclo inteiro no tile) | 10 | 15 | 1,5 |
+
+      - A previsão se confirmou: **a razão não se moveu**, e o b1 não a move por
+        construção. Quem move a razão é o b2, pelo tempo total do ciclo.
+      - O custo da fase da casa é +1 tick por ciclo: o tick da chegada é gasto entrando.
+        Não apareceu na vazão.
+      - `wineyard.sai.wine` 0,5 agora é **conferido**. A regra `producao/sai-conferido`
+        reprova 0,6 contra as fases de 120 s (provado no dado real e revertido).
 
 - [2026-09-24] o terreno passou a existir (F-T1) e viagem deixou de ser linha reta | medido: a
   travessia de 36 tiles ao redor do lago custa **292 ticks** contra **252** no mesmo trajeto sem

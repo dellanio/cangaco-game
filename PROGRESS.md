@@ -9236,3 +9236,68 @@ As duas perguntas da noite 6 foram respondidas e saíram desta seção.
 
 **F-ESC:** continua esperando o Codex sair de `src/render/`. O worktree dele tinha
 `debug.ts` e `WorldScene.ts` modificados na última conferência.
+
+## 2026-09-27 (noite, 11) — LOTE3-b1: o Canavial em fases (tile, casa, descanso, carga)
+
+**Decisão do operador (antes do Task 1):**
+- O b1 alinha o modelo e **não** melhora a razão 12 : 1. Quem a move é o b2. Escrito
+  no item LOTE3 do BUILD_PLAN, em letras.
+- O tile fica reservado até o depósito. A dependência está registrada: reabre quando
+  dois prédios disputarem os mesmos tiles.
+- Medir o custo compilando é **o método**. O item do BUILD_PLAN e a memória registram
+  isso.
+- A F-ESC saiu da espera por janela. Ela depende da arte estabilizar (o Codex segue em
+  `render/` com o Blender pintado).
+
+**Feito (verificado):**
+- **Sonda** (`tests/zz-fases-sonda.test.ts`, apagada): no Canavial, com o canavieiro
+  posto em `trabalhando` com a tarefa e o progresso em 130, dez ticks deixam a mesma
+  tarefa `t9`, o progresso sobe de 131 a 140 e nenhum tile muda. Não houve travamento.
+- **Dado:** `wineyard.colheita.fases` com 26 / 82 / 12 s e `porViagem` 1. A nota diz
+  a fonte (proporção do KaM, total de antes).
+- **Sim:**
+  - `ColheitaDeRecurso.ticksNoTile`;
+  - o carregador soma as fases, e `sai` vem de `porViagem`;
+  - `passoColhendo` para em `ticksNoTile`;
+  - `passoVoltando` entra em `trabalhando` com a tarefa se o ciclo não fechou.
+  - Zero linha de render.
+- **Teste** `tests/LOTE3-fases-canavial.test.ts`, 7 casos:
+  - forma do dado;
+  - 130 ticks em `colhendo` e 471 dentro (470 + o tick da chegada);
+  - mesma tarefa sem tile consumido até o depósito;
+  - pausa;
+  - demolição;
+  - saída cheia;
+  - vazão igual ±1 ao modelo de antes, em 1 e 12 tiles.
+  - **Prova de que acusa:** com o ramo novo do `passoVoltando` desligado, 6 dos 7
+    reprovam.
+  - Ressalva: o caso da vazão compara contra o mesmo total. Ele guarda a repartição,
+    não o total, e por isso passar com a casa em 42 s é o esperado: o total é número
+    do b2.
+- **Pausa na casa:** a F16c (`motivoDoDestino`) cancela a colheita do prédio pausado,
+  também com ele dentro da casa. Ao despausar, o relógio continua, ele reclama um tile
+  e deposita. O mapa perde exatamente 1 (afirmado). Não volta ao tile.
+- **validate:data:**
+  - regras `producao/fases` (forma, `aDistancia`, entrada ou duas saídas) e
+    `producao/sai-conferido`;
+  - três linhas por receita em `CAMPOS_ESCALONADOS`;
+  - cinco fixtures na F03;
+  - `sai.wine` 0,6 no dado real é acusado.
+- `tests/F15a-receita.test.ts`: a forma da `colheita` de `quarry` e `woodcutters` ganhou
+  `ticksNoTile` = o ciclo (o invariante de quem não tem `fases`).
+- `tests/F-TP-alcance-previa.test.ts`: `comPredioFicticio` preenche `ticksNoTile` com
+  o ciclo da quarry.
+- **Razão 12 : 1:** 15 / 10 = 1,5, antes e depois (`test-output/LOTE3-fases.json`).
+- **`npm run verify`:** a primeira corrida deu timeout na F10 semente 3, só na suíte
+  transladada. Isolada, com e sem a mudança, passou 25/25 em ~27 s. A segunda corrida
+  do verify passou inteira: 1566 testes, e 1565 + 4 pulados na transladada.
+
+**Hipótese (não verificada):** o timeout da F10 foi carga da máquina, com a outra sessão
+ativa. Uma corrida isolada limpa não prova a causa.
+
+**Aberto:**
+- **LOTE3-b2:** os quatro, em lote, esperando o operador.
+- **Render:** animar só na fase da casa pede a leitura de `ticksNoTile`. A nota está
+  na F-VIVO.
+- **Arquivos que não são meus:** apareceram em `assets/base/schoolhouse/` quatro PNGs
+  não rastreados (`schoolhouse_07..10`). Não foram tocados nem commitados.

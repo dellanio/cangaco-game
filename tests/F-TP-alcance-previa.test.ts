@@ -52,14 +52,18 @@ function predioEm(tipo: string, gx: number, gy: number): PredioCompleto {
 /** Um tipo de predio que NAO existe em `data/` nenhum, com `colheita` na
  *  receita. E a prova da regra da classe. */
 function comPredioFicticio(
-  dados: GameData, id: string, tamanho: readonly [number, number], colheita: ColheitaDeRecurso,
+  dados: GameData, id: string, tamanho: readonly [number, number],
+  // LOTE3 — sem `ticksNoTile`: o ciclo inteiro no tile, o de toda receita sem `fases`
+  colheita: Omit<ColheitaDeRecurso, 'ticksNoTile'>,
 ): GameData {
   const molde = dados.predios.find((p) => p.id === 'quarry');
   if (molde === undefined) throw new Error('fixture: quarry sumiu de buildings.json');
   const receitaMolde = receitaDoTipo('quarry', dados);
   if (receitaMolde === null) throw new Error('fixture: quarry sumiu de production.json');
   const def: PredioData = { ...molde, id, nome: id, tamanho: [tamanho[0], tamanho[1]] };
-  const receita: ReceitaDePredio = { ...receitaMolde, colheita };
+  const receita: ReceitaDePredio = {
+    ...receitaMolde, colheita: { ...colheita, ticksNoTile: receitaMolde.ticksDoCiclo },
+  };
   return {
     ...dados,
     predios: [...dados.predios, def],

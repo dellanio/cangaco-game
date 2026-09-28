@@ -76,6 +76,23 @@ const fixtures: Fixture[] = [
     quebrar: (d) => { d.resources.tipos.rock.regime = 'aos-domingos'; } },
   { nome: 'predio que colhe recurso inexistente', regraEsperada: 'recurso/colheita',
     quebrar: (d) => { d.production.predios.quarry.colheita.recurso = 'fantasma'; } },
+  // LOTE3 — as fases da colheita. A ultima e a `sai` como numero CONFERIDO: 60 s de
+  // fases por viagem rendem 1/min, e a taxa declarada pede 2.
+  { nome: 'fases em quem colhe aDistancia', regraEsperada: 'producao/fases',
+    quebrar: (d) => { d.production.predios.wineyard.colheita.aDistancia = true; } },
+  { nome: 'fases sem porViagem', regraEsperada: 'producao/fases',
+    quebrar: (d) => { delete d.production.predios.wineyard.colheita.fases.porViagem; } },
+  { nome: 'fases com duas saidas', regraEsperada: 'producao/fases',
+    quebrar: (d) => { d.production.predios.wineyard.sai.fish = 0.5; } },
+  { nome: 'fases com noTile zero', regraEsperada: 'producao/fases',
+    quebrar: (d) => { d.production.predios.wineyard.colheita.fases.noTile_segundos_base = 0; } },
+  { nome: 'fases mais lentas que a taxa sai declarada', regraEsperada: 'producao/sai-conferido',
+    quebrar: (d) => {
+      d.production.predios.wineyard.colheita.fases = {
+        noTile_segundos_base: 20, naCasa_segundos_base: 30, descanso_segundos_base: 10, porViagem: 1,
+      };
+      d.production.predios.wineyard.sai.wine = 2.0;
+    } },
   { nome: 'tipo de recurso declarado sem nenhum tile em mapa nenhum', regraEsperada: 'recurso/sem-instancia',
     quebrar: (d) => { d.resources.tipos.orvalho = { regime: 'porTempo', rendimentoPorTile: 1 }; } },
   // F18: o milho nao esta na lista esparsa de nenhum mapa — a camada dele e

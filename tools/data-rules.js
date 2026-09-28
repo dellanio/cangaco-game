@@ -212,10 +212,67 @@ function validarProducao(dados, erros) {
     if (def && def.escolheSaida === true && Object.keys(def.sai || {}).length < 2) {
       erros.push(`producao/escolha-sem-opcao: production.predios.${id} escolhe a saida mas declara menos de duas`);
     }
-    validarCicloDaReceita(id, def, escala, tickHz, erros);
+    // LOTE3 — com `fases`, o ciclo e a soma delas e a razao entre taxas deixa de
+    // existir na receita: quem confere e `validarFases`.
+    if (def && def.colheita && def.colheita.fases !== undefined) validarFases(id, def, erros);
+    else validarCicloDaReceita(id, def, escala, tickHz, erros);
     // F-T2a: `producao/veio-invalido` saiu daqui junto com o campo `veio`. Quem
     // guarda o total agora e o TILE, e quem o valida e `validarRecursos`
     // (`recurso/rendimento` e `recurso/colheita`).
+  }
+}
+
+const CAMPOS_DAS_FASES = ['noTile_segundos_base', 'naCasa_segundos_base', 'descanso_segundos_base'];
+
+/**
+ * LOTE3 — a colheita em FASES, como o KaM: tempo no tile, na casa, descanso e
+ * quantidade por viagem. A caminhada nao tem campo (sai do pathfinding).
+ *
+ * `producao/fases` e a forma. `producao/sai-conferido` e o que a taxa `sai` virou:
+ * nao e mais entrada, e o numero que as fases CONFEREM. A caminhada so atrasa, entao
+ * as fases sozinhas (na escala 1,0) tem de render pelo menos a taxa declarada; se
+ * ja sao mais lentas que ela, o dado se contradiz. A conferencia COM caminhada so
+ * existe rodando a sim, e fica nos testes.
+ */
+function validarFases(id, def, erros) {
+  const f = def.colheita.fases;
+  const onde = `production.predios.${id}.colheita.fases`;
+  if (!f || typeof f !== 'object') {
+    erros.push(`producao/fases: ${onde} precisa ser objeto`);
+    return;
+  }
+  let forma = true;
+  for (const campo of CAMPOS_DAS_FASES) {
+    const v = f[campo];
+    const minimo = campo === 'noTile_segundos_base' ? 'maior que 0' : '>= 0';
+    const ok = typeof v === 'number' && (campo === 'noTile_segundos_base' ? v > 0 : v >= 0);
+    if (!ok) {
+      erros.push(`producao/fases: ${onde}.${campo} precisa ser numero ${minimo}, achou ${v}`);
+      forma = false;
+    }
+  }
+  if (!Number.isInteger(f.porViagem) || f.porViagem < 1) {
+    erros.push(`producao/fases: ${onde}.porViagem precisa ser inteiro >= 1, achou ${f.porViagem}`);
+    forma = false;
+  }
+  if (def.colheita.aDistancia === true) {
+    erros.push(`producao/fases: production.predios.${id} colhe aDistancia, e quem colhe de dentro nao tem tile nem fase`);
+    forma = false;
+  }
+  const saidas = Object.keys(def.sai || {});
+  if (Object.keys(def.entra || {}).length > 0 || saidas.length !== 1) {
+    erros.push(`producao/fases: production.predios.${id} declara fases com entrada ou sem exatamente uma saida`);
+    forma = false;
+  }
+  if (!forma) return;
+  const segundos = CAMPOS_DAS_FASES.reduce((soma, campo) => soma + f[campo], 0);
+  const rende = (f.porViagem * 60) / segundos;
+  const taxa = def.sai[saidas[0]];
+  if (rende < taxa * (1 - TOLERANCIA_DA_RAZAO)) {
+    erros.push(
+      `producao/sai-conferido: production.predios.${id}.sai.${saidas[0]}=${taxa}/min, mas as fases `
+      + `(${segundos} s por ${f.porViagem}) rendem so ${rende.toFixed(3)}/min antes da caminhada`,
+    );
   }
 }
 

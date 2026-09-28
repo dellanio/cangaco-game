@@ -20,7 +20,8 @@ describe('F15a — a receita e um ciclo', () => {
     expect(r?.ticksDoCiclo).toBe(167);
     expect(r?.entra).toEqual({});
     expect(r?.sai).toEqual({ stone: 1 });
-    expect(r?.colheita).toEqual({ recurso: 'rock', alcance: 6, aDistancia: false });
+    // LOTE3 — sem `fases` no dado, o ciclo inteiro corre no tile
+    expect(r?.colheita).toEqual({ recurso: 'rock', alcance: 6, aDistancia: false, ticksNoTile: 167 });
   });
 
   it('sawmill: 1 tronco -> 2 timber, a razao vindo das taxas e nao de um literal', () => {
@@ -40,7 +41,7 @@ describe('F15a — a receita e um ciclo', () => {
     // campo, e passava com qualquer receita que nao colhesse nada. Esta afirma
     // a FORMA inteira — recurso, alcance e nenhuma outra chave —, que e o que a
     // regra de classe da F-T3 le para mandar o lenhador ate a arvore.
-    expect(r?.colheita).toEqual({ recurso: 'tree', alcance: 6, aDistancia: false });
+    expect(r?.colheita).toEqual({ recurso: 'tree', alcance: 6, aDistancia: false, ticksNoTile: 423 });
   });
 
   it('as proporcoes que o GDD escreve em palavras saem do dado', () => {

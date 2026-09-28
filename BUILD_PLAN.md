@@ -3925,7 +3925,48 @@ Casos 2 e 4 do prédio vivo (`docs/BRIEF-ARTE.md` §4a). Decisão do operador: c
     dos seis estágios já mostra a obra crescendo, e o placeholder some quando a arte chega.
   - Os rótulos madeira/pedra no tema: confirmado não criar, porque nada os lê.
 
+### LOTE3 — As fases da colheita: tile, casa, descanso e carga (dado + sim)
+- **Decisão do operador (2026-09-27):** saída (a) do BALANCE_LOG.
+  - **Não é mudança de modelo.** É alinhar com a referência: o KaM separa as fases desde
+    sempre.
+  - A caminhada sai do pathfinding e não tem campo.
+  - Plano: `docs/planos/LOTE3-fases-de-colheita.md`, aprovado.
+- **LOTE3-b1 — Canavial em fases (26 / 82 / 12 s: a proporção do KaM, o total de hoje).**
+  - **O b1 ALINHA O MODELO COM A REFERÊNCIA E NÃO MELHORA A RAZÃO 12 : 1 DO CANAVIAL.**
+    O gargalo é o tempo total do canavieiro por unidade, e a repartição só muda ONDE ele
+    está (no tile ou dentro da casa), não QUANTO tempo ele gasta. Medir a razão depois do
+    b1 e ver ~1,5× é o resultado esperado, não falha da feature. **Quem move a razão é
+    o b2.**
+  - **Dependência registrada (decisão do operador):** o tile fica reservado até o
+    DEPÓSITO, como na mina `aDistancia`. Liberar na chegada pede partir o `depositar`
+    em dois, e arrisca consumo em dobro: um `produzir` sem tarefa no meio do ciclo
+    reclamaria um segundo tile. Isso só destrava algo quando dois prédios disputarem os
+    mesmos tiles. Esse caso não existe hoje, e é ele que reabre a questão.
+  - Aceite: `tests/LOTE3-fases-canavial.test.ts`:
+    - `ticksNoTile` ticks em `colhendo`;
+    - o resto do ciclo em `trabalhando`, dentro da casa;
+    - a vazão igual ±1 contra o modelo de antes em 12 000 ticks;
+    - pausa, demolição e saída cheia na fase da casa;
+    - `validate:data` com `producao/fases` e `producao/sai-conferido`, provadas acusando.
+- **LOTE3-b2 — os outros quatro (`quarry`, `woodcutters`, `farm`, `fishermans`), em
+  lote.**
+  - Mover o tempo para os números do KaM.
+  - Decidir se `sai` é reescrito para o valor entregue medido.
+  - Recalcular o 1:1:1 (`proporcoesDeReferencia`).
+  - É balanceamento (§12) e espera o operador.
+- **Método, registrado:** o custo de um campo se mede COMPILANDO, não por busca de texto.
+  - A contagem por texto dizia "5 sim, 2 render, 13 testes" para `ticksDoCiclo` e
+    errava nos dois sentidos: `trabalho.ts` não quebra (lê o `DadosDoTrabalho`
+    montado), e `predios.ts` quebra.
+  - O `tsc` deu 42 erros ao tirar o campo e 2 ao acrescentar um obrigatório.
+
 ### F-ESC — A escala do prédio: altura máxima pela largura (render + ferramenta; proposta, não implementar antes do sim do operador)
+- **FORA DA ESPERA POR JANELA (operador, 2026-09-27, noite 10).** O Codex continua em
+  `src/render/`: a rota agora é render do Blender com pintura por cima, e ele vai mexer
+  no manifesto e no derivador. A F-ESC **depende da arte estabilizar**, não de uma
+  janela livre no `render/`: medir a altura dos sprites enquanto a rota de arte muda
+  mediria números que vão ser refeitos. Retoma quando o operador disser que a arte
+  estabilizou. O item abaixo ("Quando começar") fica como histórico.
 - **Quando começar (operador, 2026-09-27):** assim que o Codex sair do `render/`. Ele está
   ajustando o azimute da câmera do Blender e vai mexer nos assets. Até lá, a F-ESC não
   começa.
@@ -4231,6 +4272,13 @@ leem `GameState`: **nenhum toca em `sim/`**.
   `tools/shots/F-VIVO-b.js`. Um quadro por tick (`TICKS_POR_QUADRO = 1`). No caso 2
   o relógio anda com o trabalhador no tile (`colhendo`), e o laço aparece no prédio
   enquanto ele está no campo: pergunta em aberto no `PROGRESS.md`.
+- **Nota para o render (LOTE3-b1, 2026-09-27):** a receita com colheita ganhou
+  `colheita.ticksNoTile`.
+  - `ticksDoCiclo` continua sendo o ciclo inteiro, e o render não precisou mudar.
+  - No Canavial, de 0 a `ticksNoTile` o canavieiro está no tile, e dali até o fim está
+    dentro da casa (`trabalhando`). Com isso a prensa já anima quase só com ele dentro.
+  - Animar SÓ na fase da casa pede que o render leia `ticksNoTile`. Fica para quando o
+    Codex quiser.
 
 **Aceite da F-VIVO-c (os animais).**
 - `animaisDoCurral(predio, dados)` é pura e devolve 5 posições, com a idade de 1 a 3

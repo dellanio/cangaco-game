@@ -88,6 +88,15 @@ const CAMPOS_ESCALONADOS = [
     unidade: 'segundos', declaraEscalaEm: 'escala' },
   { arquivo: 'resources', caminho: 'tipos.grapes.aradura.segundos_base',
     unidade: 'segundos', declaraEscalaEm: 'escala' },
+  // LOTE3 — as fases da colheita, POR RECEITA, pelo mesmo contrato da reposicao:
+  // quem ganha `fases` escreve as linhas dele aqui. O grupo e o `escala` de
+  // production.json (economia), o mesmo das taxas.
+  { arquivo: 'production', caminho: 'predios.wineyard.colheita.fases.noTile_segundos_base',
+    unidade: 'segundos', declaraEscalaEm: 'escala' },
+  { arquivo: 'production', caminho: 'predios.wineyard.colheita.fases.naCasa_segundos_base',
+    unidade: 'segundos', declaraEscalaEm: 'escala' },
+  { arquivo: 'production', caminho: 'predios.wineyard.colheita.fases.descanso_segundos_base',
+    unidade: 'segundos', declaraEscalaEm: 'escala' },
 ];
 
 // production.json nao entra em CAMPOS_ESCALONADOS: as taxas de entra/sai sao

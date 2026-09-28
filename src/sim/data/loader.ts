@@ -255,6 +255,37 @@ function paraTicksDeDuracao(
 
 /** Taxa (unidades por minuto) vira PERIODO em ticks — nunca taxa em float
  *  guardada para dividir depois em tempo de execucao. */
+/** LOTE3 — as fases da colheita como o JSON as escreve (`production.json`,
+ *  `colheita.fases`). Duracao em segundos na escala 1,0; `porViagem` em unidades. */
+interface FasesNoDado {
+  readonly noTile_segundos_base: number;
+  readonly naCasa_segundos_base: number;
+  readonly descanso_segundos_base: number;
+  readonly porViagem: number;
+}
+
+/** Estreita a `colheita.fases` que o `resolveJsonModule` tipa como uniao das
+ *  receitas, conferindo campo a campo. O validate:data ja reprova a forma errada
+ *  (`producao/fases`); aqui a falha e lancar, como nas outras receitas. */
+function fasesDaColheita(predioId: string, colheita: object): FasesNoDado | null {
+  if (!('fases' in colheita)) return null;
+  const f: unknown = colheita.fases;
+  if (typeof f !== 'object' || f === null) {
+    throw new Error(`loadGameData: a receita '${predioId}' declara fases que nao sao objeto`);
+  }
+  const numero = (nome: keyof FasesNoDado): number => {
+    const v: unknown = (f as Record<string, unknown>)[nome];
+    if (typeof v !== 'number') throw new Error(`loadGameData: a receita '${predioId}' nao declara fases.${nome}`);
+    return v;
+  };
+  return {
+    noTile_segundos_base: numero('noTile_segundos_base'),
+    naCasa_segundos_base: numero('naCasa_segundos_base'),
+    descanso_segundos_base: numero('descanso_segundos_base'),
+    porViagem: numero('porViagem'),
+  };
+}
+
 function taxaParaTicksPorUnidade(taxaPorMinuto: number, escala: number, tickHz: number): Ticks {
   const ticks = Math.round((60 * tickHz) / (taxaPorMinuto * escala));
   if (!Number.isFinite(ticks) || ticks < 1) {
@@ -368,15 +399,35 @@ export function loadGameData(raw: RawGameData): GameData {
     if (todos.length === 0) {
       throw new Error(`loadGameData: receita '${predioId}' nao declara nem entrada nem saida`);
     }
-    const ticksDoCiclo = Math.max(...todos);
+    // `colheita` e opcional no JSON e so a quarry a declara hoje: `in` estreita a
+    // uniao que o `resolveJsonModule` produz, sem `any` e sem campo inventado.
+    const colheita = 'colheita' in def ? def.colheita : null;
+    // LOTE3 — quem declara `fases` tem o ciclo SOMADO delas, como no KaM: a taxa `sai`
+    // deixa de ser entrada e vira o numero que o oraculo confere (validate:data,
+    // `producao/sai-conferido`). Sem `fases`, o ciclo e o de sempre, inteiro no tile.
+    const fases = colheita === null ? null : fasesDaColheita(predioId, colheita);
+    const saidas = Object.keys(periodos.sai);
+    if (fases !== null && (Object.keys(periodos.entra).length > 0 || saidas.length !== 1)) {
+      throw new Error(`loadGameData: a receita '${predioId}' declara fases, e fases pedem uma saida e nenhuma entrada`);
+    }
+    const fase = (f: FasesNoDado, nome: 'noTile' | 'naCasa' | 'descanso'): Ticks => {
+      const segundos = f[`${nome}_segundos_base`];
+      return registrar(
+        `production.predios.${predioId}.colheita.fases.${nome}_segundos_base`, raw.production.escala,
+        segundos, 'segundos',
+        // naCasa e descanso podem ser 0 (o fazendeiro do KaM nao trabalha na casa)
+        segundos === 0 ? 0 : paraTicksDeDuracao(segundos, 'segundos', escalaEconomiaProducao, tickHz),
+      );
+    };
+    const ticksNoTile = fases === null ? null : fase(fases, 'noTile');
+    const ticksDoCiclo = fases === null || ticksNoTile === null
+      ? Math.max(...todos)
+      : ticksNoTile + fase(fases, 'naCasa') + fase(fases, 'descanso');
     const quantidades = (p: Record<string, Ticks>): Record<string, number> => {
       const q: Record<string, number> = {};
       for (const [mercadoria, periodo] of Object.entries(p)) q[mercadoria] = Math.round(ticksDoCiclo / periodo);
       return q;
     };
-    // `colheita` e opcional no JSON e so a quarry a declara hoje: `in` estreita a
-    // uniao que o `resolveJsonModule` produz, sem `any` e sem campo inventado.
-    const colheita = 'colheita' in def ? def.colheita : null;
     if (colheita !== null && !(colheita.recurso in raw.resources.tipos)) {
       throw new Error(
         `loadGameData: a receita '${predioId}' colhe '${colheita.recurso}', que nao existe em resources.tipos`,
@@ -392,11 +443,12 @@ export function loadGameData(raw: RawGameData): GameData {
       ticksDoCiclo,
       escolheSaida,
       entra: quantidades(periodos.entra),
-      sai: quantidades(periodos.sai),
+      sai: fases === null ? quantidades(periodos.sai) : { [saidas[0] ?? '']: fases.porViagem },
       colheita: colheita === null ? null : {
         recurso: colheita.recurso,
         alcance: colheita.alcance_tiles,
         aDistancia: 'aDistancia' in colheita && colheita.aDistancia === true,
+        ticksNoTile: ticksNoTile ?? ticksDoCiclo,
       },
     };
   }
