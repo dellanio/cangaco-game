@@ -4202,6 +4202,11 @@ Pedido do operador (2026-09-27, noite 15):
       rodízio" citada acima.
   - **F-REPL-c — plantar em tile vazio (sim + dado). ADIADO (decisão 1 acima): sem
     posição na fila, volta "se alguém sentir falta".**
+    - **MEDIDO (2026-09-28, sessão autônoma; `docs/planos/2026-09-28-A19-F-REPL-c-medida.md`):
+      não faz falta.** No `cenarioOraculo`, com 2 h de jogo e a fome neutralizada, o
+      `cortar_e_plantar` sustenta 17–22 troncos por 10 min, sem queda, na faixa da mata
+      virgem. O `cortar` zera no minuto 20. Continua adiado. Reabre se um mapa der mata
+      menor que o raio do lenhador.
     - `tree.plantio.terrenoPermitido`, no molde da `aradura`.
     - Predicado novo em `recursos.ts`, irmão do `canPlowField` (`campos.ts:98`). O tile
       precisa estar:

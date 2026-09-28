@@ -11085,3 +11085,22 @@ Plano: `docs/planos/2026-09-28-A18-F36-prefeitura.md`. Sim e UI (`src/ui`); nada
 - **O evento é `unit-trained`**, o mesmo do quartel. Não criei evento novo.
 - **O nome do prédio no tema é "Mercenários"** (`predios.town_hall.nome`), não
   "Prefeitura". Já estava assim; não mexi.
+
+## 2026-09-28 (sessão autônoma, item 19) — F-REPL-c: medido, não faz falta
+
+Pedido: *"medir se faz falta antes de implementar."* Nada foi implementado. Detalhe e
+tabela em `docs/planos/2026-09-28-A19-F-REPL-c-medida.md`.
+
+**Verificado (sonda rodada e apagada; é evidência desta sessão, não cobertura contínua):**
+- **Cenário:** `cenarioOraculo`, 72 000 ticks (2 h de jogo). A fome é neutralizada pela
+  sonda, que reenche a condição a cada 1000 ticks.
+- **Os números**, por janela de 10 min:
+  - `cortar_e_plantar` (padrão): 19, 20, 19, 18, 21, 18, 22, 18, 21, 17, 22 e 17
+    troncos;
+  - `cortar`: 20 e 16 troncos, e depois **0** do minuto 20 em diante.
+- **Conclusão:** o replantio no toco sustenta a produção no ritmo da mata virgem. O
+  plantio em tile vazio não faz falta no mapa de hoje, e o item continua ADIADO, agora
+  com medida.
+
+**Hipótese não medida:** um mapa com menos tocos ao alcance do lenhador pode tornar o
+replantio o gargalo. Hoje não existe mapa assim.
