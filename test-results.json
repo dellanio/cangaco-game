@@ -239,6 +239,9 @@
   "F-TR-a-textura-e-transicao": {
     "passes": true
   },
+  "F-REPL-e-estados-da-arvore": {
+    "passes": true
+  },
   "F17g-revelacao-da-obra": {
     "passes": true
   },

@@ -123,6 +123,9 @@ export interface RecursosDeRender {
    *  os tipos e N+1 e o esgotado. */
   readonly cores: readonly string[];
   readonly codigoEsgotado: number;
+  /** F-REPL-e — ticks do tile replantado ate maduro, por tipo; 0 em quem nao repoe.
+   *  E o numero que `render/crescimento.ts` divide em estados. */
+  readonly ticksDeCrescer: Readonly<Record<string, number>>;
 }
 
 export function criarRecursosDeRender(): RecursosDeRender {
@@ -142,6 +145,9 @@ export function criarRecursosDeRender(): RecursosDeRender {
     tipos,
     cores: ['#000000', ...tipos.map(corDe), corDe('esgotado')],
     codigoEsgotado: tipos.length + 1,
+    ticksDeCrescer: Object.fromEntries(tipos.map((tipo) => [
+      tipo, gameData.recursos.tipos[tipo]?.reposicao?.ticksDeCrescer ?? 0,
+    ])),
   };
 }
 

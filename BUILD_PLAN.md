@@ -4222,6 +4222,22 @@ Pedido do operador (2026-09-27, noite 15):
         tela.
   - **F-REPL-e — os estados da árvore na tela (render).** Quando a arte existir, pelo
     BRIEF-ARTE. Até lá, placeholder, como manda a §9.
+    - **ENTREGUE (2026-09-28, fila da noite)** — `docs/planos/2026-09-28-8-F-REPL-e.md`.
+      - `render/crescimento.ts`:
+        - `estadoDeCrescimento` divide o crescer em `muda`, `crescendo_1` e
+          `crescendo_2`, pela fração desde `semeadoEm`;
+        - a adulta começa no tick em que o `tileMaduro` da sim diz maduro; o teste
+          afirma a equivalência tick a tick.
+      - Desenho, do mais específico ao mais genérico:
+        - PNG `vegetacao/<id>/<estado>` quando existir;
+        - senão, o **placeholder**: a adulta do tile em escala 1/4, 2/4 e 3/4;
+        - sem arte de vegetação, o marcador de hoje.
+      - Os estados de crescimento saem do sorteio da espécie, porque o PNG da muda
+        não pode virar árvore adulta.
+      - Evidência:
+        - `test-output/F-REPL-e.json`;
+        - `test-output/F-REPL-e-shot.json`;
+        - `screenshots/F-REPL-e-*.png`, com a partida carregada no tick do replantio.
   - **Depois do b, não antes: re-medir o lenhador** (BALANCE_LOG):
     - a razão N:1;
     - o 2:1 com a serraria;

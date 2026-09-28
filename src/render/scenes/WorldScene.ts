@@ -12,7 +12,7 @@ import type { Navegacao } from '../../input/navegacao';
 import type { Tile } from '../grid';
 import { publicarEstadoDebug } from '../debug';
 import type {
-  AnimalNoDebug, CamadasEmPx, EstadoDebug, PilhaNoDebug, PredioNoDebug, QuadroNoDebug, RelogioVisivel,
+  AnimalNoDebug, CamadasEmPx, CrescimentoNoDebug, EstadoDebug, PilhaNoDebug, PredioNoDebug, QuadroNoDebug, RelogioVisivel,
 } from '../debug';
 import { aparenciaDoPredio, corDaPilha, dadosDasPilhas, dadosDosAnimais, dadosDoTrabalho, ordemDasMercadorias } from '../predios';
 import { animaisDoCurral, quadroDoAnimal } from '../animais';
@@ -45,6 +45,9 @@ import {
   texturaDaCamada, ESTADO_DO_TERRENO,
 } from '../manifesto';
 import type { ChaveDaRevelacao, DesenhoDoRecurso, EntradaDeAsset, TexturaCarregada } from '../manifesto';
+import {
+  escalaDoPlaceholder, especiesDaVegetacao, estadoDeCrescimento, type EstadoDeCrescimento,
+} from '../crescimento';
 import { manifestoDoJogo, texturasParaCarregar } from '../sprites';
 import { escalaDoSprite, regraDoManifesto } from '../escala-predio';
 import { mascaraCardinal, VIZINHOS_CARDINAIS } from '../mascara-cardinal';
@@ -124,6 +127,10 @@ export class WorldScene extends Phaser.Scene {
   /** F-SPR — o sprite de vegetacao de pe por tile, para o diff. Memoria de render,
    *  como `recursosDesenhados`: a verdade continua em `state.recursos`. */
   private readonly vegetacaoDesenhada = new Map<string, Phaser.GameObjects.Image>();
+
+  /** F-REPL-e — o estado de crescimento que cada sprite de vegetacao desenhou. O
+   *  crescimento anda sem o codigo do tile mudar; e esta memoria que o diff compara. */
+  private readonly crescimentoDesenhado = new Map<string, CrescimentoNoDebug>();
 
   private readonly desenhados = new Map<
     string,
@@ -407,6 +414,7 @@ export class WorldScene extends Phaser.Scene {
       estado.mascarasDoLajedo = this.mascarasDoLajedo();
       estado.transicoesVisiveis = this.lerTransicoesVisiveis(camadasDeTransicao);
       estado.vegetacaoRenderizada = this.vegetacaoDesenhada.size;
+      estado.crescimentoDasArvores = Object.fromEntries(this.crescimentoDesenhado);
       estado.pronto = true;
       if (this.ponte.atual) this.atualizarPredios(this.ponte.atual, tilePx, estado);
 
@@ -883,7 +891,13 @@ export class WorldScene extends Phaser.Scene {
     };
     for (const [chave, recurso] of Object.entries(recursos)) {
       const codigo = codigoDoRecurso(recurso);
-      if (this.recursosDesenhados.get(chave) === codigo) continue;
+      if (this.recursosDesenhados.get(chave) === codigo) {
+        if (this.desenhoPorCodigo[codigo]?.como === 'vegetacao'
+          && this.crescimentoDoTile(chave) !== (this.crescimentoDesenhado.get(chave)?.estado ?? null)) {
+          repintar.add(chave);
+        }
+        continue;
+      }
       const { gx, gy } = tileDeChave(chave);
       camada.putTileAt(codigo, gx, gy);
       this.recursosDesenhados.set(chave, codigo);
@@ -914,18 +928,40 @@ export class WorldScene extends Phaser.Scene {
     if (desenho?.como !== 'vegetacao') {
       atual?.destroy();
       this.vegetacaoDesenhada.delete(chave);
+      this.crescimentoDesenhado.delete(chave);
       return;
     }
-    const textura = this.texturaDaVegetacao(desenho, chave);
-    if (atual?.texture.key === textura) return;
+    // F-REPL-e — PNG do estado, se houver; senao a adulta do tile encolhida pelo
+    // estado (placeholder). Sem arte de vegetacao nenhuma, nem se chega aqui: o
+    // marcador da camada de tile e o fallback de hoje.
+    const crescimento = this.crescimentoDoTile(chave);
+    const chaveDoEstado = crescimento === null
+      ? null : chaveDeTextura('vegetacao', desenho.entrada.id, crescimento);
+    const comPng = chaveDoEstado !== null && this.textures.exists(chaveDoEstado);
+    const textura = comPng && chaveDoEstado !== null ? chaveDoEstado : this.texturaDaVegetacao(desenho, chave);
+    const escala = crescimento === null || comPng ? 1 : escalaDoPlaceholder(crescimento);
+    if (crescimento === null) this.crescimentoDesenhado.delete(chave);
+    else this.crescimentoDesenhado.set(chave, { estado: crescimento, fonte: comPng ? 'png' : 'placeholder', escala });
+    if (atual?.texture.key === textura && atual.scaleX === escala) return;
     atual?.destroy();
     const { tilePx } = configDoMapa;
     const canto = gridToScreen(tileDeChave(chave), tilePx, ESCALA_DO_MUNDO);
     const pe = { x: canto.x + tilePx / 2, y: canto.y + tilePx };
     const imagem = this.add.image(pe.x, pe.y, textura)
       .setOrigin(desenho.entrada.anchor[0], desenho.entrada.anchor[1])
+      .setScale(escala)
       .setDepth(depthDeY(pe.y));
     this.vegetacaoDesenhada.set(chave, imagem);
+  }
+
+  /** F-REPL-e — o estado de crescimento do tile, pela mesma funcao que o teste confere
+   *  contra o `tileMaduro` da sim. */
+  private crescimentoDoTile(chave: string): EstadoDeCrescimento | null {
+    const estadoDoJogo = this.ponte.atual;
+    if (!estadoDoJogo) return null;
+    const recurso = estadoDoJogo.recursos[chave];
+    if (recurso === undefined) return null;
+    return estadoDeCrescimento(recurso, estadoDoJogo.tick, recursosDeRender.ticksDeCrescer[recurso.tipo] ?? 0);
   }
 
   /**
@@ -947,7 +983,7 @@ export class WorldScene extends Phaser.Scene {
       const chaveDaMascara = chaveDeTextura('vegetacao', 'rock', `m${mascara}`);
       return this.textures.exists(chaveDaMascara) ? chaveDaMascara : desenho.chave;
     }
-    const estados = Object.keys(desenho.entrada.estados).filter((estado) => (
+    const estados = especiesDaVegetacao(Object.keys(desenho.entrada.estados)).filter((estado) => (
       this.textures.exists(chaveDeTextura('vegetacao', desenho.entrada.id, estado))
     ));
     if (estados.length === 0) return desenho.chave;

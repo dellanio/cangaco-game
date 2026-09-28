@@ -46,6 +46,13 @@ export interface QuadroNoDebug {
   readonly sprite: boolean;
 }
 
+/** F-REPL-e — um tile replantado ainda crescendo, como o sprite o desenhou. */
+export interface CrescimentoNoDebug {
+  readonly estado: string;
+  readonly fonte: 'png' | 'placeholder';
+  readonly escala: number;
+}
+
 /** F-VIVO-c — um animal do curral desenhado: posicao, idade, quadro do laco e se
  *  foi PNG (`sprite`) ou o losango do §9. */
 export interface AnimalNoDebug {
@@ -160,6 +167,9 @@ export interface EstadoDebug {
    *  (`agua`, `areia-grama`, `rocha-grama`), lida de volta das camadas de borda como
    *  `terrenoVisivel`. O roteiro recalcula do mapa e compara. */
   transicoesVisiveis: Readonly<Record<string, Readonly<Record<string, number>>>>;
+  /** F-REPL-e — o tile de vegetacao replantado que ainda cresce: o estado que o
+   *  sprite desenha, se veio de PNG ou do placeholder (a adulta encolhida), e a escala. */
+  crescimentoDasArvores: Readonly<Record<string, CrescimentoNoDebug>>;
   /** F-SPR — os ids que resolveram ARTE do manifesto em cada camada de tile, lidos
    *  uma vez no `create` (a arte chega no `preload`). Lista vazia e o placeholder de
    *  hoje — cor chapada e marcador —, que e comportamento normal (§9). Vegetacao e o
@@ -293,6 +303,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     mascarasDoLajedo: {},
     texturaDoTerreno: {},
     transicoesVisiveis: {},
+    crescimentoDasArvores: {},
     arteDasCamadas: { terreno: [], recurso: [], vegetacao: [] },
     vegetacaoRenderizada: 0,
     estradasRenderizadas: 0,

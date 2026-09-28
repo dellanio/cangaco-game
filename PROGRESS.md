@@ -10147,3 +10147,44 @@ Plano: `docs/planos/2026-09-28-7-F-TR.md`.
 - **Continua aberto, fora da F-TR-a:** o esgotado por tipo. `src/render/mapa.ts:143`
   ainda tem uma cor só para `esgotado`.
 
+## 2026-09-28 (noite, fila 8) — F-REPL-e: os estados da árvore na tela
+
+Plano: `docs/planos/2026-09-28-8-F-REPL-e.md`. Só `src/render/`, mais `tests/` e
+`tools/`. A sim não mudou.
+
+**Verificado:**
+- **`render/crescimento.ts`.** `estadoDeCrescimento(recurso, tick, ticksDeCrescer)` dá:
+  - `null` para o toco, para o tile sem `semeadoEm` e para o maduro;
+  - senão, `muda` / `crescendo_1` / `crescendo_2` pela fração desde o plantio.
+
+  O `ticksDeCrescer` chega pelo funil `render/mapa.ts`, no campo novo
+  `recursosDeRender.ticksDeCrescer`. O literal amputado do teste F21b ganhou
+  `ticksDeCrescer: {}`, o único erro de compilação.
+- **Teste** `tests/F-REPL-e-arvore.test.ts`, com 7 casos:
+  - equivalência com o `tileMaduro` da sim tick a tick, com 0 divergências;
+  - os três estados em ordem e nenhum vazio;
+  - toco e árvore do mapa sem relógio;
+  - escala crescente e abaixo de 1, com a muda ≤ 0,5;
+  - estado de crescimento fora do sorteio da espécie;
+  - o save com o toco 39,22 replantado pela `mataCurta` da F-REPL-a, no tick 4584
+    (semeado em 4583, crescer 2063).
+- **Roteiro** `tools/shots/F-REPL-e.js`:
+  - carrega o save, centra no tile a zoom 2 e anda até cada fronteira;
+  - em cada fronteira afirma o estado desenhado, o placeholder e a escala crescente
+    (0,25 → 0,5 → 0,75);
+  - na adulta o tile sai do crescimento e o número de sprites fica igual.
+
+  Verde, com 4 capturas. Abri `F-REPL-e-1-muda.png` e `F-REPL-e-4-adulta.png`: a muda é
+  a macambira pequena no pé do tile, a adulta a macambira inteira, e o toco vizinho é o
+  losango escuro.
+- **Regressão.** O shot F-SPR (vegetação) ficou verde. `npm run verify` verde.
+
+**PARA REVISÃO:**
+- **O placeholder é a adulta encolhida, não um retângulo com id.** A adulta já tem arte,
+  e um retângulo seria regressão.
+- **A espécie do placeholder é a da adulta que o tile vai ser.** O sorteio é estável por
+  tile, então a muda "anuncia" a espécie.
+- **A muda a 0,25 é pequena.** Em zoom 1, a leitura dela como obstáculo, que o brief
+  exige, é hipótese não medida: capturei só a zoom 2.
+- **O toco segue no marcador `esgotado` de hoje.** Distinguir por tipo é a pendência
+  herdada da F18, registrada na F-TR.
