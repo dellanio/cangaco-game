@@ -11104,3 +11104,27 @@ tabela em `docs/planos/2026-09-28-A19-F-REPL-c-medida.md`.
 
 **Hipótese não medida:** um mapa com menos tocos ao alcance do lenhador pode tornar o
 replantio o gargalo. Hoje não existe mapa assim.
+
+## 2026-09-28 (sessão autônoma, item 20) — varredura de dados sem leitor
+
+Relatório em `docs/planos/2026-09-28-A20-varredura-dados.md`. **Nada foi removido.**
+
+**Verificado:** cada candidata foi tirada do JSON, com `tsc` e `validate:data` rodados e o
+arquivo restaurado (`git status data/` limpo no fim). São 18 caminhos sem leitor de
+regra, em quatro grupos:
+- **Duplicado:** `delivery.maxSerfsNoMarketplace`. Custo: 1 linha no loader e 1 campo em
+  `types.ts`. Sugiro remover.
+- **Meu, morto:** `combat.ia.homensPorFileira`, posto na F28-IA desta sessão. Custo zero.
+  Sugiro remover ou ligar à formação.
+- **Texto de regra em forma de dado:** `regraHP`, `regraMarteladas`, `regraCivil`,
+  `reserva`, `cachePorParOrigemDestino`, `taxaFixa`, `duracaoAlvoDePartida_min`. Custo
+  de 0 a 2 erros de tipo, só no loader e nos tipos. Sugiro mover para `_doc`.
+- **Mecânica ainda não implementada:** `stormAttack`, `formacao`,
+  `bloqueioPadraoNoArmazem`, `visao`. Manter.
+- **Casos à parte:**
+  - `vaiAoInn`: ninguém lê; remover, ou ligar a `drenaCondicao`.
+  - `alertaTarefaSemCandidato_segundos`: só testes leem, e há 2 testes que dependem.
+  - `proporcoesDeReferencia`: o F19 lê sem tipo e quebraria em execução.
+  - `duracaoEfetiva_min_escala2`: só a regra de dado lê, e isso basta como leitor.
+
+**ESPERA DECISÃO DO OPERADOR:** o que remover. A sugestão está na tabela.
