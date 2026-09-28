@@ -41,7 +41,7 @@ import { criarCamadaDeEstradas, criarPreviaDeEstrada } from '../estradas';
 import { criarCamadaDeCampos, criarPreviaDeCampo } from '../campos';
 import { criarCamadaDeUnidades } from '../unidades';
 import {
-  assetDoPredio, arquivoDoEstagio, chaveDaTextura, chaveDeTextura, desenhoDoRecurso, temParDeRevelacao,
+  assetDaCamada, assetDoPredio, arquivoDoEstagio, chaveDaTextura, chaveDeTextura, desenhoDoRecurso, temParDeRevelacao,
   texturaDaCamada, ESTADO_DO_TERRENO,
 } from '../manifesto';
 import type { ChaveDaRevelacao, DesenhoDoRecurso, EntradaDeAsset, TexturaCarregada } from '../manifesto';
@@ -207,11 +207,13 @@ export class WorldScene extends Phaser.Scene {
     const texturaDosDetalhes = this.criarTexturaDeDetalhesDoTerreno(tilePx);
     this.criarCamadaDeDetalhesDoTerreno(tilePx, largura, altura, texturaDosDetalhes);
     const texturaDaBordaDaAgua = this.criarTexturaDaBordaDaAgua(tilePx, carregada);
-    this.criarCamadaDaBordaDaAgua(tilePx, largura, altura, texturaDaBordaDaAgua);
     const texturaDaBordaAreiaGrama = this.criarTexturaDaBordaAreiaGrama(tilePx, carregada);
-    this.criarCamadaDaBordaAreiaGrama(tilePx, largura, altura, texturaDaBordaAreiaGrama);
     const texturaDaBordaRochaGrama = this.criarTexturaDaBordaRochaGrama(tilePx, carregada);
-    this.criarCamadaDaBordaRochaGrama(tilePx, largura, altura, texturaDaBordaRochaGrama);
+    const camadasDeTransicao = {
+      agua: this.criarCamadaDaBordaDaAgua(tilePx, largura, altura, texturaDaBordaDaAgua),
+      'areia-grama': this.criarCamadaDaBordaAreiaGrama(tilePx, largura, altura, texturaDaBordaAreiaGrama),
+      'rocha-grama': this.criarCamadaDaBordaRochaGrama(tilePx, largura, altura, texturaDaBordaRochaGrama),
+    };
     const gradeDaFerramenta = this.criarGradeDaFerramenta(tilePx, largura, altura);
     const aplicarForcaDaGrade = (modo: string): void => {
       // Com textura real a linha embutida no placeholder deixa de existir. A
@@ -403,6 +405,7 @@ export class WorldScene extends Phaser.Scene {
       // tile esgotar.
       estado.recursosVisiveis = this.atualizarRecursos(camadaDeRecursos);
       estado.mascarasDoLajedo = this.mascarasDoLajedo();
+      estado.transicoesVisiveis = this.lerTransicoesVisiveis(camadasDeTransicao);
       estado.vegetacaoRenderizada = this.vegetacaoDesenhada.size;
       estado.pronto = true;
       if (this.ponte.atual) this.atualizarPredios(this.ponte.atual, tilePx, estado);
@@ -490,6 +493,17 @@ export class WorldScene extends Phaser.Scene {
         .slice(codigo * VARIANTES_DE_TERRENO, (codigo + 1) * VARIANTES_DE_TERRENO)
         .some((chave) => chave !== null)),
     };
+    // F-TR — o ARQUIVO do manifesto, e nao a chave: a chave traz o id do tipo no nome
+    // e seria distinta por construcao; dois tipos apontando o mesmo PNG nao seriam.
+    debug.texturaDoTerreno = Object.fromEntries(terrenoDeRender.tipos.map((id, codigo) => {
+      const entrada = assetDaCamada(manifestoDoJogo, 'terreno', id);
+      return [id, ESTADOS_DO_TERRENO.map((estado, variante) => {
+        const chave = arte[codigo * VARIANTES_DE_TERRENO + variante] ?? null;
+        if (chave === null) return `cor:${terrenoDeRender.cores[codigo] ?? ''}`;
+        const usado = chave === chaveDeTextura('terreno', id, estado) ? estado : ESTADO_DO_TERRENO;
+        return entrada?.estados[usado] ?? chave;
+      })];
+    }));
     return this.sobreporArteNaTira(CHAVE_TEXTURA_TERRENO, tilePx, arte, []);
   }
 
@@ -956,6 +970,24 @@ export class WorldScene extends Phaser.Scene {
       });
     }
     return mascaras;
+  }
+
+  /** F-TR — o indice de cada tile de borda E a mascara (`putTileAt(mascara)`), entao
+   *  ler a camada de volta devolve a transicao que a tela desenhou. */
+  private lerTransicoesVisiveis(
+    camadas: Readonly<Record<string, Phaser.Tilemaps.TilemapLayer>>,
+  ): Record<string, Record<string, number>> {
+    const vista = this.cameras.main.worldView;
+    const transicoes: Record<string, Record<string, number>> = {};
+    for (const [familia, camada] of Object.entries(camadas)) {
+      const mascaras: Record<string, number> = {};
+      const tiles = camada.getTilesWithinWorldXY(
+        vista.x, vista.y, vista.width, vista.height, { isNotEmpty: true },
+      );
+      for (const tile of tiles) mascaras[`${tile.x},${tile.y}`] = tile.index;
+      transicoes[familia] = mascaras;
+    }
+    return transicoes;
   }
 
   /** Lido de volta da camada desenhada, como `contarTerrenoVisivel`: o roteiro

@@ -1917,6 +1917,25 @@ a geografia já corrigida do que regravar 900 tiles depois.
   de transição; screenshot do mapa com água, grama, areia, floresta e serra no
   mesmo quadro. Nenhum teste de `sim/` muda — se algum mudar, o escopo vazou.
 - **Evidência**: `test-output/F-TR-shot.json` + `screenshots/F-TR-*.png`
+- **Quebra a/b (2026-09-28, fila da noite, PARA REVISÃO)** — `docs/planos/2026-09-28-7-F-TR.md`.
+  No mapa real a água vai de y 24 a 53 e a montanha de y 84 a 119. No zoom mais aberto
+  (0,5) a vista tem 40×22 tiles, então nenhum quadro mostra as duas.
+  - **F-TR-a** (feita) tem dois quadros do mapa real a 0,5, **açude** e **serra**, cada
+    janela achada pelo próprio mapa (`tools/shots/_terreno-tr.js`). Em cada quadro o
+    roteiro afirma três coisas:
+    - (1) nenhum PNG é dividido entre dois tipos visíveis: o hash do arquivo que o
+      manifesto declara, publicado em `debug.texturaDoTerreno`;
+    - (2) floresta na tela;
+    - (3) cada tile de transição desenhado (`debug.transicoesVisiveis`, lido de volta
+      das três camadas de borda) tem a máscara que o mapa manda, e nenhum tile de
+      fronteira da janela falta.
+
+    O lajedo dinâmico segue no mesmo roteiro. Evidência:
+    `test-output/F-TR-terreno.json` e `screenshots/F-TR-5/6-*.png`.
+  - **F-TR-b** (espera o operador) é o quadro único com os cinco. O operador escolhe
+    entre aceitar os dois quadros ou apontar um mapa em que água e serra se encontrem.
+  - **Continua aberto, fora da a:** o esgotado por tipo (nota da F18 abaixo). O campo em
+    pousio e o lajedo cavado ainda dividem o marcador `esgotado`.
 - **Nota herdada da F18 (2026-09-24, medida na tela)**: hoje **todo tile de
   quantidade zero divide um código só** (`esgotado`, em `render/mapa.ts`), então
   o campo em pousio e o lajedo já cavado desenham o **mesmo marcador escuro** —

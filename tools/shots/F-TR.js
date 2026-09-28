@@ -6,6 +6,7 @@
 // afirma a transicao de comportamento — o tile some e cada vizinho cardinal
 // ainda presente perde exatamente o bit que apontava para ele.
 const { roteiro: roteiroDaPedreira } = require('./F-T3');
+const { quadrosDoTerreno } = require('./_terreno-tr');
 
 const PASSO = 25;
 const TETO = 6_000;
@@ -61,6 +62,9 @@ async function roteiro(ctx) {
   }
   afirmar(vizinhosConferidos > 0, `o tile esgotado ${removida} deveria tocar outro rock`);
   await capturar('lajedo-recosturado-apos-esgotar');
+
+  // F-TR-a: textura por tipo e transicao nos dois quadros do mapa real
+  await quadrosDoTerreno(ctx);
 }
 
 module.exports = { roteiro };

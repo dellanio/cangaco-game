@@ -152,6 +152,14 @@ export interface EstadoDebug {
   /** F-TR — mascara N/L/S/O de cada tile de `rock` ainda presente. O roteiro
    *  compara antes/depois quando um tile esgota; nao e estado da simulacao. */
   mascarasDoLajedo: Readonly<Record<string, number>>;
+  /** F-TR — a fonte de cada variante do chao, por tipo de terreno: o arquivo da arte que
+   *  a tira recebeu, ou `cor:<hex>` onde ficou o placeholder. Lida uma vez no `create`.
+   *  O roteiro afirma que dois tipos nao dividem fonte. */
+  texturaDoTerreno: Readonly<Record<string, readonly string[]>>;
+  /** F-TR — mascara N/L/S/O de cada tile de transicao dentro da vista, por familia
+   *  (`agua`, `areia-grama`, `rocha-grama`), lida de volta das camadas de borda como
+   *  `terrenoVisivel`. O roteiro recalcula do mapa e compara. */
+  transicoesVisiveis: Readonly<Record<string, Readonly<Record<string, number>>>>;
   /** F-SPR — os ids que resolveram ARTE do manifesto em cada camada de tile, lidos
    *  uma vez no `create` (a arte chega no `preload`). Lista vazia e o placeholder de
    *  hoje — cor chapada e marcador —, que e comportamento normal (§9). Vegetacao e o
@@ -283,6 +291,8 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     terrenoVisivel: {},
     recursosVisiveis: {},
     mascarasDoLajedo: {},
+    texturaDoTerreno: {},
+    transicoesVisiveis: {},
     arteDasCamadas: { terreno: [], recurso: [], vegetacao: [] },
     vegetacaoRenderizada: 0,
     estradasRenderizadas: 0,

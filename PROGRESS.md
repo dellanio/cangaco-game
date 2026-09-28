@@ -10088,3 +10088,62 @@ A 0,75 a vista tem ~21×15 tiles. Pela §6, quebrei a feature em d1 e d2 no BUIL
   `LADO_DA_UNIDADE_EM_TILES`: é número de tela, e a decisão fica com o operador ou o
   artista.
 - **A fumaça não foi medida**, porque nenhum prédio declara âncora de fumaça.
+
+## 2026-09-28 (noite, fila 7) — F-TR quebrada: a feita (textura e transição em dois quadros), b espera o operador
+
+Plano: `docs/planos/2026-09-28-7-F-TR.md`.
+
+**Verificado:**
+- **Não existe quadro único.** Pela bounding box do mapa (node sobre
+  `data/maps/sertao-128.json`), a água vai de y 24 a 53 e a montanha de y 84 a 119. A 0,5
+  a vista tem 40×22 tiles, e a busca por janela com água e montanha não achou nenhuma
+  em 0,5, 0,75 ou 1.
+- **Render (só `src/render/`).** Dois campos novos no debug:
+  - `debug.texturaDoTerreno[tipo]` é o arquivo que o manifesto declara para cada
+    variante, ou `cor:<hex>` no placeholder;
+  - `debug.transicoesVisiveis[familia]` é lido de volta das três camadas de borda
+    dentro da vista.
+
+  As camadas de borda agora devolvem o objeto (`camadasDeTransicao`). Não mudou como
+  elas desenham.
+- **Roteiro.** `tools/shots/F-TR.js` chama `tools/shots/_terreno-tr.js` depois do
+  lajedo e faz dois quadros a 0,5: açude (janela 77,31) e serra (janela 71,97), com a
+  janela achada pelo próprio mapa. O resultado ficou verde, com 367 afirmações.
+
+  Transições conferidas:
+
+  | Quadro | Família | Máscaras exigidas na janela | Publicadas na vista |
+  |---|---|---|---|
+  | açude | água | 32 | 39 |
+  | açude | areia–grama | 32 | 44 |
+  | serra | rocha–grama | 20 | 38 |
+  | serra | areia–grama | 13 | 30 |
+
+  Todas as publicadas bateram com o mapa. A evidência está em
+  `test-output/F-TR-terreno.json` e `test-output/F-TR-shot.json`.
+- **A textura distinta é medida pelo hash do PNG.** Primeiro publiquei a chave de
+  textura, mas ela traz o id do tipo no nome e seria distinta por construção. A URL do
+  loader é `blob:`, então a fonte passou a ser o caminho do manifesto, e o roteiro faz
+  o hash do arquivo. Os 24 PNGs de terreno têm 24 hashes distintos.
+- **Sonda que tinha de reprovar.** Troquei a regra da areia–grama no roteiro para "todo
+  vizinho não-areia" e o roteiro reprovou com
+  `acude/areia-grama 88,39: desenhou 1, o mapa manda 5`. Restaurei o arquivo e rodei
+  verde de novo.
+- Abri as capturas `F-TR-5-terreno-1-acude.png` e `F-TR-6-terreno-2-serra.png`:
+  - açude: água, areia, grama e floresta;
+  - serra: montanha, rocha com lajedo, ouro e carvão, areia, grama e floresta.
+- `npm run verify` verde, com 1610 passed e 4 skipped. A chave `F-TR-a-textura-e-transicao`
+  entrou.
+
+**PARA REVISÃO:**
+- **F-TR-b, o quadro único com os cinco**, espera o operador. As saídas são duas:
+  aceitar os dois quadros, ou apontar um mapa em que água e serra se encontrem. Mapa só
+  para a foto seria andaime.
+- **Floresta conta como presença, não como textura.** Ela é vegetação (sprite de
+  `tree`), não tipo de terreno.
+- **Hipótese de leitura, não medida:** nas capturas a transição areia–grama aparece
+  como degrau de tile com a borda um pouco recortada, e não como mancha contínua. Se o
+  operador quiser a borda mais orgânica, o assunto é arte (16 máscaras), não código.
+- **Continua aberto, fora da F-TR-a:** o esgotado por tipo. `src/render/mapa.ts:143`
+  ainda tem uma cor só para `esgotado`.
+
