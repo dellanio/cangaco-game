@@ -251,6 +251,9 @@
   "F-CERCO-b-reparo": {
     "passes": true
   },
+  "F28c-regeneracao": {
+    "passes": true
+  },
   "F-TR-a-textura-e-transicao": {
     "passes": true
   },

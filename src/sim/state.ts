@@ -1111,6 +1111,14 @@ export interface Unidade {
    * invariante 2 do projeto.
    */
   readonly condicao: number;
+  /**
+   * F28c — os GOLPES que a unidade ainda aguenta (`units.json`: "hp aqui significa
+   * golpes ate morrer"), ja multiplicados por `combate.multiplicadorHP`. So quem luta
+   * tem: militar e mercenario. AUSENTE no civil, e AUSENTE num militar quer dizer
+   * CHEIO (`hpDaUnidade`, `sim/vida.ts`) — assim a unidade que nasce nao precisa do
+   * campo ate levar o primeiro golpe, e nenhum save anterior muda de sentido.
+   */
+  readonly hp?: number;
 }
 
 /**

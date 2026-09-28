@@ -279,6 +279,11 @@ export interface CombateData {
   };
   readonly watchtower: RawGameData['combat']['watchtower'];
   readonly formacao: RawGameData['combat']['formacao'];
+  /** F28c — quanto HP volta e de quantos em quantos ticks (ja convertido). */
+  readonly regeneracao: {
+    readonly hp: number;
+    readonly ticksIntervalo: Ticks;
+  };
 }
 
 /**

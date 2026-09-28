@@ -5212,7 +5212,23 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
 - **Fora**: a névoa de guerra que a torre revela (GDD §6.5) fica para depois, com
   registro.
 
-### F28c — Regeneração de HP (sim) — escrito, não implementado
+### F28c — Regeneração de HP (sim)
+- **ENTREGUE (2026-09-28, sessão autônoma; plano em
+  `docs/planos/2026-09-28-A7-F28c-regeneracao.md`).** Decisão do operador: *"1 HP a cada
+  10 s; implemente e meça o efeito com o nosso HP dobrado antes de fixar."*
+  - **Pré-requisito que o item não dizia:** a unidade não tinha HP na sim.
+    - Nasceu `Unidade.hp?`, ausente no civil (o dado não dá HP a civil) e ausente = cheio
+      no militar.
+    - O teto é `hp × multiplicadorHP` (`sim/vida.ts`).
+  - O dado é `combat.json: regeneracao { hp: 1, intervalo_segundos_base: 10 }`, na escala
+    `combate`: hoje 67 ticks.
+  - O sistema é `systems/regeneracao.ts`. Usa o relógio global, vale inclusive em luta
+    e não emite evento.
+  - **A medida** (`test-output/F28c.json`): com o HP dobrado, 1 HP a cada 10 s cura
+    **metade** da fração de vida por intervalo. De 1 HP ao cheio, o miliciano leva 50 s
+    contra 20 s no KaM, e o cavaleiro 70 s contra 30 s. Manter a proporção do KaM seria
+    2 HP a cada 10 s. **O número ficou em 1/10 s, o que o operador disse, com a medida à
+    vista: PARA REVISÃO.**
 - **Origem (decisão do operador, 2026-09-28)**: *"escreva o item, não implemente"*.
 - **Regra do KaM**: 1 HP a cada 100 ticks (10 s), inclusive em luta
   (`common/KM_Defaults.pas:360`; `units/KM_Units.pas:2306-2314`).

@@ -554,6 +554,14 @@ export function loadGameData(raw: RawGameData): GameData {
     },
     watchtower: raw.combat.watchtower,
     formacao: raw.combat.formacao,
+    regeneracao: {
+      hp: raw.combat.regeneracao.hp,
+      ticksIntervalo: registrar(
+        'combat.regeneracao.intervalo_segundos_base', raw.combat.escala,
+        raw.combat.regeneracao.intervalo_segundos_base, 'segundos',
+        paraTicksDeDuracao(raw.combat.regeneracao.intervalo_segundos_base, 'segundos', escalaCombate, tickHz),
+      ),
+    },
   };
 
   // --- condicao ---

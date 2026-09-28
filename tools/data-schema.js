@@ -53,6 +53,8 @@ const CAMPOS_ESCALONADOS = [
     unidade: 'segundos', declaraEscalaEm: 'escala' },
   { arquivo: 'combat', caminho: 'ataqueAPredio.cadencia_segundos_base',
     unidade: 'segundos', declaraEscalaEm: 'escala' },
+  { arquivo: 'combat', caminho: 'regeneracao.intervalo_segundos_base',
+    unidade: 'segundos', declaraEscalaEm: 'escala' },
   { arquivo: 'condition', caminho: 'duracaoCondicaoCheia_min_base.civil',
     unidade: 'min', declaraEscalaEm: 'escala' },
   { arquivo: 'condition', caminho: 'duracaoCondicaoCheia_min_base.militar',

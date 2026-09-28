@@ -48,5 +48,10 @@
     "cadencia_segundos_base": 1.2,
     "_docCadencia": "DERIVADO, nao escolhido (operador, 2026-09-28): o golpe contra predio no KaM espera 6 + 6 ticks de 100 ms (KM_UnitTaskAttackHouse.pas:167, :189) = 1.2 s. Cadencia PROPRIA, separada de cadenciaDeAtaque_segundos_base: aquela e dobrada para compensar o multiplicadorHP das unidades, e o predio nao tem HP dobrado; aplicada ao predio, ele cairia 2.4x mais rapido que no KaM por acidente. Os 12 ticks sao LEITURA do fonte, nao medida (docs/varredura-kam.md, frente 4).",
     "_doc": "Dano do KaM: corpo a corpo 2 por golpe sem rolagem (KM_UnitTaskAttackHouse.pas:191-192); projetil 1 (KM_Projectiles.pas:325-330). Sem leitor ate F-CERCO-a."
+  },
+  "regeneracao": {
+    "hp": 1,
+    "intervalo_segundos_base": 10,
+    "_doc": "F28c (decisao do operador, 2026-09-28): 1 HP a cada 10 s, INCLUSIVE em luta, como no KaM (1 a cada 100 ticks de 100 ms: common/KM_Defaults.pas:360, units/KM_Units.pas:2306-2314). Na escala `combate` deste arquivo. O efeito com o multiplicadorHP 2 esta medido em test-output/F28c.json: o tempo ate encher DOBRA contra o KaM. Numero fixado com a medida a vista, PARA REVISAO do operador."
   }
 }

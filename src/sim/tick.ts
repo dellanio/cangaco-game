@@ -8,6 +8,7 @@ import { aplicarPlaceBlueprint } from './systems/build';
 import { aplicarDemolishBuilding } from './systems/demolicao';
 import { aplicarAttackBuilding, sistemaDoCerco } from './systems/cerco';
 import { aplicarSetBuildingRepair } from './systems/reparo';
+import { sistemaDaRegeneracao } from './systems/regeneracao';
 import { aplicarCancelTraining, aplicarEnqueueTraining, sistemaDasEscolas } from './systems/escolas';
 import { aplicarDemolishRoad, aplicarPlaceRoad } from './systems/estradas';
 import { aplicarPlowField, aplicarUnplanField } from './systems/campos';
@@ -144,7 +145,8 @@ export function step(
   // `DemolishBuilding` ser comando: o predio que cai neste tick tem as tarefas e o
   // ocupante liberados por `sanearTarefas` neste MESMO tick, e nenhuma tarefa atravessa
   // o fim do tick apontando para predio que nao existe.
-  const cerco = sistemaDoCerco(atual, dados);
+  // F28c: a cura antes do cerco, sem evento (nenhum aceite nem tela o consome).
+  const cerco = sistemaDoCerco(sistemaDaRegeneracao(atual, tick, dados), dados);
   events.push(...cerco.events);
   const saneado = sanearTarefas(cerco.state, dados);
   // F20b: a fome ANTES das tres familias e depois do saneamento. Antes, porque o

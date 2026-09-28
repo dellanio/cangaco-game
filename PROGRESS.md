@@ -10526,3 +10526,49 @@ Plano: `docs/planos/2026-09-28-A6-F-CERCO-b.md`. Só `src/sim/` e testes.
   jogador não liga o reparo pela tela.
 - **Achado:** a obra atacada (F-CERCO-a2) é martelada pela `construir`, não pela
   `reparar`, porque é obra. Só o completo usa o reparo.
+
+## 2026-09-28 (sessão autônoma, item 7) — F28c: regeneração de HP
+
+Plano: `docs/planos/2026-09-28-A7-F28c-regeneracao.md`. Sim, dado e teste.
+
+**Verificado:**
+- **Pré-requisito:** a `Unidade` não tinha HP. O `units.json` dá HP (golpes até morrer)
+  só a militar e mercenário.
+  - `Unidade.hp?` é opcional: ausente no civil, e ausente = cheio no militar.
+  - Nenhuma fixture quebrou, e o save não mudou de versão.
+  - `sim/vida.ts`: `hpMaximoDoTipo` = `hp × multiplicadorHP.valor`, e `hpDaUnidade`.
+- **Dado:** `combat.json: regeneracao { hp: 1, intervalo_segundos_base: 10 }`, registrado
+  no schema com a escala `combate`. O loader converte uma vez: **67 ticks** (10 s / 1,5).
+  `validate:data` está verde.
+- **`systems/regeneracao.ts`**: a cada 67 ticks do relógio global, quem tem HP entre 0 e
+  o cheio ganha 1. Não olha a FSM e cura em luta também. Roda antes do cerco, sem
+  evento.
+- `tests/F28c-regeneracao.test.ts`, 6 testes, verdes:
+  - o miliciano com 1 HP passa por 1, 2, 3, 4, 5, 6 e enche no tick 335
+    (67 + 4 × 67). Fica em 6 depois disso;
+  - regenera em `atacando`;
+  - civil e militar sem o campo passam intocados;
+  - a mesma corrida dá o mesmo estado;
+  - a tabela da medida.
+- **Sonda:** com o teto desligado, o teste reprova. Achado da sonda: com ganho 1, o `min`
+  nunca age, e o teto de verdade é a guarda `hp >= maximo`.
+
+**A medida pedida pelo operador** (`test-output/F28c.json`; segundos na escala 1,0):
+
+| tipo | HP KaM | HP nosso | até encher, KaM | até encher, nosso |
+|---|---|---|---|---|
+| miliciano, machadeiro, espadachim, lanceiro, piqueiro, rebelde | 3 | 6 | 20 s | 50 s |
+| batedor, cavaleiro, vagabundo, bárbaro, guerreiro | 4 | 8 | 30 s | 70 s |
+| arqueiro, besteiro, bandido | 1 | 2 | 0 s | 10 s |
+
+**Leitura:** com o HP dobrado, 1 HP a cada 10 s cura **metade** da fração de vida por
+intervalo. Entre lutas, a recuperação leva de 2,3× a 2,5× o tempo do KaM. Dentro da luta,
+a cura pesa metade, porque a nossa cadência de ataque é dobrada.
+
+**PARA REVISÃO (decisão do operador):**
+- **O número ficou em 1 HP / 10 s**, o que ele disse, com a medida acima à vista. Manter
+  a proporção do KaM seria 2 HP / 10 s, ou 1 a cada 5 s. É uma linha do `combat.json`.
+- **O relógio é global** (`tick % 67`). No KaM ele é o da unidade: dois feridos saram no
+  mesmo tick, em vez de defasados.
+- **Hoje nada fere unidade:** o combate unidade × unidade é a F28. A cura só age em
+  fixture até lá.
