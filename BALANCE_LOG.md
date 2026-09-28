@@ -22,10 +22,16 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
 
 ## Observações abertas
 
-- [2026-09-28] **FASE C, COMBATE — dois números que a VARREDURA-KAM corrigiu no GDD e o dado ainda não segue.** Os dois ficam no dado como estão, porque nenhum código os lê hoje (conferido com grep: `mercenarios.custoOuro` e `attackVsCavalo` não têm leitor em `src/sim/`). Vão acertados quando o primeiro item de tropa da Fase C escrever o combate.
-  - **Contra montado, o ataque SOMA.** O KaM faz `damage := Attack`; se o alvo é montado, `damage := damage + AttackHorse` (`units/actions/KM_UnitActionFight.pas:291-294`, clone reyandme 731a8a4). O GDD e a string `_doc` de `data/combat.json` modelavam substituição; os dois textos foram corrigidos para soma. **O que muda no número:** o `attackVsCavalo` de `units.json` passa a ser parcela, não total. Piqueiro contra cavaleiro fica em 35 + 80 = 115, não 80; lanceiro, 25 + 60 = 85, não 60. Quem escrever a fórmula decide se a coluna fica como está (e a lança fica ~40% mais forte contra cavalo que o previsto) ou se é reduzida para manter o total antigo.
+- [2026-09-28] **FASE C, COMBATE — dois números que a VARREDURA-KAM corrigiu no GDD.** Nenhum código lê esses números hoje (conferido com grep: `mercenarios.custoOuro` e `attackVsCavalo` não têm leitor em `src/sim/`). O "vs cavalo" já foi decidido e aplicado no dado (abaixo). O custo do Bárbaro continua 7 no dado e espera o primeiro item de tropa.
+  - **Contra montado, o ataque SOMA.** O KaM faz `damage := Attack`; se o alvo é montado, `damage := damage + AttackHorse` (`units/actions/KM_UnitActionFight.pas:291-294`, clone reyandme 731a8a4). O GDD e a string `_doc` de `data/combat.json` modelavam substituição; os dois textos foram corrigidos para soma. **O que muda no número:** o `attackVsCavalo` de `units.json` passa a ser parcela, não total. Piqueiro contra cavaleiro fica em 35 + 80 = 115, não 80; lanceiro, 25 + 60 = 85, não 60. **Decidido pelo operador (2026-09-28): a coluna foi reduzida para manter o total antigo.**
+    - Em `data/units.json`: lanceiro 60 → 35, piqueiro 80 → 45, rebelde 50 → 25. Os totais contra montado continuam 60, 80 e 50.
+    - O porquê, nas palavras dele: "Piqueiro a 115 contra cavalo é muito para uma unidade que custa pouco, e os totais de hoje foram o que a gente calibrou como intenção."
+    - **A soma é mecânica do KaM; o número é nosso.** O GDD (nota depois do Anexo A, §12.2) e o `_docAttackVsCavalo` de `units.json` dizem isso.
+    - O rebelde entrou pelo mesmo princípio, sem ter sido citado.
   - **Bárbaro custa 8 de ouro, não 7** (`res/KM_ResUnits.pas:216`). O GDD foi corrigido. `data/units.json:44` continua `custoOuro: 7`.
 - [2026-09-28] **FOME NO LIMIAR DO KaM — medido, mexe pouco; não gira.** A pergunta do operador: o civil do KaM vai comer a 13,3% e o nosso a 50%. Isso mudaria a calibração da Fase B?
+  - **A premissa era do operador e caiu** (registro pedido por ele). Ele supôs "quase quatro vezes mais idas ao Inn" com 50% contra 13,3%. Medido: 146 contra 119 refeições (−18%), com produção igual.
+  - **Decisão do operador (2026-09-28): o dado fica em 50% e 8 lugares.**
   - **Premissa corrigida antes da medida** (verificado no fonte, clone reyandme 731a8a4): o limiar não decide quantas vezes se come.
     - O civil do KaM come até passar de 90% (`UNIT_CONDITION_FULL_THRESHOLD = 0.9`, `common/KM_Defaults.pas:370`), com as mesmas restaurações que as nossas (`:383-386`).
     - O limiar só decide QUANDO ele sai; quanto ele come ao chegar não muda. A frequência de refeição é dreno ÷ restauração por refeição.

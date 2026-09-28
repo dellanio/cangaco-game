@@ -9755,3 +9755,24 @@ de 2". A sonda foi apagada.
 
 - o resto da frente 4 (IA inimiga, formação, storm attack);
 - as frentes 2 e 3.
+
+## 2026-09-28 — decisões do operador sobre a frente 4 e a fome; itens F-CERCO-a/b escritos
+
+**Decisões do operador aplicadas:**
+
+- **F-CERCO-a (ataque a prédio) e F-CERCO-b (reparo)** estão escritos no BUILD_PLAN, **antes da F25**, com os números do KaM e a ordem explícita.
+  - A F-CERCO-a traz o campo `lado`. Medi o custo compilando e reverti: 27 erros no prédio, 7 na unidade.
+  - **Pergunta aberta dentro do item:** a nossa cadência dobrada de 0,5 s faz o prédio cair ~2,4× mais rápido que no KaM.
+- **Alcance mínimo do arqueiro:** nota na F28, que é onde o arqueiro está hoje. Divergência registrada; decide-se quando o arqueiro existir.
+- **Pedra da torre nunca erra:** escrito como decisão explícita no aceite da F28b.
+- **"vs cavalo":** em `data/units.json`, lanceiro 35, piqueiro 45, rebelde 25. Os totais antigos (60/80/50) se mantêm.
+  - O rebelde entrou pelo mesmo princípio, sem ter sido citado.
+  - Nota no GDD depois do Anexo A e `_docAttackVsCavalo` no dado: "a soma é mecânica, o número é nosso".
+  - Não há leitor na sim (grep), então nenhum teste muda.
+- **Fome:** a premissa do operador caiu, registrado no BALANCE_LOG com os números. O dado fica em 50% e 8 lugares.
+
+**Aberto:**
+
+- o custo do Bárbaro (7 no dado, 8 no KaM), à espera do primeiro item de tropa;
+- frente 4 (IA inimiga, formação, carga);
+- as frentes 2 e 3 depois.

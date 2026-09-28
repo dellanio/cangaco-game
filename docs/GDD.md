@@ -917,6 +917,13 @@ Velocidade na notação interna do Remake; a razão 1:1,666 é o que importa.
 | Warrior | 4 | 75 | 0 | 2 | 0.1000 | 9 |
 | Vagabond | 4 | 35 | 0 | 1 | 0.1666 | 9 |
 
+**A coluna "vs Cavalo" desta tabela é a do KaM; a nossa é outra** (decisão do
+operador, 2026-09-28). A **soma** é mecânica do KaM e fica: contra montado, o
+ataque é `attack + attackVsCavalo`. O **número** é nosso: `data/units.json`
+reduz a parcela para manter o total que a tabela antiga dava como intenção de
+calibração. Lanceiro 25 + 35 = 60, Piqueiro 35 + 45 = 80, Rebel 25 + 25 = 50.
+Somar a coluna do KaM daria 115 a um Piqueiro, que é unidade barata.
+
 Pedra-papel-tesoura: lanceiros e piqueiros levam bônus contra cavalaria;
 cavalaria é rápida e flanqueia arqueiros; arqueiros castigam infantaria lenta
 **[fonte/geral]**.

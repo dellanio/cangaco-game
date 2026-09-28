@@ -4829,6 +4829,78 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
   - a saída das três casas chega ao armazém, pelo caminho real;
   - uma regra no `validate:data` que recusa id em `production.receitas.*.sai` fora de
     `economy.mercadorias`. Hoje nenhuma regra confere isso, e por isso o buraco passou.
+### F-CERCO-a — Tropa ataca prédio, por ordem (sim)
+- **Origem (decisão do operador, 2026-09-28)**: *"ele vem ANTES da F25 (Quartel), não só
+  antes da F34. Sem ele o combate não tem objetivo — tropa mata tropa e a partida não
+  acaba."* O que a VARREDURA-KAM leu no fonte está em `docs/varredura-kam.md`, frente 4.
+- **Regras do KaM, que o operador mandou usar**:
+  - **Corpo a corpo tira 2 de HP por golpe, sem sorteio.** Attack e Defence não entram
+    (`KM_UnitTaskAttackHouse.pas:191-192`).
+  - **Obra inacabada cai mais rápido.** No KaM, vida = progresso − dano
+    (`KM_Houses.pas:1175`). Aqui isso sai de graça: o `hp` da obra já é o HP martelado
+    (`state.ts`, `PredioBase.hp`). O dano subtrai do `hp`, e não nasce campo novo.
+  - **A ordem é explícita. Tropa nunca ataca prédio sozinha.** No KaM só a ordem
+    `gicArmyAttackHouse` cria a tarefa (`KM_GameInputProcess.pas:1009`,
+    `KM_UnitWarrior.pas:940-962`).
+  - O número 2 vai para `data/combat.json`, com `escala` de combate. Nada de literal no `.ts`.
+- **Pré-requisito que o item traz: dono.** Hoje o estado não tem lado; sem lado não
+  existe prédio inimigo.
+  - O item acrescenta `lado` a `PredioBase` e a `Unidade`. A vila do jogador é o lado 0.
+  - **Custo medido compilando (2026-09-28), depois revertido:**
+    - no prédio, 27 erros: 3 em `src/sim/` (`state.ts` ×2, `systems/build.ts`) e 24 em testes e fixtures;
+    - na unidade, 7 erros: 2 em `src/sim/` (`state.ts`, `systems/escolas.ts`).
+- **Tropa antes do Quartel:** o soldado nasce por fixture de teste. A F25 é quem o
+  cria em partida, e a ordem pela tela é da F26. Aqui a ordem é o comando
+  `AttackBuilding { unidades, predio }` em `commands.ts`.
+- **Escopo**:
+  - o comando valida o alvo: prédio do próprio lado é recusado, e a recusa não muda o estado;
+  - o soldado anda até encostar no prédio e golpeia no ritmo da cadência do combate;
+  - HP zero leva o prédio pelo mesmo caminho da demolição (`systems/demolicao.ts`,
+    F16a). As tarefas são liberadas e o ocupante sai.
+  - Evento novo só nasce se o aceite ou a tela o consumirem.
+- **Fora**:
+  - projétil em prédio (entra com o arqueiro, ver F28);
+  - a tela da ordem (F26);
+  - fogo no prédio (o KaM tem 8 níveis, `KM_Houses.pas:1352`), que é render e fica para depois, com registro.
+- **Pergunta ao operador, antes do código.** A nossa `cadenciaDeAtaque_segundos_base`
+  (0,5 s) foi dobrada junto com o HP das unidades (`combat.json` `multiplicadorHP`). O
+  golpe do KaM em prédio sai a cada ~1,2 s (HIPÓTESE, lida e não medida). Com 2 por
+  golpe na cadência dobrada, o prédio cai ~2,4× mais rápido que no KaM. O `multiplicadorHP`
+  foi feito para unidade, não para prédio. A decisão é: 2 por golpe na nossa cadência,
+  ou um ritmo de golpe em prédio próprio.
+- **Aceite**:
+  - N soldados com a ordem tiram exatamente 2 × golpes do `hp` de um prédio inimigo;
+    o prédio chega a 0 e some, e as invariantes do JobBoard continuam valendo;
+  - um soldado encostado num prédio inimigo por T ticks, **sem a ordem**, não tira HP nenhum;
+  - uma obra com `hp` h cai em ⌈h/2⌉ golpes, menos que o mesmo prédio completo;
+  - uma ordem contra prédio do próprio lado é recusada, e o estado fica igual;
+  - a mesma corrida duas vezes dá o mesmo estado.
+
+### F-CERCO-b — Reparo: ligado prédio a prédio, começa desligado (sim)
+- **Origem (decisão do operador, 2026-09-28)**: *"item próprio, logo depois. É o
+  contrapeso, e sem ele o ataque fica sem resposta. Ligado prédio a prédio e começa
+  desligado, como lá."*
+- **Regras do KaM**:
+  - o reparo devolve 5 de HP por martelada do laborer (`KM_UnitTaskBuild.pas:995-1001`);
+  - o prédio só entra na lista se o reparo estiver ligado nele;
+  - para o jogador humano, o reparo começa desligado (`KM_Houses.pas:532`, `:1307-1308`).
+  - **A nossa martelada já vale 5** (`buildings.json` `hpPorMartelada`). O reparo
+    reaproveita a martelada da obra, sem número novo.
+- **Escopo**:
+  - o comando `SetBuildingRepair { predio, ligado }` (o GDD já lista "ligar/desligar reparo", `GDD.md:153`);
+  - o campo nasce desligado;
+  - o prédio completo com `hp` abaixo do teto e reparo ligado gera tarefa de reparo no
+    JobBoard, e o laborer a reclama;
+  - a tarefa tem `release` em todo ramo de erro: prédio demolido, reparo desligado no
+    meio, unidade morta.
+- **Fora**: o botão no painel do prédio é item de UI à parte, porque §10 não deixa
+  misturar sim e render.
+- **Aceite**:
+  - com o reparo desligado, o prédio danificado não recebe martelada nenhuma;
+  - ligado, o `hp` sobe 5 por martelada até o teto e para, e a tarefa some;
+  - desligar no meio libera a tarefa, e as reservas voltam;
+  - o prédio completo sem dano não gera tarefa, mesmo com o reparo ligado.
+
 ### F25 — Barracks e criação de soldado
 - **Nota (decisão do operador, 2026-09-26): a arte dos mercenários espera o Quartel.**
   Os cinco mercenários (`rebel`, `rogue`, `vagabond`, `barbarian`, `warrior`) ficaram
@@ -4843,6 +4915,16 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
   tile estiver, que é justamente onde selecionar importa.
 ### F27 — Formação, virar e storm attack
 ### F28 — Combate e IA inimiga simples
+- **Nota (decisão do operador, 2026-09-28): o alcance mínimo do arqueiro entra no item
+  do arqueiro, não sozinho.** Hoje o arqueiro está dentro desta F28.
+  - **Divergência registrada:** o KaM atira de 4 a 10,99 tiles ("atira a 4, não a 3";
+    `KM_UnitWarrior.pas:837-857`). O nosso `combat.json` `aDistancia.alcance_tiles` diz 8,
+    sem mínimo.
+  - **A decisão é do operador, quando o arqueiro existir.** O mínimo muda a tática:
+    arqueiro encostado não atira, e o KaM faz ele recuar
+    (`KM_UnitTaskAttackHouse.pas:98-101`).
+  - Herdado da F-CERCO-a: o projétil que cai em prédio inimigo tira **1 de HP, sem
+    sorteio** (`KM_Projectiles.pas:325-330`).
 
 ### F28b — Torre de Pedra: o recruta atira pedra de cima (sim + render)
 - **Feature de integração (§10 do CLAUDE.md; decisão do operador, 2026-09-27)**: toca
@@ -4860,7 +4942,12 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
   A escolha do alvo usa ordem determinística: o inimigo mais perto e, no empate, o de
   menor id. O tiro é evento (`state.events`). A pedra que cai não volta.
 - **Aceite**: uma torre abastecida mata inimigos dentro do alcance até a pedra acabar e
-  não atira fora dele. A contagem de pedras gastas é igual à de mortos. Sem pedra, a
+  não atira fora dele. A contagem de pedras gastas é igual à de mortos.
+  - **Decisão explícita do operador (2026-09-28): a pedra da torre nunca erra.** No KaM
+    ela pode errar se o alvo andou: o sorteio é pela distância entre onde a unidade
+    está e onde a pedra cai (`KM_Projectiles.pas:305-306`). Aqui não erra, e é por isso
+    que "pedras gastas = mortos" vale. Nas palavras dele: *"erro de pedra é
+    aleatoriedade que ninguém vai notar"*. Simplificação escrita, não implícita. Sem pedra, a
   torre não atira, e o painel diz por quê.
 - **Fora**: a névoa de guerra que a torre revela (GDD §6.5) fica para depois, com
   registro.
