@@ -1109,6 +1109,35 @@ function validarRecursos(dados, erros) {
   }
 }
 
+// F-REPL-b: o modo de trabalho (production.json:predios.<tipo>.modos) e escolhido
+// no painel pelo id, e o jogador ve o nome do tema. Ida e volta, como o menu: todo
+// modo tem `nome` em theme-sertao.predios.<tipo>.modos, e o tema nao nomeia modo
+// que o dado nao tem.
+function validarRotulosDeModo(dados, tema, erros) {
+  const predios = (dados.production && dados.production.predios) || {};
+  const doTema = (tema && tema.predios) || {};
+  for (const [tipo, def] of Object.entries(predios)) {
+    if (tipo.startsWith('_') || !def || typeof def !== 'object') continue;
+    const modos = def.modos && typeof def.modos === 'object' ? Object.keys(def.modos) : [];
+    const rotulos = (doTema[tipo] && doTema[tipo].modos) || {};
+    for (const modo of modos) {
+      const r = rotulos[modo];
+      if (!r || typeof r.nome !== 'string' || r.nome.length === 0) {
+        erros.push(`interface/modo-rotulo: modo '${modo}' de '${tipo}' sem nome em theme-sertao.predios.${tipo}.modos`);
+      }
+    }
+  }
+  for (const [tipo, t] of Object.entries(doTema)) {
+    if (!t || typeof t !== 'object' || !t.modos) continue;
+    const doDado = (predios[tipo] && predios[tipo].modos) || {};
+    for (const modo of Object.keys(t.modos)) {
+      if (!Object.hasOwn(doDado, modo)) {
+        erros.push(`interface/modo-rotulo: theme-sertao.predios.${tipo}.modos.${modo} nao e modo de production.json`);
+      }
+    }
+  }
+}
+
 // Layout 2, fatia 2 (docs/propostas/ui-releitura-rts.md §2): o agrupamento do
 // menu Construir (data/menu-build.json) e dado de INTERFACE, validado a parte
 // de validarTudo porque `sim/` nunca o le. O que a regra guarda: todo predio de
@@ -1120,6 +1149,7 @@ function validarInterface(dados, interfaceUi) {
   const erros = [];
   const menu = interfaceUi && interfaceUi['menu-build'];
   const tema = interfaceUi && interfaceUi['theme-sertao'];
+  validarRotulosDeModo(dados, tema, erros);
   if (!menu || !Array.isArray(menu.grupos)) {
     erros.push('interface/menu-build-forma: menu-build.grupos precisa ser array');
     return erros;

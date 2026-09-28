@@ -107,7 +107,12 @@
     },
     "woodcutters": {
       "nome": "Casa do Lenhador",
-      "desc": "Corta e replanta a lenha da caatinga."
+      "desc": "Corta e replanta a lenha da caatinga.",
+      "_docModos": "F-REPL-b: um rotulo por chave de production.json:predios.woodcutters.modos (interface/modo-rotulo). O painel escolhe pelo id; o nome e so tela.",
+      "modos": {
+        "cortar": { "nome": "Cortar", "desc": "Só corta; a mata acaba." },
+        "cortar_e_plantar": { "nome": "Cortar e plantar", "desc": "Planta no toco o que cortou." }
+      }
     },
     "watchtower": {
       "nome": "Torre de Pedra",

@@ -4181,10 +4181,14 @@ Pedido do operador (2026-09-27, noite 15):
         `producao.modo`;
       - o seletor aparece para toda receita com `modos !== null`, nunca por
         `tipo === 'woodcutters'`;
-      - os nomes que o jogador vê (`cortar`, `cortar_e_plantar`) vão para o
-        `theme-sertao.json`.
-      - Com mata grande, o modo não muda nada até a mata acabar (BALANCE_LOG,
-        F-REPL-a). Se o painel quiser mostrar isso, é decisão de tela.
+      - os nomes que o jogador vê já estão no tema (2026-09-27, noite 17), em
+        `theme-sertao.predios.<tipo>.modos.<id>`, com `nome` e `desc`. A regra
+        `interface/modo-rotulo` exige nome para todo modo do dado e recusa nome
+        de modo que o dado não tem;
+      - lenhador sozinho numa mata grande: o modo não muda nada até a mata acabar.
+        Dois lenhadores na mesma mata replantam cedo (BALANCE_LOG, premissa
+        corrigida na noite 17). Se o painel quiser mostrar isso, é decisão de
+        tela.
   - **F-REPL-e — os estados da árvore na tela (render).** Quando a arte existir, pelo
     BRIEF-ARTE. Até lá, placeholder, como manda a §9.
   - **Depois do b, não antes: re-medir o lenhador** (BALANCE_LOG):

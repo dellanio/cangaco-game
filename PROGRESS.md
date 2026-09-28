@@ -9641,3 +9641,53 @@ contrato está no item F-REPL-b do BUILD_PLAN; a F-REPL-d (Codex) herda uma Nota
 - A re-medida do lenhador (BALANCE_LOG) está destravada, mas é só medida.
 - Idioma das respostas: o CLAUDE.md não pede português, então não há desvio a
   registrar.
+
+## 2026-09-28 — re-medida do lenhador, nomes dos modos no tema, tendência do F10
+
+**Decisões do operador aplicadas.**
+- Os 20 s do `ORCAMENTO_DO_CASO` do F10 foram aprovados pela §8: é limite contra
+  travamento.
+- Nomes dos modos: ficam "Cortar" e "Cortar e plantar". Decidi sem esperar, como o
+  operador pediu, e não achei termo do sertão melhor.
+
+**Tendência do F10 (semente 3, suíte inteira).** Isto é registro, não asserção.
+- A série: ~3 s na F23 → 8,8 s → 9,85 s.
+  - Os dois primeiros números são do operador; não os re-medi.
+  - Os 9,85 s são meus, no HEAD 1c30a87. Com a F-REPL-b, 10,4 s.
+- Isolado, o caso leva ~4 s.
+- **Se continuar subindo, o problema é o teste, não o limite** (operador). Próximo
+  passo nesse caso: medir o que cresce por tick no `rodarCaos` (unidades? estado?)
+  antes de mexer no orçamento de novo.
+
+**Tema.**
+- `theme-sertao.predios.woodcutters.modos.{cortar,cortar_e_plantar}` com `nome` e
+  `desc`.
+- Regra nova `interface/modo-rotulo`, de ida e volta: todo modo do
+  `production.json` tem nome, e o tema não nomeia modo inexistente.
+  - Coberta por dois casos de quebra em `tests/estilo-ui-menu.test.ts`.
+  - Antes de escrever os casos, conferi que a regra acusa nos dois sentidos
+    (sonda, revertida).
+
+**Re-medida do lenhador.** Os números estão no BALANCE_LOG, sob "Lenhador com lote
+de 2". A sonda foi apagada.
+- Verificado:
+  - com replantio, cada tronco custa ~70 ticks de plantio;
+  - o par da abertura entrega 87–90 % do que a serraria consome, no lote 1 e em
+    toda janela;
+  - com o lote 2, entrega 98 %;
+  - 9:1 dá 1,77 no lote 1 e 2,2 no lote 2.
+- Dos quatro motivos contra o lote 2, só o 4 era número, e ele inverteu.
+- **Espera o operador**: nada, lote 2, ou proporção ~2,25:1. Recomendei nada por
+  ora.
+- **Premissa corrigida.**
+  - O que caiu: "o rodízio corta adulta antes de plantar". O rodízio anda com
+    cursor.
+  - O que foi medido: com dois lenhadores na mesma mata (a abertura real), o
+    replantio começa no t2600, com 7 adultas ao alcance.
+  - Por leitura, não medido: os dois cursores se cruzam.
+  - A observação do operador no BALANCE_LOG ("o jogador não vê o replantio até ter
+    problema") vale só para lenhador sozinho. Marquei isso no próprio registro.
+
+**Aberto.**
+- A decisão do lote 2.
+- A VARREDURA-KAM, que é a próxima.

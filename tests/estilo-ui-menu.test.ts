@@ -46,6 +46,11 @@ const quebras: Quebra[] = [
     quebrar: (_j, ui) => { ui['menu-build'].grupos.push({ id: 'vila', predios: [] }); } },
   { nome: 'arquivo sem forma', regraEsperada: 'interface/menu-build-forma',
     quebrar: (_j, ui) => { ui['menu-build'].grupos = 'nada'; } },
+  // F-REPL-b: o modo de trabalho tem nome no tema, ida e volta
+  { nome: 'modo de production.json sem nome no tema', regraEsperada: 'interface/modo-rotulo',
+    quebrar: (_j, ui) => { delete ui['theme-sertao'].predios.woodcutters.modos.cortar; } },
+  { nome: 'nome no tema de modo que o dado nao tem', regraEsperada: 'interface/modo-rotulo',
+    quebrar: (_j, ui) => { ui['theme-sertao'].predios.woodcutters.modos.replantar = { nome: 'Replantar' }; } },
 ];
 
 describe('Layout 2 — interface/menu-build', () => {

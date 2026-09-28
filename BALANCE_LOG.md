@@ -316,8 +316,12 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
             - mata de 2 tiles: 16 troncos contra o teto de 8 sem replantio;
             - mata de 1 tile: 12; mata inteira (9 tiles): 21. A razão N:1 é **1,75**;
             - a mata inteira não chega a replantar em 12 000 ticks, porque o rodízio
-              corta a adulta antes. Por isso os 21 são os mesmos com e sem
-              `reposicao` nessa janela.
+              dá a volta na lista antes de voltar ao primeiro toco. Por isso os 21
+              são os mesmos com e sem `reposicao` nessa janela.
+              - Corrigido em 2026-09-27 (noite 17): antes dizia "corta a adulta
+                antes". O rodízio (`proximoTrabalhoDoRodizio`) anda com cursor e
+                aceita colher ou semear, o que vier primeiro depois dele. A
+                observação abaixo depende disso.
             - **Observação do operador (2026-09-27, noite 16): com mata grande, o
               replantio só entra quando a mata acaba.** É o comportamento certo:
               cortar o que já está pronto vem antes. Mas o jogador não vê o
@@ -325,6 +329,19 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
               modo (F-REPL-b) não faz nada, é isso:** com 9 tiles adultos ao
               alcance, `cortar` e `cortar_e_plantar` dão a mesma corrida até a
               última adulta cair. Não é defeito, e não há número a girar.
+              - **PREMISSA CORRIGIDA (2026-09-27, noite 17), vale só para lenhador
+                SOZINHO na mata.** O mecanismo é a volta do cursor, não "adulta
+                antes". Com um lenhador, dá no mesmo: o primeiro toco só volta a ser
+                visitado quando a volta termina, e a volta termina quando a mata
+                acaba.
+              - **Com dois lenhadores na mesma mata, o replantio entra cedo.**
+                - Medido por sonda apagada: no `cenarioOraculo`, `w1` e `w2` dividem
+                  os mesmos 9 tiles, e o `lenhador-2` semeia a partir do t2600, com
+                  7 adultas ainda ao alcance dos dois.
+                - Por leitura do código, não medido: cada prédio tem o seu cursor, e
+                  o de um passa pelo toco que o outro deixou.
+                - É o caso da abertura real (`aberturaDaFaseA` põe os dois lenhadores
+                  na mesma mata), então lá o jogador vê o replantio cedo.
             - A re-medida do lenhador (N:1 contra a serraria, o 2:1, o lote de 2)
               continua depois da F-REPL-b. Isto é medição; nada gira.
       - **Quem a razão N:1 mede:** só quem REPÕE, `corn` (fazenda 2,875×, boa) e
@@ -369,6 +386,73 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
         - **Reaberta pelo item F-REPL (2026-09-27, noite 15).** Depois da F-REPL-b, esta
           medição roda de novo. O motivo 1 cai; os motivos 2 e 3 continuam; o motivo 4
           é refeito, porque replantar come tempo do lenhador e muda o 2:1.
+      - **RE-MEDIDO depois da F-REPL-b (2026-09-27, noite 17), a pedido do operador.
+        Medição; nada girou.**
+        - **Como:**
+          - sonda apagada, `cenarioOraculo`, modo `cortar_e_plantar`, gaveta
+            esvaziada a cada tick;
+          - a condição das unidades é reposta a cada tick. O cenário não tem comida,
+            e sem isso todo civil morre no t12 000;
+          - regime estável: 48 000 ticks, medidos de 24 000 a 48 000. A janela de
+            48 000 a 72 000 repete (w1 com 9 tiles: 40 contra 39 troncos, e o par
+            igual ± 3 %);
+          - "lote 2" é fases ×2 e `sai` 2, a mesma derivação da noite 14.
+        - **Razão N:1 por tiles** (`w1` sozinho, `w2` pausado, mata encurtada no
+          estado), em troncos por 24 000 ticks e ticks por tronco:
+
+          | tiles | lote 1 | lote 2 |
+          |---|---|---|
+          | 1 | 22 (1 091) | 20 (1 200) |
+          | 2 | 27 (889) | 32 (750) |
+          | 3 | 32 (750) | 36 (667) |
+          | 5 | 38 (632) | 40 (600) |
+          | 9 | 39 (615) | 44 (545) |
+
+          - 9:1 dá **1,77** no lote 1 e **2,2** no lote 2. Com 5 tiles o lote 1 já
+            está a 97 % do teto.
+          - Com 1 tile o lote 2 rende menos: ele espera o crescer, e 44 % do tempo
+            do lote 1 já é espera.
+        - **Onde vai o tempo por tronco** (`w1`, 9 tiles, regime estável, rótulo da
+          FSM contado tick a tick):
+
+          | | no tile | descanso | caminhada | plantio | total |
+          |---|---|---|---|---|---|
+          | lote 1 | 337 | 93 | 116 | **70** | 615 |
+          | lote 2 | 329 | 93 | 62 | **62** | 546 |
+
+          - **Replantar come ~70 ticks por tronco**: um plantio de 265 ticks
+            repartido pelos 4 troncos da árvore, mais a ida.
+          - Antes do replantio (0 a 12 000, mata em pé), o mesmo `w1` fazia 571,
+            com caminhada de 141. A conta da calibração (423 + 125 + 1 = 549) já
+            ficava 4 % abaixo do medido.
+        - **O 2:1 com a serraria mudou sozinho.** A serraria gasta 273 ticks por
+          tronco (`ticksDoCiclo` do dado), e o orçamento de cada lenhador é 546.
+
+          | par `w1`+`w2`, a abertura real | 0–12 000 | 24 000–48 000 | 48 000–72 000 |
+          |---|---|---|---|
+          | lote 1, ticks por tronco do par | 308 | 304 | 312 |
+          | lote 2, ticks por tronco do par | 300 | 279 | 279 |
+
+          - Com o lote 1, o par entrega 87–90 % do que a serraria consome, em toda
+            janela. A proporção que fecharia é ~2,25:1.
+          - Com o lote 2, entrega 98 %: a caminhada cai à metade (116 → 62) e paga
+            o plantio. `w1` sozinho fica em 545,5, o orçamento ao tick.
+        - **Os quatro motivos da noite 14, de novo:**
+          1. a mata acaba: **caiu**, medido. Com 5 tiles ou mais, `w1` nunca espera
+             árvore (0 ticks com 9 tiles, 1 128 com 5);
+          2. não há casa que justifique o lote: **continua**, argumento de desenho;
+          3. o KaM traz 1 por viagem: **continua**, referência;
+          4. quebraria o 2:1: **inverteu**. Quem está fora do 2:1 agora é o lote 1
+             (87–90 %); o lote 2 o devolve (98 %). É o único motivo de número dos
+             quatro.
+        - **Espera o operador.** Contra o lote 2 sobram só os motivos de desenho, 2 e
+          3. As saídas são três:
+          - nada: 10–13 % de serraria parada ainda não é problema na tela;
+          - lote 2 no lenhador;
+          - a proporção de referência para ~2,25:1.
+          - Recomendo nada por ora, pela regra "número gira quando o jogo mostra
+            problema". Mas a pergunta dele tem resposta: pelo número, o lote 2 volta
+            a fazer sentido.
     - **REFERÊNCIA KaM — o replantio (medido no fonte do KaM Remake, clone de
       2022-06-01, só no scratchpad; nenhum arquivo entra no repositório).**
       - Crescer, em `KM_ResMapElements.pas:71-82`:
