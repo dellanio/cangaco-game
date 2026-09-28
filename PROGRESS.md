@@ -9939,3 +9939,22 @@ conferido: continua valendo (`render/mapa.ts` `codigoDoRecurso`, `grapes` sem `t
   headless do placeholder?) ou exercitá-los com um prédio cuja arte some só no roteiro
   (manifesto filtrado na página)? Conservador desta sessão: nenhum dos dois; ficam
   vermelhos e registrados em BUG-M.
+
+## 2026-09-28 (noite, fila 2 e 3) — VARREDURA-KAM frentes 2 e 3
+
+Resultado em `docs/varredura-kam.md` (seções "Frente 2" e "Frente 3"). Feito por dois
+subagentes; conferi no fonte do KaM, abrindo a linha, só o que marquei [C] lá:
+- **Verificado:** o quarto erro — material de obra anda `livre` com "fonte: jogo original",
+  mas no KaM a obra é demanda de casa e casa→casa exige estrada
+  (`KM_UnitTaskBuild.pas:637-638`, `KM_HandLogistics.pas:1216-1220`). A ordem de prioridade
+  do `delivery.json` está invertida contra o `[fonte]` que ela cita (`KM_HandLogistics.pas:30-35`).
+  Bárbaro custa 8 no KaM (`KM_ResUnits.pas:215-217`), 7 aqui.
+- **Hipótese (leitura do subagente, não conferida por mim):** tempos de crescer ~metade dos
+  do KaM; rendimento por tile de árvore/milho/minério; alcance em tiles andados (16/14/10);
+  teto de laborers 6 a 12 por tipo; F24a produzindo sem cota ao contrário do KaM.
+- **Nada mudou em dado:** tudo é balanceamento (lote, §12) ou decisão do operador.
+
+### Perguntas em aberto
+- **Material de obra:** corrigir para `estrada` (cai o aceite da F18d-1a) ou declarar `livre`
+  divergência deliberada e tirar o "fonte" do dado, do GDD e do BUILD_PLAN?
+- **Prioridade ouro/comida:** inverter os níveis 1 e 2 do `delivery.json` ou declarar divergência?

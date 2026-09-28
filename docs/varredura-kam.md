@@ -289,3 +289,56 @@ que ele não achou no código está marcado **HIPÓTESE — ABERTA**.
 - Arqueiro com atraso de mira aleatório e trava contra tiro em rajada (`KM_UnitWarrior.pas:457-468`, `:788-806`).
 - **Não existem**, e o GDD também não tem: veterania, recuo e moral (grep sem resultado).
 - **Não achado:** efeito da fome no dano.
+
+## Frente 2 — BALANCE_LOG contra o KaM, por classe (2026-09-28)
+
+Feita por subagente (relatório completo no scratchpad da sessão, não versionado). As 48
+observações abertas de `BALANCE_LOG.md` caíram em 10 classes. **Conferido por mim no fonte**
+está marcado [C]; o resto é leitura do subagente, HIPÓTESE até alguém abrir a linha.
+
+| Classe | Obs. | Veredito |
+|---|---|---|
+| A. Viagem, fases, lote | 13 | confirmado: o KaM não tem taxa, o fluxo sai de andar + trabalhar no tile + na casa + descanso + lote (`KM_UnitWorkPlan.pas:124-130`). O lenhador traz **1** tronco por viagem: o lote 2 nosso é decisão nossa, não fonte. |
+| B. Tempo e crescimento | 5 | tick de 100 ms confirmado (`KM_Defaults.pas:319`). Nossos tempos de crescer (milho/árvore/uva 330/412,5/330 s) são ~metade dos do KaM (640/800/500 s, `KM_ResMapElements.pas:81-101` × `TERRAIN_PACE`) — diferença não registrada em lugar nenhum. |
+| C. Rendimento por tile | 10 | pedreira bate (15 por tile, 3 por viagem). Diverge: árvore 4 contra 1; milho 4 por semeadura contra 1 por corte; uva volta sozinha à idade 1 no KaM; minério ≤ 5 extrações por tile no KaM contra 15/12/8. |
+| D. Alcance | 6 | o KaM mede em tiles andados: pedreiro 16, pescador 14, lenhador e fazendeiro 10. O nosso é Chebyshev 6/6/6, fazenda 2. |
+| E. Movimento e terreno | 4 | o KaM não tem bônus de estrada, custo de areia nem de campo arado; diagonal 1,4 (a nossa ~1,29). |
+| F. Construção e logística | 11 | confirmado: 1 pedra por tile de estrada, material só após nivelar. **Ordem ouro/comida invertida [C]** (ver frente 3). Laborers: KaM 6 a 12 por tipo, nosso teto único 4. |
+| G. Fome | 2 | confirmado; 50 % e 8 comensais são decisão do operador. |
+| H. Combate | 1 | **bárbaro custa 8 no KaM [C]** (`KM_ResUnits.pas:215-217`, `TH_DEFAULT_TROOP_COST`), 7 no nosso `units.json`. Sem leitor ainda. |
+| I. Cadeias industriais | 4 | ciclo depende da animação no `.dat`, fora do fonte: HIPÓTESE. |
+| J. Fora do balanceamento | 2 | sem contraparte no KaM. |
+
+Nenhum número foi mudado: pela §12 do CLAUDE.md, balanceamento se ajusta em lote. Os
+achados que mudam número (classes B, C, D, F-laborers, H) ficam para o lote do operador.
+
+## Frente 3 — PROGRESS contra o KaM: o quarto erro (2026-09-28)
+
+Os três primeiros (projeção, modelo de taxa, fome) já estavam registrados. **O quarto:
+o material de obra anda livre, "fonte: o jogo original".** Não é assim no KaM.
+- O que o projeto supõe: decisão de 2026-09-23 (PROGRESS, F18d-1a): "entregar material
+  numa construção anda livre... é assim que a primeira casa sobe sem rua. Fonte: o jogo
+  original." Está em `data/delivery.json` (nível 3 `material-para-obra`, `modo: livre`) e
+  no aceite da F18d-1a (`passes: true`).
+- O que o KaM faz **[C]**: a obra pede o material como demanda **de casa**
+  (`KM_UnitTaskBuild.pas:637-638`, `AddDemand(fHouse, …, diHigh4)`), e entrega casa→casa
+  só acontece com estrada ligando as portas (`KM_HandLogistics.pas:1216-1220`, "House-House
+  delivery should be performed only if there's connecting road"). Só entrega para unidade
+  anda sem estrada (`:1222-1225`).
+- O resto da regra bate: o construtor anda livre, pedra da estrada planejada e comida da
+  tropa são livres, produção exige estrada.
+- Saídas (decisão do operador): (a) corrigir — nível 3 vira `estrada`, cai o aceite da
+  F18d-1a, muda `tests/F09-sistema.test.ts` e o GDD §6.3; (b) manter `livre` como
+  divergência deliberada e tirar o "fonte: jogo original" do dado, do GDD e do BUILD_PLAN.
+
+**Quinto, de etiqueta [C]:** `delivery.json` marca como `[fonte]` "comida→Inn é a maior
+prioridade, ouro→escola a segunda". No KaM (`KM_HandLogistics.pas:30-35`) é o contrário:
+ouro→escola (`diHigh1`), comida para soldado (`diHigh2`), comida para Inn (`diHigh3`),
+material de obra (`diHigh4`), e só então o resto. Fecha a hipótese aberta da linha de
+itens de menor prioridade acima.
+
+**Divergências que precisam ser declaradas como nossas** (leitura do subagente):
+- F24a: sem cota, a oficina daqui produz tudo; no KaM, sem ordem não produz nada
+  (`KM_Units.pas:716-720`). A sessão da F24a chamou de "conservador"; é o inverso do KaM.
+- Encostar prédios: o KaM exige 1 tile de folga nas 8 direções (`KM_Terrain.pas:3785-3806`).
+- Replantio: no KaM o toco é o preferido e o tile vazio a segunda opção.
