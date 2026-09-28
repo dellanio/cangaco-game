@@ -279,6 +279,8 @@ export interface CombateData {
   };
   readonly watchtower: RawGameData['combat']['watchtower'];
   readonly formacao: RawGameData['combat']['formacao'];
+  /** F28-IA — o tamanho do grupo de defesa da IA e os homens por fileira. */
+  readonly ia: RawGameData['combat']['ia'];
   /** F28d — quem tem escudo (pelos requisitos) e a defesa extra por tipo de projetil. */
   readonly escudo: RawGameData['combat']['escudo'];
   /** F28c — quanto HP volta e de quantos em quantos ticks (ja convertido). */

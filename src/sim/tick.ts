@@ -13,6 +13,7 @@ import { aplicarTrainSoldier } from './systems/quartel';
 import { aplicarMoveUnits, sistemaDaMarcha } from './systems/marcha';
 import { aplicarAttackUnit, sistemaDoCombate } from './systems/combate';
 import { sistemaDaTorre } from './systems/torre';
+import { sistemaDaIA } from './systems/ia';
 import { aplicarCancelTraining, aplicarEnqueueTraining, sistemaDasEscolas } from './systems/escolas';
 import { aplicarDemolishRoad, aplicarPlaceRoad } from './systems/estradas';
 import { aplicarPlowField, aplicarUnplanField } from './systems/campos';
@@ -170,7 +171,10 @@ export function step(
   // F28c: a cura antes do cerco, sem evento (nenhum aceite nem tela o consome).
   // F26a/F28a: a marcha e a luta junto do cerco — as ordens diretas da tropa, sem
   // JobBoard. A luta depois da marcha: quem chegou encostado neste tick ja pega o contato.
-  const luta = sistemaDoCombate(sistemaDaMarcha(sistemaDaRegeneracao(atual, tick, dados), dados).state, dados);
+  // F28-IA: a IA da as ordens dela ANTES da marcha e da luta, como o comando do
+  // jogador vem antes dos sistemas
+  const comIA = sistemaDaIA(sistemaDaRegeneracao(atual, tick, dados), dados);
+  const luta = sistemaDoCombate(sistemaDaMarcha(comIA, dados).state, dados);
   events.push(...luta.events);
   // F28b: a torre atira depois da luta e antes do cerco
   const torre = sistemaDaTorre(luta.state, dados);
@@ -236,5 +240,7 @@ export function step(
     // todo tick que nao e multiplo do periodo, e em todo dado sem tipo `porTempo`
     // (que e o dado de hoje).
     recursos: regenerar(atual.recursos, tick, dados),
+    // F28-IA: so atravessa quando existe — estado sem IA nao ganha o campo
+    ...(atual.ia === undefined ? {} : { ia: atual.ia }),
   };
 }

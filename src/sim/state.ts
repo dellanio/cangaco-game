@@ -1352,6 +1352,31 @@ export interface GameState {
    * ser representavel.
    */
   readonly treino: Readonly<Record<string, readonly ItemDeFila[]>>;
+  /**
+   * F28-IA — o que a IA de cada LADO sabe (chave: o lado, em texto). AUSENTE quando
+   * nenhum lado e da IA — o estado do jogo sem inimigo nao carrega o campo, e o save de
+   * antes dele continua igual byte a byte. Quem cria as posicoes e o cenario.
+   */
+  readonly ia?: Readonly<Record<string, IADoLado>>;
+}
+
+/** F28-IA — o tipo de grupo, derivado do dado da tropa (`sim/ia.ts`). */
+export type TipoDeGrupo = 'corpoACorpo' | 'antiCavalo' | 'distancia' | 'montado';
+
+/** F28-IA — uma posicao de defesa da IA (ponto 1 do laco do KaM). */
+export interface PosicaoDeDefesa {
+  readonly id: string;
+  readonly ponto: TileDeGrid;
+  readonly tipoDeGrupo: TipoDeGrupo;
+  /** Ate onde (euclidiano, em tiles, a partir do ponto) a posicao sai para o inimigo. */
+  readonly raio: number;
+  readonly linha: 'frente' | 'tras';
+  /** Os ids dos membros, na ordem em que entraram (a ordem da o tile de cada um). */
+  readonly membros: readonly string[];
+}
+
+export interface IADoLado {
+  readonly posicoes: readonly PosicaoDeDefesa[];
 }
 
 function construirColecao<T extends { readonly id: string }>(itens: readonly T[]): Colecao<T> {

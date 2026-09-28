@@ -5249,6 +5249,19 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
 - **Aceite do ponto 1**: um grupo posto numa posição de defesa sai para o inimigo que
   entra no raio e não sai para o que fica fora; a mesma corrida duas vezes dá o mesmo
   estado.
+- **Pontos 1, 2 e 3 ENTREGUES juntos (2026-09-28, sessão autônoma; plano em
+  `docs/planos/2026-09-28-A12-F28-IA-defesa.md`).** Eles são um sistema só.
+  - `GameState.ia?` guarda as posições por lado, criadas pelo cenário.
+  - `combat.json: ia` (9 homens, 3 por fileira). O tipo de grupo é derivado da tropa.
+  - `systems/ia.ts`:
+    - guarnece (frente antes de trás, até 9, do tipo certo);
+    - volta ao tile do grupo quando ocioso;
+    - sai para o intruso mais perto dentro do raio;
+    - retalia contra quem ataca um membro, mesmo de fora do raio;
+    - larga o perseguido que sai do raio.
+  - **Aceites dos pontos 2 e 3 (escritos na sessão, PARA REVISÃO):** morto o intruso, o
+    grupo volta aos seus tiles; o arqueiro que ataca de fora do raio vira alvo.
+  - Teste: `tests/F28-IA-defesa.test.ts`.
 
 ### F28b — Torre de Pedra: o recruta atira pedra de cima (sim + render)
 - **ENTREGUE (2026-09-28, sessão autônoma; plano em `docs/planos/2026-09-28-A11-F28b-torre.md`).**

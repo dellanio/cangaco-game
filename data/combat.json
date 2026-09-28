@@ -67,5 +67,10 @@
     "mercadorias": ["wooden_shield", "iron_shield"],
     "defesaContraProjetil": { "flecha": 1, "funda": 1, "virote": 0.5 },
     "_doc": "F28d (decisao do operador, 2026-09-28): a tropa com escudo ganha defesa extra contra projetil, SOMADA a `defence` na formula: +1 contra arco e funda, +0,5 contra besta (KM_ResUnits.pas:258-260). Quem tem escudo e quem leva um destes itens nos `requisitos` de units.json — derivado, sem campo por tropa."
+  },
+  "ia": {
+    "tamanhoDoGrupo": 9,
+    "homensPorFileira": 3,
+    "_doc": "F28-IA (decisao do operador, 2026-09-28): o grupo de defesa da IA tem 9 homens, 3 por fileira, o padrao da IA do KaM (KM_AIDefensePos.pas:223-224). E da IA, nao regra do jogador: a formacao do jogador vai de 1 ao tamanho do grupo (`formacao`)."
   }
 }

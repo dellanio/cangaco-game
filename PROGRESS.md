@@ -10850,3 +10850,45 @@ a declara assim): sim, render, UI, dado, teste e roteiro.
   sem quadro no meio não desenha traço.
 - **Recruta da torre aparece em pé ao lado dela**, e não dentro. É como o ocupante já era
   desenhado.
+
+## 2026-09-28 (sessão autônoma, itens 12 e 13) — F28-IA, pontos 1, 2 e 3: a defesa
+
+Plano: `docs/planos/2026-09-28-A12-F28-IA-defesa.md`. Só `src/sim/`, dado e teste.
+**Pontos 1, 2 e 3 saíram juntos:** são o mesmo laço sobre a mesma posição, e o aceite
+escrito do ponto 1 já pedia a saída para o intruso.
+
+**Verificado:**
+- **Estado:** `GameState.ia?` guarda as posições por lado (`ponto`, `tipoDeGrupo`, `raio`,
+  `linha`, `membros`). Ausente, o estado fica byte a byte igual ao de antes, e o save não
+  mudou de versão. `step` só carrega o campo quando ele existe.
+- **Dado:** `combat.json: ia { tamanhoDoGrupo: 9, homensPorFileira: 3 }`.
+- **`sim/ia.ts`:** `tipoDeGrupo` derivado do dado (montado, distância, antiCavalo se
+  `attackVsCavalo > 0`, ou corpo a corpo), `posicaoDoMembro` e `intrusos`.
+- **`systems/ia.ts`** roda antes da marcha e da luta:
+  - guarnecer;
+  - alvo da posição: primeiro quem ataca um membro (retaliar), senão o intruso mais
+    perto do ponto no raio;
+  - o corpo a corpo vai lutar e o atirador se vira;
+  - sem alvo, quem persegue fora do raio larga e o ocioso volta ao seu tile.
+- `tests/F28-IA-defesa.test.ts`, 6 testes, verdes:
+  - tipo de grupo;
+  - **guarnecer:** 12 milicianos e duas posições dão 9 na frente e 3 atrás, e o arqueiro
+    vai só para a posição de distância. Os 9 param nos 9 tiles do grupo;
+  - **raio:** o inimigo a raio + 2 não tira ninguém em 100 ticks, e a 4 tira;
+  - **voltar:** morto o intruso, os 9 voltam aos seus tiles e ficam ociosos, com as
+    invariantes válidas;
+  - **retaliar:** o arqueiro a 9 do ponto (raio 6), virado para o grupo, vira alvo;
+  - determinismo.
+- **Sondas** (restauradas):
+  - raio ignorado: o teste do raio reprova;
+  - sem a retaliação: o ponto 3 reprova;
+  - sem voltar ao tile: guarnecer, voltar e retaliar reprovam.
+
+**PARA REVISÃO:**
+- **Os aceites dos pontos 2 e 3 são meus.** O BUILD_PLAN só tinha o do ponto 1.
+- **"Homens por fileira: 3" está no dado sem leitor:** o grupo usa os anéis de
+  `tilesDoGrupo` (F26a), não fileiras. A formação é da F27.
+- **A IA ignora a névoa**, por decisão do operador (`KM_HandsCollection.pas:523-567`).
+  Hoje a sim nem tem névoa.
+- **Quem cria as posições é o cenário.** Não há arquivo de missão nem IA que escolha o
+  ponto sozinha.
