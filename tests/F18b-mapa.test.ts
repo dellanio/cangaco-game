@@ -82,7 +82,7 @@ describe('F18b — GUARDA: nada presume o tamanho do mapa', () => {
     // sem predio. A guarda afirma onde fica a BORDA, e a borda nao muda com o que
     // esta perto dela. Antes o cenario era o mapa publicado, e supunha sem
     // escrever que o canto declarado era chao livre: no mundo transladado (63,63)
-    // cai dentro do armazem e (127,127) na serra, e a F18c-2 recentra a vila.
+    // cai dentro do armazem e (127,127) na serra, e a B-TERRENO-01 (recentrar a vila) recentra a vila.
     // Mesmo motivo da F-T2b, que tirou a arvore de (94,60), o canto de 97x61.
     const dados = dadosLisos(largura, altura);
     const estado = {

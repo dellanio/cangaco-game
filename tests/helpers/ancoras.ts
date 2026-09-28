@@ -10,7 +10,7 @@
  *  - uma FEICAO do mapa (a mancha conexa de rocha, agua ou terra arada): o
  *    produtor que precisa do recurso ao alcance.
  * A pedreira da vila, derivada do armazem, passaria com o mundo transladado e
- * cairia no dia em que a vila mudasse de lugar sem o lajedo (F18c-2). Derivada do
+ * cairia no dia em que a vila mudasse de lugar sem o lajedo (B-TERRENO-01, recentrar a vila). Derivada do
  * lajedo, ela acompanha a rocha.
  *
  * A prova e a translacao do mundo inteiro (BUILD_PLAN, F18c): vila, mapa e

@@ -12,8 +12,9 @@ Decisão do operador (2026-09-28).
 ## O esquema novo
 - **Formato:** `<fase>-<MÓDULO>-<nn>`, com letra minúscula para sub-item. Exemplos:
   `D-MOVIMENTO-01a`, `C-IA-01`.
-- **Fase:** a do `BUILD_PLAN.md` em que o item **nasceu**: A (fundação), B (comida e
-  crescimento), C (militar) ou D (profundidade). Se o item mudar de fase, a sigla não muda.
+- **Fase:** a do `BUILD_PLAN.md` em que o item **nasceu**: A (loop de construção), B (comida e
+  crescimento), C (militar) ou D (profundidade). A Fase 0 (fundação) está fechada e não recebe
+  item novo. Se o item mudar de fase, a sigla não muda.
 - **Módulo:** um da lista fechada abaixo. **Módulo novo só entra por decisão do operador.**
 - **Número:** sequencial dentro de cada par fase-módulo, com dois dígitos. Uma sigla dada não
   é reaproveitada.
@@ -64,12 +65,17 @@ Decisão do operador (2026-09-28).
 | D-MOVIMENTO-01f | colisão civil: recalibração em lote | D1d |
 | C-IA-01 | IA: alimentar tropas | F28-IA-ponto-5 |
 | C-COMIDA-01 | fome militar (Feed) | F-FEED |
+| B-TERRENO-01 | recentrar a vila | F18c-2 |
+| C-COMBATE-01 | formação, virar e storm attack | F27 |
+| D-PRODUCAO-01 | ferro e smithies | F29 |
+| D-TRANSPORTE-01 | armazém com toggles por mercadoria | F30 |
+| D-TRANSPORTE-02 | menu de distribuição | F31 |
+| D-TELA-01 | aba de estatísticas | F32 |
+| D-TELA-02 | minimapa | F33 |
 
 - A série D1 inteira migrou, inclusive os sub-itens já fechados, porque a série está aberta:
   duas siglas vivas para o mesmo trabalho é o que esta tabela existe para evitar.
-- **Pergunta em aberto:** as 7 features do `BUILD_PLAN.md` que nunca começaram (no fim da
-  tabela abaixo) não migraram. A decisão do operador nomeou três abertos, e estes 7 não
-  estavam no número que ele tinha.
+- As 7 features que nunca começaram migraram também (decisão do operador, 2026-09-28: "a regra vale para todas"). A sigla sai da fase em que o item NASCEU: a B-TERRENO-01 (recentrar a vila) vem da F18c, na Fase B, embora esteja na fila depois da Fase C.
 
 ## Todas as siglas antigas
 
@@ -206,10 +212,10 @@ Decisão do operador (2026-09-28).
 | D1c | colisão civil: aceite (uma rua contra duas) | D-MOVIMENTO-01e | aberto | — |
 | D1d | colisão civil: recalibração em lote | D-MOVIMENTO-01f | aberto | — |
 | F-FEED | fome militar (Feed) | C-COMIDA-01 | aberto, plano à espera | — |
-| F18c-2 | recentrar a vila | — (pergunta aberta) | não iniciado | — |
-| F27 | formação, virar e storm attack | — (pergunta aberta) | não iniciado | — |
-| F29 | ferro e smithies | — (pergunta aberta) | não iniciado | — |
-| F30 | armazém com toggles por mercadoria | — (pergunta aberta) | não iniciado | — |
-| F31 | menu de distribuição | — (pergunta aberta) | não iniciado | — |
-| F32 | aba de estatísticas | — (pergunta aberta) | não iniciado | — |
-| F33 | minimapa | — (pergunta aberta) | não iniciado | — |
+| F18c-2 | recentrar a vila | B-TERRENO-01 | aberto, não iniciado | — |
+| F27 | formação, virar e storm attack | C-COMBATE-01 | aberto, não iniciado | — |
+| F29 | ferro e smithies | D-PRODUCAO-01 | aberto, não iniciado | — |
+| F30 | armazém com toggles por mercadoria | D-TRANSPORTE-01 | aberto, não iniciado | — |
+| F31 | menu de distribuição | D-TRANSPORTE-02 | aberto, não iniciado | — |
+| F32 | aba de estatísticas | D-TELA-01 | aberto, não iniciado | — |
+| F33 | minimapa | D-TELA-02 | aberto, não iniciado | — |

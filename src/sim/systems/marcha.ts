@@ -2,7 +2,7 @@
  * F26a — a ordem de MOVER a tropa (`MoveUnits`). Ordem direta (CLAUDE.md §1): nao
  * passa pelo JobBoard.
  *
- * O grupo nao e formacao (F27): cada unidade so recebe um tile andavel PROPRIO em volta
+ * O grupo nao e formacao (C-COMBATE-01, formação): cada unidade so recebe um tile andavel PROPRIO em volta
  * do destino, para nao parar empilhada. Os tiles saem em aneis de Chebyshev a partir do
  * destino, em varredura de linha (`gy`, depois `gx`), e a i-esima unidade da lista (sem
  * repetidos) fica com o i-esimo. Deterministico e sem RNG.

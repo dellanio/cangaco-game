@@ -161,7 +161,7 @@ button[aria-disabled="true"] {
 }
 #barra .dica-ajuda[hidden] { display: none; }
 
-/* 3. o minimapa: quadro escuro rebaixado e a faixa da rosa dos ventos (F33
+/* 3. o minimapa: quadro escuro rebaixado e a faixa da rosa dos ventos (D-TELA-02, minimapa;
    desenha o mapa; aqui e so a moldura). O carimbo de pausa fica POR CIMA dele. */
 #minimapa {
   height: 92px; display: grid; grid-template-columns: 1fr 24px;

@@ -20,7 +20,7 @@ import temaSertao from '../../data/theme-sertao.json';
 export const ABAS = ['construir', 'distribuicao', 'estatisticas', 'opcoes'] as const;
 export type Aba = (typeof ABAS)[number];
 
-/** As que ainda nao tem conteudo (F31, F32): cadeado, e o clique nao troca nada. */
+/** As que ainda nao tem conteudo (D-TRANSPORTE-02, menu de distribuição; D-TELA-01, estatísticas): cadeado, e o clique nao troca nada. */
 export const ABAS_TRANCADAS: readonly Aba[] = ['distribuicao'];
 
 export type CorpoDaAba = 'grade' | 'painel' | 'estatisticas' | 'opcoes';

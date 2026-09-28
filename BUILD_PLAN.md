@@ -5179,7 +5179,7 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
   clique tem de usar a MESMA função de deslocamento** — se ele mirar o centro do
   tile, o clique erra a unidade por até 16 px, e erra mais quanto mais cheio o
   tile estiver, que é justamente onde selecionar importa.
-### F27 — Formação, virar e storm attack
+### C-COMBATE-01 (antes F27) — Formação, virar e storm attack
 - **Nota (correções do operador, 2026-09-28, sobre a VARREDURA-KAM frente 4)**:
   - **A carga acaba por distância, não por tempo:** 12 a 13 tiles, sorteados no RNG da
     sim (`combat.json` `stormAttack.distancia_tiles`; `KM_UnitActionStormAttack.pas:41-49`).
@@ -5363,7 +5363,7 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
   que o dado diz, e nunca passa do teto.
 ---
 
-### F18c-2 — Recentrar a vila
+### B-TERRENO-01 (antes F18c-2) — Recentrar a vila
 - **Escopo**: o gerador deriva da vila o lajedo, o açude, o mato e o roçado, a vila
   vai para o centro, o mapa é gerado de novo e a calibração da F-CAL-b é refeita.
 - **Aceite**: o original da F18c, com a regra do centro da caixa em
@@ -5379,11 +5379,11 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
 
 ## Fase D — Profundidade
 
-### F29 — Ferro e smithies
-### F30 — Armazém com toggles por mercadoria
-### F31 — Menu de distribuição
-### F32 — Aba de estatísticas
-### F33 — Minimapa
+### D-PRODUCAO-01 (antes F29) — Ferro e smithies
+### D-TRANSPORTE-01 (antes F30) — Armazém com toggles por mercadoria
+### D-TRANSPORTE-02 (antes F31) — Menu de distribuição
+### D-TELA-01 (antes F32) — Aba de estatísticas
+### D-TELA-02 (antes F33) — Minimapa
 ### F34 — Condições de vitória e derrota (escaramuça)
 - **ENTREGUE (2026-09-28, sessão autônoma; plano em `docs/planos/2026-09-28-A16-F34-fim.md`).**
   Decisão do operador: *"Vitória: destruir Armazém, Escola e Quartel inimigos e todas as
