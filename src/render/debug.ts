@@ -129,6 +129,9 @@ export interface EstadoDebug {
    *  mesma estrutura: e assim que o roteiro prova que sprite e placeholder
    *  convivem, sem olhar pixel (§8). */
   spritesDePredio: Readonly<Record<string, string | null>>;
+  /** Os predios que `?semArte=` tirou do loader (`prediosSemArteDaBusca`): o
+   *  roteiro confere que a pagina leu o parametro, em vez de passar calado. */
+  prediosSemArte: readonly string[];
   /** F-VIVO-a — as pilhas que a cena DESENHOU agora, por id de predio: gaveta,
    *  mercadoria, quantas unidades e se foi PNG (`sprite`) ou o quadrado do §9. Vem
    *  da mesma lista que o desenho usa (`pilhas.ts`), e so tem predio com pilha. */
@@ -294,6 +297,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     medidoresDeObra: {},
     canteirosDeObra: {},
     spritesDePredio: {},
+    prediosSemArte: [],
     pilhasDesenhadas: {},
     quadrosDeTrabalho: {},
     animaisDoCurral: {},

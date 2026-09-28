@@ -65,6 +65,12 @@ async function roteiro(ctx) {
   await zoomPara(terreno.zoom.inicial);
   await centrarNoEixo(gx + 0.5, 'x');
   await centrarNoEixo(gy + 0.5, 'y');
+  // A muda no zoom em que o jogador joga (pedido do operador, 2026-09-28: "meça no zoom
+  // 1 antes de eu decidir"). A captura e a evidencia; a medida em px vai no PROGRESS.
+  s = await estado();
+  afirmar(s.camera.zoom === 1, `a muda se mede no zoom 1, a camera esta em ${s.camera.zoom}`);
+  afirmar(s.crescimentoDasArvores[plano.tile]?.estado === 'muda', `t${s.tick}: o tile ${plano.tile} deveria estar em muda`);
+  await capturar('muda-no-zoom-1');
   await zoomPara(ZOOM_DA_ARVORE);
 
   let escalaAnterior = 0;

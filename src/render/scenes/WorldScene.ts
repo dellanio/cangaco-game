@@ -48,7 +48,7 @@ import type { ChaveDaRevelacao, DesenhoDoRecurso, EntradaDeAsset, TexturaCarrega
 import {
   escalaDoPlaceholder, especiesDaVegetacao, estadoDeCrescimento, type EstadoDeCrescimento,
 } from '../crescimento';
-import { manifestoDoJogo, texturasParaCarregar } from '../sprites';
+import { manifestoDoJogo, prediosSemArteDaBusca, texturasParaCarregar } from '../sprites';
 import { escalaDoSprite, regraDoManifesto } from '../escala-predio';
 import { mascaraCardinal, VIZINHOS_CARDINAIS } from '../mascara-cardinal';
 
@@ -118,6 +118,8 @@ export class WorldScene extends Phaser.Scene {
    *  POST_RENDER. Memoria de render local da cena, como `desenhados`: a verdade
    *  continua em `state.recursos`, e isto aqui so evita repintar 883 tiles a
    *  cada frame para mudar um. */
+  /** `?semArte=` (F17e/F17f): predios que o loader nao traz, lidos uma vez. */
+  private readonly prediosSemArte = prediosSemArteDaBusca(window.location.search);
   private readonly recursosDesenhados = new Map<string, number>();
 
   /** F-SPR — como cada CODIGO de recurso se desenha, resolvido uma vez no `create`
@@ -197,7 +199,7 @@ export class WorldScene extends Phaser.Scene {
   }
 
   preload(): void {
-    for (const textura of texturasParaCarregar()) {
+    for (const textura of texturasParaCarregar(manifestoDoJogo, undefined, this.prediosSemArte)) {
       this.load.image(textura.chave, textura.url);
     }
   }
@@ -205,6 +207,7 @@ export class WorldScene extends Phaser.Scene {
   create(): void {
     const { tilePx, largura, altura, larguraPx, alturaPx } = configDoMapa;
     const estado = publicarEstadoDebug(this.relogio);
+    estado.prediosSemArte = [...this.prediosSemArte];
 
     // F-SPR — o loader so conhece o que o manifesto declarou e o bundler achou;
     // `exists` e a unica pergunta que os resolvedores de `manifesto.ts` fazem ao Phaser.

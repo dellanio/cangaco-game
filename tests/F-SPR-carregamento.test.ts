@@ -21,7 +21,7 @@ import type {
   Direcao, EntradaDeAsset, EntradaDeCamada, Manifesto, TexturaCarregada, TipoDeCamada,
 } from '../src/render/manifesto';
 import { direcoesDoTipo, direcoesPorTipo } from '../src/render/direcoes-de-sprite';
-import { texturasParaCarregar } from '../src/render/sprites';
+import { prediosSemArteDaBusca, texturasParaCarregar } from '../src/render/sprites';
 import { recursosDeRender, terrenoDeRender } from '../src/render/mapa';
 import { gravarEvidencia } from './helpers/evidence';
 
@@ -128,6 +128,25 @@ describe('F-SPR — o manifesto aceita as camadas novas sem mudar a entrada de p
       { chave: 'unidade:serf:parado:s', url: '/u/3.png' },
     ]);
     expect(texturasParaCarregar(m, {})).toEqual([]);
+  });
+
+  it('`?semArte=` tira do loader so o predio pedido, e nenhuma outra camada', () => {
+    const m: Manifesto = {
+      versao: 1,
+      assets: [predio('storehouse'), predio('quarry'), camada('terreno', 'quarry', { padrao: 'sprites/q/padrao.png' })],
+    };
+    const urls = {
+      'sprites/storehouse/completo.png': '/u/1.png',
+      'sprites/quarry/completo.png': '/u/2.png',
+      'sprites/q/padrao.png': '/u/3.png',
+    };
+    expect(texturasParaCarregar(m, urls, prediosSemArteDaBusca('?pausado&semArte=quarry'))).toEqual([
+      { chave: 'predio:storehouse:completo', url: '/u/1.png' },
+      { chave: 'terreno:quarry:padrao', url: '/u/3.png' },
+    ]);
+    expect([...prediosSemArteDaBusca('?semArte=quarry, watchtower')]).toEqual(['quarry', 'watchtower']);
+    expect(prediosSemArteDaBusca('?pausado').size).toBe(0);
+    expect(prediosSemArteDaBusca('?semArte=').size).toBe(0);
   });
 });
 

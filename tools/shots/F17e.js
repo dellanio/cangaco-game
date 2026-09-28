@@ -22,11 +22,18 @@
 // PRODUZ: o roteiro termina com pedra na saida. Antes ela ficava encostada na
 // escola, sem rocha ao alcance, e a foto do `completo` retratava uma pedreira que
 // nunca daria pedra.
+//
+// OS SEIS ESTAGIOS SO EXISTEM PARA PREDIO SEM ARTE (F17g: com o par madeira +
+// completo, a obra e revelada pelo `hp`). A pedreira ganhou arte e o roteiro
+// quebrou por isso — pela segunda vez. Agora ele abre a pagina com
+// `?semArte=quarry` (`_sem-arte.js`): o fallback e exercitado na pedreira qualquer
+// que seja o manifesto, e a pagina confirma que leu o parametro.
 
 const { retanguloDoCanvas, arrastarDentroDoCanvas, pontoParaApertar } = require('./_canvas');
 const { erguerRua } = require('./_estradas');
 const { arrastosDaRua } = require('./_recursos');
 const { pedreiraNoLajedo, esperarPedraNaSaida } = require('./_pedreira');
+const { abrirSemArte } = require('./_sem-arte');
 const economia = require('../../data/economy.json');
 const { predios } = require('../../data/buildings.json');
 
@@ -49,6 +56,7 @@ const PASSO_DE_AVANCO = 50; // um `avancar` seco e grande estoura o frame (F16b)
 
 async function roteiro(ctx) {
   const { page, capturar, estado, afirmar } = ctx;
+  await abrirSemArte(ctx, [TIPO_DA_OBRA]);
   const canvas = await retanguloDoCanvas(page);
 
   const esperarFrame = () => page.waitForTimeout(200);

@@ -30,31 +30,6 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
 
 ## Abertos
 
-## BUG-M — a obra de prédio com sprite não desenha nada ao ser plantada
-- feature: ? — quebrou com o lote de sprites de prédio (`ec79428`, `59ff42e`), na
-  revelação da F17g. O lote não tem chave própria. **Nenhuma chave foi virada.**
-- severidade: errado (roteiro de aceite reprovando: F17e; F17f pelo mesmo motivo).
-- **conferido 2026-09-28 — o defeito da tela está corrigido:**
-  - `WorldScene.atualizarPredios` desenha o lote do placeholder (`desenharLote`) por
-    baixo do corpo revelado; o instante do plantio já tinha o paliativo
-    (`revelacaoDaObra` devolve `null` com `hp <= 0`).
-  - F11c **verde**: o roteiro passou a ler a estrutura de madeira pelo canal da
-    revelação (`revelacaoDasObras`, madeira > 0 e pedra = 0), com a pedreira
-    afirmada com arte pelo manifesto. A "correção proposta" antiga (contar a obra
-    revelada nos seis estágios) **não** foi aplicada: a F17g afirma o contrário
-    ("a obra revelada nao pode contar nos seis estagios do fallback").
-- **o que continua vermelho, e por quê — premissa de REGRA, não de número:**
-  - F17e: "estes estagios nunca apareceram: [estrutura, paredes, cobertura]". Os seis
-    estágios do fallback só existem para prédio **sem arte**, e hoje os 28 prédios do
-    manifesto têm arte. O roteiro afirma uma regra que a arte nova deixou sem caso.
-  - F17f: "'watchtower' ganhou entrada no manifesto: escolha outro predio sem arte".
-    Não há outro: o lado do retângulo ("prédio sem arte vira retângulo") ficou sem
-    prédio real para exercitar.
-  - Decisão do operador (em `PROGRESS.md`, Perguntas em aberto): aposentar os dois
-    roteiros, ou exercitar o fallback com um prédio cuja arte é tirada só no
-    roteiro (manifesto filtrado na página). Os roteiros não foram mexidos.
-- status: aberto (F17e, F17f), esperando a decisão.
-
 ---
 
 ## Polimento

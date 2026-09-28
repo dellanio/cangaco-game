@@ -9935,10 +9935,9 @@ BUG-M atualizado (o defeito de tela corrigido; F17e/F17f vermelhos pela regra). 
 conferido: continua valendo (`render/mapa.ts` `codigoDoRecurso`, `grapes` sem `terreno`).
 
 ### Perguntas em aberto
-- **F17e/F17f:** aposentar os roteiros do fallback (a regra está coberta pelos testes
-  headless do placeholder?) ou exercitá-los com um prédio cuja arte some só no roteiro
-  (manifesto filtrado na página)? Conservador desta sessão: nenhum dos dois; ficam
-  vermelhos e registrados em BUG-M.
+- ~~F17e/F17f: aposentar ou exercitar com arte tirada na página?~~ **Respondida** pelo
+  operador em 2026-09-28: consertar, com asserção que não dependa de qual prédio tem
+  arte. Feito com `?semArte=` (ver "(leva da manhã)").
 
 ## 2026-09-28 (noite, fila 2 e 3) — VARREDURA-KAM frentes 2 e 3
 
@@ -10223,9 +10222,8 @@ BUILD_PLAN.
 
 **Decisões conservadoras (PARA REVISÃO):**
 - **`lado` obrigatório, e não opcional.** Não existe "sem dono" representável.
-- **Save da versão 2 recusado, sem migração.** É a política da F18g. A base
-  instalada já existe (a F23b grava no `localStorage`), mas é de desenvolvimento. Se
-  o operador quiser migração, o ramo é "versão 2 → `lado: 0` em tudo".
+- ~~Save da versão 2 recusado, sem migração.~~ **Revogada pelo operador** na leva
+  seguinte: o save da versão 2 é migrado. Ver "(leva da manhã)" abaixo.
 - **`LADO_DO_JOGADOR` mora em `sim/state.ts`, e não em `data/`.** É identidade, não
   balanceamento.
 - **A cor do lado na tela fica para quando houver inimigo desenhado** (F26/F28).
@@ -10233,3 +10231,68 @@ BUILD_PLAN.
 **Aberto:** F-CERCO-a2, isto é, o comando `AttackBuilding`, a FSM, a cadência de 12
 ticks (HIPÓTESE, lida no fonte do KaM), o dano 2 e a queda. O escopo e o aceite
 estão no BUILD_PLAN, intocados.
+
+## 2026-09-28 (leva da manhã) — migração do save v2, F17e/F17f por `?semArte=`, medições
+
+**Pedido do operador:** sete itens. Dois são código (1 e 4), quatro são medição
+(2, 3, 5 e 7), e o item 6 espera a próxima leva.
+
+**Verificado:**
+- **1. Save da versão 2 migrado** (decisão do operador que revoga a recusa da fila 9:
+  *"a F23b entregou salvar pela tela, então eu posso ter save meu"*).
+  - `save.ts` ganhou a tabela `MIGRACOES` (`'2' → migrarDaVersao2`), que põe
+    `LADO_DO_JOGADOR` em todo prédio e toda unidade que não têm o campo.
+  - A versão 1 continua recusada com nome: é anterior à F23b, e não há save dela em disco.
+  - Teste (`tests/F-CERCO-a1-lado.test.ts`, 6 testes):
+    - o v3 com o `lado` apagado e `versao: 2` carrega todo prédio e toda unidade com
+      o lado do jogador;
+    - `salvar(migrado)` é igual a `salvar(partida)` **byte a byte**, e 20 ticks
+      depois as duas continuam iguais.
+  - Sonda de mutação: com a migração trocada pela identidade, o teste reprovou
+    (`Set{undefined}`). O arquivo foi restaurado.
+  - Só sim: nenhum arquivo de render neste item.
+- **4. F17e e F17f consertados sem depender de qual prédio tem arte.**
+  - Parâmetro de depuração `?semArte=a,b` (como `?pausado`): `prediosSemArteDaBusca`
+    lê o parâmetro, e `texturasParaCarregar` deixa fora do loader **só** a arte dos
+    prédios pedidos. O prédio então cai no placeholder da §9. `__cangaco.prediosSemArte`
+    publica o que a página leu.
+  - `tools/shots/_sem-arte.js` recarrega a página com o parâmetro e afirma que ela o
+    leu e nasceu pausada no tick 0.
+  - F17e (pedreira) está verde: 33 asserções, 7 capturas, os seis estágios em ordem.
+  - F17f (torre) está verde: 35 asserções.
+  - Saiu do F17f a asserção "`watchtower` não pode ter arte": era ela que quebrava
+    toda vez que a arte chegava.
+  - Teste headless novo em `F-SPR-carregamento`: o filtro tira só o prédio pedido e
+    nenhuma outra camada.
+  - Não-regressão: F17g, F11c e F-SPR saíram com código 0.
+  - Só render e roteiro: nenhum arquivo de sim neste item.
+- **2. Os 14 prédios abaixo de 2,5 H:** medidos de novo com PIL (alpha > 16,
+  H = 73 px). Os números batem com a tabela do item F-ESC do BUILD_PLAN. Nada foi
+  consertado, porque a arte é da outra sessão.
+- **3. Lote sumindo embaixo da obra: nem o BUG-M voltou, nem é defeito novo.**
+  - O paliativo `if (hp <= 0) return null;` continua em
+    `src/render/estagio-obra.ts:114`. Só dois commits tocaram a linha (0648647 e
+    6928612): nenhum merge a desfez.
+  - Pixels do contorno do lote (0xede3d0) no perímetro de 192×128, no shot F11c:
+    - plantio: 1292 px, o contorno inteiro;
+    - estrutura revelada: 1040 px, cerca de 80%.
+  - O que falta na revelada fica embaixo-direita, coberto pelo sprite de madeira, que é
+    desenhado por cima do lote. Isso é de desenho: o lote fica por baixo do corpo.
+  - O "lote sumindo" do panorama era o estado anterior a af90365.
+- **5. A muda a 25% no zoom 1.** Captura nova no roteiro F-REPL-e,
+  `screenshots/F-REPL-e-1-muda-no-zoom-1.png`: afirma zoom 1 e o tile em `muda`.
+  Altura desenhada, com H = 73 px e tile = 64 px:
+  - presente: 19×22 px (0,26 H);
+  - umbuzeiro: 16×22 px (0,21 H);
+  - macambira: 16×22 px (0,22 H);
+  - mandacaru, facheiro e xique-xique: 30 px (0,41 H).
+- **7. BUG-O:** já tinha saído do `BUGS.md` em af90365 (fila 1). Nada a fazer.
+- **BUGS.md:** o BUG-M saiu neste commit, porque o F17e/F17f vermelhos eram o que o
+  mantinha aberto.
+
+**Hipótese (leitura minha da captura, não medida):** no zoom 1 a muda do presente se
+lê como "tem alguma coisa ali", um tufo escuro do tamanho da mão do lenhador. Não se
+lê como árvore. A decisão, se o estado serve, é do operador.
+
+**Aberto (próxima leva, por ordem do operador):** F-VIVO-d2, F-TR-b e F-CERCO-a2. O
+operador quer acompanhar a F-CERCO-a2, que é o combate começando: não a iniciar sem ele.

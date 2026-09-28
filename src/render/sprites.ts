@@ -32,9 +32,11 @@ export interface TexturaParaCarregar {
 export function texturasParaCarregar(
   manifesto: Manifesto = manifestoDoJogo,
   urls: Readonly<Record<string, string>> = urlsDeSprites,
+  prediosSemArte: ReadonlySet<string> = new Set(),
 ): TexturaParaCarregar[] {
   const fila: TexturaParaCarregar[] = [];
   for (const entrada of manifesto.assets) {
+    if (entrada.tipo === 'predio' && prediosSemArte.has(entrada.id)) continue;
     for (const [estado, rel] of Object.entries(entrada.estados)) {
       const url = urls[rel];
       if (!url) continue;
@@ -42,4 +44,16 @@ export function texturasParaCarregar(
     }
   }
   return fila;
+}
+
+/**
+ * `?semArte=<id>[,<id>]` na URL: os predios cuja arte o loader NAO traz, e que por
+ * isso caem no placeholder do §9 — o retangulo e os seis estagios da obra. Existe
+ * para o roteiro (F17e, F17f) exercitar o fallback sem depender de qual predio o
+ * manifesto deixou sem arte: a arte nova deu PNG aos 28, e os dois roteiros
+ * quebraram duas vezes por isso. Como o `?pausado`, nao e superficie de jogador.
+ */
+export function prediosSemArteDaBusca(busca: string): ReadonlySet<string> {
+  const valor = new URLSearchParams(busca).get('semArte') ?? '';
+  return new Set(valor.split(',').map((id) => id.trim()).filter((id) => id !== ''));
 }

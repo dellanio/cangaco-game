@@ -22,14 +22,16 @@
 // desbloqueada pela pedreira de pe), entao o roteiro levanta a pedreira pelo
 // caminho da F11c (`_pedreira.js`) e planta a torre: a obra de um predio sem
 // arte, ao lado do armazem com arte, e o §9 provado no que o jogador PLANTA.
-// Quem e o placeholder sai do manifesto, afirmado, e nao da memoria: se a torre
-// ganhar arte, este roteiro acusa em vez de passar calado.
+// A arte nova deu PNG tambem a torre, e o roteiro quebrou pela segunda vez pela
+// mesma causa. Agora a torre perde a arte NA PAGINA (`?semArte=watchtower`,
+// `_sem-arte.js`): o lado do retangulo nao depende mais do que o manifesto tem.
 //
 // Geometria: a pedreira da F-T3 (a oeste do armazem, com a rua ate a escola) e
 // a torre a direita da escola, na linha de porta.
 const { retanguloDoCanvas, arrastarDentroDoCanvas } = require('./_canvas');
 const { arrastosDaRua } = require('./_recursos');
 const { pedreiraNoLajedo } = require('./_pedreira');
+const { abrirSemArte } = require('./_sem-arte');
 const economia = require('../../data/economy.json');
 const { predios } = require('../../data/buildings.json');
 const { assets } = require('../../assets/manifest.json');
@@ -37,11 +39,12 @@ const TILE_PX = 64;
 const defDe = (id) => predios.find((p) => p.id === id);
 const noDado = (id) => economia.estadoInicial.predios.find((p) => p.id === id);
 const temArte = (id) => assets.some((e) => e.id === id);
-/** O predio sem arte que o jogador planta: o outro lado do §9, na obra. */
+/** O predio que o jogador planta sem arte (tirada na pagina): o outro lado do §9. */
 const TIPO_DA_OBRA = 'watchtower';
 
 async function roteiro(ctx) {
   const { page, capturar, estado, afirmar } = ctx;
+  await abrirSemArte(ctx, [TIPO_DA_OBRA]);
   const canvas = await retanguloDoCanvas(page);
   const esperarFrame = () => page.waitForTimeout(200); // __cangaco sai no POST_RENDER
   const avancar = (n) => page.evaluate((k) => window.__cangaco.avancar(k), n);
@@ -118,10 +121,6 @@ async function roteiro(ctx) {
   const obra = { gx: escola.gx + largEs + 1, gy: yRua - altObra }; // uma coluna livre depois da escola
   afirmar(largAr === 3, `este roteiro assume o armazem com 3 tiles de largura, veio ${largAr}`);
   afirmar(temArte('storehouse') && temArte('schoolhouse'), 'o armazem e a escola deveriam ter entrada no manifesto');
-  afirmar(
-    !temArte(TIPO_DA_OBRA),
-    `'${TIPO_DA_OBRA}' ganhou entrada no manifesto: escolha outro predio sem arte para o lado do retangulo`,
-  );
   afirmar(
     defDe(TIPO_DA_OBRA).desbloqueadoPor === 'quarry',
     `este roteiro levanta a pedreira para liberar '${TIPO_DA_OBRA}', que pede '${defDe(TIPO_DA_OBRA).desbloqueadoPor}'`,
