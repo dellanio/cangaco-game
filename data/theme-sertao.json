@@ -455,7 +455,13 @@
     "formar": "Formar",
     "faltaRequisito": "falta {itens}",
     "semRecruta": "sem recruta",
-    "portaBloqueada": "porta bloqueada"
+    "portaBloqueada": "porta bloqueada",
+    "reparo": "Reparo",
+    "reparoLigado": "ligado",
+    "reparoDesligado": "desligado",
+    "reparoConsertando": "consertando ({n} obreiro(s))",
+    "ligarReparo": "Ligar reparo",
+    "desligarReparo": "Desligar reparo"
   },
   "partida": {
     "_doc": "F34. O aviso do fim da escaramuca, sobre o jogo. So a tela: quem decide o fim e sim/partida.ts.",

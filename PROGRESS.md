@@ -11457,3 +11457,24 @@ Plano: `docs/planos/2026-09-28-C3-defeitos-do-quartel.md`, salvo antes do códig
 - O motivo longo é cortado com reticências ("falta Peixeira, Gibã…"). A lista inteira dos
   requisitos fica na dica ao passar o mouse.
 - O teto é o da gaveta de produtor (5). O KaM não tem teto: tem liga/desliga por arma.
+
+## 2026-09-28 — C4: o botão de reparo
+
+Plano: `docs/planos/2026-09-28-C4-botao-de-reparo.md`, salvo antes do código. O seletor
+(`sim/selectors.ts`, sem regra nova), a UI e o tema; nada em `src/render`.
+
+**Verificado:**
+- `PainelDoPredio.reparo` = `{ ligado, danificado, emCurso }`, e `null` em obra.
+- O painel ganhou a linha "Reparo" (`data-reparo`), que mostra desligado, ligado ou
+  "consertando (N obreiro(s))".
+- O botão `button.reparo` manda `SetBuildingRepair` com o **valor**, como o pausar da F16c.
+- **`tests/C4-reparo.test.ts`, 2 testes verdes:** o seletor desligado e `null` na obra;
+  ligado, `emCurso` > 0; o HP da escola sobe; e o save do roteiro.
+- **`npm run shot -- C4` verde, com o jogo andando.** Liga pelo botão, e o HP vai de 275 a
+  285. Abri a `C4-1-reparo-ligado.png`: "consertando (2 obreiro(s))", o botão "Desligar
+  reparo" e os dois obreiros na porta da escola.
+
+**Achado de UX (PARA REVISÃO):** no painel da escola (fila e tipos) o botão de reparo
+fica abaixo da dobra, a y = 741 numa tela de 720. É preciso rolar o corpo da aba; a sombra
+de "há mais" avisa, e o roteiro rola como o jogador. Se isso incomodar, a opção é mover o
+reparo para junto do título.

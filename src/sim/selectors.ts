@@ -446,6 +446,9 @@ export interface PainelDoPredio {
     readonly ouro: number;
     readonly tipos: readonly { readonly tipo: string; readonly custo: number; readonly falta: number }[];
   } | null;
+  /** C4 — o reparo do predio completo (`SetBuildingRepair`); `null` em obra. `emCurso` e
+   *  quantas tarefas `reparar` estao reclamadas nele agora. */
+  readonly reparo: { readonly ligado: boolean; readonly danificado: boolean; readonly emCurso: number } | null;
   /** F25b — os recrutas do quartel e cada tipo com o que falta e o motivo de recusa, que
    *  e o MESMO do `TrainSoldier` (C3: `motivoParaFormar`, com a porta); `null` em quem nao
    *  e quartel. A ordem e a de `units.json: militares.tipos`. */
@@ -552,6 +555,7 @@ export function painelDoPredio(
       feira: null,
       prefeitura: null,
       quartel: null,
+      reparo: null,
     };
   }
 
@@ -591,6 +595,14 @@ export function painelDoPredio(
         })),
       }
       : null,
+    reparo: {
+      ligado: predio.reparo,
+      danificado: predio.hp < def.hp,
+      emCurso: state.jobs.tarefas.ordem.filter((tid) => {
+        const t = state.jobs.tarefas.porId[tid];
+        return t !== undefined && t.tipo === 'reparar' && t.destino === predioId && t.estado !== 'aberta';
+      }).length,
+    },
     quartel: ehQuartelCompleto(predio)
       ? {
         recrutas: recrutasNoQuartel(predio),

@@ -5446,7 +5446,12 @@ Ordem do operador. Cada item tem plano em `docs/planos/2026-09-28-C<n>-*.md`.
      - **Painel:** grade de duas colunas; o desabilitado com o visual do `aria-disabled`;
        e o motivo `porta-bloqueada`, que sai da mesma função do comando.
      - Teste `tests/C3-quartel.test.ts`; o roteiro F25b afirma que tudo cabe sem rolar.
-  4. **C4 — o botão de reparo** (F-CERCO-b).
+  4. **C4 — o botão de reparo (F-CERCO-b). ENTREGUE.**
+     - `PainelDoPredio.reparo` traz `ligado`, `danificado` e `emCurso`.
+     - O painel tem a linha "Reparo" e o botão "Ligar/Desligar reparo", que manda o
+       valor, como o pausar.
+     - Teste `tests/C4-reparo.test.ts` e roteiro `tools/shots/C4.js`.
+     - PARA REVISÃO: no painel da escola o botão fica abaixo da dobra, e é preciso rolar.
   5. **C5 — colisão militar** (GDD §6.4).
   6. **C6 — revidar enquanto marcha.**
   7. **C7 — o `lado` filtrando o JobBoard. ENTREGUE, adiantado por ser o conserto do BUG-N1**

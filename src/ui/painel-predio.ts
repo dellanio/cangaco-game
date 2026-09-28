@@ -325,6 +325,27 @@ function desenharCompleto(
     }
   }
 
+  // C4 — o reparo: a linha diz se esta ligado (e, danificado, quantos consertam), e o botao
+  // manda o VALOR, como o pausar (F16c) — nunca "inverta o que estiver ai"
+  if (dados.reparo !== null) {
+    const r = dados.reparo;
+    const texto = !r.ligado ? rotulos.reparoDesligado
+      : r.danificado ? rotulos.reparoConsertando.replace('{n}', String(r.emCurso)) : rotulos.reparoLigado;
+    const l = linha('reparo', rotulos.reparo, texto);
+    l.dataset.reparo = r.ligado ? 'ligado' : 'desligado';
+    identidade.append(l);
+    const alvo = !r.ligado;
+    const botao = document.createElement('button');
+    botao.type = 'button';
+    botao.className = 'reparo';
+    botao.dataset.ligar = String(alvo);
+    botao.textContent = alvo ? rotulos.ligarReparo : rotulos.desligarReparo;
+    botao.addEventListener('click', () => {
+      emitir({ type: 'SetBuildingRepair', predio: dados.predio, ligado: alvo });
+    });
+    acoes.append(botao);
+  }
+
   if (dados.estoque !== null) {
     identidade.append(gaveta('entrada', rotulos.entrada, dados.estoque.entrada));
     identidade.append(gaveta('saida', rotulos.saida, dados.estoque.saida));
