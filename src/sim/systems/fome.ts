@@ -117,7 +117,7 @@ function morrer(state: GameState, u: Unidade, dados: GameData): Passo {
   const solto = segurada === null ? { state, events: [] as readonly GameEvent[] } : liberar(state, segurada.id, 'unidade-removida');
 
   const carga = u.fsmData.carga ?? null;
-  const armazem = carga === null ? null : armazemMaisProximo(solto.state, noTile(u), dados)?.id ?? null;
+  const armazem = carga === null ? null : armazemMaisProximo(solto.state, noTile(u), u.lado, dados)?.id ?? null;
   const predios = carga === null || armazem === null
     ? solto.state.predios
     : devolverMercadorias(solto.state.predios, { [carga]: 1 }, armazem);

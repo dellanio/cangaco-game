@@ -809,6 +809,15 @@ export function reclamar(
   if (!unidade || !podeReclamar(state, tarefa, unidade.tipo, dados)) return { ok: false, motivo: 'unidade-invalida' };
   if (unidadeJaTemTarefa(state, unidadeId)) return { ok: false, motivo: 'unidade-ocupada' };
 
+  // C7 (BUG-N1) — ninguem trabalha para o outro lado: todo predio que a tarefa toca
+  // (origem e destino) tem de ser do lado da unidade. Cobre serf, laborer, recruta,
+  // especialista e quem vai comer de uma vez. Tile sem predio (estrada, campo) nao tem
+  // lado no estado e nao entra aqui (PARA REVISAO).
+  for (const ponta of [('origem' in tarefa ? tarefa.origem : undefined), ('destino' in tarefa ? tarefa.destino : undefined)]) {
+    const predio = ponta === undefined ? undefined : state.predios.porId[ponta];
+    if (predio !== undefined && predio.lado !== unidade.lado) return { ok: false, motivo: 'unidade-invalida' };
+  }
+
   // F20b — assento de Bodega e so de quem esta com fome: para quem nao esta, a
   // unidade nao e elegivel a ESTA tarefa, que e o que 'unidade-invalida' quer
   // dizer aqui. Nenhuma FSM de familia muda: o `passoOcioso` de cada uma continua

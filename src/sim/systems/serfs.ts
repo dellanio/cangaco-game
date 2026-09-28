@@ -77,7 +77,7 @@ function liberarTarefa(state: GameState, tarefaId: string, motivo: MotivoDeLiber
 
 /** Entra em `devolvendo` com a carga que tem. Sem armazem alcancavel, espera onde esta. */
 function comecarADevolver(state: GameState, u: Unidade, carga: string, dados: GameData): GameState {
-  const alvo = armazemMaisProximo(state, noTile(u), dados);
+  const alvo = armazemMaisProximo(state, noTile(u), u.lado, dados);
   const fsmData = alvo === null
     ? dadosDaFsm({ carga })
     : dadosDaFsm({ carga, armazem: alvo.id, caminho: alvo.caminho, progresso: 0 });
@@ -326,11 +326,11 @@ function passoDevolvendo(state: GameState, u: Unidade, dados: GameData): Passo {
 
   let atual = u;
   const alvo = u.fsmData.armazem === undefined ? undefined : state.predios.porId[u.fsmData.armazem];
-  const alvoValido = alvo !== undefined && alvo.estado === 'completo' && alvo.tipo === ID_DO_ARMAZEM;
+  const alvoValido = alvo !== undefined && alvo.estado === 'completo' && alvo.tipo === ID_DO_ARMAZEM && alvo.lado === u.lado;
   const proximo = (u.fsmData.caminho ?? [])[0];
   if (!alvoValido || (proximo !== undefined && !passoAndavel(state, noTile(u), proximo, 'livre', dados))) {
     // o armazem sumiu, ou algo entrou no caminho: escolhe de novo a partir de onde esta
-    const novo = armazemMaisProximo(state, noTile(u), dados);
+    const novo = armazemMaisProximo(state, noTile(u), u.lado, dados);
     if (novo === null) return semEventos(comUnidade(state, { ...u, fsmData: dadosDaFsm({ carga }) })); // sem armazem: espera
     atual = { ...u, fsmData: dadosDaFsm({ carga, armazem: novo.id, caminho: novo.caminho, progresso: 0 }) };
   }

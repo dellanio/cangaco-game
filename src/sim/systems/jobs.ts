@@ -400,7 +400,8 @@ function origemMaisPerto(
 ): string | null {
   const modo = modoDoTipo(tipo, dados);
   let melhor: { id: string; distancia: number } | null = null;
-  for (const armazem of armazensCompletos(state)) {
+  // C7: so o armazem do lado do destino abastece
+  for (const armazem of armazensCompletos(state, destino.lado)) {
     if (disponivelNaOrigem(state, armazem.id, mercadoria) < 1) continue;
     const distancia = ligacaoEntrePredios(state, armazem, destino, modo, dados);
     if (distancia === null) continue;
@@ -433,7 +434,8 @@ function destinoMaisPerto(
   state: GameState, origem: PredioCompleto, modo: ModoDeBusca, dados: GameData,
 ): string | null {
   let melhor: { id: string; distancia: number } | null = null;
-  for (const armazem of armazensCompletos(state)) {
+  // C7: a sobra vai para o armazem do lado de quem a produziu
+  for (const armazem of armazensCompletos(state, origem.lado)) {
     if (armazem.id === origem.id) continue;
     const distancia = ligacaoEntrePredios(state, origem, armazem, modo, dados);
     if (distancia === null) continue;

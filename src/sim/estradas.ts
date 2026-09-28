@@ -337,10 +337,15 @@ export function distanciaEntrePredios(
 
 // --- predios na rede ---
 
-export function armazensCompletos(state: GameState): PredioCompleto[] {
+/** Os armazens completos, em `predios.ordem`. C7: com `lado`, so os daquele lado — quem
+ *  escolhe origem, destino, devolucao ou ligacao passa o lado do predio ou da unidade,
+ *  e nenhuma carga cruza de um lado para o outro. Sem `lado`, todos (o que so a medida
+ *  global da previa de estrada ainda usa). */
+export function armazensCompletos(state: GameState, lado?: number): PredioCompleto[] {
   return state.predios.ordem.flatMap((id) => {
     const predio = state.predios.porId[id];
-    return predio && predio.estado === 'completo' && predio.tipo === ID_DO_ARMAZEM ? [predio] : [];
+    return predio && predio.estado === 'completo' && predio.tipo === ID_DO_ARMAZEM
+      && (lado === undefined || predio.lado === lado) ? [predio] : [];
   });
 }
 
@@ -372,7 +377,8 @@ export function predioLigadoAoArmazem(
 ): boolean {
   const { componentes } = indiceDeEstradas(state, dados);
   const doArmazem = new Set<number>();
-  for (const armazem of armazensCompletos(state)) {
+  // C7: ligado ao armazem do PROPRIO lado
+  for (const armazem of armazensCompletos(state, predio.lado)) {
     for (const porta of tilesDaPorta(armazem, dados)) {
       const c = componentes[chaveDeTile(porta)];
       if (c !== undefined) doArmazem.add(c);

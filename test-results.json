@@ -255,7 +255,7 @@
     "passes": true
   },
   "F25a-quartel-sim": {
-    "passes": false
+    "passes": true
   },
   "F25b-painel-do-quartel": {
     "passes": true

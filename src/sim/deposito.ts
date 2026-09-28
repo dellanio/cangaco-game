@@ -54,10 +54,11 @@ export function devolverMercadorias(
  * cabecalho deste modulo ja diz que o deposito e um so.
  */
 export function armazemMaisProximo(
-  state: GameState, de: TileDeGrid, dados: GameData = gameData,
+  state: GameState, de: TileDeGrid, lado: number, dados: GameData = gameData,
 ): { readonly id: string; readonly caminho: readonly TileDeGrid[] } | null {
   let melhor: { id: string; caminho: readonly TileDeGrid[]; custo: number } | null = null;
-  for (const armazem of armazensCompletos(state)) {
+  // C7: a carga volta para um armazem do lado de quem a carrega
+  for (const armazem of armazensCompletos(state, lado)) {
     const rota = buscarCaminho(state, de, tilesDaPorta(armazem, dados), 'livre', dados);
     if (rota !== null && (melhor === null || rota.custo < melhor.custo)) {
       melhor = { id: armazem.id, caminho: rota.tiles, custo: rota.custo };

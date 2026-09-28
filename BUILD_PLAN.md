@@ -5428,7 +5428,13 @@ Ordem do operador. Cada item tem plano em `docs/planos/2026-09-28-C<n>-*.md`.
   4. **C4 — o botão de reparo** (F-CERCO-b).
   5. **C5 — colisão militar** (GDD §6.4).
   6. **C6 — revidar enquanto marcha.**
-  7. **C7 — o `lado` filtrando o JobBoard.**
+  7. **C7 — o `lado` filtrando o JobBoard. ENTREGUE, adiantado por ser o conserto do BUG-N1**
+     (reprovação da F25a pelo avaliador).
+     - O claim exige que todo prédio tocado seja do lado da unidade.
+     - A escolha de armazém (origem, destino, ligação, devolução, carga) filtra por lado.
+     - Teste `tests/C7-lado-no-jobboard.test.ts`.
+     - Fora, PARA REVISÃO: a tarefa de tile sem prédio (estrada, campo), que não tem lado
+       no estado.
   8. **C8 — a IA com prioridade de alvo e de tipo de tropa**, medida no kam_remake.
   9. **C9 — o fim de partida parando o jogo.**
   10. **C10 — a exceção de largura por prédio no dado.**

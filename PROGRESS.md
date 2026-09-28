@@ -11281,3 +11281,40 @@ CLAUDE.md §6, a reprovação passou à frente da fila C.
 - **O teste da F28c "regenera em luta" não testa a luta de fato.**
 - **O aceite (b) da F25b é tautológico**, e o botão desabilitado parece igual ao
   habilitado.
+
+## 2026-09-28 — C7: o lado filtrando o JobBoard (fecha o BUG-N1; a F25a volta a `true`)
+
+Plano: `docs/planos/2026-09-28-C7-lado-no-jobboard.md`, **escrito durante a execução, não
+antes**, contra a regra do operador. O registro honesto está no próprio arquivo.
+
+**Verificado:**
+- **Claim** (`reclamar`): todo prédio que a tarefa toca (origem, destino) tem de ser do lado
+  da unidade, senão `unidade-invalida`. Toda atribuição de tarefa passa por `reclamar`
+  (conferido com grep de `reclamadaPor:`).
+- **Escolha de armazém:** `armazensCompletos(state, lado?)`, com o lado passado por:
+  - `origemMaisPerto` (o lado do destino);
+  - `destinoMaisPerto` (o lado da origem);
+  - `predioLigadoAoArmazem`;
+  - a devolução da demolição;
+  - `armazemMaisProximo`, que ganhou o parâmetro `lado`: carga do serf e do faminto
+    morto;
+  - o alvo do `devolvendo`, que agora exige o mesmo lado.
+- **`tests/C7-lado-no-jobboard.test.ts`, 4 testes verdes:**
+  - (a) o caso do avaliador: o quartel inimigo fica com 0 recrutas e 0 armas, e o do
+    jogador fica com 1 recruta e armas;
+  - (b) a obra inimiga fica com hp 0, e a do jogador sobe;
+  - (c) a todo tick, nenhuma tarefa cruza lado, nem aberta;
+  - (d) a devolução vai ao armazém do lado de quem carrega;
+  - (e) determinismo.
+- **Sondas:**
+  - sem o filtro do claim: vermelho;
+  - sem os dois filtros (o código antigo): vermelho, e reproduz o bug do avaliador;
+  - `armazensCompletos` ignorando o lado: vermelho.
+  - Só sem o filtro da origem: **verde na 1ª versão**, porque o claim barrava. O teste
+    passou a afirmar que nenhuma tarefa aberta cruza lado, e a sonda ficou vermelha.
+- **`npm run verify` verde**, com 1732 testes. Os "4 skipped" são da passada
+  `test:transladado` (config anterior); a passada normal não pula nada.
+
+**PARA REVISÃO:**
+- A tarefa de tile sem prédio (estrada, campo) não tem lado no estado.
+- Tarefa entre lados vinda de save antigo não é saneada.

@@ -65,7 +65,8 @@ export function armazemDeDestino(
   state: GameState, predio: Predio, dados: GameData,
 ): string | null {
   let melhor: { id: string; distancia: number } | null = null;
-  for (const armazem of armazensCompletos(state)) {
+  // C7: a devolucao vai para o armazem do lado do predio demolido
+  for (const armazem of armazensCompletos(state, predio.lado)) {
     if (armazem.id === predio.id) continue; // demolir o armazem nao o faz receber de si
     const distancia = distanciaEntrePredios(state, predio, armazem, dados);
     if (distancia !== null && (melhor === null || distancia < melhor.distancia)) {
