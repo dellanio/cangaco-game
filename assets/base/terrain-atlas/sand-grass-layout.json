@@ -1,0 +1,10 @@
+{
+  "source": "assets/sprites/terrain/grama.png",
+  "outputDir": "assets/sprites/terrain/sand-grass",
+  "prefix": "sand-grass",
+  "preview": "screenshots/sand-grass-preview.png",
+  "previewBackground": "assets/sprites/terrain/areia.png",
+  "size": 64,
+  "edgeWidth": 12,
+  "feather": 4
+}

@@ -157,6 +157,9 @@ export function montarMenuBuild(
   const cartao = document.createElement('div');
   cartao.className = 'cartao';
   cartao.dataset.planta = '';
+  cartao.id = 'detalhe-construcao';
+  cartao.setAttribute('role', 'tooltip');
+  cartao.hidden = true;
   const cartaoNome = document.createElement('h3');
   const cartaoCusto = document.createElement('div');
   cartaoCusto.className = 'custo';
@@ -170,34 +173,17 @@ export function montarMenuBuild(
   cartaoMiolo.className = 'miolo';
   cartaoMiolo.append(cartaoNome, cartaoCusto, cartaoRequer, cartaoDesc);
   cartao.append(cartaoMiolo);
-  // A outra metade da guarda do `pointerleave` do icone (ver `botaoIcone`).
-  cartao.addEventListener('pointerleave', () => {
-    if (sobOMouse === null) return;
-    sobOMouse = null;
-    escreverCartao();
-  });
-
   let sobOMouse: string | null = null;
 
-  function plantaAtiva(): Planta | null {
-    if (ferramenta.modo === 'predio' && ferramenta.predioAtivo !== null) {
-      return itens.get(ferramenta.predioAtivo)?.planta ?? null;
-    }
-    for (const f of ferramentas.values()) {
-      if (f.modo === ferramenta.modo && f.cultura === ferramenta.culturaAtiva) return f.planta;
-    }
-    return null;
-  }
-
   function escreverCartao(): void {
-    const planta = (sobOMouse !== null ? itens.get(sobOMouse)?.planta ?? ferramentas.get(sobOMouse)?.planta : null)
-      ?? plantaAtiva();
+    const planta = sobOMouse !== null ? itens.get(sobOMouse)?.planta ?? ferramentas.get(sobOMouse)?.planta : null;
     if (planta === null || planta === undefined) {
       cartao.dataset.planta = '';
       cartaoNome.textContent = '';
       cartaoCusto.textContent = '';
       cartaoRequer.textContent = '';
-      cartaoDesc.textContent = temaSertao.menuBuild.cartaoVazio;
+      cartaoDesc.textContent = '';
+      cartao.hidden = true;
       return;
     }
     cartao.dataset.planta = planta.id;
@@ -205,6 +191,7 @@ export function montarMenuBuild(
     cartaoCusto.textContent = planta.custo;
     cartaoRequer.textContent = planta.requer;
     cartaoDesc.textContent = planta.desc;
+    cartao.hidden = false;
   }
 
   function marcarAtivo(
@@ -227,27 +214,33 @@ export function montarMenuBuild(
     escreverCartao();
   }
 
-  /** Um botao-icone. Quem passa o mouse por cima manda a planta dele ao cartao. */
+  function mostrarCartao(botao: HTMLButtonElement, id: string): void {
+    sobOMouse = id;
+    escreverCartao();
+    const retangulo = botao.getBoundingClientRect();
+    const largura = 220;
+    const altura = Math.min(cartao.getBoundingClientRect().height, 160);
+    cartao.style.left = `${Math.min(window.innerWidth - largura - 8, retangulo.right + 10)}px`;
+    cartao.style.top = `${Math.max(8, Math.min(window.innerHeight - altura - 8, retangulo.top))}px`;
+  }
+
+  function esconderCartao(id: string): void {
+    if (sobOMouse !== id) return;
+    sobOMouse = null;
+    escreverCartao();
+  }
+
+  /** Um botao-icone com contexto fora do fluxo da grade. */
   function botaoIcone(id: string, rotulo: string): HTMLButtonElement {
     const botao = document.createElement('button');
     botao.type = 'button';
     botao.className = 'icone';
-    botao.title = rotulo;
     botao.setAttribute('aria-label', rotulo);
-    botao.addEventListener('pointerenter', () => {
-      sobOMouse = id;
-      escreverCartao();
-    });
-    botao.addEventListener('pointerleave', (evento) => {
-      // UI-barra-a: o cartao gruda no pe do corpo e cresce com o texto, por cima
-      // da linha sob o mouse. Sair do icone PARA o cartao nao e sair: se fosse, o
-      // cartao encolhia, o icone voltava a aparecer, o mouse entrava de novo e o
-      // cartao crescia — pisca sem o mouse mexer (medido: ate 16 trocas por
-      // segundo). Quem limpa, nesse caso, e a saida do proprio cartao.
-      if (evento.relatedTarget instanceof Node && cartao.contains(evento.relatedTarget)) return;
-      if (sobOMouse === id) sobOMouse = null;
-      escreverCartao();
-    });
+    botao.setAttribute('aria-describedby', cartao.id);
+    botao.addEventListener('pointerenter', () => mostrarCartao(botao, id));
+    botao.addEventListener('focus', () => mostrarCartao(botao, id));
+  botao.addEventListener('pointerleave', () => esconderCartao(id));
+    botao.addEventListener('blur', () => esconderCartao(id));
     return botao;
   }
 

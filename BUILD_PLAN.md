@@ -1885,6 +1885,18 @@ a geografia já corrigida do que regravar 900 tiles depois.
   medição do operador; quando ela vier, mudam juntas.
 
 ### F-TR — Tratamento visual do terreno e dos recursos (render)
+
+- **Arte disponível, entrega incremental (2026-09-27):** F-TR deixou de esperar
+  arte. Água–areia, areia–grama e lajedo têm fontes canônicas e famílias de 16
+  máscaras N/L/S/O no pipeline local. A implementação entra em commits pequenos,
+  sem alterar terreno lógico nem `src/sim/`.
+- **Aceite acrescentado — lajedo dinâmico:** no cenário real da pedreira, deixar
+  um tile de `rock` esgotar e sair de `state.recursos`; o sprite daquele tile some
+  e os quatro vizinhos cardinais são reavaliados. Cada vizinho de rocha ainda
+  presente perde exatamente o bit que apontava para o tile removido. Evidência:
+  capturas antes/depois e as máscaras publicadas pelo render em
+  `test-output/F-TR-shot.json`; a asserção é de comportamento, não de quantidade
+  fixa nem de pixel.
 - **Nota herdada da F-SPR (2026-09-26)**: o **carregamento** já existe. Esta feature
   é **arte + transição**: declarar as entradas `terreno`/`recurso`/`vegetacao` no
   manifesto (contrato no item F-SPR, logo acima) e acrescentar o que a F-SPR não fez —

@@ -1,0 +1,8 @@
+{
+  "source": "assets/base/rocks-atlas/rock-present-source.png",
+  "sourceCrop": [12, 0, 84, 128],
+  "outputDir": "assets/sprites/props/rock-autotile",
+  "preview": "screenshots/rock-autotile-preview.png",
+  "previewBackground": "assets/sprites/terrain/grama.png",
+  "size": [128, 160]
+}

@@ -42,13 +42,21 @@ import {
 } from '../manifesto';
 import type { ChaveDaRevelacao, DesenhoDoRecurso, EntradaDeAsset, TexturaCarregada } from '../manifesto';
 import { manifestoDoJogo, texturasParaCarregar } from '../sprites';
-import { mascaraCardinal } from '../mascara-cardinal';
+import { mascaraCardinal, VIZINHOS_CARDINAIS } from '../mascara-cardinal';
 
 const CHAVE_TEXTURA_TERRENO = 'tiles-terreno';
 const ESTADOS_DO_TERRENO = [ESTADO_DO_TERRENO, 'v1', 'v2', 'v3'] as const;
 const VARIANTES_DE_TERRENO = ESTADOS_DO_TERRENO.length;
 const CHAVE_TEXTURA_BORDA_AGUA = 'tiles-borda-agua';
 const ESTADOS_DA_BORDA_AGUA = Array.from({ length: 16 }, (_v, mascara) => `borda-m${mascara}`);
+const CHAVE_TEXTURA_AREIA_GRAMA = 'tiles-areia-grama';
+const ESTADOS_DA_BORDA_AREIA_GRAMA = Array.from(
+  { length: 16 }, (_v, mascara) => `borda-grama-m${mascara}`,
+);
+const CHAVE_TEXTURA_ROCHA_GRAMA = 'tiles-rocha-grama';
+const ESTADOS_DA_BORDA_ROCHA_GRAMA = Array.from(
+  { length: 16 }, (_v, mascara) => `borda-grama-m${mascara}`,
+);
 const CHAVE_TEXTURA_DETALHES = 'tiles-detalhes-terreno';
 const VARIANTES_DE_DETALHE = 3;
 const CHAVE_TEXTURA_RECURSO = 'tiles-recurso';
@@ -186,6 +194,10 @@ export class WorldScene extends Phaser.Scene {
     this.criarCamadaDeDetalhesDoTerreno(tilePx, largura, altura, texturaDosDetalhes);
     const texturaDaBordaDaAgua = this.criarTexturaDaBordaDaAgua(tilePx, carregada);
     this.criarCamadaDaBordaDaAgua(tilePx, largura, altura, texturaDaBordaDaAgua);
+    const texturaDaBordaAreiaGrama = this.criarTexturaDaBordaAreiaGrama(tilePx, carregada);
+    this.criarCamadaDaBordaAreiaGrama(tilePx, largura, altura, texturaDaBordaAreiaGrama);
+    const texturaDaBordaRochaGrama = this.criarTexturaDaBordaRochaGrama(tilePx, carregada);
+    this.criarCamadaDaBordaRochaGrama(tilePx, largura, altura, texturaDaBordaRochaGrama);
     const gradeDaFerramenta = this.criarGradeDaFerramenta(tilePx, largura, altura);
     const aplicarForcaDaGrade = (modo: string): void => {
       // Com textura real a linha embutida no placeholder deixa de existir. A
@@ -376,6 +388,7 @@ export class WorldScene extends Phaser.Scene {
       // onde ha rocha e imutavel, quanto sobrou nao e, e o jogador tem de ver o
       // tile esgotar.
       estado.recursosVisiveis = this.atualizarRecursos(camadaDeRecursos);
+      estado.mascarasDoLajedo = this.mascarasDoLajedo();
       estado.vegetacaoRenderizada = this.vegetacaoDesenhada.size;
       estado.pronto = true;
       if (this.ponte.atual) this.atualizarPredios(this.ponte.atual, tilePx, estado);
@@ -507,6 +520,87 @@ export class WorldScene extends Phaser.Scene {
       }
     }
     return camada.setDepth(0.2);
+  }
+
+  /** A familia areia–grama usa a mesma mascara, mas arte e camada proprias. */
+  private criarTexturaDaBordaAreiaGrama(tilePx: number, carregada: TexturaCarregada): string {
+    const g = this.make.graphics({ x: 0, y: 0 }, false);
+    g.fillStyle(0xffffff, 0);
+    g.fillRect(0, 0, tilePx * ESTADOS_DA_BORDA_AREIA_GRAMA.length, tilePx);
+    g.generateTexture(CHAVE_TEXTURA_AREIA_GRAMA, tilePx * ESTADOS_DA_BORDA_AREIA_GRAMA.length, tilePx);
+    g.destroy();
+    const arte = ESTADOS_DA_BORDA_AREIA_GRAMA.map((estado) => texturaDaCamada(
+      manifestoDoJogo, 'terreno', 'areia', estado, carregada,
+    ));
+    return this.sobreporArteNaTira(CHAVE_TEXTURA_AREIA_GRAMA, tilePx, arte, []);
+  }
+
+  /** Grama invade somente o lado do tile de areia que realmente toca grama. */
+  private criarCamadaDaBordaAreiaGrama(
+    tilePx: number, largura: number, altura: number, textura: string,
+  ): Phaser.Tilemaps.TilemapLayer {
+    const mapa = this.make.tilemap({ tileWidth: tilePx, tileHeight: tilePx, width: largura, height: altura });
+    const tileset = mapa.addTilesetImage('areia-grama', textura, tilePx, tilePx, 0, 0);
+    if (!tileset) throw new Error('WorldScene: falha ao criar o tileset areia-grama.');
+    const camada = mapa.createBlankLayer('areia-grama', tileset);
+    if (!camada) throw new Error('WorldScene: falha ao criar a camada areia-grama.');
+
+    const { codigos, largura: larguraDoTerreno, altura: alturaDoTerreno } = terrenoDeRender;
+    const codigoDaAreia = terrenoDeRender.tipos.indexOf('areia');
+    const codigoDaGrama = terrenoDeRender.tipos.indexOf('grama');
+    const codigoEm = (gx: number, gy: number): number => (
+      gx >= 0 && gy >= 0 && gx < larguraDoTerreno && gy < alturaDoTerreno
+        ? codigos[gy * larguraDoTerreno + gx] as number
+        : -1
+    );
+    for (let gy = 0; gy < Math.min(altura, alturaDoTerreno); gy += 1) {
+      for (let gx = 0; gx < Math.min(largura, larguraDoTerreno); gx += 1) {
+        if (codigoEm(gx, gy) !== codigoDaAreia) continue;
+        const mascara = mascaraCardinal((dx, dy) => codigoEm(gx + dx, gy + dy) === codigoDaGrama);
+        if (mascara !== 0) camada.putTileAt(mascara, gx, gy);
+      }
+    }
+    return camada.setDepth(0.1);
+  }
+
+  /** A base do lajedo recebe grama nas faces externas; o recurso fica por cima. */
+  private criarTexturaDaBordaRochaGrama(tilePx: number, carregada: TexturaCarregada): string {
+    const g = this.make.graphics({ x: 0, y: 0 }, false);
+    g.fillStyle(0xffffff, 0);
+    g.fillRect(0, 0, tilePx * ESTADOS_DA_BORDA_ROCHA_GRAMA.length, tilePx);
+    g.generateTexture(CHAVE_TEXTURA_ROCHA_GRAMA, tilePx * ESTADOS_DA_BORDA_ROCHA_GRAMA.length, tilePx);
+    g.destroy();
+    const arte = ESTADOS_DA_BORDA_ROCHA_GRAMA.map((estado) => texturaDaCamada(
+      manifestoDoJogo, 'terreno', 'rocha', estado, carregada,
+    ));
+    return this.sobreporArteNaTira(CHAVE_TEXTURA_ROCHA_GRAMA, tilePx, arte, []);
+  }
+
+  private criarCamadaDaBordaRochaGrama(
+    tilePx: number, largura: number, altura: number, textura: string,
+  ): Phaser.Tilemaps.TilemapLayer {
+    const mapa = this.make.tilemap({ tileWidth: tilePx, tileHeight: tilePx, width: largura, height: altura });
+    const tileset = mapa.addTilesetImage('rocha-grama', textura, tilePx, tilePx, 0, 0);
+    if (!tileset) throw new Error('WorldScene: falha ao criar o tileset rocha-grama.');
+    const camada = mapa.createBlankLayer('rocha-grama', tileset);
+    if (!camada) throw new Error('WorldScene: falha ao criar a camada rocha-grama.');
+
+    const { codigos, largura: larguraDoTerreno, altura: alturaDoTerreno } = terrenoDeRender;
+    const codigoDaRocha = terrenoDeRender.tipos.indexOf('rocha');
+    const codigoDaGrama = terrenoDeRender.tipos.indexOf('grama');
+    const codigoEm = (gx: number, gy: number): number => (
+      gx >= 0 && gy >= 0 && gx < larguraDoTerreno && gy < alturaDoTerreno
+        ? codigos[gy * larguraDoTerreno + gx] as number
+        : -1
+    );
+    for (let gy = 0; gy < Math.min(altura, alturaDoTerreno); gy += 1) {
+      for (let gx = 0; gx < Math.min(largura, larguraDoTerreno); gx += 1) {
+        if (codigoEm(gx, gy) !== codigoDaRocha) continue;
+        const mascara = mascaraCardinal((dx, dy) => codigoEm(gx + dx, gy + dy) === codigoDaGrama);
+        if (mascara !== 0) camada.putTileAt(mascara, gx, gy);
+      }
+    }
+    return camada.setDepth(0.1);
   }
 
   /**
@@ -753,20 +847,30 @@ export class WorldScene extends Phaser.Scene {
    *  sao "acabou" na tela, e o estado e que diz qual e qual. */
   private atualizarRecursos(camada: Phaser.Tilemaps.TilemapLayer): Record<string, number> {
     const recursos = this.ponte.atual?.recursos ?? {};
+    const repintar = new Set<string>();
+    const marcarComVizinhos = (chave: string): void => {
+      repintar.add(chave);
+      const { gx, gy } = tileDeChave(chave);
+      for (const { dx, dy } of VIZINHOS_CARDINAIS) repintar.add(`${gx + dx},${gy + dy}`);
+    };
     for (const [chave, recurso] of Object.entries(recursos)) {
       const codigo = codigoDoRecurso(recurso);
       if (this.recursosDesenhados.get(chave) === codigo) continue;
       const { gx, gy } = tileDeChave(chave);
       camada.putTileAt(codigo, gx, gy);
       this.recursosDesenhados.set(chave, codigo);
-      this.pintarVegetacao(chave, codigo);
+      marcarComVizinhos(chave);
     }
     for (const chave of [...this.recursosDesenhados.keys()]) {
       if (recursos[chave] !== undefined) continue;
       const { gx, gy } = tileDeChave(chave);
       camada.putTileAt(0, gx, gy);
       this.recursosDesenhados.delete(chave);
-      this.pintarVegetacao(chave, 0);
+      marcarComVizinhos(chave);
+    }
+    for (const chave of repintar) {
+      const recurso = recursos[chave];
+      this.pintarVegetacao(chave, recurso === undefined ? 0 : codigoDoRecurso(recurso));
     }
     return this.contarRecursosVisiveis(camada);
   }
@@ -785,10 +889,7 @@ export class WorldScene extends Phaser.Scene {
       return;
     }
     const textura = this.texturaDaVegetacao(desenho, chave);
-    if (atual?.texture.key === textura) {
-      this.ajustarAfloramento(atual, chave, codigo);
-      return;
-    }
+    if (atual?.texture.key === textura) return;
     atual?.destroy();
     const { tilePx } = configDoMapa;
     const canto = gridToScreen(tileDeChave(chave), tilePx, ESCALA_DO_MUNDO);
@@ -796,7 +897,6 @@ export class WorldScene extends Phaser.Scene {
     const imagem = this.add.image(pe.x, pe.y, textura)
       .setOrigin(desenho.entrada.anchor[0], desenho.entrada.anchor[1])
       .setDepth(depthDeY(pe.y));
-    this.ajustarAfloramento(imagem, chave, codigo);
     this.vegetacaoDesenhada.set(chave, imagem);
   }
 
@@ -809,6 +909,16 @@ export class WorldScene extends Phaser.Scene {
     desenho: Extract<DesenhoDoRecurso, { readonly como: 'vegetacao' }>,
     chave: string,
   ): string {
+    if (desenho.entrada.id === 'rock') {
+      const { gx, gy } = tileDeChave(chave);
+      const recursos = this.ponte.atual?.recursos ?? {};
+      const mascara = mascaraCardinal((dx, dy) => {
+        const vizinho = recursos[`${gx + dx},${gy + dy}`];
+        return vizinho?.tipo === 'rock' && vizinho.quantidade > 0;
+      });
+      const chaveDaMascara = chaveDeTextura('vegetacao', 'rock', `m${mascara}`);
+      return this.textures.exists(chaveDaMascara) ? chaveDaMascara : desenho.chave;
+    }
     const estados = Object.keys(desenho.entrada.estados).filter((estado) => (
       this.textures.exists(chaveDeTextura('vegetacao', desenho.entrada.id, estado))
     ));
@@ -819,39 +929,19 @@ export class WorldScene extends Phaser.Scene {
     return chaveDeTextura('vegetacao', desenho.entrada.id, estado);
   }
 
-  /**
-   * A rocha do manifesto e um afloramento, nao uma pedrinha por tile. Quando
-   * varios tiles de `rock` se tocam, os sprites crescem o bastante para as bases
-   * se fundirem num lajedo. A variacao vem das coordenadas e continua determinista.
-   */
-  private ajustarAfloramento(
-    imagem: Phaser.GameObjects.Image,
-    chave: string,
-    codigo: number,
-  ): void {
-    const tipo = recursosDeRender.tipos[codigo - 1];
-    if (tipo !== 'rock') {
-      imagem.setScale(1).setFlipX(false).setRotation(0);
-      return;
-    }
-
-    const { gx, gy } = tileDeChave(chave);
+  /** Mascaras publicadas para o roteiro provar a troca dos quatro vizinhos. */
+  private mascarasDoLajedo(): Record<string, number> {
     const recursos = this.ponte.atual?.recursos ?? {};
-    let vizinhos = 0;
-    for (let dy = -1; dy <= 1; dy += 1) {
-      for (let dx = -1; dx <= 1; dx += 1) {
-        if (dx === 0 && dy === 0) continue;
-        const recurso = recursos[`${gx + dx},${gy + dy}`];
-        if (recurso?.tipo === 'rock' && recurso.quantidade > 0) vizinhos += 1;
-      }
+    const mascaras: Record<string, number> = {};
+    for (const [chave, recurso] of Object.entries(recursos)) {
+      if (recurso.tipo !== 'rock' || recurso.quantidade <= 0) continue;
+      const { gx, gy } = tileDeChave(chave);
+      mascaras[chave] = mascaraCardinal((dx, dy) => {
+        const vizinho = recursos[`${gx + dx},${gy + dy}`];
+        return vizinho?.tipo === 'rock' && vizinho.quantidade > 0;
+      });
     }
-
-    const escala = vizinhos === 0 ? 1 : 1.2 + Math.min(vizinhos, 5) * 0.04;
-    const variante = this.hashVisual(gx, gy, codigo);
-    imagem
-      .setScale(escala)
-      .setFlipX((variante & 1) === 1)
-      .setRotation(((variante >>> 1) % 5 - 2) * 0.012);
+    return mascaras;
   }
 
   /** Lido de volta da camada desenhada, como `contarTerrenoVisivel`: o roteiro
@@ -1136,15 +1226,12 @@ export class WorldScene extends Phaser.Scene {
     return container;
   }
 
-  /** F17f — o sprite, ancorado pela BORDA INFERIOR do footprint: `anchor`
-   *  `[0.5, 1]` no meio da linha de baixo do retangulo de chao. E a ancoragem
-   *  que faz o predio pousar no grid; ancorar pelo centro o faria flutuar meio
-   *  tile acima sempre que a arte nao tiver a altura do footprint.
+  /** O `anchor` e o ponto DO PNG que assenta no centro da borda inferior do
+   *  footprint. Ele pode ficar acima da borda inferior da imagem quando uma
+   *  escada ou outro volume transborda o lote para baixo.
    *
-   *  Escala por UM fator, o da largura. Dois fatores esticariam a arte: a fonte
-   *  e 3:2 (192x128 para um footprint 3x3), e a altura do sprite NAO e a do
-   *  footprint. Derivar a escala do `larguraPx` corrente, e nao de um numero
-   *  fixo, e o que faz isto sobreviver ao zoom sem tocar neste codigo.
+   *  A escala usa a regua canonica de 64 px por tile, nao a largura do canvas.
+   *  Assim o canvas pode transbordar sem encolher o predio de volta ao lote.
    *
    *  O predio ocupar so a parte de baixo do quadrado de chao e consequencia da
    *  perspectiva isometrica da arte de hoje — divergencia conhecida do §9.3,
@@ -1155,7 +1242,7 @@ export class WorldScene extends Phaser.Scene {
   ): Phaser.GameObjects.Image {
     const imagem = this.add.image(larguraPx / 2, alturaPx, chave);
     imagem.setOrigin(entrada.anchor[0], entrada.anchor[1]);
-    imagem.setScale(larguraPx / entrada.tamanho[0]);
+    imagem.setScale(larguraPx / (entrada.footprint[0] * 64));
     return imagem;
   }
 
@@ -1179,7 +1266,7 @@ export class WorldScene extends Phaser.Scene {
   private caixaDoSprite(
     entrada: EntradaDeAsset, larguraPx: number, alturaPx: number,
   ): { readonly x: number; readonly y: number; readonly w: number; readonly h: number } {
-    const escala = larguraPx / entrada.tamanho[0];
+    const escala = larguraPx / (entrada.footprint[0] * 64);
     const w = entrada.tamanho[0] * escala;
     const h = entrada.tamanho[1] * escala;
     return { x: larguraPx / 2 - w * entrada.anchor[0], y: alturaPx - h * entrada.anchor[1], w, h };

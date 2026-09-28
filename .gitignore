@@ -22,6 +22,9 @@ dist/
 # so precaucao contra PLAYWRIGHT_BROWSERS_PATH=0, que jogaria o Chromium
 # (~150 MB) dentro de node_modules/.
 ms-playwright/
+
+# Renders, comparacoes e cenas descartaveis do pipeline Blender.
+/tmp/blender/
 .playwright/
 
 # --- Ambiente e Logs ---

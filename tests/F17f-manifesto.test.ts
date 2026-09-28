@@ -81,7 +81,10 @@ describe('F17f — o manifesto descreve a arte que existe', () => {
       expect(e.origem.base).toBeTruthy();
     }
     for (const e of predios) {
-      expect(e.anchor, e.id).toEqual([0.5, 1]);
+      expect(e.anchor[0], `${e.id}: anchor x`).toBeGreaterThanOrEqual(0);
+      expect(e.anchor[0], `${e.id}: anchor x`).toBeLessThanOrEqual(1);
+      expect(e.anchor[1], `${e.id}: anchor y`).toBeGreaterThanOrEqual(0);
+      expect(e.anchor[1], `${e.id}: anchor y`).toBeLessThanOrEqual(1);
     }
   });
 
@@ -98,11 +101,12 @@ describe('F17f — o manifesto descreve a arte que existe', () => {
     }
   });
 
-  // A convencao que esta feature existe para fixar: a LARGURA manda. A altura
-  // e o que a arte der — forcar um quadrado esticaria a arte 1,5x na vertical.
-  it('a largura em px e a largura do footprint em tiles vezes o tile', () => {
+  // A base assenta no footprint, mas o canvas pode ultrapassa-lo. A regua e
+  // 64 px por tile e o render nao reduz um canvas maior de volta ao lote.
+  it('o canvas comporta o footprint na regua canonica e pode transbordar', () => {
     for (const e of predios) {
-      expect(e.tamanho[0], e.id).toBe(e.footprint[0] * gameData.terreno.tilePx);
+      expect(e.tamanho[0], e.id).toBeGreaterThanOrEqual(e.footprint[0] * gameData.terreno.tilePx);
+      expect(e.tamanho[1], e.id).toBeGreaterThan(0);
     }
   });
 

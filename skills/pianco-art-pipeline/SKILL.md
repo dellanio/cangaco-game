@@ -65,6 +65,21 @@ node skills/pianco-art-pipeline/scripts/process-water-shores.mjs <layout.json>
 O formato esta em
 [references/water-shore-layout-schema.md](references/water-shore-layout-schema.md).
 
+Para outras transicoes ortogonais de terreno, derive 16 sobreposicoes
+transparentes da textura que invade o tile-base:
+
+```text
+node skills/pianco-art-pipeline/scripts/process-terrain-edges.mjs <layout.json>
+```
+
+Para o lajedo, derive o estado de fallback e as 16 mascaras de conexao a partir
+do afloramento canonico. O recorte seguro remove ornamentos isolados antes de
+variar escala e deslocamento para dentro do aglomerado:
+
+```text
+node skills/pianco-art-pipeline/scripts/process-rock-autotile.mjs <layout.json>
+```
+
 Depois de derivar, registre o lote de forma idempotente:
 
 ```text

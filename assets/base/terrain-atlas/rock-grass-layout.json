@@ -1,0 +1,10 @@
+{
+  "source": "assets/sprites/terrain/grama.png",
+  "outputDir": "assets/sprites/terrain/rock-grass",
+  "prefix": "rock-grass",
+  "preview": "screenshots/rock-grass-preview.png",
+  "previewBackground": "assets/sprites/terrain/rocha.png",
+  "size": 64,
+  "edgeWidth": 12,
+  "feather": 4
+}

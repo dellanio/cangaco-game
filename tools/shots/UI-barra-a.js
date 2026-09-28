@@ -153,26 +153,16 @@ async function roteiro(ctx) {
   await rolarCorpo('topo');
   afirmar(await haMais(), 'de volta ao topo a sombra do pe deveria acender de novo');
 
-  // ---- 2c. o cartao nao pisca sob o mouse parado ---------------------------
-  // O cartao gruda no pe e cresce com o texto do icone, POR CIMA da linha sob o
-  // mouse. Sem a guarda de `menu-build.ts` isso era loop: medido na sonda, 22 dos
-  // 28 icones trocavam de 5 a 16 vezes por segundo com o mouse parado. Pega o
-  // ultimo icone (cartao alto), poe o centro 10 px acima do topo do cartao vazio,
-  // e amostra DESPAUSADO (§8: o laco redesenhando e o que acusa).
+  // ---- 2c. popup de contexto: fora da grade e estavel sob hover ------------
+  // O popup nao ocupa a grade nem captura o ponteiro. A amostra despausada
+  // guarda esses contratos enquanto o loop de render esta ativo.
   const ultimo = await page.$$eval('#menu-build [data-predio]', (bs) => bs[bs.length - 1].dataset.predio);
-  const ponto = await page.evaluate((id) => {
-    const c = window.document.querySelector('#corpo-aba');
-    const cartao = window.document.querySelector('#menu-build .cartao');
-    const b = window.document.querySelector(`[data-predio="${id}"]`);
-    const r = b.getBoundingClientRect();
-    c.scrollTop += (r.top + r.height / 2) - (cartao.getBoundingClientRect().top - 10);
-    const r2 = b.getBoundingClientRect();
-    return { x: r2.left + r2.width / 2, y: r2.top + r2.height / 2, topo: cartao.getBoundingClientRect().top };
-  }, ultimo);
-  afirmar(ponto.y < ponto.topo, `o icone '${ultimo}' deveria ficar acima do cartao vazio: ${JSON.stringify(ponto)}`);
+  await page.locator(`[data-predio="${ultimo}"]`).scrollIntoViewIfNeeded();
+  const ponto = await page.locator(`[data-predio="${ultimo}"]`).boundingBox();
+  afirmar(ponto !== null, `o icone '${ultimo}' deveria estar visivel`);
   await page.keyboard.press('p');
   afirmar(!(await estado()).pausado, 'a amostra do cartao precisa do relogio correndo');
-  await page.mouse.move(ponto.x, ponto.y);
+  await page.mouse.move(ponto.x + ponto.width / 2, ponto.y + ponto.height / 2);
   const amostras = [];
   for (let i = 0; i < 20; i += 1) {
     await page.waitForTimeout(50);
@@ -183,8 +173,13 @@ async function roteiro(ctx) {
   afirmar((await estado()).pausado, 'o roteiro deveria ter pausado de volta');
   afirmar(
     amostras.every((a) => a === ultimo),
-    `com o mouse parado sobre '${ultimo}' o cartao deveria ficar nele, veio ${JSON.stringify(amostras)}`,
+    `com o mouse parado sobre '${ultimo}' o popup deveria ficar nele, veio ${JSON.stringify(amostras)}`,
   );
+  const popup = await page.$eval('#detalhe-construcao', (c) => {
+    const r = c.getBoundingClientRect();
+    return { pointerEvents: window.getComputedStyle(c).pointerEvents, dentroDaTela: r.left >= 0 && r.top >= 0 && r.right <= window.innerWidth && r.bottom <= window.innerHeight };
+  });
+  afirmar(popup.pointerEvents === 'none' && popup.dentroDaTela, `popup deveria ficar visivel sem prender ponteiro: ${JSON.stringify(popup)}`);
   await page.mouse.move(5, 5);
   await rolarCorpo('topo');
 
@@ -193,6 +188,7 @@ async function roteiro(ctx) {
   // linha a mais de descricao ja dava 121. A garantia nao pode depender do texto:
   // com uma descricao 6x a mais longa, o cartao para no teto, o miolo rola, e o
   // ultimo icone continua apertavel (a folga do corpo e o mesmo teto).
+  await page.hover(`[data-predio="${ultimo}"]`);
   const teto = await page.evaluate(() => {
     const c = window.document.querySelector('#menu-build .cartao');
     const d = c.querySelector('.desc');
@@ -213,6 +209,29 @@ async function roteiro(ctx) {
   await capturar('cartao-no-teto');
   await page.$eval('#menu-build .cartao .desc', (d) => { d.textContent = d.dataset.antes; delete d.dataset.antes; });
   await rolarCorpo('topo');
+
+  // ---- 2e. abas: iconografia de xilogravura e estatisticas ----------------
+  const abas = await page.$$eval('#abas button', (botoes) => botoes.map((b) => ({
+    aba: b.dataset.aba,
+    icone: getComputedStyle(b, '::before').backgroundImage,
+    bloqueada: b.getAttribute('aria-disabled'),
+    titulo: b.getAttribute('title'),
+  })));
+  afirmar(abas.every((a) => a.icone !== 'none') && new Set(abas.map((a) => a.icone)).size === 4, `as abas deveriam usar quatro icones de xilogravura distintos: ${JSON.stringify(abas)}`);
+  const distribuicao = abas.find((a) => a.aba === 'distribuicao');
+  afirmar(distribuicao?.bloqueada === 'true' && distribuicao.titulo === 'Em breve', `Distribuicao deveria estar desabilitada com dica: ${JSON.stringify(distribuicao)}`);
+  await page.hover('[data-aba="opcoes"]');
+  const hoverDaAba = await page.$eval('[data-aba="opcoes"]', (b) => {
+    const estilo = window.getComputedStyle(b);
+    return { outline: estilo.outlineStyle, cor: estilo.outlineColor, largura: estilo.outlineWidth };
+  });
+  afirmar(hoverDaAba.outline === 'solid' && hoverDaAba.cor === 'rgb(140, 74, 37)' && hoverDaAba.largura === '2px', `hover deveria desenhar o aro terra-queimada: ${JSON.stringify(hoverDaAba)}`);
+  await capturar('hover-aba');
+  await page.click('[data-aba="estatisticas"]');
+  afirmar((await corpo()) === 'estatisticas', `Estatisticas deveria ocupar o corpo, esta em ${await corpo()}`);
+  afirmar(await page.isVisible('#estatisticas #hud'), 'os recursos e unidades deveriam aparecer em Estatisticas');
+  await capturar('estatisticas');
+  await page.click('[data-aba="construir"]');
 
   // ---- 3. escolher troca a grade pelo painel; Esc volta ---------------------
   await escolherEscola();
@@ -255,6 +274,22 @@ async function roteiro(ctx) {
   await esperarFrame();
   afirmar((await corpo()) === 'grade', `Esc deveria voltar a grade, esta em ${await corpo()}`);
   afirmar(await page.isVisible('#menu-build'), 'depois do Esc a grade deveria voltar');
+  const gradeNoTopo = await page.evaluate(() => {
+    const corpoDaGrade = window.document.getElementById('corpo-aba');
+    const primeiraRegua = window.document.querySelector('#menu-build .regua[data-grupo="vila"]');
+    const limite = corpoDaGrade.getBoundingClientRect();
+    const regua = primeiraRegua.getBoundingClientRect();
+    return {
+      scrollTop: corpoDaGrade.scrollTop,
+      vilaVisivel: regua.top >= limite.top && regua.bottom <= limite.bottom,
+    };
+  });
+  await page.mouse.move(5, 5);
+  await page.hover(`[data-predio="${ultimo}"]`);
+  afirmar(
+    gradeNoTopo.scrollTop === 0 && gradeNoTopo.vilaVisivel,
+    `voltar do painel deveria mostrar A VILA no topo da grade: ${JSON.stringify(gradeNoTopo)}`,
+  );
 
   // ---- 4. aba Construir volta a grade, DESPAUSADO e segurado (§8) -----------
   await escolherEscola();

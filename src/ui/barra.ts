@@ -21,14 +21,15 @@ export const ABAS = ['construir', 'distribuicao', 'estatisticas', 'opcoes'] as c
 export type Aba = (typeof ABAS)[number];
 
 /** As que ainda nao tem conteudo (F31, F32): cadeado, e o clique nao troca nada. */
-export const ABAS_TRANCADAS: readonly Aba[] = ['distribuicao', 'estatisticas'];
+export const ABAS_TRANCADAS: readonly Aba[] = ['distribuicao'];
 
-export type CorpoDaAba = 'grade' | 'painel' | 'opcoes';
+export type CorpoDaAba = 'grade' | 'painel' | 'estatisticas' | 'opcoes';
 
 /** A regra, pura — e o que o teste headless prova. Na aba Construir o painel
  *  SUBSTITUI a grade quando ha predio escolhido, nunca as duas coisas juntas. */
 export function corpoDaAba(aba: Aba, haSelecao: boolean): CorpoDaAba {
   if (aba === 'opcoes') return 'opcoes';
+  if (aba === 'estatisticas') return 'estatisticas';
   return haSelecao ? 'painel' : 'grade';
 }
 
@@ -70,6 +71,7 @@ export function montarBarra(selecao: Selecao, abrirAjuda: () => void): Barra {
   if (!marca) throw new Error('barra: #marca nao existe no index.html');
   const corpo = document.getElementById('corpo-aba');
   if (!corpo) throw new Error('barra: #corpo-aba nao existe no index.html');
+  const corpoRolavel: HTMLElement = corpo;
 
   // Logo e minimapa: placeholder com o id escrito ate a arte entrar (§9).
   const textoDaLogo = document.createElement('span');
@@ -113,7 +115,13 @@ export function montarBarra(selecao: Selecao, abrirAjuda: () => void): Barra {
   let aba: Aba = 'construir';
 
   function aplicar(): void {
-    document.body.dataset.corpo = corpoDaAba(aba, selecao.predio !== null);
+    const proximoCorpo = corpoDaAba(aba, selecao.predio !== null);
+    const mudouDeCorpo = document.body.dataset.corpo !== proximoCorpo;
+    document.body.dataset.corpo = proximoCorpo;
+    // Grade e painel sao telas diferentes dentro do mesmo scroller. Herdar a
+    // posicao da tela anterior fazia a grade voltar no meio: "A VILA" sumia e
+    // "MATO E PEDRA" parecia uma secao cortada.
+    if (mudouDeCorpo) corpoRolavel.scrollTop = 0;
     for (const [id, botao] of botoes) botao.setAttribute('aria-pressed', String(id === aba));
   }
 

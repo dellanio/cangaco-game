@@ -21,10 +21,13 @@ async function roteiro(ctx) {
   //    (UI-barra-a). E isto — e nao "ignorar x < 260" — que impede o ponteiro
   //    sobre a UI de chegar ao Phaser. A barra nao retrai: a area do canvas e a
   //    mesma com e sem selecao (medido no roteiro da UI-barra-a).
-  const hud = await retanguloDe(page, '#hud');
   const barra = await retanguloDe(page, '#barra');
   const canvas = await retanguloDoCanvas(page);
   afirmar(canvas.left >= barra.right - 0.5, `canvas.left (${canvas.left}) deveria ser >= barra.right (${barra.right})`);
+  afirmar(
+    await page.$eval('#estatisticas', (p) => window.getComputedStyle(p).display === 'none'),
+    'os recursos deveriam ficar fora da aba Construir',
+  );
 
   // 2. bloqueado: cinza, com "requer <nome do tema do pai>", e clicar nao ativa.
   const serraria = defDe('sawmill');
@@ -149,7 +152,7 @@ async function roteiro(ctx) {
     await page.$eval('#barra', (n) => n.scrollHeight <= n.clientHeight + 0.5),
     'a barra inteira deveria caber sem rolagem a 1280x720; so o corpo da aba rola',
   );
-  await page.mouse.move(hud.left + 100, hud.top + hud.height / 2); // tira o mouse da grade
+  await page.mouse.move(barra.left + 5, barra.top + 5); // tira o mouse da grade
   await page.waitForTimeout(100);
   // force: o Playwright recusa clicar em aria-disabled; o que se prova aqui e
   // exatamente que um clique que CHEGA no item bloqueado nao ativa nada.
@@ -285,7 +288,7 @@ async function roteiro(ctx) {
   await capturar('planta-vermelha');
 
   // 6. o ponteiro sobre a UI nao chega a cena: nem tile, nem planta.
-  await page.mouse.move(hud.left + 100, hud.top + hud.height / 2);
+  await page.mouse.move(barra.left + 5, barra.top + 5);
   await page.waitForTimeout(200);
   let s = await estado();
   afirmar(s.tileSobMouse === null, `sobre o HUD tileSobMouse deveria ser null, veio ${JSON.stringify(s.tileSobMouse)}`);

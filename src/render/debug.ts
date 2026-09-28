@@ -119,6 +119,9 @@ export interface EstadoDebug {
    *  a ve sumir depois — sem olhar pixel (§8). Vazio ate o primeiro
    *  POST_RENDER. */
   recursosVisiveis: Readonly<Record<string, number>>;
+  /** F-TR — mascara N/L/S/O de cada tile de `rock` ainda presente. O roteiro
+   *  compara antes/depois quando um tile esgota; nao e estado da simulacao. */
+  mascarasDoLajedo: Readonly<Record<string, number>>;
   /** F-SPR — os ids que resolveram ARTE do manifesto em cada camada de tile, lidos
    *  uma vez no `create` (a arte chega no `preload`). Lista vazia e o placeholder de
    *  hoje — cor chapada e marcador —, que e comportamento normal (§9). Vegetacao e o
@@ -247,6 +250,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     quadrosDeTrabalho: {},
     terrenoVisivel: {},
     recursosVisiveis: {},
+    mascarasDoLajedo: {},
     arteDasCamadas: { terreno: [], recurso: [], vegetacao: [] },
     vegetacaoRenderizada: 0,
     estradasRenderizadas: 0,

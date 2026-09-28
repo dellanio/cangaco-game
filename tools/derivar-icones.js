@@ -38,9 +38,13 @@ function basesDisponiveis(filtro) {
     .filter((id) => filtro.length === 0 || filtro.includes(id));
   const alvos = [];
   for (const id of ids) {
-    const completo = fs.readdirSync(path.join(dir, id)).find((f) => /_03_completo\.png$/.test(f));
+    const arquivos = fs.readdirSync(path.join(dir, id));
+    // Quando existe, a base de icone e uma ilustracao aprovada para leitura em
+    // 52 px. Ela vence o sprite completo, que continua sendo a fonte do mundo.
+    const completo = arquivos.find((f) => /_menu_icon\.png$/.test(f))
+      ?? arquivos.find((f) => /_03_completo\.png$/.test(f));
     if (!completo) {
-      console.warn(`${id}: sem *_03_completo.png em assets/base/${id}/ — pulado`);
+      console.warn(`${id}: sem *_menu_icon.png ou *_03_completo.png em assets/base/${id}/ — pulado`);
       continue;
     }
     alvos.push({ id, base: `base/${id}/${completo}`, saida: `sprites/${id}/icone.png` });

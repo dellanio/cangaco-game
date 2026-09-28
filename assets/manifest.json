@@ -10,8 +10,8 @@
         3
       ],
       "tamanho": [
-        192,
-        182
+        214,
+        254
       ],
       "anchor": [
         0.5,
@@ -21,11 +21,11 @@
         "madeira": "sprites/storehouse/storehouse_madeira.png",
         "completo": "sprites/storehouse/storehouse_completo.png"
       },
-      "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-27",
+      "licenca": "arte propria do projeto, modelada no Blender e repintada para o projeto em 2026-09-27",
       "origem": {
-        "base": "base/storehouse/storehouse_03_completo.png",
+        "base": "base/storehouse/storehouse_blender_compressed_premium_v3.png",
         "semente": null,
-        "nota": "Par autoral do armazem como galpao alto de um unico salao, com portao de carga dominante e sem segundo andar. Geracoes exec-5416b0ad-41e0-4a58-8c19-92e52d63f3b2 (completo) e exec-6b432585-fa18-4d4e-9cd7-7dd2ff8a948d (madeira). Derivado em conjunto por tools/derivar-sprites.js; uniao alpha > 16 somente para storehouse: x26,y29 1217x1186; saida 192x182, conteudo 187x182."
+        "nota": "Armazem 3x3 de dois pavimentos na vista canonica frontal: camera 10 graus, elevacao 59.5051 graus e compensacao local -10 graus. Compressao vertical caricatural 0.68 no modelo, aplicada junto a telhado raso e acesso curto; envelope final 214x254, ou 1.323 vezes a altura do footprint. O teste em jogo rejeitou 1.208 porque apagava a leitura de sobrado. Madeira e completo derivam da mesma geometria, camera, recorte e assentamento."
       }
     },
     {
@@ -37,7 +37,7 @@
       ],
       "tamanho": [
         192,
-        182
+        176
       ],
       "anchor": [
         0.5,
@@ -47,11 +47,11 @@
         "madeira": "sprites/woodcutters/woodcutters_madeira.png",
         "completo": "sprites/woodcutters/woodcutters_completo.png"
       },
-      "licenca": "arte propria do projeto, bases aprovadas pelo operador e par de revelacao gerado em 2026-09-26",
+      "licenca": "arte propria do projeto, modelada no Blender e repintada para o projeto em 2026-09-27",
       "origem": {
-        "base": "base/woodcutters/woodcutters_02_completo.png",
+        "base": "base/woodcutters/woodcutters_blender_premium_v2.png",
         "semente": null,
-        "nota": "Par autoral da Casa do Lenhador, com ferramentas fixas e sem mercadoria incorporada. Derivado em conjunto por tools/derivar-sprites.js; uniao alpha > 16 calculada somente para woodcutters: x46,y113 1131x1075; saida 192x182."
+        "nota": "Casa do Lenhador 3x2 na vista canonica direita: camera 0 graus, elevacao 56.7754 graus e compensacao local -10 graus. Cabana de troncos empilhados, palha marrom escura, cepo com machado e cavalete de toras; derivado a 192x176."
       }
     },
     {
@@ -63,7 +63,7 @@
       ],
       "tamanho": [
         192,
-        149
+        151
       ],
       "anchor": [
         0.5,
@@ -73,11 +73,11 @@
         "madeira": "sprites/quarry/quarry_madeira.png",
         "completo": "sprites/quarry/quarry_completo.png"
       },
-      "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+      "licenca": "arte propria do projeto, modelada no Blender e repintada para o projeto em 2026-09-27",
       "origem": {
-        "base": "base/quarry/quarry_02_completo.png",
+        "base": "base/quarry/quarry_blender_compressed_premium_v3.png",
         "semente": null,
-        "nota": "Pedreira autoral refeita com portico, guincho e rampa, sem bloco cortado ou carga incorporada. Derivado em conjunto por tools/derivar-sprites.js; uniao alpha > 16 calculada somente para quarry: x153,y22 1269x983; saida 192x149."
+        "nota": "Pedreira 3x2 na vista canonica esquerda: camera 20 graus, elevacao 63.2080 graus e compensacao local -10 graus. Compressao vertical 0.76, guincho dominante, abrigo de zinco, acesso curto e piso de pedra; envelope final 192x151, ou 1.180 vezes a altura do footprint. Madeira e completo derivam da mesma geometria, camera, recorte e assentamento."
       }
     },
     {
@@ -114,22 +114,22 @@
         3
       ],
       "tamanho": [
-        192,
-        182
+        214,
+        240
       ],
       "anchor": [
         0.5,
-        1
+        0.875
       ],
       "estados": {
         "madeira": "sprites/schoolhouse/schoolhouse_madeira.png",
         "completo": "sprites/schoolhouse/schoolhouse_completo.png"
       },
-      "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+      "licenca": "arte propria do projeto, modelada no Blender para o projeto em 2026-09-27",
       "origem": {
-        "base": "base/schoolhouse/schoolhouse_06_completo.png",
+        "base": "base/schoolhouse/schoolhouse_blender_compressed_premium_v3.png",
         "semente": null,
-        "nota": "Casa do Coronel autoral, sobrado civico com varanda e balcao vazio. Estrutura anterior reaproveitada como madeira e derivada no mesmo recorte do completo; uniao alpha > 16 calculada somente para schoolhouse: x17,y28 1201x1198; saida limitada pela regua da Casa do Lenhador a 192x182, conteudo 182x182."
+        "nota": "Casa do Coronel sobrado 3x3 frontal. O telhado nao foi achatado: uma faixa interna de cada agua foi removida e as bordas originais foram reunidas, preservando inclinacao visual, tamanho das telhas, cumeeira, diagonais e beiral. A escada foi encurtada sem escalar a fachada. Madeira e completo usam o mesmo recorte. Saida 214x240; anchor [0.5,0.875] assenta o piso da varanda e reserva somente o acesso compacto abaixo do lote."
       }
     },
     {
@@ -233,13 +233,29 @@
         "padrao": "sprites/terrain/areia.png",
         "v1": "sprites/terrain/areia-v1.png",
         "v2": "sprites/terrain/areia-v2.png",
-        "v3": "sprites/terrain/areia-v3.png"
+        "v3": "sprites/terrain/areia-v3.png",
+        "borda-grama-m0": "sprites/terrain/sand-grass/sand-grass-m0.png",
+        "borda-grama-m1": "sprites/terrain/sand-grass/sand-grass-m1.png",
+        "borda-grama-m2": "sprites/terrain/sand-grass/sand-grass-m2.png",
+        "borda-grama-m3": "sprites/terrain/sand-grass/sand-grass-m3.png",
+        "borda-grama-m4": "sprites/terrain/sand-grass/sand-grass-m4.png",
+        "borda-grama-m5": "sprites/terrain/sand-grass/sand-grass-m5.png",
+        "borda-grama-m6": "sprites/terrain/sand-grass/sand-grass-m6.png",
+        "borda-grama-m7": "sprites/terrain/sand-grass/sand-grass-m7.png",
+        "borda-grama-m8": "sprites/terrain/sand-grass/sand-grass-m8.png",
+        "borda-grama-m9": "sprites/terrain/sand-grass/sand-grass-m9.png",
+        "borda-grama-m10": "sprites/terrain/sand-grass/sand-grass-m10.png",
+        "borda-grama-m11": "sprites/terrain/sand-grass/sand-grass-m11.png",
+        "borda-grama-m12": "sprites/terrain/sand-grass/sand-grass-m12.png",
+        "borda-grama-m13": "sprites/terrain/sand-grass/sand-grass-m13.png",
+        "borda-grama-m14": "sprites/terrain/sand-grass/sand-grass-m14.png",
+        "borda-grama-m15": "sprites/terrain/sand-grass/sand-grass-m15.png"
       },
       "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
       "origem": {
         "base": "base/terrain-atlas/terrain-atlas-source.png",
         "semente": null,
-        "nota": "Segunda celula da linha de terra ocre do atlas autoral; derivacao 64x64."
+        "nota": "Areia em quatro variantes 64x64 e 16 bordas cardinais de grama derivadas dos dois terrenos canonicos."
       }
     },
     {
@@ -305,13 +321,29 @@
         "padrao": "sprites/terrain/rocha.png",
         "v1": "sprites/terrain/rocha-v1.png",
         "v2": "sprites/terrain/rocha-v2.png",
-        "v3": "sprites/terrain/rocha-v3.png"
+        "v3": "sprites/terrain/rocha-v3.png",
+        "borda-grama-m0": "sprites/terrain/rock-grass/rock-grass-m0.png",
+        "borda-grama-m1": "sprites/terrain/rock-grass/rock-grass-m1.png",
+        "borda-grama-m2": "sprites/terrain/rock-grass/rock-grass-m2.png",
+        "borda-grama-m3": "sprites/terrain/rock-grass/rock-grass-m3.png",
+        "borda-grama-m4": "sprites/terrain/rock-grass/rock-grass-m4.png",
+        "borda-grama-m5": "sprites/terrain/rock-grass/rock-grass-m5.png",
+        "borda-grama-m6": "sprites/terrain/rock-grass/rock-grass-m6.png",
+        "borda-grama-m7": "sprites/terrain/rock-grass/rock-grass-m7.png",
+        "borda-grama-m8": "sprites/terrain/rock-grass/rock-grass-m8.png",
+        "borda-grama-m9": "sprites/terrain/rock-grass/rock-grass-m9.png",
+        "borda-grama-m10": "sprites/terrain/rock-grass/rock-grass-m10.png",
+        "borda-grama-m11": "sprites/terrain/rock-grass/rock-grass-m11.png",
+        "borda-grama-m12": "sprites/terrain/rock-grass/rock-grass-m12.png",
+        "borda-grama-m13": "sprites/terrain/rock-grass/rock-grass-m13.png",
+        "borda-grama-m14": "sprites/terrain/rock-grass/rock-grass-m14.png",
+        "borda-grama-m15": "sprites/terrain/rock-grass/rock-grass-m15.png"
       },
       "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
       "origem": {
         "base": "base/terrain-atlas/terrain-atlas-source.png",
         "semente": null,
-        "nota": "Primeira celula da linha de solo rochoso do atlas autoral; derivacao 64x64."
+        "nota": "Rocha em quatro variantes 64x64 e 16 bordas cardinais de grama para a base do lajedo."
       }
     },
     {
@@ -383,7 +415,6 @@
         "nota": "Dezesseis conexoes cardinais N/L/S/O e ponte diagonal derivadas de uma textura canonica pela skill pianco-art-pipeline."
       }
     },
-
     {
       "id": "tree",
       "tipo": "vegetacao",
@@ -422,21 +453,37 @@
         1
       ],
       "tamanho": [
-        96,
-        128
+        128,
+        160
       ],
       "anchor": [
         0.5,
         1
       ],
       "estados": {
-        "presente": "sprites/props/rock.png"
+        "presente": "sprites/props/rock-autotile/rock.png",
+        "m0": "sprites/props/rock-autotile/rock-m0.png",
+        "m1": "sprites/props/rock-autotile/rock-m1.png",
+        "m2": "sprites/props/rock-autotile/rock-m2.png",
+        "m3": "sprites/props/rock-autotile/rock-m3.png",
+        "m4": "sprites/props/rock-autotile/rock-m4.png",
+        "m5": "sprites/props/rock-autotile/rock-m5.png",
+        "m6": "sprites/props/rock-autotile/rock-m6.png",
+        "m7": "sprites/props/rock-autotile/rock-m7.png",
+        "m8": "sprites/props/rock-autotile/rock-m8.png",
+        "m9": "sprites/props/rock-autotile/rock-m9.png",
+        "m10": "sprites/props/rock-autotile/rock-m10.png",
+        "m11": "sprites/props/rock-autotile/rock-m11.png",
+        "m12": "sprites/props/rock-autotile/rock-m12.png",
+        "m13": "sprites/props/rock-autotile/rock-m13.png",
+        "m14": "sprites/props/rock-autotile/rock-m14.png",
+        "m15": "sprites/props/rock-autotile/rock-m15.png"
       },
       "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
       "origem": {
         "base": "base/rocks-atlas/rocks-atlas-source.png",
         "semente": null,
-        "nota": "Afloramento autoral, segunda celula da folha de pedras; derivacao 96x128 transparente e desenhada como sprite de pe."
+        "nota": "Afloramento autoral derivado em presente mais 16 mascaras cardinais 128x160; as bordas reduzem e deslocam a massa para dentro do aglomerado sem touceira ou pedra cortada."
       }
     },
     {
@@ -1789,9 +1836,9 @@
         ],
         "licenca": "arte propria do projeto, fornecida pelo operador",
         "origem": {
-          "base": "base/storehouse/armazem_03_completo.png",
+          "base": "base/storehouse/storehouse_menu_icon.png",
           "semente": null,
-          "nota": "Derivado por tools/derivar-icones.js: 1536x1024, bbox alpha>16 em 158,80 1256x920, escala 0.0573, centrado em 72x72."
+          "nota": "Derivado por tools/derivar-icones.js: 1254x1254, bbox alpha>16 em 19,42 1213x1127, escala 0.0594, centrado em 72x72."
         }
       },
       "woodcutters": {
@@ -1930,11 +1977,11 @@
           72,
           72
         ],
-        "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+        "licenca": "arte propria do projeto, fornecida pelo operador",
         "origem": {
-          "base": "base/building-atlas-b/source.png",
+          "base": "base/marketplace/marketplace_menu_icon.png",
           "semente": null,
-          "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
+          "nota": "Derivado por tools/derivar-icones.js: 1254x1254, bbox alpha>16 em 50,69 1169x1133, escala 0.0616, centrado em 72x72."
         }
       },
       "mill": {
@@ -2125,11 +2172,11 @@
           72,
           72
         ],
-        "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+        "licenca": "arte propria do projeto, fornecida pelo operador",
         "origem": {
-          "base": "base/schoolhouse/schoolhouse_06_completo.png",
+          "base": "base/schoolhouse/schoolhouse_menu_icon.png",
           "semente": null,
-          "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
+          "nota": "Derivado por tools/derivar-icones.js: 1254x1254, bbox alpha>16 em 21,45 1209x1159, escala 0.0596, centrado em 72x72."
         }
       },
       "inn": {
@@ -2138,94 +2185,94 @@
           72,
           72
         ],
-        "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+        "licenca": "arte propria do projeto, fornecida pelo operador",
         "origem": {
-          "base": "base/inn/inn_06_completo.png",
+          "base": "base/inn/inn_menu_icon.png",
           "semente": null,
-          "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
+          "nota": "Derivado por tools/derivar-icones.js: 1254x1254, bbox alpha>16 em 32,112 1194x1063, escala 0.0603, centrado em 72x72."
         }
       }
     },
     "_doc": "Icones da interface (CLAUDE.md §9). `predios` e por id NEUTRO, derivado da base por tools/derivar-icones.js (rode de novo ao trocar a base); `hud` e por campo de src/ui/hud.ts, desenhado a mao em SVG no registro da xilogravura (tinta, papel, ocre, terracota). Quem resolve `predios` e src/ui/icones.ts, por parametro; `hud` e desenhado pelo CSS por url(). O teste tests/icones-ui.test.ts confere arquivo, dimensao e base.",
     "hud": {
       "gold": {
-      "arquivo": "sprites/ui/hud-gold.png",
+        "arquivo": "sprites/ui/hud-gold.png",
         "tamanho": [
-        24,
-        24
+          24,
+          24
         ],
-      "licenca": "arte propria do projeto, fornecida pelo operador e processada em 2026-09-26",
+        "licenca": "arte propria do projeto, fornecida pelo operador e processada em 2026-09-26",
         "origem": {
-        "base": "base/ui-icons-cordel/recurso_dinheiro_source.png",
+          "base": "base/ui-icons-cordel/recurso_dinheiro_source.png",
           "semente": null,
-        "nota": "PNG transparente derivado pelo processador de tinta da skill pianco-art-pipeline."
+          "nota": "PNG transparente derivado pelo processador de tinta da skill pianco-art-pipeline."
         }
       },
       "timber": {
-      "arquivo": "sprites/ui/hud-timber.png",
+        "arquivo": "sprites/ui/hud-timber.png",
         "tamanho": [
-        24,
-        24
+          24,
+          24
         ],
-      "licenca": "arte propria do projeto, fornecida pelo operador e processada em 2026-09-26",
+        "licenca": "arte propria do projeto, fornecida pelo operador e processada em 2026-09-26",
         "origem": {
-        "base": "base/ui-icons-cordel/recurso_tabua_source.png",
+          "base": "base/ui-icons-cordel/recurso_tabua_source.png",
           "semente": null,
-        "nota": "PNG transparente derivado pelo processador de tinta da skill pianco-art-pipeline."
+          "nota": "PNG transparente derivado pelo processador de tinta da skill pianco-art-pipeline."
         }
       },
       "stone": {
-      "arquivo": "sprites/ui/hud-stone.png",
+        "arquivo": "sprites/ui/hud-stone.png",
         "tamanho": [
-        24,
-        24
+          24,
+          24
         ],
-      "licenca": "arte propria do projeto, fornecida pelo operador e processada em 2026-09-26",
+        "licenca": "arte propria do projeto, fornecida pelo operador e processada em 2026-09-26",
         "origem": {
-        "base": "base/ui-icons-cordel/recurso_pedra_source.png",
+          "base": "base/ui-icons-cordel/recurso_pedra_source.png",
           "semente": null,
-        "nota": "PNG transparente derivado pelo processador de tinta da skill pianco-art-pipeline."
+          "nota": "PNG transparente derivado pelo processador de tinta da skill pianco-art-pipeline."
         }
       },
       "comida": {
-      "arquivo": "sprites/ui/hud-comida.png",
+        "arquivo": "sprites/ui/hud-comida.png",
         "tamanho": [
-        24,
-        24
+          24,
+          24
         ],
-      "licenca": "arte propria do projeto, fornecida pelo operador e processada em 2026-09-26",
+        "licenca": "arte propria do projeto, fornecida pelo operador e processada em 2026-09-26",
         "origem": {
-        "base": "base/ui-icons-cordel/recurso_comida_source.png",
+          "base": "base/ui-icons-cordel/recurso_comida_source.png",
           "semente": null,
-        "nota": "PNG transparente derivado pelo processador de tinta da skill pianco-art-pipeline."
+          "nota": "PNG transparente derivado pelo processador de tinta da skill pianco-art-pipeline."
         }
       },
       "populacao": {
-      "arquivo": "sprites/ui/hud-populacao.png",
+        "arquivo": "sprites/ui/hud-populacao.png",
         "tamanho": [
-        24,
-        24
+          24,
+          24
         ],
-      "licenca": "arte propria do projeto, fornecida pelo operador e processada em 2026-09-26",
+        "licenca": "arte propria do projeto, fornecida pelo operador e processada em 2026-09-26",
         "origem": {
-        "base": "base/ui-icons-cordel/recurso_gente_source.png",
+          "base": "base/ui-icons-cordel/recurso_gente_source.png",
           "semente": null,
-        "nota": "PNG transparente derivado pelo processador de tinta da skill pianco-art-pipeline."
+          "nota": "PNG transparente derivado pelo processador de tinta da skill pianco-art-pipeline."
         }
       }
     },
     "interface": {
       "logo": {
-      "arquivo": "sprites/ui/logo-pianco-completo.png",
+        "arquivo": "sprites/ui/logo-pianco-completo.png",
         "tamanho": [
           252,
-        84
+          84
         ],
         "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
         "origem": {
-        "base": "base/ui-logo/pianco-logo-source.png",
-        "semente": null,
-        "nota": "Marca completa PIANCÓ — FERRO E MANDACARU, derivada pela skill pianco-art-pipeline."
+          "base": "base/ui-logo/pianco-logo-source.png",
+          "semente": null,
+          "nota": "Marca completa PIANCÓ — FERRO E MANDACARU, derivada pela skill pianco-art-pipeline."
         }
       },
       "minimapa": {
@@ -2302,38 +2349,68 @@
           "semente": null
         }
       },
-    "iconesDeAba": {
-      "construir": {
-        "arquivo": "sprites/ui/tab-construir.png",
-        "tamanho": [36, 36],
-        "licenca": "arte propria do projeto, fornecida pelo operador e processada em 2026-09-26",
-        "origem": { "base": "base/ui-icons-cordel/construcao_source.png", "semente": null }
+      "iconesDeAba": {
+        "construir": {
+        "arquivo": "sprites/ui/tab-construir-premium.png",
+          "tamanho": [
+          128,
+          128
+          ],
+        "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-28",
+          "origem": {
+          "base": "base/ui/tab-construir-premium.png",
+            "semente": null
+          }
+        },
+        "distribuicao": {
+        "arquivo": "sprites/ui/tab-distribuicao-premium.png",
+          "tamanho": [
+          128,
+          128
+          ],
+        "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-28",
+          "origem": {
+          "base": "base/ui/tab-distribuicao-premium.png",
+            "semente": null
+          }
+        },
+        "estatisticas": {
+        "arquivo": "sprites/ui/tab-estatisticas-premium.png",
+          "tamanho": [
+          128,
+          128
+          ],
+        "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-28",
+          "origem": {
+          "base": "base/ui/tab-estatisticas-premium.png",
+            "semente": null
+          }
+        },
+        "opcoes": {
+        "arquivo": "sprites/ui/tab-opcoes-premium.png",
+          "tamanho": [
+          128,
+          128
+          ],
+        "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-28",
+          "origem": {
+          "base": "base/ui/tab-opcoes-premium.png",
+            "semente": null
+          }
+        },
+        "cadeado": {
+          "arquivo": "sprites/ui/tab-cadeado.png",
+          "tamanho": [
+            16,
+            16
+          ],
+          "licenca": "arte propria do projeto, fornecida pelo operador e processada em 2026-09-26",
+          "origem": {
+            "base": "base/ui-icons-cordel/cadeado_source.png",
+            "semente": null
+          }
+        }
       },
-      "distribuicao": {
-        "arquivo": "sprites/ui/tab-distribuicao.png",
-        "tamanho": [36, 36],
-        "licenca": "arte propria do projeto, fornecida pelo operador e processada em 2026-09-26",
-        "origem": { "base": "base/ui-icons-cordel/aba_distribuicao_source.png", "semente": null }
-      },
-      "estatisticas": {
-        "arquivo": "sprites/ui/tab-estatisticas.png",
-        "tamanho": [36, 36],
-        "licenca": "arte propria do projeto, fornecida pelo operador e processada em 2026-09-26",
-        "origem": { "base": "base/ui-icons-cordel/aba_estatisticas_source.png", "semente": null }
-      },
-      "opcoes": {
-        "arquivo": "sprites/ui/tab-opcoes.png",
-        "tamanho": [36, 36],
-        "licenca": "arte propria do projeto, fornecida pelo operador e processada em 2026-09-26",
-        "origem": { "base": "base/ui-icons-cordel/aba_opcoes_source.png", "semente": null }
-      },
-      "cadeado": {
-        "arquivo": "sprites/ui/tab-cadeado.png",
-        "tamanho": [16, 16],
-        "licenca": "arte propria do projeto, fornecida pelo operador e processada em 2026-09-26",
-        "origem": { "base": "base/ui-icons-cordel/cadeado_source.png", "semente": null }
-      }
-    },
       "painel": {
         "arquivo": "sprites/ui/panel-frame.png",
         "tamanho": [

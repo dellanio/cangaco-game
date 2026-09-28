@@ -23,22 +23,154 @@ aqui**, nem como referência de estilo.
 
 ---
 
+### Portão zero — reconhecimento sem legenda
+
+> **COBERTO O NOME, O JOGADOR SABE O QUE É.** Se uma pessoa que conhece as
+> funções do jogo não identifica o prédio sem nome, tooltip ou clique, o sprite
+> não passa, mesmo que projeção, escala e acabamento estejam corretos.
+
+Esse portão vem antes dos demais. A captura de aceite deve mostrar o prédio no
+mundo, no tamanho real, com o nome coberto. A avaliação usa três alavancas em
+conjunto:
+
+1. **Material da parede:** a vila não pode virar uma sequência de taipa branca.
+2. **Material da cobertura:** telha colonial é uma opção, não o padrão universal.
+3. **Objeto funcional dominante:** algo externo e legível conta o que acontece ali.
+
+Quatro paredes por quatro coberturas produziriam somente 16 combinações para 28
+prédios. Por isso a direção canônica usa sete famílias de parede e quatro de
+cobertura, formando 28 pares exclusivos. Cor sozinha não conta como objeto
+funcional; o objeto precisa ter silhueta ou volume reconhecível no sprite final.
+
+### Matriz proposta de diferenciação dos 28 prédios
+
+Esta tabela é decisão de design pendente de aprovação do operador. Ela orienta
+modelagem futura; não autoriza redesenho em lote.
+
+| Prédio (`id`) | Parede | Cobertura | Objeto funcional dominante |
+|---|---|---|---|
+| Armazém (`storehouse`) | tábuas verticais escuras | telha colonial terracota | plataforma de carga com grande talha sobre portas largas |
+| Casa do Coronel (`schoolhouse`) | taipa caiada branca | telha colonial terracota | varanda de recrutamento com porta dupla e quadro de avisos |
+| Bodega (`inn`) | taipa caiada ocre | sapê claro e desfiado | mesas e cadeiras externas, placa pendurada com bode e lousa de preços |
+| Pedreira (`quarry`) | pedra bruta | zinco oxidado | guincho, rampa e piso de pedra |
+| Casa do Lenhador (`woodcutters`) | troncos empilhados | palha marrom escura | cepo com machado e cavalete de toras; deve ler como cabana |
+| Torre de Pedra (`watchtower`) | pedra bruta | telha colonial terracota | plataforma alta de tiro com seteiras e sino de alerta |
+| Serraria (`sawmill`) | tábuas verticais escuras | zinco oxidado | lâmina de serra exposta e trilho de entrada da tora |
+| Roçado de Milho (`farm`) | taipa caiada ocre | palha marrom escura | paiol ripado e espigas penduradas para secagem |
+| Canavial (`wineyard`) | taipa caiada branca | sapê claro e desfiado | moenda de cana com rolos e bica para caldo |
+| Casa do Pescador (`fishermans`) | taipa caiada ocre | zinco oxidado | trapiche curto, rede estendida e varal de peixe |
+| Garimpo (`gold_mine`) | pedra bruta | palha marrom escura | calha de lavagem e bateia grande junto à entrada |
+| Jazida de Carvão (`coal_mine`) | troncos empilhados | zinco oxidado | tremonha negra e vagonete carregado de carvão |
+| Mina de Ferro (`iron_mine`) | pedra bruta | sapê claro e desfiado | trilho e caçamba com minério vermelho-escuro |
+| Casa de Armas de Madeira (`weapons_workshop`) | troncos empilhados | telha colonial terracota | bancada externa com cabos, foices e bodoques |
+| Quartel do Bando (`barracks`) | tábuas verticais escuras | sapê claro e desfiado | estandarte alto e cavalete de armas na entrada |
+| Feira (`marketplace`) | taipa caiada branca | zinco oxidado | sequência de toldos, balança grande e bancadas vazias |
+| Moinho (`mill`) | adobe cru | sapê claro e desfiado | roda motriz lateral, funil de milho e mó exposta |
+| Padaria (`bakery`) | adobe cru | telha colonial terracota | forno abaulado externo, chaminé baixa e chapa de beiju |
+| Malhada (`swine_farm`) | troncos empilhados | sapê claro e desfiado | curral frontal, cocho comprido e porteira para os bodes |
+| Cocheira (`stables`) | taipa caiada ocre | telha colonial terracota | porteira larga, amarradouro e sela pendurada |
+| Casa de Carne (`butchers`) | adobe cru | palha marrom escura | jirau de salga e ganchos sob um alpendre aberto |
+| Curtume (`tannery`) | adobe cru | zinco oxidado | couros esticados em armações e tanques de curtimento |
+| Casa do Gibão (`armory_workshop`) | tábuas verticais escuras | palha marrom escura | gibão em manequim e cavalete com chapéus de couro |
+| Fundição (`metallurgists`) | tijolo cerâmico aparente | zinco oxidado | cadinho basculante, moldes de moeda e chaminé quente |
+| Mercenários (`town_hall`) | taipa caiada branca | palha marrom escura | balcão de contratação, estandarte e painel de recompensas |
+| Forja (`iron_smithy`) | tijolo cerâmico aparente | telha colonial terracota | fornalha aberta, chaminé alta e lingoteira |
+| Ferraria (`weapon_smithy`) | tijolo cerâmico aparente | sapê claro e desfiado | bigorna e expositor de peixeiras, ferrões e canos |
+| Casa do Ferro (`armor_smithy`) | tijolo cerâmico aparente | palha marrom escura | torso de prova com peitoral e placas metálicas penduradas |
+
+**Auditoria de colisão.** Nenhum dos 28 prédios repete o mesmo par
+parede+cobertura. Mesmo assim, o par não basta para aprovação: o objeto funcional
+dominante precisa diferenciar prédios da mesma cadeia e continuar legível quando
+o sprite é visto no jogo, não apenas no render grande.
+
+---
+
 ## 2. A projeção
 
-> **ERRADO — correção do operador, 2026-09-26.** A frase "retângulo com arestas
-> horizontais" abaixo, e o "nunca em diagonal" do fim do parágrafo, estão errados. Os
-> prédios do jogo de referência são **girados**: um inclina para a direita, outro para a
-> esquerda. Mandar "não rotacionado, arestas horizontais" produziu prédios **achatados**.
-> **A convenção nova espera a medição do operador** nas telas de referência. Até ela
-> chegar, não há número nem ângulo para seguir, e nenhum foi inventado aqui.
+> **DECISÃO CANÔNICA — operador, 2026-09-27.** A referência de câmera do projeto é
+> `assets/source/blender/reference_scene.blend`. Todos os 28 prédios partem dessa cena:
+> não recrie nem ajuste a câmera, a luz ou a unidade por prédio.
 >
-> **O grid continua ortogonal.** Prédio girado sobre tile quadrado funciona: o
-> `footprint` é o retângulo de tiles que ele cobre no chão, e o sprite pode transbordar
-> esse retângulo. **Nada muda em `src/sim/`**: ocupação, porta, caminho e `canPlace`
-> continuam lendo o footprint em tiles, e o desenho é só render.
+> O grid é **ortogonal, quadrado, 64×64 px**. Na cena canônica, **1 unidade de mundo no
+> Blender = 1 tile do jogo**. No teste 512×512, `ortho_scale = 8` produz exatamente
+> 64 px por unidade no eixo horizontal. Isso fixa a proporção matemática entre
+> footprints — por exemplo, 3×2 sempre é menor que 3×3 — sem ajuste manual.
 >
-> O resto desta seção (não é isométrico, não é elevação frontal, a câmera vê o telhado)
-> continua valendo.
+> A câmera é **ortográfica**, com azimute lateral fixado em **10°** e elevação compensada
+> para **59,5051°**. O operador escolheu 10° em 2026-09-27 após comparar a mesma casa em
+> 0°, 10°, 20° e 30° sobre o grid real de 64×64 px: 10° foi o menor valor que revelou a
+> cumeeira e distinguiu as duas águas sem a base deixar de ler como retângulo. No teste,
+> a aresta de fundo ficou em 8,64°; 20° levou-a a 18° e começou a brigar com o grid.
+> O cubo de
+> validação mede 3×2×2 unidades; sua base aparece retangular, e o topo domina a fachada
+> na proporção calibrada abaixo. Um segundo cubo 3×3×3 prova a escala proporcional sem ajuste
+> manual. Losango reprova o portão e exige corrigir esta cena antes de criar qualquer
+> prédio.
+>
+> **Vista canônica `frontal` (também chamada `foco central`).** Aprovada pelo
+> operador em 2026-09-27: câmera em azimute **10°**, elevação **59,5051°** e
+> `ortho_scale = 8`. Na Casa do Coronel, a compensação local de fachada `-10°`
+> neutraliza o azimute lateral e produz a leitura frontal simétrica sem alterar
+> a câmera de referência.
+>
+> **Calibração de elevação — imagens do KaM fornecidas pelo operador em 2026-09-27.**
+> Medição feita em um corte vertical representativo da fachada principal, ignorando
+> chaminé, bandeira e alpendre: na casa térrea de madeira, cumeeira→beiral = 240 px e
+> beiral→chão = 162 px (`1,481`); na casa térrea de pedra, 257 px e 174 px (`1,477`).
+> As razões diferem só `0,3%`; a média é `1,479`. Nos dois blocos de validação a
+> profundidade é igual à altura, portanto a projeção ortográfica dá
+> `topo/fachada = tan(elevação)`: `atan(1,479) = 55,94°`. Esse foi o ponto inicial em
+> azimute 0°. Ao fixar o azimute em 10°, a elevação foi compensada para **59,5051°** para
+> manter a razão projetada em `1,479`. Esse número
+> transfere somente a proporção vertical observada; não copia o azimute isométrico nem
+> as diagonais do chão do KaM. No painel Transform do Blender, essa elevação aparece
+> aproximadamente como **`Rotation X = 30,4949°`**, o complemento `90° − 59,5051°`;
+> não digitar `59,5051°` nesse campo, pois isso inverteria a calibração.
+>
+> **Portão de aparência da casa 3×2.** O render
+> `tmp/blender/reference/reference_house_test.png`, feito sem mover ou reenquadrar a
+> câmera, mede telhado = 109 px e parede = 74 px, razão `1,473` — diferença de cerca de
+> `0,4%` para a média `1,479` das duas capturas do KaM. A cena salva deixa os cubos
+> disponíveis no Outliner, mas o `F12` renderiza essa casa com duas águas, parede,
+> porta e janela em volume e cor chapada.
+>
+> **Projeção confirmada no código do KaM — `reyandme/kam_remake`, `master`, commit
+> `731a8a47a4a02fac3d20326fdfed0fba7d1f845b` (2026-09-25).** A leitura visual de que
+> o KaM seria isométrico estava errada: os sprites são oblíquos, mas o mapa é
+> ortogonal. Evidências verificadas no fonte:
+>
+> - `src/gui/KM_Viewport.pas:330-334`: `MapToScreen` calcula X somente a partir de
+>   `aMapLoc.X` e Y somente de `aMapLoc.Y`, ambos multiplicados pelo mesmo
+>   `ZoomedCellSizePX`; não existe mistura `(x-y)`/`(x+y)`.
+> - `src/gui/KM_InterfaceGame.pas:671-676`: a conversão inversa calcula X e Y
+>   separadamente; depois corrige apenas Y pela altura do terreno.
+> - `src/common/KM_Defaults.pas:13-14`: `CELL_SIZE_PX = 40`; a célula é quadrada, e
+>   `CELL_HEIGHT_DIV` controla somente o relevo pseudo-3D.
+> - `src/render/KM_Render.pas:199-213`: o modo normal usa `glOrtho`.
+> - `src/render/KM_RenderTerrain.pas:802-856`: a estrada é um overlay por tile,
+>   escolhido por máscara dos quatro vizinhos cardinais e rotação.
+> - `src/render/KM_RenderTerrain.pas:522-536`: cada tile usa os vértices quadrados
+>   `(x-1,y-1)`, `(x-1,y)`, `(x,y)` e `(x,y-1)`, com eventual deslocamento vertical
+>   pelo relevo — nunca um losango.
+> - `src/render/KM_RenderPool.pas:760-792,1996-2020`: prédios usam X/Y e pivô sem
+>   mistura de eixos; a ordenação por `Feet.Y` é painter's order para sprites altos,
+>   não projeção isométrica.
+>
+> **Conclusão canônica:** o KaM é grid/câmera ortogonal 2D com tiles quadrados,
+> relevo pseudo-3D e sprites pré-desenhados em perspectiva oblíqua. Logo, o grid
+> quadrado e a base sem losango do Piancó estão alinhados ao código real do KaM.
+> Os **56° não são “a câmera do KaM”**: são somente a calibração artística da cena
+> Blender para reproduzir a razão telhado/parede medida nos sprites.
+>
+> A cena tem uma única luz no alto à esquerda. Seu vetor de sombra aponta para baixo à
+> direita, mas **a sombra projetada no chão não entra no passe principal do sprite**:
+> terreno e sombras pertencem a camadas separadas no jogo. O mundo usa intensidade
+> neutra mínima `0,06` somente para a fachada não cair a preto; não há segunda luz
+> direcional nem preenchimento capaz de apagar a modelagem da luz principal.
+>
+> A câmera não calibra o transbordamento: ela fixa somente projeção e a régua de
+> `64 px = 1 tile`. O transbordamento pertence a cada prédio e é registrado pelo
+> tamanho do PNG mais seu ponto de assentamento no manifesto.
 
 **A regra.** A base do prédio é um **retângulo com arestas horizontais**, alinhado ao
 grid quadrado. A câmera fica alta e à frente, olhando para baixo, e enxerga a fachada
@@ -59,10 +191,9 @@ Esse defeito é o **BUG-H** no `BUGS.md`, com severidade `feio`. A correção é
 não código: refazer as duas imagens do armazém (seção 4). Em conversa antiga ele aparece como
 "BUG-F", mas esse id é de outro bug, já corrigido. Use BUG-H.
 
-**A referência aprovada** é `assets/base/woodcutters/` (Casa do Lenhador), em especial
-`casa_lenhador_03_completo.png`. O prompt que a gerou está em
-`docs/arte-prompt-higgsfield.md`. A frase-chave da câmera é
-"tabletop model photographed from a step ladder".
+**A referência de câmera aprovada** é somente
+`assets/source/blender/reference_scene.blend`. A Casa do Lenhador permanece como arte
+histórica do projeto, mas não calibra projeção, transbordamento ou escala.
 
 ---
 
@@ -70,28 +201,179 @@ não código: refazer as duas imagens do armazém (seção 4). Em conversa antig
 
 ### Tamanho e âncora
 
-> **ERRADO — correção do operador, 2026-09-26.** "Largura = `footprint[0] × 64`" faz o
-> prédio caber exato no footprint e parecer **pequeno**. O prédio **transborda** o
-> próprio footprint. A largura passa a ser `footprint × 64 × fator`, e **o fator espera
-> a medição do operador**. Até ela chegar, nenhum número novo vale, e nenhum foi
-> inventado aqui. Três lugares ainda aplicam a regra antiga e mudam juntos quando o
-> fator vier:
-> - o derivador (`LARGURA_ALVO` em `tools/derivar-sprites.js`);
-> - o desenho do prédio, `WorldScene.desenharSprite`, que escala o sprite para a largura
->   do footprint;
-> - a regra `tamanho[0] = footprint[0] × 64` da F17f (lista abaixo).
->
-> Terreno, recurso, vegetação e unidade **não** usam essa regra (item F-SPR do
-> `BUILD_PLAN.md`): tile é redimensionado para 64 × 64, e sprite sai no `tamanho` do
-> arquivo.
+**Regra canônica de escala e transbordo (2026-09-27).** O footprint é regra da
+simulação; o canvas é regra da arte. A base do prédio assenta no retângulo do lote,
+mas telhado, beiral, varanda e escada podem passar livremente por cima, por baixo e
+pelos lados. O que fixa o tamanho é a régua humana na escala `64 px = 1 tile`, nunca
+encaixar o alfa num canvas `footprint × 64`.
 
-- **A largura manda.** A largura do sprite derivado é `footprint[0] × 64` px. Um prédio
-  de 3 tiles de largura tem 192 px. Um de 4 tem 256 px.
-- **A altura é livre.** Ela é o que a arte der, na mesma escala. Não estique para
-  quadrado.
-- **Âncora na borda inferior, no centro:** `anchor [0.5, 1]`. A borda de baixo do PNG
-  encosta na borda de baixo do footprint.
+- O derivador preserva a escala canônica e recorta o canvas comum dos estados sem
+  redimensionar o conteúdo.
+- `tamanho` é a dimensão real do PNG e pode exceder o footprint em qualquer eixo.
+- `anchor` é o **ponto de assentamento dentro do PNG** que cai no centro da borda
+  inferior do lote. `[0.5,1]` só vale quando nada passa abaixo nem desloca a base;
+  com escada inferior, `anchor.y < 1`.
+- O render escala pela régua (`footprint lógico × 64`), não por `tamanho[0]`; portanto
+  aumentar o canvas não encolhe o prédio de volta ao lote.
+- Terreno continua 64×64 e não usa esta regra. Vegetação, recursos e unidades seguem
+  seus próprios tamanhos e âncoras do manifesto.
+
+**Medição do KaM instalado.** `houses.rx` guarda tamanho e pivot por sprite, e
+`KM_ResHouses.pas:260-261,400-401,510-511` guarda o `PlanYX` do footprint. Isso
+confirma que não há fator global: o posicionamento é individual e assimétrico. No
+lenhador 3×2, o bitmap completo é 124×91 px, pivot `(-62,-60)` e transborda cerca de
+`0,55 tile` à esquerda; à direita termina `0,45 tile` antes da borda. No quartel
+4×4, o bitmap é 232×191 px e excede a largura do lote em `1,80 tile` no total,
+concentrado à esquerda pelo pivot `(-92,-155)`. A leitura visual anteriormente
+registrada — `0,65 tile` acima no 3×2 e `0,9 tile` no 4×4 — mede o alfa visível contra
+o lote na captura e continua útil como régua artística. Já o pacote não sustenta um
+transbordo inferior comum: nesses dois exemplos o bitmap termina antes da borda sul.
+Logo, transbordo para baixo é permitido quando a arquitetura pede (escada, rampa),
+mas é dado por prédio, não percentual copiado do KaM.
+
+**Compressão vertical medida no KaM instalado (2026-09-27).** A régua é
+`altura total do bitmap / (SizeY do footprint × 40 px)`. O leitor foi conferido
+contra o fonte `reyandme/kam_remake` no commit
+`26b3c8619135978132be3c396459f453736f4f5f`: `KM_ResSpritesEdit.pas:651-685` lê de `houses.rx`
+`Size`, `Pivot` e pixels; `KM_ResHouses.pas:23-43,193-199,902-920` liga o
+`StonePic` e o `SizeX×SizeY` de cada registro de `houses.dat` ao tipo do prédio.
+O índice `StonePic` do DAT é zero-based e corresponde ao slot `+1` do RX.
+
+| Prédio KaM | Footprint | Bitmap | Altura / footprint Y |
+|---|---:|---:|---:|
+| butchers | 3×3 | 148×108 | 0,9000 |
+| armorsmithy | 4×3 | 154×123 | 1,0250 |
+| farm | 4×3 | 175×124 | 1,0333 |
+| metallurgists | 3×3 | 145×127 | 1,0583 |
+| armoryworkshop | 3×3 | 147×129 | 1,0750 |
+| bakery | 3×3 | 140×131 | 1,0917 |
+| stables | 4×3 | 186×135 | 1,1250 |
+| storehouse | 3×3 | 144×136 | 1,1333 |
+| quarry | 3×2 | 148×91 | 1,1375 |
+| woodcutters | 3×2 | 124×91 | 1,1375 |
+| swinefarm | 4×3 | 187×139 | 1,1583 |
+| schoolhouse | 3×3 | 171×142 | 1,1833 |
+| inn | 4×3 | 171×143 | 1,1917 |
+| barracks | 4×4 | 232×191 | 1,1938 |
+| coalmine | 3×2 | 157×97 | 1,2125 |
+| weaponsworkshop | 4×2 | 161×98 | 1,2250 |
+| sawmill | 4×2 | 156×101 | 1,2625 |
+| ironsmithy | 4×2 | 146×103 | 1,2875 |
+| vineyard | 3×2 | 163×103 | 1,2875 |
+| weaponsmithy | 4×2 | 150×107 | 1,3375 |
+| tannery | 3×2 | 143×109 | 1,3625 |
+| mill | 3×2 | 111×113 | 1,4125 |
+| watchtower | 2×2 | 109×139 | 1,7375 |
+| ironmine | 3×1 | 111×92 | 2,3000 |
+| goldmine | 2×1 | 97×92 | 2,3000 |
+
+Nos 22 prédios econômicos comuns, excluídas as silhuetas funcionais da torre e
+das duas minas, a faixa é `0,9000–1,4125` e a mediana é `1,1708`. Os dois casos
+diretamente comparáveis ao Piancó são mais estreitos: storehouse `1,1333` e
+schoolhouse `1,1833`. Portanto **transbordar continua permitido, mas não é uma
+meta**. Para prédio comum, o primeiro portão é altura total próxima de `1,17 ×`
+a altura do footprint, com faixa ordinária até `1,20 ×`; passar disso exige um
+objeto funcional que justifique a silhueta, como torre, moinho ou boca de mina.
+Em footprint 3×3 do Piancó, isso dá referência de `225 px` e teto ordinário de
+`230 px`, antes de exceção documentada.
+
+Essa compressão é de **modelagem caricatural**, não de câmera: manter a câmera
+canônica e achatar telhado, escada, fundação e, quando necessário, o eixo Z do
+volume. A relação interna telhado/parede `1,479` continua válida apenas para a
+tipologia térrea de duas águas na qual foi medida. Ela pode ser preservada
+enquanto o envelope total diminui, porque escada, embasamento, beiral e alturas
+arquitetônicas são variáveis diferentes; não é regra universal para sobrado nem
+telhado de quatro águas.
+
+**Prova visual da compressão — Storehouse e Pedreira (2026-09-27).** O Storehouse
+3×3 passou de `214×328` (`1,708 ×` a altura do footprint) para `214×254`
+(`1,323 ×`), com compressão vertical `0,68`, telhado raso e acesso curto. O
+primeiro teste em `1,208 ×` foi rejeitado na captura do jogo: fazia o sobrado ler
+como térreo e ficar pequeno diante da Casa do Coronel. Logo, sobrado comprime
+cobertura e acesso, mas preserva a leitura dos pavimentos; `1,20 ×` é portão de
+prédio térreo comum, não teto universal. A
+Pedreira 3×2 passou de `192×165` (`1,289 ×`) para `192×151` (`1,180 ×`), com
+compressão vertical `0,76`. A câmera e o footprint não mudaram. Nos dois casos,
+`madeira` e `completo` agora vêm do mesmo modelo, câmera, recorte e ponto de
+assentamento; a obra troca fechamento e acabamento por armação, sem inventar
+outra arquitetura. Renders e comparações intermediárias ficam exclusivamente
+em `tmp/blender/`; somente `.blend` canônico e derivados aprovados entram em
+`assets/`.
 - **Fundo transparente.** Nada de chão no sprite (seção 5).
+
+### F-ESC — revogada como limite de canvas
+
+A regra antiga `altura ≈ 1,0 × largura` e a exceção `1,40` da Casa do Coronel
+misturavam estatura arquitetônica com tamanho de arquivo; ficam revogadas. A conta
+humana `3,5 / 2,5 = 1,40` continua descrevendo a altura relativa do sobrado, mas não
+define canvas nem teto. Para a Casa do Coronel, a cena canônica usa escala uniforme
+`0,90` em torno do piso e produz `214×291 px` a 64 px/tile. Seu assentamento é
+`[0.5,0.843]`: a base cai no lote 3×3 e a escada
+transborda abaixo dele. Os estados `madeira` e `completo` usam exatamente o mesmo
+recorte. A compensação local de fachada é `-10°`: ela neutraliza o azimute da câmera
+para esta fachada ler de frente, sem alterar a câmera canônica dos 28 prédios.
+
+### Pipeline híbrido — Blender → pintura → derivação
+
+O Blender é a fonte de verdade de geometria. A pintura nunca corrige volume: recebe
+um volume já aprovado e só resolve superfície.
+
+**1. Blender — base estrutural.** Cada prédio nasce de
+`assets/source/blender/reference_scene.blend`, mantendo câmera ortográfica, escala,
+luz e unidade. O passe principal é RGBA transparente, sem terreno nem sombra lançada
+fora do prédio. Além do render de derivação a 64 px/tile, produza uma base de pintura
+com pelo menos o dobro da resolução linear; a Casa do Coronel usa
+`schoolhouse_paint_base_1024.png`, 128 px por tile. Essa sobra dá pixels para telha,
+taipa, contorno e desgaste antes da redução final.
+
+- Sombra de contato no chão, quando necessária, sai em passe separado e nunca é
+  incorporada ao sprite principal. A sombra sob beiral e alpendre pertence ao prédio e
+  fica no passe principal.
+- `Z/depth` e normal de câmera são passes auxiliares úteis para máscara, conferência de
+  planos e futuras ferramentas que aceitem condicionamento; não substituem o RGBA e
+  não são obrigatórios para a primeira repintura.
+- Salve a cena, o RGBA grande e o render cru derivado. Isso permite repetir a pintura
+  sem recalibrar câmera ou modelar de novo.
+
+**2. Pintura — edição restrita.** A ferramenta preferida é o `imagegen` nativo em
+modo de edição com duas entradas: render Blender como **alvo de edição** e um asset
+canônico do Piancó como **referência somente de estilo**. Para a Casa do Coronel, a
+referência é `assets/base/woodcutters/casa_lenhador_03_completo.png`.
+
+A liberdade é **baixa**: pode acrescentar contorno marrom-escuro, desenho de telha,
+textura de taipa e cal, veio de madeira, variação cromática, poeira e sujeira do sertão
+e sombra sob o beiral. Não pode alterar silhueta, câmera, azimute, proporção, posição de
+telhado, portas, janelas, postes, varanda, escada ou ponto de assentamento. O prompt
+repete essas invariantes. Mesmo assim, gerador de imagem não é transformação
+determinística: se redesenhar arquitetura ou mover alfa, a saída é reprovada, não
+"corrigida" mudando escala.
+
+Portão antes de promover: sobreponha o alfa pintado ao render Blender e compare
+silhueta, largura, altura e assentamento; depois veja lado a lado com um prédio
+canônico sobre terreno real. A geração original fica em `assets/base/<id>/`; candidata
+reprovada ou ainda não aprovada não entra no manifesto.
+
+**3. Derivação.** Recorte todos os estados pela mesma caixa, preserve a régua de
+64 px/tile e o ponto de assentamento calculado pelo Blender, e reduza a pintura grande
+uma única vez com filtro de alta qualidade. O derivador não encaixa no footprint, não
+recalcula proporção e não recentraliza cada estado separadamente. Só depois do portão
+visual o PNG pintado substitui o cru em `assets/sprites/<id>/` e o manifesto registra
+dimensão, `anchor`, base e origem.
+
+**Prova da Casa do Coronel, 2026-09-27.** A primeira candidata está em
+`assets/base/schoolhouse/schoolhouse_painted_candidate.png`; a derivação de teste fica
+em `tmp/blender/schoolhouse/`; e a comparação com
+o lenhador em `screenshots/CORONEL-paint-test-side-by-side.png`. Aprovada pelo operador
+como candidata a testar na tela, ela passou a alimentar o estado `completo`; o portão
+final continua sendo a captura no jogo ao lado do lenhador e das unidades.
+
+**Revisão premium e de escala, 2026-09-27.** O modelo foi reduzido uniformemente a
+`90%`, sem alterar a câmera ortográfica, o azimute `10°` nem as proporções internas.
+Isso reduz o transbordo do telhado e da escada, mantendo o sobrado maior que uma casa
+térrea. A base de pintura aprovada é
+`assets/base/schoolhouse/schoolhouse_painted_premium_v2.png`, repintada com materiais
+mais realistas e leitura próxima de um render 3D; o derivado consumido pelo jogo mede
+`214×291 px`.
 
 ### Onde fica cada arquivo
 
@@ -807,3 +1089,19 @@ de item próprio no `BUILD_PLAN.md` antes de código:
 - o carregador levando pedra até um tile de estrada, e não até uma porta;
 - o obreiro esperando material no tile;
 - o pescador na margem, a um tile da água.
+### Schoolhouse compacta — cobertura e acesso (2026-09-27)
+
+A `schoolhouse` confirma a regra de caricatura de RTS: **não comprimir o
+sobrado inteiro**. Os dois pavimentos permanecem legíveis; a compressão ocorre
+no telhado de quatro águas e no acesso. A cobertura **não é escalada nem
+achatada**: remove-se uma faixa interna de cada água e reúnem-se as bordas,
+preservando tamanho das telhas, inclinação visual, cumeeira, diagonais e
+beiral. A escada passa a ser um acesso curto,
+recolhido ao piso do alpendre, sem ocupar visualmente o tile da rua.
+
+O envelope final é `214x240 px` para footprint `3x3` (`192x192 px`). O ponto de
+assentamento é `[0.5, 0.875]`; ele ancora o piso do alpendre, enquanto o acesso
+compacto pode aparecer abaixo sem deslocar a base do prédio. `madeira` e
+`completo` usam o mesmo modelo, câmera e envelope Blender. A pintura só troca
+superfície — telha, taipa, madeira, pedra, contorno e desgaste — e não pode
+reabrir o telhado nem alongar a escada.

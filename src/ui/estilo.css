@@ -189,15 +189,13 @@ button[aria-disabled="true"] {
 #minimapa .aviso-tempo[hidden] { display: none; }
 
 /* 4. os recursos: uma tabua escura por recurso, dois rebites cada */
-#hud {
-  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px;
-}
+#hud { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
 #hud .campo[data-recurso="populacao"] { grid-column: 1 / -1; }
 #hud .campo {
-  height: 19px; min-width: 0; display: flex; align-items: center; gap: 4px; padding: 0 8px 0 9px;
-  color: var(--papel);
-  background: transparent url('../../assets/sprites/ui/resource-plank.png') center / 100% 100% no-repeat;
-  border: 0; box-shadow: none;
+  min-width: 0; min-height: 46px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 1px; padding: 5px;
+  color: var(--tinta);
+  background: var(--papel-escuro);
+  border: 2px solid var(--madeira); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
 }
 /* Pictogramas raster de xilogravura, transparentes sobre a tabua escura. */
 #hud .campo::before {
@@ -268,10 +266,10 @@ button[aria-disabled="true"] {
  content: ''; width: 25px; height: 25px; display: block;
  background: transparent center / contain no-repeat;
 }
-#abas button[data-aba="construir"]::before { background-image: url('../../assets/sprites/ui/tab-construir.png'); }
-#abas button[data-aba="distribuicao"]::before { background-image: url('../../assets/sprites/ui/tab-distribuicao.png'); }
-#abas button[data-aba="estatisticas"]::before { background-image: url('../../assets/sprites/ui/tab-estatisticas.png'); }
-#abas button[data-aba="opcoes"]::before { background-image: url('../../assets/sprites/ui/tab-opcoes.png'); }
+#abas button[data-aba="construir"]::before { background-image: url('../../assets/sprites/ui/tab-construir-premium.png'); }
+#abas button[data-aba="distribuicao"]::before { background-image: url('../../assets/sprites/ui/tab-distribuicao-premium.png'); }
+#abas button[data-aba="estatisticas"]::before { background-image: url('../../assets/sprites/ui/tab-estatisticas-premium.png'); }
+#abas button[data-aba="opcoes"]::before { background-image: url('../../assets/sprites/ui/tab-opcoes-premium.png'); }
 #abas button[aria-pressed="true"] {
   background: transparent url('../../assets/sprites/ui/tab-active.png') center / 100% 100% no-repeat;
   box-shadow: inset 0 -2px 0 var(--terracota);
@@ -293,40 +291,36 @@ button[aria-disabled="true"] {
   flex: 1 1 0; min-height: 0; overflow-y: auto; overflow-x: hidden;
   scrollbar-gutter: stable;
   padding: 8px 3px 8px 6px;
-  background: var(--pergaminho) url('../../assets/sprites/ui/panel-frame.png') center / 100% 100% no-repeat;
-  border: 0;
-  box-shadow: none;
+  /* O corpo e papel; madeira pertence a moldura externa da barra. A imagem
+     anterior trazia sarrafos para dentro da area rolavel e competia com
+     titulos, cadeados e miniaturas. */
+  background-color: #f0d9aa;
+  background-image: var(--grao);
+  border: 2px solid var(--terra-queimada);
+  box-shadow: inset 0 0 0 2px rgba(255, 244, 211, 0.38);
 }
+#faixa-alertas { display: none; }
 /* Com a grade, o pe do corpo e do cartao sticky: rolar ate um icone (foco pelo
    Tab, scrollIntoView) tem de parar ACIMA dele, nao por baixo. A altura compacta
    e estavel impede que o cartao cresca sobre o ultimo icone durante o hover;
    texto maior que esse espaco rola no miolo. */
-body[data-corpo="grade"] #corpo-aba { --cartao-teto: 80px; scroll-padding-bottom: var(--cartao-teto); }
 /* A sombra do pe: ha mais embaixo (decisao do operador — o jogador nao sabe que
    o corpo rola). Some quando a rolagem chega ao fim; quem liga e `ui/barra.ts`.
    Um bloco que gruda no pe da rolagem e nao ocupa lugar (margem negativa). Na
    grade, quem esta no pe e o cartao: a mesma faixa, colada no topo dele. */
-#corpo-aba::after,
-#menu-build .cartao::before {
+#corpo-aba::after {
   content: ''; display: block; height: 22px; pointer-events: none; visibility: hidden;
   background: linear-gradient(to bottom, rgba(58, 40, 25, 0), rgba(58, 40, 25, 0.7));
 }
 #corpo-aba::after { position: sticky; bottom: -8px; z-index: 2; margin-top: -22px; }
-#menu-build .cartao::before { position: absolute; left: -2px; right: -2px; bottom: calc(100% + 5px); }
-body:not([data-corpo="grade"]) #corpo-aba[data-ha-mais]::after,
-body[data-corpo="grade"] #corpo-aba[data-ha-mais] #menu-build .cartao::before { visibility: visible; }
+#corpo-aba[data-ha-mais]::after { visibility: visible; }
 body:not([data-corpo="grade"]) #menu-build,
 body:not([data-corpo="painel"]) #painel-predio,
 body:not([data-corpo="opcoes"]) #opcoes { display: none; }
 #opcoes { display: flex; flex-direction: column; gap: 8px; padding: 4px; }
 
 /* 8. a marca: placa de pergaminho com o lema, cortada na borda da barra */
-#marca {
-  height: 70px; display: grid; place-items: center; overflow: hidden;
-  background: transparent url('../../assets/sprites/ui/footer-motto.png') center / 100% 100% no-repeat;
-  border: 0;
-  box-shadow: none;
-}
+#marca { display: none; }
 #marca .lema {
   position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%);
 }
@@ -384,7 +378,7 @@ body:not([data-corpo="opcoes"]) #opcoes { display: none; }
    uma faixa por grupo com a regua gravada entre elas, e o cartao no pe. Cada
    celula e uma placa de pergaminho, como as da referencia. */
 #menu-build .grade {
-  display: grid; grid-template-columns: repeat(5, 40px); gap: 7px 7px;
+  display: grid; grid-template-columns: repeat(4, 52px); gap: 8px 7px;
   justify-content: start;
 }
 #menu-build .regua {
@@ -396,7 +390,7 @@ body:not([data-corpo="opcoes"]) #opcoes { display: none; }
 #menu-build .regua[data-grupo=""] { display: none; }
 #menu-build .icone {
   position: relative;
-  width: 40px; height: 40px; box-sizing: border-box; padding: 0;
+  width: 52px; height: 52px; box-sizing: border-box; padding: 0;
   border: 0; background: var(--papel) url('../../assets/sprites/ui/build-icon-frame.png') center / 100% 100% no-repeat;
   outline: 1px solid var(--madeira-clara); outline-offset: -4px;
   display: grid; place-items: center;
@@ -404,7 +398,7 @@ body:not([data-corpo="opcoes"]) #opcoes { display: none; }
 }
 #menu-build .icone:hover { filter: brightness(1.08); }
 /* o retrato: a imagem do predio, derivada da base (72 px, mostrada a 34) */
-#menu-build .retrato { display: block; width: 34px; height: 34px; object-fit: contain; pointer-events: none; }
+#menu-build .retrato { display: block; width: 46px; height: 46px; object-fit: contain; pointer-events: none; }
 /* bloqueado: CADEADO sobre o retrato (GDD §7.2, decisao do operador), nao cinza.
    O "requer X" continua no cartao. */
 #menu-build .icone[aria-disabled="true"]::after {
@@ -463,18 +457,21 @@ body:not([data-corpo="opcoes"]) #opcoes { display: none; }
   cursor: not-allowed;
   background-image: url('../../assets/sprites/ui/locked-icon-frame.png');
 }
-/* o cartao: nome, custo e tamanho, requisito, descricao. Gruda no PE do corpo
-   enquanto a grade rola: e o que diz o que esta sob o mouse. */
+/* O contexto vira um balao ao lado do icone. Ele nao ocupa altura da grade. */
 #menu-build .cartao {
-  position: sticky; bottom: -8px; z-index: 1;
-  margin-top: auto; padding: 6px 8px; box-sizing: border-box;
-  height: var(--cartao-teto); min-height: var(--cartao-teto); max-height: var(--cartao-teto);
+  position: fixed; z-index: 20;
+  width: 220px; max-height: min(160px, calc(100vh - 16px)); padding: 8px 10px; box-sizing: border-box;
   display: flex; flex-direction: column;
   background: var(--papel); background-image: var(--grao);
-  border: 2px solid var(--tinta); box-shadow: 0 -3px 0 var(--pergaminho);
+  border: 2px solid var(--tinta); border-radius: 4px; box-shadow: 4px 5px 0 rgba(35, 23, 15, 0.55);
+  pointer-events: none;
 }
-/* o texto rola no MIOLO, nao no cartao: `overflow` no cartao cortaria a sombra
-   do pe, que e um `::before` pendurado acima dele */
+#menu-build .cartao[hidden] { display: none; }
+#menu-build .cartao::before {
+  content: ''; position: absolute; left: -8px; top: 14px; width: 12px; height: 12px;
+  background: var(--papel); border-left: 2px solid var(--tinta); border-bottom: 2px solid var(--tinta);
+  transform: rotate(45deg);
+}
 #menu-build .cartao .miolo { min-height: 0; overflow-y: auto; }
 #menu-build .cartao h3 { margin: 0 0 2px; font-size: 14px; text-transform: none; letter-spacing: 0.02em; color: var(--tinta); }
 #menu-build .cartao .custo { font-size: 12px; color: var(--tinta-fraca); }
@@ -572,3 +569,104 @@ body:not([data-corpo="opcoes"]) #opcoes { display: none; }
   background: var(--terracota); color: var(--papel); border-color: var(--tinta);
 }
 #painel-predio button.demolir:hover { background: var(--terra-queimada); }
+
+/* Abas de cordel: pictogramas de alto contraste, sem a aparência de
+ * thumbnail. Esta regra fica por último porque substitui a pele raster antiga. */
+#abas button {
+  height: 58px;
+  min-width: 0;
+  padding: 3px 1px 2px;
+  display: grid;
+  grid-template-rows: 39px 1fr;
+  align-items: center;
+  justify-items: center;
+  background: var(--papel);
+  border: 2px solid transparent;
+  box-shadow: none;
+  color: var(--tinta);
+  font: 700 8px/1 var(--fonte-corpo);
+  letter-spacing: -0.04em;
+}
+#abas button::before {
+  content: '';
+  display: block;
+  width: 38px;
+  height: 38px;
+  background: transparent center / contain no-repeat;
+}
+#abas button[data-aba="construir"]::before { background-image: url('../../assets/sprites/ui/tab-construir-premium.png'); }
+#abas button[data-aba="distribuicao"]::before { background-image: url('../../assets/sprites/ui/tab-distribuicao-premium.png'); }
+#abas button[data-aba="estatisticas"]::before { background-image: url('../../assets/sprites/ui/tab-estatisticas-premium.png'); }
+#abas button[data-aba="opcoes"]::before { background-image: url('../../assets/sprites/ui/tab-opcoes-premium.png'); }
+#abas button:hover:not([aria-disabled="true"]) { border-color: #8c4a25; }
+#abas button[aria-pressed="true"] {
+  background: var(--terracota);
+  border-color: #8c4a25;
+  box-shadow: inset 0 0 0 1px var(--tinta);
+}
+#abas button[aria-disabled="true"] { opacity: 1; background: var(--papel); }
+#abas button[aria-disabled="true"]::before { opacity: 0.35; }
+#abas button[aria-disabled="true"]:hover { border-color: transparent; }
+
+/* Estatísticas recebe a informação que antes disputava atenção com a grade. */
+body:not([data-corpo="estatisticas"]) #estatisticas { display: none; }
+#estatisticas { display: flex; flex-direction: column; gap: 10px; padding: 5px; }
+#estatisticas h2 {
+  margin: 0;
+  padding-bottom: 5px;
+  border-bottom: 2px solid var(--madeira);
+  color: var(--terra-queimada);
+  font: 13px/1 var(--fonte-display);
+  text-transform: uppercase;
+}
+#estatisticas #hud { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+#estatisticas #hud .campo {
+  min-width: 0;
+  min-height: 46px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 1px;
+  padding: 5px;
+  color: var(--tinta);
+  background: var(--papel-escuro);
+  border: 2px solid var(--madeira);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+}
+#estatisticas #hud .campo::before { content: none; }
+#estatisticas #hud .rotulo { flex: none; color: var(--terra-queimada); font-size: 9px; text-align: center; }
+#estatisticas #hud .valor { color: var(--tinta); font: 16px/1 var(--fonte-display); font-variant-numeric: tabular-nums; }
+
+/* Artes finais das quatro abas. A moldura preserva a madeira pesada da marca
+ * Piancó; o aro terracota é exclusivamente o retorno de hover/ativo. */
+#abas { gap: 4px; padding: 5px; background: #4b2d1a var(--veio-tabua); }
+#abas button {
+  height: 66px;
+  grid-template-rows: 46px 1fr;
+  background: #ead3a1 var(--grao);
+  border: 3px solid #4b2d1a;
+  outline: 1px solid #ba7a3c;
+  outline-offset: -5px;
+  box-shadow: inset 0 0 0 1px #1f130c, 1px 2px 0 #25170f;
+}
+#abas button::before { width: 44px; height: 44px; }
+#abas button[data-aba="construir"]::before { background-image: url('../../assets/sprites/ui/tab-construir-premium.png'); }
+#abas button[data-aba="distribuicao"]::before { background-image: url('../../assets/sprites/ui/tab-distribuicao-premium.png'); }
+#abas button[data-aba="estatisticas"]::before { background-image: url('../../assets/sprites/ui/tab-estatisticas-premium.png'); }
+#abas button[data-aba="opcoes"]::before { background-image: url('../../assets/sprites/ui/tab-opcoes-premium.png'); }
+#abas button:hover:not([aria-disabled="true"]) {
+  border-color: #8c4a25;
+  outline: 2px solid #8c4a25;
+  outline-offset: -3px;
+  box-shadow: inset 0 0 0 1px #f4ca82, 0 0 0 2px #8c4a25;
+}
+#abas button[aria-pressed="true"] {
+  background: #d36b2d;
+  border-color: #8c4a25;
+  outline: 2px solid #8c4a25;
+  outline-offset: -3px;
+  box-shadow: inset 0 0 0 1px #f5bd69, 0 0 0 2px #8c4a25;
+}
+#abas button[aria-disabled="true"] { background: #ead3a1 var(--grao); }
+#abas button[aria-disabled="true"]::before { opacity: 0.35; }

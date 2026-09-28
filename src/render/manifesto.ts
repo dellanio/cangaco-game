@@ -28,13 +28,11 @@ export interface EntradaDeAsset {
   readonly tipo: 'predio';
   /** Em tiles, igual ao `tamanho` de `data/buildings.json`. */
   readonly footprint: readonly [number, number];
-  /**
-   * Em px, do arquivo DERIVADO. A largura e sempre `footprint[0] * tilePx`; a
-   * altura e o que a arte der — a fonte isometrica e 3:2, e forcar um quadrado
-   * a esticaria 1,5x na vertical.
-   */
+  /** Em px, do arquivo DERIVADO na regua canonica de 64 px por tile. O canvas
+   * pode ser maior que o footprint: telhado, beiral e escada transbordam. */
   readonly tamanho: readonly [number, number];
-  /** `[0.5, 1]`: meio na horizontal, borda de BAIXO do footprint. */
+  /** Ponto normalizado do PNG que assenta no centro da borda inferior do lote.
+   * Nao e necessariamente `[0.5, 1]`: transbordo inferior exige `y < 1`. */
   readonly anchor: readonly [number, number];
   /** Estagio do render -> caminho do arquivo, relativo a `assets/`. */
   readonly estados: Readonly<Record<string, string>>;
