@@ -10432,3 +10432,52 @@ Plano: `docs/planos/2026-09-28-A4-F-ESC-completa.md`. Só `src/render/` e roteir
   de 192 (1,11), e a decisão de transbordo de largura foi "1,0 com exceção declarada".
   Ninguém acusa isso, porque o F17f só pede `≥`. Não mexi: decidir a exceção de largura
   é do operador (achado já registrado na fila 4).
+
+## 2026-09-28 (sessão autônoma, item 5) — F-CERCO-a2: a tropa ataca prédio, por ordem
+
+Plano: `docs/planos/2026-09-28-A5-F-CERCO-a2.md`. Só `src/sim/` e teste. Nenhum arquivo de
+render.
+
+**Verificado:**
+- **`AttackBuilding { unidades, predio }`** (`commands.ts`). O comando é recusado inteiro,
+  com o estado igual, nos casos: prédio inexistente, lista vazia, unidade inexistente,
+  unidade não militar, unidade de distância e prédio do próprio lado.
+- **`systems/cerco.ts`**:
+  - `indo_atacar` planeja até o anel do footprint (Chebyshev 1) e replaneja se o passo
+    foi bloqueado. Sem caminho, a unidade fica `ocioso`.
+  - `atacando` golpeia a cada `ataqueAPredio.ticksCadencia`, com
+    `hp = max(0, hp − danoCorpoACorpo)`. Com hp 0, o prédio sai por `semOPredio`, a
+    mesma função da demolição, agora exportada.
+  - Eventos: `building-attacked`, um por golpe, que o aceite consome; e
+    `building-demolished` com `devolvido: {}` e `armazem: null`, a perda declarada.
+- **`tick.ts`**: o sistema roda **antes** do `sanearTarefas`.
+- **`DadosDaFsm`** ganhou `alvo?` e `recarga?`, opcionais. O save não mudou de versão.
+- `tests/F-CERCO-a2-ataque.test.ts`, 9 testes, verdes:
+  - (1) três soldados, alvo de 550 HP: 275 golpes. O hp confere com `550 − 2·golpes` a
+    **cada tick**, o prédio cai no tick 766 e some, e as invariantes do JobBoard valem
+    a cada tick. O mesmo soldado golpeia de 8 em 8 ticks.
+  - (2) encostado 600 ticks sem ordem: nenhum golpe, e o hp fica igual.
+  - (3) obra com h = 37: 19 golpes, contra 275 do completo. Obra com h = 0: 1 golpe.
+  - (4) ordem contra o próprio armazém: recusada. `salvar` do tick com o comando é igual
+    ao sem o comando, byte a byte (fora a lista de eventos do tick). As outras cinco
+    recusas foram conferidas do mesmo jeito.
+  - (5) duas corridas dão o mesmo `salvar`.
+  - Pedreira inimiga ocupada: o pedreiro segurava tarefa antes da queda. Depois, ele
+    fica `ocioso`, sem tarefa presa, e as invariantes valem.
+  - Evidência: `test-output/F-CERCO-a2.json`.
+- **Sondas de mutação** (restauradas):
+  - dano +1 no código: (1) e (3) reprovam;
+  - cadência das unidades no lugar da própria: (1) reprova.
+
+**PARA REVISÃO:**
+- **A cadência real é 8 ticks, não os 12 do texto.** O dado diz 1,2 s na escala 1,0, e
+  a escala `combate` de `time.json` é 1,5. Os 12 ticks do item eram a leitura do KaM na
+  escala 1,0. A proporção com a cadência das unidades (0,5 s, 3 ticks) se mantém.
+- **Prédio destruído não devolve nada.** A demolição por comando continua devolvendo.
+- **Obra de hp 0 cai com 1 golpe.** ⌈0/2⌉ = 0 não descreve golpe.
+- **Obra atacada é martelada de novo pelo laborer**, porque o teto é o material entregue.
+  É o "vida = progresso − dano" do KaM.
+- **O `lado` ainda não filtra o JobBoard:** serf do jogador entregaria em prédio de lado 1.
+  Fica para quando o inimigo tiver economia (F28-IA).
+- **Unidade de distância é recusada** no `AttackBuilding` até o arqueiro existir (F28).
+  O dano de projétil (1) está no dado e sem leitor.

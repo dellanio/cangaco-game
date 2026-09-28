@@ -165,4 +165,17 @@ export type Command =
       readonly type: 'SetProductionQuota';
       readonly predio: string;
       readonly cota: Readonly<Record<string, number>>;
+    }
+  | {
+      /**
+       * F-CERCO-a2 — manda `unidades` (militares) atacarem o predio `predio`. A tropa
+       * anda ate encostar e golpeia na cadencia PROPRIA do golpe em predio
+       * (`combate.ataqueAPredio`), nunca sozinha: sem esta ordem nenhum soldado toca em
+       * predio (KaM, `gicArmyAttackHouse`). Recusado INTEIRO (`command-rejected`, o
+       * estado nao muda) se o predio nao existe, a lista e vazia, ou alguma unidade nao
+       * existe, nao e militar, atira a distancia ou e do mesmo lado do predio.
+       */
+      readonly type: 'AttackBuilding';
+      readonly unidades: readonly string[];
+      readonly predio: string;
     };

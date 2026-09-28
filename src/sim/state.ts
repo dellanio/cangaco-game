@@ -33,6 +33,16 @@ import { recursosIniciais } from './recursos';
  * semente e os mesmos comandos produzem os mesmos eventos, na mesma ordem.
  * O teste de determinismo compara o estado inteiro, `events` incluso.
  */
+/** F-CERCO-a2 — por que um `AttackBuilding` foi recusado. */
+export type MotivoDeRecusaDeAtaque =
+  | 'predio-inexistente'
+  | 'sem-unidades'
+  | 'unidade-inexistente'
+  | 'unidade-nao-militar'
+  /** Projetil em predio entra com o arqueiro (F28), nao aqui. */
+  | 'unidade-a-distancia'
+  | 'predio-do-proprio-lado';
+
 export type GameEvent =
   | { readonly type: 'tick-advanced'; readonly tick: number }
   /**
@@ -93,6 +103,27 @@ export type GameEvent =
       readonly command: 'SetProductionQuota';
       readonly predio: string;
       readonly motivo: MotivoDeRecusaDeCota;
+    }
+  | {
+      /** F-CERCO-a2 — `AttackBuilding` recusado INTEIRO; o estado nao mudou. `unidade`
+       *  e a primeira culpada, ou `null` quando o motivo e do predio ou da lista. */
+      readonly type: 'command-rejected';
+      readonly command: 'AttackBuilding';
+      readonly predio: string;
+      readonly unidade: string | null;
+      readonly motivo: MotivoDeRecusaDeAtaque;
+    }
+  | {
+      /**
+       * F-CERCO-a2 — um golpe de tropa em predio: `dano` saiu do `hp`, que ficou em
+       * `hp`. Um evento por golpe, e e por ele que o aceite conta os golpes
+       * ("tiram exatamente 2 x golpes").
+       */
+      readonly type: 'building-attacked';
+      readonly predio: string;
+      readonly unidade: string;
+      readonly dano: number;
+      readonly hp: number;
     }
   | {
       /** F-REPL-b — `SetBuildingMode` recusado; o estado nao mudou. Pedir o modo
@@ -1016,6 +1047,10 @@ export interface DadosDaFsm {
   readonly caminho?: readonly TileDeGrid[];
   readonly progresso?: number;
   readonly armazem?: string;
+  /** F-CERCO-a2 — o predio que a tropa recebeu ORDEM de atacar (`AttackBuilding`). */
+  readonly alvo?: string;
+  /** F-CERCO-a2 — ticks ate o proximo golpe no predio, na cadencia propria do dado. */
+  readonly recarga?: number;
 }
 
 export interface Unidade {

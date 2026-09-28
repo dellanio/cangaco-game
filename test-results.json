@@ -245,6 +245,9 @@
   "F-ESC-altura-pela-largura": {
     "passes": true
   },
+  "F-CERCO-a2-ataque": {
+    "passes": true
+  },
   "F-TR-a-textura-e-transicao": {
     "passes": true
   },

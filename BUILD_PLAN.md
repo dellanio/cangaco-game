@@ -5022,9 +5022,16 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
       jogo."* A versão 1 continua recusada.
     - Teste: `tests/F-CERCO-a1-lado.test.ts`. A herança é provada com uma escola de
       lado 1.
-  - **F-CERCO-a2 — o ataque.** Tudo o que está abaixo: comando, FSM, cadência, dano,
-    queda e os cinco aceites, intocados. O aceite *"ordem contra prédio do próprio
-    lado é recusada"* já tem o campo de que precisa.
+  - **F-CERCO-a2 — o ataque. ENTREGUE (2026-09-28, sessão autônoma; plano em
+    `docs/planos/2026-09-28-A5-F-CERCO-a2.md`).**
+    - O comando é `AttackBuilding` e o sistema é `systems/cerco.ts`
+      (`indo_atacar` → `atacando`). Ele roda antes do `sanearTarefas`.
+    - A queda usa `semOPredio` da demolição, sem devolução.
+    - Teste: `tests/F-CERCO-a2-ataque.test.ts`, com os cinco aceites mais o ocupante
+      solto.
+    - **A cadência é 8 ticks, não 12:** os 1,2 s do dado passam pela escala `combate`
+      de `time.json`, que é 1,5 hoje. A proporção com a cadência das unidades se mantém,
+      porque a mesma escala vale para as duas.
 - **Origem (decisão do operador, 2026-09-28)**: *"ele vem ANTES da F25 (Quartel), não só
   antes da F34. Sem ele o combate não tem objetivo — tropa mata tropa e a partida não
   acaba."* O que a VARREDURA-KAM leu no fonte está em `docs/varredura-kam.md`, frente 4.

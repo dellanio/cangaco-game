@@ -75,7 +75,10 @@ export function armazemDeDestino(
   return melhor === null ? null : melhor.id;
 }
 
-function semOPredio(predios: Colecao<Predio>, id: string): Colecao<Predio> {
+/** Tira o predio da colecao. Exportado desde a F-CERCO-a2: o predio que a tropa
+ *  derruba sai por aqui, o MESMO caminho do `DemolishBuilding` — e o saneamento do
+ *  mesmo tick que libera as tarefas e o ocupante, nos dois casos. */
+export function semOPredio(predios: Colecao<Predio>, id: string): Colecao<Predio> {
   const porId = { ...predios.porId };
   delete porId[id];
   return { porId, ordem: predios.ordem.filter((outro) => outro !== id) };

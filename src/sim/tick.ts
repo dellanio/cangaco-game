@@ -6,6 +6,7 @@ import { registrarConclusoes } from './desbloqueio';
 import { regenerar } from './recursos';
 import { aplicarPlaceBlueprint } from './systems/build';
 import { aplicarDemolishBuilding } from './systems/demolicao';
+import { aplicarAttackBuilding, sistemaDoCerco } from './systems/cerco';
 import { aplicarCancelTraining, aplicarEnqueueTraining, sistemaDasEscolas } from './systems/escolas';
 import { aplicarDemolishRoad, aplicarPlaceRoad } from './systems/estradas';
 import { aplicarPlowField, aplicarUnplanField } from './systems/campos';
@@ -105,6 +106,12 @@ export function step(
         events.push(...resultado.events);
         break;
       }
+      case 'AttackBuilding': {
+        const resultado = aplicarAttackBuilding(atual, command, dados);
+        atual = resultado.state;
+        events.push(...resultado.events);
+        break;
+      }
       default: {
         // Exaustividade: acrescentar um membro a `Command` sem tratar aqui
         // reprova o `typecheck` (este `never` deixa de compilar). Aqui `command` ja
@@ -126,7 +133,13 @@ export function step(
   // dos serfs e ANTES de `gerarTarefas` (F11c) — assim um nivelamento que termina neste tick
   // ja abre a tarefa de material no mesmo tick; so entao se cria o que falta, para que o que
   // um serf ou laborer libera seja recriado no mesmo tick.
-  const saneado = sanearTarefas(atual, dados);
+  // F-CERCO-a2: a tropa com ordem golpeia ANTES do saneamento, pelo mesmo motivo de o
+  // `DemolishBuilding` ser comando: o predio que cai neste tick tem as tarefas e o
+  // ocupante liberados por `sanearTarefas` neste MESMO tick, e nenhuma tarefa atravessa
+  // o fim do tick apontando para predio que nao existe.
+  const cerco = sistemaDoCerco(atual, dados);
+  events.push(...cerco.events);
+  const saneado = sanearTarefas(cerco.state, dados);
   // F20b: a fome ANTES das tres familias e depois do saneamento. Antes, porque o
   // civil que cruza o limiar neste tick sai para comer neste tick, e quem morre nao
   // deve ser passado por uma FSM de familia; depois, porque a tarefa que ela libera
