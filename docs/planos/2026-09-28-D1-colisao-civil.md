@@ -342,3 +342,41 @@ O operador decidiu:
   - a madeira continua chegando no último quarto da corrida.
 - A chave liga **só** no cenário do D1c, pelo `GameData` do teste. O `units.json` segue
   `false`, e o número volta para o operador antes de ligar.
+
+## 9. D-MOVIMENTO-01g e 01h: os dois empilhamentos, e a escolha de rota (decisões do operador, 2026-09-28)
+O operador decidiu:
+- **não fechar desligada**: medir a escolha de rota primeiro;
+- consertar **antes** de qualquer decisão os dois empilhamentos que sobraram:
+  - ociosos parados para sempre no mesmo tile;
+  - dois serfs andando juntos sob carga.
+
+### Correção do levantamento (§1.1), achada no fonte ao responder a pergunta 1
+- O +1,5 tile por unidade **não** é só do modo desvio. Em **toda** rota **por estrada**,
+  qualquer unidade no tile, andando ou parada, soma `AVOID_UNIT_PENALTY` = 15, ou 1,5 tile
+  (`KM_PathFinding.pas:278-306`, `FEAT_AVOID_UNITS_IN_PATH = True` em
+  `KM_Defaults.pas:85`).
+- Fora da estrada, só quem não está andando (`PathfindingShouldAvoid`).
+- O +20 de quem trabalha continua sendo só no modo desvio.
+- **O KaM não sorteia nem alterna rota.** A distribuição sai do custo de unidade na hora de
+  planejar. O cache de rota dele (12 rotas, `TryRouteFromCache`) reaproveita a rota só
+  quando ela passa pela origem.
+
+### D-MOVIMENTO-01g — os dois empilhamentos
+- Reproduzir cada um num teste antes de consertar.
+- Consertar a causa, não a invariante.
+
+### D-MOVIMENTO-01h — a escolha de rota (medida)
+- **Pergunta 2:** quanto custa o serf enxergar unidade como custo.
+  - Uma busca de rota por estrada com custo extra por unidade civil "fora" no tile, fora o
+    alvo, só nos pontos em que o serf **planeja a rota**: a saída para buscar, a perna
+    carregada e o replanejamento.
+  - A ordenação de tarefas do JobBoard continua na distância sem unidade, com cache: é onde
+    está o volume de buscas (§8).
+  - O custo por unidade vem do dado (`colisaoCivil.custoPorUnidade_tiles` 1,5), convertido
+    em ticks uma vez no carregamento.
+- **O que se mede:**
+  - buscas sem cache e nós expandidos, contra hoje;
+  - o D-MOVIMENTO-01e (aceite da colisão civil), uma rua contra duas, com a espera na
+    gaveta.
+- **Se duas ruas reduzirem a espera:** a colisão entra, e o 01e fecha com o número. **Se
+  não:** a colisão fecha desligada, e o GDD §6.4 volta a dizer que civis não colidem.

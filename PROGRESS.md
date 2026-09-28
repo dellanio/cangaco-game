@@ -12093,3 +12093,72 @@ de aquecimento:
   - F33 (minimapa)
 
   A decisão contou três abertos. Estes 7 estão abertos também.
+
+## 2026-09-28 — D-MOVIMENTO-01g (colisão civil: os dois empilhamentos residuais) e as 7 siglas migradas
+
+### Decisões do operador
+- **A colisão não fecha desligada:** mede-se a escolha de rota primeiro.
+- **Os dois empilhamentos se consertam antes de qualquer decisão.**
+- **As 7 features não iniciadas migram.** Estão em `docs/siglas.md`:
+  - B-TERRENO-01 (recentrar a vila)
+  - C-COMBATE-01 (formação)
+  - D-PRODUCAO-01 (ferro)
+  - D-TRANSPORTE-01 (toggles do armazém) e D-TRANSPORTE-02 (distribuição)
+  - D-TELA-01 (estatísticas) e D-TELA-02 (minimapa)
+
+### As causas (rastreadas tick a tick, com sondas)
+1. **Dois serfs andando no mesmo tile, sob carga.**
+   - Na porta de coleta, um serf entra pela troca forçada no tile de quem carrega. Um
+     segundo entra pela troca de frente, porque **os dois** ocupantes iam para o tile dele,
+     e aponta só para o primeiro.
+   - O primeiro sai, e sobram dois apontando para quem já foi.
+   - **A causa estava no desenho:** no KaM a troca é entre duas unidades, com uma por tile.
+     A minha aceitava entrar num tile com vários ocupantes.
+2. **Ociosos parados para sempre** (F13a, escola, na vila inicial).
+   - O `trocaCom` protegia o ocioso do empurrão.
+   - E seis ociosos cercavam a porta, então não havia vizinho livre.
+
+### O conserto
+- **A troca é de duas.** A troca de frente, a troca forçada e a saída da porta no teto só
+  acontecem com **exatamente um** ocupante. Com um par no tile, espera.
+- **Prioridade de quem passou da troca forçada.**
+  - Ninguém mais entra no tile que ele quer.
+  - Entre dois acima do teto, cede quem espera há menos tempo e, no empate, quem vem depois
+    em `unidades.ordem`.
+  - Motivo, medido: sem ela, numa porta de serraria com fluxo contínuo (carga 4×), pares
+    novos se formavam a cada vez que o anterior se desfazia, e um serf esperou 24 ticks.
+- **O `trocaCom` não protege ocioso.**
+- **Sem vizinho livre, o ocioso vai ao tile livre mais perto,** por busca em largura na caixa
+  `margemDoDesvio` que já existe no dado. **É o "empurrão a mais de um tile" que o operador
+  recusou na F20b (fome e morte), agora com um caso real**: a vila inicial, não uma fixture.
+  Sem ele, o recém-treinado ficava preso na escola.
+- **O teto da invariante virou `tetoDaEspera`:** a troca forçada mais o maior passo do dado
+  (20 + o maior passo diagonal a pé). É o tempo para o par que está no tile se desfazer,
+  derivado do dado.
+
+### Verificado
+- `npm run verify` verde com a chave desligada (1795 testes, 4 skipped que já existiam).
+- `tests/D-MOVIMENTO-01a-colisao-civil.test.ts`: 27 testes, 6 novos.
+- Sondas de mutação (evidência da sessão), todas reprovam:
+
+  | Mutação | Resultado |
+  |---|---|
+  | troca com vários ocupantes | reprova 1 |
+  | sem prioridade | reprova 2 |
+  | prioridade sem desempate | reprova 1 |
+  | `trocaCom` protege ocioso | reprova 1 |
+  | só vizinho, sem busca | reprova 1 |
+
+  Duas sondas passaram na primeira versão dos testes (o par se desfazia cedo demais, e o
+  desempate só age no empate). Os testes foram refeitos até elas reprovarem.
+- **Com a chave ligada:** F13a, C3 e F20b passam. O cenário da vila (D-MOVIMENTO-01e), em
+  cargas 1×, 2× e 4× com uma rua e com duas, 6000 ticks cada: **zero violações**, e a maior
+  espera foi de 22 ticks.
+
+### Limite conhecido (HIPÓTESE, não observada)
+- O teto "troca forçada + um passo" vale quando quem sai do par está livre. Uma **cadeia**
+  (quem sai do par está preso atrás de outro par) alonga a espera.
+- Um **ciclo** de dois pares, cada um querendo o tile do outro, com anfitriões que não se
+  movem, travaria. A invariante acusa esse caso: é o que ela existe para pegar.
+- Não aconteceu em nenhuma corrida. O teste de 20 000 ticks do D-MOVIMENTO-01e (aceite da
+  colisão civil) é a prova empírica que falta.

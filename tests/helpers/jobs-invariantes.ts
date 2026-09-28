@@ -20,7 +20,7 @@ import { insumosDoPredio } from '../../src/sim/insumo';
 import { receitaDoTipo, unidadesPorCiclo } from '../../src/sim/producao';
 import { ehPredioOcupavel } from '../../src/sim/ocupacao';
 import { predioReparavel } from '../../src/sim/reparo';
-import { ehCivilQueOcupa, POSICAO_DO_ESTADO } from '../../src/sim/colisao';
+import { ehCivilQueOcupa, POSICAO_DO_ESTADO, tetoDaEspera } from '../../src/sim/colisao';
 import { classeDaUnidade } from '../../src/sim/condicao';
 import { ehQuartelCompleto, ehRequisitoDoQuartel } from '../../src/sim/quartel';
 import { demandaDoTile, disponivelNaOrigem, vagaNoDestino } from '../../src/sim/reservas';
@@ -312,8 +312,8 @@ export function violacoesDeInvariantes(estado: GameState, dados: GameData = game
  * D-MOVIMENTO-01 — as invariantes da colisao civil. So com `colisaoCivil.ligada`: desligada, os civis se
  * atravessam como antes e nada disto vale.
  *  - todo estado de FSM tem classificacao (dentro ou fora);
- *  - nenhum civil espera alem do teto, `ticksTrocaForcada`, nem no passo nem na porta: e o
- *    "nao trava";
+ *  - nenhum civil espera alem do teto (`tetoDaEspera`: a troca forcada mais o maior passo),
+ *    nem no passo nem na porta: e o "nao trava";
  *  - num tile com k civis "fora", pelo menos k-1 dividem o tile por troca (`trocaCom` com
  *    alguem do mesmo tile). Qualquer outro empilhamento e defeito. Quem espera a porta
  *    (`saindo`) nao ocupa, e nao conta.
@@ -321,6 +321,8 @@ export function violacoesDeInvariantes(estado: GameState, dados: GameData = game
 export function violacoesDaColisao(estado: GameState, dados: GameData = gameData): string[] {
   const c = dados.movimento.colisaoCivil;
   if (!c.ligada) return [];
+  // D-MOVIMENTO-01g — troca forcada + o maior passo: o par que ocupa o tile dura um passo
+  const teto = tetoDaEspera(dados);
   const v: string[] = [];
   const porTile = new Map<string, string[]>();
   for (const id of estado.unidades.ordem) {
@@ -331,8 +333,8 @@ export function violacoesDaColisao(estado: GameState, dados: GameData = gameData
       continue;
     }
     if (classeDaUnidade(u.tipo, dados) !== 'civil') continue;
-    if ((u.fsmData.bloqueado ?? 0) > c.ticksTrocaForcada) v.push(`${id}: bloqueado ha ${u.fsmData.bloqueado} ticks (teto ${c.ticksTrocaForcada})`);
-    if ((u.saindo ?? 0) > c.ticksTrocaForcada) v.push(`${id}: esperando a porta ha ${u.saindo} ticks (teto ${c.ticksTrocaForcada})`);
+    if ((u.fsmData.bloqueado ?? 0) > teto) v.push(`${id}: bloqueado ha ${u.fsmData.bloqueado} ticks (teto ${teto})`);
+    if ((u.saindo ?? 0) > teto) v.push(`${id}: esperando a porta ha ${u.saindo} ticks (teto ${teto})`);
     if (!ehCivilQueOcupa(u, dados)) continue;
     const k = `${u.gx},${u.gy}`;
     porTile.set(k, [...(porTile.get(k) ?? []), id]);
