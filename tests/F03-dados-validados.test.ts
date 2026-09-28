@@ -93,6 +93,9 @@ const fixtures: Fixture[] = [
       };
       d.production.predios.wineyard.sai.wine = 2.0;
     } },
+  // LOTE3-c: a rocha nunca repoe; 4 por viagem deixaria 3 das 15 no tile para sempre
+  { nome: 'porViagem que nao divide o rendimento de quem nunca repoe', regraEsperada: 'producao/por-viagem-divide',
+    quebrar: (d) => { d.production.predios.quarry.colheita.fases.porViagem = 4; } },
   { nome: 'tipo de recurso declarado sem nenhum tile em mapa nenhum', regraEsperada: 'recurso/sem-instancia',
     quebrar: (d) => { d.resources.tipos.orvalho = { regime: 'porTempo', rendimentoPorTile: 1 }; } },
   // F18: o milho nao esta na lista esparsa de nenhum mapa — a camada dele e

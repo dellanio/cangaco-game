@@ -63,7 +63,9 @@ interface Passo {
  * mudo) — nao e afirmacao de desempenho (CLAUDE.md §8).
  */
 function trilhaDeUmCiclo(
-  inicial: GameState, predioId: string, unidadeId: string, mercadoria: string, limite = 400,
+  inicial: GameState, predioId: string, unidadeId: string, mercadoria: string,
+  // LOTE3-c: o teto e de seguranca e acompanha o ciclo do dado (a pedreira passou a 501)
+  limite = (gameData.producao.receitas.quarry?.ticksDoCiclo ?? 0) + 400,
 ): { readonly trilha: readonly Passo[]; readonly fim: GameState } {
   const trilha: Passo[] = [];
   let estado = inicial;

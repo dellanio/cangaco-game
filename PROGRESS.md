@@ -9381,3 +9381,65 @@ ativa. Uma corrida isolada limpa não prova a causa.
 - **Girar os totais:** decisão do operador, com a tabela no BALANCE_LOG.
 - **Os 3 por viagem do pedreiro do KaM:** absoluto, espera o operador.
 - **Render:** a nota da F-VIVO foi atualizada com `ticksDeDescanso` e a ordem nova.
+
+## 2026-09-27 (noite, 13) — LOTE3-c: o pedreiro traz 3 blocos por viagem
+
+**Decisão do operador:**
+- **3 por viagem no pedreiro:** implementar, mantendo a vazão declarada (ciclo ~500).
+  Pediu para medir se pedra por minuto muda, e a razão do pedreiro com vários tiles.
+- **Totais:** não giram ainda. Ele quer ver as razões com o pedreiro corrigido antes.
+  As razões medidas e a pergunta do pescador foram para o BALANCE_LOG.
+
+**Feito (verificado):**
+- **Dado:** quarry com `fases` 25,2 / 59,4 / 15,6 s (126 / 297 / 78 ticks, ciclo 501) e
+  `porViagem` 3. `sai.stone` 1,8 continua conferido. A nota da quarry foi reescrita.
+- **Zero linha de sim.** A mecânica de lote já existia (`unidadesPorCiclo`, claim com o
+  lote inteiro, consumo no depósito, `cabeNaSaida` com o lote inteiro). Só o dado mudou.
+- **Regra nova `producao/por-viagem-divide`** em `tools/data-rules.js`, com fixture em
+  `tests/F03-dados-validados.test.ts` (porViagem 4 reprova). Motivo: o claim exige o
+  lote inteiro, e um resto num tile que nunca repõe ficaria preso para sempre.
+- **Teste novo `tests/LOTE3-c-pedreiro-lote.test.ts`**, contra o pedreiro de 1 bloco
+  derivado do dado (fases / 3, `sai` 1 = o dado do b2). Nenhum número próprio.
+  - Taxa declarada igual, ±1 tick por pedra.
+  - Entregue ≥ 1,2× e caminhada por pedra < metade.
+  - **Prova de que acusa:** com `porViagem` 1 no dado, reprova (20 < 24). O dado foi
+    restaurado da cópia.
+- **Medido** (12 000 ticks, `test-output/LOTE3-c-pedreiro-lote.json`):
+  - entregue 60 contra 46 (+30%); ticks por pedra 200 contra 261;
+  - ticks andando por pedra 30,2 contra 91,4;
+  - N:1 com o dado real 60 / 15 = 4,0 (antes 46 / 15 = 3,07): mede o veio que esgota;
+  - N:1 sem esgotar (1500 por tile) 57 / 63 = 0,90.
+- **A premissa "pedra por minuto não muda" não se confirmou:** a declarada é igual e a
+  entregue subiu, porque a viagem é paga por lote. Ficou 501, como pedido; o conflito
+  vai para o operador.
+- **Guardas desatualizadas, corrigidas no sentido do lote** (jazidas injetadas viraram
+  múltiplos do lote, e os ticks foram re-medidos):
+  - `F15a-receita`: ciclo 501, `sai` 3, descanso 78, tile 126.
+  - `F15a-producao`: `POR_VIAGEM` e `TETO_EM_LOTES` (a gaveta 5 guarda 3 em lotes);
+    o esgotamento drena a gaveta a cada tick.
+  - `F15a-aceite`, `F22-alertas`: jazida de 2 lotes, drenando. O segundo teste da F22
+    usa lote + 1 e espera a sobra de 1 com `veio-esgotado`.
+  - `F15b-entrega`: 1200 ticks em vez de 600 para a pedra chegar.
+  - `F16c-pausar`: o lote vem de `sai.stone`.
+  - `F-T3-ciclo-em-campo`, `F-T3-determinismo`: o teto de segurança passou a ser
+    ciclo + 400.
+  - `F-T2a`: `LOTE` por tile. Depósitos 552 / 1104 (curto), 594 … 7378 (lajedo),
+    580 (borda) e 6812 (sobrepostas). Timeout de 60 s em três testes, porque as
+    corridas ficaram 2,4× mais longas: o timeout é contra travamento, não asserção.
+  - `F-T2c`: jazida 2 × LOTE, colisão é queda > LOTE, `CORRIDA` 3000. Depósitos
+    q2 580 / 1160 / 1740 / 2320 e q1 588 / 1176 / 1770 / 2354; 2313 ticks com as duas
+    em tarefa (3000 − 646 seca − 41 troca, a mesma conta de antes).
+  - `LOTE3-fases-quatro`: `porViagem` por caso (quarry 3).
+- **`npm run verify`:** verde. 1583 testes, e 1582 + 4 pulados na transladada.
+
+**Hipóteses (não medidas):**
+- Um ciclo de ~690 manteria as 46 entregues neste cenário: 261 × 3 − ~91 de caminhada
+  por viagem. Depende da distância.
+- O 57 < 63 do N:1 farto viria de o lajedo oferecer um tile mais longe da porta que a
+  rocha colada da jazida única.
+- O render pode querer mostrar o lote de 3 na volta. Nenhuma nota nova foi escrita.
+
+**Aberto:**
+- **Girar os totais:** decisão do operador, agora com o pedreiro corrigido.
+- **A pergunta do pescador (1,3×):** característica ou defeito? Está no BALANCE_LOG.
+- **Ciclo 501 contra ~690:** manter a declarada (feito) ou a entregue. Decisão do operador.

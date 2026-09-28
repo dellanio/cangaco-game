@@ -214,7 +214,7 @@ function validarProducao(dados, erros) {
     }
     // LOTE3 — com `fases`, o ciclo e a soma delas e a razao entre taxas deixa de
     // existir na receita: quem confere e `validarFases`.
-    if (def && def.colheita && def.colheita.fases !== undefined) validarFases(id, def, erros);
+    if (def && def.colheita && def.colheita.fases !== undefined) validarFases(id, def, erros, dados);
     else validarCicloDaReceita(id, def, escala, tickHz, erros);
     // F-T2a: `producao/veio-invalido` saiu daqui junto com o campo `veio`. Quem
     // guarda o total agora e o TILE, e quem o valida e `validarRecursos`
@@ -234,7 +234,7 @@ const CAMPOS_DAS_FASES = ['noTile_segundos_base', 'naCasa_segundos_base', 'desca
  * ja sao mais lentas que ela, o dado se contradiz. A conferencia COM caminhada so
  * existe rodando a sim, e fica nos testes.
  */
-function validarFases(id, def, erros) {
+function validarFases(id, def, erros, dados) {
   const f = def.colheita.fases;
   const onde = `production.predios.${id}.colheita.fases`;
   if (!f || typeof f !== 'object') {
@@ -265,6 +265,15 @@ function validarFases(id, def, erros) {
     forma = false;
   }
   if (!forma) return;
+  // LOTE3-c — o ciclo tira `porViagem` do tile de uma vez, e o claim exige tudo: num
+  // tipo que nunca repoe, a sobra menor que `porViagem` ficaria no mapa para sempre.
+  const tipo = dados.resources && dados.resources.tipos ? dados.resources.tipos[def.colheita.recurso] : undefined;
+  if (tipo && tipo.regime === 'nunca' && tipo.rendimentoPorTile % f.porViagem !== 0) {
+    erros.push(
+      `producao/por-viagem-divide: production.predios.${id}.colheita.fases.porViagem=${f.porViagem} nao divide `
+      + `resources.tipos.${def.colheita.recurso}.rendimentoPorTile=${tipo.rendimentoPorTile}, e o tipo nunca repoe: sobra no tile`,
+    );
+  }
   const segundos = CAMPOS_DAS_FASES.reduce((soma, campo) => soma + f[campo], 0);
   const rende = (f.porViagem * 60) / segundos;
   const taxa = def.sai[saidas[0]];

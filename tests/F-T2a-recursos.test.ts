@@ -53,6 +53,9 @@ const NO_LAJEDO = pedreiraDaVila();
 const NA_BORDA = relativoA(ancoraDoLajedo())(10, 5);
 /** O tile de rocha vizinho de `NO_LAJEDO`: (25,32) hoje. */
 const ROCHA = rochaDaPedreiraDaVila();
+/** LOTE3-c: o pedreiro traz `sai.stone` blocos por viagem e so reclama tile que
+ *  tenha o lote inteiro. Toda jazida injetada neste arquivo e multipla dele. */
+const LOTE = receitaDoTipo('quarry', gameData)?.sai.stone ?? 0;
 
 /** Uma pedreira completa e ocupada, sozinha no mapa (sem civis), ligada a rua. */
 function cenarioEm({ gx, gy }: TileDeGrid, dados: GameData, id = 'q1'): GameState {
@@ -101,17 +104,19 @@ function produzirDrenando(
  * entao um ciclo que encurte ou alargue reprova em vez de passar mais rapido.
  */
 const ULTIMO_DEPOSITO = {
-  /** jazida de um tile e duas pedras, pedreira em (26,34): tile (25,32) */
-  curtoPrimeiro: 218,
-  curtoSegundo: 436,
-  /** 13 tiles a uma pedra cada, pedreira no lajedo (26,34) */
-  lajedo: 3036,
-  /** um unico tile ao alcance, pedreira na borda (32,34). 246 e nao 244 desde a
+  /** jazida de um tile e dois lotes, pedreira em (26,34): tile (25,32). LOTE3-c:
+   *  o ciclo e 501 (3 pedras por viagem) e nao mais 167, dai 552 e nao 218 */
+  curtoPrimeiro: 552,
+  curtoSegundo: 1104,
+  /** 13 tiles a um lote cada, pedreira no lajedo (26,34) */
+  lajedo: 7378,
+  /** um unico tile ao alcance, pedreira na borda (32,34). 580 com o ciclo de 501
+   *  (LOTE3-c); era 246, e nao 244, desde a
    *  noite 17: a roca da vila entrou na faixa sul (x 26..30, y 35..36) e o
    *  caminho da borda cruza chao arado, mais caro que grama no A*. */
-  borda: 246,
+  borda: 580,
   /** as duas sobrepostas: q1 no lajedo leva 12 tiles, q2 na borda leva 1 */
-  sobrepostas: 2804,
+  sobrepostas: 6812,
 } as const;
 
 // --- a camada, antes de qualquer sistema -------------------------------------
@@ -154,16 +159,16 @@ describe('F-T2a — a camada de recurso: o mapa diz ONDE, o estado diz QUANTO', 
 // --- perna 1 -----------------------------------------------------------------
 
 describe('F-T2a — perna 1: o exploit de demolir-e-reconstruir morre', () => {
-  // Um unico tile de rocha, de 2 pedras, vizinho da pedreira de (26,34): dois
+  // Um unico tile de rocha, de 2 lotes, vizinho da pedreira de (26,34): dois
   // ciclos e a jazida acaba. Com o veio no PREDIO, demolir e reconstruir devolvia
   // o rendimento inteiro por meio custo de construcao (F16a).
-  const curto = comJazida(gameData, 'rock', [ROCHA], 2);
+  const curto = comJazida(gameData, 'rock', [ROCHA], 2 * LOTE);
 
   it('esgotada, demolida e reconstruida no MESMO tile, a pedreira nao devolve uma pedra', () => {
     const { fim: esgotada, produzido, ticksDeDeposito } = produzirDrenando(
       cenarioEm(NO_LAJEDO, curto), ULTIMO_DEPOSITO.curtoSegundo + 1, 'q1', curto,
     );
-    expect(produzido).toBe(2);
+    expect(produzido).toBe(2 * LOTE);
     expect(ticksDeDeposito).toEqual([ULTIMO_DEPOSITO.curtoPrimeiro, ULTIMO_DEPOSITO.curtoSegundo]);
     expect(disponivelDe(esgotada, 'q1', curto)).toBe(0);
 
@@ -186,11 +191,11 @@ describe('F-T2a — perna 1: o exploit de demolir-e-reconstruir morre', () => {
     // tick antes ela ainda esta na pedra, e e isso que os dois passos afirmam.
     const antes = produzirDrenando(cenarioEm(NO_LAJEDO, curto), ULTIMO_DEPOSITO.curtoPrimeiro - 1, 'q1', curto);
     expect(antes.produzido).toBe(0);
-    expect(recursoNoTile(antes.fim, ...ROCHA)).toEqual({ tipo: 'rock', quantidade: 2 });
+    expect(recursoNoTile(antes.fim, ...ROCHA)).toEqual({ tipo: 'rock', quantidade: 2 * LOTE });
 
     const fim = step(antes.fim, [], curto);
     expect(fim.events.some((e) => e.type === 'goods-produced' && e.predio === 'q1')).toBe(true);
-    expect(recursoNoTile(fim, ...ROCHA)).toEqual({ tipo: 'rock', quantidade: 1 });
+    expect(recursoNoTile(fim, ...ROCHA)).toEqual({ tipo: 'rock', quantidade: LOTE });
     const demolida = step(fim, [{ type: 'DemolishBuilding', predio: 'q1' }], curto);
     expect(demolida.recursos).toEqual(fim.recursos);
   });
@@ -198,9 +203,9 @@ describe('F-T2a — perna 1: o exploit de demolir-e-reconstruir morre', () => {
 
 // --- perna 2 -----------------------------------------------------------------
 
-/** 1 pedra por tile: o total de uma pedreira passa a SER a contagem de tiles ao
- *  alcance dela, e 13 ciclos cabem num teste onde 195 nao caberiam. */
-const umPorTile = comRendimentoPorTile(gameData, 'rock', 1);
+/** Um lote por tile: o total de uma pedreira passa a SER a contagem de tiles ao
+ *  alcance dela vezes o lote, e 13 ciclos cabem num teste onde 65 nao caberiam. */
+const umPorTile = comRendimentoPorTile(gameData, 'rock', LOTE);
 
 function tilesAoAlcance(estado: GameState, id: string, dados: GameData): number {
   const p = estado.predios.porId[id];
@@ -224,18 +229,19 @@ describe('F-T2a — perna 2: o lugar passa a importar, e o numero prova', () => 
     const b = produzirDrenando(naBorda, ULTIMO_DEPOSITO.borda + 1, 'q1', umPorTile);
 
     expect(a.produzido).not.toBe(b.produzido);
-    expect(a.produzido).toBe(tilesNoLajedo);
-    expect(b.produzido).toBe(tilesNaBorda);
+    expect(a.produzido).toBe(tilesNoLajedo * LOTE);
+    expect(b.produzido).toBe(tilesNaBorda * LOTE);
     // e o ritmo tambem: 13 viagens, a primeira e a ultima no tick exato. O lajedo
-    // esgota em 3036 ticks e nao nos 13 x 167 = 2171 de antes da F-T3 — a diferenca
+    // esgota em 7378 ticks e nao nos 13 x 501 = 6513 do ciclo puro — a diferenca
     // e a viagem, e ela esta declarada, nao tolerada.
     expect(a.ticksDeDeposito).toHaveLength(tilesNoLajedo);
-    expect(a.ticksDeDeposito[0]).toBe(260);
+    expect(a.ticksDeDeposito[0]).toBe(594);
     expect(a.ticksDeDeposito.at(-1)).toBe(ULTIMO_DEPOSITO.lajedo);
     expect(b.ticksDeDeposito).toEqual([ULTIMO_DEPOSITO.borda]);
     expect(disponivelDe(a.fim, 'q1', umPorTile)).toBe(0);
     expect(disponivelDe(b.fim, 'q1', umPorTile)).toBe(0);
-  });
+    // LOTE3-c: o lajedo leva 7378 ticks; o limite e para o caso travar
+  }, 60000);
 
   it('com o dado de verdade, o total de cada lugar e tiles x rendimentoPorTile', () => {
     const rendimento = gameData.recursos.tipos.rock?.rendimentoPorTile ?? 0;
@@ -269,14 +275,15 @@ describe('F-T2a — perna 2: o lugar passa a importar, e o numero prova', () => 
     }
     // a jazida e uma so, e as duas juntas tiram dela exatamente os 13 tiles: q2, na
     // borda, alcanca um unico tile e o leva primeiro; q1 fica com os outros 12.
-    expect(depositos).toEqual({ q1: 12, q2: 1 });
+    expect(depositos).toEqual({ q1: 12 * LOTE, q2: LOTE });
     // Com o regime `nunca` o tile zerado SAI do estado, entao o menor valor que
     // chega a ser observado em estado e 1 — o que importa e que nunca ha
     // negativo, mesmo com as duas pedreiras mirando o mesmo tile no mesmo tick.
     expect(menor).toBeGreaterThanOrEqual(0);
     expect(disponivelDe(s, 'q1', umPorTile)).toBe(0);
     expect(disponivelDe(s, 'q2', umPorTile)).toBe(0);
-  });
+    // LOTE3-c: 6812 ticks, e nao 2804; o limite e para o caso travar, nao aceite de tempo
+  }, 60000);
 });
 
 // --- perna 3 -----------------------------------------------------------------
@@ -390,15 +397,15 @@ it('F-T2a — evidencia', () => {
   );
   const noLajedo = cenarioEm(NO_LAJEDO, umPorTile, 'q1');
   const naBorda = cenarioEm(NA_BORDA, umPorTile, 'q1');
-  const a = produzirDrenando(noLajedo, 167 * 16, 'q1', umPorTile);
-  const b = produzirDrenando(naBorda, 167 * 16, 'q1', umPorTile);
-  const curto = comJazida(gameData, 'rock', [ROCHA], 2);
-  const esgotada = produzirDrenando(cenarioEm(NO_LAJEDO, curto), 167 * 3, 'q1', curto).fim;
+  const a = produzirDrenando(noLajedo, ULTIMO_DEPOSITO.lajedo + 1, 'q1', umPorTile);
+  const b = produzirDrenando(naBorda, ULTIMO_DEPOSITO.borda + 1, 'q1', umPorTile);
+  const curto = comJazida(gameData, 'rock', [ROCHA], 2 * LOTE);
+  const esgotada = produzirDrenando(cenarioEm(NO_LAJEDO, curto), ULTIMO_DEPOSITO.curtoSegundo + 1, 'q1', curto).fim;
   const demolida = step(esgotada, [{ type: 'DemolishBuilding', predio: 'q1' }], curto);
   const refeita = comEstradas(comProdutorOcupado(
     demolida, { tipo: 'quarry', id: 'q2', unidade: 'pedreiro-novo', ...NO_LAJEDO }, curto,
   ), RUA);
-  const depoisDeRefazer = produzirDrenando(refeita, 167 * 5, 'q2', curto);
+  const depoisDeRefazer = produzirDrenando(refeita, ULTIMO_DEPOSITO.curtoSegundo * 2, 'q2', curto);
 
   gravarEvidencia('F-T2a', {
     feature: 'F-T2a — O recurso esta no mapa e no estado, e a Quarry colhe o tile',
@@ -412,15 +419,15 @@ it('F-T2a — evidencia', () => {
       _nota: 'nenhum tipo do dado de hoje usa `porTempo` — o cardume e `nunca` por decisao do operador. O regime esta implementado e coberto por dado injetado.',
     },
     perna1_exploitDaF16aMorre: {
-      jazida: '1 tile (25,32) valendo 2 pedras',
-      produzidoAntesDeDemolir: 2,
+      jazida: `1 tile (25,32) valendo ${2 * LOTE} pedras (2 lotes)`,
+      produzidoAntesDeDemolir: 2 * LOTE,
       disponivelDepoisDeEsgotar: disponivelDe(esgotada, 'q1', curto),
       camadaSobreviveuADemolicao: JSON.stringify(demolida.recursos) === JSON.stringify(esgotada.recursos),
       produzidoDepoisDeReconstruirNoMesmoTile: depoisDeRefazer.produzido,
       _antes: 'com o veio no predio, reconstruir devolvia o rendimento inteiro por meio custo de construcao',
     },
     perna2_oLugarImporta: {
-      _escala: 'rendimentoPorTile injetado em 1: o total E a contagem de tiles ao alcance',
+      _escala: 'rendimentoPorTile injetado em um lote (LOTE3-c): o total E a contagem de tiles ao alcance vezes o lote',
       pedreiraEm_26_34: { tilesDeRochaAoAlcance: 13, produzidoAteEsgotar: a.produzido },
       pedreiraEm_32_34: { tilesDeRochaAoAlcance: 1, produzidoAteEsgotar: b.produzido },
       comODadoReal: {
@@ -460,7 +467,7 @@ it('F-T2a — evidencia', () => {
   expect(tiles).toBeGreaterThan(800);
   expect(bytesDaCamada / tiles).toBeLessThan(45);
   expect(bytesDaCamada).toBeLessThan(48 * 1024);
-});
+}, 60000);
 
 // ---------------------------------------------------------------------------
 // O marcador (desenho MINIMO). O funil `render/mapa.ts` nao importa phaser e e

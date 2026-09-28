@@ -560,7 +560,9 @@ describe('F15b — o ciclo fechado', () => {
   it('caminho real: a pedra sai da pedreira e chega ao armazem', () => {
     const cenario = pedreiraViva();
     const antes = noArmazem(cenario, 'stone');
-    const fim = rodar(cenario, 600);
+    // LOTE3-c: o primeiro lote de 3 so cai depois de um ciclo inteiro com a viagem
+    // (~600 ticks); o serf precisa de tempo para levar
+    const fim = rodar(cenario, 1200);
     expect(noArmazem(fim, 'stone')).toBeGreaterThan(antes);
   });
 

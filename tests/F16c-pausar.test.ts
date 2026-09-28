@@ -121,6 +121,8 @@ describe('F16c — Tarefa 2: o comando `SetBuildingPaused`', () => {
 
 const CAPACIDADE_DA_SAIDA = gameData.producao.estoqueInternoPorPredio.saida;
 const CICLO_DA_PEDREIRA = gameData.producao.receitas.quarry?.ticksDoCiclo ?? 0;
+/** LOTE3-c — o pedreiro traz 3 blocos por viagem: cada deposito e um lote. */
+const LOTE_DA_PEDREIRA = gameData.producao.receitas.quarry?.sai.stone ?? 0;
 /**
  * F-T3 — o ciclo da pedreira deixou de comecar no tick da ocupacao: ele comeca com
  * a IDA ao tile (a transicao mais 49 passos), o relogio anda NO TILE e a mercadoria
@@ -227,9 +229,9 @@ describe('F16c — Tarefa 3: pausado, o relogio congela', () => {
     // dobrada — que e o que o aceite da F16c pede.
     const retomado = rodar(voltou.state, INTERVALO_DA_PEDREIRA);
     expect(retomado.produzidos).toEqual(['stone']);
-    expect(saidaDe(retomado.state, 'q1')).toEqual({ stone: 1 });
+    expect(saidaDe(retomado.state, 'q1')).toEqual({ stone: LOTE_DA_PEDREIRA });
     expect(progressoDe(retomado.state, 'q1')).toBe(0);
-    expect(totalDe(retomado.state, 'stone')).toBe(pedraAntes + 1);
+    expect(totalDe(retomado.state, 'stone')).toBe(pedraAntes + LOTE_DA_PEDREIRA);
     expect(retomado.violacoes).toBe(0);
   });
 
@@ -250,7 +252,7 @@ describe('F16c — Tarefa 3: pausado, o relogio congela', () => {
 
     const retomado = rodar(parado.state, 1, [pausar('q1', false)]);
     expect(retomado.produzidos).toEqual(['stone']);
-    expect(saidaDe(retomado.state, 'q1')).toEqual({ stone: 1 });
+    expect(saidaDe(retomado.state, 'q1')).toEqual({ stone: LOTE_DA_PEDREIRA });
     const maisTarde = rodar(retomado.state, 1);
     expect(maisTarde.produzidos).toEqual([]);
   });

@@ -23,7 +23,7 @@ import { trabalhadorDoTipo } from '../src/sim/ocupacao';
 import { comEstradas } from './helpers/jobs-cenario';
 import { escolaDoCenario, pedir } from './helpers/escola-cenario';
 import {
-  avancar, cenarioDePedreira, cenarioDeSerraria, comJazida, disponivelDe, fsmDe, progressoDe, saidaDe,
+  avancar, cenarioDePedreira, cenarioDeSerraria, comJazida, comSaida, disponivelDe, fsmDe, progressoDe, saidaDe,
   pedreiraDaVila, rochaDaPedreiraDaVila,
 } from './helpers/producao-cenario';
 import { violacoesDaFsmDoEspecialista } from './helpers/especialista-invariantes';
@@ -205,17 +205,23 @@ describe('F15a — aceite headless do BUILD_PLAN', () => {
 
     // --- as duas clausulas de dado injetado, sobre cenarios controlados ---
     const serraria = avancar(cenarioDeSerraria(), 300);
-    const dadosCurtos = comJazida(gameData, 'rock', [rochaDaPedreiraDaVila()], 2);
-    const curto = avancar(cenarioDePedreira(dadosCurtos), CICLO * 5, dadosCurtos);
+    // LOTE3-c: dois lotes de 3 no tile, e a gaveta de 5 so aceita um lote — esvazia a
+    // cada tick (o cenario isolado nao tem serf) e soma o que saiu
+    const porViagem = gameData.producao.receitas.quarry?.sai.stone ?? 0;
+    const dadosCurtos = comJazida(gameData, 'rock', [rochaDaPedreiraDaVila()], 2 * porViagem);
     let esgotados = 0;
+    let colhido = 0;
     let e = cenarioDePedreira(dadosCurtos);
     for (let i = 0; i < CICLO * 5; i++) {
       e = step(e, [], dadosCurtos);
       esgotados += e.events.filter((ev) => ev.type === 'vein-exhausted').length;
+      colhido += saidaDe(e, 'q1').stone ?? 0;
+      e = comSaida(e, 'q1', {});
     }
+    const curto = e;
     expect(fsmDe(serraria, 'u2')).toBe('esperando_insumo');
     expect(progressoDe(serraria, 's1')).toBe(0);
-    expect(saidaDe(curto, 'q1').stone).toBe(2);
+    expect(colhido).toBe(2 * porViagem);
     expect(disponivelDe(curto, 'q1', dadosCurtos)).toBe(0);
     expect(esgotados).toBe(1);
 
@@ -252,7 +258,7 @@ describe('F15a — aceite headless do BUILD_PLAN', () => {
         _nota: 'fixture, nao caminho real: a sawmill exigiria desbloquear Woodcutter\'s, e o veio curto e dado injetado pelo parametro `dados`',
         serrariaSemTronco: { ticks: 300, fsm: fsmDe(serraria, 'u2'), progresso: progressoDe(serraria, 's1') },
         veioCurto: {
-          rendimento: 2, ticks: CICLO * 5, stoneNaSaida: saidaDe(curto, 'q1').stone,
+          rendimento: 2 * porViagem, ticks: CICLO * 5, colhido,
           disponivel: disponivelDe(curto, 'q1', dadosCurtos), fsm: fsmDe(curto, 'u1'), eventosDeVeioEsgotado: esgotados,
         },
       },

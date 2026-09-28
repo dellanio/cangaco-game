@@ -41,6 +41,11 @@ function obraDe(tipo: string): PredioEmObra {
 // `test-output/F-T3-ciclo-em-campo.json`).
 const VIAGEM = 99;
 const INTERVALO = receita('quarry').ticksDoCiclo + VIAGEM;
+/** LOTE3-c — o pedreiro traz 3 blocos por viagem (`colheita.fases.porViagem`): cada
+ *  deposito e de 3, e o tile perde 3 de uma vez. */
+const POR_VIAGEM = unidadesPorCiclo(receita('quarry'));
+/** O que a gaveta de 5 aceita em lotes de 3: 3. O segundo lote nao cabe (3 + 3 > 5). */
+const TETO_EM_LOTES = Math.floor(gameData.producao.estoqueInternoPorPredio.saida / POR_VIAGEM) * POR_VIAGEM;
 
 describe('F15a — PredioCompleto.producao', () => {
   // F-T2a: o predio deixou de carregar o total. Ele nasce so com o relogio, e o
@@ -139,7 +144,7 @@ describe('F15a — sim/producao.ts, as derivacoes puras', () => {
   });
 
   it('unidadesPorCiclo soma as mercadorias de saida', () => {
-    expect(unidadesPorCiclo(receita('quarry'))).toBe(1);
+    expect(unidadesPorCiclo(receita('quarry'))).toBe(3); // LOTE3-c: 3 por viagem
     expect(unidadesPorCiclo(receita('sawmill'))).toBe(2);
     expect(unidadesPorCiclo(receita('swine_farm'))).toBe(2); // 1 pig + 1 skin
   });
@@ -175,10 +180,14 @@ describe('F15a — o especialista produz', () => {
     expect(progressoDe(s, 'q1')).toBe(receita('quarry').ticksDoCiclo - 1);
     expect(s.unidades.porId.u1?.fsm).toBe('trabalhando');
     s = avancar(s, 1);
-    expect(saidaDe(s, 'q1').stone).toBe(1);
+    expect(saidaDe(s, 'q1').stone).toBe(POR_VIAGEM);
+    // a gaveta de 5 so aceita UM lote de 3: esvazia depois de cada deposito, para
+    // que o que se mede seja o intervalo, e nao o teto (o teto e o caso de baixo)
     for (const n of [2, 3, 4]) {
-      s = avancar(s, INTERVALO);
-      expect(saidaDe(s, 'q1').stone, `deposito ${n}`).toBe(n); // intervalo EXATO
+      s = avancar(comSaida(s, 'q1', {}), INTERVALO - 1);
+      expect(saidaDe(s, 'q1').stone ?? 0, `antes do deposito ${n}`).toBe(0);
+      s = avancar(s, 1);
+      expect(saidaDe(s, 'q1').stone, `deposito ${n}`).toBe(POR_VIAGEM); // intervalo EXATO
     }
   });
 
@@ -230,29 +239,32 @@ describe('F15a — o especialista produz', () => {
       if ((saidaDe(s, 'q1').stone ?? 0) > 0) primeiro = i;
     }
     expect(primeiro).not.toBeNull();
-    expect(saidaDe(s, 'q1').stone).toBe(1);
+    expect(saidaDe(s, 'q1').stone).toBe(POR_VIAGEM);
 
-    // e para no TETO DA GAVETA, nao antes: o que segura e a capacidade, nao a rua
+    // e para no TETO DA GAVETA, nao antes: o que segura e a capacidade, nao a rua.
+    // LOTE3-c: em lotes de 3, a gaveta de 5 para em 3 (o lote seguinte nao cabe)
+    expect(CAPACIDADE).toBeGreaterThanOrEqual(TETO_EM_LOTES);
     const cheio = avancar(s, (primeiro ?? 0) * (CAPACIDADE + 1));
-    expect(saidaDe(cheio, 'q1').stone).toBe(CAPACIDADE);
+    expect(saidaDe(cheio, 'q1').stone).toBe(TETO_EM_LOTES);
     expect(fsmDe(cheio, 'u1')).toBe('saida_cheia'); // agora por gaveta, nao por rua
     expect(progressoDe(cheio, 'q1')).toBe(receita('quarry').ticksDoCiclo);
 
     // e segue parado: sem rua ninguem vem buscar, entao a gaveta nao esvazia
     const depois = avancar(cheio, (primeiro ?? 0) * 2);
-    expect(saidaDe(depois, 'q1').stone).toBe(CAPACIDADE);
+    expect(saidaDe(depois, 'q1').stone).toBe(TETO_EM_LOTES);
     expect(fsmDe(depois, 'u1')).toBe('saida_cheia');
   });
 
   it('saida cheia: para em `saida_cheia` e NAO perde o ciclo pronto', () => {
-    // F-T3 — seis CICLOS, e o ciclo agora e `INTERVALO`: cinco couberam na gaveta
-    // e o sexto volta do campo com a pedra na mao e sem lugar para ela.
-    const s = avancar(cenarioDePedreira(), INTERVALO * 6);
-    expect(saidaDe(s, 'q1').stone).toBe(5);  // o teto da gaveta
+    // F-T3 — o ciclo agora e `INTERVALO`. LOTE3-c: o primeiro lote de 3 coube na
+    // gaveta de 5 e o segundo fica pronto sem lugar (3 + 3 > 5).
+    const s = avancar(cenarioDePedreira(), INTERVALO * 3);
+    expect(saidaDe(s, 'q1').stone).toBe(TETO_EM_LOTES);  // o teto da gaveta, em lotes
     expect(fsmDe(s, 'u1')).toBe('saida_cheia');
-    expect(progressoDe(s, 'q1')).toBe(167);  // ciclo pronto, so nao coube
-    const depois = avancar(comSaida(s, 'q1', { stone: 4 }), 1);
-    expect(saidaDe(depois, 'q1').stone).toBe(5); // depositou no tick seguinte
+    expect(progressoDe(s, 'q1')).toBe(receita('quarry').ticksDoCiclo);  // ciclo pronto, so nao coube
+    const cabeUmLote = gameData.producao.estoqueInternoPorPredio.saida - POR_VIAGEM;
+    const depois = avancar(comSaida(s, 'q1', { stone: cabeUmLote }), 1);
+    expect(saidaDe(depois, 'q1').stone).toBe(cabeUmLote + POR_VIAGEM); // depositou no tick seguinte
     expect(progressoDe(depois, 'q1')).toBe(0);
     expect(fsmDe(depois, 'u1')).toBe('trabalhando');
   });
@@ -284,26 +296,36 @@ describe('F15a — o especialista produz', () => {
   });
 
   it('jazida esgota: evento no tick exato, e depois a pedreira nao produz mais', () => {
-    const dadosCurtos = comJazida(gameData, 'rock', [rochaDaPedreiraDaVila()], 2); // 1 tile de 2 pedras e acabou
+    // 1 tile de dois lotes e acabou (LOTE3-c: 3 por viagem, entao 6 pedras)
+    const dadosCurtos = comJazida(gameData, 'rock', [rochaDaPedreiraDaVila()], 2 * POR_VIAGEM);
     // F-T3 — dois ciclos, e cada um agora inclui a viagem ate (25,32): 28 ticks de
     // ida, 29 de volta (este tile e mais perto que o do cenario cheio, e por isso o
     // intervalo aqui e menor que o de cima — a viagem e do MAPA, nao do dado).
     const CURTO = receita('quarry').ticksDoCiclo + 57;
-    expect(eventosNoTick(cenarioDePedreira(dadosCurtos), CURTO * 2, dadosCurtos)).toContainEqual(
-      { type: 'vein-exhausted', predio: 'q1', tipo: 'quarry' },
-    );
-    const s = avancar(cenarioDePedreira(dadosCurtos), CURTO * 5, dadosCurtos);
-    expect(saidaDe(s, 'q1').stone).toBe(2);
+    // LOTE3-c: a gaveta de 5 so aceita um lote de 3, e o tile so perde o lote no
+    // deposito — sem esvaziar, o 2o lote nunca cai e o veio nunca esgota. Esvazia a
+    // cada tick e soma o que saiu.
+    let s = cenarioDePedreira(dadosCurtos);
+    let colhido = 0;
+    let tickDoEsgotamento: number | null = null;
+    for (let t = 1; t <= CURTO * 5; t += 1) {
+      s = step(s, [], dadosCurtos);
+      colhido += saidaDe(s, 'q1').stone ?? 0;
+      s = comSaida(s, 'q1', {});
+      if (s.events.some((e) => e.type === 'vein-exhausted' && e.predio === 'q1')) tickDoEsgotamento = t;
+    }
+    expect(tickDoEsgotamento).toBe(CURTO * 2);
+    expect(colhido).toBe(2 * POR_VIAGEM);
     expect(disponivelDe(s, 'q1', dadosCurtos)).toBe(0);
     expect(fsmDe(s, 'u1')).toBe('esperando_insumo');
   });
 
   it('o evento de veio esgotado sai UMA vez, nao a cada tick depois', () => {
-    const dadosCurtos = comJazida(gameData, 'rock', [rochaDaPedreiraDaVila()], 2);
+    const dadosCurtos = comJazida(gameData, 'rock', [rochaDaPedreiraDaVila()], 2 * POR_VIAGEM);
     let s = cenarioDePedreira(dadosCurtos);
     let quantos = 0;
     for (let i = 0; i < (receita('quarry').ticksDoCiclo + 57) * 4; i++) {
-      s = step(s, [], dadosCurtos);
+      s = comSaida(step(s, [], dadosCurtos), 'q1', {}); // LOTE3-c: o 2o lote precisa de gaveta
       quantos += s.events.filter((e) => e.type === 'vein-exhausted').length;
     }
     expect(quantos).toBe(1);

@@ -149,7 +149,9 @@ describe('F-T3 — a evidencia consolidada dos tres aceites', () => {
     let anterior = unidadeDe(s, 'u1').fsm;
     let tileDoCiclo: string | null = null;
     let ticksAteODeposito = 0;
-    for (let tick = 1; tick <= 400 && ticksAteODeposito === 0; tick += 1) {
+    // LOTE3-c: teto de seguranca, acompanha o ciclo do dado (a pedreira passou a 501)
+    const teto = (receitaDoTipo('quarry', DADOS)?.ticksDoCiclo ?? 0) + 400;
+    for (let tick = 1; tick <= teto && ticksAteODeposito === 0; tick += 1) {
       s = step(s, [], DADOS);
       const fsm = unidadeDe(s, 'u1').fsm;
       if (fsm !== anterior) transicoes.push({ tick, de: anterior, para: fsm });

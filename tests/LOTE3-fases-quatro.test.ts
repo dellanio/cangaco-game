@@ -7,7 +7,12 @@
  * O ciclo, na ordem: descanso dentro do predio (o do KaM vem depois da entrega; aqui
  * abre o ciclo seguinte), `colhendo` no tile, a volta e — so no pedreiro — o trabalho
  * na casa. O que se afirma: cada fase dura o que o dado diz, e a VAZAO e a do modelo
- * de antes (+-1), porque o total nao mudou. A vazao por predio vai para a evidencia
+ * de antes (+-1), porque o total nao mudou.
+ *
+ * LOTE3-c (2026-09-27): o pedreiro traz 3 blocos por viagem, e o ciclo triplicou para
+ * manter a taxa declarada. O "modelo de antes" aqui e so o de SEM FASES com o mesmo
+ * lote; a comparacao com o pedreiro de um bloco por viagem esta em
+ * `LOTE3-c-pedreiro-lote.test.ts`. A vazao por predio vai para a evidencia
  * (`test-output/LOTE3-fases-quatro.json`); girar o total e decisao do operador.
  */
 import { describe, expect, it } from 'vitest';
@@ -29,13 +34,15 @@ interface Caso {
   readonly cenario: (dados: GameData) => GameState;
   /** so pedreiro (e vinhateiro, no outro arquivo) trabalham na casa */
   readonly trabalhaNaCasa: boolean;
+  /** LOTE3-c: o pedreiro traz 3 blocos por viagem, como no KaM; os outros, 1 */
+  readonly porViagem: number;
 }
 
 const CASOS: readonly Caso[] = [
-  { tipo: 'quarry', predio: 'q1', unidade: 'u1', cenario: cenarioDePedreira, trabalhaNaCasa: true },
-  { tipo: 'woodcutters', predio: 'w1', unidade: 'lenhador-1', cenario: cenarioOraculo, trabalhaNaCasa: false },
-  { tipo: 'farm', predio: 'f1', unidade: 'roceiro', cenario: cenarioDeFazenda, trabalhaNaCasa: false },
-  { tipo: 'fishermans', predio: 'pesc1', unidade: 'pescador', cenario: cenarioDePescador, trabalhaNaCasa: false },
+  { tipo: 'quarry', predio: 'q1', unidade: 'u1', cenario: cenarioDePedreira, trabalhaNaCasa: true, porViagem: 3 },
+  { tipo: 'woodcutters', predio: 'w1', unidade: 'lenhador-1', cenario: cenarioOraculo, trabalhaNaCasa: false, porViagem: 1 },
+  { tipo: 'farm', predio: 'f1', unidade: 'roceiro', cenario: cenarioDeFazenda, trabalhaNaCasa: false, porViagem: 1 },
+  { tipo: 'fishermans', predio: 'pesc1', unidade: 'pescador', cenario: cenarioDePescador, trabalhaNaCasa: false, porViagem: 1 },
 ];
 
 const JANELA = 6000;
@@ -106,10 +113,10 @@ describe('LOTE3-b2 — os quatro colhem em fases', () => {
     if (colheita === null) throw new Error('fixture');
     const naCasa = r.ticksDoCiclo - colheita.ticksDeDescanso - colheita.ticksNoTile;
 
-    it(`${c.tipo}: o dado declara fases, uma unidade por viagem, casa so no pedreiro`, () => {
+    it(`${c.tipo}: o dado declara fases, ${c.porViagem} por viagem, casa so no pedreiro`, () => {
       expect(colheita.ticksDeDescanso).toBeGreaterThan(0);
       expect(colheita.ticksNoTile).toBeGreaterThan(0);
-      expect(Object.values(r.sai)).toEqual([1]);
+      expect(Object.values(r.sai)).toEqual([c.porViagem]);
       expect(naCasa > 0).toBe(c.trabalhaNaCasa);
     });
 

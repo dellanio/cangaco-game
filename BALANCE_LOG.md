@@ -222,7 +222,60 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
         o tempo do trabalhador por unidade não muda. O que o b2 entrega é a
         repartição no lugar: daqui em diante, girar o total de um prédio mexe só nele.
         Os totais esperam o operador.
-      - Os 3 por viagem do pedreiro do KaM são absolutos e esperam o operador.
+      - Os 3 por viagem do pedreiro do KaM eram absolutos e esperavam o operador. Ele
+        decidiu: ver a entrada do LOTE3-c logo abaixo.
+    - **O que as razões N:1 medidas já dizem (leitura do operador, 2026-09-27).** Os
+      totais **não** giram ainda: o operador quer ver as razões com o pedreiro corrigido
+      antes, porque ele pode ser o caso que mostra o que os outros precisam.
+      - **Fazenda 2,875×** (46 contra 16, `test-output/LOTE3-fases-quatro.json`): boa.
+      - **Pescador 1,3×** (26 contra 20, mesmo arquivo): fraca.
+      - **Canavial 1,5×** (15 contra 10, `test-output/LOTE3-fases.json`): fraca.
+      - **Pedreira e lenhador: sem cenário de um tile.** O recurso de um tile esgota, e a
+        razão mediria o veio, não o modelo.
+      - **A pergunta que o lote vai responder:** uma razão de 1,3× significa que abrir
+        mais tiles quase não vale para o pescador. Isso é característica dele (peixe é
+        escasso) ou defeito a corrigir?
+    - **LOTE3-c ENTREGUE (2026-09-27, noite 13): o pedreiro traz 3 blocos por viagem.**
+      - **Decisão do operador:** é peça que o KaM tem e nós não, e ela muda o que o
+        pedreiro significa. Ele corta a pedra no tile e trabalha ela na casa: o lote é o
+        que justifica o tempo na casa.
+      - **O dado:** as fases do b2 triplicaram, e `porViagem` é 3.
+        - Em segundos na escala 1,0: 25,2 no tile, 59,4 na casa e 15,6 de descanso.
+        - Em ticks: 126 no tile, 297 na casa, 78 de descanso; ciclo 501.
+        - `sai.stone` continua 1,8. A taxa DECLARADA é a mesma: 3 por 501 = 1 por 167.
+      - **A premissa "pedra por minuto não muda" NÃO se confirmou.** A taxa ENTREGUE subiu.
+        Medido em `cenarioDePedreira`, 12 000 ticks (`test-output/LOTE3-c-pedreiro-lote.json`):
+
+        | pedreiro | ciclo | pedras entregues | ticks por pedra | ticks andando por pedra |
+        |---|---|---|---|---|
+        | 1 por viagem (dado do b2) | 167 | 46 | 261 | 91,4 |
+        | 3 por viagem (hoje) | 501 | **60 (+30%)** | 200 | **30,2** |
+
+        - A ida e a volta são pagas uma vez por lote, e não uma vez por pedra: a caminhada
+          por pedra caiu a um terço. É exatamente o "vaivém deixa de ser proporcional à
+          produção" que o operador previu. O ganho de vazão é a outra face do mesmo efeito.
+        - Se o operador quiser a entregue de antes: um ciclo de ~700 ticks daria as 46
+          neste cenário (hipótese, pela conta: 261 ticks por pedra × 3 = 783 por viagem,
+          menos ~91 de caminhada por viagem = ~690 de ciclo; não medida). Mas
+          depende da distância ao tile, e cada mapa daria um número. Ficou 501, como pedido.
+      - **A razão N:1 com rocha mede o veio, não o ciclo.** Mesmo arquivo, 12 000 ticks:
+        - Com o dado de verdade: 60 contra 15, ou seja 4,0× (era 46 contra 15, 3,07×). O
+          tile único de 15 esgota em 5 viagens; o 4,0 é o lajedo contra um tile vazio.
+        - Com rendimento injetado grande (1500 por tile, nada esgota): 57 contra 63, ou
+          seja 0,90×. Uma pedreira com um pedreiro colhe um tile por vez: tiles a mais não
+          aceleram nada quando nenhum acaba.
+        - **Hipótese, não medida:** o 57 < 63 viria de o lajedo farto oferecer um tile
+          escolhido mais longe da porta que a rocha colada da jazida única.
+        - Para a pergunta do lote: na pedreira, abrir mais tiles só vale como reserva de
+          veio, e isso é o modelo, não defeito. O pescador é outro caso: o cardume não
+          esgota na janela.
+      - **Consequência na gaveta:** a saída cabe 5, e o lote é 3. Cabe um lote só; o
+        segundo entra depois que o serf leva o primeiro. Medido em `tests/F15a-producao.test.ts`
+        (`TETO_EM_LOTES`).
+      - **Regra nova:** `producao/por-viagem-divide`. O `porViagem` de quem colhe um recurso
+        `nunca` precisa dividir o `rendimentoPorTile` (rocha 15 / 3). Senão o resto fica
+        preso no tile, porque o claim exige o lote inteiro. Coberta pela fixture da
+        `tests/F03-dados-validados.test.ts`.
 
 - [2026-09-24] o terreno passou a existir (F-T1) e viagem deixou de ser linha reta | medido: a
   travessia de 36 tiles ao redor do lago custa **292 ticks** contra **252** no mesmo trajeto sem

@@ -14,14 +14,15 @@ import { describe, expect, it } from 'vitest';
 import { gameData, loadGameData, rawGameData } from '../src/sim/data';
 
 describe('F15a — a receita e um ciclo', () => {
-  it('quarry: um ciclo de 167 ticks rende 1 stone, e o veio e finito', () => {
+  it('quarry: um ciclo de 501 ticks rende 3 stone, e o veio e finito', () => {
     const r = gameData.producao.receitas.quarry;
     expect(r).toBeDefined();
-    expect(r?.ticksDoCiclo).toBe(167);
+    // LOTE3-c: 3 por viagem, o ciclo triplo (1 a cada 167 como antes, na taxa `sai`)
+    expect(r?.ticksDoCiclo).toBe(501);
     expect(r?.entra).toEqual({});
-    expect(r?.sai).toEqual({ stone: 1 });
-    // LOTE3 — sem `fases` no dado, o ciclo inteiro corre no tile
-    expect(r?.colheita).toEqual({ recurso: 'rock', alcance: 6, aDistancia: false, ticksDeDescanso: 26, ticksNoTile: 42 });
+    expect(r?.sai).toEqual({ stone: 3 });
+    // LOTE3 — descanso, tile e (o resto do ciclo) a casa
+    expect(r?.colheita).toEqual({ recurso: 'rock', alcance: 6, aDistancia: false, ticksDeDescanso: 78, ticksNoTile: 126 });
   });
 
   it('sawmill: 1 tronco -> 2 timber, a razao vindo das taxas e nao de um literal', () => {

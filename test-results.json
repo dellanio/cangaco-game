@@ -250,5 +250,8 @@
   },
   "LOTE3-b2-quatro-em-fases": {
     "passes": true
+  },
+  "LOTE3-c-pedreiro-tres-por-viagem": {
+    "passes": true
   }
 }

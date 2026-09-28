@@ -3970,8 +3970,8 @@ Casos 2 e 4 do prédio vivo (`docs/BRIEF-ARTE.md` §4a). Decisão do operador: c
     | farm | 19,8 → 99 | 0 | 10,2 → 51 | 150 |
     | fishermans | 52 → 260 | 0 | 8 → 40 | 300 |
 
-    - `porViagem` 1 em todos. Os 3 por viagem do pedreiro do KaM são absolutos e esperam
-      o operador.
+    - `porViagem` 1 em todos. Os 3 por viagem do pedreiro do KaM eram absolutos e
+      esperavam o operador: entraram no LOTE3-c, abaixo.
   - **A ordem do ciclo mudou (decisão desta sessão):** o descanso do KaM vem DEPOIS da
     entrega. Aqui ele abre o ciclo seguinte, dentro do prédio e com a tarefa do tile já
     reclamada: descanso → ida → tile → volta → casa (só no pedreiro e no vinhateiro) →
@@ -3989,6 +3989,26 @@ Casos 2 e 4 do prédio vivo (`docs/BRIEF-ARTE.md` §4a). Decisão do operador: c
       (os quatro e o Canavial).
   - **Aberto, decisão do operador:** girar os totais. A vazão por prédio e a razão N:1
     ficam em `test-output/LOTE3-fases-quatro.json`.
+- **LOTE3-c — o pedreiro traz 3 blocos por viagem. ENTREGUE (2026-09-27, noite 13).**
+  - **Decisão do operador:** é peça que o KaM tem e nós não. Ele corta a pedra no tile e
+    trabalha ela na casa, e o lote justifica o tempo na casa. Vazão declarada mantida:
+    fases ×3 (126 / 297 / 78 ticks, ciclo 501), `porViagem` 3, `sai.stone` 1,8.
+  - Mecânica: o claim exige o lote inteiro no tile, o tile perde o lote no depósito, e a
+    gaveta aceita o lote só se ele couber inteiro (gaveta 5 = um lote de 3).
+  - Regra de dado nova: `producao/por-viagem-divide` (o lote divide o rendimento de
+    quem nunca repõe; rocha 15 / 3).
+  - Aceite: `tests/LOTE3-c-pedreiro-lote.test.ts`, contra o pedreiro de um bloco
+    derivado do dado (fases / 3, `sai` 1, que é o dado do b2):
+    - taxa declarada igual (±1 tick por pedra);
+    - entregue ≥ 1,2× (medido 60 contra 46 em 12 000 ticks) e caminhada por pedra
+      menor que metade (medido 30,2 contra 91,4).
+    - Prova de que acusa: `porViagem` 1 no dado reprova (20 < 24).
+  - **A premissa "pedra por minuto não muda" não se confirmou:** a declarada é a mesma,
+    a entregue subiu 30% porque a viagem é paga por lote. Ciclo ~700 manteria a entregue
+    neste cenário (hipótese, não medida), mas depende da distância. Ficou 501, como pedido.
+  - **Aberto, decisão do operador:** girar os totais, agora com as razões do pedreiro
+    corrigido (BALANCE_LOG, LOTE3-c), e a pergunta do pescador (1,3×: característica
+    ou defeito?).
 - **Método, registrado:** o custo de um campo se mede COMPILANDO, não por busca de texto.
   - A contagem por texto dizia "5 sim, 2 render, 13 testes" para `ticksDoCiclo` e
     errava nos dois sentidos: `trabalho.ts` não quebra (lê o `DadosDoTrabalho`
