@@ -26,6 +26,7 @@ import { urlsDeSprites } from './render/sprites-urls';
 import { montarPainelPredio } from './ui/painel-predio';
 import { montarAlertas } from './ui/alertas';
 import { montarAvisoDoTempo } from './ui/aviso-tempo';
+import { montarFimDePartida } from './ui/fim-de-partida';
 import { montarAjuda } from './ui/ajuda';
 import { montarBarra } from './ui/barra';
 import { montarArquivo } from './ui/arquivo';
@@ -145,6 +146,9 @@ const painel = montarPainelPredio(selecao, (comando) => {
 // derivado do estado, entao basta ser atualizado junto dos outros.
 const alertas = montarAlertas();
 
+// F34 — o aviso do fim da escaramuca. Derivado do estado, como os alertas.
+const fimDePartida = montarFimDePartida();
+
 // UI-barra-a (docs/propostas/barra-lateral-unica.md): a barra lateral unica.
 // Ela so escreve `data-corpo` no <body> — grade, painel ou opcoes no corpo da
 // aba —, e a area do canvas nao muda com isso. Nasce ANTES do jogo pelo mesmo
@@ -166,6 +170,7 @@ function atualizar(s: GameState): void {
   menu.atualizar(s);
   painel.atualizar(s);
   alertas.atualizar(s);
+  fimDePartida.atualizar(s);
 }
 
 sessao.aoMudar(atualizar);

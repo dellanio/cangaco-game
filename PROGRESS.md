@@ -10948,3 +10948,41 @@ famintos" não tem onde agir.
   armazém). O KaM tem modos de alvo.
 - **A defesa vem antes do ataque:** a sobra só existe depois de todas as posições
   estarem cheias.
+
+## 2026-09-28 (sessão autônoma, item 16) — F34: vitória e derrota
+
+Plano: `docs/planos/2026-09-28-A16-F34-fim.md`. Sim e UI (`src/ui`); nada em `src/render`.
+
+**Verificado:**
+- **`sim/partida.ts`:**
+  - `ladoCaiu` é verdadeiro quando o lado não tem armazém, escola nem quartel (em obra
+    ou completo) e não tem militar vivo;
+  - `resultadoDaPartida` só age em escaramuça (com `state.ia`). A derrota vem primeiro,
+    e a vitória exige todo oponente caído.
+- **`tick.ts`:** no fim do tick, sem fim gravado, confere. Achando, grava
+  `partida: { fim, tick }` e emite `match-ended` uma vez. A sim continua andando.
+- **UI:** `ui/fim-de-partida.ts` escreve o aviso a partir de `state.partida`, com os
+  textos do tema (`partida`). O CSS é fixo sobre a área do jogo.
+  - **Pego de passagem:** a primeira versão punha `position: relative` em `#jogo`, e o
+    canvas passou a roubar o clique do botão "carregar" da ajuda (o roteiro F34 travou
+    nisso). Troquei por `position: fixed` no aviso. O F-VIVO-c, que carrega save pela
+    ajuda, ficou verde depois.
+- `tests/F34-fim.test.ts`, 5 testes, verdes:
+  - vitória só depois do último soldado, e não com os três prédios caídos e o soldado
+    vivo;
+  - derrota e perda mútua;
+  - sem IA, sem fim;
+  - a obra segura o lado;
+  - gravado uma vez, com a sim andando 20 ticks depois;
+  - determinismo, e os dois saves do roteiro.
+- **`npm run shot -- F34` verde**: vitória e derrota, cada uma com um passo despausado, e
+  o aviso com o título do tema. Abri `F34-1-vitoria.png`: "VITÓRIA" e a frase, sobre a
+  vila.
+
+**PARA REVISÃO:**
+- **Escaramuça = partida com IA.** Sem IA, o jogo livre nunca acaba.
+- **A sim não para no fim.** O aviso não pausa o jogo nem bloqueia o clique
+  (`pointer-events: none`).
+- **"Todas as tropas" = militares.** Mercenário também é militar pela classe? Não:
+  `classeDaUnidade` só conhece civis e militares, e o mercenário devolve `null`. Hoje não
+  há mercenário em jogo (F36).

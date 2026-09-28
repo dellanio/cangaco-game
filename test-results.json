@@ -287,6 +287,9 @@
   "F28-IA-ponto-6-ataque": {
     "passes": true
   },
+  "F34-vitoria-e-derrota": {
+    "passes": true
+  },
   "F-TR-a-textura-e-transicao": {
     "passes": true
   },

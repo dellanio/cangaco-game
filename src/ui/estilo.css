@@ -669,3 +669,17 @@ body:not([data-corpo="estatisticas"]) #estatisticas { display: none; }
 }
 #abas button[aria-disabled="true"] { background: #ead3a1 var(--grao); }
 #abas button[aria-disabled="true"]::before { opacity: 0.35; }
+
+/* F34: o aviso do fim da escaramuca, no meio do jogo. Some (hidden) enquanto a partida corre. */
+/* fixo sobre a area do jogo (a direita da barra), sem mexer no empilhamento de #jogo:
+   `position: relative` em #jogo punha o canvas por cima da ajuda e roubava o clique */
+#fim-de-partida {
+  position: fixed; left: calc(var(--largura-barra) + (100vw - var(--largura-barra)) / 2); top: 40%;
+  transform: translate(-50%, -50%) rotate(-2deg); z-index: 20;
+  padding: 18px 36px; background: var(--papel); color: var(--tinta); text-align: center;
+  border: 3px solid var(--tinta); box-shadow: 4px 4px 0 var(--tinta); pointer-events: none;
+}
+#fim-de-partida[hidden] { display: none; }
+#fim-de-partida h2 { margin: 0 0 6px; font: 40px/1.1 var(--fonte-display); letter-spacing: 0.06em; text-transform: uppercase; }
+#fim-de-partida p { margin: 0; font-size: 14px; }
+#fim-de-partida[data-fim="derrota"] h2 { color: var(--terracota); }

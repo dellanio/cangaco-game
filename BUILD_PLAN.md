@@ -5372,6 +5372,17 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
 ### F32 — Aba de estatísticas
 ### F33 — Minimapa
 ### F34 — Condições de vitória e derrota (escaramuça)
+- **ENTREGUE (2026-09-28, sessão autônoma; plano em `docs/planos/2026-09-28-A16-F34-fim.md`).**
+  Decisão do operador: *"Vitória: destruir Armazém, Escola e Quartel inimigos e todas as
+  tropas. Derrota: perder os três e todas as tropas."*
+  - `sim/partida.ts`: escaramuça é a partida com IA (`state.ia`).
+    - O lado cai sem nenhum dos três (a obra conta como de pé) e sem militar vivo.
+    - A derrota vem antes da vitória, então a perda mútua é derrota.
+    - `GameState.partida?` é gravado uma vez, com `match-ended`, e a sim continua.
+  - UI: aviso `#fim-de-partida` com o texto do tema (`partida`).
+  - Teste `tests/F34-fim.test.ts` e roteiro `tools/shots/F34.js`.
+  - **PARA REVISÃO:** sem IA o jogo nunca acaba, e a sim não para no fim (quem para é a
+    tela).
 
 ### F35 — Feira: trocar mercadoria (sim + ui)
 - **Origem (decisão do operador, 2026-09-26)**: item escrito para a casca não ficar sem

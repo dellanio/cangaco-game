@@ -321,6 +321,11 @@ export type GameEvent =
       readonly vitima: string;
     }
   | {
+      /** F34 — a escaramuca acabou neste tick, com `fim`. Sai uma vez so. */
+      readonly type: 'match-ended';
+      readonly fim: 'vitoria' | 'derrota';
+    }
+  | {
       /** F28a — a unidade morreu em luta e saiu do estado neste tick. */
       readonly type: 'unit-killed';
       readonly unidade: string;
@@ -1358,6 +1363,12 @@ export interface GameState {
    * antes dele continua igual byte a byte. Quem cria as posicoes e o cenario.
    */
   readonly ia?: Readonly<Record<string, IADoLado>>;
+  /**
+   * F34 — o fim da escaramuca, gravado UMA vez no tick em que ela acaba (`sim/partida.ts`).
+   * AUSENTE enquanto a partida corre. A sim continua andando depois: quem para o jogo e
+   * a tela.
+   */
+  readonly partida?: { readonly fim: 'vitoria' | 'derrota'; readonly tick: number };
 }
 
 /** F28-IA — o tipo de grupo, derivado do dado da tropa (`sim/ia.ts`). */

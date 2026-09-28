@@ -14,6 +14,7 @@ import { aplicarMoveUnits, sistemaDaMarcha } from './systems/marcha';
 import { aplicarAttackUnit, sistemaDoCombate } from './systems/combate';
 import { sistemaDaTorre } from './systems/torre';
 import { sistemaDaIA } from './systems/ia';
+import { resultadoDaPartida } from './partida';
 import { aplicarCancelTraining, aplicarEnqueueTraining, sistemaDasEscolas } from './systems/escolas';
 import { aplicarDemolishRoad, aplicarPlaceRoad } from './systems/estradas';
 import { aplicarPlowField, aplicarUnplanField } from './systems/campos';
@@ -216,6 +217,15 @@ export function step(
   // Identidade num tick sem conclusao.
   atual = registrarConclusoes(atual, events);
 
+  // F34: o fim da escaramuca, conferido no estado do FIM do tick e gravado uma vez so
+  if (atual.partida === undefined) {
+    const fim = resultadoDaPartida(atual, dados);
+    if (fim !== null) {
+      atual = { ...atual, partida: { fim, tick } };
+      events.push({ type: 'match-ended', fim });
+    }
+  }
+
   return {
     tick,
     rng: atual.rng,
@@ -243,5 +253,6 @@ export function step(
     recursos: regenerar(atual.recursos, tick, dados),
     // F28-IA: so atravessa quando existe — estado sem IA nao ganha o campo
     ...(atual.ia === undefined ? {} : { ia: atual.ia }),
+    ...(atual.partida === undefined ? {} : { partida: atual.partida }),
   };
 }

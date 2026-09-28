@@ -445,6 +445,13 @@
     "torreSemPedra": "Sem pedra: a torre não atira",
     "torreSemRecruta": "Sem recruta: a torre não atira"
   },
+  "partida": {
+    "_doc": "F34. O aviso do fim da escaramuca, sobre o jogo. So a tela: quem decide o fim e sim/partida.ts.",
+    "vitoria": "Vitória",
+    "derrota": "Derrota",
+    "vitoriaDesc": "O inimigo perdeu o armazém, a escola, o quartel e todas as tropas.",
+    "derrotaDesc": "Você perdeu o armazém, a escola, o quartel e todas as tropas."
+  },
   "marcadores": {
     "_doc": "F20c. Marcador sobre a unidade no MUNDO (src/render/unidades.ts). Nao e o alerta do HUD (alertas, F22): aquele fala de predio parado, este de gente. `fome` acende a partir de limiares.alertaVisual (data/condition.json) — o limiar nunca e digitado em .ts.",
     "fome": { "rotulo": "com fome", "cor": "telha" }
