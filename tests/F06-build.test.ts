@@ -16,6 +16,7 @@ import { ligarTeclado } from '../src/input/teclado';
 import { validarTudo } from '../tools/data-rules.js';
 import { ARQUIVOS } from '../tools/data-schema.js';
 import { gravarEvidencia } from './helpers/evidence';
+import { LADO_DO_JOGADOR } from '../src/sim/state';
 
 // --- montagem de estados e de dados injetados (so teste; nada disto entra em sim/) ---
 
@@ -30,7 +31,7 @@ function semPredios(estado: GameState): GameState {
 function comPredio(estado: GameState, tipo: string, gx: number, gy: number): GameState {
   const id = `teste-${estado.predios.ordem.length}-${tipo}`;
   const predio: Predio = {
-    id, tipo, gx, gy, estado: 'completo', hp: 0,
+    lado: LADO_DO_JOGADOR, id, tipo, gx, gy, estado: 'completo', hp: 0,
     capacidade: { entrada: null, saida: null },
     estoque: { entrada: {}, saida: {} },
     ocupante: null, producao: null, pausado: false,

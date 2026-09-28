@@ -4964,6 +4964,23 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
   - uma regra no `validate:data` que recusa id em `production.receitas.*.sai` fora de
     `economy.mercadorias`. Hoje nenhuma regra confere isso, e por isso o buraco passou.
 ### F-CERCO-a — Tropa ataca prédio, por ordem (sim)
+
+- **Quebra (fila da noite, 2026-09-28, pela ordem do operador).** A ordem foi:
+  *"Comece pelo `lado` (dono) de prédio e unidade. Se ela não couber inteira,
+  entregue o dono e pare."* A feature não coube, e ficou quebrada assim:
+  - **F-CERCO-a1 — o dono. ENTREGUE.**
+    - `lado: number`, obrigatório, em `PredioBase` e `Unidade`, com
+      `LADO_DO_JOGADOR = 0` em `sim/state.ts`.
+    - Quem cria põe o lado de quem mandou: a abertura e o `PlaceBlueprint` põem o do
+      jogador, e o `completarObra` preserva o da obra.
+    - A unidade formada herda o lado da escola.
+    - `VERSAO_DO_SAVE` foi a 3, e o save da versão 2 é recusado com nome, sem
+      migração.
+    - Teste: `tests/F-CERCO-a1-lado.test.ts`. A herança é provada com uma escola de
+      lado 1.
+  - **F-CERCO-a2 — o ataque.** Tudo o que está abaixo: comando, FSM, cadência, dano,
+    queda e os cinco aceites, intocados. O aceite *"ordem contra prédio do próprio
+    lado é recusada"* já tem o campo de que precisa.
 - **Origem (decisão do operador, 2026-09-28)**: *"ele vem ANTES da F25 (Quartel), não só
   antes da F34. Sem ele o combate não tem objetivo — tropa mata tropa e a partida não
   acaba."* O que a VARREDURA-KAM leu no fonte está em `docs/varredura-kam.md`, frente 4.

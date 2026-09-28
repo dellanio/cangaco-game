@@ -242,6 +242,9 @@
   "F-REPL-e-estados-da-arvore": {
     "passes": true
   },
+  "F-CERCO-a1-lado": {
+    "passes": true
+  },
   "F17g-revelacao-da-obra": {
     "passes": true
   },

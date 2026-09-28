@@ -17,6 +17,7 @@ import {
 } from '../src/render/pilhas';
 import { comandosDaVilaNoTick, vilaDaCalibracao } from './helpers/cal-vila';
 import { gravarEvidencia } from './helpers/evidence';
+import { LADO_DO_JOGADOR } from '../src/sim/state';
 
 const semArte: Manifesto = { assets: [] } as unknown as Manifesto;
 const dados = dadosDasPilhas(semArte);
@@ -24,14 +25,14 @@ const hpPor = gameData.construcao.hpPorMaterialEntregue;
 
 function completo(tipo: string, entrada: Record<string, number>, saida: Record<string, number>): PredioCompleto {
   return {
-    id: 'p1', tipo, gx: 0, gy: 0, hp: 1, estado: 'completo',
+    lado: LADO_DO_JOGADOR, id: 'p1', tipo, gx: 0, gy: 0, hp: 1, estado: 'completo',
     capacidade: { entrada: null, saida: null }, estoque: { entrada, saida },
     ocupante: null, producao: null, pausado: false,
   };
 }
 
 function obra(tipo: string, faltam: Record<string, number>, hp: number): PredioEmObra {
-  return { id: 'p1', tipo, gx: 0, gy: 0, hp, estado: 'obra', obra: { faltam, nivelamento: 0 } };
+  return { lado: LADO_DO_JOGADOR, id: 'p1', tipo, gx: 0, gy: 0, hp, estado: 'obra', obra: { faltam, nivelamento: 0 } };
 }
 
 const resumo = (p: Predio, d = dados): [string, string, number][] =>

@@ -19,6 +19,7 @@ import {
   armazemDoCenario, comPredioCompletoEm, comUnidadeExtra, destinoPredioDa, semLaborers, semOPredio,
   serfsDoCenario,
 } from './helpers/jobs-cenario';
+import { LADO_DO_JOGADOR } from '../src/sim/state';
 
 const inicial = createInitialState(1);
 
@@ -34,7 +35,7 @@ describe('F14 — a posse mora no predio', () => {
   it('obra que completa nasce vaga: completarObra devolve ocupante null', () => {
     const def = gameData.predios.find((p) => p.id === 'quarry');
     const obra: PredioEmObra = {
-      id: 'o1', tipo: 'quarry', gx: 26, gy: 36, estado: 'obra', hp: def?.hp ?? 0,
+      lado: LADO_DO_JOGADOR, id: 'o1', tipo: 'quarry', gx: 26, gy: 36, estado: 'obra', hp: def?.hp ?? 0,
       obra: { faltam: {}, nivelamento: 0 },
     };
     expect(completarObra(obra).ocupante).toBe(null);
@@ -72,7 +73,7 @@ describe('F14 — quem ocupa o que vem do dado', () => {
 
   it('obra nunca e ocupavel, nem do tipo que pede trabalhador', () => {
     const obra: PredioEmObra = {
-      id: 'o2', tipo: 'quarry', gx: 26, gy: 36, estado: 'obra', hp: 10,
+      lado: LADO_DO_JOGADOR, id: 'o2', tipo: 'quarry', gx: 26, gy: 36, estado: 'obra', hp: 10,
       obra: { faltam: {}, nivelamento: 0 },
     };
     expect(trabalhadorDoTipo(obra.tipo)).not.toBe(null);

@@ -35,6 +35,7 @@ import { previaDeAlcance } from '../src/render/alcance-de-colheita';
 import { rotuloDoAlcance } from '../src/render/rotulo-de-alcance';
 import { cenarioDePedreira, comJazida } from './helpers/producao-cenario';
 import { gravarEvidencia } from './helpers/evidence';
+import { LADO_DO_JOGADOR } from '../src/sim/state';
 
 /** A colheita de um tipo, do DADO. Nunca `{ recurso: 'rock', alcance: 6 }`
  *  escrito aqui, que passaria mesmo se o dado mudasse. */
@@ -91,7 +92,7 @@ function comPredio(estado: GameState, predio: PredioCompleto): GameState {
 
 function predioEm(id: string, tipo: string, gx: number, gy: number): PredioCompleto {
   return {
-    id, tipo, gx, gy, hp: 1, estado: 'completo',
+    lado: LADO_DO_JOGADOR, id, tipo, gx, gy, hp: 1, estado: 'completo',
     capacidade: { entrada: null, saida: null }, estoque: { entrada: {}, saida: {} },
     ocupante: null, producao: null, pausado: false,
   };

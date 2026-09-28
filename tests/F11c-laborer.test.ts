@@ -20,6 +20,7 @@ import { violacoesDeInvariantes } from './helpers/jobs-invariantes';
 import { violacoesDaFsmDoLaborer } from './helpers/laborer-invariantes';
 import { gravarEvidencia } from './helpers/evidence';
 import { naVila, xy } from './helpers/ancoras';
+import { LADO_DO_JOGADOR } from '../src/sim/state';
 
 /** So para este arquivo: muda o `hp` (o martelado) de uma obra, sem tocar no resto. */
 function comHp(estado: GameState, id: string, hp: number): GameState {
@@ -185,7 +186,7 @@ describe('F11c — completarObra', () => {
     const obra = estado.predios.porId['obra-a'] as PredioEmObra;
     const completo = completarObra(obra);
     expect(completo).toEqual({
-      id: 'obra-a', tipo: 'quarry', ...naVila(-3, 4), estado: 'completo', hp: 250,
+      lado: LADO_DO_JOGADOR, id: 'obra-a', tipo: 'quarry', ...naVila(-3, 4), estado: 'completo', hp: 250,
       capacidade: gameData.producao.estoqueInternoPorPredio,
       estoque: { entrada: {}, saida: {} },
       ocupante: null,
@@ -196,7 +197,7 @@ describe('F11c — completarObra', () => {
 
   it('storehouse completado recebe a capacidade do armazem, sem estoque', () => {
     const obra: PredioEmObra = {
-      id: 'obra-b', tipo: 'storehouse', ...naVila(-19, -20), estado: 'obra', hp: 1,
+      lado: LADO_DO_JOGADOR, id: 'obra-b', tipo: 'storehouse', ...naVila(-19, -20), estado: 'obra', hp: 1,
       obra: { faltam: {}, nivelamento: alvoDeNivelamento('storehouse') },
     };
     const completo = completarObra(obra);

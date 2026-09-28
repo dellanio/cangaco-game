@@ -33,6 +33,7 @@ import { aberturaDaFaseA } from './helpers/abertura';
 import { compararComESemSave } from './helpers/determinism';
 import { gravarEvidencia } from './helpers/evidence';
 import type { TileDeGrid } from '../src/sim/estradas';
+import { LADO_DO_JOGADOR } from '../src/sim/state';
 
 const OFICINAS = ['weapons_workshop', 'weapon_smithy', 'armor_smithy'] as const;
 /** As oito saidas, lidas do DADO: a uniao de `sai` das tres receitas. */
@@ -274,7 +275,7 @@ describe('F24a — dado', () => {
     for (const tipo of OFICINAS) {
       const sai = Object.keys(gameData.producao.receitas[tipo]?.sai ?? {});
       const predio: PredioCompleto = {
-        id: 'p1', tipo, gx: 0, gy: 0, hp: 1, estado: 'completo',
+        lado: LADO_DO_JOGADOR, id: 'p1', tipo, gx: 0, gy: 0, hp: 1, estado: 'completo',
         capacidade: { entrada: null, saida: null },
         estoque: { entrada: {}, saida: Object.fromEntries(sai.map((m) => [m, 1])) },
         ocupante: null, producao: null, pausado: false,

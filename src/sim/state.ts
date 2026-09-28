@@ -265,8 +265,18 @@ export interface Capacidade {
   readonly saida: number | null;
 }
 
+/**
+ * F-CERCO-a1 — o lado da vila do jogador. Lado e IDENTIDADE (quem e dono), nao
+ * numero de balanceamento: por isso mora aqui e nao em `data/`. Sem lado nao existe
+ * predio inimigo, e a F-CERCO-a2 (tropa ataca predio) recusa ordem contra o proprio.
+ */
+export const LADO_DO_JOGADOR = 0;
+
 interface PredioBase {
   readonly id: string;
+  /** F-CERCO-a1 — o dono. Quem cria poe o lado de quem mandou (`PlaceBuilding`: o
+   *  jogador). Obrigatorio: predio sem dono nao e representavel. */
+  readonly lado: number;
   /** Id do predio em data/buildings.json ('storehouse', 'quarry', ...). */
   readonly tipo: string;
   readonly gx: number;
@@ -1010,6 +1020,8 @@ export interface DadosDaFsm {
 
 export interface Unidade {
   readonly id: string;
+  /** F-CERCO-a1 — o dono. A unidade formada herda o lado do predio que a formou. */
+  readonly lado: number;
   /** Id do civil em data/units.json civis.tipos ('serf', 'laborer', ...). */
   readonly tipo: string;
   readonly gx: number;
@@ -1241,6 +1253,7 @@ function estoqueParaTipo(
 export function completarObra(predio: PredioEmObra, dados: GameData = gameData): PredioCompleto {
   return {
     id: predio.id,
+    lado: predio.lado,
     tipo: predio.tipo,
     gx: predio.gx,
     gy: predio.gy,
@@ -1274,6 +1287,7 @@ function criarPredios(
     contador += 1;
     lista.push({
       id,
+      lado: LADO_DO_JOGADOR,
       tipo: p.id,
       gx: p.gx,
       gy: p.gy,
@@ -1309,6 +1323,7 @@ function criarUnidades(
       contador += 1;
       lista.push({
         id,
+        lado: LADO_DO_JOGADOR,
         tipo,
         gx: spawnDeUnidades.gx + deslocamento,
         gy: spawnDeUnidades.gy,

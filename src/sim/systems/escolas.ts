@@ -164,7 +164,8 @@ export function sistemaDasEscolas(state: GameState, dados: GameData = gameData):
             // F20b: nasce com a condicao CHEIA da classe dele (numero do dado). A
             // escola nao e a Bodega: quem nasce nao chega com fome.
             [id]: {
-              id, tipo: primeiro.unidade, gx: tile.gx, gy: tile.gy, fsm: 'ocioso', fsmData: {},
+              // F-CERCO-a1: herda o lado da escola que a formou.
+              id, lado: escola.lado, tipo: primeiro.unidade, gx: tile.gx, gy: tile.gy, fsm: 'ocioso', fsmData: {},
               condicao: condicaoCheiaDoTipo(primeiro.unidade, dados),
             },
           },

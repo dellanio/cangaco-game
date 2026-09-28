@@ -18,6 +18,7 @@ import { compararComESemSave, deepFreeze } from './helpers/determinism';
 import { gravarEvidencia } from './helpers/evidence';
 import { validarTudo } from '../tools/data-rules.js';
 import { ARQUIVOS } from '../tools/data-schema.js';
+import { LADO_DO_JOGADOR } from '../src/sim/state';
 
 // --- montagem (so teste) ---
 
@@ -63,7 +64,7 @@ function comPedraNoPredio(estado: GameState, id: string, saida: number, entrada:
 function comArmazemExtra(estado: GameState, saida: number, entrada: number): { estado: GameState; id: string } {
   const id = `extra-${estado.predios.ordem.length}`;
   const predio: PredioCompleto = {
-    id, tipo: 'storehouse', gx: 50, gy: 50, estado: 'completo', hp: 0,
+    lado: LADO_DO_JOGADOR, id, tipo: 'storehouse', gx: 50, gy: 50, estado: 'completo', hp: 0,
     capacidade: { entrada: null, saida: null },
     estoque: { entrada: { stone: entrada }, saida: { stone: saida } },
     ocupante: null, producao: null, pausado: false,
@@ -224,7 +225,7 @@ describe('F08 + F18g — o custo em pedra e PEDIDO no comando e pago tile a tile
   it('so armazem paga: pedra na saida de outro tipo de predio nao conta', () => {
     const semArmazem = (() => {
       const outro: PredioCompleto = {
-        id: 'pedreira', tipo: 'quarry', gx: 0, gy: 0, estado: 'completo', hp: 0,
+        lado: LADO_DO_JOGADOR, id: 'pedreira', tipo: 'quarry', gx: 0, gy: 0, estado: 'completo', hp: 0,
         capacidade: { entrada: 5, saida: 5 },
         estoque: { entrada: {}, saida: { stone: 100 } },
         ocupante: null, producao: { progresso: 0, plantio: null }, pausado: false,

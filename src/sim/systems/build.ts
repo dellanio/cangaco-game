@@ -1,5 +1,6 @@
 import type { Command } from '../commands';
 import type { GameEvent, GameState, PredioEmObra } from '../state';
+import { LADO_DO_JOGADOR } from '../state';
 import type { GameData } from '../data/types';
 import { canPlace } from '../placement';
 import { custoDoPredio } from '../obra';
@@ -46,6 +47,8 @@ export function aplicarPlaceBlueprint(
   const id = `p${state.proximoId}`;
   const obra: PredioEmObra = {
     id,
+    // F-CERCO-a1: o comando vem do jogador; o lado de quem mandou e o dele.
+    lado: LADO_DO_JOGADOR,
     tipo: comando.buildingId,
     gx: comando.gx,
     gy: comando.gy,

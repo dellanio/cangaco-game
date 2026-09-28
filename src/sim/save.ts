@@ -33,8 +33,13 @@ import { gameData } from './data';
  *    entao a versao e o unico portao. Base instalada na epoca: zero (a F23b, que
  *    grava save em disco, ainda nao existia), por isso subir o numero bastou e
  *    nao houve ramo de migracao.
+ * - 3: F-CERCO-a1. `Predio.lado` e `Unidade.lado` nasceram, obrigatorios. Um save
+ *    da versao 2 teria `lado === undefined` em tudo, e a F-CERCO-a2 leria "sem
+ *    dono" como "inimigo de ninguem". A base instalada ja existe (F23b grava no
+ *    `localStorage`), mas e de desenvolvimento: recusar com nome, sem migracao, e a
+ *    decisao conservadora (PROGRESS, marcada para revisao).
  */
-export const VERSAO_DO_SAVE = 2;
+export const VERSAO_DO_SAVE = 3;
 
 export interface Save {
   readonly versao: number;

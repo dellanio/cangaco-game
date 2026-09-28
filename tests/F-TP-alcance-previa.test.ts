@@ -27,6 +27,7 @@ import {
 } from '../src/sim/recursos';
 import { corDoRecurso, nomeDoRecurso, previaDeAlcance, rotuloDoAlcance } from '../src/render/alcance-de-colheita';
 import { comJazida } from './helpers/producao-cenario';
+import { LADO_DO_JOGADOR } from '../src/sim/state';
 
 /** A colheita da pedreira, do DADO — nunca `{ recurso: 'rock', alcance: 6 }`
  *  digitado aqui, que faria o teste passar mesmo se o dado mudasse. */
@@ -43,7 +44,7 @@ const estadoCom = (dados: GameData): GameState => createInitialState(1, dados);
  *  verdade exigiria estrada ate o armazem — que nao e o assunto aqui. */
 function predioEm(tipo: string, gx: number, gy: number): PredioCompleto {
   return {
-    id: `p-${gx}-${gy}`, tipo, gx, gy, hp: 1, estado: 'completo',
+    lado: LADO_DO_JOGADOR, id: `p-${gx}-${gy}`, tipo, gx, gy, hp: 1, estado: 'completo',
     capacidade: { entrada: null, saida: null }, estoque: { entrada: {}, saida: {} },
     ocupante: null, producao: null, pausado: false,
   };

@@ -36,6 +36,7 @@ import { registrarTipoConstruido } from '../src/sim/desbloqueio';
 import { gameData } from '../src/sim/data';
 import type { ColheitaDeRecurso } from '../src/sim/data/types';
 import { ancoraDoRocadoDoNorte, relativoA } from './helpers/ancoras';
+import { LADO_DO_JOGADOR } from '../src/sim/state';
 
 const DADOS = gameData;
 
@@ -135,7 +136,7 @@ function comMilhoDebaixoDaFazenda(estado: GameState): GameState {
   const veredito = canPlace(comOArmazemLiberado, 'storehouse', GALPAO.gx, GALPAO.gy, DADOS);
   if (!veredito.ok) throw new Error(`fixture: o jogo recusou o galpao sobre o campo (${veredito.motivo})`);
   const galpao = completarObra({
-    id: GALPAO.id, tipo: 'storehouse', gx: GALPAO.gx, gy: GALPAO.gy, estado: 'obra', hp: def.hp,
+    lado: LADO_DO_JOGADOR, id: GALPAO.id, tipo: 'storehouse', gx: GALPAO.gx, gy: GALPAO.gy, estado: 'obra', hp: def.hp,
     obra: { faltam: {}, nivelamento: 0 },
   }, DADOS);
   const rendimento = DADOS.recursos.tipos['corn']?.rendimentoPorTile;

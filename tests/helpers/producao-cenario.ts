@@ -28,6 +28,7 @@ import {
   relativoA,
 } from './ancoras';
 import type { Relativo } from './ancoras';
+import { LADO_DO_JOGADOR } from '../../src/sim/state';
 
 const tile = (gx: number, gy: number): TileDeGrid => ({ gx, gy });
 
@@ -89,7 +90,7 @@ export function comProdutorOcupado(
   const tipoDoCivil = trabalhadorDoTipo(opcoes.tipo, dados);
   if (tipoDoCivil === null) throw new Error(`fixture: '${opcoes.tipo}' nao pede trabalhador`);
   const completo = completarObra({
-    id: opcoes.id, tipo: opcoes.tipo, gx: opcoes.gx, gy: opcoes.gy, estado: 'obra', hp: def.hp,
+    lado: LADO_DO_JOGADOR, id: opcoes.id, tipo: opcoes.tipo, gx: opcoes.gx, gy: opcoes.gy, estado: 'obra', hp: def.hp,
     obra: { faltam: {}, nivelamento: 0 },
   }, dados);
   const predio: PredioCompleto = { ...completo, ocupante: opcoes.unidade };
@@ -98,7 +99,7 @@ export function comProdutorOcupado(
   const porta = tilesDaPorta(predio, dados)[0];
   if (porta === undefined) throw new Error(`fixture: '${opcoes.id}' nao tem porta`);
   const u: Unidade = {
-    id: opcoes.unidade, tipo: tipoDoCivil, gx: porta.gx, gy: porta.gy, fsm: 'trabalhando', fsmData: {},
+    lado: LADO_DO_JOGADOR, id: opcoes.unidade, tipo: tipoDoCivil, gx: porta.gx, gy: porta.gy, fsm: 'trabalhando', fsmData: {},
     condicao: condicaoCheiaDoTipo(tipoDoCivil),
   };
   return {
@@ -123,7 +124,7 @@ function comPredioSemTrabalhador(
   if (!def) throw new Error(`fixture: predio '${tipo}' nao existe em buildings.json`);
   if (trabalhadorDoTipo(tipo, dados) !== null) throw new Error(`fixture: '${tipo}' pede trabalhador`);
   const predio = completarObra({
-    id, tipo, gx, gy, estado: 'obra', hp: def.hp, obra: { faltam: {}, nivelamento: 0 },
+    lado: LADO_DO_JOGADOR, id, tipo, gx, gy, estado: 'obra', hp: def.hp, obra: { faltam: {}, nivelamento: 0 },
   }, dados);
   return {
     ...estado,
@@ -441,7 +442,7 @@ export function comSerfs(
   const porId = { ...estado.unidades.porId };
   const ordem = [...estado.unidades.ordem];
   for (let i = 1; i <= quantos; i++) {
-    const u: Unidade = { id: `serf-${i}`, tipo: 'serf', gx, gy, fsm: 'ocioso', fsmData: {}, condicao: condicaoCheiaDoTipo('serf') };
+    const u: Unidade = { lado: LADO_DO_JOGADOR, id: `serf-${i}`, tipo: 'serf', gx, gy, fsm: 'ocioso', fsmData: {}, condicao: condicaoCheiaDoTipo('serf') };
     porId[u.id] = u;
     ordem.push(u.id);
   }
@@ -491,7 +492,7 @@ export function comArmazemExtra(
   const def = dados.predios.find((p) => p.id === 'storehouse');
   if (!def) throw new Error('fixture: storehouse nao existe em buildings.json');
   const predio = completarObra({
-    id, tipo: 'storehouse', gx, gy, estado: 'obra', hp: def.hp, obra: { faltam: {}, nivelamento: 0 },
+    lado: LADO_DO_JOGADOR, id, tipo: 'storehouse', gx, gy, estado: 'obra', hp: def.hp, obra: { faltam: {}, nivelamento: 0 },
   }, dados);
   return {
     ...estado,
@@ -541,7 +542,7 @@ export function comBodegaAbastecida(
   if (caixaDeTipo(ID_DA_BODEGA, gx, gy, dados) === null) throw new Error('fixture: Bodega sem tamanho');
 
   const predio = completarObra({
-    id, tipo: ID_DA_BODEGA, gx, gy, estado: 'obra', hp: def.hp, obra: { faltam: {}, nivelamento: 0 },
+    lado: LADO_DO_JOGADOR, id, tipo: ID_DA_BODEGA, gx, gy, estado: 'obra', hp: def.hp, obra: { faltam: {}, nivelamento: 0 },
   }, dados);
   const comBodega: GameState = {
     ...estado,

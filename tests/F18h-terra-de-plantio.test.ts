@@ -38,6 +38,7 @@ import { gravarEvidencia } from './helpers/evidence';
 import { cenarioDeFazendaSemCampo } from './helpers/producao-cenario';
 import { violacoesDeInvariantes } from './helpers/jobs-invariantes';
 import { ancoraDoLagoPequeno, ancoraDoLajedo, naVila, relativoA } from './helpers/ancoras';
+import { LADO_DO_JOGADOR } from '../src/sim/state';
 
 const RECEITA = receitaDoTipo('farm', gameData);
 if (RECEITA === null || RECEITA.colheita === null) {
@@ -60,7 +61,7 @@ const tile = (gx: number, gy: number) => ({ gx, gy });
  *  provaria a recusa e nao o ciclo. */
 function comLaborer(estado: GameState, id: string, gx: number, gy: number, dados: GameData): GameState {
   const u: Unidade = {
-    id, tipo: TIPO_QUE_CONSTROI, gx, gy, fsm: 'ocioso', fsmData: {},
+    lado: LADO_DO_JOGADOR, id, tipo: TIPO_QUE_CONSTROI, gx, gy, fsm: 'ocioso', fsmData: {},
     condicao: condicaoCheiaDoTipo(TIPO_QUE_CONSTROI, dados),
   };
   return {

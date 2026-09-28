@@ -222,7 +222,8 @@ describe('F18g — o save: campo novo e migracao', () => {
   };
 
   it('a versao do save subiu, e um save da versao anterior e recusado com nome', () => {
-    expect(VERSAO_DO_SAVE).toBe(2);
+    // F-CERCO-a1 subiu de novo (3); o que a F18g guarda e ter passado da 1.
+    expect(VERSAO_DO_SAVE).toBeGreaterThanOrEqual(2);
     const texto = salvar(inicial, gameData);
     const antigo = JSON.stringify({ ...(JSON.parse(texto) as Record<string, unknown>), versao: 1 });
     expect(() => carregar(antigo, gameData)).toThrow(/versao 1/);

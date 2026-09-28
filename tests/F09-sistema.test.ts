@@ -20,6 +20,7 @@ import {
   serfsDoCenario, tarefaDe, 
 } from './helpers/jobs-cenario';
 import { linhaHDe, linhaVDe, naVila } from './helpers/ancoras';
+import { LADO_DO_JOGADOR } from '../src/sim/state';
 
 const armazem = armazemDoCenario(inicial);
 const serfsIniciais = serfsDoCenario(inicial);
@@ -125,7 +126,7 @@ describe('F09 — release em TODO ramo de falha: um teste por ramo, as duas rese
   it('6b. destino completou (o predio ja nao e obra) -> CANCELA', () => {
     const { estado, tarefa } = comUmaTarefaReclamada();
     const completo: PredioCompleto = {
-      id: 'obra-a', tipo: 'quarry', ...naVila(-3, 4), estado: 'completo', hp: 250,
+      lado: LADO_DO_JOGADOR, id: 'obra-a', tipo: 'quarry', ...naVila(-3, 4), estado: 'completo', hp: 250,
       capacidade: { entrada: 5, saida: 5 }, estoque: { entrada: {}, saida: {} },
       ocupante: null, producao: { progresso: 0, plantio: null }, pausado: false,
     };

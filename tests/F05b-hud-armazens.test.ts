@@ -15,6 +15,7 @@ import { montarHud } from '../src/ui/hud';
 import {
   armazemDoCenario, cenarioLigado, comObra, comTarefas, serfsDoCenario, tarefaDe,
 } from './helpers/jobs-cenario';
+import { LADO_DO_JOGADOR } from '../src/sim/state';
 
 const inicial = createInitialState(1);
 const armazem = armazemDoCenario(inicial);
@@ -22,7 +23,7 @@ const armazem = armazemDoCenario(inicial);
 /** Uma pedreira COMPLETA com estoque proprio na saida: o que a F15 vai produzir. */
 function comPedreiraComEstoque(estado: GameState, saida: Record<string, number>): GameState {
   const pedreira: PredioCompleto = {
-    id: 'p99', tipo: 'quarry', gx: 50, gy: 50, estado: 'completo', hp: 250,
+    lado: LADO_DO_JOGADOR, id: 'p99', tipo: 'quarry', gx: 50, gy: 50, estado: 'completo', hp: 250,
     capacidade: { entrada: null, saida: null }, estoque: { entrada: {}, saida },
     ocupante: null, producao: { progresso: 0, plantio: null }, pausado: false,
   };
@@ -52,7 +53,7 @@ describe('estoqueDosArmazens — o seletor', () => {
 
   it('soma varios armazens', () => {
     const segundo: PredioCompleto = {
-      id: 'p98', tipo: 'storehouse', gx: 40, gy: 10, estado: 'completo', hp: 0,
+      lado: LADO_DO_JOGADOR, id: 'p98', tipo: 'storehouse', gx: 40, gy: 10, estado: 'completo', hp: 0,
       capacidade: { entrada: null, saida: null }, estoque: { entrada: {}, saida: { stone: 5 } },
       ocupante: null, producao: null, pausado: false,
     };

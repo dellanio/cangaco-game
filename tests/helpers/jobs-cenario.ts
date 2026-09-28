@@ -14,6 +14,7 @@ import type { TileDeGrid } from '../../src/sim/estradas';
 import { alvoDeNivelamento } from '../../src/sim/obra';
 import { tileAndavel } from '../../src/sim/pathfinding';
 import { linhaHDe, linhaVDe, naVila } from './ancoras';
+import { LADO_DO_JOGADOR } from '../../src/sim/state';
 
 export const inicial = createInitialState(1);
 
@@ -73,7 +74,7 @@ export function comObra(
 ): GameState {
   const tipo = opcoes.tipo ?? 'quarry';
   const obra: PredioEmObra = {
-    id, tipo, gx: opcoes.gx, gy: opcoes.gy, estado: 'obra', hp: 0,
+    lado: LADO_DO_JOGADOR, id, tipo, gx: opcoes.gx, gy: opcoes.gy, estado: 'obra', hp: 0,
     obra: { faltam: opcoes.faltam, nivelamento: opcoes.nivelamento ?? alvoDeNivelamento(tipo) },
   };
   return {
@@ -166,7 +167,7 @@ export function comArmazemCompleto(
   estado: GameState, id: string, opcoes: { readonly gx: number; readonly gy: number; readonly stone?: number; readonly timber?: number },
 ): GameState {
   const predio: PredioCompleto = {
-    id, tipo: 'storehouse', gx: opcoes.gx, gy: opcoes.gy, estado: 'completo', hp: 0,
+    lado: LADO_DO_JOGADOR, id, tipo: 'storehouse', gx: opcoes.gx, gy: opcoes.gy, estado: 'completo', hp: 0,
     capacidade: { entrada: null, saida: null },
     estoque: { entrada: {}, saida: { stone: opcoes.stone ?? 0, timber: opcoes.timber ?? 0 } },
     ocupante: null, producao: null, pausado: false,
@@ -191,7 +192,7 @@ export function comPredioCompletoEm(
   const def = gameData.predios.find((p) => p.id === opcoes.tipo);
   if (!def) throw new Error(`fixture: tipo '${opcoes.tipo}' nao existe em buildings.json`);
   const predio = completarObra({
-    id, tipo: opcoes.tipo, gx: opcoes.gx, gy: opcoes.gy, estado: 'obra', hp: def.hp,
+    lado: LADO_DO_JOGADOR, id, tipo: opcoes.tipo, gx: opcoes.gx, gy: opcoes.gy, estado: 'obra', hp: def.hp,
     obra: { faltam: {}, nivelamento: 0 },
   });
   return {
@@ -300,7 +301,7 @@ export function comUnidadeEm(estado: GameState, id: string, gx: number, gy: numb
  *  (`laborersMaximosPorObra`) precisam de mais do que isso. */
 export function comUnidadeExtra(estado: GameState, id: string, tipo: string, gx: number, gy: number): GameState {
   // F20b: a fixture nasce com a condicao CHEIA do tipo, como a unidade do jogo.
-  const unidade: Unidade = { id, tipo, gx, gy, fsm: 'ocioso', fsmData: {}, condicao: condicaoCheiaDoTipo(tipo) };
+  const unidade: Unidade = { lado: LADO_DO_JOGADOR, id, tipo, gx, gy, fsm: 'ocioso', fsmData: {}, condicao: condicaoCheiaDoTipo(tipo) };
   return {
     ...estado,
     unidades: { porId: { ...estado.unidades.porId, [id]: unidade }, ordem: [...estado.unidades.ordem, id] },

@@ -10188,3 +10188,48 @@ Plano: `docs/planos/2026-09-28-8-F-REPL-e.md`. Só `src/render/`, mais `tests/` 
   exige, é hipótese não medida: capturei só a zoom 2.
 - **O toco segue no marcador `esgotado` de hoje.** Distinguir por tipo é a pendência
   herdada da F18, registrada na F-TR.
+
+## 2026-09-28 (noite, fila 9) — F-CERCO-a quebrada: a1 (o dono) feita, a2 (o ataque) aberta
+
+**Pedido:** *"Comece pelo `lado` (dono) de prédio e unidade (27 + 7 erros medidos).
+Se ela não couber inteira, entregue o dono e pare."* A feature não coube (é a nona
+da fila), então foi entregue o dono e **a fila parou aqui**. O plano está em
+`docs/planos/2026-09-28-9-F-CERCO-a.md`, e a quebra a1/a2 foi escrita no item do
+BUILD_PLAN.
+
+**Verificado:**
+- **Custo medido.** Acrescentar o campo deu **34 erros** de compilação, 27 + 7 como
+  foi medido antes:
+  - na sim, 5: `state.ts` ×3, `build.ts` e `escolas.ts`;
+  - nos testes e fixtures, 29, em 17 arquivos.
+- **Onde o lado nasce na sim:**
+  - `criarPredios` e `criarUnidades` põem `LADO_DO_JOGADOR`;
+  - `aplicarPlaceBlueprint` põe o do jogador (quem manda o comando);
+  - `completarObra` preserva o da obra;
+  - a escola põe `escola.lado` na unidade formada.
+  - As fixtures dos testes usam `LADO_DO_JOGADOR`, importado.
+- **Sonda de mutação.** Com a escola pondo a constante `0` em vez de `escola.lado`,
+  o teste de herança reprovou (`expected +0 to be 1`). O arquivo foi restaurado.
+- **Save.** `VERSAO_DO_SAVE` foi a 3, com o histórico no comentário de `save.ts`.
+  - O teste da F18g afirmava `toBe(2)` e passou a `toBeGreaterThanOrEqual(2)`, que
+    é o que ele guarda: ter passado da 1.
+  - O teste novo afirma que a versão 2 é recusada com nome, e que o lado atravessa
+    salvar e carregar byte a byte.
+- **Não-regressão.** O `F11c-laborer` tinha um `toEqual` do prédio completo, que
+  agora inclui `lado`.
+- **`npm run verify` verde**: 1621 testes, e 4 skipped, que vêm da etapa
+  `test:transladado`. `npx vitest run` puro dá 1622/1622. Não há `skip` no diff.
+- **Sem render.** Nenhum arquivo de `src/render/` foi tocado.
+
+**Decisões conservadoras (PARA REVISÃO):**
+- **`lado` obrigatório, e não opcional.** Não existe "sem dono" representável.
+- **Save da versão 2 recusado, sem migração.** É a política da F18g. A base
+  instalada já existe (a F23b grava no `localStorage`), mas é de desenvolvimento. Se
+  o operador quiser migração, o ramo é "versão 2 → `lado: 0` em tudo".
+- **`LADO_DO_JOGADOR` mora em `sim/state.ts`, e não em `data/`.** É identidade, não
+  balanceamento.
+- **A cor do lado na tela fica para quando houver inimigo desenhado** (F26/F28).
+
+**Aberto:** F-CERCO-a2, isto é, o comando `AttackBuilding`, a FSM, a cadência de 12
+ticks (HIPÓTESE, lida no fonte do KaM), o dano 2 e a queda. O escopo e o aceite
+estão no BUILD_PLAN, intocados.

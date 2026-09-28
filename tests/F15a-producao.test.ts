@@ -24,12 +24,13 @@ import {
   rochaDaPedreiraDaVila,
 } from './helpers/producao-cenario';
 import { violacoesDaFsmDoEspecialista } from './helpers/especialista-invariantes';
+import { LADO_DO_JOGADOR } from '../src/sim/state';
 
 function obraDe(tipo: string): PredioEmObra {
   const def = gameData.predios.find((p) => p.id === tipo);
   if (!def) throw new Error(`fixture: predio '${tipo}' nao existe em buildings.json`);
   return {
-    id: 'obra1', tipo, gx: 5, gy: 5, estado: 'obra', hp: def.hp,
+    lado: LADO_DO_JOGADOR, id: 'obra1', tipo, gx: 5, gy: 5, estado: 'obra', hp: def.hp,
     obra: { faltam: {}, nivelamento: 0 },
   };
 }
