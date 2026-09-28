@@ -4014,12 +4014,176 @@ Casos 2 e 4 do prédio vivo (`docs/BRIEF-ARTE.md` §4a). Decisão do operador: c
     - os totais NÃO giram: giram quando o jogo mostrar problema.
   - **Lenhador com lote de 2:** medido e não proposto (BALANCE_LOG, LOTE3-c). Na vila de
     calibração ele esgota a mata; o lote não tem casa que o justifique; o KaM não tem;
-    e quebraria o 2:1 com a serraria. Reabre com o replantio.
+    e quebraria o 2:1 com a serraria. Reabre com o replantio: item **F-REPL**, abaixo
+    (2026-09-27, noite 15).
 - **Método, registrado:** o custo de um campo se mede COMPILANDO, não por busca de texto.
   - A contagem por texto dizia "5 sim, 2 render, 13 testes" para `ticksDoCiclo` e
     errava nos dois sentidos: `trabalho.ts` não quebra (lê o `DadosDoTrabalho`
     montado), e `predios.ts` quebra.
   - O `tsc` deu 42 erros ao tirar o campo e 2 ao acrescentar um obrigatório.
+
+### F-REPL — O lenhador replanta: modos cortar, replantar e ambos (dado + sim; proposta, não implementar antes do sim do operador)
+
+Pedido do operador (2026-09-27, noite 15):
+- o lenhador ganha os modos do KaM;
+- replantar põe uma árvore num tile vazio ao alcance, e ela cresce por tempo, como o
+  campo;
+- o padrão é `ambos`, para o jogador que não mexe em nada não ficar sem madeira.
+
+- **Premissa corrigida: `recursos.ts` NÃO trata `porAcao` como terminal.** Verificado
+  lendo o código e com uma sonda, já apagada.
+  - O regime `porAcao` guarda o tile em 0: `recursos.ts:507` só apaga o `nunca`.
+  - O replantio do campo já é genérico:
+    - `tilePlantavel` (`recursos.ts:274`) aceita qualquer tipo com `reposicao`, e
+      `semearNoTile` e `tileMaduro` (por `semeadoEm`) também;
+    - `produzir` entra no rodízio sempre que `reposicaoDe(receita.colheita) !== null`,
+      sem olhar se o prédio é fazenda.
+  - A árvore é terminal **só porque `tree` não tem `reposicao` em
+    `data/resources.json`**. O código já espera o replantio: o comentário de
+    `iniciarPlantio` (`especialistas.ts:303`) diz que ele vai cobrar tora.
+  - **A sonda:** `cenarioOraculo`, prédio `w1`, 12 000 ticks, com `tree.reposicao`
+    injetado com os números do milho e nenhuma linha de código:
+
+    | | troncos | tocos replantados | tocos no fim | parado sem árvore |
+    |---|---|---|---|---|
+    | hoje | 18 | 0 | 9 | 2 329 ticks |
+    | com `reposicao` | 21 | 9 | 0 | 79 ticks |
+
+  - O que falta de verdade:
+    - plantar em tile SEM entrada;
+    - os modos;
+    - duas regras de posição (abaixo).
+  - Em `recursos.ts`, isso é um predicado novo e uma linha no rodízio. Nada do que
+    existe muda de sentido.
+
+- **Muda três coisas já registradas.** Cada uma ganha nota no lugar de origem, nesta
+  mesma sessão.
+  1. **O lenhador sai de "quem esgota" e entra em "quem repõe"**, com o milho e a cana
+     (BALANCE_LOG, "Característica, não defeito: quem esgota não acelera").
+  2. **A razão N:1 passa a valer para ele, e o lote de 2 volta à mesa** (BALANCE_LOG,
+     "Lenhador com lote de 2: medido, NÃO proposto"):
+     - o motivo 1 da recusa, a mata que acaba, cai;
+     - os motivos 2 (sem casa) e 3 (o KaM traz 1) continuam;
+     - o motivo 4, o 2:1 com a serraria, precisa ser medido de novo, porque a viagem
+       de replantar come tempo do lenhador.
+  3. **A árvore ganha estados de crescimento, como o campo**, e isso vai para o
+     `docs/BRIEF-ARTE.md`: a entrada `arvore`, proposta, ao lado da `cultura`.
+
+- **Sub-itens, nesta ordem, uma sessão cada.** A quebra evita tocar sim e render na
+  mesma feature (§10).
+  - **F-REPL-a — o toco rebrota (dado + sim).**
+    - `tree.reposicao` em `data/resources.json`, `[proposta]`, com a proporção do KaM
+      (medida; fonte no fim do item):
+      - `crescer` = 1,25 × o do milho (KaM: árvore 8 000, milho 6 400);
+      - `semear` = 0,8 × o `noTile` do lenhador (KaM: plantar 12 golpes, cortar 15);
+      - `custo` vazio. Que o KaM não cobra nada para plantar é hipótese, não
+        conferida no fonte.
+    - **Guarda de posição, obrigatória: toco coberto por estrada, estrada planejada ou
+      canteiro NÃO rebrota.** Três leituras do código:
+      - hoje dá para assentar estrada sobre um toco (`estradas.ts:549-553`: árvore em
+        0 não bloqueia);
+      - `tilePlantavel` não olha estrada;
+      - o `elegivel` do rodízio (`tileAlcancavelParaColheita`, `aproximacao.ts:71`)
+        exclui só prédio.
+
+      Juntas, elas dizem que o lenhador faria nascer uma árvore no meio da estrada.
+      Isso é **hipótese: lida no código, não rodada**. A Tarefa 1 é a sonda que
+      reproduz o caso.
+    - **Unidade em pé no tile no instante em que a árvore nasce.** A árvore bloqueia o
+      passo desde o plantio (`semearNoTile` põe a quantidade cheia). O aceite afirma
+      que a unidade não trava: ou ela sai do tile, ou o plantio espera.
+    - Sem modos ainda: todo lenhador faz `ambos`, que é o padrão pedido.
+  - **F-REPL-b — os modos (sim + dado).**
+    - `modoPadrao: "ambos"` na receita do lenhador, ao lado de `modos`, com uma regra de
+      dado: o padrão tem de estar na lista.
+    - Estado e comando:
+      - o estado é `PredioCompleto.modo`;
+      - o comando é `SetWoodcutterMode`, que leva o valor (não é alternador) e é
+        recusado nos mesmos casos do `SetBuildingPaused`.
+    - Os modos:
+      - `cortar` = só colher: o de hoje, e esgota;
+      - `replantar` = só plantar, sem tronco;
+      - `ambos` = o rodízio.
+    - O leitor é `proximoTrabalhoDoRodizio`, com um filtro de ação. É a "uma linha no
+      rodízio" citada acima.
+  - **F-REPL-c — plantar em tile vazio (sim + dado).**
+    - `tree.plantio.terrenoPermitido`, no molde da `aradura`.
+    - Predicado novo em `recursos.ts`, irmão do `canPlowField` (`campos.ts:98`). O tile
+      precisa estar:
+      - em terreno permitido;
+      - sem entrada;
+      - sem estrada nem estrada planejada;
+      - fora de prédio e de canteiro;
+      - fora de campo planejado.
+    - O novo aqui é a entrada em `state.recursos` que nasce EM PARTIDA. A camada de
+      bloqueio do A* é derivada do estado (`camadaDeBloqueio`) e troca de referência
+      quando a lista muda, mas antes de confiar nisso leia a memória
+      `cache-do-carregamento-nao-filtra-o-runtime`.
+    - **Decisão de posição que o GDD não responde** (PROGRESS, "Perguntas em aberto"):
+      a árvore nova pode fechar a porta de um prédio ou o único corredor. A
+      interpretação conservadora: não plantar no tile de acesso de prédio nem em
+      vizinho de estrada.
+  - **F-REPL-d — o seletor de modo no painel (ui).** Domínio do Codex.
+  - **F-REPL-e — os estados da árvore na tela (render).** Quando a arte existir, pelo
+    BRIEF-ARTE. Até lá, placeholder, como manda a §9.
+  - **Depois do b, não antes: re-medir o lenhador** (BALANCE_LOG):
+    - a razão N:1;
+    - o 2:1 com a serraria;
+    - o lote de 2.
+
+    É medição. Girar número é decisão do operador.
+
+- **Aceite.** Cada sub-item tem o seu; aqui vão os do a e do b, que são de sim.
+  - **F-REPL-a:**
+    - com a mata toda cortada, os tocos voltam a dar tronco: há tronco entregue DEPOIS
+      do tick em que caiu a última árvore adulta. Com `reposicao` nula isto reprova, e
+      a prova de que acusa é tirar o bloco do dado;
+    - toco sob estrada não rebrota em 12 000 ticks;
+    - nenhuma unidade fica num tile de árvore com quantidade > 0;
+    - a razão N:1 do lenhador vai para a evidência como número da corrida, não como
+      aceite: o total não gira.
+  - **F-REPL-b:**
+    - `cortar` reproduz, byte a byte, a corrida de hoje contra o dado sem `reposicao`;
+    - `replantar` não entrega tronco nenhum e deixa zero toco ao alcance;
+    - `ambos` é o modo de um prédio recém-construído;
+    - o comando com o valor atual é no-op: devolve o MESMO estado.
+- **Evidência:** `test-output/F-REPL-a.json` e `test-output/F-REPL-b.json`.
+  Screenshot só no e.
+- **Custo medido compilando.** Método: acrescentar, rodar `npx tsc --noEmit`, contar,
+  reverter. Revertido, e `git status` limpo.
+  - `modo` obrigatório em `PredioCompleto`: **14 erros**.
+    - 2 em `sim/state.ts`, os dois construtores.
+    - 12 em testes que montam prédio literal: F05b ×2, F06, F08 ×2, F09, F10, F24a,
+      F-TA, F-TP, F-VIVO-a e `helpers/jobs-cenario.ts`.
+  - `SetWoodcutterMode` na união `Command`: **1 erro**, o `switch` exaustivo de
+    `tick.ts:110`.
+  - `tree.reposicao`: **0 erros**. O tipo já é `ReposicaoDeRecurso | null`
+    (`data/types.ts:192`), então é só dado, e o loader já converte
+    (`loader.ts:597-650`).
+  - `modos` e `modoPadrao`: **não medido**. O loader hoje não lê `modos`, e
+    `ReceitaDePredio` ganha tipo novo.
+- **Premissas do pedido, conferidas no dado:**
+  - **"a árvore existe desde a F-D3":** existia antes, mas só no quadrante noroeste. A
+    F-D3 tirou a faixa, e a árvore passou a nascer no miolo e perto da vila (nota da
+    F-T2b neste arquivo). O que vale para o replantio: há mata ao alcance do lenhador
+    desde a F-D3, e ela bloqueia o passo desde a F-T2.
+  - **"`modos` sem leitor desde a F16c":** está sem leitor desde a F15a. A F16c tirou os
+    modos do aceite porque não havia árvore no terreno (Nota da emenda, F16c). Hoje o
+    grep não acha nenhum leitor em `src/`.
+  - **"os modos que o KaM tem: só cortar, só replantar, ambos":** o fonte do KaM Remake
+    que consultei tem **dois**. O clone é de 2022-06-01 e fica só no scratchpad.
+    - `TWoodcutterMode = (wcm_Chop, wcm_ChopAndPlant)` (`KM_Houses.pas:13`);
+    - o botão alterna entre os dois (`KM_GUIGameHouse.pas:720-744`);
+    - `replantar` sozinho é nosso, e já estava em `data/production.json`.
+
+    Não conferi o jogo de 1998. O item mantém os três, como pedido; tirar `replantar`
+    barateia o b.
+- **Fonte dos números do KaM.** Anotada também no BALANCE_LOG; nenhum arquivo do KaM
+  entra no repositório.
+  - `KM_ResMapElements.pas:71-82`:
+    - árvore: `TREE_AGE_1/2/FULL` = 2 400 / 5 000 / 8 000;
+    - milho: `CORN_AGE_FULL` = 6 400, na mesma unidade (`TERRAIN_PACE`).
+  - `KM_Units_WorkPlan.pas:249-252`: cortar é `ua_Work` ×15 mais 20; plantar, ×12.
 
 ### F-ESC — A escala do prédio: altura máxima pela largura (render + ferramenta; proposta, não implementar antes do sim do operador)
 - **FORA DA ESPERA POR JANELA (operador, 2026-09-27, noite 10).** O Codex continua em

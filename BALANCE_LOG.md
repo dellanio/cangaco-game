@@ -305,6 +305,11 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
         - lenhador (`tree`): o regime é `porAcao`, mas a árvore não tem `reposicao` em
           `resources.json` e `modos` segue sem leitor. Hoje ninguém replanta, então ela
           esgota como as outras.
+          - **Proposto (2026-09-27, noite 15), item F-REPL do BUILD_PLAN:** com o
+            replantio, o lenhador sai desta lista e entra na de quem repõe, junto do
+            milho e da cana. Ainda não implementado: até a F-REPL-a entrar, a linha de
+            cima continua valendo. A sonda do item (dado injetado, zero código) deu 21
+            troncos contra 18, e 79 ticks parado contra 2 329.
       - **Quem a razão N:1 mede:** só quem REPÕE, `corn` (fazenda 2,875×, boa) e
         `grapes` (Canavial 1,5×). O 1,3× do pescador e o 4,0× da pedreira com o dado real
         medem o tamanho do veio, não o modelo.
@@ -344,6 +349,23 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
       - **O que reabriria a pergunta:** o replantio (`modos`, hoje sem leitor). Com a mata
         repondo, o lenhador deixa de esgotar e a caminhada volta a ser o custo que o lote
         corta.
+        - **Reaberta pelo item F-REPL (2026-09-27, noite 15).** Depois da F-REPL-b, esta
+          medição roda de novo. O motivo 1 cai; os motivos 2 e 3 continuam; o motivo 4
+          é refeito, porque replantar come tempo do lenhador e muda o 2:1.
+    - **REFERÊNCIA KaM — o replantio (medido no fonte do KaM Remake, clone de
+      2022-06-01, só no scratchpad; nenhum arquivo entra no repositório).**
+      - Crescer, em `KM_ResMapElements.pas:71-82`:
+        - árvore: `TREE_AGE_1` 2 400, `TREE_AGE_2` 5 000, `TREE_AGE_FULL` 8 000;
+        - milho: `CORN_AGE_FULL` 6 400, na mesma unidade;
+        - a árvore leva **1,25×** o milho.
+      - Tempo no tile, em `KM_Units_WorkPlan.pas:249-252`: plantar é `ua_Work` ×12;
+        cortar, ×15 mais 20. Plantar ≈ **0,8×** o corte no tile.
+      - Modos: `TWoodcutterMode = (wcm_Chop, wcm_ChopAndPlant)`, que são dois, sem
+        "só plantar" (`KM_Houses.pas:13`).
+      - Três idades antes da adulta: três estados de crescimento na arte (BRIEF-ARTE,
+        `arvore`).
+      - **Uso:** a proporção entra no `tree.reposicao` da F-REPL-a como `[proposta]`.
+        Os números absolutos do KaM não entram.
 
 - [2026-09-24] o terreno passou a existir (F-T1) e viagem deixou de ser linha reta | medido: a
   travessia de 36 tiles ao redor do lago custa **292 ticks** contra **252** no mesmo trajeto sem

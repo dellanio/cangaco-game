@@ -3229,6 +3229,16 @@ que vetar custe uma linha.
 
 ## Perguntas em aberto
 
+- **(2026-09-27, noite 15) F-REPL-c: onde a árvore nova pode nascer?** Plantar em tile
+  vazio cria um obstáculo em partida, e o GDD não diz se o lenhador pode fechar a porta
+  de um prédio ou o único corredor até a mata.
+  - Interpretação conservadora, escrita no item: não plantar no tile de acesso de prédio
+    nem em vizinho de estrada.
+  - Saída mais barata: começar só pelos tocos (F-REPL-a), que não mudam o desenho da
+    mata.
+- **(2026-09-27, noite 15) F-REPL-b: três modos ou dois?** O fonte do KaM Remake tem dois
+  (`wcm_Chop`, `wcm_ChopAndPlant`). "Só replantar" é nosso. O item mantém os três, como
+  pedido.
 - **(2026-09-26, noite 18) A frase cortada do BRIEF-ARTE:** o operador escreveu que os
   sprites de estado da roça vão "desenhada[s] pelo render sobre o tile, nunca" — e a
   mensagem parou aí. O BRIEF-ARTE não completa a frase; falta o que vem depois do nunca.
@@ -9483,3 +9493,47 @@ ativa. Uma corrida isolada limpa não prova a causa.
 **Aberto:**
 - **Replantio** (`modos` sem leitor): é o que reabriria o lote do lenhador. Não entra
   sem decisão de design.
+
+## 2026-09-27 (noite, 15) — item F-REPL escrito (replantio do lenhador); não implementado
+
+**Pedido do operador:** escrever o item do replantio (modos cortar / replantar / ambos,
+árvore em tile vazio que cresce por tempo, padrão `ambos`), dizer as três coisas que ele
+muda e trazer o custo, principalmente em `recursos.ts`. Não implementar.
+
+**Feito:**
+- `BUILD_PLAN.md`:
+  - item **F-REPL** (sub-itens a–e, com aceite do a e do b), antes da F-ESC;
+  - ponteiro para ele na nota do lenhador, no LOTE3-c.
+- `BALANCE_LOG.md`:
+  - ponteiros em "quem esgota" e no "lote de 2";
+  - bloco "REFERÊNCIA KaM — o replantio", com a fonte anotada.
+- `docs/BRIEF-ARTE.md`: entrada `arvore`, proposta, com 3 estados de crescimento; +3 na
+  conta.
+- Duas perguntas em "Perguntas em aberto".
+
+**Verificado:**
+- **A premissa "`recursos.ts` trata `porAcao` como terminal" está errada.**
+  - O rodízio do campo é genérico, por `reposicaoDe(colheita) !== null`.
+  - A árvore só não tem `reposicao` no dado.
+  - Sonda apagada (`cenarioOraculo`, `w1`, 12 000 ticks, `tree.reposicao` injetado com
+    os números do milho, zero código): 21 troncos contra 18; 9 tocos replantados contra
+    0; 79 ticks parado sem árvore contra 2 329.
+- **Custo compilando, revertido e com `git status` limpo depois:**
+  - `modo` obrigatório em `PredioCompleto`: 14 erros (2 sim, 12 testes);
+  - `SetWoodcutterMode` na união: 1 erro (`tick.ts:110`);
+  - `tree.reposicao`: 0 erros, porque o tipo já aceita.
+- **Premissas do pedido:**
+  - "`modos` sem leitor" vale desde a F15a, não desde a F16c;
+  - a árvore já existia antes da F-D3, e passou a nascer perto da vila com a F-D3;
+  - o KaM Remake (clone no scratchpad) tem 2 modos, não 3.
+
+**Hipótese (lida no código, não rodada):**
+- com `tree.reposicao`, o lenhador faria rebrotar um toco que está sob estrada:
+  - a estrada aceita toco (`estradas.ts:549-553`);
+  - `tilePlantavel` não olha estrada;
+  - o `elegivel` do rodízio exclui só prédio.
+- A sonda que reproduz o caso é a Tarefa 1 da F-REPL-a.
+
+**Aberto:**
+- o sim do operador ao item;
+- as duas perguntas (posição da árvore nova; dois ou três modos).

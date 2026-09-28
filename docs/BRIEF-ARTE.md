@@ -506,6 +506,30 @@ do `BUILD_PLAN.md`, 2026-09-26; entra quando o operador aprovar o item).
 - **O maduro tem de se ler de longe**: é o estado que diz ao jogador "tem o que colher".
   Milho com espiga e palha amarelando; cana alta e verde-escura.
 
+**`arvore`** — a árvore de UM tile de mata, por estado. É **proposta**, do item `F-REPL`
+do `BUILD_PLAN.md` (2026-09-27), e entra quando o operador aprovar o item.
+
+- `id`: o recurso neutro, `tree`.
+- `estados`: `muda`, `crescendo_1`, `crescendo_2`, `adulta` e `toco`.
+  - `adulta` e `toco` são os dois estados que a tabela "Terreno e vegetação" já pede ("com
+    madeira e cortada").
+  - O replantio acrescenta os **três** de crescimento. São três porque o KaM tem três
+    idades antes da adulta (BALANCE_LOG, "REFERÊNCIA KaM — o replantio").
+  - Arquivo: `sprites/tree/tree_<estado>.png`.
+- Mesma disciplina da `cultura`:
+  - uma imagem por estado, desenhada pelo render sobre o chão do mapa;
+  - o render escolhe o quadro pela fração do tempo de crescer;
+  - a simulação sabe só quando o tile foi plantado.
+- Tamanho: âncora no pé (`[0.5, 1]`), como a adulta.
+  - A `muda` cabe na metade de baixo do tile.
+  - A `crescendo_2` já passa da borda de cima.
+  - A adulta fica na altura que a F-ESC medir.
+- **A muda tem de se ler como obstáculo.** Na simulação, a árvore bloqueia o passo desde
+  o plantio, e o jogador precisa ver por que a unidade contorna um tile com planta
+  pequena.
+- **O toco não pode parecer muda.** O toco é o tile que o lenhador vai replantar; a muda
+  é a que já cresce.
+
 ### A conta
 
 | Parte | Imagens |
@@ -520,6 +544,7 @@ do `BUILD_PLAN.md`, 2026-09-26; entra quando o operador aprovar o item).
 | Fumaça genérica: 1 laço × 8 | 8 |
 | **Total** | **384** |
 | `cultura` (proposta F-CAMPO): 2 culturas × 4 estados | +8 |
+| `arvore` (proposta F-REPL): 3 estados de crescimento; `adulta` e `toco` já estão em "Terreno e vegetação" | +3 |
 
 A animação sozinha soma 300 (48 + 176 + 12 + 32 + 24 + 8). O operador escolheu esse
 nível, e não o mínimo de um laço por prédio, porque um laço só parece repetitivo e
