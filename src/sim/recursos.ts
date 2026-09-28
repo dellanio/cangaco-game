@@ -27,6 +27,7 @@ import { ehTarefaDeColheita } from './state';
 import { chaveDeTile } from './estradas';
 import type { CaixaEmTiles } from './footprint';
 import { caixaDoPredio } from './footprint';
+import { plantaNoModo } from './modo';
 
 /** `chaveDeTile` por coordenada solta — a mesma chave de `state.estradas`. */
 const chave = (gx: number, gy: number): string => chaveDeTile({ gx, gy });
@@ -178,13 +179,14 @@ export interface ColheitaAoAlcance {
 
 export function colheitaAoAlcanceDaCaixa(
   state: GameState, caixa: CaixaEmTiles, colheita: ColheitaDeRecurso, dados: GameData = gameData,
+  planta = true, // F-REPL-b — o modo do predio; ver `tileTrabalhavel`
 ): ColheitaAoAlcance {
   let tiles = 0;
   let unidades = 0;
   for (const chave of tilesDeColheitaNaCaixa(state, caixa, colheita, dados)) {
     // `minimo` 1: a pergunta da contagem e "ha trabalho neste tile", nao "cabe
     // um ciclo inteiro" — quem exige o ciclo e quem vai ABRIR o ciclo.
-    if (tileTrabalhavel(state, chave, colheita, 1, dados)) tiles += 1;
+    if (tileTrabalhavel(state, chave, colheita, 1, dados, planta)) tiles += 1;
     unidades += state.recursos[chave]?.quantidade ?? 0;
   }
   return { tiles, unidades };
@@ -221,13 +223,19 @@ export function disponivelAoAlcance(
 export function tileTrabalhavel(
   state: GameState, chaveDoTile: string, colheita: ColheitaDeRecurso, minimo: number,
   dados: GameData = gameData,
+  // F-REPL-b — o predio repoe o tile neste modo (`plantaNoModo`)? `false` e o
+  // lenhador em `cortar`: toco nao e trabalho para ele, e o alerta tem de ver o
+  // mesmo que o rodizio. O padrao e a previa da planta fantasma, que nasce no
+  // modo padrao, e o de todo predio sem `modos`.
+  planta = true,
 ): boolean {
   if (tileColhivelAgora(state, chaveDoTile, colheita, minimo, dados)) return true;
   // F-CAMPO-a — o tile CRESCENDO e trabalho que vem sozinho: sem esta perna, um
   // roçado com todos os tiles semeados se declararia esgotado (`vein-exhausted`,
-  // alerta `sem-campo`) justamente no instante em que fez tudo certo.
+  // alerta `sem-campo`) justamente no instante em que fez tudo certo. Vale tambem
+  // em `cortar`: a arvore plantada antes da troca amadurece e e colhida.
   if (tileCrescendo(state, chaveDoTile, colheita, dados)) return true;
-  return tilePlantavel(state, chaveDoTile, colheita, dados);
+  return planta && tilePlantavel(state, chaveDoTile, colheita, dados);
 }
 
 /** DA para colher deste tile agora: ha entrada daquele recurso, ela tem o
@@ -402,9 +410,10 @@ export function algumTileTrabalhavel(
   // alerta e como nada para quem escolhe onde pescar.
   elegivel: TileElegivel = SEMPRE,
 ): boolean {
+  const planta = plantaNoModo(predio, dados);
   for (const chaveDoTile of tilesDeColheita(state, predio, colheita, dados)) {
     if (!elegivel(chaveDoTile)) continue;
-    if (tileTrabalhavel(state, chaveDoTile, colheita, minimo, dados)) return true;
+    if (tileTrabalhavel(state, chaveDoTile, colheita, minimo, dados, planta)) return true;
   }
   return false;
 }

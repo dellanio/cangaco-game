@@ -61,7 +61,10 @@ describe('F15a — PredioCompleto.producao', () => {
 
   it('produtor sem colheita nasce com a mesma forma: nada o distingue no predio', () => {
     expect(completarObra(obraDe('sawmill')).producao).toEqual({ progresso: 0, plantio: null });
-    expect(completarObra(obraDe('woodcutters')).producao).toEqual({ progresso: 0, plantio: null });
+    // F-REPL-b: o lenhador leva tambem o modo, que so existe em quem declara `modos`
+    const padrao = gameData.producao.receitas.woodcutters?.modos?.padrao;
+    expect(padrao).toBeDefined();
+    expect(completarObra(obraDe('woodcutters')).producao).toEqual({ progresso: 0, plantio: null, modo: padrao });
   });
 
   it('predio sem receita nasce com `producao: null`', () => {

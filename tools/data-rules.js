@@ -212,6 +212,26 @@ function validarProducao(dados, erros) {
     if (def && def.escolheSaida === true && Object.keys(def.sai || {}).length < 2) {
       erros.push(`producao/escolha-sem-opcao: production.predios.${id} escolhe a saida mas declara menos de duas`);
     }
+    // F-REPL-b: o padrao fora da lista e um predio que nasce num modo que nenhum
+    // comando pede de volta; modo sem `planta` nao tem o que o rodizio le.
+    if (def && (def.modos !== undefined || def.modoPadrao !== undefined)) {
+      const modos = def.modos;
+      if (!modos || typeof modos !== 'object' || Array.isArray(modos) || Object.keys(modos).length === 0) {
+        erros.push(`producao/modos: production.predios.${id}.modos tem de ser objeto com pelo menos um modo`);
+      } else {
+        for (const [nome, m] of Object.entries(modos)) {
+          if (!m || typeof m.planta !== 'boolean') {
+            erros.push(`producao/modos: production.predios.${id}.modos.${nome}.planta tem de ser booleano`);
+          }
+        }
+        if (typeof def.modoPadrao !== 'string' || !(def.modoPadrao in modos)) {
+          erros.push(`producao/modo-padrao: production.predios.${id}.modoPadrao=${def.modoPadrao} nao esta em modos`);
+        }
+      }
+      if (!def.colheita) {
+        erros.push(`producao/modos: production.predios.${id} declara modos, e modos pedem colheita`);
+      }
+    }
     // LOTE3 — com `fases`, o ciclo e a soma delas e a razao entre taxas deixa de
     // existir na receita: quem confere e `validarFases`.
     if (def && def.colheita && def.colheita.fases !== undefined) validarFases(id, def, erros, dados);

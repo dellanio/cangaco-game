@@ -318,6 +318,13 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
             - a mata inteira não chega a replantar em 12 000 ticks, porque o rodízio
               corta a adulta antes. Por isso os 21 são os mesmos com e sem
               `reposicao` nessa janela.
+            - **Observação do operador (2026-09-27, noite 16): com mata grande, o
+              replantio só entra quando a mata acaba.** É o comportamento certo:
+              cortar o que já está pronto vem antes. Mas o jogador não vê o
+              replantio funcionar até ter problema. **Se no playtest parecer que o
+              modo (F-REPL-b) não faz nada, é isso:** com 9 tiles adultos ao
+              alcance, `cortar` e `cortar_e_plantar` dão a mesma corrida até a
+              última adulta cair. Não é defeito, e não há número a girar.
             - A re-medida do lenhador (N:1 contra a serraria, o 2:1, o lote de 2)
               continua depois da F-REPL-b. Isto é medição; nada gira.
       - **Quem a razão N:1 mede:** só quem REPÕE, `corn` (fazenda 2,875×, boa) e

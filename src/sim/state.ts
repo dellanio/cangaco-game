@@ -15,6 +15,7 @@ import type { MotivoDeLiberacao } from './jobs';
 import type { MotivoDeRecusaDeTreino } from './escola';
 import type { MotivoDeRecusaDePausa } from './pausa';
 import type { MotivoDeRecusaDeCota } from './cota';
+import type { MotivoDeRecusaDeModo } from './modo';
 // F-T2a: a camada de recurso nasce do MAPA, e quem sabe ler o mapa e
 // `sim/recursos.ts`. Import de valor (nao de tipo) e o unico deste arquivo alem
 // do RNG e do dado — `createInitialState` e o lugar certo para ele.
@@ -92,6 +93,14 @@ export type GameEvent =
       readonly command: 'SetProductionQuota';
       readonly predio: string;
       readonly motivo: MotivoDeRecusaDeCota;
+    }
+  | {
+      /** F-REPL-b — `SetBuildingMode` recusado; o estado nao mudou. Pedir o modo
+       *  que o predio JA tem nao e recusa, e no-op: nao emite nada. */
+      readonly type: 'command-rejected';
+      readonly command: 'SetBuildingMode';
+      readonly predio: string;
+      readonly motivo: MotivoDeRecusaDeModo;
     }
   | {
       /**
@@ -338,6 +347,11 @@ export interface Producao {
    *  nele, e senao comeca DEPOIS dele — nenhum tile ao alcance espera mais de uma
    *  volta. Quem reconstroi `Producao` espalha a anterior para nao perde-lo. */
   readonly cursor?: string;
+  /** F-REPL-b — o modo que o jogador escolheu (`SetBuildingMode`), chave de
+   *  `ReceitaDePredio.modos.porModo`. So no predio cuja receita declara `modos` (o
+   *  lenhador), e nasce no `padrao`; AUSENTE nos outros, como `escolha`. Quem
+   *  reconstroi `Producao` espalha a anterior para nao perde-lo. */
+  readonly modo?: string;
 }
 
 /**
@@ -1195,10 +1209,12 @@ function producaoParaTipo(tipoId: string, dados: GameData): Producao | null {
   if (receita === undefined) return null;
   // F24a — a oficina que escolhe a saida nasce no rodizio: cota 1 para cada uma,
   // na ordem de `economia.mercadorias`. O 1 nao e balanceamento, e "todas iguais".
-  if (!receita.escolheSaida) return { progresso: 0, plantio: null };
+  // F-REPL-b — quem declara modos nasce no padrao do dado.
+  const modo = receita.modos === null ? {} : { modo: receita.modos.padrao };
+  if (!receita.escolheSaida) return { progresso: 0, plantio: null, ...modo };
   const cota: Record<string, number> = {};
   for (const m of dados.economia.mercadorias) if (m in receita.sai) cota[m] = 1;
-  return { progresso: 0, plantio: null, escolha: { cota, proxima: 0 } };
+  return { progresso: 0, plantio: null, escolha: { cota, proxima: 0 }, ...modo };
 }
 
 function estoqueParaTipo(

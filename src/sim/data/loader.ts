@@ -1,7 +1,7 @@
 import type { RawGameData } from './raw';
 import type {
   CombateData, CondicaoData, ConstrucaoData, ConversaoRegistrada, EconomiaData,
-  EntregaData, GameData, MovimentoData, ProducaoData, ReceitaDePredio,
+  EntregaData, GameData, ModoDeTrabalho, ModosDoPredio, MovimentoData, ProducaoData, ReceitaDePredio,
   MapaData, RecursosData, RegimeDeRecurso, TerrenoData, TerrenoDeMapa, TerrenoTipo,
   LimiaresEmTicks, Ticks, TileDeMapa, TipoDeRecurso, UnidadesData,
 } from './types';
@@ -286,6 +286,26 @@ function fasesDaColheita(predioId: string, colheita: object): FasesNoDado | null
   };
 }
 
+/** F-REPL-b — estreita `modos` e `modoPadrao` do JSON, campo a campo, no molde de
+ *  `fasesDaColheita`. O validate:data ja reprova a forma errada (`producao/modos`). */
+function modosDaReceita(predioId: string, modos: unknown, padrao: unknown): ModosDoPredio {
+  if (typeof modos !== 'object' || modos === null || Array.isArray(modos)) {
+    throw new Error(`loadGameData: a receita '${predioId}' declara modos que nao sao objeto`);
+  }
+  const porModo: Record<string, ModoDeTrabalho> = {};
+  for (const [nome, def] of Object.entries(modos as Record<string, unknown>)) {
+    const planta: unknown = typeof def === 'object' && def !== null ? (def as Record<string, unknown>).planta : undefined;
+    if (typeof planta !== 'boolean') {
+      throw new Error(`loadGameData: o modo '${nome}' da receita '${predioId}' nao declara planta`);
+    }
+    porModo[nome] = { planta };
+  }
+  if (typeof padrao !== 'string' || !(padrao in porModo)) {
+    throw new Error(`loadGameData: a receita '${predioId}' tem modoPadrao fora de modos`);
+  }
+  return { porModo, padrao };
+}
+
 function taxaParaTicksPorUnidade(taxaPorMinuto: number, escala: number, tickHz: number): Ticks {
   const ticks = Math.round((60 * tickHz) / (taxaPorMinuto * escala));
   if (!Number.isFinite(ticks) || ticks < 1) {
@@ -441,9 +461,17 @@ export function loadGameData(raw: RawGameData): GameData {
     if (escolheSaida && Object.keys(periodos.sai).length < 2) {
       throw new Error(`loadGameData: a receita '${predioId}' escolhe a saida, mas declara menos de duas`);
     }
+    // F-REPL-b — os modos so tem leitor no rodizio, e o rodizio so existe para quem
+    // colhe. O padrao fora da lista seria um predio que nasce num modo que nenhum
+    // comando consegue pedir de volta.
+    const modos = 'modos' in def ? modosDaReceita(predioId, def.modos, def.modoPadrao) : null;
+    if (modos !== null && colheita === null) {
+      throw new Error(`loadGameData: a receita '${predioId}' declara modos, e modos pedem colheita`);
+    }
     receitas[predioId] = {
       ticksDoCiclo,
       escolheSaida,
+      modos,
       entra: quantidades(periodos.entra),
       sai: fases === null ? quantidades(periodos.sai) : { [saidas[0] ?? '']: fases.porViagem },
       colheita: colheita === null ? null : {

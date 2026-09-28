@@ -16,92 +16,21 @@ import { describe, expect, it } from 'vitest';
 import { gameData } from '../src/sim/data';
 import type { GameData } from '../src/sim/data/types';
 import type { Command } from '../src/sim/commands';
-import type { GameState, RecursoNoTile } from '../src/sim/state';
-import { receitaDoTipo } from '../src/sim/producao';
-import { tileMaduro, tilesDeColheita } from '../src/sim/recursos';
+import type { GameState } from '../src/sim/state';
 import { buscarCaminho } from '../src/sim/pathfinding';
 import { tileDeChave } from '../src/sim/estradas';
 import { step } from '../src/sim/tick';
 import { gravarEvidencia } from './helpers/evidence';
 import { cenarioOraculo, comEspacoNaSaida } from './helpers/producao-cenario';
+import { type Corrida, correr as correrComFinal, mataCurta, semReposicao, tilesDeW1 } from './helpers/mata-curta';
 
 const JANELA = 12000;
-const COLHEITA = receitaDoTipo('woodcutters', gameData)?.colheita;
-if (COLHEITA === undefined || COLHEITA === null) throw new Error('fixture: woodcutters precisa de colheita');
 const RENDIMENTO = gameData.recursos.tipos.tree?.rendimentoPorTile ?? 0;
 
-/** O dado de antes da F-REPL-a: a mesma arvore, sem `reposicao`. */
-function semReposicao(dados: GameData): GameData {
-  const tree = dados.recursos.tipos.tree;
-  if (tree === undefined) throw new Error('fixture');
-  return { ...dados, recursos: { ...dados.recursos, tipos: { ...dados.recursos.tipos, tree: { ...tree, reposicao: null } } } };
-}
-
-const pausarW2: Command = { type: 'SetBuildingPaused', predio: 'w2', pausado: true };
-
-/** Os tiles de arvore ao alcance de `w1` no cenario montado. */
-function tilesDeW1(s: GameState, dados: GameData): readonly string[] {
-  const w1 = s.predios.porId.w1;
-  if (w1?.estado !== 'completo' || COLHEITA === undefined || COLHEITA === null) throw new Error('fixture');
-  return tilesDeColheita(s, w1, COLHEITA, dados);
-}
-
-/** Cenario do oraculo com a mata de `w1` encurtada a `n` tiles, e `w2` pausado. */
-function mataCurta(dados: GameData, n: number): { s: GameState; tiles: readonly string[] } {
-  let s = cenarioOraculo(dados);
-  const todos = tilesDeW1(s, dados);
-  const ficam = todos.slice(0, n);
-  const recursos: Record<string, RecursoNoTile> = {};
-  for (const [k, r] of Object.entries(s.recursos)) {
-    if (r.tipo === 'tree' && todos.includes(k) && !ficam.includes(k)) continue;
-    recursos[k] = r;
-  }
-  s = step({ ...s, recursos }, [pausarW2], dados);
-  return { s, tiles: ficam };
-}
-
-const adultas = (s: GameState, tiles: readonly string[], dados: GameData): number => tiles.filter((k) => {
-  const r = s.recursos[k];
-  return r !== undefined && r.quantidade > 0 && tileMaduro(s, r, dados);
-}).length;
-
-interface Corrida {
-  readonly troncos: number;
-  /** o primeiro tick em que nao sobrou arvore adulta nos tiles */
-  readonly semAdulta: number | null;
-  /** troncos entregues DEPOIS de `semAdulta` */
-  readonly depois: number;
-  readonly replantios: number;
-  /** ticks x unidade em pe num tile de arvore com quantidade > 0 */
-  readonly dentroDaArvore: number;
-}
-
-function correr(inicial: GameState, tiles: readonly string[], dados: GameData, janela = JANELA): Corrida {
-  let s = inicial;
-  let troncos = 0;
-  let semAdulta: number | null = null;
-  let depois = 0;
-  let replantios = 0;
-  let dentroDaArvore = 0;
-  for (let i = 0; i < janela; i += 1) {
-    const antes = s.recursos;
-    s = comEspacoNaSaida(step(s, [], dados), 'w1');
-    for (const e of s.events) {
-      if (e.type === 'goods-produced' && e.predio === 'w1') {
-        troncos += e.quantidade;
-        if (semAdulta !== null) depois += e.quantidade;
-      }
-    }
-    if (semAdulta === null && adultas(s, tiles, dados) === 0) semAdulta = s.tick;
-    for (const k of tiles) {
-      if ((antes[k]?.quantidade ?? 0) === 0 && (s.recursos[k]?.quantidade ?? 0) > 0) replantios += 1;
-    }
-    for (const u of Object.values(s.unidades.porId)) {
-      const r = s.recursos[`${u.gx},${u.gy}`];
-      if (r !== undefined && r.tipo === 'tree' && r.quantidade > 0) dentroDaArvore += 1;
-    }
-  }
-  return { troncos, semAdulta, depois, replantios, dentroDaArvore };
+/** A corrida sem o estado final: e o que vai para a evidencia. */
+function correr(inicial: GameState, tiles: readonly string[], dados: GameData): Corrida {
+  const { final: _final, ...r } = correrComFinal(inicial, tiles, dados, JANELA);
+  return r;
 }
 
 /**

@@ -9574,3 +9574,70 @@ em aberto da noite 15 saíram de "Perguntas em aberto"):
 **Aberto:**
 - F-REPL-b (os dois modos), e depois dele a re-medida do lenhador;
 - VARREDURA-KAM, a rodar depois da F-REPL.
+
+## 2026-09-27 (noite, 17) — F-REPL-b entregue: os dois modos do lenhador
+
+**Feito.** `cortar` e `cortar_e_plantar` como dado (`production.json`,
+`woodcutters.modos` + `modoPadrao`), comando `SetBuildingMode`, estado
+`Producao.modo`, leitor único `plantaNoModo` (`src/sim/modo.ts`). O detalhe do
+contrato está no item F-REPL-b do BUILD_PLAN; a F-REPL-d (Codex) herda uma Nota.
+
+**Decisões e porquês.**
+- O comando é genérico (`SetBuildingMode`) e o gatilho é o dado (`receita.modos`).
+  O nome da nota antiga (`SetWoodcutterMode`) amarraria o tipo no código.
+- O modo fica em `Producao.modo`, opcional, no molde da `escolha` (F24a).
+  - Medido compilando: 1 erro, só no loader.
+  - A alternativa, `PredioCompleto.modo` obrigatório, custaria ~14 literais de
+    teste.
+- O `cortar` sai do rodízio e usa o caminho de antes da F-REPL-a. Assim, "cortar =
+  o jogo sem replantio" é igualdade de bytes, não semelhança.
+- `depositar` reconstruía `Producao` e perdia o `modo`. Quem remonta `Producao`
+  espalha o campo; é o mesmo cuidado da `escolha`.
+- O rótulo do HUD considera o modo: lenhador esgotado em `cortar` é
+  `veio-esgotado`, não `sem-campo` (não há campo que ele vá repor).
+
+**Verificado (comando rodado, arquivo aberto).**
+- `test-output/F-REPL-b.json`, aberto:
+  - em `cortar` contra o dado sem `reposicao`, 0 divergências em 120 amostras de
+    estado e em todos os eventos;
+  - `cortar` dá 8 troncos e 0 replantios, e fica sem adulta no t4266;
+  - `cortar_e_plantar` dá 16 troncos e 4 replantios.
+- O `cenarioOraculo` não tem comida: todo civil morre de fome no t12000. Medido por
+  sonda, e a sonda foi apagada. Por isso os testes que afirmam trabalho param antes
+  de 11500 (`ANTES_DA_FOME`).
+- Mutação, como prova do momento: cada uma foi revertida, e o `git diff` de `sim/`
+  conferido depois. Não é cobertura contínua; a cobertura permanente é o
+  `tests/F-REPL-b-modos.test.ts` no `npm run verify`.
+
+  | Mutação | Falharam | Passaram |
+  |---|---|---|
+  | `produzir` sem o modo | 2 | 6 |
+  | `tileTrabalhavel` sem o modo | 1 | 7 |
+  | `depositar` perde o `modo` | 3 | 5 |
+  | rótulo sem o modo | 1 | 7 |
+
+- `tools/data-rules.js` acusa `modoPadrao: "ambos"`: rodei o dado adulterado e
+  reverti.
+
+**Dois testes de outras features mudaram.**
+- `tests/F15a-producao.test.ts`: o lenhador agora nasce com `modo`. A asserção lê
+  o padrão do dado, não o literal.
+- `tests/F10-falhas.test.ts`: `ORCAMENTO_DO_CASO` foi de 10 para 20 s. É timeout,
+  não asserção (§8).
+  - Medido: a semente 3 leva ~4 s isolada, no HEAD 1c30a87 e aqui, na mesma
+    faixa. Na suíte inteira levou 9,85 s no HEAD e 10,4 s com os 8 testes novos.
+  - O caso já estava no teto antes desta feature.
+  - Apliquei a regra escrita do commit 5e25147 (~5x o medido isolado).
+  - A razão entre os tempos é número da corrida, não prova de que o custo por tick
+    não mudou.
+
+**Por leitura, não medido.**
+- Com mata grande, os dois modos dão a mesma corrida até a última adulta cair. Isso
+  segue da ordem do rodízio: corta adulta antes de plantar. Está anotado no
+  BALANCE_LOG como observação do operador.
+
+**Aberto.**
+- F-REPL-d: o seletor no painel, com o Codex.
+- A re-medida do lenhador (BALANCE_LOG) está destravada, mas é só medida.
+- Idioma das respostas: o CLAUDE.md não pede português, então não há desvio a
+  registrar.

@@ -65,6 +65,7 @@ import {
 } from '../recursos';
 import { passoAndavel } from '../pathfinding';
 import { ehEstadoDeFome } from '../condicao';
+import { plantaNoModo } from '../modo';
 import { andar, chegou, comPredio, comUnidade, dadosDaFsm, ficarOcioso, noTile } from '../units/movimento';
 import type { ResultadoDeSistema } from './jobs';
 
@@ -190,13 +191,17 @@ function depositar(
   //
   // F-CAMPO-a — o `cursor` do rodizio atravessa o deposito: perde-lo aqui faria
   // toda colheita recomecar do primeiro tile, que e o BUG-O de novo.
+  // F-REPL-b — o `modo` tambem: perde-lo aqui devolvia o lenhador ao padrao no
+  // primeiro deposito, e o `cortar` do jogador durava um ciclo.
   const cursor = predio.producao?.cursor;
+  const modo = predio.producao?.modo;
   const depositado: PredioCompleto = {
     ...predio, estoque: { ...predio.estoque, saida },
     producao: {
       progresso: 0, plantio: null,
       ...(escolha === undefined ? {} : { escolha }),
       ...(cursor === undefined ? {} : { cursor }),
+      ...(modo === undefined ? {} : { modo }),
     },
   };
   const comColheita: GameState = colheita === null ? state : {
@@ -505,8 +510,12 @@ function produzir(state: GameState, u: Unidade, predioAntes: PredioCompleto, dad
   // F-CAMPO-a — o predio que REPOE o tile (roçado, canavial) escolhe pelo
   // RODIZIO: colher ou semear, e em que tile (`escolherNoCampo`). O plantio em
   // curso vem antes de tudo: o tile reservado nao volta a ser pousio de graca.
+  //
+  // F-REPL-b — o modo que nao planta (o lenhador em `cortar`) nao entra no rodizio:
+  // colhe pelo caminho de antes da F-REPL-a, o mesmo da rocha. E isso que faz o
+  // `cortar` reproduzir, byte a byte, a corrida contra a arvore sem `reposicao`.
   let colheita: { readonly state: GameState; readonly tarefa: TarefaColher } | null = null;
-  if (receita.colheita !== null && reposicaoDe(receita.colheita, dados) !== null) {
+  if (receita.colheita !== null && reposicaoDe(receita.colheita, dados) !== null && plantaNoModo(predio, dados)) {
     const escolha = escolherNoCampo(state, u, predio, receita, dados);
     if (escolha !== null && 'passo' in escolha) return escolha.passo;
     if (escolha !== null) {

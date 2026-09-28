@@ -4120,7 +4120,24 @@ Pedido do operador (2026-09-27, noite 15):
       passo desde o plantio (`semearNoTile` põe a quantidade cheia). O aceite afirma
       que a unidade não trava: ou ela sai do tile, ou o plantio espera.
     - Sem modos ainda: todo lenhador faz `ambos`, que é o padrão pedido.
-  - **F-REPL-b — os modos (sim + dado).**
+  - **F-REPL-b — os modos (sim + dado). ENTREGUE (2026-09-27, noite 16).**
+    - **Como ficou**, e onde difere do texto abaixo:
+      - `modos` virou objeto, `{ cortar: { planta: false }, cortar_e_plantar: {
+        planta: true } }`, com `modoPadrao`. O código lê só `planta`; nenhum nome de
+        modo está em `sim/`;
+      - o comando é **`SetBuildingMode`**, não `SetWoodcutterMode`. O gatilho é
+        o dado: qualquer receita com `modos` aceita, e nenhum tipo está digitado. As
+        recusas: `predio-inexistente`, `predio-em-obra`, `sem-modos`, `modo-invalido`;
+      - o estado é `Producao.modo`, opcional, no molde da `escolha`: ausente em
+        quem não tem modos. O custo foi 1 erro de compilação, contra os 14 do
+        `PredioCompleto.modo` obrigatório;
+      - o `cortar` não passa pelo rodízio: colhe pelo caminho da rocha. É isso que o
+        faz reproduzir byte a byte a corrida sem `reposicao`;
+      - o modo vale nos dois lados, `tileTrabalhavel` e rodízio: em `cortar`, toco
+        não é trabalho. Vale também para o rótulo do HUD: esgotado em `cortar` é
+        `veio-esgotado`, não `sem-campo`;
+      - a troca no meio de uma viagem de plantio deixa a viagem terminar, e a
+        reserva se solta no `voltarSemTarefa`.
     - **Nota (decisão 2 acima): são dois modos, `cortar` e `cortar_e_plantar`.** O
       `modos` do lenhador em `data/production.json` passa a ter esses dois, e o
       padrão é `cortar_e_plantar`. Onde o texto abaixo diz `ambos`, leia
@@ -4157,6 +4174,17 @@ Pedido do operador (2026-09-27, noite 15):
       interpretação conservadora: não plantar no tile de acesso de prédio nem em
       vizinho de estrada.
   - **F-REPL-d — o seletor de modo no painel (ui).** Domínio do Codex.
+    - **Nota (contrato herdado da F-REPL-b):**
+      - o botão manda `{ type: 'SetBuildingMode', predio, modo }` com o VALOR, não
+        alterna;
+      - os modos são as chaves de `receitas[tipo].modos.porModo`, e o atual está em
+        `producao.modo`;
+      - o seletor aparece para toda receita com `modos !== null`, nunca por
+        `tipo === 'woodcutters'`;
+      - os nomes que o jogador vê (`cortar`, `cortar_e_plantar`) vão para o
+        `theme-sertao.json`.
+      - Com mata grande, o modo não muda nada até a mata acabar (BALANCE_LOG,
+        F-REPL-a). Se o painel quiser mostrar isso, é decisão de tela.
   - **F-REPL-e — os estados da árvore na tela (render).** Quando a arte existir, pelo
     BRIEF-ARTE. Até lá, placeholder, como manda a §9.
   - **Depois do b, não antes: re-medir o lenhador** (BALANCE_LOG):

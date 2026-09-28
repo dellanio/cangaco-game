@@ -68,6 +68,24 @@ export interface ReceitaDePredio {
    *  cota do predio (`Producao.escolha`). `false` e a receita de sempre: o ciclo
    *  deposita todas as saidas juntas (a granja: porco e couro). */
   readonly escolheSaida: boolean;
+  /** F-REPL-b — o que o jogador escolhe neste predio (`Producao.modo`), ou `null`
+   *  para quem nao escolhe nada. Hoje so o lenhador declara. */
+  readonly modos: ModosDoPredio | null;
+}
+
+/**
+ * F-REPL-b — os modos de um predio. O codigo le o que cada modo FAZ, nunca o nome:
+ * o nome e o id que o comando `SetBuildingMode` leva e que o tema traduz.
+ */
+export interface ModosDoPredio {
+  readonly porModo: Readonly<Record<string, ModoDeTrabalho>>;
+  /** O modo de quem nasce. Esta em `porModo` (o loader recusa o contrario). */
+  readonly padrao: string;
+}
+
+export interface ModoDeTrabalho {
+  /** Repoe o tile que cortou (o rodizio). `false` so colhe, e o que colhe esgota. */
+  readonly planta: boolean;
 }
 
 /** F-T2a — a colheita de um predio: o que ele corta e ate onde alcanca. */

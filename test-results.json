@@ -256,5 +256,8 @@
   },
   "F-REPL-a-toco-rebrota": {
     "passes": true
+  },
+  "F-REPL-b-modos": {
+    "passes": true
   }
 }
