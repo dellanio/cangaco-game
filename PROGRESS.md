@@ -10040,3 +10040,51 @@ Plano: `docs/planos/2026-09-28-5-F-VIVO-c.md`. Só render (`src/render/`, `tools
 **Hipótese não verificada:** dentro dos 657 ticks de espera pelo laço, o curral não
 esvaziou. Isso sugere milho na gaveta de entrada com o criador ainda fora. Não abri o
 estado para confirmar.
+
+## 2026-09-28 (noite, fila 6) — F-VIVO-d quebrada: d1 feita (camadas a 0,75), d2 espera o operador
+
+Plano: `docs/planos/2026-09-28-6-F-VIVO-d.md`.
+
+**Achado verificado (no dado das fixtures).** Os cinco casos não cabem num quadro do
+mapa real:
+- a cadeia da carne fica em x 103..119;
+- a do ouro fica na serra, em x 78..96 e y 102..108;
+- a pedreira fica no lajedo, perto de (26,34).
+
+A 0,75 a vista tem ~21×15 tiles. Pela §6, quebrei a feature em d1 e d2 no BUILD_PLAN.
+
+**d1 — feito e verificado:**
+- A cena publica `debug.camadasEmPx[id]` em px de mundo: corpo, trabalho, pilha e
+  animais, da mesma geometria do desenho.
+  - `caixaDoPredio` foi extraída de `criarPredio`, e `ladoDoAnimalSemArte` virou uma
+    função única, usada pelo desenho e pelo debug.
+- `tests/F-VIVO-d-aldeia.test.ts` anda cada fixture até todos os alvos estarem ativos,
+  pelas funções do render.
+  - Carne no tick 3485, ouro no 480, pedreira no 5.
+  - Usa do-while: a fixture nasce com `trabalhando` no tick 0, rótulo que a sim ainda
+    não deu.
+  - Grava `test-output/F-VIVO-d-<cadeia>.save.txt`.
+- `tools/shots/F-VIVO-d.js` está verde. Para cada cadeia, carrega o save, põe a câmera a
+  0,75, afirma o caso ativo e captura. Soma os cinco casos e grava
+  `test-output/F-VIVO-d.json`.
+- Screenshot `F-VIVO-d-1-1-carne.png` aberta:
+  - os losangos da Malhada aparecem, e o filhote vira ponto;
+  - a pilha da fazenda é um quadrado pequeno;
+  - o texto `laco2_7` do açougue fica quase ilegível.
+- Medido na tela:
+  - prédio: 144 px (3 tiles) e 192 px (4 tiles);
+  - área de trabalho: 58×58 px (3×3), com mínimo de 38×29 px (gold_mine 2×1);
+  - pilha: 9,6 px;
+  - animal: de 9,6 a 19,2 px.
+- `docs/BRIEF-ARTE.md`: a "Hipótese até medir" foi trocada pelos números.
+- Roteiros F-VIVO-a, b e c re-rodados verdes depois da extração da caixa (só o código de
+  saída). `npm run verify` verde. Chave `F-VIVO-d1-camadas-a-075` marcada.
+
+**PARA REVISÃO:**
+- **d2, o quadro único com os cinco casos.** As opções do operador:
+  - aceitar as três capturas da d1;
+  - definir uma aldeia de vitrine, que é cenário novo.
+- **A pilha a 0,75 tem 9,6 px, abaixo dos ~12 da hipótese.** Não mexi em
+  `LADO_DA_UNIDADE_EM_TILES`: é número de tela, e a decisão fica com o operador ou o
+  artista.
+- **A fumaça não foi medida**, porque nenhum prédio declara âncora de fumaça.

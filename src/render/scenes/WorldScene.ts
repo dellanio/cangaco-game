@@ -12,7 +12,7 @@ import type { Navegacao } from '../../input/navegacao';
 import type { Tile } from '../grid';
 import { publicarEstadoDebug } from '../debug';
 import type {
-  AnimalNoDebug, EstadoDebug, PilhaNoDebug, PredioNoDebug, QuadroNoDebug, RelogioVisivel,
+  AnimalNoDebug, CamadasEmPx, EstadoDebug, PilhaNoDebug, PredioNoDebug, QuadroNoDebug, RelogioVisivel,
 } from '../debug';
 import { aparenciaDoPredio, corDaPilha, dadosDasPilhas, dadosDosAnimais, dadosDoTrabalho, ordemDasMercadorias } from '../predios';
 import { animaisDoCurral, quadroDoAnimal } from '../animais';
@@ -21,7 +21,7 @@ import { pilhasDoPredio, posicoesNaPilha } from '../pilhas';
 import type { PilhaDesenhada } from '../pilhas';
 import { areaDoTrabalho, quadroDaFumaca, quadroDeTrabalho } from '../trabalho';
 import type { QuadroDeTrabalho } from '../trabalho';
-import { ESTADO_DA_PILHA, ID_DA_FUMACA } from '../manifesto-camadas';
+import { CASO_DO_PREDIO, ESTADO_DA_PILHA, ID_DA_FUMACA } from '../manifesto-camadas';
 import { medidorDaObra } from '../medidor-obra';
 import type { LinhaDoMedidor } from '../medidor-obra';
 import { canteiroDaObra, chaveDoCanteiro } from '../nivelamento-obra';
@@ -80,6 +80,12 @@ const REGRA_DE_ALTURA = regraDoManifesto(manifestoDoJogo);
  *  1/4 as quatro pilhas do armazem (3 tiles de base) se sobrepoem, com 1/5 cabem.
  *  Desenho, nao balanceamento: fica aqui, como o resto do placeholder. */
 const LADO_DA_UNIDADE_EM_TILES = 1 / 5;
+
+/** F-VIVO-c — o lado do losango do animal sem PNG: a unidade da pilha no filhote, o
+ *  dobro no adulto. Uma funcao so para o desenho e o `debug.camadasEmPx`. */
+function ladoDoAnimalSemArte(idade: number, tilePx: number): number {
+  return (tilePx * LADO_DA_UNIDADE_EM_TILES * (idade + 1)) / 2;
+}
 
 /** F17e — a cara de cada estagio no placeholder geometrico (§9). `altura` e a
  *  fracao da altura do footprint que o volume ocupa, ancorado no PE: sao os tres
@@ -1041,6 +1047,7 @@ export class WorldScene extends Phaser.Scene {
     // F-VIVO-b: o quadro de trabalho de cada predio animando, da MESMA chamada do desenho.
     const quadrosNoDebug: Record<string, QuadroNoDebug> = {};
     const animaisNoDebug: Record<string, readonly AnimalNoDebug[]> = {};
+    const camadasNoDebug: Record<string, CamadasEmPx> = {};
     // F17g: as obras desenhadas pela revelacao, da MESMA conta que vai para `criarPredio`.
     const revelacoes: Record<string, RevelacaoDaObra> = {};
     for (const id of estadoDoJogo.predios.ordem) {
@@ -1131,6 +1138,10 @@ export class WorldScene extends Phaser.Scene {
           sprite: this.texturaDoAnimal(a, quadroAnimal) !== null,
         }));
       }
+      const caso = CASO_DO_PREDIO[predio.tipo];
+      if (predio.estado === 'completo' && caso !== undefined) {
+        camadasNoDebug[id] = this.camadasEmPx(predio.tipo, caso, quadro, pilhas.length > 0, animais, tilePx);
+      }
       const chaveDosAnimais = animais.length === 0 ? '-' : `${animais.map((a) => a.idade).join('')}/${quadroAnimal}`;
       // F17g: cada martelada muda a revelacao sem mudar o estagio de fallback.
       const chaveDoCorpo = revelacao === null ? '-' : chaveDaRevelacao(revelacao);
@@ -1166,6 +1177,7 @@ export class WorldScene extends Phaser.Scene {
     debug.pilhasDesenhadas = pilhasNoDebug;
     debug.quadrosDeTrabalho = quadrosNoDebug;
     debug.animaisDoCurral = animaisNoDebug;
+    debug.camadasEmPx = camadasNoDebug;
   }
 
   /** F17f — a chave de textura de um (tipo, estagio), ou `null` quando esse
@@ -1234,11 +1246,7 @@ export class WorldScene extends Phaser.Scene {
       : sprite === null
         ? this.desenharPlaceholder(estagio, nome, larguraPx, alturaPx)
         : [this.desenharSprite(sprite.chave, sprite.entrada, larguraPx, alturaPx)];
-    // F-VIVO-a: a fracao da ancora e do sprite `completo` (brief §4a). Sem ele, do lote.
-    const completo = this.spriteDoPredio(predio.tipo, 'completo');
-    const caixa = completo === null
-      ? { x: 0, y: 0, w: larguraPx, h: alturaPx }
-      : this.caixaDoSprite(completo.entrada, larguraPx, alturaPx);
+    const caixa = this.caixaDoPredio(predio.tipo, larguraPx, alturaPx);
 
     // O canteiro vai PRIMEIRO no container: ele e o chao, e o corpo da obra fica
     // por cima. O medidor da F17b continua por ultimo.
@@ -1291,6 +1299,33 @@ export class WorldScene extends Phaser.Scene {
 
   /** F-VIVO-a — o retangulo que o sprite ocupa dentro do container, pela mesma
    *  ancoragem e escala de `desenharSprite`. */
+  /** F-VIVO-a: a fracao da ancora e do sprite `completo` (brief §4a). Sem ele, do lote. */
+  private caixaDoPredio(
+    tipo: string, larguraPx: number, alturaPx: number,
+  ): { readonly x: number; readonly y: number; readonly w: number; readonly h: number } {
+    const completo = this.spriteDoPredio(tipo, 'completo');
+    return completo === null
+      ? { x: 0, y: 0, w: larguraPx, h: alturaPx }
+      : this.caixaDoSprite(completo.entrada, larguraPx, alturaPx);
+  }
+
+  /** F-VIVO-d — o tamanho de cada camada, da mesma geometria de `criarPredio`. */
+  private camadasEmPx(
+    tipo: string, caso: string, quadro: QuadroDeTrabalho | null, comPilha: boolean,
+    animais: readonly AnimalDoCurral[], tilePx: number,
+  ): CamadasEmPx {
+    const { largura, altura } = aparenciaDoPredio(tipo);
+    const caixa = this.caixaDoPredio(tipo, largura * tilePx, altura * tilePx);
+    const [x0, y0, x1, y1] = areaDoTrabalho(DADOS_DO_TRABALHO.ancoras[tipo]);
+    return {
+      tipo, caso,
+      corpo: [caixa.w, caixa.h],
+      trabalho: quadro === null ? null : [caixa.w * (x1 - x0), caixa.h * (y1 - y0)],
+      pilha: comPilha ? tilePx * LADO_DA_UNIDADE_EM_TILES : null,
+      animais: animais.length === 0 ? null : animais.map((a) => ladoDoAnimalSemArte(a.idade, tilePx)),
+    };
+  }
+
   private caixaDoSprite(
     entrada: EntradaDeAsset, larguraPx: number, alturaPx: number,
   ): { readonly x: number; readonly y: number; readonly w: number; readonly h: number } {
@@ -1320,7 +1355,6 @@ export class WorldScene extends Phaser.Scene {
     caixa: { readonly x: number; readonly y: number; readonly w: number; readonly h: number },
     tilePx: number,
   ): Phaser.GameObjects.GameObject[] {
-    const unidade = tilePx * LADO_DA_UNIDADE_EM_TILES;
     const objetos: Phaser.GameObjects.GameObject[] = [];
     for (const a of animais) {
       const x = caixa.x + caixa.w * a.ponto[0];
@@ -1332,7 +1366,7 @@ export class WorldScene extends Phaser.Scene {
         objetos.push(imagem);
         continue;
       }
-      const lado = (unidade * (a.idade + 1)) / 2;
+      const lado = ladoDoAnimalSemArte(a.idade, tilePx);
       const losango = this.add.polygon(x, y - lado / 2, [lado / 2, 0, lado, lado / 2, lado / 2, lado, 0, lado / 2], 0xe8d2b0, 1);
       losango.setStrokeStyle(1, 0x2c1d12);
       objetos.push(losango);

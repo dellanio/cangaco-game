@@ -692,8 +692,26 @@ A 0,75 o prédio tem cerca de 144 px e um boneco de 16 px vira mancha. Por isso:
 > fumaça, o animal. O gesto da mão (amassar, curtir, martelar peça pequena) é **bônus**
 > para zoom 1 ou mais, nunca a única coisa que muda.
 
-Hipótese até medir numa captura a 0,75: sobrevivem luz, fumaça, vela, serra com tora
-grande, animal que quase dobra de tamanho entre as idades, e pilha de ~12 px.
+**Medido a 0,75** (F-VIVO-d1, 2026-09-28, `test-output/F-VIVO-d.json`, com o px do
+objeto desenhado vezes o zoom). Números, na tela:
+
+- **Prédio:** 144 px no lote de 3 tiles e 192 px no de 4. Confirma a conta de cima.
+- **Área de trabalho** (a padrão, 0,4 × 0,4 da caixa): 58×58 px num prédio de 3×3.
+  Na mina de ouro de 2×1 cai para 38×29 px. O "elemento grande" de ¼ da área tem então
+  ~29 px no prédio de 3 e ~19 px na mina pequena.
+- **Pilha:** a unidade tem **9,6 px** (1/5 de tile). Fica abaixo dos ~12 px da hipótese.
+  Na captura, a pilha aparece como um quadrado pequeno e se distingue do chão pela cor,
+  não pela forma.
+- **Animal** (placeholder de 1 a 2 unidades de pilha): de 9,6 px o filhote a 19,2 px o
+  adulto. O dobro de tamanho entre as idades se lê. O filhote vira ponto.
+- **Fumaça:** não medida. Nenhum prédio declara `ancoras.trabalho.fumaca`.
+- **Luz** (caso 4): a área da mina é a mesma da regra acima. A mudança de luz ocupa a
+  área inteira, e por isso é o caso que mais sobra.
+
+O que a medida muda na regra: o que vale é o **elemento de ¼ da área**, ~20 a 30 px a
+0,75, e não a pilha nem o filhote. Estes dois ficam perto de 10 px e são informação de
+zoom 1 ou mais. Os números vêm dos placeholders. O PNG herda a área do trabalho e o
+lado da pilha, e o animal com PNG tem o tamanho do próprio PNG.
 
 ### As três âncoras
 

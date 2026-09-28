@@ -56,6 +56,21 @@ export interface AnimalNoDebug {
   readonly sprite: boolean;
 }
 
+/** F-VIVO-d — o tamanho em px de MUNDO de cada camada de um predio com receita, lido
+ *  da mesma geometria que o desenho usa. Na tela e isto vezes `camera.zoom`. */
+export interface CamadasEmPx {
+  readonly tipo: string;
+  readonly caso: string;
+  /** A caixa do sprite `completo` (o canvas do PNG escalado), ou o lote sem PNG. */
+  readonly corpo: readonly [number, number];
+  /** A area do quadro de trabalho, ou `null` quando o predio nao anima agora. */
+  readonly trabalho: readonly [number, number] | null;
+  /** O lado de uma unidade de pilha, ou `null` sem pilha desenhada. */
+  readonly pilha: number | null;
+  /** O lado de cada animal do curral, ou `null` com o curral vazio. */
+  readonly animais: readonly number[] | null;
+}
+
 export interface EstadoDebug {
   /** false ate a cena terminar o primeiro desenho. O roteiro espera por isto
    *  antes de fotografar — sem isso a captura sai do canvas em branco. */
@@ -118,6 +133,8 @@ export interface EstadoDebug {
   /** F-VIVO-c — os animais que a cena DESENHOU agora, por id de predio. So tem
    *  criacao com curral cheio (`animais.ts`); curral vazio nao aparece. */
   animaisDoCurral: Readonly<Record<string, readonly AnimalNoDebug[]>>;
+  /** F-VIVO-d — as camadas desenhadas, em px de mundo, por id de predio com receita. */
+  camadasEmPx: Readonly<Record<string, CamadasEmPx>>;
   /** F-T1 — quantos tiles de cada TIPO DE TERRENO estao dentro da vista da
    *  camera agora, lidos de volta da camada de chao ja desenhada. E o que
    *  permite ao roteiro afirmar "a camera esta em cima do lago" sem olhar
@@ -262,6 +279,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     pilhasDesenhadas: {},
     quadrosDeTrabalho: {},
     animaisDoCurral: {},
+    camadasEmPx: {},
     terrenoVisivel: {},
     recursosVisiveis: {},
     mascarasDoLajedo: {},

@@ -4722,6 +4722,20 @@ leem `GameState`: **nenhum toca em `sim/`**.
 **Aceite da F-VIVO-d.** Uma aldeia com os cinco casos, capturada a 0,75. O roteiro
 grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
 `docs/BRIEF-ARTE.md` troca a "hipótese até medir" da regra do zoom pelo número medido.
+- **Quebra (2026-09-28, fila da noite; PARA REVISÃO):** os cinco casos não cabem num
+  quadro do mapa real. Campo arado, veio da serra e lajedo ficam em lugares diferentes,
+  e juntá-los pediria recurso fora do lugar, o andaime que a F21b recusou.
+  - **F-VIVO-d1 (feita):** cada caso é medido a 0,75 na cadeia onde mora:
+    - carne: guarda, criação e dentro;
+    - ouro: luz e dentro;
+    - pedreira: transforma.
+
+    O roteiro `tools/shots/F-VIVO-d.js` carrega os saves que
+    `tests/F-VIVO-d-aldeia.test.ts` grava e escreve `test-output/F-VIVO-d.json`. O
+    brief troca a hipótese pelo número.
+  - **F-VIVO-d2 (espera o operador):** o quadro único com os cinco. O operador
+    escolhe entre aceitar as três capturas da d1 como a "aldeia" ou dizer onde ela
+    fica. Um mapa de vitrine seria cenário novo, e por isso é decisão dele.
 
 ---
 
