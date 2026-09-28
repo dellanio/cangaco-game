@@ -46,12 +46,13 @@
 import type {
   GameEvent, GameState, Plantio, PredioCompleto, TarefaColher, TarefaOcupar, Unidade,
 } from '../state';
-import { ehTarefaDeColheita } from '../state';
+import { ehTarefaDeColheita, ID_DO_RECRUTA } from '../state';
+import { ehQuartelCompleto, recrutasNoQuartel } from '../quartel';
 import type { ColheitaDeRecurso, GameData, ReceitaDePredio, ReposicaoDeRecurso } from '../data/types';
 import { gameData } from '../data';
 import {
   caminhoAteAproximacaoDoTile, caminhoAtePredioCompleto, criarTarefaDeColheita, liberar, reclamar,
-  reclamarMelhorOcupacao, removerTarefa, tarefaDeColheitaDoPredio,
+  reclamarMelhorAlistamento, reclamarMelhorOcupacao, removerTarefa, tarefaDeColheitaDoPredio,
 } from '../jobs';
 import { tileAlcancavelParaColheita } from '../aproximacao';
 import { ehPredioOcupavel, predioAceita, predioDoOcupante, tiposQueOcupam } from '../ocupacao';
@@ -102,7 +103,9 @@ export function sanearOcupacao(state: GameState, dados: GameData = gameData): Ga
 
 function passoOcioso(state: GameState, u: Unidade, dados: GameData): Passo {
   const r = reclamarMelhorOcupacao(state, u.id, dados);
-  if (!r.ok) return semEventos(state);
+  // F25a: o recruta sem torre vaga se alista no quartel (a torre vem primeiro:
+  // PARA REVISAO)
+  if (!r.ok) return u.tipo === ID_DO_RECRUTA ? passoAlistar(state, u, dados) : semEventos(state);
   const bruta = r.state.jobs.tarefas.porId[r.tarefa];
   const tarefa = bruta?.tipo === 'ocupar' ? bruta : undefined;
   const caminho = tarefa === undefined ? null : caminhoAtePredioCompleto(r.state, tarefa.destino, u.id, dados);
@@ -146,6 +149,56 @@ function passoIndoOcupar(state: GameState, u: Unidade, dados: GameData): Passo {
     state: comUnidade(semATarefa, { ...andou, fsm: 'trabalhando', fsmData: {} }),
     events: [{ type: 'building-occupied', predio: ocupado.id, unidade: u.id, tipo: u.tipo }],
   };
+}
+
+/** F25a — o recruta ocioso reclama a vaga de alistamento de caminho mais curto e sai. */
+function passoAlistar(state: GameState, u: Unidade, dados: GameData): Passo {
+  const r = reclamarMelhorAlistamento(state, u.id, dados);
+  if (!r.ok) return semEventos(state);
+  const tarefa = r.state.jobs.tarefas.porId[r.tarefa];
+  const caminho = tarefa?.tipo === 'alistar' ? caminhoAtePredioCompleto(r.state, tarefa.destino, u.id, dados) : null;
+  if (tarefa === undefined || caminho === null) {
+    const l = liberar(r.state, r.tarefa, 'pedido-da-unidade');
+    return { state: l.state, events: l.events };
+  }
+  return semEventos(comUnidade(r.state, {
+    ...u, fsm: 'indo_alistar', fsmData: dadosDaFsm({ tarefa: tarefa.id, caminho: caminho.tiles, progresso: 0 }),
+  }));
+}
+
+/**
+ * F25a — a viagem ate a porta do quartel. Ao chegar o recruta ENTRA: a unidade sai do
+ * estado, `recrutas` do quartel sobe 1 e a tarefa sai do quadro, os tres no MESMO
+ * estado novo. Recruta dentro nao e unidade (nao anda, nao come).
+ */
+function passoIndoAlistar(state: GameState, u: Unidade, dados: GameData): Passo {
+  const id = u.fsmData.tarefa;
+  const tarefa = id === undefined ? undefined : state.jobs.tarefas.porId[id];
+  if (tarefa === undefined || tarefa.tipo !== 'alistar' || tarefa.reclamadaPor !== u.id) return ficarOcioso(state, u);
+  const quartel = state.predios.porId[tarefa.destino];
+  if (!ehQuartelCompleto(quartel)) return ficarOcioso(state, u); // o saneamento a cancela no proximo tick
+
+  let atual = u;
+  const proximo = (u.fsmData.caminho ?? [])[0];
+  if (proximo !== undefined && !passoAndavel(state, noTile(u), proximo, 'livre', dados)) {
+    const caminho = caminhoAtePredioCompleto(state, tarefa.destino, u.id, dados);
+    if (caminho === null) {
+      const l = liberar(state, tarefa.id, 'pedido-da-unidade'); // so a UNIDADE nao chega: reabre
+      return ficarOcioso(l.state, u, l.events);
+    }
+    atual = { ...u, fsmData: dadosDaFsm({ tarefa: tarefa.id, caminho: caminho.tiles, progresso: 0 }) };
+  }
+  const andou = andar(state, atual, dados);
+  if (!chegou(andou)) return semEventos(comUnidade(state, andou));
+
+  const comORecruta = comPredio(state, { ...quartel, recrutas: recrutasNoQuartel(quartel) + 1 });
+  const semATarefa = removerTarefa(comORecruta, tarefa.id);
+  const porId = { ...semATarefa.unidades.porId };
+  delete porId[u.id];
+  return semEventos({
+    ...semATarefa,
+    unidades: { porId, ordem: semATarefa.unidades.ordem.filter((outro) => outro !== u.id) },
+  });
 }
 
 /** Devolve o MESMO estado quando o rotulo nao muda: um tick de producao normal
@@ -841,6 +894,7 @@ function passoDoEspecialista(state: GameState, u: Unidade, dados: GameData): Pas
   switch (u.fsm) {
     case 'ocioso': return passoOcioso(state, u, dados);
     case 'indo_ocupar': return passoIndoOcupar(state, u, dados);
+    case 'indo_alistar': return passoIndoAlistar(state, u, dados);
     // os tres estados de PRODUCAO caem no mesmo ramo: o rotulo e recalculado do
     // predio a cada tick, entao nao ha transicao a escrever entre eles
     case 'trabalhando':

@@ -557,6 +557,22 @@ function validarPoliticaDeTreino(dados, erros) {
   }
 }
 
+// F25a: o que o quartel consome para formar soldado (`units.json:
+// militares.tipos[].requisitos`) tem de ser MERCADORIA, senao nenhuma entrega leva
+// aquilo ao quartel e o tipo nunca se forma. Foi assim que `horse` (a mercadoria e
+// `horses`) deixou batedor e cavaleiro impossiveis sem ninguem acusar.
+function validarRequisitosDoQuartel(dados, erros) {
+  const mercadorias = new Set((dados.economy && dados.economy.mercadorias) || []);
+  const tipos = (dados.units && dados.units.militares && dados.units.militares.tipos) || [];
+  for (const t of tipos) {
+    for (const r of t.requisitos || []) {
+      if (!mercadorias.has(r)) {
+        erros.push(`unidades/requisitos: '${t.id}' pede '${r}', que nao esta em economy.mercadorias`);
+      }
+    }
+  }
+}
+
 // F08: fracao da pedra devolvida ao demolir tiles de estrada. Campo proprio de
 // terrain.estrada (nao o de buildings.construcao): estrada e predio podem
 // divergir. Uma fracao fora de [0, 1] devolveria mais do que custou, ou negativo.
@@ -1221,6 +1237,7 @@ function validarTudo(dados) {
   validarDevolucaoDePredio(dados, erros);
   validarEscadaDePrioridade(dados, erros);
   validarPoliticaDeTreino(dados, erros);
+  validarRequisitosDoQuartel(dados, erros);
   validarMapas(dados, erros);
   return erros;
 }

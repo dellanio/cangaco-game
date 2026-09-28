@@ -32,8 +32,8 @@
       { "id": "crossbowman",   "nome": "Besteiro",        "hp": 1, "attack": 120, "attackVsCavalo": 0,  "defence": 3, "montado": false, "visao": 9,  "requisitos": ["crossbow", "iron_armor"], "aDistancia": true },
       { "id": "lance_carrier", "nome": "Lanceiro",        "hp": 3, "attack": 25,  "attackVsCavalo": 35, "defence": 2, "montado": false, "visao": 9,  "requisitos": ["lance", "leather_armor"] },
       { "id": "pikeman",       "nome": "Piqueiro",        "hp": 3, "attack": 35,  "attackVsCavalo": 45, "defence": 3, "montado": false, "visao": 9,  "requisitos": ["pike", "iron_armor"] },
-      { "id": "scout",         "nome": "Batedor",         "hp": 4, "attack": 35,  "attackVsCavalo": 0,  "defence": 2, "montado": true,  "visao": 18, "requisitos": ["hand_axe", "leather_armor", "wooden_shield", "horse"] },
-      { "id": "knight",        "nome": "Cavaleiro",       "hp": 4, "attack": 55,  "attackVsCavalo": 0,  "defence": 3, "montado": true,  "visao": 9,  "requisitos": ["sword", "iron_armor", "iron_shield", "horse"] }
+      { "id": "scout",         "nome": "Batedor",         "hp": 4, "attack": 35,  "attackVsCavalo": 0,  "defence": 2, "montado": true,  "visao": 18, "requisitos": ["hand_axe", "leather_armor", "wooden_shield", "horses"] },
+      { "id": "knight",        "nome": "Cavaleiro",       "hp": 4, "attack": 55,  "attackVsCavalo": 0,  "defence": 3, "montado": true,  "visao": 9,  "requisitos": ["sword", "iron_armor", "iron_shield", "horses"] }
     ]
   },
   "mercenarios": {

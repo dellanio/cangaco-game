@@ -5116,6 +5116,25 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
   - o prédio completo sem dano não gera tarefa, mesmo com o reparo ligado.
 
 ### F25 — Barracks e criação de soldado
+- **Quebra (sessão autônoma, 2026-09-28; plano em `docs/planos/2026-09-28-A8-F25a-quartel.md`).**
+  O item tinha só a nota de arte. O escopo abaixo é leitura conservadora do GDD (§2.3,
+  §6.1, Anexo A 12.1), **PARA REVISÃO**.
+  - **F25a — a sim. ENTREGUE.**
+    - Os requisitos viajam do armazém para a gaveta `entrada` do quartel pela tarefa nova
+      `arma-para-quartel` (nível 11 de `delivery.json`, o último). O quartel quer tudo, e
+      nada vira excedente.
+    - O recruta sem torre se alista pela tarefa `alistar`: anda até a porta e entra, e
+      `PredioCompleto.recrutas` sobe.
+    - `TrainSoldier { predio, tipo }` consome 1 de cada requisito e 1 recruta, e o soldado
+      nasce na porta no mesmo tick, com o lado do quartel.
+    - Recusa com motivo: não é quartel, tipo não militar, sem requisito, sem recruta ou
+      porta bloqueada.
+    - **Dado corrigido:** `horse` → `horses` nos requisitos de batedor e cavaleiro.
+      Regra nova no `validate:data` (`validarRequisitosDoQuartel`).
+    - Teste: `tests/F25a-quartel.test.ts`.
+  - **F25b — o painel do quartel (ui).** Falta escrever. Recrutas dentro, requisitos na
+    gaveta, um botão por tipo que manda `TrainSoldier` e desabilita o que não cabe, dizendo
+    o motivo. Screenshot com o roteiro despausado da §8.
 - **Nota (decisão do operador, 2026-09-26): a arte dos mercenários espera o Quartel.**
   Os cinco mercenários (`rebel`, `rogue`, `vagabond`, `barbarian`, `warrior`) ficaram
   fora da arte: `data/units.json` não declara `direcoesDeSprite` para eles e

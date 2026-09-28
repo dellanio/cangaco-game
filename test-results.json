@@ -254,6 +254,12 @@
   "F28c-regeneracao": {
     "passes": true
   },
+  "F25a-quartel-sim": {
+    "passes": true
+  },
+  "F25b-painel-do-quartel": {
+    "passes": false
+  },
   "F-TR-a-textura-e-transicao": {
     "passes": true
   },

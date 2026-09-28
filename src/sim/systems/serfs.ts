@@ -261,6 +261,7 @@ function destinoQueRecebe(state: GameState, tarefa: TarefaDeTransporte, dados: G
     case 'ouro-para-escola':
       return demandaNoDestino(state, tarefa, dados) >= 1 ? entregarOuro(state, tarefa) : null;
     case 'comida-para-inn':
+    case 'arma-para-quartel':
     case 'insumo-producao-parada':
     case 'insumo-producao-baixa':
       return demandaNoDestino(state, tarefa, dados) >= 1 ? entregarNaEntrada(state, tarefa) : null;

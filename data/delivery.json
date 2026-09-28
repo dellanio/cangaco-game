@@ -12,7 +12,9 @@
     { "nivel": 8, "id": "excedente-para-armazem",   "modo": "estrada",   "tarefa": "excedente -> armazem" },
     { "nivel": 9, "id": "assentar-estrada",         "modo": "livre",     "tarefa": "laborer assenta tile de estrada planejado" },
     { "nivel": 10, "id": "arar",                    "modo": "livre",     "tarefa": "laborer ara tile de campo planejado",
-      "_doc": "F18h — o nivel nao ordena nada entre as tarefas do laborer: entre elas vale a distancia (`tarefasDoLaborerEmOrdem`), como entre construir e assentar. Ela esta na escada porque e daqui que sai o `modo` da busca de caminho, e `livre` e o certo: arar e o que se faz ANTES de haver rua." }
+      "_doc": "F18h — o nivel nao ordena nada entre as tarefas do laborer: entre elas vale a distancia (`tarefasDoLaborerEmOrdem`), como entre construir e assentar. Ela esta na escada porque e daqui que sai o `modo` da busca de caminho, e `livre` e o certo: arar e o que se faz ANTES de haver rua." },
+    { "nivel": 11, "id": "arma-para-quartel",       "modo": "estrada",   "tarefa": "requisito de soldado -> quartel",
+      "_doc": "F25a (sessao autonoma, 2026-09-28, PARA REVISAO) — o ULTIMO da escada: arma parada no armazem nao tira ninguem de fome, de obra nem de producao. `estrada` porque entrega na porta de predio pronto (a regra da _nota_modo). A posicao no KaM nao foi conferida no fonte." }
   ],
   "_nota_modo": "O `modo` de cada nivel e a vizinhanca que o A* usa na perna de ENTREGA (sim/pathfinding.ts, ModoDeBusca) e a rede em que a existencia de ligacao e medida. O criterio e o DESTINO, nao a mercadoria: canteiro, tile planejado ou unidade em campo -> `livre`, porque a primeira casa tem de subir sem rua nenhuma; porta de predio pronto -> `estrada`, porque sem rua o material fica parado na gaveta. Decisao do operador, 2026-09-23, fonte o jogo original; lido por `modoDoTipo` (sim/jobs.ts) e exigido em toda linha por tools/data-rules.js.",
   "desempate": ["menorDistanciaDeCaminhoReal", "menorIdDeTarefa"],

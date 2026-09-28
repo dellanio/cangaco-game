@@ -15,14 +15,15 @@ import type {
   TarefaExcedenteParaArmazem, TarefaInsumoProducaoBaixa, TarefaInsumoProducaoParada,
   TarefaComidaParaInn, TarefaMaterialParaObra, TarefaOcupar, TarefaOuroParaEscola,
   TarefaArar, TarefaAssentarEstrada, TarefaColher, TarefaComer, TarefaDeLaborer, TarefaSaidaCheiaParaArmazem,
-  TarefaDoSerf, TarefaPedraParaCanteiro, TarefaReparar,
+  TarefaDoSerf, TarefaPedraParaCanteiro, TarefaReparar, TarefaArmaParaQuartel, TarefaAlistar,
   TipoDeTarefa,
   TipoNaEscada,
 } from './state';
 import {
   ehTarefaDeAradura, ehTarefaDeAssentamento, ehTarefaDeColheita, ehTarefaDeLaborer, ehTarefaDePedraParaCanteiro,
-  ehTarefaDeReparo, ehTarefaDeTile, ehTarefaDoSerf, MERCADORIA_DE_OURO,
+  ehTarefaDeReparo, ehTarefaDeTile, ehTarefaDoSerf, ID_DO_RECRUTA, MERCADORIA_DE_OURO,
 } from './state';
+import { ehQuartelCompleto } from './quartel';
 import { predioReparavel } from './reparo';
 import type { GameData } from './data/types';
 import { gameData } from './data';
@@ -137,6 +138,11 @@ const UNIDADE_ELEGIVEL_POR_TIPO: Readonly<Record<TipoDeTarefa, string | null>> =
   // F-CERCO-b: reparar e martelar predio completo — mesmo laborer, mesma FSM
   // (`indo_a_obra` -> `martelando`), mesmo claim. Sem material: no KaM tambem nao.
   reparar: TIPO_QUE_CONSTROI,
+  // F25a: a arma e carga como o ouro — mesmo serf, mesma FSM, mesmo claim.
+  'arma-para-quartel': TIPO_QUE_CARREGA,
+  // F25a: so o recruta se alista, e qualquer recruta ocioso serve (sem destino
+  // especifico de tipo, ao contrario de 'ocupar').
+  alistar: ID_DO_RECRUTA,
 };
 
 /** Generaliza a checagem "a unidade e serf": cada tipo de tarefa tem UM tipo
@@ -319,6 +325,54 @@ export function criarTarefaDeConstrucao(
   const numero = state.proximoId;
   const tarefa: TarefaConstruir = { id: `t${numero}`, numero, tipo: 'construir', destino, estado: 'aberta', reclamadaPor: null };
   return inserirTarefa(state, tarefa);
+}
+
+/** F25a — uma unidade de requisito do armazem `origem` ate o quartel `destino`. */
+export function criarTarefaDeArma(
+  state: GameState,
+  campos: { readonly mercadoria: string; readonly origem: string; readonly destino: string },
+): { readonly state: GameState; readonly id: string } {
+  const numero = state.proximoId;
+  const tarefa: TarefaArmaParaQuartel = {
+    id: `t${numero}`, numero, tipo: 'arma-para-quartel', mercadoria: campos.mercadoria,
+    origem: campos.origem, destino: campos.destino, estado: 'aberta', reclamadaPor: null,
+  };
+  return inserirTarefa(state, tarefa);
+}
+
+/** F25a — a vaga de ALISTAMENTO aberta no quartel completo `destino`. */
+export function criarTarefaDeAlistamento(
+  state: GameState, destino: string,
+): { readonly state: GameState; readonly id: string } {
+  const numero = state.proximoId;
+  const tarefa: TarefaAlistar = { id: `t${numero}`, numero, tipo: 'alistar', destino, estado: 'aberta', reclamadaPor: null };
+  return inserirTarefa(state, tarefa);
+}
+
+/** F25a — reclama, para o recruta `unidadeId`, a `'alistar'` aberta de caminho mais
+ *  curto ate a porta (`(custo, numero)`), a que DER para reclamar. */
+export function reclamarMelhorAlistamento(
+  state: GameState, unidadeId: string, dados: GameData = gameData,
+): ResultadoDoClaimMelhor {
+  const custos = new Map<string, number>();
+  const candidatas = state.jobs.tarefas.ordem
+    .map((id) => state.jobs.tarefas.porId[id])
+    .filter((t): t is TarefaAlistar => t !== undefined && t.tipo === 'alistar' && t.estado === 'aberta');
+  for (const t of candidatas) {
+    custos.set(t.id, caminhoAtePredioCompleto(state, t.destino, unidadeId, dados)?.custo ?? Number.POSITIVE_INFINITY);
+  }
+  const ordem = [...candidatas].sort((a, b) => {
+    const ca = custos.get(a.id) ?? Number.POSITIVE_INFINITY;
+    const cb = custos.get(b.id) ?? Number.POSITIVE_INFINITY;
+    return ca !== cb ? (ca < cb ? -1 : 1) : a.numero - b.numero;
+  });
+  let primeiraRecusa: MotivoDeRecusaDoClaim | null = null;
+  for (const tarefa of ordem) {
+    const r = reclamar(state, tarefa.id, unidadeId, dados);
+    if (r.ok) return { ok: true, state: r.state, tarefa: tarefa.id };
+    primeiraRecusa ??= r.motivo;
+  }
+  return { ok: false, motivo: primeiraRecusa ?? 'sem-tarefa-aberta' };
 }
 
 /** F-CERCO-b — cria uma vaga de REPARO aberta no predio completo `destino`. Irma de
@@ -865,6 +919,12 @@ export function reclamar(
     // tile usa: os dois lados recusam o mesmo tile, senao a tarefa nasce e morre
     // todo tick e o predio fica esperando o que nunca chega.
     if (caminhoAteAproximacaoDoTile(state, tarefa.origemTile, unidadeId, dados) === null) {
+      return { ok: false, motivo: 'sem-caminho' };
+    }
+  } else if (tarefa.tipo === 'alistar') {
+    // F25a: o quartel tem de continuar de pe, e o recruta tem de chegar a porta
+    if (!ehQuartelCompleto(state.predios.porId[tarefa.destino])) return { ok: false, motivo: 'destino-sem-trabalho' };
+    if (caminhoAtePredioCompleto(state, tarefa.destino, unidadeId, dados) === null) {
       return { ok: false, motivo: 'sem-caminho' };
     }
   } else if (ehTarefaDeReparo(tarefa)) {

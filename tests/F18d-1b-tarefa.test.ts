@@ -64,6 +64,8 @@ describe('F18d-1b — a escada acolhe `assentar-estrada` sem mexer em nivel nenh
       // laborer escolhe por distancia); estao na escada so pelo `modo`.
       ['assentar-estrada', 9],
       ['arar', 10],
+      // F25a: o requisito de soldado, no fim — nao desloca nenhum dos outros
+      ['arma-para-quartel', 11],
     ]);
   });
 

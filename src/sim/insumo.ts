@@ -19,6 +19,7 @@ import { gameData } from './data';
 import { ehBodegaCompleta, ehComida, tetoDeComidaNaBodega } from './bodega';
 import { custoDeTreino, ehEscolaCompleta, filaDaEscola } from './escola';
 import { receitaDoTipo } from './producao';
+import { ehQuartelCompleto, ehRequisitoDoQuartel } from './quartel';
 
 /**
  * A capacidade da gaveta `entrada` repartida na proporcao da receita. Com uma
@@ -84,6 +85,10 @@ export function alvoDeEntrada(
     const aguardando = filaDaEscola(state, predioId).filter((i) => i.estado === 'aguardando').length;
     return aguardando * custoDeTreino(dados);
   }
+  // F25a — o quartel guarda TODO requisito que recebe: sem teto, e por isso nada do
+  // que chegou vira excedente e volta ao armazem pelo nivel 7. Infinito de proposito,
+  // como a demanda do armazem (`demandaNoDestino`), e nao um numero grande.
+  if (ehQuartelCompleto(predio) && ehRequisitoDoQuartel(mercadoria, dados)) return Number.POSITIVE_INFINITY;
   return 0;
 }
 

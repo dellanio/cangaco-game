@@ -10572,3 +10572,50 @@ a cura pesa metade, porque a nossa cadência de ataque é dobrada.
   mesmo tick, em vez de defasados.
 - **Hoje nada fere unidade:** o combate unidade × unidade é a F28. A cura só age em
   fixture até lá.
+
+## 2026-09-28 (sessão autônoma, item 8) — F25a: o Quartel na sim
+
+Plano: `docs/planos/2026-09-28-A8-F25a-quartel.md`. O item F25 tinha só a nota de arte, e
+**quebrei em F25a (sim, feita) e F25b (painel, escrita no BUILD_PLAN)**, pela §6.
+
+**Verificado:**
+- **Achado de dado, corrigido:** batedor e cavaleiro pediam `horse`, mas a mercadoria é
+  `horses`, e por isso nenhum dos dois se formaria. A regra nova
+  `validarRequisitosDoQuartel` (`tools/data-rules.js`) acusou os dois antes do conserto
+  e agora passa.
+- **Armas viajam:** a tarefa nova `arma-para-quartel` é carga de serf, do armazém para a
+  `entrada` do quartel. Está no nível 11 de `delivery.json`, o último, com modo `estrada`.
+  - A demanda é infinita de propósito, como a do armazém, e quem limita é a origem.
+  - `alvoDeEntrada` do quartel é infinito, então nada vira excedente de volta.
+  - Regra única em `sim/quartel.ts`.
+- **Recruta se alista:** o recruta ocioso sem torre vaga reclama `alistar` (uma aberta
+  por quartel, sempre), anda até a porta (`indo_alistar`) e entra. A unidade sai do
+  estado e `recrutas` sobe.
+- **`TrainSoldier`** (`systems/quartel.ts`) é na hora. O soldado nasce na porta andável
+  (`tileDeSaida`, a mesma da escola), com o lado do quartel, o HP cheio e o evento
+  `unit-trained`.
+- **GDD §6.2** ganhou os estados novos: `indo_alistar`, o reparo, e
+  `indo_atacar`/`atacando`. A §6.3 ganhou o nível 11.
+- `tests/F25a-quartel.test.ts`, 5 testes, verdes. O quartel é posto pelo `canPlace` e a
+  rua é traçada pelo A*:
+  - (a) 3 machados mais o kit do cavaleiro chegam em 1500 ticks, o armazém zera e nada
+    volta em mais 1500. As invariantes valem a cada tick;
+  - (b) 2 recrutas entram e somem do estado;
+  - (c) miliciano e cavaleiro no mesmo tick, na porta, consumindo tudo;
+  - (d) quatro recusas, com o estado igual byte a byte;
+  - (e) determinismo.
+- Três testes que fixam a escada inteira (`F09-escada`, `F18d-1a-modo` e `F18d-1b-tarefa`)
+  ganharam a linha 11, como cada nível anterior fez. Não tirei nenhuma asserção.
+- **Sondas** (restauradas):
+  - sem o alvo infinito: as armas voltam, e (a) reprova;
+  - sem o `recrutas + 1`: (b) reprova;
+  - sem consumir requisito: (c) reprova.
+
+**PARA REVISÃO:**
+- **O nível 11 da escada** (a posição no KaM não foi conferida no fonte).
+- **O quartel puxa todas as armas do armazém**, sem teto.
+- **O recruta prefere a torre ao quartel.**
+- **Recrutas dentro do quartel demolido se perdem.** A demolição devolve as armas da
+  gaveta, mas não os recrutas.
+- **Treino instantâneo**, como no KaM: o dado não tem tempo de treino de soldado.
+- **Sem a F25b, o jogador não treina pela tela:** o comando existe, e o botão não.

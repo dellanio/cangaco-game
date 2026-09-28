@@ -25,7 +25,7 @@ import { armazensCompletos, chaveDeTile, ehPlanejada, MERCADORIA_DA_ESTRADA, til
 import type { TileDeGrid } from '../estradas';
 import { ehCampoPlanejado, tilesPlanejadosParaArar } from '../campos';
 import {
-  criarTarefa, criarTarefaComer, criarTarefaDeAradura, criarTarefaDeAssentamento, criarTarefaDeConstrucao, criarTarefaDeReparo,
+  criarTarefa, criarTarefaComer, criarTarefaDeAradura, criarTarefaDeAssentamento, criarTarefaDeConstrucao, criarTarefaDeReparo, criarTarefaDeArma, criarTarefaDeAlistamento,
   criarTarefaDeComida, criarTarefaDeInsumo, criarTarefaDeOcupacao, criarTarefaDeOuro,
   criarTarefaDePedraParaCanteiro, criarTarefaParaArmazem,
   distanciaDaTarefa, liberar, ligacaoEntrePredioETile, ligacaoEntrePredios,
@@ -45,6 +45,7 @@ import { comidaNecessaria, comidasConhecidas, ehBodegaCompleta, temComidaNaBodeg
 import { receitaDoTipo } from '../producao';
 import { ehPredioOcupavel, vagasDoPredio } from '../ocupacao';
 import { predioReparavel } from '../reparo';
+import { ehQuartelCompleto, ehRequisitoDoQuartel, requisitosDoQuartel } from '../quartel';
 
 export interface ResultadoDeSistema {
   readonly state: GameState;
@@ -106,6 +107,11 @@ function motivoDoDestino(state: GameState, t: Tarefa, dados: GameData): MotivoDe
       return ehBodegaCompleta(destino) ? null : 'destino-sumiu';
     case 'ouro-para-escola':
       return ehEscolaCompleta(destino) ? null : 'destino-sumiu';
+    // F25a — o quartel demolido (ou ainda em obra) nao recebe arma nem recruta.
+    case 'arma-para-quartel':
+      return ehQuartelCompleto(destino) && ehRequisitoDoQuartel(t.mercadoria, dados) ? null : 'destino-sumiu';
+    case 'alistar':
+      return ehQuartelCompleto(destino) ? null : 'destino-sumiu';
     // F20b — o assento de refeicao vale enquanto a Bodega existe de pe. A Bodega
     // que FICOU SEM COMIDA nao cancela a tarefa de quem esta no caminho: quem
     // chega e nao acha nada volta a `ocioso` no mesmo tick (decisao D5 do plano),
@@ -729,6 +735,37 @@ function gerarTarefasDePedraParaCanteiro(state: GameState, dados: GameData): Gam
 }
 
 /**
+ * F25a — o quartel: para cada quartel completo,
+ * - cada REQUISITO de soldado que um armazem ligado tem livre vira tarefa de carga,
+ *   uma por unidade livre (o quartel quer tudo; quem limita e a origem). `livres`
+ *   e o disponivel na origem MAIS o que tarefas deste quartel ja reservam la, menos
+ *   as tarefas que ja existem — aberta nao reserva, e por isso entra na conta como
+ *   "ja pedida";
+ * - UMA vaga de alistamento aberta, sempre: o quartel nao tem teto de recrutas.
+ */
+function gerarTarefasDoQuartel(state: GameState, dados: GameData): GameState {
+  let atual = state;
+  for (const id of state.predios.ordem) {
+    const quartel = atual.predios.porId[id];
+    if (!ehQuartelCompleto(quartel)) continue;
+    for (const mercadoria of requisitosDoQuartel(dados)) {
+      const origem = origemMaisPerto(atual, quartel, mercadoria, 'arma-para-quartel', dados);
+      if (origem === null) continue;
+      const abertas = tarefasPorNumero(atual).filter(
+        (t) => t.tipo === 'arma-para-quartel' && t.destino === id && t.mercadoria === mercadoria && t.estado === 'aberta',
+      ).length;
+      const livres = disponivelNaOrigem(atual, origem, mercadoria);
+      for (let i = abertas; i < livres; i++) {
+        atual = criarTarefaDeArma(atual, { mercadoria, origem, destino: id }).state;
+      }
+    }
+    const alistamentoAberto = tarefasPorNumero(atual).some((t) => t.tipo === 'alistar' && t.destino === id && t.estado === 'aberta');
+    if (!alistamentoAberto) atual = criarTarefaDeAlistamento(atual, id).state;
+  }
+  return atual;
+}
+
+/**
  * F-CERCO-b — o reparo: todo predio completo que pede reparo (`predioReparavel`:
  * ligado e abaixo do total) ganha vagas ate `construcao.laborersMaximosPorObra`, o
  * MESMO teto da obra — nenhum numero novo. Sem armazem e sem estrada: o laborer nao
@@ -808,6 +845,7 @@ export function gerarTarefas(state: GameState, dados: GameData = gameData): Game
   atual = gerarTarefasDeAssentamento(atual);
   atual = gerarTarefasDeAradura(atual);
   atual = gerarTarefasDeReparo(atual, dados);
+  atual = gerarTarefasDoQuartel(atual, dados);
   // F14 por ultimo, e sobre PREDIOS COMPLETOS — o laco acima so olha obra. Uma
   // obra que o laborer completou neste tick ja entra aqui e ganha a vaga de
   // ocupante no mesmo tick; o especialista a reclama no tick seguinte.

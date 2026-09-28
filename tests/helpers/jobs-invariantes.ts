@@ -20,6 +20,7 @@ import { insumosDoPredio } from '../../src/sim/insumo';
 import { receitaDoTipo, unidadesPorCiclo } from '../../src/sim/producao';
 import { ehPredioOcupavel } from '../../src/sim/ocupacao';
 import { predioReparavel } from '../../src/sim/reparo';
+import { ehQuartelCompleto, ehRequisitoDoQuartel } from '../../src/sim/quartel';
 import { demandaDoTile, disponivelNaOrigem, vagaNoDestino } from '../../src/sim/reservas';
 import {
   ehTarefaDeAradura, ehTarefaDeAssentamento, ehTarefaDeColheita, ehTarefaDePedraParaCanteiro, ID_DO_ARMAZEM,
@@ -85,6 +86,12 @@ function violacoesDoDestino(estado: GameState, t: Tarefa, dados: GameData): stri
       return predioReparavel(estado, t.destino, dados) ? [] : [`${t.id}: destino '${t.destino}' nao pede reparo`];
     case 'ouro-para-escola':
       return !ehEscolaCompleta(destino) ? [`${t.id}: destino '${t.destino}' nao e escola completa`] : [];
+    // F25a: o quartel completo, e a mercadoria e requisito de soldado
+    case 'arma-para-quartel':
+      if (!ehQuartelCompleto(destino)) return [`${t.id}: destino '${t.destino}' nao e quartel completo`];
+      return ehRequisitoDoQuartel(t.mercadoria, dados) ? [] : [`${t.id}: '${t.mercadoria}' nao e requisito de soldado`];
+    case 'alistar':
+      return ehQuartelCompleto(destino) ? [] : [`${t.id}: destino '${t.destino}' nao e quartel completo`];
     // F20a, nivel 1: o destino e uma Bodega completa, e a mercadoria e comida.
     // `ehBodegaCompleta`/`ehComida` (sim/bodega.ts) sao os predicados da sim.
     case 'comida-para-inn': {

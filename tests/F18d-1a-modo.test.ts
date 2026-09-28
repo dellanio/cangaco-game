@@ -65,6 +65,8 @@ describe('F18d-1a — o modo mora no dado, lido pelo id do nivel', () => {
       // F18h: o nono, e 'livre' pelo MESMO criterio — nao ha rua ate a roca que
       // ainda nao existe.
       ['arar', 'livre'],
+      // F25a: o requisito entrega na PORTA do quartel pronto, e por isso `estrada`
+      ['arma-para-quartel', 'estrada'],
     ]);
   });
 

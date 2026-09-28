@@ -9,6 +9,7 @@ import { aplicarDemolishBuilding } from './systems/demolicao';
 import { aplicarAttackBuilding, sistemaDoCerco } from './systems/cerco';
 import { aplicarSetBuildingRepair } from './systems/reparo';
 import { sistemaDaRegeneracao } from './systems/regeneracao';
+import { aplicarTrainSoldier } from './systems/quartel';
 import { aplicarCancelTraining, aplicarEnqueueTraining, sistemaDasEscolas } from './systems/escolas';
 import { aplicarDemolishRoad, aplicarPlaceRoad } from './systems/estradas';
 import { aplicarPlowField, aplicarUnplanField } from './systems/campos';
@@ -104,6 +105,12 @@ export function step(
       }
       case 'SetProductionQuota': {
         const resultado = aplicarSetProductionQuota(atual, command, dados);
+        atual = resultado.state;
+        events.push(...resultado.events);
+        break;
+      }
+      case 'TrainSoldier': {
+        const resultado = aplicarTrainSoldier(atual, command, dados);
         atual = resultado.state;
         events.push(...resultado.events);
         break;

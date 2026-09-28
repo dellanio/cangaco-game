@@ -190,4 +190,17 @@ export type Command =
       readonly type: 'SetBuildingRepair';
       readonly predio: string;
       readonly ligado: boolean;
+    }
+  | {
+      /**
+       * F25a — forma UM soldado do tipo `tipo` no quartel `predio`, na hora: consome 1
+       * de cada requisito da gaveta `entrada` (`units.json: militares.tipos[].requisitos`)
+       * e 1 recruta, e a unidade nasce na porta no mesmo tick, com o lado do quartel.
+       * Recusado (`command-rejected`, o estado nao muda) se o predio nao e quartel
+       * completo, o tipo nao e militar do dado, falta requisito, falta recruta ou a
+       * porta esta bloqueada. Mercenario nao e daqui: e da Prefeitura (F36).
+       */
+      readonly type: 'TrainSoldier';
+      readonly predio: string;
+      readonly tipo: string;
     };

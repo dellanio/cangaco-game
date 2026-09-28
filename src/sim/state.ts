@@ -17,6 +17,7 @@ import type { MotivoDeRecusaDePausa } from './pausa';
 import type { MotivoDeRecusaDeCota } from './cota';
 import type { MotivoDeRecusaDeModo } from './modo';
 import type { MotivoDeRecusaDeReparo } from './reparo';
+import type { MotivoDeRecusaDeSoldado } from './quartel';
 // F-T2a: a camada de recurso nasce do MAPA, e quem sabe ler o mapa e
 // `sim/recursos.ts`. Import de valor (nao de tipo) e o unico deste arquivo alem
 // do RNG e do dado — `createInitialState` e o lugar certo para ele.
@@ -104,6 +105,14 @@ export type GameEvent =
       readonly command: 'SetProductionQuota';
       readonly predio: string;
       readonly motivo: MotivoDeRecusaDeCota;
+    }
+  | {
+      /** F25a — `TrainSoldier` recusado; o estado nao mudou. */
+      readonly type: 'command-rejected';
+      readonly command: 'TrainSoldier';
+      readonly predio: string;
+      readonly tipo: string;
+      readonly motivo: MotivoDeRecusaDeSoldado;
     }
   | {
       /** F-CERCO-b — `SetBuildingRepair` recusado; o estado nao mudou. */
@@ -378,6 +387,12 @@ export interface PredioCompleto extends PredioBase {
    * `:1307-1308`), e ligado predio a predio. SEMPRE presente, como `pausado`.
    */
   readonly reparo: boolean;
+  /**
+   * F25a — quantos recrutas estao DENTRO deste quartel, esperando virar soldado
+   * (`TrainSoldier`). So o quartel tem o campo; AUSENTE nos outros e lido como zero.
+   * Recruta dentro nao e unidade: nao anda, nao come, nao aparece em `unidades`.
+   */
+  readonly recrutas?: number;
 }
 
 /**
@@ -580,6 +595,17 @@ export interface TarefaOuroParaEscola extends TarefaDeCarga {
 }
 
 /**
+ * F25a — ultimo nivel da escada (`delivery.json: arma-para-quartel`): uma unidade de
+ * equipamento (os `requisitos` de `units.json: militares`) do armazem ate a gaveta
+ * `entrada` de um quartel COMPLETO. Mesmo serf, mesmo claim, mesma reserva dupla da
+ * tarefa de ouro. O que limita o destino nao e teto nem fila: o quartel quer TUDO o
+ * que o armazem tem de cada requisito (`sim/quartel.ts`), como no KaM.
+ */
+export interface TarefaArmaParaQuartel extends TarefaDeCarga {
+  readonly tipo: 'arma-para-quartel';
+}
+
+/**
  * F15b — niveis 4 e 5 da escada: uma unidade de insumo do armazem ate a gaveta
  * `entrada` de um produtor. Dois tipos e nao um com campo de urgencia porque o
  * NIVEL e a unica diferenca entre eles, e nivel mora no tipo (`nivelDoTipo`,
@@ -627,6 +653,7 @@ export type TarefaDeTransporte =
   | TarefaComidaParaInn
   | TarefaMaterialParaObra
   | TarefaOuroParaEscola
+  | TarefaArmaParaQuartel
   | TarefaInsumoProducaoParada
   | TarefaInsumoProducaoBaixa
   | TarefaSaidaCheiaParaArmazem
@@ -653,6 +680,8 @@ export const GAVETA_DE_ORIGEM_POR_TIPO: Readonly<Record<TipoComOrigem, Gaveta>> 
   'comida-para-inn': 'saida',
   'material-para-obra': 'saida',
   'ouro-para-escola': 'saida',
+  // F25a: a arma sai da `saida` do armazem, como o ouro
+  'arma-para-quartel': 'saida',
   'insumo-producao-parada': 'saida',
   'insumo-producao-baixa': 'saida',
   'saida-cheia-para-armazem': 'saida',
@@ -682,6 +711,7 @@ export const ORIGEM_ESPERADA_POR_TIPO: Readonly<Record<TipoComOrigem, 'armazem' 
   'comida-para-inn': 'armazem',
   'material-para-obra': 'armazem',
   'ouro-para-escola': 'armazem',
+  'arma-para-quartel': 'armazem',
   'insumo-producao-parada': 'armazem',
   'insumo-producao-baixa': 'armazem',
   'saida-cheia-para-armazem': 'outro-predio',
@@ -729,6 +759,20 @@ export interface TarefaReparar extends TarefaBase {
   readonly tipo: 'reparar';
   readonly estado: 'aberta' | 'reclamada';
   /** Id do predio completo a reparar. */
+  readonly destino: string;
+}
+
+/**
+ * F25a — a vaga de um RECRUTA no quartel: ele anda ate a porta e ENTRA — a unidade
+ * sai do estado e `recrutas` do quartel sobe 1. Molde da `TarefaOcupar`, sem carga e
+ * fora da escada; so o recruta (`ID_DO_RECRUTA`) e elegivel. O quartel nao tem teto de
+ * recrutas (no KaM tambem nao), entao ha UMA aberta por quartel completo, sempre, e
+ * cada recruta que a reclama libera o gerador a abrir a proxima.
+ */
+export interface TarefaAlistar extends TarefaBase {
+  readonly tipo: 'alistar';
+  readonly estado: 'aberta' | 'reclamada';
+  /** Id do quartel completo. */
   readonly destino: string;
 }
 
@@ -921,7 +965,7 @@ export interface TarefaComer extends TarefaBase {
 
 export type Tarefa =
   TarefaDeTransporte | TarefaConstruir | TarefaOcupar | TarefaAssentarEstrada | TarefaColher
-  | TarefaComer | TarefaArar | TarefaPedraParaCanteiro | TarefaReparar;
+  | TarefaComer | TarefaArar | TarefaPedraParaCanteiro | TarefaReparar | TarefaAlistar;
 
 /**
  * O tipo da tarefa, DERIVADO da uniao: acrescentar um produtor novo (F15, F20)
@@ -1266,6 +1310,12 @@ export const ID_DA_ESCOLA = 'schoolhouse';
  *  estrutural, como `ID_DA_ESCOLA`: o teto de comida e a lista de comidas
  *  continuam vindo do dado (`sim/bodega.ts`). */
 export const ID_DA_BODEGA = 'inn';
+
+/** F25a — o quartel, id estrutural como os de cima: e ele que forma soldado. */
+export const ID_DO_QUARTEL = 'barracks';
+
+/** F25a — o civil que vira soldado no quartel (`units.json: civis.tipos`). */
+export const ID_DO_RECRUTA = 'recruit';
 
 /** F13 — a mercadoria que a escola consome. Id estrutural, nao numero. */
 export const MERCADORIA_DE_OURO = 'gold';

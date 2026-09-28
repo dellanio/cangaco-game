@@ -24,9 +24,10 @@ describe('F09 — delivery.json: a escada de prioridade tem id por nivel', () =>
   // canteiro' entrou em OITAVO, e no lote 2 (2026-09-27, decisao do operador) subiu
   // para SEXTO, acima da saida cheia e do excedente. Acima das duas do laborer, que
   // nao ordenam nada entre si. Sao dez.
-  it('o dado real passa e cada um dos 10 niveis tem id', () => {
+  it('o dado real passa e cada um dos 11 niveis tem id', () => {
     expect(validarTudo(dadosReaisComEscada(real))).toEqual([]);
-    expect(real).toHaveLength(10);
+    // F25a: o 11o e o requisito de soldado para o quartel, no fim da escada
+    expect(real).toHaveLength(11);
     for (const linha of real) expect(typeof linha.id).toBe('string');
   });
 

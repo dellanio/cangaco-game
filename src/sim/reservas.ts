@@ -27,6 +27,7 @@ import type { GameData } from './data/types';
 import { gameData } from './data';
 import { ouroNecessario } from './escola';
 import { comidaNecessaria } from './bodega';
+import { ehQuartelCompleto, ehRequisitoDoQuartel } from './quartel';
 import { demandaDeInsumo, excedenteNaEntrada } from './insumo';
 import { vagasDoPredio } from './ocupacao';
 
@@ -167,6 +168,12 @@ export function demandaNoDestino(
       return comidaNecessaria(state, tarefa.destino, tarefa.mercadoria, dados);
     case 'ouro-para-escola':
       return ouroNecessario(state, tarefa.destino, dados);
+    // F25a — o quartel quer TUDO o que o armazem tem de cada requisito: a demanda e
+    // infinita de proposito, como a do armazem logo abaixo, e quem limita e a ORIGEM
+    // (so existe tarefa para o que esta la, `disponivelNaOrigem`).
+    case 'arma-para-quartel':
+      return ehQuartelCompleto(state.predios.porId[tarefa.destino]) && ehRequisitoDoQuartel(tarefa.mercadoria, dados)
+        ? Number.POSITIVE_INFINITY : 0;
     case 'insumo-producao-parada':
     case 'insumo-producao-baixa':
       return demandaDeInsumo(state, tarefa.destino, tarefa.mercadoria, dados);

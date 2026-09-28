@@ -455,6 +455,17 @@ com `indo_comer → comendo` a partir de `trabalhando`.
 
 `saida_cheia` sinaliza que a logística é o gargalo e gera alerta no HUD.
 
+**Recruta** (F25a, sessão autônoma de 2026-09-28, **[proposta]**, PARA REVISÃO) — os
+estados de especialista, mais `ocioso → indo_alistar → (entra no quartel e deixa de ser
+unidade)` quando não há torre vaga.
+
+**Laborer, reparo** (F-CERCO-b, **[proposta]**) — o mesmo `indo_a_obra → martelando`
+da obra, até a porta de um prédio completo com o reparo ligado.
+
+**Militar, ataque a prédio** (F-CERCO-a2, **[proposta]**) — `ocioso → indo_atacar →
+atacando → ocioso`, só por ordem do jogador (`AttackBuilding`). O prédio caindo, o alvo
+sumindo ou virando do próprio lado devolvem a `ocioso`.
+
 ### 6.3 Central de tarefas (JobBoard)
 
 Nenhuma unidade escolhe tarefa varrendo o mundo. Toda tarefa nasce no JobBoard e
@@ -474,6 +485,8 @@ Escada de prioridade (`data/delivery.json`):
 8. Excedente → armazém **[proposta]**
 9. Laborer assenta estrada · 10. Laborer ara campo. Esses dois só dão o `modo` da
    busca de caminho, porque entre as tarefas do laborer vale a distância.
+11. Requisito de soldado → quartel **[proposta, F25a, PARA REVISÃO]**: o último,
+    porque arma parada no armazém não tira ninguém de fome, obra nem produção.
 
 A pedra da obra vem **antes** de qualquer mercadoria que só volta ao armazém. Se
 ficasse depois, uma serraria cheia tiraria os serfs da estrada da Bodega, e a vila
