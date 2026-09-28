@@ -388,3 +388,51 @@ O operador decidiu:
   colidem". Os números estão no PROGRESS (D-MOVIMENTO-01h).
 - O D-MOVIMENTO-01e (aceite da colisão civil) não entra no `test-results.json` como `false`:
   entraria na fila como a próxima feature, e o item está encerrado, não pendente.
+
+## 10. D-MOVIMENTO-01i — a porta lenta (decisão do operador, 2026-09-28)
+O operador reabriu o fechamento: *"o engarrafamento de lá é fila na PORTA, não nas ruas."*
+**O código fica.** O empilhamento residual e o conserto do JobBoard ficam, qualquer que seja o
+resultado.
+
+### O número, conferido no fonte
+- A entrega do KaM (`KM_UnitTaskDelivery.pas:365-425`) tem três fases:
+  - **entrar:** `SetActionGoIn`, andar um tile inteiro para dentro na velocidade da unidade
+    (`KM_UnitActionGoInOut.pas:440-446`), com a entrada vigiada
+    (`TileHasUnitOnHouseEntrance`);
+  - **esperar dentro:** `SetActionLockedStay(5)`, com a unidade invisível;
+  - **sair:** `GoOut`, mais um tile.
+- A velocidade do serf é "normalmente 0,1 tile por tick" (`KM_ResUnits.pas:436-439`), ou 10
+  ticks de 100 ms por tile.
+- **Na nossa escala de movimento (2,0), um tile de estrada leva 5 ticks.** Entrar mais sair
+  ocupam a porta por **~10 ticks**. Os 5 ticks de dentro viram 2 a 3, e não bloqueiam.
+- A medida usa **10 ticks bloqueando a porta**, na coleta e na entrega do serf.
+  - Só o serf. Especialistas, comensais e laborers também entram em casa no KaM: é um limite
+    registrado da sonda.
+
+### As medidas (sondas, sem commit de código de jogo)
+1. **A porta lenta sozinha, com a chave desligada:**
+   - o que ela faz com a calibração (F-CAL e as evidências numéricas);
+   - quantos testes da suíte mudam.
+2. **A chave ligada, a porta de 10 ticks e o custo de unidade na rota:**
+   - uma rua contra duas faixas paralelas (e o laço, como referência);
+   - cargas 1×, 2× e 4×;
+   - a espera da madeira na gaveta.
+   - **Controle:** a mesma grade com a chave desligada.
+- **Se duas faixas ganharem com a chave ligada**, e não com ela desligada, a mecânica existe e
+  a chave liga, com a porta lenta como item próprio.
+- **Se não ganharem**, fecha desligada com a medida completa.
+
+### Resultado da §10 (2026-09-28): a medida não responde, porque o mecanismo trava
+- **A porta lenta sozinha (chave desligada) mexe na abertura:**
+  - vila fechada +14%, pedreira +41%, primeiro machado +60%;
+  - o regime muda ~1%, e a F-CAL-b2 (faixa da calibração) reprova por 0,3 tick.
+- **Com a chave ligada e a porta de 10 ticks, a vila TRAVA:**
+  - nas duas faixas, em todas as cargas;
+  - com uma rua, na carga 4×.
+- **Causa rastreada:** um ciclo de **pares** em volta da porta do armazém. Cada par (dois
+  serfs num tile, entrados pela troca forçada) quer o tile de outro par, e a regra "ninguém
+  entra num tile com par" (D-MOVIMENTO-01g) fecha o ciclo para sempre.
+- **É a divergência do KaM:** lá a troca forçada é uma **permuta** (os dois trocam de tile,
+  um por tile). Aqui ela põe dois no mesmo tile.
+- **Proposta, à espera do operador:** a troca forçada e a troca de frente viram permuta de
+  verdade, e o empilhamento deixa de existir. Depois, repetir a grade.

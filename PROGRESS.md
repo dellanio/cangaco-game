@@ -12234,3 +12234,70 @@ sim ela fecha desligada e o GDD volta ao que dizia."* **Não fez.** Então fecho
 - **A pergunta que a medida levanta e ninguém respondeu:** se o gargalo é a porta, o
   engarrafamento que o jogador do KaM sente talvez venha da porta (entrar e sair de casa
   leva ~10 ticks lá, contra 1 aqui), e não da rua. Não foi isolado.
+
+## 2026-09-28 — D-MOVIMENTO-01i (colisão civil: a porta lenta) — medido; o mecanismo TRAVA com a porta do KaM
+
+Decisão do operador: não fechar. *"O engarrafamento de lá é fila na PORTA."* Medir com a
+entrada e a saída custando o que custam no KaM. O código fica, e o empilhamento residual e o
+JobBoard ficam de qualquer jeito.
+
+### O número, conferido no fonte (verificado)
+- A entrega do KaM (`KM_UnitTaskDelivery.pas:365-425`) tem três fases:
+  - `GoIn`: um tile inteiro para dentro, na velocidade da unidade
+    (`KM_UnitActionGoInOut.pas:440-446`), com a entrada vigiada;
+  - `LockedStay(5)`: 5 ticks dentro, invisível;
+  - `GoOut`: mais um tile.
+- Serf a ~0,1 tile por tick (`KM_ResUnits.pas:436-439`). **Na nossa escala: entrar mais sair
+  ≈ 10 ticks bloqueando a porta**, e os 5 de dentro viram 2 a 3, que não bloqueiam.
+- A sonda usou 10 ticks de porta na coleta e na entrega do **serf**. Especialistas,
+  comensais e laborers ficaram de fora: é um limite registrado.
+
+### 1. A porta lenta sozinha, com a chave desligada (sonda sem commit)
+- **Calibração** (evidências contra a linha de base):
+  - vila fechada 7486 → 8559 (+14,3%);
+  - pedreira 715 → 1009 (+41%);
+  - serraria +15,5%, padaria +11%, bodega +11,5%;
+  - primeiro machado 1115 → 1782 (+60%);
+  - troca da Feira +43%.
+- **O regime quase não muda:** intervalo do milho +1%, estoques finais −2%.
+- **Testes que mudam:**
+  - por calibração: F-CAL-b2 (faixa da calibração), por 0,3 tick (246,3 contra o teto de
+    246), e o tick exato da F18d-1a (modo de rota por nível);
+  - por desenho: F10 ("carregando dura um tick", que afirma o desenho atual);
+  - de cenário: a guarda do F09 (JobBoard) do save;
+  - **da sonda, não da porta** (ela pula a conferência da tarefa durante a espera): F10 falhas
+    ×4 e F18g (a pedra viaja).
+
+### 2. A chave ligada, com a porta de 10 ticks e o custo de rota
+Espera da madeira na gaveta (ticks):
+
+| Carga | desligada, 1 rua | desligada, 2 faixas | ligada, 1 rua | ligada, laço | ligada, 2 faixas |
+|---|---|---|---|---|---|
+| 1× | 132,6 | 132,6 | 130,1 | 132,3 | **TRAVOU** (0 produzido) |
+| 2× | 288,9 | 288,9 | 356,7 | **4069** (quase parado) | **TRAVOU** |
+| 4× | 315,1 | 315,1 | **2297** (quase parado) | 854 | **TRAVOU** |
+
+- **A pergunta não foi respondida: o mecanismo trava antes.** Houve unidade bloqueada por
+  5916 ticks, a corrida inteira.
+- **Causa rastreada no tick 145** (duas faixas, carga 1×): pares em quatro tiles em volta da
+  porta do armazém, cada um querendo o tile de outro par. Pela regra do D-MOVIMENTO-01g
+  (empilhamento residual), ninguém entra num tile com par: o ciclo fecha para sempre.
+  - É o limite que o D-MOVIMENTO-01g registrou como hipótese. **Agora está observado.**
+- **Por que só com a porta lenta:** com 1 tick de porta os pares se desfaziam antes de fechar
+  ciclo. Com 10, a fila na porta cresce, a troca forçada forma pares, e os pares se travam.
+- **A divergência do KaM:** lá a troca forçada é **permuta** (A vai ao tile de B, e B ao de A,
+  com um por tile sempre). Aqui ela põe dois no mesmo tile. A troca de frente daqui também
+  deixa um par por até um passo.
+
+### Proposta (espera o operador)
+- **D-MOVIMENTO-01j:** a troca de frente e a troca forçada viram **permuta**.
+  - As duas unidades mudam de tile no mesmo tick.
+  - O empilhamento deixa de existir, e com ele a regra do par, que é o que trava.
+  - Exige mover duas unidades num passo: um sistema de permuta antes das FSMs, no molde do
+    empurrão.
+- Depois, repetir esta grade. Se duas faixas ganharem, a chave liga, e a porta lenta entra
+  como item próprio, com a recalibração da abertura (+14% sozinha).
+
+### Verificado vs. hipótese
+- **Verificado:** os números acima (sondas, sem commit) e o rastro do travamento.
+- **Hipótese:** que a permuta desfaz o travamento e faz as duas faixas ganharem. Não testado.
