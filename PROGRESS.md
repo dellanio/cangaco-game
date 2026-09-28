@@ -9730,3 +9730,28 @@ de 2". A sonda foi apagada.
 
 - Frente 4 (combate): ataque a prédio, alcance mínimo do arqueiro, alcance da torre.
 - Frentes 2 e 3 não começaram.
+
+## 2026-09-28 — VARREDURA-KAM, frente 4 (combate): ataque a prédio
+
+**Verificado** (leitura do fonte do KaM; tabela com arquivo:linha em `docs/varredura-kam.md`):
+
+- ataque a prédio só por ordem;
+- corpo a corpo tira 2, projétil tira 1, sem sorteio;
+- vida = progresso − dano;
+- reparo de 5 por martelada, desligado por padrão;
+- arqueiro com alcance de 4 a 10,99;
+- a pedra da torre mata, mas pode errar.
+
+**Hipótese, não verificado:** os ritmos de ~12 ticks por golpe e por martelada vêm da leitura das esperas, não de execução. As contas de ordem de grandeza (um soldado leva ~5,5 min para derrubar um Armazém; um laborer anula ~2,5 soldados) herdam essa hipótese.
+
+**O que muda na fila (para o operador decidir, não mexi no BUILD_PLAN):**
+
+- A F34 vence destruindo prédio, e nenhum item da Fase C dá à tropa como destruir prédio.
+- O reparo está no GDD sem item.
+- O mínimo do arqueiro não está em lugar nenhum.
+- O aceite da F28b supõe pedra que não erra.
+
+**Aberto:**
+
+- o resto da frente 4 (IA inimiga, formação, storm attack);
+- as frentes 2 e 3.

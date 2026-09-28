@@ -173,3 +173,51 @@ Conclusão: **as 14 linhas do Anexo A batem com o comportamento efetivo do KaM R
 - **Sem sistema de moral/fuga**: busquei por "Morale", "Flee", "Rout", "Cowardice" em todo o `kr/src` e não achei nada — o KaM Remake não modela moral de tropa. (Confirma que a ausência no GDD não é lacuna, é fidelidade correta por omissão simétrica.)
 - **`TH_TROOP_COST` é mutável em runtime** ("Could be modified by script functions") — os custos de mercenário do Town Hall podem ser alterados por script de missão, não são fixos como a tabela do GDD sugere.
 - **`OrderSplitLinkTo` / `OrderSplitUnit`**: operações de grupo mais finas do que "Split" simples (dividir uma unidade específica, dividir e já linkar a outro grupo) — o GDD só cita "Split" genérico.
+
+---
+
+## Frente 4 — combate (começada em 2026-09-28): ataque a prédio
+
+Tudo aqui foi lido no fonte (`kr`, 731a8a4). Nada foi medido em execução, porque
+o combate não existe na nossa sim. Os ritmos "a cada ~12 ticks" vêm da leitura
+das esperas em `SetActionLockedStay` e são **HIPÓTESE — ABERTA** até alguém
+medir (1 tick do KaM = 100 ms).
+
+### O que o KaM faz — verificado no código
+
+| Regra | Fonte |
+|---|---|
+| Atacar prédio é **ordem do jogador** (ou de script/IA): a tropa nunca começa sozinha. A ordem vale para o grupo inteiro e passa para os grupos ligados. | `game/gip/KM_GameInputProcess.pas:1009` (`gicArmyAttackHouse`); `units/KM_UnitGroup.pas:1320-1340`; `units/KM_UnitWarrior.pas:940-962` |
+| Corpo a corpo: **2 de dano por golpe, sem sorteio.** Attack e Defence não entram. | `units/tasks/KM_UnitTaskAttackHouse.pas:191-192` |
+| Ritmo do golpe: espera 6 + 6 no ciclo, ~12 ticks por golpe (HIPÓTESE — ABERTA, lida, não medida). | `KM_UnitTaskAttackHouse.pas:167`, `:189` |
+| Corpo a corpo encosta no prédio (distância 1). | `KM_UnitTaskAttackHouse.pas:108` |
+| À distância: o arqueiro recua se estiver mais perto que o mínimo e avança se estiver além do máximo. Cada flecha, virote ou pedra de funda que cai no prédio tira **1, sem sorteio**. | `KM_UnitTaskAttackHouse.pas:98-106`; `KM_Projectiles.pas:325-330` |
+| Alcance do arqueiro, do besteiro e do rogue: **mínimo 4, máximo 10,99 tiles** ("atira a 4, não a 3"; "atira a 10, não a 11"). | `units/KM_UnitWarrior.pas:837-839`, `:855-857` |
+| Vida do prédio = **progresso da obra − dano**. Obra inacabada cai mais rápido, e obra inacabada pode ser atacada "de dentro". | `houses/KM_Houses.pas:1175`; `KM_UnitTaskAttackHouse.pas:130`, `:152` |
+| Vida zero: o prédio é demolido, creditado ao dono do atacante. O dano também avisa a IA do dono. | `houses/KM_Houses.pas:1296-1330` |
+| Fogo na tela: 8 níveis, um a cada 1/8 da vida máxima. | `houses/KM_Houses.pas:1352` |
+| Reparo: **5 de vida por martelada** do laborer, ~12 ticks por ciclo (HIPÓTESE — ABERTA, lida). O prédio só entra na lista se o reparo estiver **ligado** nele, e para o jogador humano ele começa **desligado**. | `units/tasks/KM_UnitTaskBuild.pas:995-1001`; `houses/KM_Houses.pas:532`, `:1307-1308`; `game/gip/KM_GameInputProcess.pas:1024` |
+| A torre de vigia atira até 6,99 tiles da porta, sem mínimo. A pedra dela **mata na hora**. | `common/KM_Defaults.pas:392-393`; `KM_Projectiles.pas:336` |
+| O projétil pode errar a unidade: o sorteio é pela distância entre onde a unidade está e onde a pedra cai. Isso vale para a pedra da torre também. | `KM_Projectiles.pas:305-306` |
+
+### Contra o nosso GDD e os dados
+
+- **Lacuna que muda a fila (sem correspondente no GDD):** a vitória da
+  escaramuça é destruir Armazém, Escola e Quartel (`GDD.md:611`, item F34), mas
+  nem o GDD nem item nenhum da Fase C diz como tropa derruba prédio.
+  - A F28 é "combate e IA inimiga simples"; a F28b é a torre.
+  - Sem o ataque a prédio, a F34 não tem mecânica que a satisfaça.
+- **Vida do prédio já existe no dado** (`buildings.json` `hp` = (timber+stone)×50,
+  `GDD.md:304`, confirmado na frente 1). O que falta é quem a gasta e quem a repõe.
+  - Ordem de grandeza, na leitura acima e sem medir: 2 por golpe a cada ~12 ticks.
+  - Um soldado derruba um Armazém de 550 em ~275 golpes, ~5,5 min. Dez soldados, ~33 s.
+  - Um laborer reparando (5 a cada ~12 ticks) anula ~2,5 soldados.
+- **Reparo já está no GDD** ("ligar/desligar reparo", `GDD.md:153`), mas não tem
+  item na fila. No KaM ele é o contrapeso do ataque a prédio, e começa desligado.
+- **Arqueiro:** o nosso `combat.json` `aDistancia.alcance_tiles` é 8, sem mínimo.
+  O KaM tem mínimo 4 e máximo 10,99. **Divergência não declarada:** o mínimo
+  muda a tática (arqueiro encostado não atira) e hoje não está em lugar nenhum.
+- **Torre:** `combat.json` `watchtower.alcance_tiles` 6 bate com o "menos de 7" do
+  KaM; `mataEmUmGolpe` bate. **Mas** o aceite da F28b ("pedras gastas = mortos")
+  supõe que a pedra nunca erra, e a do KaM pode errar se o alvo andou.
+  Simplificar é legítimo; hoje isso não está escrito como decisão.
