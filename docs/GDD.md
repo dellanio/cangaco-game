@@ -466,6 +466,10 @@ da obra, até a porta de um prédio completo com o reparo ligado.
 ordem (`AttackUnit`) ou por contato (inimigo militar encostado). O alvo morto, sumido ou
 do próprio lado devolve a `ocioso`.
 
+**Atirador** (F28d, **[proposta]**) — `ocioso → atirando → ocioso`, sozinho, quando há
+inimigo no alcance (4 a 11 tiles) e no arco de 90° da direção em que ele olha. Ele não se
+vira para o alvo: quem o vira é o passo.
+
 **Militar, marcha** (F26a, **[proposta]**) — `ocioso → marchando → ocioso`, só por ordem
 do jogador (`MoveUnits`); cada soldado vai a um tile próprio em volta do ponto.
 

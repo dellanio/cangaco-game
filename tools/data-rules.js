@@ -573,6 +573,29 @@ function validarRequisitosDoQuartel(dados, erros) {
   }
 }
 
+// F28d: o atirador declara o projetil, e o escudo sabe quanto defende contra ele; o
+// escudo e mercadoria (senao ninguem o leva); o alcance minimo fica abaixo do maximo.
+function validarAtiradores(dados, erros) {
+  const combate = dados.combat || {};
+  const escudo = combate.escudo || {};
+  const contra = escudo.defesaContraProjetil || {};
+  const mercadorias = new Set((dados.economy && dados.economy.mercadorias) || []);
+  for (const m of escudo.mercadorias || []) {
+    if (!mercadorias.has(m)) erros.push(`combate/escudo: '${m}' nao esta em economy.mercadorias`);
+  }
+  const u = dados.units || {};
+  const tipos = [...((u.militares && u.militares.tipos) || []), ...((u.mercenarios && u.mercenarios.tipos) || [])];
+  for (const t of tipos) {
+    if (t.aDistancia !== true) continue;
+    if (typeof t.projetil !== 'string') erros.push(`combate/atirador: '${t.id}' atira e nao declara 'projetil'`);
+    else if (!(t.projetil in contra)) erros.push(`combate/atirador: o projetil '${t.projetil}' de '${t.id}' nao esta em escudo.defesaContraProjetil`);
+  }
+  const d = combate.aDistancia || {};
+  if (!(d.alcanceMinimo_tiles >= 0 && d.alcanceMaximo_tiles > d.alcanceMinimo_tiles)) {
+    erros.push('combate/alcance: aDistancia precisa de 0 <= alcanceMinimo_tiles < alcanceMaximo_tiles');
+  }
+}
+
 // F08: fracao da pedra devolvida ao demolir tiles de estrada. Campo proprio de
 // terrain.estrada (nao o de buildings.construcao): estrada e predio podem
 // divergir. Uma fracao fora de [0, 1] devolveria mais do que custou, ou negativo.
@@ -1238,6 +1261,7 @@ function validarTudo(dados) {
   validarEscadaDePrioridade(dados, erros);
   validarPoliticaDeTreino(dados, erros);
   validarRequisitosDoQuartel(dados, erros);
+  validarAtiradores(dados, erros);
   validarMapas(dados, erros);
   return erros;
 }

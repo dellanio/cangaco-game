@@ -16,7 +16,15 @@
   "cadenciaDeAtaque_segundos_base": 0.5,
   "escala": "combate",
   "aDistancia": {
-    "alcance_tiles": 8,
+    "alcanceMinimo_tiles": 4,
+    "alcanceMaximo_tiles": 11,
+    "_docAlcance": "F28d (decisao do operador, 2026-09-28): de 4 a 11 tiles, distancia EUCLIDIANA entre os centros dos tiles. O KaM atira de 4 a 10,99 (KM_UnitWarrior.pas:837-857): 'atira a 4, nao a 3'. Encostado, o arqueiro nao atira. Era alcance_tiles 8, sem minimo.",
+    "projetil": {
+      "flecha": "arco (bowman)",
+      "virote": "besta (crossbowman)",
+      "funda": "pedra de funda (rogue)",
+      "_doc": "O tipo de projetil de cada atirador esta em units.json (`projetil`). E por ele que o escudo defende mais ou menos."
+    },
     "arcoDeTiro_graus_total": 90,
     "_docArco": "TOTAL do setor, nao meio angulo: 45 graus para cada lado da direcao em que o arqueiro esta virado. Do KaM: KM_Terrain.pas:2021-2033 (+-45). O nome do campo carrega 'total' porque a ambiguidade entre meio angulo e total era o defeito (operador, 2026-09-28).",
     "_doc": "Arqueiro so atira na direcao em que esta virado. Posicionar e virar, nao mandar atacar."
@@ -53,5 +61,10 @@
     "hp": 1,
     "intervalo_segundos_base": 10,
     "_doc": "F28c (decisao do operador, 2026-09-28): 1 HP a cada 10 s, INCLUSIVE em luta, como no KaM (1 a cada 100 ticks de 100 ms: common/KM_Defaults.pas:360, units/KM_Units.pas:2306-2314). Na escala `combate` deste arquivo. O efeito com o multiplicadorHP 2 esta medido em test-output/F28c.json: o tempo ate encher DOBRA contra o KaM. Numero fixado com a medida a vista, PARA REVISAO do operador."
+  },
+  "escudo": {
+    "mercadorias": ["wooden_shield", "iron_shield"],
+    "defesaContraProjetil": { "flecha": 1, "funda": 1, "virote": 0.5 },
+    "_doc": "F28d (decisao do operador, 2026-09-28): a tropa com escudo ganha defesa extra contra projetil, SOMADA a `defence` na formula: +1 contra arco e funda, +0,5 contra besta (KM_ResUnits.pas:258-260). Quem tem escudo e quem leva um destes itens nos `requisitos` de units.json — derivado, sem campo por tropa."
   }
 }

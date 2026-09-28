@@ -22,9 +22,10 @@ import type { GameEvent, GameState, MotivoDeRecusaDeAtaque, Predio, Unidade } fr
 import type { GameData } from '../data/types';
 import type { TileDeGrid } from '../estradas';
 import { classeDaUnidade } from '../condicao';
+import { distanciaEmTiles, ehADistancia } from '../combate';
 import { caixaDoPredio } from '../footprint';
 import { buscarCaminho, passoAndavel, tileAndavel } from '../pathfinding';
-import { andar, chegou, comPredio, comUnidade, noTile, ocioso } from '../units/movimento';
+import { andar, comPredio, comUnidade, noTile, ocioso } from '../units/movimento';
 import { semOPredio } from './demolicao';
 import type { ResultadoDeSistema } from './jobs';
 
@@ -35,8 +36,22 @@ export const FSM_ATACANDO = 'atacando';
 
 const semEventos = (state: GameState): ResultadoDeSistema => ({ state, events: [] });
 
-function ehADistancia(tipo: string, dados: GameData): boolean {
-  return dados.unidades.militares.tipos.some((t) => t.id === tipo && t.aDistancia === true);
+/** F28d — a distancia (euclidiana, em tiles) da unidade ao tile mais perto do footprint. */
+function distanciaAoPredio(u: TileDeGrid, predio: Predio, dados: GameData): number | null {
+  const c = caixaDoPredio(predio, dados);
+  if (c === null) return null;
+  const gx = Math.min(Math.max(u.gx, c.x0), c.x1 - 1);
+  const gy = Math.min(Math.max(u.gy, c.y0), c.y1 - 1);
+  return distanciaEmTiles(u, { gx, gy });
+}
+
+/** De onde esta unidade golpeia o predio: encostada (corpo a corpo) ou, F28d, no
+ *  alcance do tiro (de `aDistancia.alcanceMinimo_tiles` a `alcanceMaximo_tiles`). */
+function emPosicaoDeAtaque(u: Unidade, predio: Predio, dados: GameData): boolean {
+  if (!ehADistancia(u.tipo, dados)) return encostado(u, predio, dados);
+  const d = distanciaAoPredio(u, predio, dados);
+  const { alcanceMinimo_tiles: min, alcanceMaximo_tiles: max } = dados.combate.aDistancia;
+  return d !== null && d >= min && d <= max;
 }
 
 /** A primeira recusa do comando, ou `null`. A ordem das perguntas e a do texto do
@@ -51,7 +66,6 @@ export function motivoDaRecusaDeAtaque(
     const u = state.unidades.porId[id];
     if (u === undefined) return { motivo: 'unidade-inexistente', unidade: id };
     if (classeDaUnidade(u.tipo, dados) !== 'militar') return { motivo: 'unidade-nao-militar', unidade: id };
-    if (ehADistancia(u.tipo, dados)) return { motivo: 'unidade-a-distancia', unidade: id };
     if (u.lado === predio.lado) return { motivo: 'predio-do-proprio-lado', unidade: id };
   }
   return null;
@@ -82,10 +96,23 @@ export function aplicarAttackBuilding(
 }
 
 /** O anel de tiles em volta do footprint (distancia de Chebyshev 1), andaveis, em
- *  varredura de linha: de onde se golpeia o predio. */
-function anelDeAtaque(state: GameState, predio: Predio, dados: GameData): readonly TileDeGrid[] {
+ *  varredura de linha: de onde se golpeia o predio. F28d: para quem atira, a coroa de
+ *  tiles andaveis no alcance do tiro. */
+function anelDeAtaque(state: GameState, predio: Predio, dados: GameData, aDistancia = false): readonly TileDeGrid[] {
   const c = caixaDoPredio(predio, dados);
   if (c === null) return [];
+  if (aDistancia) {
+    const { alcanceMinimo_tiles: min, alcanceMaximo_tiles: max } = dados.combate.aDistancia;
+    const raio = Math.ceil(max);
+    const coroa: TileDeGrid[] = [];
+    for (let gy = c.y0 - raio; gy < c.y1 + raio; gy += 1) {
+      for (let gx = c.x0 - raio; gx < c.x1 + raio; gx += 1) {
+        const d = distanciaAoPredio({ gx, gy }, predio, dados);
+        if (d !== null && d >= min && d <= max && tileAndavel(state, { gx, gy }, 'livre', dados)) coroa.push({ gx, gy });
+      }
+    }
+    return coroa;
+  }
   const anel: TileDeGrid[] = [];
   for (let gy = c.y0 - 1; gy <= c.y1; gy += 1) {
     for (let gx = c.x0 - 1; gx <= c.x1; gx += 1) {
@@ -121,20 +148,20 @@ function comecarAGolpear(u: Unidade, dados: GameData): Unidade {
 function passoIndoAtacar(state: GameState, u: Unidade, dados: GameData): ResultadoDeSistema {
   const alvo = alvoDaOrdem(state, u);
   if (alvo === null) return semEventos(comUnidade(state, ocioso(u)));
-  if (encostado(u, alvo, dados)) return semEventos(comUnidade(state, comecarAGolpear(u, dados)));
+  if (emPosicaoDeAtaque(u, alvo, dados)) return semEventos(comUnidade(state, comecarAGolpear(u, dados)));
 
   let atual = u;
   const caminho = u.fsmData.caminho;
   const proximo = caminho?.[0];
   const bloqueado = proximo !== undefined && !passoAndavel(state, noTile(u), proximo, 'livre', dados);
   if (caminho === undefined || caminho.length === 0 || bloqueado) {
-    const rota = buscarCaminho(state, noTile(u), anelDeAtaque(state, alvo, dados), 'livre', dados);
+    const rota = buscarCaminho(state, noTile(u), anelDeAtaque(state, alvo, dados, ehADistancia(u.tipo, dados)), 'livre', dados);
     if (rota === null) return semEventos(comUnidade(state, ocioso(u)));
     atual = { ...u, fsmData: { alvo: alvo.id, caminho: rota.tiles, progresso: 0 } };
     if (rota.tiles.length === 0) return semEventos(comUnidade(state, comecarAGolpear(atual, dados)));
   }
   const andou = andar(state, atual, dados);
-  if (chegou(andou) && encostado(andou, alvo, dados)) {
+  if (emPosicaoDeAtaque(andou, alvo, dados)) {
     return semEventos(comUnidade(state, comecarAGolpear(andou, dados)));
   }
   return semEventos(comUnidade(state, andou));
@@ -143,14 +170,16 @@ function passoIndoAtacar(state: GameState, u: Unidade, dados: GameData): Resulta
 function passoAtacando(state: GameState, u: Unidade, dados: GameData): ResultadoDeSistema {
   const alvo = alvoDaOrdem(state, u);
   if (alvo === null) return semEventos(comUnidade(state, ocioso(u)));
-  if (!encostado(u, alvo, dados)) {
+  if (!emPosicaoDeAtaque(u, alvo, dados)) {
     return semEventos(comUnidade(state, { ...u, fsm: FSM_INDO_ATACAR, fsmData: { alvo: alvo.id } }));
   }
-  const { danoCorpoACorpo, ticksCadencia } = dados.combate.ataqueAPredio;
+  // F28d: a flecha tira `danoProjetil` (1), sem sorteio, como o golpe (`rolagem: false`)
+  const { danoCorpoACorpo, danoProjetil, ticksCadencia } = dados.combate.ataqueAPredio;
+  const dano = ehADistancia(u.tipo, dados) ? danoProjetil : danoCorpoACorpo;
   const recarga = (u.fsmData.recarga ?? ticksCadencia) - 1;
   if (recarga > 0) return semEventos(comUnidade(state, { ...u, fsmData: { alvo: alvo.id, recarga } }));
 
-  const hp = Math.max(0, alvo.hp - danoCorpoACorpo);
+  const hp = Math.max(0, alvo.hp - dano);
   const golpe: GameEvent = { type: 'building-attacked', predio: alvo.id, unidade: u.id, dano: alvo.hp - hp, hp };
   if (hp > 0) {
     const s = comPredio(state, { ...alvo, hp });

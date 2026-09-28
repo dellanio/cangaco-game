@@ -10741,3 +10741,57 @@ entrega) e F28d (arqueiro, a seguir). Só `src/sim/` e teste.
 - **Contato só vale para quem está `ocioso`:** quem marcha não para para lutar. No KaM,
   quem é atacado revida, e aqui ele revida quando chega ao destino e fica ocioso.
 - **Militares ainda não colidem** (GDD §6.4).
+
+## 2026-09-28 (sessão autônoma, item 10b) — F28d: o arqueiro
+
+Plano: `docs/planos/2026-09-28-A10-F28-tropa.md`. Sim, dado e teste. Com a F28a, fecha o
+item 10.
+
+**Verificado:**
+- **Dado (decisões do operador):**
+  - `aDistancia.alcanceMinimo_tiles 4` e `alcanceMaximo_tiles 11` (era `alcance_tiles 8`,
+    e nenhum código o lia), em distância euclidiana;
+  - `arcoDeTiro_graus_total 90`, que já existia;
+  - `escudo.mercadorias` (os dois escudos) e `defesaContraProjetil`
+    (flecha 1, funda 1, virote 0,5);
+  - `projetil` no arqueiro (flecha), no besteiro (virote) e no bandido (funda);
+  - `validarAtiradores` no `validate:data`: projétil declarado e conhecido pelo escudo,
+    escudo como mercadoria, e mínimo abaixo do máximo.
+- **`sim/combate.ts`:**
+  - `temEscudo` é derivado dos requisitos;
+  - `defesaDoEscudo` só age contra projétil, e `chanceDeAcerto` a soma à `defence`;
+  - `noAlcance` usa a distância euclidiana, e `noArco` o produto escalar contra cos(45°),
+    com a borda inclusiva.
+- **`systems/combate.ts`:**
+  - o atirador ocioso com alvo passa a `atirando`. O alvo é o inimigo com HP mais perto
+    no alcance e no arco, e o atirador não se vira;
+  - a cada `ticksCadenciaDeAtaque` o tiro cai no tile do alvo e acerta a primeira unidade
+    com HP dali, do próprio lado inclusive;
+  - o acerto é sorteado com a chance mais o escudo.
+- **`systems/cerco.ts`:** o arqueiro deixou de ser recusado no `AttackBuilding`. A posição
+  de tiro é a coroa de tiles andáveis a 4..11 do footprint, e o dano é `danoProjetil`
+  (1), sem sorteio.
+- `tests/F28d-arqueiro.test.ts`, 7 testes, verdes:
+  - alcance: a 3 não atira, a 4 e a 11 atira, a 12 não;
+  - arco: a 0° e 45° atira, a ~50°, 90° e atrás não;
+  - escudo: 60/300 contra machadeiro, 120/250 do besteiro, e de perto não conta;
+  - **fogo amigo:** amigo no tile do alvo, antes na lista, leva as flechas;
+  - **prédio:** colado ao prédio, o arqueiro se afasta até a distância 4 e tira
+    549, 548, 547, 546, 545;
+  - determinismo.
+- **Sondas** (restauradas):
+  - sem o mínimo: (a) reprova;
+  - flecha sempre no alvo: (d) reprova;
+  - sem escudo: (c) reprova.
+- `tests/F-CERCO-a2-ataque.test.ts` (4b): saiu o caso "arqueiro recusado", **por mudança
+  de regra** (o arqueiro agora ataca prédio). O motivo está escrito no teste.
+
+**PARA REVISÃO:**
+- **Sem voo:** o projétil cai no tick do disparo, no tile onde o alvo está.
+  No KaM ele voa e pode errar quem andou.
+- **A cadência do tiro é a das unidades** (`ticksCadenciaDeAtaque`, 3 ticks). O dado não
+  tem cadência de arco própria, e no KaM o arqueiro é mais lento.
+- **O atirador não se vira sozinho** ("posicionar e virar"). Hoje só o passo o vira; não
+  há comando de virar (fica para a F27, formação).
+- **Atirador encostado em inimigo não revida** de perto.
+- **O bandido (mercenário) atira**, mas a Prefeitura ainda não o contrata (F36).

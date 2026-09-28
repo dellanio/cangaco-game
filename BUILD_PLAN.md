@@ -5190,8 +5190,21 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
       0,175 em 3000 golpes.
     - **Achado:** o `pisoAcerto` (0,08) nunca age com o dado de hoje, porque o menor par é
       25/300 = 0,083.
-  - **F28d — o arqueiro.** Alcance de 4 a 11, arco de 90° total, projétil no tile com
-    fogo amigo, escudo contra projétil e flecha em prédio (1 HP).
+  - **F28d — o arqueiro. ENTREGUE.**
+    - Dado:
+      - `combat.json: aDistancia.alcanceMinimo_tiles 4` e `alcanceMaximo_tiles 11`, no lugar
+        do `alcance_tiles 8`, em distância euclidiana;
+      - `escudo` (quem leva `wooden_shield`/`iron_shield` nos requisitos): +1 contra
+        flecha e funda, +0,5 contra virote;
+      - `units.json`: `projetil` do arqueiro, do besteiro e do bandido;
+      - regra nova no `validate:data` (`validarAtiradores`).
+    - O atirador ocioso atira no inimigo mais perto que esteja no alcance **e** no arco
+      (45° de cada lado, com a borda inclusiva). Ele não se vira sozinho.
+    - O projétil cai no tile do alvo e acerta a primeira unidade com HP dali, do próprio
+      lado inclusive. Sem voo.
+    - `AttackBuilding` aceita o arqueiro: ele para no alcance do prédio e tira 1 HP por
+      tiro, sem sorteio.
+    - Teste: `tests/F28d-arqueiro.test.ts`.
 - **Nota (decisão do operador, 2026-09-28): o alcance mínimo do arqueiro entra no item
   do arqueiro, não sozinho.** Hoje o arqueiro está dentro desta F28.
   - **Divergência registrada:** o KaM atira de 4 a 10,99 tiles ("atira a 4, não a 3";

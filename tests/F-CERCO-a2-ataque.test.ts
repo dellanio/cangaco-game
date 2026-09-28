@@ -191,8 +191,10 @@ describe('F-CERCO-a2 — a tropa ataca predio, por ordem', () => {
       [s0, ordem([], 'inimigo'), 'sem-unidades'],
       [s0, ordem(['fantasma'], 'inimigo'), 'unidade-inexistente'],
       [s0, ordem([civil], 'inimigo'), 'unidade-nao-militar'],
-      [arqueiro, ordem(['sold1'], 'inimigo'), 'unidade-a-distancia'],
+      // F28d: o arqueiro deixou de ser recusado — atira no predio de longe, 1 HP por
+      // flecha (`tests/F28d-arqueiro.test.ts`). O caso saiu daqui por mudanca de REGRA.
     ];
+    void arqueiro;
     for (const [s, cmd, motivo] of casos) {
       const r = step(s, [cmd], gameData);
       expect(r.events.find((e) => e.type === 'command-rejected'), motivo).toMatchObject({ command: 'AttackBuilding', motivo });

@@ -53,16 +53,71 @@ export function defDaTropa(tipo: string, dados: GameData = gameData): DefDeTropa
     ?? dados.unidades.mercenarios.tipos.find((t) => t.id === tipo) ?? null;
 }
 
+/** F28d — o projetil do atirador (`units.json: projetil`), ou `null` para quem luta de perto. */
+export function projetilDe(tipo: string, dados: GameData = gameData): string | null {
+  const def = defDaTropa(tipo, dados);
+  return def !== null && 'projetil' in def && typeof def.projetil === 'string' ? def.projetil : null;
+}
+
+/** F28d — tem escudo quem leva um dos escudos do dado nos `requisitos` (derivado). */
+export function temEscudo(tipo: string, dados: GameData = gameData): boolean {
+  const def = defDaTropa(tipo, dados);
+  const requisitos = def !== null && 'requisitos' in def ? def.requisitos : [];
+  return requisitos.some((m) => dados.combate.escudo.mercadorias.includes(m));
+}
+
+/** F28d — a defesa extra do escudo contra `projetil` (0 sem escudo ou de perto). */
+export function defesaDoEscudo(alvoTipo: string, projetil: string | null, dados: GameData = gameData): number {
+  if (projetil === null || !temEscudo(alvoTipo, dados)) return 0;
+  const tabela: Readonly<Record<string, number>> = dados.combate.escudo.defesaContraProjetil;
+  return tabela[projetil] ?? 0;
+}
+
 /** A chance de `atacante` acertar `alvo`, pela formula de `combat.json`:
- *  `clamp(attackEfetivo * multiplicadorDirecao / (defence * 100), piso, teto)`. */
+ *  `clamp(attackEfetivo * multiplicadorDirecao / (defence * 100), piso, teto)`. Contra
+ *  projetil (F28d), a `defence` soma a do escudo. */
 export function chanceDeAcerto(atacante: Unidade, alvo: Unidade, dados: GameData = gameData): number {
   const a = defDaTropa(atacante.tipo, dados);
   const d = defDaTropa(alvo.tipo, dados);
   if (a === null || d === null) return 0;
   const attackEfetivo = a.attack + (d.montado ? a.attackVsCavalo : 0);
   const multiplicador = dados.combate.multiplicadorDirecao[ladoDoGolpe(atacante, alvo)];
-  const bruta = (attackEfetivo * multiplicador) / (d.defence * 100);
+  const defesa = d.defence + defesaDoEscudo(alvo.tipo, projetilDe(atacante.tipo, dados), dados);
+  const bruta = (attackEfetivo * multiplicador) / (defesa * 100);
   return Math.min(dados.combate.tetoAcerto, Math.max(dados.combate.pisoAcerto, bruta));
+}
+
+/** F28d — a distancia EUCLIDIANA entre dois tiles, em tiles (centro a centro). */
+export function distanciaEmTiles(a: { readonly gx: number; readonly gy: number }, b: { readonly gx: number; readonly gy: number }): number {
+  return Math.hypot(b.gx - a.gx, b.gy - a.gy);
+}
+
+/** F28d — `b` esta no alcance do atirador em `a`: entre o minimo e o maximo do dado. */
+export function noAlcance(
+  a: { readonly gx: number; readonly gy: number }, b: { readonly gx: number; readonly gy: number }, dados: GameData = gameData,
+): boolean {
+  const d = distanciaEmTiles(a, b);
+  const { alcanceMinimo_tiles: min, alcanceMaximo_tiles: max } = dados.combate.aDistancia;
+  return d >= min && d <= max;
+}
+
+/** Folga de ponto flutuante na borda do arco: 45 graus em tile inteiro da cos(45) com
+ *  erro no ultimo bit, e a borda e inclusiva. */
+const FOLGA_DO_ARCO = 1e-9;
+
+/**
+ * F28d — `alvo` esta dentro do arco do atirador `u`: o angulo entre para onde ele olha e
+ * a direcao do alvo e no maximo METADE de `aDistancia.arcoDeTiro_graus_total` (90 no
+ * total, 45 para cada lado; KM_Terrain.pas:2021-2033). Borda inclusiva.
+ */
+export function noArco(u: Unidade, alvo: { readonly gx: number; readonly gy: number }, dados: GameData = gameData): boolean {
+  const [fx, fy] = PASSOS[direcaoDe(u)] as readonly [number, number];
+  const vx = alvo.gx - u.gx;
+  const vy = alvo.gy - u.gy;
+  const norma = Math.hypot(fx, fy) * Math.hypot(vx, vy);
+  if (norma === 0) return false;
+  const meio = (dados.combate.aDistancia.arcoDeTiro_graus_total / 2) * (Math.PI / 180);
+  return (fx * vx + fy * vy) / norma >= Math.cos(meio) - FOLGA_DO_ARCO;
 }
 
 export function ehADistancia(tipo: string, dados: GameData = gameData): boolean {

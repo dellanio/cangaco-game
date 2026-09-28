@@ -15,7 +15,9 @@ import type { GameEvent, GameState, MotivoDeRecusaDeLuta, Unidade } from '../sta
 import type { GameData } from '../data/types';
 import type { TileDeGrid } from '../estradas';
 import { classeDaUnidade } from '../condicao';
-import { chanceDeAcerto, direcaoEntre, ehADistancia, encostadas } from '../combate';
+import {
+  chanceDeAcerto, direcaoEntre, distanciaEmTiles, ehADistancia, encostadas, noAlcance, noArco,
+} from '../combate';
 import { hpDaUnidade, hpMaximoDoTipo } from '../vida';
 import { nextFloat } from '../rng';
 import { alvosDeAproximacao } from '../aproximacao';
@@ -27,6 +29,8 @@ export type AttackUnit = Extract<Command, { readonly type: 'AttackUnit' }>;
 
 export const FSM_INDO_LUTAR = 'indo_lutar';
 export const FSM_LUTANDO = 'lutando';
+/** F28d — o atirador com alvo no arco e no alcance. */
+export const FSM_ATIRANDO = 'atirando';
 
 /** Quem luta corpo a corpo: militar do dado que nao atira a distancia. */
 function lutaCorpoACorpo(u: Unidade, dados: GameData): boolean {
@@ -139,6 +143,74 @@ function passoLutando(
   };
 }
 
+/** F28d — quem atira: militar ou mercenario do dado com `aDistancia`. */
+function atira(u: Unidade, dados: GameData): boolean {
+  return hpMaximoDoTipo(u.tipo, dados) !== null && ehADistancia(u.tipo, dados);
+}
+
+/**
+ * F28d — o alvo do atirador: a unidade de OUTRO lado com HP, no alcance (4 a 11) e no
+ * arco (90 graus em volta de para onde ele olha), a mais perto; no empate, a primeira em
+ * `unidades.ordem`. O atirador NAO se vira sozinho: "posicionar e virar, nao mandar
+ * atacar" (combat.json) — quem o vira e o passo da marcha.
+ */
+function alvoDoAtirador(state: GameState, u: Unidade, dados: GameData): Unidade | null {
+  let melhor: { alvo: Unidade; d: number } | null = null;
+  for (const id of state.unidades.ordem) {
+    const outro = state.unidades.porId[id];
+    if (outro === undefined || outro.lado === u.lado || hpMaximoDoTipo(outro.tipo, dados) === null) continue;
+    if (!noAlcance(u, outro, dados) || !noArco(u, outro, dados)) continue;
+    const d = distanciaEmTiles(u, outro);
+    if (melhor === null || d < melhor.d) melhor = { alvo: outro, d };
+  }
+  return melhor === null ? null : melhor.alvo;
+}
+
+/**
+ * F28d — onde o projetil cai: no tile em que o alvo esta AGORA, e acerta a primeira
+ * unidade com HP daquele tile em `unidades.ordem` — do proprio lado inclusive (fogo
+ * amigo, decisao do operador; KM_Defaults.pas:397, KM_Projectiles.pas:320). Sem voo: o
+ * projetil cai no tick do disparo (PARA REVISAO).
+ */
+function quemEstaNoPonto(state: GameState, tile: TileDeGrid, dados: GameData): Unidade | null {
+  for (const id of state.unidades.ordem) {
+    const u = state.unidades.porId[id];
+    if (u !== undefined && u.gx === tile.gx && u.gy === tile.gy && hpMaximoDoTipo(u.tipo, dados) !== null) return u;
+  }
+  return null;
+}
+
+/** Tira `vitima` do estado (HP zero) ou grava o HP novo. */
+function comHp(state: GameState, vitima: Unidade, hp: number): GameState {
+  if (hp > 0) return comUnidade(state, { ...vitima, hp });
+  const porId = { ...state.unidades.porId };
+  delete porId[vitima.id];
+  return { ...state, unidades: { porId, ordem: state.unidades.ordem.filter((i) => i !== vitima.id) } };
+}
+
+function passoAtirando(
+  state: GameState, u: Unidade, dados: GameData,
+): { readonly state: GameState; readonly events: readonly GameEvent[] } {
+  const marcado = u.fsmData.alvoUnidade === undefined ? undefined : state.unidades.porId[u.fsmData.alvoUnidade];
+  const valeOMarcado = marcado !== undefined && marcado.lado !== u.lado && noAlcance(u, marcado, dados) && noArco(u, marcado, dados);
+  const alvo = valeOMarcado ? marcado : alvoDoAtirador(state, u, dados);
+  if (alvo === null || alvo === undefined) return { state: comUnidade(state, ocioso(u)), events: [] };
+  const recarga = (u.fsmData.recarga ?? dados.combate.ticksCadenciaDeAtaque) - 1;
+  if (recarga > 0) {
+    return { state: comUnidade(state, { ...u, fsmData: { alvoUnidade: alvo.id, recarga } }), events: [] };
+  }
+  const recarregado = { ...u, fsmData: { alvoUnidade: alvo.id, recarga: dados.combate.ticksCadenciaDeAtaque } };
+  const vitima = quemEstaNoPonto(state, alvo, dados) ?? alvo;
+  const sorteio = nextFloat(state.rng);
+  const acertou = sorteio.value < chanceDeAcerto(u, vitima, dados);
+  const hpAntes = hpDaUnidade(vitima, dados) ?? 0;
+  const hp = acertou ? hpAntes - 1 : hpAntes;
+  const golpe: GameEvent = { type: 'unit-struck', atacante: u.id, alvo: vitima.id, acertou, hp };
+  const depois = comUnidade(acertou ? comHp({ ...state, rng: sorteio.rng }, vitima, hp) : { ...state, rng: sorteio.rng }, recarregado);
+  const morte: GameEvent[] = hp > 0 ? [] : [{ type: 'unit-killed', unidade: vitima.id, tipo: vitima.tipo, lado: vitima.lado, por: u.id }];
+  return { state: depois, events: [golpe, ...morte] };
+}
+
 /** Um tick da luta, em `unidades.ordem`: primeiro o contato (quem esta `ocioso` e
  *  encostado em inimigo passa a lutar), depois cada unidade em luta anda ou golpeia. */
 export function sistemaDoCombate(state: GameState, dados: GameData): ResultadoDeSistema {
@@ -146,12 +218,28 @@ export function sistemaDoCombate(state: GameState, dados: GameData): ResultadoDe
   const events: GameEvent[] = [];
   for (const id of state.unidades.ordem) {
     const u = atual.unidades.porId[id];
-    if (u === undefined || u.fsm !== 'ocioso' || !lutaCorpoACorpo(u, dados)) continue;
-    const inimigo = inimigoEncostado(atual, u, dados);
-    if (inimigo !== null) atual = comUnidade(atual, lutarCom(u, inimigo, dados));
+    if (u === undefined || u.fsm !== 'ocioso') continue;
+    if (lutaCorpoACorpo(u, dados)) {
+      const inimigo = inimigoEncostado(atual, u, dados);
+      if (inimigo !== null) atual = comUnidade(atual, lutarCom(u, inimigo, dados));
+    } else if (atira(u, dados)) {
+      // F28d: o atirador ocioso com alguem no arco e no alcance comeca a recarregar
+      const alvo = alvoDoAtirador(atual, u, dados);
+      if (alvo !== null) {
+        atual = comUnidade(atual, {
+          ...u, fsm: FSM_ATIRANDO, fsmData: { alvoUnidade: alvo.id, recarga: dados.combate.ticksCadenciaDeAtaque },
+        });
+      }
+    }
   }
   for (const id of state.unidades.ordem) {
     const u = atual.unidades.porId[id];
+    if (u !== undefined && u.fsm === FSM_ATIRANDO) {
+      const r = passoAtirando(atual, u, dados);
+      atual = r.state;
+      events.push(...r.events);
+      continue;
+    }
     if (u === undefined || (u.fsm !== FSM_INDO_LUTAR && u.fsm !== FSM_LUTANDO)) continue;
     const alvoId = u.fsmData.alvoUnidade;
     const alvo = alvoId === undefined ? undefined : atual.unidades.porId[alvoId];

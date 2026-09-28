@@ -554,6 +554,7 @@ export function loadGameData(raw: RawGameData): GameData {
     },
     watchtower: raw.combat.watchtower,
     formacao: raw.combat.formacao,
+    escudo: raw.combat.escudo,
     regeneracao: {
       hp: raw.combat.regeneracao.hp,
       ticksIntervalo: registrar(

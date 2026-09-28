@@ -59,8 +59,6 @@ export type MotivoDeRecusaDeAtaque =
   | 'sem-unidades'
   | 'unidade-inexistente'
   | 'unidade-nao-militar'
-  /** Projetil em predio entra com o arqueiro (F28), nao aqui. */
-  | 'unidade-a-distancia'
   | 'predio-do-proprio-lado';
 
 export type GameEvent =
