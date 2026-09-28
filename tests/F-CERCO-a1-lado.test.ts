@@ -3,7 +3,8 @@
  *
  * Sem `lado` nao existe predio inimigo, e a F-CERCO-a2 (tropa ataca predio) nao tem
  * como recusar ordem contra o proprio. Aqui: quem cria poe o lado de quem mandou, a
- * unidade formada herda o da escola, e o save de formato antigo e recusado.
+ * unidade formada herda o da escola, e o save da versao 2 (sem lado) e migrado:
+ * lado do jogador em tudo (decisao do operador, 2026-09-28).
  */
 import { describe, expect, it } from 'vitest';
 import { gameData } from '../src/sim/data';
@@ -68,22 +69,48 @@ describe('F-CERCO-a1 — o lado de predio e unidade', () => {
     }
   });
 
-  it('o lado atravessa salvar e carregar; o save da versao anterior e recusado com nome', () => {
+  it('o lado atravessa salvar e carregar', () => {
     const alheio = comEscolaDoLado(avancar(inicial, 5), LADO_ALHEIO);
     const texto = salvar(alheio);
     const lido = carregar(texto, gameData);
     expect(ladosDe(lido)).toEqual(ladosDe(alheio));
     expect(salvar(lido)).toBe(texto);
 
+  });
+
+  it('o save da versao 2 carrega com o lado do jogador em tudo; o resto do estado fica igual', () => {
     expect(VERSAO_DO_SAVE).toBe(3);
-    const antigo = JSON.stringify({ ...(JSON.parse(texto) as Record<string, unknown>), versao: 2 });
-    expect(() => carregar(antigo, gameData)).toThrow(/versao 2/);
+    const partida = avancar(inicial, 5);
+    const envelope = JSON.parse(salvar(partida)) as { estado: GameState } & Record<string, unknown>;
+    // o save como a versao 2 gravava: sem o campo
+    const semLado = <T extends object>(c: { porId: Record<string, T> }): void => {
+      for (const item of Object.values(c.porId)) delete (item as { lado?: number }).lado;
+    };
+    semLado(envelope.estado.predios as unknown as { porId: Record<string, object> });
+    semLado(envelope.estado.unidades as unknown as { porId: Record<string, object> });
+    const textoV2 = JSON.stringify({ ...envelope, versao: 2 });
+    expect(textoV2).not.toMatch(/"lado"/);
+
+    const migrado = carregar(textoV2, gameData);
+    const { predios, unidades } = ladosDe(migrado);
+    expect(new Set([...predios, ...unidades])).toEqual(new Set([LADO_DO_JOGADOR]));
+    expect(predios).toHaveLength(partida.predios.ordem.length);
+    expect(unidades).toHaveLength(partida.unidades.ordem.length);
+    // byte a byte: a migracao devolve exatamente a partida que a versao 3 gravaria
+    expect(salvar(migrado)).toBe(salvar(partida));
+    // e a partida migrada anda como a original
+    expect(salvar(avancar(migrado, 20))).toBe(salvar(avancar(partida, 20)));
 
     gravarEvidencia('F-CERCO-a1', {
       ladoDoJogador: LADO_DO_JOGADOR,
       abertura: ladosDe(inicial),
       versaoDoSave: VERSAO_DO_SAVE,
-      ladosAposCarregar: ladosDe(lido),
+      migracaoDaVersao2: { predios: predios.length, unidades: unidades.length, igualAVersao3: true },
     });
+  });
+
+  it('o save da versao 1 continua recusado com nome (anterior a F23b, nao ha save dela em disco)', () => {
+    const antigo = JSON.stringify({ ...(JSON.parse(salvar(inicial)) as Record<string, unknown>), versao: 1 });
+    expect(() => carregar(antigo, gameData)).toThrow(/versao 1/);
   });
 });

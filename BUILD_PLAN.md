@@ -4974,8 +4974,10 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
     - Quem cria põe o lado de quem mandou: a abertura e o `PlaceBlueprint` põem o do
       jogador, e o `completarObra` preserva o da obra.
     - A unidade formada herda o lado da escola.
-    - `VERSAO_DO_SAVE` foi a 3, e o save da versão 2 é recusado com nome, sem
-      migração.
+    - `VERSAO_DO_SAVE` foi a 3. O save da versão 2 é **migrado** (`lado` do jogador
+      em todo prédio e unidade), por decisão do operador em 2026-09-28: *"Recusar com
+      mensagem é correto para dado corrompido, não para versão anterior do meu próprio
+      jogo."* A versão 1 continua recusada.
     - Teste: `tests/F-CERCO-a1-lado.test.ts`. A herança é provada com uma escola de
       lado 1.
   - **F-CERCO-a2 — o ataque.** Tudo o que está abaixo: comando, FSM, cadência, dano,

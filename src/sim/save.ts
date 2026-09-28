@@ -1,4 +1,5 @@
-import type { GameState } from './state';
+import type { Colecao, GameState } from './state';
+import { LADO_DO_JOGADOR } from './state';
 import type { GameData } from './data/types';
 import { gameData } from './data';
 
@@ -35,9 +36,11 @@ import { gameData } from './data';
  *    nao houve ramo de migracao.
  * - 3: F-CERCO-a1. `Predio.lado` e `Unidade.lado` nasceram, obrigatorios. Um save
  *    da versao 2 teria `lado === undefined` em tudo, e a F-CERCO-a2 leria "sem
- *    dono" como "inimigo de ninguem". A base instalada ja existe (F23b grava no
- *    `localStorage`), mas e de desenvolvimento: recusar com nome, sem migracao, e a
- *    decisao conservadora (PROGRESS, marcada para revisao).
+ *    dono" como "inimigo de ninguem". A base instalada ja existe (F23b salva pela
+ *    tela), entao a versao 2 NAO e recusada: `migrarDaVersao2` poe o lado do
+ *    jogador em todo predio e toda unidade (decisao do operador, 2026-09-28 — recusa
+ *    com mensagem e para dado corrompido, nao para versao anterior do proprio jogo).
+ *    A versao 1 continua recusada: e anterior a F23b, nao ha save dela em disco.
  */
 export const VERSAO_DO_SAVE = 3;
 
@@ -82,7 +85,8 @@ export function carregar(texto: string, dados: GameData = gameData): GameState {
   }
   const save = cru as Partial<Record<keyof Save, unknown>>;
 
-  if (save.versao !== VERSAO_DO_SAVE) {
+  const migrar = MIGRACOES[String(save.versao)];
+  if (save.versao !== VERSAO_DO_SAVE && migrar === undefined) {
     return recusar(`o save e da versao ${String(save.versao)}, e esta build le a versao ${VERSAO_DO_SAVE}`);
   }
   if (save.mapa !== dados.mapa.id) {
@@ -100,5 +104,25 @@ export function carregar(texto: string, dados: GameData = gameData): GameState {
   if (typeof (estado as { tick?: unknown }).tick !== 'number') {
     return recusar('o estado do save nao tem tick');
   }
-  return estado as GameState;
+  return migrar === undefined ? (estado as GameState) : migrar(estado as GameState);
 }
+
+/** Versao 2 -> 3: todo predio e toda unidade de uma partida anterior ao `lado` eram
+ *  do jogador — nao existia outro lado. So preenche quem nao tem o campo. */
+function migrarDaVersao2(estado: GameState): GameState {
+  const comLado = <T extends { readonly lado: number }>(c: Colecao<T>): Colecao<T> => ({
+    ...c,
+    // copia chave a chave, na ordem em que o save gravou: nada entra nem sai
+    porId: Object.fromEntries(Object.entries(c.porId).map(([id, item]) => {
+      const { lado = LADO_DO_JOGADOR, ...resto } = item as Omit<T, 'lado'> & { readonly lado?: number };
+      // `id, lado` primeiro, a ordem de quem cria: o save migrado sai byte a byte igual
+      return [id, { id, lado, ...resto } as unknown as T];
+    })),
+  });
+  return { ...estado, predios: comLado(estado.predios), unidades: comLado(estado.unidades) };
+}
+
+/** Versao antiga que ainda se le, e o passo que a traz para `VERSAO_DO_SAVE`. */
+const MIGRACOES: Readonly<Record<string, (estado: GameState) => GameState>> = {
+  '2': migrarDaVersao2,
+};
