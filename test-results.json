@@ -258,7 +258,7 @@
     "passes": true
   },
   "F25b-painel-do-quartel": {
-    "passes": false
+    "passes": true
   },
   "F26a-ordem-de-mover": {
     "passes": true

@@ -49,6 +49,7 @@ type TemaDeMercadorias = Readonly<Record<string, string | undefined>>;
 const temaDePredios = temaSertao.predios as TemaDePredios;
 const temaDeMercadorias = temaSertao.mercadorias as TemaDeMercadorias;
 const temaDeMercenarios = temaSertao.mercenarios as TemaDePredios;
+const temaDeMilitares = temaSertao.militares as TemaDePredios;
 
 /** F35 — o nome de uma mercadoria no tema, ou o id neutro quando falta. */
 function nomeDaMercadoria(id: string): string {
@@ -265,6 +266,33 @@ function desenharCompleto(
         : `${rotulos.contratar} ${nome} · ${t.custo}`;
       botao.addEventListener('click', () => {
         emitir({ type: 'HireMercenary', predio: dados.predio, tipo: t.tipo });
+      });
+      acoes.append(botao);
+    }
+  }
+
+  // F25b — o quartel: os recrutas e um botao por tipo que manda `TrainSoldier`. O que nao
+  // cabe fica desabilitado e diz por que; o motivo e o do seletor, que e o do comando.
+  if (dados.quartel !== null) {
+    const q = dados.quartel;
+    const l = linha('quartel', rotulos.recrutas, String(q.recrutas));
+    l.dataset.recrutas = String(q.recrutas);
+    gente.append(l);
+    for (const t of q.tipos) {
+      const botao = document.createElement('button');
+      botao.type = 'button';
+      botao.className = 'formar';
+      botao.dataset.tipo = t.tipo;
+      botao.dataset.motivo = t.motivo ?? '';
+      botao.disabled = t.motivo !== null;
+      const nome = temaDeMilitares[t.tipo]?.nome ?? t.tipo;
+      botao.title = t.requisitos.map(nomeDaMercadoria).join(', ');
+      const porQue = t.motivo === 'sem-requisito'
+        ? rotulos.faltaRequisito.replace('{itens}', t.faltam.map(nomeDaMercadoria).join(', '))
+        : t.motivo === 'sem-recruta' ? rotulos.semRecruta : null;
+      botao.textContent = porQue === null ? `${rotulos.formar} ${nome}` : `${nome} (${porQue})`;
+      botao.addEventListener('click', () => {
+        emitir({ type: 'TrainSoldier', predio: dados.predio, tipo: t.tipo });
       });
       acoes.append(botao);
     }

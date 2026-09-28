@@ -5140,6 +5140,14 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
   - **F25b — o painel do quartel (ui).** Falta escrever. Recrutas dentro, requisitos na
     gaveta, um botão por tipo que manda `TrainSoldier` e desabilita o que não cabe, dizendo
     o motivo. Screenshot com o roteiro despausado da §8.
+    - **ENTREGUE (2026-09-28; plano em `docs/planos/2026-09-28-B1-F25b-painel-do-quartel.md`).**
+      O item não tinha aceite, e o aceite foi escrito na sessão (PARA REVISÃO):
+      - (a) os 9 tipos, e com 1 machado e 1 recruta só o `militia` cabe;
+      - (b) o motivo do painel é o do `TrainSoldier`, tipo a tipo, em 6 gavetas;
+      - (c) a tela, com o jogo andando: forma, os recrutas caem e o motivo aparece.
+      - `PainelDoPredio.quartel` usa o mesmo `motivoDaRecusaDeSoldado` do comando.
+        `porta-bloqueada` fica fora do painel e só o comando a diz.
+      - Teste `tests/F25b-painel-do-quartel.test.ts` e roteiro `tools/shots/F25b.js`.
 - **Nota (decisão do operador, 2026-09-26): a arte dos mercenários espera o Quartel.**
   Os cinco mercenários (`rebel`, `rogue`, `vagabond`, `barbarian`, `warrior`) ficaram
   fora da arte: `data/units.json` não declara `direcoesDeSprite` para eles e

@@ -1,6 +1,8 @@
 import { ehTorreCompleta, pedrasNaTorre, porQueNaoAtira } from './torre';
 import { ehFeiraCompleta, porQueNaoTroca } from './feira';
 import { ehPrefeituraCompleta, ouroNaPrefeitura } from './prefeitura';
+import { ehQuartelCompleto, motivoDaRecusaDeSoldado, recrutasNoQuartel, requisitosDoTipo } from './quartel';
+import type { MotivoDeRecusaDeSoldado } from './quartel';
 import type { PorQueNaoTroca } from './feira';
 import type { PorQueATorreNaoAtira } from './torre';
 import type { GameState, Predio, PredioCompleto, PredioEmObra, Unidade } from './state';
@@ -443,6 +445,18 @@ export interface PainelDoPredio {
     readonly ouro: number;
     readonly tipos: readonly { readonly tipo: string; readonly custo: number; readonly falta: number }[];
   } | null;
+  /** F25b — os recrutas do quartel e cada tipo com o que falta e o motivo de recusa, que
+   *  e o MESMO do `TrainSoldier` (`motivoDaRecusaDeSoldado`); `null` em quem nao e
+   *  quartel. A ordem e a de `units.json: militares.tipos`. */
+  readonly quartel: {
+    readonly recrutas: number;
+    readonly tipos: readonly {
+      readonly tipo: string;
+      readonly requisitos: readonly string[];
+      readonly faltam: readonly string[];
+      readonly motivo: MotivoDeRecusaDeSoldado | null;
+    }[];
+  } | null;
   /** F28b — a munição da torre e por que ela não atira; `null` em quem não é torre. */
   readonly torre: {
     readonly pedras: number;
@@ -536,6 +550,7 @@ export function painelDoPredio(
       torre: null,
       feira: null,
       prefeitura: null,
+      quartel: null,
     };
   }
 
@@ -573,6 +588,20 @@ export function painelDoPredio(
         tipos: dados.unidades.mercenarios.tipos.map((t) => ({
           tipo: t.id, custo: t.custoOuro, falta: Math.max(0, t.custoOuro - ouroNaPrefeitura(predio)),
         })),
+      }
+      : null,
+    quartel: ehQuartelCompleto(predio)
+      ? {
+        recrutas: recrutasNoQuartel(predio),
+        tipos: dados.unidades.militares.tipos.map((t) => {
+          const requisitos = requisitosDoTipo(t.id, dados) ?? [];
+          return {
+            tipo: t.id,
+            requisitos,
+            faltam: requisitos.filter((m) => (predio.estoque.entrada[m] ?? 0) < 1),
+            motivo: motivoDaRecusaDeSoldado(state, predio.id, t.id, dados),
+          };
+        }),
       }
       : null,
   };

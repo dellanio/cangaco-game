@@ -450,7 +450,11 @@
     "feiraSemMercadoria": "Sem {da} no armazém: a troca espera",
     "ouroDaPrefeitura": "Ouro",
     "contratar": "Contratar",
-    "faltaOuro": "faltam {n} de ouro"
+    "faltaOuro": "faltam {n} de ouro",
+    "recrutas": "Recrutas",
+    "formar": "Formar",
+    "faltaRequisito": "falta {itens}",
+    "semRecruta": "sem recruta"
   },
   "partida": {
     "_doc": "F34. O aviso do fim da escaramuca, sobre o jogo. So a tela: quem decide o fim e sim/partida.ts.",

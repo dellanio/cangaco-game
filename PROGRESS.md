@@ -11128,3 +11128,45 @@ regra, em quatro grupos:
   - `duracaoEfetiva_min_escala2`: só a regra de dado lê, e isso basta como leitor.
 
 **ESPERA DECISÃO DO OPERADOR:** o que remover. A sugestão está na tabela.
+
+## 2026-09-28 — F25b: o painel do quartel
+
+Pedido do operador: *"faz o F25b, o painel do quartel"*. Plano:
+`docs/planos/2026-09-28-B1-F25b-painel-do-quartel.md`. Mexe no seletor (`src/sim/selectors.ts`,
+sem regra nova) e na UI; nada em `src/render`.
+
+**Verificado:**
+- **Seletor:** `PainelDoPredio.quartel` traz os recrutas e os 9 tipos. Cada tipo tem
+  `requisitos`, `faltam` e `motivo`, e o motivo vem de `motivoDaRecusaDeSoldado`, a
+  mesma função do comando.
+- **Painel:**
+  - linha "Recrutas" (`data-recrutas`);
+  - um botão por tipo (`button.formar`, `data-tipo`, `data-motivo`) que emite
+    `TrainSoldier`;
+  - o botão desabilitado diz "falta X, Y" ou "sem recruta", com os textos do tema.
+- **`tests/F25b-painel-do-quartel.test.ts`, 4 testes verdes:**
+  - (a) com 1 machado e 1 recruta, só o `militia` cabe, e o Gibão diz que falta couro e
+    escudo;
+  - (b) o motivo do painel é igual ao motivo do comando nas 54 combinações (6 gavetas × 9
+    tipos);
+  - fora do quartel o campo é `null`;
+  - o save do roteiro.
+- **Sondas de mutação**, as três vermelhas:
+  - motivo por regra própria;
+  - `faltam` = todos os requisitos;
+  - perder um tipo.
+- **`npm run shot -- F25b` verde, com o jogo andando** (mouse.down/up):
+  - nove botões, e só o Cabra está habilitado;
+  - o Cabra de Gibão diz "falta Chapéu de aba";
+  - formar o Cabra pelo botão leva os recrutas de 2 para 1, e aparece uma unidade (6 → 7);
+  - o botão passa a "Cabra (falta Facão)";
+  - o corpo da aba rola, com a sombra de "há mais".
+  - Abri `F25b-1` e `F25b-2`: o painel está certo, e o Cabra nasce com sprite ao lado da
+    porta.
+
+**PARA REVISÃO:**
+- **O aceite foi escrito por mim**, porque o item dizia "Falta escrever".
+- **`porta-bloqueada` não aparece no painel:** depende de `tileDeSaida`, que é do
+  sistema. Se acontecer, só o `command-rejected` diz.
+- **Nove botões passam da altura da tela.** O último e o "Derrubar" só aparecem rolando o
+  corpo da aba. A sombra de "há mais" avisa, conforme a decisão já registrada no CSS.
