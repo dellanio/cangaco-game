@@ -263,6 +263,22 @@ export interface MovimentoData {
   readonly ticksDesvioMilitar: Ticks;
   /** C5 — a margem, em tiles, da caixa da busca local do desvio (limite de busca). */
   readonly margemDoDesvioMilitar: number;
+  /** D1 — a colisao civil (`units.json: colisaoCivil`). `ligada` false: nada muda. */
+  readonly colisaoCivil: ColisaoCivilData;
+}
+
+export interface ColisaoCivilData {
+  readonly ligada: boolean;
+  /** Quanto o civil bloqueado espera antes de empurrar o ocioso do tile seguinte. */
+  readonly ticksEmpurrar: Ticks;
+  /** Quanto espera antes do primeiro desvio. */
+  readonly ticksDesviar: Ticks;
+  /** De quanto em quanto tenta o desvio de novo. */
+  readonly ticksRepetirDesvio: Ticks;
+  /** Quanto espera antes de entrar no tile ocupado: o teto da espera. */
+  readonly ticksTrocaForcada: Ticks;
+  /** A margem, em tiles, da caixa da busca do desvio (limite de busca). */
+  readonly margemDoDesvio: number;
 }
 
 export interface CadenciaDoAtirador {

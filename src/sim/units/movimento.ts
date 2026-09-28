@@ -11,6 +11,7 @@ import type { GameData } from '../data/types';
 import type { TileDeGrid } from '../estradas';
 import { custoDoPasso, passoAndavel } from '../pathfinding';
 import { classeDaUnidade } from '../condicao';
+import { colisaoCivilLigada, passoCivil } from '../colisao';
 import type { ResultadoDeSistema } from '../systems/jobs';
 
 type Passo = ResultadoDeSistema;
@@ -142,6 +143,8 @@ export function andar(state: GameState, u: Unidade, dados: GameData): Unidade {
     }
     return { ...u, fsmData: { ...u.fsmData, progresso: custo - 1, bloqueado } };
   }
+  // D1 — o civil com a colisao civil ligada: troca, espera, desvio e troca forcada
+  if (colisaoCivilLigada(dados) && classeDaUnidade(u.tipo, dados) === 'civil') return passoCivil(state, u, custo, dados);
   const { bloqueado: _b, ...semEspera } = u.fsmData;
   void _b;
   return { ...u, gx: proximo.gx, gy: proximo.gy, fsmData: { ...semEspera, caminho: caminho.slice(1), progresso: 0 } };

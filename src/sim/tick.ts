@@ -27,6 +27,7 @@ import { aplicarSetProductionQuota } from './systems/cota';
 import { aplicarSetBuildingMode } from './systems/modo';
 import { sistemaDosEspecialistas } from './systems/especialistas';
 import { sistemaDaFome } from './systems/fome';
+import { sistemaDoEmpurrao } from './colisao';
 import { sistemaDosLaborers } from './systems/laborers';
 import { sistemaDosSerfs } from './systems/serfs';
 
@@ -208,7 +209,8 @@ export function step(
   // deve ser passado por uma FSM de familia; depois, porque a tarefa que ela libera
   // (colheita do faminto, tarefa do morto) tem de ser revalidada pelo gerador no fim
   // deste mesmo tick, e nao pelo saneamento do seguinte.
-  const fome = sistemaDaFome(saneado.state, dados);
+  // D1 — o empurrao do ocioso vem antes das FSMs: o bloqueado anda no mesmo tick
+  const fome = sistemaDaFome(sistemaDoEmpurrao(saneado.state, dados), dados);
   const serfs = sistemaDosSerfs(fome.state, dados);
   const laborers = sistemaDosLaborers(serfs.state, dados);
   // F14: os especialistas DEPOIS dos laborers (o predio que ficou pronto neste

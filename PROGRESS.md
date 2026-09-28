@@ -11661,3 +11661,77 @@ com 214 px num lote de 192 (1,1146).
 
 **PARA REVISÃO:** as duas exceções (1,12) mantêm a arte como está. Tirá-las encolhe o
 armazém e a Casa do Coronel ao lote. A decisão é do operador, e da sessão de arte.
+
+## 2026-09-28 — D1a: o mecanismo da colisão civil, desligado por dado
+
+Plano: `docs/planos/2026-09-28-D1-colisao-civil.md`, §6. As três decisões do operador estão
+lá (troca de frente, "dentro" não ocupa, chave começa desligada).
+
+### Feito
+- `units.json colisaoCivil` (grupo `movimento`, registrado no schema). Os valores chegam
+  como `movimento.colisaoCivil`:
+  - `ligada: false`;
+  - esperas em ticks a 2,0×: empurrar 1, desviar 5, repetir o desvio 25, troca forçada 20;
+  - margem do desvio de 4 tiles.
+- `src/sim/colisao.ts`:
+  - `POSICAO_DO_ESTADO` classifica os 29 estados de FSM do jogo em dentro ou fora;
+  - `ocupaTile` lança para estado sem classificação;
+  - `passoCivil`: troca de frente, espera, desvio e troca forçada;
+  - `sistemaDoEmpurrao`, que roda no `step` antes da fome e das FSMs.
+- `andar` chama `passoCivil` só quando a chave está ligada e a unidade é civil. O militar
+  segue na C5 sem mudança.
+- `DadosDaFsm.trocaCom?`. O `bloqueado?` agora também vale para o civil.
+- Invariante `violacoesDaColisao` em `tests/helpers/jobs-invariantes.ts`, chamada por
+  `violacoesDeInvariantes`, só com a chave ligada:
+  - estado sem classificação reprova;
+  - `bloqueado` acima de `ticksTrocaForcada` reprova;
+  - k civis "fora" no mesmo tile precisam de k−1 em troca.
+- GDD §6.4 reescrito (civis colidem, com o mecanismo e a fonte); §5.4 ganhou o porquê das
+  duas rotas.
+
+### Decisões (conservadoras; registradas, sem pergunta bloqueante)
+- **Só civil com civil.** O pedido foi "as unidades civis colidem entre si".
+  - Civil e militar continuam se atravessando.
+  - Militar com militar segue na C5, **sem troca de frente**, então o impasse militar em
+    corredor continua aberto.
+- **`carregando` e `entregando` são "fora".** É a fila na porta, a única fonte de
+  engarrafamento que sobra depois da troca.
+- **Laborer no canteiro** (`nivelando`, `esperando_material`, `martelando`) **é
+  "dentro".** Se ocupasse a porta da obra, trancaria o serf que traz material para ela.
+- **Não há passo para o lado separado.** O desvio por busca em largura já contorna o tile
+  ocupado. `bloqueado` só zera num passo normal: é isso que garante o teto mesmo com o
+  desvio.
+- **Só o `ocioso` sem caminho é empurrado.** Os outros estados parados têm lugar e razão de
+  estar ali. Contra eles, o que resolve é o desvio ou a troca forçada.
+
+### Verificado
+- `npm run verify` verde com a chave desligada (154 arquivos, 1782 testes, 4 skipped que já
+  existiam), **sem nenhuma mudança de teste**. É a prova de que o mecanismo não vazou.
+- `tests/D1a-colisao-civil.test.ts`, 14 testes:
+  - a classificação completa, por varredura de `src/sim` com piso de 28 estados, nos dois
+    sentidos (nada sem classificação, nada sobrando);
+  - rua de um tile com 2, 4 e 8 serfs de frente: espera máxima de 1 tick;
+  - 10 ociosos empurrados;
+  - "dentro" não segura;
+  - parado na rua: troca forçada no tick 20;
+  - parado no campo: contorna, e o desvio sai no tick 5;
+  - destino ocupado: entra e divide o tile;
+  - sem a troca forçada, a invariante acusa;
+  - desligada, os dois se atravessam sem campo novo;
+  - determinismo.
+- Sondas de mutação (evidência da sessão, não cobertura contínua):
+
+  | Mutação | Resultado |
+  |---|---|
+  | sem troca | reprova 3 |
+  | sem troca forçada | reprova 2 |
+  | sem empurrão | reprova 1 |
+  | sem desvio | reprova 1 |
+  | um estado apagado da lista | reprova 6 |
+  | **`semeando` trocado de fora para dentro** | **passa** |
+
+  **O teste prova que a lista está completa, não que cada classificação está certa.**
+  Classificação errada só aparece na vila, no D1b e no D1c.
+
+### Aberto
+- O D1b (ligar e medir) vem em seguida, na mesma sessão, por pedido do operador.

@@ -20,6 +20,8 @@ import { insumosDoPredio } from '../../src/sim/insumo';
 import { receitaDoTipo, unidadesPorCiclo } from '../../src/sim/producao';
 import { ehPredioOcupavel } from '../../src/sim/ocupacao';
 import { predioReparavel } from '../../src/sim/reparo';
+import { ehCivilQueOcupa, POSICAO_DO_ESTADO } from '../../src/sim/colisao';
+import { classeDaUnidade } from '../../src/sim/condicao';
 import { ehQuartelCompleto, ehRequisitoDoQuartel } from '../../src/sim/quartel';
 import { demandaDoTile, disponivelNaOrigem, vagaNoDestino } from '../../src/sim/reservas';
 import {
@@ -301,6 +303,44 @@ export function violacoesDeInvariantes(estado: GameState, dados: GameData = game
   for (const chave of reservasPorDestino) {
     const [predio, mercadoria] = chave.split('|') as [string, string];
     if (vagaNoDestino(estado, predio, mercadoria) < 0) v.push(`${predio}/${mercadoria}: reservado no destino acima da vaga`);
+  }
+  v.push(...violacoesDaColisao(estado, dados));
+  return v;
+}
+
+/**
+ * D1 — as invariantes da colisao civil. So com `colisaoCivil.ligada`: desligada, os civis se
+ * atravessam como antes e nada disto vale.
+ *  - todo estado de FSM tem classificacao (dentro ou fora);
+ *  - nenhum civil espera alem do teto, `ticksTrocaForcada`: e o "nao trava";
+ *  - num tile com k civis "fora", pelo menos k-1 dividem o tile por troca (`trocaCom` com
+ *    alguem do mesmo tile). Qualquer outro empilhamento e defeito.
+ */
+export function violacoesDaColisao(estado: GameState, dados: GameData = gameData): string[] {
+  const c = dados.movimento.colisaoCivil;
+  if (!c.ligada) return [];
+  const v: string[] = [];
+  const porTile = new Map<string, string[]>();
+  for (const id of estado.unidades.ordem) {
+    const u = estado.unidades.porId[id];
+    if (u === undefined) continue;
+    if (POSICAO_DO_ESTADO[u.fsm] === undefined) {
+      v.push(`${id}: estado '${u.fsm}' sem classificacao de colisao`);
+      continue;
+    }
+    if (classeDaUnidade(u.tipo, dados) !== 'civil') continue;
+    if ((u.fsmData.bloqueado ?? 0) > c.ticksTrocaForcada) v.push(`${id}: bloqueado ha ${u.fsmData.bloqueado} ticks (teto ${c.ticksTrocaForcada})`);
+    if (!ehCivilQueOcupa(u, dados)) continue;
+    const k = `${u.gx},${u.gy}`;
+    porTile.set(k, [...(porTile.get(k) ?? []), id]);
+  }
+  for (const [tile, ids] of porTile) {
+    if (ids.length < 2) continue;
+    const emTroca = ids.filter((id) => {
+      const com = estado.unidades.porId[id]?.fsmData.trocaCom;
+      return com !== undefined && com !== id && ids.includes(com);
+    }).length;
+    if (emTroca < ids.length - 1) v.push(`tile ${tile}: ${ids.length} civis empilhados fora de troca (${ids.join(', ')})`);
   }
   return v;
 }

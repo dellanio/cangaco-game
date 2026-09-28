@@ -417,7 +417,8 @@ revisita aquela regra; não é esquecimento.
   plantio cobra da gaveta de entrada do prédio, e o Canavial não recebe insumo: ninguém
   entregaria a tábua e o plantio esperaria para sempre (F-CANA, `BALANCE_LOG.md`).
 - Boa prática do original: estrada ao redor de todos os prédios desde cedo e pelo
-  menos 2 rotas entre prédios relacionados **[fonte]**.
+  menos 2 rotas entre prédios relacionados **[fonte]**. O porquê é o congestionamento: os
+  civis colidem (§6.4), e uma rua só engarrafa na porta quando há muitos serfs.
 
 ---
 
@@ -519,7 +520,20 @@ montanha **[fonte]**.
 - Velocidade base 1,0 tile/s a pé e 1,66 tile/s montado **[proposta]**, mantendo
   a razão 1:1,666 do Remake **[fonte]**.
 - Custo de movimento por terreno em `data/terrain.json`.
-- Civis não colidem entre si, para não travar a logística. Militares colidem.
+- **Civis colidem entre si** (revisto em 2026-09-28, decisão do operador; antes: "civis não
+  colidem, para não travar a logística"). O congestionamento de serfs é mecânica: com
+  muitos carregadores a vila engarrafa, e o jogador resolve com mais ruas (§5.4). O
+  mecanismo é o do `WalkTo` do kam_remake **[fonte]**:
+  - a colisão se resolve no passo de andar, não no A*;
+  - quem vem de frente **troca de lugar** na hora;
+  - o ocioso no caminho é **empurrado** para o lado;
+  - o bloqueado **contorna** os parados depois de uma espera;
+  - depois da espera longa, ele **entra no tile ocupado**. Ninguém espera para sempre.
+
+  Quem está **dentro** de um prédio ou canteiro (produzindo, comendo, construindo) não
+  ocupa o tile da porta. Quem carrega ou entrega **na** porta ocupa, e é daí que vem a
+  fila. Os números estão em `units.json colisaoCivil`, e a chave `ligada` controla o
+  mecanismo inteiro. Civil e militar se atravessam. Militares colidem entre si (C5).
 - **Névoa não afeta pathfinding nem JobBoard.** O A* enxerga o mapa inteiro, a
   tarefa se cria e se reclama igual no escuro, e o serf acha o armazém que o
   jogador não está vendo. A névoa é sobre o que o **jogador** sabe, nunca sobre

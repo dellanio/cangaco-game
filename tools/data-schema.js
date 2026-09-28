@@ -90,6 +90,15 @@ const CAMPOS_ESCALONADOS = [
   // C5 — quanto o militar espera um tile ocupado antes de dar o passo para o lado.
   { arquivo: 'units', caminho: 'colisaoMilitar.desviarDepois_segundos_base',
     unidade: 'segundos', declaraEscalaEm: 'escalaVelocidade' },
+  // D1 — as esperas da colisao civil (as constantes do WalkTo do kam_remake).
+  { arquivo: 'units', caminho: 'colisaoCivil.empurrarDepois_segundos_base',
+    unidade: 'segundos', declaraEscalaEm: 'escalaVelocidade' },
+  { arquivo: 'units', caminho: 'colisaoCivil.desviarDepois_segundos_base',
+    unidade: 'segundos', declaraEscalaEm: 'escalaVelocidade' },
+  { arquivo: 'units', caminho: 'colisaoCivil.repetirDesvio_segundos_base',
+    unidade: 'segundos', declaraEscalaEm: 'escalaVelocidade' },
+  { arquivo: 'units', caminho: 'colisaoCivil.trocaForcadaDepois_segundos_base',
+    unidade: 'segundos', declaraEscalaEm: 'escalaVelocidade' },
   // A taxa e do REGIME e nao do tipo, e e por isso que ela cabe aqui: caminho
   // fixo se registra, caminho por tipo (como as taxas de production.json) nao.
   { arquivo: 'resources', caminho: 'regimes.porTempo.segundosPorUnidade_base',

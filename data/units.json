@@ -5,6 +5,15 @@
     "montado": 1.66
   },
   "escalaVelocidade": "movimento",
+  "colisaoCivil": {
+    "ligada": false,
+    "empurrarDepois_segundos_base": 0.2,
+    "desviarDepois_segundos_base": 1.0,
+    "repetirDesvio_segundos_base": 5.0,
+    "trocaForcadaDepois_segundos_base": 4.0,
+    "margemDoDesvio_tiles": 4,
+    "_doc": "D1 (GDD 6.4, revisto 2026-09-28): civis colidem entre si, pelo mecanismo do kam_remake (KM_UnitActionWalkTo.pas:119-131). Quem vem de frente TROCA de lugar na hora; o ocioso no caminho e EMPURRADO depois de `empurrarDepois` (PUSH, 1 tick; 0,2 s porque 0,1 s a 2,0x daria meio tick); passado `desviarDepois` (AVOID, 10 ticks) contorna os civis parados, de novo a cada `repetirDesvio` (AVOID_INTERVAL, 50); passado `trocaForcadaDepois` (WAITING_TIMEOUT, 40) entra no tile ocupado. Ninguem espera alem disso. Estado 'dentro' (produzindo, comendo, no canteiro) nao ocupa tile. `ligada` false: o jogo fica como antes, byte a byte. Grupo `movimento` (escalaVelocidade); a margem e limite de busca, nao tempo."
+  },
   "colisaoMilitar": {
     "desviarDepois_segundos_base": 1.0,
     "margemDoDesvio_tiles": 4,

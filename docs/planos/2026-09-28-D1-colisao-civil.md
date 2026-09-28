@@ -174,3 +174,70 @@ As constantes estão em `KM_UnitActionWalkTo.pas:119-131`. Um tick do KaM tem 10
 - Se a nossa entrega na porta dura 1 tick, **o efeito pode sair pequeno**, e o aceite (1)
   pode não fechar sem outra fonte de parada. Nesse caso, prefiro medir e trazer o número a
   inventar demora na porta.
+
+## 6. Execução do D1a e do D1b (aprovado pelo operador em 2026-09-28)
+O operador decidiu:
+- a troca de frente entra, como no KaM;
+- quem está "dentro" não ocupa tile, e um teste percorre **todos** os estados de FSM e
+  reprova estado sem classificação;
+- a chave começa desligada, e desligada a suíte fica igual byte a byte;
+- o D1b é trazido **antes** do D1c.
+
+### Escopo do D1a (interpretação conservadora)
+- **Quem colide:** civil com civil. O pedido diz "as unidades civis colidem entre si".
+  - O militar continua com a C5, sem mudança.
+  - Civil e militar continuam se atravessando.
+  - PERGUNTA registrada no PROGRESS: unificar como no KaM?
+- **Classificação** (`src/sim/colisao.ts`, `POSICAO_DO_ESTADO`): cada estado de FSM é
+  `dentro` ou `fora`. Estado sem classificação, com a chave ligada, lança erro, como o
+  `default` das FSMs. Um teste varre `src/sim` atrás de todo estado escrito ou comparado e
+  reprova o que faltar.
+  - Dentro:
+    - especialista produzindo (`trabalhando`, `esperando_insumo`, `saida_cheia`);
+    - comendo (`comendo`);
+    - laborer no canteiro (`nivelando`, `esperando_material`, `martelando`).
+  - Fora: o resto, **incluindo `carregando` e `entregando` na porta**. É a fila na porta
+    do KaM (`GoInOut` ocupa a porta), e é a única fonte de engarrafamento que sobra depois
+    da troca.
+- **No passo** (`andar`), quando o passo completa e o tile seguinte tem civil "fora":
+  - todos os ocupantes vêm para o meu tile → **troca**: entro agora, marco `trocaCom`, e o
+    outro sai quando o passo dele completar;
+  - senão, espero e conto `bloqueado`:
+    - em `desviarDepois`, e a cada `repetirDesvio`: **desvio** por busca em largura, que
+      evita os civis parados, no modo `estrada` se o caminho restante é todo de estrada,
+      senão `livre`, com a mesma caixa e margem da C5. O passo para o lado do KaM fica
+      contido no desvio: os dois contornam o tile ocupado, e não entra um segundo
+      mecanismo;
+    - em `trocaForcadaDepois`: **troca forçada**, em que entro no tile ocupado e marco
+      `trocaCom`. Ninguém espera além disso, por construção;
+  - `bloqueado` zera só num passo normal. O desvio não zera o contador, e é isso que
+    garante o teto.
+- **Empurrão** (`sistemaDoEmpurrao`, antes da fome e das FSMs):
+  - o civil `ocioso` no tile que um civil bloqueado há `empurrarDepois` quer é movido
+    para o primeiro vizinho livre;
+  - vizinhança 8 em ordem fixa, e a ordem das unidades é `unidades.ordem`.
+- **Dado:** `units.json colisaoCivil {ligada false, empurrarDepois 0,2 s, desviarDepois
+  1,0 s, repetirDesvio 5,0 s, trocaForcadaDepois 4,0 s, margemDoDesvio 4}`, grupo
+  `movimento`, registrado no schema. As constantes são as do KaM: 1, 10, 50 e 40 ticks
+  de 100 ms. O empurrão é 0,2 s porque 0,1 s a 2,0× daria meio tick.
+- **Invariante** (`violacoesDeInvariantes`, só com a chave ligada):
+  - estado sem classificação reprova;
+  - civil com `bloqueado` acima de `trocaForcada` reprova;
+  - num tile com k civis "fora", pelo menos k−1 precisam ter `trocaCom` com alguém do
+    mesmo tile.
+
+### Testes do D1a (`tests/D1a-colisao-civil.test.ts`)
+- **Classificação completa** pela varredura, com piso de quantidade para a varredura não
+  ser vazia.
+- **Chave desligada:** o `andar` e o `step` são byte a byte iguais ao código anterior. A
+  prova é a suíte inteira, sem nenhuma mudança de teste.
+- **Chave ligada:**
+  - corredor de 1 tile com 2, 4 e 8 serfs em sentidos opostos: todos chegam, e a
+    invariante fica limpa a cada tick;
+  - porta com 10 ociosos: o empurrão abre caminho;
+  - destino ocupado por um parado que não se empurra: a troca forçada entra no teto;
+  - uma sonda que tira a troca forçada faz a invariante reprovar.
+
+### D1b
+- Ligar a chave, rodar a suíte inteira, desligar, e classificar cada teste que mudou.
+- O resultado vai para o PROGRESS e o BALANCE_LOG. Nenhum número de balanceamento muda.

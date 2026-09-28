@@ -543,6 +543,30 @@ export function loadGameData(raw: RawGameData): GameData {
       paraTicksDeDuracao(raw.units.colisaoMilitar.desviarDepois_segundos_base, 'segundos', escalaMovimento, tickHz),
     ),
     margemDoDesvioMilitar: raw.units.colisaoMilitar.margemDoDesvio_tiles,
+    colisaoCivil: {
+      ligada: raw.units.colisaoCivil.ligada,
+      ticksEmpurrar: registrar(
+        'units.colisaoCivil.empurrarDepois_segundos_base', raw.units.escalaVelocidade,
+        raw.units.colisaoCivil.empurrarDepois_segundos_base, 'segundos',
+        paraTicksDeDuracao(raw.units.colisaoCivil.empurrarDepois_segundos_base, 'segundos', escalaMovimento, tickHz),
+      ),
+      ticksDesviar: registrar(
+        'units.colisaoCivil.desviarDepois_segundos_base', raw.units.escalaVelocidade,
+        raw.units.colisaoCivil.desviarDepois_segundos_base, 'segundos',
+        paraTicksDeDuracao(raw.units.colisaoCivil.desviarDepois_segundos_base, 'segundos', escalaMovimento, tickHz),
+      ),
+      ticksRepetirDesvio: registrar(
+        'units.colisaoCivil.repetirDesvio_segundos_base', raw.units.escalaVelocidade,
+        raw.units.colisaoCivil.repetirDesvio_segundos_base, 'segundos',
+        paraTicksDeDuracao(raw.units.colisaoCivil.repetirDesvio_segundos_base, 'segundos', escalaMovimento, tickHz),
+      ),
+      ticksTrocaForcada: registrar(
+        'units.colisaoCivil.trocaForcadaDepois_segundos_base', raw.units.escalaVelocidade,
+        raw.units.colisaoCivil.trocaForcadaDepois_segundos_base, 'segundos',
+        paraTicksDeDuracao(raw.units.colisaoCivil.trocaForcadaDepois_segundos_base, 'segundos', escalaMovimento, tickHz),
+      ),
+      margemDoDesvio: raw.units.colisaoCivil.margemDoDesvio_tiles,
+    },
   };
 
   // --- combate ---
