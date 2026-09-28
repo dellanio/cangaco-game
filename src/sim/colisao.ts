@@ -104,6 +104,31 @@ const VIZINHOS_8: readonly TileDeGrid[] = [
   { gx: 0, gy: 1 }, { gx: -1, gy: 1 }, { gx: -1, gy: 0 }, { gx: -1, gy: -1 },
 ];
 
+/**
+ * D-MOVIMENTO-01h — o custo de unidade na rota que o serf PLANEJA (o AVOID_UNIT_PENALTY do
+ * KaM, `KM_PathFinding.pas:278-306`): cada tile com outro civil "fora" custa
+ * `ticksPorUnidadeNaRota` a mais, uma vez por tile, como o `IsUnit` de la. Por estrada conta
+ * qualquer um, andando ou parado; a pe, so quem esta parado (`PathfindingShouldAvoid`). E o que
+ * faz a rua cheia perder para a paralela: o KaM nao sorteia nem alterna rota.
+ * `undefined` com a chave desligada: a busca segue no cache, como sempre.
+ */
+export function custoDeUnidadesNaRota(
+  state: GameState, quem: string, modo: ModoDeBusca, dados: GameData,
+): ReadonlyMap<number, number> | undefined {
+  if (!colisaoCivilLigada(dados)) return undefined;
+  const { largura } = dados.terreno.mapaPadrao;
+  const extra = dados.movimento.colisaoCivil.ticksPorUnidadeNaRota;
+  const custo = new Map<number, number>();
+  for (const id of state.unidades.ordem) {
+    if (id === quem) continue;
+    const o = state.unidades.porId[id];
+    if (o === undefined || !ehCivilQueOcupa(o, dados)) continue;
+    if (modo === 'livre' && (o.fsmData.caminho ?? []).length > 0) continue;
+    custo.set(o.gy * largura + o.gx, extra);
+  }
+  return custo;
+}
+
 /** O desvio anda so por estrada quando o caminho que ele substitui e todo de estrada. */
 function modoDoDesvio(state: GameState, u: Unidade, caminho: readonly TileDeGrid[]): ModoDeBusca {
   const naEstrada = (t: TileDeGrid): boolean => state.estradas[`${t.gx},${t.gy}`] === true;

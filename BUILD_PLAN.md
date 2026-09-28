@@ -5536,7 +5536,17 @@ Ordem do operador. Cada item tem plano em `docs/planos/2026-09-28-C<n>-*.md`.
     - (1) congestiona: uma rua entrega menos que duas. Se as duas derem o mesmo, prova que
       a fila existe e que a espera cresce com o número de serfs;
     - (2) não trava: 20 000 ticks sem ninguém acima do teto.
-  - **D-MOVIMENTO-01f (antes D1d) — recalibração em lote**, se a chave for ligada de vez.
+  - **D-MOVIMENTO-01g — os dois empilhamentos residuais. ENTREGUE.**
+    - A troca é de duas unidades, e quem passou do teto tem prioridade.
+    - O ocioso é empurrado ao tile livre mais perto.
+  - **D-MOVIMENTO-01h — a escolha de rota, medida. ENTREGUE (só medida e mecanismo desligado).**
+    - O custo de unidade do KaM, +1,5 tile, entra na rota planejada.
+    - A segunda faixa passa a receber 45% dos carregadores, e a espera na gaveta não cai.
+  - **FECHADO DESLIGADO (regra do operador: "se não fizer nem assim, fecha desligada e o GDD
+    volta").**
+    - O D-MOVIMENTO-01e não se prova. O GDD §6.4 voltou a "civis não colidem", com o
+      resultado registrado.
+  - **D-MOVIMENTO-01f (antes D1d) — recalibração em lote. CANCELADO: a chave não liga.**, se a chave for ligada de vez.
 - **Depois da fila:** C-COMIDA-01 (antes F-FEED, fome militar), com o plano esperando
   aprovação. Ele destrava C-IA-01 (antes F28-IA ponto 5, IA alimentar tropas).
 - **Siglas:** o esquema novo está em `docs/siglas.md` (decisão do operador, 2026-09-28). O que

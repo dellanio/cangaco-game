@@ -12162,3 +12162,75 @@ de aquecimento:
   movem, travaria. A invariante acusa esse caso: é o que ela existe para pegar.
 - Não aconteceu em nenhuma corrida. O teste de 20 000 ticks do D-MOVIMENTO-01e (aceite da
   colisão civil) é a prova empírica que falta.
+
+## 2026-09-28 — D-MOVIMENTO-01h (colisão civil: a escolha de rota) — medida; a colisão civil FECHA DESLIGADA
+
+Decisão do operador, dada **antes** da medida: *"Se a distribuição de rota fizer duas ruas
+valerem, a colisão entra e o D-MOVIMENTO-01e fecha com o número. Se não fizer nem assim, aí
+sim ela fecha desligada e o GDD volta ao que dizia."* **Não fez.** Então fechou desligada.
+
+### Pergunta 1: como o KaM distribui os serfs entre rotas (lido no fonte)
+- **Não sorteia nem alterna.** A distribuição sai do custo de unidade no A*:
+  `AVOID_UNIT_PENALTY` = 15, ou 1,5 tile (`KM_PathFinding.pas:278-306`,
+  `FEAT_AVOID_UNITS_IN_PATH = True`).
+- Em rota **por estrada**, **qualquer** unidade no tile pesa, andando ou parada. A pé, só quem
+  não está andando (`PathfindingShouldAvoid`).
+- **Isto corrige o levantamento do D1** (§1.1 do plano), que dizia que o custo era só do
+  modo desvio. O +20 de quem trabalha é que é só do desvio.
+- O cache de rota do KaM (12 rotas) reaproveita a rota só quando ela passa pela origem.
+
+### Pergunta 2: quanto custa aqui (eixo determinístico, cenário da vila, 6000 ticks)
+- **Implementado:**
+  - `buscarCaminho(..., custoExtra?)`: custo por tile, fora do cache e fora do alvo;
+  - `custoDeUnidadesNaRota` em `colisao.ts`, só com a chave ligada;
+  - `units.json colisaoCivil.custoPorUnidade_tiles` 1,5, que vira 8 ticks no carregamento;
+  - `buscasComUnidades()` como acessor próprio;
+  - ligado na perna carregada e no replanejamento do serf.
+- **O custo:**
+
+  | | desligada | ligada, sem custo de unidade | ligada, com custo de unidade |
+  |---|---|---|---|
+  | buscas executadas | 73 | 159 | 157 a 182 |
+  | nós expandidos | 991 | 12 145 | 13 157 a 20 115 |
+
+  - As buscas com unidade ficam fora do cache: 400 a 670 por corrida.
+  - **O salto de nós vem de ligar a colisão.** O custo de unidade soma de 10% a 40% por
+    cima disso.
+  - Em número absoluto é pouco: ~20 000 nós em 6000 ticks.
+
+### O resultado: espera média da madeira na gaveta (ticks), com a chave ligada e o custo de unidade de 8
+| Carga | 1 rua | 2ª rota em laço | 2 faixas paralelas + 3 portas do armazém |
+|---|---|---|---|
+| 1× | 106,1 | 105,1 | 100,9 |
+| 2× | 264,9 | 248,5 | **307,7** (entrega 296, contra 331) |
+| 4× | 303,4 | 304,0 | **330,2** (entrega 346, contra 379) |
+
+- **A distribuição acontece** (sonda, perna carregada, 4000 ticks). Na segunda faixa ela
+  passa de 4,3% dos passos sem o custo para **45%** com ele. No laço, de 2,3% para 14,8%.
+- **E a espera não cai.** Com carga, as duas faixas ficam **piores** (+16% a 2×, +9% a 4×) e
+  entregam menos.
+- Com a chave desligada, as três variantes dão exatamente o mesmo (controle).
+- **Leitura (HIPÓTESE, não isolada):** o gargalo é a porta e o serf livre, não a rua. Duas
+  faixas põem mais serfs se cruzando nas portas.
+- **Correção de premissa:** a "segunda rua" do D-MOVIMENTO-01e (aceite da colisão civil) era
+  um laço, bem mais longo para quase toda serraria. A variante de duas faixas foi
+  acrescentada por isso, e é ela que responde "rota de custo parecido".
+
+### O fechamento
+- **GDD §6.4** voltou a "civis não colidem", com o resultado registrado. O §5.4 perdeu a
+  frase "o porquê é o congestionamento", que ficou falsa.
+- **O código fica, desligado:** mecanismo, empilhamento, prioridade e custo de unidade, todos
+  com testes (`tests/D-MOVIMENTO-01a-colisao-civil.test.ts`, 30 testes).
+- **O que vale com a chave desligada fica:**
+  - o conserto do JobBoard (47× menos buscas na feira);
+  - o "na porta" por estado da chave;
+  - a fixture da F20b (fome e morte) espalhada.
+- **D-MOVIMENTO-01f (recalibração) cancelado.**
+
+### Aberto (para o operador)
+- **O código desligado é dívida.** São ~500 linhas em `colisao.ts`, um ramo em `andar`, dois
+  sistemas no `step` e um parâmetro no A*, cobertos por teste mas sem uso no jogo. Manter
+  (a porta para voltar a testar) ou remover (menos código morto) é decisão do operador.
+- **A pergunta que a medida levanta e ninguém respondeu:** se o gargalo é a porta, o
+  engarrafamento que o jogador do KaM sente talvez venha da porta (entrar e sair de casa
+  leva ~10 ticks lá, contra 1 aqui), e não da rua. Não foi isolado.

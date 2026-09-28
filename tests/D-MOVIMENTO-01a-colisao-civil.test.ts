@@ -15,8 +15,8 @@ import type { GameData } from '../src/sim/data/types';
 import { createInitialState, LADO_DO_JOGADOR } from '../src/sim/state';
 import type { GameState, Unidade } from '../src/sim/state';
 import { andar, comUnidade } from '../src/sim/units/movimento';
-import { POSICAO_DO_ESTADO, sistemaDaPorta, sistemaDoEmpurrao, tetoDaEspera } from '../src/sim/colisao';
-import { tileAndavel } from '../src/sim/pathfinding';
+import { custoDeUnidadesNaRota, POSICAO_DO_ESTADO, sistemaDaPorta, sistemaDoEmpurrao, tetoDaEspera } from '../src/sim/colisao';
+import { buscarCaminho, buscasComUnidades, tileAndavel, zerarEstatisticasDeBusca } from '../src/sim/pathfinding';
 import { condicaoCheiaDoTipo } from '../src/sim/condicao';
 import { salvar } from '../src/sim/save';
 import { naVila } from './helpers/ancoras';
@@ -406,6 +406,45 @@ describe('D-MOVIMENTO-01a — a colisao civil', () => {
 
     it('o teto da invariante e a troca forcada mais o maior passo do dado', () => {
       expect(tetoDaEspera(LIGADA)).toBe(C.ticksTrocaForcada + Math.max(...Object.values(LIGADA.movimento.ticksPorTileDiagonal.aPe)));
+    });
+  });
+
+  // ---------- D-MOVIMENTO-01h: a escolha de rota (o custo de unidade do KaM) ----------
+  describe('D-MOVIMENTO-01h — a rota planejada ve os outros civis como custo', () => {
+    /** Duas faixas de estrada paralelas, de mesmo comprimento, ligadas nas duas pontas. */
+    function duasFaixas(): { s: GameState; cima: Tile[]; baixo: Tile[] } {
+      const { s: s0, c } = campo();
+      const cima = Array.from({ length: 11 }, (_, i) => ({ gx: c.gx - 5 + i, gy: c.gy }));
+      const baixo = Array.from({ length: 11 }, (_, i) => ({ gx: c.gx - 5 + i, gy: c.gy + 2 }));
+      const pontas = [{ gx: c.gx - 5, gy: c.gy + 1 }, { gx: c.gx + 5, gy: c.gy + 1 }];
+      const estradas = Object.fromEntries([...cima, ...baixo, ...pontas].map((t) => [`${t.gx},${t.gy}`, true as const]));
+      return { s: { ...s0, estradas: { ...s0.estradas, ...estradas } }, cima, baixo };
+    }
+
+    it('desligada: nenhum custo, e a busca segue no cache', () => {
+      const { s: s0, cima } = duasFaixas();
+      const x = comUnidades(s0, [civil('a', cima[3] as Tile, 'indo_buscar', [cima[4] as Tile])]);
+      expect(custoDeUnidadesNaRota(x, 'w', 'estrada', gameData)).toBeUndefined();
+    });
+
+    it('ligada: com a faixa de cima cheia, a rota por estrada vai pela de baixo; vazia, vai pela de cima', () => {
+      const { s: s0, cima, baixo } = duasFaixas();
+      const de = cima[0] as Tile;
+      const para = [cima[10] as Tile];
+      const vazia = buscarCaminho(s0, de, para, 'estrada', LIGADA, custoDeUnidadesNaRota(s0, 'w', 'estrada', LIGADA));
+      expect(vazia?.tiles.every((t) => t.gy === de.gy)).toBe(true);
+      // tres civis ANDANDO na faixa de cima: por estrada, quem anda tambem pesa (como no KaM)
+      const cheia = comUnidades(s0, [3, 5, 7].map((k) => civil(`a${k}`, cima[k] as Tile, 'indo_buscar', [cima[k + 1] as Tile])));
+      zerarEstatisticasDeBusca();
+      const desvia = buscarCaminho(cheia, de, para, 'estrada', LIGADA, custoDeUnidadesNaRota(cheia, 'w', 'estrada', LIGADA));
+      expect(desvia?.tiles.some((t) => t.gy === (baixo[0] as Tile).gy)).toBe(true);
+      expect(buscasComUnidades()).toBe(1);
+      // a pe (`livre`), quem anda NAO pesa: so quem esta parado
+      expect(custoDeUnidadesNaRota(cheia, 'w', 'livre', LIGADA)?.size).toBe(0);
+    });
+
+    it('o custo por unidade vem do dado: 1,5 tile vezes o passo a pe na estrada', () => {
+      expect(C.ticksPorUnidadeNaRota).toBe(Math.round(1.5 * LIGADA.movimento.ticksPorTile.aPe.estrada));
     });
   });
 });

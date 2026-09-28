@@ -279,6 +279,10 @@ export interface ColisaoCivilData {
   readonly ticksTrocaForcada: Ticks;
   /** A margem, em tiles, da caixa da busca do desvio (limite de busca). */
   readonly margemDoDesvio: number;
+  /** D-MOVIMENTO-01h — quanto um tile com outro civil custa a mais na rota que o serf
+   *  planeja (o AVOID_UNIT_PENALTY do KaM), em ticks: `custoPorUnidade_tiles` vezes o passo
+   *  a pe na estrada, convertido no carregamento. */
+  readonly ticksPorUnidadeNaRota: Ticks;
 }
 
 export interface CadenciaDoAtirador {

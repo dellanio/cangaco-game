@@ -528,9 +528,10 @@ export function loadGameData(raw: RawGameData): GameData {
     }
     return linha;
   }
+  const ticksPorTileAPe = matrizPorModo('aPe', raw.units.velocidadeBase_tilesPorSegundo.aPe);
   const movimento: MovimentoData = {
     ticksPorTile: {
-      aPe: matrizPorModo('aPe', raw.units.velocidadeBase_tilesPorSegundo.aPe),
+      aPe: ticksPorTileAPe,
       montado: matrizPorModo('montado', raw.units.velocidadeBase_tilesPorSegundo.montado),
     },
     ticksPorTileDiagonal: {
@@ -566,6 +567,9 @@ export function loadGameData(raw: RawGameData): GameData {
         paraTicksDeDuracao(raw.units.colisaoCivil.trocaForcadaDepois_segundos_base, 'segundos', escalaMovimento, tickHz),
       ),
       margemDoDesvio: raw.units.colisaoCivil.margemDoDesvio_tiles,
+      ticksPorUnidadeNaRota: Math.round(
+        raw.units.colisaoCivil.custoPorUnidade_tiles * ticksPorTileAPe.estrada,
+      ),
     },
   };
 

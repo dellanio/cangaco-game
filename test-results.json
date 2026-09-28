@@ -346,5 +346,8 @@
   },
   "D-MOVIMENTO-01g-empilhamento-residual": {
     "passes": true
+  },
+  "D-MOVIMENTO-01h-escolha-de-rota": {
+    "passes": true
   }
 }

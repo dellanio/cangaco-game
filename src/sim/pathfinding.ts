@@ -84,6 +84,8 @@ const footprintsPorOrdem = new WeakMap<object, WeakMap<object, FootprintsEmCache
 
 let execucoes = 0;
 let acertos = 0;
+/** D-MOVIMENTO-01h — buscas com custo de unidade: sempre executam (fora do cache). */
+let comUnidades = 0;
 let expandidos = 0;
 
 /**
@@ -139,6 +141,13 @@ export function nosExpandidos(): number {
   return expandidos;
 }
 
+/** D-MOVIMENTO-01h — quantas buscas levaram custo de unidade (e por isso nao usaram o cache).
+ *  Acessor proprio pelo mesmo motivo do `nosExpandidos`: a F10 afirma `estatisticasDeBusca()`
+ *  com `toEqual`. */
+export function buscasComUnidades(): number {
+  return comUnidades;
+}
+
 /**
  * F17c — instrumentacao do rascunho. Fica FORA de `estatisticasDeBusca()` de
  * proposito: execucoes e acertos sao sobre busca e cache, isto e sobre memoria.
@@ -153,6 +162,7 @@ export function zerarEstatisticasDeBusca(): void {
   expandidos = 0;
   execucoes = 0;
   acertos = 0;
+  comUnidades = 0;
   alocacoesDeRascunho = 0; // F17c — contador de instrumentacao, como os outros dois
 }
 
@@ -343,6 +353,7 @@ export function buscarCaminho(
   alvos: readonly TileDeGrid[],
   modo: ModoDeBusca,
   dados: GameData = gameData,
+  custoExtra?: ReadonlyMap<number, number>,
 ): Caminho | null {
   const { largura, altura } = dados.terreno.mapaPadrao;
   const emMapa = (t: TileDeGrid): boolean => Number.isInteger(t.gx) && Number.isInteger(t.gy)
@@ -352,6 +363,12 @@ export function buscarCaminho(
   const chave = `${modo}|${de.gx},${de.gy}|${indicesDosAlvos.join(',')}`;
   const entrada = entradaDeCache(state, dados);
   const camada = camadaDeBloqueio(state, dados);
+  // D-MOVIMENTO-01h — com custo de unidade a resposta depende de onde cada um esta AGORA, que
+  // muda todo tick: essa busca nao le nem escreve o cache
+  if (custoExtra !== undefined && custoExtra.size > 0) {
+    comUnidades += 1;
+    return executar(state, entrada.estrada, camada, de, indicesDosAlvos, modo, dados, custoExtra);
+  }
   let resultados = entrada.resultadosPorCamada.get(camada);
   if (!resultados) {
     resultados = new Map<string, Caminho | null>();
@@ -375,11 +392,12 @@ export function buscarCaminho(
 function executar(
   state: Pick<GameState, 'predios'>, estrada: Uint8Array, recursos: CamadaDeBloqueio,
   de: TileDeGrid, alvos: readonly number[], modo: ModoDeBusca, dados: GameData,
+  custoExtra?: ReadonlyMap<number, number>,
 ): Caminho | null {
   const { largura, altura } = dados.terreno.mapaPadrao;
   ocuparRascunho(largura * altura);
   try {
-    return executarComRascunho(state, estrada, recursos, de, alvos, modo, dados);
+    return executarComRascunho(state, estrada, recursos, de, alvos, modo, dados, custoExtra);
   } finally {
     liberarRascunho();
   }
@@ -388,6 +406,7 @@ function executar(
 function executarComRascunho(
   state: Pick<GameState, 'predios'>, estrada: Uint8Array, recursos: CamadaDeBloqueio,
   de: TileDeGrid, alvos: readonly number[], modo: ModoDeBusca, dados: GameData,
+  custoExtra?: ReadonlyMap<number, number>,
 ): Caminho | null {
   const { largura, altura } = dados.terreno.mapaPadrao;
   if (!(Number.isInteger(de.gx) && Number.isInteger(de.gy) && de.gx >= 0 && de.gy >= 0 && de.gx < largura && de.gy < altura)) return null;
@@ -551,7 +570,10 @@ function executarComRascunho(
       const diagonal = dx !== 0 && dy !== 0;
       if (diagonal && !(quinaLivre(nx, y) && quinaLivre(x, ny))) continue;
       const vizinho = ny * largura + nx;
-      const novo = gAtual + (diagonal ? diagonalDoTerreno(nx, ny, vizinho) : retoDoTerreno(nx, ny, vizinho));
+      // D-MOVIMENTO-01h — o custo de unidade nao vale no ALVO (o KaM tambem o pula: "pode
+      // escolher uma rota mais longa"); >= 0, entao a heuristica continua admissivel
+      const extra = custoExtra === undefined || ehAlvo.has(vizinho) ? 0 : (custoExtra.get(vizinho) ?? 0);
+      const novo = gAtual + extra + (diagonal ? diagonalDoTerreno(nx, ny, vizinho) : retoDoTerreno(nx, ny, vizinho));
       if (novo < gDe(vizinho)) {
         marca[vizinho] = geracao;
         g[vizinho] = novo;

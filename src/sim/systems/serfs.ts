@@ -44,6 +44,7 @@ import {
 } from '../jobs';
 import type { MotivoDeLiberacao } from '../jobs';
 import { buscarCaminho, passoAndavel } from '../pathfinding';
+import { custoDeUnidadesNaRota } from '../colisao';
 import { ehEscolaCompleta } from '../escola';
 import { demandaNoDestino } from '../reservas';
 import { andar, chegou, comUnidade, dadosDaFsm, ficarOcioso, noTile, ocioso } from '../units/movimento';
@@ -137,7 +138,9 @@ function passoCarregando(state: GameState, u: Unidade, dados: GameData): Passo {
   }
   // o caminho de volta para a entrega tem que existir ANTES de o material sair do armazem
   const modo = modoDoTipo(tarefa.tipo, dados);
-  const rota = buscarCaminho(state, noTile(u), alvosDeEntrega(state, tarefa, modo, dados), modo, dados);
+  // D-MOVIMENTO-01h — a perna carregada e PLANEJADA aqui: com a colisao ligada, ela ve os outros
+  // civis como custo, e a rua cheia perde para a paralela
+  const rota = buscarCaminho(state, noTile(u), alvosDeEntrega(state, tarefa, modo, dados), modo, dados, custoDeUnidadesNaRota(state, u.id, modo, dados));
   if (rota === null) {
     const l = liberarTarefa(state, tarefa.id, 'caminho-cortado');
     return ficarOcioso(l.state, u, l.events);
@@ -183,7 +186,7 @@ function passoIndoEntregar(state: GameState, u: Unidade, dados: GameData): Passo
   if (proximo !== undefined && !passoAndavel(state, noTile(u), proximo, modo, dados)) {
     // o proximo tile da rota deixou de servir (estrada demolida, ou predio plantado
     // em cima): replaneja no mesmo modo, e desiste se nao houver outro caminho
-    const rota = buscarCaminho(state, agora, portas, modo, dados);
+    const rota = buscarCaminho(state, agora, portas, modo, dados, custoDeUnidadesNaRota(state, u.id, modo, dados));
     if (rota === null) {
       const l = liberarTarefa(state, tarefa.id, 'caminho-cortado');
       return { state: comecarADevolver(l.state, u, carga, dados), events: l.events };

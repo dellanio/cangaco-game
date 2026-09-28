@@ -8,6 +8,9 @@
  *  - 1: uma rua de uma faixa, que toca UM tile de porta do armazem;
  *  - 2: a mesma rua, mais uma SEGUNDA ROTA disjunta, uma linha abaixo com um tile de folga,
  *    que sai de OUTRO tile de porta do armazem e volta a linha das serrarias na outra ponta.
+ *    E um laco: para quase toda serraria ela e bem mais longa (D-MOVIMENTO-01h);
+ *  - 3: DUAS FAIXAS paralelas de mesmo comprimento (a linha da porta e a de baixo), e as tres
+ *    portas do armazem na rua. E o "mais rua" de custo parecido.
  * Nenhuma coordenada e digitada: o lugar sai de uma varredura por uma area aberta.
  */
 import { gameData } from '../../src/sim/data';
@@ -47,7 +50,7 @@ export interface CenarioDaColisaoNaVila {
   readonly armazem: string;
 }
 
-export function cenarioDaColisaoNaVila(ruas: 1 | 2, dados: GameData = gameData): CenarioDaColisaoNaVila {
+export function cenarioDaColisaoNaVila(ruas: 1 | 2 | 3, dados: GameData = gameData): CenarioDaColisaoNaVila {
   let s: GameState = { ...createInitialState(1, dados), unidades: { porId: {}, ordem: [] } };
   // armazem 3x3 a oeste, 12 tiles de rua ate a primeira serraria; a area cobre as duas rotas
   const larguraDasSerrarias = SERRARIAS * LARGURA_DA_SERRARIA;
@@ -70,6 +73,10 @@ export function cenarioDaColisaoNaVila(ruas: 1 | 2, dados: GameData = gameData):
     rua.push({ gx: x0, gy: yPorta }, { gx: x0, gy: yPorta + 1 });
     for (let x = x0; x <= xFim; x += 1) rua.push({ gx: x, gy: yPorta + 2 });
     rua.push({ gx: xFim, gy: yPorta + 1 });
+  }
+  if (ruas === 3) {
+    rua.push({ gx: x0, gy: yPorta }, { gx: x0 + 1, gy: yPorta });
+    for (let x = x0; x <= xFim; x += 1) rua.push({ gx: x, gy: yPorta + 1 });
   }
   s = { ...s, estradas: { ...s.estradas, ...Object.fromEntries(rua.map((t) => [chaveDeTile(t), true as const])) } };
   const arm = s.predios.porId['arm'] as PredioCompleto;

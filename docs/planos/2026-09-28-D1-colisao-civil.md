@@ -380,3 +380,11 @@ O operador decidiu:
     gaveta.
 - **Se duas ruas reduzirem a espera:** a colisão entra, e o 01e fecha com o número. **Se
   não:** a colisão fecha desligada, e o GDD §6.4 volta a dizer que civis não colidem.
+
+### Resultado (2026-09-28): fechado desligado
+- A distribuição de rota funciona: a segunda faixa recebe 45% dos carregadores.
+- Mesmo assim, duas ruas não reduzem a espera na gaveta e, com carga, pioram.
+- Pela regra do operador, a colisão civil fecha desligada, e o GDD §6.4 volta a "civis não
+  colidem". Os números estão no PROGRESS (D-MOVIMENTO-01h).
+- O D-MOVIMENTO-01e (aceite da colisão civil) não entra no `test-results.json` como `false`:
+  entraria na fila como a próxima feature, e o item está encerrado, não pendente.
