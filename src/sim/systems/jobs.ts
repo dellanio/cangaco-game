@@ -34,7 +34,7 @@ import {
 import type { MotivoDeLiberacao } from '../jobs';
 import type { ModoDeBusca } from '../pathfinding';
 import {
-  demandaDoTile, demandaNoDestino, disponivelNaOrigem, ofertaNaOrigem, sobraNaOrigem, vagaDoDestino, vagaNoTile,
+  demandaDoTile, demandaNoDestino, disponivelNaOrigem, ofertaNaOrigem, reservadoNoDestino, sobraNaOrigem, vagaDoDestino, vagaNoTile,
 } from '../reservas';
 import {
   demandaDeInsumo, excedenteNaEntrada, insumosDoPredio, produtorParado,
@@ -757,7 +757,10 @@ function gerarTarefasDoQuartel(state: GameState, dados: GameData): GameState {
         (t) => t.tipo === 'arma-para-quartel' && t.destino === id && t.mercadoria === mercadoria && t.estado === 'aberta',
       ).length;
       const livres = disponivelNaOrigem(atual, origem, mercadoria);
-      for (let i = abertas; i < livres; i++) {
+      // C3: so ate a VAGA no quartel (o teto menos o que ja tem e o que ja vem a caminho),
+      // nunca mais que o armazem tem livre
+      const vaga = demandaDeInsumo(atual, id, mercadoria, dados) - reservadoNoDestino(atual, id, mercadoria);
+      for (let i = abertas; i < Math.min(livres, vaga); i++) {
         atual = criarTarefaDeArma(atual, { mercadoria, origem, destino: id }).state;
       }
     }

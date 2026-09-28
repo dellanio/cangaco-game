@@ -5438,11 +5438,14 @@ Ordem do operador. Cada item tem plano em `docs/planos/2026-09-28-C<n>-*.md`.
        - O traço instantâneo da pedra (F28b) saiu, e os contadores de debug ficam.
        - Teste `tests/C2b-projetil-na-tela.test.ts` e roteiro `tools/shots/C2.js`, com a
          screenshot `C2-1-flecha-no-ar.png`.
-  3. **C3 — os defeitos do quartel:**
-     - o teto de armas puxadas;
-     - o recruta perdido na demolição;
-     - os nove botões passando da altura.
-     - O painel em si (F25b) já está entregue.
+  3. **C3 — os defeitos do quartel. ENTREGUE.**
+     - **Teto:** o quartel guarda até `estoqueInternoPorPredio.entrada` (5) de cada arma.
+       O claim e o gerador leem o mesmo teto; os dois são necessários, e cada um tem sua
+       sonda.
+     - **Recrutas:** voltam ao mapa quando o quartel é demolido ou derrubado.
+     - **Painel:** grade de duas colunas; o desabilitado com o visual do `aria-disabled`;
+       e o motivo `porta-bloqueada`, que sai da mesma função do comando.
+     - Teste `tests/C3-quartel.test.ts`; o roteiro F25b afirma que tudo cabe sem rolar.
   4. **C4 — o botão de reparo** (F-CERCO-b).
   5. **C5 — colisão militar** (GDD §6.4).
   6. **C6 — revidar enquanto marcha.**

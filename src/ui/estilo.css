@@ -532,6 +532,27 @@ body:not([data-corpo="opcoes"]) #opcoes { display: none; }
   min-width: 0; font-size: 11px; padding: 2px 6px; box-shadow: 1px 1px 0 var(--tinta);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
+/* C3: formar (quartel) e contratar (Prefeitura) em DUAS colunas, como o engajar da
+   escola; o nome em cima e, no que nao cabe, o motivo embaixo em letra menor. Assim os
+   nove tipos do quartel e o Derrubar cabem sem rolar a 1280x720. */
+#painel-predio .grade-de-botoes {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3px 4px; width: 100%;
+}
+#painel-predio .grade-de-botoes button {
+  min-width: 0; display: flex; flex-direction: column; align-items: flex-start;
+  font-size: 11px; padding: 2px 5px; line-height: 1.2; text-align: left;
+  box-shadow: 1px 1px 0 var(--tinta);
+}
+#painel-predio .grade-de-botoes button .nome,
+#painel-predio .grade-de-botoes button .detalhe {
+  max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#painel-predio .grade-de-botoes button .detalhe { font-size: 10px; font-style: italic; color: var(--terracota); }
+/* C3 (ressalva do avaliador): o desabilitado NAO pode parecer o habilitado — o MESMO
+   visual do `aria-disabled` do resto da interface (opacidade, hachura, sem sombra) */
+#painel-predio button:disabled {
+  cursor: not-allowed; opacity: 0.55; background-image: var(--hachura); box-shadow: none;
+}
 #painel-predio .slot button {
   padding: 0 4px; line-height: 12px; box-shadow: none; border-width: 1px; font-size: 10px;
 }

@@ -27,6 +27,7 @@ import { caixaDoPredio } from '../footprint';
 import { buscarCaminho, passoAndavel, tileAndavel } from '../pathfinding';
 import { andar, comPredio, comUnidade, noTile, ocioso } from '../units/movimento';
 import { semOPredio } from './demolicao';
+import { soltarRecrutas } from './quartel';
 import type { ResultadoDeSistema } from './jobs';
 
 export type AttackBuilding = Extract<Command, { readonly type: 'AttackBuilding' }>;
@@ -197,7 +198,9 @@ function passoAtacando(state: GameState, u: Unidade, dados: GameData): Resultado
   // hp zero: o predio sai pelo caminho da demolicao, SEM devolucao (PARA REVISAO:
   // no KaM a casa destruida se perde). O evento e o mesmo da demolicao, com a perda
   // declarada (`armazem: null`), para quem ouve nao precisar de um segundo canal.
-  const s = { ...state, predios: semOPredio(state.predios, alvo.id) };
+  // C3: os recrutas de dentro do quartel voltam ao mapa, nao se perdem
+  const solto = soltarRecrutas(state, alvo, dados);
+  const s = { ...solto, predios: semOPredio(solto.predios, alvo.id) };
   return {
     state: comUnidade(s, ocioso(u)),
     events: [golpe, { type: 'building-demolished', predio: alvo.id, tipo: alvo.tipo, devolvido: {}, armazem: null }],

@@ -10,6 +10,7 @@
  * F14 precisaram disso antes de existir comando. Reimplementar aqui seria criar
  * um segundo caminho para o mesmo estado.
  */
+import { soltarRecrutas } from './quartel';
 import type { Command } from '../commands';
 import type { Colecao, GameEvent, GameState, Predio } from '../state';
 import type { GameData } from '../data/types';
@@ -100,7 +101,8 @@ export function aplicarDemolishBuilding(
   const predios = semOPredio(devolverMercadorias(state.predios, devolvido, destino), comando.predio);
 
   return {
-    state: { ...state, predios },
+    // C3: os recrutas de dentro do quartel voltam ao mapa, nao se perdem
+    state: { ...soltarRecrutas(state, predio, dados), predios },
     events: [{
       type: 'building-demolished',
       predio: comando.predio,

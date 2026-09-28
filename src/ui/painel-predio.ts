@@ -51,6 +51,34 @@ const temaDeMercadorias = temaSertao.mercadorias as TemaDeMercadorias;
 const temaDeMercenarios = temaSertao.mercenarios as TemaDePredios;
 const temaDeMilitares = temaSertao.militares as TemaDePredios;
 
+/** C3 — a grade de duas colunas dos botoes de formar e de contratar, dentro das acoes. */
+function gradeDeBotoes(acoes: HTMLElement): HTMLElement {
+  const grade = document.createElement('div');
+  grade.className = 'grade-de-botoes';
+  acoes.append(grade);
+  return grade;
+}
+
+/** C3 — um botao da grade: o nome em cima e, quando nao cabe, o motivo embaixo (e o botao
+ *  desabilitado). O texto inteiro continua em `textContent`, como os roteiros leem. */
+function botaoDaGrade(classe: string, nome: string, detalhe: string | null): HTMLButtonElement {
+  const botao = document.createElement('button');
+  botao.type = 'button';
+  botao.className = classe;
+  botao.disabled = detalhe !== null;
+  const n = document.createElement('span');
+  n.className = 'nome';
+  n.textContent = nome;
+  botao.append(n);
+  if (detalhe !== null) {
+    const d = document.createElement('span');
+    d.className = 'detalhe';
+    d.textContent = detalhe;
+    botao.append(d);
+  }
+  return botao;
+}
+
 /** F35 — o nome de uma mercadoria no tema, ou o id neutro quando falta. */
 function nomeDaMercadoria(id: string): string {
   return temaDeMercadorias[id] ?? id;
@@ -252,22 +280,21 @@ function desenharCompleto(
     const l = linha('prefeitura', rotulos.ouroDaPrefeitura, String(p.ouro));
     l.dataset.ouro = String(p.ouro);
     gente.append(l);
+    const grade = gradeDeBotoes(acoes);
     for (const t of p.tipos) {
-      const botao = document.createElement('button');
-      botao.type = 'button';
-      botao.className = 'contratar';
+      const nome = temaDeMercenarios[t.tipo]?.nome ?? t.tipo;
+      const botao = botaoDaGrade(
+        'contratar',
+        t.falta > 0 ? `${nome} · ${t.custo}` : `${rotulos.contratar} ${nome} · ${t.custo}`,
+        t.falta > 0 ? rotulos.faltaOuro.replace('{n}', String(t.falta)) : null,
+      );
       botao.dataset.tipo = t.tipo;
       botao.dataset.custo = String(t.custo);
       botao.dataset.falta = String(t.falta);
-      botao.disabled = t.falta > 0;
-      const nome = temaDeMercenarios[t.tipo]?.nome ?? t.tipo;
-      botao.textContent = t.falta > 0
-        ? `${nome} · ${t.custo} (${rotulos.faltaOuro.replace('{n}', String(t.falta))})`
-        : `${rotulos.contratar} ${nome} · ${t.custo}`;
       botao.addEventListener('click', () => {
         emitir({ type: 'HireMercenary', predio: dados.predio, tipo: t.tipo });
       });
-      acoes.append(botao);
+      grade.append(botao);
     }
   }
 
@@ -278,23 +305,23 @@ function desenharCompleto(
     const l = linha('quartel', rotulos.recrutas, String(q.recrutas));
     l.dataset.recrutas = String(q.recrutas);
     gente.append(l);
+    const grade = gradeDeBotoes(acoes);
     for (const t of q.tipos) {
-      const botao = document.createElement('button');
-      botao.type = 'button';
-      botao.className = 'formar';
-      botao.dataset.tipo = t.tipo;
-      botao.dataset.motivo = t.motivo ?? '';
-      botao.disabled = t.motivo !== null;
       const nome = temaDeMilitares[t.tipo]?.nome ?? t.tipo;
-      botao.title = t.requisitos.map(nomeDaMercadoria).join(', ');
+      // C3: todo motivo tem texto, a porta bloqueada inclusive
       const porQue = t.motivo === 'sem-requisito'
         ? rotulos.faltaRequisito.replace('{itens}', t.faltam.map(nomeDaMercadoria).join(', '))
-        : t.motivo === 'sem-recruta' ? rotulos.semRecruta : null;
-      botao.textContent = porQue === null ? `${rotulos.formar} ${nome}` : `${nome} (${porQue})`;
+        : t.motivo === 'sem-recruta' ? rotulos.semRecruta
+          : t.motivo === 'porta-bloqueada' ? rotulos.portaBloqueada
+            : t.motivo === null ? null : t.motivo;
+      const botao = botaoDaGrade('formar', porQue === null ? `${rotulos.formar} ${nome}` : nome, porQue);
+      botao.dataset.tipo = t.tipo;
+      botao.dataset.motivo = t.motivo ?? '';
+      botao.title = t.requisitos.map(nomeDaMercadoria).join(', ');
       botao.addEventListener('click', () => {
         emitir({ type: 'TrainSoldier', predio: dados.predio, tipo: t.tipo });
       });
-      acoes.append(botao);
+      grade.append(botao);
     }
   }
 

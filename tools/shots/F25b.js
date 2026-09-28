@@ -5,6 +5,8 @@
 // completo com 1 machado, 1 gibao e 2 recrutas, SEM rua (nada se repoe).
 //   1. abre o painel com o jogo ANDANDO (mouse.down/up, §8): 2 recrutas, nove botoes, so o
 //      Cabra (militia) habilitado; o Cabra de Gibao diz o que falta (o escudo);
+//      C3: os nove botoes e o Derrubar cabem sem rolar, e o desabilitado e visivelmente
+//      diferente (opacidade);
 //   2. forma o Cabra pelo botao, com o jogo andando: recrutas 2 -> 1, o soldado aparece,
 //      e o botao do Cabra passa a dizer que falta o machado.
 const { readFileSync, existsSync } = require('node:fs');
@@ -79,12 +81,23 @@ async function roteiro(ctx) {
   const escudo = tema.mercadorias.wooden_shield;
   afirmar(gibao.motivo === 'sem-requisito' && gibao.texto.includes(escudo) && !gibao.texto.includes(tema.mercadorias.hand_axe),
     `o Cabra de Gibao deveria dizer que falta so "${escudo}", diz "${gibao.texto}"`);
-  // nove botoes passam da altura: o corpo da aba ROLA e mostra a sombra de "ha mais"
-  const rola = await page.evaluate(() => {
+  // C3: os nove botoes (em duas colunas) E o Derrubar cabem inteiros na area visivel do
+  // corpo da aba, sem rolar; e o desabilitado tem opacidade diferente do habilitado
+  const cabe = await page.evaluate(() => {
     const c = window.document.getElementById('corpo-aba');
-    return c !== null && c.scrollHeight > c.clientHeight && c.hasAttribute('data-ha-mais');
+    if (c === null) return { ok: false, porque: 'sem corpo-aba' };
+    const fundo = c.getBoundingClientRect().bottom;
+    const nos = [...window.document.querySelectorAll('#painel-predio button.formar, #painel-predio button.demolir')];
+    const fora = nos.filter((b) => b.getBoundingClientRect().bottom > fundo + 0.5).map((b) => b.dataset.tipo || b.className);
+    return { ok: nos.length === 10 && fora.length === 0 && c.scrollTop === 0, porque: `botoes ${nos.length}, fora da vista: ${fora.join(',')}` };
   });
-  afirmar(rola, 'com nove botoes o corpo da aba deveria rolar, com a sombra de "ha mais"');
+  afirmar(cabe.ok, `os nove botoes e o Derrubar deveriam caber sem rolar (${cabe.porque})`);
+  const opacidades = await page.evaluate(() => {
+    const op = (sel) => { const b = window.document.querySelector(sel); return b === null ? null : Number(window.getComputedStyle(b).opacity); };
+    return { habilitado: op('#painel-predio button.formar:not(:disabled)'), desabilitado: op('#painel-predio button.formar:disabled') };
+  });
+  afirmar(opacidades.desabilitado !== null && opacidades.habilitado !== null && opacidades.desabilitado < opacidades.habilitado,
+    `o desabilitado deveria ter opacidade menor (${JSON.stringify(opacidades)})`);
   await capturar('quartel-com-um-machado');
 
   // 2. forma o militia pelo botao, com o jogo andando

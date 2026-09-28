@@ -168,12 +168,12 @@ export function demandaNoDestino(
       return comidaNecessaria(state, tarefa.destino, tarefa.mercadoria, dados);
     case 'ouro-para-escola':
       return ouroNecessario(state, tarefa.destino, dados);
-    // F25a — o quartel quer TUDO o que o armazem tem de cada requisito: a demanda e
-    // infinita de proposito, como a do armazem logo abaixo, e quem limita e a ORIGEM
-    // (so existe tarefa para o que esta la, `disponivelNaOrigem`).
+    // C3 — o quartel quer ate o teto de cada requisito (`alvoDeEntrada`, a gaveta de
+    // entrada de qualquer produtor), menos o que ja tem: a MESMA conta do insumo. Antes era
+    // infinito, e o quartel esvaziava o armazem de armas (F25a; pedido do operador).
     case 'arma-para-quartel':
       return ehQuartelCompleto(state.predios.porId[tarefa.destino]) && ehRequisitoDoQuartel(tarefa.mercadoria, dados)
-        ? Number.POSITIVE_INFINITY : 0;
+        ? demandaDeInsumo(state, tarefa.destino, tarefa.mercadoria, dados) : 0;
     case 'insumo-producao-parada':
     case 'insumo-producao-baixa':
       return demandaDeInsumo(state, tarefa.destino, tarefa.mercadoria, dados);

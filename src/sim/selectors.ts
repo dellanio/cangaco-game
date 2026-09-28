@@ -1,7 +1,8 @@
 import { ehTorreCompleta, pedrasNaTorre, porQueNaoAtira } from './torre';
 import { ehFeiraCompleta, porQueNaoTroca } from './feira';
 import { ehPrefeituraCompleta, ouroNaPrefeitura } from './prefeitura';
-import { ehQuartelCompleto, motivoDaRecusaDeSoldado, recrutasNoQuartel, requisitosDoTipo } from './quartel';
+import { ehQuartelCompleto, recrutasNoQuartel, requisitosDoTipo } from './quartel';
+import { motivoParaFormar } from './systems/quartel';
 import type { MotivoDeRecusaDeSoldado } from './quartel';
 import type { PorQueNaoTroca } from './feira';
 import type { PorQueATorreNaoAtira } from './torre';
@@ -446,8 +447,8 @@ export interface PainelDoPredio {
     readonly tipos: readonly { readonly tipo: string; readonly custo: number; readonly falta: number }[];
   } | null;
   /** F25b — os recrutas do quartel e cada tipo com o que falta e o motivo de recusa, que
-   *  e o MESMO do `TrainSoldier` (`motivoDaRecusaDeSoldado`); `null` em quem nao e
-   *  quartel. A ordem e a de `units.json: militares.tipos`. */
+   *  e o MESMO do `TrainSoldier` (C3: `motivoParaFormar`, com a porta); `null` em quem nao
+   *  e quartel. A ordem e a de `units.json: militares.tipos`. */
   readonly quartel: {
     readonly recrutas: number;
     readonly tipos: readonly {
@@ -599,7 +600,8 @@ export function painelDoPredio(
             tipo: t.id,
             requisitos,
             faltam: requisitos.filter((m) => (predio.estoque.entrada[m] ?? 0) < 1),
-            motivo: motivoDaRecusaDeSoldado(state, predio.id, t.id, dados),
+            // C3: a MESMA funcao do `TrainSoldier`, com a porta bloqueada inclusive
+            motivo: motivoParaFormar(state, predio.id, t.id, dados),
           };
         }),
       }

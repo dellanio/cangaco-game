@@ -88,10 +88,11 @@ export function alvoDeEntrada(
     const aguardando = filaDaEscola(state, predioId).filter((i) => i.estado === 'aguardando').length;
     return aguardando * custoDeTreino(dados);
   }
-  // F25a — o quartel guarda TODO requisito que recebe: sem teto, e por isso nada do
-  // que chegou vira excedente e volta ao armazem pelo nivel 7. Infinito de proposito,
-  // como a demanda do armazem (`demandaNoDestino`), e nao um numero grande.
-  if (ehQuartelCompleto(predio) && ehRequisitoDoQuartel(mercadoria, dados)) return Number.POSITIVE_INFINITY;
+  // C3 — o quartel guarda ate a gaveta de entrada de qualquer produtor
+  // (`producao.estoqueInternoPorPredio.entrada`, 5) de CADA requisito. Antes era infinito,
+  // e o quartel esvaziava o armazem de armas (pedido do operador). O que passar volta ao
+  // armazem pelo nivel 7. O KaM nao tem teto: tem liga/desliga por arma (PARA REVISAO).
+  if (ehQuartelCompleto(predio) && ehRequisitoDoQuartel(mercadoria, dados)) return dados.producao.estoqueInternoPorPredio.entrada;
   // F28b — a torre guarda ate `watchtower.municao_stone_max` pedras (o dado)
   if (ehTorreCompleta(predio) && mercadoria === MUNICAO_DA_TORRE) return dados.combate.watchtower.municao_stone_max;
   // F35 — a feira quer `taxa x` as trocas que faltam de A; sem ordem, zero (e o A que

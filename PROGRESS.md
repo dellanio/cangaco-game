@@ -11409,3 +11409,51 @@ Plano: `docs/planos/2026-09-28-C2b-projetil-na-tela.md`, salvo antes do código.
     fino sobre a pedra), e o contraste foi reforçado. Na 2ª ela se lê, entre o arqueiro e o
     alvo.
 - **Não-regressão:** o F28b ficou verde.
+
+## 2026-09-28 — C3: os defeitos do quartel
+
+Plano: `docs/planos/2026-09-28-C3-defeitos-do-quartel.md`, salvo antes do código. Sim
+(insumo, reservas, gerador, demolição, cerco, seletor) e UI (painel, CSS); nada em
+`src/render`.
+
+**Verificado:**
+- **Teto de armas:** o `alvoDeEntrada` do quartel é `producao.estoqueInternoPorPredio.entrada`
+  (5) por arma. Nenhum número novo.
+  - **Defeito achado pelo teste:** com o teto só no alvo, o quartel ficava com 5, mas
+    quatro serfs seguiam levando machado e o excedente voltava (vaivém). A sonda que listou
+    onde estavam os machados mostrou isso. O gerador (`gerarTarefasDoQuartel`) e a
+    `demandaNoDestino` (claim) eram de demanda infinita, e passaram a ler a mesma vaga.
+  - **As duas metades são necessárias.** Sem o limite no gerador, tarefas abertas ficam
+    para sempre. Sem o limite no claim, tarefas de um save antigo passam do teto.
+  - As duas sondas passaram verde contra a 1ª versão do teste, porque o excedente volta
+    pelo nível 7 e o estado final se recompõe. O teste passou a afirmar **a cada tick** que
+    a entrada nunca passa de 5, e que não sobra tarefa aberta, e as duas ficaram vermelhas.
+- **Recrutas:** `soltarRecrutas` (`systems/quartel.ts`) recria cada recruta como `recruit`
+  ocioso, do lado do quartel, na porta. É chamado na demolição por comando e na queda em
+  combate.
+- **Porta bloqueada:** `motivoParaFormar` é a regra única. O `TrainSoldier` e o seletor do
+  painel a usam, e o painel diz "porta bloqueada".
+- **Painel:**
+  - `.grade-de-botoes` em duas colunas, para formar e para contratar, com o nome em cima e
+    o motivo embaixo;
+  - `button:disabled` com o mesmo visual do `aria-disabled` da interface.
+- **`tests/C3-quartel.test.ts`, 6 testes verdes:**
+  - (a) 5 no quartel e 7 no armazém, nunca acima de 5, e nenhuma tarefa aberta;
+  - (a) tarefas abertas de save antigo não passam do teto;
+  - (b) a demolição e a queda em combate soltam 2 recrutas do lado certo;
+  - (c) a porta tapada por árvore dá `porta-bloqueada` no painel e no comando.
+- **Sondas**, todas vermelhas no fim:
+  - teto infinito;
+  - só o claim sem teto;
+  - só o gerador sem teto;
+  - recrutas somem;
+  - painel sem porta.
+- **`npm run shot -- F25b` verde, despausado.** Afirma os 10 botões inteiros na vista, sem
+  rolar, e a opacidade do desabilitado menor que a do habilitado. Abri a `F25b-1`: duas
+  colunas, o Derrubar visível, e os desabilitados esmaecidos com hachura. O F36 (a mesma
+  grade) ficou verde.
+
+**PARA REVISÃO:**
+- O motivo longo é cortado com reticências ("falta Peixeira, Gibã…"). A lista inteira dos
+  requisitos fica na dica ao passar o mouse.
+- O teto é o da gaveta de produtor (5). O KaM não tem teto: tem liga/desliga por arma.
