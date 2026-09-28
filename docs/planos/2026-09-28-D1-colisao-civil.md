@@ -287,3 +287,56 @@ O operador decidiu:
 6. **Tick exato:** F15a e F18d-1a passam a ter um valor esperado por estado da chave,
    medido depois do D1a-2.
 7. **Repetir o D1b** e trazer a lista.
+
+## 8. D1a-3 e D1c (decisões do operador, 2026-09-28)
+O operador decidiu:
+- "todos na porta" ganha um valor por estado da chave, como o tick exato;
+- a fixture da F20b espalha os 9 serfs. O empurrão a 2 tiles foi recusado, por ser regra
+  nova criada para um teste passar;
+- o conserto do JobBoard entra, medido com a chave nos dois estados;
+- a chave não liga antes do D1c;
+- o aceite (1) do D1c passa a medir **o tempo de espera da mercadoria na gaveta** (o
+  transporte), não a produção.
+
+### D1a-3
+1. **F13a e C3(b):**
+   - desligada, todos na porta, como hoje;
+   - ligada, cada um na porta ou num vizinho dela, e nenhum empilhado.
+2. **F20b:** os extras nascem em tiles distintos em volta da porta, e não no mesmo tile.
+3. **JobBoard:**
+   - as recusas de `reclamar` que não precisam de A* saem para
+     `recusaSemCaminho(state, tarefa, unidadeId, dados)`. O `reclamar` a usa: a regra fica
+     num lugar só;
+   - o `reclamarMelhor` descarta a tarefa recusada **antes** de ordenar por custo. A ordem
+     total (nível, custo, número) é preservada entre as que sobram, então a tarefa
+     reclamada é a mesma;
+   - **o que muda:** o motivo da falha, quando todas são recusadas. Passa a ser o da
+     primeira recusada em ordem de número, e não em ordem de custo. A sim não lê esse
+     motivo (só `if (!r.ok)` em `serfs.ts`);
+   - **medida:** as buscas no A* (execuções e acertos de cache) na F35(b), antes e depois,
+     com a chave desligada e ligada. A suíte desligada tem de ficar igual.
+
+### D1c (`tests/D1c-colisao-na-vila.test.ts`)
+- **Cenário:**
+  - o armazém da abertura, com tronco de sobra, e 4 serrarias completas e ocupadas a leste,
+    lado a lado, com as portas numa mesma linha de rua;
+  - 16 serfs extras em tiles distintos;
+  - o tronco vai do armazém às serrarias, e a madeira volta.
+- **Uma rua:** um conector do armazém até a linha das serrarias, chegando a um tile de porta
+  do armazém.
+- **Duas ruas:** o mesmo conector, mais um segundo disjunto, chegando a outro tile de porta
+  do armazém e à outra ponta da linha.
+- **Medida (Little):**
+  - espera média da madeira na gaveta de saída = Σ por tick da madeira nas saídas das
+    serrarias ÷ madeira produzida;
+  - também a espera do tronco na entrada, e a vazão (madeira que chega ao armazém).
+- **Aceite (1):** com a chave ligada, duas ruas **reduzem** a espera na gaveta.
+- **Controle:** com a chave desligada, uma rua e duas dão a mesma espera, ou quase. É o que
+  prova que a diferença vem da colisão.
+- **Aceite (2), não trava:** o cenário de uma rua (o pior) por 20 000 ticks com a chave
+  ligada:
+  - nenhuma violação de `violacoesDaColisao` em nenhum tick;
+  - as invariantes do JobBoard a cada 50 ticks;
+  - a madeira continua chegando no último quarto da corrida.
+- A chave liga **só** no cenário do D1c, pelo `GameData` do teste. O `units.json` segue
+  `false`, e o número volta para o operador antes de ligar.

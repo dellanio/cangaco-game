@@ -22,6 +22,7 @@ import { painelDoPredio } from '../src/sim/selectors';
 import { salvar } from '../src/sim/save';
 import { naVila } from './helpers/ancoras';
 import { gravarEvidencia } from './helpers/evidence';
+import { foraDaPorta } from './helpers/na-porta';
 
 const TETO = gameData.producao.estoqueInternoPorPredio.entrada;
 const INIMIGO = LADO_DO_JOGADOR + 1;
@@ -111,11 +112,9 @@ describe('C3 — os defeitos do quartel', () => {
     expect(s.predios.porId['quartel']).toBeUndefined();
     const soltos = recrutasSoltos(s).slice(antes);
     expect(soltos).toHaveLength(2);
-    const portas = tilesDaPorta(quartelDe(s0), gameData).map(chaveDeTile);
-    for (const r of soltos) {
-      expect(r.lado).toBe(LADO_DO_JOGADOR);
-      expect(portas).toContain(chaveDeTile(r));
-    }
+    for (const r of soltos) expect(r.lado).toBe(LADO_DO_JOGADOR);
+    // D1a-3 — na porta desligada; na porta ou vizinho, sem empilhar, com a colisao ligada
+    expect(foraDaPorta(tilesDaPorta(quartelDe(s0), gameData), soltos, gameData)).toEqual([]);
   });
 
   it('(b) o quartel inimigo derrubado em combate solta os recrutas dele, do lado dele', () => {

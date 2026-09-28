@@ -11937,3 +11937,99 @@ e o estoque final fica a 3%. Então fica o KaM, e a exceção de dividir **não 
    ligada.
 6. **A deriva** (+9% no fechamento da vila, +48% na primeira arma) vai para o lote de
    recalibração só se a chave ligar.
+
+## 2026-09-28 — D1a-3 e o D1c medido: duas ruas NÃO reduzem a espera na gaveta
+
+Plano: `docs/planos/2026-09-28-D1-colisao-civil.md`, §8. A chave segue desligada.
+
+### Feito
+- **F13a e C3(b), "na porta":** um valor por estado da chave (`tests/helpers/na-porta.ts`).
+  - Desligada, todos na porta.
+  - Ligada, na porta ou num vizinho, sem empilhar.
+  - A faixa foi recusada pelo operador.
+- **F20b:** os 9 extras nascem em tiles distintos (`tileLivreJunto`). O empurrão a 2 tiles
+  foi recusado pelo operador, por ser regra criada para teste passar.
+- **JobBoard:**
+  - `recusaSemCaminho` extraída de `reclamar`, que passa a usá-la. A regra fica num lugar
+    só;
+  - `reclamarMelhor` descarta a tarefa recusada **antes** de ordenar por A*;
+  - o motivo da falha, quando todas são recusadas, passa a ser o da primeira na ordem do
+    quadro. A sim não o lê.
+- **O cenário do D1c** em `tests/helpers/d1c-cenario.ts` e a medida em `d1c-medida.ts`:
+  - um armazém, 6 serrarias e 16 serfs;
+  - uma rua contra uma segunda rota disjunta;
+  - espera da madeira na gaveta pela lei de Little.
+
+### Verificado
+- `npm run verify` verde com a chave desligada, **sem mudar teste** depois do conserto do
+  JobBoard.
+- **O ganho do JobBoard** (F35(b), 1500 ticks, eixo determinístico). O estado final é
+  **idêntico**, com o mesmo hash do save nos dois estados da chave.
+
+  | | acertos de cache antes | depois | execuções antes | depois |
+  |---|---|---|---|---|
+  | desligada | 287 594 | 6 124 (47×) | 10 | 10 |
+  | ligada | 1 045 289 | 6 120 (171×) | 71 | 56 |
+
+  - Relógio (número da corrida, não asserção): a F35 inteira leva 2,45 s desligada e 3,73 s
+    ligada.
+  - A F35(b), que estourava o timeout de 5 s com a chave ligada, **passa**.
+- F13a, C3 e F20b passam com a chave nos dois estados, **menos a F13a ligada**. Veja o achado
+  abaixo.
+
+### ACHADO: a F13a ligada expõe um empilhamento permanente de verdade (vila inicial, não fixture)
+- Na vila inicial, 6 ociosos cercam a porta da escola. Os dois civis recém-treinados:
+  - esperam a porta até o teto;
+  - saem pela troca forçada com o serf ocioso u3;
+  - ficam **para sempre** no mesmo tile (u3, u16 e u17 ociosos em 34,33, os dois com
+    `trocaCom: u3`).
+- O empurrão não os tira porque não há vizinho livre, e o `trocaCom` os isenta da regra dos
+  empilhados.
+- A invariante aceita, porque é "troca". **É o buraco que o operador avisou no D1a-2**: a
+  troca virando empilhamento permanente entre ociosos.
+- O helper da F13a (`foraDaPorta`) reprova, e está certo. Não foi afrouxado.
+
+### ACHADO: outro empilhamento, entre dois que andam, sob carga
+- No cenário do D1c com carga 4× (e com a porta mais longa), dois `indo_entregar` ficam no
+  mesmo tile, os dois com `trocaCom` apontando para um terceiro que já saiu dali.
+- HIPÓTESE: a troca forçada com dois ocupantes aponta só para o primeiro. Quando ele sai, o
+  par fica sem vínculo e a invariante acusa (5 ticks seguidos).
+
+### O D1c, medido (sondas; nenhum teste de aceite foi escrito, porque o aceite não fecha)
+Espera média da madeira na gaveta (ticks), serrarias em janela de 5000 ticks depois de 1000
+de aquecimento:
+
+| Porta (ticks extras) | Carga | Desligada, 1 rua | Desligada, 2 ruas | Ligada, 1 rua | Ligada, 2 ruas |
+|---|---|---|---|---|---|
+| 0 (hoje) | 1× | 109,6 | 109,6 | 109,8 | **102,6** |
+| 0 | 2× | 261,5 | 261,5 | 242,0 | 241,0 |
+| 0 | 4× | 280,0 | 280,0 | 266,6 | 267,7 |
+| 5 (sonda) | 1× | 114,6 | 114,6 | 107,6 | 113,2 |
+| 10 (sonda, ≈ entrar e sair do KaM) | 1× | 144,9 | 144,9 | 129,3 | **149,6** |
+
+- **O controle vale:** desligada, uma rua e duas dão exatamente o mesmo. A segunda rota não é
+  usada, porque o A* prefere a mais curta.
+- **O aceite não fecha:**
+  - ligada, duas ruas ficam **7% melhores** numa linha (1×, porta 1 tick);
+  - **empatam** em duas (2× e 4×);
+  - ficam **16% piores** em outra (porta de 10 ticks);
+  - o sinal troca de linha para linha.
+- **A colisão ligada baixa a espera** em relação à desligada em quase todas as linhas. Um
+  engarrafamento deveria subi-la.
+- **Leitura (HIPÓTESE, não isolada):**
+  - o gargalo aqui é o número de serfs livres, não o espaço na rua;
+  - a colisão mexe na geometria (onde o ocioso fica depois do empurrão, quem chega primeiro
+    à porta), e isso dá ±15% de ruído com os dois sinais;
+  - com a troca de frente do KaM, a rua de uma faixa não engarrafa nesta carga.
+- **A porta do KaM:** entrar e sair de casa é andar um tile para dentro e outro para fora
+  (`KM_UnitActionGoInOut.pas:440-446`), com a entrada vigiada durante o passo
+  (`TileHasUnitOnHouseEntrance`). Na nossa escala, uns 10 ticks contra 1. **Esticar a porta
+  não fez aparecer o efeito de duas ruas.**
+
+### Aberto (para o operador; nenhum decidido aqui)
+1. **O aceite (1) do D1c não se prova** com o mecanismo do KaM nesta vila. O engarrafamento
+   que o GDD descreve não aparece na espera da gaveta.
+2. **O empilhamento permanente de ociosos pela troca forçada** (F13a ligada). A troca
+   forçada entre ociosos precisa de outra regra, ou a porta precisa de outra saída.
+3. **O empilhamento de dois que andam** depois da troca forçada com dois ocupantes.
+4. **A chave não liga.**

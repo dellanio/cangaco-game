@@ -21,6 +21,7 @@ import {
 import { comEstradas } from './helpers/jobs-cenario';
 import { compararComESemSave } from './helpers/determinism';
 import { gravarEvidencia } from './helpers/evidence';
+import { foraDaPorta } from './helpers/na-porta';
 import { linhaHDe, naVila } from './helpers/ancoras';
 
 const inicial = createInitialState(1);
@@ -75,9 +76,11 @@ describe('F13a — aceite headless do BUILD_PLAN', () => {
     expect(novas.map((u) => u.tipo)).toEqual([...TRES]);
 
     // 3. nascidas na PORTA DA ESCOLA (D1), nao no `spawnDeUnidades` do cenario inicial.
+    // D1a-3 — um valor por estado da chave da colisao civil: na porta desligada; na porta ou
+    // vizinho, sem empilhar, ligada (o empurrao tira o segundo do tile)
+    expect(foraDaPorta(tilesDaPorta(escolaDoCenario(fim)), novas, gameData)).toEqual([]);
     const portas = tilesDaPorta(escolaDoCenario(fim)).map((t) => `${t.gx},${t.gy}`);
     const onde = novas.map((u) => `${u.gx},${u.gy}`);
-    expect(onde.every((p) => portas.includes(p))).toBe(true);
     const spawn = gameData.economia.estadoInicial.spawnDeUnidades;
     expect(onde).not.toContain(`${spawn.gx},${spawn.gy}`);
 

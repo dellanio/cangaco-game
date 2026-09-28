@@ -340,5 +340,8 @@
   },
   "D1a-2-empilhamento-fora-do-passo": {
     "passes": true
+  },
+  "D1a-3-jobboard-e-porta-por-estado": {
+    "passes": true
   }
 }

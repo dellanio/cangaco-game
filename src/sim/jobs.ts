@@ -798,16 +798,19 @@ export function custoDaTarefa(
  * (F10: o plano inteiro — a perna do serf ate a origem tambem tem que existir, senao um
  * serf preso reclamaria e soltaria a mesma tarefa a cada tick).
  */
-export function reclamar(
-  state: GameState, tarefaId: string, unidadeId: string, dados: GameData = gameData,
-): ResultadoDoClaim {
-  const tarefa = state.jobs.tarefas.porId[tarefaId];
-  if (!tarefa) return { ok: false, motivo: 'tarefa-inexistente' };
-  if (tarefa.estado !== 'aberta') return { ok: false, motivo: 'tarefa-ja-reclamada' };
-
+/**
+ * D1a-3 — as recusas do claim que NAO precisam do A*: tudo o que `reclamar` confere antes
+ * do caminho, para a tarefa aberta. E a MESMA regra que `reclamar` aplica (ele chama esta
+ * funcao), e existe separada para `reclamarMelhor` descartar a tarefa recusada ANTES de
+ * orde-la por custo de caminho: ordenar por A* a tarefa que o claim vai recusar pelo teto da
+ * feira era o custo medido na F35(b) (plano D1, secao 8). `null` = nada recusa sem caminho.
+ */
+function recusaSemCaminho(
+  state: GameState, tarefa: Tarefa, unidadeId: string, dados: GameData,
+): MotivoDeRecusaDoClaim | null {
   const unidade = state.unidades.porId[unidadeId];
-  if (!unidade || !podeReclamar(state, tarefa, unidade.tipo, dados)) return { ok: false, motivo: 'unidade-invalida' };
-  if (unidadeJaTemTarefa(state, unidadeId)) return { ok: false, motivo: 'unidade-ocupada' };
+  if (!unidade || !podeReclamar(state, tarefa, unidade.tipo, dados)) return 'unidade-invalida';
+  if (unidadeJaTemTarefa(state, unidadeId)) return 'unidade-ocupada';
 
   // C7 (BUG-N1) — ninguem trabalha para o outro lado: todo predio que a tarefa toca
   // (origem e destino) tem de ser do lado da unidade. Cobre serf, laborer, recruta,
@@ -815,7 +818,7 @@ export function reclamar(
   // lado no estado e nao entra aqui (PARA REVISAO).
   for (const ponta of [('origem' in tarefa ? tarefa.origem : undefined), ('destino' in tarefa ? tarefa.destino : undefined)]) {
     const predio = ponta === undefined ? undefined : state.predios.porId[ponta];
-    if (predio !== undefined && predio.lado !== unidade.lado) return { ok: false, motivo: 'unidade-invalida' };
+    if (predio !== undefined && predio.lado !== unidade.lado) return 'unidade-invalida';
   }
 
   // F20b — assento de Bodega e so de quem esta com fome: para quem nao esta, a
@@ -833,7 +836,7 @@ export function reclamar(
   // `passoOcioso` dele pedir trabalho. Sem Bodega alcancavel ele trabalha ate
   // morrer — que e o que o GDD manda acontecer.
   if (tarefa.tipo === 'comer' && !precisaComer(unidade, dados)) {
-    return { ok: false, motivo: 'unidade-invalida' };
+    return 'unidade-invalida';
   }
 
   // F35 — no maximo `economy.marketplace.maxSerfs` tarefas EM CURSO com a feira como
@@ -841,7 +844,7 @@ export function reclamar(
   // aberta ate uma fechar. Vale para qualquer carga: o A que chega e o B que sai.
   for (const ponta of [('origem' in tarefa ? tarefa.origem : undefined), ('destino' in tarefa ? tarefa.destino : undefined)]) {
     if (ponta === undefined || !ehFeiraCompleta(state.predios.porId[ponta])) continue;
-    if (serfsNaFeira(state, ponta) >= dados.economia.marketplace.maxSerfs) return { ok: false, motivo: 'destino-sem-vaga' };
+    if (serfsNaFeira(state, ponta) >= dados.economia.marketplace.maxSerfs) return 'destino-sem-vaga';
   }
 
   if (ehTarefaDoSerf(tarefa)) {
@@ -851,14 +854,28 @@ export function reclamar(
     // aqui por `disponivelNaOrigem` da gaveta `saida` deixava o serf recusar
     // para sempre uma tarefa que o quadro insistia em criar.
     if (sobraNaOrigem(state, tarefa, dados) < 1) {
-      return { ok: false, motivo: 'origem-sem-recurso' };
+      return 'origem-sem-recurso';
     }
     // A vaga depende do TIPO: `faltam` numa obra, a demanda da fila numa escola
     // (F13) — e, F18g, o que o TILE ainda pede de pedra (`vagaNoTile`).
     const vaga = ehTarefaDePedraParaCanteiro(tarefa)
       ? vagaNoTile(state, tarefa, dados)
       : vagaDoDestino(state, tarefa, dados);
-    if (vaga < 1) return { ok: false, motivo: 'destino-sem-vaga' };
+    if (vaga < 1) return 'destino-sem-vaga';
+  }
+  return null;
+}
+
+export function reclamar(
+  state: GameState, tarefaId: string, unidadeId: string, dados: GameData = gameData,
+): ResultadoDoClaim {
+  const tarefa = state.jobs.tarefas.porId[tarefaId];
+  if (!tarefa) return { ok: false, motivo: 'tarefa-inexistente' };
+  if (tarefa.estado !== 'aberta') return { ok: false, motivo: 'tarefa-ja-reclamada' };
+  const recusa = recusaSemCaminho(state, tarefa, unidadeId, dados);
+  if (recusa !== null) return { ok: false, motivo: recusa };
+
+  if (ehTarefaDoSerf(tarefa)) {
     if (custoDaTarefa(state, tarefa, unidadeId, dados) === null) return { ok: false, motivo: 'sem-caminho' };
   } else if (tarefa.tipo === 'ocupar') {
     // F14: UMA vaga por predio; o tipo certo de civil ja foi checado em
@@ -1084,13 +1101,24 @@ export function liberar(
 export function tarefasEmOrdem(
   state: GameState, unidadeId: string | null = null, dados: GameData = gameData,
 ): TarefaDoSerf[] {
+  return ordenarTarefasDoSerf(state, tarefasDoSerfAbertas(state, unidadeId), unidadeId, dados);
+}
+
+/** As tarefas do serf abertas e elegiveis para `unidadeId`, na ordem do quadro. */
+function tarefasDoSerfAbertas(state: GameState, unidadeId: string | null): TarefaDoSerf[] {
   const unidade = unidadeId === null ? null : state.unidades.porId[unidadeId];
   // F18g: `ehTarefaDoSerf`, e nao `ehTarefaDeTransporte` — a pedra do canteiro
   // disputa a mesma escada, pelo nivel dela em `delivery.json`.
-  const candidatas = state.jobs.tarefas.ordem
+  return state.jobs.tarefas.ordem
     .map((id) => state.jobs.tarefas.porId[id])
     .filter((t): t is TarefaDoSerf => t !== undefined && ehTarefaDoSerf(t) && t.estado === 'aberta')
     .filter((t) => unidade == null || elegivelParaTarefa(t.tipo, unidade.tipo));
+}
+
+/** A ordem de escolha: `(nivel, custo do caminho, numero)`. O custo e o A*. */
+function ordenarTarefasDoSerf(
+  state: GameState, candidatas: readonly TarefaDoSerf[], unidadeId: string | null, dados: GameData,
+): TarefaDoSerf[] {
   const chaves = new Map(candidatas.map((t) => [t.id, {
     nivel: nivelDoTipo(t.tipo, dados),
     custo: custoDaTarefa(state, t, unidadeId, dados) ?? Number.POSITIVE_INFINITY,
@@ -1110,16 +1138,27 @@ export function tarefasEmOrdem(
 export function reclamarMelhor(
   state: GameState, unidadeId: string, dados: GameData = gameData,
 ): ResultadoDoClaimMelhor {
-  const candidatas = tarefasEmOrdem(state, unidadeId, dados);
-  const primeira = candidatas[0];
-  if (primeira === undefined) return { ok: false, motivo: 'sem-tarefa-aberta' };
+  const abertas = tarefasDoSerfAbertas(state, unidadeId);
+  if (abertas.length === 0) return { ok: false, motivo: 'sem-tarefa-aberta' };
+  // D1a-3 — a tarefa que o claim recusa SEM caminho (teto da feira, sem vaga, sem
+  // recurso...) sai antes da ordenacao, que custa um A* por tarefa. A ordem total entre as
+  // que sobram e a mesma, entao a tarefa reclamada e a mesma. O que muda e o motivo da
+  // falha quando todas sao recusadas: o da primeira recusada NA ORDEM DO QUADRO, e nao na
+  // de custo. A sim nao le esse motivo (`serfs.ts` so pergunta `r.ok`).
+  let recusaSemCaminhoPrimeira: MotivoDeRecusaDoClaim | null = null;
+  const vivas: TarefaDoSerf[] = [];
+  for (const t of abertas) {
+    const recusa = recusaSemCaminho(state, t, unidadeId, dados);
+    if (recusa === null) vivas.push(t);
+    else recusaSemCaminhoPrimeira ??= recusa;
+  }
   let primeiraRecusa: MotivoDeRecusaDoClaim | null = null;
-  for (const tarefa of candidatas) {
+  for (const tarefa of ordenarTarefasDoSerf(state, vivas, unidadeId, dados)) {
     const r = reclamar(state, tarefa.id, unidadeId, dados);
     if (r.ok) return { ok: true, state: r.state, tarefa: tarefa.id };
     primeiraRecusa ??= r.motivo;
   }
-  return { ok: false, motivo: primeiraRecusa ?? 'sem-tarefa-aberta' };
+  return { ok: false, motivo: primeiraRecusa ?? recusaSemCaminhoPrimeira ?? 'sem-tarefa-aberta' };
 }
 
 /**

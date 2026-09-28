@@ -24,6 +24,7 @@ import {
 } from '../src/sim/condicao';
 import { tetoDeComidaNaBodega } from '../src/sim/bodega';
 import { reclamar } from '../src/sim/jobs';
+import { tileAndavel } from '../src/sim/pathfinding';
 import { comensaisReservados } from '../src/sim/reservas';
 import { estoqueDosArmazens } from '../src/sim/selectors';
 import {
@@ -220,11 +221,31 @@ describe('F20b-3 — a refeicao', () => {
   });
 });
 
+/** O tile andavel e sem unidade mais perto de (gx, gy), em aneis de Chebyshev na ordem fixa. */
+function tileLivreJunto(s: GameState, gx: number, gy: number): { gx: number; gy: number } {
+  const ocupado = new Set(s.unidades.ordem.map((id) => `${s.unidades.porId[id]?.gx},${s.unidades.porId[id]?.gy}`));
+  for (let r = 0; r < 10; r += 1) {
+    for (let dy = -r; dy <= r; dy += 1) {
+      for (let dx = -r; dx <= r; dx += 1) {
+        if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+        const t = { gx: gx + dx, gy: gy + dy };
+        if (!ocupado.has(`${t.gx},${t.gy}`) && tileAndavel(s, t, 'livre', gameData)) return t;
+      }
+    }
+  }
+  throw new Error('fixture: sem tile livre junto');
+}
+
 describe('F20b-4 — o teto de comensais da Bodega', () => {
   it('mais famintos que assentos: nunca passa de `inn.comensaisSimultaneos` a caminho', () => {
     const { estado } = cenarioDaVilaComBodegaCheia();
     let s = estado;
-    for (let i = 1; i <= TETO_DE_COMENSAIS; i++) s = comUnidadeExtra(s, `extra-${i}`, 'serf', 33, 33);
+    // D1a-3 (decisao do operador): os extras nascem em tiles DISTINTOS, livres e andaveis, em
+    // espiral a partir de (33,33) — nove numa porta so e o que a fixture tinha de artificial
+    for (let i = 1; i <= TETO_DE_COMENSAIS; i++) {
+      const t = tileLivreJunto(s, 33, 33);
+      s = comUnidadeExtra(s, `extra-${i}`, 'serf', t.gx, t.gy);
+    }
     s = comTodosComFome(s);
     const famintos = civisDoEstado(s).length;
     expect(famintos).toBeGreaterThan(TETO_DE_COMENSAIS);
