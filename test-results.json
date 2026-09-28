@@ -236,6 +236,9 @@
   "F-VIVO-d1-camadas-a-075": {
     "passes": true
   },
+  "F-VIVO-d2-quadro-unico": {
+    "passes": true
+  },
   "F-TR-a-textura-e-transicao": {
     "passes": true
   },

@@ -1,5 +1,5 @@
 'use strict';
-// Roteiro da F-VIVO-d1 — AS CAMADAS A 0,75.
+// Roteiro da F-VIVO-d1 e d2 — AS CAMADAS A 0,75, e a aldeia num quadro so.
 //
 // Mede, na tela, o tamanho de cada camada do predio vivo com a camera a 0,75, e grava
 // em `test-output/F-VIVO-d.json`. E esse numero que troca a "hipotese ate medir" da
@@ -15,6 +15,7 @@
 const { readFileSync, existsSync, writeFileSync, mkdirSync } = require('node:fs');
 const { retanguloDoCanvas } = require('./_canvas');
 const terreno = require('../../data/terrain.json');
+const { predios: DEFS } = require('../../data/buildings.json');
 
 const TILE_PX = terreno.tile_px;
 const ZOOM_MEDIDO = 0.75;
@@ -25,6 +26,9 @@ const CADEIAS = [
   { nome: 'carne', alvos: ['f1', 'sf1', 'bu1'] },
   { nome: 'ouro', alvos: ['go1', 'co1', 'me1'] },
   { nome: 'pedreira', alvos: ['q1'] },
+  // F-VIVO-d2: a aldeia de vitrine da serra, os cinco casos NUM quadro so
+  // (`cenarioDaAldeiaDaSerra`, decisao do operador de 2026-09-28)
+  { nome: 'aldeia', alvos: ['f2', 'q2', 'me1', 'go1', 'sf2'], quadroUnico: true },
 ];
 
 async function roteiro(ctx) {
@@ -84,6 +88,21 @@ async function roteiro(ctx) {
     s = await estado();
     const zoom = s.camera.zoom;
 
+    if (c.quadroUnico) {
+      // a vista em px de MUNDO: a camera da zoom em volta do centro do canvas
+      const meiaL = canvas.width / (2 * zoom);
+      const meiaA = canvas.height / (2 * zoom);
+      const cx = s.camera.scrollX + canvas.width / 2;
+      const cy = s.camera.scrollY + canvas.height / 2;
+      for (const id of c.alvos) {
+        const p = s.prediosDoEstado[id];
+        const [w, h] = DEFS.find((d) => d.id === p.tipo).tamanho;
+        const dentro = p.gx * TILE_PX >= cx - meiaL && (p.gx + w) * TILE_PX <= cx + meiaL
+          && p.gy * TILE_PX >= cy - meiaA && (p.gy + h) * TILE_PX <= cy + meiaA;
+        afirmar(dentro, `${c.nome}: '${id}' (${p.gx},${p.gy} ${w}x${h}) deveria caber inteiro na vista a ${zoom}`);
+      }
+    }
+
     const porPredio = {};
     for (const id of c.alvos) {
       const cam = s.camadasEmPx[id];
@@ -108,6 +127,8 @@ async function roteiro(ctx) {
 
   const casos = new Set(Object.values(medidas).flatMap((m) => Object.values(m.predios).map((p) => p.caso)));
   afirmar(casos.size === 5, `os cinco casos deveriam ser medidos, vieram ${[...casos]}`);
+  const casosDaAldeia = new Set(Object.values(medidas.aldeia.predios).map((p) => p.caso));
+  afirmar(casosDaAldeia.size === 5, `a aldeia deveria ter os cinco casos num quadro, veio ${[...casosDaAldeia]}`);
 
   // o resumo que o brief cita: menor px de cada camada, na tela a 0,75
   const todas = Object.values(medidas).flatMap((m) => Object.values(m.predios));

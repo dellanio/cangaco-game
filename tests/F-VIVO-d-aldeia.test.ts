@@ -19,7 +19,7 @@ import { pilhasDoPredio } from '../src/render/pilhas';
 import { animaisDoCurral } from '../src/render/animais';
 import { CASO_DO_PREDIO } from '../src/render/manifesto-camadas';
 import {
-  avancar, cenarioDaCadeiaDaCarne, cenarioDaCadeiaDoOuro, cenarioDePedreira,
+  avancar, cenarioDaAldeiaDaSerra, cenarioDaCadeiaDaCarne, cenarioDaCadeiaDoOuro, cenarioDePedreira,
 } from './helpers/producao-cenario';
 import { gravarEvidencia } from './helpers/evidence';
 
@@ -50,12 +50,14 @@ const CADEIAS: readonly Cadeia[] = [
   { nome: 'carne', cenario: () => cenarioDaCadeiaDaCarne(), alvos: ['f1', 'sf1', 'bu1'] },
   { nome: 'ouro', cenario: () => cenarioDaCadeiaDoOuro(), alvos: ['go1', 'co1', 'me1'] },
   { nome: 'pedreira', cenario: () => cenarioDePedreira(), alvos: ['q1'] },
+  // F-VIVO-d2: os cinco casos num quadro so (a vitrine da serra, decisao do operador)
+  { nome: 'aldeia', cenario: () => cenarioDaAldeiaDaSerra(), alvos: ['f2', 'q2', 'me1', 'go1', 'sf2'] },
 ];
 
 const PASSO = 5;
 const TETO = 30000;
 
-describe('F-VIVO-d1 — as partidas medidas a 0,75', () => {
+describe('F-VIVO-d1 e d2 — as partidas medidas a 0,75, e a aldeia num quadro', () => {
   it('cada cadeia alcanca o instante com todos os alvos ativos, e o save e gravado', () => {
     const evidencia: Record<string, unknown> = {};
     const dir = process.env['CANGACO_EVIDENCIA_DIR'] ?? 'test-output';
@@ -74,9 +76,12 @@ describe('F-VIVO-d1 — as partidas medidas a 0,75', () => {
       writeFileSync(`${dir}/F-VIVO-d-${c.nome}.save.txt`, salvar(s));
       evidencia[c.nome] = { tick: s.tick, alvos: c.alvos, casos };
     }
-    // os cinco casos aparecem somando as tres cadeias
-    const todos = new Set(Object.values(evidencia).flatMap((e) => (e as { casos: string[] }).casos));
+    // os cinco casos aparecem somando as tres cadeias da d1...
+    const todos = new Set(['carne', 'ouro', 'pedreira'].flatMap((n) => (evidencia[n] as { casos: string[] }).casos));
     expect([...todos].sort()).toEqual(['criacao', 'dentro', 'guarda', 'luz', 'transforma']);
+    // ...e na aldeia da d2, sozinha, no MESMO instante
+    expect([...(evidencia['aldeia'] as { casos: string[] }).casos].sort())
+      .toEqual(['criacao', 'dentro', 'guarda', 'luz', 'transforma']);
     gravarEvidencia('F-VIVO-d-saves', evidencia);
   });
 });

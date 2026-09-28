@@ -10336,3 +10336,35 @@ da adulta encolhida — escrito em `docs/BRIEF-ARTE.md`, na entrada da árvore.
 
 **Hipótese (leitura minha da captura, não medida em pixel — não há PIL na nuvem):** o tufo
 tem ~28×22 px no zoom 1. Nenhuma arte foi gerada ou mexida.
+
+## 2026-09-28 (sessão autônoma, item 2) — F-VIVO-d2: a aldeia num quadro só
+
+Plano: `docs/planos/2026-09-28-A2-F-VIVO-d2.md`. Nada em `src/` mudou: fixture, teste e
+roteiro.
+
+**Verificado:**
+- A fixture `cenarioDaAldeiaDaSerra` (`tests/helpers/producao-cenario.ts`) põe, com o
+  `canPlace` do jogador em caixas relativas à âncora da serra:
+  - a pedreira `q2` em (80,97), com rocha ao alcance;
+  - a fazenda `f2` em (83,98), com milho na saída;
+  - a Malhada `sf2` em (80,106), com milho na entrada.
+
+  Somadas à cadeia do ouro, a caixa dos cinco dá 15×12 tiles.
+- `tests/F-VIVO-d-aldeia.test.ts`: os cinco alvos (`f2`, `q2`, `me1`, `go1`, `sf2`) ficam
+  ativos no **mesmo** tick, o 480. `test-output/F-VIVO-d-saves.json` foi aberto:
+  `aldeia` traz os casos guarda, transforma, dentro, luz e criação.
+- `npm run shot -- F-VIVO-d` verde, com 4 capturas. O roteiro afirma que os cinco
+  footprints cabem inteiros na vista a 0,75 e que os cinco casos estão ativos.
+- Abri `screenshots/F-VIVO-d-4-4-aldeia.png`: pedreira em `meio_3`, fazenda com a pilha
+  de milho, metalurgia em `laco1_5`, mina em `luz_1` e Malhada com os losangos e
+  `laco1_1`, no mesmo quadro.
+
+**PARA REVISÃO:**
+- **A vitrine não é partida.** Fazenda sem campo e Malhada sem rua não se alcançam
+  jogando. A faixa mostra "Sem estrada até o armazém 3" e "Sem terra de plantio ao
+  alcance 1", que são verdade para a fixture. Ela serve ao quadro, nunca a aceite de
+  regra.
+- **Achado de arte, não mexido:** a Malhada (4×3) aparece bem menor que o lote. É a
+  tabela da F-ESC ("14 dos 22 boiam no lote").
+
+**Fecha a série F-VIVO:** 0, a, b, c, d1 e d2.

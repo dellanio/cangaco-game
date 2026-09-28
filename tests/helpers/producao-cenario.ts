@@ -938,6 +938,59 @@ export function cenarioDaCadeiaDoOuro(
   return comHistoricoDosPredios(comSerfs(s, serfs, m(-10, 21).gx, m(-10, 21).gy)); // (78,105)
 }
 
+/**
+ * F-VIVO-d2 — A ALDEIA DE VITRINE: os cinco casos do predio vivo num quadro so a 0,75.
+ *
+ * Decisao do operador (2026-09-28): *"use dois quadros, ou monte cenario de fixture
+ * com os casos juntos"*. No mapa real os cinco nao cabem num quadro (campo arado no
+ * norte, veio na serra, lajedo na vila; docs/planos/2026-09-28-6-F-VIVO-d.md). A
+ * serra tem, a 3..6 tiles da cadeia do ouro, um lajedo de rocha de verdade (x 80..87,
+ * y 91..99 hoje). Entao a vitrine e a cadeia do ouro (luz nas minas, dentro na
+ * metalurgia) MAIS tres predios no gramado em volta da rua y=105:
+ *   - uma pedreira com rocha ao alcance (transforma) — recurso no lugar dele;
+ *   - uma fazenda com milho na saida (guarda) — a pilha e semeada, o campo nao
+ *     existe ali; a fazenda nao se liga a rua, e por isso a pilha fica;
+ *   - uma Malhada com milho na entrada (criacao).
+ * Nenhum recurso sai do lugar. A POSICAO nao e digitada: e a primeira que o mesmo
+ * `canPlace` do jogador aceita, varrendo a caixa em ordem (y, depois x). A fazenda e
+ * a Malhada nao sao alcancaveis assim por partida (sem campo, sem rua), e isso e o que
+ * faz disto VITRINE: serve ao quadro do render, nunca a aceite de regra da sim.
+ */
+export function cenarioDaAldeiaDaSerra(dados: GameData = gameData): GameState {
+  let s = cenarioDaCadeiaDoOuro(dados);
+  const m = serra(dados);
+  // as caixas de busca, relativas a ancora da serra: o gramado entre o lajedo e a rua
+  // y=105 (pedreira e fazenda) e o gramado ao sul da rua, ao lado da mina de carvao
+  // (Malhada). As duas ficam dentro de ~16x12 tiles com a mina e a metalurgia, que
+  // cabem na vista de ~21x15 a 0,75.
+  const norteDaRua = { dx0: -14, dx1: 4, dy0: 12, dy1: 17 }; // x 74..92, y 96..101 hoje
+  const sulDaRua = { dx0: -8, dx1: 4, dy0: 22, dy1: 25 }; // x 80..92, y 106..109 hoje
+  type Caixa = typeof norteDaRua;
+  const colocar = (
+    estado: GameState, tipo: string, id: string, unidade: string, caixa: Caixa,
+    aceita: (candidato: GameState) => boolean,
+  ): GameState => {
+    // so para a BUSCA: destrava o tipo como se a arvore ja tivesse chegado nele
+    const def = dados.predios.find((p) => p.id === tipo);
+    const busca = def?.desbloqueadoPor ? registrarTipoConstruido(estado, def.desbloqueadoPor) : estado;
+    for (let dy = caixa.dy0; dy <= caixa.dy1; dy += 1) {
+      for (let dx = caixa.dx0; dx <= caixa.dx1; dx += 1) {
+        const t = m(dx, dy);
+        if (!canPlace(busca, tipo, t.gx, t.gy, dados).ok) continue;
+        const candidato = comProdutorOcupado(estado, { tipo, id, unidade, gx: t.gx, gy: t.gy }, dados);
+        if (aceita(candidato)) return candidato;
+      }
+    }
+    throw new Error(`fixture: '${tipo}' nao coube na caixa da aldeia da serra`);
+  };
+  s = colocar(s, 'quarry', 'q2', 'pedreiro-serra', norteDaRua, (c) => (disponivelDe(c, 'q2', dados) ?? 0) > 0);
+  s = colocar(s, 'farm', 'f2', 'roceiro-serra', norteDaRua, () => true);
+  s = colocar(s, 'swine_farm', 'sf2', 'criador-serra', sulDaRua, () => true);
+  s = comSaida(s, 'f2', { corn: 5 });
+  s = comEntrada(s, 'sf2', { corn: 5 });
+  return comHistoricoDosPredios(s);
+}
+
 /** Sem a mina de carvao: o metalurgico recebe minerio e nada mais. E o que impede
  *  o aceite de passar por uma metalurgia que fabrique ouro do nada. */
 export function cenarioDoOuroSemCarvao(dados: GameData = gameData): GameState {

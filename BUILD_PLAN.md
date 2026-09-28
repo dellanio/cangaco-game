@@ -4768,9 +4768,22 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
     O roteiro `tools/shots/F-VIVO-d.js` carrega os saves que
     `tests/F-VIVO-d-aldeia.test.ts` grava e escreve `test-output/F-VIVO-d.json`. O
     brief troca a hipótese pelo número.
-  - **F-VIVO-d2 (espera o operador):** o quadro único com os cinco. O operador
-    escolhe entre aceitar as três capturas da d1 como a "aldeia" ou dizer onde ela
-    fica. Um mapa de vitrine seria cenário novo, e por isso é decisão dele.
+  - **F-VIVO-d2 (feita, 2026-09-28, sessão autônoma):** o quadro único com os cinco.
+    - **Aceite corrigido (decisão do operador, 2026-09-28):** *"no mapa real não cabe.
+      Use dois quadros, ou monte cenário de fixture com os casos juntos."* O "uma
+      aldeia com os cinco casos" passa a ser **uma fixture de vitrine**, e não um lugar
+      do mapa. **Motivo:** no mapa os cinco moram em três lugares a 20+ tiles um do
+      outro, e a vista a 0,75 tem ~21×15.
+    - A vitrine é `cenarioDaAldeiaDaSerra` (`tests/helpers/producao-cenario.ts`): a cadeia
+      do ouro (luz, dentro), mais uma pedreira no lajedo de verdade da serra
+      (transforma), uma fazenda com milho na saída (guarda) e uma Malhada com milho na
+      entrada (criação). A posição vem do `canPlace` do jogador, e nenhum recurso sai do
+      lugar.
+    - O aceite: os cinco alvos ativos no **mesmo** tick (teste), os cinco footprints
+      inteiros na vista a 0,75 e os cinco casos publicados (roteiro, 4ª captura).
+    - **A vitrine não é partida:** fazenda sem campo e Malhada sem rua não se alcançam
+      jogando, e a faixa mostra os alertas disso. Ela serve ao quadro do render, nunca a
+      aceite de regra da sim.
 
 ---
 
