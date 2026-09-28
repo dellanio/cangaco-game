@@ -5273,6 +5273,12 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
   Feed existir, este predicado é o único lugar a mudar"), e o comando `Feed` não existe.
   **Pré-requisito:** fome militar mais o `Feed` (F27/F28), que é item novo, fora da fila
   de hoje.
+- **Ponto 6 ENTREGUE (2026-09-28, sessão autônoma).**
+  - "Homens suficientes" = um grupo cheio (`tamanhoDoGrupo`, 9) de militares ociosos fora
+    das posições (PARA REVISÃO).
+  - Todos recebem a ordem de ataque ao prédio de outro lado mais perto do centro deles.
+    Caído o prédio, eles ficam ociosos e, se ainda forem 9, atacam o próximo.
+  - Teste: `tests/F28-IA-ataque.test.ts`.
 
 ### F28b — Torre de Pedra: o recruta atira pedra de cima (sim + render)
 - **ENTREGUE (2026-09-28, sessão autônoma; plano em `docs/planos/2026-09-28-A11-F28b-torre.md`).**

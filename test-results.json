@@ -284,6 +284,9 @@
   "F28-IA-ponto-5-alimentar": {
     "passes": false
   },
+  "F28-IA-ponto-6-ataque": {
+    "passes": true
+  },
   "F-TR-a-textura-e-transicao": {
     "passes": true
   },

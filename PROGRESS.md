@@ -10922,3 +10922,29 @@ famintos" não tem onde agir.
 - **O tipo formado é o primeiro do dado** (o mais barato: miliciano, arqueiro). No KaM a
   IA escolhe pelo que a missão manda.
 - **Um soldado por posição por tick**, sem tempo de treino (o da F25a).
+
+## 2026-09-28 (sessão autônoma, item 15) — F28-IA, ponto 6: o ataque repetido
+
+**Verificado:**
+- `atacarComASobra` (`systems/ia.ts`):
+  - os militares ociosos do lado que não são membros de posição formam a força de
+    ataque;
+  - com 9 ou mais (`tamanhoDoGrupo`), todos recebem o estado do `AttackBuilding` contra o
+    prédio de outro lado mais perto do centro deles (euclidiano ao tile mais perto do
+    footprint; no empate, `predios.ordem`);
+  - caído o prédio, eles ficam ociosos e o tick seguinte repete.
+- `tests/F28-IA-ataque.test.ts`, 4 testes, verdes:
+  - 9 livres derrubam a escola do jogador (a mais perto) e depois o armazém, em 3000
+    ticks (`test-output/F28-IA-ataque.json`);
+  - 8 livres não atacam;
+  - 9 que viram membros de posição não atacam;
+  - determinismo.
+- **Sonda:** com o limiar em 8, o teste dos 8 reprova. Restaurada.
+
+**PARA REVISÃO:**
+- **"Suficientes" = 9, o tamanho do grupo.** O KaM usa o número da missão. É o único
+  número à mão sem inventar outro.
+- **O alvo é o prédio mais perto do grupo**, de qualquer tipo, sem prioridade (quartel,
+  armazém). O KaM tem modos de alvo.
+- **A defesa vem antes do ataque:** a sobra só existe depois de todas as posições
+  estarem cheias.

@@ -19,6 +19,8 @@
  */
 import type { GameEvent, GameState, IADoLado, PosicaoDeDefesa, Unidade } from '../state';
 import { ehQuartelCompleto, motivoDaRecusaDeSoldado } from '../quartel';
+import { caixaDoPredio } from '../footprint';
+import { FSM_INDO_ATACAR } from './cerco';
 import { aplicarTrainSoldier } from './quartel';
 import type { ResultadoDeSistema } from './jobs';
 import type { GameData } from '../data/types';
@@ -138,6 +140,41 @@ function reporPeloQuartel(
   return { state: atual, events };
 }
 
+/**
+ * F28-IA, ponto 6 — o ATAQUE repetido. Os militares ociosos do lado que NAO sao membros
+ * de posicao (a sobra depois do `guarnecer`) sao a forca de ataque. Com
+ * `tamanhoDoGrupo` (9) ou mais deles, todos recebem a mesma ordem de ataque ao predio
+ * de OUTRO lado mais perto do centro deles (distancia euclidiana ao tile mais perto do
+ * footprint; no empate, a ordem de `predios.ordem`). E o estado do `AttackBuilding` do
+ * jogador, dado pela IA. Caido o predio, eles voltam a ociosos, e no tick seguinte,
+ * se ainda forem 9, atacam o proximo: e isso o "repetido".
+ */
+function atacarComASobra(state: GameState, lado: number, ia: IADoLado, dados: GameData): GameState {
+  const livres = state.unidades.ordem
+    .map((id) => state.unidades.porId[id])
+    .filter((u): u is Unidade => u !== undefined && u.lado === lado && u.fsm === 'ocioso'
+      && classeDaUnidade(u.tipo, dados) === 'militar' && posicaoDoMembro(ia.posicoes, u.id) === null);
+  if (livres.length < dados.combate.ia.tamanhoDoGrupo) return state;
+  const centro = {
+    gx: Math.round(livres.reduce((s, u) => s + u.gx, 0) / livres.length),
+    gy: Math.round(livres.reduce((s, u) => s + u.gy, 0) / livres.length),
+  };
+  let alvo: { id: string; d: number } | null = null;
+  for (const id of state.predios.ordem) {
+    const p = state.predios.porId[id];
+    if (p === undefined || p.lado === lado) continue;
+    const c = caixaDoPredio(p, dados);
+    if (c === null) continue;
+    const perto = { gx: Math.min(Math.max(centro.gx, c.x0), c.x1 - 1), gy: Math.min(Math.max(centro.gy, c.y0), c.y1 - 1) };
+    const d = distanciaEmTiles(centro, perto);
+    if (alvo === null || d < alvo.d) alvo = { id, d };
+  }
+  if (alvo === null) return state;
+  let atual = state;
+  for (const u of livres) atual = comUnidade(atual, { ...u, fsm: FSM_INDO_ATACAR, fsmData: { alvo: alvo.id } });
+  return atual;
+}
+
 export function sistemaDaIA(state: GameState, dados: GameData): ResultadoDeSistema {
   if (state.ia === undefined) return { state, events: [] };
   let atual = state;
@@ -152,6 +189,7 @@ export function sistemaDaIA(state: GameState, dados: GameData): ResultadoDeSiste
     const reposto = reporPeloQuartel(atual, lado, guarnecida, dados);
     atual = reposto.state;
     events.push(...reposto.events);
+    atual = atacarComASobra(atual, lado, guarnecida, dados);
   }
   return { state: atual, events };
 }
