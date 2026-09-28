@@ -25,6 +25,7 @@ if (RECEITA === null || RECEITA.colheita === null) {
 }
 const RECEITA_OK: ReceitaDePredio = RECEITA;
 const NO_TILE = RECEITA.colheita.ticksNoTile;
+const DESCANSO = RECEITA.colheita.ticksDeDescanso;
 const CICLO = RECEITA.ticksDoCiclo;
 const JANELA = 12000;
 
@@ -41,11 +42,11 @@ const progressoDe = (s: GameState): number | null => {
 const produziu = (s: GameState): boolean =>
   s.events.some((e) => e.type === 'goods-produced' && e.predio === 'c1');
 
-/** O modelo de ANTES: o ciclo inteiro no tile. So o dado muda; o codigo e o mesmo. */
+/** O modelo de ANTES: o ciclo inteiro no tile, sem descanso. So o dado muda; o codigo e o mesmo. */
 function modeloDeAntes(dados: GameData): GameData {
   const colheita = RECEITA_OK.colheita;
   if (colheita === null) throw new Error('fixture');
-  const receita: ReceitaDePredio = { ...RECEITA_OK, colheita: { ...colheita, ticksNoTile: CICLO } };
+  const receita: ReceitaDePredio = { ...RECEITA_OK, colheita: { ...colheita, ticksDeDescanso: 0, ticksNoTile: CICLO } };
   return {
     ...dados,
     producao: { ...dados.producao, receitas: { ...dados.producao.receitas, wineyard: receita } },
@@ -102,8 +103,9 @@ describe('LOTE3-b1 — o canavieiro colhe no tile e trabalha na casa', () => {
     expect(colhendo).toBe(NO_TILE);
     // o tick da CHEGADA e gasto entrando (o relogio anda a partir do seguinte), e o
     // do deposito conta como dentro: 1 tick a mais por ciclo que o modelo de antes,
-    // em que a chegada ja era o deposito
-    expect(dentro).toBe(CICLO - NO_TILE + 1);
+    // em que a chegada ja era o deposito. O descanso (LOTE3-b2) abre o ciclo
+    // seguinte, antes da saida, e nao entra nesta conta
+    expect(dentro).toBe(CICLO - DESCANSO - NO_TILE + 1);
   }, 60000);
 
   it('dentro da casa ele segura a MESMA tarefa e nao consome tile ate o deposito', () => {

@@ -247,5 +247,8 @@
   },
   "LOTE3-b1-canavial-em-fases": {
     "passes": true
+  },
+  "LOTE3-b2-quatro-em-fases": {
+    "passes": true
   }
 }

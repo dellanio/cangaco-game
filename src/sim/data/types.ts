@@ -80,9 +80,12 @@ export interface ColheitaDeRecurso {
    *  dentro e o deposito consome o tile, como a mina do jogo original. Regra de
    *  classe, nao de tipo: qualquer receita com `colheita` pode declarar. */
   readonly aDistancia: boolean;
-  /** LOTE3 — os ticks do ciclo que correm NO TILE (`colhendo`); o resto, ate
-   *  `ReceitaDePredio.ticksDoCiclo`, corre dentro do predio. Receita sem `fases` no
-   *  dado: e o ciclo inteiro, o comportamento de antes. */
+  /** LOTE3 — o ciclo em fases, na ordem: `ticksDeDescanso` dentro do predio (o
+   *  descanso do KaM, que vem DEPOIS da entrega — aqui, no comeco do ciclo seguinte),
+   *  `ticksNoTile` no tile (`colhendo`) e o resto, ate `ReceitaDePredio.ticksDoCiclo`,
+   *  de volta dentro do predio (o trabalho na casa; zero para quem volta e deposita).
+   *  Receita sem `fases` no dado: descanso 0 e o ciclo inteiro no tile, como antes. */
+  readonly ticksDeDescanso: Ticks;
   readonly ticksNoTile: Ticks;
 }
 export type ProducaoReceitas = Readonly<Record<string, ReceitaDePredio>>;

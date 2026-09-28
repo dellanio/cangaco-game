@@ -182,8 +182,15 @@ describe('F15a — aceite headless do BUILD_PLAN', () => {
     //    EXATO (era "trabalhando", uma entre seis possibilidades hoje) e o
     //    `saida_cheia` passou a ser contado em TODOS os ticks, que e o que a
     //    clausula sempre quis dizer e o `progresso < CICLO` so insinuava.
-    expect(pedreiro?.fsm).toBe('voltando');
-    expect(quarry?.producao?.progresso ?? 0).toBe(CICLO);
+    // LOTE3-b2: o pedreiro trabalha DENTRO da casa depois do tile (as fases do KaM).
+    // Os depositos nao mudaram (549, 815, 1081, medido), e no tick 1300 ele esta na
+    // fase da casa: `trabalhando`, com o relogio ja depois do descanso e do tile e
+    // antes do ciclo pronto (medido: 121 de 167).
+    const colheita = gameData.producao.receitas.quarry?.colheita;
+    const fimDoTile = (colheita?.ticksDeDescanso ?? 0) + (colheita?.ticksNoTile ?? 0);
+    expect(pedreiro?.fsm).toBe('trabalhando');
+    expect(quarry?.producao?.progresso ?? 0).toBeGreaterThan(fimDoTile);
+    expect(quarry?.producao?.progresso ?? 0).toBeLessThan(CICLO);
     expect(r.saidaCheia).toBe(0);
 
     // 6. as invariantes dos dois quadros, tick a tick — agora SEM excecao

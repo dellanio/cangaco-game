@@ -81,11 +81,13 @@ function tarefaDe(estado: GameState, unidadeId: string): TarefaColher {
  */
 function emCampo(estado: GameState): GameState {
   let s = estado;
-  for (let i = 1; i <= 60; i += 1) {
+  // LOTE3-b2: o ciclo abre com o descanso dentro do predio, antes da ida
+  const limite = 60 + (DADOS.producao.receitas.quarry?.colheita?.ticksDeDescanso ?? 0);
+  for (let i = 1; i <= limite; i += 1) {
     s = step(s, [], DADOS);
     if (fsmDe(s, 'u1') === 'indo_colher' && distanciaAoPredio(s, 'u1', 'q1') > 1) return s;
   }
-  throw new Error('fixture: o pedreiro nao chegou a sair da porta em 60 ticks');
+  throw new Error(`fixture: o pedreiro nao chegou a sair da porta em ${limite} ticks`);
 }
 
 /** Troca a FSM de uma unidade a mao — para os testes que provam que o guarda acusa. */

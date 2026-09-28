@@ -3948,12 +3948,47 @@ Casos 2 e 4 do prédio vivo (`docs/BRIEF-ARTE.md` §4a). Decisão do operador: c
     - a vazão igual ±1 contra o modelo de antes em 12 000 ticks;
     - pausa, demolição e saída cheia na fase da casa;
     - `validate:data` com `producao/fases` e `producao/sai-conferido`, provadas acusando.
-- **LOTE3-b2 — os outros quatro (`quarry`, `woodcutters`, `farm`, `fishermans`), em
-  lote.**
-  - Mover o tempo para os números do KaM.
-  - Decidir se `sai` é reescrito para o valor entregue medido.
-  - Recalcular o 1:1:1 (`proporcoesDeReferencia`).
-  - É balanceamento (§12) e espera o operador.
+- **LOTE3-b2 — os outros quatro (`quarry`, `woodcutters`, `farm`, `fishermans`) em
+  fases, pelo caminho do Canavial. ENTREGUE (2026-09-27, noite 12).**
+  - **Decisão do operador (2026-09-27):**
+    - a PROPORÇÃO vem do KaM, e não o valor absoluto:
+      - fazendeiro 96 no tile e 0 na casa;
+      - pedreiro 80 e ~190;
+      - lenhador 180 e 0;
+      - pescador 328 e 0;
+      - descanso 50 em todos.
+    - Só o pedreiro e o vinhateiro trabalham dentro da casa. Os outros três voltam e
+      depositam.
+    - O TOTAL de cada um fica o de antes, para a vazão não mudar.
+    - O que muda o total é decisão do operador, depois de ver as fases no lugar.
+  - **Números** (segundos na escala 1,0 → ticks na escala 2,0):
+
+    | receita | tile | casa | descanso | total |
+    |---|---|---|---|---|
+    | quarry | 8,4 → 42 | 19,8 → 99 | 5,2 → 26 | 167 |
+    | woodcutters | 66,2 → 331 | 0 | 18,4 → 92 | 423 |
+    | farm | 19,8 → 99 | 0 | 10,2 → 51 | 150 |
+    | fishermans | 52 → 260 | 0 | 8 → 40 | 300 |
+
+    - `porViagem` 1 em todos. Os 3 por viagem do pedreiro do KaM são absolutos e esperam
+      o operador.
+  - **A ordem do ciclo mudou (decisão desta sessão):** o descanso do KaM vem DEPOIS da
+    entrega. Aqui ele abre o ciclo seguinte, dentro do prédio e com a tarefa do tile já
+    reclamada: descanso → ida → tile → volta → casa (só no pedreiro e no vinhateiro) →
+    depósito.
+    - Motivo: "voltam e depositam" não cabe com o descanso entre a volta e o depósito,
+      como estava no b1.
+    - A vazão é a mesma. Só o primeiro ciclo da partida ganha um descanso a mais.
+    - Campo novo: `ColheitaDeRecurso.ticksDeDescanso` (0 sem `fases`).
+  - Aceite: `tests/LOTE3-fases-quatro.test.ts`, com os quatro:
+    - forma do dado;
+    - um ciclo limpo com descanso = `ticksDeDescanso`, `colhendo` = `ticksNoTile`, e
+      dentro depois da volta = casa + 1 (1 nos três que depositam na chegada);
+    - vazão ±1 contra o modelo de antes em 6 000 ticks.
+    - Prova de que acusa: saindo no progresso 0 (sem descanso), 5 casos reprovam
+      (os quatro e o Canavial).
+  - **Aberto, decisão do operador:** girar os totais. A vazão por prédio e a razão N:1
+    ficam em `test-output/LOTE3-fases-quatro.json`.
 - **Método, registrado:** o custo de um campo se mede COMPILANDO, não por busca de texto.
   - A contagem por texto dizia "5 sim, 2 render, 13 testes" para `ticksDoCiclo` e
     errava nos dois sentidos: `trabalho.ts` não quebra (lê o `DadosDoTrabalho`
@@ -4279,6 +4314,13 @@ leem `GameState`: **nenhum toca em `sim/`**.
     dentro da casa (`trabalhando`). Com isso a prensa já anima quase só com ele dentro.
   - Animar SÓ na fase da casa pede que o render leia `ticksNoTile`. Fica para quando o
     Codex quiser.
+- **Nota para o render (LOTE3-b2, 2026-09-27):** a ordem do ciclo agora é
+  `colheita.ticksDeDescanso` dentro do prédio (`trabalhando`, a tarefa já reclamada),
+  depois `ticksNoTile` no tile, e o resto até `ticksDoCiclo` dentro da casa.
+  - O resto é zero na fazenda, no lenhador e no pescador.
+  - Quarry, farm, woodcutters e fishermans também têm fases agora.
+  - O relógio de 0 a `ticksDoCiclo` que o render lê não mudou de sentido.
+  - Animar só a casa é `ticksDeDescanso + ticksNoTile` a `ticksDoCiclo`.
 
 **Aceite da F-VIVO-c (os animais).**
 - `animaisDoCurral(predio, dados)` é pura e devolve 5 posições, com a idade de 1 a 3

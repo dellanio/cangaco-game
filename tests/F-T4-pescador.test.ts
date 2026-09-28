@@ -126,7 +126,9 @@ describe('F-T4a — (a) o pescador anda ate a margem e pesca de la', () => {
   const emCampo = trilha.filter((p) => p.fsm === 'colhendo');
 
   it('sai, pesca e volta, nessa ordem', () => {
-    expect(sequencia(trilha)).toEqual(['indo_colher', 'colhendo', 'voltando', 'trabalhando']);
+    // LOTE3-b2: o ciclo abre com o descanso DENTRO do predio (`trabalhando`); o
+    // ultimo `trabalhando` e o tick do deposito, sem trabalho na casa
+    expect(sequencia(trilha)).toEqual(['trabalhando', 'indo_colher', 'colhendo', 'voltando', 'trabalhando']);
   });
 
   it('anda um tile por passo, sem salto, e sai da porta', () => {

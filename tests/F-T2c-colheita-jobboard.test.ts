@@ -290,8 +290,18 @@ describe('F-T2c — o tile volta ao conjunto livre em todo ramo de saida', () =>
    */
   const DESPAUSAR_ATE_RECLAMAR = 3;
 
+  /** LOTE3-b2 — o ciclo abre com o descanso DENTRO (a tarefa ja reclamada), e a
+   *  pausa no tick 1 pegaria o pedreiro la dentro, sem volta nenhuma. O caso deste
+   *  teste e o da pausa com ele SAINDO: anda ate o tick da transicao, na porta. */
+  const ateSair = (): GameState => {
+    let s = comTarefas();
+    for (let i = 0; i < 200 && fsmDe(s, 'pedreiro-1') !== 'indo_colher'; i++) s = step(s, [], DADOS);
+    if (fsmDe(s, 'pedreiro-1') !== 'indo_colher') throw new Error('fixture: pedreiro-1 nunca saiu');
+    return s;
+  };
+
   it('predio pausado devolve o tile, e despausado reclama de novo depois da volta', () => {
-    const s = comTarefas();
+    const s = ateSair();
     const pausado = step(s, [{ type: 'SetBuildingPaused', predio: 'q1', pausado: true }], DADOS);
     expect(tilesEmTarefa(pausado)).toHaveLength(1);
     let voltou = step(pausado, [{ type: 'SetBuildingPaused', predio: 'q1', pausado: false }], DADOS);
@@ -302,7 +312,8 @@ describe('F-T2c — o tile volta ao conjunto livre em todo ramo de saida', () =>
     }
     // a volta primeiro, o claim depois: nos dois ticks da volta so q2 segura tile
     expect(porTick).toEqual([1, 1, 2]);
-    expect(fsmDe(voltou, 'pedreiro-1')).toBe('indo_colher');
+    // LOTE3-b2: reclamou, e o ciclo novo abre com o descanso dentro, antes da ida
+    expect(fsmDe(voltou, 'pedreiro-1')).toBe('trabalhando');
     expect(new Set(tilesEmTarefa(voltou)).size).toBe(2);
   });
 

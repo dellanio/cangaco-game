@@ -118,7 +118,9 @@ describe('F-T3 — o ciclo em campo da pedreira', () => {
   const emCampo = trilha.filter((p) => p.fsm === 'colhendo');
 
   it('sai, colhe no tile e volta, nessa ordem', () => {
-    expect(sequencia(trilha)).toEqual(['indo_colher', 'colhendo', 'voltando', 'trabalhando']);
+    // LOTE3-b2: o ciclo abre com o descanso DENTRO do predio (`trabalhando`), e o
+    // pedreiro volta do tile para trabalhar na casa (as fases do KaM)
+    expect(sequencia(trilha)).toEqual(['trabalhando', 'indo_colher', 'colhendo', 'voltando', 'trabalhando']);
   });
 
   it('anda um tile por passo, sem salto, e sai da porta', () => {

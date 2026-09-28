@@ -9301,3 +9301,83 @@ ativa. Uma corrida isolada limpa não prova a causa.
   na F-VIVO.
 - **Arquivos que não são meus:** apareceram em `assets/base/schoolhouse/` quatro PNGs
   não rastreados (`schoolhouse_07..10`). Não foram tocados nem commitados.
+
+## 2026-09-27 (noite, 12) — LOTE3-b2: pedreiro, lenhador, fazendeiro e pescador em fases
+
+**Decisão do operador:**
+- **Pausa no meio do ciclo:** é característica, não bug. Está registrada no BALANCE_LOG.
+  - A premissa dele era "perde 1 unidade". A medida diz outra coisa (abaixo).
+- **Os PNGs `assets/base/schoolhouse/schoolhouse_07..10` são do Codex.** São variantes
+  de azimute da Casa do Coronel. Não foram tocados nem commitados.
+- **b2:** a proporção vem do KaM e o total fica o de antes.
+  - Só o pedreiro e o vinhateiro trabalham na casa.
+  - Girar o total é decisão dele, depois de ver as fases no lugar.
+
+**Feito (verificado):**
+- **Dado:** `colheita.fases` nos quatro, com uma frase de fonte na nota de cada um.
+  - quarry: 8,4 / 19,8 / 5,2 s (42 / 99 / 26 ticks);
+  - woodcutters: 66,2 / 0 / 18,4 s (331 / 0 / 92);
+  - farm: 19,8 / 0 / 10,2 s (99 / 0 / 51);
+  - fishermans: 52 / 0 / 8 s (260 / 0 / 40).
+  - Os totais 167 / 423 / 150 / 300 são os de antes.
+  - Doze linhas novas em `CAMPOS_ESCALONADOS`.
+- **Sim:**
+  - `ColheitaDeRecurso.ticksDeDescanso`. É 0 sem `fases`, e aí o ciclo inteiro fica no
+    tile, como antes.
+  - O especialista sai quando `progresso === ticksDeDescanso`, em vez de 0.
+  - `passoColhendo` para em `descanso + ticksNoTile`.
+  - O carregador não registra a fase zero como conversão. Um zero é fase ausente, e
+    a F03 exige que toda conversão dê ≥ 1 tick.
+  - Zero linha de render.
+- **Decisão desta sessão — a ordem do ciclo:** o descanso abre o ciclo, dentro, com a
+  tarefa do tile já reclamada. Depois vêm ida, tile, volta, casa (quarry e wineyard) e
+  depósito.
+  - Motivo: "os outros três voltam e depositam" contradiz o b1, que punha o descanso
+    entre a volta e o depósito.
+  - A vazão é a mesma. Só o primeiro ciclo da partida ganha um descanso.
+  - Efeito colateral: o tile fica reservado durante o descanso. Isso é consistente
+    com a regra do b1 (reserva até o depósito).
+- **Teste novo** `tests/LOTE3-fases-quatro.test.ts`, 13 casos:
+  - forma do dado;
+  - um ciclo limpo por prédio: descanso = `ticksDeDescanso`, `colhendo` = `ticksNoTile`,
+    dentro depois da volta = casa + 1;
+  - vazão ±1 contra o modelo de antes em 6 000 ticks;
+  - evidência em `test-output/LOTE3-fases-quatro.json`.
+  - **Prova de que acusa:** saindo no progresso 0, reprovam os quatro casos de fase e o
+    do Canavial. O arquivo foi restaurado da cópia.
+- **Guardas desatualizadas, corrigidas no mesmo sentido.** Os depósitos da pedreira não
+  mudaram (549 / 815 / 1081, intervalo 266, medido). Mudou só ONDE ele está entre um
+  depósito e outro:
+  - `F15a-receita`: a forma da `colheita` ganhou `ticksDeDescanso`, `ticksNoTile` 42 e
+    331.
+  - `F15a-producao`: no tick antes do depósito, o relógio está em ciclo − 1 e ele em
+    `trabalhando` (antes: ciclo cheio e `voltando`).
+  - `F15a-aceite`: no tick 1300 ele está na fase da casa, `trabalhando`, com o
+    progresso entre descanso + tile e o ciclo (medido 121 de 167). Antes era
+    `voltando` com o ciclo cheio.
+  - `F-T3-ciclo-em-campo` e `F-T4-pescador`: a sequência ganhou o `trabalhando` do
+    descanso na frente.
+  - `F-T3-ocupado-mas-fora`: o limite de `emCampo` soma o descanso.
+  - `F16c-pausar`: `NA_METADE` soma o descanso, e o progresso na pausa é descanso + 3.
+  - `F-T2c`: a pausa passou para o tick da saída (`ateSair`), o caso que o teste
+    descreve. No tick 1, com o descanso, ele estaria dentro, sem volta. Depois do
+    re-claim ele descansa (`trabalhando`, antes `indo_colher`).
+  - `LOTE3-fases-canavial`: o modelo de antes tem descanso 0, e o "dentro depois da
+    volta" é 411 (casa + 1).
+- **Pausa (medida):** nenhuma unidade se perde.
+  - Pausado na casa: o relógio congela, o tile não foi consumido, e ao despausar ele
+    deposita 1 e o mapa perde 1.
+  - Pausado no campo: o relógio zera (F16c), e perde o descanso e o tempo de tile já
+    feitos.
+- **Razões** (12 000 ticks), iguais antes e depois:
+  - farm 46 / 16 = 2,875;
+  - fishermans 26 / 20 = 1,3;
+  - Canavial 1,5.
+  - Pedreira 46 e lenhador 18, sem cenário de um tile.
+- **`npm run verify`:** passou de primeira. 1579 testes, e 1578 + 4 pulados na
+  transladada (o filtro `FORA_DO_MUNDO_TRANSLADADO`).
+
+**Aberto:**
+- **Girar os totais:** decisão do operador, com a tabela no BALANCE_LOG.
+- **Os 3 por viagem do pedreiro do KaM:** absoluto, espera o operador.
+- **Render:** a nota da F-VIVO foi atualizada com `ticksDeDescanso` e a ordem nova.

@@ -15,11 +15,14 @@
  * Predio sem `colheita` (padaria, moinho) nunca entra no desvio — a diferenca vem
  * do DADO.
  *
- * LOTE3 — a receita com `fases` no dado (o Canavial) tem trabalho DENTRO da casa,
- * como o KaM: `ticksNoTile` e so parte do ciclo, e na volta ele entra com a tarefa
- * na mao e o resto do relogio anda em `trabalhando`, ate o deposito — o tile so e
- * consumido ali, como na mina `aDistancia`. Sem `fases`, `ticksNoTile` e o ciclo
- * inteiro e ele chega com o ciclo pronto, como antes.
+ * LOTE3 — a receita com `fases` no dado tem o ciclo do KaM, na ordem:
+ *   descanso (dentro, `trabalhando`) -> sai -> `ticksNoTile` no tile -> volta ->
+ *   trabalho na casa (dentro, `trabalhando`; so pedreira e Canavial tem) -> deposito.
+ * O descanso do KaM vem DEPOIS da entrega; aqui ele abre o ciclo seguinte, que e o
+ * mesmo intervalo, e quem nao trabalha na casa VOLTA E DEPOSITA na chegada. A tarefa
+ * do tile fica na mao do especialista ate o deposito, e o tile so e consumido ali,
+ * como na mina `aDistancia`. Sem `fases`: descanso 0, `ticksNoTile` = o ciclo
+ * inteiro, e tudo e como antes.
  *
  * O GDD chama o primeiro estado de `sem_predio`; aqui ele e `ocioso`, o mesmo de
  * toda unidade recem-nascida (`systems/escolas.ts`) e o que
@@ -537,7 +540,12 @@ function produzir(state: GameState, u: Unidade, predioAntes: PredioCompleto, dad
   // 2026-09-26 (operador) — `colheita.aDistancia` fica DENTRO: nao ha viagem, o
   // relogio anda no predio abaixo e o `depositar` consome o tile da tarefa, que
   // segue reclamada — o esgotamento, o alerta e a previa de alcance nao mudam.
-  if (tarefa !== null && prod.progresso === 0 && receita.colheita?.aDistancia !== true) {
+  //
+  // LOTE3 — ele sai quando o DESCANSO acaba (`ticksDeDescanso`; 0 sem `fases`). O
+  // descanso anda no ramo de dentro, abaixo. `fases` proibe `entra` (carregador e
+  // validate:data), entao o insumo nunca e cobrado duas vezes, no 0 e na saida.
+  if (tarefa !== null && receita.colheita !== null && !receita.colheita.aDistancia
+    && prod.progresso === receita.colheita.ticksDeDescanso) {
     const caminho = caminhoAteAproximacaoDoTile(base, tarefa.origemTile, u.id, dados);
     if (caminho === null) {
       const l = liberar(base, tarefa.id, 'caminho-cortado');
@@ -697,8 +705,8 @@ function passoIndoColher(state: GameState, u: Unidade, dados: GameData): Passo {
 }
 
 /** No tile: o relogio do CICLO anda aqui, e e o mesmo relogio de sempre
- *  (`predio.producao.progresso`), ate `colheita.ticksNoTile` — o ciclo inteiro, ou
- *  so a parte do tile quando a receita tem `fases` (LOTE3). */
+ *  (`predio.producao.progresso`), ate o fim da fase do tile — descanso + no tile
+ *  (LOTE3). Sem `fases`, e o ciclo inteiro. */
 function passoColhendo(state: GameState, u: Unidade, dados: GameData): Passo {
   const s = situacaoEmCampo(state, u);
   if (s.tipo === 'perdeu-o-predio') return largarOPredioPerdido(state, u);
@@ -713,7 +721,10 @@ function passoColhendo(state: GameState, u: Unidade, dados: GameData): Passo {
   const progresso = prod.progresso + 1;
   const avancado: PredioCompleto = { ...predio, producao: { ...prod, progresso, plantio: null } };
   const comRelogio = comPredio(state, avancado);
-  if (progresso < (receita.colheita?.ticksNoTile ?? receita.ticksDoCiclo)) return semEventos(comRelogio);
+  const fimDoTile = receita.colheita === null
+    ? receita.ticksDoCiclo
+    : receita.colheita.ticksDeDescanso + receita.colheita.ticksNoTile;
+  if (progresso < fimDoTile) return semEventos(comRelogio);
   return voltar(comRelogio, u, avancado, tarefa, dados);
 }
 
@@ -748,7 +759,7 @@ function passoVoltando(state: GameState, u: Unidade, dados: GameData): Passo {
   }
   // LOTE3 — o ciclo tem trabalho DENTRO da casa: ele entra com a tarefa na mao (o
   // tile so e consumido no deposito, como na mina `aDistancia`) e o `produzir` anda
-  // o resto do relogio. Receita sem `fases`: chegou com o ciclo pronto, deposita.
+  // o resto do relogio. Sem trabalho na casa: chegou com o ciclo pronto, deposita.
   if ((predio.producao?.progresso ?? 0) < receita.ticksDoCiclo) {
     return semEventos(comUnidade(state, { ...andou, fsm: 'trabalhando', fsmData: {} }));
   }

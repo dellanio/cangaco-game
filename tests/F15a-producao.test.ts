@@ -170,7 +170,10 @@ describe('F15a — o especialista produz', () => {
   it(`pedreira ocupada e ligada deposita 1 stone a cada ${INTERVALO} ticks`, () => {
     let s = avancar(cenarioDePedreira(), INTERVALO - 1);
     expect(saidaDe(s, 'q1').stone ?? 0).toBe(0);
-    expect(progressoDe(s, 'q1')).toBe(receita('quarry').ticksDoCiclo);
+    // LOTE3-b2: o ultimo tick do ciclo e DENTRO da casa (o pedreiro do KaM trabalha
+    // la), e nao mais voltando com o ciclo pronto: falta um tick, e ele esta la dentro
+    expect(progressoDe(s, 'q1')).toBe(receita('quarry').ticksDoCiclo - 1);
+    expect(s.unidades.porId.u1?.fsm).toBe('trabalhando');
     s = avancar(s, 1);
     expect(saidaDe(s, 'q1').stone).toBe(1);
     for (const n of [2, 3, 4]) {

@@ -174,6 +174,55 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
         Não apareceu na vazão.
       - `wineyard.sai.wine` 0,5 agora é **conferido**. A regra `producao/sai-conferido`
         reprova 0,6 contra as fases de 120 s (provado no dado real e revertido).
+    - **Pausa no meio do ciclo: CARACTERÍSTICA, não bug (operador, 2026-09-27).** Quem
+      pausa no meio do ciclo paga por isso, o que é coerente com a F16c cancelar a
+      colheita. Fica medido aqui para o caso de alguém reclamar jogando.
+      - **A premissa "perde 1 unidade" NÃO se confirmou.** Nenhuma unidade se perde.
+      - **Medido** (`tests/LOTE3-fases-canavial.test.ts`, caso da pausa): com a pausa na
+        fase da casa, o relógio congela e a F16c cancela a tarefa do tile. O tile ainda
+        não foi consumido, porque o consumo é só no depósito. Ao despausar, o relógio
+        continua de onde parou, ele reclama um tile e deposita: o mapa perde
+        exatamente 1 cana e sai exatamente 1 cachaça.
+      - **Medido** (`tests/F16c-pausar.test.ts`, caso 1): com a pausa na fase do CAMPO,
+        o relógio zera e ele volta de mãos vazias (`voltarSemTarefa`). Com o b2, isso
+        perde também o descanso, que abre o ciclo. O ciclo seguinte é inteiro.
+      - O que o jogador paga, então: o tempo pausado, mais, se pausou no campo, o
+        descanso e o tempo no tile já feitos. Não paga matéria-prima nem produto.
+    - **LOTE3-b2 ENTREGUE (2026-09-27, noite 12).** Pedreiro, lenhador, fazendeiro e
+      pescador em fases. A proporção vem do KaM e o total é o de antes (decisão do
+      operador).
+      - A conta: a fração do KaM × o total de hoje, em segundos na escala 1,0. A fonte
+        dos números do KaM está na REFERÊNCIA acima. O pescador usa a linha do
+        `reyandme` (13 + 10 × 30 + 15 = 328).
+
+        | receita | KaM tile : casa : descanso | aqui, ticks (escala 2,0) | total |
+        |---|---|---|---|
+        | quarry | 80 : ~190 : 50 | 42 : 99 : 26 | 167 |
+        | woodcutters | 180 : 0 : 50 | 331 : 0 : 92 | 423 |
+        | farm | 96 : 0 : 50 | 99 : 0 : 51 | 150 |
+        | fishermans | 328 : 0 : 50 | 260 : 0 : 40 | 300 |
+
+      - **Ordem do ciclo:** o descanso abre o ciclo (dentro, com o tile já reclamado).
+        No KaM ele vem depois da entrega. A vazão é a mesma. Só o primeiro ciclo da
+        partida ganha um descanso a mais.
+      - **Medido** (`test-output/LOTE3-fases-quatro.json`, 12 000 ticks, gaveta
+        esvaziada). A vazão é igual ao modelo de antes em todos:
+
+        | receita | em fases | de antes | razão N:1 em fases | de antes |
+        |---|---|---|---|---|
+        | quarry | 46 | 46 | — | — |
+        | woodcutters | 18 | 18 | — | — |
+        | farm | 46 | 46 | 46 / 16 = 2,875 | 2,875 |
+        | fishermans | 26 | 26 | 26 / 20 = 1,3 | 1,3 |
+
+        - A razão N:1 só existe onde há cenário de um tile (fazenda, pescador). Na
+          pedreira e no lenhador, o recurso de um tile acaba e a razão mediria o
+          esgotamento, não o modelo.
+      - **O b2 também não move a razão, e isso é por construção.** Com o total mantido,
+        o tempo do trabalhador por unidade não muda. O que o b2 entrega é a
+        repartição no lugar: daqui em diante, girar o total de um prédio mexe só nele.
+        Os totais esperam o operador.
+      - Os 3 por viagem do pedreiro do KaM são absolutos e esperam o operador.
 
 - [2026-09-24] o terreno passou a existir (F-T1) e viagem deixou de ser linha reta | medido: a
   travessia de 36 tiles ao redor do lago custa **292 ticks** contra **252** no mesmo trajeto sem

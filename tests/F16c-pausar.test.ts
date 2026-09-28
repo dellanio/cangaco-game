@@ -134,8 +134,10 @@ const CICLO_DA_PEDREIRA = gameData.producao.receitas.quarry?.ticksDoCiclo ?? 0;
 const IDA_ATE_O_TILE = 50;
 const VOLTA_DO_TILE = 49;
 const INTERVALO_DA_PEDREIRA = IDA_ATE_O_TILE + CICLO_DA_PEDREIRA + VOLTA_DO_TILE;
+/** LOTE3-b2 — o ciclo abre com o descanso dentro do predio, antes da ida. */
+const DESCANSO_DA_PEDREIRA = gameData.producao.receitas.quarry?.colheita?.ticksDeDescanso ?? 0;
 /** Tres ticks de relogio JA no tile: o mesmo "meio do ciclo" de antes da F-T3. */
-const NA_METADE = IDA_ATE_O_TILE + 3;
+const NA_METADE = DESCANSO_DA_PEDREIRA + IDA_ATE_O_TILE + 3;
 /**
  * DECISAO DESTA SESSAO (F-T3), marcada para o operador revisar (PROGRESS.md):
  * pausar um predio de colheita com o especialista NO CAMPO nao suspende aquele
@@ -194,7 +196,7 @@ describe('F16c — Tarefa 3: pausado, o relogio congela', () => {
   it('(1) pedreira pausada no meio do ciclo: progresso parado, e o ciclo termina ao despausar', () => {
     const meio = avancar(cenarioDePedreira(), NA_METADE);
     const progressoNaPausa = progressoDe(meio, 'q1');
-    expect(progressoNaPausa).toBe(3);
+    expect(progressoNaPausa).toBe(DESCANSO_DA_PEDREIRA + 3);
     expect(fsmDe(meio, 'u1')).toBe('colhendo'); // F-T3: o meio do ciclo e no tile
 
     const parado = rodar(meio, 200, [pausar('q1', true)]);

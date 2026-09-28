@@ -412,17 +412,19 @@ export function loadGameData(raw: RawGameData): GameData {
     }
     const fase = (f: FasesNoDado, nome: 'noTile' | 'naCasa' | 'descanso'): Ticks => {
       const segundos = f[`${nome}_segundos_base`];
+      // naCasa e descanso podem ser 0 (o fazendeiro do KaM nao trabalha na casa): fase
+      // ausente, nao uma duracao, e fica fora das conversoes (todas >= 1 tick)
+      if (segundos === 0) return 0;
       return registrar(
         `production.predios.${predioId}.colheita.fases.${nome}_segundos_base`, raw.production.escala,
-        segundos, 'segundos',
-        // naCasa e descanso podem ser 0 (o fazendeiro do KaM nao trabalha na casa)
-        segundos === 0 ? 0 : paraTicksDeDuracao(segundos, 'segundos', escalaEconomiaProducao, tickHz),
+        segundos, 'segundos', paraTicksDeDuracao(segundos, 'segundos', escalaEconomiaProducao, tickHz),
       );
     };
+    const ticksDeDescanso = fases === null ? 0 : fase(fases, 'descanso');
     const ticksNoTile = fases === null ? null : fase(fases, 'noTile');
     const ticksDoCiclo = fases === null || ticksNoTile === null
       ? Math.max(...todos)
-      : ticksNoTile + fase(fases, 'naCasa') + fase(fases, 'descanso');
+      : ticksDeDescanso + ticksNoTile + fase(fases, 'naCasa');
     const quantidades = (p: Record<string, Ticks>): Record<string, number> => {
       const q: Record<string, number> = {};
       for (const [mercadoria, periodo] of Object.entries(p)) q[mercadoria] = Math.round(ticksDoCiclo / periodo);
@@ -448,6 +450,7 @@ export function loadGameData(raw: RawGameData): GameData {
         recurso: colheita.recurso,
         alcance: colheita.alcance_tiles,
         aDistancia: 'aDistancia' in colheita && colheita.aDistancia === true,
+        ticksDeDescanso,
         ticksNoTile: ticksNoTile ?? ticksDoCiclo,
       },
     };
