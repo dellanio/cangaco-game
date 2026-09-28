@@ -4006,9 +4006,15 @@ Casos 2 e 4 do prédio vivo (`docs/BRIEF-ARTE.md` §4a). Decisão do operador: c
   - **A premissa "pedra por minuto não muda" não se confirmou:** a declarada é a mesma,
     a entregue subiu 30% porque a viagem é paga por lote. Ciclo ~700 manteria a entregue
     neste cenário (hipótese, não medida), mas depende da distância. Ficou 501, como pedido.
-  - **Aberto, decisão do operador:** girar os totais, agora com as razões do pedreiro
-    corrigido (BALANCE_LOG, LOTE3-c), e a pergunta do pescador (1,3×: característica
-    ou defeito?).
+  - **Decidido pelo operador (2026-09-27, noite 14):**
+    - os +30% entregues ficam; o ciclo ~690 (medido: 45 entregues) foi recusado;
+    - a razão 0,90× sem esgotar e o 1,3× do pescador são característica de quem esgota
+      (rocha, peixe, minério e, sem replantio, árvore). A razão N:1 só vale para quem
+      repõe (milho e cana);
+    - os totais NÃO giram: giram quando o jogo mostrar problema.
+  - **Lenhador com lote de 2:** medido e não proposto (BALANCE_LOG, LOTE3-c). Na vila de
+    calibração ele esgota a mata; o lote não tem casa que o justifique; o KaM não tem;
+    e quebraria o 2:1 com a serraria. Reabre com o replantio.
 - **Método, registrado:** o custo de um campo se mede COMPILANDO, não por busca de texto.
   - A contagem por texto dizia "5 sim, 2 render, 13 testes" para `ticksDoCiclo` e
     errava nos dois sentidos: `trabalho.ts` não quebra (lê o `DadosDoTrabalho`

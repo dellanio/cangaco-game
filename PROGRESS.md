@@ -9443,3 +9443,43 @@ ativa. Uma corrida isolada limpa não prova a causa.
 - **Girar os totais:** decisão do operador, agora com o pedreiro corrigido.
 - **A pergunta do pescador (1,3×):** característica ou defeito? Está no BALANCE_LOG.
 - **Ciclo 501 contra ~690:** manter a declarada (feito) ou a entregue. Decisão do operador.
+
+## 2026-09-27 (noite, 14) — decisões do operador sobre o LOTE3-c; lenhador com lote de 2 medido
+
+**Decisão do operador:**
+- **Os +30% entregues do pedreiro ficam.** A vazão declarada é o dado, e a entregue
+  depende da distância. Os 30% são o prêmio de trabalhar em lote. O ciclo ~690 fica
+  registrado como alternativa medida e recusada.
+- **A razão 0,90× sem esgotar é característica.** Quem esgota não acelera com mais
+  tiles, só dura mais: pedreira, lenhador e minas. A pergunta do pescador fica
+  respondida (peixe é `nunca`, a mesma família). A razão N:1 só vale para quem repõe.
+- **Os totais não giram.** Os números giram quando o jogo mostrar problema.
+- Pediu medir se um lote de 2 faria pelo lenhador o que os 3 fizeram pelo pedreiro.
+
+**Feito (verificado, por sonda apagada; nenhum teste permanente novo):**
+- **Pedreira com ciclo 690 e 700** (fases na mesma proporção, `cenarioDePedreira`,
+  12 000 ticks): 45 e 45 entregues, contra 46 do pedreiro de um bloco. A conta do ~690
+  fecha.
+- **Lenhador** (`cenarioOraculo`, `w1`, 12 000 ticks, gaveta esvaziada):
+  - 1 por viagem: 18 troncos, 113 ticks andando por tronco, 2 329 parado sem árvore,
+    último depósito em t10157;
+  - lote de 2 (fases ×2, ciclo 846): 18 troncos, 57 andando por tronco, 3 350 parado,
+    último depósito em t8649;
+  - árvores ao alcance de `w1` a cada 2 000 ticks: 30, 24, 16, 8, 2, 0 (32, 22, 14, 4,
+    0, 0 com o lote). A mata esgota, e ninguém replanta.
+  - **Conclusão:** não proponho. A mata limita o lenhador, não a caminhada; ele não tem
+    casa; o KaM traz 1; e quebraria o 2:1 calibrado com a serraria. Os quatro motivos
+    estão no BALANCE_LOG.
+- **Correção de um erro meu, da noite 13:** o BALANCE_LOG dizia que "o cardume não esgota
+  na janela". Errado: o pescador de um cardume entregou 20, o `rendimentoPorTile` do
+  peixe. Está corrigido no próprio lugar.
+- **Conferido no dado:** `fish` é `nunca`; `tree` é `porAcao` sem `reposicao`; `corn` e
+  `grapes` são `porAcao` com `reposicao`.
+- Enquanto eu depurava a sonda, uma leitura minha do JSON contou 15 depósitos em vez de 18.
+  Descartei a hipótese de estado escondido rodando o mesmo cenário três vezes, com e sem
+  `tilesDeColheita` no meio, e com um dado derivado construído antes: deu 18 em todas.
+  Foi erro de leitura, não da sim.
+
+**Aberto:**
+- **Replantio** (`modos` sem leitor): é o que reabriria o lote do lenhador. Não entra
+  sem decisão de design.

@@ -235,6 +235,10 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
       - **A pergunta que o lote vai responder:** uma razão de 1,3× significa que abrir
         mais tiles quase não vale para o pescador. Isso é característica dele (peixe é
         escasso) ou defeito a corrigir?
+        - **RESPONDIDA (operador, 2026-09-27, noite 14): característica.** O peixe é regime
+          `nunca` (`resources.json`), e 1,3× é da mesma família da pedreira. A razão
+          N:1 só faz sentido para quem REPÕE: milho e cana (`corn` e `grapes`, `porAcao`
+          com `reposicao`). Ver "Característica: quem esgota" logo abaixo.
     - **LOTE3-c ENTREGUE (2026-09-27, noite 13): o pedreiro traz 3 blocos por viagem.**
       - **Decisão do operador:** é peça que o KaM tem e nós não, e ela muda o que o
         pedreiro significa. Ele corta a pedra no tile e trabalha ela na casa: o lote é o
@@ -254,10 +258,18 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
         - A ida e a volta são pagas uma vez por lote, e não uma vez por pedra: a caminhada
           por pedra caiu a um terço. É exatamente o "vaivém deixa de ser proporcional à
           produção" que o operador previu. O ganho de vazão é a outra face do mesmo efeito.
-        - Se o operador quiser a entregue de antes: um ciclo de ~700 ticks daria as 46
-          neste cenário (hipótese, pela conta: 261 ticks por pedra × 3 = 783 por viagem,
-          menos ~91 de caminhada por viagem = ~690 de ciclo; não medida). Mas
-          depende da distância ao tile, e cada mapa daria um número. Ficou 501, como pedido.
+        - **ALTERNATIVA MEDIDA E RECUSADA (operador, 2026-09-27, noite 14): ciclo ~690
+          para manter a entregue de antes.**
+          - A conta: 261 ticks por pedra × 3 = 783 por viagem, menos ~91 de caminhada
+            por viagem, dá ~690 de ciclo.
+          - Medido depois (sonda apagada, `cenarioDePedreira`, 12 000 ticks, fases na
+            mesma proporção): ciclo 690 entrega **45**, e 700 entrega **45**, contra 46 do
+            pedreiro de um bloco. A conta fecha.
+          - **Motivo da recusa:** a vazão declarada é o que o dado diz. O que chega ao
+            armazém depende da distância, e fixar por ela amarraria o número a uma
+            geometria de cenário. E os 30% são o prêmio certo: o pedreiro que traz três
+            blocos anda menos por pedra. É o jogador recompensado por um prédio que
+            trabalha em lote, não inflação. **Ciclo 501, entregue +30%, fica.**
       - **A razão N:1 com rocha mede o veio, não o ciclo.** Mesmo arquivo, 12 000 ticks:
         - Com o dado de verdade: 60 contra 15, ou seja 4,0× (era 46 contra 15, 3,07×). O
           tile único de 15 esgota em 5 viagens; o 4,0 é o lajedo contra um tile vazio.
@@ -266,9 +278,12 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
           aceleram nada quando nenhum acaba.
         - **Hipótese, não medida:** o 57 < 63 viria de o lajedo farto oferecer um tile
           escolhido mais longe da porta que a rocha colada da jazida única.
-        - Para a pergunta do lote: na pedreira, abrir mais tiles só vale como reserva de
-          veio, e isso é o modelo, não defeito. O pescador é outro caso: o cardume não
-          esgota na janela.
+        - Na pedreira, abrir mais tiles só vale como reserva de veio. É característica,
+          registrada logo abaixo.
+        - **Correção da noite 13:** eu tinha escrito aqui que "o cardume não esgota na
+          janela". Está errado. O pescador de um cardume entregou 20, exatamente o
+          `rendimentoPorTile` do peixe: o cardume esgotou. A pedreira de um tile entregou
+          15, o da rocha. Os dois são o mesmo caso.
       - **Consequência na gaveta:** a saída cabe 5, e o lote é 3. Cabe um lote só; o
         segundo entra depois que o serf leva o primeiro. Medido em `tests/F15a-producao.test.ts`
         (`TETO_EM_LOTES`).
@@ -276,6 +291,59 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
         `nunca` precisa dividir o `rendimentoPorTile` (rocha 15 / 3). Senão o resto fica
         preso no tile, porque o claim exige o lote inteiro. Coberta pela fixture da
         `tests/F03-dados-validados.test.ts`.
+    - **Característica, não defeito: quem esgota não acelera com mais tiles (operador,
+      2026-09-27, noite 14).**
+      - **O que se mediu:** a pedreira com rocha farta dá 0,90× (57 contra 63, nenhum
+        tile esgota, `test-output/LOTE3-c-pedreiro-lote.json`).
+      - **O motivo:** o pedreiro colhe um tile por vez e a rocha não repõe. Abrir mais
+        tiles não acelera nada, só estende o estoque. É diferente da fazenda por
+        natureza, não por calibração.
+      - **Para o jogador:** mais tiles de rocha ao alcance significam pedreira que DURA
+        mais, não que produz mais rápido. Vale para todos os que esgotam:
+        - pedreira (`rock`), pescador (`fish`) e minas (`coal`, `iron_ore`, `gold_ore`):
+          regime `nunca`;
+        - lenhador (`tree`): o regime é `porAcao`, mas a árvore não tem `reposicao` em
+          `resources.json` e `modos` segue sem leitor. Hoje ninguém replanta, então ela
+          esgota como as outras.
+      - **Quem a razão N:1 mede:** só quem REPÕE, `corn` (fazenda 2,875×, boa) e
+        `grapes` (Canavial 1,5×). O 1,3× do pescador e o 4,0× da pedreira com o dado real
+        medem o tamanho do veio, não o modelo.
+    - **Totais: não giram (operador, 2026-09-27, noite 14).** Com as fases separadas e o
+      lote do pedreiro, o modelo está onde deveria. Os números giram quando o jogo
+      mostrar problema, não porque a tabela pede.
+    - **Lenhador com lote de 2: medido, NÃO proposto (2026-09-27, noite 14).**
+      - **Pergunta do operador:** o lenhador tem o mesmo caso do pedreiro (331 no tile,
+        nada na casa, 1 por viagem). Um lote de 2 faria por ele o que os 3 fizeram pelo
+        pedreiro?
+      - **Medido** (sonda apagada, `cenarioOraculo`, `w1`, 12 000 ticks, gaveta esvaziada;
+        lote de 2 = fases ×2, ciclo 846, `sai` 2):
+
+        | lenhador | troncos entregues | andando por tronco | parado sem árvore | último depósito |
+        |---|---|---|---|---|
+        | 1 por viagem (hoje) | 18 | 113 | 2 329 ticks (19%) | t10157 |
+        | 2 por viagem | 18 | 57 | 3 350 ticks (28%) | t8649 |
+
+      - **O que o lote faz:** a caminhada por tronco cai à metade, como no pedreiro, e o
+        ritmo enquanto há árvore sobe ~16% (≈ 500 contra ≈ 581 ticks por tronco no começo
+        da janela).
+      - **Por que não proponho:**
+        1. **Neste cenário o lenhador é limitado pela mata, não pela caminhada.** As
+           árvores ao alcance de `w1` caem de 30 para 0 em 12 000 ticks (medido a cada
+           2 000: 30, 24, 16, 8, 2, 0), e ninguém replanta. O lote só esgota a mata mais
+           cedo: os mesmos 18 troncos, com o lenhador parado mais tempo no fim. É a
+           característica de quem esgota, logo acima.
+        2. **Não há casa que justifique o lote.** O argumento do operador para o pedreiro
+           foi que o lote paga o tempo na casa, e o lenhador tem 0 na casa. Lote sem casa
+           é só aceleração de graça.
+        3. **O KaM não tem.** O lenhador do KaM traz 1 por viagem (REFERÊNCIA acima); o
+           pedreiro traz 3.
+        4. **Quebraria o 2:1 calibrado.** O lenhador foi calibrado para o par dar ~274,5
+           ticks por tronco, o ciclo da serraria (273). Com +16% enquanto há mata, a
+           serraria vira o gargalo e o tronco acumula. Isso é giro de total, e o operador
+           acabou de decidir que os totais não giram sem problema na tela.
+      - **O que reabriria a pergunta:** o replantio (`modos`, hoje sem leitor). Com a mata
+        repondo, o lenhador deixa de esgotar e a caminhada volta a ser o custo que o lote
+        corta.
 
 - [2026-09-24] o terreno passou a existir (F-T1) e viagem deixou de ser linha reta | medido: a
   travessia de 36 tiles ao redor do lago custa **292 ticks** contra **252** no mesmo trajeto sem
