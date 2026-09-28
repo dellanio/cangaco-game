@@ -521,7 +521,7 @@ montanha **[fonte]**.
   a razão 1:1,666 do Remake **[fonte]**.
 - Custo de movimento por terreno em `data/terrain.json`.
 - Civis não colidem entre si, para não travar a logística. Militares colidem (C5).
-  - **Testado e recusado (D-MOVIMENTO-01, colisão civil, 2026-09-28).** A colisão civil
+  - **Em teste, reaberto pelo operador (D-MOVIMENTO-01, colisão civil, 2026-09-28).** A colisão civil
     foi implementada com o mecanismo do `WalkTo` do kam_remake:
     - troca de frente;
     - empurrão do ocioso;
@@ -532,6 +532,9 @@ montanha **[fonte]**.
   - Numa vila com carga, **duas ruas não reduziram a espera da mercadoria na gaveta.** Mesmo
     com a segunda faixa recebendo 45% dos carregadores, a espera subiu (+9% a +16%) e a
     entrega caiu. O gargalo medido não é a rua: é a porta e o serf livre.
+  - A hipótese do operador é que o engarrafamento do KaM é **fila na porta**: entrar e sair
+    de casa ocupa a porta por ~10 ticks lá, e 1 aqui. Com a porta lenta, o mecanismo de
+    hoje trava (D-MOVIMENTO-01i), e a troca precisa virar permuta antes da medida final.
   - O mecanismo fica no código, desligado (`units.json colisaoCivil.ligada: false`). Os
     números estão no PROGRESS e no plano `docs/planos/2026-09-28-D1-colisao-civil.md`.
 - **Névoa não afeta pathfinding nem JobBoard.** O A* enxerga o mapa inteiro, a
