@@ -330,7 +330,6 @@ export interface EntregaData {
   readonly desempate: RawGameData['delivery']['desempate'];
   readonly reserva: RawGameData['delivery']['reserva'];
   readonly ticksAlertaTarefaSemCandidato: Ticks;
-  readonly maxSerfsNoMarketplace: number;
 }
 
 export interface TerrenoData {

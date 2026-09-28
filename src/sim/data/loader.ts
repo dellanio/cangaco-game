@@ -614,7 +614,6 @@ export function loadGameData(raw: RawGameData): GameData {
         escalaDe(escalas, raw.delivery.escala), tickHz,
       ),
     ),
-    maxSerfsNoMarketplace: raw.delivery.maxSerfsNoMarketplace,
   };
 
   // --- terreno (sem duracao — custos sao multiplicadores adimensionais) ---

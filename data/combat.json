@@ -70,7 +70,6 @@
   },
   "ia": {
     "tamanhoDoGrupo": 9,
-    "homensPorFileira": 3,
-    "_doc": "F28-IA (decisao do operador, 2026-09-28): o grupo de defesa da IA tem 9 homens, 3 por fileira, o padrao da IA do KaM (KM_AIDefensePos.pas:223-224). E da IA, nao regra do jogador: a formacao do jogador vai de 1 ao tamanho do grupo (`formacao`)."
+    "_doc": "F28-IA (decisao do operador, 2026-09-28): o grupo de defesa da IA tem 9 homens, o padrao da IA do KaM (KM_AIDefensePos.pas:223-224). E da IA, nao regra do jogador. Os '3 por fileira' do KaM NAO estao aqui: a sim nao tem formacao em fileiras (a marcha usa `tilesDoGrupo`), e o campo que dizia 3 foi removido por nao ter leitor (operador, 2026-09-28)."
   }
 }

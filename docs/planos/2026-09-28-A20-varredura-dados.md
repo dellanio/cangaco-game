@@ -1,5 +1,9 @@
 # Varredura de dados sem leitor (sessão autônoma, item 20)
 
+> **Decisão do operador (2026-09-28):** saíram `delivery.maxSerfsNoMarketplace` e
+> `combat.ia.homensPorFileira`, com o JSON, o loader e os tipos. O resto da tabela segue
+> como está.
+
 Pedido: *"varredura de dados sem leitor, listando o custo de remover cada um."* **Nada foi
 removido.** A lista é para o operador decidir.
 

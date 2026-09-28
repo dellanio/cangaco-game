@@ -5408,9 +5408,10 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
   - Painel: a ordem, feitas/quantidade e por que não troca (texto do tema).
   - Teste `tests/F35-feira.test.ts` (aceites a–d, conservação de `A + taxa × B` a cada
     tick) e roteiro `tools/shots/F35.js`.
-  - **PARA REVISÃO:** troca instantânea (sem tempo, o GDD não dá), e o cancelamento deixa
-    o A a caminho chegar à feira e voltar como excedente, em vez de largar a tarefa no
-    meio do caminho — nada se perde, mas o aceite (d) dizia "pelo `release`".
+  - **PARA REVISÃO:** troca instantânea (sem tempo, o GDD não dá).
+  - **Decisão do operador (2026-09-28): o cancelamento fica como está.** O A a caminho
+    chega à feira e volta ao armazém como excedente, e isso é *"mais correto que largar
+    tarefa no meio"*. O aceite (d) foi corrigido para dizer isso; o código não mudou.
 - **Origem (decisão do operador, 2026-09-26)**: item escrito para a casca não ficar sem
   fila. *"A Feira e a Prefeitura podem esperar."* Hoje o `marketplace` constrói e não
   faz nada.
@@ -5451,8 +5452,14 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
     em todo tick de um cenário com 20 serfs ociosos.
   - (c) sem A no armazém a troca espera, nenhum B aparece, e o painel diz por quê
     (screenshot, com o roteiro despausado da §8).
-  - (d) cancelar a ordem com A a caminho larga as tarefas pelo `release`, sem A perdido:
-    a soma de A no mundo, no armazém, nas gavetas e nos serfs, fica igual.
+  - (d) cancelar a ordem com A a caminho não perde A: a soma de A no mundo, no armazém,
+    nas gavetas e nos serfs, mais `taxa ×` o B já trocado, fica igual a cada tick. A
+    tarefa em curso **não** é largada pelo `release`: ela termina na feira, e o A que
+    sobra na gaveta volta ao armazém pelo nível 7 (excedente).
+    *Corrigido em 2026-09-28 por decisão do operador.* O texto antigo dizia "larga as
+    tarefas pelo `release`". O comportamento entregue é melhor: a mercadoria que já saiu
+    termina a viagem e volta pelo caminho normal, em vez de ficar no chão ou exigir um
+    ramo novo de devolução no meio do caminho.
 
 ### F36 — Prefeitura: mercenários pagos em ouro (sim + ui)
 - **ENTREGUE (2026-09-28, sessão autônoma; plano em `docs/planos/2026-09-28-A18-F36-prefeitura.md`).**
@@ -5465,8 +5472,16 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
   - Painel: o ouro e cinco botões com custo; os que não cabem ficam desabilitados e dizem
     quanto falta.
   - Teste `tests/F36-prefeitura.test.ts` e roteiro `tools/shots/F36.js`.
-  - **PARA REVISÃO:** mercenário = militar (não drena condição, entra na IA como tropa
-    do lado dela). O evento é o mesmo do quartel.
+  - **Decisão do operador (2026-09-28): o mercenário é militar para tudo.** *"Ele é tropa
+    e deve se comportar como tropa."* A mudança em `classeDaUnidade` atinge cinco sistemas:
+    1. a ordem de mover (F26);
+    2. o combate (F28);
+    3. o ataque a prédio (F-CERCO-a2);
+    4. a IA, com posições, reposição e ataque (F28-IA);
+    5. o fim de partida, onde ele conta como tropa (F34).
+    - E ainda: a contagem militar do HUD (`populacaoPorGrupo`) e a fome, pois ele não drena
+      condição, como todo militar até o `Feed` existir.
+  - **PARA REVISÃO:** o evento é o mesmo do quartel (`unit-trained`).
 - **Origem (decisão do operador, 2026-09-26)**: pode esperar. Depende da F25 (soldado
   existir) e dos mercenários ganharem arte e arma (nota da F25).
 - **O que o dado já diz** (GDD Anexo A): ouro por mercenário, **pronto na hora**. Rebel

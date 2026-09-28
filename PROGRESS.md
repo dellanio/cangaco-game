@@ -11170,3 +11170,27 @@ sem regra nova) e na UI; nada em `src/render`.
   sistema. Se acontecer, só o `command-rejected` diz.
 - **Nove botões passam da altura da tela.** O último e o "Derrubar" só aparecem rolando o
   corpo da aba. A sombra de "há mais" avisa, conforme a decisão já registrada no CSS.
+
+## 2026-09-28 — três decisões do operador sobre a sessão autônoma
+
+1. **Mercenário = militar para tudo: DECISÃO DO OPERADOR**, não mais PARA REVISÃO. A
+   mudança atinge cinco sistemas:
+   - a ordem de mover (F26);
+   - o combate (F28);
+   - o ataque a prédio (F-CERCO-a2);
+   - a IA (F28-IA);
+   - o fim de partida (F34).
+   E ainda a contagem militar do HUD e a fome, porque ele não drena condição. Registrado
+   no item F36 do BUILD_PLAN.
+2. **Cancelar a troca da Feira:** o aceite (d) da F35 foi corrigido e o código não mudou.
+   O A a caminho termina a viagem e volta como excedente, o que é mais correto que largar
+   a tarefa no meio. O motivo está no BUILD_PLAN.
+3. **Removidos `delivery.maxSerfsNoMarketplace` (duplicado) e `combat.ia.homensPorFileira`**
+   (criado na F28-IA e sem leitor). Saíram do JSON, do loader e dos tipos. O `_doc` da
+   `ia` agora diz por que os "3 por fileira" do KaM não estão no dado. Verificado: `tsc`,
+   `validate:data` e `npm run verify` verdes.
+
+**Próxima leva, na ordem do operador:**
+- ~~F25b~~: já estava entregue (commit `feat(F25b)`).
+- A fome do militar e o comando `Feed` (GDD §4.3), que desbloqueia o ponto 5 da F28-IA.
+- O avaliador sobre as 18 features da sessão autônoma.
