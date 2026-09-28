@@ -221,3 +221,71 @@ medir (1 tick do KaM = 100 ms).
   KaM; `mataEmUmGolpe` bate. **Mas** o aceite da F28b ("pedras gastas = mortos")
   supõe que a pedra nunca erra, e a do KaM pode errar se o alvo andou.
   Simplificar é legítimo; hoje isso não está escrito como decisão.
+
+### Frente 4, continuação — carga, formação, engajamento e IA inimiga (2026-09-28)
+
+Leitura ampla feita por subagente (§11). As linhas marcadas com ✔ eu reabri e
+conferi no fonte; as outras são do relatório dele e valem como citação dele. O
+que ele não achou no código está marcado **HIPÓTESE — ABERTA**.
+
+**Carga (storm attack)** — nosso: `combat.json` `stormAttack` (1,5×, 8 s, incontrolável); `GDD.md:160`.
+
+| Achado | Classe | Fonte KaM |
+|---|---|---|
+| Velocidade 1,5× ✔ (arredondada em passos por tile, então não é exata) | confirmado | `res/KM_ResUnits.pas:212`, `:604-605` |
+| **A carga dura em TILES, não em segundos:** 12 a 13 tiles, sorteado ✔. O comentário diz que no TPR era 8 a 13. Os nossos "8 segundos" não têm base no código; provavelmente vêm dos "8 tiles" do mínimo antigo (HIPÓTESE). | **correção** | `units/actions/KM_UnitActionStormAttack.pas:41-49` |
+| Cada fileira sai 5 ticks depois da anterior ✔ | lacuna | `KM_UnitActionStormAttack.pas:48` |
+| Não se interrompe. Halt fica na fila e Split é bloqueado. Termina quando a stamina acaba, quando acha inimigo a até 1,42 tile ou quando o tile seguinte está bloqueado. | confirmado ("incontrolável até bater") | `KM_UnitActionStormAttack.pas:159-175`, `:217-220` |
+| **Só infantaria corpo a corpo** (milícia, machado, espada, bárbaro, guerreiro). Montado e anti-cavalo não carregam. Sem cooldown. | lacuna (o GDD não diz quem carrega) | `common/KM_Defaults.pas:685-696`; `gui/pages_game/KM_GUIGameUnit.pas:532` |
+| A carga só mexe no movimento. O dano não muda. | confirmado | `units/actions/KM_UnitActionFight.pas:291-302` |
+
+**Formação** — nosso: `combat.json` `formacao` (recomendado 9–15, colunas 1–10).
+
+| Achado | Classe | Fonte KaM |
+|---|---|---|
+| Unidades por fileira: mínimo 1, **máximo = tamanho do grupo** ✔. Não há teto de 10. | **correção** (`colunasMax` 10 é nosso, não do KaM) | `units/KM_UnitGroup.pas:661-666` |
+| "Grupo recomendado 9": o único 9 no código é o padrão da IA, 9 homens, 3 por fileira ✔. **O 15 não aparece no código** (HIPÓTESE — ABERTA; deve vir de guia externo). | confirmado em parte | `ai/KM_AIDefensePos.pas:223-224` |
+| O jogador muda ±1 fileira por clique (±5 com o botão direito). Recruta que se junta ao grupo reorganiza para √n por fileira, se o jogador não mexeu. | lacuna | `KM_UnitGroup.pas:2471-2472`; `gui/KM_InterfaceTypes.pas:49` |
+| Halt, Link, Feed e Split existem. Split divide ao meio; em grupo misto, separa por tipo. SplitSingle solta um. | confirmado (o `[geral]` da linha 162 vira fonte) | `KM_UnitGroup.pas:1494-1559`, `:1722-1784` |
+| Tamanho máximo de grupo: nenhum encontrado (HIPÓTESE — ABERTA de que não exista). | sem correspondente | — |
+
+**Arco do arqueiro** — nosso: `combat.json` `aDistancia.arcoDeTiro_graus` 45.
+
+| Achado | Classe | Fonte KaM |
+|---|---|---|
+| O arqueiro parado só procura alvo na direção em que está virado ✔ | confirmado (`GDD.md:164`) | `units/KM_UnitWarrior.pas:667`, `:705-706` |
+| **O setor é de 90° (±45°)** ✔, não 45° no total. Se o nosso 45 é o meio-ângulo, bate; se é o total, está pela metade. O dado não diz qual. | **correção provável**, ambígua | `terrain/KM_Terrain.pas:2021-2033` |
+| Com ordem explícita de ataque, o grupo gira para o alvo. | lacuna | `KM_UnitGroup.pas:1061-1062` |
+
+**Engajamento automático**
+
+| Achado | Classe | Fonte KaM |
+|---|---|---|
+| Sem ordem, o guerreiro procura inimigo a cada 6 ticks. Corpo a corpo, a 1 tile; arqueiro, de 4 a 10,99, no setor, e só parado. O alvo precisa estar em tile revelado. | confirmado ("corpo a corpo carrega ao contato", `GDD.md:99`) | `KM_UnitWarrior.pas:1110-1112`, `:413-426`; `KM_Terrain.pas:2049` |
+| **Prédio, nunca sem ordem** | confirmado; já é regra da F-CERCO-a | `game/gip/KM_GameInputProcess.pas:1009` |
+| Quem é atacado responde. O grupo guarda os agressores e, a cada 5 ticks, o corpo a corpo ocioso vai até eles e o arqueiro atira neles. | lacuna | `KM_UnitGroup.pas:840-848`, `:925-987` |
+
+**IA inimiga** — nosso: F28 "IA inimiga simples", sem corpo.
+
+- **Laço clássico** (`ai/KM_AIGeneral.pas:777-810`): posições de defesa → exército → ataques → contagem.
+  - **Posição de defesa:** ponto, tipo de grupo, raio e linha de frente ou de trás; só a de trás ataca (`ai/KM_AITypes.pas:8-11`). O grupo ocioso volta ao ponto.
+  - **Treino:** repõe até 9 por posição.
+  - **Ataque:** é roteirizado na missão (atraso, homens mínimos, grupos por tipo); `AutoAttack` repete contra o prédio mais perto do ponto de partida.
+  - **Alvos possíveis:** unidade mais perta, prédio mais perto do exército, prédio mais perto da base, ponto fixo (`ai/KM_AITypes.pas:21-26`). Na resolução, prédio tem preferência sobre unidade.
+- **A IA escolhe alvo ignorando a névoa.** Só a busca de cada soldado respeita o que está revelado (`hands/KM_HandsCollection.pas:523-567`). **Divergência a decidir:** o nosso `GDD.md:516` fala da névoa para o jogador, não para a IA.
+- **Proposta de IA mínima para a F28** (do que o KaM faz):
+  1. posições de defesa com grupo de 9;
+  2. voltar ao ponto quando ocioso;
+  3. retaliar contra quem entra no raio;
+  4. repor pelo quartel;
+  5. alimentar os famintos;
+  6. um ataque repetido contra o prédio mais perto quando houver homens suficientes. Este depende da F-CERCO-a.
+
+**Mecânicas do KaM que o GDD não tem (lacunas)**
+
+- **Regeneração: 1 HP a cada 100 ticks (10 s), inclusive em luta** ✔ (`common/KM_Defaults.pas:360`; `units/KM_Units.pas:2306-2314`). Com o nosso `multiplicadorHP` 2, o ritmo de regenerar precisa ser decidido junto.
+- **Fogo amigo ligado** ✔ para flecha e torre (`KM_Defaults.pas:397`; `KM_Projectiles.pas:320`, `:334`). **Afeta a F28b:** no KaM a pedra da torre mata também o próprio soldado que estiver no ponto.
+- **Escudo dá defesa extra contra projétil**: +1 contra arco e funda, +0,5 contra besta ✔ (`res/KM_ResUnits.pas:258-260`).
+- Arqueiro com atraso de mira aleatório e trava contra tiro em rajada (`KM_UnitWarrior.pas:457-468`, `:788-806`).
+- **Não existem**, e o GDD também não tem: veterania, recuo e moral (grep sem resultado).
+- **Não achado:** efeito da fome no dano.

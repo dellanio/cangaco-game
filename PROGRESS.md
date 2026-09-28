@@ -9776,3 +9776,29 @@ de 2". A sonda foi apagada.
 - o custo do Bárbaro (7 no dado, 8 no KaM), à espera do primeiro item de tropa;
 - frente 4 (IA inimiga, formação, carga);
 - as frentes 2 e 3 depois.
+
+## 2026-09-28 — VARREDURA-KAM, frente 4 fechada (carga, formação, engajamento, IA)
+
+**Verificado por mim no fonte:**
+
+- carga de 12 a 13 **tiles** (o nosso dado diz 8 **segundos**);
+- setor do arqueiro de 90°;
+- fileira até o tamanho do grupo (o nosso dado diz 10);
+- 9 homens por posição da IA;
+- regeneração de 1 HP a cada 10 s;
+- fogo amigo;
+- escudo contra projétil.
+
+**Citação do subagente, não reaberta por mim:** o resto das linhas de `docs/varredura-kam.md`, frente 4, continuação.
+
+**Propostas para o operador (nada mudou em dado nem na fila):**
+
+- corrigir a carga para tiles;
+- dizer se o arco de 45 é meio ângulo ou total;
+- `colunasMax`;
+- regeneração;
+- fogo amigo na F28b;
+- a IA ignorar a névoa;
+- a IA mínima da F28.
+
+**Aberto:** as frentes 2 (BALANCE_LOG, ~48 observações) e 3 (PROGRESS).
