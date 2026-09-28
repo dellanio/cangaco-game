@@ -269,10 +269,13 @@ export interface CombateData {
   readonly multiplicadorHP: RawGameData['combat']['multiplicadorHP'];
   readonly ticksCadenciaDeAtaque: Ticks;
   readonly aDistancia: RawGameData['combat']['aDistancia'];
-  readonly stormAttack: {
-    readonly multiplicadorVelocidade: number;
-    readonly ticksDuracao: Ticks;
-    readonly incontrolavel: boolean;
+  readonly stormAttack: RawGameData['combat']['stormAttack'];
+  /** Cadencia PROPRIA do golpe contra predio, ja em ticks (ver combat.json). */
+  readonly ataqueAPredio: {
+    readonly danoCorpoACorpo: number;
+    readonly danoProjetil: number;
+    readonly rolagem: boolean;
+    readonly ticksCadencia: Ticks;
   };
   readonly watchtower: RawGameData['combat']['watchtower'];
   readonly formacao: RawGameData['combat']['formacao'];

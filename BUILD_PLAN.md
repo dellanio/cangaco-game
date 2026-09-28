@@ -4854,7 +4854,8 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
   - **A ordem é explícita. Tropa nunca ataca prédio sozinha.** No KaM só a ordem
     `gicArmyAttackHouse` cria a tarefa (`KM_GameInputProcess.pas:1009`,
     `KM_UnitWarrior.pas:940-962`).
-  - O número 2 vai para `data/combat.json`, com `escala` de combate. Nada de literal no `.ts`.
+  - Os números estão em `data/combat.json` `ataqueAPredio` (2 corpo a corpo, 1 projétil,
+    sem rolagem), com `escala` de combate. Nada de literal no `.ts`.
 - **Pré-requisito que o item traz: dono.** Hoje o estado não tem lado; sem lado não
   existe prédio inimigo.
   - O item acrescenta `lado` a `PredioBase` e a `Unidade`. A vila do jogador é o lado 0.
@@ -4866,7 +4867,9 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
   `AttackBuilding { unidades, predio }` em `commands.ts`.
 - **Escopo**:
   - o comando valida o alvo: prédio do próprio lado é recusado, e a recusa não muda o estado;
-  - o soldado anda até encostar no prédio e golpeia no ritmo da cadência do combate;
+  - o soldado anda até encostar no prédio e golpeia na **cadência própria do golpe em
+    prédio** (`ataqueAPredio.cadencia_segundos_base`, já em ticks no loader como
+    `combate.ataqueAPredio.ticksCadencia`), nunca na `cadenciaDeAtaque` das unidades;
   - HP zero leva o prédio pelo mesmo caminho da demolição (`systems/demolicao.ts`,
     F16a). As tarefas são liberadas e o ocupante sai.
   - Evento novo só nasce se o aceite ou a tela o consumirem.
@@ -4874,12 +4877,12 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
   - projétil em prédio (entra com o arqueiro, ver F28);
   - a tela da ordem (F26);
   - fogo no prédio (o KaM tem 8 níveis, `KM_Houses.pas:1352`), que é render e fica para depois, com registro.
-- **Pergunta ao operador, antes do código.** A nossa `cadenciaDeAtaque_segundos_base`
-  (0,5 s) foi dobrada junto com o HP das unidades (`combat.json` `multiplicadorHP`). O
-  golpe do KaM em prédio sai a cada ~1,2 s (HIPÓTESE, lida e não medida). Com 2 por
-  golpe na cadência dobrada, o prédio cai ~2,4× mais rápido que no KaM. O `multiplicadorHP`
-  foi feito para unidade, não para prédio. A decisão é: 2 por golpe na nossa cadência,
-  ou um ritmo de golpe em prédio próprio.
+- **Decisão do operador (2026-09-28): cadência própria, mais lenta, com 2 por golpe.**
+  A nossa `cadenciaDeAtaque_segundos_base` (0,5 s) é dobrada para compensar o HP dobrado
+  das unidades, e prédio não tem HP dobrado. Aplicada ao prédio, ele cairia ~2,4× mais
+  rápido que no KaM, por acidente e não por decisão. O número é **derivado, não
+  escolhido**: 6 + 6 ticks de 100 ms no KaM (`KM_UnitTaskAttackHouse.pas:167`, `:189`)
+  = 1,2 s. Os 12 ticks são leitura do fonte, não medida (HIPÓTESE — ABERTA).
 - **Aceite**:
   - N soldados com a ordem tiram exatamente 2 × golpes do `hp` de um prédio inimigo;
     o prédio chega a 0 e some, e as invariantes do JobBoard continuam valendo;
@@ -4926,6 +4929,13 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
   tile, o clique erra a unidade por até 16 px, e erra mais quanto mais cheio o
   tile estiver, que é justamente onde selecionar importa.
 ### F27 — Formação, virar e storm attack
+- **Nota (correções do operador, 2026-09-28, sobre a VARREDURA-KAM frente 4)**:
+  - **A carga acaba por distância, não por tempo:** 12 a 13 tiles, sorteados no RNG da
+    sim (`combat.json` `stormAttack.distancia_tiles`; `KM_UnitActionStormAttack.pas:41-49`).
+    **Só infantaria corpo a corpo carrega** (`stormAttack.apenas`; `KM_Defaults.pas:685-696`).
+  - **Formação:** homens por fileira vão de 1 ao tamanho do grupo
+    (`formacao.colunasMax: "tamanhoDoGrupo"`; `KM_UnitGroup.pas:661-666`). Não há tamanho
+    recomendado; o "9-15" saiu do GDD e do dado.
 ### F28 — Combate e IA inimiga simples
 - **Nota (decisão do operador, 2026-09-28): o alcance mínimo do arqueiro entra no item
   do arqueiro, não sozinho.** Hoje o arqueiro está dentro desta F28.
@@ -4937,6 +4947,40 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
     (`KM_UnitTaskAttackHouse.pas:98-101`).
   - Herdado da F-CERCO-a: o projétil que cai em prédio inimigo tira **1 de HP, sem
     sorteio** (`KM_Projectiles.pas:325-330`).
+- **Nota (correção do operador, 2026-09-28): o arco de tiro é de 90° NO TOTAL**, 45°
+  para cada lado de onde o arqueiro está virado (`KM_Terrain.pas:2021-2033`). O campo
+  chama `aDistancia.arcoDeTiro_graus_total` porque a ambiguidade entre meio ângulo e
+  total era o defeito.
+- **Nota (decisão do operador, 2026-09-28): fogo amigo ligado para a flecha.** A flecha
+  acerta quem estiver no ponto em que cai, do próprio lado inclusive (`KM_Defaults.pas:397`,
+  `KM_Projectiles.pas:320`). O aceite do arqueiro inclui um soldado do próprio lado
+  atingido.
+- **Nota (decisão do operador, 2026-09-28): escudo defende projétil.** No KaM a tropa
+  com escudo ganha defesa extra contra projétil: +1 contra arco e funda, +0,5 contra
+  besta (`KM_ResUnits.pas:258-260`). Entra com o arqueiro, e os números vão para o dado
+  da tropa, não para o `.ts`.
+
+### F28-IA — IA inimiga mínima (sim)
+- **Origem (decisão do operador, 2026-09-28)**: seis pontos, nesta ordem, tirados do laço
+  clássico do KaM (`ai/KM_AIGeneral.pas:777-810`; leitura em `docs/varredura-kam.md`,
+  frente 4). **Comece pelo ponto 1**, que não depende de nada.
+  1. **Posições de defesa** com grupo de 9: ponto, tipo de grupo, raio e linha de frente
+     ou de trás (`ai/KM_AITypes.pas:8-11`; 9 homens em 3 por fileira, `KM_AIDefensePos.pas:223-224`).
+  2. **Voltar ao ponto** quando o grupo fica ocioso.
+  3. **Retaliar** contra quem entra no raio.
+  4. **Repor pelo quartel** até 9 por posição (depende da F25).
+  5. **Alimentar os famintos** (depende do Feed da F27/F28).
+  6. **Um ataque repetido** contra o prédio mais perto quando houver homens suficientes
+     (depende da F-CERCO-a).
+- **Névoa (decisão conservadora da sessão de 2026-09-28, PARA REVISÃO do operador):
+  a IA NÃO respeita a névoa.** É o que o KaM faz: a IA escolhe alvo ignorando a névoa
+  (`hands/KM_HandsCollection.pas:523-567`). É **divergência deliberada** da regra do
+  GDD §6.5, que esconde o inimigo do jogador: a regra vale para o jogador e não para a
+  IA, por escolha e não por descuido. Motivo da escolha conservadora: a névoa ainda
+  não existe na sim, e fazê-la valer para a IA pede o modelo de visão por lado antes.
+- **Aceite do ponto 1**: um grupo posto numa posição de defesa sai para o inimigo que
+  entra no raio e não sai para o que fica fora; a mesma corrida duas vezes dá o mesmo
+  estado.
 
 ### F28b — Torre de Pedra: o recruta atira pedra de cima (sim + render)
 - **Feature de integração (§10 do CLAUDE.md; decisão do operador, 2026-09-27)**: toca
@@ -4961,8 +5005,24 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
     que "pedras gastas = mortos" vale. Nas palavras dele: *"erro de pedra é
     aleatoriedade que ninguém vai notar"*. Simplificação escrita, não implícita. Sem pedra, a
   torre não atira, e o painel diz por quê.
+  - **Fogo amigo (decisão do operador, 2026-09-28): a pedra mata quem estiver no tile em
+    que cai, do próprio lado inclusive**, como no KaM (`KM_Defaults.pas:397`,
+    `KM_Projectiles.pas:334`). Aceite: um soldado do lado da torre no tile do alvo
+    morre junto. Por isso o aceite é "pedras gastas = inimigos mortos + amigos mortos",
+    e a pedra que acerta amigo conta.
 - **Fora**: a névoa de guerra que a torre revela (GDD §6.5) fica para depois, com
   registro.
+
+### F28c — Regeneração de HP (sim) — escrito, não implementado
+- **Origem (decisão do operador, 2026-09-28)**: *"escreva o item, não implemente"*.
+- **Regra do KaM**: 1 HP a cada 100 ticks (10 s), inclusive em luta
+  (`common/KM_Defaults.pas:360`; `units/KM_Units.pas:2306-2314`).
+- **Aberto, a decidir quando o item entrar:** com o nosso `multiplicadorHP` 2, 1 HP a
+  cada 10 s regenera na metade da proporção do KaM. A leitura conservadora mantém a
+  proporção (2 HP a cada 10 s, ou 1 a cada 5 s); o número vai para `data/combat.json`
+  e o operador escolhe.
+- **Aceite (rascunho)**: uma unidade ferida e fora de luta volta ao HP cheio no tempo
+  que o dado diz, e nunca passa do teto.
 ---
 
 ### F18c-2 — Recentrar a vila

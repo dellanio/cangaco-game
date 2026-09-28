@@ -9887,3 +9887,23 @@ de 2". A sonda foi apagada.
 - a IA mínima da F28.
 
 **Aberto:** as frentes 2 (BALANCE_LOG, ~48 observações) e 3 (PROGRESS).
+
+## 2026-09-28 — decisões do operador na frente 4 aplicadas ao dado, ao GDD e à fila
+
+Aplicado (verificado com `npm run verify` verde e `validate:data`):
+- **Golpe em prédio** (`combat.json: ataqueAPredio`): 2 de dano corpo a corpo, 1 de projétil,
+  sem rolagem, cadência `cadencia_segundos_base: 1.2`, **DERIVADA** de
+  `KM_UnitTaskAttackHouse.pas` (fase 2 `SetActionLockedStay(6)` + fase 4
+  `SetActionLockedStay(6)` = 12 ticks de 100 ms), não escolhida. Os 12 ticks foram LIDOS no
+  fonte, não medidos em jogo: HIPÓTESE ABERTA quanto à duração real da animação. O loader
+  converte em `ticksCadencia` no grupo `combate`. `stormAttack.duracao_segundos_base`
+  saiu do registro de durações.
+- **Carga** em tiles (`distancia_tiles` 12–13), só infantaria corpo a corpo; **arco** 90°
+  TOTAL, escrito no nome do campo (`arcoDeTiro_graus_total`) e no `_docArco`; **formação**
+  `colunasMax: "tamanhoDoGrupo"`, o "9-15" saiu do GDD.
+- **Mecânicas faltantes:** F28c (regeneração 1 HP/10 s) escrita, não implementada; fogo
+  amigo no aceite da F28b; escudo contra projétil em nota na F28.
+- **F28-IA** escrita com os seis pontos em ordem. **PARA REVISÃO:** a IA NÃO respeita a
+  névoa, como no KaM — divergência deliberada do GDD §6.5, registrada no item.
+- Toquei `src/sim/data/{types,loader}.ts` (forma do dado pedida pelo operador); nenhum
+  sistema lê `ataqueAPredio` ainda (a F-CERCO-a é quem lê).

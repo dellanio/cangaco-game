@@ -157,11 +157,11 @@ acrescenta ao inventário — não aqui.
 
 | Comando | Efeito | Confiança |
 |---|---|---|
-| **Storm attack** | Acelera temporariamente; carrega em linha reta e fica incontrolável até bater em algo. Serve para escapar de flechas e torres | [fonte] |
-| Formação (+/− colunas) | Grupo recomendado de 9 a 15 | [fonte] |
+| **Storm attack** | Só infantaria corpo a corpo. Acelera (×1,5) e carrega em linha reta, incontrolável, por **12 a 13 tiles** — o fim é por distância, não por tempo (`KM_UnitActionStormAttack.pas:41-49`). Serve para escapar de flechas e torres | [fonte] |
+| Formação (+/− colunas) | Homens por fileira de 1 ao tamanho do grupo (`KM_UnitGroup.pas:661-666`). Sem tamanho recomendado | [fonte] |
 | Halt, Split, Link | Parar, dividir, unir | [geral] |
 | Feed | Serfs levam comida ao grupo em campo | [fonte] |
-| Arqueiros | Só atiram na direção em que estão virados | [fonte] |
+| Arqueiros | Só atiram na direção em que estão virados: setor de **90° no total**, 45° para cada lado (`KM_Terrain.pas:2021-2033`) | [fonte] |
 
 ---
 
@@ -770,7 +770,7 @@ Quatro grupos, em `data/time.json`:
 | `economia` | 2.0 | produção, condição, fome |
 | `movimento` | 2.0 | velocidade de deslocamento |
 | `construcao` | 2.0 | nivelamento, marteladas, treino na escola |
-| `combate` | 1.5 | cadência de ataque, duração do storm |
+| `combate` | 1.5 | cadência de ataque, cadência do golpe contra prédio |
 
 O combate é mais conservador de propósito: comprimir combate na mesma proporção
 da economia torna o microgerenciamento impossível.

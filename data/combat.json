@@ -4,7 +4,11 @@
   "attackEfetivo": "se o alvo for montado, attack + attackVsCavalo (soma, como no KaM: KM_UnitActionFight.pas:291-294); senao attack",
   "pisoAcerto": 0.08,
   "tetoAcerto": 0.92,
-  "multiplicadorDirecao": { "frente": 1.0, "flanco": 1.35, "costas": 1.75 },
+  "multiplicadorDirecao": {
+    "frente": 1.0,
+    "flanco": 1.35,
+    "costas": 1.75
+  },
   "multiplicadorHP": {
     "valor": 2,
     "_doc": "Dobra os golpes ate morrer de units.json. Junto com cadenciaDeAtaque dobrada, o tempo ate a morte fica igual e a variancia cai pela metade. E isso, nao o piso, que impede o miliciano de matar o cavaleiro por sorte."
@@ -13,18 +17,36 @@
   "escala": "combate",
   "aDistancia": {
     "alcance_tiles": 8,
-    "arcoDeTiro_graus": 45,
+    "arcoDeTiro_graus_total": 90,
+    "_docArco": "TOTAL do setor, nao meio angulo: 45 graus para cada lado da direcao em que o arqueiro esta virado. Do KaM: KM_Terrain.pas:2021-2033 (+-45). O nome do campo carrega 'total' porque a ambiguidade entre meio angulo e total era o defeito (operador, 2026-09-28).",
     "_doc": "Arqueiro so atira na direcao em que esta virado. Posicionar e virar, nao mandar atacar."
   },
   "stormAttack": {
     "multiplicadorVelocidade": 1.5,
-    "duracao_segundos_base": 8,
-    "incontrolavel": true
+    "distancia_tiles": {
+      "min": 12,
+      "max": 13
+    },
+    "apenas": "infantariaCorpoACorpo",
+    "incontrolavel": true,
+    "_doc": "A carga acaba por DISTANCIA percorrida, nao por tempo: 12 a 13 tiles, sorteado no RNG da sim. So grupo de infantaria corpo a corpo carrega. Do KaM: STORM_SPEEDUP 1.5 (KM_ResUnits.pas:212), folego em tiles (KM_UnitActionStormAttack.pas:41-49), so grupo melee (KM_Defaults.pas:685-696). Correcao do operador, 2026-09-28: antes era duracao_segundos_base 8."
   },
   "watchtower": {
     "municao_stone_max": 5,
     "alcance_tiles": 6,
     "mataEmUmGolpe": true
   },
-  "formacao": { "tamanhoRecomendado": [9, 15], "colunasMin": 1, "colunasMax": 10 }
+  "formacao": {
+    "colunasMin": 1,
+    "colunasMax": "tamanhoDoGrupo",
+    "_doc": "Homens por fileira vai de 1 ao tamanho do grupo, como no KaM (KM_UnitGroup.pas:661-666). Nao ha tamanho recomendado: o '9-15' saiu (operador, 2026-09-28). O padrao da IA do KaM, 9 homens em 3 por fileira (KM_AIDefensePos.pas:223-224), e da IA, nao regra."
+  },
+  "ataqueAPredio": {
+    "danoCorpoACorpo": 2,
+    "danoProjetil": 1,
+    "rolagem": false,
+    "cadencia_segundos_base": 1.2,
+    "_docCadencia": "DERIVADO, nao escolhido (operador, 2026-09-28): o golpe contra predio no KaM espera 6 + 6 ticks de 100 ms (KM_UnitTaskAttackHouse.pas:167, :189) = 1.2 s. Cadencia PROPRIA, separada de cadenciaDeAtaque_segundos_base: aquela e dobrada para compensar o multiplicadorHP das unidades, e o predio nao tem HP dobrado; aplicada ao predio, ele cairia 2.4x mais rapido que no KaM por acidente. Os 12 ticks sao LEITURA do fonte, nao medida (docs/varredura-kam.md, frente 4).",
+    "_doc": "Dano do KaM: corpo a corpo 2 por golpe sem rolagem (KM_UnitTaskAttackHouse.pas:191-192); projetil 1 (KM_Projectiles.pas:325-330). Sem leitor ate F-CERCO-a."
+  }
 }

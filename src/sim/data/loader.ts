@@ -541,14 +541,16 @@ export function loadGameData(raw: RawGameData): GameData {
       paraTicksDeDuracao(raw.combat.cadenciaDeAtaque_segundos_base, 'segundos', escalaCombate, tickHz),
     ),
     aDistancia: raw.combat.aDistancia,
-    stormAttack: {
-      multiplicadorVelocidade: raw.combat.stormAttack.multiplicadorVelocidade,
-      ticksDuracao: registrar(
-        'combat.stormAttack.duracao_segundos_base', raw.combat.escala,
-        raw.combat.stormAttack.duracao_segundos_base, 'segundos',
-        paraTicksDeDuracao(raw.combat.stormAttack.duracao_segundos_base, 'segundos', escalaCombate, tickHz),
+    stormAttack: raw.combat.stormAttack,
+    ataqueAPredio: {
+      danoCorpoACorpo: raw.combat.ataqueAPredio.danoCorpoACorpo,
+      danoProjetil: raw.combat.ataqueAPredio.danoProjetil,
+      rolagem: raw.combat.ataqueAPredio.rolagem,
+      ticksCadencia: registrar(
+        'combat.ataqueAPredio.cadencia_segundos_base', raw.combat.escala,
+        raw.combat.ataqueAPredio.cadencia_segundos_base, 'segundos',
+        paraTicksDeDuracao(raw.combat.ataqueAPredio.cadencia_segundos_base, 'segundos', escalaCombate, tickHz),
       ),
-      incontrolavel: raw.combat.stormAttack.incontrolavel,
     },
     watchtower: raw.combat.watchtower,
     formacao: raw.combat.formacao,
