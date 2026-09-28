@@ -270,12 +270,23 @@ function tileCrescendo(
  *  por acao de predio. Zerada e nao "abaixo do ciclo": repor um tile que ainda
  *  tem dois pes de milho daria dois pes de graca, e recurso que nasce do nada e
  *  o que a camada de tile existe para impedir. Tile sem entrada nenhuma nao e
- *  campo em pousio — e chao que nunca foi arado, e arar e a F-T3. */
+ *  campo em pousio — e chao que nunca foi arado, e arar e a F-T3.
+ *
+ *  F-REPL-a — e tile com estrada (assentada ou no canteiro) nao se replanta. O
+ *  toco nao bloqueia nada, entao a estrada passa por cima dele
+ *  (`canPlaceRoad`), e sem esta recusa o lenhador fazia a arvore nascer no meio
+ *  da estrada, com quem estivesse parado nela preso dentro (medido na sonda da
+ *  F-REPL-a). Mora AQUI, e nao no `elegivel` do rodizio, porque este predicado e
+ *  o mesmo dos dois lados (`tileTrabalhavel`): toco sob estrada que contasse
+ *  como trabalho para o alerta e como nada para o rodizio seria o lenhador
+ *  esperando o que nunca chega. Vale para todo tipo, como o `canPlowField`
+ *  recusa arar estrada. */
 export function tilePlantavel(
   state: GameState, chaveDoTile: string, colheita: ColheitaDeRecurso, dados: GameData = gameData,
 ): boolean {
   const atual = state.recursos[chaveDoTile];
   if (atual === undefined || atual.tipo !== colheita.recurso || atual.quantidade > 0) return false;
+  if (state.estradas[chaveDoTile] === true || state.estradasPlanejadas[chaveDoTile] === true) return false;
   return (dados.recursos.tipos[atual.tipo]?.reposicao ?? null) !== null;
 }
 

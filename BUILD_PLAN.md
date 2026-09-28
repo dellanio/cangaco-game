@@ -4022,7 +4022,19 @@ Casos 2 e 4 do prédio vivo (`docs/BRIEF-ARTE.md` §4a). Decisão do operador: c
     montado), e `predios.ts` quebra.
   - O `tsc` deu 42 erros ao tirar o campo e 2 ao acrescentar um obrigatório.
 
-### F-REPL — O lenhador replanta: modos cortar, replantar e ambos (dado + sim; proposta, não implementar antes do sim do operador)
+### F-REPL — O lenhador replanta: modos cortar e cortar e plantar (dado + sim)
+
+**Decisões do operador (2026-09-27, noite 16), que valem sobre o texto abaixo:**
+1. **A árvore nasce SÓ no toco.** O risco da árvore na estrada morre por construção:
+   toco é tile que já teve árvore, então nenhum tile novo vira mata. Resta o toco COM
+   estrada por cima, e a regra é: **toco sob estrada não rebrota.** Plantar em tile
+   virgem (o F-REPL-c) fica para depois, "se alguém sentir falta".
+2. **Dois modos, não três**, como no kam_remake (`TWoodcutterMode = (wcm_Chop,
+   wcm_ChopAndPlant)`): `cortar` e `cortar_e_plantar`. "Só replantar" era invenção
+   nossa: lenhador que só planta não produz. **Padrão: cortar e plantar.**
+3. **Sim ao item.** E a premissa da árvore, corrigida e reconhecida pelo operador: ela
+   existia antes da F-D3, no noroeste; a F-D3 a trouxe para perto. O operador vinha
+   dizendo que ela nasceu lá.
 
 Pedido do operador (2026-09-27, noite 15):
 - o lenhador ganha os modos do KaM;
@@ -4071,7 +4083,22 @@ Pedido do operador (2026-09-27, noite 15):
 
 - **Sub-itens, nesta ordem, uma sessão cada.** A quebra evita tocar sim e render na
   mesma feature (§10).
-  - **F-REPL-a — o toco rebrota (dado + sim).**
+  - **F-REPL-a — o toco rebrota (dado + sim). ENTREGUE (2026-09-27, noite 16).**
+    - **Tarefa 1, a sonda, reproduziu o caso**, já apagada: o `PlaceRoad` sobre o toco
+      37,23 foi aceito em t2338, a estrada foi assentada em t2493, e a árvore nasceu na
+      estrada em t2618. Dois serfs parados na rua (u3, u7) somaram 9 578 ticks×unidade
+      dentro do tronco.
+    - **A guarda está em `tilePlantavel`** (`sim/recursos.ts`), não no `elegivel`. É o
+      predicado único dos dois lados: o rodízio, o alerta e a prévia. Com ela no
+      rodízio apenas, o alerta esperaria um trabalho que nunca chega. Vale para todo
+      tipo com `reposicao`, como o `canPlowField` já recusa estrada.
+    - O canteiro já estava fora, pelo `elegivel`: `tileCobertoPorPredio` bloqueia o
+      footprint de todo prédio em `predios.ordem`, qualquer que seja o estado
+      (`pathfinding.ts:200-206`). Isto foi lido, não rodado.
+    - A unidade em pé no tile quando a árvore nasce sai sozinha: o A* não confere o
+      tile de partida. O teste afirma que `buscarCaminho` sai de dentro do tronco. Nas
+      corridas do aceite, 0 ticks×unidade dentro de árvore.
+    - Número: `semear` 53 s, `crescer` 412,5 s (265 e 2 063 ticks), `[proposta]`.
     - `tree.reposicao` em `data/resources.json`, `[proposta]`, com a proporção do KaM
       (medida; fonte no fim do item):
       - `crescer` = 1,25 × o do milho (KaM: árvore 8 000, milho 6 400);
@@ -4094,6 +4121,11 @@ Pedido do operador (2026-09-27, noite 15):
       que a unidade não trava: ou ela sai do tile, ou o plantio espera.
     - Sem modos ainda: todo lenhador faz `ambos`, que é o padrão pedido.
   - **F-REPL-b — os modos (sim + dado).**
+    - **Nota (decisão 2 acima): são dois modos, `cortar` e `cortar_e_plantar`.** O
+      `modos` do lenhador em `data/production.json` passa a ter esses dois, e o
+      padrão é `cortar_e_plantar`. Onde o texto abaixo diz `ambos`, leia
+      `cortar_e_plantar`. O `replantar` sai do escopo e do aceite. Desde a F-REPL-a
+      todo lenhador já faz `cortar_e_plantar`; o b acrescenta o `cortar`.
     - `modoPadrao: "ambos"` na receita do lenhador, ao lado de `modos`, com uma regra de
       dado: o padrão tem de estar na lista.
     - Estado e comando:
@@ -4106,7 +4138,8 @@ Pedido do operador (2026-09-27, noite 15):
       - `ambos` = o rodízio.
     - O leitor é `proximoTrabalhoDoRodizio`, com um filtro de ação. É a "uma linha no
       rodízio" citada acima.
-  - **F-REPL-c — plantar em tile vazio (sim + dado).**
+  - **F-REPL-c — plantar em tile vazio (sim + dado). ADIADO (decisão 1 acima): sem
+    posição na fila, volta "se alguém sentir falta".**
     - `tree.plantio.terrenoPermitido`, no molde da `aradura`.
     - Predicado novo em `recursos.ts`, irmão do `canPlowField` (`campos.ts:98`). O tile
       precisa estar:
@@ -4144,8 +4177,9 @@ Pedido do operador (2026-09-27, noite 15):
       aceite: o total não gira.
   - **F-REPL-b:**
     - `cortar` reproduz, byte a byte, a corrida de hoje contra o dado sem `reposicao`;
-    - `replantar` não entrega tronco nenhum e deixa zero toco ao alcance;
-    - `ambos` é o modo de um prédio recém-construído;
+    - ~~`replantar` não entrega tronco nenhum e deixa zero toco ao alcance~~ (fora:
+      decisão 2);
+    - `cortar_e_plantar` é o modo de um prédio recém-construído;
     - o comando com o valor atual é no-op: devolve o MESMO estado.
 - **Evidência:** `test-output/F-REPL-a.json` e `test-output/F-REPL-b.json`.
   Screenshot só no e.
@@ -4184,6 +4218,50 @@ Pedido do operador (2026-09-27, noite 15):
     - árvore: `TREE_AGE_1/2/FULL` = 2 400 / 5 000 / 8 000;
     - milho: `CORN_AGE_FULL` = 6 400, na mesma unidade (`TERRAIN_PACE`).
   - `KM_Units_WorkPlan.pas:249-252`: cortar é `ua_Work` ×15 mais 20; plantar, ×12.
+
+### VARREDURA-KAM — cruzar o que supomos com o fonte do KaM (leitura; sem posição na fila)
+
+Pedido do operador (2026-09-27, noite 15). **Sem posição na fila:** roda depois da
+F-REPL e antes da Fase C.
+
+- **Por quê:** quatro leituras pontuais do KaM corrigiram quatro coisas que estavam
+  erradas havia semanas:
+  - a projeção;
+  - o modelo de taxa;
+  - a árvore;
+  - os modos do lenhador (dois, não três).
+
+  Uma varredura provavelmente acha mais. O operador registrou que errou três vezes
+  contra o KaM: projeção, modelo de taxa e árvore.
+- **Escopo:** cruzar o que está marcado como `[geral]`, `[proposta]` ou hipótese nos
+  nossos documentos com o código do kam_remake e com o `houses.dat`. Quatro frentes:
+  1. **GDD:** tudo o que está marcado `[geral]`, isto é, comportamento suposto e nunca
+     medido.
+  2. **BALANCE_LOG:** as observações abertas e as hipóteses.
+  3. **PROGRESS:** as decisões do operador marcadas para revisão.
+  4. **O que o KaM tem e nós não:** mecânicas inteiras que passaram despercebidas
+     porque ninguém foi procurar.
+- **Resultado:** uma lista, em documento próprio (`docs/varredura-kam.md`), com cada
+  achado em uma de três classes:
+  - **correção:** estamos errados;
+  - **divergência deliberada:** escolhemos diferente, e o registro diz onde e por quê;
+  - **lacuna:** eles têm, nós não.
+
+  Cada achado cita o nosso arquivo e linha, e o arquivo e linha do fonte do KaM.
+- **Sem mudar nada.** Nem dado, nem código, nem critério de aceite. Cada correção ou
+  lacuna vira proposta para o operador, que decide o que entra na fila.
+- **Regras que continuam valendo:**
+  - nenhum dado, arte ou arquivo do KaM entra no repositório. O clone fica no
+    scratchpad, e só entram os números medidos, com a fonte anotada no BALANCE_LOG;
+  - "não conferido no fonte" é hipótese e se escreve como hipótese;
+  - o fonte do Remake não é o jogo de 1998: divergência entre os dois se registra,
+    não se resolve por palpite.
+- **Custo:** leitura grande. Segue a §11 (delegar a leitura ampla a um subagente que
+  devolve só o resumo) e cabe em mais de uma sessão; se passar de uma, quebra por
+  frente, na ordem 1 → 4.
+- **Aceite:** o documento existe; cada item das frentes 1 a 3 tem uma classe ou a
+  marca "sem correspondente no KaM"; nenhum arquivo fora de `docs/` e do PROGRESS
+  mudou no commit.
 
 ### F-ESC — A escala do prédio: altura máxima pela largura (render + ferramenta; proposta, não implementar antes do sim do operador)
 - **FORA DA ESPERA POR JANELA (operador, 2026-09-27, noite 10).** O Codex continua em

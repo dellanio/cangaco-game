@@ -3229,16 +3229,6 @@ que vetar custe uma linha.
 
 ## Perguntas em aberto
 
-- **(2026-09-27, noite 15) F-REPL-c: onde a árvore nova pode nascer?** Plantar em tile
-  vazio cria um obstáculo em partida, e o GDD não diz se o lenhador pode fechar a porta
-  de um prédio ou o único corredor até a mata.
-  - Interpretação conservadora, escrita no item: não plantar no tile de acesso de prédio
-    nem em vizinho de estrada.
-  - Saída mais barata: começar só pelos tocos (F-REPL-a), que não mudam o desenho da
-    mata.
-- **(2026-09-27, noite 15) F-REPL-b: três modos ou dois?** O fonte do KaM Remake tem dois
-  (`wcm_Chop`, `wcm_ChopAndPlant`). "Só replantar" é nosso. O item mantém os três, como
-  pedido.
 - **(2026-09-26, noite 18) A frase cortada do BRIEF-ARTE:** o operador escreveu que os
   sprites de estado da roça vão "desenhada[s] pelo render sobre o tile, nunca" — e a
   mensagem parou aí. O BRIEF-ARTE não completa a frase; falta o que vem depois do nunca.
@@ -9537,3 +9527,50 @@ muda e trazer o custo, principalmente em `recursos.ts`. Não implementar.
 **Aberto:**
 - o sim do operador ao item;
 - as duas perguntas (posição da árvore nova; dois ou três modos).
+
+## 2026-09-27 (noite, 16) — F-REPL-a entregue: o toco rebrota; item VARREDURA-KAM escrito
+
+**Decisões do operador** (registradas no item F-REPL do BUILD_PLAN; as duas perguntas
+em aberto da noite 15 saíram de "Perguntas em aberto"):
+- a árvore nasce SÓ no toco, e toco sob estrada não rebrota. Tile virgem (F-REPL-c) fica
+  adiado, "se alguém sentir falta";
+- dois modos, `cortar` e `cortar_e_plantar`, como no KaM. O padrão é cortar e plantar, e
+  "só replantar" sai. A nota vai no F-REPL-b: `modos` do lenhador em `production.json`
+  vira esses dois;
+- a premissa da árvore corrigida, reconhecida pelo operador: ela existia antes da F-D3,
+  no noroeste; a F-D3 a trouxe para perto. O operador vinha dizendo que ela nasceu lá.
+
+**Feito:**
+- `data/resources.json`: `tree.reposicao` (`semear` 53 s, `crescer` 412,5 s, custo vazio,
+  `[proposta]`, pela proporção do KaM). Os dois caminhos estão registrados em
+  `tools/data-schema.js`;
+- `sim/recursos.ts`, `tilePlantavel`: toco sob estrada ou estrada planejada não é
+  plantável. É o predicado único do rodízio, do alerta e da prévia;
+- `tests/F18-ciclo-do-roceiro.test.ts`: a asserção "árvore sem `reposicao`" virou
+  `not.toBeNull()`, por decisão do operador;
+- `tests/F-REPL-a-toco-rebrota.test.ts`, novo;
+- BUILD_PLAN: o item **VARREDURA-KAM** (leitura, sem posição na fila, depois da F-REPL e
+  antes da Fase C), pedido do operador.
+
+**Verificado (rodado):**
+- **Tarefa 1** (sonda, apagada): o caso da estrada reproduz. `PlaceRoad` no toco 37,23
+  foi aceito em t2338; a estrada foi assentada em t2493; a árvore nasceu nela em t2618;
+  9 578 ticks×unidade de serf dentro do tronco;
+- com a guarda, o toco sob estrada fica em 0 por 12 000 ticks, e o mesmo toco sem estrada
+  rebrota. Com a guarda desligada o teste reprova (o toco volta a 4): a prova de que
+  acusa;
+- mata de 2 tiles: 16 troncos, contra exatamente 8 (= 2 × rendimento) com `reposicao`
+  nula; 8 deles vieram depois do tick sem adulta (t4266); 4 replantios;
+- 0 ticks×unidade dentro de árvore em todas as corridas do teste;
+- `buscarCaminho` sai de dentro de um tile de árvore;
+- a razão N:1 do lenhador é 1,75 (21 / 12), número da corrida, não aceite.
+
+**Lido, não rodado:**
+- a unidade dentro do tile sai porque o A* não confere o tile de partida
+  (`pathfinding.ts:397-425`). O teste afirma o efeito, não a razão;
+- o canteiro já fica fora do rodízio pelo `elegivel`: `tileCobertoPorPredio` cobre todo
+  prédio em `predios.ordem`, qualquer estado (`pathfinding.ts:200-206`).
+
+**Aberto:**
+- F-REPL-b (os dois modos), e depois dele a re-medida do lenhador;
+- VARREDURA-KAM, a rodar depois da F-REPL.

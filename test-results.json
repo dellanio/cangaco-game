@@ -253,5 +253,8 @@
   },
   "LOTE3-c-pedreiro-tres-por-viagem": {
     "passes": true
+  },
+  "F-REPL-a-toco-rebrota": {
+    "passes": true
   }
 }

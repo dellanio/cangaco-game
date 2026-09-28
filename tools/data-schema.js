@@ -88,6 +88,12 @@ const CAMPOS_ESCALONADOS = [
     unidade: 'segundos', declaraEscalaEm: 'escala' },
   { arquivo: 'resources', caminho: 'tipos.grapes.aradura.segundos_base',
     unidade: 'segundos', declaraEscalaEm: 'escala' },
+  // F-REPL-a — a arvore do replantio: o lenhador planta no toco. Sem `aradura`:
+  // mata nao se desenha, so rebrota onde ja houve arvore.
+  { arquivo: 'resources', caminho: 'tipos.tree.reposicao.semear_segundos_base',
+    unidade: 'segundos', declaraEscalaEm: 'escala' },
+  { arquivo: 'resources', caminho: 'tipos.tree.reposicao.crescer_segundos_base',
+    unidade: 'segundos', declaraEscalaEm: 'escala' },
   // LOTE3 — as fases da colheita, POR RECEITA, pelo mesmo contrato da reposicao:
   // quem ganha `fases` escreve as linhas dele aqui. O grupo e o `escala` de
   // production.json (economia), o mesmo das taxas.

@@ -240,7 +240,10 @@ describe('F18 — o ciclo do roceiro, tick a tick', () => {
     // O gatilho e `reposicao` no DADO, nao o id do predio. Tipo sem reposicao nao
     // planta, e e isso que mantem o veio um recurso que acaba.
     expect(gameData.recursos.tipos.rock?.reposicao ?? null).toBeNull();
-    expect(gameData.recursos.tipos.tree?.reposicao ?? null).toBeNull();
+    // F-REPL-a (decisao do operador, 2026-09-27): a arvore passou a ter
+    // `reposicao` — o lenhador replanta o toco. E o mesmo gatilho por dado; o
+    // que afirma o replantio dela e `tests/F-REPL-a-toco-rebrota.test.ts`.
+    expect(gameData.recursos.tipos.tree?.reposicao ?? null).not.toBeNull();
     expect(gameData.recursos.tipos[COLHEITA.recurso]?.reposicao ?? null).not.toBeNull();
   });
 });

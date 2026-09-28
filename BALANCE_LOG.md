@@ -307,9 +307,19 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
           esgota como as outras.
           - **Proposto (2026-09-27, noite 15), item F-REPL do BUILD_PLAN:** com o
             replantio, o lenhador sai desta lista e entra na de quem repõe, junto do
-            milho e da cana. Ainda não implementado: até a F-REPL-a entrar, a linha de
-            cima continua valendo. A sonda do item (dado injetado, zero código) deu 21
+            milho e da cana. A sonda do item (dado injetado, zero código) deu 21
             troncos contra 18, e 79 ticks parado contra 2 329.
+          - **Entregue (2026-09-27, noite 16), F-REPL-a:** o toco rebrota, e a linha
+            de cima caiu. `tree.reposicao` tem `semear` 53 s e `crescer` 412,5 s
+            (265 e 2 063 ticks), `[proposta]`, pela proporção do KaM. Números da
+            corrida, 12 000 ticks, `w1` sozinho (`test-output/F-REPL-a.json`):
+            - mata de 2 tiles: 16 troncos contra o teto de 8 sem replantio;
+            - mata de 1 tile: 12; mata inteira (9 tiles): 21. A razão N:1 é **1,75**;
+            - a mata inteira não chega a replantar em 12 000 ticks, porque o rodízio
+              corta a adulta antes. Por isso os 21 são os mesmos com e sem
+              `reposicao` nessa janela.
+            - A re-medida do lenhador (N:1 contra a serraria, o 2:1, o lote de 2)
+              continua depois da F-REPL-b. Isto é medição; nada gira.
       - **Quem a razão N:1 mede:** só quem REPÕE, `corn` (fazenda 2,875×, boa) e
         `grapes` (Canavial 1,5×). O 1,3× do pescador e o 4,0× da pedreira com o dado real
         medem o tamanho do veio, não o modelo.
