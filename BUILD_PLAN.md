@@ -5141,6 +5141,20 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
   `data/theme-sertao.json` não descreve a arma. O operador decide as duas lacunas
   quando o Quartel existir. Até lá, `docs/BRIEF-ARTE.md` manda não gerar mercenário.
 ### F26 — Seleção e movimento de grupo
+- **Quebra (sessão autônoma, 2026-09-28; plano em `docs/planos/2026-09-28-A9-F26-grupo.md`).**
+  A feature toca a sim e a tela, e a §10 não deixa as duas numa feature que não é de
+  integração.
+  - **F26a — a ordem de mover (sim). ENTREGUE.**
+    - `MoveUnits { unidades, destino }`, com FSM `marchando` → `ocioso`.
+    - Cada unidade recebe um tile andável próprio em anéis em volta do destino. Isso não
+      é formação (F27).
+    - A ordem nova substitui a anterior, inclusive o ataque.
+    - Recusa inteira com motivo.
+    - Teste: `tests/F26a-marcha.test.ts`.
+  - **F26b — selecionar e comandar pela tela (render + input + ui).**
+    - Clique em soldado, com acerto pelo `deslocamentoDaUnidade`; caixa de arrasto.
+    - Botão direito no chão manda `MoveUnits`; em prédio inimigo, `AttackBuilding`.
+    - Seleção desenhada e publicada no debug. Roteiro com passo despausado.
 - **Nota (herdada da F18f, 2026-09-24)**: o desenho da unidade sai do centro do
   tile por um deslocamento de até ±16 px derivado do id. **O teste de acerto do
   clique tem de usar a MESMA função de deslocamento** — se ele mirar o centro do

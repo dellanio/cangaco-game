@@ -203,4 +203,17 @@ export type Command =
       readonly type: 'TrainSoldier';
       readonly predio: string;
       readonly tipo: string;
+    }
+  | {
+      /**
+       * F26a — manda `unidades` (militares, do mesmo lado) marcharem ate `destino`. Cada
+       * uma recebe um tile ANDAVEL proprio em volta do destino, em aneis, na ordem da
+       * lista: o grupo nao para empilhado (formacao de verdade e da F27). A ordem nova
+       * substitui a anterior, inclusive o ataque. Recusado INTEIRO (`command-rejected`,
+       * o estado nao muda) se a lista e vazia, alguma unidade nao existe ou nao e
+       * militar, os lados diferem, ou o destino esta fora do mapa ou nao e andavel.
+       */
+      readonly type: 'MoveUnits';
+      readonly unidades: readonly string[];
+      readonly destino: TileDeGrid;
     };

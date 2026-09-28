@@ -260,6 +260,12 @@
   "F25b-painel-do-quartel": {
     "passes": false
   },
+  "F26a-ordem-de-mover": {
+    "passes": true
+  },
+  "F26b-selecionar-pela-tela": {
+    "passes": false
+  },
   "F-TR-a-textura-e-transicao": {
     "passes": true
   },

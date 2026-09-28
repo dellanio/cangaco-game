@@ -35,6 +35,14 @@ import { recursosIniciais } from './recursos';
  * semente e os mesmos comandos produzem os mesmos eventos, na mesma ordem.
  * O teste de determinismo compara o estado inteiro, `events` incluso.
  */
+/** F26a — por que um `MoveUnits` foi recusado. */
+export type MotivoDeRecusaDeMarcha =
+  | 'sem-unidades'
+  | 'unidade-inexistente'
+  | 'unidade-nao-militar'
+  | 'lados-diferentes'
+  | 'destino-inandavel';
+
 /** F-CERCO-a2 — por que um `AttackBuilding` foi recusado. */
 export type MotivoDeRecusaDeAtaque =
   | 'predio-inexistente'
@@ -105,6 +113,13 @@ export type GameEvent =
       readonly command: 'SetProductionQuota';
       readonly predio: string;
       readonly motivo: MotivoDeRecusaDeCota;
+    }
+  | {
+      /** F26a — `MoveUnits` recusado INTEIRO; o estado nao mudou. */
+      readonly type: 'command-rejected';
+      readonly command: 'MoveUnits';
+      readonly unidade: string | null;
+      readonly motivo: MotivoDeRecusaDeMarcha;
     }
   | {
       /** F25a — `TrainSoldier` recusado; o estado nao mudou. */
@@ -1129,6 +1144,8 @@ export interface DadosDaFsm {
   readonly alvo?: string;
   /** F-CERCO-a2 — ticks ate o proximo golpe no predio, na cadencia propria do dado. */
   readonly recarga?: number;
+  /** F26a — o tile que a ordem de mover deu a ESTA unidade (`MoveUnits`). */
+  readonly alvoTile?: TileDeGrid;
 }
 
 export interface Unidade {

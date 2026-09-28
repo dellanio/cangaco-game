@@ -10,6 +10,7 @@ import { aplicarAttackBuilding, sistemaDoCerco } from './systems/cerco';
 import { aplicarSetBuildingRepair } from './systems/reparo';
 import { sistemaDaRegeneracao } from './systems/regeneracao';
 import { aplicarTrainSoldier } from './systems/quartel';
+import { aplicarMoveUnits, sistemaDaMarcha } from './systems/marcha';
 import { aplicarCancelTraining, aplicarEnqueueTraining, sistemaDasEscolas } from './systems/escolas';
 import { aplicarDemolishRoad, aplicarPlaceRoad } from './systems/estradas';
 import { aplicarPlowField, aplicarUnplanField } from './systems/campos';
@@ -109,6 +110,12 @@ export function step(
         events.push(...resultado.events);
         break;
       }
+      case 'MoveUnits': {
+        const resultado = aplicarMoveUnits(atual, command, dados);
+        atual = resultado.state;
+        events.push(...resultado.events);
+        break;
+      }
       case 'TrainSoldier': {
         const resultado = aplicarTrainSoldier(atual, command, dados);
         atual = resultado.state;
@@ -153,7 +160,8 @@ export function step(
   // ocupante liberados por `sanearTarefas` neste MESMO tick, e nenhuma tarefa atravessa
   // o fim do tick apontando para predio que nao existe.
   // F28c: a cura antes do cerco, sem evento (nenhum aceite nem tela o consome).
-  const cerco = sistemaDoCerco(sistemaDaRegeneracao(atual, tick, dados), dados);
+  // F26a: a marcha junto do cerco — as duas ordens diretas da tropa, sem JobBoard.
+  const cerco = sistemaDoCerco(sistemaDaMarcha(sistemaDaRegeneracao(atual, tick, dados), dados).state, dados);
   events.push(...cerco.events);
   const saneado = sanearTarefas(cerco.state, dados);
   // F20b: a fome ANTES das tres familias e depois do saneamento. Antes, porque o

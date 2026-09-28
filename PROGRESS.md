@@ -10619,3 +10619,29 @@ Plano: `docs/planos/2026-09-28-A8-F25a-quartel.md`. O item F25 tinha só a nota 
   gaveta, mas não os recrutas.
 - **Treino instantâneo**, como no KaM: o dado não tem tempo de treino de soldado.
 - **Sem a F25b, o jogador não treina pela tela:** o comando existe, e o botão não.
+
+## 2026-09-28 (sessão autônoma, item 9a) — F26a: a ordem de mover a tropa
+
+Plano: `docs/planos/2026-09-28-A9-F26-grupo.md`. **A F26 foi quebrada em a (sim) e b
+(tela)**, pela §10. Esta entrada é só a F26a.
+
+**Verificado:**
+- `MoveUnits { unidades, destino }` (`systems/marcha.ts`) e FSM `marchando` → `ocioso`.
+  `DadosDaFsm.alvoTile?` guarda o tile de cada unidade.
+- `tilesDoGrupo`: tiles andáveis em anéis de Chebyshev a partir do destino, em varredura
+  de linha. A i-ésima unidade da lista, sem repetidos, recebe o i-ésimo tile.
+- A marcha roda junto do cerco, antes do saneamento. A ordem nova troca a FSM, e com isso
+  o ataque para.
+- `tests/F26a-marcha.test.ts`, 4 testes, verdes:
+  - 5 soldados chegam a 5 tiles distintos no anel 1 do destino, o primeiro no próprio
+    ponto, e ficam `ocioso`;
+  - mover tira do ataque: o hp do alvo congela;
+  - cinco recusas, com o estado igual byte a byte;
+  - determinismo.
+- **Sonda:** com todos mandados para o mesmo tile, o primeiro teste reprova.
+
+**PARA REVISÃO:**
+- **Não é formação.** O anel em volta do ponto é só para o grupo não parar empilhado; a
+  formação é da F27.
+- **Militares ainda não colidem** (GDD §6.4 diz que colidem). Dois soldados podem cruzar
+  o mesmo tile no caminho. Só o destino é distinto.
