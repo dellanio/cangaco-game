@@ -5546,9 +5546,21 @@ Ordem do operador. Cada item tem plano em `docs/planos/2026-09-28-C<n>-*.md`.
     - Um civil por tile, sempre.
     - A invariante acusa qualquer par.
     - A prioridade não bloqueia a permuta.
-  - **FECHADO DESLIGADO, com o mecanismo do KaM** (regra do operador): com a porta de 1
-    tick e com a de 10, duas faixas perdem em 5 das 6 combinações. O GDD §6.4 foi
-    atualizado.
+  - **FECHADO DESLIGADO, DEFINITIVO, com o mecanismo do KaM** (regra do operador): com a
+    porta de 1 tick e com a de 10, duas faixas perdem em 5 das 6 combinações. O GDD §6.4
+    registra o resultado como definitivo.
+  - **LIÇÃO (vale para qualquer mecanismo com fila, decisão do operador):** "não trava" mede
+    **PROGRESSO**, não tempo de espera.
+    - Com a porta lenta, a invariante de teto de espera acusava fila legítima (esperas de 32
+      a 73 ticks, com a madeira chegando).
+    - Se a colisão voltar, a invariante do "não trava" afirma que cada unidade avança (tile,
+      entrega, tarefa) dentro de um prazo, e não que ninguém espera mais que N ticks.
+  - **Defeito conhecido no mecanismo desligado (medido 2026-09-29, não consertado):** a
+    permuta de frente entrega o caminho um passo inteiro mais cedo.
+    - Duas unidades de frente em 20 tiles chegam em 95 ticks, contra 100 sem colisão.
+    - Sozinha e em fila, 100 e 95 nos dois modos: o movimento normal está certo.
+    - Conserto proposto: permutar só quando o passo dos dois vence no mesmo tick, e não somar
+      o tick do `andar` em quem permutou.
   - **REABERTO pelo operador (antes da permuta):** o engarrafamento do KaM é fila na porta.
   - **D-MOVIMENTO-01i — a porta lenta (10 ticks, do fonte do KaM). MEDIDO:**
     - sozinha, atrasa a abertura 14%;

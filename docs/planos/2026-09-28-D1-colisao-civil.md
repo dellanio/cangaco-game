@@ -496,3 +496,10 @@ O operador decidiu:
   de 10 ticks. Agora a prioridade vale só para entrar em tile vazio.
 - **Duas faixas perdem** em 5 das 6 combinações de porta e carga (tabela no PROGRESS,
   D-MOVIMENTO-01j). Pela regra do operador, fecha desligada.
+
+### Encerramento (2026-09-29)
+- **Fechado desligado e definitivo**, com prova (decisão do operador).
+- **Lição:** "não trava" mede progresso, não tempo de espera.
+- **O viés medido:** a permuta de frente dá um passo de graça ao parceiro (95 contra 100
+  ticks em 20 tiles). O movimento normal conta certo. Não consertado: o mecanismo está
+  desligado.

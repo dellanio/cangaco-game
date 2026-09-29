@@ -521,8 +521,8 @@ montanha **[fonte]**.
   a razão 1:1,666 do Remake **[fonte]**.
 - Custo de movimento por terreno em `data/terrain.json`.
 - Civis não colidem entre si, para não travar a logística. Militares colidem (C5).
-  - **Testado e recusado com o mecanismo do KaM (D-MOVIMENTO-01, colisão civil, fechado em
-    2026-09-28).** O mecanismo do `WalkTo` do kam_remake foi implementado:
+  - **Testado e recusado com o mecanismo do KaM. DEFINITIVO (D-MOVIMENTO-01, colisão civil,
+    fechado em 2026-09-28 pelo operador, com prova).** O mecanismo do `WalkTo` do kam_remake foi implementado:
     - troca de frente e troca forçada como **permuta** (um civil por tile, sempre);
     - empurrão do ocioso, desvio e prioridade de quem espera;
     - a porta que espera;

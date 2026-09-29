@@ -12387,3 +12387,57 @@ Espera da madeira na gaveta (ticks):
   invariante do "não trava" precisa medir progresso, não espera.
 - **A porta lenta sozinha** (medida no D-MOVIMENTO-01i) atrasa a abertura 14%, sem colisão.
   Não entrou: ela só fazia sentido como a peça que tornaria a colisão visível.
+
+## 2026-09-29 — D-MOVIMENTO-01 (colisão civil) encerrado: o viés medido, a lição e o padrão
+
+### Decisão do operador
+- O fechamento desligado é **definitivo**, e o GDD §6.4 registra assim.
+
+### O viés "a colisão ligada é mais rápida que a desligada" (159 contra 261): medido
+Sonda (evidência da sessão), rua de 20 tiles, 5 ticks por passo, o mesmo laço de movimento
+dos testes:
+
+| Cenário | desligada | ligada |
+|---|---|---|
+| uma unidade sozinha | 100 | 100 |
+| duas em fila, mesmo sentido | 95 e 95 | 95 e 95 |
+| duas de frente (há permuta) | 100 e 100 | **95** e 100 |
+
+- **Verificado:** o movimento normal conta o tick certo, com e sem a chave. Não há bug de
+  contagem no movimento comum, e nada a consertar com a chave desligada.
+- **Verificado:** a **permuta de frente** entrega o caminho **um passo inteiro** (5 ticks)
+  mais cedo, e não 1 tick como a hipótese dizia.
+- **HIPÓTESE (a causa, não instrumentada):** o parceiro da permuta é posto no tile de destino
+  do passo dele no mesmo tick, e o passo que ele mal tinha começado sai de graça. O tick
+  somado pelo `andar` em quem permuta é a parte menor.
+- **HIPÓTESE (o tamanho):** numa rua cheia há muitas permutas de frente, e isso pode explicar
+  boa parte dos 159 contra 261. Não medido.
+- **Não consertado:** o defeito vive só no mecanismo desligado, e o operador pediu para medir
+  só isso. O conserto proposto está no BUILD_PLAN.
+- **A comparação de uma rua contra duas faixas não é afetada** no sentido do veredito: as
+  duas usam o mesmo mecanismo. O número absoluto de cada célula da grade, sim.
+
+### A lição da rodada (decisão do operador; vale para qualquer mecanismo com fila)
+- **"Não trava" mede PROGRESSO, não tempo de espera.** Uma fila legítima passa de qualquer
+  teto fixo de espera. A invariante certa afirma que cada unidade avança dentro de um prazo.
+
+### O padrão (registro do operador)
+- Quatro vezes neste projeto o efeito não aparecia porque uma peça estava implementada
+  diferente da referência:
+  - a projeção;
+  - o modelo de taxa;
+  - a fome;
+  - a troca como permuta.
+- Nas quatro, **ler o código do KaM** (kam_remake) deu a resposta.
+- Nesta série, o levantamento inicial leu o fonte, mas leu parte dele errado: o custo de
+  unidade não era só do modo desvio, e a troca forçada era permuta. **Antes de implementar
+  um mecanismo "do KaM", conferir cada regra contra o fonte, uma por uma, e registrar
+  arquivo e linha.**
+
+### A fila
+- **O D-MOVIMENTO-01 fecha.**
+- **Correção de premissa do operador:** a F25b (painel do Quartel) já está entregue
+  (`passes: true`, desta sessão, com teste e roteiro de tela).
+- **O que sobra da leva grande é o C-COMIDA-01** (fome militar com o Feed), cujo plano
+  (`docs/planos/2026-09-28-F-FEED-fome-militar.md`) **ainda espera aprovação**. Ele destrava
+  o C-IA-01 (IA alimentar tropas).
