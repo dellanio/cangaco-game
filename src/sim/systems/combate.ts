@@ -24,6 +24,7 @@ import { comProjetil, vooEmTicks } from '../projeteis';
 import { alvosDeAproximacao } from '../aproximacao';
 import { buscarCaminho, passoAndavel } from '../pathfinding';
 import { andar, comUnidade, noTile, ocioso } from '../units/movimento';
+import { FSM_EM_CARGA, emCargaIncontrolavel } from '../carga';
 import type { ResultadoDeSistema } from './jobs';
 import { FSM_MARCHANDO } from './marcha';
 import { FSM_ATACANDO, FSM_INDO_ATACAR } from './cerco';
@@ -75,7 +76,8 @@ export function aplicarAttackUnit(state: GameState, comando: AttackUnit, dados: 
   let atual = state;
   for (const id of new Set(comando.unidades)) {
     const u = atual.unidades.porId[id];
-    if (u !== undefined) atual = comUnidade(atual, { ...semRetomar(u), fsm: FSM_INDO_LUTAR, fsmData: { alvoUnidade: comando.alvo } });
+    // C-COMBATE-01b: quem esta em carga nao aceita ordem
+    if (u !== undefined && !emCargaIncontrolavel(u, dados)) atual = comUnidade(atual, { ...semRetomar(u), fsm: FSM_INDO_LUTAR, fsmData: { alvoUnidade: comando.alvo } });
   }
   return { state: atual, events: [] };
 }
@@ -247,6 +249,12 @@ export function sistemaDoCombate(state: GameState, dados: GameData): ResultadoDe
     if (u === undefined) continue;
     // C6: o corpo a corpo em MARCHA tambem revida o inimigo encostado (KaM: CheckForEnemy
     // anda junto do WalkTo, KM_UnitWarrior.pas:664-702), e guarda o destino para retomar
+    // C-COMBATE-01b: na carga tambem, no centro do tile (sem o salto para tras); a carga acaba
+    if (u.fsm === FSM_EM_CARGA) {
+      const inimigo = (u.fsmData.progresso ?? 0) === 0 ? inimigoEncostado(atual, u, dados) : null;
+      if (inimigo !== null) atual = comUnidade(atual, lutarCom(u, inimigo, dados));
+      continue;
+    }
     if (u.fsm === FSM_MARCHANDO && lutaCorpoACorpo(u, dados)) {
       const inimigo = inimigoEncostado(atual, u, dados);
       const destino = u.fsmData.alvoTile;

@@ -12,6 +12,7 @@ import { aplicarSetBuildingRepair } from './systems/reparo';
 import { sistemaDaRegeneracao } from './systems/regeneracao';
 import { aplicarTrainSoldier } from './systems/quartel';
 import { aplicarMoveUnits, sistemaDaMarcha } from './systems/marcha';
+import { aplicarStormAttack, sistemaDaCarga } from './systems/carga';
 import { aplicarFeedUnits } from './systems/alimentar';
 import { aplicarAttackUnit, sistemaDoCombate } from './systems/combate';
 import { sistemaDaTorre } from './systems/torre';
@@ -138,6 +139,12 @@ export function step(
         events.push(...resultado.events);
         break;
       }
+      case 'StormAttack': {
+        const resultado = aplicarStormAttack(atual, command, dados);
+        atual = resultado.state;
+        events.push(...resultado.events);
+        break;
+      }
       case 'FeedUnits': {
         const resultado = aplicarFeedUnits(atual, command, dados);
         atual = resultado.state;
@@ -210,7 +217,8 @@ export function step(
   events.push(...noAr.events);
   const comIA = sistemaDaIA(sistemaDaRegeneracao(noAr.state, tick, dados), dados);
   events.push(...comIA.events);
-  const luta = sistemaDoCombate(sistemaDaMarcha(comIA.state, dados).state, dados);
+  // C-COMBATE-01b: a carga depois da marcha e antes da luta, como ela
+  const luta = sistemaDoCombate(sistemaDaCarga(sistemaDaMarcha(comIA.state, dados).state, dados).state, dados);
   events.push(...luta.events);
   // F28b: a torre atira depois da luta e antes do cerco
   const torre = sistemaDaTorre(luta.state, dados);

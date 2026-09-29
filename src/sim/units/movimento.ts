@@ -54,7 +54,7 @@ export function ficarOcioso(state: GameState, u: Unidade, eventos: readonly Game
  * ocupacao no INICIO do passo): quem esta no meio de um passo ocupa o tile para onde vai, e ja
  * liberou o de onde sai; quem esta parado ocupa o proprio tile. Assim a coluna flui colada.
  */
-function militarOcupa(state: GameState, tile: TileDeGrid, quem: string, dados: GameData): boolean {
+export function militarOcupa(state: GameState, tile: TileDeGrid, quem: string, dados: GameData): boolean {
   for (const id of state.unidades.ordem) {
     if (id === quem) continue;
     const o = state.unidades.porId[id];

@@ -451,5 +451,8 @@
   },
   "D-PRODUCAO-02-lenhador": {
     "passes": true
+  },
+  "C-COMBATE-01b-storm-attack": {
+    "passes": true
   }
 }

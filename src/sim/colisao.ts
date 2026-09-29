@@ -55,6 +55,7 @@ export const POSICAO_DO_ESTADO: Readonly<Record<string, 'dentro' | 'fora'>> = {
   comendo: 'dentro',
   // militar (a C5 cuida dele; classificado para a lista ser completa)
   marchando: 'fora',
+  em_carga: 'fora',
   indo_lutar: 'fora',
   lutando: 'fora',
   atirando: 'fora',

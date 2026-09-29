@@ -15,7 +15,7 @@ import { caixaDoPredio } from './footprint';
 import { estaDesbloqueado } from './desbloqueio';
 import { predioLigadoAoArmazem } from './estradas';
 import { custoDeTreino, ehEscolaCompleta, filaDaEscola, ouroNecessario } from './escola';
-import { custoDoPasso } from './pathfinding';
+import { custoDoPassoDaUnidade } from './carga';
 import { alvoDeNivelamento, custoDoPredio } from './obra';
 import { receitaDoTipo, semTrabalhoAoAlcance } from './producao';
 import { colheitaAoAlcanceDaCaixa } from './recursos';
@@ -713,7 +713,8 @@ export function posicaoDaUnidade(
   const proximo = unidade.fsmData.caminho?.[0];
   const progresso = unidade.fsmData.progresso ?? 0;
   if (!proximo || progresso === 0) return { gx: unidade.gx, gy: unidade.gy };
-  const fracao = progresso / custoDoPasso(state.estradas, { gx: unidade.gx, gy: unidade.gy }, proximo, dados);
+  // C-COMBATE-01b: o passo da carga e mais curto; o desenho interpola no custo da unidade
+  const fracao = progresso / custoDoPassoDaUnidade(state, unidade, proximo, dados);
   return {
     gx: unidade.gx + (proximo.gx - unidade.gx) * fracao,
     gy: unidade.gy + (proximo.gy - unidade.gy) * fracao,

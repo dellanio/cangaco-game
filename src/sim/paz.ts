@@ -54,6 +54,9 @@ export function recusaNaPaz(state: GameState, command: Command): GameEvent | nul
       return { type: 'command-rejected', command: 'AttackUnit', alvo: command.alvo, unidade: null, motivo: 'em-paz' };
     case 'AttackBuilding':
       return { type: 'command-rejected', command: 'AttackBuilding', predio: command.predio, unidade: null, motivo: 'em-paz' };
+    // C-COMBATE-01b: o storm esta no BLOCKED_BY_PEACETIME do KaM (PARA REVISAO: a marcha saiu)
+    case 'StormAttack':
+      return { type: 'command-rejected', command: 'StormAttack', unidade: null, motivo: 'em-paz' };
     case 'TrainSoldier':
       return { type: 'command-rejected', command: 'TrainSoldier', predio: command.predio, tipo: command.tipo, motivo: 'em-paz' };
     // BUG-S: o equipar da prefeitura (mercenario) esta na lista do KaM (gicHouseTownHallEquip)

@@ -61,6 +61,16 @@ export type MotivoDeRecusaDeMarcha =
   /** C-COMBATE-01a — `colunas` nao e inteiro. */
   | 'colunas-invalidas';
 
+/** C-COMBATE-01b — por que um `StormAttack` foi recusado: os da marcha que valem sem destino,
+ *  a paz, e nenhuma unidade da lista carregar (`stormAttack.apenas`). */
+export type MotivoDeRecusaDeCarga =
+  | 'sem-unidades'
+  | 'unidade-inexistente'
+  | 'unidade-nao-militar'
+  | 'lados-diferentes'
+  | 'sem-infantaria-corpo-a-corpo'
+  | 'em-paz';
+
 /** C-COMIDA-01 — por que um `FeedUnits` foi recusado: os motivos da marcha que valem sem
  *  destino, e `sem-fome` quando ninguem do grupo esta abaixo do limiar do pedido. */
 export type MotivoDeRecusaDeAlimentar =
@@ -148,6 +158,13 @@ export type GameEvent =
       readonly alvo: string;
       readonly unidade: string | null;
       readonly motivo: MotivoDeRecusaDeLuta;
+    }
+  | {
+      /** C-COMBATE-01b — `StormAttack` recusado INTEIRO; o estado nao mudou. */
+      readonly type: 'command-rejected';
+      readonly command: 'StormAttack';
+      readonly unidade: string | null;
+      readonly motivo: MotivoDeRecusaDeCarga;
     }
   | {
       /** F26a — `MoveUnits` recusado INTEIRO; o estado nao mudou. */
@@ -1300,6 +1317,10 @@ export interface DadosDaFsm {
   readonly replanejar?: boolean;
   /** F28a — a unidade que esta sendo perseguida ou golpeada (`AttackUnit`, contato). */
   readonly alvoUnidade?: string;
+  /** C-COMBATE-01b — tiles que faltam da carga (`StormAttack`), sorteados no inicio. */
+  readonly cargaRestante?: number;
+  /** C-COMBATE-01b — para onde a carga vai (0..7), a frente do lider. */
+  readonly cargaDirecao?: number;
 }
 
 export interface Unidade {

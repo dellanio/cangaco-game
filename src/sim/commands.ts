@@ -227,6 +227,17 @@ export type Command =
     }
   | {
       /**
+       * C-COMBATE-01b (storm attack) — `unidades` carregam em linha reta para a frente do
+       * primeiro da lista, por uma distancia sorteada, mais rapido que a marcha e sem aceitar
+       * ordem ate acabar (`systems/carga.ts`). So carrega quem `stormAttack.apenas` admite; os
+       * outros da lista ficam como estao. Recusado INTEIRO se a lista e vazia, alguma unidade
+       * nao existe ou nao e militar, os lados diferem, ou nenhuma pode carregar.
+       */
+      readonly type: 'StormAttack';
+      readonly unidades: readonly string[];
+    }
+  | {
+      /**
        * C-COMIDA-01 (fome militar com o Feed) — o Feed do grupo `unidades` (militares do
        * mesmo lado). Cada um PEDE comida se estiver abaixo de `ticksPedeComida` e ainda nao
        * tiver pedido: um serf levara uma. Recusado INTEIRO (`command-rejected`, o estado nao

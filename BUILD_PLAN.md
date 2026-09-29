@@ -5218,6 +5218,12 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
     `stormAttack.apenas` carrega, em linha reta para a frente, a `multiplicadorVelocidade`,
     por uma distância sorteada no RNG do estado entre `distancia_tiles.min` e `.max`,
     incontrolável até acabar.
+    - **ENTREGUE (2026-09-29; `docs/planos/2026-09-29-C-COMBATE-01b-storm-attack.md`).**
+      A FSM `em_carga` roda em `systems/carga.ts`. Todos carregam na direção do líder, e o
+      passo custa `round(custoDoPasso / multiplicadorVelocidade)`. A carga para no fim da
+      distância ou com o tile da frente fechado; a fileira de trás espera o companheiro que
+      carrega à frente, em vez de parar. Encostado num inimigo ao chegar num tile, luta.
+      `MoveUnits`/`AttackUnit`/`AttackBuilding` pulam quem carrega. A paz recusa com `em-paz`.
   - **C-COMBATE-01c — os controles (tela).** Sobre a seleção da C-TELA-03, no painel do
     grupo:
     - "+/− colunas" manda `MoveUnits` com `colunas` e com o destino no líder;
@@ -5227,6 +5233,9 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
     - **Herda da 01a:** os motivos `direcao-invalida` e `colunas-invalidas` ainda não têm
       texto no tema. Hoje a tela nunca manda os campos; quando mandar, a mensagem da
       C-TELA-01 precisa deles.
+    - **Herda da 01b:** `StormAttack` entra em `ORDENS_MILITARES` (`ui/aviso-de-ordem.ts`),
+      para o aviso da paz; o motivo `sem-infantaria-corpo-a-corpo` precisa de texto no tema.
+      Quem está em carga não aceita ordem: a tela não deve fingir que a ordem pegou.
 ### F28 — Combate e IA inimiga simples
 - **Quebra (sessão autônoma, 2026-09-28; plano em `docs/planos/2026-09-28-A10-F28-tropa.md`).**
   O pedido era "os tipos de tropa": arco de 90°, alcance de 4 a 11 e escudo contra

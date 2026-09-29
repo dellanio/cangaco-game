@@ -14,6 +14,7 @@ import type { TileDeGrid } from '../estradas';
 import { classeDaUnidade } from '../condicao';
 import { buscarCaminho, passoAndavel, tileAndavel } from '../pathfinding';
 import { andar, chegou, comUnidade, noTile, ocioso, vagaEmparedadaPor } from '../units/movimento';
+import { emCargaIncontrolavel } from '../carga';
 import type { ResultadoDeSistema } from './jobs';
 import { semRetomar, viradaPeloPasso } from './combate';
 import { DIRECAO_PADRAO, direcaoAproximada, direcaoDe, passoDaDirecao } from '../combate';
@@ -158,7 +159,8 @@ export function aplicarMoveUnits(state: GameState, comando: MoveUnits, dados: Ga
       events: [{ type: 'command-rejected', command: 'MoveUnits', unidade: recusa.unidade, motivo: recusa.motivo }],
     };
   }
-  const ids = [...new Set(comando.unidades)];
+  // C-COMBATE-01b: quem esta em carga nao aceita ordem (nem entra na conta das vagas)
+  const ids = [...new Set(comando.unidades)].filter((id) => !emCargaIncontrolavel(state.unidades.porId[id], dados));
   const lider = state.unidades.porId[ids[0] ?? ''];
   const direcao = comando.direcao
     ?? (lider === undefined ? DIRECAO_PADRAO : direcaoAproximada(lider, comando.destino) ?? direcaoDe(lider));

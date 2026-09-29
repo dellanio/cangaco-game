@@ -606,6 +606,16 @@ function validarAtiradores(dados, erros) {
   if (!(d.alcanceMinimo_tiles >= 0 && d.alcanceMaximo_tiles > d.alcanceMinimo_tiles)) {
     erros.push('combate/alcance: aDistancia precisa de 0 <= alcanceMinimo_tiles < alcanceMaximo_tiles');
   }
+  // C-COMBATE-01b: a carga. `apenas` e o unico criterio que `sim/carga.ts` sabe ler; a
+  // distancia e sorteada com `nextInt(min, max + 1)`, entao inteiros com 1 <= min <= max.
+  const storm = combate.stormAttack || {};
+  if (storm.apenas !== 'infantariaCorpoACorpo') erros.push(`combate/storm: stormAttack.apenas '${storm.apenas}' nao e 'infantariaCorpoACorpo'`);
+  if (!(storm.multiplicadorVelocidade > 0)) erros.push('combate/storm: stormAttack.multiplicadorVelocidade precisa ser > 0');
+  const dist = storm.distancia_tiles || {};
+  if (!(Number.isInteger(dist.min) && Number.isInteger(dist.max) && dist.min >= 1 && dist.max >= dist.min)) {
+    erros.push('combate/storm: stormAttack.distancia_tiles precisa de inteiros 1 <= min <= max');
+  }
+  if (typeof storm.incontrolavel !== 'boolean') erros.push('combate/storm: stormAttack.incontrolavel precisa ser booleano');
 }
 
 // F35: a taxa da feira e quantas unidades de A se dao por uma de B — inteiro >= 1, ou a

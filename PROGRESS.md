@@ -13817,3 +13817,31 @@ O plano está em `docs/planos/2026-09-29-D-PRODUCAO-02-lenhador.md`.
   - A saída pronta é desligar o flag em `resources.json`, que volta à regra antiga.
   - Uma alternativa seria replantar só quando a adulta ao alcance cair abaixo de N. Não fiz, porque é número novo sem pedido.
 - A abertura da Fase A mudou de geometria com o alcance 12: lenhadores e rua 5 tiles a oeste. Nenhum aceite quebrou, mas a partida começa diferente.
+
+## 2026-09-29 — C-COMBATE-01b (storm attack, sim) ENTREGUE
+
+Plano: `docs/planos/2026-09-29-C-COMBATE-01b-storm-attack.md`. Só `src/sim/`, `tools/data-rules.js` e teste.
+
+**Verificado (rodado e aberto):**
+- `tests/C-COMBATE-01b-storm.test.ts`, 7 testes verdes, na escaramuça sem a paz. A evidência está em `test-output/C-COMBATE-01b-{linha,passo,contato}.json`.
+  - A tropa de 18 carrega para o sul (direção do líder). Todos ficam na linha, e todos ≤ 13. Dezesseis de 18 andaram entre 12 e 13 tiles.
+  - Os dois da coluna x=28 pararam em 11 com a frente fechada: o da frente dá no mato em y=51, e o de trás parou no que parou. O teste afirma "abaixo do min só com a frente fechada".
+  - O passo: 3 tiles de marcha em 21 ticks, e de carga em 15 (razão 1,4, contra 1,5 no dado; o arredondamento é por passo).
+  - `MoveUnits` durante a carga não muda quem carrega.
+  - Um bowman na lista não carrega; a lista só dele é recusada com `sem-infantaria-corpo-a-corpo`.
+  - O contato: a ponta, correndo rente ao canto da formação da IA, chega em (65,65) e passa direto de `em_carga` para `lutando` contra u31 em (66,66).
+  - Em paz, `em-paz`. O rng avança, e duas corridas dão o mesmo JSON.
+- `npm run verify` verde, com 1913 testes. Os roteiros C-TELA-03, C-IA-03c e F26b saíram com código 0.
+- `tools/data-rules.js` ganhou as regras `combate/storm`. A sonda com dado ruim acusou, e o dado foi restaurado.
+
+**O que achei no meio:** a primeira versão parava a fileira de trás no tick 1, porque a da frente ainda estava no tile. Agora, se o tile da frente está com um companheiro do mesmo lado que também carrega, quem vem atrás espera, sem gastar distância. Isso não trava: todos vão na mesma direção, e a cadeia acaba num que parou.
+
+**Observado, sem teste próprio:** carregando de frente contra a coluna do inimigo, quem vem receber (`indo_lutar`) fecha o tile da frente. Aí a carga para um tile antes, ociosa, e a luta começa quando ele chega.
+
+**PARA REVISÃO (decisões conservadoras minhas):**
+- Todos carregam na direção do líder, o primeiro da lista. No KaM é a direção do grupo; aqui não há grupo persistente.
+- O multiplicador de velocidade divide o custo do passo em tempo de execução (`Math.round`, mínimo 1). É a mesma conta no desenho, sobre ticks já convertidos no carregamento. Não é conversão de escala de tempo, mas é um arredondamento fora do loader.
+- A paz recusa o storm (`em-paz`), embora a marcha em paz esteja livre desde a C-COMBATE-02b. O KaM o bloqueia na paz. A saída é apagar o `case 'StormAttack'` em `src/sim/paz.ts`.
+- Com `incontrolavel`, as ordens pulam quem está em carga **sem evento**. Os outros da lista cumprem.
+
+**Aberto, e herdado pela C-COMBATE-01c (nota no item do BUILD_PLAN):** o botão Storm; `StormAttack` em `ORDENS_MILITARES`; o texto do tema para `sem-infantaria-corpo-a-corpo`.

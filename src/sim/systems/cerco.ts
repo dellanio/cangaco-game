@@ -27,6 +27,7 @@ import { semRetomar } from './combate';
 import { caixaDoPredio } from '../footprint';
 import { buscarCaminho, passoAndavel, tileAndavel } from '../pathfinding';
 import { andar, comPredio, comUnidade, noTile, ocioso } from '../units/movimento';
+import { emCargaIncontrolavel } from '../carga';
 import { semOPredio } from './demolicao';
 import { soltarRecrutas } from './quartel';
 import type { ResultadoDeSistema } from './jobs';
@@ -90,7 +91,8 @@ export function aplicarAttackBuilding(
   // `new Set`: a mesma unidade duas vezes na lista e UMA ordem, nao duas
   for (const id of new Set(comando.unidades)) {
     const u = atual.unidades.porId[id];
-    if (u === undefined) continue;
+    // C-COMBATE-01b: quem esta em carga nao aceita ordem
+    if (u === undefined || emCargaIncontrolavel(u, dados)) continue;
     // o caminho e planejado no primeiro tick do sistema, de onde a unidade estiver
     atual = comUnidade(atual, { ...semRetomar(u), fsm: FSM_INDO_ATACAR, fsmData: { alvo: comando.predio } });
   }
