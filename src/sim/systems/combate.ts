@@ -26,6 +26,7 @@ import { buscarCaminho, passoAndavel } from '../pathfinding';
 import { andar, comUnidade, noTile, ocioso } from '../units/movimento';
 import type { ResultadoDeSistema } from './jobs';
 import { FSM_MARCHANDO } from './marcha';
+import { FSM_ATACANDO, FSM_INDO_ATACAR } from './cerco';
 
 export type AttackUnit = Extract<Command, { readonly type: 'AttackUnit' }>;
 
@@ -250,6 +251,15 @@ export function sistemaDoCombate(state: GameState, dados: GameData): ResultadoDe
       const inimigo = inimigoEncostado(atual, u, dados);
       const destino = u.fsmData.alvoTile;
       if (inimigo !== null) atual = comUnidade(atual, { ...lutarCom(u, inimigo, dados), ...(destino === undefined ? {} : { retomarMarcha: destino }) });
+      continue;
+    }
+    // BUG-P: quem ataca PREDIO tambem larga o predio pelo guerreiro encostado, e nao volta a
+    // ele (KaM: `FindEnemy` so interrompe o ataque a casa por GUERREIRO, e `FightEnemy` libera
+    // a tarefa, KM_UnitWarrior.pas:716-717 e 740-748). Sem isto, a tropa que cerca a vila
+    // morria de pe diante do predio, sem revidar.
+    if ((u.fsm === FSM_INDO_ATACAR || u.fsm === FSM_ATACANDO) && lutaCorpoACorpo(u, dados)) {
+      const inimigo = inimigoEncostado(atual, u, dados);
+      if (inimigo !== null) atual = comUnidade(atual, lutarCom(semRetomar(u), inimigo, dados));
       continue;
     }
     if (u.fsm !== 'ocioso') continue;

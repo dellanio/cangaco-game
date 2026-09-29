@@ -40,4 +40,30 @@ describe('BUG-P — quem vai lutar revida o inimigo encostado', () => {
     }
     expect(bloco.filter((b) => s.unidades.porId[b.id]).map((b) => b.id)).toEqual([]);
   });
+
+  it('quem ataca PREDIO larga o predio pelo guerreiro encostado, e nao volta a ele (KaM)', () => {
+    const s0 = createInitialState(1);
+    // o armazem inicial vira do outro lado: e o predio atacado
+    const armazem = s0.predios.porId['p1'];
+    if (armazem === undefined) throw new Error('armazem');
+    const atacante = u('m', 'militia', LADO_DO_JOGADOR, armazem.gx + 1, armazem.gy + 4);
+    const guarda = u('g', 'militia', IA, armazem.gx + 3, armazem.gy + 5);
+    let s: GameState = {
+      ...s0,
+      predios: { ...s0.predios, porId: { ...s0.predios.porId, p1: { ...armazem, lado: IA } } },
+      unidades: { porId: { m: atacante, g: guarda }, ordem: ['m', 'g'] },
+    };
+    s = step(s, [{ type: 'AttackBuilding', unidades: ['m'], predio: 'p1' }], gameData);
+    expect(['indo_atacar', 'atacando']).toContain(s.unidades.porId['m']?.fsm);
+    // o guarda encosta no atacante
+    s = step(s, [{ type: 'AttackUnit', unidades: ['g'], alvo: 'm' }], gameData);
+    let revidou = false;
+    for (let t = 0; t < 300 && !revidou; t++) {
+      s = step(s, [], gameData);
+      const m = s.unidades.porId['m'];
+      revidou = m?.fsm === 'lutando' && m.fsmData.alvoUnidade === 'g';
+      if (m === undefined) break;
+    }
+    expect(revidou, 'o atacante do predio nunca revidou o guarda encostado').toBe(true);
+  });
 });
