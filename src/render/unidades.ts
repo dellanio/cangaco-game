@@ -92,6 +92,9 @@ export interface UnidadeRenderizada {
   readonly direcao: Direcao | null;
   /** F-SPR — a chave da textura desenhada, ou null quando e o retangulo (placeholder). */
   readonly sprite: string | null;
+  /** C-TELA-04 — o retangulo do CORPO desenhado (a imagem), em px de mundo relativos ao
+   *  centro desenhado; null no placeholder, que cabe no quadrado. E o que o jogador mira. */
+  readonly corpoPx: { readonly x0: number; readonly y0: number; readonly x1: number; readonly y1: number } | null;
   /**
    * F-D4 — largura DESENHADA desse rotulo, em px de mundo. E o que permite o roteiro afirmar
    * o encaixe com uma medida em vez de com uma impressao: o quadrado da unidade tem
@@ -282,6 +285,10 @@ export function criarCamadaDeUnidades(cena: Phaser.Scene, tilePx: number): Camad
           marcadorDeFome: comFome, fracaoDeCondicao: fracaoDeCondicao(unidade),
           nome: item.nome.text, larguraDoRotuloPx: item.nome.width,
           direcao: direcoes === null ? null : item.direcao, sprite,
+          corpoPx: sprite === null || item.imagem === null ? null : {
+            x0: -item.imagem.originX * item.imagem.displayWidth, y0: -item.imagem.originY * item.imagem.displayHeight,
+            x1: (1 - item.imagem.originX) * item.imagem.displayWidth, y1: (1 - item.imagem.originY) * item.imagem.displayHeight,
+          },
         });
       }
     organizarRotulos();

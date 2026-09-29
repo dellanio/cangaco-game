@@ -5808,6 +5808,13 @@ PROGRESS como PARA REVISÃO.
      `docs/planos/2026-09-29-C-TELA-03-selecao-de-grupo.md`.
 7. **C-TELA-04 — atacar unidade pelo mouse (ui + input).** Botão direito sobre um militar
    inimigo, com tropa selecionada, emite `AttackUnit`. **Aceite:** roteiro.
+   - **ENTREGUE (2026-09-29).** A decisão está em `src/ui/ordem-militar.ts`. O acerto passou
+     a mirar o CORPO do sprite, e não só o quadrado do pé. Plano em
+     `docs/planos/2026-09-29-C-TELA-04-atacar-unidade.md`.
+   - **Proposta, não na fila (decisão do operador):** "o grupo que mata o alvo procura o
+     próximo inimigo perto" (sim, COMBATE). Com `AttackUnit`, os 18 perseguem um alvo só, e
+     quando ele morre todos ficam ociosos. Medido na C-IA-03c: clicar no arqueiro atrás da
+     linha mata a tropa inteira.
 8. **C-TELA-05 — ordem à Feira (ui).** O painel da Feira emite `SetTrade`. **Aceite:**
    roteiro.
 9. **D-TELA-02 — minimapa (render + ui).** Já está na fila (Fase D); o escopo é o do

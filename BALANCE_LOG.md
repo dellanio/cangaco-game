@@ -1409,3 +1409,20 @@ proporções da seção 4.5 do GDD. Um cenário que as respeite **não pode**:
     10928, com 2 de 18 cabras vivos.
   - O andaime vale até a C-IA-02 (economia da IA). A margem apertada é a primeira coisa a
     olhar se a partida do operador sair perdida.
+
+## 2026-09-29 — C-TELA-04 (atacar unidade pelo mouse): o ataque dirigido custa caro
+
+O botão direito sobre um inimigo virou `AttackUnit`; antes era uma marcha até o tile dele.
+Medi o mesmo roteiro, o da C-IA-03c (jogar pela tela), contra a mesma IA:
+
+| estratégia | resultado |
+|---|---|
+| antes: clicar no arqueiro, que era marcha até ele | vitória no tick 8527, 9 de 18 vivos |
+| agora: clicar no arqueiro atrás da linha | **derrota**: os 18 morrem, e a IA perde só 4 |
+| agora: clicar no inimigo mais perto | vitória no tick 15327, **1 de 18** vivo |
+
+- A causa não é número. Os 18 perseguem **um** alvo e, quando ele morre, ficam ociosos
+  enquanto os outros chegam. A marcha chegava em formação e revidava tudo pelo caminho.
+- Proposta registrada no item da C-TELA-04 no BUILD_PLAN: "o grupo procura o próximo
+  inimigo perto".
+- A marcha continua disponível: botão direito no chão ao lado do inimigo.

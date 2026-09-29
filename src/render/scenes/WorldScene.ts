@@ -431,7 +431,8 @@ export class WorldScene extends Phaser.Scene {
       // F26b: o tile do botao direito e a ordem militar de mao vazia
       const mundo = camera.getWorldPoint(pointer.x, pointer.y);
       const tile: Tile = screenToGrid({ x: mundo.x, y: mundo.y }, tilePx, ESCALA_DO_MUNDO);
-      this.entrada.aoClicarDireito(tileDentroDoMapa(tile, largura, altura) ? tile : undefined);
+      // C-TELA-04: com o ponto de mundo, para a ordem acertar a unidade inimiga pelo desenho
+      this.entrada.aoClicarDireito(tileDentroDoMapa(tile, largura, altura) ? tile : undefined, { x: mundo.x, y: mundo.y });
     });
 
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {

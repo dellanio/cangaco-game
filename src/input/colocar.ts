@@ -23,8 +23,9 @@ export interface GestosMilitares {
   aoClicarVazio(tile: TileClicado, ponto: PontoNoMundo | null, somar: boolean): void;
   /** Caixa arrastada de mao vazia, dos dois cantos, com o shift. */
   aoCaixa(a: PontoNoMundo, b: PontoNoMundo, somar: boolean): void;
-  /** Botao direito de mao vazia no tile: a ordem militar do GDD §2.1. */
-  aoOrdenar(tile: TileClicado): void;
+  /** Botao direito de mao vazia no tile: a ordem militar do GDD §2.1. O ponto de mundo
+   *  (C-TELA-04) e o que acerta a unidade inimiga pelo desenho, como o clique esquerdo. */
+  aoOrdenar(tile: TileClicado, ponto: PontoNoMundo | null): void;
 }
 
 /** F26b — quanto o ponteiro anda, em px de mundo, antes de o clique de mao vazia virar
@@ -64,7 +65,7 @@ export interface EntradaDoMapa {
    * escrita em codigo, para a F26 saber que so recebe o que voltar `false` em
    * vez de descobrir o conflito na tela.
    */
-  aoClicarDireito(tile?: TileClicado): boolean;
+  aoClicarDireito(tile?: TileClicado, ponto?: PontoNoMundo): boolean;
   /** O trecho que esta sendo arrastado, em ordem; `null` fora de um arrasto. */
   trecho(): readonly TileClicado[] | null;
   /** F26b — a caixa de selecao em curso (mao vazia, ja alem do limiar), ou `null`. */
@@ -181,10 +182,10 @@ export function criarEntradaDoMapa(
       const comando = comandoDoArrasto(ferramenta.modo, ferramenta.culturaAtiva, tiles);
       if (comando !== null) emitir(comando);
     },
-    aoClicarDireito(tile) {
+    aoClicarDireito(tile, ponto) {
       if (ferramenta.modo === 'nenhum') {
         // F26b: o botao direito de mao vazia e a ordem militar (GDD §2.1)
-        if (tile !== undefined) militares?.aoOrdenar(tile);
+        if (tile !== undefined) militares?.aoOrdenar(tile, ponto ?? null);
         return false;
       }
       // Cancelar tambem derruba o arrasto em curso: `criarEntradaDoMapa` ja

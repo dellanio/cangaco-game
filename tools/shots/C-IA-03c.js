@@ -132,9 +132,18 @@ async function roteiro(ctx) {
   await capturar('vila-inimiga');
 
   // 5. o ataque. A primeira ordem DESPAUSADA, com o laco redesenhando (§8)
+  // C-TELA-04: o botao direito sobre o inimigo passou a ser `AttackUnit` (antes era marcha ao
+  // tile dele). Mirar o ARQUEIRO atras da linha agora manda os 18 perseguirem um so alvo
+  // atraves da frente e da chuva de flecha, e a tropa morre inteira (medido). O roteiro joga
+  // como o jogador: o inimigo MAIS PERTO da tropa.
   const alvoDaRodada = () => {
     const inimigos = s.unidadesRenderizadas.filter((u) => u.lado === LADO_DA_IA);
-    return inimigos.find((u) => u.tipo === 'bowman') ?? inimigos[0] ?? null;
+    const meus = s.unidadesRenderizadas.filter((u) => u.lado === LADO_DO_JOGADOR && u.tipo === 'militia');
+    if (meus.length === 0) return inimigos[0] ?? null;
+    const cx = meus.reduce((n, u) => n + u.gx, 0) / meus.length;
+    const cy = meus.reduce((n, u) => n + u.gy, 0) / meus.length;
+    const d = (u) => Math.hypot(u.gx - cx, u.gy - cy);
+    return [...inimigos].sort((a, b) => d(a) - d(b))[0] ?? null;
   };
   let primeira = true;
   let capturouCombate = false;

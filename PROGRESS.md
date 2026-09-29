@@ -13491,3 +13491,57 @@ já sabia mandar.
 - A caixa que toca o tile pode pegar o vizinho de uma tropa colada à outra. É o padrão de
   RTS, e o shift ou o clique corrigem.
 - O duplo-clique ("todos do mesmo tipo na tela") não entrou, porque o pedido era a caixa.
+
+## 2026-09-29 — C-TELA-04 (atacar unidade pelo mouse) ENTREGUE
+
+**Verificado:**
+- O botão direito sobre um militar inimigo, com a tropa na mão, emite `AttackUnit`. A decisão
+  está em `src/ui/ordem-militar.ts` (puro):
+  - unidade inimiga com HP sob o ponteiro: os de corpo a corpo recebem `AttackUnit`, e o
+    arqueiro recebe `MoveUnits` ao tile do alvo, porque a sim recusaria o grupo inteiro;
+  - prédio de outro lado: `AttackBuilding`;
+  - o resto: `MoveUnits` e a marca da C-TELA-02 (marcador de destino).
+  - O botão direito passou a levar o ponto de mundo: `WorldScene`, depois
+    `aoClicarDireito(tile, ponto)`, depois `aoOrdenar(tile, ponto)`.
+- **Achado:** o acerto de unidade (`render/acerto.ts`) só olhava um quadrado de ½ tile em
+  volta do PÉ, e o sprite do cabra é 64×96 ancorado no pé. O primeiro roteiro, com a
+  ponta do mouse no meio do tile do inimigo, virou `MoveUnits`: a marca caiu em (67,67).
+  - `UnidadeRenderizada` ganhou `corpoPx`, o retângulo da imagem desenhada, e
+    `unidadesNoPonto` aceita o quadrado OU o corpo. O quadrado vence, porque separa duas
+    unidades no mesmo tile (F18f); entre corpos, vence o da frente.
+  - **O clique esquerdo de seleção também passou a pegar pelo corpo**, porque é a mesma
+    função.
+- `tests/C-TELA-04-atacar-unidade.test.ts`, 5 testes com o `step` real sem a paz:
+  - 18 em `indo_lutar` contra o alvo;
+  - a unidade vence o prédio;
+  - o próprio soldado sob o ponteiro não é alvo;
+  - o grupo com arqueiro se divide;
+  - o corpo acerta, e o quadrado de quem está atrás vence o corpo da frente.
+  - Evidência em `test-output/C-TELA-04.json`.
+- **Aceite:** o roteiro `npm run shot -- C-TELA-04`, depois da paz e despausado, com o
+  botão direito no meio do corpo de um cabra da IA: 18 saem para lutar, sem marca de
+  destino, e a tropa trava a luta. Abri `screenshots/C-TELA-04-1-a-tropa-no-alvo.png`: a
+  tropa selecionada (rótulo vermelho) está encostada nos cabras azuis, e o painel diz
+  "16 Cabra".
+- `npm run verify` verde. Passaram pelo código de saída os roteiros:
+  - F26b (selecionar pela tela);
+  - C-TELA-02 (marcador de destino);
+  - C-TELA-03 (seleção de grupo).
+
+**A C-IA-03c (jogar pela tela) quebrou, e mudei a estratégia do roteiro, não a asserção:**
+- O roteiro mirava o ARQUEIRO primeiro. Com a marcha, isso vencia com 9 de 18 vivos no
+  tick 8527. Com `AttackUnit`, os 18 perseguem um só alvo pela frente e pela flecha e morrem
+  todos: a IA perde só 4. Confirmei com `git stash` que na HEAD o roteiro passa, então a
+  mudança é desta feature.
+- O roteiro agora mira o inimigo MAIS PERTO da tropa, como o jogador faria, e vence no tick
+  15327 com **1 de 18** vivo. As asserções (três prédios caem, vitória na tela) são as
+  mesmas.
+- Os números estão no `BALANCE_LOG.md`, e a proposta "o grupo procura o próximo inimigo
+  perto" (sim) está no item no BUILD_PLAN, fora da fila.
+
+**PARA REVISÃO:**
+- A margem da C-IA-03c pela tela ficou em 1 de 18. Se a partida do operador sair perdida, a
+  causa provável é esta: o grupo fica ocioso quando o alvo morre. **Hipótese** não medida
+  isoladamente: a mesma perda aparece em qualquer ataque dirigido contra um grupo.
+- O arqueiro do grupo marcha até o alvo em vez de atirar; a sim não tem ordem de tiro contra
+  unidade.

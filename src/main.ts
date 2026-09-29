@@ -44,6 +44,7 @@ import { criarSelecaoMilitar } from './input/selecao-militar';
 import { montarPainelGrupo } from './ui/painel-grupo';
 import { montarContadorDePaz } from './ui/contador-de-paz';
 import { montarAvisoDeOrdem, recusaDaPaz } from './ui/aviso-de-ordem';
+import { ordemDoBotaoDireito } from './ui/ordem-militar';
 import { criarEscaramuca } from './sim/cenario';
 
 // C-IA-03c — `?escaramuca` nasce na escaramuca (cenario provisorio, sim/cenario.ts); sem ele,
@@ -119,19 +120,16 @@ const entrada = criarEntradaDoMapa(
       if (somar) selecaoMilitar.somar(soldados);
       else selecaoMilitar.definir(soldados);
     },
-    aoOrdenar(tile) {
-      const grupo = soldadosDoJogador(selecaoMilitar.ids);
-      if (grupo.length === 0) return;
-      // botao direito em predio de OUTRO lado e ataque; no resto e marcha (GDD §2.1)
-      const alvo = predioNoTile(sessao.estado, tile.gx, tile.gy);
-      const predio = alvo === null ? undefined : sessao.estado.predios.porId[alvo];
-      if (predio !== undefined && predio.lado !== LADO_DO_JOGADOR) {
-        sessao.enviar({ type: 'AttackBuilding', unidades: grupo, predio: predio.id });
-      } else {
-        sessao.enviar({ type: 'MoveUnits', unidades: grupo, destino: { gx: tile.gx, gy: tile.gy } });
-        // C-TELA-02: a marca aparece no clique, mesmo pausado (retorno imediato, GDD §10)
-        jogo.marcarDestino({ gx: tile.gx, gy: tile.gy });
-      }
+    aoOrdenar(tile, ponto) {
+      // unidade inimiga sob o ponteiro e ataque (C-TELA-04); predio de OUTRO lado tambem
+      // (F26b); no resto e marcha (GDD §2.1). Quem decide e `ui/ordem-militar.ts`.
+      const ordem = ordemDoBotaoDireito(
+        sessao.estado, gameData, LADO_DO_JOGADOR, soldadosDoJogador(selecaoMilitar.ids), tile,
+        ponto === null ? [] : jogo.unidadesNoPonto(ponto),
+      );
+      for (const comando of ordem.comandos) sessao.enviar(comando);
+      // C-TELA-02: a marca aparece no clique, mesmo pausado (retorno imediato, GDD §10)
+      if (ordem.marcarDestino !== null) jogo.marcarDestino(ordem.marcarDestino);
     },
   },
 );
