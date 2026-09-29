@@ -12442,6 +12442,27 @@ dos testes:
   (`docs/planos/2026-09-28-F-FEED-fome-militar.md`) **ainda espera aprovação**. Ele destrava
   o C-IA-01 (IA alimentar tropas).
 
+## 2026-09-29 — C-IA-02 (economia da IA): medido no kam_remake e escrito como PROPOSTA
+
+- **Escrito no BUILD_PLAN, sem implementar e sem entrada em `test-results.json`.** O
+  operador pediu a medição antes do escopo, e o escopo fica como proposta a aprovar.
+- **Verificado no fonte do kam_remake** (clone no scratchpad da sessão, arquivo e linha no
+  item):
+  - `AutoBuild` é `True` por padrão, com o comentário "most missions turn it off";
+    `SET_AI_NO_BUILD` o desliga;
+  - `CheckUnitCount` (treino de civis, serfs, construtores e recrutas, com checagem de ouro)
+    roda SEMPRE;
+  - `CheckHouseCount`, `CheckWareFlow` e `CheckRoadsCount`, que incluem o balanço de comida,
+    rodam só com AutoBuild;
+  - a logística é a mesma da mão do jogador (`fDeliveries`).
+- **Hipótese, não verificada:** "a maioria das missões desliga o AutoBuild" é o comentário
+  do fonte; os arquivos de missão não estão no repositório do remake.
+- **Achado verificado no nosso código:** não existe partida com IA no jogo. `state.ia` só
+  nasce em teste e em save (a única escrita em `src/` é `comIA`, que atualiza uma IA que já
+  existe). O cenário da escaramuça com IA virou a parte (a) da proposta.
+- **Perguntas ao operador** (no item): o modelo "vila pronta" sem AutoBuild; se o cenário é
+  item próprio; que produção de comida a vila da IA recebe.
+
 ## 2026-09-29 — C-COMIDA-01e (a IA alimenta a tropa; é o C-IA-01, IA alimentar tropas) ENTREGUE
 
 ### Feito

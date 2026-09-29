@@ -5605,6 +5605,62 @@ Ordem do operador. Cada item tem plano em `docs/planos/2026-09-28-C<n>-*.md`.
     limiar do civil. **ENTREGUE.** Por posição: se ninguém luta e o mais faminto está abaixo
     de `civilVaiComer`, a IA dá `FeedUnits` aos membros, só se alguém pediria. Com o
     andaime (L8), na partida a tropa da IA não drena; o ponto age quando `iaDrena` virar.
+- **C-IA-02 — economia da IA. PROPOSTA, NÃO APROVADA: aguarda o operador ler a medição
+  antes do escopo** (pedido do operador, 2026-09-29: "meça no kam_remake primeiro"). Sem
+  entrada em `test-results.json` até a aprovação. **Destrava o andaime L8 do C-COMIDA-01:**
+  com esta entregue, `condition.json militar.iaDrena` vira `true` e a tropa da IA volta a
+  sentir fome.
+  - **A medição** (kam_remake, fonte lido na sessão de 2026-09-29):
+    1. **A IA constrói a vila, ou a missão já dá pronta?** Nas missões, a vila vem PRONTA.
+       - `AutoBuild` é `True` por padrão, com o comentário do próprio fonte: "In KaM it is On
+         by default, and most missions turn it off" (`ai/KM_AISetup.pas:67`).
+       - O comando de missão `SET_AI_NO_BUILD` põe `AutoBuild := False`
+         (`mission/KM_MissionScript_Standard.pas:677`), e as casas e unidades da IA vêm de
+         `SET_HOUSE` e `SET_UNIT`.
+       - "A maioria desliga" é o comentário do fonte, NÃO uma contagem minha: os arquivos
+         de missão não estão no repositório do remake.
+    2. **Ela gere produção e transporte como o jogador?** Sim, com o MESMO mecanismo. As
+       casas dela produzem com os mesmos ocupantes, e o transporte é a logística da mão
+       (`hands/KM_Hand.pas:55`, `fDeliveries: TKMHandLogistics`): serf e pedido iguais
+       aos do jogador.
+    3. **Treina civis na escola? Reage à falta de comida?**
+       - **Treina SEMPRE, com AutoBuild ou sem** (`ai/KM_AIMayor.pas:996`, `CheckUnitCount`
+         em `TKMayor.UpdateState`):
+         - o cidadão que falta em cada casa;
+         - serfs em `SerfsPerHouse` (1) × (casas + construtores/2) (`:255`);
+         - construtores e recrutas;
+         - só com ouro: produzindo ouro, ou saldo acima de 20 (`:150-152`).
+       - **Reagir à falta de comida (construir fazenda, moinho, Inn) é SÓ com AutoBuild**:
+         `CheckHouseCount`, `CheckWareFlow` e `CheckRoadsCount` ficam dentro de `if
+         fSetup.AutoBuild` (`:1001-1010`). O balanço de comida mora em
+         `ai/KM_AIMayorBalance.pas` (`AppendFood`, `:300`; Inn por 80 cidadãos, `:775`).
+       - **Alimentar a TROPA vale sempre** (`ai/KM_AIGeneral.pas:316-327`). Aqui já é o
+         C-COMIDA-01e.
+  - **O nosso lado, conferido no código:**
+    - **Não existe partida com IA no jogo.** `state.ia` só nasce em teste e em save; nenhum
+      cenário da tela cria a IA (`grep "ia: {"` em `src/` não acha criação).
+    - A IA de hoje (F28-IA) defende, repõe pelo quartel e ataca com a sobra.
+    - O JobBoard já é por lado (C7), e a tarefa `comida-para-tropa` também (C-COMIDA-01b).
+  - **Proposta de escopo, para o operador decidir:** o modelo "missão com vila pronta", que
+    é o caso comum do KaM e o mais barato.
+    - **(a) O cenário da escaramuça com IA.** Uma vila da IA pronta no mapa, com armazém,
+      estoque, escola, quartel, serfs e alguma produção de comida, mais `state.ia` e as
+      posições. Hoje ele não existe, e sem ele nada abaixo roda na tela.
+    - **(b) O prefeito mínimo**, o `CheckUnitCount` do KaM. A IA dá à escola dela o
+      comando de treino que o jogador daria:
+      - o especialista que falta em prédio sem ocupante;
+      - serfs até 1 por prédio;
+      - laborers e recrutas;
+      - tudo só com ouro.
+    - **(c) Tirar o andaime:** `iaDrena: true`, e o teste longo da IA com fome e comida.
+    - **Fora do escopo:** o planejador de cidade (`KM_AICityPlanner`) e o balanço de
+      produção (`KM_AIMayorBalance`), o AutoBuild inteiro. A IA não constrói nem reage à
+      falta de comida com prédio novo, como a maioria das missões do KaM.
+  - **Perguntas ao operador:**
+    - Aprova o modelo "vila pronta" sem AutoBuild?
+    - O (a) é item próprio, ou parte deste?
+    - Que produção de comida a vila da IA recebe (roçado e padaria, ou só estoque)? Só
+      estoque acaba, e aí a tropa volta a morrer de fome, que é o que o andaime evita.
 - **Siglas:** o esquema novo está em `docs/siglas.md` (decisão do operador, 2026-09-28). O que
   fechou mantém a sigla antiga; os itens abertos migraram.
 
