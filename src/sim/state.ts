@@ -1295,6 +1295,9 @@ export interface DadosDaFsm {
   readonly alvoTile?: TileDeGrid;
   /** C-COMBATE-01a — para onde a unidade vira ao chegar ao `alvoTile` (`MoveUnits`). */
   readonly direcaoFinal?: number;
+  /** C-MOVIMENTO-02 — a ordem chegou no meio de um passo: ele termina o passo em curso e
+   *  so entao planeja a rota nova (zerar o `progresso` desenhava o salto para tras). */
+  readonly replanejar?: boolean;
   /** F28a — a unidade que esta sendo perseguida ou golpeada (`AttackUnit`, contato). */
   readonly alvoUnidade?: string;
 }

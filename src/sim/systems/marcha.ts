@@ -13,7 +13,7 @@ import type { GameData } from '../data/types';
 import type { TileDeGrid } from '../estradas';
 import { classeDaUnidade } from '../condicao';
 import { buscarCaminho, passoAndavel, tileAndavel } from '../pathfinding';
-import { andar, chegou, comUnidade, noTile, ocioso } from '../units/movimento';
+import { andar, chegou, comUnidade, noTile, ocioso, vagaEmparedadaPor } from '../units/movimento';
 import type { ResultadoDeSistema } from './jobs';
 import { semRetomar, viradaPeloPasso } from './combate';
 import { DIRECAO_PADRAO, direcaoAproximada, direcaoDe, passoDaDirecao } from '../combate';
@@ -170,10 +170,15 @@ export function aplicarMoveUnits(state: GameState, comando: MoveUnits, dados: Ga
     const u = atual.unidades.porId[id];
     const alvo = alvos[Math.min(i, alvos.length - 1)];
     if (u === undefined || alvo === undefined) return;
-    // o caminho e planejado no primeiro tick do sistema, de onde a unidade estiver
+    // o caminho e planejado no primeiro tick do sistema, de onde a unidade estiver.
+    // C-MOVIMENTO-02: no meio de um passo, ela o termina antes (sem o salto para tras)
+    const indo = u.fsmData.caminho?.[0];
+    const progresso = u.fsmData.progresso ?? 0;
     atual = comUnidade(atual, {
       ...semRetomar(u), fsm: FSM_MARCHANDO,
-      fsmData: { caminho: [], progresso: 0, alvoTile: alvo, direcaoFinal: direcao },
+      fsmData: indo !== undefined && progresso > 0
+        ? { caminho: [indo], progresso, alvoTile: alvo, direcaoFinal: direcao, replanejar: true }
+        : { caminho: [], progresso: 0, alvoTile: alvo, direcaoFinal: direcao },
     });
   });
   return { state: atual, events: [] };
@@ -195,8 +200,30 @@ function passoMarchando(state: GameState, u: Unidade, dados: GameData): Resultad
     if (rota === null || rota.tiles.length === 0) return { state: comUnidade(state, ocioso(u)), events: [] };
     atual = { ...u, fsmData: { alvoTile: alvo, caminho: rota.tiles, progresso: 0, ...(final === undefined ? {} : { direcaoFinal: final }) } };
   }
+  // C-MOVIMENTO-02 — a vaga emparedada: troca de vaga com o parado do tile seguinte. Ele vai
+  // para a vaga de `u` (vizinha dele) e `u` fica com a dele; o conjunto de vagas nao muda.
+  const parado = atual.fsm === FSM_MARCHANDO ? vagaEmparedadaPor(state, atual, dados) : null;
+  if (parado !== null) {
+    const { bloqueado: _b, ...semEspera } = atual.fsmData;
+    void _b;
+    const vai: Unidade = {
+      ...parado, fsm: FSM_MARCHANDO,
+      fsmData: { caminho: [], progresso: 0, alvoTile: alvo, ...(final === undefined ? {} : { direcaoFinal: final }) },
+    };
+    const fica: Unidade = {
+      ...atual,
+      fsmData: { ...semEspera, caminho: [], progresso: 0, alvoTile: noTile(parado), direcaoFinal: parado.direcao ?? final ?? DIRECAO_PADRAO },
+    };
+    return { state: comUnidade(comUnidade(state, vai), fica), events: [] };
+  }
   // F28a: a unidade vira para onde anda (frente/flanco/costas e o arco do arqueiro)
   const andou = viradaPeloPasso(noTile(atual), andar(state, atual, dados));
+  if (chegou(andou) && andou.fsmData.replanejar === true) {
+    // C-MOVIMENTO-02 — terminou o passo que a ordem pegou no meio: planeja no proximo tick
+    const { replanejar: _r, ...resto } = andou.fsmData;
+    void _r;
+    return { state: comUnidade(state, { ...andou, fsmData: resto }), events: [] };
+  }
   return { state: comUnidade(state, chegou(andou) ? parar(andou) : andou), events: [] };
 }
 

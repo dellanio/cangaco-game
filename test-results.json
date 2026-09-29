@@ -445,5 +445,8 @@
   },
   "C-COMBATE-02b-a-cerca-sai": {
     "passes": true
+  },
+  "C-MOVIMENTO-02-a-tropa-nao-trava": {
+    "passes": true
   }
 }

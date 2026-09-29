@@ -100,7 +100,9 @@ function militarParadoEm(state: GameState, tile: TileDeGrid, quem: string, dados
     if (id === quem) continue;
     const o = state.unidades.porId[id];
     if (o !== undefined && o.gx === tile.gx && o.gy === tile.gy && classeDaUnidade(o.tipo, dados) === 'militar'
-      && (o.fsmData.caminho ?? []).length === 0) return o;
+      // C-MOVIMENTO-02: quem tem `alvoTile` so esta entre duas rotas (acabou de receber a
+      // ordem ou a troca de vaga), nao parado: trata-lo como parado largava o vizinho longe
+      && (o.fsmData.caminho ?? []).length === 0 && o.fsmData.alvoTile === undefined) return o;
   }
   return null;
 }
@@ -112,11 +114,15 @@ function militarParadoEm(state: GameState, tile: TileDeGrid, quem: string, dados
  * fixa, passo pelo `passoAndavel` do A*: deterministico. Devolve o caminho SEM o tile atual,
  * ou `null` se nao ha como contornar dentro da caixa.
  */
-function desvio(state: GameState, u: Unidade, destino: TileDeGrid, dados: GameData): readonly TileDeGrid[] | null {
+function desvio(
+  state: GameState, u: Unidade, destino: TileDeGrid, dados: GameData, soParados = false,
+): readonly TileDeGrid[] | null {
   const ocupado = new Set<string>();
   for (const id of state.unidades.ordem) {
     const o = state.unidades.porId[id];
-    if (o !== undefined && id !== u.id && classeDaUnidade(o.tipo, dados) === 'militar') ocupado.add(`${o.gx},${o.gy}`);
+    if (o === undefined || id === u.id || classeDaUnidade(o.tipo, dados) !== 'militar') continue;
+    // C-MOVIMENTO-02: `soParados` pergunta pela PAREDE, sem contar quem esta de passagem
+    if (!soParados || militarParadoEm(state, noTile(o), u.id, dados) !== null) ocupado.add(`${o.gx},${o.gy}`);
   }
   const m = dados.movimento.margemDoDesvioMilitar;
   const x0 = Math.min(u.gx, destino.gx) - m;
@@ -142,6 +148,27 @@ function desvio(state: GameState, u: Unidade, destino: TileDeGrid, dados: GameDa
     }
   }
   return null;
+}
+
+/**
+ * C-MOVIMENTO-02 — o militar parado com quem `u` troca de vaga, ou null. Vale quando `u`
+ * chegou ao fim da espera (`ticksDesvioMilitar`), o tile seguinte tem um militar PARADO do
+ * mesmo lado, o destino esta vazio e nem contando so os parados ha contorno: ele esta
+ * emparedado pela tropa que chegou antes (a vaga de dentro da formacao). Sem a troca,
+ * `esperarOuDesviar` tenta de novo para sempre.
+ */
+export function vagaEmparedadaPor(state: GameState, u: Unidade, dados: GameData): Unidade | null {
+  const caminho = u.fsmData.caminho ?? [];
+  const proximo = caminho[0];
+  const destino = caminho[caminho.length - 1];
+  if (proximo === undefined || destino === undefined || caminho.length === 1) return null;
+  if ((u.fsmData.progresso ?? 0) !== 0 || (u.fsmData.bloqueado ?? 0) + 1 < dados.movimento.ticksDesvioMilitar) return null;
+  const parado = militarParadoEm(state, proximo, u.id, dados);
+  if (parado === null || parado.lado !== u.lado) return null;
+  // a vaga VAZIA e sem caminho mesmo contando so os parados: so assim e parede. Com gente de
+  // passagem a espera resolve, e a troca tiraria do lugar quem ja estava na formacao
+  if (militarOcupa(state, destino, u.id, dados)) return null;
+  return desvio(state, u, destino, dados, true) === null ? parado : null;
 }
 
 /** C-MOVIMENTO-01 — todo vizinho andavel do tile tem um militar PARADO: nao ha por onde entrar. */

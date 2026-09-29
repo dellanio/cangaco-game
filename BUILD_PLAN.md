@@ -5900,6 +5900,12 @@ vai para o PROGRESS como PARA REVISÃO, e o trabalho segue.
 - **P3. C-MOVIMENTO-02 — a tropa ainda trava ao andar.** Repetir a sonda do C-MOVIMENTO-01
   (quantos saltos para trás, e de onde vêm) e achar a causa que sobrou. É o que mais
   atrapalha jogar.
+  - **ENTREGUE (2026-09-29; plano em `docs/planos/2026-09-29-C-MOVIMENTO-02-a-tropa-trava.md`).**
+    Havia duas causas:
+    - a vaga de dentro da formação ficava emparedada, e 2 de 18 esperavam para sempre;
+    - a ordem no meio do passo zerava o `progresso`, o que dava 11 saltos para trás.
+  - Os consertos: a troca de vaga com o parado, e terminar o passo antes de replanejar. As
+    seis ordens da sonda dão 0 salto e 0 preso.
 - **P4. O inimigo sem serf** não repõe a fome da própria tropa, e hoje o andaime
   `iaDrena: false` esconde isso. Fica resolvido pela C-IA-02, o item 3 abaixo.
 

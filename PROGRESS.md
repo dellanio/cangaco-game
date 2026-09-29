@@ -13735,3 +13735,50 @@ quatro problemas e os dez itens, está no BUILD_PLAN ("Segunda partida").
   marcha inteira) prendia a tropa mais ainda.
 - Em paz a IA não defende. O jogador pode estacionar a tropa colada na vila inimiga e
   atacar no primeiro tick depois da paz.
+
+## 2026-09-29 — C-MOVIMENTO-02 (a tropa ainda trava) ENTREGUE
+
+Pedido do operador (P3 da segunda partida): "Meça de novo, com a mesma sonda: quantos saltos
+para trás, e de onde vêm agora. Se for outra causa, ache." O plano está em
+`docs/planos/2026-09-29-C-MOVIMENTO-02-a-tropa-trava.md`.
+
+**Verificado (sonda `zz-trava`, apagada; a tropa de 18 da escaramuça):**
+
+| ordem | antes | depois |
+|---|---|---|
+| sul, 20 tiles | 2 nunca chegam; espera máxima de 2774 ticks; corte em 3000 | todos chegam no tick 273; espera máxima de 12 |
+| reordenar no tick 60 | 11 recuos desenhados, 13 recuos no meio do passo, 11 saltos longos | 0 / 0 / 0; fim no tick 284 (antes 313) |
+| leste, (60,60), virar 180° | 0 recuo desenhado | 0 recuo desenhado |
+| norte, atravessando a vila | espera máxima de 42 | espera máxima de 42; todos chegam no tick 402 |
+
+- Causa 1, **a vaga emparedada**: a formação enche as vagas de fora primeiro, e o soldado
+  que ia para a vaga de dentro ficava em "tenta de novo" para sempre. O conserto está em
+  `vagaEmparedadaPor` (`units/movimento.ts`) e em `passoMarchando`. Ele troca de vaga com o
+  soldado parado do mesmo lado que tapa o caminho quando:
+  - o destino está vazio;
+  - não há caminho nem contando só os parados.
+- `desvio` ganhou `soParados`. `militarParadoEm` deixou de contar quem tem `alvoTile`, isto
+  é, quem está entre duas rotas. Sem isso o vizinho parava a dois tiles da vaga e deixava um
+  buraco na formação.
+- Causa 2, **a ordem no meio do passo**: `aplicarMoveUnits` zerava o `progresso`. Agora a
+  unidade termina o passo em curso (`replanejar`) e planeja no tick seguinte.
+- `tests/C-MOVIMENTO-02-trava.test.ts` cobre três coisas:
+  - os 18 fecham as 18 vagas;
+  - a reordenação pega 13 unidades no meio do passo e não dá nenhum salto;
+  - a corrida é determinística.
+
+  Os casos 1 e 2 reprovam no código antigo, com 2 presos e 11 saltos.
+- O `C-COMBATE-01a` pegou uma versão intermediária em que a troca tirava o líder do meio da
+  frente ao virar. A troca estava disparando com gente só de passagem. Isso deu origem à
+  condição "sem caminho nem contando só os parados".
+- `npm run verify` verde. Os roteiros C-TELA-03, F26b, C-TELA-02, C-TELA-04, C-IA-03c,
+  C-TELA-01 e F06 saíram com código 0. No C-IA-03c, a vitória veio no tick 8727 com 9 de 18
+  vivos, igual a antes.
+
+**PARA REVISÃO:**
+- A troca muda qual soldado fica em qual vaga. Num grupo misto, a composição das fileiras
+  pode se permutar. A troca também pode puxar um soldado parado do mesmo lado que é de
+  outro grupo, e ele passa a ocupar a vaga do primeiro.
+
+**Hipótese (não confirmada):** a espera de 42 ticks ao atravessar a vila para o norte é uma
+fila natural num corredor estreito: u28 espera u22, que espera outro. Não achei um ciclo.
