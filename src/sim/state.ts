@@ -59,11 +59,7 @@ export type MotivoDeRecusaDeMarcha =
   /** C-COMBATE-01a — `direcao` nao e inteiro de 0 a 7. */
   | 'direcao-invalida'
   /** C-COMBATE-01a — `colunas` nao e inteiro. */
-  | 'colunas-invalidas'
-  /** C-IA-03b — a partida esta em peacetime (`sim/paz.ts`). */
-  | 'em-paz'
-  /** C-COMBATE-02 — em paz, o destino esta fora da cerca da vila (`sim/paz.ts`). */
-  | 'longe-na-paz';
+  | 'colunas-invalidas';
 
 /** C-COMIDA-01 — por que um `FeedUnits` foi recusado: os motivos da marcha que valem sem
  *  destino, e `sem-fome` quando ninguem do grupo esta abaixo do limiar do pedido. */

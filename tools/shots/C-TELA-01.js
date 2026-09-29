@@ -1,14 +1,13 @@
 'use strict';
 // Roteiro da C-TELA-01 — a mensagem da ordem recusada, pela tela, como o jogador:
 //   1. H -> "Nova escaramuca"; caixa em volta dos 18 cabras;
-//   2. DESPAUSADO (§8), botao direito longe da vila (fora da cerca da paz, C-COMBATE-02):
-//      "Longe demais na paz" aparece sobre o mapa e ninguem marcha;
+//   2. DESPAUSADO (§8), botao direito longe da vila: C-COMBATE-02b tirou a cerca da paz, e
+//      a tropa marcha sem aviso;
 //   3. botao direito no armazem da IA: "Em paz — faltam m:ss";
 //   4. a mensagem some sozinha.
 // O px sai do debug (`unidadesRenderizadas`, `prediosDoEstado`), nunca de pixel da captura.
 const { retanguloDoCanvas } = require('./_canvas');
 const terreno = require('../../data/terrain.json');
-const escaramuca = require('../../data/escaramuca.json');
 const tema = require('../../data/theme-sertao.json');
 
 const TILE_PX = terreno.tile_px;
@@ -77,8 +76,9 @@ async function roteiro(ctx) {
   s = await estado();
   afirmar(s.selecaoMilitar.length === 18, `a caixa deveria pegar os 18, veio ${s.selecaoMilitar.length}`);
 
-  // 2. longe da vila: a cerca e N tiles da caixa dos predios; N + 4 abaixo da tropa sai dela
-  const longe = { gx: meio.gx, gy: meio.gy + escaramuca.cercaDaPaz_tiles + 4 };
+  // 2. longe da vila (onde a cerca antiga, de 12 tiles, recusava): em paz, a tropa anda
+  const LONGE_TILES = 16;
+  const longe = { gx: meio.gx, gy: meio.gy + LONGE_TILES };
   await centrar(longe);
   s = await estado();
   await page.keyboard.press('p');
@@ -87,11 +87,11 @@ async function roteiro(ctx) {
   await page.keyboard.press('p');
   await esperarFrame();
   const textoLonge = await aviso();
-  afirmar(textoLonge === tema.ordem.longeNaPaz, `deveria mostrar "${tema.ordem.longeNaPaz}", veio ${textoLonge}`);
+  afirmar(textoLonge === null, `a marcha em paz nao deveria ter aviso, veio ${textoLonge}`);
   s = await estado();
   const moveram = s.unidadesRenderizadas.filter((u) => u.lado === LADO_DO_JOGADOR && u.tipo === 'militia' && u.fsm !== 'ocioso');
-  afirmar(moveram.length === 0, `fora da cerca ninguem deveria marchar, ${moveram.length} sairam`);
-  await capturar('longe-na-paz');
+  afirmar(moveram.length > 0, 'em paz, longe da vila, a tropa deveria marchar');
+  await capturar('marcha-em-paz');
 
   // 3. o armazem da IA: ataque em paz
   const [, armazem] = Object.entries(s.prediosDoEstado).find(([, p]) => p.lado === LADO_DA_IA && p.tipo === 'storehouse');

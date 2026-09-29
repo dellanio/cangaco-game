@@ -13700,3 +13700,38 @@ Esta sessão fecha a 01a; a 01b e a 01c ficam abertas.
 - Quem desiste por falta de rota (rota nula) para sem virar.
 - `direcao-invalida` e `colunas-invalidas` ainda não têm texto no tema. A tela ainda não
   manda os campos; a nota da 01c herda isso.
+
+## 2026-09-29 — C-COMBATE-02b (a cerca da paz sai) ENTREGUE
+
+Pedido do operador, depois da segunda partida: "REMOVA a cerca da paz (C-COMBATE-02, N=12).
+Ela impede os meus soldados de avançar no mapa, e não é o que eu quis." A fila nova, com os
+quatro problemas e os dez itens, está no BUILD_PLAN ("Segunda partida").
+
+**Verificado:**
+- Em paz, `MoveUnits` passa para qualquer destino. `sim/paz.ts` perdeu a cerca
+  (`dentroDaCercaDaPaz`), e a recusa de paz ficou só para atacar unidade, atacar prédio,
+  treinar e contratar. Todas seguem `em-paz`.
+- Saíram:
+  - `escaramuca.cercaDaPaz_tiles` e a regra dele no `validate:data`;
+  - o motivo `longe-na-paz`;
+  - `em-paz` dos motivos da marcha. O compilador não achou leitor fora dos testes;
+  - o texto "Longe demais na paz" do tema e da ui.
+- `tests/C-COMBATE-02b-sem-cerca.test.ts` substitui o teste da cerca. Evidência em
+  `test-output/C-COMBATE-02b.json`: a tropa estava a 32 tiles de (60,60) e chegou no tick
+  293, ainda em paz (a paz vai até o 6000).
+- Três testes mudaram para a regra nova:
+  - C-IA-03b: as quatro ordens de combate são recusadas, e a marcha longe passa;
+  - C-TELA-01: a marcha em paz não dá aviso;
+  - C-TELA-02: a recusa que apaga a marca é a do ataque.
+- Os roteiros passaram com código 0:
+  - C-TELA-01: a marcha longe anda sem aviso, e o ataque mostra "Em paz — faltam 10:00";
+  - C-TELA-02: a marca de longe fica, porque não chega recusa;
+  - C-IA-03c: a tropa marcha em paz, e a vitória veio no tick 8727 com 9 de 18 vivos.
+- `npm run verify` verde.
+
+**PARA REVISÃO:**
+- A marcha livre em paz diverge do KaM, que recusa a marcha (`BLOCKED_BY_PEACETIME`
+  inclui walk). Havia duas leituras de "remover a cerca", e a outra (voltar a recusar a
+  marcha inteira) prendia a tropa mais ainda.
+- Em paz a IA não defende. O jogador pode estacionar a tropa colada na vila inimiga e
+  atacar no primeiro tick depois da paz.

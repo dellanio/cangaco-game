@@ -41,12 +41,16 @@ describe('C-TELA-02 — o marcador de destino', () => {
     const tropa = s0.unidades.ordem.filter((id) => s0.unidades.porId[id]?.lado === LADO_DO_JOGADOR && s0.unidades.porId[id]?.tipo === gameData.escaramuca.tropaDoJogador.tipo);
     const frente = (gameData.escaramuca.posicoes.find((p) => p.id === 'frente') as { ponto: { gx: number; gy: number } }).ponto;
     const u = s0.unidades.porId[tropa[0] as string];
+    // C-COMBATE-02b: a marcha em paz passa, longe ou perto; a recusa da paz e a do ataque
+    const alvo = s0.unidades.ordem.find((id) => s0.unidades.porId[id]?.lado !== LADO_DO_JOGADOR) as string;
+    const ataque = step(s0, [{ type: 'AttackUnit', unidades: tropa, alvo }], gameData);
     const longe = step(s0, [{ type: 'MoveUnits', unidades: tropa, destino: { gx: frente.gx - 7, gy: frente.gy - 7 } }], gameData);
     const perto = step(s0, [{ type: 'MoveUnits', unidades: tropa, destino: { gx: u?.gx ?? 0, gy: (u?.gy ?? 0) + 1 } }], gameData);
-    expect(recusaDaPaz(longe.events)).toBe('longe-na-paz');
+    expect(recusaDaPaz(ataque.events)).toBe('em-paz');
+    expect(recusaDaPaz(longe.events)).toBeNull();
     expect(recusaDaPaz(perto.events)).toBeNull();
     const semFome = { type: 'command-rejected', command: 'FeedUnits', unidade: null, motivo: 'sem-fome' } as unknown as GameEvent;
     expect(recusaDaPaz([semFome])).toBeNull();
-    gravarEvidencia('C-TELA-02', { duracaoMs: DURACAO, longe: recusaDaPaz(longe.events), perto: recusaDaPaz(perto.events) });
+    gravarEvidencia('C-TELA-02', { duracaoMs: DURACAO, ataque: recusaDaPaz(ataque.events), longe: recusaDaPaz(longe.events), perto: recusaDaPaz(perto.events) });
   });
 });

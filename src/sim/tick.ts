@@ -54,7 +54,7 @@ export function step(
   let atual = state;
   for (const command of commands) {
     // C-IA-03b: em paz, ordem de exercito e treino no quartel sao recusados (sim/paz.ts)
-    const naPaz = recusaNaPaz(atual, command, dados);
+    const naPaz = recusaNaPaz(atual, command);
     if (naPaz !== null) {
       events.push(naPaz);
       continue;

@@ -1,14 +1,13 @@
 'use strict';
 // Roteiro da C-TELA-02 — o marcador de destino, pela tela:
 //   1. H -> "Nova escaramuca"; caixa em volta dos 18 cabras;
-//   2. DESPAUSADO (§8), botao direito 3 tiles acima da tropa (dentro da cerca da paz): a marca
-//      aparece NO tile clicado; captura; some sozinha depois de `segundosDoMarcador`;
-//   3. botao direito longe (fora da cerca): a marca aparece no clique e some quando a recusa
-//      `longe-na-paz` chega no tick seguinte.
+//   2. DESPAUSADO (§8), botao direito 3 tiles acima da tropa: a marca aparece NO tile
+//      clicado; captura; some sozinha depois de `segundosDoMarcador`;
+//   3. botao direito longe (onde a cerca antiga recusava; C-COMBATE-02b a tirou): a marca
+//      nasce no clique e a recusa nao chega — ela so some pelo tempo.
 // O px sai do debug (`unidadesRenderizadas`, `marcadorDeDestino`), nunca de pixel da captura.
 const { retanguloDoCanvas } = require('./_canvas');
 const terreno = require('../../data/terrain.json');
-const escaramuca = require('../../data/escaramuca.json');
 const tema = require('../../data/theme-sertao.json');
 
 const TILE_PX = terreno.tile_px;
@@ -90,10 +89,11 @@ async function roteiro(ctx) {
   s = await estado();
   afirmar(s.marcadorDeDestino === null, `a marca deveria sumir sozinha, veio ${JSON.stringify(s.marcadorDeDestino)}`);
   const andando = s.unidadesRenderizadas.filter((u) => u.lado === LADO_DO_JOGADOR && u.tipo === 'militia' && u.fsm !== 'ocioso').length;
-  afirmar(andando > 0, 'dentro da cerca a tropa deveria ter recebido a ordem');
+  afirmar(andando > 0, 'a tropa deveria ter recebido a ordem');
 
-  // 3. fora da cerca: a marca nasce no clique e a recusa a apaga
-  const longe = { gx: meio.gx, gy: meio.gy + escaramuca.cercaDaPaz_tiles + 4 };
+  // 3. longe: a marca nasce no clique, e nenhuma recusa a apaga no tick seguinte
+  const LONGE_TILES = 16;
+  const longe = { gx: meio.gx, gy: meio.gy + LONGE_TILES };
   await centrar(longe);
   s = await estado();
   await direito(pontoDoTile(longe.gx, longe.gy, s.camera));
@@ -104,8 +104,8 @@ async function roteiro(ctx) {
   await page.evaluate(() => window.__cangaco.avancar(1));
   await page.waitForTimeout(60);
   s = await estado();
-  afirmar(s.marcadorDeDestino === null, `a recusa deveria apagar a marca, veio ${JSON.stringify(s.marcadorDeDestino)}`);
-  console.log(`C-TELA-02: marca em ${JSON.stringify(marcaDentro)} (${andando} andando); longe ${JSON.stringify(marcaLonge)} apagada pela recusa`);
+  afirmar(s.marcadorDeDestino !== null, 'sem recusa, a marca de longe deveria continuar no tick seguinte');
+  console.log(`C-TELA-02: marca em ${JSON.stringify(marcaDentro)} (${andando} andando); longe ${JSON.stringify(marcaLonge)} aceita, a marca fica`);
 }
 
 module.exports = { roteiro };

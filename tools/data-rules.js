@@ -668,8 +668,6 @@ function validarEscaramuca(dados, erros) {
   const at = e.atacantes;
   if (!at || !militares.has(at.tipo)) erros.push(`escaramuca/atacantes: '${at && at.tipo}' nao e militar de units.json`);
   if (!(at && Number.isInteger(at.quantidade) && at.quantidade >= 0)) erros.push('escaramuca/atacantes: quantidade precisa ser inteiro >= 0');
-  // C-COMBATE-02: a cerca da paz e um numero inteiro de tiles
-  if (!(Number.isInteger(e.cercaDaPaz_tiles) && e.cercaDaPaz_tiles >= 0)) erros.push('escaramuca/cercaDaPaz_tiles: precisa ser inteiro >= 0');
   const grupoDe = (t) => (t.montado ? 'montado' : t.aDistancia ? 'distancia' : (t.attackVsCavalo || 0) > 0 ? 'antiCavalo' : 'corpoACorpo');
   const ids = new Set();
   for (const pos of e.posicoes) {

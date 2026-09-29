@@ -74,12 +74,11 @@ describe('C-IA-03b — peacetime e tropas', () => {
     expect(quartel && quartel.estado === 'completo' ? [quartel.estoque.entrada, quartel.recrutas] : null).toEqual([{}, 0]);
   });
 
-  it('em paz: as cinco ordens de exercito sao recusadas (a marcha longe, longe-na-paz) e o estado nao muda; construir passa', () => {
+  it('em paz: as quatro ordens de combate sao recusadas e o estado nao muda; a marcha e construir passam', () => {
     const tropa = tropaDoJogador(s0);
     const quartelDaIA = prediosDaIA(s0).find((id) => s0.predios.porId[id]?.tipo === 'barracks') as string;
     const alvo = doLado(s0, LADO_DA_IA)[0] as string;
     const ordens: Command[] = [
-      { type: 'MoveUnits', unidades: tropa, destino: daFrente(-7, -7) },
       { type: 'AttackUnit', unidades: tropa, alvo },
       { type: 'AttackBuilding', unidades: tropa, predio: quartelDaIA },
       { type: 'TrainSoldier', predio: quartelDaIA, tipo: 'militia' },
@@ -89,12 +88,12 @@ describe('C-IA-03b — peacetime e tropas', () => {
     const semNada = semEventos(step(s0, [], gameData));
     for (const ordem of ordens) {
       const r = step(s0, [ordem], gameData);
-      // C-COMBATE-02 (cerca da paz, decisao do operador 2026-09-29): a marcha para (60,60),
-      // longe da vila, sai `longe-na-paz`; as outras quatro seguem `em-paz`
-      const motivo = ordem.type === 'MoveUnits' ? 'longe-na-paz' : 'em-paz';
-      expect(r.events.find((e) => e.type === 'command-rejected'), ordem.type).toMatchObject({ command: ordem.type, motivo });
+      expect(r.events.find((e) => e.type === 'command-rejected'), ordem.type).toMatchObject({ command: ordem.type, motivo: 'em-paz' });
       expect(semEventos(r), ordem.type).toBe(semNada);
     }
+    // C-COMBATE-02b (decisao do operador, 2026-09-29): a marcha longe da vila passa em paz
+    const marcha = step(s0, [{ type: 'MoveUnits', unidades: tropa, destino: daFrente(-7, -7) }], gameData);
+    expect(marcha.events.some((e) => e.type === 'command-rejected')).toBe(false);
     // construir nao e ordem de exercito: passa
     const planta = step(s0, [{ type: 'PlaceBlueprint', buildingId: 'woodcutters', gx: 40, gy: 26 }], gameData);
     expect(planta.events.some((e) => e.type === 'command-rejected' && (e as { motivo?: string }).motivo === 'em-paz')).toBe(false);

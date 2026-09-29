@@ -442,5 +442,8 @@
   },
   "C-COMBATE-01a-formacao-e-virar": {
     "passes": true
+  },
+  "C-COMBATE-02b-a-cerca-sai": {
+    "passes": true
   }
 }

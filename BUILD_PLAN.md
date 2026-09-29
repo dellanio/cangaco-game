@@ -5880,6 +5880,47 @@ PROGRESS como PARA REVISÃO.
   (C-COMBATE-02) e a mensagem (C-TELA-01) são dois itens de propósito. Se o C-COMBATE-01
   precisar das duas camadas, ele se quebra em sim e tela, com a nota escrita aqui antes.
 
+### Segunda partida — quatro problemas e dez itens do operador (2026-09-29)
+O operador jogou de novo. Os quatro problemas vêm antes da fila. Em cada item, o plano vai
+para `docs/planos/` antes do código. Decisão de design em aberto: a leitura conservadora
+vai para o PROGRESS como PARA REVISÃO, e o trabalho segue.
+
+**Problemas:**
+- **P1. C-COMBATE-02b — a cerca da paz sai (sim + ui, sem render).** O operador: "ela impede
+  os meus soldados de avançar no mapa, e não é o que eu quis".
+  - Em paz, `MoveUnits` passa para qualquer destino.
+  - Atacar unidade, atacar prédio, treinar e contratar continuam recusados com `em-paz`.
+  - Saem o `cercaDaPaz_tiles`, o motivo `longe-na-paz` e o texto "Longe demais na paz".
+  - Toca `src/sim/` e `src/ui/`, não `src/render/`: a §10 não se aplica.
+  - **ENTREGUE (2026-09-29).** A marcha em paz para (60,60) foi aceita, e a tropa chegou no
+    tick 293, com a paz até o 6000. `em-paz` também saiu dos motivos da marcha, porque
+    nada mais o produz. Os roteiros C-TELA-01, C-TELA-02 e C-IA-03c afirmam a regra nova.
+- **P2. D-PRODUCAO-02 — o alcance do lenhador.** Dobrar o raio de busca de árvore e medir a
+  vazão antes e depois. Responder se o modo "cortar e plantar" (F-REPL-b) planta de fato.
+- **P3. C-MOVIMENTO-02 — a tropa ainda trava ao andar.** Repetir a sonda do C-MOVIMENTO-01
+  (quantos saltos para trás, e de onde vêm) e achar a causa que sobrou. É o que mais
+  atrapalha jogar.
+- **P4. O inimigo sem serf** não repõe a fome da própria tropa, e hoje o andaime
+  `iaDrena: false` esconde isso. Fica resolvido pela C-IA-02, o item 3 abaixo.
+
+**Fila:**
+1. C-COMBATE-01b — storm attack (sim).
+2. C-COMBATE-01c — controles de formação (tela).
+3. C-IA-02 — economia da IA, em partes: vila pronta, prefeito mínimo que treina, serf e
+   comida. O andaime `iaDrena` sai no fim.
+4. D-TELA-01 — aba de estatísticas: prédios e trabalhadores por tipo, com os ociosos em
+   destaque.
+5. D-TRANSPORTE-01 — armazém com liga/desliga por mercadoria.
+6. D-TRANSPORTE-02 — menu de distribuição.
+7. D-PRODUCAO-01 — ferro e ferrarias.
+8. F24, o que resta: a cadeia de couro.
+9. As quatro hipóteses do avaliador:
+   - BUG-P perde a ordem depois de revidar;
+   - a C9 roda ticks a mais;
+   - recrutas empilhados;
+   - a tela não avisa a recusa em paz.
+10. VARREDURA-KAM, as frentes que faltam.
+
 ### F35 — Feira: trocar mercadoria (sim + ui)
 - **ENTREGUE (2026-09-28, sessão autônoma; plano em `docs/planos/2026-09-28-A17-F35-feira.md`).**
   Taxa 2 para 1 (decisão do operador), em `economy.json:marketplace.taxa`, com regra no
