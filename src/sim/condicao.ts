@@ -43,12 +43,30 @@ export function ehEstadoDeFome(fsm: string): boolean {
 export function classeDaUnidade(
   tipo: string, dados: GameData = gameData,
 ): 'civil' | 'militar' | null {
-  if (dados.unidades.civis.tipos.some((t) => t.id === tipo)) return 'civil';
-  if (dados.unidades.militares.tipos.some((t) => t.id === tipo)) return 'militar';
+  return classesDe(dados.unidades).get(tipo) ?? null;
+}
+
+/**
+ * C-IA-02a — o indice tipo -> classe, uma vez por `dados.unidades` (que nao muda depois do
+ * carregamento). A varredura das tres listas a cada chamada era metade do tick da
+ * escaramuca: o `inimigoEncostado` pergunta por par de unidades. A ordem de precedencia e a
+ * de antes: civil, militar, mercenario (o primeiro que declarar o tipo fica).
+ */
+const classesPorUnidades = new WeakMap<GameData['unidades'], ReadonlyMap<string, 'civil' | 'militar'>>();
+function classesDe(unidades: GameData['unidades']): ReadonlyMap<string, 'civil' | 'militar'> {
+  const pronto = classesPorUnidades.get(unidades);
+  if (pronto !== undefined) return pronto;
+  const indice = new Map<string, 'civil' | 'militar'>();
+  const marcar = (tipos: readonly { readonly id: string }[], classe: 'civil' | 'militar'): void => {
+    for (const t of tipos) if (!indice.has(t.id)) indice.set(t.id, classe);
+  };
+  marcar(unidades.civis.tipos, 'civil');
+  marcar(unidades.militares.tipos, 'militar');
   // F36 — o mercenario e militar comum depois de contratado: recebe ordem, luta e conta
   // como tropa (BUILD_PLAN F36)
-  if (dados.unidades.mercenarios.tipos.some((t) => t.id === tipo)) return 'militar';
-  return null;
+  marcar(unidades.mercenarios.tipos, 'militar');
+  classesPorUnidades.set(unidades, indice);
+  return indice;
 }
 
 /** O civil: vai a Bodega comer. O militar tambem sente fome (C-COMIDA-01c), mas come pelo Feed. */

@@ -8,8 +8,17 @@
   "predios": [
     { "id": "storehouse", "gx": 72, "gy": 70 },
     { "id": "schoolhouse", "gx": 77, "gy": 70 },
-    { "id": "barracks", "gx": 72, "gy": 75 }
+    { "id": "barracks", "gx": 72, "gy": 75 },
+    { "id": "farm", "gx": 81, "gy": 70 },
+    { "id": "mill", "gx": 85, "gy": 70 },
+    { "id": "bakery", "gx": 89, "gy": 70 },
+    { "id": "inn", "gx": 92, "gy": 70 }
   ],
+  "producao": {
+    "_doc": "C-IA-02a (vila da IA com producao; plano em docs/planos/2026-09-29-C-IA-02a-vila-da-ia-com-producao.md). A cadeia do pao da IA: rocado, moinho, padaria e estalagem numa fileira a leste da escola, longe das posicoes de defesa. O cenario liga cada predio da IA ao armazem por estrada (A* da porta do armazem a porta de cada um: os niveis de coleta sao por estrada) e ara `campos.quantidade` tiles da cultura no alcance da colheita do `campos.predio`. Os civis nascem em `tilesDoGrupo(civis.ponto)`: sem eles nada anda, e sem a estalagem eles morrem de fome no tick ~10500 (sonda de 2026-09-29).",
+    "campos": { "predio": "farm", "recurso": "corn", "quantidade": 8 },
+    "civis": { "ponto": { "gx": 75, "gy": 73 }, "tipos": { "serf": 4, "farmer": 1, "baker": 2 } }
+  },
   "estoqueDoArmazem": { "gold": 20, "timber": 20, "stone": 20, "loaves": 20, "sausages": 10 },
   "quartel": {
     "_doc": "O que o quartel da IA tem para repor as posicoes (F28-IA ponto 4). VAZIO por decisao do operador (2026-09-29): 'a IA nao produz, nao constroi e nao repoe — ela defende o que tem'. A reposicao volta com a C-IA-02 (economia da IA).",

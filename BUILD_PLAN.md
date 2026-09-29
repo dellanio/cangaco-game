@@ -5947,7 +5947,28 @@ vai para o PROGRESS como PARA REVISÃO, e o trabalho segue.
 1. C-COMBATE-01b — storm attack (sim).
 2. C-COMBATE-01c — controles de formação (tela).
 3. C-IA-02 — economia da IA, em partes: vila pronta, prefeito mínimo que treina, serf e
-   comida. O andaime `iaDrena` sai no fim.
+   comida. O andaime `iaDrena` sai no fim. Quebrada em três (plano em
+   `docs/planos/2026-09-29-C-IA-02a-vila-da-ia-com-producao.md`):
+   - **C-IA-02a — a vila da IA com produção (dado + cenário). ENTREGUE (2026-09-29).**
+     - A escaramuça ganha, do lado da IA:
+       - roçado, moinho, padaria e estalagem;
+       - a estrada da porta do armazém a cada porta;
+       - 8 campos de milho no alcance do roçado;
+       - 4 serfs, 1 fazendeiro e 2 padeiros.
+     - Nenhuma regra nova.
+     - Aceite em `tests/C-IA-02a-vila-da-ia.test.ts`: o pão da IA vai de 20 a 75 em 12000
+       ticks, e os 7 civis vivem.
+   - **C-IA-02b — o prefeito mínimo (sim).** O `CheckUnitCount` do KaM: a IA pede à escola
+     dela o especialista que falta em prédio sem ocupante e serfs até 1 por prédio, só com
+     ouro.
+     - Nota da C-IA-02a: os civis de hoje nascem do dado (`escaramuca.producao.civis`). Com
+       o prefeito, a contagem inicial pode cair, e a escola repõe quem morre.
+   - **C-IA-02c — tirar o andaime L8 (dado + teste longo).** `condicao.iaDrena: true`. A
+     tropa da IA sente fome e come da produção pelo `comida-para-tropa`.
+     - Nota da C-IA-02a: o armazém da IA recebe ~55 pães a cada 9000 ticks (medido). A
+       tropa da IA tem 21.
+     - Os atacantes da C-IA-04 continuam: a reposição pelo quartel pede armas, e a cadeia
+       de armas não é deste item.
 4. D-TELA-01 — aba de estatísticas: prédios e trabalhadores por tipo, com os ociosos em
    destaque.
 5. D-TRANSPORTE-01 — armazém com liga/desliga por mercadoria.

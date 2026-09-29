@@ -14,6 +14,12 @@
  * Os predios nascem COMPLETOS por `completarObra` (o mesmo caminho que a obra usa), e nao
  * passam por `registrarTipoConstruido`: o menu Build e do jogador (C-IA-03a, desbloqueio por
  * lado).
+ *
+ * C-IA-02a (vila da IA com producao; plano em
+ * docs/planos/2026-09-29-C-IA-02a-vila-da-ia-com-producao.md): a vila ganha a cadeia do pao
+ * (`escaramuca.producao`). O cenario assenta a estrada de cada predio da IA ao armazem dela,
+ * ara os campos no alcance do rocado e poe os civis. Nenhuma regra nova: os sistemas do
+ * jogador ja rodam por lado (C7).
  */
 import type { GameData } from './data/types';
 import { gameData } from './data';
@@ -21,6 +27,61 @@ import { completarObra, createInitialState, ID_DO_ARMAZEM, ID_DO_QUARTEL, LADO_D
 import { tilesDoGrupo } from './systems/marcha';
 import type { GameState, PosicaoDeDefesa, Predio, PredioCompleto, Unidade } from './state';
 import { condicaoCheiaDoTipo } from './condicao';
+import { chaveDeTile, tilesDaPorta } from './estradas';
+import type { TileDeGrid } from './estradas';
+import { buscarCaminho } from './pathfinding';
+import { canPlowField } from './campos';
+import { caixaDoPredio } from './footprint';
+import { receitaDoTipo } from './producao';
+
+/**
+ * C-IA-02a — a estrada da porta do armazem da IA a porta de cada outro predio dela, pelo A*
+ * no modo `livre`. Os niveis de coleta sao por estrada: sem ela o milho para no rocado.
+ *
+ * Cada trecho gera um objeto NOVO: o cache do A* e por identidade de `state.estradas`, e
+ * mutar o objeto que ja foi a uma busca deixa o raster velho no cache (medido: toda busca
+ * no modo `estrada` dava `null`).
+ */
+function estradasDaVila(state: GameState, ladoDaVila: readonly Predio[], dados: GameData): GameState['estradas'] {
+  let estradas: GameState['estradas'] = state.estradas;
+  const armazem = ladoDaVila.find((p) => p.tipo === ID_DO_ARMAZEM);
+  const de = armazem === undefined ? undefined : tilesDaPorta(armazem, dados)[0];
+  if (armazem === undefined || de === undefined) return estradas;
+  for (const p of ladoDaVila) {
+    if (p === armazem) continue;
+    const portas = tilesDaPorta(p, dados);
+    const caminho = buscarCaminho({ ...state, estradas }, de, portas, 'livre', dados);
+    if (caminho === null) throw new Error(`criarEscaramuca: o predio '${p.tipo}' da IA nao alcanca o armazem`);
+    const trecho: Record<string, true> = { ...estradas };
+    for (const t of [de, ...caminho.tiles]) trecho[chaveDeTile(t)] = true;
+    estradas = trecho;
+  }
+  return estradas;
+}
+
+/**
+ * C-IA-02a — os campos da IA: os primeiros `quantidade` tiles araveis no alcance da colheita
+ * do predio, varridos por linha (gy, depois gx). Aravel e o que o `canPlowField` do jogador
+ * aceita; o campo nasce como o `comOTileArado` o grava.
+ */
+function camposDaVila(state: GameState, predio: Predio, recurso: string, quantidade: number, dados: GameData): GameState['recursos'] {
+  const recursos = { ...state.recursos };
+  const colheita = receitaDoTipo(predio.tipo, dados)?.colheita ?? null;
+  const caixa = caixaDoPredio(predio, dados);
+  const def = dados.recursos.tipos[recurso];
+  if (colheita === null || caixa === null || def === undefined) throw new Error(`criarEscaramuca: '${predio.tipo}' nao colhe '${recurso}'`);
+  let n = 0;
+  for (let gy = caixa.y0 - colheita.alcance; gy < caixa.y1 + colheita.alcance && n < quantidade; gy += 1) {
+    for (let gx = caixa.x0 - colheita.alcance; gx < caixa.x1 + colheita.alcance && n < quantidade; gx += 1) {
+      const tile: TileDeGrid = { gx, gy };
+      if (!canPlowField({ ...state, recursos }, recurso, [tile], dados).ok) continue;
+      recursos[chaveDeTile(tile)] = { tipo: recurso, quantidade: def.quantidadeInicial ?? def.rendimentoPorTile };
+      n += 1;
+    }
+  }
+  if (n < quantidade) throw new Error(`criarEscaramuca: so ${n} de ${quantidade} campos no alcance do '${predio.tipo}'`);
+  return recursos;
+}
 
 export function criarEscaramuca(seed: number, dados: GameData = gameData): GameState {
   const base = createInitialState(seed, dados);
@@ -62,9 +123,17 @@ export function criarEscaramuca(seed: number, dados: GameData = gameData): GameS
     nascer(LADO_DO_JOGADOR, tj.tipo, tj.spawn.gx + (i % tj.porFileira), tj.spawn.gy + Math.floor(i / tj.porFileira));
   }
 
+  // C-IA-02a — a estrada e os campos da IA, antes de qualquer unidade nascer
+  const soPredios: GameState = { ...base, predios: { porId: predios, ordem: ordemDosPredios } };
+  const daIa = ordemDosPredios.map((id) => predios[id] as Predio).filter((p) => p.lado === LADO_DA_IA);
+  const comEstrada: GameState = { ...soPredios, estradas: estradasDaVila(soPredios, daIa, dados) };
+  const pr = cenario.producao;
+  const doCampo = daIa.find((p) => p.tipo === pr.campos.predio);
+  if (doCampo === undefined) throw new Error(`criarEscaramuca: o predio dos campos '${pr.campos.predio}' nao esta na vila da IA`);
+  const comVila: GameState = { ...comEstrada, recursos: camposDaVila(comEstrada, doCampo, pr.campos.recurso, pr.campos.quantidade, dados) };
+
   // A tropa da IA nasce JA nos tiles da posicao (`tilesDoGrupo`, os mesmos que o passo de
   // voltar ao ponto usaria): em peacetime a IA nao se reposiciona (sim/paz.ts).
-  const comVila: GameState = { ...base, predios: { porId: predios, ordem: ordemDosPredios } };
   const posicoes: PosicaoDeDefesa[] = [];
   for (const pos of cenario.posicoes) {
     const tiles = tilesDoGrupo(comVila, pos.ponto, dados.combate.ia.tamanhoDoGrupo, dados);
@@ -91,9 +160,17 @@ export function criarEscaramuca(seed: number, dados: GameData = gameData): GameS
     nascer(LADO_DA_IA, at.tipo, tile.gx, tile.gy);
   }
 
+  // C-IA-02a — os civis da IA, na ordem dos tipos do dado
+  const civis = Object.entries(pr.civis.tipos).flatMap(([tipo, n]) => Array.from({ length: n }, () => tipo));
+  const tilesDosCivis = tilesDoGrupo(comVila, pr.civis.ponto, civis.length, dados);
+  civis.forEach((tipo, i) => {
+    const tile = tilesDosCivis[i];
+    if (tile === undefined) throw new Error(`criarEscaramuca: os civis da IA nao tem ${civis.length} tiles andaveis`);
+    nascer(LADO_DA_IA, tipo, tile.gx, tile.gy);
+  });
+
   return {
-    ...base,
-    predios: { porId: predios, ordem: ordemDosPredios },
+    ...comVila,
     unidades: { porId: unidades, ordem: ordemDasUnidades },
     proximoId: contador,
     ia: { [String(LADO_DA_IA)]: { posicoes } },

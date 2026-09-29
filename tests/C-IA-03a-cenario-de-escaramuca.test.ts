@@ -60,7 +60,11 @@ describe('C-IA-03a — o cenario de escaramuca na sim', () => {
     expect(daIA.map((p) => [p?.tipo, p?.gx, p?.gy, p?.estado])).toEqual(cenario.predios.map((p) => [p.id, p.gx, p.gy, 'completo']));
     // C-IA-04: mais o grupo de atacantes fora das posicoes (andaime)
     const tropa = cenario.posicoes.reduce((n, p) => n + p.tropa.quantidade, 0) + cenario.atacantes.quantidade;
-    expect(doLado(s0, LADO_DA_IA, 'unidades')).toHaveLength(tropa);
+    // C-IA-02a: mais os civis da vila da IA, que nascem depois da tropa
+    const civis = Object.entries(cenario.producao.civis.tipos).flatMap(([tipo, n]) => Array.from({ length: n }, () => tipo));
+    const daIaU = doLado(s0, LADO_DA_IA, 'unidades');
+    expect(daIaU).toHaveLength(tropa + civis.length);
+    expect(daIaU.slice(tropa).map((id) => s0.unidades.porId[id]?.tipo)).toEqual(civis);
     const posicoes = s0.ia?.[String(LADO_DA_IA)]?.posicoes ?? [];
     expect(posicoes.map((p) => [p.id, p.membros.length])).toEqual(cenario.posicoes.map((p) => [p.id, p.tropa.quantidade]));
     // o contador unico continua valendo: nenhum id repetido, proximoId acima de todos
@@ -109,7 +113,8 @@ describe('C-IA-03a — o cenario de escaramuca na sim', () => {
     expect(alertasDoEstado(comPedreira)).toEqual(alertasDoEstado(livre));
     expect(centroDaVila(s0)).toEqual(centroDaVila(livre));
     // e o lado da IA continua respondendo pelo parametro
-    expect(populacaoPorGrupo(s0, gameData, LADO_DA_IA).militar).toBe(doLado(s0, LADO_DA_IA, 'unidades').length);
+    expect(populacaoPorGrupo(s0, gameData, LADO_DA_IA).militar)
+      .toBe(cenario.posicoes.reduce((n, p) => n + p.tropa.quantidade, 0) + cenario.atacantes.quantidade);
   });
 
   it('a IA guarnece e fica: 300 ticks, todos vivos no raio, a vila do jogador intacta', () => {

@@ -13937,3 +13937,70 @@ C-MOVIMENTO-02b (a vaga tomada por quem marcha).
 
 **Hipótese, não verificada:** nas capturas, as elipses de seleção e os rótulos parecem
 deslocados dos sprites. Não é desta feature, e não medi.
+
+
+## 2026-09-29 — C-IA-02a (a vila da IA com produção, dado + cenário) ENTREGUE
+
+Primeiro item da C-IA-02 (a economia da IA), quebrada em três na fila: a C-IA-02b (o prefeito
+mínimo) e a C-IA-02c (tirar o andaime L8) estão no BUILD_PLAN, com notas. O plano está em
+`docs/planos/2026-09-29-C-IA-02a-vila-da-ia-com-producao.md`. A sessão foi interrompida por
+queda de energia com o trabalho quase pronto; o que faltava era a evidência de tela, o
+PROGRESS e o commit.
+
+**Verificado:**
+- `data/escaramuca.json`: roçado (81,70), moinho (85,70), padaria (89,70) e estalagem (92,70)
+  da IA, e o bloco `producao` com 8 campos de milho e os civis (4 serfs, 1 fazendeiro,
+  2 padeiros) no ponto (75,73).
+- `sim/cenario.ts`:
+  - `estradasDaVila`: A* em modo `livre` da porta do armazém à porta de cada prédio;
+  - `camposDaVila`: os tiles do alcance que passam no `canPlowField`, por linha;
+  - os civis nascem depois dos atacantes.
+- Dois defeitos achados e consertados no caminho (detalhe no plano):
+  - o cache do A* por identidade de `state.estradas`: um objeto novo por trecho;
+  - o tick 3,4× mais lento: `hpMaximoDoTipo` e `classeDaUnidade` viraram índice por
+    `WeakMap`, com a mesma precedência.
+- `tests/C-IA-02a-vila-da-ia.test.ts` tem 4 testes: o cenário, o pão subindo, os civis vivos,
+  o determinismo.
+  - A evidência está em `test-output/C-IA-02a-producao.json`, aberta.
+  - O pão da IA a cada 3000 ticks deu [20, 20, 42, 51, 75], e os 7 civis estão vivos no
+    tick 12000.
+- O `tools/data-rules.js` valida o bloco `producao`. Plantei 3 erros e ele acusou os 3; o
+  dado foi restaurado.
+- A C-IA-03a e a C-IA-03b foram atualizadas para a regra da F34: a vitória pede armazém,
+  escola, quartel e tropa; o civil e o roçado não contam.
+  - A partida inteira sem tela deu vitória no tick 9137, com 4 de 18 vivos. A base deu 9139
+    e 4.
+- Roteiro `tools/shots/C-IA-02a.js` (novo), OK:
+  - 7 prédios da IA, completos e azuis;
+  - 7 civis;
+  - no tick 3000, roçado, moinho e padaria com ocupante, e serf carregando;
+  - a captura `screenshots/C-IA-02a-1-vila-da-ia.png` foi aberta e mostra a fileira, a
+    estrada, o milho e os civis.
+- Roteiro C-IA-03c: com a vila, ele passou a perder, 4 de 4 corridas (a tropa inteira
+  morria). A causa foi medida:
+  - os 4 prédios novos consomem ids, e a tropa da IA passou de u31 para u35;
+  - o desvio de desenho da F18f vem do id;
+  - o roteiro clicava no centro do tile arredondado, errava o sprite, e a ordem saía como
+    MARCHA (18 `marchando` logo depois do clique, com o alvo parado ali).
+  - Sem tela, a mesma sequência de ordens deu 18 `indo_lutar` nas duas árvores.
+  - O conserto foi no roteiro: ele mira o centro desenhado, como o `acerto.ts`. Depois
+    disso, 3 de 3 vitórias, com 3, 1 e 3 de 18 vivos.
+- `npm run verify` passou. Os roteiros C-COMBATE-01c, C-TELA-01, C-TELA-02, C-TELA-03,
+  C-TELA-04 e D-TELA-02 saíram com código 0.
+- O verify reprovou duas vezes seguidas, na C-IA-03b "peace-ended" (`timeout` de 12 s), e a
+  base passou na mesma hora. Isolada, a C-IA-03b dava 2,9 s aqui e 4,4 s na base. A carga
+  nova era o teste 4 da C-IA-02a, que repetia a corrida de 12000 ticks (~7 s a mais num
+  worker). O determinismo passou a comparar duas corridas de 3000 ticks, e o verify voltou
+  ao verde. O `timeout` da C-IA-03b não foi tocado.
+
+**PARA REVISÃO (interpretações conservadoras):**
+- A vila fica a leste da escola, longe das posições de defesa. Os civis não têm defesa
+  própria.
+- A estalagem entrou porque, sem ela, os civis morrem no tick ~10500 (medido na sonda).
+- O roteiro C-IA-03c vence com menos cabras vivos que antes (1 a 3 de 18, contra 7 a 9 na
+  base). A estratégia gulosa dele ficou diferente com o clique certo; o jogo sem tela não
+  mudou (4 de 18 nas duas árvores).
+
+**Hipótese, não verificada:** o jogador que clica no tile, e não no boneco, de quem anda,
+recebe marcha no lugar de ataque, pela mesma razão do roteiro. É comportamento da C-TELA-04
+(a mira pelo sprite), não desta feature.

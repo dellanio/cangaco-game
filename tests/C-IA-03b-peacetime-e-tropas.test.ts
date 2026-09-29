@@ -13,13 +13,13 @@
  */
 import { describe, expect, it } from 'vitest';
 import { gameData } from '../src/sim/data';
-import { createInitialState, LADO_DA_IA, LADO_DO_JOGADOR } from '../src/sim/state';
+import { createInitialState, ID_DA_ESCOLA, ID_DO_ARMAZEM, ID_DO_QUARTEL, LADO_DA_IA, LADO_DO_JOGADOR } from '../src/sim/state';
 import type { GameEvent, GameState, Unidade } from '../src/sim/state';
 import type { Command } from '../src/sim/commands';
 import { step } from '../src/sim/tick';
 import { criarEscaramuca } from '../src/sim/cenario';
 import { emPaz, ticksDePazRestantes } from '../src/sim/paz';
-import { condicaoCheiaDoTipo } from '../src/sim/condicao';
+import { classeDaUnidade, condicaoCheiaDoTipo } from '../src/sim/condicao';
 import { carregar, salvar } from '../src/sim/save';
 import { violacoesDeInvariantes } from './helpers/jobs-invariantes';
 import { gravarEvidencia } from './helpers/evidence';
@@ -32,6 +32,11 @@ const FRENTE = (gameData.escaramuca.posicoes.find((p) => p.id === 'frente') as {
 const daFrente = (dx: number, dy: number): { gx: number; gy: number } => ({ gx: FRENTE.gx + dx, gy: FRENTE.gy + dy });
 const doLado = (s: GameState, lado: number): string[] => s.unidades.ordem.filter((id) => s.unidades.porId[id]?.lado === lado);
 const prediosDaIA = (s: GameState): string[] => s.predios.ordem.filter((id) => s.predios.porId[id]?.lado === LADO_DA_IA);
+/** C-IA-02a — a vila da IA tem producao: a F34 so pede os tres que seguram o lado */
+const QUE_SEGURAM = [ID_DO_ARMAZEM, ID_DA_ESCOLA, ID_DO_QUARTEL] as readonly string[];
+const osTresDaIA = (s: GameState): string[] => prediosDaIA(s).filter((id) => QUE_SEGURAM.includes(s.predios.porId[id]?.tipo ?? ''));
+/** C-IA-02a — a tropa da IA, sem os civis da vila dela */
+const militaresDaIA = (s: GameState): string[] => doLado(s, LADO_DA_IA).filter((id) => classeDaUnidade(s.unidades.porId[id]?.tipo ?? '', gameData) === 'militar');
 const tropaDoJogador = (s: GameState): string[] =>
   doLado(s, LADO_DO_JOGADOR).filter((id) => s.unidades.porId[id]?.tipo === gameData.escaramuca.tropaDoJogador.tipo);
 const semEventos = (s: GameState): string => salvar({ ...s, events: [], tick: 0 });
@@ -140,23 +145,25 @@ describe('C-IA-03b — peacetime e tropas', () => {
       const vivos = tropa.filter((id) => s.unidades.porId[id]);
       if (vivos.length === 0) break;
       const cmds: Command[] = [];
-      // a cada 50 ticks, quem esta parado: cacar a tropa (bodoqueiro primeiro); sem tropa, o predio
+      // a cada 50 ticks, quem esta parado: cacar a tropa (bodoqueiro primeiro); sem tropa, um
+      // dos tres predios que seguram o lado (F34). Civil da IA nao e alvo: a vitoria nao o pede.
       if (t % 50 === 0) {
         const parados = vivos.filter((id) => s.unidades.porId[id]?.fsm === 'ocioso');
-        const inimigos = doLado(s, LADO_DA_IA);
+        const inimigos = militaresDaIA(s);
         const alvo = inimigos.find((id) => s.unidades.porId[id]?.tipo === 'bowman') ?? inimigos[0];
-        const predio = prediosDaIA(s)[0];
+        const predio = osTresDaIA(s)[0];
         if (parados.length && alvo) cmds.push({ type: 'AttackUnit', unidades: parados, alvo });
         else if (parados.length && predio) cmds.push({ type: 'AttackBuilding', unidades: parados, predio });
       }
       s = step(s, cmds, gameData);
       iaMaxima = Math.max(iaMaxima, doLado(s, LADO_DA_IA).length);
-      if (marcos['tropaDaIAMorta'] === undefined && doLado(s, LADO_DA_IA).length === 0) marcos['tropaDaIAMorta'] = s.tick;
+      if (marcos['tropaDaIAMorta'] === undefined && militaresDaIA(s).length === 0) marcos['tropaDaIAMorta'] = s.tick;
       if (t % 100 === 0) violacoes.push(...violacoesDeInvariantes(s, gameData).map((v) => `t${s.tick}: ${v}`));
     }
     expect(violacoes).toEqual([]);
     expect(iaMaxima, 'a IA repos tropa').toBe(iaInicial);
-    expect(prediosDaIA(s)).toEqual([]);
+    expect(osTresDaIA(s)).toEqual([]);
+    expect(militaresDaIA(s)).toEqual([]);
     expect(s.partida?.fim).toBe('vitoria');
     const sobram = tropa.filter((id) => s.unidades.porId[id]).length;
     expect(sobram).toBeGreaterThan(0);

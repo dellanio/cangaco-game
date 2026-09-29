@@ -679,6 +679,26 @@ function validarEscaramuca(dados, erros) {
   if (!at || !militares.has(at.tipo)) erros.push(`escaramuca/atacantes: '${at && at.tipo}' nao e militar de units.json`);
   if (!(at && Number.isInteger(at.quantidade) && at.quantidade >= 0)) erros.push('escaramuca/atacantes: quantidade precisa ser inteiro >= 0');
   const grupoDe = (t) => (t.montado ? 'montado' : t.aDistancia ? 'distancia' : (t.attackVsCavalo || 0) > 0 ? 'antiCavalo' : 'corpoACorpo');
+  // C-IA-02a: a vila da IA com producao. Os civis sao civis de units.json, o predio dos
+  // campos esta na vila e colhe, e o recurso dos campos e o que ele colhe e se ara.
+  const pr = e.producao;
+  if (!pr || !pr.campos || !pr.civis || !pr.civis.tipos || !pr.civis.ponto) {
+    erros.push('escaramuca/producao: producao.campos e producao.civis {ponto, tipos} sao obrigatorios');
+  } else {
+    const civis = new Set(((dados.units && dados.units.civis && dados.units.civis.tipos) || []).map((t) => t.id));
+    for (const [tipo, n] of Object.entries(pr.civis.tipos)) {
+      if (!civis.has(tipo)) erros.push(`escaramuca/producao: '${tipo}' em civis.tipos nao e civil de units.json`);
+      if (!(Number.isInteger(n) && n >= 0)) erros.push(`escaramuca/producao: civis.tipos.${tipo} precisa ser inteiro >= 0`);
+    }
+    if (!e.predios.some((p) => p.id === pr.campos.predio)) erros.push(`escaramuca/producao: campos.predio '${pr.campos.predio}' nao esta em escaramuca.predios`);
+    const receita = dados.production && dados.production.predios && dados.production.predios[pr.campos.predio];
+    const colheita = receita && receita.colheita;
+    if (!colheita) erros.push(`escaramuca/producao: '${pr.campos.predio}' nao tem colheita em production.json`);
+    else if (colheita.recurso !== pr.campos.recurso) erros.push(`escaramuca/producao: '${pr.campos.predio}' colhe '${colheita.recurso}', e os campos sao de '${pr.campos.recurso}'`);
+    const tipoDoRecurso = dados.resources && dados.resources.tipos && dados.resources.tipos[pr.campos.recurso];
+    if (!(tipoDoRecurso && tipoDoRecurso.aradura)) erros.push(`escaramuca/producao: '${pr.campos.recurso}' nao se ara (resources.json sem aradura)`);
+    if (!(Number.isInteger(pr.campos.quantidade) && pr.campos.quantidade >= 0)) erros.push('escaramuca/producao: campos.quantidade precisa ser inteiro >= 0');
+  }
   const ids = new Set();
   for (const pos of e.posicoes) {
     if (ids.has(pos.id)) erros.push(`escaramuca/posicao: id '${pos.id}' repetido`);

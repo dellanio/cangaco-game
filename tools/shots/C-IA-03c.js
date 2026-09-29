@@ -17,11 +17,17 @@
 // O px sai do debug (`unidadesRenderizadas`, `prediosDoEstado`), nunca de pixel da captura.
 const { retanguloDoCanvas } = require('./_canvas');
 const terreno = require('../../data/terrain.json');
+const escaramuca = require('../../data/escaramuca.json');
+const unidades = require('../../data/units.json');
 
 const TILE_PX = terreno.tile_px;
 const LADO_DO_JOGADOR = 0;
 const LADO_DA_IA = 1;
 const RODADA = 100; // ticks entre ordens: a cadencia da sonda headless que venceu (36 rodadas)
+// C-IA-02a — a vila da IA tem producao e civis. A vitoria (F34) pede os tres predios que
+// seguram o lado e a tropa; o civil nao e alvo, e o rocado pode ficar de pe.
+const QUE_SEGURAM = ['storehouse', 'schoolhouse', 'barracks'];
+const MILITARES = new Set([...unidades.militares.tipos, ...unidades.mercenarios.tipos].map((t) => t.id));
 
 async function roteiro(ctx) {
   const { page, capturar, estado, afirmar } = ctx;
@@ -73,6 +79,13 @@ async function roteiro(ctx) {
     x: canvas.left + gx * TILE_PX + TILE_PX / 2 - camera.scrollX,
     y: canvas.top + gy * TILE_PX + TILE_PX / 2 - camera.scrollY,
   });
+  // C-IA-02a — a unidade se mira no centro DESENHADO (o `acerto.ts` da tela), nao no centro do
+  // tile: o desvio da F18f vem do id, e o tile arredondado de quem anda sai do quadrado. A
+  // vila nova da IA deslocou os ids da tropa dela, e o clique no tile virou marcha (medido).
+  const pontoDaUnidade = (u, camera) => {
+    const p = pontoDoTile(u.gxDesenhado, u.gyDesenhado, camera);
+    return { x: p.x + u.deslocamentoPx.x, y: p.y + u.deslocamentoPx.y };
+  };
   async function direito(p) {
     await page.mouse.move(p.x, p.y);
     await page.mouse.down({ button: 'right' });
@@ -126,7 +139,10 @@ async function roteiro(ctx) {
   const [, armazemDaIA] = prediosDaIA().find(([, p]) => p.tipo === 'storehouse');
   await centrar({ gx: armazemDaIA.gx, gy: armazemDaIA.gy - 3 });
   s = await estado();
-  afirmar(prediosDaIA().length === 3 && prediosDaIA().every(([, p]) => p.corDoBando === '#3F72D6'), 'os tres predios da IA deveriam ter a bandeira azul');
+  const osTresDaIA = () => prediosDaIA().filter(([, p]) => QUE_SEGURAM.includes(p.tipo));
+  afirmar(prediosDaIA().length === escaramuca.predios.length && prediosDaIA().every(([, p]) => p.corDoBando === '#3F72D6'),
+    `os ${escaramuca.predios.length} predios da IA deveriam ter a bandeira azul, vieram ${prediosDaIA().length}`);
+  afirmar(osTresDaIA().length === 3, `os tres que seguram o lado deveriam estar de pe, vieram ${osTresDaIA().length}`);
   afirmar(s.unidadesRenderizadas.filter((u) => u.lado === LADO_DA_IA).every((u) => u.corDoBando === '#3F72D6'), 'a tropa da IA deveria ter o rotulo azul');
   await capturar('vila-inimiga');
 
@@ -136,7 +152,7 @@ async function roteiro(ctx) {
   // atraves da frente e da chuva de flecha, e a tropa morre inteira (medido). O roteiro joga
   // como o jogador: o inimigo MAIS PERTO da tropa.
   const alvoDaRodada = () => {
-    const inimigos = s.unidadesRenderizadas.filter((u) => u.lado === LADO_DA_IA);
+    const inimigos = s.unidadesRenderizadas.filter((u) => u.lado === LADO_DA_IA && MILITARES.has(u.tipo));
     const meus = s.unidadesRenderizadas.filter((u) => u.lado === LADO_DO_JOGADOR && u.tipo === 'militia');
     if (meus.length === 0) return inimigos[0] ?? null;
     const cx = meus.reduce((n, u) => n + u.gx, 0) / meus.length;
@@ -157,7 +173,7 @@ async function roteiro(ctx) {
       s = await estado();
       const agora = s.unidadesRenderizadas.find((u) => u.id === alvo.id) ?? alvo;
       if (primeira) await page.keyboard.press('p');
-      await direito(pontoDoTile(Math.round(agora.gx), Math.round(agora.gy), s.camera));
+      await direito(pontoDaUnidade(agora, s.camera));
       if (primeira) {
         await page.waitForTimeout(300);
         await page.keyboard.press('p');
@@ -165,7 +181,7 @@ async function roteiro(ctx) {
         primeira = false;
       }
     } else {
-      const predios = prediosDaIA();
+      const predios = osTresDaIA();
       if (predios.length === 0) {
         await avancar(RODADA);
         continue;
@@ -201,7 +217,8 @@ async function roteiro(ctx) {
   s = await estado();
   const fim = await fimNaTela();
   const titulo = fim === null ? null : await page.$eval('#fim-de-partida h2', (n) => n.textContent);
-  afirmar(prediosDaIA().length === 0, `os tres predios da IA deveriam cair, sobraram ${prediosDaIA().length}`);
+  afirmar(osTresDaIA().length === 0, `os tres predios da IA deveriam cair, sobraram ${osTresDaIA().length}`);
+  afirmar(s.unidadesRenderizadas.every((u) => u.lado !== LADO_DA_IA || !MILITARES.has(u.tipo)), 'a tropa da IA deveria cair');
   afirmar(fim === 'vitoria', `a vitoria deveria aparecer na tela, veio ${fim} (${titulo})`);
   const vivos = s.unidadesRenderizadas.filter((u) => u.lado === LADO_DO_JOGADOR && u.tipo === 'militia').length;
   await capturar('vitoria');
