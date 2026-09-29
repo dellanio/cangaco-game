@@ -6,7 +6,8 @@
  *  (c) o destino ocupado por um militar parado: o que anda para colado, ocioso;
  *  (d) civil nao colide: serf e militar dividem tile;
  *  (e) um grupo de 9 marchando nunca poe dois militares no mesmo tile, e chega;
- *  (f) a mesma corrida duas vezes da o mesmo estado.
+ *  (f) a mesma corrida duas vezes da o mesmo estado;
+ *  (g) C-MOVIMENTO-01: quem espera nao e desenhado recuando (o passo confere o tile antes).
  */
 import { describe, expect, it } from 'vitest';
 import { gameData } from '../src/sim/data';
@@ -17,6 +18,7 @@ import type { Command } from '../src/sim/commands';
 import { tileAndavel } from '../src/sim/pathfinding';
 import { condicaoCheiaDoTipo, classeDaUnidade } from '../src/sim/condicao';
 import { salvar } from '../src/sim/save';
+import { posicaoDaUnidade } from '../src/sim/selectors';
 import { naVila } from './helpers/ancoras';
 import { gravarEvidencia } from './helpers/evidence';
 
@@ -129,5 +131,54 @@ describe('C5 — militares colidem', () => {
       return correr(com(base, ...grupo, unidade('p', 'militia', c)), [mover(ids, { gx: c.gx + 8, gy: c.gy })], 400).s;
     };
     expect(salvar(correrUma())).toBe(salvar(correrUma()));
+  });
+
+  it('(g) C-MOVIMENTO-01: nenhum militar e desenhado recuando', () => {
+    // Recuo: o tile da unidade nao muda entre dois ticks e o desenho salta mais de meio tile.
+    // Era o "volta ao tile anterior" da partida: segurar o passo a `custo - 1` e zerar ao desviar.
+    const recuos = (s0: GameState, cmds: Command[], ticks: number): { recuos: number; passos: number; sob: string[] } => {
+      let s = step(s0, cmds, gameData);
+      let n = 0;
+      let passos = 0;
+      const sob: string[] = [];
+      for (let t = 0; t < ticks; t += 1) {
+        const antes = s;
+        s = step(s, [], gameData);
+        sob.push(...sobrepostos(s));
+        for (const id of s.unidades.ordem) {
+          const u0 = antes.unidades.porId[id];
+          const u1 = s.unidades.porId[id];
+          if (u0 === undefined || u1 === undefined) continue;
+          if (u0.gx !== u1.gx || u0.gy !== u1.gy) { passos += 1; continue; }
+          const p0 = posicaoDaUnidade(antes, u0, gameData);
+          const p1 = posicaoDaUnidade(s, u1, gameData);
+          if (Math.hypot(p1.gx - p0.gx, p1.gy - p0.gy) > 0.5) n += 1;
+        }
+      }
+      return { recuos: n, passos, sob };
+    };
+    const frente = recuos(
+      com(base, unidade('a', 'militia', { gx: c.gx - 6, gy: c.gy }), unidade('b', 'militia', { gx: c.gx + 6, gy: c.gy })),
+      [mover(['a'], { gx: c.gx + 6, gy: c.gy }), mover(['b'], { gx: c.gx - 6, gy: c.gy })], 600,
+    );
+    const ids9 = Array.from({ length: 9 }, (_, i) => `g${i}`);
+    const muro = recuos(
+      com(base, ...ids9.map((id, i) => unidade(id, 'militia', { gx: c.gx - 8 + (i % 3), gy: c.gy - 1 + Math.floor(i / 3) })),
+        ...Array.from({ length: 9 }, (_, i) => unidade(`m${i}`, 'militia', { gx: c.gx - 1 + (i % 3), gy: c.gy - 1 + Math.floor(i / 3) }))),
+      [mover(ids9, { gx: c.gx + 8, gy: c.gy })], 1200,
+    );
+    // a tropa da escaramuca: 18 em duas fileiras de 9, para longe e junto
+    const ids18 = Array.from({ length: 18 }, (_, i) => `t${i}`);
+    const tropa = recuos(
+      com(base, ...ids18.map((id, i) => unidade(id, 'militia', { gx: c.gx - 10 + (i % 9), gy: c.gy - 1 + Math.floor(i / 9) }))),
+      [mover(ids18, { gx: c.gx + 8, gy: c.gy + 6 })], 1200,
+    );
+    gravarEvidencia('C-MOVIMENTO-01', {
+      frente: { recuos: frente.recuos, passos: frente.passos },
+      grupoAtravessaMuro: { recuos: muro.recuos, passos: muro.passos },
+      tropaDe18: { recuos: tropa.recuos, passos: tropa.passos },
+    });
+    expect([frente.sob, muro.sob, tropa.sob]).toEqual([[], [], []]);
+    expect([frente.recuos, muro.recuos, tropa.recuos]).toEqual([0, 0, 0]);
   });
 });

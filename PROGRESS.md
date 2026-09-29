@@ -13237,3 +13237,46 @@ do 1ef9303.
 - **Os limites de teste frouxos:** aplicar o padrão da §8 aos 30 que não têm número.
 - **Ressalvas do avaliador na rodada 2, não conferidas:** estão na entrada dele e são
   hipóteses dele.
+
+## 2026-09-29 — C-MOVIMENTO-01 (o passo confere o tile antes) ENTREGUE
+
+Primeiro item da fila da primeira partida (BUILD_PLAN, "Fila da primeira partida"). Plano em
+`docs/planos/2026-09-29-C-MOVIMENTO-01-passo-confere-antes.md`. Os nove pedidos do operador
+viraram onze itens, e a seção da fila tem a ordem e o aceite de cada um.
+
+**Verificado:**
+- O teste (g) novo em `tests/C5-colisao-militar.test.ts` rodou primeiro contra o código
+  antigo e acusou 2 / 14 / 19 recuos desenhados (dois de frente / grupo de 9 que atravessa
+  um muro / tropa de 18). Com o conserto, dá 0 / 0 / 0, e a invariante do C5 (nunca dois
+  militares no mesmo tile) segue sem sobreposição. Evidência em
+  `test-output/C-MOVIMENTO-01.json`.
+- Rodei de novo a sonda da sessão anterior (apagada depois):
+
+  | Caso | Recuos | Ticks bloqueado | Chegaram perto |
+  |---|---|---|---|
+  | grupo de 18 junto | 25 → 0 | 830 → 235 | 15 → 18 |
+  | separar em dois | 17 → 0 | 98 → 89 | 18 → 18 |
+  | dois grupos de frente | 25 → 0 | 163 → 232 | 18 → 18 |
+
+- `npm run verify` verde: 166 arquivos, 1861 testes. Nenhum tick exato de outro teste mudou.
+
+**O que mudou em `src/sim/units/movimento.ts`:**
+- **Ocupação do KaM:** quem está no meio de um passo ocupa o tile para onde vai e já
+  liberou o de onde sai (`militarOcupa`). O militar confere isso ANTES de começar o passo e
+  espera no próprio tile, com `progresso` 0: nada mais é desenhado dentro do tile ocupado.
+- **A rede de segurança do fim do passo continua** (pelo `gx/gy`, a invariante do C5). Ela
+  só dispara quando quem sai anda num passo mais caro, como a diagonal. Enquanto quem sai
+  anda livre, a espera não conta para o desvio (`saiAndandoLivre`).
+- **Dois defeitos achados pelo caminho, com o trace aberto:**
+  - o contador `bloqueado` era pegajoso: a espera da largada somava com a da chegada e
+    disparava o desvio (o recuo) no meio de uma coluna que andava. Agora zera quando o
+    passo começa;
+  - o destino cercado por oito militares parados fazia o último "tentar de novo" para
+    sempre. O código antigo chegava lá por sorte da ordem de chegada. Agora ele para ali
+    perto, que é a regra que o C5 já tinha para o destino ocupado (`cercadoPorParados`).
+
+**PARA REVISÃO:** parar perto do destino cercado é a interpretação conservadora. O KaM
+reorganiza a formação, e isso é assunto do C-COMBATE-01 (formação, virar e storm attack).
+
+- **Housekeeping:** o `pixelArt: false` do `src/render/game.ts` era teste do operador, e ele
+  mandou manter; foi commitado à parte (bb5ec07).

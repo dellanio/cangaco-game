@@ -409,5 +409,8 @@
   },
   "C-IA-03c-jogar-pela-tela": {
     "passes": true
+  },
+  "C-MOVIMENTO-01-passo-confere-antes": {
+    "passes": true
   }
 }

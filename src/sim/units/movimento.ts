@@ -49,6 +49,36 @@ export function ficarOcioso(state: GameState, u: Unidade, eventos: readonly Game
   return { state: comUnidade(state, ocioso(u)), events: eventos };
 }
 
+/**
+ * C-MOVIMENTO-01 — algum OUTRO militar OCUPA o tile? A ocupacao e a do KaM (`UnitWalk` move a
+ * ocupacao no INICIO do passo): quem esta no meio de um passo ocupa o tile para onde vai, e ja
+ * liberou o de onde sai; quem esta parado ocupa o proprio tile. Assim a coluna flui colada.
+ */
+function militarOcupa(state: GameState, tile: TileDeGrid, quem: string, dados: GameData): boolean {
+  for (const id of state.unidades.ordem) {
+    if (id === quem) continue;
+    const o = state.unidades.porId[id];
+    if (o === undefined || classeDaUnidade(o.tipo, dados) !== 'militar') continue;
+    const indo = o.fsmData.caminho?.[0];
+    const aqui = indo !== undefined && (o.fsmData.progresso ?? 0) > 0 ? indo : noTile(o);
+    if (aqui.gx === tile.gx && aqui.gy === tile.gy) return true;
+  }
+  return false;
+}
+
+/** C-MOVIMENTO-01 — todo OUTRO militar no tile ja o deixou (esta no meio de um passo para
+ *  fora) e ainda nao chegou ao ponto de segurar: o tile se libera sozinho, sem desvio. */
+function saiAndandoLivre(state: GameState, tile: TileDeGrid, quem: string, dados: GameData): boolean {
+  for (const id of state.unidades.ordem) {
+    if (id === quem) continue;
+    const o = state.unidades.porId[id];
+    if (o === undefined || o.gx !== tile.gx || o.gy !== tile.gy || classeDaUnidade(o.tipo, dados) !== 'militar') continue;
+    const saindo = o.fsmData.caminho?.[0] !== undefined && (o.fsmData.progresso ?? 0) > 0;
+    if (!saindo || (o.fsmData.bloqueado ?? 0) > 0) return false;
+  }
+  return true;
+}
+
 /** C5 — algum OUTRO militar esta no tile? (GDD §6.4: "militares colidem"; civil nao conta.) */
 function temOutroMilitar(state: GameState, tile: TileDeGrid, quem: string, dados: GameData): boolean {
   for (const id of state.unidades.ordem) {
@@ -114,34 +144,73 @@ function desvio(state: GameState, u: Unidade, destino: TileDeGrid, dados: GameDa
   return null;
 }
 
+/** C-MOVIMENTO-01 — todo vizinho andavel do tile tem um militar PARADO: nao ha por onde entrar. */
+function cercadoPorParados(state: GameState, tile: TileDeGrid, quem: string, dados: GameData): boolean {
+  for (const d of VIZINHOS_8) {
+    const t = { gx: tile.gx + d.gx, gy: tile.gy + d.gy };
+    if (passoAndavel(state, t, tile, 'livre', dados) && militarParadoEm(state, t, quem, dados) === null) return false;
+  }
+  return true;
+}
+
+/**
+ * C5 — militar nao entra em tile de outro militar: segura o passo em `segura` e conta a
+ * espera; passado `ticksDesvioMilitar`, da o passo para o lado (ou, com o DESTINO ocupado,
+ * para ali).
+ */
+function esperarOuDesviar(
+  state: GameState, u: Unidade, caminho: readonly TileDeGrid[], segura: number, dados: GameData,
+): Unidade {
+  const bloqueado = (u.fsmData.bloqueado ?? 0) + 1;
+  if (bloqueado < dados.movimento.ticksDesvioMilitar) return { ...u, fsmData: { ...u.fsmData, progresso: segura, bloqueado } };
+  const destino = caminho[caminho.length - 1] as TileDeGrid;
+  const { bloqueado: _b, ...resto } = u.fsmData;
+  void _b;
+  // o DESTINO tem um militar PARADO: para ali perto (quem so esta passando, espera-se)
+  if (militarParadoEm(state, destino, u.id, dados) !== null && caminho.length === 1) {
+    return { ...u, fsmData: { ...resto, caminho: [], progresso: 0 } };
+  }
+  const contorno = caminho.length === 1 ? null : desvio(state, u, destino, dados);
+  // C-MOVIMENTO-01 — o destino CERCADO por militares parados (o grupo chegou antes, em volta
+  // do tile dele) e o mesmo caso do destino ocupado: para ali perto, em vez de tentar sempre
+  if (contorno === null && cercadoPorParados(state, destino, u.id, dados)) {
+    return { ...u, fsmData: { ...resto, caminho: [], progresso: 0 } };
+  }
+  return contorno === null || contorno.length === 0
+    ? { ...u, fsmData: { ...resto, progresso: segura } } // tenta de novo depois de outro periodo
+    : { ...u, fsmData: { ...resto, caminho: contorno, progresso: 0 } };
+}
+
 /** Um tick de movimento: acumula 1 de progresso; ao completar o passo, a unidade passa ao tile seguinte. */
 export function andar(state: GameState, u: Unidade, dados: GameData): Unidade {
   const caminho = u.fsmData.caminho ?? [];
   const proximo = caminho[0];
   if (proximo === undefined) return u;
   const custo = custoDoPasso(state.estradas, noTile(u), proximo, dados);
+  const militar = classeDaUnidade(u.tipo, dados) === 'militar';
+  // C-MOVIMENTO-01 — o militar confere o tile ANTES de comecar o passo e espera no proprio
+  // tile. Conferir so no fim o deixava desenhado a `custo - 1`, dentro do tile ocupado, e o
+  // desvio o puxava de volta: o "volta ao tile anterior" da primeira partida.
+  if (militar && (u.fsmData.progresso ?? 0) === 0 && militarOcupa(state, proximo, u.id, dados)) {
+    return esperarOuDesviar(state, u, caminho, 0, dados);
+  }
   const progresso = (u.fsmData.progresso ?? 0) + 1;
   if (progresso < custo) {
+    // o passo comecou: a espera da largada nao conta para a da chegada
+    if (progresso === 1 && u.fsmData.bloqueado !== undefined) {
+      const { bloqueado: _b, ...largou } = u.fsmData;
+      void _b;
+      return { ...u, fsmData: { ...largou, progresso } };
+    }
     return { ...u, fsmData: { ...u.fsmData, progresso } };
   }
-  // C5 — militar nao entra em tile de outro militar: segura o passo e conta a espera; passado
-  // `ticksDesvioMilitar`, da o passo para o lado (ou, com o DESTINO ocupado, para ali)
-  if (classeDaUnidade(u.tipo, dados) === 'militar' && temOutroMilitar(state, proximo, u.id, dados)) {
-    const bloqueado = (u.fsmData.bloqueado ?? 0) + 1;
-    if (bloqueado >= dados.movimento.ticksDesvioMilitar) {
-      const destino = caminho[caminho.length - 1] as TileDeGrid;
-      const { bloqueado: _b, ...resto } = u.fsmData;
-      void _b;
-      // o DESTINO tem um militar PARADO: para ali perto (quem so esta passando, espera-se)
-      if (militarParadoEm(state, destino, u.id, dados) !== null && caminho.length === 1) {
-        return { ...u, fsmData: { ...resto, caminho: [], progresso: 0 } };
-      }
-      const contorno = caminho.length === 1 ? null : desvio(state, u, destino, dados);
-      return contorno === null || contorno.length === 0
-        ? { ...u, fsmData: { ...resto, progresso: custo - 1 } } // tenta de novo depois de outro periodo
-        : { ...u, fsmData: { ...resto, caminho: contorno, progresso: 0 } };
-    }
-    return { ...u, fsmData: { ...u.fsmData, progresso: custo - 1, bloqueado } };
+  // C5 — rede de seguranca da invariante: quem sai do tile num passo mais caro (a diagonal)
+  // ainda esta nele quando quem entra termina. Segura o passo ate ele sair; enquanto ele sai
+  // andando livre, a espera nao conta para o desvio (desviar daqui e o recuo desenhado). Quem
+  // sai e tambem esta segurando (fila ou ciclo) conta, e o desvio desfaz o ciclo.
+  if (militar && temOutroMilitar(state, proximo, u.id, dados)) {
+    if (saiAndandoLivre(state, proximo, u.id, dados)) return { ...u, fsmData: { ...u.fsmData, progresso: custo - 1 } };
+    return esperarOuDesviar(state, u, caminho, custo - 1, dados);
   }
   // D1 — o civil com a colisao civil ligada: troca, espera, desvio e troca forcada
   if (colisaoCivilLigada(dados) && classeDaUnidade(u.tipo, dados) === 'civil') return passoCivil(state, u, custo, dados);

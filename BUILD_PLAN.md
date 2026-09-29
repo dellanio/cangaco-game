@@ -5753,6 +5753,60 @@ Ordem do operador. Cada item tem plano em `docs/planos/2026-09-28-C<n>-*.md`.
 - **Siglas:** o esquema novo está em `docs/siglas.md` (decisão do operador, 2026-09-28). O que
   fechou mantém a sigla antiga; os itens abertos migraram.
 
+### Fila da primeira partida — nove pedidos do operador em onze itens (2026-09-29)
+Origem: o operador jogou a escaramuça (C-IA-03c) e trouxe o que impede jogar. Ordem dele.
+Cada item tem plano em `docs/planos/2026-09-29-<sigla>-*.md`, escrito antes do código.
+Decisão de design que o operador não respondeu: interpretação conservadora, registrada no
+PROGRESS como PARA REVISÃO.
+
+1. **C-MOVIMENTO-01 — o passo confere o tile antes (sim).** O militar confere o tile
+   seguinte ao COMEÇAR o passo, não ao terminá-lo. Hoje ele anda 86% do passo, descobre o
+   tile ocupado, segura ali e, ao desviar, volta ao tile de origem: é o "volta ao tile
+   anterior" que o operador viu (medido: 25 recuos de ~0,86 tile num grupo de 18).
+   - Ocupar, como no KaM (`UnitWalk` move a ocupação no início do passo): quem está no meio
+     de um passo ocupa o tile de DESTINO dele; quem está parado ocupa o próprio tile.
+   - A conferência do fim do passo fica como rede de segurança da invariante (dois
+     militares nunca no mesmo tile).
+   - **Aceite:** em (a) dois de frente, (e) grupo de 9 e no grupo de 18, nenhum militar é
+     desenhado recuando (`posicaoDaUnidade` nunca se afasta do tile seguinte enquanto
+     espera), e a invariante do C5 continua.
+2. **C-COMBATE-02 — a cerca da paz (sim).** Diverge do KaM por decisão do operador: na paz,
+   `MoveUnits` passa se o destino está a até N tiles (Chebyshev) da caixa de um prédio
+   PRONTO do lado de quem manda. Atacar, treinar e contratar continuam recusados. O N vive
+   em `data/escaramuca.json`, com a conta no plano.
+   - A recusa ganha motivo próprio, `longe-na-paz`, separado de `em-paz`.
+   - **Aceite:** mover dentro da cerca na paz anda; fora dela é recusado com `longe-na-paz`;
+     `AttackUnit` na paz segue `em-paz`; depois da paz, a cerca não existe.
+3. **C-TELA-01 — a mensagem da ordem recusada (ui).** "Em paz — faltam mm:ss" para
+   `em-paz`, e "Longe demais na paz" para `longe-na-paz`. **Aceite:** roteiro com as duas.
+4. **C-TELA-02 — o marcador de destino (render + input).** O tile do destino de uma ordem
+   de mover é marcado por ~1 s e some, como no Civilization. É estado da tela: não entra na
+   sim. **Aceite:** screenshot com o marcador, e a prova de que ele some.
+5. **C-IA-04 — o terceiro grupo da IA (dado + sim do cenário).** Um grupo de 9 fora das
+   posições, no dado da escaramuça: a sobra que o `atacarComASobra` já sabe usar.
+   - **ANDAIME:** sai quando a C-IA-02 (economia da IA) der à IA uma sobra que vem da
+     reposição. A condição de saída vai escrita no dado e no PROGRESS.
+   - **Aceite:** depois da paz, a IA ataca a vila do jogador na partida headless.
+6. **C-TELA-03 — selecionar o grupo pela caixa (ui + input).** O arraste pega todos os
+   militares do jogador dentro da caixa, e a ordem de mover leva todos. O plano diz o que a
+   F26b (selecionar pela tela) já faz e o que falta. **Aceite:** roteiro que arrasta sobre
+   a tropa de 18 e move os 18.
+7. **C-TELA-04 — atacar unidade pelo mouse (ui + input).** Botão direito sobre um militar
+   inimigo, com tropa selecionada, emite `AttackUnit`. **Aceite:** roteiro.
+8. **C-TELA-05 — ordem à Feira (ui).** O painel da Feira emite `SetTrade`. **Aceite:**
+   roteiro.
+9. **D-TELA-02 — minimapa (render + ui).** Já está na fila (Fase D); o escopo é o do
+   operador: terreno pintado, prédios por lado (vermelho e azul), a vista atual marcada e o
+   clique movendo a câmera.
+10. **F-REPL-d — seletor de modo do lenhador no painel (ui).** O contrato está na nota do
+    item F-REPL.
+11. **C-COMBATE-01 — formação, virar e storm attack.** O item existente, com as notas do KaM
+    que ele já traz.
+
+- **Exceção da §10:** nenhum item acima mexe em `sim/` e na tela ao mesmo tempo. A cerca
+  (C-COMBATE-02) e a mensagem (C-TELA-01) são dois itens de propósito. Se o C-COMBATE-01
+  precisar das duas camadas, ele se quebra em sim e tela, com a nota escrita aqui antes.
+
 ### F35 — Feira: trocar mercadoria (sim + ui)
 - **ENTREGUE (2026-09-28, sessão autônoma; plano em `docs/planos/2026-09-28-A17-F35-feira.md`).**
   Taxa 2 para 1 (decisão do operador), em `economy.json:marketplace.taxa`, com regra no
