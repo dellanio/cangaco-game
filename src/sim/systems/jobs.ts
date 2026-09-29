@@ -16,7 +16,7 @@ import type {
   GameEvent, GameState, Predio, PredioCompleto, PredioEmObra, Tarefa, TarefaDeTransporte, TarefaDoSerf,
 } from '../state';
 import {
-  ehTarefaDeAradura, ehTarefaDeAssentamento, ehTarefaDeColheita, ehTarefaDePedraParaCanteiro, ehTarefaDeTransporte,
+  ehTarefaDeAradura, ehTarefaDeAssentamento, ehTarefaDeColheita, ehTarefaDeComidaParaTropa, ehTarefaDePedraParaCanteiro, ehTarefaDeTransporte,
   ehTarefaDoSerf, ID_DO_ARMAZEM, MERCADORIA_DE_OURO, ORIGEM_ESPERADA_POR_TIPO, origemDaTarefaVale,
 } from '../state';
 import type { GameData } from '../data/types';
@@ -27,14 +27,15 @@ import { ehCampoPlanejado, tilesPlanejadosParaArar } from '../campos';
 import {
   criarTarefa, criarTarefaComer, criarTarefaDeAradura, criarTarefaDeAssentamento, criarTarefaDeConstrucao, criarTarefaDeReparo, criarTarefaDeArma, criarTarefaDeAlistamento,
   criarTarefaDeComida, criarTarefaDeInsumo, criarTarefaDeOcupacao, criarTarefaDeOuro,
-  criarTarefaDePedraParaCanteiro, criarTarefaParaArmazem,
+  criarTarefaDePedraParaCanteiro, criarTarefaParaArmazem, criarTarefaComidaParaTropa,
   distanciaDaTarefa, liberar, ligacaoEntrePredioETile, ligacaoEntrePredios,
   modoDoTipo, podeReclamar, tileAlcancavelDaPorta, TIPO_QUE_CARREGA,
 } from '../jobs';
 import type { MotivoDeLiberacao } from '../jobs';
 import type { ModoDeBusca } from '../pathfinding';
 import {
-  demandaDoTile, demandaNoDestino, disponivelNaOrigem, ofertaNaOrigem, reservadoNoDestino, sobraNaOrigem, vagaDoDestino, vagaNoTile,
+  demandaDaTropa, demandaDoTile, demandaNoDestino, disponivelNaOrigem, ofertaNaOrigem, reservadoNoDestino, sobraNaOrigem,
+  vagaDaTropa, vagaDoDestino, vagaNoTile,
 } from '../reservas';
 import {
   demandaDeInsumo, excedenteNaEntrada, insumosDoPredio, produtorParado,
@@ -89,6 +90,14 @@ function motivoDoDestino(state: GameState, t: Tarefa, dados: GameData): MotivoDe
   // laborer, e e por isso que ela existe aqui e nao so no claim.
   if (ehTarefaDeAradura(t)) {
     return ehCampoPlanejado(state.camposPlanejados, t.destinoTile) ? null : 'destino-sumiu';
+  }
+  // C-COMIDA-01b (fome militar com o Feed) — o destino e o MILITAR. Morto, a carga
+  // perdeu o dono ('destino-sumiu'); ja comeu, o pedido acabou ('destino-completo').
+  // Vale para a `carregando` tambem: o serf devolve a comida ao armazem.
+  if (ehTarefaDeComidaParaTropa(t)) {
+    const alvo = state.unidades.porId[t.destinoUnidade];
+    if (alvo === undefined) return 'destino-sumiu';
+    return alvo.pedidoDeComida === true ? null : 'destino-completo';
   }
   const destino = state.predios.porId[t.destino];
   if (!destino) return 'destino-sumiu';
@@ -194,6 +203,12 @@ function motivoIndividual(state: GameState, t: Tarefa, dados: GameData): MotivoD
   if (ehTarefaDePedraParaCanteiro(t)) {
     return tileAlcancavelDaPorta(state, origem, t.destinoTile, dados) ? null : 'caminho-cortado';
   }
+  // C-COMIDA-01b — a mesma existencia memoizada, ate o tile onde o militar esta AGORA
+  if (ehTarefaDeComidaParaTropa(t)) {
+    const alvo = state.unidades.porId[t.destinoUnidade];
+    return alvo !== undefined && tileAlcancavelDaPorta(state, origem, { gx: alvo.gx, gy: alvo.gy }, dados, t.tipo)
+      ? null : 'caminho-cortado';
+  }
   const destino = state.predios.porId[t.destino];
   if (!destino || distanciaDaTarefa(state, t, dados) === null) return 'caminho-cortado';
   return null;
@@ -229,7 +244,8 @@ function abertaVale(state: GameState, t: Tarefa, dados: GameData): boolean {
   // F13: o destino tambem precisa continuar PEDINDO (a fila de treino encolhe quando o
   // jogador cancela um item; `faltam` de uma obra encolhe na entrega). F18g: o tile
   // deixa de pedir quando a pedra dele chega (`demandaDoTile`).
-  const demanda = ehTarefaDePedraParaCanteiro(t) ? demandaDoTile(state, t, dados) : demandaNoDestino(state, t, dados);
+  const demanda = ehTarefaDePedraParaCanteiro(t) ? demandaDoTile(state, t, dados)
+    : ehTarefaDeComidaParaTropa(t) ? demandaDaTropa(state, t) : demandaNoDestino(state, t, dados);
   if (demanda < 1) return false;
   if (!origemDaTarefaVale(state, t)) return false;
   // F15b — `sobraNaOrigem` generaliza `disponivelNaOrigem`: le a gaveta do tipo
@@ -246,6 +262,12 @@ function abertaVale(state: GameState, t: Tarefa, dados: GameData): boolean {
   if (ehTarefaDePedraParaCanteiro(t)) {
     const origem = state.predios.porId[t.origem];
     return origem !== undefined && tileAlcancavelDaPorta(state, origem, t.destinoTile, dados);
+  }
+  if (ehTarefaDeComidaParaTropa(t)) {
+    const origem = state.predios.porId[t.origem];
+    const alvo = state.unidades.porId[t.destinoUnidade];
+    return origem !== undefined && alvo !== undefined
+      && tileAlcancavelDaPorta(state, origem, { gx: alvo.gx, gy: alvo.gy }, dados, t.tipo);
   }
   return distanciaDaTarefa(state, t, dados) !== null;
 }
@@ -313,7 +335,8 @@ export function sanearTarefas(state: GameState, dados: GameData = gameData): Res
     .reverse();
   const ordemDeSoltar = [...emGrupo.filter((t) => t.estado === 'reclamada'), ...emGrupo.filter((t) => t.estado === 'carregando')];
   const vagaDe = (t: TarefaDoSerf): number =>
-    (ehTarefaDePedraParaCanteiro(t) ? vagaNoTile(atual, t, dados) : vagaDoDestino(atual, t, dados));
+    (ehTarefaDePedraParaCanteiro(t) ? vagaNoTile(atual, t, dados)
+      : ehTarefaDeComidaParaTropa(t) ? vagaDaTropa(atual, t) : vagaDoDestino(atual, t, dados));
   for (const t of ordemDeSoltar) {
     // F15b — `sobraNaOrigem` e `oferta - reservado` na gaveta do tipo, o mesmo
     // que a conta antiga fazia a mao para a `saida` do armazem. Negativa =
@@ -378,6 +401,12 @@ export function sanearTarefas(state: GameState, dados: GameData = gameData): Res
       const doTile = tarefasPorNumero(atual)
         .filter((o) => ehTarefaDeColheita(o) && chaveDeTile(o.origemTile) === chave).length;
       if (doPredio > 1 || doTile > 1) atual = cancelarAberta(atual, t.id);
+    } else if (ehTarefaDeComidaParaTropa(t)) {
+      // C-COMIDA-01b: UMA tarefa por militar, em qualquer estado. A comida enche a
+      // condicao inteira; a segunda chegaria a quem ja comeu.
+      const existentes = tarefasPorNumero(atual)
+        .filter((o) => ehTarefaDeComidaParaTropa(o) && o.destinoUnidade === t.destinoUnidade).length;
+      if (existentes > 1) atual = cancelarAberta(atual, t.id);
     } else {
       // 'ocupar' (F14): o teto e a VAGA do predio (1 vago, 0 ocupado), derivada
       // do estado — nao ha teto em dado, ver `vagasDoPredio`.
@@ -689,6 +718,55 @@ function armazemMaisPertoDoTile(
 }
 
 /**
+ * C-COMIDA-01b (fome militar com o Feed) — a comida da tropa: para cada militar com
+ * `pedidoDeComida` e sem tarefa de comida, UMA carga, do armazem completo do MESMO
+ * lado de menor caminho ate o tile onde ele esta, entre os que tem alguma comida
+ * livre. A comida e a de mais unidades livres naquele armazem; empate, a primeira de
+ * `restauracaoPorComida` (`comidasConhecidas`). Sem armazem que sirva, nao cria: o
+ * pedido espera, e o HUD mostra (C-COMIDA-01f).
+ *
+ * "Livre" desconta as cargas ABERTAS que ja saem daquele armazem com aquela comida,
+ * pelo mesmo motivo da pedra (aberta nao reserva). Varre `unidades.ordem`: mesma
+ * ordem, mesmos ids.
+ */
+function gerarTarefasDeComidaParaTropa(state: GameState, dados: GameData): GameState {
+  let atual = state;
+  const comTarefa = new Set<string>();
+  const abertas: Record<string, number> = {};
+  for (const t of tarefasPorNumero(state)) {
+    if (!ehTarefaDeComidaParaTropa(t)) continue;
+    comTarefa.add(t.destinoUnidade);
+    if (t.estado === 'aberta') abertas[`${t.origem}|${t.mercadoria}`] = (abertas[`${t.origem}|${t.mercadoria}`] ?? 0) + 1;
+  }
+  const livre = (armazemId: string, comida: string): number =>
+    disponivelNaOrigem(atual, armazemId, comida) - (abertas[`${armazemId}|${comida}`] ?? 0);
+  const modo = modoDoTipo('comida-para-tropa', dados);
+  for (const id of state.unidades.ordem) {
+    const alvo = atual.unidades.porId[id];
+    if (alvo === undefined || alvo.pedidoDeComida !== true || comTarefa.has(id)) continue;
+    const tile = { gx: alvo.gx, gy: alvo.gy };
+    let melhor: { armazem: string; distancia: number } | null = null;
+    for (const armazem of armazensCompletos(atual, alvo.lado)) {
+      if (!comidasConhecidas(dados).some((c) => livre(armazem.id, c) >= 1)) continue;
+      if (!tileAlcancavelDaPorta(atual, armazem, tile, dados, 'comida-para-tropa')) continue;
+      const distancia = ligacaoEntrePredioETile(atual, armazem, tile, modo, dados);
+      if (distancia === null) continue;
+      if (melhor === null || distancia < melhor.distancia) melhor = { armazem: armazem.id, distancia };
+    }
+    if (melhor === null) continue;
+    let comida: string | null = null;
+    for (const c of comidasConhecidas(dados)) {
+      if (livre(melhor.armazem, c) >= 1 && (comida === null || livre(melhor.armazem, c) > livre(melhor.armazem, comida))) comida = c;
+    }
+    if (comida === null) continue;
+    atual = criarTarefaComidaParaTropa(atual, { mercadoria: comida, origem: melhor.armazem, destinoUnidade: id }).state;
+    const chave = `${melhor.armazem}|${comida}`;
+    abertas[chave] = (abertas[chave] ?? 0) + 1;
+  }
+  return atual;
+}
+
+/**
  * F18g — a pedra para o canteiro: para cada tile planejado, tantas cargas quantas
  * unidades ele ainda pede (`demandaDoTile`) menos as que ja existem, limitadas ao
  * que o armazem escolhido tem livre — o mesmo desenho do insumo (niveis 4 e 5), e
@@ -814,6 +892,7 @@ export function gerarTarefas(state: GameState, dados: GameData = gameData): Game
   // Na ordem da escada de `delivery.json`: nivel 1 (comida), nivel 2 (ouro), e
   // dentro do laco os niveis 3 (material) e a construcao.
   let atual = gerarTarefasDeComida(state, dados);
+  atual = gerarTarefasDeComidaParaTropa(atual, dados); // C-COMIDA-01b: nivel 2 da escada
   atual = gerarTarefasDeOuro(atual, dados);
   for (const id of state.predios.ordem) {
     const obra = atual.predios.porId[id];

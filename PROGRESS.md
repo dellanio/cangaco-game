@@ -12442,6 +12442,82 @@ dos testes:
   (`docs/planos/2026-09-28-F-FEED-fome-militar.md`) **ainda espera aprovação**. Ele destrava
   o C-IA-01 (IA alimentar tropas).
 
+## 2026-09-29 — C-COMIDA-01b (tarefa comida-para-tropa com destino móvel) ENTREGUE
+
+### Feito
+- **Tipo novo** `TarefaComidaParaTropa { mercadoria, origem, destinoUnidade }`:
+  - entra em `Tarefa` e em `TarefaDoSerf`, mas NÃO em `TarefaDeTransporte`, que quer dizer
+    "entrega em prédio" e lê `destino`;
+  - gaveta `saida`, origem `armazem`, unidade elegível `serf`.
+- **Reservas:** `demandaDaTropa` (1 se o militar existe e pediu) e `vagaDaTropa` (demanda
+  menos as reclamadas e carregando para ele). A reserva na origem vem de graça, porque a
+  tarefa entrou em `TarefaDoSerf`.
+- **JobBoard:**
+  - `distanciaDaTarefa` e `alvosDeEntrega` miram o tile do militar AGORA;
+  - `recusaSemCaminho` confere `militar.lado === serf.lado` (`unidade-invalida`) e a vaga;
+  - `tileAlcancavelDaPorta` recebe o tipo (risco 10 do plano).
+- **Saneamento:**
+  - militar ausente → `destino-sumiu`; sem pedido → `destino-completo`;
+  - a reclamada confere a alcançabilidade até o tile atual;
+  - a aberta vale enquanto há pedido, sobra e caminho;
+  - teto de UMA tarefa por militar, em qualquer estado.
+- **Gerador** `gerarTarefasDeComidaParaTropa`, logo depois do da Bodega:
+  - para cada militar com pedido e sem tarefa, o armazém completo do mesmo lado de menor
+    caminho que tem alguma comida livre;
+  - "livre" desconta as abertas, como faz a pedra.
+- **Serf** (`entregarATropa`, em `passoEntregando`), sem estado novo:
+  - alvo ausente → devolve;
+  - a mais de 1 tile (Chebyshev) → recalcula até o tile atual e volta a `indo_entregar`;
+  - sem caminho → devolve;
+  - adjacente → condição cheia (`condicaoCheiaDoTipo`), pedido apagado, tarefa removida e
+    `unit-fed`.
+- **Invariantes** (`tests/helpers/jobs-invariantes.ts`):
+  - o destino é militar vivo, com pedido, do lado do armazém e do serf;
+  - a carga é comida;
+  - no máximo uma tarefa por militar;
+  - a reserva na origem é conferida.
+
+### Decisões conservadoras (PARA REVISÃO)
+- **Qual comida:** a de mais unidades livres no armazém escolhido. No empate, a primeira de
+  `restauracaoPorComida`. O plano não fixava isto.
+- **O armazém é o de menor caminho entre os que têm ALGUMA comida livre**, e não o de menor
+  caminho por comida.
+- **A entrega emite só `unit-fed`, sem `task-completed`:** a comida sai do mundo, não entra
+  num destino. Quem conta bens desconta o `unit-fed` (o teste da 01b faz isso).
+- **A perseguição não tem teto** (risco 11, como no KaM `KM_UnitTaskDelivery.pas:492-497`). O
+  teste afirma progresso: com a tropa parada, a entrega acontece. Não afirma prazo com a
+  tropa andando.
+- **A morte por fome ainda não libera as tarefas que apontam para o morto**, porque o
+  militar não drena até a 01c, que é onde isso entra. Hoje o serf já tolera o alvo sumido:
+  devolve no `passoEntregando`, e o saneamento do tick seguinte cancela.
+
+### Verificado
+- `tests/C-COMIDA-01b-comida-para-tropa.test.ts`, 11 testes, com invariantes do JobBoard, da
+  FSM e a conservação de pão e salsicha (descontando `unit-fed`) a cada tick:
+  - **Entrega e enche.** 45 ticks; o pão sai de 15 para 14; condição 18000
+    (`test-output/C-COMIDA-01b-entrega.json`).
+  - **A tropa marcha 3 vezes seguidas, e o serf entrega na parada** em (38,52), com 3
+    recálculos, em 162 ticks (`test-output/C-COMIDA-01b-marcha.json`).
+  - Nunca duas por militar.
+  - Serf e armazém do lado 0 com militar do lado 1 → `unidade-invalida`.
+  - **Os ramos de falha:**
+    - morto com a tarefa reclamada (`destino-sumiu`, nada sai do armazém);
+    - morto com a carga na mão (volta ao armazém, soma 25);
+    - pedido apagado com a carga na mão (`destino-completo`);
+    - sem comida, ou só com armazém de outro lado → não cria, e o pedido persiste;
+    - militar dentro da escola, inalcançável → não cria.
+  - Determinismo: duas corridas com dois militares dão o mesmo save byte a byte.
+- **Probe de mutação** (evidência da sessão, NÃO cobertura contínua; a proteção permanente
+  são os 11 testes no `verify`). Cada mutação derruba o teste da regra dela:
+  - entregar sem checar a distância;
+  - o claim sem o lado do militar;
+  - o teto de uma por militar;
+  - o saneamento ignorando o morto;
+  - o gerador sem o lado.
+  - O primeiro rascunho do teste de lado deixava o claim sem o lado do militar passar,
+    porque quem recusava era o C7, pelo lado do armazém. Foi reescrito para isolar a regra.
+- `npm run verify` verde: 156 arquivos, 1819 testes.
+
 ## 2026-09-29 — C-COMIDA-01 (fome militar com o Feed) aprovado; C-COMIDA-01a (dado, comando e pedido) ENTREGUE
 
 ### Decisões do operador (no §7 do plano)

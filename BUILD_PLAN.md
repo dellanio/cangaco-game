@@ -5582,7 +5582,11 @@ Ordem do operador. Cada item tem plano em `docs/planos/2026-09-28-C<n>-*.md`.
     - `comida-para-tropa` no nível 2 da escada, `livre`, com os de baixo descendo um.
     - `FeedUnits`, `Unidade.pedidoDeComida?` e `resumoDoGrupo`.
     - Regra de dado: `civilVaiComer < pedeComidaAbaixoDe`.
-  - **C-COMIDA-01b — a tarefa `comida-para-tropa`, com destino que anda.**
+  - **C-COMIDA-01b — a tarefa `comida-para-tropa`, com destino que anda. ENTREGUE.**
+    - Carga do armazém do mesmo lado até o militar com pedido: uma por militar, a pé.
+    - O serf recalcula quando chega e a tropa está a mais de 1 tile (R8). Adjacente, enche a
+      condição, apaga o pedido e emite `unit-fed`.
+    - O claim confere o lado do militar (`unidade-invalida`).
   - **C-COMIDA-01c — a fome do militar.** Muda os aceites da F20b (fome e morte) e da F20c
     (marcador de fome), com o visto do operador.
   - **C-COMIDA-01d + 01f — o painel de grupo com o Alimentar, e o alerta de tropa com fome no

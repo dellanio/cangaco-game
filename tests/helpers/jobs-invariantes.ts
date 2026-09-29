@@ -25,7 +25,7 @@ import { classeDaUnidade } from '../../src/sim/condicao';
 import { ehQuartelCompleto, ehRequisitoDoQuartel } from '../../src/sim/quartel';
 import { demandaDoTile, disponivelNaOrigem, vagaNoDestino } from '../../src/sim/reservas';
 import {
-  ehTarefaDeAradura, ehTarefaDeAssentamento, ehTarefaDeColheita, ehTarefaDePedraParaCanteiro, ID_DO_ARMAZEM,
+  ehTarefaDeAradura, ehTarefaDeAssentamento, ehTarefaDeColheita, ehTarefaDeComidaParaTropa, ehTarefaDePedraParaCanteiro, ID_DO_ARMAZEM,
   origemDaTarefaVale,
 } from '../../src/sim/state';
 
@@ -76,6 +76,26 @@ function violacoesDoDestino(estado: GameState, t: Tarefa, dados: GameData): stri
     const plantada = estado.camposPlanejados[chave];
     return plantada === t.recurso
       ? [] : [`${t.id}: ara '${t.recurso}' num tile planejado como '${plantada}'`];
+  }
+  // C-COMIDA-01b (fome militar com o Feed): o destino e um MILITAR vivo, com pedido,
+  // do lado do armazem de origem; a carga e comida e sai de armazem completo.
+  if (ehTarefaDeComidaParaTropa(t)) {
+    const v: string[] = [];
+    const alvo = estado.unidades.porId[t.destinoUnidade];
+    if (alvo === undefined) return [`${t.id}: militar '${t.destinoUnidade}' nao existe`];
+    if (classeDaUnidade(alvo.tipo, dados) !== 'militar') v.push(`${t.id}: '${alvo.id}' nao e militar`);
+    if (alvo.pedidoDeComida !== true) v.push(`${t.id}: '${alvo.id}' sem pedido de comida`);
+    if (!ehComida(t.mercadoria, dados)) v.push(`${t.id}: leva '${t.mercadoria}', que nao e comida`);
+    if (t.estado !== 'carregando' && !origemDaTarefaVale(estado, t)) v.push(`${t.id}: origem '${t.origem}' nao e armazem completo`);
+    const origem = estado.predios.porId[t.origem];
+    if (t.estado !== 'carregando' && origem !== undefined && origem.lado !== alvo.lado) {
+      v.push(`${t.id}: armazem do lado ${origem.lado} alimenta militar do lado ${alvo.lado}`);
+    }
+    if (t.reclamadaPor !== null) {
+      const serf = estado.unidades.porId[t.reclamadaPor];
+      if (serf !== undefined && serf.lado !== alvo.lado) v.push(`${t.id}: serf do lado ${serf.lado} alimenta o lado ${alvo.lado}`);
+    }
+    return v;
   }
   const destino = estado.predios.porId[t.destino];
   switch (t.tipo) {
@@ -185,6 +205,8 @@ export function violacoesDeInvariantes(estado: GameState, dados: GameData = game
   // F18g: pedra a caminho de um tile, contada por tile (aberta, reclamada ou
   // carregando — como o material de obra), contra `demandaDoTile`.
   const contagemDePedraPorTile = new Map<string, { total: number; tarefa: Parameters<typeof demandaDoTile>[1] }>();
+  // C-COMIDA-01b: nunca duas tarefas de comida (em qualquer estado) para o mesmo militar.
+  const comidaPorMilitar = new Map<string, string>();
 
   for (const id of tarefas.ordem) {
     const t = tarefas.porId[id];
@@ -258,6 +280,11 @@ export function violacoesDeInvariantes(estado: GameState, dados: GameData = game
       if (t.estado === 'reclamada') reservasPorOrigem.add(`${t.origem}|${t.mercadoria}`);
       const chave = chaveDeTile(t.destinoTile);
       contagemDePedraPorTile.set(chave, { total: (contagemDePedraPorTile.get(chave)?.total ?? 0) + 1, tarefa: t });
+    } else if (ehTarefaDeComidaParaTropa(t)) {
+      if (t.estado === 'reclamada') reservasPorOrigem.add(`${t.origem}|${t.mercadoria}`);
+      const outra = comidaPorMilitar.get(t.destinoUnidade);
+      if (outra !== undefined) v.push(`${id}: o militar '${t.destinoUnidade}' ja recebe comida por ${outra}`);
+      comidaPorMilitar.set(t.destinoUnidade, id);
     } else if (t.tipo === 'ocupar' && t.estado !== 'aberta') {
       // F14: a vaga e UMA por predio — a reserva de ocupacao nunca passa disso.
       contagemDeOcupacaoPorPredio.set(t.destino, (contagemDeOcupacaoPorPredio.get(t.destino) ?? 0) + 1);

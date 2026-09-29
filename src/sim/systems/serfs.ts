@@ -27,9 +27,12 @@
  * bloqueada — ele libera aqui, por `liberar`. Toda tarefa reclamada tem caminho de volta.
  */
 import type {
-  GameEvent, GameState, Predio, PredioCompleto, PredioEmObra, Tarefa, TarefaDeTransporte, TarefaDoSerf, Unidade,
+  GameEvent, GameState, Predio, PredioCompleto, PredioEmObra, Tarefa, TarefaComidaParaTropa, TarefaDeTransporte, TarefaDoSerf,
+  Unidade,
 } from '../state';
-import { ehTarefaDePedraParaCanteiro, ehTarefaDoSerf, gavetaDeOrigem, MERCADORIA_DE_OURO } from '../state';
+import {
+  ehTarefaDeComidaParaTropa, ehTarefaDePedraParaCanteiro, ehTarefaDoSerf, gavetaDeOrigem, MERCADORIA_DE_OURO,
+} from '../state';
 import { ID_DO_ARMAZEM } from '../state';
 import type { GameData } from '../data/types';
 import { gameData } from '../data';
@@ -37,7 +40,7 @@ import { chaveDeTile, comPedraNoTile, ehEstrada, ehPlanejada, isConnected } from
 // F20b: `armazemMaisProximo` era daqui e subiu para `deposito.ts` ao ganhar o
 // segundo consumidor (a morte por fome devolve a carga pelo mesmo criterio).
 import { armazemMaisProximo } from '../deposito';
-import { ehEstadoDeFome } from '../condicao';
+import { condicaoCheiaDoTipo, ehEstadoDeFome } from '../condicao';
 import {
   alvosDeEntrega, liberar, marcarCarregando, modoDoTipo, planoDaTarefa, reclamarMelhor,
   removerTarefa, TIPO_QUE_CARREGA,
@@ -291,8 +294,48 @@ function entregarNoCanteiro(state: GameState, tarefa: TarefaDoSerf): GameState |
 
 /** Onde a carga desta tarefa e registrada como entregue, no evento: o id do
  *  predio, ou (F18g) a chave do tile do canteiro. */
-function destinoNoEvento(tarefa: TarefaDoSerf): string {
+function destinoNoEvento(tarefa: TarefaDeTransporte | TarefaPedra): string {
   return ehTarefaDePedraParaCanteiro(tarefa) ? chaveDeTile(tarefa.destinoTile) : tarefa.destino;
+}
+
+type TarefaPedra = Extract<TarefaDoSerf, { readonly tipo: 'pedra-para-canteiro' }>;
+
+/**
+ * C-COMIDA-01b (fome militar com o Feed) — a entrega a um militar, que ANDA (R8, KaM
+ * `KM_UnitTaskDelivery.pas:490-496`). Sumiu: a tarefa cai e a carga volta ao armazem.
+ * A mais de 1 tile (Chebyshev): recalcula ate onde ele esta AGORA e volta a
+ * `indo_entregar`, sem liberar nada; sem caminho, devolve. Adjacente: a condicao enche,
+ * o pedido acaba, a tarefa sai e a comida sai do mundo (`unit-fed`).
+ *
+ * A perseguicao nao tem teto (risco 11 do plano): com a tropa marchando, o serf corre
+ * atras. O que se afirma e PROGRESSO: parada a tropa, a entrega acontece.
+ */
+function entregarATropa(
+  state: GameState, u: Unidade, carga: string, tarefa: TarefaComidaParaTropa, dados: GameData,
+): Passo {
+  const alvo = state.unidades.porId[tarefa.destinoUnidade];
+  if (alvo === undefined) {
+    const l = liberarTarefa(state, tarefa.id, 'destino-sumiu');
+    return { state: comecarADevolver(l.state, u, carga, dados), events: l.events };
+  }
+  if (Math.max(Math.abs(alvo.gx - u.gx), Math.abs(alvo.gy - u.gy)) > 1) {
+    const modo = modoDoTipo(tarefa.tipo, dados);
+    const rota = buscarCaminho(state, noTile(u), [{ gx: alvo.gx, gy: alvo.gy }], modo, dados, custoDeUnidadesNaRota(state, u.id, modo, dados));
+    if (rota === null) {
+      const l = liberarTarefa(state, tarefa.id, 'caminho-cortado');
+      return { state: comecarADevolver(l.state, u, carga, dados), events: l.events };
+    }
+    return semEventos(comUnidade(state, {
+      ...u, fsm: 'indo_entregar', fsmData: dadosDaFsm({ tarefa: tarefa.id, carga, caminho: rota.tiles, progresso: 0 }),
+    }));
+  }
+  const { pedidoDeComida: _pedido, ...semPedido } = alvo;
+  const alimentado: Unidade = { ...semPedido, condicao: condicaoCheiaDoTipo(alvo.tipo, dados) };
+  const concluida = removerTarefa(comUnidade(state, alimentado), tarefa.id);
+  return {
+    state: comUnidade(concluida, ocioso(u)),
+    events: [{ type: 'unit-fed', unidade: alvo.id, serf: u.id, mercadoria: carga, tarefa: tarefa.id }],
+  };
 }
 
 function passoEntregando(state: GameState, u: Unidade, dados: GameData): Passo {
@@ -300,6 +343,7 @@ function passoEntregando(state: GameState, u: Unidade, dados: GameData): Passo {
   if (carga === undefined) return ficarOcioso(state, u);
   const tarefa = tarefaDoSerf(state, u, 'carregando');
   if (tarefa === null) return semEventos(comecarADevolver(state, u, carga, dados));
+  if (ehTarefaDeComidaParaTropa(tarefa)) return entregarATropa(state, u, carga, tarefa, dados);
 
   // O destino ainda PEDE, e onde ele recebe? Os dois vem do TIPO da tarefa. Em
   // predio a resposta e o predio com a gaveta cheia; no canteiro (F18g) e o

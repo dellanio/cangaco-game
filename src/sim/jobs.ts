@@ -11,6 +11,7 @@
  * depois de todas as checagens) e `liberar` devolve as DUAS reservas de uma vez.
  */
 import type {
+  TarefaComidaParaTropa,
   GameEvent, GameState, Predio, Tarefa, TarefaConstruir,
   TarefaExcedenteParaArmazem, TarefaInsumoProducaoBaixa, TarefaInsumoProducaoParada,
   TarefaComidaParaInn, TarefaMaterialParaObra, TarefaOcupar, TarefaOuroParaEscola,
@@ -20,7 +21,7 @@ import type {
   TipoNaEscada,
 } from './state';
 import {
-  ehTarefaDeAradura, ehTarefaDeAssentamento, ehTarefaDeColheita, ehTarefaDeLaborer, ehTarefaDePedraParaCanteiro,
+  ehTarefaDeAradura, ehTarefaDeAssentamento, ehTarefaDeColheita, ehTarefaDeLaborer, ehTarefaDePedraParaCanteiro, ehTarefaDeComidaParaTropa,
   ehTarefaDeReparo, ehTarefaDeTile, ehTarefaDoSerf, ID_DO_RECRUTA, MERCADORIA_DE_OURO,
 } from './state';
 import { ehQuartelCompleto } from './quartel';
@@ -43,7 +44,7 @@ import { alcancavelAPe } from './alcance';
 import { buscarCaminho } from './pathfinding';
 import type { Caminho, ModoDeBusca } from './pathfinding';
 import {
-  sobraNaOrigem, vagaDeConstrucao, vagaDeOcupacao, vagaDeRefeicao, vagaDoDestino, vagaNoTile,
+  sobraNaOrigem, vagaDeConstrucao, vagaDeOcupacao, vagaDeRefeicao, vagaDaTropa, vagaDoDestino, vagaNoTile,
 } from './reservas';
 import { predioAceita } from './ocupacao';
 import { temComidaNaBodega } from './bodega';
@@ -116,6 +117,8 @@ const UNIDADE_ELEGIVEL_POR_TIPO: Readonly<Record<TipoDeTarefa, string | null>> =
   // F18g: a pedra do canteiro e carga como qualquer outra — mesmo serf, mesma
   // FSM, mesmo claim. O que muda e a ponta: a entrega e num tile, nao em gaveta.
   'pedra-para-canteiro': TIPO_QUE_CARREGA,
+  // C-COMIDA-01b (fome militar com o Feed): a comida da tropa e carga como qualquer outra
+  'comida-para-tropa': TIPO_QUE_CARREGA,
   // F14: 'ocupar' nao tem UM tipo elegivel — quem pode ocupar depende do PREDIO
   // de destino. `null` aqui significa "esta pergunta nao se responde so com o
   // tipo da tarefa", e por isso `elegivelParaTarefa` NUNCA autoriza uma
@@ -446,6 +449,23 @@ export function criarTarefaDePedraParaCanteiro(
 }
 
 /**
+ * C-COMIDA-01b (fome militar com o Feed) — cria a carga de UMA comida do armazem
+ * `origem` ate o militar `destinoUnidade`, aberta. O destino e a UNIDADE, nao um
+ * tile: ela anda, e o serf mira onde ela esta quando pega a carga e de novo ao
+ * chegar (`passoEntregando`). Aberta nao reserva nada; a vaga e `vagaDaTropa`.
+ */
+export function criarTarefaComidaParaTropa(
+  state: GameState, campos: { readonly mercadoria: string; readonly origem: string; readonly destinoUnidade: string },
+): { readonly state: GameState; readonly id: string } {
+  const numero = state.proximoId;
+  const tarefa: TarefaComidaParaTropa = {
+    id: `t${numero}`, numero, tipo: 'comida-para-tropa', mercadoria: campos.mercadoria,
+    origem: campos.origem, destinoUnidade: campos.destinoUnidade, estado: 'aberta', reclamadaPor: null,
+  };
+  return inserirTarefa(state, tarefa);
+}
+
+/**
  * F18h — cria a tarefa de arar o tile do canteiro do campo, aberta. Irma da de
  * assentamento acima, com UMA diferenca, e ela e a que importa: nao ha material a
  * reservar, entao nao ha pagador a procurar e nao ha `null` a devolver. O milho
@@ -561,6 +581,11 @@ export function distanciaDaTarefa(state: GameState, tarefa: TarefaDoSerf, dados:
   if (ehTarefaDePedraParaCanteiro(tarefa)) {
     return ligacaoEntrePredioETile(state, origem, tarefa.destinoTile, modoDoTipo(tarefa.tipo, dados), dados);
   }
+  // C-COMIDA-01b — a ponta de entrega e o tile onde o militar ESTA agora
+  if (ehTarefaDeComidaParaTropa(tarefa)) {
+    const alvo = state.unidades.porId[tarefa.destinoUnidade];
+    return alvo === undefined ? null : ligacaoEntrePredioETile(state, origem, { gx: alvo.gx, gy: alvo.gy }, modoDoTipo(tarefa.tipo, dados), dados);
+  }
   const destino = state.predios.porId[tarefa.destino];
   if (!destino) return null;
   return ligacaoEntrePredios(state, origem, destino, modoDoTipo(tarefa.tipo, dados), dados);
@@ -603,8 +628,10 @@ export function ligacaoEntrePredioETile(
  */
 export function tileAlcancavelDaPorta(
   state: GameState, a: Predio, tile: TileDeGrid, dados: GameData = gameData,
+  tipo: 'pedra-para-canteiro' | 'comida-para-tropa' = 'pedra-para-canteiro',
 ): boolean {
-  const modo = modoDoTipo('pedra-para-canteiro', dados);
+  // C-COMIDA-01b — a comida da tropa faz a mesma pergunta, com a ponta no tile do militar
+  const modo = modoDoTipo(tipo, dados);
   if (modo !== 'livre') return ligacaoEntrePredioETile(state, a, tile, modo, dados) !== null;
   return tilesDaPorta(a, dados).some((porta) => alcancavelAPe(state, porta, tile, dados));
 }
@@ -648,6 +675,11 @@ export function alvosDeEntrega(
   state: GameState, tarefa: TarefaDoSerf, modo: ModoDeBusca, dados: GameData = gameData,
 ): TileDeGrid[] {
   if (ehTarefaDePedraParaCanteiro(tarefa)) return [{ gx: tarefa.destinoTile.gx, gy: tarefa.destinoTile.gy }];
+  // C-COMIDA-01b — o tile do militar agora; se ele se mover, o serf recalcula na chegada
+  if (ehTarefaDeComidaParaTropa(tarefa)) {
+    const alvo = state.unidades.porId[tarefa.destinoUnidade];
+    return alvo === undefined ? [] : [{ gx: alvo.gx, gy: alvo.gy }];
+  }
   return portasDaTarefa(state, tarefa.destino, modo, dados);
 }
 
@@ -858,9 +890,16 @@ function recusaSemCaminho(
     }
     // A vaga depende do TIPO: `faltam` numa obra, a demanda da fila numa escola
     // (F13) — e, F18g, o que o TILE ainda pede de pedra (`vagaNoTile`).
+    // C-COMIDA-01b — a comida so vai a militar do MESMO lado do serf. O C7 confere o lado
+    // dos PREDIOS; o destino aqui e uma unidade, e a conferencia e desta tarefa.
+    if (ehTarefaDeComidaParaTropa(tarefa)) {
+      const alvo = state.unidades.porId[tarefa.destinoUnidade];
+      if (alvo === undefined) return 'destino-sem-vaga';
+      if (alvo.lado !== unidade.lado) return 'unidade-invalida';
+    }
     const vaga = ehTarefaDePedraParaCanteiro(tarefa)
       ? vagaNoTile(state, tarefa, dados)
-      : vagaDoDestino(state, tarefa, dados);
+      : ehTarefaDeComidaParaTropa(tarefa) ? vagaDaTropa(state, tarefa) : vagaDoDestino(state, tarefa, dados);
     if (vaga < 1) return 'destino-sem-vaga';
   }
   return null;

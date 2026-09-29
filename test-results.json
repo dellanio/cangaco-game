@@ -355,5 +355,8 @@
   },
   "C-COMIDA-01a-dado-comando-e-pedido": {
     "passes": true
+  },
+  "C-COMIDA-01b-comida-para-tropa": {
+    "passes": true
   }
 }

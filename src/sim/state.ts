@@ -237,6 +237,16 @@ export type GameEvent =
       readonly resultado: 'reaberta' | 'cancelada';
     }
   | {
+      /** C-COMIDA-01b — o serf `serf` entregou `mercadoria` ao militar `unidade`, que ficou
+       *  cheio (o `Feed(UNIT_MAX_CONDITION)` do KaM) e perdeu o pedido. A tarefa foi
+       *  removida. A comida SAIU do mundo aqui: e o que a conservacao de bens desconta. */
+      readonly type: 'unit-fed';
+      readonly unidade: string;
+      readonly serf: string;
+      readonly mercadoria: string;
+      readonly tarefa: string;
+    }
+  | {
       /** O serf entregou em `destino` e a tarefa foi removida. Obra: `faltam[mercadoria]`
        *  caiu 1. Escola (F13): `estoque.entrada[mercadoria]` subiu 1. O campo se chamava
        *  `obra` ate a F13 — deixou de ser verdade quando o destino pode ser escola.
@@ -800,6 +810,8 @@ export const GAVETA_DE_ORIGEM_POR_TIPO: Readonly<Record<TipoComOrigem, Gaveta>> 
   // de `'assentar-estrada'`, que reservava sem carregar; agora quem reserva e
   // quem carrega, e e a mesma tarefa.
   'pedra-para-canteiro': 'saida',
+  // C-COMIDA-01b (fome militar com o Feed): a comida da tropa sai da `saida` do armazem
+  'comida-para-tropa': 'saida',
 };
 
 export function gavetaDeOrigem(tipo: TipoComOrigem): Gaveta {
@@ -826,6 +838,8 @@ export const ORIGEM_ESPERADA_POR_TIPO: Readonly<Record<TipoComOrigem, 'armazem' 
   'saida-cheia-para-armazem': 'outro-predio',
   'excedente-para-armazem': 'outro-predio',
   'pedra-para-canteiro': 'armazem',
+  // C-COMIDA-01b — so de armazem completo do mesmo lado (L3, decisao do operador)
+  'comida-para-tropa': 'armazem',
 };
 
 /**
@@ -1065,6 +1079,22 @@ export interface TarefaColher extends TarefaBase {
  * consumo ATOMICO na chegada: quem chega e nao acha comida volta a `ocioso` no mesmo
  * tick, nunca espera.
  */
+/**
+ * C-COMIDA-01b (fome militar com o Feed) — um serf leva UMA comida do armazem `origem` ao
+ * militar `destinoUnidade`, que pediu (`Unidade.pedidoDeComida`). O destino e uma UNIDADE,
+ * e o campo se chama `destinoUnidade`, e nao `destino`, para que `predios.porId[t.destino]`
+ * nao compile contra ela (o molde do `destinoTile` da F18g). A entrega anda livre (modo do
+ * nivel `comida-para-tropa`) e segue o alvo que anda: ao chegar, se o militar estiver a mais
+ * de 1 tile, recalcula e continua (KaM: `KM_UnitTaskDelivery.pas:492-497`).
+ */
+export interface TarefaComidaParaTropa extends TarefaBase {
+  readonly tipo: 'comida-para-tropa';
+  readonly estado: 'aberta' | 'reclamada' | 'carregando';
+  readonly mercadoria: string;
+  readonly origem: string;
+  readonly destinoUnidade: string;
+}
+
 export interface TarefaComer extends TarefaBase {
   readonly tipo: 'comer';
   readonly estado: 'aberta' | 'reclamada';
@@ -1074,7 +1104,7 @@ export interface TarefaComer extends TarefaBase {
 
 export type Tarefa =
   TarefaDeTransporte | TarefaConstruir | TarefaOcupar | TarefaAssentarEstrada | TarefaColher
-  | TarefaComer | TarefaArar | TarefaPedraParaCanteiro | TarefaReparar | TarefaAlistar;
+  | TarefaComer | TarefaArar | TarefaPedraParaCanteiro | TarefaReparar | TarefaAlistar | TarefaComidaParaTropa;
 
 /**
  * O tipo da tarefa, DERIVADO da uniao: acrescentar um produtor novo (F15, F20)
@@ -1134,10 +1164,15 @@ export function ehTarefaDePedraParaCanteiro(tarefa: Tarefa): tarefa is TarefaPed
  * serf, o claim e a reserva na origem percorrem; o que muda entre os dois
  * membros e so a ponta da entrega.
  */
-export type TarefaDoSerf = TarefaDeTransporte | TarefaPedraParaCanteiro;
+export type TarefaDoSerf = TarefaDeTransporte | TarefaPedraParaCanteiro | TarefaComidaParaTropa;
+
+/** C-COMIDA-01b — a comida levada a um militar em campo (destino que anda). */
+export function ehTarefaDeComidaParaTropa(tarefa: Tarefa): tarefa is TarefaComidaParaTropa {
+  return tarefa.tipo === 'comida-para-tropa';
+}
 
 export function ehTarefaDoSerf(tarefa: Tarefa): tarefa is TarefaDoSerf {
-  return ehTarefaDeTransporte(tarefa) || ehTarefaDePedraParaCanteiro(tarefa);
+  return ehTarefaDeTransporte(tarefa) || ehTarefaDePedraParaCanteiro(tarefa) || ehTarefaDeComidaParaTropa(tarefa);
 }
 
 /**

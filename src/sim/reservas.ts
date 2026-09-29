@@ -18,9 +18,9 @@
  * `test-output/F09.json` e a nota da F10 no BUILD_PLAN. Se pedir indice, e otimizacao
  * (por predio e mercadoria), nao mudanca de contrato.
  */
-import type { Gaveta, GameState, TarefaDeTransporte, TarefaDoSerf, TarefaPedraParaCanteiro } from './state';
+import type { Gaveta, GameState, TarefaComidaParaTropa, TarefaDeTransporte, TarefaDoSerf, TarefaPedraParaCanteiro } from './state';
 import {
-  ehTarefaDePedraParaCanteiro, ehTarefaDeTransporte, ehTarefaDoSerf, gavetaDeOrigem, ID_DO_ARMAZEM,
+  ehTarefaDeComidaParaTropa, ehTarefaDePedraParaCanteiro, ehTarefaDeTransporte, ehTarefaDoSerf, gavetaDeOrigem, ID_DO_ARMAZEM,
   origemDaTarefaVale,
 } from './state';
 import type { GameData } from './data/types';
@@ -89,6 +89,30 @@ function chaveDe(t: TarefaPedraParaCanteiro): string {
  * negativa: pedra alem do custo num tile nao e caso de jogo (a vaga barra), e
  * se um save trouxer, a demanda e zero e a borracha devolve o excesso.
  */
+/**
+ * C-COMIDA-01b (fome militar com o Feed) — o que o militar pede: 1 enquanto existe e
+ * tem `pedidoDeComida`, senao 0. A comida enche a condicao inteira, entao uma so basta.
+ */
+export function demandaDaTropa(state: GameState, tarefa: TarefaComidaParaTropa): number {
+  const alvo = state.unidades.porId[tarefa.destinoUnidade];
+  return alvo !== undefined && alvo.pedidoDeComida === true ? 1 : 0;
+}
+
+/**
+ * C-COMIDA-01b — a vaga da tropa: a demanda menos as tarefas JA reclamadas ou
+ * carregando para o mesmo militar (a propria incluida, se nao for aberta). No claim
+ * (a tarefa e aberta) da 1 ou 0; no saneamento em grupo, negativa = comida demais a
+ * caminho, e o excedente sai. Nunca duas comidas a caminho do mesmo militar.
+ */
+export function vagaDaTropa(state: GameState, tarefa: TarefaComidaParaTropa): number {
+  let aCaminho = 0;
+  for (const id of state.jobs.tarefas.ordem) {
+    const t = state.jobs.tarefas.porId[id];
+    if (t && ehTarefaDeComidaParaTropa(t) && t.estado !== 'aberta' && t.destinoUnidade === tarefa.destinoUnidade) aCaminho++;
+  }
+  return demandaDaTropa(state, tarefa) - aCaminho;
+}
+
 export function demandaDoTile(
   state: GameState, tarefa: TarefaPedraParaCanteiro, dados: GameData = gameData,
 ): number {
