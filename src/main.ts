@@ -43,7 +43,7 @@ import { classeDaUnidade } from './sim/condicao';
 import { criarSelecaoMilitar } from './input/selecao-militar';
 import { montarPainelGrupo } from './ui/painel-grupo';
 import { montarContadorDePaz } from './ui/contador-de-paz';
-import { montarAvisoDeOrdem } from './ui/aviso-de-ordem';
+import { montarAvisoDeOrdem, recusaDaPaz } from './ui/aviso-de-ordem';
 import { criarEscaramuca } from './sim/cenario';
 
 // C-IA-03c — `?escaramuca` nasce na escaramuca (cenario provisorio, sim/cenario.ts); sem ele,
@@ -129,6 +129,8 @@ const entrada = criarEntradaDoMapa(
         sessao.enviar({ type: 'AttackBuilding', unidades: grupo, predio: predio.id });
       } else {
         sessao.enviar({ type: 'MoveUnits', unidades: grupo, destino: { gx: tile.gx, gy: tile.gy } });
+        // C-TELA-02: a marca aparece no clique, mesmo pausado (retorno imediato, GDD §10)
+        jogo.marcarDestino({ gx: tile.gx, gy: tile.gy });
       }
     },
   },
@@ -196,6 +198,8 @@ function atualizar(s: GameState): void {
   alertas.atualizar(s);
   contadorDePaz.atualizar(s);
   avisoDeOrdem.atualizar(s);
+  // C-TELA-02: destino que ninguem vai alcancar nao fica marcado
+  if (recusaDaPaz(s.events) !== null) jogo.apagarDestino();
   fimDePartida.atualizar(s);
   // C9: a partida acabou -> o laco para (e so outro save o reabre)
   acompanharFimDePartida(laco, s);

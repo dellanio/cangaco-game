@@ -418,5 +418,8 @@
   },
   "C-TELA-01-mensagem-da-ordem-recusada": {
     "passes": true
+  },
+  "C-TELA-02-marcador-de-destino": {
+    "passes": true
   }
 }

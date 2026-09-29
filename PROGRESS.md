@@ -13366,3 +13366,38 @@ Terceiro item da fila da primeira partida. Plano em
   foram pedidos.
 - Com o jogo pausado, a mensagem aparece só ao retomar. É o mesmo atraso de toda ordem dada
   em pausa (F11a).
+
+## 2026-09-29 — C-TELA-02 (o marcador de destino) ENTREGUE
+
+Quarto item da fila da primeira partida. Plano em
+`docs/planos/2026-09-29-C-TELA-02-marcador-de-destino.md`. Toca render e ui, não toca
+`src/sim/`.
+
+**Verificado:**
+- O roteiro `npm run shot -- C-TELA-02` passou, e abri `screenshots/C-TELA-02-1-marca-no-destino.png`.
+  - O botão direito foi dado despausado, apertando com `mouse.down`, esperando 150 ms e
+    soltando com `mouse.up` (§8). A marca (anel amarelo) apareceu no tile clicado, (32,36), 3
+    tiles acima da tropa, e os 18 cabras receberam a ordem.
+  - A marca sumiu sozinha depois de 1,4 s.
+  - Fora da cerca, a marca nasce no clique e some no tick seguinte, quando chega a recusa
+    `longe-na-paz`.
+- `tests/C-TELA-02-marcador-de-destino.test.ts` tem 5 testes:
+  - a fração da marca vale 0 no clique e 0,5 na metade, e a marca some no fim;
+  - `recusaDaPaz` sobre `step` real devolve `longe-na-paz` para a ordem longe e `null` para
+    a perto.
+- `npm run verify` verde.
+
+**Como ficou:**
+- A marca é estado da cena, `{ tile, desdeMs }` no relógio `scene.time.now`. Por isso
+  aparece mesmo com o jogo pausado, que é o retorno imediato. O `main.ts` a acende no
+  `aoOrdenar` e a apaga quando `recusaDaPaz(s.events)` não é `null`.
+- O desenho é um anel que encolhe e quatro cantos, na cor da seleção, desbotando.
+- `recusaDaPaz` saiu de dentro do `textoDaRecusa` da C-TELA-01 (mensagem da ordem
+  recusada). Os dois leem a mesma coisa.
+- A duração ficou em `theme-sertao.json`, no bloco `ordem`, e não no `terrain.json`. O
+  `terrain.json` passa pelo `gameData` da sim, e a feature não toca a sim.
+
+**PARA REVISÃO:**
+- O ataque a prédio inimigo (`AttackBuilding`) não marca. O pedido falava da ordem de mover.
+- Na captura, o quadrado branco do tile sob o mouse cobre os cantos da marca, e o anel fica
+  visível. Pode valer um traço mais grosso, se o operador achar a marca fraca na partida.

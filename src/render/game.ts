@@ -10,6 +10,7 @@ import type { EntradaDoMapa } from '../input/colocar';
 import type { RelogioVisivel } from './debug';
 import type { Navegacao } from '../input/navegacao';
 import type { SelecaoMilitar } from '../input/selecao-militar';
+import type { Tile } from './grid';
 
 export interface JogoLigado {
   readonly jogo: Phaser.Game;
@@ -21,6 +22,10 @@ export interface JogoLigado {
   unidadesNoPonto(ponto: { readonly x: number; readonly y: number }): string[];
   /** F26b — as unidades desenhadas dentro da caixa. */
   unidadesNaCaixa(a: { readonly x: number; readonly y: number }, b: { readonly x: number; readonly y: number }): string[];
+  /** C-TELA-02 — marca o tile do destino de uma ordem de mover; some sozinha. */
+  marcarDestino(tile: Tile): void;
+  /** C-TELA-02 — tira a marca (a ordem foi recusada). */
+  apagarDestino(): void;
 }
 
 export function iniciarJogo(
@@ -57,6 +62,12 @@ export function iniciarJogo(
     },
     unidadesNaCaixa(a, b) {
       return cena.unidadesNaCaixa(a, b);
+    },
+    marcarDestino(tile) {
+      cena.marcarDestino(tile);
+    },
+    apagarDestino() {
+      cena.apagarDestino();
     },
   };
 }

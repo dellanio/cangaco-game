@@ -171,6 +171,8 @@ export interface EstadoDebug {
   selecaoMilitar: readonly string[];
   /** F26b — a caixa de selecao desenhada agora, em px de mundo, ou `null`. */
   caixaDeSelecao: { readonly a: { readonly x: number; readonly y: number }; readonly b: { readonly x: number; readonly y: number } } | null;
+  /** C-TELA-02 — o tile do destino marcado NESTE quadro, ou `null` quando a marca sumiu. */
+  marcadorDeDestino: { readonly gx: number; readonly gy: number } | null;
   /** F-T1 — quantos tiles de cada TIPO DE TERRENO estao dentro da vista da
    *  camera agora, lidos de volta da camada de chao ja desenhada. E o que
    *  permite ao roteiro afirmar "a camera esta em cima do lago" sem olhar
@@ -338,6 +340,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     ultimaPedra: null,
     projeteisNoAr: [],
     caixaDeSelecao: null,
+    marcadorDeDestino: null,
     terrenoVisivel: {},
     recursosVisiveis: {},
     mascarasDoLajedo: {},

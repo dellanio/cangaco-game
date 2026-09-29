@@ -19,20 +19,27 @@ export interface RotulosDaOrdem {
 const ORDENS_MILITARES: ReadonlySet<string> = new Set(['MoveUnits', 'AttackUnit', 'AttackBuilding']);
 
 /**
- * O texto da ULTIMA recusa de ordem militar do tick, ou `null`. So os dois motivos da paz:
- * os outros (destino inandavel, sem unidades) a tela nao provoca pelo botao direito.
- * Pura: e o que o teste headless prova.
+ * O motivo da ULTIMA recusa de ordem militar do tick pela paz, ou `null`. So os dois motivos
+ * da paz: os outros (destino inandavel, sem unidades) a tela nao provoca pelo botao direito.
+ * C-TELA-02: e tambem o que apaga o marcador de destino.
  */
+export function recusaDaPaz(eventos: readonly GameEvent[]): 'em-paz' | 'longe-na-paz' | null {
+  let motivo: 'em-paz' | 'longe-na-paz' | null = null;
+  for (const e of eventos) {
+    if (e.type !== 'command-rejected' || !ORDENS_MILITARES.has(e.command)) continue;
+    if (e.motivo === 'em-paz' || e.motivo === 'longe-na-paz') motivo = e.motivo;
+  }
+  return motivo;
+}
+
+/** O texto da recusa do tick (`recusaDaPaz`), ou `null`. Pura: e o que o teste headless prova. */
 export function textoDaRecusa(
   eventos: readonly GameEvent[], segundosDePaz: number, rotulos: RotulosDaOrdem = temaSertao.ordem,
 ): string | null {
-  let texto: string | null = null;
-  for (const e of eventos) {
-    if (e.type !== 'command-rejected' || !ORDENS_MILITARES.has(e.command)) continue;
-    if (e.motivo === 'em-paz') texto = rotulos.emPaz.replace('{tempo}', mmss(segundosDePaz));
-    else if (e.motivo === 'longe-na-paz') texto = rotulos.longeNaPaz;
-  }
-  return texto;
+  const motivo = recusaDaPaz(eventos);
+  if (motivo === 'em-paz') return rotulos.emPaz.replace('{tempo}', mmss(segundosDePaz));
+  if (motivo === 'longe-na-paz') return rotulos.longeNaPaz;
+  return null;
 }
 
 export interface AvisoDeOrdem {

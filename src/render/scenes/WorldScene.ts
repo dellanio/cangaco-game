@@ -11,6 +11,8 @@ import { proximoNivel, mundoSobPonto, scrollAncorado } from '../zoom';
 import type { Navegacao } from '../../input/navegacao';
 import type { Tile } from '../grid';
 import { publicarEstadoDebug } from '../debug';
+import { marcadorVisivel } from '../marcador-de-destino';
+import type { MarcadorDeDestino } from '../marcador-de-destino';
 import type {
   AnimalNoDebug, CaixaDesenhada, CamadasEmPx, CrescimentoNoDebug, EstadoDebug, PilhaNoDebug, PredioNoDebug, QuadroNoDebug, RelogioVisivel,
 } from '../debug';
@@ -193,6 +195,19 @@ export class WorldScene extends Phaser.Scene {
     return unidadesNoPonto(this.unidadesDesenhadas, ponto, configDoMapa.tilePx);
   }
 
+  /** C-TELA-02 — a marca no tile do destino da ultima ordem de mover. Estado de tela. */
+  private marcador: MarcadorDeDestino | null = null;
+
+  /** C-TELA-02 — marca o destino agora; a marca desbota e some sozinha. */
+  marcarDestino(tile: Tile): void {
+    this.marcador = { tile, desdeMs: this.time.now };
+  }
+
+  /** C-TELA-02 — tira a marca antes da hora (a ordem foi recusada). */
+  apagarDestino(): void {
+    this.marcador = null;
+  }
+
   /** F26b — as unidades desenhadas dentro da caixa. */
   unidadesNaCaixa(a: { readonly x: number; readonly y: number }, b: { readonly x: number; readonly y: number }): string[] {
     return unidadesNaCaixa(this.unidadesDesenhadas, a, b, configDoMapa.tilePx);
@@ -303,6 +318,7 @@ export class WorldScene extends Phaser.Scene {
     const marcasDeSelecao = this.add.graphics().setDepth(PROFUNDIDADE_DA_SELECAO);
     const caixaDeSelecao = this.add.graphics().setDepth(PROFUNDIDADE_DA_SELECAO);
     const projeteisNoAr = this.add.graphics().setDepth(PROFUNDIDADE_DA_SELECAO);
+    const marcaDoDestino = this.add.graphics().setDepth(PROFUNDIDADE_DA_SELECAO);
     // Ultimo tile valido sob o ponteiro. Efemero: some no gameout e nunca entra
     // no GameState (a planta e estado de interface, ver input/ferramenta.ts).
     let tileAtual: Tile | null = null;
@@ -512,6 +528,7 @@ export class WorldScene extends Phaser.Scene {
       estado.projeteisNoAr = this.desenharProjeteis(projeteisNoAr, tilePx, this.relogio.alfa());
       estado.selecaoMilitar = this.desenharSelecao(marcasDeSelecao, estado.unidadesRenderizadas, tilePx);
       estado.caixaDeSelecao = this.desenharCaixa(caixaDeSelecao);
+      estado.marcadorDeDestino = this.desenharMarcador(marcaDoDestino, tilePx);
     });
   }
 
@@ -533,6 +550,35 @@ export class WorldScene extends Phaser.Scene {
       marcadas.push(u.id);
     }
     return marcadas;
+  }
+
+  /**
+   * C-TELA-02 — o destino da ordem de mover: um anel e quatro cantos no tile, na cor da
+   * selecao, desbotando ate sumir em `segundosDoMarcador` (theme-sertao, bloco `ordem`).
+   */
+  private desenharMarcador(g: Phaser.GameObjects.Graphics, tilePx: number): { gx: number; gy: number } | null {
+    g.clear();
+    const visivel = marcadorVisivel(this.marcador, this.time.now, temaSertao.ordem.segundosDoMarcador * 1000);
+    if (visivel === null) {
+      this.marcador = null;
+      return null;
+    }
+    const canto = gridToScreen(visivel.tile, tilePx, ESCALA_DO_MUNDO);
+    const lado = tilePx * ESCALA_DO_MUNDO;
+    const alfa = 1 - visivel.fracao;
+    const [cx, cy] = [canto.x + lado / 2, canto.y + lado / 2];
+    g.lineStyle(3, COR_DA_SELECAO, alfa);
+    // o anel encolhe um pouco enquanto desbota: o olho acha o tile pelo movimento
+    g.strokeCircle(cx, cy, (lado / 2) * (1 - visivel.fracao / 3));
+    const perna = lado / 4;
+    for (const [x, y, dx, dy] of [
+      [canto.x, canto.y, 1, 1], [canto.x + lado, canto.y, -1, 1],
+      [canto.x, canto.y + lado, 1, -1], [canto.x + lado, canto.y + lado, -1, -1],
+    ] as const) {
+      g.lineBetween(x, y, x + dx * perna, y);
+      g.lineBetween(x, y, x, y + dy * perna);
+    }
+    return { gx: visivel.tile.gx, gy: visivel.tile.gy };
   }
 
   /** F28b — o ultimo tick cujos eventos de pedra ja foram desenhados. */

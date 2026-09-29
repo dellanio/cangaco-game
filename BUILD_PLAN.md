@@ -5788,6 +5788,8 @@ PROGRESS como PARA REVISÃO.
 4. **C-TELA-02 — o marcador de destino (render + input).** O tile do destino de uma ordem
    de mover é marcado por ~1 s e some, como no Civilization. É estado da tela: não entra na
    sim. **Aceite:** screenshot com o marcador, e a prova de que ele some.
+   - **ENTREGUE (2026-09-29).** `src/render/marcador-de-destino.ts`: some em 1 s
+     (`theme-sertao.ordem.segundosDoMarcador`), e a recusa da paz o apaga no tick seguinte.
 5. **C-IA-04 — o terceiro grupo da IA (dado + sim do cenário).** Um grupo de 9 fora das
    posições, no dado da escaramuça: a sobra que o `atacarComASobra` já sabe usar.
    - **ANDAIME:** sai quando a C-IA-02 (economia da IA) der à IA uma sobra que vem da
