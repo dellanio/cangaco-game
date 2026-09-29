@@ -154,5 +154,8 @@ describe('C-IA-03b — peacetime e tropas', () => {
     const sobram = tropa.filter((id) => s.unidades.porId[id]).length;
     expect(sobram).toBeGreaterThan(0);
     gravarEvidencia('C-IA-03b-partida', { ...marcos, vitoria: s.partida?.tick, sobram, de: tropa.length, iaInicial });
-  }, 120000);
+    // `timeout` NAO e assercao de tempo (§8): existe para o caso travar. Anda a paz inteira
+    // (PAZ ticks) e mais a luta ate a vitoria. Medido: 3,3 / 4,0 s isolado (2026-09-29). O
+    // limite e ~5x o isolado; o de antes, 120 s, era 30x e nao pegaria travamento nenhum.
+  }, 20_000);
 });

@@ -13069,3 +13069,171 @@ Pedido do operador antes do merge. O relatório inteiro está em
   - o save faz a viagem byte a byte, e o save sem o campo carrega;
   - a regra de dado reprova IA ≥ pedido e pedido ≥ 1.
 - `npm run verify` verde (resultado abaixo, no commit).
+
+## 2026-09-29 — Resumo da leva autônoma (28 e 29/09): o jogo passou a ter combate
+
+**Por que esta entrada existe.** A leva entrou na `main` em 69 commits (`f27e8a2..9a41e93`,
+216 arquivos, +19 411 / −331 linhas, 44 escopos `feat` distintos). Cada item tem a própria
+entrada acima, mas nenhuma diz o que o conjunto significa. Esta é a narrativa, na ordem em
+que aconteceu.
+- **Fonte dos números:** as entradas de cada item, que continuam sendo a fonte.
+- **O que foi conferido para esta entrada:** a contagem de commits e linhas (`git log` e
+  `git diff --stat`) e cada número citado, por grep neste arquivo.
+- **O que não foi feito:** nenhuma medida foi rodada de novo.
+
+### 1. O fim da fila de arte (28/09, manhã)
+- **Fecharam os quatro itens de tela que esperavam decisão:**
+  - a muda a 40% da adulta (F-REPL-e, replantio);
+  - a aldeia de vitrine (F-VIVO-d2, mundo vivo);
+  - o lajedo que encolhe com a borda conferida no desenho (F-TR-b, transição de terreno);
+  - a caixa de cada prédio conferida contra o manifesto (F-ESC, escala).
+- **Para o jogo:** nenhuma regra nova; o mundo ficou mais legível.
+
+### 2. O combate nasce (28/09, 11h46 às 18h19)
+Até aqui o jogo era economia pura: tropa formada não tinha em quem bater nem o que derrubar.
+Em sete horas a sim ganhou o ciclo inteiro de guerra, cada peça na ordem em que pedia a
+anterior.
+- **Derrubar prédio:**
+  - `AttackBuilding`: a tropa golpeia prédio inimigo (F-CERCO-a2, ataque a prédio);
+  - o reparo, ligado prédio a prédio (F-CERCO-b, reparo);
+  - a regeneração de 1 HP a cada 10 s (F28c, regeneração).
+- **Formar e mandar a tropa:**
+  - o Quartel na sim (F25a, quartel) e o painel dele (F25b, painel do quartel);
+  - a marcha (F26a, `MoveUnits`);
+  - a seleção pela tela: caixa, shift e botão direito (F26b, selecionar pela tela).
+- **Os tipos de tropa e a torre:**
+  - o corpo a corpo, com direção, flanco e sorteio no RNG (F28a, corpo a corpo);
+  - o arqueiro, com alcance, escudo e fogo amigo (F28d, arqueiro);
+  - a Torre de Pedra, abastecida pelo JobBoard (F28b, torre);
+  - a cadência própria de cada um (C1, cadência);
+  - o projétil que voa e erra quem andou (C2a/C2b, projétil na sim e na tela).
+- **A IA de defesa** (F28-IA, pontos 1 a 6):
+  - posições de 9 homens que voltam ao ponto e retaliam;
+  - a reposição pelo quartel;
+  - a sobra que ataca;
+  - depois, a prioridade de alvo e o tipo de tropa mais forte (C8, prioridade da IA).
+- **O fim da partida:**
+  - vitória e derrota pelos três prédios e pelas tropas (F34, vitória e derrota);
+  - o laço para no fim (C9, fim de partida).
+- **O ouro:** a Feira (F35, troca 2 por 1) e a Prefeitura com o mercenário (F36, Prefeitura).
+- **Consertos que o combate exigiu:**
+  - o lado filtra o JobBoard (C7, lado no JobBoard);
+  - os militares colidem entre si (C5, colisão militar);
+  - quem marcha revida o inimigo encostado (C6, revidar em marcha).
+- **Para o jogo:** dois lados podem existir, lutar e acabar. Faltava uma partida onde isso
+  acontecesse (bloco 5).
+
+### 3. A colisão civil: medida em quatro rodadas, fechou desligada (28/09 19h53 a 29/09 00h05)
+A pergunta do GDD §6.4: se os civis colidissem como no KaM, uma segunda rua aliviaria o
+engarrafamento? Se sim, colisão e rua dupla entrariam no jogo.
+
+O mecanismo do kam_remake entrou inteiro, atrás de uma chave em dado: troca, empurrão, desvio
+e troca forçada (D-MOVIMENTO-01a, antigo D1a). Depois vieram quatro rodadas de medida, cada
+uma consertando a objeção da anterior:
+1. **Chave ligada, uma rua contra duas** (D1a-3 e D1c): a espera na gaveta não caiu.
+2. **A escolha de rota do KaM** (D-MOVIMENTO-01h, custo de 1,5 tile por unidade no A*):
+   - a distribuição acontece: a segunda faixa sobe de 4,3% para 45% dos passos;
+   - a espera não cai: com carga, duas faixas ficam **piores**. São +16% a 2× (307,7 contra
+     264,9) e +9% a 4× (330,2 contra 303,4).
+3. **A porta lenta do KaM** (D-MOVIMENTO-01i):
+   - sozinha, atrasa a abertura da vila em 14%;
+   - com a colisão ligada, o mecanismo travou num ciclo de pares.
+4. **A troca como permuta, um civil por tile sempre, com a porta do KaM** (D-MOVIMENTO-01j):
+   - duas faixas perdem em 5 das 6 linhas da grade, de 17% a 60% piores;
+   - ganham 3% só com uma porta e carga 1×.
+
+**Resultado.** Pela regra que o operador fixou antes da medida, a colisão civil **fecha
+desligada**, em definitivo. O GDD §6.4 voltou a "civis não colidem".
+- **O que sobra no código:** o mecanismo, desligado e coberto por 31 testes. São ~500 linhas
+  em `colisao.ts`; manter ou remover é decisão do operador.
+- **O que fica valendo com a chave desligada:** o JobBoard não repete o A* de tarefa recusada
+  (47× menos buscas na Feira).
+- **A lição:** "não trava" mede progresso, não tempo de espera. E cada regra do KaM se confere
+  na fonte, linha a linha, antes de medir.
+
+### 4. A fome militar e o Feed (29/09, 00h23 às 01h09)
+Antes, o militar não comia: tropa parada vivia para sempre. Com o KaM como referência, entrou
+a fome militar (C-COMIDA-01):
+- **O comando e a tarefa:**
+  - `FeedUnits` e o pedido de comida (01a);
+  - uma tarefa de serf com destino **móvel**, que leva a comida até onde o soldado está (01b).
+- **A fome** (01c): o militar drena e morre a 0, mas nunca vai à Bodega.
+- **A tela** (01d/01f): o painel do grupo com o botão Alimentar e o alerta "Tropa com fome".
+- **A IA** (01e, que é o C-IA-01): alimenta as posições de defesa.
+
+**O andaime.** A IA desta leva não tem economia: um armazém com estoque, sem serf e sem
+produção. Se a tropa dela drenasse, morreria de fome sem remédio.
+- **Como está:** o dado `condition.json militar.iaDrena: false` faz o militar do lado da IA
+  não drenar. O `_docIaDrena` declara que é andaime.
+- **Condição de saída:** vira `true` quando a IA tiver armazém, comida e serf, que é a C-IA-02
+  (economia da IA). O operador aprovou que a vila da IA receba produção.
+- **Efeito visível até lá:** na escaramuça, a tropa do jogador passa fome e a da IA não: 66% no
+  fim da paz e 46% na vitória.
+
+### 5. A escaramuça: a primeira partida com dois lados (29/09, 02h24 às 03h06)
+- **O cenário na sim** (C-IA-03a, cenário de escaramuça):
+  - a vila da IA a ~45 tiles da do jogador, com armazém, escola e quartel;
+  - 9 cabras e 3 bodoqueiros em duas posições;
+  - a IA mínima, que defende e não ataca.
+- **A paz e as tropas** (C-IA-03b, peacetime e tropas): 10 min de paz (6000 ticks), com marcha,
+  ataque, treino e mercenário recusados; 18 cabras para o jogador.
+- **Pela tela** (C-IA-03c, jogar pela tela):
+  - "Nova escaramuça" no painel H, ou `?escaramuca` na URL;
+  - o contador "Paz: mm:ss" no minimapa;
+  - a cor do bando no rótulo e na bandeira: Moita Seca vermelho, Cabo Branco azul.
+- **O roteiro joga do começo à vitória:** tick 7527, 15 rodadas, 12 de 18 vivos (depois do
+  BUG-Q, abaixo).
+- **Limites da versão mínima:**
+  - a IA não ataca, não produz e não constrói;
+  - o sprite inimigo é o mesmo do jogador; só o rótulo e a bandeira dizem o lado. A arte é
+    da outra sessão.
+
+### 6. O avaliador achou seis defeitos em entregas dadas como prontas
+Foram duas rodadas do subagente `evaluator` (só leitura), a pedido do operador. As duas deram
+NEEDS_WORK. Cada `errado` era uma feature com `passes: true`, teste verde e entrada
+"verificado" neste arquivo.
+
+**Rodada 1** (`docs/avaliacoes/2026-09-28-sessao-autonoma.md`, 20 entregas):
+- **BUG-N1** (F25a, quartel): o JobBoard ignorava o lado. O recruta do jogador se alistava no
+  quartel inimigo, e o armazém do jogador mandava armas para lá. A C7 consertou.
+- **BUG-N2** (F26b, selecionar pela tela; a origem é a F-CERCO-a2): o prédio completo e
+  danificado era desenhado como obra.
+- **BUG-N3** (F-TR-b, transição de terreno): a asserção do sprite órfão passava por construção.
+
+**Rodada 2** (`docs/avaliacoes/2026-09-29-segunda-leva.md`):
+- **BUG-Q** (C5, colisão militar): no ataque a prédio só 2 soldados golpeavam, e o resto ficava
+  em `indo_atacar` para sempre.
+  - **O que alcançava:** o ataque a prédio, a seleção pela tela, a escaramuça e o ataque da IA.
+  - **O sinal ignorado:** o log do próprio roteiro da escaramuça mostrava
+    `{"indo_atacar":10,"atacando":2}` por mais de 2000 ticks, e ninguém leu. A vitória saía
+    porque 2 bastavam.
+  - **Depois do conserto:** com 12 soldados, antes golpeavam 6; agora golpeiam todos. A vitória
+    passou de 9627 ticks (36 rodadas) para 7527 (15).
+- **BUG-R** (C7, lado no JobBoard): o armazém mais perto da estrada não olhava o lado.
+- **BUG-S** (C-IA-03b, peacetime): o mercenário era contratado em paz. A entrada dela neste
+  arquivo dava isso como verificado.
+
+**Os seis foram consertados.** Cada um ganhou a asserção que faltava, rodada sem o conserto
+(reprova) e com ele (passa). O BUG-Q virou regra do roteiro: um soldado que passa mais de 10
+rodadas seguidas em `indo_atacar` reprova.
+
+**Por que importa:** o autor não achou nenhum dos seis, e todos tinham teste verde e captura
+aberta. O avaliador os achou com outra pergunta: não "passa?", e sim "o que isto deveria fazer,
+e faz?". **Proposta ao operador: rodar o avaliador ao fim de toda leva, antes do merge**, e não
+só quando alguém desconfia.
+
+### 7. Nesta sessão, fora da leva
+O teste "a partida inteira" (C-IA-03b, peacetime) tinha `timeout` de 120 s contra 3,3 a 4,0 s
+medidos isolado, uma folga de 30×. Passou a 20 s, com o número no comentário, pelo mesmo padrão
+do 1ef9303.
+- **Varredura dos limites explícitos:** foram 37 limites de teste. Poucos têm segundos medidos
+  no comentário, e muitos têm folga de 40× a 1700×. A lista, com o tempo medido de cada um,
+  foi entregue ao operador.
+- **Os outros limites não foram mexidos:** isso espera a decisão dele.
+
+### Aberto depois da leva
+- **C-IA-02 (economia da IA):** aprovada, não iniciada. É a condição de saída do andaime.
+- **O código desligado da colisão civil:** manter ou remover.
+- **Os limites de teste frouxos:** aplicar o padrão da §8 aos 30 que não têm número.
+- **Ressalvas do avaliador na rodada 2, não conferidas:** estão na entrada dele e são
+  hipóteses dele.
