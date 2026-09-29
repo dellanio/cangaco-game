@@ -448,5 +448,8 @@
   },
   "C-MOVIMENTO-02-a-tropa-nao-trava": {
     "passes": true
+  },
+  "D-PRODUCAO-02-lenhador": {
+    "passes": true
   }
 }

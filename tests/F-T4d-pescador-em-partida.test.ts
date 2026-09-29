@@ -31,7 +31,7 @@ import type { GameData } from '../src/sim/data/types';
 import { alertasDoEstado, estoqueDosArmazens } from '../src/sim/selectors';
 import { canPlace } from '../src/sim/placement';
 import { estaDesbloqueado } from '../src/sim/desbloqueio';
-import { chaveDeTile, ehEstrada, predioLigadoAoArmazem, tileDeChave } from '../src/sim/estradas';
+import { canPlaceRoad, chaveDeTile, ehEstrada, predioLigadoAoArmazem, tileDeChave } from '../src/sim/estradas';
 import type { TileDeGrid } from '../src/sim/estradas';
 import { bordaSul, caixaDeTipo } from '../src/sim/footprint';
 import { receitaDoTipo, semRecursoAoAlcance, unidadesPorCiclo } from '../src/sim/producao';
@@ -61,31 +61,76 @@ function cabanaDe(s: GameState): PredioCompleto | null {
 }
 
 /**
- * Onde a cabana cabe, com a porta na rua que a abertura ja levantou e o maximo de
- * cardume ALCANCAVEL ao alcance — pela sim, nunca por coordenada. Empate: mais perto
- * do armazem, depois a primeira em varredura.
+ * D-PRODUCAO-02 — a rua da porta da cabana ate a rua da abertura, como o jogador a
+ * traca: busca em largura, 4-vizinhos, por tiles que aceitam estrada e fora da caixa
+ * da propria cabana. Vazia se a porta ja esta na rua; null se nao ha ligacao.
  */
-function posicaoDaCabana(s: GameState, dados: GameData): { gx: number; gy: number; cardumes: number; alcancaveis: number } {
+function ruaAtePorta(s: GameState, caixa: { x0: number; y0: number; x1: number; y1: number }, porta: { x0: number; x1: number; y0: number }, dados: GameData, limite = Infinity): TileDeGrid[] | null {
+  const naCaixa = (t: TileDeGrid): boolean => t.gx >= caixa.x0 && t.gx < caixa.x1 && t.gy >= caixa.y0 && t.gy < caixa.y1;
+  const veio = new Map<string, string | null>();
+  // profundidade por tile: a busca nao passa de `limite` (a rua do melhor candidato ate aqui)
+  const fundo = new Map<string, number>();
+  const fila: TileDeGrid[] = [];
+  for (let x = porta.x0; x < porta.x1; x += 1) {
+    const t = { gx: x, gy: porta.y0 };
+    if (ehEstrada(s.estradas, t)) return [];
+    if (!canPlaceRoad(s, [t], dados).ok) continue;
+    veio.set(chaveDeTile(t), null);
+    fundo.set(chaveDeTile(t), 1);
+    fila.push(t);
+  }
+  for (let k = 0; k < fila.length; k += 1) {
+    const aqui = fila[k] as TileDeGrid;
+    const n = fundo.get(chaveDeTile(aqui)) ?? 0;
+    if (n > limite) continue;
+    for (const [dx, dy] of [[0, 1], [1, 0], [0, -1], [-1, 0]] as const) {
+      const t = { gx: aqui.gx + dx, gy: aqui.gy + dy };
+      const chave = chaveDeTile(t);
+      if (veio.has(chave) || naCaixa(t)) continue;
+      if (ehEstrada(s.estradas, t)) {
+        const rua: TileDeGrid[] = [];
+        for (let c: string | null = chaveDeTile(aqui); c !== null; c = veio.get(c) ?? null) rua.push(tileDeChave(c));
+        return rua;
+      }
+      if (!canPlaceRoad(s, [t], dados).ok) continue;
+      veio.set(chave, chaveDeTile(aqui));
+      fundo.set(chave, n + 1);
+      fila.push(t);
+    }
+  }
+  return null;
+}
+
+/**
+ * Onde a cabana cabe, com cardume ALCANCAVEL ao alcance — pela sim, nunca por
+ * coordenada — e a rua mais CURTA que liga a porta a rua da abertura (zero, com a porta
+ * na rua). Empate: mais cardume alcancavel, depois mais perto do armazem, depois a
+ * primeira em varredura.
+ *
+ * D-PRODUCAO-02: a porta tinha de cair NA rua da abertura. Com o alcance do lenhador
+ * dobrado a abertura pos a mata 5 tiles a oeste, na beira do lago, e a rua deixou de
+ * passar por algum lugar com peixe ao alcance. O jogador faria o que isto faz: a rua.
+ */
+function posicaoDaCabana(s: GameState, dados: GameData): { gx: number; gy: number; cardumes: number; alcancaveis: number; rua: TileDeGrid[] } {
   const colheita = receitaDoTipo(TIPO, dados)?.colheita ?? null;
   if (colheita === null) throw new Error(`fixture: '${TIPO}' sem colheita em production.json`);
   const armazem = s.predios.porId[s.predios.ordem[0] ?? ''];
   const { largura, altura } = dados.terreno.mapaPadrao;
-  let melhor: { gx: number; gy: number; cardumes: number; alcancaveis: number; dist: number } | null = null;
+  let melhor: { gx: number; gy: number; cardumes: number; alcancaveis: number; dist: number; rua: TileDeGrid[] } | null = null;
   for (let gy = 0; gy < altura; gy += 1) {
     for (let gx = 0; gx < largura; gx += 1) {
       if (!canPlace(s, TIPO, gx, gy, dados).ok) continue;
       const caixa = caixaDeTipo(TIPO, gx, gy, dados);
       if (caixa === null) continue;
-      const porta = bordaSul(caixa);
-      let naRua = false;
-      for (let x = porta.x0; x < porta.x1; x += 1) if (ehEstrada(s.estradas, { gx: x, gy: porta.y0 })) naRua = true;
-      if (!naRua) continue;
       const tiles = tilesDeColheitaNaCaixa(s, caixa, colheita, dados);
       const alcancaveis = tiles.filter((k) => tileAlcancavelParaColheita(s, k, dados)).length;
       if (alcancaveis === 0) continue;
+      const rua = ruaAtePorta(s, caixa, bordaSul(caixa), dados, melhor === null ? Infinity : melhor.rua.length);
+      if (rua === null || (melhor !== null && rua.length > melhor.rua.length)) continue;
       const dist = armazem ? Math.abs(gx - armazem.gx) + Math.abs(gy - armazem.gy) : 0;
-      if (melhor === null || alcancaveis > melhor.alcancaveis || (alcancaveis === melhor.alcancaveis && dist < melhor.dist)) {
-        melhor = { gx, gy, cardumes: tiles.length, alcancaveis, dist };
+      if (melhor === null || rua.length < melhor.rua.length || alcancaveis > melhor.alcancaveis
+        || (alcancaveis === melhor.alcancaveis && dist < melhor.dist)) {
+        melhor = { gx, gy, cardumes: tiles.length, alcancaveis, dist, rua };
       }
     }
   }
@@ -143,6 +188,7 @@ function correr(): Corrida {
       if (!plantada && !comandos.some((c) => c.type === 'PlaceBlueprint')) {
         posicao = posicaoDaCabana(s, dados);
         comandos.push({ type: 'PlaceBlueprint', buildingId: TIPO, gx: posicao.gx, gy: posicao.gy });
+        if (posicao.rua.length > 0) comandos.push({ type: 'PlaceRoad', tiles: posicao.rua });
         marcar('plantada', i);
       }
     }

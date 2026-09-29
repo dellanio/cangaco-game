@@ -134,7 +134,9 @@ async function roteiro(ctx) {
   await page.keyboard.down(' ');
   await esperarFrame();
   afirmar((await estado()).navegacao.espacoApertado === true, 'o Espaco segurado deveria ser publicado');
-  const cursorComEspaco = await page.$eval('canvas', (el) => getComputedStyle(el).cursor);
+  // `#jogo canvas`, nao `canvas`: desde a D-TELA-02 o primeiro canvas da pagina e o do
+  // minimapa (cursor `pointer`), e o roteiro lia o cursor dele.
+  const cursorComEspaco = await page.$eval('#jogo canvas', (el) => getComputedStyle(el).cursor);
   afirmar(
     cursorComEspaco === 'grab' || cursorComEspaco === 'grabbing',
     `com o Espaco segurado o cursor deveria avisar que da para arrastar, veio "${cursorComEspaco}"`,

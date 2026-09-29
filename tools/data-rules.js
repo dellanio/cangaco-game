@@ -1145,6 +1145,13 @@ function validarReposicao(dados, id, def, erros) {
       );
     }
   }
+  // D-PRODUCAO-02 — booleano ou ausente: a sim le `=== true`, e `"true"` de texto seria falso
+  if (r.replantaOQueCortou !== undefined && typeof r.replantaOQueCortou !== 'boolean') {
+    erros.push(
+      `recurso/reposicao: resources.tipos.${id}.reposicao.replantaOQueCortou precisa ser booleano, `
+      + `achou ${JSON.stringify(r.replantaOQueCortou)}`,
+    );
+  }
   if (!r.custo || typeof r.custo !== 'object') {
     erros.push(`recurso/reposicao: resources.tipos.${id}.reposicao.custo precisa ser objeto (vazio quando de graca)`);
     return;

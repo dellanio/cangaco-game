@@ -5897,6 +5897,14 @@ vai para o PROGRESS como PARA REVISÃO, e o trabalho segue.
     nada mais o produz. Os roteiros C-TELA-01, C-TELA-02 e C-IA-03c afirmam a regra nova.
 - **P2. D-PRODUCAO-02 — o alcance do lenhador.** Dobrar o raio de busca de árvore e medir a
   vazão antes e depois. Responder se o modo "cortar e plantar" (F-REPL-b) planta de fato.
+  - **ENTREGUE (2026-09-29; plano em `docs/planos/2026-09-29-D-PRODUCAO-02-lenhador.md`).**
+    - O alcance foi de 6 para 12. A vazão não mudou: ~1 tora por minuto, porque quem limita
+      é o ciclo. O alcance só estende a vida da mata rala.
+    - O modo não plantava na prática. O rodízio só voltava ao toco depois de cortar toda
+      adulta ao alcance: 0 replantios em 11 500 ticks, com 5 tocos no fim.
+    - Agora ele replanta o toco que acabou de cortar (`replantaOQueCortou`, só na árvore).
+      Na mata da abertura: 3 replantios e 0 tocos, contra 0 e 4. Isso vai PARA REVISÃO:
+      custa ~15% dos troncos a curto prazo.
 - **P3. C-MOVIMENTO-02 — a tropa ainda trava ao andar.** Repetir a sonda do C-MOVIMENTO-01
   (quantos saltos para trás, e de onde vêm) e achar a causa que sobrou. É o que mais
   atrapalha jogar.

@@ -35,6 +35,8 @@
         "semear_segundos_base": 53,
         "crescer_segundos_base": 412.5,
         "custo": {},
+        "replantaOQueCortou": true,
+        "_docReplantaOQueCortou": "D-PRODUCAO-02 (2026-09-29, PARA REVISAO): o lenhador planta no toco que acabou de cortar antes de seguir para a proxima arvore (o texto do jogo: 'Planta no toco o que cortou'). Sem isto o rodizio so voltava ao toco depois de cortar TODA a mata adulta ao alcance: 0 replantio em 11 500 ticks, com 5 tocos, na abertura. O milho e a uva nao declaram: o rocado segue o rodizio da F-CAMPO-a.",
         "_doc": "F-REPL-a (2026-09-27, [proposta]; decisao do operador: so no TOCO, nunca em tile virgem). O lenhador planta onde cortou, pelo mesmo rodizio do campo. PROPORCAO do KaM (BALANCE_LOG, 'REFERENCIA KaM — o replantio'), nao o numero dele: crescer = 1,25x o do milho (KaM: arvore 8000, milho 6400; 1,25 x 330 = 412,5); semear = 0,8x o `noTile` do lenhador (KaM: plantar 12 golpes, cortar 15; 0,8 x 66,2 = 53). Custo vazio: plantar nao cobra tora (hipotese sobre o KaM, nao conferida no fonte). Toco sob estrada ou estrada planejada NAO rebrota (`tilePlantavel`, sim/recursos.ts)."
       },
       "_doc": "A arvore em pe. Regime `porAcao` porque quem a repoe e o replantio do Woodcutter's (GDD 4.2), nao o relogio. Desde a F-REPL-a ela tem `reposicao`: o toco rebrota."

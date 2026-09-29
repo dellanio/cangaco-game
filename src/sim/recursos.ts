@@ -353,7 +353,8 @@ export interface TrabalhoDoRodizio {
  * era o primeiro de novo, e doze arados rendiam o mesmo que um (BUG-O). Aqui a
  * busca parte do `cursor` — o ultimo tile escolhido — e aceita as DUAS acoes:
  *
- *   1. o tile do cursor, se ainda da para colher dele: termina o tile;
+ *   1. o tile do cursor, se ainda da para colher dele: termina o tile. Esgotado, e
+ *      o tipo `replantaOQueCortou` (a arvore, D-PRODUCAO-02): planta nele;
  *   2. senao, o primeiro DEPOIS dele (dando a volta na lista, e fechando no
  *      proprio cursor) que esta maduro (colher) ou em pousio (semear).
  *
@@ -377,6 +378,9 @@ export function proximoTrabalhoDoRodizio(
   if (i0 >= 0) {
     const k = tiles[i0] as string;
     if (livre(k) && tileColhivelAgora(state, k, colheita, minimo, dados)) return { acao: 'colher', tile: k };
+    // D-PRODUCAO-02 — o toco que acabou de esgotar e replantado antes de seguir
+    const replanta = dados.recursos.tipos[colheita.recurso]?.reposicao?.replantaOQueCortou === true;
+    if (replanta && livre(k) && tilePlantavel(state, k, colheita, dados)) return { acao: 'semear', tile: k };
   }
   for (let passo = 1; passo <= tiles.length; passo += 1) {
     const k = tiles[(i0 + passo) % tiles.length] as string;

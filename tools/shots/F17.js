@@ -193,11 +193,32 @@ async function roteiro(ctx) {
   const tilesDaRua = tilesDaRuaLista.length;
   const arrastos = arrastosDaRede(tilesDaRuaLista);
   const [larguraDaBodega, alturaDaBodega] = defDe('inn').tamanho;
-  const bodega = {
-    tipo: 'inn',
-    gx: Math.max(...tilesDaRuaLista.map((tile) => tile.gx)),
-    gy: yRua - alturaDaBodega,
+  // A Bodega encosta na rua, o mais a leste que der: pela borda sul, e se ali nao couber,
+  // pela borda norte. Ate a D-PRODUCAO-02 era sempre em cima da ponta leste da rua; com o
+  // alcance do lenhador 6 -> 12 a mata do par mudou de lugar, a ponta caiu em cima da
+  // escola, e acima da rua sobra lajedo. A caixa nao pisa predio, planta, rua nem o que
+  // bloqueia construcao.
+  const pisa = (caixa, gx, gy) => gx >= caixa.gx && gx < caixa.gx + caixa.largura && gy >= caixa.gy && gy < caixa.gy + caixa.altura;
+  const ocupadas = [
+    caixaDe('storehouse'), caixaDe('schoolhouse'),
+    ...plantas.map((p) => ({ gx: p.gx, gy: p.gy, ...tamanhoDe(p.tipo) })),
+  ];
+  const cabeABodega = ({ gx: gx0, gy: gy0 }) => {
+    for (let gy = gy0; gy < gy0 + alturaDaBodega; gy += 1) {
+      for (let gx = gx0; gx < gx0 + larguraDaBodega; gx += 1) {
+        if (ocupadas.some((c) => pisa(c, gx, gy))) return false;
+        if (tilesDaRuaLista.some((t) => t.gx === gx && t.gy === gy)) return false;
+        if (bloqueiaConstrucao(gx, gy)) return false;
+      }
+    }
+    return true;
   };
+  const encostadas = (dy) => tilesDaRuaLista
+    .flatMap((t) => Array.from({ length: larguraDaBodega }, (_, i) => ({ gx: t.gx - i, gy: t.gy + dy })))
+    .sort((a, b) => b.gx - a.gx || b.gy - a.gy);
+  const lugarDaBodega = encostadas(-alturaDaBodega).find(cabeABodega) ?? encostadas(1).find(cabeABodega);
+  if (lugarDaBodega === undefined) throw new Error('F17: a Bodega nao cabe encostada em nenhum tile da rua');
+  const bodega = { tipo: 'inn', ...lugarDaBodega };
   const meioDaEscola = { gx: escola.gx + Math.floor(largEs / 2), gy: escola.gy + Math.floor(altEs / 2) };
   const timberInicial = economia.estadoInicial.estoque.timber;
 

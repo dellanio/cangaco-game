@@ -34,10 +34,9 @@ function correr(inicial: GameState, tiles: readonly string[], dados: GameData): 
 }
 
 /**
- * Anda ate existir um toco ao alcance de `w1`, na mata de 2 tiles. Na mata inteira
- * o rodizio corta adulta antes de plantar e, em 12000 ticks, nao replanta nenhum
- * toco (evidencia: `mataInteiraComReposicao`) — ali o contraste "sem estrada ele
- * rebrota" nao aconteceria.
+ * Anda ate existir um toco ao alcance de `w1`, na mata de 2 tiles: ali o toco aparece
+ * cedo. (Ate a D-PRODUCAO-02, na mata inteira o rodizio cortava adulta antes de plantar
+ * e nao replantava toco nenhum em 12000 ticks; agora replanta o que acabou de cortar.)
  */
 function ateOPrimeiroToco(dados: GameData): { s: GameState; toco: string } {
   const curta = mataCurta(dados, 2);
@@ -63,9 +62,10 @@ describe('F-REPL-a — o toco rebrota', () => {
     expect(r0.troncos).toBe(teto);
     expect(r0.replantios).toBe(0);
     expect(r0.depois).toBe(0);
-    // com reposicao: acabou a adulta, e mesmo assim veio tronco depois
-    expect(r.semAdulta).not.toBeNull();
-    expect(r.depois).toBeGreaterThan(0);
+    // com reposicao: passou do teto. D-PRODUCAO-02: o toco e replantado assim que esgota
+    // (`replantaOQueCortou`), e a mata de 2 tiles nunca fica sem adulta na janela — era
+    // "acabou a adulta, e mesmo assim veio tronco depois", com a volta inteira de cortes
+    expect(r.semAdulta).toBeNull();
     expect(r.troncos).toBeGreaterThan(teto);
     expect(r.replantios).toBeGreaterThan(0);
     expect(r.dentroDaArvore).toBe(0);

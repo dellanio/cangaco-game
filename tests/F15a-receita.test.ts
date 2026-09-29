@@ -42,7 +42,8 @@ describe('F15a — a receita e um ciclo', () => {
     // campo, e passava com qualquer receita que nao colhesse nada. Esta afirma
     // a FORMA inteira — recurso, alcance e nenhuma outra chave —, que e o que a
     // regra de classe da F-T3 le para mandar o lenhador ate a arvore.
-    expect(r?.colheita).toEqual({ recurso: 'tree', alcance: 6, aDistancia: false, ticksDeDescanso: 92, ticksNoTile: 331 });
+    // D-PRODUCAO-02 (operador, 2026-09-29): o alcance dobrou, de 6 para 12.
+    expect(r?.colheita).toEqual({ recurso: 'tree', alcance: 12, aDistancia: false, ticksDeDescanso: 92, ticksNoTile: 331 });
   });
 
   it('as proporcoes que o GDD escreve em palavras saem do dado', () => {

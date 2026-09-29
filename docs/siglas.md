@@ -197,6 +197,7 @@ Decisão do operador (2026-09-28).
 | C-COMBATE-01a | formação e virar | — | fechado | `C-COMBATE-01a-formacao-e-virar` |
 | C-COMBATE-02b | a cerca da paz sai | — | fechado | `C-COMBATE-02b-a-cerca-sai` |
 | C-MOVIMENTO-02 | a tropa não trava | — | fechado | `C-MOVIMENTO-02-a-tropa-nao-trava` |
+| D-PRODUCAO-02 | o lenhador: alcance 12 e replantio do toco | — | fechado | `D-PRODUCAO-02-lenhador` |
 | D1a | colisão civil: o mecanismo, desligado | D-MOVIMENTO-01a | fechado | `D1a-colisao-civil` |
 | D1a-2 | colisão civil: empilhamento de fora do passo | D-MOVIMENTO-01c | fechado | `D1a-2-empilhamento-fora-do-passo` |
 | D1a-3 | colisão civil: JobBoard sem A* na tarefa recusada e "na porta" por estado da chave | D-MOVIMENTO-01d | fechado | `D1a-3-jobboard-e-porta-por-estado` |

@@ -236,6 +236,10 @@ export interface ReposicaoDeRecurso {
    *  a reposicao nao cobra nada (o milho de hoje: a semente vem do proprio
    *  roçado, decisao registrada no item da fila). */
   readonly custo: Readonly<Record<string, number>>;
+  /** D-PRODUCAO-02 — o rodizio planta o tile que acabou de esgotar ANTES de seguir para
+   *  o proximo (o lenhador "planta no toco o que cortou"). Sem isto, com toda a mata
+   *  adulta no comeco, o toco so e replantado depois de uma volta inteira de cortes. */
+  readonly replantaOQueCortou: boolean;
 }
 
 export interface RecursosData {

@@ -93,6 +93,7 @@ interface RawTipoDeRecurso {
     readonly semear_segundos_base: number;
     readonly crescer_segundos_base: number;
     readonly custo: Readonly<Record<string, number>>;
+    readonly replantaOQueCortou?: boolean;
   };
   readonly aradura?: {
     readonly segundos_base: number;
@@ -759,6 +760,8 @@ export function loadGameData(raw: RawGameData): GameData {
           ),
         ),
         custo: semChavesDeDoc(reposicao.custo),
+        // D-PRODUCAO-02: `=== true`, como o `bloqueiaPasso`; o `validate:data` acusa o resto
+        replantaOQueCortou: reposicao.replantaOQueCortou === true,
       },
       // F18h — arar e a outra ponta do mesmo ciclo: `reposicao` diz o que custa
       // REPOR um tile que ja e campo, `aradura` diz o que custa CRIAR o campo.

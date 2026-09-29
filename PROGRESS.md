@@ -13782,3 +13782,38 @@ para trás, e de onde vêm agora. Se for outra causa, ache." O plano está em
 
 **Hipótese (não confirmada):** a espera de 42 ticks ao atravessar a vila para o norte é uma
 fila natural num corredor estreito: u28 espera u22, que espera outro. Não achei um ciclo.
+
+## 2026-09-29 — D-PRODUCAO-02 (o lenhador: alcance 12 e replantio do toco)
+
+Pedido do operador, P2: "Dobre e meça o efeito na vazão. E responda: ele está replantando?"
+O plano está em `docs/planos/2026-09-29-D-PRODUCAO-02-lenhador.md`.
+
+**Verificado:**
+- As medidas vieram de sondas, já apagadas: `w1` do oráculo, `w2` pausado, 11 500 ticks.
+  - Na abertura, com alcance 6: 9 árvores ao alcance, 20 troncos, 0 replantios, 5 tocos no fim.
+  - Na abertura, com alcance 12: 9 árvores, 18 troncos, 0 replantios.
+  - Na mata densa (18,54), com alcance 6: 56 árvores, 19 troncos. Com 12: 68 árvores, 18 troncos. Os dois dão 0 replantios.
+  - **A vazão não muda com o alcance.** ~1 tora por minuto; quem limita é o ciclo, e o alcance só estende a vida da mata rala.
+- **Resposta: ele não replantava.** O rodízio (`proximoTrabalhoDoRodizio`) continuava na adulta seguinte e só voltava ao toco depois de cortar toda adulta ao alcance. Dobrar o alcance deixaria essa volta mais longa.
+- **O conserto:** `data/resources.json: tree.reposicao.replantaOQueCortou = true`. Quando o tile do cursor esgota, o próximo trabalho é semear ali. Milho e uva não declaram o flag.
+- **O teste:** `tests/D-PRODUCAO-02-lenhador.test.ts`, com a evidência em `test-output/D-PRODUCAO-02.json`.
+  - Com o flag: 15 troncos, 3 replantios, 0 tocos.
+  - Com o flag desligado (a regra antiga): 18 troncos, 0 replantios, 4 tocos.
+  - O alcance da receita é o de `production.json`, e só a árvore declara o flag.
+- **Efeito colateral no F-T4d:** a abertura agora põe os lenhadores em x 29/32 (antes 34/37), onde o F-T4d punha a cabana do pescador.
+  - O fixture passou a escolher a posição com a rua mais curta e assentá-la. A busca é limitada pela melhor rua até ali; sem o limite, o arquivo levava 18 s contra um `timeout` de 20.
+  - A cabana foi para (26,27), com 1 tile de rua.
+- **Efeito colateral no F-REPL-a:** a mata de 2 tiles não fica mais sem adulta. A asserção passou a afirmar isso (`semAdulta` null).
+- **O roteiro F17 (e o F-ESC, que o reusa):** a Bodega ia na ponta leste da rua, que agora cai em cima da escola, e acima da rua sobra lajedo.
+  - Ela passa a ir onde caiba encostada na rua: pela borda sul, senão pela borda norte, o mais a leste possível.
+  - A obra completa, e o roteiro sai com 0.
+- **O roteiro F-D2 falhava já no HEAD limpo**, antes desta feature. Conferi com `git stash`.
+  - Causa: desde a D-TELA-02 o primeiro `canvas` da página é o do minimapa (CSS `cursor: pointer`), e `page.$eval('canvas')` lia o cursor dele.
+  - O seletor virou `#jogo canvas`, e o roteiro sai com 0.
+- `npm run verify` verde. F06, F17, F17b, F17d, F17g, F23b, F-D2, F-ESC, F-REPL-d e CORONEL saíram com código 0.
+
+**PARA REVISÃO (decisão conservadora minha):**
+- Replantar o toco na hora custa troncos a curto prazo: 18 → 15 na janela, cerca de 15%. Em troca, a mata não se esgota.
+  - A saída pronta é desligar o flag em `resources.json`, que volta à regra antiga.
+  - Uma alternativa seria replantar só quando a adulta ao alcance cair abaixo de N. Não fiz, porque é número novo sem pedido.
+- A abertura da Fase A mudou de geometria com o alcance 12: lenhadores e rua 5 tiles a oeste. Nenhum aceite quebrou, mas a partida começa diferente.

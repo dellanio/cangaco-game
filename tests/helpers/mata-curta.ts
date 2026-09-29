@@ -1,8 +1,9 @@
 /**
  * F-REPL — o lenhador `w1` do `cenarioOraculo` com a mata encurtada, para o
- * replantio aparecer numa janela de teste. Na mata inteira (9 tiles) o rodizio corta
- * adulta antes de plantar e, em 12 000 ticks, nao replanta nenhum toco
- * (`test-output/F-REPL-a.json`).
+ * replantio aparecer numa janela de teste. Ate a D-PRODUCAO-02, na mata inteira (9 tiles)
+ * o rodizio cortava adulta antes de plantar e, em 12 000 ticks, nao replantava nenhum toco;
+ * agora o toco que acabou de esgotar e replantado antes de seguir (`replantaOQueCortou`),
+ * e a mata curta continua servindo para o toco aparecer cedo.
  *
  * A mata e encurtada no ESTADO, depois do cenario montado: encurtar no dado
  * (`comJazida`) muda onde a abertura poe o lenhador. `w2` fica pausado pelo comando,
