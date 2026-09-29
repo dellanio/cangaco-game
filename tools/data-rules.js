@@ -557,6 +557,22 @@ function validarPoliticaDeTreino(dados, erros) {
   }
 }
 
+// C-IA-02b: o prefeito enfileira enquanto a fila esta abaixo de `filaAlvo`; acima dos
+// slots da escola ele pediria o que a fila recusa, e zero nunca pediria nada.
+function validarPrefeito(dados, erros) {
+  const prefeito = (dados.economy && dados.economy.prefeito) || {};
+  const slots = ((dados.economy && dados.economy.schoolhouse) || {}).slotsDeFila;
+  if (!Number.isInteger(prefeito.filaAlvo) || prefeito.filaAlvo < 1 || prefeito.filaAlvo > slots) {
+    erros.push(`economia/prefeito: filaAlvo precisa ser inteiro de 1 a schoolhouse.slotsDeFila (${slots})`);
+  }
+  if (typeof prefeito.serfsPorPredio !== 'number' || prefeito.serfsPorPredio < 0) {
+    erros.push('economia/prefeito: serfsPorPredio precisa ser numero >= 0');
+  }
+  if (!Number.isInteger(prefeito.ouroMinimoParaSerf) || prefeito.ouroMinimoParaSerf < 0) {
+    erros.push('economia/prefeito: ouroMinimoParaSerf precisa ser inteiro >= 0');
+  }
+}
+
 // F25a: o que o quartel consome para formar soldado (`units.json:
 // militares.tipos[].requisitos`) tem de ser MERCADORIA, senao nenhuma entrega leva
 // aquilo ao quartel e o tipo nunca se forma. Foi assim que `horse` (a mercadoria e
@@ -1411,6 +1427,7 @@ function validarTudo(dados) {
   validarDevolucaoDePredio(dados, erros);
   validarEscadaDePrioridade(dados, erros);
   validarPoliticaDeTreino(dados, erros);
+  validarPrefeito(dados, erros);
   validarRequisitosDoQuartel(dados, erros);
   validarAtiradores(dados, erros);
   validarFeira(dados, erros);

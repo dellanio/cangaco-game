@@ -51,6 +51,8 @@ const CAMPOS_ESCALONADOS = [
     unidade: 'segundos', declaraEscalaEm: 'construcao.escala' },
   { arquivo: 'economy', caminho: 'schoolhouse.segundosPorTreino_base',
     unidade: 'segundos', declaraEscalaEm: 'schoolhouse.escala' },
+  { arquivo: 'economy', caminho: 'prefeito.revisao_segundos_base',
+    unidade: 'segundos', declaraEscalaEm: 'prefeito.escala' },
   { arquivo: 'combat', caminho: 'cadenciaDeAtaque_segundos_base',
     unidade: 'segundos', declaraEscalaEm: 'escala' },
   { arquivo: 'combat', caminho: 'ataqueAPredio.cadencia_segundos_base',

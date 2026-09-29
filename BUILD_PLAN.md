@@ -5958,7 +5958,7 @@ vai para o PROGRESS como PARA REVISÃO, e o trabalho segue.
      - Nenhuma regra nova.
      - Aceite em `tests/C-IA-02a-vila-da-ia.test.ts`: o pão da IA vai de 20 a 75 em 12000
        ticks, e os 7 civis vivem.
-   - **C-IA-02b — o prefeito mínimo (sim).** O `CheckUnitCount` do KaM: a IA pede à escola
+   - **C-IA-02b — o prefeito mínimo (sim). ENTREGUE (2026-09-29).** O `CheckUnitCount` do KaM: a IA pede à escola
      dela o especialista que falta em prédio sem ocupante e serfs até 1 por prédio, só com
      ouro.
      - Nota da C-IA-02a: os civis de hoje nascem do dado (`escaramuca.producao.civis`). Com
@@ -5969,6 +5969,8 @@ vai para o PROGRESS como PARA REVISÃO, e o trabalho segue.
        tropa da IA tem 21.
      - Os atacantes da C-IA-04 continuam: a reposição pelo quartel pede armas, e a cadeia
        de armas não é deste item.
+     - Nota da C-IA-02b: com 20 de ouro a IA não treina serf (o limiar é `> 20`). A comida
+       da tropa sai pelas mãos dos 4 serfs do dado, que já carregam a cadeia do pão.
 4. D-TELA-01 — aba de estatísticas: prédios e trabalhadores por tipo, com os ociosos em
    destaque.
 5. D-TRANSPORTE-01 — armazém com liga/desliga por mercadoria.

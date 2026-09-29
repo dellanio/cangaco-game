@@ -23,6 +23,14 @@
     "escala": "construcao",
     "reembolsoSeNaoIniciado": true
   },
+  "prefeito": {
+    "_doc": "C-IA-02b (prefeito minimo; plano em docs/planos/2026-09-29-C-IA-02b-prefeito-minimo.md). O CheckUnitCount do KaM (KM_AIMayor.pas:142-270): a cada revisao, a IA pede a escola dela o especialista que falta (um por tipo de predio completo com trabalhador) e serfs ate `serfsPorPredio` x predios completos, com a fila da escola abaixo de `filaAlvo`. O serf so com ouro dos armazens ACIMA de `ouroMinimoParaSerf` (o `> 20` do HasEnoughGoldForAux); o especialista so com ouro para pagar o treino (decisao conservadora, PARA REVISAO: o KaM nao olha ouro para ele). SerfsPerHouse 1 e KM_AISetup.pas:79; a revisao de 4,8 s e o UpdateState a cada MAX_HANDS*4 = 48 ticks. Peao e recruta ficam de fora: sem AutoBuild e sem cadeia de armas.",
+    "serfsPorPredio": 1,
+    "filaAlvo": 2,
+    "ouroMinimoParaSerf": 20,
+    "revisao_segundos_base": 4.8,
+    "escala": "economia"
+  },
   "storehouse": { "capacidade": null, "bloqueioPorItem": true },
   "marketplace": { "taxaFixa": true, "taxa": 2, "_docTaxa": "F35 (decisao do operador, 2026-09-27, noite): o jogador da DUAS unidades de A e recebe UMA de B, para qualquer par. \"Troca deve custar, senao a Feira vira atalho para toda escassez.\"", "maxSerfs": 10 },
   "mercadorias": [

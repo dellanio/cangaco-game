@@ -14033,3 +14033,60 @@ A pedido do operador, depois da C-IA-02a (a vila da IA com produção).
 
 **Aberto, não feito:** o `pontoDaUnidade` vive dentro do C-IA-03c. Se outro roteiro precisar
 mirar unidade, o lugar dele é o `tools/shots/_canvas.js`, junto do `pontoDoTileNaTela`.
+
+## 2026-09-29 — C-IA-02b (o prefeito mínimo, sim) ENTREGUE
+
+O plano está em `docs/planos/2026-09-29-C-IA-02b-prefeito-minimo.md`. É o `CheckUnitCount` do
+KaM (`KM_AIMayor.pas:142-270`) sem AutoBuild: a IA não ergue prédio, só pede à escola dela
+quem falta para a vila que já tem.
+
+**Verificado:**
+- `sim/prefeito.ts` (novo): `pedidosDoPrefeito(state, lado, dados)`, pura.
+  - Especialista: cada prédio completo do lado com `trabalhador` pede um daquele tipo; os
+    vivos mais a fila das escolas do lado cobrem a demanda. Conta por TIPO, como o KaM, e
+    por isso moinho e padaria pedem 2 padeiros. Um pedido por escola por revisão.
+  - Serf: até `round(serfsPorPredio × prédios completos)`, com a fila abaixo de `filaAlvo`.
+  - Recruta (o trabalhador da torre) e peão ficam de fora.
+- `systems/ia.ts`: o passo roda depois de alimentar, também em paz, e só no tick da
+  revisão. Cada pedido vira o mesmo `aplicarEnqueueTraining` do comando do jogador.
+  - O `sistemaDaIA` passou a receber o tick que o `step` produz, porque o `state.tick`
+    ainda é o anterior. O único chamador é `tick.ts`.
+- `data/economy.json`, bloco `prefeito`: `serfsPorPredio` 1, `filaAlvo` 2,
+  `ouroMinimoParaSerf` 20 e `revisao_segundos_base` 4,8 na escala `economia`.
+  - O loader converte a revisão em `ticksDaRevisao`, e a entrada está em
+    `CAMPOS_ESCALONADOS`.
+  - Com a escala `economia` 2,0, a revisão dá **24 ticks**, e não os 48 do KaM: a mesma
+    proporção do resto da economia. A evidência mostra o farmer enfileirado no tick 24.
+  - `data-rules.js: validarPrefeito` exige `filaAlvo` de 1 a `slotsDeFila`.
+- `tests/C-IA-02b-prefeito.test.ts` tem 7 testes, todos verdes:
+  1. a escaramuça sem mudança não gera pedido;
+  2. com o fazendeiro morto, o farmer entra na fila no tick da revisão e nasce do lado da
+     IA (`test-output/C-IA-02b-especialista.json`, aberta: enfileirou no tick 24, nasceu no
+     805);
+  3. com os dois padeiros mortos, vivos mais fila nunca passam de 2;
+  4. com ouro 40, os serfs chegam a 7 (1 por prédio) e param ali, e a fila nunca passa de 2
+     (`test-output/C-IA-02b-serfs.json`, aberta: alvo 7, 7 no fim, fila máxima 2);
+  5. com o ouro no limiar (20) nenhum serf vai para a fila, e com 21 o pedido já sai;
+  6. sem ouro, o especialista não entra na fila, e com 1 de ouro entra;
+  7. determinismo em 1500 ticks.
+- Mutação: com o passo do prefeito desligado, os testes 2, 3 e 4 reprovam.
+- `npm run verify` passou, com o mundo transladado. O roteiro C-IA-02a saiu com código 0.
+- O teste 4 estourou o `timeout` padrão de 5 s na suíte paralela; isolado, levou ~1,5 s.
+  - A corrida caiu de 4000 para 2000 ticks, porque a sonda mostrou o 7º serf no tick 1139.
+  - O teste 4 e o de determinismo ganharam `timeout` de 20 s, só para o caso de travar.
+
+**PARA REVISÃO (interpretações conservadoras):**
+- **"Só com ouro" vale para os dois.** O KaM não olha ouro para o especialista. Aqui ele só
+  entra na fila se o lado pode pagar mais um treino; sem isso, o item esperaria na fila por
+  um ouro que não vem.
+- **O limiar do serf é o do KaM, `> 20`, e a escaramuça dá 20 de ouro à IA.** Por isso, na
+  partida de hoje a IA **não** treina serf: nasce com 4 e fica com 4, contra um alvo de 7.
+  A saída está pronta: baixar `economy.prefeito.ouroMinimoParaSerf` ou subir o ouro em
+  `escaramuca.estoqueDoArmazem`.
+- A contagem inicial de civis (`escaramuca.producao.civis`) não mudou. Baixá-la agora que
+  a escola repõe é balanceamento.
+- A revisão cai no tick múltiplo do período, sem o deslocamento por dono do KaM.
+
+**O que muda na partida:** quando o jogador mata o fazendeiro ou um padeiro da IA, a escola
+dela treina outro, pagando 1 de ouro dos 20. Fora isso, a partida não muda.
+

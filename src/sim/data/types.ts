@@ -409,6 +409,14 @@ export interface EconomiaSchoolhouseData {
   readonly reembolsoSeNaoIniciado: boolean;
 }
 
+/** C-IA-02b — o prefeito minimo da IA (`economy.json: prefeito`). */
+export interface EconomiaPrefeitoData {
+  readonly serfsPorPredio: number;
+  readonly filaAlvo: number;
+  readonly ouroMinimoParaSerf: number;
+  readonly ticksDaRevisao: Ticks;
+}
+
 export interface EconomiaData {
   readonly estadoInicial: Omit<RawGameData['economy']['estadoInicial'], 'menuBuildInicial'> & {
     /** So raiz sem pai na arvore (`tools/data-rules.js`) — e a arvore nao tem
@@ -419,6 +427,7 @@ export interface EconomiaData {
     readonly menuBuildInicial: readonly string[];
   };
   readonly schoolhouse: EconomiaSchoolhouseData;
+  readonly prefeito: EconomiaPrefeitoData;
   readonly storehouse: RawGameData['economy']['storehouse'];
   readonly marketplace: RawGameData['economy']['marketplace'];
   readonly mercadorias: RawGameData['economy']['mercadorias'];

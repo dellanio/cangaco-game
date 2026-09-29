@@ -805,6 +805,19 @@ export function loadGameData(raw: RawGameData): GameData {
       ),
       reembolsoSeNaoIniciado: raw.economy.schoolhouse.reembolsoSeNaoIniciado,
     },
+    prefeito: {
+      serfsPorPredio: raw.economy.prefeito.serfsPorPredio,
+      filaAlvo: raw.economy.prefeito.filaAlvo,
+      ouroMinimoParaSerf: raw.economy.prefeito.ouroMinimoParaSerf,
+      ticksDaRevisao: registrar(
+        'economy.prefeito.revisao_segundos_base', raw.economy.prefeito.escala,
+        raw.economy.prefeito.revisao_segundos_base, 'segundos',
+        paraTicksDeDuracao(
+          raw.economy.prefeito.revisao_segundos_base, 'segundos',
+          escalaDe(escalas, raw.economy.prefeito.escala) as number, tickHz,
+        ),
+      ),
+    },
     storehouse: raw.economy.storehouse,
     marketplace: raw.economy.marketplace,
     mercadorias: raw.economy.mercadorias,

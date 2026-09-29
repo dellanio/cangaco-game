@@ -463,5 +463,8 @@
   },
   "C-IA-02a-vila-da-ia": {
     "passes": true
+  },
+  "C-IA-02b-prefeito": {
+    "passes": true
   }
 }

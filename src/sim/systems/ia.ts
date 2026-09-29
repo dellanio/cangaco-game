@@ -21,6 +21,10 @@
  * ANDAIME (L8): a tropa da IA nao drena ate a IA ter economia (`condicao.iaDrena`), entao
  * na partida este ponto so age quando o dado virar; os testes baixam a condicao a mao.
  *
+ * C-IA-02b (prefeito minimo) — depois de alimentar, no tick da revisao, e tambem em paz
+ * (o KaM treina em paz): os pedidos de `pedidosDoPrefeito` (`sim/prefeito.ts`) viram o
+ * mesmo `EnqueueTraining` do jogador, dado pela IA.
+ *
  * A IA ignora a nevoa (decisao do operador; KM_HandsCollection.pas:523-567). Ela da as
  * mesmas ordens que o jogador daria — o estado da unidade e o mesmo de `MoveUnits` e
  * `AttackUnit` —, so que sem comando: e a IA, nao o jogador, quem as emite.
@@ -41,6 +45,8 @@ import { intrusos, posicaoDoMembro, tipoDeGrupo } from '../ia';
 import { comUnidade } from '../units/movimento';
 import { FSM_MARCHANDO, tilesDoGrupo } from './marcha';
 import { FSM_ATIRANDO, FSM_INDO_LUTAR, FSM_LUTANDO } from './combate';
+import { aplicarEnqueueTraining } from './escolas';
+import { ehTickDaRevisao, pedidosDoPrefeito } from '../prefeito';
 
 const lutando = (u: Unidade): boolean => u.fsm === FSM_INDO_LUTAR || u.fsm === FSM_LUTANDO || u.fsm === FSM_ATIRANDO;
 
@@ -203,7 +209,8 @@ function atacarComASobra(state: GameState, lado: number, ia: IADoLado, dados: Ga
   return atual;
 }
 
-export function sistemaDaIA(state: GameState, dados: GameData): ResultadoDeSistema {
+/** `tick` e o numero do tick que este `step` produz (o `state.tick` ainda e o anterior). */
+export function sistemaDaIA(state: GameState, dados: GameData, tick: number): ResultadoDeSistema {
   if (state.ia === undefined) return { state, events: [] };
   let atual = state;
   const events: GameEvent[] = [];
@@ -221,6 +228,13 @@ export function sistemaDaIA(state: GameState, dados: GameData): ResultadoDeSiste
       const alimentada = alimentarAPosicao(atual, p, dados);
       atual = alimentada.state;
       events.push(...alimentada.events);
+    }
+    if (ehTickDaRevisao(tick, dados)) {
+      for (const pedido of pedidosDoPrefeito(atual, lado, dados)) {
+        const r = aplicarEnqueueTraining(atual, { type: 'EnqueueTraining', ...pedido }, dados);
+        atual = r.state;
+        events.push(...r.events);
+      }
     }
     if (paz) continue;
     const reposto = reporPeloQuartel(atual, lado, guarnecida, dados);

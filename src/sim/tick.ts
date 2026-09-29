@@ -215,7 +215,7 @@ export function step(
   // proximo, e quem morre na chegada ja nao age neste tick
   const noAr = sistemaDosProjeteis(atual, dados);
   events.push(...noAr.events);
-  const comIA = sistemaDaIA(sistemaDaRegeneracao(noAr.state, tick, dados), dados);
+  const comIA = sistemaDaIA(sistemaDaRegeneracao(noAr.state, tick, dados), dados, tick);
   events.push(...comIA.events);
   // C-COMBATE-01b: a carga depois da marcha e antes da luta, como ela
   const luta = sistemaDoCombate(sistemaDaCarga(sistemaDaMarcha(comIA.state, dados).state, dados).state, dados);
