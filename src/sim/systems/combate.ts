@@ -112,6 +112,12 @@ function inimigoEncostado(state: GameState, u: Unidade, dados: GameData): Unidad
 
 function passoIndoLutar(state: GameState, u: Unidade, alvo: Unidade, dados: GameData): GameState {
   if (encostadas(u, alvo)) return comUnidade(state, lutarCom(u, alvo, dados));
+  // BUG-P: a caminho do alvo, o inimigo ENCOSTADO e revidado, como na marcha (C6; KaM
+  // `CheckForEnemy`, KM_UnitWarrior.pas:664-702). Sem isto, um alvo cercado pelos colegas
+  // (nenhum tile livre encostado nele) prendia o atacante em `indo_lutar` para sempre, com
+  // o inimigo do lado.
+  const encostado = inimigoEncostado(state, u, dados);
+  if (encostado !== null) return comUnidade(state, lutarCom(u, encostado, dados));
   let atual = u;
   const caminho = u.fsmData.caminho ?? [];
   const proximo = caminho[0];
