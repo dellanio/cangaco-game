@@ -12442,6 +12442,44 @@ dos testes:
   (`docs/planos/2026-09-28-F-FEED-fome-militar.md`) **ainda espera aprovação**. Ele destrava
   o C-IA-01 (IA alimentar tropas).
 
+## 2026-09-29 — BUG-Q, BUG-R e BUG-S corrigidos (os três `errado` do avaliador)
+
+Autorização do operador: "se forem baratos, conserte e mergeie; se algum mudar
+comportamento, a gente decide antes". Os três devolvem o comportamento que já estava declarado,
+e nenhum pediu decisão.
+
+### Feito
+- **BUG-Q (C5, colisão militar × ataque a prédio), `systems/cerco.ts`:** `passoIndoAtacar`
+  mira só os tiles do anel sem ninguém PARADO (`paradoNoTile`); com o anel todo tomado, mira
+  o anel inteiro e espera. Também replaneja quando o tile que ele mira é tomado por um colega
+  que chegou antes.
+- **BUG-R (C7, lado no JobBoard), `systems/jobs.ts`:** `armazemMaisPertoDoTile` só olha
+  armazém do jogador (`armazensCompletos(state, LADO_DO_JOGADOR)`).
+- **BUG-S (C-IA-03b, peacetime), `sim/paz.ts`:** `HireMercenary` recusado `em-paz`, com o
+  motivo novo em `MotivoDeRecusaDeMercenario`. O comentário falso ("a sim ainda não tem") foi
+  corrigido.
+- **A asserção que faltava** (lição do operador: "se o roteiro mostrou o defeito e ninguém
+  viu, a asserção que faltava é mais valiosa que o conserto"):
+  - **`tests/BUG-Q-todos-golpeiam.test.ts`** conta QUANTOS soldados do grupo chegam a
+    golpear, com 4 e com 12.
+  - **o roteiro `C-IA-03c`** reprova se um soldado passar mais de 10 rodadas seguidas em
+    `indo_atacar`.
+
+### Verificado
+- **Cada teste novo, rodado sem o conserto e com ele:**
+  - BUG-Q: 4 soldados → 3 golpeiam, 12 → 6; com o conserto, todos;
+  - BUG-R: a origem era do lado 1 e a tarefa nunca era reclamada; com o conserto, a origem é
+    do jogador e a tarefa é reclamada;
+  - BUG-S: `HireMercenary` entrou na lista do teste da C-IA-03b.
+- **O roteiro `C-IA-03c`, sem o conserto:** reprova com "u12 ficou 11 rodadas em
+  indo_atacar".
+- **O mesmo roteiro, com o conserto:** OK.
+  - Na rodada 10, 11 atacam e 1 está a caminho, contra os 10 parados de antes.
+  - A vitória sai no tick 7527 em 15 rodadas, antes 9627 em 36, com 12 de 18 vivos.
+- **Não-regressão:** os roteiros F26b, F34, F28b, C4, C2, F08, F18d-2, F25b e F36 passaram.
+- **`npm run verify` verde:** 166 arquivos, 1860 testes.
+- **Chaves:** C5, C7 e C-IA-03b voltam a `true`. Os três saem do `BUGS.md` neste commit.
+
 ## 2026-09-29 — Avaliador sobre a segunda leva (e89b0a6..55c80b8): NEEDS_WORK, três `errado`
 
 Pedido do operador antes do merge. O relatório inteiro está em

@@ -156,6 +156,16 @@ function comecarAGolpear(state: GameState, u: Unidade, dados: GameData): GameSta
   });
 }
 
+/** BUG-Q — alguma OUTRA unidade parada (sem caminho a andar) ocupa o tile? */
+function paradoNoTile(state: GameState, tile: TileDeGrid, quem: string): boolean {
+  for (const id of state.unidades.ordem) {
+    if (id === quem) continue;
+    const o = state.unidades.porId[id];
+    if (o !== undefined && o.gx === tile.gx && o.gy === tile.gy && (o.fsmData.caminho ?? []).length === 0) return true;
+  }
+  return false;
+}
+
 function passoIndoAtacar(state: GameState, u: Unidade, dados: GameData): ResultadoDeSistema {
   const alvo = alvoDaOrdem(state, u);
   if (alvo === null) return semEventos(comUnidade(state, ocioso(u)));
@@ -165,8 +175,18 @@ function passoIndoAtacar(state: GameState, u: Unidade, dados: GameData): Resulta
   const caminho = u.fsmData.caminho;
   const proximo = caminho?.[0];
   const bloqueado = proximo !== undefined && !passoAndavel(state, noTile(u), proximo, 'livre', dados);
-  if (caminho === undefined || caminho.length === 0 || bloqueado) {
-    const rota = buscarCaminho(state, noTile(u), anelDeAtaque(state, alvo, dados, ehADistancia(u.tipo, dados)), 'livre', dados);
+  // BUG-Q: o tile do anel que ele mira foi tomado por um colega que chegou antes e parou:
+  // replaneja para um que siga livre, em vez de esperar atras dele para sempre
+  const destino = caminho?.[caminho.length - 1];
+  const destinoTomado = destino !== undefined && paradoNoTile(state, destino, u.id);
+  if (caminho === undefined || caminho.length === 0 || bloqueado || destinoTomado) {
+    // BUG-Q: o A* ignora unidades, entao o anel inteiro devolveria o tile que um colega ja
+    // ocupa golpeando, e a colisao militar (C5) segura este soldado ali perto para sempre.
+    // Mira so os tiles do anel sem ninguem PARADO; com o anel todo tomado, mira o anel inteiro
+    // e espera, como antes.
+    const anel = anelDeAtaque(state, alvo, dados, ehADistancia(u.tipo, dados));
+    const livres = anel.filter((t) => !paradoNoTile(state, t, u.id));
+    const rota = buscarCaminho(state, noTile(u), livres.length > 0 ? livres : anel, 'livre', dados);
     if (rota === null) return semEventos(comUnidade(state, ocioso(u)));
     atual = { ...u, fsmData: { alvo: alvo.id, caminho: rota.tiles, progresso: 0 } };
     if (rota.tiles.length === 0) return semEventos(comecarAGolpear(state, atual, dados));

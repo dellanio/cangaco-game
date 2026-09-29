@@ -69,7 +69,7 @@ describe('C-IA-03b — peacetime e tropas', () => {
     expect(quartel && quartel.estado === 'completo' ? [quartel.estoque.entrada, quartel.recrutas] : null).toEqual([{}, 0]);
   });
 
-  it('em paz: as quatro ordens de exercito voltam em-paz e o estado nao muda; construir passa', () => {
+  it('em paz: as cinco ordens de exercito voltam em-paz e o estado nao muda; construir passa', () => {
     const tropa = tropaDoJogador(s0);
     const quartelDaIA = prediosDaIA(s0).find((id) => s0.predios.porId[id]?.tipo === 'barracks') as string;
     const alvo = doLado(s0, LADO_DA_IA)[0] as string;
@@ -78,6 +78,8 @@ describe('C-IA-03b — peacetime e tropas', () => {
       { type: 'AttackUnit', unidades: tropa, alvo },
       { type: 'AttackBuilding', unidades: tropa, predio: quartelDaIA },
       { type: 'TrainSoldier', predio: quartelDaIA, tipo: 'militia' },
+      // BUG-S: o mercenario da prefeitura (gicHouseTownHallEquip no KaM) tambem e recusado
+      { type: 'HireMercenary', predio: quartelDaIA, tipo: 'rebel' },
     ];
     const semNada = semEventos(step(s0, [], gameData));
     for (const ordem of ordens) {

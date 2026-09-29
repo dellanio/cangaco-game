@@ -15,7 +15,9 @@ export type MotivoDeRecusaDeMercenario =
   | 'tipo-desconhecido'
   | 'sem-ouro'
   /** Nenhum tile da porta e andavel: o mercenario nao teria onde nascer. */
-  | 'porta-bloqueada';
+  | 'porta-bloqueada'
+  /** BUG-S — a partida esta em peacetime (`sim/paz.ts`): no KaM, equipar na prefeitura e bloqueado. */
+  | 'em-paz';
 
 export const ehPrefeituraCompleta = (p: Predio | undefined): p is PredioCompleto =>
   p !== undefined && p.estado === 'completo' && p.tipo === ID_DA_PREFEITURA;

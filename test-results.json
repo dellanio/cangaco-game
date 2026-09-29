@@ -372,7 +372,7 @@
     "passes": true
   },
   "C-IA-03b-peacetime-e-tropas": {
-    "passes": false
+    "passes": true
   },
   "C1-cadencia-de-projetil-e-torre": {
     "passes": true
@@ -390,13 +390,13 @@
     "passes": true
   },
   "C5-colisao-militar": {
-    "passes": false
+    "passes": true
   },
   "C6-revidar-em-marcha": {
     "passes": true
   },
   "C7-lado-no-jobboard": {
-    "passes": false
+    "passes": true
   },
   "C8-prioridades-da-ia": {
     "passes": true

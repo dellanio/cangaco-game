@@ -4,9 +4,10 @@
  *
  * Enquanto `state.tick < state.pazAteTick`, a partida esta em paz:
  *  - as ordens de EXERCITO sao recusadas com `em-paz`: marcha, ataque a unidade, ataque a
- *    predio e treino no quartel — a lista do KaM (`BLOCKED_BY_PEACETIME`,
- *    KM_GameInputProcess.pas:153-155: walk, attack unit, attack house, barracks equip; o
- *    resto dela e formacao, split, link, halt e storm, que a sim ainda nao tem);
+ *    predio, treino no quartel e mercenario na prefeitura — a lista do KaM
+ *    (`BLOCKED_BY_PEACETIME`, KM_GameInputProcess.pas:153-155: walk, attack unit, attack
+ *    house, barracks equip, town hall equip; o resto dela e formacao, split, link, halt e
+ *    storm, que a sim ainda nao tem). O mercenario (BUG-S) tinha ficado de fora;
  *  - a IA nao defende, nao repoe e nao ataca (KaM: KM_AIGeneral.pas:218, 331, 395) — ver
  *    `sistemaDaIA`. Alimentar a tropa continua: no KaM `CheckArmy` alimenta antes do
  *    guarda de paz (KM_AIGeneral.pas:316-331).
@@ -53,6 +54,9 @@ export function recusaNaPaz(state: GameState, command: Command): GameEvent | nul
       return { type: 'command-rejected', command: 'AttackBuilding', predio: command.predio, unidade: null, motivo: 'em-paz' };
     case 'TrainSoldier':
       return { type: 'command-rejected', command: 'TrainSoldier', predio: command.predio, tipo: command.tipo, motivo: 'em-paz' };
+    // BUG-S: o equipar da prefeitura (mercenario) esta na lista do KaM (gicHouseTownHallEquip)
+    case 'HireMercenary':
+      return { type: 'command-rejected', command: 'HireMercenary', predio: command.predio, tipo: command.tipo, motivo: 'em-paz' };
     default:
       return null;
   }

@@ -131,6 +131,7 @@ async function roteiro(ctx) {
   let primeira = true;
   let capturouCombate = false;
   let rodadas = 0;
+  const rodadasIndoAtacar = {};
   for (; rodadas < 200; rodadas += 1) {
     s = await estado();
     if ((await fimNaTela()) !== null) break;
@@ -165,6 +166,13 @@ async function roteiro(ctx) {
       const fsms = {};
       for (const u of meus) fsms[u.fsm] = (fsms[u.fsm] ?? 0) + 1;
       console.log(`rodada ${rodadas} tick ${s.tick}: alvo ${alvo ? `${alvo.tipo}@${Math.round(alvo.gx)},${Math.round(alvo.gy)}` : 'predio'} meus ${meus.length} ${JSON.stringify(fsms)} IA ${s.unidadesRenderizadas.filter((u) => u.lado === LADO_DA_IA).length} predios ${prediosDaIA().map(([id, p]) => `${id}:${p.hp}`).join(',')} sel ${s.selecaoMilitar.length}`);
+    }
+    // BUG-Q: o log desta corrida mostrou {"indo_atacar":10,"atacando":2} por 2000 ticks e
+    // ninguem leu. Agora e asserção: soldado que passa 10 rodadas SEGUIDAS a caminho do
+    // predio, sem chegar a golpear, reprova o roteiro.
+    for (const u of s.unidadesRenderizadas.filter((x) => x.lado === LADO_DO_JOGADOR && x.tipo === 'militia')) {
+      rodadasIndoAtacar[u.id] = u.fsm === 'indo_atacar' ? (rodadasIndoAtacar[u.id] ?? 0) + 1 : 0;
+      afirmar(rodadasIndoAtacar[u.id] <= 10, `${u.id} ficou ${rodadasIndoAtacar[u.id]} rodadas em indo_atacar sem golpear (BUG-Q)`);
     }
     const lutando = s.unidadesRenderizadas.filter((u) => u.lado === LADO_DO_JOGADOR && u.fsm === 'lutando').length;
     if (!capturouCombate && lutando >= 3) {

@@ -17,7 +17,7 @@ import type {
 } from '../state';
 import {
   ehTarefaDeAradura, ehTarefaDeAssentamento, ehTarefaDeColheita, ehTarefaDeComidaParaTropa, ehTarefaDePedraParaCanteiro, ehTarefaDeTransporte,
-  ehTarefaDoSerf, ID_DO_ARMAZEM, MERCADORIA_DE_OURO, ORIGEM_ESPERADA_POR_TIPO, origemDaTarefaVale,
+  ehTarefaDoSerf, ID_DO_ARMAZEM, LADO_DO_JOGADOR, MERCADORIA_DE_OURO, ORIGEM_ESPERADA_POR_TIPO, origemDaTarefaVale,
 } from '../state';
 import type { GameData } from '../data/types';
 import { gameData } from '../data';
@@ -705,7 +705,10 @@ function armazemMaisPertoDoTile(
   livre: (armazemId: string) => number, dados: GameData,
 ): string | null {
   let melhor: { id: string; distancia: number } | null = null;
-  for (const armazem of armazensCompletos(state)) {
+  // BUG-R: a pedra da estrada sai de armazem do JOGADOR (so ele planeja estrada, plano da
+  // C7). Sem o lado, um canteiro perto da vila da IA pegava o armazem dela, e a tarefa ficava
+  // aberta para sempre: o serf do jogador nao pode reclama-la (C7).
+  for (const armazem of armazensCompletos(state, LADO_DO_JOGADOR)) {
     if (livre(armazem.id) < 1) continue;
     // a existencia memoizada ANTES do A* do custo: um tile ilhado com pedra livre
     // no armazem faria um A* de mapa inteiro por tick, para sempre.
