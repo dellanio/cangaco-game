@@ -5542,7 +5542,14 @@ Ordem do operador. Cada item tem plano em `docs/planos/2026-09-28-C<n>-*.md`.
   - **D-MOVIMENTO-01h — a escolha de rota, medida. ENTREGUE (só medida e mecanismo desligado).**
     - O custo de unidade do KaM, +1,5 tile, entra na rota planejada.
     - A segunda faixa passa a receber 45% dos carregadores, e a espera na gaveta não cai.
-  - **REABERTO pelo operador:** o engarrafamento do KaM é fila na porta.
+  - **D-MOVIMENTO-01j — a troca como permuta. ENTREGUE.**
+    - Um civil por tile, sempre.
+    - A invariante acusa qualquer par.
+    - A prioridade não bloqueia a permuta.
+  - **FECHADO DESLIGADO, com o mecanismo do KaM** (regra do operador): com a porta de 1
+    tick e com a de 10, duas faixas perdem em 5 das 6 combinações. O GDD §6.4 foi
+    atualizado.
+  - **REABERTO pelo operador (antes da permuta):** o engarrafamento do KaM é fila na porta.
   - **D-MOVIMENTO-01i — a porta lenta (10 ticks, do fonte do KaM). MEDIDO:**
     - sozinha, atrasa a abertura 14%;
     - com a colisão ligada, o mecanismo trava num ciclo de pares.

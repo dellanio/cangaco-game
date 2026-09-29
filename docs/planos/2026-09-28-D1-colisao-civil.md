@@ -436,3 +436,63 @@ resultado.
   um por tile). Aqui ela põe dois no mesmo tile.
 - **Proposta, à espera do operador:** a troca forçada e a troca de frente viram permuta de
   verdade, e o empilhamento deixa de existir. Depois, repetir a grade.
+
+## 11. D-MOVIMENTO-01j — a troca como permuta (aprovado pelo operador, 2026-09-28)
+O operador decidiu:
+- a troca de frente e a troca forçada viram **permuta**: as duas unidades mudam de tile no
+  mesmo tick;
+- a invariante fica mais forte: **dois civis "fora" no mesmo tile é sempre defeito**, sem a
+  exceção de troca da D-MOVIMENTO-01a;
+- medir a permuta sozinha (porta de 1 tick) antes de somar a porta lenta, com os dois efeitos
+  separados;
+- depois, a grade:
+  - se duas faixas ganharem, a chave liga, e a porta lenta entra como item próprio com a
+    recalibração da abertura;
+  - se não ganharem, fecha desligada.
+
+### O desenho
+- **`sistemaDaPermuta`**, antes das FSMs e depois do empurrão. Para cada civil que anda, na
+  ordem de `unidades.ordem`, cujo passo vence neste tick, e cujo tile seguinte tem
+  **exatamente um** civil que também anda (tem caminho):
+  - **permuta de frente:** o outro vem para o meu tile. Os dois trocam de tile, e cada um
+    avança o seu caminho;
+  - **permuta forçada:** chego ao teto (`ticksTrocaForcada`) e o outro não vem para cá (está
+    preso também). Os dois trocam de tile, e ele volta um passo: o caminho dele ganha o tile
+    de onde saiu;
+  - o outro precisa poder pisar no meu tile no modo dele;
+  - cada unidade permuta no máximo uma vez por tick;
+  - quem cede o tile a quem passou do teto (a prioridade da D-MOVIMENTO-01g) não permuta.
+- **Custo conhecido:** a permuta acontece antes do `andar`, que no mesmo tick soma 1 ao passo
+  seguinte. Quem permuta ganha 1 tick. É deterministico e fica registrado.
+- **No `andar`:** entra no tile vazio; senão espera, conta `bloqueado`, e desvia no tempo de
+  desvio. **Nunca entra em tile ocupado.**
+- **Ocupante parado** (carregando, entregando, colhendo): não se permuta, porque não tem
+  caminho. Quem chega espera ele terminar, ou contorna.
+  - O ocioso continua sendo empurrado.
+  - Um parado que nunca sai de uma rua de uma faixa tranca a rua, e a invariante acusa. É o
+    comportamento do KaM (`fDestBlocked`), sem a entrada forçada.
+- **A porta (`saindo`):** sem saída forçada no teto. Quem sai espera o tile vagar, e com
+  `saindo` no teto ganha a prioridade: ninguém mais entra naquele tile.
+- **Sai:**
+  - o campo `Unidade.trocaCom` e a regra do par;
+  - a entrada forçada em tile ocupado.
+- **Fica:** o empurrão (com a busca ao tile livre mais perto), a prioridade, o desvio, a
+  porta e o custo de rota.
+- **Invariante:**
+  - k ≥ 2 civis "fora" (não `saindo`) no mesmo tile é defeito, sempre;
+  - `bloqueado` e `saindo` continuam limitados por `tetoDaEspera`.
+
+### As medidas
+1. **A permuta sozinha**, com a chave ligada e a porta de 1 tick:
+   - a suíte inteira;
+   - a deriva da calibração contra a chave desligada;
+   - comparada à deriva do mecanismo anterior (a D-MOVIMENTO-01b, medida de antes).
+2. **A grade** do D-MOVIMENTO-01i (a porta lenta), com a permuta.
+
+### Resultado da §11 (2026-09-28): fechado desligado, agora com o mecanismo do KaM
+- **A permuta entrou**, com um por tile sempre. A suíte ligada passa, fora a guarda do F09
+  (JobBoard) do save.
+- **Um conserto no caminho:** a prioridade bloqueava a permuta e travava a vila com a porta
+  de 10 ticks. Agora a prioridade vale só para entrar em tile vazio.
+- **Duas faixas perdem** em 5 das 6 combinações de porta e carga (tabela no PROGRESS,
+  D-MOVIMENTO-01j). Pela regra do operador, fecha desligada.

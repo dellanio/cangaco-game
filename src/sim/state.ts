@@ -1243,10 +1243,6 @@ export interface Unidade {
    *  movimento em curso vive em `fsmData` (`caminho` + `progresso`). */
   readonly fsm: string;
   readonly fsmData: DadosDaFsm;
-  /** D-MOVIMENTO-01 (colisao civil) — a unidade com quem esta dividindo o tile: a troca de frente ou a troca forcada
-   *  (o unico empilhamento que a colisao civil aceita). Fica na unidade, e nao no
-   *  `fsmData`, para sobreviver a troca de estado da FSM (D-MOVIMENTO-01c, empilhamento de fora do passo). */
-  readonly trocaCom?: string;
   /** D-MOVIMENTO-01c (empilhamento de fora do passo) — ticks esperando a porta: quem nasceu ou saiu de "dentro" para um tile ocupado
    *  espera ele vagar, como no `GoInOut` do KaM. Enquanto isso nao ocupa nem anda. */
   readonly saindo?: number;

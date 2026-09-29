@@ -349,5 +349,8 @@
   },
   "D-MOVIMENTO-01h-escolha-de-rota": {
     "passes": true
+  },
+  "D-MOVIMENTO-01j-troca-como-permuta": {
+    "passes": true
   }
 }

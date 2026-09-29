@@ -12301,3 +12301,89 @@ Espera da madeira na gaveta (ticks):
 ### Verificado vs. hipótese
 - **Verificado:** os números acima (sondas, sem commit) e o rastro do travamento.
 - **Hipótese:** que a permuta desfaz o travamento e faz as duas faixas ganharem. Não testado.
+
+## 2026-09-28 — D-MOVIMENTO-01j (colisão civil: a troca como permuta) — ENTREGUE; a colisão civil FECHA DESLIGADA com o mecanismo do KaM
+
+### Decisões do operador
+- A troca vira permuta.
+- A invariante fica mais forte: **dois civis no mesmo tile é sempre defeito**, e a exceção
+  de troca da D-MOVIMENTO-01a sai.
+- Medir a permuta sozinha (porta de 1 tick) antes da porta lenta.
+- Regra fixada antes da medida: *"Se não ganharem nem com o mecanismo certo, fecha desligada
+  e está provado."*
+
+### Feito
+- **`sistemaDaPermuta`** (antes das FSMs, depois do empurrão): a permuta de frente e a
+  permuta forçada no teto, em que o outro volta um passo. Um por tile, sempre.
+- **O `andar` só entra em tile vazio.**
+- **Saíram:** `Unidade.trocaCom`, a regra do par e a entrada e a saída forçadas.
+- **Invariante:** dois civis "fora" no mesmo tile é defeito, sem exceção. `saindo` está
+  dentro, e não conta.
+- **Conserto achado na medida:** a prioridade de quem passou do teto **não** vale para a
+  permuta.
+  - Rastreado: com a porta de 10 ticks e carga 2×, quem saía da porta e quem esperava de
+    frente para entrar não permutavam, porque um terceiro com mais espera queria o tile.
+  - A vila parou (zero madeira, uma unidade presa por 5141 ticks).
+- **Custo conhecido:** quem permuta ganha 1 tick (o `andar` do mesmo tick soma no passo
+  seguinte).
+- `tests/D-MOVIMENTO-01a-colisao-civil.test.ts`: 31 testes, reescritos para a permuta.
+  - Sondas de mutação (evidência da sessão), todas reprovam:
+
+    | Mutação | Resultado |
+    |---|---|
+    | sem permuta | reprova 5 |
+    | sem permuta forçada | reprova 1 |
+    | a forçada não volta | reprova 1 |
+    | entra em tile ocupado | reprova 10 |
+    | porta sem prioridade | reprova 1 |
+    | invariante aceita par | reprova 1, depois do teste novo; antes, passava |
+
+### 1. A permuta sozinha (chave ligada, porta de 1 tick; suíte inteira; verificado)
+- **Reprovam só** a guarda do F09 (JobBoard) do save e os 3 testes que afirmam a chave
+  desligada. Nenhum empilhamento e nenhuma espera acima do teto na suíte.
+- **Deriva da calibração** (desligada → ligada):
+  - cenário fechado 7486 → 8844 (+18,1%);
+  - pedreira +13,3%, serraria +4,9%, padaria +3,6%, bodega +5,6%;
+  - regime +0,9%, pedra no fim −1,9%;
+  - primeiro machado −1,1%, espada −11%, troca da Feira +4%.
+- **Contra o mecanismo anterior** (D-MOVIMENTO-01c, empilhamento de fora do passo):
+  - o fechamento piorou (+9,1% → +18,1%);
+  - o machado deixou de atrasar (+48% → −1,1%).
+
+### 2. A grade: espera da madeira na gaveta (ticks), cenário da vila, janela de 5000 ticks
+
+| Porta | Carga | desligada (1 rua = 2 faixas) | ligada, 1 rua | ligada, laço | ligada, 2 faixas |
+|---|---|---|---|---|---|
+| 1 | 1× | 109,6 | 95,9 | 94,3 | 92,8 |
+| 1 | 2× | 261,5 | 159,3 | 197,2 | **254,8** |
+| 1 | 4× | 280,0 | 205,5 | 198,2 | **327,5** |
+| 10 | 1× | 132,6 | 110,2 | 112,4 | **128,5** |
+| 10 | 2× | 288,9 | 325,8 | 324,8 | **387,1** |
+| 10 | 4× | 315,1 | 406,0 | 400,3 | **434,0** |
+
+- **Nenhum travamento** depois do conserto da prioridade.
+- **A fila na porta existe:** com a porta de 10 ticks, a colisão sobe a espera 13% (2×) e 29%
+  (4×) em relação à chave desligada.
+  - A invariante acusa esperas de 32 a 73 ticks, acima do teto de 31. **São esperas de fila
+    atrás de quem está na porta, não travamento:** a madeira continua chegando.
+- **Duas faixas perdem em 5 das 6 linhas, de 17% a 60% piores.** Ganham 3% numa só (porta
+  de 1 tick, carga 1×).
+- **Pela regra do operador, fecha desligada.** Com o mecanismo do KaM, a porta do KaM e a
+  distribuição de rota do KaM, a segunda faixa não alivia o engarrafamento.
+
+### Não explicado (HIPÓTESES, não isoladas)
+- **Com a porta de 1 tick, a colisão ligada DIMINUI a espera** em relação à desligada (159
+  contra 261 na carga 2×).
+  - Candidatos: o tick ganho em cada permuta; o empurrão, que espalha os ociosos para mais
+    perto das tarefas.
+  - Isto é viés do meu mecanismo e contamina a comparação com a chave desligada, **não** a
+    de uma rua contra duas, que usam o mesmo mecanismo.
+- **Por que duas faixas pioram:** hipótese de mais cruzamentos nas três portas do armazém.
+  Não isolado.
+
+### Aberto (para o operador)
+- **O código fica, desligado** (decisão anterior do operador). A invariante de teto não
+  serve com a porta lenta: fila legítima passa do teto. Se a colisão voltar algum dia, a
+  invariante do "não trava" precisa medir progresso, não espera.
+- **A porta lenta sozinha** (medida no D-MOVIMENTO-01i) atrasa a abertura 14%, sem colisão.
+  Não entrou: ela só fazia sentido como a peça que tornaria a colisão visível.

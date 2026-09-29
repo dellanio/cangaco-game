@@ -15,7 +15,7 @@ import type { GameData } from '../src/sim/data/types';
 import { createInitialState, LADO_DO_JOGADOR } from '../src/sim/state';
 import type { GameState, Unidade } from '../src/sim/state';
 import { andar, comUnidade } from '../src/sim/units/movimento';
-import { custoDeUnidadesNaRota, POSICAO_DO_ESTADO, sistemaDaPorta, sistemaDoEmpurrao, tetoDaEspera } from '../src/sim/colisao';
+import { custoDeUnidadesNaRota, POSICAO_DO_ESTADO, sistemaDaPermuta, sistemaDaPorta, sistemaDoEmpurrao, tetoDaEspera } from '../src/sim/colisao';
 import { buscarCaminho, buscasComUnidades, tileAndavel, zerarEstatisticasDeBusca } from '../src/sim/pathfinding';
 import { condicaoCheiaDoTipo } from '../src/sim/condicao';
 import { salvar } from '../src/sim/save';
@@ -60,9 +60,9 @@ function civil(id: string, t: Tile, fsm: string, caminho: Tile[] = []): Unidade 
 function comUnidades(s: GameState, us: Unidade[]): GameState {
   return { ...s, unidades: { porId: Object.fromEntries(us.map((u) => [u.id, u])), ordem: us.map((u) => u.id) } };
 }
-/** Um tick: o empurrao e depois o `andar` de cada um, na ordem, como no `step`. */
+/** Um tick: o empurrao, a permuta e depois o `andar` de cada um, na ordem, como no `step`. */
 function tickDeMovimento(s: GameState, dados: GameData): GameState {
-  let atual = sistemaDoEmpurrao(s, dados);
+  let atual = sistemaDaPermuta(sistemaDoEmpurrao(s, dados), dados);
   for (const id of atual.unidades.ordem) {
     const u = atual.unidades.porId[id] as Unidade;
     if ((u.fsmData.caminho ?? []).length > 0) atual = comUnidade(atual, andar(atual, u, dados));
@@ -83,6 +83,18 @@ function correr(s0: GameState, ate: (s: GameState) => boolean, dados: GameData =
   return { s, violacoes, maiorEspera, ticks: t };
 }
 const em = (s: GameState, id: string): Tile => ({ gx: s.unidades.porId[id]?.gx as number, gy: s.unidades.porId[id]?.gy as number });
+/** O ocupante `id` sai do mapa (terminou o trabalho e entrou num predio longe dali). */
+const semUnidade = (x: GameState, id: string): GameState => ({ ...x, unidades: { porId: Object.fromEntries(Object.entries(x.unidades.porId).filter(([k]) => k !== id)), ordem: x.unidades.ordem.filter((k) => k !== id) } });
+/** O maior numero de civis "fora" num tile so, neste estado. */
+function maiorPorTile(x: GameState): number {
+  const n = new Map<string, number>();
+  for (const id of x.unidades.ordem) {
+    const u = x.unidades.porId[id] as Unidade;
+    if (POSICAO_DO_ESTADO[u.fsm] !== 'fora' || u.saindo !== undefined) continue;
+    n.set(`${u.gx},${u.gy}`, (n.get(`${u.gx},${u.gy}`) ?? 0) + 1);
+  }
+  return Math.max(0, ...n.values());
+}
 const todosChegaram = (s: GameState): boolean => s.unidades.ordem.every((id) => (s.unidades.porId[id]?.fsmData.caminho ?? []).length === 0);
 
 /** Um campo aberto de 25 x 25 tiles andaveis, sem ninguem. */
@@ -126,6 +138,15 @@ describe('D-MOVIMENTO-01a — a colisao civil', () => {
     expect([..."{ ...u, fsm: 'rezando' }".matchAll(/fsm: *'([a-z_]+)'/g)].map((m) => m[1])).toEqual(['rezando']);
   });
 
+  it('dois civis fora no mesmo tile e SEMPRE defeito: nao ha mais excecao de troca (D-MOVIMENTO-01j)', () => {
+    const { s, tiles } = rua(6);
+    const par = comUnidades(s, [civil('a', tiles[2] as Tile, 'indo_buscar', trecho(tiles, 2, 5)), civil('b', tiles[2] as Tile, 'indo_entregar', trecho(tiles, 2, 0))]);
+    expect(violacoesDaColisao(par, LIGADA)).toEqual(['tile ' + `${(tiles[2] as Tile).gx},${(tiles[2] as Tile).gy}` + ': 2 civis empilhados (a:indo_buscar, b:indo_entregar)']);
+    // quem espera a porta esta dentro: nao conta
+    const saindo = comUnidades(s, [civil('a', tiles[2] as Tile, 'indo_buscar', trecho(tiles, 2, 5)), { ...civil('b', tiles[2] as Tile, 'indo_entregar'), saindo: 3 }]);
+    expect(violacoesDaColisao(saindo, LIGADA)).toEqual([]);
+  });
+
   it('estado sem classificacao lanca no passo, e a invariante o acusa', () => {
     const { s, tiles } = rua(6);
     const s0 = comUnidades(s, [civil('a', tiles[0] as Tile, 'indo_buscar', trecho(tiles, 0, 5)), civil('b', tiles[1] as Tile, 'rezando')]);
@@ -148,8 +169,10 @@ describe('D-MOVIMENTO-01a — a colisao civil', () => {
         expect(em(r.s, `d${i}`)).toEqual(tiles[L - 1 - i]);
         expect(em(r.s, `e${i}`)).toEqual(tiles[i]);
       }
-      // de frente nao se espera: a troca e imediata, e o mesmo sentido anda em fila
-      expect(r.maiorEspera).toBeLessThanOrEqual(1);
+      // de frente a permuta resolve o encontro ANTES do tempo de desvio: ninguem chega a
+      // contornar. (Com a permuta, D-MOVIMENTO-01j, a maior espera medida foi 3 ticks, contra 1
+      // da troca com dois no tile: a coluna que vem atras espera o da frente permutar.)
+      expect(r.maiorEspera).toBeLessThan(C.ticksDesviar);
       gravarEvidencia(`D-MOVIMENTO-01a-rua-${n}`, { serfs: n, ticks: r.ticks, maiorEspera: r.maiorEspera });
     });
   }
@@ -175,13 +198,20 @@ describe('D-MOVIMENTO-01a — a colisao civil', () => {
     expect(em(r.s, 'w')).toEqual(tiles[7]);
   });
 
-  it('um parado que nao se empurra no meio da rua de um tile: espera ate a troca forcada, e so', () => {
+  it('um parado que nao se empurra no meio da rua de um tile: ninguem entra no tile dele; quando ele sai, o que espera passa', () => {
     const { s, tiles } = rua(8);
-    const s0 = comUnidades(s, [civil('w', tiles[0] as Tile, 'indo_buscar', trecho(tiles, 0, 7)), civil('x', tiles[3] as Tile, 'colhendo')]);
-    const r = correr(s0, todosChegaram);
-    expect(r.violacoes).toEqual([]);
-    expect(r.maiorEspera).toBe(C.ticksTrocaForcada - 1); // no tick seguinte ja entrou
-    expect(em(r.s, 'w')).toEqual(tiles[7]);
+    let x = comUnidades(s, [civil('w', tiles[0] as Tile, 'indo_buscar', trecho(tiles, 0, 7)), civil('x', tiles[3] as Tile, 'colhendo')]);
+    let maior = 0;
+    const violacoes: string[] = [];
+    for (let t = 0; t < 200 && !todosChegaram(x); t += 1) {
+      if (t === 18) x = semUnidade(x, 'x'); // terminou o trabalho
+      x = tickDeMovimento(x, LIGADA);
+      maior = Math.max(maior, maiorPorTile(x));
+      violacoes.push(...violacoesDaColisao(x, LIGADA));
+    }
+    expect(maior).toBe(1);
+    expect(violacoes).toEqual([]);
+    expect(em(x, 'w')).toEqual(tiles[7]);
   });
 
   it('o mesmo parado em campo aberto: o que anda contorna no desvio e nunca pisa no tile dele', () => {
@@ -196,22 +226,56 @@ describe('D-MOVIMENTO-01a — a colisao civil', () => {
     expect(em(r.s, 'w')).toEqual(linha[8]);
   });
 
-  it('o destino ocupado por um parado: o que chega entra pela troca forcada e divide o tile com ele', () => {
+  it('o destino ocupado por um parado: o que chega espera, nunca divide, e entra quando ele sai', () => {
     const { s, tiles } = rua(6);
-    const s0 = comUnidades(s, [civil('w', tiles[0] as Tile, 'indo_entregar', trecho(tiles, 0, 5)), civil('x', tiles[5] as Tile, 'colhendo')]);
-    const r = correr(s0, todosChegaram);
-    expect(r.violacoes).toEqual([]);
-    expect(em(r.s, 'w')).toEqual(tiles[5]);
-    expect(r.s.unidades.porId['w']?.trocaCom).toBe('x');
+    let x = comUnidades(s, [civil('w', tiles[0] as Tile, 'indo_entregar', trecho(tiles, 0, 5)), civil('x', tiles[5] as Tile, 'carregando')]);
+    let maior = 0;
+    for (let t = 0; t < 200 && !todosChegaram(x); t += 1) {
+      if (t === 30) x = semUnidade(x, 'x');
+      x = tickDeMovimento(x, LIGADA);
+      maior = Math.max(maior, maiorPorTile(x));
+      if (t < 30) expect(em(x, 'w')).not.toEqual(tiles[5]);
+    }
+    expect(maior).toBe(1);
+    expect(em(x, 'w')).toEqual(tiles[5]);
   });
 
-  it('sem a troca forcada, a invariante acusa o bloqueado para sempre', () => {
-    const semTroca: GameData = { ...LIGADA, movimento: { ...LIGADA.movimento, colisaoCivil: { ...C, ticksTrocaForcada: 1_000_000 } } };
+  it('um parado que NUNCA sai tranca a rua de uma faixa, e a invariante acusa a espera', () => {
     const { s, tiles } = rua(8);
     const s0 = comUnidades(s, [civil('w', tiles[0] as Tile, 'indo_buscar', trecho(tiles, 0, 7)), civil('x', tiles[3] as Tile, 'colhendo')]);
-    const r = correr(s0, todosChegaram, semTroca, 200);
+    const r = correr(s0, todosChegaram, LIGADA, 200);
     expect(todosChegaram(r.s)).toBe(false);
     expect(r.violacoes.some((v) => v.includes('w: bloqueado ha'))).toBe(true);
+    expect(r.violacoes.some((v) => v.includes('empilhados'))).toBe(false);
+  });
+
+  it('permuta de frente: os dois trocam de tile no MESMO tick, e nunca ha dois num tile', () => {
+    const { s, tiles } = rua(11);
+    let x = comUnidades(s, [civil('a', tiles[0] as Tile, 'indo_buscar', trecho(tiles, 0, 10)), civil('b', tiles[10] as Tile, 'indo_buscar', trecho(tiles, 10, 0))]);
+    let permutaram = false;
+    for (let t = 0; t < 400 && !todosChegaram(x); t += 1) {
+      const antes = [em(x, 'a'), em(x, 'b')];
+      x = tickDeMovimento(x, LIGADA);
+      expect(maiorPorTile(x)).toBe(1);
+      permutaram ||= antes[0]?.gx === em(x, 'b').gx && antes[1]?.gx === em(x, 'a').gx;
+    }
+    expect(permutaram).toBe(true);
+    expect([em(x, 'a'), em(x, 'b')]).toEqual([tiles[10], tiles[0]]);
+  });
+
+  it('permuta forcada: preso atras de quem tambem esta preso, no teto os dois trocam de lugar, e o outro volta um passo', () => {
+    const { s, tiles } = rua(8);
+    // `b` quer passar por `z` (parado para sempre); `a` vem atras de `b`
+    let x = comUnidades(s, [civil('a', tiles[1] as Tile, 'indo_buscar', trecho(tiles, 1, 7)), civil('b', tiles[2] as Tile, 'indo_buscar', trecho(tiles, 2, 7)), civil('z', tiles[3] as Tile, 'colhendo')]);
+    let t = 0;
+    for (; t < 100 && em(x, 'a').gx === (tiles[1] as Tile).gx; t += 1) {
+      x = tickDeMovimento(x, LIGADA);
+      expect(maiorPorTile(x)).toBe(1);
+    }
+    expect([em(x, 'a'), em(x, 'b')]).toEqual([tiles[2], tiles[1]]);
+    expect(x.unidades.porId['b']?.fsmData.caminho?.[0]).toEqual(tiles[2]);
+    // o passo de `a` vence no 5o tick, e a espera conta dali ate o teto
+    expect(t).toBeLessThanOrEqual(LIGADA.movimento.ticksPorTile.aPe.estrada + C.ticksTrocaForcada);
   });
 
   it('desligada, o mesmo encontro de frente se atravessa, sem campo novo', () => {
@@ -223,7 +287,7 @@ describe('D-MOVIMENTO-01a — a colisao civil', () => {
     for (let t = 0; t < 400 && !todosChegaram(x); t += 1) {
       x = tickDeMovimento(x, gameData);
       empilhou ||= em(x, 'a').gx === em(x, 'b').gx;
-      expect(salvar(x)).not.toMatch(/bloqueado|trocaCom|saindo/);
+      expect(salvar(x)).not.toMatch(/bloqueado|saindo/);
     }
     expect(todosChegaram(x)).toBe(true);
     expect(empilhou).toBe(true);
@@ -262,15 +326,6 @@ describe('D-MOVIMENTO-01a — a colisao civil', () => {
       expect(em(s1, 'o')).not.toEqual(tiles[2]);
     });
 
-    it('o trocaCom sobrevive a troca de estado da FSM', () => {
-      const { s, tiles } = rua(6);
-      const r = correr(comUnidades(s, [civil('w', tiles[0] as Tile, 'indo_entregar', trecho(tiles, 0, 5)), civil('x', tiles[5] as Tile, 'colhendo')]), todosChegaram);
-      const w = r.s.unidades.porId['w'] as Unidade;
-      const depois = comUnidade(r.s, { ...w, fsm: 'entregando', fsmData: {} }); // a FSM reescreve o fsmData
-      expect(depois.unidades.porId['w']?.trocaCom).toBe('x');
-      expect(violacoesDaColisao(depois, LIGADA)).toEqual([]);
-    });
-
     it('quem sai de dentro para a porta ocupada espera ela vagar, sem ocupar nem andar, e depois sai', () => {
       const { s, tiles } = rua(8);
       const antes = comUnidades(s, [civil('e', tiles[3] as Tile, 'trabalhando'), civil('x', tiles[3] as Tile, 'colhendo')]);
@@ -290,20 +345,22 @@ describe('D-MOVIMENTO-01a — a colisao civil', () => {
       expect(r.violacoes).toEqual([]);
     });
 
-    it('a espera da porta tem o teto da troca forcada: passado ele, sai em troca com o ocupante', () => {
+    it('a espera da porta nao tem saida forcada: no teto ela ganha a prioridade, e sai quando o ocupante sai', () => {
       const { s, tiles } = rua(8);
-      const antes = comUnidades(s, [civil('e', tiles[3] as Tile, 'trabalhando'), civil('x', tiles[3] as Tile, 'colhendo')]);
+      const antes = comUnidades(s, [civil('e', tiles[3] as Tile, 'trabalhando'), civil('x', tiles[3] as Tile, 'colhendo'), civil('n', tiles[4] as Tile, 'indo_buscar')]);
       let x = sistemaDaPorta(antes, comUnidade(antes, { ...(antes.unidades.porId['e'] as Unidade), fsm: 'indo_colher', fsmData: { caminho: trecho(tiles, 3, 7), progresso: 0 } }), LIGADA);
-      const violacoes: string[] = [];
-      let maior = 0;
-      for (let t = 0; t < 200 && !todosChegaram(x); t += 1) {
+      for (let t = 0; t < 25; t += 1) {
         x = sistemaDaPorta(x, tickDeMovimento(x, LIGADA), LIGADA);
-        maior = Math.max(maior, x.unidades.porId['e']?.saindo ?? 0);
-        violacoes.push(...violacoesDaColisao(x, LIGADA));
+        expect(maiorPorTile(x)).toBe(1);
       }
-      expect(violacoes).toEqual([]);
-      expect(maior).toBe(C.ticksTrocaForcada - 1);
-      expect(em(x, 'e')).toEqual(tiles[7]);
+      expect(x.unidades.porId['e']?.saindo).toBe(25);
+      // o ocupante sai; `n` quer justamente aquele tile, mas `e` passou do teto: `n` cede
+      x = semUnidade(x, 'x');
+      x = comUnidade(x, { ...(x.unidades.porId['n'] as Unidade), fsmData: { caminho: trecho(tiles, 4, 0), progresso: 4 } });
+      x = sistemaDaPorta(x, tickDeMovimento(x, LIGADA), LIGADA);
+      expect(x.unidades.porId['e']?.saindo).toBeUndefined();
+      expect(em(x, 'n')).toEqual(tiles[4]);
+      expect(violacoesDaColisao(x, LIGADA)).toEqual([]);
     });
 
     it('quem nasce numa porta ocupada tambem espera; e a porta livre nao marca ninguem', () => {
@@ -327,33 +384,7 @@ describe('D-MOVIMENTO-01a — a colisao civil', () => {
   });
 
   // ---------- D-MOVIMENTO-01g: a troca e de duas unidades; prioridade de quem espera ----------
-  describe('D-MOVIMENTO-01g — os dois empilhamentos residuais', () => {
-    const civisEm = (x: GameState, t: Tile): number => x.unidades.ordem.filter((id) => {
-      const u = x.unidades.porId[id] as Unidade;
-      return u.gx === t.gx && u.gy === t.gy && POSICAO_DO_ESTADO[u.fsm] === 'fora' && u.saindo === undefined;
-    }).length;
-
-    it('ninguem entra num tile com um par: nunca tres civis num tile, e quem espera entra quando o par se desfaz', () => {
-      const { s: s0, tiles } = rua(10);
-      const T = tiles[4] as Tile;
-      // o par: `x` parado (colhendo) e `y`, que entrou em troca com ele e esta PRESO atras de
-      // `z` (parado adiante), entao o par dura ate a troca forcada de `y`. `w` chega ao teto
-      // com o par ainda no tile: e ali que entrar faria tres.
-      const y: Unidade = { ...civil('y', T, 'indo_buscar', trecho(tiles, 4, 9)), trocaCom: 'x' };
-      const x0 = comUnidades(s0, [civil('y0', tiles[0] as Tile, 'ocioso'), civil('w', tiles[3] as Tile, 'indo_buscar', trecho(tiles, 3, 9)), civil('x', T, 'colhendo'), y, civil('z', tiles[5] as Tile, 'colhendo')]);
-      let x = x0;
-      let maior = 0;
-      const violacoes: string[] = [];
-      for (let t = 0; t < 200 && em(x, 'w').gx !== (tiles[9] as Tile).gx; t += 1) {
-        x = tickDeMovimento(x, LIGADA);
-        maior = Math.max(maior, civisEm(x, T));
-        violacoes.push(...violacoesDaColisao(x, LIGADA));
-      }
-      expect(maior).toBe(2);
-      expect(violacoes).toEqual([]);
-      expect(em(x, 'w')).toEqual(tiles[9]);
-    });
-
+  describe('D-MOVIMENTO-01g — prioridade de quem espera, e o ocioso sem vizinho livre', () => {
     it('quem passou da troca forcada tem prioridade: o recem-chegado cede o tile vazio a ele', () => {
       const { s: s0, tiles } = rua(7);
       const T = tiles[3] as Tile;
@@ -369,17 +400,15 @@ describe('D-MOVIMENTO-01a — a colisao civil', () => {
     });
 
     it('entre dois acima do teto com a MESMA espera, anda um: o primeiro na ordem', () => {
-      // em angulo, para que depois de um entrar os dois nao fiquem de frente (ai seria troca)
+      // em angulo, para que depois de um entrar os dois nao fiquem de frente
       const { s: s0, c } = campo();
       const T = { gx: c.gx, gy: c.gy };
       const pronto = (id: string, de: Tile, depois: Tile): Unidade => ({ ...civil(id, de, 'indo_buscar'), fsmData: { caminho: [T, depois], progresso: 20, bloqueado: C.ticksTrocaForcada } });
       const a = pronto('a', { gx: c.gx - 1, gy: c.gy }, { gx: c.gx + 1, gy: c.gy });
       const b = pronto('b', { gx: c.gx, gy: c.gy - 1 }, { gx: c.gx, gy: c.gy + 1 });
       const x = tickDeMovimento(comUnidades(s0, [b, a]), LIGADA);
-      // `b` (primeiro na ordem) entra no tile vazio; `a`, tambem acima do teto, entra depois pela
-      // troca forcada com o UNICO ocupante: um par ligado, nunca dois cedendo para sempre
-      expect([em(x, 'b'), x.unidades.porId['b']?.trocaCom]).toEqual([T, undefined]);
-      expect([em(x, 'a'), x.unidades.porId['a']?.trocaCom]).toEqual([T, 'b']);
+      expect([em(x, 'b'), em(x, 'a')]).toEqual([T, { gx: c.gx - 1, gy: c.gy }]);
+      expect(maiorPorTile(x)).toBe(1);
     });
 
     it('entre dois acima do teto, anda um: o que espera ha mais tempo', () => {
@@ -391,16 +420,14 @@ describe('D-MOVIMENTO-01a — a colisao civil', () => {
       expect([em(x, 'a'), em(x, 'b')]).toEqual([tiles[2], T]);
     });
 
-    it('o ocioso em troca tambem e empurrado, e sem vizinho livre vai ao tile livre mais perto', () => {
+    it('o ocioso empilhado sem vizinho livre vai ao tile livre mais perto', () => {
       const { s: s0, c } = campo();
-      // o ocioso `o` no centro, cercado por oito parados que nao se empurram, com um `trocaCom`
+      // o ocioso `o` no centro, empilhado com `h`, e cercado por oito parados que nao se empurram
       const centro = { gx: c.gx, gy: c.gy };
       const cerco = [[0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]].map(([dx, dy], k) => civil(`c${k}`, { gx: c.gx + (dx as number), gy: c.gy + (dy as number) }, 'colhendo'));
-      const o: Unidade = { ...civil('o', centro, 'ocioso'), trocaCom: 'h' };
-      const x = tickDeMovimento(comUnidades(s0, [civil('h', centro, 'colhendo'), ...cerco, o]), LIGADA);
+      const x = tickDeMovimento(comUnidades(s0, [civil('h', centro, 'colhendo'), ...cerco, civil('o', centro, 'ocioso')]), LIGADA);
       const ondeO = em(x, 'o');
       expect(Math.max(Math.abs(ondeO.gx - c.gx), Math.abs(ondeO.gy - c.gy))).toBe(2);
-      expect(x.unidades.porId['o']?.trocaCom).toBeUndefined();
       expect(violacoesDaColisao(x, LIGADA)).toEqual([]);
     });
 

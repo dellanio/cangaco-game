@@ -314,9 +314,8 @@ export function violacoesDeInvariantes(estado: GameState, dados: GameData = game
  *  - todo estado de FSM tem classificacao (dentro ou fora);
  *  - nenhum civil espera alem do teto (`tetoDaEspera`: a troca forcada mais o maior passo),
  *    nem no passo nem na porta: e o "nao trava";
- *  - num tile com k civis "fora", pelo menos k-1 dividem o tile por troca (`trocaCom` com
- *    alguem do mesmo tile). Qualquer outro empilhamento e defeito. Quem espera a porta
- *    (`saindo`) nao ocupa, e nao conta.
+ *  - dois civis "fora" no mesmo tile e defeito, SEMPRE (D-MOVIMENTO-01j: a troca e
+ *    permuta). Quem espera a porta (`saindo`) esta dentro: nao ocupa, e nao conta.
  */
 export function violacoesDaColisao(estado: GameState, dados: GameData = gameData): string[] {
   const c = dados.movimento.colisaoCivil;
@@ -339,19 +338,12 @@ export function violacoesDaColisao(estado: GameState, dados: GameData = gameData
     const k = `${u.gx},${u.gy}`;
     porTile.set(k, [...(porTile.get(k) ?? []), id]);
   }
+  // D-MOVIMENTO-01j — a troca e permuta: dois civis "fora" no mesmo tile e SEMPRE defeito,
+  // sem a excecao de troca que a D-MOVIMENTO-01a tinha
   for (const [tile, ids] of porTile) {
     if (ids.length < 2) continue;
-    const emTroca = ids.filter((id) => {
-      const com = estado.unidades.porId[id]?.trocaCom;
-      return com !== undefined && com !== id && ids.includes(com);
-    }).length;
-    if (emTroca < ids.length - 1) {
-      const quem = ids.map((id) => {
-        const u = estado.unidades.porId[id];
-        return `${id}:${u?.fsm}${u?.trocaCom === undefined ? '' : `>${u.trocaCom}`}`;
-      });
-      v.push(`tile ${tile}: ${ids.length} civis empilhados fora de troca (${quem.join(', ')})`);
-    }
+    const quem = ids.map((id) => `${id}:${estado.unidades.porId[id]?.fsm}`);
+    v.push(`tile ${tile}: ${ids.length} civis empilhados (${quem.join(', ')})`);
   }
   return v;
 }

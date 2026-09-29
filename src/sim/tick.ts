@@ -27,7 +27,7 @@ import { aplicarSetProductionQuota } from './systems/cota';
 import { aplicarSetBuildingMode } from './systems/modo';
 import { sistemaDosEspecialistas } from './systems/especialistas';
 import { sistemaDaFome } from './systems/fome';
-import { sistemaDaPorta, sistemaDoEmpurrao } from './colisao';
+import { sistemaDaPermuta, sistemaDaPorta, sistemaDoEmpurrao } from './colisao';
 import { sistemaDosLaborers } from './systems/laborers';
 import { sistemaDosSerfs } from './systems/serfs';
 
@@ -210,7 +210,8 @@ export function step(
   // (colheita do faminto, tarefa do morto) tem de ser revalidada pelo gerador no fim
   // deste mesmo tick, e nao pelo saneamento do seguinte.
   // D-MOVIMENTO-01 (colisao civil) — o empurrao do ocioso vem antes das FSMs: o bloqueado anda no mesmo tick
-  const empurrado = sistemaDoEmpurrao(saneado.state, dados);
+  // D-MOVIMENTO-01j — a permuta depois do empurrao: as duas antes das FSMs
+  const empurrado = sistemaDaPermuta(sistemaDoEmpurrao(saneado.state, dados), dados);
   const fome = sistemaDaFome(empurrado, dados);
   const serfs = sistemaDosSerfs(fome.state, dados);
   const laborers = sistemaDosLaborers(serfs.state, dados);

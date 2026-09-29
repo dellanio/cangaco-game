@@ -1,9 +1,10 @@
 /**
  * D-MOVIMENTO-01 — a colisao civil (GDD §6.4, revisto em 2026-09-28; plano em
  * docs/planos/2026-09-28-D1-colisao-civil.md). O mecanismo e o do `WalkTo` do kam_remake:
- * a colisao se resolve NO PASSO, nao no A*. Quem vem de frente troca de lugar; o ocioso no
- * caminho e empurrado; passada uma espera, o bloqueado contorna os parados; passada a espera
- * longa, entra no tile ocupado. Ninguem espera alem de `ticksTrocaForcada`.
+ * a colisao se resolve NO PASSO, nao no A*. Quem vem de frente PERMUTA de tile com o outro;
+ * o ocioso no caminho e empurrado; passada uma espera, o bloqueado contorna os parados;
+ * passada a espera longa, permuta com quem anda e o prende. D-MOVIMENTO-01j: nunca ha dois
+ * civis num tile — a troca e sempre permuta, como no KaM.
  *
  * Tudo aqui so age com `colisaoCivil.ligada`. Desligada, nenhum campo novo nasce e o
  * estado fica igual, byte a byte.
@@ -11,7 +12,7 @@
 import type { GameData } from './data/types';
 import type { DadosDaFsm, GameState, Unidade } from './state';
 import type { TileDeGrid } from './estradas';
-import { passoAndavel } from './pathfinding';
+import { custoDoPasso, passoAndavel } from './pathfinding';
 import type { ModoDeBusca } from './pathfinding';
 import { classeDaUnidade } from './condicao';
 
@@ -177,10 +178,10 @@ function desvioCivil(state: GameState, u: Unidade, caminho: readonly TileDeGrid[
 }
 
 /**
- * D-MOVIMENTO-01g — o teto da espera que a invariante confere: a troca forcada mais o maior
- * passo do dado. A troca e de DUAS unidades, entao quem chega ao teto com um par no tile
- * espera o par se desfazer, e o par dura no maximo um passo (o parceiro que sai completa o
- * passo dele). Derivado do dado, nunca digitado.
+ * O teto da espera que a invariante confere: a troca forcada mais o maior passo do dado.
+ * D-MOVIMENTO-01j — com a permuta, quem espera outro que anda permuta no teto; o passo a mais
+ * cobre a ultima volta do `andar`. Esperar um PARADO (carregando, colhendo) dura o trabalho
+ * dele, e passar daqui e o que a invariante existe para mostrar. Derivado do dado.
  */
 export function tetoDaEspera(dados: GameData): number {
   return dados.movimento.colisaoCivil.ticksTrocaForcada + Math.max(...Object.values(dados.movimento.ticksPorTileDiagonal.aPe));
@@ -201,7 +202,11 @@ function cedeAQuemEspera(state: GameState, u: Unidade, tile: TileDeGrid, dados: 
     const id = state.unidades.ordem[k] as string;
     if (id === u.id) continue;
     const x = state.unidades.porId[id];
-    if (x === undefined || !ehCivilQueOcupa(x, dados)) continue;
+    if (x === undefined) continue;
+    // D-MOVIMENTO-01j — quem espera a porta ha `teto` ticks tem o tile dela: sem a saida
+    // forcada, e so assim que ele sai de uma porta com fluxo continuo
+    if (x.saindo !== undefined && x.saindo >= teto && mesmoTile(x, tile) && classeDaUnidade(x.tipo, dados) === 'civil') return true;
+    if (!ehCivilQueOcupa(x, dados)) continue;
     const espera = x.fsmData.bloqueado ?? 0;
     const alvo = x.fsmData.caminho?.[0];
     if (espera < teto || alvo === undefined || !mesmoTile(alvo, tile)) continue;
@@ -216,10 +221,9 @@ function semEspera(d: DadosDaFsm): DadosDaFsm {
   return resto;
 }
 
-/** A unidade sem `trocaCom` e sem `saindo` (os dois campos opcionais da colisao). */
+/** A unidade sem `saindo` (o campo opcional da colisao). */
 function semMarcas(u: Unidade): Unidade {
-  const { trocaCom: _t, saindo: _s, ...resto } = u;
-  void _t;
+  const { saindo: _s, ...resto } = u;
   void _s;
   return resto;
 }
@@ -227,32 +231,21 @@ function semMarcas(u: Unidade): Unidade {
 /**
  * O passo COMPLETO de um civil com a colisao ligada (o `andar` ja acumulou o progresso).
  * `custo` e o custo do passo, para segurar o passo em `custo - 1` enquanto espera.
+ * D-MOVIMENTO-01j — aqui o civil so entra em tile VAZIO. A troca com quem anda e permuta, e
+ * mora em `sistemaDaPermuta`, antes das FSMs, porque mexe em duas unidades.
  */
 export function passoCivil(state: GameState, u: Unidade, custo: number, dados: GameData): Unidade {
   const caminho = u.fsmData.caminho ?? [];
   const proximo = caminho[0] as TileDeGrid;
-  // D-MOVIMENTO-01c (empilhamento de fora do passo) — quem espera a porta nao anda: `sistemaDaPorta` libera quando o tile vagar
+  // quem espera a porta nao anda: `sistemaDaPorta` libera quando o tile vagar
   if (u.saindo !== undefined) return { ...u, fsmData: { ...u.fsmData, progresso: custo - 1 } };
-  const entrar = (trocaCom: string | null): Unidade => ({
-    ...semMarcas(u), gx: proximo.gx, gy: proximo.gy,
-    fsmData: { ...semEspera(u.fsmData), caminho: caminho.slice(1), progresso: 0 },
-    ...(trocaCom === null ? {} : { trocaCom }),
-  });
   const c = dados.movimento.colisaoCivil;
-  const segurar = (): Unidade => ({ ...u, fsmData: { ...u.fsmData, progresso: custo - 1, bloqueado: (u.fsmData.bloqueado ?? 0) + 1 } });
-  if (cedeAQuemEspera(state, u, proximo, dados)) return segurar();
-  const ocupantes = civisNoTile(state, proximo, u.id, dados);
-  if (ocupantes.length === 0) return entrar(null);
-  // D-MOVIMENTO-01g — a troca e entre DUAS unidades, como no KaM (uma por tile): so com
-  // exatamente um ocupante. Com dois (um par ja em troca), espera: entrar faria tres num
-  // tile, e o `trocaCom` do terceiro apontaria para quem sai primeiro.
-  const unico = ocupantes.length === 1 ? (ocupantes[0] as Unidade) : null;
-  // a TROCA de frente (IntSolutionExchange, espera 0): o ocupante vem para o meu tile
-  const vemPraCa = (o: Unidade): boolean => { const p = o.fsmData.caminho?.[0]; return p !== undefined && mesmoTile(p, u); };
-  if (unico !== null && vemPraCa(unico)) return entrar(unico.id);
   const bloqueado = (u.fsmData.bloqueado ?? 0) + 1;
-  // a troca FORCADA (WAITING_TIMEOUT): o teto da espera, tambem so com um ocupante
-  if (unico !== null && bloqueado >= c.ticksTrocaForcada) return entrar(unico.id);
+  const segurar = (): Unidade => ({ ...u, fsmData: { ...u.fsmData, progresso: custo - 1, bloqueado } });
+  if (cedeAQuemEspera(state, u, proximo, dados)) return segurar();
+  if (civisNoTile(state, proximo, u.id, dados).length === 0) {
+    return { ...semMarcas(u), gx: proximo.gx, gy: proximo.gy, fsmData: { ...semEspera(u.fsmData), caminho: caminho.slice(1), progresso: 0 } };
+  }
   // o DESVIO (AVOID): em `ticksDesviar` e a cada `ticksRepetirDesvio`; o contador segue
   if (caminho.length > 1 && bloqueado >= c.ticksDesviar && (bloqueado - c.ticksDesviar) % c.ticksRepetirDesvio === 0) {
     const contorno = desvioCivil(state, u, caminho, dados);
@@ -260,7 +253,54 @@ export function passoCivil(state: GameState, u: Unidade, custo: number, dados: G
       return { ...u, fsmData: { ...u.fsmData, caminho: [...contorno], progresso: 0, bloqueado } };
     }
   }
-  return { ...u, fsmData: { ...u.fsmData, progresso: custo - 1, bloqueado } };
+  return segurar();
+}
+
+/**
+ * D-MOVIMENTO-01j — a PERMUTA (IntSolutionExchange e a troca do WAITING_TIMEOUT do KaM): os
+ * dois mudam de tile no mesmo tick, e nunca ha dois civis num tile. Roda antes das FSMs,
+ * depois do empurrao, na ordem de `unidades.ordem`. Para o civil que anda, cujo passo vence
+ * neste tick, e cujo tile seguinte tem EXATAMENTE UM civil que tambem anda:
+ *  - de frente: o outro vem para o meu tile; cada um avanca o seu caminho;
+ *  - forcada: chego a `ticksTrocaForcada` e o outro nao vem para ca (esta preso tambem); ele
+ *    volta um passo, e o caminho dele ganha o tile de onde saiu.
+ * O outro tem de poder pisar no meu tile no modo dele. Cada unidade permuta no maximo uma vez
+ * por tick. A PRIORIDADE de quem passou do teto (`cedeAQuemEspera`) NAO vale aqui: ela e para
+ * entrar em tile vazio. Medido (porta de 10 ticks, carga 2x): com ela bloqueando a permuta, quem
+ * sai da porta e quem espera de frente para entrar ficavam presos um contra o outro, porque um
+ * terceiro com mais espera queria aquele tile — e a vila parou. Quem permuta ganha 1 tick
+ * (o `andar` do mesmo tick ja soma no passo seguinte): deterministico e registrado.
+ */
+export function sistemaDaPermuta(state: GameState, dados: GameData): GameState {
+  if (!colisaoCivilLigada(dados)) return state;
+  const teto = dados.movimento.colisaoCivil.ticksTrocaForcada;
+  const permutou = new Set<string>();
+  let atual = state;
+  const anda = (x: Unidade): boolean => (x.fsmData.caminho ?? []).length > 0;
+  for (const id of state.unidades.ordem) {
+    const u = atual.unidades.porId[id];
+    if (u === undefined || permutou.has(id) || !ehCivilQueOcupa(u, dados) || !anda(u)) continue;
+    const caminho = u.fsmData.caminho as readonly TileDeGrid[];
+    const proximo = caminho[0] as TileDeGrid;
+    if ((u.fsmData.progresso ?? 0) + 1 < custoDoPasso(atual.estradas, u, proximo, dados)) continue;
+    const ocupantes = civisNoTile(atual, proximo, u.id, dados);
+    if (ocupantes.length !== 1) continue;
+    const o = ocupantes[0] as Unidade;
+    if (permutou.has(o.id) || !anda(o)) continue;
+    const caminhoDele = o.fsmData.caminho as readonly TileDeGrid[];
+    const deFrente = mesmoTile(caminhoDele[0] as TileDeGrid, u);
+    const forcada = !deFrente && (u.fsmData.bloqueado ?? 0) + 1 >= teto;
+    if (!deFrente && !forcada) continue;
+    if (!passoAndavel(atual, o, u, modoDoDesvio(atual, o, caminhoDele), dados)) continue;
+    const eu: Unidade = { ...u, gx: proximo.gx, gy: proximo.gy, fsmData: { ...semEspera(u.fsmData), caminho: caminho.slice(1), progresso: 0 } };
+    const ele: Unidade = deFrente
+      ? { ...o, gx: u.gx, gy: u.gy, fsmData: { ...semEspera(o.fsmData), caminho: caminhoDele.slice(1), progresso: 0 } }
+      : { ...o, gx: u.gx, gy: u.gy, fsmData: { ...o.fsmData, caminho: [{ gx: o.gx, gy: o.gy }, ...caminhoDele], progresso: 0 } };
+    atual = { ...atual, unidades: { ...atual.unidades, porId: { ...atual.unidades.porId, [eu.id]: eu, [ele.id]: ele } } };
+    permutou.add(eu.id);
+    permutou.add(ele.id);
+  }
+  return atual;
 }
 
 /** O primeiro vizinho livre de `o` (vizinhanca 8 em ordem fixa), fora de `evitar`. */
@@ -309,11 +349,10 @@ const parado = (u: Unidade): boolean => (u.fsmData.caminho ?? []).length === 0;
 /**
  * O EMPURRAO (IntSolutionPush), com duas causas, na ordem de `unidades.ordem`:
  *  1. o civil ocioso e parado no tile que um civil bloqueado ha `ticksEmpurrar` quer;
- *  2. (D-MOVIMENTO-01c, empilhamento de fora do passo) o civil ocioso e parado que divide o tile com outro civil fora de troca: o
+ *  2. (D-MOVIMENTO-01c, empilhamento de fora do passo) o civil ocioso e parado que divide o tile com outro civil: o
  *     empilhamento que nasce fora do passo (fixture, obra que termina, porta). Fica no tile
  *     o primeiro que nao e ocioso, ou o primeiro de todos.
- * O empurrado vai ao primeiro vizinho livre. Sem vizinho livre, fica: a troca forcada de
- * quem espera resolve. Roda antes das FSMs.
+ * O empurrado vai ao tile livre mais perto (`lugarLivre`). Roda antes das FSMs.
  */
 export function sistemaDoEmpurrao(state: GameState, dados: GameData): GameState {
   if (!colisaoCivilLigada(dados)) return state;
@@ -340,7 +379,6 @@ export function sistemaDoEmpurrao(state: GameState, dados: GameData): GameState 
     if (noTile.length < 2) continue;
     const fica = noTile.find((x) => x.fsm !== EMPURRAVEL) ?? (noTile[0] as Unidade);
     if (fica.id === o.id) continue;
-    // D-MOVIMENTO-01g — o `trocaCom` NAO protege o ocioso: ele nao tem por que dividir tile
     const livre = lugarLivre(atual, o, null, dados);
     if (livre !== undefined) atual = empurrar(atual, o, livre);
   }
@@ -349,7 +387,7 @@ export function sistemaDoEmpurrao(state: GameState, dados: GameData): GameState 
 
 /** D-MOVIMENTO-01c (empilhamento de fora do passo) — contadores da porta, FORA do estado (o molde de `estatisticasDeBusca` do A*):
  *  medida da sessao, nunca regra. `saidas` e quem ganhou `saindo`; `somaDeEspera` e
- *  `maiorEspera` em ticks; `noTeto` e quem saiu pela troca forcada. */
+ *  `maiorEspera` em ticks; `noTeto` e quem esperou ate o teto (e ganhou a prioridade). */
 const porta = { saidas: 0, somaDeEspera: 0, maiorEspera: 0, noTeto: 0 };
 export function estatisticasDaPorta(): Readonly<typeof porta> {
   return { ...porta };
@@ -367,7 +405,8 @@ export function zerarEstatisticasDaPorta(): void {
  *  - o civil que NASCEU neste tick, ou passou de "dentro" para "fora", num tile com outro
  *    civil que ocupa, ganha `saindo: 0`;
  *  - quem ja estava `saindo`: com o tile livre, sai (o campo some); senao conta mais um
- *    tick; no teto, `ticksTrocaForcada`, sai em troca com o ocupante, como todo bloqueado.
+ *    tick. D-MOVIMENTO-01j: nao ha saida forcada; no teto, `ticksTrocaForcada`, ganha a
+ *    prioridade do tile (`cedeAQuemEspera`) e sai quando o ocupante sair.
  */
 export function sistemaDaPorta(antes: GameState, depois: GameState, dados: GameData): GameState {
   if (!colisaoCivilLigada(dados)) return depois;
@@ -380,15 +419,14 @@ export function sistemaDaPorta(antes: GameState, depois: GameState, dados: GameD
     let novo: Unidade | null = null;
     if (u.saindo !== undefined) {
       const espera = u.saindo + 1;
-      if (ocupantes.length === 0 || (espera >= teto && ocupantes.length === 1)) {
+      // D-MOVIMENTO-01j — sem saida forcada: espera o tile vagar. No teto ganha a prioridade
+      // (`cedeAQuemEspera`): ninguem mais entra ali, e o ocupante sai
+      if (ocupantes.length === 0) {
         porta.somaDeEspera += u.saindo;
         porta.maiorEspera = Math.max(porta.maiorEspera, u.saindo);
-        if (ocupantes.length > 0) porta.noTeto += 1;
-      }
-      if (ocupantes.length === 0) novo = semMarcas(u);
-      // D-MOVIMENTO-01g — sai em troca so com UM ocupante; com um par na porta, segue esperando
-      else if (espera >= teto && ocupantes.length === 1) novo = { ...semMarcas(u), trocaCom: (ocupantes[0] as Unidade).id };
-      else novo = { ...u, saindo: espera };
+        if (u.saindo >= teto) porta.noTeto += 1;
+        novo = semMarcas(u);
+      } else novo = { ...u, saindo: espera };
     } else {
       const eraAntes = antes.unidades.porId[id];
       const saiu = eraAntes === undefined || (POSICAO_DO_ESTADO[eraAntes.fsm] === 'dentro' && ocupaTile(u));
