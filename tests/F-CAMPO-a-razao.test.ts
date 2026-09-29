@@ -107,5 +107,7 @@ describe('F-CAMPO-a — varios tiles ao alcance rendem mais que um', () => {
       fazendaCheia: cheia,
       razao: um.produzido === 0 ? null : cheia.produzido / um.produzido,
     });
-  }, 60000);
+    // `timeout` NAO e assercao de tempo (§8): existe para o caso travar. Medido: 0,90 / 0,98 s
+    // isolado (2026-09-29); 5x daria menos, e o limite fica no piso, o padrao do Vitest.
+  }, 5_000);
 });

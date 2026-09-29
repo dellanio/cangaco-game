@@ -127,7 +127,9 @@ describe('LOTE3-b2 — os quatro colhem em fases', () => {
       // o tick da chegada: sem trabalho na casa ele JA e o deposito (1); com, ele e
       // gasto entrando e o relogio anda a partir do seguinte (naCasa + 1)
       expect(f.dentroDepois).toBe(naCasa + 1);
-    }, 120000);
+      // `timeout` NAO e assercao de tempo (§8): existe para o caso travar. Medido: 0,03 a 0,13 s
+      // isolado, conforme o predio (2026-09-29); 5x daria menos, e o limite fica no piso, o padrao do Vitest.
+    }, 5_000);
 
     it(`${c.tipo}: a vazao em ${JANELA} ticks e a do modelo de antes (+-1)`, () => {
       const antes = modeloDeAntes(c.tipo, gameData);
@@ -135,7 +137,9 @@ describe('LOTE3-b2 — os quatro colhem em fases', () => {
       const deAntes = produzido(c.cenario(antes), antes, c.predio);
       expect(agora).toBeGreaterThan(0);
       expect(Math.abs(agora - deAntes)).toBeLessThanOrEqual(1);
-    }, 300000);
+      // `timeout` NAO e assercao de tempo (§8): existe para o caso travar. Medido: 0,27 a 0,94 s
+      // isolado, conforme o predio (2026-09-29); 5x daria menos, e o limite fica no piso, o padrao do Vitest.
+    }, 5_000);
   }
 
   it('evidencia: fases, vazao e a razao N:1 onde ha cenario de um tile', () => {
@@ -178,5 +182,7 @@ describe('LOTE3-b2 — os quatro colhem em fases', () => {
       janela: JANELA_LONGA,
       porPredio,
     });
-  }, 600000);
+    // `timeout` NAO e assercao de tempo (§8): existe para o caso travar. Medido: 8,4 / 8,2 s
+    // isolado (2026-09-29); o limite e ~5x.
+  }, 45_000);
 });

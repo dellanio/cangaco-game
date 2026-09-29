@@ -599,6 +599,8 @@ describe('F10 — cenario de carga: 20 obras e 4 serfs entregando de verdade', (
       concluidas, tarefasNoFim: materiaisNoQuadro(estado), buscasExecutadas: buscas.execucoes, acertosDeCache: buscas.acertos,
     });
     expect(metricasDeCarga.tarefasGeradas, 'churn: alguma tarefa de material foi criada mais de uma vez').toBe(esperadas);
+    // `timeout` NAO e assercao de tempo (§8): existe para o caso travar. Medido: 26,3 / 24,0 s
+    // isolado (2026-09-29); o limite e ~5x.
   }, 120_000);
 });
 

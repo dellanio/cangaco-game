@@ -227,7 +227,9 @@ describe('F-T4d — o pescador em partida', () => {
       alertasDaCabanaNoFim: c.cabanaId === null ? null : alertasDoEstado(c.fim, c.dados).filter((a) => a.predio === c.cabanaId),
       ticksRodados: c.fim.tick,
     });
-  }, 90_000);
+    // `timeout` NAO e assercao de tempo (§8): existe para o caso travar. Medido: ~3,8 s
+    // isolado, 79% dos 4,8 s do arquivo (2026-09-29); o limite e ~5x.
+  }, 20_000);
 
   it('a cabana sobe por comando, com a porta na rua, e o pescador a ocupa antes da fome da abertura', () => {
     expect(c.recusas).toEqual([]);

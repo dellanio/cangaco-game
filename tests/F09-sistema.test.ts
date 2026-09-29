@@ -529,6 +529,8 @@ describe('F09 — cenario de carga: muitas obras simultaneas e ninguem reclamand
       tarefasNoFim: tarefasDe(estado).length,
     });
     expect(metricasDeCarga.tarefasGeradas, 'churn: alguma tarefa de material foi criada mais de uma vez').toBe(esperadas);
+    // `timeout` NAO e assercao de tempo (§8): existe para o caso travar. Medido: 4,2 / 4,3 s
+    // isolado (2026-09-29); o limite e ~5x.
   }, 20_000);
 });
 

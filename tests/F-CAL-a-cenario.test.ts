@@ -254,5 +254,6 @@ describe('F-CAL-a — a vila da cadeia da comida', () => {
     // inteira, com 103 workers disputando a maquina, no teto padrao de 5 s — a sim
     // e deterministica, entao o estado nao pode ter mudado; o que mudou foi a
     // maquina. Mesmo uso e mesmo numero de `tests/F09-sistema.test.ts`.
+    // Medido: 2,1 / 2,3 s isolado (2026-09-29); o limite e ~5x.
   }, 20_000);
 });

@@ -186,5 +186,7 @@ describe('F-VIVO-a — o armazem nao pisca', () => {
       pisca: { ticks: TICKS, trocas, trocasPor100Ticks: porCem, primeirasTrocasNoTick: trocasEm, limite: 1 },
     });
     expect(porCem).toBeLessThanOrEqual(1);
-  }, 60_000);
+    // `timeout` NAO e assercao de tempo (§8): existe para o caso travar. Medido: 1,5 / 1,6 s
+    // isolado (2026-09-29); o limite e ~5x.
+  }, 10_000);
 });

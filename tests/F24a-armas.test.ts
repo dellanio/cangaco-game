@@ -160,7 +160,9 @@ describe('F24a — as seis armas e as duas protecoes de ferro, pelo caminho real
     for (const tipo of OFICINAS) expect(predioDoTipo(s, tipo), tipo).not.toBeNull();
     expect(SAIDAS.length).toBe(8);
     for (const m of SAIDAS) expect(entregues[m], m).toBeGreaterThan(0);
-  }, 60_000);
+    // `timeout` NAO e assercao de tempo (§8): existe para o caso travar. Medido: 0,76 / 0,83 s
+    // isolado (2026-09-29); 5x daria menos, e o limite fica no piso, o padrao do Vitest.
+  }, 5_000);
 
   it('rodizio fixo padrao: cota 1 para cada saida, na ordem de economia.mercadorias', () => {
     const { inicial, comandos } = montar();
@@ -173,7 +175,9 @@ describe('F24a — as seis armas e as duas protecoes de ferro, pelo caminho real
     expect(escolha.cota).toEqual({ sword: 1, pike: 1, crossbow: 1 });
     expect(rodizioDaEscolha(escolha, gameData)).toEqual(['sword', 'pike', 'crossbow']);
     evidencia['rodizioPadrao'] = { weapon_smithy: rodizioDaEscolha(escolha, gameData) };
-  }, 60_000);
+    // `timeout` NAO e assercao de tempo (§8): existe para o caso travar. Medido: 0,10 s
+    // isolado (2026-09-29); 5x daria menos, e o limite fica no piso, o padrao do Vitest.
+  }, 5_000);
 });
 
 describe('F24a — a cota (SetProductionQuota)', () => {
@@ -202,7 +206,9 @@ describe('F24a — a cota (SetProductionQuota)', () => {
     evidencia['cotaSoLance'] = { produzidas };
     expect(produzidas['lance'] ?? 0).toBeGreaterThan(2);
     expect(Object.keys(produzidas).filter((m) => (produzidas[m] ?? 0) > 0)).toEqual(['lance']);
-  }, 60_000);
+    // `timeout` NAO e assercao de tempo (§8): existe para o caso travar. Medido: 0,41 / 0,43 s
+    // isolado (2026-09-29); 5x daria menos, e o limite fica no piso, o padrao do Vitest.
+  }, 5_000);
 
   it('recusa com um motivo por caso', () => {
     const { s: pronto, oficina } = comOficinasProntas();
@@ -229,7 +235,9 @@ describe('F24a — a cota (SetProductionQuota)', () => {
       }
     }
     evidencia['recusas'] = { vistos, predioEmObraExercitado: emObra !== undefined };
-  }, 60_000);
+    // `timeout` NAO e assercao de tempo (§8): existe para o caso travar. Medido: 0,04 s
+    // isolado (2026-09-29); 5x daria menos, e o limite fica no piso, o padrao do Vitest.
+  }, 5_000);
 
   it('recusa predio-em-obra sobre a planta recem-posta', () => {
     const { inicial, plantas } = montar();
@@ -299,5 +307,7 @@ describe('F24a — determinismo', () => {
     });
     expect(comSave).toBe(direto);
     gravarEvidencia('F24a', evidencia);
-  }, 60_000);
+    // `timeout` NAO e assercao de tempo (§8): existe para o caso travar. Medido: 0,65 s
+    // isolado (2026-09-29); 5x daria menos, e o limite fica no piso, o padrao do Vitest.
+  }, 5_000);
 });

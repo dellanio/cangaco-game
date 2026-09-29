@@ -87,7 +87,9 @@ describe('LOTE3-c — o pedreiro traz um lote por viagem', () => {
     expect(agora.entregue).toBeGreaterThanOrEqual(antes.entregue * 1.2);
     // ticks andando por pedra: a razao ideal e 1/LOTE; o piso e metade
     expect(agora.ticksAndando / agora.entregue).toBeLessThan((antes.ticksAndando / antes.entregue) / 2);
-  }, 120000);
+    // `timeout` NAO e assercao de tempo (§8): existe para o caso travar. Medido: 0,70 s
+    // isolado (2026-09-29); 5x daria menos, e o limite fica no piso, o padrao do Vitest.
+  }, 5_000);
 
   it('evidencia: entregue, caminhada por pedra e a razao N:1 com rocha', () => {
     const agora = correr(cenarioDePedreira(gameData), gameData);
@@ -130,5 +132,7 @@ describe('LOTE3-c — o pedreiro traz um lote por viagem', () => {
         agora: { muitos: agoraFartoN.entregue, um: agoraFarto1.entregue, razao: razao(agoraFartoN.entregue, agoraFarto1.entregue) },
       },
     });
-  }, 600000);
+    // `timeout` NAO e assercao de tempo (§8): existe para o caso travar. Medido: 1,5 s
+    // isolado (2026-09-29); o limite e ~5x.
+  }, 10_000);
 });

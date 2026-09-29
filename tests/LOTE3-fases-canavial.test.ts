@@ -106,7 +106,9 @@ describe('LOTE3-b1 — o canavieiro colhe no tile e trabalha na casa', () => {
     // em que a chegada ja era o deposito. O descanso (LOTE3-b2) abre o ciclo
     // seguinte, antes da saida, e nao entra nesta conta
     expect(dentro).toBe(CICLO - DESCANSO - NO_TILE + 1);
-  }, 60000);
+    // `timeout` NAO e assercao de tempo (§8): existe para o caso travar. Medido: 0,16 s
+    // isolado (2026-09-29); 5x daria menos, e o limite fica no piso, o padrao do Vitest.
+  }, 5_000);
 
   it('dentro da casa ele segura a MESMA tarefa e nao consome tile ate o deposito', () => {
     let s = ateAFaseDaCasa();
@@ -119,7 +121,9 @@ describe('LOTE3-b1 — o canavieiro colhe no tile e trabalha na casa', () => {
       s = comEspacoNaSaida(step(s, [], gameData), 'c1');
     }
     expect(JSON.stringify(s.recursos)).not.toBe(recursos);
-  }, 60000);
+    // `timeout` NAO e assercao de tempo (§8): existe para o caso travar. Medido: 0,22 s
+    // isolado (2026-09-29); 5x daria menos, e o limite fica no piso, o padrao do Vitest.
+  }, 5_000);
 
   it('pausado na casa: o relogio congela e, despausado, ele termina consumindo UM tile', () => {
     let s = ateAFaseDaCasa();
@@ -148,7 +152,9 @@ describe('LOTE3-b1 — o canavieiro colhe no tile e trabalha na casa', () => {
     // o relogio nao zerou: ele termina o ciclo da casa, reclamando um tile para o
     // deposito, e o mapa perde exatamente o que virou cachaca
     expect(canaAntes - cana(s)).toBe(RECEITA_OK.sai.wine);
-  }, 60000);
+    // `timeout` NAO e assercao de tempo (§8): existe para o caso travar. Medido: 0,12 s
+    // isolado (2026-09-29); 5x daria menos, e o limite fica no piso, o padrao do Vitest.
+  }, 5_000);
 
   it('demolido com ele na casa: a colheita sai do quadro', () => {
     let s = ateAFaseDaCasa();
@@ -157,7 +163,9 @@ describe('LOTE3-b1 — o canavieiro colhe no tile e trabalha na casa', () => {
     s = step(s, [demolir], gameData);
     s = step(s, [], gameData);
     expect(colheitasDe(s)).toEqual([]);
-  }, 60000);
+    // `timeout` NAO e assercao de tempo (§8): existe para o caso travar. Medido: 0,08 s
+    // isolado (2026-09-29); 5x daria menos, e o limite fica no piso, o padrao do Vitest.
+  }, 5_000);
 
   it('saida cheia no fim da casa: o ciclo fica pronto e espera, sem voltar ao tile', () => {
     let s = ateAFaseDaCasa();
@@ -172,7 +180,9 @@ describe('LOTE3-b1 — o canavieiro colhe no tile e trabalha na casa', () => {
     expect(s.unidades.porId.canavieiro?.fsm).toBe('saida_cheia');
     expect(progressoDe(s)).toBe(CICLO);
     expect(colheitasDe(s)).toHaveLength(1);
-  }, 60000);
+    // `timeout` NAO e assercao de tempo (§8): existe para o caso travar. Medido: 0,14 s
+    // isolado (2026-09-29); 5x daria menos, e o limite fica no piso, o padrao do Vitest.
+  }, 5_000);
 
   it(`a vazao em ${JANELA} ticks e a do modelo de antes (+-1), e a razao 12:1 vai para a evidencia`, () => {
     const antes = modeloDeAntes(gameData);
@@ -190,5 +200,7 @@ describe('LOTE3-b1 — o canavieiro colhe no tile e trabalha na casa', () => {
       agora: { umTile: agora1, dozeTiles: agora12, razao: agora1 === 0 ? null : agora12 / agora1 },
       modeloDeAntes: { umTile: antes1, dozeTiles: antes12, razao: antes1 === 0 ? null : antes12 / antes1 },
     });
-  }, 600000);
+    // `timeout` NAO e assercao de tempo (§8): existe para o caso travar. Medido: 1,4 s
+    // isolado (2026-09-29); o limite e ~5x.
+  }, 10_000);
 });

@@ -170,7 +170,9 @@ describe('F-REPL-b — o que cada modo faz', () => {
       cortarContraSemReposicao: { divergeEventos, divergeEstados, amostras: j },
       cortarEPlantar: { troncos: rc.troncos, replantios: rc.replantios, primeiraDivergenciaDoPadrao },
     });
-  }, 300000);
+    // `timeout` NAO e assercao de tempo (§8): existe para o caso travar. Medido: 3,4 s
+    // isolado (2026-09-29); o limite e ~5x.
+  }, 20_000);
 
   it('em `cortar`, toco nao e trabalho nem para o alerta: o predio se declara esgotado; de volta ao padrao, replanta', () => {
     // anda ate o `vein-exhausted` de w1: em `cortar` a mata de 2 tiles acaba
@@ -203,7 +205,9 @@ describe('F-REPL-b — o que cada modo faz', () => {
     const rb = correr(devolta, tiles, gameData, ANTES_DA_FOME - devolta.tick);
     expect(rb.replantios).toBeGreaterThan(0);
     expect(rb.troncos).toBeGreaterThan(0);
-  }, 300000);
+    // `timeout` NAO e assercao de tempo (§8): existe para o caso travar. Medido: 1,2 s
+    // isolado (2026-09-29); o limite e ~5x.
+  }, 10_000);
 
   it('trocar para `cortar` no meio de um plantio: a viagem termina, a reserva se solta, e nao planta mais', () => {
     let { s } = mataCurta(gameData, 2);
@@ -227,5 +231,7 @@ describe('F-REPL-b — o que cada modo faz', () => {
     expect(depois.troncos).toBeGreaterThan(0);
     expect(depois.replantios).toBe(0);
     expect(depois.dentroDaArvore).toBe(0);
-  }, 300000);
+    // `timeout` NAO e assercao de tempo (§8): existe para o caso travar. Medido: 1,2 s
+    // isolado (2026-09-29); o limite e ~5x.
+  }, 10_000);
 });

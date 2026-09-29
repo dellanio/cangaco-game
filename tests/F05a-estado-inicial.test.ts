@@ -188,6 +188,8 @@ describe('F05a — npm run sim, ponta a ponta', () => {
     for (const [tipo, quantidade] of Object.entries(estadoInicial.unidades)) {
       expect(saida).toContain(`${tipo}: ${quantidade}`);
     }
+    // `timeout` NAO e assercao de tempo (§8): existe para o caso travar. Medido: 2,7 s
+    // isolado (2026-09-29); o limite e ~11x, porque o `npm run sim` em processo filho sofre mais com a maquina cheia.
   }, 30_000);
 });
 

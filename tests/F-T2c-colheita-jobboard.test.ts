@@ -237,7 +237,9 @@ describe('F-T2c — duas pedreiras de alcances sobrepostos nunca colhem o mesmo 
     expect(r.depositosPorPredio.q1).toEqual([588, 1176, 1770, 2354]);
     expect(r.ticksComAsDuas).toBe(0);
     // LOTE3-c: 3000 ticks com a invariante a cada tick; o limite e para o caso travar
-  }, 60000);
+    // `timeout` NAO e assercao de tempo (§8): existe para o caso travar. Medido: 0,59 s
+    // isolado (2026-09-29); 5x daria menos, e o limite fica no piso, o padrao do Vitest.
+  }, 5_000);
 
   it('jazida seca: as duas param em esperando_insumo e nenhuma tarefa segura tile', () => {
     const r = correr(duasPedreiras(), CORRIDA);
@@ -247,7 +249,9 @@ describe('F-T2c — duas pedreiras de alcances sobrepostos nunca colhem o mesmo 
     expect(fsmDe(r.fim, 'pedreiro-2')).toBe('esperando_insumo');
     expect(tilesEmTarefa(r.fim)).toEqual([]);
     // LOTE3-c: 3000 ticks com a invariante a cada tick; o limite e para o caso travar
-  }, 60000);
+    // `timeout` NAO e assercao de tempo (§8): existe para o caso travar. Medido: 0,49 s
+    // isolado (2026-09-29); 5x daria menos, e o limite fica no piso, o padrao do Vitest.
+  }, 5_000);
 });
 
 // --- o guarda acusa -----------------------------------------------------------
@@ -383,5 +387,7 @@ describe('F-T2c — evidencia', () => {
     });
     expect(r.colisoes).toEqual([]);
     // LOTE3-c: 3000 ticks com a invariante a cada tick; o limite e para o caso travar
-  }, 60000);
+    // `timeout` NAO e assercao de tempo (§8): existe para o caso travar. Medido: 0,48 s
+    // isolado (2026-09-29); 5x daria menos, e o limite fica no piso, o padrao do Vitest.
+  }, 5_000);
 });

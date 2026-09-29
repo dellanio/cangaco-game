@@ -69,7 +69,9 @@ describe('F-REPL-a — o toco rebrota', () => {
     expect(r.troncos).toBeGreaterThan(teto);
     expect(r.replantios).toBeGreaterThan(0);
     expect(r.dentroDaArvore).toBe(0);
-  }, 120000);
+    // `timeout` NAO e assercao de tempo (§8): existe para o caso travar. Medido: 2,1 / 2,1 s
+    // isolado (2026-09-29); o limite e ~5x.
+  }, 10_000);
 
   it('toco sob estrada nao rebrota; o mesmo toco, sem estrada, rebrota', () => {
     const { s: s0, toco } = ateOPrimeiroToco(gameData);
@@ -93,7 +95,9 @@ describe('F-REPL-a — o toco rebrota', () => {
     }
     expect({ assentou, rebrotouSemEstrada }).toEqual({ assentou: true, rebrotouSemEstrada: true });
     expect(dentro).toBe(0);
-  }, 120000);
+    // `timeout` NAO e assercao de tempo (§8): existe para o caso travar. Medido: 3,0 / 2,7 s
+    // isolado (2026-09-29); o limite e ~5x.
+  }, 15_000);
 
   it('quem estiver dentro de uma arvore que nasceu sai: o A* nao confere o tile de partida', () => {
     const { s } = mataCurta(gameData, 2);
@@ -128,5 +132,7 @@ describe('F-REPL-a — o toco rebrota', () => {
       mataInteiraSemReposicao: rN0,
       mataInteiraComReposicao: rN,
     });
-  }, 600000);
+    // `timeout` NAO e assercao de tempo (§8): existe para o caso travar. Medido: 5,3 / 4,9 s
+    // isolado (2026-09-29); o limite e ~5x.
+  }, 25_000);
 });

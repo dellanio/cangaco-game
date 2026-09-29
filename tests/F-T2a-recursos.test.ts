@@ -241,7 +241,9 @@ describe('F-T2a — perna 2: o lugar passa a importar, e o numero prova', () => 
     expect(disponivelDe(a.fim, 'q1', umPorTile)).toBe(0);
     expect(disponivelDe(b.fim, 'q1', umPorTile)).toBe(0);
     // LOTE3-c: o lajedo leva 7378 ticks; o limite e para o caso travar
-  }, 60000);
+    // `timeout` NAO e assercao de tempo (§8): existe para o caso travar. Medido: 0,21 s
+    // isolado (2026-09-29); 5x daria menos, e o limite fica no piso, o padrao do Vitest.
+  }, 5_000);
 
   it('com o dado de verdade, o total de cada lugar e tiles x rendimentoPorTile', () => {
     const rendimento = gameData.recursos.tipos.rock?.rendimentoPorTile ?? 0;
@@ -283,7 +285,9 @@ describe('F-T2a — perna 2: o lugar passa a importar, e o numero prova', () => 
     expect(disponivelDe(s, 'q1', umPorTile)).toBe(0);
     expect(disponivelDe(s, 'q2', umPorTile)).toBe(0);
     // LOTE3-c: 6812 ticks, e nao 2804; o limite e para o caso travar, nao aceite de tempo
-  }, 60000);
+    // `timeout` NAO e assercao de tempo (§8): existe para o caso travar. Medido: 1,4 / 1,5 s
+    // isolado (2026-09-29); o limite e ~5x.
+  }, 10_000);
 });
 
 // --- perna 3 -----------------------------------------------------------------
@@ -467,7 +471,9 @@ it('F-T2a — evidencia', () => {
   expect(tiles).toBeGreaterThan(800);
   expect(bytesDaCamada / tiles).toBeLessThan(45);
   expect(bytesDaCamada).toBeLessThan(48 * 1024);
-}, 60000);
+  // `timeout` NAO e assercao de tempo (§8): existe para o caso travar. Medido: 0,28 / 0,29 s
+  // isolado (2026-09-29); 5x daria menos, e o limite fica no piso, o padrao do Vitest.
+}, 5_000);
 
 // ---------------------------------------------------------------------------
 // O marcador (desenho MINIMO). O funil `render/mapa.ts` nao importa phaser e e
