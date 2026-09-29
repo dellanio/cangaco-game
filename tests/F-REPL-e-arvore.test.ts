@@ -67,10 +67,8 @@ describe('F-REPL-e — estadoDeCrescimento', () => {
     const escalas = ESTADOS_DE_CRESCIMENTO.map(escalaDoPlaceholder);
     for (let i = 1; i < escalas.length; i += 1) expect(escalas[i]).toBeGreaterThan(escalas[i - 1] as number);
     expect(Math.max(...escalas)).toBeLessThan(1);
-    // o brief: a muda cabe na metade de baixo do tile
-    expect(escalaDoPlaceholder('muda')).toBeLessThanOrEqual(0.5);
-    // decisao do operador (2026-09-28): a 1/4 a muda nao lia como arvore; ~40% da adulta
-    expect(escalaDoPlaceholder('muda')).toBeGreaterThanOrEqual(0.4);
+    // decisao do operador (2026-09-28): a muda a ~40% da adulta, para se ler como arvore
+    expect(escalaDoPlaceholder('muda')).toBeCloseTo(0.4, 5);
   });
 
   it('estado de crescimento nunca entra no sorteio da especie', () => {

@@ -4249,7 +4249,9 @@ Pedido do operador (2026-09-27, noite 15):
           afirma a equivalência tick a tick.
       - Desenho, do mais específico ao mais genérico:
         - PNG `vegetacao/<id>/<estado>` quando existir;
-        - senão, o **placeholder**: a adulta do tile em escala 1/4, 2/4 e 3/4;
+        - senão, o **placeholder**: a adulta do tile em escala 0,4, 0,6 e 0,8
+          (eram 1/4, 2/4 e 3/4; a muda subiu a ~40 % por decisão do operador em
+          2026-09-28 — a 1/4 ela não se lia como árvore);
         - sem arte de vegetação, o marcador de hoje.
       - Os estados de crescimento saem do sorteio da espécie, porque o PNG da muda
         não pode virar árvore adulta.
