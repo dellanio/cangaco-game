@@ -5802,6 +5802,10 @@ PROGRESS como PARA REVISÃO.
    militares do jogador dentro da caixa, e a ordem de mover leva todos. O plano diz o que a
    F26b (selecionar pela tela) já faz e o que falta. **Aceite:** roteiro que arrasta sobre
    a tropa de 18 e move os 18.
+   - **ENTREGUE (2026-09-29).** A caixa pega quem tem o TILE desenhado tocado, não mais o
+     centro. A caixa que a mão começa em cima do cabra da ponta pegava 15 de 18. A ajuda (H)
+     ganhou o grupo "A tropa", com a caixa e o botão direito. Plano em
+     `docs/planos/2026-09-29-C-TELA-03-selecao-de-grupo.md`.
 7. **C-TELA-04 — atacar unidade pelo mouse (ui + input).** Botão direito sobre um militar
    inimigo, com tropa selecionada, emite `AttackUnit`. **Aceite:** roteiro.
 8. **C-TELA-05 — ordem à Feira (ui).** O painel da Feira emite `SetTrade`. **Aceite:**

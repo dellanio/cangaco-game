@@ -58,10 +58,17 @@ describe('F26b — o acerto mira o desenho', () => {
     expect(unidadesNoPonto(noMesmoTile, { x: 0, y: 0 }, TILE)).toEqual([]);
   });
 
-  it('a caixa pega quem tem o centro desenhado dentro, e so esses', () => {
+  it('a caixa pega quem tem o tile desenhado tocado (C-TELA-03), e so esses', () => {
     const espalhadas = [desenhada('a', 2, 2), desenhada('b', 3, 2), desenhada('c', 9, 9)];
     const caixa = unidadesNaCaixa(espalhadas, { x: 4 * TILE, y: 3 * TILE }, { x: 2 * TILE, y: 2 * TILE }, TILE);
     expect(caixa).toEqual(['a', 'b']);
+    // a caixa comeca um pixel DENTRO do tile 1: o centro de 'perto' (tile 1) fica fora dela,
+    // e o centro reprovava; o tile dele e tocado. 'longe' (tile 0) nao e tocado.
+    const perto = desenhada('perto', 1, 2);
+    const longe = desenhada('longe', 0, 2);
+    const borda = 2 * TILE - 1;
+    expect(centroDesenhado(perto, TILE).x).toBeLessThan(borda);
+    expect(unidadesNaCaixa([perto, longe], { x: 4 * TILE, y: 3 * TILE }, { x: borda, y: 2 * TILE }, TILE)).toEqual(['perto']);
   });
 });
 

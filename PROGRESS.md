@@ -13447,3 +13447,47 @@ já sabia mandar.
   registrada no BALANCE_LOG, sem mudar número.
 - Se a "frente" perder homens em paz, o `guarnecer` puxa atacantes para ela. Na escaramuça
   de hoje não há combate em paz, então o caso não ocorre.
+
+## 2026-09-29 — C-TELA-03 (seleção de grupo pela caixa) ENTREGUE
+
+"Não consigo pegar o exército inteiro — tenho que mover um por um."
+
+**Verificado:**
+- **A sim nunca foi o problema.** Uma sonda headless (apagada) mandou `MoveUnits` com os 18
+  cabras da escaramuça para três destinos: 18 de 18 em `marchando`, 18 saíram do lugar e não
+  houve recusa.
+- **O defeito é a caixa.** Medi pela tela, despausado e com o botão seguro:
+
+  | arrasto | pegou |
+  |---|---|
+  | começando em cima do cabra do canto | **15 de 18** |
+  | ao contrário, com folga | 18 |
+  | afastado (zoom 0,75), com folga | 18 |
+
+  A F26b (selecionar pela tela) só pegava quem tinha o **centro** desenhado dentro da
+  caixa, e a mão começa a caixa em cima do soldado da ponta. O desvio do anel da F18f
+  desalinha vizinhos da mesma fileira em até meio tile, então exigir o centro, ou mesmo o
+  quadrado do clique, ainda deixava soldados de fora. No teste headless, com o centro,
+  foram 11 de 18 em cada canto; com o quadrado, 15.
+- **A correção:** `render/acerto.ts` (`unidadesNaCaixa`) pega quem tem o **tile desenhado**
+  (o tile interpolado, sem o desvio) tocado pela caixa. O anel nunca tira o desenho do
+  tile, então começar em qualquer soldado do canto e terminar em qualquer soldado do canto
+  oposto pega o bloco inteiro.
+- **A ajuda (H) não contava** a caixa nem o botão direito. `input/atalhos.ts` ganhou o
+  grupo `tropa`, com `selecionar-tropa` ("Botão esquerdo, arrastando") e `ordenar-tropa`
+  ("Botão direito"). Os textos estão em `data/theme-sertao.json`.
+- `tests/C-TELA-03-selecao-de-grupo.test.ts` reprova sem a correção (11/10/11 de 18) e
+  passa com ela (18/18/18). Evidência em `test-output/C-TELA-03.json`.
+- O teste da caixa da F26b ficou mais estrito: ele acrescenta o soldado cujo centro fica
+  fora e o tile fica dentro, e ele é pego, e mantém o de fora, que não é.
+- **Aceite:** o roteiro `npm run shot -- C-TELA-03` faz três caixas despausadas (em cima do
+  cabra, ao contrário, afastada) e pega 18 nas três. Com o botão direito, 18 marcham e 18
+  saem do lugar. Abri `screenshots/C-TELA-03-2-os-18-andaram.png`: o painel diz
+  "Tropa — 18 Cabra", e a tropa anda para o destino.
+- `npm run verify` verde. Os roteiros F-D1 (tela de ajuda), F26b (selecionar pela tela) e
+  C-TELA-01 (mensagem da ordem recusada) passaram pelo código de saída.
+
+**PARA REVISÃO:**
+- A caixa que toca o tile pode pegar o vizinho de uma tropa colada à outra. É o padrão de
+  RTS, e o shift ou o clique corrigem.
+- O duplo-clique ("todos do mesmo tipo na tela") não entrou, porque o pedido era a caixa.

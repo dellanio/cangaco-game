@@ -16,7 +16,7 @@
  * ouvintes. O `id` e NEUTRO e em ingles interno (CLAUDE.md §9); quem fala com o
  * jogador e `data/theme-sertao.json`.
  */
-export type GrupoDeAtalho = 'ferramenta' | 'tempo' | 'ajuda' | 'camera';
+export type GrupoDeAtalho = 'ferramenta' | 'tempo' | 'ajuda' | 'camera' | 'tropa';
 
 export interface AtalhoDeTeclado {
   /** Id neutro. E a chave do rotulo no tema. */
@@ -81,6 +81,9 @@ export const ATALHOS: readonly AtalhoDeTeclado[] = [
 export const GESTOS: readonly GestoDeMouse[] = [
   { id: 'arrastar-camera', grupo: 'camera' },
   { id: 'zoom', grupo: 'camera' },
+  // C-TELA-03: a caixa e a ordem da F26b existiam e a ajuda nao contava
+  { id: 'selecionar-tropa', grupo: 'tropa' },
+  { id: 'ordenar-tropa', grupo: 'tropa' },
 ];
 
 interface EventoComparavel {

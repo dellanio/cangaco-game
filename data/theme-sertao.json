@@ -601,6 +601,7 @@
       "ferramenta": "Na mão",
       "tempo": "O tempo",
       "camera": "Andar pelo mapa",
+      "tropa": "A tropa",
       "ajuda": "Este papel"
     },
     "rotulos": {
@@ -613,11 +614,15 @@
       "camera-mover": "Anda com o mapa para o lado que a seta aponta",
       "camera-arrastar": "Segure e arraste com o mouse para correr o mapa",
       "arrastar-camera": "Corre o mapa de um lado para o outro",
-      "zoom": "Chega perto e afasta"
+      "zoom": "Chega perto e afasta",
+      "selecionar-tropa": "Pega os cabras dentro da caixa (com Shift, soma)",
+      "ordenar-tropa": "Manda a tropa marchar, ou atacar a casa do inimigo"
     },
     "gestos": {
       "arrastar-camera": "Botão do meio, arrastando",
-      "zoom": "Roda do mouse"
+      "zoom": "Roda do mouse",
+      "selecionar-tropa": "Botão esquerdo, arrastando",
+      "ordenar-tropa": "Botão direito"
     }
   }
 }

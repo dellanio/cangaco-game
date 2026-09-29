@@ -8,7 +8,7 @@
  * selecionar importa. Por isso a entrada e a lista que a camada DESENHOU
  * (`UnidadeRenderizada`: `gxDesenhado`/`gyDesenhado` e `deslocamentoPx`), e nao o estado.
  */
-import { ESCALA_DO_MUNDO, gridToScreenCentro, LADO_DA_UNIDADE_EM_TILES } from './grid';
+import { ESCALA_DO_MUNDO, gridToScreen, gridToScreenCentro, LADO_DA_UNIDADE_EM_TILES } from './grid';
 
 /** O minimo do que a camada de unidades desenhou que o acerto precisa. */
 export interface UnidadeDesenhada {
@@ -50,8 +50,16 @@ export function unidadesNoPonto(desenhadas: readonly UnidadeDesenhada[], ponto: 
     .map(({ u }) => u.id);
 }
 
-/** As unidades cujo centro desenhado cai dentro da caixa de cantos `a` e `b`
- *  (qualquer ordem), na ordem da lista. */
+/**
+ * As unidades cujo TILE desenhado (o tile interpolado, sem o desvio do anel) toca a caixa
+ * de cantos `a` e `b` (qualquer ordem), na ordem da lista.
+ *
+ * C-TELA-03: a mao comeca a caixa EM CIMA do soldado da ponta. Exigir o centro deixava de
+ * fora a fileira dele (15 de 18, medido), e o quadrado do clique ainda deixava: o desvio da
+ * F18f poe dois vizinhos da mesma fileira ate meio tile fora de alinhamento. O anel nunca
+ * tira o desenho do tile, entao o tile e o menor alvo em que "comecar em qualquer soldado
+ * do canto e terminar em qualquer soldado do canto oposto" pega o bloco inteiro.
+ */
 export function unidadesNaCaixa(
   desenhadas: readonly UnidadeDesenhada[], a: Ponto, b: Ponto, tilePx: number,
 ): string[] {
@@ -60,7 +68,8 @@ export function unidadesNaCaixa(
   const y0 = Math.min(a.y, b.y);
   const y1 = Math.max(a.y, b.y);
   return desenhadas.filter((u) => {
-    const c = centroDesenhado(u, tilePx);
-    return c.x >= x0 && c.x <= x1 && c.y >= y0 && c.y <= y1;
+    const canto = gridToScreen({ gx: u.gxDesenhado, gy: u.gyDesenhado }, tilePx, ESCALA_DO_MUNDO);
+    const lado = tilePx * ESCALA_DO_MUNDO;
+    return canto.x + lado >= x0 && canto.x <= x1 && canto.y + lado >= y0 && canto.y <= y1;
   }).map((u) => u.id);
 }

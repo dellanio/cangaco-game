@@ -424,5 +424,8 @@
   },
   "C-IA-04-terceiro-grupo-andaime": {
     "passes": true
+  },
+  "C-TELA-03-selecao-de-grupo": {
+    "passes": true
   }
 }
