@@ -14004,3 +14004,32 @@ PROGRESS e o commit.
 **Hipótese, não verificada:** o jogador que clica no tile, e não no boneco, de quem anda,
 recebe marcha no lugar de ataque, pela mesma razão do roteiro. É comportamento da C-TELA-04
 (a mira pelo sprite), não desta feature.
+
+
+## 2026-09-29 — BUG-T registrado e auditoria dos roteiros que clicam em unidade
+
+A pedido do operador, depois da C-IA-02a (a vila da IA com produção).
+
+**Verificado:**
+- O limite da C-MOVIMENTO-02b (a troca só vale com a vaga como PRÓXIMO passo) virou o BUG-T
+  no `BUGS.md`, com os três casos da família e onde olhar em cada um. Ele não tem repro, e
+  a severidade fica a classificar: o aceite escrito da C-MOVIMENTO-02 e da 02b continua
+  passando, então a chave de nenhuma das duas cai.
+- A fragilidade do clique é geral, e não só da mudança de id:
+  - o desvio de desenho é um anel de raio 0,25 tile (`RAIO_DO_ANEL_EM_TILES`, em
+    `render/grid.ts`);
+  - a metade do quadrado de acerto é 0,25 tile (`LADO_DA_UNIDADE_EM_TILES` 0,5, em
+    `render/acerto.ts`);
+  - por isso, o centro do tile cai NA BORDA do quadrado de qualquer unidade parada, e fora
+    dele quando ela anda.
+- A auditoria dos 19 roteiros que leem `unidadesRenderizadas` e clicam:
+  - só o C-IA-03c mirava unidade pelo centro do tile, e já foi consertado;
+  - o C-TELA-04 mira pelo `gxDesenhado`, mais o desvio e o corpo;
+  - a caixa de seleção (C-TELA-01, C-TELA-02, C-TELA-03, C-TELA-04, C-COMBATE-01c,
+    C-IA-03c) não é frágil: `unidadesNaCaixa` olha o tile inteiro da posição desenhada e
+    ignora o desvio;
+  - os demais cliques miram prédio ou tile (a marcha, o armazém, a pedreira, a escola), e
+    esses se acham pelo tile.
+
+**Aberto, não feito:** o `pontoDaUnidade` vive dentro do C-IA-03c. Se outro roteiro precisar
+mirar unidade, o lugar dele é o `tools/shots/_canvas.js`, junto do `pontoDoTileNaTela`.

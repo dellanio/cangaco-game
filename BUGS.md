@@ -30,6 +30,33 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
 
 ## Abertos
 
+## BUG-T — tropa travada: vaga bloqueada no MEIO do caminho (terceiro caso da família)
+- feature: C-MOVIMENTO-02b (a vaga tomada por quem marcha) — limite conhecido dela
+- severidade: a classificar. Não há repro, e o aceite escrito da C-MOVIMENTO-02 e da 02b
+  continua passando, então a chave de nenhuma das duas cai. Se reproduzir em jogo, é `trava`:
+  soldado que espera para sempre é travamento de regra, não balanceamento.
+- repro: nenhum ainda. Quando acontecer, pause (P) e salve pelo painel H (botão Guardar): a
+  partida vai para o `localStorage` do navegador. Diga o tick e quem ficou `marchando`.
+- esperado: toda a tropa mandada para uma formação para, cada soldado numa vaga, em tempo
+  finito.
+- observado (hipótese, não medida): um soldado marcha para sempre quando o nó está num
+  tile do MEIO do caminho dele, e não no próximo passo com a vaga como destino.
+- **a família, para saber onde olhar sem reler os relatórios:**
+  1. C-MOVIMENTO-02 (a tropa não trava): a vaga é o próximo tile e está ocupada por um
+     PARADO do mesmo lado, sem contorno. Troca: `vagaEmparedadaPor`, em
+     `src/sim/units/movimento.ts`.
+  2. C-MOVIMENTO-02b: a vaga é o próximo tile e está ocupada por alguém que MARCHA para
+     outra vaga, com `progresso` 0 e um parado à frente dele. Troca: `vagaTomadaPor`, em
+     `src/sim/systems/marcha.ts`, chamada em `passoMarchando`.
+  3. Este bug: o bloqueio não está no próximo passo com a vaga. As duas trocas exigem
+     `caminho[0]` igual à vaga (ou o destino), então nenhuma dispara. Resta
+     `esperarOuDesviar` (`units/movimento.ts`), que espera `ticksDesvioMilitar`, tenta o
+     contorno e, sem contorno, "tenta de novo depois de outro período", para sempre.
+- onde olhar primeiro: o soldado preso com `fsm: 'marchando'` e `fsmData.bloqueado`
+  voltando a zero em ciclos. O `caminho[0]` dele e quem está naquele tile (parado ou
+  marchando, de que lado, para onde) dizem qual dos três casos é.
+- status: aberto
+
 ## Polimento
 
 Os três bugs de oscilação de tempo que moravam aqui (BUG-D na F-T1, BUG-E na F-T2b e,
