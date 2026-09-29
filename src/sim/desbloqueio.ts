@@ -1,4 +1,5 @@
 import type { GameEvent, GameState } from './state';
+import { LADO_DO_JOGADOR } from './state';
 import type { GameData } from './data/types';
 import { gameData } from './data';
 
@@ -57,7 +58,14 @@ export function registrarConclusoes(
 ): GameState {
   let atual = state;
   for (const evento of events) {
-    if (evento.type === 'building-completed') atual = registrarTipoConstruido(atual, evento.tipo);
+    // C-IA-03a: so o predio do JOGADOR desbloqueia o menu dele. O menu Build e do
+    // jogador; o quartel da IA de pe nao libera o quartel no menu de quem nunca fez um.
+    // Predio que nao esta no estado (o evento sobrevive a uma demolicao no mesmo tick) segue
+    // a regra antiga e conta: so o predio PRESENTE de outro lado e que fica de fora.
+    const lado = atual.predios.porId[evento.type === 'building-completed' ? evento.predio : '']?.lado ?? LADO_DO_JOGADOR;
+    if (evento.type === 'building-completed' && lado === LADO_DO_JOGADOR) {
+      atual = registrarTipoConstruido(atual, evento.tipo);
+    }
   }
   return atual;
 }

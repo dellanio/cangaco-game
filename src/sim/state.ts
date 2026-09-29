@@ -433,6 +433,9 @@ export interface Capacidade {
  * predio inimigo, e a F-CERCO-a2 (tropa ataca predio) recusa ordem contra o proprio.
  */
 export const LADO_DO_JOGADOR = 0;
+/** C-IA-03a — o lado da IA no cenario de escaramuca (`sim/cenario.ts`). Identificador, nao
+ *  balanceamento: por isso mora aqui, ao lado do lado do jogador, e nao em `data/`. */
+export const LADO_DA_IA = LADO_DO_JOGADOR + 1;
 
 interface PredioBase {
   readonly id: string;

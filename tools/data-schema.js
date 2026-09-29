@@ -20,6 +20,8 @@ const ARQUIVOS = [
   'combat', 'condition', 'delivery', 'terrain', 'economy',
   // F-T2a — regime e rendimento dos recursos naturais.
   'resources',
+  // C-IA-03a — o cenario de escaramuca: a vila e a tropa iniciais da IA.
+  'escaramuca',
   // F-T1 — a camada de terreno base. Um arquivo por mapa; `maps/` e diretorio
   // porque a campanha vai ter varios (GDD Anexo B).
   'maps/sertao-128',

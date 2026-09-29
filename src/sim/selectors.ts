@@ -7,7 +7,7 @@ import type { MotivoDeRecusaDeSoldado } from './quartel';
 import type { PorQueNaoTroca } from './feira';
 import type { PorQueATorreNaoAtira } from './torre';
 import type { GameState, Predio, PredioCompleto, PredioEmObra, Unidade } from './state';
-import { ID_DO_ARMAZEM } from './state';
+import { ID_DO_ARMAZEM, LADO_DO_JOGADOR } from './state';
 import type { GameData, PredioData } from './data/types';
 import { gameData } from './data';
 import { classeDaUnidade, emAlertaDeFome, fracaoDeCondicao } from './condicao';
@@ -58,11 +58,14 @@ export function estoqueTotal(state: GameState): Readonly<Record<string, number>>
  * explica a recusa. A mercadoria em transito (na mao de um serf) nao esta em armazem nenhum e
  * nao conta. Obra nao guarda mercadoria.
  */
-export function estoqueDosArmazens(state: GameState): Readonly<Record<string, number>> {
+export function estoqueDosArmazens(
+  state: GameState, lado: number = LADO_DO_JOGADOR,
+): Readonly<Record<string, number>> {
   const total: Record<string, number> = {};
   for (const id of state.predios.ordem) {
     const predio = state.predios.porId[id];
-    if (!predio || predio.estado !== 'completo' || predio.tipo !== ID_DO_ARMAZEM) continue;
+    // C-IA-03a: o HUD e do JOGADOR; o armazem da IA nao soma no estoque dele
+    if (!predio || predio.estado !== 'completo' || predio.tipo !== ID_DO_ARMAZEM || predio.lado !== lado) continue;
     for (const gaveta of [predio.estoque.entrada, predio.estoque.saida]) {
       for (const [mercadoria, quantidade] of Object.entries(gaveta)) {
         total[mercadoria] = (total[mercadoria] ?? 0) + quantidade;
@@ -117,8 +120,13 @@ export function resumoDoEstado(state: GameState): ResumoDoEstado {
 /** Soma de `estoqueTotal` restrita as mercadorias de `economia.grupos.comida`.
  *  A lista de quais mercadorias contam como comida vem do dado — este
  *  selector nao conhece nenhum id de comida por conta propria. */
-export function comidaTotal(state: GameState, dados: GameData = gameData): number {
-  const total = estoqueTotal(state);
+export function comidaTotal(state: GameState, dados: GameData = gameData, lado: number = LADO_DO_JOGADOR): number {
+  // C-IA-03a: so os predios do lado (o HUD e do jogador)
+  const doLado: GameState = {
+    ...state,
+    predios: { ...state.predios, ordem: state.predios.ordem.filter((id) => state.predios.porId[id]?.lado === lado) },
+  };
+  const total = estoqueTotal(doLado);
   let soma = 0;
   for (const id of dados.economia.grupos.comida) soma += total[id] ?? 0;
   return soma;
@@ -172,14 +180,15 @@ export function tropaComFome(state: GameState, lado: number, dados: GameData = g
   return n;
 }
 
-export function populacaoPorGrupo(state: GameState, dados: GameData = gameData): Populacao {
+export function populacaoPorGrupo(state: GameState, dados: GameData = gameData, lado: number = LADO_DO_JOGADOR): Populacao {
   const idsCivis = new Set(dados.unidades.civis.tipos.map((t) => t.id));
   const idsMilitares = new Set([...dados.unidades.militares.tipos, ...dados.unidades.mercenarios.tipos].map((t) => t.id));
   let civil = 0;
   let militar = 0;
   for (const id of state.unidades.ordem) {
     const unidade = state.unidades.porId[id];
-    if (!unidade) continue;
+    // C-IA-03a: a populacao do HUD e a do lado (a do jogador, por padrao)
+    if (!unidade || unidade.lado !== lado) continue;
     if (idsCivis.has(unidade.tipo)) civil += 1;
     else if (idsMilitares.has(unidade.tipo)) militar += 1;
   }
@@ -217,10 +226,11 @@ function caixaDaUnidade(unidade: Unidade): CaixaEmTiles {
  * 2. sem predio mas com unidade -> centro do bounding box das unidades;
  * 3. nem uma coisa nem outra -> centro do mapa.
  */
-export function centroDaVila(state: GameState, dados: GameData = gameData): PontoEmTiles {
+export function centroDaVila(state: GameState, dados: GameData = gameData, lado: number = LADO_DO_JOGADOR): PontoEmTiles {
+  // C-IA-03a: a camera nasce sobre a vila do JOGADOR, nao no meio das duas
   const predios = state.predios.ordem
     .map((id) => state.predios.porId[id])
-    .filter((p): p is Predio => p !== undefined);
+    .filter((p): p is Predio => p !== undefined && p.lado === lado);
   if (predios.length > 0) {
     const caixas = predios
       .map((p) => caixaDoPredio(p, dados))
@@ -230,7 +240,7 @@ export function centroDaVila(state: GameState, dados: GameData = gameData): Pont
 
   const unidades = state.unidades.ordem
     .map((id) => state.unidades.porId[id])
-    .filter((u): u is Unidade => u !== undefined);
+    .filter((u): u is Unidade => u !== undefined && u.lado === lado);
   if (unidades.length > 0) {
     return centroDeCaixas(unidades.map(caixaDaUnidade));
   }
@@ -809,11 +819,13 @@ function fonteSemTrabalho(
  * dao a mesma lista, na mesma ordem.
  */
 export function alertasDoEstado(
-  state: GameState, dados: GameData = gameData,
+  state: GameState, dados: GameData = gameData, lado: number = LADO_DO_JOGADOR,
 ): readonly Alerta[] {
   const alertas: Alerta[] = [];
   for (const id of state.predios.ordem) {
     const predio = state.predios.porId[id];
+    // C-IA-03a: o aviso e do JOGADOR; predio da IA parado nao e problema dele
+    if (predio !== undefined && predio.lado !== lado) continue;
     // Obra nao alerta: nao ha trabalhador a esperar antes de o predio existir,
     // e o que falta a ela ja aparece no medidor da F17b.
     if (predio === undefined || predio.estado !== 'completo') continue;

@@ -631,6 +631,53 @@ function validarPrioridadesDaIA(dados, erros) {
   }
 }
 
+// C-IA-03a (cenario de escaramuca): a vila e a tropa da IA em data/escaramuca.json
+// apontam para ids que existem, e a tropa cabe na posicao do tipo dela. O encaixe no
+// MAPA (terreno livre, sem sobreposicao) e do teste da C-IA-03a, com o `canPlace` da sim:
+// este validador nao conhece o mapa em tile.
+function validarEscaramuca(dados, erros) {
+  const e = dados.escaramuca;
+  if (!e || !Array.isArray(e.predios) || !Array.isArray(e.posicoes)) {
+    erros.push('escaramuca/forma: escaramuca.predios e escaramuca.posicoes precisam ser arrays');
+    return;
+  }
+  const predios = new Set(((dados.buildings && dados.buildings.predios) || []).map((p) => p.id));
+  for (const p of e.predios) {
+    if (!predios.has(p.id)) erros.push(`escaramuca/predio: '${p.id}' nao esta em buildings.json`);
+  }
+  const mercadorias = new Set((dados.economy && dados.economy.mercadorias) || []);
+  const conferirMercadorias = (onde, gaveta) => {
+    for (const [m, n] of Object.entries(gaveta || {})) {
+      if (!mercadorias.has(m)) erros.push(`escaramuca/mercadoria: '${m}' em ${onde} nao esta em economy.mercadorias`);
+      if (!(Number.isInteger(n) && n >= 0)) erros.push(`escaramuca/mercadoria: ${onde}.${m} precisa ser inteiro >= 0`);
+    }
+  };
+  conferirMercadorias('estoqueDoArmazem', e.estoqueDoArmazem);
+  conferirMercadorias('quartel.entrada', e.quartel && e.quartel.entrada);
+  if (!(e.quartel && Number.isInteger(e.quartel.recrutas) && e.quartel.recrutas >= 0)) {
+    erros.push('escaramuca/quartel: quartel.recrutas precisa ser inteiro >= 0');
+  }
+  const ia = (dados.combat && dados.combat.ia) || {};
+  const militares = new Map(((dados.units && dados.units.militares && dados.units.militares.tipos) || []).map((t) => [t.id, t]));
+  const grupoDe = (t) => (t.montado ? 'montado' : t.aDistancia ? 'distancia' : (t.attackVsCavalo || 0) > 0 ? 'antiCavalo' : 'corpoACorpo');
+  const ids = new Set();
+  for (const pos of e.posicoes) {
+    if (ids.has(pos.id)) erros.push(`escaramuca/posicao: id '${pos.id}' repetido`);
+    ids.add(pos.id);
+    if (!Object.prototype.hasOwnProperty.call(ia.ordemDeTreino || {}, pos.tipoDeGrupo)) {
+      erros.push(`escaramuca/posicao: '${pos.id}' tem tipoDeGrupo '${pos.tipoDeGrupo}' fora de combat.ia.ordemDeTreino`);
+    }
+    if (pos.linha !== 'frente' && pos.linha !== 'tras') erros.push(`escaramuca/posicao: '${pos.id}' tem linha '${pos.linha}'`);
+    const t = pos.tropa && militares.get(pos.tropa.tipo);
+    if (t === undefined) erros.push(`escaramuca/tropa: '${pos.tropa && pos.tropa.tipo}' em '${pos.id}' nao e militar de units.json`);
+    else if (grupoDe(t) !== pos.tipoDeGrupo) erros.push(`escaramuca/tropa: '${t.id}' e do grupo '${grupoDe(t)}', e a posicao '${pos.id}' e '${pos.tipoDeGrupo}'`);
+    const q = pos.tropa && pos.tropa.quantidade;
+    if (!(Number.isInteger(q) && q >= 1 && q <= ia.tamanhoDoGrupo)) {
+      erros.push(`escaramuca/tropa: '${pos.id}' tem ${q} homens; o grupo vai de 1 a combat.ia.tamanhoDoGrupo (${ia.tamanhoDoGrupo})`);
+    }
+  }
+}
+
 // C-COMIDA-01 (fome militar com o Feed): o militar pede comida abaixo de
 // `militar.pedeComidaAbaixoDe`, e a IA alimenta a tropa abaixo de `limiares.civilVaiComer`
 // (o limiar do civil, decisao do operador). A IA pedir ACIMA de onde o membro aceita pedir
@@ -1323,6 +1370,7 @@ function validarTudo(dados) {
   validarFeira(dados, erros);
   validarPedidoDeComida(dados, erros);
   validarPrioridadesDaIA(dados, erros);
+  validarEscaramuca(dados, erros);
   validarMapas(dados, erros);
   return erros;
 }

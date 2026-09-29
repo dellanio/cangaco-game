@@ -5609,8 +5609,10 @@ Ordem do operador. Cada item tem plano em `docs/planos/2026-09-28-C<n>-*.md`.
   C-IA-02:** sem ele nada do combate é jogável. Duas vilas, dois lados, o mapa que já existe;
   começa pelo mínimo, a IA com a vila de pé e tropa, sem economia. Plano em
   `docs/planos/2026-09-29-C-IA-03-cenario-de-escaramuca.md`.
-  - **C-IA-03a — o cenário na sim:** `data/escaramuca.json`, `criarEscaramuca`, e os
-    vazamentos entre lados fechados (desbloqueio, HUD, avisos, câmera).
+  - **C-IA-03a — o cenário na sim. ENTREGUE (2026-09-29).** `data/escaramuca.json`,
+    `sim/cenario.ts criarEscaramuca`, `LADO_DA_IA`, regra de dado `validarEscaramuca`, e os
+    vazamentos entre lados fechados (desbloqueio só por prédio do jogador; estoque, comida,
+    população, avisos e centro da câmera com `lado`, padrão o jogador).
   - **C-IA-03b — jogar pela tela:** começar a escaramuça, o inimigo com cor própria,
     screenshots.
   - **C-IA-03c — a partida até o fim:** roteiro longo de vitória e de derrota.

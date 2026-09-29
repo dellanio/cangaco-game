@@ -1,0 +1,20 @@
+{
+  "_doc": "C-IA-03a (cenario de escaramuca; plano em docs/planos/2026-09-29-C-IA-03-cenario-de-escaramuca.md). A vila da IA no mapa que ja existe (sertao-128), na area livre em torno de (64..88, 64..88), a ~45 tiles da vila do jogador. Decisao do operador (2026-09-29): 'comece pelo minimo: a IA com a vila de pe e tropa, sem economia'. Por isso nao ha serf nem producao: o armazem tem estoque, o quartel tem armas e recrutas FINITOS para repor as posicoes (F28-IA ponto 4), e a tropa comeca guarnecendo duas posicoes. Com todos em posicao, a regra do ataque (ponto 6: 9 ociosos FORA de posicao) nao dispara: a IA minima defende. A producao chega com a C-IA-02 (economia da IA). Prédios e posicoes em tile; o lado da IA e LADO_DA_IA no codigo (identificador, nao balanceamento).",
+  "predios": [
+    { "id": "storehouse", "gx": 72, "gy": 70 },
+    { "id": "schoolhouse", "gx": 77, "gy": 70 },
+    { "id": "barracks", "gx": 72, "gy": 75 }
+  ],
+  "estoqueDoArmazem": { "gold": 20, "timber": 20, "stone": 20, "loaves": 20, "sausages": 10 },
+  "quartel": {
+    "_doc": "O que o quartel da IA tem para repor as posicoes: armas na entrada (units.json requisitos) e recrutas. Acaba: sem economia nao ha reposicao infinita.",
+    "entrada": { "hand_axe": 9, "longbow": 4, "leather_armor": 4 },
+    "recrutas": 9
+  },
+  "posicoes": [
+    { "id": "frente", "ponto": { "gx": 67, "gy": 67 }, "tipoDeGrupo": "corpoACorpo", "raio": 8, "linha": "frente",
+      "tropa": { "tipo": "militia", "quantidade": 9 }, "spawn": { "gx": 64, "gy": 69 } },
+    { "id": "arco", "ponto": { "gx": 73, "gy": 66 }, "tipoDeGrupo": "distancia", "raio": 8, "linha": "tras",
+      "tropa": { "tipo": "bowman", "quantidade": 9 }, "spawn": { "gx": 70, "gy": 64 } }
+  ]
+}

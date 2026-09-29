@@ -824,6 +824,7 @@ export function loadGameData(raw: RawGameData): GameData {
     mapa: carregarMapa(raw),
     recursos,
     economia,
+    escaramuca: raw.escaramuca,
     conversoes,
   };
 }

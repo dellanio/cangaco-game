@@ -12442,6 +12442,72 @@ dos testes:
   (`docs/planos/2026-09-28-F-FEED-fome-militar.md`) **ainda espera aprovação**. Ele destrava
   o C-IA-01 (IA alimentar tropas).
 
+## 2026-09-29 — C-IA-03a (cenário de escaramuça: o cenário na sim) ENTREGUE
+
+### Feito
+- **`data/escaramuca.json`**: a vila da IA na área livre do `sertao-128`, a ~45 tiles da
+  vila do jogador:
+  - armazém (72,70) com estoque;
+  - escola (77,70);
+  - quartel (72,75) com 9 facões, 4 arcos, 4 gibões e 9 recrutas;
+  - duas posições: "frente", corpo a corpo com 9 cabras, e "arco", distância com 9
+    bodoqueiros.
+- **`sim/cenario.ts` `criarEscaramuca(semente)`:**
+  - `createInitialState` mais a vila da IA no lado `LADO_DA_IA` (nova constante em
+    `state.ts`, `LADO_DO_JOGADOR + 1`);
+  - os prédios nascem por `completarObra`, e os ids seguem o contador único;
+  - `state.ia` já nasce com as posições guarnecidas;
+  - `createInitialState` NÃO mudou: o jogo livre segue sem IA.
+- **Plumbing:** `escaramuca` em `data-schema ARQUIVOS`, `raw.ts`, `loader.ts` e
+  `GameData.escaramuca`.
+- **Regra de dado `validarEscaramuca`:**
+  - prédios e mercadorias existem;
+  - a tropa é militar do grupo da posição;
+  - 1 ≤ homens ≤ `tamanhoDoGrupo`;
+  - linha e id válidos.
+  - O encaixe no mapa é do teste (o validador não conhece tile).
+- **Vazamentos entre lados fechados:**
+  - `registrarConclusoes` só registra prédio PRESENTE do jogador. Evento de prédio ausente
+    segue contando, como antes: é o que os testes da F12 (desbloqueio) usam.
+  - `estoqueDosArmazens`, `comidaTotal`, `populacaoPorGrupo`, `alertasDoEstado` e
+    `centroDaVila` ganharam `lado`, com padrão `LADO_DO_JOGADOR`.
+  - `estoqueTotal` e `contagemPorTipo` ficaram globais de propósito: são seletores de teste e
+    de conservação, não de HUD.
+
+### Decisões conservadoras (PARA REVISÃO)
+- **A IA mínima NÃO ataca:** as 18 unidades nascem em posição, e a regra do ponto 6 (9
+  ociosos fora de posição) não dispara. Ela defende e repõe pelo quartel até acabarem as
+  armas. O ataque vem com a economia (C-IA-02).
+- **Os números da vila** (estoque, armas, 9+9, raio 8) são do cenário, escolhidos agora, não
+  balanceados.
+- **O jogo livre continua sendo o início da tela** até a C-IA-03b decidir como se começa uma
+  escaramuça.
+
+### Verificado
+- `tests/C-IA-03a-cenario-de-escaramuca.test.ts`, 6 testes:
+  - as duas vilas: a do jogador é igual à do jogo livre, a da IA é a do dado, e os ids são
+    únicos;
+  - os três prédios da IA passam no `canPlace`, um depois do outro, e pontos e spawns são
+    andáveis;
+  - nada vaza: menu, desbloqueio de quartel da IA, estoque, comida, população, avisos (com
+    uma pedreira da IA sem trabalhador) e câmera;
+  - 300 ticks: os 18 no raio, a vila do jogador intacta, sem fim de partida, invariantes
+    limpas (`test-output/C-IA-03a-cenario.json`: os 9+9 em volta dos pontos (67,67) e
+    (73,66));
+  - derrubada a IA → vitória, derrubado o jogador → derrota;
+  - save byte a byte e determinismo.
+- **Probe de mutação** (evidência da sessão, NÃO cobertura contínua). Cada mutação derruba o
+  teste da sua regra:
+  - desbloqueio global;
+  - estoque do HUD global;
+  - avisos globais (o primeiro rascunho não pegava: prédio da IA sem ofício não alerta, e aí
+    entrou a pedreira);
+  - quartel em cima do armazém;
+  - sem `state.ia`.
+- `npm run verify` verde: 161 arquivos, 1846 testes.
+- **`test-results.json`:** a 03a `true`; a 03b e a 03c entraram como `false`, para a fila ter
+  o próximo item.
+
 ## 2026-09-29 — Decisões do operador: cenário de escaramuça primeiro; C-IA-02 aprovada; limpezas
 
 ### Decisões do operador

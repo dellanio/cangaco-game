@@ -456,5 +456,8 @@ export interface GameData {
   /** F-T2a — regime e rendimento por TIPO de recurso. Leia por `sim/recursos.ts`. */
   readonly recursos: RecursosData;
   readonly economia: EconomiaData;
+  /** C-IA-03a — o cenario de escaramuca (`data/escaramuca.json`): a vila e a tropa
+   *  iniciais da IA. Sem duracao nem taxa: posicoes, quantidades e estoque, lidos como vem. */
+  readonly escaramuca: RawGameData['escaramuca'];
   readonly conversoes: readonly ConversaoRegistrada[];
 }
