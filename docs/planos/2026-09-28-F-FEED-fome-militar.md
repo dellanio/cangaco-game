@@ -2,6 +2,14 @@
 
 > **Sigla nova (2026-09-28, `docs/siglas.md`): C-COMIDA-01 (fome militar, antes F-FEED).** Ela destrava C-IA-01 (IA alimentar tropas, antes F28-IA ponto 5). O nome deste arquivo fica, porque o PROGRESS o cita.
 
+> **Revisão de 2026-09-29, antes da leitura do operador:**
+> - as regras R1, R3, R4, R5, R8 e R10 foram **reconferidas no fonte**, uma por uma, com
+>   arquivo e linha (lição do D-MOVIMENTO-01, colisão civil). Batem;
+> - o GDD §4.3 confere: "Militar enche com 1 item qualquer";
+> - o C7 (o lado filtra o JobBoard) já foi entregue, e o §0 e o §6 foram corrigidos;
+> - os sub-itens ganharam as siglas novas (C-COMIDA-01a a 01f);
+> - entrou o risco da perseguição sem fim, com a lição "não trava mede progresso".
+>
 > **Status: ESPERA APROVAÇÃO DO OPERADOR.** É plano de implementação: nada foi
 > implementado. Escrito por um subagente de planejamento em 2026-09-28, com o fonte do
 > kam_remake (clone `reyandme/kam_remake` no scratchpad) e o código do repo.
@@ -25,7 +33,10 @@
 - **O grupo militar do jogador é só estado de interface** (`src/input/selecao-militar.ts`).
   Os comandos de tropa recebem uma lista de unidades.
 - **A IA tem grupos persistentes:** as `PosicaoDeDefesa` em `GameState.ia`.
-- **O JobBoard não conhece lado.** O operador mandou consertar na fila C, item C7.
+- **O lado no JobBoard:** o C7 já foi entregue. O `reclamar` recusa tarefa cujo **prédio**
+  de origem ou destino é de outro lado, e o armazém é escolhido pelo lado. **O destino
+  desta tarefa é uma unidade, não um prédio**, então o C7 não a cobre sozinho: o claim
+  precisa conferir `serf.lado === militar.lado` (§3.3).
 - **Civil não pode ser atacado:** o combate filtra por `hpMaximoDoTipo !== null`. O serf só
   morre de fome.
 - **Não existe painel de grupo militar.** O GDD §7.2 o lista como P1: "Tipo, quantidade,
@@ -205,7 +216,7 @@ opcional (f).
 Ligar o dreno antes de o Feed funcionar seria o travamento de regra que `drenaCondicao`
 proíbe.
 
-- **F-FEED-a — dado, comando e pedido.**
+- **C-COMIDA-01a — dado, comando e pedido.**
   - Faz: os dois campos novos com regra, a linha `comida-para-tropa` com renumeração,
     `FeedUnits`, `pedidoDeComida?` e `resumoDoGrupo`.
   - Aceite:
@@ -214,7 +225,7 @@ proíbe.
     - as recusas deixam o estado igual;
     - o save faz a viagem byte a byte, e o save v4 carrega;
     - a regra de dado reprova `ia >= pede`.
-- **F-FEED-b — a tarefa.**
+- **C-COMIDA-01b — a tarefa.**
   - Faz: gerador, reserva, claim com lado, saneamento, FSM com alvo que anda, entrega e
     `unit-fed`. O militar ainda não drena; o teste baixa a condição à mão.
   - Aceite:
@@ -225,7 +236,7 @@ proíbe.
     - conservação de bens descontando `unit-fed`;
     - determinismo;
     - nunca duas tarefas por militar.
-- **F-FEED-c — a fome do militar.**
+- **C-COMIDA-01c — a fome do militar.**
   - Faz: R1 a R3, com `morrer` liberando as tarefas.
   - Aceite:
     - drena 1 por tick;
@@ -233,20 +244,21 @@ proíbe.
     - morre a 0 e o pedido cai no mesmo tick;
     - o ciclo marcha → fome → Feed → cheio fecha.
   - **Muda os aceites da F20b e da F20c, e precisa do seu visto.**
-- **F-FEED-d — painel e botão (só UI).**
+- **C-COMIDA-01d — painel e botão (só UI).**
   - Aceite headless mais screenshots com roteiro despausado: o grupo a 30 % com marcador,
     o serf com pão a caminho e o grupo cheio.
-- **F-FEED-e — a IA, ponto 5.**
+- **C-COMIDA-01e — a IA alimenta a tropa (é o C-IA-01, antes F28-IA ponto 5).**
   - Aceite:
     - acima de 13,3 % não pede;
     - abaixo, pede e é alimentado;
     - com um membro lutando, ninguém pede;
     - o serf do jogador nunca atende a IA;
     - determinismo.
-- **F-FEED-f (opcional):** o alerta de tropa com fome no HUD.
+- **C-COMIDA-01f (opcional):** o alerta de tropa com fome no HUD.
 
 ## 6. Riscos
-1. **JobBoard sem lado.** O C7 da fila C resolve antes do Feed.
+1. **Lado do destino-unidade.** O C7 cobre prédios. A conferência `serf.lado ===
+   militar.lado` é deste item, e tem teste próprio.
 2. **Morte por fome depois do saneamento.** `morrer` precisa liberar as tarefas que apontam
    para o morto.
 3. **Perseguir um alvo que anda.** Recalcular só na chegada e no bloqueio, como no KaM; o
@@ -258,3 +270,12 @@ proíbe.
 8. **A conservação de bens** precisa descontar `unit-fed`.
 9. **Classificação por forma.** `ehTarefaDoSerf` passa a olhar o tipo.
 10. **`tileAlcancavelDaPorta`** está fixo no tipo da pedra e passa a receber o tipo.
+11. **Perseguição sem fim.** No KaM o serf re-anda atrás do soldado indefinidamente
+    (`KM_UnitTaskDelivery.pas:492-497`). Uma tropa que o jogador mantém marchando faz o serf
+    correr atrás dela.
+    - Pela lição do D-MOVIMENTO-01 (colisão civil), o "não trava" deste item mede
+      **progresso**, não tempo de espera: a invariante afirma que a tarefa
+      `comida-para-tropa` em curso termina (entregue, devolvida ou cancelada) quando a tropa
+      para.
+    - Não afirma que ela termina em N ticks com a tropa andando.
+    - A (b) tem o caso "a tropa marcha 3 vezes seguidas, e o serf entrega na parada".
