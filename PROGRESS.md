@@ -12442,6 +12442,44 @@ dos testes:
   (`docs/planos/2026-09-28-F-FEED-fome-militar.md`) **ainda espera aprovação**. Ele destrava
   o C-IA-01 (IA alimentar tropas).
 
+## 2026-09-29 — C-COMIDA-01e (a IA alimenta a tropa; é o C-IA-01, IA alimentar tropas) ENTREGUE
+
+### Feito
+- **`systems/ia.ts` `alimentarAPosicao`**, depois de `defenderEPosicionar`, para cada
+  posição do lado:
+  - se ninguém da posição está lutando (`indo_lutar`, `lutando` ou `atirando`) e a condição
+    do mais faminto está ABAIXO de `ticksNoLimiar.militar.civilVaiComer` (o limiar do civil,
+    50%, por decisão do operador), dá `FeedUnits` aos membros vivos;
+  - só quando algum membro de fato pediria (`vaiPedirComida`), para não gerar `sem-fome`
+    todo tick;
+  - quem pede, dentro do Feed, continua sendo quem está abaixo de 55%.
+- **Com o andaime (L8), na partida a tropa da IA não drena**, então este ponto só age
+  quando `iaDrena` virar. Os testes baixam a condição à mão, e o cenário vira a vila para o
+  lado da IA (armazém e serfs dela).
+- **`test-results.json`:** `C-IA-01-alimentar-tropas` passou a `true`. É a mesma entrada
+  do item, que estava `false` desde o bloqueio de 2026-09-28; não criei chave nova.
+
+### Decisões conservadoras (PARA REVISÃO)
+- **O limiar é estrito (`<`), como o do pedido.** No limiar exato, a posição não pede.
+- **Só os membros de POSIÇÃO são alimentados.** A sobra que ataca (ponto 6) não entra: o
+  plano fala em "para cada posição".
+
+### Verificado
+- `tests/C-COMIDA-01e-ia-alimenta.test.ts`, 5 testes:
+  - no limiar e acima, não pede;
+  - abaixo, pede e o serf DA IA entrega: 2 alimentados em 62 ticks, sem nenhuma recusa
+    na corrida (`test-output/C-COMIDA-01e-ia-alimenta.json`);
+  - com inimigo no raio e membro lutando, nenhum pedido nos ticks de luta;
+  - com a vila do jogador, o serf do jogador nunca cria nem atende tarefa para a IA;
+  - determinismo.
+- **Probe de mutação** (evidência da sessão, NÃO cobertura contínua). Cada mutação derruba
+  o teste da sua regra:
+  - ignorar quem luta;
+  - limiar inclusivo;
+  - tirar a guarda de quem pediria (a recusa `sem-fome` aparece);
+  - a IA nunca alimentar.
+- `npm run verify` verde: 159 arquivos, 1837 testes.
+
 ## 2026-09-29 — C-COMIDA-01d + 01f (painel de grupo com o Alimentar, e alerta de tropa com fome no HUD) ENTREGUE
 
 ### Feito

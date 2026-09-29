@@ -282,7 +282,7 @@
     "passes": true
   },
   "C-IA-01-alimentar-tropas": {
-    "passes": false
+    "passes": true
   },
   "F28-IA-ponto-6-ataque": {
     "passes": true

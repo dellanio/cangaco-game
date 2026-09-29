@@ -7,8 +7,8 @@
  *  - o tipo formado e o do grupo da posicao (arqueiro para a de distancia);
  *  - sem recruta (ou sem requisito), nada se forma;
  *  - a mesma corrida duas vezes da o mesmo estado.
- * O ponto 5 (alimentar os famintos) NAO tem teste: esta bloqueado — militar nao sente
- * fome na sim (`drenaCondicao`) e o comando Feed nao existe.
+ * O ponto 5 (alimentar os famintos) e o C-IA-01, entregue como C-COMIDA-01e: o teste dele
+ * e `tests/C-COMIDA-01e-ia-alimenta.test.ts`.
  */
 import { describe, expect, it } from 'vitest';
 import { gameData } from '../src/sim/data';

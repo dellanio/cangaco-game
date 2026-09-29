@@ -5281,7 +5281,9 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
   - O tipo é o primeiro de `units.json: militares` do tipo de grupo da posição que o
     quartel consegue formar.
   - Teste: `tests/F28-IA-repor.test.ts`.
-- **Ponto 5, agora C-IA-01 (IA alimentar tropas; sigla migrada em 2026-09-28), BLOQUEADO (sessão autônoma, 2026-09-28):** "alimentar os famintos" não tem
+- **Ponto 5, agora C-IA-01 (IA alimentar tropas), ENTREGUE em 2026-09-29 como C-COMIDA-01e
+  (a IA alimenta a tropa)** — ver o item C-COMIDA-01. O bloqueio abaixo é histórico.
+  **Estava BLOQUEADO (sessão autônoma, 2026-09-28):** "alimentar os famintos" não tem
   onde agir. Na sim só o civil sente fome (`sim/condicao.ts: drenaCondicao`, "quando o
   Feed existir, este predicado é o único lugar a mudar"), e o comando `Feed` não existe.
   **Pré-requisito:** fome militar mais o `Feed` (F27/F28), que é item novo, fora da fila
@@ -5600,7 +5602,9 @@ Ordem do operador. Cada item tem plano em `docs/planos/2026-09-28-C<n>-*.md`.
       "N esperando comida", o botão Alimentar (`FeedUnits`) e "Ninguém com fome".
     - Alerta "Tropa com fome" na faixa da barra (`tropaComFome`), na primeira linha.
   - **C-COMIDA-01e — a IA alimenta a tropa.** É o C-IA-01, antes F28-IA ponto 5, com o
-    limiar do civil.
+    limiar do civil. **ENTREGUE.** Por posição: se ninguém luta e o mais faminto está abaixo
+    de `civilVaiComer`, a IA dá `FeedUnits` aos membros, só se alguém pediria. Com o
+    andaime (L8), na partida a tropa da IA não drena; o ponto age quando `iaDrena` virar.
 - **Siglas:** o esquema novo está em `docs/siglas.md` (decisão do operador, 2026-09-28). O que
   fechou mantém a sigla antiga; os itens abertos migraram.
 

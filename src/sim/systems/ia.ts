@@ -13,6 +13,14 @@
  *     ninguem, nao tira ninguem do lugar; o membro que persegue quem saiu do raio (e nao
  *     o ataca) larga e volta.
  *
+ * C-IA-01 (IA alimentar tropas; e a C-COMIDA-01e, antes F28-IA ponto 5) — depois de
+ * defender, para cada posicao: se NINGUEM dela esta lutando e o mais faminto esta abaixo
+ * do limiar do CIVIL (`limiares.civilVaiComer`, decisao do operador 2026-09-29, e nao os
+ * 6/45 do KaM `KM_AIGeneral.pas:316-327`), a IA da `FeedUnits` aos membros. So quando
+ * algum membro de fato pediria (`vaiPedirComida`): sem isso, seria um `sem-fome` por tick.
+ * ANDAIME (L8): a tropa da IA nao drena ate a IA ter economia (`condicao.iaDrena`), entao
+ * na partida este ponto so age quando o dado virar; os testes baixam a condicao a mao.
+ *
  * A IA ignora a nevoa (decisao do operador; KM_HandsCollection.pas:523-567). Ela da as
  * mesmas ordens que o jogador daria — o estado da unidade e o mesmo de `MoveUnits` e
  * `AttackUnit` —, so que sem comando: e a IA, nao o jogador, quem as emite.
@@ -25,6 +33,7 @@ import { aplicarTrainSoldier, motivoParaFormar } from './quartel';
 import type { ResultadoDeSistema } from './jobs';
 import type { GameData } from '../data/types';
 import { classeDaUnidade } from '../condicao';
+import { aplicarFeedUnits, vaiPedirComida } from './alimentar';
 import { direcaoEntre, distanciaEmTiles } from '../combate';
 import { hpMaximoDoTipo } from '../vida';
 import { intrusos, posicaoDoMembro, tipoDeGrupo } from '../ia';
@@ -36,6 +45,17 @@ const lutando = (u: Unidade): boolean => u.fsm === FSM_INDO_LUTAR || u.fsm === F
 
 function comIA(state: GameState, lado: string, ia: IADoLado): GameState {
   return { ...state, ia: { ...state.ia, [lado]: ia } };
+}
+
+/** C-IA-01 — alimentar a posicao: ninguem lutando, o mais faminto abaixo do limiar do
+ *  civil (em ticks do militar) e alguem que pediria. Os membros sao os VIVOS da posicao. */
+function alimentarAPosicao(state: GameState, p: PosicaoDeDefesa, dados: GameData): ResultadoDeSistema {
+  const membros = p.membros.map((id) => state.unidades.porId[id]).filter((u): u is Unidade => u !== undefined);
+  if (membros.length === 0 || membros.some(lutando)) return { state, events: [] };
+  const limiar = dados.condicao.ticksNoLimiar.militar.civilVaiComer;
+  if (Math.min(...membros.map((u) => u.condicao)) >= limiar) return { state, events: [] };
+  if (!membros.some((u) => vaiPedirComida(u, dados))) return { state, events: [] };
+  return aplicarFeedUnits(state, { type: 'FeedUnits', unidades: membros.map((u) => u.id) }, dados);
 }
 
 /** 1. guarnecer: as posicoes na ordem frente -> tras, e dentro da linha a da lista. */
@@ -193,6 +213,11 @@ export function sistemaDaIA(state: GameState, dados: GameData): ResultadoDeSiste
     const guarnecida = guarnecer(atual, lado, ia, dados);
     atual = comIA(atual, chave, guarnecida);
     for (const p of guarnecida.posicoes) atual = defenderEPosicionar(atual, p, lado, dados);
+    for (const p of guarnecida.posicoes) {
+      const alimentada = alimentarAPosicao(atual, p, dados);
+      atual = alimentada.state;
+      events.push(...alimentada.events);
+    }
     const reposto = reporPeloQuartel(atual, lado, guarnecida, dados);
     atual = reposto.state;
     events.push(...reposto.events);
