@@ -108,6 +108,10 @@ async function roteiro(ctx) {
   await page.keyboard.press('p');
   await esperarFrame();
   afirmar(aCaminho, 'um serf deveria sair do armazem com comida para a tropa');
+  // BUG-O: a etiqueta da carga e o nome do tema, nunca o id da sim
+  const comComida = (await estado()).unidadesRenderizadas.filter((u) => u.tipo === 'serf' && u.carga === 'loaves');
+  afirmar(comComida.length > 0 && comComida.every((u) => u.rotuloDaCarga === 'Cuscuz'),
+    `a carga de pao deveria aparecer como "Cuscuz", veio ${JSON.stringify(comComida.map((u) => u.rotuloDaCarga))}`);
   const esperando = await texto('#painel-grupo [data-grupo="esperando"]');
   afirmar(esperando !== null && /esperando/.test(esperando), `o painel deveria dizer quantos esperam comida, veio ${esperando}`);
   await capturar('pao-a-caminho');

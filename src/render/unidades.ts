@@ -40,6 +40,7 @@ import {
   ALTURA_DA_CARGA_EM_LADOS, ALTURA_DA_FOME_EM_LADOS, temMarcadorDeFome,
 } from './marcador-de-fome';
 import { nomeDaUnidade } from './nome-de-unidade';
+import { rotuloDaCarga } from './rotulo-da-carga';
 import { direcoesDoTipo } from './direcoes-de-sprite';
 import { direcaoDoPasso, spriteDaUnidade, POSE_PARADO } from './manifesto';
 import type { Direcao } from './manifesto';
@@ -63,6 +64,8 @@ export interface UnidadeRenderizada {
   readonly fsm: string;
   /** A mercadoria que ela leva, ou null. */
   readonly carga: string | null;
+  /** BUG-O — o texto DESENHADO sobre a carga (nome do tema), ou null. */
+  readonly rotuloDaCarga: string | null;
   /**
    * F18f — o quanto o desenho sai do centro do tile, em px de mundo. Nao e posicao de
    * jogo: `gx/gy` continuam sendo o tile, e e por eles que os roteiros medem caminho e
@@ -262,13 +265,14 @@ export function criarCamadaDeUnidades(cena: Phaser.Scene, tilePx: number): Camad
         item.container.setPosition(centro.x + desvio.x, centro.y + desvio.y);
         item.container.setDepth(depthDeY(centro.y + desvio.y));
         const carga = unidade.fsmData.carga ?? null;
-        item.marcadorDeCarga.setText(carga ?? '');
+        // BUG-O: o nome do tema, nunca o id da sim
+        item.marcadorDeCarga.setText(carga === null ? '' : rotuloDaCarga(carga));
         item.marcadorDeCarga.setVisible(carga !== null);
         const comFome = temMarcadorDeFome(unidade);
         item.marcadorDeFome.setVisible(comFome);
         renderizadas.push({
           id, tipo: unidade.tipo, gx: posicao.gx, gy: posicao.gy,
-          gxDesenhado: desenhada.gx, gyDesenhado: desenhada.gy, fsm: unidade.fsm, carga,
+          gxDesenhado: desenhada.gx, gyDesenhado: desenhada.gy, fsm: unidade.fsm, carga, rotuloDaCarga: carga === null ? null : rotuloDaCarga(carga),
           deslocamentoPx: { x: desvio.x, y: desvio.y },
           marcadorDeFome: comFome, fracaoDeCondicao: fracaoDeCondicao(unidade),
           nome: item.nome.text, larguraDoRotuloPx: item.nome.width,
