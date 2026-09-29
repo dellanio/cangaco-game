@@ -469,7 +469,10 @@
     "reparoDesligado": "desligado",
     "reparoConsertando": "consertando ({n} obreiro(s))",
     "ligarReparo": "Ligar reparo",
-    "desligarReparo": "Desligar reparo"
+    "desligarReparo": "Desligar reparo",
+    "armazemRecebe": "Recebe (clique para bloquear ou liberar)",
+    "armazemBloquear": "Recebe. Clique para não receber mais",
+    "armazemAceitar": "Não recebe. Clique para voltar a receber"
   },
   "partida": {
     "_doc": "F34. O aviso do fim da escaramuca, sobre o jogo. So a tela: quem decide o fim e sim/partida.ts.",

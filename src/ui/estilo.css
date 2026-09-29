@@ -569,6 +569,23 @@ body:not([data-corpo="opcoes"]) #opcoes { display: none; }
   max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 #painel-predio .grade-de-botoes button .detalhe { font-size: 10px; font-style: italic; color: var(--terracota); }
+/* D-TRANSPORTE-01b: o que o armazem recebe, 28 botoes em TRES colunas pequenas (nome a
+   esquerda, quantidade a direita) para caber sem rolar a 1280x720. A bloqueada fica
+   apagada e riscada, sem sombra: e o "desligado" lido de relance. */
+#painel-predio .aceite-do-armazem { display: flex; flex-direction: column; gap: 3px; width: 100%; }
+#painel-predio .grade-de-aceite {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px 3px; width: 100%;
+}
+#painel-predio .grade-de-aceite button.aceite {
+  min-width: 0; display: flex; justify-content: space-between; gap: 3px;
+  font-size: 10px; padding: 1px 4px; line-height: 1.2; box-shadow: 1px 1px 0 var(--tinta);
+}
+#painel-predio .grade-de-aceite button.aceite .nome {
+  min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#painel-predio .grade-de-aceite button.aceite.bloqueada {
+  opacity: 0.45; text-decoration: line-through; box-shadow: none;
+}
 /* C3 (ressalva do avaliador): o desabilitado NAO pode parecer o habilitado — o MESMO
    visual do `aria-disabled` do resto da interface (opacidade, hachura, sem sombra) */
 #painel-predio button:disabled {

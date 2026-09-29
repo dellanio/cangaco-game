@@ -174,6 +174,49 @@ function desenharModo(
   }
 }
 
+/**
+ * D-TRANSPORTE-01b — o que o armazem RECEBE: as 28 mercadorias, cada uma um botao com o nome
+ * e o que ha, que manda `SetStorehouseAccept` com o VALOR oposto ao que a tela mostra (como o
+ * reparo, nunca "inverta o que estiver ai"). A bloqueada fica apagada e riscada. Aceita e
+ * quantidade vao em `data-`, para o roteiro afirmar sem recortar texto.
+ */
+function desenharAceiteDoArmazem(
+  gente: HTMLElement, predio: string, armazem: NonNullable<PainelDoPredio['armazem']>,
+  emitir: (comando: Command) => void,
+): void {
+  const secao = document.createElement('div');
+  secao.className = 'aceite-do-armazem';
+  const titulo = document.createElement('span');
+  titulo.className = 'rotulo';
+  titulo.textContent = rotulos.armazemRecebe;
+  const grade = document.createElement('div');
+  grade.className = 'grade-de-aceite';
+  for (const m of armazem.mercadorias) {
+    const botao = document.createElement('button');
+    botao.type = 'button';
+    botao.className = m.aceita ? 'aceite' : 'aceite bloqueada';
+    botao.dataset.aceite = m.mercadoria;
+    botao.dataset.aceita = String(m.aceita);
+    botao.dataset.quantidade = String(m.quantidade);
+    botao.setAttribute('aria-pressed', String(m.aceita));
+    botao.title = m.aceita ? rotulos.armazemBloquear : rotulos.armazemAceitar;
+    const nome = document.createElement('span');
+    nome.className = 'nome';
+    nome.textContent = nomeDaMercadoria(m.mercadoria);
+    const qtd = document.createElement('span');
+    qtd.className = 'quantidade';
+    qtd.textContent = String(m.quantidade);
+    botao.append(nome, qtd);
+    const alvo = !m.aceita;
+    botao.addEventListener('click', () => {
+      emitir({ type: 'SetStorehouseAccept', predio, mercadoria: m.mercadoria, aceita: alvo });
+    });
+    grade.append(botao);
+  }
+  secao.append(titulo, grade);
+  gente.append(secao);
+}
+
 function nomeDoPredio(tipo: string): string {
   return temaDePredios[tipo]?.nome ?? tipo;
 }
@@ -446,6 +489,10 @@ function desenharCompleto(
     identidade.append(gaveta('entrada', rotulos.entrada, dados.estoque.entrada));
     identidade.append(gaveta('saida', rotulos.saida, dados.estoque.saida));
   }
+
+  // D-TRANSPORTE-01b — no bloco do meio, que no armazem fica vazio (ele nao pede trabalhador).
+  // As gavetas continuam acima: elas dizem o que ha, a grade diz o que entra.
+  if (dados.armazem !== null) desenharAceiteDoArmazem(gente, dados.predio, dados.armazem, emitir);
 
   // O botao de pausar so nasce em predio COM producao, como a nota da F16c
   // registrou: pausar um armazem nao quer dizer nada.

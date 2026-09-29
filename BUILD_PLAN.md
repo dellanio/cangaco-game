@@ -5454,10 +5454,14 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
     - **Aceite:** `tests/D-TRANSPORTE-01a-armazem-aceita.test.ts`.
     - **PARA REVISÃO:** a carga que já está na mão entrega; o KaM abandona. A devolução, o
       reembolso da demolição e a carga de quem morre de fome ignoram o bloqueio.
-  - **D-TRANSPORTE-01b — o painel (ui).** O painel do armazém lista as 28 mercadorias, com
+  - **D-TRANSPORTE-01b — o painel (ui). ENTREGUE (2026-09-29).** O painel do armazém lista as 28 mercadorias, com
     a quantidade e um botão aceitar/bloquear (`SetStorehouseAccept`).
     - **Aceite:** o roteiro `tools/shots/D-TRANSPORTE-01.js` do plano: despausado, com o
-      botão seguro 150 ms, o estado ganha e perde o bloqueio, e a linha mostra.
+      botão seguro 150 ms, o estado ganha e perde o bloqueio, e a linha mostra. Mais
+      `tests/D-TRANSPORTE-01b-painel-armazem.test.ts` (o seletor).
+    - **PARA REVISÃO:** a lista "Recebe" fica abaixo das gavetas, que continuam (o roteiro
+      F16b lê a gaveta do armazém); o nome longo é cortado na grade de 3 colunas e aparece
+      inteiro no `title`.
 ### D-TRANSPORTE-02 (antes F31) — Menu de distribuição
 ### D-TELA-01 (antes F32) — Aba de estatísticas
 - **ENTREGUE (2026-09-29, lote do operador, item 4; plano em

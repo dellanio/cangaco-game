@@ -2,6 +2,7 @@ import { ehTorreCompleta, pedrasNaTorre, porQueNaoAtira } from './torre';
 import { ehFeiraCompleta, porQueNaoTroca } from './feira';
 import { ehPrefeituraCompleta, ouroNaPrefeitura } from './prefeitura';
 import { ehQuartelCompleto, recrutasNoQuartel, requisitosDoTipo } from './quartel';
+import { armazemAceita } from './armazem';
 import { motivoParaFormar } from './systems/quartel';
 import type { MotivoDeRecusaDeSoldado } from './quartel';
 import type { PorQueNaoTroca } from './feira';
@@ -584,6 +585,13 @@ export interface PainelDoPredio {
       readonly motivo: MotivoDeRecusaDeSoldado | null;
     }[];
   } | null;
+  /** D-TRANSPORTE-01b — as 28 mercadorias do armazem, na ordem de `economia.mercadorias`, com
+   *  o que ha nas duas gavetas e se ele aceita (`SetStorehouseAccept`). TODAS, e nao so as
+   *  que tem estoque: bloquear o que ainda nao chegou e justamente o uso. `null` em quem nao
+   *  e armazem completo. */
+  readonly armazem: {
+    readonly mercadorias: readonly { readonly mercadoria: string; readonly quantidade: number; readonly aceita: boolean }[];
+  } | null;
   /** F28b — a munição da torre e por que ela não atira; `null` em quem não é torre. */
   readonly torre: {
     readonly pedras: number;
@@ -679,6 +687,7 @@ export function painelDoPredio(
       prefeitura: null,
       quartel: null,
       reparo: null,
+      armazem: null,
     };
   }
 
@@ -715,6 +724,15 @@ export function painelDoPredio(
         ouro: ouroNaPrefeitura(predio),
         tipos: dados.unidades.mercenarios.tipos.map((t) => ({
           tipo: t.id, custo: t.custoOuro, falta: Math.max(0, t.custoOuro - ouroNaPrefeitura(predio)),
+        })),
+      }
+      : null,
+    armazem: predio.tipo === ID_DO_ARMAZEM
+      ? {
+        mercadorias: dados.economia.mercadorias.map((mercadoria) => ({
+          mercadoria,
+          quantidade: (predio.estoque.entrada[mercadoria] ?? 0) + (predio.estoque.saida[mercadoria] ?? 0),
+          aceita: armazemAceita(predio, mercadoria),
         })),
       }
       : null,

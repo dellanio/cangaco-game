@@ -14239,3 +14239,26 @@ Lote do operador, item 5. O plano está em `docs/planos/2026-09-29-D-TRANSPORTE-
 - A IA nunca bloqueia.
 
 **O que muda na partida:** por enquanto nada visível. O comando existe, e o botão chega na 01b.
+
+
+## 2026-09-29 — D-TRANSPORTE-01b (armazém liga/desliga: o painel)
+
+Lote do operador, item 5, segunda metade. O plano é o mesmo da 01a. Com isso a D-TRANSPORTE-01 (armazém com toggles por mercadoria) fecha.
+
+**Verificado (rodado e aberto):**
+- `sim/selectors.ts`: `PainelDoPredio.armazem` traz as mercadorias de `economia.mercadorias`, na ordem, com a quantidade (entrada + saída) e `aceita` (via `armazemAceita`). É `null` fora do armazém e na obra.
+- `ui/painel-predio.ts: desenharAceiteDoArmazem` monta a grade "Recebe" com 28 botões `data-aceite`. O clique emite `SetStorehouseAccept` com o valor oposto, e a linha bloqueada fica apagada e riscada (`estilo.css`). Os textos vêm do tema (`painelPredio.armazemRecebe`, `armazemBloquear`, `armazemAceitar`).
+- `tests/D-TRANSPORTE-01b-painel-armazem.test.ts` tem 3 testes verdes (evidência em `test-output/D-TRANSPORTE-01b-painel-armazem.json`).
+- O roteiro `tools/shots/D-TRANSPORTE-01.js` passou (exit 0):
+  - as 28 linhas estão na ordem do dado, e a quantidade bate com as gavetas;
+  - despausado e com o botão seguro 150 ms, a Tábua passa a `data-aceita=false`, e só ela muda;
+  - o segundo gesto devolve a Tábua.
+- A captura `screenshots/D-TRANSPORTE-01-1-madeira-bloqueada.png` foi aberta: "Tábua 40" aparece apagada e riscada na grade.
+- Não-regressão pelo código de saída, todos 0: F16b, F35, C4 e C-TELA-05.
+  - O plano citava F16c e F-CERCO-b, que não existem como roteiro. O pausar está no F16b, e o reparo no C4.
+
+**PARA REVISÃO (interpretação conservadora):**
+- A grade fica abaixo das gavetas, que continuam no armazém. O plano dizia "substitui a gaveta", mas o roteiro F16b lê a gaveta de saída do armazém, e manter é o menor passo.
+- Com 3 colunas, o nome longo é cortado ("Ouro br…"). O nome inteiro aparece no `title` do botão.
+
+**O que muda na partida:** clicar no armazém mostra, embaixo, a lista "Recebe" com as 28 mercadorias. Um clique numa delas faz o armazém parar de receber a sobra dessa mercadoria (a linha fica riscada), e a sobra vai ao próximo armazém que aceita. Outro clique devolve.
