@@ -353,10 +353,11 @@ export interface CondicaoData {
    * F20b — `restauracaoPorComida` x `ticksCondicaoCheia`, arredondado no
    * carregamento: quantos TICKS de condicao cada comida devolve, por classe. A
    * refeicao soma inteiro em inteiro; a fracao nunca chega a `sim/`.
+   * So o CIVIL: o militar enche de uma vez pelo Feed (C-COMIDA-01b), e a linha
+   * `militar` saiu por nao ter leitor (decisao do operador, 2026-09-29).
    */
   readonly ticksRestauradosPorComida: {
     readonly civil: Readonly<Record<string, Ticks>>;
-    readonly militar: Readonly<Record<string, Ticks>>;
   };
   readonly regraCivil: string;
   readonly regraMilitar: string;

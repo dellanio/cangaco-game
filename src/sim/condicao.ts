@@ -103,16 +103,16 @@ export function limiaresDaUnidade(
 }
 
 /**
- * Quanto cada comida devolve de condicao, em TICKS, para a classe desta unidade
- * (`ticksRestauradosPorComida`, convertido no carregamento). Irma de
- * `limiaresDaUnidade` — nenhuma fracao e multiplicada em tempo de execucao.
+ * Quanto cada comida devolve de condicao, em TICKS, na refeicao da Bodega
+ * (`ticksRestauradosPorComida`, convertido no carregamento). So o civil come na
+ * Bodega (`precisaComer`); o militar enche de uma vez pelo Feed (C-COMIDA-01b), e a
+ * tabela dele saiu por nao ter leitor. `unidade` fica na assinatura porque e a
+ * pergunta que o chamador faz: "quanto ESTA unidade recupera".
  */
 export function restauracaoDaUnidade(
-  unidade: Unidade, dados: GameData = gameData,
+  _unidade: Unidade, dados: GameData = gameData,
 ): Readonly<Record<string, number>> {
-  return classeDaUnidade(unidade.tipo, dados) === 'militar'
-    ? dados.condicao.ticksRestauradosPorComida.militar
-    : dados.condicao.ticksRestauradosPorComida.civil;
+  return dados.condicao.ticksRestauradosPorComida.civil;
 }
 
 /**

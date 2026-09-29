@@ -669,7 +669,6 @@ export function loadGameData(raw: RawGameData): GameData {
     restauracaoPorComida: raw.condition.restauracaoPorComida,
     ticksRestauradosPorComida: {
       civil: restauracaoEmTicks(raw.condition.restauracaoPorComida, ticksCondicaoCheiaCivil),
-      militar: restauracaoEmTicks(raw.condition.restauracaoPorComida, ticksCondicaoCheiaMilitar),
     },
     regraCivil: raw.condition.regraCivil,
     regraMilitar: raw.condition.regraMilitar,
