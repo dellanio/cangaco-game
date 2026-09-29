@@ -39,7 +39,7 @@ export function iniciarJogo(
     type: Phaser.AUTO,
     parent: 'jogo',
     backgroundColor: '#0a0a0a',
-    pixelArt: true,
+    pixelArt: false,
     scale: {
       mode: Phaser.Scale.RESIZE,
       width: '100%',
