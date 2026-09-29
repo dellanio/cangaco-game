@@ -12,12 +12,17 @@ export interface ContadorDePaz {
   atualizar(estado: GameState): void;
 }
 
+/** `m:ss` de segundos inteiros. Tambem e o tempo da recusa em paz (C-TELA-01). */
+export function mmss(segundos: number): string {
+  const mm = Math.floor(segundos / 60);
+  const ss = segundos % 60;
+  return `${mm}:${String(ss).padStart(2, '0')}`;
+}
+
 /** O texto do contador (`Paz: 9:58`), ou `''` quando ele some. Pura: e o que o teste prova. */
 export function textoDoContador(segundos: number, rotulo: string = temaSertao.paz.rotulo): string {
   if (segundos <= 0) return '';
-  const mm = Math.floor(segundos / 60);
-  const ss = segundos % 60;
-  return rotulo.replace('{tempo}', `${mm}:${String(ss).padStart(2, '0')}`);
+  return rotulo.replace('{tempo}', mmss(segundos));
 }
 
 /** Cria o elemento uma vez, dentro de `#minimapa`, e so escreve quando o texto muda. */

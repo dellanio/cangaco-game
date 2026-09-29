@@ -5782,6 +5782,9 @@ PROGRESS como PARA REVISÃO.
      transladar junto no mundo transladado (`tools/transladar-mundo.js`).
 3. **C-TELA-01 — a mensagem da ordem recusada (ui).** "Em paz — faltam mm:ss" para
    `em-paz`, e "Longe demais na paz" para `longe-na-paz`. **Aceite:** roteiro com as duas.
+   - **ENTREGUE (2026-09-29).** `src/ui/aviso-de-ordem.ts`, sobre o mapa, some em 3 s de
+     relógio. Roteiro `tools/shots/C-TELA-01.js`. O roteiro da C-IA-03c passou a clicar fora
+     da cerca para afirmar "ninguém marcha em paz".
 4. **C-TELA-02 — o marcador de destino (render + input).** O tile do destino de uma ordem
    de mover é marcado por ~1 s e some, como no Civilization. É estado da tela: não entra na
    sim. **Aceite:** screenshot com o marcador, e a prova de que ele some.

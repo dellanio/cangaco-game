@@ -16,6 +16,8 @@
 // O px sai do debug (`unidadesRenderizadas`, `prediosDoEstado`), nunca de pixel da captura.
 const { retanguloDoCanvas } = require('./_canvas');
 const terreno = require('../../data/terrain.json');
+const escaramuca = require('../../data/escaramuca.json');
+const tema = require('../../data/theme-sertao.json');
 
 const TILE_PX = terreno.tile_px;
 const LADO_DO_JOGADOR = 0;
@@ -100,12 +102,18 @@ async function roteiro(ctx) {
   s = await estado();
   afirmar(s.selecaoMilitar.length === 18, `a caixa deveria pegar os 18, veio ${s.selecaoMilitar.length}`);
 
-  // em paz, o botao direito nao move ninguem
-  await direito(pontoDoTile(meio.gx, meio.gy - 4, s.camera));
+  // em paz, o botao direito LONGE da vila nao move ninguem. C-COMBATE-02: perto da vila (a cerca
+  // da paz) a tropa anda; N + 4 abaixo da tropa esta fora dela. C-TELA-01: e a tela diz por que.
+  const longe = { gx: meio.gx, gy: meio.gy + escaramuca.cercaDaPaz_tiles + 4 };
+  await centrar(longe);
+  s = await estado();
+  await direito(pontoDoTile(longe.gx, longe.gy, s.camera));
   await avancar(20);
   s = await estado();
   const moveram = s.unidadesRenderizadas.filter((u) => u.lado === LADO_DO_JOGADOR && u.tipo === 'militia' && u.fsm !== 'ocioso');
-  afirmar(moveram.length === 0, `em paz ninguem deveria marchar, ${moveram.length} sairam`);
+  afirmar(moveram.length === 0, `em paz, longe da vila, ninguem deveria marchar, ${moveram.length} sairam`);
+  const recusa = await page.$eval('#aviso-de-ordem', (n) => (n.hidden ? null : n.textContent));
+  afirmar(recusa === tema.ordem.longeNaPaz, `a tela deveria dizer "${tema.ordem.longeNaPaz}", veio ${recusa}`);
 
   // 3. o relogio corre ate a paz acabar
   for (let i = 0; i < 20 && (await texto('#minimapa [data-campo="paz"]')) !== null; i += 1) await avancar(500);

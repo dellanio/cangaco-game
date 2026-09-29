@@ -415,5 +415,8 @@
   },
   "C-COMBATE-02-cerca-da-paz": {
     "passes": true
+  },
+  "C-TELA-01-mensagem-da-ordem-recusada": {
+    "passes": true
   }
 }

@@ -13324,3 +13324,45 @@ caixa de um prédio PRONTO do lado das unidades. Fora disso, a recusa sai com o 
 
 **A tela ainda não mostra a recusa.** Nenhum consumidor de `command-rejected` para
 `MoveUnits` existe fora da sim: é o próximo item, C-TELA-01 (mensagem da ordem recusada).
+
+## 2026-09-29 — C-TELA-01 (a mensagem da ordem recusada) ENTREGUE
+
+Terceiro item da fila da primeira partida. Plano em
+`docs/planos/2026-09-29-C-TELA-01-mensagem-da-ordem-recusada.md`. Só tela: `src/sim/` não mudou.
+
+**Verificado:**
+- O roteiro `npm run shot -- C-TELA-01` passou, e abri as duas capturas.
+  - `screenshots/C-TELA-01-1-longe-na-paz.png`: "Longe demais na paz" no alto do mapa, com a
+    tropa de 18 selecionada. O botão direito foi despausado, com `mouse.down` / 150 ms /
+    `mouse.up` (§8), e ninguém marchou.
+  - `screenshots/C-TELA-01-2-em-paz.png`: "Em paz — faltam 10:00" depois do botão direito
+    no armazém da IA.
+  - O roteiro também afirma que a mensagem some sozinha.
+- `tests/C-TELA-01-mensagem-da-ordem-recusada.test.ts`: 5 testes, com eventos de `step` real
+  na escaramuça. Cobre os dois textos, que eles são diferentes, que o tick sem recusa e a
+  recusa de outro comando não mostram nada, e que no tick com duas recusas vence a última.
+- `npm run verify` verde, com 168 arquivos.
+  - **Anotado:** uma corrida anterior, feita ao mesmo tempo que o roteiro da C-IA-03c, deu 5
+    arquivos vermelhos. Isolada, a suíte passou inteira. **Hipótese não conferida:** a causa
+    é disputa de CPU com o Chromium, porque não abri as mensagens dos 5.
+- **Regressão:** `npm run shot -- C-IA-03c` terminou com código 0.
+  - O passo "em paz ninguém marcha" clicava 4 tiles acima da tropa, e com a cerca da
+    C-COMBATE-02 esse tile fica dentro dela. Agora o clique vai N + 4 tiles abaixo da tropa,
+    e o passo afirma também o texto "Longe demais na paz".
+  - A corrida deu vitória no tick 7828, com 8 de 18 cabras vivos e a captura de combate sem
+    disparar (`combate capturado: false`). Não comparei com as corridas de antes da
+    C-MOVIMENTO-01.
+
+**Como ficou:**
+- `textoDaRecusa(eventos, segundosDePaz)`, função pura. Olha só as ordens militares
+  (`MoveUnits`, `AttackUnit`, `AttackBuilding`) e só os dois motivos da paz.
+- O `mm:ss` agora sai de uma função só, `mmss`, em `contador-de-paz.ts`.
+- Os rótulos e o `segundosNaTela` (3) ficam em `theme-sertao.json`, no bloco `ordem`.
+- A mensagem fica num `<aside id="aviso-de-ordem">`, na mesma célula do canvas que o `#ajuda`
+  usa, sem pegar clique.
+
+**PARA REVISÃO:**
+- Os outros motivos de recusa da marcha, como destino inandável, continuam sem mensagem. Não
+  foram pedidos.
+- Com o jogo pausado, a mensagem aparece só ao retomar. É o mesmo atraso de toda ordem dada
+  em pausa (F11a).

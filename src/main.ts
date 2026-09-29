@@ -43,6 +43,7 @@ import { classeDaUnidade } from './sim/condicao';
 import { criarSelecaoMilitar } from './input/selecao-militar';
 import { montarPainelGrupo } from './ui/painel-grupo';
 import { montarContadorDePaz } from './ui/contador-de-paz';
+import { montarAvisoDeOrdem } from './ui/aviso-de-ordem';
 import { criarEscaramuca } from './sim/cenario';
 
 // C-IA-03c — `?escaramuca` nasce na escaramuca (cenario provisorio, sim/cenario.ts); sem ele,
@@ -165,6 +166,9 @@ const alertas = montarAlertas();
 // C-IA-03c — o contador do peacetime, no quadro do minimapa. Derivado do estado.
 const contadorDePaz = montarContadorDePaz();
 
+// C-TELA-01 — por que a ordem militar nao andou (paz, cerca da paz), sobre o mapa.
+const avisoDeOrdem = montarAvisoDeOrdem();
+
 // F34 — o aviso do fim da escaramuca. Derivado do estado, como os alertas.
 const fimDePartida = montarFimDePartida();
 
@@ -191,6 +195,7 @@ function atualizar(s: GameState): void {
   painelGrupo.atualizar(s);
   alertas.atualizar(s);
   contadorDePaz.atualizar(s);
+  avisoDeOrdem.atualizar(s);
   fimDePartida.atualizar(s);
   // C9: a partida acabou -> o laco para (e so outro save o reabre)
   acompanharFimDePartida(laco, s);

@@ -335,6 +335,14 @@ body:not([data-corpo="opcoes"]) #opcoes { display: none; }
 /* ---- o mapa ------------------------------------------------------------------ */
 #jogo { grid-column: 2; grid-row: 1; min-width: 0; min-height: 0; overflow: hidden; }
 #jogo canvas { display: block; }
+/* C-TELA-01 — a ordem recusada: no alto da celula do canvas, sem pegar clique */
+#aviso-de-ordem {
+  grid-column: 2; grid-row: 1; align-self: start; justify-self: center; margin-top: 18px; z-index: 5;
+  pointer-events: none; padding: 5px 14px; background: var(--papel); color: var(--tinta);
+  border: 2px solid var(--tinta); box-shadow: 3px 3px 0 var(--tinta);
+  font: 16px/1.2 var(--fonte-display); letter-spacing: 0.04em; white-space: nowrap;
+}
+#aviso-de-ordem[hidden] { display: none; }
 
 /* ---- a tela de ajuda (F-D1) ------------------------------------------------- */
 /* Sobreposicao na celula do canvas, centrada, e `hidden` por padrao: fechada,

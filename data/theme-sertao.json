@@ -561,6 +561,12 @@
     "_doc": "C-IA-03c. O contador do peacetime (sim/paz.ts), no quadro do minimapa. {tempo} e mm:ss de JOGO restante.",
     "rotulo": "Paz: {tempo}"
   },
+  "ordem": {
+    "_doc": "C-TELA-01 (src/ui/aviso-de-ordem.ts). O porque da ordem militar recusada, sobre o mapa. emPaz: ataque em paz, {tempo} e mm:ss de JOGO que falta. longeNaPaz: marcha fora da cerca da vila (C-COMBATE-02). segundosNaTela e relogio de parede, dado de TELA: nao entra na sim.",
+    "emPaz": "Em paz — faltam {tempo}",
+    "longeNaPaz": "Longe demais na paz",
+    "segundosNaTela": 3
+  },
   "grupo": {
     "_doc": "C-COMIDA-01d. O painel do grupo militar escolhido (src/ui/painel-grupo.ts). `condicao` e `esperando` levam {n}. `ninguemComFome` aparece quando o Alimentar volta recusado com `sem-fome` (ninguem do grupo abaixo do limiar do pedido).",
     "titulo": "Tropa",
