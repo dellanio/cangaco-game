@@ -1,3 +1,4 @@
+import { recusaNaPaz } from './paz';
 import type { Command } from './commands';
 import type { GameEvent, GameState } from './state';
 import type { GameData } from './data/types';
@@ -52,6 +53,12 @@ export function step(
 
   let atual = state;
   for (const command of commands) {
+    // C-IA-03b: em paz, ordem de exercito e treino no quartel sao recusados (sim/paz.ts)
+    const naPaz = recusaNaPaz(atual, command);
+    if (naPaz !== null) {
+      events.push(naPaz);
+      continue;
+    }
     switch (command.type) {
       case 'PlaceBlueprint': {
         const resultado = aplicarPlaceBlueprint(atual, command, dados);
@@ -250,6 +257,9 @@ export function step(
   // Identidade num tick sem conclusao.
   atual = registrarConclusoes(atual, events);
 
+  // C-IA-03b: o peacetime acaba neste tick
+  if (atual.pazAteTick !== undefined && tick === atual.pazAteTick) events.push({ type: 'peace-ended' });
+
   // F34: o fim da escaramuca, conferido no estado do FIM do tick e gravado uma vez so
   if (atual.partida === undefined) {
     const fim = resultadoDaPartida(atual, dados);
@@ -287,6 +297,8 @@ export function step(
     // F28-IA: so atravessa quando existe — estado sem IA nao ganha o campo
     ...(atual.ia === undefined ? {} : { ia: atual.ia }),
     ...(atual.partida === undefined ? {} : { partida: atual.partida }),
+    // C-IA-03b: o fim do peacetime, so na escaramuca
+    ...(atual.pazAteTick === undefined ? {} : { pazAteTick: atual.pazAteTick }),
     // C2: os projeteis no ar, so quando ha algum voando
     ...(atual.projeteis === undefined ? {} : { projeteis: atual.projeteis }),
   };

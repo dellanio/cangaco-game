@@ -45,7 +45,9 @@ export type MotivoDeRecusaDeLuta =
   | 'unidade-inexistente'
   | 'unidade-nao-militar'
   | 'unidade-a-distancia'
-  | 'alvo-do-proprio-lado';
+  | 'alvo-do-proprio-lado'
+  /** C-IA-03b — a partida esta em peacetime (`sim/paz.ts`). */
+  | 'em-paz';
 
 /** F26a — por que um `MoveUnits` foi recusado. */
 export type MotivoDeRecusaDeMarcha =
@@ -53,7 +55,9 @@ export type MotivoDeRecusaDeMarcha =
   | 'unidade-inexistente'
   | 'unidade-nao-militar'
   | 'lados-diferentes'
-  | 'destino-inandavel';
+  | 'destino-inandavel'
+  /** C-IA-03b — a partida esta em peacetime (`sim/paz.ts`). */
+  | 'em-paz';
 
 /** C-COMIDA-01 — por que um `FeedUnits` foi recusado: os motivos da marcha que valem sem
  *  destino, e `sem-fome` quando ninguem do grupo esta abaixo do limiar do pedido. */
@@ -70,7 +74,9 @@ export type MotivoDeRecusaDeAtaque =
   | 'sem-unidades'
   | 'unidade-inexistente'
   | 'unidade-nao-militar'
-  | 'predio-do-proprio-lado';
+  | 'predio-do-proprio-lado'
+  /** C-IA-03b — a partida esta em peacetime (`sim/paz.ts`). */
+  | 'em-paz';
 
 export type GameEvent =
   | { readonly type: 'tick-advanced'; readonly tick: number }
@@ -377,6 +383,10 @@ export type GameEvent =
       /** F34 — a escaramuca acabou neste tick, com `fim`. Sai uma vez so. */
       readonly type: 'match-ended';
       readonly fim: 'vitoria' | 'derrota';
+    }
+  | {
+      /** C-IA-03b — o peacetime acabou neste tick. Sai uma vez so. */
+      readonly type: 'peace-ended';
     }
   | {
       /** F28a — a unidade morreu em luta e saiu do estado neste tick. */
@@ -1469,6 +1479,12 @@ export interface GameState {
    * a tela.
    */
   readonly partida?: { readonly fim: 'vitoria' | 'derrota'; readonly tick: number };
+  /**
+   * C-IA-03b — o tick em que o peacetime acaba (`sim/paz.ts`): em paz enquanto
+   * `tick < pazAteTick`. AUSENTE no jogo livre; so a escaramuca o cria. O save nao muda de
+   * versao (campo opcional ausente).
+   */
+  readonly pazAteTick?: number;
   /**
    * C2 — os projeteis no ar (`sim/projeteis.ts`), na ordem em que sairam. AUSENTE quando
    * nenhum voa: o estado sem combate nao carrega o campo, e o save nao muda de versao.

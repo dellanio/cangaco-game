@@ -81,6 +81,9 @@ const CAMPOS_ESCALONADOS = [
     unidade: 'tilesPorSegundo', declaraEscalaEm: 'escala' },
   { arquivo: 'combat', caminho: 'aDistancia.velocidade_tilesPorSegundo_base.pedraDaTorre',
     unidade: 'tilesPorSegundo', declaraEscalaEm: 'escala' },
+  // C-IA-03b — o peacetime da escaramuca (fixo; vira parametro de fase depois).
+  { arquivo: 'escaramuca', caminho: 'peacetime_min_base',
+    unidade: 'min', declaraEscalaEm: 'escala' },
   { arquivo: 'condition', caminho: 'duracaoCondicaoCheia_min_base.civil',
     unidade: 'min', declaraEscalaEm: 'escala' },
   { arquivo: 'condition', caminho: 'duracaoCondicaoCheia_min_base.militar',

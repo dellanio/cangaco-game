@@ -1,5 +1,10 @@
 {
-  "_doc": "C-IA-03a (cenario de escaramuca; plano em docs/planos/2026-09-29-C-IA-03-cenario-de-escaramuca.md). A vila da IA no mapa que ja existe (sertao-128), na area livre em torno de (64..88, 64..88), a ~45 tiles da vila do jogador. Decisao do operador (2026-09-29): 'comece pelo minimo: a IA com a vila de pe e tropa, sem economia'. Por isso nao ha serf nem producao: o armazem tem estoque, o quartel tem armas e recrutas FINITOS para repor as posicoes (F28-IA ponto 4), e a tropa comeca guarnecendo duas posicoes. Com todos em posicao, a regra do ataque (ponto 6: 9 ociosos FORA de posicao) nao dispara: a IA minima defende. A producao chega com a C-IA-02 (economia da IA). Prédios e posicoes em tile; o lado da IA e LADO_DA_IA no codigo (identificador, nao balanceamento).",
+  "_doc": "C-IA-03a (cenario de escaramuca; plano em docs/planos/2026-09-29-C-IA-03-cenario-de-escaramuca.md). A vila da IA no mapa que ja existe (sertao-128), na area livre em torno de (64..88, 64..88), a ~45 tiles da vila do jogador. Decisao do operador (2026-09-29): 'comece pelo minimo: a IA com a vila de pe e tropa, sem economia'. Por isso nao ha serf nem producao: o armazem tem estoque, o quartel tem armas e recrutas FINITOS para repor as posicoes (F28-IA ponto 4), e a tropa nasce JA nos tiles de cada posicao (`tilesDoGrupo`, os mesmos que a IA usaria), porque em peacetime a IA nao se reposiciona. Com todos em posicao, a regra do ataque (ponto 6: 9 ociosos FORA de posicao) nao dispara: a IA minima defende. A producao chega com a C-IA-02 (economia da IA). Prédios e posicoes em tile; o lado da IA e LADO_DA_IA no codigo (identificador, nao balanceamento).",
+  "escala": "economia",
+  "peacetime_min_base": 20,
+  "_docPeacetime": "C-IA-03b. O peacetime do KaM (GDD 8.2: configuravel), FIXO por enquanto; vira parametro de fase no sistema de fases. Em minutos na escala 1.0, grupo economia: a escala DIVIDE a duracao (time.json economia 2,0 = jogo duas vezes mais rapido), entao 20 min base = 10 min de jogo = 6000 ticks. A conta, pela nossa calibracao: da abertura (armazem + escola) a serraria MEDIDO 2127 ticks (F17); oficina de armas e quartel ~1000 ticks (marteladas do dado, 2 laborers, com a entrega); um facao a cada 375 ticks (weapons_workshop 0,8/min x 2); recruta 150 ticks. Primeiro cabra ~3500 ticks (6 min); um grupo de 9 ~6500 ticks (11 min) com uma oficina. 10 min cobre a cadeia ate quase um grupo. Durante a paz, como no KaM (KM_GameInputProcess.pas:153-155), marcha, ataque e treino no quartel sao recusados, e a IA nao defende, nao repoe e nao ataca (KM_AIGeneral.pas:218, 331, 395). KaM: 0 por padrao no jogo solo (KM_Defaults.pas:117); no lobby, 0 a 120 min, de 5 em 5 (KM_GUIMenuLobby.pas:635-638).",
+  "tropaDoJogador": { "tipo": "militia", "quantidade": 18, "porFileira": 9, "spawn": { "gx": 28, "gy": 38 },
+    "_doc": "C-IA-03b. A tropa inicial do jogador: duas fileiras de 9 cabras ao sul da vila. 18 contra a defesa de 9 cabras + 3 bodoqueiros vence com margem pela tatica 'cacar a tropa primeiro' (medido na sessao: sobram 11 de 18; contra 9+5 sobram 5; contra 9+9 perde). Numero do cenario, nao balanceamento (BALANCE_LOG 2026-09-29)." },
   "predios": [
     { "id": "storehouse", "gx": 72, "gy": 70 },
     { "id": "schoolhouse", "gx": 77, "gy": 70 },
@@ -7,14 +12,14 @@
   ],
   "estoqueDoArmazem": { "gold": 20, "timber": 20, "stone": 20, "loaves": 20, "sausages": 10 },
   "quartel": {
-    "_doc": "O que o quartel da IA tem para repor as posicoes: armas na entrada (units.json requisitos) e recrutas. Acaba: sem economia nao ha reposicao infinita.",
-    "entrada": { "hand_axe": 9, "longbow": 4, "leather_armor": 4 },
-    "recrutas": 9
+    "_doc": "O que o quartel da IA tem para repor as posicoes (F28-IA ponto 4). VAZIO por decisao do operador (2026-09-29): 'a IA nao produz, nao constroi e nao repoe — ela defende o que tem'. A reposicao volta com a C-IA-02 (economia da IA).",
+    "entrada": {},
+    "recrutas": 0
   },
   "posicoes": [
     { "id": "frente", "ponto": { "gx": 67, "gy": 67 }, "tipoDeGrupo": "corpoACorpo", "raio": 8, "linha": "frente",
-      "tropa": { "tipo": "militia", "quantidade": 9 }, "spawn": { "gx": 64, "gy": 69 } },
+      "tropa": { "tipo": "militia", "quantidade": 9 } },
     { "id": "arco", "ponto": { "gx": 73, "gy": 66 }, "tipoDeGrupo": "distancia", "raio": 8, "linha": "tras",
-      "tropa": { "tipo": "bowman", "quantidade": 9 }, "spawn": { "gx": 70, "gy": 64 } }
+      "tropa": { "tipo": "bowman", "quantidade": 3 } }
   ]
 }

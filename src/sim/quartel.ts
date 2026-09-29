@@ -14,7 +14,9 @@ export type MotivoDeRecusaDeSoldado =
   | 'sem-requisito'
   | 'sem-recruta'
   /** Nenhum tile da porta e andavel: o soldado nao teria onde nascer. */
-  | 'porta-bloqueada';
+  | 'porta-bloqueada'
+  /** C-IA-03b — a partida esta em peacetime (`sim/paz.ts`): no KaM, equipar e bloqueado. */
+  | 'em-paz';
 
 export const ehQuartelCompleto = (p: Predio | undefined): p is PredioCompleto =>
   p !== undefined && p.estado === 'completo' && p.tipo === ID_DO_QUARTEL;

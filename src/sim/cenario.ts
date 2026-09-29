@@ -17,7 +17,8 @@
  */
 import type { GameData } from './data/types';
 import { gameData } from './data';
-import { completarObra, createInitialState, ID_DO_ARMAZEM, ID_DO_QUARTEL, LADO_DA_IA } from './state';
+import { completarObra, createInitialState, ID_DO_ARMAZEM, ID_DO_QUARTEL, LADO_DA_IA, LADO_DO_JOGADOR } from './state';
+import { tilesDoGrupo } from './systems/marcha';
 import type { GameState, PosicaoDeDefesa, Predio, PredioCompleto, Unidade } from './state';
 import { condicaoCheiaDoTipo } from './condicao';
 
@@ -47,18 +48,31 @@ export function criarEscaramuca(seed: number, dados: GameData = gameData): GameS
 
   const unidades: Record<string, Unidade> = { ...base.unidades.porId };
   const ordemDasUnidades = [...base.unidades.ordem];
+  const nascer = (lado: number, tipo: string, gx: number, gy: number): string => {
+    const id = `u${contador}`;
+    contador += 1;
+    unidades[id] = { id, lado, tipo, gx, gy, fsm: 'ocioso', fsmData: {}, condicao: condicaoCheiaDoTipo(tipo, dados) };
+    ordemDasUnidades.push(id);
+    return id;
+  };
+
+  // C-IA-03b — a tropa do jogador, em fileiras ao sul da vila dele
+  const tj = cenario.tropaDoJogador;
+  for (let i = 0; i < tj.quantidade; i++) {
+    nascer(LADO_DO_JOGADOR, tj.tipo, tj.spawn.gx + (i % tj.porFileira), tj.spawn.gy + Math.floor(i / tj.porFileira));
+  }
+
+  // A tropa da IA nasce JA nos tiles da posicao (`tilesDoGrupo`, os mesmos que o passo de
+  // voltar ao ponto usaria): em peacetime a IA nao se reposiciona (sim/paz.ts).
+  const comVila: GameState = { ...base, predios: { porId: predios, ordem: ordemDosPredios } };
   const posicoes: PosicaoDeDefesa[] = [];
   for (const pos of cenario.posicoes) {
+    const tiles = tilesDoGrupo(comVila, pos.ponto, dados.combate.ia.tamanhoDoGrupo, dados);
     const membros: string[] = [];
     for (let i = 0; i < pos.tropa.quantidade; i++) {
-      const id = `u${contador}`;
-      contador += 1;
-      unidades[id] = {
-        id, lado: LADO_DA_IA, tipo: pos.tropa.tipo, gx: pos.spawn.gx + i, gy: pos.spawn.gy,
-        fsm: 'ocioso', fsmData: {}, condicao: condicaoCheiaDoTipo(pos.tropa.tipo, dados),
-      };
-      ordemDasUnidades.push(id);
-      membros.push(id);
+      const tile = tiles[i];
+      if (tile === undefined) throw new Error(`criarEscaramuca: a posicao '${pos.id}' nao tem ${pos.tropa.quantidade} tiles andaveis`);
+      membros.push(nascer(LADO_DA_IA, pos.tropa.tipo, tile.gx, tile.gy));
     }
     posicoes.push({
       id: pos.id, ponto: { gx: pos.ponto.gx, gy: pos.ponto.gy },
@@ -73,5 +87,7 @@ export function criarEscaramuca(seed: number, dados: GameData = gameData): GameS
     unidades: { porId: unidades, ordem: ordemDasUnidades },
     proximoId: contador,
     ia: { [String(LADO_DA_IA)]: { posicoes } },
+    // C-IA-03b — o peacetime: fixo no cenario, parametro de fase depois (sim/paz.ts)
+    pazAteTick: base.tick + dados.escaramuca.ticksDePaz,
   };
 }

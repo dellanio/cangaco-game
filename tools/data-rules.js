@@ -659,6 +659,11 @@ function validarEscaramuca(dados, erros) {
   }
   const ia = (dados.combat && dados.combat.ia) || {};
   const militares = new Map(((dados.units && dados.units.militares && dados.units.militares.tipos) || []).map((t) => [t.id, t]));
+  // C-IA-03b: a tropa inicial do jogador e militar, e as fileiras tem gente
+  const tj = e.tropaDoJogador;
+  if (!tj || !militares.has(tj.tipo)) erros.push(`escaramuca/tropaDoJogador: '${tj && tj.tipo}' nao e militar de units.json`);
+  if (!(tj && Number.isInteger(tj.quantidade) && tj.quantidade >= 0)) erros.push('escaramuca/tropaDoJogador: quantidade precisa ser inteiro >= 0');
+  if (!(tj && Number.isInteger(tj.porFileira) && tj.porFileira >= 1)) erros.push('escaramuca/tropaDoJogador: porFileira precisa ser inteiro >= 1');
   const grupoDe = (t) => (t.montado ? 'montado' : t.aDistancia ? 'distancia' : (t.attackVsCavalo || 0) > 0 ? 'antiCavalo' : 'corpoACorpo');
   const ids = new Set();
   for (const pos of e.posicoes) {

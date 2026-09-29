@@ -51,7 +51,11 @@ describe('C-IA-03a — o cenario de escaramuca na sim', () => {
   it('duas vilas, dois lados: a do jogador e a do jogo livre; a da IA e a do dado', () => {
     expect(livre.ia).toBeUndefined();
     expect(doLado(s0, LADO_DO_JOGADOR, 'predios')).toEqual(livre.predios.ordem);
-    expect(doLado(s0, LADO_DO_JOGADOR, 'unidades')).toEqual(livre.unidades.ordem);
+    // C-IA-03b: o jogador tem os civis do jogo livre MAIS a tropa inicial do cenario
+    const doJogador = doLado(s0, LADO_DO_JOGADOR, 'unidades');
+    expect(doJogador.slice(0, livre.unidades.ordem.length)).toEqual(livre.unidades.ordem);
+    expect(doJogador.slice(livre.unidades.ordem.length).map((id) => s0.unidades.porId[id]?.tipo))
+      .toEqual(Array.from({ length: cenario.tropaDoJogador.quantidade }, () => cenario.tropaDoJogador.tipo));
     const daIA = doLado(s0, LADO_DA_IA, 'predios').map((id) => s0.predios.porId[id]);
     expect(daIA.map((p) => [p?.tipo, p?.gx, p?.gy, p?.estado])).toEqual(cenario.predios.map((p) => [p.id, p.gx, p.gy, 'completo']));
     const tropa = cenario.posicoes.reduce((n, p) => n + p.tropa.quantidade, 0);
@@ -74,11 +78,15 @@ describe('C-IA-03a — o cenario de escaramuca na sim', () => {
       expect(canPlace(s, p.tipo, p.gx, p.gy, gameData), `${p.tipo} em ${p.gx},${p.gy}`).toEqual({ ok: true });
       s = { ...s, predios: { porId: { ...s.predios.porId, [id]: p }, ordem: [...s.predios.ordem, id] } };
     }
-    for (const pos of cenario.posicoes) {
-      expect(tileAndavel(s, pos.ponto, 'livre', gameData), `ponto de ${pos.id}`).toBe(true);
-      for (let i = 0; i < pos.tropa.quantidade; i++) {
-        expect(tileAndavel(s, { gx: pos.spawn.gx + i, gy: pos.spawn.gy }, 'livre', gameData), `spawn ${i} de ${pos.id}`).toBe(true);
-      }
+    for (const pos of cenario.posicoes) expect(tileAndavel(s, pos.ponto, 'livre', gameData), `ponto de ${pos.id}`).toBe(true);
+    // toda unidade do cenario (a tropa do jogador e a da IA) nasce em tile andavel, um por tile
+    const ocupados = new Set<string>();
+    for (const id of s0.unidades.ordem.slice(livre.unidades.ordem.length)) {
+      const u = s0.unidades.porId[id];
+      if (u === undefined) throw new Error(id);
+      expect(tileAndavel(s, u, 'livre', gameData), `${id} em ${u.gx},${u.gy}`).toBe(true);
+      expect(ocupados.has(`${u.gx},${u.gy}`), `${id} empilhado em ${u.gx},${u.gy}`).toBe(false);
+      ocupados.add(`${u.gx},${u.gy}`);
     }
   });
 
@@ -91,7 +99,7 @@ describe('C-IA-03a — o cenario de escaramuca na sim', () => {
     expect(registrarConclusoes(s0, [conclusao])).toBe(s0);
     expect(estoqueDosArmazens(s0)).toEqual(estoqueDosArmazens(livre));
     expect(comidaTotal(s0)).toBe(comidaTotal(livre));
-    expect(populacaoPorGrupo(s0)).toEqual(populacaoPorGrupo(livre));
+    expect(populacaoPorGrupo(s0)).toEqual({ ...populacaoPorGrupo(livre), militar: cenario.tropaDoJogador.quantidade });
     expect(alertasDoEstado(s0)).toEqual(alertasDoEstado(livre));
     // uma pedreira da IA sem trabalhador alertaria; o aviso e do jogador, e ela nao entra
     const pedreira = completarObra({ id: 'pedreira-ia', lado: LADO_DA_IA, tipo: 'quarry', gx: 80, gy: 75, estado: 'obra', hp: 250, obra: { faltam: {}, nivelamento: 0 } }, gameData);

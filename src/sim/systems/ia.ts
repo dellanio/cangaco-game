@@ -34,6 +34,7 @@ import type { ResultadoDeSistema } from './jobs';
 import type { GameData } from '../data/types';
 import { classeDaUnidade } from '../condicao';
 import { aplicarFeedUnits, vaiPedirComida } from './alimentar';
+import { emPaz } from '../paz';
 import { direcaoEntre, distanciaEmTiles } from '../combate';
 import { hpMaximoDoTipo } from '../vida';
 import { intrusos, posicaoDoMembro, tipoDeGrupo } from '../ia';
@@ -212,12 +213,16 @@ export function sistemaDaIA(state: GameState, dados: GameData): ResultadoDeSiste
     const lado = Number(chave);
     const guarnecida = guarnecer(atual, lado, ia, dados);
     atual = comIA(atual, chave, guarnecida);
-    for (const p of guarnecida.posicoes) atual = defenderEPosicionar(atual, p, lado, dados);
+    // C-IA-03b: em paz a IA nao defende, nao repoe e nao ataca (KaM: KM_AIGeneral.pas:218,
+    // 331, 395). Guarnecer e alimentar continuam: nao sao ordem de combate.
+    const paz = emPaz(atual);
+    if (!paz) for (const p of guarnecida.posicoes) atual = defenderEPosicionar(atual, p, lado, dados);
     for (const p of guarnecida.posicoes) {
       const alimentada = alimentarAPosicao(atual, p, dados);
       atual = alimentada.state;
       events.push(...alimentada.events);
     }
+    if (paz) continue;
     const reposto = reporPeloQuartel(atual, lado, guarnecida, dados);
     atual = reposto.state;
     events.push(...reposto.events);

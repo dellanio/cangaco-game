@@ -5609,13 +5609,68 @@ Ordem do operador. Cada item tem plano em `docs/planos/2026-09-28-C<n>-*.md`.
   C-IA-02:** sem ele nada do combate é jogável. Duas vilas, dois lados, o mapa que já existe;
   começa pelo mínimo, a IA com a vila de pé e tropa, sem economia. Plano em
   `docs/planos/2026-09-29-C-IA-03-cenario-de-escaramuca.md`.
+  - **É UM CENÁRIO, NÃO UM SISTEMA DE FASES, e é PROVISÓRIO** (operador, 2026-09-29). Ele é
+    montado em código, como os cenários de hoje (`sim/cenario.ts` + `data/escaramuca.json`),
+    para haver contra quem jogar. **Quando o sistema de fases (item abaixo) existir, a
+    escaramuça vira uma fase como as outras**, e `criarEscaramuca` sai.
+  - **O mínimo, e só o mínimo** (operador): duas vilas com prédios de pé e tropa; a IA não
+    produz, não constrói e não repõe — defende o que tem com as posições de defesa; o jogador
+    ataca, e a vitória e a derrota da F34 disparam de verdade pela primeira vez. A fome da
+    tropa da IA segue com o andaime (`iaDrena: false`).
+  - **Peacetime entra agora, com valor FIXO** (`data/escaramuca.json`), com contador na
+    tela; vira parâmetro de fase depois.
+  - **Aceite do operador:** partindo do cenário, eu acho a vila inimiga, ataco, destruo os
+    três prédios e vejo a vitória — num roteiro que eu possa abrir. (A F34 exige também a
+    tropa da IA morta: vitória = sem armazém, escola e quartel E sem militar.)
   - **C-IA-03a — o cenário na sim. ENTREGUE (2026-09-29).** `data/escaramuca.json`,
     `sim/cenario.ts criarEscaramuca`, `LADO_DA_IA`, regra de dado `validarEscaramuca`, e os
     vazamentos entre lados fechados (desbloqueio só por prédio do jogador; estoque, comida,
     população, avisos e centro da câmera com `lado`, padrão o jogador).
-  - **C-IA-03b — jogar pela tela:** começar a escaramuça, o inimigo com cor própria,
-    screenshots.
-  - **C-IA-03c — a partida até o fim:** roteiro longo de vitória e de derrota.
+  - **C-IA-03b — peacetime e as tropas (sim). ENTREGUE (2026-09-29).** O jogador nasce com
+    18 cabras; a IA com 9 cabras + 3 bodoqueiros nos tiles das posições e o quartel vazio (não
+    repõe); peacetime de 10 min de jogo (`peacetime_min_base` 20, escala economia) com a regra
+    do KaM: marcha, ataque e treino no quartel recusados `em-paz`, a IA não defende nem repõe
+    nem ataca; `peace-ended` no tick exato. A partida headless fecha em vitória (tick 10287).
+  - **C-IA-03c — jogar pela tela (integração `ui/` + `render/` + `main.ts`).** Começar a
+    escaramuça; o contador do peacetime; a cor de cada bando (vermelho do jogador, azul do
+    inimigo, do documento da campanha); e o roteiro do aceite, da abertura à vitória.
+- **SISTEMA DE FASES — a campanha do Piancó em dado. SIGLA A DEFINIR pelo operador** (nenhum
+  dos 11 módulos cobre "fase/missão"; módulo novo só por decisão dele — proposta: `FASE`).
+  Vem DEPOIS do cenário de escaramuça. A campanha tem 10 missões, cada uma com estado inicial,
+  objetivo e inimigo próprios, e isso pede DADO em vez de código. Documento:
+  `pianco-campanha-10-missoes.md` (na RAIZ do repositório, não em `docs/`; commit `cce6f40`).
+  Quando existir, a escaramuça (C-IA-03) vira uma fase como as outras.
+  - **O levantamento que o cenário de escaramuça ensina** (atualizado a cada sub-item da
+    C-IA-03; é a entrada do projeto deste sistema):
+    - **O que precisou ser configurável** (está em `data/escaramuca.json`): prédios da IA
+      com posição; estoque do armazém da IA; conteúdo do quartel da IA; posições de defesa
+      (ponto, tipo de grupo, raio, linha) com a tropa de cada uma e onde ela nasce; a tropa
+      inicial do jogador; o peacetime.
+    - **O que ficou fixo no código:**
+      - a vila do jogador é a do jogo livre (`economy.json estadoInicial`), sem variação;
+      - os lados são dois, `LADO_DO_JOGADOR` 0 e `LADO_DA_IA` 1, constantes;
+      - o objetivo é um só, o da F34 (`sim/partida.ts`: armazém, escola e quartel mais
+        tropa); "sobreviver a ondas" ou "escoltar" não cabem;
+      - o comportamento da IA é um só (defender, repor, atacar com a sobra), sem parâmetro
+        por fase;
+      - o mapa é um só, importado em `sim/data/raw.ts`;
+      - quem começa a partida é o `main.ts`;
+      - o andaime `iaDrena` é global, não por fase;
+      - a lista de ordens que o peacetime bloqueia está no código (a do KaM).
+    - **O que doeu:**
+      - **seletores e desbloqueio supunham um lado só:** HUD, avisos, câmera e menu Build
+        somariam a IA (C-IA-03a fechou cinco vazamentos). Toda leitura "do jogador" precisa
+        de `lado`;
+      - **o gerador de mapa reserva só a vila do jogador:** a vila da IA depende de achar
+        área livre à mão. Uma fase precisa declarar as vilas, e o gerador reservar todas;
+      - **o balanço de combate é caótico perto do empate:** 18+10 perde por inteiro e 18+9
+        vence com 11 (C-IA-03b). Uma fase com inimigo "médio" precisa de margem medida, não
+        de número escolhido;
+      - **o combate travava** em dois casos que só o cenário exercitou: alvo cercado pelos
+        colegas e ataque a prédio sem revidar (BUG-P, corrigido). Cenário novo acha defeito
+        de combate velho;
+      - **o documento da campanha estava fora de `docs/`:** a referência do operador apontava
+        `docs/`, o arquivo está na raiz.
 - **C-IA-02 — economia da IA. APROVADA pelo operador (2026-09-29), DEPOIS da C-IA-03:**
   - o modelo "vila pronta" sem AutoBuild, e um prefeito mínimo que só treina gente — planejar
     cidade fica de fora (o KaM desliga na maioria das missões);

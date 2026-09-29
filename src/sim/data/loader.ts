@@ -642,6 +642,13 @@ export function loadGameData(raw: RawGameData): GameData {
     },
   };
 
+  // --- escaramuca (C-IA-03b): o peacetime, convertido uma vez aqui ---
+  const escalaDaEscaramucaNome = raw.escaramuca.escala;
+  const ticksDePaz = registrar(
+    'escaramuca.peacetime_min_base', escalaDaEscaramucaNome, raw.escaramuca.peacetime_min_base, 'min',
+    paraTicksDeDuracao(raw.escaramuca.peacetime_min_base, 'min', escalaDe(escalas, escalaDaEscaramucaNome) as number, tickHz),
+  );
+
   // --- condicao ---
   const escalaCondicaoNome = raw.condition.escala;
   const escalaCondicao = escalaDe(escalas, escalaCondicaoNome) as number;
@@ -824,7 +831,7 @@ export function loadGameData(raw: RawGameData): GameData {
     mapa: carregarMapa(raw),
     recursos,
     economia,
-    escaramuca: raw.escaramuca,
+    escaramuca: { ...raw.escaramuca, ticksDePaz },
     conversoes,
   };
 }

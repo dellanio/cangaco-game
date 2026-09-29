@@ -22,6 +22,13 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
 
 ## Observações abertas
 
+- [2026-09-29] **O bodoqueiro decide qualquer luta, e o empate é caótico** | 3 bodoqueiros de defesa matam 16 de 18 cabras atacantes em ~680 ticks; 18 cabras + 10 bodoqueiros perdem por inteiro para 9 cabras + 3 bodoqueiros, e 18 + 9 vencem com 11 | units.json bowman (hp 1, attack 60), militia (hp 3, defence 1); combat.json aDistancia
+  - Medido na C-IA-03b (cenário de escaramuça), sonda headless com a vila da IA do cenário.
+  - Com a tática "caçar a tropa primeiro": 18 cabras vencem 9+3 com 11 de sobra e 9+5 com 5,
+    e perdem de 9+9. O cenário ficou em 9+3 por isso, não por desenho.
+  - Parte do massacre era defeito (BUG-P: alvo cercado e ataque a prédio sem revidar),
+    corrigido antes desta medida.
+
 - [2026-09-28] **A colisão civil ligada (D1b) atrasa a abertura em até +16% e fecha a vila 6,8% mais tarde** | F-CAL cenário fechado 7486 → 7997; pedreira 715 → 827; bodega 522 → 557; armas 2–5% mais cedo | units.json colisaoCivil
   - Medido com a chave ligada só para a medida; a chave segue desligada. Nenhum teste de
     calibração reprovou. A lista completa está no PROGRESS (D1b).

@@ -458,6 +458,9 @@ export interface GameData {
   readonly economia: EconomiaData;
   /** C-IA-03a — o cenario de escaramuca (`data/escaramuca.json`): a vila e a tropa
    *  iniciais da IA. Sem duracao nem taxa: posicoes, quantidades e estoque, lidos como vem. */
-  readonly escaramuca: RawGameData['escaramuca'];
+  readonly escaramuca: RawGameData['escaramuca'] & {
+    /** C-IA-03b — `peacetime_min_base` x escala, em ticks, convertido no carregamento. */
+    readonly ticksDePaz: Ticks;
+  };
   readonly conversoes: readonly ConversaoRegistrada[];
 }

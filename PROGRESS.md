@@ -12442,6 +12442,96 @@ dos testes:
   (`docs/planos/2026-09-28-F-FEED-fome-militar.md`) **ainda espera aprovação**. Ele destrava
   o C-IA-01 (IA alimentar tropas).
 
+## 2026-09-29 — C-IA-03b (cenário de escaramuça: peacetime e tropas) ENTREGUE; BUG-P corrigido
+
+### Decisões do operador (2026-09-29)
+- **O cenário é UM CENÁRIO, não um sistema de fases, e é PROVISÓRIO:** com o sistema de fases,
+  a escaramuça vira uma fase. Os dois estão como itens separados no BUILD_PLAN, e o do sistema
+  de fases tem o levantamento (configurável / fixo no código / o que doeu).
+- **O mínimo:** duas vilas com tropa; a IA não produz, não constrói, NÃO REPÕE; o jogador
+  ataca e a F34 dispara.
+- **Peacetime agora, fixo, com contador na tela;** parâmetro de fase depois.
+- **O documento da campanha** que o operador citou como `docs/pianco-campanha-10-missoes.md`
+  está na RAIZ (`pianco-campanha-10-missoes.md`, commit `cce6f40`). Verificado com `ls`.
+
+### Medido e verificado
+- **KaM, peacetime** (fonte no scratchpad):
+  - `IsPeaceTime` = tick < `Peacetime` × 600 (`game/KM_Game.pas:1788-1793`);
+  - `BLOCKED_BY_PEACETIME` bloqueia split, link, ataque a unidade, ataque a casa, halt,
+    formação, WALK, storm e equipar no quartel e na prefeitura
+    (`game/gip/KM_GameInputProcess.pas:153-155`);
+  - a IA não treina (`ai/KM_AIGeneral.pas:218`) e não processa ataque nem defesa (`:331`,
+    `:395`);
+  - o padrão do jogo solo é 0 (`common/KM_Defaults.pas:117`); no lobby, de 0 a 120 min, de
+    5 em 5 (`gui/pages_menu/KM_GUIMenuLobby.pas:635-638`).
+- **A conta do valor:**
+  - MEDIDO: a serraria fica completa no tick 2127 (F17).
+  - SOMADO DO DADO: oficina e quartel ~1000 ticks, um facão a cada 375 ticks, recruta 150.
+  - Resultado: primeiro cabra ~3500 ticks (6 min), grupo de 9 ~6500 (11 min).
+  - Proposta e valor: 10 min de jogo = 6000 ticks.
+  - A escala DIVIDE a duração. Minha primeira conta estava invertida e deu 1500 ticks; o
+    teste pegou.
+- **A distância:** a vila da IA ficou em (72..79, 70..78), ~57 tiles em linha reta da vila
+  do jogador. MEDIDO numa sonda: um cabra leva 248 ticks (25 s) até a borda dela. Longe o
+  bastante para não se ver do começo, e a paz, não a distância, é o que dá tempo de
+  construir.
+- **As forças:** MEDIDO por sonda headless, tática "caçar a tropa primeiro":
+  - 18 cabras vencem 9+3 (sobram 11) e 9+5 (sobram 5), e perdem de 9+9;
+  - o cenário ficou 18 contra 9 cabras + 3 bodoqueiros;
+  - `BALANCE_LOG.md` registra que o bodoqueiro decide a luta e que o empate é caótico.
+- **BUG-P** (achado aqui, corrigido em dois commits, com teste que falha sem o conserto):
+  - o corpo a corpo em `indo_lutar` atrás de um alvo cercado pelos colegas travava para
+    sempre, com um inimigo encostado;
+  - quem atacava prédio não revidava o guerreiro encostado (o KaM revida,
+    `KM_UnitWarrior.pas:716-717`, `740-748`);
+  - os dois agora lutam com o encostado.
+
+### Feito (C-IA-03b)
+- **`sim/paz.ts`:** `emPaz`, `ticksDePazRestantes` e `recusaNaPaz`.
+  - `step` recusa `MoveUnits`, `AttackUnit`, `AttackBuilding` e `TrainSoldier` com `em-paz`.
+  - `peace-ended` sai no tick `pazAteTick`.
+  - O campo `pazAteTick?` atravessa o step; o save segue na v4.
+- **`sistemaDaIA`:** em paz não defende, não repõe e não ataca; guarnecer e alimentar
+  continuam, como no KaM.
+- **`criarEscaramuca`:**
+  - 18 cabras do jogador em duas fileiras em (28..36, 38..39);
+  - a tropa da IA nasce nos `tilesDoGrupo` da posição, porque em paz ela não se
+    reposiciona;
+  - `pazAteTick` vem de `escaramuca.ticksDePaz`.
+- **Dado:**
+  - `peacetime_min_base` 20 e `escala` economia, registrado em `CAMPOS_ESCALONADOS` e
+    convertido no loader;
+  - `tropaDoJogador`;
+  - o quartel da IA vazio;
+  - 3 bodoqueiros;
+  - a regra de dado confere `tropaDoJogador`.
+
+### Verificado
+- `tests/C-IA-03b-peacetime-e-tropas.test.ts`, 6 testes:
+  - o dado (6000 ticks, grupo economia) e o jogo livre sem paz;
+  - as tropas e o quartel vazio;
+  - as 4 ordens `em-paz` com o estado igual, e construir passa;
+  - a IA parada em paz, e saindo para o intruso no raio quando a paz acaba;
+  - `peace-ended` uma vez no tick 6000, a marcha passando depois, e o save;
+  - **a partida inteira headless:** tropa da IA morta no tick 6439, os três prédios no
+    chão e vitória no tick 10287, com 16 de 18 vivos, sem a IA repor e com invariantes
+    limpas (`test-output/C-IA-03b-partida.json`).
+- `tests/C-IA-03a-*` foi ajustado à tropa do jogador e aos tiles da posição: toda unidade
+  do cenário em tile andável, uma por tile.
+- **Probe de mutação** (evidência da sessão, NÃO cobertura contínua). Cada mutação derruba o
+  teste da sua regra:
+  - sem o bloqueio de ordem;
+  - a IA ignorando a paz;
+  - sem `peace-ended`;
+  - treino liberado na paz.
+- `npm run verify` verde: 163 arquivos, 1854 testes.
+
+### Decisões conservadoras (PARA REVISÃO)
+- **A paz bloqueia também a marcha DENTRO da própria vila**, como no KaM: a lista é a dele
+  inteira.
+- **O combate automático (revidar o encostado, arqueiro atirando) NÃO é bloqueado em paz.**
+  O KaM não o bloqueia, e sem marcha ninguém se encontra.
+
 ## 2026-09-29 — C-IA-03a (cenário de escaramuça: o cenário na sim) ENTREGUE
 
 ### Feito

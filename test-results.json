@@ -371,10 +371,10 @@
   "C-IA-03a-cenario-na-sim": {
     "passes": true
   },
-  "C-IA-03b-jogar-pela-tela": {
-    "passes": false
+  "C-IA-03b-peacetime-e-tropas": {
+    "passes": true
   },
-  "C-IA-03c-partida-ate-o-fim": {
+  "C-IA-03c-jogar-pela-tela": {
     "passes": false
   }
 }
