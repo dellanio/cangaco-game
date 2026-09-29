@@ -12442,6 +12442,45 @@ dos testes:
   (`docs/planos/2026-09-28-F-FEED-fome-militar.md`) **ainda espera aprovação**. Ele destrava
   o C-IA-01 (IA alimentar tropas).
 
+## 2026-09-29 — Avaliador sobre a segunda leva (e89b0a6..55c80b8): NEEDS_WORK, três `errado`
+
+Pedido do operador antes do merge. O relatório inteiro está em
+`docs/avaliacoes/2026-09-29-segunda-leva.md`.
+
+### Verificado (pelo avaliador, com sonda; o autor conferiu as três linhas de código citadas)
+- **BUG-Q (C5, colisão militar):** só 2 soldados golpeiam o prédio, e o resto fica em
+  `indo_atacar` para sempre. Bisect até 84aeb6c. Alcança F-CERCO-a2 (ataque a prédio), F26b
+  (selecionar pela tela), C-IA-03c (escaramuça pela tela) e F28-IA ponto 6 (ataque com a
+  sobra).
+  - **O autor viu e não leu:** o log do próprio roteiro da C-IA-03c mostrava
+    `{"indo_atacar":10,"atacando":2}` por mais de 2000 ticks, e a vitória saiu porque 2
+    bastam.
+- **BUG-R (C7, lado no JobBoard):** `armazemMaisPertoDoTile` sem lado. A estrada perto da
+  vila da IA nunca recebe pedra.
+- **BUG-S (C-IA-03b, peacetime):** `HireMercenary` passa em paz, contra o KaM citado e
+  contra o que este PROGRESS afirmou ("equipar no quartel e na prefeitura").
+  - **A entrada da C-IA-03b abaixo está ERRADA nesse ponto.** Ela foi escrita como
+    verificada e não era.
+
+### Chaves no `test-results.json` (regra §12: `errado` põe a chave em `false`)
+- **A Fila C ganhou chave:**
+  - o avaliador julgou os 11 itens entregáveis;
+  - C1, C2a, C2b, C3, C4, C6, C8, C9 e C10 ficam `true`;
+  - C5 e C7 ficam `false`.
+- **C-IA-03b vai para `false`** (BUG-S).
+- **BUG-O (etiqueta da carga) e BUG-P (combate travando) NÃO ganham chave:** são bugs, não
+  features. Pela §12 o bug corrigido sai do `BUGS.md` no mesmo commit que o corrige, e o
+  registro é o commit (`1f22c5e`; `8ba64b8` e `c46875c`) mais o teste
+  (`tests/BUG-O-*`, `tests/BUG-P-*`). Não foram esquecidos; foram entregues como conserto.
+
+### Ressalvas do avaliador, não conferidas pelo autor (hipóteses)
+- BUG-P perde a ordem de ataque a prédio e o alvo original depois do revide.
+- C2a pode ter quebrado "pedras gastas = mortos" (F28b).
+- C9 pode rodar 1 ou 2 ticks depois do fim no mesmo quadro.
+- C3 solta os recrutas empilhados.
+- Em paz não há retorno na UI para a ordem recusada.
+- A bandeira fica solta no capim quando o sprite é menor que o lote.
+
 ## 2026-09-29 — C-IA-03c (cenário de escaramuça: jogar pela tela) ENTREGUE — o aceite do operador
 
 ### Feito

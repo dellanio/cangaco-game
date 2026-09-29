@@ -372,6 +372,39 @@
     "passes": true
   },
   "C-IA-03b-peacetime-e-tropas": {
+    "passes": false
+  },
+  "C1-cadencia-de-projetil-e-torre": {
+    "passes": true
+  },
+  "C2a-projetil-voa": {
+    "passes": true
+  },
+  "C2b-projetil-desenhado": {
+    "passes": true
+  },
+  "C3-defeitos-do-quartel": {
+    "passes": true
+  },
+  "C4-botao-de-reparo": {
+    "passes": true
+  },
+  "C5-colisao-militar": {
+    "passes": false
+  },
+  "C6-revidar-em-marcha": {
+    "passes": true
+  },
+  "C7-lado-no-jobboard": {
+    "passes": false
+  },
+  "C8-prioridades-da-ia": {
+    "passes": true
+  },
+  "C9-fim-de-partida-para-o-jogo": {
+    "passes": true
+  },
+  "C10-regra-de-largura": {
     "passes": true
   },
   "C-IA-03c-jogar-pela-tela": {
