@@ -3,8 +3,8 @@
  * docs/planos/2026-09-28-F-FEED-fome-militar.md §3.4 e §7). Aceite:
  *  - o militar drena 1 por tick e morre a 0 (R1, R3); o mercenario tambem (decisao 7, F36);
  *  - ele nao vai a Bodega: nunca reclama `comer`;
- *  - ANDAIME (L8): a tropa de lado com IA nao drena enquanto `condition.militar.iaDrena`
- *    for false; com o dado em true, drena;
+ *  - ANDAIME (L8): a tropa de lado com IA nao drena com `condition.militar.iaDrena` false;
+ *    desde a C-IA-02c o dado e true e ela drena como a do jogador;
  *  - a morte por fome libera, no mesmo tick, a comida que vinha para o morto, e a carga
  *    volta ao armazem (risco 2);
  *  - ponta a ponta: drena ate o pedido, Feed, o serf entrega e a condicao volta a cheia.
@@ -71,19 +71,20 @@ describe('C-COMIDA-01c — o militar sente fome', () => {
     }
   });
 
-  it('ANDAIME (L8): a tropa de lado com IA nao drena; com `iaDrena` true, drena', () => {
+  it('ANDAIME (L8), tirado na C-IA-02c: o dado drena a tropa da IA; com `iaDrena` false, nao', () => {
     const LADO_IA = LADO_DO_JOGADOR + 1;
     const s0 = comIa(com(tropa('j', 'militia', CHEIA), tropa('x', 'militia', CHEIA, LADO_IA, 26, 42)), LADO_IA);
-    expect(gameData.condicao.iaDrena).toBe(false);
+    expect(gameData.condicao.iaDrena).toBe(true);
     const { s } = rodar(s0, 30);
     expect(s.unidades.porId['j']?.condicao).toBe(CHEIA - 30);
-    expect(s.unidades.porId['x']?.condicao).toBe(CHEIA);
-    // o andaime e so da TROPA: um civil do lado da IA continua drenando
-    expect(drenaNoTick(s0, { ...tropa('c', 'serf', 100, LADO_IA) })).toBe(true);
-    // a condicao de saida: o dado vira true, e a tropa da IA drena como a do jogador
-    const saida: GameData = { ...gameData, condicao: { ...gameData.condicao, iaDrena: true } };
-    const r = rodar(s0, 30, saida);
-    expect(r.s.unidades.porId['x']?.condicao).toBe(CHEIA - 30);
+    expect(s.unidades.porId['x']?.condicao).toBe(CHEIA - 30);
+    // a chave ainda desliga: com false, so a tropa da IA para de drenar
+    const andaime: GameData = { ...gameData, condicao: { ...gameData.condicao, iaDrena: false } };
+    const r = rodar(s0, 30, andaime);
+    expect(r.s.unidades.porId['j']?.condicao).toBe(CHEIA - 30);
+    expect(r.s.unidades.porId['x']?.condicao).toBe(CHEIA);
+    // e e so da TROPA: um civil do lado da IA drena com a chave desligada
+    expect(drenaNoTick(s0, { ...tropa('c', 'serf', 100, LADO_IA) }, andaime)).toBe(true);
   });
 
   it('morrer de fome com a comida na mao do serf: a tarefa cai no mesmo tick e a carga volta', () => {

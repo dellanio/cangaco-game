@@ -5963,7 +5963,7 @@ vai para o PROGRESS como PARA REVISÃO, e o trabalho segue.
      ouro.
      - Nota da C-IA-02a: os civis de hoje nascem do dado (`escaramuca.producao.civis`). Com
        o prefeito, a contagem inicial pode cair, e a escola repõe quem morre.
-   - **C-IA-02c — tirar o andaime L8 (dado + teste longo).** `condicao.iaDrena: true`. A
+   - **C-IA-02c — tirar o andaime L8 (dado + teste longo). ENTREGUE (2026-09-29).** `condicao.iaDrena: true`. A
      tropa da IA sente fome e come da produção pelo `comida-para-tropa`.
      - Nota da C-IA-02a: o armazém da IA recebe ~55 pães a cada 9000 ticks (medido). A
        tropa da IA tem 21.

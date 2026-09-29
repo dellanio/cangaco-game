@@ -8,8 +8,8 @@
  *  - com um membro lutando, ninguem da posicao pede;
  *  - o serf do jogador nunca atende a IA;
  *  - determinismo.
- * ANDAIME (L8): a tropa da IA nao drena (`condicao.iaDrena` false). O teste baixa a
- * condicao a mao, e a vila do cenario e DA IA (armazem e serfs virados para o lado dela).
+ * O teste baixa a condicao a mao, e a vila do cenario e DA IA (armazem e serfs virados para o
+ * lado dela). Desde a C-IA-02c (o andaime L8 saiu) a tropa da IA drena, como a do jogador.
  */
 import { describe, expect, it } from 'vitest';
 import { gameData } from '../src/sim/data';
@@ -60,18 +60,21 @@ describe('C-COMIDA-01e — a IA alimenta a tropa (C-IA-01)', () => {
     expect(pedidos(s)).toEqual(['ia1', 'ia2']);
     const eventos: GameEvent[] = [];
     const violacoes: string[] = [];
+    // C-IA-02c: a tropa da IA drena, entao o cheio se afirma no tick em que cada um come
+    const condicaoAoComer: Record<string, number | undefined> = {};
     let ticks = 0;
     while (ticks++ < 1500 && pedidos(s).length > 0) {
       s = step(s, [], gameData);
       eventos.push(...s.events);
       violacoes.push(...violacoesDeInvariantes(s, gameData));
+      for (const e of s.events) if (e.type === 'unit-fed') condicaoAoComer[e.unidade] = s.unidades.porId[e.unidade]?.condicao;
     }
     expect(violacoes).toEqual([]);
     expect(pedidos(s)).toEqual([]);
     const alimentados = eventos.filter((e) => e.type === 'unit-fed');
     expect(alimentados.map((e) => (e.type === 'unit-fed' ? e.unidade : '')).sort()).toEqual(['ia1', 'ia2']);
     for (const e of alimentados) if (e.type === 'unit-fed') expect(s.unidades.porId[e.serf]?.lado).toBe(IA);
-    expect(s.unidades.porId['ia1']?.condicao).toBe(CHEIA);
+    expect(condicaoAoComer).toEqual({ ia1: CHEIA, ia2: CHEIA });
     // a IA nao reemite Feed a cada tick: nenhuma recusa sem-fome na corrida inteira
     expect(eventos.filter((e) => e.type === 'command-rejected')).toEqual([]);
     gravarEvidencia('C-COMIDA-01e-ia-alimenta', { limiar: LIMIAR, ticksAteTodosComerem: ticks, alimentados: alimentados.length });
@@ -96,14 +99,16 @@ describe('C-COMIDA-01e — a IA alimenta a tropa (C-IA-01)', () => {
   });
 
   it('o serf do jogador nunca atende a IA: a vila e do jogador, e a tropa da IA fica com fome', () => {
+    const TICKS = 300;
     let s = step(cenario([LIMIAR - 1, LIMIAR - 1, LIMIAR - 1], LADO_DO_JOGADOR), [], gameData);
     expect(pedidos(s)).toEqual(MEMBROS);
-    for (let t = 0; t < 300; t++) {
+    for (let t = 0; t < TICKS; t++) {
       s = step(s, [], gameData);
       expect(s.jobs.tarefas.ordem.some((id) => s.jobs.tarefas.porId[id]?.tipo === 'comida-para-tropa')).toBe(false);
     }
     expect(pedidos(s)).toEqual(MEMBROS);
-    expect(s.unidades.porId['ia1']?.condicao).toBe(LIMIAR - 1);
+    // C-IA-02c: a tropa da IA drena 1 por tick (o primeiro step e os TICKS) e ninguem repoe
+    expect(s.unidades.porId['ia1']?.condicao).toBe(LIMIAR - 1 - (1 + TICKS));
   });
 
   it('determinismo: a mesma corrida duas vezes da o mesmo save', () => {

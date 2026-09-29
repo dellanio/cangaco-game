@@ -466,5 +466,8 @@
   },
   "C-IA-02b-prefeito": {
     "passes": true
+  },
+  "C-IA-02c-fome-da-ia": {
+    "passes": true
   }
 }

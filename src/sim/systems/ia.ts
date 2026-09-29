@@ -18,8 +18,9 @@
  * do limiar do CIVIL (`limiares.civilVaiComer`, decisao do operador 2026-09-29, e nao os
  * 6/45 do KaM `KM_AIGeneral.pas:316-327`), a IA da `FeedUnits` aos membros. So quando
  * algum membro de fato pediria (`vaiPedirComida`): sem isso, seria um `sem-fome` por tick.
- * ANDAIME (L8): a tropa da IA nao drena ate a IA ter economia (`condicao.iaDrena`), entao
- * na partida este ponto so age quando o dado virar; os testes baixam a condicao a mao.
+ * C-IA-02c: a SOBRA (os militares do lado fora de posicao) e alimentada do mesmo jeito, como
+ * um grupo so. O KaM alimenta todo grupo da IA, nao so o da posicao (`TKMGeneral.CheckArmy`,
+ * KM_AIGeneral.pas:306-327). O andaime L8 saiu: `condicao.iaDrena` e true desde a C-IA-02c.
  *
  * C-IA-02b (prefeito minimo) — depois de alimentar, no tick da revisao, e tambem em paz
  * (o KaM treina em paz): os pedidos de `pedidosDoPrefeito` (`sim/prefeito.ts`) viram o
@@ -54,10 +55,11 @@ function comIA(state: GameState, lado: string, ia: IADoLado): GameState {
   return { ...state, ia: { ...state.ia, [lado]: ia } };
 }
 
-/** C-IA-01 — alimentar a posicao: ninguem lutando, o mais faminto abaixo do limiar do
- *  civil (em ticks do militar) e alguem que pediria. Os membros sao os VIVOS da posicao. */
-function alimentarAPosicao(state: GameState, p: PosicaoDeDefesa, dados: GameData): ResultadoDeSistema {
-  const membros = p.membros.map((id) => state.unidades.porId[id]).filter((u): u is Unidade => u !== undefined);
+/** C-IA-01 — alimentar um grupo (a posicao ou, C-IA-02c, a sobra): ninguem lutando, o mais
+ *  faminto abaixo do limiar do civil (em ticks do militar) e alguem que pediria. Os membros
+ *  sao os VIVOS entre `ids`. */
+function alimentarGrupo(state: GameState, ids: readonly string[], dados: GameData): ResultadoDeSistema {
+  const membros = ids.map((id) => state.unidades.porId[id]).filter((u): u is Unidade => u !== undefined);
   if (membros.length === 0 || membros.some(lutando)) return { state, events: [] };
   const limiar = dados.condicao.ticksNoLimiar.militar.civilVaiComer;
   if (Math.min(...membros.map((u) => u.condicao)) >= limiar) return { state, events: [] };
@@ -224,8 +226,13 @@ export function sistemaDaIA(state: GameState, dados: GameData, tick: number): Re
     // 331, 395). Guarnecer e alimentar continuam: nao sao ordem de combate.
     const paz = emPaz(atual);
     if (!paz) for (const p of guarnecida.posicoes) atual = defenderEPosicionar(atual, p, lado, dados);
-    for (const p of guarnecida.posicoes) {
-      const alimentada = alimentarAPosicao(atual, p, dados);
+    const sobra = atual.unidades.ordem.filter((id) => {
+      const u = atual.unidades.porId[id];
+      return u !== undefined && u.lado === lado && classeDaUnidade(u.tipo, dados) === 'militar'
+        && posicaoDoMembro(guarnecida.posicoes, id) === null;
+    });
+    for (const grupo of [...guarnecida.posicoes.map((p) => p.membros), sobra]) {
+      const alimentada = alimentarGrupo(atual, grupo, dados);
       atual = alimentada.state;
       events.push(...alimentada.events);
     }

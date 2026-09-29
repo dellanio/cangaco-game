@@ -9,8 +9,8 @@
   "regraMilitar": "Enche com 1 item qualquer. Nao vai ao Inn; serf leva comida no comando Feed.",
   "militar": {
     "pedeComidaAbaixoDe": 0.55,
-    "iaDrena": false,
-    "_docIaDrena": "ANDAIME (C-COMIDA-01c, decisao L8 do operador, 2026-09-29), nao divergencia de desenho: no KaM a IA tem cidade e alimenta a propria tropa. Aqui a IA ainda nao tem armazem, comida e serf, e a tropa dela morreria de fome sem remedio. Enquanto false, o militar de um lado com `state.ia` nao drena. Condicao de saida: a IA volta a drenar (true) quando tiver armazem, comida e serf — o item da economia da IA destrava este.",
+    "iaDrena": true,
+    "_docIaDrena": "C-IA-02c (plano em docs/planos/2026-09-29-C-IA-02c-tirar-o-andaime-L8.md): o ANDAIME L8 saiu. Ele existia (C-COMIDA-01c, decisao L8 do operador, 2026-09-28) porque a IA nao tinha armazem, comida e serf, e a tropa dela morreria de fome sem remedio. Desde a C-IA-02a ela tem a cadeia do pao, e a IA alimenta posicao e sobra (systems/ia.ts). Com false, o militar de um lado com `state.ia` volta a nao drenar; a chave ficou (PARA REVISAO: apagar a chave e o ramo de condicao.ts e limpeza que o operador pode pedir).",
     "_doc": "C-COMIDA-01 (fome militar com o Feed). No comando Feed, cada militar do grupo so PEDE comida se a condicao estiver abaixo desta fracao da cheia e ele ainda nao tiver pedido. KaM: TROOPS_FEED_MAX = 0.55 (common/KM_Defaults.pas:373), TKMUnitWarrior.OrderFood (units/KM_UnitWarrior.pas:290-296). Fracao, sem escala. A IA alimenta a tropa abaixo de `limiares.civilVaiComer` (decisao do operador, 2026-09-29: o mesmo limiar do civil, e nao os 6/45 do KaM); a regra de dado exige civilVaiComer < pedeComidaAbaixoDe."
   },
   "inn": { "comensaisSimultaneos": 8, "estoquePorTipoDeComida": 5 },

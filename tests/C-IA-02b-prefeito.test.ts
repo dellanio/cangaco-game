@@ -86,12 +86,16 @@ describe('C-IA-02b — o prefeito minimo', () => {
     s = rodar(s, REVISAO * 2, (a) => { if (enfileirouNoTick === null && fila(a, FARMER) > 0) enfileirouNoTick = a.tick; });
     expect(enfileirouNoTick, 'o farmer deveria entrar na fila na revisao').not.toBeNull();
     expect((enfileirouNoTick ?? 1) % REVISAO, 'so no tick da revisao').toBe(0);
+    // ate nascer (tick ~805), com teto: parar ali poupa CPU a suite paralela
     let nasceu: number | null = null;
-    s = rodar(s, 3000, (a) => { if (nasceu === null && doLado(a, FARMER).length === 1) nasceu = a.tick; });
+    for (let t = 0; t < 3000 && nasceu === null; t++) {
+      s = step(s, [], gameData);
+      if (doLado(s, FARMER).length === 1) nasceu = s.tick;
+    }
     expect(nasceu, 'o farmer treinado deveria nascer').not.toBeNull();
     expect(doLado(s, FARMER)).toHaveLength(1);
     gravarEvidencia('C-IA-02b-especialista', { enfileirouNoTick, nasceu, farmers: doLado(s, FARMER).length });
-  });
+  }, 20_000); // caso trave: ~3000 ticks, passou de 5 s na suite paralela
 
   it('um pedido por falta: os dois padeiros mortos dao, entre vivos e fila, no maximo dois', () => {
     const s0 = criarEscaramuca(SEMENTE);
@@ -135,11 +139,11 @@ describe('C-IA-02b — o prefeito minimo', () => {
   it('determinismo: duas corridas com o fazendeiro morto e ouro de sobra dao o mesmo JSON', () => {
     const correr = (): GameState => {
       const s0 = comOuroDaIA(criarEscaramuca(SEMENTE), pf.ouroMinimoParaSerf * 2);
-      return rodar(matar(s0, doLado(s0, FARMER)), 1500);
+      return rodar(matar(s0, doLado(s0, FARMER)), 900); // passa do nascimento do farmer e do 1o serf
     };
     const a = correr();
     const b = correr();
-    expect(a.tick).toBe(1501);
+    expect(a.tick).toBe(901);
     expect(salvar(a)).toBe(salvar(b));
   }, 20_000); // caso trave
 });

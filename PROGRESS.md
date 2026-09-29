@@ -14090,3 +14090,67 @@ quem falta para a vila que já tem.
 **O que muda na partida:** quando o jogador mata o fazendeiro ou um padeiro da IA, a escola
 dela treina outro, pagando 1 de ouro dos 20. Fora isso, a partida não muda.
 
+## 2026-09-29 — C-IA-02c (tirar o andaime L8, dado + teste longo) ENTREGUE
+
+O plano está em `docs/planos/2026-09-29-C-IA-02c-tirar-o-andaime-L8.md`. Com ela, a C-IA-02 (a
+economia da IA) fecha os três sub-itens.
+
+**Verificado:**
+- A sonda, feita antes do plano: escaramuça com `iaDrena: true`, sem comando, 40000 ticks.
+  - As 12 das posições comem e vivem, e o pão da IA sobe de 25 para 159.
+  - **Os 9 atacantes (C-IA-04) morriam de fome no tick ~18000.** A C-IA-01 (IA alimentar
+    tropas) só alimentava quem estava em posição.
+  - O KaM alimenta todo grupo da IA que não está em luta (`TKMGeneral.CheckArmy`,
+    `KM_AIGeneral.pas:306-327`, 731a8a4, baixado nesta sessão).
+- `data/condition.json: militar.iaDrena` passou a `true`, e o `_docIaDrena` diz que o andaime
+  saiu e por quê.
+- `systems/ia.ts`: a `alimentarAPosicao` virou `alimentarGrupo(state, ids, dados)`, com a
+  mesma regra. Ela roda para cada posição e depois para a **sobra**, que são os militares do
+  lado fora de posição, como um grupo só.
+  - Com isso, a sonda de 24000 ticks deu os 21 vivos, com 42 entregas.
+- `tests/C-IA-02c-fome-da-ia.test.ts` tem 4 testes, todos verdes:
+  1. o dado é `true`;
+  2. o teste longo: a escaramuça sem comando com a tropa da IA faminta (¼ da cheia, abaixo
+     do limiar), 6000 ticks. Ninguém morre de fome, os 21 estão vivos no fim, e o serf da IA
+     leva comida à posição e à sobra (`test-output/C-IA-02c-fome-da-ia.json`, aberta: 12
+     entregas à posição, 9 à sobra, 0 mortos);
+  3. a sobra faminta, fora de posição, recebe o `FeedUnits` da IA;
+  4. determinismo em 1500 ticks, com a tropa faminta.
+- Mutação: com a sobra fora da alimentação, o teste 2 acusa as 9 mortes e o teste 3 acusa
+  os pedidos que faltam.
+- Dois testes codificavam o andaime e foram corrigidos:
+  - C-COMIDA-01c "ANDAIME (L8)": afirma que o dado real drena a tropa da IA, que com
+    `iaDrena: false` ela não drena, e que o civil drena mesmo com a chave desligada;
+  - C-COMIDA-01e:
+    - o "serf do jogador nunca atende a IA" afirmava a condição parada, e agora afirma a
+      queda de 1 por tick sem reposição;
+    - o "os três ficam cheios" afirma cheio **no tick em que cada um come**. No mundo
+      transladado (+32), o `ia1` come 2 ticks antes do `ia2` e drena esses 2 até o laço
+      acabar; foi o `test:transladado` que acusou.
+- `npm run verify` passou. Os roteiros C-IA-02a e C-IA-03c saíram com código 0.
+- A carga na suíte:
+  - o teste longo era, primeiro, a partida cheia de 24000 ticks. Ele disputava CPU com a
+    suíte paralela e derrubava testes alheios por timeout, então passou a começar faminto,
+    com o mesmo mecanismo em 6000 ticks;
+  - na C-IA-02b, o teste do farmer para ao nascer, e o determinismo caiu para 900 ticks;
+  - o teste do farmer ganhou `timeout` de 20 s, só para o caso de travar.
+
+**Aberto — risco medido, e não defeito desta feature:** a C-IA-03b "peace-ended" (`timeout`
+de 12 s) caiu em 2 das 5 corridas de verify desta sessão.
+- Isolada, ela leva ~2,5 s com a fome ligada e ~2,2 s sem.
+- A suíte da base (HEAD 1a76fd2), num worktree irmão, passou uma vez. A minha árvore passou
+  em duas corridas seguidas de `vitest run` e no verify final.
+- O `timeout` está a 5× o tempo isolado, e a suíte cresce a cada feature. O outro teste longo
+  do mesmo arquivo usa 20 s. Não mexi nele: é de outra feature, e alargar é decisão do
+  operador.
+
+**PARA REVISÃO (interpretações conservadoras):**
+- A chave `iaDrena` ficou, em `true`. Apagar a chave e o ramo de `condicao.ts` é limpeza que o
+  operador pode pedir.
+- A sobra é alimentada como UM grupo: se um dela luta, ninguém dela pede. A sim não tem grupo
+  como entidade, e na escaramuça a sobra é o grupo dos atacantes.
+
+**O que muda na partida:** a tropa da IA agora sente fome. Por volta do tick 9000, a posição e
+os atacantes pedem comida, e os serfs da IA levam pão do armazém dela. Quem está lutando não
+pede. Os atacantes que o jogador não matar comem, onde estiverem.
+
