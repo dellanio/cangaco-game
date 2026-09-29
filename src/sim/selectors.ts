@@ -10,6 +10,7 @@ import type { GameState, Predio, PredioCompleto, PredioEmObra, Unidade } from '.
 import { ID_DO_ARMAZEM } from './state';
 import type { GameData, PredioData } from './data/types';
 import { gameData } from './data';
+import { fracaoDeCondicao } from './condicao';
 import { caixaDoPredio } from './footprint';
 import { estaDesbloqueado } from './desbloqueio';
 import { predioLigadoAoArmazem } from './estradas';
@@ -132,6 +133,31 @@ export interface Populacao {
  *  dado. Um tipo desconhecido nao vira civil por omissao: nao entra em
  *  nenhuma das duas contagens (ver teste que afirma civil+militar contra o
  *  total de unidades). */
+/** C-COMIDA-01 (fome militar com o Feed) — o resumo do grupo selecionado, para o painel
+ *  de grupo: quantos de cada tipo, a condicao do GRUPO (a do mais faminto, como o
+ *  `TKMUnitGroup.GetCondition` do KaM, units/KM_UnitGroup.pas:471-478) e quantos esperam
+ *  comida. Ids que nao existem sao ignorados. */
+export interface ResumoDoGrupo {
+  readonly porTipo: Readonly<Record<string, number>>;
+  /** Fracao da cheia do membro mais faminto; 1 com o grupo vazio. */
+  readonly condicao: number;
+  readonly esperandoComida: number;
+}
+
+export function resumoDoGrupo(state: GameState, ids: readonly string[], dados: GameData = gameData): ResumoDoGrupo {
+  const porTipo: Record<string, number> = {};
+  let condicao = 1;
+  let esperandoComida = 0;
+  for (const id of new Set(ids)) {
+    const u = state.unidades.porId[id];
+    if (u === undefined) continue;
+    porTipo[u.tipo] = (porTipo[u.tipo] ?? 0) + 1;
+    condicao = Math.min(condicao, fracaoDeCondicao(u, dados));
+    if (u.pedidoDeComida === true) esperandoComida += 1;
+  }
+  return { porTipo, condicao, esperandoComida };
+}
+
 export function populacaoPorGrupo(state: GameState, dados: GameData = gameData): Populacao {
   const idsCivis = new Set(dados.unidades.civis.tipos.map((t) => t.id));
   const idsMilitares = new Set([...dados.unidades.militares.tipos, ...dados.unidades.mercenarios.tipos].map((t) => t.id));

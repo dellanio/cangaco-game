@@ -5570,8 +5570,25 @@ Ordem do operador. Cada item tem plano em `docs/planos/2026-09-28-C<n>-*.md`.
     - O D-MOVIMENTO-01e não se prova. O GDD §6.4 voltou a "civis não colidem", com o
       resultado registrado.
   - **D-MOVIMENTO-01f (antes D1d) — recalibração em lote. CANCELADO: a chave não liga.**, se a chave for ligada de vez.
-- **Depois da fila:** C-COMIDA-01 (antes F-FEED, fome militar), com o plano esperando
-  aprovação. Ele destrava C-IA-01 (antes F28-IA ponto 5, IA alimentar tropas).
+- **C-COMIDA-01 — fome militar com o Feed (antes F-FEED). APROVADO pelo operador em
+  2026-09-29; plano em `docs/planos/2026-09-28-F-FEED-fome-militar.md`** (as decisões
+  estão no §7).
+  - **Andaime (L8):** a tropa da IA não drena enquanto a IA não tiver armazém, comida e serf.
+    Não é divergência de desenho: no KaM a IA tem cidade. Sai quando o item da economia da
+    IA entregar.
+  - O mercenário sente fome, como todo militar.
+  - **C-COMIDA-01a — dado, comando e pedido. ENTREGUE.**
+    - `condition.json militar.pedeComidaAbaixoDe` 0,55.
+    - `comida-para-tropa` no nível 2 da escada, `livre`, com os de baixo descendo um.
+    - `FeedUnits`, `Unidade.pedidoDeComida?` e `resumoDoGrupo`.
+    - Regra de dado: `civilVaiComer < pedeComidaAbaixoDe`.
+  - **C-COMIDA-01b — a tarefa `comida-para-tropa`, com destino que anda.**
+  - **C-COMIDA-01c — a fome do militar.** Muda os aceites da F20b (fome e morte) e da F20c
+    (marcador de fome), com o visto do operador.
+  - **C-COMIDA-01d + 01f — o painel de grupo com o Alimentar, e o alerta de tropa com fome no
+    HUD** (o 01f não é opcional, e é feito junto com o 01d).
+  - **C-COMIDA-01e — a IA alimenta a tropa.** É o C-IA-01, antes F28-IA ponto 5, com o
+    limiar do civil.
 - **Siglas:** o esquema novo está em `docs/siglas.md` (decisão do operador, 2026-09-28). O que
   fechou mantém a sigla antiga; os itens abertos migraram.
 

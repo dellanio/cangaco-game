@@ -49,23 +49,26 @@ describe('F18d-1b — a escada acolhe `assentar-estrada` sem mexer em nivel nenh
     const escada = gameData.entrega.prioridades.map((p) => [p.id, nivelDoTipo(p.id as never)]);
     expect(escada).toEqual([
       ['comida-para-inn', 1],
-      ['ouro-para-escola', 2],
-      ['material-para-obra', 3],
-      ['insumo-producao-parada', 4],
-      ['insumo-producao-baixa', 5],
+      // C-COMIDA-01a (fome militar com o Feed): a comida da tropa, logo abaixo da Bodega;
+      // todos os de baixo descem um
+      ['comida-para-tropa', 2],
+      ['ouro-para-escola', 3],
+      ['material-para-obra', 4],
+      ['insumo-producao-parada', 5],
+      ['insumo-producao-baixa', 6],
       // F18g entrou em OITAVO, abaixo do excedente. Decisao do operador, 2026-09-27
       // (lote 2): pedra de obra vem ANTES de excedente para o armazem, porque em
       // oitavo os serfs largavam a estrada da Bodega para levar tabua sobrando, e a
-      // vila da F-CAL-a morria de fome. Os insumos (4-5) continuam acima dela.
-      ['pedra-para-canteiro', 6],
-      ['saida-cheia-para-armazem', 7],
-      ['excedente-para-armazem', 8],
+      // vila da F-CAL-a morria de fome. Os insumos (5-6 desde a C-COMIDA-01a) continuam acima dela.
+      ['pedra-para-canteiro', 7],
+      ['saida-cheia-para-armazem', 8],
+      ['excedente-para-armazem', 9],
       // F18d-1b e F18h: as duas do laborer. O nivel delas nao ordena nada (o
       // laborer escolhe por distancia); estao na escada so pelo `modo`.
-      ['assentar-estrada', 9],
-      ['arar', 10],
+      ['assentar-estrada', 10],
+      ['arar', 11],
       // F25a: o requisito de soldado, no fim — nao desloca nenhum dos outros
-      ['arma-para-quartel', 11],
+      ['arma-para-quartel', 12],
     ]);
   });
 

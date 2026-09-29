@@ -360,6 +360,10 @@ export interface CondicaoData {
   };
   readonly regraCivil: string;
   readonly regraMilitar: string;
+  /** C-COMIDA-01 (fome militar com o Feed) — no Feed, o militar so pede comida com a
+   *  condicao ABAIXO de `ticksPedeComida` (`condition.json: militar.pedeComidaAbaixoDe` x
+   *  a cheia do militar, convertido no carregamento). */
+  readonly ticksPedeComida: Ticks;
   readonly inn: RawGameData['condition']['inn'];
   readonly populacao: RawGameData['condition']['populacao'];
 }

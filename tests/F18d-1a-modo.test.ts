@@ -51,6 +51,8 @@ describe('F18d-1a — o modo mora no dado, lido pelo id do nivel', () => {
     const daEscada = gameData.entrega.prioridades.map((p) => [p.id, p.modo]);
     expect(daEscada).toEqual([
       ['comida-para-inn', 'estrada'],
+      // C-COMIDA-01a (fome militar com o Feed): o destino e unidade em campo -> livre
+      ['comida-para-tropa', 'livre'],
       ['ouro-para-escola', 'estrada'],
       ['material-para-obra', 'livre'],
       ['insumo-producao-parada', 'estrada'],

@@ -7,6 +7,10 @@
   "restauracaoPorComida": { "wine": 0.30, "loaves": 0.40, "fish": 0.50, "sausages": 0.60 },
   "regraCivil": "Precisa de pelo menos 2 comidas DIFERENTES para chegar a 100%.",
   "regraMilitar": "Enche com 1 item qualquer. Nao vai ao Inn; serf leva comida no comando Feed.",
+  "militar": {
+    "pedeComidaAbaixoDe": 0.55,
+    "_doc": "C-COMIDA-01 (fome militar com o Feed). No comando Feed, cada militar do grupo so PEDE comida se a condicao estiver abaixo desta fracao da cheia e ele ainda nao tiver pedido. KaM: TROOPS_FEED_MAX = 0.55 (common/KM_Defaults.pas:373), TKMUnitWarrior.OrderFood (units/KM_UnitWarrior.pas:290-296). Fracao, sem escala. A IA alimenta a tropa abaixo de `limiares.civilVaiComer` (decisao do operador, 2026-09-29: o mesmo limiar do civil, e nao os 6/45 do KaM); a regra de dado exige civilVaiComer < pedeComidaAbaixoDe."
+  },
   "inn": { "comensaisSimultaneos": 8, "estoquePorTipoDeComida": 5 },
   "populacao": { "limite": null, "_doc": "Nao existe limite de populacao. A comida e o limite." }
 }

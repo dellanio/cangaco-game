@@ -631,6 +631,23 @@ function validarPrioridadesDaIA(dados, erros) {
   }
 }
 
+// C-COMIDA-01 (fome militar com o Feed): o militar pede comida abaixo de
+// `militar.pedeComidaAbaixoDe`, e a IA alimenta a tropa abaixo de `limiares.civilVaiComer`
+// (o limiar do civil, decisao do operador). A IA pedir ACIMA de onde o membro aceita pedir
+// faria o Feed dela voltar `sem-fome` para sempre: por isso civilVaiComer < pedeComida.
+function validarPedidoDeComida(dados, erros) {
+  const c = dados.condition || {};
+  const pede = c.militar && c.militar.pedeComidaAbaixoDe;
+  const ia = c.limiares && c.limiares.civilVaiComer;
+  if (typeof pede !== 'number' || !(pede > 0 && pede < 1)) {
+    erros.push('condicao/pedido: militar.pedeComidaAbaixoDe precisa ser uma fracao em (0, 1)');
+    return;
+  }
+  if (typeof ia !== 'number' || !(ia > 0 && ia < pede)) {
+    erros.push('condicao/pedido: limiares.civilVaiComer (o limiar da IA) precisa ficar em (0, militar.pedeComidaAbaixoDe)');
+  }
+}
+
 function validarFeira(dados, erros) {
   const feira = (dados.economy && dados.economy.marketplace) || {};
   if (!Number.isInteger(feira.taxa) || feira.taxa < 1) erros.push('economia/feira: marketplace.taxa precisa ser inteiro >= 1');
@@ -1304,6 +1321,7 @@ function validarTudo(dados) {
   validarRequisitosDoQuartel(dados, erros);
   validarAtiradores(dados, erros);
   validarFeira(dados, erros);
+  validarPedidoDeComida(dados, erros);
   validarPrioridadesDaIA(dados, erros);
   validarMapas(dados, erros);
   return erros;

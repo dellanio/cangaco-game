@@ -11,6 +11,7 @@ import { aplicarSetBuildingRepair } from './systems/reparo';
 import { sistemaDaRegeneracao } from './systems/regeneracao';
 import { aplicarTrainSoldier } from './systems/quartel';
 import { aplicarMoveUnits, sistemaDaMarcha } from './systems/marcha';
+import { aplicarFeedUnits } from './systems/alimentar';
 import { aplicarAttackUnit, sistemaDoCombate } from './systems/combate';
 import { sistemaDaTorre } from './systems/torre';
 import { sistemaDaIA } from './systems/ia';
@@ -126,6 +127,12 @@ export function step(
       }
       case 'MoveUnits': {
         const resultado = aplicarMoveUnits(atual, command, dados);
+        atual = resultado.state;
+        events.push(...resultado.events);
+        break;
+      }
+      case 'FeedUnits': {
+        const resultado = aplicarFeedUnits(atual, command, dados);
         atual = resultado.state;
         events.push(...resultado.events);
         break;

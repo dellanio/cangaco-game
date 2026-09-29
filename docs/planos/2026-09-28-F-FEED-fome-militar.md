@@ -279,3 +279,29 @@ proíbe.
       para.
     - Não afirma que ela termina em N ticks com a tropa andando.
     - A (b) tem o caso "a tropa marcha 3 vezes seguidas, e o serf entrega na parada".
+
+## 7. Decisões do operador (2026-09-29): plano APROVADO
+1. **L8, a IA sem economia: a IA fica fora do dreno. É ANDAIME, não divergência de desenho.**
+   - No KaM toda missão dá cidade à IA, e ela alimenta a própria tropa. O problema é a
+     nossa IA estar incompleta, não a fome do militar estar errada.
+   - **Condição de saída:** a IA volta a drenar quando tiver armazém, comida e serf.
+   - Isso fica escrito aqui, no dado (`condition.json`) e no item da economia da IA.
+2. **L1:** `comida-para-tropa` no **nível 2**. A Bodega tem prioridade sobre a tropa,
+   porque civil morto é produção perdida para sempre.
+3. **O limiar da IA segue o do CIVIL** (`limiares.civilVaiComer`, 0,50), e não os 6/45 do
+   KaM: dois limiares no mesmo jogo ninguém lembra por quê.
+   - Não entra `iaAlimentaAbaixoDe` no dado. A regra continua: `civilVaiComer <
+     pedeComidaAbaixoDe`.
+   - **Consequência registrada:** com a IA fora do dreno, a tropa dela não fica com fome. A
+     C-COMIDA-01e é testada baixando a condição à mão, e na partida só age quando o
+     andaime sair.
+4. **Visto nos aceites da F20b (fome e morte) e da F20c (marcador de fome):** eles mudam na
+   C-COMIDA-01c.
+5. **L2, L3, L4, L5 e L11 aprovadas** como o plano propõe.
+6. **O C-COMIDA-01f (alerta de tropa com fome no HUD) NÃO é opcional**, e é feito junto com a
+   C-COMIDA-01d (o painel).
+7. **O mercenário sente fome** (conta como militar para tudo, decisão do F36).
+   `classeDaUnidade` já o dá como militar, então `drenaCondicao`, `condicaoCheiaDoTipo` e o
+   Feed o pegam sem caso especial. A C-COMIDA-01c tem teste próprio para ele.
+8. **O conserto da permuta** (D-MOVIMENTO-01j, troca como permuta) fica registrado e não é
+   feito.

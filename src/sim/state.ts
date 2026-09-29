@@ -55,6 +55,15 @@ export type MotivoDeRecusaDeMarcha =
   | 'lados-diferentes'
   | 'destino-inandavel';
 
+/** C-COMIDA-01 — por que um `FeedUnits` foi recusado: os motivos da marcha que valem sem
+ *  destino, e `sem-fome` quando ninguem do grupo esta abaixo do limiar do pedido. */
+export type MotivoDeRecusaDeAlimentar =
+  | 'sem-unidades'
+  | 'unidade-inexistente'
+  | 'unidade-nao-militar'
+  | 'lados-diferentes'
+  | 'sem-fome';
+
 /** F-CERCO-a2 — por que um `AttackBuilding` foi recusado. */
 export type MotivoDeRecusaDeAtaque =
   | 'predio-inexistente'
@@ -138,6 +147,14 @@ export type GameEvent =
       readonly command: 'MoveUnits';
       readonly unidade: string | null;
       readonly motivo: MotivoDeRecusaDeMarcha;
+    }
+  | {
+      /** C-COMIDA-01 — `FeedUnits` recusado INTEIRO; o estado nao mudou. `sem-fome` e o
+       *  "Ninguem com fome" da tela. */
+      readonly type: 'command-rejected';
+      readonly command: 'FeedUnits';
+      readonly unidade: string | null;
+      readonly motivo: MotivoDeRecusaDeAlimentar;
     }
   | {
       /** F35 — `SetTrade` recusado; o estado nao mudou. */
@@ -1246,6 +1263,10 @@ export interface Unidade {
   /** D-MOVIMENTO-01c (empilhamento de fora do passo) — ticks esperando a porta: quem nasceu ou saiu de "dentro" para um tile ocupado
    *  espera ele vagar, como no `GoInOut` do KaM. Enquanto isso nao ocupa nem anda. */
   readonly saindo?: number;
+  /** C-COMIDA-01 (fome militar com o Feed) — o militar PEDIU comida (o `fRequestedFood` do
+   *  KaM): um serf vai levar uma. Ausente = sem pedido. Some quando a comida chega ou ele
+   *  morre; pedir de novo nao duplica. */
+  readonly pedidoDeComida?: true;
   /**
    * F20b — a condicao (fome) em TICKS RESTANTES, inteiro. Cheia no nascimento
    * (`condicao.ticksCondicaoCheia` da classe), decrementada de 1 por tick pelo

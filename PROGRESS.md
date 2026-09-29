@@ -12441,3 +12441,50 @@ dos testes:
 - **O que sobra da leva grande é o C-COMIDA-01** (fome militar com o Feed), cujo plano
   (`docs/planos/2026-09-28-F-FEED-fome-militar.md`) **ainda espera aprovação**. Ele destrava
   o C-IA-01 (IA alimentar tropas).
+
+## 2026-09-29 — C-COMIDA-01 (fome militar com o Feed) aprovado; C-COMIDA-01a (dado, comando e pedido) ENTREGUE
+
+### Decisões do operador (no §7 do plano)
+- **L8 é ANDAIME:** a tropa da IA não drena até a IA ter armazém, comida e serf.
+- **L1:** o nível 2 da escada.
+- **O limiar da IA é o do civil** (0,50).
+- **Visto** nos aceites da F20b (fome e morte) e da F20c (marcador de fome).
+- **L2, L3, L4, L5 e L11** aprovadas.
+- **O C-COMIDA-01f não é opcional**, e é feito junto com o 01d.
+- **O mercenário sente fome.**
+- **O conserto da permuta** (D-MOVIMENTO-01j, troca como permuta) é registrado e não feito.
+
+### Feito (C-COMIDA-01a)
+- **Dado:**
+  - `condition.json militar.pedeComidaAbaixoDe` 0,55, o `TROOPS_FEED_MAX` do KaM. O loader
+    produz `ticksPedeComida` (9900).
+  - `delivery.json`: `comida-para-tropa`, nível 2, `livre`. Os níveis 2 a 11 viraram 3 a 12.
+- **Regra de dado** `validarPedidoDeComida`: `0 < civilVaiComer < pedeComidaAbaixoDe < 1`.
+  O `iaAlimentaAbaixoDe` do plano não entrou: a IA usa o limiar do civil.
+- **Sim:**
+  - `Unidade.pedidoDeComida?: true`;
+  - `FeedUnits { unidades }` em `systems/alimentar.ts`, com `vaiPedirComida`;
+  - recusas: `sem-unidades`, `unidade-inexistente`, `unidade-nao-militar`,
+    `lados-diferentes` e `sem-fome`;
+  - o pedido é estrito: abaixo de `ticksPedeComida`, como o `<` do KaM.
+- **Seletor** `resumoDoGrupo`: por tipo, a condição do mais faminto (a `GetCondition` do
+  KaM) e quantos esperam comida.
+- **Os 5 testes com a escada literal foram atualizados para o nível novo**, cada um com um
+  comentário do porquê: F09-escada, F13a-ouro, F15b-entrega, F18d-1a-modo e
+  F18d-1b-tarefa.
+
+### Decisões conservadoras (PARA REVISÃO)
+- **`ticksRestauradosPorComida.militar` fica.** Ele perde leitor quando o militar encher
+  direto (01b), e a remoção do dado fica para o operador.
+- **O pedido é estrito (`<`), como no KaM.** O militar exatamente em 55% não pede.
+
+### Verificado
+- `tests/C-COMIDA-01a-feed.test.ts`, 8 testes:
+  - pede a 50% e não a 60%;
+  - o mercenário pede;
+  - dois Feed deixam um pedido só, e o segundo volta `sem-fome` com o estado igual;
+  - as 5 recusas deixam o estado igual byte a byte;
+  - o resumo do grupo;
+  - o save faz a viagem byte a byte, e o save sem o campo carrega;
+  - a regra de dado reprova IA ≥ pedido e pedido ≥ 1.
+- `npm run verify` verde (resultado abaixo, no commit).

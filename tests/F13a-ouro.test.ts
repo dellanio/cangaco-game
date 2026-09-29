@@ -38,7 +38,8 @@ const ligado = (ouro: number, estado: GameState = inicial): GameState =>
 
 describe('F13a — a tarefa de ouro no quadro', () => {
   it('o nivel vem do dado, e ouro ganha de material', () => {
-    expect(nivelDoTipo('ouro-para-escola')).toBe(2);
+    // C-COMIDA-01a (fome militar com o Feed): 3, com a comida da tropa no nivel 2
+    expect(nivelDoTipo('ouro-para-escola')).toBe(3);
     expect(nivelDoTipo('ouro-para-escola')).toBeLessThan(nivelDoTipo('material-para-obra'));
   });
 

@@ -673,6 +673,8 @@ export function loadGameData(raw: RawGameData): GameData {
     },
     regraCivil: raw.condition.regraCivil,
     regraMilitar: raw.condition.regraMilitar,
+    // C-COMIDA-01 — fracao x cheia do militar, arredondada aqui e so aqui (como os limiares)
+    ticksPedeComida: Math.round(raw.condition.militar.pedeComidaAbaixoDe * ticksCondicaoCheiaMilitar),
     inn: raw.condition.inn,
     populacao: raw.condition.populacao,
   };

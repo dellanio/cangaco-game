@@ -219,6 +219,17 @@ export type Command =
     }
   | {
       /**
+       * C-COMIDA-01 (fome militar com o Feed) — o Feed do grupo `unidades` (militares do
+       * mesmo lado). Cada um PEDE comida se estiver abaixo de `ticksPedeComida` e ainda nao
+       * tiver pedido: um serf levara uma. Recusado INTEIRO (`command-rejected`, o estado nao
+       * muda) se a lista e vazia, alguma unidade nao existe ou nao e militar, os lados
+       * diferem, ou ninguem esta com fome (`sem-fome`).
+       */
+      readonly type: 'FeedUnits';
+      readonly unidades: readonly string[];
+    }
+  | {
+      /**
        * F28a — manda `unidades` (militares corpo a corpo) perseguirem e golpearem a
        * unidade `alvo`, de outro lado e com HP (militar ou mercenario). A ordem nova
        * substitui a anterior. Recusado INTEIRO (`command-rejected`, o estado nao muda)
