@@ -570,6 +570,10 @@
   "ordem": {
     "_doc": "C-TELA-01 (src/ui/aviso-de-ordem.ts). O porque da ordem militar recusada, sobre o mapa. emPaz: ataque em paz, {tempo} e mm:ss de JOGO que falta. A marcha em paz nao e recusada (C-COMBATE-02b: a cerca saiu). segundosNaTela e relogio de parede, dado de TELA: nao entra na sim.",
     "emPaz": "Em paz — faltam {tempo}",
+    "_docMotivos": "C-COMBATE-01c. semInfantaria: a investida sem ninguem de corpo a corpo a pe. direcaoInvalida e colunasInvalidas: a formacao pedida fora do que a sim aceita (a tela manda sempre valido; o texto existe para o dia em que nao mandar).",
+    "semInfantaria": "Só a infantaria de corpo a corpo faz a investida",
+    "direcaoInvalida": "Direção da formação inválida",
+    "colunasInvalidas": "Número de colunas inválido",
     "segundosNaTela": 3,
     "_docMarcador": "C-TELA-02 (src/render/marcador-de-destino.ts). Quanto dura, em segundos de relogio de parede, a marca no tile do destino de uma ordem de mover. Dado de TELA.",
     "segundosDoMarcador": 1
@@ -580,7 +584,12 @@
     "condicao": "Condição do grupo: {n}%",
     "esperando": "{n} esperando comida",
     "alimentar": "Alimentar",
-    "ninguemComFome": "Ninguém com fome"
+    "ninguemComFome": "Ninguém com fome",
+    "_docFormacao": "C-COMBATE-01c. A linha das colunas da formacao (`colunas` leva {n}: homens por fileira) com os botoes de menos e mais, e o botao da investida (o storm attack da sim, StormAttack).",
+    "colunas": "{n} por fileira",
+    "menosColunas": "−",
+    "maisColunas": "+",
+    "investida": "Investida"
   },
   "barra": {
     "_doc": "UI-barra-a (docs/propostas/barra-lateral-unica.md). A barra lateral unica, a esquerda. As chaves de `abas` SAO os ids de ABAS (src/ui/barra.ts), na ida e na volta (tests/UI-barra-a.test.ts). `trancada` e o `title` da aba com cadeado; `logo` e `minimapa` sao o texto do placeholder ate a arte entrar (CLAUDE.md §9).",

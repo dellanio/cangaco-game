@@ -13,10 +13,27 @@ import temaSertao from '../../data/theme-sertao.json';
 
 export interface RotulosDaOrdem {
   readonly emPaz: string;
+  readonly semInfantaria: string;
+  readonly direcaoInvalida: string;
+  readonly colunasInvalidas: string;
 }
 
-/** As ordens militares que a tela emite pelo botao direito e pela paz (C-IA-03b). */
-const ORDENS_MILITARES: ReadonlySet<string> = new Set(['MoveUnits', 'AttackUnit', 'AttackBuilding']);
+/** As ordens militares que a tela emite pelo botao direito e pela paz (C-IA-03b), e a
+ *  investida do painel do grupo (C-COMBATE-01c), que a paz tambem recusa. */
+const ORDENS_MILITARES: ReadonlySet<string> = new Set(['MoveUnits', 'AttackUnit', 'AttackBuilding', 'StormAttack']);
+
+/** C-COMBATE-01c — os motivos que a tela pode provocar pelos controles de formacao e pela
+ *  investida, e a chave do texto em `theme-sertao.json` (`ordem`). */
+const MOTIVOS_COM_TEXTO = {
+  'sem-infantaria-corpo-a-corpo': 'semInfantaria',
+  'direcao-invalida': 'direcaoInvalida',
+  'colunas-invalidas': 'colunasInvalidas',
+} as const satisfies Readonly<Record<string, keyof RotulosDaOrdem>>;
+
+function chaveDoMotivo(e: GameEvent): keyof RotulosDaOrdem | null {
+  if (e.type !== 'command-rejected' || !ORDENS_MILITARES.has(e.command)) return null;
+  return (MOTIVOS_COM_TEXTO as Readonly<Record<string, keyof RotulosDaOrdem>>)[e.motivo] ?? null;
+}
 
 /**
  * `'em-paz'` se alguma ordem militar do tick foi recusada pela paz, senao `null`. Os outros
@@ -36,6 +53,10 @@ export function textoDaRecusa(
 ): string | null {
   const motivo = recusaDaPaz(eventos);
   if (motivo === 'em-paz') return rotulos.emPaz.replace('{tempo}', mmss(segundosDePaz));
+  for (const e of eventos) {
+    const chave = chaveDoMotivo(e);
+    if (chave !== null) return rotulos[chave];
+  }
   return null;
 }
 

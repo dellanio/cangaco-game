@@ -9,6 +9,9 @@
  *  3. o resto: `MoveUnits` ao tile.
  *
  * A unidade vence o predio pela mesma razao do clique esquerdo: o jogador mirou o boneco.
+ *
+ * C-COMBATE-01c: quem esta em carga sai do grupo (a ordem nao pega nele); a `formacao` (a
+ * direcao do arrasto, as colunas guardadas) vai so no `MoveUnits` do passo 3.
  */
 import type { Command } from '../sim/commands';
 import type { GameData } from '../sim/data/types';
@@ -16,6 +19,13 @@ import type { GameState } from '../sim/state';
 import { predioNoTile } from '../sim/selectors';
 import { hpMaximoDoTipo } from '../sim/vida';
 import { ehADistancia } from '../sim/combate';
+import { quemAceitaOrdem } from './formacao';
+
+/** C-COMBATE-01c — os campos de formacao que a tela manda na marcha; ausente, os da sim. */
+export interface FormacaoDaOrdem {
+  readonly direcao?: number;
+  readonly colunas?: number;
+}
 
 export interface OrdemDoBotaoDireito {
   readonly comandos: readonly Command[];
@@ -36,8 +46,10 @@ export function inimigoSobOPonteiro(
 
 export function ordemDoBotaoDireito(
   estado: GameState, dados: GameData, lado: number,
-  grupo: readonly string[], tile: { readonly gx: number; readonly gy: number }, idsNoPonto: readonly string[],
+  todos: readonly string[], tile: { readonly gx: number; readonly gy: number }, idsNoPonto: readonly string[],
+  formacao: FormacaoDaOrdem = {},
 ): OrdemDoBotaoDireito {
+  const grupo = quemAceitaOrdem(estado, todos, dados);
   if (grupo.length === 0) return { comandos: [], marcarDestino: null };
   const destino = { gx: tile.gx, gy: tile.gy };
 
@@ -57,5 +69,5 @@ export function ordemDoBotaoDireito(
   if (predio !== undefined && predio.lado !== lado) {
     return { comandos: [{ type: 'AttackBuilding', unidades: grupo, predio: predio.id }], marcarDestino: null };
   }
-  return { comandos: [{ type: 'MoveUnits', unidades: grupo, destino }], marcarDestino: destino };
+  return { comandos: [{ type: 'MoveUnits', unidades: grupo, destino, ...formacao }], marcarDestino: destino };
 }

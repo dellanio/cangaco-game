@@ -468,6 +468,14 @@ export class WorldScene extends Phaser.Scene {
 
     // Soltar o botao esquerdo: fecha o arrasto no tile do ponteiro. Solto fora do mapa
     // (canvas maior que o mapa) cancela, como sair do canvas.
+    // C-COMBATE-01c: soltar o botao direito e o fim da ordem de mao vazia; o ponto de mundo
+    // da soltura da a direcao do arrasto. A cena so encaminha, como no pointerdown.
+    this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => {
+      if (!pointer.rightButtonReleased()) return;
+      const mundo = camera.getWorldPoint(pointer.x, pointer.y);
+      this.entrada.aoSoltarDireito({ x: mundo.x, y: mundo.y });
+    });
+
     this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => {
       if (!pointer.leftButtonReleased()) return;
       if (this.navegacao.espacoApertado) return;

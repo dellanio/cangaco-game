@@ -100,6 +100,9 @@ describe('F26b — os gestos da mao vazia', () => {
   it('botao direito de mao vazia vira ordem; com ferramenta so larga a ferramenta', () => {
     const { entrada, log, ferramenta } = montar();
     expect(entrada.aoClicarDireito({ gx: 5, gy: 6 })).toBe(false);
+    // C-COMBATE-01c: a ordem sai ao soltar (o arrasto do direito da a direcao)
+    expect(log).toEqual([]);
+    entrada.aoSoltarDireito();
     expect(log).toEqual(['ordem 5,6']);
     ferramenta.selecionar('storehouse');
     expect(entrada.aoClicarDireito({ gx: 5, gy: 6 })).toBe(true);

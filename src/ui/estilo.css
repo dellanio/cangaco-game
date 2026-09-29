@@ -738,3 +738,4 @@ body:not([data-corpo="estatisticas"]) #estatisticas { display: none; }
 #painel-grupo h2 { margin: 0; }
 #painel-grupo ul { margin: 0; padding-left: 16px; }
 #painel-grupo [data-grupo="ninguem-com-fome"] { color: var(--terra-queimada); font-weight: bold; }
+#painel-grupo [data-grupo="colunas"] { display: flex; align-items: center; gap: 8px; margin: 0; }

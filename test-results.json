@@ -457,5 +457,8 @@
   },
   "C-MOVIMENTO-02b-vaga-tomada": {
     "passes": true
+  },
+  "C-COMBATE-01c-controles": {
+    "passes": true
   }
 }

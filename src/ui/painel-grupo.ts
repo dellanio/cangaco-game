@@ -5,7 +5,11 @@
 //
 // Mostra quantos de cada tipo, a condicao do grupo (a do mais faminto, a `GetCondition`
 // do KaM) e quantos esperam comida, e tem UM botao: Alimentar, que envia `FeedUnits`.
-// Halt, Split, Link, Formacao e Storm nao entram (plano §4).
+// Halt, Split e Link nao entram (plano §4).
+//
+// C-COMBATE-01c (plano em docs/planos/2026-09-29-C-COMBATE-01c-controles-de-formacao.md): a
+// linha "− N por fileira +", que refaz a formacao no lugar e guarda N para a proxima marcha,
+// e o botao da investida, que envia `StormAttack`. N volta ao padrao quando a selecao muda.
 //
 // Le o estado pelo seletor puro `resumoDoGrupo` e emite comando. Nao muta GameState,
 // nao importa phaser (CLAUDE.md §3, §10). Os nos nascem UMA vez e `atualizar` so troca
@@ -13,9 +17,11 @@
 // com o laco correndo.
 import type { GameEvent, GameState } from '../sim/state';
 import type { Command } from '../sim/commands';
+import type { GameData } from '../sim/data/types';
 import { resumoDoGrupo } from '../sim/selectors';
 import type { ResumoDoGrupo } from '../sim/selectors';
 import type { SelecaoMilitar } from '../input/selecao-militar';
+import { colunasAjustadas, colunasAtuais, ordemDeFormacao, podeCarregar, quemAceitaOrdem } from './formacao';
 import temaSertao from '../../data/theme-sertao.json';
 
 type TemaDeTropa = Readonly<Record<string, { readonly nome: string } | undefined>>;
@@ -52,6 +58,9 @@ export function feedSemFome(events: readonly GameEvent[]): boolean {
 
 export interface PainelDoGrupo {
   atualizar(estado: GameState): void;
+  /** C-COMBATE-01c — as colunas que o jogador escolheu para esta selecao, ou `null` (a sim
+   *  usa a padrao). A marcha do botao direito as manda. */
+  colunas(): number | null;
 }
 
 /**
@@ -62,6 +71,7 @@ export function montarPainelGrupo(
   selecao: SelecaoMilitar,
   enviar: (comando: Command) => void,
   soldados: (ids: readonly string[]) => string[],
+  dados: GameData,
 ): PainelDoGrupo {
   const raiz = document.getElementById('painel-grupo');
   if (!raiz) throw new Error('painel-grupo: #painel-grupo nao existe no index.html');
@@ -83,9 +93,45 @@ export function montarPainelGrupo(
   ninguem.dataset.grupo = 'ninguem-com-fome';
   ninguem.textContent = rotulos.ninguemComFome;
   ninguem.hidden = true;
-  raiz.append(titulo, lista, condicao, esperando, alimentar, ninguem);
+  // C-COMBATE-01c — a formacao e a investida
+  const linhaDeColunas = document.createElement('p');
+  linhaDeColunas.dataset.grupo = 'colunas';
+  const menos = document.createElement('button');
+  menos.type = 'button';
+  menos.dataset.acao = 'menos-colunas';
+  menos.textContent = rotulos.menosColunas;
+  const textoDeColunas = document.createElement('span');
+  const mais = document.createElement('button');
+  mais.type = 'button';
+  mais.dataset.acao = 'mais-colunas';
+  mais.textContent = rotulos.maisColunas;
+  linhaDeColunas.append(menos, textoDeColunas, mais);
+  const investida = document.createElement('button');
+  investida.type = 'button';
+  investida.dataset.acao = 'investida';
+  investida.textContent = rotulos.investida;
+  raiz.append(titulo, lista, condicao, esperando, alimentar, ninguem, linhaDeColunas, investida);
 
   let ultimo: GameState | null = null;
+  let colunasGuardadas: number | null = null;
+
+  function mudarColunas(delta: number): void {
+    if (ultimo === null) return;
+    const grupo = quemAceitaOrdem(ultimo, soldados(selecao.ids), dados);
+    if (grupo.length === 0) return;
+    colunasGuardadas = colunasAjustadas(colunasGuardadas, delta, grupo.length, dados);
+    const comando = ordemDeFormacao(ultimo, grupo, colunasGuardadas, dados);
+    if (comando !== null) enviar(comando);
+    desenhar(ultimo);
+  }
+  menos.addEventListener('click', () => mudarColunas(-1));
+  mais.addEventListener('click', () => mudarColunas(1));
+  investida.addEventListener('click', () => {
+    if (ultimo === null) return;
+    const grupo = soldados(selecao.ids);
+    if (grupo.length === 0) return;
+    enviar({ type: 'StormAttack', unidades: grupo });
+  });
 
   alimentar.addEventListener('click', () => {
     if (ultimo === null) return;
@@ -98,6 +144,7 @@ export function montarPainelGrupo(
   // outro grupo, outro assunto: o aviso era do grupo anterior
   selecao.aoMudar(() => {
     ninguem.hidden = true;
+    colunasGuardadas = null;
     if (ultimo !== null) desenhar(ultimo);
   });
 
@@ -118,12 +165,25 @@ export function montarPainelGrupo(
     esperando.hidden = texto.esperando === null;
     if (texto.esperando !== null && esperando.textContent !== texto.esperando) esperando.textContent = texto.esperando;
     if (feedSemFome(estado.events)) ninguem.hidden = false;
+    const grupo = soldados(selecao.ids);
+    // o numero conta o grupo todo (quem carrega volta a ele); o +/− so vale com quem aceita ordem
+    const n = grupo.length;
+    const textoDasColunas = rotulos.colunas.replace('{n}', String(n === 0 ? 0 : colunasAtuais(colunasGuardadas, n, dados)));
+    if (textoDeColunas.textContent !== textoDasColunas) textoDeColunas.textContent = textoDasColunas;
+    const semOrdem = quemAceitaOrdem(estado, grupo, dados).length === 0;
+    if (menos.disabled !== semOrdem) menos.disabled = semOrdem;
+    if (mais.disabled !== semOrdem) mais.disabled = semOrdem;
+    const semCarga = !podeCarregar(estado, grupo, dados);
+    if (investida.disabled !== semCarga) investida.disabled = semCarga;
   }
 
   return {
     atualizar(estado) {
       ultimo = estado;
       desenhar(estado);
+    },
+    colunas() {
+      return colunasGuardadas;
     },
   };
 }

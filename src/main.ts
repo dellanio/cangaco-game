@@ -48,6 +48,7 @@ import { montarPainelGrupo } from './ui/painel-grupo';
 import { montarContadorDePaz } from './ui/contador-de-paz';
 import { montarAvisoDeOrdem, recusaDaPaz } from './ui/aviso-de-ordem';
 import { ordemDoBotaoDireito } from './ui/ordem-militar';
+import { direcaoDoArrasto } from './ui/formacao';
 import { criarEscaramuca } from './sim/cenario';
 
 // C-IA-03c — `?escaramuca` nasce na escaramuca (cenario provisorio, sim/cenario.ts); sem ele,
@@ -123,12 +124,16 @@ const entrada = criarEntradaDoMapa(
       if (somar) selecaoMilitar.somar(soldados);
       else selecaoMilitar.definir(soldados);
     },
-    aoOrdenar(tile, ponto) {
+    aoOrdenar(tile, ponto, fim) {
       // unidade inimiga sob o ponteiro e ataque (C-TELA-04); predio de OUTRO lado tambem
       // (F26b); no resto e marcha (GDD §2.1). Quem decide e `ui/ordem-militar.ts`.
+      // C-COMBATE-01c: o arrasto do direito da a direcao; as colunas sao as do painel
+      const direcao = ponto === null ? null : direcaoDoArrasto(ponto, fim);
+      const colunas = painelGrupo.colunas();
       const ordem = ordemDoBotaoDireito(
         sessao.estado, gameData, LADO_DO_JOGADOR, soldadosDoJogador(selecaoMilitar.ids), tile,
         ponto === null ? [] : jogo.unidadesNoPonto(ponto),
+        { ...(direcao === null ? {} : { direcao }), ...(colunas === null ? {} : { colunas }) },
       );
       for (const comando of ordem.comandos) sessao.enviar(comando);
       // C-TELA-02: a marca aparece no clique, mesmo pausado (retorno imediato, GDD §10)
@@ -156,7 +161,7 @@ const painel = montarPainelPredio(selecao, (comando) => {
 // C-COMIDA-01d — o painel do grupo militar, com o Alimentar.
 const painelGrupo = montarPainelGrupo(selecaoMilitar, (comando) => {
   sessao.enviar(comando);
-}, soldadosDoJogador);
+}, soldadosDoJogador, gameData);
 // predio e grupo nao convivem (F26b): escolher predio pela aba solta o grupo aqui tambem
 selecao.aoMudar(() => {
   if (selecao.predio !== null) selecaoMilitar.limpar();

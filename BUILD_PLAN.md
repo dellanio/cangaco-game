@@ -5236,6 +5236,16 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
     - **Herda da 01b:** `StormAttack` entra em `ORDENS_MILITARES` (`ui/aviso-de-ordem.ts`),
       para o aviso da paz; o motivo `sem-infantaria-corpo-a-corpo` precisa de texto no tema.
       Quem está em carga não aceita ordem: a tela não deve fingir que a ordem pegou.
+    - **ENTREGUE (2026-09-29; plano em
+      `docs/planos/2026-09-29-C-COMBATE-01c-controles-de-formacao.md`).**
+      - O painel do grupo ganhou "− N por fileira +" e o botão Investida.
+      - O botão direito passou a mandar a ordem ao SOLTAR: o arrasto dá a direção.
+      - Quem está em carga sai do grupo da ordem.
+      - Os quatro motivos herdados têm texto no tema.
+      - O roteiro achou um travamento de marcha, consertado à parte na C-MOVIMENTO-02b (a
+        vaga tomada por quem marcha).
+      - Aceite: `tests/C-COMBATE-01c-controles.test.ts` e o roteiro
+        `tools/shots/C-COMBATE-01c.js`.
 ### F28 — Combate e IA inimiga simples
 - **Quebra (sessão autônoma, 2026-09-28; plano em `docs/planos/2026-09-28-A10-F28-tropa.md`).**
   O pedido era "os tipos de tropa": arco de 90°, alcance de 4 a 11 e escudo contra

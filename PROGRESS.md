@@ -13883,3 +13883,57 @@ a 01c toca o render (§10). O plano está em
 
 **PARA REVISÃO:** a troca só acontece com a vaga como PRÓXIMO tile. Um nó no meio do
 caminho segue com a espera e o desvio de hoje (interpretação conservadora).
+
+
+## 2026-09-29 — C-COMBATE-01c (controles de formação, tela) ENTREGUE
+
+O plano está em `docs/planos/2026-09-29-C-COMBATE-01c-controles-de-formacao.md`. Não toca
+`src/sim/`. O travamento que o roteiro achou foi consertado antes, em commit próprio: a
+C-MOVIMENTO-02b (a vaga tomada por quem marcha).
+
+**Verificado:**
+- `src/ui/formacao.ts` (novo, puro): a direção do arrasto, as colunas (+/−, presas pela
+  `colunasDaFormacao` da sim), quem aceita ordem (sem quem está em carga), a ordem de refazer
+  a formação no lugar, e se o grupo pode investir.
+  - `dados` é parâmetro obrigatório: a guarda da F05b proíbe `src/ui` de importar
+    `../sim/data`, e ela reprovou a primeira versão.
+- O painel do grupo ganhou "− N por fileira +" e o botão Investida.
+  - O número conta o grupo todo.
+  - Em carga, o +/− e a Investida ficam desabilitados.
+- O botão direito manda a ordem ao soltar (`aoSoltarDireito`), e o arrasto dá a direção. O
+  `pointerup` está na `WorldScene`.
+- `aviso-de-ordem.ts` ganhou o `StormAttack` e os textos de `sem-infantaria-corpo-a-corpo`,
+  `direcao-invalida` e `colunas-invalidas`, que estão no tema.
+- `tests/C-COMBATE-01c-controles.test.ts` tem 6 testes. A evidência está em
+  `test-output/C-COMBATE-01c-colunas.json` e dá `{36:4, 37:7, 38:7}`.
+- O roteiro `tools/shots/C-COMBATE-01c.js` deu OK. Ele roda despausado, com down/150 ms/up.
+  - A caixa pegou 18.
+  - O painel foi de 5 para 7 por fileira, e a tropa parou em 3 fileiras, com no máximo 7.
+  - O arrasto ao leste deu 3 linhas de gx, com no máximo 7, e os 18 pararam.
+  - A Investida em paz deu "Em paz — faltam 9:24", com 0 em carga.
+  - Depois da paz, a Investida pôs os 18 em carga, e o painel seguiu com "7 por fileira" e
+    o +/− desabilitado.
+  - As 4 capturas foram abertas.
+  - Pelas capturas corrigi duas coisas: o "−" encostado no número (espaço na linha, em
+    `estilo.css`) e "0 por fileira" durante a carga.
+- O destino do arrasto no roteiro ficou 2 tiles ao norte do meio. A 4 tiles, uma vaga cai em
+  mata, e o desenho da C-COMBATE-01a a desloca (8 numa linha). Isso não é defeito: é a regra
+  da vaga que não serve.
+- `npm run verify` passou. Os roteiros C-TELA-01, C-TELA-02, C-TELA-03, C-TELA-04, F26b, F06 e
+  C-IA-03c saíram com código 0.
+- `tests/F26b-selecao.test.ts` mudou: a ordem do direito sai no `aoSoltarDireito`, não no
+  `aoClicarDireito`.
+
+**PARA REVISÃO (interpretações conservadoras):**
+- As colunas guardadas zeram quando a seleção muda. O KaM guarda no grupo, que aqui não
+  existe.
+- A ordem do botão direito sai ao SOLTAR, não ao apertar. É o que permite o arrasto dar a
+  direção.
+- O arrasto curto (abaixo do limiar da caixa) não manda direção, e a sim usa a do líder.
+- Sair do mapa com o direito apertado cancela a ordem.
+- O Storm tem o nome "Investida" no tema.
+- Quem está em carga sai do grupo sem aviso. Se só há gente em carga, não sai comando nem
+  marcador.
+
+**Hipótese, não verificada:** nas capturas, as elipses de seleção e os rótulos parecem
+deslocados dos sprites. Não é desta feature, e não medi.

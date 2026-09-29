@@ -200,6 +200,7 @@ Decisão do operador (2026-09-28).
 | C-MOVIMENTO-02b | a vaga tomada por quem marcha | — | fechado | `C-MOVIMENTO-02b-vaga-tomada` |
 | D-PRODUCAO-02 | o lenhador: alcance 12 e replantio do toco | — | fechado | `D-PRODUCAO-02-lenhador` |
 | C-COMBATE-01b | storm attack (sim) | — | fechado | `C-COMBATE-01b-storm-attack` |
+| C-COMBATE-01c | controles de formação (tela) | — | fechado | `C-COMBATE-01c-controles` |
 | D1a | colisão civil: o mecanismo, desligado | D-MOVIMENTO-01a | fechado | `D1a-colisao-civil` |
 | D1a-2 | colisão civil: empilhamento de fora do passo | D-MOVIMENTO-01c | fechado | `D1a-2-empilhamento-fora-do-passo` |
 | D1a-3 | colisão civil: JobBoard sem A* na tarefa recusada e "na porta" por estado da chave | D-MOVIMENTO-01d | fechado | `D1a-3-jobboard-e-porta-por-estado` |
