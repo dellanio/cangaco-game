@@ -114,7 +114,11 @@ describe('C-IA-03b — peacetime e tropas', () => {
     const r = step(s, [{ type: 'MoveUnits', unidades: tropaDoJogador(s), destino: { gx: 50, gy: 50 } }], gameData);
     expect(r.events.filter((e) => e.type === 'command-rejected')).toEqual([]);
     expect(salvar(carregar(salvar(s0)))).toBe(salvar(s0));
-  });
+    // `timeout` NAO e assercao de tempo (§8): existe para o caso travar. Caro por natureza:
+    // anda a paz inteira, PAZ ticks (6000 hoje). Medido: 2,0 / 2,1 / 2,1 / 2,3 s isolado
+    // (2026-09-29); o padrao de 5 s estourou num verify local. O limite e ~5x o isolado e
+    // acompanha `peacetime_min_base`: paz mais longa, limite maior.
+  }, 12_000);
 
   it('a partida inteira: paz, marcha, cacar a tropa, derrubar os tres predios — vitoria', () => {
     let { s } = ateOFimDaPaz(s0);
