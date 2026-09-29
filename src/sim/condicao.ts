@@ -51,7 +51,7 @@ export function classeDaUnidade(
   return null;
 }
 
-/** So o civil sente fome nesta feature. Ver `drenaCondicao` para o porque. */
+/** O civil: vai a Bodega comer. O militar tambem sente fome (C-COMIDA-01c), mas come pelo Feed. */
 export function ehCivil(tipo: string, dados: GameData = gameData): boolean {
   return classeDaUnidade(tipo, dados) === 'civil';
 }
@@ -68,16 +68,29 @@ export function condicaoCheiaDoTipo(tipo: string, dados: GameData = gameData): n
 }
 
 /**
- * A unidade DRENA condicao neste tick?
+ * A CLASSE desta unidade drena condicao?
  *
- * So civil, e a razao e de regra, nao de escopo: `condition.regraMilitar` diz que o
- * militar **nao vai ao Inn** e depende do comando `Feed`, que e da F17 em diante.
- * Drenar quem nao tem como comer seria travamento de regra disfarçado de
- * balanceamento — a unidade esperaria o que nunca chega. Quando o `Feed` existir,
- * este predicado e o unico lugar a mudar.
+ * C-COMIDA-01c (fome militar com o Feed): civil e militar (o mercenario incluido, F36)
+ * drenam; tipo desconhecido nao. Ate a C-COMIDA-01b so o civil drenava, porque o militar
+ * nao tinha como comer; agora o `FeedUnits` e a tarefa `comida-para-tropa` existem.
+ *
+ * O ANDAIME da IA (L8) nao mora aqui: ele depende do LADO, e este predicado so ve a
+ * unidade. Quem decide o dreno no tick e `drenaNoTick`.
  */
 export function drenaCondicao(unidade: Unidade, dados: GameData = gameData): boolean {
-  return ehCivil(unidade.tipo, dados);
+  return classeDaUnidade(unidade.tipo, dados) !== null;
+}
+
+/**
+ * A unidade drena NESTE estado? `drenaCondicao` menos o ANDAIME da IA (C-COMIDA-01c,
+ * decisao L8): com `condicao.iaDrena` falso, o militar de um lado que tem `state.ia` nao
+ * drena — a IA ainda nao tem armazem, comida e serf para alimentar a tropa. Sai quando o
+ * item da economia da IA entregar (o dado vira true).
+ */
+export function drenaNoTick(state: GameState, unidade: Unidade, dados: GameData = gameData): boolean {
+  if (!drenaCondicao(unidade, dados)) return false;
+  if (dados.condicao.iaDrena || classeDaUnidade(unidade.tipo, dados) !== 'militar') return true;
+  return state.ia?.[String(unidade.lado)] === undefined;
 }
 
 /** Os limiares em tick da classe desta unidade. */
@@ -120,7 +133,8 @@ export function fracaoDeCondicao(unidade: Unidade, dados: GameData = gameData): 
  * militar nao vai ao Inn.
  */
 export function precisaComer(unidade: Unidade, dados: GameData = gameData): boolean {
-  if (!drenaCondicao(unidade, dados)) return false;
+  // C-COMIDA-01c — so o civil vai a Bodega; o militar come pelo Feed
+  if (!ehCivil(unidade.tipo, dados)) return false;
   return unidade.condicao <= limiaresDaUnidade(unidade, dados).civilVaiComer;
 }
 
@@ -137,22 +151,35 @@ export function morreuDeFome(unidade: Unidade, dados: GameData = gameData): bool
 }
 
 /**
- * Quantos civis do estado estao abaixo de cada limiar. Nao e usado pela simulacao:
- * e o resumo que o teste e a evidencia leem, num lugar so, para nao haver duas
- * contas da mesma coisa.
+ * Quantos civis e quantos militares do estado estao abaixo de cada limiar. Nao e usado
+ * pela simulacao: e o resumo que o teste e a evidencia leem, num lugar so, para nao
+ * haver duas contas da mesma coisa. C-COMIDA-01c separa as duas classes: `comFome` e
+ * `emAlerta` continuam sendo so dos civis (o que a F20b sempre contou); o militar tem a
+ * propria contagem, e "com fome" dele e o alerta, porque ele nao vai a Bodega.
  */
 export function resumoDeCondicao(
   state: GameState, dados: GameData = gameData,
-): { readonly civis: number; readonly comFome: number; readonly emAlerta: number } {
+): {
+  readonly civis: number; readonly comFome: number; readonly emAlerta: number;
+  readonly militares: number; readonly militaresEmAlerta: number;
+} {
   let civis = 0;
   let comFome = 0;
   let emAlerta = 0;
+  let militares = 0;
+  let militaresEmAlerta = 0;
   for (const id of state.unidades.ordem) {
     const u = state.unidades.porId[id];
-    if (u === undefined || !drenaCondicao(u, dados)) continue;
-    civis += 1;
-    if (precisaComer(u, dados)) comFome += 1;
-    if (emAlertaDeFome(u, dados)) emAlerta += 1;
+    if (u === undefined) continue;
+    const classe = classeDaUnidade(u.tipo, dados);
+    if (classe === 'civil') {
+      civis += 1;
+      if (precisaComer(u, dados)) comFome += 1;
+      if (emAlertaDeFome(u, dados)) emAlerta += 1;
+    } else if (classe === 'militar') {
+      militares += 1;
+      if (emAlertaDeFome(u, dados)) militaresEmAlerta += 1;
+    }
   }
-  return { civis, comFome, emAlerta };
+  return { civis, comFome, emAlerta, militares, militaresEmAlerta };
 }

@@ -358,5 +358,8 @@
   },
   "C-COMIDA-01b-comida-para-tropa": {
     "passes": true
+  },
+  "C-COMIDA-01c-fome-do-militar": {
+    "passes": true
   }
 }

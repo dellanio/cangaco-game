@@ -12442,6 +12442,62 @@ dos testes:
   (`docs/planos/2026-09-28-F-FEED-fome-militar.md`) **ainda espera aprovação**. Ele destrava
   o C-IA-01 (IA alimentar tropas).
 
+## 2026-09-29 — C-COMIDA-01c (a fome do militar) ENTREGUE
+
+### Feito
+- **`drenaCondicao`** passa a valer para civil E militar, com o mercenário incluído (F36);
+  tipo desconhecido continua não drenando.
+- **`precisaComer`** passa a exigir civil: o militar nunca vai à Bodega. Há uma segunda
+  barreira, que já existia: `podeReclamar` de `comer` exige `ehCivil`.
+- **ANDAIME da IA (L8):**
+  - o dado `condition.json militar.iaDrena: false`, com o `_docIaDrena` explicando que é
+    andaime e qual é a condição de saída;
+  - o predicado `drenaNoTick(state, u)`: com `iaDrena` falso, o MILITAR de lado com
+    `state.ia` não drena, e o civil desse lado drena normalmente;
+  - quem lê o predicado é o `passoDeFome`;
+  - **condição de saída:** o dado vira `true` quando a IA tiver armazém, comida e serf. Está
+    escrita no item do BUILD_PLAN, e vai no item da economia da IA.
+- **`morrer`** (fome) libera com `destino-sumiu` as tarefas `comida-para-tropa` que apontam
+  para o morto, no mesmo tick (risco 2 do plano).
+- **`resumoDeCondicao`** separa as classes: `civis/comFome/emAlerta`, como antes, mais
+  `militares/militaresEmAlerta`.
+- **Aceites mudados, com o visto do operador:**
+  - **F20b (fome e morte):** "o militar NÃO drena" virou "o militar drena, alerta e morre a
+    0, mas não vai à Bodega"; o resumo ganhou as duas chaves militares.
+  - **F20c (marcador de fome):** "quem não drena nunca acende" virou "o militar acende no
+    chão; o tipo desconhecido nunca acende".
+  - **O helper `civisDoEstado`** (`tests/helpers/fome-cenario.ts`) passou de `drenaCondicao`
+    para `ehCivil`: "quem drena" deixou de ser sinônimo de "civil".
+
+### Decisões conservadoras (PARA REVISÃO)
+- **O andaime é um DADO** (`iaDrena`), e não uma condição derivada ("a IA tem armazém,
+  comida e serf?"). Motivo: a derivação liga e desliga sozinha no meio da partida, e o
+  operador pediu um andaime com saída escrita, não um comportamento novo.
+- **`ticksRestauradosPorComida.militar` continua no dado, sem leitor na sim**: o militar
+  enche direto até a cheia (R2). A remoção é do operador.
+
+### Verificado
+- `tests/C-COMIDA-01c-fome-do-militar.test.ts`, 6 testes:
+  - o militar e o mercenário drenam 1 por tick;
+  - os dois morrem a 0 com `unit-starved`;
+  - com a Bodega cheia (a vila da F20a) e o militar a 20%, nunca há `indo_comer` nem
+    `comer`;
+  - andaime: a tropa da IA fica cheia e a do jogador drena 30. Com `iaDrena: true` a da IA
+    drena 30, e o civil do lado da IA drena de qualquer modo;
+  - morte por fome com a comida na mão do serf: `destino-sumiu` no mesmo tick, a carga
+    volta, invariantes limpas;
+  - ponta a ponta: 20 ticks acima do limiar o Feed é recusado (`sem-fome`); abaixo dele, o
+    serf entrega em 60 ticks e a condição volta a 18000
+    (`test-output/C-COMIDA-01c-ponta-a-ponta.json`).
+- **Probe de mutação** (evidência da sessão, NÃO cobertura contínua):
+  - o andaime desligado derruba o teste do andaime;
+  - a morte sem liberar a comida derruba o teste da morte;
+  - o mercenário sem dreno derruba 2 testes;
+  - **`precisaComer` sem exigir civil SOBREVIVE sozinho** no teste da 01c, porque a
+    barreira de `podeReclamar` segura. Quem a pega é a F20b, que testa o predicado
+    direto. As duas barreiras mutadas juntas derrubam o teste da 01c.
+- `npm run verify` verde: 157 arquivos, 1825 testes.
+
 ## 2026-09-29 — C-COMIDA-01b (tarefa comida-para-tropa com destino móvel) ENTREGUE
 
 ### Feito

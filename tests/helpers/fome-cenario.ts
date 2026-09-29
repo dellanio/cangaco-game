@@ -18,7 +18,7 @@ import { createInitialState } from '../../src/sim/state';
 import type { GameState, PredioCompleto, Unidade } from '../../src/sim/state';
 import { step } from '../../src/sim/tick';
 import { comidasConhecidas, tetoDeComidaNaBodega } from '../../src/sim/bodega';
-import { drenaCondicao, limiaresDaUnidade } from '../../src/sim/condicao';
+import { ehCivil, limiaresDaUnidade } from '../../src/sim/condicao';
 import { predioLigadoAoArmazem } from '../../src/sim/estradas';
 import { estoqueDosArmazens } from '../../src/sim/selectors';
 import { bodegaDoCenario, cenarioComBodega, ID_DA_BODEGA_NO_CENARIO } from './bodega-cenario';
@@ -54,11 +54,12 @@ export function comCondicao(estado: GameState, condicoes: Readonly<Record<string
   return { ...estado, unidades: { ...estado.unidades, porId } };
 }
 
-/** Os ids de quem drena condicao — o predicado da simulacao, nao uma lista de tipos. */
+/** Os ids dos CIVIS — o predicado da simulacao, nao uma lista de tipos. Ate a
+ *  C-COMIDA-01c era "quem drena"; agora o militar tambem drena, e o civil e `ehCivil`. */
 export function civisDoEstado(estado: GameState, dados: GameData = gameData): readonly string[] {
   return estado.unidades.ordem.filter((id) => {
     const u = estado.unidades.porId[id];
-    return u !== undefined && drenaCondicao(u, dados);
+    return u !== undefined && ehCivil(u.tipo, dados);
   });
 }
 

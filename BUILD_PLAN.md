@@ -5587,8 +5587,13 @@ Ordem do operador. Cada item tem plano em `docs/planos/2026-09-28-C<n>-*.md`.
     - O serf recalcula quando chega e a tropa está a mais de 1 tile (R8). Adjacente, enche a
       condição, apaga o pedido e emite `unit-fed`.
     - O claim confere o lado do militar (`unidade-invalida`).
-  - **C-COMIDA-01c — a fome do militar.** Muda os aceites da F20b (fome e morte) e da F20c
-    (marcador de fome), com o visto do operador.
+  - **C-COMIDA-01c — a fome do militar. ENTREGUE.** Muda os aceites da F20b (fome e morte) e
+    da F20c (marcador de fome), com o visto do operador.
+    - O militar e o mercenário drenam 1 por tick e morrem a 0. Nunca vão à Bodega.
+    - **ANDAIME (L8):** `condition.json militar.iaDrena: false`, e a tropa de lado com
+      `state.ia` não drena. **Condição de saída: a IA volta a drenar (o dado vira `true`)
+      quando tiver armazém, comida e serf. O item da economia da IA destrava este.**
+    - A morte por fome libera no mesmo tick a comida que vinha para o morto.
   - **C-COMIDA-01d + 01f — o painel de grupo com o Alimentar, e o alerta de tropa com fome no
     HUD** (o 01f não é opcional, e é feito junto com o 01d).
   - **C-COMIDA-01e — a IA alimenta a tropa.** É o C-IA-01, antes F28-IA ponto 5, com o

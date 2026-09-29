@@ -30,11 +30,11 @@
  *    caminho para o mesmo estado seria o defeito, não a garantia.
  */
 import type { GameEvent, GameState, PredioCompleto, TarefaComer, Unidade } from '../state';
-import { ehTarefaDeColheita } from '../state';
+import { ehTarefaDeColheita, ehTarefaDeComidaParaTropa } from '../state';
 import type { GameData } from '../data/types';
 import { gameData } from '../data';
 import {
-  condicaoCheiaDoTipo, drenaCondicao, FSM_COMENDO, FSM_INDO_COMER,
+  condicaoCheiaDoTipo, drenaNoTick, FSM_COMENDO, FSM_INDO_COMER,
   morreuDeFome, precisaComer, restauracaoDaUnidade,
 } from '../condicao';
 import { comidasConhecidas, ehBodegaCompleta } from '../bodega';
@@ -114,7 +114,16 @@ function morrer(state: GameState, u: Unidade, dados: GameData): Passo {
   // 'unidade-removida' REABRE a reclamada (outro civil a pega) e CANCELA a
   // `carregando`, cuja reserva de origem já foi consumida na coleta — é o mesmo
   // motivo que `sanearTarefas` usaria no tick seguinte, aplicado agora.
-  const solto = segurada === null ? { state, events: [] as readonly GameEvent[] } : liberar(state, segurada.id, 'unidade-removida');
+  let solto = segurada === null ? { state, events: [] as readonly GameEvent[] } : liberar(state, segurada.id, 'unidade-removida');
+  // C-COMIDA-01c (risco 2 do plano) — a morte por fome roda DEPOIS do saneamento: a
+  // comida que vinha para este militar cai agora ('destino-sumiu'), e o serf que a
+  // carrega devolve ao armazem no proprio passo (a tarefa sumiu debaixo dele).
+  for (const id of solto.state.jobs.tarefas.ordem) {
+    const t = solto.state.jobs.tarefas.porId[id];
+    if (t === undefined || !ehTarefaDeComidaParaTropa(t) || t.destinoUnidade !== u.id) continue;
+    const l = liberar(solto.state, t.id, 'destino-sumiu');
+    solto = { state: l.state, events: [...solto.events, ...l.events] };
+  }
 
   const carga = u.fsmData.carga ?? null;
   const armazem = carga === null ? null : armazemMaisProximo(solto.state, noTile(u), u.lado, dados)?.id ?? null;
@@ -201,7 +210,8 @@ function passoIndoComer(state: GameState, u: Unidade, dados: GameData): Passo {
 }
 
 function passoDeFome(state: GameState, u: Unidade, dados: GameData): Passo {
-  if (!drenaCondicao(u, dados)) return semEventos(state);   // militar depende do `Feed` (F17+)
+  // C-COMIDA-01c — civil e militar drenam; a tropa da IA fica fora pelo ANDAIME (L8)
+  if (!drenaNoTick(state, u, dados)) return semEventos(state);
 
   const drenado: Unidade = { ...u, condicao: Math.max(0, u.condicao - DRENO_POR_TICK) };
   const comDreno = comUnidade(state, drenado);

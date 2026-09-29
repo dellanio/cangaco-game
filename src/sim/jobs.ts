@@ -174,7 +174,7 @@ export function podeReclamar(
   // recebe a unidade, so o tipo dela) e mora no `reclamar`.
   // F20b — 'comer' e a primeira tarefa cujo elegivel e uma CLASSE de unidade e
   // nao um tipo: todo civil come. O dado que responde e `units.json:civis.tipos`,
-  // lido por `ehCivil`. O militar depende do comando `Feed` (F17+) e nao entra.
+  // lido por `ehCivil`. O militar come pelo Feed (C-COMIDA-01b) e nunca vai a Bodega.
   if (tarefa.tipo === 'comer') return ehCivil(tipoDaUnidade, dados);
   if (tarefa.tipo !== 'ocupar' && tarefa.tipo !== 'colher') {
     return elegivelParaTarefa(tarefa.tipo, tipoDaUnidade);

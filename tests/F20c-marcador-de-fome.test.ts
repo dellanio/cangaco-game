@@ -21,7 +21,7 @@ import { gameData } from '../src/sim/data';
 import { createInitialState } from '../src/sim/state';
 import type { Unidade } from '../src/sim/state';
 import {
-  condicaoCheiaDoTipo, drenaCondicao, emAlertaDeFome, fracaoDeCondicao, precisaComer,
+  condicaoCheiaDoTipo, drenaCondicao, ehCivil, emAlertaDeFome, fracaoDeCondicao, precisaComer,
 } from '../src/sim/condicao';
 import {
   ALTURA_DA_CARGA_EM_LADOS, ALTURA_DA_FOME_EM_LADOS, temMarcadorDeFome,
@@ -33,7 +33,7 @@ function civilDaAbertura(): Unidade {
   const estado = createInitialState(1);
   for (const id of estado.unidades.ordem) {
     const u = estado.unidades.porId[id];
-    if (u !== undefined && drenaCondicao(u)) return u;
+    if (u !== undefined && ehCivil(u.tipo)) return u;
   }
   throw new Error('fixture: a vila de abertura deveria ter pelo menos um civil');
 }
@@ -73,12 +73,19 @@ describe('F20c — o render nao tem limiar', () => {
     expect(divergentes).toEqual([]);
   });
 
-  it('quem nao drena nunca acende o marcador, nem com a condicao no chao', () => {
+  // ACEITE MUDADO na C-COMIDA-01c (fome militar com o Feed), com o visto do operador
+  // (2026-09-29): o militar drena, entao o marcador acende nele tambem, no limiar DELE.
+  // Quem continua sem marcador e quem nao drena: tipo desconhecido (save de outra versao).
+  it('o militar acende o marcador no chao; quem nao drena (tipo desconhecido) nunca acende', () => {
     const tipoMilitar = gameData.unidades.militares.tipos[0]?.id ?? '';
     expect(tipoMilitar).not.toBe('');
     const militar: Unidade = { ...CIVIL, tipo: tipoMilitar, condicao: 0 };
-    expect(drenaCondicao(militar)).toBe(false);
-    expect(temMarcadorDeFome(militar)).toBe(false);
+    expect(drenaCondicao(militar)).toBe(true);
+    expect(temMarcadorDeFome(militar)).toBe(true);
+    expect(temMarcadorDeFome({ ...militar, condicao: condicaoCheiaDoTipo(tipoMilitar) })).toBe(false);
+    const desconhecido: Unidade = { ...CIVIL, tipo: 'tipo-de-outra-versao', condicao: 0 };
+    expect(drenaCondicao(desconhecido)).toBe(false);
+    expect(temMarcadorDeFome(desconhecido)).toBe(false);
   });
 });
 

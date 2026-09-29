@@ -105,26 +105,29 @@ describe('F20b-1 — a condicao e um inteiro de ticks, e ela drena', () => {
     for (let t = 0; t < ticks; t++) fim = step(fim, []);
 
     for (const id of civis) expect(condicaoDe(fim, id), id).toBe((antes[id] ?? 0) - ticks);
-    expect(resumoDeCondicao(fim)).toEqual({ civis: civis.length, comFome: 0, emAlerta: 0 });
+    expect(resumoDeCondicao(fim)).toEqual({ civis: civis.length, comFome: 0, emAlerta: 0, militares: 0, militaresEmAlerta: 0 });
   });
 
-  it('o militar NAO drena: ele depende do `Feed`, e quem nao tem como comer nao pode ter fome', () => {
+  // ACEITE MUDADO na C-COMIDA-01c (fome militar com o Feed), com o visto do operador
+  // (2026-09-29): ate aqui o militar nao drenava porque nao tinha como comer. Com o Feed
+  // e a tarefa comida-para-tropa, ele drena, acende o alerta e morre a 0 — mas nunca
+  // vai a Bodega (`precisaComer` e so do civil).
+  it('o militar drena, alerta e morre a 0, mas nao vai a Bodega: ele come pelo `Feed`', () => {
     const tipoMilitar = gameData.unidades.militares.tipos[0]?.id ?? '';
     expect(tipoMilitar).not.toBe('');
     const inicio = comUnidadeExtra(createInitialState(1), 'm1', tipoMilitar, 30, 33);
     const cheiaMilitar = condicaoCheiaDoTipo(tipoMilitar);
     expect(cheiaMilitar).toBe(gameData.condicao.ticksCondicaoCheia.militar);
-    expect(drenaCondicao(unidadeDo(inicio, 'm1'))).toBe(false);
+    expect(drenaCondicao(unidadeDo(inicio, 'm1'))).toBe(true);
     expect(civisDoEstado(inicio)).not.toContain('m1');
 
     let fim = inicio;
     for (let t = 0; t < 50; t++) fim = step(fim, []);
-    expect(condicaoDe(fim, 'm1')).toBe(cheiaMilitar);
-    // e nenhum predicado da fome vale para ele, nem no fundo do poco
+    expect(condicaoDe(fim, 'm1')).toBe(cheiaMilitar - 50);
     const zerado = { ...unidadeDo(fim, 'm1'), condicao: 0 };
     expect(precisaComer(zerado)).toBe(false);
-    expect(emAlertaDeFome(zerado)).toBe(false);
-    expect(morreuDeFome(zerado)).toBe(false);
+    expect(emAlertaDeFome(zerado)).toBe(true);
+    expect(morreuDeFome(zerado)).toBe(true);
   });
 });
 

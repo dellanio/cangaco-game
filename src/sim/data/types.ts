@@ -364,6 +364,9 @@ export interface CondicaoData {
    *  condicao ABAIXO de `ticksPedeComida` (`condition.json: militar.pedeComidaAbaixoDe` x
    *  a cheia do militar, convertido no carregamento). */
   readonly ticksPedeComida: Ticks;
+  /** C-COMIDA-01c — ANDAIME (L8): a tropa de lado com IA drena? `condition.json: militar.iaDrena`.
+   *  Sai (vira true) quando a IA tiver armazem, comida e serf. */
+  readonly iaDrena: boolean;
   readonly inn: RawGameData['condition']['inn'];
   readonly populacao: RawGameData['condition']['populacao'];
 }
