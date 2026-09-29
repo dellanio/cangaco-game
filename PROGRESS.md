@@ -13582,3 +13582,42 @@ já sabia mandar.
   chegando". É o rótulo único para causas opostas. Não mexi: separar pede o estoque do
   armazém no seletor, o que é sim, e fica para o operador decidir.
 - A quantidade anda de 1 em 1.
+
+## 2026-09-29 — D-TELA-02 (minimapa) ENTREGUE
+
+**Verificado:**
+- O quadro `#minimapa` era só moldura. Agora um `<canvas>` toma o lugar do placeholder e
+  desenha, a cada quadro:
+  - o terreno, com as cores do tema e o mesmo código por tile que a cena pinta, de
+    `terrenoDeRender`, cacheado uma vez num canvas de 1 px por tile;
+  - os prédios do estado, na cor do bando (`corDoBando`), com lado mínimo de 3 px;
+  - a vista da câmera (`worldView`), em traço claro. Ela anda com a câmera mesmo pausado,
+    porque o redesenho é por quadro.
+- O clique ou o arrasto (botão esquerdo) centra a câmera no tile, e o `setBounds` prende na
+  borda.
+- A aritmética é pura, em `src/render/minimapa.ts`: `enquadrar`, `retanguloNoMinimapa`,
+  `vistaEmTiles`, `tileDoMinimapa` e `pixelsDoTerreno`. A cena ganhou `vistaDaCamera` e
+  `centrarCameraEm`. O `ui/minimapa.ts` não importa `sim/data` nem o funil `render/mapa.ts`:
+  o `main.ts` entrega terreno, footprint e câmera.
+- `tests/D-TELA-02-minimapa.test.ts`, 4 testes: o enquadro centrado, o clique inverte o
+  retângulo e prende na borda, a vista vira tiles e cada tile tem a cor do seu código. O
+  F04 (grid ortogonal), que prende `sim/data` fora de `render/`, continua verde.
+- **Aceite:** o roteiro `npm run shot -- D-TELA-02`, na escaramuça:
+  - o minimapa desenha os 5 prédios do estado;
+  - no pixel do meio, o do jogador é `#d64b3f` e o da IA é `#3f72d6` (`getImageData`);
+  - despausado, com o clique seguro 150 ms sobre a vila da IA, a câmera centra em (74,5,
+    77,5) para o tile (74,77), erro 0;
+  - o retângulo da vista anda para o clique, a meio tile do centro.
+- Abri `screenshots/D-TELA-02-1-camera-na-vila-da-ia.png`: a câmera está no quartel da IA.
+  Recortei e ampliei o minimapa: o terreno está pintado e a vila do jogador aparece em
+  vermelho. O azul colado nela é um açude (`#3c6e8f`, terreno), conferido no pixel.
+
+**PARA REVISÃO:**
+- **O minimapa é pequeno.** A célula da moldura (UI-barra-a) tem 196×65 px, e o mapa
+  quadrado de 128 tiles cabe em 65×65, com 0,51 px por tile e duas faixas escuras dos
+  lados. Com o jogo pausado, o carimbo PAUSADO cobre o meio; durante a paz, o contador cobre
+  o pé. Não mexi na moldura: altura e arte são da UI-barra-a, decisão de layout do
+  operador. As saídas são subir a altura do `#minimapa`, que estica a arte da moldura, ou
+  tirar o carimbo de cima do mapa.
+- Não desenha unidades, recursos, estrada nem névoa (fora do pedido).
+- O terreno não repinta se mudar na partida; hoje nada o muda.

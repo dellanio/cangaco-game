@@ -195,6 +195,24 @@ export class WorldScene extends Phaser.Scene {
     return unidadesNoPonto(this.unidadesDesenhadas, ponto, configDoMapa.tilePx);
   }
 
+  /** D-TELA-02 — o retangulo de mundo que a camera mostra, para o minimapa; `null` antes
+   *  de a cena criar a camera. */
+  vistaDaCamera(): { x: number; y: number; width: number; height: number } | null {
+    const camera = this.cameras?.main;
+    if (camera === undefined) return null;
+    const v = camera.worldView;
+    return { x: v.x, y: v.y, width: v.width, height: v.height };
+  }
+
+  /** D-TELA-02 — leva a camera ao centro do tile (o clique no minimapa). O `setBounds` da
+   *  F04 prende na borda. */
+  centrarCameraEm(tile: Tile): void {
+    const camera = this.cameras?.main;
+    if (camera === undefined) return;
+    const { tilePx } = configDoMapa;
+    camera.centerOn((tile.gx + 0.5) * tilePx, (tile.gy + 0.5) * tilePx);
+  }
+
   /** C-TELA-02 — a marca no tile do destino da ultima ordem de mover. Estado de tela. */
   private marcador: MarcadorDeDestino | null = null;
 

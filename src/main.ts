@@ -37,7 +37,9 @@ import { criarEntradaDoMapa } from './input/colocar';
 import { ligarTeclado } from './input/teclado';
 import { ligarTeclasDoTempo } from './input/teclas-do-tempo';
 import { ligarNavegacao } from './input/navegacao';
-import { configDoMapa } from './render/mapa';
+import { configDoMapa, terrenoDeRender } from './render/mapa';
+import { caixaDeTipoNoMapa } from './render/predios';
+import { montarMinimapa } from './ui/minimapa';
 import { predioNoTile } from './sim/selectors';
 import { classeDaUnidade } from './sim/condicao';
 import { criarSelecaoMilitar } from './input/selecao-militar';
@@ -187,8 +189,19 @@ const navegacao = ligarNavegacao(window, configDoMapa.camera);
 
 const jogo = iniciarJogo(ferramenta, entrada, laco, navegacao, selecaoMilitar);
 
+// D-TELA-02 — o minimapa, depois da barra (ele toma o lugar do placeholder dela). O
+// terreno, o footprint e a camera chegam daqui: `ui/` nao le `sim/data` nem o funil.
+const minimapa = montarMinimapa({
+  terreno: terrenoDeRender,
+  tilePx: configDoMapa.tilePx,
+  caixaDoPredio: caixaDeTipoNoMapa,
+  vista: () => jogo.vistaDaCamera(),
+  centrarEm: (tile) => jogo.centrarCameraEm(tile),
+});
+
 function atualizar(s: GameState): void {
   jogo.atualizar(s);
+  minimapa.atualizar(s);
   hud.atualizar(s);
   menu.atualizar(s);
   painel.atualizar(s);

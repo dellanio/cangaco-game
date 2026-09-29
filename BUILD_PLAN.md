@@ -5388,6 +5388,16 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
 ### D-TRANSPORTE-02 (antes F31) — Menu de distribuição
 ### D-TELA-01 (antes F32) — Aba de estatísticas
 ### D-TELA-02 (antes F33) — Minimapa
+- **ENTREGUE (2026-09-29, lote do operador, item 9; plano em
+  `docs/planos/2026-09-29-D-TELA-02-minimapa.md`).** O escopo é o do operador:
+  - terreno pintado;
+  - prédios por lado, na cor do bando;
+  - a vista atual marcada;
+  - clique ou arrasto movendo a câmera.
+  - A aritmética está em `render/minimapa.ts`, e o canvas em `ui/minimapa.ts`, no lugar do
+    placeholder da moldura. **Aceite:** roteiro `tools/shots/D-TELA-02.js`.
+  - **PARA REVISÃO:** a moldura da UI-barra-a tem 196×65 px, e o mapa de 128 tiles cabe em
+    65×65 (0,51 px por tile). Pausado, o carimbo cobre o meio.
 ### F34 — Condições de vitória e derrota (escaramuça)
 - **ENTREGUE (2026-09-28, sessão autônoma; plano em `docs/planos/2026-09-28-A16-F34-fim.md`).**
   Decisão do operador: *"Vitória: destruir Armazém, Escola e Quartel inimigos e todas as

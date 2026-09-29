@@ -26,6 +26,10 @@ export interface JogoLigado {
   marcarDestino(tile: Tile): void;
   /** C-TELA-02 — tira a marca (a ordem foi recusada). */
   apagarDestino(): void;
+  /** D-TELA-02 — o `worldView` da camera, para o minimapa. */
+  vistaDaCamera(): { x: number; y: number; width: number; height: number } | null;
+  /** D-TELA-02 — leva a camera ao tile (clique no minimapa). */
+  centrarCameraEm(tile: Tile): void;
 }
 
 export function iniciarJogo(
@@ -68,6 +72,12 @@ export function iniciarJogo(
     },
     apagarDestino() {
       cena.apagarDestino();
+    },
+    vistaDaCamera() {
+      return cena.vistaDaCamera();
+    },
+    centrarCameraEm(tile) {
+      cena.centrarCameraEm(tile);
     },
   };
 }

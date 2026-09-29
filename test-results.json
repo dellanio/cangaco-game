@@ -433,5 +433,8 @@
   },
   "C-TELA-05-ordem-a-feira": {
     "passes": true
+  },
+  "D-TELA-02-minimapa": {
+    "passes": true
   }
 }
