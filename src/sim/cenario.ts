@@ -81,6 +81,16 @@ export function criarEscaramuca(seed: number, dados: GameData = gameData): GameS
     });
   }
 
+  // C-IA-04 — ANDAIME: o grupo fora das posicoes, a sobra que o `atacarComASobra` manda ao
+  // ataque quando a paz acaba. Sai com a C-IA-02 (economia da IA): ver o `_doc` do dado.
+  const at = cenario.atacantes;
+  const tilesDosAtacantes = tilesDoGrupo(comVila, at.ponto, at.quantidade, dados);
+  for (let i = 0; i < at.quantidade; i++) {
+    const tile = tilesDosAtacantes[i];
+    if (tile === undefined) throw new Error(`criarEscaramuca: os atacantes nao tem ${at.quantidade} tiles andaveis`);
+    nascer(LADO_DA_IA, at.tipo, tile.gx, tile.gy);
+  }
+
   return {
     ...base,
     predios: { porId: predios, ordem: ordemDosPredios },

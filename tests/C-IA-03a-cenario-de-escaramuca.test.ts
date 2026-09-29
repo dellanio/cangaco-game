@@ -58,7 +58,8 @@ describe('C-IA-03a — o cenario de escaramuca na sim', () => {
       .toEqual(Array.from({ length: cenario.tropaDoJogador.quantidade }, () => cenario.tropaDoJogador.tipo));
     const daIA = doLado(s0, LADO_DA_IA, 'predios').map((id) => s0.predios.porId[id]);
     expect(daIA.map((p) => [p?.tipo, p?.gx, p?.gy, p?.estado])).toEqual(cenario.predios.map((p) => [p.id, p.gx, p.gy, 'completo']));
-    const tropa = cenario.posicoes.reduce((n, p) => n + p.tropa.quantidade, 0);
+    // C-IA-04: mais o grupo de atacantes fora das posicoes (andaime)
+    const tropa = cenario.posicoes.reduce((n, p) => n + p.tropa.quantidade, 0) + cenario.atacantes.quantidade;
     expect(doLado(s0, LADO_DA_IA, 'unidades')).toHaveLength(tropa);
     const posicoes = s0.ia?.[String(LADO_DA_IA)]?.posicoes ?? [];
     expect(posicoes.map((p) => [p.id, p.membros.length])).toEqual(cenario.posicoes.map((p) => [p.id, p.tropa.quantidade]));

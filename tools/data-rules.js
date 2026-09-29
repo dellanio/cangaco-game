@@ -664,6 +664,10 @@ function validarEscaramuca(dados, erros) {
   if (!tj || !militares.has(tj.tipo)) erros.push(`escaramuca/tropaDoJogador: '${tj && tj.tipo}' nao e militar de units.json`);
   if (!(tj && Number.isInteger(tj.quantidade) && tj.quantidade >= 0)) erros.push('escaramuca/tropaDoJogador: quantidade precisa ser inteiro >= 0');
   if (!(tj && Number.isInteger(tj.porFileira) && tj.porFileira >= 1)) erros.push('escaramuca/tropaDoJogador: porFileira precisa ser inteiro >= 1');
+  // C-IA-04 (andaime): os atacantes sao militares, e a quantidade e inteiro >= 0
+  const at = e.atacantes;
+  if (!at || !militares.has(at.tipo)) erros.push(`escaramuca/atacantes: '${at && at.tipo}' nao e militar de units.json`);
+  if (!(at && Number.isInteger(at.quantidade) && at.quantidade >= 0)) erros.push('escaramuca/atacantes: quantidade precisa ser inteiro >= 0');
   // C-COMBATE-02: a cerca da paz e um numero inteiro de tiles
   if (!(Number.isInteger(e.cercaDaPaz_tiles) && e.cercaDaPaz_tiles >= 0)) erros.push('escaramuca/cercaDaPaz_tiles: precisa ser inteiro >= 0');
   const grupoDe = (t) => (t.montado ? 'montado' : t.aDistancia ? 'distancia' : (t.attackVsCavalo || 0) > 0 ? 'antiCavalo' : 'corpoACorpo');

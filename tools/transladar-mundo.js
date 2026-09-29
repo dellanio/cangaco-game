@@ -72,6 +72,8 @@ function transladarTextos(originais, k) {
   esc.tropaDoJogador.spawn.gx += k;
   esc.tropaDoJogador.spawn.gy += k;
   for (const pos of esc.posicoes) { pos.ponto.gx += k; pos.ponto.gy += k; }
+  esc.atacantes.ponto.gx += k;
+  esc.atacantes.ponto.gy += k;
 
   return {
     economia: `${JSON.stringify(e, null, 2)}\n`, mapa: JSON.stringify(m), terreno,

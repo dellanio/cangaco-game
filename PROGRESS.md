@@ -13401,3 +13401,49 @@ Quarto item da fila da primeira partida. Plano em
 - O ataque a prédio inimigo (`AttackBuilding`) não marca. O pedido falava da ordem de mover.
 - Na captura, o quadrado branco do tile sob o mouse cobre os cantos da marca, e o anel fica
   visível. Pode valer um traço mais grosso, se o operador achar a marca fraca na partida.
+
+## 2026-09-29 — C-IA-04 (o terceiro grupo da IA) ENTREGUE — ANDAIME
+
+Quinto item da fila da primeira partida. Plano em
+`docs/planos/2026-09-29-C-IA-04-terceiro-grupo-andaime.md`.
+
+**ANDAIME — condição de saída:** sai quando a C-IA-02 (economia da IA) der à IA uma sobra
+vinda da reposição do quartel. Nesse dia, `escaramuca.atacantes.quantidade` volta a 0, ou o
+bloco sai do dado e o `criarEscaramuca` deixa de lê-lo. A condição está escrita no `_doc`
+do dado e na nota do item no BUILD_PLAN.
+
+**Verificado:**
+- `tests/C-IA-04-terceiro-grupo.test.ts`, com o jogador sem dar ordem nenhuma:
+  - os 9 cabras nascem ociosos, fora das posições, sem pisar em ninguém;
+  - em paz, nenhum deles se move;
+  - no tick 6001, um depois do fim da paz, os 9 estão em `indo_atacar` contra o mesmo
+    prédio do jogador (`p2`);
+  - no tick 6403, um prédio do jogador perde HP.
+  - Evidência em `test-output/C-IA-04.json`.
+- A partida headless da C-IA-03b (peacetime e tropas), medida antes e depois com
+  `git stash`, segue vencendo, com a margem menor:
+
+  | | antes | depois |
+  |---|---|---|
+  | tropa da IA morta | tick 6520 | tick 6967 |
+  | vitória | tick 7307 | tick 8231 |
+  | cabras vivos | 14 de 18 | 9 de 18 |
+
+- O roteiro `npm run shot -- C-IA-03c` passou, com vitória no tick 10928 e 2 de 18 cabras
+  vivos. Não abri as capturas: são roteiro de outra feature.
+- `npm run verify` verde, incluindo o mundo transladado.
+  - A validação de dados ganhou a regra dos `atacantes`: o tipo é militar e a quantidade é
+    inteiro ≥ 0.
+  - O `tools/transladar-mundo.js` translada o ponto dos atacantes junto com o resto.
+- Dois testes contavam a tropa da IA com literal:
+  - C-IA-03a (cenário de escaramuça) passou a somar `atacantes.quantidade` do dado;
+  - C-IA-03b (peacetime e tropas) passou a esperar 9 + 9 cabras, com o comentário.
+
+**Nenhuma regra de IA mudou.** O grupo é a sobra que o `atacarComASobra` (F28-IA, o ataque)
+já sabia mandar.
+
+**PARA REVISÃO:**
+- A margem da escaramuça ficou apertada: 2 de 18 vivos no roteiro da tela. A observação foi
+  registrada no BALANCE_LOG, sem mudar número.
+- Se a "frente" perder homens em paz, o `guarnecer` puxa atacantes para ela. Na escaramuça
+  de hoje não há combate em paz, então o caso não ocorre.

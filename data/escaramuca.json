@@ -18,6 +18,8 @@
     "entrada": {},
     "recrutas": 0
   },
+  "atacantes": { "tipo": "militia", "quantidade": 9, "ponto": { "gx": 80, "gy": 77 },
+    "_doc": "C-IA-04 — ANDAIME (plano em docs/planos/2026-09-29-C-IA-04-terceiro-grupo-andaime.md). Um grupo de 9 FORA das posicoes, ocioso, a leste do quartel: e a sobra que o atacarComASobra (F28-IA) ja usa, e sem ela a IA nunca ataca, porque sem economia nao ha reposicao. SAI QUANDO a C-IA-02 (economia da IA) der a IA uma sobra vinda da reposicao do quartel: entao quantidade volta a 0 ou o bloco sai." },
   "posicoes": [
     { "id": "frente", "ponto": { "gx": 67, "gy": 67 }, "tipoDeGrupo": "corpoACorpo", "raio": 8, "linha": "frente",
       "tropa": { "tipo": "militia", "quantidade": 9 } },

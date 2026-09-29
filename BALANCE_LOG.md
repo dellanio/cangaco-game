@@ -1398,3 +1398,14 @@ proporções da seção 4.5 do GDD. Um cenário que as respeite **não pode**:
   - Se a intenção for proteger o golpe fraco, ele precisa ficar acima de 0,083.
   - Se for só guarda para dado futuro, pode ficar.
   - Medido em `tests/F28a-corpo-a-corpo.test.ts`.
+
+## 2026-09-29 — a escaramuça com o terceiro grupo da IA (C-IA-04, andaime)
+
+- **Observação, não mudança.** Com os 9 atacantes, a IA tem 21 militares contra os 18
+  cabras do jogador.
+  - Partida headless da C-IA-03b (caçar a tropa primeiro): a vitória passou do tick 7307
+    para o 8231, e os cabras vivos no fim caíram de 14 para 9.
+  - Roteiro da C-IA-03c (pela tela, caçando o bodoqueiro mais perto): vitória no tick
+    10928, com 2 de 18 cabras vivos.
+  - O andaime vale até a C-IA-02 (economia da IA). A margem apertada é a primeira coisa a
+    olhar se a partida do operador sair perdida.

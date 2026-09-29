@@ -5794,6 +5794,9 @@ PROGRESS como PARA REVISÃO.
    posições, no dado da escaramuça: a sobra que o `atacarComASobra` já sabe usar.
    - **ANDAIME:** sai quando a C-IA-02 (economia da IA) der à IA uma sobra que vem da
      reposição. A condição de saída vai escrita no dado e no PROGRESS.
+   - **ENTREGUE (2026-09-29).** `data/escaramuca.json: atacantes`, com 9 cabras em (80,77).
+     Saem para o ataque no tick 6001, um depois da paz, e o primeiro golpe na vila do
+     jogador cai no tick 6403.
    - **Aceite:** depois da paz, a IA ataca a vila do jogador na partida headless.
 6. **C-TELA-03 — selecionar o grupo pela caixa (ui + input).** O arraste pega todos os
    militares do jogador dentro da caixa, e a ordem de mover leva todos. O plano diz o que a

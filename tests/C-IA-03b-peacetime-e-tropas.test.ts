@@ -64,10 +64,11 @@ describe('C-IA-03b — peacetime e tropas', () => {
     expect(emPaz(livre)).toBe(false);
   });
 
-  it('as tropas: 18 cabras do jogador; a IA 9 cabras + 3 bodoqueiros, e o quartel dela vazio', () => {
+  it('as tropas: 18 cabras do jogador; a IA 9 cabras + 3 bodoqueiros nas posicoes, mais os 9 atacantes, e o quartel dela vazio', () => {
     expect(tropaDoJogador(s0)).toHaveLength(18);
     const ia = doLado(s0, LADO_DA_IA).map((id) => s0.unidades.porId[id]?.tipo);
-    expect(ia.filter((t) => t === 'militia')).toHaveLength(9);
+    // C-IA-04 (andaime): os 9 cabras atacantes fora das posicoes
+    expect(ia.filter((t) => t === 'militia')).toHaveLength(9 + 9);
     expect(ia.filter((t) => t === 'bowman')).toHaveLength(3);
     const quartel = prediosDaIA(s0).map((id) => s0.predios.porId[id]).find((p) => p?.tipo === 'barracks');
     expect(quartel && quartel.estado === 'completo' ? [quartel.estoque.entrada, quartel.recrutas] : null).toEqual([{}, 0]);
