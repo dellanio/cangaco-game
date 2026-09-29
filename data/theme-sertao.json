@@ -604,7 +604,14 @@
     "logo": "Piancó",
     "minimapa": "minimapa",
     "abrirAjuda": "Controles e partida",
-    "maisAlertas": "+{n}"
+    "maisAlertas": "+{n}",
+    "estatisticas": {
+      "_doc": "D-TELA-01 (docs/planos/2026-09-29-D-TELA-01-aba-de-estatisticas.md). Os titulos das duas listas da aba e o texto das linhas: {n} e o numero. `ociosos` e o destaque de quem esta parado (especialista sem posto, carregador e peao sem tarefa).",
+      "predios": "Prédios",
+      "gente": "Gente",
+      "emObra": "+{n} em obra",
+      "ociosos": "{n} parados"
+    }
   },
   "ajuda": {
     "_doc": "F-D1. A tela de ajuda. As chaves de `rotulos` e `gestos` SÃO os ids de `ATALHOS` e `GESTOS` (src/input/atalhos.ts): id sem rótulo aqui, ou rótulo sobrando sem id, reprova o npm run verify — o guarda está em tests/F-D1-ajuda.test.ts, na ida e na volta, como o da F22. O nome da TECLA (Esc, H, F1) não sai daqui: é o que está escrito no teclado do jogador, não texto de tema.",

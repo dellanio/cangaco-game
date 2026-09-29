@@ -7,7 +7,7 @@ import type { MotivoDeRecusaDeSoldado } from './quartel';
 import type { PorQueNaoTroca } from './feira';
 import type { PorQueATorreNaoAtira } from './torre';
 import type { GameState, Predio, PredioCompleto, PredioEmObra, Unidade } from './state';
-import { ID_DO_ARMAZEM, LADO_DO_JOGADOR } from './state';
+import { ID_DO_ARMAZEM, ID_DO_RECRUTA, LADO_DO_JOGADOR } from './state';
 import type { GameData, PredioData } from './data/types';
 import { gameData } from './data';
 import { classeDaUnidade, emAlertaDeFome, fracaoDeCondicao } from './condicao';
@@ -20,7 +20,7 @@ import { alvoDeNivelamento, custoDoPredio } from './obra';
 import { receitaDoTipo, semTrabalhoAoAlcance } from './producao';
 import { colheitaAoAlcanceDaCaixa } from './recursos';
 import { plantaNoModo } from './modo';
-import { ehPredioOcupavel, trabalhadorDoTipo } from './ocupacao';
+import { ehPredioOcupavel, tiposQueOcupam, trabalhadorDoTipo } from './ocupacao';
 import type { CaixaEmTiles } from './footprint';
 
 /**
@@ -193,6 +193,79 @@ export function populacaoPorGrupo(state: GameState, dados: GameData = gameData, 
     else if (idsMilitares.has(unidade.tipo)) militar += 1;
   }
   return { civil, militar };
+}
+
+/** D-TELA-01 — uma linha da aba de estatisticas: um tipo de predio do lado. */
+export interface LinhaDePredio {
+  readonly tipo: string;
+  readonly completos: number;
+  readonly emObra: number;
+}
+
+/** D-TELA-01 — uma linha de gente: um tipo de civil do lado. `ociosos` e `null` para o
+ *  recruta, que esperar no quartel e o papel dele. */
+export interface LinhaDeGente {
+  readonly tipo: string;
+  readonly total: number;
+  readonly ociosos: number | null;
+}
+
+export interface EstatisticasDaVila {
+  readonly predios: readonly LinhaDePredio[];
+  readonly gente: readonly LinhaDeGente[];
+}
+
+/**
+ * D-TELA-01 — a aba de estatisticas (GDD §7.2): predios e trabalhadores do lado por tipo,
+ * na ordem do dado, so os tipos com algum. OCIOSO e (plano em
+ * docs/planos/2026-09-29-D-TELA-01-aba-de-estatisticas.md, PARA REVISAO):
+ *  - especialista (tipo que ocupa predio): nao ocupa nem vai ocupar (sem `ocupar`
+ *    reclamada). Parado DENTRO do predio, sem insumo, nao conta: isso tem alerta proprio;
+ *  - serf e peao: `fsm === 'ocioso'`, sem tarefa;
+ *  - recruta: `null`.
+ * O militar fica de fora: a barra ja da civil/militar.
+ */
+export function estatisticasDaVila(state: GameState, dados: GameData = gameData, lado: number = LADO_DO_JOGADOR): EstatisticasDaVila {
+  const porTipo = new Map<string, { completos: number; emObra: number }>();
+  const ocupantes = new Set<string>();
+  for (const id of state.predios.ordem) {
+    const p = state.predios.porId[id];
+    if (p === undefined || p.lado !== lado) continue;
+    const linha = porTipo.get(p.tipo) ?? { completos: 0, emObra: 0 };
+    if (p.estado === 'completo') {
+      linha.completos += 1;
+      if (p.ocupante !== null) ocupantes.add(p.ocupante);
+    } else {
+      linha.emObra += 1;
+    }
+    porTipo.set(p.tipo, linha);
+  }
+  for (const id of state.jobs.tarefas.ordem) {
+    const t = state.jobs.tarefas.porId[id];
+    if (t?.tipo === 'ocupar' && t.reclamadaPor !== null) ocupantes.add(t.reclamadaPor);
+  }
+  const especialistas = tiposQueOcupam(dados);
+  const gente = new Map<string, { total: number; ociosos: number }>();
+  for (const id of state.unidades.ordem) {
+    const u = state.unidades.porId[id];
+    if (u === undefined || u.lado !== lado || classeDaUnidade(u.tipo, dados) !== 'civil') continue;
+    const linha = gente.get(u.tipo) ?? { total: 0, ociosos: 0 };
+    linha.total += 1;
+    const ocioso = especialistas.has(u.tipo) ? !ocupantes.has(u.id) : u.fsm === 'ocioso';
+    if (ocioso) linha.ociosos += 1;
+    gente.set(u.tipo, linha);
+  }
+  return {
+    predios: dados.predios.flatMap((d) => {
+      const linha = porTipo.get(d.id);
+      return linha === undefined ? [] : [{ tipo: d.id, ...linha }];
+    }),
+    gente: dados.unidades.civis.tipos.flatMap((c) => {
+      const linha = gente.get(c.id);
+      if (linha === undefined) return [];
+      return [{ tipo: c.id, total: linha.total, ociosos: c.id === ID_DO_RECRUTA ? null : linha.ociosos }];
+    }),
+  };
 }
 
 /**

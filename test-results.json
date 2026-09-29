@@ -469,5 +469,8 @@
   },
   "C-IA-02c-fome-da-ia": {
     "passes": true
+  },
+  "D-TELA-01-estatisticas": {
+    "passes": true
   }
 }

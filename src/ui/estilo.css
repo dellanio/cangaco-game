@@ -739,3 +739,28 @@ body:not([data-corpo="estatisticas"]) #estatisticas { display: none; }
 #painel-grupo ul { margin: 0; padding-left: 16px; }
 #painel-grupo [data-grupo="ninguem-com-fome"] { color: var(--terra-queimada); font-weight: bold; }
 #painel-grupo [data-grupo="colunas"] { display: flex; align-items: center; gap: 8px; margin: 0; }
+
+/* D-TELA-01 — as listas da aba de estatisticas: predios e gente por tipo, parados em destaque */
+#estatisticas .lista-estatistica h3 {
+  margin: 0 0 4px;
+  color: var(--terra-queimada);
+  font: 11px/1 var(--fonte-display);
+  text-transform: uppercase;
+}
+#estatisticas .lista-estatistica ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 2px; }
+#estatisticas .lista-estatistica li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 6px;
+  padding: 3px 5px;
+  color: var(--tinta);
+  font-size: 11px;
+  background: var(--papel-escuro);
+  border-left: 3px solid var(--madeira);
+}
+#estatisticas .lista-estatistica .nome { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#estatisticas .lista-estatistica .numero { font: 12px/1.2 var(--fonte-display); font-variant-numeric: tabular-nums; text-align: right; }
+#estatisticas .lista-estatistica .detalhe { grid-column: 1 / -1; color: var(--tinta-fraca); font-size: 10px; }
+#estatisticas .lista-estatistica .detalhe:empty { display: none; }
+#estatisticas .lista-estatistica li.ocioso { border-left-color: var(--terracota); background: #f0d2bd; }
+#estatisticas .lista-estatistica li.ocioso .detalhe { color: var(--terracota); font-weight: bold; }

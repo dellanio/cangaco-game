@@ -14154,3 +14154,55 @@ de 12 s) caiu em 2 das 5 corridas de verify desta sessão.
 os atacantes pedem comida, e os serfs da IA levam pão do armazém dela. Quem está lutando não
 pede. Os atacantes que o jogador não matar comem, onde estiverem.
 
+## 2026-09-29 — D-TELA-01 (aba de estatísticas) ENTREGUE
+
+O plano está em `docs/planos/2026-09-29-D-TELA-01-aba-de-estatisticas.md`. O item é a linha
+do GDD §7.2.
+
+**Verificado:**
+- Antes do plano, a aba já abria (`ABAS_TRANCADAS` só tem a distribuição), mas mostrava só os
+  cinco recursos. O comentário de `ui/barra.ts:24` ainda dizia que ela estava trancada, e foi
+  corrigido.
+- `sim/selectors.ts: estatisticasDaVila(state, dados, lado)` é puro. Devolve os prédios do
+  lado por tipo (`completos` e `emObra`) e os civis do lado por tipo (`total` e `ociosos`),
+  na ordem do dado e só com os tipos que existem.
+- `ui/estatisticas.ts` monta as listas "Prédios" e "Gente" dentro de `#estatisticas`, abaixo
+  do `#hud`, e é chamado em `main.ts` junto do HUD.
+  - Uma linha com parados recebe `data-ociosos` e a classe `ocioso`, com a borda e o texto
+    terracota.
+  - O DOM só é recriado quando o conjunto de tipos muda. Os textos estão no tema
+    (`barra.estatisticas`).
+- `tests/D-TELA-01-estatisticas.test.ts` tem 7 testes, todos verdes:
+  - a vila inicial bate com o estado, e a soma da gente bate com o civil da barra;
+  - os lados ficam separados;
+  - a obra conta em `emObra`;
+  - carregador parado e ocupado;
+  - especialista no posto (mesmo com a FSM parada), sem posto e a caminho do posto (com a
+    vaga reclamada);
+  - o recruta dá `null`;
+  - a ordem segue o dado.
+  - Evidência em `test-output/D-TELA-01-estatisticas.json`, aberta.
+- Mutação: com o especialista julgado pela FSM, o teste do especialista acusa.
+- O roteiro `tools/shots/D-TELA-01.js` saiu OK. Ele clica na aba despausado, com o botão
+  seguro 150 ms (§8), e confere três coisas:
+  - os prédios da tela batem com o estado;
+  - a gente soma o civil da barra (6);
+  - o destaque aparece só em quem tem parado.
+  - A captura `screenshots/D-TELA-01-1-aba-de-estatisticas.png` foi aberta: "Carregador 4 /
+    4 parados" e "Obreiro 2 / 2 parados" aparecem em terracota, e Armazém e Casa do Coronel
+    em linha simples.
+- Os roteiros de não-regressão UI-barra-a, D-TELA-02 e C-COMIDA-01d saíram com código 0.
+
+**PARA REVISÃO (interpretações conservadoras):**
+- O que conta como parado:
+  - para o especialista, estar sem posto e sem vaga reclamada. Parado dentro do prédio, por
+    falta de insumo, não conta, porque isso já tem alerta (F22);
+  - para o carregador e o obreiro, `fsm === 'ocioso'`.
+- O recruta não conta como parado, porque esperar no quartel é o papel dele.
+- O militar fica fora das listas. A barra já mostra civil/militar.
+- O KaM mostra a contagem por tipo sem "parado". O destaque vem do GDD.
+
+**O que muda na partida:** a aba Estatísticas passa a responder "o que eu tenho e quem está
+à toa". A lista de prédios dá os completos e as obras à parte. A lista de gente dá cada tipo,
+e quem está parado fica em terracota com "N parados".
+

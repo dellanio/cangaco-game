@@ -5444,6 +5444,14 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
 ### D-TRANSPORTE-01 (antes F30) — Armazém com toggles por mercadoria
 ### D-TRANSPORTE-02 (antes F31) — Menu de distribuição
 ### D-TELA-01 (antes F32) — Aba de estatísticas
+- **ENTREGUE (2026-09-29, lote do operador, item 4; plano em
+  `docs/planos/2026-09-29-D-TELA-01-aba-de-estatisticas.md`).** A aba Estatísticas ganha,
+  abaixo dos recursos, duas listas: prédios do jogador por tipo (completos, e as obras à
+  parte) e gente por tipo, com os parados em destaque.
+  - Seletor puro `estatisticasDaVila` (`sim/selectors.ts`) e tela em `ui/estatisticas.ts`.
+  - **Aceite:** `tests/D-TELA-01-estatisticas.test.ts` e o roteiro `tools/shots/D-TELA-01.js`.
+  - **PARA REVISÃO:** parado é o especialista sem posto e o carregador ou obreiro sem
+    tarefa. O recruta não conta como parado, e o militar fica fora das listas.
 ### D-TELA-02 (antes F33) — Minimapa
 - **ENTREGUE (2026-09-29, lote do operador, item 9; plano em
   `docs/planos/2026-09-29-D-TELA-02-minimapa.md`).** O escopo é o do operador:

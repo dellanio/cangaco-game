@@ -228,5 +228,5 @@ Decisão do operador (2026-09-28).
 | F29 | ferro e smithies | D-PRODUCAO-01 | aberto, não iniciado | — |
 | F30 | armazém com toggles por mercadoria | D-TRANSPORTE-01 | aberto, não iniciado | — |
 | F31 | menu de distribuição | D-TRANSPORTE-02 | aberto, não iniciado | — |
-| F32 | aba de estatísticas | D-TELA-01 | aberto, não iniciado | — |
+| F32 | aba de estatísticas | D-TELA-01 | fechado | `D-TELA-01-estatisticas` |
 | F33 | minimapa | D-TELA-02 | aberto, não iniciado | — |

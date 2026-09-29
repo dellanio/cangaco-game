@@ -18,6 +18,7 @@ import { criarSessao } from './sessao';
 import { acompanharFimDePartida, criarLaco, nascerPausadoPelaUrl, pausarAoOcultar } from './laco';
 import { iniciarJogo } from './render/game';
 import { montarHud } from './ui/hud';
+import { montarEstatisticas } from './ui/estatisticas';
 import { montarMenuBuild } from './ui/menu-build';
 import { resolvedorDeIcones } from './ui/icones';
 import type { IconesDoManifesto } from './ui/icones';
@@ -145,6 +146,7 @@ const entrada = criarEntradaDoMapa(
 // HUD e painel ANTES do jogo: o Phaser mede o pai no boot e o layout tem que
 // estar assentado (as dimensoes sao fixas no CSS, mas nao custa a ordem certa).
 const hud = montarHud();
+const estatisticas = montarEstatisticas();
 const aviso = montarAvisoDoTempo();
 // Os icones do menu: o trecho `icones` do manifesto mais as URLs que o bundler
 // resolveu. Juntados AQUI, na raiz de composicao, para `ui/` nao falar com o
@@ -209,6 +211,7 @@ function atualizar(s: GameState): void {
   jogo.atualizar(s);
   minimapa.atualizar(s);
   hud.atualizar(s);
+  estatisticas.atualizar(s);
   menu.atualizar(s);
   painel.atualizar(s);
   painelGrupo.atualizar(s);
