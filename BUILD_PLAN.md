@@ -5442,6 +5442,22 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
 
 ### D-PRODUCAO-01 (antes F29) — Ferro e smithies
 ### D-TRANSPORTE-01 (antes F30) — Armazém com toggles por mercadoria
+- **Quebrada em dois (2026-09-29, lote do operador, item 5; plano em
+  `docs/planos/2026-09-29-D-TRANSPORTE-01-armazem-liga-desliga.md`).** O item não tinha
+  aceite escrito. O aceite é o do plano, e sai da linha do GDD §7.2 ("28 mercadorias,
+  quantidade e toggle aceitar/bloquear") e do `KM_HouseStore.pas`.
+  - **D-TRANSPORTE-01a — a regra (sim). ENTREGUE (2026-09-29).** O campo `naoAceita?` no
+    armazém e o comando `SetStorehouseAccept`. A sobra dos níveis 6 e 7 vai ao armazém mais
+    perto que aceita a mercadoria. A tarefa aberta ou reclamada para um armazém que passou
+    a bloquear cai no saneamento, e a que está `carregando` entrega assim mesmo. O armazém
+    novo herda o bloqueio do primeiro do lado.
+    - **Aceite:** `tests/D-TRANSPORTE-01a-armazem-aceita.test.ts`.
+    - **PARA REVISÃO:** a carga que já está na mão entrega; o KaM abandona. A devolução, o
+      reembolso da demolição e a carga de quem morre de fome ignoram o bloqueio.
+  - **D-TRANSPORTE-01b — o painel (ui).** O painel do armazém lista as 28 mercadorias, com
+    a quantidade e um botão aceitar/bloquear (`SetStorehouseAccept`).
+    - **Aceite:** o roteiro `tools/shots/D-TRANSPORTE-01.js` do plano: despausado, com o
+      botão seguro 150 ms, o estado ganha e perde o bloqueio, e a linha mostra.
 ### D-TRANSPORTE-02 (antes F31) — Menu de distribuição
 ### D-TELA-01 (antes F32) — Aba de estatísticas
 - **ENTREGUE (2026-09-29, lote do operador, item 4; plano em

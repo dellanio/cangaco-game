@@ -472,5 +472,8 @@
   },
   "D-TELA-01-estatisticas": {
     "passes": true
+  },
+  "D-TRANSPORTE-01a-armazem-aceita": {
+    "passes": true
   }
 }

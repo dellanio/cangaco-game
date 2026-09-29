@@ -46,6 +46,7 @@ import { comidaNecessaria, comidasConhecidas, ehBodegaCompleta, temComidaNaBodeg
 import { receitaDoTipo } from '../producao';
 import { ehPredioOcupavel, vagasDoPredio } from '../ocupacao';
 import { predioReparavel } from '../reparo';
+import { armazemAceita } from '../armazem';
 import { ehQuartelCompleto, ehRequisitoDoQuartel, requisitosDoQuartel } from '../quartel';
 
 export interface ResultadoDeSistema {
@@ -133,10 +134,15 @@ function motivoDoDestino(state: GameState, t: Tarefa, dados: GameData): MotivoDe
     case 'insumo-producao-parada':
     case 'insumo-producao-baixa':
       return insumosDoPredio(state, t.destino, dados).includes(t.mercadoria) ? null : 'destino-sumiu';
-    // F15b — niveis 6 e 7 entregam num armazem, e so nele.
+    // F15b — niveis 6 e 7 entregam num armazem, e so nele. D-TRANSPORTE-01a: o armazem
+    // que passou a BLOQUEAR a mercadoria derruba a aberta e a reclamada, e o gerador a
+    // refaz no mesmo tick para outro. A `carregando` entrega assim mesmo (PARA REVISAO; o
+    // KaM abandona): largar a carga no caminho e pior que uma entrega a mais, como na
+    // decisao do operador para a feira (F35).
     case 'saida-cheia-para-armazem':
     case 'excedente-para-armazem':
-      return ehArmazemCompleto(destino) ? null : 'destino-sumiu';
+      if (!ehArmazemCompleto(destino)) return 'destino-sumiu';
+      return t.estado === 'carregando' || armazemAceita(destino, t.mercadoria) ? null : 'destino-completo';
     case 'ocupar':
       // Deixou de ser predio ocupavel (demolido e replantado, save de outra
       // versao): a tarefa nao tem mais sentido. Ja ocupado: a vaga acabou — e o
@@ -440,7 +446,7 @@ function origemMaisPerto(
 }
 
 /** Os niveis 6 e 7 entregam os dois na PORTA do armazem, e por isso tem que ter o
- *  mesmo modo: `destinoMaisPerto` escolhe o armazem antes de saber qual dos dois
+ *  mesmo modo: `armazensPorDistancia` mede os armazens antes de saber qual dos dois
  *  vai criar. Dado divergente falha alto em vez de escolher pelo nivel errado. */
 function modoDoArmazem(dados: GameData): ModoDeBusca {
   const daSaidaCheia = modoDoTipo('saida-cheia-para-armazem', dados);
@@ -451,26 +457,35 @@ function modoDoArmazem(dados: GameData): ModoDeBusca {
 }
 
 /**
- * F15b — o espelho de `origemMaisPerto` para os niveis 6 e 7: o armazem completo
- * de menor caminho por estrada a partir de `origem`. Aqui a origem e que e
+ * F15b — o espelho de `origemMaisPerto` para os niveis 6 e 7: os armazens completos
+ * ligados a `origem` por estrada, do menor caminho ao maior. Aqui a origem e que e
  * conhecida (e o predio que tem a sobra) e quem se escolhe e o destino. Mesmo
  * desempate: menor distancia, e no empate o primeiro em `predios.ordem`.
  *
- * `null` quando nenhum armazem esta ligado — e nao e travamento: e o mesmo
+ * Lista vazia quando nenhum armazem esta ligado — e nao e travamento: e o mesmo
  * silencio de uma obra sem estrada. A carga espera na gaveta ate haver caminho.
+ *
+ * D-TRANSPORTE-01a: a lista inteira, medida UMA vez por origem, porque o destino agora
+ * depende da mercadoria (`destinoQueAceita`).
  */
-function destinoMaisPerto(
+function armazensPorDistancia(
   state: GameState, origem: PredioCompleto, modo: ModoDeBusca, dados: GameData,
-): string | null {
-  let melhor: { id: string; distancia: number } | null = null;
+): PredioCompleto[] {
+  const ligados: { armazem: PredioCompleto; distancia: number }[] = [];
   // C7: a sobra vai para o armazem do lado de quem a produziu
   for (const armazem of armazensCompletos(state, origem.lado)) {
     if (armazem.id === origem.id) continue;
     const distancia = ligacaoEntrePredios(state, origem, armazem, modo, dados);
-    if (distancia === null) continue;
-    if (melhor === null || distancia < melhor.distancia) melhor = { id: armazem.id, distancia };
+    if (distancia !== null) ligados.push({ armazem, distancia });
   }
-  return melhor === null ? null : melhor.id;
+  // `sort` e estavel: no empate fica a ordem de `armazensCompletos`, a de `predios.ordem`
+  return ligados.sort((a, b) => a.distancia - b.distancia).map((l) => l.armazem);
+}
+
+/** D-TRANSPORTE-01a — o mais perto que ACEITA `mercadoria`; `null` quando todos a
+ *  bloqueiam, e a carga fica na gaveta (a producao para quando ela enche, como no KaM). */
+function destinoQueAceita(armazens: readonly PredioCompleto[], mercadoria: string): string | null {
+  return armazens.find((a) => armazemAceita(a, mercadoria))?.id ?? null;
 }
 
 /** As mercadorias de uma gaveta com quantidade positiva, em ordem ALFABETICA —
@@ -533,11 +548,13 @@ function gerarTarefasParaArmazem(state: GameState, dados: GameData): GameState {
   for (const id of state.predios.ordem) {
     const predio = atual.predios.porId[id];
     if (!predio || predio.estado !== 'completo' || predio.tipo === ID_DO_ARMAZEM) continue;
-    const destino = destinoMaisPerto(atual, predio, modoDoArmazem(dados), dados);
-    if (destino === null) continue;
+    const armazens = armazensPorDistancia(atual, predio, modoDoArmazem(dados), dados);
+    if (armazens.length === 0) continue;
     for (const excedente of [false, true]) {
       const gaveta = excedente ? 'entrada' : 'saida';
       for (const mercadoria of mercadoriasDaGaveta(predio, gaveta)) {
+        const destino = destinoQueAceita(armazens, mercadoria);
+        if (destino === null) continue;
         const tipo = excedente ? 'excedente-para-armazem' : 'saida-cheia-para-armazem';
         const oferta = excedente
           ? excedenteNaEntrada(atual, id, mercadoria, dados)

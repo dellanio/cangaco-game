@@ -17,6 +17,7 @@ import type { MotivoDeRecusaDePausa } from './pausa';
 import type { MotivoDeRecusaDeCota } from './cota';
 import type { MotivoDeRecusaDeModo } from './modo';
 import type { MotivoDeRecusaDeReparo } from './reparo';
+import type { MotivoDeRecusaDeAceite } from './armazem';
 import type { MotivoDeRecusaDeSoldado } from './quartel';
 import type { MotivoDeRecusaDeTroca } from './feira';
 import type { MotivoDeRecusaDeMercenario } from './prefeitura';
@@ -210,6 +211,14 @@ export type GameEvent =
       readonly command: 'SetBuildingRepair';
       readonly predio: string;
       readonly motivo: MotivoDeRecusaDeReparo;
+    }
+  | {
+      /** D-TRANSPORTE-01a — `SetStorehouseAccept` recusado; o estado nao mudou. */
+      readonly type: 'command-rejected';
+      readonly command: 'SetStorehouseAccept';
+      readonly predio: string;
+      readonly mercadoria: string;
+      readonly motivo: MotivoDeRecusaDeAceite;
     }
   | {
       /** F-CERCO-a2 — `AttackBuilding` recusado INTEIRO; o estado nao mudou. `unidade`
@@ -544,6 +553,10 @@ export interface PredioCompleto extends PredioBase {
   /** F35 — a ordem da feira: trocar A (`da`) por B (`para`) ate `quantidade` de B, e
    *  quantas ja sairam. So a feira tem o campo; AUSENTE e sem ordem. */
   readonly troca?: { readonly da: string; readonly para: string; readonly quantidade: number; readonly feitas: number };
+  /** D-TRANSPORTE-01a — as mercadorias que este ARMAZEM nao recebe da sobra da vila
+   *  (`SetStorehouseAccept`), ordenadas. So o armazem tem o campo; AUSENTE aceita tudo, e
+   *  a lista vazia e apagada (`armazem.ts: comNaoAceita`). */
+  readonly naoAceita?: readonly string[];
 }
 
 /**

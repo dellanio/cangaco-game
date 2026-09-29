@@ -34,6 +34,7 @@ import {
 } from '../state';
 import { comOTileAssentado, pedraNoTile, tileDeEstradaTrabalhavel } from '../estradas';
 import { comOTileArado } from '../campos';
+import { herdarNaoAceita } from '../armazem';
 import type { GameData } from '../data/types';
 import { gameData } from '../data';
 import {
@@ -242,7 +243,8 @@ function passoMartelando(state: GameState, u: Unidade, dados: GameData): Passo {
   const hp = Math.min(obra.hp + dados.construcao.hpPorMartelada, hpTotal);
   const martelada: PredioEmObra = { ...obra, hp };
   if (hp >= hpTotal) {
-    const completo = completarObra(martelada, dados);
+    // D-TRANSPORTE-01a: o armazem novo herda o que o primeiro do lado bloqueia
+    const completo = herdarNaoAceita(state, completarObra(martelada, dados));
     const semATarefa = removerTarefa(comPredio(state, completo), tarefa.id);
     // BUG-001: as tarefas IRMAS (dos outros laborers e as abertas do teto) saem no
     // MESMO tick. Antes elas sobreviviam ate `sanearTarefas` do tick seguinte, e

@@ -193,6 +193,19 @@ export type Command =
     }
   | {
       /**
+       * D-TRANSPORTE-01a — o armazem `predio` passa a aceitar (`aceita: true`) ou a
+       * bloquear a `mercadoria` que a vila manda para armazem (niveis 6 e 7). `aceita` e o
+       * VALOR, como em `SetBuildingRepair`: o mesmo valor e no-op. Recusado
+       * (`command-rejected`) se o predio nao existe, nao e armazem completo ou a
+       * mercadoria nao esta em `economia.mercadorias`.
+       */
+      readonly type: 'SetStorehouseAccept';
+      readonly predio: string;
+      readonly mercadoria: string;
+      readonly aceita: boolean;
+    }
+  | {
+      /**
        * F25a — forma UM soldado do tipo `tipo` no quartel `predio`, na hora: consome 1
        * de cada requisito da gaveta `entrada` (`units.json: militares.tipos[].requisitos`)
        * e 1 recruta, e a unidade nasce na porta no mesmo tick, com o lado do quartel.

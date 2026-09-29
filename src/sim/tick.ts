@@ -9,6 +9,7 @@ import { aplicarPlaceBlueprint } from './systems/build';
 import { aplicarDemolishBuilding } from './systems/demolicao';
 import { aplicarAttackBuilding, sistemaDoCerco } from './systems/cerco';
 import { aplicarSetBuildingRepair } from './systems/reparo';
+import { aplicarSetStorehouseAccept } from './systems/armazem';
 import { sistemaDaRegeneracao } from './systems/regeneracao';
 import { aplicarTrainSoldier } from './systems/quartel';
 import { aplicarMoveUnits, sistemaDaMarcha } from './systems/marcha';
@@ -171,6 +172,12 @@ export function step(
       }
       case 'SetBuildingRepair': {
         const resultado = aplicarSetBuildingRepair(atual, command);
+        atual = resultado.state;
+        events.push(...resultado.events);
+        break;
+      }
+      case 'SetStorehouseAccept': {
+        const resultado = aplicarSetStorehouseAccept(atual, command, dados);
         atual = resultado.state;
         events.push(...resultado.events);
         break;

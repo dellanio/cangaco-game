@@ -14206,3 +14206,36 @@ do GDD §7.2.
 à toa". A lista de prédios dá os completos e as obras à parte. A lista de gente dá cada tipo,
 e quem está parado fica em terracota com "N parados".
 
+
+
+## 2026-09-29 — D-TRANSPORTE-01a (armazém liga/desliga: a regra na sim)
+
+Lote do operador, item 5. O plano está em `docs/planos/2026-09-29-D-TRANSPORTE-01-armazem-liga-desliga.md`. O item veio sem aceite escrito e foi quebrado em 01a (sim) e 01b (painel), registrados no `BUILD_PLAN.md`.
+
+**Verificado (rodado e aberto):**
+- `sim/armazem.ts` é a regra num lugar só:
+  - `motivoDaRecusaDeAceite`;
+  - `armazemAceita`;
+  - `comNaoAceita` (ordena, e a lista vazia apaga o campo);
+  - `herdarNaoAceita`.
+- `systems/armazem.ts: aplicarSetStorehouseAccept` segue o molde do reparo. É idempotente e recusa em três casos: `predio-inexistente`, `nao-e-armazem` e `mercadoria-desconhecida`.
+- `systems/jobs.ts`:
+  - `destinoMaisPerto` deu lugar a `armazensPorDistancia`, que mede uma vez por origem, e a `destinoQueAceita`, que escolhe por mercadoria;
+  - `motivoDoDestino` dá `'destino-completo'` à tarefa não `carregando` cujo armazém bloqueia.
+- `systems/laborers.ts`: a obra que completa passa por `herdarNaoAceita`.
+- `tests/D-TRANSPORTE-01a-armazem-aceita.test.ts` tem 11 testes verdes. Um deles vai de ponta a ponta: com o perto bloqueando, o serf entrega as 2 tábuas no longe (`test-output/D-TRANSPORTE-01a-armazem-aceita.json`).
+- Mutação, as quatro derrubaram o teste:
+  - sem o filtro do destino, 4 testes caem;
+  - sem o saneamento, cai 1;
+  - sem a exceção do `carregando`, cai 1;
+  - sem a herança, cai 1.
+
+**PARA REVISÃO (interpretação conservadora):**
+- A tarefa `carregando` para um armazém que passou a bloquear entrega assim mesmo. O KaM (`ShouldAbandonDeliveryTo`) abandona. Aqui segue o que o operador decidiu para a feira (F35).
+- A devolução do serf, o reembolso da demolição e a carga de quem morre de fome ignoram o bloqueio. São caminhos de erro, e bloquear neles criaria espera indefinida.
+- Tirar mercadoria de um armazém que bloqueia continua valendo. Bloquear é "não receber".
+- Com todos os armazéns bloqueando, a carga fica na gaveta do produtor, e ele para quando a gaveta enche, como no KaM.
+- O armazém novo herda do primeiro armazém completo do lado, em `predios.ordem` (o `Activate` do KaM). O do cenário inicial não herda.
+- A IA nunca bloqueia.
+
+**O que muda na partida:** por enquanto nada visível. O comando existe, e o botão chega na 01b.
