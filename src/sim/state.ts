@@ -56,6 +56,10 @@ export type MotivoDeRecusaDeMarcha =
   | 'unidade-nao-militar'
   | 'lados-diferentes'
   | 'destino-inandavel'
+  /** C-COMBATE-01a — `direcao` nao e inteiro de 0 a 7. */
+  | 'direcao-invalida'
+  /** C-COMBATE-01a — `colunas` nao e inteiro. */
+  | 'colunas-invalidas'
   /** C-IA-03b — a partida esta em peacetime (`sim/paz.ts`). */
   | 'em-paz'
   /** C-COMBATE-02 — em paz, o destino esta fora da cerca da vila (`sim/paz.ts`). */
@@ -1293,6 +1297,8 @@ export interface DadosDaFsm {
   readonly recarga?: number;
   /** F26a — o tile que a ordem de mover deu a ESTA unidade (`MoveUnits`). */
   readonly alvoTile?: TileDeGrid;
+  /** C-COMBATE-01a — para onde a unidade vira ao chegar ao `alvoTile` (`MoveUnits`). */
+  readonly direcaoFinal?: number;
   /** F28a — a unidade que esta sendo perseguida ou golpeada (`AttackUnit`, contato). */
   readonly alvoUnidade?: string;
 }

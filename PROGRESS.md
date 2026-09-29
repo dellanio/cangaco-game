@@ -13644,3 +13644,59 @@ já sabia mandar.
 **PARA REVISÃO:**
 - O painel não avisa que, com um lenhador sozinho numa mata grande, o modo não muda nada
   até a mata acabar. A nota da F-REPL-b deixou isso como decisão de tela, e o lote não pediu.
+
+## 2026-09-29 — C-COMBATE-01a (formação e virar, sim) ENTREGUE
+
+O C-COMBATE-01 (formação, virar e storm attack) saiu em três: 01a formação e virar (sim),
+01b storm attack (sim) e 01c os controles (tela). A quebra está no item do BUILD_PLAN.
+Esta sessão fecha a 01a; a 01b e a 01c ficam abertas.
+
+**Verificado:**
+- `MoveUnits` aceita `colunas?` e `direcao?`. Os homens tomam fileiras de `colunas` de
+  frente para `direcao`, e o líder (o primeiro da lista) fica no destino, no meio da
+  fileira da frente. As colunas de cada fileira vão do meio para fora (0, +1, −1, …). Ao
+  chegar, cada um vira para `direcao` (`fsmData.direcaoFinal`).
+- Sem os campos, `colunas` = ⌈√n⌉, e `direcao` é o octante mais próximo da reta do líder
+  ao destino (`direcaoAproximada` em `sim/combate.ts`, em inteiro): 16 a leste e 1 ao sul
+  dá leste, não sudeste. Com o sinal de dx e dy apenas, a C5(e) quebrava.
+- `colunas` se prende a `[colunasMin, n]`. Recusas com motivo novo: `direcao` fora de
+  0..7 ou não inteira (`direcao-invalida`), `colunas` não inteira (`colunas-invalidas`).
+- Vaga bloqueada, fora do mapa ou já tomada cai na busca em anel que já existia.
+- **Quem vai para qual vaga é por proximidade** (`vagasPorProximidade`): o líder fica com a
+  vaga 0 e cada outro pega a vaga livre mais perto (Chebyshev; no empate, o menor índice).
+  Por índice fixo, virar 180° no lugar trocava dois homens de lado passando pelo líder, e
+  os dois ficavam um esperando o outro para sempre. Achei isso com uma sonda, já apagada.
+- "Virar sem mover" é `MoveUnits` com o destino no tile do líder. O líder não sai do
+  tile, e o grupo refaz as fileiras do outro lado.
+- `tests/C-COMBATE-01a-formacao.test.ts`, 8 testes:
+  - o desenho: sul, leste e 5 homens em 3 colunas;
+  - colunas presas e o padrão;
+  - `direcaoAproximada`;
+  - as recusas;
+  - 6 homens marcham para o leste e viram para o oeste no lugar;
+  - os padrões pelo `step`;
+  - uma árvore numa vaga;
+  - as vagas por proximidade.
+  - Evidência em `test-output/C-COMBATE-01a.json` e `C-COMBATE-01a-desenho.json`. A leste,
+    a frente fica em gx 37 e a fileira de trás em 36. Virados para o oeste, a frente fica
+    em 37 e a de trás em 38. Todos terminam com a direção pedida.
+- Regressão: `npm run verify` verde. Estes roteiros saíram com código 0: F26b, C-TELA-02,
+  C-TELA-03, C-TELA-04, C-IA-03c, C-TELA-01 e F06.
+- **O roteiro `C-TELA-03` mudou.** Ele afirmava "os 18 marcham" e "os 18 saem do lugar",
+  e isso valia para a regra antiga, em que cada um ia para o tile mais perto do destino.
+  Na formação, 3 dos 18 já estão na própria vaga e não andam. As asserções novas:
+  - marchando + já na vaga = 18;
+  - quem marchou saiu do lugar;
+  - depois de esperar, os 18 param;
+  - os 18 ficam em tiles distintos.
+  - A corrida deu 15 marchando, 3 já na vaga e 18 parados. A captura
+    `screenshots/C-TELA-03-2-os-18-andaram.png` mostra o bloco parado.
+
+**PARA REVISÃO:**
+- O padrão de ⌈√n⌉ colunas é meu. O KaM guarda a largura no grupo, e a sim não tem grupo
+  persistente. A 01c guarda a largura na tela.
+- Revidar e depois retomar a marcha (C6) perde o `direcaoFinal`: o homem chega e não vira.
+- Em paz, a cerca da C-COMBATE-02 confere só o destino, não cada vaga da formação.
+- Quem desiste por falta de rota (rota nula) para sem virar.
+- `direcao-invalida` e `colunas-invalidas` ainda não têm texto no tema. A tela ainda não
+  manda os campos; a nota da 01c herda isso.

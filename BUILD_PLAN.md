@@ -5196,6 +5196,37 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
   - **Formação:** homens por fileira vão de 1 ao tamanho do grupo
     (`formacao.colunasMax: "tamanhoDoGrupo"`; `KM_UnitGroup.pas:661-666`). Não há tamanho
     recomendado; o "9-15" saiu do GDD e do dado.
+- **Quebra (lote do operador, 2026-09-29, item 11).** O item precisa das duas camadas, então
+  sai em três. **Nenhum dos três é feature de integração**: a sim e a tela ficam em itens
+  separados (§10).
+  - **C-COMBATE-01a — formação e virar (sim).** Plano em
+    `docs/planos/2026-09-29-C-COMBATE-01a-formacao-e-virar.md`.
+    - `MoveUnits` ganha `colunas?` e `direcao?` opcionais. Os homens tomam as fileiras de
+      `colunas` de frente para `direcao`, com o centro da primeira fileira no destino, e ao
+      chegar viram para `direcao`.
+    - Sem os campos, `direcao` é a do primeiro da lista até o destino e `colunas` é
+      ⌈√n⌉ (PARA REVISÃO).
+    - "Virar sem mover" é o mesmo comando com o destino no tile do primeiro, o líder.
+      Não é comando novo.
+    - `colunas` fora de `[colunasMin, n]` se prende. `direcao` fora de 0..7 recusa.
+    - **ENTREGUE (2026-09-29).** A direção padrão é o octante mais próximo
+      (`direcaoAproximada`), não só o sinal de dx e dy. Quem vai para qual vaga é por
+      proximidade (`vagasPorProximidade`), com o líder na vaga 0; por índice, virar 180°
+      travava dois homens um esperando o outro. O roteiro `C-TELA-03` passou a afirmar
+      "marchando + já na vaga = 18" e "18 parados em tiles distintos".
+  - **C-COMBATE-01b — storm attack (sim).** Comando `StormAttack { unidades }`. Só a
+    `stormAttack.apenas` carrega, em linha reta para a frente, a `multiplicadorVelocidade`,
+    por uma distância sorteada no RNG do estado entre `distancia_tiles.min` e `.max`,
+    incontrolável até acabar.
+  - **C-COMBATE-01c — os controles (tela).** Sobre a seleção da C-TELA-03, no painel do
+    grupo:
+    - "+/− colunas" manda `MoveUnits` com `colunas` e com o destino no líder;
+    - segurar o botão direito e soltar numa direção manda `direcao` (GDD §controles);
+    - o botão Storm manda `StormAttack`.
+    - A tela guarda as `colunas` da seleção, porque a sim não tem grupo persistente.
+    - **Herda da 01a:** os motivos `direcao-invalida` e `colunas-invalidas` ainda não têm
+      texto no tema. Hoje a tela nunca manda os campos; quando mandar, a mensagem da
+      C-TELA-01 precisa deles.
 ### F28 — Combate e IA inimiga simples
 - **Quebra (sessão autônoma, 2026-09-28; plano em `docs/planos/2026-09-28-A10-F28-tropa.md`).**
   O pedido era "os tipos de tropa": arco de 90°, alcance de 4 a 11 e escudo contra

@@ -5,8 +5,9 @@
 //      a) comecando EM CIMA de um cabra (o canto superior esquerdo da tropa);
 //      b) de baixo-direita para cima-esquerda;
 //      c) com a camera afastada (roda do mouse), que muda px de tela contra px de mundo;
-//   3. botao direito dentro da cerca da paz: os 18 marcham, e depois de andar os 18 sairam
-//      do tile de onde nasceram.
+//   3. botao direito dentro da cerca da paz: os 18 recebem a ordem (marcham, ou ja estao na
+//      vaga da formacao, C-COMBATE-01a), e param em 18 tiles distintos; quem marchou saiu
+//      do tile em que nasceu.
 // O px sai do debug (`unidadesRenderizadas`, `camera`), nunca de pixel da captura.
 const { retanguloDoCanvas } = require('./_canvas');
 const terreno = require('../../data/terrain.json');
@@ -121,10 +122,21 @@ async function roteiro(ctx) {
   await page.mouse.up({ button: 'right' });
   await page.waitForTimeout(400);
   s = await estado();
+  // C-COMBATE-01a (formação): a ordem poe os 18 em fileiras de ceil(sqrt(18)) = 5, de frente
+  // para onde o lider anda, com a primeira no destino. Quem ja esta em cima da propria vaga fica
+  // (ocioso, no tile em que nasceu); todo o resto marcha.
+  const noLugar = (u) => u.fsm === 'ocioso' && nasceram.get(u.id) === `${u.gx},${u.gy}`;
   resultado.marchando = cabras(s).filter((u) => u.fsm === 'marchando').length;
-  await page.waitForTimeout(4000);
-  s = await estado();
+  resultado.jaNaVaga = cabras(s).filter(noLugar).length;
+  for (let i = 0; i < 40 && cabras(s).some((u) => u.fsm !== 'ocioso'); i += 1) {
+    await page.waitForTimeout(250);
+    s = await estado();
+  }
   resultado.sairamDoLugar = cabras(s).filter((u) => nasceram.get(u.id) !== `${u.gx},${u.gy}`).length;
+  // o desenho da formacao (direcao, colunas) e da sim e tem teste la
+  // (tests/C-COMBATE-01a-formacao.test.ts); aqui, que os 18 param, cada um no seu tile
+  resultado.pararam = cabras(s).filter((u) => u.fsm === 'ocioso').length;
+  resultado.tilesDistintos = new Set(cabras(s).map((u) => `${u.gx},${u.gy}`)).size;
   await capturar('os-18-andaram');
   await page.keyboard.press('p');
 
@@ -133,8 +145,12 @@ async function roteiro(ctx) {
   afirmar(resultado.aoContrario === 18, `caixa ao contrario deveria pegar 18, pegou ${resultado.aoContrario}`);
   afirmar(resultado.zoom !== zoomAntes, `a roda deveria ter mudado o zoom (${zoomAntes})`);
   afirmar(resultado.afastado === 18, `caixa com a camera afastada deveria pegar 18, pegou ${resultado.afastado}`);
-  afirmar(resultado.marchando === 18, `os 18 deveriam marchar, marcham ${resultado.marchando}`);
-  afirmar(resultado.sairamDoLugar === 18, `os 18 deveriam ter saido do lugar, sairam ${resultado.sairamDoLugar}`);
+  afirmar(resultado.marchando + resultado.jaNaVaga === 18,
+    `os 18 deveriam receber a ordem (marchando ou ja na vaga), vieram ${resultado.marchando} + ${resultado.jaNaVaga}`);
+  afirmar(resultado.marchando > 0 && resultado.sairamDoLugar === resultado.marchando,
+    `quem marchou deveria sair do lugar: marcharam ${resultado.marchando}, sairam ${resultado.sairamDoLugar}`);
+  afirmar(resultado.pararam === 18, `os 18 deveriam parar na formacao, pararam ${resultado.pararam}`);
+  afirmar(resultado.tilesDistintos === 18, `os 18 deveriam parar em tiles distintos, ${resultado.tilesDistintos}`);
 }
 
 module.exports = { roteiro };

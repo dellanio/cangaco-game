@@ -17,6 +17,30 @@ const PASSOS: readonly (readonly [number, number])[] = [
   [0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1],
 ];
 
+/**
+ * C-COMBATE-01a — a direcao (0..7) mais proxima da reta de `de` a `para`, e nao so o
+ * sinal de dx e dy: 16 a leste e 1 ao sul e leste, nao sudeste. O eixo menor so conta
+ * quando passa da metade do maior (a fronteira do octante, em inteiro, sem trigonometria).
+ * `null` no mesmo tile.
+ */
+export function direcaoAproximada(
+  de: { readonly gx: number; readonly gy: number }, para: { readonly gx: number; readonly gy: number },
+): number | null {
+  const dx = para.gx - de.gx;
+  const dy = para.gy - de.gy;
+  const ax = Math.abs(dx);
+  const ay = Math.abs(dy);
+  return direcaoEntre({ gx: 0, gy: 0 }, {
+    gx: 2 * ax < ay ? 0 : Math.sign(dx),
+    gy: 2 * ay < ax ? 0 : Math.sign(dy),
+  });
+}
+
+/** C-COMBATE-01a — o passo (dx, dy) de uma direcao 0..7 (a formacao anda nela). */
+export function passoDaDirecao(direcao: number): readonly [number, number] {
+  return PASSOS[((direcao % PASSOS.length) + PASSOS.length) % PASSOS.length] ?? [0, 1];
+}
+
 export function direcaoDe(u: Unidade): number {
   return u.direcao ?? DIRECAO_PADRAO;
 }

@@ -206,16 +206,24 @@ export type Command =
     }
   | {
       /**
-       * F26a — manda `unidades` (militares, do mesmo lado) marcharem ate `destino`. Cada
-       * uma recebe um tile ANDAVEL proprio em volta do destino, em aneis, na ordem da
-       * lista: o grupo nao para empilhado (formacao de verdade e da C-COMBATE-01, formação). A ordem nova
-       * substitui a anterior, inclusive o ataque. Recusado INTEIRO (`command-rejected`,
+       * F26a — manda `unidades` (militares, do mesmo lado) marcharem ate `destino`. A ordem
+       * nova substitui a anterior, inclusive o ataque. Recusado INTEIRO (`command-rejected`,
        * o estado nao muda) se a lista e vazia, alguma unidade nao existe ou nao e
-       * militar, os lados diferem, ou o destino esta fora do mapa ou nao e andavel.
+       * militar, os lados diferem, o destino esta fora do mapa ou nao e andavel, ou
+       * `direcao`/`colunas` nao sao inteiros validos (C-COMBATE-01a).
+       *
+       * C-COMBATE-01a (formação e virar) — os homens tomam fileiras de `colunas`, de frente
+       * para `direcao`, com o centro da primeira fileira no destino e o primeiro da lista
+       * (o lider) nela; ao chegar, viram para `direcao` (`systems/marcha.ts`). Com o destino
+       * no tile do lider, e o "virar sem mover".
        */
       readonly type: 'MoveUnits';
       readonly unidades: readonly string[];
       readonly destino: TileDeGrid;
+      /** 0..7 (`Unidade.direcao`). Ausente: a do lider ate o destino. */
+      readonly direcao?: number;
+      /** Homens por fileira; preso a `[formacao.colunasMin, n]`. Ausente: a raiz de n, para cima. */
+      readonly colunas?: number;
     }
   | {
       /**
