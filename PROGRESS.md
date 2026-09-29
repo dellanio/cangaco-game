@@ -13621,3 +13621,26 @@ já sabia mandar.
   tirar o carimbo de cima do mapa.
 - Não desenha unidades, recursos, estrada nem névoa (fora do pedido).
 - O terreno não repinta se mudar na partida; hoje nada o muda.
+
+## 2026-09-29 — F-REPL-d (seletor de modo do lenhador no painel) ENTREGUE
+
+**Verificado:**
+- O painel de um prédio completo cuja receita declara `modos` ganhou:
+  - a linha "Trabalho: <modo>" (`data-modo`, com a `desc` do tema no `title`);
+  - um botão por modo. Cada botão manda `SetBuildingMode` com o VALOR, e o atual fica em
+    `aria-pressed`. Não é desabilitado: mandar o mesmo modo não faz mal.
+- Os modos saem de `receitas[tipo].modos` pelo `main.ts`, com `modosDoTipo`, que lê por
+  forma e não importa `sim/data`. O atual é o `producao.modo` do estado. Não há teste por
+  `tipo === 'woodcutters'`.
+- `tests/F-REPL-d-seletor-de-modo.test.ts`, 3 testes:
+  - opções e nomes do tema, com o padrão marcado;
+  - sem modos não há seletor, e uma variante da serraria com modos tem;
+  - "Cortar" e depois "Cortar e plantar" passam pelo `step` real sem recusa.
+  - O teste grava `test-output/F-REPL-d.save.txt`.
+- **Aceite:** `npm run shot -- F-REPL-d`, com o jogo andando e cada botão seguro 150 ms.
+  A linha foi de `cortar_e_plantar` para `cortar` e voltou a `cortar_e_plantar`, com o
+  botão marcado junto. Evidência em `screenshots/F-REPL-d-1-modo-cortar.png`.
+
+**PARA REVISÃO:**
+- O painel não avisa que, com um lenhador sozinho numa mata grande, o modo não muda nada
+  até a mata acabar. A nota da F-REPL-b deixou isso como decisão de tela, e o lote não pediu.

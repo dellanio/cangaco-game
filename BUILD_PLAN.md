@@ -4239,6 +4239,13 @@ Pedido do operador (2026-09-27, noite 15):
         Dois lenhadores na mesma mata replantam cedo (BALANCE_LOG, premissa
         corrigida na noite 17). Se o painel quiser mostrar isso, é decisão de
         tela.
+    - **ENTREGUE (2026-09-29, lote do operador, item 10; plano em
+      `docs/planos/2026-09-29-F-REPL-d-seletor-de-modo.md`).** Feito nesta sessão, não
+      pelo Codex:
+      - `ui/modo-do-predio.ts` (`modosDoTipo`, `opcoesDeModo`, `comandoDeModo`);
+      - no painel, a linha "Trabalho" (`data-modo`) e um botão por modo
+        (`data-modo-botao`), com o atual em `aria-pressed`;
+      - `sim/` intocado. **Aceite:** o roteiro `tools/shots/F-REPL-d.js`.
   - **F-REPL-e — os estados da árvore na tela (render).** Quando a arte existir, pelo
     BRIEF-ARTE. Até lá, placeholder, como manda a §9.
     - **ENTREGUE (2026-09-28, fila da noite)** — `docs/planos/2026-09-28-8-F-REPL-e.md`.

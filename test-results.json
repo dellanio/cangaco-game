@@ -436,5 +436,8 @@
   },
   "D-TELA-02-minimapa": {
     "passes": true
+  },
+  "F-REPL-d-seletor-de-modo": {
+    "passes": true
   }
 }

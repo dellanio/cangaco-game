@@ -28,6 +28,8 @@ import type { Selecao } from '../input/selecao';
 import { desenharSecaoDaEscola, nomeDoCivil } from './painel-escola';
 import { comandoDaTroca, comandoDeCancelar, girarMercadoria, mudarQuantidade, rascunhoInicial } from './ordem-da-feira';
 import type { RascunhoDaTroca } from './ordem-da-feira';
+import { comandoDeModo, opcoesDeModo } from './modo-do-predio';
+import type { ModosDoTipo, NomeDoModo, OpcaoDeModo } from './modo-do-predio';
 // A MESMA aritmetica que a cena desenha no mapa (F17b). O arquivo nao tem
 // import nenhum — nem phaser, nem `sim/data` —, entao trazer ele para ca nao
 // abre o caminho que `menu-build.ts` fechou de proposito: `ui/` continua sem
@@ -46,7 +48,9 @@ export interface PainelPredio {
 }
 
 const rotulos = temaSertao.painelPredio;
-type TemaDePredios = Readonly<Record<string, { readonly nome: string } | undefined>>;
+type TemaDePredios = Readonly<Record<string, {
+  readonly nome: string; readonly modos?: Readonly<Record<string, NomeDoModo | undefined>>;
+} | undefined>>;
 type TemaDeMercadorias = Readonly<Record<string, string | undefined>>;
 const temaDePredios = temaSertao.predios as TemaDePredios;
 const temaDeMercadorias = temaSertao.mercadorias as TemaDeMercadorias;
@@ -140,6 +144,33 @@ function desenharOrdemDaFeira(
   acoes.append(botaoDaFeira('mandar', rotulos.feiraMandar, () => emitir(comandoDaTroca(predio, r))));
   if (feira.quantidade > 0) {
     acoes.append(botaoDaFeira('cancelar', rotulos.feiraCancelar, () => emitir(comandoDeCancelar(predio, r))));
+  }
+}
+
+/** F-REPL-d — "Trabalho: <modo>" e um botao por modo. O botao manda o valor; o atual
+ *  fica marcado (`aria-pressed`) e nao desabilitado: mandar o mesmo modo nao faz mal. */
+function desenharModo(
+  gente: HTMLElement, acoes: HTMLElement, predio: string, opcoes: readonly OpcaoDeModo[],
+  emitir: (comando: Command) => void,
+): void {
+  const atual = opcoes.find((o) => o.atual);
+  if (atual === undefined) return;
+  const l = linha('modo', rotulos.modo, atual.nome);
+  l.dataset.modo = atual.id;
+  l.title = atual.desc;
+  gente.append(l);
+  for (const o of opcoes) {
+    const botao = document.createElement('button');
+    botao.type = 'button';
+    botao.className = 'modo';
+    botao.dataset.modoBotao = o.id;
+    botao.setAttribute('aria-pressed', String(o.atual));
+    botao.textContent = o.nome;
+    botao.title = o.desc;
+    botao.addEventListener('click', () => {
+      emitir(comandoDeModo(predio, o.id));
+    });
+    acoes.append(botao);
   }
 }
 
@@ -259,6 +290,7 @@ function desenharObra(
 function desenharCompleto(
   identidade: HTMLElement, gente: HTMLElement, acoes: HTMLElement,
   dados: PainelDoPredio, emitir: (comando: Command) => void, controleDaFeira: ControleDaFeira,
+  modos: readonly OpcaoDeModo[],
 ): void {
   identidade.append(linha('hp', rotulos.hp, `${dados.hp}/${dados.hpTotal}`));
 
@@ -293,6 +325,8 @@ function desenharCompleto(
     l.append(v);
     gente.append(l);
   }
+
+  desenharModo(gente, acoes, dados.predio, modos, emitir);
 
   // F28b — a torre: quantas pedras, e POR QUE nao atira (o aceite pede que o painel
   // diga). Os numeros e o motivo vao em `data-`, para o roteiro afirmar sem recortar texto.
@@ -444,6 +478,8 @@ export function montarPainelPredio(
   selecao: Selecao, emitir: (comando: Command) => void,
   /** C-TELA-05 — `economia.mercadorias`, entregue pela raiz: `ui/` nao le `sim/data`. */
   mercadorias: readonly string[],
+  /** F-REPL-d — os modos de `receitas[tipo].modos`, ou `null`; tambem da raiz. */
+  modosDoTipo: (tipo: string) => ModosDoTipo | null,
 ): PainelPredio {
   const encontrado = document.getElementById('painel-predio');
   if (encontrado === null) throw new Error('painel-predio: falta #painel-predio no index.html');
@@ -546,7 +582,15 @@ export function montarPainelPredio(
       // `menu-build.ts`). Varredura de lista curta, so quando ha obra aberta.
       const opcao = opcoesDoMenuBuild(estado).find((o) => o.id === dados.tipo);
       desenharObra(identidade, dados, opcao?.custo ?? {});
-    } else desenharCompleto(identidade, gente, acoes, dados, emitir, controleDaFeira);
+    } else {
+      // o modo atual e o `producao.modo` do estado, o mesmo campo que `plantaNoModo` le
+      const p = estado.predios.porId[dados.predio];
+      const modos = opcoesDeModo(
+        modosDoTipo(dados.tipo), p?.estado === 'completo' ? p.producao?.modo : undefined,
+        temaDePredios[dados.tipo]?.modos,
+      );
+      desenharCompleto(identidade, gente, acoes, dados, emitir, controleDaFeira, modos);
+    }
 
     // A escola entra como SECAO, e so quando ela existe de fato no estado.
     const dadosDaEscola = dados.estado === 'completo' ? painelDaEscola(estado, dados.predio) : null;

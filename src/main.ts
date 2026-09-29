@@ -24,6 +24,7 @@ import type { IconesDoManifesto } from './ui/icones';
 import manifestoJson from '../assets/manifest.json';
 import { urlsDeSprites } from './render/sprites-urls';
 import { montarPainelPredio } from './ui/painel-predio';
+import { modosDoTipo } from './ui/modo-do-predio';
 import { montarAlertas } from './ui/alertas';
 import { montarAvisoDoTempo } from './ui/aviso-tempo';
 import { montarFimDePartida } from './ui/fim-de-partida';
@@ -150,7 +151,7 @@ const menu = montarMenuBuild(
 // UM painel para todo predio (F16b). A fila da escola virou uma secao dele.
 const painel = montarPainelPredio(selecao, (comando) => {
   sessao.enviar(comando);
-}, gameData.economia.mercadorias);
+}, gameData.economia.mercadorias, (tipo) => modosDoTipo(gameData.producao.receitas, tipo));
 
 // C-COMIDA-01d — o painel do grupo militar, com o Alimentar.
 const painelGrupo = montarPainelGrupo(selecaoMilitar, (comando) => {
