@@ -322,6 +322,12 @@ npm run typecheck
 npm run lint
 npm run validate:data   # valida data/*.json contra o schema
 npm run shot -- <nome>  # Playwright: roteiro + screenshot
+                        # NA NUVEM (claude.ai/code), sempre com as duas variaveis:
+                        #   CANGACO_SHOT_NUVEM=1 CANGACO_CHROMIUM=/opt/pw-browsers/chromium npm run shot -- <nome>
+                        # Sem a primeira, a fonte do Google falha por certificado do proxy e o
+                        # favicon da 404: erro de console reprova todo roteiro antes de comecar.
+                        # Sem a segunda, o Chromium pinado do Playwright nao existe no container.
+                        # Nao rode `playwright install`. (Registrado em 2026-09-29.)
 npm run sim -- <cenário> --ticks 600   # roda a sim sem tela e imprime o estado
 ```
 

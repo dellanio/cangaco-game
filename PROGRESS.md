@@ -12442,6 +12442,42 @@ dos testes:
   (`docs/planos/2026-09-28-F-FEED-fome-militar.md`) **ainda espera aprovação**. Ele destrava
   o C-IA-01 (IA alimentar tropas).
 
+## 2026-09-29 — Decisões do operador: cenário de escaramuça primeiro; C-IA-02 aprovada; limpezas
+
+### Decisões do operador
+- **O cenário de escaramuça (C-IA-03) é item próprio e é o PRÓXIMO**, antes da economia da IA
+  (C-IA-02): sem ele nada do combate é jogável. Mínimo primeiro: a IA com a vila de pé e
+  tropa, sem economia. Plano em `docs/planos/2026-09-29-C-IA-03-cenario-de-escaramuca.md`.
+- **C-IA-02 (economia da IA) aprovada:** "vila pronta" sem AutoBuild e um prefeito mínimo que
+  só treina gente. **A vila da IA recebe PRODUÇÃO**, não só estoque, para a condição de saída
+  do andaime se cumprir de verdade.
+- **Remover `ticksRestauradosPorComida.militar`** (dado sem leitor): feito.
+- **As quatro escolhas marcadas PARA REVISÃO nas C-COMIDA-01c/01d/01e estão APROVADAS:**
+  - o andaime como dado;
+  - o alerta contando a tropa com pedido;
+  - a tropa na primeira linha da faixa;
+  - a IA alimentando só quem está em posição de defesa, que é a regra do KaM.
+- **Consertar o BUG-O** (etiqueta da carga com id cru) e **registrar no CLAUDE.md as
+  variáveis do Chromium na nuvem**: feitos.
+
+### Feito
+- `ticksRestauradosPorComida` ficou só com `civil`. `restauracaoDaUnidade` devolve a tabela
+  civil: só o civil come na Bodega.
+- **BUG-O corrigido:**
+  - `src/render/rotulo-da-carga.ts` (`rotuloDaCarga`) lê `theme-sertao.json mercadorias` e
+    reprova mercadoria sem nome;
+  - `unidades.ts` desenha o nome, e a ponte de debug ganhou `rotuloDaCarga`;
+  - saiu do `BUGS.md` no mesmo commit.
+- **CLAUDE.md §13:** o `npm run shot` na nuvem roda com `CANGACO_SHOT_NUVEM=1` e
+  `CANGACO_CHROMIUM=/opt/pw-browsers/chromium`, com o porquê de cada uma.
+
+### Verificado
+- `tests/BUG-O-rotulo-da-carga.test.ts`, 3 testes: o pão sai "Cuscuz"; toda mercadoria de
+  `economy.json` tem nome; sem tema reprova.
+- O roteiro `C-COMIDA-01d` passou a afirmar `rotuloDaCarga === 'Cuscuz'` no serf com pão, e
+  passou. `screenshots/C-COMIDA-01d-2-pao-a-caminho.png` foi aberto e mostra "Cuscuz".
+- `npm run verify` verde: 160 arquivos, 1840 testes.
+
 ## 2026-09-29 — C-IA-02 (economia da IA): medido no kam_remake e escrito como PROPOSTA
 
 - **Escrito no BUILD_PLAN, sem implementar e sem entrada em `test-results.json`.** O

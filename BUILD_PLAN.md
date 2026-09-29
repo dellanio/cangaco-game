@@ -5605,8 +5605,24 @@ Ordem do operador. Cada item tem plano em `docs/planos/2026-09-28-C<n>-*.md`.
     limiar do civil. **ENTREGUE.** Por posição: se ninguém luta e o mais faminto está abaixo
     de `civilVaiComer`, a IA dá `FeedUnits` aos membros, só se alguém pediria. Com o
     andaime (L8), na partida a tropa da IA não drena; o ponto age quando `iaDrena` virar.
-- **C-IA-02 — economia da IA. PROPOSTA, NÃO APROVADA: aguarda o operador ler a medição
-  antes do escopo** (pedido do operador, 2026-09-29: "meça no kam_remake primeiro"). Sem
+- **C-IA-03 — cenário de escaramuça. O PRÓXIMO (decisão do operador, 2026-09-29), antes da
+  C-IA-02:** sem ele nada do combate é jogável. Duas vilas, dois lados, o mapa que já existe;
+  começa pelo mínimo, a IA com a vila de pé e tropa, sem economia. Plano em
+  `docs/planos/2026-09-29-C-IA-03-cenario-de-escaramuca.md`.
+  - **C-IA-03a — o cenário na sim:** `data/escaramuca.json`, `criarEscaramuca`, e os
+    vazamentos entre lados fechados (desbloqueio, HUD, avisos, câmera).
+  - **C-IA-03b — jogar pela tela:** começar a escaramuça, o inimigo com cor própria,
+    screenshots.
+  - **C-IA-03c — a partida até o fim:** roteiro longo de vitória e de derrota.
+- **C-IA-02 — economia da IA. APROVADA pelo operador (2026-09-29), DEPOIS da C-IA-03:**
+  - o modelo "vila pronta" sem AutoBuild, e um prefeito mínimo que só treina gente — planejar
+    cidade fica de fora (o KaM desliga na maioria das missões);
+  - **a vila da IA recebe PRODUÇÃO, não só estoque:** estoque acaba, a tropa volta a morrer de
+    fome e o andaime nunca sai. Com produção, a condição de saída do andaime (L8) se cumpre
+    de verdade.
+  - A medição e a proposta original ficam abaixo, como registro.
+  - Status anterior: PROPOSTA, aguardava o operador ler a medição
+  antes do escopo (pedido do operador, 2026-09-29: "meça no kam_remake primeiro"). Sem
   entrada em `test-results.json` até a aprovação. **Destrava o andaime L8 do C-COMIDA-01:**
   com esta entregue, `condition.json militar.iaDrena` vira `true` e a tropa da IA volta a
   sentir fome.
