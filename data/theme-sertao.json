@@ -477,6 +477,8 @@
   "alertas": {
     "_doc": "F22. Uma chave por causa de alerta, e a chave E o id neutro de CAUSAS_DE_ALERTA (src/sim/selectors.ts). Causa sem rótulo aqui, ou rótulo sobrando sem causa, reprova o npm run verify — o guarda está em tests/F22-alertas.test.ts. O texto é o do JOGADOR: diz o que fazer, não o nome do campo que ficou nulo.",
     "titulo": "Avisos",
+    "tropaComFome": "Tropa com fome",
+    "_docTropaComFome": "C-COMIDA-01f. Linha à parte das causas de prédio: conta os militares do jogador no alerta de fome (limiares.alertaVisual). O remédio é selecionar o grupo e apertar Alimentar.",
     "causas": {
       "sem-trabalhador": "Sem quem trabalhe",
       "sem-estrada": "Sem estrada até o armazém",
@@ -547,6 +549,14 @@
     "estilo": "xilogravura de cordel: alto contraste, preto sobre papel, traço grosso",
     "glossarioObrigatorio": true,
     "_doc": "O mundo é colorido e detalhado; a interface é xilogravura. Os dois registros não competem."
+  },
+  "grupo": {
+    "_doc": "C-COMIDA-01d. O painel do grupo militar escolhido (src/ui/painel-grupo.ts). `condicao` e `esperando` levam {n}. `ninguemComFome` aparece quando o Alimentar volta recusado com `sem-fome` (ninguem do grupo abaixo do limiar do pedido).",
+    "titulo": "Tropa",
+    "condicao": "Condição do grupo: {n}%",
+    "esperando": "{n} esperando comida",
+    "alimentar": "Alimentar",
+    "ninguemComFome": "Ninguém com fome"
   },
   "barra": {
     "_doc": "UI-barra-a (docs/propostas/barra-lateral-unica.md). A barra lateral unica, a esquerda. As chaves de `abas` SAO os ids de ABAS (src/ui/barra.ts), na ida e na volta (tests/UI-barra-a.test.ts). `trancada` e o `title` da aba com cadeado; `logo` e `minimapa` sao o texto do placeholder ate a arte entrar (CLAUDE.md §9).",

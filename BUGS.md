@@ -40,6 +40,18 @@ antes deles, o BUG-001 na F09) saíram em 2026-09-24 com a regra que os dissolve
 do operador. A regra antiga daqui ("alargar o teto com o número medido") está **revogada**:
 ela consertava a asserção em vez de perguntar se aquele eixo podia ser asserção.
 
+## BUG-O — a etiqueta da carga sobre o serf mostra o id neutro ("loaves"), não o nome do tema
+- feature: F20c (marcador de fome) / F10 (serf fsm); o texto é de `src/render/unidades.ts:265`
+  (`item.marcadorDeCarga.setText(carga ?? '')`)
+- severidade: feio
+- repro: `CANGACO_SHOT_NUVEM=1 npm run shot -- C-COMIDA-01d`, captura
+  `screenshots/C-COMIDA-01d-2-pao-a-caminho.png`: dois serfs com "loaves" escrito em cima.
+- esperado: o jogador lê o nome do tema (`theme-sertao.json`: `loaves` → "Cuscuz"). A
+  CLAUDE.md §9 diz que os nomes que o jogador vê vêm do tema.
+- observado: aparece o id da sim, cru.
+- correção: é do render, com a sessão do render. Achado na C-COMIDA-01d (painel de grupo
+  com o Alimentar), 2026-09-29; não foi corrigido lá porque a feature é de `ui/`.
+
 ## BUG-N — cana em pousio parece mato cortado
 - feature: F-CANA-b (a mancha de cana da vila); o desenho é de `src/render/mapa.ts`
 - severidade: feio

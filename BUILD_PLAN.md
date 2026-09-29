@@ -5595,7 +5595,10 @@ Ordem do operador. Cada item tem plano em `docs/planos/2026-09-28-C<n>-*.md`.
       quando tiver armazém, comida e serf. O item da economia da IA destrava este.**
     - A morte por fome libera no mesmo tick a comida que vinha para o morto.
   - **C-COMIDA-01d + 01f — o painel de grupo com o Alimentar, e o alerta de tropa com fome no
-    HUD** (o 01f não é opcional, e é feito junto com o 01d).
+    HUD** (o 01f não é opcional, e é feito junto com o 01d). **ENTREGUE.**
+    - `ui/painel-grupo.ts`, com o corpo `grupo` na barra: tipos, a condição do mais faminto,
+      "N esperando comida", o botão Alimentar (`FeedUnits`) e "Ninguém com fome".
+    - Alerta "Tropa com fome" na faixa da barra (`tropaComFome`), na primeira linha.
   - **C-COMIDA-01e — a IA alimenta a tropa.** É o C-IA-01, antes F28-IA ponto 5, com o
     limiar do civil.
 - **Siglas:** o esquema novo está em `docs/siglas.md` (decisão do operador, 2026-09-28). O que

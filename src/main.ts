@@ -41,6 +41,7 @@ import { configDoMapa } from './render/mapa';
 import { predioNoTile } from './sim/selectors';
 import { classeDaUnidade } from './sim/condicao';
 import { criarSelecaoMilitar } from './input/selecao-militar';
+import { montarPainelGrupo } from './ui/painel-grupo';
 
 const sessao = criarSessao(createInitialState(gameData.economia.estadoInicial.semente));
 const ferramenta = criarFerramenta();
@@ -142,6 +143,15 @@ const painel = montarPainelPredio(selecao, (comando) => {
   sessao.enviar(comando);
 });
 
+// C-COMIDA-01d — o painel do grupo militar, com o Alimentar.
+const painelGrupo = montarPainelGrupo(selecaoMilitar, (comando) => {
+  sessao.enviar(comando);
+}, soldadosDoJogador);
+// predio e grupo nao convivem (F26b): escolher predio pela aba solta o grupo aqui tambem
+selecao.aoMudar(() => {
+  if (selecao.predio !== null) selecaoMilitar.limpar();
+});
+
 // F22 — o aviso de predio parado. Nao tem evento nem assinatura propria: e
 // derivado do estado, entao basta ser atualizado junto dos outros.
 const alertas = montarAlertas();
@@ -155,7 +165,7 @@ const fimDePartida = montarFimDePartida();
 // motivo do HUD: o Phaser mede o pai no boot.
 montarBarra(selecao, () => {
   ajuda.abrir();
-});
+}, selecaoMilitar);
 
 // F-D2 — a navegacao da camera. Ligada aqui, com os outros ouvintes de
 // `input/`, e no `window` como eles. Os numeros vem de `data/terrain.json` pelo
@@ -169,6 +179,7 @@ function atualizar(s: GameState): void {
   hud.atualizar(s);
   menu.atualizar(s);
   painel.atualizar(s);
+  painelGrupo.atualizar(s);
   alertas.atualizar(s);
   fimDePartida.atualizar(s);
   // C9: a partida acabou -> o laco para (e so outro save o reabre)

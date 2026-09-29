@@ -10,7 +10,7 @@ import type { GameState, Predio, PredioCompleto, PredioEmObra, Unidade } from '.
 import { ID_DO_ARMAZEM } from './state';
 import type { GameData, PredioData } from './data/types';
 import { gameData } from './data';
-import { fracaoDeCondicao } from './condicao';
+import { classeDaUnidade, emAlertaDeFome, fracaoDeCondicao } from './condicao';
 import { caixaDoPredio } from './footprint';
 import { estaDesbloqueado } from './desbloqueio';
 import { predioLigadoAoArmazem } from './estradas';
@@ -156,6 +156,20 @@ export function resumoDoGrupo(state: GameState, ids: readonly string[], dados: G
     if (u.pedidoDeComida === true) esperandoComida += 1;
   }
   return { porTipo, condicao, esperandoComida };
+}
+
+/**
+ * C-COMIDA-01f (alerta de tropa com fome no HUD) — quantos militares do `lado` estao no
+ * alerta de fome (`emAlertaDeFome`, o mesmo predicado do marcador da F20c). Todos, com
+ * pedido ou sem: com o pedido feito e sem comida no armazem, a tropa continua morrendo.
+ */
+export function tropaComFome(state: GameState, lado: number, dados: GameData = gameData): number {
+  let n = 0;
+  for (const id of state.unidades.ordem) {
+    const u = state.unidades.porId[id];
+    if (u !== undefined && u.lado === lado && classeDaUnidade(u.tipo, dados) === 'militar' && emAlertaDeFome(u, dados)) n += 1;
+  }
+  return n;
 }
 
 export function populacaoPorGrupo(state: GameState, dados: GameData = gameData): Populacao {

@@ -9,7 +9,8 @@
 // Uma linha por CAUSA, nao por predio: dez pedreiras sem trabalhador sao um
 // aviso com "10", nao dez avisos empilhados por cima do mapa.
 import type { GameState } from '../sim/state';
-import { CAUSAS_DE_ALERTA, alertasDoEstado } from '../sim/selectors';
+import { CAUSAS_DE_ALERTA, alertasDoEstado, tropaComFome } from '../sim/selectors';
+import { LADO_DO_JOGADOR } from '../sim/state';
 import type { CausaDeAlerta } from '../sim/selectors';
 import temaSertao from '../../data/theme-sertao.json';
 
@@ -28,12 +29,18 @@ export const LINHAS_NA_FAIXA = 2;
 
 /** Quais causas aparecem e quantas sobram. Pura: e o que o teste headless prova.
  *  A ordem e a de `CAUSAS_DE_ALERTA`, nunca a da contagem — aviso que troca de
- *  lugar entre um tick e outro e aviso que o jogador nao aprende a procurar. */
+ *  lugar entre um tick e outro e aviso que o jogador nao aprende a procurar.
+ *
+ *  C-COMIDA-01f — a tropa com fome, quando ha, toma a PRIMEIRA linha da faixa, antes de
+ *  toda causa de predio: e gente morrendo, e o predio parado espera. As causas ficam com
+ *  as linhas que sobram, e o "+N" conta so as causas. */
 export function causasNaFaixa(
   contagens: Readonly<Record<CausaDeAlerta, number>>,
+  tropaComFome = 0,
 ): { readonly visiveis: readonly CausaDeAlerta[]; readonly sobram: number } {
+  const linhas = LINHAS_NA_FAIXA - (tropaComFome > 0 ? 1 : 0);
   const ativas = CAUSAS_DE_ALERTA.filter((c) => contagens[c] > 0);
-  return { visiveis: ativas.slice(0, LINHAS_NA_FAIXA), sobram: Math.max(0, ativas.length - LINHAS_NA_FAIXA) };
+  return { visiveis: ativas.slice(0, linhas), sobram: Math.max(0, ativas.length - linhas) };
 }
 
 /** Monta as linhas uma vez em `#alertas` e devolve `{ atualizar }`, que so
@@ -45,6 +52,21 @@ export function montarAlertas(): Alertas {
   const titulo = document.createElement('h2');
   titulo.textContent = temaSertao.alertas.titulo;
   raiz.append(titulo);
+
+  // C-COMIDA-01f — a linha da tropa com fome, a primeira. `data-alerta`, e nao
+  // `data-causa`: nao e causa de predio, e os roteiros da F22 contam `[data-causa]`.
+  const tropa = document.createElement('div');
+  tropa.className = 'alerta';
+  tropa.dataset.alerta = 'tropa-com-fome';
+  tropa.hidden = true;
+  const rotuloDaTropa = document.createElement('span');
+  rotuloDaTropa.className = 'rotulo';
+  rotuloDaTropa.textContent = temaSertao.alertas.tropaComFome;
+  const contagemDaTropa = document.createElement('span');
+  contagemDaTropa.className = 'contagem';
+  contagemDaTropa.textContent = '0';
+  tropa.append(rotuloDaTropa, contagemDaTropa);
+  raiz.append(tropa);
 
   // A ordem das linhas e a de `CAUSAS_DE_ALERTA`, fixada no DOM no nascimento:
   // aviso que troca de lugar entre um tick e outro e aviso que o jogador nao
@@ -81,8 +103,11 @@ export function montarAlertas(): Alertas {
       const contagens = Object.fromEntries(
         CAUSAS_DE_ALERTA.map((c) => [c, alertas.filter((a) => a.causa === c).length]),
       ) as Record<CausaDeAlerta, number>;
-      const { visiveis, sobram } = causasNaFaixa(contagens);
-      let total = 0;
+      const comFome = tropaComFome(estado, LADO_DO_JOGADOR);
+      const { visiveis, sobram } = causasNaFaixa(contagens, comFome);
+      tropa.hidden = comFome === 0;
+      if (contagemDaTropa.textContent !== String(comFome)) contagemDaTropa.textContent = String(comFome);
+      let total = comFome;
       for (const causa of CAUSAS_DE_ALERTA) {
         const quantos = contagens[causa];
         total += quantos;

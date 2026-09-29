@@ -361,5 +361,11 @@
   },
   "C-COMIDA-01c-fome-do-militar": {
     "passes": true
+  },
+  "C-COMIDA-01d-painel-do-grupo": {
+    "passes": true
+  },
+  "C-COMIDA-01f-alerta-de-tropa-com-fome": {
+    "passes": true
   }
 }

@@ -12442,6 +12442,67 @@ dos testes:
   (`docs/planos/2026-09-28-F-FEED-fome-militar.md`) **ainda espera aprovação**. Ele destrava
   o C-IA-01 (IA alimentar tropas).
 
+## 2026-09-29 — C-COMIDA-01d + 01f (painel de grupo com o Alimentar, e alerta de tropa com fome no HUD) ENTREGUE
+
+### Feito
+- **Painel do grupo** `src/ui/painel-grupo.ts`: o corpo `grupo` da barra (`corpoDaAba`
+  ganhou `haGrupo`; predio escolhido vence).
+  - Mostra quantos de cada tipo, com o nome do tema; o mercenário vem de
+    `mercenarios`.
+  - Mostra a condição do mais faminto, arredondada PARA BAIXO: 29,9% diz 29, para não
+    esconder quem já acendeu o marcador.
+  - Mostra "N esperando comida", que some com zero.
+  - Tem o botão **Alimentar**, que envia `FeedUnits` com os soldados do jogador vivos.
+  - Diz "Ninguém com fome" quando o Feed volta `sem-fome`.
+  - Os nós nascem uma vez e `atualizar` só troca texto (a lição do BUG-B).
+- **Barra:** `montarBarra` recebe a `selecaoMilitar`. O grupo leva a aba para Construir,
+  e a aba Construir solta o grupo, como já soltava o prédio.
+- **`main.ts`:** escolher prédio solta o grupo (predio e grupo não convivem, F26b).
+- **Alerta (01f):**
+  - o seletor `tropaComFome(state, lado)` conta os militares do lado no alerta de fome;
+  - a linha fica em `#alertas [data-alerta="tropa-com-fome"]` (não é `data-causa`, que é
+    de prédio);
+  - ela toma a PRIMEIRA linha da faixa, e as causas de prédio ficam com o resto
+    (`causasNaFaixa(contagens, tropaComFome)`).
+- **Tema:** o bloco `grupo` e `alertas.tropaComFome`.
+- **Roteiro** `tools/shots/C-COMIDA-01d.js`: os passos que apertam o botão rodam
+  despausados, com `mouse.down` / 150 ms / `mouse.up` (§8). Este roteiro cumpre a regra.
+
+### Decisões conservadoras (PARA REVISÃO)
+- **O alerta conta TODO militar do jogador no alerta de fome (35%), com pedido ou sem.**
+  Com o pedido feito e sem comida no armazém, a tropa continua morrendo, e o alerta não
+  pode sumir só porque alguém apertou o botão.
+- **A tropa toma a primeira linha da faixa**, na frente de prédio parado: é gente
+  morrendo.
+- **"Ninguém com fome" fica aceso até o próximo aperto ou a troca de grupo.** Não some
+  com o tempo.
+
+### Verificado
+- `tests/C-COMIDA-01d-painel-do-grupo.test.ts`, 7 testes:
+  - o corpo da aba;
+  - o texto do painel (nomes do tema, 29,94% → 29, "esperando" some com zero);
+  - "Ninguém com fome" só com `sem-fome`;
+  - os rótulos do tema;
+  - `tropaComFome` por lado, sem civil;
+  - a faixa com a tropa;
+  - o save do roteiro.
+- **Screenshots** (abertos com Read), `npm run shot -- C-COMIDA-01d`, OK:
+  - `screenshots/C-COMIDA-01d-1-grupo-com-fome.png`: painel "3 Cabra", "Condição do
+    grupo: 30%", Alimentar; "com fome" sobre as três; alerta "Tropa com fome 3";
+  - `screenshots/C-COMIDA-01d-2-pao-a-caminho.png`: dois serfs saindo do armazém com
+    pão, "3 esperando comida";
+  - `screenshots/C-COMIDA-01d-3-grupo-cheio.png`: "99%", sem marcador, alerta apagado;
+    serfs ao lado das cabras.
+  - O passo 4 do roteiro afirma "Ninguém com fome" visível depois do segundo Alimentar.
+- **Não-regressão:** os roteiros F26b (selecionar pela tela), F22 (alertas do HUD) e
+  UI-barra-a (barra lateral única) terminaram com código 0.
+- **Ambiente:** nesta nuvem o roteiro roda com `CANGACO_SHOT_NUVEM=1
+  CANGACO_CHROMIUM=/opt/pw-browsers/chromium`. Sem eles, o Chromium pinado não existe e a
+  fonte do Google falha por certificado; o modo já existia no `shot.js`.
+- **Achado fora do escopo, registrado como BUG-O** (feio, do render): a etiqueta da carga
+  mostra "loaves", e não "Cuscuz".
+- `npm run verify` verde: 158 arquivos, 1832 testes.
+
 ## 2026-09-29 — C-COMIDA-01c (a fome do militar) ENTREGUE
 
 ### Feito
@@ -12534,8 +12595,9 @@ dos testes:
   - a reserva na origem é conferida.
 
 ### Decisões conservadoras (PARA REVISÃO)
-- **Qual comida:** a de mais unidades livres no armazém escolhido. No empate, a primeira de
-  `restauracaoPorComida`. O plano não fixava isto.
+- **Qual comida:** a de mais unidades livres no armazém escolhido; no empate, a primeira de
+  `restauracaoPorComida`. É a L2 do plano, APROVADA (correção: a primeira versão desta
+  entrada dizia que o plano não fixava isto, e fixava).
 - **O armazém é o de menor caminho entre os que têm ALGUMA comida livre**, e não o de menor
   caminho por comida.
 - **A entrega emite só `unit-fed`, sem `task-completed`:** a comida sai do mundo, não entra

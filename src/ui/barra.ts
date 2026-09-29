@@ -14,6 +14,7 @@
 // <body>, que e o que o CSS le. E estado de interface, irmao da selecao: nunca
 // entra no `GameState`.
 import type { Selecao } from '../input/selecao';
+import type { SelecaoMilitar } from '../input/selecao-militar';
 import temaSertao from '../../data/theme-sertao.json';
 
 /** As abas do GDD §7.1, na ordem da tela. */
@@ -23,14 +24,18 @@ export type Aba = (typeof ABAS)[number];
 /** As que ainda nao tem conteudo (D-TRANSPORTE-02, menu de distribuição; D-TELA-01, estatísticas): cadeado, e o clique nao troca nada. */
 export const ABAS_TRANCADAS: readonly Aba[] = ['distribuicao'];
 
-export type CorpoDaAba = 'grade' | 'painel' | 'estatisticas' | 'opcoes';
+export type CorpoDaAba = 'grade' | 'painel' | 'grupo' | 'estatisticas' | 'opcoes';
 
 /** A regra, pura — e o que o teste headless prova. Na aba Construir o painel
- *  SUBSTITUI a grade quando ha predio escolhido, nunca as duas coisas juntas. */
-export function corpoDaAba(aba: Aba, haSelecao: boolean): CorpoDaAba {
+ *  SUBSTITUI a grade quando ha predio escolhido, nunca as duas coisas juntas.
+ *  C-COMIDA-01d — com um GRUPO militar na mao, o corpo e o painel do grupo. Predio e
+ *  grupo nao convivem (`main.ts` solta um quando o outro e escolhido); se convivessem,
+ *  o predio venceria, que e o que o jogador clicou por ultimo nos dois caminhos. */
+export function corpoDaAba(aba: Aba, haSelecao: boolean, haGrupo = false): CorpoDaAba {
   if (aba === 'opcoes') return 'opcoes';
   if (aba === 'estatisticas') return 'estatisticas';
-  return haSelecao ? 'painel' : 'grade';
+  if (haSelecao) return 'painel';
+  return haGrupo ? 'grupo' : 'grade';
 }
 
 /** Ha conteudo abaixo do que o corpo mostra? E o que acende a sombra no pe do
@@ -56,7 +61,7 @@ export interface Barra {
 
 const rotulos = temaSertao.barra;
 
-export function montarBarra(selecao: Selecao, abrirAjuda: () => void): Barra {
+export function montarBarra(selecao: Selecao, abrirAjuda: () => void, selecaoMilitar?: SelecaoMilitar): Barra {
   const barra = document.getElementById('barra');
   if (!barra) throw new Error('barra: #barra nao existe no index.html');
   const logo = document.getElementById('logo');
@@ -115,7 +120,7 @@ export function montarBarra(selecao: Selecao, abrirAjuda: () => void): Barra {
   let aba: Aba = 'construir';
 
   function aplicar(): void {
-    const proximoCorpo = corpoDaAba(aba, selecao.predio !== null);
+    const proximoCorpo = corpoDaAba(aba, selecao.predio !== null, (selecaoMilitar?.ids.length ?? 0) > 0);
     const mudouDeCorpo = document.body.dataset.corpo !== proximoCorpo;
     document.body.dataset.corpo = proximoCorpo;
     // Grade e painel sao telas diferentes dentro do mesmo scroller. Herdar a
@@ -130,7 +135,10 @@ export function montarBarra(selecao: Selecao, abrirAjuda: () => void): Barra {
     if (!alvo || alvo.getAttribute('aria-disabled') === 'true') return;
     const id = alvo.dataset.aba as Aba;
     // Construir com algo escolhido volta a grade, como o Esc.
-    if (id === 'construir') selecao.limpar();
+    if (id === 'construir') {
+      selecao.limpar();
+      selecaoMilitar?.limpar();
+    }
     aba = id;
     aplicar();
   });
@@ -139,6 +147,11 @@ export function montarBarra(selecao: Selecao, abrirAjuda: () => void): Barra {
   // o painel mora.
   selecao.aoMudar(() => {
     if (selecao.predio !== null) aba = 'construir';
+    aplicar();
+  });
+  // C-COMIDA-01d — o grupo militar tambem pede o corpo da aba Construir
+  selecaoMilitar?.aoMudar((ids) => {
+    if (ids.length > 0) aba = 'construir';
     aplicar();
   });
 

@@ -315,6 +315,7 @@ button[aria-disabled="true"] {
 #corpo-aba[data-ha-mais]::after { visibility: visible; }
 body:not([data-corpo="grade"]) #menu-build,
 body:not([data-corpo="painel"]) #painel-predio,
+body:not([data-corpo="grupo"]) #painel-grupo,
 body:not([data-corpo="opcoes"]) #opcoes { display: none; }
 #opcoes { display: flex; flex-direction: column; gap: 8px; padding: 4px; }
 
@@ -704,3 +705,9 @@ body:not([data-corpo="estatisticas"]) #estatisticas { display: none; }
 #fim-de-partida h2 { margin: 0 0 6px; font: 40px/1.1 var(--fonte-display); letter-spacing: 0.06em; text-transform: uppercase; }
 #fim-de-partida p { margin: 0; font-size: 14px; }
 #fim-de-partida[data-fim="derrota"] h2 { color: var(--terracota); }
+
+/* C-COMIDA-01d — o painel do grupo militar: o mesmo papel do painel do predio. */
+#painel-grupo { display: flex; flex-direction: column; gap: 6px; padding: 4px; }
+#painel-grupo h2 { margin: 0; }
+#painel-grupo ul { margin: 0; padding-left: 16px; }
+#painel-grupo [data-grupo="ninguem-com-fome"] { color: var(--terra-queimada); font-weight: bold; }
