@@ -26,6 +26,10 @@ import { gravarEvidencia } from './helpers/evidence';
 
 const SEMENTE = gameData.economia.estadoInicial.semente;
 const PAZ = gameData.escaramuca.ticksDePaz;
+/** A posicao da frente da IA, do dado: as coordenadas abaixo sao relativas a ela, para o
+ *  teste valer no mundo transladado (a escaramuca translada junto desde a C-COMBATE-02). */
+const FRENTE = (gameData.escaramuca.posicoes.find((p) => p.id === 'frente') as { ponto: { gx: number; gy: number } }).ponto;
+const daFrente = (dx: number, dy: number): { gx: number; gy: number } => ({ gx: FRENTE.gx + dx, gy: FRENTE.gy + dy });
 const doLado = (s: GameState, lado: number): string[] => s.unidades.ordem.filter((id) => s.unidades.porId[id]?.lado === lado);
 const prediosDaIA = (s: GameState): string[] => s.predios.ordem.filter((id) => s.predios.porId[id]?.lado === LADO_DA_IA);
 const tropaDoJogador = (s: GameState): string[] =>
@@ -69,12 +73,12 @@ describe('C-IA-03b — peacetime e tropas', () => {
     expect(quartel && quartel.estado === 'completo' ? [quartel.estoque.entrada, quartel.recrutas] : null).toEqual([{}, 0]);
   });
 
-  it('em paz: as cinco ordens de exercito voltam em-paz e o estado nao muda; construir passa', () => {
+  it('em paz: as cinco ordens de exercito sao recusadas (a marcha longe, longe-na-paz) e o estado nao muda; construir passa', () => {
     const tropa = tropaDoJogador(s0);
     const quartelDaIA = prediosDaIA(s0).find((id) => s0.predios.porId[id]?.tipo === 'barracks') as string;
     const alvo = doLado(s0, LADO_DA_IA)[0] as string;
     const ordens: Command[] = [
-      { type: 'MoveUnits', unidades: tropa, destino: { gx: 60, gy: 60 } },
+      { type: 'MoveUnits', unidades: tropa, destino: daFrente(-7, -7) },
       { type: 'AttackUnit', unidades: tropa, alvo },
       { type: 'AttackBuilding', unidades: tropa, predio: quartelDaIA },
       { type: 'TrainSoldier', predio: quartelDaIA, tipo: 'militia' },
@@ -84,7 +88,10 @@ describe('C-IA-03b — peacetime e tropas', () => {
     const semNada = semEventos(step(s0, [], gameData));
     for (const ordem of ordens) {
       const r = step(s0, [ordem], gameData);
-      expect(r.events.find((e) => e.type === 'command-rejected'), ordem.type).toMatchObject({ command: ordem.type, motivo: 'em-paz' });
+      // C-COMBATE-02 (cerca da paz, decisao do operador 2026-09-29): a marcha para (60,60),
+      // longe da vila, sai `longe-na-paz`; as outras quatro seguem `em-paz`
+      const motivo = ordem.type === 'MoveUnits' ? 'longe-na-paz' : 'em-paz';
+      expect(r.events.find((e) => e.type === 'command-rejected'), ordem.type).toMatchObject({ command: ordem.type, motivo });
       expect(semEventos(r), ordem.type).toBe(semNada);
     }
     // construir nao e ordem de exercito: passa
@@ -94,7 +101,7 @@ describe('C-IA-03b — peacetime e tropas', () => {
 
   it('em paz a IA nao sai para o inimigo no raio; acabada a paz, sai', () => {
     // um cabra do jogador posto DENTRO do raio da frente, sem encostar em ninguem
-    const intruso: Unidade = { id: 'intruso', lado: LADO_DO_JOGADOR, tipo: 'militia', gx: 62, gy: 67, fsm: 'ocioso', fsmData: {}, condicao: condicaoCheiaDoTipo('militia') };
+    const intruso: Unidade = { id: 'intruso', lado: LADO_DO_JOGADOR, tipo: 'militia', ...daFrente(-5, 0), fsm: 'ocioso', fsmData: {}, condicao: condicaoCheiaDoTipo('militia') };
     const perto: GameState = { ...s0, unidades: { porId: { ...s0.unidades.porId, intruso }, ordem: [...s0.unidades.ordem, 'intruso'] } };
     let s = perto;
     for (let t = 0; t < 30; t++) s = step(s, [], gameData);
@@ -111,7 +118,7 @@ describe('C-IA-03b — peacetime e tropas', () => {
     expect(s.tick).toBe(PAZ);
     expect(eventos.filter((e) => e.type === 'peace-ended')).toHaveLength(1);
     expect(ticksDePazRestantes(s)).toBe(0);
-    const r = step(s, [{ type: 'MoveUnits', unidades: tropaDoJogador(s), destino: { gx: 50, gy: 50 } }], gameData);
+    const r = step(s, [{ type: 'MoveUnits', unidades: tropaDoJogador(s), destino: daFrente(-17, -17) }], gameData);
     expect(r.events.filter((e) => e.type === 'command-rejected')).toEqual([]);
     expect(salvar(carregar(salvar(s0)))).toBe(salvar(s0));
     // `timeout` NAO e assercao de tempo (§8): existe para o caso travar. Caro por natureza:

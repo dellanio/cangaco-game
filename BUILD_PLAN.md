@@ -5777,6 +5777,9 @@ PROGRESS como PARA REVISÃO.
    - A recusa ganha motivo próprio, `longe-na-paz`, separado de `em-paz`.
    - **Aceite:** mover dentro da cerca na paz anda; fora dela é recusado com `longe-na-paz`;
      `AttackUnit` na paz segue `em-paz`; depois da paz, a cerca não existe.
+   - **ENTREGUE (2026-09-29), N = 12.** Muda o aceite da C-IA-03b (peacetime e tropas): a
+     marcha longe em paz sai `longe-na-paz`, e não mais `em-paz`. A escaramuça passou a
+     transladar junto no mundo transladado (`tools/transladar-mundo.js`).
 3. **C-TELA-01 — a mensagem da ordem recusada (ui).** "Em paz — faltam mm:ss" para
    `em-paz`, e "Longe demais na paz" para `longe-na-paz`. **Aceite:** roteiro com as duas.
 4. **C-TELA-02 — o marcador de destino (render + input).** O tile do destino de uma ordem

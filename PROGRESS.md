@@ -13280,3 +13280,47 @@ reorganiza a formação, e isso é assunto do C-COMBATE-01 (formação, virar e 
 
 - **Housekeeping:** o `pixelArt: false` do `src/render/game.ts` era teste do operador, e ele
   mandou manter; foi commitado à parte (bb5ec07).
+
+## 2026-09-29 — C-COMBATE-02 (a cerca da paz) ENTREGUE, com N = 12
+
+Plano com a conta em `docs/planos/2026-09-29-C-COMBATE-02-cerca-da-paz.md`.
+
+**A regra:** diverge do KaM por decisão do operador. Em paz, `MoveUnits` passa se o destino
+está a até `cercaDaPaz_tiles` (12, em `data/escaramuca.json`), em distância Chebyshev, da
+caixa de um prédio PRONTO do lado das unidades. Fora disso, a recusa sai com o motivo novo
+`longe-na-paz`. `AttackUnit`, `AttackBuilding`, `TrainSoldier` e `HireMercenary` seguem
+`em-paz`.
+
+**A conta do N:**
+- piso 6: a tropa nasce a 5–6 tiles da caixa da vila;
+- o dobro, 12, cabe uma linha de 9 de cada lado da vila;
+- a borda da cerca fica a 14 tiles da zona de defesa da frente da IA e a 16 da zona do arco.
+  O bodoqueiro alcança 11.
+
+**Verificado:**
+- `tests/C-COMBATE-02-cerca-da-paz.test.ts`, 7 testes: dentro anda; fora recusa sem mudar o
+  estado; na borda N passa e N+1 recusa (derivado da caixa, sem literal); obra não estende a
+  cerca e pronta estende; `AttackUnit` segue `em-paz`; depois da paz não há cerca.
+- Evidência em `test-output/C-COMBATE-02.json`: borda em (32,44) dentro e (32,45) fora.
+- A regra nova de `validate:data` acusa `cercaDaPaz_tiles: 1.5`. Foi uma prova da sessão,
+  revertida; a regra fica.
+- `npm run verify` verde nas duas passadas (167 arquivos).
+
+**Mudou no caminho (verificado):**
+- **O guarda do mundo transladado não transladava a escaramuça.** No mundo +32, a vila do
+  jogador caía em cima da vila da IA, e os testes da C-IA-03b passavam por coincidência de
+  literal. Agora `tools/transladar-mundo.js` translada `escaramuca.json` também (prédios,
+  spawn da tropa e pontos das posições). O guarda passou a acusar três literais absolutos,
+  `(60,60)`, `(50,50)` e o intruso em `(62,67)`, que agora saem da posição "frente" do dado.
+- **O aceite da C-IA-03b mudou por decisão do operador:** a marcha longe em paz sai
+  `longe-na-paz`. A asserção ficou mais estrita, porque nomeia o motivo novo.
+
+**PARA REVISÃO:**
+- Só o destino é conferido. `tilesDoGrupo` espalha o grupo em anéis, e as pontas podem cair
+  1 ou 2 tiles fora da cerca.
+- A cerca cresce com qualquer prédio pronto: quem construir perto da IA durante a paz ganha
+  cerca lá. A saída, se o operador quiser, é contar só os prédios a até K tiles do armazém
+  inicial.
+
+**A tela ainda não mostra a recusa.** Nenhum consumidor de `command-rejected` para
+`MoveUnits` existe fora da sim: é o próximo item, C-TELA-01 (mensagem da ordem recusada).

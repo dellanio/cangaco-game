@@ -26,6 +26,9 @@ const ARQ = {
   economia: path.join(RAIZ, 'data', 'economy.json'),
   mapa: path.join(RAIZ, 'data', 'maps', 'sertao-128.json'),
   terreno: path.join(RAIZ, 'data', 'terrain.json'),
+  // C-COMBATE-02: a escaramuca tem coordenada de mapa (vila da IA, tropa, posicoes). Fora da
+  // translacao, a vila do jogador andava +K e caia em cima da vila da IA.
+  escaramuca: path.join(RAIZ, 'data', 'escaramuca.json'),
 };
 
 function argumentos(argv) {
@@ -64,7 +67,16 @@ function transladarTextos(originais, k) {
   if (!originais.terreno.includes(de)) throw new Error(`transladar: terrain.json nao tem ${de}`);
   const terreno = originais.terreno.replace(de, `"mapaPadrao": { "largura": ${novo}, "altura": ${novo} }`);
 
-  return { economia: `${JSON.stringify(e, null, 2)}\n`, mapa: JSON.stringify(m), terreno };
+  const esc = JSON.parse(originais.escaramuca);
+  for (const p of esc.predios) { p.gx += k; p.gy += k; }
+  esc.tropaDoJogador.spawn.gx += k;
+  esc.tropaDoJogador.spawn.gy += k;
+  for (const pos of esc.posicoes) { pos.ponto.gx += k; pos.ponto.gy += k; }
+
+  return {
+    economia: `${JSON.stringify(e, null, 2)}\n`, mapa: JSON.stringify(m), terreno,
+    escaramuca: `${JSON.stringify(esc, null, 2)}\n`,
+  };
 }
 
 function transladar(originais, k) {

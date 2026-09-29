@@ -57,7 +57,9 @@ export type MotivoDeRecusaDeMarcha =
   | 'lados-diferentes'
   | 'destino-inandavel'
   /** C-IA-03b — a partida esta em peacetime (`sim/paz.ts`). */
-  | 'em-paz';
+  | 'em-paz'
+  /** C-COMBATE-02 — em paz, o destino esta fora da cerca da vila (`sim/paz.ts`). */
+  | 'longe-na-paz';
 
 /** C-COMIDA-01 — por que um `FeedUnits` foi recusado: os motivos da marcha que valem sem
  *  destino, e `sem-fome` quando ninguem do grupo esta abaixo do limiar do pedido. */
