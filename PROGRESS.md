@@ -13545,3 +13545,40 @@ já sabia mandar.
   isoladamente: a mesma perda aparece em qualquer ataque dirigido contra um grupo.
 - O arqueiro do grupo marcha até o alvo em vez de atirar; a sim não tem ordem de tiro contra
   unidade.
+
+## 2026-09-29 — C-TELA-05 (ordem à Feira) ENTREGUE
+
+**Verificado:**
+- Antes, nada na tela emitia `SetTrade`: a feira que o jogador construía nunca trocava. O
+  painel da Feira agora monta um RASCUNHO da ordem:
+  - "Dar ◀ X ▶" e "Receber ◀ Y ▶" giram na lista `economia.mercadorias`, pulando a
+    mercadoria do outro campo;
+  - "Quanto − n +" nunca desce de 1;
+  - "Mandar a troca" emite o `SetTrade`, e "Cancelar a troca" (só com ordem em vigor)
+    emite quantidade 0.
+- A lógica é pura, em `src/ui/ordem-da-feira.ts`. O rascunho de cada feira mora no fecho de
+  `montarPainelPredio`, fora do redesenho de 10 Hz. Com o jogo pausado, mudar o rascunho
+  redesenha pelo último estado.
+- A lista de mercadorias entra pelo `main.ts` (`gameData.economia.mercadorias`). O `ui/`
+  continua sem importar `sim/data`, e a lista não sai do tema.
+- `tests/C-TELA-05-ordem-a-feira.test.ts`, 3 testes:
+  - o giro nunca cai em A = B e dá a volta;
+  - a quantidade tem piso 1, e o rascunho parte da ordem em vigor;
+  - pelo `step` real, o rascunho "pedra → dinheiro, 2" é aceito e a feira fecha as 2 trocas
+    em 56 ticks. O cancelar tira a ordem.
+  - Evidência em `test-output/C-TELA-05.json`.
+- **Aceite:** o roteiro `npm run shot -- C-TELA-05`, com o save da F35. Andando, e com cada
+  botão seguro 150 ms, ele gira até pedra → dinheiro, baixa para 2 e manda. A linha da ordem
+  passa a pedra ×2, a feira faz 2 de 2, e o cancelar dá "Sem ordem de troca".
+- Abri `screenshots/C-TELA-05-1-ordem-mandada.png`: "Troca 2 Pedra → 1 Dinheiro (0/2)" e
+  os controles no painel.
+- Achado do roteiro: com o jogo andando, `locator().boundingBox()` pega o nó já trocado
+  pelo redesenho e devolve `null`. O roteiro mede o retângulo numa leitura síncrona
+  (`page.evaluate`).
+
+**PARA REVISÃO:**
+- Logo depois de mandar, o aviso da F35 diz "Sem Pedra no armazém: a troca espera", com
+  pedra NO armazém, a caminho. O `sem-mercadoria` junta "não há no armazém" e "está
+  chegando". É o rótulo único para causas opostas. Não mexi: separar pede o estoque do
+  armazém no seletor, o que é sim, e fica para o operador decidir.
+- A quantidade anda de 1 em 1.

@@ -5817,6 +5817,9 @@ PROGRESS como PARA REVISÃO.
      linha mata a tropa inteira.
 8. **C-TELA-05 — ordem à Feira (ui).** O painel da Feira emite `SetTrade`. **Aceite:**
    roteiro.
+   - **ENTREGUE (2026-09-29).** O rascunho da ordem está em `src/ui/ordem-da-feira.ts`, e o
+     painel ganhou "Dar ◀ ▶", "Receber ◀ ▶", "Quanto − +", "Mandar a troca" e "Cancelar a
+     troca". Plano em `docs/planos/2026-09-29-C-TELA-05-ordem-a-feira.md`.
 9. **D-TELA-02 — minimapa (render + ui).** Já está na fila (Fase D); o escopo é o do
    operador: terreno pintado, prédios por lado (vermelho e azul), a vista atual marcada e o
    clique movendo a câmera.

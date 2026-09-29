@@ -26,6 +26,8 @@ import { opcoesDoMenuBuild, painelDaEscola, painelDoPredio } from '../sim/select
 import type { ItemDeEstoque, PainelDoPredio } from '../sim/selectors';
 import type { Selecao } from '../input/selecao';
 import { desenharSecaoDaEscola, nomeDoCivil } from './painel-escola';
+import { comandoDaTroca, comandoDeCancelar, girarMercadoria, mudarQuantidade, rascunhoInicial } from './ordem-da-feira';
+import type { RascunhoDaTroca } from './ordem-da-feira';
 // A MESMA aritmetica que a cena desenha no mapa (F17b). O arquivo nao tem
 // import nenhum — nem phaser, nem `sim/data` —, entao trazer ele para ca nao
 // abre o caminho que `menu-build.ts` fechou de proposito: `ui/` continua sem
@@ -82,6 +84,63 @@ function botaoDaGrade(classe: string, nome: string, detalhe: string | null): HTM
 /** F35 — o nome de uma mercadoria no tema, ou o id neutro quando falta. */
 function nomeDaMercadoria(id: string): string {
   return temaDeMercadorias[id] ?? id;
+}
+
+/** C-TELA-05 — o rascunho da ordem de cada feira mora FORA do redesenho: o painel refaz
+ *  os nos a cada tick, e o que o jogador girou nao pode voltar ao comeco. */
+interface ControleDaFeira {
+  readonly mercadorias: readonly string[];
+  rascunho(predio: string, feira: NonNullable<PainelDoPredio['feira']>): RascunhoDaTroca;
+  mudar(predio: string, r: RascunhoDaTroca): void;
+}
+
+/** Um botao pequeno do controle da feira, com o papel em `data-feira-controle`. */
+function botaoDaFeira(papel: string, texto: string, aoClicar: () => void): HTMLButtonElement {
+  const botao = document.createElement('button');
+  botao.type = 'button';
+  botao.className = 'feira-controle';
+  botao.dataset.feiraControle = papel;
+  botao.textContent = texto;
+  botao.addEventListener('click', aoClicar);
+  return botao;
+}
+
+/** C-TELA-05 — "Dar ◀ X ▶", "Receber ◀ Y ▶", "Quanto − n +", e mandar / cancelar. */
+function desenharOrdemDaFeira(
+  gente: HTMLElement, acoes: HTMLElement, dados: PainelDoPredio, feira: NonNullable<PainelDoPredio['feira']>,
+  controle: ControleDaFeira, emitir: (comando: Command) => void,
+): void {
+  const predio = dados.predio;
+  const r = controle.rascunho(predio, feira);
+  const mudar = (novo: RascunhoDaTroca): void => controle.mudar(predio, novo);
+  const seletor = (campo: 'da' | 'para', rotulo: string): HTMLElement => {
+    const l = linha(`feira-rascunho ${campo}`, rotulo, '');
+    l.dataset[campo] = r[campo];
+    const valor = l.querySelector('.valor') as HTMLElement;
+    const nome = document.createElement('span');
+    nome.textContent = nomeDaMercadoria(r[campo]);
+    valor.append(
+      botaoDaFeira(`${campo}-anterior`, '◀', () => mudar(girarMercadoria(r, campo, -1, controle.mercadorias))),
+      nome,
+      botaoDaFeira(`${campo}-proxima`, '▶', () => mudar(girarMercadoria(r, campo, 1, controle.mercadorias))),
+    );
+    return l;
+  };
+  const quanto = linha('feira-rascunho quantidade', rotulos.feiraQuanto, '');
+  quanto.dataset.quantidade = String(r.quantidade);
+  const valor = quanto.querySelector('.valor') as HTMLElement;
+  const n = document.createElement('span');
+  n.textContent = String(r.quantidade);
+  valor.append(
+    botaoDaFeira('menos', '−', () => mudar(mudarQuantidade(r, -1))),
+    n,
+    botaoDaFeira('mais', '+', () => mudar(mudarQuantidade(r, 1))),
+  );
+  gente.append(seletor('da', rotulos.feiraDar), seletor('para', rotulos.feiraReceber), quanto);
+  acoes.append(botaoDaFeira('mandar', rotulos.feiraMandar, () => emitir(comandoDaTroca(predio, r))));
+  if (feira.quantidade > 0) {
+    acoes.append(botaoDaFeira('cancelar', rotulos.feiraCancelar, () => emitir(comandoDeCancelar(predio, r))));
+  }
 }
 
 function nomeDoPredio(tipo: string): string {
@@ -199,7 +258,7 @@ function desenharObra(
 
 function desenharCompleto(
   identidade: HTMLElement, gente: HTMLElement, acoes: HTMLElement,
-  dados: PainelDoPredio, emitir: (comando: Command) => void,
+  dados: PainelDoPredio, emitir: (comando: Command) => void, controleDaFeira: ControleDaFeira,
 ): void {
   identidade.append(linha('hp', rotulos.hp, `${dados.hp}/${dados.hpTotal}`));
 
@@ -261,6 +320,8 @@ function desenharCompleto(
     l.dataset.feitas = String(f.feitas);
     l.dataset.quantidade = String(f.quantidade);
     l.dataset.naEntrada = String(f.naEntrada);
+    l.dataset.da = f.da ?? '';
+    l.dataset.para = f.para ?? '';
     gente.append(l);
     if (f.naoTroca !== null) {
       const aviso = document.createElement('div');
@@ -271,6 +332,7 @@ function desenharCompleto(
           : rotulos.feiraSemMercadoria.replace('{da}', f.da === null ? '' : nomeDaMercadoria(f.da));
       gente.append(aviso);
     }
+    desenharOrdemDaFeira(gente, acoes, dados, f, controleDaFeira, emitir);
   }
 
   // F36 — a Prefeitura: o ouro na gaveta e um botao por mercenario, com o custo. O que
@@ -380,6 +442,8 @@ function desenharCompleto(
 
 export function montarPainelPredio(
   selecao: Selecao, emitir: (comando: Command) => void,
+  /** C-TELA-05 — `economia.mercadorias`, entregue pela raiz: `ui/` nao le `sim/data`. */
+  mercadorias: readonly string[],
 ): PainelPredio {
   const encontrado = document.getElementById('painel-predio');
   if (encontrado === null) throw new Error('painel-predio: falta #painel-predio no index.html');
@@ -423,11 +487,25 @@ export function montarPainelPredio(
   window.addEventListener('pointerup', destravar);
   window.addEventListener('pointercancel', destravar);
 
+  // C-TELA-05 — o rascunho de cada feira, e o ultimo estado para redesenhar quando ele
+  // muda com o jogo pausado (sem tick, `atualizar` nao seria chamado).
+  const rascunhos = new Map<string, RascunhoDaTroca>();
+  let ultimoEstado: GameState | null = null;
+  const controleDaFeira: ControleDaFeira = {
+    mercadorias,
+    rascunho: (predio, feira) => rascunhos.get(predio) ?? rascunhoInicial(feira, mercadorias),
+    mudar: (predio, r) => {
+      rascunhos.set(predio, r);
+      if (ultimoEstado !== null) atualizar(ultimoEstado);
+    },
+  };
+
   function atualizar(estado: GameState): void {
     if (segurando) {
       pendente = estado;
       return;
     }
+    ultimoEstado = estado;
     const id = selecao.predio;
     const dados = id === null ? null : painelDoPredio(estado, id);
 
@@ -468,7 +546,7 @@ export function montarPainelPredio(
       // `menu-build.ts`). Varredura de lista curta, so quando ha obra aberta.
       const opcao = opcoesDoMenuBuild(estado).find((o) => o.id === dados.tipo);
       desenharObra(identidade, dados, opcao?.custo ?? {});
-    } else desenharCompleto(identidade, gente, acoes, dados, emitir);
+    } else desenharCompleto(identidade, gente, acoes, dados, emitir, controleDaFeira);
 
     // A escola entra como SECAO, e so quando ela existe de fato no estado.
     const dadosDaEscola = dados.estado === 'completo' ? painelDaEscola(estado, dados.predio) : null;

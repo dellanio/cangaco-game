@@ -578,6 +578,12 @@ body:not([data-corpo="opcoes"]) #opcoes { display: none; }
 #painel-predio .linha { display: flex; align-items: baseline; gap: 6px; font-size: 13px; }
 #painel-predio .linha .rotulo { flex: 1; color: var(--tinta-fraca); }
 #painel-predio .linha .valor { font-variant-numeric: tabular-nums; font-weight: 700; }
+/* C-TELA-05 — o rascunho da troca: ◀ nome ▶ com o nome de largura fixa, para as setas
+   nao andarem enquanto o jogador gira */
+#painel-predio .linha.feira-rascunho { align-items: center; }
+#painel-predio .linha.feira-rascunho .valor { display: inline-flex; align-items: center; gap: 4px; }
+#painel-predio .linha.feira-rascunho .valor > span { min-width: 76px; text-align: center; }
+#painel-predio .linha.feira-rascunho button { padding: 1px 6px; }
 #painel-predio .linha[data-ocupante="vago"] .valor { color: var(--terracota); font-weight: 400; font-style: italic; }
 #painel-predio .gaveta {
   display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px; font-size: 12px;

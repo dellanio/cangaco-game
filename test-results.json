@@ -430,5 +430,8 @@
   },
   "C-TELA-04-atacar-unidade": {
     "passes": true
+  },
+  "C-TELA-05-ordem-a-feira": {
+    "passes": true
   }
 }

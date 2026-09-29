@@ -148,7 +148,7 @@ const menu = montarMenuBuild(
 // UM painel para todo predio (F16b). A fila da escola virou uma secao dele.
 const painel = montarPainelPredio(selecao, (comando) => {
   sessao.enviar(comando);
-});
+}, gameData.economia.mercadorias);
 
 // C-COMIDA-01d — o painel do grupo militar, com o Alimentar.
 const painelGrupo = montarPainelGrupo(selecaoMilitar, (comando) => {
