@@ -5923,6 +5923,13 @@ vai para o PROGRESS como PARA REVISÃO, e o trabalho segue.
     - a ordem no meio do passo zerava o `progresso`, o que dava 11 saltos para trás.
   - Os consertos: a troca de vaga com o parado, e terminar o passo antes de replanejar. As
     seis ordens da sonda dão 0 salto e 0 preso.
+  - **C-MOVIMENTO-02b — a vaga tomada por quem marcha. ENTREGUE (2026-09-29; plano em
+    `docs/planos/2026-09-29-C-MOVIMENTO-02b-vaga-tomada-por-quem-marcha.md`).** Achado pelo
+    roteiro da C-COMBATE-01c: a tropa em fileiras de 7, mandada ao leste, deixava 3 de 18
+    marchando para sempre. A vaga de um estava tomada por outro que marchava, preso atrás de um
+    parado, e cada um esperava o outro. Agora os dois trocam de vaga, só quando o preso tem um
+    PARADO à frente (quem está só de passagem sai sozinho). Aceite:
+    `tests/C-MOVIMENTO-02b-vaga-tomada.test.ts`.
 - **P4. O inimigo sem serf** não repõe a fome da própria tropa, e hoje o andaime
   `iaDrena: false` esconde isso. Fica resolvido pela C-IA-02, o item 3 abaixo.
 

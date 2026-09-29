@@ -13845,3 +13845,41 @@ Plano: `docs/planos/2026-09-29-C-COMBATE-01b-storm-attack.md`. Só `src/sim/`, `
 - Com `incontrolavel`, as ordens pulam quem está em carga **sem evento**. Os outros da lista cumprem.
 
 **Aberto, e herdado pela C-COMBATE-01c (nota no item do BUILD_PLAN):** o botão Storm; `StormAttack` em `ORDENS_MILITARES`; o texto do tema para `sem-infantaria-corpo-a-corpo`.
+
+
+## 2026-09-29 — C-MOVIMENTO-02b (a vaga tomada por quem marcha, sim) ENTREGUE
+
+Achado pelo roteiro da C-COMBATE-01c (controles de formação). A tropa de 18 da escaramuça,
+refeita em fileiras de 7 e mandada ao leste (`MoveUnits {destino (32,35), direcao 2,
+colunas 7}`), deixava **3 de 18 `marchando` para sempre**. Separei do trabalho da 01c porque
+a 01c toca o render (§10). O plano está em
+`docs/planos/2026-09-29-C-MOVIMENTO-02b-vaga-tomada-por-quem-marcha.md`.
+
+**Verificado:**
+- A causa, medida numa sonda sem tela (a sonda foi apagada):
+  - u22 tinha a vaga (31,34) como tile seguinte;
+  - u27 estava nela, `marchando`, com `progresso` 0, para (32,38). O caminho de u27 passava
+    por um parado (u24), e o contorno passava por u22;
+  - `vagaEmparedadaPor` (C-MOVIMENTO-02) só troca com PARADO, e `esperarOuDesviar` tentava
+    de novo para sempre.
+- O conserto está em `systems/marcha.ts`: `vagaTomadaPor` e a troca em `passoMarchando`.
+  - Condições: `u` no fim da espera, a vaga como tile seguinte, e ali um do mesmo lado que
+    marcha para outra vaga, com `progresso` 0 e um PARADO no tile seguinte dele.
+  - Quem ocupa fica na vaga de `u`; `u` herda a vaga e a `direcaoFinal` dele.
+  - O conjunto de vagas não muda. Nenhum número novo entra, e nada de RNG.
+  - `militarParadoEm` passou a ser exportada de `units/movimento.ts`.
+- A primeira versão, sem a condição do parado à frente, reprovou a C-COMBATE-01a: o líder
+  saía da vaga do meio, trocado com quem só estava de passagem. A condição do parado a
+  separa, e a C-COMBATE-01a voltou ao verde.
+- Aceite: `tests/C-MOVIMENTO-02b-vaga-tomada.test.ts`, 3 testes.
+  - Os 18 param em 156 ticks, cada um numa vaga de `tilesDaFormacao`, todos virados ao leste.
+  - A troca disparou 1 vez na corrida.
+  - Duas corridas dão o mesmo estado.
+  - A evidência está em `test-output/C-MOVIMENTO-02b-leste.json`, aberta.
+- O teste acusa: com a troca desligada, o teste 1 reprova. Isto é prova da sessão; a
+  cobertura contínua é o próprio teste, dentro do `npm run verify`.
+- A formação ao leste tem 8 na coluna gx=32. Não é defeito: a vaga (31,32) cai em terreno, e
+  o desenho da C-COMBATE-01a a desloca para (32,31), o primeiro livre do anel.
+
+**PARA REVISÃO:** a troca só acontece com a vaga como PRÓXIMO tile. Um nó no meio do
+caminho segue com a espera e o desvio de hoje (interpretação conservadora).

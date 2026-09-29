@@ -95,7 +95,7 @@ const VIZINHOS_8: readonly TileDeGrid[] = [
 ];
 
 /** C5 — o militar que esta PARADO (sem caminho) no tile, ou null. */
-function militarParadoEm(state: GameState, tile: TileDeGrid, quem: string, dados: GameData): Unidade | null {
+export function militarParadoEm(state: GameState, tile: TileDeGrid, quem: string, dados: GameData): Unidade | null {
   for (const id of state.unidades.ordem) {
     if (id === quem) continue;
     const o = state.unidades.porId[id];

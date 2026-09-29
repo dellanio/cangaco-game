@@ -13,7 +13,7 @@ import type { GameData } from '../data/types';
 import type { TileDeGrid } from '../estradas';
 import { classeDaUnidade } from '../condicao';
 import { buscarCaminho, passoAndavel, tileAndavel } from '../pathfinding';
-import { andar, chegou, comUnidade, noTile, ocioso, vagaEmparedadaPor } from '../units/movimento';
+import { andar, chegou, comUnidade, militarParadoEm, noTile, ocioso, vagaEmparedadaPor } from '../units/movimento';
 import { emCargaIncontrolavel } from '../carga';
 import type { ResultadoDeSistema } from './jobs';
 import { semRetomar, viradaPeloPasso } from './combate';
@@ -218,6 +218,24 @@ function passoMarchando(state: GameState, u: Unidade, dados: GameData): Resultad
     };
     return { state: comUnidade(comUnidade(state, vai), fica), events: [] };
   }
+  // C-MOVIMENTO-02b — a vaga tomada por quem marcha e esta preso: ele fica nela, e `u` herda
+  // a dele. O conjunto de vagas nao muda
+  const preso = atual.fsm === FSM_MARCHANDO ? vagaTomadaPor(state, atual, dados) : null;
+  if (preso !== null && preso.fsmData.alvoTile !== undefined) {
+    const { bloqueado: _b, ...semEspera } = atual.fsmData;
+    void _b;
+    const { bloqueado: _p, ...presoSemEspera } = preso.fsmData;
+    void _p;
+    const fica: Unidade = {
+      ...preso,
+      fsmData: { ...presoSemEspera, caminho: [], progresso: 0, alvoTile: alvo, ...(final === undefined ? {} : { direcaoFinal: final }) },
+    };
+    const vai: Unidade = {
+      ...atual,
+      fsmData: { ...semEspera, caminho: [], progresso: 0, alvoTile: preso.fsmData.alvoTile, direcaoFinal: preso.fsmData.direcaoFinal ?? final ?? DIRECAO_PADRAO },
+    };
+    return { state: comUnidade(comUnidade(state, fica), vai), events: [] };
+  }
   // F28a: a unidade vira para onde anda (frente/flanco/costas e o arco do arqueiro)
   const andou = viradaPeloPasso(noTile(atual), andar(state, atual, dados));
   if (chegou(andou) && andou.fsmData.replanejar === true) {
@@ -227,6 +245,32 @@ function passoMarchando(state: GameState, u: Unidade, dados: GameData): Resultad
     return { state: comUnidade(state, { ...andou, fsmData: resto }), events: [] };
   }
   return { state: comUnidade(state, chegou(andou) ? parar(andou) : andou), events: [] };
+}
+
+/**
+ * C-MOVIMENTO-02b — o militar que MARCHA e esta preso na vaga de `u`, ou null. Vale quando `u`
+ * chegou ao fim da espera (`ticksDesvioMilitar`) com a propria vaga como tile seguinte, e ali
+ * esta outro do mesmo lado, marchando para OUTRA vaga, sem ter saido (`progresso` 0), com um
+ * PARADO no tile seguinte dele. Ele espera a tropa que ja chegou, e o contorno passa por `u`:
+ * a espera nao resolve, e `vagaEmparedadaPor` so troca com quem esta parado. Quem ocupa so de
+ * passagem (o seguinte dele e de outro que anda) sai sozinho, e a troca tiraria o lider da
+ * vaga do meio.
+ */
+export function vagaTomadaPor(state: GameState, u: Unidade, dados: GameData): Unidade | null {
+  const proximo = u.fsmData.caminho?.[0];
+  const alvo = u.fsmData.alvoTile;
+  if (proximo === undefined || alvo === undefined || proximo.gx !== alvo.gx || proximo.gy !== alvo.gy) return null;
+  if ((u.fsmData.progresso ?? 0) !== 0 || (u.fsmData.bloqueado ?? 0) + 1 < dados.movimento.ticksDesvioMilitar) return null;
+  for (const id of state.unidades.ordem) {
+    const o = state.unidades.porId[id];
+    if (o === undefined || id === u.id || o.gx !== alvo.gx || o.gy !== alvo.gy) continue;
+    if (o.fsm !== FSM_MARCHANDO || o.lado !== u.lado || (o.fsmData.progresso ?? 0) !== 0) continue;
+    const dele = o.fsmData.alvoTile;
+    const seguinte = o.fsmData.caminho?.[0];
+    if (dele === undefined || (dele.gx === alvo.gx && dele.gy === alvo.gy) || seguinte === undefined) continue;
+    if (militarParadoEm(state, seguinte, o.id, dados) !== null) return o;
+  }
+  return null;
 }
 
 /** Um tick de cada unidade marchando, em `unidades.ordem`. */

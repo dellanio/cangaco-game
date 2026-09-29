@@ -197,6 +197,7 @@ Decisão do operador (2026-09-28).
 | C-COMBATE-01a | formação e virar | — | fechado | `C-COMBATE-01a-formacao-e-virar` |
 | C-COMBATE-02b | a cerca da paz sai | — | fechado | `C-COMBATE-02b-a-cerca-sai` |
 | C-MOVIMENTO-02 | a tropa não trava | — | fechado | `C-MOVIMENTO-02-a-tropa-nao-trava` |
+| C-MOVIMENTO-02b | a vaga tomada por quem marcha | — | fechado | `C-MOVIMENTO-02b-vaga-tomada` |
 | D-PRODUCAO-02 | o lenhador: alcance 12 e replantio do toco | — | fechado | `D-PRODUCAO-02-lenhador` |
 | C-COMBATE-01b | storm attack (sim) | — | fechado | `C-COMBATE-01b-storm-attack` |
 | D1a | colisão civil: o mecanismo, desligado | D-MOVIMENTO-01a | fechado | `D1a-colisao-civil` |

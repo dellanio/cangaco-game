@@ -454,5 +454,8 @@
   },
   "C-COMBATE-01b-storm-attack": {
     "passes": true
+  },
+  "C-MOVIMENTO-02b-vaga-tomada": {
+    "passes": true
   }
 }
