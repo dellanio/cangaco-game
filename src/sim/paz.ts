@@ -19,6 +19,8 @@
  */
 import type { Command } from './commands';
 import type { GameEvent, GameState } from './state';
+import type { GameData } from './data/types';
+import { gameData } from './data';
 
 /** A partida esta em paz AGORA (no tick em que os comandos deste step sao aplicados)? */
 export function emPaz(state: GameState): boolean {
@@ -28,6 +30,12 @@ export function emPaz(state: GameState): boolean {
 /** Quantos ticks faltam para a paz acabar; 0 fora da paz. E o contador da tela. */
 export function ticksDePazRestantes(state: GameState): number {
   return emPaz(state) ? (state.pazAteTick as number) - state.tick : 0;
+}
+
+/** Os SEGUNDOS de jogo que faltam para a paz acabar, arredondados para cima (o contador
+ *  nunca mostra 0:00 com a paz ainda valendo). 0 fora da paz. */
+export function segundosDePazRestantes(state: GameState, dados: GameData = gameData): number {
+  return Math.ceil(ticksDePazRestantes(state) / dados.tempo.tickHz);
 }
 
 /**

@@ -5631,9 +5631,11 @@ Ordem do operador. Cada item tem plano em `docs/planos/2026-09-28-C<n>-*.md`.
     repõe); peacetime de 10 min de jogo (`peacetime_min_base` 20, escala economia) com a regra
     do KaM: marcha, ataque e treino no quartel recusados `em-paz`, a IA não defende nem repõe
     nem ataca; `peace-ended` no tick exato. A partida headless fecha em vitória (tick 10287).
-  - **C-IA-03c — jogar pela tela (integração `ui/` + `render/` + `main.ts`).** Começar a
-    escaramuça; o contador do peacetime; a cor de cada bando (vermelho do jogador, azul do
-    inimigo, do documento da campanha); e o roteiro do aceite, da abertura à vitória.
+  - **C-IA-03c — jogar pela tela (integração `ui/` + `render/` + `main.ts`, e um seletor em
+    `sim/paz.ts`). ENTREGUE (2026-09-29).** "Nova escaramuça" no painel H e `?escaramuca`;
+    o contador `Paz: mm:ss` no quadro do minimapa; a cor de cada bando (vermelho do jogador,
+    azul do inimigo, do documento da campanha) no rótulo da unidade e numa bandeira no prédio;
+    e o roteiro do aceite, `npm run shot -- C-IA-03c`: da abertura à vitória pelo mouse.
 - **SISTEMA DE FASES — a campanha do Piancó em dado. SIGLA A DEFINIR pelo operador** (nenhum
   dos 11 módulos cobre "fase/missão"; módulo novo só por decisão dele — proposta: `FASE`).
   Vem DEPOIS do cenário de escaramuça. A campanha tem 10 missões, cada uma com estado inicial,
@@ -5670,7 +5672,19 @@ Ordem do operador. Cada item tem plano em `docs/planos/2026-09-28-C<n>-*.md`.
         colegas e ataque a prédio sem revidar (BUG-P, corrigido). Cenário novo acha defeito
         de combate velho;
       - **o documento da campanha estava fora de `docs/`:** a referência do operador apontava
-        `docs/`, o arquivo está na raiz.
+        `docs/`, o arquivo está na raiz;
+      - **a tela não sabia que existe outro lado:** unidade e prédio do inimigo eram iguais aos
+        do jogador (C-IA-03c pôs a cor do bando no rótulo e uma bandeira no prédio). O
+        SPRITE continua igual — o cabra inimigo usa lenço vermelho; o sprite por bando é da
+        sessão de arte. Uma fase com três bandos pede a cor por lado no dado da fase;
+      - **pela tela o jogador só MARCHA e ataca PRÉDIO:** botão direito em unidade inimiga é
+        marcha, e a luta nasce do revide (C6/BUG-P). Não existe "atacar esta unidade" no
+        mouse, embora a sim tenha o `AttackUnit`;
+      - **a fome é assimétrica:** a tropa do jogador drena (66% no fim da paz de 10 min, 46%
+        na vitória do roteiro) e a da IA não (andaime L8). Uma fase longa pune só o jogador
+        até a C-IA-02;
+      - **a partida só começa por botão no painel H ou por URL:** não há tela de escolha de
+        modo. Um sistema de fases precisa de um menu de partida.
 - **C-IA-02 — economia da IA. APROVADA pelo operador (2026-09-29), DEPOIS da C-IA-03:**
   - o modelo "vila pronta" sem AutoBuild, e um prefeito mínimo que só treina gente — planejar
     cidade fica de fora (o KaM desliga na maioria das missões);

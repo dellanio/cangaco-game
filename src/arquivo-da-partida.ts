@@ -23,7 +23,7 @@ export interface Gaveta {
 export const CHAVE_DO_SAVE = 'cangaco:partida';
 
 export type ResultadoDoArquivo =
-  | { readonly ok: true; readonly acao: 'salvou' | 'carregou'; readonly tick: number }
+  | { readonly ok: true; readonly acao: 'salvou' | 'carregou' | 'escaramuca'; readonly tick: number }
   /** `sem-save`: nada na gaveta. `recusado`: `carregar` recusou, com o motivo dele.
    *  `gaveta`: o navegador nao guardou (cota cheia, armazenamento bloqueado). */
   | { readonly ok: false; readonly causa: 'sem-save' | 'recusado' | 'gaveta'; readonly detalhe: string };

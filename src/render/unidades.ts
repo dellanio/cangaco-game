@@ -41,6 +41,7 @@ import {
 } from './marcador-de-fome';
 import { nomeDaUnidade } from './nome-de-unidade';
 import { rotuloDaCarga } from './rotulo-da-carga';
+import { corDoBando } from './cor-do-bando';
 import { direcoesDoTipo } from './direcoes-de-sprite';
 import { direcaoDoPasso, spriteDaUnidade, POSE_PARADO } from './manifesto';
 import type { Direcao } from './manifesto';
@@ -64,6 +65,9 @@ export interface UnidadeRenderizada {
   readonly fsm: string;
   /** A mercadoria que ela leva, ou null. */
   readonly carga: string | null;
+  /** C-IA-03c — o lado da unidade e a cor de bando com que o rotulo foi pintado. */
+  readonly lado: number;
+  readonly corDoBando: string;
   /** BUG-O — o texto DESENHADO sobre a carga (nome do tema), ou null. */
   readonly rotuloDaCarga: string | null;
   /**
@@ -140,14 +144,15 @@ export function criarCamadaDeUnidades(cena: Phaser.Scene, tilePx: number): Camad
   const memoria = criarMemoriaDePosicoes();
   const lado = tilePx * LADO_DA_UNIDADE_EM_TILES;
 
-  function criar(tipo: string): Desenhado {
+  function criar(tipo: string, ladoDaUnidade: number): Desenhado {
     const ehSerf = tipo === 'serf';
     const retangulo = cena.add.rectangle(0, 0, lado, lado, cor(ehSerf ? temaSertao.paleta.ocre : temaSertao.paleta.couro), 1);
     retangulo.setStrokeStyle(2, cor(temaSertao.paleta.madeira));
     // O texto e do JOGADOR: vem do tema pelo tipo neutro, nunca digitado aqui. `setOrigin(0.5, 0)`
     // ancora pelo TOPO, entao a folga sob o quadrado nao depende do tamanho da fonte.
     const rotulo = cena.add.text(0, lado * ALTURA_DO_NOME_EM_LADOS, nomeDaUnidade(tipo), {
-      fontSize: '11px', color: temaSertao.paleta.cal, backgroundColor: '#2c1d12', padding: { x: 2, y: 0 },
+      // C-IA-03c: o fundo do rotulo e a cor do BANDO (vermelho o jogador, azul a IA)
+      fontSize: '11px', color: temaSertao.paleta.cal, backgroundColor: corDoBando(ladoDaUnidade), padding: { x: 2, y: 0 },
     });
     rotulo.setOrigin(0.5, 0);
     const marcadorDeCarga = cena.add.text(0, -lado * ALTURA_DA_CARGA_EM_LADOS, '', {
@@ -246,7 +251,7 @@ export function criarCamadaDeUnidades(cena: Phaser.Scene, tilePx: number): Camad
         if (!unidade) continue;
         let item = desenhados.get(id);
         if (!item) {
-          item = criar(unidade.tipo);
+          item = criar(unidade.tipo, unidade.lado);
           desenhados.set(id, item);
         }
         const posicao = posicaoDaUnidade(estado, unidade);
@@ -272,7 +277,7 @@ export function criarCamadaDeUnidades(cena: Phaser.Scene, tilePx: number): Camad
         item.marcadorDeFome.setVisible(comFome);
         renderizadas.push({
           id, tipo: unidade.tipo, gx: posicao.gx, gy: posicao.gy,
-          gxDesenhado: desenhada.gx, gyDesenhado: desenhada.gy, fsm: unidade.fsm, carga, rotuloDaCarga: carga === null ? null : rotuloDaCarga(carga),
+          gxDesenhado: desenhada.gx, gyDesenhado: desenhada.gy, fsm: unidade.fsm, lado: unidade.lado, corDoBando: corDoBando(unidade.lado), carga, rotuloDaCarga: carga === null ? null : rotuloDaCarga(carga),
           deslocamentoPx: { x: desvio.x, y: desvio.y },
           marcadorDeFome: comFome, fracaoDeCondicao: fracaoDeCondicao(unidade),
           nome: item.nome.text, larguraDoRotuloPx: item.nome.width,

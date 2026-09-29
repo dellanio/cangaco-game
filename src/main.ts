@@ -42,8 +42,14 @@ import { predioNoTile } from './sim/selectors';
 import { classeDaUnidade } from './sim/condicao';
 import { criarSelecaoMilitar } from './input/selecao-militar';
 import { montarPainelGrupo } from './ui/painel-grupo';
+import { montarContadorDePaz } from './ui/contador-de-paz';
+import { criarEscaramuca } from './sim/cenario';
 
-const sessao = criarSessao(createInitialState(gameData.economia.estadoInicial.semente));
+// C-IA-03c — `?escaramuca` nasce na escaramuca (cenario provisorio, sim/cenario.ts); sem ele,
+// o jogo livre de sempre. O botao "Nova escaramuca" do painel H faz o mesmo no meio do jogo.
+const SEMENTE = gameData.economia.estadoInicial.semente;
+const nascerNaEscaramuca = new URLSearchParams(window.location.search).has('escaramuca');
+const sessao = criarSessao(nascerNaEscaramuca ? criarEscaramuca(SEMENTE) : createInitialState(SEMENTE));
 const ferramenta = criarFerramenta();
 // O predio aberto no painel (F13b). Estado de interface, como a ferramenta.
 const selecao = criarSelecao();
@@ -156,6 +162,9 @@ selecao.aoMudar(() => {
 // derivado do estado, entao basta ser atualizado junto dos outros.
 const alertas = montarAlertas();
 
+// C-IA-03c — o contador do peacetime, no quadro do minimapa. Derivado do estado.
+const contadorDePaz = montarContadorDePaz();
+
 // F34 — o aviso do fim da escaramuca. Derivado do estado, como os alertas.
 const fimDePartida = montarFimDePartida();
 
@@ -181,6 +190,7 @@ function atualizar(s: GameState): void {
   painel.atualizar(s);
   painelGrupo.atualizar(s);
   alertas.atualizar(s);
+  contadorDePaz.atualizar(s);
   fimDePartida.atualizar(s);
   // C9: a partida acabou -> o laco para (e so outro save o reabre)
   acompanharFimDePartida(laco, s);
@@ -200,6 +210,13 @@ const painelDoArquivo = montarArquivo(
     const resultado = arquivo.carregar();
     if (resultado.ok) selecao.selecionar(null);
     painelDoArquivo.mostrar(resultado);
+  },
+  () => {
+    // C-IA-03c: a escaramuca do comeco, no lugar da partida em curso
+    sessao.substituir(criarEscaramuca(SEMENTE));
+    selecao.selecionar(null);
+    selecaoMilitar.limpar();
+    painelDoArquivo.mostrar({ ok: true, acao: 'escaramuca', tick: 0 });
   },
 );
 // O painel abre NO CLIQUE, sem esperar o proximo tick: com o jogo pausado nao

@@ -22,6 +22,9 @@ import { ATALHOS, GESTOS } from '../input/atalhos';
  *  precisa afirmar, para a ponte nao virar copia do GameState. */
 export interface PredioNoDebug {
   readonly tipo: string;
+  /** C-IA-03c — o dono, e a cor da bandeira desenhada. */
+  readonly lado: number;
+  readonly corDoBando: string;
   readonly estado: 'obra' | 'completo';
   readonly gx: number;
   readonly gy: number;

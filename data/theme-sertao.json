@@ -380,6 +380,8 @@
       "titulo": "Partida",
       "salvar": "Guardar",
       "carregar": "Retomar",
+      "escaramuca": "Nova escaramuça",
+      "escaramucaIniciada": "Escaramuça começou: paz até o relógio zerar",
       "salvou": "Partida guardada",
       "carregou": "Partida retomada",
       "semSave": "Nenhuma partida guardada",
@@ -549,6 +551,15 @@
     "estilo": "xilogravura de cordel: alto contraste, preto sobre papel, traço grosso",
     "glossarioObrigatorio": true,
     "_doc": "O mundo é colorido e detalhado; a interface é xilogravura. Os dois registros não competem."
+  },
+  "bandos": {
+    "_doc": "C-IA-03c. A cor de cada LADO na tela, do documento da campanha (pianco-campanha-10-missoes.md: Bando do Moita Seca, lenco vermelho #D64B3F; Bando do Cabo Branco, lenco azul #3F72D6). A chave e o lado da sim em texto (LADO_DO_JOGADOR 0, LADO_DA_IA 1). Pinta o rotulo da unidade e a bandeira do predio: sem arte nova.",
+    "0": { "nome": "Moita Seca", "cor": "#D64B3F" },
+    "1": { "nome": "Cabo Branco", "cor": "#3F72D6" }
+  },
+  "paz": {
+    "_doc": "C-IA-03c. O contador do peacetime (sim/paz.ts), no quadro do minimapa. {tempo} e mm:ss de JOGO restante.",
+    "rotulo": "Paz: {tempo}"
   },
   "grupo": {
     "_doc": "C-COMIDA-01d. O painel do grupo militar escolhido (src/ui/painel-grupo.ts). `condicao` e `esperando` levam {n}. `ninguemComFome` aparece quando o Alimentar volta recusado com `sem-fome` (ninguem do grupo abaixo do limiar do pedido).",

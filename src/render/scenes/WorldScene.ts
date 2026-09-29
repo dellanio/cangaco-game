@@ -31,6 +31,7 @@ import {
 } from '../estagio-obra';
 import type { EstagioDaObra, Fracao, RevelacaoDaObra } from '../estagio-obra';
 import { centroDaVila } from '../../sim/selectors';
+import { corDoBando } from '../cor-do-bando';
 import { tileDeChave } from '../../sim/estradas';
 import type { EstadoDePredio, GameState, Predio } from '../../sim/state';
 import type { PonteDeEstado } from '../ponte';
@@ -93,6 +94,8 @@ const LADO_DA_UNIDADE_EM_TILES = 1 / 5;
 /** F26b — o anel do selecionado e a caixa, por cima do mundo e abaixo do highlight do
  *  tile (1 000 000). Cor de TELA, como as outras do render. */
 const PROFUNDIDADE_DA_SELECAO = 999_999;
+/** C-IA-03c — hex do tema para o numero que o Phaser pinta. */
+const cor = (hex: string): number => Phaser.Display.Color.HexStringToColor(hex).color;
 const COR_DA_SELECAO = 0xf2d16b;
 /** F28b — a pedra da torre na tela: cor e quanto tempo o traco fica. Numeros de TELA. */
 const COR_DA_PEDRA = 0xe8e2d0;
@@ -1295,6 +1298,8 @@ export class WorldScene extends Phaser.Scene {
       if (!predio) continue;
       doEstado[id] = {
         tipo: predio.tipo,
+        lado: predio.lado,
+        corDoBando: corDoBando(predio.lado),
         estado: predio.estado,
         gx: predio.gx,
         gy: predio.gy,
@@ -1486,6 +1491,16 @@ export class WorldScene extends Phaser.Scene {
    *  chao; a F11c divide essa fase em tres estagios derivados do `hp`
    *  (`estagio-obra.ts`): marcacao (nada martelado), madeira (em obra) e
    *  completo (o predio de pe, sem rotulo extra). */
+  /** C-IA-03c — a bandeira do bando no canto do lote: um mastro e um pano na cor do lado
+   *  (`corDoBando`, do tema). Sem ela o predio inimigo e identico ao do jogador. */
+  private desenharBandeira(lado: number, tilePx: number): Phaser.GameObjects.GameObject[] {
+    const altura = tilePx * 0.6;
+    const mastro = this.add.rectangle(4, -altura + 4, 3, altura, cor(temaSertao.paleta.madeira), 1).setOrigin(0, 0);
+    const pano = this.add.rectangle(7, -altura + 4, tilePx * 0.35, tilePx * 0.22, cor(corDoBando(lado)), 1).setOrigin(0, 0);
+    pano.setStrokeStyle(1, cor(temaSertao.paleta.madeira));
+    return [mastro, pano];
+  }
+
   private criarPredio(
     predio: Predio, estagio: EstagioDaObra, revelacao: RevelacaoDaObra | null,
     linhas: readonly LinhaDoMedidor[],
@@ -1523,6 +1538,7 @@ export class WorldScene extends Phaser.Scene {
       ...this.desenharAnimais(animais, quadroAnimal, caixa, tilePx),
       ...this.desenharPilhas(pilhas, caixa, tilePx),
       ...this.desenharMedidor(linhas, larguraPx, alturaPx, canteiro === null || canteiro.nivelada),
+      ...this.desenharBandeira(predio.lado, tilePx),
     ]);
     container.setDepth(depthDeY(canto.y + alturaPx));
     return container;

@@ -12442,6 +12442,65 @@ dos testes:
   (`docs/planos/2026-09-28-F-FEED-fome-militar.md`) **ainda espera aprovação**. Ele destrava
   o C-IA-01 (IA alimentar tropas).
 
+## 2026-09-29 — C-IA-03c (cenário de escaramuça: jogar pela tela) ENTREGUE — o aceite do operador
+
+### Feito
+- **Começar:**
+  - "Nova escaramuça" no painel H (`ui/arquivo.ts`, terceiro botão; recado do tema);
+  - `?escaramuca` na URL (`main.ts`), para o roteiro e para o jogador;
+  - o jogo livre continua sendo o padrão.
+- **Contador da paz:** `ui/contador-de-paz.ts` mostra `Paz: mm:ss` no pé do quadro do
+  minimapa, com `segundosDePazRestantes` (`sim/paz.ts`, arredonda para cima). Some quando a
+  paz acaba e não aparece no jogo livre.
+- **Cor do bando:**
+  - `render/cor-do-bando.ts` lê o tema `bandos`: 0 é Moita Seca `#D64B3F`, 1 é Cabo Branco
+    `#3F72D6`, do documento da campanha;
+  - pinta o fundo do rótulo da unidade e uma bandeira (mastro e pano) no canto do lote de
+    todo prédio;
+  - o debug publica `lado` e `corDoBando` de unidade e prédio.
+- **Roteiro** `tools/shots/C-IA-03c.js`, todo pela tela:
+  - H → Nova escaramuça; caixa nos 18; botão direito em paz não move ninguém;
+  - o relógio corre até o contador sumir;
+  - a câmera vai à vila inimiga;
+  - a cada 100 ticks, botão direito no bodoqueiro inimigo mais perto (depois no cabra), e
+    sem tropa, botão direito em cada prédio;
+  - a vitória aparece na tela.
+  - A primeira ordem depois da paz roda DESPAUSADA com `mouse.down` / 150 ms / `mouse.up`
+    (§8).
+
+### Verificado
+- `npm run shot -- C-IA-03c` → OK, com as 4 capturas abertas com Read:
+  - `C-IA-03c-1-inicio-em-paz.png`: "Paz: 10:00" no minimapa e 18 cabras de rótulo
+    vermelho;
+  - `C-IA-03c-2-vila-inimiga.png`: 9 cabras e 3 bodoqueiros de rótulo AZUL, e bandeira azul
+    no armazém e na escola da IA;
+  - `C-IA-03c-3-combate.png`: a tropa do jogador na vila inimiga, 13 de pé;
+  - `C-IA-03c-4-vitoria.png`: o cartaz "VITÓRIA — o inimigo perdeu o armazém, a escola, o
+    quartel e todas as tropas".
+  - O log: paz até o tick 6020 (o relógio corre em blocos de 500), vitória no tick 9627, 36
+    rodadas, 12 de 18 vivos.
+- `tests/C-IA-03c-jogar-pela-tela.test.ts`, 3 testes: o texto do contador (10:00,
+  arredondando para cima, some), a cor dos bandos com a recusa de lado sem cor, e o recado.
+- **Não-regressão**, só código de saída: os roteiros F-D4, F26b, F20c, F16b, F23b, F34,
+  UI-barra-a e F17g passaram.
+- `npm run verify` verde: 164 arquivos, 1857 testes.
+
+### Visto nas capturas, fica registrado
+- **O sprite do cabra inimigo é o mesmo do jogador, lenço vermelho inclusive:** só o rótulo
+  diz de quem é. O sprite por bando é da sessão de arte (CLAUDE.md §9).
+- **A tropa do jogador passa fome e a da IA não** (andaime L8): 66% no fim da paz e 46% na
+  vitória. Com 10 min de paz, um terço da condição vai embora antes da primeira luta.
+- **O roteiro precisou de duas voltas:**
+  - a caixa pegou 0 porque a câmera centrou num cabra da ponta e a caixa saiu da janela;
+  - o laço saiu na primeira rodada porque eu testava o `h2` (sempre visível) em vez do
+    `#fim-de-partida` escondido.
+
+### Decisões conservadoras (PARA REVISÃO)
+- **A bandeira vai em TODO prédio, do jogador também**, e o rótulo do jogador ficou vermelho
+  (antes marrom): a identidade é dos dois bandos.
+- **Começar pelo painel H**, e não por uma tela de modo: o cenário é provisório, e o menu de
+  partida é do sistema de fases.
+
 ## 2026-09-29 — C-IA-03b (cenário de escaramuça: peacetime e tropas) ENTREGUE; BUG-P corrigido
 
 ### Decisões do operador (2026-09-29)

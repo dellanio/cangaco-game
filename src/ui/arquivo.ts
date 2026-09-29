@@ -15,6 +15,8 @@ import type { ResultadoDoArquivo } from '../arquivo-da-partida';
 export interface RotulosDoArquivo {
   readonly salvou: string;
   readonly carregou: string;
+  /** C-IA-03c — o recado de "Nova escaramuca". */
+  readonly escaramucaIniciada: string;
   readonly semSave: string;
   /** Com `{detalhe}`, trocado pelo motivo que `carregar` escreveu. */
   readonly recusado: string;
@@ -23,7 +25,10 @@ export interface RotulosDoArquivo {
 
 /** O recado de um resultado. Pura: e o que o teste headless prova. */
 export function textoDoRecado(resultado: ResultadoDoArquivo, rotulos: RotulosDoArquivo): string {
-  if (resultado.ok) return resultado.acao === 'salvou' ? rotulos.salvou : rotulos.carregou;
+  if (resultado.ok) {
+    if (resultado.acao === 'escaramuca') return rotulos.escaramucaIniciada;
+    return resultado.acao === 'salvou' ? rotulos.salvou : rotulos.carregou;
+  }
   const molde = resultado.causa === 'sem-save' ? rotulos.semSave : rotulos[resultado.causa];
   return molde.replace('{detalhe}', resultado.detalhe);
 }
@@ -34,7 +39,7 @@ export interface PainelDoArquivo {
 
 /** Monta a secao em `#ajuda`, uma vez, logo abaixo do titulo. Nasce DEPOIS da
  *  ajuda (`montarAjuda`), que tambem monta o DOM uma vez e nunca o recria. */
-export function montarArquivo(aoSalvar: () => void, aoCarregar: () => void): PainelDoArquivo {
+export function montarArquivo(aoSalvar: () => void, aoCarregar: () => void, aoEscaramuca?: () => void): PainelDoArquivo {
   const ajuda = document.getElementById('ajuda');
   if (!ajuda) throw new Error('arquivo: #ajuda nao existe no index.html');
   const rotulos = temaSertao.hud.arquivo;
@@ -46,7 +51,7 @@ export function montarArquivo(aoSalvar: () => void, aoCarregar: () => void): Pai
   const botoes = document.createElement('div');
   botoes.className = 'botoes';
 
-  function botao(acao: 'salvar' | 'carregar', rotulo: string, aoClicar: () => void): HTMLButtonElement {
+  function botao(acao: 'salvar' | 'carregar' | 'escaramuca', rotulo: string, aoClicar: () => void): HTMLButtonElement {
     const b = document.createElement('button');
     b.type = 'button';
     b.dataset.acao = acao;
@@ -66,7 +71,10 @@ export function montarArquivo(aoSalvar: () => void, aoCarregar: () => void): Pai
   recado.setAttribute('role', 'status');
   recado.hidden = true;
 
-  botoes.append(botao('salvar', rotulos.salvar, aoSalvar), botao('carregar', rotulos.carregar, aoCarregar), recado);
+  botoes.append(botao('salvar', rotulos.salvar, aoSalvar), botao('carregar', rotulos.carregar, aoCarregar));
+  // C-IA-03c — comecar a escaramuca (cenario provisorio: vira uma fase no sistema de fases)
+  if (aoEscaramuca !== undefined) botoes.append(botao('escaramuca', rotulos.escaramuca, aoEscaramuca));
+  botoes.append(recado);
   raiz.append(titulo, botoes);
   ajuda.insertBefore(raiz, ajuda.querySelector('h2')?.nextSibling ?? null);
 

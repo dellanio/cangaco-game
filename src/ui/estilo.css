@@ -187,6 +187,13 @@ button[aria-disabled="true"] {
   font: 13px/1.2 var(--fonte-display); letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap;
 }
 #minimapa .aviso-tempo[hidden] { display: none; }
+/* C-IA-03c — o contador do peacetime: no pe do minimapa, para nao disputar com o carimbo */
+#minimapa .contador-de-paz {
+  position: absolute; left: 50%; bottom: 6px; transform: translateX(calc(-50% - 14px));
+  padding: 2px 8px; background: var(--papel); color: var(--tinta);
+  border: 2px solid var(--tinta); font: 12px/1.2 var(--fonte-display); white-space: nowrap;
+}
+#minimapa .contador-de-paz[hidden] { display: none; }
 
 /* 4. os recursos: uma tabua escura por recurso, dois rebites cada */
 #hud { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
