@@ -14537,3 +14537,39 @@ para o couro; o aceite é o do plano.
 **O que muda na partida:** nada de regra. O guarda afirma que Malhada → Curtume → Casa do
 Gibão já entrega gibão e escudo. Até a F24c, a Casa do Gibão continua fazendo as duas peças
 sem encomenda, e sem madeira não faz gibão.
+
+## 2026-09-29 — As quatro hipóteses do avaliador (C9b, o quadro para no fim)
+
+Plano: `docs/planos/2026-09-29-hipoteses-do-avaliador.md`. Fila, item 10.
+
+**Verificado:**
+- **BUG-P (o alvo cercado), a ordem perdida depois de revidar:** é o que o KaM faz. No clone
+  731a8a4, `FightEnemy` descarta a tarefa de atacar a casa quando o inimigo é guerreiro
+  (`KM_UnitWarrior.pas:740-748`), e `FindEnemy` só interrompe o ataque à casa por guerreiro
+  (`:716-717`). O comentário em `src/sim/systems/combate.ts` já cita isso. Não é defeito.
+- **C9 (o fim da partida para o jogo), ticks a mais no quadro:** CONFIRMADA. O
+  `encerrar()` chega de dentro do passo (`sessao.passo()` avisa `atualizar`, que chama
+  `acompanharFimDePartida`), mas o `while` de `tique` não conferia `pausado` de novo: o
+  quadro seguia até 10 passos. `avancar(n)` tinha o mesmo furo. Os testes novos (d), (e) e
+  (f) falharam antes do conserto (10 passos em vez de 2) e passam depois. `partida` é gravada
+  uma vez só, então o resultado não mudava; o que andava eram até 9 ticks depois do fim.
+- **C3 (o quartel), recrutas empilhados:** já coberta. `tests/C3-quartel.test.ts`, caso
+  "(b) demolir o quartel com 2 recrutas", afirma "sem empilhar" desde a D-MOVIMENTO-01d
+  (JobBoard e porta por estado da chave).
+- **Recusa em paz sem aviso na tela:** já coberta pela C-TELA-01 (a mensagem da ordem
+  recusada), `passes: true`, testada pelo `step` na escaramuca.
+- `npm run verify` verde (195 arquivos, 2014 testes). Roteiro `F34` (o fim na tela) OK como
+  não-regressão, pelo código de saída.
+
+**Feito:** `src/laco.ts`, duas condições (`!pausado` no `while` de `tique`, `!encerrado` no
+`for` de `avancar`). A linha que já descartava o acumulado além da fração de tick cobre o
+corte no meio: retomar não despeja o resto do quadro velho (aceite f).
+
+**PARA REVISÃO:**
+- Sigla `C9b` e chave `C9b-quadro-para-no-fim`, sub-item da C9 (sigla antiga, fechada antes
+  de 2026-09-28).
+- A pausa pedida de dentro do passo também corta o quadro. Hoje só o fim da partida faz
+  isso; o comportamento é o mesmo do `retomar`, que já descartava o tempo parado.
+
+**O que muda na partida:** no quadro em que a partida acaba, o mundo congela no tick do fim.
+Antes, soldados e serfs ainda davam até 9 passos, a 3x principalmente.

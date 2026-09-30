@@ -6140,11 +6140,16 @@ vai para o PROGRESS como PARA REVISÃO, e o trabalho segue.
    2026-09-29. ENTREGUE (03a regra, 03b painel).
 9. F24, o que resta: a cadeia de couro. ENTREGUE como F24b (guarda); F24c (a Casa do Gibão
    por encomenda) é proposta e espera o operador.
-10. As quatro hipóteses do avaliador:
-   - BUG-P perde a ordem depois de revidar;
-   - a C9 roda ticks a mais;
-   - recrutas empilhados;
-   - a tela não avisa a recusa em paz.
+10. As quatro hipóteses do avaliador: CONFERIDAS (2026-09-29; plano em
+    `docs/planos/2026-09-29-hipoteses-do-avaliador.md`).
+   - BUG-P perde a ordem depois de revidar: fiel ao KaM (`KM_UnitWarrior.pas:716-717,
+     740-748`); sem código.
+   - a C9 roda ticks a mais: CONFIRMADA e consertada em `src/laco.ts` (o quadro e o
+     `avancar` param no passo que encerra ou pausa), aceites (d)-(f) em
+     `tests/C9-fim-para-o-jogo.test.ts`.
+   - recrutas empilhados: já coberta pela D-MOVIMENTO-01c/01d (a porta e o empurrão).
+   - a tela não avisa a recusa em paz: já coberta pela C-TELA-01 (a mensagem da ordem
+     recusada).
 11. VARREDURA-KAM, as frentes que faltam.
 
 ### F35 — Feira: trocar mercadoria (sim + ui)

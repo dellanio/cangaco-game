@@ -94,12 +94,13 @@ export function criarLaco(config: ConfigDoLaco): Laco {
 
       acumulado += decorrido * (velocidades[indice] as number);
       let rodados = 0;
-      while (acumulado >= tickMs && rodados < MAX_PASSOS_POR_QUADRO) {
+      // C9: o fim (ou a pausa) chega DE DENTRO do passo, pelo ouvinte da sessao; o quadro para ali
+      while (acumulado >= tickMs && rodados < MAX_PASSOS_POR_QUADRO && !pausado) {
         passo();
         acumulado -= tickMs;
         rodados += 1;
       }
-      // estourou o teto: descarta o que sobrou alem da fracao de tick
+      // estourou o teto, ou pausou no meio: descarta o que sobrou alem da fracao de tick
       if (acumulado >= tickMs) acumulado %= tickMs;
       return rodados;
     },
@@ -136,7 +137,7 @@ export function criarLaco(config: ConfigDoLaco): Laco {
       if (encerrado) return; // C9: nem o roteiro faz andar a partida que acabou
       if (!pausado) throw new Error('avancar: o timer esta rodando; so se avanca a mao com o jogo pausado');
       if (!Number.isInteger(passos) || passos < 0) throw new Error(`avancar: '${passos}' nao e um inteiro >= 0`);
-      for (let i = 0; i < passos; i++) passo();
+      for (let i = 0; i < passos && !encerrado; i++) passo();
     },
     encerrar() {
       encerrado = true;

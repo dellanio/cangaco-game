@@ -5,6 +5,9 @@
  *      reaberto, volta a rodar depois de retomar;
  *  (b) `acompanharFimDePartida` encerra no estado com fim e reabre no estado sem fim.
  * O (c), a tela, e o roteiro `tools/shots/F34.js`.
+ *  (d)/(e)/(f) — hipotese do avaliador, confirmada (plano em
+ *      docs/planos/2026-09-29-hipoteses-do-avaliador.md): o fim chega DE DENTRO do passo (a
+ *      sessao avisa os ouvintes a cada passo), e o quadro nao pode rodar os passos que sobram.
  */
 import { describe, expect, it } from 'vitest';
 import { acompanharFimDePartida, criarLaco } from '../src/laco';
@@ -40,6 +43,44 @@ describe('C9 — o fim da partida para o laco', () => {
     l.tique(6000);
     l.tique(6300);
     expect(passos()).toBe(5);
+  });
+
+  /** Laco cujo passo `n` chama `efeito` (o ouvinte da sessao, que encerra ou pausa). */
+  function lacoQueReageNoPasso(n: number, efeito: (l: ReturnType<typeof criarLaco>) => void) {
+    let rodados = 0;
+    const ref: { l?: ReturnType<typeof criarLaco> } = {};
+    const l = criarLaco({
+      passo: () => { rodados += 1; if (rodados === n && ref.l !== undefined) efeito(ref.l); },
+      tickMs: 100, velocidades: [1, 2, 3], velocidadePadrao: 1,
+    });
+    ref.l = l;
+    return { l, passos: () => rodados };
+  }
+
+  it('(d) o fim no 2o passo de um quadro de 1 s: o quadro para ali', () => {
+    const { l, passos } = lacoQueReageNoPasso(2, (x) => acompanharFimDePartida(x, { partida: { fim: 'vitoria', tick: 2 } }));
+    l.tique(0);
+    expect(l.tique(1000)).toBe(2);
+    expect([passos(), l.encerrado]).toEqual([2, true]);
+    l.tique(2000);
+    expect(passos()).toBe(2);
+  });
+
+  it('(e) o fim no 2o passo de um avancar(5): param os 3 que sobram', () => {
+    const { l, passos } = lacoQueReageNoPasso(2, (x) => x.encerrar());
+    l.pausar();
+    l.avancar(5);
+    expect(passos()).toBe(2);
+  });
+
+  it('(f) pausa pedida de dentro do passo corta o quadro, e retomar nao despeja o resto', () => {
+    const { l, passos } = lacoQueReageNoPasso(2, (x) => x.pausar());
+    l.tique(0);
+    expect(l.tique(1000)).toBe(2);
+    l.retomar();
+    l.tique(1100);
+    l.tique(1200);
+    expect(passos()).toBeLessThanOrEqual(3);
   });
 
   it('(b) o helper encerra no estado com fim e reabre no estado sem fim', () => {
