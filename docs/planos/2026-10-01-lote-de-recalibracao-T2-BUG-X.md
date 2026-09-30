@@ -81,3 +81,14 @@ A regra do §12 vale: juntar, girar tudo junto, rodar o cenário longo **uma vez
 - Qualquer mecanismo novo. O lote gira número; mecanismo novo volta para o BUILD_PLAN.
 - O `TETO_DE_NOS` do T2 (condição b do merge). É guarda de desempenho do A*, não de
   balanceamento, e faz parte do merge, não do lote.
+
+## Medida de 2026-09-30 (leva 2, item 8): Tarefas 1 e 2 rodadas; nada girado
+
+Contra a base original `faf8590`, nas quatro árvores (base, T1, + BUG-Y, main com o T2), em 3
+sementes idênticas. A tabela completa e a perda acumulada estão no `PROGRESS.md` (2026-09-30,
+leva 2, item 8). Resumo:
+- a perda acumulada de tora e de farinha é zero em 16k, 20k e 30k;
+- os testes de calibração passam nas quatro árvores, então a Tarefa 2 não tem reprovado;
+- a parada da serraria (esperando + saída cheia) sobe +3,7 % em 20 000, e a produção não cai;
+- nenhuma entrada pede giro. As candidatas da Tarefa 3 (`woodcutters`, a pedra inicial,
+  `farm.sai.corn`) continuam sem motivo medido.

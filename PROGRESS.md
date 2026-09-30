@@ -15878,3 +15878,63 @@ commit próprio antes do código (`b066ab2`). O bug sai do `BUGS.md` neste commi
 - Na captura, só o "Carregador" mostra nome; os outros civis com sprite não mostram rótulo
   visível. A captura antiga já era assim. Não medi se é o desencontro que os empurra para fora do
   quadro ou outra regra.
+
+## 2026-09-30 — Leva 2, item 8: lote de recalibração (T2 + BUG-X + BUG-Y) medido contra a base original `faf8590`; nenhum número mudou
+
+Pedido: rodar a medida e trazer medido × esperado × proposta, comparando com a base ORIGINAL
+`faf8590` para ver a perda ACUMULADA de tora e farinha. **Nenhum `data/*.json` foi tocado.**
+
+### Verificado (sonda `zz-` apagada; rodada no diretório principal, uma árvore por vez, voltando à `main`)
+- Quatro árvores de sim, na ordem em que entraram: `faf8590` (base), `2183da5` (T1, classes de
+  importância), `8929ba3` (+ BUG-Y, viagem inútil para comer) e a `main` `e2d5ab1` (+ T2, oferta ×
+  demanda). O BUG-X (especialista dentro) é só tela: `git log faf8590..HEAD -- src/sim data` não
+  tem commit dele, e contribui com zero.
+- **As 3 sementes (20260920, 21 e 22) dão estado idêntico nas quatro árvores**, porque o RNG só é
+  consumido em combate. A coluna "medido" vale para as três.
+- Os testes de calibração (F15a, F15b, F17b, F19, F21, F-CAL-a e F-CAL-b) passam nas quatro
+  árvores, 34/34 em cada. A Tarefa 2 do plano do lote não tem reprovado para listar.
+- **Perda acumulada contra a `faf8590`, vila da calibração:**
+
+```text
+janela   tora (base → T1 → +BUG-Y → main)   farinha                acumulado main − base
+16 000   41 → 41 → 41 → 41                    43 → 43 → 44 → 44      tora 0, farinha +1
+20 000   51 → 51 → 50 → 51                    59 → 59 → 58 → 59      tora 0, farinha 0
+30 000   78 → 78 → 78 → 78                    96 → 96 → 96 → 96      tora 0, farinha 0
+(pão: +2 nas três janelas; tábua +2 em 30 000; pedra e milho iguais)
+```
+
+  - O −1 do BUG-Y em 20 000 (tora 50, farinha 58) **é real e é só dele**: o T1 não mexe nesses dois.
+  - O T2 devolveu os dois. **A perda acumulada da main contra a base original é zero** nas três
+    janelas, e nenhuma cadeia termina abaixo da base.
+
+```text
+linha      entrada (BALANCE_LOG)            esperado (o que a entrada diz)       medido faf8590 → T1 → +BUG-Y → main            proposta
+620        arranque é transporte            1ª pedra 207, tronco 628, tábua 968  F15: pedra 630 → 630 → 630 → 630;              nenhum giro; marcar premissa morta:
+                                                                                 tábua 1081 → 1081 → 1081 → 1077;               o tronco não passa mais pelo armazém
+                                                                                 tronco no armazém 740 → 740 → 740 → nunca
+650        abertura é reposição de pedra    armazém a 3 pedras no tick 917       não remedido nesta leva (1ª pedra igual, 630)  nenhuma
+753        metalurgia                       minério empilha no armazém           F21: 1º ouro fundido 1076 → 1076 → 1076 → 1002; nenhuma; o T2 adianta 74 ticks
+                                                                                 ouro no armazém 1110 → … → 1046; escola 233 → … → 204
+988/1009   folga de pedra, pontas           ticks 1319/2129/2563                 NÃO MEDIDO (nenhum teste grava as pontas)      remedir com sonda própria no lote
+1134/1150  lote 2, madeira 0,71/min         escada consertada                    vila 16k/20k/30k: tora 41/51/78 nas quatro;    nenhuma
+                                                                                 tábua 78/98/152 → 78/98/152 → 78/98/154 → 78/98/154
+1223       farm.sai.corn 2,0 (1:1:1)        entrada do moinho não enche          F-CAL cornMaxAte24k 2 nas quatro;              nenhuma
+                                                                                 F19 milho entregue 12k 5 → 5 → 5 → 4
+1245       lote 1, cadeia de comida         F-CAL fechado sem fome               F-CAL fechado 7164 → 7177 → 7177 → 6768;        nenhuma; a vila fecha 396 ticks antes
+                                                                                 pão no armazém 100 → 98 → 98 → 99
+1290       1:1:1, moinho 26,2 %,            ociosos esperando insumo             F19 ocioso: moinho 0,170 → … → 0,167;          marcar premissa morta: os 26,2/28,8
+           padaria 28,8 %                                                        padaria 0,203 → … → 0,193                      são de antes da F-T3; hoje ~17/19 %
+(nova)     parada da serraria               —                                    20k esperando 2705 → 3367 → 3296 → 3817;        nenhum giro (a produção não cai);
+                                                                                 saída cheia 976 → 328 → 566 → 0;               a tora limita a serraria
+                                                                                 soma 3681 → 3695 → 3862 → 3817 (+3,7 %)
+(nova)     parada da padaria                —                                    20k esperando+cheia 607 → 497 → 496 → 485       nenhuma
+(nova)     viagem de comer sem comer        —                                    20k 13 → 13 → 0 → 0; refeições 37 nas quatro   nenhuma (BUG-Y fechado)
+(nova)     inn.comensaisSimultaneos 8       limita os comensais                  sem efeito: a garantia do BUG-Y é ≤ 5          (A) tirar o campo ou (B) duração da
+                                                                                 (KaM: 6 assentos, 5 por comida)                refeição no dado (BALANCE_LOG 2026-09-30)
+```
+
+### Espera decisão do operador
+- As duas marcas de premissa morta (linhas 620 e 1290): escrever agora no BALANCE_LOG, ou só
+  quando o lote abrir, como diz o plano do lote.
+- `inn.comensaisSimultaneos`: (A) ou (B), item 4 desta leva.
+- As pontas da folga de pedra (988/1009) continuam sem medida.
