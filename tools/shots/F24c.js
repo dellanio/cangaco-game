@@ -118,6 +118,15 @@ async function roteiro(ctx) {
   afirmar(escudo !== undefined && escudo.falta + (escudo.emCurso ? 1 : 0) === DEZ,
     `o escudo deveria estar pedido dez vezes (falta 10, ou 9 e em curso): ${JSON.stringify(escudo)}`);
   afirmar(gibao !== undefined && gibao.falta === 0 && !gibao.emCurso, `o gibao continua sem encomenda: ${JSON.stringify(gibao)}`);
+  // limpeza do avaliador (2026-10-01): o nome da mercadoria cabe numa linha, mesmo com a
+  // marca "em curso" ao lado. Medido pela caixa do texto, nao pelo olho.
+  const alturas = await page.evaluate(() => [...window.document.querySelectorAll('#painel-predio .linha.encomenda-saida .rotulo')].map((r) => {
+    const linha = Number.parseFloat(window.getComputedStyle(r).lineHeight) || Number.parseFloat(window.getComputedStyle(r).fontSize) * 1.2;
+    const l = r.closest('.linha');
+    return { texto: r.textContent, altura: r.getBoundingClientRect().height, linha, transborda: l.scrollWidth > l.clientWidth, excesso: l.scrollWidth - l.clientWidth };
+  }));
+  for (const a of alturas) afirmar(a.altura < a.linha * 1.5, `o rotulo "${a.texto}" quebrou linha: ${a.altura}px contra linha de ${a.linha}px`);
+  for (const a of alturas) afirmar(!a.transborda, `a linha de "${a.texto}" transborda o painel em ${a.excesso}px`);
   await capturar('escudo-dez');
   console.log(`F24c: ajuda ${JSON.stringify(naAjuda)}, escudo ${JSON.stringify(escudo)}`);
 }

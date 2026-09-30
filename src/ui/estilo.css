@@ -609,8 +609,11 @@ body:not([data-corpo="opcoes"]) #opcoes { display: none; }
 /* D-PRODUCAO-03b — a encomenda da oficina: "− falta +" e a marca da peca em curso */
 #painel-predio .encomenda { display: flex; flex-direction: column; gap: 2px; }
 #painel-predio .linha.encomenda-saida { align-items: center; }
-#painel-predio .linha.encomenda-saida .valor { display: inline-flex; align-items: center; gap: 4px; }
+#painel-predio .linha.encomenda-saida .valor { display: inline-flex; align-items: center; gap: 2px; }
 #painel-predio .linha.encomenda-saida .falta { min-width: 28px; text-align: center; }
+/* o nome da mercadoria nao quebra ("Chapeu de aba" com a marca "em curso" ao lado); o gap
+   de 2px no .valor acima e o que faz a linha caber no painel sem transbordar */
+#painel-predio .linha.encomenda-saida .rotulo { white-space: nowrap; }
 #painel-predio .linha.encomenda-saida button { padding: 1px 6px; }
 #painel-predio .linha.encomenda-saida button:disabled { opacity: 0.4; }
 #painel-predio .linha.encomenda-saida .em-curso { font-style: italic; opacity: 0.8; }

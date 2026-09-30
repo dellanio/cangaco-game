@@ -15012,3 +15012,11 @@ Fecha as notas LOTE3-b1/b2 da F-VIVO-b. O BUG-X já parava o caso 2 com o cantei
 
 ### PARA REVISÃO
 - A sigla segue o nome que o operador deu (F-VIVO-e/f), não uma `<fase>-<MÓDULO>-<nn>` nova.
+
+## 2026-10-01 — Limpeza do avaliador (decisões da manhã, item 6): feita
+
+### Verificado
+- **BUG-U (quartel sem estrada), captura sem o Quartel.** `tools/shots/BUG-U.js` agora centra a câmera no Quartel (o tamanho vem de `data/buildings.json`) e afirma, pela câmera, que o retângulo dele cabe na vista. `screenshots/BUG-U-1-aviso.png` aberta: o Quartel no centro, o aviso "Sem estrada até o armazém · 1" no HUD.
+- **F24c (casa do gibão por encomenda), "Chapéu de aba" quebrando em 2 linhas.** O roteiro mede antes de corrigir: a caixa do rótulo tinha 35 px contra uma linha de 17,5 px, e o roteiro reprovou. Com `white-space: nowrap` o rótulo ficou numa linha, mas a medida nova de transbordo acusou 2 px. O `gap` do `.valor` da linha da encomenda passou de 4 para 2 px. As duas medidas passam, e `screenshots/F24c-2-escudo-dez.png` aberta mostra "Chapéu de aba − 9 + fazendo" numa linha, dentro do painel.
+- O achado de documentação do BUG-X (`WorldScene.ts:1441-1453`) já estava corrigido no plano. O do BUG-U no `BUGS.md` (refs velhas) fica para o fechamento do BUG-U, preso ao T2.
+- `npm run verify` verde. Não-regressão pelo código de saída: BUG-U, F24c, C-TELA-05 e F13b deram OK.
