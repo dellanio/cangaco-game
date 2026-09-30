@@ -14710,11 +14710,29 @@ chave é da D-TRANSPORTE-03 inteira e fecha no T2.
   (diagnóstico no tick 8000: serfs todos em pedra→armazém, `reclamar` da arma dá
   `unidade-ocupada`). A multa do armazém (T2) resolve isso, e puxá-la para cá seria adiantar
   o T2. O T1 afirma o 15/15 sem carga; o 15/15 com carga virou nota do T2 no BUILD_PLAN.
-- **`quartelAceitaArma` pede estrada e vaga; o KaM não pede nenhuma das duas** (o quartel
-  dele não tem teto). Sem elas, a arma ficaria presa na oficina com o quartel cheio ou
-  isolado, e a produção pararia.
+- **`quartelAceitaArma` pede estrada e vaga; o FILTRO de preferência do KaM não pede nenhuma
+  das duas.** Corrigido em 2026-09-30, a pedido do operador: a frase original dizia "o KaM não
+  pede", e contradizia o BUG-U. Lido no fonte (731a8a4):
+  - A ENTREGA casa→casa exige estrada (`KM_HandLogistics.pas:1218-1221`, `tpWalkRoad`), e isso
+    inclui oficina→quartel. A causa A do BUG-U continua igual à do KaM.
+  - O filtro que tira a arma do armazém (`HL:1238-1258`) olha só se existe quartel do dono com
+    `dmDelivery` e sem `NotAcceptFlag` para aquela arma. Não olha estrada nem quantidade.
+    No KaM, quartel isolado segura a arma na oficina para sempre; aqui ela vai ao armazém.
+  - O quartel do KaM não tem vaga: a demanda é `dtAlways` (`KM_Houses.pas:659`). O +10000 de
+    `HL:1631-1637` é multa, não teto, e só vale para armazém→quartel com mais de 50 daquela
+    arma no quartel. O teto de 5 por arma é nosso (C3, decisão do operador); o equivalente
+    do KaM a "quartel cheio" é o jogador desligar a arma (`NotAcceptFlag`).
 - **Excedente na classe comum:** decisão do operador, divergência do KaM (lá não há excedente
   automático).
+
+- **Achado da arma reservada:** o aceite 2 (`a.saidaDeArmaComQuartel` = 0) reprovava antes da
+  correção (22), mas de forma indireta, pelo ritmo da corrida. Teste direto acrescentado, pelo
+  `step`: oficina com 1 lança reservada para o quartel, que tem vaga de 1. Passa com a correção
+  e reprova sem ela (nasce a `saida-cheia` `t15`); revertido e conferido nesta sessão.
+- **Decisão do operador (2026-09-30):** o desvio do aceite 1 foi aceito com condição: o T1 é
+  estado intermediário, não entregável. O T2 fecha com dois aceites bloqueantes: 15/15 armas
+  na corrida B com carga; ticks de produtor parado ≤ 13 184 e padaria ≤ 696 (a base). Se ficar
+  acima, trazer causa isolada, não hipótese.
 
 **Hipótese (não medida):**
 - A subida do tempo parado vem da fusão parada/baixa: a baixa, que antes passava na frente da
@@ -14723,6 +14741,3 @@ chave é da D-TRANSPORTE-03 inteira e fecha no T2.
   armazém do T2 também pesa sobre o insumo que sai do armazém; se isso compensa, só a medida
   do T2 diz.
 
-### Perguntas em aberto
-- **D-TRANSPORTE-03 T1:** o desvio do aceite 1 (15/15 afirmado sem carga, com carga no T2)
-  serve, ou o T2 não começa antes de outra forma?

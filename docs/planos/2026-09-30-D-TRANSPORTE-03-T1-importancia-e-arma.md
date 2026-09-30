@@ -41,8 +41,11 @@ No T1 o insumo continua saindo só do armazém, e a saída das casas continua in
 ## Tarefa 2 — arma prefere o quartel
 
 KaM, `HL:1238-1258`: arma não vai ao armazém enquanto algum quartel do dono tem
-`dmDelivery` e não bloqueou aquela arma. O quartel do KaM não tem teto (`dtAlways`); o nosso
-tem (C3, decisão do operador). Interpretação conservadora, registrada no PROGRESS:
+`dmDelivery` e não bloqueou aquela arma. O filtro não olha estrada nem quantidade; a entrega em
+si (oficina→quartel) exige estrada, como toda casa→casa (`HL:1218-1221`). O quartel do KaM não
+tem teto (`dtAlways`, `KM_Houses.pas:659`; o +10000 de `HL:1631-1637` é multa só para
+armazém→quartel acima de 50); o nosso tem (C3, decisão do operador). Interpretação
+conservadora, registrada no PROGRESS:
 
 - `quartelAceitaArma(state, origem, mercadoria)`: existe quartel completo do lado da origem,
   ligado a ela por estrada (modo de `arma-para-quartel`), com vaga para aquela arma (demanda

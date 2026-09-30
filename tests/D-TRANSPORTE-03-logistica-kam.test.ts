@@ -20,7 +20,7 @@ import type { GameState, Predio, PredioCompleto, TipoComOrigem } from '../src/si
 import { step } from '../src/sim/tick';
 import {
   criarTarefa, criarTarefaComidaParaTropa, criarTarefaDeArma, criarTarefaDeComida, criarTarefaDeInsumo,
-  criarTarefaDeOuro, criarTarefaDePedraParaCanteiro, criarTarefaParaArmazem, importanciaDoTipo, tarefasEmOrdem,
+  criarTarefaDeOuro, criarTarefaDePedraParaCanteiro, criarTarefaParaArmazem, importanciaDoTipo, reclamar, tarefasEmOrdem, TIPO_QUE_CARREGA,
 } from '../src/sim/jobs';
 import { canPlace } from '../src/sim/placement';
 import { buscarCaminho } from '../src/sim/pathfinding';
@@ -75,12 +75,14 @@ interface Corrida {
  * pedras repostas a cada 200 ticks na saida da escola (a carga de `saida-cheia` da corrida B).
  * Cada recruta com machado no quartel vira `militia` (o `TrainSoldier` do jogador).
  */
-function correr(opts: { readonly quartel: boolean; readonly carga: boolean; readonly ticks: number; readonly invariantes: boolean }): Corrida {
+/** A vila da corrida: as plantas cabendo a leste da escola, na rua da abertura estendida ate a
+ *  ultima (ligadas por estrada ao armazem). */
+function vilaDaOficina(quartel: boolean): { readonly s: GameState; readonly plantas: readonly { tipo: string; gx: number; gy: number }[]; readonly escola: string } {
   const base = createInitialState(1);
   const des: GameState = { ...base, tiposJaConstruidos: [...new Set([...base.tiposJaConstruidos, 'sawmill'])] };
   const ab = aberturaDaFaseA(des);
   const escola = escolaDoCenario(des);
-  const tipos = opts.quartel ? ['weapons_workshop', 'barracks'] : ['weapons_workshop'];
+  const tipos = quartel ? ['weapons_workshop', 'barracks'] : ['weapons_workshop'];
   let x = escola.gx + tam(escola.tipo).largura;
   const plantas: { tipo: string; gx: number; gy: number }[] = [];
   for (const tipo of tipos) {
@@ -101,7 +103,14 @@ function correr(opts: { readonly quartel: boolean; readonly carga: boolean; read
     const t = { gx, gy: ab.yRua };
     if (canPlaceRoad(des, [t]).ok) ext.push(t);
   }
-  let s = comEstradas(des, [...ab.rua, ...ext]);
+  return { s: comEstradas(des, [...ab.rua, ...ext]), plantas, escola: ab.escola };
+}
+
+function correr(opts: { readonly quartel: boolean; readonly carga: boolean; readonly ticks: number; readonly invariantes: boolean }): Corrida {
+  const vila = vilaDaOficina(opts.quartel);
+  const { plantas } = vila;
+  const ab = { escola: vila.escola };
+  let s = vila.s;
   const inicio: Command[] = [
     ...plantas.map((p) => ({ type: 'PlaceBlueprint', buildingId: p.tipo, gx: p.gx, gy: p.gy }) as Command),
     pedir(ab.escola, trabalhadorDoTipo('weapons_workshop') ?? ''),
@@ -289,6 +298,37 @@ function escolhaDoSerfNa7b(dados: GameData): { comInsumo: boolean; tipo: string 
   }
   return { comInsumo, tipo: doSerf?.tipo };
 }
+
+describe('D-TRANSPORTE-03 T1 — a saida da oficina e origem de dois tipos', () => {
+  it('a arma ja reservada para o quartel nao se oferece de novo ao armazem (pelo step)', () => {
+    // O quartel tem vaga de 1 lanca (4 de 5), e essa vaga ja esta reservada pela
+    // `arma-para-quartel` que tirou a unica lanca da saida: `quartelAceitaArma` da false.
+    // Contar a oferta pela saida bruta criava uma `saida-cheia` para a mesma lanca (antes da
+    // correcao: 22 na corrida sem carga, uma por tick, desfeitas pelo saneamento).
+    const vila = vilaDaOficina(true);
+    let s = vila.s;
+    const [pOficina, pQuartel] = vila.plantas as [{ tipo: string; gx: number; gy: number }, { tipo: string; gx: number; gy: number }];
+    const obra = (id: string, p: { tipo: string; gx: number; gy: number }): PredioCompleto =>
+      completarObra({ lado: LADO_DO_JOGADOR, id, tipo: p.tipo, gx: p.gx, gy: p.gy, estado: 'obra', hp: 0, obra: { faltam: {}, nivelamento: 0 } }, gameData);
+    const oficina = obra('oficina', pOficina);
+    const quartel = obra('quartel', pQuartel);
+    s = comPredio(s, { ...oficina, estoque: { entrada: {}, saida: { lance: 1 } } });
+    s = comPredio(s, { ...quartel, estoque: { entrada: { lance: COTA - 1 }, saida: {} } });
+    const criada = criarTarefaDeArma(s, { mercadoria: 'lance', origem: 'oficina', destino: 'quartel' });
+    s = criada.state;
+    const serf = s.unidades.ordem.find((id) => s.unidades.porId[id]?.tipo === TIPO_QUE_CARREGA) as string;
+    const claim = reclamar(s, criada.id, serf, gameData);
+    if (!claim.ok) throw new Error(`fixture: claim recusado (${claim.motivo})`);
+    s = claim.state;
+
+    const depois = step(s, [], gameData);
+    const tarefas = depois.jobs.tarefas.ordem.map((id) => depois.jobs.tarefas.porId[id]);
+    // a reserva continua (o serf ainda nao chegou) ...
+    expect(depois.jobs.tarefas.porId[criada.id]?.estado).toBe('reclamada');
+    // ... e nenhuma saida-cheia de lanca nasceu na oficina
+    expect(tarefas.filter((t) => t?.tipo === 'saida-cheia-para-armazem' && t.origem === 'oficina')).toEqual([]);
+  });
+});
 
 describe('D-TRANSPORTE-03 T1 — classes de importancia (aceite 7)', () => {
   it('7a. a ordem entre classes e a do dado: escola > Inn > tropa > obra e canteiro > o resto', () => {
