@@ -22,9 +22,9 @@ import { MAX_PASSOS_POR_QUADRO } from '../../laco';
 import type { AnimalDoCurral } from '../animais';
 import { pilhasDoPredio, posicoesNaPilha } from '../pilhas';
 import type { PilhaDesenhada } from '../pilhas';
-import { areaDoTrabalho, quadroDaFumaca, quadroDeTrabalho, quadroOcioso } from '../trabalho';
+import { areaDoTrabalho, quadroDaEscola, quadroDaFumaca, quadroDeTrabalho, quadroOcioso } from '../trabalho';
 import type { QuadroDeTrabalho } from '../trabalho';
-import { CASO_DO_PREDIO, ESTADO_DA_PILHA, ID_DA_FUMACA, ID_DO_OCIOSO } from '../manifesto-camadas';
+import { CASO_DO_PREDIO, ESTADO_DA_PILHA, ID_DA_FUMACA, ID_DO_OCIOSO, LACO_DA_ESCOLA } from '../manifesto-camadas';
 import { medidorDaObra } from '../medidor-obra';
 import type { LinhaDoMedidor } from '../medidor-obra';
 import { canteiroDaObra, chaveDoCanteiro } from '../nivelamento-obra';
@@ -1405,6 +1405,8 @@ export class WorldScene extends Phaser.Scene {
     const quadrosNoDebug: Record<string, QuadroNoDebug> = {};
     // F-VIVO-e: o ocioso de cada casa com gente dentro e sem trabalho, idem.
     const ociososNoDebug: Record<string, OciosoNoDebug> = {};
+    // F-VIVO-h: a escola treinando, idem.
+    const escolasNoDebug: Record<string, OciosoNoDebug> = {};
     const animaisNoDebug: Record<string, readonly AnimalNoDebug[]> = {};
     const camadasNoDebug: Record<string, CamadasEmPx> = {};
     // F17g: as obras desenhadas pela revelacao, da MESMA conta que vai para `criarPredio`.
@@ -1492,9 +1494,15 @@ export class WorldScene extends Phaser.Scene {
       // F-VIVO-e: casa com gente dentro e sem trabalho desenha o ocioso no mesmo lugar do
       // quadro. Os dois nunca coincidem (`quadroOcioso` exige quadro nulo).
       const ocioso = quadroOcioso(predio, ocupante, estadoDoJogo.tick, DADOS_DO_TRABALHO);
-      const quadroDesenhado: QuadroDeTrabalho | null = quadro ?? (ocioso === null ? null : { laco: ID_DO_OCIOSO, n: ocioso });
+      // F-VIVO-h: a escola nao tem receita nem ocupante; anima enquanto a fila treina.
+      const treino = quadroDaEscola(predio, estadoDoJogo.treino[id], estadoDoJogo.tick);
+      const quadroDesenhado: QuadroDeTrabalho | null = quadro
+        ?? (ocioso !== null ? { laco: ID_DO_OCIOSO, n: ocioso } : treino !== null ? { laco: LACO_DA_ESCOLA, n: treino } : null);
       if (ocioso !== null && quadroDesenhado !== null) {
         ociososNoDebug[id] = { n: ocioso, sprite: this.texturaDoQuadro(predio.tipo, quadroDesenhado) !== null };
+      }
+      if (treino !== null && quadroDesenhado !== null) {
+        escolasNoDebug[id] = { n: treino, sprite: this.texturaDoQuadro(predio.tipo, quadroDesenhado) !== null };
       }
       const chaveDoTrabalho = `${quadroDesenhado === null ? '-' : `${quadroDesenhado.laco}_${quadroDesenhado.n}`}/${fumaca ?? '-'}`;
       // F-VIVO-c: a idade anda com o progresso e o quadro com o tick, sem mexer em
@@ -1552,6 +1560,7 @@ export class WorldScene extends Phaser.Scene {
     debug.pilhasDesenhadas = pilhasNoDebug;
     debug.quadrosDeTrabalho = quadrosNoDebug;
     debug.quadrosOciosos = ociososNoDebug;
+    debug.quadrosDaEscola = escolasNoDebug;
     debug.animaisDoCurral = animaisNoDebug;
     debug.camadasEmPx = camadasNoDebug;
     debug.caixasDesenhadas = this.caixasDesenhadas(estadoDoJogo, sprites, tilePx);

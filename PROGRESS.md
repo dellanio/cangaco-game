@@ -15364,3 +15364,44 @@ Só `src/render/`, testes e roteiro; `src/sim/` intocado.
   existia (F-VIVO-c); esta feature só escolhe qual lista se desenha.
 - `debug.avancar(n)` com n > 10 esvazia a memória, como uma partida carregada. Roteiro que
   queira o curral guardado anda com o relógio, não aos saltos.
+
+## 2026-10-01 — Tarefa 8 da leva: F-VIVO-h (a escola anima enquanto há recruta em treino): feita
+
+Só `src/render/`, testes, roteiro e docs; `src/sim/` intocado.
+
+### Verificado
+
+- `src/render/manifesto-camadas.ts`: `ID_DA_ESCOLA = 'schoolhouse'`, `LACO_DA_ESCOLA = 'treino'`,
+  `LACOS_DA_ESCOLA` com 8 quadros. O validador aceita `trabalho` sem receita só para esse id, e
+  `trabalho.area` também.
+- `src/render/trabalho.ts`: `quadroDaEscola(predio, fila, tick)`. Anima só escola completa com
+  item `treinando` na fila. O quadro vem do `tick`, como na fumaça e no ocioso.
+- `src/render/scenes/WorldScene.ts`: a escola desenha o laço no lugar do quadro, na área padrão.
+  `debug.quadrosDaEscola` guarda o que foi desenhado.
+- `docs/BRIEF-ARTE.md`: a Casa do Coronel sai da lista "sem receita" e ganha um item próprio.
+- `tests/F-VIVO-h-escola.test.ts`, pelo `step`, no cenário da F13a (1 pedido, o ouro no
+  armazém). Evidência `test-output/F-VIVO-h.json`, aberta:
+  - 27 ticks `aguardando` sem laço;
+  - laço em 150 ticks (`ticksPorTreino`), do 29 ao 178;
+  - o recruta sai no 179, e o laço some nesse tick;
+  - o laço bate com "fila tem `treinando`" em todo tick.
+  - O teste também cobre a escola sem fila, e um outro prédio com a mesma fila, que não anima.
+  - Validador: `barracks` com `treino_1..8` reprova, e `trabalho.area` em `barracks` também.
+  - **Prova de que acusa:** com o filtro `treinando` trocado por "fila não vazia", 2 testes
+    reprovam. Restaurado em seguida.
+- Roteiro `tools/shots/F-VIVO-h.js`, porta 5178:
+  - carrega a partida do tick 1;
+  - despausa (§8) e confere a cada 150 ms que o laço aparece só na janela de treino da sim;
+  - pausa no meio do treino e captura `screenshots/F-VIVO-h-1-escola-treinando.png`, aberta:
+    o retângulo `treino_1` sobre a Casa do Coronel;
+  - despausa até o recruta sair e confere que o laço sumiu (`-2-escola-depois-do-treino`).
+  - **Prova de que acusa:** com a fila trocada por `undefined` na cena, o roteiro reprova em
+    "tick 30: laço ausente, sim treina de 29 a 178". Restaurado em seguida.
+
+### PARA REVISÃO
+
+- A escola pausada continua treinando na sim (`sistemaDasEscolas` não lê `pausado`), então o
+  laço continua. Conferido no código, não medido em teste.
+- Quando o treino acaba sem porta andável, a sim segura o item com `restam` 1
+  (`escolas.ts`), e o laço continua enquanto o item segurar. É leitura do código, não caso
+  testado.

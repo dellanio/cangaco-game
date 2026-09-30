@@ -4937,6 +4937,11 @@ escola tem item **`treinando`**; fila vazia ou só `aguardando`, nada. **Conferi
 `estado: 'aguardando' | 'treinando'` (`:1331`): o render distingue sem mudar a sim. *(O plano
 apontava `src/sim/escola.ts`.)* Manifesto com exceção nomeada para `schoolhouse`, e o
 `docs/BRIEF-ARTE.md` tira a escola da lista "sem receita".
+**Entregue (2026-10-01, leva desatendida, tarefa 8):** `quadroDaEscola` (`src/render/trabalho.ts`),
+`ID_DA_ESCOLA` e `LACOS_DA_ESCOLA` (`src/render/manifesto-camadas.ts`), `debug.quadrosDaEscola`.
+`tests/F-VIVO-h-escola.test.ts`, evidência em `test-output/F-VIVO-h.json` (150 ticks de laço,
+do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
+`tools/shots/F-VIVO-h.js`, que reprova no tick 30 com a fila desligada na cena.
 
 ---
 

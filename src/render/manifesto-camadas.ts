@@ -49,6 +49,12 @@ export const LACOS_DA_FUMACA: Readonly<Record<string, number>> = { fumaca: 8 };
 export const ID_DO_OCIOSO = 'ocioso';
 export const LACOS_DO_OCIOSO: Readonly<Record<string, number>> = { ocioso: 8 };
 
+/** F-VIVO-h — a escola nao tem receita e anima mesmo assim, enquanto treina (A5/C1 do
+ *  KaM). Excecao NOMEADA: o validador aceita `trabalho` sem receita so para este id. */
+export const ID_DA_ESCOLA = 'schoolhouse';
+export const LACO_DA_ESCOLA = 'treino';
+export const LACOS_DA_ESCOLA: Readonly<Record<string, number>> = { [LACO_DA_ESCOLA]: 8 };
+
 /** O animal de cada criacao: o id da entrada `animal` e a mercadoria que ele vira. */
 export const ANIMAL_DA_CRIACAO: Readonly<Record<string, string>> = { swine_farm: 'pigs', stables: 'horses' };
 
@@ -133,8 +139,9 @@ export function violacoesDaCamadaViva(e: EntradaDeCamada, ctx: ContextoDasCamada
   if (e.tipo === 'trabalho') {
     if (e.id === ID_DA_FUMACA) return violacoesDosLacos(rotulo, e.estados, LACOS_DA_FUMACA);
     if (e.id === ID_DO_OCIOSO) return violacoesDosLacos(rotulo, e.estados, LACOS_DO_OCIOSO);
+    if (e.id === ID_DA_ESCOLA) return violacoesDosLacos(rotulo, e.estados, LACOS_DA_ESCOLA);
     const caso = CASO_DO_PREDIO[e.id];
-    if (caso === undefined) return [`${rotulo}: nao e predio com receita nem '${ID_DA_FUMACA}' nem '${ID_DO_OCIOSO}'`];
+    if (caso === undefined) return [`${rotulo}: nao e predio com receita nem '${ID_DA_FUMACA}', '${ID_DO_OCIOSO}' ou '${ID_DA_ESCOLA}'`];
     if (caso === 'guarda') return [`${rotulo}: caso 1 (so guarda) nao tem animacao dentro`];
     return violacoesDosLacos(rotulo, e.estados, LACOS_DO_CASO[caso]);
   }
@@ -214,7 +221,8 @@ export function violacoesDasAncoras(e: EntradaDeAsset, ctx: ContextoDasCamadas):
       erros.push(`${r}: trabalho.area precisa de x0 < x1 e y0 < y1`);
     }
     const caso = CASO_DO_PREDIO[e.id];
-    if (caso === undefined || caso === 'guarda') erros.push(`${r}: trabalho.area em predio sem animacao dentro`);
+    const anima = e.id === ID_DA_ESCOLA || (caso !== undefined && caso !== 'guarda');
+    if (!anima) erros.push(`${r}: trabalho.area em predio sem animacao dentro`);
   }
   if (a.trabalho?.fumaca !== undefined) guardar('trabalho.fumaca', a.trabalho.fumaca);
 

@@ -666,9 +666,12 @@ garrafas de cachaça. Nada de uva, parreira ou lagar de vinho, embora o id seja
 - **O Canavial e as minas** já estão nos casos da tabela (correção de simulação F-CANA,
   2026-09-26). O Canavial sai para cortar cana no partido que o jogador arou. O mineiro
   colhe de dentro da mina, sem andar até o veio.
-- **Prédios sem receita** (armazém, bodega, Casa do Coronel, quartel, feira,
-  mercenários, torre) não têm animação de trabalho. O armazém e a bodega mostram
-  estoque.
+- **Prédios sem receita** (armazém, bodega, quartel, feira, mercenários, torre) não têm
+  animação de trabalho. O armazém e a bodega mostram estoque.
+- **A Casa do Coronel (`schoolhouse`) é a exceção** (F-VIVO-h, adotada do KaM): não tem
+  receita, mas anima enquanto há recruta em treino. Um laço de 8 quadros, `treino_1..8`,
+  na área de trabalho. Fila vazia, ou recruta esperando o ouro: nada. Até a arte chegar, o
+  render desenha o retângulo com o nome do quadro.
 
 ### Os quadros
 

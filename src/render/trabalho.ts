@@ -18,10 +18,12 @@
  * tela esconde o homem.
  */
 import type { AncorasDoPredio } from './manifesto';
-import { LACOS_DO_CASO, LACOS_DA_FUMACA, ID_DA_FUMACA, LACOS_DO_OCIOSO, ID_DO_OCIOSO } from './manifesto-camadas';
+import {
+  LACOS_DO_CASO, LACOS_DA_FUMACA, ID_DA_FUMACA, LACOS_DO_OCIOSO, ID_DO_OCIOSO, LACOS_DA_ESCOLA, LACO_DA_ESCOLA, ID_DA_ESCOLA,
+} from './manifesto-camadas';
 import { dentroDaCasa } from './visibilidade';
 import type { CasoDoPredioVivo } from './manifesto-camadas';
-import type { Predio, Unidade } from '../sim/state';
+import type { ItemDeFila, Predio, Unidade } from '../sim/state';
 
 /**
  * Um quadro por tick da sim (10 Hz): 8 quadros em 0,8 s. E o passo do kam_remake,
@@ -165,6 +167,20 @@ export function quadroOcioso(
   if (unidade === null || !dentroDaCasa(predio, unidade)) return null;
   if (quadroDeTrabalho(predio, unidade, tick, dados) !== null) return null;
   const f = LACOS_DO_OCIOSO[ID_DO_OCIOSO] ?? 1;
+  return (Math.floor(Math.max(0, tick) / TICKS_POR_QUADRO) % f) + 1;
+}
+
+/**
+ * F-VIVO-h — o quadro da escola (1..8), ou `null`: escola completa com um item
+ * `treinando` na fila (`state.treino`, `sim/systems/escolas.ts`). Fila vazia, ou so com
+ * `aguardando` (o ouro nao chegou), nao anima. O item sai da fila no tick em que o
+ * recruta nasce, entao o laco some nesse tick. Sem ciclo no dado de tela: o `tick` e o
+ * relogio, como na fumaca e no ocioso.
+ */
+export function quadroDaEscola(predio: Predio, fila: readonly ItemDeFila[] | undefined, tick: number): number | null {
+  if (predio.tipo !== ID_DA_ESCOLA || predio.estado !== 'completo') return null;
+  if (fila === undefined || !fila.some((item) => item.estado === 'treinando')) return null;
+  const f = LACOS_DA_ESCOLA[LACO_DA_ESCOLA] ?? 1;
   return (Math.floor(Math.max(0, tick) / TICKS_POR_QUADRO) % f) + 1;
 }
 

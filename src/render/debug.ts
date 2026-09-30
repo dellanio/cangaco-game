@@ -165,6 +165,9 @@ export interface EstadoDebug {
   /** F-VIVO-e — o ocioso que a cena DESENHOU agora, por id de predio: casa com o ocupante
    *  dentro e sem quadro de trabalho (`quadroOcioso`, `trabalho.ts`). */
   quadrosOciosos: Readonly<Record<string, OciosoNoDebug>>;
+  /** F-VIVO-h — o laco `treino` que a cena DESENHOU agora, por id de escola: so escola com
+   *  item `treinando` na fila (`quadroDaEscola`, `trabalho.ts`). */
+  quadrosDaEscola: Readonly<Record<string, OciosoNoDebug>>;
   /** F-VIVO-c — os animais que a cena DESENHOU agora, por id de predio. So tem
    *  criacao com curral cheio (`animais.ts`); curral vazio nao aparece. */
   animaisDoCurral: Readonly<Record<string, readonly AnimalNoDebug[]>>;
@@ -349,6 +352,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     pilhasDesenhadas: {},
     quadrosDeTrabalho: {},
     quadrosOciosos: {},
+    quadrosDaEscola: {},
     animaisDoCurral: {},
     camadasEmPx: {},
     caixasDesenhadas: {},
