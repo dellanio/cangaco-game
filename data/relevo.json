@@ -1,0 +1,25 @@
+{
+  "_doc": "Relevo SO DE RENDER, opcao A (docs/planos/estudo-relevo.md secao 7; plano em docs/planos/relevo-a.md). sim/ nunca le este arquivo nem a altura emitida (data/maps/<id>.relevo.json): nada disto muda regra de jogo. `ligado` e a flag: false ate a arte de terreno da F-TR entrar. `?relevo` na URL liga para o roteiro.",
+  "ligado": false,
+  "_docPlano": "O chao plano e 1,0 EXATO: a sombra (MULTIPLY) e a luz ([DST_COLOR, ONE]) sao neutras no plano, e a arte e pintada para ele sem compensacao (decisao do operador, 2026-09-30). Nao ha fator do plano: um campo `fatorDoPlano` aqui e erro de dado.",
+  "fatorMinimo": 0.5,
+  "_docFatorMinimo": "Piso de seguranca da luz do chao. Com o declive suave do gerador, a encosta mais escura fica bem acima dele.",
+  "tetoDoTintDoSprite": 1.0,
+  "_docTetoDoTintDoSprite": "O sprite escurece na sombra e nao recebe o realce da luz (S1, decisao do operador, 2026-09-30). O setTint do Phaser 3 so escurece, entao o teto nao passa de 1.",
+  "pxDeMundoPorDegrau": 8,
+  "_docPxDeMundoPorDegrau": "Quantos px de mundo um degrau de altura vale para a conta da luz (nao desloca nada na tela). Ponto de partida: a captura decide entre 8 (norte ~0,83, sul ~1,11) e 12,8 (norte ~0,71, sul ~1,14).",
+  "luz": {
+    "_doc": "De cima, inclinada levemente para o sul (o lado da camera), SEM componente leste-oeste (decisao do operador, 2026-09-30). Nao ha campo leste-oeste de proposito: o espelho das unidades continua valendo.",
+    "inclinacaoParaOSulGraus": 30
+  },
+  "geracao": {
+    "_doc": "Lido so por tools/gerar-mapa.js, que emite data/maps/<id>.relevo.json. Altura em degraus inteiros de 0 a 35 (o formato e um char base-36 por vertice). A semente e propria: gerar o relevo nao consome o RNG do terreno nem o dos recursos, e o mapa sai byte a byte igual.",
+    "semente": 20260930,
+    "celulaDoRuidoEmTiles": 12,
+    "amplitudeDoRuidoEmDegraus": 4,
+    "decliveMaximoEmDegraus": 2,
+    "_docDecliveMaximoEmDegraus": "Fora dos tipos sem limite, a diferenca entre os 4 cantos de um tile nao passa disto: so relevo suave. O que tem de parecer intransitavel continua sendo tile de montanha ou rocha, que a sim bloqueia de fato.",
+    "tiposSemLimiteDeDeclive": ["montanha", "rocha"],
+    "basePorTipo": { "agua": 0, "areia": 2, "campoArado": 4, "grama": 4, "rocha": 5, "montanha": 14 }
+  }
+}

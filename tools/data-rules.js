@@ -1468,11 +1468,86 @@ function validarRotulosDeModo(dados, tema, erros) {
 // dentro do grupo e a de buildings.json (a ordem nunca e digitada duas vezes);
 // e cada grupo tem rotulo no tema, e so os grupos tem — o mesmo par ida-e-volta
 // do guarda da F22 para as causas de alerta.
+// D-TERRENO-01 — data/relevo.json, o relevo so de render (docs/planos/relevo-a.md). As regras sao
+// as que a conta da luz e o gerador pressupoem:
+//   - chao plano = 1,0 exato: nao ha `fatorDoPlano` (o k de antes volta so por engano);
+//   - o piso da luz fica abaixo de 1; o teto do tint do sprite em (0, 1], porque o setTint so
+//     escurece; o teto da luz do chao, SE existir, acima de 1;
+//   - a luz vem de cima inclinada para o sul, sem leste-oeste: so `inclinacaoParaOSulGraus`;
+//   - todo tipo da legenda do mapa tem base, e todo degrau cabe no formato (0 a 35).
+const DEGRAU_MAXIMO_DO_FORMATO = 35;
+
+function validarRelevo(dados, relevo, erros) {
+  const e = (msg) => erros.push(`interface/relevo: ${msg}`);
+  if (!relevo || typeof relevo !== 'object') {
+    e('data/relevo.json precisa existir e ser objeto');
+    return;
+  }
+  const numero = (v) => typeof v === 'number' && Number.isFinite(v);
+  if (typeof relevo.ligado !== 'boolean') e('`ligado` precisa ser booleano');
+  if ('fatorDoPlano' in relevo) e('`fatorDoPlano` nao existe mais: o chao plano e 1,0 exato');
+  if (!numero(relevo.fatorMinimo) || relevo.fatorMinimo <= 0 || relevo.fatorMinimo >= 1) {
+    e('`fatorMinimo` precisa estar em (0, 1)');
+  }
+  if (!numero(relevo.tetoDoTintDoSprite) || relevo.tetoDoTintDoSprite <= 0 || relevo.tetoDoTintDoSprite > 1) {
+    e('`tetoDoTintDoSprite` precisa estar em (0, 1]: o setTint so escurece');
+  }
+  if ('tetoDaLuzDoChao' in relevo
+    && (!numero(relevo.tetoDaLuzDoChao) || relevo.tetoDaLuzDoChao <= 1 || relevo.tetoDaLuzDoChao > 2)) {
+    e('`tetoDaLuzDoChao`, se existir, precisa estar em (1, 2]');
+  }
+  if (!numero(relevo.pxDeMundoPorDegrau) || relevo.pxDeMundoPorDegrau <= 0) e('`pxDeMundoPorDegrau` precisa ser > 0');
+  const luz = relevo.luz;
+  if (!luz || typeof luz !== 'object') {
+    e('`luz` precisa existir');
+  } else {
+    const inclinacao = luz.inclinacaoParaOSulGraus;
+    if (!numero(inclinacao) || inclinacao <= 0 || inclinacao >= 90) e('`luz.inclinacaoParaOSulGraus` precisa estar em (0, 90)');
+    for (const campo of Object.keys(luz)) {
+      if (campo !== 'inclinacaoParaOSulGraus' && !campo.startsWith('_')) {
+        e(`\`luz.${campo}\` nao e permitido: a luz nao tem componente leste-oeste`);
+      }
+    }
+  }
+  const geracao = relevo.geracao;
+  if (!geracao || typeof geracao !== 'object') {
+    e('`geracao` precisa existir');
+    return;
+  }
+  const degrau = (v) => Number.isInteger(v) && v >= 0 && v <= DEGRAU_MAXIMO_DO_FORMATO;
+  if (!Number.isInteger(geracao.semente)) e('`geracao.semente` precisa ser inteiro');
+  if (!numero(geracao.celulaDoRuidoEmTiles) || geracao.celulaDoRuidoEmTiles <= 0) e('`geracao.celulaDoRuidoEmTiles` precisa ser > 0');
+  if (!degrau(geracao.amplitudeDoRuidoEmDegraus)) e(`\`geracao.amplitudeDoRuidoEmDegraus\` precisa ser inteiro de 0 a ${DEGRAU_MAXIMO_DO_FORMATO}`);
+  if (!Number.isInteger(geracao.decliveMaximoEmDegraus) || geracao.decliveMaximoEmDegraus < 1) {
+    e('`geracao.decliveMaximoEmDegraus` precisa ser inteiro >= 1');
+  }
+  const tiposDoMapa = new Set();
+  for (const nome of Object.keys(dados)) {
+    const legenda = nome.startsWith('maps/') && dados[nome] && dados[nome].legenda;
+    if (legenda && typeof legenda === 'object') for (const tipo of Object.values(legenda)) tiposDoMapa.add(tipo);
+  }
+  const base = geracao.basePorTipo || {};
+  for (const tipo of tiposDoMapa) {
+    if (!(tipo in base)) e(`\`geracao.basePorTipo\` sem o tipo do mapa '${tipo}'`);
+  }
+  for (const [tipo, valor] of Object.entries(base)) {
+    if (!degrau(valor)) e(`\`geracao.basePorTipo.${tipo}\` precisa ser inteiro de 0 a ${DEGRAU_MAXIMO_DO_FORMATO}`);
+  }
+  if (!Array.isArray(geracao.tiposSemLimiteDeDeclive)) {
+    e('`geracao.tiposSemLimiteDeDeclive` precisa ser array');
+  } else {
+    for (const tipo of geracao.tiposSemLimiteDeDeclive) {
+      if (!tiposDoMapa.has(tipo)) e(`\`geracao.tiposSemLimiteDeDeclive\`: '${tipo}' nao e tipo do mapa`);
+    }
+  }
+}
+
 function validarInterface(dados, interfaceUi) {
   const erros = [];
   const menu = interfaceUi && interfaceUi['menu-build'];
   const tema = interfaceUi && interfaceUi['theme-sertao'];
   validarRotulosDeModo(dados, tema, erros);
+  validarRelevo(dados, interfaceUi && interfaceUi.relevo, erros);
   if (!menu || !Array.isArray(menu.grupos)) {
     erros.push('interface/menu-build-forma: menu-build.grupos precisa ser array');
     return erros;

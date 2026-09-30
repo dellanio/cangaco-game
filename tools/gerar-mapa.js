@@ -578,6 +578,158 @@ function gerarRecursos({ largura, altura, grade, rng }) {
   return recursos;
 }
 
+// D-TERRENO-01 — A ALTURA SO DE RENDER (opcao A do relevo, docs/planos/relevo-a.md). Sai daqui
+// para um arquivo PROPRIO, `data/maps/<id>.relevo.json`, que so o render le: a sim nao sabe que a
+// altura existe. Quatro escolhas escritas:
+//
+//   - a altura mora no VERTICE, o canto do tile, como no KaM: o tile (gx,gy) tem os cantos
+//     (gx,gy), (gx+1,gy), (gx,gy+1) e (gx+1,gy+1), e a grade tem (L+1) x (A+1) vertices;
+//   - o RNG e proprio (`relevo.geracao.semente`) e roda depois de tudo: o terreno e os recursos
+//     nao consomem nada dele, e o `sertao-128.json` sai byte a byte igual;
+//   - o ruido so usa + - * / e floor, e o resultado vira degrau INTEIRO: nada de Math.sin num
+//     numero que vai para o arquivo;
+//   - so relevo SUAVE: fora de `tiposSemLimiteDeDeclive`, os 4 cantos de um tile ficam a no maximo
+//     `decliveMaximoEmDegraus`. A altura grande so existe no miolo da montanha, que ja e
+//     intransponivel: a sombra nunca sugere um obstaculo que a sim nao tem.
+const RELEVO = require(path.join(RAIZ, 'data', 'relevo.json'));
+const SAIDA_DO_RELEVO = path.join(RAIZ, 'data', 'maps', `${ID}.relevo.json`);
+/** O formato, nao balanceamento: um char base-36 por vertice, degrau de 0 a 35. */
+const DIGITOS_DO_RELEVO = '0123456789abcdefghijklmnopqrstuvwxyz';
+
+/** Ruido de valor semeado: grade grossa de amostras em [0,1), interpolada bilinear com smoothstep. */
+function ruidoDeValor(rng, largura, altura, celula) {
+  const gl = Math.ceil(largura / celula) + 2;
+  const ga = Math.ceil(altura / celula) + 2;
+  const grossa = Array.from({ length: gl * ga }, () => rng());
+  const suave = (t) => t * t * (3 - 2 * t);
+  const g = (i, j) => grossa[j * gl + i];
+  return (x, y) => {
+    const cx = x / celula;
+    const cy = y / celula;
+    const ix = Math.floor(cx);
+    const iy = Math.floor(cy);
+    const fx = suave(cx - ix);
+    const fy = suave(cy - iy);
+    const a = g(ix, iy) + (g(ix + 1, iy) - g(ix, iy)) * fx;
+    const b = g(ix, iy + 1) + (g(ix + 1, iy + 1) - g(ix, iy + 1)) * fx;
+    return a + (b - a) * fy;
+  };
+}
+
+/** Os indices dos 4 cantos do tile (gx,gy) na grade de vertices de largura `vl`. */
+function cantosDoTile(gx, gy, vl) {
+  return [gy * vl + gx, gy * vl + gx + 1, (gy + 1) * vl + gx, (gy + 1) * vl + gx + 1];
+}
+
+function temLimiteDeDeclive(grade, gx, gy, cfg) {
+  return !cfg.tiposSemLimiteDeDeclive.includes(grade[gy][gx]);
+}
+
+/**
+ * Baixa todo canto que passa de `min + decliveMaximo` num tile com limite, ate nao sobrar nenhum.
+ * So BAIXA: a altura e inteira, nunca cresce e tem piso, entao o laco termina. Muta `h` e devolve
+ * quantas vezes baixou um vertice.
+ */
+function forcarDecliveMaximo(h, grade, cfg) {
+  const altura = grade.length;
+  const largura = grade[0].length;
+  const vl = largura + 1;
+  let baixados = 0;
+  for (let mudou = true; mudou;) {
+    mudou = false;
+    for (let gy = 0; gy < altura; gy += 1) {
+      for (let gx = 0; gx < largura; gx += 1) {
+        if (!temLimiteDeDeclive(grade, gx, gy, cfg)) continue;
+        const cantos = cantosDoTile(gx, gy, vl);
+        const teto = Math.min(...cantos.map((i) => h[i])) + cfg.decliveMaximoEmDegraus;
+        for (const i of cantos) {
+          if (h[i] > teto) {
+            h[i] = teto;
+            baixados += 1;
+            mudou = true;
+          }
+        }
+      }
+    }
+  }
+  return baixados;
+}
+
+/** Os tiles com limite cuja amplitude entre os 4 cantos passa do declive maximo: [gx, gy, amp]. */
+function declivesForaDoLimite(h, grade, cfg) {
+  const altura = grade.length;
+  const largura = grade[0].length;
+  const vl = largura + 1;
+  const fora = [];
+  for (let gy = 0; gy < altura; gy += 1) {
+    for (let gx = 0; gx < largura; gx += 1) {
+      if (!temLimiteDeDeclive(grade, gx, gy, cfg)) continue;
+      const v = cantosDoTile(gx, gy, vl).map((i) => h[i]);
+      const amplitude = Math.max(...v) - Math.min(...v);
+      if (amplitude > cfg.decliveMaximoEmDegraus) fora.push([gx, gy, amplitude]);
+    }
+  }
+  return fora;
+}
+
+/** A altura por vertice: a media da base dos tiles que tocam o vertice, mais o ruido, em degrau
+ *  inteiro de 0 a 35, e depois o declive forcado. */
+function montarRelevo(grade, cfg) {
+  const altura = grade.length;
+  const largura = grade[0].length;
+  const vl = largura + 1;
+  const va = altura + 1;
+  const ruido = ruidoDeValor(mulberry32(cfg.semente), vl, va, cfg.celulaDoRuidoEmTiles);
+  const h = new Array(vl * va);
+  for (let vy = 0; vy < va; vy += 1) {
+    for (let vx = 0; vx < vl; vx += 1) {
+      let soma = 0;
+      let tiles = 0;
+      for (const [gx, gy] of [[vx - 1, vy - 1], [vx, vy - 1], [vx - 1, vy], [vx, vy]]) {
+        if (gx < 0 || gy < 0 || gx >= largura || gy >= altura) continue;
+        soma += cfg.basePorTipo[grade[gy][gx]];
+        tiles += 1;
+      }
+      const bruto = Math.round(soma / tiles + cfg.amplitudeDoRuidoEmDegraus * ruido(vx, vy));
+      h[vy * vl + vx] = Math.max(0, Math.min(DIGITOS_DO_RELEVO.length - 1, bruto));
+    }
+  }
+  forcarDecliveMaximo(h, grade, cfg);
+  return { largura: vl, altura: va, h };
+}
+
+/** `cfg` so para o teste provar que outra semente da outro relevo; o arquivo usa o dado. */
+function montarArquivoDeRelevo(cfg = RELEVO.geracao) {
+  const { grade } = gerar();
+  const { largura, altura, h } = montarRelevo(grade, cfg);
+  const linhas = [];
+  for (let vy = 0; vy < altura; vy += 1) {
+    let linha = '';
+    for (let vx = 0; vx < largura; vx += 1) linha += DIGITOS_DO_RELEVO[h[vy * largura + vx]];
+    linhas.push(linha);
+  }
+  return {
+    id: ID,
+    _doc: 'Altura SO DE RENDER (opcao A do relevo, docs/planos/relevo-a.md). EMITIDO por '
+      + 'tools/gerar-mapa.js a partir de data/relevo.json (geracao) e dos tipos do mapa; nao edite a '
+      + 'mao. sim/ nunca le este arquivo. Uma linha por fileira de VERTICES: o tile (gx,gy) tem os '
+      + 'cantos (gx,gy), (gx+1,gy), (gx,gy+1) e (gx+1,gy+1). Um char por vertice, na ordem '
+      + `"${DIGITOS_DO_RELEVO}": o degrau inteiro de 0 a 35.`,
+    gerador: 'tools/gerar-mapa.js',
+    mapa: `data/maps/${ID}.json`,
+    semente: cfg.semente,
+    largura,
+    altura,
+    linhas,
+  };
+}
+
+function serializarRelevo(arquivo) {
+  const { linhas, ...resto } = arquivo;
+  const corpo = JSON.stringify(resto, null, 2).replace(/\n}$/, '');
+  return `${corpo},\n  "linhas": [\n${linhas.map((l) => `    ${JSON.stringify(l)}`).join(',\n')}\n  ]\n}\n`;
+}
+
 function montarArquivo() {
   const mundo = gerar();
   const { largura, altura, grade } = mundo;
@@ -633,19 +785,30 @@ function serializar(arquivo) {
 
 function main() {
   const conferir = process.argv.includes('--conferir');
-  const texto = serializar(montarArquivo());
+  // D-TERRENO-01: dois arquivos, cada um com a sua semente; o `--conferir` confere os dois.
+  const saidas = [
+    { caminho: SAIDA, texto: serializar(montarArquivo()), semente: SEMENTE },
+    { caminho: SAIDA_DO_RELEVO, texto: serializarRelevo(montarArquivoDeRelevo()), semente: RELEVO.geracao.semente },
+  ];
   if (conferir) {
-    const atual = fs.existsSync(SAIDA) ? fs.readFileSync(SAIDA, 'utf8') : '';
-    if (atual.replace(/\r\n/g, '\n') !== texto) {
-      console.error(`gerar-mapa: ${path.relative(RAIZ, SAIDA)} difere do que a semente ${SEMENTE} emite.`);
-      process.exit(1);
+    let difere = false;
+    for (const { caminho, texto, semente } of saidas) {
+      const atual = fs.existsSync(caminho) ? fs.readFileSync(caminho, 'utf8') : '';
+      if (atual.replace(/\r\n/g, '\n') !== texto) {
+        console.error(`gerar-mapa: ${path.relative(RAIZ, caminho)} difere do que a semente ${semente} emite.`);
+        difere = true;
+      } else {
+        console.log(`gerar-mapa: ${path.relative(RAIZ, caminho)} confere com a semente ${semente}.`);
+      }
     }
-    console.log(`gerar-mapa: ${path.relative(RAIZ, SAIDA)} confere com a semente ${SEMENTE}.`);
+    if (difere) process.exit(1);
     return;
   }
-  fs.mkdirSync(path.dirname(SAIDA), { recursive: true });
-  fs.writeFileSync(SAIDA, texto);
-  console.log(`gerar-mapa: ${path.relative(RAIZ, SAIDA)} escrito (semente ${SEMENTE}).`);
+  for (const { caminho, texto, semente } of saidas) {
+    fs.mkdirSync(path.dirname(caminho), { recursive: true });
+    fs.writeFileSync(caminho, texto);
+    console.log(`gerar-mapa: ${path.relative(RAIZ, caminho)} escrito (semente ${semente}).`);
+  }
 }
 
 if (require.main === module) main();
@@ -656,4 +819,7 @@ module.exports = {
   // conta dele — se o gerador e o teste discordarem, discordam no mesmo lugar.
   RESERVA, tilesDaVila, naVila, naReserva,
   CANAVIAL_DA_VILA, ROCADO_DA_VILA, disco, faixa,
+  // D-TERRENO-01: o teste roda o mesmo codigo que grava o relevo.
+  montarRelevo, montarArquivoDeRelevo, serializarRelevo, forcarDecliveMaximo, declivesForaDoLimite,
+  DIGITOS_DO_RELEVO,
 };
