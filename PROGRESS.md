@@ -14779,3 +14779,124 @@ O código está na branch `wip/D-TRANSPORTE-03-T2` (commit empurrado), fora da `
 
 - O aceite 2 vale como está (entrada vazia), ou passa a ser a parada real (`esperando_insumo`)? Nas duas
   métricas a serraria fica acima da base; pela real, por causa do tempo que antes era `saida_cheia`.
+
+## 2026-09-30 — Leva noturna: T2 retomado (sem merge), BUG-X, 8 direções, BUG-W, plano da F-VIVO-e
+
+### D-TRANSPORTE-03 T2 (oferta × demanda): aceites novos verdes, aceite de produção reprova por 1
+
+Branch `wip/D-TRANSPORTE-03-T2`, commit `ebb2182`, empurrado. **Não mergeado**: a regra da leva
+é merge só com todos os aceites passando.
+
+Verificado (verify verde na branch, 199 arquivos):
+- Aceite 2 na métrica nova do operador. Parada real (`esperando_insumo`) por casa ≤ base + 5 %:
+  serraria 3 529 ≤ 3 681, moinho 934 ≤ 1 012, padaria 423 ≤ 607. **Passa.**
+- D-PRODUCAO-01b (o insumo escasso dividido) consertado em `src/sim/systems/jobs.ts`:
+  `origemDoInsumo` passa a usar `disponivelNaOrigem − usados`, e `ofertaDaCasaParaDemanda` saiu. O
+  carvão divide 10/6/6. F19b afirma o destino (`primeiroNoConsumidor`). O aceite 2 da corrida B
+  afirma `entreguesAoQuartel === 3 × COTA` (15/15).
+- Aceites 3, 4, 5, 6, 8 e 10 escritos em `tests/D-TRANSPORTE-03-T2-oferta-demanda.test.ts`, os
+  seis verdes. Evidência em `test-output/D-TRANSPORTE-03-T2.json`:
+  - real: 18 viagens, a serraria recebe 16 da casa e 1 do armazém, 0 ao armazém com vaga;
+  - serraria cheia: 17 ao armazém;
+  - sem lenhador: 10 do armazém;
+  - sem multa: 3 ao armazém com vaga;
+  - nós do A* 22 935 ≤ 23 000.
+- `data/delivery.json`, `_doc` do lance: divergência declarada. No KaM a arma do quartel isolado
+  fica na oficina; aqui ela vai ao armazém. Decisão do operador (2026-09-30): manter a nossa.
+- **Aceite bloqueante "produção de cada cadeia ≥ base" reprova por 1:** tree_trunk 50 contra 51,
+  timber 48 contra 49. Causa medida:
+  - as duas árvores são idênticas até a 16ª tora;
+  - no T2 os lenhadores saem para comer no tick 6 869, colhendo; na base, no tick 7 286, logo
+    depois da 17ª tora;
+  - nas duas, essa primeira viagem termina `indo_comer → indo_ocupar`: a prateleira está vazia,
+    porque a comida não é reservada (F20b D5), e o lenhador perde ~110 ticks de cada lado;
+  - o T2 leva pão à Bodega mais cedo (57 contra 55), a tarefa `comer` abre antes, e a viagem
+    perdida cai antes da 17ª tora;
+  - o −1 fica constante a 16k, 20k e 30k ticks: é um ciclo deslocado, não perda que cresce.
+
+Espera o operador:
+- aceitar o −1 como efeito de relógio da viagem inútil da F20b D5, que já existia;
+- ou exigir conserto antes do merge (reservar a comida, ou não sair sem comida na prateleira).
+
+Isso é sim, e é feature própria.
+
+### BUG-X (especialista trabalha fora da casa): registrado com plano, sem código
+
+`BUGS.md` e `docs/planos/2026-09-30-BUG-X-especialista-dentro-da-casa.md` (commit `c89eadc`).
+
+### Texto das 8 direções aplicado (commit `7aadf98`)
+
+- `docs/fase-animacao-vida-do-mundo.md` §14, a nota da F-SPR no `BUILD_PLAN.md` e o
+  `docs/BRIEF-ARTE.md` §6/§9.
+- **Verificado, e corrigido contra o texto aprovado:** o "Corrigido" proposto dizia que
+  `data/units.json` não declara `direcoesDeSprite`. Declara, no `_comum` de cada grupo: civis 4
+  em `:26` e militares 8 em `:106`. O campo é lido em `src/render/direcoes-de-sprite.ts:32`. A
+  nota da F-SPR ficou com o fato conferido.
+
+### BUG-W (campo recém-plantado se desenha maduro): feito, commit `20d199b`
+
+- Verificado:
+  - `estagioDaCultura` (`src/render/crescimento.ts`) dá semeado, muda, verde ou pronto;
+  - `pronto` cai no mesmo tick que `tileMaduro`, afirmado tick a tick para o milho e a uva;
+  - placeholder por opacidade do marcador: 0,2 / 0,4 / 0,6 / 1.
+- A cena memoiza o estágio desenhado e publica `debug.estagiosDasCulturas`.
+- O teste grava o save do roçado da `cenarioDeFazenda` no tick 1 730, quando o primeiro milho
+  amadurece. O rodízio deixa os quatro estágios no mesmo campo: (110,28) pronto, e (110,30) e
+  (111,30) semeados.
+- `npm run shot -- BUG-W`: OK, e os 14 tiles afirmados. A screenshot foi aberta: o pronto está
+  cheio e o semeado quase apagado.
+- Só render: o diff não toca em `src/sim/`. BUG-W saiu do `BUGS.md`.
+- Decisão de implementação: os alfas começaram em 0,25 / 0,5 / 0,75. Na screenshot, o verde a 0,75
+  não se distinguia do pronto, então baixaram.
+
+### Plano da F-VIVO-e em diante (commit `e5a7e95`)
+
+`docs/planos/2026-09-30-F-VIVO-e-em-diante.md`, sem código. Aplica as decisões do operador:
+
+| Sub-item | Conteúdo | Depende de | Prioridade |
+|---|---|---|---|
+| F-VIVO-e | ocioso genérico | BUG-X | — |
+| F-VIVO-f | caso 2 só na fase da casa | F-VIVO-e | — |
+| F-VIVO-g | curral guarda o último quadro | — | — |
+| F-VIVO-h | escola no treino | — | baixa |
+
+Feira sem pilha e fogo depois da C-IA-02 ficam como nota.
+
+Perguntas abertas no plano:
+- pausado mostra o ocioso?
+- qual a arte do ocioso genérico?
+
+**Ainda não aplicado ao `BUILD_PLAN.md`:** espera o operador aprovar.
+
+### Hipótese (não conferida)
+
+- F-VIVO-h: o estado da escola distingue recruta "em curso" de "esperando mercadoria"
+  (`src/sim/escola.ts`, perto de `:31`). Não abri o arquivo.
+- C4: `pilhasDoPredio` já devolve `[]` para a feira. Não conferido.
+
+### Avaliação (subagente evaluator, desde 2183da5 com BUG-U e F24c): registrada, sem conserto
+
+A regra da leva é registrar, não consertar. O evaluator rodou os testes das entregas na main, 47 de 47 verdes. Na branch T2 rodou uma cópia via `git archive`: 199 arquivos, 2 048 testes verdes. Não rodou nenhum shot.
+
+```text
+| Entrega                     | Veredito  | Achados                                                      |
+|-----------------------------|-----------|--------------------------------------------------------------|
+| BUG-U causa A (a702a8c)     | APROVADO  | doc: BUGS.md BUG-U segue "aberto", com as refs velhas        |
+|                             |           | feio: screenshot não mostra o quartel                        |
+| F24c (faf8590)              | APROVADO  | feio: "Chapéu de aba" quebra em 2 linhas no painel           |
+| D-TRANSPORTE-03 T1          | RESSALVA  | estado intermediário, sem passes (como manda o BUILD_PLAN)   |
+| T2 (branch ebb2182)         | REPROVADO | errado: aceite 2 e "produção ≥ base" só em sonda,            |
+|                             | p/ merge  |   sem teste permanente                                       |
+|                             |           | doc: BUILD_PLAN.md:5629-5633 ainda tem a métrica antiga      |
+|                             |           | feio: TETO_DE_NOS 23000 contra 22 935 (folga de 0,3 %)       |
+| BUG-W (20d199b)             | APROVADO  | feio: o roteiro afirma o Map do render, não o alfa do tile   |
+| Docs c89eadc/7aadf98/e5a7e95| RESSALVA  | doc: BUG-X cita WorldScene.ts:1441-1453 como painel do       |
+|                             |           |   ocupante; o painel é src/ui/painel-predio.ts:397-405       |
+|                             |           | doc: plano F-VIVO-g cita debug.animaisDesenhados; o campo é  |
+|                             |           |   animaisDoCurral (debug.ts:158)                             |
+|                             |           | doc: F-VIVO-h ItemDeFila fica em state.ts:1320, e o          |
+|                             |           |   estado 'treinando' está em state.ts:1331                   |
+```
+
+- O evaluator **não** remediu o −1 de tora do T2. A causa (F20b D5) continua sendo medida só minha.
+- A hipótese da F-VIVO-h acima ficou desmentida quanto ao arquivo. O "treinando" é leitura do evaluator; eu não a conferi.
