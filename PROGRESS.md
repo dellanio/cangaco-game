@@ -14994,3 +14994,21 @@ A fila de F-VIVO-e a F-VIVO-h entrou no `BUILD_PLAN.md` (plano e5a7e95), com as 
 ### Espera decisão do operador
 1. O pausado: ocioso com o homem escondido dentro (KaM "parado"), ou homem fora e sem ocioso (o entregue, KaM "casa fechada")?
 2. A arte do ocioso (pergunta 2 do plano): o placeholder cobre até lá.
+
+
+## 2026-10-01 — F-VIVO-f (o caso 2 só na fase da casa): feita
+
+Fecha as notas LOTE3-b1/b2 da F-VIVO-b. O BUG-X já parava o caso 2 com o canteiro no tile (`colhendo`); faltava o descanso, que também é `trabalhando` e dentro. Agora a regra é a fase: `quadroDeTrabalho` só devolve quadro em `[ticksDeDescanso + ticksNoTile, ticksDoCiclo)`, e os terços dividem essa fase. No descanso vale o ocioso da F-VIVO-e.
+
+### Verificado
+- `DadosDoTrabalho` ganhou `ticksDeDescanso` e `ticksNoTile`, montados em `dadosDoTrabalho` (`src/render/predios.ts`) a partir de `gameData.producao.receitas[id].colheita`. O teste compara a soma com a do dado carregado, sem literal.
+- `tests/F-VIVO-f-caso-2-na-casa.test.ts`, evidência `test-output/F-VIVO-f.json` aberta:
+  - pedreira: a casa começa em 204 de 501 (fase de 297 ticks); canavial: 190 de 600 (410). Nulo antes, `inicio → meio → fim` inteiro depois, de `inicio_1` a `fim_8`;
+  - pelo `step` (3 000 ticks): pedreira 155 ticks de descanso só com ocioso, 252 no tile sem nada, 594 na casa só com trabalho; canavial 124 / 260 / 820; **0 erros** nos dois.
+- `tests/F-VIVO-b-trabalho.test.ts` ajustado à regra: o caso 2 afirma nulo em `[0, casa)` e os terços sobre a fase da casa. A pedreira real afirma nulo no descanso.
+- Roteiro `tools/shots/F-VIVO-f.js`: carrega a `q1` na fase da casa ao lado da `q2` com o canteiro `u9` colhendo. Mede pausado: a `q1` tem quadro; a `q2` não tem trabalho nem ocioso; o `u9` está desenhado. Despausa (§8), lê 14 vezes a 150 ms e o quadro da `q1` anda. Com 6 leituras não andava: na fase `inicio` cada quadro dura ~12 ticks. Captura `screenshots/F-VIVO-f-1-dentro-e-no-tile.png` aberta: o canteiro na rocha, a `q2` sem quadro, `meio_1` na `q1`.
+- **Literal absoluto achado pelo mundo transladado.** A segunda pedreira em `22,34` reprovou no `test:transladado`. Na F-VIVO-e, o mesmo literal passava por sorte. As duas agora são `pedreiraDaVila()` com 4 tiles a oeste.
+- `npm run verify` verde. Não-regressão pelo código de saída: os roteiros F-VIVO-e, F-VIVO-b, F-VIVO-d e BUG-X deram OK.
+
+### PARA REVISÃO
+- A sigla segue o nome que o operador deu (F-VIVO-e/f), não uma `<fase>-<MÓDULO>-<nn>` nova.

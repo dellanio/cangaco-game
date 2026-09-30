@@ -4804,6 +4804,12 @@ leem `GameState`: **nenhum toca em `sim/`**.
   colisão. Anima no descanso e na casa (os dois são `trabalhando`, dentro), fica parado
   com ele no tile (`colhendo`). Os casos 3, 4 e 5 não mudaram. A pergunta em aberto do
   PROGRESS sobre o caso 2 está respondida.
+- **Fechado pela F-VIVO-f (2026-10-01): o caso 2 anima só na fase da casa.** Além do
+  rótulo, a fase: `quadroDeTrabalho` lê `ticksDeDescanso + ticksNoTile` (de
+  `dadosDoTrabalho`, que tira de `gameData.producao.receitas[id].colheita`) e devolve
+  `null` antes disso; os terços dividem `[descanso + noTile, ciclo)`. No descanso, com o
+  canteiro dentro, vale o ocioso da F-VIVO-e. As notas LOTE3-b1 e LOTE3-b2 acima estão
+  cumpridas.
 
 **Aceite da F-VIVO-c (os animais).**
 - `animaisDoCurral(predio, dados)` é pura e devolve 5 posições, com a idade de 1 a 3
@@ -4897,6 +4903,10 @@ ocioso, no tile nada. Os terços dividem a fase da casa. Fecha a nota LOTE3-b2 d
 2. Com o ocupante `colhendo`, nem trabalho nem ocioso.
 3. Os números de fase vêm de `gameData.producao…colheita`, não de literal.
 4. Roteiro despausado: pedreira com o canteiro fora e pedreira com ele dentro.
+- **Entregue (2026-10-01).** `src/render/trabalho.ts` e `src/render/predios.ts`
+  (`DadosDoTrabalho` ganhou `ticksDeDescanso` e `ticksNoTile`),
+  `tests/F-VIVO-f-caso-2-na-casa.test.ts`, evidência em `test-output/F-VIVO-f.json`,
+  roteiro `tools/shots/F-VIVO-f.js`. A F-VIVO-b foi ajustada à regra nova.
 
 **Aceite da F-VIVO-g (o curral guarda).** `curralDesenhado(anterior, atual, ocupado)` em
 `src/render/animais.ts`, pura; a memória num `Map` da cena. Depois de carregar partida, o

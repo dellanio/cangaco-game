@@ -111,10 +111,15 @@ export function dadosDasPilhas(manifesto: Manifesto): DadosDasPilhas {
 export function dadosDoTrabalho(manifesto: Manifesto): DadosDoTrabalho {
   const ancoras: Record<string, AncorasDoPredio | undefined> = {};
   for (const e of manifesto.assets) if (ehEntradaDePredio(e)) ancoras[e.id] = e.ancoras;
+  const receitas = Object.entries(gameData.producao.receitas);
+  const daColheita = (campo: 'ticksDeDescanso' | 'ticksNoTile'): Record<string, number> => Object.fromEntries(
+    receitas.flatMap(([id, r]) => (r?.colheita == null ? [] : [[id, r.colheita[campo]]])),
+  );
   return {
     casos: CASO_DO_PREDIO,
-    ticksDoCiclo: Object.fromEntries(Object.entries(gameData.producao.receitas)
-      .flatMap(([id, r]) => (r === undefined ? [] : [[id, r.ticksDoCiclo]]))),
+    ticksDoCiclo: Object.fromEntries(receitas.flatMap(([id, r]) => (r === undefined ? [] : [[id, r.ticksDoCiclo]]))),
+    ticksDeDescanso: daColheita('ticksDeDescanso'),
+    ticksNoTile: daColheita('ticksNoTile'),
     ancoras,
   };
 }

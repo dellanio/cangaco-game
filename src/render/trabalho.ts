@@ -60,6 +60,10 @@ export interface DadosDoTrabalho {
   readonly casos: Readonly<Record<string, CasoDoPredioVivo>>;
   /** `ticksDoCiclo` da receita de cada tipo, ja em ticks (o carregador converteu). */
   readonly ticksDoCiclo: Readonly<Record<string, number>>;
+  /** F-VIVO-f — as fases da colheita (LOTE3), por tipo que colhe: o descanso dentro e o
+   *  trecho no tile. A fase da casa e o resto do ciclo. Tipo sem colheita nao aparece. */
+  readonly ticksDeDescanso: Readonly<Record<string, number>>;
+  readonly ticksNoTile: Readonly<Record<string, number>>;
   /** As ancoras do manifesto por tipo. Tipo sem entrada usa as padrao. */
   readonly ancoras: Readonly<Record<string, AncorasDoPredio | undefined>>;
 }
@@ -92,9 +96,10 @@ const quadrosDe = (caso: CasoDoPredioVivo, laco: string): number => LACOS_DO_CAS
 /**
  * O quadro de trabalho do predio neste tick, ou `null`:
  * - caso 1 (`guarda`): sempre `null` — a vida dele e o trabalhador no campo e a fumaca;
- * - caso 2 (`transforma`): `inicio`, `meio` e `fim` pelos tercos do progresso, uma vez
- *   o primeiro e o ultimo, e o `meio` repetido ate encher o terco dele; so com o
- *   ocupante dentro (`ROTULOS_DE_DENTRO`, BUG-X): no tile, a casa fica parada;
+ * - caso 2 (`transforma`): so na FASE DA CASA, `[descanso + noTile, ciclo)` (F-VIVO-f, como
+ *   o KaM): no descanso vale o ocioso, no tile nada. `inicio`, `meio` e `fim` pelos
+ *   tercos dessa fase, uma vez o primeiro e o ultimo, e o `meio` repetido ate encher o
+ *   terco dele; so com o ocupante dentro (`ROTULOS_DE_DENTRO`, BUG-X);
  * - casos 3 e 5 (`dentro`, `criacao`): `laco1` e `laco2` alternando a cada volta;
  * - caso 4 (`luz`): `luz`, repetido.
  * O `tick` nao entra (o quadro e do `progresso`); fica na assinatura do aceite.
@@ -110,11 +115,15 @@ export function quadroDeTrabalho(
 
   if (caso === 'transforma') {
     if (unidade === null || !ROTULOS_DE_DENTRO.includes(unidade.fsm)) return null;
-    const t1 = Math.floor(total / 3);
-    const t2 = Math.floor((2 * total) / 3);
-    if (p < t1) return { laco: 'inicio', n: noTercoUnico(p, t1, quadrosDe(caso, 'inicio')) };
-    if (p < t2) return { laco: 'meio', n: noTrecho(p - t1, t2 - t1, quadrosDe(caso, 'meio')).n };
-    return { laco: 'fim', n: noTercoUnico(p - t2, total - t2, quadrosDe(caso, 'fim')) };
+    const casa = (dados.ticksDeDescanso[predio.tipo] ?? 0) + (dados.ticksNoTile[predio.tipo] ?? 0);
+    const fase = total - casa;
+    if (p < casa || fase <= 0) return null;
+    const q = p - casa;
+    const t1 = Math.floor(fase / 3);
+    const t2 = Math.floor((2 * fase) / 3);
+    if (q < t1) return { laco: 'inicio', n: noTercoUnico(q, t1, quadrosDe(caso, 'inicio')) };
+    if (q < t2) return { laco: 'meio', n: noTrecho(q - t1, t2 - t1, quadrosDe(caso, 'meio')).n };
+    return { laco: 'fim', n: noTercoUnico(q - t2, fase - t2, quadrosDe(caso, 'fim')) };
   }
   if (caso === 'luz') return { laco: 'luz', n: noTrecho(p, total, quadrosDe(caso, 'luz')).n };
   const { volta, n } = noTrecho(p, total, quadrosDe(caso, 'laco1'));

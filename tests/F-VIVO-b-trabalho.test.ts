@@ -56,6 +56,8 @@ const ticksDe = (tipo: string): number => {
   if (t === undefined) throw new Error(`fixture: '${tipo}' sem ticksDoCiclo`);
   return t;
 };
+/** F-VIVO-f — onde comeca a fase da casa: descanso + tile (0 para quem nao colhe). */
+const casaDe = (tipo: string): number => (dados.ticksDeDescanso[tipo] ?? 0) + (dados.ticksNoTile[tipo] ?? 0);
 
 /** Os quadros de um ciclo inteiro, progresso 0..T-1, com o ocupante no rotulo dado. */
 function cicloDe(tipo: string, unidade: Unidade = trabalhando): (QuadroDeTrabalho | null)[] {
@@ -99,9 +101,14 @@ describe('F-VIVO-b — o quadro de trabalho por caso, num ciclo inteiro', () => 
     evidencia['guarda'] = { ticksDoCiclo: ticksDe('farm'), quadros: 'todos null', fumacaDeclarada: fumacas };
   });
 
-  it('caso 2 (transforma, quarry): inicio, meio e fim pelos tercos; o meio se repete no terco dele', () => {
-    const t = ticksDe('quarry');
-    const ciclo = cicloDe('quarry');
+  it('caso 2 (transforma, quarry): so na fase da casa, inicio, meio e fim pelos tercos dela', () => {
+    // F-VIVO-f: o caso 2 anima so em [descanso + tile, ciclo); antes, nada (o descanso e do
+    // ocioso). O terco divide a FASE DA CASA, nao o ciclo inteiro.
+    const casa = casaDe('quarry');
+    expect(casa).toBeGreaterThan(0);
+    expect(cicloDe('quarry').slice(0, casa).every((q) => q === null)).toBe(true);
+    const t = ticksDe('quarry') - casa;
+    const ciclo = cicloDe('quarry').slice(casa);
     // BUG-X: o caso 2 anima so com o ocupante dentro; no tile a casa fica parada
     expect(cicloDe('quarry', comFsm('colhendo')).every((q) => q === null)).toBe(true);
     expect(corridas(ciclo)).toEqual(['inicio', 'meio', 'fim']);
@@ -121,7 +128,7 @@ describe('F-VIVO-b — o quadro de trabalho por caso, num ciclo inteiro', () => 
     // o ultimo quadro do ciclo e o fim_8; o primeiro do seguinte, inicio_1
     expect(ciclo[ciclo.length - 1]).toEqual({ laco: 'fim', n: 8 });
     expect(ciclo[0]).toEqual({ laco: 'inicio', n: 1 });
-    evidencia['transforma'] = { ticksDoCiclo: t, tercos: [t1, t2], voltasDoMeio: k, sequencia: ciclo.map((q) => `${q?.laco}_${q?.n}`) };
+    evidencia['transforma'] = { ticksDoCiclo: ticksDe('quarry'), inicioDaCasa: casa, faseDaCasa: t, tercos: [t1, t2], voltasDoMeio: k, sequencia: ciclo.map((q) => `${q?.laco}_${q?.n}`) };
   });
 
   it('caso 3 (dentro, sawmill): laco1 e laco2 alternando a cada volta completa', () => {
@@ -185,7 +192,8 @@ describe('F-VIVO-b — n avanca e volta ao 1 sem pular, nas receitas reais', () 
     const vistos: Record<string, { ticks: number; quadros: number }> = {};
     for (const [tipo, caso] of Object.entries(CASO_DO_PREDIO)) {
       if (caso === 'guarda') continue;
-      const ciclo = cicloDe(tipo);
+      // F-VIVO-f: o caso 2 so tem quadro na fase da casa; o que vem antes e null por regra
+      const ciclo = cicloDe(tipo).slice(caso === 'transforma' ? casaDe(tipo) : 0);
       expect(pulos(ciclo, caso), tipo).toEqual([]);
       expect(ciclo[0]?.n, tipo).toBe(1);
       // o ultimo quadro do ciclo fecha o laco (n = F), e o seguinte recomeca no 1
@@ -244,7 +252,11 @@ describe('F-VIVO-b — contra a sim: a pedreira real e a serraria sem insumo', (
         expect(q, `tick ${s.tick}, no lajedo`).toBeNull();
         if (colhendoNoTick < 0) colhendoNoTick = s.tick;
       }
-      if (fsm === 'trabalhando' && progresso > 0 && progresso < ticksDe('quarry')) {
+      // F-VIVO-f: dentro no descanso, nada (o ocioso cobre); dentro na fase da casa, anima
+      if (fsm === 'trabalhando' && progresso < (dados.ticksDeDescanso['quarry'] ?? 0)) {
+        expect(q, `tick ${s.tick}, dentro no descanso`).toBeNull();
+      }
+      if (fsm === 'trabalhando' && progresso >= casaDe('quarry') && progresso < ticksDe('quarry')) {
         expect(q, `tick ${s.tick}, dentro`).not.toBeNull();
         if (dentroNoTick < 0) dentroNoTick = s.tick;
         vistos.push(`${q!.laco}_${q!.n}`);

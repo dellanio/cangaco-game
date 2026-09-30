@@ -23,7 +23,7 @@ import { quadroDeTrabalho, quadroOcioso, TICKS_POR_QUADRO } from '../src/render/
 import type { DadosDoTrabalho } from '../src/render/trabalho';
 import { dentroDaCasa, unidadesInvisiveis } from '../src/render/visibilidade';
 import {
-  cenarioDeFazenda, cenarioDePedreira, cenarioDeSerraria, comProdutorOcupado, semAUnidade, semOcupante,
+  cenarioDeFazenda, cenarioDePedreira, cenarioDeSerraria, comProdutorOcupado, pedreiraDaVila, semAUnidade, semOcupante,
 } from './helpers/producao-cenario';
 import { comandosDaVilaNoTick, vilaDaCalibracao } from './helpers/cal-vila';
 import { gravarEvidencia } from './helpers/evidence';
@@ -171,8 +171,9 @@ describe('F-VIVO-e — o ocioso generico', () => {
   });
 
   it('aceite 5 (partida do roteiro): pedreira de saida cheia ao lado de pedreira vazia', () => {
-    // a segunda pedreira onde o jogador poderia pô-la, colada a oeste da q1 (26,34)
-    const VAZIA = { gx: 22, gy: 34 };
+    // a segunda pedreira onde o jogador poderia pô-la, colada a oeste da q1 (relativa: o
+    // mundo transladado da F18c-1c anda junto)
+    const VAZIA = { gx: pedreiraDaVila().gx - 4, gy: pedreiraDaVila().gy };
     const base = cenarioDePedreira();
     expect(canPlace(base, 'quarry', VAZIA.gx, VAZIA.gy).ok).toBe(true);
     let s = comProdutorOcupado(base, { tipo: 'quarry', id: 'q2', unidade: 'u9', ...VAZIA }, gameData);
