@@ -163,6 +163,32 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
   D-TRANSPORTE-03 T2 e antes do lote de recalibração do BALANCE_LOG.
 - status: aberto
 
+## BUG-Y — viagem inútil para comer: o especialista acha a prateleira vazia
+- feature: F20b (fome e morte), decisão D5; aparece no D-TRANSPORTE-03 T2 (logística do KaM)
+- severidade: a classificar pelo operador. Não quebra aceite escrito: a D5 prevê que "quem
+  chega e não acha comida não espera".
+- repro: vila da calibração (`tests/helpers/cal-vila.ts`, `comandosDaVilaNoTick`), 20 000
+  ticks, na árvore `ebb2182` (branch `wip/D-TRANSPORTE-03-T2`). Os lenhadores u85/u86 saem
+  para comer no tick 6 869, colhendo. Na base (`faf8590`), a mesma viagem sai no tick 7 286.
+- observado: o lenhador vaga a casa (D8), anda até a Bodega, chega sem comida na prateleira, e
+  a FSM vai `indo_comer → indo_ocupar`. Ele volta para a casa sem ter comido e perde ~110
+  ticks por sentido. Nas duas árvores, a primeira viagem de comer do lenhador termina assim.
+- esperado: o especialista não troca a produção por uma viagem que não alimenta.
+- **o motivo registrado da D5** (`docs/planos/F20b-fome-e-morte.md:64-70`): "o assento é
+  reservado; a comida, não. [...] A comida não é reservada porque uma refeição consome um
+  **conjunto variável de tipos** (D7) e reservar uma unidade de um tipo seria uma reserva
+  que mente sobre o que vai ser consumido. O que cobre a corrida é o portão do gerador [...]
+  mais o consumo **atômico na chegada**: quem chega e não acha comida não espera — volta a
+  `ocioso` no mesmo tick". O portão do gerador (a tarefa só nasce em Bodega com comida) vale
+  no claim, e não na chegada: entre o claim e a chegada, outro comensal esvazia a prateleira.
+- efeito medido: no T2 o pão chega mais cedo à Bodega, e a viagem perdida cai antes da 17ª
+  tora, e não depois. Isso dá tree_trunk 50 contra 51 da base. Com 16 000, 20 000 e 30 000
+  ticks, a diferença é sempre −1.
+- saídas possíveis (não decididas, e sem correção nesta entrada): reservar comida por
+  refeição (a D7 pede uma reserva de conjunto), ou o comensal conferir a prateleira de novo
+  antes de vagar a casa.
+- status: aberto
+
 ## Polimento
 
 Os três bugs de oscilação de tempo que moravam aqui (BUG-D na F-T1, BUG-E na F-T2b e,
