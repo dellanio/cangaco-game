@@ -15762,3 +15762,15 @@ ab52723 | APROVADO | D3 confere                                                 
 - As citações `KM_HandLogistics.pas` do T2 não levam o caminho `src/hands/`, que a regra nova do §15
   pede. Há uma cópia só do arquivo no clone, então não são ambíguas. Não corrigi: é doc de dado
   e comentário, fica para a próxima vez que `delivery.json` for tocado.
+
+## 2026-09-30 — Leva 2, item 4: `inn.comensaisSimultaneos` medido no clone do KaM: número sem efeito, proposta (A) ou (B)
+
+Os números e as linhas estão na entrada de hoje no `BALANCE_LOG.md`. Verificado no clone
+`731a8a4`, com o caminho a partir da raiz: 6 assentos e 5 por comida no KaM. Lá o assento só
+limita porque é tomado dentro da Inn e a refeição dura `29*4` ticks por comida. Aqui, com a
+refeição de 1 tick (D6 da F20b) e a garantia do BUG-Y (viagem inútil para comer), o teto é ≤ 5,
+e um assento 6 continuaria sem efeito. **Nenhum número mudou.**
+
+### Espera decisão do operador
+- (A) tirar o campo do dado, ou (B) duração da refeição no dado, com assento 6 contado dentro
+  da Inn (revoga a D6).

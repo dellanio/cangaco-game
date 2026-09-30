@@ -1435,3 +1435,23 @@ Medi o mesmo roteiro, o da C-IA-03c (jogar pela tela), contra a mesma IA:
   limita com o dado de hoje.
 - Proposta: nenhuma agora. Para o lote: decidir se o assento baixa até a gaveta, ou se a
   gaveta sobe. Nenhum número mudou.
+
+## 2026-09-30 — `inn.comensaisSimultaneos` contra o KaM (medido no clone 731a8a4): proposta, nada mudou
+
+- **KaM:** 6 assentos (`src/houses/KM_HouseInn.pas:11`, `INN_MAX_EATERS = 6`); teto de 5 por
+  comida (`src/houses/KM_Houses.pas:1666-1673`, `GetMaxInWare` → `MAX_WARES_IN_HOUSE`,
+  `src/common/KM_Defaults.pas:299`). O nosso `estoquePorTipoDeComida` 5 bate.
+- **Por que lá o assento limita e aqui não:** no KaM o assento só é tomado DENTRO da Inn
+  (`src/units/tasks/KM_UnitTaskGoEat.pas:123`), e cada comida prende o comensal `29*4` ticks
+  (`:139`, e o mesmo nas outras comidas). A escolha da Inn olha "tem comida e tem assento" na
+  hora de sair (`src/hands/KM_Hand.pas:1461`), sem reservar nada: quem chega sem assento sai com
+  fome (`KM_UnitTaskGoEat.pas:125-128`). Aqui a refeição dura 1 tick (D6 da F20b), e desde o
+  BUG-Y a garantia (≤ 5) é o teto. Qualquer assento ≥ 5 fica sem efeito, e isso inclui o 6 do KaM.
+- **Proposta (espera o operador):**
+  - (A) **tirar o campo:** `comensaisSimultaneos` sai de `condition.json`, e o teto é só
+    `refeicoesGarantidas`. É o modelo de hoje dito com honestidade. Muda F20b-4 e o BUG-Y aceite 3.
+  - (B) **alinhar ao KaM de fato:** duração da refeição no dado (grupo `economia`, `29*4` ticks
+    por comida como referência no `_doc`), assento 6 contado só por quem está `comendo`, e a
+    garantia continua valendo para quem anda. Revoga a D6 da F20b, e muda o tempo que o
+    especialista passa fora da casa: pede o cenário longo antes.
+  - Trocar só 8 → 6 **não** resolve: continua sem efeito.
