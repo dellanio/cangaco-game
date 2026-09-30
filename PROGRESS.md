@@ -14614,3 +14614,48 @@ aceite.
 - **A pausa contra a casa fechada do KaM:** declarar a divergência ou alinhar?
 
 **O que muda na partida:** nada. É leitura.
+
+## 2026-09-30 — Leva do operador: maxWorkers, BUG-U causa A (quartel sem estrada), F24c (Casa do Gibão por encomenda)
+
+Ordem do operador (2026-09-30): verify estável primeiro, depois um commit por item. A
+D-TRANSPORTE-03 (logística do KaM) foi autorizada na mesma mensagem e vem depois, em dois
+passos (T1 e T2), com medida entre eles.
+
+**Verificado:**
+- **Timeout do C-IA-03b (IA inimiga: tempo de paz e tropas) no verify.** Causa medida: disputa
+  de CPU, não teste lento nem sim mais lenta.
+  - A sonda de 6000 ticks de paz em node puro deu 1,6–1,9 s no fonte de `1ef9303` (36
+    unidades) e 1,6–2,2 s no de hoje (52 unidades): o custo por tick não cresceu.
+  - Na suíte com 15 workers (o padrão do vitest, núcleos − 1), cada teste pesado fica 4 a 4,5×
+    mais lento que isolado: 14,1 s e 24,0 s contra os limites de 12 s e 20 s. O F05a caiu
+    junto (30 s).
+  - Com 8 workers: suíte em 68,7 s contra 73,5 s, zero falha.
+  - Decisão do operador: `maxWorkers: '50%'` em `vitest.config.mts` (o transladado herda
+    pelo `mergeConfig`). Três verifies seguidos: 150 s, 165 s e 142 s, todos com 2028/2028
+    na suíte e 2027 + 4 fora do mundo transladado. Commit `2015b45`. Números de relógio:
+    evidência da sessão, nunca asserção (§8).
+- **BUG-U causa A (quartel sem estrada até o armazém).** `temCausa` acende `sem-estrada`
+  para quartel completo sem ligação por estrada, a mesma que o gerador de
+  `arma-para-quartel` exige. `tests/BUG-U-quartel-sem-estrada.test.ts` (reprovava antes);
+  roteiro `tools/shots/BUG-U.js` com o jogo andando: a faixa mostra "Sem estrada até o
+  armazém" com 1 (screenshot aberto). Commit `a702a8c`. O BUG-U continua aberto no
+  `BUGS.md`: a causa B é da D-TRANSPORTE-03, e o `BUGS.md` só muda depois do avaliador (ordem
+  do operador).
+- **F24c (Casa do Gibão por encomenda).** Verify verde; roteiro `F24c` passou de novo nesta
+  sessão (escudo pedido 10 vezes: falta 9 e em curso), screenshot aberto. Detalhe no item do
+  `BUILD_PLAN.md` e no plano.
+- **VARREDURA-KAM, frente 5** (tarefa de leitura pedida pelo operador): toda afirmação sobre
+  o KaM em `data/*.json` sem arquivo:linha está listada em `docs/varredura-kam.md`. Oito
+  entradas sem citação (a maioria em `delivery.json`), oito com citação indireta pelo
+  `BALANCE_LOG.md`. Nada corrigido.
+
+**Não feito, e por quê:**
+- **Caminhada única da paz no C-IA-03b.** O operador aprovou só com isolamento pelo save, e
+  mandou não fazer se o save não cobrisse algum estado de que o teste depende. Não cobre: o
+  teste "peace-ended sai uma vez, no tick exato" conta os eventos `peace-ended` de TODOS os
+  6000 ticks (`ateOFimDaPaz` acumula `eventos`), e o save guarda só o `state.events` do
+  último tick. Com o `maxWorkers`, o arquivo passou nas três corridas sem esta mudança.
+
+### Perguntas em aberto
+- **C-IA-03b:** guardar a lista de eventos da caminhada ao lado do save, como texto também,
+  cada teste lendo a sua cópia? Ou deixar como está, já que o verify passa?

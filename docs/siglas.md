@@ -158,7 +158,7 @@ Decisão do operador (2026-09-28).
 | F18c-1c | guarda do mundo transladado | — | fechado | `F18c-1c-guarda-transladado` |
 | F24a | armas | — | fechado | `F24a-armas` |
 | F24b | cadeia do couro | — | fechado (2026-09-29) | `F24b-cadeia-do-couro` |
-| F24c | Casa do Gibão por encomenda | — | proposta, espera o operador | — |
+| F24c | Casa do Gibão por encomenda | — | fechado (2026-09-30) | `F24c-casa-do-gibao-por-encomenda` |
 | F-VIVO-b | animação de trabalho | — | fechado | `F-VIVO-b-trabalho` |
 | F-VIVO-c | animais | — | fechado | `F-VIVO-c-animais` |
 | F-VIVO-d1 | camadas a 0,75 | — | fechado | `F-VIVO-d1-camadas-a-075` |

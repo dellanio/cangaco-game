@@ -64,27 +64,36 @@ export function encomendaZerada(escolha: EscolhaDeSaida): boolean {
   return Object.values(escolha.cota).every((q) => q <= 0);
 }
 
+/** F24c — o que o ciclo da `saida` cobra: `entraPorSaida` dela, ou `entra` inteiro. */
+export function insumoDaSaida(receita: ReceitaDePredio, saida: string | undefined): Readonly<Record<string, number>> {
+  return (saida === undefined ? undefined : receita.entraPorSaida?.[saida]) ?? receita.entra;
+}
+
 /**
  * D-PRODUCAO-03a — a escolha no COMECO de um ciclo, o `PickOrder` do KaM
- * (`KM_Houses.pas`, 731a8a4): a partir de `proxima`, a primeira saida com encomenda
- * > 0. Desconta 1 dela, grava `emCurso` e passa `proxima` para a seguinte.
+ * (`KM_Houses.pas:1585-1600`, 731a8a4): a partir de `proxima`, a primeira saida com
+ * encomenda > 0 E com o insumo dela na entrada (F24c: o KaM pula a peca sem insumo).
+ * Desconta 1 dela, grava `emCurso` e passa `proxima` para a seguinte.
  * `undefined` na receita que nao escolhe; `null` quando nada esta encomendado — o
- * ciclo nao comeca.
+ * ciclo nao comeca; `'sem-insumo'` quando ha encomenda e nenhuma tem insumo.
  */
 export function escolhaNoComecoDoCiclo(
   predio: PredioCompleto, receita: ReceitaDePredio, dados: GameData = gameData,
-): EscolhaDeSaida | null | undefined {
+): EscolhaDeSaida | null | 'sem-insumo' | undefined {
   if (!receita.escolheSaida) return undefined;
   const escolha = escolhaEmVigor(predio, receita, dados);
   const saidas = saidasDaReceita(receita, dados);
+  let encomendada = false;
   for (let i = 0; i < saidas.length; i++) {
     const indice = (escolha.proxima + i) % saidas.length;
     const m = saidas[indice];
     const falta = m === undefined ? 0 : escolha.cota[m] ?? 0;
     if (m === undefined || falta <= 0) continue;
+    encomendada = true;
+    if (!temInsumoPara(predio, insumoDaSaida(receita, m))) continue;
     return { cota: { ...escolha.cota, [m]: falta - 1 }, proxima: (indice + 1) % saidas.length, emCurso: m };
   }
-  return null;
+  return encomendada ? 'sem-insumo' : null;
 }
 
 /**
@@ -119,7 +128,12 @@ export function escolhaDepoisDoDeposito(
 /** A gaveta `entrada` tem TUDO que o ciclo consome? Verdade de vacuo para
  *  receita sem entrada (quarry, woodcutters: tiram do veio ou do mato). */
 export function temInsumo(predio: PredioCompleto, receita: ReceitaDePredio): boolean {
-  return Object.entries(receita.entra)
+  return temInsumoPara(predio, receita.entra);
+}
+
+/** F24c — `temInsumo` com o insumo dado (o da saida em curso, `insumoDaSaida`). */
+export function temInsumoPara(predio: PredioCompleto, entra: Readonly<Record<string, number>>): boolean {
+  return Object.entries(entra)
     .every(([mercadoria, q]) => (predio.estoque.entrada[mercadoria] ?? 0) >= q);
 }
 
@@ -131,8 +145,13 @@ export function temInsumo(predio: PredioCompleto, receita: ReceitaDePredio): boo
  * ja faz ao coletar, e duas rotas para o mesmo estoque tem que dar o mesmo objeto.
  */
 export function consumirInsumos(predio: PredioCompleto, receita: ReceitaDePredio): PredioCompleto {
+  return consumirInsumosPara(predio, receita.entra);
+}
+
+/** F24c — `consumirInsumos` com o insumo dado (o da saida em curso). */
+export function consumirInsumosPara(predio: PredioCompleto, entra: Readonly<Record<string, number>>): PredioCompleto {
   const entrada: Record<string, number> = { ...predio.estoque.entrada };
-  for (const [mercadoria, q] of Object.entries(receita.entra)) {
+  for (const [mercadoria, q] of Object.entries(entra)) {
     entrada[mercadoria] = (entrada[mercadoria] ?? 0) - q;
   }
   return { ...predio, estoque: { ...predio.estoque, entrada } };

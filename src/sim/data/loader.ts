@@ -429,7 +429,29 @@ export function loadGameData(raw: RawGameData): GameData {
         );
       }
     }
-    const todos = [...Object.values(periodos.entra), ...Object.values(periodos.sai)];
+    // F24c — o insumo por saida: periodos na mesma conversao de `entra`, e entram no ciclo
+    const porSaidaNoDado: Record<string, Record<string, number>> = 'entraPorSaida' in def ? def.entraPorSaida : {};
+    const periodosPorSaida: Record<string, Record<string, Ticks>> = {};
+    for (const [saida, insumos] of Object.entries(porSaidaNoDado)) {
+      if (!(saida in periodos.sai)) {
+        throw new Error(`loadGameData: a receita '${predioId}' cobra insumo da saida '${saida}', que ela nao declara`);
+      }
+      periodosPorSaida[saida] = {};
+      for (const [mercadoria, taxa] of Object.entries(insumos)) {
+        if (!(mercadoria in periodos.entra)) {
+          throw new Error(`loadGameData: a receita '${predioId}' cobra '${mercadoria}' por saida, fora de 'entra'`);
+        }
+        (periodosPorSaida[saida] as Record<string, Ticks>)[mercadoria] = registrar(
+          `production.predios.${predioId}.entraPorSaida.${saida}.${mercadoria}`, raw.production.escala,
+          taxa, 'unidadesPorMinuto',
+          taxaParaTicksPorUnidade(taxa, escalaEconomiaProducao as number, tickHz),
+        );
+      }
+    }
+    const todos = [
+      ...Object.values(periodos.entra), ...Object.values(periodos.sai),
+      ...Object.values(periodosPorSaida).flatMap((p) => Object.values(p)),
+    ];
     if (todos.length === 0) {
       throw new Error(`loadGameData: receita '${predioId}' nao declara nem entrada nem saida`);
     }
@@ -475,6 +497,9 @@ export function loadGameData(raw: RawGameData): GameData {
     if (escolheSaida && Object.keys(periodos.sai).length < 2) {
       throw new Error(`loadGameData: a receita '${predioId}' escolhe a saida, mas declara menos de duas`);
     }
+    if (!escolheSaida && Object.keys(periodosPorSaida).length > 0) {
+      throw new Error(`loadGameData: a receita '${predioId}' cobra insumo por saida, mas nao escolhe a saida`);
+    }
     // F-REPL-b — os modos so tem leitor no rodizio, e o rodizio so existe para quem
     // colhe. O padrao fora da lista seria um predio que nasce num modo que nenhum
     // comando consegue pedir de volta.
@@ -487,6 +512,8 @@ export function loadGameData(raw: RawGameData): GameData {
       escolheSaida,
       modos,
       entra: quantidades(periodos.entra),
+      entraPorSaida: Object.keys(periodosPorSaida).length === 0 ? null
+        : Object.fromEntries(Object.entries(periodosPorSaida).map(([s, p]) => [s, quantidades(p)])),
       sai: fases === null ? quantidades(periodos.sai) : { [saidas[0] ?? '']: fases.porViagem },
       colheita: colheita === null ? null : {
         recurso: colheita.recurso,

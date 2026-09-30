@@ -17,7 +17,7 @@ import { step } from '../src/sim/tick';
 import { painelDoPredio } from '../src/sim/selectors';
 import type { PainelDoPredio } from '../src/sim/selectors';
 import { salvar } from '../src/sim/save';
-import { comandoDeEncomenda, semEncomenda, textoDaEncomendaCumprida } from '../src/ui/encomenda';
+import { PASSO_COM_SHIFT, comandoDeEncomenda, passoDaEncomenda, semEncomenda, textoDaEncomendaCumprida } from '../src/ui/encomenda';
 import { cenarioDaCadeiaDoFerro, comSaida } from './helpers/producao-cenario';
 import { gravarEvidencia } from './helpers/evidence';
 
@@ -103,6 +103,23 @@ describe('D-PRODUCAO-03b — o botao −/+ levado ao step', () => {
     // o comando grampeia: um salto maior que o teto manda o teto, e a sim aceita
     const grampeado = comandoDeEncomenda('ws1', enc, 'pike', enc.maxima + 5);
     expect(grampeado?.type === 'SetProductionQuota' ? grampeado.cota['pike'] : null).toBe(enc.maxima);
+  });
+
+  it('F24c — Shift anda dez: + de zero vai a dez, − de tres para no zero, + perto do teto para no teto', () => {
+    expect(passoDaEncomenda(false)).toBe(1);
+    expect(passoDaEncomenda(true)).toBe(PASSO_COM_SHIFT);
+    let s = inicio();
+    s = aplicar(s, comandoDeEncomenda('ws1', encomendaDe(s, 'ws1'), 'crossbow', passoDaEncomenda(true)));
+    const enc = encomendaDe(s, 'ws1');
+    const pedidas = { ...faltas(enc) };
+    if (enc.emCurso !== null) pedidas[enc.emCurso] = (pedidas[enc.emCurso] ?? 0) + 1;
+    expect(pedidas).toEqual({ sword: 0, pike: 0, crossbow: PASSO_COM_SHIFT });
+    s = aplicar(s, comandoDeEncomenda('ws1', encomendaDe(s, 'ws1'), 'sword', 3));
+    const menos = comandoDeEncomenda('ws1', encomendaDe(s, 'ws1'), 'sword', -passoDaEncomenda(true));
+    expect(menos?.type === 'SetProductionQuota' ? menos.cota['sword'] : null).toBe(0);
+    const quase = aplicar(s, comandoDeEncomenda('ws1', encomendaDe(s, 'ws1'), 'pike', enc.maxima - 3));
+    const mais = comandoDeEncomenda('ws1', encomendaDe(quase, 'ws1'), 'pike', passoDaEncomenda(true));
+    expect(mais?.type === 'SetProductionQuota' ? mais.cota['pike'] : null).toBe(enc.maxima);
   });
 
   it('mercadoria que nao e saida da oficina nao monta comando', () => {

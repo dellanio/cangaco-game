@@ -477,8 +477,8 @@
     "encomenda": "Encomenda",
     "encomendaEmCurso": "fazendo",
     "semEncomenda": "Sem encomenda: a oficina está parada",
-    "encomendaMenos": "Encomendar uma a menos",
-    "encomendaMais": "Encomendar uma a mais"
+    "encomendaMenos": "Encomendar uma a menos (Shift: dez)",
+    "encomendaMais": "Encomendar uma a mais (Shift: dez)"
   },
   "partida": {
     "_doc": "F34. O aviso do fim da escaramuca, sobre o jogo. So a tela: quem decide o fim e sim/partida.ts.",
@@ -641,7 +641,8 @@
       "tempo": "O tempo",
       "camera": "Andar pelo mapa",
       "tropa": "A tropa",
-      "ajuda": "Este papel"
+      "ajuda": "Este papel",
+      "casa": "Na casa aberta"
     },
     "rotulos": {
       "ajuda": "Mostra e esconde este papel",
@@ -655,13 +656,15 @@
       "arrastar-camera": "Corre o mapa de um lado para o outro",
       "zoom": "Chega perto e afasta",
       "selecionar-tropa": "Pega os cabras dentro da caixa (com Shift, soma)",
-      "ordenar-tropa": "Manda a tropa marchar, ou atacar a casa do inimigo"
+      "ordenar-tropa": "Manda a tropa marchar, ou atacar a casa do inimigo",
+      "encomenda-dez": "No − e no + da encomenda, pede de dez em dez"
     },
     "gestos": {
       "arrastar-camera": "Botão do meio, arrastando",
       "zoom": "Roda do mouse",
       "selecionar-tropa": "Botão esquerdo, arrastando",
-      "ordenar-tropa": "Botão direito"
+      "ordenar-tropa": "Botão direito",
+      "encomenda-dez": "Shift + clique"
     }
   }
 }

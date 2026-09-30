@@ -58,8 +58,8 @@ import { tileAlcancavelParaColheita } from '../aproximacao';
 import { ehPredioOcupavel, predioAceita, predioDoOcupante, tiposQueOcupam } from '../ocupacao';
 import { chaveDeTile, tileDeChave } from '../estradas';
 import {
-  cabeNaSaida, consumirInsumos, encomendaZerada, escolhaDepoisDoDeposito, escolhaNoComecoDoCiclo, receitaDoTipo,
-  saidasDoCiclo, semRecursoAoAlcance, temInsumo, unidadesPorCiclo,
+  cabeNaSaida, consumirInsumos, consumirInsumosPara, encomendaZerada, escolhaDepoisDoDeposito, escolhaNoComecoDoCiclo,
+  insumoDaSaida, receitaDoTipo, saidasDoCiclo, semRecursoAoAlcance, temInsumo, temInsumoPara, unidadesPorCiclo,
 } from '../producao';
 import {
   colherDoTile, melhorTileDeColheita, proximoTrabalhoDoRodizio, semearNoTile, tilesReservadosParaColheita,
@@ -632,10 +632,14 @@ function produzir(state: GameState, u: Unidade, predioAntes: PredioCompleto, dad
     // D-PRODUCAO-03a — a encomenda vem ANTES do insumo: oficina sem encomenda nao
     // cobra nada. O rotulo e `trabalhando`, o da pausa: e escolha do jogador, nao
     // falta de materia-prima. O desconto e aqui, no comeco, como o `PickOrder`.
+    // F24c — a escolha ja pulou a peca sem insumo (`PickOrder`); o que ela cobra e o
+    // insumo da peca em curso (`insumoDaSaida`), e nao `entra` inteiro.
     const escolha = escolhaNoComecoDoCiclo(predio, receita, dados);
     if (escolha === null) return comFsm(base, u, 'trabalhando');
-    if (!temInsumo(predio, receita)) return comFsm(base, u, 'esperando_insumo');
-    atual = consumirInsumos(predio, receita);
+    if (escolha === 'sem-insumo') return comFsm(base, u, 'esperando_insumo');
+    const insumo = insumoDaSaida(receita, escolha?.emCurso);
+    if (!temInsumoPara(predio, insumo)) return comFsm(base, u, 'esperando_insumo');
+    atual = consumirInsumosPara(predio, insumo);
     if (escolha !== undefined) prod = { ...prod, escolha };
   }
   const avancado: PredioCompleto = {

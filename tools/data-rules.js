@@ -191,6 +191,9 @@ function validarProducao(dados, erros) {
   // `economia.mercadorias`). Foi assim que tres oficinas consumiam insumo e nao
   // entregavam nada, com `arma_madeira`, `arma_ferro` e `armadura_ferro`.
   const mercadorias = new Set((dados.economy && dados.economy.mercadorias) || []);
+  const requisitosDeSoldado = new Set(
+    ((dados.units && dados.units.militares && dados.units.militares.tipos) || []).flatMap((t) => t.requisitos || []),
+  );
   for (const [id, def] of Object.entries(predios)) {
     if (id.startsWith('_')) continue;
     if (!idsDePredios.has(id)) {
@@ -211,6 +214,31 @@ function validarProducao(dados, erros) {
     }
     if (def && def.escolheSaida === true && Object.keys(def.sai || {}).length < 2) {
       erros.push(`producao/escolha-sem-opcao: production.predios.${id} escolhe a saida mas declara menos de duas`);
+    }
+    // F24c — o insumo de cada peca: so em quem escolhe, peca de `sai`, insumo de `entra`
+    // (as mesmas recusas do carregador, aqui para o `validate:data` apontar o arquivo).
+    if (def && def.entraPorSaida !== undefined) {
+      if (def.escolheSaida !== true) {
+        erros.push(`producao/entra-por-saida: production.predios.${id} declara entraPorSaida sem escolheSaida`);
+      }
+      for (const [saida, insumo] of Object.entries(def.entraPorSaida || {})) {
+        if (!(saida in (def.sai || {}))) {
+          erros.push(`producao/entra-por-saida: production.predios.${id}.entraPorSaida.${saida} nao esta em sai`);
+        }
+        for (const [m, taxa] of Object.entries(insumo || {})) {
+          if (!(m in (def.entra || {}))) {
+            erros.push(`producao/entra-por-saida: production.predios.${id}.entraPorSaida.${saida}.${m} nao esta em entra`);
+          } else if (!(taxa > 0)) {
+            erros.push(`producao/entra-por-saida: production.predios.${id}.entraPorSaida.${saida}.${m}=${taxa}`);
+          }
+        }
+      }
+    }
+    // F24c (decisao do operador, 2026-09-29) — toda oficina de guerra trabalha por encomenda:
+    // receita com duas saidas ou mais, alguma requisito de soldado, escolhe a saida.
+    const saidas = Object.keys((def && def.sai) || {});
+    if (saidas.length >= 2 && saidas.some((m) => requisitosDeSoldado.has(m)) && def.escolheSaida !== true) {
+      erros.push(`producao/oficina-de-guerra-sem-encomenda: production.predios.${id} faz ${saidas.join(', ')} e nao escolhe a saida`);
     }
     // F-REPL-b: o padrao fora da lista e um predio que nasce num modo que nenhum
     // comando pede de volta; modo sem `planta` nao tem o que o rodizio le.

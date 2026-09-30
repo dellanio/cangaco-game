@@ -24,6 +24,14 @@ export function comandoDeEncomenda(
   return { type: 'SetProductionQuota', predio, cota };
 }
 
+/** F24c (decisao do operador, 2026-09-29) — o salto do −/+ com Shift. O clique solto anda 1. */
+export const PASSO_COM_SHIFT = 10;
+
+/** O tanto que o −/+ anda: 1, ou `PASSO_COM_SHIFT` com Shift apertado. O sinal e do botao. */
+export function passoDaEncomenda(comShift: boolean): number {
+  return comShift ? PASSO_COM_SHIFT : 1;
+}
+
 /** Tudo em zero e nenhum ciclo em andamento: a oficina esta parada por escolha do jogador. */
 export function semEncomenda(encomenda: NonNullable<PainelDoPredio['encomenda']>): boolean {
   return encomenda.emCurso === null && encomenda.saidas.every((s) => s.falta === 0);

@@ -16,7 +16,7 @@
  * ouvintes. O `id` e NEUTRO e em ingles interno (CLAUDE.md §9); quem fala com o
  * jogador e `data/theme-sertao.json`.
  */
-export type GrupoDeAtalho = 'ferramenta' | 'tempo' | 'ajuda' | 'camera' | 'tropa';
+export type GrupoDeAtalho = 'ferramenta' | 'tempo' | 'ajuda' | 'camera' | 'tropa' | 'casa';
 
 export interface AtalhoDeTeclado {
   /** Id neutro. E a chave do rotulo no tema. */
@@ -84,6 +84,9 @@ export const GESTOS: readonly GestoDeMouse[] = [
   // C-TELA-03: a caixa e a ordem da F26b existiam e a ajuda nao contava
   { id: 'selecionar-tropa', grupo: 'tropa' },
   { id: 'ordenar-tropa', grupo: 'tropa' },
+  // F24c: o Shift+clique no −/+ da encomenda (`ui/painel-predio.ts`); atalho que a ajuda
+  // nao conta e funcionalidade invisivel (decisao do operador, 2026-09-29)
+  { id: 'encomenda-dez', grupo: 'casa' },
 ];
 
 interface EventoComparavel {

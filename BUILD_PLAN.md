@@ -5010,8 +5010,16 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
   é o GUARDA: `tests/F24b-cadeia-do-couro.test.ts`, com o contra-exemplo sem o Curtume, na
   fixture `cenarioDaCadeiaDoCouro`. **PARA REVISÃO:** a sigla ficou `F24b`, sub-item da série
   aberta, como a F24a.
-- **F24c — a Casa do Gibão escolhe a peça pela encomenda, como no KaM. PROPOSTA, espera o
-  operador (2026-09-29).** Hoje `armory_workshop` faz gibão E escudo no mesmo ciclo, comendo
+- **F24c — a Casa do Gibão escolhe a peça pela encomenda, como no KaM. ENTREGUE
+  (2026-09-30; aprovada pelo operador em 2026-09-29).** Plano
+  `docs/planos/2026-09-29-F24c-casa-do-gibao-por-encomenda.md`; o aceite é o do plano.
+  `armory_workshop` ganhou `escolheSaida` e `entraPorSaida` (gibão = 1 couro, escudo = 1
+  madeira); o começo do ciclo pula a peça encomendada sem insumo (o `PickOrder`,
+  `KM_Houses.pas:1585-1600`); regra `producao/oficina-de-guerra-sem-encomenda` no
+  validate:data; Shift+clique no − / + da encomenda anda 10, com linha na ajuda. Guarda:
+  `tests/F24c-casa-do-gibao-por-encomenda.test.ts` (reprova antes da correção); roteiro
+  `tools/shots/F24c.js`, com o jogo andando. **PARA REVISÃO:** a sigla ficou `F24c`, como a
+  F24b. Texto da proposta, histórico: Hoje `armory_workshop` faz gibão E escudo no mesmo ciclo, comendo
   couro E madeira: é a única oficina de guerra que produz sem encomenda (D-PRODUCAO-03), e
   sem madeira não faz gibão nenhum, mesmo com couro sobrando. No KaM
   (`KM_ResHouses.pas:251-252`, `WARFARE_COSTS` em `KM_ResWares.pas:73-75`, clone 731a8a4) a

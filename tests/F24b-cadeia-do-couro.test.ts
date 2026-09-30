@@ -6,16 +6,16 @@
  * sem codigo novo. O que se entrega e o GUARDA. Tudo pelo `step` (regra do operador,
  * 2026-09-29).
  *
- * O que NAO se afirma aqui: a Casa do Gibao escolher a peca pela encomenda, como no KaM. Ela
- * faz as duas por ciclo, comendo couro e madeira; a divergencia esta registrada como F24c,
- * proposta, esperando o operador.
+ * F24c (2026-09-29): a Casa do Gibao trabalha por encomenda, e cada peca come o seu insumo
+ * (gibao = couro, escudo = madeira). Por isso a cadeia ENCOMENDA as duas pecas, e o aceite 5
+ * encomenda so o gibao: o escudo sai da madeira, sem Curtume, e isso nao e defeito.
  */
 import { describe, expect, it } from 'vitest';
 import { gameData } from '../src/sim/data';
 import type { GameData } from '../src/sim/data/types';
 import type { GameState, PredioCompleto } from '../src/sim/state';
 import { step } from '../src/sim/tick';
-import { cenarioDaCadeiaDoCouro, cenarioDoCouroSemCurtume } from './helpers/producao-cenario';
+import { cenarioDaCadeiaDoCouro, cenarioDoCouroSemCurtume, comEncomenda } from './helpers/producao-cenario';
 import { violacoesDeInvariantes } from './helpers/jobs-invariantes';
 import { violacoesDaFsmDoEspecialista } from './helpers/especialista-invariantes';
 import { gravarEvidencia } from './helpers/evidence';
@@ -76,7 +76,7 @@ function rodarAte(
 }
 
 describe('F24b — a cadeia do couro fecha no mapa emitido', () => {
-  const inicio = cenarioDaCadeiaDoCouro();
+  const inicio = comEncomenda(cenarioDaCadeiaDoCouro(), 'aw1', { leather_armor: 1, wooden_shield: 1 });
   const { estado, registro, tick } = rodarAte(
     inicio, (_e, r) => PECAS.every((p) => r.entregou[`arm:${p}`] !== undefined),
     TETO_DA_CADEIA, 'o gibao e o escudo no armazem',
@@ -102,8 +102,9 @@ describe('F24b — a cadeia do couro fecha no mapa emitido', () => {
   it('aceite 4 — o curtido chega a Casa do Gibao, e gibao e escudo saem de la para o armazem', () => {
     const couro = registro.entregou['aw1:leather'];
     expect(couro).toBeDefined();
+    // F24c — so o gibao espera o couro; o escudo come madeira e pode sair antes
+    expect(registro.produziu['aw1:leather_armor'] ?? 0).toBeGreaterThan(couro ?? Number.POSITIVE_INFINITY);
     for (const p of PECAS) {
-      expect(registro.produziu[`aw1:${p}`] ?? 0, p).toBeGreaterThan(couro ?? Number.POSITIVE_INFINITY);
       expect(registro.entregou[`arm:${p}`] ?? 0, p).toBeGreaterThan(registro.produziu[`aw1:${p}`] ?? Number.POSITIVE_INFINITY);
       expect(Object.keys(registro.produziu).filter((k) => k.endsWith(`:${p}`)), p).toEqual([`aw1:${p}`]);
     }
@@ -122,10 +123,10 @@ describe('F24b — a cadeia do couro fecha no mapa emitido', () => {
   });
 });
 
-describe('F24b, aceite 5 — sem o Curtume, nenhum curtido nem peca', () => {
-  it('o couro cru sai, e o curtido, o gibao e o escudo nao', () => {
+describe('F24b, aceite 5 — sem o Curtume, nenhum curtido nem gibao', () => {
+  it('o couro cru sai, e o curtido e o gibao encomendado nao', () => {
     let desde: number | null = null;
-    const r = rodarAte(cenarioDoCouroSemCurtume(), (e, _r, t) => {
+    const r = rodarAte(comEncomenda(cenarioDoCouroSemCurtume(), 'aw1', { leather_armor: 1 }), (e, _r, t) => {
       if (desde === null && totalNoMundo(e, 'skins') > 0) desde = t;
       return desde !== null && t - desde >= JANELA_DEPOIS_DO_COURO_CRU;
     }, TETO_DA_CADEIA + JANELA_DEPOIS_DO_COURO_CRU, 'o couro cru mais a janela');

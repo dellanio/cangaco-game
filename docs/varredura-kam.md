@@ -377,3 +377,46 @@ só por encomenda, como o KaM. A exceção é a Casa do Gibão (F24c, proposta).
 - Um item para os comandos de grupo do item 11. É o maior efeito na partida: hoje o
   jogador não divide nem une tropa.
 - Os itens 4, 6 e 8, de logística fina, podem ir juntos num item de comandos de prédio.
+
+## Frente 5 — `data/*.json`: "fonte" sem arquivo:linha do KaM (2026-09-30)
+
+Pedido do operador (2026-09-30, junto das decisões da D-TRANSPORTE-03): auditar todo
+`data/*.json` atrás de afirmação sobre o KaM que não cite arquivo:linha. **Só a lista, nada
+corrigido.** Método: `grep -n -i "fonte\|KaM\|KM_\|remake\|original"` nos onze arquivos,
+e cada linha achada lida por inteiro (47 linhas). Três classes:
+
+**A. Afirma o KaM e não cita nada** (a lista pedida):
+
+| arquivo:linha | campo | o que afirma | nota |
+|---|---|---|---|
+| `delivery.json:4` | nível 1, `fonte` | "[fonte] maior prioridade no Remake" (comida → bodega) | Errado contra o fonte: no KaM a escola vem antes (`diHigh1`, `KM_HandLogistics.pas:1163-1166`) e a bodega é `diHigh3`. Detalhe no plano da D-TRANSPORTE-03. |
+| `delivery.json:7` | nível 3, `fonte` | "[fonte] segunda maior prioridade no Remake" (ouro → escola) | Errado do mesmo jeito: é a primeira no KaM. |
+| `delivery.json:9-17` | níveis 4 a 11 | a escada inteira, sem `fonte` nem `_doc` de origem nos níveis 4, 5, 6, 8, 9, 10 | Não afirma o KaM por escrito, mas é a mesma tabela dos níveis 1 e 3; sem origem declarada. |
+| `delivery.json:23` | `_nota_distancia` | "É erro conhecido no próprio Remake" (distância direta) | Nenhum arquivo citado. No fonte o lance tem dois estágios (`TryCalcRouteCost`, `KM_HandLogistics.pas:1446-1467`): `dckFast` confere que a rota existe e usa a estimativa `EvaluateFast`; `dckAccurate` usa o custo da rota. Qual é o "erro conhecido" a frase não diz. |
+| `economy.json:46` | `bloqueioPadraoNoArmazem._doc` | "Sugestão de guia do original" | Sem arquivo; nem diz se é do jogo de 1998 ou do Remake. |
+| `time.json:2` | `_doc` | "escala 1.0 = ritmo do KaM original" | Sem citação; a premissa do tick de 100 ms é hipótese declarada no `BALANCE_LOG.md:200`. |
+| `escaramuca.json:5` | `_docPeacetime` | "O peacetime do KaM (GDD 8.2: configurável)" | A primeira frase cita o GDD, não o fonte; o resto da mesma nota cita (`KM_GameInputProcess.pas:153-155`, `KM_Defaults.pas:117`). Parcial. |
+| `resources.json:40` | `_doc` do replantio | "plantar não cobra tora (hipótese sobre o KaM, não conferida no fonte)" | Já se declara hipótese. O resto da nota cita pelo `BALANCE_LOG` (classe B). |
+
+**B. Cita o KaM pelo `BALANCE_LOG.md`, que cita o fonte** (indireto; a cadeia fecha, mas o
+dado não diz arquivo:linha):
+
+| arquivo:linha | o que afirma | onde a cadeia fecha |
+|---|---|---|
+| `production.json:5` (`quarry`) | proporção do pedreiro 80 : ~190 : 50; 3 blocos por viagem "como no KaM" | `BALANCE_LOG.md:142` em diante (`KM_UnitTaskMining.pas`, `KM_UnitWorkPlan.pas`, `houses.dat`) |
+| `production.json:7` (`woodcutters`) | proporção 180 : 0 : 50; modos `wcm_Chop` / `wcm_ChopAndPlant` | `BALANCE_LOG.md:142`; os modos em `BALANCE_LOG.md:539` (`KM_Houses.pas:13`) |
+| `production.json:10` (`farm`) | proporção do fazendeiro 96 : 0 : 50 | `BALANCE_LOG.md:142` |
+| `production.json:13` (`vineyard`) | proporção do vinhateiro 100 : ~320 : 50 | `BALANCE_LOG.md:142` e `:1165` (binário) |
+| `production.json:15` (`fishermans`) | 328 no tile na linha do `reyandme`; 388/590 no binário | `BALANCE_LOG.md:262` e `:1165` |
+| `production.json:37-38` (`proporcoesDeReferencia`) | "herdado do GDD 4.5 e do jogo de 1998" | GDD 4.5, não o fonte. O `_aviso` já marca a premissa como caída para os ramos da fazenda. |
+| `resources.json:40` | crescer 1,25× o milho (árvore 8000, milho 6400); plantar 0,8× o corte | `BALANCE_LOG.md:539-548` (`KM_ResMapElements.pas:71-82`, `KM_Units_WorkPlan.pas:249-252`) |
+| `units.json:110` | "os valores do KaM estão no Anexo A do GDD" | GDD Anexo A, conferido na seção 12.1 desta varredura |
+
+**C. Cita arquivo:linha** (fora da lista, só para a conta fechar): `combat.json` 4, 21, 29, 44,
+51, 62, 68, 69, 75, 82, 83, 88, 100, 129, 130; `condition.json:14`; `delivery.json` 6, 31, 41;
+`economy.json:27`; `production.json` 30, 52; `units.json` 16, 21. O `delivery.json:19`
+(nível 12) diz sozinho que "a posição no KaM não foi conferida no fonte".
+
+Leitura: a classe A se concentra no `delivery.json`, justamente o arquivo que a
+D-TRANSPORTE-03 reescreve. As entradas de lá saem com a escada; as outras quatro ficam para
+decisão do operador.

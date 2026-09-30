@@ -29,7 +29,7 @@ import { desenharSecaoDaEscola, nomeDoCivil } from './painel-escola';
 import { comandoDaTroca, comandoDeCancelar, girarMercadoria, mudarQuantidade, rascunhoInicial } from './ordem-da-feira';
 import type { RascunhoDaTroca } from './ordem-da-feira';
 import { comandoDeModo, opcoesDeModo } from './modo-do-predio';
-import { comandoDeEncomenda, semEncomenda } from './encomenda';
+import { comandoDeEncomenda, passoDaEncomenda, semEncomenda } from './encomenda';
 import type { ModosDoTipo, NomeDoModo, OpcaoDeModo } from './modo-do-predio';
 // A MESMA aritmetica que a cena desenha no mapa (F17b). O arquivo nao tem
 // import nenhum — nem phaser, nem `sim/data` —, entao trazer ele para ca nao
@@ -100,7 +100,7 @@ interface ControleDaFeira {
 }
 
 /** Um botao pequeno do controle da feira, com o papel em `data-feira-controle`. */
-function botaoDaFeira(papel: string, texto: string, aoClicar: () => void): HTMLButtonElement {
+function botaoDaFeira(papel: string, texto: string, aoClicar: (evento: MouseEvent) => void): HTMLButtonElement {
   const botao = document.createElement('button');
   botao.type = 'button';
   botao.className = 'feira-controle';
@@ -245,8 +245,9 @@ function desenharEncomenda(
     n.className = 'falta';
     n.textContent = String(s.falta);
     const botao = (papel: string, texto: string, dica: string, delta: number): HTMLButtonElement => {
-      const b = botaoDaFeira(papel, texto, () => {
-        const comando = comandoDeEncomenda(predio, encomenda, s.mercadoria, delta);
+      // F24c — Shift+clique anda `PASSO_COM_SHIFT`; o desabilitado continua o do passo de 1
+      const b = botaoDaFeira(papel, texto, (evento) => {
+        const comando = comandoDeEncomenda(predio, encomenda, s.mercadoria, delta * passoDaEncomenda(evento.shiftKey));
         if (comando !== null) emitir(comando);
       });
       b.className = 'encomenda-controle';

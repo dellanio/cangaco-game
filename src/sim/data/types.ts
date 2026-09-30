@@ -68,6 +68,11 @@ export interface ReceitaDePredio {
    *  cota do predio (`Producao.escolha`). `false` e a receita de sempre: o ciclo
    *  deposita todas as saidas juntas (a granja: porco e couro). */
   readonly escolheSaida: boolean;
+  /** F24c — o insumo do ciclo POR SAIDA, na receita que escolhe a saida: o ciclo cobra o
+   *  da saida em curso, e nao `entra` inteiro (KaM, `WARFARE_COSTS`: gibao = 1 couro,
+   *  escudo = 1 madeira). `entra` continua sendo o que o predio pede ao transporte.
+   *  `null` = toda saida cobra `entra`, como sempre. */
+  readonly entraPorSaida: Readonly<Record<string, Readonly<Record<string, number>>>> | null;
   /** F-REPL-b — o que o jogador escolhe neste predio (`Producao.modo`), ou `null`
    *  para quem nao escolhe nada. Hoje so o lenhador declara. */
   readonly modos: ModosDoPredio | null;
