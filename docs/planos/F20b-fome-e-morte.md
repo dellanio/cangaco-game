@@ -225,3 +225,26 @@ um portão no `reclamar`. Nenhum arquivo de `src/render/` ou `src/ui/`.
 4. **12 000 ticks por teste é caro.** Os cenários de fome semeiam `condicao` baixa direto
    no estado (fixture), como o teste da escola semeia fila. O caminho real de 12 000 ticks
    roda **uma vez**, no cenário longo da Tarefa 5.
+
+## Emenda (operador, 2026-09-30): `inn.comensaisSimultaneos` sai do dado — opção (A)
+
+Commit próprio, antes do código (CLAUDE.md §6, item 10). Medido na leva 2 (BALANCE_LOG,
+2026-09-30): desde a emenda do BUG-Y na D5, o teto de comensais é `min(assentos,
+refeicoesGarantidas)`. A garantia fica ≤ `inn.estoquePorTipoDeComida` (5), e o assento (8) nunca
+limita. O mesmo valeria para os 6 do KaM (`src/houses/KM_HouseInn.pas:11`), porque aqui a
+refeição dura um tick (D6).
+
+- **O que muda:** a D4 ("a vaga é `inn.comensaisSimultaneos`") passa a "a vaga é
+  `refeicoesGarantidas`". O campo sai de `data/condition.json`. O claim e o gerador leem só a
+  garantia. A invariante de assentos (`tests/helpers/jobs-invariantes.ts`) passa a ser
+  "comensais reservados ≤ refeições garantidas + os que já estão a caminho de uma Bodega que
+  esvaziou". Na prática, ela é ≤ o teto de comida por tipo, que é o que o dado garante.
+- **Aceite:**
+  1. `data/condition.json` não tem `inn.comensaisSimultaneos`. `validate:data` e `typecheck`
+     verdes, e nenhum `.ts` o lê (o tipo vem do JSON; o compilador acusa leitor sobrando).
+  2. F20b-4 (o teto de comensais): com mais famintos que o teto de comida, os comensais reservados
+     e os `indo_comer` nunca passam de `refeicoesGarantidas` no tick da saída, e chegam a ela.
+     O caso "assento abaixo da garantia" sai, porque o assento não existe mais.
+  3. BUG-Y aceites 2 a 5 inalterados e verdes.
+  4. Não-regressão: F20b inteiro, F-CAL-a sem fome, invariantes.
+- A opção (B) (refeição com duração e 6 assentos, como no KaM) vai para o `IDEIAS.md`.
