@@ -15813,3 +15813,42 @@ foi num commit só dele, antes do código (`98ccf3a`).
 - **Hipótese, não medida:** a C-IA-03b está perto do próprio teto de travamento (10,4 s contra
   12 s) e cai sob carga paralela. Aumentar o teto é guarda de travamento (§8), não asserção, e
   fica como proposta, sem mexer agora.
+
+## 2026-09-30 — Leva 2, item 6: BUG-T (tropa travada), troca mútua na hora: aceite 4 REPROVA, código na branch, sem merge
+
+Código liberado pelo plano (`e42c300`), com a troca mútua na hora (decisão do operador). A emenda
+do aceite foi num commit próprio, antes do código (`bad487a`, plano, seção 7).
+
+### Verificado
+- **Tarefa 1:** a receita do `BUGS.md` não reproduz as ordens 11 e 19. Testei o LCG antes e
+  depois do sorteio, três definições de tropa e dois critérios de parada. A receita ficou fixada
+  na seção 7 do plano. Medido com ela: 3 de 400 ordens com preso, e os 6 presos são troca mútua.
+- **Código** (branch local `wip/BUG-T-troca-mutua`, `8ec6118`; `src/sim/systems/marcha.ts` e
+  `src/sim/units/movimento.ts`):
+  - `trocaMutuaCom`: dois do mesmo lado, marchando, cada um no tile seguinte do outro;
+  - a troca é **atômica nas duas pontas**. Os dois largam juntos, e trocam de tile juntos quando
+    os dois terminam o passo. O `andar` ganhou o parâmetro `parceiro`, que não segura a largada e,
+    na chegada, espera em `custo − 1` sem contar espera.
+  - **Duas versões anteriores reprovaram pela varredura, e não pelo par isolado.** Largada isenta
+    com chegada separada: u22 entrou no tile que u19 deixava, e o u28 ficou 7 ticks sobreposto ao
+    u19. Chegada atômica com largada separada: a mesma corrente deixou u19, u22, u28 e u29 presos
+    na ordem k = 13. A versão atômica nas duas pontas zera as sobreposições.
+- `tests/BUG-T-troca-mutua.test.ts` (na branch), vermelho antes do conserto nos aceites 2 e 4:
+  - aceite 2: troca em 6 ticks (teto 9 = maior custo de passo + 2); com estrada, 6 ticks nos dois
+    sentidos; 0 sobreposições;
+  - aceite 3 (inimigo não troca): 0 ticks trocados;
+  - **aceite 4: REPROVA.** A varredura dá 0 sobreposições e 1 ordem com preso (k = 37, caso 3:
+    `BUGS.md`, BUG-T).
+- Na branch, a não-regressão (C5, C-MOVIMENTO-02, 02b, C6, C-COMBATE-01a, F26a) está verde. O
+  `verify` dá 2 098 verdes, e só o aceite 4 falha. **A branch foi commitada com o `verify`
+  vermelho**, como wip marcado, para o código não se perder. Nada disso está na `main`.
+- A prova de que acusa (aceite 6) **não foi feita**: fica para quando o aceite 4 passar.
+
+### Espera decisão do operador
+- **O caso 3.** Os dois querem o tile do outro a dois passos, pelo meio ocupado por um parado do
+  mesmo lado. Saídas possíveis, nenhuma aplicada:
+  - (a) a `vagaEmparedadaPor` aceita o destino ocupado quando quem ocupa é o outro da troca a
+    dois passos (os três trocam de vaga);
+  - (b) a troca forçada com quem espera, do KaM (`src/units/actions/KM_UnitActionWalkTo.pas:799-802`,
+    depois de `WAITING_TIMEOUT` 40, `:131`): o parado do meio é empurrado. Pede número novo no dado.
+- Merge da branch: só com o aceite 4 verde.

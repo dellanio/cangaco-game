@@ -38,6 +38,19 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
 - **plano com aceite:** `docs/planos/2026-09-30-BUG-T-tropa-travada.md` (só plano; o código
   espera o operador). Conferido no código: a troca mútua escapa da `vagaTomadaPor` porque ela
   exige um PARADO no seguinte de quem ocupa. É o quarto caso da família.
+- **estado (2026-09-30, leva 2):** o código da troca mútua (na hora, atômica na largada e na
+  chegada) está na branch local `wip/BUG-T-troca-mutua` (`8ec6118`), **sem merge**. Os aceites 2
+  e 3 do plano (seção 7) passam, e a família inteira (C5, C-MOVIMENTO-02, 02b, C6, C-COMBATE-01a,
+  F26a) continua verde. **O aceite 4 reprova:** com a troca mútua, a varredura de 400 ordens
+  (receita fixada na seção 7 do plano) cai de 3 ordens com preso para 1, e aparece o **caso 3**:
+  - ordem k = 37 (destino 20,32, direção 0, 8 colunas): u20 em 19,33 com caminho
+    `[20,32 → 21,33]`, e u21 em 21,33 com caminho `[20,32 → 19,33]`. Cada um quer o tile do outro,
+    a DOIS passos, e o tile do meio (20,32) está com u16 **ocioso**, do mesmo lado;
+  - a `vagaEmparedadaPor` (C-MOVIMENTO-02) não dispara porque exige o destino vazio, e o destino
+    de cada um é o tile do outro. A troca mútua não se aplica, porque o próximo tile é do u16.
+  - O conserto do caso 3 é decisão do operador (abaixo, e o PROGRESS de 2026-09-30, leva 2).
+- a receita original abaixo **não reproduz** as ordens 11 e 19 (Tarefa 1 do plano). A receita
+  que vale é a da seção 7 do plano.
 - repro (medido; sonda apagada, receita determinística):
   - `criarEscaramuca(gameData.economia.estadoInicial.semente)` e a tropa do jogador inteira.
   - 400 ordens `MoveUnits` sorteadas por LCG `x = (x·1103515245 + 12345) mod 2³¹`, começando
