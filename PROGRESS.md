@@ -15998,3 +15998,19 @@ emendado num commit próprio antes (`3b40b3e`, plano da F20b).
   garantia" saiu junto com o assento.
 - F20b, BUG-Y e F-CAL-a: 26/26. `test-output/BUG-Y.json` aberto: aceite 4 inalterado, com 37
   refeições e 0 viagens sem comer.
+
+## 2026-09-30 — Leva 3, item 5: D-TELA-07 (sinal de pausado), o teste compara a placa com o botão pela mesma string de origem: feito
+
+É o aceite emendado de `98ccf3a` ("o teste compara com a mesma chave que o painel usa no botão"),
+cumprido agora no teste.
+
+### Verificado
+- `rotuloDoBotaoDePausar(pausado)` em `src/render/sinal-de-pausado.ts` é a origem única da
+  palavra. O painel (`src/ui/painel-predio.ts`) passou a chamá-la no botão; ele já importava
+  rótulos puros de `render/`, como o `rotulo-de-alcance`. A placa é `rotuloDoBotaoDePausar(false)`.
+- `tests/D-TELA-07-sinal-de-pausado.test.ts`: a placa é igual ao rótulo do botão do prédio não
+  pausado, e os dois rótulos do botão diferem. A garantia de "mesma string" é estrutural, pelo
+  import do painel. O teste roda sem DOM e não exercita o botão; quem lê o botão na página é o
+  roteiro.
+- Roteiros D-TELA-07 e F16b (painel de seleção), porta 5178, saída 0. O D-TELA-07 afirma o texto
+  do botão da `s2` igual ao da placa.

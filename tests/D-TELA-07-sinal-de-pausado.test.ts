@@ -15,7 +15,9 @@ import { salvar } from '../src/sim/save';
 import { dadosDoTrabalho } from '../src/render/predios';
 import type { Manifesto } from '../src/render/manifesto';
 import { quadroDeTrabalho, quadroOcioso } from '../src/render/trabalho';
-import { caixaDoSinalDePausado, temSinalDePausado, TEXTO_DO_SINAL_DE_PAUSADO } from '../src/render/sinal-de-pausado';
+import {
+  caixaDoSinalDePausado, rotuloDoBotaoDePausar, temSinalDePausado, TEXTO_DO_SINAL_DE_PAUSADO,
+} from '../src/render/sinal-de-pausado';
 import { cenarioDeSerraria, comEntrada, comProdutorOcupado } from './helpers/producao-cenario';
 import { gravarEvidencia } from './helpers/evidence';
 
@@ -65,7 +67,10 @@ describe('D-TELA-07 aceite 1 — a regra e a geometria', () => {
   it('o texto e o do tema, a palavra do botao de pausar do painel (decisao do operador)', () => {
     const tema = JSON.parse(readFileSync('data/theme-sertao.json', 'utf8')) as { painelPredio: { pausar: string } };
     expect(TEXTO_DO_SINAL_DE_PAUSADO).toBe(tema.painelPredio.pausar);
-    // a igualdade com o botao do painel e afirmada no roteiro, lida da pagina
+    // a MESMA string de origem do botao do painel: o painel chama `rotuloDoBotaoDePausar`
+    // (src/ui/painel-predio.ts), e a placa e o rotulo do predio nao pausado
+    expect(TEXTO_DO_SINAL_DE_PAUSADO).toBe(rotuloDoBotaoDePausar(false));
+    expect(rotuloDoBotaoDePausar(true)).not.toBe(rotuloDoBotaoDePausar(false));
   });
 
   it('a placa fica dentro da largura do corpo e na metade de cima', () => {

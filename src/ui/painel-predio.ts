@@ -41,6 +41,7 @@ import { medidorDaObra } from '../render/medidor-obra';
 // aquele arquivo le `sim/data` pelo funil `render/mapa.ts`, e `ui/` nao le
 // `sim/data`. Dois textos para o mesmo numero sugeririam dois numeros.
 import { rotuloDoAlcance } from '../render/rotulo-de-alcance';
+import { rotuloDoBotaoDePausar } from '../render/sinal-de-pausado';
 import { canteiroDaObra } from '../render/nivelamento-obra';
 import temaSertao from '../../data/theme-sertao.json';
 
@@ -562,7 +563,8 @@ function desenharCompleto(
     // retomar. Mesmo criterio do comando (F16c).
     const alvo = !dados.pausado;
     botao.dataset.pausar = String(alvo);
-    botao.textContent = dados.pausado ? rotulos.retomar : rotulos.pausar;
+    // D-TELA-07: a mesma origem da placa de pausado no mapa
+    botao.textContent = rotuloDoBotaoDePausar(dados.pausado);
     botao.addEventListener('click', () => {
       emitir({ type: 'SetBuildingPaused', predio: dados.predio, pausado: alvo });
     });

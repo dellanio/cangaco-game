@@ -13,9 +13,17 @@
 import temaSertao from '../../data/theme-sertao.json';
 import type { Predio } from '../sim/state';
 
-/** O texto da placa: a palavra do botao de pausar do painel (`src/ui/painel-predio.ts`), do
- *  tema. `sim/` nunca le o tema; so a tela. */
-export const TEXTO_DO_SINAL_DE_PAUSADO: string = temaSertao.painelPredio.pausar;
+/**
+ * O rotulo do botao de pausar/retomar do painel do predio (`src/ui/painel-predio.ts`), do tema.
+ * E a ORIGEM unica da palavra: o painel chama esta funcao, e a placa usa o rotulo do predio nao
+ * pausado. Assim a placa diz o mesmo que o botao, pela mesma string. `sim/` nunca le o tema.
+ */
+export function rotuloDoBotaoDePausar(pausado: boolean): string {
+  return pausado ? temaSertao.painelPredio.retomar : temaSertao.painelPredio.pausar;
+}
+
+/** O texto da placa: a palavra do botao de pausar do painel (decisao do operador, 2026-09-30). */
+export const TEXTO_DO_SINAL_DE_PAUSADO: string = rotuloDoBotaoDePausar(false);
 
 /** O predio mostra a placa: completo e pausado pelo jogador (F16c). Obra nao pausa. */
 export function temSinalDePausado(predio: Predio): boolean {
