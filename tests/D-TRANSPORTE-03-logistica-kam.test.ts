@@ -182,8 +182,8 @@ describe('D-TRANSPORTE-03 T1 — a arma prefere o quartel (aceites 1, 2 e 10)', 
   // Sem carga: a arma vai direto ao quartel. Com carga (a corrida B do BUG-U): a pedra da
   // escola disputa os serfs na MESMA classe (5) e, mais perto, ganha sempre; as ultimas armas
   // ficam como tarefa aberta ate a pedra acabar. Quem resolve e a multa do armazem (T2:
-  // +1000 na saida para o armazem). No T1 a corrida B afirma so o que o T1 garante (nenhuma
-  // arma no armazem, invariantes); o 15/15 saturado vai para o T2 (PARA REVISAO, PROGRESS).
+  // +1000 na saida para o armazem). No T1 a corrida B afirmava so o que o T1 garante (nenhuma
+  // arma no armazem, invariantes); o T2 fecha o 15/15 saturado (aceite 2 abaixo).
   const a = correr({ quartel: true, carga: false, ticks: TETO, invariantes: true });
   const b = correr({ quartel: true, carga: true, ticks: TETO, invariantes: true });
   const semQuartel = correr({ quartel: false, carga: false, ticks: TETO, invariantes: false });
@@ -199,6 +199,8 @@ describe('D-TRANSPORTE-03 T1 — a arma prefere o quartel (aceites 1, 2 e 10)', 
 
   it('2. com o quartel aceitando, nenhuma arma vai ao armazem, nem sob carga; sem quartel, as 15 vao', () => {
     expect(b.aoArmazemComQuartel).toBe(0);
+    // T2: sob carga (corrida B) as 15 chegam ao quartel, o bloqueante que o T1 adiou
+    expect(b.entreguesAoQuartel, JSON.stringify(b.fim)).toBe(3 * COTA);
     expect(b.saidaDeArmaComQuartel).toBe(0);
     expect(a.saidaDeArmaComQuartel).toBe(0);
     expect(semQuartel.produzidas).toBe(3 * COTA);

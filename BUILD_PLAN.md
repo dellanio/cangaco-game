@@ -5741,7 +5741,21 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
       tempo de produtor parado por falta de insumo subiu 28 % no cenário da F-CAL (medida
       no PROGRESS, 2026-09-30). A produção não caiu (311 → 312).
   - **D-TRANSPORTE-03 T2 — casamento oferta × demanda + multa do armazém + 20/unidade.**
-    Aceites 3, 4, 5, 6, 9, 10 do plano. Espera o operador ler a medida do T1.
+    Aceites 3, 4, 5, 6, 9, 10 do plano. **ENTREGUE (2026-09-30, mergeado depois do BUG-Y,
+    viagem inútil para comer).** Plano: `docs/planos/2026-09-30-D-TRANSPORTE-03-T2-oferta-demanda.md`.
+    - **Aceite 2, a métrica (D1 e D2 do operador, 2026-10-01; substitui o bloqueante 2 do
+      T1 acima):** na vila da F-CAL (calibração), em 16 000, 20 000 e 30 000 ticks, contra a
+      linha de base sem o T2 medida na árvore `8929ba3`:
+      - D2: produção por cadeia (soma de `goods-produced`) ≥ floor(base × 0,98), e o déficit
+        (base − T2) de cada cadeia em 30 000 ≤ o déficit em 16 000;
+      - D1: parada (ticks com o ocupante em `esperando_insumo` ou `saida_cheia`) de serraria,
+        moinho e padaria ≤ base × 1,05.
+    - **Aceite:** `tests/D-TRANSPORTE-03-T2-oferta-demanda.test.ts` (2, 3, 4, 5, 6, 8, 10) e
+      `tests/D-TRANSPORTE-03-logistica-kam.test.ts` (o bloqueante 1, corrida B 15/15).
+      `TETO_DE_NOS` 24 700 (medido 22 470, ~10 % de folga).
+    - **Nota para quem remedir:** a linha de base é número da corrida, escrita no teste. Se
+      o cenário da F-CAL mudar, o aceite 2 remede a base numa árvore sem o T2, e não afrouxa
+      os fatores.
 ### D-TELA-01 (antes F32) — Aba de estatísticas
 - **ENTREGUE (2026-09-29, lote do operador, item 4; plano em
   `docs/planos/2026-09-29-D-TELA-01-aba-de-estatisticas.md`).** A aba Estatísticas ganha,

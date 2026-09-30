@@ -912,8 +912,10 @@ export const ORIGEM_ESPERADA_POR_TIPO: Readonly<Record<TipoComOrigem, 'armazem' 
   'material-para-obra': 'armazem',
   'ouro-para-escola': 'armazem',
   'arma-para-quartel': 'qualquer',
-  'insumo-producao-parada': 'armazem',
-  'insumo-producao-baixa': 'armazem',
+  // D-TRANSPORTE-03 T2 — o insumo sai do armazem OU da casa que o fez (a oferta casada com a
+  // demanda, KM_HandLogistics.pas:1587-1590)
+  'insumo-producao-parada': 'qualquer',
+  'insumo-producao-baixa': 'qualquer',
   'saida-cheia-para-armazem': 'outro-predio',
   'excedente-para-armazem': 'outro-predio',
   'pedra-para-canteiro': 'armazem',

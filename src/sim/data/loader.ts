@@ -726,6 +726,11 @@ export function loadGameData(raw: RawGameData): GameData {
       ofertaMaxima: raw.delivery.divisaoDoEscasso.ofertaMaxima,
       gavetaMaxima: raw.delivery.divisaoDoEscasso.gavetaMaxima,
     },
+    // D-TRANSPORTE-03 T2 — tiles do lance do KaM, em ticks do passo a pe na estrada, uma vez aqui
+    lance: {
+      ticksMultaDoArmazem: Math.round(raw.delivery.lance.multaDoArmazem_tiles * ticksPorTileAPe.estrada),
+      ticksPorUnidadeNaEntrada: Math.round(raw.delivery.lance.porUnidadeNaEntrada_tiles * ticksPorTileAPe.estrada),
+    },
     ticksAlertaTarefaSemCandidato: registrar(
       'delivery.alertaTarefaSemCandidato_segundos', raw.delivery.escala,
       raw.delivery.alertaTarefaSemCandidato_segundos, 'segundos',

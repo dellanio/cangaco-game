@@ -15539,3 +15539,68 @@ de citação), commit `db1580f`.
 - O assento (`comensaisSimultaneos` 8) virou número sem efeito com o dado de hoje, porque
   a garantia (≤ 5) sempre fica abaixo dele. Não mexi (nenhum número de balanceamento muda
   sem lote). Anotado aqui para o próximo lote.
+
+## 2026-09-30 — Sessão do operador, tarefa 2: T2 (D-TRANSPORTE-03, oferta × demanda) rebaseado sobre o BUG-Y: passa, mergeado; BUG-U e BUG-V fechados
+
+A D2 não mudou: produção por cadeia ≥ floor(base × 0,98) em 16 000, 20 000 e 30 000 ticks,
+e o déficit não cresce de 16 000 para 30 000. D1 igual (parada ≤ base × 1,05 por janela).
+
+### Por que a tábua ia de 0 para 2, se a medida em `ebb2182` dava −1 constante (conferido nos registros)
+
+- O "−1 constante nos três horizontes" é da **tora**, não da tábua. Está no BUG-Y
+  (`BUGS.md` em `e8f704e`: "tree_trunk 50 contra 51 da base... a diferença é sempre −1") e na
+  tabela da retomada 2 (acima, 2026-10-01): tora com déficit 1 / 1 / 1.
+- A **tábua** nunca foi constante naquela tabela: 0 / 2 / 2. A serraria rende 2 tábuas por
+  ciclo, então o déficit anda em passos de 2 e depende de onde a janela corta o ciclo. A série
+  de 1 000 em 1 000 ticks da retomada 2 já mostrava a oscilação entre −4 e +4.
+- A leitura "−1 constante" juntou as duas cadeias.
+
+### Verificado (sonda `zz-` de 40 000 ticks, apagada; base = `main` em `8929ba3`, T2 = a wip rebaseada, `ec23cca`)
+
+- O rebase de `wip/D-TRANSPORTE-03-T2` sobre a `main` com o BUG-Y foi limpo (2 commits,
+  sem conflito). A wip **não** foi empurrada: a `origin/wip/D-TRANSPORTE-03-T2` continua
+  em `ebb2182`.
+
+```text
+janela  cadeia      base  T2   floor(base×0,98)  déficit
+16 000  tree_trunk   41   41   40                 0
+16 000  timber       78   78   76                 0
+16 000  flour        44   44   43                 0
+16 000  loaves       80   80   78                 0
+20 000  tree_trunk   50   51   49                -1
+20 000  timber       98   98   96                 0
+20 000  flour        58   59   56                -1
+30 000  tree_trunk   78   78   76                 0
+30 000  timber      154  154  150                 0
+30 000  loaves      190  192  186                -2
+(stone e corn: déficit 0 nas três janelas; loaves em 20 000: 0)
+
+parada (esperando_insumo + saida_cheia), base → T2 (teto base × 1,05):
+16 000  serraria 2929 → 2895   moinho 725 → 641    padaria 496 → 485
+20 000  serraria 3862 → 3817   moinho 1028 → 914   padaria 496 → 485
+30 000  serraria 5825 → 5683   moinho 1718 → 1607  padaria 987 → 816
+```
+
+- **Piso, D1 e déficit que não cresce: passam em todas as cadeias.** Nenhum déficit positivo
+  nas três janelas. Viagens de comer sem comer: 0 nas duas árvores.
+- **A série de 1 000 em 1 000 ainda oscila** (base − T2): tábua entre −4 e +2 (+2 só em 28k),
+  tora entre −2 e +1 (+1 só em 21k). O aceite passa pela letra nas três janelas; entre elas,
+  o T2 fica atrás da base em um ciclo em 2 de 40 pontos. Registro para o operador ler.
+- O −1 de tora que tinha o BUG-Y como hipótese sumiu, mas **pelos dois lados**: a base caiu
+  de 51 para 50 em 20 000 com o BUG-Y (tarefa 1), e o T2 ficou em 51. A causa não foi separada.
+- `tests/D-TRANSPORTE-03-T2-oferta-demanda.test.ts`, aceite 2 permanente: a linha de base da
+  `8929ba3` escrita no teste, 30 000 ticks. Evidência `test-output/D-TRANSPORTE-03-T2-longo.json`.
+  **Prova de que acusa** (sonda de uma corrida, revertida): com a parada-base da serraria em
+  16 000 trocada para 2 000, reprova em "parada sawmill em 16000: expected 2895 to be ≤ 2100".
+- `TETO_DE_NOS` 23 000 → 24 700 (medido 22 470 no rebaseado, +~10 %).
+- BUILD_PLAN: o T2 marcado entregue, com a métrica escrita. `test-results.json` ganhou
+  `D-TRANSPORTE-03-logistica-kam` (a chave da feature inteira, que o BUILD_PLAN dizia fechar no T2).
+- BUG-U (arma produzida não chega ao Quartel) e BUG-V (tora passa pelo armazém antes da
+  Serraria) saem do `BUGS.md` neste commit.
+
+### Correção de um erro meu, nesta sessão
+
+- O commit do BUG-Y (`8929ba3`) gravou o `BUGS.md` **duplicado**: o corte procurou
+  `## Polimento` e achou a menção da linha 12. O BUG-Y continuava lá dentro. Este commit
+  refaz o arquivo a partir de `e8f704e`, sem BUG-U, BUG-V e BUG-Y. Ficam o BUG-T (aberto) e o
+  BUG-N (polimento).

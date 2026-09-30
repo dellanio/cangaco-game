@@ -54,6 +54,11 @@
     "ofertaMaxima": 2,
     "gavetaMaxima": 1
   },
+  "lance": {
+    "_doc": "D-TRANSPORTE-03 T2 — o que o lance do KaM soma ao caminho, dentro da mesma classe de importancia (KM_HandLogistics.pas, 731a8a4). multaDoArmazem: a tarefa que sai do armazem ou entra nele paga isto, menos a arma do armazem ao quartel (:1587-1590); e o que faz a oferta de uma casa ir direto a quem pede, e o armazem so receber o que ninguem quer. porUnidadeNaEntrada: o destino que ja tem N daquela mercadoria na entrada paga N vezes isto, menos armazem e quartel (:1612-1618); e o que reparte entre duas casas que pedem o mesmo. Em TILES, como o lance do KaM (GetLengthDiag, :2809-2812): vira ticks no carregamento, vezes o passo a pe na estrada, como o custoPorUnidade_tiles da colisao civil. Distancia, nao tempo: nao tem grupo de escala. DIVERGENCIA DECLARADA, quartel isolado: no KaM a arma que nenhum quartel aceita fica na saida da oficina; aqui ela vai ao armazem (saida-cheia-para-armazem). Decisao do operador (2026-09-30): manter a nossa.",
+    "multaDoArmazem_tiles": 1000,
+    "porUnidadeNaEntrada_tiles": 20
+  },
   "alertaTarefaSemCandidato_segundos": 30,
   "escala": null,
   "_nota_escala": "Deliberadamente sem escala: e aviso de interface, nao balanceamento. Comprimir a economia nao muda o tempo de atencao humana. Decisao do operador, F03."

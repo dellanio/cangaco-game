@@ -399,6 +399,12 @@ export interface EntregaData {
     readonly ofertaMaxima: number;
     readonly gavetaMaxima: number;
   };
+  /** D-TRANSPORTE-03 T2 — o que o lance do KaM soma ao caminho, ja em ticks: a multa da tarefa
+   *  que sai do armazem ou entra nele, e o preco de cada unidade que o destino ja tem. */
+  readonly lance: {
+    readonly ticksMultaDoArmazem: number;
+    readonly ticksPorUnidadeNaEntrada: number;
+  };
   readonly ticksAlertaTarefaSemCandidato: Ticks;
 }
 

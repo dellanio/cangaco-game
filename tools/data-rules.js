@@ -817,6 +817,18 @@ function validarDivisaoDoEscasso(dados, erros) {
   }
 }
 
+// D-TRANSPORTE-03 T2: os dois termos do lance sao distancia em tiles; negativo premiaria o
+// armazem e o destino cheio, o contrario do que o KaM faz.
+function validarLance(dados, erros) {
+  const lance = dados.delivery && dados.delivery.lance;
+  for (const campo of ['multaDoArmazem_tiles', 'porUnidadeNaEntrada_tiles']) {
+    const v = lance && lance[campo];
+    if (typeof v !== 'number' || !Number.isFinite(v) || v < 0) {
+      erros.push(`entrega/lance: delivery.lance.${campo} precisa ser numero >= 0`);
+    }
+  }
+}
+
 function validarEncomenda(dados, erros) {
   const enc = dados.production && dados.production.encomenda;
   if (!enc || !Number.isInteger(enc.maxima) || enc.maxima < 1) {
@@ -1538,6 +1550,7 @@ function validarTudo(dados) {
   validarFeira(dados, erros);
   validarDistribuicao(dados, erros);
   validarDivisaoDoEscasso(dados, erros);
+  validarLance(dados, erros);
   validarEncomenda(dados, erros);
   validarPedidoDeComida(dados, erros);
   validarPrioridadesDaIA(dados, erros);

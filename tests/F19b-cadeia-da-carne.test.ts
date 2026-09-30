@@ -64,6 +64,9 @@ const JANELA = 20000;
 interface Corrida {
   readonly produzido: Readonly<Record<string, number>>;
   readonly primeiroNoArmazem: Readonly<Record<string, number | null>>;
+  /** D-TRANSPORTE-03 T2 — o tick da primeira entrega de cada mercadoria na casa que a
+   *  CONSOME (a receita dela tem a mercadoria em `entra`), venha de onde vier. */
+  readonly primeiroNoConsumidor: Readonly<Record<string, number | null>>;
   readonly esperandoInsumo: Readonly<Record<string, number>>;
   readonly serie: Readonly<Record<number, Readonly<Record<string, number>>>>;
   readonly baseDosArmazens: Readonly<Record<string, number>>;
@@ -97,6 +100,8 @@ function rodar(inicial: GameState, ticks: number, especialistas: readonly string
   const ultimoFsm: Record<string, string> = {};
   let mortes = 0;
   for (const m of OBSERVADAS) primeiroNoArmazem[m] = null;
+  const primeiroNoConsumidor: Record<string, number | null> = {};
+  for (const m of OBSERVADAS) primeiroNoConsumidor[m] = null;
   for (const u of especialistas) {
     esperandoInsumo[u] = 0;
     // a fixture confere a si mesma: nome errado falha AQUI, e nao como um contador
@@ -112,6 +117,11 @@ function rodar(inicial: GameState, ticks: number, especialistas: readonly string
         produzido[ev.mercadoria] = (produzido[ev.mercadoria] ?? 0) + ev.quantidade;
       }
       if (ev.type === 'unit-starved') mortes += 1;
+      if (ev.type === 'task-completed' && primeiroNoConsumidor[ev.mercadoria] === null) {
+        const destino = s.predios.porId[ev.destino];
+        const receita = destino === undefined ? null : receitaDoTipo(destino.tipo, gameData);
+        if (receita !== null && ev.mercadoria in receita.entra) primeiroNoConsumidor[ev.mercadoria] = t;
+      }
     }
     const noArmazemAgora = estoqueDosArmazens(s);
     for (const m of OBSERVADAS) {
@@ -130,7 +140,7 @@ function rodar(inicial: GameState, ticks: number, especialistas: readonly string
     }
   }
   return {
-    produzido, primeiroNoArmazem, esperandoInsumo, serie, baseDosArmazens, fim: s,
+    produzido, primeiroNoArmazem, primeiroNoConsumidor, esperandoInsumo, serie, baseDosArmazens, fim: s,
     ultimoFsm, populacao: s.unidades.ordem.length, mortes,
   };
 }
@@ -189,10 +199,14 @@ describe('F19b — a cadeia fecha: milho vira bode, bode vira carne de sol', () 
     expect(TRES.map((u) => fsmSeVivo(c.fim, u))).not.toContain(null);
   }, TIMEOUT_DA_CORRIDA);
 
-  it('e cada elo chega na sua vez: milho, depois bode, depois carne', () => {
+  // D-TRANSPORTE-03 T2 (2026-09-30): o milho e o bode vao da casa que os fez DIRETO a que os
+  // consome (a oferta casada com a demanda, com a multa do armazem), e nao passam mais pelo
+  // armazem enquanto alguem os pede. O marco de cada elo do meio e a chegada NO CONSUMIDOR;
+  // a carne, que ninguem na cadeia consome, continua medida no armazem.
+  it('e cada elo chega na sua vez: milho na Malhada, bode na Casa de Carne, carne no armazem', () => {
     const c = completa();
-    const milho = c.primeiroNoArmazem[GRAO] ?? 0;
-    const bode = c.primeiroNoArmazem[BODE] ?? 0;
+    const milho = c.primeiroNoConsumidor[GRAO] ?? 0;
+    const bode = c.primeiroNoConsumidor[BODE] ?? 0;
     const carne = c.primeiroNoArmazem[CARNE] ?? 0;
     expect(milho).toBeGreaterThan(0);
     expect(bode).toBeGreaterThan(milho);
@@ -311,6 +325,7 @@ describe('F19b — evidencia', () => {
       cadeiaCompleta: {
         janela: JANELA,
         primeiroNoArmazem: c.primeiroNoArmazem,
+        primeiroNoConsumidor: c.primeiroNoConsumidor,
         produzido: c.produzido,
         serieDeProducao: c.serie,
         saldoAcimaDaBase: Object.fromEntries(OBSERVADAS.map((m) => [m, acimaDaBase(c, m)])),
