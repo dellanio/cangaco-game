@@ -453,21 +453,6 @@ function origemMaisPerto(
   return melhor === null ? null : melhor.id;
 }
 
-/**
- * D-TRANSPORTE-03 T2 — quanto da `saida` da casa `id` ainda sobra para quem a pede: o
- * estoque menos as tarefas nao-`carregando` que ja contam com ele. A `saida-cheia` ABERTA nao
- * conta: ela cede, e o teto do saneamento a cancela (KM_HandLogistics.pas:1587-1590: a demanda
- * do armazem paga a multa, e a de uma casa ganha).
- */
-function ofertaDaCasaParaDemanda(state: GameState, id: string, mercadoria: string): number {
-  const predio = state.predios.porId[id];
-  if (predio?.estado !== 'completo') return 0;
-  const contam = tarefasPorNumero(state).filter((t) => ehTarefaDoSerf(t) && t.origem === id && t.mercadoria === mercadoria
-    && t.estado !== 'carregando' && t.tipo !== 'excedente-para-armazem'
-    && !(t.tipo === 'saida-cheia-para-armazem' && t.estado === 'aberta')).length;
-  return (predio.estoque.saida[mercadoria] ?? 0) - contam;
-}
-
 /** D-TRANSPORTE-03 T2 — o que a `saida` da casa `id` ainda oferece ao armazem: o estoque menos
  *  as tarefas de OUTRO tipo (abertas ou reclamadas) que saem dela com a mercadoria. O insumo e a
  *  arma levam primeiro; o armazem fica com o resto. */
@@ -481,11 +466,17 @@ function ofertaDaSaidaAoArmazem(state: GameState, id: string, mercadoria: string
 
 /**
  * D-TRANSPORTE-03 T2 — de onde sai o insumo para `destino`: o armazem (ligacao mais a multa do
- * armazem, `delivery.lance`) ou a casa completa do mesmo lado que tem a mercadoria livre na
- * `saida` (`ofertaDaCasaParaDemanda`), no modo do `tipo`. O menor vence; empate: o primeiro em
- * `predios.ordem`. O quartel e o proprio destino nao sao origem. `usados`: quantas tarefas o
- * laco do gerador ja criou de cada armazem neste tick (a aberta nao reserva, e o armazem nao se
- * desconta sozinho, como a `livres` de antes).
+ * armazem, `delivery.lance`) ou a casa completa do mesmo lado com a mercadoria livre na `saida`,
+ * no modo do `tipo`. O menor vence; empate: o primeiro em `predios.ordem`. O quartel e o proprio
+ * destino nao sao origem.
+ *
+ * Livre e `disponivelNaOrigem` (o estoque menos o RECLAMADO) para a casa como para o armazem: a
+ * aberta de outro destino nao desconta. Cada consumidor cria a sua, e quem decide e a ordem do
+ * serf, como o lance do KaM casa a oferta com a melhor demanda na hora de entregar
+ * (KM_HandLogistics.pas:1512-1530, a divisao do escasso, so tem o que dividir assim). Descontar a
+ * aberta dava a carga sempre ao primeiro consumidor em `predios.ordem`. A `saida-cheia` aberta
+ * tambem nao desconta: ela cede (`ofertaDaSaidaAoArmazem`). `usados`: o que o laco do gerador
+ * ja criou de cada origem para ESTE destino neste tick.
  */
 function origemDoInsumo(
   state: GameState, destino: PredioCompleto, mercadoria: string, tipo: TarefaDeTransporte['tipo'],
@@ -498,7 +489,7 @@ function origemDoInsumo(
     if (predio?.estado !== 'completo' || predio.lado !== destino.lado || id === destino.id) continue;
     const armazem = predio.tipo === ID_DO_ARMAZEM;
     if (ehQuartelCompleto(predio)) continue;
-    const livre = armazem ? disponivelNaOrigem(state, id, mercadoria) - (usados[id] ?? 0) : ofertaDaCasaParaDemanda(state, id, mercadoria);
+    const livre = disponivelNaOrigem(state, id, mercadoria) - (usados[id] ?? 0);
     if (livre < 1) continue;
     const ligacao = ligacaoEntrePredios(state, predio, destino, modo, dados);
     if (ligacao === null) continue;

@@ -31,8 +31,11 @@ Proposta: `docs/planos/2026-09-30-D-TRANSPORTE-03-logistica-kam.md`. T1:
    completa do mesmo lado, que não é armazém, quartel nem o destino, com oferta livre na `saida`
    (ligação). O menor vence; empate, `predios.ordem`. `ORIGEM_ESPERADA_POR_TIPO` dos dois insumos
    vira `'qualquer'`.
-   - Oferta livre da casa para demanda = `saida` − tarefas não-`carregando` que saem dela com a
-     mercadoria, menos a `saida-cheia` ABERTA (essa cede).
+   - Oferta livre da casa = `disponivelNaOrigem` (a `saida` menos o que está RECLAMADO), menos
+     o que este mesmo passo já apontou para ela (`usados`). Tarefa aberta de outro destino não
+     desconta: aberta não reserva, e descontá-la deu o carvão todo ao primeiro fundidor (a
+     regressão do D-PRODUCAO-01b, 20/2/0; com `disponivelNaOrigem`, 10/6/6). O
+     `ofertaDaCasaParaDemanda` da primeira versão saiu por isso.
 4. **A saída cheia cede à demanda.** `gerarTarefasParaArmazem` e o grupo do saneamento
    (`grupoDeAbertas`) descontam da oferta da `saida` as tarefas de OUTRO tipo que saem da casa
    (aberta ou reclamada). A `saida-cheia` aberta que sobra é cancelada pelo teto, e o insumo leva
