@@ -138,6 +138,10 @@ Não adicione dependência nova sem registrar o motivo em `PROGRESS.md`.
    uma linha no `BUILD_PLAN.md` (feature) ou no `BUGS.md` (bug), **antes** de qualquer branch
    usá-lo. Id que não está na `main` não existe: confira `git grep` na `main` antes de
    escolher. Motivo: três colisões (BUG-V, D-TELA-06, D-TELA-07).
+10. **O aceite vai num commit próprio, antes do código** (regra do operador, 2026-09-30). O
+    critério de aceite (novo ou mudado) entra no `BUILD_PLAN.md` ou no plano da feature num
+    commit só dele, e só depois vem o commit do código. "Escrito antes do código" dentro do
+    mesmo commit não se prova pelo git.
 
 ### Uma sessão só na `main` (regra do operador, 2026-09-25)
 
