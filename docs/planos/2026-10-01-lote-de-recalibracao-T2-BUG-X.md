@@ -21,7 +21,7 @@ sessão**, e o lote não começa antes das três decisões da seção "Pré-cond
 ## Entradas do BALANCE_LOG que o lote revisita
 
 A tabela das entradas cuja premissa cai com o T2 já está no plano do D-TRANSPORTE-03
-(`docs/planos/2026-09-30-D-TRANSPORTE-03-logistica-kam.md`, seção "Entradas do BALANCE_LOG",
+(`docs/planos/2026-09-30-D-TRANSPORTE-03-logistica-kam.md`, seção "d) Medições do BALANCE_LOG que ficam inválidas",
 linhas 32, 620, 650, 988/1009, 1134/1150, 1223, 1245, 1290 e 753 do BALANCE_LOG). O lote
 lê essa lista e não a repete. A ela se somam duas observações novas, que entram no
 BALANCE_LOG quando o lote abrir:

@@ -68,10 +68,9 @@ async function roteiro(ctx) {
   afirmar(canteiro().visivel === true, `o ${plano.canteiroNoTile} no tile deveria ser desenhado`);
 
   await zoomPara(ZOOM);
-  // enquadra as duas pedreiras e o canteiro no tile (a rocha fica fora do retangulo delas)
+  // enquadra as duas pedreiras inteiras (x no meio delas) e sobe ate o canteiro no tile (y)
   const noTile = canteiro();
-  console.log(`canteiro ${plano.canteiroNoTile} em ${noTile.gx},${noTile.gy}`);
-  await centrarNoEixo((plano.centro.gx + noTile.gx) / 2, 'x');
+  await centrarNoEixo(plano.centro.gx, 'x');
   await centrarNoEixo((plano.centro.gy + noTile.gy) / 2, 'y');
 
   // despausado (§8): o quadro da q1 anda; a q2 segue sem quadro enquanto o canteiro colhe

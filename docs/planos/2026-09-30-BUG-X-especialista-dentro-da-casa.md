@@ -85,7 +85,7 @@ Só tela, composta de dado que já existe, sem campo novo na sim:
 - **Tarefa 2 — `visibilidade.ts` + teste.** Tabela: ocupante em `trabalhando` /
   `esperando_insumo` / `saida_cheia` → invisível; o mesmo em `colhendo`, `indo_comer`,
   `voltando` → visível; laborer `martelando` → visível; ocupante de prédio pausado →
-  invisível. Contraprova: a regra acusa um especialista `trabalhando` que a tela antiga
+  visível (decisão do operador acima; o "invisível" da versão proposta caiu). Contraprova: a regra acusa um especialista `trabalhando` que a tela antiga
   desenharia.
 - **Tarefa 3 — camada de unidades e acerto.** Filtro nas duas listas. Teste: o acerto não
   devolve unidade invisível sob o ponto.

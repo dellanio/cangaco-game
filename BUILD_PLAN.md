@@ -1890,7 +1890,8 @@ a geografia já corrigida do que regravar 900 tiles depois.
     diagonal sem quadro cai na HORIZONTAL (`HORIZONTAL_DA_DIAGONAL`,
     `src/render/manifesto.ts`), que é o que o civil de 4 já desenhava no passo diagonal —
     a tela não muda até a arte diagonal entrar (`tests/F-SPR-carregamento.test.ts`). A
-    D-TELA-05a fica com o resto do escopo dela (nota da F-SPR e os 28 tipos já estão em 8).
+    D-TELA-05a foi fechada por este passo (c53f85a): a nota da F-SPR e os 28 tipos em 8;
+    o que resta é arte diagonal, que entra por decisão humana.
     (O texto proposto em `docs/planos/2026-09-30-vivo-contra-kam-e-texto-das-8-direcoes.md`
     §4.2 dizia que o campo não existia; a leitura do arquivo desmentiu.)
   - **Nenhum tamanho é calculado** fora do prédio: sprite sai no `tamanho` do
@@ -4914,7 +4915,7 @@ curral começa vazio até a próxima entrega (memória de tela, não entra no sa
 1. Vazio e ocupado → `anterior`; cheio → `atual`; desocupado → vazio.
 2. Na cadeia da carne (F19b), pelo `step`, ticks com o curral desenhado vazio e o prédio
    ocupado caem a 0 depois da primeira entrega; antes e depois em `test-output/F-VIVO-g.json`.
-3. Roteiro: entre duas entregas, `debug.animaisDoCurral` (`src/render/debug.ts:158`) não
+3. Roteiro: entre duas entregas, `debug.animaisDoCurral` (`src/render/debug.ts:167`) não
    vazio no curral. *(O plano dizia `debug.animaisDesenhados`, que não existe.)*
 
 **Aceite da F-VIVO-h (a escola treina; baixa).** Laço `treino_1..8` enquanto a fila da

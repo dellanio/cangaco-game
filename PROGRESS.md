@@ -15020,3 +15020,28 @@ Fecha as notas LOTE3-b1/b2 da F-VIVO-b. O BUG-X já parava o caso 2 com o cantei
 - **F24c (casa do gibão por encomenda), "Chapéu de aba" quebrando em 2 linhas.** O roteiro mede antes de corrigir: a caixa do rótulo tinha 35 px contra uma linha de 17,5 px, e o roteiro reprovou. Com `white-space: nowrap` o rótulo ficou numa linha, mas a medida nova de transbordo acusou 2 px. O `gap` do `.valor` da linha da encomenda passou de 4 para 2 px. As duas medidas passam, e `screenshots/F24c-2-escudo-dez.png` aberta mostra "Chapéu de aba − 9 + fazendo" numa linha, dentro do painel.
 - O achado de documentação do BUG-X (`WorldScene.ts:1441-1453`) já estava corrigido no plano. O do BUG-U no `BUGS.md` (refs velhas) fica para o fechamento do BUG-U, preso ao T2.
 - `npm run verify` verde. Não-regressão pelo código de saída: BUG-U, F24c, C-TELA-05 e F13b deram OK.
+
+## 2026-10-01 — Avaliação de fim de leva (subagente evaluator) e fechamento
+
+Sete entregas, de 1416d1b a 8817783. 3 APROVADO, 4 RESSALVA, 0 REPROVADO. O avaliador rodou 6 arquivos de teste: 77/77 verdes. Nenhum commit do intervalo toca `src/sim`.
+
+```text
+| Entrega                          | Veredito | Achado                                              | Destino           |
+|----------------------------------|----------|-----------------------------------------------------|-------------------|
+| BUG-X (especialista dentro)      | APROVADO | plano, Tarefa 2: "pausado → invisível"              | corrigido         |
+| D-TELA-05a (civis em 8 direções) | RESSALVA | BUILD_PLAN: "fica com o resto do escopo"            | corrigido         |
+| T2 (aceite 2 reprova)            | RESSALVA | padaria do T2: 423 na leva noturna, 35 na tabela    | aberto, hipótese  |
+| F-VIVO-e (ocioso genérico)       | RESSALVA | passes contra "pausado mostra o ocioso"             | espera o operador |
+|                                  |          | números do PROGRESS velhos depois da F-VIVO-f       | anotado abaixo    |
+| F-VIVO-f (caso 2 na casa)        | APROVADO | captura cortava a q1 na borda                       | corrigido         |
+| BUG-U + F24c                     | APROVADO | —                                                   | —                 |
+| Plano do lote de recalibração    | RESSALVA | nome da seção citada do plano do D-TRANSPORTE-03    | corrigido         |
+| (fora da tabela)                 | doc      | BUILD_PLAN F-VIVO-g: debug.ts:158 → :167            | corrigido         |
+```
+
+### Verificado
+- **F-VIVO-e, os números depois da F-VIVO-f** (lidos pelo avaliador em `test-output/F-VIVO-e.json`): 7 616 quadros de trabalho, 5 751 ociosos, 2 763 com o homem `trabalhando`. Colisões e divergências continuam 0. A diferença para os 8 406 / 4 961 / 1 973 da seção da F-VIVO-e é o descanso: ele saiu do trabalho e foi para o ocioso. Isso é o que a F-VIVO-f pede.
+- Captura da F-VIVO-f recentrada: o x vai no meio das duas pedreiras. `screenshots/F-VIVO-f-1-dentro-e-no-tile.png` aberta: as duas pedreiras inteiras, o canteiro na rocha, `meio_2` na q1.
+
+### Hipótese, nomeada como tal
+- **Padaria do T2: 423 contra 35.** Serraria e moinho saem iguais nas duas medidas, e só a padaria diverge. Não remedi. Pode ser janela ou semente diferente na sonda da leva noturna. Não mexe no veredito do T2: a serraria reprova sozinha. A Tarefa 1 do plano do lote remede com 3 sementes.
