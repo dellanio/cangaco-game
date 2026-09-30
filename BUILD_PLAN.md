@@ -1882,12 +1882,17 @@ a geografia já corrigida do que regravar 900 tiles depois.
     quadros `{unidade}/{estado}/{direcao}/{nnnn}`, pelo plano
     `docs/planos/2026-09-30-animacao-direcional-de-unidades.md`. O `anchor` cai na
     posição desenhada da unidade.
-    **Dado de hoje (conferido em 2026-09-30):** `data/units.json` declara
-    `direcoesDeSprite` no `_comum` de cada grupo, civis 4 (`:26`) e militares 8
-    (`:106`), e o render o lê (`src/render/direcoes-de-sprite.ts:32`). Os civis passam a
-    8 pela D-TELA-05a do plano; até lá o dado continua dizendo 4. (O texto proposto em
-    `docs/planos/2026-09-30-vivo-contra-kam-e-texto-das-8-direcoes.md` §4.2 dizia que o
-    campo não existia; a leitura do arquivo desmentiu.)
+    **Dado de hoje (conferido em 2026-10-01):** `data/units.json` declara
+    `direcoesDeSprite` no `_comum` de cada grupo, civis 8 (`:26`) e militares 8
+    (`:106`), e o render o lê (`src/render/direcoes-de-sprite.ts:32`). Os civis passaram
+    de 4 a 8 em 2026-10-01, por pedido do operador, antes da D-TELA-05a do plano (que
+    fazia o mesmo depois do piloto de arte). A arte civil de hoje só tem `n l s`: a
+    diagonal sem quadro cai na HORIZONTAL (`HORIZONTAL_DA_DIAGONAL`,
+    `src/render/manifesto.ts`), que é o que o civil de 4 já desenhava no passo diagonal —
+    a tela não muda até a arte diagonal entrar (`tests/F-SPR-carregamento.test.ts`). A
+    D-TELA-05a fica com o resto do escopo dela (nota da F-SPR e os 28 tipos já estão em 8).
+    (O texto proposto em `docs/planos/2026-09-30-vivo-contra-kam-e-texto-das-8-direcoes.md`
+    §4.2 dizia que o campo não existia; a leitura do arquivo desmentiu.)
   - **Nenhum tamanho é calculado** fora do prédio: sprite sai no `tamanho` do
     arquivo, e textura de tile sai no `tilePx`. O fator de transbordo do prédio
     (correção do BRIEF-ARTE, 2026-09-26) **não passa por este código**.

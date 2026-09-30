@@ -563,7 +563,7 @@ Só depois do piloto aprovado:
 
 | Sigla (proposta) | O quê |
 |---|---|
-| D-TELA-05a | `direcoesDeSprite: 8` nos 28 tipos, e a nota da F-SPR atualizada no BUILD_PLAN |
+| D-TELA-05a | `direcoesDeSprite: 8` nos 28 tipos, e a nota da F-SPR atualizada no BUILD_PLAN. **Feito antes do piloto (2026-10-01, pedido do operador)**: civis em 8, diagonal sem quadro cai na horizontal (`HORIZONTAL_DA_DIAGONAL`) |
 | D-TELA-05b | o olhar pela `direcao` da sim (militares), e o piloto de um militar com o sprite de depuração, para conferir o espelho da arma (seção 7) |
 | D-TELA-05c | `atacar`, `trabalhar` e `morrer`, com `morrer` sem laço e o corpo mantido até a sim remover a unidade |
 | D-TELA-05d | carregar só os tipos presentes, com carga tardia do tipo produzido em partida |

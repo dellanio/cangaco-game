@@ -202,6 +202,18 @@ describe('F-SPR — unidade: um arquivo por direcao, oeste espelhado', () => {
     expect(spriteDaUnidade(m, 'militia', POSE_PARADO, 'o', 8, c)).toMatchObject({ chave: 'unidade:militia:parado:l', espelhar: true });
   });
 
+  it('diagonal sem quadro cai na horizontal: o civil de 8 com arte de 3 desenha como o de 4', () => {
+    // a arte civil de hoje e `n l s`; o dado passou a 8 (decisao do operador, 2026-09-30)
+    for (const [d, passo] of [['ne', [1, -1]], ['se', [1, 1]], ['no', [-1, -1]], ['so', [-1, 1]]] as const) {
+      const com8 = spriteDaUnidade(m, 'serf', POSE_PARADO, d, 8, c);
+      const com4 = spriteDaUnidade(m, 'serf', POSE_PARADO, direcaoDoPasso(passo[0], passo[1], 4) as Direcao, 4, c);
+      expect(com8, d).not.toBeNull();
+      expect(com8, d).toEqual(com4);
+    }
+    // com o quadro diagonal, ele vence a horizontal
+    expect(spriteDaUnidade(m, 'militia', POSE_PARADO, 'se', 8, c)).toMatchObject({ chave: 'unidade:militia:parado:se', espelhar: false });
+  });
+
   it('a direcao declarada vence o espelho', () => {
     const comOeste: Manifesto = { versao: 1, assets: [camada('unidade', 'serf', { 'parado:l': 'l.png', 'parado:o': 'o.png' })] };
     expect(spriteDaUnidade(comOeste, 'serf', POSE_PARADO, 'o', 4, tudoCarregado(comOeste)))
@@ -240,9 +252,10 @@ describe('F-SPR — unidade: um arquivo por direcao, oeste espelhado', () => {
     }
   });
 
-  it('as direcoes vem de units.json: civis 4, militares 8, mercenarios null', () => {
+  it('as direcoes vem de units.json: civis 8, militares 8, mercenarios null', () => {
+    // civis 4 -> 8: decisao do operador, 2026-09-30 (BUILD_PLAN, nota da F-SPR)
     const grupos = unidadesJson as Record<string, { tipos: { id: string }[] }>;
-    for (const t of grupos.civis!.tipos) expect(direcoesDoTipo(t.id), t.id).toBe(4);
+    for (const t of grupos.civis!.tipos) expect(direcoesDoTipo(t.id), t.id).toBe(8);
     for (const t of grupos.militares!.tipos) expect(direcoesDoTipo(t.id), t.id).toBe(8);
     for (const t of grupos.mercenarios!.tipos) expect(direcoesDoTipo(t.id), t.id).toBeNull();
     expect(direcoesDoTipo('tipo_que_nao_existe')).toBeNull();
@@ -273,9 +286,12 @@ describe('F-SPR — o manifesto real', () => {
       "vegetacao 'cacto' nao e um recurso do mapa",
       "'tree' e recurso E vegetacao",
       "unidade 'rebel' nao declara direcoesDeSprite em units.json",
-      "unidade 'serf': estado 'parado:ne' nao e <pose>:<direcao> de 4 direcoes",
-      "unidade 'serf': estado 'parado' nao e <pose>:<direcao> de 4 direcoes",
+      "unidade 'serf': estado 'parado' nao e <pose>:<direcao> de 8 direcoes",
     ]);
+    // o guarda da diagonal num tipo de 4 continua acusando (o serf era 4 ate 2026-10-01)
+    expect(problemasDasCamadas(errado, new Map([...direcoes, ['serf', 4]]))).toContain(
+      "unidade 'serf': estado 'parado:ne' nao e <pose>:<direcao> de 4 direcoes",
+    );
   });
 
   // A regra, nao o retrato do dia (licao da F17f): cada id resolve arte se e so se o

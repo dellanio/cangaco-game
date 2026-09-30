@@ -14934,3 +14934,14 @@ Pedido: "Decisões da manhã (2026-10-01)", item 3. Plano `docs/planos/2026-09-3
 ### Hipótese, nomeada como tal
 
 - Serf ocioso empilhado na porta da serraria no começo da vila: visto uma vez no screenshot descartado, não investigado.
+
+## 2026-10-01 — Civis com 8 direções no dado (decisões da manhã, item 4)
+
+### Verificado
+- `data/units.json:26`, `civis._comum.direcoesDeSprite` 4 → 8. Os 28 tipos agora declaram 8.
+- **Achado antes do commit:** com 8, o passo diagonal pede `ne/se/no/so`, e a arte civil de hoje só tem `parado:n/l/s` (`assets/manifest.json`). `spriteDaUnidade` devolveria `null` e o civil viraria retângulo no meio da caminhada. Conserto de tela: `HORIZONTAL_DA_DIAGONAL` em `src/render/manifesto.ts`. A diagonal sem quadro (nem o próprio, nem o espelho) cai na horizontal, que é o que o civil de 4 já desenhava (empate de `direcaoDoPasso`). O teste afirma que o civil de 8 com arte de 3 desenha igual ao de 4 nas quatro diagonais, e que o quadro diagonal, quando existe, vence (`tests/F-SPR-carregamento.test.ts`). O guarda de "diagonal num tipo de 4" continua provado com um mapa injetado.
+- Texto da F-SPR no BUILD_PLAN atualizado para o dado (civis 8, a regra da horizontal); `docs/BRIEF-ARTE.md` §6 já dizia civis 8. A linha da D-TELA-05a no plano da animação direcional está marcada como feita antes do piloto.
+- Não-regressão: roteiros `F-SPR`, `F-TR` e `C-TELA-03` com saída OK (imagens não abertas).
+
+### PARA REVISÃO
+- A regra da horizontal é decisão de tela minha, e não estava no pedido. A alternativa era o placeholder na diagonal, que é comportamento do §9 mas piscaria a cada passo diagonal.

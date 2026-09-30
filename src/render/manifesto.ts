@@ -219,6 +219,13 @@ export type Direcao = (typeof DIRECOES)[number];
 export const DIRECOES_DE_QUATRO: readonly Direcao[] = ['n', 'l', 's', 'o'];
 /** O lado oeste e espelho (BRIEF-ARTE §6): falta `o`, desenha `l` virado. */
 export const ESPELHO_DO_OESTE: Readonly<Partial<Record<Direcao, Direcao>>> = { o: 'l', no: 'ne', so: 'se' };
+/**
+ * Diagonal sem quadro (nem o proprio, nem o espelho) cai na HORIZONTAL: e o que o tipo de
+ * 4 direcoes ja mostrava no passo diagonal (`direcaoDoPasso`, empate na horizontal). Assim
+ * o civil que passou a declarar 8 (decisao do operador, 2026-09-30) desenha igual ate a
+ * arte diagonal existir, em vez de virar placeholder no meio da caminhada.
+ */
+export const HORIZONTAL_DA_DIAGONAL: Readonly<Partial<Record<Direcao, Direcao>>> = { ne: 'l', se: 'l', no: 'o', so: 'o' };
 /** A unica pose que o render pede hoje. Animacao acrescenta poses, nao muda a chave. */
 export const POSE_PARADO = 'parado';
 
@@ -257,7 +264,8 @@ export interface SpriteDaUnidade {
 
 /**
  * F-SPR — o sprite de uma unidade numa pose e direcao, ou `null` (placeholder). A
- * direcao declarada vence; sem ela, o oeste cai no espelho do leste. Direcao fora do
+ * direcao declarada vence; sem ela, o oeste cai no espelho do leste, e a diagonal sem
+ * quadro cai na horizontal (`HORIZONTAL_DA_DIAGONAL`). Direcao fora do
  * conjunto do tipo (`ne` num civil de 4) nao existe e resolve `null`, e tipo sem
  * `direcoesDeSprite` no dado (os mercenarios, decisao do operador) tambem.
  */
@@ -275,6 +283,10 @@ export function spriteDaUnidade(
     const chave = chaveDeTextura('unidade', tipo, estado);
     return carregada(chave) ? { chave, espelhar, entrada } : null;
   };
-  const espelho = ESPELHO_DO_OESTE[direcao];
-  return tentar(direcao, false) ?? (espelho ? tentar(espelho, true) : null);
+  const naDirecao = (d: Direcao): SpriteDaUnidade | null => {
+    const espelho = ESPELHO_DO_OESTE[d];
+    return tentar(d, false) ?? (espelho ? tentar(espelho, true) : null);
+  };
+  const horizontal = HORIZONTAL_DA_DIAGONAL[direcao];
+  return naDirecao(direcao) ?? (horizontal ? naDirecao(horizontal) : null);
 }

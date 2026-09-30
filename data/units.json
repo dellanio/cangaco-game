@@ -23,7 +23,7 @@
   "civis": {
     "_comum": {
       "velocidade": "aPe",
-      "direcoesDeSprite": 4,
+      "direcoesDeSprite": 8,
       "vaiAoInn": true
     },
     "tipos": [
