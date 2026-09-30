@@ -143,8 +143,9 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
 
 ## BUG-Y — viagem inútil para comer: o especialista acha a prateleira vazia
 - feature: F20b (fome e morte), decisão D5; aparece no D-TRANSPORTE-03 T2 (logística do KaM)
-- severidade: a classificar pelo operador. Não quebra aceite escrito: a D5 prevê que "quem
-  chega e não acha comida não espera".
+- severidade: **`errado`, provisória** (operador, 2026-10-01). Não quebra aceite escrito: a D5
+  prevê que "quem chega e não acha comida não espera"; mas 13 de 50 viagens para comer na
+  vila da calibração não alimentam ninguém (medido, base `faf8590`).
 - repro: vila da calibração (`tests/helpers/cal-vila.ts`, `comandosDaVilaNoTick`), 20 000
   ticks, na árvore `ebb2182` (branch `wip/D-TRANSPORTE-03-T2`). Os lenhadores u85/u86 saem
   para comer no tick 6 869, colhendo. Na base (`faf8590`), a mesma viagem sai no tick 7 286.
@@ -162,6 +163,9 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
 - efeito medido: no T2 o pão chega mais cedo à Bodega, e a viagem perdida cai antes da 17ª
   tora, e não depois. Isso dá tree_trunk 50 contra 51 da base. Com 16 000, 20 000 e 30 000
   ticks, a diferença é sempre −1.
+- **plano com aceite:** `docs/planos/2026-10-01-BUG-Y-viagem-inutil-para-comer.md`. A causa é o
+  portão binário do gerador (`src/sim/systems/jobs.ts:721-733`): uma broa abre todos os
+  assentos. A proposta (A) reserva a refeição garantida pela D7, e espera o operador.
 - saídas possíveis (não decididas, e sem correção nesta entrada): reservar comida por
   refeição (a D7 pede uma reserva de conjunto), ou o comensal conferir a prateleira de novo
   antes de vagar a casa.
