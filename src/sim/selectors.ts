@@ -907,6 +907,9 @@ function temCausa(
       if (ehEscolaCompleta(predio)) {
         return motivoDaEspera(state, predio.id, predio, dados) === 'sem-estrada';
       }
+      // BUG-U causa A: a arma so vem pela estrada (`arma-para-quartel`, modo `estrada`),
+      // e o recruta chega a pe — sem o aviso, o quartel enche de gente e fica calado.
+      if (ehQuartelCompleto(predio)) return !predioLigadoAoArmazem(state, predio, dados);
       return false;
     // F18 — a mesma medida, dois nomes. O que separa as duas causas nao e o id
     // do predio: e o DADO do recurso que ele colhe. Tipo com `reposicao` e terra
