@@ -14752,7 +14752,7 @@ O código está na branch `wip/D-TRANSPORTE-03-T2` (commit empurrado), fora da `
 - Corrida B (carga de pedra): 15/15 armas no quartel (era 12/15 no T1). Aceite bloqueante 1 passa.
 - Parado por entrada vazia (métrica do aceite): base 13 184, T1 16 875, T2 16 711. Padaria: 696, 2 399, 768.
   Aceite bloqueante 2 **reprova**.
-- O casamento funciona: armazém→serraria caiu de 51 para 1 tora, e lenhador→armazém de 50 para 1.
+- O casamento funciona: armazém→serraria caiu de 50 para 1 tora, e lenhador→armazém de 50 para 1.
   Farinha: moinho→padaria direto, 55 contra 3 do armazém. `saida-cheia` entregue: 478 → 321.
 - Causa isolada, medida por estado da FSM do ocupante:
   - a métrica conta a casa TRABALHANDO: o ciclo cobra a entrada no início (`especialistas.ts:631-642`),
