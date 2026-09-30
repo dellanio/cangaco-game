@@ -32,9 +32,12 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
 
 ## BUG-T — tropa travada: vaga bloqueada no MEIO do caminho (terceiro caso da família)
 - feature: C-MOVIMENTO-02b (a vaga tomada por quem marcha) — limite conhecido dela
-- severidade: **proposta `trava`** (sonda da leva, 2026-10-01; o operador classifica). Soldado
-  parado em `marchando` por 16 048 ticks é travamento de regra, não balanceamento. O aceite
-  escrito da C-MOVIMENTO-02 e da 02b continua passando: a chave de nenhuma das duas cai.
+- severidade: **`trava`** (operador, 2026-09-30). Soldado parado em `marchando` por 16 048
+  ticks é travamento de regra, não balanceamento. O aceite escrito da C-MOVIMENTO-02 e da 02b
+  continua passando: a chave de nenhuma das duas cai.
+- **plano com aceite:** `docs/planos/2026-09-30-BUG-T-tropa-travada.md` (só plano; o código
+  espera o operador). Conferido no código: a troca mútua escapa da `vagaTomadaPor` porque ela
+  exige um PARADO no seguinte de quem ocupa. É o quarto caso da família.
 - repro (medido; sonda apagada, receita determinística):
   - `criarEscaramuca(gameData.economia.estadoInicial.semente)` e a tropa do jogador inteira.
   - 400 ordens `MoveUnits` sorteadas por LCG `x = (x·1103515245 + 12345) mod 2³¹`, começando
@@ -56,9 +59,7 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
     escaramuça).
 - esperado: toda a tropa mandada para uma formação para, cada soldado numa vaga, em tempo
   finito.
-- observado: medido acima. Hipótese sobre a troca mútua, não conferida no código: a
-  `vagaTomadaPor` da 02b exige um parado à frente de quem toma a vaga, e aqui não há; seria
-  um quarto caso da família.
+- observado: medido acima. A troca mútua foi conferida no código (plano, seção 2).
 - **a família, para saber onde olhar sem reler os relatórios:**
   1. C-MOVIMENTO-02 (a tropa não trava): a vaga é o próximo tile e está ocupada por um
      PARADO do mesmo lado, sem contorno. Troca: `vagaEmparedadaPor`, em

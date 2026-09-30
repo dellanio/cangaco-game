@@ -15645,3 +15645,32 @@ BUILD_PLAN (item D-TELA-07) antes do código. Só `src/render/`, testes e roteir
 - O texto é o do painel ("Parado"), sem chave nova no tema. O HUD usa "Pausado" para o relógio,
   e a placa não usa essa palavra, para não confundir prédio parado com jogo pausado.
 - Placa geométrica (§9), sem arte. Cores iguais às do placeholder do quadro de trabalho.
+
+## 2026-09-30 — Sessão do operador, tarefa 4: BUG-T (tropa travada), severidade `trava`: plano com aceite, sem código
+
+Plano: `docs/planos/2026-09-30-BUG-T-tropa-travada.md`. `BUGS.md` do BUG-T: severidade `trava`
+(decisão do operador) e ponteiro para o plano. **Nenhum código mudou.**
+
+### Verificado (lido no código e no clone do KaM nesta sessão)
+
+- **A troca mútua escapa das duas trocas que existem.** `vagaTomadaPor` (`src/sim/systems/marcha.ts`,
+  C-MOVIMENTO-02b) exige um PARADO no seguinte de quem ocupa, e na troca mútua o seguinte é de
+  quem marcha. `vagaEmparedadaPor` (C-MOVIMENTO-02) exige parado no próximo tile. Em
+  `esperarOuDesviar`, caminho de um passo não tem contorno, e o laço fica em "tenta de novo".
+  Isso confirma a hipótese da leva: é o quarto caso da família.
+- KaM (`KM_UnitActionWalkTo.pas`, clone `731a8a4`): troca mútua sem espera (`:125`, `:787`);
+  troca forçada com quem está esperando (`:799-802`; espera de 40 ticks em `:131` e `:1076`);
+  não troca com inimigo (`:770-773`).
+
+### Hipótese, nomeada como tal
+
+- O caso 3 da ordem 11 (u24) pode ser consequência da troca mútua ao lado (u28/u33). O contorno
+  contado só com os parados passaria pelos tiles dos dois, e a regra da 02 veria contorno onde o
+  `esperarOuDesviar` não vê. A Tarefa 1 do plano mede isso antes do código.
+
+### Espera decisão do operador
+
+1. Liberar o código (a severidade `trava` o põe na frente da fila).
+2. A troca mútua: na hora, como o KaM (`:125`), ou depois de `ticksDesvioMilitar`, como as outras
+   duas trocas da família.
+3. Se a Tarefa 1 pedir a (B): o número novo da espera da troca forçada (o KaM usa 40 ticks).
