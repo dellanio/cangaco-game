@@ -15116,3 +15116,102 @@ batching, que o Canvas do Phaser não tem ou faz mal. Sem WebGL o jogo não inic
 
 **PARA REVISÃO:** a mensagem é o texto do pedido, sem estilo de tema; a tela sem WebGL não
 tem botão nem link de ajuda.
+
+## 2026-10-01 — D-TRANSPORTE-03 T2 (oferta × demanda) com a D2 nova: REPROVA pela letra, sem merge
+
+Pedido do operador (retomada 2): "produção por cadeia ≥ floor(base × 0,98), medida em 16 000,
+20 000 e 30 000 ticks, E o déficit não pode crescer de 16 000 para 30 000. D1 continua igual".
+Regra da leva: aceite bloqueante reprova → registra e segue. **Nada foi mergeado**, o
+`TETO_DE_NOS` e o BUILD_PLAN não mudaram, e BUG-U e BUG-V continuam abertos no `BUGS.md`.
+
+### Verificado
+
+- Sonda `zz-` fora do repositório (apagada), vila da calibração (`vilaDaCalibracao` +
+  `comandosDaVilaNoTick`). Produção é a soma dos eventos `goods-produced`; parada é a soma de
+  ticks com o ocupante em `esperando_insumo` ou `saida_cheia`. A base é a `main` em `4550668`,
+  e o T2 é o merge local sem commit de `wip/D-TRANSPORTE-03-T2` (`ebb2182`), desfeito com
+  `git merge --abort`.
+
+```text
+tick    cadeia      base  T2   floor(base×0,98)  piso  déficit
+16 000  tree_trunk   41   40   40                ok    1
+16 000  timber       78   78   76                ok    0
+16 000  flour        43   44   42                ok    -1
+20 000  tree_trunk   51   50   49                ok    1
+20 000  timber       98   96   96                ok    2
+20 000  loaves      112  114  109                ok    -2
+30 000  tree_trunk   78   77   76                ok    1
+30 000  timber      152  150  148                ok    2
+30 000  loaves      190  192  186                ok    -2
+(stone, corn: déficit 0 nas três janelas; flour em 30 000: -1)
+```
+
+- **Piso:** passa em todas as cadeias e nas três janelas.
+- **D1** (parada ≤ base × 1,05) passa nas três janelas. Serraria: 2 457 ≤ 2 932, 3 529 ≤ 3 880
+  e 5 683 ≤ 5 876. Moinho: 657 ≤ 793, 934 ≤ 1 055 e 1 544 ≤ 1 756. Padaria: 423 ≤ 465,
+  423 ≤ 522 e 816 ≤ 966.
+- **Déficit que não cresce: REPROVA na tábua**, que vai de 0 em 16 000 para 2 em 30 000. A tora
+  fica em 1 → 1 e passa.
+- **A série de 1 000 em 1 000 ticks até 40 000 mostra que é fase, não deriva.**
+  - O déficit da tábua oscila entre −4 e +4, sempre em múltiplos de 2, porque a receita da
+    serraria rende 2 tábuas por ciclo.
+  - Ele vale 0 em 12k, 14k–19k, 22k, 31k, 36k e 39k, 2 em 30k e 40k, e 4 em 26k, 29k e 35k.
+  - Antes de 12k ele já oscilava: −4 em 9k e +2 em 11k.
+  - O déficit da tora é 0 até 13k e fica em 1 (2 em 24k, 25k e 34k) daí até 40k.
+- `git status` depois da sonda: só o `BUGS.md` e o plano do BUG-Y, da tarefa 3.
+
+### Espera decisão do operador
+
+- **A D2 reprova por um ciclo de fase da serraria.** Proposta, que não foi aplicada: "déficit em
+  30 000 ≤ déficit em 16 000 + rendimento de um ciclo da receita". O rendimento vem do dado
+  (`receitas.sawmill`), não é um 2 digitado. Com essa leitura, tábua 2 ≤ 0 + 2 e tora 1 ≤ 1 + 1
+  passam. Aprovada, a sequência é: teste permanente, `TETO_DE_NOS` com folga, BUILD_PLAN, merge,
+  e BUG-U e BUG-V fechados no mesmo commit.
+
+### Hipótese, nomeada como tal
+
+- O déficit de 1 tora a partir de 13k é a viagem perdida dos lenhadores para comer (BUG-Y,
+  viagem inútil para comer). A série é compatível com isso, mas não separei a causa.
+
+## 2026-10-01 — Tarefa 2 da leva: pausado × ocupante (F-VIVO-e, o ocioso genérico; decisão D3): feita
+
+Decisão D3 do operador: pausado mantém o homem dentro e mostra o ocioso. O "parar produção" do
+KaM é o modo de entrega (`KM_Houses.pas:904-960`, `UpdateDeliveryMode`), que não mexe no
+trabalhador; quem o expulsa é "fechar para o trabalhador" (`KM_Units.pas:540-546`).
+Só `src/render/` e testes; `src/sim/` intocado.
+
+### Verificado
+
+- `src/render/visibilidade.ts`: `dentroDaCasa` perdeu o `predio.pausado ||`. O cabeçalho cita
+  a D3 e as duas linhas do KaM. `src/render/trabalho.ts`: o comentário do `quadroOcioso`
+  foi atualizado.
+- `tests/F-VIVO-e-ocioso.test.ts`:
+  - o aceite 2 afirma o ocioso aceso no pausado;
+  - **aceite 6 (D3)** novo, pelo `step`: pausa pelo `SetBuildingPaused`; por 50 ticks o ocupante
+    é o mesmo, fica dentro e escondido, o ocioso está aceso e não há quadro de trabalho;
+  - despausado, o trabalho volta e o ocioso apaga.
+  - Evidência `test-output/F-VIVO-e.json`, aberta: `aceite6` com u2, 50 ticks pausado, todas as
+    linhas `dentro/escondido/ocioso: true`, voltou a trabalhar no tick 53.
+- **Conserto da fixture do aceite 6.** A `cenarioDeSerraria` nasce com a gaveta vazia, e o
+  `trabalhando` do tick 0 cai em `esperando_insumo` no tick 1. O rascunho esperava a volta do
+  trabalho, que nunca vinha, e reprovou por isso. Agora o teste usa `comEntrada(..., { tree_trunk: 5 })`
+  e exige `progresso > 0` antes de pausar.
+- `tests/BUG-X-especialista-dentro.test.ts`: a linha `pausado` da tabela passa a `true`.
+- Roteiro novo `tools/shots/F-VIVO-e-pausado.js`:
+  - carrega a partida do aceite 6;
+  - afirma o ocioso aceso, nenhum quadro de trabalho e o serrador com `visivel: false`;
+  - despausa por 6 × 150 ms, com o n variando e o serrador escondido, e pausa de volta.
+  - Captura `screenshots/F-VIVO-e-pausado-1-serraria-pausada.png`, aberta: serraria com a
+    bandeira de pausa, o placeholder `ocioso_8` (D5) e nenhum serrador fora da casa.
+- Não-regressão por código de saída, porta 5178: F-VIVO-e, BUG-X, F-VIVO-b, F16b e F22, todos
+  com saída 0. A 5175 continua presa pelo PID 15040, que não matei, e a 5177 é da branch do
+  relevo.
+- `npm run verify`: 203 arquivos, 2 070 testes, e o transladado com 2 069 e 4 skips antigos.
+- BUILD_PLAN:
+  - a nota do BUG-X na F16c ganhou "Revogada pela D3";
+  - o "ESPERA O OPERADOR" do pausado na F-VIVO-e virou "DECIDIDO pela D3… entregue".
+
+### PARA REVISÃO
+
+- A bandeira de pausa e o ocioso aparecem juntos. Não há outro sinal de "pausado" na casa além
+  da bandeira que já existia.

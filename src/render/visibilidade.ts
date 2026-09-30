@@ -11,9 +11,11 @@
  *   de predio: continua visivel no canteiro, a obra se ve trabalhar;
  * - `comendo` nao se desenha: no KaM ele anda visivel ate a Bodega e come la dentro
  *   (`KM_UnitTaskGoEat.pas:99-135`, `SetActionGoIn(gdGoInside, fInn)`);
- * - predio pausado (a casa fechada da F16c): o ocupante SE desenha. No KaM o trabalhador
- *   sai da casa fechada e fica visivel fora (`KM_Units.pas:529-600`,
- *   `ProceedHouseClosedForWorker`). Decisao do operador, 2026-10-01.
+ * - predio pausado (F16c) NAO muda nada: o ocupante fica dentro, escondido, e a casa
+ *   mostra o ocioso. "Parar a producao" no KaM e o modo de entrega (`KM_Houses.pas:904-960`,
+ *   `UpdateDeliveryMode`), que nao mexe no trabalhador; quem o poe para fora e o outro
+ *   botao, "fechar para o trabalhador" (`KM_Units.pas:540-546`), que o jogo nao tem.
+ *   Decisao do operador D3, 2026-10-01.
  *
  * Pura e sem Phaser: o teste afirma a tabela em Node. A camada de unidades esconde o
  * desenho e o acerto pula quem ela escondeu, para clique e desenho nao divergirem.
@@ -22,14 +24,14 @@ import { ocupaTile } from '../sim/colisao';
 import type { GameState, Predio, Unidade } from '../sim/state';
 
 /**
- * O ocupante esta DENTRO do predio: predio completo nao pausado, a unidade e o ocupante
+ * O ocupante esta DENTRO do predio: predio completo (pausado ou nao), a unidade e o ocupante
  * dele, nao esta comendo (a Bodega e outra casa), e o estado dela e `dentro` pela colisao
  * ou ela espera a porta para sair (`saindo`). E o predicado que esconde a unidade e o
  * que acende o ocioso (F-VIVO-e): um so, para a casa nao mostrar ocioso com o homem na
  * porta, nem esconder o homem sem ocioso.
  */
 export function dentroDaCasa(predio: Predio, u: Unidade): boolean {
-  if (predio.estado !== 'completo' || predio.pausado || predio.ocupante !== u.id) return false;
+  if (predio.estado !== 'completo' || predio.ocupante !== u.id) return false;
   if (u.fsm === 'comendo') return false;
   return !ocupaTile(u) || u.saindo !== undefined;
 }

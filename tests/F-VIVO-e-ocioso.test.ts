@@ -23,7 +23,7 @@ import { quadroDeTrabalho, quadroOcioso, TICKS_POR_QUADRO } from '../src/render/
 import type { DadosDoTrabalho } from '../src/render/trabalho';
 import { dentroDaCasa, unidadesInvisiveis } from '../src/render/visibilidade';
 import {
-  cenarioDeFazenda, cenarioDePedreira, cenarioDeSerraria, comProdutorOcupado, pedreiraDaVila, semAUnidade, semOcupante,
+  cenarioDeFazenda, cenarioDePedreira, cenarioDeSerraria, comEntrada, comProdutorOcupado, pedreiraDaVila, semAUnidade, semOcupante,
 } from './helpers/producao-cenario';
 import { comandosDaVilaNoTick, vilaDaCalibracao } from './helpers/cal-vila';
 import { gravarEvidencia } from './helpers/evidence';
@@ -107,7 +107,7 @@ describe('F-VIVO-e — o ocioso generico', () => {
     expect(quadroDeTrabalho(completoDe(cheia, 'q1'), ocupanteDe(cheia, completoDe(cheia, 'q1')), cheia.tick, dados)).toBeNull();
   });
 
-  it('aceite 2: apagado sem ocupante, com ocupante fora, comendo, em obra, sem receita e (por ora) pausado', () => {
+  it('aceite 2: apagado sem ocupante, com ocupante fora, comendo, em obra e sem receita', () => {
     const semInsumo = ateQue(cenarioDeSerraria(), (s) => fsmDoOcupante(s, 's1') === 'esperando_insumo', 2_000);
     const p = completoDe(semInsumo, 's1');
     const u = ocupanteDe(semInsumo, p) as Unidade;
@@ -122,11 +122,10 @@ describe('F-VIVO-e — o ocioso generico', () => {
     expect(quadroOcioso({ ...p, tipo: 'storehouse', producao: null }, u, t, dados)).toBeNull();
     const obra = { ...p, estado: 'obra' } as unknown as Predio;
     expect(quadroOcioso(obra, u, t, dados)).toBeNull();
-    // PAUSADO: a decisao do operador de 2026-10-01 ("pausado mostra o ocioso") colide com a
-    // do BUG-X (pausado = casa fechada, o homem se desenha fora) e espera no BUILD_PLAN.
-    // Este e o estado entregue, pelo predicado unico: nem ocioso, nem homem escondido.
-    expect(quadroOcioso({ ...p, pausado: true }, u, t, dados)).toBeNull();
-    expect(dentroDaCasa({ ...p, pausado: true }, u)).toBe(false);
+    // PAUSADO (D3, 2026-10-01): o homem fica dentro e o ocioso acende; o caminho pelo
+    // comando esta no aceite 6
+    expect(quadroOcioso({ ...p, pausado: true }, u, t, dados)).not.toBeNull();
+    expect(dentroDaCasa({ ...p, pausado: true }, u)).toBe(true);
 
     // ocupante fora de verdade: a pedreira com o canteiro no lajedo
     const noTile = ateQue(cenarioDePedreira(), (s) => fsmDoOcupante(s, 'q1') === 'colhendo', 5_000);
@@ -168,6 +167,48 @@ describe('F-VIVO-e — o ocioso generico', () => {
       const b = ns[i] as number;
       expect(b === a || b === a + 1 || (a === QUADROS && b === 1), `${i}: ${a} -> ${b}`).toBe(true);
     }
+  });
+
+  it('aceite 6 (D3): pausar pelo comando mantem o homem dentro, escondido, e acende o ocioso', () => {
+    // com tora na entrada: a serraria da fixture nasce vazia, e o `trabalhando` do tick 0 cai
+    // em esperando_insumo no tick 1 — nao haveria trabalho para voltar depois de despausar
+    const trabalhando = ateQue(comEntrada(cenarioDeSerraria(), 's1', { tree_trunk: 5 }), (s) => {
+      const p = completoDe(s, 's1');
+      return (p.producao?.progresso ?? 0) > 0 && quadroDeTrabalho(p, ocupanteDe(s, p), s.tick, dados) !== null;
+    }, 5_000);
+    const ocupante = completoDe(trabalhando, 's1').ocupante;
+    expect(ocupante).not.toBeNull();
+    let s = step(trabalhando, [{ type: 'SetBuildingPaused', predio: 's1', pausado: true }], gameData);
+    // guarda do cenario: o comando pegou
+    expect(completoDe(s, 's1').pausado).toBe(true);
+    const tabela: Array<{ tick: number; fsm: string | undefined; dentro: boolean; escondido: boolean; ocioso: boolean }> = [];
+    for (let i = 0; i < 50; i += 1) {
+      s = step(s, [], gameData);
+      const p = completoDe(s, 's1');
+      const u = ocupanteDe(s, p);
+      expect(p.ocupante).toBe(ocupante);
+      if (u === null) throw new Error('o ocupante sumiu');
+      const linha = { tick: s.tick, fsm: u.fsm, dentro: dentroDaCasa(p, u), escondido: unidadesInvisiveis(s).has(u.id), ocioso: quadroOcioso(p, u, s.tick, dados) !== null };
+      tabela.push(linha);
+      expect(linha, `tick ${s.tick}`).toMatchObject({ dentro: true, escondido: true, ocioso: true });
+      expect(quadroDeTrabalho(p, u, s.tick, dados)).toBeNull();
+    }
+    // a partida do roteiro F-VIVO-e-pausado: a serraria pausada com o serrador dentro
+    const dir = process.env['CANGACO_EVIDENCIA_DIR'] ?? 'test-output';
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(`${dir}/F-VIVO-e-pausado.save.txt`, salvar(s));
+    const s1 = completoDe(s, 's1');
+    const partidaPausada = { tick: s.tick, predio: 's1', ocupante, centro: { gx: s1.gx + 1.5, gy: s1.gy + 1 } };
+    writeFileSync(`${dir}/F-VIVO-e-pausado.partida.json`, JSON.stringify(partidaPausada, null, 2));
+    // despausado, o trabalho volta e o ocioso apaga
+    s = step(s, [{ type: 'SetBuildingPaused', predio: 's1', pausado: false }], gameData);
+    s = ateQue(s, (e) => {
+      const p = completoDe(e, 's1');
+      return quadroDeTrabalho(p, ocupanteDe(e, p), e.tick, dados) !== null;
+    }, 500);
+    expect(ociosoEm(s, 's1')).toBeNull();
+    evidencia['aceite6'] = { ocupante, pausadoPor: tabela.length, primeira: tabela[0], ultima: tabela[tabela.length - 1], voltouNoTick: s.tick };
+    gravarEvidencia('F-VIVO-e', evidencia);
   });
 
   it('aceite 5 (partida do roteiro): pedreira de saida cheia ao lado de pedreira vazia', () => {

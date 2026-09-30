@@ -122,7 +122,7 @@ describe('BUG-X — quem a tela esconde', () => {
   const comFsm = (fsm: string): GameState => comUnidade(s, ocupante, (u) => ({ ...u, fsm }));
   const escondido = (e: GameState, id: string): boolean => unidadesInvisiveis(e).has(id);
 
-  it('ocupante dentro some; em campo, andando ou pausado, aparece', () => {
+  it('ocupante dentro some, pausado ou nao; em campo ou andando, aparece', () => {
     const tabela: Record<string, boolean> = {};
     for (const fsm of ['trabalhando', 'esperando_insumo', 'saida_cheia']) {
       tabela[fsm] = escondido(comFsm(fsm), ocupante);
@@ -132,10 +132,11 @@ describe('BUG-X — quem a tela esconde', () => {
       tabela[fsm] = escondido(comFsm(fsm), ocupante);
       expect(tabela[fsm], fsm).toBe(false);
     }
-    // casa fechada (F16c): no KaM ele sai e fica visivel (KM_Units.pas:529-600)
+    // pausado (F16c, D3 de 2026-10-01): "parar a producao" no KaM nao tira o homem
+    // (KM_Houses.pas:904-960); ele fica dentro, escondido
     const pausado = { ...s, predios: { ...s.predios, porId: { ...s.predios.porId, [casa.id]: { ...casa, pausado: true } } } };
     tabela['pausado'] = escondido(comUnidade(pausado, ocupante, (u) => ({ ...u, fsm: 'trabalhando' })), ocupante);
-    expect(tabela['pausado']).toBe(false);
+    expect(tabela['pausado']).toBe(true);
     // esperando a porta para sair (D-MOVIMENTO-01c): para os outros, ainda dentro
     tabela['saindo'] = escondido(comUnidade(s, ocupante, (u) => ({ ...u, fsm: 'indo_colher', saindo: 1 })), ocupante);
     expect(tabela['saindo']).toBe(true);

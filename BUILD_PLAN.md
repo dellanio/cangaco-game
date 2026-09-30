@@ -684,6 +684,12 @@ prédio surge sem clique do jogador.
   tile da porta (`src/render/visibilidade.ts`). A parte de SIM — sair de fato e perder a
   posse — contradiz o (c) da nota acima e não está na fila: é item de sim à parte, e
   espera o operador dizer se o (c) cai (pergunta no `PROGRESS.md`, 2026-10-01).
+  - **Revogada pela D3 do operador (2026-10-01, leva desatendida).** "Parar a produção" no
+    KaM é o modo de entrega (`KM_Houses.pas:904-960`, `UpdateDeliveryMode`), que não mexe
+    no trabalhador; quem o põe para fora é "fechar para o trabalhador"
+    (`KM_Units.pas:540-546`), outro botão, que o jogo não tem. O (c) fica: pausado, o homem
+    fica **dentro**, escondido, e a casa mostra o ocioso (`dentroDaCasa` sem o
+    `pausado`). Entregue na tarefa 2 da leva, com a F-VIVO-e.
 - **Nota (emenda do aceite — decisão do operador, 2026-09-23)**: a cláusula "teste
   que troca o modo do Woodcutter's e confirma que o comportamento do lenhador
   acompanha" **saiu do aceite**. Razão: **o comportamento que o modo governaria
@@ -4888,8 +4894,10 @@ manifesto aceita `trabalho` com id `ocioso` (`ocioso_1..8`); `ocioso_9` e duas e
 4. O `n` avança e volta a 1 sem pulo.
 5. Roteiro despausado (§8): casa ocupada e parada ao lado de casa vazia do mesmo tipo;
    `debug.quadrosOciosos` avança numa e fica ausente na outra.
-- **Pausado (decisão do operador de 2026-10-01: "pausado mostra o ocioso") — ESPERA O
-  OPERADOR.** Ela colide com a decisão do BUG-X do mesmo dia, em que o pausado é a casa
+- **Pausado — DECIDIDO pela D3 do operador (2026-10-01) e entregue.** Pausado, o homem fica
+  dentro e o ocioso acende: o KaM não tira o trabalhador ao parar a produção (nota do BUG-X
+  na F16c). Aceite 6 em `tests/F-VIVO-e-ocioso.test.ts` (pausa pelo comando, pelo `step`) e
+  roteiro `tools/shots/F-VIVO-e-pausado.js`. O texto abaixo é o histórico. Ela colidia com a decisão do BUG-X do mesmo dia, em que o pausado é a casa
   fechada e o trabalhador **se desenha fora** (`KM_Units.pas:529-600`). As duas juntas dão
   ocioso com o homem visível na porta, que é a divergência que o predicado único existe
   para impedir. Entregue com o predicado único (pausado: sem ocioso), e o teste afirma isso

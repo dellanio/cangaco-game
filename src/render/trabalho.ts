@@ -155,8 +155,8 @@ export function quadroDaFumaca(
  * F-VIVO-e — o quadro do ocioso (1..8), ou `null`: predio com receita, ocupante DENTRO
  * (`dentroDaCasa`, o mesmo predicado que o esconde) e nenhum quadro de trabalho. Cobre
  * `esperando_insumo`, `saida_cheia` e o descanso do caso 1. O ocioso nao tem ciclo: o
- * `tick` e o relogio, como na fumaca. Pausado nao acende, porque `dentroDaCasa` o poe
- * fora (BUG-X); a decisao do operador de 2026-10-01 que o quer aceso espera no BUILD_PLAN.
+ * `tick` e o relogio, como na fumaca. Pausado acende: o ocupante fica dentro e o
+ * trabalho para (`progressoEmTrabalho` devolve null), decisao D3 do operador, 2026-10-01.
  */
 export function quadroOcioso(
   predio: Predio, unidade: Unidade | null, tick: number, dados: DadosDoTrabalho,
