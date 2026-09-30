@@ -126,18 +126,22 @@ Não adicione dependência nova sem registrar o motivo em `PROGRESS.md`.
    `test-results.json`. Uma por sessão. Não adiante a próxima.
 5. Implemente, escreva o teste, rode, capture a evidência.
 6. Atualize `PROGRESS.md`: o que fez, o que decidiu e por quê, o que ficou aberto.
-7. Commit com a mensagem `feat(<sigla>): <resumo>`. A sigla segue `docs/siglas.md`:
-   `<fase>-<MÓDULO>-<nn>`, como `feat(D-MOVIMENTO-01e): ...`. Módulo só da lista fechada de
-   11; módulo novo só por decisão do operador. O que fechou antes de 2026-09-28 mantém a
-   sigla antiga (`F17g`, `C5`), e a tabela de equivalência está no mesmo arquivo.
+7. Commit com a mensagem `feat(<sigla>): <resumo>`. A sigla segue `docs/siglas.md`. Item
+   **novo** (desde 2026-09-30): `<FASE>-<MÓDULO>-<NOME-CURTO>`, como
+   `feat(D-TELA-LUZ-RELEVO): ...`. Os itens com número (`D-MOVIMENTO-01e`) mantêm o id que têm.
+   Módulo só da lista fechada de 11; módulo novo só por decisão do operador. O que fechou antes
+   de 2026-09-28 mantém a sigla antiga (`F17g`, `C5`), e a tabela de equivalência está no
+   mesmo arquivo.
 8. **Sigla nunca aparece sozinha em relatório** (PROGRESS, avaliação, resposta ao
    operador): vem sempre com o nome ao lado, seja antiga ou nova. Exemplo: "F20b (fome e
    morte)".
-9. **Id se reserva na `main` antes de ser usado** (regra do operador, 2026-09-30). Todo item
-   novo (feature, bug, `D-xxx`) reserva o id na `main` no momento do plano, com um commit de
-   uma linha no `BUILD_PLAN.md` (feature) ou no `BUGS.md` (bug), **antes** de qualquer branch
-   usá-lo. Id que não está na `main` não existe: confira `git grep` na `main` antes de
-   escolher. Motivo: três colisões (BUG-V, D-TELA-06, D-TELA-07).
+9. **Id de item novo descreve o conteúdo** (regra do operador, 2026-09-30; substitui a regra
+   de reserva do mesmo dia). Formato `<FASE>-<ÁREA>-<NOME-CURTO-DO-CONTEÚDO>`, em maiúsculas
+   com hífen, sem número sequencial: `D-TELA-LUZ-RELEVO`, `D-TERRENO-ALTURA`. A área é um dos
+   11 módulos. O nome diz o que o item faz, **nunca** o nome de branch ou worktree. Quem cria
+   o item confere com `git grep` na `main` que o id não existe; não há commit de reserva. A
+   ordem de execução continua sendo a ordem da lista no `BUILD_PLAN.md`. Vale para item novo,
+   e item antigo não se renomeia. Motivo: três colisões de número (BUG-V, D-TELA-06, D-TELA-07).
 10. **O aceite vai num commit próprio, antes do código** (regra do operador, 2026-09-30). O
     critério de aceite (novo ou mudado) entra no `BUILD_PLAN.md` ou no plano da feature num
     commit só dele, e só depois vem o commit do código. "Escrito antes do código" dentro do

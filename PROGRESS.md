@@ -15774,3 +15774,16 @@ e um assento 6 continuaria sem efeito. **Nenhum número mudou.**
 ### Espera decisão do operador
 - (A) tirar o campo do dado, ou (B) duração da refeição no dado, com assento 6 contado dentro
   da Inn (revoga a D6).
+
+## 2026-09-30 — Leva 2: regra nova de id (nome do conteúdo, sem número) e o renome dos dois itens do relevo
+
+**Decisão do operador (2026-09-30):** item novo tem id `<FASE>-<ÁREA>-<NOME-CURTO-DO-CONTEÚDO>`,
+sem número. Quem cria confere com `git grep` na `main`, e não há commit de reserva. Isso
+substitui a regra de reserva de algumas horas antes (`8554302`). Item antigo não se renomeia.
+Registrado no CLAUDE.md (§6, itens 7 e 9) e em `docs/siglas.md`.
+
+- Renome no `BUILD_PLAN.md`, conferido vazio na `main` antes: D-TELA-08 → **D-TELA-LUZ-RELEVO**
+  (luz de relevo) e D-TERRENO-01 → **D-TERRENO-ALTURA** (altura só de render no gerador de mapa).
+- **O renome do lado da branch não foi feito:** o teste, as evidências e o cabeçalho de
+  `src/render/relevo.ts` são da sessão do relevo. Não toquei nesse worktree, e o aviso vai pelo
+  operador (texto no relatório da leva).

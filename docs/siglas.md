@@ -9,7 +9,17 @@ Decisão do operador (2026-09-28).
   vem sempre com o nome ao lado, seja antiga ou nova. Exemplo: "F20b (fome e morte)",
   "D-MOVIMENTO-01e (colisão civil: aceite)".
 
-## O esquema novo
+## Item novo desde 2026-09-30: nome, não número (decisão do operador)
+- **Formato:** `<FASE>-<ÁREA>-<NOME-CURTO-DO-CONTEÚDO>`, em maiúsculas com hífen, sem número
+  sequencial. Exemplos: `D-TELA-LUZ-RELEVO`, `D-TERRENO-ALTURA`. Fase e área (o módulo) seguem as
+  regras abaixo.
+- O nome descreve o **conteúdo**, nunca branch ou worktree.
+- Quem cria o item confere com `git grep` na `main` que o id não existe. Não há commit de reserva.
+- A ordem de execução continua sendo a ordem da lista no `BUILD_PLAN.md`.
+- Item que já tem id com número mantém o id. Nada se renomeia, exceto os dois do relevo, por
+  ordem do operador: D-TELA-08 → `D-TELA-LUZ-RELEVO` e D-TERRENO-01 → `D-TERRENO-ALTURA`.
+
+## O esquema de 2026-09-28 (número; vale para os itens que já o têm)
 - **Formato:** `<fase>-<MÓDULO>-<nn>`, com letra minúscula para sub-item. Exemplos:
   `D-MOVIMENTO-01a`, `C-IA-01`.
 - **Fase:** a do `BUILD_PLAN.md` em que o item **nasceu**: A (loop de construção), B (comida e
