@@ -15405,3 +15405,48 @@ Só `src/render/`, testes, roteiro e docs; `src/sim/` intocado.
 - Quando o treino acaba sem porta andável, a sim segura o item com `restam` 1
   (`escolas.ts`), e o laço continua enquanto o item segurar. É leitura do código, não caso
   testado.
+
+## 2026-10-01 — Tarefa 9 da leva: VARREDURA-KAM (cruzar o que supomos com o fonte do KaM), só lista
+
+**Interpretação (conservadora, registrada como tal):** a tarefa diz só "VARREDURA-KAM, só lista".
+O `BUILD_PLAN.md` (fila de 2026-09-29, item 11) pede "as frentes que faltam". As cinco frentes já
+têm seção em `docs/varredura-kam.md` (1 GDD; 2 BALANCE_LOG; 3 PROGRESS; 4 e 4b o que o KaM tem e
+nós não; 5 `data/*.json`). Então a lista abaixo é **o que ficou aberto** no documento. Não abri o
+fonte do KaM, não mudei dado, código nem aceite, e não reclassifiquei nada. Se o operador queria
+uma frente nova, é pergunta dele.
+
+### Verificado (lido em `docs/varredura-kam.md` nesta sessão)
+
+```text
+grupo                          linha(s) do doc      o que está aberto
+hipótese aberta, GDD           99, 117, 133, 135,   armazém bloqueia item; fome 1h21 (fonte externa); guia do
+                               136                  armazém; proporções de referência (medida comunitária)
+hipótese aberta, baixa prior.  145-150              clique esquerdo; botão direito; estrada diagonal; JobBoard
+                                                    comida/ouro (a 148 foi fechada pela frente 3, linha 334-338);
+                                                    distância euclidiana; altura 25/18 (fora de escopo)
+hipótese aberta, frente 4      183, 192, 199,       ritmo do golpe ~12 ticks; reparo 5 por martelada; grupo
+                               247, 250             de 15 fora do código; sem teto de grupo
+frente 2, sem lote             302-308              tempos de crescer ~metade do KaM; rendimento por tile;
+                                                    alcance em tiles andados; sem bônus de estrada; teto de
+                                                    laborers; bárbaro 8 contra 7 (decisão de lote, §12)
+frente 3, espera decisão       330-332, 340-344     material de obra livre (a) corrigir ou (b) declarar;
+                                                    F24a, encostar prédios, replantio a declarar
+frente 4b, propostas           375-379              comandos de grupo (item 11); itens 4, 6, 8 juntos; item 5
+frente 5, classe A             392-399              delivery.json 4, 7, 9-17, 23; economy.json:46; time.json:2;
+                                                    escaramuca.json:5; resources.json:40
+```
+
+### Hipótese (não conferida nesta sessão)
+
+- Alguns itens podem já ter sido resolvidos depois de escritos, e o documento não registra.
+  O único que conferi no código nesta leva é o **item 5 da frente 4b** (fechar a casa para o
+  trabalhador). A D3 (2026-10-01, tarefa 2) manteve o pausado como "parar produção" do KaM
+  (`KM_Houses.pas:904-960`), e não como "fechar para o trabalhador". A proposta da linha 376
+  segue sem resposta escrita.
+- As linhas 392-395 (`delivery.json`) mudam com a D-TRANSPORTE-03 (T2, oferta × demanda). O
+  T2 não foi mergeado nesta leva (tarefa 1), então elas continuam valendo na `main`.
+
+**Nota da tarefa 9 (o verify dela):** a primeira rodada reprovou no aceite 2 da F-VIVO-g
+(o curral guarda os animais, 20 000 ticks): passou do timeout padrão de 5 s na suíte paralela.
+Isolado ele leva ~4 s. Ganhou teto de 60 s, que é guarda de travamento e não asserção de tempo
+(§8), num commit próprio antes deste. A segunda rodada deu verde.
