@@ -23,6 +23,7 @@ import { ehQuartelCompleto, ehRequisitoDoQuartel } from './quartel';
 import { ehTorreCompleta, ID_DA_TORRE, MUNICAO_DA_TORRE } from './torre';
 import { alvoDaFeira, ehFeiraCompleta, ID_DA_FEIRA } from './feira';
 import { alvoDeOuroDaPrefeitura, ehPrefeituraCompleta, ID_DA_PREFEITURA } from './prefeitura';
+import { limiteDeDistribuicao } from './distribuicao';
 
 /**
  * A capacidade da gaveta `entrada` repartida na proporcao da receita. Com uma
@@ -104,7 +105,12 @@ export function alvoDeEntrada(
   return 0;
 }
 
-/** Niveis 4 e 5: o que ainda falta chegar na gaveta `entrada`. Nunca negativo. */
+/** Niveis 4 e 5: o que ainda falta chegar na gaveta `entrada`. Nunca negativo.
+ *
+ *  D-TRANSPORTE-02a — o menu de distribuicao corta o ALVO, e so aqui: o par disputado pede
+ *  ate `min(alvo, limite)`. O excedente continua contra o alvo inteiro, porque o que ja
+ *  esta dentro fica e e consumido (o KaM nao evacua); como o pedido nunca passa do alvo,
+ *  as duas contas continuam sem ser positivas juntas. */
 export function demandaDeInsumo(
   state: GameState,
   predioId: string,
@@ -114,7 +120,9 @@ export function demandaDeInsumo(
   const predio = state.predios.porId[predioId];
   if (!predio || predio.estado !== 'completo') return 0;
   const alvo = alvoDeEntrada(state, predioId, mercadoria, dados);
-  return Math.max(0, alvo - (predio.estoque.entrada[mercadoria] ?? 0));
+  const limite = limiteDeDistribuicao(state, predio.lado, predio.tipo, mercadoria, dados);
+  const pedido = limite === null ? alvo : Math.min(alvo, limite);
+  return Math.max(0, pedido - (predio.estoque.entrada[mercadoria] ?? 0));
 }
 
 /** Nivel 7: o que esta na gaveta `entrada` ALEM do alvo. Nunca negativo. E a

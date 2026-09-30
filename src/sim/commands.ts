@@ -206,6 +206,18 @@ export type Command =
     }
   | {
       /**
+       * D-TRANSPORTE-02a — o menu de distribuicao: o maximo de `mercadoria` que um predio
+       * do `tipo` quer na gaveta de entrada, no lado do jogador. `quantidade` e o VALOR:
+       * o mesmo valor e no-op. Recusado (`command-rejected`) se o par nao esta em
+       * `delivery.json: distribuicao.padrao` ou a quantidade nao e inteiro em `0..maximo`.
+       */
+      readonly type: 'SetWareDistribution';
+      readonly mercadoria: string;
+      readonly tipo: string;
+      readonly quantidade: number;
+    }
+  | {
+      /**
        * F25a — forma UM soldado do tipo `tipo` no quartel `predio`, na hora: consome 1
        * de cada requisito da gaveta `entrada` (`units.json: militares.tipos[].requisitos`)
        * e 1 recruta, e a unidade nasce na porta no mesmo tick, com o lado do quartel.

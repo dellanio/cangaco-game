@@ -5463,6 +5463,23 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
       F16b lê a gaveta do armazém); o nome longo é cortado na grade de 3 colunas e aparece
       inteiro no `title`.
 ### D-TRANSPORTE-02 (antes F31) — Menu de distribuição
+- **Quebrada em dois (2026-09-29, lote do operador, item 6; plano em
+  `docs/planos/2026-09-29-D-TRANSPORTE-02-menu-de-distribuicao.md`).** O item não tinha
+  aceite escrito. O aceite é o do plano, e sai do GDD §4 e §7.2 e do
+  `KM_WareDistribution.pas` / `KM_Houses.pas: UpdateDemands`.
+  - **D-TRANSPORTE-02a — a regra (sim). ENTREGUE (2026-09-29).** `delivery.json:
+    distribuicao` (o máximo e o padrão por par mercadoria/tipo, só nos insumos
+    disputados), `GameState.distribuicao?` (só a diferença do padrão) e o comando
+    `SetWareDistribution`. `demandaDeInsumo` pede até `min(alvo, limite)`; o excedente
+    continua contra o alvo inteiro, e o que já está dentro fica.
+    - **Aceite:** `tests/D-TRANSPORTE-02a-distribuicao.test.ts`.
+    - **PARA REVISÃO:** o padrão é 5 em todos os pares, e não o do KaM (anotado no `_doc`
+      do dado), para a partida não mudar de balanceamento até o jogador mexer.
+  - **D-TRANSPORTE-02b — a aba (ui).** A aba Distribuição destrancada, com uma seção por
+    mercadoria disputada e os botões `−`/`+` por consumidor.
+    - **Aceite:** o roteiro `tools/shots/D-TRANSPORTE-02.js` do plano.
+    - **Nota para a D-PRODUCAO-01 e a F24:** `validarDistribuicao` reprova insumo novo com
+      dois ou mais consumidores que não esteja em `distribuicao.padrao`, com todos eles.
 ### D-TELA-01 (antes F32) — Aba de estatísticas
 - **ENTREGUE (2026-09-29, lote do operador, item 4; plano em
   `docs/planos/2026-09-29-D-TELA-01-aba-de-estatisticas.md`).** A aba Estatísticas ganha,

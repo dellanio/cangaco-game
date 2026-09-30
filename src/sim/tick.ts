@@ -10,6 +10,7 @@ import { aplicarDemolishBuilding } from './systems/demolicao';
 import { aplicarAttackBuilding, sistemaDoCerco } from './systems/cerco';
 import { aplicarSetBuildingRepair } from './systems/reparo';
 import { aplicarSetStorehouseAccept } from './systems/armazem';
+import { aplicarSetWareDistribution } from './systems/distribuicao';
 import { sistemaDaRegeneracao } from './systems/regeneracao';
 import { aplicarTrainSoldier } from './systems/quartel';
 import { aplicarMoveUnits, sistemaDaMarcha } from './systems/marcha';
@@ -178,6 +179,12 @@ export function step(
       }
       case 'SetStorehouseAccept': {
         const resultado = aplicarSetStorehouseAccept(atual, command, dados);
+        atual = resultado.state;
+        events.push(...resultado.events);
+        break;
+      }
+      case 'SetWareDistribution': {
+        const resultado = aplicarSetWareDistribution(atual, command, dados);
         atual = resultado.state;
         events.push(...resultado.events);
         break;

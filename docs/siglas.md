@@ -227,6 +227,6 @@ Decisão do operador (2026-09-28).
 | F27 | formação, virar e storm attack | C-COMBATE-01 | aberto, não iniciado | — |
 | F29 | ferro e smithies | D-PRODUCAO-01 | aberto, não iniciado | — |
 | F30 | armazém com toggles por mercadoria | D-TRANSPORTE-01 | fechado (2026-09-29) | `D-TRANSPORTE-01a-armazem-aceita`, `D-TRANSPORTE-01b-painel-armazem` |
-| F31 | menu de distribuição | D-TRANSPORTE-02 | aberto, não iniciado | — |
+| F31 | menu de distribuição | D-TRANSPORTE-02 | em curso: 02a fechado, 02b aberto | `D-TRANSPORTE-02a-distribuicao` |
 | F32 | aba de estatísticas | D-TELA-01 | fechado | `D-TELA-01-estatisticas` |
 | F33 | minimapa | D-TELA-02 | aberto, não iniciado | — |

@@ -756,6 +756,47 @@ function validarFeira(dados, erros) {
   if (!Number.isInteger(feira.maxSerfs) || feira.maxSerfs < 1) erros.push('economia/feira: marketplace.maxSerfs precisa ser inteiro >= 1');
 }
 
+// D-TRANSPORTE-02a: o menu de distribuicao. Todo par declarado e insumo real, todo valor
+// cabe em 0..maximo, e toda mercadoria consumida por dois ou mais tipos esta declarada com
+// TODOS os consumidores — e isso que impede uma cadeia nova (F24, ferro) de criar uma
+// disputa que o menu nao mostra.
+function validarDistribuicao(dados, erros) {
+  const dist = dados.delivery && dados.delivery.distribuicao;
+  const receitas = (dados.production && dados.production.predios) || {};
+  if (!dist || typeof dist.padrao !== 'object' || dist.padrao === null) {
+    erros.push('entrega/distribuicao: delivery.distribuicao.padrao precisa existir');
+    return;
+  }
+  if (!Number.isInteger(dist.maximo) || dist.maximo < 1) {
+    erros.push('entrega/distribuicao: distribuicao.maximo precisa ser inteiro >= 1');
+    return;
+  }
+  const consumidores = {};
+  for (const [tipo, receita] of Object.entries(receitas)) {
+    for (const mercadoria of Object.keys((receita && receita.entra) || {})) {
+      (consumidores[mercadoria] = consumidores[mercadoria] || []).push(tipo);
+    }
+  }
+  for (const [mercadoria, porTipo] of Object.entries(dist.padrao)) {
+    for (const [tipo, valor] of Object.entries(porTipo || {})) {
+      if (!(consumidores[mercadoria] || []).includes(tipo)) {
+        erros.push(`entrega/distribuicao: ${mercadoria}/${tipo} nao e insumo da receita de ${tipo}`);
+      }
+      if (!Number.isInteger(valor) || valor < 0 || valor > dist.maximo) {
+        erros.push(`entrega/distribuicao: ${mercadoria}/${tipo} precisa ser inteiro em 0..${dist.maximo}`);
+      }
+    }
+  }
+  for (const [mercadoria, tipos] of Object.entries(consumidores)) {
+    if (tipos.length < 2) continue;
+    for (const tipo of tipos) {
+      if (!dist.padrao[mercadoria] || dist.padrao[mercadoria][tipo] === undefined) {
+        erros.push(`entrega/distribuicao: ${mercadoria} e disputado e falta o consumidor ${tipo} em distribuicao.padrao`);
+      }
+    }
+  }
+}
+
 // F08: fracao da pedra devolvida ao demolir tiles de estrada. Campo proprio de
 // terrain.estrada (nao o de buildings.construcao): estrada e predio podem
 // divergir. Uma fracao fora de [0, 1] devolveria mais do que custou, ou negativo.
@@ -1431,6 +1472,7 @@ function validarTudo(dados) {
   validarRequisitosDoQuartel(dados, erros);
   validarAtiradores(dados, erros);
   validarFeira(dados, erros);
+  validarDistribuicao(dados, erros);
   validarPedidoDeComida(dados, erros);
   validarPrioridadesDaIA(dados, erros);
   validarEscaramuca(dados, erros);

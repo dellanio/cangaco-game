@@ -14262,3 +14262,35 @@ Lote do operador, item 5, segunda metade. O plano é o mesmo da 01a. Com isso a 
 - Com 3 colunas, o nome longo é cortado ("Ouro br…"). O nome inteiro aparece no `title` do botão.
 
 **O que muda na partida:** clicar no armazém mostra, embaixo, a lista "Recebe" com as 28 mercadorias. Um clique numa delas faz o armazém parar de receber a sobra dessa mercadoria (a linha fica riscada), e a sobra vai ao próximo armazém que aceita. Outro clique devolve.
+
+
+## 2026-09-29 — D-TRANSPORTE-02a (menu de distribuição: a regra na sim)
+
+Lote do operador, item 6. O plano está em `docs/planos/2026-09-29-D-TRANSPORTE-02-menu-de-distribuicao.md`. O item veio sem aceite escrito e foi quebrado em 02a (sim) e 02b (aba), registrados no `BUILD_PLAN.md`.
+
+**Verificado (rodado e aberto):**
+- A regra do KaM foi lida no fonte (`reyandme/kam_remake` 731a8a4):
+  - `KM_WareDistribution.pas`: 0..5 por par, e o padrão;
+  - `KM_Houses.pas: UpdateDemands`: o valor é o máximo na entrada, contando o que está a caminho. Baixar retira a demanda que ninguém pegou, e o que já está dentro fica.
+- Os pares disputados de `production.json` são os mesmos do KaM: carvão (4 consumidores), milho (3), madeira (2) e ferro (2).
+- `data/delivery.json: distribuicao` com `maximo` 5 e `padrao`. `validarDistribuicao` (`tools/data-rules.js`) reprova:
+  - par que não é insumo;
+  - valor fora de `0..maximo`;
+  - insumo disputado com consumidor faltando.
+  O teste de dado prova que as três acusam.
+- `sim/distribuicao.ts`: `limiteDeDistribuicao`, `motivoDaRecusaDeDistribuicao` e `comDistribuicao` (grava só a diferença, e o estado devolvido ao padrão é igual byte a byte ao inicial).
+- `systems/distribuicao.ts: aplicarSetWareDistribution`: lado do jogador, idempotente, e recusa `par-desconhecido` e `fora-da-faixa`.
+- `insumo.ts: demandaDeInsumo` pede até `min(alvo, limite)`.
+- `tests/D-TRANSPORTE-02a-distribuicao.test.ts` tem 9 testes verdes. No gerador (`test-output/D-TRANSPORTE-02a-distribuicao.json`), as tarefas de milho para o moinho são 5 no padrão, 2 com limite 2, 0 com limite 0, e 5 de volta ao padrão. A aberta além do limite novo cai no saneamento.
+- Mutação:
+  - sem o `min`, caem 3 testes;
+  - com o excedente medido contra o alvo cortado, cai 1 (a gaveta cheia devolveria milho ao armazém).
+
+**Lido no código, não testado:** a tarefa reclamada ou carregando para o moinho continua quando o limite baixa, porque `grupoDeAbertas` só corta a aberta.
+
+**PARA REVISÃO (interpretação conservadora):**
+- O padrão é 5 em todos os pares, e não o do KaM, para a partida não mudar de balanceamento até o jogador mexer. O padrão do KaM está no `_doc` do dado para o lote de balanceamento.
+- O comando vale sempre para o lado do jogador. A IA usa o padrão e nunca emite o comando.
+- Baixar o limite não devolve ao armazém o que já está dentro (como no KaM).
+
+**O que muda na partida:** por enquanto nada visível. O limite existe, e a aba chega na 02b.

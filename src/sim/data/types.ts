@@ -380,6 +380,11 @@ export interface EntregaData {
   readonly prioridades: RawGameData['delivery']['prioridades'];
   readonly desempate: RawGameData['delivery']['desempate'];
   readonly reserva: RawGameData['delivery']['reserva'];
+  /** D-TRANSPORTE-02a — o menu de distribuicao: `maximo` e o `padrao` por par mercadoria/tipo. */
+  readonly distribuicao: {
+    readonly maximo: number;
+    readonly padrao: Readonly<Record<string, Readonly<Record<string, number>>>>;
+  };
   readonly ticksAlertaTarefaSemCandidato: Ticks;
 }
 

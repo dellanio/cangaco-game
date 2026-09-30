@@ -478,5 +478,8 @@
   },
   "D-TRANSPORTE-01b-painel-armazem": {
     "passes": true
+  },
+  "D-TRANSPORTE-02a-distribuicao": {
+    "passes": true
   }
 }

@@ -18,6 +18,7 @@ import type { MotivoDeRecusaDeCota } from './cota';
 import type { MotivoDeRecusaDeModo } from './modo';
 import type { MotivoDeRecusaDeReparo } from './reparo';
 import type { MotivoDeRecusaDeAceite } from './armazem';
+import type { MotivoDeRecusaDeDistribuicao } from './distribuicao';
 import type { MotivoDeRecusaDeSoldado } from './quartel';
 import type { MotivoDeRecusaDeTroca } from './feira';
 import type { MotivoDeRecusaDeMercenario } from './prefeitura';
@@ -219,6 +220,14 @@ export type GameEvent =
       readonly predio: string;
       readonly mercadoria: string;
       readonly motivo: MotivoDeRecusaDeAceite;
+    }
+  | {
+      /** D-TRANSPORTE-02a — `SetWareDistribution` recusado; o estado nao mudou. */
+      readonly type: 'command-rejected';
+      readonly command: 'SetWareDistribution';
+      readonly mercadoria: string;
+      readonly tipo: string;
+      readonly motivo: MotivoDeRecusaDeDistribuicao;
     }
   | {
       /** F-CERCO-a2 — `AttackBuilding` recusado INTEIRO; o estado nao mudou. `unidade`
@@ -1531,6 +1540,13 @@ export interface GameState {
    * nenhum voa: o estado sem combate nao carrega o campo, e o save nao muda de versao.
    */
   readonly projeteis?: readonly Projetil[];
+  /**
+   * D-TRANSPORTE-02a — o menu de distribuicao de cada LADO (chave: o lado, em texto):
+   * mercadoria -> tipo de predio -> maximo na gaveta de entrada (`sim/distribuicao.ts`).
+   * So o que difere de `delivery.json: distribuicao.padrao`; AUSENTE quando ninguem
+   * mexeu, e o save nao muda de versao.
+   */
+  readonly distribuicao?: Readonly<Record<string, Readonly<Record<string, Readonly<Record<string, number>>>>>>;
 }
 
 /**

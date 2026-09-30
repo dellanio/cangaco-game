@@ -27,6 +27,16 @@
     "noDestino": "vaga de estoque",
     "_doc": "Sem reserva dupla: dois serfs pegam a mesma pedra e um predio recebe mais do que cabe."
   },
+  "distribuicao": {
+    "_doc": "D-TRANSPORTE-02a — o menu de distribuicao (KM_WareDistribution.pas + KM_Houses.pas: UpdateDemands, conferidos em 731a8a4). Por par mercadoria/tipo de predio, o MAXIMO que o predio quer na gaveta de entrada, contando o que esta a caminho; o jogador muda com SetWareDistribution. So os insumos com dois ou mais consumidores entram, e todos os consumidores de cada um (validarDistribuicao). PARA REVISAO: o padrao e 5 em todos, e nao o do KaM, para a partida nao mudar de balanceamento ate o jogador mexer (5 nunca fica abaixo do alvo de hoje, a gaveta de 5 repartida pela receita). O padrao do KaM, para o lote de balanceamento: iron weapon_smithy 5 / armor_smithy 5; coal iron_smithy 3 / metallurgists 5 / weapon_smithy 3 / armor_smithy 3; timber armory_workshop 2 / weapons_workshop 5; corn mill 4 / swine_farm 5 / stables 3.",
+    "maximo": 5,
+    "padrao": {
+      "coal": { "metallurgists": 5, "iron_smithy": 5, "weapon_smithy": 5, "armor_smithy": 5 },
+      "corn": { "mill": 5, "swine_farm": 5, "stables": 5 },
+      "timber": { "armory_workshop": 5, "weapons_workshop": 5 },
+      "iron": { "weapon_smithy": 5, "armor_smithy": 5 }
+    }
+  },
   "alertaTarefaSemCandidato_segundos": 30,
   "escala": null,
   "_nota_escala": "Deliberadamente sem escala: e aviso de interface, nao balanceamento. Comprimir a economia nao muda o tempo de atencao humana. Decisao do operador, F03."
