@@ -12,7 +12,7 @@ import type { GameState, MotivoDeRecusaDeMarcha, Unidade } from '../state';
 import type { GameData } from '../data/types';
 import type { TileDeGrid } from '../estradas';
 import { classeDaUnidade } from '../condicao';
-import { buscarCaminho, passoAndavel, tileAndavel } from '../pathfinding';
+import { buscarCaminho, custoDoPasso, passoAndavel, tileAndavel } from '../pathfinding';
 import { andar, chegou, comUnidade, militarParadoEm, noTile, ocioso, vagaEmparedadaPor } from '../units/movimento';
 import { emCargaIncontrolavel } from '../carga';
 import type { ResultadoDeSistema } from './jobs';
@@ -236,8 +236,36 @@ function passoMarchando(state: GameState, u: Unidade, dados: GameData): Resultad
     };
     return { state: comUnidade(comUnidade(state, fica), vai), events: [] };
   }
+  // BUG-T — a troca mutua, na hora (decisao do operador). Atomica nas duas pontas: os dois
+  // LARGAM juntos (os dois tiles ficam tomados para terceiros desde o primeiro tick, porque quem
+  // anda ocupa o tile para onde vai) e, quando os DOIS terminam o passo, trocam de tile juntos
+  // (ninguem entra no tile que um deixou antes de o outro chegar). A ordem da lista nao importa
+  const parceiro = atual.fsm === FSM_MARCHANDO ? trocaMutuaCom(state, atual, dados) : null;
+  if (parceiro !== null && (atual.fsmData.progresso ?? 0) === 0 && (parceiro.fsmData.progresso ?? 0) === 0
+    && !terminaOPasso(state, atual, dados)) {
+    const larga = (x: Unidade): Unidade => {
+      const { bloqueado: _b, ...semEspera } = x.fsmData;
+      void _b;
+      return viradaPeloPasso(noTile(x), { ...x, fsmData: { ...semEspera, progresso: 1 } });
+    };
+    return { state: comUnidade(comUnidade(state, larga(atual)), larga(parceiro)), events: [] };
+  }
+  if (parceiro !== null && terminaOPasso(state, atual, dados) && terminaOPasso(state, parceiro, dados)) {
+    const chega = (x: Unidade): Unidade => {
+      const destino = x.fsmData.caminho?.[0] as TileDeGrid;
+      const { bloqueado: _b, ...semEspera } = x.fsmData;
+      void _b;
+      const movida = viradaPeloPasso(noTile(x), {
+        ...x, gx: destino.gx, gy: destino.gy, fsmData: { ...semEspera, caminho: (x.fsmData.caminho ?? []).slice(1), progresso: 0 },
+      });
+      if (!chegou(movida)) return movida;
+      const fim = movida.fsmData.direcaoFinal;
+      return fim === undefined ? ocioso(movida) : { ...ocioso(movida), direcao: fim };
+    };
+    return { state: comUnidade(comUnidade(state, chega(atual)), chega(parceiro)), events: [] };
+  }
   // F28a: a unidade vira para onde anda (frente/flanco/costas e o arco do arqueiro)
-  const andou = viradaPeloPasso(noTile(atual), andar(state, atual, dados));
+  const andou = viradaPeloPasso(noTile(atual), andar(state, atual, dados, parceiro?.id ?? null));
   if (chegou(andou) && andou.fsmData.replanejar === true) {
     // C-MOVIMENTO-02 — terminou o passo que a ordem pegou no meio: planeja no proximo tick
     const { replanejar: _r, ...resto } = andou.fsmData;
@@ -271,6 +299,34 @@ export function vagaTomadaPor(state: GameState, u: Unidade, dados: GameData): Un
     if (militarParadoEm(state, seguinte, o.id, dados) !== null) return o;
   }
   return null;
+}
+
+/**
+ * BUG-T (tropa travada) — o parceiro da TROCA MUTUA de `u`, ou null: outro militar do mesmo
+ * lado, marchando, no tile seguinte de `u`, cujo tile seguinte e o de `u`. Os dois querem o
+ * tile do outro e nenhuma espera resolve: a `vagaTomadaPor` (C-MOVIMENTO-02b) exige um parado a
+ * frente dele, e a `vagaEmparedadaPor` (C-MOVIMENTO-02) um parado no proximo tile. Como no KaM,
+ * os dois passam um pelo outro, na hora (decisao do operador, 2026-09-30;
+ * `src/units/actions/KM_UnitActionWalkTo.pas:125` e `:787`). Inimigo nunca troca.
+ */
+export function trocaMutuaCom(state: GameState, u: Unidade, dados: GameData): Unidade | null {
+  const proximo = u.fsmData.caminho?.[0];
+  if (proximo === undefined || u.fsm !== FSM_MARCHANDO || classeDaUnidade(u.tipo, dados) !== 'militar') return null;
+  for (const id of state.unidades.ordem) {
+    const o = state.unidades.porId[id];
+    if (o === undefined || id === u.id || o.gx !== proximo.gx || o.gy !== proximo.gy) continue;
+    if (o.fsm !== FSM_MARCHANDO || o.lado !== u.lado || classeDaUnidade(o.tipo, dados) !== 'militar') continue;
+    const dele = o.fsmData.caminho?.[0];
+    if (dele !== undefined && dele.gx === u.gx && dele.gy === u.gy) return o;
+  }
+  return null;
+}
+
+/** O passo de `u` termina neste tick (`progresso + 1` alcanca o custo do passo). */
+function terminaOPasso(state: GameState, u: Unidade, dados: GameData): boolean {
+  const proximo = u.fsmData.caminho?.[0];
+  if (proximo === undefined) return false;
+  return (u.fsmData.progresso ?? 0) + 1 >= custoDoPasso(state.estradas, noTile(u), proximo, dados);
 }
 
 /** Um tick de cada unidade marchando, em `unidades.ordem`. */
