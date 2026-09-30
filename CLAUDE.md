@@ -347,3 +347,16 @@ consegue marcar feature como pronta sem ter verificado.
 - Dúvida de escopo ou de regra de jogo que o GDD não responde: **não invente**.
   Escreva a pergunta em `PROGRESS.md` sob `## Perguntas em aberto`, implemente a
   interpretação mais conservadora e siga.
+
+---
+
+## 15. Referência do KaM Remake (registrado em 2026-09-30)
+
+- Clone local: `D:\projetos-pessoal\kam_remake`, no commit
+  `731a8a47a4a02fac3d20326fdfed0fba7d1f845b` (`731a8a4`).
+- Repositório ativo: `github.com/reyandme/kam_remake`. O `Kromster80/kam_remake`, que é o
+  remote configurado no clone, está congelado desde 2022.
+- **Toda citação do KaM cita `arquivo:linha` deste commit.** Citação sem arquivo:linha, ou
+  de outro commit, é hipótese até ser conferida aqui.
+- **Nunca faça `pull`, `fetch`, `checkout` nem nenhuma escrita nesse clone.** Ele é só
+  leitura; mover o commit invalida todas as citações já escritas.
