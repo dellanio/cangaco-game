@@ -16014,3 +16014,33 @@ cumprido agora no teste.
   roteiro.
 - Roteiros D-TELA-07 e F16b (painel de seleção), porta 5178, saída 0. O D-TELA-07 afirma o texto
   do botão da `s2` igual ao da placa.
+
+## 2026-09-30 — Leva 3, pendência: timeouts sob carga — processos `node` medidos; C-IA-03b (peacetime e tropas) mais leve, sem mexer em limite
+
+### Verificado
+- **Processos `node` durante um `verify`**, amostrados a cada 5 s (PowerShell, `Win32_Process`, com
+  a linha de comando):
+  - fora dos testes: 24 `node`, todos servidores de ferramenta (chrome-devtools-mcp ×4,
+    playwright-mcp ×4, telemetria, Codex `cua_node` ×4, serena/typescript-language-server);
+  - durante a suíte: até 37, dos quais 9 são vitest. São 8 workers deste diretório
+    (`D:/projetos-pessoal/cangaco-game`) mais o processo pai;
+  - **nenhum vitest de outra worktree** rodou na janela medida. Nesta medida a carga dos testes
+    vem só do próprio `verify`. Os timeouts de antes (~27 `node`) não têm como ser atribuídos
+    agora; **hipótese não medida**: a sessão do relevo ou o Codex rodando junto naquela hora.
+- **Onde vai o tempo da paz** (perfil de CPU, 6 000 ticks da escaramuça, script apagado): o maior
+  consumo da sim é `inimigoEncostado` (`src/sim/systems/combate.ts:106`, varredura de todos contra
+  todos), ~400 ms de ~1,2 s. Civis e A* não pesam (17 697 nós; sem civis, igual). Otimizar a sim
+  não foi pedido: fica como candidato.
+- **C-IA-03b, o teste que caía** ("peace-ended sai uma vez, no tick exato"):
+  - o que ele prova é a regra: o evento uma vez no tick `pazAteTick`, depois a marcha passa. Ela
+    não depende da duração, e que o dado dá 6 000 ticks e o `s0` nasce com eles é o teste 1;
+  - agora roda numa cópia do dado com paz de 1/200 (30 ticks, derivada do dado real), e olha os
+    eventos de **todos** os ticks. O antigo olhava só os do último tick e não acusaria um evento
+    repetido;
+  - tempo: ~2 s → 82 ms isolado. O limite de 12 s não mudou;
+  - **prova de que acusa** (sonda de uma corrida, revertida): com `tick >= pazAteTick` em
+    `src/sim/tick.ts`, reprova com `[30, 31, 32, 33, 34, 35]` contra `[30]`.
+- A "partida inteira" (C-IA-03b teste 4) continua andando a paz real (6,5 s isolado, limite 20 s),
+  porque ela é o gêmeo do roteiro da C-IA-03c. Não mexi.
+- **F-VIVO-e aceite 1** (vila da calibração, 6 000 ticks, limite padrão de 5 s) caiu uma vez sob
+  carga. Não foi pedido e não mexi. É candidato ao mesmo tratamento.

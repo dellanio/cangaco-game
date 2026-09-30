@@ -12,7 +12,7 @@
  *  - save com o campo, e o jogo livre sem paz.
  */
 import { describe, expect, it } from 'vitest';
-import { gameData } from '../src/sim/data';
+import { gameData, loadGameData, rawGameData } from '../src/sim/data';
 import { createInitialState, ID_DA_ESCOLA, ID_DO_ARMAZEM, ID_DO_QUARTEL, LADO_DA_IA, LADO_DO_JOGADOR } from '../src/sim/state';
 import type { GameEvent, GameState, Unidade } from '../src/sim/state';
 import type { Command } from '../src/sim/commands';
@@ -119,17 +119,31 @@ describe('C-IA-03b — peacetime e tropas', () => {
   });
 
   it('peace-ended sai uma vez, no tick exato; depois a marcha passa', () => {
-    const { s, eventos } = ateOFimDaPaz(s0);
-    expect(s.tick).toBe(PAZ);
-    expect(eventos.filter((e) => e.type === 'peace-ended')).toHaveLength(1);
-    expect(ticksDePazRestantes(s)).toBe(0);
-    const r = step(s, [{ type: 'MoveUnits', unidades: tropaDoJogador(s), destino: daFrente(-17, -17) }], gameData);
+    // O que este teste prova e a REGRA do fim da paz: o evento sai uma vez, no tick
+    // `pazAteTick`, e depois dele a marcha passa. Ela nao depende de quantos ticks a paz dura;
+    // que o dado da 6000 ticks e o `s0` nasce com eles e o teste 1 ('o dado: 20 min base...').
+    // Por isso roda numa COPIA do dado com a paz curta (derivada do dado real: 1/200 dela), e
+    // nao anda os 6000 ticks: rodava 2 s isolado e estourava o limite sob carga. Tambem passa
+    // a olhar os eventos de TODOS os ticks, e nao so os do ultimo, que e o que "uma vez" pede.
+    const raw = JSON.parse(JSON.stringify(rawGameData)) as typeof rawGameData;
+    raw.escaramuca.peacetime_min_base = rawGameData.escaramuca.peacetime_min_base / 200;
+    const curto = loadGameData(raw);
+    const pazCurta = curto.escaramuca.ticksDePaz;
+    expect(pazCurta).toBeGreaterThan(1);
+    expect(pazCurta).toBeLessThan(PAZ);
+    let s = criarEscaramuca(SEMENTE, curto);
+    expect(s.pazAteTick).toBe(pazCurta);
+    const fins: number[] = [];
+    while (s.tick < pazCurta + 5) {
+      s = step(s, [], curto);
+      if (s.events.some((e) => e.type === 'peace-ended')) fins.push(s.tick);
+      if (s.tick === pazCurta) expect(ticksDePazRestantes(s)).toBe(0);
+      if (s.tick < pazCurta) expect(emPaz(s)).toBe(true);
+    }
+    expect(fins).toEqual([pazCurta]);
+    const r = step(s, [{ type: 'MoveUnits', unidades: tropaDoJogador(s), destino: daFrente(-17, -17) }], curto);
     expect(r.events.filter((e) => e.type === 'command-rejected')).toEqual([]);
     expect(salvar(carregar(salvar(s0)))).toBe(salvar(s0));
-    // `timeout` NAO e assercao de tempo (§8): existe para o caso travar. Caro por natureza:
-    // anda a paz inteira, PAZ ticks (6000 hoje). Medido: 2,0 / 2,1 / 2,1 / 2,3 s isolado
-    // (2026-09-29); o padrao de 5 s estourou num verify local. O limite e ~5x o isolado e
-    // acompanha `peacetime_min_base`: paz mais longa, limite maior.
   }, 12_000);
 
   it('a partida inteira: paz, marcha, cacar a tropa, derrubar os tres predios — vitoria', () => {
