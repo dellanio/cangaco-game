@@ -3,7 +3,8 @@
  *
  * Desde a D3 (2026-10-01) a casa pausada mostra o ocioso com o homem dentro, igual a casa
  * sem insumo (F-VIVO-e). O que separa as duas na tela e esta placa: duas barras de pausa e
- * a palavra que o painel ja mostra para o mesmo estado (`painelPredio.pausado`, do tema).
+ * a palavra do botao de pausar do painel (`painelPredio.pausar`, do tema; decisao do operador,
+ * 2026-09-30).
  * Placeholder geometrico do §9 ate haver arte.
  *
  * Pura e sem Phaser: o teste afirma a regra e a geometria em Node, e a cena desenha e publica
@@ -12,8 +13,9 @@
 import temaSertao from '../../data/theme-sertao.json';
 import type { Predio } from '../sim/state';
 
-/** O texto da placa, do tema. `sim/` nunca le o tema; so a tela. */
-export const TEXTO_DO_SINAL_DE_PAUSADO: string = temaSertao.painelPredio.pausado;
+/** O texto da placa: a palavra do botao de pausar do painel (`src/ui/painel-predio.ts`), do
+ *  tema. `sim/` nunca le o tema; so a tela. */
+export const TEXTO_DO_SINAL_DE_PAUSADO: string = temaSertao.painelPredio.pausar;
 
 /** O predio mostra a placa: completo e pausado pelo jogador (F16c). Obra nao pausa. */
 export function temSinalDePausado(predio: Predio): boolean {

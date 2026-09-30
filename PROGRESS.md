@@ -15787,3 +15787,29 @@ Registrado no CLAUDE.md (§6, itens 7 e 9) e em `docs/siglas.md`.
 - **O renome do lado da branch não foi feito:** o teste, as evidências e o cabeçalho de
   `src/render/relevo.ts` são da sessão do relevo. Não toquei nesse worktree, e o aviso vai pelo
   operador (texto no relatório da leva).
+
+## 2026-09-30 — Leva 2, item 5: D-TELA-07 (sinal de pausado), a placa diz a palavra do botão de pausar: feita
+
+Decisão do operador: a placa usa a mesma palavra do botão de pausar do painel. O aceite emendado
+foi num commit só dele, antes do código (`98ccf3a`).
+
+### Verificado
+- `TEXTO_DO_SINAL_DE_PAUSADO` = `painelPredio.pausar` ("Parar"), o rótulo que
+  `src/ui/painel-predio.ts:565` mostra no botão do prédio não pausado.
+- `tests/D-TELA-07-sinal-de-pausado.test.ts`: o texto é comparado com o JSON lido do disco, 4/4.
+- Roteiro, porta 5178, saída 0: abre o painel da `s2` (não pausada) e afirma que o texto do botão
+  `[data-pausar="true"]`, lido da página, é igual ao da placa. Antes de cada captura, o mouse vai
+  para a barra, e o roteiro afirma `tileSobMouse === null`. É o realce do mouse que aparecia na
+  primeira captura desta rodada, o mesmo achado da F-VIVO-h.
+- `screenshots/D-TELA-07-1-pausada-e-sem-insumo.png` aberta: "Parar" com as duas barras só sobre
+  a serraria pausada; as duas com `ocioso_5`; sem o quadrado do mouse.
+- Não-regressão pelo código de saída: F-VIVO-e-pausado e F16b (painel de seleção), 0.
+
+### Erro meu nesta leva, registrado
+- O commit do aceite emendado (`98ccf3a`) foi feito com o `verify` em **saída 1**. Encadeei o
+  commit com `;` em vez de `&&`. A falha foi o timeout de 12 s da C-IA-03b (peacetime e tropas).
+  Isolado, o arquivo passa em 10,4 s, e o `verify` inteiro seguinte deu verde. O commit é só de
+  doc. Daqui em diante o commit só roda depois de `verify` com saída 0 (`&&`).
+- **Hipótese, não medida:** a C-IA-03b está perto do próprio teto de travamento (10,4 s contra
+  12 s) e cai sob carga paralela. Aumentar o teto é guarda de travamento (§8), não asserção, e
+  fica como proposta, sem mexer agora.

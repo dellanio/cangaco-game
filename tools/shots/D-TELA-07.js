@@ -58,6 +58,17 @@ async function roteiro(ctx) {
     return { x, y };
   }
   const sinais = (s) => Object.keys(s.sinaisDePausado).sort();
+  /** O mouse vai para a barra: sem tile sob ele, o realce apaga e a captura mostra o jogo
+   *  (o mesmo cuidado do roteiro da F-VIVO-h). */
+  async function tirarOMouseDoMapa() {
+    const b = await page.evaluate(() => {
+      const r = window.document.querySelector('#barra').getBoundingClientRect();
+      return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+    });
+    await page.mouse.move(b.x, b.y);
+    await esperarFrame();
+    afirmar((await estado()).tileSobMouse === null, 'com o mouse na barra, nenhum tile deveria estar sob ele');
+  }
 
   for (const arquivo of ['test-output/D-TELA-07.save.txt', 'test-output/D-TELA-07.partida.json']) {
     afirmar(existsSync(arquivo), `${arquivo} nao existe: rode \`npm run test\` antes`);
@@ -79,8 +90,8 @@ async function roteiro(ctx) {
   afirmar(JSON.stringify(sinais(s)) === JSON.stringify([plano.pausado]),
     `so a ${plano.pausado} deveria ter placa, veio ${JSON.stringify(sinais(s))}`);
   const sinal = s.sinaisDePausado[plano.pausado];
-  afirmar(sinal.texto === tema.painelPredio.pausado,
-    `a placa deveria dizer "${tema.painelPredio.pausado}" (painelPredio.pausado), veio "${sinal.texto}"`);
+  afirmar(sinal.texto === tema.painelPredio.pausar,
+    `a placa deveria dizer "${tema.painelPredio.pausar}" (painelPredio.pausar), veio "${sinal.texto}"`);
   const { placa, corpo } = sinal;
   afirmar(placa.x >= corpo.x && placa.x + placa.w <= corpo.x + corpo.w,
     `a placa deveria caber na largura do corpo: placa ${JSON.stringify(placa)}, corpo ${JSON.stringify(corpo)}`);
@@ -120,10 +131,27 @@ async function roteiro(ctx) {
   s = await estado();
   afirmar(s.pausado, 'o roteiro deveria ter pausado de volta');
   afirmar(s.tick > plano.tick, 'o relogio deveria ter andado');
+  await tirarOMouseDoMapa();
   await capturar('pausada-e-sem-insumo');
 
-  // retomar pelo painel: o gesto do jogador, relogio correndo, botao segurado (§8)
+  // a placa diz a MESMA palavra do botao de pausar do painel de uma serraria nao pausada
   await zoomPara(1);
+  await centrarNoEixo(plano.meioDaSemInsumo.gx, 'x');
+  await centrarNoEixo(plano.meioDaSemInsumo.gy, 'y');
+  const q = await pontoDoTile(plano.meioDaSemInsumo.gx, plano.meioDaSemInsumo.gy);
+  await page.mouse.click(q.x, q.y);
+  await esperarFrame();
+  afirmar((await page.getAttribute('#painel-predio', 'data-predio-aberto')) === plano.semInsumo,
+    `o clique deveria abrir o painel da ${plano.semInsumo}`);
+  afirmar((await page.getAttribute('#painel-predio [data-pausar]', 'data-pausar')) === 'true',
+    `a ${plano.semInsumo} nao pausada deveria mostrar o botao de pausar (data-pausar="true")`);
+  const textoDoBotao = (await page.textContent('#painel-predio [data-pausar]')).trim();
+  afirmar(textoDoBotao === sinal.texto,
+    `a placa ("${sinal.texto}") deveria dizer o mesmo que o botao de pausar do painel ("${textoDoBotao}")`);
+  await page.keyboard.press('Escape');
+  await esperarFrame();
+
+  // retomar pelo painel: o gesto do jogador, relogio correndo, botao segurado (§8)
   await centrarNoEixo(plano.meioDaPausada.gx, 'x');
   await centrarNoEixo(plano.meioDaPausada.gy, 'y');
   const p = await pontoDoTile(plano.meioDaPausada.gx, plano.meioDaPausada.gy);
@@ -149,6 +177,7 @@ async function roteiro(ctx) {
   afirmar(sinais(s).length === 0, `retomada, a placa deveria sumir, veio ${JSON.stringify(sinais(s))}`);
   await page.keyboard.press('Escape');
   await esperarFrame();
+  await tirarOMouseDoMapa();
   await capturar('retomada-sem-placa');
 }
 

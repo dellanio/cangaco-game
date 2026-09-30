@@ -62,9 +62,10 @@ describe('D-TELA-07 aceite 1 — a regra e a geometria', () => {
     evidencia['aceite1'] = tabela.map((l) => ({ caso: l.caso, sinal: l.sinal }));
   });
 
-  it('o texto e o do tema, a palavra que o painel mostra para o pausado', () => {
-    const tema = JSON.parse(readFileSync('data/theme-sertao.json', 'utf8')) as { painelPredio: { pausado: string } };
-    expect(TEXTO_DO_SINAL_DE_PAUSADO).toBe(tema.painelPredio.pausado);
+  it('o texto e o do tema, a palavra do botao de pausar do painel (decisao do operador)', () => {
+    const tema = JSON.parse(readFileSync('data/theme-sertao.json', 'utf8')) as { painelPredio: { pausar: string } };
+    expect(TEXTO_DO_SINAL_DE_PAUSADO).toBe(tema.painelPredio.pausar);
+    // a igualdade com o botao do painel e afirmada no roteiro, lida da pagina
   });
 
   it('a placa fica dentro da largura do corpo e na metade de cima', () => {
@@ -126,6 +127,7 @@ describe('D-TELA-07 aceite 2 — pausada e sem insumo, lado a lado, pelo step', 
     const partida = {
       tick: s.tick, pausado: 's1', semInsumo: 's2', texto: TEXTO_DO_SINAL_DE_PAUSADO,
       meioDaPausada: { gx: p1.gx + 2, gy: p1.gy + 1 },
+      meioDaSemInsumo: { gx: p2.gx + 2, gy: p2.gy + 1 },
       centro: { gx: (Math.min(p1.gx, p2.gx) + Math.max(p1.gx, p2.gx) + 4) / 2, gy: p1.gy + 1 },
     };
     writeFileSync(`${dir}/D-TELA-07.partida.json`, JSON.stringify(partida, null, 2));
