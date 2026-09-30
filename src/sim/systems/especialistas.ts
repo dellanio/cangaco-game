@@ -58,8 +58,8 @@ import { tileAlcancavelParaColheita } from '../aproximacao';
 import { ehPredioOcupavel, predioAceita, predioDoOcupante, tiposQueOcupam } from '../ocupacao';
 import { chaveDeTile, tileDeChave } from '../estradas';
 import {
-  cabeNaSaida, consumirInsumos, escolhaDepoisDoDeposito, receitaDoTipo, saidasDoCiclo, semRecursoAoAlcance,
-  temInsumo, unidadesPorCiclo,
+  cabeNaSaida, consumirInsumos, encomendaZerada, escolhaDepoisDoDeposito, escolhaNoComecoDoCiclo, receitaDoTipo,
+  saidasDoCiclo, semRecursoAoAlcance, temInsumo, unidadesPorCiclo,
 } from '../producao';
 import {
   colherDoTile, melhorTileDeColheita, proximoTrabalhoDoRodizio, semearNoTile, tilesReservadosParaColheita,
@@ -232,6 +232,11 @@ function depositar(
     events.push({ type: 'goods-produced', predio: predio.id, mercadoria, quantidade: q });
   }
   const escolha = escolhaDepoisDoDeposito(predio, receita, dados);
+  // D-PRODUCAO-03a — o ultimo ciclo encomendado entregou: o aviso do KaM
+  // (`TX_MSG_ORDER_COMPLETED`). So quem tinha ciclo encomendado em curso avisa.
+  if (escolha !== undefined && predio.producao?.escolha?.emCurso !== undefined && encomendaZerada(escolha)) {
+    events.push({ type: 'production-order-completed', predio: predio.id });
+  }
   // F-T2a — a colheita: o que saiu da gaveta saiu do MAPA. Acontece aqui, no
   // deposito, e nao no avanco do relogio, para que o tile so perca o que virou
   // mercadoria de verdade.
@@ -624,8 +629,14 @@ function produzir(state: GameState, u: Unidade, predioAntes: PredioCompleto, dad
   // inicio de ciclo: cobra os insumos, como a escola cobra o ouro ao INICIAR o treino (F13a)
   let atual = predio;
   if (prod.progresso === 0) {
+    // D-PRODUCAO-03a — a encomenda vem ANTES do insumo: oficina sem encomenda nao
+    // cobra nada. O rotulo e `trabalhando`, o da pausa: e escolha do jogador, nao
+    // falta de materia-prima. O desconto e aqui, no comeco, como o `PickOrder`.
+    const escolha = escolhaNoComecoDoCiclo(predio, receita, dados);
+    if (escolha === null) return comFsm(base, u, 'trabalhando');
     if (!temInsumo(predio, receita)) return comFsm(base, u, 'esperando_insumo');
     atual = consumirInsumos(predio, receita);
+    if (escolha !== undefined) prod = { ...prod, escolha };
   }
   const avancado: PredioCompleto = {
     ...atual, producao: { ...prod, progresso: prod.progresso + 1, plantio: null },

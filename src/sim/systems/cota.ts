@@ -1,16 +1,17 @@
 /**
  * `SetProductionQuota` (F24a): o jogador diz quantas de cada arma a oficina faz.
  *
- * A cota e PESO do rodizio, e nao encomenda que se esgota (`EscolhaDeSaida`,
- * `state.ts`): com `{ lance: 1 }` so sai aguilhada, para sempre, ate o jogador
- * mudar. Fixar a cota zera a vez: o proximo ciclo entrega a primeira saida do
- * rodizio novo. O ciclo em curso nao e perdido nem refeito — o insumo ja foi
- * cobrado, e o que muda e so qual mercadoria ele vira.
+ * D-PRODUCAO-03a — a cota e ENCOMENDA (`EscolhaDeSaida`, `state.ts`): o comando
+ * SUBSTITUI o que falta de cada saida, e tudo zero para a oficina. A vez
+ * (`proxima`) e o ciclo em curso (`emCurso`) ficam, como no KaM, que nao mexe em
+ * `fLastOrderProduced` ao mudar a encomenda: o ciclo em curso ja foi descontado e
+ * entrega o que comecou.
  */
 import type { Command } from '../commands';
 import type { GameData } from '../data/types';
 import type { GameState } from '../state';
 import { motivoDaRecusaDeCota } from '../cota';
+import { escolhaInicial, saidasDaReceita } from '../producao';
 import { comPredio } from '../units/movimento';
 import type { ResultadoDeSistema } from './jobs';
 
@@ -30,15 +31,15 @@ export function aplicarSetProductionQuota(
   // o `motivo === null` ja garantiu predio completo com receita que escolhe; a
   // guarda explicita e para o TypeScript, como em `systems/pausa.ts`
   if (predio === undefined || predio.estado !== 'completo' || predio.producao === null) return { state, events: [] };
-  // so as saidas com peso: a cota guardada nao carrega zero, e duas cotas que dao
-  // o mesmo rodizio ficam iguais byte a byte
+  const receita = dados.producao.receitas[predio.tipo];
+  if (receita === undefined) return { state, events: [] };
+  // toda saida da receita, com zero inclusive: e a forma de `escolhaInicial`, e duas
+  // encomendas iguais ficam iguais byte a byte
   const cota: Record<string, number> = {};
-  for (const m of dados.economia.mercadorias) {
-    const q = comando.cota[m] ?? 0;
-    if (q > 0) cota[m] = q;
-  }
+  for (const m of saidasDaReceita(receita, dados)) cota[m] = comando.cota[m] ?? 0;
+  const anterior = predio.producao.escolha ?? escolhaInicial(receita, dados);
   return {
-    state: comPredio(state, { ...predio, producao: { ...predio.producao, escolha: { cota, proxima: 0 } } }),
+    state: comPredio(state, { ...predio, producao: { ...predio.producao, escolha: { ...anterior, cota } } }),
     events: [],
   };
 }

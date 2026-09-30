@@ -783,6 +783,13 @@ function validarDivisaoDoEscasso(dados, erros) {
   }
 }
 
+function validarEncomenda(dados, erros) {
+  const enc = dados.production && dados.production.encomenda;
+  if (!enc || !Number.isInteger(enc.maxima) || enc.maxima < 1) {
+    erros.push('producao/encomenda: production.encomenda.maxima precisa ser inteiro >= 1');
+  }
+}
+
 function validarDistribuicao(dados, erros) {
   const dist = dados.delivery && dados.delivery.distribuicao;
   const receitas = (dados.production && dados.production.predios) || {};
@@ -1497,6 +1504,7 @@ function validarTudo(dados) {
   validarFeira(dados, erros);
   validarDistribuicao(dados, erros);
   validarDivisaoDoEscasso(dados, erros);
+  validarEncomenda(dados, erros);
   validarPedidoDeComida(dados, erros);
   validarPrioridadesDaIA(dados, erros);
   validarEscaramuca(dados, erros);

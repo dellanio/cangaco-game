@@ -39,57 +39,81 @@ export function unidadesPorCiclo(receita: ReceitaDePredio): number {
   return qs.reduce((soma, q) => soma + q, 0);
 }
 
-/** F24a — a escolha com que o predio nasce: cota 1 para cada saida, ou seja, o
- *  rodizio na ordem de `economia.mercadorias`. Vale tambem para save de antes da
- *  F24a, em que o campo nao existia. */
+/** D-PRODUCAO-03a — as saidas da receita, na ordem de `economia.mercadorias` (nunca
+ *  `Object.keys` da receita nem da cota, que veio do save). E a lista em que
+ *  `EscolhaDeSaida.proxima` e indice. */
+export function saidasDaReceita(receita: ReceitaDePredio, dados: GameData = gameData): string[] {
+  return dados.economia.mercadorias.filter((m) => m in receita.sai);
+}
+
+/** D-PRODUCAO-03a — a escolha com que o predio nasce: encomenda zero em cada saida.
+ *  Vale tambem para save sem o campo. */
 export function escolhaInicial(receita: ReceitaDePredio, dados: GameData = gameData): EscolhaDeSaida {
   const cota: Record<string, number> = {};
-  for (const m of dados.economia.mercadorias) if (m in receita.sai) cota[m] = 1;
+  for (const m of saidasDaReceita(receita, dados)) cota[m] = 0;
   return { cota, proxima: 0 };
 }
 
-/** F24a — o rodizio expandido: cada saida repetida `cota[m]` vezes, na ordem de
- *  `economia.mercadorias` (nunca `Object.keys` da cota, que veio do save). */
-export function rodizioDaEscolha(escolha: EscolhaDeSaida, dados: GameData = gameData): string[] {
-  const rodizio: string[] = [];
-  for (const m of dados.economia.mercadorias) {
-    for (let i = 0; i < (escolha.cota[m] ?? 0); i++) rodizio.push(m);
-  }
-  return rodizio;
+/** A escolha em vigor: a do predio, ou a inicial quando falta. */
+function escolhaEmVigor(predio: PredioCompleto, receita: ReceitaDePredio, dados: GameData): EscolhaDeSaida {
+  return predio.producao?.escolha ?? escolhaInicial(receita, dados);
 }
 
-/** A escolha em vigor: a do predio, ou a inicial quando falta ou nao escolhe nada
- *  (save adulterado — o comando nunca deixa a cota toda em zero). */
-function escolhaEmVigor(predio: PredioCompleto, receita: ReceitaDePredio, dados: GameData): EscolhaDeSaida {
-  const escolha = predio.producao?.escolha;
-  if (escolha === undefined || rodizioDaEscolha(escolha, dados).length === 0) return escolhaInicial(receita, dados);
-  return escolha;
+/** D-PRODUCAO-03a — toda a encomenda em zero: a oficina nao tem o que fazer. */
+export function encomendaZerada(escolha: EscolhaDeSaida): boolean {
+  return Object.values(escolha.cota).every((q) => q <= 0);
 }
 
 /**
- * F24a — o que ESTE ciclo deposita. Receita sem escolha: `sai` inteiro, como
- * sempre. Com escolha: so a saida da vez no rodizio.
+ * D-PRODUCAO-03a — a escolha no COMECO de um ciclo, o `PickOrder` do KaM
+ * (`KM_Houses.pas`, 731a8a4): a partir de `proxima`, a primeira saida com encomenda
+ * > 0. Desconta 1 dela, grava `emCurso` e passa `proxima` para a seguinte.
+ * `undefined` na receita que nao escolhe; `null` quando nada esta encomendado — o
+ * ciclo nao comeca.
+ */
+export function escolhaNoComecoDoCiclo(
+  predio: PredioCompleto, receita: ReceitaDePredio, dados: GameData = gameData,
+): EscolhaDeSaida | null | undefined {
+  if (!receita.escolheSaida) return undefined;
+  const escolha = escolhaEmVigor(predio, receita, dados);
+  const saidas = saidasDaReceita(receita, dados);
+  for (let i = 0; i < saidas.length; i++) {
+    const indice = (escolha.proxima + i) % saidas.length;
+    const m = saidas[indice];
+    const falta = m === undefined ? 0 : escolha.cota[m] ?? 0;
+    if (m === undefined || falta <= 0) continue;
+    return { cota: { ...escolha.cota, [m]: falta - 1 }, proxima: (indice + 1) % saidas.length, emCurso: m };
+  }
+  return null;
+}
+
+/**
+ * O que ESTE ciclo deposita. Receita sem escolha: `sai` inteiro, como sempre. Com
+ * escolha: so a saida `emCurso`. Save de antes da D-PRODUCAO-03a com ciclo em curso
+ * nao tem `emCurso`: entrega a saida na posicao `proxima`, para o insumo ja pago
+ * nao sumir.
  */
 export function saidasDoCiclo(
   predio: PredioCompleto, receita: ReceitaDePredio, dados: GameData = gameData,
 ): Readonly<Record<string, number>> {
   if (!receita.escolheSaida) return receita.sai;
   const escolha = escolhaEmVigor(predio, receita, dados);
-  const rodizio = rodizioDaEscolha(escolha, dados);
-  const vez = rodizio[escolha.proxima % rodizio.length];
+  const saidas = saidasDaReceita(receita, dados);
+  const vez = escolha.emCurso ?? saidas[escolha.proxima % saidas.length];
   const q = vez === undefined ? undefined : receita.sai[vez];
   return vez === undefined || q === undefined ? {} : { [vez]: q };
 }
 
-/** F24a — a escolha depois de um deposito: a vez passa para a proxima do rodizio.
- *  `undefined` na receita que nao escolhe, para o campo continuar ausente. */
+/** A escolha depois de um deposito: sem `emCurso`. O save sem `emCurso` anda
+ *  `proxima`, como fazia o rodizio. `undefined` na receita que nao escolhe, para o
+ *  campo continuar ausente. */
 export function escolhaDepoisDoDeposito(
   predio: PredioCompleto, receita: ReceitaDePredio, dados: GameData = gameData,
 ): EscolhaDeSaida | undefined {
   if (!receita.escolheSaida) return undefined;
-  const escolha = escolhaEmVigor(predio, receita, dados);
-  const tamanho = rodizioDaEscolha(escolha, dados).length;
-  return { ...escolha, proxima: (escolha.proxima + 1) % tamanho };
+  const { emCurso, ...escolha } = escolhaEmVigor(predio, receita, dados);
+  if (emCurso !== undefined) return escolha;
+  return { ...escolha, proxima: (escolha.proxima + 1) % saidasDaReceita(receita, dados).length };
 }
 
 /** A gaveta `entrada` tem TUDO que o ciclo consome? Verdade de vacuo para

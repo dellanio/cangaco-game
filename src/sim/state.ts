@@ -341,6 +341,15 @@ export type GameEvent =
     }
   | {
       /**
+       * D-PRODUCAO-03a — a oficina entregou o ultimo ciclo encomendado e a encomenda
+       * de todas as saidas esta em zero. Uma vez por encomenda cumprida: o proximo so
+       * vem depois de o jogador encomendar de novo (KaM, `TX_MSG_ORDER_COMPLETED`).
+       */
+      readonly type: 'production-order-completed';
+      readonly predio: string;
+    }
+  | {
+      /**
        * F16a — o predio saiu do estado por comando do jogador. `tipo` e o do
        * predio; `devolvido` e o que efetivamente entrou no armazem, por
        * mercadoria — vazio quando nao havia armazem alcancavel, e e assim que o
@@ -606,15 +615,22 @@ export interface Producao {
 
 /**
  * F24a — qual saida o proximo ciclo entrega (GDD §2.3, "quantas de cada arma
- * produzir"). A cota e PESO, nao encomenda que se esgota: o rodizio expandido e
- * cada saida repetida `cota[m]` vezes, na ordem de `economia.mercadorias`, e o
- * ciclo que deposita entrega a posicao `proxima`. Deterministico e sem RNG.
+ * produzir").
+ *
+ * D-PRODUCAO-03a — a cota deixou de ser PESO e virou ENCOMENDA, como o `WareOrder`
+ * do KaM (`KM_Houses.pas: PickOrder`, 731a8a4): nasce em zero, o ciclo so comeca
+ * com alguma saida > 0, e o comeco do ciclo desconta 1 da escolhida. A escolha
+ * procura a partir de `proxima`, na lista das saidas da receita em ordem de
+ * `economia.mercadorias`. Deterministico e sem RNG.
  */
 export interface EscolhaDeSaida {
-  /** Peso de cada saida da receita; inteiro >= 0, e pelo menos um positivo. */
+  /** O que FALTA fazer de cada saida; inteiro >= 0. Tudo zero: a oficina para. */
   readonly cota: Readonly<Record<string, number>>;
-  /** Posicao no rodizio expandido, de 0 ate o tamanho dele menos 1. */
+  /** Indice, nas saidas da receita, de onde a proxima escolha comeca a procurar. */
   readonly proxima: number;
+  /** A saida que o ciclo em andamento entrega, ja descontada da `cota`. AUSENTE
+   *  sem ciclo em andamento; o deposito a apaga. */
+  readonly emCurso?: string;
 }
 
 /**
@@ -1655,13 +1671,13 @@ function producaoParaTipo(tipoId: string, dados: GameData): Producao | null {
   // colher nao nasce com ele — esta no mapa desde o tick 0 e continua la depois
   // que ele for demolido.
   if (receita === undefined) return null;
-  // F24a — a oficina que escolhe a saida nasce no rodizio: cota 1 para cada uma,
-  // na ordem de `economia.mercadorias`. O 1 nao e balanceamento, e "todas iguais".
+  // D-PRODUCAO-03a — a oficina que escolhe a saida nasce SEM encomenda: zero em
+  // cada saida, e parada ate o jogador encomendar (o KaM, `fWareOrder[I] := 0`).
   // F-REPL-b — quem declara modos nasce no padrao do dado.
   const modo = receita.modos === null ? {} : { modo: receita.modos.padrao };
   if (!receita.escolheSaida) return { progresso: 0, plantio: null, ...modo };
   const cota: Record<string, number> = {};
-  for (const m of dados.economia.mercadorias) if (m in receita.sai) cota[m] = 1;
+  for (const m of dados.economia.mercadorias) if (m in receita.sai) cota[m] = 0;
   return { progresso: 0, plantio: null, escolha: { cota, proxima: 0 }, ...modo };
 }
 

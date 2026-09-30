@@ -14414,3 +14414,40 @@ Fecha a D-TRANSPORTE-02 (menu de distribuição). Plano: `docs/planos/2026-09-29
 **O que muda na partida:**
 - Fundição e ferrarias disputando carvão ou ferro escasso agora se revezam. A ferraria de armaduras deixa de ficar parada para sempre quando a de armas ou a fundição está mais perto.
 - O ferro sai mais devagar com uma mina de carvão só, porque a fundição divide o carvão. O jogo passa a pedir mais minas de carvão, como no KaM.
+
+
+## 2026-09-29 — D-PRODUCAO-03a (encomendas das oficinas, a regra)
+
+Plano: `docs/planos/2026-09-29-D-PRODUCAO-03a-encomendas.md`. Decisão do operador: a encomenda nasce em zero, só inicia ciclo com encomenda > 0, desconta 1 por ciclo e avisa quando todas zeram, como no KaM. A troca do aceite da F24a entrou aqui, aprovada.
+
+**Feito:**
+- `EscolhaDeSaida` virou encomenda: `cota` é o que falta, `proxima` é o índice nas saídas da receita (ordem de `economia.mercadorias`), e o opcional novo `emCurso` guarda a saída do ciclo em andamento.
+- A oficina nasce com zero em cada saída. No começo do ciclo, antes do insumo, a escolha segue o `PickOrder` do KaM: a partir de `proxima`, a primeira com encomenda > 0. Ela desconta 1 e grava `emCurso`. Sem encomenda, o ciclo não começa e nada é cobrado.
+- O depósito entrega `emCurso`. Se a encomenda toda zerou, emite `production-order-completed`.
+- `SetProductionQuota` substitui a encomenda e mantém `proxima` e `emCurso`.
+  - A faixa é `0..production.encomenda.maxima`, com máximo 999 (`MAX_WARES_ORDER`, `KM_Defaults.pas:301`).
+  - Tudo zero vale; `cota-vazia` saiu da união de motivos.
+- A F24a foi trocada: o caminho real encomenda o máximo quando cada oficina fica pronta; "cota 1" virou "nasce sem encomenda"; o caso "só lance" encomenda 5 e afirma no máximo 5; `cota-vazia` virou o caso "acima do máximo".
+- A fixture da cadeia do ferro nasce com encomenda máxima nas duas ferrarias, parâmetro `encomendada`.
+- O guarda do `step` ganhou a tabela de opcionais de `EscolhaDeSaida` (`emCurso`: `do-sistema`).
+- Nova regra `producao/encomenda` no `validate:data`.
+
+**Verificado:**
+- Evidência aberta em `test-output/D-PRODUCAO-03a-encomendas.json`:
+  - sem encomenda: 0 peça e 0 ciclo em 1500 ticks, com ferro 2 e carvão 3 já na gaveta;
+  - com `{sword 2, crossbow 1}`: o primeiro ciclo começa no tick 57, já com espada descontada e `emCurso` espada; as peças saem nos ticks 431, 806 e 1181 (espada, besta, espada); o aviso sai no 1181, e nada mais em 1500 ticks;
+  - encomenda zerada no meio do ciclo: sai a lança em curso e o aviso.
+- Com o portão da encomenda tirado à mão, 3 dos 9 testes caem.
+- `test-output/F24a.json`: as oito saídas chegam ao armazém.
+- 01a e 01b continuam verdes com a fixture encomendada.
+- `npm run verify`: 193 arquivos, 1996 testes.
+  - A primeira corrida caiu só no timeout de 12 s do C-IA-03b (6 testes, 10,5 s isolado). A segunda passou inteira.
+  - É o risco já anotado para o operador, sem mudança aqui.
+
+**PARA REVISÃO:**
+- O rótulo sem encomenda é `trabalhando`, o mesmo da pausa, e não um estado novo.
+- Acima do máximo é recusa (`cota-invalida`), e não o `EnsureRange` do KaM.
+- O aviso sai no depósito do último ciclo, e não na tentativa seguinte como no KaM. O instante é o mesmo, e não precisa de uma flag a mais.
+- A oficina sem encomenda continua pedindo insumo até o alvo da gaveta. O KaM também pede.
+
+**O que muda na partida:** oficina de armas, ferraria de armas e de armaduras nascem paradas, e produzem só o que o jogador encomenda. Até a 03b (o painel) não há botão: só o comando.

@@ -5,8 +5,8 @@
  * assim que `distribuicao` nao valia na partida.
  *
  * A lista de opcionais NAO e escrita a olho: `satisfies Record<ChavesOpcionais<T>, ...>`
- * obriga este arquivo a nomear todo opcional de `GameState`, de `PredioCompleto` e de
- * `Producao`. Campo opcional novo quebra o typecheck aqui ate alguem decidir se ele
+ * obriga este arquivo a nomear todo opcional de `GameState`, de `PredioCompleto`, de
+ * `Producao` e de `EscolhaDeSaida` (D-PRODUCAO-03a). Campo opcional novo quebra o typecheck aqui ate alguem decidir se ele
  * persiste, e o fixture `Required<GameState>` obriga a preenche-lo.
  *
  * `Unidade` e `DadosDaFsm` ficam de fora de proposito: todo opcional deles e da FSM, que
@@ -15,7 +15,7 @@
 import { describe, expect, it } from 'vitest';
 import { gameData } from '../src/sim/data';
 import { completarObra, LADO_DO_JOGADOR } from '../src/sim/state';
-import type { GameState, Predio, PredioCompleto, Producao } from '../src/sim/state';
+import type { EscolhaDeSaida, GameState, Predio, PredioCompleto, Producao } from '../src/sim/state';
 import { comDistribuicao } from '../src/sim/distribuicao';
 import { criarEscaramuca } from '../src/sim/cenario';
 import { step } from '../src/sim/tick';
@@ -53,6 +53,11 @@ const OPCIONAIS_DA_PRODUCAO = {
   cursor: 'do-sistema',
   modo: 'persiste',
 } as const satisfies Record<ChavesOpcionais<Producao>, Regime>;
+
+const OPCIONAIS_DA_ESCOLHA = {
+  // D-PRODUCAO-03a — o comeco do ciclo grava a saida em curso e o deposito a apaga
+  emCurso: 'do-sistema',
+} as const satisfies Record<ChavesOpcionais<EscolhaDeSaida>, Regime>;
 
 const persistentes = (tabela: Readonly<Record<string, Regime>>): string[] =>
   Object.entries(tabela).filter(([, r]) => r === 'persiste').map(([k]) => k);
@@ -118,6 +123,7 @@ function sumidosNoPredio(antes: Predio | undefined, depois: Predio | undefined, 
   return [
     ...sumidos(antes, depois, persistentes(OPCIONAIS_DO_PREDIO), `predios.${id}`),
     ...sumidos(antes.producao ?? {}, depois.producao ?? {}, persistentes(OPCIONAIS_DA_PRODUCAO), `predios.${id}.producao`),
+    ...sumidos(antes.producao?.escolha ?? {}, depois.producao?.escolha ?? {}, persistentes(OPCIONAIS_DA_ESCOLHA), `predios.${id}.producao.escolha`),
   ];
 }
 

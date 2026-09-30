@@ -120,6 +120,9 @@ export interface EstoqueInternoPorPredio {
 export interface ProducaoData {
   readonly receitas: ProducaoReceitas;
   readonly estoqueInternoPorPredio: EstoqueInternoPorPredio;
+  /** D-PRODUCAO-03a — `production.json: encomenda`. `maxima` e o teto da encomenda de
+   *  UMA saida no `SetProductionQuota`. */
+  readonly encomenda: { readonly maxima: number };
 }
 
 export type TerrenoTipo = 'estrada' | 'grama' | 'campoArado' | 'areia';

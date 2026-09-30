@@ -46,5 +46,9 @@
     "iron_smithy_por_weapon_smithy": 1,
     "iron_smithy_por_armor_smithy": 0.4
   },
-  "estoqueInternoPorPredio": { "entrada": 5, "saida": 5 }
+  "estoqueInternoPorPredio": { "entrada": 5, "saida": 5 },
+  "encomenda": {
+    "_doc": "D-PRODUCAO-03a. A encomenda das oficinas que escolhem a saida (receitas com escolheSaida): o jogador diz quantas de cada saida faltam, e cada ciclo desconta 1 no comeco. 'maxima' e o teto de UMA saida no SetProductionQuota; acima e recusa. KaM: MAX_WARES_ORDER = 999 (KM_Defaults.pas:301, 731a8a4). Contagem, nao duracao: nao tem grupo de escala.",
+    "maxima": 999
+  }
 }

@@ -4985,8 +4985,11 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
 - **Aceite**:
   - Cada uma das três oficinas, pelo caminho real (construída, ocupada, abastecida),
     deposita no armazém **cada** uma das suas saídas numa corrida longa, com o rodízio
-    default.
-  - Com a cota fixada pelo comando, só sai a arma pedida.
+    default. **Trocado pela D-PRODUCAO-03a (decisão do operador, 2026-09-29):** a oficina
+    nasce sem encomenda, e o caminho real encomenda cada saída pelo `SetProductionQuota`
+    quando a oficina fica pronta; sem encomenda, ela não começa ciclo.
+  - Com a cota fixada pelo comando, só sai a arma pedida (desde a 03a, e no máximo o
+    encomendado).
   - `validate:data` reprova um `data/` sintético com `arma_madeira` numa receita.
   - Nenhum id de `production.receitas.*.sai` fica fora de `economy.mercadorias`, provado
     por igualdade de conjuntos e não por varredura de texto.
@@ -5510,6 +5513,13 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
       armazém"): decisão do operador.
     - A IA não tem oficina na escaramuça hoje (`data/escaramuca.json`), então nada muda
       para ela. Quando tiver, ela emite a encomenda.
+    - **ENTREGUE (2026-09-29).** Plano `docs/planos/2026-09-29-D-PRODUCAO-03a-encomendas.md`.
+      `EscolhaDeSaida` é encomenda (com `emCurso?`), `production.json: encomenda.maxima`
+      (999, o do KaM), evento `production-order-completed`, `cota-vazia` saiu da união.
+      **Aceite:** `tests/D-PRODUCAO-03a-encomendas.test.ts`; o da F24a trocado.
+      **PARA REVISÃO:** rótulo `trabalhando` sem encomenda (o da pausa); acima do máximo é
+      recusa, e não o `EnsureRange` do KaM; o aviso sai no depósito do último ciclo.
+      **Até a 03b, a oficina nova fica parada na partida:** só o comando encomenda.
   - **03b — o painel (ui).** No painel da oficina, uma linha por saída com `−`/`+` e a
     encomenda restante, no molde da aba Distribuição, e o alerta de encomenda cumprida.
 - **Onde encaixar (aprovado):** logo depois da D-PRODUCAO-01. Ela faz a Ferraria de armas
@@ -6103,7 +6113,7 @@ vai para o PROGRESS como PARA REVISÃO, e o trabalho segue.
 6. D-TRANSPORTE-02 — menu de distribuição.
 7. D-PRODUCAO-01 — ferro e ferrarias. ENTREGUE (01a guarda, 01b insumo escasso dividido).
 8. D-PRODUCAO-03 — encomendas das oficinas (03a regra, 03b painel). Decisão do operador,
-   2026-09-29.
+   2026-09-29. 03a ENTREGUE.
 9. F24, o que resta: a cadeia de couro.
 10. As quatro hipóteses do avaliador:
    - BUG-P perde a ordem depois de revidar;

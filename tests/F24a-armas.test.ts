@@ -20,7 +20,7 @@ import { canPlace } from '../src/sim/placement';
 import { canPlaceRoad } from '../src/sim/estradas';
 import { caixaDeTipo } from '../src/sim/footprint';
 import { trabalhadorDoTipo } from '../src/sim/ocupacao';
-import { rodizioDaEscolha } from '../src/sim/producao';
+import { escolhaNoComecoDoCiclo, receitaDoTipo } from '../src/sim/producao';
 import { validarTudo } from '../tools/data-rules.js';
 import { ARQUIVOS } from '../tools/data-schema.js';
 import { readFileSync } from 'node:fs';
@@ -47,6 +47,9 @@ const FERRO_E_CARVAO = 20;
  * todas as saidas. O ciclo das armas e de ~375 ticks; a volta ao armazem e do serf.
  */
 const TICKS = 6000;
+/** D-PRODUCAO-03a — a encomenda do caso "so lance": maior que as 2 que o caso exige,
+ *  e o teto do que pode sair. */
+const ENCOMENDA_DE_LANCE = 5;
 
 const evidencia: Record<string, unknown> = {};
 
@@ -130,6 +133,23 @@ function predioDoTipo(e: GameState, tipo: string): PredioCompleto | null {
   return null;
 }
 
+/**
+ * D-PRODUCAO-03a — a oficina nasce SEM encomenda (troca do aceite aprovada pelo
+ * operador). O caminho real encomenda o maximo do dado em cada saida no tick em que a
+ * oficina fica pronta, pelo `SetProductionQuota`. `feitas` guarda quem ja recebeu.
+ */
+function encomendasDoTick(e: GameState, feitas: Set<string>): Command[] {
+  const comandos: Command[] = [];
+  for (const tipo of OFICINAS) {
+    const p = predioDoTipo(e, tipo);
+    if (p === null || feitas.has(p.id)) continue;
+    feitas.add(p.id);
+    const sai = Object.keys(gameData.producao.receitas[tipo]?.sai ?? {});
+    comandos.push({ type: 'SetProductionQuota', predio: p.id, cota: Object.fromEntries(sai.map((m) => [m, gameData.producao.encomenda.maxima])) });
+  }
+  return comandos;
+}
+
 function contarEntregas(e: GameState, entregues: Record<string, number>): void {
   for (const ev of e.events) {
     if (ev.type !== 'task-completed') continue;
@@ -146,8 +166,9 @@ describe('F24a — as seis armas e as duas protecoes de ferro, pelo caminho real
     const entregues: Record<string, number> = Object.fromEntries(SAIDAS.map((m) => [m, 0]));
     const primeiraEm: Record<string, number> = {};
     const produzidas: Record<string, number> = {};
+    const feitas = new Set<string>();
     for (let t = 0; t < TICKS; t += 1) {
-      s = step(s, t === 0 ? comandos : []);
+      s = step(s, t === 0 ? comandos : encomendasDoTick(s, feitas));
       contarEntregas(s, entregues);
       for (const ev of s.events as readonly GameEvent[]) {
         if (ev.type === 'goods-produced' && SAIDAS.includes(ev.mercadoria)) {
@@ -164,7 +185,7 @@ describe('F24a — as seis armas e as duas protecoes de ferro, pelo caminho real
     // isolado (2026-09-29); 5x daria menos, e o limite fica no piso, o padrao do Vitest.
   }, 5_000);
 
-  it('rodizio fixo padrao: cota 1 para cada saida, na ordem de economia.mercadorias', () => {
+  it('D-PRODUCAO-03a: a oficina nasce sem encomenda, zero em cada saida, e nao comeca ciclo', () => {
     const { inicial, comandos } = montar();
     let s = inicial;
     for (let t = 0; t < 1200 && predioDoTipo(s, 'weapon_smithy') === null; t += 1) s = step(s, t === 0 ? comandos : []);
@@ -172,9 +193,12 @@ describe('F24a — as seis armas e as duas protecoes de ferro, pelo caminho real
     const escolha = ferreiro?.producao?.escolha;
     expect(escolha).toBeDefined();
     if (escolha === undefined) return;
-    expect(escolha.cota).toEqual({ sword: 1, pike: 1, crossbow: 1 });
-    expect(rodizioDaEscolha(escolha, gameData)).toEqual(['sword', 'pike', 'crossbow']);
-    evidencia['rodizioPadrao'] = { weapon_smithy: rodizioDaEscolha(escolha, gameData) };
+    expect(escolha.cota).toEqual({ sword: 0, pike: 0, crossbow: 0 });
+    const receita = receitaDoTipo('weapon_smithy', gameData);
+    expect(receita).not.toBeNull();
+    if (ferreiro === null || receita === null) return;
+    expect(escolhaNoComecoDoCiclo(ferreiro, receita, gameData)).toBeNull();
+    evidencia['escolhaAoNascer'] = { weapon_smithy: escolha };
     // `timeout` NAO e assercao de tempo (§8): existe para o caso travar. Medido: 0,10 s
     // isolado (2026-09-29); 5x daria menos, e o limite fica no piso, o padrao do Vitest.
   }, 5_000);
@@ -190,9 +214,9 @@ describe('F24a — a cota (SetProductionQuota)', () => {
     return { s, oficina: p.id };
   }
 
-  it('com a cota fixada em so lance, so sai lance', () => {
+  it('com a encomenda so de lance, so sai lance, e nao mais que o encomendado', () => {
     const { s: pronto, oficina } = comOficinasProntas();
-    let s = step(pronto, [{ type: 'SetProductionQuota', predio: oficina, cota: { lance: 1 } }]);
+    let s = step(pronto, [{ type: 'SetProductionQuota', predio: oficina, cota: { lance: ENCOMENDA_DE_LANCE } }]);
     expect(s.events.some((e) => e.type === 'command-rejected')).toBe(false);
     const produzidas: Record<string, number> = {};
     for (let t = 0; t < 3000; t += 1) {
@@ -205,6 +229,7 @@ describe('F24a — a cota (SetProductionQuota)', () => {
     }
     evidencia['cotaSoLance'] = { produzidas };
     expect(produzidas['lance'] ?? 0).toBeGreaterThan(2);
+    expect(produzidas['lance'] ?? 0).toBeLessThanOrEqual(ENCOMENDA_DE_LANCE);
     expect(Object.keys(produzidas).filter((m) => (produzidas[m] ?? 0) > 0)).toEqual(['lance']);
     // `timeout` NAO e assercao de tempo (§8): existe para o caso travar. Medido: 0,41 / 0,43 s
     // isolado (2026-09-29); 5x daria menos, e o limite fica no piso, o padrao do Vitest.
@@ -220,8 +245,8 @@ describe('F24a — a cota (SetProductionQuota)', () => {
       ['mercadoria-invalida', { type: 'SetProductionQuota', predio: oficina, cota: { sword: 1 } }],
       ['cota-invalida', { type: 'SetProductionQuota', predio: oficina, cota: { lance: 1.5 } }],
       ['cota-invalida', { type: 'SetProductionQuota', predio: oficina, cota: { lance: -1 } }],
-      ['cota-vazia', { type: 'SetProductionQuota', predio: oficina, cota: { lance: 0, longbow: 0 } }],
-      ['cota-vazia', { type: 'SetProductionQuota', predio: oficina, cota: {} }],
+      // D-PRODUCAO-03a — tudo zero deixou de ser recusa; acima do maximo do dado e
+      ['cota-invalida', { type: 'SetProductionQuota', predio: oficina, cota: { lance: gameData.producao.encomenda.maxima + 1 } }],
     ];
     if (emObra !== undefined) casos.push(['predio-em-obra', { type: 'SetProductionQuota', predio: emObra, cota: { lance: 1 } }]);
     const vistos: string[] = [];
@@ -299,11 +324,24 @@ describe('F24a — dado', () => {
 describe('F24a — determinismo', () => {
   it('save/load no meio do rodizio da o mesmo estado', () => {
     const { inicial, comandos } = montar();
+    // D-PRODUCAO-03a — os ticks das encomendas saem de uma corrida previa (a sim e
+    // deterministica): o `comandosNoTick` so recebe o tick.
+    const porTick = new Map<number, Command[]>();
+    {
+      let e = inicial;
+      const feitas = new Set<string>();
+      for (let t = 0; t < 2600; t += 1) {
+        const c = t === 0 ? comandos : encomendasDoTick(e, feitas);
+        if (t > 0 && c.length > 0) porTick.set(e.tick, [...c]);
+        e = step(e, c);
+      }
+    }
+    expect(porTick.size).toBe(OFICINAS.length);
     // `compararComESemSave` parte do createInitialState: o fixture entra pelo antesDoStep, no tick 0.
     const { direto, comSave } = compararComESemSave({
       seed: 1, totalTicks: 2600, saveAtTick: 1900,
       antesDoStep: (e) => (e.tick === 0 ? inicial : e),
-      comandosNoTick: (t) => (t === 0 ? comandos : []),
+      comandosNoTick: (t) => (t === 0 ? comandos : porTick.get(t) ?? []),
     });
     expect(comSave).toBe(direto);
     gravarEvidencia('F24a', evidencia);

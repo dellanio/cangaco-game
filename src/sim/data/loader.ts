@@ -500,6 +500,7 @@ export function loadGameData(raw: RawGameData): GameData {
   const producao: ProducaoData = {
     receitas,
     estoqueInternoPorPredio: raw.production.estoqueInternoPorPredio,
+    encomenda: { maxima: raw.production.encomenda.maxima },
   };
 
   // --- movimento (velocidade x custo de terreno, matriz) ---

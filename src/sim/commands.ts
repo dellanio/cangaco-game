@@ -156,11 +156,12 @@ export type Command =
   | {
       /**
        * F24a — fixa a cota da oficina `predio` (GDD §2.3, "quantas de cada arma
-       * produzir"). A cota e o PESO de cada saida no rodizio: `{ lance: 1 }` faz
-       * so aguilhada; `{ hand_axe: 2, longbow: 1 }` faz dois facoes para cada
-       * bodoque. Saida omitida vale zero. Recusado (`command-rejected`) se o
-       * predio nao existe, esta em obra, nao escolhe a saida, se a cota nomeia o
-       * que a receita nao faz, tem valor que nao e inteiro >= 0, ou e toda zero.
+       * produzir"). D-PRODUCAO-03a — a cota e ENCOMENDA e substitui a anterior:
+       * `{ hand_axe: 2, longbow: 1 }` faz dois facoes e um bodoque, alternando, e
+       * para. Saida omitida vale zero; tudo zero para a oficina. Recusado
+       * (`command-rejected`) se o predio nao existe, esta em obra, nao escolhe a
+       * saida, se a cota nomeia o que a receita nao faz, ou tem valor que nao e
+       * inteiro de 0 ate `production.encomenda.maxima`.
        */
       readonly type: 'SetProductionQuota';
       readonly predio: string;

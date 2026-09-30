@@ -1017,8 +1017,14 @@ export function cenarioDoOuroSemMina(dados: GameData = gameData): GameState {
  *
  * O armazem `arm` entra VAZIO de ferro, minerio e carvao; a Bodega entra abastecida,
  * como nas outras cadeias (sem ela a vila morre de fome antes da janela acabar).
+ *
+ * D-PRODUCAO-03a — as duas ferrarias nascem com a encomenda no MAXIMO do dado em cada
+ * saida (`encomendada`), para a janela das 01a/01b nunca esgotar: sem isso a oficina
+ * nasce parada. A 03a passa `false` e encomenda pelo comando.
  */
-export function cenarioDaCadeiaDoFerro(dados: GameData = gameData, serfs: number = 6): GameState {
+export function cenarioDaCadeiaDoFerro(
+  dados: GameData = gameData, serfs: number = 6, encomendada: boolean = true,
+): GameState {
   let s = semCivis(createInitialState(1, dados));
   const m = serra(dados);
   type Caixa = { readonly dx0: number; readonly dx1: number; readonly dy0: number; readonly dy1: number };
@@ -1097,8 +1103,27 @@ export function cenarioDaCadeiaDoFerro(dados: GameData = gameData, serfs: number
     s = comEstradas(s, [...tilesDaPorta(p, dados).filter((t) => canPlaceRoad(s, [t], dados).ok), ...caminho]);
     s = exigirLigado(s, id, dados);
   }
+  if (encomendada) {
+    for (const id of ['ws1', 'as1']) {
+      const p = s.predios.porId[id];
+      const receita = p === undefined ? undefined : dados.producao.receitas[p.tipo];
+      if (receita === undefined) throw new Error(`fixture: '${id}' sem receita`);
+      s = comEncomenda(s, id, Object.fromEntries(Object.keys(receita.sai).map((m) => [m, dados.producao.encomenda.maxima])));
+    }
+  }
   const porta = tilesDaPorta(armazem, dados)[0] as TileDeGrid;
   return comHistoricoDosPredios(comSerfs(s, serfs, porta.gx, porta.gy));
+}
+
+/** D-PRODUCAO-03a — a encomenda do predio escrita direto, sem o comando: so para
+ *  fixture de quem NAO testa a encomenda. Mantem `proxima` e `emCurso`. */
+export function comEncomenda(s: GameState, id: string, cota: Record<string, number>): GameState {
+  const p = s.predios.porId[id];
+  if (p?.estado !== 'completo' || p.producao === null) throw new Error(`fixture: '${id}' nao produz`);
+  const escolha = p.producao.escolha;
+  if (escolha === undefined) throw new Error(`fixture: '${id}' nao escolhe a saida`);
+  const producao = { ...p.producao, escolha: { ...escolha, cota: { ...escolha.cota, ...cota } } };
+  return { ...s, predios: { ...s.predios, porId: { ...s.predios.porId, [id]: { ...p, producao } } } };
 }
 
 /** D-PRODUCAO-01a — sem a mina de carvao: minerio sobrando e a fundicao parada. */

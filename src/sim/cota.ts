@@ -15,14 +15,13 @@ export type MotivoDeRecusaDeCota =
   | 'sem-escolha'
   /** a cota nomeia mercadoria que nao sai desta receita */
   | 'mercadoria-invalida'
-  /** algum valor nao e inteiro >= 0 */
-  | 'cota-invalida'
-  /** tudo zero: parar a oficina e `SetBuildingPaused`, nao cota vazia */
-  | 'cota-vazia';
+  /** algum valor nao e inteiro de 0 ate `production.encomenda.maxima` */
+  | 'cota-invalida';
 
 /**
  * O motivo da recusa, ou `null` quando o comando vale. A cota pode OMITIR uma
  * saida — vale zero —, mas nao pode nomear o que a receita nao faz.
+ * D-PRODUCAO-03a — tudo zero VALE: e encomenda vazia, a oficina para (o KaM).
  */
 export function motivoDaRecusaDeCota(
   predio: Predio | undefined, cota: Readonly<Record<string, number>>, dados: GameData,
@@ -31,11 +30,9 @@ export function motivoDaRecusaDeCota(
   if (predio.estado !== 'completo') return 'predio-em-obra';
   const receita = dados.producao.receitas[predio.tipo];
   if (receita === undefined || !receita.escolheSaida) return 'sem-escolha';
-  let soma = 0;
   for (const [m, q] of Object.entries(cota)) {
     if (!(m in receita.sai)) return 'mercadoria-invalida';
-    if (!Number.isInteger(q) || q < 0) return 'cota-invalida';
-    soma += q;
+    if (!Number.isInteger(q) || q < 0 || q > dados.producao.encomenda.maxima) return 'cota-invalida';
   }
-  return soma === 0 ? 'cota-vazia' : null;
+  return null;
 }

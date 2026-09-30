@@ -490,5 +490,8 @@
   },
   "D-PRODUCAO-01b-insumo-escasso": {
     "passes": true
+  },
+  "D-PRODUCAO-03a-encomendas": {
+    "passes": true
   }
 }
