@@ -141,7 +141,9 @@ Não adicione dependência nova sem registrar o motivo em `PROGRESS.md`.
    11 módulos. O nome diz o que o item faz, **nunca** o nome de branch ou worktree. Quem cria
    o item confere com `git grep` na `main` que o id não existe; não há commit de reserva. A
    ordem de execução continua sendo a ordem da lista no `BUILD_PLAN.md`. Vale para item novo,
-   e item antigo não se renomeia. Motivo: três colisões de número (BUG-V, D-TELA-06, D-TELA-07).
+   e item antigo não se renomeia. **Exceção única, por ordem do operador (2026-09-30):** os dois
+   itens do relevo, D-TELA-08 → `D-TELA-LUZ-RELEVO` e D-TERRENO-01 → `D-TERRENO-ALTURA`. Motivo:
+   três colisões de número (BUG-V, D-TELA-06, D-TELA-07).
 10. **O aceite vai num commit próprio, antes do código** (regra do operador, 2026-09-30). O
     critério de aceite (novo ou mudado) entra no `BUILD_PLAN.md` ou no plano da feature num
     commit só dele, e só depois vem o commit do código. "Escrito antes do código" dentro do
