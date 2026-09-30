@@ -62,6 +62,33 @@ Registradas como decisões. Elas valem sobre qualquer trecho do plano que diga o
     de migração" é a lista de hipóteses no fim do `docs/planos/estudo-relevo.md`, e é lá que o
     risco entra, no commit deste plano.
 
+## Decisões do operador depois do rebase (2026-09-30, terceira rodada)
+
+12. **Linha de base: não agora.** A `main` ainda muda nesta sessão (BUG-Y, T2, sinal de
+    pausado), e uma linha de base sobre `e8f704e` ficaria velha. O procedimento passa para o
+    **fim**, em sequência e só quando o operador disser que a `main` está parada:
+    1. rebase sobre a ponta da `main`;
+    2. linha de base dos roteiros sobre essa ponta;
+    3. os mesmos roteiros com a flag desligada nesta branch, logo em seguida.
+
+    É a Tarefa 5, passo 1. A Tarefa 0 fica só com o rebase e a checagem do WebGL, que já rodaram.
+13. **`npm ci` separado nesta worktree: aprovado.** Registrado nas "Notas da implementação".
+14. **A proteção de Canvas sai do plano.** A D-TELA-06 já garante o WebGL (sem ele, o jogo nem
+    inicia), e código que nenhum teste alcança não entra. Saem o `decidirRelevo`, o `motivo:
+    'canvas'` e a pergunta pelo `renderer.type` no `criarCamadaDeRelevo`. Fica o `relevoPedido`
+    (flag do dado ou `?relevo`).
+15. **O que pode avançar agora, sem roteiro de tela e sem `npm run verify`:**
+    - `src/render/relevo.ts` (a matemática da luz, sem Phaser) e os testes dele;
+    - `data/relevo.json` e a validação dele;
+    - a D-TERRENO-01: o gerador escreve o `sertao-128.relevo.json`, e o `sertao-128.json` sai
+      byte a byte igual.
+
+    Para testar, **só `npx vitest run <arquivo>`, um arquivo por vez**; nada de suíte inteira.
+    **Commit por tarefa, sem marcar `passes`.** Com isso, o "`verify` antes de cada commit" fica
+    suspenso para essas tarefas, por decisão do operador. O `typecheck`, o `lint`, o
+    `validate:data` e a suíte inteira rodam depois, no `verify` liberado, antes de qualquer
+    `passes`.
+
 ## Avaliação: chão plano = 1,0, pedida pelo operador (2026-09-30)
 
 **Estado: avaliada e aprovada (decisões 7 a 11 acima).** O resto do plano já está escrito com
@@ -232,9 +259,8 @@ operador (2026-09-30)").
 - **Só a opção A.** Nada de B, C, splatting, vento ou agrupamento de matas.
 - **A flag nasce desligada** (`data/relevo.json`, `"ligado": false`). Com ela desligada, nenhum
   teste, roteiro ou captura muda em relação à `main`.
-- **Proteção de renderizador:** se o renderizador ativo não for WebGL, a camada **e** o tint ficam
-  desligados, mesmo com a flag ligada. A troca de `Phaser.AUTO` para `Phaser.WEBGL`
-  (`src/render/game.ts:48`) **não** é feita aqui.
+- **Sem proteção de Canvas (decisão 14):** a D-TELA-06 da `main` já exige WebGL antes de o jogo
+  carregar. Este plano não mexe no `src/render/game.ts`.
 - **Nada na sim:** nenhum arquivo de `src/sim/` muda, nada entra no `GameState`, e o `sim/` não
   importa o arquivo de altura nem o `data/relevo.json`. Um teste estrutural guarda isso.
 - **Só relevo suave:** fora de `montanha` e `rocha`, a diferença entre os 4 vértices de um tile é
@@ -364,7 +390,7 @@ por fileira, para o diff do git ficar legível.
 
 ```json
 {
-  "_doc": "Relevo SO DE RENDER, opcao A (docs/planos/estudo-relevo.md, secao 7). sim/ nunca le este arquivo. `ligado` e a flag: false ate a arte de terreno da F-TR entrar. `?relevo` na URL liga para o roteiro. Sem WebGL a camada e o tint ficam desligados mesmo ligado.",
+  "_doc": "Relevo SO DE RENDER, opcao A (docs/planos/estudo-relevo.md, secao 7). sim/ nunca le este arquivo. `ligado` e a flag: false ate a arte de terreno da F-TR entrar. `?relevo` na URL liga para o roteiro.",
   "ligado": false,
   "_docPlano": "O chao plano e 1,0 EXATO: a sombra (MULTIPLY) e a luz ([DST_COLOR, ONE]) sao neutras no plano, e a arte e pintada para ele sem compensacao (decisao do operador, 2026-09-30). Nao ha fator do plano.",
   "fatorMinimo": 0.5,
@@ -434,8 +460,7 @@ tint   = cinza(min(f, tetoDoTintDoSprite))
 
 Os casos que nenhum aceite escrito cobre e que mais podem morder:
 
-1. **Flag ligada no Canvas:** a camada **e** o tint ficam desligados, os dois juntos. Teste da
-   decisão `relevoAtivo` na Tarefa 2; o debug diz `ativo: false, motivo: 'canvas'`.
+1. ~~**Flag ligada no Canvas**~~: saiu pela decisão 14. A D-TELA-06 garante o WebGL.
 2. **Sprite recriado perde o tint:** a árvore que cresce (`desenharVegetacao` destrói e recria) e
    a obra que muda de estágio (`criarPredio` recria o container). O tint vive **no ponto de
    criação**, e não num passe único no `create`. O roteiro afirma o fator de um prédio depois de
@@ -458,46 +483,13 @@ nota no item D-TELA-07 do `BUILD_PLAN.md`.
 
 ---
 
-## Tarefa 0: rebase, linha de base e sonda do WebGL (sem commit)
+## Tarefa 0: rebase e checagem do WebGL (sem commit) — FEITA
 
-**Não roda antes** do commit da D-TELA-06 na `main` (mudança 2). Duas perguntas precisam de
-resposta **antes** de construir (a lição de sondar o travamento antes de construir em cima).
-
-- [ ] **Passo 0: o rebase.**
-  - `git status` limpo nesta worktree.
-  - `git log main` mostra o commit da D-TELA-06, e o `git status` do diretório da `main` está
-    limpo (a leva terminou o commit dela).
-  - `git rebase main`.
-  - Ler o `BUILD_PLAN.md` da `main`: o próximo id livre de D-TELA substitui o `xx` em todo este
-    arquivo, e a D-TERRENO-01 é reconferida.
-  - Ler o que a D-TELA-06 mudou no `src/render/game.ts` e em volta: se o jogo passou a exigir
-    WebGL, a proteção de renderizador continua no plano (é pedido do operador), mas o caso Canvas
-    deixa de acontecer na prática. Registro isso nas "Notas da implementação".
-- [ ] **Passo 1: linha de base dos roteiros, na `main` rebaseada, antes de qualquer código.**
-  - A porta 5177 é conferida antes (`curl -s -o /dev/null -w '%{http_code}' localhost:5177`, que
-    tem de falhar). Se estiver ocupada, **paro e reporto**, sem matar processo.
-  - Rodar cada `tools/shots/*.js` que não começa com `_`, um por vez, com
-    `CANGACO_SHOT_PORTA=5177`. Cada roteiro sobe e derruba o próprio servidor: o `shot.js` recusa
-    porta que já responde.
-  - Gravar no scratchpad `linha-de-base.json`, no formato
-    `{ roteiro: { saida, pngs: { nome: sha256 } } }`.
-  - É a referência do "iguais aos da `main`". Não entra no git.
-- [ ] **Passo 2: a sonda do WebGL.** Um roteiro temporário, `tools/shots/zz-sonda-webgl.js`, que
-  faz:
-
-  ```js
-  const webgl = await page.evaluate(() => {
-    const c = document.querySelector('#jogo canvas');
-    return Boolean(c && (c.getContext('webgl2') || c.getContext('webgl')));
-  });
-  ```
-
-  `getContext('webgl')` num canvas que já tem contexto 2D devolve `null`, e num canvas WebGL
-  devolve o contexto existente. A sonda não muda nada no jogo.
-- [ ] **Passo 3: decidir.**
-  - Se o Chromium do runner **não** der WebGL depois do rebase, o roteiro da Tarefa 4 não tem
-    como mostrar a luz. **Paro e reporto**, sem contornar.
-  - Se der, apago a sonda: `git status` sem o `zz-`.
+- [x] **Passo 0: o rebase** sobre a `main` com a D-TELA-06, e a sigla D-TELA-07 conferida no
+  `BUILD_PLAN.md` da `main`. Detalhes nas "Notas da implementação".
+- [x] **Passo 1: a checagem do WebGL.** A sonda `zz-` não foi criada: o roteiro `D-TELA-06` da
+  `main` faz a mesma pergunta, e rodou verde na porta 5177.
+- **A linha de base saiu daqui** (decisão 12): ela vai para a Tarefa 5, passo 1, no fim.
 
 ## Tarefa 1: D-TERRENO-01, a altura só de render no gerador
 
@@ -669,10 +661,6 @@ resposta **antes** de construir (a lição de sondar o travamento antes de const
   /** So para o roteiro comparar as duas geometrias (decisao 9): `?relevoPx=12.8`. */
   export function pxPorDegrauDaBusca(busca: string, doDado: number): number;
   export function relevoPedido(busca: string, ligadoNoDado: boolean): boolean; // dado || ?relevo
-  export type DecisaoDoRelevo =
-    | { readonly ativo: true }
-    | { readonly ativo: false; readonly motivo: 'desligado' | 'canvas' };
-  export function decidirRelevo(pedido: boolean, webgl: boolean): DecisaoDoRelevo;
   export function tileDoPe(x: number, y: number, tilePx: number): string; // "gx,gy", para o retingir
   ```
 
@@ -692,12 +680,8 @@ resposta **antes** de construir (a lição de sondar o travamento antes de const
   - **Presa à borda:** (−5, −5) dá o fator do vértice (0, 0), e fora pela direita e por baixo, o
     do canto.
   - **`tintDoFator`:** 1 dá `0xffffff`, 0,83 dá `0xd4d4d4`, e é monotônico.
-  - **Decisão:**
-    - `decidirRelevo(false, true)` dá `{ ativo: false, motivo: 'desligado' }`;
-    - `decidirRelevo(true, false)` dá `{ ativo: false, motivo: 'canvas' }`;
-    - `decidirRelevo(true, true)` dá `{ ativo: true }`;
-    - `relevoPedido('?pausado', false)` dá `false`, e `relevoPedido('?pausado&relevo', false)` dá
-      `true`.
+  - **Pedido:** `relevoPedido('?pausado', false)` dá `false`, `relevoPedido('?pausado&relevo',
+    false)` dá `true`, e `relevoPedido('?pausado', true)` dá `true`.
   - **Padrão desligado:** `import relevo from '../data/relevo.json'` tem `ligado === false`.
   - **Sem `k`:** o `data/relevo.json` não tem `fatorDoPlano`, e tem `tetoDoTintDoSprite === 1`.
   - **`?relevoPx`:** sem o parâmetro, vale o dado; com `?relevo&relevoPx=12.8`, vale 12,8; um
@@ -778,8 +762,6 @@ resposta **antes** de construir (a lição de sondar o travamento antes de const
   ```ts
   relevo?: {
     ativo: boolean;
-    motivo: 'desligado' | 'canvas' | null;
-    renderizador: 'webgl' | 'canvas';
     pxDeMundoPorDegrau: number;
     vertices: [number, number];
     /** rotulo -> fator aplicado: 'predio:<id>', 'unidade:<id>', 'vegetacao:<gx,gy>'. */
@@ -788,15 +770,8 @@ resposta **antes** de construir (a lição de sondar o travamento antes de const
   ```
 
 - [ ] **Passo 1: `criarCamadaDeRelevo`.**
-  - Decide, e devolve `null` se desligado:
-
-    ```ts
-    const pedido = relevoPedido(busca, dados.ligado);
-    const webgl = cena.game.renderer.type === Phaser.WEBGL;
-    ```
-
-    Pedido e sem WebGL: escreve `debug.relevo` com `ativo: false, motivo: 'canvas'` e devolve
-    `null`. Assim, **camada e tint caem juntos.**
+  - Devolve `null` se não foi pedido (`relevoPedido(busca, dados.ligado)` falso), sem escrever
+    nada no debug. Não pergunta pelo renderizador (decisão 14): a D-TELA-06 garante o WebGL.
   - Ativo:
     - `calcularLuz`;
     - `texturasDaLuz`, e duas `CanvasTexture` de `largura × altura` (129×129), opacas (alfa 255
@@ -853,7 +828,7 @@ resposta **antes** de construir (a lição de sondar o travamento antes de const
 - [ ] **Passo 1: o roteiro.**
   - Reabre com `?pausado&relevo`, como o `_sem-arte.js` faz com `?semArte`.
   - Afirma, pelo `window.__cangaco.relevo`:
-    - `ativo === true` e `renderizador === 'webgl'`;
+    - `ativo === true` (o WebGL já é afirmado pelo roteiro da D-TELA-06);
     - `vertices` igual a `[largura + 1, altura + 1]` do mapa.
   - **Escolhe o lugar pelo dado, sem coordenada digitada.** Lê `data/maps/sertao-128.json` e o
     `.relevo.json`, e acha, perto da vila, um retângulo de tela que contenha **grama, areia e
@@ -940,12 +915,23 @@ resposta **antes** de construir (a lição de sondar o travamento antes de const
 
 ## Tarefa 5: regressão completa, fila e registro
 
-- [ ] **Passo 1: todos os roteiros com a flag desligada**, no mesmo procedimento da Tarefa 0.
-  - Comparar com a linha de base: **código de saída igual em todos**, e sha256 por PNG.
-  - PNG divergente: rodar de novo na linha de base (worktree temporária na `main`) e classificar
-    como ruído (a `main` diverge dela mesma) ou mudança real.
-  - Mudança real é **defeito desta branch**: conserto antes de seguir.
-  - A tabela de resultado vai para `test-output/relevo-a-regressao.json`.
+- [ ] **Passo 1: linha de base e flag desligada, em sequência** (decisão 12). Só quando o
+  operador disser que a `main` está parada:
+  1. **rebase** sobre a ponta da `main`;
+  2. **linha de base** sobre essa ponta, numa worktree temporária da `main` (`git worktree add`
+     no scratchpad, com o mesmo `npm ci`). A porta 5177 é conferida antes de cada roteiro; porta
+     ocupada é parar e reportar, sem matar processo. Cada `tools/shots/*.js` que não começa com
+     `_` roda um por vez, com `CANGACO_SHOT_PORTA=5177`, e o resultado vai para
+     `linha-de-base.json` no scratchpad: `{ roteiro: { saida, pngs: { nome: sha256 } } }`;
+  3. **logo em seguida, os mesmos roteiros nesta branch**, com a flag desligada, no mesmo
+     formato.
+
+  A comparação:
+  - **código de saída igual em todos**, e sha256 por PNG;
+  - PNG divergente: roda de novo na linha de base e classifica como ruído (a `main` diverge dela
+    mesma) ou mudança real;
+  - mudança real é **defeito desta branch**, e o conserto vem antes de seguir;
+  - a tabela de resultado vai para `test-output/relevo-a-regressao.json`.
 - [ ] **Passo 2: `BUILD_PLAN.md`**, na Fase D, com as siglas e o nome ao lado:
   - **D-TERRENO-01 (altura só de render no gerador de mapa)**, com o aceite da Tarefa 1;
   - **D-TELA-07 (luz do relevo: camadas de sombra e de luz, e tint)**, com o aceite das Tarefas
@@ -962,7 +948,7 @@ resposta **antes** de construir (a lição de sondar o travamento antes de const
   arquivo, ficam completas. Elas separam o que foi verificado do que é hipótese:
   - os números de geração são de partida;
   - a geometria escolhida (decisão 9) e a medida de saturação (decisão 10);
-  - o WebGL do runner foi medido pela sonda da Tarefa 0;
+  - o WebGL do runner foi medido pelo roteiro D-TELA-06, na Tarefa 0;
   - o resultado da conferência do salto do tint.
 
   Delas sai, **no merge**, o bloco do PROGRESS: já vai escrito lá, pronto para colar.
@@ -986,8 +972,9 @@ resposta **antes** de construir (a lição de sondar o travamento antes de const
 | Branch `dellanio/relevo-a` da `main`, em worktree própria | feito (`76dbcc8`, worktree `implementacao-relevo`) |
 | Só a opção A | Restrições globais; nada de B, C, splatting, vento ou matas em nenhuma tarefa |
 | Flag desligada por padrão, nada muda com ela desligada | `data/relevo.json` `ligado: false`; `debug.relevo` só com a flag pedida; Tarefa 3 passo 5; Tarefa 5 passo 1 |
-| Sem WebGL, camada e tint desligados | `decidirRelevo` (Tarefa 2) e `criarCamadaDeRelevo` devolvendo `null` (Tarefa 3) |
-| Não trocar para `Phaser.WEBGL` | `game.ts` fora da lista de arquivos; a sonda da Tarefa 0 decide se dá para seguir |
+| ~~Sem WebGL, camada e tint desligados~~ saiu (decisão 14) | a D-TELA-06 da `main` exige WebGL; o roteiro dela rodou verde na 5177 |
+| Não trocar para `Phaser.WEBGL` | a troca veio da `main` (D-TELA-06); `game.ts` fora da lista de arquivos |
+| Linha de base no fim, em sequência (decisão 12) | Tarefa 5, passo 1 |
 | Módulo isolado e o mínimo de ganchos no `WorldScene.ts` | 2 módulos novos; 4 ganchos de uma linha |
 | Altura só de render, do gerador, lida só pelo render | Tarefa 1; guarda estrutural na Tarefa 2 |
 | Relevo suave com teste do declive máximo | `forcarDecliveMaximo` e `declivesForaDoLimite`, com o teste que acusa |
@@ -1033,18 +1020,17 @@ Preenchidas durante a execução. Separam o **verificado** (com o comando ou o a
   - o `BUILD_PLAN.md` da `main` usa D-TELA até a 06, e nenhuma branch local usa 07. O `xx` virou
     **D-TELA-07**. A D-TERRENO-01 continua livre;
   - a cena já publica `__cangaco.renderizador = { tipo, webgl }` (D-TELA-06). A proteção de
-    renderizador fica no plano, como o operador pediu, mas o caso Canvas deixou de acontecer na
-    prática: sem WebGL, o jogo nem inicia.
+    Canvas saiu do plano (decisão 14).
 - **Tarefa 0, passo 2 (verificado, 2026-09-30):** a sonda `zz-` **não foi criada**. O roteiro
   da própria `main`, `D-TELA-06`, lê `game.renderer.type` com o jogo rodando, e é a mesma
   pergunta. Rodou com `CANGACO_SHOT_PORTA=5177 npm run shot -- D-TELA-06` (porta conferida livre
   antes, com `curl` saindo 7): **saída 0**, `renderizador: { tipo: 2, webgl: 2 }`, as 7
   afirmações passaram, e nenhum erro de console (`test-output/D-TELA-06-shot.json`). **O
   Chromium do runner tem WebGL; a Tarefa 4 pode mostrar a luz.**
-- **`node_modules` próprio nesta worktree (decisão da sessão):** a regra do CLAUDE.md é a
+- **`node_modules` próprio nesta worktree (aprovado pelo operador, decisão 13):** a regra do CLAUDE.md é a
   junction para o `node_modules` da `main`. Não usei, porque não há `vite.config` e o cache do
   Vite fica em `node_modules/.vite`: com a junction, o dev server da porta 5177 escreveria no
   mesmo cache que a leva da `main` está usando. Rodei `npm ci` aqui, do mesmo `package-lock.json`:
   136 pacotes, nenhuma dependência nova, e o `node_modules/` é ignorado pelo git.
-- **Tarefa 0, passo 1 (linha de base dos ~82 roteiros):** ainda não rodado. Espera o operador,
-  porque são ~82 subidas de dev server na máquina compartilhada durante a leva da `main`.
+- **Linha de base:** não rodada, por decisão do operador (decisão 12). Vai para o fim (Tarefa 5,
+  passo 1), sobre a ponta da `main` parada. São 84 roteiros hoje (`tools/shots/*.js` sem `_`).
