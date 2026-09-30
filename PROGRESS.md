@@ -15604,3 +15604,44 @@ parada (esperando_insumo + saida_cheia), base → T2 (teto base × 1,05):
   `## Polimento` e achou a menção da linha 12. O BUG-Y continuava lá dentro. Este commit
   refaz o arquivo a partir de `e8f704e`, sem BUG-U, BUG-V e BUG-Y. Ficam o BUG-T (aberto) e o
   BUG-N (polimento).
+
+## 2026-09-30 — Sessão do operador, tarefa 3: D-TELA-07 (sinal de pausado no mapa): feita
+
+Pedido: hoje pausado e sem insumo mostram o mesmo ocioso (F-VIVO-e, o ocioso genérico).
+Ícone pequeno sobre o prédio pausado, com texto do `theme-sertao.json`. O aceite entrou no
+BUILD_PLAN (item D-TELA-07) antes do código. Só `src/render/`, testes e roteiro; `src/sim/` e
+`data/` intocados.
+
+### Verificado
+
+- `src/render/sinal-de-pausado.ts`: `temSinalDePausado` (completo e `pausado`),
+  `caixaDoSinalDePausado` (placa centrada no alto do corpo, largura ≤ corpo − margem) e
+  `TEXTO_DO_SINAL_DE_PAUSADO` = `painelPredio.pausado` ("Parado").
+- `WorldScene.ts`: `desenharSinalDePausado` (placa escura, duas barras e o texto), por cima
+  da bandeira. `pausado` entrou na assinatura do redesenho. `debug.sinaisDePausado` publica a
+  placa e o corpo em px de mundo, da mesma caixa que se desenha.
+- `tests/D-TELA-07-sinal-de-pausado.test.ts`, 4 testes. Evidência `test-output/D-TELA-07.json`
+  aberta:
+  - aceite 1: tabela (pausado true; não pausado e obra false); texto comparado com o JSON lido
+    do disco; geometria em três corpos;
+  - aceite 2: pelo `step`, `s1` pausada e `s2` (5 tiles a leste) em `esperando_insumo`. Por 30
+    ticks as duas têm ocioso e só a `s1` tem sinal. Isso é a guarda de que a ambiguidade existe.
+- Roteiro `tools/shots/D-TELA-07.js`, porta 5178, saída 0:
+  - passo 0 pausado: só `s1` tem placa, texto do tema, dentro da largura e na metade de cima do
+    corpo. Depois de centrar, **a placa em px de tela fica inteira à direita de `#barra` e
+    dentro do canvas**. Não rodei o caso que reprova essa medida;
+  - 6 leituras despausado: a placa fica só na `s1`, e a `s2` mantém o ocioso;
+  - retomar pelo painel (`[data-pausar]="false"`, relógio correndo, `mouse.down` / 150 ms /
+    `mouse.up`): `pausado` false e a placa some.
+  - Capturas abertas. `screenshots/D-TELA-07-1-pausada-e-sem-insumo.png`: placa "Parado" com as
+    duas barras sobre a serraria da esquerda; a da direita com o mesmo `ocioso_5`, sem placa. A
+    barra lateral cobre a borda esquerda da `s1` (a placa não). `-2-retomada-sem-placa.png`: a
+    `s1` com `laco1_3`, sem placa.
+- Não-regressão pelo código de saída: F-VIVO-e-pausado, F-VIVO-e, F16b (painel de seleção) e
+  BUG-X (especialista dentro), todos 0.
+
+### PARA REVISÃO
+
+- O texto é o do painel ("Parado"), sem chave nova no tema. O HUD usa "Pausado" para o relógio,
+  e a placa não usa essa palavra, para não confundir prédio parado com jogo pausado.
+- Placa geométrica (§9), sem arte. Cores iguais às do placeholder do quadro de trabalho.

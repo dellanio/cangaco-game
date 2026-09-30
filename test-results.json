@@ -523,5 +523,8 @@
   },
   "D-TRANSPORTE-03-logistica-kam": {
     "passes": true
+  },
+  "D-TELA-07-sinal-de-pausado": {
+    "passes": true
   }
 }

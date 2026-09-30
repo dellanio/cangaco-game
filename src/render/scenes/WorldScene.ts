@@ -14,7 +14,7 @@ import { publicarEstadoDebug } from '../debug';
 import { marcadorVisivel } from '../marcador-de-destino';
 import type { MarcadorDeDestino } from '../marcador-de-destino';
 import type {
-  AnimalNoDebug, CaixaDesenhada, CamadasEmPx, CrescimentoNoDebug, EstadoDebug, OciosoNoDebug, PilhaNoDebug, PredioNoDebug, QuadroNoDebug, RelogioVisivel,
+  AnimalNoDebug, CaixaDesenhada, CamadasEmPx, CrescimentoNoDebug, EstadoDebug, OciosoNoDebug, PilhaNoDebug, PredioNoDebug, QuadroNoDebug, RelogioVisivel, SinalDePausadoNoDebug,
 } from '../debug';
 import { aparenciaDoPredio, corDaPilha, dadosDasPilhas, dadosDosAnimais, dadosDoTrabalho, ordemDasMercadorias } from '../predios';
 import { animaisDoCurral, curralDesenhado, quadroDoAnimal } from '../animais';
@@ -24,6 +24,7 @@ import { pilhasDoPredio, posicoesNaPilha } from '../pilhas';
 import type { PilhaDesenhada } from '../pilhas';
 import { areaDoTrabalho, quadroDaEscola, quadroDaFumaca, quadroDeTrabalho, quadroOcioso } from '../trabalho';
 import type { QuadroDeTrabalho } from '../trabalho';
+import { caixaDoSinalDePausado, temSinalDePausado, TEXTO_DO_SINAL_DE_PAUSADO } from '../sinal-de-pausado';
 import { CASO_DO_PREDIO, ESTADO_DA_PILHA, ID_DA_FUMACA, ID_DO_OCIOSO, LACO_DA_ESCOLA } from '../manifesto-camadas';
 import { medidorDaObra } from '../medidor-obra';
 import type { LinhaDoMedidor } from '../medidor-obra';
@@ -1409,6 +1410,8 @@ export class WorldScene extends Phaser.Scene {
     const escolasNoDebug: Record<string, OciosoNoDebug> = {};
     const animaisNoDebug: Record<string, readonly AnimalNoDebug[]> = {};
     const camadasNoDebug: Record<string, CamadasEmPx> = {};
+    // D-TELA-07: a placa de pausado, em px de mundo, da MESMA caixa que `criarPredio` desenha.
+    const sinaisNoDebug: Record<string, SinalDePausadoNoDebug> = {};
     // F17g: as obras desenhadas pela revelacao, da MESMA conta que vai para `criarPredio`.
     const revelacoes: Record<string, RevelacaoDaObra> = {};
     for (const id of estadoDoJogo.predios.ordem) {
@@ -1526,9 +1529,21 @@ export class WorldScene extends Phaser.Scene {
         camadasNoDebug[id] = this.camadasEmPx(predio.tipo, caso, quadro, pilhas.length > 0, animais, tilePx);
       }
       const chaveDosAnimais = animais.length === 0 ? '-' : `${animais.map((a) => a.idade).join('')}/${quadroAnimal}`;
+      // D-TELA-07: pausar e retomar mudam so `pausado`; entra na chave pelo mesmo motivo da pilha.
+      const sinal = temSinalDePausado(predio);
+      if (sinal) {
+        const canto = gridToScreen({ gx: predio.gx, gy: predio.gy }, tilePx, ESCALA_DO_MUNDO);
+        const corpo = this.caixaDoPredio(predio.tipo, aparencia.largura * tilePx, aparencia.altura * tilePx);
+        const placa = caixaDoSinalDePausado(corpo, tilePx);
+        sinaisNoDebug[id] = {
+          texto: TEXTO_DO_SINAL_DE_PAUSADO,
+          placa: { x: canto.x + placa.x, y: canto.y + placa.y, w: placa.w, h: placa.h },
+          corpo: { x: canto.x + corpo.x, y: canto.y + corpo.y, w: corpo.w, h: corpo.h },
+        };
+      }
       // F17g: cada martelada muda a revelacao sem mudar o estagio de fallback.
       const chaveDoCorpo = revelacao === null ? '-' : chaveDaRevelacao(revelacao);
-      const assinatura = `${linhas.map((l) => l.entregue).join(',')}|${chaveDoCanteiro(canteiro)}|${chaveDasPilhas}|${chaveDoTrabalho}|${chaveDosAnimais}|${chaveDoCorpo}`;
+      const assinatura = `${linhas.map((l) => l.entregue).join(',')}|${chaveDoCanteiro(canteiro)}|${chaveDasPilhas}|${chaveDoTrabalho}|${chaveDosAnimais}|${chaveDoCorpo}|${sinal ? 'P' : '-'}`;
       const existente = this.desenhados.get(id);
       if (existente && existente.estado === predio.estado && existente.estagio === estagio
         && existente.assinatura === assinatura) continue;
@@ -1563,6 +1578,7 @@ export class WorldScene extends Phaser.Scene {
     debug.quadrosDaEscola = escolasNoDebug;
     debug.animaisDoCurral = animaisNoDebug;
     debug.camadasEmPx = camadasNoDebug;
+    debug.sinaisDePausado = sinaisNoDebug;
     debug.caixasDesenhadas = this.caixasDesenhadas(estadoDoJogo, sprites, tilePx);
   }
 
@@ -1640,6 +1656,28 @@ export class WorldScene extends Phaser.Scene {
     return [mastro, pano];
   }
 
+  /** D-TELA-07 — a placa de pausado no alto do corpo: duas barras e a palavra do tema, na
+   *  caixa de `caixaDoSinalDePausado`. Placeholder geometrico do §9 ate haver arte. */
+  private desenharSinalDePausado(
+    predio: Predio, corpo: { readonly x: number; readonly y: number; readonly w: number; readonly h: number },
+    tilePx: number,
+  ): Phaser.GameObjects.GameObject[] {
+    if (!temSinalDePausado(predio)) return [];
+    const c = caixaDoSinalDePausado(corpo, tilePx);
+    const fundo = this.add.rectangle(c.x, c.y, c.w, c.h, 0x2c1d12, 0.85).setOrigin(0, 0);
+    fundo.setStrokeStyle(1, 0xf2d6a2);
+    const barraH = c.h * 0.6;
+    const barraW = Math.max(2, c.h * 0.14);
+    const y = c.y + (c.h - barraH) / 2;
+    const x = c.x + c.h * 0.3;
+    const barras = [x, x + barraW * 2].map((bx) => this.add.rectangle(bx, y, barraW, barraH, 0xf2d6a2, 1).setOrigin(0, 0));
+    const rotulo = this.add.text(x + barraW * 3 + c.h * 0.25, c.y + c.h / 2, TEXTO_DO_SINAL_DE_PAUSADO, {
+      fontFamily: 'monospace', fontSize: '11px', color: '#f2d6a2',
+    });
+    rotulo.setOrigin(0, 0.5);
+    return [fundo, ...barras, rotulo];
+  }
+
   private criarPredio(
     predio: Predio, estagio: EstagioDaObra, revelacao: RevelacaoDaObra | null,
     linhas: readonly LinhaDoMedidor[],
@@ -1678,6 +1716,7 @@ export class WorldScene extends Phaser.Scene {
       ...this.desenharPilhas(pilhas, caixa, tilePx),
       ...this.desenharMedidor(linhas, larguraPx, alturaPx, canteiro === null || canteiro.nivelada),
       ...this.desenharBandeira(predio.lado, tilePx),
+      ...this.desenharSinalDePausado(predio, caixa, tilePx),
     ]);
     container.setDepth(depthDeY(canto.y + alturaPx));
     return container;

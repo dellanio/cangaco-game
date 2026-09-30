@@ -5785,6 +5785,26 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
   - **Aceite:** o roteiro `tools/shots/D-TELA-06.js` confirma `game.renderer.type ===
     Phaser.WEBGL` e, com o WebGL simulado ausente, que o jogo não inicia e a mensagem
     aparece; `tests/D-TELA-06-webgl.test.ts` prova o portão com documento falso.
+### D-TELA-07 — Sinal de pausado no mapa
+- **ENTREGUE (2026-09-30).** Pedido do operador: hoje a casa pausada e a casa sem insumo mostram o mesmo
+  ocioso (F-VIVO-e, o ocioso genérico; D3). Um ícone pequeno sobre o prédio pausado, com o
+  texto do `theme-sertao.json`. Só `src/render/`; a sim já tem `predio.pausado` (F16c).
+- **Interpretação (conservadora, registrada):** o texto é `painelPredio.pausado` ("Parado"), a
+  palavra que o painel já mostra para o mesmo estado; nenhuma chave nova no tema. O ícone é
+  geométrico (placa com duas barras de pausa), placeholder do §9 até haver arte.
+- **Aceite (escrito antes do código, 2026-09-30):**
+  1. Função pura `temSinalDePausado(predio)`: verdadeira só para prédio completo com
+     `pausado`; falsa para completo não pausado e para obra. Teste por tabela.
+  2. Pelo `step`: duas serrarias ocupadas, `s1` pausada pelo `SetBuildingPaused` e `s2` sem
+     insumo (`esperando_insumo`). Guarda do cenário: as duas com o ocioso aceso (a ambiguidade
+     de hoje existe). Só a `s1` tem sinal. O teste grava a partida do roteiro.
+  3. Roteiro `tools/shots/D-TELA-07.js`, pela ponte (`debug.sinaisDePausado`):
+     - passo 0, pausado: só a `s1` tem sinal, o texto é o do tema (lido do JSON, não digitado),
+       e a caixa do sinal fica dentro da largura do prédio e acima do meio do corpo;
+     - despausa o relógio (§8), 6 leituras a 150 ms: o sinal continua só na `s1`;
+     - captura aberta com as duas serrarias lado a lado;
+     - retomar a `s1` pelo painel (`[data-pausar]`, `mouse.down` / 150 ms / `mouse.up`, relógio
+       correndo): o sinal some.
 ### D-TELA-05e — Mercenários em 8 direções
 - **Registrado (2026-10-01, pedido do operador). Não implementado.** A decisão de 2026-09-30
   (8 direções para todas as unidades; nota da F-SPR acima) ainda não chegou aos mercenários:

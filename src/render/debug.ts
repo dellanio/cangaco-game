@@ -56,6 +56,13 @@ export interface OciosoNoDebug {
   readonly sprite: boolean;
 }
 
+/** D-TELA-07 — a placa de pausado desenhada, e o corpo do predio, em px de mundo. */
+export interface SinalDePausadoNoDebug {
+  readonly texto: string;
+  readonly placa: { readonly x: number; readonly y: number; readonly w: number; readonly h: number };
+  readonly corpo: { readonly x: number; readonly y: number; readonly w: number; readonly h: number };
+}
+
 /** F-REPL-e — um tile replantado ainda crescendo, como o sprite o desenhou. */
 export interface CrescimentoNoDebug {
   readonly estado: string;
@@ -168,6 +175,9 @@ export interface EstadoDebug {
   /** F-VIVO-h — o laco `treino` que a cena DESENHOU agora, por id de escola: so escola com
    *  item `treinando` na fila (`quadroDaEscola`, `trabalho.ts`). */
   quadrosDaEscola: Readonly<Record<string, OciosoNoDebug>>;
+  /** D-TELA-07 — a placa de pausado que a cena DESENHOU agora, por id de predio: so predio
+   *  completo e pausado (`temSinalDePausado`, `sinal-de-pausado.ts`). */
+  sinaisDePausado: Readonly<Record<string, SinalDePausadoNoDebug>>;
   /** F-VIVO-c — os animais que a cena DESENHOU agora, por id de predio. So tem
    *  criacao com curral cheio (`animais.ts`); curral vazio nao aparece. */
   animaisDoCurral: Readonly<Record<string, readonly AnimalNoDebug[]>>;
@@ -353,6 +363,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     quadrosDeTrabalho: {},
     quadrosOciosos: {},
     quadrosDaEscola: {},
+    sinaisDePausado: {},
     animaisDoCurral: {},
     camadasEmPx: {},
     caixasDesenhadas: {},
