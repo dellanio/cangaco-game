@@ -15215,3 +15215,51 @@ Só `src/render/` e testes; `src/sim/` intocado.
 
 - A bandeira de pausa e o ocioso aparecem juntos. Não há outro sinal de "pausado" na casa além
   da bandeira que já existia.
+
+## 2026-10-01 — Leva desatendida, tarefa 4: lote de recalibração (T2 + BUG-X) medido; nenhum número mudou
+
+Pedido: "o lote de recalibração medido em 3 sementes: tabela medido × esperado × proposta por
+entrada do BALANCE_LOG. Nenhum número muda." Plano do lote:
+`docs/planos/2026-10-01-lote-de-recalibracao-T2-BUG-X.md`. **Nenhum `data/*.json` foi tocado.**
+
+### Verificado
+
+- Árvores: base `faf8590` e T2 `ebb2182` (branch `wip/D-TRANSPORTE-03-T2`, não mergeada: a D2
+  reprova pela letra, seção do T2 acima). Medida nos worktrees de sonda, antes da regra nova do
+operador ("nada roda nos worktrees de sonda"); os dois foram removidos na retomada 2: a suíte inteira nas duas árvores (a base
+  foi até o fim; a do T2 parei no meio, porque rodava junto com o laço de roteiros de tela e
+  violava "um laço por vez") e a sonda de 3 sementes da tarefa 1. A linha 1134 usa a medida de 16k/20k/30k da retomada 2.
+- **As 3 sementes são idênticas**, pelo motivo da tarefa 1: o RNG só é consumido em combate. A
+  coluna "medido" vale para as 3.
+- **BUG-X (especialista dentro) contribui com zero:** a D3 manteve a F16c (c), o ocupante
+  fica, e a parte de sim do BUG-X não existe. A tarefa 2 (pausado × ocupante) é só tela.
+- Base, 2 falhas na suíte inteira, as duas por `timeout` (C-IA-03b 12 s, F-REPL-a 10 s),
+  rodando em paralelo com os roteiros de tela. Não são desta medida; o T2, até onde rodou,
+  deu 854 de 854.
+
+```text
+linha   entrada (BALANCE_LOG)               esperado (o que a entrada diz)          medido base → T2                         proposta
+32      colisão civil D1b                   só entra se a chave ligar               não medido (chave desligada)            nenhuma; fica fora do lote
+620     arranque é transporte               1ª pedra 207, tronco 628, tábua 968     F15: pedra 630→630; tábua 1081→1077;    nenhum giro; marcar premissa: tronco
+                                                                                    tronco no armazém 740→nunca              não passa mais pelo armazém no T2
+650     abertura é reposição de pedra       armazém a 3 pedras no tick 917          F15 fim: pedra 45→45; pedreira 15→15   nenhuma; premissa mantida
+753     metalurgia                          minério empilha no armazém              F21: 1º ouro fundido 1076→1002;          nenhuma; T2 adianta 74 ticks
+                                                                                    ouro no armazém 1110→1046; escola 233→204
+988/1009 folga de pedra, pontas             ticks das pontas 1319/2129/2563         NÃO MEDIDO nesta leva (a sonda da F18g   remedir quando o T2 mergear
+                                                                                    era temporária)
+1134/1150 lote 2, madeira 0,71/min          escada consertada                       cal 16k/20k/30k: tábua déficit 0/2/2,     espera o operador reler a D2 nova
+                                                                                    tora 1/1/1; F-CAL tábua final 191→192    (fase, seção do T2); sem giro
+1223    farm.sai.corn 2,0 (1:1:1)           entrada do moinho não enche             F-CAL cornMaxAte24k 2→1;                  nenhuma; a folga cresceu
+                                                                                    F19 milho entregue 12k 5→4, pão 60→60
+1245    lote 1, cadeia de comida            F-CAL fechado sem fome                  F-CAL fechado 7164→6768; pão 100→102      nenhuma; T2 fecha 396 ticks antes
+1290    1:1:1, moinho 26,2 %, padaria 28,8 %  ociosos esperando insumo              F19: moinho 0,170→0,167; padaria          marcar premissa: os 26,2/28,8 são de
+                                                                                    0,203→0,193                              antes da F-T3; ociosidade de hoje ~17/20 %
+```
+
+- **Nenhuma entrada pede giro pelo T2.** A tábua −2 é fase de um ciclo da serraria (série de
+  1 000 em 1 000 ticks na seção do T2) e está presa à releitura da D2. O −1 de tora, estável
+  desde 13k, tem por hipótese não medida a viagem inútil para comer dos lenhadores (BUG-Y),
+  `docs/planos/2026-10-01-BUG-Y-viagem-inutil-para-comer.md` aceite 6.
+- Os testes de calibração (`F-CAL-a`, `F-CAL-b`, `F17b`) passam no T2 (medido na sonda).
+- As marcas "premissa morta" nas linhas 620 e 1290 **não foram escritas** no BALANCE_LOG: pelo
+  plano do lote, elas entram quando o lote abrir, depois do merge do T2.
