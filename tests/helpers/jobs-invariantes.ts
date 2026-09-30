@@ -317,10 +317,11 @@ export function violacoesDeInvariantes(estado: GameState, dados: GameData = game
   for (const [predio, reservado] of contagemDeOcupacaoPorPredio) {
     if (reservado > 1) v.push(`${predio}: ${reservado} ocupantes reclamados para uma vaga`);
   }
-  // F20b: comensal reservado nunca acima de `inn.comensaisSimultaneos`.
+  // F20b: comensal reservado nunca acima do que a gaveta pode garantir. Desde a emenda de
+  // 2026-09-30 o teto e `refeicoesGarantidas`, e ela nunca passa do teto de comida por tipo
   for (const [predio, reservado] of contagemDeRefeicaoPorBodega) {
-    const assentos = dados.condicao.inn.comensaisSimultaneos;
-    if (reservado > assentos) v.push(`${predio}: ${reservado} comensais reclamados para ${assentos} assentos`);
+    const teto = dados.condicao.inn.estoquePorTipoDeComida;
+    if (reservado > teto) v.push(`${predio}: ${reservado} comensais reclamados para ${teto} refeicoes possiveis`);
   }
   // reservado <= disponivel nas DUAS pontas (disponivel/vaga nunca negativos)
   for (const chave of reservasPorOrigem) {

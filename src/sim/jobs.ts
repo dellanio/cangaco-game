@@ -44,7 +44,7 @@ import { alcancavelAPe } from './alcance';
 import { buscarCaminho } from './pathfinding';
 import type { Caminho, ModoDeBusca } from './pathfinding';
 import {
-  comensaisReservados, sobraNaOrigem, vagaDeConstrucao, vagaDeOcupacao, vagaDeRefeicao, vagaDaTropa, vagaDoDestino, vagaNoTile,
+  comensaisReservados, sobraNaOrigem, vagaDeConstrucao, vagaDeOcupacao, vagaDaTropa, vagaDoDestino, vagaNoTile,
 } from './reservas';
 import { predioAceita } from './ocupacao';
 import { refeicoesGarantidas } from './bodega';
@@ -931,15 +931,14 @@ export function reclamar(
       return { ok: false, motivo: 'sem-caminho' };
     }
   } else if (tarefa.tipo === 'comer') {
-    // F20b — o assento (`inn.comensaisSimultaneos`), a comida e o caminho. BUG-Y (emenda
-    // da D5): a comida conta por REFEICAO GARANTIDA, e os comensais ja a caminho gastam
+    // F20b — a comida e o caminho. BUG-Y (emenda da D5): a comida conta por REFEICAO
+    // GARANTIDA, que tambem e o assento (emenda de 2026-09-30), e os comensais ja a caminho gastam
     // dela — com uma broa na gaveta, o segundo faminto e recusado aqui e continua no
     // predio, em vez de andar ate a Bodega e acha-la vazia. Recusa tambem a Bodega
     // VAZIA, e nao so no gerador: entre a criacao da tarefa e o claim, outro comensal
     // pode ter levado a ultima broa. 'destino-sem-trabalho' e o mesmo motivo que o tile
     // ja assentado e a pedreira sem ocupante usam — "nao ha o que fazer no destino" — e
     // ele NAO reabre a tarefa.
-    if (vagaDeRefeicao(state, tarefa.destino, dados) < 1) return { ok: false, motivo: 'destino-sem-vaga' };
     if (comensaisReservados(state, tarefa.destino) >= refeicoesGarantidas(state, tarefa.destino, dados)) {
       return { ok: false, motivo: 'destino-sem-trabalho' };
     }

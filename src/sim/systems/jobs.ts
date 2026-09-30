@@ -756,7 +756,8 @@ function gerarTarefasDeOuro(state: GameState, dados: GameData): GameState {
  */
 /**
  * F20b — os ASSENTOS de refeicao: cada Bodega completa QUE TEM COMIDA oferece
- * `condition.json:inn.comensaisSimultaneos` assentos, menos os que ja existem.
+ * `refeicoesGarantidas` assentos, menos os que ja existem (emenda da F20b, 2026-09-30: o
+ * teto de assentos a parte saiu do dado).
  *
  * Irma de `gerarTarefasDeOcupacao`, e pelo mesmo desenho: o quadro declara o
  * trabalho DISPONIVEL, nao reage ao estado das unidades — a vaga de ocupante
@@ -769,10 +770,10 @@ function gerarTarefasDeOuro(state: GameState, dados: GameData): GameState {
  */
 function gerarTarefasDeComer(state: GameState, dados: GameData): GameState {
   let atual = state;
-  const assentos = dados.condicao.inn.comensaisSimultaneos;
   for (const id of state.predios.ordem) {
-    // BUG-Y: o assento so nasce com refeicao garantida atras dele (emenda da D5)
-    const teto = Math.min(assentos, refeicoesGarantidas(atual, id, dados));
+    // BUG-Y: o assento so nasce com refeicao garantida atras dele (emenda da D5). Desde a
+    // emenda de 2026-09-30 nao ha teto de assentos a parte: e so a garantia
+    const teto = refeicoesGarantidas(atual, id, dados);
     if (teto <= 0) continue;
     const existentes = tarefasPorNumero(atual).filter((t) => t.tipo === 'comer' && t.destino === id).length;
     for (let i = existentes; i < teto; i++) {

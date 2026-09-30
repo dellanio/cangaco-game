@@ -15978,3 +15978,23 @@ item                               | veredito  | achado                         
 - **Timeouts de guarda sob carga, nesta leva:** C-IA-03b a 12 s (duas vezes) e F-VIVO-e aceite 1 a
   5 s (uma vez), com ~27 processos `node` na máquina. As duas rodadas seguintes deram verde.
   Hipótese, não medida: carga de outra sessão.
+
+## 2026-09-30 — Leva 3, item 4: `inn.comensaisSimultaneos` sai do dado (opção A): feito
+
+Decisão do operador: (A). A opção (B) foi para o `IDEIAS.md`, com as linhas do KaM. O aceite foi
+emendado num commit próprio antes (`3b40b3e`, plano da F20b).
+
+### Verificado
+- `data/condition.json`: o `inn` ficou só com `estoquePorTipoDeComida` e um `_doc` que explica a
+  ausência. O `typecheck` apontou os 6 leitores (o tipo vem do JSON): `reservas.ts`
+  (`vagaDeRefeicao`, removida), o gerador em `systems/jobs.ts`, o claim em `jobs.ts`, a invariante
+  e dois testes. Todos foram trocados.
+- O gerador abre `refeicoesGarantidas` assentos; o claim recusa quando os reservados já cobrem a
+  garantia. A recusa `destino-sem-vaga` do assento saiu.
+- A invariante de comensais (`tests/helpers/jobs-invariantes.ts`) passa a comparar com o teto de
+  comida por tipo, que é o máximo que a garantia pode dar.
+- F20b-4 reescrito pelo aceite emendado: com mais famintos que o teto de comida, os reservados e
+  os `indo_comer` chegam a `refeicoesGarantidas` e não passam dela. O caso "assento abaixo da
+  garantia" saiu junto com o assento.
+- F20b, BUG-Y e F-CAL-a: 26/26. `test-output/BUG-Y.json` aberto: aceite 4 inalterado, com 37
+  refeições e 0 viagens sem comer.

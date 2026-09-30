@@ -170,3 +170,17 @@ caminho. Ideia boa é justamente a mais perigosa.
   - O F11 do próprio navegador continua funcionando sem código nosso. O Phaser em
     `Scale.RESIZE` acompanha a troca de tamanho.
   - Só volta com uma saída para o conflito do `Esc`.
+
+- **A refeição com duração e 6 assentos na Bodega, como no KaM** (opção (B) do operador,
+  2026-09-30; ele escolheu a (A), tirar o campo, e esta fica congelada).
+  - **KaM, clone `731a8a4`:** 6 assentos (`src/houses/KM_HouseInn.pas:11`, `INN_MAX_EATERS = 6`),
+    tomados só DENTRO da Inn (`src/units/tasks/KM_UnitTaskGoEat.pas:123`). Quem chega sem assento
+    sai com fome (`:125-128`). Cada comida prende o comensal `29*4` ticks (`:139`, e o mesmo nas
+    outras). A escolha da Inn olha "tem comida e tem assento" na saída, sem reservar
+    (`src/hands/KM_Hand.pas:1461`). O teto é de 5 por comida (`src/houses/KM_Houses.pas:1666-1673`,
+    `MAX_WARES_IN_HOUSE`, `src/common/KM_Defaults.pas:299`), igual ao nosso.
+  - **O que mudaria:** duração da refeição no dado (grupo `economia`, `29*4` como referência no
+    `_doc`), 6 assentos contados só por quem está `comendo`, e a garantia do BUG-Y (viagem inútil
+    para comer) continuando a valer para quem anda. Revoga a D6 da F20b (refeição de um tick).
+  - **Por que não agora:** muda o tempo que o especialista passa fora da casa, e pede o cenário
+    longo antes. Com a refeição de um tick, o assento nunca limita (BALANCE_LOG, 2026-09-30).

@@ -1465,3 +1465,5 @@ Medi o mesmo roteiro, o da C-IA-03c (jogar pela tela), contra a mesma IA:
     garantia continua valendo para quem anda. Revoga a D6 da F20b, e muda o tempo que o
     especialista passa fora da casa: pede o cenário longo antes.
   - Trocar só 8 → 6 **não** resolve: continua sem efeito.
+  - **Decidido (operador, 2026-09-30): (A).** O campo saiu de `condition.json`; a (B) está no
+    `IDEIAS.md`.

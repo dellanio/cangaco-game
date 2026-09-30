@@ -44,7 +44,8 @@ import {
 const CHEIA_CIVIL = gameData.condicao.ticksCondicaoCheia.civil;
 const LIMIARES_CIVIS = gameData.condicao.ticksNoLimiar.civil;
 const COMIDAS = comidasDaAbertura();
-const TETO_DE_COMENSAIS = gameData.condicao.inn.comensaisSimultaneos;
+/** Emenda da F20b (2026-09-30): o teto de comensais e o que a gaveta garante, no maximo o teto por tipo. */
+const TETO_DE_COMENSAIS = gameData.condicao.inn.estoquePorTipoDeComida;
 /** Guarda de travamento, NAO afirmacao de tempo (CLAUDE.md §8): o cenario sem
  *  comida anda 12 000 ticks, e o teto padrao do Vitest e de 5 s. */
 const TIMEOUT_DA_CORRIDA = 60_000;
@@ -268,27 +269,13 @@ function maximosACaminho(dados: GameData): { readonly reservados: number; readon
 }
 
 describe('F20b-4 — o teto de comensais da Bodega', () => {
-  // BUG-Y (emenda da D5): o teto e o MENOR entre o assento e a refeicao garantida. Com o
-  // dado de hoje a gaveta guarda menos de cada tipo que o numero de assentos, entao quem
-  // limita e a garantia; o segundo caso baixa o assento abaixo dela, derivado do dado,
-  // para provar que o assento continua valendo.
-  it('mais famintos que assentos: nunca passa de min(assentos, refeicoes garantidas) a caminho', () => {
+  // Emenda da F20b (2026-09-30): nao ha assento a parte no dado. O teto e so a refeicao
+  // garantida (BUG-Y), e com mais famintos que o teto de comida ele e atingido e nunca passado.
+  it('mais famintos que o teto de comida: os comensais a caminho chegam a refeicoesGarantidas e nunca passam', () => {
     const m = maximosACaminho(gameData);
-    const teto = Math.min(TETO_DE_COMENSAIS, m.garantidas);
-    expect(m.reservados).toBe(teto);
-    expect(m.aCaminho).toBe(teto);
-  });
-
-  it('com o assento abaixo da garantia, o assento e o teto', () => {
-    const assentos = tetoDeComidaNaBodega() - 1;
-    const dados: GameData = {
-      ...gameData,
-      condicao: { ...gameData.condicao, inn: { ...gameData.condicao.inn, comensaisSimultaneos: assentos } },
-    };
-    const m = maximosACaminho(dados);
-    expect(m.garantidas).toBeGreaterThan(assentos);
-    expect(m.reservados).toBe(assentos);
-    expect(m.aCaminho).toBe(assentos);
+    expect(m.garantidas).toBeGreaterThan(0);
+    expect(m.reservados).toBe(m.garantidas);
+    expect(m.aCaminho).toBe(m.garantidas);
   });
 });
 

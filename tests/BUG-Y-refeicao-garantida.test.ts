@@ -52,7 +52,6 @@ vi.mock('../src/sim/bodega', async (importOriginal) => {
   };
 });
 
-const ASSENTOS = gameData.condicao.inn.comensaisSimultaneos;
 const LIMIAR = gameData.condicao.ticksNoLimiar.civil.civilVaiComer;
 const COMIDAS = comidasDaAbertura();
 /** Guarda de travamento, NAO afirmacao de tempo (CLAUDE.md §8): 20 000 ticks da vila. */
@@ -147,7 +146,6 @@ describe('BUG-Y aceite 3 — o piso da D7', () => {
     }
     s = comTodosComFome(s);
     expect(civisDoEstado(s).length).toBeGreaterThan(4);
-    expect(ASSENTOS).toBeGreaterThan(4); // o assento nao e o que limita aqui
 
     let maxReservados = 0;
     for (let t = 0; t < 30; t += 1) {
@@ -229,6 +227,6 @@ describe('BUG-Y aceite 5 — o gerador e o claim leem o mesmo refeicoesGarantida
 
 describe('BUG-Y — evidencia', () => {
   it('grava `test-output/BUG-Y.json`', () => {
-    gravarEvidencia('BUG-Y', { assentos: ASSENTOS, ...evidencia });
+    gravarEvidencia('BUG-Y', { ...evidencia });
   });
 });

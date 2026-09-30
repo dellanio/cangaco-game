@@ -1146,7 +1146,7 @@ export interface TarefaColher extends TarefaBase {
  * escada de `delivery.json` — quem reclama nao disputa carga com serf nenhum, e por
  * isso nao ha nivel a comparar.
  *
- * A VAGA e `condition.inn.comensaisSimultaneos` (dado), e nao um campo no predio:
+ * A VAGA e `refeicoesGarantidas` (`sim/bodega.ts`; emenda da F20b, 2026-09-30), e nao um campo no predio:
  * ela e derivada das tarefas de comer daquele destino, como a vaga da obra e
  * derivada das de construir. Ela e reservada desde o `claim` e vale ATE a refeicao
  * acabar — o assento fica comprometido durante a caminhada, exactamente como a vaga
