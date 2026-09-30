@@ -1896,7 +1896,7 @@ a geografia já corrigida do que regravar 900 tiles depois.
     diagonal sem quadro cai na HORIZONTAL (`HORIZONTAL_DA_DIAGONAL`,
     `src/render/manifesto.ts`), que é o que o civil de 4 já desenhava no passo diagonal —
     a tela não muda até a arte diagonal entrar (`tests/F-SPR-carregamento.test.ts`). A
-    D-TELA-05a foi fechada por este passo (c53f85a): a nota da F-SPR e os 28 tipos em 8;
+    D-TELA-05a foi fechada por este passo (c53f85a): a nota da F-SPR e civis e militares em 8 (os mercenários ficaram sem o campo: D-TELA-05e);
     o que resta é arte diagonal, que entra por decisão humana.
     (O texto proposto em `docs/planos/2026-09-30-vivo-contra-kam-e-texto-das-8-direcoes.md`
     §4.2 dizia que o campo não existia; a leitura do arquivo desmentiu.)
@@ -5761,6 +5761,22 @@ apontava `src/sim/escola.ts`.)* Manifesto com exceção nomeada para `schoolhous
   - **Aceite:** o roteiro `tools/shots/D-TELA-06.js` confirma `game.renderer.type ===
     Phaser.WEBGL` e, com o WebGL simulado ausente, que o jogo não inicia e a mensagem
     aparece; `tests/D-TELA-06-webgl.test.ts` prova o portão com documento falso.
+### D-TELA-05e — Mercenários em 8 direções
+- **Registrado (2026-10-01, pedido do operador). Não implementado.** A decisão de 2026-09-30
+  (8 direções para todas as unidades; nota da F-SPR acima) ainda não chegou aos mercenários:
+  `data/units.json` declara `direcoesDeSprite: 8` no `_comum` de `civis` (`:26`) e de
+  `militares` (`:106`), mas o grupo `mercenarios` (`:249`) não tem `_comum` nem o campo. Os
+  cinco tipos (`rebel`, `rogue`, `vagabond`, `barbarian` e `warrior`) ficam no placeholder
+  (`src/render/direcoes-de-sprite.ts`).
+- **Escopo:** `mercenarios` ganha `direcoesDeSprite: 8`, como os outros grupos. O `vagabond`
+  é montado e recebe 8, como o `scout` e o `knight`. **Só render lê o campo:** a sim não muda.
+- **Aceite:**
+  - o teste da F-SPR (`tests/F-SPR-carregamento.test.ts`) afirma 8 para os 28 tipos, por
+    grupo, e não só para civis e militares;
+  - o `npm run validate:data` passa.
+- **Arte:** fora do escopo. Sem arte de mercenário no manifesto, o placeholder continua. O
+  item só faz o dado dizer o que a decisão diz.
+
 ### F34 — Condições de vitória e derrota (escaramuça)
 - **ENTREGUE (2026-09-28, sessão autônoma; plano em `docs/planos/2026-09-28-A16-F34-fim.md`).**
   Decisão do operador: *"Vitória: destruir Armazém, Escola e Quartel inimigos e todas as
