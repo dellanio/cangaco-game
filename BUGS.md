@@ -102,3 +102,18 @@ ela consertava a asserção em vez de perguntar se aquele eixo podia ser asserç
   cultura (tipo com `aradura` em `resources.json`), ou o chão de roça desenhado sob
   tile de cultura.
 
+
+## BUG-Z — nome de unidade coberto pelas unidades da frente ("rrega")
+- feature: a camada de unidades (`src/render/unidades.ts`; o rótulo com a cor do bando da
+  C-IA-03c e o nome do tema do BUG-O). Não é da F-VIVO-h, que só expôs na captura.
+- severidade: feio
+- repro: `npm run shot -- F-VIVO-h`, captura `screenshots/F-VIVO-h-1-escola-treinando.png`
+  (2026-09-30): embaixo, o rótulo vermelho "Carregador" de um serf aparece só como "rrega",
+  com as duas pontas atrás dos sprites das unidades vizinhas. Está dentro do canvas.
+- esperado: o nome da unidade se lê inteiro.
+- causa (lida no código, **não medida**): o rótulo mora no container da unidade, com
+  profundidade pelo y dela (`unidades.ts:280`, `depthDeY`). O desencontro de rótulos
+  (`unidades.ts:215-241`) empurra o rótulo para baixo quando ele colide com outro, e aí ele
+  cai sobre a fileira da frente, que tem profundidade maior e o cobre.
+- decisão que espera o operador: o nome fica por cima de toda unidade (camada própria),
+  ou por cima só dos rótulos, ou o desencontro para de empurrar para baixo.

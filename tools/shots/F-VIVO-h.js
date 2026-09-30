@@ -66,6 +66,19 @@ async function roteiro(ctx) {
   await zoomPara(ZOOM);
   await centrarNoEixo(plano.centro.gx, 'x');
   await centrarNoEixo(plano.centro.gy, 'y');
+  // o quadrado claro que o avaliador viu ao lado da escola e o realce do tile sob o mouse
+  // (`highlight`, WorldScene), deixado no mapa pelo `zoomPara`. O mouse sai do canvas para a
+  // barra, e o realce apaga (GAME_OUT): a captura mostra o jogo, nao o cursor do roteiro.
+  const sobOMouse = (await estado()).tileSobMouse;
+  afirmar(sobOMouse !== null, 'depois do zoom o mouse deveria estar sobre um tile do mapa');
+  const barra = await page.evaluate(() => {
+    const r = window.document.querySelector('#barra').getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  });
+  await page.mouse.move(barra.x, barra.y);
+  await esperarFrame();
+  afirmar((await estado()).tileSobMouse === null,
+    `com o mouse na barra, nenhum tile deveria estar sob ele (estava em ${JSON.stringify(sobOMouse)})`);
 
   // relogio andando (§8): cada leitura confere o laco contra a janela de treino da sim
   let vistos = 0;

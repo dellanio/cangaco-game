@@ -15674,3 +15674,31 @@ Plano: `docs/planos/2026-09-30-BUG-T-tropa-travada.md`. `BUGS.md` do BUG-T: seve
 2. A troca mútua: na hora, como o KaM (`:125`), ou depois de `ticksDesvioMilitar`, como as outras
    duas trocas da família.
 3. Se a Tarefa 1 pedir a (B): o número novo da espera da troca forçada (o KaM usa 40 ticks).
+
+## 2026-09-30 — Sessão do operador, tarefa 5: F-VIVO-h (a escola anima com recruta em treino), os dois achados do avaliador: confirmados; um consertado, um registrado
+
+### Verificado
+
+- **O roteiro da F-VIVO-h reprovava hoje:** "a partida carregada deveria estar no tick 1, veio
+  0". A causa medida é que `tests/F-VIVO-h-escola.test.ts:87` gravava o save em `'test-output'`
+  fixo. A corrida transladada do `verify` (`CANGACO_EVIDENCIA_DIR = test-output/transladado`)
+  sobrescrevia o save com o mundo transladado (centro 67,5 × 63,5 em vez de 35,5 × 31,5), e o
+  jogo não o carregava. Agora usa `CANGACO_EVIDENCIA_DIR` como os outros. Grep: era o único
+  teste com o diretório fixo.
+- **Captura aberta, os dois achados existem.**
+  1. **O quadrado claro vazio à esquerda da escola é o realce do tile sob o mouse**
+     (`highlight`, `WorldScene.ts`, visível quando há tile sob o ponteiro). O `zoomPara` do
+     roteiro deixa o mouse sobre o mapa. Medido no roteiro: depois do zoom há um tile sob o
+     mouse; com o mouse na `#barra`, `tileSobMouse` é `null`. **Consertado no roteiro**: a
+     captura nova, aberta, não tem o quadrado. Não é defeito do jogo.
+  2. **O rótulo cortado "rrega" é o "Carregador" de um serf**, coberto nas duas pontas pelos
+     sprites das unidades vizinhas, dentro do canvas. Continua na captura nova. **Não
+     consertado**: é da camada de unidades, não da F-VIVO-h, e o conserto pede uma decisão de
+     profundidade dos rótulos. Registrado como BUG-Z (`feio`), com a causa lida no código e
+     não medida.
+- Roteiro `F-VIVO-h` com saída 0 depois do conserto.
+
+### Espera decisão do operador
+
+- BUG-Z: o nome de unidade vai por cima de toda unidade, ou o desencontro para de empurrar o
+  rótulo para baixo.

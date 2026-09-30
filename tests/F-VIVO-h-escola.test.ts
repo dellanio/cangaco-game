@@ -84,7 +84,7 @@ describe('F-VIVO-h — a escola anima enquanto treina', () => {
     expect(laco(step(s, []))).toBeNull();
 
     // a partida do roteiro: 40 ticks antes de a escola comecar a treinar
-    const dir = 'test-output';
+    const dir = process.env['CANGACO_EVIDENCIA_DIR'] ?? 'test-output';
     mkdirSync(dir, { recursive: true });
     writeFileSync(`${dir}/F-VIVO-h.save.txt`, salvar(partida));
     const escola = predio(partida, ESCOLA);
