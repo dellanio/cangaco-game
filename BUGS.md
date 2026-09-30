@@ -57,6 +57,150 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
   marchando, de que lado, para onde) dizem qual dos três casos é.
 - status: aberto
 
+## BUG-U — arma produzida não chega ao Quartel
+- feature: F25a (o quartel pede arma; nível 12 da escada, PARA REVISÃO) e C3 (a vaga do quartel)
+- severidade: proposta `trava` — recruta que espera arma que nunca chega é espera
+  indefinida, não balanceamento. Classificação final do operador: o aceite escrito da
+  F25a passa no cenário isolado dele, então é lacuna de aceite, e a chave não cai sozinha.
+- repro: sonda de 2026-09-30 (apagada; os números ficam aqui). `createInitialState(1)`,
+  Oficina de Armas e Quartel pelo `PlaceBlueprint` a leste da escola, um carpinteiro e dois
+  recrutas pedidos na escola, encomenda de 5 de cada arma, 12000 ticks.
+
+  | corrida | armas feitas | entregues ao armazém | entregues ao quartel | no fim |
+  |---|---|---|---|---|
+  | base (tudo com estrada) | 15 | 15 | 15 | — |
+  | A: quartel sem estrada | 15 | 15 | 0 | nenhuma `arma-para-quartel` criada; 2 recrutas lá |
+  | B: base + 40 pedras a cada 200 ticks na saída da escola | 15 | 11 | 0 | 11 `arma-para-quartel` e 20 `saida-cheia-para-armazem` abertas; 2 recrutas lá |
+
+- esperado: arma no armazém e vaga no quartel viram soldado em tempo finito.
+- **causa B (medida): fome de prioridade.** O quartel registra a demanda
+  (`gerarTarefasDoQuartel`, `src/sim/systems/jobs.ts:846-873`), mas `arma-para-quartel` é o
+  nível 12, o último (`data/delivery.json:18`), e a ordem do serf é estrita por nível
+  (`ordenarTarefasDoSerf`, `src/sim/jobs.ts:1186-1201`: `if (ca.nivel !== cb.nivel) return
+  ca.nivel - cb.nivel`). Com qualquer tarefa de nível 1 a 11 aberta, nenhum serf pega a
+  arma. O próprio `_doc` do nível 12 diz: "A posição no KaM não foi conferida no fonte".
+- **causa A (medida): quartel sem estrada.** A origem passa por `origemMaisPerto`
+  (`src/sim/systems/jobs.ts:433-446`) no modo `estrada`; sem ligação ela devolve `null` e a
+  tarefa nem nasce. O recruta chega a pé (o `alistar` é outra tarefa). Isso o KaM também
+  faz (abaixo). O defeito nosso é o silêncio: o alerta `sem-estrada`
+  (`src/sim/selectors.ts:902-910`) só vale para prédio com `producao` e para a escola; o
+  quartel devolve `false`.
+- referência (KaM, clone 731a8a4):
+  - `KM_Houses.pas:659`: o quartel pede `AddDemand(Self, nil, W, 1, dtAlways, diNorm)` —
+    importância `diNorm`, a MESMA do insumo de produção (`KM_HandLogistics.pas:28-35`).
+    Não é a última da fila: disputa por distância com as outras entregas normais.
+  - `KM_HandLogistics.pas:1238-1246`: "Warfare has a preference to be delivered to
+    Barracks" — arma só vai ao armazém se nenhum quartel aceita.
+  - `KM_HandLogistics.pas:1587-1590`: armazém→quartel é isento da multa de +1000 que toda
+    entrega que sai do armazém paga.
+  - `KM_HandLogistics.pas:1220`: casa→casa exige rota por estrada (`tpWalkRoad`). A causa A
+    é igual à do KaM.
+- aceite proposto:
+  1. Pelo `step`, o cenário B (a mesma carga de nível 8): as 15 armas entram no quartel e
+     os dois recrutas viram soldado antes do teto de segurança. Hoje: 0.
+  2. Com quartel ligado e com vaga, nenhuma arma vai para o armazém (a preferência do KaM):
+     a tarefa que sai da oficina de armas tem destino no quartel.
+  3. Quartel completo sem estrada até o armazém acende o alerta `sem-estrada`, pelo mesmo
+     `temCausa`, com teste que reprova hoje.
+- status: aberto. Mesma raiz do BUG-V, ver lá.
+
+## BUG-V — tora passa pelo armazém antes de ir à Serraria
+- feature: modelo de transporte do JobBoard (F05 em diante); não quebra aceite escrito
+- severidade: proposta `errado`, de modelo. Mudar isto mexe em todas as entregas; é
+  decisão do operador, e vira item de fila, não correção avulsa.
+- repro: qualquer partida com Lenhador e Serraria. Não há sonda: o código decide sozinho,
+  e não existe outro caminho (abaixo).
+- esperado (KaM): a tora do lenhador vai direto à serraria que precisa dela; só vai ao
+  armazém o que nenhuma casa pede.
+- observado: tora sai do lenhador, entra no armazém e depois sai do armazém para a
+  serraria. Duas viagens de serf onde o KaM faz uma.
+- causa (medida no código): não existe casamento produtor→consumidor.
+  - Saída de produtor tem um destino só, o armazém: `gerarTarefasParaArmazem`
+    (`src/sim/systems/jobs.ts:546-566`, `saida-cheia-para-armazem`, nível 8).
+  - Insumo tem uma origem só, o armazém: `origemMaisPerto`
+    (`src/sim/systems/jobs.ts:433-446`) varre `armazensCompletos` e nada mais. Todos os
+    geradores de entrega passam por ela (`:524`, `:607`, `:636`, `:852`, `:926`).
+- referência (KaM, `KM_HandLogistics.pas`):
+  - Oferta e demanda são duas listas; qualquer oferta casa com qualquer demanda que
+    `ValidDelivery` aprova (`:1205-1285`). O armazém é só mais uma casa.
+  - `TryCalculateBidBasic` (`:1492-1591`): lance = distância + aleatório, e `if (dWT =
+    wtAll) or ((aOfferHouseType = htStore) and (dWT <> wtWarfare)) then IncAddition(1000)`
+    — casa→casa ganha de casa→armazém e de armazém→casa.
+- **BUG-U e BUG-V têm a mesma causa?** Em parte. A raiz comum: tudo passa pelo armazém, e a
+  arma faz dois trechos (oficina→armazém no nível 8, armazém→quartel no 12). A fome do
+  BUG-U vem de um defeito que se soma, o nível 12. Corrigir só o BUG-V (casamento direto)
+  não resolve a fome se a entrega direta ao quartel herdar o nível 12; corrigir só a posição
+  da arma na escada resolve o BUG-U e deixa o BUG-V. A causa A do BUG-U é à parte.
+- aceite proposto:
+  1. Pelo `step`: lenhador e serraria ligados, entrada da serraria abaixo do alvo. A tora
+     vai numa tarefa só, origem no lenhador e destino na serraria, e o armazém não recebe
+     tora enquanto a serraria tem vaga.
+  2. Serraria cheia: a tora vai ao armazém (o comportamento de hoje continua como
+     fallback).
+  3. Guarda: nenhum cenário longo (F17, fase A) perde produção total contra a linha de
+     base, e as viagens de serf por tora entregue caem.
+- status: aberto
+
+## BUG-W — campo recém-plantado se desenha maduro
+- feature: F-CAMPO-a (o tile cresce sem o roceiro); o desenho é de `src/render/mapa.ts` e
+  `src/render/scenes/WorldScene.ts`
+- severidade: proposta `feio`. A regra da sim está certa e coberta; falta a tela.
+- repro: qualquer roçado. Semeado, o tile ganha o marcador cheio do milho no mesmo tick.
+- esperado: o jogador vê o milho crescer, e só o tile colhível se desenha colhível.
+- **o tempo de crescer existe na sim (medido):** `data/resources.json`,
+  `corn.reposicao.crescer_segundos_base: 330` (grupo economia, escala 2 em
+  `data/time.json`: 165 s, 1650 ticks). A uva tem o mesmo campo. O carregador converte em
+  `ticksDeCrescer` (`src/sim/data/loader.ts:780-793`). `tileMaduro`
+  (`src/sim/recursos.ts:260-266`) é `tick >= semeadoEm + crescer`, e o claim da colheita
+  recusa tile verde (`src/sim/jobs.ts:981-983`). `tests/F18-ciclo-do-roceiro.test.ts:182`
+  afirma, tick a tick, que `tileMaduro` vira exatamente em `semeadoEm + TICKS_DE_CRESCER`
+  e que ninguém reclama o tile antes.
+- causa: só render. O semear põe a quantidade cheia de uma vez
+  (`src/sim/recursos.ts:469`, com `semeadoEm`), e o render escolhe o desenho só pela
+  quantidade: `codigoDoRecurso` (`src/render/mapa.ts:174-181`) dá o mesmo código ao tile
+  verde e ao maduro. O crescimento por estágio (`src/render/crescimento.ts`) existe, mas só
+  para vegetação — "o milho e a uva nao sao vegetacao e nao passam por aqui" (linha 11) —,
+  e o `WorldScene` só o consulta quando `como === 'vegetacao'` (`:1131-1133`).
+- hipótese, não conferida em jogo: o que o operador viu foi o desenho, não uma colheita
+  antes do tempo. Se um roceiro COLHEU tile recém-semeado, é outro defeito, e o repro com
+  save muda a classificação.
+- referência (KaM, `KM_ResMapElements.pas:85-101`): 7 estágios de milho (0 vazio,
+  1 semeado, 2-3 muda, 4 verde, 5 pronto, 6 cortado) nas idades `CORN_AGE_1/2/3/FULL`;
+  uva com 4. Cada estágio troca o desenho do tile (`KM_Terrain.pas:5366-5372`,
+  `:5453-5455`).
+- aceite proposto:
+  1. Função pura de render, irmã de `estadoDeCrescimento`, que dá o estágio do tile de
+     cultura a partir de `semeadoEm` e `ticksDeCrescer`, com teste que confere tick a tick
+     que o estágio "pronto" começa no mesmo tick em que `tileMaduro` vira (molde:
+     `tests/F-REPL-e-arvore.test.ts`).
+  2. Screenshot: roçado com um tile recém-semeado e um maduro lado a lado, distintos; o
+     recém-semeado não usa o desenho do maduro.
+  3. Placeholder vale (§9): sem arte, estágio é variação do marcador (escala ou cor). Arte
+     de estágio é decisão humana.
+- status: aberto
+
+## BUG-X — especialista trabalha fora da casa, na porta
+- feature: F14 (o especialista ocupa o prédio) e F-VIVO-b (o prédio anima)
+- severidade: errado
+- repro: qualquer casa de produção ocupada. O especialista chega, ocupa, e fica parado no
+  tile da porta, ao sul, visível, enquanto produz e enquanto espera insumo.
+- esperado (KaM): entra, some, e a casa toca a animação ociosa ou a de trabalho
+  (`KM_Units.pas:662-667`, `KM_UnitActionGoInOut.pas:444`). Sai só para trabalhar fora
+  (lenhador, fazenda, pescador), para mostrar fome, ou quando a casa é fechada.
+- observado: a posse passa ao prédio com a unidade onde o caminho acabou
+  (`src/sim/systems/especialistas.ts:146-149`); esse fim é a borda sul do footprint
+  (`src/sim/footprint.ts:32-39`, `bordaSul`), e as trocas de rótulo da produção não mexem
+  na posição (`especialistas.ts:206-208`, `comFsm`).
+- conferido no código, não medido em jogo: a colisão já trata `trabalhando`,
+  `esperando_insumo` e `saida_cheia` como `dentro` (`src/sim/colisao.ts`,
+  `POSICAO_DO_ESTADO`), então a hipótese é que o especialista na porta NÃO bloqueia serf
+  hoje e o defeito é de posição e de tela. A medida antes/depois está no plano.
+- mesmo defeito da pergunta em aberto do PROGRESS (F-VIVO-b, caso 2: o laço de dentro com
+  o trabalhador fora).
+- plano: `docs/planos/2026-09-30-BUG-X-especialista-dentro-da-casa.md`. Entra depois do
+  D-TRANSPORTE-03 T2 e antes do lote de recalibração do BALANCE_LOG.
+- status: aberto
+
 ## Polimento
 
 Os três bugs de oscilação de tempo que moravam aqui (BUG-D na F-T1, BUG-E na F-T2b e,
