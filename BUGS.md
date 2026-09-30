@@ -114,32 +114,3 @@ ela consertava a asserção em vez de perguntar se aquele eixo podia ser asserç
   Dois caminhos, a decidir lá: um código de "em pousio" separado do "esgotado" para
   cultura (tipo com `aradura` em `resources.json`), ou o chão de roça desenhado sob
   tile de cultura.
-
-
-## BUG-Z — nome de unidade coberto pelas unidades da frente ("rrega")
-- feature: a camada de unidades (`src/render/unidades.ts`; o rótulo com a cor do bando da
-  C-IA-03c e o nome do tema do BUG-O). Não é da F-VIVO-h, que só expôs na captura.
-- severidade: feio
-- repro: `npm run shot -- F-VIVO-h`, captura `screenshots/F-VIVO-h-1-escola-treinando.png`
-  (2026-09-30): embaixo, o rótulo vermelho "Carregador" de um serf aparece só como "rrega",
-  com as duas pontas atrás dos sprites das unidades vizinhas. Está dentro do canvas.
-- esperado: o nome da unidade se lê inteiro.
-- causa (lida no código, **não medida**): o rótulo mora no container da unidade, com
-  profundidade pelo y dela (`unidades.ts:280`, `depthDeY`). O desencontro de rótulos
-  (`unidades.ts:215-241`) empurra o rótulo para baixo quando ele colide com outro, e aí ele
-  cai sobre a fileira da frente, que tem profundidade maior e o cobre.
-- **decisão do operador (2026-09-30):** o rótulo da unidade vai numa camada acima de todas as
-  unidades.
-- **aceite (commit próprio, antes do código):**
-  1. Em Node: a profundidade da camada dos nomes (`PROFUNDIDADE_DOS_NOMES`, `src/render/grid.ts`)
-     é maior que `depthDeY` da borda de baixo do maior mapa de `data/maps/` e menor que a da
-     seleção. O teste lê o tamanho dos mapas do dado, sem literal.
-  2. Roteiro `tools/shots/BUG-Z.js`, na partida da F-VIVO-h (a captura onde o "rrega"
-     apareceu), com o relógio correndo (§8): em toda leitura, cada unidade visível tem
-     `profundidadeDoNome` igual à da camada e maior que a `profundidadeDoCorpo` de toda unidade
-     desenhada. O nome de unidade escondida (BUG-X, especialista dentro) também fica escondido.
-     O texto do nome continua o do tema.
-  3. Captura aberta, com o mouse fora do mapa: o "Carregador" que aparecia como "rrega" se lê
-     inteiro.
-  4. Não-regressão pelo código de saída: F-D4 (o nome do ofício sob a unidade), F18f (unidade
-     empilhada não some), BUG-X e F-VIVO-h.

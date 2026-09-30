@@ -118,6 +118,15 @@ export function depthDeY(worldY: number): number {
   return worldY;
 }
 
+/** F26b — o anel do selecionado e a caixa, por cima do mundo e abaixo do highlight do
+ *  tile (1 000 000). */
+export const PROFUNDIDADE_DA_SELECAO = 999_999;
+
+/** BUG-Z — a camada dos NOMES de unidade: acima de toda unidade e de todo predio (que se
+ *  ordenam por `depthDeY`, o y em px de mundo, alguns milhares) e abaixo da selecao. Assim o
+ *  nome que o desencontro de rotulos empurra para baixo nao some atras da fileira da frente. */
+export const PROFUNDIDADE_DOS_NOMES = 900_000;
+
 export function tileDentroDoMapa(tile: Tile, largura: number, altura: number): boolean {
   return tile.gx >= 0 && tile.gy >= 0 && tile.gx < largura && tile.gy < altura;
 }

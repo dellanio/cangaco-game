@@ -34,6 +34,7 @@ import Phaser from 'phaser';
 import temaSertao from '../../data/theme-sertao.json';
 import {
   depthDeY, gridToScreenCentro, deslocamentoDaUnidade, ESCALA_DO_MUNDO, LADO_DA_UNIDADE_EM_TILES,
+  PROFUNDIDADE_DOS_NOMES,
 } from './grid';
 import { criarMemoriaDePosicoes, interpolarPosicao } from './interpolacao';
 import {
@@ -106,6 +107,11 @@ export interface UnidadeRenderizada {
    *  comensal dentro da Bodega (`visibilidade.ts`). Segue na lista para o roteiro achar o
    *  id; o acerto pula. */
   readonly visivel: boolean;
+  /** BUG-Z — a profundidade do nome (a camada dos nomes) e a do corpo (o y da unidade), e se o
+   *  nome esta aceso. O roteiro afirma o nome acima de todo corpo, pela medida. */
+  readonly profundidadeDoNome: number;
+  readonly profundidadeDoCorpo: number;
+  readonly nomeVisivel: boolean;
 }
 
 export interface CamadaDeUnidades {
@@ -163,6 +169,10 @@ export function criarCamadaDeUnidades(cena: Phaser.Scene, tilePx: number): Camad
       fontSize: '11px', color: temaSertao.paleta.cal, backgroundColor: corDoBando(ladoDaUnidade), padding: { x: 2, y: 0 },
     });
     rotulo.setOrigin(0.5, 0);
+    // BUG-Z: o nome nao mora no container da unidade (que se ordena pelo y dela), mas na camada
+    // dos nomes, acima de toda unidade: empurrado pelo desencontro, ele nao some atras da fileira
+    // da frente. A posicao e a de mundo, posta em `organizarRotulos`
+    rotulo.setDepth(PROFUNDIDADE_DOS_NOMES);
     const marcadorDeCarga = cena.add.text(0, -lado * ALTURA_DA_CARGA_EM_LADOS, '', {
       fontSize: '11px', color: '#ede3d0', backgroundColor: '#2c1d12', padding: { x: 3, y: 1 },
     });
@@ -178,7 +188,7 @@ export function criarCamadaDeUnidades(cena: Phaser.Scene, tilePx: number): Camad
     });
     marcadorDeFome.setOrigin(0.5, 0.5);
     marcadorDeFome.setVisible(false);
-    const container = cena.add.container(0, 0, [retangulo, rotulo, marcadorDeCarga, marcadorDeFome]);
+    const container = cena.add.container(0, 0, [retangulo, marcadorDeCarga, marcadorDeFome]);
     return { container, retangulo, imagem: null, direcao: 's', nome: rotulo, marcadorDeCarga, marcadorDeFome };
   }
 
@@ -219,7 +229,6 @@ export function criarCamadaDeUnidades(cena: Phaser.Scene, tilePx: number): Camad
     const folga = 2;
 
     for (const [, item] of itens) {
-      item.nome.setY(baseY);
       const largura = item.nome.displayWidth;
       const altura = item.nome.displayHeight;
       const x0 = item.container.x - largura / 2;
@@ -237,7 +246,7 @@ export function criarCamadaDeUnidades(cena: Phaser.Scene, tilePx: number): Camad
         y0 = Math.max(...colisoes.map((r) => r.y1 + folga));
       }
 
-      item.nome.setY(y0 - item.container.y);
+      item.nome.setPosition(item.container.x, y0);
       ocupados.push({ x0, y0, x1, y1: y0 + altura });
     }
   }
@@ -249,6 +258,7 @@ export function criarCamadaDeUnidades(cena: Phaser.Scene, tilePx: number): Camad
       for (const [id, item] of desenhados) {
         if (!vivas.has(id)) {
           item.container.destroy();
+          item.nome.destroy();
           desenhados.delete(id);
           memoria.esquecer(id);
         }
@@ -280,6 +290,7 @@ export function criarCamadaDeUnidades(cena: Phaser.Scene, tilePx: number): Camad
         item.container.setDepth(depthDeY(centro.y + desvio.y));
         const visivel = !invisiveis.has(id);
         item.container.setVisible(visivel);
+        item.nome.setVisible(visivel);
         const carga = unidade.fsmData.carga ?? null;
         // BUG-O: o nome do tema, nunca o id da sim
         item.marcadorDeCarga.setText(carga === null ? '' : rotuloDaCarga(carga));
@@ -292,6 +303,7 @@ export function criarCamadaDeUnidades(cena: Phaser.Scene, tilePx: number): Camad
           deslocamentoPx: { x: desvio.x, y: desvio.y },
           marcadorDeFome: comFome, fracaoDeCondicao: fracaoDeCondicao(unidade),
           nome: item.nome.text, larguraDoRotuloPx: item.nome.width, visivel,
+          profundidadeDoNome: item.nome.depth, profundidadeDoCorpo: item.container.depth, nomeVisivel: item.nome.visible,
           direcao: direcoes === null ? null : item.direcao, sprite,
           corpoPx: sprite === null || item.imagem === null ? null : {
             x0: -item.imagem.originX * item.imagem.displayWidth, y0: -item.imagem.originY * item.imagem.displayHeight,

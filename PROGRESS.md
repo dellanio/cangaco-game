@@ -15852,3 +15852,29 @@ do aceite foi num commit próprio, antes do código (`bad487a`, plano, seção 7
   - (b) a troca forçada com quem espera, do KaM (`src/units/actions/KM_UnitActionWalkTo.pas:799-802`,
     depois de `WAITING_TIMEOUT` 40, `:131`): o parado do meio é empurrado. Pede número novo no dado.
 - Merge da branch: só com o aceite 4 verde.
+
+## 2026-09-30 — Leva 2, item 7: BUG-Z (nome de unidade coberto pelas unidades da frente): corrigido
+
+Decisão do operador: o rótulo vai numa camada acima de todas as unidades. O aceite entrou num
+commit próprio antes do código (`b066ab2`). O bug sai do `BUGS.md` neste commit.
+
+### Verificado
+- `src/render/grid.ts`: `PROFUNDIDADE_DOS_NOMES` (900 000) e `PROFUNDIDADE_DA_SELECAO`, que saiu
+  da `WorldScene` para o teste poder comparar.
+- `src/render/unidades.ts`: o nome saiu do container da unidade, e agora tem profundidade própria
+  e posição de mundo, posta pelo desencontro de rótulos. Acende e apaga com o corpo, e some junto
+  com a unidade. A ponte ganhou `profundidadeDoNome`, `profundidadeDoCorpo` e `nomeVisivel`.
+- `tests/BUG-Z-camada-dos-nomes.test.ts` (aceite 1), evidência `test-output/BUG-Z.json` aberta:
+  o fundo do maior mapa é 8 192 < 900 000 < 999 999.
+- Roteiro `tools/shots/BUG-Z.js`, porta 5178, saída 0. Carrega a partida da F-VIVO-h e anda com o
+  relógio até o meio do treino (§8). Em toda leitura, cada unidade visível tem o nome acima do
+  corpo mais alto, o nome acende junto com o corpo, e o texto vem do tema.
+- `screenshots/BUG-Z-1-nomes-por-cima.png` aberta: o "Carregador" que aparecia como "rrega" se lê
+  inteiro, por cima das unidades da frente.
+- Não-regressão pelo código de saída: F-D4 (o nome do ofício), F18f (unidade empilhada), BUG-X,
+  F-VIVO-h e F26b (seleção), todos 0.
+
+### Hipótese, nomeada como tal
+- Na captura, só o "Carregador" mostra nome; os outros civis com sprite não mostram rótulo
+  visível. A captura antiga já era assim. Não medi se é o desencontro que os empurra para fora do
+  quadro ou outra regra.

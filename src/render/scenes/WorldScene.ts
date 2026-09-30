@@ -5,7 +5,7 @@ import Phaser from 'phaser';
 import temaSertao from '../../../data/theme-sertao.json';
 import { codigoDoRecurso, configDoMapa, recursosDeRender, terrenoDeRender } from '../mapa';
 import {
-  gridToScreen, screenToGrid, depthDeY, tileDentroDoMapa, ESCALA_DO_MUNDO,
+  gridToScreen, screenToGrid, depthDeY, tileDentroDoMapa, ESCALA_DO_MUNDO, PROFUNDIDADE_DA_SELECAO,
 } from '../grid';
 import { proximoNivel, mundoSobPonto, scrollAncorado } from '../zoom';
 import type { Navegacao } from '../../input/navegacao';
@@ -96,9 +96,6 @@ const REGRA_DE_LARGURA = regraDeLarguraDoManifesto(manifestoDoJogo);
  *  1/4 as quatro pilhas do armazem (3 tiles de base) se sobrepoem, com 1/5 cabem.
  *  Desenho, nao balanceamento: fica aqui, como o resto do placeholder. */
 const LADO_DA_UNIDADE_EM_TILES = 1 / 5;
-/** F26b — o anel do selecionado e a caixa, por cima do mundo e abaixo do highlight do
- *  tile (1 000 000). Cor de TELA, como as outras do render. */
-const PROFUNDIDADE_DA_SELECAO = 999_999;
 /** C-IA-03c — hex do tema para o numero que o Phaser pinta. */
 const cor = (hex: string): number => Phaser.Display.Color.HexStringToColor(hex).color;
 const COR_DA_SELECAO = 0xf2d16b;
