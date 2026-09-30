@@ -356,7 +356,9 @@ consegue marcar feature como pronta sem ter verificado.
   `731a8a47a4a02fac3d20326fdfed0fba7d1f845b` (`731a8a4`).
 - Repositório ativo: `github.com/reyandme/kam_remake`. O `Kromster80/kam_remake`, que é o
   remote configurado no clone, está congelado desde 2022.
-- **Toda citação do KaM cita `arquivo:linha` deste commit.** Citação sem arquivo:linha, ou
-  de outro commit, é hipótese até ser conferida aqui.
+- **Toda citação do KaM cita `arquivo:linha` deste commit**, com o caminho a partir da raiz do
+  clone (`src/houses/KM_Houses.pas:904`, não `KM_Houses.pas:904`): o clone tem três
+  `KM_Houses.pas` e dois `KM_Units.pas` (cópias em `Utils/PathFinder` e `Utils/RVO2`). Citação
+  sem arquivo:linha, ou de outro commit, é hipótese até ser conferida aqui.
 - **Nunca faça `pull`, `fetch`, `checkout` nem nenhuma escrita nesse clone.** Ele é só
   leitura; mover o commit invalida todas as citações já escritas.

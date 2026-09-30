@@ -15702,3 +15702,39 @@ Plano: `docs/planos/2026-09-30-BUG-T-tropa-travada.md`. `BUGS.md` do BUG-T: seve
 
 - BUG-Z: o nome de unidade vai por cima de toda unidade, ou o desencontro para de empurrar o
   rótulo para baixo.
+
+## 2026-09-30 — Sessão do operador, tarefa 6: as citações do KaM que sustentam a D3 (pausado mantém o ocupante): batem
+
+O avaliador da leva não pôde conferir porque o clone não estava na máquina. Agora está
+(`D:\projetos-pessoal\kam_remake`, `731a8a4`, CLAUDE.md §15). Lido nesta sessão, com número de linha:
+
+### Verificado
+
+- **`KM_Houses.pas:904-960` (a D3 e `src/render/visibilidade.ts`): bate.**
+  `src/houses/KM_Houses.pas:904-918` é `UpdateDeliveryMode`: troca `fDeliveryMode`, dispara o
+  evento de script e o log. Nada do trabalhador. `:920-958` são os setters do mesmo modo
+  (`SetNewDeliveryMode`, `SetNextDeliveryMode`, `SetDeliveryModeInstantly`,
+  `AllowDeliveryModeChange`), também sem trabalhador.
+- **`KM_Units.pas:540-546`: bate.** `src/units/KM_Units.pas:530` é
+  `ProceedHouseClosedForWorker`, e `:542-546` é a condição dele: `fHome.IsClosedForWorker`
+  (`:544`, ou o quartel que não aceita recruta). A saída de fato está em `:591-595`
+  (`SetActionGoIn(uaWalk, gdGoOutside, fHome)`, `SetState(hstEmpty)`, `CleanHousePointer`).
+  O campo tem o comentário "If worker is already occupied it, then leave house"
+  (`src/houses/KM_Houses.pas:110`).
+- **`KM_Units.pas:529-600` (BUG-X, casa fechada): bate** (`:529` é o comentário, `:530-598` o
+  procedimento).
+
+### Dois cuidados (não mudam a D3)
+
+- **Caminho ambíguo.** O clone tem `Utils/PathFinder/KM_Houses.pas`,
+  `Utils/RVO2/KM_Houses.pas` e `src/houses/KM_Houses.pas` (e dois `KM_Units.pas`). Minha
+  primeira leitura caiu na cópia de `Utils/PathFinder`, onde a linha 904 é outra coisa. As
+  citações da D3 valem para `src/`. O §15 do CLAUDE.md passou a exigir o caminho a partir da
+  raiz do clone.
+- **"Parar produção" no KaM é interpretação.** O KaM não tem pausa de produção genérica. A
+  casa tem três controles: o modo de entrega (`:904-958`), o fechado para o trabalhador
+  (`:110`, `:1381-1389`) e, nas oficinas, a encomenda (`fWareOrder`, `:136`, `:1549-1560`).
+  A D3 leu o nosso `pausado` como o modo de entrega. A conclusão ("pausado mantém o homem
+  dentro") não depende dessa leitura. No procedimento de expulsão, o único gatilho é
+  `IsClosedForWorker` (`:544`). Não conferi se algum outro caminho do KaM tira o trabalhador
+  de casa com a encomenda em 0.
