@@ -760,6 +760,29 @@ function validarFeira(dados, erros) {
 // cabe em 0..maximo, e toda mercadoria consumida por dois ou mais tipos esta declarada com
 // TODOS os consumidores — e isso que impede uma cadeia nova (F24, ferro) de criar uma
 // disputa que o menu nao mostra.
+// D-PRODUCAO-01b: todo tipo que divide o insumo escasso tem receita com entrada (senao
+// nunca recebe tarefa de insumo, e a linha no dado nao faz nada), e os dois limites sao
+// inteiros >= 0.
+function validarDivisaoDoEscasso(dados, erros) {
+  const div = dados.delivery && dados.delivery.divisaoDoEscasso;
+  const receitas = (dados.production && dados.production.predios) || {};
+  if (!div || !Array.isArray(div.tipos)) {
+    erros.push('entrega/divisaoDoEscasso: delivery.divisaoDoEscasso.tipos precisa existir');
+    return;
+  }
+  for (const tipo of div.tipos) {
+    const receita = receitas[tipo];
+    if (!receita || Object.keys(receita.entra || {}).length === 0) {
+      erros.push(`entrega/divisaoDoEscasso: ${tipo} nao tem receita com entrada`);
+    }
+  }
+  for (const campo of ['ofertaMaxima', 'gavetaMaxima']) {
+    if (!Number.isInteger(div[campo]) || div[campo] < 0) {
+      erros.push(`entrega/divisaoDoEscasso: ${campo} precisa ser inteiro >= 0`);
+    }
+  }
+}
+
 function validarDistribuicao(dados, erros) {
   const dist = dados.delivery && dados.delivery.distribuicao;
   const receitas = (dados.production && dados.production.predios) || {};
@@ -1473,6 +1496,7 @@ function validarTudo(dados) {
   validarAtiradores(dados, erros);
   validarFeira(dados, erros);
   validarDistribuicao(dados, erros);
+  validarDivisaoDoEscasso(dados, erros);
   validarPedidoDeComida(dados, erros);
   validarPrioridadesDaIA(dados, erros);
   validarEscaramuca(dados, erros);

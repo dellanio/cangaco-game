@@ -1154,20 +1154,50 @@ function tarefasDoSerfAbertas(state: GameState, unidadeId: string | null): Taref
     .filter((t) => unidade == null || elegivelParaTarefa(t.tipo, unidade.tipo));
 }
 
-/** A ordem de escolha: `(nivel, custo do caminho, numero)`. O custo e o A*. */
+/**
+ * D-PRODUCAO-01b — a VEZ do destino na disputa pelo insumo escasso, ou `null` se a
+ * tarefa nao disputa. Disputa a tarefa de insumo para um tipo de
+ * `delivery.divisaoDoEscasso`, com a origem oferecendo ate `ofertaMaxima` e o destino com
+ * ate `gavetaMaxima` na entrada — o `TryCalculateBidBasic` do KaM. A vez e o tick da
+ * ultima entrega daquela mercadoria ali; quem nunca recebeu vem antes de todos.
+ */
+function vezNoEscasso(state: GameState, t: TarefaDoSerf, dados: GameData): number | null {
+  if (t.tipo !== 'insumo-producao-parada' && t.tipo !== 'insumo-producao-baixa') return null;
+  const divisao = dados.entrega.divisaoDoEscasso;
+  const destino = state.predios.porId[t.destino];
+  if (destino?.estado !== 'completo' || !divisao.tipos.includes(destino.tipo)) return null;
+  if (sobraNaOrigem(state, t, dados) > divisao.ofertaMaxima) return null;
+  if ((destino.estoque.entrada[t.mercadoria] ?? 0) > divisao.gavetaMaxima) return null;
+  return destino.ultimaEntrega?.[t.mercadoria] ?? Number.NEGATIVE_INFINITY;
+}
+
+/** O custo da tarefa que disputa o escasso: so a perna ate a origem, porque a de entrega
+ *  e o que o KaM ignora ("even if one is closer"). O caminho inteiro ainda tem de existir. */
+function custoSemAEntrega(
+  state: GameState, t: TarefaDoSerf, unidadeId: string | null, dados: GameData,
+): number | null {
+  if (unidadeId !== null) return planoDaTarefa(state, t, unidadeId, dados)?.ateAOrigem.custo ?? null;
+  return custoDaTarefa(state, t, null, dados) === null ? null : 0;
+}
+
+/** A ordem de escolha: `(nivel, custo do caminho, vez no escasso, numero)`. O custo e o
+ *  A*; na tarefa que disputa o escasso (D-PRODUCAO-01b) ele perde a perna de entrega, e a
+ *  vez so desempata duas que disputam. */
 function ordenarTarefasDoSerf(
   state: GameState, candidatas: readonly TarefaDoSerf[], unidadeId: string | null, dados: GameData,
 ): TarefaDoSerf[] {
-  const chaves = new Map(candidatas.map((t) => [t.id, {
-    nivel: nivelDoTipo(t.tipo, dados),
-    custo: custoDaTarefa(state, t, unidadeId, dados) ?? Number.POSITIVE_INFINITY,
-  }]));
+  const chaves = new Map(candidatas.map((t) => {
+    const vez = vezNoEscasso(state, t, dados);
+    const custo = vez === null ? custoDaTarefa(state, t, unidadeId, dados) : custoSemAEntrega(state, t, unidadeId, dados);
+    return [t.id, { nivel: nivelDoTipo(t.tipo, dados), custo: custo ?? Number.POSITIVE_INFINITY, vez }];
+  }));
   return [...candidatas].sort((a, b) => {
     const ca = chaves.get(a.id);
     const cb = chaves.get(b.id);
     if (!ca || !cb) return 0;
     if (ca.nivel !== cb.nivel) return ca.nivel - cb.nivel;
     if (ca.custo !== cb.custo) return ca.custo < cb.custo ? -1 : 1;
+    if (ca.vez !== null && cb.vez !== null && ca.vez !== cb.vez) return ca.vez < cb.vez ? -1 : 1;
     return a.numero - b.numero;
   });
 }

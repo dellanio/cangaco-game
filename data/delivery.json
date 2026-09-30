@@ -37,6 +37,12 @@
       "iron": { "weapon_smithy": 5, "armor_smithy": 5 }
     }
   },
+  "divisaoDoEscasso": {
+    "_doc": "D-PRODUCAO-01b — o insumo escasso dividido (KM_HandLogistics.pas, 731a8a4, TryCalculateBidBasic :1512-1530: a fundicao e as casas que esperam encomenda do jogador, NeedsPlayerOrder em KM_ResHouses.pas). Tarefa de insumo para um destes tipos, com a origem oferecendo ate ofertaMaxima e o destino com ate gavetaMaxima daquela mercadoria na entrada, IGNORA a perna de entrega no custo, e o empate cai para quem recebeu aquela mercadoria ha mais tempo. O KaM desempata com a distribuicao e um aleatorio; aqui e a vez, para a sim continuar deterministica sem gastar o RNG. PARA REVISAO.",
+    "tipos": ["iron_smithy", "weapon_smithy", "armor_smithy", "weapons_workshop", "armory_workshop"],
+    "ofertaMaxima": 2,
+    "gavetaMaxima": 1
+  },
   "alertaTarefaSemCandidato_segundos": 30,
   "escala": null,
   "_nota_escala": "Deliberadamente sem escala: e aviso de interface, nao balanceamento. Comprimir a economia nao muda o tempo de atencao humana. Decisao do operador, F03."

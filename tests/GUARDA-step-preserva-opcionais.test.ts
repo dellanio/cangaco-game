@@ -43,6 +43,8 @@ const OPCIONAIS_DO_PREDIO = {
   recarga: 'do-sistema',
   troca: 'persiste',
   naoAceita: 'persiste',
+  // so a entrega escreve, e nenhum tick sem entrega apaga
+  ultimaEntrega: 'persiste',
 } as const satisfies Record<ChavesOpcionais<PredioCompleto>, Regime>;
 
 const OPCIONAIS_DA_PRODUCAO = {
@@ -81,7 +83,7 @@ function estadoCheio(): { readonly state: Required<GameState>; readonly ids: Rea
   let s: GameState = base;
   s = comPredioNovo(s, { ...novo('g-quartel', 'barracks', 2, 2), recrutas: 3 });
   s = comPredioNovo(s, { ...novo('g-feira', 'marketplace', 6, 2), troca: { da: 'stone', para: 'timber', quantidade: 999, feitas: 0 } });
-  s = comPredioNovo(s, novo('g-oficina', 'weapons_workshop', 10, 2));
+  s = comPredioNovo(s, { ...novo('g-oficina', 'weapons_workshop', 10, 2), ultimaEntrega: { timber: 0 } });
   s = comPredioNovo(s, novo('g-lenhador', 'woodcutters', 14, 2));
   s = { ...s, predios: { ...s.predios, porId: { ...s.predios.porId, [armazem.id]: { ...armazem, naoAceita: ['stone'] } } } };
 
@@ -140,6 +142,7 @@ describe('GUARDA — o step nao perde campo opcional', () => {
     expect(campo(ids.feira).troca).toBeDefined();
     expect(campo(ids.armazem).naoAceita).toEqual(['stone']);
     expect(campo(ids.oficina).producao?.escolha).toBeDefined();
+    expect(campo(ids.oficina).ultimaEntrega).toEqual({ timber: 0 });
     expect(campo(ids.lenhador).producao?.modo).toBeDefined();
   });
 

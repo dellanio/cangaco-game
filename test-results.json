@@ -487,5 +487,8 @@
   },
   "D-PRODUCAO-01a-cadeia-do-ferro": {
     "passes": true
+  },
+  "D-PRODUCAO-01b-insumo-escasso": {
+    "passes": true
   }
 }

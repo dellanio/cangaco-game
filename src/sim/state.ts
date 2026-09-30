@@ -566,6 +566,10 @@ export interface PredioCompleto extends PredioBase {
    *  (`SetStorehouseAccept`), ordenadas. So o armazem tem o campo; AUSENTE aceita tudo, e
    *  a lista vazia e apagada (`armazem.ts: comNaoAceita`). */
   readonly naoAceita?: readonly string[];
+  /** D-PRODUCAO-01b — o tick da ultima entrega de insumo, por mercadoria. So os tipos de
+   *  `delivery.divisaoDoEscasso` tem o campo, e so a entrega o escreve: e a vez com que
+   *  o insumo escasso se divide (`jobs.ts: ordenarTarefasDoSerf`). AUSENTE nunca recebeu. */
+  readonly ultimaEntrega?: Readonly<Record<string, number>>;
 }
 
 /**

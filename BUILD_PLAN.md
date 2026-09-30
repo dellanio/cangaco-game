@@ -5458,7 +5458,16 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
     peso 1 da F24a; (5) sem a mina de carvão ou sem a de ferro, nenhum ferro; (6) tudo pelo
     `step`, sem violar invariante. `tests/D-PRODUCAO-01a-cadeia-do-ferro.test.ts`.
   - **Não cobre:** a ferraria de armaduras produzir. É a 01b.
-- **D-PRODUCAO-01b — insumo escasso dividido entre fundição e ferrarias (sim).** Aberto.
+- **D-PRODUCAO-01b — insumo escasso dividido entre fundição e ferrarias (sim). ENTREGUE
+  (2026-09-29; plano em `docs/planos/2026-09-29-D-PRODUCAO-01b-insumo-escasso.md`).**
+  `delivery.divisaoDoEscasso` (tipos, `ofertaMaxima` 2, `gavetaMaxima` 1),
+  `PredioCompleto.ultimaEntrega` e a vez em `ordenarTarefasDoSerf`. Carvão em 12 000
+  ticks, fundição / armas / armaduras: 39 / 7 / 0 → 23 / 12 / 11.
+  - **Aceite:** `tests/D-PRODUCAO-01b-insumo-escasso.test.ts` (a de armaduras faz peça em
+    ≤ 5 000; razão menor/maior ≥ 0,22 em 6 000; a ordem direta nos três casos).
+  - **PARA REVISÃO:** o `KaMRandom` virou a vez (quem recebeu há mais tempo); a
+    distribuição fica fora do lance; os +20 por unidade na gaveta, que valem para toda
+    casa, ficam para o lote de balanceamento.
   - **O defeito (medido, sonda da 01a):** uma mina de carvão, três consumidores; em
     12 000 ticks a fundição recebeu 39 carvões, a ferraria de armas 7 e a de armaduras 0.
     Com as gavetas vazias as três tarefas empatam no nível `parada`, e
@@ -6092,7 +6101,7 @@ vai para o PROGRESS como PARA REVISÃO, e o trabalho segue.
    destaque.
 5. D-TRANSPORTE-01 — armazém com liga/desliga por mercadoria.
 6. D-TRANSPORTE-02 — menu de distribuição.
-7. D-PRODUCAO-01 — ferro e ferrarias (01a entregue; 01b, o insumo escasso dividido).
+7. D-PRODUCAO-01 — ferro e ferrarias. ENTREGUE (01a guarda, 01b insumo escasso dividido).
 8. D-PRODUCAO-03 — encomendas das oficinas (03a regra, 03b painel). Decisão do operador,
    2026-09-29.
 9. F24, o que resta: a cadeia de couro.

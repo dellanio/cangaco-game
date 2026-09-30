@@ -226,7 +226,7 @@ Decisão do operador (2026-09-28).
 | F-FEED | fome militar (Feed) | C-COMIDA-01 | aberto, plano à espera | — |
 | F18c-2 | recentrar a vila | B-TERRENO-01 | aberto, não iniciado | — |
 | F27 | formação, virar e storm attack | C-COMBATE-01 | aberto, não iniciado | — |
-| F29 | ferro e smithies | D-PRODUCAO-01 | 01a fechado (2026-09-29); 01b aberto | `D-PRODUCAO-01a-cadeia-do-ferro` |
+| F29 | ferro e smithies | D-PRODUCAO-01 | fechado (2026-09-29) | `D-PRODUCAO-01a-cadeia-do-ferro`, `D-PRODUCAO-01b-insumo-escasso` |
 | F30 | armazém com toggles por mercadoria | D-TRANSPORTE-01 | fechado (2026-09-29) | `D-TRANSPORTE-01a-armazem-aceita`, `D-TRANSPORTE-01b-painel-armazem` |
 | F31 | menu de distribuição | D-TRANSPORTE-02 | fechado (2026-09-29) | `D-TRANSPORTE-02a-distribuicao`, `D-TRANSPORTE-02b-aba-distribuicao` |
 | F32 | aba de estatísticas | D-TELA-01 | fechado | `D-TELA-01-estatisticas` |

@@ -693,6 +693,11 @@ export function loadGameData(raw: RawGameData): GameData {
     desempate: raw.delivery.desempate,
     reserva: raw.delivery.reserva,
     distribuicao: { maximo: raw.delivery.distribuicao.maximo, padrao: raw.delivery.distribuicao.padrao },
+    divisaoDoEscasso: {
+      tipos: raw.delivery.divisaoDoEscasso.tipos,
+      ofertaMaxima: raw.delivery.divisaoDoEscasso.ofertaMaxima,
+      gavetaMaxima: raw.delivery.divisaoDoEscasso.gavetaMaxima,
+    },
     ticksAlertaTarefaSemCandidato: registrar(
       'delivery.alertaTarefaSemCandidato_segundos', raw.delivery.escala,
       raw.delivery.alertaTarefaSemCandidato_segundos, 'segundos',

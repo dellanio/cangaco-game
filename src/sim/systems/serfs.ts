@@ -227,6 +227,13 @@ function entregarOuro(state: GameState, tarefa: TarefaDeTransporte): PredioCompl
  *  o civil vai comer. O gesto e um so, e por isso a funcao tambem. `null` se o
  *  destino deixou de ser predio completo — quem confere que ele ainda PEDE e
  *  `demandaNoDestino`, no `switch` abaixo. */
+/** D-PRODUCAO-01b — quem divide o insumo escasso guarda o tick da entrega: e a vez dele
+ *  na proxima disputa (`ordenarTarefasDoSerf`). Os outros tipos nao ganham o campo. */
+function comVezDoEscasso(predio: PredioCompleto, mercadoria: string, tick: number, dados: GameData): PredioCompleto {
+  if (!dados.entrega.divisaoDoEscasso.tipos.includes(predio.tipo)) return predio;
+  return { ...predio, ultimaEntrega: { ...predio.ultimaEntrega, [mercadoria]: tick } };
+}
+
 function entregarNaEntrada(state: GameState, tarefa: TarefaDeTransporte): PredioCompleto | null {
   const destino = state.predios.porId[tarefa.destino];
   if (destino === undefined || destino.estado !== 'completo') return null;
@@ -268,9 +275,12 @@ function destinoQueRecebe(state: GameState, tarefa: TarefaDeTransporte, dados: G
       return demandaNoDestino(state, tarefa, dados) >= 1 ? entregarOuro(state, tarefa) : null;
     case 'comida-para-inn':
     case 'arma-para-quartel':
-    case 'insumo-producao-parada':
-    case 'insumo-producao-baixa':
       return demandaNoDestino(state, tarefa, dados) >= 1 ? entregarNaEntrada(state, tarefa) : null;
+    case 'insumo-producao-parada':
+    case 'insumo-producao-baixa': {
+      const recebeu = demandaNoDestino(state, tarefa, dados) >= 1 ? entregarNaEntrada(state, tarefa) : null;
+      return recebeu === null ? null : comVezDoEscasso(recebeu, tarefa.mercadoria, state.tick, dados);
+    }
     case 'saida-cheia-para-armazem':
     case 'excedente-para-armazem':
       return depositarNoArmazem(state, tarefa.destino, tarefa.mercadoria);

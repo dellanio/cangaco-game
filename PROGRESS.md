@@ -14388,3 +14388,29 @@ Fecha a D-TRANSPORTE-02 (menu de distribuição). Plano: `docs/planos/2026-09-29
 - A caixa da fixture (encosta norte) é decisão minha. A posição dentro dela sai do `canPlace`.
 
 **O que muda na partida:** nada. A 01a é só guarda. Na partida de hoje, uma mina de carvão com fundição e as duas ferrarias deixa a de armaduras parada para sempre, e isso é a 01b.
+
+
+## 2026-09-29 — D-PRODUCAO-01b (o insumo escasso dividido entre fundição e ferrarias)
+
+**O que fiz.** Plano em `docs/planos/2026-09-29-D-PRODUCAO-01b-insumo-escasso.md`. A mudança é de sim e dado, sem tela.
+- **Dado.** `delivery.divisaoDoEscasso` recebe os tipos, `ofertaMaxima` 2 e `gavetaMaxima` 1, com regra nova em `tools/data-rules.js`.
+- **Estado.** `PredioCompleto.ultimaEntrega?` só é escrito na entrega de insumo, em `serfs.ts`, e está na guarda de opcionais como `persiste`.
+- **Ordem.** A tarefa que disputa o escasso perde a perna de entrega no custo, e o desempate é a vez: quem recebeu há mais tempo (`sim/jobs.ts`, `vezNoEscasso` e `ordenarTarefasDoSerf`).
+
+**Verificado:**
+- A guarda de opcionais cobrou o campo novo pelo compilador antes da classificação: um erro de typecheck, em `OPCIONAIS_DO_PREDIO`.
+- Carvão na cadeia do ferro em 12 000 ticks, fundição / armas / armaduras: era 39 / 7 / 0 e ficou 23 / 12 / 11. A ferraria de armaduras fez 10 peças, onde antes fazia 0, e as armas subiram de 7 para 11. O ferro caiu de 37 para 22, porque o carvão agora é repartido. Sonda apagada.
+- Evidência aberta: `test-output/D-PRODUCAO-01b-insumo-escasso.json` tem 11 / 6 / 5 em 6 000 ticks, razão 0,45, e a primeira armadura no tick 2256.
+- Com a regra desligada à mão, 5 dos 6 testes caem: carvão 19 / 3 / 0 e nenhuma armadura. O que continua passando é o da oferta farta, que é o lado de compatibilidade.
+- `npm run verify`: 192 arquivos, 1987 testes. Nenhum teste existente mudou de resultado.
+- A lista de tipos foi conferida no fonte (`KM_ResHouses.pas`, `NeedsPlayerOrder: True`): ferraria de armas, de armaduras, oficina de armas, de armaduras e de cerco, mais a fundição por nome em `KM_HandLogistics.pas:1517`. A de cerco não existe aqui.
+
+**PARA REVISÃO:**
+- O `KaMRandom` do lance virou a vez, para a sim seguir determinística sem gastar o RNG.
+- A distribuição (`distr`) fica fora do lance. Hoje ela é 5 em todo par.
+- Os +20 por unidade já na gaveta (`TryCalculateBid` :1613-1618) valem para toda casa e ficam para o lote de balanceamento (`BALANCE_LOG.md`, não registrado ainda).
+- O piso da razão, 0,22, fica na metade do medido.
+
+**O que muda na partida:**
+- Fundição e ferrarias disputando carvão ou ferro escasso agora se revezam. A ferraria de armaduras deixa de ficar parada para sempre quando a de armas ou a fundição está mais perto.
+- O ferro sai mais devagar com uma mina de carvão só, porque a fundição divide o carvão. O jogo passa a pedir mais minas de carvão, como no KaM.

@@ -8,10 +8,10 @@
  * F15a, tarefa de insumo da F15b, rodizio de peso 1 da F24a. O que se entrega e o
  * GUARDA. Tudo aqui passa pelo `step` (regra do operador, 2026-09-29).
  *
- * O que NAO se afirma, e esta na D-PRODUCAO-01b: a ferraria de armaduras produzir. Com
- * uma mina de carvao para tres consumidores, a tarefa de insumo vai sempre para o
- * destino de menor caminho, e a de armaduras nunca recebe carvao (sonda: 0 em 12 000
- * ticks). Afirmar isso codificaria o defeito; afirma-se so que o ferro chega nela.
+ * O que NAO se afirma aqui: a ferraria de armaduras produzir. Na sonda, com uma mina de
+ * carvao para tres consumidores, a tarefa de insumo ia sempre para o destino de menor
+ * caminho, e a de armaduras nunca recebia carvao (0 em 12 000 ticks). A D-PRODUCAO-01b
+ * corrigiu e afirma isso em `tests/D-PRODUCAO-01b-insumo-escasso.test.ts`.
  */
 import { describe, expect, it } from 'vitest';
 import { gameData } from '../src/sim/data';

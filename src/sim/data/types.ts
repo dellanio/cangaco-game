@@ -385,6 +385,12 @@ export interface EntregaData {
     readonly maximo: number;
     readonly padrao: Readonly<Record<string, Readonly<Record<string, number>>>>;
   };
+  /** D-PRODUCAO-01b — os tipos que dividem o insumo escasso, e o que e "escasso". */
+  readonly divisaoDoEscasso: {
+    readonly tipos: readonly string[];
+    readonly ofertaMaxima: number;
+    readonly gavetaMaxima: number;
+  };
   readonly ticksAlertaTarefaSemCandidato: Ticks;
 }
 
