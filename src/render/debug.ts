@@ -15,6 +15,7 @@ import type { EstagioDaObra, RevelacaoDaObra } from './estagio-obra';
 import type { LinhaDoMedidor } from './medidor-obra';
 import type { CanteiroDaObra } from './nivelamento-obra';
 import type { GavetaDaPilha } from './pilhas';
+import type { EstagioDaCultura } from './crescimento';
 import type { ItemDeFila } from '../sim/state';
 import { ATALHOS, GESTOS } from '../input/atalhos';
 
@@ -205,6 +206,9 @@ export interface EstadoDebug {
   /** F-REPL-e — o tile de vegetacao replantado que ainda cresce: o estado que o
    *  sprite desenha, se veio de PNG ou do placeholder (a adulta encolhida), e a escala. */
   crescimentoDasArvores: Readonly<Record<string, CrescimentoNoDebug>>;
+  /** BUG-W — o estagio que cada tile de CULTURA com relogio desenha agora (o que tem
+   *  `semeadoEm`); o tile do mapa, sem relogio, nao entra. O roteiro le daqui. */
+  estagiosDasCulturas: Readonly<Record<string, EstagioDaCultura>>;
   /** F-SPR — os ids que resolveram ARTE do manifesto em cada camada de tile, lidos
    *  uma vez no `create` (a arte chega no `preload`). Lista vazia e o placeholder de
    *  hoje — cor chapada e marcador —, que e comportamento normal (§9). Vegetacao e o
@@ -348,6 +352,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     texturaDoTerreno: {},
     transicoesVisiveis: {},
     crescimentoDasArvores: {},
+    estagiosDasCulturas: {},
     arteDasCamadas: { terreno: [], recurso: [], vegetacao: [] },
     vegetacaoRenderizada: 0,
     estradasRenderizadas: 0,

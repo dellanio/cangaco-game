@@ -48,3 +48,32 @@ export function especiesDaVegetacao(estados: readonly string[]): string[] {
   const crescimento: readonly string[] = ESTADOS_DE_CRESCIMENTO;
   return estados.filter((estado) => !crescimento.includes(estado));
 }
+
+/**
+ * BUG-W — os estagios de uma CULTURA (milho, uva), na ordem. A cultura nao vira sprite
+ * em pe como a arvore: e marcador (ou textura) na tira de recurso, e o estagio muda o
+ * desenho da celula. O KaM tem 7 estagios de milho e 4 de uva (`KM_ResMapElements.pas`);
+ * aqui sao tres de crescimento e o `pronto`, que comeca no MESMO tick em que a sim diz
+ * `tileMaduro` (`tests/BUG-W-estagio-da-cultura.test.ts` afirma tick a tick).
+ */
+export const ESTAGIOS_DA_CULTURA = ['semeado', 'muda', 'verde', 'pronto'] as const;
+export type EstagioDaCultura = (typeof ESTAGIOS_DA_CULTURA)[number];
+
+/** `null` e "sem relogio": esgotado, ou tile que nasceu do mapa (maduro desde sempre). */
+export function estagioDaCultura(
+  recurso: RecursoNoTile | undefined, tick: number, ticksDeCrescer: number,
+): EstagioDaCultura | null {
+  if (recurso === undefined || recurso.quantidade <= 0 || recurso.semeadoEm === undefined) return null;
+  const passado = tick - recurso.semeadoEm;
+  if (passado >= ticksDeCrescer) return 'pronto';
+  const n = ESTAGIOS_DA_CULTURA.length - 1;
+  const i = Math.floor((n * Math.max(0, passado)) / ticksDeCrescer);
+  return ESTAGIOS_DA_CULTURA[Math.min(i, n - 1)] ?? null;
+}
+
+/** O placeholder do estagio sem arte (§9): a opacidade do marcador. Numero de TELA, como
+ *  `ESCALA_DA_MUDA`: o semeado mal se ve, o pronto e o marcador cheio de sempre. Arte de
+ *  estagio e decisao humana. */
+export const ALFA_DO_ESTAGIO: Readonly<Record<EstagioDaCultura, number>> = {
+  semeado: 0.2, muda: 0.4, verde: 0.6, pronto: 1,
+};

@@ -35,7 +35,7 @@ import type { EstagioDaObra, Fracao, RevelacaoDaObra } from '../estagio-obra';
 import { centroDaVila } from '../../sim/selectors';
 import { corDoBando } from '../cor-do-bando';
 import { tileDeChave } from '../../sim/estradas';
-import type { EstadoDePredio, GameState, Predio } from '../../sim/state';
+import type { EstadoDePredio, GameState, Predio, RecursoNoTile } from '../../sim/state';
 import type { PonteDeEstado } from '../ponte';
 import type { Ferramenta } from '../../input/ferramenta';
 import type { EntradaDoMapa } from '../../input/colocar';
@@ -50,7 +50,8 @@ import {
 } from '../manifesto';
 import type { ChaveDaRevelacao, DesenhoDoRecurso, EntradaDeAsset, TexturaCarregada } from '../manifesto';
 import {
-  escalaDoPlaceholder, especiesDaVegetacao, estadoDeCrescimento, type EstadoDeCrescimento,
+  ALFA_DO_ESTAGIO, escalaDoPlaceholder, especiesDaVegetacao, estadoDeCrescimento, estagioDaCultura,
+  type EstadoDeCrescimento, type EstagioDaCultura,
 } from '../crescimento';
 import { manifestoDoJogo, prediosSemArteDaBusca, texturasParaCarregar } from '../sprites';
 import { escalaDoSprite, regraDeLarguraDoManifesto, regraDoManifesto } from '../escala-predio';
@@ -159,6 +160,9 @@ export class WorldScene extends Phaser.Scene {
   /** F-REPL-e — o estado de crescimento que cada sprite de vegetacao desenhou. O
    *  crescimento anda sem o codigo do tile mudar; e esta memoria que o diff compara. */
   private readonly crescimentoDesenhado = new Map<string, CrescimentoNoDebug>();
+  /** BUG-W — o estagio que cada tile de cultura desenhou. Como o crescimento da arvore,
+   *  anda sem o codigo do tile mudar; e esta memoria que o diff compara. */
+  private readonly estagioDesenhado = new Map<string, EstagioDaCultura>();
 
   private readonly desenhados = new Map<
     string,
@@ -512,6 +516,7 @@ export class WorldScene extends Phaser.Scene {
       estado.transicoesVisiveis = this.lerTransicoesVisiveis(camadasDeTransicao);
       estado.vegetacaoRenderizada = this.vegetacaoDesenhada.size;
       estado.crescimentoDasArvores = Object.fromEntries(this.crescimentoDesenhado);
+      estado.estagiosDasCulturas = Object.fromEntries(this.estagioDesenhado);
       estado.pronto = true;
       if (this.ponte.atual) this.atualizarPredios(this.ponte.atual, tilePx, estado);
 
@@ -1129,18 +1134,22 @@ export class WorldScene extends Phaser.Scene {
           && this.crescimentoDoTile(chave) !== (this.crescimentoDesenhado.get(chave)?.estado ?? null)) {
           repintar.add(chave);
         }
+        this.pintarEstagio(camada, chave, recurso, codigo, false);
         continue;
       }
       const { gx, gy } = tileDeChave(chave);
       camada.putTileAt(codigo, gx, gy);
       this.recursosDesenhados.set(chave, codigo);
       marcarComVizinhos(chave);
+      // o tile trocado nasce com opacidade cheia: o estagio se repoe sempre
+      this.pintarEstagio(camada, chave, recurso, codigo, true);
     }
     for (const chave of [...this.recursosDesenhados.keys()]) {
       if (recursos[chave] !== undefined) continue;
       const { gx, gy } = tileDeChave(chave);
       camada.putTileAt(0, gx, gy);
       this.recursosDesenhados.delete(chave);
+      this.estagioDesenhado.delete(chave);
       marcarComVizinhos(chave);
     }
     for (const chave of repintar) {
@@ -1192,6 +1201,24 @@ export class WorldScene extends Phaser.Scene {
 
   /** F-REPL-e — o estado de crescimento do tile, pela mesma funcao que o teste confere
    *  contra o `tileMaduro` da sim. */
+  /** BUG-W — a opacidade da celula pelo estagio da cultura (`estagioDaCultura`). So o que
+   *  nao e vegetacao: a arvore cresce como sprite em pe. Sem relogio (tile do mapa,
+   *  esgotado), a celula fica cheia. `repor`: o tile acabou de ser trocado e a opacidade
+   *  voltou a 1, entao reaplica mesmo sem mudanca de estagio. */
+  private pintarEstagio(
+    camada: Phaser.Tilemaps.TilemapLayer, chave: string, recurso: RecursoNoTile, codigo: number, repor: boolean,
+  ): void {
+    const tick = this.ponte.atual?.tick ?? 0;
+    const estagio = this.desenhoPorCodigo[codigo]?.como === 'vegetacao'
+      ? null
+      : estagioDaCultura(recurso, tick, recursosDeRender.ticksDeCrescer[recurso.tipo] ?? 0);
+    if (!repor && estagio === (this.estagioDesenhado.get(chave) ?? null)) return;
+    const { gx, gy } = tileDeChave(chave);
+    camada.getTileAt(gx, gy)?.setAlpha(estagio === null ? 1 : ALFA_DO_ESTAGIO[estagio]);
+    if (estagio === null) this.estagioDesenhado.delete(chave);
+    else this.estagioDesenhado.set(chave, estagio);
+  }
+
   private crescimentoDoTile(chave: string): EstadoDeCrescimento | null {
     const estadoDoJogo = this.ponte.atual;
     if (!estadoDoJogo) return null;
