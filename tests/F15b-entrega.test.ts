@@ -5,7 +5,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
-  criarTarefaDeInsumo, criarTarefaParaArmazem, elegivelParaTarefa, nivelDoTipo,
+  criarTarefaDeInsumo, criarTarefaParaArmazem, elegivelParaTarefa, importanciaDoTipo,
   TIPO_QUE_CARREGA, TIPO_QUE_CONSTROI,
 } from '../src/sim/jobs';
 import type { GameState, Tarefa, TarefaDeTransporte, TipoDeTransporte } from '../src/sim/state';
@@ -44,19 +44,17 @@ const armazem = armazemDoCenario(base).id;
 const crua = (t: Tarefa): Tarefa => t;
 
 describe('F15b — os quatro tipos entram na escada', () => {
-  it('cada tipo novo tem nivel em delivery.json, na ordem certa', () => {
-    // C-COMIDA-01a (fome militar com o Feed): todos descem um, com a comida da tropa no 2
-    expect(nivelDoTipo('insumo-producao-parada')).toBe(5);
-    expect(nivelDoTipo('insumo-producao-baixa')).toBe(6);
-    // 8 e 9 desde a C-COMIDA-01a (7 e 8 desde o lote 2, quando a pedra do canteiro subiu)
-    expect(nivelDoTipo('saida-cheia-para-armazem')).toBe(8);
-    expect(nivelDoTipo('excedente-para-armazem')).toBe(9);
-    expect(nivelDoTipo('pedra-para-canteiro'))
-      .toBeLessThan(nivelDoTipo('saida-cheia-para-armazem'));
-    expect(nivelDoTipo('insumo-producao-parada'))
-      .toBeLessThan(nivelDoTipo('insumo-producao-baixa'));
-    expect(nivelDoTipo('material-para-obra'))
-      .toBeLessThan(nivelDoTipo('insumo-producao-parada'));
+  it('cada tipo novo tem classe em delivery.json, na ordem certa', () => {
+    // D-TRANSPORTE-03 T1: os quatro sao a classe comum do KaM (diNorm, 5); dentro dela
+    // decide o caminho. Obra e canteiro (diHigh4) acima deles
+    expect(importanciaDoTipo('insumo-producao-parada')).toBe(5);
+    expect(importanciaDoTipo('insumo-producao-baixa')).toBe(5);
+    expect(importanciaDoTipo('saida-cheia-para-armazem')).toBe(5);
+    expect(importanciaDoTipo('excedente-para-armazem')).toBe(5);
+    expect(importanciaDoTipo('pedra-para-canteiro'))
+      .toBeLessThan(importanciaDoTipo('saida-cheia-para-armazem'));
+    expect(importanciaDoTipo('material-para-obra'))
+      .toBeLessThan(importanciaDoTipo('insumo-producao-parada'));
   });
 
   it('os quatro sao tarefas de TRANSPORTE pela forma', () => {
@@ -340,9 +338,9 @@ describe('F15b — niveis 4 e 5: o insumo chega ao produtor', () => {
     expect(tarefasDoTipo(gerarTarefas(servida(2)), 'insumo-producao-parada')).toEqual([]);
   });
 
-  it('a parada esta acima da baixa na escada (o desempate e do atendimento)', () => {
-    expect(nivelDoTipo('insumo-producao-parada'))
-      .toBeLessThan(nivelDoTipo('insumo-producao-baixa'));
+  it('a parada e a baixa estao na mesma classe (D-TRANSPORTE-03 T1: diNorm; decide o caminho)', () => {
+    expect(importanciaDoTipo('insumo-producao-parada'))
+      .toBe(importanciaDoTipo('insumo-producao-baixa'));
   });
 
   it('nao gera mais tarefas do que cabe na gaveta de entrada', () => {

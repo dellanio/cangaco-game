@@ -14659,3 +14659,70 @@ passos (T1 e T2), com medida entre eles.
 ### Perguntas em aberto
 - **C-IA-03b:** guardar a lista de eventos da caminhada ao lado do save, como texto também,
   cada teste lendo a sua cópia? Ou deixar como está, já que o verify passa?
+
+## 2026-09-30 — D-TRANSPORTE-03 T1 (logística do KaM: classes de importância e a arma prefere o quartel)
+
+Autorização do operador na leva de 2026-09-30 (T1, medida, depois T2). Plano:
+`docs/planos/2026-09-30-D-TRANSPORTE-03-T1-importancia-e-arma.md`. `passes` NÃO marcado: a
+chave é da D-TRANSPORTE-03 inteira e fecha no T2.
+
+**Verificado:**
+- **Dado.** `data/delivery.json` troca `nivel` por `importancia`, nas classes do KaM, cada
+  linha com a `fonte` em arquivo:linha: 1 ouro da escola, 2 Bodega (D1, divergência no
+  `_doc`), 3 comida da tropa, 4 obra e pedra do canteiro (D3), 5 o resto. As duas do laborer
+  ficam com `null`, só pelo `modo`. `validate:data`: importância inteira ≥ 1 ou `null`, classes
+  de 1 ao máximo sem buraco, ids únicos.
+- **Sim.**
+  - `importanciaDoTipo` no lugar de `nivelDoTipo`: falha alto sem o id e com `null`.
+  - A arma prefere o quartel: sem `saida-cheia` de arma enquanto `quartelAceitaArma`, que pede
+    quartel completo do lado, ligado por estrada, com vaga.
+  - A origem da `arma-para-quartel` é a mais perto entre armazém e produtor.
+  - `gerarTarefasParaArmazem` desconta da oferta o que outro tipo já reservou na mesma saída.
+    Sem isso, com o quartel cheio, nascia uma `saida-cheia` de arma por tick: 22 na corrida
+    sem carga.
+- **Aceite** (`tests/D-TRANSPORTE-03-logistica-kam.test.ts`, 12 testes, evidência
+  `test-output/D-TRANSPORTE-03-T1.json` aberta):
+  - sem carga: 15/15 armas no quartel e 2 soldados, nenhuma ao armazém com quartel pronto;
+  - sem quartel: 15 no armazém;
+  - corrida B: nenhuma ao armazém, sem `saida-cheia` de arma;
+  - invariantes em todo tick das duas corridas com quartel, e o determinismo;
+  - a ordem entre classes vem do dado (7a, com cópia adulterada);
+  - dentro da classe 5 decide o caminho, pelo `step` (7b, com contraprova);
+  - o guarda estrutural do aceite 8.
+- **Testes antigos** que afirmavam nível passaram a afirmar a classe, cada troca com a razão
+  no comentário. Onde afirmavam `a < b` e os dois caíram na mesma classe (parada e baixa),
+  afirmam agora a igualdade. O F18d-1a (o modo no dado) só mudou a ordem das linhas.
+- `npm run verify` verde, com a F-CAL da fome (aceite 9, bloqueante) dentro.
+- **Medida** (vila da F-CAL, 20 000 ticks, sonda fora do repo; base = a `main` antes do T1):
+
+  | | base | T1 | delta |
+  |---|---|---|---|
+  | produção total | 311 | 312 | +1 (pão) |
+  | insumo parado / baixa entregues | 50 / 122 | 69 / 103 | ±19, soma igual |
+  | demais entregas por tipo | — | iguais | 0 |
+  | ticks-produtor parado por falta de insumo | 13 184 | 16 875 | +3 691 (+28 %) |
+  | — padaria / moinho / serraria | 696 / 2 740 / 9 748 | 2 399 / 2 823 / 11 653 | +1 703 / +83 / +1 905 |
+  | mortes | 0 | 0 | 0 |
+
+**PARA REVISÃO:**
+- **Aceite 1 com carga: 12/15, não 15.** Na corrida B a pedra da escola e a arma estão na
+  mesma classe; a pedra fica mais perto e ganha sempre, e as 3 últimas armas ficam abertas
+  (diagnóstico no tick 8000: serfs todos em pedra→armazém, `reclamar` da arma dá
+  `unidade-ocupada`). A multa do armazém (T2) resolve isso, e puxá-la para cá seria adiantar
+  o T2. O T1 afirma o 15/15 sem carga; o 15/15 com carga virou nota do T2 no BUILD_PLAN.
+- **`quartelAceitaArma` pede estrada e vaga; o KaM não pede nenhuma das duas** (o quartel
+  dele não tem teto). Sem elas, a arma ficaria presa na oficina com o quartel cheio ou
+  isolado, e a produção pararia.
+- **Excedente na classe comum:** decisão do operador, divergência do KaM (lá não há excedente
+  automático).
+
+**Hipótese (não medida):**
+- A subida do tempo parado vem da fusão parada/baixa: a baixa, que antes passava na frente da
+  `saida-cheia`, agora perde para ela na distância, e o produtor esvazia antes de ser servido.
+  A troca de 19 entregas de baixa por parada casa com isso, mas não isolei a causa. A multa do
+  armazém do T2 também pesa sobre o insumo que sai do armazém; se isso compensa, só a medida
+  do T2 diz.
+
+### Perguntas em aberto
+- **D-TRANSPORTE-03 T1:** o desvio do aceite 1 (15/15 afirmado sem carga, com carga no T2)
+  serve, ou o T2 não começa antes de outra forma?

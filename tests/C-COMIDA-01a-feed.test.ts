@@ -16,7 +16,7 @@ import type { GameState, Unidade } from '../src/sim/state';
 import { step } from '../src/sim/tick';
 import type { Command } from '../src/sim/commands';
 import { condicaoCheiaDoTipo } from '../src/sim/condicao';
-import { nivelDoTipo } from '../src/sim/jobs';
+import { importanciaDoTipo } from '../src/sim/jobs';
 import { resumoDoGrupo } from '../src/sim/selectors';
 import { carregar, salvar } from '../src/sim/save';
 import { validarTudo } from '../tools/data-rules.js';
@@ -38,12 +38,14 @@ const feed = (...unidades: string[]): Command => ({ type: 'FeedUnits', unidades 
 const pediu = (s: GameState, id: string): boolean => s.unidades.porId[id]?.pedidoDeComida === true;
 
 describe('C-COMIDA-01a — o Feed marca o pedido de comida', () => {
-  it('o dado: pede abaixo de 55 % da cheia do militar; a comida da tropa e o nivel 2 da escada, a pe', () => {
+  it('o dado: pede abaixo de 55 % da cheia do militar; a comida da tropa e a classe 3, abaixo da Bodega, a pe', () => {
     expect(gameData.condicao.ticksPedeComida).toBe(aFracao(0.55));
     // a tarefa nasce na C-COMIDA-01b; a linha da escada ja existe no dado
-    expect(gameData.entrega.prioridades.find((p) => p.id === 'comida-para-tropa')).toMatchObject({ nivel: 2, modo: 'livre' });
-    expect(nivelDoTipo('comida-para-inn')).toBe(1);
-    expect(nivelDoTipo('ouro-para-escola')).toBe(3);
+    // D-TRANSPORTE-03 T1: classes do KaM. D2 poe a escola na 1; D1 mantem a Bodega (2)
+    // acima da tropa (3)
+    expect(gameData.entrega.prioridades.find((p) => p.id === 'comida-para-tropa')).toMatchObject({ importancia: 3, modo: 'livre' });
+    expect(importanciaDoTipo('comida-para-inn')).toBe(2);
+    expect(importanciaDoTipo('ouro-para-escola')).toBe(1);
   });
 
   it('pede a 50 % e nao a 60 %; o de 60 % fica sem pedido', () => {

@@ -754,8 +754,8 @@ afterAll(() => {
     },
     // Ponto 4: so o nivel 3 tem produtor; os demais so existem no dado.
     escada: {
-      nivelImplementado: { id: 'material-para-obra', nivelNoDado: nivelDoCodigo?.nivel ?? null },
-      soNoDado: gameData.entrega.prioridades.filter((p) => p.id !== 'material-para-obra').map((p) => ({ nivel: p.nivel, id: p.id })),
+      nivelImplementado: { id: 'material-para-obra', nivelNoDado: nivelDoCodigo?.importancia ?? null },
+      soNoDado: gameData.entrega.prioridades.filter((p) => p.id !== 'material-para-obra').map((p) => ({ nivel: p.importancia, id: p.id })),
       ordenacaoPorNivelExercitavel: false,
       motivo: 'com um unico nivel produzido nao ha como exercitar a ordenacao por nivel sem fabricar tarefas que ninguem produz',
     },

@@ -11,7 +11,7 @@
 import { gameData } from '../../src/sim/data';
 import type { GameData } from '../../src/sim/data/types';
 import type { GameState, Tarefa } from '../../src/sim/state';
-import { distanciaDaTarefa, modoDoTipo, nivelDoTipo, podeReclamar } from '../../src/sim/jobs';
+import { distanciaDaTarefa, importanciaDoTipo, modoDoTipo, podeReclamar } from '../../src/sim/jobs';
 import { ehEscolaCompleta } from '../../src/sim/escola';
 import { ehBodegaCompleta, ehComida } from '../../src/sim/bodega';
 import { chaveDeTile, ehPlanejada, MERCADORIA_DA_ESTRADA } from '../../src/sim/estradas';
@@ -221,7 +221,7 @@ export function violacoesDeInvariantes(estado: GameState, dados: GameData = game
 
     if (t.tipo === 'material-para-obra') {
       try {
-        nivelDoTipo(t.tipo, dados);
+        importanciaDoTipo(t.tipo, dados);
       } catch {
         v.push(`${id}: tipo '${t.tipo}' fora da escada do dado`);
       }

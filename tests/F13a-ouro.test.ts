@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 import { createInitialState, MERCADORIA_DE_OURO } from '../src/sim/state';
 import type { GameState, ItemDeFila, TarefaDeTransporte } from '../src/sim/state';
 import { step } from '../src/sim/tick';
-import { criarTarefaDeOuro, elegivelParaTarefa, nivelDoTipo, reclamar, tarefasEmOrdem } from '../src/sim/jobs';
+import { criarTarefaDeOuro, elegivelParaTarefa, importanciaDoTipo, reclamar, tarefasEmOrdem } from '../src/sim/jobs';
 import { custoDeTreino, filaDaEscola, ouroNecessario } from '../src/sim/escola';
 import { vagaDoDestino } from '../src/sim/reservas';
 import {
@@ -37,10 +37,10 @@ const ligado = (ouro: number, estado: GameState = inicial): GameState =>
   comOuroNoArmazem(comEstradas(estado, RUAS), ARMAZEM, ouro);
 
 describe('F13a — a tarefa de ouro no quadro', () => {
-  it('o nivel vem do dado, e ouro ganha de material', () => {
-    // C-COMIDA-01a (fome militar com o Feed): 3, com a comida da tropa no nivel 2
-    expect(nivelDoTipo('ouro-para-escola')).toBe(3);
-    expect(nivelDoTipo('ouro-para-escola')).toBeLessThan(nivelDoTipo('material-para-obra'));
+  it('a classe vem do dado, e ouro ganha de material', () => {
+    // D-TRANSPORTE-03 T1 (D2): o ouro da escola e a classe 1, diHigh1 do KaM
+    expect(importanciaDoTipo('ouro-para-escola')).toBe(1);
+    expect(importanciaDoTipo('ouro-para-escola')).toBeLessThan(importanciaDoTipo('material-para-obra'));
   });
 
   it('so o serf e elegivel', () => {

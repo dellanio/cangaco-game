@@ -788,9 +788,9 @@ export interface TarefaOuroParaEscola extends TarefaDeCarga {
 }
 
 /**
- * F25a — ultimo nivel da escada (`delivery.json: arma-para-quartel`): uma unidade de
- * equipamento (os `requisitos` de `units.json: militares`) do armazem ate a gaveta
- * `entrada` de um quartel COMPLETO. Mesmo serf, mesmo claim, mesma reserva dupla da
+ * F25a — `delivery.json: arma-para-quartel`: uma unidade de equipamento (os `requisitos`
+ * de `units.json: militares`) do armazem, ou direto da oficina (D-TRANSPORTE-03 T1), ate
+ * a gaveta `entrada` de um quartel COMPLETO. Mesmo serf, mesmo claim, mesma reserva dupla da
  * tarefa de ouro. O que limita o destino nao e teto nem fila: o quartel quer TUDO o
  * que o armazem tem de cada requisito (`sim/quartel.ts`), como no KaM.
  */
@@ -873,7 +873,8 @@ export const GAVETA_DE_ORIGEM_POR_TIPO: Readonly<Record<TipoComOrigem, Gaveta>> 
   'comida-para-inn': 'saida',
   'material-para-obra': 'saida',
   'ouro-para-escola': 'saida',
-  // F25a: a arma sai da `saida` do armazem, como o ouro
+  // F25a: a arma sai da `saida` do armazem, como o ouro. D-TRANSPORTE-03 T1: ou da
+  // `saida` da oficina que a fez — a mesma gaveta
   'arma-para-quartel': 'saida',
   'insumo-producao-parada': 'saida',
   'insumo-producao-baixa': 'saida',
@@ -901,12 +902,16 @@ export function gavetaDeOrigem(tipo: TipoComOrigem): Gaveta {
  * F18g — indexada por `TipoComOrigem`, e nao mais por `TipoDeTransporte`: a
  * pedra do canteiro tambem sai de um armazem, e a pergunta "a origem tem a forma
  * do tipo?" e a mesma para ela.
+ *
+ * D-TRANSPORTE-03 T1 — `'qualquer'`: a arma sai do armazem OU direto da oficina que a
+ * fez, sem passar pelo armazem (KM_HandLogistics.pas:1238-1258: a arma nao vai ao armazem
+ * enquanto um quartel a aceita).
  */
-export const ORIGEM_ESPERADA_POR_TIPO: Readonly<Record<TipoComOrigem, 'armazem' | 'outro-predio'>> = {
+export const ORIGEM_ESPERADA_POR_TIPO: Readonly<Record<TipoComOrigem, 'armazem' | 'outro-predio' | 'qualquer'>> = {
   'comida-para-inn': 'armazem',
   'material-para-obra': 'armazem',
   'ouro-para-escola': 'armazem',
-  'arma-para-quartel': 'armazem',
+  'arma-para-quartel': 'qualquer',
   'insumo-producao-parada': 'armazem',
   'insumo-producao-baixa': 'armazem',
   'saida-cheia-para-armazem': 'outro-predio',
@@ -927,9 +932,9 @@ export const ORIGEM_ESPERADA_POR_TIPO: Readonly<Record<TipoComOrigem, 'armazem' 
 export function origemDaTarefaVale(state: GameState, tarefa: TarefaDoSerf): boolean {
   const origem = state.predios.porId[tarefa.origem];
   if (origem === undefined || origem.estado !== 'completo') return false;
-  return ORIGEM_ESPERADA_POR_TIPO[tarefa.tipo] === 'armazem'
-    ? origem.tipo === ID_DO_ARMAZEM
-    : origem.tipo !== ID_DO_ARMAZEM;
+  const esperada = ORIGEM_ESPERADA_POR_TIPO[tarefa.tipo];
+  if (esperada === 'qualquer') return true;
+  return esperada === 'armazem' ? origem.tipo === ID_DO_ARMAZEM : origem.tipo !== ID_DO_ARMAZEM;
 }
 
 /**

@@ -5603,6 +5603,28 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
     - **PARA REVISÃO:** botões `−`/`+` de passo 1 no lugar do controle deslizante do KaM.
     - **Nota para a D-PRODUCAO-01 e a F24:** `validarDistribuicao` reprova insumo novo com
       dois ou mais consumidores que não esteja em `distribuicao.padrao`, com todos eles.
+### D-TRANSPORTE-03 — Logística do KaM (BUG-U causa B + BUG-V)
+- **Autorizada em dois passos, com medida entre eles (operador, 2026-09-30).** Proposta e
+  aceite em `docs/planos/2026-09-30-D-TRANSPORTE-03-logistica-kam.md`. Decisões D1 (Bodega
+  acima da tropa, divergência no `_doc`), D2 (escola primeiro), D3 (pedra do canteiro na 4,
+  com a obra); excedente como oferta comum é decisão do operador e divergência do KaM.
+  - **D-TRANSPORTE-03 T1 — classes de importância no lugar da escada + a arma prefere o
+    quartel. ENTREGUE (2026-09-30), sem marcar `passes`** (a chave é da feature inteira, e
+    fecha no T2). Plano: `docs/planos/2026-09-30-D-TRANSPORTE-03-T1-importancia-e-arma.md`.
+    - **Aceite:** `tests/D-TRANSPORTE-03-logistica-kam.test.ts` (aceites 1, 2, 7, 8, 10).
+    - **Desvio no aceite 1 (PARA REVISÃO):** o 15/15 no quartel está afirmado na corrida
+      SEM a carga de pedra. Com a carga (corrida B do BUG-U), 12 das 15 chegam: a pedra da
+      escola e a arma estão na mesma classe (5), a pedra fica mais perto e ganha toda vez, e
+      as últimas armas esperam como tarefa aberta. Na corrida B o T1 afirma só "nenhuma arma
+      ao armazém" e as invariantes.
+    - **Nota para o T2:** o aceite 1 do T2 volta a afirmar 15/15 e 2 soldados NA CORRIDA B
+      (com a carga). É a multa do armazém (+1000 na oferta que vai ao armazém) que põe a
+      pedra atrás da arma. Se a multa não bastar, parar e trazer ao operador.
+    - **Nota para o T2 e o lote do BALANCE_LOG:** com parada e baixa na mesma classe, o
+      tempo de produtor parado por falta de insumo subiu 28 % no cenário da F-CAL (medida
+      no PROGRESS, 2026-09-30). A produção não caiu (311 → 312).
+  - **D-TRANSPORTE-03 T2 — casamento oferta × demanda + multa do armazém + 20/unidade.**
+    Aceites 3, 4, 5, 6, 9, 10 do plano. Espera o operador ler a medida do T1.
 ### D-TELA-01 (antes F32) — Aba de estatísticas
 - **ENTREGUE (2026-09-29, lote do operador, item 4; plano em
   `docs/planos/2026-09-29-D-TELA-01-aba-de-estatisticas.md`).** A aba Estatísticas ganha,

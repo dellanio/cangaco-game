@@ -530,10 +530,12 @@ function validarMenuInicialSoRaiz(dados, erros) {
   }
 }
 
-// F09: a escada de prioridade de delivery.json tem um `id` por nivel — e por ele que
-// o codigo referencia um tipo de tarefa, sem digitar o numero do nivel em .ts
-// (invariante 3). Ids unicos e nao vazios; niveis inteiros, unicos e contiguos a
-// partir de 1 (um buraco faria "nivel menor = mais urgente" enganar).
+// F09 e D-TRANSPORTE-03 T1: delivery.prioridades tem um `id` por linha — e por ele que o
+// codigo referencia um tipo de tarefa, sem digitar numero em .ts (invariante 3). Ids unicos
+// e nao vazios; `importancia` inteira >= 1 (classe do KaM) ou null (as do laborer, que nao
+// sao entrega); as classes nao nulas cobrem 1..maxima sem buraco (uma classe vazia no meio
+// faria "menor = mais urgente" enganar). Classe repetida e o normal: dentro dela decide o
+// caminho.
 function validarEscadaDePrioridade(dados, erros) {
   const escada = dados.delivery && dados.delivery.prioridades;
   if (!Array.isArray(escada)) {
@@ -541,7 +543,7 @@ function validarEscadaDePrioridade(dados, erros) {
     return;
   }
   const ids = new Set();
-  const niveis = [];
+  const classes = new Set();
   escada.forEach((linha, i) => {
     if (typeof linha.id !== 'string' || linha.id === '') {
       erros.push(`entrega/escada: prioridades[${i}] precisa de um id nao vazio`);
@@ -550,18 +552,22 @@ function validarEscadaDePrioridade(dados, erros) {
     } else {
       ids.add(linha.id);
     }
-    // F18d-1a: o modo da perna de entrega e do nivel, e TODA linha publica o seu.
+    // F18d-1a: o modo da perna de entrega e da linha, e TODA linha publica o seu.
     // Regra positiva, sem lista de excecao: linha nova sem modo reprova aqui, em
     // vez de cair num padrao escondido no .ts.
     if (linha.modo !== 'livre' && linha.modo !== 'estrada') {
       erros.push(`entrega/escada: prioridades[${i}] (${linha.id}) precisa de modo 'livre' ou 'estrada'`);
     }
-    niveis.push(linha.nivel);
+    if (linha.importancia === null) return;
+    if (!Number.isInteger(linha.importancia) || linha.importancia < 1) {
+      erros.push(`entrega/escada: prioridades[${i}] (${linha.id}) precisa de importancia inteira >= 1, ou null`);
+      return;
+    }
+    classes.add(linha.importancia);
   });
-  const ordenados = [...niveis].sort((a, b) => a - b);
-  const contiguos = ordenados.every((nivel, i) => Number.isInteger(nivel) && nivel === i + 1);
-  if (!contiguos) {
-    erros.push('entrega/escada: os niveis precisam ser inteiros, unicos e contiguos a partir de 1');
+  const maxima = Math.max(0, ...classes);
+  for (let c = 1; c <= maxima; c += 1) {
+    if (!classes.has(c)) erros.push(`entrega/escada: a classe de importancia ${c} esta vazia; as classes cobrem 1..${maxima} sem buraco`);
   }
 }
 

@@ -49,17 +49,19 @@ describe('F18d-1a — o modo mora no dado, lido pelo id do nivel', () => {
 
   it('toda linha da escada publica um modo — a lista do teste e a do dado, nao uma copia', () => {
     const daEscada = gameData.entrega.prioridades.map((p) => [p.id, p.modo]);
+    // D-TRANSPORTE-03 T1: as linhas foram reordenadas pela classe de importancia (a escola
+    // na 1, a pedra do canteiro na 4 com a obra); os modos sao os mesmos
     expect(daEscada).toEqual([
+      ['ouro-para-escola', 'estrada'],
       ['comida-para-inn', 'estrada'],
       // C-COMIDA-01a (fome militar com o Feed): o destino e unidade em campo -> livre
       ['comida-para-tropa', 'livre'],
-      ['ouro-para-escola', 'estrada'],
       ['material-para-obra', 'livre'],
+      // F18g: a pedra do canteiro e carga de serf, 'livre' pelo MESMO criterio do
+      // nivel 3 — o canteiro nao tem rua por onde chegar
+      ['pedra-para-canteiro', 'livre'],
       ['insumo-producao-parada', 'estrada'],
       ['insumo-producao-baixa', 'estrada'],
-      // F18g: a pedra do canteiro e carga de serf, 'livre' pelo MESMO criterio do
-      // nivel 3 — o canteiro nao tem rua por onde chegar. Sexta desde o lote 2.
-      ['pedra-para-canteiro', 'livre'],
       ['saida-cheia-para-armazem', 'estrada'],
       ['excedente-para-armazem', 'estrada'],
       // F18d-1b: o (entao) oitavo nivel entrou no fim, e e 'livre' pelo MESMO

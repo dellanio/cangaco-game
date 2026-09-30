@@ -9,7 +9,7 @@ import {
   disponivelNaOrigem, reservadoNaOrigem, reservadoNoDestino, vagaNoDestino,
 } from '../src/sim/reservas';
 import {
-  criarTarefa, liberar, ligacaoEntrePredios, nivelDoTipo, reclamar, reclamarMelhor, tarefasEmOrdem,
+  criarTarefa, importanciaDoTipo, liberar, ligacaoEntrePredios, reclamar, reclamarMelhor, tarefasEmOrdem,
 } from '../src/sim/jobs';
 import {
   armazemDoCenario, cenarioDaRuaMaisBarata, cenarioDeVolta, comAPortaTapada, cenarioLigado, comObra, comPedraNaSaida, comTarefas, estradasDe,
@@ -339,22 +339,22 @@ describe('F09 — liberar', () => {
 });
 
 describe('F09 — a escada de prioridade vem do dado', () => {
-  it('nivelDoTipo le o nivel de delivery.json pelo id, sem numero em .ts', () => {
+  it('importanciaDoTipo le a classe de delivery.json pelo id, sem numero em .ts', () => {
     const doDado = gameData.entrega.prioridades.find((p) => p.id === 'material-para-obra');
-    expect(nivelDoTipo('material-para-obra')).toBe(doDado?.nivel);
+    expect(importanciaDoTipo('material-para-obra')).toBe(doDado?.importancia);
   });
 
-  it('com o dado trocado, o nivel muda; sem o id no dado, falha alto em vez de assumir', () => {
+  it('com o dado trocado, a classe muda; sem o id no dado, falha alto em vez de assumir', () => {
     const dados: GameData = {
       ...gameData,
       entrega: {
         ...gameData.entrega,
-        prioridades: gameData.entrega.prioridades.map((p) => (p.id === 'material-para-obra' ? { ...p, nivel: 42 } : p)),
+        prioridades: gameData.entrega.prioridades.map((p) => (p.id === 'material-para-obra' ? { ...p, importancia: 42 } : p)),
       },
     };
-    expect(nivelDoTipo('material-para-obra', dados)).toBe(42);
+    expect(importanciaDoTipo('material-para-obra', dados)).toBe(42);
     const semOId: GameData = { ...gameData, entrega: { ...gameData.entrega, prioridades: [] } };
-    expect(() => nivelDoTipo('material-para-obra', semOId)).toThrow(/material-para-obra/);
+    expect(() => importanciaDoTipo('material-para-obra', semOId)).toThrow(/material-para-obra/);
   });
 });
 

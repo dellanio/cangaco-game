@@ -15,19 +15,15 @@ function dadosReaisComEscada(escada: unknown): Record<string, unknown> {
 const errosDaEscada = (escada: unknown): string[] =>
   validarTudo(dadosReaisComEscada(escada)).filter((e) => e.startsWith('entrega/escada'));
 
-const real = gameData.entrega.prioridades as ReadonlyArray<{ readonly nivel: number; readonly id?: string }>;
+type Linha = { readonly importancia: number | null; readonly id?: string };
+const real = gameData.entrega.prioridades as ReadonlyArray<Linha>;
 
-describe('F09 — delivery.json: a escada de prioridade tem id por nivel', () => {
-  // F18d-1b: eram 7 niveis ate a estrada virar canteiro; 'assentar-estrada' entrou
-  // no fim (nivel 8) justamente para nao deslocar nenhum dos outros. F18h: 'arar'
-  // entrou em nono, pelo mesmo motivo e sem deslocar nenhum. F18g: 'pedra-para-
-  // canteiro' entrou em OITAVO, e no lote 2 (2026-09-27, decisao do operador) subiu
-  // para SEXTO, acima da saida cheia e do excedente. Acima das duas do laborer, que
-  // nao ordenam nada entre si. Sao dez.
-  it('o dado real passa e cada um dos 12 niveis tem id', () => {
+describe('F09 — delivery.json: cada linha tem id; D-TRANSPORTE-03 T1: classes de importancia', () => {
+  // D-TRANSPORTE-03 T1 (2026-09-30): a escada estrita virou as classes de importancia do KaM
+  // (KM_HandLogistics.pas:28-35). Classe repetida e o normal: dentro dela decide o caminho.
+  // Sao as mesmas 12 linhas; as duas do laborer tem importancia null (so o `modo`).
+  it('o dado real passa e cada uma das 12 linhas tem id', () => {
     expect(validarTudo(dadosReaisComEscada(real))).toEqual([]);
-    // F25a: o requisito de soldado para o quartel, no fim da escada. C-COMIDA-01a (fome
-    // militar com o Feed): a comida da tropa entrou no nivel 2, e sao 12
     expect(real).toHaveLength(12);
     for (const linha of real) expect(typeof linha.id).toBe('string');
   });
@@ -38,18 +34,25 @@ describe('F09 — delivery.json: a escada de prioridade tem id por nivel', () =>
     expect(errosDaEscada(repetida)[0]).toContain('id');
   });
 
-  it('nivel repetido reprova', () => {
-    const repetida = real.map((l, i) => (i === 1 ? { ...l, nivel: real[0]?.nivel } : l));
-    expect(errosDaEscada(repetida).length).toBeGreaterThan(0);
+  it('importancia repetida PASSA: e a classe, e dentro dela decide o caminho', () => {
+    expect(errosDaEscada(real.map((l) => (l.importancia === null ? l : { ...l, importancia: 1 })))).toEqual([]);
   });
 
-  it('buraco na sequencia de niveis (1,2,4...) reprova', () => {
-    const comBuraco = real.map((l, i) => (i >= 2 ? { ...l, nivel: l.nivel + 1 } : l));
+  it('classe vazia no meio (1,2,4...) reprova', () => {
+    const comBuraco = real.map((l) => (l.importancia !== null && l.importancia >= 3 ? { ...l, importancia: l.importancia + 1 } : l));
     expect(errosDaEscada(comBuraco).length).toBeGreaterThan(0);
   });
 
+  it('importancia nao inteira, zero ou ausente reprova; null passa', () => {
+    expect(errosDaEscada(real.map((l) => (l.id === 'arma-para-quartel' ? { ...l, importancia: 1.5 } : l))).length).toBeGreaterThan(0);
+    expect(errosDaEscada(real.map((l) => (l.id === 'arma-para-quartel' ? { ...l, importancia: 0 } : l))).length).toBeGreaterThan(0);
+    const { importancia: _fora, ...semImportancia } = real[0] as Linha;
+    void _fora;
+    expect(errosDaEscada([semImportancia, ...real.slice(1)]).length).toBeGreaterThan(0);
+  });
+
   it('linha sem id, ou com id vazio, reprova', () => {
-    const { id: _removido, ...semId } = real[0] as { nivel: number; id?: string };
+    const { id: _removido, ...semId } = real[0] as Linha;
     void _removido;
     expect(errosDaEscada([semId, ...real.slice(1)])).toHaveLength(1);
     expect(errosDaEscada(real.map((l, i) => (i === 0 ? { ...l, id: '' } : l)))).toHaveLength(1);

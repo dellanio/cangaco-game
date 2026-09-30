@@ -34,7 +34,7 @@ import {
 import type { MotivoDeLiberacao } from '../jobs';
 import type { ModoDeBusca } from '../pathfinding';
 import {
-  demandaDaTropa, demandaDoTile, demandaNoDestino, disponivelNaOrigem, ofertaNaOrigem, reservadoNoDestino, sobraNaOrigem,
+  demandaDaTropa, demandaDoTile, demandaNoDestino, disponivelNaOrigem, ofertaNaOrigem, reservadoNaOrigem, reservadoNoDestino, sobraNaOrigem,
   vagaDaTropa, vagaDoDestino, vagaNoTile,
 } from '../reservas';
 import {
@@ -254,6 +254,12 @@ function abertaVale(state: GameState, t: Tarefa, dados: GameData): boolean {
     : ehTarefaDeComidaParaTropa(t) ? demandaDaTropa(state, t) : demandaNoDestino(state, t, dados);
   if (demanda < 1) return false;
   if (!origemDaTarefaVale(state, t)) return false;
+  // D-TRANSPORTE-03 T1 — a arma que ia ao armazem deixa de ir quando um quartel passa a
+  // aceita-la; o gerador do quartel cria a carga dela no mesmo tick
+  if (t.tipo === 'saida-cheia-para-armazem') {
+    const origem = state.predios.porId[t.origem];
+    if (origem !== undefined && quartelAceitaArma(state, origem, t.mercadoria, dados)) return false;
+  }
   // F15b — `sobraNaOrigem` generaliza `disponivelNaOrigem`: le a gaveta do tipo
   // e, no nivel 7, o EXCEDENTE em vez do estoque bruto.
   if (sobraNaOrigem(state, t, dados) < 1) return false;
@@ -488,6 +494,48 @@ function destinoQueAceita(armazens: readonly PredioCompleto[], mercadoria: strin
   return armazens.find((a) => armazemAceita(a, mercadoria))?.id ?? null;
 }
 
+/**
+ * D-TRANSPORTE-03 T1 — algum quartel do lado de `origem` ACEITA agora a `mercadoria` que
+ * esta nela: completo, ligado a ela na rede da `arma-para-quartel` e com vaga (a demanda
+ * menos o que ja vem a caminho). Enquanto aceita, a arma nao vai ao armazem: sai da
+ * oficina direto para o quartel (KM_HandLogistics.pas:1238-1258).
+ *
+ * Divergencia do KaM, PARA REVISAO: la o quartel aceita sem teto e sem conferir estrada.
+ * Aqui ha teto (C3) e a ligacao conta, senao a arma ficaria presa na oficina com o
+ * quartel cheio ou isolado, e a oficina pararia com a saida cheia.
+ */
+function quartelAceitaArma(state: GameState, origem: Predio, mercadoria: string, dados: GameData): boolean {
+  if (!ehRequisitoDoQuartel(mercadoria, dados)) return false;
+  const modo = modoDoTipo('arma-para-quartel', dados);
+  for (const id of state.predios.ordem) {
+    const quartel = state.predios.porId[id];
+    if (!ehQuartelCompleto(quartel) || quartel.lado !== origem.lado) continue;
+    if (demandaDeInsumo(state, id, mercadoria, dados) - reservadoNoDestino(state, id, mercadoria) < 1) continue;
+    if (ligacaoEntrePredios(state, origem, quartel, modo, dados) !== null) return true;
+  }
+  return false;
+}
+
+/**
+ * D-TRANSPORTE-03 T1 — de onde sai a arma para `quartel`: o predio completo do lado dele,
+ * armazem OU oficina, com a `mercadoria` livre na `saida` e o menor caminho ate ele, no
+ * modo da `arma-para-quartel`; empate: o primeiro em `predios.ordem`. `null` se nenhum
+ * serve. Quartel nao e origem de quartel.
+ */
+function origemDaArma(state: GameState, quartel: PredioCompleto, mercadoria: string, dados: GameData): string | null {
+  const modo = modoDoTipo('arma-para-quartel', dados);
+  let melhor: { id: string; distancia: number } | null = null;
+  for (const id of state.predios.ordem) {
+    const predio = state.predios.porId[id];
+    if (predio?.estado !== 'completo' || predio.lado !== quartel.lado || ehQuartelCompleto(predio)) continue;
+    if (disponivelNaOrigem(state, id, mercadoria) < 1) continue;
+    const distancia = ligacaoEntrePredios(state, predio, quartel, modo, dados);
+    if (distancia === null) continue;
+    if (melhor === null || distancia < melhor.distancia) melhor = { id, distancia };
+  }
+  return melhor === null ? null : melhor.id;
+}
+
 /** As mercadorias de uma gaveta com quantidade positiva, em ordem ALFABETICA —
  *  e nao a ordem das chaves do objeto, que depende de como o estoque foi montado
  *  e nao sobreviveria a um save/load como criterio de determinismo. Nao da para
@@ -553,15 +601,23 @@ function gerarTarefasParaArmazem(state: GameState, dados: GameData): GameState {
     for (const excedente of [false, true]) {
       const gaveta = excedente ? 'entrada' : 'saida';
       for (const mercadoria of mercadoriasDaGaveta(predio, gaveta)) {
+        // D-TRANSPORTE-03 T1: a arma espera o serf da `arma-para-quartel` na saida
+        if (!excedente && quartelAceitaArma(atual, predio, mercadoria, dados)) continue;
         const destino = destinoQueAceita(armazens, mercadoria);
         if (destino === null) continue;
         const tipo = excedente ? 'excedente-para-armazem' : 'saida-cheia-para-armazem';
+        const doTipo = tarefasPorNumero(atual)
+          .filter((t) => ehTarefaDeTransporte(t) && t.tipo === tipo && t.origem === id
+            && t.mercadoria === mercadoria && t.estado !== 'carregando');
+        const existentes = doTipo.length;
+        // D-TRANSPORTE-03 T1: a saida tambem e origem da `arma-para-quartel`; a unidade que
+        // outro tipo ja reservou nela nao se oferece ao armazem de novo (sem isto, com o
+        // quartel cheio, nascia uma `saida-cheia` a mais por tick, e o saneamento a cancelava)
+        const deOutroTipo = excedente ? 0
+          : reservadoNaOrigem(atual, id, mercadoria, 'saida', dados) - doTipo.filter((t) => t.estado === 'reclamada').length;
         const oferta = excedente
           ? excedenteNaEntrada(atual, id, mercadoria, dados)
-          : (predio.estoque.saida[mercadoria] ?? 0);
-        const existentes = tarefasPorNumero(atual)
-          .filter((t) => ehTarefaDeTransporte(t) && t.tipo === tipo && t.origem === id
-            && t.mercadoria === mercadoria && t.estado !== 'carregando').length;
+          : (predio.estoque.saida[mercadoria] ?? 0) - deOutroTipo;
         for (let i = existentes; i < oferta; i++) {
           atual = criarTarefaParaArmazem(atual, { mercadoria, origem: id, destino, excedente }).state;
         }
@@ -836,7 +892,8 @@ function gerarTarefasDePedraParaCanteiro(state: GameState, dados: GameData): Gam
 
 /**
  * F25a — o quartel: para cada quartel completo,
- * - cada REQUISITO de soldado que um armazem ligado tem livre vira tarefa de carga,
+ * - cada REQUISITO de soldado que um armazem ou uma oficina ligados tem livre
+ *   (D-TRANSPORTE-03 T1, `origemDaArma`) vira tarefa de carga,
  *   uma por unidade livre (o quartel quer tudo; quem limita e a origem). `livres`
  *   e o disponivel na origem MAIS o que tarefas deste quartel ja reservam la, menos
  *   as tarefas que ja existem — aberta nao reserva, e por isso entra na conta como
@@ -849,14 +906,14 @@ function gerarTarefasDoQuartel(state: GameState, dados: GameData): GameState {
     const quartel = atual.predios.porId[id];
     if (!ehQuartelCompleto(quartel)) continue;
     for (const mercadoria of requisitosDoQuartel(dados)) {
-      const origem = origemMaisPerto(atual, quartel, mercadoria, 'arma-para-quartel', dados);
+      const origem = origemDaArma(atual, quartel, mercadoria, dados);
       if (origem === null) continue;
       const abertas = tarefasPorNumero(atual).filter(
         (t) => t.tipo === 'arma-para-quartel' && t.destino === id && t.mercadoria === mercadoria && t.estado === 'aberta',
       ).length;
       const livres = disponivelNaOrigem(atual, origem, mercadoria);
       // C3: so ate a VAGA no quartel (o teto menos o que ja tem e o que ja vem a caminho),
-      // nunca mais que o armazem tem livre
+      // nunca mais que a origem tem livre
       const vaga = demandaDeInsumo(atual, id, mercadoria, dados) - reservadoNoDestino(atual, id, mercadoria);
       for (let i = abertas; i < Math.min(livres, vaga); i++) {
         atual = criarTarefaDeArma(atual, { mercadoria, origem, destino: id }).state;

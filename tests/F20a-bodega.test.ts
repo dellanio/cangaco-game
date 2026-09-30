@@ -23,7 +23,7 @@ import {
 } from '../src/sim/bodega';
 import { alvoDeEntrada, excedenteNaEntrada } from '../src/sim/insumo';
 import {
-  elegivelParaTarefa, modoDoTipo, nivelDoTipo, tarefasEmOrdem, TIPO_QUE_CARREGA, TIPO_QUE_CONSTROI,
+  elegivelParaTarefa, importanciaDoTipo, modoDoTipo, tarefasEmOrdem, TIPO_QUE_CARREGA, TIPO_QUE_CONSTROI,
 } from '../src/sim/jobs';
 import { estoqueDosArmazens } from '../src/sim/selectors';
 import {
@@ -65,13 +65,17 @@ const doCaminhoReal = (): ReturnType<typeof rodarAberturaDaBodega> => {
 };
 
 describe('F20a-1 — o tipo novo entra na escada e nas tabelas exaustivas', () => {
-  it('o nivel e o 1, acima de todos, e o modo vem do dado', () => {
-    expect(nivelDoTipo('comida-para-inn')).toBe(1);
-    expect(nivelDoTipo('comida-para-inn')).toBeLessThan(nivelDoTipo('ouro-para-escola'));
+  it('a classe e a 2, abaixo so da escola, e o modo vem do dado', () => {
+    // D-TRANSPORTE-03 T1: D2 (o ouro da escola primeiro, diHigh1 do KaM) tirou a Bodega do
+    // topo; D1 a mantem acima da tropa e da obra
+    expect(importanciaDoTipo('comida-para-inn')).toBe(2);
+    expect(importanciaDoTipo('comida-para-inn')).toBeGreaterThan(importanciaDoTipo('ouro-para-escola'));
+    expect(importanciaDoTipo('comida-para-inn')).toBeLessThan(importanciaDoTipo('comida-para-tropa'));
+    expect(importanciaDoTipo('comida-para-inn')).toBeLessThan(importanciaDoTipo('material-para-obra'));
     expect(modoDoTipo('comida-para-inn')).toBe('estrada');
-    // o nivel nao esta digitado em `.ts`: e o que `delivery.json` publica
+    // a classe nao esta digitada em `.ts`: e o que `delivery.json` publica
     const doDado = gameData.entrega.prioridades.find((p) => p.id === 'comida-para-inn');
-    expect(nivelDoTipo('comida-para-inn')).toBe(doDado?.nivel);
+    expect(importanciaDoTipo('comida-para-inn')).toBe(doDado?.importancia);
   });
 
   it('so o serf carrega comida, e a carga sai da gaveta `saida` do armazem', () => {
@@ -257,7 +261,7 @@ describe('F20a — evidencia', () => {
       aceite: 'BUILD_PLAN.md F20a: a Bodega pede comida ao armazem pelo nivel 1 da escada',
       derivadoDoDado: {
         idDaBodega: ID_DA_BODEGA,
-        nivel: nivelDoTipo('comida-para-inn'),
+        importancia: importanciaDoTipo('comida-para-inn'),
         modo: modoDoTipo('comida-para-inn'),
         comidas: COMIDAS,
         tetoPorTipoDeComida: TETO,

@@ -17,7 +17,7 @@ import type {
   TarefaComidaParaInn, TarefaMaterialParaObra, TarefaOcupar, TarefaOuroParaEscola,
   TarefaArar, TarefaAssentarEstrada, TarefaColher, TarefaComer, TarefaDeLaborer, TarefaSaidaCheiaParaArmazem,
   TarefaDoSerf, TarefaPedraParaCanteiro, TarefaReparar, TarefaArmaParaQuartel, TarefaAlistar,
-  TipoDeTarefa,
+  TipoComOrigem, TipoDeTarefa,
   TipoNaEscada,
 } from './state';
 import {
@@ -182,19 +182,26 @@ export function podeReclamar(
   return predioAceita(state.predios.porId[tarefa.destino], tipoDaUnidade, dados);
 }
 
-/** O nivel do tipo na escada de `delivery.json`, lido pelo `id` — nunca um numero em
- *  `.ts`. Falha alto se o dado nao tem o id: assumir um nivel escondido seria pior. */
-export function nivelDoTipo(tipo: TipoDeTarefa, dados: GameData = gameData): number {
+/**
+ * D-TRANSPORTE-03 T1 — a CLASSE de importancia do tipo em `delivery.json`, lida pelo
+ * `id`: nunca um numero em `.ts`. Menor = mais urgente; dentro da classe decide o custo
+ * (`ordenarTarefasDoSerf`). Falha alto se o dado nao tem o id ou se a linha e do laborer
+ * (`importancia: null`, que nao e entrega): assumir uma classe escondida seria pior.
+ */
+export function importanciaDoTipo(tipo: TipoComOrigem, dados: GameData = gameData): number {
   const linha = dados.entrega.prioridades.find((p) => p.id === tipo);
   if (linha === undefined) {
-    throw new Error(`nivelDoTipo: '${tipo}' nao esta na escada de delivery.json (prioridades[].id)`);
+    throw new Error(`importanciaDoTipo: '${tipo}' nao esta em delivery.json (prioridades[].id)`);
   }
-  return linha.nivel;
+  if (linha.importancia === null) {
+    throw new Error(`importanciaDoTipo: '${tipo}' tem importancia null em delivery.json (so as do laborer)`);
+  }
+  return linha.importancia;
 }
 
 /**
  * F18d-1a — a vizinhanca que a perna de ENTREGA daquele tipo usa, lida do mesmo
- * lugar que o nivel (`delivery.json: prioridades[].modo`). Nenhum sistema digita
+ * lugar que a importancia (`delivery.json: prioridades[].modo`). Nenhum sistema digita
  * `'estrada'` ou `'livre'` para tarefa de transporte: o criterio e o destino
  * (canteiro -> livre, porta de predio pronto -> estrada) e ele mora no dado.
  *
@@ -1127,8 +1134,8 @@ export function liberar(
 /**
  * As tarefas de TRANSPORTE abertas na ordem de escolha: `(nivel, custo A* em
  * ticks, numero)`. `numero` numerico, nao a string do id ('t10' < 't2').
- * O nivel vem da escada de `delivery.json` pelo id do tipo (F13: ouro, nivel 2,
- * ganha de material, nivel 3) — nunca de um numero digitado aqui.
+ * A classe vem de `delivery.json` pelo id do tipo (`importanciaDoTipo`; D-TRANSPORTE-03:
+ * escola > Inn > tropa > obra e canteiro > o resto) — nunca de um numero digitado aqui.
  * Com `unidadeId` o custo parte da posicao do serf (as duas pernas); sem, so
  * a perna de entrega. Custo `null` (sem caminho) vai para o fim.
  *
@@ -1180,7 +1187,7 @@ function custoSemAEntrega(
   return custoDaTarefa(state, t, null, dados) === null ? null : 0;
 }
 
-/** A ordem de escolha: `(nivel, custo do caminho, vez no escasso, numero)`. O custo e o
+/** A ordem de escolha: `(importancia, custo do caminho, vez no escasso, numero)`. O custo e o
  *  A*; na tarefa que disputa o escasso (D-PRODUCAO-01b) ele perde a perna de entrega, e a
  *  vez so desempata duas que disputam. */
 function ordenarTarefasDoSerf(
@@ -1189,13 +1196,13 @@ function ordenarTarefasDoSerf(
   const chaves = new Map(candidatas.map((t) => {
     const vez = vezNoEscasso(state, t, dados);
     const custo = vez === null ? custoDaTarefa(state, t, unidadeId, dados) : custoSemAEntrega(state, t, unidadeId, dados);
-    return [t.id, { nivel: nivelDoTipo(t.tipo, dados), custo: custo ?? Number.POSITIVE_INFINITY, vez }];
+    return [t.id, { importancia: importanciaDoTipo(t.tipo, dados), custo: custo ?? Number.POSITIVE_INFINITY, vez }];
   }));
   return [...candidatas].sort((a, b) => {
     const ca = chaves.get(a.id);
     const cb = chaves.get(b.id);
     if (!ca || !cb) return 0;
-    if (ca.nivel !== cb.nivel) return ca.nivel - cb.nivel;
+    if (ca.importancia !== cb.importancia) return ca.importancia - cb.importancia;
     if (ca.custo !== cb.custo) return ca.custo < cb.custo ? -1 : 1;
     if (ca.vez !== null && cb.vez !== null && ca.vez !== cb.vez) return ca.vez < cb.vez ? -1 : 1;
     return a.numero - b.numero;

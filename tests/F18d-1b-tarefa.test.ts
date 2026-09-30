@@ -16,14 +16,14 @@
 import { describe, it, expect } from 'vitest';
 import { gameData } from '../src/sim/data';
 import {
-  criarTarefaDeAssentamento, criarTarefaDePedraParaCanteiro, elegivelParaTarefa, modoDoTipo, nivelDoTipo, reclamar,
+  criarTarefaDeAssentamento, criarTarefaDePedraParaCanteiro, elegivelParaTarefa, importanciaDoTipo, modoDoTipo, reclamar,
 } from '../src/sim/jobs';
 import { MERCADORIA_DA_ESTRADA } from '../src/sim/estradas';
 import { disponivelNaOrigem, reservadoNaOrigem } from '../src/sim/reservas';
 import {
   ehTarefaDeAssentamento, ehTarefaDeLaborer, ehTarefaDePedraParaCanteiro, ehTarefaDoSerf, ehTarefaDeTransporte,
 } from '../src/sim/state';
-import type { GameState } from '../src/sim/state';
+import type { GameState, TipoComOrigem } from '../src/sim/state';
 import { gerarTarefas, sanearTarefas } from '../src/sim/systems/jobs';
 import { step } from '../src/sim/tick';
 import { ehEstrada, ehPlanejada, tilesOrdenados } from '../src/sim/estradas';
@@ -46,30 +46,30 @@ describe('F18d-1b — a escada acolhe `assentar-estrada` sem mexer em nivel nenh
   it('a escada inteira, na ordem: a pedra da obra antes do excedente; o laborer no fim', () => {
     // a lista inteira, lida do dado, comparada de uma vez: se uma linha nova tivesse
     // entrado no meio, os numeros dos sete mudariam de uma vez so.
-    const escada = gameData.entrega.prioridades.map((p) => [p.id, nivelDoTipo(p.id as never)]);
+    // D-TRANSPORTE-03 T1: as classes de importancia do KaM no lugar da escada estrita
+    const escada = gameData.entrega.prioridades.map((p) => [p.id, p.importancia]);
     expect(escada).toEqual([
-      ['comida-para-inn', 1],
-      // C-COMIDA-01a (fome militar com o Feed): a comida da tropa, logo abaixo da Bodega;
-      // todos os de baixo descem um
-      ['comida-para-tropa', 2],
-      ['ouro-para-escola', 3],
+      // D2: o ouro da escola primeiro (diHigh1)
+      ['ouro-para-escola', 1],
+      // D1: a Bodega acima da tropa, divergencia do KaM declarada no _doc do dado
+      ['comida-para-inn', 2],
+      ['comida-para-tropa', 3],
+      // D3: a pedra do canteiro com a obra (diHigh4). Desde o lote 2 (2026-09-27) ela vem
+      // antes do excedente; agora vem antes de toda a classe comum
       ['material-para-obra', 4],
+      ['pedra-para-canteiro', 4],
       ['insumo-producao-parada', 5],
-      ['insumo-producao-baixa', 6],
-      // F18g entrou em OITAVO, abaixo do excedente. Decisao do operador, 2026-09-27
-      // (lote 2): pedra de obra vem ANTES de excedente para o armazem, porque em
-      // oitavo os serfs largavam a estrada da Bodega para levar tabua sobrando, e a
-      // vila da F-CAL-a morria de fome. Os insumos (5-6 desde a C-COMIDA-01a) continuam acima dela.
-      ['pedra-para-canteiro', 7],
-      ['saida-cheia-para-armazem', 8],
-      ['excedente-para-armazem', 9],
-      // F18d-1b e F18h: as duas do laborer. O nivel delas nao ordena nada (o
-      // laborer escolhe por distancia); estao na escada so pelo `modo`.
-      ['assentar-estrada', 10],
-      ['arar', 11],
-      // F25a: o requisito de soldado, no fim — nao desloca nenhum dos outros
-      ['arma-para-quartel', 12],
+      ['insumo-producao-baixa', 5],
+      ['saida-cheia-para-armazem', 5],
+      ['excedente-para-armazem', 5],
+      // F18d-1b e F18h: as duas do laborer nao sao entrega; estao aqui so pelo `modo`
+      ['assentar-estrada', null],
+      ['arar', null],
+      ['arma-para-quartel', 5],
     ]);
+    for (const [id, importancia] of escada) {
+      if (importancia !== null) expect(importanciaDoTipo(id as TipoComOrigem)).toBe(importancia);
+    }
   });
 
   it('o modo dos niveis de canteiro e `livre`: nao ha rua para se chegar nele', () => {
