@@ -14361,3 +14361,30 @@ Fecha a D-TRANSPORTE-02 (menu de distribuição). Plano: `docs/planos/2026-09-29
 - Divergência de texto, já PARA REVISÃO: o GDD §7 (linha 623) diz "Sliders por recurso disputado", e a aba usa botões.
 
 **Espera decisão do operador:** a posição da D-PRODUCAO-03 e a troca do aceite escrito da F24a (o rodízio padrão).
+
+
+## 2026-09-29 — D-PRODUCAO-01a (a cadeia do ferro no mapa emitido)
+
+**Decisões do operador (2026-09-29), registradas:**
+- D-PRODUCAO-03 (encomendas das oficinas) entra na fila logo DEPOIS da D-PRODUCAO-01, não junto. Item 8 da fila.
+- A troca do aceite da F24a está aprovada e entra na 03a, como no KaM: a encomenda nasce em zero, só começa ciclo com encomenda > 0, desconta 1 por ciclo e avisa quando todas zeram. Até lá vale o rodízio de peso 1, e as ferrarias da D-PRODUCAO-01 nascem com ele.
+
+**O que fiz.** Plano em `docs/planos/2026-09-29-D-PRODUCAO-01-ferro-e-ferrarias.md`. Antes do código, uma sonda (apagada) montou a cadeia na encosta norte da serra do mapa emitido e rodou 12 000 ticks pelo `step`.
+
+**Verificado (sonda e teste):**
+- A cadeia do ferro fecha até a arma sem código novo. Primeiro carvão no tick 250, primeiro minério no 300, primeiro ferro na fundição no 981 e primeira espada no 2312.
+- A ferraria de armaduras nunca recebe carvão: 0 em 12 000 ticks, contra 39 na fundição e 7 na de armas. A causa foi lida no código. Com as gavetas vazias, as três tarefas de insumo empatam no nível `parada`, e `ordenarTarefasDoSerf` (`sim/jobs.ts`) desempata pelo custo A*, então vence sempre quem está mais perto.
+- O KaM trata isso de propósito (`KM_HandLogistics.pas`, 731a8a4, `TryCalculateBidBasic` :1512-1530 e `TryCalculateBid` :1613-1618). Com pouco recurso, fundição e ferrarias dividem sem olhar distância, e cada unidade que o destino já tem soma 20 ao lance.
+- A primeira versão da fixture pôs a mina de carvão num veio de um tile só (15), que secou no minuto 7. A fixture agora escolhe a posição com mais veio na caixa.
+- `tests/D-PRODUCAO-01a-cadeia-do-ferro.test.ts` tem 8 testes, todos pelo `step`. Evidência aberta: `test-output/D-PRODUCAO-01a-cadeia-do-ferro.json` (veio 108/105 no tick 0, parada no 2312).
+
+**Concluído:**
+- A feature foi quebrada em duas (CLAUDE.md §6).
+- 01a entregue: guarda da cadeia com fixture e testes, sem tocar em `src/`.
+- 01b aberta no BUILD_PLAN, com o defeito medido, a regra do KaM e um aceite proposto.
+
+**PARA REVISÃO:**
+- O aceite da 01a é meu, tirado do GDD §4.2 e §4.5, porque o item não tinha aceite.
+- A caixa da fixture (encosta norte) é decisão minha. A posição dentro dela sai do `canPlace`.
+
+**O que muda na partida:** nada. A 01a é só guarda. Na partida de hoje, uma mina de carvão com fundição e as duas ferrarias deixa a de armaduras parada para sempre, e isso é a 01b.

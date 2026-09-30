@@ -484,5 +484,8 @@
   },
   "D-TRANSPORTE-02b-aba-distribuicao": {
     "passes": true
+  },
+  "D-PRODUCAO-01a-cadeia-do-ferro": {
+    "passes": true
   }
 }

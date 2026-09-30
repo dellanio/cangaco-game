@@ -199,7 +199,7 @@ Decisão do operador (2026-09-28).
 | C-MOVIMENTO-02 | a tropa não trava | — | fechado | `C-MOVIMENTO-02-a-tropa-nao-trava` |
 | C-MOVIMENTO-02b | a vaga tomada por quem marcha | — | fechado | `C-MOVIMENTO-02b-vaga-tomada` |
 | D-PRODUCAO-02 | o lenhador: alcance 12 e replantio do toco | — | fechado | `D-PRODUCAO-02-lenhador` |
-| D-PRODUCAO-03 | encomendas das oficinas (`WareOrder`) | — | aberto, espera decisão do operador | — |
+| D-PRODUCAO-03 | encomendas das oficinas (`WareOrder`) | — | aberto, na fila depois da D-PRODUCAO-01 | — |
 | C-COMBATE-01b | storm attack (sim) | — | fechado | `C-COMBATE-01b-storm-attack` |
 | C-COMBATE-01c | controles de formação (tela) | — | fechado | `C-COMBATE-01c-controles` |
 | C-IA-02a | a vila da IA com produção | — | fechado | `C-IA-02a-vila-da-ia` |
@@ -226,7 +226,7 @@ Decisão do operador (2026-09-28).
 | F-FEED | fome militar (Feed) | C-COMIDA-01 | aberto, plano à espera | — |
 | F18c-2 | recentrar a vila | B-TERRENO-01 | aberto, não iniciado | — |
 | F27 | formação, virar e storm attack | C-COMBATE-01 | aberto, não iniciado | — |
-| F29 | ferro e smithies | D-PRODUCAO-01 | aberto, não iniciado | — |
+| F29 | ferro e smithies | D-PRODUCAO-01 | 01a fechado (2026-09-29); 01b aberto | `D-PRODUCAO-01a-cadeia-do-ferro` |
 | F30 | armazém com toggles por mercadoria | D-TRANSPORTE-01 | fechado (2026-09-29) | `D-TRANSPORTE-01a-armazem-aceita`, `D-TRANSPORTE-01b-painel-armazem` |
 | F31 | menu de distribuição | D-TRANSPORTE-02 | fechado (2026-09-29) | `D-TRANSPORTE-02a-distribuicao`, `D-TRANSPORTE-02b-aba-distribuicao` |
 | F32 | aba de estatísticas | D-TELA-01 | fechado | `D-TELA-01-estatisticas` |

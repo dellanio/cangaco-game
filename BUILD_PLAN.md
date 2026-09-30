@@ -5445,9 +5445,39 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
   `tests/GUARDA-step-preserva-opcionais.test.ts`, que cobra pelo compilador todo opcional
   de `GameState`, `PredioCompleto` e `Producao`. E toda regra de sim nova tem pelo menos um
   teste que passa pelo `step`, não só pelo sistema isolado.
+- **Plano:** `docs/planos/2026-09-29-D-PRODUCAO-01-ferro-e-ferrarias.md`. O item não
+  tinha aceite; o de baixo vem do GDD §4.2 e §4.5 e da sonda. **Quebrado em dois**
+  (CLAUDE.md §6): a sonda mostrou que a cadeia fecha até a arma sem código, e que a
+  ferraria de armaduras nunca recebe carvão.
+- **D-PRODUCAO-01a — a cadeia do ferro no mapa emitido (guarda). ENTREGUE (2026-09-29).**
+  Fixture `cenarioDaCadeiaDoFerro` na encosta norte da serra, posição por `canPlace` e rua
+  por `canPlaceRoad`, minas no veio do mapa (a posição de mais veio da caixa).
+  - **Aceite:** (1) as duas minas colhem do veio do mapa, e o veio ao alcance cai;
+    (2) o ferro nasce na fundição, depois de minério e carvão chegarem a ela; (3) o ferro
+    chega às duas ferrarias; (4) a ferraria de armas faz arma com ele, no rodízio de
+    peso 1 da F24a; (5) sem a mina de carvão ou sem a de ferro, nenhum ferro; (6) tudo pelo
+    `step`, sem violar invariante. `tests/D-PRODUCAO-01a-cadeia-do-ferro.test.ts`.
+  - **Não cobre:** a ferraria de armaduras produzir. É a 01b.
+- **D-PRODUCAO-01b — insumo escasso dividido entre fundição e ferrarias (sim).** Aberto.
+  - **O defeito (medido, sonda da 01a):** uma mina de carvão, três consumidores; em
+    12 000 ticks a fundição recebeu 39 carvões, a ferraria de armas 7 e a de armaduras 0.
+    Com as gavetas vazias as três tarefas empatam no nível `parada`, e
+    `ordenarTarefasDoSerf` (`sim/jobs.ts`) desempata pelo custo A*: vence sempre quem
+    está mais perto. É espera indefinida, não balanceamento.
+  - **O KaM (`KM_HandLogistics.pas`, 731a8a4):** `TryCalculateBidBasic` :1512-1530 — para
+    a fundição e as casas com encomenda, com oferta ≤ 2 e destino com ≤ 1 na gaveta, o
+    lance ignora a distância e usa a distribuição mais um aleatório ("weapon and armour
+    smiths should get same amount of iron, even if one is closer"); `TryCalculateBid`
+    :1613-1618 soma 20 por unidade já na gaveta do destino.
+  - **Aceite proposto:** no `cenarioDaCadeiaDoFerro`, a ferraria de armaduras recebe
+    carvão e faz peça de armadura dentro do teto, pelo `step`; e nenhum dos três
+    consumidores fica sem o insumo escasso enquanto outro recebe.
 ### D-PRODUCAO-03 — Encomendas das oficinas (o `WareOrder` do KaM)
-- **Registrado em 2026-09-29, a pedido do operador. SEM POSIÇÃO NA FILA: a ordem e o escopo
-  esperam a decisão dele.**
+- **Registrado em 2026-09-29, a pedido do operador. Decisão do operador (2026-09-29): entra
+  na fila logo DEPOIS da D-PRODUCAO-01, não junto; a troca do aceite da F24a está
+  aprovada e entra na 03a** — encomenda nasce em zero, só inicia ciclo com encomenda > 0,
+  desconta 1 por ciclo e avisa quando todas zeram, como no KaM. Até a 03a, o rodízio de
+  peso 1 da F24a continua valendo, e as ferrarias da D-PRODUCAO-01 nascem com ele.
 - **O que diverge hoje (verificado no código):** a F24a (`sim/cota.ts`, `EscolhaDeSaida`)
   fez a cota como PESO que não se esgota. A oficina nasce com peso 1 em cada saída e produz
   uma de cada em rodízio, sem o jogador pedir nada. O painel da cota (F24a-ui) ficou de
@@ -5473,7 +5503,7 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
       para ela. Quando tiver, ela emite a encomenda.
   - **03b — o painel (ui).** No painel da oficina, uma linha por saída com `−`/`+` e a
     encomenda restante, no molde da aba Distribuição, e o alerta de encomenda cumprida.
-- **Onde encaixar (proposta):** logo depois da D-PRODUCAO-01. Ela faz a Ferraria de armas
+- **Onde encaixar (aprovado):** logo depois da D-PRODUCAO-01. Ela faz a Ferraria de armas
   e a de armaduras, que já têm `escolheSaida`: se a 03a vier antes, as duas nascem
   paradas e o aceite da D-PRODUCAO-01 precisa emitir encomenda. Juntar as duas numa
   sessão só seria feature dupla.
@@ -6062,14 +6092,16 @@ vai para o PROGRESS como PARA REVISÃO, e o trabalho segue.
    destaque.
 5. D-TRANSPORTE-01 — armazém com liga/desliga por mercadoria.
 6. D-TRANSPORTE-02 — menu de distribuição.
-7. D-PRODUCAO-01 — ferro e ferrarias.
-8. F24, o que resta: a cadeia de couro.
-9. As quatro hipóteses do avaliador:
+7. D-PRODUCAO-01 — ferro e ferrarias (01a entregue; 01b, o insumo escasso dividido).
+8. D-PRODUCAO-03 — encomendas das oficinas (03a regra, 03b painel). Decisão do operador,
+   2026-09-29.
+9. F24, o que resta: a cadeia de couro.
+10. As quatro hipóteses do avaliador:
    - BUG-P perde a ordem depois de revidar;
    - a C9 roda ticks a mais;
    - recrutas empilhados;
    - a tela não avisa a recusa em paz.
-10. VARREDURA-KAM, as frentes que faltam.
+11. VARREDURA-KAM, as frentes que faltam.
 
 ### F35 — Feira: trocar mercadoria (sim + ui)
 - **ENTREGUE (2026-09-28, sessão autônoma; plano em `docs/planos/2026-09-28-A17-F35-feira.md`).**

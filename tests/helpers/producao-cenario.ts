@@ -13,7 +13,7 @@ import type { GameEvent, GameState, PredioCompleto, Producao, Unidade } from '..
 import { gameData } from '../../src/sim/data';
 import type { GameData } from '../../src/sim/data/types';
 import { step } from '../../src/sim/tick';
-import { chaveDeTile, predioLigadoAoArmazem, tilesDaPorta } from '../../src/sim/estradas';
+import { canPlaceRoad, chaveDeTile, predioLigadoAoArmazem, tileDeChave, tilesDaPorta } from '../../src/sim/estradas';
 import { caixaDeTipo, caixaDoPredio } from '../../src/sim/footprint';
 import { canPlace } from '../../src/sim/placement';
 import type { TileDeGrid } from '../../src/sim/estradas';
@@ -1001,4 +1001,112 @@ export function cenarioDoOuroSemCarvao(dados: GameData = gameData): GameState {
  *  contra-exemplo — as duas entradas sao obrigatorias, nao uma. */
 export function cenarioDoOuroSemMina(dados: GameData = gameData): GameState {
   return semPredioEOcupante(cenarioDaCadeiaDoOuro(dados), 'go1', 'mineiro-ouro');
+}
+
+/**
+ * D-PRODUCAO-01 — A CADEIA DO FERRO, na encosta NORTE da serra, onde o mapa emitido
+ * tem veio de ferro (a quina noroeste, x=88..91 y=84 e x=88 y=84..90 hoje) e carvao
+ * (a quina nordeste, x=100..101 y=89..92). Nada de minerio semeado: o veio e o do mapa,
+ * como a F21b pediu para a cadeia do ouro.
+ *
+ * A POSICAO nao e digitada, no molde de `cenarioDaAldeiaDaSerra`: cada predio vai na
+ * primeira posicao de uma caixa, em ordem (y, depois x), que o `canPlace` do jogador
+ * aceita e — nas minas — que tem veio ao alcance. A RUA tambem nao e digitada: cada
+ * porta e ligada a rede do armazem por busca em largura sobre os tiles que o
+ * `canPlaceRoad` do jogador aceita. O que o fixture decide e so a caixa.
+ *
+ * O armazem `arm` entra VAZIO de ferro, minerio e carvao; a Bodega entra abastecida,
+ * como nas outras cadeias (sem ela a vila morre de fome antes da janela acabar).
+ */
+export function cenarioDaCadeiaDoFerro(dados: GameData = gameData, serfs: number = 6): GameState {
+  let s = semCivis(createInitialState(1, dados));
+  const m = serra(dados);
+  type Caixa = { readonly dx0: number; readonly dx1: number; readonly dy0: number; readonly dy1: number };
+  // as posicoes da caixa, em ordem (y, depois x), que o `canPlace` do jogador aceita
+  const posicoes = (estado: GameState, tipo: string, caixa: Caixa): TileDeGrid[] => {
+    const def = dados.predios.find((p) => p.id === tipo);
+    const busca = def?.desbloqueadoPor ? registrarTipoConstruido(estado, def.desbloqueadoPor) : estado;
+    const aceitas: TileDeGrid[] = [];
+    for (let dy = caixa.dy0; dy <= caixa.dy1; dy += 1) {
+      for (let dx = caixa.dx0; dx <= caixa.dx1; dx += 1) {
+        const t = m(dx, dy);
+        if (canPlace(busca, tipo, t.gx, t.gy, dados).ok) aceitas.push(t);
+      }
+    }
+    return aceitas;
+  };
+  const colocar = (estado: GameState, tipo: string, caixa: Caixa, montar: (e: GameState, t: TileDeGrid) => GameState): GameState => {
+    const t = posicoes(estado, tipo, caixa)[0];
+    if (t === undefined) throw new Error(`fixture: '${tipo}' nao coube na caixa da cadeia do ferro`);
+    return montar(estado, t);
+  };
+  const produtor = (tipo: string, id: string, unidade: string) =>
+    (e: GameState, t: TileDeGrid): GameState => comProdutorOcupado(e, { tipo, id, unidade, gx: t.gx, gy: t.gy }, dados);
+  // a mina vai na posicao da caixa com MAIS veio ao alcance (empate: a primeira em (y, x)).
+  // A primeira com ALGUM veio pegou um tile so de carvao, que secou no minuto 7 (sonda).
+  const colocarMina = (estado: GameState, tipo: string, id: string, unidade: string, caixa: Caixa): GameState => {
+    let melhor: { readonly e: GameState; readonly veio: number } | null = null;
+    for (const t of posicoes(estado, tipo, caixa)) {
+      const e = produtor(tipo, id, unidade)(estado, t);
+      const veio = disponivelDe(e, id, dados) ?? 0;
+      if (veio > (melhor?.veio ?? 0)) melhor = { e, veio };
+    }
+    if (melhor === null) throw new Error(`fixture: '${tipo}' sem veio ao alcance na caixa da cadeia do ferro`);
+    return melhor.e;
+  };
+
+  // as caixas, relativas a ancora da serra (a quina noroeste do veio de ferro)
+  s = colocar(s, 'storehouse', { dx0: -16, dx1: -6, dy0: -6, dy1: -2 }, (e, t) => comArmazemExtra(e, 'arm', t.gx, t.gy, dados));
+  s = colocarMina(s, 'iron_mine', 'fe1', 'mineiro-ferro', { dx0: -6, dx1: 6, dy0: -3, dy1: -1 });
+  s = colocarMina(s, 'coal_mine', 'co1', 'mineiro-carvao', { dx0: 10, dx1: 22, dy0: -4, dy1: 4 });
+  const oficinas: Caixa = { dx0: -18, dx1: 20, dy0: -12, dy1: -3 };
+  s = colocar(s, 'iron_smithy', oficinas, produtor('iron_smithy', 'fu1', 'fundidor'));
+  s = colocar(s, 'weapon_smithy', oficinas, produtor('weapon_smithy', 'ws1', 'ferreiro-armas'));
+  s = colocar(s, 'armor_smithy', oficinas, produtor('armor_smithy', 'as1', 'ferreiro-armaduras'));
+
+  // a rua: busca em largura de cada porta ate a rede que ja toca a porta do armazem
+  const ids = ['fe1', 'co1', 'fu1', 'ws1', 'as1'];
+  const armazem = s.predios.porId['arm'];
+  if (armazem === undefined) throw new Error('fixture: arm');
+  s = comEstradas(s, tilesDaPorta(armazem, dados));
+  // a Bodega pousa na linha do armazem e poe rua so na propria porta: a do armazem ja existe
+  s = comBodegaAbastecida(s, 'bodega', 'arm', dados);
+  for (const id of ids) {
+    const p = s.predios.porId[id];
+    if (p === undefined) throw new Error(`fixture: '${id}' nao entrou`);
+    const rede = s.estradas;
+    const inicio = tilesDaPorta(p, dados).filter((t) => rede[chaveDeTile(t)] === true || canPlaceRoad(s, [t], dados).ok);
+    const veioDe = new Map<string, string | null>(inicio.map((t) => [chaveDeTile(t), null]));
+    const fila: TileDeGrid[] = [...inicio];
+    let achado: string | null = null;
+    while (fila.length > 0 && achado === null) {
+      const t = fila.shift() as TileDeGrid;
+      if (rede[chaveDeTile(t)] === true) { achado = chaveDeTile(t); break; }
+      for (const [ddx, ddy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+        const v = { gx: t.gx + ddx, gy: t.gy + ddy };
+        const k = chaveDeTile(v);
+        if (veioDe.has(k)) continue;
+        if (rede[k] !== true && !canPlaceRoad(s, [v], dados).ok) continue;
+        veioDe.set(k, chaveDeTile(t));
+        fila.push(v);
+      }
+    }
+    if (achado === null) throw new Error(`fixture: nenhuma rua liga '${id}' ao armazem`);
+    const caminho: TileDeGrid[] = [];
+    for (let k: string | null = achado; k !== null; k = veioDe.get(k) ?? null) caminho.push(tileDeChave(k));
+    s = comEstradas(s, [...tilesDaPorta(p, dados).filter((t) => canPlaceRoad(s, [t], dados).ok), ...caminho]);
+    s = exigirLigado(s, id, dados);
+  }
+  const porta = tilesDaPorta(armazem, dados)[0] as TileDeGrid;
+  return comHistoricoDosPredios(comSerfs(s, serfs, porta.gx, porta.gy));
+}
+
+/** D-PRODUCAO-01a — sem a mina de carvao: minerio sobrando e a fundicao parada. */
+export function cenarioDoFerroSemCarvao(dados: GameData = gameData): GameState {
+  return semPredioEOcupante(cenarioDaCadeiaDoFerro(dados), 'co1', 'mineiro-carvao');
+}
+
+/** D-PRODUCAO-01a — sem a mina de ferro: o outro lado do mesmo contra-exemplo. */
+export function cenarioDoFerroSemMina(dados: GameData = gameData): GameState {
+  return semPredioEOcupante(cenarioDaCadeiaDoFerro(dados), 'fe1', 'mineiro-ferro');
 }
