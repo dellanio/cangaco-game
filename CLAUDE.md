@@ -133,6 +133,11 @@ Não adicione dependência nova sem registrar o motivo em `PROGRESS.md`.
 8. **Sigla nunca aparece sozinha em relatório** (PROGRESS, avaliação, resposta ao
    operador): vem sempre com o nome ao lado, seja antiga ou nova. Exemplo: "F20b (fome e
    morte)".
+9. **Id se reserva na `main` antes de ser usado** (regra do operador, 2026-09-30). Todo item
+   novo (feature, bug, `D-xxx`) reserva o id na `main` no momento do plano, com um commit de
+   uma linha no `BUILD_PLAN.md` (feature) ou no `BUGS.md` (bug), **antes** de qualquer branch
+   usá-lo. Id que não está na `main` não existe: confira `git grep` na `main` antes de
+   escolher. Motivo: três colisões (BUG-V, D-TELA-06, D-TELA-07).
 
 ### Uma sessão só na `main` (regra do operador, 2026-09-25)
 
