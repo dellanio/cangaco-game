@@ -5789,9 +5789,15 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
 - **ENTREGUE (2026-09-30).** Pedido do operador: hoje a casa pausada e a casa sem insumo mostram o mesmo
   ocioso (F-VIVO-e, o ocioso genérico; D3). Um ícone pequeno sobre o prédio pausado, com o
   texto do `theme-sertao.json`. Só `src/render/`; a sim já tem `predio.pausado` (F16c).
-- **Interpretação (conservadora, registrada):** o texto é `painelPredio.pausado` ("Parado"), a
-  palavra que o painel já mostra para o mesmo estado; nenhuma chave nova no tema. O ícone é
-  geométrico (placa com duas barras de pausa), placeholder do §9 até haver arte.
+- ~~Interpretação: o texto é `painelPredio.pausado` ("Parado")~~. **Decisão do operador
+  (2026-09-30):** a placa usa a mesma palavra do botão de pausar do painel,
+  `painelPredio.pausar` ("Parar", o rótulo que `src/ui/painel-predio.ts` mostra no botão de prédio
+  não pausado). Nenhuma chave nova no tema. O ícone é geométrico (placa com duas barras de
+  pausa), placeholder do §9 até haver arte.
+- **Aceite emendado (2026-09-30, antes do código):** nos aceites 1 e 3, "o texto do tema" é
+  `painelPredio.pausar`. O teste compara com o JSON lido do disco e com a mesma chave que o
+  painel usa no botão. O roteiro afirma que o texto da placa é igual ao texto do botão de pausar
+  do painel de uma serraria NÃO pausada (a `s2`), lido da página.
 - **Aceite (escrito antes do código, 2026-09-30):**
   1. Função pura `temSinalDePausado(predio)`: verdadeira só para prédio completo com
      `pausado`; falsa para completo não pausado e para obra. Teste por tabela.
