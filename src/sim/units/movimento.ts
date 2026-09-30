@@ -54,9 +54,11 @@ export function ficarOcioso(state: GameState, u: Unidade, eventos: readonly Game
  * ocupacao no INICIO do passo): quem esta no meio de um passo ocupa o tile para onde vai, e ja
  * liberou o de onde sai; quem esta parado ocupa o proprio tile. Assim a coluna flui colada.
  */
-export function militarOcupa(state: GameState, tile: TileDeGrid, quem: string, dados: GameData): boolean {
+export function militarOcupa(
+  state: GameState, tile: TileDeGrid, quem: string, dados: GameData, parceiro: string | null = null,
+): boolean {
   for (const id of state.unidades.ordem) {
-    if (id === quem) continue;
+    if (id === quem || id === parceiro) continue;
     const o = state.unidades.porId[id];
     if (o === undefined || classeDaUnidade(o.tipo, dados) !== 'militar') continue;
     const indo = o.fsmData.caminho?.[0];
@@ -80,9 +82,11 @@ function saiAndandoLivre(state: GameState, tile: TileDeGrid, quem: string, dados
 }
 
 /** C5 — algum OUTRO militar esta no tile? (GDD §6.4: "militares colidem"; civil nao conta.) */
-function temOutroMilitar(state: GameState, tile: TileDeGrid, quem: string, dados: GameData): boolean {
+function temOutroMilitar(
+  state: GameState, tile: TileDeGrid, quem: string, dados: GameData, parceiro: string | null = null,
+): boolean {
   for (const id of state.unidades.ordem) {
-    if (id === quem) continue;
+    if (id === quem || id === parceiro) continue;
     const o = state.unidades.porId[id];
     if (o !== undefined && o.gx === tile.gx && o.gy === tile.gy && classeDaUnidade(o.tipo, dados) === 'militar') return true;
   }
@@ -208,8 +212,14 @@ function esperarOuDesviar(
     : { ...u, fsmData: { ...resto, caminho: contorno, progresso: 0 } };
 }
 
-/** Um tick de movimento: acumula 1 de progresso; ao completar o passo, a unidade passa ao tile seguinte. */
-export function andar(state: GameState, u: Unidade, dados: GameData): Unidade {
+/**
+ * Um tick de movimento: acumula 1 de progresso; ao completar o passo, a unidade passa ao tile seguinte.
+ *
+ * BUG-T — `parceiro` e o militar da TROCA MUTUA (`trocaMutuaCom`, `systems/marcha.ts`): ele esta
+ * no tile seguinte e vem para o de `u`. Ele nao segura a largada, e na chegada `u` espera em
+ * `custo - 1`, sem contar espera: quem troca os dois de tile, no mesmo passo, e a marcha.
+ */
+export function andar(state: GameState, u: Unidade, dados: GameData, parceiro: string | null = null): Unidade {
   const caminho = u.fsmData.caminho ?? [];
   const proximo = caminho[0];
   if (proximo === undefined) return u;
@@ -218,7 +228,7 @@ export function andar(state: GameState, u: Unidade, dados: GameData): Unidade {
   // C-MOVIMENTO-01 — o militar confere o tile ANTES de comecar o passo e espera no proprio
   // tile. Conferir so no fim o deixava desenhado a `custo - 1`, dentro do tile ocupado, e o
   // desvio o puxava de volta: o "volta ao tile anterior" da primeira partida.
-  if (militar && (u.fsmData.progresso ?? 0) === 0 && militarOcupa(state, proximo, u.id, dados)) {
+  if (militar && (u.fsmData.progresso ?? 0) === 0 && militarOcupa(state, proximo, u.id, dados, parceiro)) {
     return esperarOuDesviar(state, u, caminho, 0, dados);
   }
   const progresso = (u.fsmData.progresso ?? 0) + 1;
@@ -235,6 +245,10 @@ export function andar(state: GameState, u: Unidade, dados: GameData): Unidade {
   // ainda esta nele quando quem entra termina. Segura o passo ate ele sair; enquanto ele sai
   // andando livre, a espera nao conta para o desvio (desviar daqui e o recuo desenhado). Quem
   // sai e tambem esta segurando (fila ou ciclo) conta, e o desvio desfaz o ciclo.
+  if (militar && parceiro !== null && !temOutroMilitar(state, proximo, u.id, dados, parceiro)
+    && temOutroMilitar(state, proximo, u.id, dados)) {
+    return { ...u, fsmData: { ...u.fsmData, progresso: custo - 1 } };
+  }
   if (militar && temOutroMilitar(state, proximo, u.id, dados)) {
     if (saiAndandoLivre(state, proximo, u.id, dados)) return { ...u, fsmData: { ...u.fsmData, progresso: custo - 1 } };
     return esperarOuDesviar(state, u, caminho, custo - 1, dados);

@@ -30,65 +30,6 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
 
 ## Abertos
 
-## BUG-T — tropa travada: vaga bloqueada no MEIO do caminho (terceiro caso da família)
-- feature: C-MOVIMENTO-02b (a vaga tomada por quem marcha) — limite conhecido dela
-- severidade: **`trava`** (operador, 2026-09-30). Soldado parado em `marchando` por 16 048
-  ticks é travamento de regra, não balanceamento. O aceite escrito da C-MOVIMENTO-02 e da 02b
-  continua passando: a chave de nenhuma das duas cai.
-- **plano com aceite:** `docs/planos/2026-09-30-BUG-T-tropa-travada.md` (só plano; o código
-  espera o operador). Conferido no código: a troca mútua escapa da `vagaTomadaPor` porque ela
-  exige um PARADO no seguinte de quem ocupa. É o quarto caso da família.
-- **estado (2026-09-30, leva 2):** o código da troca mútua (na hora, atômica na largada e na
-  chegada) está na branch local `wip/BUG-T-troca-mutua` (`8ec6118`), **sem merge**. Os aceites 2
-  e 3 do plano (seção 7) passam, e a família inteira (C5, C-MOVIMENTO-02, 02b, C6, C-COMBATE-01a,
-  F26a) continua verde. **O aceite 4 reprova:** com a troca mútua, a varredura de 400 ordens
-  (receita fixada na seção 7 do plano) cai de 3 ordens com preso para 1, e aparece o **caso 3**:
-  - ordem k = 37 (destino 20,32, direção 0, 8 colunas): u20 em 19,33 com caminho
-    `[20,32 → 21,33]`, e u21 em 21,33 com caminho `[20,32 → 19,33]`. Cada um quer o tile do outro,
-    a DOIS passos, e o tile do meio (20,32) está com u16 **ocioso**, do mesmo lado;
-  - a `vagaEmparedadaPor` (C-MOVIMENTO-02) não dispara porque exige o destino vazio, e o destino
-    de cada um é o tile do outro. A troca mútua não se aplica, porque o próximo tile é do u16.
-  - O conserto do caso 3 é decisão do operador (abaixo, e o PROGRESS de 2026-09-30, leva 2).
-- a receita original abaixo **não reproduz** as ordens 11 e 19 (Tarefa 1 do plano). A receita
-  que vale é a da seção 7 do plano.
-- repro (medido; sonda apagada, receita determinística):
-  - `criarEscaramuca(gameData.economia.estadoInicial.semente)` e a tropa do jogador inteira.
-  - 400 ordens `MoveUnits` sorteadas por LCG `x = (x·1103515245 + 12345) mod 2³¹`, começando
-    em `x = 12345`, com `rnd(n) = x mod n`:
-    - destino `(líder0.gx + rnd(17) − 8, líder0.gy + rnd(17) − 8)`, com a posição inicial do
-      primeiro soldado;
-    - `direcao rnd(8)`, `colunas 3 + rnd(7)`.
-  - Cada ordem roda até todos ociosos, ou no máximo 1 500 ticks. Presos: 2 das 400.
-  - **Ordem 11** (tick 1 951, destino 36,43, direção 0, 4 colunas): três soldados parados
-    até o tick +16 048.
-    - u24 em 34,45, caminho `[35,45 → 36,45]`: o tile do MEIO é de u26, **ocioso**. É o caso
-      3 abaixo, confirmado.
-    - u28 em 37,47 quer 36,46 e u33 em 36,46 quer 37,47: **troca mútua**, os dois marchando
-      com `progresso` 0 e caminho de um passo.
-  - **Ordem 19** (tick 4 799, destino 35,36, direção 0, 5 colunas): u27 em 36,37 e u28 em 36,36
-    trocam de tile, também em troca mútua. Presos até +1 737 e +1 791.
-  - Reaplicada a ordem sobre o save de antes dela, depois de 20 000 ticks todos estão ociosos.
-    Hipótese, não medida: o que solta os três em +16 048 é causa externa (combate ou IA da
-    escaramuça).
-- esperado: toda a tropa mandada para uma formação para, cada soldado numa vaga, em tempo
-  finito.
-- observado: medido acima. A troca mútua foi conferida no código (plano, seção 2).
-- **a família, para saber onde olhar sem reler os relatórios:**
-  1. C-MOVIMENTO-02 (a tropa não trava): a vaga é o próximo tile e está ocupada por um
-     PARADO do mesmo lado, sem contorno. Troca: `vagaEmparedadaPor`, em
-     `src/sim/units/movimento.ts`.
-  2. C-MOVIMENTO-02b: a vaga é o próximo tile e está ocupada por alguém que MARCHA para
-     outra vaga, com `progresso` 0 e um parado à frente dele. Troca: `vagaTomadaPor`, em
-     `src/sim/systems/marcha.ts`, chamada em `passoMarchando`.
-  3. Este bug: o bloqueio não está no próximo passo com a vaga. As duas trocas exigem
-     `caminho[0]` igual à vaga (ou o destino), então nenhuma dispara. Resta
-     `esperarOuDesviar` (`units/movimento.ts`), que espera `ticksDesvioMilitar`, tenta o
-     contorno e, sem contorno, "tenta de novo depois de outro período", para sempre.
-- onde olhar primeiro: o soldado preso com `fsm: 'marchando'` e `fsmData.bloqueado`
-  voltando a zero em ciclos. O `caminho[0]` dele e quem está naquele tile (parado ou
-  marchando, de que lado, para onde) dizem qual dos três casos é.
-- status: aberto
-
 ## Polimento
 
 Os três bugs de oscilação de tempo que moravam aqui (BUG-D na F-T1, BUG-E na F-T2b e,

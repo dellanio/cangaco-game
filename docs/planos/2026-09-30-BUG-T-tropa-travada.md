@@ -180,3 +180,13 @@ Commit próprio, antes do código (CLAUDE.md §6, item 10). Onde diverge da seç
      `replanejar` na troca, o aceite 5 reprova.
   8. Não-regressão: C5, C-MOVIMENTO-02 e 02b, C6, C-COMBATE-01a, F26a e o `verify` inteiro.
 - **Merge na `main` só com os aceites 1 a 6 verdes** (operador: "1 a 4"; 5 e 6 são os novos).
+
+## 9. Registro da prova (2026-09-30, merge): o que a medida mostrou contra o aceite 7
+
+Não muda critério nenhum; registra o que a sonda do aceite 7 mediu.
+- Sem a troca atômica: os aceites 2, 5 e 4 reprovam.
+- Sem o `replanejar` na troca: o aceite 5 reprova.
+- **Sem a troca de vaga do caso 3: só o aceite 6 reprova.** O 4 continua verde. A previsão da §8
+  ("os aceites 6 e 4") não se confirmou: com o "um passo por tick" (o `feitos` da
+  `sistemaDaMarcha`), a ordem k = 37 não cai mais no caso 3. O caso 3 fica provado só pelo cenário
+  isolado do aceite 6.

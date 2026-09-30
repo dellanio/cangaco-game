@@ -16044,3 +16044,44 @@ cumprido agora no teste.
   porque ela é o gêmeo do roteiro da C-IA-03c. Não mexi.
 - **F-VIVO-e aceite 1** (vila da calibração, 6 000 ticks, limite padrão de 5 s) caiu uma vez sob
   carga. Não foi pedido e não mexi. É candidato ao mesmo tratamento.
+
+## 2026-09-30 — Leva 3, item 6: BUG-T (tropa travada): corrigido e mergeado; os aceites 1 a 6 verdes
+
+Decisões do operador: o caso 3 pela extensão da vaga emparedada da C-MOVIMENTO-02, primeiro; a
+ordem nova perdida no meio da troca corrigida, com teste que reprova antes; merge só com os
+aceites 1 a 4 verdes. A emenda 2 do aceite foi num commit próprio antes do código (`43c6a80`,
+plano, §8). A branch `wip/BUG-T-troca-mutua` foi rebaseada sobre ela e mergeada neste commit. O
+bug sai do `BUGS.md` aqui.
+
+### Verificado
+- `src/sim/systems/marcha.ts`:
+  - **caso 3:** `vagaCruzadaCom`, a extensão da `vagaEmparedadaPor`, nas mesmas condições dela
+    (espera cumprida, `progresso` 0, caminho > 1, parado do mesmo lado no próximo tile), mas com o
+    destino ocupado por quem quer a vaga de `u`. Os dois trocam de vaga (`alvoTile` e
+    `direcaoFinal`) e param, e o conjunto de vagas não muda. **A troca forçada do KaM não foi
+    necessária, e nenhum número novo entrou no dado;**
+  - **ordem nova no meio da troca:** a chegada atômica respeita o `replanejar` da C-MOVIMENTO-02;
+  - **um passo por tick:** a `sistemaDaMarcha` não processa de novo quem a troca atômica já moveu
+    (`feitos`).
+- `tests/BUG-T-troca-mutua.test.ts`, evidência `test-output/BUG-T.json` aberta:
+  - aceite 2: troca em 6 ticks (teto 9), com estrada nos dois sentidos, 0 sobreposições, nenhum
+    passo de mais de 1 de progresso por tick;
+  - aceite 3: inimigo não troca, 0 ticks trocados;
+  - aceite 4: **0 de 400 ordens com preso, 0 sobreposições** (7 453 ticks);
+  - aceite 5 (achado do avaliador), vermelho antes (`a` parava em 42,45, o tile trocado): agora
+    chega a 35,39, `ocioso`;
+  - aceite 6 (caso 3 isolado, com uma coluna de parados mais alta que a margem do desvio),
+    vermelho antes (os dois nunca paravam): param em 5 ticks, cada um numa vaga pedida, e o
+    parado fica no lugar.
+- **Aceite 7, provas de que acusam** (sondas de uma corrida, revertidas, `marcha.ts` restaurado):
+  - sem a troca atômica: 2, 5 e 4 reprovam;
+  - sem o `replanejar`: o 5 reprova;
+  - **sem a troca de vaga do caso 3: só o 6 reprova, e o 4 continua verde.** A previsão da §8 não
+    se confirmou: com o "um passo por tick", a ordem k = 37 não cai mais no caso 3. Registrado no
+    plano (§9), sem mudar critério.
+- Não-regressão: C5, C-MOVIMENTO-02 e 02b, C6, C-COMBATE-01a e F26a (29/29). Roteiros
+  C-COMBATE-01c, C-IA-03c e F26b, porta 5178, saída 0. `verify` verde na branch (2 101).
+
+### Erro meu, corrigido antes do commit
+- O primeiro corte do `BUGS.md` achou de novo a menção de `## Polimento` na linha 12 e duplicou
+  o arquivo, o mesmo erro do BUG-Y. Refeito a partir do `HEAD` com a âncora `\n## Polimento\n`.
