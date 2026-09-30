@@ -140,3 +140,43 @@ das seções 4 e 5, vale ela.
   - 6: sem guarda por import (o predicado e o `andar` moram no mesmo módulo). A prova de que
     acusa é uma sonda de uma corrida, com `trocaMutuaCom` devolvendo `null`: os aceites 2 e 4
     reprovam. É revertida e fica registrada no PROGRESS.
+
+## 8. Emenda 2 (operador, 2026-09-30, depois do avaliador): o caso 3, a ordem perdida, e o escopo
+
+Commit próprio, antes do código (CLAUDE.md §6, item 10). Onde diverge da seção 7, vale esta.
+
+- **Onde vive a troca mútua (corrige a §7):** em `passoMarchando` (`src/sim/systems/marcha.ts`),
+  ao lado das trocas da C-MOVIMENTO-02 e da 02b. Vale só para militar em `marchando`, que é quem
+  recebe ordem de formação. Militar em outra FSM (`indo_lutar`) continua na regra da C5 (militares
+  colidem). A troca é **atômica nas duas pontas**: os dois largam juntos e trocam de tile juntos,
+  quando os dois terminam o passo. Medido: a versão com chegada separada da §7 deixava um terceiro
+  entrar no tile vazio (7 ticks sobrepostos na varredura).
+- **Cada um anda uma vez por tick:** quem a troca atômica já moveu (o parceiro) não é processado
+  de novo no mesmo tick pela `sistemaDaMarcha`.
+- **A ordem nova no meio da troca não se perde:** a troca atômica que termina o caminho respeita o
+  `replanejar` da C-MOVIMENTO-02, como o passo normal, e a unidade segue para o destino novo.
+- **Caso 3, pela extensão da vaga emparedada (C-MOVIMENTO-02), primeiro:** vale nas mesmas
+  condições dela (em `marchando`, `progresso` 0, espera `ticksDesvioMilitar` cumprida, caminho > 1,
+  um militar PARADO do mesmo lado no próximo tile), com o destino OCUPADO por outro do mesmo lado
+  em `marchando`, cujo alvo é o tile de `u`. Os dois trocam de VAGA (`alvoTile` e `direcaoFinal`),
+  cada um já está na vaga nova e para. O conjunto de vagas não muda, como na 02 e na 02b. Se isto
+  não fechar o aceite 4, a troca forçada do KaM (`src/units/actions/KM_UnitActionWalkTo.pas:799-802`)
+  vem ao operador com o número novo, **antes** de entrar no dado.
+- **Aceites (substituem os da §7 onde repetem):**
+  1. Tarefa 1: feita (§7).
+  2. Troca mútua, no campo aberto e com estrada: os dois nos tiles trocados em no máximo o maior
+     custo de passo + 2, sem sobreposição. Novo: nenhum dos dois soma mais de 1 de `progresso`
+     por tick.
+  3. Inimigo não troca (igual à §7).
+  4. A varredura da §7: 0 de 400 ordens com soldado `marchando`, 0 sobreposições.
+  5. **Novo (achado do avaliador), vermelho antes:** o par em troca recebe, no meio do passo, uma
+     `MoveUnits` para um tile longe. Hoje ele para no tile trocado. Depois, ele chega ao tile novo,
+     `ocioso`.
+  6. **Novo, caso 3 isolado, vermelho antes:** dois do mesmo lado, cada um mandado ao tile do outro
+     a dois passos, com um parado do mesmo lado no tile do meio. Hoje: `marchando` 200 ticks
+     depois. Depois: os dois `ociosos`, cada um numa das duas vagas pedidas, o parado no lugar.
+  7. Prova de que acusa (sonda de uma corrida, revertida, registrada no PROGRESS): sem a troca
+     atômica, o aceite 2 reprova; sem a troca de vaga do caso 3, os aceites 6 e 4 reprovam; sem o
+     `replanejar` na troca, o aceite 5 reprova.
+  8. Não-regressão: C5, C-MOVIMENTO-02 e 02b, C6, C-COMBATE-01a, F26a e o `verify` inteiro.
+- **Merge na `main` só com os aceites 1 a 6 verdes** (operador: "1 a 4"; 5 e 6 são os novos).
