@@ -15938,3 +15938,43 @@ linha      entrada (BALANCE_LOG)            esperado (o que a entrada diz)      
   quando o lote abrir, como diz o plano do lote.
 - `inn.comensaisSimultaneos`: (A) ou (B), item 4 desta leva.
 - As pontas da folga de pedra (988/1009) continuam sem medida.
+
+## 2026-09-30 — Leva 2: avaliador (subagente evaluator) sobre `d0af7e6..2cc22cb` e a branch `wip/BUG-T-troca-mutua`
+
+Veredito dele: **NEEDS_WORK por causa da branch do BUG-T (tropa travada)**, que já estava marcada
+como "não mergear". A `main` sai aprovável com ressalvas.
+
+```text
+item                               | veredito  | achado                                                     | destino
+1 regra de id                      | RESSALVA  | CLAUDE.md "item antigo não se renomeia" sem a exceção     | aberto (doc)
+2 aceite antes do código           | RESSALVA  | ordem certa nos 3; BUG-T: código diverge do §7 do plano   | aberto, com o BUG-T
+3 branch do T2 apagada             | APROVADO  | —                                                          | —
+4 assentos da Bodega no KaM        | APROVADO  | 5 citações conferem; o 6 continuaria sem efeito           | espera o operador
+5 D-TELA-07 (sinal de pausado)     | RESSALVA  | o teste não compara com o botão; só o roteiro compara     | aberto (aceite ou teste)
+6 BUG-T (tropa travada), branch    | REPROVADO | aceite 4 vermelho (sabido); ordem nova some na troca      | aberto, na branch
+7 BUG-Z (nome coberto)             | RESSALVA  | o roteiro não afirmava camada única nem o caso escondido | corrigido neste commit
+8 lote de recalibração             | APROVADO  | —                                                          | —
+```
+
+### Corrigido neste commit (roteiro do BUG-Z)
+- `tools/shots/BUG-Z.js` passou a afirmar que todo nome está na mesma profundidade (a camada).
+  **Medido:** a partida da F-VIVO-h não tem unidade escondida. Então o caso do BUG-X
+  (especialista dentro) nunca rodava. O roteiro ganhou uma fase com a partida da F-VIVO-e pausada:
+  o serrador `u2` fica com corpo e nome escondidos, em 6 leituras com o relógio correndo. Saída 0.
+- **Prova de que acusa** (sonda de uma corrida, revertida): sem `item.nome.setVisible(visivel)`,
+  o roteiro reprova em "tick 54: o nome de u2 deveria acender junto com o corpo".
+
+### Aberto (achados do avaliador, sem conserto nesta leva)
+- **BUG-T, achado dele, lido no código e não rodado:** na troca atômica, quem chega no fim do
+  caminho vira `ocioso` direto. Com isso ele perde uma ordem nova dada no meio do passo (o
+  `replanejar` da C-MOVIMENTO-02). E a troca só vale para quem está marchando, e não "para todo
+  militar que anda", como diz o §7 do plano. Os dois vão para a correção da branch, com emenda de
+  aceite em commit próprio, junto com o caso 3.
+- D-TELA-07: o aceite emendado pede que o teste compare com "a mesma chave que o painel usa no
+  botão". Hoje só o roteiro compara, lendo o botão da página; tirei a guarda textual do teste.
+  Emendar o aceite para "o roteiro compara" ou pôr a comparação no teste é escolha do operador.
+- CLAUDE.md §6 item 9: acrescentar a exceção dos dois renomes do relevo, que hoje só está em
+  `docs/siglas.md`.
+- **Timeouts de guarda sob carga, nesta leva:** C-IA-03b a 12 s (duas vezes) e F-VIVO-e aceite 1 a
+  5 s (uma vez), com ~27 processos `node` na máquina. As duas rodadas seguintes deram verde.
+  Hipótese, não medida: carga de outra sessão.

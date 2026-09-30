@@ -67,6 +67,9 @@ async function roteiro(ctx) {
     const us = e.unidadesRenderizadas;
     afirmar(us.length > 0, 'deveria haver unidades desenhadas');
     const corpoMaisAlto = Math.max(...us.map((u) => u.profundidadeDoCorpo));
+    // a camada e UMA so: todo nome na mesma profundidade (a de PROFUNDIDADE_DOS_NOMES)
+    const camadas = new Set(us.map((u) => u.profundidadeDoNome));
+    afirmar(camadas.size === 1, `tick ${e.tick}: os nomes deveriam estar todos na mesma camada, vieram ${[...camadas].join(', ')}`);
     for (const u of us) {
       afirmar(u.nomeVisivel === u.visivel, `tick ${e.tick}: o nome de ${u.id} deveria acender junto com o corpo (${u.visivel})`);
       if (!u.visivel) continue;
@@ -106,6 +109,30 @@ async function roteiro(ctx) {
   await esperarFrame();
   afirmar((await estado()).tileSobMouse === null, 'com o mouse na barra, nenhum tile deveria estar sob ele');
   await capturar('nomes-por-cima');
+
+  // o nome de quem a tela esconde (BUG-X, especialista dentro): a partida da F-VIVO-e pausada
+  // tem o serrador dentro da serraria. A partida da F-VIVO-h nao tem unidade escondida (medido)
+  const pausada = JSON.parse(readFileSync('test-output/F-VIVO-e-pausado.partida.json', 'utf8'));
+  await page.evaluate(([k, v]) => window.localStorage.setItem(k, v), [CHAVE_DO_SAVE, readFileSync('test-output/F-VIVO-e-pausado.save.txt', 'utf8')]);
+  await page.keyboard.press('h');
+  await esperarFrame();
+  await page.click('#ajuda [data-acao="carregar"]');
+  await esperarFrame();
+  await page.keyboard.press('Escape');
+  await esperarFrame();
+  await page.keyboard.press('p');
+  for (let i = 0; i < 6; i += 1) {
+    await page.waitForTimeout(150);
+    s = await estado();
+    conferir(s);
+    const serrador = s.unidadesRenderizadas.find((u) => u.id === pausada.ocupante);
+    afirmar(serrador !== undefined && serrador.visivel === false && serrador.nomeVisivel === false,
+      `tick ${s.tick}: o serrador ${pausada.ocupante} dentro da casa deveria ter corpo e nome escondidos`);
+    escondidas += 1;
+  }
+  await page.keyboard.press('p');
+  await esperarFrame();
+  afirmar((await estado()).pausado, 'o roteiro deveria ter pausado de volta');
   return { leituras, escondidas };
 }
 
