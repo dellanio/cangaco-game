@@ -972,7 +972,7 @@ contrato inteiro, com terreno, recurso e vegetação, está no item F-SPR do
 - Com espelho horizontal, 4 direções custam 3 desenhos (norte, leste, sul) e 8 direções
   custam 5 (norte, nordeste, leste, sudeste, sul). O lado oeste é o espelho.
 
-**Civis: 4 direções** (`data/units.json`, `direcoesDeSprite: 4`)
+**Civis: 8 direções, 5 desenhadas com espelho** (decisão do operador, 2026-09-30)
 
 | id | Nome no jogo | Item na mão |
 |---|---|---|
@@ -1188,8 +1188,8 @@ no refazer.
 
 | id | Nome | Direções | Desenhos com espelho | Item |
 |---|---|---|---|---|
-| serf | Carregador | 4 | 3 (norte, leste, sul) | cesto ou saco nas costas |
-| laborer | Obreiro | 4 | 3 (norte, leste, sul) | marreta de madeira |
+| serf | Carregador | 8 | 5 (norte, nordeste, leste, sudeste, sul) | cesto ou saco nas costas |
+| laborer | Obreiro | 8 | 5 (norte, nordeste, leste, sudeste, sul) | marreta de madeira |
 
 **Tamanho na tela hoje** **[lido em `src/render/grid.ts`]**. A unidade ocupa meio tile,
 32×32 px no zoom 1. O zoom vai de 0,5 a 2, então ela aparece entre 16 e 64 px. O

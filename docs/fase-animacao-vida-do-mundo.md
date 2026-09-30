@@ -508,18 +508,25 @@ Animações iniciais:
 idle
 walk
 work
-carry
+carry (por ora o render mostra o ícone da mercadoria sobre o serf
+(plano, leva 1); a carga desenhada no corpo fica para depois do piloto)
 
-Direções civis:
+Direções (civis e militares, decisão do operador de 2026-09-30):
 
-north
-east
-south
+8 direções: n, ne, l, se, s, so, o, no.
+Desenhe 5: n, ne, l, se, s.
+so, o, no = espelho (flipX) de se, l, ne.
 
-west = mirror(east)
+Para o espelho valer, a luz vem de cima, sem componente lateral.
+A ferramenta e a arma trocam de mão no espelho, e isso é aceito.
+Um tipo que o operador reprovar no espelho desenha as 8.
 
-Respeite as regras de direção existentes no BRIEF-ARTE.md e
-data/units.json.
+Quadros num atlas por unidade, com o nome
+{unidade}/{estado}/{direcao}/{nnnn}.
+
+Plano, custo e ordem:
+docs/planos/2026-09-30-animacao-direcional-de-unidades.md.
+O piloto é o serf, com sprites de depuração, antes de qualquer arte.
 
 A silhueta deve continuar legível no tamanho real mostrado pelo jogo.
 

@@ -1866,13 +1866,21 @@ a geografia já corrigida do que regravar 900 tiles depois.
     do arquivo, com o `anchor` no meio da borda de baixo do tile e depth pelo pé. A
     célula da tira fica vazia. Um id não pode ser `recurso` e `vegetacao` ao mesmo
     tempo (guarda em `tests/F-SPR-carregamento.test.ts`).
-  - **Unidade** (`tipo: "unidade"`, `id` = tipo neutro) usa **um arquivo por
-    direção**, não folha. Estado `"<pose>:<direcao>"`, com as direções
-    `n ne l se s so o no`, e hoje só a pose `parado`. **Oeste é espelho**: `o`, `no`
-    e `so` sem arquivo usam `l`, `ne` e `se` com `flipX`, de modo que 4 direções
-    custam 3 arquivos e 8 custam 5. Quantas direções cada tipo tem vem de
-    `data/units.json` (`direcoesDeSprite`: civis 4, militares 8); os mercenários não
-    declaram e ficam no retângulo. O `anchor` cai na posição desenhada da unidade.
+  - **Unidade** (`tipo: "unidade"`, `id` = tipo neutro): **8 direções para todos os
+    tipos** (decisão do operador, 2026-09-30; o A* anda em diagonal,
+    `sim/pathfinding.ts`). As direções são `n ne l se s so o no`. **Oeste é espelho**:
+    `o`, `no` e `so` sem quadro usam `l`, `ne` e `se` com `flipX`, e por isso 8 direções
+    custam 5 desenhos. A arte parada de hoje continua em `estados`
+    (`"<pose>:<direcao>"`, um arquivo por chave). A arte animada entra em atlas, com
+    quadros `{unidade}/{estado}/{direcao}/{nnnn}`, pelo plano
+    `docs/planos/2026-09-30-animacao-direcional-de-unidades.md`. O `anchor` cai na
+    posição desenhada da unidade.
+    **Dado de hoje (conferido em 2026-09-30):** `data/units.json` declara
+    `direcoesDeSprite` no `_comum` de cada grupo, civis 4 (`:26`) e militares 8
+    (`:106`), e o render o lê (`src/render/direcoes-de-sprite.ts:32`). Os civis passam a
+    8 pela D-TELA-05a do plano; até lá o dado continua dizendo 4. (O texto proposto em
+    `docs/planos/2026-09-30-vivo-contra-kam-e-texto-das-8-direcoes.md` §4.2 dizia que o
+    campo não existia; a leitura do arquivo desmentiu.)
   - **Nenhum tamanho é calculado** fora do prédio: sprite sai no `tamanho` do
     arquivo, e textura de tile sai no `tilePx`. O fator de transbordo do prédio
     (correção do BRIEF-ARTE, 2026-09-26) **não passa por este código**.
