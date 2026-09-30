@@ -1034,3 +1034,28 @@ Preenchidas durante a execução. Separam o **verificado** (com o comando ou o a
   136 pacotes, nenhuma dependência nova, e o `node_modules/` é ignorado pelo git.
 - **Linha de base:** não rodada, por decisão do operador (decisão 12). Vai para o fim (Tarefa 5,
   passo 1), sobre a ponta da `main` parada. São 84 roteiros hoje (`tools/shots/*.js` sem `_`).
+- **Tarefa 1, D-TERRENO-01 (commit `345be3f`), verificado com `npx vitest run`, um arquivo por
+  vez (decisão 15):**
+  - `tests/D-TERRENO-01-relevo-do-gerador.test.ts`: 21 de 21. Também `estilo-ui-menu` (12 de
+    12), por causa do `relevo` novo em `ARQUIVOS_DA_INTERFACE`, e `F-D3-geografia` (8 de 8), a
+    guarda do mapa emitido;
+  - `node tools/gerar-mapa.js --conferir` sai 0 nos dois arquivos. O `sertao-128.json` tem o
+    **mesmo blob** de antes (`686196f…`, por `git hash-object` e `git rev-parse HEAD:`). O "M"
+    que o `git status` mostrou depois de regravar era só LF contra CRLF, e a cópia foi restaurada;
+  - a evidência (`test-output/D-TERRENO-01-relevo-do-gerador.json`): degraus de 1 a 18; 15 633
+    tiles com limite, dos quais 11 722 planos e 248 encostas no limite de 2 degraus; média no
+    miolo de montanha 15,7, de grama 6,1, de água 3,2.
+- **Tarefa 2, D-TELA-07, a conta pura (`src/render/relevo.ts`), verificado com `npx vitest run`:**
+  - `tests/D-TELA-07-luz-do-relevo.test.ts`: 12 de 12. Também `F04-grid-ortogonal` (17 de 17),
+    que guarda o que `src/render/` pode importar;
+  - as rampas sintéticas dão os números da avaliação: 0,830 e 1,110 a 8 px por degrau, e 0,714 e
+    1,143 a 12,8 px (`test-output/D-TELA-07-luz-do-relevo-geometrias.json`);
+  - **no mapa real, a 8 px por degrau, a luz vai de 0,52 a 1,15, mas só no miolo de montanha e
+    rocha** (sem limite de declive). Nos vértices tocados só por tipos com limite, medido com um
+    `node -e` avulso, ela vai de **0,87 a 1,11**. O 0,83 do norte só aparece com rampa de 2
+    degraus nos dois lados do vértice, e o mapa quase não tem isso. Isso pesa na decisão 9: o
+    norte real fica mais claro que o da tabela nas duas geometrias, e a captura vai mostrar;
+  - o mapa de luz é `Float32`: o 1 do plano é exato, mas um teto como 1,05 volta como
+    1,0499999…. O teste do teto usa tolerância; os neutros exatos (255 e 0) não dependem disso;
+  - `Float32Array`, `Uint8Array` e o JSON importado **não passaram por `typecheck` nem `lint`**:
+    esses rodam no `verify`, quando for liberado. Até lá, a tipagem é hipótese.
