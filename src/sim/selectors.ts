@@ -19,7 +19,7 @@ import { predioLigadoAoArmazem } from './estradas';
 import { custoDeTreino, ehEscolaCompleta, filaDaEscola, ouroNecessario } from './escola';
 import { custoDoPassoDaUnidade } from './carga';
 import { alvoDeNivelamento, custoDoPredio } from './obra';
-import { receitaDoTipo, semTrabalhoAoAlcance } from './producao';
+import { receitaDoTipo, saidasDaReceita, semTrabalhoAoAlcance } from './producao';
 import { colheitaAoAlcanceDaCaixa } from './recursos';
 import { plantaNoModo } from './modo';
 import { ehPredioOcupavel, tiposQueOcupam, trabalhadorDoTipo } from './ocupacao';
@@ -617,6 +617,14 @@ export interface PainelDoPredio {
   readonly armazem: {
     readonly mercadorias: readonly { readonly mercadoria: string; readonly quantidade: number; readonly aceita: boolean }[];
   } | null;
+  /** D-PRODUCAO-03b — a encomenda da oficina: o que FALTA de cada saida (na ordem de
+   *  `economia.mercadorias`), a saida do ciclo em andamento (ja descontada, 03a) e o teto do
+   *  comando. `null` em quem nao tem receita com `escolheSaida`, e em obra. */
+  readonly encomenda: {
+    readonly maxima: number;
+    readonly emCurso: string | null;
+    readonly saidas: readonly { readonly mercadoria: string; readonly falta: number }[];
+  } | null;
   /** F28b — a munição da torre e por que ela não atira; `null` em quem não é torre. */
   readonly torre: {
     readonly pedras: number;
@@ -713,6 +721,7 @@ export function painelDoPredio(
       quartel: null,
       reparo: null,
       armazem: null,
+      encomenda: null,
     };
   }
 
@@ -761,6 +770,7 @@ export function painelDoPredio(
         })),
       }
       : null,
+    encomenda: encomendaDoPainel(predio, dados),
     reparo: {
       ligado: predio.reparo,
       danificado: predio.hp < def.hp,
@@ -784,6 +794,19 @@ export function painelDoPredio(
         }),
       }
       : null,
+  };
+}
+
+/** D-PRODUCAO-03b — a encomenda do painel. Sem escolha gravada (save antigo), tudo zero:
+ *  e o que a sim le no lugar (`escolhaInicial`). */
+function encomendaDoPainel(predio: PredioCompleto, dados: GameData): PainelDoPredio['encomenda'] {
+  const receita = receitaDoTipo(predio.tipo, dados);
+  if (receita === null || !receita.escolheSaida) return null;
+  const escolha = predio.producao?.escolha;
+  return {
+    maxima: dados.producao.encomenda.maxima,
+    emCurso: escolha?.emCurso ?? null,
+    saidas: saidasDaReceita(receita, dados).map((mercadoria) => ({ mercadoria, falta: escolha?.cota[mercadoria] ?? 0 })),
   };
 }
 

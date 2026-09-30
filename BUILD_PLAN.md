@@ -5522,6 +5522,14 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
       **Até a 03b, a oficina nova fica parada na partida:** só o comando encomenda.
   - **03b — o painel (ui).** No painel da oficina, uma linha por saída com `−`/`+` e a
     encomenda restante, no molde da aba Distribuição, e o alerta de encomenda cumprida.
+    - **ENTREGUE (2026-09-29).** Plano `docs/planos/2026-09-29-D-PRODUCAO-03b-painel-encomenda.md`.
+      `painelDoPredio.encomenda` (seletor), `ui/encomenda.ts` (o comando do −/+ e o texto
+      do aviso), seção "Encomenda" no painel e o aviso "Encomenda cumprida: <prédio>" no
+      `#aviso-de-ordem`. **Aceite:** `tests/D-PRODUCAO-03b-painel-encomenda.test.ts` e o
+      roteiro `tools/shots/D-PRODUCAO-03.js` (clica com o jogo andando, §8).
+      **PARA REVISÃO:** o aviso vai no texto passageiro sobre o mapa, e não como causa nova
+      na aba Alertas; um clique é ±1 (o KaM tem ±10 no botão direito); a oficina sem
+      encomenda ganha a linha "Sem encomenda", mas o ocupante continua `trabalhando`.
 - **Onde encaixar (aprovado):** logo depois da D-PRODUCAO-01. Ela faz a Ferraria de armas
   e a de armaduras, que já têm `escolheSaida`: se a 03a vier antes, as duas nascem
   paradas e o aceite da D-PRODUCAO-01 precisa emitir encomenda. Juntar as duas numa
@@ -6113,7 +6121,7 @@ vai para o PROGRESS como PARA REVISÃO, e o trabalho segue.
 6. D-TRANSPORTE-02 — menu de distribuição.
 7. D-PRODUCAO-01 — ferro e ferrarias. ENTREGUE (01a guarda, 01b insumo escasso dividido).
 8. D-PRODUCAO-03 — encomendas das oficinas (03a regra, 03b painel). Decisão do operador,
-   2026-09-29. 03a ENTREGUE.
+   2026-09-29. ENTREGUE (03a regra, 03b painel).
 9. F24, o que resta: a cadeia de couro.
 10. As quatro hipóteses do avaliador:
    - BUG-P perde a ordem depois de revidar;

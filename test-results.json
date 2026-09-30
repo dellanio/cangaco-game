@@ -493,5 +493,8 @@
   },
   "D-PRODUCAO-03a-encomendas": {
     "passes": true
+  },
+  "D-PRODUCAO-03b-painel-encomenda": {
+    "passes": true
   }
 }

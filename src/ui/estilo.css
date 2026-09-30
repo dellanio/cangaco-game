@@ -606,6 +606,15 @@ body:not([data-corpo="opcoes"]) #opcoes { display: none; }
 #painel-predio .linha.feira-rascunho .valor { display: inline-flex; align-items: center; gap: 4px; }
 #painel-predio .linha.feira-rascunho .valor > span { min-width: 76px; text-align: center; }
 #painel-predio .linha.feira-rascunho button { padding: 1px 6px; }
+/* D-PRODUCAO-03b — a encomenda da oficina: "− falta +" e a marca da peca em curso */
+#painel-predio .encomenda { display: flex; flex-direction: column; gap: 2px; }
+#painel-predio .linha.encomenda-saida { align-items: center; }
+#painel-predio .linha.encomenda-saida .valor { display: inline-flex; align-items: center; gap: 4px; }
+#painel-predio .linha.encomenda-saida .falta { min-width: 28px; text-align: center; }
+#painel-predio .linha.encomenda-saida button { padding: 1px 6px; }
+#painel-predio .linha.encomenda-saida button:disabled { opacity: 0.4; }
+#painel-predio .linha.encomenda-saida .em-curso { font-style: italic; opacity: 0.8; }
+#painel-predio .linha.sem-encomenda { font-style: italic; }
 #painel-predio button.modo[aria-pressed="true"] { font-weight: 700; box-shadow: inset 0 0 0 2px var(--terracota); }
 #painel-predio .linha[data-ocupante="vago"] .valor { color: var(--terracota); font-weight: 400; font-style: italic; }
 #painel-predio .gaveta {

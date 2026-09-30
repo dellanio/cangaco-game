@@ -29,6 +29,7 @@ import { desenharSecaoDaEscola, nomeDoCivil } from './painel-escola';
 import { comandoDaTroca, comandoDeCancelar, girarMercadoria, mudarQuantidade, rascunhoInicial } from './ordem-da-feira';
 import type { RascunhoDaTroca } from './ordem-da-feira';
 import { comandoDeModo, opcoesDeModo } from './modo-do-predio';
+import { comandoDeEncomenda, semEncomenda } from './encomenda';
 import type { ModosDoTipo, NomeDoModo, OpcaoDeModo } from './modo-do-predio';
 // A MESMA aritmetica que a cena desenha no mapa (F17b). O arquivo nao tem
 // import nenhum — nem phaser, nem `sim/data` —, entao trazer ele para ca nao
@@ -217,6 +218,61 @@ function desenharAceiteDoArmazem(
   gente.append(secao);
 }
 
+/**
+ * D-PRODUCAO-03b — a encomenda da oficina: uma linha por saida com "− falta +", no molde do
+ * "Quanto" da feira, e "fazendo" na peca do ciclo em andamento. O botao manda o mapa inteiro
+ * com o VALOR novo (`comandoDeEncomenda`); no zero o − e no teto o + ficam desabilitados.
+ * Mercadoria, falta e o que esta em curso vao em `data-`, para o roteiro afirmar numero.
+ */
+function desenharEncomenda(
+  gente: HTMLElement, predio: string, encomenda: NonNullable<PainelDoPredio['encomenda']>,
+  emitir: (comando: Command) => void,
+): void {
+  const secao = document.createElement('div');
+  secao.className = 'encomenda';
+  const titulo = document.createElement('span');
+  titulo.className = 'rotulo';
+  titulo.textContent = rotulos.encomenda;
+  secao.append(titulo);
+  for (const s of encomenda.saidas) {
+    const emCurso = encomenda.emCurso === s.mercadoria;
+    const l = linha('encomenda-saida', nomeDaMercadoria(s.mercadoria), '');
+    l.dataset.encomenda = s.mercadoria;
+    l.dataset.falta = String(s.falta);
+    l.dataset.emCurso = String(emCurso);
+    const valor = l.querySelector('.valor') as HTMLElement;
+    const n = document.createElement('span');
+    n.className = 'falta';
+    n.textContent = String(s.falta);
+    const botao = (papel: string, texto: string, dica: string, delta: number): HTMLButtonElement => {
+      const b = botaoDaFeira(papel, texto, () => {
+        const comando = comandoDeEncomenda(predio, encomenda, s.mercadoria, delta);
+        if (comando !== null) emitir(comando);
+      });
+      b.className = 'encomenda-controle';
+      b.title = dica;
+      b.disabled = comandoDeEncomenda(predio, encomenda, s.mercadoria, delta) === null;
+      return b;
+    };
+    valor.append(botao('menos', '−', rotulos.encomendaMenos, -1), n, botao('mais', '+', rotulos.encomendaMais, 1));
+    if (emCurso) {
+      const marca = document.createElement('span');
+      marca.className = 'em-curso';
+      marca.textContent = rotulos.encomendaEmCurso;
+      valor.append(marca);
+    }
+    secao.append(l);
+  }
+  if (semEncomenda(encomenda)) {
+    const aviso = document.createElement('div');
+    aviso.className = 'linha sem-encomenda';
+    aviso.dataset.semEncomenda = 'true';
+    aviso.textContent = rotulos.semEncomenda;
+    secao.append(aviso);
+  }
+  gente.append(secao);
+}
+
 function nomeDoPredio(tipo: string): string {
   return temaDePredios[tipo]?.nome ?? tipo;
 }
@@ -370,6 +426,7 @@ function desenharCompleto(
   }
 
   desenharModo(gente, acoes, dados.predio, modos, emitir);
+  if (dados.encomenda !== null) desenharEncomenda(gente, dados.predio, dados.encomenda, emitir);
 
   // F28b — a torre: quantas pedras, e POR QUE nao atira (o aceite pede que o painel
   // diga). Os numeros e o motivo vao em `data-`, para o roteiro afirmar sem recortar texto.

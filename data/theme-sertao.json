@@ -472,7 +472,13 @@
     "desligarReparo": "Desligar reparo",
     "armazemRecebe": "Recebe (clique para bloquear ou liberar)",
     "armazemBloquear": "Recebe. Clique para não receber mais",
-    "armazemAceitar": "Não recebe. Clique para voltar a receber"
+    "armazemAceitar": "Não recebe. Clique para voltar a receber",
+    "_docEncomenda": "D-PRODUCAO-03b (src/ui/painel-predio.ts). A encomenda da oficina: uma linha por saida com o que falta fazer; encomendaEmCurso marca a peca do ciclo em andamento (ja descontada); semEncomenda e a oficina parada porque tudo esta em zero.",
+    "encomenda": "Encomenda",
+    "encomendaEmCurso": "fazendo",
+    "semEncomenda": "Sem encomenda: a oficina está parada",
+    "encomendaMenos": "Encomendar uma a menos",
+    "encomendaMais": "Encomendar uma a mais"
   },
   "partida": {
     "_doc": "F34. O aviso do fim da escaramuca, sobre o jogo. So a tela: quem decide o fim e sim/partida.ts.",
@@ -579,7 +585,9 @@
     "colunasInvalidas": "Número de colunas inválido",
     "segundosNaTela": 3,
     "_docMarcador": "C-TELA-02 (src/render/marcador-de-destino.ts). Quanto dura, em segundos de relogio de parede, a marca no tile do destino de uma ordem de mover. Dado de TELA.",
-    "segundosDoMarcador": 1
+    "segundosDoMarcador": 1,
+    "_docEncomenda": "D-PRODUCAO-03b (src/ui/aviso-de-ordem.ts). O aviso de encomenda cumprida de uma oficina do jogador ({predio} e o nome do tipo), no mesmo lugar e pelo mesmo tempo da ordem recusada.",
+    "encomendaCumprida": "Encomenda cumprida: {predio}"
   },
   "grupo": {
     "_doc": "C-COMIDA-01d. O painel do grupo militar escolhido (src/ui/painel-grupo.ts). `condicao` e `esperando` levam {n}. `ninguemComFome` aparece quando o Alimentar volta recusado com `sem-fome` (ninguem do grupo abaixo do limiar do pedido).",

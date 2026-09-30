@@ -14451,3 +14451,49 @@ Plano: `docs/planos/2026-09-29-D-PRODUCAO-03a-encomendas.md`. Decisão do operad
 - A oficina sem encomenda continua pedindo insumo até o alvo da gaveta. O KaM também pede.
 
 **O que muda na partida:** oficina de armas, ferraria de armas e de armaduras nascem paradas, e produzem só o que o jogador encomenda. Até a 03b (o painel) não há botão: só o comando.
+
+## 2026-09-29 — D-PRODUCAO-03b (encomendas das oficinas, painel)
+
+Plano: `docs/planos/2026-09-29-D-PRODUCAO-03b-painel-encomenda.md`. Camadas: `sim/selectors.ts`
+(leitura), `src/ui/` e o tema. Nada em `src/render/` nem em regra da sim.
+
+**Feito:**
+- Seletor: `painelDoPredio.encomenda { maxima, emCurso, saidas[{mercadoria, falta}] }`, `null`
+  em quem não tem receita com `escolheSaida`.
+- `src/ui/encomenda.ts` (puro): `comandoDeEncomenda` monta o `SetProductionQuota` com o mapa
+  inteiro e o VALOR novo, grampeado em `0..maxima`, e devolve `null` quando nada mudaria;
+  `semEncomenda`; `textoDaEncomendaCumprida` lê o `production-order-completed` do tick, só de
+  prédio do jogador.
+- Painel: seção "Encomenda", uma linha por saída com `− falta +`, "fazendo" na peça em curso,
+  − desabilitado no zero e + no teto, e a linha "Sem encomenda: a oficina está parada".
+  Números em `data-encomenda`/`data-falta`/`data-em-curso`.
+- Aviso: `#aviso-de-ordem` mostra "Encomenda cumprida: <prédio>" quando não há recusa de
+  ordem militar no tick (a recusa ganha).
+- Tema: `painelPredio.encomenda*`, `semEncomenda`, `ordem.encomendaCumprida`. CSS no molde da
+  feira.
+
+**Verificado:**
+- `tests/D-PRODUCAO-03b-painel-encomenda.test.ts`, 9 testes pelo `step`. Evidência em
+  `test-output/D-PRODUCAO-03b-painel-encomenda.json`: com `+1` na espada, o ciclo começa no
+  tick 57 com a espada em curso e tudo em zero; o aviso sai no tick 431 com o nome do prédio,
+  e não sai no tick seguinte nem para prédio da IA.
+- Com o `emCurso` do seletor forçado a `null` e o filtro do lado tirado, 3 dos 9 testes caem
+  (sonda revertida, arquivo restaurado).
+- Roteiro `tools/shots/D-PRODUCAO-03.js`, OK, 3 capturas. Abre o painel e clica o `+` com o
+  jogo andando (`mouse.down`/150 ms/`mouse.up`, §8). Aberta
+  `screenshots/D-PRODUCAO-03-2-encomenda-cumprida.png`: o aviso "Encomenda cumprida:
+  Ferraria" sobre o mapa, as três linhas `− 0 +` (Peixeira, Ferrão, Bacamarte) e a linha
+  "Sem encomenda". No passo 3, a lança pedida já entrou em ciclo (falta 0, em curso).
+- `npm run verify`: 194 arquivos, 2005 testes. A primeira corrida caiu de novo só no timeout
+  de 12 s do C-IA-03b ("peace-ended sai uma vez"). A segunda passou inteira.
+
+**PARA REVISÃO:**
+- O aviso vai no texto passageiro sobre o mapa, e não como causa nova na aba Alertas: causa
+  nova muda os roteiros da F22, e os alertas de lá são estado persistente, não evento.
+- Um clique é ±1. O KaM tem ±10 no botão direito.
+- A oficina sem encomenda ganha a linha "Sem encomenda", mas o ocupante continua
+  `trabalhando` (decisão da 03a).
+
+**O que muda na partida:** o jogador passa a encomendar pelas oficinas no painel, com −/+ por
+peça, e vê a peça que está saindo. Quando a encomenda acaba, o aviso aparece sobre o mapa e a
+oficina diz que está parada.

@@ -6,9 +6,13 @@
 // Le os eventos do tick (`command-rejected` que a sim ja emite) e o seletor puro
 // `segundosDePazRestantes`, e escreve texto num aviso sobre a celula do canvas. Nunca muda
 // o jogo, nunca importa phaser. Os rotulos vem de `theme-sertao.json` (`ordem`).
+//
+// D-PRODUCAO-03b: sem recusa no tick, o mesmo aviso diz a encomenda de oficina cumprida
+// (`textoDaEncomendaCumprida`). A recusa ganha: e resposta ao gesto que o jogador acabou de fazer.
 import type { GameEvent, GameState } from '../sim/state';
 import { segundosDePazRestantes } from '../sim/paz';
 import { mmss } from './contador-de-paz';
+import { textoDaEncomendaCumprida } from './encomenda';
 import temaSertao from '../../data/theme-sertao.json';
 
 export interface RotulosDaOrdem {
@@ -70,9 +74,12 @@ export function montarAvisoDeOrdem(): AvisoDeOrdem {
   const elemento = document.getElementById('aviso-de-ordem');
   if (!elemento) throw new Error('aviso-de-ordem: #aviso-de-ordem nao existe no index.html');
   let apagar: ReturnType<typeof setTimeout> | null = null;
+  const temaDePredios = temaSertao.predios as Readonly<Record<string, { readonly nome: string } | undefined>>;
+  const nomeDoTipo = (tipo: string): string => temaDePredios[tipo]?.nome ?? tipo;
   return {
     atualizar(estado) {
-      const texto = textoDaRecusa(estado.events, segundosDePazRestantes(estado));
+      const texto = textoDaRecusa(estado.events, segundosDePazRestantes(estado))
+        ?? textoDaEncomendaCumprida(estado, temaSertao.ordem.encomendaCumprida, nomeDoTipo);
       if (texto === null) return;
       elemento.textContent = texto;
       elemento.hidden = false;
