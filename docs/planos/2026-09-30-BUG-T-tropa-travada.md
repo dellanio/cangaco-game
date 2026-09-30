@@ -95,3 +95,48 @@ por isso fica fora da (A).
 
 `trava` (operador, 2026-09-30). O aceite escrito da C-MOVIMENTO-02 e da 02b continua passando,
 então a chave de nenhuma das duas cai. O que fecha o BUG-T é o aceite 4 deste plano.
+
+## 7. Emenda (operador, 2026-09-30): código liberado, troca mútua NA HORA
+
+Esta emenda vai num commit próprio, antes do código (CLAUDE.md §6, item 10). Onde ela diverge
+das seções 4 e 5, vale ela.
+
+- **Decisão:** a troca mútua é na hora, como no KaM (`src/units/actions/KM_UnitActionWalkTo.pas:125`).
+  Não usa `ticksDesvioMilitar`, e a (B) não entra.
+- **Tarefa 1, feita** (sonda apagada): a receita do `BUGS.md` **não reproduz** as ordens 11 e 19.
+  Testei o LCG avançado antes e depois do sorteio, a tropa por tipo, por classe e pelo lado
+  inteiro, e a parada por "todos ociosos" e por "ninguém marchando". Nenhuma combinação dá o
+  destino 36,43 da ordem 11. A receita fica **fixada** assim, e é a do aceite 4:
+  - `x₀ = 12345`; cada sorteio faz primeiro `x = (x·1103515245 + 12345) mod 2³¹` e depois
+    `rnd(n) = x mod n`;
+  - a tropa são os soldados do lado do jogador com o tipo `escaramuca.tropaDoJogador.tipo`, e o
+    líder de referência é o primeiro deles no estado inicial;
+  - a ordem vai para a tropa inteira: destino `(líder.gx + rnd(17) − 8, líder.gy + rnd(17) − 8)`,
+    `direcao rnd(8)`, `colunas 3 + rnd(7)`, nesta ordem de sorteio;
+  - cada ordem roda até todos os vivos ficarem `ocioso`, ou no máximo 1 500 ticks.
+  - **Medido:** 3 das 400 ordens deixam presos (k = 4, 9 e 11). Os 6 presos são **troca mútua**:
+    cada par quer o tile do outro. O caso 3 (tile do meio) não aparece nesta receita. A (A) cobre.
+- **Onde vive:** em `andar` (`src/sim/units/movimento.ts`), para todo militar que anda, e não só
+  em `passoMarchando`: a colisão da largada e a da chegada estão lá. Predicado exportado
+  `trocaMutuaCom`. As duas isenções:
+  1. **largada:** o parceiro no meu próximo tile, do mesmo lado, com o próprio próximo tile igual
+     ao meu tile, não me bloqueia;
+  2. **chegada:** entro no tile do parceiro só se ele termina o passo neste mesmo tick, depois de
+     mim na ordem (`progresso + 1 ≥` o custo dele). Se ele já foi processado neste tick, espero
+     em `custo − 1`, sem contar espera, e no tick seguinte ele entra primeiro. Assim, nem com
+     custos diferentes (estrada) dois militares ficam no mesmo tile no fim do tick, e cada passo
+     custa o tempo de sempre.
+- **Aceites que mudam:**
+  - 2: pelo `step`, no campo aberto da C5 (militares colidem), dois soldados do mesmo lado,
+    vizinhos, cada um mandado para o tile do outro. Vermelho antes do conserto (200 ticks depois,
+    os dois `marchando`). Depois, os dois `ociosos` nos tiles trocados em no máximo o maior dos
+    dois custos de passo + 2 ticks (custo lido de `custoDoPasso`, sem literal), e nenhuma
+    sobreposição em tick nenhum. Mais um caso com um dos dois tiles em estrada (custos diferentes),
+    com o mesmo afirmado.
+  - 3: inimigo não troca. Os mesmos dois, de lados opostos: em nenhum tick um está no tile inicial
+    do outro enquanto o outro está no dele.
+  - 4: a receita fixada acima, 0 de 400 ordens com soldado em `marchando` no fim, e nenhuma
+    sobreposição de militares em tick nenhum.
+  - 6: sem guarda por import (o predicado e o `andar` moram no mesmo módulo). A prova de que
+    acusa é uma sonda de uma corrida, com `trocaMutuaCom` devolvendo `null`: os aceites 2 e 4
+    reprovam. É revertida e fica registrada no PROGRESS.
