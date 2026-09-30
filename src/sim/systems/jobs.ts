@@ -34,7 +34,7 @@ import {
 import type { MotivoDeLiberacao } from '../jobs';
 import type { ModoDeBusca } from '../pathfinding';
 import {
-  demandaDaTropa, demandaDoTile, demandaNoDestino, disponivelNaOrigem, ofertaNaOrigem, reservadoNaOrigem, reservadoNoDestino, sobraNaOrigem,
+  demandaDaTropa, demandaDoTile, demandaNoDestino, disponivelNaOrigem, ofertaNaOrigem, reservadoNoDestino, sobraNaOrigem,
   vagaDaTropa, vagaDoDestino, vagaNoTile,
 } from '../reservas';
 import {
@@ -306,7 +306,9 @@ function grupoDeAbertas(
     .filter((o): o is TarefaDeTransporte => ehTarefaDeTransporte(o) && o.tipo === t.tipo && o.mercadoria === t.mercadoria);
   if (ORIGEM_ESPERADA_POR_TIPO[t.tipo] === 'outro-predio') {
     return {
-      teto: ofertaNaOrigem(state, t, dados),
+      // D-TRANSPORTE-03 T2: a `saida-cheia` fica com o que o insumo e a arma nao levam
+      teto: t.tipo === 'saida-cheia-para-armazem' && origemDaTarefaVale(state, t)
+        ? ofertaDaSaidaAoArmazem(state, t.origem, t.mercadoria) : ofertaNaOrigem(state, t, dados),
       existentes: mesmoTipoEMercadoria.filter((o) => o.origem === t.origem && o.estado !== 'carregando').length,
     };
   }
@@ -451,6 +453,61 @@ function origemMaisPerto(
   return melhor === null ? null : melhor.id;
 }
 
+/**
+ * D-TRANSPORTE-03 T2 — quanto da `saida` da casa `id` ainda sobra para quem a pede: o
+ * estoque menos as tarefas nao-`carregando` que ja contam com ele. A `saida-cheia` ABERTA nao
+ * conta: ela cede, e o teto do saneamento a cancela (KM_HandLogistics.pas:1587-1590: a demanda
+ * do armazem paga a multa, e a de uma casa ganha).
+ */
+function ofertaDaCasaParaDemanda(state: GameState, id: string, mercadoria: string): number {
+  const predio = state.predios.porId[id];
+  if (predio?.estado !== 'completo') return 0;
+  const contam = tarefasPorNumero(state).filter((t) => ehTarefaDoSerf(t) && t.origem === id && t.mercadoria === mercadoria
+    && t.estado !== 'carregando' && t.tipo !== 'excedente-para-armazem'
+    && !(t.tipo === 'saida-cheia-para-armazem' && t.estado === 'aberta')).length;
+  return (predio.estoque.saida[mercadoria] ?? 0) - contam;
+}
+
+/** D-TRANSPORTE-03 T2 — o que a `saida` da casa `id` ainda oferece ao armazem: o estoque menos
+ *  as tarefas de OUTRO tipo (abertas ou reclamadas) que saem dela com a mercadoria. O insumo e a
+ *  arma levam primeiro; o armazem fica com o resto. */
+function ofertaDaSaidaAoArmazem(state: GameState, id: string, mercadoria: string): number {
+  const predio = state.predios.porId[id];
+  if (predio?.estado !== 'completo') return 0;
+  const deOutroTipo = tarefasPorNumero(state).filter((t) => ehTarefaDoSerf(t) && t.origem === id && t.mercadoria === mercadoria
+    && t.estado !== 'carregando' && t.tipo !== 'saida-cheia-para-armazem' && t.tipo !== 'excedente-para-armazem').length;
+  return (predio.estoque.saida[mercadoria] ?? 0) - deOutroTipo;
+}
+
+/**
+ * D-TRANSPORTE-03 T2 — de onde sai o insumo para `destino`: o armazem (ligacao mais a multa do
+ * armazem, `delivery.lance`) ou a casa completa do mesmo lado que tem a mercadoria livre na
+ * `saida` (`ofertaDaCasaParaDemanda`), no modo do `tipo`. O menor vence; empate: o primeiro em
+ * `predios.ordem`. O quartel e o proprio destino nao sao origem. `usados`: quantas tarefas o
+ * laco do gerador ja criou de cada armazem neste tick (a aberta nao reserva, e o armazem nao se
+ * desconta sozinho, como a `livres` de antes).
+ */
+function origemDoInsumo(
+  state: GameState, destino: PredioCompleto, mercadoria: string, tipo: TarefaDeTransporte['tipo'],
+  usados: Readonly<Record<string, number>>, dados: GameData,
+): string | null {
+  const modo = modoDoTipo(tipo, dados);
+  let melhor: { id: string; custo: number } | null = null;
+  for (const id of state.predios.ordem) {
+    const predio = state.predios.porId[id];
+    if (predio?.estado !== 'completo' || predio.lado !== destino.lado || id === destino.id) continue;
+    const armazem = predio.tipo === ID_DO_ARMAZEM;
+    if (ehQuartelCompleto(predio)) continue;
+    const livre = armazem ? disponivelNaOrigem(state, id, mercadoria) - (usados[id] ?? 0) : ofertaDaCasaParaDemanda(state, id, mercadoria);
+    if (livre < 1) continue;
+    const ligacao = ligacaoEntrePredios(state, predio, destino, modo, dados);
+    if (ligacao === null) continue;
+    const custo = ligacao + (armazem ? dados.entrega.lance.ticksMultaDoArmazem : 0);
+    if (melhor === null || custo < melhor.custo) melhor = { id, custo };
+  }
+  return melhor === null ? null : melhor.id;
+}
+
 /** Os niveis 6 e 7 entregam os dois na PORTA do armazem, e por isso tem que ter o
  *  mesmo modo: `armazensPorDistancia` mede os armazens antes de saber qual dos dois
  *  vai criar. Dado divergente falha alto em vez de escolher pelo nivel errado. */
@@ -569,12 +626,13 @@ function gerarTarefasDeInsumo(state: GameState, dados: GameData): GameState {
       // `parada` sobe para antes da origem porque agora e ele que diz o TIPO da
       // tarefa, e o tipo e que diz em que modo a origem se mede (F18d-1a).
       const parada = produtorParado(atual, id, mercadoria, dados);
-      const origem = origemMaisPerto(
-        atual, predio, mercadoria, parada ? 'insumo-producao-parada' : 'insumo-producao-baixa', dados,
-      );
-      if (origem === null) continue;
-      const livres = disponivelNaOrigem(atual, origem, mercadoria);
-      for (let i = existentes; i < Math.min(querem, existentes + livres); i++) {
+      const tipo = parada ? 'insumo-producao-parada' : 'insumo-producao-baixa';
+      // D-TRANSPORTE-03 T2: cada unidade escolhe a origem de novo, armazem ou casa
+      const usados: Record<string, number> = {};
+      for (let i = existentes; i < querem; i++) {
+        const origem = origemDoInsumo(atual, predio, mercadoria, tipo, usados, dados);
+        if (origem === null) break;
+        usados[origem] = (usados[origem] ?? 0) + 1;
         atual = criarTarefaDeInsumo(atual, { mercadoria, origem, destino: id, parada }).state;
       }
     }
@@ -610,14 +668,12 @@ function gerarTarefasParaArmazem(state: GameState, dados: GameData): GameState {
           .filter((t) => ehTarefaDeTransporte(t) && t.tipo === tipo && t.origem === id
             && t.mercadoria === mercadoria && t.estado !== 'carregando');
         const existentes = doTipo.length;
-        // D-TRANSPORTE-03 T1: a saida tambem e origem da `arma-para-quartel`; a unidade que
-        // outro tipo ja reservou nela nao se oferece ao armazem de novo (sem isto, com o
+        // D-TRANSPORTE-03 T1/T2: a saida tambem e origem da `arma-para-quartel` e do insumo; a
+        // unidade com que outro tipo ja conta nao se oferece ao armazem de novo (sem isto, com o
         // quartel cheio, nascia uma `saida-cheia` a mais por tick, e o saneamento a cancelava)
-        const deOutroTipo = excedente ? 0
-          : reservadoNaOrigem(atual, id, mercadoria, 'saida', dados) - doTipo.filter((t) => t.estado === 'reclamada').length;
         const oferta = excedente
           ? excedenteNaEntrada(atual, id, mercadoria, dados)
-          : (predio.estoque.saida[mercadoria] ?? 0) - deOutroTipo;
+          : ofertaDaSaidaAoArmazem(atual, id, mercadoria);
         for (let i = existentes; i < oferta; i++) {
           atual = criarTarefaParaArmazem(atual, { mercadoria, origem: id, destino, excedente }).state;
         }

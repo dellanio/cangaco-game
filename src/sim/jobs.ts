@@ -22,7 +22,7 @@ import type {
 } from './state';
 import {
   ehTarefaDeAradura, ehTarefaDeAssentamento, ehTarefaDeColheita, ehTarefaDeLaborer, ehTarefaDePedraParaCanteiro, ehTarefaDeComidaParaTropa,
-  ehTarefaDeReparo, ehTarefaDeTile, ehTarefaDoSerf, ID_DO_RECRUTA, MERCADORIA_DE_OURO,
+  ehTarefaDeReparo, ehTarefaDeTile, ehTarefaDoSerf, ID_DO_ARMAZEM, ID_DO_RECRUTA, MERCADORIA_DE_OURO,
 } from './state';
 import { ehQuartelCompleto } from './quartel';
 import { ehFeiraCompleta, serfsNaFeira } from './feira';
@@ -1192,16 +1192,38 @@ function custoSemAEntrega(
   return custoDaTarefa(state, t, null, dados) === null ? null : 0;
 }
 
-/** A ordem de escolha: `(importancia, custo do caminho, vez no escasso, numero)`. O custo e o
- *  A*; na tarefa que disputa o escasso (D-PRODUCAO-01b) ele perde a perna de entrega, e a
- *  vez so desempata duas que disputam. */
+/**
+ * D-TRANSPORTE-03 T2 — o que o lance do KaM soma ao caminho, em ticks (`delivery.lance`):
+ *  - a multa do armazem, na tarefa que sai dele ou entra nele, menos a arma ao quartel
+ *    (KM_HandLogistics.pas:1587-1590);
+ *  - o preco de cada unidade que o destino completo ja tem daquela mercadoria na entrada,
+ *    menos armazem e quartel (:1612-1618).
+ */
+function lanceDaTarefa(state: GameState, t: TarefaDoSerf, dados: GameData): number {
+  const { ticksMultaDoArmazem, ticksPorUnidadeNaEntrada } = dados.entrega.lance;
+  const origem = state.predios.porId[t.origem];
+  const destino = 'destino' in t ? state.predios.porId[t.destino] : undefined;
+  let lance = 0;
+  if (t.tipo !== 'arma-para-quartel' && (origem?.tipo === ID_DO_ARMAZEM || destino?.tipo === ID_DO_ARMAZEM)) {
+    lance += ticksMultaDoArmazem;
+  }
+  if (destino?.estado === 'completo' && destino.tipo !== ID_DO_ARMAZEM) {
+    const naEntrada = destino.estoque.entrada[t.mercadoria] ?? 0;
+    if (!ehQuartelCompleto(destino)) lance += ticksPorUnidadeNaEntrada * naEntrada;
+  }
+  return lance;
+}
+
+/** A ordem de escolha: `(importancia, custo, vez no escasso, numero)`. O custo e o A* mais o
+ *  lance (D-TRANSPORTE-03 T2); na tarefa que disputa o escasso (D-PRODUCAO-01b) o A* perde a
+ *  perna de entrega, e a vez so desempata duas que disputam. */
 function ordenarTarefasDoSerf(
   state: GameState, candidatas: readonly TarefaDoSerf[], unidadeId: string | null, dados: GameData,
 ): TarefaDoSerf[] {
   const chaves = new Map(candidatas.map((t) => {
     const vez = vezNoEscasso(state, t, dados);
     const custo = vez === null ? custoDaTarefa(state, t, unidadeId, dados) : custoSemAEntrega(state, t, unidadeId, dados);
-    return [t.id, { importancia: importanciaDoTipo(t.tipo, dados), custo: custo ?? Number.POSITIVE_INFINITY, vez }];
+    return [t.id, { importancia: importanciaDoTipo(t.tipo, dados), custo: custo === null ? Number.POSITIVE_INFINITY : custo + lanceDaTarefa(state, t, dados), vez }];
   }));
   return [...candidatas].sort((a, b) => {
     const ca = chaves.get(a.id);
