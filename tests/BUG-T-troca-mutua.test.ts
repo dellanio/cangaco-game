@@ -78,8 +78,15 @@ function trocar(base: GameState, ta: { gx: number; gy: number }, tb: { gx: numbe
   const sobreposicoes: string[] = [...sobrepostos(s)];
   let chegou: number | null = null;
   for (let t = 1; t <= ticks; t += 1) {
+    const antes = s;
     s = step(s, [], gameData);
     sobreposicoes.push(...sobrepostos(s));
+    // emenda 2: cada um anda uma vez por tick (nenhum soma mais de 1 de progresso)
+    for (const id of ['a', 'b']) {
+      const pa = antes.unidades.porId[id]?.fsmData.progresso ?? 0;
+      const pd = s.unidades.porId[id]?.fsmData.progresso ?? 0;
+      if (pd > pa + 1) sobreposicoes.push(`t${s.tick} ${id} andou ${pd - pa} de progresso num tick`);
+    }
     if (chegou === null && pos(s, 'a') === `${tb.gx},${tb.gy}` && pos(s, 'b') === `${ta.gx},${ta.gy}`
       && s.unidades.porId['a']?.fsm === 'ocioso' && s.unidades.porId['b']?.fsm === 'ocioso') chegou = t;
   }
@@ -111,6 +118,63 @@ describe('BUG-T aceite 2 — dois do mesmo lado, cada um no tile do outro, troca
       expect(r.ticks, nome).not.toBeNull();
       expect(r.ticks ?? Infinity, nome).toBeLessThanOrEqual(r.teto);
     }
+  });
+});
+
+describe('BUG-T aceite 5 — a ordem nova no meio da troca nao se perde (achado do avaliador)', () => {
+  it('o par em troca recebe, no meio do passo, uma ordem para longe: o que a recebeu chega la', () => {
+    const base = semUnidades(createInitialState(1));
+    const c = campo(base);
+    const ta = { gx: c.gx, gy: c.gy };
+    const tb = { gx: c.gx + 1, gy: c.gy };
+    const longe = { gx: c.gx - 6, gy: c.gy - 6 };
+    const s0 = com(base, soldado('a', LADO_DO_JOGADOR, ta), soldado('b', LADO_DO_JOGADOR, tb));
+    let s = step(s0, [mover('a', tb), mover('b', ta)], gameData);
+    // guarda do cenario: a ordem pega os dois NO MEIO do passo da troca
+    for (let t = 0; t < 20 && (s.unidades.porId['a']?.fsmData.progresso ?? 0) < 2; t += 1) s = step(s, [], gameData);
+    expect(s.unidades.porId['a']?.fsmData.progresso ?? 0).toBeGreaterThanOrEqual(2);
+    expect(s.unidades.porId['a']?.fsmData.caminho?.[0]).toEqual(tb);
+    s = step(s, [mover('a', longe)], gameData);
+    const sob: string[] = [];
+    for (let t = 0; t < 300; t += 1) { s = step(s, [], gameData); sob.push(...sobrepostos(s)); }
+    evidencia['aceite5'] = { chegou: pos(s, 'a'), fsm: s.unidades.porId['a']?.fsm, sobreposicoes: sob };
+    expect(sob).toEqual([]);
+    expect(pos(s, 'a')).toBe(`${longe.gx},${longe.gy}`);
+    expect(s.unidades.porId['a']?.fsm).toBe('ocioso');
+  });
+});
+
+describe('BUG-T aceite 6 — caso 3: cada um quer o tile do outro a dois passos, com um parado no meio', () => {
+  it('os dois param nas duas vagas pedidas, e o parado fica no lugar', () => {
+    const base = semUnidades(createInitialState(1));
+    const c = campo(base);
+    const ta = { gx: c.gx - 1, gy: c.gy };
+    const meio = { gx: c.gx, gy: c.gy };
+    const tb = { gx: c.gx + 1, gy: c.gy };
+    // o parado do meio e o centro de uma COLUNA de parados mais alta que a margem do desvio
+    // (`margemDoDesvio_tiles`): ninguem contorna, e o caminho de cada um passa pelo meio, como
+    // na ordem k = 37 da varredura, onde a formacao em volta fechava o contorno
+    const alcance = gameData.movimento.margemDoDesvioMilitar + 2;
+    const muro: Unidade[] = [];
+    for (let dy = -alcance; dy <= alcance; dy += 1) if (dy !== 0) muro.push(soldado(`m${dy}`, LADO_DO_JOGADOR, { gx: c.gx, gy: c.gy + dy }));
+    const s0 = com(base, soldado('a', LADO_DO_JOGADOR, ta), soldado('b', LADO_DO_JOGADOR, tb), soldado('p', LADO_DO_JOGADOR, meio), ...muro);
+    let s = step(s0, [mover('a', tb), mover('b', ta)], gameData);
+    // guarda do cenario: o caminho de cada um passa pelo meio, onde o parado esta
+    expect(s.unidades.porId['a']?.fsmData.caminho?.[0]).toEqual(meio);
+    expect(s.unidades.porId['b']?.fsmData.caminho?.[0]).toEqual(meio);
+    const sob: string[] = [];
+    let parou: number | null = null;
+    for (let t = 1; t <= 200; t += 1) {
+      s = step(s, [], gameData);
+      sob.push(...sobrepostos(s));
+      if (parou === null && s.unidades.porId['a']?.fsm === 'ocioso' && s.unidades.porId['b']?.fsm === 'ocioso') parou = t;
+    }
+    const onde = [pos(s, 'a'), pos(s, 'b')].sort();
+    evidencia['aceite6'] = { parou, onde, parado: pos(s, 'p'), sobreposicoes: sob };
+    expect(sob).toEqual([]);
+    expect(parou, 'os dois pararam').not.toBeNull();
+    expect(onde).toEqual([`${ta.gx},${ta.gy}`, `${tb.gx},${tb.gy}`].sort());
+    expect(pos(s, 'p')).toBe(`${meio.gx},${meio.gy}`);
   });
 });
 

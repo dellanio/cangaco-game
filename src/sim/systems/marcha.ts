@@ -186,7 +186,11 @@ export function aplicarMoveUnits(state: GameState, comando: MoveUnits, dados: Ga
   return { state: atual, events: [] };
 }
 
-function passoMarchando(state: GameState, u: Unidade, dados: GameData): ResultadoDeSistema {
+/**
+ * `feitos`: quem a troca mutua (BUG-T) ja moveu neste tick, alem de `u`. A `sistemaDaMarcha` nao
+ * o processa de novo, para ninguem andar dois passos num tick (emenda 2 do plano do BUG-T).
+ */
+function passoMarchando(state: GameState, u: Unidade, dados: GameData, feitos: Set<string>): ResultadoDeSistema {
   const alvo = u.fsmData.alvoTile;
   const final = u.fsmData.direcaoFinal;
   // C-COMBATE-01a — quem chega vira para a frente da formacao
@@ -218,6 +222,27 @@ function passoMarchando(state: GameState, u: Unidade, dados: GameData): Resultad
     };
     return { state: comUnidade(comUnidade(state, vai), fica), events: [] };
   }
+  // BUG-T, caso 3 — a extensao da vaga emparedada: o destino esta OCUPADO por quem quer a vaga
+  // de `u`, e o parado do meio fecha o caminho dos dois. Eles trocam de VAGA: cada um ja esta na
+  // do outro e para. O conjunto de vagas nao muda, como na 02 e na 02b
+  const cruzado = atual.fsm === FSM_MARCHANDO ? vagaCruzadaCom(state, atual, dados) : null;
+  if (cruzado !== null && cruzado.fsmData.alvoTile !== undefined) {
+    const { bloqueado: _b, ...semEspera } = atual.fsmData;
+    void _b;
+    const { bloqueado: _o, ...outroSemEspera } = cruzado.fsmData;
+    void _o;
+    const dele = cruzado.fsmData.alvoTile;
+    const direcaoDele = cruzado.fsmData.direcaoFinal;
+    const eu: Unidade = {
+      ...atual,
+      fsmData: { ...semEspera, caminho: [], progresso: 0, alvoTile: dele, ...(direcaoDele === undefined ? {} : { direcaoFinal: direcaoDele }) },
+    };
+    const ele: Unidade = {
+      ...cruzado,
+      fsmData: { ...outroSemEspera, caminho: [], progresso: 0, alvoTile: alvo, ...(final === undefined ? {} : { direcaoFinal: final }) },
+    };
+    return { state: comUnidade(comUnidade(state, eu), ele), events: [] };
+  }
   // C-MOVIMENTO-02b — a vaga tomada por quem marcha e esta preso: ele fica nela, e `u` herda
   // a dele. O conjunto de vagas nao muda
   const preso = atual.fsm === FSM_MARCHANDO ? vagaTomadaPor(state, atual, dados) : null;
@@ -248,6 +273,7 @@ function passoMarchando(state: GameState, u: Unidade, dados: GameData): Resultad
       void _b;
       return viradaPeloPasso(noTile(x), { ...x, fsmData: { ...semEspera, progresso: 1 } });
     };
+    feitos.add(parceiro.id);
     return { state: comUnidade(comUnidade(state, larga(atual)), larga(parceiro)), events: [] };
   }
   if (parceiro !== null && terminaOPasso(state, atual, dados) && terminaOPasso(state, parceiro, dados)) {
@@ -259,9 +285,17 @@ function passoMarchando(state: GameState, u: Unidade, dados: GameData): Resultad
         ...x, gx: destino.gx, gy: destino.gy, fsmData: { ...semEspera, caminho: (x.fsmData.caminho ?? []).slice(1), progresso: 0 },
       });
       if (!chegou(movida)) return movida;
+      // C-MOVIMENTO-02 — a ordem que pegou a troca no meio: planeja no proximo tick, como o passo
+      // normal logo abaixo (achado do avaliador, emenda 2)
+      if (movida.fsmData.replanejar === true) {
+        const { replanejar: _r, ...resto } = movida.fsmData;
+        void _r;
+        return { ...movida, fsmData: resto };
+      }
       const fim = movida.fsmData.direcaoFinal;
       return fim === undefined ? ocioso(movida) : { ...ocioso(movida), direcao: fim };
     };
+    feitos.add(parceiro.id);
     return { state: comUnidade(comUnidade(state, chega(atual)), chega(parceiro)), events: [] };
   }
   // F28a: a unidade vira para onde anda (frente/flanco/costas e o arco do arqueiro)
@@ -322,6 +356,32 @@ export function trocaMutuaCom(state: GameState, u: Unidade, dados: GameData): Un
   return null;
 }
 
+/**
+ * BUG-T, caso 3 — a extensao da vaga emparedada (C-MOVIMENTO-02, `vagaEmparedadaPor`): nas mesmas
+ * condicoes dela (espera cumprida, `progresso` 0, caminho de mais de um passo, um militar PARADO
+ * do mesmo lado no proximo tile), mas com o destino OCUPADO por outro do mesmo lado, marchando,
+ * parado no tile (`progresso` 0), cujo alvo e o tile de `u`. A `vagaEmparedadaPor` recusa esse
+ * caso (exige o destino livre), e a troca mutua nao se aplica (o proximo tile e do parado).
+ * Devolve esse outro, ou null.
+ */
+export function vagaCruzadaCom(state: GameState, u: Unidade, dados: GameData): Unidade | null {
+  const caminho = u.fsmData.caminho ?? [];
+  const proximo = caminho[0];
+  const destino = caminho[caminho.length - 1];
+  if (proximo === undefined || destino === undefined || caminho.length === 1) return null;
+  if ((u.fsmData.progresso ?? 0) !== 0 || (u.fsmData.bloqueado ?? 0) + 1 < dados.movimento.ticksDesvioMilitar) return null;
+  const parado = militarParadoEm(state, proximo, u.id, dados);
+  if (parado === null || parado.lado !== u.lado) return null;
+  for (const id of state.unidades.ordem) {
+    const o = state.unidades.porId[id];
+    if (o === undefined || id === u.id || o.gx !== destino.gx || o.gy !== destino.gy) continue;
+    if (o.fsm !== FSM_MARCHANDO || o.lado !== u.lado || (o.fsmData.progresso ?? 0) !== 0) continue;
+    const dele = o.fsmData.alvoTile;
+    if (dele !== undefined && dele.gx === u.gx && dele.gy === u.gy) return o;
+  }
+  return null;
+}
+
 /** O passo de `u` termina neste tick (`progresso + 1` alcanca o custo do passo). */
 function terminaOPasso(state: GameState, u: Unidade, dados: GameData): boolean {
   const proximo = u.fsmData.caminho?.[0];
@@ -332,10 +392,11 @@ function terminaOPasso(state: GameState, u: Unidade, dados: GameData): boolean {
 /** Um tick de cada unidade marchando, em `unidades.ordem`. */
 export function sistemaDaMarcha(state: GameState, dados: GameData): ResultadoDeSistema {
   let atual = state;
+  const feitos = new Set<string>();
   for (const id of state.unidades.ordem) {
     const u = atual.unidades.porId[id];
-    if (u === undefined || u.fsm !== FSM_MARCHANDO) continue;
-    atual = passoMarchando(atual, u, dados).state;
+    if (u === undefined || u.fsm !== FSM_MARCHANDO || feitos.has(id)) continue;
+    atual = passoMarchando(atual, u, dados, feitos).state;
   }
   return { state: atual, events: [] };
 }
