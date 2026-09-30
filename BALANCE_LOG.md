@@ -622,6 +622,11 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   | data/units.json (velocidade a pé), quantidade de serfs | medido, `test-output/F15.json`. Com 4 serfs a fila
   do quadro NUNCA acumulou: em todas as amostras de 100 em 100 ticks havia zero tarefa `aberta`. Se houver
   ajuste a fazer, é no arranque, não na vazão.
+  | **PREMISSA MORTA (marcada em 2026-09-30, lote de recalibração):** desde o T2 (D-TRANSPORTE-03,
+  oferta × demanda) o tronco vai do lenhador direto à serraria e **não passa mais pelo armazém**
+  (F15: "tronco no armazém" 740 → nunca). Cai o marco do tronco no armazém. Continuam válidos a 1ª
+  pedra (630, igual nas quatro árvores) e a leitura "o arranque é transporte". A 1ª tábua foi de
+  1081 para 1077. Medida: `PROGRESS.md`, 2026-09-30, leva 2, item 8.
 - [2026-09-23] **veio esgotado deixa o especialista parado para sempre**: no tick em que o veio zera sai
   `vein-exhausted` e o pedreiro entra em `esperando_insumo` e fica — 1000 ticks depois continua lá, ocupando a
   pedreira. | src/sim/systems (ocupação), não é número | medido com veio curto (zerou no tick 835). Não quebra
@@ -1303,6 +1308,11 @@ roceiro, a conta dos dois números, a tabela de antes e depois e o que NÃO mudo
   que só os ramos que dependem da fazenda foram afetados — `woodcutters_por_sawmill`, calibrado na
   F15b, continua de pé | `production.json:proporcoesDeReferencia`,
   `resources.json:tipos.corn.reposicao`
+  | **PREMISSA MORTA (marcada em 2026-09-30, lote de recalibração):** os 26,2 % / 28,8 % são de antes
+  da F-T3 (fases da colheita). No cenário da F19 de hoje o ocioso é **16,7 %** no moinho e **19,3 %**
+  na padaria (`test-output/F19.json`, `fracaoOciosa` m1/b1, na `main` com o T2). Continua valendo a
+  causa (o plantio dilui a entrega da fazenda), e o 1:1:1 segue deixando os dois ociosos, só que
+  menos. Medida: `PROGRESS.md`, 2026-09-30, leva 2, item 8.
 
 - [2026-09-24] **a cadeia da carne é mais faminta de milho do que o oráculo diz, e o elo que não
   depende da fazenda está certo** | medido em 20 000 ticks no cenário 1 Fazenda : 1 Malhada : 1 Casa
