@@ -15289,3 +15289,40 @@ linha   entrada (BALANCE_LOG)               esperado (o que a entrada diz)      
 - O que solta os presos em +16 048 é causa externa (combate ou IA da escaramuça). Não medi.
 - A troca mútua escapa da `vagaTomadaPor` da C-MOVIMENTO-02b porque falta o "parado à frente".
   Não conferi no código.
+
+## 2026-10-01 — Tarefa 6 da leva: sonda do serf ocioso empilhado na porta: medido; não é bug; sem conserto
+
+### Verificado
+
+- Sonda `zz-` na vila da calibração, 6 000 ticks, apagada. Ela conta tiles com 2 ou mais serfs
+  ociosos, o dono da porta (`tilesDaPorta`) e o estado anterior ao ocioso.
+- A vila tem 4 serfs, e todas as 187 entradas em `ocioso` vêm de `entregando`: quem entrega
+  fica parado na porta onde entregou.
+
+```text
+porta (tile)            máx. serfs  ticks empilhado  primeiro–último
+sawmill p93 (18,33)     4           848              988–3 061
+storehouse p1 (29,33)   3           393              1 455–4 341
+mill p212 (41,33)       2           228              3 894–4 155
+woodcutters p37 (29,29) 4           215              676–890
+quarry p39 (21,33)      3            61              531–591
+farm p144 (37,33)       4            25              2 240–2 638
+schoolhouse p2 (34,33)  2             1              150
+```
+
+- **Causa:** `data/units.json colisaoCivil.ligada = false`. O empurrão do ocioso (D-MOVIMENTO-01c
+  e 01g, que separa os ociosos empilhados) existe, mas está desligado por dado. Ligar a
+  chave é a decisão que já espera o operador na D-MOVIMENTO-01e (o aceite da colisão civil,
+  "MEDIDO, NÃO FECHA").
+- Nenhum aceite escrito quebra, e por isso não entra no `BUGS.md`.
+
+### Espera decisão do operador
+
+- A mesma da D-MOVIMENTO-01e: ligar a colisão civil ou não. Esta sonda acrescenta um dado ao
+  pedido: com ela desligada, a porta da serraria junta os 4 serfs da vila por 848 ticks em
+  6 000.
+
+### Hipótese, nomeada como tal
+
+- Na tela, o empilhamento aparece como um serf só, ou como o leque da F18f (unidade empilhada
+  não some). Não abri screenshot, porque não é evidência de feature desta leva.
