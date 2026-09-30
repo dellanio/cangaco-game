@@ -92,5 +92,5 @@ describe('F-VIVO-g — o curral guarda', () => {
     writeFileSync(`${dir}/F-VIVO-g.partida.json`, JSON.stringify({
       tick: partida.tick, predio: 'sf1', esvazia, reenche, centro: { gx: sf1.gx + 1.5, gy: sf1.gy + 1 },
     }, null, 2));
-  });
+  }, 60_000); // caso trave: 20 000 ticks; na suite paralela passou de 5 s
 });
