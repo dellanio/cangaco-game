@@ -16,7 +16,7 @@ import type { AncorasDoPredio } from '../src/render/manifesto';
 import { CASO_DO_PREDIO, LACOS_DO_CASO, violacoesDosCasos } from '../src/render/manifesto-camadas';
 import type { ContextoDasCamadas } from '../src/render/manifesto-camadas';
 import {
-  quadroDeTrabalho, quadroDaFumaca, ROTULOS_QUE_ANIMAM, TICKS_POR_QUADRO,
+  quadroDeTrabalho, quadroDaFumaca, ROTULOS_DE_DENTRO, ROTULOS_QUE_ANIMAM, TICKS_POR_QUADRO,
 } from '../src/render/trabalho';
 import type { DadosDoTrabalho, QuadroDeTrabalho } from '../src/render/trabalho';
 import {
@@ -101,7 +101,9 @@ describe('F-VIVO-b — o quadro de trabalho por caso, num ciclo inteiro', () => 
 
   it('caso 2 (transforma, quarry): inicio, meio e fim pelos tercos; o meio se repete no terco dele', () => {
     const t = ticksDe('quarry');
-    const ciclo = cicloDe('quarry', comFsm('colhendo'));
+    const ciclo = cicloDe('quarry');
+    // BUG-X: o caso 2 anima so com o ocupante dentro; no tile a casa fica parada
+    expect(cicloDe('quarry', comFsm('colhendo')).every((q) => q === null)).toBe(true);
     expect(corridas(ciclo)).toEqual(['inicio', 'meio', 'fim']);
     const t1 = Math.floor(t / 3); const t2 = Math.floor((2 * t) / 3);
     expect(ciclo.slice(0, t1).every((q) => q?.laco === 'inicio')).toBe(true);
@@ -162,7 +164,8 @@ describe('F-VIVO-b — os quatro estados parados devolvem null', () => {
   it.each(tipos)('%s: sem ocupante, sem insumo, saida cheia e pausado', (tipo) => {
     const meio = Math.floor(ticksDe(tipo) / 2);
     // o controle: no meio do ciclo, trabalhando, anima
-    for (const rotulo of ROTULOS_QUE_ANIMAM) expect(quadroDeTrabalho(predioEm(tipo, meio), comFsm(rotulo), meio, dados)).not.toBeNull();
+    const animam = CASO_DO_PREDIO[tipo] === 'transforma' ? ROTULOS_DE_DENTRO : ROTULOS_QUE_ANIMAM;
+    for (const rotulo of animam) expect(quadroDeTrabalho(predioEm(tipo, meio), comFsm(rotulo), meio, dados)).not.toBeNull();
     // sem ocupante: o predio nao tem, ou a unidade passada nao e a dele
     expect(quadroDeTrabalho(predioEm(tipo, meio, { ocupante: null }), trabalhando, meio, dados)).toBeNull();
     expect(quadroDeTrabalho(predioEm(tipo, meio), null, meio, dados)).toBeNull();
@@ -182,7 +185,7 @@ describe('F-VIVO-b — n avanca e volta ao 1 sem pular, nas receitas reais', () 
     const vistos: Record<string, { ticks: number; quadros: number }> = {};
     for (const [tipo, caso] of Object.entries(CASO_DO_PREDIO)) {
       if (caso === 'guarda') continue;
-      const ciclo = cicloDe(tipo, comFsm('colhendo'));
+      const ciclo = cicloDe(tipo);
       expect(pulos(ciclo, caso), tipo).toEqual([]);
       expect(ciclo[0]?.n, tipo).toBe(1);
       // o ultimo quadro do ciclo fecha o laco (n = F), e o seguinte recomeca no 1
@@ -225,28 +228,37 @@ describe('F-VIVO-b — a tabela de casos do render concorda com production.json'
 });
 
 describe('F-VIVO-b — contra a sim: a pedreira real e a serraria sem insumo', () => {
-  it('a pedreira ocupada anima quando o relogio anda no tile, e nao sem ocupante ou pausada', () => {
+  it('a pedreira ocupada anima com o pedreiro dentro, fica parada com ele no lajedo, e nao sem ocupante ou pausada', () => {
+    // BUG-X (decisao do operador, 2026-10-01): o caso 2 anima so enquanto o ocupante esta
+    // dentro. O relogio anda nos dois lugares (descanso e casa dentro, `colhendo` no tile).
     let s = cenarioDePedreira();
     let colhendoNoTick = -1;
+    let dentroNoTick = -1;
     const vistos: string[] = [];
-    for (let t = 0; t < 400; t += 1) {
+    for (let t = 0; t < 2000; t += 1) {
       s = avancar(s, 1);
       const fsm = fsmDe(s, 'u1');
+      const progresso = completoDe(s, 'q1').producao!.progresso;
       const q = quadroDeTrabalho(completoDe(s, 'q1'), unidadeDe(s, 'u1'), s.tick, dados);
-      if (fsm === 'colhendo' && completoDe(s, 'q1').producao!.progresso > 0) {
-        expect(q, `tick ${s.tick}`).not.toBeNull();
+      if (fsm === 'colhendo' && progresso > 0) {
+        expect(q, `tick ${s.tick}, no lajedo`).toBeNull();
         if (colhendoNoTick < 0) colhendoNoTick = s.tick;
+      }
+      if (fsm === 'trabalhando' && progresso > 0 && progresso < ticksDe('quarry')) {
+        expect(q, `tick ${s.tick}, dentro`).not.toBeNull();
+        if (dentroNoTick < 0) dentroNoTick = s.tick;
         vistos.push(`${q!.laco}_${q!.n}`);
       }
-      if (vistos.length >= 30) break;
+      if (colhendoNoTick > 0 && vistos.length >= 30) break;
     }
     expect(colhendoNoTick).toBeGreaterThan(0);
+    expect(dentroNoTick).toBeGreaterThan(0);
     expect(new Set(vistos).size).toBeGreaterThan(1);
     // o mesmo instante, sem ocupante ou pausada: parado
     const q1 = completoDe(s, 'q1');
     expect(quadroDeTrabalho(completoDe(semOcupante(s, 'q1'), 'q1'), unidadeDe(s, 'u1'), s.tick, dados)).toBeNull();
     expect(quadroDeTrabalho({ ...q1, pausado: true }, unidadeDe(s, 'u1'), s.tick, dados)).toBeNull();
-    evidencia['pedreiraReal'] = { primeiroColhendoNoTick: colhendoNoTick, quadros: vistos };
+    evidencia['pedreiraReal'] = { primeiroColhendoNoTick: colhendoNoTick, primeiroDentroNoTick: dentroNoTick, quadros: vistos };
   });
 
   it('a serraria sem insumo fica no rotulo de espera e nao anima', () => {

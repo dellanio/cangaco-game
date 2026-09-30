@@ -33,6 +33,14 @@ export const TICKS_POR_QUADRO = 1;
  */
 export const ROTULOS_QUE_ANIMAM: readonly string[] = ['trabalhando', 'colhendo'];
 
+/**
+ * BUG-X — os rotulos que animam com o ocupante DENTRO da casa. O caso 2 (`transforma`,
+ * pedreira e vinhedo) so anima com eles: a casa desenha o trabalho de dentro, e enquanto
+ * o cabra esta no lajedo (`colhendo`) nao ha ninguem la (decisao do operador, 2026-10-01).
+ * O teste confere cada um contra `POSICAO_DO_ESTADO` da colisao, que e quem diz `dentro`.
+ */
+export const ROTULOS_DE_DENTRO: readonly string[] = ['trabalhando'];
+
 /** A area padrao, so para o placeholder: no meio do predio, acima da linha das
  *  pilhas (`Y_DA_BASE` de `pilhas.ts`), para que as duas camadas nao se cubram. */
 export const AREA_PADRAO: readonly [number, number, number, number] = [0.3, 0.35, 0.7, 0.75];
@@ -80,7 +88,8 @@ const quadrosDe = (caso: CasoDoPredioVivo, laco: string): number => LACOS_DO_CAS
  * O quadro de trabalho do predio neste tick, ou `null`:
  * - caso 1 (`guarda`): sempre `null` — a vida dele e o trabalhador no campo e a fumaca;
  * - caso 2 (`transforma`): `inicio`, `meio` e `fim` pelos tercos do progresso, uma vez
- *   o primeiro e o ultimo, e o `meio` repetido ate encher o terco dele;
+ *   o primeiro e o ultimo, e o `meio` repetido ate encher o terco dele; so com o
+ *   ocupante dentro (`ROTULOS_DE_DENTRO`, BUG-X): no tile, a casa fica parada;
  * - casos 3 e 5 (`dentro`, `criacao`): `laco1` e `laco2` alternando a cada volta;
  * - caso 4 (`luz`): `luz`, repetido.
  * O `tick` nao entra (o quadro e do `progresso`); fica na assinatura do aceite.
@@ -95,6 +104,7 @@ export function quadroDeTrabalho(
   if (p === null || total === undefined) return null;
 
   if (caso === 'transforma') {
+    if (unidade === null || !ROTULOS_DE_DENTRO.includes(unidade.fsm)) return null;
     const t1 = Math.floor(total / 3);
     const t2 = Math.floor((2 * total) / 3);
     if (p < t1) return { laco: 'inicio', n: noTercoUnico(p, t1, quadrosDe(caso, 'inicio')) };

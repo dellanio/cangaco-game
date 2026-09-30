@@ -677,6 +677,13 @@ prédio surge sem clique do jogador.
   prédio que produziria. Um campo (`PredioCompleto.pausado`), um leitor (o topo
   de `produzir`), nenhum estado de FSM novo: "pausado" se compõe do campo mais o
   ocupante. Plano e alternativas rejeitadas em `docs/planos/F16c-pausar.md` §3.
+- **Nota (BUG-X, especialista dentro da casa — decisão do operador, 2026-10-01)**: casa
+  fechada, o trabalhador **sai e fica visível**, como no KaM (`KM_Units.pas:529-600`,
+  `ProceedHouseClosedForWorker`: `SetActionGoIn(gdGoOutside)` e `CleanHousePointer`, ele
+  perde a casa). O BUG-X entregou só a TELA: o ocupante de prédio pausado se desenha, no
+  tile da porta (`src/render/visibilidade.ts`). A parte de SIM — sair de fato e perder a
+  posse — contradiz o (c) da nota acima e não está na fila: é item de sim à parte, e
+  espera o operador dizer se o (c) cai (pergunta no `PROGRESS.md`, 2026-10-01).
 - **Nota (emenda do aceite — decisão do operador, 2026-09-23)**: a cláusula "teste
   que troca o modo do Woodcutter's e confirma que o comportamento do lenhador
   acompanha" **saiu do aceite**. Razão: **o comportamento que o modo governaria
@@ -4786,6 +4793,12 @@ leem `GameState`: **nenhum toca em `sim/`**.
   - Quarry, farm, woodcutters e fishermans também têm fases agora.
   - O relógio de 0 a `ticksDoCiclo` que o render lê não mudou de sentido.
   - Animar só a casa é `ticksDeDescanso + ticksNoTile` a `ticksDoCiclo`.
+- **Fechado pelo BUG-X (2026-10-01, decisão do operador): o caso 2 anima só enquanto o
+  ocupante está dentro.** A regra é pelo rótulo, não pela fase: `ROTULOS_DE_DENTRO`
+  (`trabalhando`) em `src/render/trabalho.ts`, conferido contra `POSICAO_DO_ESTADO` da
+  colisão. Anima no descanso e na casa (os dois são `trabalhando`, dentro), fica parado
+  com ele no tile (`colhendo`). Os casos 3, 4 e 5 não mudaram. A pergunta em aberto do
+  PROGRESS sobre o caso 2 está respondida.
 
 **Aceite da F-VIVO-c (os animais).**
 - `animaisDoCurral(predio, dados)` é pura e devolve 5 posições, com a idade de 1 a 3

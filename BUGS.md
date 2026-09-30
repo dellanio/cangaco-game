@@ -141,28 +141,6 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
      base, e as viagens de serf por tora entregue caem.
 - status: aberto
 
-## BUG-X — especialista trabalha fora da casa, na porta
-- feature: F14 (o especialista ocupa o prédio) e F-VIVO-b (o prédio anima)
-- severidade: errado
-- repro: qualquer casa de produção ocupada. O especialista chega, ocupa, e fica parado no
-  tile da porta, ao sul, visível, enquanto produz e enquanto espera insumo.
-- esperado (KaM): entra, some, e a casa toca a animação ociosa ou a de trabalho
-  (`KM_Units.pas:662-667`, `KM_UnitActionGoInOut.pas:444`). Sai só para trabalhar fora
-  (lenhador, fazenda, pescador), para mostrar fome, ou quando a casa é fechada.
-- observado: a posse passa ao prédio com a unidade onde o caminho acabou
-  (`src/sim/systems/especialistas.ts:146-149`); esse fim é a borda sul do footprint
-  (`src/sim/footprint.ts:32-39`, `bordaSul`), e as trocas de rótulo da produção não mexem
-  na posição (`especialistas.ts:206-208`, `comFsm`).
-- conferido no código, não medido em jogo: a colisão já trata `trabalhando`,
-  `esperando_insumo` e `saida_cheia` como `dentro` (`src/sim/colisao.ts`,
-  `POSICAO_DO_ESTADO`), então a hipótese é que o especialista na porta NÃO bloqueia serf
-  hoje e o defeito é de posição e de tela. A medida antes/depois está no plano.
-- mesmo defeito da pergunta em aberto do PROGRESS (F-VIVO-b, caso 2: o laço de dentro com
-  o trabalhador fora).
-- plano: `docs/planos/2026-09-30-BUG-X-especialista-dentro-da-casa.md`. Entra depois do
-  D-TRANSPORTE-03 T2 e antes do lote de recalibração do BALANCE_LOG.
-- status: aberto
-
 ## BUG-Y — viagem inútil para comer: o especialista acha a prateleira vazia
 - feature: F20b (fome e morte), decisão D5; aparece no D-TRANSPORTE-03 T2 (logística do KaM)
 - severidade: a classificar pelo operador. Não quebra aceite escrito: a D5 prevê que "quem

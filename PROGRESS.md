@@ -14900,3 +14900,37 @@ A regra da leva é registrar, não consertar. O evaluator rodou os testes das en
 
 - O evaluator **não** remediu o −1 de tora do T2. A causa (F20b D5) continua sendo medida só minha.
 - A hipótese da F-VIVO-h acima ficou desmentida quanto ao arquivo. O "treinando" é leitura do evaluator; eu não a conferi.
+
+## 2026-10-01 — BUG-X (especialista trabalha dentro da casa, não na porta)
+
+Pedido: "Decisões da manhã (2026-10-01)", item 3. Plano `docs/planos/2026-09-30-BUG-X-especialista-dentro-da-casa.md`, com a referência do painel corrigida (`src/ui/painel-predio.ts:397-405`) e as três decisões do operador registradas nele. Só render: `git diff --stat` sem `src/sim`.
+
+### Verificado (rodado, e a evidência aberta)
+
+- **Comendo, conferido no fonte do KaM antes do código:** `KM_UnitTaskGoEat.pas:99-135` anda visível até `PointBelowEntrance` e entra na Inn (`SetActionGoIn(gdGoInside)`); come dentro. Bate com a decisão. Casa fechada: `KM_Units.pas:529-600` (`ProceedHouseClosedForWorker`), sai e perde a casa.
+- **Medida do bloqueio de serf na porta** (`tests/BUG-X-especialista-dentro.test.ts`, `test-output/BUG-X.json`): vila da calibração, 8 000 ticks, pelo `step`.
+
+```text
+| Colisão civil        | encontros | bloqueios pelo especialista | outro serf entrou antes | passos recusados de serf (total) |
+|----------------------|-----------|-----------------------------|-------------------------|----------------------------------|
+| desligada (o dado)   | 1690      | 0                           | 0                       | 0                                |
+| ligada               | 1329      | 0                           | 9                       | 2761                             |
+```
+
+  - Antes = depois: a sim não mudou, e a contagem é da sim. A primeira corrida contou 9 bloqueios na ligada; a sonda (apagada) mostrou que os 9 são outro serf que andou para o mesmo tile no mesmo tick, na porta do Roçado (u3/u5 de 37,33 para 38,33). O teste separa as duas causas e afirma bloqueios pelo especialista = 0.
+- **Regra de tela** (`src/render/visibilidade.ts`, `unidadesInvisiveis`): some o ocupante de prédio completo e não pausado em estado `dentro` ou esperando a porta (`saindo`); some quem está `comendo`; aparece o ocupante de prédio pausado, quem está em campo, andando ou indo comer, e o laborer `martelando`. O teste confere a regra contra `POSICAO_DO_ESTADO` estado a estado.
+- **Acerto:** `UnidadeDesenhada.visivel`; `unidadesNoPonto` e `unidadesNaCaixa` pulam `false`. A unidade escondida segue em `unidadesRenderizadas` com `visivel: false`, para os roteiros acharem o id.
+- **Caso 2 (F-VIVO-b):** `ROTULOS_DE_DENTRO = ['trabalhando']`; a pedreira real anima dentro (descanso e casa) e fica parada no lajedo. `tests/F-VIVO-b-trabalho.test.ts` mudou junto: o caso 2 usa `trabalhando`, e o teste da pedreira real afirma os dois lados.
+- **Screenshot** `screenshots/BUG-X-1-serraria-porta-vazia.png` (serraria anima `laco1_3`, porta sem ninguém) e `BUG-X-2-lenhador-colhendo-visivel.png`, abertos. O roteiro mede antes pela ponte de debug; não clica em painel.
+
+### Decidido aqui
+
+- A partida do roteiro exige a porta sem outra unidade: na primeira, quatro serfs ociosos estavam empilhados no tile da porta da serraria (colisão desligada) e a prova ficava ambígua.
+
+### Perguntas em aberto
+
+- **Casa fechada, parte de sim.** O operador decidiu "sai e fica visível" (KaM). A tela está feita; sair de fato e perder a posse contradiz a F16c (c) ("o ocupante fica"). Nota no item F16c do BUILD_PLAN. Cai o (c)?
+
+### Hipótese, nomeada como tal
+
+- Serf ocioso empilhado na porta da serraria no começo da vila: visto uma vez no screenshot descartado, não investigado.

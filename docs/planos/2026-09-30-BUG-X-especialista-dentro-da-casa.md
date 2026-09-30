@@ -21,7 +21,8 @@ antes do lote de recalibração do BALANCE_LOG. **Nenhum código antes da aprova
 - SELEÇÃO: civil não é selecionável em nenhum estado. `src/main.ts:92-100`
   (`soldadosDoJogador`) filtra o acerto para militar do jogador; clique sobre civil cai no
   prédio do tile. Esconder o especialista não tira seleção nenhuma. Clicar a casa continua
-  abrindo o painel do prédio, que já mostra o ocupante (`WorldScene.ts:1441-1453`).
+  abrindo o painel do prédio, que já mostra o ocupante (`src/ui/painel-predio.ts:397-405`;
+  a referência antiga, `WorldScene.ts:1441-1453`, estava errada — achado do avaliador).
 - CASA FECHADA: o nosso "fechar" é o `pausado` da F16c, e a decisão do operador
   (2026-09-23, `docs/planos/F16c-pausar.md` §3) é que o ocupante **fica**, no rótulo
   `trabalhando` (`src/sim/state.ts:537-551`). O KaM tira o trabalhador da casa fechada.
@@ -52,7 +53,17 @@ Só tela, composta de dado que já existe, sem campo novo na sim:
   sai para colher ou comer). Mover a posição para dentro do footprint seria sim + render e
   mexeria em caminho e colisão; fica fora.
 
-## Decisões que esperam o operador (não decididas aqui)
+## Decisões do operador (2026-10-01), todas do KaM
+
+- **Casa fechada:** o trabalhador sai e fica visível (`KM_Units.pas:529-600`). Entregue a
+  parte de tela (ocupante de prédio pausado se desenha). A parte de sim (sair e perder a
+  posse) contradiz a F16c (c) e ficou como nota no item F16c do BUILD_PLAN, à espera.
+- **Comendo:** anda visível até a Bodega e fica invisível lá dentro. Conferido no fonte
+  antes de implementar: `KM_UnitTaskGoEat.pas:99-135` (fase 1 anda até
+  `PointBelowEntrance`, fase 2 `SetActionGoIn(gdGoInside, fInn)`, come dentro). Bate.
+- **Caso 2:** anima só enquanto está dentro (`ROTULOS_DE_DENTRO` em `trabalho.ts`).
+
+## Decisões que esperavam o operador (texto original do plano)
 
 1. **Casa fechada.** Manter a F16c (fica dentro, invisível) ou seguir o KaM (sai ao
    pausar)? O plano segue a F16c; mudar é item de sim à parte.

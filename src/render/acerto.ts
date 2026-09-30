@@ -19,7 +19,12 @@ export interface UnidadeDesenhada {
   /** C-TELA-04 — o corpo desenhado (a imagem do sprite), relativo ao centro desenhado; sem
    *  ele (placeholder, ou teste), vale so o quadrado. */
   readonly corpoPx?: { readonly x0: number; readonly y0: number; readonly x1: number; readonly y1: number } | null;
+  /** BUG-X — `false` e a unidade que a camada nao desenhou (dentro de casa, `visibilidade.ts`):
+   *  o clique nao acerta o que nao se ve. Ausente vale visivel. */
+  readonly visivel?: boolean;
 }
+
+const naTela = (u: UnidadeDesenhada): boolean => u.visivel !== false;
 
 export interface Ponto {
   readonly x: number;
@@ -50,6 +55,7 @@ export function unidadesNoPonto(desenhadas: readonly UnidadeDesenhada[], ponto: 
     return k !== null && k !== undefined && ponto.x >= c.x + k.x0 && ponto.x <= c.x + k.x1 && ponto.y >= c.y + k.y0 && ponto.y <= c.y + k.y1;
   };
   return desenhadas
+    .filter(naTela)
     .map((u, i) => ({ u, i, c: centroDesenhado(u, tilePx) }))
     .map((d) => ({ ...d, q: noQuadrado(d.c) }))
     .filter((d) => d.q || noCorpo(d.u, d.c))
@@ -83,7 +89,7 @@ export function unidadesNaCaixa(
   const x1 = Math.max(a.x, b.x);
   const y0 = Math.min(a.y, b.y);
   const y1 = Math.max(a.y, b.y);
-  return desenhadas.filter((u) => {
+  return desenhadas.filter(naTela).filter((u) => {
     const canto = gridToScreen({ gx: u.gxDesenhado, gy: u.gyDesenhado }, tilePx, ESCALA_DO_MUNDO);
     const lado = tilePx * ESCALA_DO_MUNDO;
     return canto.x + lado >= x0 && canto.x <= x1 && canto.y + lado >= y0 && canto.y <= y1;

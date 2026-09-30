@@ -48,6 +48,7 @@ import type { Direcao } from './manifesto';
 import { manifestoDoJogo } from './sprites';
 import { posicaoDaUnidade } from '../sim/selectors';
 import { fracaoDeCondicao } from '../sim/condicao';
+import { unidadesInvisiveis } from './visibilidade';
 import type { GameState } from '../sim/state';
 
 /** O que a camada desenhou de uma unidade, para o roteiro afirmar (`window.__cangaco`). */
@@ -101,6 +102,10 @@ export interface UnidadeRenderizada {
    * `tilePx * LADO_DA_UNIDADE_EM_TILES` de lado, e o rotulo do oficio nao cabe dentro dele.
    */
   readonly larguraDoRotuloPx: number;
+  /** BUG-X — a camada DESENHOU a unidade? `false` e o especialista dentro de casa ou o
+   *  comensal dentro da Bodega (`visibilidade.ts`). Segue na lista para o roteiro achar o
+   *  id; o acerto pula. */
+  readonly visivel: boolean;
 }
 
 export interface CamadaDeUnidades {
@@ -205,7 +210,7 @@ export function criarCamadaDeUnidades(cena: Phaser.Scene, tilePx: number): Camad
    */
   function organizarRotulos(): void {
     const ocupados: { x0: number; y0: number; x1: number; y1: number }[] = [];
-    const itens = [...desenhados.entries()].sort(([idA, a], [idB, b]) => (
+    const itens = [...desenhados.entries()].filter(([, item]) => item.container.visible).sort(([idA, a], [idB, b]) => (
       a.container.y - b.container.y
       || a.container.x - b.container.x
       || idA.localeCompare(idB)
@@ -249,6 +254,7 @@ export function criarCamadaDeUnidades(cena: Phaser.Scene, tilePx: number): Camad
         }
       }
       const renderizadas: UnidadeRenderizada[] = [];
+      const invisiveis = unidadesInvisiveis(estado);
       for (const id of estado.unidades.ordem) {
         const unidade = estado.unidades.porId[id];
         if (!unidade) continue;
@@ -272,6 +278,8 @@ export function criarCamadaDeUnidades(cena: Phaser.Scene, tilePx: number): Camad
         const desvio = deslocamentoDaUnidade(id, tilePx, ESCALA_DO_MUNDO);
         item.container.setPosition(centro.x + desvio.x, centro.y + desvio.y);
         item.container.setDepth(depthDeY(centro.y + desvio.y));
+        const visivel = !invisiveis.has(id);
+        item.container.setVisible(visivel);
         const carga = unidade.fsmData.carga ?? null;
         // BUG-O: o nome do tema, nunca o id da sim
         item.marcadorDeCarga.setText(carga === null ? '' : rotuloDaCarga(carga));
@@ -283,7 +291,7 @@ export function criarCamadaDeUnidades(cena: Phaser.Scene, tilePx: number): Camad
           gxDesenhado: desenhada.gx, gyDesenhado: desenhada.gy, fsm: unidade.fsm, lado: unidade.lado, corDoBando: corDoBando(unidade.lado), carga, rotuloDaCarga: carga === null ? null : rotuloDaCarga(carga),
           deslocamentoPx: { x: desvio.x, y: desvio.y },
           marcadorDeFome: comFome, fracaoDeCondicao: fracaoDeCondicao(unidade),
-          nome: item.nome.text, larguraDoRotuloPx: item.nome.width,
+          nome: item.nome.text, larguraDoRotuloPx: item.nome.width, visivel,
           direcao: direcoes === null ? null : item.direcao, sprite,
           corpoPx: sprite === null || item.imagem === null ? null : {
             x0: -item.imagem.originX * item.imagem.displayWidth, y0: -item.imagem.originY * item.imagem.displayHeight,
