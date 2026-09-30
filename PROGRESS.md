@@ -15738,3 +15738,27 @@ O avaliador da leva não pôde conferir porque o clone não estava na máquina. 
   dentro") não depende dessa leitura. No procedimento de expulsão, o único gatilho é
   `IsClosedForWorker` (`:544`). Não conferi se algum outro caminho do KaM tira o trabalhador
   de casa com a encomenda em 0.
+
+## 2026-09-30 — Sessão do operador, tarefa 7: avaliador (subagente evaluator) sobre os 7 commits da sessão
+
+5 APROVADO, 2 RESSALVA, 0 REPROVADO. O avaliador rodou isolados BUG-Y (viagem inútil para
+comer) 6/6, F20b (fome e morte) 16/16, T2 (D-TRANSPORTE-03, oferta × demanda) 7/7 e D-TELA-07
+(sinal de pausado) 4/4. Não rodou typecheck, lint nem validate:data. Esses passaram no
+`npm run verify` de cada commit.
+
+```text
+commit  | veredito | achado                                                        | destino
+db1580f | APROVADO | clone em 731a8a4, §15 bate                                    | —
+8929ba3 | RESSALVA | BUGS.md duplicado (já corrigido no 94011e9); F20b-4 não afrouxou | corrigido
+94011e9 | APROVADO | citações HL sem `src/hands/` em delivery.json e jobs.ts       | aberto, doc
+5402f09 | RESSALVA | "aceite antes do código" não se prova pelo git (mesmo commit) | registrado
+e42c300 | APROVADO | 7 citações do KaM batem; leitura do código confere            | —
+70e9a0c | APROVADO | quadrado claro sumiu; "rrega" continua (BUG-Z)                | BUG-Z aberto
+ab52723 | APROVADO | D3 confere                                                    | —
+```
+
+- Rubrica visual da D-TELA-07: acabamento 3/5 (a barra lateral corta a serraria pausada, a da
+  direita sai pela borda). Cosmético.
+- As citações `KM_HandLogistics.pas` do T2 não levam o caminho `src/hands/`, que a regra nova do §15
+  pede. Há uma cópia só do arquivo no clone, então não são ambíguas. Não corrigi: é doc de dado
+  e comentário, fica para a próxima vez que `delivery.json` for tocado.
