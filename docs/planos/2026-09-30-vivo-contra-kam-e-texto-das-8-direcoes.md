@@ -144,3 +144,28 @@ depois do piloto"*.
 - **Achado para o espelho.** A §6 dá **item na mão** a cada civil (linhas 970-971: "um corpo só
   com uma ferramenta diferente na mão"). É a assimetria que o espelho troca de lado. O texto
   proposto em 4.1 já registra que isso é aceito.
+
+---
+
+## 5. Reconciliação com a `main` (2026-10-01)
+
+As decisões do operador sobre as seções 1 a 3 estão em `docs/planos/2026-09-30-F-VIVO-e-em-diante.md`
+(`e5a7e95`). A tabela de itens está no `BUILD_PLAN.md`, em "F-VIVO-e em diante". Conferida contra
+a `main` em `8817783`.
+
+| # | Estado |
+|---|---|
+| A1, A2 (ocioso, também no caso 1) | **resolvido**: F-VIVO-e (`f67e994`), com um laço genérico |
+| A3 (fogo por dano) | **decidido, fora da F-VIVO**: vai para a fila depois da C-IA-02 |
+| A4 (bandeira animada) | manter (seção 1) |
+| A5, C1 (escola) | **aberto**: F-VIVO-h, prioridade baixa |
+| A6 (torre) | **resolvido** pela regra da F-VIVO-e, se houver ocupante dentro; hoje não há |
+| B1–B7 | manter (seção 2); nada a fazer |
+| C2 (caso 2 no campo) | **resolvido**: F-VIVO-f (`85197b8`) |
+| C3 (curral) | **aberto**: F-VIVO-g, o curral guarda o último quadro |
+| C4 (feira) | **decidido**: fica sem pilha até ter regra de estoque |
+| C5 (especialista na porta) | **resolvido**: BUG-X (`1416d1b`). O "BUG-V" daqui é o BUG-X da `main` |
+| C6 (descanso) | **resolvido**: F-VIVO-f, com o descanso no ocioso |
+| Seção 4 (texto das 8 direções) | **aplicada** (`7aadf98`). A civis em 8 veio na D-TELA-05a (`c53f85a`) |
+
+**Abertos só dois:** F-VIVO-g (curral) e F-VIVO-h (escola), os dois já na fila da `main`.

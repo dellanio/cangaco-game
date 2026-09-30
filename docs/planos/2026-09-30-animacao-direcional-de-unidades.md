@@ -1,6 +1,6 @@
 # Plano: legibilidade da logística e animação direcional das unidades
 
-**Estado: proposta, esperando aprovação do operador. Nada aqui foi implementado.**
+**Estado: proposta, esperando aprovação do operador.** Reconciliado com a `main` em 2026-10-01 (seção 13): o que a `main` já fez está marcado no lugar, e o que falta continua aberto.
 Branch `dellanio/avaliacao-animacao`, worktree próprio. Não interrompe o D-TRANSPORTE-03
 (classes de importância do KaM): o plano entra depois do T2 dele ou em sessão separada.
 
@@ -70,11 +70,15 @@ Tudo nesta seção foi **verificado** abrindo o arquivo ou rodando o comando nes
 ### Dados e assets
 
 - `data/units.json` tem **28 tipos**: 14 civis, 9 militares (scout e knight montados) e 5
-  mercenários (vagabond montado). **Nenhum** declara `direcoesDeSprite` hoje. A nota da F-SPR
-  (arte das unidades por direção) em `BUILD_PLAN.md:1874` diz "civis 4, militares 8", então a
-  nota está desatualizada em relação ao dado. **A conferir no piloto:** qual caminho
-  `src/render/direcoes-de-sprite.ts` segue quando o campo falta. O comentário do arquivo, na
-  linha 6, diz "`null`: sem direcao, sem sprite, fica o placeholder".
+  mercenários (vagabond montado).
+  - **Corrigido em 2026-10-01.** Esta seção dizia que nenhum tipo declara `direcoesDeSprite`.
+    Estava **errado**: o campo mora no `_comum` de cada grupo, e o script desta sessão lia só os
+    tipos, um a um. A `main` apontou o erro (nota no fim do
+    `2026-09-30-vivo-contra-kam-e-texto-das-8-direcoes.md`).
+  - **Hoje, na `main`:** `civis._comum.direcoesDeSprite = 8` (a D-TELA-05a, `c53f85a`, trocou o
+    4 de antes), `militares._comum = 8`, e os mercenários continuam **sem** o campo, então ficam
+    no placeholder. A diagonal sem quadro cai na horizontal (`HORIZONTAL_DA_DIAGONAL`, na mesma
+    D-TELA-05a).
 - A entrada do serf no manifesto tem `tamanho [64, 96]`, `anchor [0.5, 1]` e `parado:n`,
   `parado:l` e `parado:s` apontando **para o mesmo PNG**.
 - **Ícones de mercadoria que já existem.** São 8 de 28:
@@ -187,11 +191,13 @@ só os ícones listados na seção 2.
 > `docs/kam-casas-animacao-e-pilhas.md`, o insumo da skill de arte do Codex. A tabela abaixo é o
 > resumo do que este plano usa.
 >
-> **Relacionado:** o BUG-V (`BUGS.md`, o especialista trabalha e espera fora da casa). No KaM, o
-> trabalhador de dentro fica invisível, e quem mostra que ele está lá é a animação da **casa**
-> (`haIdle`, `haWork`). Se o BUG-V for corrigido nesse sentido, o estado `trabalhar` da unidade
-> (seção 5.2) só vale para quem trabalha fora: lenhador, fazendeiro, pescador, pedreiro e
-> laborer.
+> **Resolvido na `main`:** o "especialista fora da casa" que este plano chamava de BUG-V é o
+> **BUG-X** da `main`. Esse nome, BUG-V, lá é de outro bug. O BUG-X foi corrigido em `1416d1b`: o
+> especialista dentro da casa some da tela. A casa ocupada e parada anima o ocioso (F-VIVO-e,
+> `f67e994`), e o caso 2 anima só na fase da casa, com o descanso no ocioso (F-VIVO-f,
+> `85197b8`). **Consequência para este plano:** o estado `trabalhar` da unidade (seção 5.2) só
+> vale para quem trabalha **fora**: lenhador, fazendeiro, pescador, pedreiro e laborer. Quem
+> trabalha dentro é a casa que anima.
 
 **Fonte:**
 - `houses.dat` e `houses.rx` de `D:\SteamLibrary\...\Knights and Merchants Historical Version`;
@@ -287,9 +293,9 @@ seja resto de dado sem uso. A mina não recebe insumo no remake.
 
 ### 5.1 Direções: F-SPR atualizada
 
-- **Proposto:** todo tipo a pé e montado declara `direcoesDeSprite: 8` em `data/units.json`. O
-  campo é lido só pelo render. A nota da F-SPR em `BUILD_PLAN.md:1874` passa a dizer "8 para
-  todos, 5 desenhadas com espelho".
+- **Feito em parte na `main`:** civis e militares declaram `direcoesDeSprite: 8` (D-TELA-05a,
+  `c53f85a`), e a nota da F-SPR foi atualizada (`7aadf98`). **Falta:** os mercenários, que
+  continuam sem o campo. O campo é lido só pelo render.
 - A quantidade de direções **desenhadas** não vira campo novo. Ela sai do que existe no atlas: com
   `o` desenhado, a regra de hoje (`manifesto.ts:259-279`, "a direção declarada vence") já usa o
   arquivo e não espelha. Um tipo assimétrico (seção 7) desenha 8 sem mudança de código.
@@ -353,9 +359,10 @@ A ordem de precedência é:
    `:145`), em formação (`marcha.ts:193`) e em carga (`carga.ts:92`). O render converte 0..7
    para `n ne l se s so o no`, na mesma ordem horária a partir do norte. **A conferir no piloto
    militar:** se 0 é norte na sim. `passoDaDirecao` em `combate.ts:40` é quem diz.
-2. **Trabalhando:** o tile do trabalho. **Hipótese a conferir:** se o `fsmData` do civil que
-   colhe tem o tile de destino. Se não tiver, a unidade mantém a última direção do passo, que já
-   aponta para o alvo porque ela andou até lá.
+2. **Trabalhando fora** (quem colhe): o tile do trabalho. **Hipótese a conferir:** se o `fsmData`
+   do civil que colhe tem o tile de destino. Se não tiver, a unidade mantém a última direção do
+   passo, que já aponta para o alvo porque ela andou até lá. Quem trabalha **dentro** não aparece
+   (BUG-X, resolvido na `main`), então não precisa de direção.
 3. **Andando:** o vetor do passo (hoje).
 4. **Parada:** a última direção (hoje).
 
@@ -602,3 +609,23 @@ Só depois do piloto aprovado:
    mostra pilha no armazém?
 5. **Leitor de pilhas no `kam-medir.js`:** tornar reproduzível a medida da seção 4 (hoje ela é
    sonda de scratchpad) ou deixar como medida da sessão?
+
+---
+
+## 13. Reconciliação com a `main` (2026-10-01)
+
+Conferida contra a `main` em `8817783`.
+
+| Item deste plano | Estado |
+|---|---|
+| BUG-V (especialista fora da casa) | **resolvido na `main` como BUG-X** (`1416d1b`). O nome BUG-V, na `main`, é de outro bug (a tora que passa pelo armazém). O registro duplicado desta branch saiu do `BUGS.md` no merge |
+| D-TELA-05a (8 direções) | **feito em parte** (`c53f85a`): civis e militares em 8, com a diagonal sem quadro caindo na horizontal. **Aberto:** os mercenários, sem `direcoesDeSprite` |
+| Texto das 8 direções (fase-animacao §14, nota da F-SPR, BRIEF-ARTE §6/§9) | **aplicado na `main`** (`7aadf98`) |
+| `trabalhar` só para quem trabalha fora (seção 4) | **vale agora**: o trabalhador de dentro some (BUG-X), e a casa anima o ocioso (F-VIVO-e, `f67e994`) e a fase da casa no caso 2 (F-VIVO-f, `85197b8`) |
+| Leva 1: D-ARTE-01, D-TELA-03a/b (ícones na carga e na pilha) | **aberto**. Não está no `BUILD_PLAN.md` da `main`, e as siglas continuam livres |
+| Leva 2: D-ARTE-02, D-TELA-04a–e (piloto do serf) | **aberto** |
+| Leva 3: D-TELA-05b–d | **aberto** |
+| Perguntas da seção 12 | **abertas**, esperando o operador |
+
+Os itens do F-VIVO × KaM (`2026-09-30-vivo-contra-kam-e-texto-das-8-direcoes.md`) estão
+reconciliados no próprio arquivo.
