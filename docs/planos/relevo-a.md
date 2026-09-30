@@ -34,6 +34,153 @@ Registradas como decisões. Elas valem sobre qualquer trecho do plano que diga o
    tile. Se saltar, o tint passa a ser **interpolado pela posição**, e não mais por troca de tile
    (Tarefa 4, passo 3a).
 
+## Avaliação: chão plano = 1,0, pedida pelo operador (2026-09-30)
+
+**Estado: avaliação, sem código. Espera a decisão do operador sobre os sprites (item 4).** Enquanto
+ela não vem, o resto do plano continua escrito com `k`. O item 6 lista o que muda quando for
+aprovado.
+
+**O pedido:** no plano, fator 1,0 (sem mudança); na encosta de sombra, MULTIPLY (< 1); na encosta
+de luz, SCREEN ou ADD (> 1). O objetivo é a arte deixar de depender da camada estar ligada ou
+desligada.
+
+### 1. SCREEN e ADD, do jeito que o Phaser traz, não dão "× f"
+
+Conferido no Phaser 3.90 (`node_modules/phaser/src/renderer/webgl/WebGLRenderer.js:797-801`, lido
+da árvore da `main`):
+- o MULTIPLY é `[DST_COLOR, ONE_MINUS_SRC_ALPHA]`;
+- o SCREEN é `[ONE, ONE_MINUS_SRC_COLOR]`, que dá `c + s·(1 − c)`;
+- o ADD soma, e dá `c + s`.
+
+Os dois **somam** uma quantidade ao pixel do chão (`c`), em vez de multiplicá-lo. Para clarear a
+grama em 10%:
+
+| Canal do chão `c` | Queremos (`c × 1,1`) | SCREEN com `s = 0,1` | ADD com `s = 0,05` |
+|---|---|---|---|
+| 0,20 (verde escuro da grama) | 0,22 | 0,28 (+40%) | 0,25 (+25%) |
+| 0,50 | 0,55 | 0,55 | 0,55 |
+| 0,80 (areia clara) | 0,88 | 0,82 (+2,5%) | 0,85 |
+
+O canal escuro sobe muito mais que o claro. A cor perde saturação e fica leitosa, e é o que a
+captura do estudo mostrou na opção (b) ("o SCREEN lava a grama", estudo 3.A). **Com SCREEN ou
+ADD, a encosta de luz não fica com o fator equivalente de ~1,1: ela muda de cor.**
+
+### 2. O que funciona: um modo de mistura próprio que multiplica acima de 1
+
+O Phaser 3 tem API pública para registrar modo de mistura:
+`renderer.addBlendMode(func, equation)` (`WebGLRenderer.js:1859`, "@since 3.0.0"). Não é shader
+nem pipeline: é o par de fatores do `gl.blendFunc`, registrado uma vez no `create`.
+
+| Camada | `blendFunc` | Resultado | Neutro (plano) |
+|---|---|---|---|
+| **Sombra** | MULTIPLY do Phaser, `[DST_COLOR, ONE_MINUS_SRC_ALPHA]` | `c × s`, com `s = min(f, 1)` | `s = 255`, e `c × 1 = c` **exato** |
+| **Luz** | próprio, `[DST_COLOR, ONE]`, `FUNC_ADD` | `c × s + c = c × (1 + s)`, com `s = max(f − 1, 0)` | `s = 0`, e `c × 1 = c` **exato** |
+
+- A textura é opaca (alfa 1 em todo pixel), então `ONE_MINUS_SRC_ALPHA` é 0 e o MULTIPLY é
+  exatamente `c × s`.
+- A camada de luz **multiplica** por `1 + s`. A grama escura sobe os mesmos 10% que a areia, e
+  não há lavagem. É o `c × 1,1` da tabela.
+- **O plano fica igual pixel a pixel ao da flag desligada**: 255 no MULTIPLY e 0 na luz são
+  neutros exatos na aritmética de 8 bits. Isso vira asserção no roteiro (item 6).
+- **Limite:** a camada de luz satura por canal em 1,0. Um canal de areia a 0,95 × 1,11 fica em
+  1,0, e a areia mais clara puxa um pouco para o branco no topo da encosta de luz. Com `f ≤ 1,11`,
+  só o canal acima de 0,90 satura.
+- **Phaser 4 (hipótese, não conferida):** o `addBlendMode` do renderer WebGL do 3 pode não
+  existir igual no 4, que reescreveu o renderer em render nodes. O argumento do estudo "passa
+  intacta para o Phaser 4" deixa de valer para a camada de luz, e vira item do estudo de
+  migração. A camada de sombra (MULTIPLY padrão) continua valendo.
+
+### 3. Custo
+
+| | Hoje no plano (`k`) | Plano = 1,0 |
+|---|---|---|
+| Camadas | 1 imagem | 2 imagens, no mesmo depth 3 |
+| Textura | 1 × 129×129 | 2 × 129×129 (~65 KB cada), ou uma de 258×129 com dois quadros |
+| Draw calls a mais por quadro | 1, com uma troca de modo de mistura | 2, com duas trocas de modo de mistura |
+| Código | `setBlendMode(MULTIPLY)` | mais um `addBlendMode` no `create` da camada, e o índice guardado no módulo |
+| Ganchos no `WorldScene.ts` | 4 | 4, os mesmos |
+
+A diferença de custo é desprezível: uma draw call a mais por quadro, num render que já faz
+dezenas.
+
+### 4. O tint dos sprites: onde está a decisão
+
+O `setTint` do Phaser 3 **só escurece**: o shader faz `textura × tint`, com o tint em 0–1
+(`Multi.frag`: `vec4 color = texture * texel`). Na encosta de sombra, nada muda: o sprite recebe
+`setTint(cinza(f))` com `f < 1`, como no plano atual. **Na encosta de luz, o sprite não tem como
+subir a 1,1 só com tint.** São quatro saídas:
+
+| Saída | O sprite na encosta de luz | Custo | Contra |
+|---|---|---|---|
+| **S1. Tint preso em 1,0** | fica a 1,0, e o chão em volta a até ~1,11 | nenhum: `tintDoFator(min(f, 1))` | o sprite lê até ~10% mais escuro que o chão na encosta de luz. É o "recortado" do estudo, mas menor: lá o SCREEN subia +40% no canal escuro, e aqui o chão sobe 10% |
+| **S2. S1 com teto mais baixo na luz** | igual a S1 | nenhum | o chão só sobe até `fatorMaximo`, por exemplo 1,05, e o recorte fica em ≤5%. Custo: a encosta de luz aparece menos que a de sombra (assimetria) |
+| **S3. Cópia fantasma por sprite** | exato: uma cópia com `setTintFill(cinza(f − 1))` no modo de luz, logo acima do sprite, dá `c × f` na silhueta | +1 objeto por sprite em encosta de luz, e **cada cópia quebra o lote de desenho duas vezes**. Com centenas de sprites visíveis a zoom 0,5, são +100 a +300 draw calls | a cópia tem de seguir o quadro, o espelho, o `setCrop` da obra revelada, a escala e a origem de cada sprite. Isso multiplica os ganchos no `unidades.ts` e no `criarPredio`. **Não recomendo** |
+| **S4. Camadas de luz acima dos sprites** | sem tint nenhum: a luz cai em tudo pela posição na tela | 2 draw calls, e zero tint | o sprite pega a luz do chão **atrás de cada pixel dele**, e não a de sob o pé: o telhado de um prédio pega a luz de dois tiles ao norte. Isso contraria a decisão 5 do estudo. E rótulo, medidor e nome da unidade, que moram dentro dos containers, escurecem junto. **Não recomendo** |
+
+**Recomendação: S1, com `fatorMaximo` no dado.**
+- O tint vira `tintDoFator(min(f, 1))`.
+- O `fatorMaximo` começa em 1,11 e é conferido na captura da Tarefa 4: sprite na encosta de luz
+  ao lado do chão. Se o recorte aparecer, o teto desce (S2), e é o operador quem decide o número.
+- A conferência do salto do tint da unidade (mudança 6) continua, e só se aplica à sombra: na
+  encosta de luz, S1 não muda o tint.
+
+### 5. Os fatores equivalentes
+
+Com a mesma geometria do plano (declive máximo de 2 degraus a 8 px por degrau, encosta de ~14°,
+luz a 30° para o sul) e `f = (n·L) / cos θ` **sem** `k`:
+
+| Encosta | Hoje (`k` = 0,85) | Plano = 1,0, mesma geometria | Plano = 1,0, norte a 0,71 |
+|---|---|---|---|
+| virada para o norte | 0,71 | **0,83** | 0,71 |
+| leste ou oeste | 0,82 | 0,97 | 0,93 |
+| **plano** | 0,85 | **1,00** | 1,00 |
+| virada para o sul | 0,94 | **1,11** | 1,14 |
+
+- **A coluna do meio** é a de hoje dividida por 0,85. O contraste entre as encostas é o mesmo, e
+  só o plano sobe a 1,0. É ela que dá o "~1,1" na encosta de luz.
+- **A coluna da direita** mantém o norte escuro de hoje (0,71). Para isso a encosta tem de ser
+  mais íngreme (gradiente 0,4, ~12,8 px por degrau, ~22°), e a luz sobe a 1,14.
+- Os números saem da conta da seção "A conta da luz". A captura decide entre as duas, e o dado
+  fica com `pxDeMundoPorDegrau`.
+- **Leste e oeste continuam iguais entre si** nas três colunas: a luz não tem componente
+  leste–oeste.
+
+### 6. O que muda no plano, se for aprovado
+
+- **`data/relevo.json`:** saem `fatorDoPlano` e a hipótese dele. Entra `fatorMaximo` (1,11,
+  número de partida, calibrado na captura), e o `fatorMinimo` fica. A validação passa a exigir
+  `0 < fatorMinimo < 1 < fatorMaximo ≤ 2`.
+- **A conta:** `f = (n·L) / cos θ`, preso em `[fatorMinimo, fatorMaximo]`. O teste "plano dá `k`"
+  vira "plano dá **exatamente 1**". O teste de leste = oeste fica.
+- **`relevo.ts`:**
+  - `texturasDaLuz(luz)` devolve os dois mapas de 8 bits: `sombra = round(min(f, 1)·255)` e
+    `luz = round(max(f − 1, 0)·255)`;
+  - teste: no plano, 255 e 0 **exatos**.
+- **`camada-de-relevo.ts`:**
+  - duas imagens no depth 3: a de sombra em `BlendModes.MULTIPLY`, e a de luz no índice devolvido
+    por `renderer.addBlendMode([gl.DST_COLOR, gl.ONE], gl.FUNC_ADD)`, registrado **uma vez** por
+    renderer;
+  - o tint vira `tintDoFator(min(f, 1))` (S1).
+- **Roteiro da Tarefa 4:**
+  - **nova asserção:** um retângulo de chão plano, lido do canvas com a flag ligada e desligada,
+    é **igual pixel a pixel**. É a prova de que a arte não fica amarrada ao modo;
+  - a asserção "fator do prédio ≠ `fatorDoPlano`" vira "≠ 1".
+- **Contrato de arte:** a nota da seção abaixo é substituída por "a arte é pintada para o chão
+  plano, sem compensação", mais uma linha sobre a encosta de luz (texto no item 7).
+- **Notas:** some a hipótese `k = 0,85`. Entra como hipótese o `addBlendMode` no Phaser 4.
+- **Autoconferência:** a linha "`k < 1` em `data/`" é trocada por "plano = 1,0 exato".
+
+### 7. Texto proposto para o contrato de arte, se aprovado (substitui o da seção abaixo)
+
+> **A arte é pintada para o chão plano, sem compensação.** Com o relevo ligado, o render multiplica
+> o chão pela luz da encosta: 1,0 no plano, abaixo de 1 na encosta virada para o norte, e acima de
+> 1 (até ~1,1) na virada para o sul. O sprite (prédio, unidade, árvore, recurso, pilha) recebe a
+> sombra da encosta pelo chão sob o pé, mas **não** o realce: na encosta de luz ele fica como foi
+> pintado. Por isso a arte é pintada e aprovada no plano, a 1,0, sem clarear nem escurecer para
+> compensar o relevo, e a folha de contato não aplica fator nenhum.
+
+---
+
 ## Texto proposto para o contrato de arte
 
 Destino: a seção `## Cor, valores e luz` de
