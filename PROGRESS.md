@@ -14497,3 +14497,43 @@ Plano: `docs/planos/2026-09-29-D-PRODUCAO-03b-painel-encomenda.md`. Camadas: `si
 **O que muda na partida:** o jogador passa a encomendar pelas oficinas no painel, com −/+ por
 peça, e vê a peça que está saindo. Quando a encomenda acaba, o aviso aparece sobre o mapa e a
 oficina diz que está parada.
+
+## 2026-09-29 — F24b (a cadeia do couro)
+
+Plano: `docs/planos/2026-09-29-F24b-cadeia-do-couro.md`. O item F24 não tinha aceite escrito
+para o couro; o aceite é o do plano.
+
+**Feito:**
+- A sonda (`zz-`, apagada) fechou a cadeia sem código novo, como a do ferro. O que se entrega
+  é o guarda: `tests/F24b-cadeia-do-couro.test.ts`, 6 testes pelo `step`.
+- Fixture nova `cenarioDaCadeiaDoCouro`: a cadeia da carne, mais Curtume (`ta1`), Casa do
+  Gibão (`aw1`) e 20 de madeira no armazém. Contra-exemplo `cenarioDoCouroSemCurtume`.
+- `ligarPorRua` saiu de dentro da `cenarioDaCadeiaDoFerro` para uso comum. 01a e 03 seguem
+  verdes (32 testes).
+- A divergência da Casa do Gibão foi registrada no BUILD_PLAN como F24c (a Casa do Gibão por
+  encomenda), **proposta, sem código**.
+
+**Verificado:**
+- `test-output/F24b-cadeia-do-couro.json`:
+  - a Malhada faz bode e couro cru no mesmo tick (3309);
+  - o couro cru chega ao Curtume no 3416, o curtido nasce no 4015 e chega à Casa do Gibão
+    no 4162;
+  - gibão e escudo nascem no 4461 e chegam ao armazém no 4474 e no 4524.
+- Sem Curtume, 2000 ticks depois do primeiro couro cru: 3 de couro cru no mundo e zero
+  curtido, gibão ou escudo, com madeira na Casa do Gibão.
+- Com o Curtume pausado no começo, o bloco principal estoura ("não aconteceu em 9000
+  ticks"). Sonda revertida.
+- No KaM (clone 731a8a4), o Curtume dá 2 curtidos por couro cru (`KM_ResWares.pas:301`), a
+  mesma razão do dado daqui. A Casa do Gibão faz uma peça por ciclo, pela encomenda, com um
+  insumo cada (`KM_ResHouses.pas:251-252`, `KM_ResWares.pas:73-75`).
+- `npm run verify`: 195 arquivos, 2011 testes, verde na primeira corrida.
+
+**PARA REVISÃO:**
+- A sigla ficou `F24b`, sub-item da série aberta, como a F24a. A série F24 não entrou na
+  tabela de migração.
+- F24c: alinhar a Casa do Gibão ao KaM pede insumo por saída na receita com `escolheSaida`.
+  É mudança de modelo da sim, e espera o operador.
+
+**O que muda na partida:** nada de regra. O guarda afirma que Malhada → Curtume → Casa do
+Gibão já entrega gibão e escudo. Até a F24c, a Casa do Gibão continua fazendo as duas peças
+sem encomenda, e sem madeira não faz gibão.

@@ -433,6 +433,52 @@ export function cenarioDaCarneSemFazenda(dados: GameData = gameData): GameState 
   return semPredioEOcupante(cenarioDaCadeiaDaCarne(dados), 'f1', 'roceiro');
 }
 
+/** F24b — a madeira do armazem da cadeia do couro: a Casa do Gibao come uma por ciclo, e a
+ *  sonda fechou 20 giboes e 20 escudos com ela em 20 000 ticks. */
+export const MADEIRA_DA_CADEIA_DO_COURO = 20;
+
+/**
+ * F24b — a cadeia do couro: a cadeia da carne (a Malhada faz bode E couro cru) mais um
+ * Curtume (`ta1`) e uma Casa do Gibao (`aw1`), cada um na primeira posicao, em aneis a
+ * partir do armazem, que o `canPlace` do jogador aceita E que uma rua liga ao armazem
+ * (`ligarPorRua`). Madeira no armazem, para a Casa do Gibao ter o outro insumo.
+ */
+export function cenarioDaCadeiaDoCouro(dados: GameData = gameData, serfs: number = 6): GameState {
+  let s = cenarioDaCadeiaDaCarne(dados, serfs);
+  const arm = s.predios.porId['arm'];
+  if (arm?.estado !== 'completo') throw new Error('fixture: arm');
+  const colocar = (estado: GameState, tipo: string, id: string, unidade: string): GameState => {
+    const def = dados.predios.find((p) => p.id === tipo);
+    const busca = def?.desbloqueadoPor ? registrarTipoConstruido(estado, def.desbloqueadoPor) : estado;
+    for (let r = 1; r < 20; r += 1) {
+      for (let dy = -r; dy <= r; dy += 1) {
+        for (let dx = -r; dx <= r; dx += 1) {
+          if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+          const gx = arm.gx + dx;
+          const gy = arm.gy + dy;
+          if (!canPlace(busca, tipo, gx, gy, dados).ok) continue;
+          const posto = comProdutorOcupado(estado, { tipo, id, unidade, gx, gy }, dados);
+          try {
+            return ligarPorRua(posto, id, dados);
+          } catch {
+            // sem rua ate o armazem nesta posicao: o anel segue
+          }
+        }
+      }
+    }
+    throw new Error(`fixture: '${tipo}' nao coube perto do armazem da cadeia do couro`);
+  };
+  s = colocar(s, 'tannery', 'ta1', 'curtidor');
+  s = colocar(s, 'armory_workshop', 'aw1', 'gibaozeiro');
+  s = comSaida(s, 'arm', { ...arm.estoque.saida, timber: MADEIRA_DA_CADEIA_DO_COURO });
+  return comHistoricoDosPredios(s);
+}
+
+/** F24b contra-exemplo: sem o Curtume, o couro cru se acumula e a Casa do Gibao nao ve couro. */
+export function cenarioDoCouroSemCurtume(dados: GameData = gameData): GameState {
+  return semPredioEOcupante(cenarioDaCadeiaDoCouro(dados), 'ta1', 'curtidor');
+}
+
 /** Serfs ociosos em cima de um tile, para o cenario que precisa de carga sem
  *  esperar a caminhada da vila. Ids `serf-1..n`, para nao colidir com os `u<n>`
  *  do cenario inicial. */
@@ -1077,32 +1123,7 @@ export function cenarioDaCadeiaDoFerro(
   s = comEstradas(s, tilesDaPorta(armazem, dados));
   // a Bodega pousa na linha do armazem e poe rua so na propria porta: a do armazem ja existe
   s = comBodegaAbastecida(s, 'bodega', 'arm', dados);
-  for (const id of ids) {
-    const p = s.predios.porId[id];
-    if (p === undefined) throw new Error(`fixture: '${id}' nao entrou`);
-    const rede = s.estradas;
-    const inicio = tilesDaPorta(p, dados).filter((t) => rede[chaveDeTile(t)] === true || canPlaceRoad(s, [t], dados).ok);
-    const veioDe = new Map<string, string | null>(inicio.map((t) => [chaveDeTile(t), null]));
-    const fila: TileDeGrid[] = [...inicio];
-    let achado: string | null = null;
-    while (fila.length > 0 && achado === null) {
-      const t = fila.shift() as TileDeGrid;
-      if (rede[chaveDeTile(t)] === true) { achado = chaveDeTile(t); break; }
-      for (const [ddx, ddy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
-        const v = { gx: t.gx + ddx, gy: t.gy + ddy };
-        const k = chaveDeTile(v);
-        if (veioDe.has(k)) continue;
-        if (rede[k] !== true && !canPlaceRoad(s, [v], dados).ok) continue;
-        veioDe.set(k, chaveDeTile(t));
-        fila.push(v);
-      }
-    }
-    if (achado === null) throw new Error(`fixture: nenhuma rua liga '${id}' ao armazem`);
-    const caminho: TileDeGrid[] = [];
-    for (let k: string | null = achado; k !== null; k = veioDe.get(k) ?? null) caminho.push(tileDeChave(k));
-    s = comEstradas(s, [...tilesDaPorta(p, dados).filter((t) => canPlaceRoad(s, [t], dados).ok), ...caminho]);
-    s = exigirLigado(s, id, dados);
-  }
+  for (const id of ids) s = ligarPorRua(s, id, dados);
   if (encomendada) {
     for (const id of ['ws1', 'as1']) {
       const p = s.predios.porId[id];
@@ -1113,6 +1134,39 @@ export function cenarioDaCadeiaDoFerro(
   }
   const porta = tilesDaPorta(armazem, dados)[0] as TileDeGrid;
   return comHistoricoDosPredios(comSerfs(s, serfs, porta.gx, porta.gy));
+}
+
+/**
+ * A rua de um predio: busca em largura da porta ate a rede que ja existe, pelo que o
+ * `canPlaceRoad` do jogador aceita, e exige a ligacao ao armazem. Saiu da cadeia do ferro
+ * (D-PRODUCAO-01a) para a do couro (F24b) usar a mesma.
+ */
+export function ligarPorRua(estado: GameState, id: string, dados: GameData = gameData): GameState {
+  let s = estado;
+  const p = s.predios.porId[id];
+  if (p === undefined) throw new Error(`fixture: '${id}' nao entrou`);
+  const rede = s.estradas;
+  const inicio = tilesDaPorta(p, dados).filter((t) => rede[chaveDeTile(t)] === true || canPlaceRoad(s, [t], dados).ok);
+  const veioDe = new Map<string, string | null>(inicio.map((t) => [chaveDeTile(t), null]));
+  const fila: TileDeGrid[] = [...inicio];
+  let achado: string | null = null;
+  while (fila.length > 0 && achado === null) {
+    const t = fila.shift() as TileDeGrid;
+    if (rede[chaveDeTile(t)] === true) { achado = chaveDeTile(t); break; }
+    for (const [ddx, ddy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+      const v = { gx: t.gx + ddx, gy: t.gy + ddy };
+      const k = chaveDeTile(v);
+      if (veioDe.has(k)) continue;
+      if (rede[k] !== true && !canPlaceRoad(s, [v], dados).ok) continue;
+      veioDe.set(k, chaveDeTile(t));
+      fila.push(v);
+    }
+  }
+  if (achado === null) throw new Error(`fixture: nenhuma rua liga '${id}' ao armazem`);
+  const caminho: TileDeGrid[] = [];
+  for (let k: string | null = achado; k !== null; k = veioDe.get(k) ?? null) caminho.push(tileDeChave(k));
+  s = comEstradas(s, [...tilesDaPorta(p, dados).filter((t) => canPlaceRoad(s, [t], dados).ok), ...caminho]);
+  return exigirLigado(s, id, dados);
 }
 
 /** D-PRODUCAO-03a — a encomenda do predio escrita direto, sem o comando: so para

@@ -5003,6 +5003,22 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
   da cota ficou de fora e é o sub-item **F24a-ui**, que ainda não foi escrito.
 
 ### F24 — Weapons workshop e cadeia de couro
+- **F24b — a cadeia do couro. ENTREGUE (2026-09-29, lote do operador).** Plano
+  `docs/planos/2026-09-29-F24b-cadeia-do-couro.md`. O item não tinha aceite escrito para o
+  couro; o aceite é o do plano. A sonda fechou a cadeia sem código novo (Malhada → couro
+  cru → Curtume → curtido → Casa do Gibão → gibão e escudo no armazém), e o que se entregou
+  é o GUARDA: `tests/F24b-cadeia-do-couro.test.ts`, com o contra-exemplo sem o Curtume, na
+  fixture `cenarioDaCadeiaDoCouro`. **PARA REVISÃO:** a sigla ficou `F24b`, sub-item da série
+  aberta, como a F24a.
+- **F24c — a Casa do Gibão escolhe a peça pela encomenda, como no KaM. PROPOSTA, espera o
+  operador (2026-09-29).** Hoje `armory_workshop` faz gibão E escudo no mesmo ciclo, comendo
+  couro E madeira: é a única oficina de guerra que produz sem encomenda (D-PRODUCAO-03), e
+  sem madeira não faz gibão nenhum, mesmo com couro sobrando. No KaM
+  (`KM_ResHouses.pas:251-252`, `WARFARE_COSTS` em `KM_ResWares.pas:73-75`, clone 731a8a4) a
+  casa faz UMA peça por ciclo pela encomenda, e cada peça come UM insumo: escudo = 1
+  madeira, gibão = 1 couro. Alinhar pede **insumo por saída** na receita com
+  `escolheSaida` (hoje o `entra` é um só, `sim/producao.ts`): mudança de modelo da sim. O
+  total de insumo por peça não muda. O Curtume já bate com o KaM (1 couro cru → 2 curtidos).
 - **Nota (F24a entregue, 2026-09-26)**: as duas notas abaixo **já estão atendidas pela
   F24a**, e ficam aqui como histórico. As três casas saem armas reais, que chegam ao
   armazém pelo caminho real. A regra `producao/saida-desconhecida` existe, e a saída
@@ -6122,7 +6138,8 @@ vai para o PROGRESS como PARA REVISÃO, e o trabalho segue.
 7. D-PRODUCAO-01 — ferro e ferrarias. ENTREGUE (01a guarda, 01b insumo escasso dividido).
 8. D-PRODUCAO-03 — encomendas das oficinas (03a regra, 03b painel). Decisão do operador,
    2026-09-29. ENTREGUE (03a regra, 03b painel).
-9. F24, o que resta: a cadeia de couro.
+9. F24, o que resta: a cadeia de couro. ENTREGUE como F24b (guarda); F24c (a Casa do Gibão
+   por encomenda) é proposta e espera o operador.
 10. As quatro hipóteses do avaliador:
    - BUG-P perde a ordem depois de revidar;
    - a C9 roda ticks a mais;
