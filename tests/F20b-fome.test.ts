@@ -22,7 +22,8 @@ import {
   condicaoCheiaDoTipo, drenaCondicao, emAlertaDeFome, fracaoDeCondicao,
   morreuDeFome, precisaComer, restauracaoDaUnidade, resumoDeCondicao,
 } from '../src/sim/condicao';
-import { tetoDeComidaNaBodega } from '../src/sim/bodega';
+import { refeicoesGarantidas, tetoDeComidaNaBodega } from '../src/sim/bodega';
+import type { GameData } from '../src/sim/data/types';
 import { reclamar } from '../src/sim/jobs';
 import { tileAndavel } from '../src/sim/pathfinding';
 import { comensaisReservados } from '../src/sim/reservas';
@@ -239,30 +240,55 @@ function tileLivreJunto(s: GameState, gx: number, gy: number): { gx: number; gy:
   throw new Error('fixture: sem tile livre junto');
 }
 
-describe('F20b-4 — o teto de comensais da Bodega', () => {
-  it('mais famintos que assentos: nunca passa de `inn.comensaisSimultaneos` a caminho', () => {
-    const { estado } = cenarioDaVilaComBodegaCheia();
-    let s = estado;
-    // D-MOVIMENTO-01d (JobBoard e porta por estado da chave) (decisao do operador): os extras nascem em tiles DISTINTOS, livres e andaveis, em
-    // espiral a partir de (33,33) — nove numa porta so e o que a fixture tinha de artificial
-    for (let i = 1; i <= TETO_DE_COMENSAIS; i++) {
-      const t = tileLivreJunto(s, 33, 33);
-      s = comUnidadeExtra(s, `extra-${i}`, 'serf', t.gx, t.gy);
-    }
-    s = comTodosComFome(s);
-    const famintos = civisDoEstado(s).length;
-    expect(famintos).toBeGreaterThan(TETO_DE_COMENSAIS);
+/** F20b-4: vila com Bodega cheia e mais famintos que assentos, nos `dados` dados. */
+function maximosACaminho(dados: GameData): { readonly reservados: number; readonly aCaminho: number; readonly garantidas: number } {
+  const { estado } = cenarioDaVilaComBodegaCheia();
+  let s = estado;
+  // D-MOVIMENTO-01d (JobBoard e porta por estado da chave) (decisao do operador): os extras nascem em tiles DISTINTOS, livres e andaveis, em
+  // espiral a partir de (33,33) — nove numa porta so e o que a fixture tinha de artificial
+  for (let i = 1; i <= TETO_DE_COMENSAIS; i++) {
+    const t = tileLivreJunto(s, 33, 33);
+    s = comUnidadeExtra(s, `extra-${i}`, 'serf', t.gx, t.gy);
+  }
+  s = comTodosComFome(s);
+  expect(civisDoEstado(s).length).toBeGreaterThan(TETO_DE_COMENSAIS);
+  const garantidas = refeicoesGarantidas(s, ID_DA_BODEGA_NO_CENARIO, dados);
 
-    let maxReservados = 0;
-    let maxACaminho = 0;
-    for (let t = 0; t < 60; t++) {
-      s = step(s, []);
-      maxReservados = Math.max(maxReservados, comensaisReservados(s, ID_DA_BODEGA_NO_CENARIO));
-      maxACaminho = Math.max(maxACaminho, fsmsDe(s, ['indo_comer', 'comendo']).length);
-      expect(violacoesDeInvariantes(s)).toEqual([]);
-    }
-    expect(maxReservados).toBe(TETO_DE_COMENSAIS);
-    expect(maxACaminho).toBe(TETO_DE_COMENSAIS);
+  let reservados = 0;
+  let aCaminho = 0;
+  for (let t = 0; t < 60; t++) {
+    s = step(s, [], dados);
+    reservados = Math.max(reservados, comensaisReservados(s, ID_DA_BODEGA_NO_CENARIO));
+    // so `indo_comer` segura assento: quem chega come no mesmo tick e a tarefa sai do
+    // quadro, entao o `comendo` desse tick ja liberou a vaga para o proximo
+    aCaminho = Math.max(aCaminho, fsmsDe(s, ['indo_comer']).length);
+    expect(violacoesDeInvariantes(s)).toEqual([]);
+  }
+  return { reservados, aCaminho, garantidas };
+}
+
+describe('F20b-4 — o teto de comensais da Bodega', () => {
+  // BUG-Y (emenda da D5): o teto e o MENOR entre o assento e a refeicao garantida. Com o
+  // dado de hoje a gaveta guarda menos de cada tipo que o numero de assentos, entao quem
+  // limita e a garantia; o segundo caso baixa o assento abaixo dela, derivado do dado,
+  // para provar que o assento continua valendo.
+  it('mais famintos que assentos: nunca passa de min(assentos, refeicoes garantidas) a caminho', () => {
+    const m = maximosACaminho(gameData);
+    const teto = Math.min(TETO_DE_COMENSAIS, m.garantidas);
+    expect(m.reservados).toBe(teto);
+    expect(m.aCaminho).toBe(teto);
+  });
+
+  it('com o assento abaixo da garantia, o assento e o teto', () => {
+    const assentos = tetoDeComidaNaBodega() - 1;
+    const dados: GameData = {
+      ...gameData,
+      condicao: { ...gameData.condicao, inn: { ...gameData.condicao.inn, comensaisSimultaneos: assentos } },
+    };
+    const m = maximosACaminho(dados);
+    expect(m.garantidas).toBeGreaterThan(assentos);
+    expect(m.reservados).toBe(assentos);
+    expect(m.aCaminho).toBe(assentos);
   });
 });
 

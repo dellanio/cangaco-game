@@ -68,6 +68,14 @@ um portão no `reclamar`. Nenhum arquivo de `src/render/` ou `src/ui/`.
   acima mais o consumo **atômico na chegada**: quem chega e não acha comida não espera —
   volta a `ocioso` no mesmo tick (e morre, se for o caso, que é o aceite do cenário sem
   comida).
+  - **Emenda (operador, 2026-09-30, BUG-Y — viagem inútil para comer, opção (A)):** a D5
+    reservava o assento; passa a garantir uma refeição via `refeicoesGarantidas`. Uma
+    refeição tira no máximo uma unidade de cada tipo (D7), então a prateleira serve pelo
+    menos `max(quantidade de cada tipo)` refeições. O gerador não abre mais assentos que
+    isso, e o `claim` recusa quando os comensais a caminho já cobrem esse piso. Não mente
+    sobre o tipo, que era a objeção acima: reserva uma refeição, não uma broa. Medido antes
+    do conserto: 13 de 13 viagens perdidas na vila da calibração eram prateleira vazia na
+    chegada. Plano: `docs/planos/2026-10-01-BUG-Y-viagem-inutil-para-comer.md`.
 - **D6 — a refeição é de um tick.** Não existe duração de refeição em `data/`, e inventar
   número de balanceamento em `.ts` é proibido. `comendo` existe como estado do GDD e dura
   um tick: chega, come, e no tick seguinte está `ocioso`.

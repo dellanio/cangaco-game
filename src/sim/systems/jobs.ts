@@ -42,7 +42,7 @@ import {
 } from '../insumo';
 import { obraNivelada } from '../obra';
 import { ehEscolaCompleta, ouroNecessario } from '../escola';
-import { comidaNecessaria, comidasConhecidas, ehBodegaCompleta, temComidaNaBodega } from '../bodega';
+import { comidaNecessaria, comidasConhecidas, ehBodegaCompleta, refeicoesGarantidas } from '../bodega';
 import { receitaDoTipo } from '../producao';
 import { ehPredioOcupavel, vagasDoPredio } from '../ocupacao';
 import { predioReparavel } from '../reparo';
@@ -716,16 +716,19 @@ function gerarTarefasDeOuro(state: GameState, dados: GameData): GameState {
  * tambem nasce sem haver especialista livre. Quem decide que vai comer e o civil,
  * no `reclamar` (portao da fome).
  *
- * O portao `temComidaNaBodega` e o mesmo que na F20a impediu tarefa de `wine`:
- * ninguem caminha para encontrar prateleira vazia.
+ * O portao e `refeicoesGarantidas` (BUG-Y, emenda da D5): no maximo tantos assentos
+ * quantas refeicoes a gaveta garante. Bodega sem comida da zero, que e o portao da F20a
+ * que impediu tarefa de `wine`: ninguem caminha para encontrar prateleira vazia.
  */
 function gerarTarefasDeComer(state: GameState, dados: GameData): GameState {
   let atual = state;
   const assentos = dados.condicao.inn.comensaisSimultaneos;
   for (const id of state.predios.ordem) {
-    if (!temComidaNaBodega(atual, id, dados)) continue;
+    // BUG-Y: o assento so nasce com refeicao garantida atras dele (emenda da D5)
+    const teto = Math.min(assentos, refeicoesGarantidas(atual, id, dados));
+    if (teto <= 0) continue;
     const existentes = tarefasPorNumero(atual).filter((t) => t.tipo === 'comer' && t.destino === id).length;
-    for (let i = existentes; i < assentos; i++) {
+    for (let i = existentes; i < teto; i++) {
       atual = criarTarefaComer(atual, id).state;
     }
   }

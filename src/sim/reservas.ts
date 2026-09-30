@@ -325,10 +325,11 @@ export function comensaisReservados(state: GameState, predioId: string): number 
  * F20b — assento ainda reservavel na Bodega: `comensaisSimultaneos - reservado`. O
  * teto vem de `condition.json:inn.comensaisSimultaneos`, nunca de `.ts`.
  *
- * So o ASSENTO e reservado; a comida, nao (decisao D8 do plano): uma refeicao
- * consome um conjunto variavel de tipos, e reservar uma unidade de um deles seria
- * uma reserva que mente sobre o que vai sair da gaveta. Quem cobre a corrida e o
- * portao do gerador (`temComidaNaBodega`) mais o consumo atomico na chegada.
+ * Nenhuma unidade de comida e reservada (D5 do plano): uma refeicao consome um conjunto
+ * variavel de tipos, e reservar uma unidade de um deles seria uma reserva que mente sobre
+ * o que vai sair da gaveta. Desde o BUG-Y (emenda da D5) a corrida e coberta pela
+ * REFEICAO garantida: `refeicoesGarantidas` (`sim/bodega.ts`), lida pelo gerador e pelo
+ * claim contra `comensaisReservados`.
  */
 export function vagaDeRefeicao(
   state: GameState, predioId: string, dados: GameData = gameData,

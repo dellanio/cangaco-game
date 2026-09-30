@@ -15487,3 +15487,55 @@ não há `eslint-disable`, `skip` nem `zz-`.
   exercido pelo roteiro, que reprovou sem a guarda nesta leva (tarefa 7).
 - Achado 7, **hipótese** do avaliador: na captura da F-VIVO-h aparecem um retângulo branco
   vazio à esquerda da escola e um rótulo cortado ("rrega"). Provavelmente anteriores; não medido.
+
+## 2026-09-30 — Sessão do operador, tarefa 1: BUG-Y (viagem inútil para comer), opção (A): feita
+
+Pedido: opção (A) aprovada; emenda na F20b (fome e morte) D5; implementar pelo plano do
+commit 341a728 (`docs/planos/2026-10-01-BUG-Y-viagem-inutil-para-comer.md`) com os aceites
+de lá. Antes, nesta sessão: o CLAUDE.md ganhou a §15 (clone do KaM, commit `731a8a4`, regra
+de citação), commit `db1580f`.
+
+### Verificado
+
+- **Aceite 1, a sonda antes do código** (vila da calibração, 20 000 ticks, `main` em
+  `e8f704e`, sonda `zz-` apagada): 37 refeições e 13 saídas de `indo_comer` sem comer, e as
+  **13 são prateleira vazia na chegada**. Nenhuma tarefa sumida, Bodega incompleta ou morte.
+  A (A) é o conserto, e segui.
+- **Emenda** na D5 de `docs/planos/F20b-fome-e-morte.md`: "a D5 reservava o assento; passa a
+  garantir uma refeição via `refeicoesGarantidas`".
+- `src/sim/bodega.ts`: `refeicoesGarantidas` = o máximo, por tipo, da gaveta (0 fora de
+  Bodega completa). O gerador (`gerarTarefasDeComer`, `src/sim/systems/jobs.ts`) abre
+  `min(assentos, refeicoesGarantidas)`; o `reclamar` (`src/sim/jobs.ts`) recusa
+  `destino-sem-trabalho` quando `comensaisReservados >= refeicoesGarantidas`. Isso substitui
+  o `temComidaNaBodega` nos dois lugares (garantia 0 é a Bodega vazia). O `temComidaNaBodega`
+  continua exportado, sem leitor em `src/`.
+- `tests/BUG-Y-refeicao-garantida.test.ts`, **vermelho antes do conserto nos 4 aceites**
+  (2: `['esp','esp2']` saíam os dois; 3: 8 a caminho com 3 garantidas; 4: 13 chegadas com
+  prateleira vazia; 5: o gerador abriu 8 com a garantia forçada a 0). Depois, verde.
+  Evidência `test-output/BUG-Y.json`, aberta:
+  - aceite 2: com 1 broa, `esp` sai e come; `esp2` continua ocupante da `q2`;
+  - aceite 3: gaveta 3 + 1, máximo de 3 reservados;
+  - aceite 4: 20 000 ticks, 37 refeições (base 37), **0 saídas sem comer**, 0 chegadas com
+    prateleira vazia;
+  - aceite 5: `refeicoesGarantidas` trocado por `vi.mock` (forçado a 0 com comida na gaveta):
+    o gerador não abre assento e o claim recusa. É a guarda por import, não por texto.
+- `tests/F20b-fome.test.ts`, F20b-4 (o teto de comensais), reescrito:
+  - **com o dado de hoje o assento nunca é o que limita**: a gaveta guarda 5 por tipo
+    (`inn.estoquePorTipoDeComida`) e há 8 assentos (`comensaisSimultaneos`). O teste afirma
+    `min(assentos, garantidas)`, que dá 5;
+  - caso novo: com `comensaisSimultaneos` = teto da gaveta − 1 (derivado do dado), o assento
+    é o teto (4);
+  - "a caminho" passou a contar só `indo_comer`. O `comendo` já soltou o assento na chegada,
+    e com 4 assentos a medida antiga dava 5 (4 a caminho + 1 comendo), sem violar nada.
+- **Aceite 6 (hipótese a medir, não aceite), na `main`, sonda apagada:** produção da vila em
+  20 000 ticks antes → depois: tora 51 → **50**, farinha 59 → **58**; pedra 99, tábua 98,
+  milho 64 e pão 112 iguais. O conserto **não** devolveu tora na `main`: tirou uma. A causa
+  não foi separada (hipótese: o especialista recusado fica, mas volta a pedir no tick
+  seguinte e sai mais tarde, com a fome mais funda). O efeito no T2 é medido na tarefa 2.
+- `npm run verify` verde (abaixo, no commit).
+
+### PARA REVISÃO
+
+- O assento (`comensaisSimultaneos` 8) virou número sem efeito com o dado de hoje, porque
+  a garantia (≤ 5) sempre fica abaixo dele. Não mexi (nenhum número de balanceamento muda
+  sem lote). Anotado aqui para o próximo lote.

@@ -1426,3 +1426,12 @@ Medi o mesmo roteiro, o da C-IA-03c (jogar pela tela), contra a mesma IA:
 - Proposta registrada no item da C-TELA-04 no BUILD_PLAN: "o grupo procura o próximo
   inimigo perto".
 - A marcha continua disponível: botão direito no chão ao lado do inimigo.
+
+## 2026-09-30 — `inn.comensaisSimultaneos` sem efeito depois do BUG-Y (viagem inútil para comer)
+
+- Observado (medido em `tests/F20b-fome.test.ts`, F20b-4): desde a emenda da D5 da F20b, o
+  teto de comensais é `min(comensaisSimultaneos, refeicoesGarantidas)`. A garantia é o máximo
+  por tipo da gaveta, ≤ `inn.estoquePorTipoDeComida` (5), e o assento é 8: o assento nunca
+  limita com o dado de hoje.
+- Proposta: nenhuma agora. Para o lote: decidir se o assento baixa até a gaveta, ou se a
+  gaveta sobe. Nenhum número mudou.

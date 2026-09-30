@@ -88,6 +88,26 @@ export function comidasNaBodega(
   return comidasConhecidas(dados).filter((c) => (bodega.estoque.entrada[c] ?? 0) > 0);
 }
 
+/**
+ * BUG-Y (emenda da D5 da F20b) — quantas refeicoes esta Bodega GARANTE com o que tem na
+ * gaveta agora: o maximo, por tipo, da quantidade. Uma refeicao tira no maximo uma
+ * unidade de cada tipo (D7), entao nenhum tipo cai mais de um por refeicao, e o tipo mais
+ * cheio aguenta sozinho esse numero de refeicoes, qualquer que seja a mistura.
+ *
+ * E o que o gerador de `'comer'` abre de assento e o que o `claim` deixa reclamar: quem
+ * sai para comer tem a refeicao garantida na chegada. Reserva uma REFEICAO, nao uma broa
+ * — por isso nao mente sobre o tipo, que era a objecao da D5.
+ */
+export function refeicoesGarantidas(
+  state: GameState, predioId: string, dados: GameData = gameData,
+): number {
+  const bodega = state.predios.porId[predioId];
+  if (!ehBodegaCompleta(bodega)) return 0;
+  let maximo = 0;
+  for (const c of comidasConhecidas(dados)) maximo = Math.max(maximo, bodega.estoque.entrada[c] ?? 0);
+  return maximo;
+}
+
 /** Se ha o que comer nesta Bodega. O predicado do gerador (F20b, D4). */
 export function temComidaNaBodega(
   state: GameState, predioId: string, dados: GameData = gameData,
