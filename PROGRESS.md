@@ -14321,3 +14321,43 @@ Fecha a D-TRANSPORTE-02 (menu de distribuição). Plano: `docs/planos/2026-09-29
 **Hipótese, não conferida:** o literal de retorno do `step` não acusa campo opcional esquecido no typecheck. Uma guarda estrutural (por exemplo, um teste que passe por `step` um estado com todo opcional preenchido e compare as chaves) pegaria o próximo caso. Não fiz: seria refatoração não pedida. Fica registrado.
 
 **O que muda na partida:** a aba Distribuição (a balança) abre. Nela, o jogador escolhe quanto carvão, milho, tábua e ferro cada tipo de casa guarda (0 a 5). Baixar o Moinho para 0 deixa todo o milho para a Malhada e a Cocheira. Com a correção do `step`, o limite agora vale de fato na partida.
+
+
+## 2026-09-29 — Auditoria do step, guarda permanente e a divergência das oficinas (pedido do operador)
+
+**Verificado (ponto 1, a auditoria):**
+- Os opcionais de topo do `GameState` são cinco: `ia`, `partida`, `pazAteTick`, `projeteis` e `distribuicao`.
+- A guarda nova rodou contra o `tick.ts` de `1bd4279` (antes da correção da 02b) e acusou só `state.distribuicao`, já no primeiro tick. Os outros quatro atravessam.
+- Também passaram pela guarda os opcionais de prédio e de produção que só comando mexe: `recrutas`, `troca`, `naoAceita`, `escolha` e `modo`. Nenhum se perde em 5 ticks.
+- Conclusão: o único campo descartado era `distribuicao`, e ele já está corrigido no `aa044cf`.
+
+**Verificado (ponto 2, a guarda):** `tests/GUARDA-step-preserva-opcionais.test.ts`, 3 testes verdes.
+- A lista de opcionais não é escrita a olho. `satisfies Record<ChavesOpcionais<T>, Regime>` obriga a nomear todo opcional de `GameState`, `PredioCompleto` e `Producao`, e o fixture é `Required<GameState>`.
+  - Prova: com um opcional falso em `GameState` e outro em `PredioCompleto`, o typecheck deu 3 erros no teste (as duas tabelas e o fixture). Revertido.
+- Cada opcional é classificado:
+  - `persiste`: só comando mexe, e a guarda cobra que o campo sobreviva a 5 ticks sem comando.
+  - `do-sistema`: não cobrado, porque um sistema cria e apaga o campo no ritmo dele (`recarga` da torre e `cursor` do roçado).
+- `Unidade` e `DadosDaFsm` ficam de fora: todo opcional deles é da FSM.
+- A guarda acusa: o terceiro teste tira o campo à mão e confere o caminho devolvido. A corrida contra o `tick.ts` antigo nomeou `state.distribuicao`.
+- O fixture grava o limite por `comDistribuicao`, e não pelo `step`: na primeira versão ele dependia do `step` e, contra o código antigo, explodia na montagem em vez de nomear o campo.
+
+**Regra do operador (2026-09-29):** toda regra de sim tem pelo menos um teste que passa pelo `step`, não só pelo sistema isolado. Estado novo entra na guarda. Está na nota da D-PRODUCAO-01 no BUILD_PLAN.
+
+**Verificado (ponto 3, as oficinas produzem sem encomenda):**
+- É comportamento decidido e documentado, mas é o inverso do original.
+  - A F24a (`docs/planos/F24a-armas.md`, item 4: "nasce com cota 1 para cada saída") fez a cota como peso que não se esgota.
+  - A nota da receita em `production.json` diz: "sem cota, rodízio na ordem de economia.mercadorias".
+- O painel da cota ficou como sub-item F24a-ui (BUILD_PLAN, entrega da F24a) e nunca entrou na fila. Hoje a cota só se fixa pelo comando `SetProductionQuota`, sem tela.
+- A VARREDURA-KAM já tinha apontado a divergência (`docs/varredura-kam.md`, "divergências que precisam ser declaradas"), sem virar item.
+- **O comportamento atual diverge do original.** No KaM (conferido no fonte, `KM_Houses.pas` em 731a8a4):
+  - a encomenda nasce em 0 (`fWareOrder[I] := 0`);
+  - `PickOrder` só escolhe saída com encomenda > 0 e desconta 1 ao escolher;
+  - quando todas zeram, sai a mensagem de encomenda cumprida.
+- Registrado como item novo **D-PRODUCAO-03 (encomendas das oficinas)**: 03a é a regra, 03b é o painel. Sem posição na fila: espera o operador. Não implementado.
+
+**Confirmações (ponto 4), lidas no código:**
+- Segurar `−`/`+` na aba Distribuição NÃO repete o passo. `ui/distribuicao.ts` escuta só `click`, um passo por clique, e não há repetição automática.
+- A trava da aba no UI-barra-a era só "não implementado". O comentário de `ABAS_TRANCADAS` em `1bd4279` diz "As que ainda não têm conteúdo (D-TRANSPORTE-02, menu de distribuição)", e a dica era "Em breve". Não era regra de progressão, e o GDD não liga a aba a nada.
+- Divergência de texto, já PARA REVISÃO: o GDD §7 (linha 623) diz "Sliders por recurso disputado", e a aba usa botões.
+
+**Espera decisão do operador:** a posição da D-PRODUCAO-03 e a troca do aceite escrito da F24a (o rodízio padrão).

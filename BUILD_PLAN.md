@@ -5441,6 +5441,42 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
 ## Fase D — Profundidade
 
 ### D-PRODUCAO-01 (antes F29) — Ferro e smithies
+- **Nota (regra do operador, 2026-09-29):** estado novo entra na guarda
+  `tests/GUARDA-step-preserva-opcionais.test.ts`, que cobra pelo compilador todo opcional
+  de `GameState`, `PredioCompleto` e `Producao`. E toda regra de sim nova tem pelo menos um
+  teste que passa pelo `step`, não só pelo sistema isolado.
+### D-PRODUCAO-03 — Encomendas das oficinas (o `WareOrder` do KaM)
+- **Registrado em 2026-09-29, a pedido do operador. SEM POSIÇÃO NA FILA: a ordem e o escopo
+  esperam a decisão dele.**
+- **O que diverge hoje (verificado no código):** a F24a (`sim/cota.ts`, `EscolhaDeSaida`)
+  fez a cota como PESO que não se esgota. A oficina nasce com peso 1 em cada saída e produz
+  uma de cada em rodízio, sem o jogador pedir nada. O painel da cota (F24a-ui) ficou de
+  fora e nunca entrou na fila: hoje a cota só se fixa pelo comando `SetProductionQuota`.
+  A VARREDURA-KAM já tinha apontado a divergência (`docs/varredura-kam.md`, "divergências
+  que precisam ser declaradas"). A sessão da F24a chamou o rodízio de "conservador", e ele
+  é o inverso do KaM.
+- **O KaM (conferido no fonte, `KM_Houses.pas` em 731a8a4):** `fWareOrder[I] := 0` no
+  `Create`; `SetWareOrder` faz `EnsureRange(aValue, 0, MAX_WARES_ORDER)`; `PickOrder` só
+  escolhe saída com `WareOrder > 0`, com saída não cheia e insumo presente, alterna entre
+  elas ("6 e 2 saem 12121111") e faz `Dec(fWareOrder[Result])` ao escolher. Quando todas
+  zeram, a mensagem `TX_MSG_ORDER_COMPLETED`. O valor de `MAX_WARES_ORDER` está em
+  `KM_Defaults` e não foi conferido.
+- **Escopo proposto:**
+  - **03a — a regra (sim).** `EscolhaDeSaida` passa de peso a encomenda: nasce em zero, e
+    oficina sem encomenda não começa ciclo. O desconto é no começo do ciclo, como o
+    `PickOrder`, com o rodízio entre as saídas com encomenda > 0. O comando
+    `SetProductionQuota` vira encomenda (faixa 0..máximo, com o máximo em dado), e a cota
+    vazia deixa de ser recusa. Evento de encomenda cumprida.
+    - Muda o aceite escrito da F24a ("com o rodízio default, cada saída chega ao
+      armazém"): decisão do operador.
+    - A IA não tem oficina na escaramuça hoje (`data/escaramuca.json`), então nada muda
+      para ela. Quando tiver, ela emite a encomenda.
+  - **03b — o painel (ui).** No painel da oficina, uma linha por saída com `−`/`+` e a
+    encomenda restante, no molde da aba Distribuição, e o alerta de encomenda cumprida.
+- **Onde encaixar (proposta):** logo depois da D-PRODUCAO-01. Ela faz a Ferraria de armas
+  e a de armaduras, que já têm `escolheSaida`: se a 03a vier antes, as duas nascem
+  paradas e o aceite da D-PRODUCAO-01 precisa emitir encomenda. Juntar as duas numa
+  sessão só seria feature dupla.
 ### D-TRANSPORTE-01 (antes F30) — Armazém com toggles por mercadoria
 - **Quebrada em dois (2026-09-29, lote do operador, item 5; plano em
   `docs/planos/2026-09-29-D-TRANSPORTE-01-armazem-liga-desliga.md`).** O item não tinha

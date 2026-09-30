@@ -199,6 +199,7 @@ Decisão do operador (2026-09-28).
 | C-MOVIMENTO-02 | a tropa não trava | — | fechado | `C-MOVIMENTO-02-a-tropa-nao-trava` |
 | C-MOVIMENTO-02b | a vaga tomada por quem marcha | — | fechado | `C-MOVIMENTO-02b-vaga-tomada` |
 | D-PRODUCAO-02 | o lenhador: alcance 12 e replantio do toco | — | fechado | `D-PRODUCAO-02-lenhador` |
+| D-PRODUCAO-03 | encomendas das oficinas (`WareOrder`) | — | aberto, espera decisão do operador | — |
 | C-COMBATE-01b | storm attack (sim) | — | fechado | `C-COMBATE-01b-storm-attack` |
 | C-COMBATE-01c | controles de formação (tela) | — | fechado | `C-COMBATE-01c-controles` |
 | C-IA-02a | a vila da IA com produção | — | fechado | `C-IA-02a-vila-da-ia` |
