@@ -15122,7 +15122,8 @@ tem botão nem link de ajuda.
 Pedido do operador (retomada 2): "produção por cadeia ≥ floor(base × 0,98), medida em 16 000,
 20 000 e 30 000 ticks, E o déficit não pode crescer de 16 000 para 30 000. D1 continua igual".
 Regra da leva: aceite bloqueante reprova → registra e segue. **Nada foi mergeado**, o
-`TETO_DE_NOS` e o BUILD_PLAN não mudaram, e BUG-U e BUG-V continuam abertos no `BUGS.md`.
+`TETO_DE_NOS` e o BUILD_PLAN não mudaram, e BUG-U (arma produzida não chega ao Quartel) e BUG-V (tora passa pelo armazém antes da
+Serraria) continuam abertos no `BUGS.md`.
 
 ### Verificado
 
@@ -15201,9 +15202,10 @@ Só `src/render/` e testes; `src/sim/` intocado.
   - carrega a partida do aceite 6;
   - afirma o ocioso aceso, nenhum quadro de trabalho e o serrador com `visivel: false`;
   - despausa por 6 × 150 ms, com o n variando e o serrador escondido, e pausa de volta.
-  - Captura `screenshots/F-VIVO-e-pausado-1-serraria-pausada.png`, aberta: serraria com a
-    bandeira de pausa, o placeholder `ocioso_8` (D5) e nenhum serrador fora da casa.
-- Não-regressão por código de saída, porta 5178: F-VIVO-e, BUG-X, F-VIVO-b, F16b e F22, todos
+  - Captura `screenshots/F-VIVO-e-pausado-1-serraria-pausada.png`, aberta: serraria com o
+    placeholder `ocioso_8` (D5) e nenhum serrador fora da casa.
+- Não-regressão por código de saída, porta 5178: F-VIVO-e (o ocioso), BUG-X (especialista
+  fora da casa), F-VIVO-b (o trabalho), F16b (painel de seleção) e F22 (alertas do HUD), todos
   com saída 0. A 5175 continua presa pelo PID 15040, que não matei, e a 5177 é da branch do
   relevo.
 - `npm run verify`: 203 arquivos, 2 070 testes, e o transladado com 2 069 e 4 skips antigos.
@@ -15213,10 +15215,13 @@ Só `src/render/` e testes; `src/sim/` intocado.
 
 ### PARA REVISÃO
 
-- A bandeira de pausa e o ocioso aparecem juntos. Não há outro sinal de "pausado" na casa além
-  da bandeira que já existia.
+- **Não há sinal de "pausado" no mapa.** A bandeira vermelha da captura é a do bando
+  (C-IA-03c, `desenharBandeira` em `WorldScene.ts`), desenhada em todo prédio; corrigido
+  depois do avaliador (tarefa 10), que a viu também na Malhada e na Casa do Coronel. Pausada,
+  a casa mostra o mesmo ocioso de uma casa sem insumo. O aceite não pede sinal de pausa;
+  **espera decisão do operador** se deve haver um.
 
-## 2026-10-01 — Leva desatendida, tarefa 4: lote de recalibração (T2 + BUG-X) medido; nenhum número mudou
+## 2026-10-01 — Leva desatendida, tarefa 4: lote de recalibração (T2, oferta × demanda + BUG-X, especialista fora da casa) medido; nenhum número mudou
 
 Pedido: "o lote de recalibração medido em 3 sementes: tabela medido × esperado × proposta por
 entrada do BALANCE_LOG. Nenhum número muda." Plano do lote:
@@ -15233,7 +15238,7 @@ operador ("nada roda nos worktrees de sonda"); os dois foram removidos na retoma
   coluna "medido" vale para as 3.
 - **BUG-X (especialista dentro) contribui com zero:** a D3 manteve a F16c (c), o ocupante
   fica, e a parte de sim do BUG-X não existe. A tarefa 2 (pausado × ocupante) é só tela.
-- Base, 2 falhas na suíte inteira, as duas por `timeout` (C-IA-03b 12 s, F-REPL-a 10 s),
+- Base, 2 falhas na suíte inteira, as duas por `timeout` (C-IA-03b, peacetime e as tropas, 12 s; F-REPL-a, o toco rebrota, 10 s),
   rodando em paralelo com os roteiros de tela. Não são desta medida; o T2, até onde rodou,
   deu 854 de 854.
 
@@ -15255,6 +15260,9 @@ linha   entrada (BALANCE_LOG)               esperado (o que a entrada diz)      
 1290    1:1:1, moinho 26,2 %, padaria 28,8 %  ociosos esperando insumo              F19: moinho 0,170→0,167; padaria          marcar premissa: os 26,2/28,8 são de
                                                                                     0,203→0,193                              antes da F-T3; ociosidade de hoje ~17/20 %
 ```
+
+Siglas da tabela: F15 (produção: o ciclo e o veio), F21 (ouro renovável), F-CAL (vila da
+calibração), F19 (cadeia do pão), F18g (folga de pedra), F-T3 (fases da colheita).
 
 - **Nenhuma entrada pede giro pelo T2.** A tábua −2 é fase de um ciclo da serraria (série de
   1 000 em 1 000 ticks na seção do T2) e está presa à releitura da D2. O −1 de tora, estável
@@ -15361,7 +15369,7 @@ Só `src/render/`, testes e roteiro; `src/sim/` intocado.
 ### PARA REVISÃO
 
 - Os losangos dos animais aparecem acima do telhado da Malhada. É a posição da camada que já
-  existia (F-VIVO-c); esta feature só escolhe qual lista se desenha.
+  existia (F-VIVO-c, os animais); esta feature só escolhe qual lista se desenha.
 - `debug.avancar(n)` com n > 10 esvazia a memória, como uma partida carregada. Roteiro que
   queira o curral guardado anda com o relógio, não aos saltos.
 
@@ -15379,7 +15387,7 @@ Só `src/render/`, testes, roteiro e docs; `src/sim/` intocado.
 - `src/render/scenes/WorldScene.ts`: a escola desenha o laço no lugar do quadro, na área padrão.
   `debug.quadrosDaEscola` guarda o que foi desenhado.
 - `docs/BRIEF-ARTE.md`: a Casa do Coronel sai da lista "sem receita" e ganha um item próprio.
-- `tests/F-VIVO-h-escola.test.ts`, pelo `step`, no cenário da F13a (1 pedido, o ouro no
+- `tests/F-VIVO-h-escola.test.ts`, pelo `step`, no cenário da F13a (fila de treino da escola; 1 pedido, o ouro no
   armazém). Evidência `test-output/F-VIVO-h.json`, aberta:
   - 27 ticks `aguardando` sem laço;
   - laço em 150 ticks (`ticksPorTreino`), do 29 ao 178;
@@ -15430,7 +15438,8 @@ frente 2, sem lote             302-308              tempos de crescer ~metade do
                                                     alcance em tiles andados; sem bônus de estrada; teto de
                                                     laborers; bárbaro 8 contra 7 (decisão de lote, §12)
 frente 3, espera decisão       330-332, 340-344     material de obra livre (a) corrigir ou (b) declarar;
-                                                    F24a, encostar prédios, replantio a declarar
+                                                    F24a (armas separadas), encostar prédios,
+                                                    replantio a declarar
 frente 4b, propostas           375-379              comandos de grupo (item 11); itens 4, 6, 8 juntos; item 5
 frente 5, classe A             392-399              delivery.json 4, 7, 9-17, 23; economy.json:46; time.json:2;
                                                     escaramuca.json:5; resources.json:40
@@ -15450,3 +15459,31 @@ frente 5, classe A             392-399              delivery.json 4, 7, 9-17, 23
 (o curral guarda os animais, 20 000 ticks): passou do timeout padrão de 5 s na suíte paralela.
 Isolado ele leva ~4 s. Ganhou teto de 60 s, que é guarda de travamento e não asserção de tempo
 (§8), num commit próprio antes deste. A segunda rodada deu verde.
+
+## 2026-10-01 — Tarefa 10 da leva: avaliador (subagente evaluator) sobre os 9 commits da leva
+
+Veredito dele: **PASS com ressalvas**, nada bloqueante. Ele rodou isolados os testes da F-VIVO-e
+(o ocioso) 7/7, da F-VIVO-g (o curral guarda) 2/2 e da F-VIVO-h (a escola treina) 5/5. Pelo
+`git diff 050fca2~1 1a0699e`, nenhum arquivo de `data/`, `src/sim/` ou `src/ui/` mudou, e
+não há `eslint-disable`, `skip` nem `zz-`.
+
+### Corrigido neste commit (só docs)
+
+- Achado 1: o "Verificado" da F-VIVO-e pausada chamava de "bandeira de pausa" a bandeira do
+  bando. **Conferido por mim** em `WorldScene.ts` (`desenharBandeira`, C-IA-03c, a bandeira do
+  bando). O texto foi corrigido, e o PARA REVISÃO virou pergunta ao operador: pausado não tem
+  sinal no mapa.
+- Achado 3: o histórico da F-VIVO-e no BUILD_PLAN agora diz que está revogado pela D3.
+- Achado 4: as siglas soltas dos textos novos ganharam o nome.
+
+### Fica registrado, sem ação
+
+- Achado 2: as citações `KM_Houses.pas:904-960` e `KM_Units.pas:540-546` (a base da D3) não
+  podem ser conferidas na máquina, porque o clone do kam_remake não está aqui. Ficam como
+  leitura da sessão que as escreveu.
+- Achado 5: o aceite 6 da F-VIVO-e não tem prova negativa registrada. As asserções invertidas
+  reprovariam com o código antigo, mas **nenhuma corrida mostrou isso**.
+- Achado 6: o aceite 2 da F-VIVO-g simula a memória numa variável. O `Map` da cena só é
+  exercido pelo roteiro, que reprovou sem a guarda nesta leva (tarefa 7).
+- Achado 7, **hipótese** do avaliador: na captura da F-VIVO-h aparecem um retângulo branco
+  vazio à esquerda da escola e um rótulo cortado ("rrega"). Provavelmente anteriores; não medido.
