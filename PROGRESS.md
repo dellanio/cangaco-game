@@ -14741,3 +14741,41 @@ chave é da D-TRANSPORTE-03 inteira e fecha no T2.
   armazém do T2 também pesa sobre o insumo que sai do armazém; se isso compensa, só a medida
   do T2 diz.
 
+
+## 2026-09-30 — D-TRANSPORTE-03 T2 (oferta × demanda, multa do armazém, +20 por unidade): PARADO no aceite bloqueante
+
+O código está na branch `wip/D-TRANSPORTE-03-T2` (commit empurrado), fora da `main`. Plano:
+`docs/planos/2026-09-30-D-TRANSPORTE-03-T2-oferta-demanda.md` (na branch). Espera decisão do operador.
+
+### Verificado (sonda fora do repo, vila da F-CAL, 20 000 ticks; base = faf8590, T1 = a1dbb5c)
+
+- Corrida B (carga de pedra): 15/15 armas no quartel (era 12/15 no T1). Aceite bloqueante 1 passa.
+- Parado por entrada vazia (métrica do aceite): base 13 184, T1 16 875, T2 16 711. Padaria: 696, 2 399, 768.
+  Aceite bloqueante 2 **reprova**.
+- O casamento funciona: armazém→serraria caiu de 51 para 1 tora, e lenhador→armazém de 50 para 1.
+  Farinha: moinho→padaria direto, 55 contra 3 do armazém. `saida-cheia` entregue: 478 → 321.
+- Causa isolada, medida por estado da FSM do ocupante:
+  - a métrica conta a casa TRABALHANDO: o ciclo cobra a entrada no início (`especialistas.ts:631-642`),
+    então a serraria que serra a última tora tem entrada 0 e conta como parada. Na chegada uma a uma,
+    direto do lenhador, a entrada fica em 0 durante o ciclo mais vezes;
+  - a parada real (ocupante em `esperando_insumo`): serraria 2 705 → 3 683, moinho 1 012 → 929, padaria
+    85 → 35. Total 3 802 → 4 647 (T1: 4 738);
+  - serraria: trabalhando 13 467 → 13 465, madeira 49 → 49. Na base ela passava 976 ticks em `saida_cheia`;
+    no T2, zero. Os +978 de `esperando_insumo` são esse tempo trocado de estado: ela é limitada pela tora
+    do lenhador (51 nas duas), e a saída que agora esvazia mais rápido não aumenta a produção.
+  - A multa e o +20 isolados (dado adulterado, multa 0 / unidade 0): nenhum devolve a serraria à base
+    (11 823 a 14 752); multa 0 leva a padaria a 8 157.
+- `npm run verify` vermelho: 4 testes. D-PRODUCAO-01b (a ferraria de armaduras recebe 0 carvão) e F19b
+  (`primeiroNoArmazem` do milho é 0).
+
+### Hipótese (não conferida)
+
+- F19b: o milho passa a ir direto da fazenda ao criador de bode e nunca chega ao armazém, e o teste
+  mede o fluxo antigo.
+- D-PRODUCAO-01b: o carvão sai direto da carvoaria para outro consumidor, e a divisão do escasso só
+  considerava origem no armazém.
+
+### Pergunta ao operador
+
+- O aceite 2 vale como está (entrada vazia), ou passa a ser a parada real (`esperando_insumo`)? Nas duas
+  métricas a serraria fica acima da base; pela real, por causa do tempo que antes era `saida_cheia`.
