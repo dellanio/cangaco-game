@@ -14788,8 +14788,10 @@ Branch `wip/D-TRANSPORTE-03-T2`, commit `ebb2182`, empurrado. **Não mergeado**:
 é merge só com todos os aceites passando.
 
 Verificado (verify verde na branch, 199 arquivos):
-- Aceite 2 na métrica nova do operador. Parada real (`esperando_insumo`) por casa ≤ base + 5 %:
-  serraria 3 529 ≤ 3 681, moinho 934 ≤ 1 012, padaria 423 ≤ 607. **Passa.**
+- ~~Aceite 2 na métrica nova do operador. Parada real (`esperando_insumo`) por casa ≤ base + 5 %:
+  serraria 3 529 ≤ 3 681, moinho 934 ≤ 1 012, padaria 423 ≤ 607. **Passa.**~~
+  **ERRADO, corrigido em 2026-10-01** (seção "T2: o aceite 2 não passa", abaixo): o limite 3 681
+  não é base + 5 %; a serraria **reprova**.
 - D-PRODUCAO-01b (o insumo escasso dividido) consertado em `src/sim/systems/jobs.ts`:
   `origemDoInsumo` passa a usar `disponivelNaOrigem − usados`, e `ofertaDaCasaParaDemanda` saiu. O
   carvão divide 10/6/6. F19b afirma o destino (`primeiroNoConsumidor`). O aceite 2 da corrida B
@@ -14945,3 +14947,27 @@ Pedido: "Decisões da manhã (2026-10-01)", item 3. Plano `docs/planos/2026-09-3
 
 ### PARA REVISÃO
 - A regra da horizontal é decisão de tela minha, e não estava no pedido. A alternativa era o placeholder na diagonal, que é comportamento do §9 mas piscaria a cada passo diagonal.
+
+## 2026-10-01 — T2 (D-TRANSPORTE-03, oferta × demanda): o aceite 2 não passa, e o merge não foi feito
+
+O operador autorizou o merge (decisões da manhã, item 1) **com a condição** de um teste permanente da parada real por casa ≤ base + 5 % e da produção por cadeia ≥ base − 2 %. A medida que o teste afirmaria reprova. Pela regra da leva: sem merge, registrado aqui, e sigo para a próxima tarefa independente. BUG-U e BUG-V continuam abertos no `BUGS.md`.
+
+### Verificado (sonda de 20 000 ticks na vila da calibração, as três árvores; sonda apagada)
+
+```text
+| Árvore        | Parada: serraria | moinho | padaria | farm | Produção: tora | pedra | tábua | milho | farinha | pão |
+|---------------|------------------|--------|---------|------|----------------|-------|-------|-------|---------|-----|
+| base faf8590  | 2705             | 1012   | 85      | 6222 | 51             | 99    | 98    | 64    | 59      | 110 |
+| T1 a1dbb5c    | 3367             | 1005   | 366     | 6222 | 51             | 99    | 98    | 64    | 59      | 112 |
+| T2 ebb2182    | 3529             | 934    | 35      | 6222 | 50             | 99    | 96    | 64    | 59      | 114 |
+```
+
+- Parada ≤ base + 5 %: **serraria reprova**, 3 529 contra um limite de 2 840. Moinho (934 ≤ 1 063) e padaria (35 ≤ 89) passam.
+- Produção ≥ base − 2 %: **tábua reprova por um fio**, 96 contra 96,04. Tora passa (50 ≥ 49,98). As outras passam.
+- **O erro da leva noturna:** o "3 681" era 2 705 + 976, a parada da base somada ao tempo `saida_cheia` da base. Esse é um limiar misturado, não base + 5 %. O "Passa" estava errado e foi riscado acima.
+- Causa, pela análise da leva noturna, **não remedida hoje (hipótese)**: o tempo que a serraria passava em `saida_cheia` virou `esperando_insumo`, porque a tábua agora sai mais rápido e o que limita é a tora.
+- A branch `wip/D-TRANSPORTE-03-T2` está como na origem (`ebb2182`). O merge local que eu tinha feito foi descartado. As partes b) (`TETO_DE_NOS`) e c) (BUILD_PLAN:5629-5633) **não foram feitas**: são condição do mesmo merge.
+
+### Espera decisão do operador
+1. A serraria: aceitar a leitura (parada que troca de `saida_cheia` para `esperando_insumo` não é perda, e a tábua caiu 2 em 98) ou trocar a métrica (por exemplo, parada + `saida_cheia` ≤ base + 5 %).
+2. A tábua a −2,04 %: alargar a tolerância declarada, ou medir em mais de uma semente.
