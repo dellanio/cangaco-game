@@ -28,17 +28,44 @@ Registradas como decisões. Elas valem sobre qualquer trecho do plano que diga o
    - **Nunca matar processo.** Porta ocupada: **parar e reportar.**
 4. **`PROGRESS.md` não é editado nesta branch.** As notas da sessão vão na seção "Notas da
    implementação", no fim deste arquivo. O bloco do PROGRESS entra no merge.
-5. **`k = 0,85` e a arte.** Vai uma nota para o contrato de arte, na seção "Texto proposto para o
-   contrato de arte" abaixo. É texto proposto: a branch de arte não é editada daqui.
+5. **A arte.** Vai uma nota para o contrato de arte, na seção "Texto proposto para o contrato de
+   arte" abaixo. É texto proposto: a branch de arte não é editada daqui. (O texto original, sobre
+   `k = 0,85`, foi substituído pela decisão 7.)
 6. **Tint da unidade.** Na captura, conferir se o brilho **salta** quando a unidade cruza de
    tile. Se saltar, o tint passa a ser **interpolado pela posição**, e não mais por troca de tile
-   (Tarefa 4, passo 3a).
+   (Tarefa 4, passo 3a). Com a decisão 7, isso só vale na encosta de sombra: na de luz, o tint é
+   1,0.
+
+## Decisões do operador sobre a luz (2026-09-30, segunda rodada)
+
+7. **Chão plano = 1,0.** A sombra usa o MULTIPLY; a luz usa o modo próprio `[DST_COLOR, ONE]`,
+   registrado por `renderer.addBlendMode`. **Aprovado.**
+   - O `k` (`fatorDoPlano`) **sai** do `data/relevo.json`.
+   - Asserção no roteiro: **o chão plano é igual pixel a pixel** com a flag ligada e desligada.
+8. **Tint do sprite: S1.** O sprite escurece na sombra e não recebe o realce da luz. O teto do
+   tint fica em `data/relevo.json`, com **1,0**.
+   - **Leitura desta sessão:** o "teto `fatorMaximo` = 1,0" é o teto do **tint do sprite**, e não
+     o do chão. Se fosse o do chão, a camada de luz nunca agiria, e o item 7 aprovou justamente
+     essa camada. O teto do chão só entra no dado pela decisão 10.
+   - **O nome:** para não confundir as duas coisas, o campo se chama `tetoDoTintDoSprite`, e não
+     `fatorMaximo`. Se o operador preferir o nome dele, a troca é de um campo só.
+   - **Nota do contrato de arte:** "a arte é pintada para o chão plano, sem compensação; o sprite
+     escurece na sombra e não recebe o realce da luz". O texto completo está na seção "Texto
+     proposto para o contrato de arte".
+9. **Geometria: a captura decide** entre norte 0,83 (a mesma geometria, 8 px por degrau) e norte
+   0,71 (~12,8 px por degrau). As duas vêm **lado a lado** no relatório (Tarefa 4).
+10. **Saturação da areia clara** no topo da encosta de luz: **medir na captura** quantos pixels
+    saturam. Se aparecer, o teto da luz do chão (`tetoDaLuzDoChao`) vai para o dado (Tarefa 4,
+    passo 3b). Até lá, o chão não tem teto de luz além do que a geometria dá.
+11. **Phaser 4:** o `addBlendMode` fica registrado como **risco** para o estudo de migração.
+    Esse estudo ainda não existe em nenhuma branch; o único lugar que junta itens "para o estudo
+    de migração" é a lista de hipóteses no fim do `docs/planos/estudo-relevo.md`, e é lá que o
+    risco entra, no commit deste plano.
 
 ## Avaliação: chão plano = 1,0, pedida pelo operador (2026-09-30)
 
-**Estado: avaliação, sem código. Espera a decisão do operador sobre os sprites (item 4).** Enquanto
-ela não vem, o resto do plano continua escrito com `k`. O item 6 lista o que muda quando for
-aprovado.
+**Estado: avaliada e aprovada (decisões 7 a 11 acima).** O resto do plano já está escrito com
+ela. Esta seção fica como o registro do porquê.
 
 **O pedido:** no plano, fator 1,0 (sem mudança); na encosta de sombra, MULTIPLY (< 1); na encosta
 de luz, SCREEN ou ADD (> 1). O objetivo é a arte deixar de depender da camada estar ligada ou
@@ -117,10 +144,10 @@ subir a 1,1 só com tint.** São quatro saídas:
 | **S3. Cópia fantasma por sprite** | exato: uma cópia com `setTintFill(cinza(f − 1))` no modo de luz, logo acima do sprite, dá `c × f` na silhueta | +1 objeto por sprite em encosta de luz, e **cada cópia quebra o lote de desenho duas vezes**. Com centenas de sprites visíveis a zoom 0,5, são +100 a +300 draw calls | a cópia tem de seguir o quadro, o espelho, o `setCrop` da obra revelada, a escala e a origem de cada sprite. Isso multiplica os ganchos no `unidades.ts` e no `criarPredio`. **Não recomendo** |
 | **S4. Camadas de luz acima dos sprites** | sem tint nenhum: a luz cai em tudo pela posição na tela | 2 draw calls, e zero tint | o sprite pega a luz do chão **atrás de cada pixel dele**, e não a de sob o pé: o telhado de um prédio pega a luz de dois tiles ao norte. Isso contraria a decisão 5 do estudo. E rótulo, medidor e nome da unidade, que moram dentro dos containers, escurecem junto. **Não recomendo** |
 
-**Recomendação: S1, com `fatorMaximo` no dado.**
-- O tint vira `tintDoFator(min(f, 1))`.
-- O `fatorMaximo` começa em 1,11 e é conferido na captura da Tarefa 4: sprite na encosta de luz
-  ao lado do chão. Se o recorte aparecer, o teto desce (S2), e é o operador quem decide o número.
+**Decidido: S1** (decisão 8), com `tetoDoTintDoSprite` = 1,0 no dado.
+- O tint vira `tintDoFator(min(f, tetoDoTintDoSprite))`.
+- O chão **não** tem teto de luz, a não ser que a saturação da areia apareça na captura (decisão
+  10).
 - A conferência do salto do tint da unidade (mudança 6) continua, e só se aplica à sombra: na
   encosta de luz, S1 não muda o tint.
 
@@ -145,39 +172,20 @@ luz a 30° para o sul) e `f = (n·L) / cos θ` **sem** `k`:
 - **Leste e oeste continuam iguais entre si** nas três colunas: a luz não tem componente
   leste–oeste.
 
-### 6. O que muda no plano, se for aprovado
+### 6. O que mudou no plano (aplicado com as decisões 7 a 11)
 
-- **`data/relevo.json`:** saem `fatorDoPlano` e a hipótese dele. Entra `fatorMaximo` (1,11,
-  número de partida, calibrado na captura), e o `fatorMinimo` fica. A validação passa a exigir
-  `0 < fatorMinimo < 1 < fatorMaximo ≤ 2`.
-- **A conta:** `f = (n·L) / cos θ`, preso em `[fatorMinimo, fatorMaximo]`. O teste "plano dá `k`"
-  vira "plano dá **exatamente 1**". O teste de leste = oeste fica.
-- **`relevo.ts`:**
-  - `texturasDaLuz(luz)` devolve os dois mapas de 8 bits: `sombra = round(min(f, 1)·255)` e
-    `luz = round(max(f − 1, 0)·255)`;
-  - teste: no plano, 255 e 0 **exatos**.
-- **`camada-de-relevo.ts`:**
-  - duas imagens no depth 3: a de sombra em `BlendModes.MULTIPLY`, e a de luz no índice devolvido
-    por `renderer.addBlendMode([gl.DST_COLOR, gl.ONE], gl.FUNC_ADD)`, registrado **uma vez** por
-    renderer;
-  - o tint vira `tintDoFator(min(f, 1))` (S1).
-- **Roteiro da Tarefa 4:**
-  - **nova asserção:** um retângulo de chão plano, lido do canvas com a flag ligada e desligada,
-    é **igual pixel a pixel**. É a prova de que a arte não fica amarrada ao modo;
-  - a asserção "fator do prédio ≠ `fatorDoPlano`" vira "≠ 1".
-- **Contrato de arte:** a nota da seção abaixo é substituída por "a arte é pintada para o chão
-  plano, sem compensação", mais uma linha sobre a encosta de luz (texto no item 7).
-- **Notas:** some a hipótese `k = 0,85`. Entra como hipótese o `addBlendMode` no Phaser 4.
-- **Autoconferência:** a linha "`k < 1` em `data/`" é trocada por "plano = 1,0 exato".
-
-### 7. Texto proposto para o contrato de arte, se aprovado (substitui o da seção abaixo)
-
-> **A arte é pintada para o chão plano, sem compensação.** Com o relevo ligado, o render multiplica
-> o chão pela luz da encosta: 1,0 no plano, abaixo de 1 na encosta virada para o norte, e acima de
-> 1 (até ~1,1) na virada para o sul. O sprite (prédio, unidade, árvore, recurso, pilha) recebe a
-> sombra da encosta pelo chão sob o pé, mas **não** o realce: na encosta de luz ele fica como foi
-> pintado. Por isso a arte é pintada e aprovada no plano, a 1,0, sem clarear nem escurecer para
-> compensar o relevo, e a folha de contato não aplica fator nenhum.
+- **`data/relevo.json`:** saem `fatorDoPlano` e a hipótese dele. Entra `tetoDoTintDoSprite`
+  (1,0, decisão 8). O `fatorMinimo` fica, como piso de segurança do chão.
+- **A conta:** `f = (n·L) / cos θ`, com piso `fatorMinimo` e **sem teto no chão** (decisão 10). O
+  teste "plano dá `k`" virou "plano dá **exatamente 1**". O teste de leste = oeste fica.
+- **`relevo.ts`:** `texturasDaLuz(luz)` devolve os dois mapas de 8 bits, `sombra` e `luz`. No
+  plano, 255 e 0 **exatos**.
+- **`camada-de-relevo.ts`:** duas imagens, no depth 3. O tint é
+  `tintDoFator(min(f, tetoDoTintDoSprite))`.
+- **O roteiro da Tarefa 4:** o chão plano é igual pixel a pixel com a flag ligada e desligada; as
+  duas geometrias vêm lado a lado; e a saturação da areia é medida.
+- **O contrato de arte:** o texto novo está na seção abaixo.
+- **Riscos:** a hipótese `k = 0,85` saiu. O `addBlendMode` no Phaser 4 entrou como risco.
 
 ---
 
@@ -185,25 +193,23 @@ luz a 30° para o sul) e `f = (n·L) / cos θ` **sem** `k`:
 
 Destino: a seção `## Cor, valores e luz` de
 `noru-novos-sprites:skills/pianco-render-contract/SKILL.md`. **Não foi editado lá:** o operador
-leva ao Codex.
+leva ao Codex. Substitui o texto anterior, que falava de `k = 0,85` (decisão 8).
 
-> **Sprite visto sob o fator do plano.** Com o relevo ligado, o render multiplica **todo** sprite
-> (prédio, unidade, árvore, recurso, pilha) pelo fator de luz do chão sob o pé. No plano, esse
-> fator é `k` (`data/relevo.json`, `fatorDoPlano`, hoje **0,85, hipótese** até a arte de terreno
-> da F-TR). Numa encosta virada para o sul ele sobe até 1,0, e numa virada para o norte cai abaixo
-> de `k`. Por isso:
-> - o sprite é **pintado sabendo que será visto a ×`k`**, como o tile de terreno: a folha de
->   contato aplica `k` antes do portão visual, e o valor mais claro da arte (cal, brilho de telha,
->   céu refletido) precisa continuar lendo como claro a ×`k`;
-> - não se compensa clareando o sprite inteiro por 1/`k`, o que estouraria os brancos a 1,0. Se a
->   folha de contato mostrar a arte apagada a ×`k`, o ajuste é no valor da arte ou no `k`, e é
->   decisão do operador;
-> - o tint é multiplicativo e só escurece. Brilho próprio (fogo da forja, fumaça clara) também
->   escurece com a encosta. Se um dia isso incomodar, é camada separada sem tint, e não arte mais
->   clara.
+> **A arte é pintada para o chão plano, sem compensação; o sprite escurece na sombra e não recebe
+> o realce da luz.** Com o relevo ligado:
+> - o render multiplica o chão pela luz da encosta: 1,0 no plano, abaixo de 1 na encosta virada
+>   para o norte, e acima de 1 na virada para o sul;
+> - o sprite (prédio, unidade, árvore, recurso, pilha) recebe a sombra da encosta pelo chão sob o
+>   pé, e nunca passa de 1,0: na encosta de luz, ele fica como foi pintado;
+> - por isso a arte é pintada e aprovada no plano, a 1,0, sem clarear nem escurecer para
+>   compensar o relevo, e a folha de contato não aplica fator nenhum;
+> - o tint é multiplicativo e só escurece. Brilho próprio (o fogo da forja, a fumaça clara)
+>   também escurece na encosta de sombra. Se um dia isso incomodar, a saída é uma camada separada
+>   sem tint, e não arte mais clara.
 
-**Objetivo:** mostrar o relevo suave pela luz (opção A do estudo): uma camada MULTIPLY entre o chão
-e os sprites, mais o `setTint` dos sprites pela luz sob o pé. Tudo **desligado por padrão**.
+**Objetivo:** mostrar o relevo suave pela luz (opção A do estudo): duas camadas entre o chão e os
+sprites (MULTIPLY na sombra, `[DST_COLOR, ONE]` na luz, com o plano neutro), mais o `setTint` dos
+sprites pela sombra sob o pé. Tudo **desligado por padrão**.
 
 **Arquitetura:**
 - A altura é **só de render**. Ela sai de `tools/gerar-mapa.js` (tipos de terreno mais ruído
@@ -212,8 +218,8 @@ e os sprites, mais o `setTint` dos sprites pela luz sob o pé. Tudo **desligado 
 - O que toca o Phaser mora em `src/render/camada-de-relevo.ts`.
 - O `WorldScene.ts` ganha quatro ganchos de uma linha cada, e o `unidades.ts` ganha um parâmetro.
 
-**Stack:** TypeScript, Phaser 3.90 (só `Image`, `setBlendMode` e `setTint`: sem shader e sem
-pipeline), Vitest e Playwright.
+**Stack:** TypeScript, Phaser 3.90 (só `Image`, `setBlendMode`, `renderer.addBlendMode` e
+`setTint`: sem shader e sem pipeline), Vitest e Playwright.
 
 **Fonte única:** `docs/planos/estudo-relevo.md`, inteiro, inclusive a seção 7 ("Decisões do
 operador (2026-09-30)").
@@ -236,9 +242,10 @@ operador (2026-09-30)").
   montanha ou rocha.
 - **Luz do mundo:** de cima, inclinada levemente para o sul, **sem componente leste–oeste**. O
   dado não tem campo leste–oeste, de propósito.
-- **Fator do plano `k = 0,85`**, em `data/relevo.json` e **marcado como hipótese** até a arte de
-  terreno da F-TR existir.
-- **Tint obrigatório** em árvore, prédio, recurso, pilha e unidade, pela luz do vértice sob o pé:
+- **Chão plano = 1,0 exato** (decisão 7). Sombra por MULTIPLY; luz pelo modo próprio
+  `[DST_COLOR, ONE]` (`renderer.addBlendMode`). Não há `k`.
+- **Tint obrigatório** em árvore, prédio, recurso, pilha e unidade, pela luz do vértice sob o pé,
+  preso em `tetoDoTintDoSprite` = 1,0 (decisão 8: escurece na sombra, e não recebe o realce):
   - objeto fixo: uma vez, ao nascer;
   - unidade: a cada mudança de tile.
 - `src/render/` e `tools/` mudam. `src/sim/` não muda, e a regra do §10 (render e sim na mesma
@@ -255,7 +262,7 @@ Pelo `docs/siglas.md` ("se muda os dois, são dois itens"), são **dois itens** 
 | Sigla | Nome | Onde |
 |---|---|---|
 | **D-TERRENO-01** | altura só de render no gerador de mapa | `tools/`, `data/` |
-| **D-TELA-xx** | luz do relevo: camada MULTIPLY e tint dos sprites | `src/render/` |
+| **D-TELA-xx** | luz do relevo: camadas de sombra e de luz, e tint dos sprites | `src/render/` |
 
 A D-TERRENO-01 foi conferida em todas as branches locais: não há TERRENO no esquema novo. **Ela
 também é reconferida no `BUILD_PLAN.md` da `main` depois do rebase**, junto com o id da D-TELA-xx
@@ -272,14 +279,14 @@ Definition of Done (§7).
 
 | Arquivo | Muda | Tarefa |
 |---|---|---|
-| `data/relevo.json` | **novo.** Os números do relevo, a flag e a hipótese de `k` | 1 |
+| `data/relevo.json` | **novo.** Os números do relevo, a flag e o teto do tint do sprite (sem `k`) | 1 |
 | `data/maps/sertao-128.relevo.json` | **novo, emitido.** A altura por vértice | 1 |
 | `tools/gerar-mapa.js` | emite o segundo arquivo, com o próprio RNG. O `sertao-128.json` sai **byte a byte igual** | 1 |
 | `tools/data-schema.js`, `tools/data-rules.js` | `relevo` entra em `ARQUIVOS_DA_INTERFACE`, com a regra própria | 1 |
 | `tests/D-TERRENO-01-relevo-do-gerador.test.ts` | **novo** | 1 |
 | `src/render/relevo.ts` | **novo, puro.** Lê a altura, calcula a luz, amostra sob o pé, decide se liga | 2 |
 | `tests/D-TELA-xx-luz-do-relevo.test.ts` | **novo.** A conta da luz, a decisão de ligar e a guarda estrutural | 2 |
-| `src/render/camada-de-relevo.ts` | **novo, Phaser.** A textura, a imagem MULTIPLY e o tint | 3 |
+| `src/render/camada-de-relevo.ts` | **novo, Phaser.** As duas texturas, as camadas de sombra e de luz, e o tint | 3 |
 | `src/render/scenes/WorldScene.ts` | **4 ganchos** (abaixo) | 3 |
 | `src/render/unidades.ts` | parâmetro opcional `luz`, e uma linha no `atualizar` | 3 |
 | `src/render/debug.ts` | campo **opcional** `relevo?`, só escrito com a flag pedida | 3 |
@@ -320,7 +327,7 @@ deles faz nada.
 
 A camada vai em depth **3**:
 - **acima** do chão, das transições, da grade, dos recursos (0,5), da estrada (1) e do canteiro de
-  campo (2), que recebem a luz pelo MULTIPLY;
+  campo (2), que recebem a sombra e a luz pelas duas camadas;
 - **abaixo** de todo sprite, cujo depth é o y do pé (`depthDeY`), sempre ≥ ~30 px.
 
 O número é constante de TELA no módulo, como `DEPTH_DA_ESTRADA`.
@@ -359,10 +366,12 @@ por fileira, para o diff do git ficar legível.
 {
   "_doc": "Relevo SO DE RENDER, opcao A (docs/planos/estudo-relevo.md, secao 7). sim/ nunca le este arquivo. `ligado` e a flag: false ate a arte de terreno da F-TR entrar. `?relevo` na URL liga para o roteiro. Sem WebGL a camada e o tint ficam desligados mesmo ligado.",
   "ligado": false,
-  "fatorDoPlano": 0.85,
-  "_hipotese_fatorDoPlano": "HIPOTESE: e o valor da captura do estudo (2026-09-30), nao calibrado. Calibrar na folha de contato quando a arte de terreno da F-TR existir (estudo, secao 7, item 14).",
+  "_docPlano": "O chao plano e 1,0 EXATO: a sombra (MULTIPLY) e a luz ([DST_COLOR, ONE]) sao neutras no plano, e a arte e pintada para ele sem compensacao (decisao do operador, 2026-09-30). Nao ha fator do plano.",
   "fatorMinimo": 0.5,
+  "tetoDoTintDoSprite": 1.0,
+  "_docTetoDoTintDoSprite": "O sprite escurece na sombra e nao recebe o realce da luz (S1, decisao do operador, 2026-09-30). O setTint do Phaser 3 so escurece.",
   "pxDeMundoPorDegrau": 8,
+  "_docPxDeMundoPorDegrau": "Ponto de partida. A captura decide entre 8 (norte 0,83) e 12,8 (norte 0,71).",
   "luz": {
     "_doc": "De cima, inclinada levemente para o sul, SEM componente leste-oeste (decisao do operador, 2026-09-30). Nao ha campo leste-oeste de proposito.",
     "inclinacaoParaOSulGraus": 30
@@ -379,7 +388,10 @@ por fileira, para o diff do git ficar legível.
 ```
 
 **A validação** (`validate:data`, regra `interface/relevo`) exige:
-- `0 < fatorMinimo ≤ fatorDoPlano ≤ 1`;
+- `0 < fatorMinimo < 1`;
+- `0 < tetoDoTintDoSprite ≤ 1` (o `setTint` não passa de 1);
+- `tetoDaLuzDoChao`, **se existir** (decisão 10): `1 < tetoDaLuzDoChao ≤ 2`;
+- nenhum campo `fatorDoPlano` (a regra acusa se o `k` voltar por engano);
 - `0 < inclinacaoParaOSulGraus < 90`;
 - `basePorTipo` cobrindo todo tipo da legenda do mapa;
 - base e amplitude dentro de 0–35;
@@ -388,26 +400,30 @@ por fileira, para o diff do git ficar legível.
 
 **Os números da geração e da luz são ponto de partida**, a conferir na captura da Tarefa 4. Com
 `pxDeMundoPorDegrau` 8, o declive máximo de 2 degraus dá uma encosta de 16 px por tile de 64
-(~14°). Com a luz a 30° para o sul e `k` 0,85, isso dá:
+(~14°). Com a luz a 30° para o sul, isso dá (seção "Avaliação", item 5):
 
-| Encosta | Fator |
-|---|---|
-| virada para o sul | ~0,94 |
-| plano | 0,85 |
-| virada para o norte | ~0,71 |
-| leste ou oeste | ~0,82 (iguais entre si) |
+| Encosta | 8 px por degrau | 12,8 px por degrau |
+|---|---|---|
+| virada para o sul | ~1,11 | ~1,14 |
+| plano | **1,00** | **1,00** |
+| leste ou oeste | ~0,97 | ~0,93 |
+| virada para o norte | ~0,83 | ~0,71 |
 
 ### A conta da luz
 
 É o Lambert com a luz `L = (0, sen θ, cos θ)`, com y para o sul, e normalizada pelo plano.
 
 ```
-g  = gradiente da altura no vértice (diferença central), em px de mundo por px de mundo
-n  = normalizar(-gx, -gy, 1)
-f  = k · (n·L) / cos θ, preso em [fatorMinimo, 1]
+g      = gradiente da altura no vértice (diferença central), em px de mundo por px de mundo
+n      = normalizar(-gx, -gy, 1)
+f      = (n·L) / cos θ, com piso fatorMinimo (e teto tetoDaLuzDoChao só se a decisão 10 pedir)
+sombra = round(min(f, 1) · 255)          -> camada MULTIPLY
+luz    = round(max(f − 1, 0) · 255)      -> camada [DST_COLOR, ONE]: c · (1 + luz/255)
+tint   = cinza(min(f, tetoDoTintDoSprite))
 ```
 
-- O plano dá exatamente `k`.
+- O plano dá **exatamente 1**: `lz / lz` é 1 exato em ponto flutuante. Daí sombra 255 e luz 0,
+  os dois neutros exatos.
 - Com `Lx = 0`, `gx` e `−gx` dão o mesmo fator: é o que o teste afirma para "sem leste–oeste".
 - A amostra sob o pé é **bilinear** entre os 4 vértices do tile, como o `RenderFlatToHeight` do
   KaM. Fora do mapa, a coordenada é presa à borda.
@@ -608,7 +624,8 @@ resposta **antes** de construir (a lição de sondar o travamento antes de const
   - `tools/data-schema.js`: `ARQUIVOS_DA_INTERFACE = ['theme-sertao', 'menu-build', 'relevo']`.
   - `tools/data-rules.js`: `validarRelevo(dados, interfaceUi)`, com as regras da seção
     `data/relevo.json`, chamada de dentro de `validarInterface`.
-  - No teste: uma cópia com `fatorDoPlano: 1.2` reprova com `interface/relevo`. O caminho é o
+  - No teste: uma cópia com `tetoDoTintDoSprite: 1.2` reprova com `interface/relevo`, e uma com
+    `fatorDoPlano` presente também. O caminho é o
     `--dir` que o `validate-data.js` já aceita.
 - [ ] **Passo 5:** `node tools/gerar-mapa.js` escreve o `.relevo.json`, e depois:
   - `git diff --stat data/maps/sertao-128.json` fica **vazio**;
@@ -632,8 +649,10 @@ resposta **antes** de construir (a lição de sondar o travamento antes de const
 
   ```ts
   export interface ParametrosDaLuz {
-    readonly fatorDoPlano: number;
     readonly fatorMinimo: number;
+    readonly tetoDoTintDoSprite: number;
+    /** So se a decisao 10 pedir (saturacao da areia). Ausente: o chao nao tem teto de luz. */
+    readonly tetoDaLuzDoChao?: number;
     readonly pxDeMundoPorDegrau: number;
     readonly inclinacaoParaOSulGraus: number;
   }
@@ -644,7 +663,11 @@ resposta **antes** de construir (a lição de sondar o travamento antes de const
   export function alturasDoMapa(): AlturasDoRelevo;       // o arquivo emitido
   export function calcularLuz(alt: AlturasDoRelevo, p: ParametrosDaLuz, tilePx: number): MapaDeLuz;
   export function fatorEm(luz: MapaDeLuz, xMundo: number, yMundo: number, tilePx: number): number; // bilinear, preso na borda
-  export function tintDoFator(f: number): number;         // 0xRRGGBB cinza, round(f*255)
+  export function texturasDaLuz(luz: MapaDeLuz): { sombra: Uint8ClampedArray; luz: Uint8ClampedArray }; // um byte por vertice
+  export function tintDoSprite(f: number, p: ParametrosDaLuz): number; // cinza de min(f, tetoDoTintDoSprite)
+  export function tintDoFator(f: number): number;         // 0xRRGGBB cinza, round(f*255), f em [0,1]
+  /** So para o roteiro comparar as duas geometrias (decisao 9): `?relevoPx=12.8`. */
+  export function pxPorDegrauDaBusca(busca: string, doDado: number): number;
   export function relevoPedido(busca: string, ligadoNoDado: boolean): boolean; // dado || ?relevo
   export type DecisaoDoRelevo =
     | { readonly ativo: true }
@@ -654,15 +677,21 @@ resposta **antes** de construir (a lição de sondar o travamento antes de const
   ```
 
 - [ ] **Passo 1: o teste que falha.** `tests/D-TELA-xx-luz-do-relevo.test.ts`:
-  - **Plano dá `k`:** tudo a 5 dá `fator === fatorDoPlano` em todo vértice interior.
+  - **Plano dá exatamente 1:** tudo a 5 dá `fator === 1` em todo vértice, e `texturasDaLuz` dá
+    `sombra === 255` e `luz === 0` em todo vértice (os neutros exatos da decisão 7).
   - **Sul clareia, norte escurece:** uma rampa que desce para o sul (h diminuindo com y) dá
-    `> k` e `≤ 1`. A rampa espelhada dá `< k` e `≥ fatorMinimo`.
+    `> 1`, com `luz > 0` e `sombra === 255`. A rampa espelhada dá `< 1` e `≥ fatorMinimo`, com
+    `sombra < 255` e `luz === 0`.
+  - **Os números da avaliação:** a rampa de 2 degraus por tile a 8 px por degrau dá ~0,83 no
+    norte e ~1,11 no sul; a 12,8 px, ~0,71 e ~1,14 (tolerância de 0,01).
   - **Sem leste–oeste:** a rampa para leste e a rampa para oeste dão o **mesmo** fator (igualdade
-    exata), `≤ k`.
+    exata), `< 1`.
+  - **Tint S1:** `tintDoSprite(1.11, p)` dá `0xffffff` (não recebe o realce);
+    `tintDoSprite(0.83, p)` dá o cinza de 0,83.
   - **Bilinear:** no vértice, dá o valor do vértice; no centro do tile, a média dos 4.
   - **Presa à borda:** (−5, −5) dá o fator do vértice (0, 0), e fora pela direita e por baixo, o
     do canto.
-  - **`tintDoFator`:** 1 dá `0xffffff`, 0,85 dá `0xd9d9d9`, e é monotônico.
+  - **`tintDoFator`:** 1 dá `0xffffff`, 0,83 dá `0xd4d4d4`, e é monotônico.
   - **Decisão:**
     - `decidirRelevo(false, true)` dá `{ ativo: false, motivo: 'desligado' }`;
     - `decidirRelevo(true, false)` dá `{ ativo: false, motivo: 'canvas' }`;
@@ -670,7 +699,9 @@ resposta **antes** de construir (a lição de sondar o travamento antes de const
     - `relevoPedido('?pausado', false)` dá `false`, e `relevoPedido('?pausado&relevo', false)` dá
       `true`.
   - **Padrão desligado:** `import relevo from '../data/relevo.json'` tem `ligado === false`.
-  - **Hipótese marcada:** `_hipotese_fatorDoPlano` existe e cita `F-TR`.
+  - **Sem `k`:** o `data/relevo.json` não tem `fatorDoPlano`, e tem `tetoDoTintDoSprite === 1`.
+  - **`?relevoPx`:** sem o parâmetro, vale o dado; com `?relevo&relevoPx=12.8`, vale 12,8; um
+    valor não numérico ou ≤ 0 cai no dado.
   - **Guarda estrutural** (import, não substring de número):
     - nenhum arquivo de `src/sim/**` tem import que resolva para `data/relevo.json` ou
       `data/maps/*.relevo.json`;
@@ -679,7 +710,7 @@ resposta **antes** de construir (a lição de sondar o travamento antes de const
     O `import` é extraído com a mesma leitura que o teste estrutural da F04 usa, que vou
     conferir e reutilizar em vez de inventar outra.
   - **O arquivo real:** `calcularLuz(alturasDoMapa(), parametrosDaLuz, 64)` tem todo fator em
-    `[fatorMinimo, 1]`, e existe fator `> k` e `< k` (o mapa tem relevo).
+    `[fatorMinimo, 2)`, e existe fator `> 1` e `< 1` (o mapa tem relevo).
 - [ ] **Passo 2:** o teste falha (o módulo não existe).
 - [ ] **Passo 3: implementar `relevo.ts`.** O núcleo:
 
@@ -696,7 +727,8 @@ resposta **antes** de construir (a lição de sondar o travamento antes de const
       const gx = ((em(x + 1, y) - em(x - 1, y)) / 2) * escala;
       const gy = ((em(x, y + 1) - em(x, y - 1)) / 2) * escala;
       const nDotL = (-gy * ly + lz) / Math.hypot(gx, gy, 1);
-      fator[y * largura + x] = Math.min(1, Math.max(p.fatorMinimo, (p.fatorDoPlano * nDotL) / lz));
+      const f = Math.max(p.fatorMinimo, nDotL / lz);        // plano: lz / lz === 1 exato
+      fator[y * largura + x] = p.tetoDaLuzDoChao === undefined ? f : Math.min(p.tetoDaLuzDoChao, f);
     }
     return { largura, altura, fator };
   }
@@ -704,15 +736,18 @@ resposta **antes** de construir (a lição de sondar o travamento antes de const
 
   - `fatorEm`: vértice `(x/tilePx, y/tilePx)`, preso a `[0, largura-1]`, e a interpolação bilinear
     dos 4.
+  - `texturasDaLuz`: `sombra[i] = round(min(f, 1) · 255)` e `luz[i] = round(max(f − 1, 0) · 255)`.
   - `relevoPedido`: `ligadoNoDado || new URLSearchParams(busca).has('relevo')`.
+  - `pxPorDegrauDaBusca`: lê `relevoPx` e cai no dado se ausente ou inválido. Só existe para o
+    roteiro mostrar as duas geometrias sem editar o dado; o número que fica é o do dado.
 - [ ] **Passo 4:** o teste passa; `npm run verify` passa.
 - [ ] **Passo 5: commit.**
 
   ```
-  feat(D-TELA-xx): conta pura da luz do relevo (sul, sem leste-oeste, k do dado)
+  feat(D-TELA-xx): conta pura da luz do relevo (sul, sem leste-oeste, plano neutro)
   ```
 
-## Tarefa 3: D-TELA-xx, a camada MULTIPLY, o tint e os ganchos
+## Tarefa 3: D-TELA-xx, as camadas de sombra e de luz, o tint e os ganchos
 
 **Arquivos:**
 - novo: `src/render/camada-de-relevo.ts`;
@@ -745,7 +780,7 @@ resposta **antes** de construir (a lição de sondar o travamento antes de const
     ativo: boolean;
     motivo: 'desligado' | 'canvas' | null;
     renderizador: 'webgl' | 'canvas';
-    fatorDoPlano: number;
+    pxDeMundoPorDegrau: number;
     vertices: [number, number];
     /** rotulo -> fator aplicado: 'predio:<id>', 'unidade:<id>', 'vegetacao:<gx,gy>'. */
     fatores: Record<string, number>;
@@ -764,12 +799,24 @@ resposta **antes** de construir (a lição de sondar o travamento antes de const
     `null`. Assim, **camada e tint caem juntos.**
   - Ativo:
     - `calcularLuz`;
-    - uma `CanvasTexture` de `largura × altura` (129×129), um pixel cinza por vértice
-      (`round(f·255)`), com `setFilter(LINEAR)`;
-    - `cena.add.image(-tilePx/2, -tilePx/2, chave).setOrigin(0).setDisplaySize(largura·tilePx, altura·tilePx)`,
+    - `texturasDaLuz`, e duas `CanvasTexture` de `largura × altura` (129×129), opacas (alfa 255
+      em todo pixel, para o `ONE_MINUS_SRC_ALPHA` do MULTIPLY ser 0), com `setFilter(LINEAR)`;
+    - duas imagens, cada uma com
+      `cena.add.image(-tilePx/2, -tilePx/2, chave).setOrigin(0).setDisplaySize(largura·tilePx, altura·tilePx)`,
       que põe o centro do texel (i, j) no vértice (i·tilePx, j·tilePx);
-    - `.setBlendMode(Phaser.BlendModes.MULTIPLY).setDepth(DEPTH_DA_LUZ)`, com `DEPTH_DA_LUZ = 3`.
-  - O tint: `setTint(tintDoFator(fatorEm(...)))` em `instanceof Phaser.GameObjects.Image`, e
+    - a de **sombra** com `.setBlendMode(Phaser.BlendModes.MULTIPLY)`;
+    - a de **luz** com o modo próprio:
+
+      ```ts
+      const r = cena.game.renderer as Phaser.Renderer.WebGL.WebGLRenderer;
+      // uma vez por renderer: o indice fica guardado num WeakMap<renderer, number>
+      const LUZ = r.addBlendMode([r.gl.DST_COLOR, r.gl.ONE], r.gl.FUNC_ADD); // c*s + c = c*(1+s)
+      imagemDaLuz.setBlendMode(LUZ);
+      ```
+
+    - as duas em `.setDepth(DEPTH_DA_LUZ)`, com `DEPTH_DA_LUZ = 3`. A ordem entre elas não muda o
+      resultado: cada pixel recebe só uma das duas fora do neutro.
+  - O tint: `setTint(tintDoSprite(fatorEm(...), p))` em `instanceof Phaser.GameObjects.Image`, e
     `tingirContainer` desce por `container.list`, recursivo. Todo tint escreve
     `debug.relevo.fatores[rotulo]`.
   - O `tingirSeMudouDeTile` guarda `WeakMap<Image, string>` com o `tileDoPe`.
@@ -796,7 +843,7 @@ resposta **antes** de construir (a lição de sondar o travamento antes de const
 - [ ] **Passo 6: commit.**
 
   ```
-  feat(D-TELA-xx): camada MULTIPLY do relevo e tint dos sprites, atras da flag e do WebGL
+  feat(D-TELA-xx): camadas de sombra e luz do relevo e tint dos sprites, atras da flag e do WebGL
   ```
 
 ## Tarefa 4: D-TELA-xx, o roteiro com a flag ligada
@@ -817,17 +864,37 @@ resposta **antes** de construir (a lição de sondar o travamento antes de const
     (`avancar(n)`), ou o quadro inclui o armazém.
   - **Afirma os fatores:**
     - `fatores['predio:<id>']`, `fatores['vegetacao:<gx,gy>']` e `fatores['unidade:<id>']`
-      existem e ficam em `[fatorMinimo, 1]`;
-    - o fator do prédio na encosta é **≠ `fatorDoPlano`**.
+      existem e ficam em `[fatorMinimo, 1]` (o tint nunca passa de `tetoDoTintDoSprite`);
+    - o prédio fica numa encosta de **sombra**, e o fator dele é **< 1**, para a captura mostrar o
+      tint agindo. A árvore ou o serf numa encosta de **luz** mostra o S1: fator **1**, e o chão
+      em volta acima de 1.
   - Avança o bastante para a obra trocar de estágio e afirma que `fatores['predio:<id>']` foi
     escrito de novo (Foco de revisão 2).
   - **Um passo despausado** (`press('p')`, `waitForTimeout(150)`, `press('p')`), para o serf trocar
     de tile e o `fatores['unidade:<id>']` mudar ou se manter coerente com o tile novo. É a lição
     do roteiro pausado (§8).
-  - Captura:
-    - `screenshots/D-TELA-xx-1.png`: o quadro com relevo;
-    - `screenshots/D-TELA-xx-2.png`: o mesmo quadro, recarregado **sem** `?relevo`, para a
-      comparação lado a lado.
+  - Captura (o mesmo quadro, o mesmo tick, a mesma câmera):
+    - `screenshots/D-TELA-xx-1.png`: com relevo, geometria de 8 px por degrau (norte 0,83);
+    - `screenshots/D-TELA-xx-2.png`: com relevo, `?relevoPx=12.8` (norte 0,71). **As duas lado a
+      lado decidem a geometria** (decisão 9);
+    - `screenshots/D-TELA-xx-0.png`: recarregado **sem** `?relevo`, a referência.
+  - **O chão plano igual pixel a pixel (decisão 7).**
+    - O roteiro escolhe, pelo arquivo de altura, um retângulo de chão de grama **plano**: todo
+      vértice dele e da moldura de um vértice em volta tem a mesma altura, então o gradiente é 0
+      e o fator é 1 exato. O retângulo não tem sprite nenhum (sem árvore, prédio ou unidade no
+      retângulo nem a um tile dele).
+    - Decodifica as capturas `-0` e `-1` **no próprio navegador** (`page.screenshot` em base64,
+      `Image`, canvas 2D e `getImageData`, sem dependência nova). Afirma que os pixels do
+      retângulo são **iguais byte a byte**.
+    - Para provar que a asserção acusa, faz a mesma comparação num retângulo de encosta, que tem
+      de **diferir**.
+  - **A saturação da areia (decisão 10).**
+    - O roteiro acha pelo dado um retângulo de **areia** numa encosta de luz (fator > 1) e o
+      põe no quadro.
+    - Conta, entre `-0` e `-1` (e `-2`), os pixels do retângulo com algum canal em 255 que não
+      estava em 255 sem relevo: são os que **saturaram por causa da luz**.
+    - Grava a contagem, o total de pixels e a fração em `test-output/D-TELA-xx-saturacao.json`.
+      O roteiro não reprova por isso: é medida para a decisão.
   - **O salto de brilho da unidade (mudança 6).** O roteiro segue um serf andando por uma
     encosta, despausado em passos curtos. A cada quadro registra `fatores['unidade:<id>']` e o x,
     y desenhado, e grava a série em `test-output/D-TELA-xx-tint-da-unidade.json`. Captura duas
@@ -843,7 +910,13 @@ resposta **antes** de construir (a lição de sondar o travamento antes de const
 
   Se os números de partida (amplitude, `pxDeMundoPorDegrau`, inclinação) derem relevo invisível
   ou exagerado, ajusto **só** `data/relevo.json` e regenero. Os números novos e o motivo vão para
-  as "Notas da implementação". `k` fica em 0,85: ele espera a F-TR.
+  as "Notas da implementação".
+- [ ] **Passo 3b: a geometria e a saturação, para o operador.**
+  - `-1` e `-2` lado a lado vão no relatório, com os fatores medidos no norte e no sul de cada
+    uma. O operador escolhe, e o número dele vai para `pxDeMundoPorDegrau` no dado.
+  - A contagem de saturados vai junto. **Se houver pixel saturado**, o `tetoDaLuzDoChao` entra no
+    dado, com o valor que zera a saturação no retângulo medido, e a validação dele já está pronta
+    (seção `data/relevo.json`). Se não houver, o campo não entra.
 - [ ] **Passo 3a: o salto do tint da unidade.** Abrir `-3.png` e `-4.png`, e ler a série do
   JSON.
   - **Salta** se a diferença de fator na troca de tile for perceptível na captura (o serf muda
@@ -875,18 +948,20 @@ resposta **antes** de construir (a lição de sondar o travamento antes de const
   - A tabela de resultado vai para `test-output/relevo-a-regressao.json`.
 - [ ] **Passo 2: `BUILD_PLAN.md`**, na Fase D, com as siglas e o nome ao lado:
   - **D-TERRENO-01 (altura só de render no gerador de mapa)**, com o aceite da Tarefa 1;
-  - **D-TELA-xx (luz do relevo: camada MULTIPLY e tint)**, com o aceite das Tarefas 2 a 4;
+  - **D-TELA-xx (luz do relevo: camadas de sombra e de luz, e tint)**, com o aceite das Tarefas
+    2 a 4;
   - na nota da D-TELA-xx:
     - ligar a flag por padrão espera a arte de terreno da F-TR;
-    - calibrar `k` na folha de contato;
+    - o chão plano é 1,0 exato e a arte é pintada para ele, sem compensação (decisões 7 e 8);
+    - o `addBlendMode` é risco no Phaser 4 (decisão 11);
     - o `transladar-mundo.js` não translada a altura;
     - a troca para `Phaser.WEBGL` é item próprio da `main`.
 - [ ] **Passo 3: `test-results.json`.** As duas chaves com `passes: true`, só depois do `npm run
   verify` (o hook exige o selo de 15 minutos).
 - [ ] **Passo 4: sem `PROGRESS.md` (mudança 4).** As "Notas da implementação", no fim deste
   arquivo, ficam completas. Elas separam o que foi verificado do que é hipótese:
-  - `k = 0,85` é hipótese;
   - os números de geração são de partida;
+  - a geometria escolhida (decisão 9) e a medida de saturação (decisão 10);
   - o WebGL do runner foi medido pela sonda da Tarefa 0;
   - o resultado da conferência do salto do tint.
 
@@ -917,7 +992,11 @@ resposta **antes** de construir (a lição de sondar o travamento antes de const
 | Altura só de render, do gerador, lida só pelo render | Tarefa 1; guarda estrutural na Tarefa 2 |
 | Relevo suave com teste do declive máximo | `forcarDecliveMaximo` e `declivesForaDoLimite`, com o teste que acusa |
 | Luz de cima, inclinada para o sul, sem leste–oeste | `L = (0, sen θ, cos θ)`; o teste de igualdade leste = oeste |
-| `k < 1` em `data/`, marcado como hipótese (0,85) | `data/relevo.json` `_hipotese_fatorDoPlano`; teste |
+| ~~`k < 1` em `data/`, marcado como hipótese (0,85)~~ substituído: chão plano = 1,0 exato (decisão 7) | `texturasDaLuz` neutra no plano (teste, Tarefa 2); chão plano igual pixel a pixel (roteiro, Tarefa 4) |
+| Tint S1, `tetoDoTintDoSprite` = 1,0 (decisão 8) | `tintDoSprite` (teste, Tarefa 2); fatores ≤ 1 (roteiro, Tarefa 4) |
+| Geometria 0,83 × 0,71 lado a lado (decisão 9) | `?relevoPx`; capturas `-1` e `-2`; Tarefa 4 passo 3b |
+| Saturação da areia medida (decisão 10) | `test-output/D-TELA-xx-saturacao.json`; Tarefa 4 passo 3b |
+| `addBlendMode` como risco para o Phaser 4 (decisão 11) | `docs/planos/estudo-relevo.md`, hipóteses; Notas |
 | Tint em árvore, prédio, recurso e unidade; fixo uma vez, unidade por tile | Tarefa 3; Foco de revisão 2 e 3 |
 | `verify` e roteiros iguais com a flag desligada | Tarefas 0, 3 e 5 |
 | Roteiro com a flag ligada (grama, areia, rocha; serf, árvore e prédio na encosta) | Tarefa 4 |
@@ -926,7 +1005,7 @@ resposta **antes** de construir (a lição de sondar o travamento antes de const
 | Resumo e `diff --stat`, sem merge | Tarefa 5 passo 6 |
 | Sigla livre conferida na `main` depois do commit dela | mudança 1; Tarefa 0 passo 0 |
 | Porta 5177, verify só liberado, nunca matar processo | mudança 3; Restrições globais |
-| Nota de `k` para o contrato de arte | "Texto proposto para o contrato de arte" |
+| Nota para o contrato de arte (decisão 8) | "Texto proposto para o contrato de arte" |
 | Conferir o salto do tint da unidade, interpolar se saltar | Tarefa 4 passos 1 e 3a |
 
 ---
@@ -936,5 +1015,15 @@ resposta **antes** de construir (a lição de sondar o travamento antes de const
 Preenchidas durante a execução. Separam o **verificado** (com o comando ou o arquivo aberto) da
 **hipótese**. O bloco do `PROGRESS.md` sai daqui no merge.
 
-- **Hipótese:** `k = 0,85`, até a arte de terreno da F-TR (estudo, seção 7, item 14).
-- (vazio até a Tarefa 0)
+- **Decidido (2026-09-30):** não há `k`. O chão plano é 1,0 exato (decisão 7), e o sprite fica
+  preso em 1,0 (decisão 8).
+- **Verificado (lido no Phaser 3.90 da árvore da `main`):**
+  - o MULTIPLY é `[DST_COLOR, ONE_MINUS_SRC_ALPHA]` e o SCREEN é `[ONE, ONE_MINUS_SRC_COLOR]`
+    (`WebGLRenderer.js:797-801`);
+  - o `addBlendMode(func, equation)` é público (`:1859`);
+  - o shader multiplica textura × tint (`Multi.frag`), então o tint só escurece.
+- **Hipótese:** o `[DST_COLOR, ONE]` dá exatamente `c × (1 + s)` na GPU do runner. Quem confere
+  é a asserção pixel a pixel do plano e a captura da encosta (Tarefa 4).
+- **Risco (decisão 11):** o `addBlendMode` pode não existir igual no Phaser 4. Registrado nas
+  hipóteses do `docs/planos/estudo-relevo.md`, para o estudo de migração.
+- (o resto, vazio até a Tarefa 0)

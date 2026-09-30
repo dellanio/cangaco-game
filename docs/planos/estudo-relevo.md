@@ -585,3 +585,12 @@ Sem perguntas em aberto neste estudo.
   sprites;
 - a afirmação de Poisson-disc nos decoratives do Factorio, que veio do resumo da busca e não da
   leitura do post.
+
+**Risco para o estudo de migração (decisão do operador, 2026-09-30, no plano
+`docs/planos/relevo-a.md`):**
+- a opção A passou a usar, na encosta de luz, um modo de mistura próprio `[DST_COLOR, ONE]`,
+  registrado por `renderer.addBlendMode` do Phaser 3 (`WebGLRenderer.js:1859`), para o chão plano
+  ficar em 1,0 exato. Não foi conferido se o Phaser 4, que trocou o renderer por render nodes, tem
+  o mesmo registro de modo de mistura. Se não tiver, a camada de luz precisa ser refeita na
+  migração. A camada de sombra usa o MULTIPLY padrão e não depende disso. Com isso, o "passa
+  intacta para o Phaser 4" da seção 5 vale só para a sombra.
