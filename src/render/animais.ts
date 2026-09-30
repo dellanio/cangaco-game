@@ -83,6 +83,21 @@ export function animaisDoCurral(predio: Predio, dados: DadosDosAnimais): AnimalD
 }
 
 /**
+ * F-VIVO-g — o curral que a tela desenha. `animaisDoCurral` esvazia entre duas entregas
+ * de milho (gaveta seca, ciclo no zero), e a Malhada ocupada piscava vazia. Enquanto o
+ * predio estiver ocupado, o curral vazio mostra o `anterior`, o ultimo desenhado; cheio,
+ * mostra o `atual`; desocupado, esvazia. O `anterior` e memoria de tela (um `Map` da
+ * cena), nao entra no save: depois de carregar partida, o curral comeca vazio ate a
+ * proxima entrega.
+ */
+export function curralDesenhado(
+  anterior: readonly AnimalDoCurral[], atual: readonly AnimalDoCurral[], ocupado: boolean,
+): readonly AnimalDoCurral[] {
+  if (!ocupado) return [];
+  return atual.length > 0 ? atual : anterior;
+}
+
+/**
  * O quadro do laco parado do animal (1..4). Anda com o tick quando o criador esta
  * trabalhando (o mesmo predicado de `trabalho.ts`); parado, e o quadro 1. Um
  * quadro por tick, o passo de tela da F-VIVO-b.

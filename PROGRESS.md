@@ -15326,3 +15326,41 @@ schoolhouse p2 (34,33)  2             1              150
 
 - Na tela, o empilhamento aparece como um serf só, ou como o leque da F18f (unidade empilhada
   não some). Não abri screenshot, porque não é evidência de feature desta leva.
+
+## 2026-10-01 — Tarefa 7 da leva: F-VIVO-g (o curral guarda os animais): feita
+
+Só `src/render/`, testes e roteiro; `src/sim/` intocado.
+
+### Verificado
+
+- `src/render/animais.ts`: `curralDesenhado(anterior, atual, ocupado)`, pura. Desocupado
+  devolve vazio; cheio devolve o atual; vazio e ocupado devolve o anterior.
+- `src/render/scenes/WorldScene.ts`:
+  - `curralGuardado` (um `Map` por prédio) com `tickDoCurral`. A memória esvazia quando o tick
+    volta, ou quando salta mais que `MAX_PASSOS_POR_QUADRO` (`src/laco.ts`, 10), que é a
+    partida carregada. Assim ela não entra no save.
+  - Prédio que sumiu sai do mapa.
+  - O `debug.animaisDoCurral` passa a ser o curral desenhado.
+- `tests/F-VIVO-g-curral-guarda.test.ts`:
+  - aceite 1, a tabela da função;
+  - aceite 2, pelo `step`, 20 000 ticks na `cenarioDaCadeiaDaCarne`. Evidência
+    `test-output/F-VIVO-g.json`, aberta: primeira entrega no tick 2 043; vazio com a Malhada
+    ocupada **1 350 ticks antes, 0 depois**; a sim esvazia em 14 863 e reenche em 16 213.
+  - Guarda do cenário: o esvaziamento acontece de fato.
+- Roteiro `tools/shots/F-VIVO-g.js`, porta 5178:
+  - carrega a partida 40 ticks antes do esvaziamento e despausa (§8);
+  - lê `animaisDoCurral.sf1` a cada 150 ms até esvazia + 20, sempre não vazio;
+  - pausa dentro da janela vazia da sim e captura
+    `screenshots/F-VIVO-g-1-curral-entre-entregas.png`, aberta: a Malhada com o `ocioso_5`
+    e os 5 losangos dos animais em placeholder, de tamanhos pela idade.
+  - **Prova de que acusa:** com `curralDesenhado` trocado por `return atual`, o roteiro reprova
+    em "o curral da sf1 ficou vazio no tick 14863". Restaurado em seguida.
+- O primeiro typecheck acusou o import duplicado de `AnimalDoCurral`, porque a cena já o
+  importava. A linha foi removida.
+
+### PARA REVISÃO
+
+- Os losangos dos animais aparecem acima do telhado da Malhada. É a posição da camada que já
+  existia (F-VIVO-c); esta feature só escolhe qual lista se desenha.
+- `debug.avancar(n)` com n > 10 esvazia a memória, como uma partida carregada. Roteiro que
+  queira o curral guardado anda com o relógio, não aos saltos.

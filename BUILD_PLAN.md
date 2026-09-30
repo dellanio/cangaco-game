@@ -4925,6 +4925,11 @@ curral começa vazio até a próxima entrega (memória de tela, não entra no sa
    ocupado caem a 0 depois da primeira entrega; antes e depois em `test-output/F-VIVO-g.json`.
 3. Roteiro: entre duas entregas, `debug.animaisDoCurral` (`src/render/debug.ts:167`) não
    vazio no curral. *(O plano dizia `debug.animaisDesenhados`, que não existe.)*
+- **Entregue (2026-10-01, tarefa 7 da leva).** `curralDesenhado` em `src/render/animais.ts`; a
+  memória (`curralGuardado`) na `WorldScene` esvazia quando o tick volta ou salta mais que
+  `MAX_PASSOS_POR_QUADRO` (`src/laco.ts`), que é a partida carregada. `tests/F-VIVO-g-curral-guarda.test.ts`,
+  evidência em `test-output/F-VIVO-g.json` (1 350 ticks vazios antes, 0 depois), roteiro
+  `tools/shots/F-VIVO-g.js`, que reprova no tick 14 863 sem a guarda.
 
 **Aceite da F-VIVO-h (a escola treina; baixa).** Laço `treino_1..8` enquanto a fila da
 escola tem item **`treinando`**; fila vazia ou só `aguardando`, nada. **Conferido

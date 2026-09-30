@@ -17,7 +17,8 @@ import type {
   AnimalNoDebug, CaixaDesenhada, CamadasEmPx, CrescimentoNoDebug, EstadoDebug, OciosoNoDebug, PilhaNoDebug, PredioNoDebug, QuadroNoDebug, RelogioVisivel,
 } from '../debug';
 import { aparenciaDoPredio, corDaPilha, dadosDasPilhas, dadosDosAnimais, dadosDoTrabalho, ordemDasMercadorias } from '../predios';
-import { animaisDoCurral, quadroDoAnimal } from '../animais';
+import { animaisDoCurral, curralDesenhado, quadroDoAnimal } from '../animais';
+import { MAX_PASSOS_POR_QUADRO } from '../../laco';
 import type { AnimalDoCurral } from '../animais';
 import { pilhasDoPredio, posicoesNaPilha } from '../pilhas';
 import type { PilhaDesenhada } from '../pilhas';
@@ -163,6 +164,12 @@ export class WorldScene extends Phaser.Scene {
   /** BUG-W — o estagio que cada tile de cultura desenhou. Como o crescimento da arvore,
    *  anda sem o codigo do tile mudar; e esta memoria que o diff compara. */
   private readonly estagioDesenhado = new Map<string, EstagioDaCultura>();
+
+  /** F-VIVO-g — o ultimo curral desenhado de cada criacao ocupada. Memoria de tela, nao
+   *  entra no save: esvazia quando o tick volta ou salta mais do que um quadro roda
+   *  (`MAX_PASSOS_POR_QUADRO`), que e a partida carregada. */
+  private readonly curralGuardado = new Map<string, readonly AnimalDoCurral[]>();
+  private tickDoCurral: number | null = null;
 
   private readonly desenhados = new Map<
     string,
@@ -1369,6 +1376,12 @@ export class WorldScene extends Phaser.Scene {
    *  sprite (§10). */
   private atualizarPredios(estadoDoJogo: GameState, tilePx: number, debug: EstadoDebug): void {
     const vivos = new Set(estadoDoJogo.predios.ordem);
+    const tick = estadoDoJogo.tick;
+    if (this.tickDoCurral !== null && (tick < this.tickDoCurral || tick > this.tickDoCurral + MAX_PASSOS_POR_QUADRO)) {
+      this.curralGuardado.clear();
+    }
+    this.tickDoCurral = tick;
+    for (const id of this.curralGuardado.keys()) if (!vivos.has(id)) this.curralGuardado.delete(id);
     for (const [id, item] of this.desenhados) {
       if (!vivos.has(id)) {
         item.objeto.destroy();
@@ -1486,7 +1499,13 @@ export class WorldScene extends Phaser.Scene {
       const chaveDoTrabalho = `${quadroDesenhado === null ? '-' : `${quadroDesenhado.laco}_${quadroDesenhado.n}`}/${fumaca ?? '-'}`;
       // F-VIVO-c: a idade anda com o progresso e o quadro com o tick, sem mexer em
       // estado nem em estagio — mesma razao da pilha e do trabalho.
-      const animais = animaisDoCurral(predio, DADOS_DOS_ANIMAIS);
+      // F-VIVO-g: entre duas entregas o curral da sim esvazia; ocupado, a tela guarda o ultimo.
+      const animais = curralDesenhado(
+        this.curralGuardado.get(id) ?? [], animaisDoCurral(predio, DADOS_DOS_ANIMAIS),
+        predio.estado === 'completo' && predio.ocupante !== null,
+      );
+      if (animais.length > 0) this.curralGuardado.set(id, animais);
+      else this.curralGuardado.delete(id);
       const quadroAnimal = quadroDoAnimal(predio, ocupante, estadoDoJogo.tick);
       if (animais.length > 0) {
         animaisNoDebug[id] = animais.map((a) => ({
