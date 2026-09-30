@@ -13,7 +13,8 @@ import { gameData } from '../src/sim/data';
 import { assetDoPredio, arquivoDoEstagio, chaveDaTextura, ehEntradaDePredio, TIPOS_DE_CAMADA } from '../src/render/manifesto';
 import type { EntradaDeAsset, EntradaDeCamada, Manifesto } from '../src/render/manifesto';
 import {
-  ANIMAL_DA_CRIACAO, CASO_DO_PREDIO, violacoesDaCamadaViva, violacoesDasAncoras, violacoesDosCasos,
+  ANIMAL_DA_CRIACAO, CASO_DO_PREDIO, violacoesDaCamadaViva, violacoesDasAncoras, violacoesDasCamadasRepetidas,
+  violacoesDosCasos,
 } from '../src/render/manifesto-camadas';
 import type { ContextoDasCamadas } from '../src/render/manifesto-camadas';
 import { contextoDasCamadas } from '../src/render/predios';
@@ -277,6 +278,7 @@ describe('F-VIVO-0 — o manifesto aceita o predio vivo', () => {
       camadaSintetica('trabalho', 'sawmill', [...quadros('laco1', 8), ...quadros('laco2', 8)]),
       camadaSintetica('trabalho', 'gold_mine', quadros('luz', 4)),
       camadaSintetica('trabalho', 'fumaca', quadros('fumaca', 8)),
+      camadaSintetica('trabalho', 'ocioso', quadros('ocioso', 8)),
       // arte em parte: um laco inteiro de dois vale; o outro fica placeholder
       camadaSintetica('trabalho', 'bakery', quadros('laco1', 8)),
     ];
@@ -297,6 +299,20 @@ describe('F-VIVO-0 — o manifesto aceita o predio vivo', () => {
     acusa(camadaSintetica('trabalho', 'sawmill', quadros('luz', 4)), /luz_1/);
     acusa(camadaSintetica('trabalho', 'gold_mine', quadros('luz', 8)), /luz_5/);
     acusa(camadaSintetica('trabalho', 'quarry', [...quadros('inicio', 8), ...quadros('meio', 6)]), /meio.*6 de 8/);
+    // F-VIVO-e: o ocioso e um laco de 8, e nada alem dele
+    acusa(camadaSintetica('trabalho', 'ocioso', [...quadros('ocioso', 8), 'ocioso_9']), /ocioso_9/);
+    acusa(camadaSintetica('trabalho', 'ocioso', quadros('laco1', 8)), /laco1_1/);
+  });
+
+  it('F-VIVO-e: cada camada uma entrada so; o ocioso repetido (dois tamanhos) reprova', () => {
+    const camadas = manifesto.assets.filter((e): e is EntradaDeCamada => !ehEntradaDePredio(e));
+    expect(violacoesDasCamadasRepetidas(camadas)).toEqual([]);
+    const ocioso = camadaSintetica('trabalho', 'ocioso', quadros('ocioso', 8));
+    const outroTamanho: EntradaDeCamada = { ...ocioso, tamanho: [32, 32] };
+    expect(violacoesDasCamadasRepetidas([...camadas, ocioso, outroTamanho]).join(' | '))
+      .toMatch(/trabalho 'ocioso': entrada repetida/);
+    // tipos diferentes com o mesmo id nao sao repeticao (a pilha e o animal podem dividir id)
+    expect(violacoesDasCamadasRepetidas([ocioso, camadaSintetica('pilha', 'ocioso', ['unidade'])])).toEqual([]);
   });
 
   it('ancoras completas passam, e predio sem ancoras nao tem regra', () => {

@@ -14971,3 +14971,26 @@ O operador autorizou o merge (decisões da manhã, item 1) **com a condição** 
 ### Espera decisão do operador
 1. A serraria: aceitar a leitura (parada que troca de `saida_cheia` para `esperando_insumo` não é perda, e a tábua caiu 2 em 98) ou trocar a métrica (por exemplo, parada + `saida_cheia` ≤ base + 5 %).
 2. A tábua a −2,04 %: alargar a tolerância declarada, ou medir em mais de uma semente.
+
+## 2026-10-01 — F-VIVO-e (o ocioso genérico): feita; o pausado espera o operador
+
+A fila de F-VIVO-e a F-VIVO-h entrou no `BUILD_PLAN.md` (plano e5a7e95), com as referências corrigidas: `debug.animaisDoCurral` (`src/render/debug.ts:158`; o plano dizia `animaisDesenhados`) e a fila de treino em `ItemDeFila` (`src/sim/state.ts:1320`; o plano dizia `src/sim/escola.ts`). **Conferido:** `estado: 'treinando'` já existe (`:1331`), então a F-VIVO-h separa "em curso" de "esperando" sem mudar a sim. A G e a H ficam na fila.
+
+### Verificado
+- Casa com receita, ocupante **dentro** e sem quadro de trabalho desenha o laço `ocioso` (8 quadros pelo tick; sem PNG, o retângulo `ocioso_<n>`). "Dentro" é `dentroDaCasa` (`src/render/visibilidade.ts`), **o mesmo predicado** que esconde a unidade no BUG-X. `unidadesInvisiveis` passou a usá-lo; o comportamento do BUG-X não mudou (o teste dele e o roteiro passam).
+- `tests/F-VIVO-e-ocioso.test.ts`, com a evidência em `test-output/F-VIVO-e.json`, aberta:
+  - vila da calibração, 6 000 ticks: 8 406 quadros de trabalho, 4 961 ociosos (1 973 `trabalhando`, 2 988 `esperando_insumo`), **0 colisões e 0 divergências** (ocioso aceso com o homem desenhado);
+  - caso 1 (fazenda): 3 372 ticks de descanso com ocioso, 2 628 fora sem ele, 0 erros.
+- A asserção de colisão **acusa**: sem a exigência de trabalho nulo, o aceite 1 reprova com 8 406 (sonda de uma corrida, revertida; a proteção permanente é o próprio teste).
+- Manifesto: `trabalho` com id `ocioso` (`ocioso_1..8`); `ocioso_9` reprova. Regra nova `violacoesDasCamadasRepetidas`: duas entradas com o mesmo tipo e id (o "ocioso com dois tamanhos") reprovam, e o manifesto real passa.
+- Roteiro `tools/shots/F-VIVO-e.js`: carrega a pedreira de saída cheia ao lado da pedreira vazia e mede pausado. Depois despausa (§8) e lê o `n` seis vezes: ele anda na `q1`, e a `q2` fica sem ocioso. Captura `screenshots/F-VIVO-e-1-ocupada-e-vazia.png` aberta: `ocioso_4` na pedreira ocupada, nada na vazia.
+- Não-regressão pelo código de saída: os roteiros BUG-X, F-VIVO-b e F-VIVO-d deram OK.
+
+### PARA REVISÃO (decisões minhas)
+- **O pausado não mostra ocioso**, contra a ordem "pausado mostra o ocioso". Ela colide com a decisão do BUG-X do mesmo dia: pausado é a casa fechada, e o trabalhador se desenha fora. As duas juntas dão ocioso com o homem visível na porta. Mantive o predicado único e deixei o conflito escrito no `BUILD_PLAN.md`. A troca é uma linha em `dentroDaCasa`, e decide também se o pausado esconde o homem.
+- `quadroOcioso` exige receita (`casos`) e `producao`: armazém, Bodega, feira, torre, quartel e escola ficam fora, como o plano diz.
+- A regra de repetição vale para toda camada (tipo + id), não só para o ocioso.
+
+### Espera decisão do operador
+1. O pausado: ocioso com o homem escondido dentro (KaM "parado"), ou homem fora e sem ocioso (o entregue, KaM "casa fechada")?
+2. A arte do ocioso (pergunta 2 do plano): o placeholder cobre até lá.

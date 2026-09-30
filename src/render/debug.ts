@@ -50,6 +50,12 @@ export interface QuadroNoDebug {
   readonly sprite: boolean;
 }
 
+/** F-VIVO-e — o quadro do ocioso desenhado (1..8), como o roteiro o le. */
+export interface OciosoNoDebug {
+  readonly n: number;
+  readonly sprite: boolean;
+}
+
 /** F-REPL-e — um tile replantado ainda crescendo, como o sprite o desenhou. */
 export interface CrescimentoNoDebug {
   readonly estado: string;
@@ -153,6 +159,9 @@ export interface EstadoDebug {
    *  tem predio animando: parado (sem ocupante, sem insumo, saida cheia, pausado) nao
    *  aparece. Vem da mesma chamada que o desenho usa (`trabalho.ts`). */
   quadrosDeTrabalho: Readonly<Record<string, QuadroNoDebug>>;
+  /** F-VIVO-e — o ocioso que a cena DESENHOU agora, por id de predio: casa com o ocupante
+   *  dentro e sem quadro de trabalho (`quadroOcioso`, `trabalho.ts`). */
+  quadrosOciosos: Readonly<Record<string, OciosoNoDebug>>;
   /** F-VIVO-c — os animais que a cena DESENHOU agora, por id de predio. So tem
    *  criacao com curral cheio (`animais.ts`); curral vazio nao aparece. */
   animaisDoCurral: Readonly<Record<string, readonly AnimalNoDebug[]>>;
@@ -336,6 +345,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     prediosSemArte: [],
     pilhasDesenhadas: {},
     quadrosDeTrabalho: {},
+    quadrosOciosos: {},
     animaisDoCurral: {},
     camadasEmPx: {},
     caixasDesenhadas: {},

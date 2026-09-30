@@ -12,9 +12,14 @@
  * k = max(1, floor(T / (F * TICKS_POR_QUADRO))), e o quadro do tick p e
  * floor(p * k * F / T). Como k * F <= T, o indice sobe no maximo um por tick: o `n`
  * nunca pula.
+ *
+ * F-VIVO-e: o ocioso le o predicado "dentro" de `visibilidade.ts` (o do BUG-X), unica
+ * dependencia que nao e so tipo ou tabela: a casa acende o ocioso exatamente quando a
+ * tela esconde o homem.
  */
 import type { AncorasDoPredio } from './manifesto';
-import { LACOS_DO_CASO, LACOS_DA_FUMACA, ID_DA_FUMACA } from './manifesto-camadas';
+import { LACOS_DO_CASO, LACOS_DA_FUMACA, ID_DA_FUMACA, LACOS_DO_OCIOSO, ID_DO_OCIOSO } from './manifesto-camadas';
+import { dentroDaCasa } from './visibilidade';
 import type { CasoDoPredioVivo } from './manifesto-camadas';
 import type { Predio, Unidade } from '../sim/state';
 
@@ -134,6 +139,23 @@ export function quadroDaFumaca(
   if (dados.ancoras[predio.tipo]?.trabalho?.fumaca === undefined) return null;
   if (progressoEmTrabalho(predio, unidade, dados) === null) return null;
   const f = LACOS_DA_FUMACA[ID_DA_FUMACA] ?? 1;
+  return (Math.floor(Math.max(0, tick) / TICKS_POR_QUADRO) % f) + 1;
+}
+
+/**
+ * F-VIVO-e — o quadro do ocioso (1..8), ou `null`: predio com receita, ocupante DENTRO
+ * (`dentroDaCasa`, o mesmo predicado que o esconde) e nenhum quadro de trabalho. Cobre
+ * `esperando_insumo`, `saida_cheia` e o descanso do caso 1. O ocioso nao tem ciclo: o
+ * `tick` e o relogio, como na fumaca. Pausado nao acende, porque `dentroDaCasa` o poe
+ * fora (BUG-X); a decisao do operador de 2026-10-01 que o quer aceso espera no BUILD_PLAN.
+ */
+export function quadroOcioso(
+  predio: Predio, unidade: Unidade | null, tick: number, dados: DadosDoTrabalho,
+): number | null {
+  if (dados.casos[predio.tipo] === undefined || predio.estado !== 'completo' || predio.producao === null) return null;
+  if (unidade === null || !dentroDaCasa(predio, unidade)) return null;
+  if (quadroDeTrabalho(predio, unidade, tick, dados) !== null) return null;
+  const f = LACOS_DO_OCIOSO[ID_DO_OCIOSO] ?? 1;
   return (Math.floor(Math.max(0, tick) / TICKS_POR_QUADRO) % f) + 1;
 }
 

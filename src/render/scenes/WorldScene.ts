@@ -14,16 +14,16 @@ import { publicarEstadoDebug } from '../debug';
 import { marcadorVisivel } from '../marcador-de-destino';
 import type { MarcadorDeDestino } from '../marcador-de-destino';
 import type {
-  AnimalNoDebug, CaixaDesenhada, CamadasEmPx, CrescimentoNoDebug, EstadoDebug, PilhaNoDebug, PredioNoDebug, QuadroNoDebug, RelogioVisivel,
+  AnimalNoDebug, CaixaDesenhada, CamadasEmPx, CrescimentoNoDebug, EstadoDebug, OciosoNoDebug, PilhaNoDebug, PredioNoDebug, QuadroNoDebug, RelogioVisivel,
 } from '../debug';
 import { aparenciaDoPredio, corDaPilha, dadosDasPilhas, dadosDosAnimais, dadosDoTrabalho, ordemDasMercadorias } from '../predios';
 import { animaisDoCurral, quadroDoAnimal } from '../animais';
 import type { AnimalDoCurral } from '../animais';
 import { pilhasDoPredio, posicoesNaPilha } from '../pilhas';
 import type { PilhaDesenhada } from '../pilhas';
-import { areaDoTrabalho, quadroDaFumaca, quadroDeTrabalho } from '../trabalho';
+import { areaDoTrabalho, quadroDaFumaca, quadroDeTrabalho, quadroOcioso } from '../trabalho';
 import type { QuadroDeTrabalho } from '../trabalho';
-import { CASO_DO_PREDIO, ESTADO_DA_PILHA, ID_DA_FUMACA } from '../manifesto-camadas';
+import { CASO_DO_PREDIO, ESTADO_DA_PILHA, ID_DA_FUMACA, ID_DO_OCIOSO } from '../manifesto-camadas';
 import { medidorDaObra } from '../medidor-obra';
 import type { LinhaDoMedidor } from '../medidor-obra';
 import { canteiroDaObra, chaveDoCanteiro } from '../nivelamento-obra';
@@ -1389,6 +1389,8 @@ export class WorldScene extends Phaser.Scene {
     const pilhasNoDebug: Record<string, readonly PilhaNoDebug[]> = {};
     // F-VIVO-b: o quadro de trabalho de cada predio animando, da MESMA chamada do desenho.
     const quadrosNoDebug: Record<string, QuadroNoDebug> = {};
+    // F-VIVO-e: o ocioso de cada casa com gente dentro e sem trabalho, idem.
+    const ociososNoDebug: Record<string, OciosoNoDebug> = {};
     const animaisNoDebug: Record<string, readonly AnimalNoDebug[]> = {};
     const camadasNoDebug: Record<string, CamadasEmPx> = {};
     // F17g: as obras desenhadas pela revelacao, da MESMA conta que vai para `criarPredio`.
@@ -1473,7 +1475,14 @@ export class WorldScene extends Phaser.Scene {
       if (quadro !== null) {
         quadrosNoDebug[id] = { ...quadro, sprite: this.texturaDoQuadro(predio.tipo, quadro) !== null };
       }
-      const chaveDoTrabalho = `${quadro === null ? '-' : `${quadro.laco}_${quadro.n}`}/${fumaca ?? '-'}`;
+      // F-VIVO-e: casa com gente dentro e sem trabalho desenha o ocioso no mesmo lugar do
+      // quadro. Os dois nunca coincidem (`quadroOcioso` exige quadro nulo).
+      const ocioso = quadroOcioso(predio, ocupante, estadoDoJogo.tick, DADOS_DO_TRABALHO);
+      const quadroDesenhado: QuadroDeTrabalho | null = quadro ?? (ocioso === null ? null : { laco: ID_DO_OCIOSO, n: ocioso });
+      if (ocioso !== null && quadroDesenhado !== null) {
+        ociososNoDebug[id] = { n: ocioso, sprite: this.texturaDoQuadro(predio.tipo, quadroDesenhado) !== null };
+      }
+      const chaveDoTrabalho = `${quadroDesenhado === null ? '-' : `${quadroDesenhado.laco}_${quadroDesenhado.n}`}/${fumaca ?? '-'}`;
       // F-VIVO-c: a idade anda com o progresso e o quadro com o tick, sem mexer em
       // estado nem em estagio — mesma razao da pilha e do trabalho.
       const animais = animaisDoCurral(predio, DADOS_DOS_ANIMAIS);
@@ -1499,7 +1508,7 @@ export class WorldScene extends Phaser.Scene {
       this.desenhados.set(id, {
         estado: predio.estado, estagio, assinatura,
         objeto: this.criarPredio(
-          predio, estagio, revelacao, linhas, canteiro, pilhas, quadro, fumaca, animais, quadroAnimal, tilePx,
+          predio, estagio, revelacao, linhas, canteiro, pilhas, quadroDesenhado, fumaca, animais, quadroAnimal, tilePx,
         ),
       });
     }
@@ -1522,6 +1531,7 @@ export class WorldScene extends Phaser.Scene {
     debug.spritesDePredio = sprites;
     debug.pilhasDesenhadas = pilhasNoDebug;
     debug.quadrosDeTrabalho = quadrosNoDebug;
+    debug.quadrosOciosos = ociososNoDebug;
     debug.animaisDoCurral = animaisNoDebug;
     debug.camadasEmPx = camadasNoDebug;
     debug.caixasDesenhadas = this.caixasDesenhadas(estadoDoJogo, sprites, tilePx);
@@ -1756,9 +1766,11 @@ export class WorldScene extends Phaser.Scene {
     return objetos;
   }
 
-  /** F-VIVO-b — a textura de um quadro de trabalho, ou `null` (retangulo do §9). */
+  /** F-VIVO-b — a textura de um quadro de trabalho, ou `null` (retangulo do §9). O
+   *  ocioso (F-VIVO-e) e uma entrada so, com o id dele, para todos os predios. */
   private texturaDoQuadro(tipo: string, quadro: QuadroDeTrabalho): string | null {
-    const chave = chaveDeTextura('trabalho', tipo, `${quadro.laco}_${quadro.n}`);
+    const id = quadro.laco === ID_DO_OCIOSO ? ID_DO_OCIOSO : tipo;
+    const chave = chaveDeTextura('trabalho', id, `${quadro.laco}_${quadro.n}`);
     return this.textures.exists(chave) ? chave : null;
   }
 

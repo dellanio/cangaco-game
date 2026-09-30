@@ -44,6 +44,11 @@ export const LACOS_DO_CASO: Readonly<Record<CasoDoPredioVivo, Readonly<Record<st
 export const ID_DA_FUMACA = 'fumaca';
 export const LACOS_DA_FUMACA: Readonly<Record<string, number>> = { fumaca: 8 };
 
+/** F-VIVO-e — o ocioso tambem e generico: casa com gente dentro e sem trabalho. Um
+ *  laco de 8 para todos os predios, no molde da fumaca (decisao A1/A2 do operador). */
+export const ID_DO_OCIOSO = 'ocioso';
+export const LACOS_DO_OCIOSO: Readonly<Record<string, number>> = { ocioso: 8 };
+
 /** O animal de cada criacao: o id da entrada `animal` e a mercadoria que ele vira. */
 export const ANIMAL_DA_CRIACAO: Readonly<Record<string, string>> = { swine_farm: 'pigs', stables: 'horses' };
 
@@ -127,12 +132,29 @@ export function violacoesDaCamadaViva(e: EntradaDeCamada, ctx: ContextoDasCamada
   }
   if (e.tipo === 'trabalho') {
     if (e.id === ID_DA_FUMACA) return violacoesDosLacos(rotulo, e.estados, LACOS_DA_FUMACA);
+    if (e.id === ID_DO_OCIOSO) return violacoesDosLacos(rotulo, e.estados, LACOS_DO_OCIOSO);
     const caso = CASO_DO_PREDIO[e.id];
-    if (caso === undefined) return [`${rotulo}: nao e predio com receita nem '${ID_DA_FUMACA}'`];
+    if (caso === undefined) return [`${rotulo}: nao e predio com receita nem '${ID_DA_FUMACA}' nem '${ID_DO_OCIOSO}'`];
     if (caso === 'guarda') return [`${rotulo}: caso 1 (so guarda) nao tem animacao dentro`];
     return violacoesDosLacos(rotulo, e.estados, LACOS_DO_CASO[caso]);
   }
   return [];
+}
+
+/**
+ * F-VIVO-e — cada camada uma entrada so por tipo e id. O laco generico (fumaca, ocioso)
+ * tem UM tamanho: a cena o desenha na `area` de qualquer predio, e duas entradas com o
+ * mesmo id dariam dois tamanhos, com a primeira achada vencendo em silencio.
+ */
+export function violacoesDasCamadasRepetidas(camadas: readonly EntradaDeCamada[]): string[] {
+  const vistas = new Set<string>();
+  const erros: string[] = [];
+  for (const e of camadas) {
+    const chave = `${e.tipo} '${e.id}'`;
+    if (vistas.has(chave)) erros.push(`${chave}: entrada repetida no manifesto`);
+    vistas.add(chave);
+  }
+  return erros;
 }
 
 /**

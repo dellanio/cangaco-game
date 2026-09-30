@@ -4854,6 +4854,66 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
       jogando, e a faixa mostra os alertas disso. Ela serve ao quadro do render, nunca a
       aceite de regra da sim.
 
+#### F-VIVO-e em diante (decisões do operador, 2026-09-30; aplicado em 2026-10-01)
+
+Plano: `docs/planos/2026-09-30-F-VIVO-e-em-diante.md` (e5a7e95). A F-VIVO-0/a/b não se
+reescrevem: o que muda nelas entra como sub-item novo. Tudo é **render**: nenhum toca em
+`src/sim/`.
+
+| sub-item | o que entra | depende de |
+|---|---|---|
+| F-VIVO-e | ocioso genérico: casa ocupada e parada ≠ casa vazia (placeholder) | BUG-X, b |
+| F-VIVO-f | caso 2 anima só na fase da casa, `[descanso + noTile, ciclo)` | e |
+| F-VIVO-g | curral guarda o último quadro enquanto ocupado | c |
+| F-VIVO-h | escola anima enquanto há recruta em treino (prioridade baixa) | 0 |
+
+**Aceite da F-VIVO-e (o ocioso).** Prédio completo com receita, **ocupante dentro** e sem
+quadro de trabalho desenha o laço `ocioso` (8 quadros, `n = 1 + ⌊tick / TICKS_POR_QUADRO⌋
+mod 8`) na `area` de trabalho. "Dentro" é **o mesmo predicado** que esconde a unidade no
+BUG-X (`src/render/visibilidade.ts`). Sem PNG, o retângulo da `area` com `ocioso_<n>`. O
+manifesto aceita `trabalho` com id `ocioso` (`ocioso_1..8`); `ocioso_9` e duas entradas
+`ocioso` reprovam no teste. A fumaça não acompanha o ocioso.
+1. `quadroOcioso` e `quadroDeTrabalho` nunca são não-nulos no mesmo prédio no mesmo tick:
+   varredura de 6 000 ticks da vila da calibração, contagem em `test-output/F-VIVO-e.json`.
+2. Não-nulo em `esperando_insumo` e `saida_cheia` com o ocupante dentro; nulo sem ocupante,
+   com ocupante fora (colhendo, indo comer, comendo), em obra e em prédio sem receita.
+3. No caso 1, o descanso mostra o ocioso e a fase no tile não mostra nada.
+4. O `n` avança e volta a 1 sem pulo.
+5. Roteiro despausado (§8): casa ocupada e parada ao lado de casa vazia do mesmo tipo;
+   `debug.quadrosOciosos` avança numa e fica ausente na outra.
+- **Pausado (decisão do operador de 2026-10-01: "pausado mostra o ocioso") — ESPERA O
+  OPERADOR.** Ela colide com a decisão do BUG-X do mesmo dia, em que o pausado é a casa
+  fechada e o trabalhador **se desenha fora** (`KM_Units.pas:529-600`). As duas juntas dão
+  ocioso com o homem visível na porta, que é a divergência que o predicado único existe
+  para impedir. Entregue com o predicado único (pausado: sem ocioso), e o teste afirma isso
+  como estado atual; a troca é uma linha em `visibilidade.ts` e uma no teste, e decide
+  também se o pausado esconde o homem.
+
+**Aceite da F-VIVO-f (o caso 2 na casa).** Na receita com colheita, `quadroDeTrabalho` só
+devolve quadro em `[ticksDeDescanso + ticksNoTile, ticksDoCiclo)`; no descanso vale o
+ocioso, no tile nada. Os terços dividem a fase da casa. Fecha a nota LOTE3-b2 da F-VIVO-b.
+1. Pedreira e Canavial, tick a tick num ciclo: nulo em `[0, descanso + noTile)`, a
+   sequência `inicio → meio → fim` inteira no resto.
+2. Com o ocupante `colhendo`, nem trabalho nem ocioso.
+3. Os números de fase vêm de `gameData.producao…colheita`, não de literal.
+4. Roteiro despausado: pedreira com o canteiro fora e pedreira com ele dentro.
+
+**Aceite da F-VIVO-g (o curral guarda).** `curralDesenhado(anterior, atual, ocupado)` em
+`src/render/animais.ts`, pura; a memória num `Map` da cena. Depois de carregar partida, o
+curral começa vazio até a próxima entrega (memória de tela, não entra no save).
+1. Vazio e ocupado → `anterior`; cheio → `atual`; desocupado → vazio.
+2. Na cadeia da carne (F19b), pelo `step`, ticks com o curral desenhado vazio e o prédio
+   ocupado caem a 0 depois da primeira entrega; antes e depois em `test-output/F-VIVO-g.json`.
+3. Roteiro: entre duas entregas, `debug.animaisDoCurral` (`src/render/debug.ts:158`) não
+   vazio no curral. *(O plano dizia `debug.animaisDesenhados`, que não existe.)*
+
+**Aceite da F-VIVO-h (a escola treina; baixa).** Laço `treino_1..8` enquanto a fila da
+escola tem item **`treinando`**; fila vazia ou só `aguardando`, nada. **Conferido
+(2026-10-01):** a fila é `ItemDeFila` em `src/sim/state.ts:1320`, união discriminada com
+`estado: 'aguardando' | 'treinando'` (`:1331`): o render distingue sem mudar a sim. *(O plano
+apontava `src/sim/escola.ts`.)* Manifesto com exceção nomeada para `schoolhouse`, e o
+`docs/BRIEF-ARTE.md` tira a escola da lista "sem receita".
+
 ---
 
 ### UI-barra-a — A barra lateral única (ui + roteiros)
