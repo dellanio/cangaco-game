@@ -32,15 +32,33 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
 
 ## BUG-T — tropa travada: vaga bloqueada no MEIO do caminho (terceiro caso da família)
 - feature: C-MOVIMENTO-02b (a vaga tomada por quem marcha) — limite conhecido dela
-- severidade: a classificar. Não há repro, e o aceite escrito da C-MOVIMENTO-02 e da 02b
-  continua passando, então a chave de nenhuma das duas cai. Se reproduzir em jogo, é `trava`:
-  soldado que espera para sempre é travamento de regra, não balanceamento.
-- repro: nenhum ainda. Quando acontecer, pause (P) e salve pelo painel H (botão Guardar): a
-  partida vai para o `localStorage` do navegador. Diga o tick e quem ficou `marchando`.
+- severidade: **proposta `trava`** (sonda da leva, 2026-10-01; o operador classifica). Soldado
+  parado em `marchando` por 16 048 ticks é travamento de regra, não balanceamento. O aceite
+  escrito da C-MOVIMENTO-02 e da 02b continua passando: a chave de nenhuma das duas cai.
+- repro (medido; sonda apagada, receita determinística):
+  - `criarEscaramuca(gameData.economia.estadoInicial.semente)` e a tropa do jogador inteira.
+  - 400 ordens `MoveUnits` sorteadas por LCG `x = (x·1103515245 + 12345) mod 2³¹`, começando
+    em `x = 12345`, com `rnd(n) = x mod n`:
+    - destino `(líder0.gx + rnd(17) − 8, líder0.gy + rnd(17) − 8)`, com a posição inicial do
+      primeiro soldado;
+    - `direcao rnd(8)`, `colunas 3 + rnd(7)`.
+  - Cada ordem roda até todos ociosos, ou no máximo 1 500 ticks. Presos: 2 das 400.
+  - **Ordem 11** (tick 1 951, destino 36,43, direção 0, 4 colunas): três soldados parados
+    até o tick +16 048.
+    - u24 em 34,45, caminho `[35,45 → 36,45]`: o tile do MEIO é de u26, **ocioso**. É o caso
+      3 abaixo, confirmado.
+    - u28 em 37,47 quer 36,46 e u33 em 36,46 quer 37,47: **troca mútua**, os dois marchando
+      com `progresso` 0 e caminho de um passo.
+  - **Ordem 19** (tick 4 799, destino 35,36, direção 0, 5 colunas): u27 em 36,37 e u28 em 36,36
+    trocam de tile, também em troca mútua. Presos até +1 737 e +1 791.
+  - Reaplicada a ordem sobre o save de antes dela, depois de 20 000 ticks todos estão ociosos.
+    Hipótese, não medida: o que solta os três em +16 048 é causa externa (combate ou IA da
+    escaramuça).
 - esperado: toda a tropa mandada para uma formação para, cada soldado numa vaga, em tempo
   finito.
-- observado (hipótese, não medida): um soldado marcha para sempre quando o nó está num
-  tile do MEIO do caminho dele, e não no próximo passo com a vaga como destino.
+- observado: medido acima. Hipótese sobre a troca mútua, não conferida no código: a
+  `vagaTomadaPor` da 02b exige um parado à frente de quem toma a vaga, e aqui não há; seria
+  um quarto caso da família.
 - **a família, para saber onde olhar sem reler os relatórios:**
   1. C-MOVIMENTO-02 (a tropa não trava): a vaga é o próximo tile e está ocupada por um
      PARADO do mesmo lado, sem contorno. Troca: `vagaEmparedadaPor`, em

@@ -15263,3 +15263,29 @@ linha   entrada (BALANCE_LOG)               esperado (o que a entrada diz)      
 - Os testes de calibração (`F-CAL-a`, `F-CAL-b`, `F17b`) passam no T2 (medido na sonda).
 - As marcas "premissa morta" nas linhas 620 e 1290 **não foram escritas** no BALANCE_LOG: pelo
   plano do lote, elas entram quando o lote abrir, depois do merge do T2.
+
+## 2026-10-01 — Tarefa 5 da leva: sonda do BUG-T (tropa travada, vaga bloqueada no meio do caminho): reproduziu; severidade proposta `trava`
+
+### Verificado
+
+- A sonda `zz-` rodou dentro de `tests/` e foi apagada antes do commit: 400 ordens `MoveUnits`
+  sorteadas por LCG na `criarEscaramuca`, cada uma até todos ociosos ou 1 500 ticks. A receita
+  inteira está no `BUGS.md`.
+- **2 das 400 ordens deixam soldados parados em `marchando`:**
+  - ordem 11: u24 bloqueado no tile do meio por u26 ocioso, que é o caso 3 do BUG-T, e o par
+    u28/u33 em troca mútua. Os três ficam presos 16 048 ticks.
+  - ordem 19: o par u27/u28 em troca mútua, preso cerca de 1 750 ticks.
+- Reaplicadas sobre o save de antes da ordem, 20 000 ticks depois todos estão ociosos.
+- `BUGS.md` do BUG-T: severidade **proposta `trava`**, repro medido, e a troca mútua como
+  provável quarto caso da família.
+
+### Espera decisão do operador
+
+- A severidade. Pela própria entrada do BUG-T ("se reproduzir em jogo, é `trava`"), ela
+  interromperia a fila.
+
+### Hipótese, nomeada como tal
+
+- O que solta os presos em +16 048 é causa externa (combate ou IA da escaramuça). Não medi.
+- A troca mútua escapa da `vagaTomadaPor` da C-MOVIMENTO-02b porque falta o "parado à frente".
+  Não conferi no código.
