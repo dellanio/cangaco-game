@@ -15045,3 +15045,74 @@ Sete entregas, de 1416d1b a 8817783. 3 APROVADO, 4 RESSALVA, 0 REPROVADO. O aval
 
 ### Hipótese, nomeada como tal
 - **Padaria do T2: 423 contra 35.** Serraria e moinho saem iguais nas duas medidas, e só a padaria diverge. Não remedi. Pode ser janela ou semente diferente na sonda da leva noturna. Não mexe no veredito do T2: a serraria reprova sozinha. A Tarefa 1 do plano do lote remede com 3 sementes.
+
+## 2026-10-01 — LEVA DESATENDIDA: autorização do operador (exceção ao CLAUDE.md §11)
+
+**Decisão do operador, por escrito (2026-10-01):** esta leva roda desatendida, por várias horas,
+como exceção ao CLAUDE.md §11 ("sessões curtas, disparadas pelo operador"). A exceção vale só
+para esta leva. Regras que ele fixou:
+- aceite bloqueante reprovado ou decisão de design não coberta: **não decidir**; registrar e
+  seguir para a próxima tarefa independente;
+- **nenhum número de dado de balanceamento muda** nesta leva;
+- um commit por tarefa, `npm run verify` verde antes de cada um.
+
+Decisões que ele deu para a leva:
+- **D1** — a métrica do aceite 2 do T2 (D-TRANSPORTE-03, oferta × demanda) é a SOMA
+  `esperando_insumo` + `saida_cheia`, como no pedido de 2026-09-30; o teto da serraria é
+  3 681 × 1,05.
+- **D2** — a produção por cadeia é a média de 3 sementes, ≥ base − 2 % na média.
+- **D3/D4** — conferir no kam_remake se "parar produção" (não "fechar para o trabalhador")
+  tira o ocupante da casa. Se não tira: o pausado mantém o homem dentro e mostra o ocioso. Se
+  tira: parar e trazer arquivo:linha.
+- **D5** — a arte do ocioso segue placeholder.
+
+Tarefas, na ordem dele: (1) T2, explicar a padaria 35 × 423, teste permanente com D1/D2,
+TETO_DE_NOS com ~10 % de folga, merge, fechar BUG-U e BUG-V; (2) pausado × ocupante por
+D3/D4; (3) BUG-Y, motivo e plano, sem corrigir; (4) o lote de recalibração medido em 3
+sementes, só medida e proposta; (5) BUG-T, sonda do 3º caso; (6) sonda do serf ocioso
+empilhado na porta da serraria; (7) F-VIVO-g (o curral guarda os animais); (8) F-VIVO-h
+(fila de treino "em curso" × "esperando"); (9) VARREDURA-KAM, só lista; (10) avaliador.
+
+**Conferência pedida antes de começar (Fila C e Fila da primeira partida, BUILD_PLAN.md):**
+nada pendente precisa vir antes das tarefas 5–9. Todos os itens das duas filas têm
+`passes: true` em `test-results.json` (conferido: nenhuma chave do arquivo está fora de
+`true`). O único item sem chave é o **sistema de fases**, que espera a sigla do operador
+(módulo novo); ele não bloqueia nenhuma tarefa da leva.
+
+## 2026-10-01 — D-TELA-06 (o jogo exige WebGL): feita
+
+**Decisão do operador (2026-10-01):** o jogo roda com `Phaser.WEBGL`, não mais `Phaser.AUTO`.
+**Por quê:** a arte nova depende de `setTint` (cor do bando, luz do relevo), mipmaps e
+batching, que o Canvas do Phaser não tem ou faz mal. Sem WebGL o jogo não inicia e diz por quê.
+
+- `src/render/webgl.ts`: o portão. `suportaWebgl` tenta um contexto `'webgl'` num canvas
+  temporário (exceção conta como "não tem"); `iniciarSeHouverWebgl` carrega o jogo só com
+  WebGL, senão escreve `#sem-webgl` ("Este jogo precisa de WebGL; ative a aceleração de
+  hardware do navegador"), `role=alert`, por cima de tudo.
+- `src/inicio.ts` é a nova entrada do `index.html`: só pergunta e faz `import('./main')`.
+  Sem WebGL, `main.ts` nunca roda — nem o `Phaser.Game`, nem HUD pela metade.
+- `src/render/game.ts`: `type: Phaser.WEBGL`. `debug.ts` publica
+  `renderizador: { tipo, webgl }`, preenchido na `WorldScene.create` com
+  `game.renderer.type`, para o roteiro ler o que roda, não o fonte.
+
+**Verificado:**
+- `tests/D-TELA-06-webgl.test.ts`: 3 testes com documento falso — sem WebGL (`null`) e com
+  `getContext` que lança, o jogo não carrega e a mensagem aparece; com WebGL carrega e não há
+  mensagem. Evidência em `test-output/D-TELA-06.json`.
+- `npm run shot -- D-TELA-06`: `renderer.type === Phaser.WEBGL` rodando; um passo despausado
+  anda o tick sem aviso; depois, com `getContext` de webgl/webgl2/experimental-webgl devolvendo
+  `null` por `addInitScript`, o aviso aparece com o texto exato, `window.__cangaco` não existe
+  e não há canvas em `#jogo`. Screenshot `D-TELA-06-2-sem-webgl.png` aberta: a mensagem
+  centrada sobre fundo preto.
+- Os 81 roteiros de tela rodados depois da troca, pelo código de saída, todos 0. O F10 falhou
+  uma vez por timeout (30 s) enquanto uma suíte vitest rodava em paralelo nos worktrees de
+  sonda (erro meu, contra "um laço por vez"). Sozinho, deu OK. O laço foi interrompido em
+  71/81 por falta de memória no sistema, e os 10 restantes rodaram um de cada vez, todos OK.
+- As portas 5175 e 5176 estavam presas pelos PIDs 15040 e 19580, vivos (`tasklist`), mesmo
+  depois de o operador fechar os vites. Não matei: rodei na 5178 (`CANGACO_SHOT_PORTA`),
+  conferida livre antes de subir.
+- `npm run verify` verde: 203 arquivos, 2 069 testes; a corrida transladada, 2 068 com 4
+  pulados (os pulados já existiam).
+
+**PARA REVISÃO:** a mensagem é o texto do pedido, sem estilo de tema; a tela sem WebGL não
+tem botão nem link de ajuda.

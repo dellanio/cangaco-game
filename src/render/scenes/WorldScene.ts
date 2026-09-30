@@ -284,6 +284,7 @@ export class WorldScene extends Phaser.Scene {
   create(): void {
     const { tilePx, largura, altura, larguraPx, alturaPx } = configDoMapa;
     const estado = publicarEstadoDebug(this.relogio);
+    estado.renderizador = { tipo: this.game.renderer.type, webgl: Phaser.WEBGL };
     estado.prediosSemArte = [...this.prediosSemArte];
 
     // F-SPR — o loader so conhece o que o manifesto declarou e o bundler achou;

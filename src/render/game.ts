@@ -1,6 +1,10 @@
 // Config do Phaser.Game. Unico lugar que monta a engine — main.ts so chama
 // iniciarJogo(). Nao decide nada de jogo (§10): so tamanho de tela e a lista
 // de cenas.
+//
+// WEBGL, nao AUTO (decisao do operador, 2026-10-01): a arte nova depende de setTint
+// (cor de faccao, luz do relevo), mipmaps e batching. Sem WebGL o Phaser falharia
+// calado; quem garante que ha WebGL antes de chegar aqui e `src/inicio.ts`.
 import Phaser from 'phaser';
 import type { GameState } from '../sim/state';
 import { WorldScene } from './scenes/WorldScene';
@@ -45,7 +49,7 @@ export function iniciarJogo(
   const ponte = criarPonte();
   const cena = new WorldScene(ponte, ferramenta, entrada, relogio, navegacao, selecaoMilitar);
   const jogo = new Phaser.Game({
-    type: Phaser.AUTO,
+    type: Phaser.WEBGL,
     parent: 'jogo',
     backgroundColor: '#0a0a0a',
     pixelArt: false,

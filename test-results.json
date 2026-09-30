@@ -511,5 +511,8 @@
   },
   "F-VIVO-f-caso-2-na-casa": {
     "passes": true
+  },
+  "D-TELA-06-webgl": {
+    "passes": true
   }
 }

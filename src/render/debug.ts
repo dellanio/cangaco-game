@@ -98,6 +98,9 @@ export interface CamadasEmPx {
 }
 
 export interface EstadoDebug {
+  /** O renderizador ativo: `tipo` e `game.renderer.type`, `webgl` e `Phaser.WEBGL`. O
+   *  roteiro compara os dois sem importar o Phaser. */
+  renderizador: { readonly tipo: number; readonly webgl: number };
   /** false ate a cena terminar o primeiro desenho. O roteiro espera por isto
    *  antes de fotografar — sem isso a captura sai do canvas em branco. */
   pronto: boolean;
@@ -379,6 +382,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
       teclado: ATALHOS.map((a) => ({ id: a.id, teclas: a.teclas })),
       gestos: GESTOS.map((g) => g.id),
     },
+    renderizador: { tipo: -1, webgl: -1 },
     tick: 0,
     filaDeTreino: {},
     unidadesRenderizadas: [],

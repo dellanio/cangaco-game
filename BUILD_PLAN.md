@@ -5744,6 +5744,15 @@ apontava `src/sim/escola.ts`.)* Manifesto com exceção nomeada para `schoolhous
     placeholder da moldura. **Aceite:** roteiro `tools/shots/D-TELA-02.js`.
   - **PARA REVISÃO:** a moldura da UI-barra-a tem 196×65 px, e o mapa de 128 tiles cabe em
     65×65 (0,51 px por tile). Pausado, o carimbo cobre o meio.
+### D-TELA-06 — O jogo exige WebGL
+- **ENTREGUE (2026-10-01, decisão do operador).** `Phaser.AUTO` vira `Phaser.WEBGL`: a arte
+  nova depende de `setTint`, mipmaps e batching. O portão `render/webgl.ts` pergunta por um
+  contexto `webgl` num canvas temporário antes de o jogo carregar (`src/inicio.ts`); sem ele,
+  o jogo não inicia e a página diz "Este jogo precisa de WebGL; ative a aceleração de
+  hardware do navegador".
+  - **Aceite:** o roteiro `tools/shots/D-TELA-06.js` confirma `game.renderer.type ===
+    Phaser.WEBGL` e, com o WebGL simulado ausente, que o jogo não inicia e a mensagem
+    aparece; `tests/D-TELA-06-webgl.test.ts` prova o portão com documento falso.
 ### F34 — Condições de vitória e derrota (escaramuça)
 - **ENTREGUE (2026-09-28, sessão autônoma; plano em `docs/planos/2026-09-28-A16-F34-fim.md`).**
   Decisão do operador: *"Vitória: destruir Armazém, Escola e Quartel inimigos e todas as
