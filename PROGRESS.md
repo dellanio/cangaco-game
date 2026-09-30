@@ -14573,3 +14573,44 @@ corte no meio: retomar não despeja o resto do quadro velho (aceite f).
 
 **O que muda na partida:** no quadro em que a partida acaba, o mundo congela no tick do fim.
 Antes, soldados e serfs ainda davam até 9 passos, a 3x principalmente.
+
+## 2026-09-29 — VARREDURA-KAM, frente 4b (o que o KaM tem e nós não, fora do combate)
+
+Plano: `docs/planos/2026-09-29-VARREDURA-KAM-frente-4b.md`. Resultado na seção "Frente 4b"
+de `docs/varredura-kam.md`. Fila, item 11. Só leitura: nada mudou em dado, código ou
+aceite.
+
+**Verificado no fonte (clone 731a8a4, linha aberta):**
+- Os 28 prédios do KaM têm par aqui; só falta a oficina de cerco.
+- O peixe não se repõe no KaM (`KM_Units.pas:1204-1209`): o `nunca` daqui bate.
+- A lista `BLOCKED_BY_PEACETIME` (`KM_GameInputProcess.pas:153-155`): a divergência da
+  marcha já está declarada na C-COMBATE-02b.
+- Lacunas pelos comandos do jogador que não têm par em `commands.ts`:
+  - modo de entrega por prédio;
+  - recusa no quartel;
+  - entrega da Casa do Gibão;
+  - ponto de corte do lenhador;
+  - reunião e teto de ouro da prefeitura;
+  - ordem da fila da escola;
+  - parar, dividir, unir e formação do exército.
+- O achado da frente 3 "a oficina produz sem cota" foi superado pela D-PRODUCAO-03a. A Casa
+  do Gibão continua fora (F24c).
+
+**Hipótese (não conferida):**
+- Que esvaziar (`dmTakeOut`), a prefeitura e a oficina de cerco sejam só do Remake.
+- O caminho no código que tira o trabalhador da casa fechada. Li o comentário do campo
+  (`KM_Houses.pas:110`), não o laço que o executa.
+
+**PARA REVISÃO:**
+- A pausa daqui (`SetBuildingPaused`) não solta o ocupante; a casa fechada do KaM solta. É
+  decisão do operador (2026-09-23), mas não estava declarada como divergência do KaM, e o
+  motivo escrito ("vago anunciaria vaga") não vale lá.
+- O item 11 da fila não foi marcado no BUILD_PLAN: o aceite da VARREDURA-KAM proíbe mudar
+  arquivo fora de `docs/` e do PROGRESS no commit. O estado fica aqui.
+
+### Perguntas em aberto
+- **Comandos de grupo (parar, dividir, unir, formação):** estão no GDD §2.4, confirmados
+  no fonte, e não têm item no BUILD_PLAN. Abrir um item?
+- **A pausa contra a casa fechada do KaM:** declarar a divergência ou alinhar?
+
+**O que muda na partida:** nada. É leitura.

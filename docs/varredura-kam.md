@@ -342,3 +342,38 @@ itens de menor prioridade acima.
   (`KM_Units.pas:716-720`). A sessão da F24a chamou de "conservador"; é o inverso do KaM.
 - Encostar prédios: o KaM exige 1 tile de folga nas 8 direções (`KM_Terrain.pas:3785-3806`).
 - Replantio: no KaM o toco é o preferido e o tile vazio a segunda opção.
+
+
+---
+
+## Frente 4b — o que o KaM tem e nós não, fora do combate (2026-09-29)
+
+Plano: `docs/planos/2026-09-29-VARREDURA-KAM-frente-4b.md`. Índice: os prédios do KaM
+(`kr/src/res/KM_ResTypes.pas:49-57`) e os comandos do jogador
+(`kr/src/game/gip/KM_GameInputProcess.pas:40-100`), um a um contra `data/buildings.json` e
+`src/sim/commands.ts`. **Conferido por mim no fonte**, abrindo a linha, salvo onde está
+escrito HIPÓTESE.
+
+| # | O KaM | Nós | Classe |
+|---|---|---|---|
+| 1 | 28 tipos de prédio (`KM_ResTypes.pas:51-56`) | os mesmos 28 em `data/buildings.json`; falta só `htSiegeWorkshop` | **confirmado**. A oficina de cerco é do Remake, não de 1998 (HIPÓTESE sobre o 1998: não conferido no binário) |
+| 2 | O peixe só diminui: `ReduceFish` tira 1 e mata o cardume no zero (`kr/src/units/KM_Units.pas:1204-1209`, chamado de `KM_Terrain.pas:3138`); peixe novo só nasce do mapa ou do script (`KM_ScriptingActions.pas:2095`) | `resources.json`, `fish`: regime `nunca` | **confirmado** |
+| 3 | Paz bloqueia TODO comando de exército, inclusive andar, e o treino no quartel e na prefeitura (`KM_GameInputProcess.pas:153-155`) | `src/sim/paz.ts`: bloqueia ataque, storm, treino e mercenário; a marcha passa | **divergência deliberada**, já declarada (C-COMBATE-02b, operador 2026-09-29, `paz.ts:16-18`) |
+| 4 | Toda casa tem modo de entrega: fechada, entregando, esvaziando (`TKMDeliveryMode`, `kr/src/houses/KM_Houses.pas:14`; comando `gicHouseDeliveryModeNext`) | por prédio só o armazém recusa (`SetStorehouseAccept`); nos outros, só o teto por TIPO do menu de distribuição (`SetWareDistribution`); esvaziar não existe | **lacuna**. Esvaziar (`dmTakeOut`) é HIPÓTESE de ser só do Remake |
+| 5 | Fechar a casa para o trabalhador: ele sai e a casa para (`fIsClosedForWorker`, "If worker is already occupied it, then leave house", `KM_Houses.pas:110`) | `SetBuildingPaused` congela o relógio e **não** solta o ocupante (`src/sim/systems/pausa.ts:17-18`, operador 2026-09-23) | **divergência deliberada, não declarada como tal**: o motivo escrito ("vago anunciaria vaga") não vale no KaM, onde a casa fechada não pede trabalhador. O caminho no código que tira o trabalhador é HIPÓTESE (li o comentário do campo, não o laço que o executa) |
+| 6 | O quartel recusa mercadoria de guerra por tipo e pode recusar recruta (`NotAcceptFlag`, `NotAcceptRecruitFlag`, `kr/src/houses/KM_HouseBarracks.pas:21-22`; `gicHouseBarracksAcceptFlag`) | nenhum comando de recusa no quartel | **lacuna** |
+| 7 | A Casa do Gibão liga e desliga a entrega de couro e madeira (`gicHouseArmorWSDeliveryToggle`, `KM_GameInputProcess.pas:77`) | nenhum | **lacuna**; entra na F24c (a Casa do Gibão por encomenda), que já está proposta |
+| 8 | Ponto de corte do lenhador (`gicHouseWoodcuttersCutting`, `:96`) | nenhum; o lenhador escolhe o tile ao alcance | **lacuna** |
+| 9 | Prefeitura: ponto de reunião e teto de ouro (`gicHouseTownHallRally`, `gicHouseTownHallMaxGold`, `:93-94`) | nenhum | **lacuna**. HIPÓTESE: a prefeitura é do Remake |
+| 10 | Escola: mudar a ordem da fila (`gicHouseSchoolTrainChOrder`, `gicHouseSchoolTrainChLastUOrder`, `:83-84`) | fila com enfileirar e cancelar (`EnqueueTraining`, `CancelTraining`) | **lacuna** menor |
+| 11 | Exército: parar, dividir, dividir um, unir, formação (`gicArmyHalt`, `gicArmySplit`, `gicArmySplitSingle`, `gicArmyLink`, `gicArmyFormation`, `:47-53`) | nenhum desses comandos em `commands.ts`; o GDD §2.4 já os lista, e a seção "Frente 4, continuação" já os confirmou no fonte | **lacuna** de implementação: está no GDD e não tem item no BUILD_PLAN |
+
+**Atualização de um achado da frente 3:** "F24a: sem cota, a oficina daqui produz tudo" deixou
+de valer. A D-PRODUCAO-03a (encomendas das oficinas) fez a oficina nascer parada e produzir
+só por encomenda, como o KaM. A exceção é a Casa do Gibão (F24c, proposta).
+
+**Propostas ao operador** (nenhuma entra na fila sem decisão dele):
+- Declarar o item 5 como divergência no `pausa.ts` e no GDD, ou alinhar ao KaM.
+- Um item para os comandos de grupo do item 11. É o maior efeito na partida: hoje o
+  jogador não divide nem une tropa.
+- Os itens 4, 6 e 8, de logística fina, podem ir juntos num item de comandos de prédio.
