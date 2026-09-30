@@ -5806,6 +5806,7 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
      - retomar a `s1` pelo painel (`[data-pausar]`, `mouse.down` / 150 ms / `mouse.up`, relógio
        correndo): o sinal some.
 ### D-TELA-08 — Luz de relevo (id reservado, 2026-09-30, para a branch `dellanio/relevo-a`)
+### D-TERRENO-01 — Altura só de render no gerador de mapa (id reservado, 2026-09-30, para a branch `dellanio/relevo-a`)
 ### D-TELA-05e — Mercenários em 8 direções
 - **Registrado (2026-10-01, pedido do operador). Não implementado.** A decisão de 2026-09-30
   (8 direções para todas as unidades; nota da F-SPR acima) ainda não chegou aos mercenários:
