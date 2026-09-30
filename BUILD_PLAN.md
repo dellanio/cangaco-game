@@ -5475,9 +5475,15 @@ grava em `test-output/F-VIVO-d.json` o tamanho em px de cada camada, e o
     - **Aceite:** `tests/D-TRANSPORTE-02a-distribuicao.test.ts`.
     - **PARA REVISÃO:** o padrão é 5 em todos os pares, e não o do KaM (anotado no `_doc`
       do dado), para a partida não mudar de balanceamento até o jogador mexer.
-  - **D-TRANSPORTE-02b — a aba (ui).** A aba Distribuição destrancada, com uma seção por
-    mercadoria disputada e os botões `−`/`+` por consumidor.
-    - **Aceite:** o roteiro `tools/shots/D-TRANSPORTE-02.js` do plano.
+    - **Correção na 02b (2026-09-29):** o `step` monta o estado de saída campo a campo e
+      descartava `distribuicao` — o limite não sobrevivia a um tick. Agora atravessa, e
+      o teste da 02a ganhou o caso "atravessa o step" (reprova sem a correção).
+  - **D-TRANSPORTE-02b — a aba (ui). ENTREGUE (2026-09-29).** A aba Distribuição
+    destrancada, com uma seção por mercadoria disputada e os botões `−`/`+` por
+    consumidor. Seletor puro `distribuicaoDaVila` e tela em `ui/distribuicao.ts`.
+    - **Aceite:** `tests/D-TRANSPORTE-02b-aba-distribuicao.test.ts` e o roteiro
+      `tools/shots/D-TRANSPORTE-02.js`.
+    - **PARA REVISÃO:** botões `−`/`+` de passo 1 no lugar do controle deslizante do KaM.
     - **Nota para a D-PRODUCAO-01 e a F24:** `validarDistribuicao` reprova insumo novo com
       dois ou mais consumidores que não esteja em `distribuicao.padrao`, com todos eles.
 ### D-TELA-01 (antes F32) — Aba de estatísticas

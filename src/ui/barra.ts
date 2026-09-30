@@ -21,10 +21,11 @@ import temaSertao from '../../data/theme-sertao.json';
 export const ABAS = ['construir', 'distribuicao', 'estatisticas', 'opcoes'] as const;
 export type Aba = (typeof ABAS)[number];
 
-/** As que ainda nao tem conteudo (D-TRANSPORTE-02, menu de distribuição): cadeado, e o clique nao troca nada. */
-export const ABAS_TRANCADAS: readonly Aba[] = ['distribuicao'];
+/** As que ainda nao tem conteudo: cadeado, e o clique nao troca nada. Vazia desde a
+ *  D-TRANSPORTE-02b (menu de distribuicao), que deu conteudo a ultima. */
+export const ABAS_TRANCADAS: readonly Aba[] = [];
 
-export type CorpoDaAba = 'grade' | 'painel' | 'grupo' | 'estatisticas' | 'opcoes';
+export type CorpoDaAba = 'grade' | 'painel' | 'grupo' | 'estatisticas' | 'distribuicao' | 'opcoes';
 
 /** A regra, pura — e o que o teste headless prova. Na aba Construir o painel
  *  SUBSTITUI a grade quando ha predio escolhido, nunca as duas coisas juntas.
@@ -34,6 +35,7 @@ export type CorpoDaAba = 'grade' | 'painel' | 'grupo' | 'estatisticas' | 'opcoes
 export function corpoDaAba(aba: Aba, haSelecao: boolean, haGrupo = false): CorpoDaAba {
   if (aba === 'opcoes') return 'opcoes';
   if (aba === 'estatisticas') return 'estatisticas';
+  if (aba === 'distribuicao') return 'distribuicao';
   if (haSelecao) return 'painel';
   return haGrupo ? 'grupo' : 'grade';
 }

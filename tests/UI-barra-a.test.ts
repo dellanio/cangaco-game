@@ -29,7 +29,10 @@ describe('UI-barra-a — a barra lateral unica', () => {
 
   it('as abas sao as chaves do tema, na ida e na volta; so as sem conteudo tem cadeado', () => {
     expect([...ABAS]).toEqual(Object.keys(temaSertao.barra.abas));
-    expect([...ABAS_TRANCADAS].sort()).toEqual(['distribuicao']);
+    // D-TRANSPORTE-02b deu conteudo a Distribuicao, a ultima trancada, e ela abre o proprio corpo
+    expect([...ABAS_TRANCADAS]).toEqual([]);
+    expect(corpoDaAba('distribuicao', false)).toBe('distribuicao');
+    expect(corpoDaAba('distribuicao', true)).toBe('distribuicao');
     for (const aba of ABAS_TRANCADAS) expect(ABAS).toContain(aba);
     for (const texto of [temaSertao.barra.trancada, temaSertao.barra.lema, temaSertao.barra.logo]) {
       expect(texto.trim().length).toBeGreaterThan(0);

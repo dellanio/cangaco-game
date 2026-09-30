@@ -481,5 +481,8 @@
   },
   "D-TRANSPORTE-02a-distribuicao": {
     "passes": true
+  },
+  "D-TRANSPORTE-02b-aba-distribuicao": {
+    "passes": true
   }
 }

@@ -81,6 +81,13 @@ describe('D-TRANSPORTE-02a — o comando', () => {
     }
   });
 
+  it('o limite atravessa o step e os ticks seguintes (o estado de saida e montado campo a campo)', () => {
+    let s = step(inicial, [distribuir(2)], gameData);
+    expect(limiteDeDistribuicao(s, LADO_DO_JOGADOR, 'mill', 'corn', gameData)).toBe(2);
+    for (let t = 0; t < 10; t++) s = step(s, [], gameData);
+    expect(s.distribuicao).toEqual({ [String(LADO_DO_JOGADOR)]: { corn: { mill: 2 } } });
+  });
+
   it('o comando do jogador nao mexe no lado da IA', () => {
     const s = comando(inicial, distribuir(0));
     expect(limiteDeDistribuicao(s, LADO_DO_JOGADOR, 'mill', 'corn', gameData)).toBe(0);

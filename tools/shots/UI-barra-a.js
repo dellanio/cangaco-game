@@ -101,16 +101,17 @@ async function roteiro(ctx) {
     `as abas deveriam ser ${Object.values(tema.barra.abas).join('/')}, sao ${textosDasAbas.join('/')}`,
   );
 
-  // aba trancada: o clique chega e nao troca nada
-  // pelo mouse cru: o `page.click` do Playwright recusa `aria-disabled` e nunca
-  // chegaria a entregar o clique que o modulo tem de ignorar
-  const trancada = await retanguloDe(page, '#abas [data-aba="distribuicao"]');
-  await page.mouse.click(trancada.left + trancada.width / 2, trancada.top + trancada.height / 2);
-  afirmar((await corpo()) === 'grade', 'clicar na aba trancada nao deveria trocar o corpo');
+  // D-TRANSPORTE-02b: a Distribuicao deixou de ser trancada — o clique abre o corpo dela
+  const distribuicaoAba = await retanguloDe(page, '#abas [data-aba="distribuicao"]');
+  await page.mouse.click(distribuicaoAba.left + distribuicaoAba.width / 2, distribuicaoAba.top + distribuicaoAba.height / 2);
+  afirmar((await corpo()) === 'distribuicao', `clicar em Distribuicao deveria abrir o corpo dela, abriu ${await corpo()}`);
   afirmar(
-    (await page.getAttribute('#abas [data-aba="construir"]', 'aria-pressed')) === 'true',
-    'Construir deveria continuar apertada depois do clique na trancada',
+    (await page.getAttribute('#abas [data-aba="distribuicao"]', 'aria-pressed')) === 'true',
+    'Distribuicao deveria ficar apertada depois do clique',
   );
+  const construirAba = await retanguloDe(page, '#abas [data-aba="construir"]');
+  await page.mouse.click(construirAba.left + construirAba.width / 2, construirAba.top + construirAba.height / 2);
+  afirmar((await corpo()) === 'grade', 'voltar a Construir deveria devolver a grade');
 
   // ---- 2. faixa de alertas de altura fixa ----------------------------------
   // So o layout: os alertas de verdade sao da F22. Mostrar o #alertas a mao com
@@ -219,7 +220,7 @@ async function roteiro(ctx) {
   })));
   afirmar(abas.every((a) => a.icone !== 'none') && new Set(abas.map((a) => a.icone)).size === 4, `as abas deveriam usar quatro icones de xilogravura distintos: ${JSON.stringify(abas)}`);
   const distribuicao = abas.find((a) => a.aba === 'distribuicao');
-  afirmar(distribuicao?.bloqueada === 'true' && distribuicao.titulo === 'Em breve', `Distribuicao deveria estar desabilitada com dica: ${JSON.stringify(distribuicao)}`);
+  afirmar(distribuicao !== undefined && distribuicao.bloqueada !== 'true' && distribuicao.titulo !== 'Em breve', `Distribuicao deveria estar liberada, sem a dica de trancada: ${JSON.stringify(distribuicao)}`);
   await page.hover('[data-aba="opcoes"]');
   const hoverDaAba = await page.$eval('[data-aba="opcoes"]', (b) => {
     const estilo = window.getComputedStyle(b);

@@ -14294,3 +14294,30 @@ Lote do operador, item 6. O plano está em `docs/planos/2026-09-29-D-TRANSPORTE-
 - Baixar o limite não devolve ao armazém o que já está dentro (como no KaM).
 
 **O que muda na partida:** por enquanto nada visível. O limite existe, e a aba chega na 02b.
+
+
+## 2026-09-29 — D-TRANSPORTE-02b (menu de distribuição: a aba)
+
+Fecha a D-TRANSPORTE-02 (menu de distribuição). Plano: `docs/planos/2026-09-29-D-TRANSPORTE-02-menu-de-distribuicao.md`.
+
+**Verificado:**
+- **Defeito da 02a achado e corrigido nesta sessão.** O `step` (`sim/tick.ts`) monta o estado de saída campo a campo, e `distribuicao` não estava na lista: o comando mudava o estado dentro do tick e o campo sumia na saída. Na partida, a 02a não tinha efeito nenhum. Os testes da 02a não viram porque chamavam `aplicarSetWareDistribution` direto, e o de determinismo só compara duas corridas iguais. Agora o campo atravessa, e a 02a ganhou o teste "o limite atravessa o step e os ticks seguintes". Sem a linha nova ele reprova (mutação feita e revertida), e o teste do selector da 02b também. Os outros opcionais do `GameState` (`ia`, `partida`, `pazAteTick`, `projeteis`) já atravessavam.
+- `sim/selectors.ts: distribuicaoDaVila` lê as mercadorias na ordem do dado e o valor do lado do jogador.
+- `ui/distribuicao.ts`: os nós são montados uma vez, e o laço só troca texto e `disabled` (não recria o botão sob o dedo, BUG-B). O `−` desabilita em 0 e o `+` no máximo.
+- A aba deixou de ser trancada: `ABAS_TRANCADAS = []`.
+- `tests/D-TRANSPORTE-02b-aba-distribuicao.test.ts`: 2 testes verdes.
+- Roteiro `tools/shots/D-TRANSPORTE-02.js` (despausado, com o botão seguro 150 ms) saiu com código 0. Ele confere:
+  - as 4 seções na ordem do dado (Carvão, Milho, Tábua, Ferro), todas em 5 com o `+` desabilitado;
+  - dois `−` no Moinho levam o valor a 3 e só ele muda;
+  - dois `+` devolvem a 5 e desabilitam o `+`;
+  - a última linha fica alcançável rolando o `#corpo-aba`.
+- A captura `screenshots/D-TRANSPORTE-02-1-moinho-guarda-menos.png` foi aberta: aba apertada, Moinho em 3, o resto em 5 com o `+` hachurado. A seção Ferro fica abaixo da dobra e se alcança rolando.
+- Não-regressão por código de saída, todos 0: UI-barra-a, D-TELA-01, F16b.
+
+**PARA REVISÃO:**
+- Botões `−`/`+` de passo 1 no lugar do controle deslizante do KaM.
+- O roteiro UI-barra-a mudou em dois pontos. Antes ele afirmava a aba trancada ("o clique não troca o corpo", "aria-disabled com dica Em breve"). Agora afirma que o clique abre a Distribuição e que a aba não tem `aria-disabled` nem a dica. O teste `UI-barra-a.test.ts` passa a esperar `ABAS_TRANCADAS = []`.
+
+**Hipótese, não conferida:** o literal de retorno do `step` não acusa campo opcional esquecido no typecheck. Uma guarda estrutural (por exemplo, um teste que passe por `step` um estado com todo opcional preenchido e compare as chaves) pegaria o próximo caso. Não fiz: seria refatoração não pedida. Fica registrado.
+
+**O que muda na partida:** a aba Distribuição (a balança) abre. Nela, o jogador escolhe quanto carvão, milho, tábua e ferro cada tipo de casa guarda (0 a 5). Baixar o Moinho para 0 deixa todo o milho para a Malhada e a Cocheira. Com a correção do `step`, o limite agora vale de fato na partida.

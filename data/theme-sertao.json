@@ -608,6 +608,13 @@
     "minimapa": "minimapa",
     "abrirAjuda": "Controles e partida",
     "maisAlertas": "+{n}",
+    "distribuicao": {
+      "_doc": "D-TRANSPORTE-02b (docs/planos/2026-09-29-D-TRANSPORTE-02-menu-de-distribuicao.md). A aba Distribuicao: por mercadoria disputada, quanto cada casa guarda na entrada. `menos` e `mais` sao o `title` dos botoes.",
+      "titulo": "Distribuição",
+      "ajuda": "Quanto cada casa guarda de cada mercadoria disputada. Menos aqui sobra para as outras.",
+      "menos": "Guardar menos",
+      "mais": "Guardar mais"
+    },
     "estatisticas": {
       "_doc": "D-TELA-01 (docs/planos/2026-09-29-D-TELA-01-aba-de-estatisticas.md). Os titulos das duas listas da aba e o texto das linhas: {n} e o numero. `ociosos` e o destaque de quem esta parado (especialista sem posto, carregador e peao sem tarefa).",
       "predios": "Prédios",

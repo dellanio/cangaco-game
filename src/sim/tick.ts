@@ -323,5 +323,7 @@ export function step(
     ...(atual.pazAteTick === undefined ? {} : { pazAteTick: atual.pazAteTick }),
     // C2: os projeteis no ar, so quando ha algum voando
     ...(atual.projeteis === undefined ? {} : { projeteis: atual.projeteis }),
+    // D-TRANSPORTE-02a: o limite do menu de distribuicao, so quando o jogador mudou algum
+    ...(atual.distribuicao === undefined ? {} : { distribuicao: atual.distribuicao }),
   };
 }

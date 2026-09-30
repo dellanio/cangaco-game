@@ -3,6 +3,7 @@ import { ehFeiraCompleta, porQueNaoTroca } from './feira';
 import { ehPrefeituraCompleta, ouroNaPrefeitura } from './prefeitura';
 import { ehQuartelCompleto, recrutasNoQuartel, requisitosDoTipo } from './quartel';
 import { armazemAceita } from './armazem';
+import { limiteDeDistribuicao } from './distribuicao';
 import { motivoParaFormar } from './systems/quartel';
 import type { MotivoDeRecusaDeSoldado } from './quartel';
 import type { PorQueNaoTroca } from './feira';
@@ -197,6 +198,30 @@ export function populacaoPorGrupo(state: GameState, dados: GameData = gameData, 
 }
 
 /** D-TELA-01 — uma linha da aba de estatisticas: um tipo de predio do lado. */
+/** D-TRANSPORTE-02b — o menu de distribuicao do jogador: por mercadoria disputada, na
+ *  ordem de `delivery.json: distribuicao.padrao`, o limite de cada tipo consumidor. */
+export interface DistribuicaoDaVila {
+  readonly maximo: number;
+  readonly linhas: readonly {
+    readonly mercadoria: string;
+    readonly consumidores: readonly { readonly tipo: string; readonly valor: number }[];
+  }[];
+}
+
+export function distribuicaoDaVila(state: GameState, dados: GameData = gameData): DistribuicaoDaVila {
+  const { maximo, padrao } = dados.entrega.distribuicao;
+  return {
+    maximo,
+    linhas: Object.entries(padrao).map(([mercadoria, porTipo]) => ({
+      mercadoria,
+      consumidores: Object.keys(porTipo).map((tipo) => ({
+        tipo,
+        valor: limiteDeDistribuicao(state, LADO_DO_JOGADOR, tipo, mercadoria, dados) ?? maximo,
+      })),
+    })),
+  };
+}
+
 export interface LinhaDePredio {
   readonly tipo: string;
   readonly completos: number;
