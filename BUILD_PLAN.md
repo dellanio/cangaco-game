@@ -6064,6 +6064,23 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
   3. nenhum "alto à esquerda" fora do PROGRESS. O CLAUDE.md §9 aponta para a
      `pianco-sprite-director`.
 
+### D-ARTE-BODEGA-MENOR — A Bodega desenhada a 1,2 do lote, e não a 1,5
+- **Decisão do operador (2026-10-01), opção (b), depois de jogar:** a Bodega estava grande demais.
+  Ela invadia o lote do canavial e cobria a parede da padaria (closes de pior caso da
+  D-ARTE-INTEGRA-1).
+- **Escopo:** só o manifesto. A exceção `larguraMaxPorLote` da `inn` passa de 1,5 a **1,2**, como a do
+  armazém. O arquivo continua o `inn_completo-D-plus50.png` (384 px), e o render já o encolhe pela
+  `escalaDoSprite`, sem deformar: 307 px de largura num lote de 256, com a altura caindo na mesma
+  proporção. O `alturaMaxPorLargura` (1,29) fica: com a largura de 1,2, a altura desenhada (264 px)
+  ainda passa do lote, então a exceção continua viva. Nenhum PNG novo, nenhum código de render,
+  nada em `src/sim/` nem em `data/`.
+- **Aceite (escrito antes do código):**
+  1. `tests/C10-largura.test.ts` afirma a Bodega com o teto 1,2, pela conta exata, e que a largura
+     desenhada é `1,2 × lote` (a `escalaDoSprite` encolhe o arquivo de 384). O canavial continua
+     em 1,303;
+  2. F17f, `validate:data` e o `verify` completo verdes;
+  3. o roteiro `ARTE-VILA` sai 0, e a captura do pior caso da Bodega com o canavial é aberta.
+
 ### D-ARTE-CHAO-DE-ROCA — Pedido de arte para o Codex: o chão de roça sob a cana
 - **Registrado por decisão do operador (2026-10-01): é pedido de arte para o Codex**, e não
   trabalho desta fila de código. Vem da avaliação da F-TR (o esgotado por tipo, `9fb7b71`): a
