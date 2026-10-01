@@ -436,6 +436,16 @@ no PROGRESS entra no commit seguinte à avaliação, com o hash que o selo mostr
      depois de subir o vite, e o vite fica órfão escutando a porta. A liberação da partida seguinte
      (a mesma função que o `shot.js` chama) encerra o órfão, e a porta fica livre;
   3. um servidor que não é o vite do registro, na porta, não é encerrado: ele continua escutando.
+  - **Emenda do aceite 2 (2026-10-01, antes do código; pela medida):** com o vite subido direto pelo
+    node (sem `npx` nem shell, para o PID do registro ser o do vite), o `shot.js` encerrado à força
+    leva o vite junto. Ele não fica órfão, e a porta solta sozinha (medido no teste; **a causa é
+    hipótese**). O órfão de antes vinha da árvore `cmd.exe` → `npx` → `node vite`. O aceite 2 passa a
+    ter duas partes:
+    - **2a.** Um `shot.js` real, encerrado à força com o vite de pé: depois da liberação, a porta está
+      livre.
+    - **2b.** Um vite órfão de verdade, que a liberação encerra. Um processo sobe o vite com a mesma
+      linha de comando do `shot.js`, grava o registro e sai sem derrubá-lo. A porta continua presa
+      até a liberação, que encerra o vite, e depois dela fica livre.
 - **Push só depois do `verify` completo verde.** Se ele falhar e o `verify:rapido` de cada commit
   passou, acha-se o commit culpado com `git bisect` local (`git bisect run npm run verify`), sem
   empurrar nada antes.
