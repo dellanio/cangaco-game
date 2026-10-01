@@ -17061,3 +17061,11 @@ B D-TELA-LUZ-RELEVO, aceite 1             | NEEDS_WORK        | o sha256 contra 
       jogador.
 
     **Hipótese:** um aglomerado de árvore sorteado perto do centro puxa os lenhadores para leste.
+- **Erro meu, registrado:** o push do `6b29993` saiu com o `verify` VERMELHO. O comando encadeava o
+  push sem depender da saída do `verify`. A suíte transladada reprovava os 3 testes do save: no mundo
+  transladado o mapa tem outro hash, e o `carregar` recusa o save versionado, corretamente.
+  - **Conserto, sem tirar nada da verificação:** o contrato do arquivo (byte a byte) roda onde o hash
+    do mapa do arquivo é o deste mundo. A suíte normal afirma que esse ramo roda. No mundo
+    transladado, o teste afirma a recusa do jogo. O aceite de jogo roda nos dois mundos, sobre o
+    save que a montagem gera, que no mundo versionado é byte a byte o arquivo.
+  - Daqui em diante, o push só sai encadeado com `&&` depois do `verify`.

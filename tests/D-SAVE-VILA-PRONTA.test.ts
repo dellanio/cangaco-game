@@ -179,9 +179,17 @@ const armasNoQuartel = (s: GameState): number => {
   return ARMAS.reduce((n, m) => n + (q.estoque.entrada[m] ?? 0), 0);
 };
 
+/** O save que a montagem gera NESTE mundo. Na suite transladada (F18c-1c) o mapa e outro, e o
+ *  arquivo versionado e de outro mapa: o `carregar` do jogo o recusa, e e o certo. Por isso o
+ *  contrato do arquivo vale onde o hash do mapa dele e o deste mundo, e o aceite de jogo roda sobre
+ *  o save deste mundo, que no mundo versionado e byte a byte o arquivo. */
+const TEXTO = salvar(vilaPronta());
+const versionado = readFileSync(ARQUIVO, 'utf8');
+const doMesmoMapa = (JSON.parse(versionado) as { hashDoMapa: string }).hashDoMapa === gameData.mapa.hash;
+
 describe('o save de teste do operador (vila pronta)', () => {
   it('o arquivo versionado e o que a montagem gera, e o carregar do jogo o aceita', () => {
-    const texto = salvar(vilaPronta());
+    const texto = TEXTO;
     const dir = process.env['CANGACO_EVIDENCIA_DIR'] ?? 'test-output';
     mkdirSync(dir, { recursive: true });
     writeFileSync(`${dir}/teste-operador-vila-pronta.txt`, texto);
@@ -190,12 +198,19 @@ describe('o save de teste do operador (vila pronta)', () => {
       writeFileSync(ARQUIVO, texto);
     }
     expect(existsSync(ARQUIVO)).toBe(true);
-    expect(readFileSync(ARQUIVO, 'utf8')).toBe(texto);
     expect(() => carregar(texto, gameData)).not.toThrow();
+    // na suite normal o ramo do contrato TEM de rodar: o mundo e o versionado
+    if (process.env['CANGACO_MUNDO_VERSIONADO'] === undefined) expect(doMesmoMapa).toBe(true);
+    if (doMesmoMapa) {
+      expect(versionado).toBe(texto);
+    } else {
+      // outro mundo (a suite transladada): o jogo recusa o save de outro mapa, pelo hash
+      expect(() => carregar(versionado, gameData)).toThrow(/mudou desde o save/);
+    }
   });
 
   it('a partida tem os onze predios pedidos, completos, do jogador e ligados por estrada; o inimigo existe', () => {
-    const s = carregar(readFileSync(ARQUIVO, 'utf8'), gameData);
+    const s = carregar(TEXTO, gameData);
     const doJogador = s.predios.ordem.map((id) => s.predios.porId[id]).filter((p) => p?.lado === LADO_DO_JOGADOR && p.estado === 'completo');
     for (const tipo of ['quarry', 'woodcutters', 'sawmill', 'farm', 'wineyard', 'mill', 'bakery', 'inn', 'weapons_workshop', 'barracks']) {
       const dele = doJogador.filter((p) => p?.tipo === tipo);
@@ -211,7 +226,7 @@ describe('o save de teste do operador (vila pronta)', () => {
   });
 
   it('aceite: carregado o save, em ate 2 000 ticks uma arma sai da casa de armas e entra no quartel', () => {
-    let s = carregar(readFileSync(ARQUIVO, 'utf8'), gameData);
+    let s = carregar(TEXTO, gameData);
     const tick0 = s.tick;
     expect(armasNoQuartel(s)).toBe(0);
     // o armazem nao tem arma: a que chegar ao quartel saiu da casa de armas
