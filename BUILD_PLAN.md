@@ -6088,6 +6088,24 @@ operador no pedido, e o `git grep` na `main` não acha nenhuma delas. **Só rend
   pediu um serf levando arma da oficina ao quartel. A partida da oficina cobre os dois degraus: a
   tábua (com ícone) e o machado (sem ícone, texto). Por isso a farinha sai.
 
+#### D-TELA-03b — A pilha de estoque da casa usa o ícone da mercadoria
+- **Escopo:** a pilha da F-VIVO-a muda só a textura, nesta ordem: o PNG `pilha` da mercadoria, o
+  ícone dela (D-ARTE-01), o quadrado com a cor do tema. A posição, o teto 5 e o 3 + 2 não mudam. A
+  função pura é `fonteDaPilha` (`src/render/icone-da-mercadoria.ts`). A ponte ganha `fonte`
+  (`pilha` | `icone` | `quadrado`) por pilha, e o `sprite` continua querendo dizer "PNG `pilha`".
+- **Aceite (escrito antes do código):**
+  1. `tests/D-TELA-03-icones.test.ts`, a cadeia nos três degraus: com PNG `pilha`, ele vence o
+     ícone; sem PNG, o ícone; sem os dois, o quadrado (a mercadoria sem ícone, e o ícone não
+     carregado);
+  2. os testes da F-VIVO-a continuam verdes, e o roteiro `F-VIVO-a` sai 0;
+  3. o roteiro `tools/shots/D-TELA-03.js` (o pedido do operador): a pilha de machado da oficina
+     abre com 3 e é `quadrado`. Quando o serf retira um machado, ela cai para 2 no mesmo tick em
+     que ele aparece com a carga. A tábua entregue na entrada da oficina vira pilha com `icone`. As
+     capturas são abertas;
+  4. **troca do roteiro do plano:** a pedreira e o moinho saem. A oficina cobre os dois degraus da
+     tela (o ícone e o quadrado), e o degrau do PNG `pilha` fica no teste puro, porque o manifesto
+     não tem nenhuma pilha desenhada.
+
 ### F34 — Condições de vitória e derrota (escaramuça)
 - **ENTREGUE (2026-09-28, sessão autônoma; plano em `docs/planos/2026-09-28-A16-F34-fim.md`).**
   Decisão do operador: *"Vitória: destruir Armazém, Escola e Quartel inimigos e todas as
