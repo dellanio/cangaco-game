@@ -428,6 +428,16 @@ no PROGRESS entra no commit seguinte à avaliação, com o hash que o selo mostr
   suíte inteira; (3) o rápido não cria o `.verify-ok`, e o portão recusa escrever no
   `test-results.json` só com o selo rápido; (4) o tempo do rápido num commit típico e quantos testes
   ele roda vão para o PROGRESS, como número da corrida.
+- **Aceite do teste automatizado dos portões (2026-10-01, antes do código; ressalva do avaliador:
+  "sem teste automatizado, só sondas"):** `tests/PORTOES-verify.test.ts` roda os dois portões de
+  verdade, como processo, com um diretório de projeto falso (`CLAUDE_PROJECT_DIR`), sem tocar o
+  `.verify-ok` real:
+  1. o hook (`.claude/hooks/verify-gate.js`), por tabela: escrita em `test-results.json` com selo
+     `completo` recente passa (0); com selo `rapido`, sem selo, ilegível ou vencido (mais de 15 min)
+     recusa (2); escrita em outro arquivo passa sem selo. O formato antigo (só a data) passa;
+  2. `scripts/verify-gate.js` é igual ao hook, byte a byte;
+  3. o `verify:rapido` nunca escreve o `.verify-ok`: guarda estrutural no fonte do script (o nome do
+     arquivo que ele grava é o `.verify-rapido-ok`), e não uma corrida inteira dele dentro do teste.
 
 **O portão:** `test-results.json` só aceita escrita depois de `npm run verify`
 passar, e o selo vale 15 minutos. Isso é hook, não pedido educado — o agente não
