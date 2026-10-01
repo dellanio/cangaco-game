@@ -16741,3 +16741,10 @@ difere: MESMA câmera e tick           6   C-TELA-01, C-TELA-02, F-T3, F-TR, F24
   6 está no chão. Pergunta escrita no item do BUILD_PLAN. **Sem chave em `test-results.json`.**
 - A memória: o Claude Code encerrou de novo o comando de espera por falta de memória. Pela regra da
   leva, não religuei a medida.
+
+## 2026-10-01 — Leva da manhã, item 2: o `validate:data` entra no `verify:rapido`: feito
+
+- `scripts/verify-rapido.js` roda o `validate:data` depois do typecheck e do lint; ele custa cerca de
+  1 s. Um commit que mexe em `data/*.json` já tem o dado validado no portão de cada commit, e não só
+  no `verify` completo.
+- CLAUDE.md §13: a tabela das camadas passa a dizer "typecheck + lint + validate:data + `vitest related`".

@@ -400,7 +400,7 @@ no PROGRESS entra no commit seguinte à avaliação, com o hash que o selo mostr
 
 | camada | o que roda | quando |
 |---|---|---|
-| `npm run verify:rapido` | typecheck + lint + `vitest related` nos arquivos alterados (staged, não staged e novos) | **cada commit** |
+| `npm run verify:rapido` | typecheck + lint + validate:data + `vitest related` nos arquivos alterados (staged, não staged e novos) | **cada commit** |
 | `npm run verify` (completo) | typecheck + lint + validate:data + a suíte inteira + a transladada | **fim da leva e todo push** |
 | `npm run test:longo` + todos os roteiros | a suíte longa, sozinha, com o selo; `npm run shot` de cada roteiro | **fechamento da leva** |
 

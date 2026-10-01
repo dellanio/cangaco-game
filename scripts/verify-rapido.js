@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 // npm run verify:rapido -> este script (camadas de teste, decisao do operador de 2026-10-01; CLAUDE.md
-// §13). O portao de CADA COMMIT: typecheck + lint + `vitest related` nos arquivos alterados (staged,
+// §13). O portao de CADA COMMIT: typecheck + lint + validate:data + `vitest related` nos arquivos alterados (staged,
 // nao staged e novos). Grava .verify-rapido-ok e NUNCA o .verify-ok: marcar feature em
 // test-results.json continua exigindo o `verify` completo.
 const { execSync, spawnSync } = require('child_process');
@@ -30,6 +30,9 @@ function etapa(nome, comando) {
 const inicio = Date.now();
 etapa('typecheck', 'npm run typecheck');
 etapa('lint', 'npm run lint');
+// o dado tambem a cada commit (decisao do operador, 2026-10-01): ~1 s, e commit que mexe em data/*.json
+// nao fica esperando o verify completo para descobrir que o schema reprova
+etapa('validate:data', 'npm run validate:data');
 
 const arquivos = alterados();
 console.log(`\n--- vitest related (${arquivos.length} arquivo(s) alterado(s)) ---`);
