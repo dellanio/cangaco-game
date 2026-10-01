@@ -15,18 +15,16 @@
  */
 import { describe, expect, it, vi } from 'vitest';
 import { gameData } from '../src/sim/data';
-import { createInitialState } from '../src/sim/state';
 import type { GameState, PredioCompleto } from '../src/sim/state';
 import { step } from '../src/sim/tick';
 import * as bodegaReal from '../src/sim/bodega';
-import { comidasNaBodega, ehBodegaCompleta, refeicoesGarantidas } from '../src/sim/bodega';
+import { comidasNaBodega, refeicoesGarantidas } from '../src/sim/bodega';
 import { precisaComer } from '../src/sim/condicao';
 import { gerarTarefas } from '../src/sim/systems/jobs';
 import { reclamar } from '../src/sim/jobs';
 import { tileAndavel } from '../src/sim/pathfinding';
 import { comensaisReservados } from '../src/sim/reservas';
 import { bodegaDoCenario, ID_DA_BODEGA_NO_CENARIO, tarefasDoTipo } from './helpers/bodega-cenario';
-import { comandosDaVilaNoTick, vilaDaCalibracao } from './helpers/cal-vila';
 import {
   cenarioDaPedreiraComBodega, cenarioDaVilaComBodegaCheia, civisDoEstado, comCondicao,
   comidasDaAbertura, comTodosComFome, ID_DA_PEDREIRA, ID_DO_ESPECIALISTA, unidadeDo,
@@ -54,10 +52,6 @@ vi.mock('../src/sim/bodega', async (importOriginal) => {
 
 const LIMIAR = gameData.condicao.ticksNoLimiar.civil.civilVaiComer;
 const COMIDAS = comidasDaAbertura();
-/** Guarda de travamento, NAO afirmacao de tempo (CLAUDE.md §8): 20 000 ticks da vila. */
-const TIMEOUT_DA_CORRIDA = 60_000;
-/** As refeicoes da vila da calibracao em 20 000 ticks ANTES do conserto (plano, secao 3). */
-const REFEICOES_DA_BASE = 37;
 
 /** A gaveta de comida da Bodega do cenario trocada por `gaveta` (o resto zera). */
 function comGaveta(estado: GameState, gaveta: Readonly<Record<string, number>>): GameState {
@@ -160,37 +154,7 @@ describe('BUG-Y aceite 3 — o piso da D7', () => {
   });
 });
 
-describe('BUG-Y aceite 4 — a vila da calibracao, 20 000 ticks', () => {
-  it('zero chegadas com a prateleira vazia, e refeicoes >= a base [longo]', () => {
-    let s = createInitialState(gameData.economia.estadoInicial.semente);
-    const vila = vilaDaCalibracao(s);
-    let refeicoes = 0;
-    let saidasSemComer = 0;
-    let chegadasComPrateleiraVazia = 0;
-    for (let i = 0; i < 20_000; i += 1) {
-      const antes = s;
-      s = step(s, comandosDaVilaNoTick(s, vila, i));
-      for (const id of antes.unidades.ordem) {
-        const a = antes.unidades.porId[id];
-        if (a?.fsm !== 'indo_comer') continue;
-        const d = s.unidades.porId[id];
-        if (d?.fsm === 'indo_comer') continue;
-        if (d?.fsm === 'comendo') { refeicoes += 1; continue; }
-        saidasSemComer += 1;
-        const t = antes.jobs.tarefas.porId[a.fsmData.tarefa ?? ''];
-        const destino = t !== undefined && 'destino' in t ? t.destino : '';
-        if (ehBodegaCompleta(s.predios.porId[destino]) && comidasNaBodega(s, destino).length === 0) {
-          chegadasComPrateleiraVazia += 1;
-        }
-      }
-    }
-    evidencia['aceite4'] = { ticks: 20_000, refeicoes, saidasSemComer, chegadasComPrateleiraVazia, refeicoesDaBase: REFEICOES_DA_BASE };
-    // suite longa: evidencia propria (a de `BUG-Y.json` e da suite do `verify`)
-    gravarEvidencia('BUG-Y-vila', { aceite4: evidencia['aceite4'] });
-    expect(chegadasComPrateleiraVazia).toBe(0);
-    expect(refeicoes).toBeGreaterThanOrEqual(REFEICOES_DA_BASE);
-  }, TIMEOUT_DA_CORRIDA);
-});
+// o aceite 4 (a vila da calibracao, 20 000 ticks) mora em `BUG-Y-refeicao-garantida.longo.test.ts`, na suite longa
 
 describe('BUG-Y aceite 5 — o gerador e o claim leem o mesmo refeicoesGarantidas', () => {
   it('forcado a 0 com comida na gaveta: o gerador nao abre assento, e o claim recusa', () => {

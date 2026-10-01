@@ -16346,3 +16346,28 @@ recusa a começar se o hash não for o `HEAD`. Registrado no CLAUDE.md §13.
   `npm run selo:longo` no próprio `evaluator.md` é decisão do operador.
 - Consequência escrita no §13: a `test:longo` é a última coisa antes do avaliador. Commit depois
   dela, até de PROGRESS, invalida o selo.
+
+## 2026-10-01 — Item 2: os testes longos viram `*.longo.test.ts`; o filtro vai pelo nome do arquivo
+
+Decisão do operador. Ela substitui a marca `[longo]` no título, de 2026-09-30.
+
+### Feito
+- Os cinco testes saíram dos arquivos de origem para arquivos `*.longo.test.ts` próprios, ao lado
+  do arquivo curto, **sem mudar asserção**: F-VIVO-e (o ocioso genérico) aceite 1; C-IA-03b
+  (peacetime e tropas) "partida inteira"; T2 (D-TRANSPORTE-03, oferta × demanda) aceite 2; BUG-T
+  (tropa travada), a varredura das 400 ordens; BUG-Y (viagem inútil para comer) aceite 4.
+- O que os dois arquivos dividiam foi para helpers, copiado sem mudança:
+  - `tests/helpers/escaramuca-paz.ts` (`ateOFimDaPaz`, `tropaDoJogador`, `militaresDaIA`, ...);
+  - `tests/helpers/militares.ts` (`sobrepostos`).
+  O que só o longo usava foi junto com ele (a base do aceite 2 do T2, os limites de tempo).
+- O BUG-Y curto mantém o `vi.mock` de `sim/bodega` (aceite 5). O longo não precisa: o mock só
+  repassa, a menos que o aceite 5 force um valor.
+- **Filtro:** `exclude` com `tests/**/*.longo.test.ts` na config do `verify`, herdado pela
+  transladada; a suíte longa troca `include` e `exclude` depois do `mergeConfig`. Nenhum
+  `testNamePattern` de longo sobrou. A transladada mantém só as 4 exclusões antigas.
+- `tests/LONGO-lista.test.ts`, refeito: os cinco longos, cada um com o arquivo curto irmão, e
+  nenhum título com a marca antiga. Isso cobre a ressalva do avaliador da leva 5 sobre a guarda
+  só achar a marca antes da aspa: o nome do arquivo não tem esse problema.
+- Medido: o `verify` roda os 6 arquivos curtos (31 testes) sem nenhum longo e sem nada pulado; a
+  `test:longo` roda os 5 arquivos (5 testes), sem nada pulado. Antes, ela coletava 34 testes e
+  pulava 29.

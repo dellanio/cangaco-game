@@ -16,7 +16,6 @@ import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import { defineConfig, mergeConfig, type Plugin } from 'vitest/config';
 import base from './vitest.config.mts';
-import { SEM_O_LONGO } from './tests/helpers/suite-longa';
 
 const require = createRequire(import.meta.url);
 const { ARQ, transladarTextos } = require('./tools/transladar-mundo.js') as {
@@ -64,8 +63,7 @@ export default mergeConfig(base, defineConfig({
   plugins: [mundoTransladado],
   test: {
     setupFiles: ['tests/helpers/mundo-transladado.ts'],
-    // o padrao daqui substitui o da base (mergeConfig nao junta RegExp): a exclusao do longo vem junto
-    testNamePattern: new RegExp(`^${SEM_O_LONGO}(?!(?:${FORA_DO_MUNDO_TRANSLADADO.map(escapar).join('|')})$)`),
+    testNamePattern: new RegExp(`^(?!(?:${FORA_DO_MUNDO_TRANSLADADO.map(escapar).join('|')})$)`),
     env: {
       CANGACO_TRANSLADO_K: String(K),
       // A evidencia desta corrida tem numero de outro mundo: nao sobrescreve a da suite.

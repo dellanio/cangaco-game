@@ -333,7 +333,7 @@ o cenário longo uma vez.
 npm run dev             # Vite dev server
 npm run verify          # typecheck + lint + validate:data + test; cria .verify-ok
 npm run test            # Vitest, headless, sem browser
-npm run test:longo      # a suite longa: so os testes com [longo] no titulo, normal e transladada
+npm run test:longo      # a suite longa: os arquivos *.longo.test.ts, normal e transladada; grava o selo
 npm run selo:longo      # confere o selo da suite longa: sai 1 se o commit dele nao e o HEAD
 npm run typecheck
 npm run lint
@@ -351,12 +351,13 @@ npm run sim -- <cenário> --ticks 600   # roda a sim sem tela e imprime o estado
 Comandos de sessão: `/codex <tarefa>` delega trabalho mecânico ao Codex ·
 `/bug <relato>` registra um bug sem corrigir.
 
-**A suíte longa (decisão do operador, 2026-09-30).** Teste de sim longa leva `[longo]` no título,
-sai do `verify` e roda em `npm run test:longo` (as constantes e a lista ficam em
-`tests/helpers/suite-longa.ts`, e `tests/LONGO-lista.test.ts` confere a lista contra a marca).
+**A suíte longa (decisões do operador, 2026-09-30 e 2026-10-01).** Teste de sim longa mora num
+arquivo `*.longo.test.ts`, sai do `verify` e roda em `npm run test:longo`. O filtro é pelo **nome do
+arquivo** (`exclude` do `verify`, `include` da suíte longa; `tests/helpers/suite-longa.ts`), e não
+pelo título. `tests/LONGO-lista.test.ts` confere a lista dos longos.
 **Nenhuma leva fecha sem `npm run test:longo` verde, rodado sozinho na máquina, antes do
 avaliador.** "Sozinho" quer dizer sem outra suíte, roteiro ou sessão rodando teste ao mesmo tempo.
-A marca não é `.skip`: o teste continua inteiro e afirma o mesmo, só muda em qual suíte ele roda.
+O teste longo continua inteiro e afirma o mesmo; só muda em qual suíte ele roda.
 Mover teste para a suíte longa é decisão do operador, como foi a dos cinco primeiros.
 
 **O selo da leva (decisão do operador, 2026-10-01).** `npm run test:longo` grava em

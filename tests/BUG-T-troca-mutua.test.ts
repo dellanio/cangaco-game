@@ -19,14 +19,12 @@ import { step } from '../src/sim/tick';
 import type { Command } from '../src/sim/commands';
 import { custoDoPasso, tileAndavel } from '../src/sim/pathfinding';
 import { chaveDeTile } from '../src/sim/estradas';
-import { condicaoCheiaDoTipo, classeDaUnidade } from '../src/sim/condicao';
-import { criarEscaramuca } from '../src/sim/cenario';
+import { condicaoCheiaDoTipo } from '../src/sim/condicao';
 import { naVila } from './helpers/ancoras';
 import { gravarEvidencia } from './helpers/evidence';
+import { sobrepostos } from './helpers/militares';
 
 const TIPO = gameData.escaramuca.tropaDoJogador.tipo;
-/** Guarda de travamento, NAO afirmacao de tempo (CLAUDE.md §8): 400 ordens da escaramuca. */
-const TIMEOUT_DA_VARREDURA = 120_000;
 const evidencia: Record<string, unknown> = {};
 
 const semUnidades = (s: GameState): GameState => ({ ...s, unidades: { porId: {}, ordem: [] } });
@@ -50,20 +48,6 @@ function campo(s: GameState): { gx: number; gy: number } {
     }
   }
   throw new Error('fixture: sem campo aberto');
-}
-/** Pares de militares no mesmo tile neste estado. */
-function sobrepostos(s: GameState): string[] {
-  const vistos = new Map<string, string>();
-  const erros: string[] = [];
-  for (const id of s.unidades.ordem) {
-    const u = s.unidades.porId[id];
-    if (u === undefined || classeDaUnidade(u.tipo, gameData) !== 'militar') continue;
-    const k = `${u.gx},${u.gy}`;
-    const outro = vistos.get(k);
-    if (outro !== undefined) erros.push(`t${s.tick} ${outro}+${id}@${k}`);
-    else vistos.set(k, id);
-  }
-  return erros;
 }
 const mover = (id: string, destino: { gx: number; gy: number }): Command => ({ type: 'MoveUnits', unidades: [id], destino });
 const pos = (s: GameState, id: string): string => `${s.unidades.porId[id]?.gx},${s.unidades.porId[id]?.gy}`;
@@ -254,39 +238,7 @@ describe('BUG-T aceite 3 — inimigo nao troca', () => {
   });
 });
 
-describe('BUG-T aceite 4 — a varredura das 400 ordens (receita fixada na secao 7 do plano)', () => {
-  it('nenhuma ordem deixa soldado marchando, e nenhum tick tem dois militares no mesmo tile [longo]', () => {
-    let x = 12345n;
-    const rnd = (n: number): number => { x = (x * 1103515245n + 12345n) % 2147483648n; return Number(x % BigInt(n)); };
-    let s = criarEscaramuca(gameData.economia.estadoInicial.semente);
-    const tropa = s.unidades.ordem.filter((id) => s.unidades.porId[id]?.lado === LADO_DO_JOGADOR && s.unidades.porId[id]?.tipo === TIPO);
-    const lider = s.unidades.porId[tropa[0] as string] as Unidade;
-    const comPreso: unknown[] = [];
-    const sobreposicoes: string[] = [];
-    let ticks = 0;
-    for (let k = 0; k < 400; k += 1) {
-      const destino = { gx: lider.gx + rnd(17) - 8, gy: lider.gy + rnd(17) - 8 };
-      const direcao = rnd(8);
-      const colunas = 3 + rnd(7);
-      s = step(s, [{ type: 'MoveUnits', unidades: tropa, destino, direcao, colunas }], gameData);
-      sobreposicoes.push(...sobrepostos(s));
-      const vivos = (): string[] => tropa.filter((id) => s.unidades.porId[id] !== undefined);
-      let t = 0;
-      for (; t < 1500 && !vivos().every((id) => s.unidades.porId[id]?.fsm === 'ocioso'); t += 1) {
-        s = step(s, [], gameData);
-        sobreposicoes.push(...sobrepostos(s));
-      }
-      ticks += t;
-      const presos = vivos().filter((id) => s.unidades.porId[id]?.fsm === 'marchando');
-      if (presos.length > 0) comPreso.push({ k, destino, direcao, colunas, presos });
-    }
-    evidencia['aceite4'] = { ordens: 400, ticks, comPreso, sobreposicoes: sobreposicoes.slice(0, 20), antesDoConserto: { ordensComPreso: 3, presos: 6, causa: 'troca mutua' } };
-    // suite longa: evidencia propria, para nao sobrescrever a do `verify` com uma parte so
-    gravarEvidencia('BUG-T-varredura', { aceite4: evidencia['aceite4'] });
-    expect(sobreposicoes).toEqual([]);
-    expect(comPreso).toEqual([]);
-  }, TIMEOUT_DA_VARREDURA);
-});
+// o aceite 4 (a varredura das 400 ordens) mora em `BUG-T-troca-mutua.longo.test.ts`, na suite longa
 
 describe('BUG-T — evidencia', () => {
   it('grava `test-output/BUG-T.json` (a varredura, da suite longa, grava `BUG-T-varredura.json`)', () => {
