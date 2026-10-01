@@ -5865,6 +5865,29 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
     têm os mesmos códigos de saída, e toda captura estável tem o sha256 igual. A captura instável
     é listada, com o motivo, e não conta. Os 6 pares instáveis já conhecidos ficam registrados como
     tais.
+  - **MEDIDO (2026-10-01): a chave NÃO volta.** Lado A: as capturas do `shot:todos` sobre `e2d6aed`,
+    89/89 com saída 0. Lado B: o worktree `../cangaco-game-relevo-base` (o relevo tirado de `src/`),
+    89 roteiros rodados. O sistema encerrou o comando por falta de memória depois do resumo, e ele
+    não foi religado.
+    - **Os códigos de saída não batem em 12.** Dois são esperados: os roteiros do próprio relevo, que
+      no lado B não têm o que ligar. **Os outros 10 são erro de montagem do lado B, e não do jogo:**
+      o worktree novo não tinha os `*.save.txt` da suíte, e copiei-os tarde. São BUG-U, BUG-W,
+      BUG-X, BUG-Z, C-COMIDA-01d, C-TELA-05, C2, C4, D-PRODUCAO-03 e D-TELA-07, todos com "save.txt
+      nao existe". **Esses 10 roteiros ficaram sem comparação.**
+    - Das 205 capturas com par: **176 com o sha256 igual**; 20 noutro tick; 2 com outra câmera
+      (C-IA-02a-1 e MATERIAIS-1); 7 diferentes com a mesma câmera e o mesmo tick:
+      - 5 dos 6 instáveis conhecidos: C-TELA-01-1, C-TELA-02-1, F-T3-1, F-TR-1 e F28b-1;
+      - **F11a-2 (rodando 1x):** o relógio andando, com o alfa 0,5 contra 0,667. É a mesma classe dos
+        instáveis (17 208 px, caixa x 558–978, y 424–581);
+      - **F24c-1 (a ajuda):** pausado, alfa 1, tick 0 e a mesma câmera, e **difere em 88 136 px**.
+        Todos caem na caixa x 562–974, y 27–692, que é a região do painel de ajuda; o mapa em volta
+        é idêntico. **Hipótese, não medida:** a rolagem do painel (o `scrollIntoView` do roteiro), e
+        não o relevo. A imagem não foi aberta.
+    - **Pelo critério escrito, reprova.** Há duas capturas estáveis diferentes fora dos 6 instáveis
+      conhecidos (F11a-2 e F24c-1), e 10 roteiros sem par. Para a chave voltar falta: rodar os 10
+      roteiros no lado B, com os saves, e explicar a F24c-1. Os dois esperam o operador, porque a
+      investigação da captura foi encerrada por decisão dele. Dados da corrida:
+      `test-output/shot-todos.json` do worktree e a sonda `comparar-relevo.js` do scratchpad.
 - **Decisões do operador incorporadas:** chão plano = 1,0 (sem `k`); tint S1; geometria 12,8 px
   por degrau, **provisória**; o tint da unidade segue a posição do pé (por tile, saltava até 61
   níveis de cinza no pé da serra).
@@ -5989,6 +6012,27 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
   - o `npm run validate:data` passa.
 - **Arte:** fora do escopo. Sem arte de mercenário no manifesto, o placeholder continua. O
   item só faz o dado dizer o que a decisão diz.
+
+### D-ARTE-CHAO-DE-ROCA — Pedido de arte para o Codex: o chão de roça sob a cana
+- **Registrado por decisão do operador (2026-10-01): é pedido de arte para o Codex**, e não
+  trabalho desta fila de código. Vem da avaliação da F-TR (o esgotado por tipo, `9fb7b71`): a
+  cana em pousio já não usa o losango escuro do esgotado, mas continua sendo losangos soltos
+  sobre a grama. O BUG-N (cana em pousio parecia mato cortado) fechou pelo caminho (a), um código
+  de pousio próprio. O caminho (b) que ele registrou, **o chão de roça desenhado sob o tile de
+  cultura**, é este pedido.
+- **O que falta:** o milho em pousio fica sobre o terreno `campoArado`, marrom e derivado do mapa.
+  A cana (`grapes` em `data/resources.json`, que **é cana-de-açúcar e não uva**: o `_doc` do
+  recurso diz isso) não tem terreno, e fica sobre `grama`. O pedido é a arte do chão de roça da
+  cana, a terra de partido com sulco, sob a touceira e sob o tile em pousio. O losango solto deixa
+  de ser a única coisa que diz "aqui tem roça".
+- **Regras para quem fizer:**
+  - a skill `skills/pianco-art-pipeline/SKILL.md`, com base versionada em `assets/base/` e o
+    derivado em `assets/sprites/`;
+  - entrada no `assets/manifest.json` com os oito campos do CLAUDE.md §9;
+  - nenhum asset do jogo de 1998, em nenhuma forma.
+- **Decisão que fica com o operador, e não com quem desenha:** se o chão de roça vira terreno
+  próprio no mapa (dado do gerador) ou camada de render sob o tile de cultura. Nenhum número de
+  `data/` muda sem essa decisão.
 
 ### Leva 1 da animação direcional: legibilidade da logística (aprovada pelo operador, 2026-10-01)
 Plano: `docs/planos/2026-09-30-animacao-direcional-de-unidades.md`, §3 e §10. **Só a Leva 1 foi
