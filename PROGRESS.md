@@ -16790,3 +16790,40 @@ O aceite foi num commit próprio antes do código (`cbd9ee0`). Só `src/render/`
   do dado é 2. Zero recusa de comando. Tabela no BALANCE_LOG.
 - Pontas B e D: **decisão do operador**, ficam como dependentes da regra da rua mínima, que não está
   escrita. **Nenhum número mudou.**
+
+## 2026-10-01 — Fechamento da leva da manhã (commits desde `5124154`)
+
+### Fechamento (na ordem do CLAUDE.md §13)
+- `npm run verify` completo sobre `c1cfc30`: verde, 2 150 testes; transladada com 2 148 e 5 pulados
+  antigos; 141 s. `.verify-ok` do tipo `completo`.
+- `npm run test:longo` sozinha sobre `c1cfc30`: verde, 22 s. Selo em `test-output/test-longo.json`,
+  e o `npm run selo:longo` deu OK.
+- **Todos os 88 roteiros:** 88/88 com saída 0, em 39 min, um de cada vez pela trava, na porta 5176.
+  A 5178 continua presa pelo `vite` órfão (pai `cmd.exe`, desde 09:08), que não foi morto.
+- O avaliador rodou o `selo:longo` primeiro, e ele saiu 0.
+
+### Avaliador (subagente evaluator): PASS com ressalvas, nada bloqueante
+Ele conferiu: `src/sim` sem commit no intervalo. Em `data/` mudaram só o `units.json` (a D-TELA-05e,
+mercenários em 8 direções) e os dois arquivos do relevo. Nenhum `eslint-disable`, `.skip`, `.only` nem
+`zz-` rastreado.
+
+```text
+item                                          | veredito     | ressalva                                                       | destino
+selo da leva + longos por nome (8d91cb8, d1c6397) | ok, ressalva | regra e código no mesmo commit, sem aceite antes (§6 item 10)  | registrado
+D-TELA-CAPTURA-DETERMINISTICA                 | ok           | sem chave, registro honesto; o aceite 1 (fixarCamera) não tem teste | aberto, antes da chave
+trava + sinal de vida (7a9e038; 89ccfc8 → 2f4bc94) | ok, ressalva | 7a9e038 sem aceite antes; o aceite 3 escreve o arquivo do morto à mão, e não encerra um processo à força | registrado
+limpeza (8460712)                             | ok           | —                                                              | —
+camadas de teste (51700ab → 13ea130; 670c66b) | ok, ressalva | 670c66b sem aceite antes; portão e rápido sem teste automatizado, só sondas | aberto
+D-TELA-05e (mercenários em 8 direções)        | ok           | —                                                              | —
+aviso do Vitest (9585948)                     | ok           | —                                                              | —
+folga de pedra (02aa604, c1cfc30)             | ok           | —                                                              | —
+marcos (e60b18a)                              | ok           | —                                                              | —
+evaluator.md com o selo (7ae3e75)             | ok           | —                                                              | —
+F-TR, o esgotado por tipo (cbd9ee0 → 9fb7b71) | ok, ressalva visual | a cana sobre a grama ainda são losangos soltos; falta o chão de roça sob a cultura (o caminho (b) do BUG-N) | aberto, decisão
+relevo (e68a749..95b9e74)                     | não avaliado | D-TELA-LUZ-RELEVO e D-TERRENO-ALTURA com chave, sem avaliação registrada | aberto, decisão
+```
+- Rubrica visual da F-TR: perspectiva 5, estilo 4, legibilidade 3, acabamento 4.
+- **Erros meus, que ele achou e eu reconheço:** três commits mudaram regra e código juntos, sem o
+  aceite antes. São o `8d91cb8` (selo), o `7a9e038` (trava) e o `670c66b` (validate:data no rápido).
+  Os três foram pedidos do operador com o critério escrito no pedido, mas a §6 item 10 manda o aceite
+  num commit próprio de qualquer jeito.
