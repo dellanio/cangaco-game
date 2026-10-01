@@ -6064,6 +6064,30 @@ operador no pedido, e o `git grep` na `main` não acha nenhuma delas. **Só rend
      arquivo que não existe; tamanho errado);
   4. são exatamente as 8 do escopo.
 
+#### D-TELA-03a — O serf mostra o ícone da mercadoria que carrega
+- **Escopo:** a cadeia do que se desenha sobre a unidade com carga: (1) o ícone da mercadoria
+  (D-ARTE-01), quando o manifesto o declara e o loader o trouxe; (2) senão, o texto de hoje (BUG-O).
+  Nenhuma carga some. A função pura `marcaDaCarga` (`src/render/icone-da-mercadoria.ts`) devolve
+  `{ como: 'icone', chave }` ou `{ como: 'texto', rotulo }`. O `preload` enfileira os ícones na chave
+  `icone:<mercadoria>:mercadoria`.
+- **Aceite (escrito antes do código):**
+  1. `tests/D-TELA-03-icones.test.ts`: as 8 com ícone dão `icone`; as outras 18 dão `texto`, com o
+     nome do tema; ícone declarado e não carregado dá `texto`; o loader enfileira um ícone por
+     arquivo resolvido, e nenhum sem ele;
+  2. não-regressão: `tests/BUG-O-rotulo-da-carga.test.ts` continua afirmando que toda mercadoria tem
+     nome, e o roteiro `C-COMIDA-01d` (o pão como "Cuscuz") sai 0. A ponte ganha `marcaDaCarga` por
+     unidade (`icone` | `texto` | null), e o `rotuloDaCarga` continua sendo o nome do tema;
+  3. roteiro `tools/shots/D-TELA-03.js`, sobre a partida que `tests/D-TELA-03-logistica.test.ts`
+     grava (a oficina de armas com 3 machados na saída e a entrada vazia; o quartel ligado a ela por
+     rua; nenhum machado no armazém). Um passo com o jogo andando (§8), e depois o relógio pela
+     ponte. O serf com tábua tem `marcaDaCarga` `icone`. O serf que leva o machado da oficina ao
+     quartel tem `texto`, com o nome do tema. As capturas são abertas;
+  4. o teste da partida afirma, pelo `step`, que a tábua chega à oficina e que o machado sai dela,
+     para o roteiro não esperar o que nunca chega.
+- **Troca do roteiro do plano:** o plano pedia "um serf com tábua e um com farinha". O operador
+  pediu um serf levando arma da oficina ao quartel. A partida da oficina cobre os dois degraus: a
+  tábua (com ícone) e o machado (sem ícone, texto). Por isso a farinha sai.
+
 ### F34 — Condições de vitória e derrota (escaramuça)
 - **ENTREGUE (2026-09-28, sessão autônoma; plano em `docs/planos/2026-09-28-A16-F34-fim.md`).**
   Decisão do operador: *"Vitória: destruir Armazém, Escola e Quartel inimigos e todas as
