@@ -1323,7 +1323,7 @@ Branch `dellanio/relevo-a`, plano e notas em `docs/planos/relevo-a.md` (a fonte:
   segue a posição (por tile, saltava até 61 níveis de cinza no pé da serra).
 - Flag desligada: 86 roteiros com o mesmo código de saída que a `main` em `5124154`; as 109 capturas
   diferentes são ruído da própria `main` (grão do chão) e movimento no relógio de parede.
-- `verify` final verde sobre `8d91cb8`.
+- `verify` final verde sobre `89392d8` (2 139 testes; transladado 2 137 e 5 pulados).
 
 **Hipótese ou provisório:**
 - `pxDeMundoPorDegrau` 12,8 é provisório até a arte de terreno da F-TR (tile sem luz pintada);
@@ -1334,3 +1334,11 @@ Branch `dellanio/relevo-a`, plano e notas em `docs/planos/relevo-a.md` (a fonte:
 
 **Aberto:** ligar a flag por padrão espera a arte de terreno da F-TR.
 ```
+
+- **Merge (2026-10-01):** rebase sobre `89392d8` com o conflito do `BUILD_PLAN.md` resolvido como
+  o operador aprovou (os dois itens do relevo e, logo abaixo, o D-TELA-CHAO-DETERMINISTICO da `main`,
+  sem mudança). A `main` não mexeu em nenhum arquivo do relevo desde `8d91cb8`; por decisão do
+  operador, sem nova rodada de roteiros. O 1º `verify` reprovou em 2 testes por timeout
+  (`F-REPL-a-toco-rebrota`, `LOTE3-fases-quatro`) com a CPU a 83% pela worktree do Codex rodando o
+  Vitest; com o Codex pausado e a máquina livre, **verde**: 2 139 testes, transladado 2 137 e 5
+  pulados. O bloco acima foi colado no `PROGRESS.md` nesse commit.

@@ -16401,3 +16401,29 @@ Decisão do operador. Ela substitui a marca `[longo]` no título, de 2026-09-30.
 - **Ctrl+C** num console manda SIGINT ao Node, e o script solta a trava nesse caso. Não testei,
   porque não tenho console interativo aqui.
 - As outras worktrees (relevo, Codex) só respeitam a trava depois do rebase sobre esta `main`.
+
+## 2026-10-01 — D-TELA-LUZ-RELEVO (luz do relevo) e D-TERRENO-ALTURA (altura só de render): entregues, desligados por padrão
+
+Branch `dellanio/relevo-a`, plano e notas em `docs/planos/relevo-a.md` (a fonte: o
+`docs/planos/estudo-relevo.md`, opção A). Nada na sim e nada no `GameState`.
+
+**Verificado:**
+- D-TERRENO-ALTURA: `tools/gerar-mapa.js` emite `data/maps/sertao-128.relevo.json` (degrau 0–35 por
+  vértice, 129 × 129, semente própria); o `sertao-128.json` sai com o mesmo blob. Fora de montanha
+  e rocha, os 4 cantos de um tile diferem no máximo 2 degraus (teste nos dois sentidos).
+- D-TELA-LUZ-RELEVO: sombra em MULTIPLY e luz no modo próprio `[DST_COLOR, ONE]`
+  (`renderer.addBlendMode`), neutras exatas no plano; o chão plano é igual pixel a pixel com a flag
+  ligada e desligada (roteiro). Tint dos sprites pela luz sob o pé, preso em 1,0 (S1); o da unidade
+  segue a posição (por tile, saltava até 61 níveis de cinza no pé da serra).
+- Flag desligada: 86 roteiros com o mesmo código de saída que a `main` em `5124154`; as 109 capturas
+  diferentes são ruído da própria `main` (grão do chão) e movimento no relógio de parede.
+- `verify` final verde sobre `89392d8` (2 139 testes; transladado 2 137 e 5 pulados).
+
+**Hipótese ou provisório:**
+- `pxDeMundoPorDegrau` 12,8 é provisório até a arte de terreno da F-TR (tile sem luz pintada);
+  amplitude 12 e célula 10 da geração são ponto de partida.
+- Recorte do sprite na encosta de luz medido em ~11% (vila) e ~10% (pé da serra); hoje não lê como
+  recortado. Correção pronta, não aplicada: `tetoDaLuzDoChao`.
+- `renderer.addBlendMode` é risco no Phaser 4 (registrado no estudo do relevo).
+
+**Aberto:** ligar a flag por padrão espera a arte de terreno da F-TR.
