@@ -11,6 +11,8 @@ import { proximoNivel, mundoSobPonto, scrollAncorado } from '../zoom';
 import type { Navegacao } from '../../input/navegacao';
 import type { Tile } from '../grid';
 import { publicarEstadoDebug } from '../debug';
+import { criarCamadaDeRelevo } from '../camada-de-relevo';
+import type { LuzDoRelevo } from '../camada-de-relevo';
 import { marcadorVisivel } from '../marcador-de-destino';
 import type { MarcadorDeDestino } from '../marcador-de-destino';
 import type {
@@ -151,6 +153,8 @@ export class WorldScene extends Phaser.Scene {
   /** F-SPR — o sprite de vegetacao de pe por tile, para o diff. Memoria de render,
    *  como `recursosDesenhados`: a verdade continua em `state.recursos`. */
   private readonly vegetacaoDesenhada = new Map<string, Phaser.GameObjects.Image>();
+  /** D-TELA-LUZ-RELEVO — a luz do relevo, ou `null` com ele desligado (o padrao): todo gancho e `luz?.`. */
+  private luz: LuzDoRelevo | null = null;
   /** BUG-N3 — os tiles cujo sprite de vegetacao NASCEU de rocha. Guardado na hora de
    *  pintar, e nao perguntado a `recursos` depois: a rocha esgotada sai de `recursos`, e
    *  um sprite que sobrasse dela sumiria da conferencia por construcao. */
@@ -319,6 +323,8 @@ export class WorldScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, desligarGrade);
     const texturaDoRecurso = this.criarTexturaDeRecurso(tilePx, carregada, estado);
     const camadaDeRecursos = this.criarCamadaDeRecursos(tilePx, largura, altura, texturaDoRecurso);
+    // D-TELA-LUZ-RELEVO: antes do primeiro `atualizarPredios`, que ja tinge o predio ao nascer.
+    this.luz = criarCamadaDeRelevo(this, configDoMapa, window.location.search, estado);
 
     const camera = this.cameras.main;
     camera.setBounds(0, 0, larguraPx, alturaPx);
@@ -341,7 +347,7 @@ export class WorldScene extends Phaser.Scene {
     const previaDeEstrada = criarPreviaDeEstrada(this, tilePx);
     const camadaDeCampos = criarCamadaDeCampos(this, tilePx);
     const previaDeCampo = criarPreviaDeCampo(this, tilePx);
-    const camadaDeUnidades = criarCamadaDeUnidades(this, tilePx);
+    const camadaDeUnidades = criarCamadaDeUnidades(this, tilePx, this.luz);
     // F26b: o anel dos selecionados e a caixa ficam ACIMA de tudo do mundo
     const marcasDeSelecao = this.add.graphics().setDepth(PROFUNDIDADE_DA_SELECAO);
     const caixaDeSelecao = this.add.graphics().setDepth(PROFUNDIDADE_DA_SELECAO);
@@ -1202,6 +1208,7 @@ export class WorldScene extends Phaser.Scene {
       .setOrigin(desenho.entrada.anchor[0], desenho.entrada.anchor[1])
       .setScale(escala)
       .setDepth(depthDeY(pe.y));
+    this.luz?.tingir(imagem, pe.x, pe.y, `vegetacao:${chave}`);
     this.vegetacaoDesenhada.set(chave, imagem);
   }
 
@@ -1716,6 +1723,7 @@ export class WorldScene extends Phaser.Scene {
       ...this.desenharSinalDePausado(predio, caixa, tilePx),
     ]);
     container.setDepth(depthDeY(canto.y + alturaPx));
+    this.luz?.tingirContainer(container, canto.x + larguraPx / 2, canto.y + alturaPx, `predio:${predio.id}`);
     return container;
   }
 

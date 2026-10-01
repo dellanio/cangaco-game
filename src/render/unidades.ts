@@ -51,6 +51,7 @@ import { posicaoDaUnidade } from '../sim/selectors';
 import { fracaoDeCondicao } from '../sim/condicao';
 import { unidadesInvisiveis } from './visibilidade';
 import type { GameState } from '../sim/state';
+import type { LuzDoRelevo } from './camada-de-relevo';
 
 /** O que a camada desenhou de uma unidade, para o roteiro afirmar (`window.__cangaco`). */
 export interface UnidadeRenderizada {
@@ -153,7 +154,11 @@ interface Desenhado {
   readonly marcadorDeFome: Phaser.GameObjects.Text;
 }
 
-export function criarCamadaDeUnidades(cena: Phaser.Scene, tilePx: number): CamadaDeUnidades {
+export function criarCamadaDeUnidades(
+  cena: Phaser.Scene, tilePx: number,
+  /** D-TELA-LUZ-RELEVO — a luz do relevo, ou `null` (o padrao): o tint so muda quando o pe cruza de tile. */
+  luz: LuzDoRelevo | null = null,
+): CamadaDeUnidades {
   const desenhados = new Map<string, Desenhado>();
   const memoria = criarMemoriaDePosicoes();
   const lado = tilePx * LADO_DA_UNIDADE_EM_TILES;
@@ -288,6 +293,7 @@ export function criarCamadaDeUnidades(cena: Phaser.Scene, tilePx: number): Camad
         const desvio = deslocamentoDaUnidade(id, tilePx, ESCALA_DO_MUNDO);
         item.container.setPosition(centro.x + desvio.x, centro.y + desvio.y);
         item.container.setDepth(depthDeY(centro.y + desvio.y));
+        luz?.tingirSeMudouDeTile(item.imagem, centro.x + desvio.x, centro.y + desvio.y, `unidade:${id}`);
         const visivel = !invisiveis.has(id);
         item.container.setVisible(visivel);
         item.nome.setVisible(visivel);

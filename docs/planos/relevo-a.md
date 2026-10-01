@@ -1153,3 +1153,27 @@ Preenchidas durante a execução. Separam o **verificado** (com o comando ou o a
   `F04-grid-ortogonal` 17 e 17; `estilo-ui-menu` 12 e 12; `F-D3-geografia` 8, e 7 + 1 pulado (o
   pulo antigo dele). `tsc --noEmit` do projeto, `eslint` nos arquivos alterados e `validate:data`
   (15 arquivos, 0 erros): verdes.
+- **Tarefa 3, D-TELA-LUZ-RELEVO, as camadas e o tint (verificado com os checks da decisão 17):**
+  - `src/render/camada-de-relevo.ts`, novo: sem o pedido, devolve `null` sem criar nada nem
+    escrever no debug. Com o pedido, cria duas `CanvasTexture` de 129 × 129, opacas e com filtro
+    linear, e duas imagens no depth 3: a sombra em `MULTIPLY` e a luz no modo
+    `[DST_COLOR, ONE]` (`renderer.addBlendMode`, registrado uma vez por renderer num `WeakMap`).
+    Não há caminho de Canvas (decisão 14): o renderer vem por cast, com a D-TELA-06 garantindo o
+    WebGL;
+  - **o tint só vai em `Image`**, recursivo nos containers. Conferido no código do
+    `criarPredio` da `main` atual: medidor, bandeira, placa de pausado, canteiro, lote e
+    placeholder são retângulo, texto ou polígono, e ficam sem tint. Recebem tint o corpo do
+    prédio, as pilhas, o quadro de trabalho e os animais. **A bandeira fica sem luz** (é
+    retângulo), ao contrário do que a Tarefa 3, passo 3, previa;
+  - `src/render/debug.ts`: o campo **opcional** `relevo?` (`RelevoNoDebug`), escrito só com o
+    pedido: `pxDeMundoPorDegrau`, `vertices`, `faixa` e `fatores` por rótulo;
+  - os ganchos no `WorldScene.ts` (10 linhas): o import, o campo `luz`, a criação logo depois da
+    camada de recursos e antes do primeiro `atualizarPredios`, o `this.luz` passado à camada de
+    unidades, o tint da vegetação ao nascer e o do prédio no fim de `criarPredio`. No
+    `unidades.ts`: o parâmetro opcional `luz` e o `tingirSeMudouDeTile` logo depois do
+    `setPosition`;
+  - checks: `tsc --noEmit` e `eslint` verdes; `D-TELA-LUZ-RELEVO` e `F04` verdes nas duas suítes;
+  - **fumaça com a flag desligada, porta 5177 conferida antes de cada roteiro:** `F-VIVO-a`
+    saída 0; `F10` **saída 1 na primeira**, por `page.goto: Timeout 30000ms` antes do jogo
+    carregar (a primeira subida do Vite depois do rebase), e **saída 0 na segunda**. Não é a
+    comparação com a linha de base, que fica para o fim (decisão 12).

@@ -104,10 +104,27 @@ export interface CamadasEmPx {
   readonly animais: readonly number[] | null;
 }
 
+/** D-TELA-LUZ-RELEVO — a luz do relevo, publicada SO quando o relevo foi pedido (flag do dado ou
+ *  `?relevo`): com ele desligado, o campo nao existe e o `__cangaco` fica igual ao de antes. */
+export interface RelevoNoDebug {
+  readonly ativo: true;
+  /** O px por degrau em uso (o do dado, ou o `?relevoPx` do roteiro). */
+  readonly pxDeMundoPorDegrau: number;
+  /** [largura, altura] da grade de VERTICES. */
+  readonly vertices: readonly [number, number];
+  /** O menor e o maior fator de luz do chao no mapa. */
+  readonly faixa: readonly [number, number];
+  /** Rotulo -> fator aplicado no tint: 'predio:<id>', 'unidade:<id>', 'vegetacao:<gx,gy>'. O fator
+   *  e o do chao sob o pe, ANTES do teto do sprite (o cinza do tint e min(fator, teto)). */
+  readonly fatores: Record<string, number>;
+}
+
 export interface EstadoDebug {
   /** O renderizador ativo: `tipo` e `game.renderer.type`, `webgl` e `Phaser.WEBGL`. O
    *  roteiro compara os dois sem importar o Phaser. */
   renderizador: { readonly tipo: number; readonly webgl: number };
+  /** D-TELA-LUZ-RELEVO — ausente com o relevo desligado. */
+  relevo?: RelevoNoDebug;
   /** false ate a cena terminar o primeiro desenho. O roteiro espera por isto
    *  antes de fotografar — sem isso a captura sai do canvas em branco. */
   pronto: boolean;
