@@ -55,7 +55,7 @@ const nadaCarregado: TexturaCarregada = () => false;
  * com o id, para a reprovacao dizer onde olhar:
  * - id de terreno que o mapa nao conhece, ou de recurso/vegetacao que nao e recurso;
  * - o mesmo id como `recurso` E `vegetacao` (a vegetacao vence e a textura vira arte morta);
- * - unidade de tipo sem `direcoesDeSprite` no dado (mercenario), ou estado que nao e
+ * - unidade de tipo sem `direcoesDeSprite` no dado, ou estado que nao e
  *   `<pose>:<direcao>` com direcao do conjunto do tipo.
  */
 function problemasDasCamadas(m: Manifesto, direcoes: ReadonlyMap<string, 4 | 8 | null>): string[] {
@@ -223,7 +223,7 @@ describe('F-SPR — unidade: um arquivo por direcao, oeste espelhado', () => {
   it('o outro lado: sem entrada, sem direcao, sem arquivo ou fora do conjunto do tipo, placeholder', () => {
     expect(spriteDaUnidade(m, 'stonemason', POSE_PARADO, 's', 4, c)).toBeNull();
     expect(spriteDaUnidade(m, 'serf', POSE_PARADO, 'ne', 4, c)).toBeNull(); // civil nao tem diagonal
-    expect(spriteDaUnidade(m, 'serf', POSE_PARADO, 's', null, c)).toBeNull(); // mercenario
+    expect(spriteDaUnidade(m, 'serf', POSE_PARADO, 's', null, c)).toBeNull(); // tipo sem direcoes no dado
     expect(spriteDaUnidade(m, 'serf', POSE_PARADO, 's', 4, nadaCarregado)).toBeNull();
     expect(spriteDaUnidade(m, 'serf', 'andando', 's', 4, c)).toBeNull(); // pose sem arte
     const soLeste: Manifesto = { versao: 1, assets: [camada('unidade', 'serf', { 'parado:l': 'l.png' })] };
@@ -252,12 +252,16 @@ describe('F-SPR — unidade: um arquivo por direcao, oeste espelhado', () => {
     }
   });
 
-  it('as direcoes vem de units.json: civis 8, militares 8, mercenarios null', () => {
-    // civis 4 -> 8: decisao do operador, 2026-09-30 (BUILD_PLAN, nota da F-SPR)
+  it('as direcoes vem de units.json: os 28 tipos, nos tres grupos, todos 8', () => {
+    // civis 4 -> 8: decisao do operador, 2026-09-30 (BUILD_PLAN, nota da F-SPR); os mercenarios
+    // entraram na D-TELA-05e (antes, `null`)
     const grupos = unidadesJson as Record<string, { tipos: { id: string }[] }>;
-    for (const t of grupos.civis!.tipos) expect(direcoesDoTipo(t.id), t.id).toBe(8);
-    for (const t of grupos.militares!.tipos) expect(direcoesDoTipo(t.id), t.id).toBe(8);
-    for (const t of grupos.mercenarios!.tipos) expect(direcoesDoTipo(t.id), t.id).toBeNull();
+    const porGrupo = { civis: grupos.civis!.tipos, militares: grupos.militares!.tipos, mercenarios: grupos.mercenarios!.tipos };
+    for (const [nome, tipos] of Object.entries(porGrupo)) {
+      expect(tipos.length, nome).toBeGreaterThan(0);
+      for (const t of tipos) expect(direcoesDoTipo(t.id), `${nome}/${t.id}`).toBe(8);
+    }
+    expect(Object.values(porGrupo).reduce((n, tipos) => n + tipos.length, 0)).toBe(28);
     expect(direcoesDoTipo('tipo_que_nao_existe')).toBeNull();
     // override por tipo vence o _comum; numero fora de 4 e 8 reprova alto
     const dado = { civis: { _comum: { direcoesDeSprite: 4 }, tipos: [{ id: 'a' }, { id: 'b', direcoesDeSprite: 8 }] } };
@@ -277,7 +281,8 @@ describe('F-SPR — o manifesto real', () => {
         camada('vegetacao', 'cacto', { presente: 'x.png' }),
         camada('recurso', 'tree', { presente: 'x.png' }),
         camada('vegetacao', 'tree', { presente: 'x.png' }),
-        camada('unidade', 'rebel', { 'parado:s': 'x.png' }),
+        // um tipo que o dado nao conhece: desde a D-TELA-05e todo tipo do dado declara direcoes
+        camada('unidade', 'tipo_sem_direcao', { 'parado:s': 'x.png' }),
         camada('unidade', 'serf', { 'parado:ne': 'x.png', parado: 'x.png', 'parado:s': 'x.png' }),
       ],
     };
@@ -285,7 +290,7 @@ describe('F-SPR — o manifesto real', () => {
       "terreno 'lava' nao existe no mapa",
       "vegetacao 'cacto' nao e um recurso do mapa",
       "'tree' e recurso E vegetacao",
-      "unidade 'rebel' nao declara direcoesDeSprite em units.json",
+      "unidade 'tipo_sem_direcao' nao declara direcoesDeSprite em units.json",
       "unidade 'serf': estado 'parado' nao e <pose>:<direcao> de 8 direcoes",
     ]);
     // o guarda da diagonal num tipo de 4 continua acusando (o serf era 4 ate 2026-10-01)

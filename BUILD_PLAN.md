@@ -5886,8 +5886,8 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
     chão diferente com a mesma câmera e o mesmo tick? A medida de onde veio o "105 de 219" não foi
     refeita aqui.
 ### D-TELA-05e — Mercenários em 8 direções
-- **Registrado (2026-10-01, pedido do operador). Não implementado.** A decisão de 2026-09-30
-  (8 direções para todas as unidades; nota da F-SPR acima) ainda não chegou aos mercenários:
+- **ENTREGUE (2026-10-01, leva desatendida 2, item 5).** Registrado (2026-10-01, pedido do operador). A decisão de 2026-09-30
+  (8 direções para todas as unidades; nota da F-SPR acima) ainda não chegava aos mercenários:
   `data/units.json` declara `direcoesDeSprite: 8` no `_comum` de `civis` (`:26`) e de
   `militares` (`:106`), mas o grupo `mercenarios` (`:249`) não tem `_comum` nem o campo. Os
   cinco tipos (`rebel`, `rogue`, `vagabond`, `barbarian` e `warrior`) ficam no placeholder

@@ -16611,3 +16611,21 @@ verify completo, para comparar               —         2 149 + 2 147 da transl
   tick fixo) muda os roteiros, e não o chão. Pergunta escrita no item do BUILD_PLAN. Nenhum aceite foi
   commitado e nenhum código de render mudou.
 - O commit leva só a ferramenta de medida e o registro.
+
+## 2026-10-01 — Leva desatendida 2, item 5: D-TELA-05e (mercenários em 8 direções): feito
+
+O aceite já estava escrito no BUILD_PLAN (operador: "aceite já escrito").
+
+### Verificado
+- `data/units.json`: `mercenarios` ganhou `_comum.direcoesDeSprite: 8`, como os outros dois grupos.
+  O `_doc` do grupo cita a decisão. Só o render lê o campo (`src/render/direcoes-de-sprite.ts`, que
+  teve o cabeçalho atualizado); a sim não muda.
+- `tests/F-SPR-carregamento.test.ts`: afirma 8 para os 28 tipos, por grupo (civis, militares e
+  mercenários), e que são 28. O caso negativo do validador ("unidade que não declara
+  `direcoesDeSprite`") continua provado, agora com um tipo que o dado não conhece, já que todo tipo
+  do dado declara. 16/16.
+- `npm run validate:data`: 15 arquivos, 0 erros.
+- **Tela:** nenhum dos 5 mercenários tem arte no manifesto (os 23 tipos com arte são civis e
+  militares). O mercenário continua no retângulo do §9, e nenhum pixel muda: não há captura nova a
+  abrir. Os roteiros não rodaram agora, por causa da memória (2,3 GB livres); a não-regressão de
+  tela fica para o fechamento (item 8), com todos os roteiros.

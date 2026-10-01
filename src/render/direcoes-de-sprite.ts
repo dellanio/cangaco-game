@@ -1,9 +1,9 @@
 /**
  * F-SPR — quantas direcoes de sprite cada tipo de unidade tem, lido de
  * `data/units.json` (`direcoesDeSprite`). O numero vive no dado (CLAUDE.md §2.3):
- * civis 4, militares 8, declarados no `_comum` do grupo, com override por tipo se
- * um dia existir. Os mercenarios nao declaram — decisao do operador — e resolvem
- * `null`: sem direcao, sem sprite, fica o placeholder.
+ * civis, militares e mercenarios, todos 8 (decisao do operador, 2026-09-30; os mercenarios
+ * entraram na D-TELA-05e), declarados no `_comum` do grupo, com override por tipo se um dia
+ * existir. Tipo que nao declara resolve `null`: sem direcao, sem sprite, fica o placeholder.
  *
  * Este arquivo NAO importa `phaser` nem `sim/data` (teste estrutural da F04): le o
  * JSON direto, como `nome-de-unidade.ts` le o tema.

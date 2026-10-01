@@ -247,7 +247,10 @@
     ]
   },
   "mercenarios": {
-    "_doc": "Town hall. Pagos em ouro, prontos na hora.",
+    "_comum": {
+      "direcoesDeSprite": 8
+    },
+    "_doc": "Town hall. Pagos em ouro, prontos na hora. direcoesDeSprite 8 como os outros grupos (D-TELA-05e, decisao do operador de 2026-09-30: 8 direcoes para todas as unidades); so o render le o campo.",
     "tipos": [
       {
         "id": "rebel",
