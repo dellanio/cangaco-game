@@ -5853,6 +5853,11 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
   3. roteiro `tools/shots/D-TELA-LUZ-RELEVO.js` com `?relevo`: o chão plano é igual pixel a pixel
      com a flag ligada e desligada (e uma encosta difere); árvore, rocha, prédio numa encosta e
      serf tingidos; a obra é retingida quando o container é recriado, já com sprite.
+- **CHAVE EM FALSE (decisão do operador, 2026-10-01):** o aceite 1 está sem prova do sha256 (avaliador,
+  NEEDS_WORK). Na entrega só 110 de 219 PNG bateram, e a causa atribuída, "chão não determinístico",
+  caiu com a D-TELA-CAPTURA-DETERMINISTICA. A refação compara as capturas da `main` (flag desligada)
+  com a `main` sem o relevo, com a câmera fixada pela ponte. Se as capturas estáveis baterem, a chave
+  volta a true, com a evidência citada aqui.
 - **Decisões do operador incorporadas:** chão plano = 1,0 (sem `k`); tint S1; geometria 12,8 px
   por degrau, **provisória**; o tint da unidade segue a posição do pé (por tile, saltava até 61
   níveis de cinza no pé da serra).
