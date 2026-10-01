@@ -17,7 +17,9 @@ const path = require('node:path');
 const { spawn } = require('node:child_process');
 const { chromium } = require('@playwright/test');
 // BUG-K: as duas defesas moram em `_servidor.js`, com o `tools/dev.js` (F-DEV).
-const { derrubarServidor, portaJaResponde, mensagemDePortaOcupada } = require('./_servidor');
+const {
+  derrubarServidor, portaJaResponde, mensagemDePortaOcupada, gravarRegistro, apagarRegistro, liberarViteOrfao,
+} = require('./_servidor');
 
 // Fixa e fora da faixa padrao do vite dev, evita colisao. `CANGACO_SHOT_PORTA`
 // troca a porta para uma segunda arvore de trabalho rodar roteiro ao mesmo
@@ -54,14 +56,18 @@ function carregarRoteiro(nome) {
   return modulo.roteiro;
 }
 
+/** O vite sobe direto pelo node, sem `npx` nem shell: o PID do filho e o do proprio vite, que e o
+ *  que o registro grava e o que escuta a porta (decisao do operador, 2026-10-01). */
+const VITE = path.join(__dirname, '..', 'node_modules', 'vite', 'bin', 'vite.js');
+
 function subirServidor() {
-  const processo = spawn('npx', ['vite', '--port', String(PORTA), '--strictPort'], {
+  const processo = spawn(process.execPath, [VITE, '--port', String(PORTA), '--strictPort'], {
     cwd: path.join(__dirname, '..'),
-    shell: true,
     stdio: ['ignore', 'pipe', 'pipe'],
     // fora do Windows, lider de grupo: `derrubarServidor` derruba o grupo inteiro
     detached: process.platform !== 'win32',
   });
+  if (processo.pid !== undefined) gravarRegistro(PORTA, processo.pid);
   return processo;
 }
 
@@ -132,8 +138,13 @@ async function main() {
 
   const url = `http://localhost:${PORTA}/`;
   if (await portaJaResponde(url)) {
-    console.error(mensagemDePortaOcupada('shot', PORTA, 'CANGACO_SHOT_PORTA'));
-    process.exit(1);
+    // o vite orfao do PROPRIO shot (registro, linha de comando e dono morto) pode ser encerrado; o resto nao
+    const liberacao = await liberarViteOrfao(PORTA);
+    console.error(`shot: porta ${PORTA} ocupada; ${liberacao.motivo}.`);
+    if (await portaJaResponde(url)) {
+      console.error(mensagemDePortaOcupada('shot', PORTA, 'CANGACO_SHOT_PORTA'));
+      process.exit(1);
+    }
   }
 
   const errosDeConsole = [];
@@ -203,6 +214,7 @@ async function main() {
   } finally {
     if (browser) await browser.close();
     derrubarServidor(servidor);
+    if (servidor.pid !== undefined) apagarRegistro(PORTA, servidor.pid);
   }
 
   fs.mkdirSync('test-output', { recursive: true });

@@ -11,6 +11,7 @@ const net = require('net');
 const os = require('os');
 const path = require('path');
 const { MEMORIA_MINIMA_MB, listarRoteiros, deveParar } = require('./shot-todos-regra.js');
+const { liberarViteOrfao } = require('./_servidor');
 
 const PORTA = Number(process.env.CANGACO_SHOT_PORTA ?? 5176);
 // o teste troca o arquivo do resumo, para nao escrever por cima da evidencia real (aceite 6)
@@ -45,6 +46,8 @@ async function principal() {
   try { commit = execSync('git rev-parse HEAD', { encoding: 'utf8' }).trim(); } catch { /* sem git */ }
   const roteiros = listarRoteiros(fs.readdirSync('tools/shots'));
   const resumo = { commit, porta: PORTA, quando: new Date().toISOString(), total: roteiros.length, roteiros: [], falhas: [], parou: null };
+  // o vite orfao do proprio shot sai antes da conferencia (CLAUDE.md §13); qualquer outro dono segue recusado
+  if (await portaOcupada(PORTA)) console.error(`shot:todos: porta ${PORTA} ocupada; ${(await liberarViteOrfao(PORTA)).motivo}.`);
   if (await portaOcupada(PORTA)) {
     resumo.parou = `porta ${PORTA} ja ocupada no inicio (vite orfao ou de outra sessao); nenhum roteiro rodou`;
     gravar(resumo);
