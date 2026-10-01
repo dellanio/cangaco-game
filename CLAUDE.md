@@ -353,7 +353,7 @@ Comandos de sessão: `/codex <tarefa>` delega trabalho mecânico ao Codex ·
 
 **A suíte longa (decisões do operador, 2026-09-30 e 2026-10-01).** Teste de sim longa mora num
 arquivo `*.longo.test.ts`, sai do `verify` e roda em `npm run test:longo`. O filtro é pelo **nome do
-arquivo** (`exclude` do `verify`, `include` da suíte longa; `tests/helpers/suite-longa.ts`), e não
+arquivo** (`exclude` do `verify`, `include` da suíte longa; `tools/suite-longa.mjs`), e não
 pelo título. `tests/LONGO-lista.test.ts` confere a lista dos longos.
 **Nenhuma leva fecha sem `npm run test:longo` verde, rodado sozinho na máquina, antes do
 avaliador.** "Sozinho" quer dizer sem outra suíte, roteiro ou sessão rodando teste ao mesmo tempo.

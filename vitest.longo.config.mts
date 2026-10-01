@@ -1,6 +1,6 @@
 import { defineConfig, mergeConfig } from 'vitest/config';
 import base from './vitest.config.mts';
-import { ARQUIVOS_LONGOS, EXCLUDE_DO_LONGO } from './tests/helpers/suite-longa';
+import { ARQUIVOS_LONGOS, EXCLUDE_DO_LONGO } from './tools/suite-longa.mjs';
 
 /**
  * Suite longa (decisoes do operador, 2026-09-30 e 2026-10-01): `npm run test:longo` roda os

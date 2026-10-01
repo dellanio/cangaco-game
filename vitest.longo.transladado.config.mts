@@ -1,6 +1,6 @@
 import { defineConfig, mergeConfig } from 'vitest/config';
 import transladado from './vitest.transladado.config.mts';
-import { ARQUIVOS_LONGOS, EXCLUDE_DO_LONGO } from './tests/helpers/suite-longa';
+import { ARQUIVOS_LONGOS, EXCLUDE_DO_LONGO } from './tools/suite-longa.mjs';
 
 /** A suite longa no mundo transladado: os mesmos testes, como o `verify` faz com a suite curta. */
 

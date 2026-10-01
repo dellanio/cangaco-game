@@ -16629,3 +16629,14 @@ O aceite já estava escrito no BUILD_PLAN (operador: "aceite já escrito").
   militares). O mercenário continua no retângulo do §9, e nenhum pixel muda: não há captura nova a
   abrir. Os roteiros não rodaram agora, por causa da memória (2,3 GB livres); a não-regressão de
   tela fica para o fechamento (item 8), com todos os roteiros.
+
+## 2026-10-01 — Leva desatendida 2, item 6a: o aviso do Vitest ao carregar a config: resolvido
+
+- **Causa (lida no aviso):** `vitest.config.mts` importava `./tests/helpers/suite-longa`, sem
+  extensão, e o Vite carregava esse `.ts` como CommonJS ("ESM syntax in a file loaded as CommonJS").
+- **Conserto:** as constantes da suíte longa foram para `tools/suite-longa.mjs` (ESM de verdade, com
+  `tools/suite-longa.d.mts` para o typecheck), importadas com a extensão pelas três configs. O
+  `tests/helpers/suite-longa.ts` saiu. Nenhum `VITE_CONFIG_NATIVE_IGNORE_WARNING`: o aviso foi
+  consertado, e não escondido.
+- Verificado: o aviso não aparece mais. O `verify` lista 216 arquivos e nenhum `*.longo.test.ts` (o
+  `SELO-longo.test.ts` é curto, e o padrão exige o ponto antes de "longo"). A suíte longa lista os 5.

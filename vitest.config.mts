@@ -1,5 +1,5 @@
 import { defineConfig } from 'vitest/config';
-import { EXCLUDE_DO_VERIFY } from './tests/helpers/suite-longa';
+import { EXCLUDE_DO_VERIFY } from './tools/suite-longa.mjs';
 
 // maxWorkers (decisao do operador, 2026-09-30): o padrao do vitest e nucleos - 1, e com 15
 // workers a maquina fica sobrecarregada — o teste pesado roda 4 a 4,5x mais lento que isolado
@@ -8,7 +8,7 @@ import { EXCLUDE_DO_VERIFY } from './tests/helpers/suite-longa';
 // `vitest.transladado.config.mts` herda daqui pelo `mergeConfig`.
 //
 // Suite longa (decisoes do operador, 2026-09-30 e 2026-10-01): os arquivos `*.longo.test.ts` NAO
-// rodam aqui nem no `verify`; rodam em `npm run test:longo`. Ver `tests/helpers/suite-longa.ts`.
+// rodam aqui nem no `verify`; rodam em `npm run test:longo`. Ver `tools/suite-longa.mjs`.
 export default defineConfig({
   test: {
     environment: 'node', globals: true, include: ['tests/**/*.test.ts'], maxWorkers: '50%',
