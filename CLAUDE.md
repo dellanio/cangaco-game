@@ -242,6 +242,9 @@ Toda criação ou alteração de arte raster deste repositório usa a skill loca
 prompts, derivação e portões visuais para que agentes diferentes produzam o
 mesmo jogo, não estilos paralelos.
 
+- **A luz da arte (decisão do operador, 2026-10-01):** uma luz única de cima, levemente do sul,
+  sem componente leste-oeste (o `cdcfec5` da branch `noru-novos-sprites`). O "alto à esquerda" do
+  `2df15df` e do `docs/BRIEF-ARTE.md` está **obsoleto**.
 - Nenhum asset do jogo original de 1998 entra aqui, em nenhuma forma: nem sprite,
   nem som, nem mapa, nem texto, nem como referência de transferência de estilo.
   Mecânica e estilo, sim. Cópia, não.

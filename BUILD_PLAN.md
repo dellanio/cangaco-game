@@ -5591,6 +5591,9 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
 ---
 
 ### B-TERRENO-01 (antes F18c-2) — Recentrar a vila
+- **PARADA (decisão do operador, 2026-10-01).** O plano e a medida estão em
+  `docs/planos/2026-10-01-B-TERRENO-01-recentrar-a-vila.md`. A medida: folga de pedra −5, pedra
+  mínima 35 contra 30 no dado, rua de 35 tiles, e colisão com a defesa da IA da escaramuça.
 - **Escopo**: o gerador deriva da vila o lajedo, o açude, o mato e o roçado, a vila
   vai para o centro, o mapa é gerado de novo e a calibração da F-CAL-b é refeita.
 - **Aceite**: o original da F18c, com a regra do centro da caixa em

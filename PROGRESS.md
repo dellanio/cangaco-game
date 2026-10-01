@@ -17069,3 +17069,17 @@ B D-TELA-LUZ-RELEVO, aceite 1             | NEEDS_WORK        | o sha256 contra 
     transladado, o teste afirma a recusa do jogo. O aceite de jogo roda nos dois mundos, sobre o
     save que a montagem gera, que no mundo versionado é byte a byte o arquivo.
   - Daqui em diante, o push só sai encadeado com `&&` depois do `verify`.
+
+## 2026-10-01 (noite, 3) — Decisões do operador sobre a arte e o recentro
+- **Luz:** vale o `cdcfec5`: de cima, levemente do sul, sem leste-oeste. O "alto à esquerda" do
+  `2df15df` ficou marcado como obsoleto no `docs/BRIEF-ARTE.md` e no CLAUDE.md §9.
+- **Arte piloto:** cancelada nesta sessão, por decisão do operador; fica com a sessão do Codex.
+  Nada foi gerado.
+- **`dellanio/sprites-parcial-1`: NÃO mergeada**, por decisão do operador. Os motivos (conferidos
+  pelo `git diff --stat main...dellanio/sprites-parcial-1`, base `95b9e74`, um commit, `83e8734`):
+  - não tem nenhum PNG nem âncora no manifesto, só `skills/` e `archive/`, e não substitui nenhum
+    placeholder;
+  - move a `pianco-art-pipeline` para `archive/`, e o CLAUDE.md §9 manda usá-la;
+  - não contém o `2df15df`: saiu da `main`.
+- **B-TERRENO-01 (recentrar a vila): parada.** A medida (folga −5, pedra mínima 35, colisão com a
+  defesa da IA) está no topo do plano e no item do BUILD_PLAN.

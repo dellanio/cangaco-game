@@ -1,5 +1,13 @@
 # Plano: B-TERRENO-01 (antes F18c-2), recentrar a vila
 
+> **PARADA (decisão do operador, 2026-10-01).** A medida do §0 fica registrada:
+> - folga de pedra **−5**;
+> - pedra mínima que fecha a abertura: **35** (o dado tem 30);
+> - rua da abertura de 35 tiles;
+> - **colisão com a defesa da IA** da escaramuça: a posição "frente" cai dentro da vila recentrada.
+>
+> Nada se implementa até o operador responder às perguntas do §5.
+
 Pedido do operador (2026-10-01): o plano, **sem código**, com a medida da folga de pedra com a vila
 recentrada, feita numa cópia do mapa e sem commitar o dado. O item está em `BUILD_PLAN.md:5593`.
 

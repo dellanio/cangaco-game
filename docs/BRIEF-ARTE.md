@@ -162,6 +162,12 @@ o sprite é visto no jogo, não apenas no render grande.
 > Os **56° não são “a câmera do KaM”**: são somente a calibração artística da cena
 > Blender para reproduzir a razão telhado/parede medida nos sprites.
 >
+> **OBSOLETO (decisão do operador, 2026-10-01):** a luz "no alto à esquerda" deste parágrafo,
+> que é também a do `2df15df` da branch `noru-novos-sprites`, caiu. Vale a do `cdcfec5`, na mesma
+> branch: **uma luz única de cima, levemente do sul (o lado da câmera), sem componente leste-oeste**,
+> para chão, prédio, unidade, vegetação e recurso. É ela que deixa o oeste espelhar o leste. O resto
+> do parágrafo (a sombra fora do passe principal, sem segunda luz) continua valendo.
+>
 > A cena tem uma única luz no alto à esquerda. Seu vetor de sombra aponta para baixo à
 > direita, mas **a sombra projetada no chão não entra no passe principal do sprite**:
 > terreno e sombras pertencem a camadas separadas no jogo. O mundo usa intensidade
