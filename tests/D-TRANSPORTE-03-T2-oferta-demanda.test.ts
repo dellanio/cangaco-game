@@ -249,5 +249,7 @@ describe('D-TRANSPORTE-03 T2 — oferta x demanda, multa do armazem, +20 por uni
     const b = correr('real', gameData, 3000);
     expect(JSON.stringify(a.estado)).toBe(JSON.stringify(b.estado));
     expect(real.nos).toBeLessThanOrEqual(TETO_DE_NOS);
-  });
+  // `timeout` NAO e assercao de tempo (CLAUDE.md §8): existe para o caso travar. Sozinho ~1,2 s; na
+  // suite, a disputa entre os workers do Vitest o levava ao limite padrao de 5 s (medido 2026-09-30).
+  }, 20_000);
 });

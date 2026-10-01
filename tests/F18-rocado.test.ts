@@ -151,7 +151,9 @@ describe('F18 (b) — com terra ao alcance: produz, para, e volta', () => {
     // ela no tick exato da chegada.
     expect(serie[VOLTOU - 1]).toBe(RENDIMENTO);
     expect(serie[VOLTOU]).toBe(RENDIMENTO + 1);
-  });
+  // `timeout` NAO e assercao de tempo (CLAUDE.md §8): existe para o caso travar. Sozinho ~1,2 s; na
+  // suite, a disputa entre os workers do Vitest o levava ao limite padrao de 5 s (medido 2026-09-30).
+  }, 20_000);
 
   it('o patamar e o campo vazio, e nao a gaveta cheia nem o caminho cortado', () => {
     // Um patamar por gaveta cheia ou estrada faltando contaria a mesma historia

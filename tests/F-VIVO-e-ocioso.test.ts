@@ -93,7 +93,9 @@ describe('F-VIVO-e — o ocioso generico', () => {
     expect(colisoes).toBe(0);
     // ocioso aceso com o homem desenhado seria a casa com gente dentro e o homem na porta
     expect(divergencias).toBe(0);
-  });
+  // `timeout` NAO e assercao de tempo (CLAUDE.md §8): existe para o caso travar. Sozinho ~1,4 s; na
+  // suite, a disputa entre os workers do Vitest o levava ao limite padrao de 5 s (medido 2026-09-30).
+  }, 20_000);
 
   it('aceite 2: acende em esperando_insumo e em saida_cheia com o ocupante dentro', () => {
     const semInsumo = ateQue(cenarioDeSerraria(), (s) => fsmDoOcupante(s, 's1') === 'esperando_insumo'

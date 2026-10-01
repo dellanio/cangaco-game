@@ -129,7 +129,9 @@ describe('F18 — o ciclo do roceiro, tick a tick', () => {
     expect(noTick(secou)).toEqual({ tipo: COLHEITA.recurso, quantidade: 0 });
     expect(saidaDe(avancar(inicial, secou, gameData), 'f1')[COLHEITA.recurso] ?? 0)
       .toBe(RENDIMENTO);
-  });
+  // `timeout` NAO e assercao de tempo (CLAUDE.md §8): existe para o caso travar. Sozinho ~1,0 s; na
+  // suite, a disputa entre os workers do Vitest o levava ao limite padrao de 5 s (medido 2026-09-30).
+  }, 20_000);
 
   it('o tile em plantio fica reservado, e o plantio seguinte escolhe outro', () => {
     // A reserva mora no predio (`producao.plantio`), mas a pergunta e a mesma que
