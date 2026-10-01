@@ -1977,6 +1977,30 @@ a geografia já corrigida do que regravar 900 tiles depois.
       com a mesma mutação, porque comparava máscara do estado com máscara do estado.
   - **Continua aberto, fora da a:** o esgotado por tipo (nota da F18 abaixo). O campo em
     pousio e o lajedo cavado ainda dividem o marcador `esgotado`.
+  - **Aceite do esgotado por tipo (2026-10-01, pedido do operador; commit próprio antes do código):**
+    - **A regra, pura (`src/render/mapa.ts`):** tile de recurso com quantidade 0 de um tipo **com**
+      `aradura` em `data/resources.json` (as culturas; hoje `corn` e `grapes`) ganha o código
+      `emPousio`. Tile com quantidade 0 de um tipo **sem** `aradura` (lajedo, minério, árvore,
+      peixe) continua com o `esgotado`. Teste por tabela, para todo tipo do dado. Nenhum id de
+      recurso é digitado no código: quem decide é a presença do bloco `aradura`.
+    - **A cor, sem cor nova:** o `emPousio` usa a cor do terreno `campoArado` do tema, e o
+      `esgotado` continua com a dele. As duas diferem, e o teste afirma isso pelo tema.
+    - **A ponte:** `recursosVisiveis` conta `emPousio` à parte do `esgotado`.
+    - **Os roteiros:**
+      - o F18 (o roçado em pousio) afirma o pousio pela contagem `emPousio`, e não mais por
+        `esgotado`, e que o quadro do roçado tem `esgotado` 0;
+      - o F-CANA-b (a cana da vila nasce em pousio) afirma `emPousio` > 0 e `esgotado` 0 na mancha.
+      - Captura aberta do roçado: a roça em pousio sem o losango escuro.
+    - **Fecha o BUG-N** (cana em pousio parece mato cortado), pelo caminho (a) que ele mesmo
+      registrou. Sai do `BUGS.md` no commit do código.
+    - **Não-regressão:** os roteiros e testes que contam `esgotado` (F-T2a, F-TR, F-D3; os testes de
+      esgotamento da pedreira e da mina) continuam verdes, porque o recurso cavado segue `esgotado`.
+    - **Testes que mudam junto, sem afrouxar:**
+      - `tests/F-T2a-recursos.test.ts`: as cores passam a ter os tipos + 3 códigos (0, `esgotado` e
+        `emPousio`). A árvore cortada continua `esgotado`, e o milho em pousio passa a ser
+        `emPousio`;
+      - `tests/F21b-mina-esgota.test.ts`: a tabela amputada ganha o campo novo.
+
 - **Nota herdada da F18 (2026-09-24, medida na tela)**: hoje **todo tile de
   quantidade zero divide um código só** (`esgotado`, em `render/mapa.ts`), então
   o campo em pousio e o lajedo já cavado desenham o **mesmo marcador escuro** —
