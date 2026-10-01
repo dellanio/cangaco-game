@@ -6105,6 +6105,15 @@ operador no pedido, e o `git grep` na `main` não acha nenhuma delas. **Só rend
   4. **troca do roteiro do plano:** a pedreira e o moinho saem. A oficina cobre os dois degraus da
      tela (o ícone e o quadrado), e o degrau do PNG `pilha` fica no teste puro, porque o manifesto
      não tem nenhuma pilha desenhada.
+- **ENTREGUES (2026-10-01), a D-TELA-03a e a D-TELA-03b, num commit de código só.** O arquivo puro, o
+  `preload` e o roteiro são comuns aos dois; os aceites foram em commits separados, antes.
+  - **A placa sob o ícone (decisão de apresentação, pela medida):** a primeira captura mostrou o
+    ícone do HUD sumindo. Ele é traço creme (média RGB 233, 213, 167, feito para o painel escuro):
+    desaparece na camisa branca do serf, e na grama vira borrão. O ícone passa a ir sobre uma placa
+    escura (`COR_DA_PLACA_DO_ICONE`, a mesma `#2c1d12` do fundo do texto da carga e do contorno do
+    quadrado), na carga e na pilha. A segunda captura lê a tábua no serf e nas pilhas.
+  - **Para o operador ver jogando:** as quatro pilhas do armazém (F-VIVO-a) também passaram a
+    mostrar o ícone (tábua, pedra e ouro), e não mais o quadrado de cor.
 
 ### F34 — Condições de vitória e derrota (escaramuça)
 - **ENTREGUE (2026-09-28, sessão autônoma; plano em `docs/planos/2026-09-28-A16-F34-fim.md`).**

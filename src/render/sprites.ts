@@ -8,6 +8,8 @@ import manifestoJson from '../../assets/manifest.json';
 import type { Manifesto } from './manifesto';
 import { chaveDeTextura } from './manifesto';
 import { urlsDeSprites } from './sprites-urls';
+import { chaveDoIcone, entradasDosIcones } from './icone-da-mercadoria';
+import type { IconesDeMercadoria } from './icone-da-mercadoria';
 
 /**
  * O `as unknown as` existe porque o TypeScript infere `number[]` para os campos
@@ -56,4 +58,21 @@ export function texturasParaCarregar(
 export function prediosSemArteDaBusca(busca: string): ReadonlySet<string> {
   const valor = new URLSearchParams(busca).get('semArte') ?? '';
   return new Set(valor.split(',').map((id) => id.trim()).filter((id) => id !== ''));
+}
+
+/** D-ARTE-01 — os icones de mercadoria do mesmo manifesto (`icones.mercadorias`). */
+export const iconesDoJogo: IconesDeMercadoria | undefined =
+  (manifestoJson as unknown as { icones?: { mercadorias?: IconesDeMercadoria } }).icones?.mercadorias;
+
+/** D-TELA-03a — os icones que o `preload()` enfileira, na chave `icone:<mercadoria>:mercadoria`.
+ *  Como em `texturasParaCarregar`, so o que o bundler resolveu: o resto fica no texto ou no
+ *  quadrado, que e o comportamento normal (§9). */
+export function texturasDosIcones(
+  icones: IconesDeMercadoria | undefined = iconesDoJogo,
+  urls: Readonly<Record<string, string>> = urlsDeSprites,
+): TexturaParaCarregar[] {
+  return entradasDosIcones(icones).flatMap(([id, icone]) => {
+    const url = urls[icone.arquivo];
+    return url ? [{ chave: chaveDoIcone(id), url }] : [];
+  });
 }

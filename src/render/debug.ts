@@ -40,7 +40,10 @@ export interface PilhaNoDebug {
   readonly gaveta: GavetaDaPilha;
   readonly mercadoria: string;
   readonly n: number;
+  /** O PNG `pilha` da mercadoria (F-VIVO-a). */
   readonly sprite: boolean;
+  /** D-TELA-03b — o que desenhou a unidade da pilha: o PNG `pilha`, o icone da mercadoria ou o quadrado. */
+  readonly fonte: 'pilha' | 'icone' | 'quadrado';
 }
 
 /** F-VIVO-b — o quadro de trabalho desenhado, como o roteiro o le. */

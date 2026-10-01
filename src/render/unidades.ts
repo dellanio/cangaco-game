@@ -42,11 +42,12 @@ import {
 } from './marcador-de-fome';
 import { nomeDaUnidade } from './nome-de-unidade';
 import { rotuloDaCarga } from './rotulo-da-carga';
+import { COR_DA_PLACA_DO_ICONE, marcaDaCarga } from './icone-da-mercadoria';
 import { corDoBando } from './cor-do-bando';
 import { direcoesDoTipo } from './direcoes-de-sprite';
 import { direcaoDoPasso, spriteDaUnidade, POSE_PARADO } from './manifesto';
 import type { Direcao } from './manifesto';
-import { manifestoDoJogo } from './sprites';
+import { iconesDoJogo, manifestoDoJogo } from './sprites';
 import { posicaoDaUnidade } from '../sim/selectors';
 import { fracaoDeCondicao } from '../sim/condicao';
 import { unidadesInvisiveis } from './visibilidade';
@@ -71,8 +72,11 @@ export interface UnidadeRenderizada {
   /** C-IA-03c — o lado da unidade e a cor de bando com que o rotulo foi pintado. */
   readonly lado: number;
   readonly corDoBando: string;
-  /** BUG-O — o texto DESENHADO sobre a carga (nome do tema), ou null. */
+  /** BUG-O — o nome do tema da carga, ou null. Com icone (D-TELA-03a) o texto nao se desenha,
+   *  mas o nome continua aqui: e o que o jogador leria. */
   readonly rotuloDaCarga: string | null;
+  /** D-TELA-03a — como a carga foi desenhada: `icone` (D-ARTE-01) ou `texto` (o BUG-O); null sem carga. */
+  readonly marcaDaCarga: 'icone' | 'texto' | null;
   /**
    * F18f — o quanto o desenho sai do centro do tile, em px de mundo. Nao e posicao de
    * jogo: `gx/gy` continuam sendo o tile, e e por eles que os roteiros medem caminho e
@@ -135,6 +139,10 @@ const SALTO_MAXIMO_EM_TILES = 2;
  */
 const ALTURA_DO_NOME_EM_LADOS = 0.6;
 
+/** D-TELA-03a — o lado do icone da carga, em multiplos do lado da unidade: 24 px num lado de 32,
+ *  o tamanho do arquivo do HUD. Apresentacao, nao balanceamento. */
+const LADO_DO_ICONE_DA_CARGA_EM_LADOS = 0.75;
+
 const cor = (hex: string): number => Phaser.Display.Color.HexStringToColor(hex).color;
 
 /** A cor do marcador de fome vem do tema por NOME da paleta (`marcadores.fome.cor`). */
@@ -151,6 +159,10 @@ interface Desenhado {
   direcao: Direcao;
   readonly nome: Phaser.GameObjects.Text;
   readonly marcadorDeCarga: Phaser.GameObjects.Text;
+  /** D-TELA-03a — o icone da carga e a placa escura sob ele, criados na primeira carga com icone;
+   *  memoria de render. */
+  iconeDaCarga: Phaser.GameObjects.Image | null;
+  placaDoIcone: Phaser.GameObjects.Rectangle | null;
   readonly marcadorDeFome: Phaser.GameObjects.Text;
 }
 
@@ -194,7 +206,7 @@ export function criarCamadaDeUnidades(
     marcadorDeFome.setOrigin(0.5, 0.5);
     marcadorDeFome.setVisible(false);
     const container = cena.add.container(0, 0, [retangulo, marcadorDeCarga, marcadorDeFome]);
-    return { container, retangulo, imagem: null, direcao: 's', nome: rotulo, marcadorDeCarga, marcadorDeFome };
+    return { container, retangulo, imagem: null, direcao: 's', nome: rotulo, marcadorDeCarga, iconeDaCarga: null, placaDoIcone: null, marcadorDeFome };
   }
 
   /** F-SPR — troca o retangulo pelo sprite quando a arte resolve, e volta quando nao. */
@@ -216,6 +228,28 @@ export function criarCamadaDeUnidades(
     item.imagem.setFlipX(sprite.espelhar);
     item.imagem.setVisible(true);
     return sprite.chave;
+  }
+
+  /** D-TELA-03a — a carga: o icone da mercadoria quando existe, senao o texto do BUG-O (o nome
+   *  do tema, nunca o id da sim). Sem carga, os dois se apagam. */
+  function desenharCarga(item: Desenhado, carga: string): 'icone' | 'texto' {
+    const marca = marcaDaCarga(carga, iconesDoJogo, (chave) => cena.textures.exists(chave), rotuloDaCarga);
+    item.marcadorDeCarga.setVisible(marca.como === 'texto');
+    item.marcadorDeCarga.setText(marca.como === 'texto' ? marca.rotulo : '');
+    if (marca.como === 'icone') {
+      if (item.iconeDaCarga === null) {
+        const ladoDaPlaca = lado * LADO_DO_ICONE_DA_CARGA_EM_LADOS + 4;
+        item.placaDoIcone = cena.add.rectangle(0, -lado * ALTURA_DA_CARGA_EM_LADOS, ladoDaPlaca, ladoDaPlaca, COR_DA_PLACA_DO_ICONE, 1);
+        item.iconeDaCarga = cena.add.image(0, -lado * ALTURA_DA_CARGA_EM_LADOS, marca.chave);
+        item.container.add([item.placaDoIcone, item.iconeDaCarga]);
+      } else if (item.iconeDaCarga.texture.key !== marca.chave) {
+        item.iconeDaCarga.setTexture(marca.chave);
+      }
+      item.iconeDaCarga.setDisplaySize(lado * LADO_DO_ICONE_DA_CARGA_EM_LADOS, lado * LADO_DO_ICONE_DA_CARGA_EM_LADOS);
+    }
+    item.iconeDaCarga?.setVisible(marca.como === 'icone');
+    item.placaDoIcone?.setVisible(marca.como === 'icone');
+    return marca.como;
   }
 
   /**
@@ -298,14 +332,17 @@ export function criarCamadaDeUnidades(
         item.container.setVisible(visivel);
         item.nome.setVisible(visivel);
         const carga = unidade.fsmData.carga ?? null;
-        // BUG-O: o nome do tema, nunca o id da sim
-        item.marcadorDeCarga.setText(carga === null ? '' : rotuloDaCarga(carga));
-        item.marcadorDeCarga.setVisible(carga !== null);
+        const marca = carga === null ? null : desenharCarga(item, carga);
+        if (marca === null) {
+          item.marcadorDeCarga.setVisible(false);
+          item.iconeDaCarga?.setVisible(false);
+          item.placaDoIcone?.setVisible(false);
+        }
         const comFome = temMarcadorDeFome(unidade);
         item.marcadorDeFome.setVisible(comFome);
         renderizadas.push({
           id, tipo: unidade.tipo, gx: posicao.gx, gy: posicao.gy,
-          gxDesenhado: desenhada.gx, gyDesenhado: desenhada.gy, fsm: unidade.fsm, lado: unidade.lado, corDoBando: corDoBando(unidade.lado), carga, rotuloDaCarga: carga === null ? null : rotuloDaCarga(carga),
+          gxDesenhado: desenhada.gx, gyDesenhado: desenhada.gy, fsm: unidade.fsm, lado: unidade.lado, corDoBando: corDoBando(unidade.lado), carga, rotuloDaCarga: carga === null ? null : rotuloDaCarga(carga), marcaDaCarga: marca,
           deslocamentoPx: { x: desvio.x, y: desvio.y },
           marcadorDeFome: comFome, fracaoDeCondicao: fracaoDeCondicao(unidade),
           nome: item.nome.text, larguraDoRotuloPx: item.nome.width, visivel,

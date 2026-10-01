@@ -27,7 +27,7 @@ import type { PilhaDesenhada } from '../pilhas';
 import { areaDoTrabalho, quadroDaEscola, quadroDaFumaca, quadroDeTrabalho, quadroOcioso } from '../trabalho';
 import type { QuadroDeTrabalho } from '../trabalho';
 import { caixaDoSinalDePausado, temSinalDePausado, TEXTO_DO_SINAL_DE_PAUSADO } from '../sinal-de-pausado';
-import { CASO_DO_PREDIO, ESTADO_DA_PILHA, ID_DA_FUMACA, ID_DO_OCIOSO, LACO_DA_ESCOLA } from '../manifesto-camadas';
+import { CASO_DO_PREDIO, ID_DA_FUMACA, ID_DO_OCIOSO, LACO_DA_ESCOLA } from '../manifesto-camadas';
 import { medidorDaObra } from '../medidor-obra';
 import type { LinhaDoMedidor } from '../medidor-obra';
 import { canteiroDaObra, chaveDoCanteiro } from '../nivelamento-obra';
@@ -57,7 +57,9 @@ import {
   ALFA_DO_ESTAGIO, escalaDoPlaceholder, especiesDaVegetacao, estadoDeCrescimento, estagioDaCultura,
   type EstadoDeCrescimento, type EstagioDaCultura,
 } from '../crescimento';
-import { manifestoDoJogo, prediosSemArteDaBusca, texturasParaCarregar } from '../sprites';
+import { iconesDoJogo, manifestoDoJogo, prediosSemArteDaBusca, texturasDosIcones, texturasParaCarregar } from '../sprites';
+import { COR_DA_PLACA_DO_ICONE, fonteDaPilha } from '../icone-da-mercadoria';
+import type { FonteDaPilha } from '../icone-da-mercadoria';
 import { escalaDoSprite, regraDeLarguraDoManifesto, regraDoManifesto } from '../escala-predio';
 import { centroDesenhado, unidadesNaCaixa, unidadesNoPonto } from '../acerto';
 import { LADO_DA_UNIDADE_EM_TILES as LADO_DO_SOLDADO } from '../grid';
@@ -288,6 +290,8 @@ export class WorldScene extends Phaser.Scene {
     for (const textura of texturasParaCarregar(manifestoDoJogo, undefined, this.prediosSemArte)) {
       this.load.image(textura.chave, textura.url);
     }
+    // D-TELA-03a/03b: os icones de mercadoria, para a carga do serf e a pilha sem PNG
+    for (const textura of texturasDosIcones()) this.load.image(textura.chave, textura.url);
   }
 
   create(): void {
@@ -1490,7 +1494,8 @@ export class WorldScene extends Phaser.Scene {
       const pilhas = pilhasDoPredio(predio, DADOS_DAS_PILHAS);
       if (pilhas.length > 0) {
         pilhasNoDebug[id] = pilhas.map((x) => ({
-          gaveta: x.gaveta, mercadoria: x.mercadoria, n: x.n, sprite: this.texturaDaPilha(x.mercadoria) !== null,
+          gaveta: x.gaveta, mercadoria: x.mercadoria, n: x.n,
+          ...this.fonteNoDebug(x.mercadoria),
         }));
       }
       const chaveDasPilhas = pilhas.map((x) => `${x.mercadoria}:${x.n}`).join(',');
@@ -1807,10 +1812,16 @@ export class WorldScene extends Phaser.Scene {
     return { x: larguraPx / 2 - w * entrada.anchor[0], y: alturaPx - h * entrada.anchor[1], w, h };
   }
 
-  /** F-VIVO-a — a textura da unidade de uma mercadoria, ou `null` (quadrado do §9). */
-  private texturaDaPilha(mercadoria: string): string | null {
-    const chave = chaveDeTextura('pilha', mercadoria, ESTADO_DA_PILHA);
-    return this.textures.exists(chave) ? chave : null;
+  /** F-VIVO-a — a textura da unidade de uma mercadoria. D-TELA-03b: o PNG `pilha`, senao o icone
+   *  da mercadoria, senao o quadrado do §9 (`icone-da-mercadoria.ts`). */
+  private fonteDaPilha(mercadoria: string): FonteDaPilha {
+    return fonteDaPilha(mercadoria, iconesDoJogo, (chave) => this.textures.exists(chave));
+  }
+
+  /** D-TELA-03b — a fonte da pilha para a ponte: `sprite` continua dizendo "PNG de pilha" (F-VIVO-a). */
+  private fonteNoDebug(mercadoria: string): { readonly sprite: boolean; readonly fonte: 'pilha' | 'icone' | 'quadrado' } {
+    const { fonte } = this.fonteDaPilha(mercadoria);
+    return { sprite: fonte === 'pilha', fonte };
   }
 
   /** F-VIVO-c — a textura do animal na idade e no quadro, ou `null` (losango do §9). */
@@ -1915,19 +1926,26 @@ export class WorldScene extends Phaser.Scene {
     for (const pilha of pilhas) {
       const px = caixa.x + caixa.w * pilha.ponto[0];
       const py = caixa.y + caixa.h * pilha.ponto[1];
-      const textura = this.texturaDaPilha(pilha.mercadoria);
+      const fonte = this.fonteDaPilha(pilha.mercadoria);
       const cor = Phaser.Display.Color.HexStringToColor(corDaPilha(pilha.mercadoria)).color;
       for (const [dx, dy] of posicoesNaPilha(pilha.n)) {
         const x = px + dx * lado;
         const y = py + dy * lado - lado / 2;
-        if (textura !== null) {
-          const imagem = this.add.image(x, y + lado / 2, textura);
+        if (fonte.fonte === 'icone') {
+          // o icone do HUD e traco claro feito para o painel escuro: vai sobre uma placa da cor do
+          // contorno do quadrado, ou some na grama (medido na captura da D-TELA-03b)
+          const placa = this.add.rectangle(x, y, lado - 1, lado - 1, COR_DA_PLACA_DO_ICONE, 1);
+          const icone = this.add.image(x, y, fonte.chave);
+          icone.setDisplaySize(lado - 3, lado - 3);
+          objetos.push(placa, icone);
+        } else if (fonte.fonte === 'pilha') {
+          const imagem = this.add.image(x, y + lado / 2, fonte.chave);
           imagem.setOrigin(0.5, 1);
           imagem.setDisplaySize(lado, lado * (imagem.height / imagem.width));
           objetos.push(imagem);
         } else {
           const unidade = this.add.rectangle(x, y, lado - 1, lado - 1, cor, 1);
-          unidade.setStrokeStyle(1, 0x2c1d12);
+          unidade.setStrokeStyle(1, COR_DA_PLACA_DO_ICONE);
           objetos.push(unidade);
         }
       }
