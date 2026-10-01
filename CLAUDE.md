@@ -418,6 +418,24 @@ no PROGRESS entra no commit seguinte à avaliação, com o hash que o selo mostr
      religar. A decisão é uma função pura, e o teste a cobre por tabela;
   5. grava `test-output/shot-todos.json` com o commit, a porta, cada roteiro (saída, segundos), as
      falhas e o motivo da parada. Sai 0 só se todos saíram 0.
+  6. **(emenda de 2026-10-01, ressalva do avaliador; antes do código)** o teste não escreve por cima
+     da evidência real: `CANGACO_SHOT_TODOS_SAIDA` troca o arquivo do resumo, e o teste do aceite 3
+     grava num diretório temporário. O `test-output/shot-todos.json` fica byte a byte igual antes e
+     depois do teste (ou continua sem existir, se não existia).
+- **O `shot.js` encerra o PRÓPRIO vite órfão (decisão do operador, 2026-10-01; aceite antes do
+  código).** Ao subir, ele grava o PID do vite, a porta e o próprio PID num registro por porta. Na
+  partida seguinte, com a porta ocupada, ele encerra o processo **só** se valerem as três: o PID é o
+  do registro; a linha de comando dele ainda é `vite … --port <a porta dele>`; e o `shot.js` que o
+  subiu já não existe (o vite é órfão, e não de uma corrida em curso). Qualquer outro processo
+  continua intocável, e a porta ocupada por ele segue recusada como hoje. O `shot:todos` passa pela
+  mesma liberação antes da conferência da porta. **Aceite:**
+  1. a regra pura, por tabela: o registro certo, com vite na porta dele e o dono morto, encerra. Não
+     encerra se a porta for outra, se a linha de comando não for vite, se o dono estiver vivo ou se
+     não houver registro;
+  2. **um roteiro interrompido não deixa a porta presa**: um `shot.js` real é encerrado à força
+     depois de subir o vite, e o vite fica órfão escutando a porta. A liberação da partida seguinte
+     (a mesma função que o `shot.js` chama) encerra o órfão, e a porta fica livre;
+  3. um servidor que não é o vite do registro, na porta, não é encerrado: ele continua escutando.
 - **Push só depois do `verify` completo verde.** Se ele falhar e o `verify:rapido` de cada commit
   passou, acha-se o commit culpado com `git bisect` local (`git bisect run npm run verify`), sem
   empurrar nada antes.
