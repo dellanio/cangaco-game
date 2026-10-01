@@ -396,6 +396,25 @@ teste rodando. Por isso a `test:longo` é a **última** coisa antes do avaliador
 depois dela, inclusive de PROGRESS, invalida o selo e pede uma nova corrida. O registro da corrida
 no PROGRESS entra no commit seguinte à avaliação, com o hash que o selo mostrou.
 
+**As camadas de teste (decisão do operador, 2026-10-01).**
+
+| camada | o que roda | quando |
+|---|---|---|
+| `npm run verify:rapido` | typecheck + lint + `vitest related` nos arquivos alterados (staged, não staged e novos) | **cada commit** |
+| `npm run verify` (completo) | typecheck + lint + validate:data + a suíte inteira + a transladada | **fim da leva e todo push** |
+| `npm run test:longo` + todos os roteiros | a suíte longa, sozinha, com o selo; `npm run shot` de cada roteiro | **fechamento da leva** |
+
+- **Push só depois do `verify` completo verde.** Se ele falhar e o `verify:rapido` de cada commit
+  passou, acha-se o commit culpado com `git bisect` local (`git bisect run npm run verify`), sem
+  empurrar nada antes.
+- O `verify:rapido` grava `.verify-rapido-ok` e **nunca** o `.verify-ok`. Marcar feature em
+  `test-results.json` continua exigindo o `verify` completo (o portão abaixo recusa o selo rápido).
+- **Aceite das camadas:** (1) sem arquivo alterado que o `vitest related` alcance, o rápido roda 0
+  testes e sai 0; (2) mudar um arquivo de `src/sim` roda os testes que o importam, e menos que a
+  suíte inteira; (3) o rápido não cria o `.verify-ok`, e o portão recusa escrever no
+  `test-results.json` só com o selo rápido; (4) o tempo do rápido num commit típico e quantos testes
+  ele roda vão para o PROGRESS, como número da corrida.
+
 **O portão:** `test-results.json` só aceita escrita depois de `npm run verify`
 passar, e o selo vale 15 minutos. Isso é hook, não pedido educado — o agente não
 consegue marcar feature como pronta sem ter verificado.
