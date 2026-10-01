@@ -16955,7 +16955,7 @@ B D-TELA-LUZ-RELEVO, aceite 1             | NEEDS_WORK        | o sha256 contra 
 1. **D-TELA-LUZ-RELEVO (luz do relevo): a chave voltou a false** (`726bdb0`), e a comparação foi
    refeita (método `6c4b260`, resultado `235e737`). **Medido:** 176 de 205 capturas com par têm o
    sha256 igual. 20 caíram noutro tick e 2 tiveram outra câmera. 7 diferem com a mesma câmera e o
-   mesmo tick: 5 dos 6 instáveis conhecidos, mais F11a-2 (relógio andando, alfa diferente) e F24c-1
+   mesmo tick: 5 dos 6 instáveis conhecidos, mais F11a-2 (a interpolação rodando a 1x; relógio andando, alfa diferente) e F24c-1
    (a ajuda: pausada, alfa 1). Na F24c-1, 88 136 px diferem, todos dentro da caixa do painel de
    ajuda. Que seja a rolagem do painel, e não o relevo, é **hipótese**; a imagem não foi aberta.
    **10 roteiros ficaram sem par por erro meu de montagem:** o worktree do lado B não tinha os
@@ -16970,7 +16970,7 @@ B D-TELA-LUZ-RELEVO, aceite 1             | NEEDS_WORK        | o sha256 contra 
    - O worktree `../cangaco-game-relevo-base` ficou de pé, destacado, com as mudanças não
      commitadas. Ele é descartável e não tem commit; apagar fica com o operador.
 2. **Captura: o relógio NÃO pausa, e a investigação está encerrada.** Os 6 instáveis estão
-   registrados no item. A caixa 8×8 da F24c-2 não entra. Commit `235e737`.
+   registrados no item. A caixa 8×8 da F24c-2 (escudo dez, Casa do Gibão) não entra. Commit `235e737`.
 3. **O `shot.js` encerra o próprio vite órfão.** Aceite `9228b74`, emenda `f29724d`, código
    `abc8242`. O vite sobe pelo node (sem `npx` nem shell), e o registro por porta guarda o vite e o
    dono. A liberação encerra só o PID do registro, só se a linha de comando ainda for `vite --port
@@ -17008,5 +17008,21 @@ B D-TELA-LUZ-RELEVO, aceite 1             | NEEDS_WORK        | o sha256 contra 
   branca do serf e na grama. Agora ele vai sobre uma placa escura, na mesma cor do fundo do texto da
   carga. A segunda captura lê o ícone (recorte ampliado aberto).
 - **Mudança que o operador vai ver jogando:** as pilhas do armazém também mostram o ícone.
-- **Não-regressão:** os roteiros C-COMIDA-01d e F-VIVO-a saíram 0. Os testes do BUG-O e da
+- **Não-regressão:** os roteiros C-COMIDA-01d (o painel do grupo de comida) e F-VIVO-a (as pilhas) saíram 0. Os testes do BUG-O e da
   F-VIVO-a deram 11/11.
+
+### Fechamento da noite e avaliação (`39d89be..f3955e0`)
+- `verify` completo sobre `bf2844e`: verde, 2 171 testes; transladada com 2 169 e 5 pulados. O `f3955e0` só acrescenta as chaves.
+- `test:longo` sozinha: verde, 22 s, **selo do `f3955e0`**; `selo:longo` OK.
+- `npm run shot:todos` na porta 5177: **90/90 com saída 0**, 2 259 s de roteiro, commit `f3955e0`.
+- **Avaliador: PASS.** Ele rodou o `selo:longo` primeiro, e o selo bateu. A ordem aceite → código foi conferida nos cinco pares, e não há nada em `src/sim/` nem em `data/`. Ele abriu as 3 capturas da D-TELA-03. A refação do relevo está fiel ao critério escrito, e a chave continua false.
+- Ressalvas, nenhuma bloqueante:
+  - a placa do ícone na D-TELA-03a (ícone da carga) cobre o tronco do serf, como o texto já cobria;
+  - o ícone da pilha na D-TELA-03b (pilha com ícone) tem ~10 px e só se lê com zoom (legibilidade 3);
+  - o roteiro olha a cada 2 ticks; o "mesmo tick" da retirada está afirmado no `step`;
+  - siglas sem nome ao lado: corrigidas acima.
+  
+  O assunto do `235e737` fica como está, porque não se reescreve histórico.
+- **Com o operador:**
+  - o vite órfão da 5176 (PID 43464): não tem registro, e por isso a regra nova não o encerra;
+  - o worktree `../cangaco-game-relevo-base`, com as mudanças não commitadas.
