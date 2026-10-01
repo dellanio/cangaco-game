@@ -5897,7 +5897,7 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
 - **Fora do escopo:** o tick de quem captura depois de um passo despausado por tempo. A captura
   segue num tick que varia, e a medida diz quantos são.
 - **Aceite:**
-  1. a `fixarCamera` põe o scroll pedido, e a câmera lida pela ponte devolve o mesmo valor;
+  1. a `fixarCamera` põe o scroll pedido, e a câmera lida pela ponte devolve o mesmo valor; **coberto (2026-10-01):** `tools/shots/D-TELA-CAPTURA-DETERMINISTICA.js`;
   2. todos os roteiros rodam duas vezes com saída 0. Em cada captura, câmera e tick vêm em
      `quadros`, no `<roteiro>-shot.json`;
   3. **duas corridas do mesmo roteiro dão o mesmo hash** em toda captura com a mesma câmera e o

@@ -16864,3 +16864,13 @@ antes do código. A emenda troca "guarda no fonte", que é varrer texto, por com
     nada. Sai 0, grava o `.verify-rapido-ok` (`arquivos` 0, `testes` 0) e não cria o `.verify-ok`.
 - **Provas de que acusam** (sondas de uma corrida, revertidas): com o hook aceitando qualquer tipo de
   selo, os aceites 1 e 2 reprovam; com o `verify:rapido` gravando o `.verify-ok`, o aceite 3 reprova.
+
+### Item 3: o teste do aceite 1 da captura determinística (`fixarCamera`)
+O aceite 1 já estava escrito no item (`d0577f1`). A `fixarCamera` só existe no jogo rodando, então o
+teste é um roteiro: `tools/shots/D-TELA-CAPTURA-DETERMINISTICA.js`.
+- Os alvos são derivados do mapa e do canvas, dentro dos limites da câmera. O roteiro afirma: os dois
+  eixos de uma vez caem exatos; pedir só o `scrollY` não mexe no `scrollX`; e dois quadros depois a
+  câmera continua onde foi posta. Porta 5176, saída 0.
+- **Prova de que acusa** (sonda de uma corrida, revertida): com a `fixarCamera` sem efeito no
+  `scrollX`, o roteiro reprova ("a câmera deveria estar em {2391,1868}, veio {1602,1868}").
+- Item ainda sem chave: o aceite 3 continua reprovado e espera a decisão do operador.
