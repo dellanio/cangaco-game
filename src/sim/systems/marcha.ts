@@ -187,10 +187,18 @@ export function aplicarMoveUnits(state: GameState, comando: MoveUnits, dados: Ga
 }
 
 /**
- * `feitos`: quem a troca mutua (BUG-T) ja moveu neste tick, alem de `u`. A `sistemaDaMarcha` nao
- * o processa de novo, para ninguem andar dois passos num tick (emenda 2 do plano do BUG-T).
+ * O tick da marcha, para a troca mutua (BUG-T) dar exatamente +1 de progresso a cada um por tick:
+ * - `feitos`: quem a troca ja moveu neste tick, alem de `u`. A `sistemaDaMarcha` nao o processa
+ *   de novo;
+ * - `processados`: quem ja teve o passo deste tick (o +1 dele ja entrou);
+ * - `prontos`: quem, neste tick, completou o passo da troca e ficou segurado em `custo - 1`
+ *   esperando o parceiro. So esse pode ser movido pela chegada de quem vem depois na ordem.
  */
-function passoMarchando(state: GameState, u: Unidade, dados: GameData, feitos: Set<string>): ResultadoDeSistema {
+interface TickDaMarcha { readonly feitos: Set<string>; readonly processados: Set<string>; readonly prontos: Set<string> }
+
+function passoMarchando(state: GameState, u: Unidade, dados: GameData, tick: TickDaMarcha): ResultadoDeSistema {
+  tick.processados.add(u.id);
+  const { feitos } = tick;
   const alvo = u.fsmData.alvoTile;
   const final = u.fsmData.direcaoFinal;
   // C-COMBATE-01a — quem chega vira para a frente da formacao
@@ -266,7 +274,8 @@ function passoMarchando(state: GameState, u: Unidade, dados: GameData, feitos: S
   // anda ocupa o tile para onde vai) e, quando os DOIS terminam o passo, trocam de tile juntos
   // (ninguem entra no tile que um deixou antes de o outro chegar). A ordem da lista nao importa
   const parceiro = atual.fsm === FSM_MARCHANDO ? trocaMutuaCom(state, atual, dados) : null;
-  if (parceiro !== null && (atual.fsmData.progresso ?? 0) === 0 && (parceiro.fsmData.progresso ?? 0) === 0
+  if (parceiro !== null && !tick.processados.has(parceiro.id)
+    && (atual.fsmData.progresso ?? 0) === 0 && (parceiro.fsmData.progresso ?? 0) === 0
     && !terminaOPasso(state, atual, dados)) {
     const larga = (x: Unidade): Unidade => {
       const { bloqueado: _b, ...semEspera } = x.fsmData;
@@ -276,7 +285,13 @@ function passoMarchando(state: GameState, u: Unidade, dados: GameData, feitos: S
     feitos.add(parceiro.id);
     return { state: comUnidade(comUnidade(state, larga(atual)), larga(parceiro)), events: [] };
   }
-  if (parceiro !== null && terminaOPasso(state, atual, dados) && terminaOPasso(state, parceiro, dados)) {
+  // o parceiro ja processado neste tick so conta como pronto se completou o passo NESTE tick
+  // (`prontos`); o nao processado ainda vai receber o +1 dele, e `terminaOPasso` o inclui. Sem
+  // isto, o parceiro que andou +1 antes era movido de novo, e o passo fechava um tick mais cedo
+  const parceiroPronto = parceiro !== null && (tick.processados.has(parceiro.id)
+    ? tick.prontos.has(parceiro.id)
+    : terminaOPasso(state, parceiro, dados));
+  if (parceiro !== null && terminaOPasso(state, atual, dados) && parceiroPronto) {
     const chega = (x: Unidade): Unidade => {
       const destino = x.fsmData.caminho?.[0] as TileDeGrid;
       const { bloqueado: _b, ...semEspera } = x.fsmData;
@@ -300,6 +315,9 @@ function passoMarchando(state: GameState, u: Unidade, dados: GameData, feitos: S
   }
   // F28a: a unidade vira para onde anda (frente/flanco/costas e o arco do arqueiro)
   const andou = viradaPeloPasso(noTile(atual), andar(state, atual, dados, parceiro?.id ?? null));
+  if (parceiro !== null && terminaOPasso(state, atual, dados) && andou.gx === atual.gx && andou.gy === atual.gy) {
+    tick.prontos.add(atual.id);
+  }
   if (chegou(andou) && andou.fsmData.replanejar === true) {
     // C-MOVIMENTO-02 — terminou o passo que a ordem pegou no meio: planeja no proximo tick
     const { replanejar: _r, ...resto } = andou.fsmData;
@@ -392,11 +410,11 @@ function terminaOPasso(state: GameState, u: Unidade, dados: GameData): boolean {
 /** Um tick de cada unidade marchando, em `unidades.ordem`. */
 export function sistemaDaMarcha(state: GameState, dados: GameData): ResultadoDeSistema {
   let atual = state;
-  const feitos = new Set<string>();
+  const tick: TickDaMarcha = { feitos: new Set<string>(), processados: new Set<string>(), prontos: new Set<string>() };
   for (const id of state.unidades.ordem) {
     const u = atual.unidades.porId[id];
-    if (u === undefined || u.fsm !== FSM_MARCHANDO || feitos.has(id)) continue;
-    atual = passoMarchando(atual, u, dados, feitos).state;
+    if (u === undefined || u.fsm !== FSM_MARCHANDO || tick.feitos.has(id)) continue;
+    atual = passoMarchando(atual, u, dados, tick).state;
   }
   return { state: atual, events: [] };
 }

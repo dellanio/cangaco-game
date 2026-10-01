@@ -68,30 +68,43 @@ function sobrepostos(s: GameState): string[] {
 const mover = (id: string, destino: { gx: number; gy: number }): Command => ({ type: 'MoveUnits', unidades: [id], destino });
 const pos = (s: GameState, id: string): string => `${s.unidades.porId[id]?.gx},${s.unidades.porId[id]?.gy}`;
 
-interface Troca { readonly ticks: number | null; readonly sobreposicoes: readonly string[]; readonly fim: GameState; readonly teto: number }
+interface Troca {
+  readonly ticks: number | null; readonly sobreposicoes: readonly string[]; readonly fim: GameState; readonly teto: number;
+  /** cada passo dado: em quantos ticks a unidade avancou nele, contra o custo dele */
+  readonly passos: readonly { id: string; ticks: number; custo: number }[];
+}
 
 /** `a` em `ta` e `b` em `tb`, vizinhos, cada um mandado para o tile do outro. */
 function trocar(base: GameState, ta: { gx: number; gy: number }, tb: { gx: number; gy: number }, ladoB: number, ticks: number): Troca {
   const s0 = com(base, soldado('a', LADO_DO_JOGADOR, ta), soldado('b', ladoB, tb));
   const teto = Math.max(custoDoPasso(s0.estradas, ta, tb, gameData), custoDoPasso(s0.estradas, tb, ta, gameData)) + 2;
-  let s = step(s0, [mover('a', tb), mover('b', ta)], gameData);
-  const sobreposicoes: string[] = [...sobrepostos(s)];
+  // o tick do comando ja anda (quem planeja e larga no mesmo tick): a contagem comeca nele
+  let s = s0;
+  const sobreposicoes: string[] = [];
+  const avancos: Record<string, number> = {};
+  const passos: { id: string; ticks: number; custo: number }[] = [];
   let chegou: number | null = null;
-  for (let t = 1; t <= ticks; t += 1) {
+  for (let t = 0; t <= ticks; t += 1) {
     const antes = s;
-    s = step(s, [], gameData);
+    s = step(s, t === 0 ? [mover('a', tb), mover('b', ta)] : [], gameData);
     sobreposicoes.push(...sobrepostos(s));
-    // emenda 2: cada um anda uma vez por tick (nenhum soma mais de 1 de progresso)
+    // emenda 2: cada um anda uma vez por tick. Medido pelo que a chegada nao esconde: os ticks
+    // em que a unidade AVANCOU (progresso subiu ou mudou de tile) somam exatamente o custo do
+    // passo dela. Olhar so `pd > pa + 1` era cego: a chegada zera o progresso (avaliador, leva 3)
     for (const id of ['a', 'b']) {
-      const pa = antes.unidades.porId[id]?.fsmData.progresso ?? 0;
-      const pd = s.unidades.porId[id]?.fsmData.progresso ?? 0;
-      if (pd > pa + 1) sobreposicoes.push(`t${s.tick} ${id} andou ${pd - pa} de progresso num tick`);
+      const ua = antes.unidades.porId[id];
+      const ud = s.unidades.porId[id];
+      if (ua === undefined || ud === undefined) continue;
+      const mudou = ua.gx !== ud.gx || ua.gy !== ud.gy;
+      if (mudou || (ud.fsmData.progresso ?? 0) > (ua.fsmData.progresso ?? 0)) avancos[id] = (avancos[id] ?? 0) + 1;
+      if (mudou) passos.push({ id, ticks: avancos[id] ?? 0, custo: custoDoPasso(s0.estradas, noTileDe(ua), noTileDe(ud), gameData) });
     }
     if (chegou === null && pos(s, 'a') === `${tb.gx},${tb.gy}` && pos(s, 'b') === `${ta.gx},${ta.gy}`
       && s.unidades.porId['a']?.fsm === 'ocioso' && s.unidades.porId['b']?.fsm === 'ocioso') chegou = t;
   }
-  return { ticks: chegou, sobreposicoes, fim: s, teto };
+  return { ticks: chegou, sobreposicoes, fim: s, teto, passos };
 }
+const noTileDe = (u: Unidade): { gx: number; gy: number } => ({ gx: u.gx, gy: u.gy });
 
 describe('BUG-T aceite 2 — dois do mesmo lado, cada um no tile do outro, trocam na hora', () => {
   const base = semUnidades(createInitialState(1));
@@ -101,8 +114,10 @@ describe('BUG-T aceite 2 — dois do mesmo lado, cada um no tile do outro, troca
 
   it('no campo aberto: os dois param nos tiles trocados, no tempo de um passo, sem sobreposicao', () => {
     const r = trocar(base, ta, tb, LADO_DO_JOGADOR, 200);
-    evidencia['aceite2'] = { ticks: r.ticks, teto: r.teto, sobreposicoes: r.sobreposicoes };
+    evidencia['aceite2'] = { ticks: r.ticks, teto: r.teto, sobreposicoes: r.sobreposicoes, passos: r.passos };
     expect(r.sobreposicoes).toEqual([]);
+    expect(r.passos).toHaveLength(2);
+    for (const p of r.passos) expect(p.ticks, `${p.id}: ticks do passo contra o custo`).toBe(p.custo);
     expect(r.ticks, 'a troca aconteceu').not.toBeNull();
     expect(r.ticks ?? Infinity).toBeLessThanOrEqual(r.teto);
   });
@@ -113,8 +128,10 @@ describe('BUG-T aceite 2 — dois do mesmo lado, cada um no tile do outro, troca
     expect(custoDoPasso(comEstrada.estradas, ta, tb, gameData)).not.toBe(custoDoPasso(comEstrada.estradas, tb, ta, gameData));
     for (const [nome, x, y] of [['a antes', ta, tb], ['b antes', tb, ta]] as const) {
       const r = trocar(comEstrada, x, y, LADO_DO_JOGADOR, 200);
-      evidencia[`aceite2-estrada-${nome}`] = { ticks: r.ticks, teto: r.teto, sobreposicoes: r.sobreposicoes };
+      evidencia[`aceite2-estrada-${nome}`] = { ticks: r.ticks, teto: r.teto, sobreposicoes: r.sobreposicoes, passos: r.passos };
       expect(r.sobreposicoes, nome).toEqual([]);
+      expect(r.passos, nome).toHaveLength(2);
+      for (const p of r.passos) expect(p.ticks, `${nome}, ${p.id}: ticks do passo contra o custo`).toBe(p.custo);
       expect(r.ticks, nome).not.toBeNull();
       expect(r.ticks ?? Infinity, nome).toBeLessThanOrEqual(r.teto);
     }

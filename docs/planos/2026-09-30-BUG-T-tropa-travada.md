@@ -190,3 +190,40 @@ Não muda critério nenhum; registra o que a sonda do aceite 7 mediu.
   ("os aceites 6 e 4") não se confirmou: com o "um passo por tick" (o `feitos` da
   `sistemaDaMarcha`), a ordem k = 37 não cai mais no caso 3. O caso 3 fica provado só pelo cenário
   isolado do aceite 6.
+
+## 10. Por que a extensão da vaga emparedada, e não a troca forçada do KaM (registrado em 2026-09-30, pedido do operador)
+
+- A ordem do operador foi tentar primeiro a extensão da vaga emparedada da C-MOVIMENTO-02, e trazer
+  a troca forçada do KaM (`src/units/actions/KM_UnitActionWalkTo.pas:799-802`) só se ela não
+  fechasse.
+- **Fechou:** a `vagaCruzadaCom` resolve o caso 3 (aceite 6) com a mesma regra que a família já
+  usa. Os dois trocam de VAGA, sem ninguém entrar em tile ocupado, e o conjunto de vagas não muda.
+- **A troca forçada não entrou porque:**
+  1. pede um número novo no dado (a espera de 40 ticks do KaM, `:131`, `:1076`), e número novo é
+     decisão do operador;
+  2. empurra o parado do meio para fora da vaga dele. A extensão não mexe em quem já chegou;
+  3. seria uma quarta mecânica na família. A extensão reaproveita a da C-MOVIMENTO-02.
+- **O caso 3 continua coberto em teste permanente pelo aceite 6** (cenário isolado em
+  `tests/BUG-T-troca-mutua.test.ts`), já que a varredura das 400 ordens não o exercita mais (§9).
+
+## 11. Correção depois do avaliador da leva 3 (2026-09-30): o passo fechava um tick mais cedo
+
+- **Achado (bloqueante, aceite 2 da §8):** com o parceiro já processado no tick, a chegada atômica
+  o movia de novo. O passo de custo 7 fechava em 6 ticks. O teste não via isso: olhava
+  `progresso > anterior + 1`, e a chegada zera o progresso.
+- **Conserto, sem mudar critério:**
+  - a marcha guarda quem já teve o passo deste tick (`processados`) e quem completou o passo da
+    troca neste tick e ficou segurado (`prontos`). O parceiro já processado só é movido pela
+    chegada se estiver em `prontos`, e a largada conjunta não o move de novo;
+  - o teste passou a medir, por unidade, os ticks em que ela avançou no passo contra o custo dele,
+    contando o tick do comando.
+- **Achado no caminho (medido):** com o conserto, a varredura reprovou na ordem k = 32, com 8
+  presos num ciclo de três. O u30 ia para o tile do u22 (troca mútua); o u22 não largava porque
+  o u32 reivindicava o tile do u30; o u32 não chegava porque o u30 ainda estava lá. Com parceiro
+  de troca, a largada passou a esperar só quem está de fato no tile (`temOutroMilitar`), e não
+  a reivindicação. A entrada real só acontece na troca atômica, e a chegada confere quem está lá.
+- **Prova de que acusa** (sondas de uma corrida, revertidas):
+  - sem o `prontos`, o aceite 2 reprova;
+  - **a largada física não tem prova**: revertida (para a reivindicação, ou sem a conferência),
+    os seis aceites continuam verdes, porque a ordem k = 32 deixa de se formar. A regra fica pelo
+    raciocínio do ciclo acima, e isso é **hipótese, sem teste que a exija**.

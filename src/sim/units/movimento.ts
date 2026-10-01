@@ -54,11 +54,9 @@ export function ficarOcioso(state: GameState, u: Unidade, eventos: readonly Game
  * ocupacao no INICIO do passo): quem esta no meio de um passo ocupa o tile para onde vai, e ja
  * liberou o de onde sai; quem esta parado ocupa o proprio tile. Assim a coluna flui colada.
  */
-export function militarOcupa(
-  state: GameState, tile: TileDeGrid, quem: string, dados: GameData, parceiro: string | null = null,
-): boolean {
+export function militarOcupa(state: GameState, tile: TileDeGrid, quem: string, dados: GameData): boolean {
   for (const id of state.unidades.ordem) {
-    if (id === quem || id === parceiro) continue;
+    if (id === quem) continue;
     const o = state.unidades.porId[id];
     if (o === undefined || classeDaUnidade(o.tipo, dados) !== 'militar') continue;
     const indo = o.fsmData.caminho?.[0];
@@ -228,7 +226,14 @@ export function andar(state: GameState, u: Unidade, dados: GameData, parceiro: s
   // C-MOVIMENTO-01 — o militar confere o tile ANTES de comecar o passo e espera no proprio
   // tile. Conferir so no fim o deixava desenhado a `custo - 1`, dentro do tile ocupado, e o
   // desvio o puxava de volta: o "volta ao tile anterior" da primeira partida.
-  if (militar && (u.fsmData.progresso ?? 0) === 0 && militarOcupa(state, proximo, u.id, dados, parceiro)) {
+  // BUG-T — com parceiro de troca, a largada so espera quem esta DE FATO no tile (alem dele).
+  // A reivindicacao de quem esta chegando ao tile do parceiro nao conta: a entrada so acontece
+  // na troca atomica, e a chegada confere quem esta la. Contar a reivindicacao fechava um ciclo
+  // de tres (medido, varredura do BUG-T, ordem k = 32)
+  const tomado = parceiro !== null
+    ? temOutroMilitar(state, proximo, u.id, dados, parceiro)
+    : militarOcupa(state, proximo, u.id, dados);
+  if (militar && (u.fsmData.progresso ?? 0) === 0 && tomado) {
     return esperarOuDesviar(state, u, caminho, 0, dados);
   }
   const progresso = (u.fsmData.progresso ?? 0) + 1;

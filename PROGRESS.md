@@ -16085,3 +16085,48 @@ bug sai do `BUGS.md` aqui.
 ### Erro meu, corrigido antes do commit
 - O primeiro corte do `BUGS.md` achou de novo a menção de `## Polimento` na linha 12 e duplicou
   o arquivo, o mesmo erro do BUG-Y. Refeito a partir do `HEAD` com a âncora `\n## Polimento\n`.
+
+## 2026-09-30 — Leva 4: avaliador da leva 3 (subagente evaluator) e o bloqueante do BUG-T (tropa travada), corrigido
+
+Veredito dele sobre `3b40b3e..3a470f2`: **NEEDS_WORK**, com um bloqueante, no BUG-T. Ele rodou
+typecheck, lint e validate:data (verdes) e cinco arquivos de teste isolados (todos verdes).
+
+```text
+item                                      | veredito    | achado                                                    | destino
+BUG-T aceite 2 (§8)                        | BLOQUEANTE  | com custos diferentes, o passo de custo 7 fechava em 6     | corrigido (plano §11)
+BUG-T, o teste do aceite 2                 | BLOQUEANTE  | `pd > pa + 1` cego (a chegada zera o progresso); o PROGRESS | corrigido; a linha do PROGRESS
+                                           |             | dizia "verificado" e era falso                              | da leva 3 fica errada (ver abaixo)
+BUG-T, demais pontos                       | ok          | sem sobreposição, sem preso, vagaCruzadaCom só do mesmo lado | —
+BUG-T, passo de 1 tick                     | hipótese    | inalcançável hoje (o menor custo do dado é 5)                | registrado
+comensaisSimultaneos fora do dado (F20b)   | PASS        | nenhuma garantia perdida; a invariante ficou mais estrita     | —
+BALANCE_LOG:90 cita o campo como vigente   | ressalva    | sem marca de premissa morta                                   | aberto (doc)
+a40ed44, 05ddb94, e38dd6e                  | PASS        | —                                                             | —
+190e471 C-IA-03b                           | PASS        | o comentário do timeout de 12 s saiu                          | aberto (doc)
+BUGS.md                                    | PASS        | só o BUG-N                                                    | —
+```
+
+### Correção do que a leva 3 registrou como verificado
+- A seção da leva 3 sobre o BUG-T diz "aceite 2: nenhum passo de mais de 1 de progresso por tick".
+  **Era falso**: a medida não via o caso (avaliador). O passo fechava um tick mais cedo quando o
+  parceiro era processado antes, na ordem.
+
+### Verificado (plano do BUG-T, §11)
+- `src/sim/systems/marcha.ts`: `processados` e `prontos` no tick da marcha. O parceiro já processado
+  só é movido pela chegada se completou o passo neste tick; a largada conjunta não o move de novo.
+- `src/sim/units/movimento.ts`: com parceiro de troca, a largada espera só quem está de fato no tile.
+  Isso saiu de um ciclo de três medido na varredura (ordem k = 32, 8 presos) depois do primeiro
+  conserto.
+- `tests/BUG-T-troca-mutua.test.ts`: o aceite 2 mede, por unidade, os ticks em que ela avançou no
+  passo contra o custo do passo, contando o tick do comando. **Vermelho sem o conserto**
+  ("a: ticks do passo contra o custo: expected 6 to be 7"). Agora `test-output/BUG-T.json`, aberto,
+  dá 7/7 e 7/7 no campo; com estrada, 5/5 e 7/7 nos dois sentidos. Varredura: 0 de 400 presos,
+  0 sobreposições.
+- Provas de que acusam: sem o `prontos`, o aceite 2 reprova. **A largada física não tem prova**:
+  revertida, os 6 aceites continuam verdes, porque a ordem k = 32 não se forma. Fica como hipótese,
+  sem teste que a exija.
+- `verify` verde nas duas suítes.
+
+### Item 3 do operador
+- O caso 3 isolado **já é teste permanente** (aceite 6 em `tests/BUG-T-troca-mutua.test.ts`, desde
+  `07e1a7c`), e é ele que cobre o caso 3, porque a varredura não o exercita mais.
+- O plano ganhou a §10: por que a extensão da vaga emparedada, e não a troca forçada do KaM.
