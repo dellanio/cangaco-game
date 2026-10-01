@@ -17081,6 +17081,13 @@ B D-TELA-LUZ-RELEVO, aceite 1             | NEEDS_WORK        | o sha256 contra 
     placeholder;
   - move a `pianco-art-pipeline` para `archive/`, e o CLAUDE.md §9 manda usá-la;
   - não contém o `2df15df`: saiu da `main`.
+  - **Encerrada em 2026-10-01** (decisão do operador, commit `5754bef`). Conferido com
+    `git diff main 83e8734 -- skills/`: as skills novas já estavam na `main` pelo `ccb2419`, e o
+    que sobrava era mais velho que a `main` (sem a citação do `cdcfec5` no
+    `pianco-render-contract`; o caminho `cangaco-arte-candidatos` no diretor, que o `b1723ae` da
+    `noru-novos-sprites` trocou por `arte-candidatos`). O `archive/` não entra: o §9 manda a skill
+    antiga ficar só no histórico do git. A frase de `skills/pianco-sprite-tools/SKILL.md:8` que
+    citava `archive/skills/`, pasta inexistente na `main`, foi corrigida.
 - **B-TERRENO-01 (recentrar a vila): parada.** A medida (folga −5, pedra mínima 35, colisão com a
   defesa da IA) está no topo do plano e no item do BUILD_PLAN.
 - **O portão do push** (aceite `ade8464`). O hook `.githooks/pre-push` (`tools/pre-push-hook.js`)
