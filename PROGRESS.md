@@ -16675,3 +16675,31 @@ O aceite já estava escrito no BUILD_PLAN (operador: "aceite já escrito").
 - As linhas foram reconferidas na `main` de agora. O que mudou desde a foto do ESCOPO (`43c6a80`) está
   no documento: o BUG-T fechou, o relevo entrou, a D-TELA-05e foi entregue, a D-TELA-CHAO parou.
 - Nenhum código, dado ou aceite mudou.
+
+## 2026-10-01 — Leva desatendida 2, item 8: fechamento — PARADO por falta de memória depois do primeiro passo
+
+### Feito
+- `.claude/agents/evaluator.md` ganhou "Antes de qualquer coisa: o selo da leva". O avaliador roda
+  `npm run selo:longo` antes de qualquer passo e, se o selo não for do `HEAD` (ou estiver vermelho,
+  com árvore suja, ou com outro teste rodando), responde `RECUSADO: selo:longo` e para. A alteração em
+  `.claude/` foi **decidida pelo operador** nesta leva.
+
+### Parado, pela regra da leva ("falta de memória: pare a tarefa, registre, não religue")
+- Memória livre: **1,6 GB de 32 GB**. O `vmmemWSL` (o WSL, fora deste projeto) ocupa **12,1 GB**, e
+  ninguém o encerrou. Desde o item 4 a memória está baixa (2,3 GB; mínimo de 941 MB no 6b), e o
+  Claude Code encerrou dois comandos de segundo plano por falta de memória.
+- **Não rodados:** o `verify` completo, a `test:longo` sozinha gravando o selo, todos os roteiros,
+  o avaliador desde `5124154` e o **push**. O push exige o `verify` completo antes (CLAUDE.md §13), e
+  por isso o `origin/main` ficou em `8460712`, o push do item 1.
+- **Também espera o `verify` completo:** a chave da D-TELA-05e (mercenários em 8 direções) no
+  `test-results.json`, porque o portão só aceita o selo completo.
+
+### Para retomar (na ordem do item 8, com a memória de volta)
+1. `npm run verify`, completo;
+2. a chave `D-TELA-05e-mercenarios-8-direcoes` em `test-results.json`, e commit;
+3. `npm run test:longo` sozinho, sobre esse `HEAD`, gravando o selo. **Sem commit depois dele**;
+4. todos os roteiros (`npm run shot -- <roteiro>`, um de cada vez, pela trava). Saída diferente de 0
+   é bloqueante;
+5. o avaliador (`npm run selo:longo` primeiro) sobre tudo desde `5124154`;
+6. `git push`, com a saída de `git status -sb`.
+- O registro do fechamento no PROGRESS entra no commit seguinte à avaliação (CLAUDE.md §13).

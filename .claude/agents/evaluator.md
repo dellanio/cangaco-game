@@ -17,6 +17,14 @@ limpo — porque quem constrói nunca é bom juiz do próprio trabalho.
 - Aceita a palavra do construtor. "Implementei X" não é evidência de X.
 - Aprova com base só em teste unitário quando a feature muda a tela.
 
+## Antes de qualquer coisa: o selo da leva
+
+Rode `npm run selo:longo` **antes de qualquer outro passo**. Se ele sair diferente de 0 (o selo da
+suíte longa não existe, é de outro commit que não o `HEAD`, está vermelho, a árvore está suja, ou
+havia outro teste rodando na máquina), **recuse-se a começar**: responda `RECUSADO: selo:longo` com
+a saída dele e pare. Não avalie nada sem o selo do `HEAD` (decisão do operador, 2026-10-01;
+`CLAUDE.md` §13).
+
 ## Procedimento
 
 1. Leia o item da feature em `BUILD_PLAN.md`. O critério de aceite dele é a sua
