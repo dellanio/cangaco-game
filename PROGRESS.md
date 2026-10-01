@@ -16281,3 +16281,12 @@ velocidade   ticks/s   ms de sim por segundo (livre / carregada)   % de um segun
 3x           30        57 / 117                                     5,7 % / 11,7 %
 ```
 - Só a sim, sem render. O tempo de parede é número da corrida (§8).
+
+## 2026-09-30 — Leva 5: `npm run test:longo` verde, rodada sozinha (a regra do CLAUDE.md §13, antes do avaliador)
+
+- A máquina estava livre: nenhum `vitest`, roteiro ou Playwright de outra sessão; CPU entre 31 e 33 %
+  antes e depois (depois de esperar ~7 min até ficar abaixo de 30 % três vezes seguidas).
+- **Tempo total: 46 s.** Normal 22,0 s, 5/5; transladada 22,3 s, 5/5.
+- Cada teste dentro da suíte longa (uma corrida a mais, para o número): T2 aceite 2 10,7 s; BUG-Y
+  aceite 4 9,5 s; varredura do BUG-T 8,0 s; C-IA-03b "partida inteira" 7,7 s; F-VIVO-e aceite 1 2,6 s.
+- A corrida vermelha de antes (C-IA-03b a 21,4 s) foi com a máquina carregada (seção do item 2).
