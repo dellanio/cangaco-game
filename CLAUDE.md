@@ -402,8 +402,22 @@ no PROGRESS entra no commit seguinte à avaliação, com o hash que o selo mostr
 |---|---|---|
 | `npm run verify:rapido` | typecheck + lint + validate:data + `vitest related` nos arquivos alterados (staged, não staged e novos) | **cada commit** |
 | `npm run verify` (completo) | typecheck + lint + validate:data + a suíte inteira + a transladada | **fim da leva e todo push** |
-| `npm run test:longo` + todos os roteiros | a suíte longa, sozinha, com o selo; `npm run shot` de cada roteiro | **fechamento da leva** |
+| `npm run test:longo` + `npm run shot:todos` | a suíte longa, sozinha, com o selo; todos os roteiros, um de cada vez | **fechamento: só ao fim de um grande bloco de entrega** |
 
+- **O fechamento é só ao fim de um grande bloco de entrega** (decisão do operador, 2026-10-01). Ele
+  leva cerca de 45 min. Entre os blocos valem o `verify:rapido` a cada commit e o `verify` completo
+  antes de todo push. O operador diz quando um bloco fecha: por exemplo, a versão que ele vai jogar
+  (tag `teste-jogo-<n>`).
+- **`npm run shot:todos` (aceite, 2026-10-01, antes do código):**
+  1. a lista é todo `tools/shots/*.js` sem prefixo `_` (os helpers), na ordem do nome. Uma função
+     pura a devolve, e o teste a compara com o disco;
+  2. roda sob a trava, um roteiro de cada vez, na porta `CANGACO_SHOT_PORTA` (padrão 5176);
+  3. com a porta já ocupada no início, sai 2 sem rodar nenhum roteiro, e diz a porta. É o caso do
+     `vite` órfão que fez 70 de 88 roteiros falharem em 1 s;
+  4. com a memória livre abaixo de 1 500 MB antes de um roteiro, para, registra em qual e sai 3, sem
+     religar. A decisão é uma função pura, e o teste a cobre por tabela;
+  5. grava `test-output/shot-todos.json` com o commit, a porta, cada roteiro (saída, segundos), as
+     falhas e o motivo da parada. Sai 0 só se todos saíram 0.
 - **Push só depois do `verify` completo verde.** Se ele falhar e o `verify:rapido` de cada commit
   passou, acha-se o commit culpado com `git bisect` local (`git bisect run npm run verify`), sem
   empurrar nada antes.
