@@ -334,6 +334,7 @@ npm run dev             # Vite dev server
 npm run verify          # typecheck + lint + validate:data + test; cria .verify-ok
 npm run test            # Vitest, headless, sem browser
 npm run test:longo      # a suite longa: so os testes com [longo] no titulo, normal e transladada
+npm run selo:longo      # confere o selo da suite longa: sai 1 se o commit dele nao e o HEAD
 npm run typecheck
 npm run lint
 npm run validate:data   # valida data/*.json contra o schema
@@ -357,6 +358,15 @@ sai do `verify` e roda em `npm run test:longo` (as constantes e a lista ficam em
 avaliador.** "Sozinho" quer dizer sem outra suíte, roteiro ou sessão rodando teste ao mesmo tempo.
 A marca não é `.skip`: o teste continua inteiro e afirma o mesmo, só muda em qual suíte ele roda.
 Mover teste para a suíte longa é decisão do operador, como foi a dos cinco primeiros.
+
+**O selo da leva (decisão do operador, 2026-10-01).** `npm run test:longo` grava em
+`test-output/test-longo.json` o commit testado (`git rev-parse HEAD`), se a árvore estava limpa, se
+havia outro teste rodando na máquina (medido no início e no fim) e o resultado. **O avaliador roda
+`npm run selo:longo` antes de qualquer outra coisa e se recusa a começar se ele sair diferente de
+0**: commit do selo diferente do `HEAD`, suíte vermelha, árvore suja (na corrida ou agora) ou outro
+teste rodando. Por isso a `test:longo` é a **última** coisa antes do avaliador: qualquer commit
+depois dela, inclusive de PROGRESS, invalida o selo e pede uma nova corrida. O registro da corrida
+no PROGRESS entra no commit seguinte à avaliação, com o hash que o selo mostrou.
 
 **O portão:** `test-results.json` só aceita escrita depois de `npm run verify`
 passar, e o selo vale 15 minutos. Isso é hook, não pedido educado — o agente não

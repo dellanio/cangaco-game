@@ -16321,3 +16321,28 @@ item                                         | veredito | achado                
 - A guarda da lista (`tests/LONGO-lista.test.ts`) deveria achar a marca em qualquer posição do título.
 - O Vitest avisa no carregamento da config (import sem extensão; ESM carregado como CommonJS). Só
   aviso, sem falha.
+
+## 2026-10-01 — Item 1: o selo da leva (a suíte longa grava o commit; o avaliador confere)
+
+Decisão do operador: a `test:longo` grava o hash do commit testado na evidência, e o avaliador se
+recusa a começar se o hash não for o `HEAD`. Registrado no CLAUDE.md §13.
+
+### Feito
+- `npm run test:longo` agora é `tools/test-longo.js`. Ele roda as duas configurações e grava
+  `test-output/test-longo.json` com: o commit (`git rev-parse HEAD`), se a árvore estava limpa, os
+  outros testes rodando na máquina no início e no fim (vitest, roteiro de tela, Playwright, por
+  `Win32_Process`; `null` fora do Windows), os segundos e a saída de cada corrida.
+- `npm run selo:longo` (`tools/selo-longo.js`) sai 1 se o selo não existe, é de outro commit, está
+  vermelho, se a árvore estava suja na corrida ou está suja agora, ou se havia outro teste rodando
+  (ou se não deu para medir isso).
+- A regra é pura (`tools/selo-longo-regra.js`) e tem teste no `verify` (`tests/SELO-longo.test.ts`):
+  cada uma das 7 condições derruba o selo sozinha.
+- Rodado agora, sem selo: recusa ("não há selo") e sai 1.
+
+### O que eu não consigo fazer
+- **O avaliador vem de `.claude/agents/evaluator.md`, e o CLAUDE.md §10 me proíbe de mexer em
+  `.claude/`.** A recusa depende de ele ler o CLAUDE.md (o que ele faz, por instrução própria) e
+  rodar o `selo:longo`, e eu passo isso explícito no pedido de cada avaliação. Pôr o
+  `npm run selo:longo` no próprio `evaluator.md` é decisão do operador.
+- Consequência escrita no §13: a `test:longo` é a última coisa antes do avaliador. Commit depois
+  dela, até de PROGRESS, invalida o selo.
