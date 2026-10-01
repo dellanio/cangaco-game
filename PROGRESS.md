@@ -16779,3 +16779,14 @@ O aceite foi num commit próprio antes do código (`cbd9ee0`). Só `src/render/`
   e `esgotado` tem de ser 0. Agora passam.
 - `screenshots/F-CANA-b-1-abertura-com-a-cana.png` aberta: a cana e o roçado com o mesmo losango
   marrom de terra arada; o losango quase preto do mato cortado sumiu do pousio.
+
+## 2026-10-01 — Leva da manhã, item 4: a ponta A da folga de pedra, medida; B e D registradas como dependentes da regra da rua mínima
+
+- Sonda `zz-` (apagada) da ponta A, a rua inteira no tick 0: critério da F17 e os quatro ligados, com
+  a pedra inicial varrida de 34 a 24, em 12 000 ticks. A geometria é a de hoje, montada uma vez com o
+  dado de hoje: o guarda da geometria é que fazia a sonda de ontem falhar em 27.
+- **Medido:** rua de 24 tiles. Com 34 fecha no 3 724, com 30 (o dado) no 3 825 e com 28 no 4 363;
+  **com 27 ou menos, trava.** O limiar é 28, que é exatamente o que o guarda exige (rua + 4). A margem
+  do dado é 2. Zero recusa de comando. Tabela no BALANCE_LOG.
+- Pontas B e D: **decisão do operador**, ficam como dependentes da regra da rua mínima, que não está
+  escrita. **Nenhum número mudou.**

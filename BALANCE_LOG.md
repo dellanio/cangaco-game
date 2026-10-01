@@ -1047,6 +1047,30 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
   **Ressalva:** a Fase A demora ~200 ticks a mais na ponta A com 30. Nenhum outro número foi girado. |
   `data/economy.json:estadoInicial.estoque.stone`
 
+- [2026-10-01] **A ponta A remedida (a rua inteira no tick 0): a rua tem hoje 24 tiles, e o limiar é
+  28** | sonda temporária (apagada; os números ficaram). Critério da F17 (`criterio-fechado`) e os
+  quatro prédios completos e ligados, numa janela de 12 000 ticks, com a pedra inicial varrida. A
+  geometria é a de hoje, montada uma vez com o dado de hoje.
+
+  | pedra inicial | F17 fecha | os quatro ligados | menor pedra no armazém |
+  |---|---|---|---|
+  | 34 | 3 724 | 1 183 | 1 (tick 1 047) |
+  | **30 (o dado)** | **3 825** | **1 591** | 0 (tick 716) |
+  | 28 | 4 363 | 2 140 | 0 (tick 563) |
+  | 27 | **trava** (nada fecha em 12 000) | — | 0 (tick 517) |
+  | 26, 25, 24 | trava | — | 0 |
+
+  - Rua de **24** tiles, e não 26: o limiar caiu de 27 para **28** com a rua 2 tiles menor. A medida
+    não separa por quê (hipótese, não medida: a geometria da abertura mudou depois da entrada de
+    2026-09-26).
+  - O guarda de `tools/geometria-da-abertura.mjs` exige rua + 4 = **28**, que agora é o limiar
+    exato, e não "3 acima". A margem do dado (30) é **2**. Zero recusa de comando em toda corrida.
+  - **As pontas B e D não foram remedidas:** dependem da regra da rua mínima (15 tiles na sonda
+    apagada de 2026-09-26), que não está escrita. **Decisão do operador (2026-10-01):** ficam
+    registradas como dependentes dessa regra.
+  - **Nenhum número girado.** | `data/economy.json:estadoInicial.estoque.stone`,
+    `tools/geometria-da-abertura.mjs`
+
 - [2026-09-25] **A faixa da fazenda nas geometrias do jogador: 143 a 346 ticks por milho,
   e no alcance máximo a fazenda NÃO sustenta o moinho** | `test-output/F-CAL-b2-sonda.json`
   (sonda apagada), a vila da F-CAL-a por 36 000 ticks, só o campo mudando de lugar.
