@@ -923,11 +923,11 @@ nota no item D-TELA-LUZ-RELEVO do `BUILD_PLAN.md`.
       põe no quadro.
     - Conta, entre `-0` e `-1` (e `-2`), os pixels do retângulo com algum canal em 255 que não
       estava em 255 sem relevo: são os que **saturaram por causa da luz**.
-    - Grava a contagem, o total de pixels e a fração em `docs/evidencias/relevo-a/D-TELA-LUZ-RELEVO-medidas.json` (a saturação foi para o arquivo de medidas; o `-saturacao.json` nunca existiu).
+    - Grava a contagem, o total de pixels e a fração em `D:\projetos-pessoal\evidencias\relevo-a\D-TELA-LUZ-RELEVO-medidas.json` (a saturação foi para o arquivo de medidas; o `-saturacao.json` nunca existiu).
       O roteiro não reprova por isso: é medida para a decisão.
   - **O salto de brilho da unidade (mudança 6).** O roteiro segue um serf andando por uma
     encosta, despausado em passos curtos. A cada quadro registra `fatores['unidade:<id>']` e o x,
-    y desenhado, e grava a série em `docs/evidencias/relevo-a/D-TELA-LUZ-RELEVO-tint-da-unidade.json`. Captura duas
+    y desenhado, e grava a série em `D:\projetos-pessoal\evidencias\relevo-a\D-TELA-LUZ-RELEVO-tint-da-unidade.json`. Captura duas
     imagens coladas: `screenshots/D-TELA-LUZ-RELEVO-3.png` com o serf no último quadro antes de cruzar o
     tile, e `-4.png` com ele no primeiro quadro depois.
 - [ ] **Passo 2:** `CANGACO_SHOT_PORTA=5177 npm run shot -- D-TELA-LUZ-RELEVO` sai 0, com a porta
@@ -977,7 +977,7 @@ nota no item D-TELA-LUZ-RELEVO do `BUILD_PLAN.md`.
      no scratchpad, com o mesmo `npm ci`). A porta 5177 é conferida antes de cada roteiro; porta
      ocupada é parar e reportar, sem matar processo. Cada `tools/shots/*.js` que não começa com
      `_` roda um por vez, com `CANGACO_SHOT_PORTA=5177`, e o resultado vai para
-     `docs/evidencias/relevo-a/linha-de-base.json` (antes no scratchpad): `{ roteiro: { saida, pngs: { nome: sha256 } } }`;
+     `D:\projetos-pessoal\evidencias\relevo-a\linha-de-base.json` (antes no scratchpad): `{ roteiro: { saida, pngs: { nome: sha256 } } }`;
   3. **logo em seguida, os mesmos roteiros nesta branch**, com a flag desligada, no mesmo
      formato.
 
@@ -986,7 +986,7 @@ nota no item D-TELA-LUZ-RELEVO do `BUILD_PLAN.md`.
   - PNG divergente: roda de novo na linha de base e classifica como ruído (a `main` diverge dela
     mesma) ou mudança real;
   - mudança real é **defeito desta branch**, e o conserto vem antes de seguir;
-  - a tabela de resultado vai para `docs/evidencias/relevo-a/comparacao.json`, com as corridas em `docs/evidencias/relevo-a/linha-de-base.json` e `docs/evidencias/relevo-a/branch-flag-desligada.json`.
+  - a tabela de resultado vai para `D:\projetos-pessoal\evidencias\relevo-a\comparacao.json`, com as corridas em `D:\projetos-pessoal\evidencias\relevo-a\linha-de-base.json` e `D:\projetos-pessoal\evidencias\relevo-a\branch-flag-desligada.json`.
 - [ ] **Passo 2: `BUILD_PLAN.md`**, na Fase D, com as siglas e o nome ao lado:
   - **D-TERRENO-ALTURA (altura só de render no gerador de mapa)**, com o aceite da Tarefa 1;
   - **D-TELA-LUZ-RELEVO (luz do relevo: camadas de sombra e de luz, e tint)**, com o aceite das Tarefas
@@ -1037,7 +1037,7 @@ nota no item D-TELA-LUZ-RELEVO do `BUILD_PLAN.md`.
 | ~~`k < 1` em `data/`, marcado como hipótese (0,85)~~ substituído: chão plano = 1,0 exato (decisão 7) | `texturasDaLuz` neutra no plano (teste, Tarefa 2); chão plano igual pixel a pixel (roteiro, Tarefa 4) |
 | Tint S1, `tetoDoTintDoSprite` = 1,0 (decisão 8) | `tintDoSprite` (teste, Tarefa 2); fatores ≤ 1 (roteiro, Tarefa 4) |
 | Geometria 0,83 × 0,71 lado a lado (decisão 9) | `?relevoPx`; capturas `-1` e `-2`; Tarefa 4 passo 3b |
-| Saturação da areia medida (decisão 10) | `docs/evidencias/relevo-a/D-TELA-LUZ-RELEVO-medidas.json` (a saturação foi para o arquivo de medidas; o `-saturacao.json` nunca existiu); Tarefa 4 passo 3b |
+| Saturação da areia medida (decisão 10) | `D:\projetos-pessoal\evidencias\relevo-a\D-TELA-LUZ-RELEVO-medidas.json` (a saturação foi para o arquivo de medidas; o `-saturacao.json` nunca existiu); Tarefa 4 passo 3b |
 | `addBlendMode` como risco para o Phaser 4 (decisão 11) | `docs/planos/estudo-relevo.md`, hipóteses; Notas |
 | Tint em árvore, prédio, recurso e unidade; fixo uma vez, unidade por tile | Tarefa 3; Foco de revisão 2 e 3 |
 | `verify` e roteiros iguais com a flag desligada | Tarefas 0, 3 e 5 |
@@ -1099,14 +1099,14 @@ Preenchidas durante a execução. Separam o **verificado** (com o comando ou o a
   - `node tools/gerar-mapa.js --conferir` sai 0 nos dois arquivos. O `sertao-128.json` tem o
     **mesmo blob** de antes (`686196f…`, por `git hash-object` e `git rev-parse HEAD:`). O "M"
     que o `git status` mostrou depois de regravar era só LF contra CRLF, e a cópia foi restaurada;
-  - a evidência (`docs/evidencias/relevo-a/D-TERRENO-ALTURA.json`): degraus de 1 a 18; 15 633
+  - a evidência (`D:\projetos-pessoal\evidencias\relevo-a\D-TERRENO-ALTURA.json`): degraus de 1 a 18; 15 633
     tiles com limite, dos quais 11 722 planos e 248 encostas no limite de 2 degraus; média no
     miolo de montanha 15,7, de grama 6,1, de água 3,2.
 - **Tarefa 2, D-TELA-LUZ-RELEVO, a conta pura (`src/render/relevo.ts`), verificado com `npx vitest run`:**
   - `tests/D-TELA-LUZ-RELEVO.test.ts`: 12 de 12. Também `F04-grid-ortogonal` (17 de 17),
     que guarda o que `src/render/` pode importar;
   - as rampas sintéticas dão os números da avaliação: 0,830 e 1,110 a 8 px por degrau, e 0,714 e
-    1,143 a 12,8 px (`docs/evidencias/relevo-a/D-TELA-LUZ-RELEVO-geometrias.json`);
+    1,143 a 12,8 px (`D:\projetos-pessoal\evidencias\relevo-a\D-TELA-LUZ-RELEVO-geometrias.json`);
   - **no mapa real, a 8 px por degrau, a luz vai de 0,52 a 1,15, mas só no miolo de montanha e
     rocha** (sem limite de declive). Nos vértices tocados só por tipos com limite, medido com um
     `node -e` avulso, ela vai de **0,87 a 1,11**. O 0,83 do norte só aparece com rampa de 2
@@ -1202,7 +1202,7 @@ Preenchidas durante a execução. Separam o **verificado** (com o comando ou o a
     navegador com `elementFromPoint`): **900 de 900 pixels iguais**, a 8 e a 12,8 px por degrau.
     A encosta de controle, (26,26), **difere** em 779 e 846 pixels: a comparação acusa;
   - **areia de luz (decisão 10):** 4 tiles, 3 600 pixels, **0 saturados** nas duas geometrias
-    (`docs/evidencias/relevo-a/D-TELA-LUZ-RELEVO-medidas.json`). Pela decisão 10, o `tetoDaLuzDoChao` não entra;
+    (`D:\projetos-pessoal\evidencias\relevo-a\D-TELA-LUZ-RELEVO-medidas.json`). Pela decisão 10, o `tetoDaLuzDoChao` não entra;
   - **tint:** árvore e lajedo do quadro tingidos ao nascer (fatores 1,03–1,06 nas árvores, que
     estão em encosta de luz, e 1 no lajedo plano). **A pedreira** ficou em (30,27), na encosta de
     sombra mais forte que cabe no quadro com rua até a vila: **fator 0,979**. A obra foi
@@ -1229,7 +1229,7 @@ Preenchidas durante a execução. Separam o **verificado** (com o comando ou o a
   foi de 2 níveis de cinza.
 - **Decisão 6, o salto do tint da unidade: SALTA, e o tint passou a seguir a posição.** Medido no
   mapa inteiro (`tests/D-TELA-LUZ-RELEVO.test.ts`, evidência
-  `docs/evidencias/relevo-a/D-TELA-LUZ-RELEVO-salto-do-tint.json`): entre centros de tiles vizinhos em chão
+  `D:\projetos-pessoal\evidencias\relevo-a\D-TELA-LUZ-RELEVO-salto-do-tint.json`): entre centros de tiles vizinhos em chão
   andável, a diferença de fator tem p95 de 0,020 a 8 px e 0,034 a 12,8 px, mas chega a **0,24, 61
   níveis de cinza**, no chão encostado na serra. A captura da vila não pega esse caso, então a
   medida veio do mapa. Pela regra da mudança 6, `tingirSeMudouDeTile` virou `tingirPelaPosicao`:
@@ -1250,7 +1250,7 @@ Preenchidas durante a execução. Separam o **verificado** (com o comando ou o a
   diferente (846 e 779), areia 0 saturados, pedreira de sombra com fator 0,964.
 - **Decisões 19 e 20, roteiro de medida `tools/shots/D-TELA-LUZ-RELEVO-recorte.js`** (ajudantes em
   `tools/shots/_relevo.js`), porta 5177, saída 0, medidas em
-  `docs/evidencias/relevo-a/D-TELA-LUZ-RELEVO-recorte.json`. Ganho de luminância (Rec. 709) com relevo sobre
+  `D:\projetos-pessoal\evidencias\relevo-a\D-TELA-LUZ-RELEVO-recorte.json`. Ganho de luminância (Rec. 709) com relevo sobre
   sem relevo, mesma câmera nas duas cargas (zoom pela roda, posição pelo clique no minimapa):
 
   | Onde | Fator sob o pé | Ganho do chão | Ganho do sprite | Diferença |
@@ -1345,6 +1345,11 @@ Branch `dellanio/relevo-a`, plano e notas em `docs/planos/relevo-a.md` (a fonte:
 
 - **Evidências guardadas no encerramento (2026-10-01):** os JSONs do relevo (os 9 das medidas e dos
   roteiros, mais `linha-de-base.json`, `branch-flag-desligada.json` e `comparacao.json`) foram copiados
-  para `docs/evidencias/relevo-a/` e commitados: `test-output/` e `screenshots/` são ignorados pelo git e sumiam com a
+  para `D:\projetos-pessoal\evidencias\relevo-a\` e commitados: `test-output/` e `screenshots/` são ignorados pelo git e sumiam com a
   worktree. São retratos da corrida, e os testes continuam gravando em `test-output/`. Os 17 PNGs do
   relevo ficam fora do repositório, em `D:\projetos-pessoal\evidencias\relevo-a\`.
+
+
+> **Nota (2026-10-01, leva desatendida 2, item 1b):** as 12 evidências JSON que este plano cita
+> saíram do repositório e estão em `D:\projetos-pessoal\evidencias\relevo-a\` (decisão do operador).
+> Os caminhos acima foram trocados para esse lugar.

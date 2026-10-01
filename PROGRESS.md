@@ -16435,3 +16435,69 @@ Entre as 114 estáveis, 110 com hash igual e 4 diferentes por unidade ou texto d
 parede (`F23b-2`, `F11a-3`, `F-D4-2`, `D-TELA-02-1`, conferidas no olho).
 
 **Aberto:** ligar a flag por padrão espera a arte de terreno da F-TR.
+
+## 2026-10-01 — LEVA DESATENDIDA 2: autorização do operador (exceção ao CLAUDE.md §11)
+
+**Decisão do operador, por escrito (2026-10-01):** esta leva roda desatendida, como exceção ao
+CLAUDE.md §11. A lista dele substitui as 8 que eu propus.
+
+Regras que ele fixou:
+- aceite reprovado, decisão de design não coberta ou conflito de git: **não decidir**; registrar e
+  seguir para a próxima tarefa independente;
+- aceite em commit próprio, antes do código;
+- testes e roteiros sempre pela trava; não matar processo; falta de memória: parar a tarefa,
+  registrar, não religar;
+- um commit por tarefa. Até o item 3 entrar, o portão é o `verify` completo; depois dele, o
+  `verify:rapido`;
+- a branch `noru-novos-sprites` é do Codex: não mexer.
+
+Tarefas, na ordem dele:
+1. limpeza e push (worktree e branch do relevo; as evidências do relevo saem do repositório; a linha
+   do relevo no PROGRESS; o `origin/main` explicado pelo reflog);
+2. trava com sinal de vida (60 s; abandonada sem atualização há 10 min);
+3. camadas de teste (`verify:rapido`, `verify` completo, `test:longo` com os roteiros);
+4. D-TELA-CHAO-DETERMINISTICO (o grão do chão vem da semente do mapa);
+5. D-TELA-05e (mercenários em 8 direções);
+6. a) o aviso do Vitest; b) a medida das pontas da folga de pedra;
+7. só leitura: os marcos a partir do `docs/ESCOPO.md`;
+8. fechamento: `selo:longo` no `evaluator.md` (**decidido pelo operador: sim**; é exceção a "mexer em
+   `.claude/`", do §10), `verify` completo, `test:longo` sozinho, todos os roteiros, avaliador desde
+   `5124154`, push com `git status -sb`, e parar.
+
+Fora desta leva: B-TERRENO-01, F-TR resto, F-CAMPO-b, VARREDURA-KAM, fases da campanha, o grupo que
+procura o próximo alvo, F-REPL-c, as capturas da geometria do relevo.
+
+## 2026-10-01 — Leva desatendida 2, item 1: limpeza e push
+
+### a) A worktree e a branch do relevo
+- `git worktree list`: a worktree do relevo já não existia.
+- `git ls-remote --heads origin`: a branch remota `dellanio/relevo-a` não existe.
+- A branch local `dellanio/relevo-a` existia, inteira na `main` (0 commits à frente). Foi apagada
+  com `git branch -d`, sem `-D` nem `--force`.
+- A `dellanio/implementacao-relevo` também está inteira na `main`, mas não foi pedida e ficou.
+  `noru-novos-sprites` (Codex) não foi tocada.
+
+### b) As evidências do relevo saem do repositório
+- Os 12 JSON de `docs/evidencias/relevo-a/` foram copiados para
+  `D:\projetos-pessoal\evidencias\relevo-a\`, conferidos byte a byte (12 de 12 iguais) e tirados do
+  git (`git rm`). A pasta de destino já tinha 17 arquivos da sessão do relevo (os PNG e mais 5 JSON);
+  não mexi neles.
+- `docs/planos/relevo-a.md`: as 13 referências ao caminho antigo foram trocadas, com uma nota no fim.
+  As menções no PROGRESS são histórico e ficaram.
+
+### c) Relevo (linha do operador, que o PROGRESS não tinha)
+Relevo: 86/86 roteiros com o mesmo código de saída com a flag desligada; 110/219 capturas com hash
+igual (o resto é o chão não determinístico). Geometria: 8 px → norte 0,83 / sul 1,11; 12,8 px →
+norte 0,71 / sul 1,14. Evidências em `D:\projetos-pessoal\evidencias\relevo-a\`.
+
+### d) `origin/main` contra a `main` local, e o porquê do `e8f704e` (conferido no reflog)
+- Depois do `git fetch`, `main` e `origin/main` estão no mesmo commit, `95b9e74`.
+- `git reflog show origin/main`: até `e8f704e` (2026-09-30 14:18) a sessão anterior fez push depois
+  de cada commit. **Esta sessão começou em `e8f704e` e nunca fez push da `main`**, porque nenhum
+  pedido mandou e o CLAUDE.md não manda empurrar. O único push meu foi
+  `git push origin --delete wip/D-TRANSPORTE-03-T2`. O `origin/main` só andou com os pushes da
+  sessão do relevo: `9ab9373` (02:45) e `95b9e74` (02:51), que levaram todos os commits desta sessão
+  junto.
+- Nos relatórios desta sessão não achei "commits enviados" dito por mim. Se a frase veio de outro
+  relatório (a memória de uma sessão anterior diz "all commits are pushed"), ela não foi conferida
+  contra o `origin`. **Daqui em diante, "enviado" vem com a saída de `git status -sb`.**
