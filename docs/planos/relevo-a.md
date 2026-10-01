@@ -1219,3 +1219,10 @@ Preenchidas durante a execução. Separam o **verificado** (com o comando ou o a
   o fator é o bilinear sob o pé a cada quadro, e o `setTint` só roda quando o cinza muda. O teste
   puro ganhou o caso "meio tile anda e o cinza muda sem trocar de tile", e o `tileDoPe` saiu (sem
   uso). O "a cada mudança de tile" do pedido original fica substituído por essa regra.
+- **Sincronização e `verify` liberados pelo operador (2026-09-30):** rebase sobre a `main` em
+  `d372d04`, sem conflito. Máquina conferida antes (25 `node`, nenhum gastando CPU, CPU a 27%).
+  **`npm run verify` verde**: `typecheck`, `lint`, `validate:data` (15 arquivos, 0 erros),
+  `test` **2 138 de 2 138**, `test:transladado` **2 136 e 5 pulados** (os 4 antigos mais o
+  contrato do arquivo publicado do `D-TERRENO-ALTURA`). O selo `.verify-ok` foi criado. **Não
+  é o `verify` final da decisão 17**, nem marca `passes`: a linha de base, a comparação com a
+  flag desligada e as duas capturas da geometria esperam o operador liberar a máquina.
