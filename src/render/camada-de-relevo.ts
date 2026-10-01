@@ -17,7 +17,7 @@
 import Phaser from 'phaser';
 import {
   alturasDoMapa, calcularLuz, fatorEm, parametrosDaLuz, pxPorDegrauDaBusca, relevoLigadoNoDado,
-  relevoPedido, texturasDaLuz, tileDoPe, tintDoSprite,
+  relevoPedido, texturasDaLuz, tintDoSprite,
   type MapaDeLuz, type ParametrosDaLuz,
 } from './relevo';
 import type { EstadoDebug } from './debug';
@@ -37,8 +37,10 @@ export interface LuzDoRelevo {
    *  do pe do predio. Retangulo, texto e poligono (medidor, placa, bandeira, placeholder) ficam
    *  sem tint por construcao: so `Image` tem tint. */
   tingirContainer(c: Phaser.GameObjects.Container, xPe: number, yPe: number, rotulo: string): void;
-  /** Unidade: retinge quando o pe cruza de tile, ou quando a imagem e nova. */
-  tingirSeMudouDeTile(img: Phaser.GameObjects.Image | null, xPe: number, yPe: number, rotulo: string): void;
+  /** Unidade: o tint segue a POSICAO do pe, bilinear como o chao (decisao 6: por tile, o tom
+   *  saltava ate 61 niveis de cinza no pe da serra). So chama `setTint` quando o cinza muda, ou
+   *  quando a imagem e nova. */
+  tingirPelaPosicao(img: Phaser.GameObjects.Image | null, xPe: number, yPe: number, rotulo: string): void;
 }
 
 /** O modo [DST_COLOR, ONE], registrado uma vez por renderer. */
@@ -106,45 +108,60 @@ export function criarCamadaDeRelevo(
     if (f > maximo) maximo = f;
   }
   const fatores: Record<string, number> = {};
+  const tintagens: Record<string, number> = {};
+  const imagens: Record<string, number> = {};
+  const registrar = (rotulo: string, f: number, quantas: number): void => {
+    imagens[rotulo] = quantas;
+    fatores[rotulo] = f;
+    tintagens[rotulo] = (tintagens[rotulo] ?? 0) + 1;
+  };
   debug.relevo = {
     ativo: true,
     pxDeMundoPorDegrau: p.pxDeMundoPorDegrau,
     vertices: [luz.largura, luz.altura],
     faixa: [minimo, maximo],
     fatores,
+    tintagens,
+    imagens,
   };
 
   const aplicar = (img: Phaser.GameObjects.Image, f: number): void => {
     img.setTint(tintDoSprite(f, p));
   };
-  const tileDaImagem = new WeakMap<Phaser.GameObjects.Image, string>();
+  const cinzaDaImagem = new WeakMap<Phaser.GameObjects.Image, number>();
 
-  const tingirLista = (lista: readonly Phaser.GameObjects.GameObject[], f: number): void => {
+  /** Tinge todo `Image` da lista, recursivo nos containers, e devolve quantos tingiu. */
+  const tingirLista = (lista: readonly Phaser.GameObjects.GameObject[], f: number): number => {
+    let quantas = 0;
     for (const filho of lista) {
-      if (filho instanceof Phaser.GameObjects.Image) aplicar(filho, f);
-      else if (filho instanceof Phaser.GameObjects.Container) tingirLista(filho.list, f);
+      if (filho instanceof Phaser.GameObjects.Image) {
+        aplicar(filho, f);
+        quantas += 1;
+      } else if (filho instanceof Phaser.GameObjects.Container) {
+        quantas += tingirLista(filho.list, f);
+      }
     }
+    return quantas;
   };
 
   return {
     tingir(obj, xPe, yPe, rotulo) {
       const f = fatorEm(luz, xPe, yPe, tilePx);
       aplicar(obj, f);
-      fatores[rotulo] = f;
+      registrar(rotulo, f, 1);
     },
     tingirContainer(c, xPe, yPe, rotulo) {
       const f = fatorEm(luz, xPe, yPe, tilePx);
-      tingirLista(c.list, f);
-      fatores[rotulo] = f;
+      registrar(rotulo, f, tingirLista(c.list, f));
     },
-    tingirSeMudouDeTile(img, xPe, yPe, rotulo) {
+    tingirPelaPosicao(img, xPe, yPe, rotulo) {
       if (img === null) return;
-      const tile = tileDoPe(xPe, yPe, tilePx);
-      if (tileDaImagem.get(img) === tile) return;
-      tileDaImagem.set(img, tile);
       const f = fatorEm(luz, xPe, yPe, tilePx);
-      aplicar(img, f);
-      fatores[rotulo] = f;
+      const cinza = tintDoSprite(f, p);
+      if (cinzaDaImagem.get(img) === cinza) return;
+      cinzaDaImagem.set(img, cinza);
+      img.setTint(cinza);
+      registrar(rotulo, f, 1);
     },
   };
 }

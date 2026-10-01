@@ -117,6 +117,12 @@ export interface RelevoNoDebug {
   /** Rotulo -> fator aplicado no tint: 'predio:<id>', 'unidade:<id>', 'vegetacao:<gx,gy>'. O fator
    *  e o do chao sob o pe, ANTES do teto do sprite (o cinza do tint e min(fator, teto)). */
   readonly fatores: Record<string, number>;
+  /** Quantas vezes cada rotulo foi tingido: o predio recriado (troca de estagio) e a unidade que
+   *  cruza de tile somam um; o roteiro afirma que o tint acompanha a recriacao. */
+  readonly tintagens: Record<string, number>;
+  /** Quantos `Image` a ultima tintagem do rotulo atingiu: a obra em "marcacao no chao" e so
+   *  retangulo e texto (0), e o roteiro espera o sprite antes de afirmar o tint do predio. */
+  readonly imagens: Record<string, number>;
 }
 
 export interface EstadoDebug {

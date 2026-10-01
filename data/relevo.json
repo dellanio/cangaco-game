@@ -15,8 +15,9 @@
   "geracao": {
     "_doc": "Lido so por tools/gerar-mapa.js, que emite data/maps/<id>.relevo.json. Altura em degraus inteiros de 0 a 35 (o formato e um char base-36 por vertice). A semente e propria: gerar o relevo nao consome o RNG do terreno nem o dos recursos, e o mapa sai byte a byte igual.",
     "semente": 20260930,
-    "celulaDoRuidoEmTiles": 12,
-    "amplitudeDoRuidoEmDegraus": 4,
+    "celulaDoRuidoEmTiles": 10,
+    "amplitudeDoRuidoEmDegraus": 12,
+    "_docRuido": "Ajustado na captura da D-TELA-LUZ-RELEVO (2026-09-30): com 4 e 12, o quadro da vila saia quase liso (25% do chao com alguma inclinacao, 1,6% no teto de declive). Com 12 e 10: 67,5% e 8,2%, ainda dentro do teto de 2 degraus. Ponto de partida, nao calibragem.",
     "decliveMaximoEmDegraus": 2,
     "_docDecliveMaximoEmDegraus": "Fora dos tipos sem limite, a diferenca entre os 4 cantos de um tile nao passa disto: so relevo suave. O que tem de parecer intransitavel continua sendo tile de montanha ou rocha, que a sim bloqueia de fato.",
     "tiposSemLimiteDeDeclive": ["montanha", "rocha"],

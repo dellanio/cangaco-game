@@ -156,7 +156,7 @@ interface Desenhado {
 
 export function criarCamadaDeUnidades(
   cena: Phaser.Scene, tilePx: number,
-  /** D-TELA-LUZ-RELEVO — a luz do relevo, ou `null` (o padrao): o tint so muda quando o pe cruza de tile. */
+  /** D-TELA-LUZ-RELEVO — a luz do relevo, ou `null` (o padrao): o tint segue a posicao do pe. */
   luz: LuzDoRelevo | null = null,
 ): CamadaDeUnidades {
   const desenhados = new Map<string, Desenhado>();
@@ -293,7 +293,7 @@ export function criarCamadaDeUnidades(
         const desvio = deslocamentoDaUnidade(id, tilePx, ESCALA_DO_MUNDO);
         item.container.setPosition(centro.x + desvio.x, centro.y + desvio.y);
         item.container.setDepth(depthDeY(centro.y + desvio.y));
-        luz?.tingirSeMudouDeTile(item.imagem, centro.x + desvio.x, centro.y + desvio.y, `unidade:${id}`);
+        luz?.tingirPelaPosicao(item.imagem, centro.x + desvio.x, centro.y + desvio.y, `unidade:${id}`);
         const visivel = !invisiveis.has(id);
         item.container.setVisible(visivel);
         item.nome.setVisible(visivel);

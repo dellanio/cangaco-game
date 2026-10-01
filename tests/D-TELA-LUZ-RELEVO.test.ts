@@ -17,7 +17,7 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import {
   alturasDoMapa, calcularLuz, fatorEm, parametrosDaLuz, pxPorDegrauDaBusca, relevoPedido,
-  texturasDaLuz, tileDoPe, tintDoFator, tintDoSprite,
+  texturasDaLuz, tintDoFator, tintDoSprite,
   type AlturasDoRelevo, type ParametrosDaLuz,
 } from '../src/render/relevo';
 import { gravarEvidencia } from './helpers/evidence';
@@ -121,10 +121,44 @@ describe('D-TELA-LUZ-RELEVO — a luz do relevo', () => {
     expect(pxPorDegrauDaBusca('?relevo&relevoPx=-3', 8)).toBe(8);
   });
 
-  it('o tile do pe: floor, e a chave muda so quando o pe cruza a borda do tile', () => {
-    expect(tileDoPe(10, 10, TILE)).toBe('0,0');
-    expect(tileDoPe(63.9, 127.9, TILE)).toBe('0,1');
-    expect(tileDoPe(64, 128, TILE)).toBe('1,2');
+  it('decisao 6: o tint da unidade segue a posicao, e muda andando meio tile sem trocar de tile', () => {
+    // Encosta virada ao norte (sobe para o sul) com a inclinacao crescendo: o fator cai ao longo
+    // do mesmo tile, e o cinza do tint cai junto. Por tile, os dois pontos dariam o mesmo cinza.
+    const luz = calcularLuz(grade(5, (_x, y) => y * y), p, TILE);
+    const noTopo = tintDoSprite(fatorEm(luz, 2 * TILE, 2 * TILE + 4, TILE), p);
+    const noMeio = tintDoSprite(fatorEm(luz, 2 * TILE, 2 * TILE + TILE / 2, TILE), p);
+    expect(Math.floor((2 * TILE + 4) / TILE)).toBe(Math.floor((2 * TILE + TILE / 2) / TILE)); // mesmo tile
+    expect(noMeio & 0xff).toBeLessThan(noTopo & 0xff);
+  });
+
+  it('o salto do tint da unidade ao cruzar de tile, medido no mapa real (decisao 6)', () => {
+    // A unidade e tingida pelo fator sob o pe quando cruza de tile: o salto e a diferenca entre o
+    // fator de um tile e o do vizinho. Medido entre centros de tiles vizinhos em chao andavel
+    // (fora de agua, montanha e rocha), nas duas geometrias da decisao 9. E MEDIDA para a decisao
+    // do operador, como o cinza do tint (x255) mostra; a asserção so garante que mediu.
+    const mapa = JSON.parse(readFileSync('data/maps/sertao-128.json', 'utf-8')) as {
+      largura: number; altura: number; legenda: Record<string, string>; linhas: string[];
+    };
+    const naoAnda = new Set(['agua', 'montanha', 'rocha']);
+    const anda = (gx: number, gy: number): boolean => !naoAnda.has(mapa.legenda[mapa.linhas[gy]![gx]!]!);
+    const medir = (px: number): { maior: number; p95: number; pares: number; maiorEmCinza: number } => {
+      const luz = calcularLuz(alturasDoMapa(), { ...parametrosDaLuz, pxDeMundoPorDegrau: px }, TILE);
+      const centro = (gx: number, gy: number): number => Math.min(1, fatorEm(luz, (gx + 0.5) * TILE, (gy + 0.5) * TILE, TILE));
+      const saltos: number[] = [];
+      for (let gy = 0; gy < mapa.altura - 1; gy += 1) {
+        for (let gx = 0; gx < mapa.largura - 1; gx += 1) {
+          if (!anda(gx, gy)) continue;
+          if (anda(gx + 1, gy)) saltos.push(Math.abs(centro(gx + 1, gy) - centro(gx, gy)));
+          if (anda(gx, gy + 1)) saltos.push(Math.abs(centro(gx, gy + 1) - centro(gx, gy)));
+        }
+      }
+      saltos.sort((a, b) => a - b);
+      const maior = saltos[saltos.length - 1]!;
+      return { maior, p95: saltos[Math.floor(saltos.length * 0.95)]!, pares: saltos.length, maiorEmCinza: Math.round(maior * 255) };
+    };
+    const medidas = { px8: medir(8), px12_8: medir(12.8) };
+    expect(medidas.px8.pares).toBeGreaterThan(0);
+    gravarEvidencia('D-TELA-LUZ-RELEVO-salto-do-tint', medidas);
   });
 
   it('o arquivo real: todo fator no intervalo, com encosta de luz e de sombra', () => {

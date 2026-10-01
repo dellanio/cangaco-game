@@ -156,8 +156,3 @@ export function pxPorDegrauDaBusca(busca: string, doDado: number): number {
   const valor = cru === null ? Number.NaN : Number(cru);
   return Number.isFinite(valor) && valor > 0 ? valor : doDado;
 }
-
-/** A chave do tile sob o pe: e ela que diz quando a unidade cruzou de tile. */
-export function tileDoPe(x: number, y: number, tilePx: number): string {
-  return `${Math.floor(x / tilePx)},${Math.floor(y / tilePx)}`;
-}

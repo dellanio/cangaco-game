@@ -1177,3 +1177,45 @@ Preenchidas durante a execução. Separam o **verificado** (com o comando ou o a
     saída 0; `F10` **saída 1 na primeira**, por `page.goto: Timeout 30000ms` antes do jogo
     carregar (a primeira subida do Vite depois do rebase), e **saída 0 na segunda**. Não é a
     comparação com a linha de base, que fica para o fim (decisão 12).
+- **Tarefa 4, o roteiro `tools/shots/D-TELA-LUZ-RELEVO.js`, rodado na porta 5177 (conferida
+  livre antes de cada corrida): saída 0, nenhum erro de console.** O que ele afirma e mede, no
+  quadro da vila a zoom 0,5:
+  - **chão plano igual pixel a pixel (decisão 7):** um tile de grama plana, (20,30), com toda
+    a moldura de vértices na mesma altura, nada em pé por perto e sem HUD por cima (conferido no
+    navegador com `elementFromPoint`): **900 de 900 pixels iguais**, a 8 e a 12,8 px por degrau.
+    A encosta de controle, (26,26), **difere** em 779 e 846 pixels: a comparação acusa;
+  - **areia de luz (decisão 10):** 4 tiles, 3 600 pixels, **0 saturados** nas duas geometrias
+    (`test-output/D-TELA-LUZ-RELEVO-medidas.json`). Pela decisão 10, o `tetoDaLuzDoChao` não entra;
+  - **tint:** árvore e lajedo do quadro tingidos ao nascer (fatores 1,03–1,06 nas árvores, que
+    estão em encosta de luz, e 1 no lajedo plano). **A pedreira** ficou em (30,27), na encosta de
+    sombra mais forte que cabe no quadro com rua até a vila: **fator 0,979**. A obra foi
+    retingida já com sprite (1 `Image`, 4 tintagens) antes da captura `-4`;
+  - **o que precisou de conserto no caminho**, todos no roteiro e não no jogo:
+    - a busca da areia ficava no miolo do quadro e marcava como ocupado todo recurso, inclusive
+      os 274 `fish` do açude. Passou a ler do manifesto os que viram sprite em pé (`tree` e
+      `rock`);
+    - a rua exigia um tile de folga em volta dos prédios e descartava a encosta do açude;
+    - a primeira prova do retingimento passava com a obra ainda em "marcação no chão", sem
+      nenhuma `Image`. O debug ganhou `relevo.imagens` (quantas `Image` a última tintagem
+      atingiu), e o roteiro espera o sprite.
+- **Geração ajustada na captura (passo 3 da Tarefa 4):** com amplitude 4 e célula de ruído de 12
+  tiles, o quadro da vila saía quase liso (25% do chão com alguma inclinação, 1,6% no teto). Medi
+  seis combinações com o próprio gerador e fiquei com **amplitude 12 e célula 10: 67,5% e 8,2%**,
+  degrau máximo 26, ainda com o teto de 2 degraus. Amplitude 16 punha um quinto do chão no teto.
+  Os números estão no `data/relevo.json` com o motivo; o `pxDeMundoPorDegrau` não mudou, porque
+  é decisão do operador (decisão 9). Com o relevo novo, o miolo do quadro deixou de ter um 2×2
+  plano, e a busca passou a 1 tile no quadro visível inteiro, só onde o canvas está descoberto.
+- **Capturas abertas (Read):** `-2` (8 px) e `-3` (12,8 px), lado a lado para a decisão 9. A
+  ondulação aparece como manchas suaves de luz e sombra na grama, mais marcadas a 12,8 px, sem
+  parede nem degrau duro. A `-4` mostra a pedreira na margem do açude e a rua em L. Os recortes
+  do serf (`-serf-antes-da-troca` e `-depois`) **não foram abertos**: a troca medida nesse quadro
+  foi de 2 níveis de cinza.
+- **Decisão 6, o salto do tint da unidade: SALTA, e o tint passou a seguir a posição.** Medido no
+  mapa inteiro (`tests/D-TELA-LUZ-RELEVO.test.ts`, evidência
+  `test-output/D-TELA-LUZ-RELEVO-salto-do-tint.json`): entre centros de tiles vizinhos em chão
+  andável, a diferença de fator tem p95 de 0,020 a 8 px e 0,034 a 12,8 px, mas chega a **0,24, 61
+  níveis de cinza**, no chão encostado na serra. A captura da vila não pega esse caso, então a
+  medida veio do mapa. Pela regra da mudança 6, `tingirSeMudouDeTile` virou `tingirPelaPosicao`:
+  o fator é o bilinear sob o pé a cada quadro, e o `setTint` só roda quando o cinza muda. O teste
+  puro ganhou o caso "meio tile anda e o cinza muda sem trocar de tile", e o `tileDoPe` saiu (sem
+  uso). O "a cada mudança de tile" do pedido original fica substituído por essa regra.
