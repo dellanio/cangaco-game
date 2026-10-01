@@ -578,7 +578,7 @@ function gerarRecursos({ largura, altura, grade, rng }) {
   return recursos;
 }
 
-// D-TERRENO-01 — A ALTURA SO DE RENDER (opcao A do relevo, docs/planos/relevo-a.md). Sai daqui
+// D-TERRENO-ALTURA — A ALTURA SO DE RENDER (opcao A do relevo, docs/planos/relevo-a.md). Sai daqui
 // para um arquivo PROPRIO, `data/maps/<id>.relevo.json`, que so o render le: a sim nao sabe que a
 // altura existe. Quatro escolhas escritas:
 //
@@ -785,7 +785,7 @@ function serializar(arquivo) {
 
 function main() {
   const conferir = process.argv.includes('--conferir');
-  // D-TERRENO-01: dois arquivos, cada um com a sua semente; o `--conferir` confere os dois.
+  // D-TERRENO-ALTURA: dois arquivos, cada um com a sua semente; o `--conferir` confere os dois.
   const saidas = [
     { caminho: SAIDA, texto: serializar(montarArquivo()), semente: SEMENTE },
     { caminho: SAIDA_DO_RELEVO, texto: serializarRelevo(montarArquivoDeRelevo()), semente: RELEVO.geracao.semente },
@@ -819,7 +819,7 @@ module.exports = {
   // conta dele — se o gerador e o teste discordarem, discordam no mesmo lugar.
   RESERVA, tilesDaVila, naVila, naReserva,
   CANAVIAL_DA_VILA, ROCADO_DA_VILA, disco, faixa,
-  // D-TERRENO-01: o teste roda o mesmo codigo que grava o relevo.
+  // D-TERRENO-ALTURA: o teste roda o mesmo codigo que grava o relevo.
   montarRelevo, montarArquivoDeRelevo, serializarRelevo, forcarDecliveMaximo, declivesForaDoLimite,
   DIGITOS_DO_RELEVO,
 };

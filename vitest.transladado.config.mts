@@ -52,6 +52,11 @@ const FORA_DO_MUNDO_TRANSLADADO = [
   // CONTRATO DO ARQUIVO PUBLICADO, fora de vez (decisao do operador, 2026-09-26):
   // - o gerador emite, byte a byte, o arquivo versionado (determinismo do gerador)
   'F-D3 — mesma semente, mesmo mapa (aceite 3) > o que a semente emite hoje e, byte a byte, o arquivo versionado',
+  // - o gerador emite, byte a byte, o relevo versionado (D-TERRENO-ALTURA, aprovado pelo operador
+  //   em 2026-09-30 pela mesma regra do F-D3 de 2026-09-26: contrato do arquivo publicado, nao do
+  //   mundo). O gerador ve o mapa andado de +K e o `.relevo.json` do disco continua 129 x 129. As
+  //   guardas do relevo que nao comparam com o disco continuam rodando aqui.
+  'D-TERRENO-ALTURA — o arquivo publicado > o que a semente emite hoje e, byte a byte, o arquivo versionado',
   // - o tamanho publicado e a area x4 da Fase A
   'F18b — o mapa publicado > data/terrain.json publica 128x128, e o render espelha',
   'F18b — o mapa publicado > a area jogavel quadruplicou em relacao ao 64x64 da Fase A',

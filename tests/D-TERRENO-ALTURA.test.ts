@@ -1,16 +1,21 @@
-// D-TERRENO-01 — a altura SO DE RENDER, emitida pelo gerador de mapa.
+// D-TERRENO-ALTURA — a altura SO DE RENDER, emitida pelo gerador de mapa.
 //
 // O relevo da opcao A (docs/planos/estudo-relevo.md, docs/planos/relevo-a.md) e desenho: a sim
 // nunca le a altura. Quem a escreve e o `tools/gerar-mapa.js`, a partir dos tipos de terreno e de
-// um ruido semeado. Quatro guardas:
+// um ruido semeado. Cinco guardas:
 //
-// 1. determinismo: a mesma semente emite o MESMO arquivo, igual ao do disco; outra semente, outro
-//    relevo. E o `--conferir` virado teste, como o F-D3 faz com o mapa;
+// 1. determinismo: a mesma semente emite o MESMO relevo; outra semente, outro relevo;
 // 2. so relevo suave: fora de `tiposSemLimiteDeDeclive`, os 4 cantos de um tile nao diferem mais
-//    que `decliveMaximoEmDegraus`. A guarda e provada nos DOIS sentidos: passa no arquivo real e
+//    que `decliveMaximoEmDegraus`. A guarda e provada nos DOIS sentidos: passa no relevo gerado e
 //    ACUSA uma grade feita para reprovar;
 // 3. o relevo existe: o mapa nao e liso (senao a guarda 2 passaria sozinha) e a montanha e alta;
-// 4. o `data/relevo.json` e validado pelo `validate:data`, e a regra acusa o `k` de volta.
+// 4. o arquivo publicado e, byte a byte, o que a semente emite (o `--conferir` virado teste);
+// 5. o `data/relevo.json` e validado pelo `validate:data`, e a regra acusa o `k` de volta.
+//
+// As guardas 1 a 3 medem o relevo que o gerador EMITE sobre o mapa que ELE MESMO monta, e nao o
+// arquivo do disco: assim valem no mundo transladado da F18c-1c, em que o gerador ve o mapa andado
+// de +K e o arquivo versionado continua do tamanho publicado. So a guarda 4 compara com o disco, e
+// ela e contrato do arquivo publicado, como a do F-D3.
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -50,34 +55,32 @@ const gerador = requireCjs('../tools/gerar-mapa.js') as {
 
 const relevoJson = JSON.parse(readFileSync('data/relevo.json', 'utf8')) as { geracao: CfgDaGeracao } & Record<string, unknown>;
 const cfg = relevoJson.geracao;
+/** O mapa que o gerador monta, e o relevo que ele emite sobre ESSE mapa: o mesmo mundo. */
 const mapa = gerador.montarArquivo();
 const grade: Grade = mapa.linhas.map((linha) => [...linha].map((ch) => mapa.legenda[ch] as string));
-const noDisco = readFileSync('data/maps/sertao-128.relevo.json', 'utf8').replace(/\r\n/g, '\n');
-const arquivo = JSON.parse(noDisco) as ArquivoDeRelevo;
-const h = arquivo.linhas.flatMap((linha) => [...linha].map((ch) => gerador.DIGITOS_DO_RELEVO.indexOf(ch)));
+const gerado = gerador.montarArquivoDeRelevo();
+const h = gerado.linhas.flatMap((linha) => [...linha].map((ch) => gerador.DIGITOS_DO_RELEVO.indexOf(ch)));
 
 /** Os 4 cantos do tile (gx, gy), na grade de vertices de largura `vl`. */
 const cantos = (gx: number, gy: number, vl: number): number[] =>
   [gy * vl + gx, gy * vl + gx + 1, (gy + 1) * vl + gx, (gy + 1) * vl + gx + 1];
 
-describe('D-TERRENO-01 — altura so de render no gerador', () => {
-  it('1. a mesma semente emite o mesmo arquivo, igual ao do disco; outra semente, outro relevo', () => {
+describe('D-TERRENO-ALTURA — altura so de render no gerador', () => {
+  it('1. a mesma semente emite o mesmo relevo; outra semente, outro relevo', () => {
     const a = gerador.serializarRelevo(gerador.montarArquivoDeRelevo());
-    const b = gerador.serializarRelevo(gerador.montarArquivoDeRelevo());
-    expect(a).toBe(b);
-    expect(a).toBe(noDisco);
+    expect(a).toBe(gerador.serializarRelevo(gerado));
     const outro = gerador.montarRelevo(grade, { ...cfg, semente: cfg.semente + 1 });
     expect(outro.h).not.toEqual(h);
   });
 
   it('o formato: um char por vertice, (L+1) x (A+1), na legenda de 0 a 35', () => {
-    expect(arquivo.id).toBe('sertao-128');
-    expect(arquivo.mapa).toBe('data/maps/sertao-128.json');
-    expect(arquivo.semente).toBe(cfg.semente);
-    expect(arquivo.largura).toBe(mapa.largura + 1);
-    expect(arquivo.altura).toBe(mapa.altura + 1);
-    expect(arquivo.linhas).toHaveLength(arquivo.altura);
-    for (const linha of arquivo.linhas) expect(linha).toHaveLength(arquivo.largura);
+    expect(gerado.id).toBe('sertao-128');
+    expect(gerado.mapa).toBe('data/maps/sertao-128.json');
+    expect(gerado.semente).toBe(cfg.semente);
+    expect(gerado.largura).toBe(mapa.largura + 1);
+    expect(gerado.altura).toBe(mapa.altura + 1);
+    expect(gerado.linhas).toHaveLength(gerado.altura);
+    for (const linha of gerado.linhas) expect(linha).toHaveLength(gerado.largura);
     expect(gerador.DIGITOS_DO_RELEVO).toHaveLength(36);
     expect(h.every((v) => v >= 0 && v <= 35)).toBe(true);
   });
@@ -106,7 +109,7 @@ describe('D-TERRENO-01 — altura so de render no gerador', () => {
   });
 
   it('3. o relevo existe: ha encosta no limite fora de montanha, e a montanha e mais alta', () => {
-    const vl = arquivo.largura;
+    const vl = gerado.largura;
     const limitados: number[] = [];
     for (let gy = 0; gy < mapa.altura; gy += 1) {
       for (let gx = 0; gx < mapa.largura; gx += 1) {
@@ -137,9 +140,9 @@ describe('D-TERRENO-01 — altura so de render no gerador', () => {
     expect(montanha).toBeGreaterThan(grama);
     expect(grama).toBeGreaterThan(agua);
 
-    gravarEvidencia('D-TERRENO-01-relevo-do-gerador', {
+    gravarEvidencia('D-TERRENO-ALTURA', {
       semente: cfg.semente,
-      vertices: [arquivo.largura, arquivo.altura],
+      vertices: [gerado.largura, gerado.altura],
       degrauMinimo: Math.min(...h),
       degrauMaximo: Math.max(...h),
       tilesComLimite: limitados.length,
@@ -148,17 +151,19 @@ describe('D-TERRENO-01 — altura so de render no gerador', () => {
       mediaInterior: { montanha, grama, agua },
     });
   });
+});
 
-  it('o mapa do jogo nao muda: o sertao-128.json emitido continua igual ao do disco', () => {
-    // O relevo tem semente propria e roda DEPOIS; o F-D3 guarda o mesmo, e este caso fica aqui
-    // para a regressao aparecer no teste da feature que a causaria.
-    const mapaNoDisco = readFileSync('data/maps/sertao-128.json', 'utf8').replace(/\r\n/g, '\n');
-    const serializar = (requireCjs('../tools/gerar-mapa.js') as { serializar: (a: unknown) => string }).serializar;
-    expect(serializar(gerador.montarArquivo())).toBe(mapaNoDisco);
+describe('D-TERRENO-ALTURA — o arquivo publicado', () => {
+  // CONTRATO DO ARQUIVO PUBLICADO, como o do F-D3: compara com o disco. No mundo transladado o
+  // gerador ve o mapa andado de +K e o arquivo versionado continua 129 x 129, entao este caso nao
+  // tem como passar la. A igualdade do sertao-128.json com o que a semente emite ja e do F-D3.
+  it('o que a semente emite hoje e, byte a byte, o arquivo versionado', () => {
+    const noDisco = readFileSync('data/maps/sertao-128.relevo.json', 'utf8').replace(/\r\n/g, '\n');
+    expect(gerador.serializarRelevo(gerado)).toBe(noDisco);
   });
 });
 
-describe('D-TERRENO-01 — data/relevo.json validado', () => {
+describe('D-TERRENO-ALTURA — data/relevo.json validado', () => {
   const carregar = (lista: readonly string[]): Record<string, unknown> =>
     Object.fromEntries(lista.map((n) => [n, JSON.parse(readFileSync(`data/${n}.json`, 'utf8'))]));
   const jogo = carregar(ARQUIVOS);
@@ -180,24 +185,29 @@ describe('D-TERRENO-01 — data/relevo.json validado', () => {
     expect(r['tetoDoTintDoSprite']).toBe(1);
   });
 
-  const quebras: { nome: string; quebrar: (r: Record<string, any>) => void }[] = [
+  /** A forma crua do data/relevo.json, so o que as quebras mexem: o resto fica `unknown`. */
+  type RelevoCru = Record<string, unknown> & {
+    luz: Record<string, unknown>;
+    geracao: Record<string, unknown> & { basePorTipo: Record<string, number> };
+  };
+  const quebras: { nome: string; quebrar: (r: RelevoCru) => void }[] = [
     { nome: 'o k de volta', quebrar: (r) => { r['fatorDoPlano'] = 0.85; } },
     { nome: 'teto do tint acima de 1', quebrar: (r) => { r['tetoDoTintDoSprite'] = 1.2; } },
     { nome: 'piso da luz em 1', quebrar: (r) => { r['fatorMinimo'] = 1; } },
     { nome: 'teto da luz do chao abaixo de 1', quebrar: (r) => { r['tetoDaLuzDoChao'] = 0.9; } },
-    { nome: 'luz a pino (0 graus)', quebrar: (r) => { r['luz'].inclinacaoParaOSulGraus = 0; } },
-    { nome: 'componente leste-oeste', quebrar: (r) => { r['luz'].inclinacaoParaOLesteGraus = 5; } },
+    { nome: 'luz a pino (0 graus)', quebrar: (r) => { r.luz['inclinacaoParaOSulGraus'] = 0; } },
+    { nome: 'componente leste-oeste', quebrar: (r) => { r.luz['inclinacaoParaOLesteGraus'] = 5; } },
     { nome: 'px por degrau zero', quebrar: (r) => { r['pxDeMundoPorDegrau'] = 0; } },
-    { nome: 'tipo do mapa sem base', quebrar: (r) => { delete r['geracao'].basePorTipo.areia; } },
-    { nome: 'base acima de 35', quebrar: (r) => { r['geracao'].basePorTipo.montanha = 36; } },
-    { nome: 'declive maximo zero', quebrar: (r) => { r['geracao'].decliveMaximoEmDegraus = 0; } },
-    { nome: 'tipo sem limite inexistente', quebrar: (r) => { r['geracao'].tiposSemLimiteDeDeclive = ['serra']; } },
+    { nome: 'tipo do mapa sem base', quebrar: (r) => { delete r.geracao.basePorTipo['areia']; } },
+    { nome: 'base acima de 35', quebrar: (r) => { r.geracao.basePorTipo['montanha'] = 36; } },
+    { nome: 'declive maximo zero', quebrar: (r) => { r.geracao['decliveMaximoEmDegraus'] = 0; } },
+    { nome: 'tipo sem limite inexistente', quebrar: (r) => { r.geracao['tiposSemLimiteDeDeclive'] = ['serra']; } },
     { nome: 'flag nao booleana', quebrar: (r) => { r['ligado'] = 'sim'; } },
   ];
   for (const q of quebras) {
     it(`acusa: ${q.nome}`, () => {
       const u = clonar(ui);
-      q.quebrar(u['relevo'] as Record<string, any>);
+      q.quebrar(u['relevo'] as RelevoCru);
       expect(errosDoRelevo(u).length).toBeGreaterThan(0);
     });
   }

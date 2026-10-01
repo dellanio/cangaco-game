@@ -1,10 +1,11 @@
 /**
- * D-TELA-07 — a conta da luz do relevo, pura: nenhum Phaser aqui, para rodar no Vitest sem tela.
- * Quem desenha e `camada-de-relevo.ts`.
+ * D-TELA-LUZ-RELEVO (luz do relevo) — a conta da luz, pura: nenhum Phaser aqui, para rodar no
+ * Vitest sem tela. Quem desenha e `camada-de-relevo.ts`.
  *
  * O relevo e SO DE RENDER (opcao A, docs/planos/relevo-a.md): a altura sai do gerador de mapa
- * (D-TERRENO-01) para `data/maps/<id>.relevo.json`, e este e o UNICO arquivo que a importa. A sim
- * nao sabe que ela existe — o teste da D-TELA-07 guarda isso pelo import resolvido.
+ * (D-TERRENO-ALTURA) para `data/maps/<id>.relevo.json`, e este e o UNICO arquivo que a importa.
+ * A sim nao sabe que ela existe — `tests/D-TELA-LUZ-RELEVO.test.ts` guarda isso pelo import
+ * resolvido.
  *
  * A luz (decisoes do operador, 2026-09-30):
  *   - vem de cima, inclinada para o sul, SEM leste-oeste: L = (0, sen t, cos t), com y para o sul;

@@ -35,7 +35,7 @@ const PREFIXO_DE_MAPA = 'maps/';
 // FORA de ARQUIVOS — o carregador da simulacao nao os conhece e nenhuma regra
 // de jogo pode depender deles. Quem os valida e `validarInterface`, em
 // data-rules.js, contra os arquivos de jogo (o menu aponta ids de buildings).
-// `relevo` (D-TERRENO-01): numeros do relevo SO DE RENDER. O gerador de mapa e o render o leem;
+// `relevo` (D-TERRENO-ALTURA): numeros do relevo SO DE RENDER. O gerador de mapa e o render o leem;
 // sim/ nao. Validado por `validarRelevo`, dentro de `validarInterface`.
 const ARQUIVOS_DA_INTERFACE = ['theme-sertao', 'menu-build', 'relevo'];
 

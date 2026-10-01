@@ -1468,7 +1468,7 @@ function validarRotulosDeModo(dados, tema, erros) {
 // dentro do grupo e a de buildings.json (a ordem nunca e digitada duas vezes);
 // e cada grupo tem rotulo no tema, e so os grupos tem — o mesmo par ida-e-volta
 // do guarda da F22 para as causas de alerta.
-// D-TERRENO-01 — data/relevo.json, o relevo so de render (docs/planos/relevo-a.md). As regras sao
+// D-TERRENO-ALTURA — data/relevo.json, o relevo so de render (docs/planos/relevo-a.md). As regras sao
 // as que a conta da luz e o gerador pressupoem:
 //   - chao plano = 1,0 exato: nao ha `fatorDoPlano` (o k de antes volta so por engano);
 //   - o piso da luz fica abaixo de 1; o teto do tint do sprite em (0, 1], porque o setTint so

@@ -1,4 +1,4 @@
-// D-TELA-07 — a conta da luz do relevo, pura (sem Phaser).
+// D-TELA-LUZ-RELEVO — a conta da luz do relevo, pura (sem Phaser).
 //
 // A opcao A do relevo (docs/planos/relevo-a.md) desenha a altura so pela LUZ: uma camada de
 // sombra (MULTIPLY) e uma de luz ([DST_COLOR, ONE]) sobre o chao, e o tint dos sprites. A conta
@@ -36,7 +36,7 @@ const doMeio = (alt: AlturasDoRelevo, params: ParametrosDaLuz = p): number =>
   calcularLuz(alt, params, TILE).fator[2 * 5 + 2]!;
 const perto = (a: number, b: number): boolean => Math.abs(a - b) < 0.01;
 
-describe('D-TELA-07 — a luz do relevo', () => {
+describe('D-TELA-LUZ-RELEVO — a luz do relevo', () => {
   it('chao plano da 1 EXATO, e as texturas sao neutras exatas (sombra 255, luz 0)', () => {
     const luz = calcularLuz(grade(5, () => 5), p, TILE);
     expect([...luz.fator].every((f) => f === 1)).toBe(true);
@@ -71,7 +71,7 @@ describe('D-TELA-07 — a luz do relevo', () => {
     expect(perto(medidos.px8.sul, 1.11)).toBe(true);
     expect(perto(medidos.px12_8.norte, 0.714)).toBe(true);
     expect(perto(medidos.px12_8.sul, 1.143)).toBe(true);
-    gravarEvidencia('D-TELA-07-luz-do-relevo-geometrias', medidos);
+    gravarEvidencia('D-TELA-LUZ-RELEVO-geometrias', medidos);
   });
 
   it('sem leste-oeste: a encosta para leste e a para oeste dao o MESMO fator, abaixo de 1', () => {
@@ -143,7 +143,7 @@ describe('D-TELA-07 — a luz do relevo', () => {
     expect(acima).toBeGreaterThan(0);
     expect(abaixo).toBeGreaterThan(0);
     expect(planos).toBeGreaterThan(0);
-    gravarEvidencia('D-TELA-07-luz-do-relevo', {
+    gravarEvidencia('D-TELA-LUZ-RELEVO', {
       pxDeMundoPorDegrau: parametrosDaLuz.pxDeMundoPorDegrau,
       vertices: fatores.length,
       minimo,
@@ -172,7 +172,7 @@ function importsResolvidos(arquivo: string): string[] {
 const DADO_DO_RELEVO = resolve('data/relevo.json');
 const ehAlturaEmitida = (caminho: string): boolean => /[\\/]data[\\/]maps[\\/][^\\/]+\.relevo\.json$/.test(caminho);
 
-describe('D-TELA-07 — a altura e so de render', () => {
+describe('D-TELA-LUZ-RELEVO — a altura e so de render', () => {
   it('nenhum arquivo de src/sim/ importa data/relevo.json nem a altura emitida', () => {
     const vazamentos = listarTs('src/sim').flatMap((f) =>
       importsResolvidos(f).filter((i) => i === DADO_DO_RELEVO || ehAlturaEmitida(i)).map((i) => `${f} -> ${i}`));

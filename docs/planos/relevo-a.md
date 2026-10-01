@@ -11,10 +11,9 @@ sobre a D-TELA-06 da `main`**, a que faz o jogo exigir WebGL.
 
 Registradas como decisões. Elas valem sobre qualquer trecho do plano que diga o contrário.
 
-1. **Sigla.** A D-TELA-06 já existe na `main` (o jogo exige WebGL), ainda sem commit. A luz do
-   relevo usa o **próximo id livre de D-TELA**, conferido no `BUILD_PLAN.md` **da `main` depois do
-   commit dela**, e não no desta branch. Até lá, o plano escreve **D-TELA-08**. O `xx` é trocado
-   em tudo (título, teste, roteiro, commit) logo depois do rebase.
+1. **Sigla.** A luz do relevo esperava um id livre de D-TELA, conferido na `main` depois do commit
+   da D-TELA-06 (o jogo exige WebGL). O plano escrevia **D-TELA-xx**; virou D-TELA-07, colidiu,
+   virou D-TELA-08, e hoje é **D-TELA-LUZ-RELEVO** pela regra nova de id (decisão 16).
 2. **A Tarefa 0 espera.** Primeiro o commit da D-TELA-06 na `main`, depois o rebase desta branch
    sobre ela. Só então a sonda do WebGL no Chromium e a linha de base.
 3. **Máquina compartilhada.** A `main` está numa leva longa.
@@ -80,7 +79,7 @@ Registradas como decisões. Elas valem sobre qualquer trecho do plano que diga o
 15. **O que pode avançar agora, sem roteiro de tela e sem `npm run verify`:**
     - `src/render/relevo.ts` (a matemática da luz, sem Phaser) e os testes dele;
     - `data/relevo.json` e a validação dele;
-    - a D-TERRENO-01: o gerador escreve o `sertao-128.relevo.json`, e o `sertao-128.json` sai
+    - a D-TERRENO-ALTURA: o gerador escreve o `sertao-128.relevo.json`, e o `sertao-128.json` sai
       byte a byte igual.
 
     Para testar, **só `npx vitest run <arquivo>`, um arquivo por vez**; nada de suíte inteira.
@@ -91,23 +90,42 @@ Registradas como decisões. Elas valem sobre qualquer trecho do plano que diga o
 
 ## Decisão do operador sobre o id (2026-09-30, quarta rodada)
 
-16. **Colisão de id.** A `main` usou a D-TELA-07 para o sinal de pausado (`5402f09`,
-    `tests/D-TELA-07-sinal-de-pausado.test.ts`, `tools/shots/D-TELA-07.js`). A luz do relevo passa
-    a ser **D-TELA-08**, reservada na `main` pelo operador.
-    - **Regra nova: id só vale depois de reservado por commit na `main`.** Conferir no
-      `BUILD_PLAN.md` da `main` que um item "livre" não tem dono não basta: foi o que colidiu aqui.
-    - **Conferido nesta sessão (`main` em `d0af7e6`):** nenhum commit nem arquivo da `main` cita
-      D-TELA-08 ainda (`git grep` na árvore e `git log -S` no histórico). A reserva por commit
-      **ainda não aparece**. Pela regra 16, o `08` só vale quando aparecer.
-    - **A D-TERRENO-01 também não está reservada na `main`**: a regra nova vale para ela.
-      Precisa de reserva por commit, ou de outro id, antes do merge.
-    - **O que muda no código já commitado desta branch,** quando a reserva aparecer:
-      - `tests/D-TELA-07-luz-do-relevo.test.ts` vira `tests/D-TELA-08-luz-do-relevo.test.ts`;
-      - as evidências `test-output/D-TELA-07-luz-do-relevo*.json` viram `D-TELA-08-…`;
-      - o cabeçalho de `src/render/relevo.ts` troca o id.
+16. **Id pelo conteúdo (regra do operador, 2026-09-30; `main` em `bba027c`, CLAUDE.md §6
+    item 9).** Item novo não tem número nem reserva: o id é `<FASE>-<ÁREA>-<NOME-CURTO>`, e quem
+    cria confere com `git grep` na `main` que ele não existe. Os itens deste plano são:
+    - **D-TELA-LUZ-RELEVO** (luz do relevo: camadas de sombra e de luz, e tint dos sprites);
+    - **D-TERRENO-ALTURA** (altura só de render no gerador de mapa).
 
-      É um commit só, de renome. O commit `6cd08fc` mantém a mensagem com `D-TELA-07`, porque
-      reescrever histórico é anti-padrão (§10); este plano registra a troca.
+    A `main` já os renomeou no `BUILD_PLAN.md` e no `docs/siglas.md`.
+
+    **Histórico, que fica registrado:** a luz foi D-TELA-xx, depois D-TELA-07, que colidiu com o
+    sinal de pausado da `main` (`5402f09`), e depois D-TELA-08. A altura foi D-TERRENO-01. Uma
+    regra de reserva por commit na `main` valeu por uma hora e foi **revogada** pela regra nova.
+
+    **O renome desta branch** foi um commit só, depois do rebase sobre a `main` com a regra nova:
+    - `tests/D-TELA-07-luz-do-relevo.test.ts` virou `tests/D-TELA-LUZ-RELEVO.test.ts`;
+    - `tests/D-TERRENO-01-relevo-do-gerador.test.ts` virou `tests/D-TERRENO-ALTURA.test.ts`;
+    - as evidências viraram `test-output/D-TELA-LUZ-RELEVO.json`,
+      `D-TELA-LUZ-RELEVO-geometrias.json` e `D-TERRENO-ALTURA.json`. O `test-output/` não é
+      rastreado; as antigas foram apagadas e as novas regravadas pelos testes;
+    - o cabeçalho do `src/render/relevo.ts` e os comentários do `tools/gerar-mapa.js`,
+      `tools/data-rules.js` e `tools/data-schema.js`.
+
+    As mensagens dos commits anteriores mantêm os ids antigos: reescrever histórico é
+    anti-padrão (§10).
+
+## Decisão do operador sobre o `verify` (2026-09-30, quinta rodada)
+
+17. **O `verify` roda uma vez só, no fim, depois de todas as entregas**, como validação final.
+    Ele sai da frente de cada commit, e isso revoga o "`verify` antes de cada commit" da mudança
+    3 e da decisão 15. **Em cada commit,** os checks localizados:
+    - `npx vitest run` dos arquivos tocados, na suíte normal e na transladada
+      (`-c vitest.transladado.config.mts`);
+    - `npx tsc --noEmit` e `npx eslint` nos arquivos alterados, e o `node tools/validate-data.js`
+      quando o commit mexe em `data/` ou nas regras.
+
+    O roteiro da Tarefa 4 continua na Tarefa 4. A regressão completa dos roteiros continua no fim
+    (decisão 12), antes do `verify` final.
 
 ## Avaliação: chão plano = 1,0, pedida pelo operador (2026-09-30)
 
@@ -307,17 +325,17 @@ Pelo `docs/siglas.md` ("se muda os dois, são dois itens"), são **dois itens** 
 
 | Sigla | Nome | Onde |
 |---|---|---|
-| **D-TERRENO-01** | altura só de render no gerador de mapa | `tools/`, `data/` |
-| **D-TELA-08** | luz do relevo: camadas de sombra e de luz, e tint dos sprites | `src/render/` |
+| **D-TERRENO-ALTURA** | altura só de render no gerador de mapa | `tools/`, `data/` |
+| **D-TELA-LUZ-RELEVO** | luz do relevo: camadas de sombra e de luz, e tint dos sprites | `src/render/` |
 
-A D-TERRENO-01 foi conferida em todas as branches locais: não há TERRENO no esquema novo. **Ela
-também é reconferida no `BUILD_PLAN.md` da `main` depois do rebase**, junto com o id da D-TELA-08
+A D-TERRENO-ALTURA foi conferida em todas as branches locais: não há TERRENO no esquema novo. **Ela
+também é reconferida no `BUILD_PLAN.md` da `main` depois do rebase**, junto com o id da D-TELA-LUZ-RELEVO
 (mudança 1).
 
 Os dois entram no `BUILD_PLAN.md` com o aceite abaixo, e no `test-results.json` só depois do
 Definition of Done (§7).
 
-**A D-TELA-08 não é "feature de integração":** ela não toca em `src/sim/`.
+**A D-TELA-LUZ-RELEVO não é "feature de integração":** ela não toca em `src/sim/`.
 
 ---
 
@@ -329,14 +347,14 @@ Definition of Done (§7).
 | `data/maps/sertao-128.relevo.json` | **novo, emitido.** A altura por vértice | 1 |
 | `tools/gerar-mapa.js` | emite o segundo arquivo, com o próprio RNG. O `sertao-128.json` sai **byte a byte igual** | 1 |
 | `tools/data-schema.js`, `tools/data-rules.js` | `relevo` entra em `ARQUIVOS_DA_INTERFACE`, com a regra própria | 1 |
-| `tests/D-TERRENO-01-relevo-do-gerador.test.ts` | **novo** | 1 |
+| `tests/D-TERRENO-ALTURA.test.ts` | **novo** | 1 |
 | `src/render/relevo.ts` | **novo, puro.** Lê a altura, calcula a luz, amostra sob o pé, decide se liga | 2 |
-| `tests/D-TELA-08-luz-do-relevo.test.ts` | **novo.** A conta da luz, a decisão de ligar e a guarda estrutural | 2 |
+| `tests/D-TELA-LUZ-RELEVO.test.ts` | **novo.** A conta da luz, a decisão de ligar e a guarda estrutural | 2 |
 | `src/render/camada-de-relevo.ts` | **novo, Phaser.** As duas texturas, as camadas de sombra e de luz, e o tint | 3 |
 | `src/render/scenes/WorldScene.ts` | **4 ganchos** (abaixo) | 3 |
 | `src/render/unidades.ts` | parâmetro opcional `luz`, e uma linha no `atualizar` | 3 |
 | `src/render/debug.ts` | campo **opcional** `relevo?`, só escrito com a flag pedida | 3 |
-| `tools/shots/D-TELA-08.js` | **novo.** O roteiro com a flag ligada | 4 |
+| `tools/shots/D-TELA-LUZ-RELEVO.js` | **novo.** O roteiro com a flag ligada | 4 |
 | `BUILD_PLAN.md`, `test-results.json` | os itens e as chaves (o `PROGRESS.md` **não**: mudança 4) | 5 |
 
 ### Os ganchos no `WorldScene.ts`
@@ -499,23 +517,23 @@ Os casos que nenhum aceite escrito cobre e que mais podem morder:
 
 **Fora do foco, e registrado:** o `tools/transladar-mundo.js` (F18c) não translada a altura. Com a
 flag desligada é irrelevante, porque a suíte transladada roda a sim, e a sim não lê altura. Vira
-nota no item D-TELA-08 do `BUILD_PLAN.md`.
+nota no item D-TELA-LUZ-RELEVO do `BUILD_PLAN.md`.
 
 ---
 
 ## Tarefa 0: rebase e checagem do WebGL (sem commit) — FEITA
 
-- [x] **Passo 0: o rebase** sobre a `main` com a D-TELA-06, e a sigla D-TELA-08 conferida no
+- [x] **Passo 0: o rebase** sobre a `main` com a D-TELA-06, e a sigla D-TELA-LUZ-RELEVO conferida no
   `BUILD_PLAN.md` da `main`. Detalhes nas "Notas da implementação".
 - [x] **Passo 1: a checagem do WebGL.** A sonda `zz-` não foi criada: o roteiro `D-TELA-06` da
   `main` faz a mesma pergunta, e rodou verde na porta 5177.
 - **A linha de base saiu daqui** (decisão 12): ela vai para a Tarefa 5, passo 1, no fim.
 
-## Tarefa 1: D-TERRENO-01, a altura só de render no gerador
+## Tarefa 1: D-TERRENO-ALTURA, a altura só de render no gerador
 
 **Arquivos:** `data/relevo.json` (novo), `tools/gerar-mapa.js`, `tools/data-schema.js`,
 `tools/data-rules.js`, `data/maps/sertao-128.relevo.json` (emitido) e
-`tests/D-TERRENO-01-relevo-do-gerador.test.ts` (novo).
+`tests/D-TERRENO-ALTURA.test.ts` (novo).
 
 **Interfaces:**
 - **Produz**, no `module.exports` do `gerar-mapa.js`:
@@ -525,7 +543,7 @@ nota no item D-TELA-08 do `BUILD_PLAN.md`.
   - `forcarDecliveMaximo(h, grade, cfg)`, que muta e devolve o número de vértices baixados;
   - `declivesForaDoLimite(h, grade, cfg) -> Array<[gx, gy, amplitude]>`.
 
-- [ ] **Passo 1: o teste que falha.** `tests/D-TERRENO-01-relevo-do-gerador.test.ts`:
+- [ ] **Passo 1: o teste que falha.** `tests/D-TERRENO-ALTURA.test.ts`:
   - **Determinismo:** duas chamadas de `montarArquivoDeRelevo()` dão o mesmo `serializarRelevo`,
     igual ao arquivo no disco (com o CRLF normalizado, como no F-D3). Uma semente diferente
     (`cfg` com `semente + 1`) dá outro `h`.
@@ -539,7 +557,7 @@ nota no item D-TELA-08 do `BUILD_PLAN.md`.
     são montanha) é maior que a média dos vértices só de grama.
   - **Faixa:** todo degrau está em 0–35.
   - **Formato:** `linhas.length === altura + 1`, cada linha com `largura + 1` chars da legenda.
-- [ ] **Passo 2:** `npx vitest run tests/D-TERRENO-01-relevo-do-gerador.test.ts` falha
+- [ ] **Passo 2:** `npx vitest run tests/D-TERRENO-ALTURA.test.ts` falha
   (`montarArquivoDeRelevo is not a function`).
 - [ ] **Passo 3: implementar no `gerar-mapa.js`.** O esboço:
 
@@ -646,12 +664,12 @@ nota no item D-TELA-08 do `BUILD_PLAN.md`.
 - [ ] **Passo 7: commit.**
 
   ```
-  feat(D-TERRENO-01): altura so de render no gerador de mapa, com teto de declive
+  feat(D-TERRENO-ALTURA): altura so de render no gerador de mapa, com teto de declive
   ```
 
-## Tarefa 2: D-TELA-08, a conta pura da luz
+## Tarefa 2: D-TELA-LUZ-RELEVO, a conta pura da luz
 
-**Arquivos:** `src/render/relevo.ts` (novo) e `tests/D-TELA-08-luz-do-relevo.test.ts` (novo).
+**Arquivos:** `src/render/relevo.ts` (novo) e `tests/D-TELA-LUZ-RELEVO.test.ts` (novo).
 
 **Interfaces:**
 - **Consome** `data/relevo.json` e `data/maps/sertao-128.relevo.json`, por import estático de
@@ -684,7 +702,7 @@ nota no item D-TELA-08 do `BUILD_PLAN.md`.
   export function tileDoPe(x: number, y: number, tilePx: number): string; // "gx,gy", para o retingir
   ```
 
-- [ ] **Passo 1: o teste que falha.** `tests/D-TELA-08-luz-do-relevo.test.ts`:
+- [ ] **Passo 1: o teste que falha.** `tests/D-TELA-LUZ-RELEVO.test.ts`:
   - **Plano dá exatamente 1:** tudo a 5 dá `fator === 1` em todo vértice, e `texturasDaLuz` dá
     `sombra === 255` e `luz === 0` em todo vértice (os neutros exatos da decisão 7).
   - **Sul clareia, norte escurece:** uma rampa que desce para o sul (h diminuindo com y) dá
@@ -748,10 +766,10 @@ nota no item D-TELA-08 do `BUILD_PLAN.md`.
 - [ ] **Passo 5: commit.**
 
   ```
-  feat(D-TELA-08): conta pura da luz do relevo (sul, sem leste-oeste, plano neutro)
+  feat(D-TELA-LUZ-RELEVO): conta pura da luz do relevo (sul, sem leste-oeste, plano neutro)
   ```
 
-## Tarefa 3: D-TELA-08, as camadas de sombra e de luz, o tint e os ganchos
+## Tarefa 3: D-TELA-LUZ-RELEVO, as camadas de sombra e de luz, o tint e os ganchos
 
 **Arquivos:**
 - novo: `src/render/camada-de-relevo.ts`;
@@ -838,12 +856,12 @@ nota no item D-TELA-08 do `BUILD_PLAN.md`.
 - [ ] **Passo 6: commit.**
 
   ```
-  feat(D-TELA-08): camadas de sombra e luz do relevo e tint dos sprites, atras da flag e do WebGL
+  feat(D-TELA-LUZ-RELEVO): camadas de sombra e luz do relevo e tint dos sprites, atras da flag e do WebGL
   ```
 
-## Tarefa 4: D-TELA-08, o roteiro com a flag ligada
+## Tarefa 4: D-TELA-LUZ-RELEVO, o roteiro com a flag ligada
 
-**Arquivos:** `tools/shots/D-TELA-08.js` (novo).
+**Arquivos:** `tools/shots/D-TELA-LUZ-RELEVO.js` (novo).
 
 - [ ] **Passo 1: o roteiro.**
   - Reabre com `?pausado&relevo`, como o `_sem-arte.js` faz com `?semArte`.
@@ -869,10 +887,10 @@ nota no item D-TELA-08 do `BUILD_PLAN.md`.
     de tile e o `fatores['unidade:<id>']` mudar ou se manter coerente com o tile novo. É a lição
     do roteiro pausado (§8).
   - Captura (o mesmo quadro, o mesmo tick, a mesma câmera):
-    - `screenshots/D-TELA-08-1.png`: com relevo, geometria de 8 px por degrau (norte 0,83);
-    - `screenshots/D-TELA-08-2.png`: com relevo, `?relevoPx=12.8` (norte 0,71). **As duas lado a
+    - `screenshots/D-TELA-LUZ-RELEVO-1.png`: com relevo, geometria de 8 px por degrau (norte 0,83);
+    - `screenshots/D-TELA-LUZ-RELEVO-2.png`: com relevo, `?relevoPx=12.8` (norte 0,71). **As duas lado a
       lado decidem a geometria** (decisão 9);
-    - `screenshots/D-TELA-08-0.png`: recarregado **sem** `?relevo`, a referência.
+    - `screenshots/D-TELA-LUZ-RELEVO-0.png`: recarregado **sem** `?relevo`, a referência.
   - **O chão plano igual pixel a pixel (decisão 7).**
     - O roteiro escolhe, pelo arquivo de altura, um retângulo de chão de grama **plano**: todo
       vértice dele e da moldura de um vértice em volta tem a mesma altura, então o gradiente é 0
@@ -888,14 +906,14 @@ nota no item D-TELA-08 do `BUILD_PLAN.md`.
       põe no quadro.
     - Conta, entre `-0` e `-1` (e `-2`), os pixels do retângulo com algum canal em 255 que não
       estava em 255 sem relevo: são os que **saturaram por causa da luz**.
-    - Grava a contagem, o total de pixels e a fração em `test-output/D-TELA-08-saturacao.json`.
+    - Grava a contagem, o total de pixels e a fração em `test-output/D-TELA-LUZ-RELEVO-saturacao.json`.
       O roteiro não reprova por isso: é medida para a decisão.
   - **O salto de brilho da unidade (mudança 6).** O roteiro segue um serf andando por uma
     encosta, despausado em passos curtos. A cada quadro registra `fatores['unidade:<id>']` e o x,
-    y desenhado, e grava a série em `test-output/D-TELA-08-tint-da-unidade.json`. Captura duas
-    imagens coladas: `screenshots/D-TELA-08-3.png` com o serf no último quadro antes de cruzar o
+    y desenhado, e grava a série em `test-output/D-TELA-LUZ-RELEVO-tint-da-unidade.json`. Captura duas
+    imagens coladas: `screenshots/D-TELA-LUZ-RELEVO-3.png` com o serf no último quadro antes de cruzar o
     tile, e `-4.png` com ele no primeiro quadro depois.
-- [ ] **Passo 2:** `CANGACO_SHOT_PORTA=5177 npm run shot -- D-TELA-08` sai 0, com a porta
+- [ ] **Passo 2:** `CANGACO_SHOT_PORTA=5177 npm run shot -- D-TELA-LUZ-RELEVO` sai 0, com a porta
   conferida antes.
 - [ ] **Passo 3: abrir as duas capturas com Read** (evidência da feature atual, §8). O que olhar:
   - encosta clara ao sul e escura ao norte;
@@ -930,7 +948,7 @@ nota no item D-TELA-08 do `BUILD_PLAN.md`.
 - [ ] **Passo 4:** `npm run verify` (só depois de liberado, mudança 3), e depois o commit.
 
   ```
-  feat(D-TELA-08): roteiro do relevo ligado (grama, areia, rocha; serf, arvore e predio na encosta)
+  feat(D-TELA-LUZ-RELEVO): roteiro do relevo ligado (grama, areia, rocha; serf, arvore e predio na encosta)
   ```
 
 ## Tarefa 5: regressão completa, fila e registro
@@ -953,10 +971,10 @@ nota no item D-TELA-08 do `BUILD_PLAN.md`.
   - mudança real é **defeito desta branch**, e o conserto vem antes de seguir;
   - a tabela de resultado vai para `test-output/relevo-a-regressao.json`.
 - [ ] **Passo 2: `BUILD_PLAN.md`**, na Fase D, com as siglas e o nome ao lado:
-  - **D-TERRENO-01 (altura só de render no gerador de mapa)**, com o aceite da Tarefa 1;
-  - **D-TELA-08 (luz do relevo: camadas de sombra e de luz, e tint)**, com o aceite das Tarefas
+  - **D-TERRENO-ALTURA (altura só de render no gerador de mapa)**, com o aceite da Tarefa 1;
+  - **D-TELA-LUZ-RELEVO (luz do relevo: camadas de sombra e de luz, e tint)**, com o aceite das Tarefas
     2 a 4;
-  - na nota da D-TELA-08:
+  - na nota da D-TELA-LUZ-RELEVO:
     - ligar a flag por padrão espera a arte de terreno da F-TR;
     - o chão plano é 1,0 exato e a arte é pintada para ele, sem compensação (decisões 7 e 8);
     - o `addBlendMode` é risco no Phaser 4 (decisão 11);
@@ -975,7 +993,7 @@ nota no item D-TELA-08 do `BUILD_PLAN.md`.
 - [ ] **Passo 5: commit.**
 
   ```
-  docs(D-TELA-08): fila, test-results e notas do relevo A
+  docs(D-TELA-LUZ-RELEVO): fila, test-results e notas do relevo A
   ```
 
 - [ ] **Passo 6: relatório ao operador.**
@@ -1002,7 +1020,7 @@ nota no item D-TELA-08 do `BUILD_PLAN.md`.
 | ~~`k < 1` em `data/`, marcado como hipótese (0,85)~~ substituído: chão plano = 1,0 exato (decisão 7) | `texturasDaLuz` neutra no plano (teste, Tarefa 2); chão plano igual pixel a pixel (roteiro, Tarefa 4) |
 | Tint S1, `tetoDoTintDoSprite` = 1,0 (decisão 8) | `tintDoSprite` (teste, Tarefa 2); fatores ≤ 1 (roteiro, Tarefa 4) |
 | Geometria 0,83 × 0,71 lado a lado (decisão 9) | `?relevoPx`; capturas `-1` e `-2`; Tarefa 4 passo 3b |
-| Saturação da areia medida (decisão 10) | `test-output/D-TELA-08-saturacao.json`; Tarefa 4 passo 3b |
+| Saturação da areia medida (decisão 10) | `test-output/D-TELA-LUZ-RELEVO-saturacao.json`; Tarefa 4 passo 3b |
 | `addBlendMode` como risco para o Phaser 4 (decisão 11) | `docs/planos/estudo-relevo.md`, hipóteses; Notas |
 | Tint em árvore, prédio, recurso e unidade; fixo uma vez, unidade por tile | Tarefa 3; Foco de revisão 2 e 3 |
 | `verify` e roteiros iguais com a flag desligada | Tarefas 0, 3 e 5 |
@@ -1039,8 +1057,8 @@ Preenchidas durante a execução. Separam o **verificado** (com o comando ou o a
     carregar);
   - o `BUILD_PLAN.md` da `main` usa D-TELA até a 06, e nenhuma branch local usa 07. O `xx` virou
     **D-TELA-07**. A D-TERRENO-01 continua livre. **Colidiu** depois: a `main` usou a D-TELA-07
-    para o sinal de pausado (`5402f09`), e o operador passou a luz do relevo para a
-    **D-TELA-08** (decisão 16);
+    para o sinal de pausado (`5402f09`); a luz foi para a D-TELA-08, e hoje, pela regra nova de
+    id, é a **D-TELA-LUZ-RELEVO**, e a altura é a **D-TERRENO-ALTURA** (decisão 16);
   - a cena já publica `__cangaco.renderizador = { tipo, webgl }` (D-TELA-06). A proteção de
     Canvas saiu do plano (decisão 14).
 - **Tarefa 0, passo 2 (verificado, 2026-09-30):** a sonda `zz-` **não foi criada**. O roteiro
@@ -1056,22 +1074,22 @@ Preenchidas durante a execução. Separam o **verificado** (com o comando ou o a
   136 pacotes, nenhuma dependência nova, e o `node_modules/` é ignorado pelo git.
 - **Linha de base:** não rodada, por decisão do operador (decisão 12). Vai para o fim (Tarefa 5,
   passo 1), sobre a ponta da `main` parada. São 84 roteiros hoje (`tools/shots/*.js` sem `_`).
-- **Tarefa 1, D-TERRENO-01 (commit `345be3f`), verificado com `npx vitest run`, um arquivo por
+- **Tarefa 1, D-TERRENO-ALTURA (commit `c12c4fa`, depois do rebase sobre `6bc8044`), verificado com `npx vitest run`, um arquivo por
   vez (decisão 15):**
-  - `tests/D-TERRENO-01-relevo-do-gerador.test.ts`: 21 de 21. Também `estilo-ui-menu` (12 de
+  - `tests/D-TERRENO-ALTURA.test.ts`: 21 de 21. Também `estilo-ui-menu` (12 de
     12), por causa do `relevo` novo em `ARQUIVOS_DA_INTERFACE`, e `F-D3-geografia` (8 de 8), a
     guarda do mapa emitido;
   - `node tools/gerar-mapa.js --conferir` sai 0 nos dois arquivos. O `sertao-128.json` tem o
     **mesmo blob** de antes (`686196f…`, por `git hash-object` e `git rev-parse HEAD:`). O "M"
     que o `git status` mostrou depois de regravar era só LF contra CRLF, e a cópia foi restaurada;
-  - a evidência (`test-output/D-TERRENO-01-relevo-do-gerador.json`): degraus de 1 a 18; 15 633
+  - a evidência (`test-output/D-TERRENO-ALTURA.json`): degraus de 1 a 18; 15 633
     tiles com limite, dos quais 11 722 planos e 248 encostas no limite de 2 degraus; média no
     miolo de montanha 15,7, de grama 6,1, de água 3,2.
-- **Tarefa 2, D-TELA-08, a conta pura (`src/render/relevo.ts`), verificado com `npx vitest run`:**
-  - `tests/D-TELA-07-luz-do-relevo.test.ts` (o nome até o renome da decisão 16): 12 de 12. Também `F04-grid-ortogonal` (17 de 17),
+- **Tarefa 2, D-TELA-LUZ-RELEVO, a conta pura (`src/render/relevo.ts`), verificado com `npx vitest run`:**
+  - `tests/D-TELA-LUZ-RELEVO.test.ts`: 12 de 12. Também `F04-grid-ortogonal` (17 de 17),
     que guarda o que `src/render/` pode importar;
   - as rampas sintéticas dão os números da avaliação: 0,830 e 1,110 a 8 px por degrau, e 0,714 e
-    1,143 a 12,8 px (`test-output/D-TELA-07-luz-do-relevo-geometrias.json`, idem);
+    1,143 a 12,8 px (`test-output/D-TELA-LUZ-RELEVO-geometrias.json`);
   - **no mapa real, a 8 px por degrau, a luz vai de 0,52 a 1,15, mas só no miolo de montanha e
     rocha** (sem limite de declive). Nos vértices tocados só por tipos com limite, medido com um
     `node -e` avulso, ela vai de **0,87 a 1,11**. O 0,83 do norte só aparece com rampa de 2
@@ -1081,3 +1099,57 @@ Preenchidas durante a execução. Separam o **verificado** (com o comando ou o a
     1,0499999…. O teste do teto usa tolerância; os neutros exatos (255 e 0) não dependem disso;
   - `Float32Array`, `Uint8Array` e o JSON importado **não passaram por `typecheck` nem `lint`**:
     esses rodam no `verify`, quando for liberado. Até lá, a tipagem é hipótese.
+- **Renome para os ids novos e o primeiro `verify` (2026-09-30), depois do rebase sobre a `main`
+  em `6bc8044`:**
+  - os dois testes renomeados passam sozinhos: `D-TELA-LUZ-RELEVO` 12 de 12 e `D-TERRENO-ALTURA`
+    21 de 21, e as três evidências foram regravadas com os nomes novos;
+  - o 1º `verify` reprovou no **lint**: dois `any` nas quebras do `D-TERRENO-ALTURA.test.ts`. Ficou
+    tipado (`RelevoCru`), sem `eslint-disable`;
+  - o 2º e o 3º `verify`: `typecheck`, `lint` e `validate:data` (15 arquivos, 0 erros) verdes, e
+    **1 teste de 2 129 reprovado**, nos dois: `tests/F-VIVO-e-ocioso.test.ts`, "aceite 1", por
+    **timeout de 5 000 ms** (5 130 ms e 5 014 ms). Esse teste roda 6 000 ticks da sim com o
+    timeout padrão do Vitest;
+  - **o que se sabe:** sozinho, o arquivo passa, 7 de 7, em 5,4 s e 6,0 s de duração total. Esta
+    branch não muda nada em `src/sim/` (`git diff main --stat -- src/sim` vazio), e o teste não
+    importa nada do relevo. A máquina tinha 36 processos `node` na hora;
+  - **hipótese, não conferida:** a mesma suíte na `main` reprova igual com a máquina carregada.
+    Não rodei a suíte da `main` para conferir;
+  - **o commit do renome espera:** sem o selo do `verify`, não commitei. O teste é de outra
+    feature (F-VIVO-e), e a correção dele (um `timeout` explícito, como o do F09, que o §8
+    permite porque timeout não é asserção de tempo) é decisão do operador.
+- **4º `verify` (máquina livre: 24 `node`, nenhum gastando CPU em duas leituras seguidas, CPU a
+  9–20%):**
+  - `typecheck`, `lint`, `validate:data` verdes; `npm run test` **2 129 de 2 129**;
+  - `test:transladado` reprovou em dois arquivos:
+    - `F-VIVO-e-ocioso`, "aceite 1", **timeout de novo** (5 844 ms). **Sozinho** (`--reporter=verbose`,
+      duas vezes em cada suíte), o "aceite 1" leva **1 785 e 1 461 ms** na suíte normal e
+      **1 604 e 1 481 ms** na transladada (arquivo inteiro 3,4–4,0 s). Na suíte inteira, 5,0–5,8 s:
+      é a disputa entre os workers do Vitest, não a máquina de fora nem esta branch. A correção é
+      da `main` (decisão do operador);
+    - **`D-TERRENO-ALTURA`, 5 casos: defeito desta branch.** No mundo transladado da F18c-1c, o
+      `require` do gerador passa pelo `fs.readFileSync` trocado, e o gerador vê o mapa andado
+      (160 × 160), enquanto o `.relevo.json` do disco não é transladado (129 × 129). O teste
+      comparava os dois mundos;
+  - **conserto:** as guardas 1 a 3 medem o relevo que o gerador emite sobre o mapa que ele mesmo
+    monta, e valem nos dois mundos. O caso "o mapa do jogo não muda" saiu, porque duplicava o do
+    F-D3. Sobra **um** caso que compara com o disco, "o que a semente emite hoje é, byte a byte, o
+    arquivo versionado", no `describe` "o arquivo publicado". Na suíte normal, 21 de 21; na
+    transladada, 20 de 21, só esse caso;
+  - **esse caso é contrato do arquivo publicado**, a mesma categoria do F-D3 e do F18b que o
+    operador pôs "fora de vez" do mundo transladado (2026-09-26, `vitest.transladado.config.mts`,
+    `FORA_DO_MUNDO_TRANSLADADO`). Pôr uma linha nova nessa lista é tirar um caso de uma
+    verificação (§10), então **espera a decisão do operador**. Até lá, nada é commitado.
+- **`FORA_DO_MUNDO_TRANSLADADO` (aprovado pelo operador, 2026-09-30):** o caso "o que a semente
+  emite hoje é, byte a byte, o arquivo versionado" do `D-TERRENO-ALTURA` entrou na lista, com o
+  comentário citando a regra do F-D3 (2026-09-26): contrato do arquivo publicado, não do mundo.
+  Conferido: transladada 20 passam e 1 pulado; normal 21 de 21. **Espera para o commit:** a
+  correção do timeout da F-VIVO-e na `main`. Depois dela vêm o rebase, o `verify` e o commit do
+  renome com o teste reestruturado.
+- **Rebase sobre a `main` em `b2b5c73` (o timeout explícito de 20 s na F-VIVO-e e em outros três
+  testes), sem conflito.** Stash marcado `relevo-a-wip-renome`, aplicado pelo SHA e depois
+  apagado; a árvore conferiu igual ao `relevo-a-wip.patch` (ignorando as linhas `index`), e o
+  `.patch` foi apagado depois do commit. **Checks localizados** (decisão 17), suíte normal e
+  transladada: `D-TELA-LUZ-RELEVO` 12 e 12; `D-TERRENO-ALTURA` 21, e 20 + 1 pulado;
+  `F04-grid-ortogonal` 17 e 17; `estilo-ui-menu` 12 e 12; `F-D3-geografia` 8, e 7 + 1 pulado (o
+  pulo antigo dele). `tsc --noEmit` do projeto, `eslint` nos arquivos alterados e `validate:data`
+  (15 arquivos, 0 erros): verdes.
