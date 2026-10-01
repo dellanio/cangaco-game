@@ -526,5 +526,11 @@
   },
   "D-TELA-07-sinal-de-pausado": {
     "passes": true
+  },
+  "D-TELA-LUZ-RELEVO-luz-do-relevo": {
+    "passes": true
+  },
+  "D-TERRENO-ALTURA-altura-so-de-render": {
+    "passes": true
   }
 }

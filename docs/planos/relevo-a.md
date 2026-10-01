@@ -1277,3 +1277,60 @@ Preenchidas durante a execução. Separam o **verificado** (com o comando ou o a
     `screenshots/D-TELA-LUZ-RELEVO-recorte-encosta-forte-sem-x-com.png` (e nas capturas inteiras
     `-recorte-5` e `-recorte-6`): sombreado suave na transição de grama para areia, **não lê como
     parede nem como intransitável**.
+- **Tarefa 5, a regressão com a flag desligada (decisão 12), 2026-10-01:**
+  - **linha de base** na `main` em `5124154`, numa worktree temporária no scratchpad, com `npm
+    ci` próprio e os testes rodados antes (31 roteiros leem `test-output/`): testes 2 102 + 5
+    pulados; **86 de 86 roteiros com saída 0** (54 min, porta 5177 conferida antes de cada
+    um). A primeira tentativa, sobre `d372d04`, foi interrompida pelo Claude Code por memória
+    baixa no roteiro 39 e descartada, porque a `main` andou;
+  - **a branch** sobre o mesmo `5124154`: testes 2 136 + 5 pulados; **88 de 88 com saída 0** (os
+    86 comuns e os 2 do relevo);
+  - **códigos de saída iguais nos 86.** Capturas: 110 de 219 iguais por sha256 e 109 diferentes,
+    **todas classificadas como ruído**:
+    - 105 com ~76–80% dos pixels do canvas diferentes (o grão da textura do chão muda a cada
+      corrida). A `main` rodada de novo contra ela mesma deu o mesmo padrão em 19 PNGs de 5
+      roteiros (`F17e`, `F-TR`, `MATERIAIS`, `F21b`, `BUG-U`); **os outros 86 PNGs do padrão
+      foram classificados pelo padrão, sem nova corrida da `main` (inferência)**;
+    - 4 com diferença localizada (`F23b-2`, `F11a-3`, `F-D4-2`, `D-TELA-02-1`): unidades e texto
+      deslocados por movimento no relógio de parede, conferidos no olho em recortes lado a lado;
+  - **rebase sobre a ponta, `8d91cb8`.** Desde `5124154`, a `main` mudou só o selo do
+    `test:longo` (`CLAUDE.md`, `PROGRESS.md`, `package.json`, `tests/SELO-longo.test.ts` e quatro
+    arquivos de `tools/`), **nenhum arquivo que o relevo toca**. Pelo passo 3 do operador, basta
+    o `verify` final. A regra nova do `CLAUDE.md` §13 (o selo do `test:longo` é a última coisa
+    antes do avaliador) não muda o fechamento desta branch;
+  - **`verify` final verde** (máquina livre: nenhum `node` ocupado, CPU a 35%): `typecheck`,
+    `lint`, `validate:data` (15 arquivos), `test` 2 138 + 5 pulados, `test:transladado` 2 136 +
+    10 pulados;
+  - `BUILD_PLAN.md`: D-TELA-LUZ-RELEVO e D-TERRENO-ALTURA preenchidos (entregue, aceite e nota).
+    `test-results.json`: `D-TELA-LUZ-RELEVO-luz-do-relevo` e
+    `D-TERRENO-ALTURA-altura-so-de-render` com `passes: true`.
+
+### Bloco do `PROGRESS.md`, para colar no merge (decisão 4)
+
+```markdown
+## 2026-10-01 — D-TELA-LUZ-RELEVO (luz do relevo) e D-TERRENO-ALTURA (altura só de render): entregues, desligados por padrão
+
+Branch `dellanio/relevo-a`, plano e notas em `docs/planos/relevo-a.md` (a fonte: o
+`docs/planos/estudo-relevo.md`, opção A). Nada na sim e nada no `GameState`.
+
+**Verificado:**
+- D-TERRENO-ALTURA: `tools/gerar-mapa.js` emite `data/maps/sertao-128.relevo.json` (degrau 0–35 por
+  vértice, 129 × 129, semente própria); o `sertao-128.json` sai com o mesmo blob. Fora de montanha
+  e rocha, os 4 cantos de um tile diferem no máximo 2 degraus (teste nos dois sentidos).
+- D-TELA-LUZ-RELEVO: sombra em MULTIPLY e luz no modo próprio `[DST_COLOR, ONE]`
+  (`renderer.addBlendMode`), neutras exatas no plano; o chão plano é igual pixel a pixel com a flag
+  ligada e desligada (roteiro). Tint dos sprites pela luz sob o pé, preso em 1,0 (S1); o da unidade
+  segue a posição (por tile, saltava até 61 níveis de cinza no pé da serra).
+- Flag desligada: 86 roteiros com o mesmo código de saída que a `main` em `5124154`; as 109 capturas
+  diferentes são ruído da própria `main` (grão do chão) e movimento no relógio de parede.
+- `verify` final verde sobre `8d91cb8`.
+
+**Hipótese ou provisório:**
+- `pxDeMundoPorDegrau` 12,8 é provisório até a arte de terreno da F-TR (tile sem luz pintada);
+  amplitude 12 e célula 10 da geração são ponto de partida.
+- Recorte do sprite na encosta de luz medido em ~11% (vila) e ~10% (pé da serra); hoje não lê como
+  recortado. Correção pronta, não aplicada: `tetoDaLuzDoChao`.
+- `renderer.addBlendMode` é risco no Phaser 4 (registrado no estudo do relevo).
+
+**Aberto:** ligar a flag por padrão espera a arte de terreno da F-TR.
+```

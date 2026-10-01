@@ -5811,8 +5811,52 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
      - captura aberta com as duas serrarias lado a lado;
      - retomar a `s1` pelo painel (`[data-pausar]`, `mouse.down` / 150 ms / `mouse.up`, relógio
        correndo): o sinal some.
-### D-TELA-LUZ-RELEVO — Luz de relevo (id de 2026-09-30; antes D-TELA-08; trabalho em curso na sessão do relevo)
-### D-TERRENO-ALTURA — Altura só de render no gerador de mapa (id de 2026-09-30; antes D-TERRENO-01; trabalho em curso na sessão do relevo)
+### D-TELA-LUZ-RELEVO — Luz de relevo (id de 2026-09-30; antes D-TELA-08)
+- **ENTREGUE (2026-09-30), desligado por padrão.** Opção A do `docs/planos/estudo-relevo.md`,
+  com plano, decisões e notas em `docs/planos/relevo-a.md`. O relevo é só de render: duas camadas
+  sobre o chão (sombra em `MULTIPLY`, luz no modo próprio `[DST_COLOR, ONE]`), neutras exatas no
+  plano, e o `setTint` dos sprites pela luz sob o pé, preso em 1,0 (o sprite escurece na sombra e
+  não recebe o realce). A flag é `data/relevo.json` `ligado: false`; `?relevo` liga para o
+  roteiro. Código em `src/render/relevo.ts` (a conta, pura) e `src/render/camada-de-relevo.ts`
+  (o Phaser), com 10 linhas de gancho no `WorldScene.ts` e um parâmetro no `unidades.ts`.
+- **Aceite (do plano, escrito antes do código):**
+  1. com a flag desligada, nenhum teste, roteiro ou captura muda em relação à `main` (linha de
+     base dos roteiros contra a branch, código de saída e sha256);
+  2. `tests/D-TELA-LUZ-RELEVO.test.ts`: o plano dá 1 exato e texturas neutras (255 e 0); a
+     encosta sul clareia e a norte escurece; leste = oeste (sem componente leste–oeste); o tint
+     do sprite nunca passa de 1; `src/sim/` não importa o relevo e só `relevo.ts` lê a altura
+     (import resolvido);
+  3. roteiro `tools/shots/D-TELA-LUZ-RELEVO.js` com `?relevo`: o chão plano é igual pixel a pixel
+     com a flag ligada e desligada (e uma encosta difere); árvore, rocha, prédio numa encosta e
+     serf tingidos; a obra é retingida quando o container é recriado, já com sprite.
+- **Decisões do operador incorporadas:** chão plano = 1,0 (sem `k`); tint S1; geometria 12,8 px
+  por degrau, **provisória**; o tint da unidade segue a posição do pé (por tile, saltava até 61
+  níveis de cinza no pé da serra).
+- **Nota (o que fica para depois):**
+  - **ligar a flag por padrão** espera a arte de terreno da F-TR (tile sem luz pintada), e com
+    ela a recalibração do `pxDeMundoPorDegrau`;
+  - **recorte do sprite na encosta de luz:** medido em ~11% (chão contra sprite) na vila e ~10%
+    no pé da serra (`tools/shots/D-TELA-LUZ-RELEVO-recorte.js`); hoje não lê como recortado. Se a
+    arte nova mostrar recorte, a correção pronta é `tetoDaLuzDoChao` no dado;
+  - o `renderer.addBlendMode` é **risco no Phaser 4** (registrado no estudo do relevo);
+  - o `tools/transladar-mundo.js` não translada a altura: com a flag desligada é irrelevante, e
+    o contrato do arquivo publicado está no `FORA_DO_MUNDO_TRANSLADADO`.
+
+### D-TERRENO-ALTURA — Altura só de render no gerador de mapa (id de 2026-09-30; antes D-TERRENO-01)
+- **ENTREGUE (2026-09-30).** `tools/gerar-mapa.js` emite `data/maps/sertao-128.relevo.json`: um
+  degrau inteiro (0–35, um char base-36) por vértice, 129 × 129, a partir dos tipos de terreno e
+  de um ruído semeado com semente própria (`data/relevo.json`, `geracao`). O `sertao-128.json`
+  sai com o mesmo blob. A sim não lê a altura.
+- **Aceite (do plano, escrito antes do código):** `tests/D-TERRENO-ALTURA.test.ts`:
+  1. a mesma semente emite o mesmo relevo, outra semente outro; o arquivo versionado é byte a
+     byte o que a semente emite (contrato do arquivo publicado, fora do mundo transladado como o
+     do F-D3);
+  2. só relevo suave: fora de `montanha` e `rocha`, os 4 cantos de um tile diferem no máximo
+     `decliveMaximoEmDegraus` (2), com a guarda provada nos dois sentidos;
+  3. o relevo existe (encostas no teto, montanha mais alta que grama, grama mais alta que água);
+  4. `data/relevo.json` validado pelo `validate:data` (regra `interface/relevo`).
+- **Nota:** amplitude 12 e célula de ruído 10 são **ponto de partida**, ajustados na captura
+  (67,5% do chão com inclinação, 8,2% no teto); a encosta mais forte não lê como parede.
 ### D-TELA-CHAO-DETERMINISTICO — O grão da textura do chão vem da semente do mapa
 - **Registrado (2026-10-01, pedido do operador). Não implementado.**
 - **Problema (medido pelo operador):** o grão da textura do chão muda a cada execução. Em duas
