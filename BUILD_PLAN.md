@@ -6329,6 +6329,16 @@ vai para o PROGRESS como PARA REVISÃO, e o trabalho segue.
      um do outro para não lutar, em campo aberto), em tempo de parede (evidência da sessão, nunca
      asserção, §8) e no eixo determinístico de chamadas a `inimigoEncostado` por tick. Tabela no
      PROGRESS e aqui, com a razão entre as três. Nenhum código de `src/sim` muda.
+   - **MEDIDO (2026-09-30), sem otimizar:**
+     ```text
+     militares  chamadas a hpMaximoDoTipo / tick   ms / tick (3 corridas: carregada, livre, livre)
+     50         313                                 0,340   0,149   0,146
+     100        1 268   (×4,05)                     0,944   0,417   0,384   (livre: ×2,7)
+     200        5 898   (×4,65)                     3,910   1,914   1,876   (livre: ×4,7)
+     ```
+     O eixo determinístico cresce ~quadrático, e o tempo, com a máquina livre, também (×4,7 de 100
+     para 200). Com 200 militares o `step` passa de 1,9 ms; a 10 Hz é ~2 % de um tick de 100 ms,
+     sem render. Os números de tempo são da corrida, não asserção.
    - **Posição na fila:** o operador pediu "antes da C-IA-02". A C-IA-02 (economia da IA) está
      entregue (02a, 02b e 02c com `passes: true`), então o item entra antes da entrada dela nesta
      lista, e a pergunta fica no PROGRESS.

@@ -16142,3 +16142,30 @@ BUGS.md                                    | PASS        | só o BUG-N          
   atual dá vazio.
 - É regra permanente (roda em todo `verify`). A conferência contra `8929ba3` é evidência desta
   sessão.
+
+## 2026-09-30 — Leva 4, item 4: C-COMBATE-CUSTO-ENCOSTADO (o custo de inimigo encostado, todos contra todos): medido, sem otimizar
+
+O item entrou na fila com o aceite num commit próprio (`f053446`). Nenhum código de `src/sim` mudou.
+
+### Verificado (sonda `zz-` apagada)
+- Cenário: `createInitialState(1)` sem unidades, mais N militares do tipo da tropa, metade de cada
+  lado, em metades opostas do mapa (ninguém encosta em inimigo, ninguém luta), todos ociosos. 20
+  ticks de aquecimento, depois 300 medidos.
+- Eixo determinístico: chamadas a `hpMaximoDoTipo` por tick, contadas por `vi.mock` de
+  `src/sim/vida`. É a função que `inimigoEncostado` chama uma vez por unidade de outro lado.
+  **Ela tem outros leitores**, então a contagem é um teto do custo da varredura, e não a varredura
+  pura.
+
+```text
+militares  chamadas a hpMaximoDoTipo / tick   ms / tick (3 corridas: carregada, livre, livre)
+50         313                                 0,340   0,149   0,146
+100        1 268   (×4,05)                     0,944   0,417   0,384   (livre: ×2,7)
+200        5 898   (×4,65)                     3,910   1,914   1,876   (livre: ×4,7)
+```
+
+- Tempo de parede é evidência da corrida, não asserção (§8). A primeira corrida pegou CPU a 87 %
+  (carga externa) e as outras duas a 7–20 %.
+
+### Pergunta em aberto (premissa do pedido)
+- "Antes da C-IA-02": a C-IA-02 (economia da IA) está entregue (02a, 02b, 02c). O item entrou antes
+  da entrada dela na lista do BUILD_PLAN. Se o operador quis dizer outro item, a posição muda.
