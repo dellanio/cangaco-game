@@ -6043,6 +6043,22 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
      save, com os prédios dela. A captura é aberta.
 - **Se o carregar do jogo não aceitar um save gerado assim sem mudar código, o item PARA.**
 
+### D-ARTE-INTEGRA-1 — A arte do Codex na main (integra-arte-1)
+- **Aprovada pelo operador (2026-10-01)**, com as exceções de largura dos prédios. As da Bodega
+  (1,5) e do canavial (1,303) são **provisórias**.
+- **Escopo:**
+  - da `noru-novos-sprites` em `57ab2b6`: `skills/`, `assets/base/` e `assets/sprites/`; o manifesto
+    dela, mais o `icones.mercadorias` da `main` (D-ARTE-01);
+  - por patch desde `b2d9bc3`: a âncora `bandeira` (`manifesto.ts`, `manifesto-camadas.ts`,
+    `WorldScene.ts`) e o C10 e o F-ESC;
+  - o diretor de arte pelo `b1723ae`.
+- **Aceite:**
+  1. F17f, `validate:data`, `verify` completo e `shot:todos` com saída 0;
+  2. o roteiro `ARTE-VILA` mostra a vila e closes do armazém, padaria, moinho, serraria, terreno e
+     vegetação. Cada prédio do close tem PNG (`spritesDePredio`), e as capturas são abertas;
+  3. nenhum "alto à esquerda" fora do PROGRESS. O CLAUDE.md §9 aponta para a
+     `pianco-sprite-director`.
+
 ### D-ARTE-CHAO-DE-ROCA — Pedido de arte para o Codex: o chão de roça sob a cana
 - **Registrado por decisão do operador (2026-10-01): é pedido de arte para o Codex**, e não
   trabalho desta fila de código. Vem da avaliação da F-TR (o esgotado por tipo, `9fb7b71`): a
