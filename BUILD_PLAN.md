@@ -6080,6 +6080,10 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
      em 1,303;
   2. F17f, `validate:data` e o `verify` completo verdes;
   3. o roteiro `ARTE-VILA` sai 0, e a captura do pior caso da Bodega com o canavial é aberta.
+  4. **(emenda de 2026-10-01, antes do código, pela medida)** o F-ESC afirmava que nenhum sprite
+     encolhe ("a arte de hoje esta toda dentro da regra"). Com a decisão (b), a Bodega encolhe de
+     propósito. A asserção passa a ser exata por prédio: a escala da `inn` é **0,8** (1,2 / 1,5), e a
+     de todos os outros continua **1**. Nenhum prédio sai da conta.
 
 ### D-ARTE-CHAO-DE-ROCA — Pedido de arte para o Codex: o chão de roça sob a cana
 - **Registrado por decisão do operador (2026-10-01): é pedido de arte para o Codex**, e não
