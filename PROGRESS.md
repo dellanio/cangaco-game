@@ -17093,3 +17093,28 @@ B D-TELA-LUZ-RELEVO, aceite 1             | NEEDS_WORK        | o sha256 contra 
   Ligado neste clone por `npm run hooks:instalar` (`core.hooksPath .githooks`). Outro clone ou
   worktree precisa rodar o mesmo comando. **O fluxo passa a ser:** commit, `npm run verify`, push.
   Qualquer commit depois do `verify` pede um `verify` novo.
+
+## 2026-10-01 (noite, 4) — D-ARTE-INTEGRA-1 (a arte do Codex na main, branch `integra-arte-1`)
+- **Decisão do operador (passo 4):** as exceções de largura ficam **aceitas como provisórias**:
+  milho 1,051, moinho 1,16, armazém 1,2. A Bodega (1,5) e o canavial (1,303) o operador
+  **reavalia olhando as capturas**.
+- `skills/pianco-sprite-director/SKILL.md` pelo `b1723ae` (`ccb2419`). **Conferido no diff:** além do
+  caminho da pasta externa (`cangaco-arte-candidatos` → `arte-candidatos`), o `b1723ae` também troca
+  uma frase. Antes: as imagens de `candidatos/` já versionadas são históricas e não se apagam nem
+  movem. Agora: elas e as de `screenshots/` ficam no disco e no histórico, mas saem do índice.
+  Entrou como está no `b1723ae`, e o operador foi avisado.
+- **Os closes de pior caso** (aceite emendado em `c302a32`, código em `391d1d3`). Saem do save da
+  vila pronta, sem prédio posto pelo roteiro (medido: a Bodega do lado 0 em 29,38 tem o roçado
+  colado a oeste e o canavial a 1 tile a leste; a do lado 1 tem a padaria colada):
+  - `ARTE-VILA-6-close-bodega-canavial-vizinhos`: o telhado da Bodega entra no lote do canavial, e a
+    bandeira do canavial fica no beirado da Bodega. Quatro unidades passam atrás do canavial, com os
+    pés cobertos pelo telhado de palha. O roçado a oeste cai quase todo atrás do HUD;
+  - `ARTE-VILA-7-close-bodega-padaria`: o alpendre da Bodega cobre a parede direita da padaria.
+  - As 9 capturas também estão em `D:\projetos-pessoal\evidencias\integra-arte-1\`. As duas acima
+    foram abertas.
+- **Incidente de sessão:** duas sessões do Claude rodaram este pedido na mesma worktree. A primeira
+  fez o `ccb2419` e o `verify` (verde, selo do `ccb2419`), e foi fechada pelo operador no meio do
+  `shot:todos`. Esse `shot:todos` (`test-output/shot-todos.json` de 18:55) tem 9 roteiros verdes e 83
+  com saída `0xC0000142`, em 0 s: o processo nem subiu, porque a sessão que o abriu morreu. **Não é
+  falha de roteiro** (hipótese pela causa; o código de saída e os 0 s foram conferidos). O
+  `verify` e o `shot:todos` valem só se refeitos sobre o HEAD final, e foram.
