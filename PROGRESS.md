@@ -16663,3 +16663,15 @@ O aceite já estava escrito no BUILD_PLAN (operador: "aceite já escrito").
   (2,3 GB). Não religuei. Para remedir: ponta A gravando cada estoque à medida que roda e desligando
   o guarda abaixo de 28, como a F18g fazia. As pontas B e D pedem a regra da rua mínima escrita
   antes. **Nenhum número de dado mudou.**
+
+## 2026-10-01 — Leva desatendida 2, item 7: marcos a partir do ESCOPO (só leitura): feito
+
+- `docs/planos/2026-10-01-marcos-a-partir-do-escopo.md`, com as três partes pedidas:
+  - os marcos existentes, com a única definição de pronto escrita (a da Fase A, `BUILD_PLAN.md:70-73`);
+  - os itens sem marco, atualizados para a `main` de agora;
+  - três candidatos a próximo marco (A: a escaramuça de ponta a ponta; B: a primeira fase da
+    campanha; C: sem placeholder no que o jogador vê sempre), cada um com o que já existe e o que
+    falta. **Não escolhi.**
+- As linhas foram reconferidas na `main` de agora. O que mudou desde a foto do ESCOPO (`43c6a80`) está
+  no documento: o BUG-T fechou, o relevo entrou, a D-TELA-05e foi entregue, a D-TELA-CHAO parou.
+- Nenhum código, dado ou aceite mudou.
