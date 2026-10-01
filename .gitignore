@@ -45,3 +45,4 @@ Thumbs.db
 !.vscode/settings.json
 
 .claude/.headroom_*
+.verify-rapido-ok

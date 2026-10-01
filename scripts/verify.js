@@ -19,5 +19,9 @@ for (const etapa of etapas) {
   }
 }
 
-fs.writeFileSync('.verify-ok', new Date().toISOString());
+// o selo do verify COMPLETO (camadas de teste, 2026-10-01): o portao do test-results.json confere o
+// `tipo`, e o `verify:rapido` grava outro arquivo (.verify-rapido-ok), nunca este
+let commit = '?';
+try { commit = execSync('git rev-parse HEAD', { encoding: 'utf8' }).trim(); } catch { /* sem git */ }
+fs.writeFileSync('.verify-ok', JSON.stringify({ tipo: 'completo', commit, quando: new Date().toISOString() }));
 console.log('\nVerificacao completa. Evidencia em test-output/ e screenshots/.');

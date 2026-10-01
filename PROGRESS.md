@@ -16529,3 +16529,51 @@ O aceite foi num commit próprio antes do código (`89ccfc8`, CLAUDE.md §13).
 - A primeira versão do aceite 2 passou o código do filho por dois shells, e o `>` da arrow function
   virou redirecionamento. Isso deixou um arquivo vazio `{}` na raiz, que foi apagado. O filho agora
   roda um arquivo de script.
+
+## 2026-10-01 — Leva desatendida 2, item 3: as camadas de teste
+
+O aceite foi num commit próprio antes do código (`51700ab`, CLAUDE.md §13).
+
+### Feito
+- `npm run verify:rapido` (`scripts/verify-rapido.js`, pela trava): typecheck + lint +
+  `vitest related` nos arquivos alterados (staged, não staged e novos), com a config do `verify`
+  (os longos ficam fora). Grava `.verify-rapido-ok` (ignorado no git) e nunca o `.verify-ok`.
+- `scripts/verify.js`: o `.verify-ok` passa a ser `{ tipo: 'completo', commit, quando }`.
+- `.claude/hooks/verify-gate.js`: alteração em `.claude/` **autorizada pelo operador nesta leva**
+  ("verify-gate atualizados"). Recusa um `.verify-ok` cujo `tipo` não seja `completo`; o formato
+  antigo (só a data) é de `verify` completo e continua valendo. `scripts/verify-gate.js`, a cópia
+  antiga que tinha ficado para trás (casava pelo conteúdo, e não pelo alvo), foi igualada ao hook.
+- Regras no CLAUDE.md §13: rápido a cada commit; completo no fim da leva e antes de todo push; a
+  `test:longo` e todos os roteiros no fechamento; `git bisect run npm run verify` se o completo
+  falhar.
+
+### Verificado
+- Portão (sondas com o payload do hook): selo `rapido` no `.verify-ok` → recusa (2); `completo` →
+  passa (0); formato antigo → passa; sem selo → recusa; escrita em outro arquivo → passa.
+- **O tempo do `verify:rapido` (números da corrida, §8):**
+
+```text
+o que mudou                                  arquivos  testes  tempo
+nada (aceite 1)                              0         0       18 s  (typecheck + lint)
+src/render/sinal-de-pausado.ts               1         4       21 s
+docs/GDD.md                                  1         0       21 s
+src/sim/bodega.ts (aceite 2)                 1         1 808   89 s  (183 arquivos)
+este commit (package.json, config, hook)     6         2 149   91 s  (a suíte inteira)
+verify completo, para comparar               —         2 149 + 2 147 da transladada   ~200 s
+```
+
+- **Leitura:** num commit típico de tela ou de docs, o rápido leva ~20 s e roda de 0 a 4 testes. Num
+  commit de `src/sim` ele quase não economiza: `bodega.ts` alcança 1 808 dos 2 149 testes, porque
+  quase todo teste chega a ela pelo `step`. Com `package.json` ou config alterado, o
+  `vitest related` roda a suíte inteira. A transladada nunca entra no rápido.
+- O `.verify-ok` do completo continuou intacto em todas as corridas do rápido.
+
+### Erro meu na medida, refeita
+- Na primeira tentativa, o `git stash -u` levou junto o próprio `verify-rapido.js` (arquivo novo),
+  e os casos "nada" e "bodega" falharam por falta do script. Refiz com uma cópia do script fora do
+  repositório.
+
+### Pergunta em aberto
+- O rápido não roda o `validate:data`. Um commit que mexe em `data/*.json` só tem o dado validado no
+  completo. Hoje isso segue o pedido ("typecheck + lint + vitest related"); acrescentar o
+  `validate:data` (~1 s) é decisão do operador.
