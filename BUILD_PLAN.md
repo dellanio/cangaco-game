@@ -5813,6 +5813,17 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
        correndo): o sinal some.
 ### D-TELA-LUZ-RELEVO — Luz de relevo (id de 2026-09-30; antes D-TELA-08; trabalho em curso na sessão do relevo)
 ### D-TERRENO-ALTURA — Altura só de render no gerador de mapa (id de 2026-09-30; antes D-TERRENO-01; trabalho em curso na sessão do relevo)
+### D-TELA-CHAO-DETERMINISTICO — O grão da textura do chão vem da semente do mapa
+- **Registrado (2026-10-01, pedido do operador). Não implementado.**
+- **Problema (medido pelo operador):** o grão da textura do chão muda a cada execução. Em duas
+  corridas dos roteiros na própria `main`, **105 de 219 capturas** saíram diferentes. Com isso,
+  comparar captura por sha256 entre corridas não serve para nada: a diferença do chão encobre a
+  diferença que interessa.
+- **Objetivo:** o chão determinístico pela semente do mapa. A mesma semente e a mesma câmera dão o
+  mesmo pixel em toda execução.
+- **Fronteira:** é tela (`src/render/`). A semente vem do mapa já carregado, e `sim/` não muda nem
+  ganha consumo de RNG.
+- **Aceite:** a escrever no plano, num commit próprio antes do código (CLAUDE.md §6, item 10).
 ### D-TELA-05e — Mercenários em 8 direções
 - **Registrado (2026-10-01, pedido do operador). Não implementado.** A decisão de 2026-09-30
   (8 direções para todas as unidades; nota da F-SPR acima) ainda não chegou aos mercenários:
