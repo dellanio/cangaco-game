@@ -59,7 +59,7 @@ function ateQue(estado: GameState, ate: (s: GameState) => boolean, max: number):
 const fsmDoOcupante = (s: GameState, id: string): string | undefined => ocupanteDe(s, completoDe(s, id))?.fsm;
 
 describe('F-VIVO-e — o ocioso generico', () => {
-  it('aceite 1: na vila da calibracao, ocioso e trabalho nunca coincidem, e o ocioso anda com o esconder', () => {
+  it('aceite 1: na vila da calibracao, ocioso e trabalho nunca coincidem, e o ocioso anda com o esconder [longo]', () => {
     const TICKS = 6_000;
     let s: GameState = createInitialState(gameData.economia.estadoInicial.semente);
     const vila = vilaDaCalibracao(s, gameData);
@@ -87,7 +87,8 @@ describe('F-VIVO-e — o ocioso generico', () => {
       }
     }
     evidencia['aceite1'] = { ticks: TICKS, trabalho, ocioso, colisoes, divergencias, ociosoPorRotulo };
-    gravarEvidencia('F-VIVO-e', evidencia);
+    // suite longa: evidencia propria (a de `F-VIVO-e.json` e da suite do `verify`)
+    gravarEvidencia('F-VIVO-e-vila', { aceite1: evidencia['aceite1'] });
     expect(trabalho).toBeGreaterThan(0);
     expect(ocioso).toBeGreaterThan(0);
     expect(colisoes).toBe(0);

@@ -161,7 +161,7 @@ describe('BUG-Y aceite 3 — o piso da D7', () => {
 });
 
 describe('BUG-Y aceite 4 — a vila da calibracao, 20 000 ticks', () => {
-  it('zero chegadas com a prateleira vazia, e refeicoes >= a base', () => {
+  it('zero chegadas com a prateleira vazia, e refeicoes >= a base [longo]', () => {
     let s = createInitialState(gameData.economia.estadoInicial.semente);
     const vila = vilaDaCalibracao(s);
     let refeicoes = 0;
@@ -185,6 +185,8 @@ describe('BUG-Y aceite 4 — a vila da calibracao, 20 000 ticks', () => {
       }
     }
     evidencia['aceite4'] = { ticks: 20_000, refeicoes, saidasSemComer, chegadasComPrateleiraVazia, refeicoesDaBase: REFEICOES_DA_BASE };
+    // suite longa: evidencia propria (a de `BUG-Y.json` e da suite do `verify`)
+    gravarEvidencia('BUG-Y-vila', { aceite4: evidencia['aceite4'] });
     expect(chegadasComPrateleiraVazia).toBe(0);
     expect(refeicoes).toBeGreaterThanOrEqual(REFEICOES_DA_BASE);
   }, TIMEOUT_DA_CORRIDA);

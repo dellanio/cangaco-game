@@ -144,9 +144,13 @@ describe('C-IA-03b — peacetime e tropas', () => {
     const r = step(s, [{ type: 'MoveUnits', unidades: tropaDoJogador(s), destino: daFrente(-17, -17) }], curto);
     expect(r.events.filter((e) => e.type === 'command-rejected')).toEqual([]);
     expect(salvar(carregar(salvar(s0)))).toBe(salvar(s0));
+    // `timeout` NAO e assercao de tempo (§8): existe para o caso travar. Desde 2026-09-30 o teste
+    // anda a paz CURTA (1/200 do dado, ~30 ticks) e leva ~80 ms isolado. O limite de 12 s ficou
+    // do tempo em que ele andava os 6000 ticks da paz real (~2 s isolado). Hoje ele so pega
+    // travamento de verdade; nao e medida do teste.
   }, 12_000);
 
-  it('a partida inteira: paz, marcha, cacar a tropa, derrubar os tres predios — vitoria', () => {
+  it('a partida inteira: paz, marcha, cacar a tropa, derrubar os tres predios — vitoria [longo]', () => {
     let { s } = ateOFimDaPaz(s0);
     const tropa = tropaDoJogador(s);
     const iaInicial = doLado(s, LADO_DA_IA).length;

@@ -333,6 +333,7 @@ o cenário longo uma vez.
 npm run dev             # Vite dev server
 npm run verify          # typecheck + lint + validate:data + test; cria .verify-ok
 npm run test            # Vitest, headless, sem browser
+npm run test:longo      # a suite longa: so os testes com [longo] no titulo, normal e transladada
 npm run typecheck
 npm run lint
 npm run validate:data   # valida data/*.json contra o schema
@@ -348,6 +349,14 @@ npm run sim -- <cenário> --ticks 600   # roda a sim sem tela e imprime o estado
 
 Comandos de sessão: `/codex <tarefa>` delega trabalho mecânico ao Codex ·
 `/bug <relato>` registra um bug sem corrigir.
+
+**A suíte longa (decisão do operador, 2026-09-30).** Teste de sim longa leva `[longo]` no título,
+sai do `verify` e roda em `npm run test:longo` (as constantes e a lista ficam em
+`tests/helpers/suite-longa.ts`, e `tests/LONGO-lista.test.ts` confere a lista contra a marca).
+**Nenhuma leva fecha sem `npm run test:longo` verde, rodado sozinho na máquina, antes do
+avaliador.** "Sozinho" quer dizer sem outra suíte, roteiro ou sessão rodando teste ao mesmo tempo.
+A marca não é `.skip`: o teste continua inteiro e afirma o mesmo, só muda em qual suíte ele roda.
+Mover teste para a suíte longa é decisão do operador, como foi a dos cinco primeiros.
 
 **O portão:** `test-results.json` só aceita escrita depois de `npm run verify`
 passar, e o selo vale 15 minutos. Isso é hook, não pedido educado — o agente não

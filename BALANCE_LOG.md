@@ -88,6 +88,7 @@ Fechado o ciclo, arquive o lote e esvazie a seção de abertas.
     - o KaM tem uma condição única de 45 min para todos (`KM_Defaults.pas:371`), contra os nossos 40 min civil / 60 min militar;
     - o KaM manda o guerreiro pedir comida abaixo de 55% (`TROOPS_FEED_MAX`, `:373`).
     - Nenhuma dessas mexe a Fase B pelo que se mediu. `civilVaiComer` 0,50 e `comensaisSimultaneos` 8 continuam no dado; se o lote da VARREDURA-KAM quiser alinhar, o custo medido é o desta tabela.
+    - **PREMISSA MORTA (marcada em 2026-09-30):** `comensaisSimultaneos` **saiu do dado** (`8e58be1`, opção (A) do operador). O teto de comensais agora é `refeicoesGarantidas` (BUG-Y, viagem inútil para comer). A comparação com os 6 assentos do KaM e a opção (B) estão no `IDEIAS.md`. `civilVaiComer` 0,50 continua valendo.
 
 - [2026-09-27] **PRÓXIMO LOTE COMEÇA AQUI — constatação do modelo, não observação do Canavial:
   o tempo de colheita é DERIVADO da taxa de saída, e isso vale para os CINCO que saem a colher.**

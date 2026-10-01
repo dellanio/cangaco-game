@@ -16223,3 +16223,45 @@ workers (de 16 núcleos)   suíte normal   suíte transladada   falhas
   aberta: param no tick 20, sem sobreposição.
 - A primeira montagem (P a dois passos) **não reproduziu**: P contornava em campo aberto. Plano do
   BUG-T, §12.
+
+## 2026-09-30 — Leva 5, item 2: a suíte longa (`npm run test:longo`), aprovada pelo operador
+
+### Feito
+- Os cinco testes ganharam `[longo]` no título e saem do `verify`: F-VIVO-e aceite 1, C-IA-03b
+  "partida inteira", T2 aceite 2, a varredura do BUG-T e o aceite 4 do BUG-Y.
+  - É o mesmo mecanismo que a config transladada já usa: `testNamePattern`, com o lookahead
+    negativo `SEM_O_LONGO` nas duas configs do `verify`.
+  - Não é `.skip`: o teste continua inteiro e afirma o mesmo.
+- `npm run test:longo` roda os cinco **nas duas configurações**, normal e transladada, como o
+  `verify` faz com a suíte curta. Assim a cobertura do mundo transladado não se perde.
+  - Configs `vitest.longo.config.mts` e `vitest.longo.transladado.config.mts`; as constantes ficam
+    em `tests/helpers/suite-longa.ts`;
+  - **medido:** o `mergeConfig` concatena o `include` da base, e a primeira corrida coletou a suíte
+    inteira. A lista agora é posta depois do merge.
+- `tests/LONGO-lista.test.ts` (no `verify`): a lista de arquivos e a marca andam juntas.
+- Evidência própria dos longos, para não sobrescrever a do `verify` com uma parte só:
+  `F-VIVO-e-vila.json`, `BUG-T-varredura.json`, `BUG-Y-vila.json`. `BUG-T.json` passou a ser
+  gravado por um teste de evidência no fim do arquivo.
+- Regra no CLAUDE.md §13: nenhuma leva fecha sem `test:longo` verde, rodado sozinho na máquina,
+  antes do avaliador. O comando também entrou na lista do §13.
+- `verify` verde: 2 102 + 5 longos fora; transladada 2 101 + 9 (5 longos e 4 antigos).
+
+### Corridas da `test:longo` (tempo total, nenhuma com a máquina livre)
+```text
+corrida                                   total   resultado                       CPU de outros processos
+1 (include ainda concatenado, 210 arq.)   107 s   verde, 5/5 nas duas configs     ~57 %
+2 (include certo, 5 arquivos)              46 s   VERMELHO: C-IA-03b partida 21,4 s,  37 % no início, 82 % depois
+                                                  timeout de 20 s; a normal parou
+```
+- A "partida inteira" sozinha, na config longa: **11,3 e 13,9 s**. Mais cedo, no mesmo código da sim
+  (nada em `src/sim` mudou desde `4b331d5`), deu 4,9–5,9 s. A máquina estava com CPU de 50 a 82 %
+  em outros processos (Orca, um `python` com ~900 MB, o ChatGPT). Nenhum era teste. **Não matei
+  nada.**
+- **A leva não fecha:** a regra pede a `test:longo` verde e sozinha antes do avaliador, e agora a
+  máquina não está sozinha.
+
+### Item 5 (pendências do avaliador), feito
+- BALANCE_LOG:90: `comensaisSimultaneos` marcado como premissa morta (saiu do dado em `8e58be1`).
+- C-IA-03b, o teste do fim da paz: ele não foi para a suíte longa, então o comentário do limite
+  voltou. O limite de 12 s ficou do tempo em que o teste andava a paz real, e hoje ele leva ~80 ms;
+  o limite só pega travamento.

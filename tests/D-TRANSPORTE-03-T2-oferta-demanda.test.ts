@@ -222,7 +222,7 @@ describe('D-TRANSPORTE-03 T2 — oferta x demanda, multa do armazem, +20 por uni
     expect(errosCom('porUnidadeNaEntrada_tiles', -1).length).toBeGreaterThan(0);
   });
 
-  it('2: cenario longo — producao por cadeia >= floor(base x 0,98), deficit que nao cresce, parada <= base x 1,05', () => {
+  it('2: cenario longo — producao por cadeia >= floor(base x 0,98), deficit que nao cresce, parada <= base x 1,05 [longo]', () => {
     const t2 = correrLongo();
     gravarEvidencia('D-TRANSPORTE-03-T2-longo', { base: BASE_LONGA, t2 });
     const deficit = (janela: number, cadeia: string): number =>

@@ -255,7 +255,7 @@ describe('BUG-T aceite 3 — inimigo nao troca', () => {
 });
 
 describe('BUG-T aceite 4 — a varredura das 400 ordens (receita fixada na secao 7 do plano)', () => {
-  it('nenhuma ordem deixa soldado marchando, e nenhum tick tem dois militares no mesmo tile', () => {
+  it('nenhuma ordem deixa soldado marchando, e nenhum tick tem dois militares no mesmo tile [longo]', () => {
     let x = 12345n;
     const rnd = (n: number): number => { x = (x * 1103515245n + 12345n) % 2147483648n; return Number(x % BigInt(n)); };
     let s = criarEscaramuca(gameData.economia.estadoInicial.semente);
@@ -281,8 +281,15 @@ describe('BUG-T aceite 4 — a varredura das 400 ordens (receita fixada na secao
       if (presos.length > 0) comPreso.push({ k, destino, direcao, colunas, presos });
     }
     evidencia['aceite4'] = { ordens: 400, ticks, comPreso, sobreposicoes: sobreposicoes.slice(0, 20), antesDoConserto: { ordensComPreso: 3, presos: 6, causa: 'troca mutua' } };
-    gravarEvidencia('BUG-T', evidencia);
+    // suite longa: evidencia propria, para nao sobrescrever a do `verify` com uma parte so
+    gravarEvidencia('BUG-T-varredura', { aceite4: evidencia['aceite4'] });
     expect(sobreposicoes).toEqual([]);
     expect(comPreso).toEqual([]);
   }, TIMEOUT_DA_VARREDURA);
+});
+
+describe('BUG-T — evidencia', () => {
+  it('grava `test-output/BUG-T.json` (a varredura, da suite longa, grava `BUG-T-varredura.json`)', () => {
+    gravarEvidencia('BUG-T', evidencia);
+  });
 });
