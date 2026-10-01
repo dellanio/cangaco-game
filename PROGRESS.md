@@ -16948,3 +16948,65 @@ B D-TELA-LUZ-RELEVO, aceite 1             | NEEDS_WORK        | o sha256 contra 
   (C-TELA-02, F-T3 e F-TR) são **compatíveis** com a interpolação; não a "confirmam". A amostra é de
   um par de corridas por roteiro.
 - "B-TERRENO-01" = B-TERRENO-01 (recentrar a vila).
+
+## 2026-10-01 (noite) — Decisões do operador sobre a leva da tarde + Leva 1 da animação direcional
+
+### As seis decisões
+1. **D-TELA-LUZ-RELEVO (luz do relevo): a chave voltou a false** (`726bdb0`), e a comparação foi
+   refeita (método `6c4b260`, resultado `235e737`). **Medido:** 176 de 205 capturas com par têm o
+   sha256 igual. 20 caíram noutro tick e 2 tiveram outra câmera. 7 diferem com a mesma câmera e o
+   mesmo tick: 5 dos 6 instáveis conhecidos, mais F11a-2 (relógio andando, alfa diferente) e F24c-1
+   (a ajuda: pausada, alfa 1). Na F24c-1, 88 136 px diferem, todos dentro da caixa do painel de
+   ajuda. Que seja a rolagem do painel, e não o relevo, é **hipótese**; a imagem não foi aberta.
+   **10 roteiros ficaram sem par por erro meu de montagem:** o worktree do lado B não tinha os
+   `*.save.txt`, e eu os copiei depois de a corrida passar por eles. **Pelo critério escrito, a
+   chave continua false.** O que falta está no item, no BUILD_PLAN.
+   - **O sistema encerrou o comando do lado B por falta de memória** depois do resumo (89/89 já
+     rodados, saída não gravada). Ele não foi religado.
+   - **Porta 5176:** ficou presa pelo vite órfão dessa corrida, o PID 43464, com a linha de comando
+     `…cangaco-game-relevo-base\node_modules\.bin\..\vite\bin\vite.js --port 5176`. **Não foi
+     encerrado** (ele é anterior ao código novo, e não tem registro). Os roteiros desta leva
+     rodaram na 5177.
+   - O worktree `../cangaco-game-relevo-base` ficou de pé, destacado, com as mudanças não
+     commitadas. Ele é descartável e não tem commit; apagar fica com o operador.
+2. **Captura: o relógio NÃO pausa, e a investigação está encerrada.** Os 6 instáveis estão
+   registrados no item. A caixa 8×8 da F24c-2 não entra. Commit `235e737`.
+3. **O `shot.js` encerra o próprio vite órfão.** Aceite `9228b74`, emenda `f29724d`, código
+   `abc8242`. O vite sobe pelo node (sem `npx` nem shell), e o registro por porta guarda o vite e o
+   dono. A liberação encerra só o PID do registro, só se a linha de comando ainda for `vite --port
+   <porta>`, e só com o dono morto. **Medido:** com o spawn novo, o vite morre junto com o shot
+   encerrado à força. Por isso o aceite 2 virou 2a (o shot real: a porta fica livre) e 2b (um órfão
+   de verdade, que a liberação encerra). `tests/SHOT-vite-orfao.test.ts`: 4/4.
+4. **O teste do `shot:todos` grava em arquivo próprio** (`CANGACO_SHOT_TODOS_SAIDA`): aceite
+   `9228b74`, código `df790cc`. O teste afirma que o `test-output/shot-todos.json` real fica byte a
+   byte igual.
+5. **O chão de roça sob a cana virou pedido de arte para o Codex:** D-ARTE-CHAO-DE-ROCA (pedido de
+   arte do chão de roça), no BUILD_PLAN, `235e737`.
+6. **O item 7 da leva de ontem (os marcos a partir do ESCOPO) já estava feito:** `e60b18a`,
+   `docs/planos/2026-10-01-marcos-a-partir-do-escopo.md`. Não foi refeito.
+
+### Leva 1 da animação direcional (só a Leva 1 aprovada)
+- **O §12 do plano foi relido.** As perguntas 2 (carga sem ícone: texto ou quadrado) e 4 (o
+  armazém mostra pilha?) tocam a Leva 1. **Não decidi nenhuma das duas:** a carga sem ícone
+  continua em texto, e as pilhas do armazém continuam onde e quantas estavam.
+- **O que já existia, conferido:** o texto da carga (BUG-O) e as pilhas com quadrado (F-VIVO-a). Os
+  dois foram completados, não refeitos.
+- **D-ARTE-01 (o manifesto aponta os ícones de mercadoria):** aceite `bc818ef`, código `354c9e1`.
+  O `icones.mercadorias` tem as 8 mercadorias com arte, e o validador tem um caso que reprova em
+  cada regra.
+- **D-TELA-03a (o ícone da carga sobre o serf) e D-TELA-03b (a pilha da casa com ícone):** aceites
+  `403d5f0` e `8c5459a`, cada um no seu commit. O código saiu num commit só (`9b7bf2f`), porque o
+  arquivo puro, o `preload` e o roteiro são comuns aos dois.
+- **Roteiro `D-TELA-03`** (pedido do operador): na partida, a oficina de armas tem 3 machados na
+  saída e o quartel está ligado a ela por rua.
+  - O serf u6 leva tábua com ícone, e o serf u3 leva o machado da oficina ao quartel, como texto
+    ("Facão").
+  - A pilha de machado cai de 3 para 2 no tick 31, quando ele retira.
+  - A tábua entregue na entrada vira pilha com ícone.
+  - As três capturas foram abertas.
+- **Achado da captura, corrigido na mesma tarefa:** o ícone do HUD é traço creme, e sumia na camisa
+  branca do serf e na grama. Agora ele vai sobre uma placa escura, na mesma cor do fundo do texto da
+  carga. A segunda captura lê o ícone (recorte ampliado aberto).
+- **Mudança que o operador vai ver jogando:** as pilhas do armazém também mostram o ícone.
+- **Não-regressão:** os roteiros C-COMIDA-01d e F-VIVO-a saíram 0. Os testes do BUG-O e da
+  F-VIVO-a deram 11/11.
