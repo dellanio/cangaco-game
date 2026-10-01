@@ -375,6 +375,15 @@ pode ser tomada.
 - É reentrante: quem segura a trava passa `CANGACO_TRAVA_DONO` aos filhos. O `verify`, que chama
   `npm run test`, não espera por si mesmo.
 - Processo encerrado à força não apaga a trava. É para isso que existe o limite de 90 minutos.
+- **Sinal de vida (decisão do operador, 2026-10-01; substitui os 90 minutos).** Quem segura a
+  trava atualiza o horário dela a cada 60 s (`vivoEm`). Trava sem atualização há mais de 10 min é
+  abandonada, e a próxima sessão a toma. **Aceite:** (1) a regra pura, por tabela: atualizada há
+  9 min vale, há mais de 10 não vale, trava sem `vivoEm` conta pelo `inicio`; (2) um comando que
+  dura mais que o sinal (ex.: 2 sinais) tem o `vivoEm` avançando enquanto roda; (3) **processo
+  morto sem soltar → liberada em 10 min**: um processo que pega a trava e é encerrado à força deixa
+  o arquivo, e uma segunda sessão o toma quando ele passa de 10 min sem atualização, e não antes.
+  O teste usa o relógio injetado; o 2 e o 3 rodam com os tempos reduzidos por variável de
+  ambiente, e a proporção 60 s : 10 min fica afirmada no dado do script.
 - Uma worktree só respeita a trava depois de ter este script, ou seja, depois do rebase sobre a
   `main` que o trouxe.
 
