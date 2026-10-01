@@ -16901,3 +16901,50 @@ F28b-1 pedra no ar               DIFERE  OUTRO tick    andando            0 / 0,
   e não na mesma câmera e tick, como na medida da manhã.
 - **Para a decisão do operador:** capturar com o relógio pausado (o alfa em 1) resolveria os 3 da
   interpolação. A F24c-2 pede investigação própria.
+
+## 2026-10-01 — Fechamento da leva da tarde (`5528aeb..e2d6aed`) e a avaliação do relevo
+
+### Fechamento
+- `verify` completo sobre `e2d6aed`: verde, 2 156 testes; transladada com 2 154 e 5 pulados antigos.
+- `test:longo` sozinha: verde, 22 s. Selo do `e2d6aed`; `selo:longo` OK.
+- **`npm run shot:todos`, a primeira corrida pelo comando novo:** 89/89 com saída 0, 38 min, porta
+  5176. O 89º roteiro é o novo, o da `fixarCamera`. Resumo em `test-output/shot-todos.json`.
+- O avaliador rodou o `selo:longo` primeiro, e ele saiu 0.
+
+### Avaliador (subagente evaluator)
+**(A) leva da tarde: PASS com ressalvas.** A regra do aceite em commit próprio antes do código foi
+cumprida nos quatro pares (`995da71` → `c8b81a7`; `345a4db` e `efad24a` → `5c24555`; `d0577f1` →
+`d08e0fa`; `a4e1dbf` → `e2d6aed`). Nada em `src/sim/` nem em `data/`. A tag `teste-jogo-1` está no
+`origin`.
+
+**(B) relevo (`e68a749..95b9e74`): NEEDS_WORK no aceite 1 da D-TELA-LUZ-RELEVO (luz do relevo).**
+- **D-TERRENO-ALTURA** (altura só de render no gerador de mapa): PASS, 21/21 isolado.
+- **D-TELA-LUZ-RELEVO**, aceites 2 e 3: PASS, 13/13 isolado; ele abriu duas capturas.
+- **D-TELA-LUZ-RELEVO, aceite 1: a prova não se sustenta.** O aceite pede o código de saída **e o
+  sha256** iguais aos da `main` com a flag desligada. As saídas bateram (86/86), mas só 110 de 219 PNG
+  saíram iguais. Os outros foram atribuídos ao "chão não determinístico", e a medida desta leva
+  derrubou essa premissa (o chão é determinístico; o que varia é a câmera e o tick). O risco é baixo,
+  porque com a flag desligada a camada nem nasce, mas a parte do sha256 continua sem prova.
+  - **A chave em `test-results.json` não foi mexida.** Virar a chave de uma feature já marcada é
+    decisão do operador. Saída proposta: refazer a comparação flag desligada × `main` com a captura que
+    fixa a câmera pela ponte (183 de 214 estáveis) e classificar cada diferença por câmera e tick.
+
+```text
+item                                      | veredito          | ressalva                                                   | destino
+A1 shot:todos                             | PASS, ressalva    | o teste da porta escreve por cima do test-output/shot-todos.json real | aberto
+A2 portões                                | PASS              | —                                                          | —
+A3 roteiro do aceite 1 (fixarCamera)      | PASS, menor       | o "coberto" foi anotado na linha do aceite                 | registrado
+A4 medida do alfa                         | PASS, leitura     | "confirma em 3" estava a mais: pelo critério escrito, a hipótese CAI | corrigido abaixo
+A siglas                                  | menor             | "B-TERRENO-01" sem o nome ao lado                          | corrigido abaixo
+B D-TERRENO-ALTURA                        | PASS              | —                                                          | —
+B D-TELA-LUZ-RELEVO, aceites 2 e 3        | PASS              | —                                                          | —
+B D-TELA-LUZ-RELEVO, aceite 1             | NEEDS_WORK        | o sha256 contra a main sem prova                           | espera o operador
+```
+
+### Correções de texto (só docs)
+- **A medida da interpolação (item 4 da tarde), a leitura certa:** pelo critério escrito no aceite
+  (`a4e1dbf`), "todo par que difere tem o relógio andando e o alfa diferente", **a hipótese cai como
+  regra geral**, porque a F24c-2 difere com o relógio pausado e o alfa 1/1. Os 3 pares
+  (C-TELA-02, F-T3 e F-TR) são **compatíveis** com a interpolação; não a "confirmam". A amostra é de
+  um par de corridas por roteiro.
+- "B-TERRENO-01" = B-TERRENO-01 (recentrar a vila).
