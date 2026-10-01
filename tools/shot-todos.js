@@ -9,10 +9,12 @@ const { execSync, spawnSync } = require('child_process');
 const fs = require('fs');
 const net = require('net');
 const os = require('os');
+const path = require('path');
 const { MEMORIA_MINIMA_MB, listarRoteiros, deveParar } = require('./shot-todos-regra.js');
 
 const PORTA = Number(process.env.CANGACO_SHOT_PORTA ?? 5176);
-const SAIDA = 'test-output/shot-todos.json';
+// o teste troca o arquivo do resumo, para nao escrever por cima da evidencia real (aceite 6)
+const SAIDA = process.env.CANGACO_SHOT_TODOS_SAIDA ?? 'test-output/shot-todos.json';
 
 function portaOcupada(porta) {
   return new Promise((ok) => {
@@ -34,7 +36,7 @@ function memoriaLivreMb() {
 }
 
 function gravar(resumo) {
-  fs.mkdirSync('test-output', { recursive: true });
+  fs.mkdirSync(path.dirname(SAIDA), { recursive: true });
   fs.writeFileSync(SAIDA, JSON.stringify(resumo, null, 2));
 }
 
