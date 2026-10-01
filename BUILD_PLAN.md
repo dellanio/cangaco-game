@@ -6013,6 +6013,33 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
 - **Arte:** fora do escopo. Sem arte de mercenário no manifesto, o placeholder continua. O
   item só faz o dado dizer o que a decisão diz.
 
+### D-SAVE-VILA-PRONTA — O save de teste do operador: a vila pronta, com a casa de armas e o quartel
+- **Pedido do operador (2026-10-01).** O jogo NÃO muda: nada em `src/` nem em número de `data/`. O
+  operador testa o `7d35788` à noite.
+- **Escopo:** uma partida salva em `saves/teste-operador-vila-pronta.txt`, montada pela sim com
+  `completarObra`, ocupante na porta, estrada direto no estado, `step` e o comando
+  `SetProductionQuota`, como os cenários de teste. Na partida já existem e estão ligados por estrada
+  ao armazém:
+  - a pedreira, o lenhador e a serraria;
+  - a roça de milho e o canavial, nos campos que o mapa já tem na vila;
+  - o moinho, a padaria e a Bodega;
+  - a casa de armas, com tábua na entrada e uma encomenda;
+  - o quartel, com recrutas.
+
+  O inimigo é a vila da IA da escaramuça (`criarEscaramuca`). Não há arma no armazém: a arma do
+  quartel só pode sair da casa de armas.
+- **Aceite (escrito antes do código):** `tests/D-SAVE-VILA-PRONTA.test.ts`:
+  1. o arquivo versionado é byte a byte o que a montagem gera, e o `carregar` do jogo o aceita;
+  2. a partida tem os dez tipos pedidos, completos, do jogador e ligados ao armazém. O quartel tem
+     recrutas, a casa de armas tem tábua na entrada, e existe prédio da IA. Nenhum prédio do jogador
+     abre com alerta;
+  3. **a partir do arquivo versionado**, em até 2 000 ticks a casa de armas produz uma arma, um serf
+     a retira, e ela entra no quartel;
+  4. roteiro `tools/shots/D-SAVE-VILA-PRONTA.js`: o dev server serve o arquivo em `/saves/...`, o
+     console o põe no `localStorage` (a chave do save), e o painel H carrega a partida no tick do
+     save, com os prédios dela. A captura é aberta.
+- **Se o carregar do jogo não aceitar um save gerado assim sem mudar código, o item PARA.**
+
 ### D-ARTE-CHAO-DE-ROCA — Pedido de arte para o Codex: o chão de roça sob a cana
 - **Registrado por decisão do operador (2026-10-01): é pedido de arte para o Codex**, e não
   trabalho desta fila de código. Vem da avaliação da F-TR (o esgotado por tipo, `9fb7b71`): a
