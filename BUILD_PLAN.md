@@ -6320,6 +6320,18 @@ vai para o PROGRESS como PARA REVISÃO, e o trabalho segue.
 **Fila:**
 1. C-COMBATE-01b — storm attack (sim).
 2. C-COMBATE-01c — controles de formação (tela).
+2b. **C-COMBATE-CUSTO-ENCOSTADO — o custo da checagem de inimigo encostado, todos contra todos
+   (pedido do operador, 2026-09-30). Só medida, sem otimizar.**
+   - O perfil de CPU da paz da escaramuça (leva 3, `PROGRESS.md`) pôs `inimigoEncostado`
+     (`src/sim/systems/combate.ts:106`) como o maior custo da sim: ~400 ms de ~1,2 s em 6 000 ticks.
+     Ele varre todas as unidades para cada militar.
+   - **Aceite:** custo por tick do `step` com 50, 100 e 200 militares (metade de cada lado, longe
+     um do outro para não lutar, em campo aberto), em tempo de parede (evidência da sessão, nunca
+     asserção, §8) e no eixo determinístico de chamadas a `inimigoEncostado` por tick. Tabela no
+     PROGRESS e aqui, com a razão entre as três. Nenhum código de `src/sim` muda.
+   - **Posição na fila:** o operador pediu "antes da C-IA-02". A C-IA-02 (economia da IA) está
+     entregue (02a, 02b e 02c com `passes: true`), então o item entra antes da entrada dela nesta
+     lista, e a pergunta fica no PROGRESS.
 3. C-IA-02 — economia da IA, em partes: vila pronta, prefeito mínimo que treina, serf e
    comida. O andaime `iaDrena` sai no fim. Quebrada em três (plano em
    `docs/planos/2026-09-29-C-IA-02a-vila-da-ia-com-producao.md`):
