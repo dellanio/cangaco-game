@@ -195,6 +195,45 @@ describe('BUG-T aceite 6 — caso 3: cada um quer o tile do outro a dois passos,
   });
 });
 
+describe('BUG-T — o ciclo de tres da ordem k = 32 (a regra da largada com parceiro)', () => {
+  // P e Q estao em troca mutua (P em T0 quer T1, Q em T1 quer T0), cada um a UM passo da vaga
+  // (caminho de um passo nao tem contorno, como u22/u30 na varredura). Q ja completou o passo e
+  // espera P; R vem de T2 e ja comecou o passo para T1, entao REIVINDICA T1. Se a largada de P
+  // contasse a reivindicacao de R, P nunca largaria, Q nunca chegaria e R nunca entraria: os tres
+  // presos (medido na varredura, ordem k = 32, antes da regra). O estado e o do meio da marcha,
+  // montado tile a tile como estava na varredura.
+  it('P larga, a troca fecha, e R segue para o fim dele: os tres param, sem sobreposicao', () => {
+    const base = semUnidades(createInitialState(1));
+    const c = campo(base);
+    const T0 = { gx: c.gx, gy: c.gy };
+    const T1 = { gx: c.gx + 1, gy: c.gy };
+    const T2 = { gx: c.gx + 2, gy: c.gy };
+    const fimDeR = { gx: c.gx + 1, gy: c.gy - 1 };
+    const custoQ = custoDoPasso(base.estradas, T1, T0, gameData);
+    const marchando = (id: string, t: { gx: number; gy: number }, caminho: { gx: number; gy: number }[], progresso: number): Unidade => ({
+      ...soldado(id, LADO_DO_JOGADOR, t), fsm: 'marchando',
+      fsmData: { caminho, progresso, alvoTile: caminho[caminho.length - 1] as { gx: number; gy: number } },
+    });
+    let s = com(base,
+      marchando('P', T0, [T1], 0),
+      marchando('Q', T1, [T0], custoQ - 1),
+      marchando('R', T2, [T1, fimDeR], 2));
+    const sob: string[] = [...sobrepostos(s)];
+    let parou: number | null = null;
+    for (let t = 1; t <= 300; t += 1) {
+      s = step(s, [], gameData);
+      sob.push(...sobrepostos(s));
+      if (parou === null && ['P', 'Q', 'R'].every((id) => s.unidades.porId[id]?.fsm === 'ocioso')) parou = t;
+    }
+    evidencia['cicloDeTres'] = { parou, P: pos(s, 'P'), Q: pos(s, 'Q'), R: pos(s, 'R'), sobreposicoes: sob };
+    expect(sob).toEqual([]);
+    expect(parou, 'os tres pararam').not.toBeNull();
+    expect(pos(s, 'Q')).toBe(`${T0.gx},${T0.gy}`);
+    expect(pos(s, 'P')).toBe(`${T1.gx},${T1.gy}`);
+    expect(pos(s, 'R')).toBe(`${fimDeR.gx},${fimDeR.gy}`);
+  });
+});
+
 describe('BUG-T aceite 3 — inimigo nao troca', () => {
   it('de lados opostos, em nenhum tick um esta no tile inicial do outro enquanto o outro esta no dele', () => {
     const base = semUnidades(createInitialState(1));

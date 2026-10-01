@@ -227,3 +227,18 @@ Não muda critério nenhum; registra o que a sonda do aceite 7 mediu.
   - **a largada física não tem prova**: revertida (para a reivindicação, ou sem a conferência),
     os seis aceites continuam verdes, porque a ordem k = 32 deixa de se formar. A regra fica pelo
     raciocínio do ciclo acima, e isso é **hipótese, sem teste que a exija**.
+
+## 12. A regra da largada ganhou o teste que a exige (2026-09-30, decisão do operador)
+
+O operador mandou: ou um cenário isolado que force o ciclo de três e reprove sem a regra, ou a
+regra sai. **Reproduziu**, e a regra fica.
+- **Cenário** (`tests/BUG-T-troca-mutua.test.ts`, "o ciclo de tres da ordem k = 32"): é o estado
+  do meio da marcha, montado como estava na varredura.
+  - P em T0 quer T1, e Q em T1 quer T0: troca mútua, cada um a **um** passo da vaga;
+  - Q já completou o passo e está segurado esperando P;
+  - R vem de T2 e já começou o passo para T1, então reivindica T1.
+- **Sem a regra** (a largada de P contando a reivindicação de R), os três ficam em `marchando` por
+  300 ticks. **Com a regra**, param no tick 20, sem sobreposição: P em T1, Q em T0 e R no fim dele.
+- A primeira tentativa, com P a dois passos da vaga, **não reproduziu**: em campo aberto, P
+  contornava. Caminho de um passo não tem contorno (`esperarOuDesviar`), que era o caso do
+  u22/u30 na varredura.

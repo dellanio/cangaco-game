@@ -16213,3 +16213,13 @@ workers (de 16 núcleos)   suíte normal   suíte transladada   falhas
 - Menos workers deixam a suíte **mais lenta** no total e não zeram o risco: nenhuma corrida acima
   falhou, mas a de 8 também não falhou nessa hora. A disputa pesa no teste longo, e não no total.
   Proposta: manter os 50 % e tirar os longos para a suíte longa (acima).
+
+## 2026-09-30 — Leva 5, item 1: BUG-T (tropa travada), a regra da largada com parceiro tem teste que a exige
+
+- `tests/BUG-T-troca-mutua.test.ts`, o teste novo "o ciclo de tres da ordem k = 32": P e Q em troca
+  mútua, cada um a um passo da vaga; Q segurado esperando P; R reivindicando o tile de Q.
+- **Prova de que acusa** (sonda de uma corrida, revertida): sem a regra, "os tres pararam: expected
+  null". Com a regra, os 7 testes passam. Evidência `test-output/BUG-T.json` (`cicloDeTres`),
+  aberta: param no tick 20, sem sobreposição.
+- A primeira montagem (P a dois passos) **não reproduziu**: P contornava em campo aberto. Plano do
+  BUG-T, §12.
