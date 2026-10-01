@@ -535,5 +535,14 @@
   },
   "D-TELA-05e-mercenarios-8-direcoes": {
     "passes": true
+  },
+  "D-ARTE-01-icones-de-mercadoria": {
+    "passes": true
+  },
+  "D-TELA-03a-icone-da-carga": {
+    "passes": true
+  },
+  "D-TELA-03b-pilha-com-icone": {
+    "passes": true
   }
 }
