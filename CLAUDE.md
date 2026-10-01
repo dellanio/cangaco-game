@@ -360,6 +360,24 @@ avaliador.** "Sozinho" quer dizer sem outra suíte, roteiro ou sessão rodando t
 O teste longo continua inteiro e afirma o mesmo; só muda em qual suíte ele roda.
 Mover teste para a suíte longa é decisão do operador, como foi a dos cinco primeiros.
 
+**A trava de testes entre worktrees (regra do operador, 2026-10-01).** Só uma sessão roda teste
+de cada vez na máquina, em qualquer worktree. Antes de rodar vitest, `verify` ou roteiro, a sessão
+confere o arquivo de trava comum, `%LOCALAPPDATA%\Temp\cangaco-testes.lock` (fora das worktrees;
+`CANGACO_TRAVA` troca o caminho). Se ele existe, espera. Se não, cria com a branch, o horário e o
+comando, roda e apaga ao terminar, inclusive em falha. Trava com mais de 90 minutos é abandonada e
+pode ser tomada.
+- Quem faz isso é `tools/trava-de-testes.js`, e os scripts `test`, `test:transladado`,
+  `test:longo`, `verify` e `shot` já passam por ele.
+- **Teste avulso também passa pela trava:** `node tools/trava-de-testes.js npx vitest run <arquivo>`.
+  `npx vitest` direto não confere a trava.
+- O caminho não é o `%TEMP%` da sessão: nas sessões do Claude ele aponta para um scratchpad
+  diferente em cada sessão, e a trava não seria comum.
+- É reentrante: quem segura a trava passa `CANGACO_TRAVA_DONO` aos filhos. O `verify`, que chama
+  `npm run test`, não espera por si mesmo.
+- Processo encerrado à força não apaga a trava. É para isso que existe o limite de 90 minutos.
+- Uma worktree só respeita a trava depois de ter este script, ou seja, depois do rebase sobre a
+  `main` que o trouxe.
+
 **O selo da leva (decisão do operador, 2026-10-01).** `npm run test:longo` grava em
 `test-output/test-longo.json` o commit testado (`git rev-parse HEAD`), se a árvore estava limpa, se
 havia outro teste rodando na máquina (medido no início e no fim) e o resultado. **O avaliador roda

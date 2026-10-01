@@ -16371,3 +16371,33 @@ Decisão do operador. Ela substitui a marca `[longo]` no título, de 2026-09-30.
 - Medido: o `verify` roda os 6 arquivos curtos (31 testes) sem nenhum longo e sem nada pulado; a
   `test:longo` roda os 5 arquivos (5 testes), sem nada pulado. Antes, ela coletava 34 testes e
   pulava 29.
+
+## 2026-10-01 — A trava de testes entre worktrees (regra do operador): feita
+
+### Feito
+- `tools/trava-de-testes.js <comando>`: confere a trava comum. Se existe e tem menos de 90 min,
+  espera e avisa quem a tem (branch, desde quando, qual comando). Se não existe, cria com a criação
+  atômica do arquivo (`wx`), roda o comando, e apaga ao fim, inclusive em falha, devolvendo o código
+  de saída do comando. Os scripts `test`, `test:transladado`, `test:longo`, `verify` e `shot`
+  passaram a usá-lo.
+- A regra pura fica em `tools/trava-regra.js` (pegar, abandonada, soltar só a própria), com teste
+  no `verify` (`tests/TRAVA-de-testes.test.ts`), sempre num arquivo de trava próprio.
+- Caminho: `%LOCALAPPDATA%\Temp\cangaco-testes.lock`, e não `%TEMP%`. Nas sessões do Claude o `TEMP`
+  é um scratchpad por sessão, e a trava não seria comum.
+- Reentrante, por `CANGACO_TRAVA_DONO`. Regra no CLAUDE.md §13.
+
+### Verificado (sondas de ponta a ponta, num caminho de trava do scratchpad)
+- livre: a trava existe durante o comando e é apagada depois, saída 0;
+- o comando falha com 7: a saída é 7 e a trava é apagada;
+- reentrante: o neto roda dentro da trava do avô, sem esperar;
+- ocupada por outra branch (fresca): avisa "ocupada por dellanio/relevo-a desde ... (npm run
+  verify)", espera, e roda quando a trava sai (10 s);
+- abandonada (91 min): toma na hora, roda e apaga.
+
+### Não provado (registrado como tal)
+- **Encerramento forçado** (`taskkill`, fechar a janela) **não apaga a trava**: o processo morre sem
+  rodar código, e quem resolve é o limite de 90 min. A minha sonda desse caso não serviu de prova:
+  um `rm` do próprio comando apagou a trava antes da hora.
+- **Ctrl+C** num console manda SIGINT ao Node, e o script solta a trava nesse caso. Não testei,
+  porque não tenho console interativo aqui.
+- As outras worktrees (relevo, Codex) só respeitam a trava depois do rebase sobre esta `main`.

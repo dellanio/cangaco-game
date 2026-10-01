@@ -5,17 +5,17 @@
   "scripts": {
     "dev": "node tools/dev.js",
     "build": "vite build",
-    "test": "vitest run",
-    "test:transladado": "vitest run -c vitest.transladado.config.mts",
-    "test:longo": "node tools/test-longo.js",
+    "test": "node tools/trava-de-testes.js vitest run",
+    "test:transladado": "node tools/trava-de-testes.js vitest run -c vitest.transladado.config.mts",
+    "test:longo": "node tools/trava-de-testes.js node tools/test-longo.js",
     "selo:longo": "node tools/selo-longo.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "validate:data": "node tools/validate-data.js",
-    "shot": "node tools/shot.js",
+    "shot": "node tools/trava-de-testes.js node tools/shot.js",
     "docs:mapa": "node tools/gerar-mapa-construcoes.js",
     "sim": "node tools/sim.js",
-    "verify": "node scripts/verify.js"
+    "verify": "node tools/trava-de-testes.js node scripts/verify.js"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
