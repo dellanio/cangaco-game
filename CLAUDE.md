@@ -436,8 +436,11 @@ no PROGRESS entra no commit seguinte à avaliação, com o hash que o selo mostr
      `completo` recente passa (0); com selo `rapido`, sem selo, ilegível ou vencido (mais de 15 min)
      recusa (2); escrita em outro arquivo passa sem selo. O formato antigo (só a data) passa;
   2. `scripts/verify-gate.js` é igual ao hook, byte a byte;
-  3. o `verify:rapido` nunca escreve o `.verify-ok`: guarda estrutural no fonte do script (o nome do
-     arquivo que ele grava é o `.verify-rapido-ok`), e não uma corrida inteira dele dentro do teste.
+  3. o `verify:rapido` nunca escreve o `.verify-ok`, **por comportamento**: o script roda de verdade
+     num projeto falso (um repositório git vazio, com `typecheck`, `lint` e `validate:data` que não
+     fazem nada), sem arquivo alterado. Ele sai 0, grava o `.verify-rapido-ok` e não cria o
+     `.verify-ok`. (Emenda de 2026-10-01: a primeira versão dizia "guarda no fonte", que é varrer
+     texto, e não prova o que o script faz.)
 
 **O portão:** `test-results.json` só aceita escrita depois de `npm run verify`
 passar, e o selo vale 15 minutos. Isso é hook, não pedido educado — o agente não
