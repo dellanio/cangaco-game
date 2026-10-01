@@ -5928,8 +5928,12 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
     tropa marchando, o pedreiro no campo, a pedra no ar). **Hipótese, não medida:** a interpolação
     entre ticks (`alfaDeInterpolacao`) segue o relógio de parede quando o roteiro captura com o
     relógio andando. O chão não aparece em nenhuma das 6.
-  - **Pergunta ao operador:** a captura passa a exigir o relógio pausado (o alfa fica em 1), ou o
-    aceite 3 aceita a diferença de interpolação? O item fica sem chave até lá.
+  - ~~Pergunta ao operador~~ **DECIDIDO (operador, 2026-10-01): a captura NÃO passa a pausar o
+    relógio. A investigação da captura está ENCERRADA, e a caixa 8×8 da F24c-2 não entra.** O item
+    fica sem chave, com os aceites 1 e 2 cumpridos e o 3 reprovado pelos **6 pares instáveis
+    registrados**: C-TELA-01-1 (marcha em paz), C-TELA-02-1 (marca no destino), F-T3-1 e F-TR-1
+    (pedreiro no campo), F24c-2 (escudo dez) e F28b-1 (pedra no ar). Quem comparar capturas por
+    sha256 trata esses 6 como instáveis conhecidos, e não como regressão.
 - **Medida da hipótese (aceite de 2026-10-01, antes do código; só medida, para a decisão acima):**
   1. o `tools/shot.js` passa a gravar, em cada captura de `quadros`, se o relógio estava pausado e o
      `alfaDeInterpolacao` que a ponte publicava;
@@ -5985,6 +5989,36 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
   - o `npm run validate:data` passa.
 - **Arte:** fora do escopo. Sem arte de mercenário no manifesto, o placeholder continua. O
   item só faz o dado dizer o que a decisão diz.
+
+### Leva 1 da animação direcional: legibilidade da logística (aprovada pelo operador, 2026-10-01)
+Plano: `docs/planos/2026-09-30-animacao-direcional-de-unidades.md`, §3 e §10. **Só a Leva 1 foi
+aprovada**: o piloto do serf (Leva 2) e o resto esperam. As siglas são as do plano, citadas pelo
+operador no pedido, e o `git grep` na `main` não acha nenhuma delas. **Só render**: nada em
+`src/sim/` nem em número de `data/`.
+- **O que já existe (conferido na `main`):** a carga sobre a unidade é texto com o nome do tema
+  (BUG-O, `src/render/rotulo-da-carga.ts`, `unidades.ts:300-303`). A pilha da F-VIVO-a desenha PNG
+  `pilha` ou quadrado com a cor do tema (`WorldScene.ts:1811-1813`, `:1918-1931`), e o manifesto
+  não tem nenhuma entrada `tipo: "pilha"`. Ícone de mercadoria não aparece no mundo, e o manifesto
+  não tem `icones.mercadorias`.
+- **Perguntas do §12 do plano que tocam a Leva 1. Não foram decididas; a parte afetada fica como está:**
+  - a 2 (carga sem ícone: texto ou quadrado): a mercadoria sem ícone continua com o texto de hoje,
+    sem nenhuma mudança. A troca pelo quadrado espera o operador;
+  - a 4 (o armazém mostra pilha?): as pilhas do armazém (F-VIVO-a) não mudam de lugar nem de
+    número. A cadeia de textura nova vale onde a pilha já existe.
+
+#### D-ARTE-01 — O manifesto aponta os ícones de mercadoria que já existem
+- **Escopo:** `assets/manifest.json` ganha `icones.mercadorias`, nos mesmos quatro campos do
+  `icones.hud` (`arquivo`, `tamanho`, `licenca` e `origem`). São as 8 mercadorias do §2 do plano,
+  cada uma apontando para um arquivo que já existe: `timber` (`sprites/ui/hud-timber.png`),
+  `stone` (`sprites/ui/hud-stone.png`), `gold` (`sprites/ui/hud-gold.png`), e `corn`, `fish`,
+  `coal`, `iron_ore` e `gold_ore` (`sprites/resources/<id>.png`). Nenhum PNG novo.
+- **Aceite (escrito antes do código):** `tests/F17f-manifesto.test.ts` valida o
+  `icones.mercadorias` do manifesto real com uma regra pura de `src/render/`:
+  1. todo id é mercadoria de `economia.mercadorias`;
+  2. todo arquivo existe, e o `tamanho` é o do cabeçalho do PNG;
+  3. cada regra tem um caso que reprova, num manifesto escrito no teste (id que não é mercadoria;
+     arquivo que não existe; tamanho errado);
+  4. são exatamente as 8 do escopo.
 
 ### F34 — Condições de vitória e derrota (escaramuça)
 - **ENTREGUE (2026-09-28, sessão autônoma; plano em `docs/planos/2026-09-28-A16-F34-fim.md`).**
