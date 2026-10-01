@@ -16874,3 +16874,30 @@ teste é um roteiro: `tools/shots/D-TELA-CAPTURA-DETERMINISTICA.js`.
 - **Prova de que acusa** (sonda de uma corrida, revertida): com a `fixarCamera` sem efeito no
   `scrollX`, o roteiro reprova ("a câmera deveria estar em {2391,1868}, veio {1602,1868}").
 - Item ainda sem chave: o aceite 3 continua reprovado e espera a decisão do operador.
+
+### Item 4: a medida da hipótese da interpolação nos 6 pares (só medida; para a decisão do aceite 3)
+O aceite foi num commit próprio antes da ferramenta (`a4e1dbf`). O `tools/shot.js` grava agora, por
+captura, `pausado` e `alfa` (o `alfaDeInterpolacao` da ponte). Os 6 roteiros rodaram duas vezes, todos
+com saída 0. Nenhum roteiro mudou.
+
+```text
+captura                          hash    câmera+tick   relógio            alfa (corrida 1 / 2)
+C-TELA-01-1 marcha em paz        IGUAL   iguais        pausado            1 / 1
+C-TELA-02-1 marca no destino     DIFERE  iguais        andando            0,499 / 0,667
+F-T3-1 pedreiro no campo         DIFERE  iguais        andando            0,832 / 0,500
+F-TR-1 pedreiro no campo         DIFERE  iguais        andando            0,333 / 0,500
+F24c-2 escudo dez                DIFERE  iguais        pausado            1 / 1        (53 px, caixa 8×8)
+F28b-1 pedra no ar               DIFERE  OUTRO tick    andando            0 / 0,667
+(as outras capturas dos 6 roteiros: iguais, pausadas, alfa 1; F-T3-2 difere por outro tick)
+```
+
+- **A hipótese se confirma em 3:** C-TELA-02-1, F-T3-1 e F-TR-1 diferem com a mesma câmera e o mesmo
+  tick, com o relógio andando e o alfa diferente entre as corridas.
+- **Não é a interpolação em 1:** a F24c-2 difere com o relógio **pausado** e o alfa 1 nas duas. São
+  53 pixels numa caixa de 8×8 (x 816–823, y 398–405). A causa fica em aberto. **Hipótese, não
+  medida:** algum desenho de tela que anda pelo relógio do Phaser (`this.time.now`) e não pelo tick,
+  como o marcador que desbota (`marcadorVisivel`, `segundosDoMarcador`).
+- **Mudaram de classe:** a C-TELA-01-1 saiu igual nesta corrida, pausada. A F28b-1 caiu noutro tick,
+  e não na mesma câmera e tick, como na medida da manhã.
+- **Para a decisão do operador:** capturar com o relógio pausado (o alfa em 1) resolveria os 3 da
+  interpolação. A F24c-2 pede investigação própria.

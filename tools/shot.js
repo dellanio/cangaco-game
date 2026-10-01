@@ -103,7 +103,8 @@ function criarCapturador(nomeFeature) {
       // causa (a camera em outro lugar, outro tick, ou o desenho) sem adivinhar pela imagem
       const quadro = await page.evaluate(() => {
         const e = window.__cangaco;
-        return e ? { tick: e.tick, camera: e.camera } : null;
+        // a medida da hipotese da interpolacao: o relogio andando e o alfa do quadro capturado
+        return e ? { tick: e.tick, camera: e.camera, pausado: e.pausado, alfa: e.alfaDeInterpolacao } : null;
       }).catch(() => null);
       capturas.push(arquivo);
       quadros.push({ arquivo, ...(quadro ?? {}) });
