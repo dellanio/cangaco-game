@@ -17,7 +17,8 @@
     "docs:mapa": "node tools/gerar-mapa-construcoes.js",
     "sim": "node tools/sim.js",
     "verify:rapido": "node tools/trava-de-testes.js node scripts/verify-rapido.js",
-    "verify": "node tools/trava-de-testes.js node scripts/verify.js"
+    "verify": "node tools/trava-de-testes.js node scripts/verify.js",
+    "hooks:instalar": "git config core.hooksPath .githooks"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

@@ -17083,3 +17083,13 @@ B D-TELA-LUZ-RELEVO, aceite 1             | NEEDS_WORK        | o sha256 contra 
   - não contém o `2df15df`: saiu da `main`.
 - **B-TERRENO-01 (recentrar a vila): parada.** A medida (folga −5, pedra mínima 35, colisão com a
   defesa da IA) está no topo do plano e no item do BUILD_PLAN.
+- **O portão do push** (aceite `ade8464`). O hook `.githooks/pre-push` (`tools/pre-push-hook.js`)
+  recusa o push se o `.verify-ok` não é o selo `completo` do commit empurrado. A regra pura está em
+  `tools/pre-push-regra.js`, e o teste é `tests/PORTOES-pre-push.test.ts`:
+  - a regra por tabela, em 8 casos;
+  - um push de verdade num repositório falso com remoto bare: com o selo velho é recusado, e o
+    remoto fica intocado; com o selo do HEAD passa.
+
+  Ligado neste clone por `npm run hooks:instalar` (`core.hooksPath .githooks`). Outro clone ou
+  worktree precisa rodar o mesmo comando. **O fluxo passa a ser:** commit, `npm run verify`, push.
+  Qualquer commit depois do `verify` pede um `verify` novo.
