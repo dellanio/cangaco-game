@@ -6056,6 +6056,11 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
   1. F17f, `validate:data`, `verify` completo e `shot:todos` com saída 0;
   2. o roteiro `ARTE-VILA` mostra a vila e closes do armazém, padaria, moinho, serraria, terreno e
      vegetação. Cada prédio do close tem PNG (`spritesDePredio`), e as capturas são abertas;
+     - **(emenda de 2026-10-01, pedido do operador; antes do código)** closes de pior caso das duas
+       exceções provisórias: a Bodega com o canavial e outro vizinho colados, e uma unidade passando
+       atrás (ao norte) de um dos dois no instante da captura; e a outra Bodega com a padaria colada.
+       Tudo vem do save da vila pronta, sem prédio posto pelo roteiro. As capturas vão também para
+       `D:\projetos-pessoal\evidencias\integra-arte-1\`, para o operador reavaliar as duas larguras;
   3. nenhum "alto à esquerda" fora do PROGRESS. O CLAUDE.md §9 aponta para a
      `pianco-sprite-director`.
 
