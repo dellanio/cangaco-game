@@ -16290,3 +16290,34 @@ velocidade   ticks/s   ms de sim por segundo (livre / carregada)   % de um segun
 - Cada teste dentro da suíte longa (uma corrida a mais, para o número): T2 aceite 2 10,7 s; BUG-Y
   aceite 4 9,5 s; varredura do BUG-T 8,0 s; C-IA-03b "partida inteira" 7,7 s; F-VIVO-e aceite 1 2,6 s.
 - A corrida vermelha de antes (C-IA-03b a 21,4 s) foi com a máquina carregada (seção do item 2).
+
+## 2026-09-30 — Leva 5: avaliador (subagente evaluator) sobre `d372d04..8a51220`
+
+Veredito dele: **PASS com ressalvas, nada bloqueante.** Ele rodou `tests/BUG-T-troca-mutua.test.ts`
+(7 verdes, o `[longo]` fora), `tests/LONGO-lista.test.ts` e `npm run test:longo` uma vez: verde, 5/5
+nas duas configurações, ~52 s (contra os 46 s registrados).
+
+```text
+item                                         | veredito | achado                                                        | destino
+1 BUG-T (tropa travada), a regra da largada  | PASS     | o estado é alcançável sem a regra; o teste prova a saída, e não a formação | —
+2 suíte longa (a–f)                          | PASS     | verify sem os 5; a longa só com os 5; nenhum expect tocado      | —
+2e a regra no CLAUDE.md §13                  | ressalva | o selo .verify-ok não exige a test:longo: a regra é disciplina | aberto, decisão do operador
+2g a guarda da lista                         | ressalva | só acha a marca seguida de aspa simples                         | aberto
+3 C-COMBATE-CUSTO-ENCOSTADO (o custo de inimigo encostado) | PASS | aritmética confere; a tabela conta hpMaximoDoTipo, e não a função | aberto (herdado)
+4 BALANCE_LOG e o comentário da C-IA-03b     | PASS     | —                                                             | —
+5 a corrida da test:longo                    | PASS     | "abaixo de 30 %" e depois CPU a 31–33 %: contradição pequena  | corrigido abaixo
+§6 item 8                                    | ressalva | "T2 aceite 2", "F-VIVO-e aceite 1", "C-IA-03b" sem o nome    | corrigido abaixo
+```
+
+### Correções de texto (só docs)
+- A CPU: esperei até ela ficar abaixo de 30 % em três amostras seguidas; na hora de rodar estava a
+  33 %, e depois a 31 %. Ninguém mais rodava teste na máquina.
+- Os nomes que faltaram no item 2: T2 (D-TRANSPORTE-03, oferta × demanda) aceite 2; F-VIVO-e (o
+  ocioso genérico) aceite 1; C-IA-03b (peacetime e tropas) "partida inteira"; BUG-Y (viagem inútil
+  para comer) aceite 4; BUG-T (tropa travada), a varredura.
+
+### Aberto, sem conserto nesta leva
+- O selo do `verify` não cobre a `test:longo`.
+- A guarda da lista (`tests/LONGO-lista.test.ts`) deveria achar a marca em qualquer posição do título.
+- O Vitest avisa no carregamento da config (import sem extensão; ESM carregado como CommonJS). Só
+  aviso, sem falha.
