@@ -16130,3 +16130,15 @@ BUGS.md                                    | PASS        | só o BUG-N          
 - O caso 3 isolado **já é teste permanente** (aceite 6 em `tests/BUG-T-troca-mutua.test.ts`, desde
   `07e1a7c`), e é ele que cobre o caso 3, porque a varredura não o exercita mais.
 - O plano ganhou a §10: por que a extensão da vaga emparedada, e não a troca forçada do KaM.
+
+## 2026-09-30 — Leva 4, item 5: o `verify` reprova título repetido no `BUGS.md`
+
+- `tools/titulos-repetidos.js` (função pura, com `.d.ts`): os títulos `## ` repetidos de um
+  markdown, ignorando bloco de código (o `## BUG-000` do modelo fica dentro de um).
+- `tests/BUGS-titulos-unicos.test.ts` roda no `verify` (as duas suítes): o `BUGS.md` real sem
+  repetido; o próprio arquivo colado duas vezes reprova; título em bloco de código não conta.
+- **Conferido contra o defeito real** (só na sessão, sem o teste depender do git): o `BUGS.md` de
+  `8929ba3`, o primeiro duplicado, dá `## Modelo`, `## Abertos`, BUG-T, BUG-U e BUG-V em 2x. O
+  atual dá vazio.
+- É regra permanente (roda em todo `verify`). A conferência contra `8929ba3` é evidência desta
+  sessão.
