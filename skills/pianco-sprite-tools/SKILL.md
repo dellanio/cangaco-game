@@ -5,7 +5,7 @@ description: Ferramentas técnicas para derivar, registrar, validar e montar con
 
 # Ferramentas de sprites
 
-Para novas candidatas e ensaios de imagem, passe aos scripts caminhos sob `D:\projetos-pessoal\cangaco-arte-candidatos\<variante>\<id>\`. Nao grave folhas de contato, relatorios ou PNGs candidatos dentro do repositorio. Os scripts antigos preservados em `archive/skills/` sao historicos e nao devem ser carregados como contrato.
+Para novas candidatas e ensaios de imagem, passe aos scripts caminhos sob `D:\projetos-pessoal\cangaco-arte-candidatos\<variante>\<id>\`. Nao grave folhas de contato, relatorios ou PNGs candidatos dentro do repositorio. Os scripts da antiga `pianco-art-pipeline` ficam so no historico do git e nao devem ser carregados como contrato.
 
 Leia `../pianco-render-contract/SKILL.md` para dimensões, pivôs, caminhos e portões. A direção artística fica na especialidade visual escolhida. Não use `brief-arte.md`, `GDD.md`, `docs/` nem o arquivo legado arquivado como fonte de regras.
 
