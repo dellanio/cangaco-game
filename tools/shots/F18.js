@@ -209,16 +209,22 @@ async function roteiro(ctx) {
   const noQuadro = doCampo + dasOutras;
 
   const daArea = s.recursosVisiveis;
+  // F-TR (o esgotado por tipo): o campo em pousio tem codigo proprio (`emPousio`), e nao divide
+  // mais o `esgotado` com a fonte acabada. Na abertura nada foi cavado nem cortado
   afirmar(
-    daArea.esgotado > 0,
+    daArea.emPousio > 0,
     `o campo em pousio deveria estar desenhado, veio ${JSON.stringify(daArea)}`,
+  );
+  afirmar(
+    (daArea.esgotado || 0) === 0,
+    `na abertura nada foi cavado: 'esgotado' a vista deveria ser 0 (o pousio tem codigo proprio), veio ${JSON.stringify(daArea)}`,
   );
   // Tolera a borda: `getTilesWithinWorldXY` e a conta acima arredondam o meio
   // tile da margem para lados diferentes. O que se afirma e a ORDEM de grandeza
   // certa, e nao "algum tile".
   afirmar(
-    Math.abs(daArea.esgotado - noQuadro) <= 2 * ((x1 - x0) + (y1 - y0)),
-    `esgotado(${daArea.esgotado}) deveria bater com os ${noQuadro} tiles em pousio do quadro (${doCampo} de campo, ${dasOutras} de outras culturas)`,
+    Math.abs(daArea.emPousio - noQuadro) <= 2 * ((x1 - x0) + (y1 - y0)),
+    `emPousio(${daArea.emPousio}) deveria bater com os ${noQuadro} tiles em pousio do quadro (${doCampo} de campo, ${dasOutras} de outras culturas)`,
   );
   afirmar(
     (daArea[CAMPO.id] || 0) === 0,

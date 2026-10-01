@@ -1106,7 +1106,8 @@ export class WorldScene extends Phaser.Scene {
     // Codigo 0 e o esgotado ficam fora: vazio e marcador unico, sem entrada propria.
     this.desenhoPorCodigo = recursosDeRender.cores.map((_cor, codigo): DesenhoDoRecurso => {
       const id = recursosDeRender.tipos[codigo - 1];
-      if (codigo === 0 || codigo === recursosDeRender.codigoEsgotado || id === undefined) return { como: 'marcador' };
+      if (codigo === 0 || codigo === recursosDeRender.codigoEsgotado || codigo === recursosDeRender.codigoEmPousio
+        || id === undefined) return { como: 'marcador' };
       return desenhoDoRecurso(manifestoDoJogo, id, carregada);
     });
     const arte = this.desenhoPorCodigo.map((d) => (d.como === 'textura' ? d.chave : null));
@@ -1326,10 +1327,11 @@ export class WorldScene extends Phaser.Scene {
     const contagem: Record<string, number> = {};
     for (const tipo of recursosDeRender.tipos) contagem[tipo] = 0;
     contagem.esgotado = 0;
+    contagem.emPousio = 0;
     for (const tile of camada.getTilesWithinWorldXY(vista.x, vista.y, vista.width, vista.height)) {
       if (tile.index <= 0) continue;
-      const chave = tile.index === recursosDeRender.codigoEsgotado
-        ? 'esgotado' : recursosDeRender.tipos[tile.index - 1];
+      const chave = tile.index === recursosDeRender.codigoEsgotado ? 'esgotado'
+        : tile.index === recursosDeRender.codigoEmPousio ? 'emPousio' : recursosDeRender.tipos[tile.index - 1];
       if (chave !== undefined) contagem[chave] = (contagem[chave] as number) + 1;
     }
     return contagem;

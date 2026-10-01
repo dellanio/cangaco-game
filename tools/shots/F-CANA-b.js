@@ -10,7 +10,8 @@
 // camera para achar. Decisao do operador (2026-09-26): as duas vem para a faixa
 // sul, alongadas, e o roteiro passa a afirmar o quadro que o jogador ve primeiro.
 // A cana nasce em pousio (`quantidadeInicial: 0`), entao a cena a conta como
-// `esgotado`, junto do milho do rocado.
+// `emPousio`, junto do milho do rocado (F-TR, o esgotado por tipo; antes, `esgotado`).
+// Fecha o BUG-N (cana em pousio parecia mato cortado).
 //
 // Sem clique em painel e sem arrasto: o roteiro so fotografa, e a regra do
 // passo despausado (CLAUDE.md §8) nao se aplica.
@@ -73,9 +74,13 @@ async function roteiro(ctx) {
     `a cana nasce em pousio: 'grapes' maduro a vista deveria ser 0, veio ${JSON.stringify(s.recursosVisiveis)}`,
   );
   afirmar(
-    (s.recursosVisiveis.esgotado || 0) >= mancha.length + rocado.length,
-    `os ${mancha.length} tiles da cana e os ${rocado.length} do rocado deveriam entrar no 'esgotado', `
+    (s.recursosVisiveis.emPousio || 0) >= mancha.length + rocado.length,
+    `os ${mancha.length} tiles da cana e os ${rocado.length} do rocado deveriam entrar no 'emPousio', `
       + `veio ${JSON.stringify(s.recursosVisiveis)}`,
+  );
+  afirmar(
+    (s.recursosVisiveis.esgotado || 0) === 0,
+    `a cana e o rocado em pousio nao sao fonte acabada: 'esgotado' a vista deveria ser 0, veio ${JSON.stringify(s.recursosVisiveis)}`,
   );
 
   await capturar('abertura-com-a-cana');

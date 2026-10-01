@@ -37,21 +37,3 @@ antes deles, o BUG-001 na F09) saíram em 2026-09-24 com a regra que os dissolve
 **medida de relógio é evidência da sessão, nunca asserção** — `CLAUDE.md` §8, decisão
 do operador. A regra antiga daqui ("alargar o teto com o número medido") está **revogada**:
 ela consertava a asserção em vez de perguntar se aquele eixo podia ser asserção.
-
-## BUG-N — cana em pousio parece mato cortado
-- feature: F-CANA-b (a mancha de cana da vila); o desenho é de `src/render/mapa.ts`
-- severidade: feio
-- repro: `npm run shot -- F-CANA-b`, captura `screenshots/F-CANA-b-1-abertura-com-a-cana.png`
-- esperado: a mancha de cana nova se lê como roça esperando plantio, como o roçado do milho.
-- observado: a cana nasce em pousio (`quantidadeInicial: 0`) e o render a pinta com o
-  código único de ESGOTADO (`render/mapa.ts`, `codigoEsgotado`: "havia recurso") — o
-  mesmo losango escuro da árvore cortada, sobre grama.
-- causa: falta o chão arado que o milho tem. O milho em pousio fica sobre o terreno
-  `campoArado` (marrom), derivado do mapa; a cana não tem terreno (`grapes` sem `terreno`
-  em `resources.json`) e fica sobre `grama`, e aí o esgotado não tem contexto.
-- **conferido 2026-09-28, continua valendo:** `render/mapa.ts` `codigoDoRecurso` ainda
-  devolve `codigoEsgotado` para quantidade ≤ 0, e `grapes` segue sem `terreno`.
-- correção: é do render, com a sessão do render (instrução do operador, 2026-09-26).
-  Dois caminhos, a decidir lá: um código de "em pousio" separado do "esgotado" para
-  cultura (tipo com `aradura` em `resources.json`), ou o chão de roça desenhado sob
-  tile de cultura.

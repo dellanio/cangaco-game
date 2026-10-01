@@ -129,9 +129,9 @@ async function roteiro(ctx) {
       `veio ${JSON.stringify(s.recursosVisiveis)}`,
     );
   }
-  // Nada foi colhido ainda: o unico `esgotado` da abertura e o que NASCE vazio
-  // (o milho do chao arado e a cana em pousio), que desde a noite 17 entra no
-  // quadro de abertura. A conta vem do arquivo de mapa, tipo a tipo pela
+  // Nada foi colhido ainda: o que a abertura mostra vazio e o que NASCE vazio (o milho do chao
+  // arado e a cana), que desde a noite 17 entra no quadro de abertura. Desde a F-TR (o esgotado
+  // por tipo) ele conta como `emPousio`, e o `esgotado` (a fonte acabada) tem de ser 0. A conta vem do arquivo de mapa, tipo a tipo pela
   // `quantidadeInicial`: um tile colhido a mais, ou um tipo cheio desenhado
   // como esgotado, sai da faixa.
   const vistaDeAbertura = mundoVisivel(canvas, s.camera);
@@ -148,9 +148,13 @@ async function roteiro(ctx) {
   }
   const pousio = contarDoMapa(vazios, vistaDeAbertura);
   afirmar(
-    s.recursosVisiveis.esgotado >= pousio.dentro && s.recursosVisiveis.esgotado <= pousio.tocando,
-    `nada foi colhido ainda: 'esgotado' deveria ser so o que nasce vazio, entre ${pousio.dentro} e `
+    s.recursosVisiveis.emPousio >= pousio.dentro && s.recursosVisiveis.emPousio <= pousio.tocando,
+    `nada foi colhido ainda: 'emPousio' deveria ser so o que nasce vazio, entre ${pousio.dentro} e `
       + `${pousio.tocando} tiles; veio ${JSON.stringify(s.recursosVisiveis)}`,
+  );
+  afirmar(
+    (s.recursosVisiveis.esgotado || 0) === 0,
+    `nada foi colhido nem cavado: 'esgotado' deveria ser 0; veio ${JSON.stringify(s.recursosVisiveis)}`,
   );
   await capturar('vila-de-abertura');
 

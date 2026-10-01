@@ -120,9 +120,14 @@ export interface RecursosDeRender {
    *  NOME, como no terreno. */
   readonly tipos: readonly string[];
   /** Cor por CODIGO, em `#rrggbb`: indice 0 nao e usado (tile vazio), 1..N sao
-   *  os tipos e N+1 e o esgotado. */
+   *  os tipos, N+1 e o esgotado e N+2 e o em pousio. */
   readonly cores: readonly string[];
   readonly codigoEsgotado: number;
+  /** F-TR (o esgotado por tipo) — o tile de CULTURA com quantidade 0: a roca esperando plantio,
+   *  e nao a fonte acabada. Cultura e o tipo com `aradura` em `data/resources.json`. */
+  readonly codigoEmPousio: number;
+  /** Os tipos que, zerados, ficam em pousio (os que tem `aradura`). */
+  readonly culturas: readonly string[];
   /** F-REPL-e — ticks do tile replantado ate maduro, por tipo; 0 em quem nao repoe.
    *  E o numero que `render/crescimento.ts` divide em estados. */
   readonly ticksDeCrescer: Readonly<Record<string, number>>;
@@ -141,10 +146,18 @@ export function criarRecursosDeRender(): RecursosDeRender {
     }
     return cor;
   };
+  // F-TR (o esgotado por tipo): o pousio usa a cor do chao arado do tema, sem cor nova. Quem e
+  // cultura e o dado (`aradura`), nunca uma lista de ids aqui
+  const corDoArado = (temaSertao as { terreno?: Record<string, string | undefined> }).terreno?.['campoArado'];
+  if (typeof corDoArado !== 'string') {
+    throw new Error("render/mapa: theme-sertao.json nao tem a cor do terreno 'campoArado' (o pousio a usa).");
+  }
   return {
     tipos,
-    cores: ['#000000', ...tipos.map(corDe), corDe('esgotado')],
+    cores: ['#000000', ...tipos.map(corDe), corDe('esgotado'), corDoArado],
     codigoEsgotado: tipos.length + 1,
+    codigoEmPousio: tipos.length + 2,
+    culturas: tipos.filter((tipo) => gameData.recursos.tipos[tipo]?.aradura != null),
     ticksDeCrescer: Object.fromEntries(tipos.map((tipo) => [
       tipo, gameData.recursos.tipos[tipo]?.reposicao?.ticksDeCrescer ?? 0,
     ])),
@@ -175,7 +188,10 @@ export function codigoDoRecurso(
   recurso: RecursoNoTile | undefined, config: RecursosDeRender = recursosDeRender,
 ): number {
   if (recurso === undefined) return 0;
-  if (recurso.quantidade <= 0) return config.codigoEsgotado;
+  if (recurso.quantidade <= 0) {
+    // F-TR (o esgotado por tipo): a cultura zerada e roca em pousio; o resto e fonte acabada
+    return config.culturas.includes(recurso.tipo) ? config.codigoEmPousio : config.codigoEsgotado;
+  }
   const indice = config.tipos.indexOf(recurso.tipo);
   return indice < 0 ? 0 : indice + 1;
 }

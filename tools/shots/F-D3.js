@@ -21,8 +21,8 @@ const terreno = require('../../data/terrain.json');
 const mapa = require('../../data/maps/sertao-128.json');
 const { tipos: TIPOS_DE_RECURSO } = require('../../data/resources.json');
 
-/** Tipo que nasce em zero (a cana em pousio): a cena o desenha como `esgotado`,
- *  nao pelo nome. Mesma leitura do `tiposQueNascemVazios` do roteiro F18. */
+/** Tipo que nasce em zero (a cana em pousio): a cena o desenha como `emPousio` (F-TR, o
+ *  esgotado por tipo; antes, `esgotado`), nao pelo nome. Mesma leitura do `tiposQueNascemVazios` do roteiro F18. */
 const nasceVazio = (tipo) => {
   const def = TIPOS_DE_RECURSO[tipo];
   return def !== undefined && (def.quantidadeInicial ?? def.rendimentoPorTile) === 0;
@@ -37,7 +37,7 @@ const TILE_PX = terreno.tile_px;
 // mede nada: contar chave daria 6 terrenos numa tela inteira de grama, e o
 // aceite passaria sozinho. Medido ao escrever este roteiro, nao suposto.
 //
-// `esgotado` sai fora tambem: e ESTADO de recurso, nao tipo — a cena o publica
+// `esgotado` e `emPousio` saem fora tambem: sao ESTADO de recurso, nao tipo — a cena os publica
 // na mesma contagem para a F-T2a poder afirmar que nada nasce esgotado.
 const presentes = (contagem, ignorar = []) => Object.keys(contagem)
   .filter((k) => !ignorar.includes(k) && contagem[k] > 0);
@@ -108,7 +108,7 @@ async function roteiro(ctx) {
 
   // ---- 1. tres terrenos e dois recursos, medidos do estado ------------------
   const terrenos = presentes(s.terrenoVisivel);
-  const recursos = presentes(s.recursosVisiveis, ['esgotado']);
+  const recursos = presentes(s.recursosVisiveis, ['esgotado', 'emPousio']);
   afirmar(
     terrenos.length >= 3,
     `a abertura deveria mostrar ao menos 3 tipos de terreno, veio ${terrenos.length}: `
@@ -138,12 +138,12 @@ async function roteiro(ctx) {
   }
   for (const tipo of doArquivo.recursoDentro) {
     // Desde a noite 17 a cana da vila entra no quadro de abertura, e ela nasce
-    // em pousio: o que a cena tem de desenhar e o `esgotado`, nao o nome.
+    // em pousio: o que a cena tem de desenhar e o `emPousio`, nao o nome.
     if (nasceVazio(tipo)) {
       afirmar(
-        (s.recursosVisiveis.esgotado || 0) > 0,
+        (s.recursosVisiveis.emPousio || 0) > 0,
         `o mapa poe '${tipo}' (nasce vazio) inteiro dentro do quadro de abertura e a cena nao `
-          + `desenhou nenhum tile esgotado: ${JSON.stringify(s.recursosVisiveis)}`,
+          + `desenhou nenhum tile em pousio: ${JSON.stringify(s.recursosVisiveis)}`,
       );
       continue;
     }

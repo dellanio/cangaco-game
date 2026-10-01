@@ -16748,3 +16748,34 @@ difere: MESMA câmera e tick           6   C-TELA-01, C-TELA-02, F-T3, F-TR, F24
   1 s. Um commit que mexe em `data/*.json` já tem o dado validado no portão de cada commit, e não só
   no `verify` completo.
 - CLAUDE.md §13: a tabela das camadas passa a dizer "typecheck + lint + validate:data + `vitest related`".
+
+## 2026-10-01 — Leva da manhã, item 3: F-TR, o resto (o esgotado por tipo): feito; fecha o BUG-N
+
+O aceite foi num commit próprio antes do código (`cbd9ee0`). Só `src/render/`, testes e roteiros;
+`src/sim/` não mudou.
+
+### Feito
+- `src/render/mapa.ts`: código novo `codigoEmPousio`. Recurso de **cultura** (o tipo com `aradura`
+  em `data/resources.json`; hoje `corn` e `grapes`) com quantidade 0 fica em pousio, e o resto zerado
+  continua `esgotado`. Nenhum id de recurso é digitado: quem decide é a presença do bloco `aradura`.
+  A cor do pousio é a do terreno `campoArado` do tema, sem cor nova.
+- `WorldScene.ts`: o pousio é marcador, como o esgotado, e `recursosVisiveis` conta `emPousio` à
+  parte.
+- O BUG-N (cana em pousio parece mato cortado) sai do `BUGS.md`, que fica sem bug aberto nem de
+  polimento.
+
+### Verificado
+- `tests/F-T2a-recursos.test.ts`, por tabela para todo tipo do dado: cultura zerada → `emPousio`, o
+  resto zerado → `esgotado`, e com quantidade cada tipo no próprio código. A cor do pousio é a do
+  chão arado e difere da do esgotado. O `tests/F21b-mina-esgota.test.ts` ganhou o campo novo na tabela
+  amputada. Os dois arquivos e a guarda do `BUGS.md`: 40/40.
+- Roteiros, porta 5176, todos com saída 0:
+  - F18 (o roçado em pousio): conta pelo `emPousio` e afirma `esgotado` 0 na abertura;
+  - F-CANA-b (a cana nasce em pousio): `emPousio` cobre a mancha e o roçado, e `esgotado` é 0;
+  - F-TR: igual a antes.
+- **A previsão do meu aceite errou em dois roteiros**, que eu disse que "continuariam verdes". O
+  F-T2a e o F-D3 contavam o que nasce vazio como `esgotado` e reprovaram (`emPousio` 20,
+  `esgotado` 0). Mudaram na mesma tarefa, mais estritos: o vazio da abertura conta em `emPousio`,
+  e `esgotado` tem de ser 0. Agora passam.
+- `screenshots/F-CANA-b-1-abertura-com-a-cana.png` aberta: a cana e o roçado com o mesmo losango
+  marrom de terra arada; o losango quase preto do mato cortado sumiu do pousio.

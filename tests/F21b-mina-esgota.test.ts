@@ -371,7 +371,7 @@ describe('F21b — (7) todo recurso tem cor e nome no tema', () => {
     expect(semTema(tipos, semNome)).toEqual(['gold_ore']);
     expect(semTema(tipos, {})).toEqual(tipos);
     // e a funcao de producao tambem acusa, com a tabela de cor amputada
-    const cortada = { tipos: tipos.filter((id) => id !== 'coal'), cores: ['#000000'], codigoEsgotado: 1, ticksDeCrescer: {} };
+    const cortada = { tipos: tipos.filter((id) => id !== 'coal'), cores: ['#000000'], codigoEsgotado: 1, codigoEmPousio: 2, culturas: [], ticksDeCrescer: {} };
     expect(() => corDoRecurso('coal', cortada)).toThrow();
   });
 });

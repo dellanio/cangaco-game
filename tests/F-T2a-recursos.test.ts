@@ -484,9 +484,10 @@ it('F-T2a — evidencia', () => {
 describe('F-T2a — o marcador le o ESTADO, nao o mapa', () => {
   it('da um codigo por tipo, e uma cor para cada codigo', () => {
     expect(recursosDeRender.tipos).toEqual(Object.keys(gameData.recursos.tipos));
-    // +2: o codigo 0 (tile sem recurso, transparente) e o codigo do esgotado.
-    expect(recursosDeRender.cores).toHaveLength(recursosDeRender.tipos.length + 2);
+    // +3: o codigo 0 (tile sem recurso, transparente), o do esgotado e o do em pousio (F-TR)
+    expect(recursosDeRender.cores).toHaveLength(recursosDeRender.tipos.length + 3);
     expect(recursosDeRender.codigoEsgotado).toBe(recursosDeRender.tipos.length + 1);
+    expect(recursosDeRender.codigoEmPousio).toBe(recursosDeRender.tipos.length + 2);
     for (const cor of recursosDeRender.cores) expect(cor).toMatch(/^#[0-9a-fA-F]{6}$/);
   });
 
@@ -502,6 +503,23 @@ describe('F-T2a — o marcador le o ESTADO, nao o mapa', () => {
     // tela, com a cara de esgotado. `cortada` e diferente de `inexistente`
     // tambem para quem olha, nao so para quem simula.
     expect(codigoDoRecurso({ tipo: 'tree', quantidade: 0 })).toBe(recursosDeRender.codigoEsgotado);
+  });
+
+  it('F-TR, o esgotado por tipo: cultura zerada e pousio; o resto, esgotado (por tabela, todo tipo do dado)', () => {
+    const culturas = Object.keys(gameData.recursos.tipos).filter((t) => gameData.recursos.tipos[t]?.aradura != null);
+    // guarda do cenario: ha cultura e ha fonte, senao a tabela nao separa nada
+    expect(culturas.length).toBeGreaterThan(0);
+    expect(culturas.length).toBeLessThan(recursosDeRender.tipos.length);
+    expect([...recursosDeRender.culturas]).toEqual(culturas);
+    for (const tipo of recursosDeRender.tipos) {
+      const esperado = culturas.includes(tipo) ? recursosDeRender.codigoEmPousio : recursosDeRender.codigoEsgotado;
+      expect(codigoDoRecurso({ tipo, quantidade: 0 }), tipo).toBe(esperado);
+      // com quantidade, cada tipo continua no proprio codigo
+      expect(codigoDoRecurso({ tipo, quantidade: 1 }), tipo).toBe(recursosDeRender.tipos.indexOf(tipo) + 1);
+    }
+    // a cor do pousio e a do chao arado do tema, e difere da do esgotado
+    expect(recursosDeRender.cores[recursosDeRender.codigoEmPousio]).toBe(temaSertao.terreno.campoArado);
+    expect(recursosDeRender.cores[recursosDeRender.codigoEmPousio]).not.toBe(recursosDeRender.cores[recursosDeRender.codigoEsgotado]);
   });
 
   it('nao inventa marcador para tipo que o dado nao tem', () => {
