@@ -16640,3 +16640,26 @@ O aceite já estava escrito no BUILD_PLAN (operador: "aceite já escrito").
   consertado, e não escondido.
 - Verificado: o aviso não aparece mais. O `verify` lista 216 arquivos e nenhum `*.longo.test.ts` (o
   `SELO-longo.test.ts` é curto, e o padrão exige o ponto antes de "longo"). A suíte longa lista os 5.
+
+## 2026-10-01 — Leva desatendida 2, item 6b: a medida das pontas da folga de pedra — PARADO por falta de memória, sem número
+
+### O que se mediu
+- As entradas são as do BALANCE_LOG de 2026-09-25 e 2026-09-26 (as "988/1009" da tabela do lote;
+  hoje nas linhas 994-1048). Os números delas (1319/2129/2563; depois A 4404, B 5193, D 5158) vieram de
+  sondas apagadas.
+- Sonda `zz-` (apagada) da **ponta A** (a rua inteira no tick 0, `tests/helpers/abertura.ts`), com o
+  critério da F17 (`criterio-fechado`), a pedra inicial varrida 34 / 30 / 28 / 27 / 26 / 25, em
+  12 000 ticks.
+- **Ela não deu número.** Com 27 de pedra, o guarda da abertura (`aberturaDaFaseA`) lança: "a rua
+  precisa de 24 tiles … o estado inicial tem 27 de pedra; a reserva de 4 … tem de sobrar". A sonda
+  só gravava no fim, então os casos 34, 30 e 28, que passaram do guarda, não ficaram registrados.
+  **Medido no caminho:** a rua da abertura tem hoje **24 tiles**, e não os 26 das entradas. O guarda
+  exige 28 (24 + 4), e não 30.
+- **Pontas B e D:** dependiam da "rua mínima de 15 tiles" que a sonda apagada de 2026-09-26 achou.
+  Não sei reconstruí-la com fidelidade, e não inventei.
+
+### Parado, pela regra da leva
+- **Falta de memória:** 941 MB livres de 32 GB logo depois da corrida, já baixa desde o item 4
+  (2,3 GB). Não religuei. Para remedir: ponta A gravando cada estoque à medida que roda e desligando
+  o guarda abaixo de 28, como a F18g fazia. As pontas B e D pedem a regra da rua mínima escrita
+  antes. **Nenhum número de dado mudou.**
