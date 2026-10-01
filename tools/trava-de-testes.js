@@ -2,7 +2,7 @@
 'use strict';
 // node tools/trava-de-testes.js <comando...> — roda o comando com a TRAVA DE TESTES entre worktrees
 // (regra do operador, 2026-10-01; CLAUDE.md §13). Antes de rodar, confere a trava comum
-// (`caminhoDaTrava`): se existe e nao esta abandonada (mais de 90 min), espera. Se nao existe, cria
+// (`caminhoDaTrava`): se existe e nao esta abandonada (sem sinal de vida ha mais de 10 min), espera. Se nao existe, cria
 // com a branch, o horario e o comando, roda, e apaga ao terminar, inclusive em falha e em Ctrl+C.
 //
 // Reentrante: quem segura a trava passa `CANGACO_TRAVA_DONO` aos filhos. O `verify` chama
@@ -10,7 +10,8 @@
 const { execSync, spawn } = require('child_process');
 const crypto = require('crypto');
 const { setTimeout: esperar } = require('timers/promises');
-const { caminhoDaTrava, tentarPegar, soltar } = require('./trava-regra.js');
+const { setInterval: repetir, clearInterval: pararDeRepetir } = require('timers');
+const { SINAL_DE_VIDA_MS, LIMITE_DE_ABANDONO_MS, caminhoDaTrava, darSinalDeVida, tentarPegar, soltar } = require('./trava-regra.js');
 
 const comando = process.argv.slice(2).join(' ');
 if (comando === '') {
@@ -18,8 +19,14 @@ if (comando === '') {
   process.exit(2);
 }
 
+/**
+ * Os tempos da trava. `CANGACO_TRAVA_SINAL_MS` e `CANGACO_TRAVA_ABANDONO_MS` existem SO para o teste
+ * do abandono rodar em segundos (tests/TRAVA-de-testes.test.ts); o uso normal e o do dado do script.
+ */
+const SINAL_MS = Number(process.env.CANGACO_TRAVA_SINAL_MS ?? SINAL_DE_VIDA_MS);
+const ABANDONO_MS = Number(process.env.CANGACO_TRAVA_ABANDONO_MS ?? LIMITE_DE_ABANDONO_MS);
 /** Intervalo entre as conferencias enquanto espera. Tempo de parede de ferramenta, nao de jogo. */
-const ESPERA_ENTRE_TENTATIVAS_MS = 5000;
+const ESPERA_ENTRE_TENTATIVAS_MS = Math.min(5000, Math.max(100, Math.floor(SINAL_MS / 2)));
 
 function rodar(env) {
   const filho = spawn(comando, { stdio: 'inherit', shell: true, env });
@@ -38,7 +45,7 @@ async function principal() {
   const dono = { id, branch: branch(), diretorio: process.cwd(), comando, pid: process.pid, inicio: new Date().toISOString() };
   let avisado = '';
   for (;;) {
-    const r = tentarPegar(caminho, dono, Date.now());
+    const r = tentarPegar(caminho, dono, Date.now(), ABANDONO_MS);
     if (r.ok) break;
     const quem = r.dona === null ? 'trava ilegivel' : `${r.dona.branch} desde ${r.dona.inicio} (${r.dona.comando})`;
     if (quem !== avisado) {
@@ -48,8 +55,10 @@ async function principal() {
     await esperar(ESPERA_ENTRE_TENTATIVAS_MS);
   }
 
+  // o sinal de vida: enquanto o comando roda, a trava diz que o dono esta vivo
+  const vida = repetir(() => darSinalDeVida(caminho, id, Date.now()), SINAL_MS);
   // solta em qualquer saida: fim normal, falha, Ctrl+C, encerramento pedido
-  const liberar = () => soltar(caminho, id);
+  const liberar = () => { pararDeRepetir(vida); soltar(caminho, id); };
   process.on('exit', liberar);
   for (const sinal of ['SIGINT', 'SIGTERM', 'SIGHUP', 'SIGBREAK']) {
     process.on(sinal, () => { liberar(); process.exit(130); });

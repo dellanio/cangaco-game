@@ -16501,3 +16501,31 @@ norte 0,71 / sul 1,14. Evidências em `D:\projetos-pessoal\evidencias\relevo-a\`
 - Nos relatórios desta sessão não achei "commits enviados" dito por mim. Se a frase veio de outro
   relatório (a memória de uma sessão anterior diz "all commits are pushed"), ela não foi conferida
   contra o `origin`. **Daqui em diante, "enviado" vem com a saída de `git status -sb`.**
+
+## 2026-10-01 — Leva desatendida 2, item 2: a trava com sinal de vida
+
+O aceite foi num commit próprio antes do código (`89ccfc8`, CLAUDE.md §13).
+
+### Feito
+- `tools/trava-regra.js`: `SINAL_DE_VIDA_MS` (60 s) e `LIMITE_DE_ABANDONO_MS` (10 min; eram 90).
+  `abandonada` conta pelo `vivoEm`, e pelo `inicio` quando a trava nunca deu sinal.
+  `darSinalDeVida` regrava a trava, mas só a do próprio dono.
+- `tools/trava-de-testes.js`: enquanto o comando roda, dá sinal de vida a cada 60 s e para ao soltar.
+  `CANGACO_TRAVA_SINAL_MS` e `CANGACO_TRAVA_ABANDONO_MS` existem só para o teste rodar em segundos.
+
+### Verificado (`tests/TRAVA-de-testes.test.ts`, 10/10)
+- aceite 1, por tabela: sinal há 9 min e há 10 min exatos valem; há 10 min e 1 ms, abandonada. Sem
+  sinal, conta pelo `inicio`;
+- aceite 2: o script de verdade, com sinal de 200 ms e abandono de 2 s (a mesma proporção 1:10 do
+  dado). O `vivoEm` muda pelo menos 2 vezes enquanto o comando roda, e a trava some no fim;
+- aceite 3, **processo morto sem soltar**: a trava do morto fica no disco com o último sinal dele.
+  A segunda sessão avisa "ocupada por x", espera, e só pega depois do limite (esperou ≥ 2 s), e a
+  trava some no fim. O arquivo é escrito pelo teste, porque o encerramento forçado não roda código
+  nenhum: o que sobra é o arquivo;
+- **provas de que acusam** (sondas de uma corrida, revertidas): sem o sinal de vida, o aceite 2
+  reprova; com o abandono contado só pelo `inicio`, o aceite 1 reprova.
+
+### Achado meu, corrigido
+- A primeira versão do aceite 2 passou o código do filho por dois shells, e o `>` da arrow function
+  virou redirecionamento. Isso deixou um arquivo vazio `{}` na raiz, que foi apagado. O filho agora
+  roda um arquivo de script.

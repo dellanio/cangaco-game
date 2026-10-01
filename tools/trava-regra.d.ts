@@ -1,5 +1,7 @@
-export interface DonoDaTrava { readonly id: string; readonly branch: string; readonly inicio: string; readonly comando?: string }
+export interface DonoDaTrava { readonly id: string; readonly branch: string; readonly inicio: string; readonly vivoEm?: string; readonly comando?: string }
+export const SINAL_DE_VIDA_MS: number;
 export const LIMITE_DE_ABANDONO_MS: number;
+export function darSinalDeVida(caminho: string, id: string, agoraMs: number): boolean;
 export function caminhoDaTrava(env?: Record<string, string | undefined>): string;
 export function lerTrava(caminho: string): DonoDaTrava | null;
 export function abandonada(trava: DonoDaTrava | null, agoraMs: number, limiteMs?: number): boolean;

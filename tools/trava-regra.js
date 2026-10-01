@@ -6,8 +6,10 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
-/** Trava com mais que isto e considerada abandonada (regra do operador: 90 minutos). */
-const LIMITE_DE_ABANDONO_MS = 90 * 60 * 1000;
+/** Quem segura a trava atualiza `vivoEm` a este intervalo (sinal de vida; operador, 2026-10-01). */
+const SINAL_DE_VIDA_MS = 60 * 1000;
+/** Trava sem sinal de vida ha mais que isto e abandonada (operador, 2026-10-01: 10 min; antes 90). */
+const LIMITE_DE_ABANDONO_MS = 10 * 60 * 1000;
 
 /**
  * O arquivo de trava, COMUM a todas as worktrees e sessoes da maquina. Nao e `os.tmpdir()`: nas
@@ -25,11 +27,24 @@ function lerTrava(caminho) {
   try { return JSON.parse(fs.readFileSync(caminho, 'utf8')); } catch { return null; }
 }
 
-/** A trava esta abandonada: tem mais que o limite, ou nao da para ler quando foi criada. */
+/**
+ * A trava esta abandonada: o ultimo sinal de vida (`vivoEm`, ou o `inicio` se ela nunca deu sinal)
+ * tem mais que o limite, ou nao da para ler.
+ */
 function abandonada(trava, agoraMs, limiteMs = LIMITE_DE_ABANDONO_MS) {
-  if (trava === null || typeof trava.inicio !== 'string') return true;
-  const inicio = Date.parse(trava.inicio);
-  return Number.isNaN(inicio) || agoraMs - inicio > limiteMs;
+  if (trava === null) return true;
+  const ultimo = typeof trava.vivoEm === 'string' ? trava.vivoEm : trava.inicio;
+  if (typeof ultimo !== 'string') return true;
+  const ms = Date.parse(ultimo);
+  return Number.isNaN(ms) || agoraMs - ms > limiteMs;
+}
+
+/** O sinal de vida: regrava a trava com `vivoEm`, mas so se ela ainda for deste dono. */
+function darSinalDeVida(caminho, id, agoraMs) {
+  const atual = lerTrava(caminho);
+  if (atual === null || atual.id !== id) return false;
+  fs.writeFileSync(caminho, JSON.stringify({ ...atual, vivoEm: new Date(agoraMs).toISOString() }, null, 2));
+  return true;
 }
 
 /**
@@ -64,4 +79,4 @@ function soltar(caminho, id) {
   return false;
 }
 
-module.exports = { LIMITE_DE_ABANDONO_MS, caminhoDaTrava, lerTrava, abandonada, tentarPegar, soltar };
+module.exports = { SINAL_DE_VIDA_MS, LIMITE_DE_ABANDONO_MS, caminhoDaTrava, lerTrava, abandonada, darSinalDeVida, tentarPegar, soltar };

@@ -364,8 +364,8 @@ Mover teste para a suíte longa é decisão do operador, como foi a dos cinco pr
 de cada vez na máquina, em qualquer worktree. Antes de rodar vitest, `verify` ou roteiro, a sessão
 confere o arquivo de trava comum, `%LOCALAPPDATA%\Temp\cangaco-testes.lock` (fora das worktrees;
 `CANGACO_TRAVA` troca o caminho). Se ele existe, espera. Se não, cria com a branch, o horário e o
-comando, roda e apaga ao terminar, inclusive em falha. Trava com mais de 90 minutos é abandonada e
-pode ser tomada.
+comando, roda e apaga ao terminar, inclusive em falha. Trava sem sinal de vida há mais de 10 minutos é
+abandonada e pode ser tomada (ver o sinal de vida abaixo).
 - Quem faz isso é `tools/trava-de-testes.js`, e os scripts `test`, `test:transladado`,
   `test:longo`, `verify` e `shot` já passam por ele.
 - **Teste avulso também passa pela trava:** `node tools/trava-de-testes.js npx vitest run <arquivo>`.
@@ -374,7 +374,7 @@ pode ser tomada.
   diferente em cada sessão, e a trava não seria comum.
 - É reentrante: quem segura a trava passa `CANGACO_TRAVA_DONO` aos filhos. O `verify`, que chama
   `npm run test`, não espera por si mesmo.
-- Processo encerrado à força não apaga a trava. É para isso que existe o limite de 90 minutos.
+- Processo encerrado à força não apaga a trava. Sem o sinal de vida dele, ela é liberada em 10 min.
 - **Sinal de vida (decisão do operador, 2026-10-01; substitui os 90 minutos).** Quem segura a
   trava atualiza o horário dela a cada 60 s (`vivoEm`). Trava sem atualização há mais de 10 min é
   abandonada, e a próxima sessão a toma. **Aceite:** (1) a regra pura, por tabela: atualizada há
