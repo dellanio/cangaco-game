@@ -8,7 +8,8 @@
 //  1. o CHAO PLANO e igual pixel a pixel com o relevo ligado e desligado (decisao 7: as duas
 //     camadas sao neutras exatas no plano). Para provar que a comparacao acusa, uma encosta do
 //     mesmo quadro tem de DIFERIR;
-//  2. as duas geometrias lado a lado (decisao 9): 8 px por degrau (o dado) e 12,8 (`?relevoPx`);
+//  2. as duas geometrias lado a lado: 12,8 px por degrau (o dado, decisao 18) e 8 (`?relevoPx`, so
+//     registro da decisao 9);
 //  3. a saturacao da areia clara nas encostas de luz, medida (decisao 10): quantos pixels passam a
 //     ter canal em 255 por causa da luz. E medida para o operador, nao reprova;
 //  4. o tint: arvore e rocha do quadro tingidas ao nascer; a pedreira plantada numa encosta de
@@ -38,8 +39,9 @@ const FEATURE = 'D-TELA-LUZ-RELEVO';
 const TILE_PX = terreno.tile_px;
 /** O quadro: a vila inteira, o acude com a areia, o lajedo e as primeiras arvores. */
 const ZOOM = 0.5;
-/** A geometria alternativa da decisao 9 (norte ~0,71). A do dado e `relevoDado.pxDeMundoPorDegrau`. */
-const PX_ALTERNATIVO = 12.8;
+/** A geometria de registro (decisao 18): o dado e 12,8 px por degrau, provisorio; a de 8 fica so
+ *  como registro da comparacao da decisao 9, pelo `?relevoPx`. */
+const PX_DE_REGISTRO = 8;
 const TETO_PRONTO_MS = 10_000;
 const TETO_ATE_RETINGIR_OBRA = 1500;
 const TETO_ATE_SERF_CRUZAR = 600;
@@ -236,8 +238,8 @@ async function roteiro(ctx) {
   const retsAreia = areiaDeLuz.map(({ gx, gy }) => retDeTiles(gx, gy, 1, 1));
   const geometrias = {};
   for (const [nome, busca, px] of [
-    ['relevo-8px', '&relevo', relevoDado.pxDeMundoPorDegrau],
-    ['relevo-12_8px', `&relevo&relevoPx=${PX_ALTERNATIVO}`, PX_ALTERNATIVO],
+    ['relevo-12_8px', '&relevo', relevoDado.pxDeMundoPorDegrau],
+    ['relevo-8px-registro', `&relevo&relevoPx=${PX_DE_REGISTRO}`, PX_DE_REGISTRO],
   ]) {
     await abrir(busca);
     const cam = await aoZoomDoQuadro(canvas);

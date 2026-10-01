@@ -6,8 +6,8 @@
   "_docFatorMinimo": "Piso de seguranca da luz do chao. Com o declive suave do gerador, a encosta mais escura fica bem acima dele.",
   "tetoDoTintDoSprite": 1.0,
   "_docTetoDoTintDoSprite": "O sprite escurece na sombra e nao recebe o realce da luz (S1, decisao do operador, 2026-09-30). O setTint do Phaser 3 so escurece, entao o teto nao passa de 1.",
-  "pxDeMundoPorDegrau": 8,
-  "_docPxDeMundoPorDegrau": "Quantos px de mundo um degrau de altura vale para a conta da luz (nao desloca nada na tela). Ponto de partida: a captura decide entre 8 (norte ~0,83, sul ~1,11) e 12,8 (norte ~0,71, sul ~1,14).",
+  "pxDeMundoPorDegrau": 12.8,
+  "_docPxDeMundoPorDegrau": "Quantos px de mundo um degrau de altura vale para a conta da luz (nao desloca nada na tela). PROVISORIO (decisao do operador, 2026-09-30): 12,8 escolhido na captura contra 8; recalibrar quando a arte de terreno da F-TR (tile sem luz pintada) entrar.",
   "luz": {
     "_doc": "De cima, inclinada levemente para o sul (o lado da camera), SEM componente leste-oeste (decisao do operador, 2026-09-30). Nao ha campo leste-oeste de proposito: o espelho das unidades continua valendo.",
     "inclinacaoParaOSulGraus": 30

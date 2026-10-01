@@ -127,6 +127,23 @@ Registradas como decisões. Elas valem sobre qualquer trecho do plano que diga o
     O roteiro da Tarefa 4 continua na Tarefa 4. A regressão completa dos roteiros continua no fim
     (decisão 12), antes do `verify` final.
 
+## Decisões do operador ao liberar a máquina (2026-09-30, sexta rodada)
+
+18. **Geometria: 12,8 px por degrau**, valor **provisório** no `data/relevo.json`, a recalibrar
+    quando entrar a arte de terreno da F-TR (tile sem luz pintada). As capturas de 8 e de 12,8
+    ficam só como registro: a decisão 9 está fechada e não volta ao operador.
+19. **Medição obrigatória do recorte do sprite.** Na encosta mais iluminada (a da vila e a do pé
+    da serra), medir a diferença de luminância entre o sprite (árvore, serf, prédio) e o chão em
+    volta. A camada `[DST_COLOR, ONE]` clareia o chão e o `setTint` só escurece o sprite (S1).
+    **Se o sprite parecer recortado, propor a correção com captura**; a correção em si é
+    decisão do operador.
+20. **Captura a zoom 0,5 da encosta mais forte** (a dos 8,2% de tiles no teto de declive),
+    confirmando que ela não lê como parede nem como intransitável.
+
+Depois disso, a Tarefa 5 na ordem: rebase sobre a ponta da `main`, linha de base dos roteiros,
+comparação com a flag desligada, `verify` final, `BUILD_PLAN.md`, `test-results.json` e o bloco
+do `PROGRESS.md` (nas notas, para o merge). **Sem merge.**
+
 ## Avaliação: chão plano = 1,0, pedida pelo operador (2026-09-30)
 
 **Estado: avaliada e aprovada (decisões 7 a 11 acima).** O resto do plano já está escrito com
@@ -1226,3 +1243,37 @@ Preenchidas durante a execução. Separam o **verificado** (com o comando ou o a
   contrato do arquivo publicado do `D-TERRENO-ALTURA`). O selo `.verify-ok` foi criado. **Não
   é o `verify` final da decisão 17**, nem marca `passes`: a linha de base, a comparação com a
   flag desligada e as duas capturas da geometria esperam o operador liberar a máquina.
+- **Decisão 18 aplicada:** `data/relevo.json` com `pxDeMundoPorDegrau: 12.8`, marcado como
+  provisório até a arte de terreno da F-TR. No roteiro de aceite, a captura principal passou a
+  ser a de 12,8 (`-2-relevo-12_8px`), e a de 8 ficou como registro (`-3-relevo-8px-registro`,
+  pelo `?relevoPx=8`). Roteiro de novo verde: chão plano 900/900 iguais nas duas, encosta
+  diferente (846 e 779), areia 0 saturados, pedreira de sombra com fator 0,964.
+- **Decisões 19 e 20, roteiro de medida `tools/shots/D-TELA-LUZ-RELEVO-recorte.js`** (ajudantes em
+  `tools/shots/_relevo.js`), porta 5177, saída 0, medidas em
+  `test-output/D-TELA-LUZ-RELEVO-recorte.json`. Ganho de luminância (Rec. 709) com relevo sobre
+  sem relevo, mesma câmera nas duas cargas (zoom pela roda, posição pelo clique no minimapa):
+
+  | Onde | Fator sob o pé | Ganho do chão | Ganho do sprite | Diferença |
+  |---|---|---|---|---|
+  | árvore da vila na encosta mais iluminada, (38,23) | 1,143 | 1,127 (4 tiles) | 1,013 (pixel) | **11,3%** |
+  | pé da serra, faixa mais iluminada, (118,120) | — | até **1,102** (89 tiles) | 1,0 (S1) | **10,2%** |
+  | pedreira na encosta de luz mais forte com rua ≤ 16, (26,28) | 1,024 | 0,983 | 1,0 (tint) | ~0 |
+  | serf mais iluminado (u6) | 1,006 | 1,033 | 1,0 (tint) | ~3% |
+
+  - **No pé da serra não há sprite:** nenhuma árvore a 3 tiles de montanha no mapa. O ganho do
+    chão é o recorte que um sprite teria ali. No prédio e no serf, o ganho do sprite é o tint
+    publicado (`min(fator, 1)`), porque eles não existem na carga sem relevo.
+  - **Visto (Read), recortes ampliados lado a lado, sem × com relevo:**
+    - `screenshots/D-TELA-LUZ-RELEVO-recorte-arvores-sem-x-com.png`: a grama em volta clareia e
+      as árvores ficam como pintadas. **Não lê como recortado** a zoom 0,5, ampliado 2×: sem
+      halo nem borda, contraste do tamanho da variação que o próprio chão já tem;
+    - `screenshots/D-TELA-LUZ-RELEVO-recorte-serra-sem-x-com.png`: a faixa andável quase não
+      muda; o escuro forte fica dentro dos tiles de montanha, onde a sim já bloqueia.
+  - **Correção proposta, não aplicada** (só se o operador achar o recorte visível com a arte
+    nova): `tetoDaLuzDoChao` em `data/relevo.json` (a regra de validação já existe). Com 1,05, a
+    diferença máxima cai de ~11% para ~5%, ao custo de achatar a encosta de luz.
+  - **Decisão 20, a encosta mais forte:** a janela 12 × 8 com mais tiles no teto de declive,
+    (86–97, 33–40), 74 tiles, na margem de um açude. Visto em
+    `screenshots/D-TELA-LUZ-RELEVO-recorte-encosta-forte-sem-x-com.png` (e nas capturas inteiras
+    `-recorte-5` e `-recorte-6`): sombreado suave na transição de grama para areia, **não lê como
+    parede nem como intransitável**.
