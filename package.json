@@ -13,6 +13,7 @@
     "lint": "eslint .",
     "validate:data": "node tools/validate-data.js",
     "shot": "node tools/trava-de-testes.js node tools/shot.js",
+    "shot:todos": "node tools/trava-de-testes.js node tools/shot-todos.js",
     "docs:mapa": "node tools/gerar-mapa-construcoes.js",
     "sim": "node tools/sim.js",
     "verify:rapido": "node tools/trava-de-testes.js node scripts/verify-rapido.js",

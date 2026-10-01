@@ -16827,3 +16827,27 @@ relevo (e68a749..95b9e74)                     | não avaliado | D-TELA-LUZ-RELEV
   aceite antes. São o `8d91cb8` (selo), o `7a9e038` (trava) e o `670c66b` (validate:data no rápido).
   Os três foram pedidos do operador com o critério escrito no pedido, mas a §6 item 10 manda o aceite
   num commit próprio de qualquer jeito.
+
+## 2026-10-01 — Leva da tarde (desatendida; o operador fora até a noite)
+
+- **Tag `teste-jogo-1` em `5528aeb`**, a versão fechada para o operador jogar, enviada ao `origin`.
+- Filtro do dia (operador): só entra o que **não** muda `src/sim/` nem número de balanceamento em
+  `data/`. A B-TERRENO-01 continua fora; quando entrar, remede a folga de pedra no mesmo item.
+- Já feitos nesta leva, que o pedido manda incluir: o item 7 (os marcos, `e60b18a`) e a D-TELA-05e
+  (mercenários em 8 direções, `2d005c2` com a chave em `5480e67`).
+- **A porta 5178 foi liberada sozinha:** o `vite` órfão das 09:08 não está mais lá, e não matei nada.
+  Nenhuma porta de 5175 a 5178 escuta agora.
+
+### Item 1: o fechamento só ao fim de um grande bloco, e o `npm run shot:todos`
+O aceite foi num commit próprio antes do código (`995da71`, CLAUDE.md §13).
+- `tools/shot-todos.js` (com a trava, por `npm run shot:todos`) e a regra pura em
+  `tools/shot-todos-regra.js`:
+  - a lista é `tools/shots/*.js` sem `_`;
+  - a porta ocupada no início sai 2 sem rodar roteiro;
+  - memória livre abaixo de 1 500 MB (a medida do Win32) para e sai 3;
+  - grava `test-output/shot-todos.json`.
+- `tests/SHOT-todos.test.ts`, 3/3, com os aceites 1, 3 e 4. O aceite 3 roda o script de verdade com
+  uma porta tomada por um servidor do próprio teste. **Prova de que acusa** (sonda de uma corrida,
+  revertida): sem a checagem de porta, o aceite 3 reprova ("expected null to be 2").
+- Os aceites 2 (um de cada vez, sob a trava) e 5 (o resumo completo) são exercidos de verdade no
+  fechamento do dia, que roda por este comando.
