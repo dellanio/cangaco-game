@@ -5868,6 +5868,23 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
 - **Fronteira:** é tela (`src/render/`). A semente vem do mapa já carregado, e `sim/` não muda nem
   ganha consumo de RNG.
 - **Aceite:** a escrever no plano, num commit próprio antes do código (CLAUDE.md §6, item 10).
+- **PARADO (2026-10-01, leva desatendida 2, item 4): a medida contradiz a premissa; espera o
+  operador.** Duas corridas de 6 roteiros (D-TELA-07, F-VIVO-h, BUG-Z, F-TR, F-T1 e F18a; 21 pares de
+  capturas, com a câmera e o tick de cada captura gravados pelo `tools/shot.js`):
+  - 9 pares com hash igual;
+  - 9 diferem porque a captura caiu noutro tick;
+  - 3 diferem porque a câmera estava noutro lugar;
+  - **0 diferem com a mesma câmera e o mesmo tick.**
+
+  No F16b (painel de seleção), 4 das 5 capturas diferem, com ~730 mil dos ~734 mil pixels do canvas
+  mudando, no mesmo tick e com `scrollX` 945,8 contra 861,6. Câmera e tick dependem do relógio de
+  parede do roteiro: setas seguradas por `waitForTimeout`, passos despausados por tempo. Nesta amostra
+  o chão é determinístico. A amostra parou por falta de memória no sistema (C-IA-03c e F-SPR ficaram
+  de fora), e não religuei.
+  - **Pergunta ao operador:** o objetivo vira "captura determinística" (câmera posta pela ponte, e a
+    captura num tick fixo, e não pelo relógio), ou o item fica como está até alguém achar um caso de
+    chão diferente com a mesma câmera e o mesmo tick? A medida de onde veio o "105 de 219" não foi
+    refeita aqui.
 ### D-TELA-05e — Mercenários em 8 direções
 - **Registrado (2026-10-01, pedido do operador). Não implementado.** A decisão de 2026-09-30
   (8 direções para todas as unidades; nota da F-SPR acima) ainda não chegou aos mercenários:

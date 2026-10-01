@@ -16577,3 +16577,37 @@ verify completo, para comparar               —         2 149 + 2 147 da transl
 - O rápido não roda o `validate:data`. Um commit que mexe em `data/*.json` só tem o dado validado no
   completo. Hoje isso segue o pedido ("typecheck + lint + vitest related"); acrescentar o
   `validate:data` (~1 s) é decisão do operador.
+
+## 2026-10-01 — Leva desatendida 2, item 4: D-TELA-CHAO-DETERMINISTICO — PARADO: a medida contradiz a premissa, e a amostra foi encerrada por falta de memória
+
+### Verificado
+- **Fonte do chão, lida no código:** o detalhe do terreno vem de `hashVisual(gx, gy, codigo)`
+  (`src/render/scenes/WorldScene.ts`), uma função pura da coordenada. Não há `Math.random` nem RNG do
+  Phaser no render.
+- **Ferramenta nova:**
+  - `tools/shot.js` grava, junto de cada captura, o `tick` e a `camera` da ponte, em
+    `test-output/<roteiro>-shot.json` (`quadros`);
+  - `tools/comparar-capturas.js` conta os pixels diferentes entre dois PNG e a caixa onde estão, no
+    Chromium do Playwright (sem dependência nova).
+- **F16b (painel de seleção), duas corridas:** 1 de 5 capturas igual. As outras 4 têm ~730 mil de
+  ~734 mil pixels do canvas diferentes, no mesmo tick, com a câmera em outro `scrollX` (945,8 contra
+  861,6; 812,8 contra 731,4).
+- **Amostra de 6 roteiros, duas corridas cada** (D-TELA-07, F-VIVO-h, BUG-Z, F-TR, F-T1 e F18a,
+  todos com saída 0): 21 pares. 9 iguais; 9 em outro tick; 3 com outra câmera; **0 diferentes com a
+  mesma câmera e o mesmo tick.**
+
+### O que a medida diz (hipótese, nomeada como tal)
+- A diferença entre corridas vem de **quando** a captura é tirada e de **onde** a câmera está. Os dois
+  dependem do relógio de parede dos roteiros (setas seguradas por `waitForTimeout`, passos despausados
+  por tempo), e não do chão. A hipótese do relevo ("o resto é o chão não determinístico") não se
+  confirmou nesta amostra. A origem do "105 de 219" não foi refeita.
+
+### Parado, pelas regras da leva
+- **Falta de memória:** o Claude Code encerrou a amostra (8 roteiros) e o classificador, com 2,3 GB
+  livres de 32 GB. C-IA-03c e F-SPR ficaram de fora. **Não religuei.** O roteiro C-IA-03c que já
+  estava rodando continuou e segura a trava (não matei); ela sai no fim dele, ou em 10 min sem sinal.
+- **Decisão de design não coberta:** o aceite pedido ("duas corridas do mesmo roteiro dão o mesmo
+  hash") não depende do chão. Fazer as capturas determinísticas (câmera posta pela ponte, captura num
+  tick fixo) muda os roteiros, e não o chão. Pergunta escrita no item do BUILD_PLAN. Nenhum aceite foi
+  commitado e nenhum código de render mudou.
+- O commit leva só a ferramenta de medida e o registro.

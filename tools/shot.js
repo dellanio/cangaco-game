@@ -87,14 +87,23 @@ async function esperarServidor(url, timeoutMs, processo) {
 function criarCapturador(nomeFeature) {
   let contador = 0;
   const capturas = [];
+  const quadros = [];
   return {
     capturas,
+    quadros,
     async capturar(page, nomeDoPasso) {
       contador += 1;
       const arquivo = `screenshots/${nomeFeature}-${contador}-${nomeDoPasso}.png`;
       fs.mkdirSync('screenshots', { recursive: true });
       await page.screenshot({ path: arquivo });
+      // D-TELA-CHAO-DETERMINISTICO: o que a tela mostrava, para comparar duas corridas e separar a
+      // causa (a camera em outro lugar, outro tick, ou o desenho) sem adivinhar pela imagem
+      const quadro = await page.evaluate(() => {
+        const e = window.__cangaco;
+        return e ? { tick: e.tick, camera: e.camera } : null;
+      }).catch(() => null);
       capturas.push(arquivo);
+      quadros.push({ arquivo, ...(quadro ?? {}) });
       return arquivo;
     },
   };
@@ -128,7 +137,7 @@ async function main() {
   let browser;
   let sucesso = false;
   let motivoDaFalha = null;
-  const { capturar, capturas } = criarCapturador(nomeFeature);
+  const { capturar, capturas, quadros } = criarCapturador(nomeFeature);
   const { afirmar, afirmacoes } = criarAfirmador();
 
   try {
@@ -200,6 +209,7 @@ async function main() {
       sucesso,
       motivoDaFalha,
       capturas,
+      quadros,
       afirmacoes,
       errosDeConsole,
     }, null, 2),
