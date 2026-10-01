@@ -17125,3 +17125,20 @@ B D-TELA-LUZ-RELEVO, aceite 1             | NEEDS_WORK        | o sha256 contra 
   com saída `0xC0000142`, em 0 s: o processo nem subiu, porque a sessão que o abriu morreu. **Não é
   falha de roteiro** (hipótese pela causa; o código de saída e os 0 s foram conferidos). O
   `verify` e o `shot:todos` valem só se refeitos sobre o HEAD final, e foram.
+
+## 2026-10-01 (noite, 4) — D-ARTE-BODEGA-MENOR (a Bodega a 1,2 do lote) e o node_modules apagado
+- **Decisão do operador, opção (b):** o `larguraMaxPorLote` da `inn` caiu de 1,5 para 1,2, como o
+  armazém. É só manifesto: o arquivo de 384 px continua, e o render o encolhe para 307 px (escala
+  0,8), sem deformar.
+  - Aceite `ab04bd0`, emenda `c0e236f` (a do F-ESC, ver abaixo).
+  - O C10 afirma o teto 1,2 e a largura desenhada exata; o canavial segue em 1,303.
+  - **O F-ESC afirmava que nenhum sprite encolhe.** Agora afirma a escala exata de cada prédio: a
+    Bodega em 0,8 e os outros em 1. Ficou mais estrita, porque passa a cobrir a Bodega, e nenhum
+    prédio saiu da conta.
+  - O ARTE-VILA saiu 0. As capturas 6 (Bodega com o canavial) e 7 (Bodega com a padaria) foram
+    abertas: a Bodega já não cobre o canavial nem a parede da padaria. Cópias em
+    `D:\projetos-pessoal\evidencias\bodega-menor\`.
+- **O `node_modules` do projeto estava vazio.** O jogo não abria ("Failed to resolve import
+  phaser"), e o `npm ci` reinstalou pelo lockfile, sem dependência nova. **Hipótese, não
+  confirmada:** a remoção das worktrees com o `node_modules` por junction entrou no atalho e apagou
+  o conteúdo do destino. A pasta vazia tem a data de 18:48, perto da limpeza da integração da arte.

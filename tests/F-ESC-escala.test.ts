@@ -79,8 +79,10 @@ describe('F-ESC — altura maxima pela largura do lote', () => {
     for (const e of predios) {
       const lote = e.footprint[0] * tilePx;
       const escala = escalaDoSprite(e, regra, tilePx, lote);
-      // a arte de hoje esta toda dentro da regra (com as excecoes): nenhum sprite muda
-      expect(escala, e.id).toBe(1);
+      // a arte de hoje esta toda dentro da regra (com as excecoes): nenhum sprite muda, menos a Bodega,
+      // que desenha a 1,2 do lote com um arquivo de 1,5 (D-ARTE-BODEGA-MENOR, decisao do operador)
+      if (e.id === 'inn') expect(escala, e.id).toBeCloseTo(1.2 / 1.5, 10);
+      else expect(escala, e.id).toBe(1);
       medidas.push({
         id: e.id, footprint: e.footprint, tamanho: e.tamanho, teto: alturaMaxPorLargura(e, regra),
         alturaSobreLote: +(e.tamanho[1] / lote).toFixed(3), escala,

@@ -34,6 +34,13 @@ describe('C10 — a largura do predio tem regra, como a altura', () => {
     const moinho = comExcecao.find((c) => c.id === 'mill');
     expect(moinho?.larguraPorLote).toBeCloseTo(221 / 192, 6);
     expect(moinho?.teto).toBe(1.16);
+    // D-ARTE-BODEGA-MENOR (decisao do operador): o arquivo de 384 px desenha a 1,2 do lote, e nao a 1,5
+    const bodega = predios.find((e) => e.id === 'inn') as EntradaDeAsset;
+    const loteDaBodega = bodega.footprint[0] * TILE;
+    expect(bodega.tamanho[0] / loteDaBodega).toBeCloseTo(384 / 256, 6);
+    expect(larguraMaxPorLote(bodega, regraL)).toBe(1.2);
+    expect(bodega.tamanho[0] * escalaDoSprite(bodega, regraA, TILE, loteDaBodega, regraL)).toBeCloseTo(1.2 * loteDaBodega, 6);
+    expect(comExcecao.find((c) => c.id === 'wineyard')?.teto).toBe(1.303);
     gravarEvidencia('C10-largura', { k: regraL.k, comExcecao });
   });
 
