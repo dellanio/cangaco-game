@@ -16265,3 +16265,19 @@ corrida                                   total   resultado                     
 - C-IA-03b, o teste do fim da paz: ele não foi para a suíte longa, então o comentário do limite
   voltou. O limite de 12 s ficou do tempo em que o teste andava a paz real, e hoje ele leva ~80 ms;
   o limite só pega travamento.
+
+## 2026-09-30 — Leva 5, item 3: C-COMBATE-CUSTO-ENCOSTADO vai para o backlog com gatilho
+
+- O BUILD_PLAN não tinha backlog. Ganhou a seção "Backlog com gatilho", antes das "Regras da fila".
+  O item saiu da posição antes da C-IA-02 (economia da IA) e foi para lá, com o gatilho do operador:
+  "entra antes de qualquer feature que aumente o número de unidades em jogo".
+- **O custo com 200 militares, em tempo de jogo.** É aritmética sobre a medida da leva 4, sem corrida
+  nova: `tickHz` 10, e as velocidades de jogo são [1, 2, 3] (`data/time.json`). 1,9 ms por tick com
+  a máquina livre e 3,9 ms carregada:
+
+```text
+velocidade   ticks/s   ms de sim por segundo (livre / carregada)   % de um segundo
+1x           10        19 / 39                                      1,9 % / 3,9 %
+3x           30        57 / 117                                     5,7 % / 11,7 %
+```
+- Só a sim, sem render. O tempo de parede é número da corrida (§8).

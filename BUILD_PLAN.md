@@ -6320,28 +6320,6 @@ vai para o PROGRESS como PARA REVISÃO, e o trabalho segue.
 **Fila:**
 1. C-COMBATE-01b — storm attack (sim).
 2. C-COMBATE-01c — controles de formação (tela).
-2b. **C-COMBATE-CUSTO-ENCOSTADO — o custo da checagem de inimigo encostado, todos contra todos
-   (pedido do operador, 2026-09-30). Só medida, sem otimizar.**
-   - O perfil de CPU da paz da escaramuça (leva 3, `PROGRESS.md`) pôs `inimigoEncostado`
-     (`src/sim/systems/combate.ts:106`) como o maior custo da sim: ~400 ms de ~1,2 s em 6 000 ticks.
-     Ele varre todas as unidades para cada militar.
-   - **Aceite:** custo por tick do `step` com 50, 100 e 200 militares (metade de cada lado, longe
-     um do outro para não lutar, em campo aberto), em tempo de parede (evidência da sessão, nunca
-     asserção, §8) e no eixo determinístico de chamadas a `inimigoEncostado` por tick. Tabela no
-     PROGRESS e aqui, com a razão entre as três. Nenhum código de `src/sim` muda.
-   - **MEDIDO (2026-09-30), sem otimizar:**
-     ```text
-     militares  chamadas a hpMaximoDoTipo / tick   ms / tick (3 corridas: carregada, livre, livre)
-     50         313                                 0,340   0,149   0,146
-     100        1 268   (×4,05)                     0,944   0,417   0,384   (livre: ×2,7)
-     200        5 898   (×4,65)                     3,910   1,914   1,876   (livre: ×4,7)
-     ```
-     O eixo determinístico cresce ~quadrático, e o tempo, com a máquina livre, também (×4,7 de 100
-     para 200). Com 200 militares o `step` passa de 1,9 ms; a 10 Hz é ~2 % de um tick de 100 ms,
-     sem render. Os números de tempo são da corrida, não asserção.
-   - **Posição na fila:** o operador pediu "antes da C-IA-02". A C-IA-02 (economia da IA) está
-     entregue (02a, 02b e 02c com `passes: true`), então o item entra antes da entrada dela nesta
-     lista, e a pergunta fica no PROGRESS.
 3. C-IA-02 — economia da IA, em partes: vila pronta, prefeito mínimo que treina, serf e
    comida. O andaime `iaDrena` sai no fim. Quebrada em três (plano em
    `docs/planos/2026-09-29-C-IA-02a-vila-da-ia-com-producao.md`):
@@ -6515,6 +6493,42 @@ vai para o PROGRESS como PARA REVISÃO, e o trabalho segue.
   - (e) o painel mostra os cinco custos e desabilita o que não cabe (screenshot, com o
     roteiro despausado da §8).
 ---
+
+## Backlog com gatilho
+
+Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
+feature do gatilho confere esta lista antes.
+
+- **C-COMBATE-CUSTO-ENCOSTADO — o custo da checagem de inimigo encostado, todos contra todos
+   (pedido do operador, 2026-09-30). Só medida, sem otimizar.**
+   - O perfil de CPU da paz da escaramuça (leva 3, `PROGRESS.md`) pôs `inimigoEncostado`
+     (`src/sim/systems/combate.ts:106`) como o maior custo da sim: ~400 ms de ~1,2 s em 6 000 ticks.
+     Ele varre todas as unidades para cada militar.
+   - **Aceite:** custo por tick do `step` com 50, 100 e 200 militares (metade de cada lado, longe
+     um do outro para não lutar, em campo aberto), em tempo de parede (evidência da sessão, nunca
+     asserção, §8) e no eixo determinístico de chamadas a `inimigoEncostado` por tick. Tabela no
+     PROGRESS e aqui, com a razão entre as três. Nenhum código de `src/sim` muda.
+   - **MEDIDO (2026-09-30), sem otimizar:**
+     ```text
+     militares  chamadas a hpMaximoDoTipo / tick   ms / tick (3 corridas: carregada, livre, livre)
+     50         313                                 0,340   0,149   0,146
+     100        1 268   (×4,05)                     0,944   0,417   0,384   (livre: ×2,7)
+     200        5 898   (×4,65)                     3,910   1,914   1,876   (livre: ×4,7)
+     ```
+     O eixo determinístico cresce ~quadrático, e o tempo, com a máquina livre, também (×4,7 de 100
+     para 200). Com 200 militares o `step` passa de 1,9 ms; a 10 Hz é ~2 % de um tick de 100 ms,
+     sem render. Os números de tempo são da corrida, não asserção.
+   - **Gatilho (decisão do operador, 2026-09-30):** entra antes de qualquer feature que aumente
+     o número de unidades em jogo. Saiu da posição antes da C-IA-02 (economia da IA), que já
+     estava entregue.
+   - **O custo em tempo de jogo, com 200 militares** (aritmética sobre a medida acima, sem render;
+     `data/time.json`: `tickHz` 10 e `velocidadeDeJogo.opcoes` [1, 2, 3]):
+
+     ```text
+     velocidade   ticks por segundo   ms de sim por segundo (máquina livre / carregada)   % de um segundo
+     1x           10                  19 / 39                                              1,9 % / 3,9 %
+     3x           30                  57 / 117                                             5,7 % / 11,7 %
+     ```
 
 ## Regras da fila
 
