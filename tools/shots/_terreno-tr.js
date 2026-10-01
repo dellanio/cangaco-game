@@ -100,6 +100,12 @@ async function quadrosDoTerreno({ page, capturar, estado, afirmar }) {
     afirmar((await estado()).camera.zoom === nivel, `a camera deveria chegar a ${nivel}`);
   }
   async function centrarNoEixo(alvoEmTiles, eixo) {
+    { // D-TELA-CAPTURA-DETERMINISTICA: a camera vai exata pela ponte (harness), e nao por setas no tempo de parede
+      const vao = eixo === 'x' ? canvas.width : canvas.height;
+      const alvo = alvoEmTiles * TILE - vao / 2;
+      await page.evaluate(([e, v]) => window.__cangaco.fixarCamera(e === 'x' ? { scrollX: v } : { scrollY: v }), [eixo, alvo]);
+      await page.waitForTimeout(200); // o quadro seguinte publica a camera nova na ponte
+    }
     const vao = eixo === 'x' ? canvas.width : canvas.height;
     const alvo = alvoEmTiles * TILE - vao / 2;
     const [mais, menos] = eixo === 'x' ? ['ArrowRight', 'ArrowLeft'] : ['ArrowDown', 'ArrowUp'];

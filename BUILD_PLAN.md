@@ -5880,6 +5880,20 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
      mesmo tick. Diferente com câmera e tick iguais reprova (seria o chão, ou outra fonte no desenho);
   4. no PROGRESS, quantas das capturas ficam com hash igual entre as duas corridas, contra as
      110/219 do relevo, e as que mudam por tick, com o roteiro.
+- **MEDIDO (2026-10-01), o aceite 3 REPROVA; espera o operador.** Duas corridas de todos os
+  roteiros, com a câmera pela ponte (43 roteiros mudaram). Houve 214 pares, e 17 capturas ficaram sem
+  par: a 2ª corrida parou no F-VIVO-d, porque a porta 5178 estava presa por um `vite` órfão de uma
+  corrida encerrada.
+  - **183 iguais** (antes, 110 de 219);
+  - 23 diferem porque a captura caiu noutro tick;
+  - 2 diferem porque a câmera estava noutro lugar (o F-D2, de propósito, e o C-IA-02a);
+  - **6 diferem com a mesma câmera e o mesmo tick**: C-TELA-01, C-TELA-02, F-T3, F-TR, F24c e F28b.
+    Diferença pequena e localizada (de 53 a 36 661 pixels), numa caixa em volta do que se move (a
+    tropa marchando, o pedreiro no campo, a pedra no ar). **Hipótese, não medida:** a interpolação
+    entre ticks (`alfaDeInterpolacao`) segue o relógio de parede quando o roteiro captura com o
+    relógio andando. O chão não aparece em nenhuma das 6.
+  - **Pergunta ao operador:** a captura passa a exigir o relógio pausado (o alfa fica em 1), ou o
+    aceite 3 aceita a diferença de interpolação? O item fica sem chave até lá.
 
 ### D-TELA-CHAO-DETERMINISTICO — O grão da textura do chão vem da semente do mapa
 - **Registrado (2026-10-01, pedido do operador). Não implementado.**

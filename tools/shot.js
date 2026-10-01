@@ -95,8 +95,11 @@ function criarCapturador(nomeFeature) {
       contador += 1;
       const arquivo = `screenshots/${nomeFeature}-${contador}-${nomeDoPasso}.png`;
       fs.mkdirSync('screenshots', { recursive: true });
+      // D-TELA-CAPTURA-DETERMINISTICA: espera dois quadros desenhados antes do screenshot, para a
+      // imagem ser a do estado que a ponte publica, e nao um quadro de transicao da camera
+      await page.evaluate(() => new Promise((ok) => window.requestAnimationFrame(() => window.requestAnimationFrame(ok)))).catch(() => undefined);
       await page.screenshot({ path: arquivo });
-      // D-TELA-CHAO-DETERMINISTICO: o que a tela mostrava, para comparar duas corridas e separar a
+      // D-TELA-CAPTURA-DETERMINISTICA: o que a tela mostrava, para comparar duas corridas e separar a
       // causa (a camera em outro lugar, outro tick, ou o desenho) sem adivinhar pela imagem
       const quadro = await page.evaluate(() => {
         const e = window.__cangaco;

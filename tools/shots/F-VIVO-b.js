@@ -59,6 +59,11 @@ async function roteiro(ctx) {
   }
 
   async function centrarEm(gx) {
+    { // D-TELA-CAPTURA-DETERMINISTICA: a camera vai exata pela ponte (harness), e nao por setas no tempo de parede
+      const alvo = Math.max(0, gx * TILE_PX - (canvas.right - canvas.left) / 2);
+      await page.evaluate(([e, v]) => window.__cangaco.fixarCamera(e === 'x' ? { scrollX: v } : { scrollY: v }), ['x', alvo]);
+      await page.waitForTimeout(200); // o quadro seguinte publica a camera nova na ponte
+    }
     const alvo = Math.max(0, gx * TILE_PX - (canvas.right - canvas.left) / 2);
     for (let i = 0; i < 30; i += 1) {
       const { camera } = await estado();

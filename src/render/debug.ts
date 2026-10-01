@@ -340,6 +340,12 @@ export interface EstadoDebug {
   pausar: () => void;
   retomar: () => void;
   avancar: (passos: number) => void;
+  /**
+   * D-TELA-CAPTURA-DETERMINISTICA — HARNESS, como `pausar`/`avancar`: poe a camera num scroll exato,
+   * para o roteiro nao depender de setas seguradas por tempo de parede. Nao usar em codigo de jogo,
+   * `ui/` nem `input/`. A cena a liga na `create`; antes disso nao faz nada.
+   */
+  fixarCamera: (scroll: { readonly scrollX?: number; readonly scrollY?: number }) => void;
 }
 
 /**
@@ -437,6 +443,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     pausar: () => relogio.pausar(),
     retomar: () => relogio.retomar(),
     avancar: (passos) => relogio.avancar(passos),
+    fixarCamera: () => undefined,
   };
   window.__cangaco = estado;
   return estado;

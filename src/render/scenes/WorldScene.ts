@@ -328,6 +328,11 @@ export class WorldScene extends Phaser.Scene {
 
     const camera = this.cameras.main;
     camera.setBounds(0, 0, larguraPx, alturaPx);
+    // D-TELA-CAPTURA-DETERMINISTICA: o roteiro poe a camera exata pela ponte (harness)
+    estado.fixarCamera = ({ scrollX, scrollY }) => {
+      if (scrollX !== undefined) camera.scrollX = scrollX;
+      if (scrollY !== undefined) camera.scrollY = scrollY;
+    };
     // F18a: o nivel de abertura vem do dado, e hoje e 1. Nao e detalhe — todo
     // roteiro de screenshot ja validado calcula a posicao do tile no canvas
     // assumindo escala 1, e continua valendo enquanto o inicial for 1.

@@ -16703,3 +16703,41 @@ O aceite já estava escrito no BUILD_PLAN (operador: "aceite já escrito").
 5. o avaliador (`npm run selo:longo` primeiro) sobre tudo desde `5124154`;
 6. `git push`, com a saída de `git status -sb`.
 - O registro do fechamento no PROGRESS entra no commit seguinte à avaliação (CLAUDE.md §13).
+
+## 2026-10-01 — Leva da manhã, item 1: D-TELA-CAPTURA-DETERMINISTICA (a captura do roteiro sem o relógio de parede) — código entregue; o aceite 3 REPROVA
+
+Pedido do operador: substitui a D-TELA-CHAO-DETERMINISTICO, porque a medida mostrou o chão já
+determinístico. O aceite foi num commit próprio antes do código (`d0577f1`).
+
+### Feito
+- `fixarCamera` na ponte de debug (harness, como `pausar`/`avancar`; `src/render/debug.ts`,
+  ligada na `WorldScene.create`).
+- Os helpers `centrarNoEixo` e `centrarEm(gx)` de **43 roteiros** passam a pôr a câmera no scroll
+  exato pela ponte, e não por setas seguradas por tempo. O F-D2, que testa a navegação por teclado,
+  ficou com as setas. Os `centrarEm(gx, gy)` do F17 e do F17g (arrasto com o botão do meio) não
+  mudaram.
+- `tools/shot.js` espera dois quadros desenhados antes do screenshot.
+
+### Verificado (duas corridas de todos os roteiros, sonda no scratchpad)
+- Os 88 roteiros da 1ª corrida e 80 da 2ª: todos com saída 0. A 2ª parou no F-VIVO-d porque a porta
+  5178 estava presa por um `vite` órfão (pai `cmd.exe`, criado às 09:08). Ele sobrou de um roteiro
+  encerrado à força: o laço anterior, parado por mim a pedido do operador, e a medida, encerrada pelo
+  Claude Code por falta de memória. **Não matei o processo.** Daqui em diante os roteiros usam a
+  porta 5176.
+- **214 pares** (17 capturas sem par):
+
+```text
+iguais                              183   (antes: 110 de 219)
+difere: outro tick                   23   C-COMBATE-01c, C-COMIDA-01d, C-TELA-03, D-PRODUCAO-03 (2),
+                                          D-TRANSPORTE-02, F-ESC (5), F-T4a, F-VIVO-a, F11a, F11c,
+                                          F16b (3), F17 (4), F26b
+difere: outra câmera                  2   F-D2 (navega de propósito), C-IA-02a
+difere: MESMA câmera e tick           6   C-TELA-01, C-TELA-02, F-T3, F-TR, F24c, F28b
+```
+- **O aceite 3 reprova** pelos 6. A diferença é pequena e localizada (`tools/comparar-capturas.js`):
+  761, 36 661, 888, 2 568, 53 e 524 pixels, numa caixa em volta do que se move (a tropa marchando, a
+  marca do destino, o pedreiro no campo, a pedra no ar). **Hipótese, não medida:** a interpolação
+  entre ticks segue o relógio de parede quando o roteiro captura com o relógio andando. Nenhuma das
+  6 está no chão. Pergunta escrita no item do BUILD_PLAN. **Sem chave em `test-results.json`.**
+- A memória: o Claude Code encerrou de novo o comando de espera por falta de memória. Pela regra da
+  leva, não religuei a medida.

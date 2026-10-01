@@ -257,6 +257,12 @@ async function roteiro(ctx) {
   /** Anda a camera com as setas ate a coluna (ou a linha) cair no meio do
    *  quadro. Molde do F-T3/F-T4a; so vale em zoom 1. */
   async function centrarNoEixo(alvoEmTiles, eixo) {
+    { // D-TELA-CAPTURA-DETERMINISTICA: a camera vai exata pela ponte (harness), e nao por setas no tempo de parede
+      const vao = eixo === 'x' ? canvas.width : canvas.height;
+      const alvo = Math.max(0, alvoEmTiles * TILE_PX - vao / 2);
+      await page.evaluate(([e, v]) => window.__cangaco.fixarCamera(e === 'x' ? { scrollX: v } : { scrollY: v }), [eixo, alvo]);
+      await page.waitForTimeout(200); // o quadro seguinte publica a camera nova na ponte
+    }
     const vao = eixo === 'x' ? canvas.width : canvas.height;
     const alvo = Math.max(0, alvoEmTiles * TILE_PX - vao / 2);
     const teclas = eixo === 'x' ? ['ArrowRight', 'ArrowLeft'] : ['ArrowDown', 'ArrowUp'];

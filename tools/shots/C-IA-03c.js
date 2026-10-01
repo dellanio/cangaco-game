@@ -58,6 +58,12 @@ async function roteiro(ctx) {
   afirmar(minha.every((u) => u.corDoBando === '#D64B3F'), 'os cabras do jogador deveriam ter o rotulo vermelho do bando');
 
   async function centrarNoEixo(alvoEmTiles, eixo) {
+    { // D-TELA-CAPTURA-DETERMINISTICA: a camera vai exata pela ponte (harness), e nao por setas no tempo de parede
+      const vao = eixo === 'x' ? canvas.width : canvas.height;
+      const alvo = alvoEmTiles * TILE_PX - vao / 2;
+      await page.evaluate(([e, v]) => window.__cangaco.fixarCamera(e === 'x' ? { scrollX: v } : { scrollY: v }), [eixo, alvo]);
+      await page.waitForTimeout(200); // o quadro seguinte publica a camera nova na ponte
+    }
     const vao = eixo === 'x' ? canvas.width : canvas.height;
     const alvo = alvoEmTiles * TILE_PX - vao / 2;
     const [mais, menos] = eixo === 'x' ? ['ArrowRight', 'ArrowLeft'] : ['ArrowDown', 'ArrowUp'];
