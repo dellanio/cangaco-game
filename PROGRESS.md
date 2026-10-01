@@ -17026,3 +17026,38 @@ B D-TELA-LUZ-RELEVO, aceite 1             | NEEDS_WORK        | o sha256 contra 
 - **Com o operador:**
   - o vite órfão da 5176 (PID 43464): não tem registro, e por isso a regra nova não o encerra;
   - o worktree `../cangaco-game-relevo-base`, com as mudanças não commitadas.
+
+## 2026-10-01 (noite, 2) — O save de teste do operador e dois planos (o jogo não mudou)
+
+- **D-SAVE-VILA-PRONTA (o save de teste do operador):** aceite `131394f`, código `557ddfc`. O
+  arquivo é `saves/teste-operador-vila-pronta.txt`, e a montagem é a dos cenários de teste:
+  - `completarObra` e o ocupante posto na porta;
+  - a estrada direto no estado, pelo A* em modo `livre`;
+  - o comando `SetProductionQuota` (3 facões) e 20 ticks de `step`.
+
+  O inimigo é a escaramuça do jogo (`criarEscaramuca`).
+  - **Medido** (`test-output/D-SAVE-VILA-PRONTA.json`): carregado o save, a casa de armas produz a
+    arma no tick +355, um serf a retira no +479, e ela chega ao quartel no **+587** (teto 2 000).
+    O armazém não tem arma, então a arma só pode ter saído da casa de armas.
+  - **Duas correções no caminho, pela medida:**
+    - a primeira montagem pôs a padaria em cima da cana, e as duas roças acenderam "sem terra de
+      plantio". O lugar agora não cobre recurso nem estrada, e as roças vão onde alcançam mais
+      tiles (5 de milho e 5 de cana);
+    - o teste afirma que nenhum prédio do jogador abre com alerta.
+  - **Roteiro `D-SAVE-VILA-PRONTA`:** o dev server serve `/saves/...`, o console põe o texto no
+    `localStorage`, e o painel H carrega. Saída 0; a captura foi aberta e mostra a vila com o quartel.
+  - **Nada em `src/` nem em `data/`:** `git diff 7d35788 -- src data index.html` está vazio.
+- **Planos, sem código:**
+  - `docs/planos/2026-10-01-D-MOVIMENTO-PERMUTA-NO-PASSO.md`, a permuta da colisão civil, que está
+    desligada. A causa foi lida em `colisao.ts:286` e `:297-298`, e o KaM em `KM_UnitActionWalkTo.pas`
+    (`:776-778`, `:787-796`, `:1267-1286`). A primeira pergunta ao operador é se o conserto vale, ou
+    se o mecanismo sai.
+  - `docs/planos/2026-10-01-B-TERRENO-01-recentrar-a-vila.md`, a vila recentrada. **Medido**, numa
+    cópia do gerador no scratchpad, com a sonda apagada:
+    - a rua da abertura passa de 24 para **35 tiles**, porque os lenhadores vão 14 tiles para leste;
+    - a pedra mínima que fecha é 35, e **com a pedra do dado (30) a abertura trava: a folga vai de
+      +2 para −5**. O controle no mapa de hoje repetiu 3 825 / 4 363 / trava;
+    - a escaramuça colide com a vila recentrada: a defesa "frente" da IA cai dentro da vila do
+      jogador.
+
+    **Hipótese:** um aglomerado de árvore sorteado perto do centro puxa os lenhadores para leste.

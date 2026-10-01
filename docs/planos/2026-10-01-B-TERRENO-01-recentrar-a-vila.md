@@ -62,7 +62,7 @@ isso os lenhadores vão para leste. Não identifiquei qual aglomerado.
 
 **Efeito colateral do recentro, que o escopo não diz:**
 - a mancha grande de terra arada em (77,62) (`:210`) passa a ficar a ~12 tiles do armazém e encosta
-  na folga da vila (~12 tiles de distância);
+  na folga da vila;
 - o lago (92,46) fica a ~30 tiles.
 
 Os dois ficam ao alcance da abertura, o que hoje não acontece.
@@ -121,8 +121,8 @@ hash do mapa muda. Ele se regera com `CANGACO_GRAVAR_SAVE_DO_OPERADOR=1`.
 ### Calibração e marcos (no escopo do item)
 
 - A F-CAL-b é refeita.
-- Os marcos da F17 andam: o critério fechado passa de 3 825 para pelo menos 5 202 com a pedra
-  mínima, e com 30 nem fecha.
+- Os marcos da F17 andam: o critério fechado passa de 3 825 para algo entre 4 551 (39 de pedra)
+  e 5 202 (35, a pedra mínima), e com 30 nem fecha.
 
 ## 3. Ordem proposta
 
