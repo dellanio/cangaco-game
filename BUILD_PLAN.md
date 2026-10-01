@@ -5857,6 +5857,30 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
   4. `data/relevo.json` validado pelo `validate:data` (regra `interface/relevo`).
 - **Nota:** amplitude 12 e célula de ruído 10 são **ponto de partida**, ajustados na captura
   (67,5% do chão com inclinação, 8,2% no teto); a encosta mais forte não lê como parede.
+### D-TELA-CAPTURA-DETERMINISTICA — A captura do roteiro não depende do relógio de parede
+- **Pedido do operador (2026-10-01). Substitui a D-TELA-CHAO-DETERMINISTICO (abaixo):** a medida
+  mostrou o chão já determinístico. Em 21 pares de capturas de 6 roteiros, nenhum diferia com a
+  mesma câmera e o mesmo tick (`387d65a`). O que varia entre corridas é **onde está a câmera** e **em
+  que tick** a captura é tirada. Os dois saem do tempo de parede dos roteiros: setas seguradas por
+  `waitForTimeout`, e passos despausados por tempo.
+- **Escopo:**
+  - a ponte de debug ganha `fixarCamera({ scrollX?, scrollY? })`. É harness, como `pausar` e
+    `avancar`, e não é usada por código de jogo, `ui/` nem `input/`;
+  - os helpers de câmera copiados nos roteiros (`centrarNoEixo`, `centrarEm`) passam a pôr a câmera
+    no scroll exato pela ponte, e não por setas seguradas por tempo. O roteiro que **testa** a
+    navegação por teclado (F-D2) continua com as setas;
+  - a captura (`tools/shot.js`) espera o quadro desenhado do mesmo estado antes do screenshot.
+- **Fora do escopo:** o tick de quem captura depois de um passo despausado por tempo. A captura
+  segue num tick que varia, e a medida diz quantos são.
+- **Aceite:**
+  1. a `fixarCamera` põe o scroll pedido, e a câmera lida pela ponte devolve o mesmo valor;
+  2. todos os roteiros rodam duas vezes com saída 0. Em cada captura, câmera e tick vêm em
+     `quadros`, no `<roteiro>-shot.json`;
+  3. **duas corridas do mesmo roteiro dão o mesmo hash** em toda captura com a mesma câmera e o
+     mesmo tick. Diferente com câmera e tick iguais reprova (seria o chão, ou outra fonte no desenho);
+  4. no PROGRESS, quantas das capturas ficam com hash igual entre as duas corridas, contra as
+     110/219 do relevo, e as que mudam por tick, com o roteiro.
+
 ### D-TELA-CHAO-DETERMINISTICO — O grão da textura do chão vem da semente do mapa
 - **Registrado (2026-10-01, pedido do operador). Não implementado.**
 - **Problema (medido pelo operador):** o grão da textura do chão muda a cada execução. Em duas
@@ -5868,6 +5892,8 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
 - **Fronteira:** é tela (`src/render/`). A semente vem do mapa já carregado, e `sim/` não muda nem
   ganha consumo de RNG.
 - **Aceite:** a escrever no plano, num commit próprio antes do código (CLAUDE.md §6, item 10).
+- **SUBSTITUÍDO pela D-TELA-CAPTURA-DETERMINISTICA (decisão do operador, 2026-10-01):** a medida
+  mostrou o chão já determinístico.
 - **PARADO (2026-10-01, leva desatendida 2, item 4): a medida contradiz a premissa; espera o
   operador.** Duas corridas de 6 roteiros (D-TELA-07, F-VIVO-h, BUG-Z, F-TR, F-T1 e F18a; 21 pares de
   capturas, com a câmera e o tick de cada captura gravados pelo `tools/shot.js`):
