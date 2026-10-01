@@ -16851,3 +16851,16 @@ O aceite foi num commit próprio antes do código (`995da71`, CLAUDE.md §13).
   revertida): sem a checagem de porta, o aceite 3 reprova ("expected null to be 2").
 - Os aceites 2 (um de cada vez, sob a trava) e 5 (o resumo completo) são exercidos de verdade no
   fechamento do dia, que roda por este comando.
+
+### Item 2: o teste automatizado dos portões (ressalva do avaliador do fechamento da manhã)
+O aceite foi num commit próprio (`345a4db`), e a emenda do aceite 3 em outro (`efad24a`), as duas
+antes do código. A emenda troca "guarda no fonte", que é varrer texto, por comportamento.
+- `tests/PORTOES-verify.test.ts`, 3/3, cada um num diretório de projeto falso; o `.verify-ok` real
+  não é tocado:
+  - aceite 1, o hook por tabela: completo recente e formato antigo passam; rápido, sem selo,
+    ilegível e vencido (16 min) recusam; outro arquivo sem selo passa;
+  - aceite 2: `scripts/verify-gate.js` é igual ao hook, byte a byte;
+  - aceite 3: o `verify:rapido` de verdade num repositório git falso, com as etapas que não fazem
+    nada. Sai 0, grava o `.verify-rapido-ok` (`arquivos` 0, `testes` 0) e não cria o `.verify-ok`.
+- **Provas de que acusam** (sondas de uma corrida, revertidas): com o hook aceitando qualquer tipo de
+  selo, os aceites 1 e 2 reprovam; com o `verify:rapido` gravando o `.verify-ok`, o aceite 3 reprova.
