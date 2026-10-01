@@ -16169,3 +16169,47 @@ militares  chamadas a hpMaximoDoTipo / tick   ms / tick (3 corridas: carregada, 
 ### Pergunta em aberto (premissa do pedido)
 - "Antes da C-IA-02": a C-IA-02 (economia da IA) está entregue (02a, 02b, 02c). O item entrou antes
   da entrada dela na lista do BUILD_PLAN. Se o operador quis dizer outro item, a posição muda.
+
+## 2026-09-30 — Leva 4, item 6: F-VIVO-e (o ocioso genérico) aceite 1 — o que ele prova, e por que não se alivia
+
+### O que o teste PROVA
+- Uma invariante por tick e por prédio completo: `quadroOcioso` e `quadroDeTrabalho` nunca acesos
+  juntos, e o ocioso aceso só com o ocupante escondido (`unidadesInvisiveis`). Sobre os estados
+  que a vila da calibração **visita** em 6 000 ticks, que é o que o BUILD_PLAN escreve ("varredura
+  de 6 000 ticks da vila da calibração").
+
+### Depende do tamanho do cenário: medido (sonda apagada)
+- Combinações (tipo de prédio × estado do ocupante × pausado × trabalho × ocioso × escondido), pela
+  1ª vez, em 20 000 ticks: 35 no total, **32 até o tick 6 000**. As últimas que entram nessa janela
+  são da padaria (sem ocupante em 5 459, `trabalhando` em 5 510, `esperando_insumo` em 5 511). Depois
+  de 6 000 entram mais 3: Bodega sem ocupante (6 768), padaria em `saida_cheia` (7 267) e pedreira em
+  `saida_cheia` (7 657).
+- Encurtar a janela, como foi feito na C-IA-03b, tira a padaria inteira da cobertura. **Não aliviei.**
+  O teste ganhou o timeout explícito de 20 s em `b2b5c73` (CLAUDE.md §8), e o que ele afirma não mudou.
+
+### Proposta (espera o operador; nada feito)
+- **Suíte longa fora do `verify`:** `npm run test:longo`, com um `vitest.longo.config.mts` que roda
+  só os testes marcados como longos (sufixo `.longo.test.ts`), com `maxWorkers` baixo, e que o
+  `verify` exclui. Candidatos medidos nesta leva (sozinho / na suíte):
+  - F-VIVO-e aceite 1 (1,4 s / até 5,8 s);
+  - C-IA-03b "partida inteira" (5–6 s / **21 s, estourou o limite de 20 s em 2 dos últimos 4
+    `verify`**, os dois na transladada);
+  - o aceite 2 do D-TRANSPORTE-03 T2 (30 000 ticks, 15 s na suíte);
+  - a varredura do BUG-T (11 s);
+  - o aceite 4 do BUG-Y (20 000 ticks, 11 s).
+- O custo: o `verify` deixa de rodar esses testes a cada commit. Quem roda a suíte longa, e quando,
+  fica para o operador decidir.
+- Alternativa que não tira nada do `verify`: aumentar o limite da "partida inteira". **Não feito**:
+  o operador vetou subir limite na leva 3.
+
+### Medida dos workers (item 3 do pedido dos timeouts, sem mudar a configuração)
+```text
+workers (de 16 núcleos)   suíte normal   suíte transladada   falhas
+8 (50 %, o de hoje)       ~90 s          ~90 s               0 (verify total 203 s)
+6                         129 s          96 s                0
+4                         141 s          137 s               0
+25 % (4)                  118 s          127 s               0
+```
+- Menos workers deixam a suíte **mais lenta** no total e não zeram o risco: nenhuma corrida acima
+  falhou, mas a de 8 também não falhou nessa hora. A disputa pesa no teste longo, e não no total.
+  Proposta: manter os 50 % e tirar os longos para a suíte longa (acima).
