@@ -5858,6 +5858,13 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
   caiu com a D-TELA-CAPTURA-DETERMINISTICA. A refação compara as capturas da `main` (flag desligada)
   com a `main` sem o relevo, com a câmera fixada pela ponte. Se as capturas estáveis baterem, a chave
   volta a true, com a evidência citada aqui.
+  - **Método (escrito antes da corrida).** Lado A: as capturas da `main` com a flag desligada. Lado
+    B: a mesma `main` com o relevo tirado (o diff de `7a9e038..95b9e74` em `src/` revertido, num
+    worktree descartável), rodada pelo `shot:todos`. Uma captura é **estável** quando o tick e a
+    câmera são os mesmos nos dois lados (o `<roteiro>-shot.json`). **Critério:** os dois lados
+    têm os mesmos códigos de saída, e toda captura estável tem o sha256 igual. A captura instável
+    é listada, com o motivo, e não conta. Os 6 pares instáveis já conhecidos ficam registrados como
+    tais.
 - **Decisões do operador incorporadas:** chão plano = 1,0 (sem `k`); tint S1; geometria 12,8 px
   por degrau, **provisória**; o tint da unidade segue a posição do pé (por tile, saltava até 61
   níveis de cinza no pé da serra).
