@@ -532,5 +532,8 @@
   },
   "D-TERRENO-ALTURA-altura-so-de-render": {
     "passes": true
+  },
+  "D-TELA-05e-mercenarios-8-direcoes": {
+    "passes": true
   }
 }
