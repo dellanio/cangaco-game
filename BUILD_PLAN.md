@@ -5918,6 +5918,15 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
     relógio andando. O chão não aparece em nenhuma das 6.
   - **Pergunta ao operador:** a captura passa a exigir o relógio pausado (o alfa fica em 1), ou o
     aceite 3 aceita a diferença de interpolação? O item fica sem chave até lá.
+- **Medida da hipótese (aceite de 2026-10-01, antes do código; só medida, para a decisão acima):**
+  1. o `tools/shot.js` passa a gravar, em cada captura de `quadros`, se o relógio estava pausado e o
+     `alfaDeInterpolacao` que a ponte publicava;
+  2. os 6 roteiros (C-TELA-01, C-TELA-02, F-T3, F-TR, F24c e F28b) rodam duas vezes, na mesma árvore;
+  3. no PROGRESS, por par com a mesma câmera e o mesmo tick: hash igual ou não, relógio pausado ou
+     não, e o alfa nas duas corridas. **A hipótese se confirma** se todo par que difere tiver o
+     relógio andando e o alfa diferente entre as corridas, e todo par igual tiver o alfa igual (ou o
+     relógio pausado). Caso contrário, ela cai, e a causa fica em aberto.
+  Nenhum roteiro muda nesta medida.
 
 ### D-TELA-CHAO-DETERMINISTICO — O grão da textura do chão vem da semente do mapa
 - **Registrado (2026-10-01, pedido do operador). Não implementado.**
