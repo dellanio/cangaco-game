@@ -6056,7 +6056,7 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
   cana, a terra de partido com sulco, sob a touceira e sob o tile em pousio. O losango solto deixa
   de ser a única coisa que diz "aqui tem roça".
 - **Regras para quem fizer:**
-  - a skill `skills/pianco-art-pipeline/SKILL.md`, com base versionada em `assets/base/` e o
+  - as skills de arte (`skills/pianco-sprite-director/SKILL.md` e a especialidade que ela escolhe), com base versionada em `assets/base/` e o
     derivado em `assets/sprites/`;
   - entrada no `assets/manifest.json` com os oito campos do CLAUDE.md §9;
   - nenhum asset do jogo de 1998, em nenhuma forma.

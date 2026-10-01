@@ -237,14 +237,17 @@ escrita.
 
 ## 9. Arte e assets
 
-Toda criação ou alteração de arte raster deste repositório usa a skill local
-`skills/pianco-art-pipeline/SKILL.md`. Ela fixa perspectiva, proporções,
-prompts, derivação e portões visuais para que agentes diferentes produzam o
-mesmo jogo, não estilos paralelos.
+Toda criação ou alteração de arte raster deste repositório começa pela skill local
+`skills/pianco-sprite-director/SKILL.md`, que escolhe a especialidade (`pianco-buildings`,
+`pianco-units`, `pianco-vegetation`, `pianco-natural-resources`, `pianco-animation-planner`) e
+carrega o contrato `pianco-render-contract` e as ferramentas `pianco-sprite-tools`. Elas fixam
+perspectiva, proporções, prompts, derivação e portões visuais para que agentes diferentes produzam
+o mesmo jogo, não estilos paralelos. Elas substituem a `pianco-art-pipeline` (integração da arte,
+2026-10-01); a antiga fica no histórico do git.
 
 - **A luz da arte (decisão do operador, 2026-10-01):** uma luz única de cima, levemente do sul,
-  sem componente leste-oeste (o `cdcfec5` da branch `noru-novos-sprites`). O "alto à esquerda" do
-  `2df15df` e do `docs/BRIEF-ARTE.md` está **obsoleto**.
+  sem componente leste-oeste (o `cdcfec5` da branch `noru-novos-sprites`). A luz lateral do
+  `2df15df` e da versão antiga do `docs/BRIEF-ARTE.md` está **obsoleta**.
 - Nenhum asset do jogo original de 1998 entra aqui, em nenhuma forma: nem sprite,
   nem som, nem mapa, nem texto, nem como referência de transferência de estilo.
   Mecânica e estilo, sim. Cópia, não.

@@ -1664,10 +1664,12 @@ export class WorldScene extends Phaser.Scene {
    *  completo (o predio de pe, sem rotulo extra). */
   /** C-IA-03c — a bandeira do bando no canto do lote: um mastro e um pano na cor do lado
    *  (`corDoBando`, do tema). Sem ela o predio inimigo e identico ao do jogador. */
-  private desenharBandeira(lado: number, tilePx: number): Phaser.GameObjects.GameObject[] {
+  private desenharBandeira(
+    lado: number, tilePx: number, contato: { readonly x: number; readonly y: number } = { x: 4, y: 4 },
+  ): Phaser.GameObjects.GameObject[] {
     const altura = tilePx * 0.6;
-    const mastro = this.add.rectangle(4, -altura + 4, 3, altura, cor(temaSertao.paleta.madeira), 1).setOrigin(0, 0);
-    const pano = this.add.rectangle(7, -altura + 4, tilePx * 0.35, tilePx * 0.22, cor(corDoBando(lado)), 1).setOrigin(0, 0);
+    const mastro = this.add.rectangle(contato.x, contato.y - altura, 3, altura, cor(temaSertao.paleta.madeira), 1).setOrigin(0, 0);
+    const pano = this.add.rectangle(contato.x + 3, contato.y - altura, tilePx * 0.35, tilePx * 0.22, cor(corDoBando(lado)), 1).setOrigin(0, 0);
     pano.setStrokeStyle(1, cor(temaSertao.paleta.madeira));
     return [mastro, pano];
   }
@@ -1724,6 +1726,12 @@ export class WorldScene extends Phaser.Scene {
 
     // O canteiro vai PRIMEIRO no container: ele e o chao, e o corpo da obra fica
     // por cima. O medidor da F17b continua por ultimo.
+    const bandeiraNaArte = sprite?.entrada.ancoras?.bandeira;
+    const escalaDaArte = sprite === null ? 1 : escalaDoSprite(sprite.entrada, REGRA_DE_ALTURA, tilePx, larguraPx, REGRA_DE_LARGURA);
+    const contatoDaBandeira = bandeiraNaArte === undefined || sprite === null ? undefined : {
+      x: larguraPx / 2 + (bandeiraNaArte[0] - sprite.entrada.anchor[0]) * sprite.entrada.tamanho[0] * escalaDaArte,
+      y: alturaPx + (bandeiraNaArte[1] - sprite.entrada.anchor[1]) * sprite.entrada.tamanho[1] * escalaDaArte,
+    };
     const container = this.add.container(canto.x, canto.y, [
       ...this.desenharCanteiro(canteiro, largura, tilePx),
       ...corpo,
@@ -1731,7 +1739,7 @@ export class WorldScene extends Phaser.Scene {
       ...this.desenharAnimais(animais, quadroAnimal, caixa, tilePx),
       ...this.desenharPilhas(pilhas, caixa, tilePx),
       ...this.desenharMedidor(linhas, larguraPx, alturaPx, canteiro === null || canteiro.nivelada),
-      ...this.desenharBandeira(predio.lado, tilePx),
+      ...this.desenharBandeira(predio.lado, tilePx, contatoDaBandeira),
       ...this.desenharSinalDePausado(predio, caixa, tilePx),
     ]);
     container.setDepth(depthDeY(canto.y + alturaPx));

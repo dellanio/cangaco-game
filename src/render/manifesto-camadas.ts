@@ -213,6 +213,10 @@ export function violacoesDasAncoras(e: EntradaDeAsset, ctx: ContextoDasCamadas):
     else erros.push(`${r}: ${nome} nao e ponto [x, y] com fracoes de 0 a 1`);
   };
 
+  if (a.bandeira !== undefined && !ehPonto(a.bandeira)) {
+    erros.push(`${r}: bandeira nao e ponto [x, y] com fracoes de 0 a 1`);
+  }
+
   const area = a.trabalho?.area;
   if (area !== undefined) {
     if (!(Array.isArray(area) && area.length === 4 && area.every(ehFracao))) {

@@ -136,7 +136,8 @@ chrome, saturated blue
    nem sob o prédio.
 4. **Nenhuma rocha bruta, morro ou vegetação** — recurso natural é do
    mapa (F-T2a).
-5. Luz no alto à esquerda, sombra embaixo à direita.
+5. Luz de cima, levemente do sul, sem leste-oeste (decisão do operador, `cdcfec5`; a luz lateral
+   que estava aqui está obsoleta desde 2026-10-01).
 6. Contorno escuro contínuo, legível reduzido a 192 px de largura.
 7. Densidade de detalhe compatível com os prédios já aprovados.
 

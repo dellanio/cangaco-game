@@ -29,6 +29,16 @@ function comEntrada(id: string, troca: (e: EntradaDeAsset) => EntradaDeAsset): M
 }
 
 describe('F-ESC — altura maxima pela largura do lote', () => {
+  it('o armazem cresce 20% nos dois eixos desde o ensaio de tres tiles', () => {
+    const armazem = predios.find((e) => e.id === 'storehouse');
+    expect(armazem).toBeDefined();
+    if (!armazem) return;
+    const alvo = Math.round(3 * tilePx * 1.2);
+    expect(armazem.tamanho).toEqual([alvo, alvo]);
+    expect(armazem.alturaMaxPorLargura).toBeGreaterThanOrEqual(1.2);
+    expect(armazem.larguraMaxPorLote).toBeGreaterThanOrEqual(1.2);
+  });
+
   it('o manifesto declara a regra, com k = 1,0', () => {
     expect(manifesto.regraDeAltura?.k).toBe(1);
   });

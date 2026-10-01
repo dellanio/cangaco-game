@@ -347,7 +347,7 @@ O contrato está em `noru-novos-sprites:skills/pianco-render-contract/SKILL.md`.
 | Ponto do contrato | A | B | C |
 |---|---|---|---|
 | **Âncora nos pés** (`anchor [0.5, 1]`) | nada muda | **é o que faz B funcionar**: o pé recebe a altura. Nada muda na arte | igual a B |
-| **Luz fixa "do alto à esquerda"** | **muda** (decisão do operador, 2026-09-30): uma luz só no mundo, **de cima, inclinada levemente para o sul, sem leste–oeste**. O mapa de luz do relevo usa a mesma direção da luz pintada | idem | idem |
+| **Luz fixa lateral (a antiga)** | **muda** (decisão do operador, 2026-09-30): uma luz só no mundo, **de cima, inclinada levemente para o sul, sem leste–oeste**. O mapa de luz do relevo usa a mesma direção da luz pintada | idem | idem |
 | **Sombra de contato** (até ~4 px) | nada muda | a sombra pintada vai junto com o sprite. A sombra "blob" do render teria de seguir a altura | idem |
 | **Tiles de terreno e transições** (16 máscaras cardinais, `process-terrain-edges.mjs`) | **o tile não pode ter luz direcional pintada**: tem de ser albedo, só cor e material. A luz vem do mapa. Com isso, o tile também fica seguro para girar e espelhar (seção 6) | igual a A. Mais: a transição continua 2D sobre a malha, e o gerador não muda | igual a B |
 | **Encostas** | nenhum tile novo | nenhum tile novo, se o declive for suave como no KaM. Barranco íngreme (penhasco) pediria tiles de face vertical, que o KaM não tem | idem, e o declive íngreme vira "não passa" |
@@ -363,7 +363,7 @@ norte deixaria todas elas em contraluz. Por isso a luz vem de cima e se inclina 
 **sul**, o lado da câmera. Sem componente leste–oeste, o espelho das unidades continua valendo, e
 as encostas norte e sul ainda se distinguem pela luz.
 
-**Texto proposto 1: substitui o parágrafo "Luz fixa no mundo, do alto à esquerda do mapa"
+**Texto proposto 1: substitui o parágrafo da luz lateral antiga
 (`## Cor, valores e luz`).**
 
 > **Uma luz só no mundo, para chão, prédio e unidade:** de cima, inclinada levemente para o sul

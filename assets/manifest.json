@@ -11,85 +11,131 @@
   },
   "assets": [
     {
-      "id": "storehouse",
-      "tipo": "predio",
-      "footprint": [
-        3,
-        3
-      ],
-      "tamanho": [
-        214,
-        254
-      ],
-      "alturaMaxPorLargura": 1.33,
-      "larguraMaxPorLote": 1.12,
-      "anchor": [
-        0.5,
+  "id": "storehouse",
+  "tipo": "predio",
+  "footprint": [
+    3,
+    3
+  ],
+  "tamanho": [
+ 230,
+ 230
+  ],
+ "alturaMaxPorLargura": 1.2,
+  "anchor": [
+    0.5,
         1
+  ],
+  "estados": {
+ "madeira": "sprites/storehouse/storehouse_madeira-D-roof-preview-plus20.png",
+ "completo": "sprites/storehouse/storehouse_completo-D-roof-straight-plus20.png"
+  },
+  "licenca": "arte propria do projeto, variante D escolhida pelo operador em 2026-09-30",
+  "origem": {
+ "base": "base/storehouse/storehouse-D-roof-straight-plus20-master-2x.png",
+    "semente": null,
+        "nota": "Ampliação proporcional de 20% desde o ensaio 192x192: canvas 230x230, silhueta 200x222. Derivado do master D de maior detalhe. Madeira provisória antiga ampliada no mesmo canvas ainda difere em geometria/estilo do completo. Bandeira separada e âncoras normalizadas preservadas."
+  },
+  "ancoras": {
+    "estoque": {
+      "entrada": [
+        [
+          0.188,
+          0.82
+        ],
+        [
+          0.34,
+          0.82
+        ],
+        [
+          0.66,
+          0.82
+        ],
+        [
+          0.812,
+          0.82
+        ]
       ],
-      "estados": {
-        "madeira": "sprites/storehouse/storehouse_madeira.png",
-        "completo": "sprites/storehouse/storehouse_completo.png"
-      },
-      "licenca": "arte propria do projeto, modelada no Blender e repintada para o projeto em 2026-09-27",
-      "origem": {
-        "base": "base/storehouse/storehouse_blender_compressed_premium_v3.png",
-        "semente": null,
-        "nota": "Armazem 3x3 de dois pavimentos na vista canonica frontal: camera 10 graus, elevacao 59.5051 graus e compensacao local -10 graus. Compressao vertical caricatural 0.68 no modelo, aplicada junto a telhado raso e acesso curto; envelope final 214x254, ou 1.323 vezes a altura do footprint. O teste em jogo rejeitou 1.208 porque apagava a leitura de sobrado. Madeira e completo derivam da mesma geometria, camera, recorte e assentamento."
-      }
+      "saida": []
     },
+    "bandeira": [
+      0.18,
+      0.035
+    ]
+  },
+  "larguraMaxPorLote": 1.2
+},
     {
-      "id": "woodcutters",
-      "tipo": "predio",
-      "footprint": [
-        3,
-        2
-      ],
-      "tamanho": [
-        192,
-        176
-      ],
-      "anchor": [
-        0.5,
-        1
-      ],
-      "estados": {
-        "madeira": "sprites/woodcutters/woodcutters_madeira.png",
-        "completo": "sprites/woodcutters/woodcutters_completo.png"
-      },
-      "licenca": "arte propria do projeto, modelada no Blender e repintada para o projeto em 2026-09-27",
-      "origem": {
-        "base": "base/woodcutters/woodcutters_blender_premium_v2.png",
-        "semente": null,
-        "nota": "Casa do Lenhador 3x2 na vista canonica direita: camera 0 graus, elevacao 56.7754 graus e compensacao local -10 graus. Cabana de troncos empilhados, palha marrom escura, cepo com machado e cavalete de toras; derivado a 192x176."
-      }
-    },
+  "id": "woodcutters",
+  "tipo": "predio",
+  "footprint": [
+    3,
+    2
+  ],
+  "tamanho": [
+    192,
+    176
+  ],
+  "anchor": [
+    0.5,
+    1
+  ],
+  "estados": {
+    "madeira": "sprites/woodcutters/woodcutters_madeira.png",
+    "completo": "sprites/woodcutters/woodcutters_completo-D.png"
+  },
+  "licenca": "arte propria do projeto, candidata D em 2026-10-01",
+  "origem": {
+    "base": "base/woodcutters/woodcutters-D-master-2x.png",
+    "semente": null,
+    "nota": "Proposta D de troncos e palha geracao 01 derivada em 192x176. Estado madeira preservado da arte antiga e ainda requer par compativel."
+  }
+},
     {
-      "id": "quarry",
-      "tipo": "predio",
-      "footprint": [
-        3,
-        2
-      ],
-      "tamanho": [
-        192,
-        151
-      ],
-      "anchor": [
-        0.5,
-        1
-      ],
-      "estados": {
-        "madeira": "sprites/quarry/quarry_madeira.png",
-        "completo": "sprites/quarry/quarry_completo.png"
-      },
-      "licenca": "arte propria do projeto, modelada no Blender e repintada para o projeto em 2026-09-27",
-      "origem": {
-        "base": "base/quarry/quarry_blender_compressed_premium_v3.png",
-        "semente": null,
-        "nota": "Pedreira 3x2 na vista canonica esquerda: camera 20 graus, elevacao 63.2080 graus e compensacao local -10 graus. Compressao vertical 0.76, guincho dominante, abrigo de zinco, acesso curto e piso de pedra; envelope final 192x151, ou 1.180 vezes a altura do footprint. Madeira e completo derivam da mesma geometria, camera, recorte e assentamento."
-      }
+  "id": "quarry",
+  "tipo": "predio",
+  "footprint": [
+    3,
+    2
+  ],
+  "tamanho": [
+    192,
+    176
+  ],
+  "anchor": [
+    0.5,
+    1
+  ],
+  "estados": {
+    "madeira": "sprites/quarry/quarry_madeira-D-preview.png",
+    "completo": "sprites/quarry/quarry_completo-D.png"
+  },
+  "licenca": "arte propria do projeto, candidata D da pedreira para ensaio em jogo em 2026-09-30",
+  "origem": {
+    "base": "base/quarry/quarry-D-master-2x.png",
+    "semente": null,
+    "nota": "Candidato D derivado de candidatos/D/quarry/generation-02-raw.png. Area de trabalho a esquerda e patio de stone a direita sao hipoteses para teste em jogo; arte de madeira e previa antiga redimensionada, com geometria/estilo distintos. Referencia externa usada so para clima e materiais, nao proporcoes."
+  },
+  "ancoras": {
+    "trabalho": {
+      "area": [
+        0.13,
+        0.42,
+        0.48,
+        0.73
+      ]
     },
+    "estoque": {
+      "entrada": [],
+      "saida": [
+        [
+          0.78,
+          0.81
+        ]
+      ]
+    }
+  }
+},
     {
       "id": "sawmill",
       "tipo": "predio",
@@ -99,22 +145,26 @@
       ],
       "tamanho": [
         256,
-        157
+ 160
       ],
       "anchor": [
         0.5,
         1
       ],
       "estados": {
-        "madeira": "sprites/sawmill/sawmill_madeira.png",
-        "completo": "sprites/sawmill/sawmill_completo.png"
+ "madeira": "sprites/sawmill/sawmill_madeira-D.png",
+ "completo": "sprites/sawmill/sawmill_completo-D.png"
       },
-      "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+ "licenca": "arte propria do projeto, variante D aprovada pelo operador em 2026-09-30",
       "origem": {
-        "base": "base/sawmill/sawmill_06_completo.png",
+ "base": "base/sawmill/sawmill-D-master-2x.png",
         "semente": null,
-        "nota": "Serraria autoral com duas serras centrais e baias vazias para estoque dinamico. Estrutura anterior reaproveitada como madeira e derivada no mesmo recorte do completo; uniao alpha > 16 calculada somente para sawmill: x21,y54 1495x915; saida 256x157."
-      }
+ "nota": "Layout D aprovado pelo operador, completo corrigido na geracao 05 para baias vazias com estoque dinamico. Madeira geracao 04 no mesmo canvas e geometria aproximada; diferenca de piso central ainda requer ensaio da revelacao de obra."
+ },
+ "ancoras": {
+   "trabalho": { "area": [0.36, 0.48, 0.64, 0.91] },
+   "estoque": { "entrada": [[0.19, 0.79]], "saida": [[0.78, 0.79]] }
+ }
     },
     {
       "id": "schoolhouse",
@@ -145,31 +195,56 @@
       }
     },
     {
-      "id": "inn",
-      "tipo": "predio",
-      "footprint": [
-        4,
-        3
+  "id": "inn",
+  "tipo": "predio",
+  "footprint": [
+    4,
+    3
+  ],
+  "tamanho": [
+    384,
+    330
+  ],
+  "anchor": [
+    0.5,
+    1
+  ],
+  "estados": {
+    "madeira": "sprites/inn/inn_madeira-D-plus50.png",
+    "completo": "sprites/inn/inn_completo-D-plus50.png"
+  },
+  "licenca": "arte propria do projeto, variante D candidata em 2026-10-01",
+  "origem": {
+    "base": "base/inn/inn-D-completo-plus50-master-2x.png",
+    "semente": null,
+    "nota": "Bodega D ampliada linearmente em 50% desde os brutos 02/03; area de estoque e mesas continuam vazias, anchors normalizados conservados. Candidata a revisao visual."
+  },
+  "ancoras": {
+    "estoque": {
+      "entrada": [
+        [
+          0.65,
+          0.66
+        ],
+        [
+          0.71,
+          0.66
+        ],
+        [
+          0.77,
+          0.66
+        ],
+        [
+          0.83,
+          0.66
+        ]
       ],
-      "tamanho": [
-        256,
-        178
-      ],
-      "anchor": [
-        0.5,
-        1
-      ],
-      "estados": {
-        "madeira": "sprites/inn/inn_madeira.png",
-        "completo": "sprites/inn/inn_completo.png"
-      },
-      "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
-      "origem": {
-        "base": "base/inn/inn_06_completo.png",
-        "semente": null,
-        "nota": "Bodega autoral com varanda, rede e areas vazias para estoque dinamico. Estrutura anterior reaproveitada como madeira e derivada no mesmo recorte do completo; uniao alpha > 16 calculada somente para inn: x10,y60 1427x992; saida 256x178."
-      }
-    },
+      "saida": []
+    }
+  },
+  "larguraMaxPorLote": 1.5,
+  "alturaMaxPorLargura": 1.29
+},
     {
       "id": "grama",
       "tipo": "terreno",
@@ -186,16 +261,16 @@
         1
       ],
       "estados": {
-        "padrao": "sprites/terrain/grama.png",
-        "v1": "sprites/terrain/grama-v1.png",
-        "v2": "sprites/terrain/grama-v2.png",
-        "v3": "sprites/terrain/grama-v3.png"
+        "padrao": "sprites/terrain/grama-D-v0.png",
+        "v1": "sprites/terrain/grama-D-v1.png",
+        "v2": "sprites/terrain/grama-D-v2.png",
+        "v3": "sprites/terrain/grama-D-v3.png"
       },
-      "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+      "licenca": "arte propria do projeto, estudo D de grama autorizado para ensaio em jogo em 2026-09-30",
       "origem": {
-        "base": "base/terrain-atlas/terrain-atlas-source.png",
+        "base": "base/terrain/grama-D-raw.png",
         "semente": null,
-        "nota": "Primeira celula do atlas autoral de terreno; recorte 362x362 e derivacao 64x64."
+        "nota": "Quatro reducoes/rotacoes do mesmo recorte central do estudo candidatos/D/grama/generation-01-raw.png. Tileability e albedo nao homologados."
       }
     },
     {
@@ -428,35 +503,35 @@
       }
     },
     {
-      "id": "tree",
-      "tipo": "vegetacao",
-      "footprint": [
-        1,
-        1
-      ],
-      "tamanho": [
-        96,
-        128
-      ],
-      "anchor": [
-        0.5,
-        1
-      ],
-      "estados": {
-        "presente": "sprites/vegetation/tree.png",
-        "umbuzeiro": "sprites/vegetation/umbuzeiro.png",
-        "mandacaru": "sprites/vegetation/mandacaru.png",
-        "facheiro": "sprites/vegetation/facheiro.png",
-        "xique-xique": "sprites/vegetation/xique-xique.png",
-        "macambira": "sprites/vegetation/macambira.png"
-      },
-      "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
-      "origem": {
-        "base": "base/vegetation-sertao/juazeiro-source.png",
-        "semente": null,
-        "nota": "Seis especies do sertao derivadas em 96x128 com proporcao preservada, pe inferior central e quatro pixels de margem minima. As demais bases e layouts ficam em base/vegetation-sertao/."
-      }
-    },
+  "id": "tree",
+  "tipo": "vegetacao",
+  "footprint": [
+    1,
+    1
+  ],
+  "tamanho": [
+    192,
+    256
+  ],
+  "anchor": [
+    0.5,
+    1
+  ],
+  "estados": {
+    "presente": "sprites/vegetation/tree-D-double.png",
+    "umbuzeiro": "sprites/vegetation/umbuzeiro-double-frame.png",
+    "mandacaru": "sprites/vegetation/mandacaru-double-frame.png",
+    "facheiro": "sprites/vegetation/facheiro-double-frame.png",
+    "xique-xique": "sprites/vegetation/xique-xique-double-frame.png",
+    "macambira": "sprites/vegetation/macambira-double-frame.png"
+  },
+  "licenca": "arte propria do projeto, juazeiro variante D candidata em 2026-10-01",
+  "origem": {
+    "base": "base/vegetation-sertao/juazeiro-D-double-master-2x.png",
+    "semente": null,
+    "nota": "Juazeiro D generation-01 com silhueta linear 2x no quadro 192x256, pe preservado. Outros estados somente acolchoados com transparencia no mesmo quadro, sem aumento visual. Candidata com luz anterior."
+  }
+},
     {
       "id": "rock",
       "tipo": "vegetacao",
@@ -1178,13 +1253,13 @@
         1
       ],
       "estados": {
-        "presente": "sprites/resources/corn.png"
+        "presente": "sprites/resources/corn-D.png"
       },
-      "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+      "licenca": "arte propria do projeto, candidata D gerada em 2026-09-30",
       "origem": {
-        "base": "base/resource-atlas/source.png",
+        "base": "base/resources/corn-D-master-2x.png",
         "semente": null,
-        "nota": "Derivado pela skill pianco-art-pipeline do layout corn."
+        "nota": "Candidato D derivado de candidatos/D/corn-tile/generation-01-raw.png; milho maduro no tile."
       }
     },
     {
@@ -1203,13 +1278,13 @@
         1
       ],
       "estados": {
-        "presente": "sprites/resources/grapes.png"
+        "presente": "sprites/resources/grapes-D.png"
       },
-      "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+      "licenca": "arte propria do projeto, candidata D gerada em 2026-09-30",
       "origem": {
-        "base": "base/resource-atlas/source.png",
+        "base": "base/resources/grapes-D-master-2x.png",
         "semente": null,
-        "nota": "Derivado pela skill pianco-art-pipeline do layout grapes."
+        "nota": "Candidato D derivado de candidatos/D/sugarcane-tile/generation-01-raw.png; id grapes representa cana-de-acucar."
       }
     },
     {
@@ -1320,21 +1395,25 @@
         3
       ],
       "tamanho": [
-        256,
-        192
+        269,
+        200
       ],
+      "larguraMaxPorLote": 1.051,
       "anchor": [
         0.5,
         1
       ],
       "estados": {
-        "completo": "sprites/farm/completo.png"
+        "completo": "sprites/farm/farm_completo-D-yellow-tall.png"
       },
-      "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+      "licenca": "arte propria do projeto, candidata D gerada em 2026-09-30",
       "origem": {
-        "base": "base/building-atlas-a/source.png",
+        "base": "base/farm/farm-D-yellow-tall-master-2x.png",
         "semente": null,
-        "nota": "Derivado pela skill pianco-art-pipeline do layout farm."
+        "nota": "Candidato D derivado de candidatos/D/farm/generation-02-yellow-raw.png. Parede amarelo-milho; silhueta cerca de 4% mais larga e 11% mais alta que o derivado anterior. Plataforma de milho permanece vazia."
+      },
+      "ancoras": {
+        "estoque": { "entrada": [], "saida": [[0.78, 0.80]] }
       }
     },
     {
@@ -1345,48 +1424,64 @@
         2
       ],
       "tamanho": [
-        192,
-        128
+        250,
+        180
       ],
+      "larguraMaxPorLote": 1.303,
       "anchor": [
         0.5,
         1
       ],
       "estados": {
-        "completo": "sprites/wineyard/completo.png"
+        "completo": "sprites/wineyard/wineyard_completo-D-green-cane-tall10.png"
       },
-      "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+      "licenca": "arte propria do projeto, candidata D gerada em 2026-09-30",
       "origem": {
-        "base": "base/building-atlas-a/source.png",
+        "base": "base/wineyard/wineyard-D-green-cane-tall10-master-2x.png",
         "semente": null,
-        "nota": "Derivado pela skill pianco-art-pipeline do layout wineyard."
+        "nota": "Mesmo bruto generation-02-green-cane rederivado em 2026-10-01: largura 250 px preservada, altura 164 para 180 px (+9,76% no canvas) e silhueta 242x152 para 242x168 (+10,53% vertical), base e anchor [0.5,1] preservados. Parede verde-cana, teto de caules, prensa esquerda e patio de cachaca vazio a direita."
+      },
+      "ancoras": {
+        "trabalho": { "area": [0.10, 0.43, 0.35, 0.83] },
+        "estoque": { "entrada": [], "saida": [[0.76, 0.79]] }
       }
     },
     {
-      "id": "fishermans",
-      "tipo": "predio",
-      "footprint": [
-        3,
-        2
-      ],
-      "tamanho": [
-        192,
-        128
-      ],
-      "anchor": [
-        0.5,
-        1
-      ],
-      "estados": {
-        "completo": "sprites/fishermans/completo.png"
-      },
-      "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
-      "origem": {
-        "base": "base/building-atlas-a/source.png",
-        "semente": null,
-        "nota": "Derivado pela skill pianco-art-pipeline do layout fishermans."
-      }
-    },
+  "id": "fishermans",
+  "tipo": "predio",
+  "footprint": [
+    3,
+    2
+  ],
+  "tamanho": [
+    192,
+    176
+  ],
+  "anchor": [
+    0.5,
+    1
+  ],
+  "estados": {
+    "completo": "sprites/fishermans/fishermans_completo-D-blue.png"
+  },
+  "licenca": "arte propria do projeto, candidata D azul em 2026-10-01",
+  "origem": {
+    "base": "base/fishermans/fishermans-D-blue-master-2x.png",
+    "semente": null,
+    "nota": "Casa do Pescador azul da geracao 02, derivada no mesmo quadro 192x176 da Pedreira. Zona de trabalho fica reservada na arte, mas sem ancora de trabalho: a simulacao realiza pesca fora da casa. Ancora de estoque e hipotese ate revisao visual."
+  },
+  "ancoras": {
+    "estoque": {
+      "entrada": [],
+      "saida": [
+        [
+          0.78,
+          0.81
+        ]
+      ]
+    }
+  }
+},
     {
       "id": "gold_mine",
       "tipo": "predio",
@@ -1538,30 +1633,56 @@
       }
     },
     {
-      "id": "mill",
-      "tipo": "predio",
-      "footprint": [
-        3,
-        3
-      ],
-      "tamanho": [
-        192,
-        192
-      ],
-      "anchor": [
-        0.5,
-        1
-      ],
-      "estados": {
-        "completo": "sprites/mill/completo.png"
-      },
-      "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
-      "origem": {
-        "base": "base/building-atlas-b/source.png",
-        "semente": null,
-        "nota": "Derivado pela skill pianco-art-pipeline do layout mill."
-      }
+  "id": "mill",
+  "tipo": "predio",
+  "footprint": [
+    3,
+    3
+  ],
+  "tamanho": [
+    221,
+    276
+  ],
+  "alturaMaxPorLargura": 1.44,
+  "anchor": [
+    0.5,
+    1
+  ],
+  "estados": {
+    "completo": "sprites/mill/mill_completo-D-plus15.png"
+  },
+  "licenca": "arte propria do projeto, variante D aprovada pelo operador em 2026-09-30",
+  "origem": {
+    "base": "base/mill/mill-D-plus15-master-2x.png",
+    "semente": null,
+    "nota": "Candidato D geracao 02 ampliado em 15 por cento nas duas dimensoes a pedido do operador em 2026-10-01. Roda lateral ainda pintada no corpo; plataformas vazias para milho/farinha dinamica."
+  },
+  "ancoras": {
+    "trabalho": {
+      "area": [
+        0.39,
+        0.6,
+        0.6,
+        0.87
+      ]
     },
+    "estoque": {
+      "entrada": [
+        [
+          0.12,
+          0.78
+        ]
+      ],
+      "saida": [
+        [
+          0.75,
+          0.78
+        ]
+      ]
+    }
+  },
+  "larguraMaxPorLote": 1.16
+},
     {
       "id": "bakery",
       "tipo": "predio",
@@ -1578,13 +1699,37 @@
         1
       ],
       "estados": {
-        "completo": "sprites/bakery/completo.png"
+        "completo": "sprites/bakery/completo-D.png"
       },
-      "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+      "licenca": "arte propria do projeto, variante D autorizada pelo operador para ensaio em jogo em 2026-09-30",
       "origem": {
-        "base": "base/building-atlas-b/source.png",
+        "base": "base/bakery/bakery-D-master-2x.png",
         "semente": null,
-        "nota": "Derivado pela skill pianco-art-pipeline do layout bakery."
+        "nota": "Derivado de candidatos/D/bakery/generation-02-raw.png, vitrine apagada; luz antiga. Areas de trabalho e estoque sao hipoteses para avaliar por captura em jogo."
+      },
+      "ancoras": {
+        "trabalho": {
+          "area": [
+            0.39,
+            0.42,
+            0.63,
+            0.67
+          ]
+        },
+        "estoque": {
+          "entrada": [
+            [
+              0.23,
+              0.81
+            ]
+          ],
+          "saida": [
+            [
+              0.72,
+              0.83
+            ]
+          ]
+        }
       }
     },
     {

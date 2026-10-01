@@ -1,7 +1,0 @@
-interface:
-  display_name: "Piancó Art Pipeline"
-  short_description: "Gera e valida a arte consistente do Piancó"
-  brand_color: "#8C4A25"
-  default_prompt: "Use $pianco-art-pipeline para criar e integrar assets coerentes ao Piancó."
-policy:
-  allow_implicit_invocation: true

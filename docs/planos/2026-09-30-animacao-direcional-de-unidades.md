@@ -124,7 +124,7 @@ operador:** o §14 dele passa a apontar para este plano, ou fica como pesquisa h
 Fonte: `git show noru-novos-sprites:skills/pianco-render-contract/SKILL.md`.
 
 - `:14`: pés no centro inferior, `anchor [0.5, 1]` e a mesma linha de base em todos os quadros.
-- `:38`: luz do alto à esquerda, com os planos ajustados em cada uma das 8 direções. É isso que
+- `:38`: a luz lateral antiga (obsoleta desde 2026-10-01; vale a do `cdcfec5`), com os planos ajustados em cada uma das 8 direções. É isso que
   quebra o espelho.
 - `:42`: a máscara de facção em cinza, como segundo sprite com `setTint` no mesmo atlas. Pendente
   e adiada.
@@ -491,7 +491,7 @@ serf: o serf não carrega nada na mão.
 
 Nada aqui foi editado na `noru-novos-sprites`. O operador leva ao Codex.
 
-1. **`:38` (luz).** No lugar de "Luz fixa no mundo, do alto à esquerda do mapa", propor:
+1. **`:38` (luz).** No lugar do parágrafo da luz lateral antiga (obsoleta), propor:
    > Luz de cima, sem componente lateral: sombra e realce são simétricos em relação ao eixo
    > vertical do sprite, para que as direções do oeste sejam o espelho (`flipX`) das do leste.
    > Nas oito direções, os planos do corpo mudam com a orientação, mas nunca com o lado.

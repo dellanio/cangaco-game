@@ -58,6 +58,8 @@ export type PontoFracionario = readonly [number, number];
 
 /** F-VIVO-0 — as ancoras do predio vivo. Cada bloco e opcional. */
 export interface AncorasDoPredio {
+  /** Ponto de contato do pé do mastro com o teto, em fração do canvas do sprite. */
+  readonly bandeira?: PontoFracionario;
   /** `area` e `[x0, y0, x1, y1]`, onde o quadro de trabalho e desenhado; `fumaca`
    *  e a chamine ou a boca da mina. */
   readonly trabalho?: {

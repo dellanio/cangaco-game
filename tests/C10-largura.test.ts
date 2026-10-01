@@ -3,8 +3,8 @@
  * 10; plano em docs/planos/2026-09-28-C10-excecao-de-largura.md). Aceite:
  *  (a) o manifesto real nao tem violacao de largura;
  *  (b) sintetico: largo sem excecao -> `largo-sem-excecao`; excecao que cabe -> `excecao-morta`;
- *  (c) `escalaDoSprite` encolhe o largo demais para `k x lote`, sem deformar; o armazem e
- *      a escola continuam na escala de antes.
+ *  (c) `escalaDoSprite` encolhe um caso sintetico largo demais para `k x lote`, sem deformar;
+ *      o armazem D agora cabe no lote e a escola preserva sua excecao.
  */
 import { describe, expect, it } from 'vitest';
 import manifestoJson from '../assets/manifest.json';
@@ -30,29 +30,35 @@ describe('C10 — a largura do predio tem regra, como a altura', () => {
     const comExcecao = predios.filter((e) => e.larguraMaxPorLote !== undefined).map((e) => ({
       id: e.id, larguraPorLote: e.tamanho[0] / (e.footprint[0] * TILE), teto: larguraMaxPorLote(e, regraL),
     }));
-    expect(comExcecao.map((c) => c.id).sort()).toEqual(['schoolhouse', 'storehouse']);
+    expect(comExcecao.map((c) => c.id).sort()).toEqual(['farm', 'inn', 'mill', 'schoolhouse', 'storehouse', 'wineyard']);
+    const moinho = comExcecao.find((c) => c.id === 'mill');
+    expect(moinho?.larguraPorLote).toBeCloseTo(221 / 192, 6);
+    expect(moinho?.teto).toBe(1.16);
     gravarEvidencia('C10-largura', { k: regraL.k, comExcecao });
   });
 
   it('(b) sintetico: largo sem excecao e excecao morta sao acusados', () => {
-    const semExcecao = comEntrada('storehouse', ({ larguraMaxPorLote: _, ...resto }) => resto);
-    expect(violacoesDaLargura(semExcecao, regraL, TILE)).toEqual([{ id: 'storehouse', motivo: 'largo-sem-excecao' }]);
+    const largo = comEntrada('woodcutters', (e) => ({ ...e, tamanho: [214, e.tamanho[1]] as const }));
+    expect(violacoesDaLargura(largo, regraL, TILE)).toEqual([{ id: 'woodcutters', motivo: 'largo-sem-excecao' }]);
     const estreito = predios.find((e) => e.larguraMaxPorLote === undefined && e.tamanho[0] <= e.footprint[0] * TILE);
     if (estreito === undefined) throw new Error('fixture: sem predio estreito');
     const morta = comEntrada(estreito.id, (e) => ({ ...e, larguraMaxPorLote: 1.5 }));
     expect(violacoesDaLargura(morta, regraL, TILE)).toEqual([{ id: estreito.id, motivo: 'excecao-morta' }]);
   });
 
-  it('(c) o largo demais encolhe para k x lote, sem deformar; os dois de hoje nao mudam', () => {
-    const armazem = predios.find((e) => e.id === 'storehouse') as EntradaDeAsset;
-    const lote = armazem.footprint[0] * TILE;
-    // sem a excecao, a largura desenhada vira exatamente o lote (k = 1)
-    const { larguraMaxPorLote: _, ...semExcecao } = armazem;
-    const escala = escalaDoSprite(semExcecao, regraA, TILE, lote, regraL);
-    expect(semExcecao.tamanho[0] * escala).toBeCloseTo(lote, 6);
-    // com a excecao declarada (1,12), a escala e a de antes da C10 (a regra de largura nao age)
-    expect(escalaDoSprite(armazem, regraA, TILE, lote, regraL)).toBe(escalaDoSprite(armazem, regraA, TILE, lote, SEM_REGRA_DE_LARGURA));
-    const escola = predios.find((e) => e.id === 'schoolhouse') as EntradaDeAsset;
-    expect(escalaDoSprite(escola, regraA, TILE, lote, regraL)).toBe(escalaDoSprite(escola, regraA, TILE, lote, SEM_REGRA_DE_LARGURA));
+  it('(c) o largo demais encolhe para k x lote; excecoes preservam escala', () => {
+    const cabana = predios.find((e) => e.id === 'woodcutters') as EntradaDeAsset;
+    const lote = cabana.footprint[0] * TILE;
+    const largo: EntradaDeAsset = { ...cabana, tamanho: [214, cabana.tamanho[1]] };
+    const escala = escalaDoSprite(largo, regraA, TILE, lote, regraL);
+    expect(largo.tamanho[0] * escala).toBeCloseTo(lote, 6);
+    expect(cabana.tamanho[0]).toBe(lote);
+    expect(escalaDoSprite(cabana, regraA, TILE, lote, regraL)).toBe(
+      escalaDoSprite(cabana, regraA, TILE, lote, SEM_REGRA_DE_LARGURA));
+    for (const id of ['storehouse', 'schoolhouse']) {
+      const entrada = predios.find((e) => e.id === id) as EntradaDeAsset;
+      expect(escalaDoSprite(entrada, regraA, TILE, lote, regraL)).toBe(
+        escalaDoSprite(entrada, regraA, TILE, lote, SEM_REGRA_DE_LARGURA));
+    }
   });
 });
