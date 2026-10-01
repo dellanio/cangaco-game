@@ -1,0 +1,853 @@
+{
+  "arvore": "C:/Users/della/orca/workspaces/cangaco-game/implementacao-relevo",
+  "porta": 5177,
+  "inicio": "2026-10-01T03:54:25.206Z",
+  "roteiros": {
+    "BUG-U": {
+      "saida": 0,
+      "segundos": 17,
+      "motivo": null,
+      "pngs": {
+        "BUG-U-1-aviso.png": "8bc79724099b57ede6b01e6f4ab18b81bceb4a48bb81c2b54f0c69fec97e1eb2"
+      }
+    },
+    "BUG-W": {
+      "saida": 0,
+      "segundos": 33,
+      "motivo": null,
+      "pngs": {
+        "BUG-W-1-rocado-em-estagios.png": "5702245762dcc911c9069004ce489edfa400d31f67c1bbfa0dd32aabc92db6b4"
+      }
+    },
+    "BUG-X": {
+      "saida": 0,
+      "segundos": 30,
+      "motivo": null,
+      "pngs": {
+        "BUG-X-1-serraria-porta-vazia.png": "dc3a6d6b2b03652d8cb9957f2b384933ba96e244e9a0c491067d80043fef5930",
+        "BUG-X-2-lenhador-colhendo-visivel.png": "593a9b4cae84fb7d785844cfafba0043226cadd418911b594b4c8fd70b563655"
+      }
+    },
+    "BUG-Z": {
+      "saida": 0,
+      "segundos": 24,
+      "motivo": null,
+      "pngs": {
+        "BUG-Z-1-nomes-por-cima.png": "9fcbe8bc5ea730de073331dd846fa74729abb1da17cd942b70f1caeb10435cdb"
+      }
+    },
+    "C-COMBATE-01c": {
+      "saida": 0,
+      "segundos": 61,
+      "motivo": null,
+      "pngs": {
+        "C-COMBATE-01c-1-fileiras-de-7.png": "50eac5de6f114d4e8b6c2689d3d3b1505f26f4541e88a1c98ddd3d1834a5b7c4",
+        "C-COMBATE-01c-2-virados-ao-leste.png": "b7395a6e96ea8dd5b4f6a15c546946c6a5fed9d71aa5a4776fdf4a701edbbcbe",
+        "C-COMBATE-01c-3-investida-em-paz.png": "b1d3a6b63c2f4a2cc545b555b0cea6ec4b23df14320aba72d21e2a13fb3d9fa8",
+        "C-COMBATE-01c-4-investida.png": "183dd8c8b59aa966a5049700e24d5f08bba8825c3a19e952540e934062b8c498"
+      }
+    },
+    "C-COMIDA-01d": {
+      "saida": 0,
+      "segundos": 26,
+      "motivo": null,
+      "pngs": {
+        "C-COMIDA-01d-1-grupo-com-fome.png": "f911b1b822c5e8501c35d7d8d8fdb055aa4da34f3f91ea0a83e520f0789b23b7",
+        "C-COMIDA-01d-2-pao-a-caminho.png": "8e98e1429f4b5e96127e4596b280822b9d55e582a11fccba462eb80757ea089e",
+        "C-COMIDA-01d-3-grupo-cheio.png": "27439de7a7c2ea9a997dffedaa4ab629cd88d1b92c76082f90f5b98f3e48592d"
+      }
+    },
+    "C-IA-02a": {
+      "saida": 0,
+      "segundos": 31,
+      "motivo": null,
+      "pngs": {
+        "C-IA-02a-1-vila-da-ia.png": "d22372e5ea71ff9e376b04f5737fcc8f42d402948de5df7b734cae0cd420168d"
+      }
+    },
+    "C-IA-03c": {
+      "saida": 0,
+      "segundos": 181,
+      "motivo": null,
+      "pngs": {
+        "C-IA-03c-1-inicio-em-paz.png": "3efeba0555754c879b209389999bfda381e8db026db9d9473afa9e0fa69abc02",
+        "C-IA-03c-2-vila-inimiga.png": "36d9e4429c6b75dca73b231637dacdc2ef3bde809d65d924fcbb6d24f35370a9",
+        "C-IA-03c-3-vitoria.png": "688fefdc1037c208a1d5321c818d1f765600d988c42d43fe2070feb7abd8839d"
+      }
+    },
+    "C-TELA-01": {
+      "saida": 0,
+      "segundos": 34,
+      "motivo": null,
+      "pngs": {
+        "C-TELA-01-1-marcha-em-paz.png": "1b1c17de8dae15d2130a5b3f52dc7cce2be8ae78c38a3bdec887d11f8b46b37b",
+        "C-TELA-01-2-em-paz.png": "78dfaaa8395449a1a372294791420a9039feef42a0cc059607aab220f6f08f9b"
+      }
+    },
+    "C-TELA-02": {
+      "saida": 0,
+      "segundos": 27,
+      "motivo": null,
+      "pngs": {
+        "C-TELA-02-1-marca-no-destino.png": "519f1cb691eefab153cd7a433eb6860e904bd36571b2074f46490e7e1d2e546f"
+      }
+    },
+    "C-TELA-03": {
+      "saida": 0,
+      "segundos": 30,
+      "motivo": null,
+      "pngs": {
+        "C-TELA-03-1-caixa-em-cima-do-cabra.png": "f80389eb49a31370f1d2b2e75e47f29707984567df5cbe40dfc71d98c377091b",
+        "C-TELA-03-2-os-18-andaram.png": "7acf58ecb168e69e6f0c00709d8cb45b5dbc3adc101d38773f3441f6fb6f88f9"
+      }
+    },
+    "C-TELA-04": {
+      "saida": 0,
+      "segundos": 36,
+      "motivo": null,
+      "pngs": {
+        "C-TELA-04-1-a-tropa-no-alvo.png": "c319154461689f2f3e0f29246572d0ac46f8f1e079f6ed0e065f4ac83ce7c67c"
+      }
+    },
+    "C-TELA-05": {
+      "saida": 0,
+      "segundos": 28,
+      "motivo": null,
+      "pngs": {
+        "C-TELA-05-1-ordem-mandada.png": "5c9486fd6c8fc2f7e602cc9681d7cd26c9b5678a16e4441f18932c80401354d7"
+      }
+    },
+    "C2": {
+      "saida": 0,
+      "segundos": 24,
+      "motivo": null,
+      "pngs": {
+        "C2-1-flecha-no-ar.png": "2c2a50bbc85798798072700a2ec40f997abbaef526b4d5008f33f4ca60a82b35"
+      }
+    },
+    "C4": {
+      "saida": 0,
+      "segundos": 22,
+      "motivo": null,
+      "pngs": {
+        "C4-1-reparo-ligado.png": "d0d7ca3e80cfbb55cb1ca064656b2cbf23cf49e06a6fdb78e4f31e4ace63f3af"
+      }
+    },
+    "CORONEL": {
+      "saida": 0,
+      "segundos": 21,
+      "motivo": null,
+      "pngs": {
+        "CORONEL-1-coronel-lenhador-unidades.png": "1024be470a7109eaadc080cd390750dc81566dbe4f20c7328b91ea1301ba78af"
+      }
+    },
+    "D-PRODUCAO-03": {
+      "saida": 0,
+      "segundos": 48,
+      "motivo": null,
+      "pngs": {
+        "D-PRODUCAO-03-1-espada-em-curso.png": "8757c11f6b72f7de06a40000c1aee72ceec3b228a7d5d078ac748b14b72c7af3",
+        "D-PRODUCAO-03-2-encomenda-cumprida.png": "e230e9b82344fa776507b17f6ce83e5aa5f5c6f11a761bbc1d84b69765b6b7a3",
+        "D-PRODUCAO-03-3-lanca-encomendada.png": "fc929d2162042c946febc2ed78ce1c71346a98bbb0a324dee84c4cc0e17bf4a4"
+      }
+    },
+    "D-TELA-01": {
+      "saida": 0,
+      "segundos": 25,
+      "motivo": null,
+      "pngs": {
+        "D-TELA-01-1-aba-de-estatisticas.png": "333290fc7df56298f1e94398cccd9d70e933538ac0f78747e008817085b7f702"
+      }
+    },
+    "D-TELA-02": {
+      "saida": 0,
+      "segundos": 27,
+      "motivo": null,
+      "pngs": {
+        "D-TELA-02-1-camera-na-vila-da-ia.png": "13c6e92d9c7f8c543e57373081dcbe735c6c797528b599a7b255105548167e6a"
+      }
+    },
+    "D-TELA-06": {
+      "saida": 0,
+      "segundos": 13,
+      "motivo": null,
+      "pngs": {
+        "D-TELA-06-1-com-webgl.png": "d843e2d4bb1da3cab97f2631eae004dc78053f8752cdd0205cf1a496d1aca869",
+        "D-TELA-06-2-sem-webgl.png": "edfc684c5fbbf3cd6b396125f18dbea777304395c2e83c232c6db01fdb22f639"
+      }
+    },
+    "D-TELA-07": {
+      "saida": 0,
+      "segundos": 23,
+      "motivo": null,
+      "pngs": {
+        "D-TELA-07-1-pausada-e-sem-insumo.png": "da3230e994be73c9f96eba3ba79e9f4e21b16c11d5e83207979ae91abf12c4e1",
+        "D-TELA-07-2-retomada-sem-placa.png": "7ac5483d082cd4cc473af3a5b776b2e649dd5040fa7b1a11c4155575e10f2841"
+      }
+    },
+    "D-TELA-LUZ-RELEVO": {
+      "saida": 0,
+      "segundos": 36,
+      "motivo": null,
+      "pngs": {
+        "D-TELA-LUZ-RELEVO-1-sem-relevo.png": "453062d27cf120876f37e288eadd1a024aa9052dcb0431e8c4a422996675f33b",
+        "D-TELA-LUZ-RELEVO-2-relevo-12_8px.png": "ebaadde841402ffd8278e768e8fa2936a09b5920f3ba50c8eb537f00b3c8126e",
+        "D-TELA-LUZ-RELEVO-3-relevo-8px-registro.png": "511de74e3b9598d2bece410bbfc2923a4ca24137956ffb5fff7f6e18b13070b1",
+        "D-TELA-LUZ-RELEVO-4-encosta-com-obra.png": "dc1bd91797966f9e0549c6ae333233e788f8e79fd1c0ae1cde018f478613597b"
+      }
+    },
+    "D-TELA-LUZ-RELEVO-recorte": {
+      "saida": 0,
+      "segundos": 56,
+      "motivo": null,
+      "pngs": {
+        "D-TELA-LUZ-RELEVO-recorte-1-vila-com-relevo.png": "ebaadde841402ffd8278e768e8fa2936a09b5920f3ba50c8eb537f00b3c8126e",
+        "D-TELA-LUZ-RELEVO-recorte-2-vila-predio-e-serf-na-luz.png": "e59912f7709ad7688154cb50f8faa806467c5c385115feb8e062ca9f78b5e05a",
+        "D-TELA-LUZ-RELEVO-recorte-3-pe-da-serra-sem-relevo.png": "2b0d6a6afd5c04d50d69d425ae61ec487eef812d545ba1fbba8bd910e91360df",
+        "D-TELA-LUZ-RELEVO-recorte-4-pe-da-serra-com-relevo.png": "5a262f6b29ae2af0b7b8f13bc4c6579bfa2cca64717c20be005781c2118a90c6",
+        "D-TELA-LUZ-RELEVO-recorte-5-encosta-forte-sem-relevo.png": "5ee32bfd2a96462af138e6946720460f3dddcd51b1ef743e2f49d80e2fcc4a2b",
+        "D-TELA-LUZ-RELEVO-recorte-6-encosta-forte-com-relevo.png": "d00d339cdc04c15179f84524257ab6e265cea2eaec33a3d643f55f8646c49428"
+      }
+    },
+    "D-TRANSPORTE-01": {
+      "saida": 0,
+      "segundos": 10,
+      "motivo": null,
+      "pngs": {
+        "D-TRANSPORTE-01-1-madeira-bloqueada.png": "7bb58904baa1408c4fa04ee40cf9a25e0791b15d63f11dff29a2e377f9b69318"
+      }
+    },
+    "D-TRANSPORTE-02": {
+      "saida": 0,
+      "segundos": 14,
+      "motivo": null,
+      "pngs": {
+        "D-TRANSPORTE-02-1-moinho-guarda-menos.png": "8f7835392deb049f8ae886fe888fe889b93e66aa04749fd1bc77e399fb02c624"
+      }
+    },
+    "F-CANA-b": {
+      "saida": 0,
+      "segundos": 7,
+      "motivo": null,
+      "pngs": {
+        "F-CANA-b-1-abertura-com-a-cana.png": "d843e2d4bb1da3cab97f2631eae004dc78053f8752cdd0205cf1a496d1aca869"
+      }
+    },
+    "F-D1": {
+      "saida": 0,
+      "segundos": 14,
+      "motivo": null,
+      "pngs": {
+        "F-D1-1-dica-na-primeira-partida.png": "d843e2d4bb1da3cab97f2631eae004dc78053f8752cdd0205cf1a496d1aca869",
+        "F-D1-2-ajuda-aberta.png": "a93679a126475a9782e7270ea83def78d71a9975bf5047a16f7efba578301f6b"
+      }
+    },
+    "F-D2": {
+      "saida": 0,
+      "segundos": 56,
+      "motivo": null,
+      "pngs": {
+        "F-D2-1-canto-noroeste.png": "0e0e53624c38f2a51184cd593208be22459a50d43fd311e9e338ad101537c77e",
+        "F-D2-2-espaco-arrastando.png": "24c1a02089c45c1f2f48739d6a389650f35bed5cc2ad143b8b3e5f4405685667"
+      }
+    },
+    "F-D3": {
+      "saida": 0,
+      "segundos": 10,
+      "motivo": null,
+      "pngs": {
+        "F-D3-1-abertura.png": "d843e2d4bb1da3cab97f2631eae004dc78053f8752cdd0205cf1a496d1aca869"
+      }
+    },
+    "F-D4": {
+      "saida": 0,
+      "segundos": 12,
+      "motivo": null,
+      "pngs": {
+        "F-D4-1-vila-com-oficios.png": "d843e2d4bb1da3cab97f2631eae004dc78053f8752cdd0205cf1a496d1aca869",
+        "F-D4-2-oficio-em-movimento.png": "8ed1fc5744da711876b3af9363a37f4a91fe7f1b4e25be01367ee4728ac6f4ad",
+        "F-D4-3-oficio-de-perto.png": "757cd922071adaf4ace3cff75695750ad981217b668b60d3c46866ff02e57296"
+      }
+    },
+    "F-ESC": {
+      "saida": 0,
+      "segundos": 74,
+      "motivo": null,
+      "pngs": {
+        "F-ESC-1-vila-inicial.png": "d843e2d4bb1da3cab97f2631eae004dc78053f8752cdd0205cf1a496d1aca869",
+        "F-ESC-2-quatro-obras.png": "63e616ed6b200dec36fd0dfe47bcd8cb62abed567eb391ab28d48cd5b61c980f",
+        "F-ESC-3-fila-da-escola.png": "4ef2c4ee03aee8723204c4c8980c1bc5157b07c8c7beeba866816cd5d946532d",
+        "F-ESC-4-serraria-desbloqueada.png": "5aa206772762211e1aaaf705e87b14510dd02fbbd509b66d634d2630bcb8b1f7",
+        "F-ESC-5-final.png": "37f77526f581655280fe973b3b25294f060b081a8ad787546e422a816df70a43",
+        "F-ESC-6-serraria-ocupada.png": "94f43604c65389611ca6b8f81385c2688cdf8ffd01d15c4f52d157bcca833e51",
+        "F-ESC-7-bodega-completa.png": "f550be5e366aa969866b4cd1276670179e9f34be0661243171d920a62587b28d",
+        "F-ESC-8-seis-predios-a-0,5.png": "75b8e3d4888d1373c1f13df3b0a8596a8bc207bcbcf74fa201369e7059054ad3"
+      }
+    },
+    "F-REPL-d": {
+      "saida": 0,
+      "segundos": 14,
+      "motivo": null,
+      "pngs": {
+        "F-REPL-d-1-modo-cortar.png": "69a6e188f027e06758fd2cdb1e79af9172712ea126cbc39c41dfcf08578c0608",
+        "F-REPL-d-2-modo-cortar-e-plantar.png": "41e6ad66f0fc2cd54b2e367490d96644b30912163ece80366cc98b7422a59278"
+      }
+    },
+    "F-REPL-e": {
+      "saida": 0,
+      "segundos": 17,
+      "motivo": null,
+      "pngs": {
+        "F-REPL-e-1-muda-no-zoom-1.png": "8b3a2b4c3cd9ebc62f9e343b3af12f2be6cae935d3b63d30b19870b5a4bc516c",
+        "F-REPL-e-2-muda.png": "b187763dbb0b4cbf307ede7d01ab782bac26f30f101e485fd608214dd6cc06d1",
+        "F-REPL-e-3-crescendo_1.png": "58a4cb6aa9dd48c322b02c8e514f474d2f2c67a27da0cb55f071872e0dbe86c1",
+        "F-REPL-e-4-crescendo_2.png": "9706895bd4df8ec2bcd2630a46645f6362eb0647fbf9f760b8d89db2c8773326",
+        "F-REPL-e-5-adulta.png": "61a65119e5ae1d7748da4fbc775c44fca3ace990e18aaaee47e1b6fd98612a41"
+      }
+    },
+    "F-SPR": {
+      "saida": 0,
+      "segundos": 9,
+      "motivo": null,
+      "pngs": {
+        "F-SPR-1-abertura-placeholder.png": "d843e2d4bb1da3cab97f2631eae004dc78053f8752cdd0205cf1a496d1aca869",
+        "F-SPR-2-unidades-andando.png": "150120c60df10879bbc66e50cb1bd1c7952f97ee07990e10f78ca41f7a4ccd10"
+      }
+    },
+    "F-T1": {
+      "saida": 0,
+      "segundos": 19,
+      "motivo": null,
+      "pngs": {
+        "F-T1-1-vila-em-terreno-limpo.png": "d843e2d4bb1da3cab97f2631eae004dc78053f8752cdd0205cf1a496d1aca869",
+        "F-T1-2-lago-e-praia.png": "fed8b46fa143e3bcf0f91f049d10831ae241f4fda71745342e55a901fe869a7b",
+        "F-T1-3-planta-recusada-pela-agua.png": "76253384544daa6faef8255dc778cfcbd9c41e85b4529aa54384685c7139ba1a",
+        "F-T1-4-planta-aceita-na-margem.png": "f2767e41cc23c553d01d17142e508d8fdf6df706f054edff50626690de59ed1f"
+      }
+    },
+    "F-T2a": {
+      "saida": 0,
+      "segundos": 18,
+      "motivo": null,
+      "pngs": {
+        "F-T2a-1-vila-de-abertura.png": "d843e2d4bb1da3cab97f2631eae004dc78053f8752cdd0205cf1a496d1aca869",
+        "F-T2a-2-jazida-de-rocha-visivel.png": "4046080b372673f2e44f85244af9ec668504140f63e12ccdc8104790514d6e65",
+        "F-T2a-3-planta-da-pedreira-sobre-a-jazida.png": "ba2c7c6900232cf45caa4af0c1fde256c2c0190c35d5e0f93cf941bf2ac015c1"
+      }
+    },
+    "F-T2b": {
+      "saida": 0,
+      "segundos": 17,
+      "motivo": null,
+      "pngs": {
+        "F-T2b-1-vila-de-abertura.png": "d843e2d4bb1da3cab97f2631eae004dc78053f8752cdd0205cf1a496d1aca869",
+        "F-T2b-2-arvore-e-rocha-no-mesmo-quadro.png": "001b78b44b92c5653fbff5316683bca8c75a9562670588fce5ffb67ccd6bb6fa",
+        "F-T2b-3-a-rua-nao-atravessa-a-arvore.png": "9cb877ce56c8f568cfa405805667865ac66a007fa462c2131afc1e916de53950",
+        "F-T2b-4-nenhum-canteiro-sobre-a-arvore.png": "8e04e2dbc9a35648fe3716da15c861d5ed8360d40aee893aaa606725bffc9505"
+      }
+    },
+    "F-T3": {
+      "saida": 0,
+      "segundos": 95,
+      "motivo": null,
+      "pngs": {
+        "F-T3-1-pedreiro-no-campo.png": "34d5b6401e27c358b76d61a0de41a2aa945b00df18f7bc3f0b2349620d0969c5",
+        "F-T3-2-pedreiro-de-volta.png": "5054c450211d82def93b40ac3d834928cd968f6dee18645adb4abe2e9008d9b6"
+      }
+    },
+    "F-T4a": {
+      "saida": 0,
+      "segundos": 152,
+      "motivo": null,
+      "pngs": {
+        "F-T4a-1-pescador-na-margem.png": "81e70a7056bcaf3f4d0ff744c4e1788384ed24da609b81c56ad023bc315d1c08",
+        "F-T4a-2-acude-baixou.png": "37279c439e648999ca92352ac7888b5f69c1d18266ab03271678fc3150648658"
+      }
+    },
+    "F-TA": {
+      "saida": 0,
+      "segundos": 39,
+      "motivo": null,
+      "pngs": {
+        "F-TA-1-armazem-sem-linha.png": "9cd006455286ce851b275bd6e0950237b3adb021441c1fd9d63af453b511716b",
+        "F-TA-2-pedreira-com-alcance.png": "55e631315a387ae27b4e30dca77cdd7e4c6fb50ca56f704083ac2f289749d701",
+        "F-TA-3-alcance-com-o-laco-andando.png": "c1aced6514e19da13681ad8996c71b2396103f5872adb832856db2ad21aa760c"
+      }
+    },
+    "F-TP": {
+      "saida": 0,
+      "segundos": 24,
+      "motivo": null,
+      "pngs": {
+        "F-TP-1-o-alcance-sobre-o-lajedo.png": "1dafc3ecac026e73cdc250abd1870909a07fe67659fcaf7f130620bbac239456",
+        "F-TP-2-zero-ao-alcance-e-o-clique-continua-valendo.png": "16cc21b57c3af9350f2bd4a0f97bf4b4e758773ae1d9bed3b4188e1554a4c918",
+        "F-TP-3-quem-nao-colhe-nao-ganha-moldura.png": "29b224c5c30e3dd1cfc72838d1bc81718d0d4ba6746a28050ed0edfacac51587"
+      }
+    },
+    "F-TR": {
+      "saida": 0,
+      "segundos": 184,
+      "motivo": null,
+      "pngs": {
+        "F-TR-1-pedreiro-no-campo.png": "bf9423f3e71b9ab851044d44bc419969c4ab6953a5cdcc2e474b516897295c8e",
+        "F-TR-2-pedreiro-de-volta.png": "a9dded74886f64ac4adcbcd291f94df117fc8cff7098fad344a6300f846d772a",
+        "F-TR-3-lajedo-antes-de-esgotar.png": "a9dded74886f64ac4adcbcd291f94df117fc8cff7098fad344a6300f846d772a",
+        "F-TR-4-lajedo-recosturado-apos-esgotar.png": "29bc4e75abe80d8f6da9a22727847ae1051c7418173ce50949fc2de752c439bf",
+        "F-TR-5-lajedo-encolhido-3-tiles.png": "ad81e9760ed071dc9353a4295ea0eccfbd2c05ff9b29bfff3f8f5c80259e3c1f",
+        "F-TR-6-terreno-1-acude.png": "f0e7582f192c3279e1c0cd8d50d4c113473e5401f18a2e4e337323c21e7b557d",
+        "F-TR-7-terreno-2-serra.png": "b39e772195b4201ac69572bc10cd1b83ac00899375767082ed170505369dd919"
+      }
+    },
+    "F-VIVO-a": {
+      "saida": 0,
+      "segundos": 81,
+      "motivo": null,
+      "pngs": {
+        "F-VIVO-a-1-armazem.png": "d843e2d4bb1da3cab97f2631eae004dc78053f8752cdd0205cf1a496d1aca869",
+        "F-VIVO-a-2-obra.png": "4b84e09f9aba7db60fc7849dc40c075601ae0c4921dc12c8c6d1003506ccfcef",
+        "F-VIVO-a-3-pedreira.png": "e21b334f39d0b8b19c28e35b6415f98101b1588a963b10ccf362e51a502679da"
+      }
+    },
+    "F-VIVO-b": {
+      "saida": 0,
+      "segundos": 83,
+      "motivo": null,
+      "pngs": {
+        "F-VIVO-b-1-animando.png": "0a020887048f01859448b067b28482df6cd6b8b6079a05cfa674efa14522c724",
+        "F-VIVO-b-2-pausada.png": "573046c0f8af0b94240470e71192d4600ec04efafdc7aed08b6b8f8f775e530a"
+      }
+    },
+    "F-VIVO-c": {
+      "saida": 0,
+      "segundos": 97,
+      "motivo": null,
+      "pngs": {
+        "F-VIVO-c-1-1-curral.png": "206056bf09d9aec66ea9882713a5e6d3422943602cb20f9e6db15ea1a0034d41",
+        "F-VIVO-c-2-2-outra-idade.png": "d3b2a129d63b811a408f8aa89b8e777631aac8fd912c790c6f52f161ffa033b8"
+      }
+    },
+    "F-VIVO-d": {
+      "saida": 0,
+      "segundos": 85,
+      "motivo": null,
+      "pngs": {
+        "F-VIVO-d-1-1-carne.png": "9ede3f094cef4d3d9c5837ad3fa70799184753a4c05fba05a412552966220a3c",
+        "F-VIVO-d-2-2-ouro.png": "ea5a0f022844ab107f710bbf389591b8c6171b76b5f816c8862c4531a68a4530",
+        "F-VIVO-d-3-3-pedreira.png": "547c587f6a146c71683b6367dd2f066e5a7efb9747c39ea142c75de13048d475",
+        "F-VIVO-d-4-4-aldeia.png": "64ac7524ec8534266e42f74c459c7efa912876eea3ba1604db6eff6fa6e0bbf4"
+      }
+    },
+    "F-VIVO-e": {
+      "saida": 0,
+      "segundos": 26,
+      "motivo": null,
+      "pngs": {
+        "F-VIVO-e-1-ocupada-e-vazia.png": "93d0d166b4bc6f909ac4d16b5ab0760af2d32093d659df78653b7b5c990f202d"
+      }
+    },
+    "F-VIVO-e-pausado": {
+      "saida": 0,
+      "segundos": 18,
+      "motivo": null,
+      "pngs": {
+        "F-VIVO-e-pausado-1-serraria-pausada.png": "c5b4be2c58b4d45318df8b61ff759dd69e78fdd1fe326a6c0ba2d548a131e1b9"
+      }
+    },
+    "F-VIVO-f": {
+      "saida": 0,
+      "segundos": 22,
+      "motivo": null,
+      "pngs": {
+        "F-VIVO-f-1-dentro-e-no-tile.png": "8563c998a28fb08df3c8f6a982a16a8163f02cd98c3601497d0155bb2df7a7ed"
+      }
+    },
+    "F-VIVO-g": {
+      "saida": 0,
+      "segundos": 43,
+      "motivo": null,
+      "pngs": {
+        "F-VIVO-g-1-curral-entre-entregas.png": "7db20bf8089cdcdcfb1f393d7e098aa0b9459858d403740c563014a9db3c86c1"
+      }
+    },
+    "F-VIVO-h": {
+      "saida": 0,
+      "segundos": 32,
+      "motivo": null,
+      "pngs": {
+        "F-VIVO-h-1-escola-treinando.png": "5348ffd00b4579307bae9f05f93399221642bdd4229b760b1a7b9a60c3059333",
+        "F-VIVO-h-2-escola-depois-do-treino.png": "dd277d8de9c9f0627c1a055beb8c0ccead07881522c860a74fbb1f372b31d1a1"
+      }
+    },
+    "F04": {
+      "saida": 0,
+      "segundos": 14,
+      "motivo": null,
+      "pngs": {
+        "F04-1-mapa.png": "d843e2d4bb1da3cab97f2631eae004dc78053f8752cdd0205cf1a496d1aca869",
+        "F04-2-highlight.png": "9839b69fdaabd9a073762a44a711232f18c8b3ef2791cfd387bce5c6f1ea768d",
+        "F04-3-camera-movida.png": "eacebbfea2b10a88de66b9af691ca366dda0b234b8d782f1c0e8f129c2e9bd94"
+      }
+    },
+    "F05b": {
+      "saida": 0,
+      "segundos": 10,
+      "motivo": null,
+      "pngs": {
+        "F05b-1-vila.png": "d843e2d4bb1da3cab97f2631eae004dc78053f8752cdd0205cf1a496d1aca869",
+        "F05b-2-hud-e-highlight.png": "9839b69fdaabd9a073762a44a711232f18c8b3ef2791cfd387bce5c6f1ea768d"
+      }
+    },
+    "F06": {
+      "saida": 0,
+      "segundos": 42,
+      "motivo": null,
+      "pngs": {
+        "F06-1-item-ativo-destacado.png": "6ffd8897dfadc1e55000606e698c1e84568351995c8880111c7bbd6b5c688d98",
+        "F06-2-planta-verde.png": "2dbd4feaaf30915f81a30019e744370c1843705a4854f976bebd8c20ea1574f3",
+        "F06-3-planta-vermelha.png": "7034121afcd7c2f2fe1463427a4515ed25847f817a7e5446187ed24c1f352f7d",
+        "F06-4-apos-esc.png": "424c8b238b0136ac3fcd60239d59f2eacd6897782d0c369266cc2d8963990fd3"
+      }
+    },
+    "F07": {
+      "saida": 0,
+      "segundos": 13,
+      "motivo": null,
+      "pngs": {
+        "F07-1-antes-do-clique.png": "2dbd4feaaf30915f81a30019e744370c1843705a4854f976bebd8c20ea1574f3",
+        "F07-2-obra-plantada.png": "9b2af1a1a2255e6a0b519a2bbf9d08620792595e6cd43d8e5fac0f546c39cb2d",
+        "F07-3-duas-obras.png": "24bde545e0ee20384365670b0bf4b1543a66545b9be42d1ad07d9adb1418b521"
+      }
+    },
+    "F08": {
+      "saida": 0,
+      "segundos": 23,
+      "motivo": null,
+      "pngs": {
+        "F08-1-previa-do-arrasto.png": "2bd9d1ccadd9482b85a26a9d03a5d886f75d9e279fe2668ec19ca99e476487d0",
+        "F08-2-estrada-desenhada.png": "c4b579ba4b5ce971b9c880d0003a195c00780510d13e10c9cdfb38be65572509",
+        "F08-3-estrada-partida.png": "ae1172db9fe1adea86aa867a44a279e9b2b20c07039f18ee9df68ec0c4141280"
+      }
+    },
+    "F10": {
+      "saida": 0,
+      "segundos": 25,
+      "motivo": null,
+      "pngs": {
+        "F10-1-serfs-ociosos.png": "9cf6bddfc05b25ff84af47532ee7b357129afb0fb66f72881ad45ce8abcf9a0c",
+        "F10-2-serfs-a-caminho.png": "822d4b847851c883162a0e4e5ad304b7fa16823a7aaa400524cb346cbeae854e",
+        "F10-3-carga-em-transito.png": "7f0df1bd880cca78426075f88ad97699410d689dcbbacacafccb632db278fc66",
+        "F10-4-obra-entregue.png": "8cae76a7fc3fd8fee22bbc3b00b75c8d458e09da90c05938c32835f9dfa3c74d"
+      }
+    },
+    "F11a": {
+      "saida": 0,
+      "segundos": 19,
+      "motivo": null,
+      "pngs": {
+        "F11a-1-pausado.png": "d843e2d4bb1da3cab97f2631eae004dc78053f8752cdd0205cf1a496d1aca869",
+        "F11a-2-rodando-1x-sem-aviso.png": "2069bf749addada9e61242dea293070d6f5772ce43cfb3e6d54608e398059be6",
+        "F11a-3-2x-com-aviso.png": "6fe65821e2c86765972cdb5ac436137134c51841b874460308eccc8da2d3c305"
+      }
+    },
+    "F11c": {
+      "saida": 0,
+      "segundos": 76,
+      "motivo": null,
+      "pngs": {
+        "F11c-1-marcacao.png": "81a4c032e4544f21a6e641c53cb7e904ec1eed37c123c138e3fa7c9df9567c1a",
+        "F11c-2-estrutura.png": "9c130df375eb785609a16dba3da5099610da19f214b4009675662c6250043b44",
+        "F11c-3-completo.png": "ce83f57896c909041544599928c1c855b1aaaf5b1cfc669b9766847debe97b89",
+        "F11c-4-produzindo.png": "483f464fae72d2e131d02ba90eab8e5bfa7cc5ae28cb0b02f8d430209ed9eab0"
+      }
+    },
+    "F13b": {
+      "saida": 0,
+      "segundos": 44,
+      "motivo": null,
+      "pngs": {
+        "F13b-1-fila-cheia.png": "3b41b29d232ec45454c9c5f8729fbae0d1c5897da76cb158fd6564cb3be1ab01",
+        "F13b-2-treinando.png": "ab9dfcbc6730e41f49c103266b17934afe8e88a20a4d63cfd7af5805d8687acb"
+      }
+    },
+    "F16b": {
+      "saida": 0,
+      "segundos": 73,
+      "motivo": null,
+      "pngs": {
+        "F16b-1-armazem.png": "424fa0f90be0a4ea019582cf252ecb602b92b0eb5d90b918b87c0b0366f6df1b",
+        "F16b-2-obra.png": "a43879a186877cdb80a0decdfa50efd6b19ece093d196cbbc58558a1ebf627e7",
+        "F16b-3-completo-ocupado.png": "a2273f085256c869adb37046c452477ccf331b8a4021bf535b6d70a0b9900a6b",
+        "F16b-4-pausado.png": "e9c69b473a6460b9b09bcb6f27bf669766089d17bac1481dd98de91c657c5cdb",
+        "F16b-5-depois-de-demolir.png": "39b26719374050131b4596ed32284d24770a5520d326d157fef47b89f4ae59dd"
+      }
+    },
+    "F17": {
+      "saida": 0,
+      "segundos": 70,
+      "motivo": null,
+      "pngs": {
+        "F17-1-vila-inicial.png": "d843e2d4bb1da3cab97f2631eae004dc78053f8752cdd0205cf1a496d1aca869",
+        "F17-2-quatro-obras.png": "63e616ed6b200dec36fd0dfe47bcd8cb62abed567eb391ab28d48cd5b61c980f",
+        "F17-3-fila-da-escola.png": "4ef2c4ee03aee8723204c4c8980c1bc5157b07c8c7beeba866816cd5d946532d",
+        "F17-4-serraria-desbloqueada.png": "5aa206772762211e1aaaf705e87b14510dd02fbbd509b66d634d2630bcb8b1f7",
+        "F17-5-final.png": "37f77526f581655280fe973b3b25294f060b081a8ad787546e422a816df70a43",
+        "F17-6-serraria-ocupada.png": "94f43604c65389611ca6b8f81385c2688cdf8ffd01d15c4f52d157bcca833e51",
+        "F17-7-bodega-completa.png": "f550be5e366aa969866b4cd1276670179e9f34be0661243171d920a62587b28d"
+      }
+    },
+    "F17b": {
+      "saida": 0,
+      "segundos": 19,
+      "motivo": null,
+      "pngs": {
+        "F17b-1-vazio.png": "f9a079b3517fc4ac48eacc036ac9c1d35abe97c5feef8cd631ab9819ccafaff3",
+        "F17b-2-cheio.png": "6876480ac10523799908b9d01f89976a3f61b6adf5e074654e4da4ac74b1065b",
+        "F17b-3-painel.png": "c84da9ae4ba38df64ba18526f3254048f7706dcc2f6abc71a4f48c40f2ea1369"
+      }
+    },
+    "F17d": {
+      "saida": 0,
+      "segundos": 21,
+      "motivo": null,
+      "pngs": {
+        "F17d-1-nivelando.png": "d3ba8e8e29d3930f2e130ef27d9b6a1cb9243c406064bb26e545786da9906cae",
+        "F17d-2-nivelada.png": "68e49e664f356499037e7a34f0a03d43e6c3dfb290ff9854f9cebb0263d7a0ad"
+      }
+    },
+    "F17e": {
+      "saida": 0,
+      "segundos": 96,
+      "motivo": null,
+      "pngs": {
+        "F17e-1-marcacao.png": "7a0b3ee9d082d0ec152e7479f860a011499842ce1b25077f24bb492a34224a34",
+        "F17e-2-fundacao.png": "c370f8d8f60d0464e48d09bb01d9e7b9b1b78e4f2f1ebf6d844d39489c347079",
+        "F17e-3-estrutura.png": "5ea2133141c09e0df48fc9074d8efd83696699f99ef3b8367a4cb3ef55c10d54",
+        "F17e-4-paredes.png": "72af636aadbee01dfa50b2e38276a5a5e2109d20ac9ab1ab5592c4033e4ad6f6",
+        "F17e-5-cobertura.png": "04d55acc3329bb9352c50d6ce9bd56ecdb0ac93d3a6fe23f1c7cb2e7d06ca8ec",
+        "F17e-6-completo.png": "8609b714c0f95615499c9c4210c7932088fb8b64a98b76ca3e08ef463cc8d54a",
+        "F17e-7-produzindo.png": "c4ac71ff4d5dd0767993b5619d04540950bbb072bcbfc5600d5fb0b1b456e7cf"
+      }
+    },
+    "F17f": {
+      "saida": 0,
+      "segundos": 35,
+      "motivo": null,
+      "pngs": {
+        "F17f-1-armazem-escola-unidade.png": "d843e2d4bb1da3cab97f2631eae004dc78053f8752cdd0205cf1a496d1aca869",
+        "F17f-2-obra-placeholder-ao-lado-do-sprite.png": "768a233afd899e5ff1322b3a6a88e63b6ebf55b8cc32b9450320ef9900dd1f8a"
+      }
+    },
+    "F17g": {
+      "saida": 0,
+      "segundos": 105,
+      "motivo": null,
+      "pngs": {
+        "F17g-1-meia-madeira.png": "6026054f171b7f4dd274252436e36f5b5a7e3cecf39ad1a07b7e771e66fbb1be",
+        "F17g-2-virada.png": "0b74968199cacbe1cf44bfaab6e173735a38f5bad86427a3783499865233aa09",
+        "F17g-3-meia-pedra.png": "43cdb824a3ba28178143d12693ba9b493551f8247a20217aa5717f83e9b835ee"
+      }
+    },
+    "F18": {
+      "saida": 0,
+      "segundos": 16,
+      "motivo": null,
+      "pngs": {
+        "F18-1-o-campo-arado-em-pousio.png": "6b29519d57e0d249510c0b8385da0a33ecd9752fc04570cc0d5922928ab6d25a",
+        "F18-2-sem-fazenda-o-campo-nao-brota.png": "44a53800ee948b3f1f1f410837a8686782975a6d67cab5a2a83a4ab5d4d5f71e"
+      }
+    },
+    "F18a": {
+      "saida": 0,
+      "segundos": 19,
+      "motivo": null,
+      "pngs": {
+        "F18a-1-zoom-minimo.png": "a689baf7daeede8d891165948fd437006089b4a155cf37c25c673048e6b673bd",
+        "F18a-2-zoom-maximo.png": "d46739e29eb0611899b013cbe69fb6cad1ebaabf16f016094334cf2319fe64c6",
+        "F18a-3-zoom-neutro.png": "51cdb14872af3b8c166afac2489d115ea433c4f23d22add4cf7813883e0d759a"
+      }
+    },
+    "F18b": {
+      "saida": 0,
+      "segundos": 16,
+      "motivo": null,
+      "pngs": {
+        "F18b-1-canto-sudeste.png": "007adc512bc1a897f6decf88c1a3b4b0eddbc8617c9434d5fdbab51658a4a96c",
+        "F18b-2-canto-sudeste-neutro.png": "c64fd19cbce3a63fae6ad9d90f4f6ae05ea26ff7bcdde8b5c77b33b170fe2df7"
+      }
+    },
+    "F18d-2": {
+      "saida": 0,
+      "segundos": 15,
+      "motivo": null,
+      "pngs": {
+        "F18d-2-1-canteiro-desenhado.png": "ddc7fe7ac331d5336b52b3ae547d0c92c407f5833f5acd13aeaee626eeda722d",
+        "F18d-2-2-metade-erguida.png": "52c207b46a9be9d4e8588b97d271cd145374f2d124f41a1d84e2362e1d4d9249",
+        "F18d-2-3-rua-de-pe.png": "c4b579ba4b5ce971b9c880d0003a195c00780510d13e10c9cdfb38be65572509"
+      }
+    },
+    "F18e": {
+      "saida": 0,
+      "segundos": 14,
+      "motivo": null,
+      "pngs": {
+        "F18e-1-previa-diagonal.png": "c183d298dfb1be0de76b695afd9250abe119deedacecf80ccbafdc13d7f55739",
+        "F18e-2-estrada-diagonal.png": "d3caf87a97a1f030e2c37c181d61b582aa1e831a866d4a9fec16e23837c44b78"
+      }
+    },
+    "F18f": {
+      "saida": 0,
+      "segundos": 24,
+      "motivo": null,
+      "pngs": {
+        "F18f-1-pilha-separada.png": "6a3a63836d2346b081e3f57866f6dd64f5513040dd98d11a81b7d7cc7a16f638",
+        "F18f-2-pilha-de-perto.png": "4a7b610088316371fda64aa5bdc573b966744091a382e3f04e568a3391192d20"
+      }
+    },
+    "F18i": {
+      "saida": 0,
+      "segundos": 21,
+      "motivo": null,
+      "pngs": {
+        "F18i-1-canteiro-desenhado.png": "c2b8a4055ed2fd700bc1144eb54d84d31b71d2a7efe19855b97f4cdb7296490a",
+        "F18i-2-meio-arado.png": "9979c6c29531ee8177298c5a352f27d684454daba75c1c7b73d5ba764f293f5c",
+        "F18i-3-canteiro-apagado.png": "177861ba1cd64e07c354b3704b2973356ad60f18a2d0689095b6099f6b5d1a05"
+      }
+    },
+    "F20c": {
+      "saida": 0,
+      "segundos": 16,
+      "motivo": null,
+      "pngs": {
+        "F20c-1-cheia-sem-marcador.png": "d843e2d4bb1da3cab97f2631eae004dc78053f8752cdd0205cf1a496d1aca869",
+        "F20c-2-com-fome-sem-marcador.png": "d843e2d4bb1da3cab97f2631eae004dc78053f8752cdd0205cf1a496d1aca869",
+        "F20c-3-abaixo-do-limiar-com-marcador.png": "33ab5d8fea36c231a31ed747d2cb2e986723599fb906f211efedc98cdf070aea",
+        "F20c-4-marcador-de-perto.png": "490de2e50c87a41e48d6b48b4b0aa9fb97c698a677a0ed795d4baf42e394acba"
+      }
+    },
+    "F21b": {
+      "saida": 0,
+      "segundos": 47,
+      "motivo": null,
+      "pngs": {
+        "F21b-1-o-veio-na-serra.png": "2b0f5a96b74fdba9f17d17407bbf2c7c7508fc4e816064d0ca89de69a5d9271f",
+        "F21b-2-a-previa-conta-o-veio.png": "75a7a0e0be1a8e4efa3695d1181cf372941c7709858c8d58a71b83ec59345b60",
+        "F21b-3-sobre-o-veio-a-planta-recusa.png": "9be899b05dce7cfd253d6321e0ea4c867f7fc1cf7d023ce4858d91b5aff6cc0b"
+      }
+    },
+    "F22": {
+      "saida": 0,
+      "segundos": 43,
+      "motivo": null,
+      "pngs": {
+        "F22-1-abertura-sem-aviso.png": "d843e2d4bb1da3cab97f2631eae004dc78053f8752cdd0205cf1a496d1aca869",
+        "F22-2-sem-trabalhador.png": "17487cdbf388c1ea4af7985575c238ad79b2fbaf73c052b294661e192b5a86d3",
+        "F22-3-pausado-sem-aviso.png": "7eaba264de082a6fc883c795a3e41fbe619a8e1bd24660977e84acc4e3833042",
+        "F22-4-sem-trabalhador-e-sem-estrada.png": "a89e708ab08a369084439168fde311385a71f3c9fcb59632ea8c1f2158d61d76"
+      }
+    },
+    "F23b": {
+      "saida": 0,
+      "segundos": 26,
+      "motivo": null,
+      "pngs": {
+        "F23b-1-guardada.png": "0aac27f946b7502638d7eece32dae64462dc6c460712b8b443f5d8ff1160afd7",
+        "F23b-2-recado-retomada.png": "7abbd8ac75f9561a7930a3e6367d51a889d7e6273654a70fcad6ef98bca33da9",
+        "F23b-3-retomada.png": "0aac27f946b7502638d7eece32dae64462dc6c460712b8b443f5d8ff1160afd7"
+      }
+    },
+    "F24c": {
+      "saida": 0,
+      "segundos": 30,
+      "motivo": null,
+      "pngs": {
+        "F24c-1-ajuda.png": "eecc492828d3c6e136c3300ac7e0fc81f029887d7f1a5cd291d76f15ce07dc9f",
+        "F24c-2-escudo-dez.png": "b4a5e81dd39886e6e8e9276e8caf37b5ed25bb09f7b8a411e2a5cdac6ec9bb43"
+      }
+    },
+    "F25b": {
+      "saida": 0,
+      "segundos": 19,
+      "motivo": null,
+      "pngs": {
+        "F25b-1-quartel-com-um-machado.png": "88e9b39127e746d059f13e3452ba1b871b1961d4ab68ef8e4e8856340280d7b9",
+        "F25b-2-formado.png": "050ac4a1545a11dd2641b3e5a7c4b0b863cc1e20de8befdff558b0d539d46aa5"
+      }
+    },
+    "F26b": {
+      "saida": 0,
+      "segundos": 34,
+      "motivo": null,
+      "pngs": {
+        "F26b-1-um-soldado-no-tile-cheio.png": "04a74dc84110c650d743f15d62d4d5e3c43966be4e20f1a5c523a680a76ddac4",
+        "F26b-2-caixa-em-curso.png": "219b41cc4a2c952db97c99b93d14486ec0eb493d00e9e62f3a4bb083d3a915b5",
+        "F26b-3-grupo-selecionado.png": "ea9a3951ff310e3deeb0fb32beb175d09a74887d596491fda01fd7e304ad55f2",
+        "F26b-4-grupo-marchou.png": "9b500dfd75466e26546560c3bff3118cb1cd282af2acea9c784ede32b5ca0c37",
+        "F26b-5-grupo-atacando.png": "f8f2ba851caf54a97d927a354940fd83432ca786dce5442efb8df4693e6cee4e"
+      }
+    },
+    "F28b": {
+      "saida": 0,
+      "segundos": 29,
+      "motivo": null,
+      "pngs": {
+        "F28b-1-pedra-no-ar.png": "c79e5e676f437ccab73b59e04ca94834ebfae5b836d2a320a4db86e5c48b3668",
+        "F28b-2-torre-sem-pedra.png": "5846e4350f7e4fa6b178357f83ab6a24fe9d9f221cb05eb8f32b0af7c6c9d7db"
+      }
+    },
+    "F34": {
+      "saida": 0,
+      "segundos": 21,
+      "motivo": null,
+      "pngs": {
+        "F34-1-vitoria.png": "40c9e9b171088cd65da60f9fa3464b21986b673964e3c24effb993740c595dd3",
+        "F34-2-derrota.png": "7481f561c1001bb0e25da8880970db322879ddae2e4ce9480e7dc65dbbc1c708"
+      }
+    },
+    "F35": {
+      "saida": 0,
+      "segundos": 24,
+      "motivo": null,
+      "pngs": {
+        "F35-1-feira-sem-mercadoria.png": "ffcefd8792bc4189abe927674c74e82694c241c6da37c114132f2435d861cb05"
+      }
+    },
+    "F36": {
+      "saida": 0,
+      "segundos": 22,
+      "motivo": null,
+      "pngs": {
+        "F36-1-prefeitura-com-5.png": "a7397bdc7d12737ddd6da00bb28a38dc7f852b3deeeb462842cba90a69ee455e",
+        "F36-2-contratado.png": "7d9b8dd45ee56817d82a021a8a83cf680aab15449a48aa86f1fbd0c2fa577185"
+      }
+    },
+    "MATERIAIS": {
+      "saida": 0,
+      "segundos": 13,
+      "motivo": null,
+      "pngs": {
+        "MATERIAIS-1-pedreira-lenhador-sem-legenda.png": "db1bd6f39ca4fd42f50ea2bf989d8d854f46eb1522edf0669d45083c92632ad6"
+      }
+    },
+    "STOREHOUSE": {
+      "saida": 0,
+      "segundos": 7,
+      "motivo": null,
+      "pngs": {
+        "STOREHOUSE-1-armazem-coronel-sem-legenda.png": "d843e2d4bb1da3cab97f2631eae004dc78053f8752cdd0205cf1a496d1aca869"
+      }
+    },
+    "UI-barra-a": {
+      "saida": 0,
+      "segundos": 24,
+      "motivo": null,
+      "pngs": {
+        "UI-barra-a-1-sombra-grade.png": "d50a01a519c637e1cd706d9b47060226bcf75c3631e756755e9b8d120fa33612",
+        "UI-barra-a-2-cartao-no-teto.png": "98a2fb5adba88022e69f424cb31456359c760e49f709f7b919c297d7a26d4e0d",
+        "UI-barra-a-3-hover-aba.png": "cf5ec454acdb7e8d34dd8b24d2519d939233128098a5cdfcb1b643d1bfe98f90",
+        "UI-barra-a-4-estatisticas.png": "fd4b2b66f277ee3046647a9173dea75dc64d161c8af46537045fdf02cdb8a77f",
+        "UI-barra-a-5-escola.png": "e09fc7a4802e17ffe469479ff411efdb0bb525e78f422dec93b6545eeb5b716b"
+      }
+    }
+  },
+  "fim": "2026-10-01T04:49:16.813Z"
+}

@@ -16426,4 +16426,12 @@ Branch `dellanio/relevo-a`, plano e notas em `docs/planos/relevo-a.md` (a fonte:
   recortado. Correção pronta, não aplicada: `tetoDaLuzDoChao`.
 - `renderer.addBlendMode` é risco no Phaser 4 (registrado no estudo do relevo).
 
+**Evidências:** os JSONs em `docs/evidencias/relevo-a/` (commitados: as medidas do relevo, `linha-de-base.json`,
+`branch-flag-desligada.json` e `comparacao.json`); os 17 PNGs do relevo em
+`D:\projetos-pessoal\evidencias\relevo-a\`, fora do repositório. A `comparacao.json`: 86 roteiros
+comuns, 86 com o mesmo código de saída (todos 0); 219 capturas, das quais 105 mudam a cada corrida
+pelo grão do chão (a `main` difere dela mesma; ver D-TELA-CHAO-DETERMINISTICO) e 114 são estáveis.
+Entre as 114 estáveis, 110 com hash igual e 4 diferentes por unidade ou texto deslocado no relógio de
+parede (`F23b-2`, `F11a-3`, `F-D4-2`, `D-TELA-02-1`, conferidas no olho).
+
 **Aberto:** ligar a flag por padrão espera a arte de terreno da F-TR.
