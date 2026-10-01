@@ -473,6 +473,19 @@ no PROGRESS entra no commit seguinte à avaliação, com o hash que o selo mostr
      `.verify-ok`. (Emenda de 2026-10-01: a primeira versão dizia "guarda no fonte", que é varrer
      texto, e não prova o que o script faz.)
 
+**O portão do push (decisão do operador, 2026-10-01; aceite antes do código).** O hook `pre-push`
+(`.githooks/pre-push`, ligado por `npm run hooks:instalar`, que põe `core.hooksPath` em `.githooks`)
+recusa o push se o `.verify-ok` não é um selo `completo` do commit empurrado. O motivo: um push saiu
+com o `verify` vermelho (`6b29993`), porque o comando não dependia da saída do `verify`. **Aceite:**
+1. a regra pura, por tabela (`tools/pre-push-regra.js`). Passa: o selo `completo` cujo `commit` é o
+   sha empurrado de cada branch (`refs/heads/*`). Recusa: o selo de outro commit, o selo `rapido`, a
+   falta de selo, o selo ilegível e o formato antigo (só a data, sem commit). Apagar uma ref remota e
+   empurrar tag não pedem selo;
+2. **push com selo velho é recusado, como processo:** num repositório git falso com um remoto bare e
+   o hook ligado, faz-se um commit depois do selo, e o push sai diferente de 0, com o remoto
+   intocado. Com o selo do HEAD, o mesmo push passa;
+3. o hook não roda teste nenhum: só lê o selo. Quem gera o selo continua sendo o `npm run verify`.
+
 **O portão:** `test-results.json` só aceita escrita depois de `npm run verify`
 passar, e o selo vale 15 minutos. Isso é hook, não pedido educado — o agente não
 consegue marcar feature como pronta sem ter verificado.
