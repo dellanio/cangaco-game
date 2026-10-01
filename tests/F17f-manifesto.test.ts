@@ -20,6 +20,8 @@ import type { ContextoDasCamadas } from '../src/render/manifesto-camadas';
 import { contextoDasCamadas } from '../src/render/predios';
 import { ORDEM_DOS_ESTAGIOS } from '../src/render/estagio-obra';
 import { CHAVES_DA_REVELACAO } from '../src/render/manifesto';
+import { entradasDosIcones, errosDosIconesDeMercadoria } from '../src/render/icone-da-mercadoria';
+import type { IconesDeMercadoria } from '../src/render/icone-da-mercadoria';
 import { gravarEvidencia } from './helpers/evidence';
 
 const manifesto = JSON.parse(readFileSync('assets/manifest.json', 'utf8')) as Manifesto;
@@ -353,5 +355,34 @@ describe('F-VIVO-0 — o manifesto aceita o predio vivo', () => {
     acusa(comAncoras('sawmill', {
       trabalho: { area: [0.3, 0.45, 0.6, 0.75] }, estoque: { entrada: [[0.4, 0.5]], saida: [[0.8, 0.9]] },
     }), /entrada\[0\] cai dentro de trabalho.area/);
+  });
+});
+
+describe('D-ARTE-01 — icones.mercadorias aponta os icones que ja existem', () => {
+  const icones = (manifesto as unknown as { icones?: { mercadorias?: IconesDeMercadoria } }).icones?.mercadorias;
+  const mercadorias = gameData.economia.mercadorias;
+  const dimensao = (arquivo: string): [number, number] | null =>
+    existsSync(`assets/${arquivo}`) ? dimensaoDoPng(`assets/${arquivo}`) : null;
+  const ESPERADAS = ['coal', 'corn', 'fish', 'gold', 'gold_ore', 'iron_ore', 'stone', 'timber'];
+
+  it('o manifesto real passa: todo id e mercadoria, todo arquivo existe com o tamanho declarado', () => {
+    expect(errosDosIconesDeMercadoria(icones, mercadorias, dimensao)).toEqual([]);
+  });
+
+  it('sao exatamente as 8 do escopo', () => {
+    expect(entradasDosIcones(icones).map(([id]) => id).sort()).toEqual(ESPERADAS);
+  });
+
+  it('cada regra acusa, num manifesto escrito no teste', () => {
+    const base = entradasDosIcones(icones)[0]?.[1];
+    if (base === undefined) throw new Error('sem icone para copiar');
+    const acusa = (falso: IconesDeMercadoria, padrao: RegExp): void => {
+      expect(errosDosIconesDeMercadoria(falso, mercadorias, dimensao).join(' | ')).toMatch(padrao);
+    };
+    acusa({ arma_madeira: base }, /arma_madeira: nao e mercadoria/);
+    acusa({ timber: { ...base, arquivo: 'sprites/ui/nao-existe.png' } }, /nao-existe\.png nao existe/);
+    acusa({ timber: { ...base, tamanho: [base.tamanho[0] + 1, base.tamanho[1]] } }, /tamanho declarado/);
+    // o comentario do dado nao e entrada
+    expect(errosDosIconesDeMercadoria({ _doc: 'nota' }, mercadorias, dimensao)).toEqual([]);
   });
 });
