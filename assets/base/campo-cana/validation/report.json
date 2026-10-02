@@ -1,0 +1,106 @@
+{
+  "id": "campoCana",
+  "kind": "terrain",
+  "mode": "trial",
+  "approved": false,
+  "success": true,
+  "errors": [],
+  "warnings": [
+    "Ensaio técnico sem calibração cromática; não equivale a aprovação"
+  ],
+  "frames": [
+    {
+      "state": "padrao",
+      "direction": "front",
+      "index": 0,
+      "path": "assets/sprites/terrain/campo-cana.png",
+      "footline": 63,
+      "centroidX": 31.5,
+      "regions": [
+        {
+          "luma": 90.33488536931817,
+          "hue": 23.804191637582505
+        },
+        {
+          "luma": 90.61118050595235,
+          "hue": 23.821751670480694
+        },
+        {
+          "luma": 90.33800669642861,
+          "hue": 23.78182692608692
+        }
+      ]
+    },
+    {
+      "state": "v1",
+      "direction": "front",
+      "index": 0,
+      "path": "assets/sprites/terrain/campo-cana-v1.png",
+      "footline": 63,
+      "centroidX": 31.5,
+      "regions": [
+        {
+          "luma": 90.10892088068171,
+          "hue": 23.779552756603152
+        },
+        {
+          "luma": 90.67323363095241,
+          "hue": 23.812843783959636
+        },
+        {
+          "luma": 90.42265952380953,
+          "hue": 23.7816182775386
+        }
+      ]
+    },
+    {
+      "state": "v2",
+      "direction": "front",
+      "index": 0,
+      "path": "assets/sprites/terrain/campo-cana-v2.png",
+      "footline": 63,
+      "centroidX": 31.5,
+      "regions": [
+        {
+          "luma": 90.51403764204557,
+          "hue": 23.821427390482995
+        },
+        {
+          "luma": 90.7218226190476,
+          "hue": 23.842617723735827
+        },
+        {
+          "luma": 90.20542202380945,
+          "hue": 23.76838724947038
+        }
+      ]
+    },
+    {
+      "state": "v3",
+      "direction": "front",
+      "index": 0,
+      "path": "assets/sprites/terrain/campo-cana-v3.png",
+      "footline": 63,
+      "centroidX": 31.5,
+      "regions": [
+        {
+          "luma": 90.20609502840908,
+          "hue": 23.76303382176974
+        },
+        {
+          "luma": 90.91616011904767,
+          "hue": 23.839386661301944
+        },
+        {
+          "luma": 90.56123824404759,
+          "hue": 23.793953785359918
+        }
+      ]
+    }
+  ],
+  "contactSheets": [
+    "C:\\Users\\della\\orca\\workspaces\\cangaco-game\\D-ARTE-CHAO-ROCA\\assets\\base\\campo-cana\\validation\\contact-0.5.png",
+    "C:\\Users\\della\\orca\\workspaces\\cangaco-game\\D-ARTE-CHAO-ROCA\\assets\\base\\campo-cana\\validation\\contact-1.png",
+    "C:\\Users\\della\\orca\\workspaces\\cangaco-game\\D-ARTE-CHAO-ROCA\\assets\\base\\campo-cana\\validation\\contact-2.png"
+  ]
+}

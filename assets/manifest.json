@@ -274,7 +274,7 @@
       }
     },
     {
-      "id": "campoArado",
+    "id": "campoArado",
       "tipo": "terreno",
       "footprint": [
         1,
@@ -299,6 +299,25 @@
         "base": "base/terrain-water-field/terrain-water-field-source.png",
         "semente": null,
         "nota": "Primeira celula da linha de terra arada do atlas autoral; derivacao 64x64."
+      }
+    },
+    {
+      "id": "campoCana",
+      "tipo": "terreno",
+      "footprint": [1, 1],
+      "tamanho": [64, 64],
+      "anchor": [0.5, 1],
+      "estados": {
+        "padrao": "sprites/terrain/campo-cana.png",
+        "v1": "sprites/terrain/campo-cana-v1.png",
+        "v2": "sprites/terrain/campo-cana-v2.png",
+        "v3": "sprites/terrain/campo-cana-v3.png"
+      },
+      "licenca": "arte propria do projeto, gerada para o projeto em 2026-10-02",
+      "origem": {
+        "base": "base/campo-cana/generation-02-raw.png",
+        "semente": "imagegen:exec-78f1200e-09ce-4115-ab13-fd11554eae50",
+        "nota": "Quatro variantes derivadas da geracao 02 pelo derive.py; master 128x128 e contato versionados ao lado da base."
       }
     },
     {

@@ -1,0 +1,13 @@
+{
+  "id": "campoCana",
+  "kind": "terrain",
+  "mode": "trial",
+  "frameSize": [64, 64],
+  "masterSize": [128, 128],
+  "frames": [
+    { "state": "padrao", "direction": "front", "index": 0, "path": "assets/sprites/terrain/campo-cana.png", "masterPath": "assets/base/campo-cana/campo-cana-master.png", "pivot": [0.5, 1] },
+    { "state": "v1", "direction": "front", "index": 0, "path": "assets/sprites/terrain/campo-cana-v1.png", "masterPath": "assets/base/campo-cana/campo-cana-master-v1.png", "pivot": [0.5, 1] },
+    { "state": "v2", "direction": "front", "index": 0, "path": "assets/sprites/terrain/campo-cana-v2.png", "masterPath": "assets/base/campo-cana/campo-cana-master-v2.png", "pivot": [0.5, 1] },
+    { "state": "v3", "direction": "front", "index": 0, "path": "assets/sprites/terrain/campo-cana-v3.png", "masterPath": "assets/base/campo-cana/campo-cana-master-v3.png", "pivot": [0.5, 1] }
+  ]
+}
