@@ -28,3 +28,9 @@ O tile base contém só cor e material. Não pinte nele luz direcional, sombra p
 ## Luz e volume
 
 Para recursos volumétricos, siga os quatro valores, deslocamento de matiz e luz fixa do pianco-render-contract; teste também tint 0,8 nos três zooms. Terreno base é albedo e não recebe essa pintura de luz. Transições suaves dentro do material são permitidas; proíbem-se gradiente de fundo, vinheta e brilho digital/plástico.
+
+## Serra contínua e esgotamento localizado
+
+Para rock, preservar uma formação geológica grande e conectada. Os tiles controlam a extração; não repetir uma pequena serra inteira em cada tile. Planejar cinco patamares de volume e ausência total em zero, com retirada local assimétrica, cristas baixando pelo topo, faces irregulares e apoio próprio. Manter câmera, escala, canvas e pivô; nunca reduzir escala, recentralizar o remanescente ou apagar a base deixando o topo suspenso.
+
+Carregue references/pedra-modular.md para medidas do KaM, decisões do operador e portões de aprovação. As prévias de recortes e de12 mini-serras foram reprovadas para aparência. A prévia da serra contínua ainda é candidata: entulho, faces regulares e duas reprovações de luz permanecem pendentes. Não aplicar imagens da formação inteira ao consumidor rock1x1 nem alterar exploração sem item e aceite próprios. A regra de três estágios dos demais recursos permanece até decisão específica.
