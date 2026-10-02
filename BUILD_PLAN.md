@@ -5904,6 +5904,28 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
   - o `tools/transladar-mundo.js` não translada a altura: com a flag desligada é irrelevante, e
     o contrato do arquivo publicado está no `FORA_DO_MUNDO_TRANSLADADO`.
 
+- **Fechamento da comparação (pedido do operador, 2026-10-02: "providenciar"; aceite antes da
+  corrida).** As duas pendências que seguravam a chave:
+  1. **Os 10 roteiros sem par** (BUG-U, BUG-W, BUG-X, BUG-Z, C-COMIDA-01d, C-TELA-05, C2, C4,
+     D-PRODUCAO-03 e D-TELA-07) rodam nos dois lados, com os `*.save.txt` no lugar antes de começar.
+     - **Lado A:** a `main` atual, com o relevo desligado, como está.
+     - **Lado B:** uma worktree descartável da mesma `main`, com o relevo tirado de `src/`, como na
+       corrida de 2026-10-01.
+
+     Os códigos de saída batem, e toda captura estável tem o sha256 igual entre os lados. Os
+     instáveis conhecidos (os 6, mais o F11a-2) são listados e não contam.
+  2. **A F24c-1 (a ajuda):** a diferença de 88 136 px é explicada por medida. As duas capturas
+     são comparadas recortando a caixa do painel de ajuda. Se a diferença some fora da caixa e
+     dentro dela é a rolagem (o mesmo conteúdo deslocado), a hipótese se confirma. Senão, a causa
+     fica registrada como aberta, e a chave continua false.
+  3. **Por medida, e não por julgamento:** a chave volta a `true` só se os dois itens acima
+     fecharem. Quem marca o `test-results.json` é o fechamento da fase, com o `verify` completo,
+     e não este item.
+  4. **Sem mudança de código do jogo** neste item. A worktree do lado B é apagada no fim, e o vite
+     órfão é encerrado pela liberação do `shot.js`.
+  5. **No PROGRESS:** a tabela dos 10 roteiros (saída A, saída B, capturas iguais e diferentes),
+     a medida da F24c-1 e o veredito.
+
 ### D-TERRENO-ALTURA — Altura só de render no gerador de mapa (id de 2026-09-30; antes D-TERRENO-01)
 - **ENTREGUE (2026-09-30).** `tools/gerar-mapa.js` emite `data/maps/sertao-128.relevo.json`: um
   degrau inteiro (0–35, um char base-36) por vértice, 129 × 129, a partir dos tipos de terreno e
@@ -6551,11 +6573,216 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
      `git diff main -- src/sim` vazio.
 - **Depende da D-TELA-POEIRA-AMBIENTE:** reaproveita o pool e o hash dela.
 
+#### D-TELA-EFEITOS-DO-TRABALHO — Lasca no machado e pó na pedreira
+- **Origem (2026-10-02, pedido do operador; §15 do `docs/fase-animacao-vida-do-mundo.md`):** o
+  efeito ligado ao trabalho real. Esta primeira entrega cobre dois casos: o lenhador cortando
+  solta lasca de madeira, e o pedreiro na pedreira solta pó de pedra. A fagulha da forja vai na
+  D-TELA-FUMACA-DA-FORJA, que espera os PNG novos.
+- **Escopo:** só render. O efeito nasce no **tile de colheita** do especialista em `colhendo`
+  (`src/sim/systems/especialistas.ts`: `fsmData.tarefa` → a tarefa do JobBoard → `origemTile`),
+  lido do estado pela ponte, sem mudar a sim. As partículas seguem o molde sem estado da fumaça e
+  da poeira (hash da semente, sem `Math.random()`, pool reaproveitado). A lasca cai em arco, e o
+  pó sobe e se espalha com o vento.
+- **Aceite (escrito antes do código, 2026-10-02):**
+  1. **A regra de quem emite** é uma função pura, por tabela: emite só o `woodcutter` e o
+     `stonemason` em `colhendo` com tarefa de tile válida. A mesma unidade em `indo_colher` ou
+     `voltando`, outro tipo em `colhendo` e uma tarefa sumida não emitem.
+  2. **A função das partículas** `particulasDoTrabalho(config, vento, tick, alfa, emissor,
+     colhendoDesde, parouEm)`, por tabela em `tests/D-TELA-EFEITOS-DO-TRABALHO.test.ts`:
+     - as mesmas entradas dão a mesma saída;
+     - nada nasce antes do `colhendoDesde` nem depois do `parouEm`, e tudo some até
+       `parouEm + vidaTicks`;
+     - a lasca desce depois de subir (o y passa por um mínimo), e o pó sobe e anda no sentido do
+       vento;
+     - o total por emissor é no máximo `maximoPorEmissor`;
+     - o efeito tem ritmo: a emissão vem em pulsos a cada `intervaloDoGolpeTicks`, e não contínua.
+  3. **O dado:** `data/efeitos-do-trabalho.json`, só de interface, por tipo (cor, vida, máximo,
+     intervalo do golpe). A regra `interface/efeitos-do-trabalho` tem um caso que reprova por
+     campo, e reprova também um tipo que não é unidade de `data/units.json`.
+  4. **O desenho:** o pool é próprio e reaproveitado, e só redesenha quando o tick, o alfa ou a
+     câmera mudam. O efeito só aparece na vista. A camada fica acima do chão e dos recursos, com o
+     `depth` pelo pé do tile de colheita.
+  5. **O roteiro `tools/shots/D-TELA-EFEITOS-DO-TRABALHO.js`:**
+     - com uma partida montada pela sim no teste, como os outros cenários (lenhador e pedreiro
+       ocupando a casa, com árvore e pedra ao alcance);
+     - avança pela ponte até um lenhador em `colhendo`, e afirma partículas de lasca no tile dele;
+     - faz o mesmo para o pedreiro com pó;
+     - avança até o lenhador sair do `colhendo`, e afirma as partículas dele em 0 depois de
+       `vidaTicks`;
+     - um passo despausado (§8);
+     - as capturas são abertas.
+  6. **Não-regressão:**
+     - os roteiros `F-REPL-e`, `F-T3`, `D-TELA-FUMACA-DA-PADARIA` e `ARTE-VILA` saem 0;
+     - o `verify:rapido` passa, e os testes diretos da fumaça, da poeira e de manifesto passam;
+     - `git diff main -- src/sim` vazio.
+
+#### D-TELA-AGUA-PEIXE — Ondulação de peixe e o pescador mexendo a água
+- **Origem (2026-10-02, pedido do operador; §9 do documento):** círculos ocasionais de peixe e a
+  perturbação perto do pescador. A água já troca de variante pelo tick (D-TELA-AGUA-VIVA).
+- **Escopo:** só render. Um anel que se abre e some (círculo desenhado, sem arte), em dois casos:
+  - **peixe:** raro, num tile de `agua` da vista, com o tile e o tick por hash da semente. No
+    máximo `maximoNaVista` de cada vez;
+  - **pescador:** o `fisherman` em `colhendo` (o tile da tarefa, como na
+    D-TELA-EFEITOS-DO-TRABALHO) abre anéis a cada `intervaloDoPescadorTicks`, enquanto colhe.
+- **Aceite (escrito antes do código, 2026-10-02):**
+  1. **A função pura** `aneisDaAgua(config, tick, alfa, vista, ehAgua, pescadores)` em
+     `src/render/agua-peixe.ts`, por tabela em `tests/D-TELA-AGUA-PEIXE.test.ts`:
+     - as mesmas entradas dão a mesma saída;
+     - todo anel está num tile em que `ehAgua` é verdadeiro;
+     - o raio cresce e a opacidade cai com a idade, e o anel some em `vidaTicks`;
+     - sem pescador, numa vista fixa de água, a fração de ticks com anel de peixe vai para o
+       `test-output`, e numa janela de 4 × `intervaloDoPeixeTicks` há pelo menos um anel;
+     - com um pescador em `colhendo`, há anel no tile dele a cada `intervaloDoPescadorTicks`; sem
+       o `colhendo`, não há.
+  2. **O dado:** `data/agua-peixe.json`, só de interface, com a regra `interface/agua-peixe` e um
+     caso que reprova por campo.
+  3. **O desenho:** pool próprio e reaproveitado, só na vista, e só redesenha quando o tick, o alfa
+     ou a câmera mudam. O anel fica acima da água e da borda, e abaixo das unidades.
+  4. **A água viva não muda:** o roteiro `D-TELA-AGUA-VIVA` continua com a variante de cada tile
+     igual à da função pura.
+  5. **O roteiro `tools/shots/D-TELA-AGUA-PEIXE.js`:**
+     - na vista do açude, avança pela ponte até um anel de peixe e o captura;
+     - com um pescador em `colhendo`, numa partida montada pela sim no teste, afirma o anel no
+       tile dele e o captura;
+     - o sha256 da captura do peixe é igual nas duas corridas;
+     - um passo despausado (§8);
+     - as capturas são abertas.
+  6. **Não-regressão:**
+     - os roteiros `D-TELA-AGUA-VIVA`, `F-T4a`, `D-TELA-POEIRA-AMBIENTE` e `ARTE-VILA` saem 0;
+     - o `verify:rapido` passa, e o teste da água passa direto;
+     - `git diff main -- src/sim` vazio.
+
+#### D-TELA-FUMACA-DA-FORJA — Fumaça e fagulha na forja e na fundição
+- **Origem (2026-10-02, pedido do operador):** a fumaça da padaria (D-TELA-FUMACA-DA-PADARIA)
+  deixou de fora a forja (`iron_smithy`) e a fundição (`metallurgists`), e o §15 pede a fagulha
+  na forja.
+- **Depende dos PNG novos dos 17 prédios** (o PR `arte-17-predios`): o ponto da chaminé sai do
+  PNG, e esses dois prédios estão no lote. **Só começa com o PR mergeado na `main`.**
+- **Escopo:** só render e manifesto.
+  - O `ancoras.trabalho.fumaca` é medido no PNG novo da `iron_smithy` e da `metallurgists`.
+  - A fumaça reusa o `particulasDaFumaca` sem mudança.
+  - A fagulha é uma segunda espécie de partícula da forja: pontos quentes que sobem rápido e
+    somem cedo, em pulsos, só enquanto ela trabalha. A fagulha nasce no ponto do fogo, que é um
+    ponto novo no manifesto, `ancoras.trabalho.fogo`, e a regra do manifesto ganha esse ponto.
+- **Aceite (escrito antes do código, 2026-10-02):**
+  1. **Os pontos:** a `iron_smithy` e a `metallurgists` declaram `trabalho.fumaca`, e a
+     `iron_smithy` declara também `trabalho.fogo`. Os pontos são medidos no PNG (os pixels e a
+     fração vão para o PROGRESS). O `F17f-manifesto` reprova um `fogo` que não é ponto, com um
+     caso escrito no teste.
+  2. **A fagulha** `particulasDaFagulha(config, tick, alfa, ponto, trabalhandoDesde, parouEm)`,
+     pura, por tabela: as mesmas entradas dão a mesma saída; ela sobe; vive menos que a fumaça;
+     vem em pulsos; não há nada sem trabalho; e tudo some até `parouEm + vidaTicks`.
+  3. **Quem diz se trabalha** é o mesmo predicado do `quadroDaFumaca`, como na padaria.
+  4. **O dado:** a fagulha fica em `data/fumaca.json` (um bloco `fagulha`), com a regra
+     `interface/fumaca` estendida e um caso que reprova.
+  5. **O roteiro `tools/shots/D-TELA-FUMACA-DA-FORJA.js`,** com uma forja e uma fundição
+     trabalhando, montadas pela sim no teste como os outros cenários:
+     - afirma fumaça nas duas e fagulha na forja;
+     - pausa a forja pelo painel (despausado, §8) e afirma as duas em 0 depois da vida;
+     - as capturas são abertas.
+  6. **Não-regressão:**
+     - os roteiros `D-TELA-FUMACA-DA-PADARIA`, `F-VIVO-b` e `ARTE-VILA` saem 0;
+     - o `verify:rapido` passa, e o `F17f-manifesto`, o `F-SPR-carregamento`, o `C10-largura` e
+       o `F-ESC-escala` passam direto;
+     - `git diff main -- src/sim` vazio.
+
+#### D-TELA-LIMPEZA-DO-MUNDO-VIVO — Três ressalvas das revisões de 2026-10-02
+- **Origem:** as ressalvas das revisões da sessão Claude no PROGRESS de 2026-10-02. Vai no mesmo
+  pacote do `verify-rapido-dado-lido` (abaixo), por decisão do operador.
+- **Aceite (escrito antes do código, 2026-10-02):**
+  1. **O pool da fumaça da padaria demolida é destruído,** e não só escondido. A ponte publica o
+     `poolDaFumaca` (já existe). Um teste da regra pura que decide quais chaminés sobram (o
+     conjunto de ids de prédio presentes) prova que a chaminé de um prédio que saiu é removida. O
+     roteiro `D-TELA-FUMACA-DA-PADARIA` ganha um passo: ele demole a padaria pela ponte de
+     comando ou pelo painel (despausado, §8) e afirma que o `poolDaFumaca` cai.
+  2. **O teste do cacto fica mais leve:** a guarda de equivalência da espécie (o
+     `tests/helpers/textura-da-vegetacao-antes-cacto.txt` compilado com `transpileModule` e
+     `new Function`) é trocada por uma **tabela fixa**: os ids de tile e a espécie esperada num
+     bloco de 16 × 16, para o conjunto completo de espécies e para dois subconjuntos. A tabela é
+     gerada uma vez pela função atual e conferida. O helper `.txt` sai. **A guarda tem de acusar:**
+     com o hash trocado, o teste novo reprova (prova da sessão, registrada no PROGRESS).
+  3. **O chão da cana na troca de partida:** o predicado `quadroDoChaoDaCanaMudou` recebe também
+     uma identidade da partida. Uma partida carregada no mesmo tick, sem recriar a cena, varre os
+     recursos de novo. O caso "mesmo tick, partida nova" entra na tabela do
+     `tests/D-TELA-CHAO-DA-CANA-SO-QUANDO-MUDA.test.ts`. A identidade é a referência do estado
+     carregado ou um contador de carga da ponte, e não um campo novo na sim.
+  4. **Não-regressão:**
+     - os roteiros `D-TELA-FUMACA-DA-PADARIA`, `D-TELA-VENTO-VEGETACAO`, `D-ARTE-CHAO-DE-ROCA` e
+       `D-SAVE-VILA-PRONTA` saem 0;
+     - o `verify:rapido` passa;
+     - `git diff main -- src/sim` vazio.
+
+#### verify-rapido-dado-lido — O `verify:rapido` roda os testes que leem o dado alterado
+- **Origem (medido em 2026-10-02):** a `main` ficou vermelha no `254fe78`. O commit mudou só o
+  `assets/manifest.json`. O `vitest related` segue import, e o `tests/F-SPR-carregamento.test.ts`
+  lê o manifesto por `readFileSync`, então não entrou na corrida. Aprovado pelo operador em
+  2026-10-02. Vai no pacote da D-TELA-LIMPEZA-DO-MUNDO-VIVO.
+- **Escopo:** só `scripts/verify-rapido.js` (e um módulo puro em `tools/`, se convier) e o teste
+  dos portões. Quando a lista de arquivos alterados (a mesma de hoje: a árvore mais os commits que
+  não subiram) tem um arquivo de dado (`assets/manifest.json`, `data/**/*.json` ou
+  `saves/*.txt`), o `verify:rapido` acrescenta à lista do `vitest related` os testes cujo fonte
+  cita o caminho desse arquivo.
+  - É uma busca de texto no fonte do teste, e por isso **a guarda é estrutural do lado do
+    resultado:** o teste afirma por comportamento quais testes rodam, e não varre a regra.
+  - **Nenhum teste deixa de rodar** em relação a hoje: a lista só cresce.
+- **Aceite (escrito antes do código, 2026-10-02):**
+  1. **A regra pura** `testesQueLeemDado(arquivosAlterados, fontesDosTestes)`, por tabela:
+     - o manifesto alterado acha o `F-SPR-carregamento` e o `F17f-manifesto` de um conjunto de
+       fontes de teste escrito na tabela;
+     - um `data/x.json` acha o teste que cita `data/x.json`, e não o que cita `data/y.json`;
+     - um arquivo que não é dado não acrescenta nada;
+     - um teste citado por dois dados aparece uma vez.
+  2. **Como processo,** no repositório falso do `tests/PORTOES-pre-push.test.ts` (com o vitest
+     falso do `CANGACO_VITEST`): um commit que muda só o `assets/manifest.json` faz o vitest falso
+     receber o teste que lê o manifesto. Hoje, ele não receberia nada.
+  3. **O caso que fez a `main` ficar vermelha, reproduzido:** com o `vitest related` sozinho, o
+     teste do manifesto não entra; com a regra nova, entra. Os dois lados são afirmados.
+  4. **O selo e o hook não mudam:** os testes de `PORTOES-verify` e `PORTOES-pre-push` passam sem
+     alteração de asserção.
+  5. **Número da corrida no PROGRESS:** quantos testes o `verify:rapido` roda num commit só de
+     manifesto, antes e depois.
+
 #### D-ARTE-BANDEIRA-FACCAO — A bandeira do bando balança no vento
 - **Escopo (o aceite entra num commit próprio antes do código):** a bandeira de facção (§13 do
   documento) na cor do bando (`render/cor-do-bando.ts`), balançando com o mesmo vento. **Precisa
   de arte**, e a técnica (quadros pintados ou deformação procedural) espera a ferramenta que o
   operador está escolhendo. Depende da D-TELA-VENTO-VEGETACAO.
+- **Escopo fechado (2026-10-02, pedido do operador: "providenciar"; antes do código):** sem arte.
+  A bandeira que já existe (`desenharBandeira`, `WorldScene.ts`, C-IA-03c: um mastro e um
+  retângulo na cor do bando) ganha o **pano ondulando** por deformação procedural. O pano vira
+  uma tira de N segmentos (um polígono), cujo deslocamento vertical sai de uma onda que corre do
+  mastro para a ponta, com a força, a direção e a rajada do vento (`src/render/vento.ts`). O
+  mastro não se mexe. Quando a arte vier, ela substitui o polígono, e a onda continua sendo a
+  mesma função. O id continua `D-ARTE-BANDEIRA-FACCAO` (item antigo não se renomeia).
+- **Aceite (escrito antes do código, 2026-10-02):**
+  1. **A função pura** `panoDaBandeira(vento, config, tick, alfa, gx, gy)` em
+     `src/render/bandeira.ts` devolve os vértices do pano relativos ao mastro. Por tabela em
+     `tests/D-ARTE-BANDEIRA-FACCAO.test.ts`:
+     - as mesmas entradas dão a mesma saída;
+     - o vértice preso ao mastro tem deslocamento 0 em todo tick;
+     - a amplitude cresce do mastro para a ponta, e nunca passa de `amplitudeMaximaPx` do dado;
+     - com `forca` 0, o pano é o retângulo de hoje (os vértices, com tolerância de 1e-9);
+     - na rajada, a amplitude da ponta é maior que fora dela, no mesmo tile;
+     - duas bandeiras em tiles diferentes não ondulam em fase (pelo hash do tile).
+  2. **O dado:** `data/bandeira.json`, só de interface, com segmentos, amplitude, comprimento de
+     onda e velocidade. A regra `interface/bandeira` tem um caso que reprova para cada campo.
+  3. **A cor e o dono não mudam:** o pano continua com `corDoBando(lado)`, e o `debug` do dono da
+     C-IA-03c continua igual. Os testes e o roteiro da C-IA-03c saem 0.
+  4. **Só trabalha quando muda:** a bandeira só é redesenhada quando o tick, o alfa ou a câmera
+     mudam, e só a da vista. A ponte publica `bandeirasRedesenhadas` por quadro, e o roteiro afirma
+     0 com o jogo pausado e a câmera parada.
+  5. **O roteiro `tools/shots/D-ARTE-BANDEIRA-FACCAO.js`:**
+     - sobre o save `saves/teste-operador-vila-pronta.txt`, com uma bandeira de cada lado na
+       vista, se couber; senão, uma vista por lado;
+     - capturas no tick T e no T + 5;
+     - o sha256 do tick T é igual nas duas corridas;
+     - um passo despausado (§8);
+     - as capturas são abertas.
+  6. **Não-regressão:**
+     - os roteiros `C-IA-03c`, `ARTE-VILA` e `D-TELA-07` (a placa de pausado convive com a
+       bandeira) saem 0;
+     - o `verify:rapido` passa, e os testes diretos do vento e de manifesto passam;
+     - `git diff main -- src/sim` vazio.
 
 ### Leva 1 da animação direcional: legibilidade da logística (aprovada pelo operador, 2026-10-01)
 Plano: `docs/planos/2026-09-30-animacao-direcional-de-unidades.md`, §3 e §10. **Só a Leva 1 foi
@@ -6637,6 +6864,78 @@ operador no pedido, e o `git grep` na `main` não acha nenhuma delas. **Só rend
     quadrado), na carga e na pilha. A segunda captura lê a tábua no serf e nas pilhas.
   - **Para o operador ver jogando:** as quatro pilhas do armazém (F-VIVO-a) também passaram a
     mostrar o ícone (tábua, pedra e ouro), e não mais o quadrado de cor.
+
+### Leva 2 da animação direcional: o piloto do serf, só o código (pedido do operador, 2026-10-02)
+Plano: `docs/planos/2026-09-30-animacao-direcional-de-unidades.md`, §5 e §10 (Leva 2). O operador
+pediu para "providenciar" a Leva 2 sem esperar a arte pintada: o encanamento é provado com
+**sprites de depuração** e fica pronto para quando a arte do serf (D-ARTE-SERF-ANDAR) chegar.
+- **Decisões aplicadas (as perguntas do §12 do plano que tocam esta leva, resolvidas pela
+  proposta do próprio plano, com o pedido do operador de seguir):**
+  - o walk tem **8 quadros**, como a decisão do operador para a arte do serf (D-ARTE-SERF-ANDAR,
+    2026-10-01). Não há atlas de walk 12;
+  - a virada é **um degrau de 45° a cada 70 ms em 1x** (a de 180° gasta ~210 ms), pelo tempo de
+    jogo (§5.3 e §5.5);
+  - os **sprites de depuração vão para o git** em `assets/depuracao/` (§12, pergunta 3), porque o
+    roteiro precisa deles e o gerador não roda no `verify`.
+
+  Se o operador mudar qualquer uma, ela vira emenda do aceite antes do código.
+- **Só render e ferramenta.** Nada em `src/sim/` nem em número de `data/` que a sim leia. O serf
+  continua com o placeholder ou com a arte parada no jogo normal: o atlas de depuração só entra
+  com `?depuracao` ou na vitrine.
+
+#### D-ARTE-02 — O gerador e o atlas de depuração do serf
+- **Aceite (escrito antes do código, 2026-10-02):** `tools/gerar-sprites-depuracao.js` gera, a
+  partir de formas desenhadas pelo próprio script (sem arte), o atlas
+  `assets/depuracao/serf/serf.png` + `serf.json`, com `parado` (4), `andar` (8) e `morrer` (6),
+  nas 5 direções canônicas (n, ne, l, se, s), 64×96 e anchor [0.5, 1].
+  - Cada quadro mostra a direção e o número desenhados, e o pé numa linha fixa.
+  - Rodar o gerador duas vezes dá os mesmos bytes (o sha256 vai para o PROGRESS).
+  - O teste afirma que todo quadro prometido existe no `.json` e que o `sourceSize` de todos é
+    64×96.
+
+#### D-TELA-04a — O manifesto aceita `atlas` e `animacoes`
+- **Aceite (escrito antes do código, 2026-10-02):** o tipo `EntradaDeAsset` de unidade aceita
+  `atlas` + `animacoes` ao lado de `estados` (§5.9 do plano). O `tests/F17f-manifesto.test.ts`
+  ganha as três regras do §5.9, cada uma com um caso que reprova num manifesto escrito no teste:
+  - todo quadro que `animacoes` promete existe no atlas;
+  - toda direção desenhada tem os mesmos `quadros`;
+  - o `tamanho` é igual ao `sourceSize` de todo quadro.
+
+  O manifesto real **não muda** neste item: a entrada de depuração do serf mora em
+  `assets/depuracao/manifesto.json`, validada pelas mesmas regras.
+
+#### D-TELA-04b — O render do serf por animação
+- **Aceite (escrito antes do código, 2026-10-02):**
+  1. `quadroDoAndar(distanciaAcumulada, tilesPorCiclo, quadros)` (§5.4), por tabela, inclusive o
+     salto maior que `saltoMaximo` da interpolação (`interpolacao.ts`), que **não** soma
+     distância;
+  2. o `parado` roda pelo tempo de jogo (§5.3), e pausado fica no mesmo quadro;
+  3. com `?depuracao`, o serf usa o atlas: `atlas` antes de `estados`, e o espelho nas três
+     direções do oeste;
+  4. **o y do pé é constante** em todos os quadros e direções. O roteiro afirma o y do pé pela
+     ponte, e é aqui que se confirma a hipótese do anchor com trim do §5.9.
+
+#### D-TELA-04c — A vitrine e o serf andando na partida
+- **Aceite (escrito antes do código, 2026-10-02):**
+  - `?vitrine=serf` mostra as 8 direções × os quadros de cada animação, só render;
+  - numa partida com `?depuracao`, um serf andando publica, tick a tick, a direção e o quadro no
+    `debug`, e o quadro avança com a distância;
+  - um passo despausado (§8);
+  - as duas capturas (a vitrine e a partida) são abertas.
+
+#### D-TELA-04d — A virada suavizada
+- **Aceite (escrito antes do código, 2026-10-02):** a função pura da virada, por tabela: 90° gasta
+  1 passo, 135° gasta 2, 180° gasta 3, e o empate escolhe sempre o mesmo sentido. Parado, o serf
+  não vira sozinho. O walk continua durante a virada. O roteiro captura uma virada de 180° no
+  degrau intermediário.
+
+#### D-TELA-04e — A medida de memória das texturas
+- **Aceite (escrito antes do código, 2026-10-02):** o `debug.memoriaDeTexturas` soma
+  `largura × altura × 4` de toda textura carregada, pelo `TextureManager`. O roteiro grava em
+  `test-output/D-TELA-04e.json` o número com e sem o atlas de depuração. A asserção fica no eixo de
+  bytes: com o atlas, a soma cresce exatamente o tamanho do PNG do atlas × 4. A memória real de
+  GPU, se medida, é evidência da sessão.
+- **Parada para o operador depois da 04e** (§10 do plano): o espelho e o formato, vendo a vitrine.
 
 ### F34 — Condições de vitória e derrota (escaramuça)
 - **ENTREGUE (2026-09-28, sessão autônoma; plano em `docs/planos/2026-09-28-A16-F34-fim.md`).**
