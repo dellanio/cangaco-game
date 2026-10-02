@@ -6369,6 +6369,35 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
      - `git diff main -- src/sim` vazio.
   6. **Sem medida de tempo pelo intervalo entre quadros:** esse método não mede custo (achado da
      D-TELA-AGUA-VIVA). O custo da poeira entra na D-TELA-CUSTO-DO-QUADRO, depois.
+- **Emenda do aceite (2026-10-02, antes do código; pedido do operador, pelo §11 do
+  `docs/fase-animacao-vida-do-mundo.md`):** a poeira é **evento**, e não efeito constante. O
+  documento diz que "eventos raros geram mais impacto do que efeitos constantes", pede para não
+  exagerar na frequência e sugere redemoinhos ocasionais, sem tumbleweed de western. A emenda
+  troca o "sempre há partícula até o teto" por dois eventos:
+  - **a rajada levanta poeira:** a partícula só nasce num tile em que a rajada do vento está
+    passando (`intensidadeDaRajada` de `src/render/vento.ts` acima de `limiarDaRajada`, do dado). A
+    poeira cruza o mapa como uma frente, junto com a rajada que já balança as árvores;
+  - **o redemoinho raro:** no máximo um redemoinho por vista de cada vez, a cada
+    `intervaloDoRedemoinhoTicks` em média. O lugar e o tick saem de um hash da semente. Ele dura
+    `duracaoDoRedemoinhoTicks`, e as partículas giram em volta de um centro que anda com o vento;
+  - **fora dos dois, nenhuma partícula.**
+
+  O que muda nos aceites:
+  - **aceite 1, acrescenta:**
+    - fora da rajada e de um redemoinho, a lista é vazia;
+    - toda partícula de rajada está num tile em que a intensidade passa do limiar;
+    - numa janela de 4 × `intervaloDoRedemoinhoTicks`, numa vista fixa, há pelo menos um
+      redemoinho e nunca dois ao mesmo tempo;
+    - a fração de ticks com alguma partícula na vista, numa janela de 2 000 ticks, vai para o
+      `test-output`. É número da corrida, sem teto, porque o teto é gosto do operador;
+  - **aceite 2, acrescenta:** a regra reprova `limiarDaRajada` fora de (0, 1),
+    `intervaloDoRedemoinhoTicks` ≤ `duracaoDoRedemoinhoTicks` e duração ≤ 0;
+  - **aceite 4, troca** "o `poeiraDesenhada` é maior que 0" por: o roteiro avança pela ponte até
+    achar um tick com poeira na vista e um tick sem poeira, no máximo `intervaloTicks` da rajada
+    em cada um. As capturas são a com poeira e a sem poeira. A ponte publica
+    `rajadaNaVista` (a maior intensidade da vista), e o roteiro afirma que ela passa do limiar no
+    tick com poeira de rajada. O sha256 da captura com poeira é igual nas duas corridas, e o tick
+    dela também.
 
 #### D-TELA-CUSTO-DO-QUADRO — O custo de cada camada animada, medido dentro do quadro
 - **Origem (2026-10-02):** os roteiros do vento e da água mediam o custo pelo intervalo entre
