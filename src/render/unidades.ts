@@ -61,6 +61,8 @@ import type { PontoEmTiles } from './interpolacao';
 import type { SpriteAnimado } from './animacao-de-unidade';
 import { assetDaCamada } from './manifesto';
 import { peDoSprite } from './pe-do-sprite';
+import { atualizarVirada, iniciarVirada } from './virada-de-unidade';
+import type { MemoriaDaVirada } from './virada-de-unidade';
 
 /** O que a camada desenhou de uma unidade, para o roteiro afirmar (`window.__cangaco`). */
 export interface UnidadeRenderizada {
@@ -167,6 +169,7 @@ const corDoMarcadorDeFome: string = (
 )[temaSertao.marcadores.fome.cor] ?? temaSertao.paleta.terraQueimada;
 
 interface Desenhado {
+  virada: MemoriaDaVirada;
   distancia: number;
   ultimaPosicao: PontoEmTiles | null;
   ultimoTickAnimado: number;
@@ -233,7 +236,8 @@ export function criarCamadaDeUnidades(
     marcadorDeFome.setVisible(false);
     const container = cena.add.container(0, 0, [retangulo, marcadorDeCarga, marcadorDeFome]);
     return { container, retangulo, imagem: null, direcao: 's', nome: rotulo, marcadorDeCarga, iconeDaCarga: null, placaDoIcone: null, marcadorDeFome,
-      distancia: 0, ultimaPosicao: null, ultimoTickAnimado: -1, animacao: 'parado', quadro: 0, spriteAnimado: null };
+      distancia: 0, ultimaPosicao: null, ultimoTickAnimado: -1, animacao: 'parado', quadro: 0, spriteAnimado: null,
+      virada: iniciarVirada('s', 0) };
   }
 
   /** F-SPR — troca o retangulo pelo sprite quando a arte resolve, e volta quando nao. */
@@ -351,12 +355,12 @@ export function criarCamadaDeUnidades(
         const posicao = posicaoDaUnidade(estado, unidade);
         const anterior = memoria.observar(id, estado.tick, posicao);
         const desenhada = interpolarPosicao(anterior, posicao, alfa, SALTO_MAXIMO_EM_TILES);
+        const entradaAnimada = assetDaCamada(manifestoAnimado, 'unidade', unidade.tipo);
         const direcoes = direcoesDoTipo(unidade.tipo);
-        if (direcoes !== null) {
+        if (direcoes !== null && !entradaAnimada?.atlas) {
           item.direcao = direcaoDoPasso(posicao.gx - anterior.gx, posicao.gy - anterior.gy, direcoes) ?? item.direcao;
         }
         const centro = gridToScreenCentro(desenhada, tilePx, ESCALA_DO_MUNDO);
-        const entradaAnimada = assetDaCamada(manifestoAnimado, 'unidade', unidade.tipo);
         if (entradaAnimada?.atlas && mudouAnimacao) {
           const naVista = centro.x + entradaAnimada.tamanho[0] >= vista.x
             && centro.x - entradaAnimada.tamanho[0] <= vista.right
@@ -364,10 +368,16 @@ export function criarCamadaDeUnidades(
             && centro.y - entradaAnimada.tamanho[1] <= vista.bottom && !invisiveis.has(id);
           if (naVista) {
             const voltou = estado.tick < item.ultimoTickAnimado;
-            if (voltou) item.distancia = 0;
+            if (voltou) {
+              item.distancia = 0;
+              item.virada = iniciarVirada('s', tempoDeAnimacao(estado.tick, alfa));
+            }
             const salto = Math.hypot(posicao.gx - anterior.gx, posicao.gy - anterior.gy) > SALTO_MAXIMO_EM_TILES;
             item.distancia = somarDistancia(item.distancia, voltou ? null : item.ultimaPosicao, desenhada, SALTO_MAXIMO_EM_TILES, salto);
             const andando = posicao.gx !== anterior.gx || posicao.gy !== anterior.gy;
+            const alvo = direcoes === null ? null : direcaoDoPasso(posicao.gx - anterior.gx, posicao.gy - anterior.gy, direcoes);
+            item.virada = atualizarVirada(item.virada, alvo, tempoDeAnimacao(estado.tick, alfa), configAnimacao.passoDaViradaTicks);
+            item.direcao = item.virada.visivel;
             item.animacao = andando ? 'andar' : 'parado';
             const animacao = entradaAnimada.animacoes?.[item.animacao];
             if (animacao) {

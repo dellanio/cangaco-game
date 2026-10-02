@@ -364,6 +364,9 @@ export interface EstadoDebug {
   unidadesRenderizadas: readonly UnidadeRenderizada[];
   animacoesDeUnidadeTrabalhadas: number;
   pesDosQuadrosDoSerf: readonly { readonly frame: string; readonly direcao: string; readonly espelhado: boolean; readonly peY: number }[];
+  /** Harness da vitrine; tempo em ticks de jogo desde n → s, sem relógio de parede. */
+  mostrarViradaDoSerf: (tempoTicks: number) => void;
+  viradaDoSerf: { direcao: string; quadro: number; peY: number } | null;
   /** O laco de tempo esta pausado (F11a). Le o valor vivo do relogio, nao o do ultimo quadro. */
   readonly pausado: boolean;
   /** A velocidade de jogo atual (1x, 2x, 3x), valor vivo. */
@@ -492,6 +495,8 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     unidadesRenderizadas: [],
     animacoesDeUnidadeTrabalhadas: 0,
     pesDosQuadrosDoSerf: [],
+    mostrarViradaDoSerf: () => undefined,
+    viradaDoSerf: null,
     // getters: sempre o valor vivo do relogio, sem esperar o proximo POST_RENDER
     get pausado() {
       return relogio.pausado;

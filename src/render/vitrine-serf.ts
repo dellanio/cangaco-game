@@ -1,9 +1,11 @@
 import Phaser from 'phaser';
 import { atlasDeDepuracao, manifestoDeDepuracao } from './depuracao-de-unidade';
 import { DIRECOES, assetDaCamada } from './manifesto';
-import { spriteDoAtlas } from './animacao-de-unidade';
+import { quadroDoAndar, spriteDoAtlas } from './animacao-de-unidade';
 import { peDoSprite } from './pe-do-sprite';
 import { publicarEstadoDebug } from './debug';
+import { atualizarVirada, iniciarVirada } from './virada-de-unidade';
+import configAnimacao from '../../data/animacao-unidade.json';
 
 /** Cena isolada: não importa nem inicia a sessão ou o laço da simulação. */
 class VitrineDoSerf extends Phaser.Scene {
@@ -39,6 +41,22 @@ class VitrineDoSerf extends Phaser.Scene {
       coluna += dado.quadros;
     }
     debug.pesDosQuadrosDoSerf = pes;
+    const demonstração = this.add.image(1180, 755, atlasDeDepuracao.chave).setOrigin(0.5, 1).setScale(0.6).setVisible(false);
+    const rotulo = this.add.text(860, 725, '', { fontSize: '16px', color: '#ffffff' });
+    debug.mostrarViradaDoSerf = (tempoTicks) => {
+      const comecou = atualizarVirada(iniciarVirada('n', 0), 's', 0, configAnimacao.passoDaViradaTicks);
+      const virada = atualizarVirada(comecou, 's', tempoTicks, configAnimacao.passoDaViradaTicks);
+      const andar = entrada.animacoes?.andar;
+      if (!andar?.tilesPorCiclo) return;
+      const distancia = tempoTicks * andar.tilesPorCiclo / andar.quadros;
+      const quadro = quadroDoAndar(distancia, andar.tilesPorCiclo, andar.quadros);
+      const sprite = spriteDoAtlas(manifestoDeDepuracao, 'serf', 'andar', virada.visivel, quadro,
+        (chave, frame) => this.textures.get(chave).has(frame));
+      if (!sprite) return;
+      demonstração.setFrame(sprite.frame).setFlipX(sprite.espelhar).setVisible(true);
+      rotulo.setText(`Virada N → S: ${virada.visivel.toUpperCase()} · quadro ${quadro}`);
+      debug.viradaDoSerf = { direcao: virada.visivel, quadro, peY: peDoSprite(demonstração) - demonstração.y };
+    };
     debug.renderizador = { tipo: this.game.renderer.type, webgl: Phaser.WEBGL };
     debug.pronto = true;
     debug.fixarCamera = ({ scrollX, scrollY }) => {
