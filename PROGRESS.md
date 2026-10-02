@@ -17298,4 +17298,28 @@ B D-TELA-LUZ-RELEVO, aceite 1             | NEEDS_WORK        | o sha256 contra 
     emenda não chegou à sessão do Codex antes do código.
   - **Decisão:** o código fica na `main` como base, porque a função pura, o pool e o dado servem
     à emenda. O item continua aberto até a emenda ser implementada por cima. Não vai chave para o
-    `test-results.json`.
+  `test-results.json`.
+
+## 2026-10-02 — D-TELA-CUSTO-DO-QUADRO e D-TELA-VENTO-NA-VISTA, pelo Codex
+
+- **Verificado:** o custo acumula milissegundos, chamadas e itens por camada no trecho executado pelo render, com relógio injetado na função pura. O roteiro mede 60 quadros pausados e 60 quadros com um tick avançado por quadro em cada vista. A água pausada trabalhou 0 células. Os valores abaixo são evidência destas duas corridas na máquina compartilhada, não asserções nem limites de desempenho. Os JSONs locais estão em `test-output/D-TELA-CUSTO-DO-QUADRO-antes.json` e `test-output/D-TELA-CUSTO-DO-QUADRO.json`.
+- **Verificado:** o vento escolhe pelo retângulo do sprite calculado do pé, anchor e tamanho do manifesto. Em tick novo, 67 árvores da vista foram atualizadas no roteiro; no quadro repetido, 0. Depois de `fixarCamera`, 67 árvores que entraram na vista receberam o tick atual. As duas capturas do roteiro foram abertas. A origem do sprite continua sendo o anchor do manifesto.
+
+| Vista | Modo | Camada | Antes: ms/quadro; itens/quadro | Depois: ms/quadro; itens/quadro |
+|---|---|---|---:|---:|
+| Árvores | Pausado | Vento | 0,1183; 350 | 0,0017; 0 |
+| Árvores | Pausado | Água | 0,0083; 0 | 0,0100; 0 |
+| Árvores | Pausado | Chão da cana | 0,2217; 0 | 0,2383; 0 |
+| Árvores | Ticks | Vento | 0,1217; 350 | 0,0700; 57 |
+| Árvores | Ticks | Água | 0,0283; 0 | 0,0433; 0 |
+| Árvores | Ticks | Chão da cana | 0,1967; 0 | 0,2317; 0 |
+| Água | Pausado | Vento | 0,0933; 350 | 0,0067; 0 |
+| Água | Pausado | Água | 0,0083; 0 | 0,0033; 0 |
+| Água | Pausado | Chão da cana | 0,2017; 0 | 0,1917; 0 |
+| Água | Ticks | Vento | 0,0617; 350 | 0,0033; 0 |
+| Água | Ticks | Água | 0,1000; 176 | 0,0950; 176 |
+| Água | Ticks | Chão da cana | 0,1983; 0 | 0,1900; 0 |
+
+- Os números antigos do vento (+2,4 ms) e da água (34,7 contra 31,7) ficam substituídos: mediam o intervalo entre `requestAnimationFrame`, e não o custo dentro do quadro.
+- **Verificações:** `npm run verify:rapido` saiu 0 (typecheck, lint, dados e testes ligados); os seis testes diretos da lição, incluindo os dois novos, passaram (46 testes). Os roteiros de custo, vento, água, chão da cana, F-SPR (carga dos sprites), F-REPL-e (estados da árvore) e ARTE-VILA (arte da vila) saíram 0. O roteiro F-REPL-e (estados da árvore) exigiu antes `tests/F-REPL-e-arvore.test.ts`, que passou e gerou seu save. `git diff main -- src/sim` vazio.
+- **Fora dos aceites:** camada da poeira, arte nova e qualquer alteração da simulação.
