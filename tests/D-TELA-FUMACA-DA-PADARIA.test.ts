@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { particulasDaFumaca, type ConfigDaFumaca } from '../src/render/fumaca';
 import type { DadosDoVento } from '../src/render/vento';
 import type { GameState } from '../src/sim/state';
-import type { Manifesto } from '../src/render/manifesto';
+import { ehEntradaDePredio, type Manifesto } from '../src/render/manifesto';
 import { dadosDoTrabalho } from '../src/render/predios';
 import { quadroDaFumaca } from '../src/render/trabalho';
 import { validarFumaca, validarInterface } from '../tools/data-rules.js';
@@ -70,7 +70,7 @@ describe('D-TELA-FUMACA-DA-PADARIA', () => {
     // A arte dos 17 predios (PR #2, 2026-10-02) trouxe chamines medidas em outros predios; o
     // escopo deste item era a padaria, e nao "so a padaria". Toda chamine declarada chega aos
     // dados do render com o mesmo ponto do manifesto, e a da padaria continua a medida aqui.
-    const comChamine = manifesto.assets.filter((a) => a.tipo === 'predio' && a.ancoras?.trabalho?.fumaca !== undefined);
+    const comChamine = manifesto.assets.filter(ehEntradaDePredio).filter((a) => a.ancoras?.trabalho?.fumaca !== undefined);
     expect(comChamine.map((a) => a.id)).toContain('bakery');
     for (const a of comChamine) expect(dados.ancoras[a.id]?.trabalho?.fumaca, a.id).toEqual(a.ancoras?.trabalho?.fumaca);
     expect(dados.ancoras['bakery']?.trabalho?.fumaca).toEqual([147 / 192, 18 / 192]);
