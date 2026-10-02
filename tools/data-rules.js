@@ -1679,6 +1679,12 @@ function validarRelevo(dados, relevo, erros) {
 
 function validarInterface(dados, interfaceUi) {
   const erros = [];
+  const animacao = interfaceUi && interfaceUi['animacao-unidade'];
+  for (const campo of ['saltoMaximoTiles', 'passoDaViradaTicks']) {
+    if (!animacao || !Number.isFinite(animacao[campo]) || animacao[campo] <= 0) {
+      erros.push(`interface/animacao-unidade: ${campo} precisa ser > 0`);
+    }
+  }
   const agua = interfaceUi && interfaceUi.agua;
   if (!agua || typeof agua !== 'object') {
     erros.push('interface/agua: data/agua.json precisa existir e ser objeto');

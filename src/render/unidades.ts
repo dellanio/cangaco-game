@@ -53,9 +53,24 @@ import { fracaoDeCondicao } from '../sim/condicao';
 import { unidadesInvisiveis } from './visibilidade';
 import type { GameState } from '../sim/state';
 import type { LuzDoRelevo } from './camada-de-relevo';
+import configAnimacao from '../../data/animacao-unidade.json';
+import tempo from '../../data/time.json';
+import { depuracaoDeUnidade, quadroDoAndar, quadroPeloTempo, somarDistancia, spriteDoAtlas, tempoDeAnimacao } from './animacao-de-unidade';
+import { manifestoDeDepuracao } from './depuracao-de-unidade';
+import type { PontoEmTiles } from './interpolacao';
+import type { SpriteAnimado } from './animacao-de-unidade';
+import { assetDaCamada } from './manifesto';
+import { peDoSprite } from './pe-do-sprite';
 
 /** O que a camada desenhou de uma unidade, para o roteiro afirmar (`window.__cangaco`). */
 export interface UnidadeRenderizada {
+  readonly animacao?: string;
+  readonly quadro?: number;
+  readonly frame?: string;
+  readonly distanciaAnimada?: number;
+  /** Borda inferior do recorte realmente desenhado, relativa ao container. */
+  readonly peY?: number;
+  readonly espelhado?: boolean;
   readonly id: string;
   readonly tipo: string;
   /** Posicao do TICK, em tiles, FRACIONARIA no meio de um passo. Deterministica: e o que os
@@ -120,6 +135,7 @@ export interface UnidadeRenderizada {
 }
 
 export interface CamadaDeUnidades {
+  readonly animacoesTrabalhadas: number;
   /** `alfa`: fracao do tick em curso (`Laco.alfa()`), em [0, 1]. */
   atualizar(estado: GameState | null, alfa: number): readonly UnidadeRenderizada[];
 }
@@ -130,7 +146,7 @@ export interface CamadaDeUnidades {
  * so aparece em reposicionamento (unidade nova, caminho refeito) ou num quadro que rodou varios
  * passos de uma vez.
  */
-const SALTO_MAXIMO_EM_TILES = 2;
+const SALTO_MAXIMO_EM_TILES = configAnimacao.saltoMaximoTiles;
 
 /**
  * Onde o nome do oficio fica ABAIXO do centro da unidade, em multiplos do lado dela. O
@@ -151,6 +167,12 @@ const corDoMarcadorDeFome: string = (
 )[temaSertao.marcadores.fome.cor] ?? temaSertao.paleta.terraQueimada;
 
 interface Desenhado {
+  distancia: number;
+  ultimaPosicao: PontoEmTiles | null;
+  ultimoTickAnimado: number;
+  animacao: string;
+  quadro: number;
+  spriteAnimado: SpriteAnimado | null;
   readonly container: Phaser.GameObjects.Container;
   readonly retangulo: Phaser.GameObjects.Rectangle;
   /** F-SPR — criado na primeira vez que a arte resolve; memoria de render. */
@@ -174,6 +196,10 @@ export function criarCamadaDeUnidades(
   const desenhados = new Map<string, Desenhado>();
   const memoria = criarMemoriaDePosicoes();
   const lado = tilePx * LADO_DA_UNIDADE_EM_TILES;
+  const depuracao = depuracaoDeUnidade(window.location.search);
+  const manifestoAnimado = depuracao ? manifestoDeDepuracao : manifestoDoJogo;
+  let ultimaChaveAnimada = '';
+  let animacoesTrabalhadas = 0;
 
   function criar(tipo: string, ladoDaUnidade: number): Desenhado {
     const ehSerf = tipo === 'serf';
@@ -206,13 +232,16 @@ export function criarCamadaDeUnidades(
     marcadorDeFome.setOrigin(0.5, 0.5);
     marcadorDeFome.setVisible(false);
     const container = cena.add.container(0, 0, [retangulo, marcadorDeCarga, marcadorDeFome]);
-    return { container, retangulo, imagem: null, direcao: 's', nome: rotulo, marcadorDeCarga, iconeDaCarga: null, placaDoIcone: null, marcadorDeFome };
+    return { container, retangulo, imagem: null, direcao: 's', nome: rotulo, marcadorDeCarga, iconeDaCarga: null, placaDoIcone: null, marcadorDeFome,
+      distancia: 0, ultimaPosicao: null, ultimoTickAnimado: -1, animacao: 'parado', quadro: 0, spriteAnimado: null };
   }
 
   /** F-SPR — troca o retangulo pelo sprite quando a arte resolve, e volta quando nao. */
   function desenharSprite(item: Desenhado, tipo: string, direcoes: 4 | 8 | null): string | null {
     const carregada = (chave: string): boolean => cena.textures.exists(chave);
-    const sprite = spriteDaUnidade(manifestoDoJogo, tipo, POSE_PARADO, item.direcao, direcoes, carregada);
+    const sprite = item.spriteAnimado ?? spriteDaUnidade(manifestoDoJogo, tipo, POSE_PARADO, item.direcao, direcoes, carregada);
+    if (item.spriteAnimado && item.imagem?.visible && item.imagem.texture.key === sprite?.chave
+      && item.imagem.frame.name === item.spriteAnimado.frame && item.imagem.flipX === sprite?.espelhar) return sprite.chave;
     item.retangulo.setVisible(sprite === null);
     if (sprite === null) {
       item.imagem?.setVisible(false);
@@ -224,6 +253,7 @@ export function criarCamadaDeUnidades(
     } else if (item.imagem.texture.key !== sprite.chave) {
       item.imagem.setTexture(sprite.chave);
     }
+    if (item.spriteAnimado && item.imagem.frame.name !== item.spriteAnimado.frame) item.imagem.setFrame(item.spriteAnimado.frame);
     item.imagem.setOrigin(sprite.entrada.anchor[0], sprite.entrada.anchor[1]);
     item.imagem.setFlipX(sprite.espelhar);
     item.imagem.setVisible(true);
@@ -291,8 +321,14 @@ export function criarCamadaDeUnidades(
   }
 
   return {
+    get animacoesTrabalhadas() { return animacoesTrabalhadas; },
     atualizar(estado, alfa) {
       if (estado === null) return [];
+      const vista = cena.cameras.main.worldView;
+      const chave = `${estado.tick},${alfa},${vista.x},${vista.y},${vista.width},${vista.height}`;
+      const mudouAnimacao = chave !== ultimaChaveAnimada;
+      ultimaChaveAnimada = chave;
+      animacoesTrabalhadas = 0;
       const vivas = new Set(estado.unidades.ordem);
       for (const [id, item] of desenhados) {
         if (!vivas.has(id)) {
@@ -319,8 +355,33 @@ export function criarCamadaDeUnidades(
         if (direcoes !== null) {
           item.direcao = direcaoDoPasso(posicao.gx - anterior.gx, posicao.gy - anterior.gy, direcoes) ?? item.direcao;
         }
-        const sprite = desenharSprite(item, unidade.tipo, direcoes);
         const centro = gridToScreenCentro(desenhada, tilePx, ESCALA_DO_MUNDO);
+        const entradaAnimada = assetDaCamada(manifestoAnimado, 'unidade', unidade.tipo);
+        if (entradaAnimada?.atlas && mudouAnimacao) {
+          const naVista = centro.x + entradaAnimada.tamanho[0] >= vista.x
+            && centro.x - entradaAnimada.tamanho[0] <= vista.right
+            && centro.y + entradaAnimada.tamanho[1] >= vista.y
+            && centro.y - entradaAnimada.tamanho[1] <= vista.bottom && !invisiveis.has(id);
+          if (naVista) {
+            const voltou = estado.tick < item.ultimoTickAnimado;
+            if (voltou) item.distancia = 0;
+            const salto = Math.hypot(posicao.gx - anterior.gx, posicao.gy - anterior.gy) > SALTO_MAXIMO_EM_TILES;
+            item.distancia = somarDistancia(item.distancia, voltou ? null : item.ultimaPosicao, desenhada, SALTO_MAXIMO_EM_TILES, salto);
+            const andando = posicao.gx !== anterior.gx || posicao.gy !== anterior.gy;
+            item.animacao = andando ? 'andar' : 'parado';
+            const animacao = entradaAnimada.animacoes?.[item.animacao];
+            if (animacao) {
+              item.quadro = andando ? quadroDoAndar(item.distancia, animacao.tilesPorCiclo ?? 1, animacao.quadros)
+                : quadroPeloTempo(tempoDeAnimacao(estado.tick, alfa), tempo.tickHz, animacao);
+              item.spriteAnimado = spriteDoAtlas(manifestoAnimado, unidade.tipo, item.animacao, item.direcao, item.quadro,
+                (chave, frame) => cena.textures.exists(chave) && cena.textures.get(chave).has(frame));
+            }
+            animacoesTrabalhadas++;
+          }
+          item.ultimaPosicao = desenhada;
+          item.ultimoTickAnimado = estado.tick;
+        }
+        const sprite = desenharSprite(item, unidade.tipo, direcoes);
         // F18f: duas unidades no mesmo tile caem no mesmo pixel e a de cima esconde a de baixo
         // inteira. O desvio e de DESENHO: some ao pixel e ao depth (assim a que desenha mais ao
         // sul segue na frente), nunca a posicao do tick, que continua sendo `posicao`.
@@ -348,6 +409,11 @@ export function criarCamadaDeUnidades(
           nome: item.nome.text, larguraDoRotuloPx: item.nome.width, visivel,
           profundidadeDoNome: item.nome.depth, profundidadeDoCorpo: item.container.depth, nomeVisivel: item.nome.visible,
           direcao: direcoes === null ? null : item.direcao, sprite,
+          ...(item.spriteAnimado && item.imagem ? {
+            animacao: item.animacao, quadro: item.quadro, frame: item.imagem.frame.name,
+            distanciaAnimada: item.distancia, espelhado: item.imagem.flipX,
+            peY: peDoSprite(item.imagem),
+          } : {}),
           corpoPx: sprite === null || item.imagem === null ? null : {
             x0: -item.imagem.originX * item.imagem.displayWidth, y0: -item.imagem.originY * item.imagem.displayHeight,
             x1: (1 - item.imagem.originX) * item.imagem.displayWidth, y1: (1 - item.imagem.originY) * item.imagem.displayHeight,

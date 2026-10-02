@@ -60,6 +60,11 @@ import { criarPlantaFantasma } from '../planta-fantasma';
 import { criarCamadaDeEstradas, criarPreviaDeEstrada } from '../estradas';
 import { criarCamadaDeCampos, criarPreviaDeCampo } from '../campos';
 import { criarCamadaDeUnidades } from '../unidades';
+import { atlasDeDepuracao } from '../depuracao-de-unidade';
+import { depuracaoDeUnidade, spriteDoAtlas } from '../animacao-de-unidade';
+import { manifestoDeDepuracao } from '../depuracao-de-unidade';
+import { DIRECOES } from '../manifesto';
+import { peDoSprite } from '../pe-do-sprite';
 import { posicaoDoProjetil } from '../projeteis';
 import {
   assetDaCamada, assetDoPredio, arquivoDoEstagio, chaveDaTextura, chaveDeTextura, desenhoDoRecurso, temParDeRevelacao,
@@ -318,6 +323,9 @@ export class WorldScene extends Phaser.Scene {
   }
 
   preload(): void {
+    if (depuracaoDeUnidade(window.location.search)) {
+      this.load.atlas(atlasDeDepuracao.chave, atlasDeDepuracao.url, atlasDeDepuracao.dados);
+    }
     for (const textura of texturasParaCarregar(manifestoDoJogo, undefined, this.prediosSemArte)) {
       this.load.image(textura.chave, textura.url);
     }
@@ -328,6 +336,21 @@ export class WorldScene extends Phaser.Scene {
   create(): void {
     const { tilePx, largura, altura, larguraPx, alturaPx } = configDoMapa;
     const estado = publicarEstadoDebug(this.relogio);
+    if (depuracaoDeUnidade(window.location.search)) {
+      const entrada = manifestoDeDepuracao.assets.find((a) => a.tipo === 'unidade' && a.id === 'serf');
+      const imagem = this.add.image(0, 0, atlasDeDepuracao.chave).setOrigin(0.5, 1).setVisible(false);
+      const pes: { frame: string; direcao: string; espelhado: boolean; peY: number }[] = [];
+      if (entrada && 'animacoes' in entrada) for (const [animacao, dado] of Object.entries(entrada.animacoes ?? {})) {
+        for (const direcao of DIRECOES) for (let quadro = 0; quadro < dado.quadros; quadro++) {
+          const sprite = spriteDoAtlas(manifestoDeDepuracao, 'serf', animacao, direcao, quadro,
+            (chave, frame) => this.textures.exists(chave) && this.textures.get(chave).has(frame));
+          if (!sprite) continue;
+          imagem.setFrame(sprite.frame).setFlipX(sprite.espelhar);
+          pes.push({ frame: imagem.frame.name, direcao, espelhado: imagem.flipX, peY: peDoSprite(imagem) });
+        }
+      }
+      estado.pesDosQuadrosDoSerf = pes;
+    }
     estado.renderizador = { tipo: this.game.renderer.type, webgl: Phaser.WEBGL };
     estado.prediosSemArte = [...this.prediosSemArte];
 
@@ -712,6 +735,7 @@ export class WorldScene extends Phaser.Scene {
       // sobre o que o painel escreveu. Leitura, como todo o resto daqui.
       estado.filaDeTreino = this.ponte.atual?.treino ?? {};
       estado.unidadesRenderizadas = camadaDeUnidades.atualizar(this.ponte.atual, this.relogio.alfa());
+      estado.animacoesDeUnidadeTrabalhadas = camadaDeUnidades.animacoesTrabalhadas;
       // F26b: o acerto do proximo clique mira ESTE desenho
       this.unidadesDesenhadas = estado.unidadesRenderizadas;
       // F28b: a pedra da torre, lida do evento do tick (uma vez por tick)
