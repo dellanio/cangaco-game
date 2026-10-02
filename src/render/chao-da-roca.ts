@@ -7,3 +7,15 @@ export function chaoDaRoca(recurso: RecursoNoTile | undefined): typeof CHAO_DA_C
   // O recurso persiste com quantidade zero enquanto a cultura está em pousio.
   return recurso?.tipo === 'grapes' ? CHAO_DA_CANA : null;
 }
+
+export interface QuadroDoChaoDaCana {
+  readonly tick: number;
+  readonly vista: string;
+}
+/** Recursos mudam no tick. A camera so invalida a contagem dos tiles desenhados. */
+export function quadroDoChaoDaCanaMudou(
+  anterior: QuadroDoChaoDaCana | null, atual: QuadroDoChaoDaCana,
+): { readonly varrerRecursos: boolean; readonly contarVista: boolean } {
+  const varrerRecursos = anterior === null || anterior.tick !== atual.tick;
+  return { varrerRecursos, contarVista: varrerRecursos || anterior.vista !== atual.vista };
+}

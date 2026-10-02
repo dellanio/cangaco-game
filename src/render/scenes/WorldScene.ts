@@ -11,7 +11,7 @@ import { particulasDaFumaca, type ParticulaDaFumaca } from '../fumaca';
 import { celulasDaAguaParaTrocar } from '../agua-viva';
 import { particulasDaPoeira, rajadaNaVista } from '../poeira';
 import { codigoDoRecurso, configDoMapa, recursosDeRender, terrenoDeRender } from '../mapa';
-import { CHAO_DA_CANA, chaoDaRoca } from '../chao-da-roca';
+import { CHAO_DA_CANA, chaoDaRoca, quadroDoChaoDaCanaMudou } from '../chao-da-roca';
 import {
   gridToScreen, screenToGrid, depthDeY, tileDentroDoMapa, ESCALA_DO_MUNDO, PROFUNDIDADE_DA_SELECAO,
 } from '../grid';
@@ -159,6 +159,8 @@ export class WorldScene extends Phaser.Scene {
   private readonly prediosSemArte = prediosSemArteDaBusca(window.location.search);
   private readonly recursosDesenhados = new Map<string, number>();
   private readonly chaoDaCanaNoMapa = new Map<string, number>();
+  private ultimoQuadroDoChaoDaCana: { readonly tick: number; readonly vista: string } | null = null;
+  private chaoDaCanaNaVista = 0;
 
   /** F-SPR — como cada CODIGO de recurso se desenha, resolvido uma vez no `create`
    *  (a arte ja chegou no `preload`). Indice e o codigo, como na tira. */
@@ -1253,27 +1255,40 @@ export class WorldScene extends Phaser.Scene {
 
   /** Repinta pelo estado, sem alterar o terreno do mapa nem a simulacao. */
   private atualizarChaoDaCana(camada: Phaser.Tilemaps.TilemapLayer | null): number {
+    const debug = window.__cangaco;
+    if (debug) debug.recursosVarridosPeloChao = 0;
     if (camada === null) return 0;
-    const recursos = this.ponte.atual?.recursos ?? {};
-    const atuais = new Set<string>();
-    for (const [chave, recurso] of Object.entries(recursos)) {
-      if (chaoDaRoca(recurso) === null) continue;
-      atuais.add(chave);
-      const { gx, gy } = tileDeChave(chave);
-      const variante = 1 + ((gx * 17 + gy * 31) & 3);
-      if (this.chaoDaCanaNoMapa.get(chave) !== variante) {
-        camada.putTileAt(variante, gx, gy);
+    const vista = this.cameras.main.worldView;
+    const quadro = {
+      tick: this.ponte.atual?.tick ?? 0,
+      vista: `${vista.x},${vista.y},${vista.width},${vista.height}`,
+    };
+    const trabalho = quadroDoChaoDaCanaMudou(this.ultimoQuadroDoChaoDaCana, quadro);
+    if (trabalho.varrerRecursos) {
+      const recursos = this.ponte.atual?.recursos ?? {};
+      const atuais = new Set<string>();
+      for (const [chave, recurso] of Object.entries(recursos)) {
+        if (debug) debug.recursosVarridosPeloChao += 1;
+        if (chaoDaRoca(recurso) === null) continue;
+        atuais.add(chave);
+        const { gx, gy } = tileDeChave(chave);
+        const variante = 1 + ((gx * 17 + gy * 31) & 3);
+        if (this.chaoDaCanaNoMapa.get(chave) !== variante) camada.putTileAt(variante, gx, gy);
         this.chaoDaCanaNoMapa.set(chave, variante);
       }
+      for (const chave of this.chaoDaCanaNoMapa.keys()) {
+        if (atuais.has(chave)) continue;
+        const { gx, gy } = tileDeChave(chave);
+        camada.removeTileAt(gx, gy);
+        this.chaoDaCanaNoMapa.delete(chave);
+      }
     }
-    for (const chave of this.chaoDaCanaNoMapa.keys()) {
-      if (atuais.has(chave)) continue;
-      const { gx, gy } = tileDeChave(chave);
-      camada.removeTileAt(gx, gy);
-      this.chaoDaCanaNoMapa.delete(chave);
+    if (trabalho.contarVista) {
+      this.chaoDaCanaNaVista = camada.getTilesWithinWorldXY(vista.x, vista.y, vista.width, vista.height,
+        { isNotEmpty: true }).length;
     }
-    const vista = this.cameras.main.worldView;
-    return camada.getTilesWithinWorldXY(vista.x, vista.y, vista.width, vista.height, { isNotEmpty: true }).length;
+    this.ultimoQuadroDoChaoDaCana = quadro;
+    return this.chaoDaCanaNaVista;
   }
 
   private criarCamadaDeRecursos(

@@ -28,18 +28,24 @@ async function medir(page, vista, modo) {
     const quadro = () => new Promise((resolve) => window.requestAnimationFrame(() => setTimeout(resolve, 0)));
     await quadro();
     ponte.zerarCusto();
+    const varreduras = [];
     if (modo === 'pausado') {
-      for (let i = 0; i < 60; i += 1) await quadro();
+      for (let i = 0; i < 60; i += 1) { await quadro(); varreduras.push(ponte.recursosVarridosPeloChao); }
     } else {
-      for (let i = 0; i < 60; i += 1) { ponte.avancar(1); await quadro(); }
+      for (let i = 0; i < 60; i += 1) { ponte.avancar(1); await quadro(); varreduras.push(ponte.recursosVarridosPeloChao); }
     }
     const custo = JSON.parse(JSON.stringify(ponte.custo));
+    if (varreduras.some((n) => modo === 'pausado' ? n !== 0 : !(n > 0))) {
+      throw new Error(`chao da cana: varreduras invalidas no modo ${modo}: ${JSON.stringify(varreduras)}`);
+    }
+    custo.chaoDaCana.recursosVarridos = varreduras.reduce((total, n) => total + n, 0);
     return Object.fromEntries(Object.entries(custo).map(([camada, valor]) => [camada, {
       msPorQuadro: valor.chamadas ? valor.ms / valor.chamadas : 0,
       itensPorQuadro: valor.chamadas ? valor.itens / valor.chamadas : 0,
       chamadas: valor.chamadas,
       ms: valor.ms,
       itens: valor.itens,
+      ...(camada === 'chaoDaCana' ? { recursosVarridosPorQuadro: valor.recursosVarridos / 60 } : {}),
     }]));
   }, { gx: vista.gx, gy: vista.gy, modo });
 }

@@ -255,6 +255,8 @@ export interface EstadoDebug {
   recursosVisiveis: Readonly<Record<string, number>>;
   /** Tiles de chao da cana efetivamente desenhados na vista da camera. */
   chaoDaCanaDesenhado: number;
+  /** Recursos examinados pelo chao da cana neste quadro; zero no quadro repetido. */
+  recursosVarridosPeloChao: number;
   /** F-TR — mascara N/L/S/O de cada tile de `rock` ainda presente. O roteiro
    *  compara antes/depois quando um tile esgota; nao e estado da simulacao. */
   mascarasDoLajedo: Readonly<Record<string, number>>;
@@ -441,6 +443,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     poolDaFumaca: 0,
     recursosVisiveis: {},
     chaoDaCanaDesenhado: 0,
+    recursosVarridosPeloChao: 0,
     mascarasDoLajedo: {},
     lajedoDesenhado: {},
     texturaDoTerreno: {},
