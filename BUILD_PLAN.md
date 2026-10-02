@@ -6323,6 +6323,102 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
   seca (§10 e §11 do documento), levadas pelo mesmo vento, com densidade limitada e só na vista.
   As partículas são sorteadas por um RNG de render semeado (nunca `Math.random()`), e a sim não
   muda. Depende da D-TELA-VENTO-VEGETACAO.
+- **Escopo fechado (2026-10-02, antes do código):**
+  - **sem estado:** a lista de partículas de um quadro é uma função pura do tick, do alfa, da vista
+    e da semente. Cada partícula nasce num tick sorteado por hash da semente e de um índice, vive
+    `vidaTicks` e anda com o vento de `src/render/vento.ts`. Nada acumula de um quadro para o
+    outro, então pausado o quadro é o mesmo, e a câmera pode pular sem partícula órfã;
+  - **dois tipos:** `poeira` (ponto pequeno, cor de terra) e `palha` (traço curto, cor de palha
+    seca). As cores e os números ficam em `data/poeira.json`, só de render, com a regra
+    `interface/poeira`;
+  - **não nasce sobre água** (`agua` no terreno) e respeita um teto por vista (`maximoNaVista`);
+  - **o desenho** é um pool de objetos reaproveitados, sem criar ou destruir por quadro e sem o
+    emissor de partículas do Phaser, que sorteia com `Math.random()`. A camada fica acima do chão
+    e dos recursos, e abaixo das unidades e dos prédios;
+  - **com `forca` 0 no vento, não há partícula.**
+- **Aceite (escrito antes do código, 2026-10-02):**
+  1. **A função pura** `particulasDaPoeira(config, vento, tick, alfa, vista, ehAgua)` em
+     `src/render/poeira.ts`, por tabela em `tests/D-TELA-POEIRA-AMBIENTE.test.ts`:
+     - as mesmas entradas dão a mesma saída;
+     - toda partícula está dentro da vista, e o total é no máximo `maximoNaVista`;
+     - nenhuma partícula está sobre um tile em que `ehAgua` é verdadeiro;
+     - com `forca` 0, a lista é vazia;
+     - uma partícula presente no tick t e no t + 1 (o mesmo `id`) andou no sentido do vento: o
+       produto escalar do deslocamento com a `direcao` é positivo;
+     - nenhuma partícula vive mais que `vidaTicks`;
+     - as duas espécies aparecem numa janela de 200 ticks.
+  2. **O dado:** `data/poeira.json` é de interface, e não de jogo. A regra reprova `maximoNaVista`
+     ≤ 0, `vidaTicks` ≤ 0 e cor fora de `#rrggbb`, com um caso que reprova escrito no teste. A
+     poeira lê o vento do `data/vento.json` e não tem direção nem força próprias.
+  3. **O pool:** a ponte de debug publica `poeiraDesenhada` (as partículas visíveis no quadro) e
+     `poolDaPoeira` (os objetos criados desde o início). O roteiro afirma que o `poolDaPoeira` não
+     passa de `maximoNaVista` depois de 50 ticks com a câmera em dois lugares.
+  4. **O roteiro `tools/shots/D-TELA-POEIRA-AMBIENTE.js`:**
+     - pausado, com a câmera pela ponte (`fixarCamera`) numa vista de areia e grama;
+     - o `poeiraDesenhada` é maior que 0 e no máximo `maximoNaVista`;
+     - capturas no tick T e no T + 5 (pela ponte `avancar`);
+     - o roteiro roda duas vezes, e a captura do tick T tem o mesmo sha256 nas duas corridas;
+     - numa vista sobre o açude, nenhuma partícula visível está sobre tile de água: a ponte publica
+       o tile de cada partícula, e o roteiro confere com o terreno do mapa;
+     - um passo despausado (§8);
+     - as capturas são abertas.
+  5. **Não-regressão:**
+     - os roteiros `D-TELA-VENTO-VEGETACAO`, `D-TELA-AGUA-VIVA` e `ARTE-VILA` saem 0;
+     - o `npm run verify:rapido` passa, e os testes que leem dado por `readFileSync` passam rodados
+       direto: `F-SPR-carregamento`, `F17f-manifesto` e os testes do vento, da água e da poeira;
+     - `git diff main -- src/sim` vazio.
+  6. **Sem medida de tempo pelo intervalo entre quadros:** esse método não mede custo (achado da
+     D-TELA-AGUA-VIVA). O custo da poeira entra na D-TELA-CUSTO-DO-QUADRO, depois.
+
+#### D-TELA-CUSTO-DO-QUADRO — O custo de cada camada animada, medido dentro do quadro
+- **Origem (2026-10-02):** os roteiros do vento e da água mediam o custo pelo intervalo entre
+  `requestAnimationFrame`. Isso segue a cadência do navegador, e não o trabalho da cena: pausada,
+  sem trabalho nenhum, a água ainda "custava" 5 ms. Este item troca o método.
+- **Escopo:** só render e roteiro.
+  - O render cronometra, com `performance.now()` (permitido em `src/render/`, nunca em `sim/`), o
+    trecho de cada camada animada: vento, água e chão da cana.
+  - Ele acumula o tempo e o número de chamadas, e publica os dois na ponte de debug (`custo`), com
+    um `zerarCusto()` de harness.
+- **Aceite (escrito antes do código, 2026-10-02):**
+  1. **A ponte publica** `custo: { [camada]: { ms, chamadas, itens } }`, em que `itens` são os
+     sprites ou células que a camada trabalhou. O `zerarCusto()` zera tudo. Isso é testado em
+     `tests/D-TELA-CUSTO-DO-QUADRO.test.ts`, pela função pura que acumula, com relógio injetado.
+  2. **O roteiro `tools/shots/D-TELA-CUSTO-DO-QUADRO.js`:**
+     - em duas vistas, a mais cheia de árvore e a mais cheia de água;
+     - pausado por 60 quadros e depois avançando 60 ticks pela ponte;
+     - grava em `test-output/D-TELA-CUSTO-DO-QUADRO.json` o ms por quadro e os itens por quadro de
+       cada camada.
+
+     **Asserção só no eixo determinístico (§8):** pausado e com a câmera parada, a água trabalha
+     0 células por quadro. Nenhum `expect` de tempo.
+  3. **A medida antiga sai:** os roteiros `D-TELA-VENTO-VEGETACAO` e `D-TELA-AGUA-VIVA` deixam de
+     medir pelo intervalo entre quadros. O número novo vai para o PROGRESS e corrige os dois
+     números antigos, que estão marcados como inválidos.
+  4. **Não-regressão:** os roteiros do vento, da água e do chão da cana saem 0; o `verify:rapido`
+     passa; `git diff main -- src/sim` vazio.
+
+#### D-TELA-VENTO-NA-VISTA — O vento só trabalha onde a câmera vê
+- **Origem (2026-10-02):** o vento atualiza as 350 árvores do mapa a cada quadro, e não só as da
+  vista, mesmo pausado. A água já trabalha só na vista e só quando o tick ou a câmera mudam.
+  **Depende da D-TELA-CUSTO-DO-QUADRO,** que mede o antes e o depois.
+- **Aceite (escrito antes do código, 2026-10-02):**
+  1. **A regra pura** que escolhe quais árvores atualizar, por tabela em
+     `tests/D-TELA-VENTO-NA-VISTA.test.ts`: entra a árvore cujo retângulo desenhado (o pé, o anchor
+     e o tamanho do manifesto) cruza a vista. A árvore com o pé fora da vista e a copa dentro entra;
+     a árvore toda fora não entra.
+  2. **Sem trabalho repetido:** com o tick, o alfa e a câmera iguais aos do quadro anterior, o vento
+     atualiza 0 sprites. A ponte publica `vegetacaoBalancando` por quadro.
+  3. **Sem árvore atrasada:** a árvore que entra na vista por um movimento de câmera, sem tick novo,
+     já sai no ângulo do tick atual. A ponte publica o tick da última atualização de cada árvore da
+     vista, e o roteiro afirma que é o tick atual depois do `fixarCamera`.
+  4. **O roteiro `D-TELA-VENTO-VEGETACAO` muda a asserção:** onde afirmava "balançando = toda a
+     vegetação menos as rochas", passa a afirmar "balançando = as árvores na vista" no quadro de um
+     tick novo, e 0 no quadro repetido. A asserção nova é mais estrita, e não só diferente.
+  5. **A medida:** a D-TELA-CUSTO-DO-QUADRO roda antes e depois, e os dois números vão para o
+     PROGRESS, como evidência da corrida.
+  6. **Não-regressão:** os roteiros `D-TELA-VENTO-VEGETACAO`, `F-SPR`, `F-REPL-e` e `ARTE-VILA` saem
+     0; o `verify:rapido` passa, e o teste do vento passa rodado direto; `git diff main -- src/sim`
+     vazio.
 
 #### D-ARTE-BANDEIRA-FACCAO — A bandeira do bando balança no vento
 - **Escopo (o aceite entra num commit próprio antes do código):** a bandeira de facção (§13 do
