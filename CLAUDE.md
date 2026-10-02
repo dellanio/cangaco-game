@@ -436,6 +436,12 @@ no PROGRESS entra no commit seguinte à avaliação, com o hash que o selo mostr
        que 0) e grava `commit` e `base`. O push com esse selo passa; um commit depois do selo, recusa;
     3. o `verify:rapido` sem upstream e com a árvore limpa continua rodando 0 testes e saindo 0 (o
        aceite 3 dos portões).
+    - **Emenda do aceite 2 (antes do código):** no repositório falso não há `vitest` instalado, e
+      ligar o `node_modules` real por junction é o que apagou o `node_modules` do projeto hoje.
+      `CANGACO_VITEST` troca o comando do vitest (o padrão continua `npx vitest`). O teste põe um
+      vitest falso, que grava os arquivos que recebeu e devolve o relatório. O aceite 2 afirma que os
+      arquivos dos dois commits chegam ao `vitest related`, e que o número de testes do relatório vai
+      para o selo.
 - **O fechamento é só ao fim de um grande bloco de entrega** (decisão do operador, 2026-10-01). Ele
   leva cerca de 45 min. Entre os blocos vale o `verify:rapido`, a cada commit e antes de todo push. O operador diz quando um bloco fecha: por exemplo, a versão que ele vai jogar
   (tag `teste-jogo-<n>`).
