@@ -17296,9 +17296,28 @@ B D-TELA-LUZ-RELEVO, aceite 1             | NEEDS_WORK        | o sha256 contra 
     redemoinho raro, com a lista vazia fora dos dois. O código entregue não tem rajada, limiar nem
     redemoinho (conferido com `grep`): a poeira nasce o tempo todo, até o teto. **Hipótese:** a
     emenda não chegou à sessão do Codex antes do código.
+
   - **Decisão:** o código fica na `main` como base, porque a função pura, o pool e o dado servem
     à emenda. O item continua aberto até a emenda ser implementada por cima. Não vai chave para o
   `test-results.json`.
+
+  - **Emenda implementada pelo Codex (2026-10-02):** a rajada só gera partículas quando o tile de
+    nascimento e o tile atual passam de `limiarDaRajada`; um redemoinho por ciclo tem início e
+    centro derivados do hash da semente, gira por `duracaoDoRedemoinhoTicks` e anda com o vento.
+    Fora desses eventos a lista fica vazia. O render continua sem estado entre quadros e com pool
+    de 64 objetos; a ponte publica `rajadaNaVista`.
+  - **Verificado:** o teste da poeira e os quatro testes diretos de não-regressão passaram (5 arquivos,
+    46 testes). A regra `interface/poeira` reprovou limiar fora de (0,1), intervalo menor ou igual
+    à duração e duração não positiva. Em 2.000 ticks de vista fixa, 297 tiveram poeira:
+    **fração 0,1485** (`test-output/D-TELA-POEIRA-AMBIENTE.json`, sem teto de aceite). O teste
+    encontrou ticks vazios fora dos eventos e redemoinho em janela de 4 intervalos, nunca dois.
+  - **Verificado na tela:** `D-TELA-POEIRA-AMBIENTE` saiu 0 duas vezes; ambas capturaram poeira no
+    tick **40**, SHA-256 **`2C69F1F88C14AA7078136C32DBDB454CA2BFFDBCFF6CF0D18C2AAD6D23F96E3D`**.
+    As capturas com poeira, sem poeira e do açude foram abertas. O roteiro confirmou a rajada acima
+    do limiar, ausência de poeira em outro tick, exclusão da água, pool limitado e passo despausado.
+    `D-TELA-VENTO-VEGETACAO`, `D-TELA-AGUA-VIVA` e `ARTE-VILA` saíram 0; as 13 capturas foram
+    abertas em folha de contato. `npm run verify:rapido` saiu 0 (typecheck, lint, 18 dados válidos,
+    320 testes relacionados). `git diff main -- src/sim` estava vazio antes do merge.
 
 ## 2026-10-02 — D-TELA-CUSTO-DO-QUADRO e D-TELA-VENTO-NA-VISTA, pelo Codex
 
