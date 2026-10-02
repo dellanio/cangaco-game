@@ -17142,3 +17142,16 @@ B D-TELA-LUZ-RELEVO, aceite 1             | NEEDS_WORK        | o sha256 contra 
   phaser"), e o `npm ci` reinstalou pelo lockfile, sem dependência nova. **Hipótese, não
   confirmada:** a remoção das worktrees com o `node_modules` por junction entrou no atalho e apagou
   o conteúdo do destino. A pasta vazia tem a data de 18:48, perto da limpeza da integração da arte.
+- **D-ARTE-PESCADOR-BAIXO (a Casa do Pescador mais baixa):** aceite `1f6021e`. O manifesto ganha
+  `alturaMaxPorLargura: 0.8` na `fishermans`: o arquivo de 192×176 desenha 154 px de altura e 168 de
+  largura, centrado no lote, sem deformar.
+  - **O modelo da "exceção morta" proibia o dado certo:** acusava toda exceção num arquivo que cabe
+    em k. Foi trocado pelo predicado do runtime, nos dois eixos: a exceção é morta quando a escala é
+    a mesma com ela e sem ela (`escala-predio.ts`).
+  - **Prova de que o teste novo acusa:** com o `escala-predio.ts` do HEAD de volta, ele reprova.
+  - O F-ESC agora afirma a escala de cada prédio: a Bodega em 0,8, o pescador em 0,8 × 192 / 176 e
+    os outros em 1.
+  - O roteiro F-T4a saiu 0, e a captura 1 foi aberta.
+  - **Ponto de atenção, não medido:** o manifesto foi esvaziado uma vez por um script meu, que
+    truncou o arquivo antes de falhar. Foi restaurado do git (`git checkout`) antes de qualquer
+    commit.

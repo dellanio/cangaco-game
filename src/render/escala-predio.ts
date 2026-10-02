@@ -61,6 +61,12 @@ export function escalaDoSprite(
   return Math.min(pelaLargura, pelaAltura, pelaLarguraMax);
 }
 
+/** A escala que um teto impoe a um arquivo de `razao` (px do arquivo / px do lote), num eixo: o mesmo
+ *  `min` de `escalaDoSprite`, com o lote na regua. */
+function escalaPeloTeto(teto: number, razao: number): number {
+  return Math.min(1, teto / razao);
+}
+
 export interface ViolacaoDaAltura {
   readonly id: string;
   readonly motivo: 'alto-sem-excecao' | 'excecao-morta';
@@ -70,7 +76,12 @@ export interface ViolacaoDaAltura {
  * O manifesto contra a regra, na regua do arquivo (`tamanho[1]` contra
  * `footprint[0] x tilePx`):
  * - `alto-sem-excecao`: passa de k sem declarar excecao — o render o encolheria calado;
- * - `excecao-morta`: declara excecao e cabe em k — a excecao vira folclore.
+ * - `excecao-morta`: declara excecao e ela nao muda o desenho — a excecao vira folclore.
+ *
+ * D-ARTE-PESCADOR-BAIXO: "morta" e o predicado do RUNTIME, e nao "o arquivo cabe em k". Com o
+ * arquivo na regua (lote = footprint x tilePx), a escala pela altura e `min(1, teto / razao)`; a
+ * excecao e morta quando essa escala e a mesma com ela e sem ela. Uma excecao ABAIXO de k, que
+ * encolhe um predio que caberia, e viva: o modelo antigo a acusava.
  */
 export function violacoesDaAltura(
   manifesto: Manifesto, regra: RegraDeAltura, tilePx: number,
@@ -82,7 +93,7 @@ export function violacoesDaAltura(
     const razao = entrada.tamanho[1] / (entrada.footprint[0] * tilePx);
     if (entrada.alturaMaxPorLargura === undefined) {
       if (razao > regra.k) saida.push({ id: entrada.id, motivo: 'alto-sem-excecao' });
-    } else if (razao <= regra.k) {
+    } else if (escalaPeloTeto(entrada.alturaMaxPorLargura, razao) === escalaPeloTeto(regra.k, razao)) {
       saida.push({ id: entrada.id, motivo: 'excecao-morta' });
     }
   }
@@ -98,7 +109,7 @@ export interface ViolacaoDaLargura {
  * C10 — o manifesto contra a regra da largura, na regua do arquivo (`tamanho[0]` contra
  * `footprint[0] x tilePx`), no molde de `violacoesDaAltura`:
  * - `largo-sem-excecao`: passa de k sem declarar excecao — o render o encolheria calado;
- * - `excecao-morta`: declara excecao e cabe em k.
+ * - `excecao-morta`: declara excecao e ela nao muda o desenho (o mesmo predicado da altura).
  */
 export function violacoesDaLargura(
   manifesto: Manifesto, regra: RegraDeLargura, tilePx: number,
@@ -110,7 +121,7 @@ export function violacoesDaLargura(
     const razao = entrada.tamanho[0] / (entrada.footprint[0] * tilePx);
     if (entrada.larguraMaxPorLote === undefined) {
       if (razao > regra.k) saida.push({ id: entrada.id, motivo: 'largo-sem-excecao' });
-    } else if (razao <= regra.k) {
+    } else if (escalaPeloTeto(entrada.larguraMaxPorLote, razao) === escalaPeloTeto(regra.k, razao)) {
       saida.push({ id: entrada.id, motivo: 'excecao-morta' });
     }
   }

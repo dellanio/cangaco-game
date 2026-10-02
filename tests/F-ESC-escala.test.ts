@@ -11,7 +11,7 @@ import { gameData } from '../src/sim/data';
 import { ehEntradaDePredio } from '../src/render/manifesto';
 import type { EntradaDeAsset, Manifesto } from '../src/render/manifesto';
 import {
-  alturaMaxPorLargura, escalaDoSprite, regraDoManifesto, violacoesDaAltura,
+  alturaMaxPorLargura, escalaDoSprite, regraDeLarguraDoManifesto, regraDoManifesto, violacoesDaAltura, violacoesDaLargura,
 } from '../src/render/escala-predio';
 import { gravarEvidencia } from './helpers/evidence';
 
@@ -65,13 +65,51 @@ describe('F-ESC — altura maxima pela largura do lote', () => {
     expect(violacoesDaAltura(morta, regra, tilePx)).toEqual([{ id: baixo.id, motivo: 'excecao-morta' }]);
   });
 
-  it('tirar a excecao de quem a declara reprova: ela nao e enfeite', () => {
+  it('tirar a excecao de quem a declara muda o desenho: ela nao e enfeite', () => {
     const comExcecao = predios.filter((e) => e.alturaMaxPorLargura !== undefined);
     expect(comExcecao.length).toBeGreaterThan(0);
     for (const e of comExcecao) {
-      const sem = comEntrada(e.id, ({ alturaMaxPorLargura: _, ...resto }) => resto);
-      expect(violacoesDaAltura(sem, regra, tilePx), e.id).toEqual([{ id: e.id, motivo: 'alto-sem-excecao' }]);
+      const lote = e.footprint[0] * tilePx;
+      const { alturaMaxPorLargura: _, ...semExcecao } = e;
+      // D-ARTE-PESCADOR-BAIXO: a prova e o desenho (o predicado do runtime), nos dois sentidos
+      expect(escalaDoSprite(semExcecao, regra, tilePx, lote), e.id).not.toBe(escalaDoSprite(e, regra, tilePx, lote));
+      const sem = comEntrada(e.id, ({ alturaMaxPorLargura: __, ...resto }) => resto);
+      // a excecao acima de k segura arte alta: sem ela, o manifesto reprova
+      if (e.tamanho[1] / lote > regra.k) {
+        expect(violacoesDaAltura(sem, regra, tilePx), e.id).toEqual([{ id: e.id, motivo: 'alto-sem-excecao' }]);
+      }
     }
+  });
+
+  it('D-ARTE-PESCADOR-BAIXO: a excecao morta pelo runtime, por tabela, nos dois eixos', () => {
+    const base = predios.find((e) => e.id === 'bakery') as EntradaDeAsset; // 192 x 192 num lote de 192
+    const lote = base.footprint[0] * tilePx;
+    const casos: [string, number, number, boolean][] = [
+      // [caso, razao do arquivo, teto declarado, morta?]
+      ['acima de k num arquivo que cabe em k', 0.9, 1.5, true],
+      ['abaixo da razao do arquivo (encolhe)', 0.9, 0.8, false],
+      ['igual a k', 0.9, 1, true],
+      ['acima de k num arquivo que passa de k', 1.3, 1.4, false],
+      ['entre a razao e k (nao encolhe)', 0.9, 0.95, true],
+    ];
+    for (const [caso, razao, teto, morta] of casos) {
+      const px = Math.round(razao * lote);
+      const alto = comEntrada(base.id, (e) => ({ ...e, tamanho: [e.tamanho[0], px] as const, alturaMaxPorLargura: teto }));
+      const largo = comEntrada(base.id, (e) => ({ ...e, tamanho: [px, e.tamanho[1]] as const, larguraMaxPorLote: teto }));
+      const acusou = (v: readonly { motivo: string }[]) => v.some((x) => x.motivo === 'excecao-morta');
+      expect(acusou(violacoesDaAltura(alto, regra, tilePx)), `altura: ${caso}`).toBe(morta);
+      expect(acusou(violacoesDaLargura(largo, regraDeLarguraDoManifesto(manifesto), tilePx)), `largura: ${caso}`).toBe(morta);
+    }
+  });
+
+  it('D-ARTE-PESCADOR-BAIXO: a Casa do Pescador desenha 0,8 do lote de altura, sem deformar', () => {
+    const casa = predios.find((e) => e.id === 'fishermans') as EntradaDeAsset;
+    const lote = casa.footprint[0] * tilePx;
+    const escala = escalaDoSprite(casa, regra, tilePx, lote, regraDeLarguraDoManifesto(manifesto));
+    expect(casa.tamanho[1] * escala).toBeCloseTo(0.8 * lote, 10);
+    expect(escala).toBeLessThan(1);
+    // uma escala so para os dois eixos: a largura cai na mesma proporcao
+    expect((casa.tamanho[0] * escala) / (casa.tamanho[1] * escala)).toBeCloseTo(casa.tamanho[0] / casa.tamanho[1], 10);
   });
 
   it('a escala pura: dentro da regra nao muda nada; alto demais encolhe ate o teto', () => {
@@ -82,6 +120,7 @@ describe('F-ESC — altura maxima pela largura do lote', () => {
       // a arte de hoje esta toda dentro da regra (com as excecoes): nenhum sprite muda, menos a Bodega,
       // que desenha a 1,2 do lote com um arquivo de 1,5 (D-ARTE-BODEGA-MENOR, decisao do operador)
       if (e.id === 'inn') expect(escala, e.id).toBeCloseTo(1.2 / 1.5, 10);
+      else if (e.id === 'fishermans') expect(escala, e.id).toBeCloseTo((0.8 * 192) / 176, 10);
       else expect(escala, e.id).toBe(1);
       medidas.push({
         id: e.id, footprint: e.footprint, tamanho: e.tamanho, teto: alturaMaxPorLargura(e, regra),
