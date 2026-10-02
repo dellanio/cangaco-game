@@ -1333,6 +1333,9 @@ export class WorldScene extends Phaser.Scene {
       atual?.destroy();
       this.vegetacaoDesenhada.delete(chave);
       this.ultimoTickDaVegetacao.delete(chave);
+      // D-TELA-VENTO-NA-VISTA: a arvore cortada sai da lista da vista ja no proximo quadro; sem
+      // isto, o vento seguiria girando o sprite destruido ate a camera mexer.
+      if (atual !== undefined) this.vegetacaoNova = true;
       this.rochaDesenhada.delete(chave);
       this.crescimentoDesenhado.delete(chave);
       return;

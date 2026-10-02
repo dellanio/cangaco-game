@@ -17323,3 +17323,23 @@ B D-TELA-LUZ-RELEVO, aceite 1             | NEEDS_WORK        | o sha256 contra 
 - Os números antigos do vento (+2,4 ms) e da água (34,7 contra 31,7) ficam substituídos: mediam o intervalo entre `requestAnimationFrame`, e não o custo dentro do quadro.
 - **Verificações:** `npm run verify:rapido` saiu 0 (typecheck, lint, dados e testes ligados); os seis testes diretos da lição, incluindo os dois novos, passaram (46 testes). Os roteiros de custo, vento, água, chão da cana, F-SPR (carga dos sprites), F-REPL-e (estados da árvore) e ARTE-VILA (arte da vila) saíram 0. O roteiro F-REPL-e (estados da árvore) exigiu antes `tests/F-REPL-e-arvore.test.ts`, que passou e gerou seu save. `git diff main -- src/sim` vazio.
 - **Fora dos aceites:** camada da poeira, arte nova e qualquer alteração da simulação.
+- **Revisão da sessão Claude (2026-10-02):**
+  - **Conferido no diff:** `git diff cccc9a5..c6edfa9 -- src/sim` vazio. O custo é somado por
+    função pura com relógio injetado. A asserção fica só no eixo de itens, e o tempo fica fora de
+    `expect`. A medida antiga por `requestAnimationFrame` saiu dos roteiros do vento e da água.
+  - **Corrigido (defeito, lido no código):** quando a árvore sai do mapa (cortada, ou trocada por
+    outro desenho), o `pintarVegetacao` a destruía e tirava da `vegetacaoDesenhada`, mas não
+    marcava `vegetacaoNova`. A lista `arvoresNaVista` guardava o sprite destruído até a câmera
+    mexer: o vento continuava girando-o e contando-o no `vegetacaoBalancando`. Agora a remoção
+    marca a lista para ser refeita no próximo quadro. **Sem teste que reprove o caso antigo:** a
+    prova é a leitura do código. Depois da correção, rodaram com saída 0: o `verify:rapido` (372
+    testes), os 5 testes diretos (43/43) e os roteiros do vento, do custo e do `F-REPL-e`.
+  - **Achado da medida:** o chão da cana custa ~0,2 ms por quadro mesmo pausado, sem item
+    nenhum. Hoje é a camada animada mais cara, porque o `atualizarChaoDaCana` varre todos os
+    recursos do estado a cada quadro. A correção provável é o mesmo portão da água (só quando o
+    tick muda). É pequena, e fica registrada para um item.
+  - **Ressalvas:**
+    - o `atualizarVento` escreve `ticksDaVegetacaoNaVista` direto no `window.__cangaco`, e não
+      pelo `estado` como os outros campos da ponte. O efeito é o mesmo, mas a forma destoa;
+    - o bloco da poeira no `POST_RENDER` ficou com a indentação torta depois do rebase. O Codex
+      da poeira (emenda) mexe nesse trecho agora, e a correção fica com ele.
