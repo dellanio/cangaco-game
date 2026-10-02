@@ -17442,3 +17442,27 @@ A ponte publica especie e angulo por arvore. No tick 1 capturado: maior angulo a
 | agua | ticks | chaoDaCana | 0.170000 | 0.200000 | 0 | 0 |
 
 **Hipotese e limites:** os fatores de amplitude 1,0 para juazeiro/umbuzeiro, 0,3 para macambira e 0,15 para os tres cactos sao provis?rios. A velocidade relativa das especies inicia em 1,0; a variacao por arvore de 0,1 altera velocidade em ?10% e amplitude entre 90% e 100%, mantendo o teto absoluto do aceite. A calibracao visual final e do operador. Os tempos sugerem que o portao retira a varredura do quadro pausado; diferencas das camadas nao editadas e dos ticks sao ruido desta medicao em maquina compartilhada, nao prova de ganho ou regressao. A cana ainda varre todos os recursos no tick novo, como previsto. Nenhum trabalho fora dos dois aceites; nao se marca feature e nao se faz push. O merge exige main limpa, rebase com preservacao das mudancas concorrentes e nova verificacao dos aceites.
+- **Revisão da sessão Claude: D-TELA-CACTO-NO-VENTO e D-TELA-CHAO-DA-CANA-SO-QUANDO-MUDA
+  (`f0c2af9`, `235f9d1` e `c6576b2`), os dois cumprem o aceite.** O Codex retomou depois da
+  revisão anterior, que tinha visto a worktree vazia.
+  - **Conferido no diff:** `git diff e037ee4..c6576b2 -- src/sim` vazio.
+    - A espécie sai de `especieDoTile`, com o mesmo hash e a mesma ordem de antes, e a cena e o
+      vento usam a mesma função.
+    - O fator da espécie e a variação por árvore vêm do `data/vento.json` e do hash do tile.
+    - O chão da cana só varre os recursos no tick novo, e só reconta a vista quando a câmera muda.
+  - **Rodado aqui, com saída 0:**
+    - o `verify:rapido` (381 testes);
+    - os 7 testes diretos (81/81);
+    - os roteiros do vento, do chão da cana e do custo.
+
+    No tick capturado, o maior ângulo de cacto foi 0,21° e o de juazeiro 1,30°.
+  - **A medida do Codex (evidência da corrida):** o chão da cana pausado caiu de ~0,25 para
+    ~0,007 ms por quadro.
+  - **Ressalvas:**
+    - o teste de equivalência da espécie compila uma cópia literal do método antigo
+      (`tests/helpers/textura-da-vegetacao-antes-cacto.txt`) com `transpileModule` e
+      `new Function`. Prova a igualdade nos 128 × 128 tiles, mas é uma maquinaria pesada para uma
+      guarda que só vale na troca. Ela pode sair num próximo item;
+    - **hipótese, não medida:** se a partida for trocada por outra no mesmo tick sem recriar a
+      cena, o chão da cana não varre os recursos novos até o tick andar. O teste cobre o tick
+      que volta, e não o tick igual.
