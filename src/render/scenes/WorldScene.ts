@@ -7,7 +7,7 @@ import dadosDoVento from '../../../data/vento.json';
 import agua from '../../../data/agua.json';
 import dadosDaPoeira from '../../../data/poeira.json';
 import { celulasDaAguaParaTrocar } from '../agua-viva';
-import { particulasDaPoeira } from '../poeira';
+import { particulasDaPoeira, rajadaNaVista } from '../poeira';
 import { codigoDoRecurso, configDoMapa, recursosDeRender, terrenoDeRender } from '../mapa';
 import { CHAO_DA_CANA, chaoDaRoca } from '../chao-da-roca';
 import {
@@ -588,16 +588,18 @@ export class WorldScene extends Phaser.Scene {
     const chaveDaPoeira = `${tickDaAgua},${alfaDaPoeira},${chaveDaVistaDaAgua}`;
     if (chaveDaPoeira !== ultimoQuadroDaPoeira) {
       ultimoQuadroDaPoeira = chaveDaPoeira;
-      const particulas = particulasDaPoeira(
-        dadosDaPoeira, dadosDoVento, tickDaAgua, alfaDaPoeira,
-        {
+      const vistaDaPoeira = {
           x: vistaDaAgua.x / tilePx, y: vistaDaAgua.y / tilePx,
           largura: vistaDaAgua.width / tilePx, altura: vistaDaAgua.height / tilePx,
           larguraMapa: largura, alturaMapa: altura,
-        },
+        };
+      const particulas = particulasDaPoeira(
+        dadosDaPoeira, dadosDoVento, tickDaAgua, alfaDaPoeira,
+        vistaDaPoeira,
         (gx, gy) => terrenoDeRender.tipos[terrenoDeRender.codigos[gy * largura + gx] ?? -1] === 'agua',
       );
-      estado.poeiraDesenhada = particulas.map(({ id, tipo, gx, gy }) => ({ id, tipo, gx, gy }));
+      estado.rajadaNaVista = rajadaNaVista(dadosDoVento, tickDaAgua, alfaDaPoeira, vistaDaPoeira);
+      estado.poeiraDesenhada = particulas.map(({ id, tipo, evento, gx, gy }) => ({ id, tipo, evento, gx, gy }));
       poolDaPoeira.forEach((grafico, indice) => {
         const particula = particulas[indice];
         if (!particula) { grafico.setVisible(false); return; }

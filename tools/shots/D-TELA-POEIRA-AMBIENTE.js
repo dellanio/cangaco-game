@@ -3,6 +3,7 @@
 const mapa = require('../../data/maps/sertao-128.json');
 const terreno = require('../../data/terrain.json');
 const config = require('../../data/poeira.json');
+const vento = require('../../data/vento.json');
 
 function vistaDeAreiaEGrama() {
   const largura = Math.ceil(1280 / terreno.tile_px);
@@ -51,14 +52,24 @@ async function roteiro({ page, estado, afirmar, capturar }) {
   };
   await page.evaluate((camera) => window.__cangaco.fixarCamera(camera), vistaDeAreiaEGrama());
   await page.waitForTimeout(200);
-  const antes = await conferir();
-  afirmar(antes.poeiraDesenhada.length > 0, 'A vista de areia e grama precisa mostrar poeira.');
-  await capturar('tick-T');
-  await page.evaluate(() => window.__cangaco.avancar(5));
-  await page.waitForTimeout(200);
-  const depois = await conferir();
-  afirmar(depois.tick === antes.tick + 5, 'A ponte nao avancou cinco ticks.');
-  await capturar('tick-T-mais-5');
+  let comPoeira = null;
+  let semPoeira = null;
+  for (let passo = 0; passo <= vento.rajada.intervaloTicks; passo += 1) {
+    const atual = await conferir();
+    if (!comPoeira && atual.poeiraDesenhada.some((p) => p.evento === 'rajada')) {
+      afirmar(atual.rajadaNaVista > config.limiarDaRajada, 'Rajada na vista nao passou do limiar.');
+      comPoeira = { tick: atual.tick, arquivo: await capturar('com-poeira') };
+    }
+    if (!semPoeira && atual.poeiraDesenhada.length === 0) {
+      semPoeira = { tick: atual.tick, arquivo: await capturar('sem-poeira') };
+    }
+    if (comPoeira && semPoeira) break;
+    if (passo >= vento.rajada.intervaloTicks) break;
+    await page.evaluate(() => window.__cangaco.avancar(1));
+    await page.waitForTimeout(35);
+  }
+  afirmar(Boolean(comPoeira && semPoeira), `Nao houve ticks com e sem poeira em ${vento.rajada.intervaloTicks} passos.`);
+  console.log(`captura com poeira: tick ${comPoeira.tick}, ${comPoeira.arquivo}`);
 
   await page.evaluate((camera) => window.__cangaco.fixarCamera(camera), centroDoAcude());
   await page.waitForTimeout(200);

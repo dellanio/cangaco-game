@@ -50,8 +50,14 @@ function validarPoeira(poeira, erros) {
     e('data/poeira.json precisa existir e ser objeto');
     return;
   }
-  for (const campo of ['maximoNaVista', 'vidaTicks', 'nascimentosPorTick']) {
+  for (const campo of ['maximoNaVista', 'vidaTicks', 'nascimentosPorTick', 'intervaloDoRedemoinhoTicks', 'duracaoDoRedemoinhoTicks']) {
     if (!Number.isInteger(poeira[campo]) || poeira[campo] <= 0) e(`${campo} precisa ser inteiro > 0`);
+  }
+  if (typeof poeira.limiarDaRajada !== 'number' || !Number.isFinite(poeira.limiarDaRajada)
+    || poeira.limiarDaRajada <= 0 || poeira.limiarDaRajada >= 1) e('limiarDaRajada precisa estar em (0,1)');
+  if (Number.isInteger(poeira.intervaloDoRedemoinhoTicks) && Number.isInteger(poeira.duracaoDoRedemoinhoTicks)
+    && poeira.intervaloDoRedemoinhoTicks <= poeira.duracaoDoRedemoinhoTicks) {
+    e('intervaloDoRedemoinhoTicks precisa ser maior que duracaoDoRedemoinhoTicks');
   }
   if (!Number.isInteger(poeira.semente)) e('semente precisa ser inteiro');
   if (typeof poeira.velocidadeTilesPorTick !== 'number' || !Number.isFinite(poeira.velocidadeTilesPorTick)

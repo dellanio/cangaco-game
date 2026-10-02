@@ -237,7 +237,8 @@ export interface EstadoDebug {
   /** Quantas celulas da camada mudaram no ultimo tick observado. */
   celulasDaAguaTrocadas: number;
   /** Particulas visiveis, inclusive tile para o roteiro conferir agua. */
-  poeiraDesenhada: readonly { readonly id: string; readonly tipo: 'poeira' | 'palha'; readonly gx: number; readonly gy: number }[];
+  poeiraDesenhada: readonly { readonly id: string; readonly tipo: 'poeira' | 'palha'; readonly evento: 'rajada' | 'redemoinho'; readonly gx: number; readonly gy: number }[];
+  rajadaNaVista: number;
   /** Total de objetos da camada criados desde o inicio. */
   poolDaPoeira: number;
   /** F-T2a — quantos tiles de cada RECURSO estao dentro da vista da camera
@@ -429,6 +430,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     variantesDaAguaVisivel: {},
     celulasDaAguaTrocadas: 0,
     poeiraDesenhada: [],
+    rajadaNaVista: 0,
     poolDaPoeira: 0,
     recursosVisiveis: {},
     chaoDaCanaDesenhado: 0,

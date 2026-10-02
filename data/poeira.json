@@ -6,6 +6,9 @@
   "nascimentosPorTick": 48,
   "velocidadeTilesPorTick": 0.045,
   "fracaoPalha": 0.28,
+  "limiarDaRajada": 0.6,
+  "intervaloDoRedemoinhoTicks": 360,
+  "duracaoDoRedemoinhoTicks": 18,
   "corPoeira": "#a88961",
   "corPalha": "#c9aa72"
 }
