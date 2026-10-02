@@ -407,12 +407,37 @@ no PROGRESS entra no commit seguinte à avaliação, com o hash que o selo mostr
 | camada | o que roda | quando |
 |---|---|---|
 | `npm run verify:rapido` | typecheck + lint + validate:data + `vitest related` nos arquivos alterados (staged, não staged e novos) | **cada commit** |
-| `npm run verify` (completo) | typecheck + lint + validate:data + a suíte inteira + a transladada | **fim da leva e todo push** |
+| `npm run verify` (completo) | typecheck + lint + validate:data + a suíte inteira + a transladada | **só no fechamento de uma fase** (ver abaixo) |
 | `npm run test:longo` + `npm run shot:todos` | a suíte longa, sozinha, com o selo; todos os roteiros, um de cada vez | **fechamento: só ao fim de um grande bloco de entrega** |
 
+- **O `verify` é sempre o rápido; o completo só no fechamento de uma fase** (decisão do operador,
+  2026-10-01, noite; substitui o "completo antes de todo push"). Quem precisar rodar verify, sessão
+  Claude ou Codex, roda o `npm run verify:rapido`, a cada commit e antes de todo push. O `verify`
+  completo roda **só no fechamento de uma fase do jogo, com um grande pacote de entregas**, junto da
+  `test:longo` e do `shot:todos`. Motivo: o completo leva ~2,5 min por vez e estava sendo rodado a
+  cada push.
+  - **O push com o selo rápido:** o `verify:rapido` passa a gravar no `.verify-rapido-ok` o `commit`
+    (o HEAD) e a `base` (o `merge-base` com o upstream, ou o HEAD sem upstream). O `vitest related`
+    roda nos arquivos alterados na árvore **e** nos que mudaram de `base` até o HEAD. Com a árvore
+    limpa depois dos commits, ele testa o que vai subir.
+  - O hook `pre-push` aceita o selo completo do sha empurrado, como hoje, **ou** o selo rápido cujo
+    `commit` é o sha empurrado e cuja `base` cobre o que o remoto ainda não tem. Ou seja, a `base` é
+    o sha remoto ou um ancestral dele; para uma branch nova, a `base` está em alguma ref remota.
+  - **Marcar feature em `test-results.json` continua pedindo o completo** (o portão do
+    `.claude/hooks/verify-gate.js` não muda). Por isso as chaves passam a ser marcadas em lote, no
+    fechamento da fase.
+  - **Aceite (escrito antes do código):**
+    1. a regra do hook por tabela, com o selo rápido: passa com o `commit` do sha e a `base` igual ao
+       remoto ou ancestral dele. Recusa com o `commit` de outro sha, com a `base` à frente do remoto
+       (cobre menos do que sobe), com selo rápido sem `commit` ou sem `base` (o formato antigo) e,
+       numa branch nova, com a `base` fora das refs remotas. Os casos do selo completo continuam;
+    2. como processo, num repositório falso com remoto bare: dois commits depois do push anterior, e
+       o `verify:rapido` com a árvore limpa roda os testes ligados aos arquivos desses commits (mais
+       que 0) e grava `commit` e `base`. O push com esse selo passa; um commit depois do selo, recusa;
+    3. o `verify:rapido` sem upstream e com a árvore limpa continua rodando 0 testes e saindo 0 (o
+       aceite 3 dos portões).
 - **O fechamento é só ao fim de um grande bloco de entrega** (decisão do operador, 2026-10-01). Ele
-  leva cerca de 45 min. Entre os blocos valem o `verify:rapido` a cada commit e o `verify` completo
-  antes de todo push. O operador diz quando um bloco fecha: por exemplo, a versão que ele vai jogar
+  leva cerca de 45 min. Entre os blocos vale o `verify:rapido`, a cada commit e antes de todo push. O operador diz quando um bloco fecha: por exemplo, a versão que ele vai jogar
   (tag `teste-jogo-<n>`).
 - **`npm run shot:todos` (aceite, 2026-10-01, antes do código):**
   1. a lista é todo `tools/shots/*.js` sem prefixo `_` (os helpers), na ordem do nome. Uma função
@@ -452,9 +477,9 @@ no PROGRESS entra no commit seguinte à avaliação, com o hash que o selo mostr
     - **2b.** Um vite órfão de verdade, que a liberação encerra. Um processo sobe o vite com a mesma
       linha de comando do `shot.js`, grava o registro e sai sem derrubá-lo. A porta continua presa
       até a liberação, que encerra o vite, e depois dela fica livre.
-- **Push só depois do `verify` completo verde.** Se ele falhar e o `verify:rapido` de cada commit
-  passou, acha-se o commit culpado com `git bisect` local (`git bisect run npm run verify`), sem
-  empurrar nada antes.
+- **Push só depois do `verify:rapido` verde, com o selo do HEAD** (o completo também serve). Se o
+  completo do fechamento falhar e o rápido de cada commit passou, acha-se o commit culpado com
+  `git bisect` local (`git bisect run npm run verify`).
 - O `verify:rapido` grava `.verify-rapido-ok` e **nunca** o `.verify-ok`. Marcar feature em
   `test-results.json` continua exigindo o `verify` completo (o portão abaixo recusa o selo rápido).
 - **Aceite das camadas:** (1) sem arquivo alterado que o `vitest related` alcance, o rápido roda 0
