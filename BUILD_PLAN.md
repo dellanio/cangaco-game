@@ -6197,6 +6197,98 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
   7. **Não-regressão:** os roteiros `F-TR` e `ARTE-VILA` saem 0, e o `npm run verify:rapido` passa.
      Nada muda em `src/sim/` nem em `data/` (`git diff main -- src/sim data` vazio).
 
+### O mundo vivo: vento, água e poeira (quebra do `docs/fase-animacao-vida-do-mundo.md`, aprovada pelo operador, 2026-10-02)
+- **Origem:** o documento é o prompt de pesquisa do operador (`c75e98e`), e não item da fila. Parte
+  dele já foi entregue por outros itens: o trabalho, a fumaça e a luz das minas (F-VIVO-b), os
+  animais (F-VIVO-c), as pilhas (F-VIVO-a e D-TELA-03b) e as 8 direções (`7aadf98`). O andar do
+  carregador está na D-ARTE-SERF-ANDAR. O resto sai nos quatro itens abaixo, **nesta ordem**
+  (decisão do operador).
+- **O Aseprite fica fora (decisão do operador, 2026-10-02).** Os §2, §20 e §23 do documento pedem
+  o Aseprite MCP, mas o operador procura ferramenta que entregue animação **em tom de pintura**,
+  e não só pixel art. Outra sessão testa Blender, mesh.ai e outras plataformas. Nenhum item desta
+  quebra instala ferramenta nem depende de uma. O `docs/BRIEF-ANIMACAO.md` (§4 do documento)
+  espera essa escolha.
+- **Regras comuns aos quatro itens:**
+  - **Só render.** Nada em `src/sim/` nem em número de `data/` que a sim leia.
+  - **O movimento sai do tick, nunca do relógio de parede**, como o laço de trabalho
+    (`src/render/trabalho.ts`). O movimento é uma função de `(tick, alfaDeInterpolacao, tile)`.
+    Com o jogo pausado, o mesmo tick dá o mesmo quadro. Sem isso, toda captura com árvore ou água
+    muda de hash entre corridas.
+  - **Nada de `Math.random()`.** A fase de cada objeto sai do tile por hash determinístico, de modo
+    que vizinhos não balançam juntos.
+  - **Os números de tela ficam num dado de render,** como o `data/relevo.json`, com uma regra no
+    `validate:data`.
+  - **Pode ir para o Codex** (tabela do `/codex`: `src/render/`, `tools/`, testes de aceite já
+    escritos), numa worktree a partir da `main`, com merge na `main` no fim.
+
+#### D-TELA-VENTO-VEGETACAO — O vento e as árvores que balançam
+- **Escopo:**
+  - um vento global, função pura em `src/render/vento.ts`, com `direcao`, `forca`, `rajada` e o
+    tempo em ticks. É o consumidor único dos §6 e §8 do documento: os itens seguintes (a poeira
+    e a bandeira) leem o mesmo vento, e nenhum inventa o seu;
+  - os números em `data/vento.json`: a direção, a força, a amplitude máxima, o período, a
+    rajada (intervalo, duração e velocidade com que ela cruza o mapa) e quais ids de `vegetacao`
+    do manifesto balançam. A regra é `interface/vento` em `tools/data-rules.js`;
+  - os sprites de vegetação de pé (`vegetacaoDesenhada` no `WorldScene.ts`, hoje o `tree`)
+    balançam em volta do pé. A rocha (`rock`, que também é `vegetacao` no manifesto) não balança.
+- **Fora do escopo:** o milho e a cana. Eles são células do tilemap, e não sprites, e balançar
+  uma célula pede outra técnica. Ficam para depois, com registro no PROGRESS. Também ficam fora a
+  água, a poeira e a bandeira, que são os itens seguintes.
+- **Aceite (escrito antes do código, 2026-10-02):**
+  1. **A função pura, por tabela, em `tests/D-TELA-VENTO-VEGETACAO.test.ts`:**
+     - as mesmas entradas dão a mesma saída, e o mesmo tick com o mesmo alfa dá o mesmo valor;
+     - com `forca` 0, o deslocamento é exatamente 0 em todo tile;
+     - em nenhum tile, em nenhum tick de uma janela de 2 000 ticks, o deslocamento passa da
+       amplitude máxima do dado;
+     - não é sincronizado: num bloco de 10×10 tiles, no mesmo tick, a fase não é a mesma em
+       todos (conta-se quantos valores distintos há, e o número vai para o
+       `test-output/D-TELA-VENTO-VEGETACAO.json`);
+     - a rajada atravessa o mapa: o pico chega antes ao tile a montante (pela `direcao`) e depois
+       ao tile a jusante, com o atraso dado pela velocidade da rajada no dado, com tolerância de
+       1 tick.
+  2. **O pé fica parado:** o balanço gira ou inclina o sprite em volta do anchor `[0.5, 1]`. A
+     posição do pé na tela é a mesma com e sem vento, afirmada pela função que calcula a
+     transformação.
+  3. **Quem balança:** a regra pura lê a lista do `data/vento.json`. O `tree` balança e o `rock`
+     não. A regra do `validate:data` reprova um id da lista que não existe no manifesto como
+     `vegetacao`, e há um caso que reprova escrito no teste.
+  4. **A luz do relevo não se perde:** o `tingir` da D-TELA-LUZ-RELEVO continua aplicado ao
+     sprite que balança, com a tint lida pelo pé.
+  5. **O roteiro `tools/shots/D-TELA-VENTO-VEGETACAO.js`:**
+     - pausado, com a câmera posta pela ponte (`fixarCamera`) sobre um mato;
+     - a ponte informa quantos sprites balançam, e o número é igual ao de árvores desenhadas
+       (`vegetacaoRenderizada` menos as rochas);
+     - duas capturas, uma no tick T e outra no T + 5 (pela ponte `avancar`), diferentes na região
+       das árvores;
+     - o roteiro roda duas vezes, e a captura do tick T tem o mesmo sha256 nas duas corridas;
+     - um passo despausado (§8);
+     - as capturas são abertas.
+  6. **A medida de custo** vai para o PROGRESS como evidência da sessão, e não como asserção (§8):
+     o tempo de quadro com e sem vento, na vista mais cheia de árvore do mapa, e quantos sprites
+     são atualizados por quadro.
+  7. **Não-regressão:**
+     - os roteiros `F-SPR`, `F-REPL-e` e `ARTE-VILA` saem 0;
+     - o `npm run verify:rapido` passa;
+     - `git diff main -- src/sim` vazio, e os arquivos de `data/` que a sim lê ficam intactos.
+
+#### D-TELA-AGUA-VIVA — A água se mexe
+- **Escopo (o aceite entra num commit próprio antes do código):** a água (`agua`, com as
+  variantes `v1` a `v3` no manifesto) ganha movimento pelo tick. A primeira tentativa é a
+  alternância ou o deslocamento das variantes que já existem, sem arte nova. A margem não pisca, e
+  o vento (D-TELA-VENTO-VEGETACAO) pode influir, se for barato. Mesmas regras comuns.
+
+#### D-TELA-POEIRA-AMBIENTE — Poeira e palha no vento
+- **Escopo (o aceite entra num commit próprio antes do código):** partículas de poeira e palha
+  seca (§10 e §11 do documento), levadas pelo mesmo vento, com densidade limitada e só na vista.
+  As partículas são sorteadas por um RNG de render semeado (nunca `Math.random()`), e a sim não
+  muda. Depende da D-TELA-VENTO-VEGETACAO.
+
+#### D-ARTE-BANDEIRA-FACCAO — A bandeira do bando balança no vento
+- **Escopo (o aceite entra num commit próprio antes do código):** a bandeira de facção (§13 do
+  documento) na cor do bando (`render/cor-do-bando.ts`), balançando com o mesmo vento. **Precisa
+  de arte**, e a técnica (quadros pintados ou deformação procedural) espera a ferramenta que o
+  operador está escolhendo. Depende da D-TELA-VENTO-VEGETACAO.
+
 ### Leva 1 da animação direcional: legibilidade da logística (aprovada pelo operador, 2026-10-01)
 Plano: `docs/planos/2026-09-30-animacao-direcional-de-unidades.md`, §3 e §10. **Só a Leva 1 foi
 aprovada**: o piloto do serf (Leva 2) e o resto esperam. As siglas são as do plano, citadas pelo
