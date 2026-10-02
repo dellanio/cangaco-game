@@ -1393,17 +1393,24 @@
         128
       ],
       "anchor": [
-        0.5,
-        1
+        0.43442,
+        0.94431
       ],
       "estados": {
-        "completo": "sprites/watchtower/completo.png"
+        "completo": "sprites/watchtower/watchtower_completo-D-20261002.png",
+        "madeira": "sprites/watchtower/watchtower_madeira-D-20261002.png"
       },
-      "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+      "licenca": "arte propria do projeto, geracao nativa autorizada pelo operador em 2026-10-02; aprovada pelo operador em 2026-10-02",
       "origem": {
-        "base": "base/building-atlas-a/source.png",
+        "base": "base/watchtower/watchtower-D-20261002-completo-master-2x.png",
         "semente": null,
-        "nota": "Derivado pela skill pianco-art-pipeline do layout watchtower."
+        "nota": "Pianco D, par madeira/completo de geracao nativa; luz cdcfec5. Canvas <=1 lote nos dois eixos, footprint preservado, reducao uniforme 2x para 1x e alpha bleed. Registro externo D/watchtower/rodada-2026-10-02/. Raw completo SHA256 7c69d40a680f3ccd5b50a4812e5b6d1ff31a23d5a5d1663a9330d1117b650899; madeira 6c72b748b251f6ae56f9e16144149b225f2f198620e7007dca08b4b54a6ced74. Estoque segue ordem de data/production.json: {\"entrada\": [], \"saida\": []}. Ancoras medidas nas folhas reduzidas, prova no render e homologacao pendentes. Master da madeira: base/watchtower/watchtower-D-20261002-madeira-master-2x.png."
+      },
+      "ancoras": {
+        "bandeira": [
+          0.49219,
+          0.03906
+        ]
       }
     },
     {
@@ -1511,20 +1518,43 @@
       ],
       "tamanho": [
         128,
-        96
+        128
       ],
       "anchor": [
-        0.5,
-        1
+        0.50753,
+        0.88868
       ],
       "estados": {
-        "completo": "sprites/gold_mine/completo.png"
+        "completo": "sprites/gold_mine/gold_mine_completo-D-20261002.png",
+        "madeira": "sprites/gold_mine/gold_mine_madeira-D-20261002.png"
       },
-      "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+      "licenca": "arte propria do projeto, geracao nativa autorizada pelo operador em 2026-10-02; aprovada pelo operador em 2026-10-02",
       "origem": {
-        "base": "base/building-atlas-a/source.png",
+        "base": "base/gold_mine/gold_mine-D-20261002-completo-master-2x.png",
         "semente": null,
-        "nota": "Derivado pela skill pianco-art-pipeline do layout gold_mine."
+        "nota": "Pianco D, par madeira/completo de geracao nativa; luz cdcfec5. Canvas <=1 lote nos dois eixos, footprint preservado, reducao uniforme 2x para 1x e alpha bleed. Registro externo D/gold_mine/rodada-2026-10-02/. Raw completo SHA256 5e5a5ab4d8c5ee634ae0875c18cdda4d29788a9b1c20cfa9ed74811bcc4756d0; madeira 6673e2c7010e6490fc38fe5bb1cd2b33e7efaa7e9d6a6b54c95da0f5ec4cd6f2. Estoque segue ordem de data/production.json: {\"entrada\": [], \"saida\": [\"gold_ore\"]}. Ancoras medidas nas folhas reduzidas, prova no render e homologacao pendentes. Ressalva por id gold_mine: completo/front/0: luz sul invertida (Δ=-28.8); madeira/front/0: luz sul invertida (Δ=-3.3). Aprovada pelo operador em 2026-10-02 apesar destas falhas de luz; regeneracao futura possivel. Master da madeira: base/gold_mine/gold_mine-D-20261002-madeira-master-2x.png."
+      },
+      "ancoras": {
+        "bandeira": [
+          0.58594,
+          0.16406
+        ],
+        "estoque": {
+          "saida": [
+            [
+              0.78452,
+              0.85901
+            ]
+          ]
+        },
+        "trabalho": {
+          "area": [
+            0.37892,
+            0.57212,
+            0.63613,
+            0.79965
+          ]
+        }
       }
     },
     {
@@ -1536,20 +1566,43 @@
       ],
       "tamanho": [
         192,
-        128
+        176
       ],
       "anchor": [
-        0.5,
-        1
+        0.54062,
+        0.80862
       ],
       "estados": {
-        "completo": "sprites/coal_mine/completo.png"
+        "completo": "sprites/coal_mine/coal_mine_completo-D-20261002.png",
+        "madeira": "sprites/coal_mine/coal_mine_madeira-D-20261002.png"
       },
-      "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+      "licenca": "arte propria do projeto, geracao nativa autorizada pelo operador em 2026-10-02; aprovada pelo operador em 2026-10-02",
       "origem": {
-        "base": "base/building-atlas-a/source.png",
+        "base": "base/coal_mine/coal_mine-D-20261002-completo-master-2x.png",
         "semente": null,
-        "nota": "Derivado pela skill pianco-art-pipeline do layout coal_mine."
+        "nota": "Pianco D, par madeira/completo de geracao nativa; luz cdcfec5. Canvas <=1 lote nos dois eixos, footprint preservado, reducao uniforme 2x para 1x e alpha bleed. Registro externo D/coal_mine/rodada-2026-10-02/. Raw completo SHA256 3a2ce88fc651fc270254bf784a2420f1ad93e697a4317d636827b47b324ffa8b; madeira 1273391247c3e6e1d8d468771680166dbc29cb58af3be6905ed7d0b1d41446ed. Estoque segue ordem de data/production.json: {\"entrada\": [], \"saida\": [\"coal\"]}. Ancoras medidas nas folhas reduzidas, prova no render e homologacao pendentes. Ressalva por id coal_mine: completo/front/0: luz sul invertida (Δ=-19.7); madeira/front/0: luz sul invertida (Δ=-16.5). Aprovada pelo operador em 2026-10-02 apesar destas falhas de luz; regeneracao futura possivel. Master da madeira: base/coal_mine/coal_mine-D-20261002-madeira-master-2x.png."
+      },
+      "ancoras": {
+        "bandeira": [
+          0.5,
+          0.06818
+        ],
+        "estoque": {
+          "saida": [
+            [
+              0.86871,
+              0.77796
+            ]
+          ]
+        },
+        "trabalho": {
+          "area": [
+            0.41759,
+            0.50198,
+            0.6534,
+            0.73707
+          ]
+        }
       }
     },
     {
@@ -1561,20 +1614,43 @@
       ],
       "tamanho": [
         192,
-        96
+        176
       ],
       "anchor": [
-        0.5,
-        1
+        0.52543,
+        0.89674
       ],
       "estados": {
-        "completo": "sprites/iron_mine/completo.png"
+        "completo": "sprites/iron_mine/iron_mine_completo-D-20261002.png",
+        "madeira": "sprites/iron_mine/iron_mine_madeira-D-20261002.png"
       },
-      "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+      "licenca": "arte propria do projeto, geracao nativa autorizada pelo operador em 2026-10-02; aprovada pelo operador em 2026-10-02",
       "origem": {
-        "base": "base/building-atlas-a/source.png",
+        "base": "base/iron_mine/iron_mine-D-20261002-completo-master-2x.png",
         "semente": null,
-        "nota": "Derivado pela skill pianco-art-pipeline do layout iron_mine."
+        "nota": "Pianco D, par madeira/completo de geracao nativa; luz cdcfec5. Canvas <=1 lote nos dois eixos, footprint preservado, reducao uniforme 2x para 1x e alpha bleed. Registro externo D/iron_mine/rodada-2026-10-02/. Raw completo SHA256 3941c5c22fcfdcd20804dc648688c7f2774e5e60f3b9e73bbf05b43f4b0c7293; madeira 2121148b2af4f514a667992ffb8908d0ac9927e08a27b7c6ca2215b117fa613e. Estoque segue ordem de data/production.json: {\"entrada\": [], \"saida\": [\"iron_ore\"]}. Ancoras medidas nas folhas reduzidas, prova no render e homologacao pendentes. Master da madeira: base/iron_mine/iron_mine-D-20261002-madeira-master-2x.png."
+      },
+      "ancoras": {
+        "bandeira": [
+          0.55729,
+          0.17045
+        ],
+        "estoque": {
+          "saida": [
+            [
+              0.85562,
+              0.7966
+            ]
+          ]
+        },
+        "trabalho": {
+          "area": [
+            0.41537,
+            0.54623,
+            0.63549,
+            0.77657
+          ]
+        }
       }
     },
     {
@@ -1586,20 +1662,57 @@
       ],
       "tamanho": [
         256,
-        128
+        220
       ],
       "anchor": [
-        0.5,
-        1
+        0.48685,
+        0.92947
       ],
       "estados": {
-        "completo": "sprites/weapons_workshop/completo.png"
+        "completo": "sprites/weapons_workshop/weapons_workshop_completo-D-20261002.png",
+        "madeira": "sprites/weapons_workshop/weapons_workshop_madeira-D-20261002.png"
       },
-      "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+      "licenca": "arte propria do projeto, geracao nativa autorizada pelo operador em 2026-10-02; aprovada pelo operador em 2026-10-02",
       "origem": {
-        "base": "base/building-atlas-a/source.png",
+        "base": "base/weapons_workshop/weapons_workshop-D-20261002-completo-master-2x.png",
         "semente": null,
-        "nota": "Derivado pela skill pianco-art-pipeline do layout weapons_workshop."
+        "nota": "Pianco D, par madeira/completo de geracao nativa; luz cdcfec5. Canvas <=1 lote nos dois eixos, footprint preservado, reducao uniforme 2x para 1x e alpha bleed. Registro externo D/weapons_workshop/rodada-2026-10-02/. Raw completo SHA256 bd625a02bcf75cc42c21b5c0da25f24e9135112f5137f2ca5cece2bdb8e304a2; madeira c4a3f57131251ceeec02be264797d83344db9a5db57da7043df625b23fa17501. Estoque segue ordem de data/production.json: {\"entrada\": [\"timber\"], \"saida\": [\"hand_axe\", \"lance\", \"longbow\"]}. Ancoras medidas nas folhas reduzidas, prova no render e homologacao pendentes. Ressalva por id weapons_workshop: completo/front/0: luz sul invertida (Δ=-26.0); madeira/front/0: luz sul invertida (Δ=-0.7). Aprovada pelo operador em 2026-10-02 apesar destas falhas de luz; regeneracao futura possivel. Master da madeira: base/weapons_workshop/weapons_workshop-D-20261002-madeira-master-2x.png."
+      },
+      "ancoras": {
+        "bandeira": [
+          0.48828,
+          0.15909
+        ],
+        "estoque": {
+          "entrada": [
+            [
+              0.13048,
+              0.88886
+            ]
+          ],
+          "saida": [
+            [
+              0.81267,
+              0.86856
+            ],
+            [
+              0.81267,
+              0.73659
+            ],
+            [
+              0.81267,
+              0.60462
+            ]
+          ]
+        },
+        "trabalho": {
+          "area": [
+            0.38503,
+            0.63507,
+            0.6294,
+            0.86856
+          ]
+        }
       }
     },
     {
@@ -1615,16 +1728,23 @@
       ],
       "anchor": [
         0.5,
-        1
+        0.99204
       ],
       "estados": {
-        "completo": "sprites/barracks/completo.png"
+        "completo": "sprites/barracks/barracks_completo-D-20261002.png",
+        "madeira": "sprites/barracks/barracks_madeira-D-20261002.png"
       },
-      "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+      "licenca": "arte propria do projeto, geracao nativa autorizada pelo operador em 2026-10-02; aprovada pelo operador em 2026-10-02",
       "origem": {
-        "base": "base/building-atlas-b/source.png",
+        "base": "base/barracks/barracks-D-20261002-completo-master-2x.png",
         "semente": null,
-        "nota": "Derivado pela skill pianco-art-pipeline do layout barracks."
+        "nota": "Pianco D, par madeira/completo de geracao nativa; luz cdcfec5. Canvas <=1 lote nos dois eixos, footprint preservado, reducao uniforme 2x para 1x e alpha bleed. Registro externo D/barracks/rodada-2026-10-02/. Raw completo SHA256 4ca724fa976ca3ae44ad976c0d5491f8dff4cc0732bb165d31485e25fe93963e; madeira add56d5b8650cb91f4717f713647c004efb3c353405e8b926d7d416cae2f81ec. Estoque segue ordem de data/production.json: {\"entrada\": [], \"saida\": []}. Ancoras medidas nas folhas reduzidas, prova no render e homologacao pendentes. Master da madeira: base/barracks/barracks-D-20261002-madeira-master-2x.png."
+      },
+      "ancoras": {
+        "bandeira": [
+          0.5,
+          0.17188
+        ]
       }
     },
     {
@@ -1636,20 +1756,27 @@
       ],
       "tamanho": [
         256,
-        192
+        220
       ],
       "anchor": [
-        0.5,
-        1
+        0.48018,
+        0.88317
       ],
       "estados": {
-        "completo": "sprites/marketplace/completo.png"
+        "completo": "sprites/marketplace/marketplace_completo-D-20261002.png",
+        "madeira": "sprites/marketplace/marketplace_madeira-D-20261002.png"
       },
-      "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+      "licenca": "arte propria do projeto, geracao nativa autorizada pelo operador em 2026-10-02; aprovada pelo operador em 2026-10-02",
       "origem": {
-        "base": "base/building-atlas-b/source.png",
+        "base": "base/marketplace/marketplace-D-20261002-completo-master-2x.png",
         "semente": null,
-        "nota": "Derivado pela skill pianco-art-pipeline do layout marketplace."
+        "nota": "Pianco D, par madeira/completo de geracao nativa; luz cdcfec5. Canvas <=1 lote nos dois eixos, footprint preservado, reducao uniforme 2x para 1x e alpha bleed. Registro externo D/marketplace/rodada-2026-10-02/. Raw completo SHA256 1862304950c3918aefeeb851af12af921a30d399bb359867c39029131ba10b67; madeira 48d6a838e89bf8500fbaa1ceeab95d79060899f9cb257b1908d763e32d2228a6. Estoque segue ordem de data/production.json: {\"entrada\": [], \"saida\": []}. Ancoras medidas nas folhas reduzidas, prova no render e homologacao pendentes. Ressalva por id marketplace: completo/front/0: luz sul invertida (Δ=-41.8); madeira/front/0: luz sul invertida (Δ=-5.4). Aprovada pelo operador em 2026-10-02 apesar destas falhas de luz; regeneracao futura possivel. Master da madeira: base/marketplace/marketplace-D-20261002-madeira-master-2x.png."
+      },
+      "ancoras": {
+        "bandeira": [
+          0.61328,
+          0.09091
+        ]
       }
     },
     {
@@ -1762,20 +1889,75 @@
       ],
       "tamanho": [
         256,
-        192
+        220
       ],
       "anchor": [
-        0.5,
-        1
+        0.45708,
+        0.93531
       ],
       "estados": {
-        "completo": "sprites/swine_farm/completo.png"
+        "completo": "sprites/swine_farm/swine_farm_completo-D-20261002.png",
+        "madeira": "sprites/swine_farm/swine_farm_madeira-D-20261002.png"
       },
-      "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+      "licenca": "arte propria do projeto, geracao nativa autorizada pelo operador em 2026-10-02; aprovada pelo operador em 2026-10-02",
       "origem": {
-        "base": "base/building-atlas-b/source.png",
+        "base": "base/swine_farm/swine_farm-D-20261002-completo-master-2x.png",
         "semente": null,
-        "nota": "Derivado pela skill pianco-art-pipeline do layout swine_farm."
+        "nota": "Pianco D, par madeira/completo de geracao nativa; luz cdcfec5. Canvas <=1 lote nos dois eixos, footprint preservado, reducao uniforme 2x para 1x e alpha bleed. Registro externo D/swine_farm/rodada-2026-10-02/. Raw completo SHA256 858f29e5a45b6e997aa8847f48e95d8fadb8d3ef97872ee5005203c059fc89ab; madeira c6f6c73e89d0890ffa4957d4224867710740551b8ad5ecbbc933949fc5ff8e30. Estoque segue ordem de data/production.json: {\"entrada\": [\"corn\"], \"saida\": [\"pigs\", \"skins\"]}. Ancoras medidas nas folhas reduzidas, prova no render e homologacao pendentes. Master da madeira: base/swine_farm/swine_farm-D-20261002-madeira-master-2x.png."
+      },
+      "ancoras": {
+        "bandeira": [
+          0.48438,
+          0.1
+        ],
+        "estoque": {
+          "entrada": [
+            [
+              0.13629,
+              0.88364
+            ]
+          ],
+          "saida": [
+            [
+              0.82961,
+              0.86297
+            ],
+            [
+              0.82961,
+              0.72863
+            ]
+          ]
+        },
+        "trabalho": {
+          "area": [
+            0.34325,
+            0.55295,
+            0.57091,
+            0.8113
+          ]
+        },
+        "curral": [
+          [
+            0.70543,
+            0.65629
+          ],
+          [
+            0.81926,
+            0.66662
+          ],
+          [
+            0.88135,
+            0.74929
+          ],
+          [
+            0.69509,
+            0.7803
+          ],
+          [
+            0.79857,
+            0.80096
+          ]
+        ]
       }
     },
     {
@@ -1787,20 +1969,71 @@
       ],
       "tamanho": [
         256,
-        192
+        220
       ],
       "anchor": [
-        0.5,
-        1
+        0.39411,
+        0.87652
       ],
       "estados": {
-        "completo": "sprites/stables/completo.png"
+        "completo": "sprites/stables/stables_completo-D-20261002.png",
+        "madeira": "sprites/stables/stables_madeira-D-20261002.png"
       },
-      "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+      "licenca": "arte propria do projeto, geracao nativa autorizada pelo operador em 2026-10-02; aprovada pelo operador em 2026-10-02",
       "origem": {
-        "base": "base/building-atlas-b/source.png",
+        "base": "base/stables/stables-D-20261002-completo-master-2x.png",
         "semente": null,
-        "nota": "Derivado pela skill pianco-art-pipeline do layout stables."
+        "nota": "Pianco D, par madeira/completo de geracao nativa; luz cdcfec5. Canvas <=1 lote nos dois eixos, footprint preservado, reducao uniforme 2x para 1x e alpha bleed. Registro externo D/stables/rodada-2026-10-02/. Raw completo SHA256 19cfa33e7b188535a08cd0f3f287eec696a5d2d88165c793f44069d39837b1f4; madeira ed8034c6ce211d0272d0964557f1a12fc14ae15a1918c03f943ce5873eeac0f3. Estoque segue ordem de data/production.json: {\"entrada\": [\"corn\"], \"saida\": [\"horses\"]}. Ancoras medidas nas folhas reduzidas, prova no render e homologacao pendentes. Master da madeira: base/stables/stables-D-20261002-madeira-master-2x.png."
+      },
+      "ancoras": {
+        "bandeira": [
+          0.46484,
+          0.21364
+        ],
+        "estoque": {
+          "entrada": [
+            [
+              0.137,
+              0.91763
+            ]
+          ],
+          "saida": [
+            [
+              0.48667,
+              0.91763
+            ]
+          ]
+        },
+        "trabalho": {
+          "area": [
+            0.31184,
+            0.56817,
+            0.47639,
+            0.77374
+          ]
+        },
+        "curral": [
+          [
+            0.70265,
+            0.69151
+          ],
+          [
+            0.81578,
+            0.70179
+          ],
+          [
+            0.87749,
+            0.78402
+          ],
+          [
+            0.69237,
+            0.81485
+          ],
+          [
+            0.79521,
+            0.83541
+          ]
+        ]
       }
     },
     {
@@ -1815,17 +2048,46 @@
         192
       ],
       "anchor": [
-        0.5,
-        1
+        0.42867,
+        0.97408
       ],
       "estados": {
-        "completo": "sprites/butchers/completo.png"
+        "completo": "sprites/butchers/butchers_completo-D-20261002.png",
+        "madeira": "sprites/butchers/butchers_madeira-D-20261002.png"
       },
-      "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+      "licenca": "arte propria do projeto, geracao nativa autorizada pelo operador em 2026-10-02; aprovada pelo operador em 2026-10-02",
       "origem": {
-        "base": "base/building-atlas-b/source.png",
+        "base": "base/butchers/butchers-D-20261002-completo-master-2x.png",
         "semente": null,
-        "nota": "Derivado pela skill pianco-art-pipeline do layout butchers."
+        "nota": "Pianco D, par madeira/completo de geracao nativa; luz cdcfec5. Canvas <=1 lote nos dois eixos, footprint preservado, reducao uniforme 2x para 1x e alpha bleed. Registro externo D/butchers/rodada-2026-10-02/. Raw completo SHA256 25a70276ae6b45ce9520669d7ddde89887438fcecf1a457e56735fed203a73af; madeira 6e6e4e61e83738903972a0fe41d4501a0346a0a3f5045b95a7d240538639bf6a. Estoque segue ordem de data/production.json: {\"entrada\": [\"pigs\"], \"saida\": [\"sausages\"]}. Ancoras medidas nas folhas reduzidas, prova no render e homologacao pendentes. Ressalva por id butchers: madeira/front/0: luz sul invertida (Δ=-5.0). Aprovada pelo operador em 2026-10-02 apesar destas falhas de luz; regeneracao futura possivel. Master da madeira: base/butchers/butchers-D-20261002-madeira-master-2x.png."
+      },
+      "ancoras": {
+        "bandeira": [
+          0.54167,
+          0.15625
+        ],
+        "estoque": {
+          "entrada": [
+            [
+              0.12614,
+              0.90106
+            ]
+          ],
+          "saida": [
+            [
+              0.8251,
+              0.89062
+            ]
+          ]
+        },
+        "trabalho": {
+          "area": [
+            0.37651,
+            0.64025,
+            0.62688,
+            0.86976
+          ]
+        }
       }
     },
     {
@@ -1837,20 +2099,49 @@
       ],
       "tamanho": [
         192,
-        128
+        176
       ],
       "anchor": [
-        0.5,
-        1
+        0.4368,
+        0.86051
       ],
       "estados": {
-        "completo": "sprites/tannery/completo.png"
+        "completo": "sprites/tannery/tannery_completo-D-20261002.png",
+        "madeira": "sprites/tannery/tannery_madeira-D-20261002.png"
       },
-      "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+      "licenca": "arte propria do projeto, geracao nativa autorizada pelo operador em 2026-10-02; aprovada pelo operador em 2026-10-02",
       "origem": {
-        "base": "base/building-atlas-b/source.png",
+        "base": "base/tannery/tannery-D-20261002-completo-master-2x.png",
         "semente": null,
-        "nota": "Derivado pela skill pianco-art-pipeline do layout tannery."
+        "nota": "Pianco D, par madeira/completo de geracao nativa; luz cdcfec5. Canvas <=1 lote nos dois eixos, footprint preservado, reducao uniforme 2x para 1x e alpha bleed. Registro externo D/tannery/rodada-2026-10-02/. Raw completo SHA256 4834a9938eddbfbc1e6a3641920b950cb5fa551af8bef95b7da81202b780e9a5; madeira 71b6377b9d238f07c862d3fefcd7f94c42654ec69e57f299e7d38cb238b5e6f6. Estoque segue ordem de data/production.json: {\"entrada\": [\"skins\"], \"saida\": [\"leather\"]}. Ancoras medidas nas folhas reduzidas, prova no render e homologacao pendentes. Ressalva por id tannery: completo/front/0: luz sul invertida (Δ=-27.2); madeira/front/0: luz sul invertida (Δ=-3.0). Aprovada pelo operador em 2026-10-02 apesar destas falhas de luz; regeneracao futura possivel. Master da madeira: base/tannery/tannery-D-20261002-madeira-master-2x.png."
+      },
+      "ancoras": {
+        "bandeira": [
+          0.53646,
+          0.09659
+        ],
+        "estoque": {
+          "entrada": [
+            [
+              0.12444,
+              0.83966
+            ]
+          ],
+          "saida": [
+            [
+              0.79081,
+              0.87093
+            ]
+          ]
+        },
+        "trabalho": {
+          "area": [
+            0.68669,
+            0.57912,
+            0.89494,
+            0.77713
+          ]
+        }
       }
     },
     {
@@ -1865,17 +2156,54 @@
         192
       ],
       "anchor": [
-        0.5,
-        1
+        0.45989,
+        0.95842
       ],
       "estados": {
-        "completo": "sprites/armory_workshop/completo.png"
+        "completo": "sprites/armory_workshop/armory_workshop_completo-D-20261002.png",
+        "madeira": "sprites/armory_workshop/armory_workshop_madeira-D-20261002.png"
       },
-      "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+      "licenca": "arte propria do projeto, geracao nativa autorizada pelo operador em 2026-10-02; aprovada pelo operador em 2026-10-02",
       "origem": {
-        "base": "base/building-atlas-c/source.png",
+        "base": "base/armory_workshop/armory_workshop-D-20261002-completo-master-2x.png",
         "semente": null,
-        "nota": "Derivado pela skill pianco-art-pipeline do layout armory_workshop."
+        "nota": "Pianco D, par madeira/completo de geracao nativa; luz cdcfec5. Canvas <=1 lote nos dois eixos, footprint preservado, reducao uniforme 2x para 1x e alpha bleed. Registro externo D/armory_workshop/rodada-2026-10-02/. Raw completo SHA256 67fe2f576f787fee6b591d3f7de017fd2247d5772a2e0ad0a4ec2729476f5587; madeira 9f8387605682549b7618c44cc1b91962692948b955e3e012c2f02ccf554cacca. Estoque segue ordem de data/production.json: {\"entrada\": [\"leather\", \"timber\"], \"saida\": [\"leather_armor\", \"wooden_shield\"]}. Ancoras medidas nas folhas reduzidas, prova no render e homologacao pendentes. Ressalva por id armory_workshop: completo/front/0: luz sul invertida (Δ=-31.9); madeira/front/0: luz sul invertida (Δ=-13.7). Aprovada pelo operador em 2026-10-02 apesar destas falhas de luz; regeneracao futura possivel. Master da madeira: base/armory_workshop/armory_workshop-D-20261002-madeira-master-2x.png."
+      },
+      "ancoras": {
+        "bandeira": [
+          0.5,
+          0.11458
+        ],
+        "estoque": {
+          "entrada": [
+            [
+              0.11461,
+              0.90447
+            ],
+            [
+              0.11461,
+              0.75341
+            ]
+          ],
+          "saida": [
+            [
+              0.83753,
+              0.88289
+            ],
+            [
+              0.83753,
+              0.74262
+            ]
+          ]
+        },
+        "trabalho": {
+          "area": [
+            0.38436,
+            0.63472,
+            0.60015,
+            0.8721
+          ]
+        }
       }
     },
     {
@@ -1890,17 +2218,54 @@
         192
       ],
       "anchor": [
-        0.5,
-        1
+        0.44285,
+        0.91493
       ],
       "estados": {
-        "completo": "sprites/metallurgists/completo.png"
+        "completo": "sprites/metallurgists/metallurgists_completo-D-20261002.png",
+        "madeira": "sprites/metallurgists/metallurgists_madeira-D-20261002.png"
       },
-      "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+      "licenca": "arte propria do projeto, geracao nativa autorizada pelo operador em 2026-10-02; aprovada pelo operador em 2026-10-02",
       "origem": {
-        "base": "base/building-atlas-c/source.png",
+        "base": "base/metallurgists/metallurgists-D-20261002-completo-master-2x.png",
         "semente": null,
-        "nota": "Derivado pela skill pianco-art-pipeline do layout metallurgists."
+        "nota": "Pianco D, par madeira/completo de geracao nativa; luz cdcfec5. Canvas <=1 lote nos dois eixos, footprint preservado, reducao uniforme 2x para 1x e alpha bleed. Registro externo D/metallurgists/rodada-2026-10-02/. Raw completo SHA256 5a427c6671eae1394ad53af739ce242d67d4ed9208549ac2ee57f77677905814; madeira fc5fbf8f29ddee11229968b507e7a641a3ba8e7d6716ef0e0e4388a615658be6. Estoque segue ordem de data/production.json: {\"entrada\": [\"gold_ore\", \"coal\"], \"saida\": [\"gold\"]}. Ancoras medidas nas folhas reduzidas, prova no render e homologacao pendentes. Ressalva por id metallurgists: completo/front/0: luz sul invertida (Δ=-3.0). Aprovada pelo operador em 2026-10-02 apesar destas falhas de luz; regeneracao futura possivel. Master da madeira: base/metallurgists/metallurgists-D-20261002-madeira-master-2x.png."
+      },
+      "ancoras": {
+        "bandeira": [
+          0.55729,
+          0.17708
+        ],
+        "estoque": {
+          "entrada": [
+            [
+              0.12617,
+              0.85364
+            ],
+            [
+              0.12617,
+              0.71063
+            ]
+          ],
+          "saida": [
+            [
+              0.79017,
+              0.8945
+            ]
+          ]
+        },
+        "trabalho": {
+          "area": [
+            0.6778,
+            0.6289,
+            0.84124,
+            0.81278
+          ],
+          "fumaca": [
+            0.83103,
+            0.159
+          ]
+        }
       }
     },
     {
@@ -1912,20 +2277,27 @@
       ],
       "tamanho": [
         256,
-        192
+        256
       ],
       "anchor": [
-        0.5,
-        1
+        0.47829,
+        0.95306
       ],
       "estados": {
-        "completo": "sprites/town_hall/completo.png"
+        "completo": "sprites/town_hall/town_hall_completo-D-20261002.png",
+        "madeira": "sprites/town_hall/town_hall_madeira-D-20261002.png"
       },
-      "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+      "licenca": "arte propria do projeto, geracao nativa autorizada pelo operador em 2026-10-02; aprovada pelo operador em 2026-10-02",
       "origem": {
-        "base": "base/building-atlas-c/source.png",
+        "base": "base/town_hall/town_hall-D-20261002-completo-master-2x.png",
         "semente": null,
-        "nota": "Derivado pela skill pianco-art-pipeline do layout town_hall."
+        "nota": "Pianco D, par madeira/completo de geracao nativa; luz cdcfec5. Canvas <=1 lote nos dois eixos, footprint preservado, reducao uniforme 2x para 1x e alpha bleed. Registro externo D/town_hall/rodada-2026-10-02/. Raw completo SHA256 42d7024845c93c9b5ee1d20465421897cde7e923e06ca101efdd4add6f7c8fc5; madeira f040b1b5575d80f8f8cc8a3f48eaadf7e9f14d322ac78b6286999d257e6bf471. Estoque segue ordem de data/production.json: {\"entrada\": [], \"saida\": []}. Ancoras medidas nas folhas reduzidas, prova no render e homologacao pendentes. Master da madeira: base/town_hall/town_hall-D-20261002-madeira-master-2x.png."
+      },
+      "ancoras": {
+        "bandeira": [
+          0.5,
+          0.21094
+        ]
       }
     },
     {
@@ -1937,20 +2309,57 @@
       ],
       "tamanho": [
         256,
-        128
+        220
       ],
       "anchor": [
-        0.5,
-        1
+        0.52646,
+        0.9094
       ],
       "estados": {
-        "completo": "sprites/iron_smithy/completo.png"
+        "completo": "sprites/iron_smithy/iron_smithy_completo-D-20261002.png",
+        "madeira": "sprites/iron_smithy/iron_smithy_madeira-D-20261002.png"
       },
-      "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+      "licenca": "arte propria do projeto, geracao nativa autorizada pelo operador em 2026-10-02; aprovada pelo operador em 2026-10-02",
       "origem": {
-        "base": "base/building-atlas-c/source.png",
+        "base": "base/iron_smithy/iron_smithy-D-20261002-completo-master-2x.png",
         "semente": null,
-        "nota": "Derivado pela skill pianco-art-pipeline do layout iron_smithy."
+        "nota": "Pianco D, par madeira/completo de geracao nativa; luz cdcfec5. Canvas <=1 lote nos dois eixos, footprint preservado, reducao uniforme 2x para 1x e alpha bleed. Registro externo D/iron_smithy/rodada-2026-10-02/. Raw completo SHA256 c130f5ee3384f403d51539465d5af122fd55f8968f96bd06692af063b9c7d372; madeira 681ba52225be5dc0253f51114ea253dfc6adeac95b15a6a1a8c556a2e2514dd3. Estoque segue ordem de data/production.json: {\"entrada\": [\"iron_ore\", \"coal\"], \"saida\": [\"iron\"]}. Ancoras medidas nas folhas reduzidas, prova no render e homologacao pendentes. Ressalva por id iron_smithy: completo/front/0: luz sul invertida (Δ=-6.8); madeira/front/0: luz sul invertida (Δ=-4.6). Aprovada pelo operador em 2026-10-02 apesar destas falhas de luz; regeneracao futura possivel. Master da madeira: base/iron_smithy/iron_smithy-D-20261002-madeira-master-2x.png."
+      },
+      "ancoras": {
+        "bandeira": [
+          0.44922,
+          0.25455
+        ],
+        "estoque": {
+          "entrada": [
+            [
+              0.13321,
+              0.9094
+            ],
+            [
+              0.13321,
+              0.76461
+            ]
+          ],
+          "saida": [
+            [
+              0.83691,
+              0.89906
+            ]
+          ]
+        },
+        "trabalho": {
+          "area": [
+            0.42297,
+            0.61983,
+            0.67134,
+            0.83701
+          ],
+          "fumaca": [
+            0.84726,
+            0.20614
+          ]
+        }
       }
     },
     {
@@ -1962,20 +2371,65 @@
       ],
       "tamanho": [
         256,
-        128
+        220
       ],
       "anchor": [
-        0.5,
-        1
+        0.46981,
+        0.88619
       ],
       "estados": {
-        "completo": "sprites/weapon_smithy/completo.png"
+        "completo": "sprites/weapon_smithy/weapon_smithy_completo-D-20261002.png",
+        "madeira": "sprites/weapon_smithy/weapon_smithy_madeira-D-20261002.png"
       },
-      "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+      "licenca": "arte propria do projeto, geracao nativa autorizada pelo operador em 2026-10-02; aprovada pelo operador em 2026-10-02",
       "origem": {
-        "base": "base/building-atlas-c/source.png",
+        "base": "base/weapon_smithy/weapon_smithy-D-20261002-completo-master-2x.png",
         "semente": null,
-        "nota": "Derivado pela skill pianco-art-pipeline do layout weapon_smithy."
+        "nota": "Pianco D, par madeira/completo de geracao nativa; luz cdcfec5. Canvas <=1 lote nos dois eixos, footprint preservado, reducao uniforme 2x para 1x e alpha bleed. Registro externo D/weapon_smithy/rodada-2026-10-02/. Raw completo SHA256 a19117864ba844ed0755244694afcc4d65d0bda802cca1ec672457e6f2300b32; madeira db7f21d7c22e694357b09ffa4dd6cf39986ddf35ca8158e99889c3928bbe2857. Estoque segue ordem de data/production.json: {\"entrada\": [\"iron\", \"coal\"], \"saida\": [\"sword\", \"pike\", \"crossbow\"]}. Ancoras medidas nas folhas reduzidas, prova no render e homologacao pendentes. Ressalva por id weapon_smithy: completo/front/0: luz sul invertida (Δ=-5.2); madeira/front/0: luz sul invertida (Δ=-8.2). Aprovada pelo operador em 2026-10-02 apesar destas falhas de luz; regeneracao futura possivel. Master da madeira: base/weapon_smithy/weapon_smithy-D-20261002-madeira-master-2x.png."
+      },
+      "ancoras": {
+        "bandeira": [
+          0.49219,
+          0.11818
+        ],
+        "estoque": {
+          "entrada": [
+            [
+              0.11565,
+              0.86474
+            ],
+            [
+              0.11565,
+              0.71458
+            ]
+          ],
+          "saida": [
+            [
+              0.8347,
+              0.84329
+            ],
+            [
+              0.8347,
+              0.70386
+            ],
+            [
+              0.8347,
+              0.56443
+            ]
+          ]
+        },
+        "trabalho": {
+          "area": [
+            0.38395,
+            0.56443,
+            0.60933,
+            0.81111
+          ],
+          "fumaca": [
+            0.68445,
+            0.34992
+          ]
+        }
       }
     },
     {
@@ -1987,20 +2441,61 @@
       ],
       "tamanho": [
         256,
-        192
+        240
       ],
       "anchor": [
-        0.5,
-        1
+        0.46394,
+        0.91665
       ],
       "estados": {
-        "completo": "sprites/armor_smithy/completo.png"
+        "completo": "sprites/armor_smithy/armor_smithy_completo-D-20261002.png",
+        "madeira": "sprites/armor_smithy/armor_smithy_madeira-D-20261002.png"
       },
-      "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+      "licenca": "arte propria do projeto, geracao nativa autorizada pelo operador em 2026-10-02; aprovada pelo operador em 2026-10-02",
       "origem": {
-        "base": "base/building-atlas-c/source.png",
+        "base": "base/armor_smithy/armor_smithy-D-20261002-completo-master-2x.png",
         "semente": null,
-        "nota": "Derivado pela skill pianco-art-pipeline do layout armor_smithy."
+        "nota": "Pianco D, par madeira/completo de geracao nativa; luz cdcfec5. Canvas <=1 lote nos dois eixos, footprint preservado, reducao uniforme 2x para 1x e alpha bleed. Registro externo D/armor_smithy/rodada-2026-10-02/. Raw completo SHA256 d257b5f3a093303fc9680d679236e3016ffadb13b7e2f31c798f4bbde20b9b40; madeira 9d5b3cbd8cf6caf54923e7e1f8331a3b7dd984a3f53d02a6aec1b73b252f4644. Estoque segue ordem de data/production.json: {\"entrada\": [\"iron\", \"coal\"], \"saida\": [\"iron_armor\", \"iron_shield\"]}. Ancoras medidas nas folhas reduzidas, prova no render e homologacao pendentes. Ressalva por id armor_smithy: completo/front/0: luz sul invertida (Δ=-50.2); madeira/front/0: luz sul invertida (Δ=-7.9). Aprovada pelo operador em 2026-10-02 apesar destas falhas de luz; regeneracao futura possivel. Master da madeira: base/armor_smithy/armor_smithy-D-20261002-madeira-master-2x.png."
+      },
+      "ancoras": {
+        "bandeira": [
+          0.50781,
+          0.1375
+        ],
+        "estoque": {
+          "entrada": [
+            [
+              0.13444,
+              0.87546
+            ],
+            [
+              0.13444,
+              0.73131
+            ]
+          ],
+          "saida": [
+            [
+              0.82433,
+              0.85487
+            ],
+            [
+              0.82433,
+              0.72102
+            ]
+          ]
+        },
+        "trabalho": {
+          "area": [
+            0.38156,
+            0.59746,
+            0.6081,
+            0.82398
+          ],
+          "fumaca": [
+            0.68018,
+            0.38123
+          ]
+        }
       }
     }
   ],
