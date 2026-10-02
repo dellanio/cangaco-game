@@ -6085,6 +6085,31 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
      propósito. A asserção passa a ser exata por prédio: a escala da `inn` é **0,8** (1,2 / 1,5), e a
      de todos os outros continua **1**. Nenhum prédio sai da conta.
 
+### D-ARTE-PESCADOR-BAIXO — A Casa do Pescador mais baixa
+- **Pedido do operador (2026-10-01), depois de jogar:** a Casa do Pescador ficou alta demais. O
+  arquivo dela tem 192×176, num lote de 192 px (razão 0,917, abaixo do k = 1), então nenhuma regra a
+  encolhe hoje.
+- **Escopo:** o manifesto ganha `alturaMaxPorLargura: 0.8` na `fishermans`. O render encolhe o
+  sprite inteiro, sem deformar: ele desenha 154 px de altura (−13%) e 168 de largura, centrado no
+  lote.
+  - **O modelo da "exceção morta" (F-ESC e C10) proíbe esse dado, e o modelo está errado.** Hoje a
+    exceção é morta quando o arquivo cabe em k, e uma exceção abaixo de k, que encolhe, é acusada.
+  - **Troca pelo predicado do runtime:** a exceção é morta quando a escala com ela é a mesma escala
+    sem ela (`escalaDoSprite`). Nos dois eixos, `violacoesDaAltura` e `violacoesDaLargura`.
+  - Isso é render puro (`src/render/escala-predio.ts`): nada em `src/sim/` nem em número de `data/`.
+- **Aceite (escrito antes do código):**
+  1. o manifesto real não tem violação nos dois eixos. As exceções de hoje continuam vivas e não
+     muda a escala de nenhuma outra (a do F-ESC, por prédio: a Bodega em 0,8, o pescador em
+     0,8 × 192 / 176, os outros em 1);
+  2. por tabela, nos dois eixos:
+     - exceção acima de k num arquivo que cabe em k: **morta** (o caso de hoje continua reprovando);
+     - exceção abaixo da razão do arquivo: **viva**;
+     - exceção igual a k: **morta**;
+     - exceção acima de k num arquivo que passa de k: **viva**;
+  3. a Casa do Pescador desenha `0,8 × lote` de altura, pela conta exata, e não deforma (a
+     largura e a altura caem na mesma escala);
+  4. `verify` completo verde, e o roteiro `F-T4a` (o pescador) sai 0, com a captura aberta.
+
 ### D-ARTE-CHAO-DE-ROCA — Pedido de arte para o Codex: o chão de roça sob a cana
 - **Registrado por decisão do operador (2026-10-01): é pedido de arte para o Codex**, e não
   trabalho desta fila de código. Vem da avaliação da F-TR (o esgotado por tipo, `9fb7b71`): a
