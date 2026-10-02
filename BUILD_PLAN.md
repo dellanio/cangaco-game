@@ -6158,6 +6158,44 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
 - **Decisão que fica com o operador, e não com quem desenha:** se o chão de roça vira terreno
   próprio no mapa (dado do gerador) ou camada de render sob o tile de cultura. Nenhum número de
   `data/` muda sem essa decisão.
+- **Escopo ampliado (operador, 2026-10-02): a arte e a integração, pelo Codex, numa worktree a
+  partir da `main`, com merge na `main` no fim.** A decisão acima continua com o operador. Por
+  isso a integração segue a interpretação mais conservadora (§14): **camada de render** sob o tile
+  de cana, sem terreno novo no mapa e sem nada em `src/sim/` nem em `data/`. O caminho do terreno
+  próprio continua aberto.
+  - O id do asset é `campoCana`, no padrão do `campoArado`, e é provisório.
+  - Só `assets/`, `src/render/`, `tools/shots/` e `tests/`.
+- **Aceite (escrito antes da geração e do código, 2026-10-02):**
+  1. **A arte:**
+     - quatro variantes 64×64 (`padrao`, `v1`, `v2` e `v3`), emendáveis nos quatro lados;
+     - o validador da `pianco-sprite-tools` passa em todas;
+     - a luz é a do `cdcfec5`;
+     - a base vai em `assets/base/`, e o derivado em `assets/sprites/terrain/`;
+     - a entrada `campoCana` no `assets/manifest.json` tem os oito campos do §9, no formato do
+       `campoArado`.
+  2. **A folha de contato,** ao lado da base: o chão em grade 4×4, o chão com a touceira
+     `grapes-D.png` por cima e o chão vizinho de `grama` e de `campoArado`. Nos zooms 0,5, 1 e 2,
+     normal e com tint 0,8. A zoom 1, o chão da cana se distingue do `campoArado` e da `grama`, e a
+     touceira continua legível por cima.
+  3. **Registro no `SKILL_BUILDER_PROGRESS.md`:** o prompt, as referências, os sha256 dos PNG e as
+     gerações gastas (no máximo 4).
+  4. **A regra pura** em `src/render/`, que decide se um tile leva o chão da roça, com teste por
+     tabela:
+     - o tile de cana, com quantidade > 0 ou em pousio, leva o chão;
+     - o milho não leva, porque já tem o `campoArado` do mapa;
+     - qualquer outro recurso não leva, nem o tile sem recurso;
+     - a relação entre a cana e o `campoCana` fica num lugar só.
+  5. **O desenho:** o chão fica acima do terreno e abaixo da touceira, das unidades e dos prédios.
+     Sem o PNG carregado, nada é desenhado no lugar dele, e o jogo segue como hoje (placeholder do
+     §9). O manifesto continua passando no `tests/F17f-manifesto.test.ts`.
+  6. **O roteiro `tools/shots/D-ARTE-CHAO-DE-ROCA.js`,** sobre o save
+     `saves/teste-operador-vila-pronta.txt`, como o roteiro `D-SAVE-VILA-PRONTA`:
+     - com a câmera nos tiles de cana, a ponte de debug informa quantos chãos de roça estão
+       desenhados, e o número é igual ao de tiles de cana na vista, com pelo menos um em pousio
+       (pelo `step`, se o save não tiver nenhum);
+     - a captura é aberta.
+  7. **Não-regressão:** os roteiros `F-TR` e `ARTE-VILA` saem 0, e o `npm run verify:rapido` passa.
+     Nada muda em `src/sim/` nem em `data/` (`git diff main -- src/sim data` vazio).
 
 ### Leva 1 da animação direcional: legibilidade da logística (aprovada pelo operador, 2026-10-01)
 Plano: `docs/planos/2026-09-30-animacao-direcional-de-unidades.md`, §3 e §10. **Só a Leva 1 foi
