@@ -17175,3 +17175,37 @@ B D-TELA-LUZ-RELEVO, aceite 1             | NEEDS_WORK        | o sha256 contra 
   `index.lock` no `.git` comum, mesmo com o `--add-dir`. Gastou 1 geração de 14, e o registro dela
   está no `SKILL_BUILDER_PROGRESS.md` da worktree dele, sem commit. Espera o operador decidir como
   liberar a escrita no git.
+
+## 2026-10-02 — D-ARTE-CHAO-DE-ROCA (o chão de roça sob a cana), pelo Codex, e a quebra do mundo vivo
+- **Escopo ampliado pelo operador:** arte e integração pelo Codex, numa worktree a partir da `main`,
+  com merge na `main`. A integração é a interpretação conservadora (§14): camada de render, sem
+  terreno novo no mapa. Aceite `a1e2670`; arte `711a244`; integração `254fe78` (merge ff do Codex,
+  sem push).
+- **Verificado na revisão (abri o arquivo ou a imagem):**
+  - `git diff b3fb8f7..254fe78 -- src/sim data` vazio;
+  - `src/render/chao-da-roca.ts`: a relação `grapes` → `campoCana` fica num lugar só. O teste
+    por tabela tem 6 casos: a cana plantada e em pousio levam o chão; o milho, a árvore e o
+    tile vazio não levam;
+  - sem o PNG, `criarCamadaDoChaoDaCana` devolve `null`, e nada é desenhado;
+  - o roteiro afirma que `chaoDaCanaDesenhado` é igual à cana na vista, com pousio na vista;
+  - a captura do Codex (`screenshots/` da worktree dele) foi aberta: o partido da cana lê como roça
+    e se distingue do `campoArado` do milho. Na captura, todos os tiles de cana estão em pousio,
+    então a touceira por cima do chão só aparece na folha de contato;
+  - 2 gerações de 4; os sha256 estão no `assets/base/campo-cana/SKILL_BUILDER_PROGRESS.md`.
+- **Relatado pelo Codex, não refeito aqui:** typecheck, lint e `verify:rapido` deram 0; os
+  roteiros D-ARTE-CHAO-DE-ROCA, F-TR e ARTE-VILA deram 0; os testes direcionados deram 26/26.
+- **Ressalvas:**
+  - o validador da `pianco-sprite-tools` deu `success: true` e `errors: []`, mas rodou em modo
+    `trial`, com `approved: false` ("ensaio técnico sem calibração cromática"). O aceite 1 lido ao
+    pé da letra ("passa") está cumprido, mas não há aprovação calibrada;
+  - a camada está em `depth` 0,35, acima da grade da ferramenta (0,25). Com uma ferramenta ativa, a
+    grade some sobre o partido da cana. A correção provável é pôr a camada entre 0,2 e 0,25. É
+    hipótese, não medida.
+- **A quebra do `docs/fase-animacao-vida-do-mundo.md`** (`b3fb8f7`), aprovada pelo operador, em
+  quatro itens:
+  - D-TELA-VENTO-VEGETACAO (o vento e as árvores), com o aceite escrito;
+  - D-TELA-AGUA-VIVA (a água), D-TELA-POEIRA-AMBIENTE (a poeira) e D-ARTE-BANDEIRA-FACCAO (a
+    bandeira), com o escopo escrito e o aceite pendente.
+
+  O Aseprite ficou fora por decisão do operador: ele procura uma ferramenta de animação em tom de
+  pintura, e não só pixel art.
