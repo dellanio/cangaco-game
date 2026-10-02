@@ -17384,3 +17384,29 @@ B D-TELA-LUZ-RELEVO, aceite 1             | NEEDS_WORK        | o sha256 contra 
 
 - O aspecto e a densidade escolhidos são uma decisão visual de render; as capturas mostram funcionamento, mas não provam uma preferência artística do operador. Não foi medido custo por intervalo de requestAnimationFrame.
 - Forja e fundição permanecem para depois, conforme o contrato. Somente `bakery` declara o ponto. A marcação da feature em `test-results.json` cabe ao operador.
+
+## 2026-10-02 — Revisão da sessão Claude: a emenda da poeira, a fumaça da padaria e o cacto
+- **D-TELA-POEIRA-AMBIENTE (a emenda, `ac53570` e `0019448`): cumpre o aceite emendado.**
+  - **Conferido no código:** a partícula só existe na rajada (o tile de nascimento e o atual acima
+    do `limiarDaRajada`) ou num redemoinho por ciclo. Fora disso, a lista é vazia. Não há estado
+    entre quadros nem `Math.random()`. A fração de ticks com poeira é 0,1485 (297 em 2 000).
+  - **Rodado aqui, com saída 0:** os testes da poeira, da fumaça e de manifesto (43/43) e o roteiro
+    da poeira, com a captura no tick 40, como nas corridas do Codex.
+  - **Achado visual (medido):** na captura "com poeira", a diferença de pixels para a "sem poeira"
+    é **zero fora das árvores**. Toda a diferença está na caixa x 1156–1279, onde o vento também
+    balança as árvores. A partícula é um ponto de 1,5 px (ou um traço de 5×1 px) com alfa 0,7, na
+    cor da terra. **Na prática, a poeira não se vê na captura.** O aceite não pede legibilidade, e
+    o tamanho e a cor estão no `data/poeira.json`. Fica para o operador olhar em jogo e girar os
+    números.
+- **D-TELA-FUMACA-DA-PADARIA (`d339dc1` e `21899d6`): cumpre o aceite.**
+  - **Conferido no código:** quem decide se a padaria trabalha é o próprio `quadroDaFumaca`. O
+    `trabalhandoDesde` e o `parouEm` são memória de render. Se o manifesto ganhar os quadros da
+    `fumaca`, o laço da F-VIVO-b continua valendo. O ponto da chaminé é
+    `[0.765625, 0.09375]` na `bakery`.
+  - **Captura aberta:** a fumaça sai da chaminé e sobe inclinada pelo vento.
+  - **Ressalva:** o pool de 32 `Graphics` de uma padaria demolida não é destruído, só escondido.
+    É pouca memória, e só cresce com padaria nova.
+- **D-TELA-CACTO-NO-VENTO e D-TELA-CHAO-DA-CANA-SO-QUANDO-MUDA: NÃO FEITOS.** A worktree
+  `D-TELA-CACTO-NO-VENTO` ficou no `4c4c9bb`, sem commit, sem arquivo modificado e sem outra
+  branch. O Codex dela não produziu nada (causa desconhecida). Os dois itens continuam abertos, com
+  o aceite intacto.
