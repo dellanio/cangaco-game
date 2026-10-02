@@ -239,6 +239,8 @@ export interface EstadoDebug {
    *  a ve sumir depois — sem olhar pixel (§8). Vazio ate o primeiro
    *  POST_RENDER. */
   recursosVisiveis: Readonly<Record<string, number>>;
+  /** Tiles de chao da cana efetivamente desenhados na vista da camera. */
+  chaoDaCanaDesenhado: number;
   /** F-TR — mascara N/L/S/O de cada tile de `rock` ainda presente. O roteiro
    *  compara antes/depois quando um tile esgota; nao e estado da simulacao. */
   mascarasDoLajedo: Readonly<Record<string, number>>;
@@ -407,6 +409,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     marcadorDeDestino: null,
     terrenoVisivel: {},
     recursosVisiveis: {},
+    chaoDaCanaDesenhado: 0,
     mascarasDoLajedo: {},
     lajedoDesenhado: {},
     texturaDoTerreno: {},

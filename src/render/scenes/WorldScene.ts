@@ -4,6 +4,7 @@
 import Phaser from 'phaser';
 import temaSertao from '../../../data/theme-sertao.json';
 import { codigoDoRecurso, configDoMapa, recursosDeRender, terrenoDeRender } from '../mapa';
+import { CHAO_DA_CANA, chaoDaRoca } from '../chao-da-roca';
 import {
   gridToScreen, screenToGrid, depthDeY, tileDentroDoMapa, ESCALA_DO_MUNDO, PROFUNDIDADE_DA_SELECAO,
 } from '../grid';
@@ -83,6 +84,7 @@ const ESTADOS_DA_BORDA_ROCHA_GRAMA = Array.from(
 const CHAVE_TEXTURA_DETALHES = 'tiles-detalhes-terreno';
 const VARIANTES_DE_DETALHE = 3;
 const CHAVE_TEXTURA_RECURSO = 'tiles-recurso';
+const CHAVE_TEXTURA_CHAO_DA_CANA = 'tiles-chao-da-cana';
 // Acima do chao (0) e abaixo da estrada (1, `render/estradas.ts`): a rua que o
 // jogador assentou cobre o marcador, como cobre o chao. O recurso continua no
 // estado; quem o le e a simulacao, nao o pixel.
@@ -147,6 +149,7 @@ export class WorldScene extends Phaser.Scene {
   /** `?semArte=` (F17e/F17f): predios que o loader nao traz, lidos uma vez. */
   private readonly prediosSemArte = prediosSemArteDaBusca(window.location.search);
   private readonly recursosDesenhados = new Map<string, number>();
+  private readonly chaoDaCanaNoMapa = new Map<string, number>();
 
   /** F-SPR — como cada CODIGO de recurso se desenha, resolvido uma vez no `create`
    *  (a arte ja chegou no `preload`). Indice e o codigo, como na tira. */
@@ -325,6 +328,7 @@ export class WorldScene extends Phaser.Scene {
     aplicarForcaDaGrade(this.ferramenta.modo);
     const desligarGrade = this.ferramenta.aoMudar((_predio, modo) => aplicarForcaDaGrade(modo));
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, desligarGrade);
+    const camadaDoChaoDaCana = this.criarCamadaDoChaoDaCana(tilePx, largura, altura, carregada);
     const texturaDoRecurso = this.criarTexturaDeRecurso(tilePx, carregada, estado);
     const camadaDeRecursos = this.criarCamadaDeRecursos(tilePx, largura, altura, texturaDoRecurso);
     // D-TELA-LUZ-RELEVO: antes do primeiro `atualizarPredios`, que ja tinge o predio ao nascer.
@@ -532,6 +536,7 @@ export class WorldScene extends Phaser.Scene {
       // onde ha rocha e imutavel, quanto sobrou nao e, e o jogador tem de ver o
       // tile esgotar.
       estado.recursosVisiveis = this.atualizarRecursos(camadaDeRecursos);
+      estado.chaoDaCanaDesenhado = this.atualizarChaoDaCana(camadaDoChaoDaCana);
       estado.mascarasDoLajedo = this.mascarasDoLajedo();
       estado.lajedoDesenhado = this.lajedoDesenhado();
       estado.transicoesVisiveis = this.lerTransicoesVisiveis(camadasDeTransicao);
@@ -1121,6 +1126,53 @@ export class WorldScene extends Phaser.Scene {
     );
     debug.arteDasCamadas = { ...debug.arteDasCamadas, recurso: idsCom('textura'), vegetacao: idsCom('vegetacao') };
     return this.sobreporArteNaTira(CHAVE_TEXTURA_RECURSO, tilePx, arte, vazias);
+  }
+
+  /** Camada opcional: sem PNG carregado, a textura do terreno continua intacta. */
+  private criarCamadaDoChaoDaCana(
+    tilePx: number, largura: number, altura: number, carregada: TexturaCarregada,
+  ): Phaser.Tilemaps.TilemapLayer | null {
+    const padrao = texturaDaCamada(manifestoDoJogo, 'terreno', CHAO_DA_CANA, ESTADO_DO_TERRENO, carregada);
+    if (padrao === null) return null;
+    const tira = this.textures.createCanvas(CHAVE_TEXTURA_CHAO_DA_CANA, tilePx * 5, tilePx);
+    if (!tira) throw new Error('WorldScene: falha ao criar a tira do chao da cana.');
+    const ctx = tira.getContext();
+    ESTADOS_DO_TERRENO.forEach((estado, variante) => {
+      const chave = texturaDaCamada(manifestoDoJogo, 'terreno', CHAO_DA_CANA, estado, carregada) ?? padrao;
+      ctx.drawImage(this.textures.get(chave).getSourceImage() as HTMLImageElement, (variante + 1) * tilePx, 0, tilePx, tilePx);
+    });
+    tira.refresh();
+    const mapa = this.make.tilemap({ tileWidth: tilePx, tileHeight: tilePx, width: largura, height: altura });
+    const tileset = mapa.addTilesetImage('chao-da-cana', CHAVE_TEXTURA_CHAO_DA_CANA, tilePx, tilePx, 0, 0);
+    if (!tileset) throw new Error('WorldScene: falha ao criar o tileset do chao da cana.');
+    const camada = mapa.createBlankLayer('chao-da-cana', tileset);
+    if (!camada) throw new Error('WorldScene: falha ao criar a camada do chao da cana.');
+    return camada.setDepth(0.35);
+  }
+
+  /** Repinta pelo estado, sem alterar o terreno do mapa nem a simulacao. */
+  private atualizarChaoDaCana(camada: Phaser.Tilemaps.TilemapLayer | null): number {
+    if (camada === null) return 0;
+    const recursos = this.ponte.atual?.recursos ?? {};
+    const atuais = new Set<string>();
+    for (const [chave, recurso] of Object.entries(recursos)) {
+      if (chaoDaRoca(recurso) === null) continue;
+      atuais.add(chave);
+      const { gx, gy } = tileDeChave(chave);
+      const variante = 1 + ((gx * 17 + gy * 31) & 3);
+      if (this.chaoDaCanaNoMapa.get(chave) !== variante) {
+        camada.putTileAt(variante, gx, gy);
+        this.chaoDaCanaNoMapa.set(chave, variante);
+      }
+    }
+    for (const chave of this.chaoDaCanaNoMapa.keys()) {
+      if (atuais.has(chave)) continue;
+      const { gx, gy } = tileDeChave(chave);
+      camada.removeTileAt(gx, gy);
+      this.chaoDaCanaNoMapa.delete(chave);
+    }
+    const vista = this.cameras.main.worldView;
+    return camada.getTilesWithinWorldXY(vista.x, vista.y, vista.width, vista.height, { isNotEmpty: true }).length;
   }
 
   private criarCamadaDeRecursos(
