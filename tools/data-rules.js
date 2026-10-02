@@ -18,6 +18,26 @@ function validarVento(vento, erros, manifesto = manifestoDeAssets) {
     e('data/vento.json precisa existir e ser objeto');
     return;
   }
+  const estadosDeCrescimento = new Set(['muda', 'crescendo_1', 'crescendo_2']);
+  const arvore = manifesto.assets.find((a) => a.tipo === 'vegetacao' && a.id === 'tree');
+  const especies = Object.keys(arvore?.estados ?? {}).filter((estado) => !estadosDeCrescimento.has(estado));
+  if (!vento.especies || typeof vento.especies !== 'object' || Array.isArray(vento.especies)) {
+    e('especies precisa ser objeto com todas as especies de tree');
+  } else {
+    for (const especie of especies) {
+      if (!Object.hasOwn(vento.especies, especie)) e(`especie '${especie}' sem entrada em especies`);
+    }
+    for (const [especie, fatores] of Object.entries(vento.especies)) {
+      if (!especies.includes(especie)) e(`'${especie}' nao e especie de tree no manifesto`);
+      for (const eixo of ['amplitude', 'velocidade']) {
+        const valor = fatores?.[eixo];
+        if (!Number.isFinite(valor) || valor <= 0 || valor > 1) e(`${especie}.${eixo} precisa estar em (0,1]`);
+      }
+    }
+  }
+  if (!Number.isFinite(vento.variacaoPorArvore) || vento.variacaoPorArvore < 0 || vento.variacaoPorArvore >= 0.5) {
+    e('variacaoPorArvore precisa estar em [0,0.5)');
+  }
   const positivo = (n) => typeof n === 'number' && Number.isFinite(n) && n > 0;
   const inteiro = (n) => Number.isInteger(n) && n > 0;
   const direcao = vento.direcao;

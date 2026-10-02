@@ -1,5 +1,8 @@
 {
-  "direcao": { "x": 1, "y": 0 },
+  "direcao": {
+    "x": 1,
+    "y": 0
+  },
   "forca": 0.7,
   "amplitudeMaximaGraus": 4,
   "periodoTicks": 32,
@@ -8,5 +11,34 @@
     "duracaoTicks": 24,
     "velocidadeTilesPorTick": 2
   },
-  "vegetacaoQueBalanca": ["tree"]
+  "vegetacaoQueBalanca": [
+    "tree"
+  ],
+  "especies": {
+    "presente": {
+      "amplitude": 1,
+      "velocidade": 1
+    },
+    "umbuzeiro": {
+      "amplitude": 1,
+      "velocidade": 1
+    },
+    "mandacaru": {
+      "amplitude": 0.15,
+      "velocidade": 1
+    },
+    "facheiro": {
+      "amplitude": 0.15,
+      "velocidade": 1
+    },
+    "xique-xique": {
+      "amplitude": 0.15,
+      "velocidade": 1
+    },
+    "macambira": {
+      "amplitude": 0.3,
+      "velocidade": 1
+    }
+  },
+  "variacaoPorArvore": 0.1
 }

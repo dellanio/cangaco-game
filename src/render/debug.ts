@@ -292,6 +292,7 @@ export interface EstadoDebug {
   vegetacaoBalancando: number;
   /** Tick em que cada arvore da vista recebeu a ultima rotacao. */
   ticksDaVegetacaoNaVista: Readonly<Record<string, number>>;
+  arvoresDoVentoNaVista: Readonly<Record<string, { readonly especie: string; readonly anguloGraus: number }>>;
   custo: CustoDoQuadro;
   zerarCusto: () => void;
   /** Controle de medicao do render; nao altera o estado da sim. */
@@ -451,6 +452,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     rochasRenderizadas: 0,
     vegetacaoBalancando: 0,
     ticksDaVegetacaoNaVista: {},
+    arvoresDoVentoNaVista: {},
     custo: custoZerado(),
     zerarCusto: () => { estado.custo = custoZerado(); },
     ligarVento: () => undefined,

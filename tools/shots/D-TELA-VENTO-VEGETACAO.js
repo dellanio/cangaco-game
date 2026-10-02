@@ -4,6 +4,8 @@ const { retanguloDoCanvas } = require('./_canvas');
 const mapa = require('../../data/maps/sertao-128.json');
 const terreno = require('../../data/terrain.json');
 const manifesto = require('../../assets/manifest.json');
+const vento = require('../../data/vento.json');
+const fs = require('node:fs');
 
 function arvoresNaVista(camera, canvas) {
   const entrada = manifesto.assets.find((asset) => asset.tipo === 'vegetacao' && asset.id === 'tree');
@@ -45,14 +47,31 @@ async function roteiro({ page, capturar, estado, afirmar }) {
   const novoTick = await page.evaluate(async () => {
     window.__cangaco.avancar(1);
     await new Promise((resolve) => window.requestAnimationFrame(() => setTimeout(resolve, 0)));
-    const { tick, vegetacaoBalancando, ticksDaVegetacaoNaVista } = window.__cangaco;
-    return { tick, vegetacaoBalancando, ticksDaVegetacaoNaVista };
+    const { tick, vegetacaoBalancando, ticksDaVegetacaoNaVista, arvoresDoVentoNaVista } = window.__cangaco;
+    return { tick, vegetacaoBalancando, ticksDaVegetacaoNaVista, arvoresDoVentoNaVista };
   });
   afirmar(novoTick.vegetacaoBalancando === arvoresNaVista(antes.camera, canvas),
     `tick novo atualiza exatamente as arvores da vista: ${novoTick.vegetacaoBalancando}`);
   afirmar(novoTick.vegetacaoBalancando === Object.keys(novoTick.ticksDaVegetacaoNaVista).length,
     'a ponte publica cada arvore da vista');
   afirmar(novoTick.vegetacaoBalancando > 0, 'deve haver arvores na vista balancando');
+  const arvores = Object.values(novoTick.arvoresDoVentoNaVista);
+  const cactos = arvores.filter((a) => ['mandacaru', 'facheiro', 'xique-xique'].includes(a.especie));
+  const juazeiros = arvores.filter((a) => a.especie === 'presente');
+  afirmar(arvores.length === novoTick.vegetacaoBalancando, 'cada arvore publica especie e angulo');
+  afirmar(cactos.length > 0 && juazeiros.length > 0, 'o tick capturado tem cactos e juazeiro');
+  for (const arvore of cactos) {
+    afirmar(Math.abs(arvore.anguloGraus) <= vento.especies[arvore.especie].amplitude * vento.amplitudeMaximaGraus,
+      `${arvore.especie} respeita o teto de amplitude do dado`);
+  }
+  const angulos = { tick: novoTick.tick,
+    maiorAnguloCactoGraus: Math.max(...cactos.map((a) => Math.abs(a.anguloGraus))),
+    maiorAnguloJuazeiroGraus: Math.max(...juazeiros.map((a) => Math.abs(a.anguloGraus))),
+    arvores: novoTick.arvoresDoVentoNaVista };
+  fs.mkdirSync('test-output', { recursive: true });
+  fs.writeFileSync('test-output/D-TELA-CACTO-NO-VENTO-captura.json', JSON.stringify(angulos, null, 2) + '\n');
+  console.log(JSON.stringify(angulos));
+  await capturar('cacto-e-juazeiro-tick-capturado');
   await page.waitForTimeout(100);
   afirmar((await estado()).vegetacaoBalancando === 0, 'quadro repetido apos tick atualiza 0 sprites');
   await page.evaluate(() => window.__cangaco.fixarCamera({ scrollX: 0, scrollY: 0 }));

@@ -1,0 +1,23 @@
+  private texturaDaVegetacao(
+    desenho: Extract<DesenhoDoRecurso, { readonly como: 'vegetacao' }>,
+    chave: string,
+  ): string {
+    if (desenho.entrada.id === 'rock') {
+      const { gx, gy } = tileDeChave(chave);
+      const recursos = this.ponte.atual?.recursos ?? {};
+      const mascara = mascaraCardinal((dx, dy) => {
+        const vizinho = recursos[`${gx + dx},${gy + dy}`];
+        return vizinho?.tipo === 'rock' && vizinho.quantidade > 0;
+      });
+      const chaveDaMascara = chaveDeTextura('vegetacao', 'rock', `m${mascara}`);
+      return this.textures.exists(chaveDaMascara) ? chaveDaMascara : desenho.chave;
+    }
+    const estados = especiesDaVegetacao(Object.keys(desenho.entrada.estados)).filter((estado) => (
+      this.textures.exists(chaveDeTextura('vegetacao', desenho.entrada.id, estado))
+    ));
+    if (estados.length === 0) return desenho.chave;
+    const { gx, gy } = tileDeChave(chave);
+    const hash = (Math.imul(gx + 1, 73_856_093) ^ Math.imul(gy + 1, 19_349_663)) >>> 0;
+    const estado = estados[hash % estados.length] ?? 'presente';
+    return chaveDeTextura('vegetacao', desenho.entrada.id, estado);
+  }

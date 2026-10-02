@@ -21,7 +21,7 @@ import type { Tile } from '../grid';
 import { publicarEstadoDebug } from '../debug';
 import { somarCusto } from '../custo-do-quadro';
 import { criarCamadaDeRelevo } from '../camada-de-relevo';
-import { arvoreNaVista, balancaVegetacao, quadroDoVentoMudou, transformacaoDoVento } from '../vento';
+import { arvoreNaVista, balancaVegetacao, especieDoTile, quadroDoVentoMudou, transformacaoDoVento } from '../vento';
 import type { LuzDoRelevo } from '../camada-de-relevo';
 import { marcadorVisivel } from '../marcador-de-destino';
 import type { MarcadorDeDestino } from '../marcador-de-destino';
@@ -1413,12 +1413,16 @@ export class WorldScene extends Phaser.Scene {
     this.vegetacaoNova = false;
     let quantos = 0;
     const ticksNaVista: Record<string, number> = {};
+    const arvores: Record<string, { especie: string; anguloGraus: number }> = {};
+    const entradaDaArvore = assetDaCamada(manifestoDoJogo, 'vegetacao', 'tree');
+    const especies = entradaDaArvore ? this.especiesCarregadasDaVegetacao(entradaDaArvore) : [];
     for (const [chave, imagem] of this.arvoresNaVista) {
       const { gx, gy } = tileDeChave(chave);
+      const especie = especieDoTile(especies, gx, gy).split(':')[2] ?? 'presente';
       const transformacao = transformacaoDoVento(
-        dadosDoVento, quadro.tick, quadro.alfa,
-        gx, gy, imagem.x, imagem.y,
+        dadosDoVento, quadro.tick, quadro.alfa, gx, gy, imagem.x, imagem.y, especie,
       );
+      arvores[chave] = { especie, anguloGraus: transformacao.deslocamentoGraus };
       // Gira em volta da origem que o sprite ja tem (o anchor do manifesto, posto ao nascer), e
       // nao de uma origem fixa: com outro anchor, o pe sairia do lugar.
       imagem.setRotation(transformacao.rotacao);
@@ -1426,7 +1430,10 @@ export class WorldScene extends Phaser.Scene {
       ticksNaVista[chave] = quadro.tick;
       quantos += 1;
     }
-    if (window.__cangaco) window.__cangaco.ticksDaVegetacaoNaVista = ticksNaVista;
+    if (window.__cangaco) {
+      window.__cangaco.ticksDaVegetacaoNaVista = ticksNaVista;
+      window.__cangaco.arvoresDoVentoNaVista = arvores;
+    }
     return quantos;
   }
 
@@ -1463,6 +1470,12 @@ export class WorldScene extends Phaser.Scene {
    * especie, sem RNG e sem acrescentar ids a simulacao. `presente` continua
    * sendo o fallback quando algum derivado nao foi carregado.
    */
+  private especiesCarregadasDaVegetacao(entrada: Pick<EntradaDeAsset, 'id' | 'estados'>): string[] {
+    return especiesDaVegetacao(Object.keys(entrada.estados)).filter((estado) => (
+      this.textures.exists(chaveDeTextura('vegetacao', entrada.id, estado))
+    )).map((estado) => chaveDeTextura('vegetacao', entrada.id, estado));
+  }
+
   private texturaDaVegetacao(
     desenho: Extract<DesenhoDoRecurso, { readonly como: 'vegetacao' }>,
     chave: string,
@@ -1477,14 +1490,10 @@ export class WorldScene extends Phaser.Scene {
       const chaveDaMascara = chaveDeTextura('vegetacao', 'rock', `m${mascara}`);
       return this.textures.exists(chaveDaMascara) ? chaveDaMascara : desenho.chave;
     }
-    const estados = especiesDaVegetacao(Object.keys(desenho.entrada.estados)).filter((estado) => (
-      this.textures.exists(chaveDeTextura('vegetacao', desenho.entrada.id, estado))
-    ));
+    const estados = this.especiesCarregadasDaVegetacao(desenho.entrada);
     if (estados.length === 0) return desenho.chave;
     const { gx, gy } = tileDeChave(chave);
-    const hash = (Math.imul(gx + 1, 73_856_093) ^ Math.imul(gy + 1, 19_349_663)) >>> 0;
-    const estado = estados[hash % estados.length] ?? 'presente';
-    return chaveDeTextura('vegetacao', desenho.entrada.id, estado);
+    return especieDoTile(estados, gx, gy);
   }
 
   /** Mascaras publicadas para o roteiro provar a troca dos quatro vizinhos. */
