@@ -3,4 +3,5 @@
 // Phaser.Game, nem o HUD pela metade.
 import { iniciarSeHouverWebgl } from './render/webgl';
 
-void iniciarSeHouverWebgl(document, () => import('./main'));
+void iniciarSeHouverWebgl(document, () => new URLSearchParams(window.location.search).get('vitrine') === 'serf'
+  ? import('./render/vitrine-serf') : import('./main'));
