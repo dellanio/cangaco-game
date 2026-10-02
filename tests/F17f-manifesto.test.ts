@@ -345,6 +345,7 @@ describe('F-VIVO-0 — o manifesto aceita o predio vivo', () => {
     acusa(comAncoras('sawmill', { trabalho: { area: [0.6, 0.45, 0.3, 0.75] } }), /x0 < x1/);
     acusa(comAncoras('farm', { trabalho: { area: [0.3, 0.45, 0.6, 0.75] } }), /sem animacao dentro/);
     acusa(comAncoras('sawmill', { trabalho: { fumaca: [0.5, -0.1] } }), /trabalho.fumaca nao e ponto/);
+    acusa(comAncoras('iron_smithy', { trabalho: { fogo: [0.5, -0.1] } }), /trabalho.fogo nao e ponto/);
     acusa(comAncoras('sawmill', { estoque: { entrada: [[0.1, 0.9], [0.2, 0.9]], saida: [[0.8, 0.9]] } }), /entrada tem 2.*pede 1/);
     acusa(comAncoras('storehouse', { estoque: { entrada: [[0.1, 0.9]] } }), /entrada tem 1.*pede 4/);
     acusa(comAncoras('inn', { estoque: { entrada: [[0.1, 0.9], [0.2, 0.9], [0.3, 0.9], [0.4, 0.9]], saida: [[0.8, 0.9]] } }), /saida tem 1.*pede 0/);

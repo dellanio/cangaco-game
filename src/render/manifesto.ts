@@ -65,6 +65,7 @@ export interface AncorasDoPredio {
   readonly trabalho?: {
     readonly area?: readonly [number, number, number, number];
     readonly fumaca?: PontoFracionario;
+    readonly fogo?: PontoFracionario;
   };
   /** Um ponto por mercadoria da gaveta, na ordem de `entra`/`sai` da receita. */
   readonly estoque?: {

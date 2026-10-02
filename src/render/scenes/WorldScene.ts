@@ -10,6 +10,7 @@ import agua from '../../../data/agua.json';
 import dadosDaPoeira from '../../../data/poeira.json';
 import dadosDaFumaca from '../../../data/fumaca.json';
 import { chaminesRemovidas, particulasDaFumaca, type ParticulaDaFumaca } from '../fumaca';
+import { particulasDaFagulha } from '../fagulha';
 import { celulasDaAguaParaTrocar } from '../agua-viva';
 import { particulasDaPoeira, rajadaNaVista } from '../poeira';
 import { codigoDoRecurso, configDoMapa, recursosDeRender, terrenoDeRender } from '../mapa';
@@ -200,6 +201,7 @@ export class WorldScene extends Phaser.Scene {
     trabalhandoDesde: number | null;
     parouEm: number | null;
     pool: Phaser.GameObjects.Graphics[];
+    poolFagulha: Phaser.GameObjects.Graphics[];
   }>();
   private ultimoQuadroDaFumaca = '';
   private tickDaFumaca: number | null = null;
@@ -1646,6 +1648,7 @@ export class WorldScene extends Phaser.Scene {
 
   /** Chamine sem quadros: memoria de trabalho e pool independente, redesenho por tick/alfa/vista. */
   private atualizarFumaca(debug: EstadoDebug, tilePx: number): void {
+    debug.particulasCalculadasNesteQuadro = 0;
     const jogo = this.ponte.atual;
     if (jogo === null) return;
     const alfa = this.relogio.alfa();
@@ -1661,18 +1664,24 @@ export class WorldScene extends Phaser.Scene {
     }
     this.tickDaFumaca = jogo.tick;
     const desenhada: Record<string, readonly ParticulaDaFumaca[]> = {};
-    for (const memoria of this.chamines.values()) for (const grafico of memoria.pool) grafico.setVisible(false);
+    const fagulhas: Record<string, readonly ParticulaDaFumaca[]> = {};
+    for (const memoria of this.chamines.values()) {
+      for (const grafico of memoria.pool) grafico.setVisible(false);
+      for (const grafico of memoria.poolFagulha) grafico.setVisible(false);
+    }
     for (const id of jogo.predios.ordem) {
       const predio = jogo.predios.porId[id];
       if (predio === undefined) continue;
       const ancora = DADOS_DO_TRABALHO.ancoras[predio.tipo]?.trabalho?.fumaca;
       if (ancora === undefined) continue;
+      const fogo = DADOS_DO_TRABALHO.ancoras[predio.tipo]?.trabalho?.fogo;
       // Um manifesto futuro com quadros continua no laco da F-VIVO-b.
       if (this.textures.exists(chaveDeTextura('trabalho', ID_DA_FUMACA, `${ID_DA_FUMACA}_1`))) continue;
       let memoria = this.chamines.get(id);
       if (memoria === undefined) {
         memoria = { trabalhandoDesde: null, parouEm: null,
-          pool: Array.from({ length: dadosDaFumaca.maximoPorChamine }, () => this.add.graphics().setVisible(false)) };
+          pool: Array.from({ length: dadosDaFumaca.maximoPorChamine }, () => this.add.graphics().setVisible(false)),
+          poolFagulha: fogo === undefined ? [] : Array.from({ length: dadosDaFumaca.fagulha.maximoPorFogo }, () => this.add.graphics().setVisible(false)) };
         this.chamines.set(id, memoria);
       }
       const ocupante = predio.estado === 'completo' && predio.ocupante !== null
@@ -1687,10 +1696,16 @@ export class WorldScene extends Phaser.Scene {
       const aparencia = aparenciaDoPredio(predio.tipo);
       const caixa = this.caixaDoPredio(predio.tipo, aparencia.largura * tilePx, aparencia.altura * tilePx);
       const canto = gridToScreen({ gx: predio.gx, gy: predio.gy }, tilePx, ESCALA_DO_MUNDO);
+      // Mantem a memoria do trabalho fora da vista, mas nao calcula particulas ali.
+      const margem = dadosDaFumaca.vidaTicks * (dadosDaFumaca.subidaTilesPorTick
+        + dadosDaFumaca.velocidadeTilesPorTick + dadosDaFumaca.crescimentoTilesPorTick) * tilePx;
+      if (canto.x + caixa.x + caixa.w + margem < vista.x || canto.x + caixa.x - margem > vista.right
+        || canto.y + caixa.y + caixa.h + margem < vista.y || canto.y + caixa.y - margem > vista.bottom) continue;
       const ponto = { x: (canto.x + caixa.x + caixa.w * ancora[0]) / tilePx,
         y: (canto.y + caixa.y + caixa.h * ancora[1]) / tilePx };
       const particulas = particulasDaFumaca(dadosDaFumaca, dadosDoVento, jogo.tick, alfa,
         ponto, memoria.trabalhandoDesde, memoria.parouEm);
+      debug.particulasCalculadasNesteQuadro += particulas.length;
       desenhada[id] = particulas.filter((p) => p.x * tilePx + p.raio * tilePx >= vista.x
         && p.x * tilePx - p.raio * tilePx < vista.right && p.y * tilePx + p.raio * tilePx >= vista.y
         && p.y * tilePx - p.raio * tilePx < vista.bottom);
@@ -1702,13 +1717,34 @@ export class WorldScene extends Phaser.Scene {
         grafico.fillStyle(Number.parseInt(dadosDaFumaca.cor.slice(1), 16), particula.opacidade);
         grafico.fillCircle(0, 0, particula.raio * tilePx);
       });
+      if (fogo !== undefined) {
+        const pontoDoFogo = { x: (canto.x + caixa.x + caixa.w * fogo[0]) / tilePx,
+          y: (canto.y + caixa.y + caixa.h * fogo[1]) / tilePx };
+        const pontos = particulasDaFagulha(dadosDaFumaca.fagulha, jogo.tick, alfa,
+          pontoDoFogo, memoria.trabalhandoDesde, memoria.parouEm);
+        debug.particulasCalculadasNesteQuadro += pontos.length;
+        fagulhas[id] = pontos.filter((p) => p.x * tilePx + p.raio * tilePx >= vista.x
+          && p.x * tilePx - p.raio * tilePx < vista.right && p.y * tilePx + p.raio * tilePx >= vista.y
+          && p.y * tilePx - p.raio * tilePx < vista.bottom);
+        fagulhas[id]?.forEach((particula, indice) => {
+          const grafico = memoria.poolFagulha[indice];
+          if (grafico === undefined) return;
+          grafico.clear().setPosition(particula.x * tilePx, particula.y * tilePx)
+            .setDepth(depthDeY(canto.y + aparencia.altura * tilePx) + 0.2).setVisible(true);
+          grafico.fillStyle(Number.parseInt(dadosDaFumaca.fagulha.cor.slice(1), 16), particula.opacidade);
+          grafico.fillCircle(0, 0, particula.raio * tilePx);
+        });
+      }
     }
     for (const id of chaminesRemovidas([...this.chamines.keys()], new Set(jogo.predios.ordem))) {
       for (const grafico of this.chamines.get(id)!.pool) grafico.destroy();
+      for (const grafico of this.chamines.get(id)!.poolFagulha) grafico.destroy();
       this.chamines.delete(id);
     }
     debug.fumacaPorPredio = desenhada;
     debug.poolDaFumaca = [...this.chamines.values()].reduce((total, m) => total + m.pool.length, 0);
+    debug.fagulhaPorPredio = fagulhas;
+    debug.poolDaFagulha = [...this.chamines.values()].reduce((total, m) => total + m.poolFagulha.length, 0);
   }
 
   /** Diff por id, estagio, assinatura do medidor (F17b) E leitura do canteiro

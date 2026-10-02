@@ -249,6 +249,9 @@ export interface EstadoDebug {
   /** Particulas visiveis da chamine, por id de predio, em tiles de mundo. */
   fumacaPorPredio: Readonly<Record<string, readonly ParticulaDaFumaca[]>>;
   poolDaFumaca: number;
+  fagulhaPorPredio: Readonly<Record<string, readonly ParticulaDaFumaca[]>>;
+  poolDaFagulha: number;
+  particulasCalculadasNesteQuadro: number;
   /** F-T2a — quantos tiles de cada RECURSO estao dentro da vista da camera
    *  agora, lidos de volta da camada de marcadores. A chave e o id neutro do
    *  recurso (`rock`, `tree`, `fish`) mais `esgotado`, que e o tile que ja foi
@@ -446,6 +449,9 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     poolDaPoeira: 0,
     fumacaPorPredio: {},
     poolDaFumaca: 0,
+    fagulhaPorPredio: {},
+    poolDaFagulha: 0,
+    particulasCalculadasNesteQuadro: 0,
     recursosVisiveis: {},
     chaoDaCanaDesenhado: 0,
     recursosVarridosPeloChao: 0,

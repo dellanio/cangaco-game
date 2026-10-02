@@ -9,5 +9,17 @@
   "raioInicialTiles": 0.035,
   "crescimentoTilesPorTick": 0.004,
   "opacidade": 0.55,
-  "cor": "#d8d0c0"
+  "cor": "#d8d0c0",
+  "fagulha": {
+    "semente": 20261002,
+    "maximoPorFogo": 24,
+    "vidaTicks": 8,
+    "intervaloPulsosTicks": 12,
+    "particulasPorPulso": 6,
+    "subidaTilesPorTick": 0.065,
+    "dispersaoTilesPorTick": 0.025,
+    "raioTiles": 0.016,
+    "opacidade": 0.95,
+    "cor": "#ffb34d"
+  }
 }

@@ -229,6 +229,7 @@ export function violacoesDasAncoras(e: EntradaDeAsset, ctx: ContextoDasCamadas):
     if (!anima) erros.push(`${r}: trabalho.area em predio sem animacao dentro`);
   }
   if (a.trabalho?.fumaca !== undefined) guardar('trabalho.fumaca', a.trabalho.fumaca);
+  if (a.trabalho?.fogo !== undefined) guardar('trabalho.fogo', a.trabalho.fogo);
 
   if (a.estoque !== undefined) {
     const esperado = pontosDeEstoqueEsperados(e.id, ctx);
@@ -260,7 +261,7 @@ export function violacoesDasAncoras(e: EntradaDeAsset, ctx: ContextoDasCamadas):
   // As areas nao se sobrepoem (§4a): nenhum ponto cai dentro da area de trabalho.
   if (area !== undefined && area.length === 4 && area.every(ehFracao)) {
     for (const { nome, p } of pontos) {
-      if (nome === 'trabalho.fumaca') continue;
+      if (nome === 'trabalho.fumaca' || nome === 'trabalho.fogo') continue;
       if (p[0] > area[0] && p[0] < area[2] && p[1] > area[1] && p[1] < area[3]) {
         erros.push(`${r}: ${nome} cai dentro de trabalho.area`);
       }

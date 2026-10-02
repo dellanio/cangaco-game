@@ -126,6 +126,24 @@ function validarFumaca(fumaca, erros) {
   if (typeof fumaca.opacidade !== 'number' || !Number.isFinite(fumaca.opacidade) || fumaca.opacidade <= 0 || fumaca.opacidade > 1) e('opacidade precisa estar em (0,1]');
   if (typeof fumaca.cor !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(fumaca.cor)) e('cor precisa ser #rrggbb');
   if ('direcao' in fumaca || 'forca' in fumaca) e('o vento vem de data/vento.json');
+  const f = fumaca.fagulha;
+  if (!f || typeof f !== 'object' || Array.isArray(f)) {
+    e('fagulha precisa ser objeto');
+    return;
+  }
+  for (const campo of ['maximoPorFogo', 'vidaTicks', 'intervaloPulsosTicks', 'particulasPorPulso']) {
+    if (!Number.isInteger(f[campo]) || f[campo] <= 0) e(`fagulha.${campo} precisa ser inteiro > 0`);
+  }
+  if (!Number.isInteger(f.semente)) e('fagulha.semente precisa ser inteiro');
+  for (const campo of ['subidaTilesPorTick', 'dispersaoTilesPorTick', 'raioTiles']) {
+    if (typeof f[campo] !== 'number' || !Number.isFinite(f[campo]) || f[campo] <= 0) e(`fagulha.${campo} precisa ser > 0`);
+  }
+  if (!(f.vidaTicks < fumaca.vidaTicks)) e('fagulha.vidaTicks precisa ser menor que vidaTicks da fumaca');
+  if (!(f.subidaTilesPorTick > fumaca.subidaTilesPorTick)) e('fagulha.subidaTilesPorTick precisa superar a fumaca');
+  if (!(f.intervaloPulsosTicks > f.vidaTicks)) e('fagulha.intervaloPulsosTicks precisa superar vidaTicks para separar pulsos');
+  if (!(f.particulasPorPulso <= f.maximoPorFogo)) e('fagulha.particulasPorPulso precisa caber no pool');
+  if (typeof f.opacidade !== 'number' || !Number.isFinite(f.opacidade) || f.opacidade <= 0 || f.opacidade > 1) e('fagulha.opacidade precisa estar em (0,1]');
+  if (typeof f.cor !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(f.cor)) e('fagulha.cor precisa ser #rrggbb');
 }
 
 function getByPath(obj, caminho) {
