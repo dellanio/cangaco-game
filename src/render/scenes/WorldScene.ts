@@ -5,7 +5,9 @@ import Phaser from 'phaser';
 import temaSertao from '../../../data/theme-sertao.json';
 import dadosDoVento from '../../../data/vento.json';
 import agua from '../../../data/agua.json';
+import dadosDaPoeira from '../../../data/poeira.json';
 import { celulasDaAguaParaTrocar } from '../agua-viva';
+import { particulasDaPoeira } from '../poeira';
 import { codigoDoRecurso, configDoMapa, recursosDeRender, terrenoDeRender } from '../mapa';
 import { CHAO_DA_CANA, chaoDaRoca } from '../chao-da-roca';
 import {
@@ -316,6 +318,10 @@ export class WorldScene extends Phaser.Scene {
     const aguaAnimada = !new URLSearchParams(window.location.search).has('aguaDesligada');
     let ultimoTickDaAgua: number | null = null;
     let ultimaVistaDaAgua = '';
+    const poolDaPoeira = Array.from({ length: dadosDaPoeira.maximoNaVista }, () =>
+      this.add.graphics().setDepth(0.75).setVisible(false));
+    estado.poolDaPoeira = poolDaPoeira.length;
+    let ultimoQuadroDaPoeira = '';
     const texturaDosDetalhes = this.criarTexturaDeDetalhesDoTerreno(tilePx);
     this.criarCamadaDeDetalhesDoTerreno(tilePx, largura, altura, texturaDosDetalhes);
     const texturaDaBordaDaAgua = this.criarTexturaDaBordaDaAgua(tilePx, carregada);
@@ -568,7 +574,31 @@ export class WorldScene extends Phaser.Scene {
           terrenoDeRender.tipos[Math.floor(tile.index / VARIANTES_DE_TERRENO)] === 'agua',
         ).map((tile) => [`${tile.x},${tile.y}`, ESTADOS_DO_TERRENO[tile.index % VARIANTES_DE_TERRENO] ?? '']));
       }
-      estado.terrenoVisivel = this.contarTerrenoVisivel(camadaChao);
+    const alfaDaPoeira = this.relogio.alfa();
+    const chaveDaPoeira = `${tickDaAgua},${alfaDaPoeira},${chaveDaVistaDaAgua}`;
+    if (chaveDaPoeira !== ultimoQuadroDaPoeira) {
+      ultimoQuadroDaPoeira = chaveDaPoeira;
+      const particulas = particulasDaPoeira(
+        dadosDaPoeira, dadosDoVento, tickDaAgua, alfaDaPoeira,
+        {
+          x: vistaDaAgua.x / tilePx, y: vistaDaAgua.y / tilePx,
+          largura: vistaDaAgua.width / tilePx, altura: vistaDaAgua.height / tilePx,
+          larguraMapa: largura, alturaMapa: altura,
+        },
+        (gx, gy) => terrenoDeRender.tipos[terrenoDeRender.codigos[gy * largura + gx] ?? -1] === 'agua',
+      );
+      estado.poeiraDesenhada = particulas.map(({ id, tipo, gx, gy }) => ({ id, tipo, gx, gy }));
+      poolDaPoeira.forEach((grafico, indice) => {
+        const particula = particulas[indice];
+        if (!particula) { grafico.setVisible(false); return; }
+        grafico.clear().setPosition(particula.x * tilePx, particula.y * tilePx).setVisible(true);
+        const cor = particula.tipo === 'palha' ? dadosDaPoeira.corPalha : dadosDaPoeira.corPoeira;
+        grafico.fillStyle(Number.parseInt(cor.slice(1), 16), 0.7);
+        if (particula.tipo === 'palha') grafico.fillRect(-2, 0, 5, 1);
+        else grafico.fillCircle(0, 0, 1.5);
+      });
+    }
+    estado.terrenoVisivel = this.contarTerrenoVisivel(camadaChao);
       // F-T2a: a camada de recurso se repinta do ESTADO a cada frame (por diff),
       // e nao uma vez no create como a de terreno. E a diferenca que o item pede:
       // onde ha rocha e imutavel, quanto sobrou nao e, e o jogador tem de ver o

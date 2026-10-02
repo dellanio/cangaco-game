@@ -235,6 +235,10 @@ export interface EstadoDebug {
   variantesDaAguaVisivel: Readonly<Record<string, string>>;
   /** Quantas celulas da camada mudaram no ultimo tick observado. */
   celulasDaAguaTrocadas: number;
+  /** Particulas visiveis, inclusive tile para o roteiro conferir agua. */
+  poeiraDesenhada: readonly { readonly id: string; readonly tipo: 'poeira' | 'palha'; readonly gx: number; readonly gy: number }[];
+  /** Total de objetos da camada criados desde o inicio. */
+  poolDaPoeira: number;
   /** F-T2a — quantos tiles de cada RECURSO estao dentro da vista da camera
    *  agora, lidos de volta da camada de marcadores. A chave e o id neutro do
    *  recurso (`rock`, `tree`, `fish`) mais `esgotado`, que e o tile que ja foi
@@ -419,6 +423,8 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     terrenoVisivel: {},
     variantesDaAguaVisivel: {},
     celulasDaAguaTrocadas: 0,
+    poeiraDesenhada: [],
+    poolDaPoeira: 0,
     recursosVisiveis: {},
     chaoDaCanaDesenhado: 0,
     mascarasDoLajedo: {},

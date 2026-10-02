@@ -1,0 +1,11 @@
+{
+  "_doc": "Particulas apenas de render; o vento vem de data/vento.json.",
+  "semente": 20261002,
+  "maximoNaVista": 64,
+  "vidaTicks": 48,
+  "nascimentosPorTick": 48,
+  "velocidadeTilesPorTick": 0.045,
+  "fracaoPalha": 0.28,
+  "corPoeira": "#a88961",
+  "corPalha": "#c9aa72"
+}

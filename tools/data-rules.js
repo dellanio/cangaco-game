@@ -44,6 +44,26 @@ function validarVento(vento, erros, manifesto = manifestoDeAssets) {
   }
 }
 
+function validarPoeira(poeira, erros) {
+  const e = (msg) => erros.push(`interface/poeira: ${msg}`);
+  if (!poeira || typeof poeira !== 'object' || Array.isArray(poeira)) {
+    e('data/poeira.json precisa existir e ser objeto');
+    return;
+  }
+  for (const campo of ['maximoNaVista', 'vidaTicks', 'nascimentosPorTick']) {
+    if (!Number.isInteger(poeira[campo]) || poeira[campo] <= 0) e(`${campo} precisa ser inteiro > 0`);
+  }
+  if (!Number.isInteger(poeira.semente)) e('semente precisa ser inteiro');
+  if (typeof poeira.velocidadeTilesPorTick !== 'number' || !Number.isFinite(poeira.velocidadeTilesPorTick)
+    || poeira.velocidadeTilesPorTick <= 0) e('velocidadeTilesPorTick precisa ser > 0');
+  if (typeof poeira.fracaoPalha !== 'number' || !Number.isFinite(poeira.fracaoPalha)
+    || poeira.fracaoPalha < 0 || poeira.fracaoPalha > 1) e('fracaoPalha precisa estar em [0,1]');
+  for (const campo of ['corPoeira', 'corPalha']) {
+    if (typeof poeira[campo] !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(poeira[campo])) e(`${campo} precisa ser #rrggbb`);
+  }
+  if ('direcao' in poeira || 'forca' in poeira) e('o vento vem de data/vento.json');
+}
+
 function getByPath(obj, caminho) {
   const partes = caminho.split('.');
   let atual = obj;
@@ -1599,6 +1619,7 @@ function validarInterface(dados, interfaceUi) {
   validarRotulosDeModo(dados, tema, erros);
   validarRelevo(dados, interfaceUi && interfaceUi.relevo, erros);
   validarVento(interfaceUi && interfaceUi.vento, erros);
+  validarPoeira(interfaceUi && interfaceUi.poeira, erros);
   if (!menu || !Array.isArray(menu.grupos)) {
     erros.push('interface/menu-build-forma: menu-build.grupos precisa ser array');
     return erros;
@@ -1685,4 +1706,4 @@ function validarTudo(dados) {
   return erros;
 }
 
-module.exports = { validarTudo, validarInterface, validarVento, getByPath };
+module.exports = { validarTudo, validarInterface, validarVento, validarPoeira, getByPath };

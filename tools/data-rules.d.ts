@@ -5,3 +5,4 @@ export function validarTudo(dados: Record<string, unknown>): string[];
 export function getByPath(obj: unknown, caminho: string): { existe: boolean; valor: unknown };
 export function validarInterface(dados: Record<string, unknown>, interfaceUi: Record<string, unknown>): string[];
 export function validarVento(vento: unknown, erros: string[], manifesto?: unknown): void;
+export function validarPoeira(poeira: unknown, erros: string[]): void;
