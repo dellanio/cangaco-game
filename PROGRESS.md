@@ -17536,3 +17536,12 @@ A ponte publica especie e angulo por arvore. No tick 1 capturado: maior angulo a
 ### Integracao
 - O pedido para continuar retomou o bloqueio da assercao antiga da padaria. Uma sessao na main tambem corrigiu essa divergencia; a integracao deve preservar a passagem das ancoras declaradas no manifesto para os dados do render e os testes novos desta limpeza.
 - O merge so pode ocorrer com a main limpa, por fast-forward e sem push. Os hashes finais e a verificacao completa sao reportados na entrega apos o rebase.
+- **Revisão da sessão Claude: verify-rapido-dado-lido e D-TELA-LIMPEZA-DO-MUNDO-VIVO (`f9f784d`,
+  `4179fc9` e `2059300`), os dois cumprem o aceite.**
+  - **Conferido no diff:** nada em `src/sim/`, `.githooks/` nem `.claude/`. A lista do
+    `verify:rapido` só cresce: soma os testes cujo fonte cita o dado alterado.
+  - **Risco conferido por medida:** a "identidade da partida" do chão da cana é a referência do
+    `ponte.atual`. Se ela trocasse a cada quadro, a otimização cairia sem ninguém ver. O roteiro
+    `D-TELA-CUSTO-DO-QUADRO`, rodado aqui, deu `recursosVarridosPorQuadro` 0 com o jogo pausado e
+    1 095 com os ticks andando, nas duas vistas. Os testes do portão, do cacto, do chão e da
+    padaria deram 49/49.
