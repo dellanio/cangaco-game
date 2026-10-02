@@ -23,6 +23,48 @@ import { CHAVES_DA_REVELACAO } from '../src/render/manifesto';
 import { entradasDosIcones, errosDosIconesDeMercadoria } from '../src/render/icone-da-mercadoria';
 import type { IconesDeMercadoria } from '../src/render/icone-da-mercadoria';
 import { gravarEvidencia } from './helpers/evidence';
+import { violacoesDoAtlas } from '../src/render/atlas-de-unidade';
+import type { AtlasDeUnidade } from '../src/render/atlas-de-unidade';
+
+describe('D-TELA-04a (manifesto de animações)', () => {
+  const depuracao = JSON.parse(readFileSync('assets/depuracao/manifesto.json', 'utf8')) as Manifesto;
+  it('valida pela mesma regra todos os atlas declarados nos dois manifestos', () => {
+    for (const m of [manifesto, depuracao]) for (const e of m.assets) {
+      if (e.tipo === 'unidade' && e.atlas) {
+        const atlas = JSON.parse(readFileSync(`assets/${e.atlas}`, 'utf8')) as AtlasDeUnidade;
+        expect(violacoesDoAtlas(e, atlas), e.id).toEqual([]);
+      }
+    }
+  });
+  const entrada: EntradaDeCamada = {
+    id: 'teste', tipo: 'unidade', footprint: [1,1], tamanho: [64,96], anchor: [0.5,1], estados: {},
+    atlas: 'sintetico.json', animacoes: { andar: { quadros: 2, tilesPorCiclo: 2, laco: true } },
+    licenca: 'teste', origem: { base: 'teste', semente: null },
+  };
+  const quadro = { sourceSize: { w: 64, h: 96 }, spriteSourceSize: { x: 0, y: 0, w: 64, h: 96 }, frame: { x: 0, y: 0, w: 64, h: 96 } };
+  const sintetico = (): AtlasDeUnidade => ({ frames: {
+    'teste/andar/n/0000': structuredClone(quadro), 'teste/andar/n/0001': structuredClone(quadro),
+    'teste/andar/s/0000': structuredClone(quadro), 'teste/andar/s/0001': structuredClone(quadro),
+  } });
+  it('reprova quadro prometido ausente, mesmo preservando a contagem', () => {
+    const a = sintetico(); const frames = { ...a.frames };
+    frames['teste/andar/n/0002'] = structuredClone(quadro); delete frames['teste/andar/n/0001'];
+    expect(violacoesDoAtlas(entrada, { frames })).toContain('quadro-ausente: teste/andar/n/0001');
+  });
+  it('reprova direção com contagem diferente', () => {
+    const frames = { ...sintetico().frames }; delete frames['teste/andar/s/0001'];
+    expect(violacoesDoAtlas(entrada, { frames })).toContain('contagem-de-direcao: teste/andar/s/');
+  });
+  it('reprova uma direção inteira ausente em uma das animações', () => {
+    const frames = { ...sintetico().frames, 'teste/parado/n/0000': structuredClone(quadro) };
+    const e = { ...entrada, animacoes: { ...entrada.animacoes, parado: { quadros: 1, fps: 10, laco: true } } };
+    expect(violacoesDoAtlas(e, { frames })).toContain('quadro-ausente: teste/parado/s/0000');
+  });
+  it('reprova sourceSize diferente do tamanho declarado', () => {
+    const frames = { ...sintetico().frames, 'teste/andar/n/0000': { ...quadro, sourceSize: { w: 63, h: 96 } } };
+    expect(violacoesDoAtlas(entrada, { frames })).toContain('sourceSize: teste/andar/n/0000');
+  });
+});
 
 const manifesto = JSON.parse(readFileSync('assets/manifest.json', 'utf8')) as Manifesto;
 /**

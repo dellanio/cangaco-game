@@ -1,0 +1,2 @@
+# Atlases de depuração têm hash reproduzível também em checkouts Windows.
+/assets/depuracao/**/*.json text eol=lf

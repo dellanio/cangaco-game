@@ -17659,3 +17659,9 @@ Verificado: gerador próprio sem entrada de arte, 90 quadros (parado 4, andar 8,
 SHA256 PNG: 39c18a302b8750db4195319a8d6790a76ddae0f8c06fd75cb6301c3309019afa.
 SHA256 JSON: b6e439d57028634f81775f862ae65acb2dc8bab0533a5b2302c55586f8f966ab.
 Hipótese ainda não verificada: a origem do Phaser respeita sourceSize com trim; será medida na D-TELA-04b (render por animação).
+
+## 2026-10-02 — D-TELA-04a (manifesto de animações), pelo Codex
+
+Verificado: campos opcionais atlas e animacoes no tipo de unidade, convivendo com estados; regra pura compartilhada entre manifesto real e manifesto de depuração. F17f ganha rejeição de quadro ausente, contagem diferente por direção, direção inteira ausente numa animação e sourceSize incompatível. O manifesto real permanece intacto. JSON de depuração usa LF no checkout para preservar sha256 em Windows.
+
+Após rebase sobre 7c986ef, testes diretos D-ARTE-02 (atlas de depuração), D-TELA-04b (animação por distância), F17f (manifesto), F-SPR (carregamento) e F11a (interpolação): 110 testes verdes. verify:rapido: typecheck, lint, validate:data e 586 testes verdes (43 s), incluindo o código posterior em elaboração. Nenhuma alteração local ao teste da padaria; sua correção veio da main. Não há hipótese sobre o formato; a evidência visual do trim fica para o render.

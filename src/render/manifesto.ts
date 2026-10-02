@@ -107,8 +107,18 @@ export interface EntradaDeCamada {
   readonly tamanho: readonly [number, number];
   readonly anchor: readonly [number, number];
   readonly estados: Readonly<Record<string, string>>;
+  /** D-TELA-04a: atlas opcional; as poses PNG continuam aceitas. */
+  readonly atlas?: string;
+  readonly animacoes?: Readonly<Record<string, AnimacaoDeUnidade>>;
   readonly licenca: string;
   readonly origem: OrigemDoAsset;
+}
+
+export interface AnimacaoDeUnidade {
+  readonly quadros: number;
+  readonly fps?: number;
+  readonly tilesPorCiclo?: number;
+  readonly laco: boolean;
 }
 
 export type EntradaDoManifesto = EntradaDeAsset | EntradaDeCamada;
