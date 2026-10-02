@@ -17648,3 +17648,14 @@ A ponte publica especie e angulo por arvore. No tick 1 capturado: maior angulo a
     (52/52) e o roteiro da forja.
   - **Captura aberta:** a fumaça sai da chaminé da fundição e da forja, no topo de cada uma. A
     fagulha não se distingue na captura, por ser pequena. Fica para o operador olhar em jogo.
+
+
+
+
+## 2026-10-02 — D-ARTE-02 (gerador e atlas de depuração do serf), pelo Codex
+
+Verificado: gerador próprio sem entrada de arte, 90 quadros (parado 4, andar 8, morrer 6 × cinco direções), sourceSize 64×96 e pé y=95. O teste compara duas corridas temporárias com os bytes versionados. `npm run verify:rapido`: 1 teste, typecheck, lint e validate:data verdes (54 s). Dependências locais instaladas com npm ci; lockfile intacto.
+
+SHA256 PNG: 39c18a302b8750db4195319a8d6790a76ddae0f8c06fd75cb6301c3309019afa.
+SHA256 JSON: b6e439d57028634f81775f862ae65acb2dc8bab0533a5b2302c55586f8f966ab.
+Hipótese ainda não verificada: a origem do Phaser respeita sourceSize com trim; será medida na D-TELA-04b (render por animação).

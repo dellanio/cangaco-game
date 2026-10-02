@@ -1,0 +1,46 @@
+{
+  "versao": 1,
+  "assets": [
+    {
+      "id": "serf",
+      "tipo": "unidade",
+      "footprint": [
+        1,
+        1
+      ],
+      "tamanho": [
+        64,
+        96
+      ],
+      "anchor": [
+        0.5,
+        1
+      ],
+      "estados": {},
+      "atlas": "depuracao/serf/serf.json",
+      "animacoes": {
+        "parado": {
+          "quadros": 4,
+          "fps": 10,
+          "laco": true
+        },
+        "andar": {
+          "quadros": 8,
+          "tilesPorCiclo": 2,
+          "laco": true
+        },
+        "morrer": {
+          "quadros": 6,
+          "fps": 10,
+          "laco": false
+        }
+      },
+      "licenca": "CC0, formas de depuração",
+      "origem": {
+        "base": "depuracao/serf/serf.png",
+        "semente": null,
+        "nota": "tools/gerar-sprites-depuracao.js"
+      }
+    }
+  ]
+}
