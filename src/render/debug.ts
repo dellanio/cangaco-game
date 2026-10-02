@@ -231,6 +231,10 @@ export interface EstadoDebug {
    *  pixel: a agua aparece na contagem, ou a tela esta mentindo. Vazio ate o
    *  primeiro POST_RENDER. */
   terrenoVisivel: Readonly<Record<string, number>>;
+  /** Agua lida da camada de terreno na vista, depois da troca do tick. */
+  variantesDaAguaVisivel: Readonly<Record<string, string>>;
+  /** Quantas celulas da camada mudaram no ultimo tick observado. */
+  celulasDaAguaTrocadas: number;
   /** F-T2a — quantos tiles de cada RECURSO estao dentro da vista da camera
    *  agora, lidos de volta da camada de marcadores. A chave e o id neutro do
    *  recurso (`rock`, `tree`, `fish`) mais `esgotado`, que e o tile que ja foi
@@ -413,6 +417,8 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     caixaDeSelecao: null,
     marcadorDeDestino: null,
     terrenoVisivel: {},
+    variantesDaAguaVisivel: {},
+    celulasDaAguaTrocadas: 0,
     recursosVisiveis: {},
     chaoDaCanaDesenhado: 0,
     mascarasDoLajedo: {},

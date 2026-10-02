@@ -1,0 +1,5 @@
+{
+  "_doc": "Variantes visuais da agua; nao entra na simulacao.",
+  "periodo": 8,
+  "variantes": ["padrao", "v1", "v2", "v3"]
+}

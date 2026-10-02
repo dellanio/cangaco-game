@@ -1577,6 +1577,23 @@ function validarRelevo(dados, relevo, erros) {
 
 function validarInterface(dados, interfaceUi) {
   const erros = [];
+  const agua = interfaceUi && interfaceUi.agua;
+  if (!agua || typeof agua !== 'object') {
+    erros.push('interface/agua: data/agua.json precisa existir e ser objeto');
+  } else {
+    if (!Number.isInteger(agua.periodo) || agua.periodo <= 0) {
+      erros.push('interface/agua: periodo precisa ser inteiro > 0');
+    }
+    const manifesto = require('../assets/manifest.json');
+    const assetDaAgua = manifesto.assets.find((asset) => asset.id === 'agua');
+    const estados = new Set(Object.keys(assetDaAgua?.estados ?? {}).filter((estado) =>
+      estado === 'padrao' || /^v[1-3]$/.test(estado)));
+    if (!Array.isArray(agua.variantes) || agua.variantes.length !== 4
+      || new Set(agua.variantes).size !== 4
+      || agua.variantes.some((estado) => !estados.has(estado))) {
+      erros.push('interface/agua: variantes precisam ser as quatro do manifesto da agua');
+    }
+  }
   const menu = interfaceUi && interfaceUi['menu-build'];
   const tema = interfaceUi && interfaceUi['theme-sertao'];
   validarRotulosDeModo(dados, tema, erros);
