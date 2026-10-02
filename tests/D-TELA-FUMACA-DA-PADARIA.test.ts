@@ -65,9 +65,14 @@ describe('D-TELA-FUMACA-DA-PADARIA', () => {
     expect(particulasDaFumaca(config, vento, parouEm + config.vidaTicks, 0, ponto, 10, parouEm)).toEqual([]);
   });
 
-  it('declara somente a chamine da bakery e usa o predicado existente', () => {
+  it('declara a chamine da bakery e usa o predicado existente', () => {
     const dados = dadosDoTrabalho(manifesto);
-    expect(manifesto.assets.filter((a) => a.tipo === 'predio' && a.ancoras?.trabalho?.fumaca !== undefined).map((a) => a.id)).toEqual(['bakery']);
+    // A arte dos 17 predios (PR #2, 2026-10-02) trouxe chamines medidas em outros predios; o
+    // escopo deste item era a padaria, e nao "so a padaria". Toda chamine declarada chega aos
+    // dados do render com o mesmo ponto do manifesto, e a da padaria continua a medida aqui.
+    const comChamine = manifesto.assets.filter((a) => a.tipo === 'predio' && a.ancoras?.trabalho?.fumaca !== undefined);
+    expect(comChamine.map((a) => a.id)).toContain('bakery');
+    for (const a of comChamine) expect(dados.ancoras[a.id]?.trabalho?.fumaca, a.id).toEqual(a.ancoras?.trabalho?.fumaca);
     expect(dados.ancoras['bakery']?.trabalho?.fumaca).toEqual([147 / 192, 18 / 192]);
     const jogo = (JSON.parse(readFileSync('saves/teste-operador-vila-pronta.txt', 'utf8')) as { estado: GameState }).estado;
     const p = jogo.predios.porId['padaria'];

@@ -17466,3 +17466,18 @@ A ponte publica especie e angulo por arvore. No tick 1 capturado: maior angulo a
     - **hipótese, não medida:** se a partida for trocada por outra no mesmo tick sem recriar a
       cena, o chão da cana não varre os recursos novos até o tick andar. O teste cobre o tick
       que volta, e não o tick igual.
+
+## 2026-10-02 — A `main` vermelha no merge da PR #2 (os 17 prédios), corrigida
+- **Medido:** depois do `6317c42`, o `tests/D-TELA-FUMACA-DA-PADARIA.test.ts` reprovava em
+  "declara somente a chamine da bakery". A arte nova declara `ancoras.trabalho.fumaca` na
+  `metallurgists`, na `iron_smithy`, na `weapon_smithy` e na `armor_smithy`. O teste afirmava a
+  lista exata `['bakery']`, que era o escopo daquele item, e não uma regra do jogo.
+- **Erro meu na revisão da PR #2:** rodei os 5 testes de manifesto que eu conhecia, mas não esse,
+  que também lê o manifesto por `readFileSync`. É a mesma lacuna do `vitest related` que o item
+  `verify-rapido-dado-lido` fecha. Quem achou foi o Codex da LEVA2-SEF-DEPURACAO, que perguntou
+  antes de mexer.
+- **Corrigido no teste, mais preciso do que antes:** a padaria continua com o ponto exato, e
+  **toda** chaminé declarada no manifesto tem de chegar aos dados do render com o mesmo ponto.
+  - Depois da correção, rodaram com saída 0 os 22 arquivos de teste que leem o manifesto, 190/190.
+  - **Mudança que o operador vai ver jogando:** a forja, a fundição e as duas ferrarias também
+    soltam fumaça enquanto trabalham, pelo ponto que a arte trouxe.
