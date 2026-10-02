@@ -1147,7 +1147,9 @@ export class WorldScene extends Phaser.Scene {
     if (!tileset) throw new Error('WorldScene: falha ao criar o tileset do chao da cana.');
     const camada = mapa.createBlankLayer('chao-da-cana', tileset);
     if (!camada) throw new Error('WorldScene: falha ao criar a camada do chao da cana.');
-    return camada.setDepth(0.35);
+    // Acima das bordas do chao (0,1 e 0,2) e abaixo da grade da ferramenta (0,25): com a
+    // ferramenta ativa, a grade continua visivel sobre o partido da cana.
+    return camada.setDepth(0.22);
   }
 
   /** Repinta pelo estado, sem alterar o terreno do mapa nem a simulacao. */

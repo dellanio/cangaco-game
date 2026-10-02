@@ -23,6 +23,7 @@ import type {
 import { direcoesDoTipo, direcoesPorTipo } from '../src/render/direcoes-de-sprite';
 import { prediosSemArteDaBusca, texturasParaCarregar } from '../src/render/sprites';
 import { recursosDeRender, terrenoDeRender } from '../src/render/mapa';
+import { CHAO_DA_CANA } from '../src/render/chao-da-roca';
 import { gravarEvidencia } from './helpers/evidence';
 
 const manifestoReal = JSON.parse(readFileSync('assets/manifest.json', 'utf8')) as Manifesto;
@@ -62,7 +63,10 @@ function problemasDasCamadas(m: Manifesto, direcoes: ReadonlyMap<string, 4 | 8 |
   const problemas: string[] = [];
   const camadas = m.assets.filter((e): e is EntradaDeCamada => !ehEntradaDePredio(e));
   for (const e of camadas) {
-    if (e.tipo === 'terreno' && !(terrenoDeRender.tipos as readonly string[]).includes(e.id)) {
+    // D-ARTE-CHAO-DE-ROCA: o chao da cana e terreno so de render (camada sob a cultura), e nao
+    // tipo do mapa. Vale o id que o proprio render declara, e nenhum outro.
+    const ehTerrenoDoMapa = (terrenoDeRender.tipos as readonly string[]).includes(e.id);
+    if (e.tipo === 'terreno' && !ehTerrenoDoMapa && e.id !== CHAO_DA_CANA) {
       problemas.push(`terreno '${e.id}' nao existe no mapa`);
     }
     if ((e.tipo === 'recurso' || e.tipo === 'vegetacao') && !recursosDeRender.tipos.includes(e.id)) {

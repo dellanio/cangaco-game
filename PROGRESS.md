@@ -17209,3 +17209,23 @@ B D-TELA-LUZ-RELEVO, aceite 1             | NEEDS_WORK        | o sha256 contra 
 
   O Aseprite ficou fora por decisão do operador: ele procura uma ferramenta de animação em tom de
   pintura, e não só pixel art.
+- **Correção da revisão (mesmo dia, sessão Claude):**
+  - **A grade da ferramenta:** a camada do chão da cana desceu de `depth` 0,35 para 0,22, acima
+    das bordas do chão e abaixo da grade (0,25). O roteiro ganhou a captura 2, com a estrada
+    escolhida.
+    - **Medido** pela diferença de pixels da região do partido entre as capturas 1 e 2: com
+      0,22, as colunas de grade aparecem em x 705/769/833/897, a cada 64 px; com 0,35, nenhuma.
+    - A captura 2 foi aberta.
+    - É evidência da sessão: o roteiro não afirma o pixel.
+  - **A `main` estava vermelha desde o `254fe78`:** o `tests/F-SPR-carregamento.test.ts` acusava
+    `terreno 'campoCana' nao existe no mapa`. O guarda só conhecia terreno do mapa, e o
+    `campoCana` é terreno só de render.
+    - Corrigido no guarda, e não na asserção: vale também o id que o render declara
+      (`CHAO_DA_CANA`, importado de `src/render/chao-da-roca.ts`), e nenhum outro. O caso
+      sintético `lava` continua reprovando.
+  - **Por que o `verify:rapido` do Codex passou com a suíte vermelha** (medido no resultado,
+    causa como hipótese): o commit dele mudou `assets/manifest.json`. O `vitest related` segue
+    import, e o teste lê o manifesto por `readFileSync`, então o teste não entrou na corrida. Só
+    entrou quando o `WorldScene.ts` mudou aqui. **Lacuna da camada rápida:** mudança só de dado
+    lido por `readFileSync` (manifesto, `data/*.json` lidos assim) não aciona os testes que o
+    leem. Fica para o operador decidir se o `verify:rapido` passa a mapear esses arquivos.

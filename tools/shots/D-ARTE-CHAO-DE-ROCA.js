@@ -58,6 +58,12 @@ async function roteiro(ctx) {
   afirmar(s.chaoDaCanaDesenhado === naVista.length,
     `chao desenhado ${s.chaoDaCanaDesenhado}, cana na vista ${naVista.length}`);
   await capturar('chao-de-roca-da-cana');
+  // A grade da ferramenta (depth 0,25) fica por cima do chao da cana (0,22): com a estrada
+  // escolhida, as linhas aparecem sobre o partido. A captura e aberta na sessao.
+  await page.keyboard.press('r');
+  await page.waitForTimeout(200);
+  await capturar('chao-de-roca-com-a-grade');
+  await page.keyboard.press('Escape');
 }
 
 module.exports = { roteiro };
