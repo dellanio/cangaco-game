@@ -6276,6 +6276,47 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
   variantes `v1` a `v3` no manifesto) ganha movimento pelo tick. A primeira tentativa é a
   alternância ou o deslocamento das variantes que já existem, sem arte nova. A margem não pisca, e
   o vento (D-TELA-VENTO-VEGETACAO) pode influir, se for barato. Mesmas regras comuns.
+- **Escopo fechado (2026-10-02, antes do código):**
+  - o tile de água troca de variante (`padrao`, `v1`, `v2` e `v3`, as do manifesto) pelo tick, com
+    fase própria por tile, de modo que a água "corre" sem piscar em bloco. Não há arte nova;
+  - a borda (`borda-m0` a `borda-m15`) e os outros terrenos não mudam;
+  - o vento fica de fora: a D-TELA-VENTO-VEGETACAO corre em paralelo, e acoplar os dois agora
+    criaria uma dependência entre worktrees;
+  - os números (período em ticks e ordem das variantes) ficam em `data/agua.json`, só de render,
+    com a regra `interface/agua` em `tools/data-rules.js`.
+- **Aceite (escrito antes do código, 2026-10-02):**
+  1. **A função pura** `varianteDaAgua(config, tick, gx, gy)` em `src/render/agua-viva.ts`, por
+     tabela em `tests/D-TELA-AGUA-VIVA.test.ts`:
+     - as mesmas entradas dão a mesma saída, e a saída é sempre uma das 4 variantes;
+     - num tile, a variante muda no máximo uma vez a cada `periodo` ticks;
+     - numa janela de 4 × `periodo` ticks, todo tile passa por pelo menos 2 variantes;
+     - num bloco de 10×10 tiles, no mesmo tick, há mais de uma variante (o número vai para o
+       `test-output/D-TELA-AGUA-VIVA.json`);
+     - a regra do `validate:data` reprova um período ≤ 0 e uma variante que não está no manifesto
+       da `agua`, com um caso que reprova escrito no teste.
+  2. **Só a água muda:** a regra que decide quais células trocar devolve só tiles cujo terreno é
+     `agua`. Uma tabela com água, areia, grama e `campoArado` vizinhos prova isso. A camada da
+     borda não é tocada.
+  3. **Só a vista paga:** a troca de célula acontece só nos tiles de água dentro da vista da
+     câmera, e só quando a variante muda. A ponte de debug publica quantas células foram trocadas
+     no último tick. O roteiro afirma que esse número é no máximo o de tiles de água na vista.
+  4. **O roteiro `tools/shots/D-TELA-AGUA-VIVA.js`:**
+     - pausado, com a câmera posta pela ponte (`fixarCamera`) sobre o açude;
+     - a ponte publica a variante de cada tile de água na vista. Entre o tick T e o T + `periodo`
+       (pela ponte `avancar`), pelo menos um tile muda, e cada variante publicada é igual à da
+       função pura para aquele tick e tile;
+     - capturas no T e no T + `periodo`;
+     - o roteiro roda duas vezes, e a captura do tick T tem o mesmo sha256 nas duas corridas;
+     - um passo despausado (§8);
+     - as capturas são abertas.
+  5. **A medida de custo** vai para o PROGRESS como evidência da sessão: as células trocadas por
+     tick na vista com mais água do mapa e o tempo de quadro com e sem a animação.
+  6. **Não-regressão:**
+     - os roteiros `F-T1`, `F-TR`, `ARTE-VILA` e `D-ARTE-CHAO-DE-ROCA` saem 0;
+     - o `npm run verify:rapido` passa, e `tests/F-SPR-carregamento.test.ts` e
+       `tests/F17f-manifesto.test.ts` passam rodados direto. O `vitest related` não alcança teste
+       que lê dado por `readFileSync` (achado da D-ARTE-CHAO-DE-ROCA);
+     - `git diff main -- src/sim` vazio.
 
 #### D-TELA-POEIRA-AMBIENTE — Poeira e palha no vento
 - **Escopo (o aceite entra num commit próprio antes do código):** partículas de poeira e palha
