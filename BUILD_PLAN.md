@@ -6449,6 +6449,85 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
      0; o `verify:rapido` passa, e o teste do vento passa rodado direto; `git diff main -- src/sim`
      vazio.
 
+#### D-TELA-CACTO-NO-VENTO — O cacto quase não se mexe, e cada árvore balança do seu jeito
+- **Origem (2026-10-02, pedido do operador):** o §8 do `docs/fase-animacao-vida-do-mundo.md` diz
+  "não faça cactos balançarem como árvores": o mandacaru e o xique-xique se mexem muito menos, o
+  juazeiro e o umbuzeiro reagem ao vento. O vento da D-TELA-VENTO-VEGETACAO trata todas iguais,
+  porque no manifesto as espécies são **estados** do mesmo id `tree` (`presente`, que é o
+  juazeiro, mais `umbuzeiro`, `mandacaru`, `facheiro`, `xique-xique` e `macambira`). O §8 pede
+  também uma pequena variação de velocidade e de amplitude por árvore, e não só de fase.
+- **Escopo:** só render e dado de render. Nada em `src/sim/`, nenhum id novo no mapa.
+  - A espécie do tile sai de uma função pura, tirada do `texturaDaVegetacao` do `WorldScene.ts`,
+    que hoje sorteia por hash dentro da cena. A cena e o vento passam a chamar a mesma função.
+  - O `data/vento.json` ganha `especies`: amplitude e velocidade relativas por espécie, e a
+    `variacaoPorArvore` (a fração máxima de desvio por tile).
+  - **Os números de partida são provisórios,** para o operador girar olhando:
+    - juazeiro e umbuzeiro 1,0;
+    - macambira 0,3;
+    - mandacaru, facheiro e xique-xique 0,15.
+- **Aceite (escrito antes do código, 2026-10-02):**
+  1. **A espécie é uma função pura** `especieDoTile(especiesCarregadas, gx, gy)`, testada por tabela.
+     Para o mesmo conjunto de espécies carregadas, ela devolve o que o `texturaDaVegetacao` devolve
+     hoje, e a cena passa a usá-la. Nenhum tile troca de espécie: o teste compara as duas num bloco
+     de 128 × 128 antes da troca.
+  2. **O cacto quase parado,** por tabela em `tests/D-TELA-CACTO-NO-VENTO.test.ts`. No mesmo tile e
+     no mesmo tick, numa janela de 2 000 ticks, o maior deslocamento do mandacaru, do facheiro e do
+     xique-xique é no máximo a fração do dado vezes o do juazeiro, e nunca passa da amplitude
+     máxima.
+  3. **Cada árvore do seu jeito:** dois tiles da mesma espécie têm período e amplitude diferentes,
+     dentro da `variacaoPorArvore`. O desvio sai do hash do tile, e não de `Math.random()`.
+  4. **O dado:** a regra `interface/vento` reprova uma espécie de `tree` do manifesto sem entrada em
+     `especies`, uma entrada que não é espécie do manifesto, amplitude ou velocidade fora de (0, 1]
+     e `variacaoPorArvore` fora de [0, 0,5), com um caso que reprova escrito no teste.
+  5. **O roteiro `D-TELA-VENTO-VEGETACAO` ganha uma afirmação:** a ponte publica a espécie e o
+     ângulo de cada árvore da vista, e, no tick capturado, nenhum cacto tem ângulo maior que a
+     fração do dado vezes a amplitude máxima. A captura é aberta.
+  6. **Não-regressão:** os roteiros `D-TELA-VENTO-VEGETACAO`, `F-SPR`, `F-REPL-e` e `ARTE-VILA` saem
+     0. O `verify:rapido` passa, e o teste do vento, o `F-SPR-carregamento` e o `F17f-manifesto`
+     passam rodados direto. `git diff main -- src/sim` vazio.
+- **Depende da D-TELA-VENTO-NA-VISTA,** que mexe no mesmo trecho (`atualizarVento`). Entra depois
+  dela, para não brigar no rebase.
+
+#### D-TELA-FUMACA-DA-PADARIA — A padaria trabalhando solta fumaça pela chaminé
+- **Origem (2026-10-02):** é o caso C da prova de conceito (§7 e §23 do documento): "padaria
+  produz fumaça somente quando apropriado". A F-VIVO-b deixou o encanamento: `quadroDaFumaca` em
+  `src/render/trabalho.ts`, que só anda com o prédio trabalhando, e o ponto
+  `ancoras.trabalho.fumaca`. **Medido na `main`:** o manifesto não tem entrada `fumaca` nem prédio
+  com esse ponto, e por isso nenhuma fumaça aparece no jogo.
+- **Escopo:** só render e manifesto. A fumaça é de **partículas**, no mesmo molde sem estado da
+  poeira (D-TELA-POEIRA-AMBIENTE), levada pelo vento, sem arte pintada.
+  - Se um dia o manifesto ganhar a entrada `fumaca` com quadros, o laço da F-VIVO-b continua
+    valendo para quem a declarar, e as partículas são o caminho de quem não tem os quadros.
+  - Só a padaria (`bakery`) ganha o ponto da chaminé. A forja e a fundição ficam para depois, com
+    registro.
+- **Aceite (escrito antes do código, 2026-10-02):**
+  1. **O ponto:** a entrada `bakery` do manifesto declara `ancoras.trabalho.fumaca` na chaminé
+     desenhada. O ponto é medido no PNG da padaria, e o `F17f-manifesto` continua passando.
+  2. **A função pura** `particulasDaFumaca(config, vento, tick, alfa, ponto, trabalhandoDesde,
+     parouEm)`, por tabela em `tests/D-TELA-FUMACA-DA-PADARIA.test.ts`:
+     - as mesmas entradas dão a mesma saída;
+     - sem trabalho, a lista é vazia;
+     - nenhuma partícula nasce depois do `parouEm`, e todas somem até `parouEm + vidaTicks`. A
+       fumaça se desfaz, e não some de uma vez;
+     - a partícula sobe (o y diminui com a idade) e se desloca no sentido do vento;
+     - o total é no máximo `maximoPorChamine`.
+  3. **Quem diz se a padaria trabalha** é o mesmo predicado do `quadroDaFumaca`, e não um
+     predicado novo. O `trabalhandoDesde` e o `parouEm` são memória de render por prédio (como a
+     `vegetacaoDesenhada`), e não estado da sim.
+  4. **O dado:** os números ficam em `data/fumaca.json`, só de render, com a regra
+     `interface/fumaca` e um caso que reprova.
+  5. **O roteiro `tools/shots/D-TELA-FUMACA-DA-PADARIA.js`,** sobre o save
+     `saves/teste-operador-vila-pronta.txt`:
+     - com a padaria trabalhando, a ponte publica as partículas dela, maior que 0, e a captura
+       mostra a fumaça saindo da chaminé;
+     - o roteiro pausa a padaria pelo painel (despausado, §8) e avança `vidaTicks` pela ponte;
+     - as partículas dela chegam a 0, e a captura não mostra fumaça;
+     - as duas capturas são abertas.
+  6. **Não-regressão:** os roteiros `F-VIVO-b`, `D-TELA-POEIRA-AMBIENTE` e `ARTE-VILA` saem 0. O
+     `verify:rapido` passa, e o `F17f-manifesto` e o `F-SPR-carregamento` passam rodados direto.
+     `git diff main -- src/sim` vazio.
+- **Depende da D-TELA-POEIRA-AMBIENTE:** reaproveita o pool e o hash dela.
+
 #### D-ARTE-BANDEIRA-FACCAO — A bandeira do bando balança no vento
 - **Escopo (o aceite entra num commit próprio antes do código):** a bandeira de facção (§13 do
   documento) na cor do bando (`render/cor-do-bando.ts`), balançando com o mesmo vento. **Precisa
