@@ -17571,3 +17571,22 @@ A ponte publica especie e angulo por arvore. No tick 1 capturado: maior angulo a
 
 ### Hipoteses
 - Nenhuma hipotese tratada como prova de aceite; a transladada e o merge permanecem sem verificacao/conclusao por causa do bloqueio acima.
+
+
+## 2026-10-02 — D-TELA-AGUA-PEIXE (retomada e verificacao apos rebase), pelo Codex
+
+### Verificado
+- Retomada por ordem do operador para conferir a main limpa. Main em 804026d, limpa; os commits 494f973 e 7c986ef corrigiram o teste da padaria que bloqueava a corrida anterior. O bloqueio descrito na secao anterior e historico, nao uma falha atual deste item.
+- Rebase sobre essa main feito; unico conflito em PROGRESS.md resolvido preservando os registros das duas entregas. O codigo da limpeza e o codigo dos aneis coexistem; nenhuma mudanca em src/sim.
+- `verify:rapido` apos rebase: saida 0, 27 s; typecheck, lint e validate:data passaram (20 arquivos, zero erros). Arvore limpa e branch sem upstream: 0 arquivos selecionados, 0 testes no related; essa corrida nao substitui os testes diretos ou a verificacao completa. Log: test-output/D-TELA-AGUA-PEIXE-retomada-rapido.log.
+- Testes diretos pela trava: D-TELA-AGUA-PEIXE, D-TELA-AGUA-VIVA, F-SPR-carregamento e F17f-manifesto: 4 arquivos, 43 testes, saida 0. Log: test-output/D-TELA-AGUA-PEIXE-retomada-diretos.log.
+- Cinco roteiros apos rebase: D-TELA-AGUA-PEIXE, D-TELA-AGUA-VIVA, F-T4a, D-TELA-POEIRA-AMBIENTE e ARTE-VILA, todos saida 0. Logs: test-output/<ID>-retomada-shot.log. As tres capturas da feature foram abertas novamente.
+- Peixe em 96 de 800 ticks (0.12), maximo observado 3, pool fixo 16, trabalho pausado 0, pescador no origemTile (29,24). As duas partidas do peixe mantiveram o SHA-256 0e6f313b68dcc7f064993b89d8d3f9f3f03100c016c2ff92fb879143fec17396 no tick 46.
+- Diff contra main de src/sim vazio; sem alteracao em test-results.json, .claude/, AGENTS.md ou no aceite.
+
+### Fechamento
+- A verificacao completa final roda apos este commit, pela trava, e sua saida fica em test-output/D-TELA-AGUA-PEIXE-retomada-verify.log; o resultado e reportado ao operador na entrega.
+- O merge continua condicionado a essa verificacao verde e nova conferencia da main limpa, por fast-forward, sem push. Quem marca o item e o operador.
+
+### Hipoteses
+- Nenhuma inferencia substitui as evidencias acima; a verificacao completa e a operacao de merge sao conferidas no fechamento, nao antecipadas neste registro.
