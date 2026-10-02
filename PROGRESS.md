@@ -17279,3 +17279,11 @@ B D-TELA-LUZ-RELEVO, aceite 1             | NEEDS_WORK        | o sha256 contra 
     pediria o tempo da própria função dentro do quadro.
   - **Ressalva:** o roteiro reimplementa a fórmula da variante em JS para conferir a ponte. Se a
     fórmula de `src/render/agua-viva.ts` mudar, ele precisa mudar junto.
+
+## 2026-10-02 — D-TELA-POEIRA-AMBIENTE (poeira e palha no vento), pelo Codex
+
+- **Verificado:** `particulasDaPoeira` é pura, sem Phaser e sem estado entre quadros. O nascimento e a espécie vêm de hash de semente, tick de nascimento e índice; a posição usa `data/vento.json`. O teste cobriu 200 ticks, saída repetível, limite de vista, exclusão de água, movimento com produto escalar positivo, duração máxima, ambas as espécies e vento com força zero. A evidência foi gravada em `test-output/D-TELA-POEIRA-AMBIENTE.json`.
+- **Verificado:** `data/poeira.json` está entre os dados de interface, fora da lista da sim. `interface/poeira` reprova teto e vida não positivos, cores fora de `#rrggbb` e vento próprio; o teste inclui casos inválidos. `src/sim/` não mudou.
+- **Verificado:** a cena reaproveita 64 objetos `Graphics`, só recalcula e redesenha quando tick, alfa ou vista mudam. A ponte publica a lista visível com tile e o total do pool. O roteiro da poeira saiu 0 nas duas corridas, inclusive a câmera fixada pela ponte, T e T+5, vista do açude, 50 ticks nas duas vistas e um passo despausado. O maior `poolDaPoeira` observado foi 64, igual a `maximoNaVista`.
+- **Verificado:** SHA-256 da captura do tick T nas duas corridas: `F83CAE8C9169C8DD6B09E2F9C7F22F30D6E90CDDA0524F9154EF06725276F800`. As três capturas foram abertas. O teste direto dos cinco arquivos exigidos saiu 0 (45 testes), e `npm run verify:rapido` passou por typecheck, lint, validação de 18 dados e Vitest. Os roteiros `D-TELA-VENTO-VEGETACAO`, `D-TELA-AGUA-VIVA` e `ARTE-VILA` saíram 0. `git diff main -- src/sim` ficou vazio antes do rebase final.
+- **Hipótese visual:** a poeira pequena se mistura aos grãos já pintados na areia em escala 1:1; não há teste de legibilidade visual neste aceite. Nenhuma medida de custo por intervalo entre quadros foi feita, conforme o aceite 6.
