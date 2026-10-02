@@ -17410,3 +17410,35 @@ B D-TELA-LUZ-RELEVO, aceite 1             | NEEDS_WORK        | o sha256 contra 
   `D-TELA-CACTO-NO-VENTO` ficou no `4c4c9bb`, sem commit, sem arquivo modificado e sem outra
   branch. O Codex dela não produziu nada (causa desconhecida). Os dois itens continuam abertos, com
   o aceite intacto.
+
+
+## 2026-10-02 ? D-TELA-CACTO-NO-VENTO e D-TELA-CHAO-DA-CANA-SO-QUANDO-MUDA, pelo Codex
+
+**Contrato:** aceites de `a42122c` e `4c4c9bb`, sem alterar BUILD_PLAN.md, simulacao ou test-results.json. A branch inicial estava anterior aos aceites; foi atualizada por rebase sobre a main antes da medida. A primeira tentativa de shot falhou por falta de @playwright/test; `npm ci` instalou as dependencias (saida 0), e o ANTES abaixo e da primeira corrida concluida com sucesso.
+
+**Verificado ? cacto:** `especieDoTile` devolve a chave completa de textura entre as especies carregadas, com o hash e a ordem originais. O metodo antigo foi copiado literalmente para `tests/helpers/textura-da-vegetacao-antes-cacto.txt` antes da troca; o teste o executa e compara os retornos nos 16.384 tiles, com todas as especies, subconjunto, uma especie e nenhuma carregada. Os 25 casos passaram antes da substituicao da cena e na revisao que tornou literal o retorno completo. No mesmo tile, os tres cactos respeitam 0,15 do maximo do juazeiro em 2.000 ticks. A variacao de amplitude e periodo vem de hashes do tile. A cena preserva o anchor do manifesto, a restricao a vista, o portao tick/alfa/camera e vegetacaoNova na remocao da arvore. A regra interface/vento valida cobertura das especies adultas do manifesto, especie desconhecida, amplitude/velocidade em (0,1] e variacao em [0,0.5), com casos negativos.
+
+A ponte publica especie e angulo por arvore. No tick 1 capturado: maior angulo absoluto de cacto **0,20620478825804978 graus**, de juazeiro (`presente`) **1,3025199241378076 graus**. `D-TELA-VENTO-VEGETACAO` afirma a fracao maxima de cada cacto e a presenca das duas classes, sem comparar tempos. Captura `screenshots/D-TELA-VENTO-VEGETACAO-1-cacto-e-juazeiro-tick-capturado.png` aberta; registro `test-output/D-TELA-CACTO-NO-VENTO-captura.json`.
+
+**Verificado ? chao:** o predicado puro distingue varrer recursos de recontar vista. Primeiro quadro/tick novo varrem; camera nova so reconta tiles existentes; quadro repetido reutiliza a contagem. Oito casos verdes, incluindo retorno de tick ao carregar e zoom. `recursosVarridosPeloChao` e zerado a cada quadro e contado na varredura real. Nas 60 amostras de cada vista do custo: pausado **0** recursos/quadro, tick novo **1.095** recursos/quadro. O roteiro do chao afirma igualdade com a cana (inclusive pousio) apos mover e retornar a camera sem tick; a vista escolhida muda a quantidade visivel. Captura do chao aberta.
+
+**Verificacoes antes do rebase final:** `verify:rapido` verde (typecheck, lint e validate:data; 18 arquivos de dados, zero erros). Cacto: 346 testes relacionados na primeira corrida, depois 31 na revisao do retorno; chao: 30 testes relacionados. Testes diretos pela trava: sete arquivos da licao, **81 testes**, saida 0; tambem F-REPL-e-arvore para gerar seu save (primeira rodada: sete arquivos, 80 testes). Todos os roteiros pedidos sairam 0: D-TELA-VENTO-VEGETACAO (3 capturas), D-TELA-CUSTO-DO-QUADRO (sem captura, JSON), D-ARTE-CHAO-DE-ROCA (2), F-SPR (2), F-REPL-e (5), ARTE-VILA (9). `git diff main -- src/sim` vazio. Nenhum teste ignorado ou verificacao afrouxada; nao se escreveu em .claude/, AGENTS.md ou test-results.json.
+
+**Custo dentro do quadro ? evidencia desta corrida, sem patamar de tempo.** Cada linha tem 60 quadros. ANTES: base 4c4c9bb; DEPOIS: os dois itens implementados nesta branch, antes de incorporar os merges concorrentes de poeira/fumaca. Os arquivos completos ficam em `test-output/D-TELA-CUSTO-DO-QUADRO-antes-cacto-cana.json` e `test-output/D-TELA-CUSTO-DO-QUADRO-depois-cacto-cana.json`. Itens conservam a definicao do medidor existente: sprites de vento, celulas de agua trabalhadas e tiles de chao desenhados na vista. As vistas de custo nao tem cana: zero tiles na ultima camada nao significava zero recursos varridos no ANTES. O contador novo distingue isso; so ele fundamenta a afirmacao de nao varrer no DEPOIS.
+
+| Vista | Modo | Camada | ms/quadro antes | ms/quadro depois | itens/quadro antes | itens/quadro depois |
+| --- | --- | --- | ---: | ---: | ---: | ---: |
+| arvores | pausado | vento | 0.010000 | 0.001667 | 0 | 0 |
+| arvores | pausado | agua | 0.011667 | 0.003333 | 0 | 0 |
+| arvores | pausado | chaoDaCana | 0.250000 | 0.006667 | 0 | 0 |
+| arvores | ticks | vento | 0.066667 | 0.063333 | 57 | 57 |
+| arvores | ticks | agua | 0.143333 | 0.100000 | 0 | 0 |
+| arvores | ticks | chaoDaCana | 0.225000 | 0.193333 | 0 | 0 |
+| agua | pausado | vento | 0.005000 | 0.000000 | 0 | 0 |
+| agua | pausado | agua | 0.011667 | 0.010000 | 0 | 0 |
+| agua | pausado | chaoDaCana | 0.223333 | 0.006667 | 0 | 0 |
+| agua | ticks | vento | 0.011667 | 0.011667 | 0 | 0 |
+| agua | ticks | agua | 0.155000 | 0.223333 | 176 | 176 |
+| agua | ticks | chaoDaCana | 0.170000 | 0.200000 | 0 | 0 |
+
+**Hipotese e limites:** os fatores de amplitude 1,0 para juazeiro/umbuzeiro, 0,3 para macambira e 0,15 para os tres cactos sao provis?rios. A velocidade relativa das especies inicia em 1,0; a variacao por arvore de 0,1 altera velocidade em ?10% e amplitude entre 90% e 100%, mantendo o teto absoluto do aceite. A calibracao visual final e do operador. Os tempos sugerem que o portao retira a varredura do quadro pausado; diferencas das camadas nao editadas e dos ticks sao ruido desta medicao em maquina compartilhada, nao prova de ganho ou regressao. A cana ainda varre todos os recursos no tick novo, como previsto. Nenhum trabalho fora dos dois aceites; nao se marca feature e nao se faz push. O merge exige main limpa, rebase com preservacao das mudancas concorrentes e nova verificacao dos aceites.
