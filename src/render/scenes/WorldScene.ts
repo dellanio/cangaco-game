@@ -19,7 +19,7 @@ import type { Tile } from '../grid';
 import { publicarEstadoDebug } from '../debug';
 import { somarCusto } from '../custo-do-quadro';
 import { criarCamadaDeRelevo } from '../camada-de-relevo';
-import { balancaVegetacao, transformacaoDoVento } from '../vento';
+import { arvoreNaVista, balancaVegetacao, quadroDoVentoMudou, transformacaoDoVento } from '../vento';
 import type { LuzDoRelevo } from '../camada-de-relevo';
 import { marcadorVisivel } from '../marcador-de-destino';
 import type { MarcadorDeDestino } from '../marcador-de-destino';
@@ -166,6 +166,10 @@ export class WorldScene extends Phaser.Scene {
    *  como `recursosDesenhados`: a verdade continua em `state.recursos`. */
   private readonly vegetacaoDesenhada = new Map<string, Phaser.GameObjects.Image>();
   private ventoLigado = true;
+  private ultimoQuadroDoVento: { tick: number; alfa: number; vista: string } | null = null;
+  private vegetacaoNova = true;
+  private readonly ultimoTickDaVegetacao = new Map<string, number>();
+  private arvoresNaVista: Array<readonly [string, Phaser.GameObjects.Image]> = [];
   /** D-TELA-LUZ-RELEVO — a luz do relevo, ou `null` com ele desligado (o padrao): todo gancho e `luz?.`. */
   private luz: LuzDoRelevo | null = null;
   /** BUG-N3 — os tiles cujo sprite de vegetacao NASCEU de rocha. Guardado na hora de
@@ -618,7 +622,7 @@ export class WorldScene extends Phaser.Scene {
       estado.lajedoDesenhado = this.lajedoDesenhado();
       estado.transicoesVisiveis = this.lerTransicoesVisiveis(camadasDeTransicao);
       estado.vegetacaoRenderizada = this.vegetacaoDesenhada.size;
-      estado.ligarVento = (ligado) => { this.ventoLigado = ligado; };
+      estado.ligarVento = (ligado) => { this.ventoLigado = ligado; this.vegetacaoNova = true; };
       estado.rochasRenderizadas = this.rochaDesenhada.size;
       const inicioDoVento = agora();
       estado.vegetacaoBalancando = this.atualizarVento();
@@ -1328,6 +1332,7 @@ export class WorldScene extends Phaser.Scene {
     if (desenho?.como !== 'vegetacao') {
       atual?.destroy();
       this.vegetacaoDesenhada.delete(chave);
+      this.ultimoTickDaVegetacao.delete(chave);
       this.rochaDesenhada.delete(chave);
       this.crescimentoDesenhado.delete(chave);
       return;
@@ -1347,6 +1352,8 @@ export class WorldScene extends Phaser.Scene {
     else this.crescimentoDesenhado.set(chave, { estado: crescimento, fonte: comPng ? 'png' : 'placeholder', escala });
     if (atual?.texture.key === textura && atual.scaleX === escala) return;
     atual?.destroy();
+    this.vegetacaoNova = true;
+    this.ultimoTickDaVegetacao.delete(chave);
     const { tilePx } = configDoMapa;
     const canto = gridToScreen(tileDeChave(chave), tilePx, ESCALA_DO_MUNDO);
     const pe = { x: canto.x + tilePx / 2, y: canto.y + tilePx };
@@ -1368,20 +1375,42 @@ export class WorldScene extends Phaser.Scene {
       }
       return 0;
     }
+    const camera = this.cameras.main.worldView;
+    const quadro = {
+      tick: this.ponte.atual?.tick ?? 0,
+      alfa: this.relogio.alfa(),
+      vista: `${camera.x},${camera.y},${camera.width},${camera.height}`,
+    };
+    if (!quadroDoVentoMudou(this.ultimoQuadroDoVento, quadro, this.vegetacaoNova)) return 0;
+    if (this.vegetacaoNova || this.ultimoQuadroDoVento?.vista !== quadro.vista) {
+      this.arvoresNaVista = [];
+      for (const [chave, imagem] of this.vegetacaoDesenhada) {
+        const tipo = recursos[chave]?.tipo;
+        if (!tipo || !balancaVegetacao(tipo, dadosDoVento)) continue;
+        const entrada = assetDaCamada(manifestoDoJogo, 'vegetacao', tipo);
+        if (entrada && arvoreNaVista(imagem, entrada.anchor, entrada.tamanho, imagem.scaleX, camera)) {
+          this.arvoresNaVista.push([chave, imagem]);
+        }
+      }
+    }
+    this.ultimoQuadroDoVento = quadro;
+    this.vegetacaoNova = false;
     let quantos = 0;
-    for (const [chave, imagem] of this.vegetacaoDesenhada) {
-      const tipo = recursos[chave]?.tipo;
-      if (!tipo || !balancaVegetacao(tipo, dadosDoVento)) continue;
+    const ticksNaVista: Record<string, number> = {};
+    for (const [chave, imagem] of this.arvoresNaVista) {
       const { gx, gy } = tileDeChave(chave);
       const transformacao = transformacaoDoVento(
-        dadosDoVento, this.ponte.atual?.tick ?? 0, this.relogio.alfa(),
+        dadosDoVento, quadro.tick, quadro.alfa,
         gx, gy, imagem.x, imagem.y,
       );
       // Gira em volta da origem que o sprite ja tem (o anchor do manifesto, posto ao nascer), e
       // nao de uma origem fixa: com outro anchor, o pe sairia do lugar.
       imagem.setRotation(transformacao.rotacao);
+      this.ultimoTickDaVegetacao.set(chave, quadro.tick);
+      ticksNaVista[chave] = quadro.tick;
       quantos += 1;
     }
+    if (window.__cangaco) window.__cangaco.ticksDaVegetacaoNaVista = ticksNaVista;
     return quantos;
   }
 

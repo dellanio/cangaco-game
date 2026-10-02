@@ -21,6 +21,32 @@ export interface TransformacaoDoVento {
   readonly intensidadeDaRajada: number;
 }
 
+export interface RetanguloDaVista {
+  readonly x: number; readonly y: number; readonly width: number; readonly height: number;
+}
+
+/** A posicao e o pe no anchor do manifesto; a copa pode cruzar a vista com o pe fora. */
+export function arvoreNaVista(
+  pe: { readonly x: number; readonly y: number }, anchor: readonly [number, number],
+  tamanho: readonly [number, number], escala: number, vista: RetanguloDaVista,
+): boolean {
+  const esquerda = pe.x - anchor[0] * tamanho[0] * escala;
+  const cima = pe.y - anchor[1] * tamanho[1] * escala;
+  const direita = esquerda + tamanho[0] * escala;
+  const baixo = cima + tamanho[1] * escala;
+  return esquerda < vista.x + vista.width && direita > vista.x &&
+    cima < vista.y + vista.height && baixo > vista.y;
+}
+
+export function quadroDoVentoMudou(
+  anterior: { readonly tick: number; readonly alfa: number; readonly vista: string } | null,
+  atual: { readonly tick: number; readonly alfa: number; readonly vista: string },
+  spriteNovo: boolean,
+): boolean {
+  return spriteNovo || anterior === null || anterior.tick !== atual.tick ||
+    anterior.alfa !== atual.alfa || anterior.vista !== atual.vista;
+}
+
 const volta = (valor: number, periodo: number): number => ((valor % periodo) + periodo) % periodo;
 
 /** Mistura de coordenadas inteiras; a fase nao depende de ordem de iteracao. */

@@ -285,6 +285,8 @@ export interface EstadoDebug {
   rochasRenderizadas: number;
   /** D-TELA-VENTO-VEGETACAO — sprites atualizados pelo vento neste quadro. */
   vegetacaoBalancando: number;
+  /** Tick em que cada arvore da vista recebeu a ultima rotacao. */
+  ticksDaVegetacaoNaVista: Readonly<Record<string, number>>;
   custo: CustoDoQuadro;
   zerarCusto: () => void;
   /** Controle de medicao do render; nao altera o estado da sim. */
@@ -440,6 +442,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     vegetacaoRenderizada: 0,
     rochasRenderizadas: 0,
     vegetacaoBalancando: 0,
+    ticksDaVegetacaoNaVista: {},
     custo: custoZerado(),
     zerarCusto: () => { estado.custo = custoZerado(); },
     ligarVento: () => undefined,

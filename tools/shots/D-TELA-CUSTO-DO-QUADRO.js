@@ -50,8 +50,10 @@ async function roteiro({ page, afirmar }) {
   const resultado = {};
   for (const [nome, vista] of Object.entries(locais)) {
     resultado[nome] = { vista, pausado: await medir(page, vista, 'pausado'), ticks: await medir(page, vista, 'ticks') };
+    console.log(`vista ${nome}: vento ${resultado[nome].ticks.vento.itens} itens em ${resultado[nome].ticks.vento.chamadas} quadros`);
     afirmar(resultado[nome].pausado.agua.itens === 0, 'agua parada com camera fixa trabalha 0 celulas');
-    afirmar(resultado[nome].ticks.vento.itens > 0, 'vento trabalha arvores durante os ticks');
+    if (nome === 'arvores') afirmar(resultado[nome].ticks.vento.itens > 0, 'vento trabalha arvores durante os ticks');
+    if (nome === 'agua') afirmar(resultado[nome].ticks.agua.itens > 0, 'agua trabalha celulas durante os ticks');
   }
   fs.mkdirSync('test-output', { recursive: true });
   fs.writeFileSync('test-output/D-TELA-CUSTO-DO-QUADRO.json', JSON.stringify(resultado, null, 2) + '\n');
