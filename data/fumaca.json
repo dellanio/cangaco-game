@@ -1,0 +1,13 @@
+{
+  "_doc": "Somente render; deriva do tick, e o vento vem de data/vento.json.",
+  "semente": 20261002,
+  "maximoPorChamine": 32,
+  "vidaTicks": 40,
+  "intervaloTicks": 2,
+  "subidaTilesPorTick": 0.035,
+  "velocidadeTilesPorTick": 0.018,
+  "raioInicialTiles": 0.035,
+  "crescimentoTilesPorTick": 0.004,
+  "opacidade": 0.55,
+  "cor": "#d8d0c0"
+}

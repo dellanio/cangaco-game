@@ -70,6 +70,25 @@ function validarPoeira(poeira, erros) {
   if ('direcao' in poeira || 'forca' in poeira) e('o vento vem de data/vento.json');
 }
 
+function validarFumaca(fumaca, erros) {
+  const e = (msg) => erros.push(`interface/fumaca: ${msg}`);
+  if (!fumaca || typeof fumaca !== 'object' || Array.isArray(fumaca)) {
+    e('data/fumaca.json precisa existir e ser objeto');
+    return;
+  }
+  for (const campo of ['maximoPorChamine', 'vidaTicks', 'intervaloTicks']) {
+    if (!Number.isInteger(fumaca[campo]) || fumaca[campo] <= 0) e(`${campo} precisa ser inteiro > 0`);
+  }
+  if (!Number.isInteger(fumaca.semente)) e('semente precisa ser inteiro');
+  for (const campo of ['subidaTilesPorTick', 'velocidadeTilesPorTick', 'raioInicialTiles', 'crescimentoTilesPorTick']) {
+    if (typeof fumaca[campo] !== 'number' || !Number.isFinite(fumaca[campo]) || fumaca[campo] <= 0) e(`${campo} precisa ser > 0`);
+  }
+  if (fumaca.subidaTilesPorTick <= fumaca.velocidadeTilesPorTick) e('subidaTilesPorTick precisa superar velocidadeTilesPorTick para subir em qualquer vento');
+  if (typeof fumaca.opacidade !== 'number' || !Number.isFinite(fumaca.opacidade) || fumaca.opacidade <= 0 || fumaca.opacidade > 1) e('opacidade precisa estar em (0,1]');
+  if (typeof fumaca.cor !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(fumaca.cor)) e('cor precisa ser #rrggbb');
+  if ('direcao' in fumaca || 'forca' in fumaca) e('o vento vem de data/vento.json');
+}
+
 function getByPath(obj, caminho) {
   const partes = caminho.split('.');
   let atual = obj;
@@ -1626,6 +1645,7 @@ function validarInterface(dados, interfaceUi) {
   validarRelevo(dados, interfaceUi && interfaceUi.relevo, erros);
   validarVento(interfaceUi && interfaceUi.vento, erros);
   validarPoeira(interfaceUi && interfaceUi.poeira, erros);
+  validarFumaca(interfaceUi && interfaceUi.fumaca, erros);
   if (!menu || !Array.isArray(menu.grupos)) {
     erros.push('interface/menu-build-forma: menu-build.grupos precisa ser array');
     return erros;
@@ -1712,4 +1732,4 @@ function validarTudo(dados) {
   return erros;
 }
 
-module.exports = { validarTudo, validarInterface, validarVento, validarPoeira, getByPath };
+module.exports = { validarFumaca, validarTudo, validarInterface, validarVento, validarPoeira, getByPath };

@@ -6,3 +6,5 @@ export function getByPath(obj: unknown, caminho: string): { existe: boolean; val
 export function validarInterface(dados: Record<string, unknown>, interfaceUi: Record<string, unknown>): string[];
 export function validarVento(vento: unknown, erros: string[], manifesto?: unknown): void;
 export function validarPoeira(poeira: unknown, erros: string[]): void;
+
+export function validarFumaca(fumaca: unknown, erros: string[]): void;

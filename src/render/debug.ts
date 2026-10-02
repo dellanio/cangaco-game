@@ -15,6 +15,7 @@ import type { EstagioDaObra, RevelacaoDaObra } from './estagio-obra';
 import type { LinhaDoMedidor } from './medidor-obra';
 import type { CanteiroDaObra } from './nivelamento-obra';
 import type { GavetaDaPilha } from './pilhas';
+import type { ParticulaDaFumaca } from './fumaca';
 import type { EstagioDaCultura } from './crescimento';
 import type { ItemDeFila } from '../sim/state';
 import { ATALHOS, GESTOS } from '../input/atalhos';
@@ -241,6 +242,9 @@ export interface EstadoDebug {
   rajadaNaVista: number;
   /** Total de objetos da camada criados desde o inicio. */
   poolDaPoeira: number;
+  /** Particulas visiveis da chamine, por id de predio, em tiles de mundo. */
+  fumacaPorPredio: Readonly<Record<string, readonly ParticulaDaFumaca[]>>;
+  poolDaFumaca: number;
   /** F-T2a — quantos tiles de cada RECURSO estao dentro da vista da camera
    *  agora, lidos de volta da camada de marcadores. A chave e o id neutro do
    *  recurso (`rock`, `tree`, `fish`) mais `esgotado`, que e o tile que ja foi
@@ -432,6 +436,8 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     poeiraDesenhada: [],
     rajadaNaVista: 0,
     poolDaPoeira: 0,
+    fumacaPorPredio: {},
+    poolDaFumaca: 0,
     recursosVisiveis: {},
     chaoDaCanaDesenhado: 0,
     mascarasDoLajedo: {},

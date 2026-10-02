@@ -6,6 +6,8 @@ import temaSertao from '../../../data/theme-sertao.json';
 import dadosDoVento from '../../../data/vento.json';
 import agua from '../../../data/agua.json';
 import dadosDaPoeira from '../../../data/poeira.json';
+import dadosDaFumaca from '../../../data/fumaca.json';
+import { particulasDaFumaca, type ParticulaDaFumaca } from '../fumaca';
 import { celulasDaAguaParaTrocar } from '../agua-viva';
 import { particulasDaPoeira, rajadaNaVista } from '../poeira';
 import { codigoDoRecurso, configDoMapa, recursosDeRender, terrenoDeRender } from '../mapa';
@@ -189,6 +191,14 @@ export class WorldScene extends Phaser.Scene {
    *  (`MAX_PASSOS_POR_QUADRO`), que e a partida carregada. */
   private readonly curralGuardado = new Map<string, readonly AnimalDoCurral[]>();
   private tickDoCurral: number | null = null;
+  /** Memoria e pool exclusivos de render, alocados uma vez por chamine. */
+  private readonly chamines = new Map<string, {
+    trabalhandoDesde: number | null;
+    parouEm: number | null;
+    pool: Phaser.GameObjects.Graphics[];
+  }>();
+  private ultimoQuadroDaFumaca = '';
+  private tickDaFumaca: number | null = null;
 
   private readonly desenhados = new Map<
     string,
@@ -633,6 +643,7 @@ export class WorldScene extends Phaser.Scene {
       estado.estagiosDasCulturas = Object.fromEntries(this.estagioDesenhado);
       estado.pronto = true;
       if (this.ponte.atual) this.atualizarPredios(this.ponte.atual, tilePx, estado);
+      this.atualizarFumaca(estado, tilePx);
 
       // Ferramenta ativa -> a planta pergunta canPlace e pinta; sem ferramenta
       // volta o highlight de tile. O render pergunta, nao decide.
@@ -1577,6 +1588,75 @@ export class WorldScene extends Phaser.Scene {
     return contagem;
   }
 
+  /** Chamine sem quadros: memoria de trabalho e pool independente, redesenho por tick/alfa/vista. */
+  private atualizarFumaca(debug: EstadoDebug, tilePx: number): void {
+    const jogo = this.ponte.atual;
+    if (jogo === null) return;
+    const alfa = this.relogio.alfa();
+    const vista = this.cameras.main.worldView;
+    const chave = `${jogo.tick},${alfa},${vista.x},${vista.y},${vista.width},${vista.height}`;
+    if (chave === this.ultimoQuadroDaFumaca) return;
+    this.ultimoQuadroDaFumaca = chave;
+    if (this.tickDaFumaca !== null && jogo.tick < this.tickDaFumaca) {
+      for (const memoria of this.chamines.values()) {
+        memoria.trabalhandoDesde = null;
+        memoria.parouEm = null;
+      }
+    }
+    this.tickDaFumaca = jogo.tick;
+    const desenhada: Record<string, readonly ParticulaDaFumaca[]> = {};
+    for (const memoria of this.chamines.values()) for (const grafico of memoria.pool) grafico.setVisible(false);
+    for (const id of jogo.predios.ordem) {
+      const predio = jogo.predios.porId[id];
+      if (predio === undefined) continue;
+      const ancora = DADOS_DO_TRABALHO.ancoras[predio.tipo]?.trabalho?.fumaca;
+      if (ancora === undefined) continue;
+      // Um manifesto futuro com quadros continua no laco da F-VIVO-b.
+      if (this.textures.exists(chaveDeTextura('trabalho', ID_DA_FUMACA, `${ID_DA_FUMACA}_1`))) continue;
+      let memoria = this.chamines.get(id);
+      if (memoria === undefined) {
+        memoria = { trabalhandoDesde: null, parouEm: null,
+          pool: Array.from({ length: dadosDaFumaca.maximoPorChamine }, () => this.add.graphics().setVisible(false)) };
+        this.chamines.set(id, memoria);
+      }
+      const ocupante = predio.estado === 'completo' && predio.ocupante !== null
+        ? jogo.unidades.porId[predio.ocupante] ?? null : null;
+      const trabalhando = quadroDaFumaca(predio, ocupante, jogo.tick, DADOS_DO_TRABALHO) !== null;
+      if (trabalhando && (memoria.trabalhandoDesde === null || memoria.parouEm !== null)) {
+        memoria.trabalhandoDesde = jogo.tick;
+        memoria.parouEm = null;
+      } else if (!trabalhando && memoria.trabalhandoDesde !== null && memoria.parouEm === null) {
+        memoria.parouEm = jogo.tick;
+      }
+      const aparencia = aparenciaDoPredio(predio.tipo);
+      const caixa = this.caixaDoPredio(predio.tipo, aparencia.largura * tilePx, aparencia.altura * tilePx);
+      const canto = gridToScreen({ gx: predio.gx, gy: predio.gy }, tilePx, ESCALA_DO_MUNDO);
+      const ponto = { x: (canto.x + caixa.x + caixa.w * ancora[0]) / tilePx,
+        y: (canto.y + caixa.y + caixa.h * ancora[1]) / tilePx };
+      const particulas = particulasDaFumaca(dadosDaFumaca, dadosDoVento, jogo.tick, alfa,
+        ponto, memoria.trabalhandoDesde, memoria.parouEm);
+      desenhada[id] = particulas.filter((p) => p.x * tilePx + p.raio * tilePx >= vista.x
+        && p.x * tilePx - p.raio * tilePx < vista.right && p.y * tilePx + p.raio * tilePx >= vista.y
+        && p.y * tilePx - p.raio * tilePx < vista.bottom);
+      desenhada[id]?.forEach((particula, indice) => {
+        const grafico = memoria.pool[indice];
+        if (grafico === undefined) return;
+        grafico.clear().setPosition(particula.x * tilePx, particula.y * tilePx)
+          .setDepth(depthDeY(canto.y + aparencia.altura * tilePx) + 0.1).setVisible(true);
+        grafico.fillStyle(Number.parseInt(dadosDaFumaca.cor.slice(1), 16), particula.opacidade);
+        grafico.fillCircle(0, 0, particula.raio * tilePx);
+      });
+    }
+    for (const [id, memoria] of this.chamines) {
+      if (jogo.predios.porId[id] === undefined) {
+        memoria.trabalhandoDesde = null;
+        memoria.parouEm = null;
+      }
+    }
+    debug.fumacaPorPredio = desenhada;
+    debug.poolDaFumaca = [...this.chamines.values()].reduce((total, m) => total + m.pool.length, 0);
+  }
+
   /** Diff por id, estagio, assinatura do medidor (F17b) E leitura do canteiro
    *  (F17d) contra o que ja esta desenhado: id novo cria, id sumido
    *  destroi, mesmo id no mesmo estagio nao mexe. O estagio (F11c: `estagio-obra.ts`)
@@ -1703,7 +1783,10 @@ export class WorldScene extends Phaser.Scene {
         ? estadoDoJogo.unidades.porId[predio.ocupante] ?? null
         : null;
       const quadro = quadroDeTrabalho(predio, ocupante, estadoDoJogo.tick, DADOS_DO_TRABALHO);
-      const fumaca = quadroDaFumaca(predio, ocupante, estadoDoJogo.tick, DADOS_DO_TRABALHO);
+      const quadroDeFumaca = quadroDaFumaca(predio, ocupante, estadoDoJogo.tick, DADOS_DO_TRABALHO);
+      const fumaca = quadroDeFumaca !== null
+        && this.textures.exists(chaveDeTextura('trabalho', ID_DA_FUMACA, `${ID_DA_FUMACA}_${quadroDeFumaca}`))
+        ? quadroDeFumaca : null;
       if (quadro !== null) {
         quadrosNoDebug[id] = { ...quadro, sprite: this.texturaDoQuadro(predio.tipo, quadro) !== null };
       }
@@ -2111,8 +2194,6 @@ export class WorldScene extends Phaser.Scene {
         const imagem = this.add.image(x, y, chave);
         imagem.setOrigin(0.5, 1);
         objetos.push(imagem);
-      } else {
-        objetos.push(this.add.circle(x, y - fumaca * 2, 3 + fumaca / 2, 0xd8d0c0, 0.7));
       }
     }
     return objetos;
