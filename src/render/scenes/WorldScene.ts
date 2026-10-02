@@ -7,7 +7,7 @@ import dadosDoVento from '../../../data/vento.json';
 import agua from '../../../data/agua.json';
 import dadosDaPoeira from '../../../data/poeira.json';
 import dadosDaFumaca from '../../../data/fumaca.json';
-import { particulasDaFumaca, type ParticulaDaFumaca } from '../fumaca';
+import { chaminesRemovidas, particulasDaFumaca, type ParticulaDaFumaca } from '../fumaca';
 import { celulasDaAguaParaTrocar } from '../agua-viva';
 import { particulasDaPoeira, rajadaNaVista } from '../poeira';
 import { codigoDoRecurso, configDoMapa, recursosDeRender, terrenoDeRender } from '../mapa';
@@ -159,7 +159,7 @@ export class WorldScene extends Phaser.Scene {
   private readonly prediosSemArte = prediosSemArteDaBusca(window.location.search);
   private readonly recursosDesenhados = new Map<string, number>();
   private readonly chaoDaCanaNoMapa = new Map<string, number>();
-  private ultimoQuadroDoChaoDaCana: { readonly tick: number; readonly vista: string } | null = null;
+  private ultimoQuadroDoChaoDaCana: { readonly tick: number; readonly vista: string; readonly partida: object | null } | null = null;
   private chaoDaCanaNaVista = 0;
 
   /** F-SPR — como cada CODIGO de recurso se desenha, resolvido uma vez no `create`
@@ -1261,6 +1261,7 @@ export class WorldScene extends Phaser.Scene {
     const vista = this.cameras.main.worldView;
     const quadro = {
       tick: this.ponte.atual?.tick ?? 0,
+      partida: this.ponte.atual,
       vista: `${vista.x},${vista.y},${vista.width},${vista.height}`,
     };
     const trabalho = quadroDoChaoDaCanaMudou(this.ultimoQuadroDoChaoDaCana, quadro);
@@ -1671,11 +1672,9 @@ export class WorldScene extends Phaser.Scene {
         grafico.fillCircle(0, 0, particula.raio * tilePx);
       });
     }
-    for (const [id, memoria] of this.chamines) {
-      if (jogo.predios.porId[id] === undefined) {
-        memoria.trabalhandoDesde = null;
-        memoria.parouEm = null;
-      }
+    for (const id of chaminesRemovidas([...this.chamines.keys()], new Set(jogo.predios.ordem))) {
+      for (const grafico of this.chamines.get(id)!.pool) grafico.destroy();
+      this.chamines.delete(id);
     }
     debug.fumacaPorPredio = desenhada;
     debug.poolDaFumaca = [...this.chamines.values()].reduce((total, m) => total + m.pool.length, 0);

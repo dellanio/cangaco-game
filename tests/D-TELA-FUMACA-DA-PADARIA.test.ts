@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { particulasDaFumaca, type ConfigDaFumaca } from '../src/render/fumaca';
+import { chaminesRemovidas, particulasDaFumaca, type ConfigDaFumaca } from '../src/render/fumaca';
 import type { DadosDoVento } from '../src/render/vento';
 import type { GameState } from '../src/sim/state';
 import { ehEntradaDePredio, type Manifesto } from '../src/render/manifesto';
@@ -16,6 +16,14 @@ const ponto = { x: 24, y: 36 };
 const manifesto = JSON.parse(readFileSync('assets/manifest.json', 'utf8')) as Manifesto;
 
 describe('D-TELA-FUMACA-DA-PADARIA', () => {
+  it.each([
+    [[], ['padaria'], []],
+    [['padaria'], ['padaria'], []],
+    [['padaria', 'forja'], ['forja'], ['padaria']],
+    [['padaria', 'forja'], [], ['padaria', 'forja']],
+  ])('remove so as chamines de predios que sairam: %j', (chamines, presentes, esperado) => {
+    expect(chaminesRemovidas(chamines, new Set(presentes))).toEqual(esperado);
+  });
   it('e deterministica, sobe, segue o vento e respeita o teto com tick e alfa', () => {
     let maior = 0;
     let pares = 0;

@@ -1,5 +1,10 @@
 import type { DadosDoVento } from './vento';
 
+/** Chamines cujo predio ja nao esta no estado: o render destroi seus pools. */
+export function chaminesRemovidas(chamines: readonly string[], prediosPresentes: ReadonlySet<string>): string[] {
+  return chamines.filter((id) => !prediosPresentes.has(id));
+}
+
 export interface ConfigDaFumaca {
   readonly semente: number;
   readonly maximoPorChamine: number;

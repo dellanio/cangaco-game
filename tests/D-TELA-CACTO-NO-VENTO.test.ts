@@ -1,8 +1,7 @@
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { transpileModule } from 'typescript';
 import dados from '../data/vento.json';
 import manifesto from '../assets/manifest.json';
+import tabelas from './helpers/especies-por-tile-cacto.json';
 import { especiesDaVegetacao } from '../src/render/crescimento';
 import { chaveDeTextura } from '../src/render/manifesto';
 import { especieDoTile, fatoresDaArvore, transformacaoDoVento } from '../src/render/vento';
@@ -11,25 +10,25 @@ import { gravarEvidencia } from './helpers/evidence';
 
 const entrada = manifesto.assets.find((a) => a.tipo === 'vegetacao' && a.id === 'tree')!;
 const especies = especiesDaVegetacao(Object.keys(entrada.estados));
-const literalAnterior = readFileSync('tests/helpers/textura-da-vegetacao-antes-cacto.txt', 'utf8');
-const compilado = transpileModule(`class CenaAnterior { ${literalAnterior} }`, {}).outputText;
-const CenaAnterior = new Function('especiesDaVegetacao', 'chaveDeTextura', 'tileDeChave',
-  `${compilado}; return CenaAnterior;`)(especiesDaVegetacao, chaveDeTextura,
-  (chave: string) => { const [gx, gy] = chave.split(',').map(Number); return { gx, gy }; }) as {
-    prototype: { texturaDaVegetacao: (desenho: unknown, chave: string) => string };
-  };
-
 describe('D-TELA-CACTO-NO-VENTO (cacto quase parado e variacao por arvore)', () => {
-  it.each([especies, especies.slice(1, 4), ['presente'], []])(
-    'preserva o metodo anterior nos 128 x 128 tiles com as texturas carregadas %j', (...carregadas: string[]) => {
-      const cena = { textures: { exists: (chave: string) => carregadas.some((e) => chave === chaveDeTextura('vegetacao', 'tree', e)) } };
-      for (let gy = 0; gy < 128; gy += 1) for (let gx = 0; gx < 128; gx += 1) {
-        const antes = CenaAnterior.prototype.texturaDaVegetacao.call(cena,
-          { entrada, chave: chaveDeTextura('vegetacao', 'tree', 'presente') }, `${gx},${gy}`);
-        expect(especieDoTile(carregadas.map((e) => chaveDeTextura('vegetacao', 'tree', e)), gx, gy)).toBe(antes);
+  it('a tabela fixa cobre todas as especies e os dois subconjuntos', () => {
+    expect(tabelas.map(t => t.especies)).toEqual([especies, especies.slice(1, 4), ['presente']]);
+  });
+  it.each(tabelas)('preserva a especie na tabela fixa 16 x 16: $especies', ({ especies: carregadas, linhas }) => {
+    expect(linhas).toHaveLength(16);
+    for (let gy = 0; gy < 16; gy += 1) {
+      expect(linhas[gy]).toHaveLength(16);
+      for (let gx = 0; gx < 16; gx += 1) {
+        const esperada = carregadas[Number.parseInt(linhas[gy]![gx]!, 16)]!;
+        expect(especieDoTile(carregadas.map(e => chaveDeTextura('vegetacao', 'tree', e)), gx, gy), gx + ',' + gy)
+          .toBe(chaveDeTextura('vegetacao', 'tree', esperada));
       }
-      gravarEvidencia('D-TELA-CACTO-NO-VENTO-especies', { tiles: 128 * 128, especies });
-    });
+    }
+    gravarEvidencia('D-TELA-CACTO-NO-VENTO-especies', { tilesPorTabela: 16 * 16, tabelas: 3, especies });
+  });
+  it('sem especies carregadas conserva a textura de fallback', () => {
+    expect(especieDoTile([], 3, 4)).toBe(chaveDeTextura('vegetacao', 'tree', 'presente'));
+  });
   it.each(['mandacaru', 'facheiro', 'xique-xique'])('limita %s ao fator do juazeiro no mesmo tile em 2000 ticks', (especie) => {
     const fator = dados.especies[especie as keyof typeof dados.especies].amplitude;
     for (const [gx, gy] of [[0, 0], [3, 4], [127, 127]]) {

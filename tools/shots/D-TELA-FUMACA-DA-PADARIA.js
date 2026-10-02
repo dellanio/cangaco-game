@@ -69,7 +69,22 @@ async function roteiro({ page, estado, afirmar, capturar }) {
   await page.mouse.move(canvas.left + 5, canvas.top + 5);
   await frame();
   await capturar('pausada-sem-fumaca');
-  console.log(`fumaca: trabalho ${quantidadeTrabalhando}, pausa 0; pool proprio ${pool}; espera ${avancados} ticks; avancou ${config.vidaTicks} ticks apos a pausa`);
+  await page.mouse.click(ponto.x, ponto.y);
+  await frame();
+  const demolir = await pontoParaApertar(page, '#painel-predio [data-demolir="padaria"]');
+  await page.keyboard.press('p');
+  await page.mouse.move(demolir.x, demolir.y);
+  await page.mouse.down();
+  await page.waitForTimeout(150);
+  await page.mouse.up();
+  await page.waitForTimeout(150);
+  await page.keyboard.press('p');
+  await frame();
+  s = await estado();
+  afirmar(s.prediosDoEstado.padaria === undefined, 'A padaria deve ter sido demolida.');
+  afirmar(s.poolDaFumaca < pool, 'Demolir deve destruir o pool da padaria.');
+  await capturar('demolida-pool-destruido');
+  console.log(`fumaca: trabalho ${quantidadeTrabalhando}, pausa 0; pool ${pool} -> ${s.poolDaFumaca} apos demolir; espera ${avancados} ticks; avancou ${config.vidaTicks} ticks apos a pausa`);
 }
 
 module.exports = { roteiro };
