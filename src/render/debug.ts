@@ -18,6 +18,7 @@ import type { GavetaDaPilha } from './pilhas';
 import type { EstagioDaCultura } from './crescimento';
 import type { ItemDeFila } from '../sim/state';
 import { ATALHOS, GESTOS } from '../input/atalhos';
+import { custoZerado, type CustoDoQuadro } from './custo-do-quadro';
 
 /** O recorte de um predio que o roteiro le. Nao e `Predio`: so o que a tela
  *  precisa afirmar, para a ponte nao virar copia do GameState. */
@@ -284,6 +285,8 @@ export interface EstadoDebug {
   rochasRenderizadas: number;
   /** D-TELA-VENTO-VEGETACAO — sprites atualizados pelo vento neste quadro. */
   vegetacaoBalancando: number;
+  custo: CustoDoQuadro;
+  zerarCusto: () => void;
   /** Controle de medicao do render; nao altera o estado da sim. */
   ligarVento: (ligado: boolean) => void;
   /** Quantos tiles de estrada DE PE (F08) a cena tem desenhados agora. */
@@ -437,6 +440,8 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     vegetacaoRenderizada: 0,
     rochasRenderizadas: 0,
     vegetacaoBalancando: 0,
+    custo: custoZerado(),
+    zerarCusto: () => { estado.custo = custoZerado(); },
     ligarVento: () => undefined,
     estradasRenderizadas: 0,
     estradasPlanejadasRenderizadas: 0,

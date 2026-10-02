@@ -41,20 +41,7 @@ async function roteiro({ page, capturar, estado, afirmar }) {
   await page.waitForTimeout(150);
   await page.keyboard.press('p');
   afirmar((await estado()).pausado, 'o passo despausado terminou pausado');
-  const medir = (ligado) => page.evaluate(async (ativo) => {
-    window.__cangaco.ligarVento(ativo);
-    await new Promise((ok) => window.requestAnimationFrame(() => window.requestAnimationFrame(ok)));
-    const quadros = 90;
-    const inicio = window.performance.now();
-    for (let i = 0; i < quadros; i += 1) {
-      await new Promise((ok) => window.requestAnimationFrame(ok));
-    }
-    return { msPorQuadro: (window.performance.now() - inicio) / quadros, sprites: window.__cangaco.vegetacaoBalancando };
-  }, ligado);
-  const semVento = await medir(false);
-  const comVento = await medir(true);
-  console.log(`custo de quadro na vista mais cheia: sem vento ${semVento.msPorQuadro.toFixed(3)} ms; com vento ${comVento.msPorQuadro.toFixed(3)} ms; ${comVento.sprites} sprites atualizados`);
-  console.log(`vento: ${antes.vegetacaoBalancando} sprites por quadro; vista ${mato.x},${mato.y} com ${mato.n} arvores`);
+  console.log(`vento: ${antes.vegetacaoBalancando} sprites no quadro; vista ${mato.x},${mato.y} com ${mato.n} arvores`);
 }
 
 module.exports = { roteiro };

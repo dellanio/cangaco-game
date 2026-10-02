@@ -17,6 +17,7 @@ import { proximoNivel, mundoSobPonto, scrollAncorado } from '../zoom';
 import type { Navegacao } from '../../input/navegacao';
 import type { Tile } from '../grid';
 import { publicarEstadoDebug } from '../debug';
+import { somarCusto } from '../custo-do-quadro';
 import { criarCamadaDeRelevo } from '../camada-de-relevo';
 import { balancaVegetacao, transformacaoDoVento } from '../vento';
 import type { LuzDoRelevo } from '../camada-de-relevo';
@@ -549,6 +550,9 @@ export class WorldScene extends Phaser.Scene {
       const chaveDaVistaDaAgua = `${vistaDaAgua.x},${vistaDaAgua.y},${vistaDaAgua.width},${vistaDaAgua.height}`;
       // D-TELA-AGUA-VIVA: a variante so muda com o tick, e a vista so com a camera. Fora disso
       // o quadro nao varre a agua nem republica a ponte (aceite 3, "so quando a variante muda").
+      const agora = () => performance.now();
+      const inicioDaAgua = agora();
+      let celulasDaAguaTrabalhadas = 0;
       if (ultimoTickDaAgua !== tickDaAgua || ultimaVistaDaAgua !== chaveDaVistaDaAgua) {
         estado.celulasDaAguaTrocadas = 0;
         ultimoTickDaAgua = tickDaAgua;
@@ -556,6 +560,8 @@ export class WorldScene extends Phaser.Scene {
         const tilesDaVista = camadaChao.getTilesWithinWorldXY(
           vistaDaAgua.x, vistaDaAgua.y, vistaDaAgua.width, vistaDaAgua.height,
         );
+        celulasDaAguaTrabalhadas = tilesDaVista.filter((tile) =>
+          terrenoDeRender.tipos[Math.floor(tile.index / VARIANTES_DE_TERRENO)] === 'agua').length;
         if (aguaAnimada) {
           const trocas = celulasDaAguaParaTrocar(agua, tickDaAgua, tilesDaVista.map((tile) => ({
             gx: tile.x,
@@ -574,7 +580,7 @@ export class WorldScene extends Phaser.Scene {
           terrenoDeRender.tipos[Math.floor(tile.index / VARIANTES_DE_TERRENO)] === 'agua',
         ).map((tile) => [`${tile.x},${tile.y}`, ESTADOS_DO_TERRENO[tile.index % VARIANTES_DE_TERRENO] ?? '']));
       }
-    const alfaDaPoeira = this.relogio.alfa();
+      const alfaDaPoeira = this.relogio.alfa();
     const chaveDaPoeira = `${tickDaAgua},${alfaDaPoeira},${chaveDaVistaDaAgua}`;
     if (chaveDaPoeira !== ultimoQuadroDaPoeira) {
       ultimoQuadroDaPoeira = chaveDaPoeira;
@@ -598,20 +604,25 @@ export class WorldScene extends Phaser.Scene {
         else grafico.fillCircle(0, 0, 1.5);
       });
     }
-    estado.terrenoVisivel = this.contarTerrenoVisivel(camadaChao);
+      estado.custo = somarCusto(estado.custo, 'agua', inicioDaAgua, celulasDaAguaTrabalhadas, agora);
+      estado.terrenoVisivel = this.contarTerrenoVisivel(camadaChao);
       // F-T2a: a camada de recurso se repinta do ESTADO a cada frame (por diff),
       // e nao uma vez no create como a de terreno. E a diferenca que o item pede:
       // onde ha rocha e imutavel, quanto sobrou nao e, e o jogador tem de ver o
       // tile esgotar.
       estado.recursosVisiveis = this.atualizarRecursos(camadaDeRecursos);
+      const inicioDoChao = agora();
       estado.chaoDaCanaDesenhado = this.atualizarChaoDaCana(camadaDoChaoDaCana);
+      estado.custo = somarCusto(estado.custo, 'chaoDaCana', inicioDoChao, estado.chaoDaCanaDesenhado, agora);
       estado.mascarasDoLajedo = this.mascarasDoLajedo();
       estado.lajedoDesenhado = this.lajedoDesenhado();
       estado.transicoesVisiveis = this.lerTransicoesVisiveis(camadasDeTransicao);
       estado.vegetacaoRenderizada = this.vegetacaoDesenhada.size;
       estado.ligarVento = (ligado) => { this.ventoLigado = ligado; };
       estado.rochasRenderizadas = this.rochaDesenhada.size;
+      const inicioDoVento = agora();
       estado.vegetacaoBalancando = this.atualizarVento();
+      estado.custo = somarCusto(estado.custo, 'vento', inicioDoVento, estado.vegetacaoBalancando, agora);
       estado.crescimentoDasArvores = Object.fromEntries(this.crescimentoDesenhado);
       estado.estagiosDasCulturas = Object.fromEntries(this.estagioDesenhado);
       estado.pronto = true;

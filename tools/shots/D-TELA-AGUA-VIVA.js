@@ -19,23 +19,6 @@ function centroDaAgua() {
       (melhor.gx - medio.gx) ** 2 + (melhor.gy - medio.gy) ** 2 ? t : melhor);
 }
 
-function vistaComMaisAgua() {
-  const simbolo = Object.keys(mapa.legenda).find((ch) => mapa.legenda[ch] === 'agua');
-  const largura = Math.ceil(1280 / terreno.tile_px);
-  const altura = Math.ceil(720 / terreno.tile_px);
-  let melhor = { gx: 0, gy: 0, total: -1 };
-  for (let gy = 0; gy <= mapa.altura - altura; gy += 1) {
-    for (let gx = 0; gx <= mapa.largura - largura; gx += 1) {
-      let total = 0;
-      for (let y = gy; y < gy + altura; y += 1) {
-        for (let x = gx; x < gx + largura; x += 1) if (mapa.linhas[y][x] === simbolo) total += 1;
-      }
-      if (total > melhor.total) melhor = { gx, gy, total };
-    }
-  }
-  return { x: melhor.gx * terreno.tile_px, y: melhor.gy * terreno.tile_px };
-}
-
 function variante(tick, gx, gy) {
   const fase = ((Math.imul(gx, 73856093) ^ Math.imul(gy, 19349663)) >>> 0) % config.variantes.length;
   return config.variantes[(Math.floor(tick / config.periodo) + fase) % config.variantes.length];
@@ -75,31 +58,6 @@ async function roteiro({ page, estado, afirmar, capturar }) {
   await page.waitForTimeout(150);
   await page.keyboard.press('p');
 
-  // Medida da corrida, sem assercao: mesmo acude, viewport e estado pausado.
-  const medirQuadro = () => page.evaluate(async () => {
-    let anterior = await new Promise((resolve) => window.requestAnimationFrame(resolve));
-    let soma = 0;
-    for (let i = 0; i < 60; i += 1) {
-      const agora = await new Promise((resolve) => window.requestAnimationFrame(resolve));
-      soma += agora - anterior;
-      anterior = agora;
-    }
-    return soma / 60;
-  });
-  const vistaCheia = vistaComMaisAgua();
-  await page.evaluate(({ x, y }) => window.__cangaco.fixarCamera({ scrollX: x, scrollY: y }), vistaCheia);
-  await page.waitForTimeout(200);
-  const aguaNaVistaCheia = Object.keys((await estado()).variantesDaAguaVisivel).length;
-  await page.evaluate((n) => window.__cangaco.avancar(n), config.periodo);
-  await page.waitForTimeout(200);
-  const trocadasNaVistaCheia = (await estado()).celulasDaAguaTrocadas;
-  const comAguaMs = await medirQuadro();
-  await page.goto(`${page.url()}&aguaDesligada`);
-  await page.waitForFunction(() => Boolean(window.__cangaco?.pronto));
-  await page.evaluate(({ x, y }) => window.__cangaco.fixarCamera({ scrollX: x, scrollY: y }), vistaCheia);
-  await page.waitForTimeout(200);
-  const semAguaMs = await medirQuadro();
-  console.log(`custo D-TELA-AGUA-VIVA: com=${comAguaMs.toFixed(3)} ms/quadro; sem=${semAguaMs.toFixed(3)} ms/quadro; aguaNaVistaMaisCheia=${aguaNaVistaCheia}; trocadasNoPeriodo=${trocadasNaVistaCheia}`);
 }
 
 module.exports = { roteiro };
