@@ -17254,3 +17254,12 @@ B D-TELA-LUZ-RELEVO, aceite 1             | NEEDS_WORK        | o sha256 contra 
     - o mandacaru também balança: ele é o mesmo id `tree` da caatinga (gosto, para o operador);
     - o vento atualiza as 350 árvores do mapa a cada quadro, e não só as 68 da vista. O custo
       medido foi de +2,4 ms por quadro (evidência da corrida).
+
+## 2026-10-02 — D-TELA-AGUA-VIVA (água se mexe)
+
+- **Verificado:** `src/render/agua-viva.ts` escolhe uma das quatro variantes por tick e tile. O teste de tabela cobriu determinismo, fronteiras do período, diversidade em 10×10 e seleção exclusiva de água; gravou `test-output/D-TELA-AGUA-VIVA.json` (4 variantes distintas, período 8).
+- **Verificado:** `data/agua.json` é dado só de interface; `interface/agua` reprova período 0 ou negativo e variante ausente do manifesto. A cena troca somente índices de água da camada de terreno na vista e publica variantes e trocas na ponte. Borda da água, chão da cana e `src/sim/` ficaram intactos.
+- **Verificado:** `npm run verify:rapido` saiu 0 após o rebase (typecheck, lint, 17 arquivos de dados válidos; árvore limpa, 0 testes relacionados). Os testes diretos `F-SPR-carregamento`, `F17f-manifesto` e `D-TELA-AGUA-VIVA` saíram 0: 3 arquivos, 39 testes. `npm run verify` completo saiu 0 antes do rebase. `git diff main -- src/sim` vazio.
+- **Verificado:** `D-TELA-AGUA-VIVA` rodou duas vezes após o rebase, saída 0, duas capturas por corrida. SHA-256 do tick T nas duas: `FC48239397B125E65B98518EEF58C5B576D2B4A0E8B46A82F86EEEA09DBEF270`. As capturas T e T+8 foram abertas; o roteiro afirmou variantes da ponte contra a conta pura, mudança após o período e limite das trocas. `F-T1`, `F-TR`, `ARTE-VILA` e `D-ARTE-CHAO-DE-ROCA` saíram 0 após o rebase.
+- **Medida da corrida, sem asserção:** na vista mais cheia de água encontrada no mapa, 176 tiles de água e 176 células trocadas após um período. Tempo médio de 60 quadros: 34,722 ms com animação e 31,665 ms com ela desligada. **Hipótese:** a diferença pode incluir ruído da máquina compartilhada; esta corrida não estabelece custo estável nem ganho/perda causal.
+- **Fora do aceite:** arte nova, influência do vento e alterações da simulação.
