@@ -9,6 +9,7 @@ import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { decidirPush, lerRefs } from '../tools/pre-push-regra.js';
+import { testesQueLeemDado } from '../tools/testes-que-leem-dado.js';
 
 const RAIZ = process.cwd();
 const A = 'a'.repeat(40);
@@ -21,6 +22,65 @@ const dirs: string[] = [];
 afterEach(() => { for (const d of dirs.splice(0)) rmSync(d, { recursive: true, force: true }); });
 
 describe('o portao do push', () => {
+  it('verify-rapido-dado-lido: leitores por tabela, sem retirar arquivos do related', () => {
+    const fontes = {
+      'tests/F-SPR-carregamento.test.ts': "readFileSync('assets/manifest.json')",
+      'tests/F17f-manifesto.test.ts': "readFileSync('assets/manifest.json')",
+      'tests/x.test.ts': "readFileSync('data/x.json'); readFileSync('saves/x.txt')",
+      'tests/y.test.ts': "readFileSync('data/y.json')",
+    };
+    const casos: [string[], string[]][] = [
+      [['assets/manifest.json'], ['tests/F-SPR-carregamento.test.ts', 'tests/F17f-manifesto.test.ts']],
+      [['data/x.json'], ['tests/x.test.ts']],
+      [['src/x.ts'], []],
+      [['data/x.json', 'saves/x.txt'], ['tests/x.test.ts']],
+      [['data/sub/x.json'], []],
+    ];
+    for (const [dados, esperado] of casos) expect(testesQueLeemDado(dados, fontes)).toEqual(esperado);
+  });
+
+  it('verify-rapido-dado-lido: commit so de manifesto chega ao vitest falso; related real sozinho perde o leitor', () => {
+    const base = mkdtempSync(join(tmpdir(), 'zz-dado-lido-'));
+    dirs.push(base);
+    const repo = join(base, 'repo');
+    const remoto = join(base, 'remoto.git');
+    const git = (cwd: string, ...args: string[]) => spawnSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', ...args], { cwd, encoding: 'utf8' });
+    expect(git(base, 'init', '-q', '--bare', remoto).status).toBe(0);
+    expect(git(base, 'init', '-q', '-b', 'main', repo).status).toBe(0);
+    mkdirSync(join(repo, 'assets'));
+    mkdirSync(join(repo, 'tests'));
+    writeFileSync(join(repo, 'package.json'), JSON.stringify({ scripts: { typecheck: 'node -e 0', lint: 'node -e 0', 'validate:data': 'node -e 0' } }));
+    writeFileSync(join(repo, '.gitignore'), '.verify-rapido-ok\ntest-output/\nnode_modules/\n');
+    writeFileSync(join(repo, 'assets/manifest.json'), '{}');
+    const leitor = 'tests/manifesto.test.ts';
+    const fonte = "import { readFileSync } from 'node:fs';\nimport { it, expect } from 'vitest';\nit('le o manifesto', () => expect(JSON.parse(readFileSync('assets/manifest.json', 'utf8')).ok).toBe(true));\n";
+    writeFileSync(join(repo, leitor), fonte);
+    expect(git(repo, 'remote', 'add', 'origin', remoto).status).toBe(0);
+    expect(git(repo, 'add', '-A').status).toBe(0);
+    expect(git(repo, 'commit', '-q', '-m', 'base').status).toBe(0);
+    expect(git(repo, 'push', '-q', '-u', 'origin', 'main').status).toBe(0);
+    writeFileSync(join(repo, 'assets/manifest.json'), '{"ok":true}');
+    expect(git(repo, 'add', '-A').status).toBe(0);
+    expect(git(repo, 'commit', '-q', '-m', 'so manifesto').status).toBe(0);
+    const vitest = join(RAIZ, 'node_modules/vitest/vitest.mjs');
+    const rodar = (arquivos: string[], nome: string): number => {
+      const relatorio = join(base, nome + '.json');
+      const r = spawnSync('node', [vitest, 'related', '--run', '--passWithNoTests', '--reporter=json', '--outputFile=' + relatorio, ...arquivos], { cwd: repo, encoding: 'utf8', timeout: 60_000 });
+      expect(r.status, r.stdout + r.stderr).toBe(0);
+      return (JSON.parse(readFileSync(relatorio, 'utf8')) as { numTotalTests: number }).numTotalTests;
+    };
+    expect(rodar(['assets/manifest.json'], 'antes')).toBe(0);
+    const leitores = testesQueLeemDado(['assets/manifest.json'], { [leitor]: fonte });
+    expect(rodar(['assets/manifest.json', ...leitores], 'depois')).toBe(1);
+    const falso = join(base, 'vitest-falso.js');
+    const recebidos = join(base, 'recebidos.json');
+    writeFileSync(falso, "const fs = require('fs'); const args = process.argv.slice(2); fs.writeFileSync(process.env.ZZ_RECEBIDOS, JSON.stringify(args)); fs.writeFileSync(args.find(a => a.startsWith('--outputFile.json=')).split('=')[1], JSON.stringify({numTotalTests: args.includes('tests/manifesto.test.ts') ? 1 : 0}));");
+    const r = spawnSync('node', [join(RAIZ, 'scripts/verify-rapido.js')], { cwd: repo, encoding: 'utf8', timeout: 60_000, env: { ...process.env, CANGACO_VITEST: `node "${falso}"`, ZZ_RECEBIDOS: recebidos } });
+    expect(r.status, r.stdout + r.stderr).toBe(0);
+    expect(JSON.parse(readFileSync(recebidos, 'utf8'))).toContain(leitor);
+    expect(JSON.parse(readFileSync(join(repo, '.verify-rapido-ok'), 'utf8'))).toMatchObject({ arquivos: 1, testes: 1 });
+  }, 90_000);
+
   it('aceite 1, por tabela: so o selo completo do sha empurrado passa', () => {
     const casos: [string, string | null, ReturnType<typeof branch>, boolean][] = [
       ['completo do commit empurrado', selo({ tipo: 'completo', commit: A, quando: 'x' }), branch(A), true],

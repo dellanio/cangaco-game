@@ -7,6 +7,19 @@
 // exigindo o `verify` completo.
 const { execSync, spawnSync } = require('child_process');
 const fs = require('fs');
+const path = require('path');
+const { testesQueLeemDado } = require('../tools/testes-que-leem-dado.js');
+
+function fontesDosTestes(dir = 'tests') {
+  if (!fs.existsSync(dir)) return {};
+  const fontes = {};
+  for (const entrada of fs.readdirSync(dir, { withFileTypes: true })) {
+    const arquivo = path.posix.join(dir, entrada.name);
+    if (entrada.isDirectory()) Object.assign(fontes, fontesDosTestes(arquivo));
+    else if (/\.test\.[cm]?[jt]sx?$/.test(entrada.name)) fontes[arquivo] = fs.readFileSync(arquivo, 'utf8');
+  }
+  return fontes;
+}
 
 const SELO = '.verify-rapido-ok';
 try { fs.unlinkSync(SELO); } catch { /* nao havia */ }
@@ -55,7 +68,9 @@ let testes = 0;
 if (arquivos.length > 0) {
   const relatorio = 'test-output/verify-rapido-vitest.json';
   fs.mkdirSync('test-output', { recursive: true });
-  const lista = arquivos.map((f) => `"${f}"`).join(' ');
+  const leitores = testesQueLeemDado(arquivos, fontesDosTestes());
+  const lista = [...new Set([...arquivos, ...leitores])].map((f) => `"${f}"`).join(' ');
+  console.log(`testes que leem dado alterado: ${leitores.length}`);
   // CANGACO_VITEST troca o comando (o teste dos portoes usa um vitest falso; padrao: npx vitest)
   const vitest = process.env.CANGACO_VITEST ?? 'npx vitest';
   const r = spawnSync(`${vitest} related --run --passWithNoTests --reporter=default --reporter=json --outputFile.json=${relatorio} ${lista}`,
