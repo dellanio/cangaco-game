@@ -1301,7 +1301,9 @@ export class WorldScene extends Phaser.Scene {
         dadosDoVento, this.ponte.atual?.tick ?? 0, this.relogio.alfa(),
         gx, gy, imagem.x, imagem.y,
       );
-      imagem.setOrigin(...transformacao.origem).setRotation(transformacao.rotacao);
+      // Gira em volta da origem que o sprite ja tem (o anchor do manifesto, posto ao nascer), e
+      // nao de uma origem fixa: com outro anchor, o pe sairia do lugar.
+      imagem.setRotation(transformacao.rotacao);
       quantos += 1;
     }
     return quantos;

@@ -17178,13 +17178,6 @@ B D-TELA-LUZ-RELEVO, aceite 1             | NEEDS_WORK        | o sha256 contra 
 
 ## 2026-10-02 — D-ARTE-CHAO-DE-ROCA (o chão de roça sob a cana), pelo Codex, e a quebra do mundo vivo
 
-### D-TELA-VENTO-VEGETACAO — vento nas arvores (2026-10-02)
-
-- **Verificado:** vento puro em `src/render/vento.ts`, calculado de tick, alfa e tile. Em 2.000 ticks x 100 tiles, o maior deslocamento foi 2,7990985485789244 graus (limite do dado: 4), com 100 fases distintas. Forca zero deu deslocamento exato zero; o teste de rajada confirmou o atraso pela velocidade do dado; `tree` balanca, `rock` nao. `test-output/D-TELA-VENTO-VEGETACAO.json` guarda a medida. A regra `interface/vento` rejeitou id de vegetacao inexistente no manifesto.
-- **Verificado na tela:** 350 sprites de arvore atualizados por quadro; o contador bateu com vegetacao renderizada menos rochas. O mesmo tick T (0), com camera fixa e jogo pausado, gerou SHA-256 `CDFF8F5C7461A6AC7CE9F6515407D49D3264BD001D88310ADF05E2266C875F9E` nas duas corridas. T+5 mudou a regiao das arvores. As duas capturas foram abertas; a rotacao preserva o pe e o `tingir` do relevo continua no sprite.
-- **Verificacao:** `verify:rapido` verde (314 testes relacionados); `shot` D-TELA-VENTO-VEGETACAO duas vezes, F-SPR, F-REPL-e e ARTE-VILA sairam 0. O roteiro F-REPL-e precisou da fixture gerada por `tests/F-REPL-e-arvore.test.ts`. `git diff main -- src/sim` vazio.
-- **Medida de custo da corrida, nao assercao:** na vista mais cheia do mapa (janela iniciada em 9,46, com 68 arvores visiveis), media de 90 quadros: 50,592 ms por quadro sem vento; 52,973 ms com vento; 350 sprites atualizados por quadro no mapa inteiro. **Hipotese:** a diferenca de 2,381 ms inclui variacao do navegador e de outras sessoes da maquina; nao e um teto de desempenho.
-- **Fora do aceite:** milho e cana continuam celulas do tilemap, sem balanco. Agua, poeira e bandeira permanecem nos itens seguintes.
 - **Escopo ampliado pelo operador:** arte e integração pelo Codex, numa worktree a partir da `main`,
   com merge na `main`. A integração é a interpretação conservadora (§14): camada de render, sem
   terreno novo no mapa. Aceite `a1e2670`; arte `711a244`; integração `254fe78` (merge ff do Codex,
@@ -17237,3 +17230,27 @@ B D-TELA-LUZ-RELEVO, aceite 1             | NEEDS_WORK        | o sha256 contra 
     entrou quando o `WorldScene.ts` mudou aqui. **Lacuna da camada rápida:** mudança só de dado
     lido por `readFileSync` (manifesto, `data/*.json` lidos assim) não aciona os testes que o
     leem. Fica para o operador decidir se o `verify:rapido` passa a mapear esses arquivos.
+
+## 2026-10-02 — D-TELA-VENTO-VEGETACAO (o vento nas árvores), pelo Codex
+
+- **Verificado:** vento puro em `src/render/vento.ts`, calculado de tick, alfa e tile. Em 2.000 ticks x 100 tiles, o maior deslocamento foi 2,7990985485789244 graus (limite do dado: 4), com 100 fases distintas. Forca zero deu deslocamento exato zero; o teste de rajada confirmou o atraso pela velocidade do dado; `tree` balanca, `rock` nao. `test-output/D-TELA-VENTO-VEGETACAO.json` guarda a medida. A regra `interface/vento` rejeitou id de vegetacao inexistente no manifesto.
+- **Verificado na tela:** 350 sprites de arvore atualizados por quadro; o contador bateu com vegetacao renderizada menos rochas. O mesmo tick T (0), com camera fixa e jogo pausado, gerou SHA-256 `CDFF8F5C7461A6AC7CE9F6515407D49D3264BD001D88310ADF05E2266C875F9E` nas duas corridas. T+5 mudou a regiao das arvores. As duas capturas foram abertas; a rotacao preserva o pe e o `tingir` do relevo continua no sprite.
+- **Verificacao:** `verify:rapido` verde (314 testes relacionados); `shot` D-TELA-VENTO-VEGETACAO duas vezes, F-SPR, F-REPL-e e ARTE-VILA sairam 0. O roteiro F-REPL-e precisou da fixture gerada por `tests/F-REPL-e-arvore.test.ts`. `git diff main -- src/sim` vazio.
+- **Medida de custo da corrida, nao assercao:** na vista mais cheia do mapa (janela iniciada em 9,46, com 68 arvores visiveis), media de 90 quadros: 50,592 ms por quadro sem vento; 52,973 ms com vento; 350 sprites atualizados por quadro no mapa inteiro. **Hipotese:** a diferenca de 2,381 ms inclui variacao do navegador e de outras sessoes da maquina; nao e um teto de desempenho.
+- **Fora do aceite:** milho e cana continuam celulas do tilemap, sem balanco. Agua, poeira e bandeira permanecem nos itens seguintes.
+- **Revisão da sessão Claude (2026-10-02):**
+  - **Conferido no diff:** `git diff 401f55a..340b6bc -- src/sim` vazio; o vento só lê tick, alfa e
+    tile; `data/vento.json` é de interface, e a regra reprova id fora do manifesto.
+  - **Corrigido:** o `atualizarVento` punha `setOrigin([0.5, 1])` por cima do anchor do
+    manifesto. Hoje `tree` e `rock` têm `[0.5, 1]`, então nada mudava na tela, mas uma vegetação
+    com outro anchor teria o pé deslocado. Agora o sprite só gira, na origem posta ao nascer. A
+    entrada acima tinha caído no meio da seção do chão de roça e foi movida para cá.
+  - **Ressalvas, sem correção:**
+    - o teste do pé (aceite 2) é fraco: afirma o pé que a própria função devolve. Quem segura o pé
+      é a rotação em volta da origem, que o Phaser garante;
+    - o roteiro compara o canvas inteiro entre T e T+5, e não só a região das árvores: uma unidade
+      andando também faria a diferença. Na captura aberta nesta revisão, a vista do mato não tem
+      unidade, então a diferença é das árvores, mas o roteiro não afirma isso;
+    - o mandacaru também balança: ele é o mesmo id `tree` da caatinga (gosto, para o operador);
+    - o vento atualiza as 350 árvores do mapa a cada quadro, e não só as 68 da vista. O custo
+      medido foi de +2,4 ms por quadro (evidência da corrida).
