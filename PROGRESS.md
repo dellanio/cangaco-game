@@ -17362,3 +17362,25 @@ B D-TELA-LUZ-RELEVO, aceite 1             | NEEDS_WORK        | o sha256 contra 
       pelo `estado` como os outros campos da ponte. O efeito é o mesmo, mas a forma destoa;
     - o bloco da poeira no `POST_RENDER` ficou com a indentação torta depois do rebase. O Codex
       da poeira (emenda) mexe nesse trecho agora, e a correção fica com ele.
+
+## 2026-10-02 — D-TELA-FUMACA-DA-PADARIA (a fumaça da padaria), pelo Codex
+
+### Verificado
+
+- Contrato: aceite de `a42122c`, sem alteração no BUILD_PLAN. A branch nasceu anterior a ele e foi atualizada sobre a main commitada antes da implementação.
+- A entrada `bakery` aponta `assets/sprites/bakery/completo-D.png`. O cabeçalho e a imagem aberta mostram canvas de 192×192 px. Medida visual na resolução nativa, com coordenadas a partir do canto superior esquerdo: ponto (147,18), na abertura sob o chapéu da chaminé. Fração registrada em `ancoras.trabalho.fumaca`: (147/192,18/192) = (0.765625,0.09375). A cena aplica essa fração à mesma caixa/escala do sprite completo.
+- `src/render/fumaca.ts`: função pura, sem Phaser ou relógio de parede. Hash pequeno copiado da poeira, com nota, para não alterar o arquivo da outra sessão. Nascimentos são derivados do tick; parar corta nascimentos e deixa cada partícula terminar sua vida. A subida e a deriva usam o vento existente, e o máximo é por chaminé.
+- WorldScene reconhece trabalho chamando `quadroDaFumaca`, sem outro predicado. `trabalhandoDesde` e `parouEm` são memória de render. Pool próprio alocado uma vez por chaminé; o redesenho depende de tick, alfa ou vista. Debug publica `fumacaPorPredio` e `poolDaFumaca`. Se vierem quadros de fumaça, permanece o caminho da F-VIVO-b (trabalho dos prédios).
+- `data/fumaca.json` é interface, fora de `ARQUIVOS` da sim; `interface/fumaca` é chamada pelo validador. O teste exercita o funil real e reprova vida/teto/intervalo, cor, subida e vento próprios inválidos.
+- `tests/D-TELA-FUMACA-DA-PADARIA.test.ts` grava `test-output/D-TELA-FUMACA-DA-PADARIA.json`. Corrida: 200 ticks × 3 alfas × 4 direções, máximo observado 18 (teto 32), 32.812 pares acompanhados. Confere determinismo, subida, deriva, teto, ausência de trabalho, corte de nascimentos e extinção gradual até vidaTicks.
+- `npm run verify:rapido`: saída 0; typecheck, lint e validate:data verdes (19 arquivos, 0 erros); 367 testes, 38 s na última corrida antes do commit de código. A primeira tentativa parou por falta de dependências (`tsc` ausente); `npm ci` instalou as versões do lockfile. Um erro de tipo no teste foi corrigido antes da corrida verde.
+- Pela trava, os cinco arquivos explícitos: `F17f-manifesto`, `F-SPR-carregamento`, `D-TELA-POEIRA-AMBIENTE` (poeira ambiente), `D-TELA-VENTO-VEGETACAO` (vento na vegetação) e o teste da fumaça: saída 0, 5 arquivos e 46 testes.
+- Roteiros: `D-TELA-FUMACA-DA-PADARIA` (fumaça da padaria), `F-VIVO-b` (trabalho dos prédios), `D-TELA-POEIRA-AMBIENTE` (poeira ambiente) e `ARTE-VILA` (arte da vila): todos saída 0; respectivamente 2, 2, 3 e 9 capturas.
+- O roteiro carrega `saves/teste-operador-vila-pronta.txt`, espera trabalho e captura 12 partículas. Pausa a padaria pelo painel com o relógio despausado e mouse.down / espera 150 ms / mouse.up; pausa o relógio de volta, avança 40 vidaTicks e afirma 0 partículas. Pool continua 64 (as padarias `p14` e `padaria`). As duas capturas da fumaça foram abertas: a primeira mostra a pluma saindo da chaminé, a segunda não mostra fumaça.
+- A espera até a primeira captura foi 2.804 ticks. A tentativa com limite de 2.000 falhou com o forneiro em `esperando_insumo` em todas as amostras; o aceite do save nesses 2.000 ticks é uma arma no quartel, não a cadeia de alimento. O roteiro espera a produção com limite de diagnóstico de 6.000 ticks, sem mudar o save ou a sim.
+- `git diff main -- src/sim` vazio; também não houve alteração no arquivo/trecho da poeira, no atualizarVento, no trecho da água, em `.claude/`, em AGENTS ou em `test-results.json`. Nenhum push. A integração final exige main limpa, rebase e repetição das verificações pedidas pelo operador.
+
+### Hipótese e limites
+
+- O aspecto e a densidade escolhidos são uma decisão visual de render; as capturas mostram funcionamento, mas não provam uma preferência artística do operador. Não foi medido custo por intervalo de requestAnimationFrame.
+- Forja e fundição permanecem para depois, conforme o contrato. Somente `bakery` declara o ponto. A marcação da feature em `test-results.json` cabe ao operador.
