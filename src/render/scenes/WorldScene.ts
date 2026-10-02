@@ -60,11 +60,11 @@ import { criarPlantaFantasma } from '../planta-fantasma';
 import { criarCamadaDeEstradas, criarPreviaDeEstrada } from '../estradas';
 import { criarCamadaDeCampos, criarPreviaDeCampo } from '../campos';
 import { criarCamadaDeUnidades } from '../unidades';
-import { atlasDeDepuracao } from '../depuracao-de-unidade';
+import { depuracaoRegistrada } from '../registro-de-depuracao';
 import { depuracaoDeUnidade, spriteDoAtlas } from '../animacao-de-unidade';
-import { manifestoDeDepuracao } from '../depuracao-de-unidade';
 import { DIRECOES } from '../manifesto';
 import { peDoSprite } from '../pe-do-sprite';
+import { memoriaDeTexturas } from '../memoria-de-texturas';
 import { posicaoDoProjetil } from '../projeteis';
 import {
   assetDaCamada, assetDoPredio, arquivoDoEstagio, chaveDaTextura, chaveDeTextura, desenhoDoRecurso, temParDeRevelacao,
@@ -323,7 +323,9 @@ export class WorldScene extends Phaser.Scene {
   }
 
   preload(): void {
-    if (depuracaoDeUnidade(window.location.search)) {
+    const depuracao = depuracaoRegistrada();
+    if (depuracao && depuracaoDeUnidade(window.location.search)) {
+      const atlasDeDepuracao = depuracao.atlas;
       this.load.atlas(atlasDeDepuracao.chave, atlasDeDepuracao.url, atlasDeDepuracao.dados);
     }
     for (const textura of texturasParaCarregar(manifestoDoJogo, undefined, this.prediosSemArte)) {
@@ -336,7 +338,13 @@ export class WorldScene extends Phaser.Scene {
   create(): void {
     const { tilePx, largura, altura, larguraPx, alturaPx } = configDoMapa;
     const estado = publicarEstadoDebug(this.relogio);
-    if (depuracaoDeUnidade(window.location.search)) {
+    Object.defineProperty(estado, 'memoriaDeTexturas', {
+      enumerable: true, get: () => memoriaDeTexturas(Object.values(this.textures.list)),
+    });
+    const depuracao = depuracaoRegistrada();
+    if (depuracao && depuracaoDeUnidade(window.location.search)) {
+      const manifestoDeDepuracao = depuracao.manifesto;
+      const atlasDeDepuracao = depuracao.atlas;
       const entrada = manifestoDeDepuracao.assets.find((a) => a.tipo === 'unidade' && a.id === 'serf');
       const imagem = this.add.image(0, 0, atlasDeDepuracao.chave).setOrigin(0.5, 1).setVisible(false);
       const pes: { frame: string; direcao: string; espelhado: boolean; peY: number }[] = [];

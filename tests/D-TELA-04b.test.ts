@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import {
-  depuracaoDeUnidade, quadroDoAndar, quadroPeloTempo, somarDistancia, tempoDeAnimacao, spriteDoAtlas,
+  depuracaoDeUnidade, quadroDoAndar, quadroPeloTempo, somarDistancia, tempoDeAnimacao, spriteDoAtlas, unidadeNaVista,
 } from '../src/render/animacao-de-unidade';
 import { interpolarPosicao } from '../src/render/interpolacao';
 import { DIRECOES } from '../src/render/manifesto';
@@ -11,6 +11,13 @@ import { validarInterface } from '../tools/data-rules.js';
 import config from '../data/animacao-unidade.json';
 
 describe('D-TELA-04b (animação por distância e tempo de jogo)', () => {
+  it('só trabalha quando o canvas ancorado no pé intersecta a vista', () => {
+    const vista = { x: 0, y: 0, right: 100, bottom: 100 };
+    expect(unidadeNaVista({ x: 50, y: 0 }, [64,96], [0.5,1], vista)).toBe(false);
+    expect(unidadeNaVista({ x: 50, y: 1 }, [64,96], [0.5,1], vista)).toBe(true);
+    expect(unidadeNaVista({ x: 132, y: 50 }, [64,96], [0.5,1], vista)).toBe(false);
+    expect(unidadeNaVista({ x: 131, y: 50 }, [64,96], [0.5,1], vista)).toBe(true);
+  });
   it.each([[0,0], [0.25,1], [1,4], [1.75,7], [2,0], [2.25,1], [4,0]])('distância %s dá quadro %s', (distancia, quadro) => {
     expect(quadroDoAndar(distancia, 2, 8)).toBe(quadro);
   });

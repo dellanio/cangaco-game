@@ -26,6 +26,13 @@ export function depuracaoDeUnidade(busca: string): boolean {
   return parametros.has('depuracao') || parametros.get('vitrine') === 'serf';
 }
 export function chaveDoAtlas(id: string): string { return `unidade:${id}:atlas`; }
+export function unidadeNaVista(
+  pe: { readonly x: number; readonly y: number }, tamanho: readonly [number, number], anchor: readonly [number, number],
+  vista: { readonly x: number; readonly y: number; readonly right: number; readonly bottom: number },
+): boolean {
+  const x = pe.x - tamanho[0] * anchor[0], y = pe.y - tamanho[1] * anchor[1];
+  return x < vista.right && x + tamanho[0] > vista.x && y < vista.bottom && y + tamanho[1] > vista.y;
+}
 export function nomeDoQuadro(id: string, animacao: string, direcao: Direcao, quadro: number): string {
   return `${id}/${animacao}/${direcao}/${String(quadro).padStart(4, '0')}`;
 }

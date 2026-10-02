@@ -55,8 +55,8 @@ import type { GameState } from '../sim/state';
 import type { LuzDoRelevo } from './camada-de-relevo';
 import configAnimacao from '../../data/animacao-unidade.json';
 import tempo from '../../data/time.json';
-import { depuracaoDeUnidade, quadroDoAndar, quadroPeloTempo, somarDistancia, spriteDoAtlas, tempoDeAnimacao } from './animacao-de-unidade';
-import { manifestoDeDepuracao } from './depuracao-de-unidade';
+import { depuracaoDeUnidade, quadroDoAndar, quadroPeloTempo, somarDistancia, spriteDoAtlas, tempoDeAnimacao, unidadeNaVista } from './animacao-de-unidade';
+import { depuracaoRegistrada } from './registro-de-depuracao';
 import type { PontoEmTiles } from './interpolacao';
 import type { SpriteAnimado } from './animacao-de-unidade';
 import { assetDaCamada } from './manifesto';
@@ -200,7 +200,7 @@ export function criarCamadaDeUnidades(
   const memoria = criarMemoriaDePosicoes();
   const lado = tilePx * LADO_DA_UNIDADE_EM_TILES;
   const depuracao = depuracaoDeUnidade(window.location.search);
-  const manifestoAnimado = depuracao ? manifestoDeDepuracao : manifestoDoJogo;
+  const manifestoAnimado = depuracao ? depuracaoRegistrada()?.manifesto ?? manifestoDoJogo : manifestoDoJogo;
   let ultimaChaveAnimada = '';
   let animacoesTrabalhadas = 0;
 
@@ -361,11 +361,10 @@ export function criarCamadaDeUnidades(
           item.direcao = direcaoDoPasso(posicao.gx - anterior.gx, posicao.gy - anterior.gy, direcoes) ?? item.direcao;
         }
         const centro = gridToScreenCentro(desenhada, tilePx, ESCALA_DO_MUNDO);
+        const desvio = deslocamentoDaUnidade(id, tilePx, ESCALA_DO_MUNDO);
         if (entradaAnimada?.atlas && mudouAnimacao) {
-          const naVista = centro.x + entradaAnimada.tamanho[0] >= vista.x
-            && centro.x - entradaAnimada.tamanho[0] <= vista.right
-            && centro.y + entradaAnimada.tamanho[1] >= vista.y
-            && centro.y - entradaAnimada.tamanho[1] <= vista.bottom && !invisiveis.has(id);
+          const naVista = unidadeNaVista({ x: centro.x + desvio.x, y: centro.y + desvio.y },
+            entradaAnimada.tamanho, entradaAnimada.anchor, vista) && !invisiveis.has(id);
           if (naVista) {
             const voltou = estado.tick < item.ultimoTickAnimado;
             if (voltou) {
@@ -395,7 +394,6 @@ export function criarCamadaDeUnidades(
         // F18f: duas unidades no mesmo tile caem no mesmo pixel e a de cima esconde a de baixo
         // inteira. O desvio e de DESENHO: some ao pixel e ao depth (assim a que desenha mais ao
         // sul segue na frente), nunca a posicao do tick, que continua sendo `posicao`.
-        const desvio = deslocamentoDaUnidade(id, tilePx, ESCALA_DO_MUNDO);
         item.container.setPosition(centro.x + desvio.x, centro.y + desvio.y);
         item.container.setDepth(depthDeY(centro.y + desvio.y));
         luz?.tingirPelaPosicao(item.imagem, centro.x + desvio.x, centro.y + desvio.y, `unidade:${id}`);

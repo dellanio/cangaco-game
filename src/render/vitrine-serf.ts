@@ -6,6 +6,7 @@ import { peDoSprite } from './pe-do-sprite';
 import { publicarEstadoDebug } from './debug';
 import { atualizarVirada, iniciarVirada } from './virada-de-unidade';
 import configAnimacao from '../../data/animacao-unidade.json';
+import { memoriaDeTexturas } from './memoria-de-texturas';
 
 /** Cena isolada: não importa nem inicia a sessão ou o laço da simulação. */
 class VitrineDoSerf extends Phaser.Scene {
@@ -16,6 +17,9 @@ class VitrineDoSerf extends Phaser.Scene {
   create(): void {
     const debug = publicarEstadoDebug({ pausado: true, velocidade: 1, alfa: () => 1,
       pausar: () => undefined, retomar: () => undefined, avancar: () => undefined });
+    Object.defineProperty(debug, 'memoriaDeTexturas', {
+      enumerable: true, get: () => memoriaDeTexturas(Object.values(this.textures.list)),
+    });
     const entrada = assetDaCamada(manifestoDeDepuracao, 'unidade', 'serf');
     if (!entrada?.animacoes) throw new Error('Vitrine sem animações do serf');
     this.add.text(24, 14, 'Serf · sprites de depuração · 8 direções', { fontSize: '24px', color: '#ffffff' });

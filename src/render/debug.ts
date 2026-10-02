@@ -367,6 +367,8 @@ export interface EstadoDebug {
   /** Harness da vitrine; tempo em ticks de jogo desde n → s, sem relógio de parede. */
   mostrarViradaDoSerf: (tempoTicks: number) => void;
   viradaDoSerf: { direcao: string; quadro: number; peY: number } | null;
+  /** D-TELA-04e: soma largura × altura × 4 das fontes do TextureManager. */
+  readonly memoriaDeTexturas: number;
   /** O laco de tempo esta pausado (F11a). Le o valor vivo do relogio, nao o do ultimo quadro. */
   readonly pausado: boolean;
   /** A velocidade de jogo atual (1x, 2x, 3x), valor vivo. */
@@ -497,6 +499,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     pesDosQuadrosDoSerf: [],
     mostrarViradaDoSerf: () => undefined,
     viradaDoSerf: null,
+    memoriaDeTexturas: 0,
     // getters: sempre o valor vivo do relogio, sem esperar o proximo POST_RENDER
     get pausado() {
       return relogio.pausado;
