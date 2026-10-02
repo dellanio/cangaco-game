@@ -6110,6 +6110,34 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
      largura e a altura caem na mesma escala);
   4. `verify` completo verde, e o roteiro `F-T4a` (o pescador) sai 0, com a captura aberta.
 
+### D-ARTE-SERF-ANDAR — Piloto do serf: o andar e a carga no braço (arte, pelo Codex)
+- **Decisões do operador (2026-10-01):**
+  - a carga vai **no braço**, como no KaM (caminho A), e não como ícone sobre a unidade;
+  - o andar tem **8 quadros**;
+  - **só o serf**, como teste;
+  - quem chama o Codex é a sessão Claude.
+
+  O ícone sobre placa escura da D-TELA-03a (ícone da carga no serf) é o que fica no lugar até a
+  arte entrar. É ele que o operador viu como "fundo preto".
+- **Escopo da arte**, na branch `noru-novos-sprites`, pelas skills dela (`pianco-sprite-director`,
+  `pianco-units`, `pianco-animation-planner`), com a luz do `cdcfec5`:
+  - **lote 1:** o serf `andar`, sem carga: as 5 direções canônicas (N, NE, E, SE, S; o oeste é
+    espelho) × 8 quadros, 64×96, `anchor [0.5, 1]`, a linha dos pés constante;
+  - **lote 2:** o serf andando com tábua (`timber`) no braço, a mesma grade.
+
+  **Parada para o operador** depois do lote 2, antes das outras 27 mercadorias (o custo de
+  28 × 5 × 8 quadros).
+- **Fora do escopo do Codex:** `src/`, `data/` e as entradas `estados` do serf no manifesto. O
+  consumidor de animação é da sessão de código, na Leva 2 do plano da animação direcional
+  (D-TELA-04a a 04e). A arte chega com uma descrição por quadro, num arquivo ao lado dos PNG.
+- **Aceite da arte (escrito antes da geração):**
+  1. 40 quadros por lote, com o mesmo tamanho, o mesmo anchor e o pé na mesma linha. O validador
+     da `pianco-sprite-tools` passa em todos;
+  2. a folha de contato sobre grama, areia e rocha, nos zooms 0,5, 1 e 2, normal e com tint 0,8;
+  3. a carga lê como tábua a zoom 1, sem placa nem fundo;
+  4. o registro no `SKILL_BUILDER_PROGRESS.md`: o prompt, a referência, os hashes e as gerações
+     gastas.
+
 ### D-ARTE-CHAO-DE-ROCA — Pedido de arte para o Codex: o chão de roça sob a cana
 - **Registrado por decisão do operador (2026-10-01): é pedido de arte para o Codex**, e não
   trabalho desta fila de código. Vem da avaliação da F-TR (o esgotado por tipo, `9fb7b71`): a
