@@ -3,6 +3,7 @@
 // mora aqui, so apresentacao.
 import Phaser from 'phaser';
 import temaSertao from '../../../data/theme-sertao.json';
+import dadosDoVento from '../../../data/vento.json';
 import { codigoDoRecurso, configDoMapa, recursosDeRender, terrenoDeRender } from '../mapa';
 import { CHAO_DA_CANA, chaoDaRoca } from '../chao-da-roca';
 import {
@@ -13,6 +14,7 @@ import type { Navegacao } from '../../input/navegacao';
 import type { Tile } from '../grid';
 import { publicarEstadoDebug } from '../debug';
 import { criarCamadaDeRelevo } from '../camada-de-relevo';
+import { balancaVegetacao, transformacaoDoVento } from '../vento';
 import type { LuzDoRelevo } from '../camada-de-relevo';
 import { marcadorVisivel } from '../marcador-de-destino';
 import type { MarcadorDeDestino } from '../marcador-de-destino';
@@ -158,6 +160,7 @@ export class WorldScene extends Phaser.Scene {
   /** F-SPR — o sprite de vegetacao de pe por tile, para o diff. Memoria de render,
    *  como `recursosDesenhados`: a verdade continua em `state.recursos`. */
   private readonly vegetacaoDesenhada = new Map<string, Phaser.GameObjects.Image>();
+  private ventoLigado = true;
   /** D-TELA-LUZ-RELEVO — a luz do relevo, ou `null` com ele desligado (o padrao): todo gancho e `luz?.`. */
   private luz: LuzDoRelevo | null = null;
   /** BUG-N3 — os tiles cujo sprite de vegetacao NASCEU de rocha. Guardado na hora de
@@ -541,6 +544,9 @@ export class WorldScene extends Phaser.Scene {
       estado.lajedoDesenhado = this.lajedoDesenhado();
       estado.transicoesVisiveis = this.lerTransicoesVisiveis(camadasDeTransicao);
       estado.vegetacaoRenderizada = this.vegetacaoDesenhada.size;
+      estado.ligarVento = (ligado) => { this.ventoLigado = ligado; };
+      estado.rochasRenderizadas = this.rochaDesenhada.size;
+      estado.vegetacaoBalancando = this.atualizarVento();
       estado.crescimentoDasArvores = Object.fromEntries(this.crescimentoDesenhado);
       estado.estagiosDasCulturas = Object.fromEntries(this.estagioDesenhado);
       estado.pronto = true;
@@ -1274,6 +1280,31 @@ export class WorldScene extends Phaser.Scene {
       .setDepth(depthDeY(pe.y));
     this.luz?.tingir(imagem, pe.x, pe.y, `vegetacao:${chave}`);
     this.vegetacaoDesenhada.set(chave, imagem);
+  }
+
+  /** A cena so aplica a transformacao pura. O pe e o mesmo usado para tingir a luz. */
+  private atualizarVento(): number {
+    const recursos = this.ponte.atual?.recursos;
+    if (!recursos) return 0;
+    if (!this.ventoLigado) {
+      for (const imagem of this.vegetacaoDesenhada.values()) {
+        if (imagem.rotation !== 0) imagem.setRotation(0);
+      }
+      return 0;
+    }
+    let quantos = 0;
+    for (const [chave, imagem] of this.vegetacaoDesenhada) {
+      const tipo = recursos[chave]?.tipo;
+      if (!tipo || !balancaVegetacao(tipo, dadosDoVento)) continue;
+      const { gx, gy } = tileDeChave(chave);
+      const transformacao = transformacaoDoVento(
+        dadosDoVento, this.ponte.atual?.tick ?? 0, this.relogio.alfa(),
+        gx, gy, imagem.x, imagem.y,
+      );
+      imagem.setOrigin(...transformacao.origem).setRotation(transformacao.rotacao);
+      quantos += 1;
+    }
+    return quantos;
   }
 
   /** F-REPL-e — o estado de crescimento do tile, pela mesma funcao que o teste confere

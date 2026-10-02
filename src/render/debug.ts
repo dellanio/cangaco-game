@@ -273,6 +273,11 @@ export interface EstadoDebug {
   };
   /** F-SPR — quantos sprites de vegetacao a cena tem de pe agora (mapa inteiro). */
   vegetacaoRenderizada: number;
+  rochasRenderizadas: number;
+  /** D-TELA-VENTO-VEGETACAO — sprites atualizados pelo vento neste quadro. */
+  vegetacaoBalancando: number;
+  /** Controle de medicao do render; nao altera o estado da sim. */
+  ligarVento: (ligado: boolean) => void;
   /** Quantos tiles de estrada DE PE (F08) a cena tem desenhados agora. */
   estradasRenderizadas: number;
   /** F18d-2 — quantos tiles de CANTEIRO (`estradasPlanejadas`, F18d-1b) a cena tem
@@ -418,6 +423,9 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     estagiosDasCulturas: {},
     arteDasCamadas: { terreno: [], recurso: [], vegetacao: [] },
     vegetacaoRenderizada: 0,
+    rochasRenderizadas: 0,
+    vegetacaoBalancando: 0,
+    ligarVento: () => undefined,
     estradasRenderizadas: 0,
     estradasPlanejadasRenderizadas: 0,
     pedraNoCanteiroNoEstado: 0,

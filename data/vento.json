@@ -1,0 +1,12 @@
+{
+  "direcao": { "x": 1, "y": 0 },
+  "forca": 0.7,
+  "amplitudeMaximaGraus": 4,
+  "periodoTicks": 32,
+  "rajada": {
+    "intervaloTicks": 120,
+    "duracaoTicks": 24,
+    "velocidadeTilesPorTick": 2
+  },
+  "vegetacaoQueBalanca": ["tree"]
+}

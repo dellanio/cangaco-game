@@ -10,6 +10,39 @@ const {
   CAMPOS_ESCALONADOS, DECLARACOES_ESTRUTURAIS, NAO_SAO_DURACAO, PREFIXO_DE_MAPA,
   bateNomeDeTempo,
 } = require('./data-schema');
+const manifestoDeAssets = require('../assets/manifest.json');
+
+function validarVento(vento, erros, manifesto = manifestoDeAssets) {
+  const e = (msg) => erros.push(`interface/vento: ${msg}`);
+  if (!vento || typeof vento !== 'object' || Array.isArray(vento)) {
+    e('data/vento.json precisa existir e ser objeto');
+    return;
+  }
+  const positivo = (n) => typeof n === 'number' && Number.isFinite(n) && n > 0;
+  const inteiro = (n) => Number.isInteger(n) && n > 0;
+  const direcao = vento.direcao;
+  if (!direcao || !Number.isFinite(direcao.x) || !Number.isFinite(direcao.y)
+    || Math.hypot(direcao.x, direcao.y) < 0.999 || Math.hypot(direcao.x, direcao.y) > 1.001) {
+    e('direcao precisa ser vetor unitario {x,y}');
+  }
+  if (typeof vento.forca !== 'number' || !Number.isFinite(vento.forca) || vento.forca < 0 || vento.forca > 1) e('forca precisa estar em [0,1]');
+  if (!positivo(vento.amplitudeMaximaGraus)) e('amplitudeMaximaGraus precisa ser > 0');
+  if (!inteiro(vento.periodoTicks)) e('periodoTicks precisa ser inteiro > 0');
+  const rajada = vento.rajada;
+  if (!rajada || !inteiro(rajada.intervaloTicks) || !inteiro(rajada.duracaoTicks)
+    || rajada.duracaoTicks >= rajada.intervaloTicks || !positivo(rajada.velocidadeTilesPorTick)) {
+    e('rajada precisa de intervaloTicks > duracaoTicks > 0 e velocidadeTilesPorTick > 0');
+  }
+  if (!Array.isArray(vento.vegetacaoQueBalanca) || vento.vegetacaoQueBalanca.length === 0) {
+    e('vegetacaoQueBalanca precisa ser lista nao vazia');
+  } else {
+    const ids = new Set(manifesto.assets.filter((a) => a.tipo === 'vegetacao').map((a) => a.id));
+    for (const id of vento.vegetacaoQueBalanca) {
+      if (!ids.has(id)) e(`'${id}' nao existe como vegetacao no manifesto`);
+    }
+    if (new Set(vento.vegetacaoQueBalanca).size !== vento.vegetacaoQueBalanca.length) e('vegetacaoQueBalanca tem id duplicado');
+  }
+}
 
 function getByPath(obj, caminho) {
   const partes = caminho.split('.');
@@ -1548,6 +1581,7 @@ function validarInterface(dados, interfaceUi) {
   const tema = interfaceUi && interfaceUi['theme-sertao'];
   validarRotulosDeModo(dados, tema, erros);
   validarRelevo(dados, interfaceUi && interfaceUi.relevo, erros);
+  validarVento(interfaceUi && interfaceUi.vento, erros);
   if (!menu || !Array.isArray(menu.grupos)) {
     erros.push('interface/menu-build-forma: menu-build.grupos precisa ser array');
     return erros;
@@ -1634,4 +1668,4 @@ function validarTudo(dados) {
   return erros;
 }
 
-module.exports = { validarTudo, validarInterface, getByPath };
+module.exports = { validarTudo, validarInterface, validarVento, getByPath };
