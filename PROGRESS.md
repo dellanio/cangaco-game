@@ -17601,3 +17601,27 @@ A ponte publica especie e angulo por arvore. No tick 1 capturado: maior angulo a
     Ele é **muito discreto**: um círculo de 1 px, com raio de 0,04 a 0,35 tile. Lê como detalhe,
     não como efeito. A espessura e o raio estão no `data/agua-peixe.json`, para o operador girar
     olhando.
+## 2026-10-02 — D-TELA-FUMACA-DA-FORJA (fumaça e fagulha na forja e na fundição), pelo Codex
+
+### Verificado
+
+- Contrato: aceite 7163e21; partida da main 6317c42, com o PR arte-17-predios integrado e os dois PNG completos com sufixo -D-20261002.
+- Pontos medidos nos PNG completos novos, em coordenadas do canvas (origem no canto superior esquerdo):
+  - iron_smithy, 256 × 220: centro da abertura da chaminé (207, 48), fração (0.80859375, 0.21818181818181817); centro do fogo/fornalha visível (146, 156), fração (0.5703125, 0.7090909090909091).
+  - metallurgists, 192 × 192: centro da abertura da chaminé (149, 25), fração (0.7760416666666666, 0.13020833333333334).
+  - Dimensões confirmadas no IHDR dos PNG; imagens abertas como evidência desta feature. A altura da forja é 220: a primeira estimativa visual de 224 foi corrigida antes da validação.
+- Manifesto: atualizados os pontos de fumaça das duas oficinas, preservando as áreas de trabalho; acrescentado trabalho.fogo à forja. A regra valida fogo como ponto fracionário e o F17f-manifesto (validação do manifesto) tem o contraexemplo.
+- particulasDaFumaca ficou sem alteração. particulasDaFagulha é pura, determinística por tick/alfa/ponto/semente, em pulsos; vida de 8 ticks contra 40 da fumaça, intervalo de 12 ticks, 6 partículas por pulso, teto de 24 por fogo. Dado e validação ficam no bloco fagulha de interface/fumaca.
+- As duas espécies compartilham a memória de trabalho obtida de quadroDaFumaca, sem predicado novo; o render reaproveita pools, calcula por mudança de tick/alfa/vista e evita partículas fora da vista. A ponte publica fagulhaPorPredio, poolDaFagulha e particulasCalculadasNesteQuadro.
+- Cenário gerado por teste: completarObra pelo helper de produção, estoque de insumos da fixture, step, salvar/carregar reais; não se alterou src/sim. Save do roteiro em test-output/D-TELA-FUMACA-DA-FORJA-save.txt.
+- Testes diretos pela trava: D-TELA-FUMACA-DA-FORJA (fagulha nas oficinas), D-TELA-FUMACA-DA-PADARIA (fumaça da padaria), F17f-manifesto (validação do manifesto), F-SPR-carregamento (carregamento dos sprites), C10-largura (largura dos prédios), F-ESC-escala (escala), D-TELA-03-icones (ícones) e icones-ui (ícones da interface): 8 arquivos, 67 testes aprovados.
+- Roteiro D-TELA-FUMACA-DA-FORJA (fumaça e fagulha nas oficinas): saída 0; fumaça 8 na forja e 8 na fundição, fagulha 6 na forja; depois de pausar a forja pelo painel despausado e avançar 40 ticks, ambas em 0 nela e fundição ainda emitindo. Pools constantes: 64 fumaças e 24 fagulhas; quadro pausado/câmera parada: 0 cálculos.
+- Capturas abertas: screenshots/D-TELA-FUMACA-DA-FORJA-1-oficinas-trabalhando.png e screenshots/D-TELA-FUMACA-DA-FORJA-2-forja-pausada.png.
+- Não regressão D-TELA-FUMACA-DA-PADARIA (fumaça da padaria): roteiro saiu 0; trabalho 12, pausa 0, pool próprio 64.
+- Não regressão F-VIVO-b (trabalho dos prédios) e ARTE-VILA (vila com os sprites novos): ambos saíram 0, com 2 e 9 capturas respectivamente. Só as capturas desta feature foram abertas.
+- verify:rapido (portão por commit): saída 0; typecheck e lint sem erros, validate:data com 19 arquivos e 0 erros; 42 arquivos de teste, 568 testes aprovados; 13 arquivos alterados, 55 s nesta máquina. Tempo é evidência da corrida, não asserção.
+- git diff main -- src/sim e git diff main -- src/render/fumaca.ts: vazios.
+
+### Hipóteses e pendências
+
+- Nenhuma hipótese de simulação foi usada. O merge não foi executado: a main estava suja na conferência, com tests/D-TELA-FUMACA-DA-PADARIA.test.ts modificado por outra sessão. A regra comum manda parar o merge nessa situação. Implementação e documentação ficam commitadas na branch, sem push; test-results.json é exclusivo do operador.
