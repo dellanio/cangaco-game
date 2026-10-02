@@ -541,31 +541,33 @@ export class WorldScene extends Phaser.Scene {
       const tickDaAgua = this.ponte.atual?.tick ?? 0;
       const vistaDaAgua = camera.worldView;
       const chaveDaVistaDaAgua = `${vistaDaAgua.x},${vistaDaAgua.y},${vistaDaAgua.width},${vistaDaAgua.height}`;
-      const tilesDaVista = camadaChao.getTilesWithinWorldXY(
-        vistaDaAgua.x, vistaDaAgua.y, vistaDaAgua.width, vistaDaAgua.height,
-      );
-      if (aguaAnimada && (ultimoTickDaAgua !== tickDaAgua || ultimaVistaDaAgua !== chaveDaVistaDaAgua)) {
+      // D-TELA-AGUA-VIVA: a variante so muda com o tick, e a vista so com a camera. Fora disso
+      // o quadro nao varre a agua nem republica a ponte (aceite 3, "so quando a variante muda").
+      if (ultimoTickDaAgua !== tickDaAgua || ultimaVistaDaAgua !== chaveDaVistaDaAgua) {
         estado.celulasDaAguaTrocadas = 0;
         ultimoTickDaAgua = tickDaAgua;
         ultimaVistaDaAgua = chaveDaVistaDaAgua;
-      }
-      if (aguaAnimada) {
-        const trocas = celulasDaAguaParaTrocar(agua, tickDaAgua, tilesDaVista.map((tile) => ({
-          gx: tile.x,
-          gy: tile.y,
-          tipo: terrenoDeRender.tipos[Math.floor(tile.index / VARIANTES_DE_TERRENO)] ?? '',
-          varianteAtual: ESTADOS_DO_TERRENO[tile.index % VARIANTES_DE_TERRENO] ?? '',
-        })));
-        const codigoDaAgua = terrenoDeRender.tipos.indexOf('agua');
-        for (const troca of trocas) {
-          const variante = ESTADOS_DO_TERRENO.indexOf(troca.variante as typeof ESTADOS_DO_TERRENO[number]);
-          camadaChao.putTileAt(codigoDaAgua * VARIANTES_DE_TERRENO + variante, troca.gx, troca.gy);
+        const tilesDaVista = camadaChao.getTilesWithinWorldXY(
+          vistaDaAgua.x, vistaDaAgua.y, vistaDaAgua.width, vistaDaAgua.height,
+        );
+        if (aguaAnimada) {
+          const trocas = celulasDaAguaParaTrocar(agua, tickDaAgua, tilesDaVista.map((tile) => ({
+            gx: tile.x,
+            gy: tile.y,
+            tipo: terrenoDeRender.tipos[Math.floor(tile.index / VARIANTES_DE_TERRENO)] ?? '',
+            varianteAtual: ESTADOS_DO_TERRENO[tile.index % VARIANTES_DE_TERRENO] ?? '',
+          })));
+          const codigoDaAgua = terrenoDeRender.tipos.indexOf('agua');
+          for (const troca of trocas) {
+            const variante = ESTADOS_DO_TERRENO.indexOf(troca.variante as typeof ESTADOS_DO_TERRENO[number]);
+            camadaChao.putTileAt(codigoDaAgua * VARIANTES_DE_TERRENO + variante, troca.gx, troca.gy);
+          }
+          estado.celulasDaAguaTrocadas = trocas.length;
         }
-        estado.celulasDaAguaTrocadas += trocas.length;
+        estado.variantesDaAguaVisivel = Object.fromEntries(tilesDaVista.filter((tile) =>
+          terrenoDeRender.tipos[Math.floor(tile.index / VARIANTES_DE_TERRENO)] === 'agua',
+        ).map((tile) => [`${tile.x},${tile.y}`, ESTADOS_DO_TERRENO[tile.index % VARIANTES_DE_TERRENO] ?? '']));
       }
-      estado.variantesDaAguaVisivel = Object.fromEntries(tilesDaVista.filter((tile) =>
-        terrenoDeRender.tipos[Math.floor(tile.index / VARIANTES_DE_TERRENO)] === 'agua',
-      ).map((tile) => [`${tile.x},${tile.y}`, ESTADOS_DO_TERRENO[tile.index % VARIANTES_DE_TERRENO] ?? '']));
       estado.terrenoVisivel = this.contarTerrenoVisivel(camadaChao);
       // F-T2a: a camada de recurso se repinta do ESTADO a cada frame (por diff),
       // e nao uma vez no create como a de terreno. E a diferenca que o item pede:

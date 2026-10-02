@@ -17263,3 +17263,19 @@ B D-TELA-LUZ-RELEVO, aceite 1             | NEEDS_WORK        | o sha256 contra 
 - **Verificado:** `D-TELA-AGUA-VIVA` rodou duas vezes após o rebase, saída 0, duas capturas por corrida. SHA-256 do tick T nas duas: `FC48239397B125E65B98518EEF58C5B576D2B4A0E8B46A82F86EEEA09DBEF270`. As capturas T e T+8 foram abertas; o roteiro afirmou variantes da ponte contra a conta pura, mudança após o período e limite das trocas. `F-T1`, `F-TR`, `ARTE-VILA` e `D-ARTE-CHAO-DE-ROCA` saíram 0 após o rebase.
 - **Medida da corrida, sem asserção:** na vista mais cheia de água encontrada no mapa, 176 tiles de água e 176 células trocadas após um período. Tempo médio de 60 quadros: 34,722 ms com animação e 31,665 ms com ela desligada. **Hipótese:** a diferença pode incluir ruído da máquina compartilhada; esta corrida não estabelece custo estável nem ganho/perda causal.
 - **Fora do aceite:** arte nova, influência do vento e alterações da simulação.
+- **Revisão da sessão Claude (2026-10-02):**
+  - **Conferido no diff:** `git diff a987b2b..96778bb -- src/sim` vazio. A variante sai só do
+    tick e do tile. Só a camada de terreno troca célula, e só tile de `agua`. A borda e o chão da
+    cana não foram tocados.
+  - **Corrigido:** o `POST_RENDER` varria todos os tiles da vista e republicava a ponte **a cada
+    quadro**, mesmo pausado e sem nada mudar. Agora o trabalho só acontece quando o tick ou a
+    câmera mudam. Depois da correção, rodaram com saída 0: o roteiro `D-TELA-AGUA-VIVA`, o `F-T1`,
+    os 4 testes (água, vento e os dois de manifesto, 43/43) e o `verify:rapido` (367 testes).
+  - **A medida de custo do roteiro não mede o custo** (medido): ela soma o intervalo entre
+    `requestAnimationFrame`, que segue a cadência do navegador, e não o trabalho da cena. Depois
+    da correção, pausado, a água não faz trabalho nenhum por quadro, e mesmo assim a corrida deu
+    36,7 contra 31,4 ms. Os números do Codex (34,7 contra 31,7) e a medida do vento
+    (D-TELA-VENTO-VEGETACAO, +2,4 ms, mesmo método) **não servem como custo**. Uma medida real
+    pediria o tempo da própria função dentro do quadro.
+  - **Ressalva:** o roteiro reimplementa a fórmula da variante em JS para conferir a ponte. Se a
+    fórmula de `src/render/agua-viva.ts` mudar, ele precisa mudar junto.
