@@ -17481,3 +17481,58 @@ A ponte publica especie e angulo por arvore. No tick 1 capturado: maior angulo a
   - Depois da correção, rodaram com saída 0 os 22 arquivos de teste que leem o manifesto, 190/190.
   - **Mudança que o operador vai ver jogando:** a forja, a fundição e as duas ferrarias também
     soltam fumaça enquanto trabalham, pelo ponto que a arte trouxe.
+## 2026-10-02 — verify-rapido-dado-lido (testes que leem dados alterados), pelo Codex
+
+### Verificado
+- Contrato 7163e21 presente na ancestralidade da worktree; inicio no 6317c42, arvore limpa.
+- Commit de codigo: 060c8e6. Acrescenta leitores textuais de assets/manifest.json, data/**/*.json e saves/*.txt a lista original do vitest related, sem retirar arquivos nem mudar selo ou hook.
+- npm run verify:rapido: saida 0; typecheck e lint verdes, validate:data com 19 arquivos e 0 erros; 6 testes, 35 s.
+- Testes diretos PORTOES-verify e PORTOES-pre-push: saida 0; 2 arquivos, 9 testes, 9,46 s. Assercoes existentes preservadas.
+- Reproducao automatizada num repositorio temporario com remoto bare e um commit somente de manifesto: related real sozinho roda 0 testes; com os leitores roda 1. O verify rapido com vitest falso recebe o leitor e registra 1 teste no selo.
+- Dependencias ausentes na worktree foram instaladas por npm ci, sem alterar o lockfile.
+
+### Limite
+- Nao houve push. A entrega conjunta e o merge aguardam a limpeza abaixo.
+
+## 2026-10-02 — D-TELA-LIMPEZA-DO-MUNDO-VIVO (tres ressalvas das revisoes), pelo Codex
+
+### Verificado
+- Implementacao parcial, ainda sem commit: destruicao do pool de chamines removidas, identidade do estado carregado no predicado do chao da cana e tabela fixa de especies 16 x 16.
+- A tabela foi gerada uma vez e conferida contra o helper anterior em 768 tiles (conjunto completo e dois subconjuntos); o helper .txt foi removido.
+- Testes diretos: 5 arquivos, 79 testes; 78 passaram e 1 falhou. O caso que falha exige somente bakery com ancora de fumaca, mas assets/manifest.json tambem declara metallurgists, iron_smithy, weapon_smithy e armor_smithy.
+- A assercao que falhou ja existe no HEAD 060c8e6, sem alteracao pela limpeza. O ultimo commit do manifesto e 9b847a2, integrado no 6317c42, antes desta tarefa.
+- git diff main -- src/sim vazio.
+
+### Bloqueio e trabalho pendente
+- Parada pela regra do operador: situacao fora do plano. Nao foi alterada a assercao para acomodar o manifesto.
+- Ainda faltam a prova com hash trocado, os quatro roteiros e a verificacao final verde; a limpeza nao esta concluida. Nenhuma captura foi produzida nesta tarefa.
+- Sem commit da limpeza, sem commit de docs e sem merge. Alteracoes parciais ficam disponiveis para revisao.
+
+## 2026-10-02 — verify-rapido-dado-lido (leitores de dados no verify rapido; retomada), pelo Codex
+
+### Verificado
+- Retomada apos o pedido do operador para continuar. O registro da interrupcao acima descreve a corrida anterior, nao o estado final desta entrega.
+- A regra pura encontra leitores por caminho citado no fonte do teste. Os arquivos originais do related permanecem, sem mudar o hook ou o formato do selo. Os testes existentes dos portoes conservaram suas assercoes.
+- Medicao no projeto real com a selecao contendo somente assets/manifest.json: related sozinho roda 70 testes, e a uniao com os leitores roda 117; ambas as corridas sairam 0. Evidencia: test-output/manifesto-so-comparacao.json e os dois relatorios manifesto-so-antes/depois.json.
+- Essa medicao simula a lista de um commit so de manifesto; a prova como processo com um commit real so de manifesto e remoto bare permanece no teste automatizado dos portoes. No repositorio falso, 0 antes e 1 depois, com os dois lados afirmados e o leitor recebido pelo vitest falso.
+- Testes diretos dos dois portoes, limpeza e leitores do manifesto: 7 arquivos, 88 testes, saida 0.
+
+### Limites
+- Sem alteracao em .githooks/pre-push, .claude/ ou test-results.json; nenhum push.
+
+## 2026-10-02 — D-TELA-LIMPEZA-DO-MUNDO-VIVO (tres ressalvas das revisoes; retomada), pelo Codex
+
+### Verificado
+- Pools de chamines cujo predio saiu sao destruidos e removidos do mapa, pela regra pura chaminesRemovidas. A tabela afirma conservacao dos presentes e remocao dos ausentes.
+- O roteiro D-TELA-FUMACA-DA-PADARIA saiu 0: 12 particulas trabalhando, 0 depois da pausa; pool 64 antes e 32 depois de demolir a padaria. Esperou 2804 ticks ate o trabalho e avancou 40 apos a pausa. O comando de demolir ocorreu pelo painel despausado, com mouse.down/waitForTimeout(150)/mouse.up.
+- Capturas abertas e conferidas: screenshots/D-TELA-FUMACA-DA-PADARIA-1-trabalhando-com-fumaca.png e screenshots/D-TELA-FUMACA-DA-PADARIA-3-demolida-pool-destruido.png. A padaria com fumaca aparece na primeira e o predio esta ausente na ultima.
+- Tabela fixa de especies: 3 conjuntos de 16 x 16, 768 tiles conferidos contra o helper anterior; o helper textura-da-vegetacao-antes-cacto.txt saiu. A ordem e o conjunto completo das especies tambem sao afirmados.
+- Prova da sessao: hash 73_856_093 trocado por 73_856_091, teste saiu 1 com falha nas tabelas do conjunto completo e do subconjunto de tres especies. O fonte original foi restaurado (git diff de vento.ts vazio). Evidencia: test-output/cacto-hash-trocado-prova.json e cacto-hash-trocado-vitest.json. Isso e uma prova temporaria; a guarda permanente e a comparacao com a tabela fixa no teste automatizado.
+- A identidade da partida e a referencia de ponte.atual no quadro do render. O caso mesmo tick, partida nova varre recursos e reconta a vista; nenhuma propriedade nova na sim.
+- Os quatro roteiros sairam 0: D-TELA-FUMACA-DA-PADARIA (3 capturas), D-TELA-VENTO-VEGETACAO (3), D-ARTE-CHAO-DE-ROCA (2) e D-SAVE-VILA-PRONTA (1).
+- verify:rapido da limpeza: saida 0, 65 testes em 5 arquivos, 35 s. Typecheck e lint verdes; validate:data com 19 arquivos e 0 erros.
+- git diff main -- src/sim vazio.
+
+### Integracao
+- O pedido para continuar retomou o bloqueio da assercao antiga da padaria. Uma sessao na main tambem corrigiu essa divergencia; a integracao deve preservar a passagem das ancoras declaradas no manifesto para os dados do render e os testes novos desta limpeza.
+- O merge so pode ocorrer com a main limpa, por fast-forward e sem push. Os hashes finais e a verificacao completa sao reportados na entrega apos o rebase.
