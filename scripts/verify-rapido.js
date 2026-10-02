@@ -2,20 +2,34 @@
 'use strict';
 // npm run verify:rapido -> este script (camadas de teste, decisao do operador de 2026-10-01; CLAUDE.md
 // §13). O portao de CADA COMMIT: typecheck + lint + validate:data + `vitest related` nos arquivos alterados (staged,
-// nao staged e novos). Grava .verify-rapido-ok e NUNCA o .verify-ok: marcar feature em
-// test-results.json continua exigindo o `verify` completo.
+// nao staged e novos, mais os commits que ainda nao subiram). Grava .verify-rapido-ok com o commit e a
+// base, que o pre-push aceita; NUNCA o .verify-ok: marcar feature em test-results.json continua
+// exigindo o `verify` completo.
 const { execSync, spawnSync } = require('child_process');
 const fs = require('fs');
 
 const SELO = '.verify-rapido-ok';
 try { fs.unlinkSync(SELO); } catch { /* nao havia */ }
 
-/** Os arquivos alterados contra o HEAD, mais os novos nao ignorados, que existem no disco. */
-function alterados() {
+const git = (args) => execSync(`git ${args}`, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+
+/** O HEAD e a base do que ainda nao subiu: o merge-base com o upstream, ou o HEAD sem upstream
+ *  (verify-rapido-no-push, CLAUDE.md §13). */
+function commitEBase() {
+  const commit = git('rev-parse HEAD');
+  let base = commit;
+  try { base = git('merge-base HEAD @{upstream}'); } catch { /* sem upstream: so a arvore */ }
+  return { commit, base };
+}
+
+/** Os arquivos alterados contra o HEAD, mais os novos nao ignorados, mais os que mudaram de `base`
+ *  ate o HEAD, que existem no disco. */
+function alterados(base, commit) {
   const saida = execSync('git status --porcelain --untracked-files=all', { encoding: 'utf8' });
-  return saida.split(/\r?\n/).filter((l) => l.length > 3)
-    .map((l) => l.slice(3).replace(/^"|"$/g, '').split(' -> ').pop())
-    .filter((f) => fs.existsSync(f) && fs.statSync(f).isFile());
+  const naArvore = saida.split(/\r?\n/).filter((l) => l.length > 3)
+    .map((l) => l.slice(3).replace(/^"|"$/g, '').split(' -> ').pop());
+  const nosCommits = base === commit ? [] : git(`diff --name-only ${base} ${commit}`).split(/\r?\n/).filter((f) => f !== '');
+  return [...new Set([...naArvore, ...nosCommits])].filter((f) => fs.existsSync(f) && fs.statSync(f).isFile());
 }
 
 function etapa(nome, comando) {
@@ -34,14 +48,17 @@ etapa('lint', 'npm run lint');
 // nao fica esperando o verify completo para descobrir que o schema reprova
 etapa('validate:data', 'npm run validate:data');
 
-const arquivos = alterados();
+const { commit, base } = commitEBase();
+const arquivos = alterados(base, commit);
 console.log(`\n--- vitest related (${arquivos.length} arquivo(s) alterado(s)) ---`);
 let testes = 0;
 if (arquivos.length > 0) {
   const relatorio = 'test-output/verify-rapido-vitest.json';
   fs.mkdirSync('test-output', { recursive: true });
   const lista = arquivos.map((f) => `"${f}"`).join(' ');
-  const r = spawnSync(`npx vitest related --run --passWithNoTests --reporter=default --reporter=json --outputFile.json=${relatorio} ${lista}`,
+  // CANGACO_VITEST troca o comando (o teste dos portoes usa um vitest falso; padrao: npx vitest)
+  const vitest = process.env.CANGACO_VITEST ?? 'npx vitest';
+  const r = spawnSync(`${vitest} related --run --passWithNoTests --reporter=default --reporter=json --outputFile.json=${relatorio} ${lista}`,
     { stdio: 'inherit', shell: true });
   if (r.status !== 0) {
     console.error(`\nFALHOU: vitest related. O selo ${SELO} NAO foi criado.`);
@@ -53,5 +70,5 @@ if (arquivos.length > 0) {
 }
 
 const segundos = Math.round((Date.now() - inicio) / 1000);
-fs.writeFileSync(SELO, JSON.stringify({ tipo: 'rapido', arquivos: arquivos.length, testes, segundos, quando: new Date().toISOString() }, null, 2));
-console.log(`\nverify:rapido OK: ${arquivos.length} arquivo(s) alterado(s), ${testes} teste(s), ${segundos} s. Push e marcar feature pedem o \`npm run verify\` completo.`);
+fs.writeFileSync(SELO, JSON.stringify({ tipo: 'rapido', commit, base, arquivos: arquivos.length, testes, segundos, quando: new Date().toISOString() }, null, 2));
+console.log(`\nverify:rapido OK: ${arquivos.length} arquivo(s) alterado(s), ${testes} teste(s), ${segundos} s. Selo do ${commit.slice(0, 7)} desde ${base.slice(0, 7)}; marcar feature pede o \`npm run verify\` completo.`);

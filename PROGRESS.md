@@ -17155,3 +17155,23 @@ B D-TELA-LUZ-RELEVO, aceite 1             | NEEDS_WORK        | o sha256 contra 
   - **Ponto de atenção, não medido:** o manifesto foi esvaziado uma vez por um script meu, que
     truncou o arquivo antes de falhar. Foi restaurado do git (`git checkout`) antes de qualquer
     commit.
+
+## 2026-10-01 (noite, 5) — O verify é sempre o rápido (decisão do operador)
+- **A regra:** quem precisar rodar verify, sessão Claude ou Codex, roda o `npm run verify:rapido`, a
+  cada commit e antes de todo push. O `verify` completo fica **só no fechamento de uma fase**, junto
+  da `test:longo` e do `shot:todos`. Aceite `eda11b4`, emenda `9cadaa3`.
+- **O código:**
+  - o `verify:rapido` grava `commit` e `base` (o merge-base com o upstream) e testa também os
+    arquivos dos commits que ainda não subiram;
+  - o `pre-push` aceita esse selo quando a base cobre o remoto;
+  - o portão do `test-results.json` continua pedindo o completo, então as chaves passam a ser
+    marcadas em lote, no fechamento.
+- **O teste** (`tests/PORTOES-pre-push.test.ts`): 11 casos por tabela, e um push real num
+  repositório falso com um vitest falso. No repositório falso não há junction para o
+  `node_modules`, e isso é de propósito.
+  - **Prova de que acusa:** com o código do HEAD de volta, os 2 testes novos reprovam.
+- **O piloto do serf (D-ARTE-SERF-ANDAR):** o operador aprovou a cara e a câmera da folha do norte,
+  e o serf fica sem chapéu. **O Codex parou duas vezes sem commitar.** A sandbox dele recusa o
+  `index.lock` no `.git` comum, mesmo com o `--add-dir`. Gastou 1 geração de 14, e o registro dela
+  está no `SKILL_BUILDER_PROGRESS.md` da worktree dele, sem commit. Espera o operador decidir como
+  liberar a escrita no git.
