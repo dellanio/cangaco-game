@@ -6488,6 +6488,29 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
 - **Depende da D-TELA-VENTO-NA-VISTA,** que mexe no mesmo trecho (`atualizarVento`). Entra depois
   dela, para não brigar no rebase.
 
+#### D-TELA-CHAO-DA-CANA-SO-QUANDO-MUDA — O chão da cana só trabalha quando o tick ou a câmera mudam
+- **Origem (2026-10-02, medida da D-TELA-CUSTO-DO-QUADRO):** o `atualizarChaoDaCana`
+  (`WorldScene.ts`) varre todos os recursos do estado a cada quadro, mesmo pausado e sem nada
+  mudando. Medido: cerca de 0,2 ms por quadro, a camada animada mais cara. A água e o vento já só
+  trabalham quando o tick ou a câmera mudam. Vai no mesmo pacote da D-TELA-CACTO-NO-VENTO.
+- **Aceite (escrito antes do código, 2026-10-02):**
+  1. **O predicado puro** que decide se o chão da cana precisa ser refeito, por tabela em
+     `tests/D-TELA-CHAO-DA-CANA-SO-QUANDO-MUDA.test.ts`:
+     - com o tick e a vista iguais aos do quadro anterior, não precisa;
+     - com o tick novo, precisa. Os recursos só mudam com o tick;
+     - com só a vista nova, refaz só a contagem da vista, sem varrer os recursos;
+     - no primeiro quadro, precisa.
+  2. **O eixo determinístico:** a ponte publica `recursosVarridosPeloChao` por quadro. O roteiro
+     `D-TELA-CUSTO-DO-QUADRO` afirma que ele é 0 com o jogo pausado e a câmera parada, e maior que 0
+     no quadro de um tick novo.
+  3. **A tela não muda:** o roteiro `D-ARTE-CHAO-DE-ROCA` continua afirmando que o chão desenhado é
+     igual à cana na vista. Ele passa a afirmar também que isso vale depois de um `fixarCamera` sem
+     tick novo (a contagem da vista acompanha a câmera).
+  4. **A medida antes e depois** pelo roteiro do custo vai para o PROGRESS, como evidência da
+     corrida, e não como asserção.
+  5. **Não-regressão:** os roteiros `D-ARTE-CHAO-DE-ROCA`, `D-TELA-CUSTO-DO-QUADRO` e `ARTE-VILA`
+     saem 0; o `verify:rapido` passa; `git diff main -- src/sim` vazio.
+
 #### D-TELA-FUMACA-DA-PADARIA — A padaria trabalhando solta fumaça pela chaminé
 - **Origem (2026-10-02):** é o caso C da prova de conceito (§7 e §23 do documento): "padaria
   produz fumaça somente quando apropriado". A F-VIVO-b deixou o encanamento: `quadroDaFumaca` em
