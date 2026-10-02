@@ -64,6 +64,25 @@ function validarVento(vento, erros, manifesto = manifestoDeAssets) {
   }
 }
 
+function validarAguaPeixe(config, erros) {
+  const e = (msg) => erros.push(`interface/agua-peixe: ${msg}`);
+  if (!config || typeof config !== 'object' || Array.isArray(config)) {
+    e('data/agua-peixe.json precisa existir e ser objeto');
+    return;
+  }
+  if (!Number.isInteger(config.semente)) e('semente precisa ser inteiro');
+  for (const campo of ['maximoNaVista', 'vidaTicks', 'intervaloDoPeixeTicks', 'intervaloDoPescadorTicks']) {
+    if (!Number.isInteger(config[campo]) || config[campo] <= 0) e(`${campo} precisa ser inteiro > 0`);
+  }
+  for (const campo of ['raioInicialTiles', 'raioFinalTiles', 'espessuraPx', 'opacidadeInicial']) {
+    if (!Number.isFinite(config[campo]) || config[campo] <= 0) e(`${campo} precisa ser > 0`);
+  }
+  if (config.raioFinalTiles <= config.raioInicialTiles || config.raioFinalTiles > 0.5) e('raioFinalTiles precisa crescer dentro do tile');
+  if (config.opacidadeInicial > 1) e('opacidadeInicial precisa ser <= 1');
+  if (config.vidaTicks >= config.intervaloDoPeixeTicks) e('peixe precisa ser raro: vidaTicks < intervaloDoPeixeTicks');
+  if (typeof config.cor !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(config.cor)) e('cor precisa ser #rrggbb');
+}
+
 function validarPoeira(poeira, erros) {
   const e = (msg) => erros.push(`interface/poeira: ${msg}`);
   if (!poeira || typeof poeira !== 'object' || Array.isArray(poeira)) {
@@ -1664,6 +1683,7 @@ function validarInterface(dados, interfaceUi) {
   validarRotulosDeModo(dados, tema, erros);
   validarRelevo(dados, interfaceUi && interfaceUi.relevo, erros);
   validarVento(interfaceUi && interfaceUi.vento, erros);
+  validarAguaPeixe(interfaceUi && interfaceUi['agua-peixe'], erros);
   validarPoeira(interfaceUi && interfaceUi.poeira, erros);
   validarFumaca(interfaceUi && interfaceUi.fumaca, erros);
   if (!menu || !Array.isArray(menu.grupos)) {

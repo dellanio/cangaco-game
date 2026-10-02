@@ -4,6 +4,8 @@
 import Phaser from 'phaser';
 import temaSertao from '../../../data/theme-sertao.json';
 import dadosDoVento from '../../../data/vento.json';
+import dadosDosAneis from '../../../data/agua-peixe.json';
+import { aneisDaAgua, pescadoresNaAgua } from '../agua-peixe';
 import agua from '../../../data/agua.json';
 import dadosDaPoeira from '../../../data/poeira.json';
 import dadosDaFumaca from '../../../data/fumaca.json';
@@ -339,6 +341,11 @@ export class WorldScene extends Phaser.Scene {
       this.add.graphics().setDepth(0.75).setVisible(false));
     estado.poolDaPoeira = poolDaPoeira.length;
     let ultimoQuadroDaPoeira = '';
+    const poolDosAneis = Array.from({ length: dadosDosAneis.maximoNaVista }, () =>
+      this.add.graphics().setDepth(0.3).setVisible(false));
+    estado.poolDosAneis = poolDosAneis.length;
+    let ultimoQuadroDosAneis = '';
+    let estadoDosAneis: GameState | null = null;
     const texturaDosDetalhes = this.criarTexturaDeDetalhesDoTerreno(tilePx);
     this.criarCamadaDeDetalhesDoTerreno(tilePx, largura, altura, texturaDosDetalhes);
     const texturaDaBordaDaAgua = this.criarTexturaDaBordaDaAgua(tilePx, carregada);
@@ -595,6 +602,30 @@ export class WorldScene extends Phaser.Scene {
         estado.variantesDaAguaVisivel = Object.fromEntries(tilesDaVista.filter((tile) =>
           terrenoDeRender.tipos[Math.floor(tile.index / VARIANTES_DE_TERRENO)] === 'agua',
         ).map((tile) => [`${tile.x},${tile.y}`, ESTADOS_DO_TERRENO[tile.index % VARIANTES_DE_TERRENO] ?? '']));
+      }
+      // D-TELA-AGUA-PEIXE: pool separado; nao troca nenhum tile da agua viva.
+      const alfaDosAneis = this.relogio.alfa();
+      const chaveDosAneis = `${tickDaAgua},${alfaDosAneis},${chaveDaVistaDaAgua}`;
+      const partidaDosAneis = this.ponte.atual;
+      estado.trabalhoDosAneisNoQuadro = 0;
+      if (chaveDosAneis !== ultimoQuadroDosAneis || partidaDosAneis !== estadoDosAneis) {
+        ultimoQuadroDosAneis = chaveDosAneis;
+        estadoDosAneis = partidaDosAneis;
+        estado.trabalhoDosAneisNoQuadro = 1;
+        const aneis = aneisDaAgua(dadosDosAneis, tickDaAgua, alfaDosAneis, {
+          x: vistaDaAgua.x / tilePx, y: vistaDaAgua.y / tilePx,
+          largura: vistaDaAgua.width / tilePx, altura: vistaDaAgua.height / tilePx,
+          larguraMapa: largura, alturaMapa: altura,
+        }, (gx, gy) => terrenoDeRender.tipos[terrenoDeRender.codigos[gy * largura + gx] ?? -1] === 'agua',
+        partidaDosAneis ? pescadoresNaAgua(partidaDosAneis) : []);
+        estado.aneisDaAgua = aneis;
+        poolDosAneis.forEach((grafico, indice) => {
+          const anel = aneis[indice];
+          if (!anel) { grafico.setVisible(false); return; }
+          grafico.clear().setPosition((anel.gx + 0.5) * tilePx, (anel.gy + 0.5) * tilePx).setVisible(true);
+          grafico.lineStyle(dadosDosAneis.espessuraPx, Number.parseInt(dadosDosAneis.cor.slice(1), 16), anel.opacidade);
+          grafico.strokeCircle(0, 0, anel.raio * tilePx);
+        });
       }
       const alfaDaPoeira = this.relogio.alfa();
     const chaveDaPoeira = `${tickDaAgua},${alfaDaPoeira},${chaveDaVistaDaAgua}`;

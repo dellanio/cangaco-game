@@ -1,3 +1,4 @@
+import type { AnelDaAgua } from './agua-peixe';
 /**
  * Contrato de depuracao publicado em `window` pela cena. Existe para o
  * runner de screenshot (Playwright) afirmar sobre o estado do app — "o mouse
@@ -242,6 +243,9 @@ export interface EstadoDebug {
   rajadaNaVista: number;
   /** Total de objetos da camada criados desde o inicio. */
   poolDaPoeira: number;
+  aneisDaAgua: readonly AnelDaAgua[];
+  poolDosAneis: number;
+  trabalhoDosAneisNoQuadro: number;
   /** Particulas visiveis da chamine, por id de predio, em tiles de mundo. */
   fumacaPorPredio: Readonly<Record<string, readonly ParticulaDaFumaca[]>>;
   poolDaFumaca: number;
@@ -436,6 +440,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     terrenoVisivel: {},
     variantesDaAguaVisivel: {},
     celulasDaAguaTrocadas: 0,
+    aneisDaAgua: [], poolDosAneis: 0, trabalhoDosAneisNoQuadro: 0,
     poeiraDesenhada: [],
     rajadaNaVista: 0,
     poolDaPoeira: 0,

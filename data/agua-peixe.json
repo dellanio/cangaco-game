@@ -1,0 +1,12 @@
+{
+  "semente": 20261002,
+  "maximoNaVista": 16,
+  "vidaTicks": 12,
+  "intervaloDoPeixeTicks": 100,
+  "intervaloDoPescadorTicks": 8,
+  "raioInicialTiles": 0.04,
+  "raioFinalTiles": 0.35,
+  "opacidadeInicial": 0.65,
+  "espessuraPx": 1,
+  "cor": "#d5e6dd"
+}
