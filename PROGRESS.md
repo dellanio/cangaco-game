@@ -17545,3 +17545,29 @@ A ponte publica especie e angulo por arvore. No tick 1 capturado: maior angulo a
     `D-TELA-CUSTO-DO-QUADRO`, rodado aqui, deu `recursosVarridosPorQuadro` 0 com o jogo pausado e
     1 095 com os ticks andando, nas duas vistas. Os testes do portão, do cacto, do chão e da
     padaria deram 49/49.
+
+## 2026-10-02 — D-TELA-AGUA-PEIXE (anel do peixe e do pescador), pelo Codex
+
+### Implementado
+- `src/render/agua-peixe.ts`: funcao pura `aneisDaAgua`, nascimento do peixe por hash da semente, raio crescente e opacidade decrescente, agua da vista e teto. O leitor `pescadoresNaAgua` resolve `fisherman` em `colhendo` por `fsmData.tarefa` -> JobBoard -> `origemTile`, sem escrever no estado.
+- `data/agua-peixe.json`, registro em `ARQUIVOS_DA_INTERFACE` e regra `interface/agua-peixe` com reprovacao por campo no teste.
+- `WorldScene.ts`: pool proprio de 16 Graphics, depth 0.3 (acima da borda 0.2 e abaixo das unidades), reaproveitado e condicionado a tick/alfa/vista ou troca da partida. Ponte publica aneis, tamanho do pool e contador de trabalho por quadro. A variante da agua viva nao foi alterada.
+- Teste monta pela sim a partida do pescador e grava a fixture em `CANGACO_EVIDENCIA_DIR` (padrao `test-output`), separando a corrida transladada. O roteiro captura peixe em duas partidas e o pescador na margem.
+
+### Verificado
+- Branch atualizada por rebase sobre `main` 6317c42 antes do codigo; aceite 7163e21 presente e intocado.
+- Typecheck e lint: saida 0. `validate:data`: 20 arquivos, 0 erros.
+- Testes diretos pela trava: `D-TELA-AGUA-PEIXE`, `D-TELA-AGUA-VIVA`, `F-SPR-carregamento` e `F17f-manifesto`: 4 arquivos, 43 testes passaram, saida 0. Log: `test-output/D-TELA-AGUA-PEIXE-diretos.log`.
+- Evidencia pura: 800 ticks, 96 com peixe (fracao 0.12), maximo observado 3 aneis, teto configurado 16; toda janela deslizante de 400 ticks testada tem peixe. `test-output/D-TELA-AGUA-PEIXE.json`.
+- `D-TELA-AGUA-PEIXE`: saida 0, tres capturas abertas. Peixe no tick 46, mesmo SHA-256 nas duas corridas: `0e6f313b68dcc7f064993b89d8d3f9f3f03100c016c2ff92fb879143fec17396`. Pescador abre anel no alvo (29,24). Pool 16; trabalho com jogo pausado e camera parada 0. Passo despausado executado.
+- Nao-regressao: `D-TELA-AGUA-VIVA` (2 capturas), `F-T4a` (2), `D-TELA-POEIRA-AMBIENTE` (3) e `ARTE-VILA` (9): todos saida 0. Agua viva confere as variantes contra a funcao pura.
+- `git diff main -- src/sim` vazio. `test-results.json`, `.claude/`, `AGENTS.md` e o aceite nao foram alterados.
+
+### Bloqueio confirmado e limites da entrega
+- `verify:rapido`: saida 1, 20 arquivos passaram e 1 reprovou; 352 testes passaram, 1 reprovou. Log: `test-output/D-TELA-AGUA-PEIXE-verify-rapido.log`.
+- `npm run verify`: saida 1 na etapa `test`, depois de typecheck, lint e validate:data verdes; 232 arquivos passaram e 1 reprovou; 2240 testes passaram, 1 reprovou. A etapa transladada nao foi executada e o selo completo nao foi criado. Log: `test-output/D-TELA-AGUA-PEIXE-verify.log`.
+- Falha em `tests/D-TELA-FUMACA-DA-PADARIA.test.ts:70`: exige somente `bakery`, mas o manifesto ja presente na `main` contem `bakery`, `metallurgists`, `iron_smithy`, `weapon_smithy` e `armor_smithy` com ancora de fumaca. `git diff main -- assets/manifest.json tests/D-TELA-FUMACA-DA-PADARIA.test.ts` vazio confirma que os dois arquivos nao foram mudados neste item. A correcao desse contrato fica fora do escopo autorizado; nao foi improvisada nem afrouxada a verificacao.
+- Implementacao commitada na branch para revisao. Merge ff na main NAO feito, porque as regras exigem verify:rapido verde. Sem push. Item nao marcado aprovado.
+
+### Hipoteses
+- Nenhuma hipotese tratada como prova de aceite; a transladada e o merge permanecem sem verificacao/conclusao por causa do bloqueio acima.
