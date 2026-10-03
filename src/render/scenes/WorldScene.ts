@@ -1,3 +1,5 @@
+import dadosDaBandeira from '../../../data/bandeira.json';
+import { panoDaBandeira } from '../bandeira';
 // A cena so le o estado (aqui, so gameData/tema e o GameState via ponte) e
 // desenha. Nada de logica de jogo (CLAUDE.md §10): nenhuma decisao de regra
 // mora aqui, so apresentacao.
@@ -178,6 +180,10 @@ export class WorldScene extends Phaser.Scene {
    *  como `recursosDesenhados`: a verdade continua em `state.recursos`. */
   private readonly vegetacaoDesenhada = new Map<string, Phaser.GameObjects.Image>();
   private ventoLigado = true;
+  private readonly panosDasBandeiras = new Map<string, {
+    pano: Phaser.GameObjects.Polygon; mastro: Phaser.GameObjects.Rectangle; gx: number; gy: number;
+    quadro: { tick: number; alfa: number; vista: string } | null;
+  }>();
   private ultimoQuadroDoVento: { tick: number; alfa: number; vista: string } | null = null;
   private vegetacaoNova = true;
   private readonly ultimoTickDaVegetacao = new Map<string, number>();
@@ -709,6 +715,7 @@ export class WorldScene extends Phaser.Scene {
       estado.estagiosDasCulturas = Object.fromEntries(this.estagioDesenhado);
       estado.pronto = true;
       if (this.ponte.atual) this.atualizarPredios(this.ponte.atual, tilePx, estado);
+      estado.bandeirasRedesenhadas = this.atualizarBandeiras(tilePx);
       this.atualizarFumaca(estado, tilePx);
 
       // Ferramenta ativa -> a planta pergunta canPlace e pinta; sem ferramenta
@@ -1801,6 +1808,7 @@ export class WorldScene extends Phaser.Scene {
       if (!vivos.has(id)) {
         item.objeto.destroy();
         this.desenhados.delete(id);
+        this.panosDasBandeiras.delete(id);
       }
     }
     const porEstagio = contagemDeEstagios();
@@ -1965,6 +1973,10 @@ export class WorldScene extends Phaser.Scene {
       const existente = this.desenhados.get(id);
       if (existente && existente.estado === predio.estado && existente.estagio === estagio
         && existente.assinatura === assinatura) continue;
+      const bandeiraExistente = this.panosDasBandeiras.get(id);
+      if (bandeiraExistente && existente) {
+        existente.objeto.remove([bandeiraExistente.mastro, bandeiraExistente.pano]);
+      }
       existente?.objeto.destroy();
       this.desenhados.set(id, {
         estado: predio.estado, estagio, assinatura,
@@ -2067,13 +2079,52 @@ export class WorldScene extends Phaser.Scene {
   /** C-IA-03c — a bandeira do bando no canto do lote: um mastro e um pano na cor do lado
    *  (`corDoBando`, do tema). Sem ela o predio inimigo e identico ao do jogador. */
   private desenharBandeira(
-    lado: number, tilePx: number, contato: { readonly x: number; readonly y: number } = { x: 4, y: 4 },
+    predio: Predio, tilePx: number, contato: { readonly x: number; readonly y: number } = { x: 4, y: 4 },
   ): Phaser.GameObjects.GameObject[] {
     const altura = tilePx * 0.6;
+    const existente = this.panosDasBandeiras.get(predio.id);
+    if (existente) {
+      existente.mastro.setPosition(contato.x, contato.y - altura);
+      existente.pano.setPosition(contato.x + 3, contato.y - altura);
+      existente.pano.setFillStyle(cor(corDoBando(predio.lado)), 1);
+      existente.gx = predio.gx;
+      existente.gy = predio.gy;
+      existente.quadro = null;
+      return [existente.mastro, existente.pano];
+    }
     const mastro = this.add.rectangle(contato.x, contato.y - altura, 3, altura, cor(temaSertao.paleta.madeira), 1).setOrigin(0, 0);
-    const pano = this.add.rectangle(contato.x + 3, contato.y - altura, tilePx * 0.35, tilePx * 0.22, cor(corDoBando(lado)), 1).setOrigin(0, 0);
+    const pontos = panoDaBandeira(dadosDoVento, {
+      ...dadosDaBandeira, larguraPx: tilePx * 0.35, alturaPx: tilePx * 0.22,
+    }, this.ponte.atual?.tick ?? 0, this.relogio.alfa(), predio.gx, predio.gy);
+    const pano = this.add.polygon(contato.x + 3, contato.y - altura, pontos, cor(corDoBando(predio.lado)), 1).setOrigin(0, 0);
+    this.panosDasBandeiras.set(predio.id, { pano, mastro, gx: predio.gx, gy: predio.gy, quadro: null });
     pano.setStrokeStyle(1, cor(temaSertao.paleta.madeira));
     return [mastro, pano];
+  }
+
+  private atualizarBandeiras(tilePx: number): number {
+    const vista = this.cameras.main.worldView;
+    const quadro = { tick: this.ponte.atual?.tick ?? 0, alfa: this.relogio.alfa(),
+      vista: `${vista.x},${vista.y},${vista.width},${vista.height}` };
+    let redesenhadas = 0;
+    for (const memoria of this.panosDasBandeiras.values()) {
+      if (!quadroDoVentoMudou(memoria.quadro, quadro, false)) continue;
+      const pai = memoria.pano.parentContainer;
+      if (!pai) continue;
+      const x = pai.x + memoria.pano.x;
+      const y = pai.y + memoria.pano.y;
+      const margem = dadosDaBandeira.amplitudeMaximaPx;
+      if (x > vista.right || x + tilePx * 0.35 < vista.x ||
+        y - margem > vista.bottom || y + tilePx * 0.22 + margem < vista.y) continue;
+      const pontos = panoDaBandeira(dadosDoVento, {
+        ...dadosDaBandeira, larguraPx: tilePx * 0.35, alturaPx: tilePx * 0.22,
+      }, quadro.tick, quadro.alfa, memoria.gx, memoria.gy);
+      // Mantem o objeto Phaser e suas cores/tint; troca apenas a geometria.
+      memoria.pano.setTo(pontos);
+      memoria.quadro = quadro;
+      redesenhadas += 1;
+    }
+    return redesenhadas;
   }
 
   /** D-TELA-07 — a placa de pausado no alto do corpo: duas barras e a palavra do tema, na
@@ -2141,7 +2192,7 @@ export class WorldScene extends Phaser.Scene {
       ...this.desenharAnimais(animais, quadroAnimal, caixa, tilePx),
       ...this.desenharPilhas(pilhas, caixa, tilePx),
       ...this.desenharMedidor(linhas, larguraPx, alturaPx, canteiro === null || canteiro.nivelada),
-      ...this.desenharBandeira(predio.lado, tilePx, contatoDaBandeira),
+      ...this.desenharBandeira(predio, tilePx, contatoDaBandeira),
       ...this.desenharSinalDePausado(predio, caixa, tilePx),
     ]);
     container.setDepth(depthDeY(canto.y + alturaPx));

@@ -37,7 +37,7 @@ const PREFIXO_DE_MAPA = 'maps/';
 // data-rules.js, contra os arquivos de jogo (o menu aponta ids de buildings).
 // `relevo` (D-TERRENO-ALTURA): numeros do relevo SO DE RENDER. O gerador de mapa e o render o leem;
 // sim/ nao. Validado por `validarRelevo`, dentro de `validarInterface`.
-const ARQUIVOS_DA_INTERFACE = ['theme-sertao', 'menu-build', 'relevo', 'vento', 'agua', 'agua-peixe', 'poeira', 'fumaca', 'animacao-unidade'];
+const ARQUIVOS_DA_INTERFACE = ['theme-sertao', 'menu-build', 'relevo', 'vento', 'agua', 'agua-peixe', 'poeira', 'fumaca', 'animacao-unidade', 'bandeira'];
 
 // Campos numericos cujo valor depende de escalas.<grupo> e por isso precisa
 // virar tick inteiro (ou ticksPorTile/ticksPorUnidade) no carregamento.

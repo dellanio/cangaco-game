@@ -12,6 +12,18 @@ const {
 } = require('./data-schema');
 const manifestoDeAssets = require('../assets/manifest.json');
 
+function validarBandeira(bandeira, erros) {
+  const e = (msg) => erros.push(`interface/bandeira: ${msg}`);
+  if (!bandeira || typeof bandeira !== 'object' || Array.isArray(bandeira)) {
+    e('data/bandeira.json precisa existir e ser objeto');
+    return;
+  }
+  if (!Number.isInteger(bandeira.segmentos) || bandeira.segmentos < 2) e('segmentos precisa ser inteiro >= 2');
+  for (const campo of ['amplitudeMaximaPx', 'comprimentoDeOndaPx', 'velocidadePxPorTick']) {
+    if (!Number.isFinite(bandeira[campo]) || bandeira[campo] <= 0) e(`${campo} precisa ser > 0`);
+  }
+}
+
 function validarVento(vento, erros, manifesto = manifestoDeAssets) {
   const e = (msg) => erros.push(`interface/vento: ${msg}`);
   if (!vento || typeof vento !== 'object' || Array.isArray(vento)) {
@@ -1706,6 +1718,7 @@ function validarInterface(dados, interfaceUi) {
   const tema = interfaceUi && interfaceUi['theme-sertao'];
   validarRotulosDeModo(dados, tema, erros);
   validarRelevo(dados, interfaceUi && interfaceUi.relevo, erros);
+  validarBandeira(interfaceUi && interfaceUi.bandeira, erros);
   validarVento(interfaceUi && interfaceUi.vento, erros);
   validarAguaPeixe(interfaceUi && interfaceUi['agua-peixe'], erros);
   validarPoeira(interfaceUi && interfaceUi.poeira, erros);
@@ -1796,4 +1809,4 @@ function validarTudo(dados) {
   return erros;
 }
 
-module.exports = { validarFumaca, validarTudo, validarInterface, validarVento, validarPoeira, getByPath };
+module.exports = { validarBandeira, validarFumaca, validarTudo, validarInterface, validarVento, validarPoeira, getByPath };

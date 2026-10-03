@@ -297,6 +297,8 @@ export interface EstadoDebug {
   /** F-SPR — quantos sprites de vegetacao a cena tem de pe agora (mapa inteiro). */
   vegetacaoRenderizada: number;
   rochasRenderizadas: number;
+  /** D-ARTE-BANDEIRA-FACCAO — panos atualizados neste quadro. */
+  bandeirasRedesenhadas: number;
   /** D-TELA-VENTO-VEGETACAO — sprites atualizados pelo vento neste quadro. */
   vegetacaoBalancando: number;
   /** Tick em que cada arvore da vista recebeu a ultima rotacao. */
@@ -471,6 +473,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     arteDasCamadas: { terreno: [], recurso: [], vegetacao: [] },
     vegetacaoRenderizada: 0,
     rochasRenderizadas: 0,
+    bandeirasRedesenhadas: 0,
     vegetacaoBalancando: 0,
     ticksDaVegetacaoNaVista: {},
     arvoresDoVentoNaVista: {},
