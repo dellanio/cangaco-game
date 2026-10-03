@@ -243,11 +243,15 @@ const painelDoArquivo = montarArquivo(
   },
   () => {
     const resultado = arquivo.carregar();
-    if (resultado.ok) selecao.selecionar(null);
+    if (resultado.ok) {
+      jogo.reiniciarApresentacao();
+      selecao.selecionar(null);
+    }
     painelDoArquivo.mostrar(resultado);
   },
   () => {
     // C-IA-03c: a escaramuca do comeco, no lugar da partida em curso
+    jogo.reiniciarApresentacao();
     sessao.substituir(criarEscaramuca(SEMENTE));
     selecao.selecionar(null);
     selecaoMilitar.limpar();

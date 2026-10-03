@@ -55,7 +55,7 @@ esta leva valem a reconciliação acima e os aceites abaixo.
 ## Fronteira e decisões herdadas
 
 - Escopo de código: `src/render/`, entrada de depuração em `src/inicio.ts`,
-  ferramentas de fixtures, testes e roteiros. Emenda de 2026-10-03, ap?s o operador mandar prosseguir: `src/main.ts` pode apenas sinalizar ao render load bem-sucedido e nova escaramu?a, usando os callbacks existentes. `data/animacao-unidade.json` é
+  ferramentas de fixtures, testes e roteiros. Emenda de 2026-10-03, após o operador mandar prosseguir: `src/main.ts` pode apenas sinalizar ao render load bem-sucedido e nova escaramuça, usando os callbacks existentes. `data/animacao-unidade.json` é
   interface; alterações exigem schema e casos que reprovam no funil real.
 - Não escrever em `src/sim/`, `src/sessao.ts`, `src/laco.ts`, dados da sim,
   `assets/manifest.json`, `assets/base/` ou `assets/sprites/`. Sem dependência nova.

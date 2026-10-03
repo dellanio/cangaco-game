@@ -140,6 +140,7 @@ export interface UnidadeRenderizada {
 }
 
 export interface CamadaDeUnidades {
+  invalidar(): void;
   readonly animacoesTrabalhadas: number;
   /** `alfa`: fracao do tick em curso (`Laco.alfa()`), em [0, 1]. */
   atualizar(estado: GameState | null, alfa: number): readonly UnidadeRenderizada[];
@@ -198,6 +199,7 @@ export function criarCamadaDeUnidades(
   cena: Phaser.Scene, tilePx: number,
   /** D-TELA-LUZ-RELEVO — a luz do relevo, ou `null` (o padrao): o tint segue a posicao do pe. */
   luz: LuzDoRelevo | null = null,
+  identidadePartida: () => number = () => 0,
 ): CamadaDeUnidades {
   const desenhados = new Map<string, Desenhado>();
   const memoria = criarMemoriaDePosicoes();
@@ -206,6 +208,7 @@ export function criarCamadaDeUnidades(
   const manifestoAnimado = mesclarManifestos(manifestoDoJogo, depuracao ? depuracaoRegistrada()?.manifesto : undefined);
   let ultimaChaveAnimada = '';
   let animacoesTrabalhadas = 0;
+  let identidade = identidadePartida();
 
   function criar(tipo: string, ladoDaUnidade: number): Desenhado {
     const ehSerf = tipo === 'serf';
@@ -328,9 +331,15 @@ export function criarCamadaDeUnidades(
   }
 
   return {
+    invalidar(){ultimaChaveAnimada='';},
     get animacoesTrabalhadas() { return animacoesTrabalhadas; },
     atualizar(estado, alfa) {
       if (estado === null) return [];
+      if(identidade!==identidadePartida()) {
+        identidade=identidadePartida();ultimaChaveAnimada='';
+        for(const [id,item] of desenhados) {item.container.destroy();item.nome.destroy();memoria.esquecer(id);}
+        desenhados.clear();
+      }
       const vista = cena.cameras.main.worldView;
       const chave = `${estado.tick},${alfa},${vista.x},${vista.y},${vista.width},${vista.height}`;
       const mudouAnimacao = chave !== ultimaChaveAnimada;

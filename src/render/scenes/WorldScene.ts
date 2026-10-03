@@ -69,6 +69,8 @@ import { depuracaoDeUnidade, spriteDoAtlas } from '../animacao-de-unidade';
 import { DIRECOES } from '../manifesto';
 import { peDoSprite } from '../pe-do-sprite';
 import { memoriaDeTexturas } from '../memoria-de-texturas';
+import { criarCargaDeUnidades, pedidosDeUnidade, tiposPresentes } from '../carregamento-de-unidades';
+import { urlsDeSprites } from '../sprites-urls';
 import { posicaoDoProjetil } from '../projeteis';
 import {
   assetDaCamada, assetDoPredio, arquivoDoEstagio, chaveDaTextura, chaveDeTextura, desenhoDoRecurso, temParDeRevelacao,
@@ -332,11 +334,14 @@ export class WorldScene extends Phaser.Scene {
 
   preload(): void {
     const depuracao = depuracaoRegistrada();
+    const tipos = tiposPresentes(this.ponte.atual);
     if (depuracao && depuracaoDeUnidade(window.location.search)) {
-      for (const a of depuracao.atlases ?? [depuracao.atlas]) this.load.atlas(a.chave, a.url, a.dados);
+      for (const a of depuracao.atlases ?? [depuracao.atlas]) {
+        if([...tipos].some((id)=>a.chave===`unidade:${id}:atlas`)) this.load.atlas(a.chave, a.url, a.dados);
+      }
     }
-    for (const a of atlasesParaCarregar()) this.load.atlas(a.chave, a.url, a.dados);
-    for (const textura of texturasParaCarregar(manifestoDoJogo, undefined, this.prediosSemArte)) {
+    for (const a of atlasesParaCarregar()) if([...tipos].some((id)=>a.chave===`unidade:${id}:atlas`)) this.load.atlas(a.chave, a.url, a.dados);
+    for (const textura of texturasParaCarregar(manifestoDoJogo, undefined, this.prediosSemArte, tipos)) {
       this.load.image(textura.chave, textura.url);
     }
     // D-TELA-03a/03b: os icones de mercadoria, para a carga do serf e a pilha sem PNG
@@ -439,7 +444,18 @@ export class WorldScene extends Phaser.Scene {
     const previaDeEstrada = criarPreviaDeEstrada(this, tilePx);
     const camadaDeCampos = criarCamadaDeCampos(this, tilePx);
     const previaDeCampo = criarPreviaDeCampo(this, tilePx);
-    const camadaDeUnidades = criarCamadaDeUnidades(this, tilePx, this.luz);
+    const camadaDeUnidades = criarCamadaDeUnidades(this, tilePx, this.luz, ()=>this.ponte.identidadePartida ?? 0);
+    const carga=criarCargaDeUnidades((chave)=>this.textures.exists(chave),(p)=>{
+      if(p.dados) this.load.atlas(p.chave,p.url,p.dados); else this.load.image(p.chave,p.url);
+    });
+    const concluiu=(chave:string)=>{if(this.textures.exists(chave)) {carga.concluir(chave);camadaDeUnidades.invalidar();}};
+    const falhou=(arquivo:{key:string})=>carga.falhar(arquivo.key);
+    this.load.on('filecomplete',concluiu);this.load.on('loaderror',falhou);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN,()=>{this.load.off('filecomplete',concluiu);this.load.off('loaderror',falhou);});
+    const dep=depuracaoRegistrada();
+    const atlasesDisponiveis=[...atlasesParaCarregar(),...(dep?.atlases ?? [])];
+    let estadoDaCarga: GameState | null | undefined;
+    let partidaDaCarga = -1;
     // F26b: o anel dos selecionados e a caixa ficam ACIMA de tudo do mundo
     const marcasDeSelecao = this.add.graphics().setDepth(PROFUNDIDADE_DA_SELECAO);
     const caixaDeSelecao = this.add.graphics().setDepth(PROFUNDIDADE_DA_SELECAO);
@@ -751,6 +767,13 @@ export class WorldScene extends Phaser.Scene {
       // F13b: a fila de treino, crua, para o roteiro afirmar sobre o ESTADO e nao
       // sobre o que o painel escreveu. Leitura, como todo o resto daqui.
       estado.filaDeTreino = this.ponte.atual?.treino ?? {};
+      if (estadoDaCarga !== this.ponte.atual || partidaDaCarga !== this.ponte.identidadePartida) {
+        estadoDaCarga = this.ponte.atual;
+        partidaDaCarga = this.ponte.identidadePartida ?? 0;
+        const novos = carga.solicitar(pedidosDeUnidade(manifestoDoJogo, tiposPresentes(estadoDaCarga), urlsDeSprites, atlasesDisponiveis));
+        if (novos > 0 && !this.load.isLoading()) this.load.start();
+      }
+      estado.cargasDeUnidade=carga.estados;
       estado.unidadesRenderizadas = camadaDeUnidades.atualizar(this.ponte.atual, this.relogio.alfa());
       estado.animacoesDeUnidadeTrabalhadas = camadaDeUnidades.animacoesTrabalhadas;
       // F26b: o acerto do proximo clique mira ESTE desenho

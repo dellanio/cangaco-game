@@ -17,6 +17,7 @@ import type { SelecaoMilitar } from '../input/selecao-militar';
 import type { Tile } from './grid';
 
 export interface JogoLigado {
+  reiniciarApresentacao(): void;
   readonly jogo: Phaser.Game;
   /** Entrega o estado mais recente para a cena desenhar. Nao guarda
    *  referencia aqui: so escreve na ponte (render/ponte.ts). */
@@ -61,6 +62,7 @@ export function iniciarJogo(
     scene: [cena],
   });
   return {
+    reiniciarApresentacao() { ponte.reiniciar?.(); },
     jogo,
     atualizar(estado) {
       ponte.atual = estado;

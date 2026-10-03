@@ -132,6 +132,7 @@ export interface RelevoNoDebug {
 }
 
 export interface EstadoDebug {
+  cargasDeUnidade: Readonly<Record<string,{readonly estado:string;readonly pedidos:number}>>;
   /** O renderizador ativo: `tipo` e `game.renderer.type`, `webgl` e `Phaser.WEBGL`. O
    *  roteiro compara os dois sem importar o Phaser. */
   renderizador: { readonly tipo: number; readonly webgl: number };
@@ -500,6 +501,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     tick: 0,
     filaDeTreino: {},
     unidadesRenderizadas: [],
+    cargasDeUnidade: {},
     animacoesDeUnidadeTrabalhadas: 0,
     pesDosQuadrosDoSerf: [],
     mostrarViradaDoSerf: () => undefined,

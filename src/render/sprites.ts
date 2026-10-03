@@ -50,9 +50,11 @@ export function texturasParaCarregar(
   manifesto: Manifesto = manifestoDoJogo,
   urls: Readonly<Record<string, string>> = urlsDeSprites,
   prediosSemArte: ReadonlySet<string> = new Set(),
+  tiposPresentes?: ReadonlySet<string>,
 ): TexturaParaCarregar[] {
   const fila: TexturaParaCarregar[] = [];
   for (const entrada of manifesto.assets) {
+    if (entrada.tipo === 'unidade' && tiposPresentes && !tiposPresentes.has(entrada.id)) continue;
     if (entrada.tipo === 'predio' && prediosSemArte.has(entrada.id)) continue;
     for (const [estado, rel] of Object.entries(entrada.estados)) {
       const url = urls[rel];

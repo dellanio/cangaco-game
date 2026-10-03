@@ -15,8 +15,18 @@ import type { GameState } from '../sim/state';
 
 export interface PonteDeEstado {
   atual: GameState | null;
+  readonly identidadePartida?: number;
+  reiniciar?(): void;
 }
 
 export function criarPonte(): PonteDeEstado {
-  return { atual: null };
+  let atual: GameState | null = null, identidade = 0;
+  return {
+    get atual() { return atual; },
+    set atual(novo: GameState | null) {
+      atual = novo;
+    },
+    get identidadePartida() { return identidade; },
+    reiniciar() { identidade++; },
+  };
 }

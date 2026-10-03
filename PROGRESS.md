@@ -18144,3 +18144,14 @@ Luminância = 0,2126 R + 0,7152 G + 0,0722 B; desvio populacional de todos os pi
   espelho de arma e escudo; não iniciar 05c antes dela. 05d é independente.
 - Nenhum código/dado de sim alterado, sem arte final, sem push; não marcar
   `test-results.json`. Evidências em `test-output/D-TELA-05b*.json` e screenshots.
+
+
+## 2026-10-03 - D-TELA-05d: carga inicial e tardia de unidades
+
+- Autorizacao do operador para prosseguir apos o impedimento: aceite de integracao minima em `main.ts` registrado separadamente em `6b293a8`. Load bem-sucedido e nova escaramuca incrementam uma identidade explicita do render; nada deduzido de tick, ids ou semente. Sessao, laco e sim permanecem intactos.
+- Preload limita unidades aos tipos presentes (ambos os lados, inclusive escondidas); demais categorias mantem sua carga. Fila tardia deduplica chaves, registra carregada/em-curso/falhou e nao repete falha por quadro. Planejamento reavaliado por estado/partida. Textura pronta invalida o desenho mesmo pausado no mesmo tick.
+- Testes de planner, fila, falha, identidade e treino real: `tests/D-TELA-05d.test.ts`, 4 testes aprovados. Saves do treino produzidos pelo teste, sem comando de render simulando treino. Teste de tipos inclui unidade escondida do outro lado.
+- Roteiro `D-TELA-05d` passou: treino pelo painel despausado; zero PNG militar inicial; uma carga no treino; fallback enquanto PNG aguarda; frame animado no mesmo tick pausado; delta RGBA8 de 2.949.120 bytes. Nova cena faz uma nova carga; resposta da partida anterior nao recria soldado removido. Duas capturas abertas e inspecionadas. Evidencias: `test-output/D-TELA-05d*.json` e `screenshots/D-TELA-05d-*`.
+- Nao-regressao: roteiros D-TELA-05b, D-TELA-04b/c/d/e, F-SPR, D-TELA-03, C-TELA-03, C-COMBATE-01c, F-T3 e F23b, todos com saida 0. Verificacao rapida passou com 682 testes, incluindo o teste ampliado de unidade escondida.
+- D-TELA-05c (ataque, trabalho e morte) ainda nao iniciada: portao P exige revisao do espelho da arma/escudo pelo operador. Pergunta enviada com captura do piloto; sem resposta ate aqui. Nao foi registrado aceite visual por inferencia.
+- Sem alteracoes em sim/dados/arte real/test-results.json, sem push. Leva nao declarada fechada; verificacao completa de encerramento e reportada separadamente.
