@@ -25,3 +25,7 @@ const modulos = import.meta.glob('../../assets/sprites/**/*.png', {
 export const urlsDeSprites: Readonly<Record<string, string>> = Object.fromEntries(
   Object.entries(modulos).map(([chave, url]) => [chave.replace('../../assets/', ''), url]),
 );
+const atlases = import.meta.glob('../../assets/sprites/**/*.json', { eager: true, import: 'default' }) as Record<string, object>;
+export const dadosDosAtlases: Readonly<Record<string, object>> = Object.fromEntries(
+  Object.entries(atlases).map(([caminho, dado]) => [caminho.replace('../../assets/', ''), dado]),
+);

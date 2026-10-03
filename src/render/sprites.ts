@@ -7,7 +7,8 @@
 import manifestoJson from '../../assets/manifest.json';
 import type { Manifesto } from './manifesto';
 import { chaveDeTextura } from './manifesto';
-import { urlsDeSprites } from './sprites-urls';
+import { urlsDeSprites, dadosDosAtlases } from './sprites-urls';
+import { chaveDoAtlas } from './animacao-de-unidade';
 import { chaveDoIcone, entradasDosIcones } from './icone-da-mercadoria';
 import type { IconesDeMercadoria } from './icone-da-mercadoria';
 
@@ -22,6 +23,20 @@ export const manifestoDoJogo = manifestoJson as unknown as Manifesto;
 export interface TexturaParaCarregar {
   readonly chave: string;
   readonly url: string;
+}
+export interface AtlasParaCarregar extends TexturaParaCarregar { readonly dados: object }
+export function atlasesParaCarregar(manifesto: Manifesto = manifestoDoJogo,
+  urls: Readonly<Record<string,string>> = urlsDeSprites,
+  dados: Readonly<Record<string,object>> = dadosDosAtlases): AtlasParaCarregar[] {
+  return manifesto.assets.flatMap((a) => {
+    if (a.tipo !== 'unidade' || !a.atlas || !dados[a.atlas]) return [];
+    const atlas = dados[a.atlas] as { meta?: { image?: string } };
+    const image = atlas.meta?.image;
+    if (!image || image.includes('..') || image.includes('/') || image.includes('\\')) return [];
+    const caminho = a.atlas.slice(0, a.atlas.lastIndexOf('/') + 1) + image;
+    const url = urls[caminho];
+    return url ? [{ chave: chaveDoAtlas(a.id), url, dados: dados[a.atlas]! }] : [];
+  });
 }
 
 /** O que o `preload()` da cena tem de enfileirar: so o que o manifesto declara

@@ -79,7 +79,7 @@ import {
   ALFA_DO_ESTAGIO, escalaDoPlaceholder, especiesDaVegetacao, estadoDeCrescimento, estagioDaCultura,
   type EstadoDeCrescimento, type EstagioDaCultura,
 } from '../crescimento';
-import { iconesDoJogo, manifestoDoJogo, prediosSemArteDaBusca, texturasDosIcones, texturasParaCarregar } from '../sprites';
+import { iconesDoJogo, manifestoDoJogo, prediosSemArteDaBusca, texturasDosIcones, texturasParaCarregar, atlasesParaCarregar } from '../sprites';
 import { COR_DA_PLACA_DO_ICONE, fonteDaPilha } from '../icone-da-mercadoria';
 import type { FonteDaPilha } from '../icone-da-mercadoria';
 import { escalaDoSprite, regraDeLarguraDoManifesto, regraDoManifesto } from '../escala-predio';
@@ -333,9 +333,9 @@ export class WorldScene extends Phaser.Scene {
   preload(): void {
     const depuracao = depuracaoRegistrada();
     if (depuracao && depuracaoDeUnidade(window.location.search)) {
-      const atlasDeDepuracao = depuracao.atlas;
-      this.load.atlas(atlasDeDepuracao.chave, atlasDeDepuracao.url, atlasDeDepuracao.dados);
+      for (const a of depuracao.atlases ?? [depuracao.atlas]) this.load.atlas(a.chave, a.url, a.dados);
     }
+    for (const a of atlasesParaCarregar()) this.load.atlas(a.chave, a.url, a.dados);
     for (const textura of texturasParaCarregar(manifestoDoJogo, undefined, this.prediosSemArte)) {
       this.load.image(textura.chave, textura.url);
     }

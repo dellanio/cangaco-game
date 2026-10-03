@@ -22,8 +22,19 @@ export function somarDistancia(
   return distancia > saltoMaximo ? acumulada : acumulada + distancia;
 }
 export function depuracaoDeUnidade(busca: string): boolean {
-  const parametros = new URLSearchParams(busca);
-  return parametros.has('depuracao') || parametros.get('vitrine') === 'serf';
+  return tiposDeDepuracao(busca).length > 0;
+}
+export function tiposDeDepuracao(busca: string): readonly string[] {
+  const p = new URLSearchParams(busca), vitrine = p.get('vitrine');
+  const tipos = ['serf','militia','woodcutter','laborer'];
+  if (vitrine && tipos.includes(vitrine)) return [vitrine];
+  if (!p.has('depuracao')) return [];
+  return [...new Set((p.get('depuracao') || 'serf').split(',').filter((id) => tipos.includes(id)))];
+}
+export function mesclarManifestos(real: Manifesto, depuracao?: Manifesto): Manifesto {
+  if (!depuracao) return real;
+  const ids = new Set(depuracao.assets.map((a) => a.id));
+  return { ...real, assets: [...real.assets.filter((a) => !ids.has(a.id)), ...depuracao.assets] };
 }
 export function chaveDoAtlas(id: string): string { return `unidade:${id}:atlas`; }
 export function unidadeNaVista(

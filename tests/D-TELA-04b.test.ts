@@ -56,7 +56,7 @@ describe('D-TELA-04b (animação por distância e tempo de jogo)', () => {
     }
     expect(spriteDoAtlas(manifesto, 'serf', 'andar', 's', 0, () => false)).toBeNull();
   });
-  it.each([['',false], ['?depuracao',true], ['?vitrine=serf',true], ['?vitrine=laborer',false]])('gate %s = %s', (busca, ativo) => {
+  it.each([['',false], ['?depuracao',true], ['?vitrine=serf',true], ['?vitrine=laborer',true], ['?vitrine=inventado',false]])('gate %s = %s', (busca, ativo) => {
     expect(depuracaoDeUnidade(busca)).toBe(ativo);
   });
   it('configuração só de interface, com rejeição no funil real', () => {

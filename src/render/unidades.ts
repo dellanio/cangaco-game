@@ -45,7 +45,8 @@ import { rotuloDaCarga } from './rotulo-da-carga';
 import { COR_DA_PLACA_DO_ICONE, marcaDaCarga } from './icone-da-mercadoria';
 import { corDoBando } from './cor-do-bando';
 import { direcoesDoTipo } from './direcoes-de-sprite';
-import { direcaoDoPasso, spriteDaUnidade, POSE_PARADO } from './manifesto';
+import { alvoDaDirecao } from './direcao-de-unidade';
+import { spriteDaUnidade, POSE_PARADO } from './manifesto';
 import type { Direcao } from './manifesto';
 import { iconesDoJogo, manifestoDoJogo } from './sprites';
 import { posicaoDaUnidade } from '../sim/selectors';
@@ -59,6 +60,7 @@ import { depuracaoDeUnidade, quadroDoAndar, quadroPeloTempo, somarDistancia, spr
 import { depuracaoRegistrada } from './registro-de-depuracao';
 import type { PontoEmTiles } from './interpolacao';
 import type { SpriteAnimado } from './animacao-de-unidade';
+import { mesclarManifestos } from './animacao-de-unidade';
 import { assetDaCamada } from './manifesto';
 import { peDoSprite } from './pe-do-sprite';
 import { atualizarVirada, iniciarVirada } from './virada-de-unidade';
@@ -66,6 +68,7 @@ import type { MemoriaDaVirada } from './virada-de-unidade';
 
 /** O que a camada desenhou de uma unidade, para o roteiro afirmar (`window.__cangaco`). */
 export interface UnidadeRenderizada {
+  readonly direcaoLogica?: Direcao | null;
   readonly animacao?: string;
   readonly quadro?: number;
   readonly frame?: string;
@@ -200,7 +203,7 @@ export function criarCamadaDeUnidades(
   const memoria = criarMemoriaDePosicoes();
   const lado = tilePx * LADO_DA_UNIDADE_EM_TILES;
   const depuracao = depuracaoDeUnidade(window.location.search);
-  const manifestoAnimado = depuracao ? depuracaoRegistrada()?.manifesto ?? manifestoDoJogo : manifestoDoJogo;
+  const manifestoAnimado = mesclarManifestos(manifestoDoJogo, depuracao ? depuracaoRegistrada()?.manifesto : undefined);
   let ultimaChaveAnimada = '';
   let animacoesTrabalhadas = 0;
 
@@ -350,6 +353,8 @@ export function criarCamadaDeUnidades(
         let item = desenhados.get(id);
         if (!item) {
           item = criar(unidade.tipo, unidade.lado);
+          const inicial = alvoDaDirecao(unidade.tipo, unidade.direcao, 0, 0, direcoesDoTipo(unidade.tipo));
+          if (inicial) { item.direcao = inicial; item.virada = iniciarVirada(inicial, tempoDeAnimacao(estado.tick, alfa)); }
           desenhados.set(id, item);
         }
         const posicao = posicaoDaUnidade(estado, unidade);
@@ -358,7 +363,7 @@ export function criarCamadaDeUnidades(
         const entradaAnimada = assetDaCamada(manifestoAnimado, 'unidade', unidade.tipo);
         const direcoes = direcoesDoTipo(unidade.tipo);
         if (direcoes !== null && !entradaAnimada?.atlas) {
-          item.direcao = direcaoDoPasso(posicao.gx - anterior.gx, posicao.gy - anterior.gy, direcoes) ?? item.direcao;
+          item.direcao = alvoDaDirecao(unidade.tipo, unidade.direcao, posicao.gx - anterior.gx, posicao.gy - anterior.gy, direcoes) ?? item.direcao;
         }
         const centro = gridToScreenCentro(desenhada, tilePx, ESCALA_DO_MUNDO);
         const desvio = deslocamentoDaUnidade(id, tilePx, ESCALA_DO_MUNDO);
@@ -374,7 +379,7 @@ export function criarCamadaDeUnidades(
             const salto = Math.hypot(posicao.gx - anterior.gx, posicao.gy - anterior.gy) > SALTO_MAXIMO_EM_TILES;
             item.distancia = somarDistancia(item.distancia, voltou ? null : item.ultimaPosicao, desenhada, SALTO_MAXIMO_EM_TILES, salto);
             const andando = posicao.gx !== anterior.gx || posicao.gy !== anterior.gy;
-            const alvo = direcoes === null ? null : direcaoDoPasso(posicao.gx - anterior.gx, posicao.gy - anterior.gy, direcoes);
+            const alvo = alvoDaDirecao(unidade.tipo, unidade.direcao, posicao.gx - anterior.gx, posicao.gy - anterior.gy, direcoes);
             item.virada = atualizarVirada(item.virada, alvo, tempoDeAnimacao(estado.tick, alfa), configAnimacao.passoDaViradaTicks);
             item.direcao = item.virada.visivel;
             item.animacao = andando ? 'andar' : 'parado';
@@ -416,6 +421,7 @@ export function criarCamadaDeUnidades(
           marcadorDeFome: comFome, fracaoDeCondicao: fracaoDeCondicao(unidade),
           nome: item.nome.text, larguraDoRotuloPx: item.nome.width, visivel,
           profundidadeDoNome: item.nome.depth, profundidadeDoCorpo: item.container.depth, nomeVisivel: item.nome.visible,
+          direcaoLogica: alvoDaDirecao(unidade.tipo, unidade.direcao, posicao.gx - anterior.gx, posicao.gy - anterior.gy, direcoes),
           direcao: direcoes === null ? null : item.direcao, sprite,
           ...(item.spriteAnimado && item.imagem ? {
             animacao: item.animacao, quadro: item.quadro, frame: item.imagem.frame.name,

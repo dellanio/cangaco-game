@@ -18127,3 +18127,20 @@ Luminância = 0,2126 R + 0,7152 G + 0,0722 B; desvio populacional de todos os pi
   `test-output/D-ARTE-DEPURACAO-LEVA-TRES.json`; atlas militia aberto e inspecionado.
 - Só fixtures de depuração, não arte final. Nenhum dado/código da sim ou asset
   real alterado; não marcado `test-results.json`, sem push.
+
+## 2026-10-03 — D-TELA-05b (direção militar e piloto), pelo Codex
+
+- Militares e mercenários usam direção lógica 0..7; ausente=sul. Civis mantêm
+  vetor do passo. Direção inválida reprova, sem conversão silenciosa.
+- Manifestos isolados mesclados por id; atlas reais só carregam com JSON/PNG
+  resolvidos, sem mexer no manifesto real. Vitrine e depuração selecionam tipos.
+- Piloto recém-criado já olha a direção do estado; virada em marcha preserva
+  degraus da Leva 2. Gate da 04b ampliado para laborer agora suportado,
+  com tipo desconhecido continuando recusado; nenhuma verificação desativada.
+- Testes diretos 05b/04b/04d/04e e manifesto/carregamento: saída 0. Roteiro 05b
+  passou com 3 capturas, vitrine e formação final abertas. Pé y=0, espelho e passada
+  por distância conferidos. Roteiros 04b/c/d/e passaram (piloto serf preservado).
+- Portão P enviado ao operador com a vitrine militar: aguarda avaliação do
+  espelho de arma e escudo; não iniciar 05c antes dela. 05d é independente.
+- Nenhum código/dado de sim alterado, sem arte final, sem push; não marcar
+  `test-results.json`. Evidências em `test-output/D-TELA-05b*.json` e screenshots.
