@@ -143,7 +143,8 @@ tipos presentes: isso é a D-TELA-05d.
 ## Tarefa 3 — D-TELA-05c (estados de ação)
 
 **Situação:** execução autorizada em 2026-10-03; morte definida abaixo. O portão
-P continua sendo a inspeção do piloto militar, antes da generalização.
+P aprovado pelo operador nesta sessao ("Aprovado. Isso ja esta renderizado?").
+A aprovacao libera ataque, trabalho e morte, mantendo o limite de arte de depuracao.
 
 **Ataque e trabalho — aceite proposto:**
 
