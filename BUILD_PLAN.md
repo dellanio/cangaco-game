@@ -6207,6 +6207,24 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
     normal. A asserção passa a ser mais estrita: no jogo normal, todo `frame` de serf é um quadro
     do atlas **real** (existe em `assets/sprites/units/serf/serf.json`), e nenhum é da depuração.
     Com `?depuracao`, o atlas de depuração continua vencendo, como hoje.
+  - **Emenda da revisão do operador (2026-10-03, antes do reprocessamento).** Jogando, o operador
+    reprovou o tamanho e as poses:
+    - o parado e o andar de frente e na diagonal saíram grandes demais perto do laborer;
+    - o serf olha para cima;
+    - quadros saíram na direção errada;
+    - um quadro tem a mão levantada.
+
+    O leste foi aprovado no tamanho. A troca:
+    - **uma escala só para todas as direções,** e não uma por direção. As poses foram desenhadas
+      todas na mesma escala, então um fator único mantém a proporção entre as direções. Ele é
+      calibrado para o andar do leste ficar com a altura de hoje (a mediana de 86 px);
+    - **o pé na linha 90,** como o `parado.png` do laborer e o do serf antigo (medido: a linha de
+      baixo do alfa dos dois é a 89). O aceite 2 passa a medir a distância à linha 90;
+    - **os quadros reprovados são gerados de novo,** com o prompt de cabeça reta e olhar para a
+      frente, e a direção reforçada: o parado e o andar do sul, o parado e o andar do nordeste, os
+      quadros 5 a 7 do norte, o 6 do leste e o 6 do sudeste;
+    - **o aceite ganha uma medida de tamanho:** em nenhum quadro a largura do alfa passa de 1,25 vez
+      a do laborer (42 px, logo no máximo 52 px).
   5. **Limites conhecidos, registrados e não reprovados:** a geração é quadro a quadro, então
      detalhes da roupa podem variar entre quadros (cintilação). A carga continua como ícone sobre
      o serf (D-TELA-03a).
