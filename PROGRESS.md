@@ -18508,6 +18508,11 @@ Perguntas em aberto (3)       espera      -         unidade da paz, lista da paz
 **Comportamento a conferir jogando (não é bug registrado):** o botão "Menu inicial" da ajuda volta ao
 menu sem perguntar, e o que não foi guardado se perde.
 
-**Limpeza que cabe ao operador:** a worktree irmã `C:/Users/della/orca/workspaces/cangaco-game/fase-e-shots`
-(HEAD destacado no `3893ee5`, `node_modules` por junction) existe só para os `shot:todos`. Para
-encerrá-la: `cmd //c "rmdir <worktree>\node_modules"` (só o link) e `git worktree remove`.
+**Limpeza feita:** a worktree irmã `fase-e-shots`, criada só para os `shot:todos`, foi removida no fim
+da sessão. Antes saiu o link do `node_modules`, e o `node_modules` da `main` continuou com 104
+entradas.
+
+**Para o merge:** a `main` andou durante a sessão (está em `4e65f9e`: o serf animado do ComfyUI, a
+D-ARTE-SERF-COMFYUI, de outra sessão). Esta branch saiu do `61d9e49` e não foi rebaseada. O merge é do
+operador. Os dois lados mexem no PROGRESS e no BUILD_PLAN, e **hipótese, não conferida:** a outra
+sessão pode ter tocado o roteiro D-TELA-04c e o `assets/manifest.json`, que esta branch não tocou.
