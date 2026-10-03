@@ -18011,3 +18011,29 @@ Luminância = 0,2126 R + 0,7152 G + 0,0722 B; desvio populacional de todos os pi
 - **Observado nas capturas:** as bordas antigas areia → grama ainda contêm faixa verde. Os arquivos `sand-grass` não pertencem aos quatro tiles autorizados e foram preservados; esta entrega não resolve essa transição.
 - O render ainda não espalha capim, como determina a emenda: isso pertence a D-TELA-DECALQUES-DE-CAPIM (render dos decalques de capim). A prova dos tufos aqui é contato composto e manifesto, não presença no mapa.
 - Nenhuma hipótese foi usada para alterar gameplay ou o contrato; homologação visual final pertence ao operador.
+
+## 2026-10-03 — Revisão da sessão Claude: o véu dos detalhes e o solo de caatinga
+- **D-TELA-VEU-DOS-DETALHES (`8b1bf13`, `acb5238` e `67b3722`): cumpre o aceite, com efeito pequeno
+  (medido pelo Codex).** A água e a grama não recebem mais o véu (0 células de detalhe). A diferença
+  entre os centros de tiles vizinhos quase não mudou: água 26,4 → 26,5 e grama 7,0 → 6,9 no zoom 1.
+  **Conclusão:** o xadrez que sobra na água é da arte antiga. O render está todo corrigido (a
+  costura do filtro e o véu).
+- **D-ARTE-SOLO-CAATINGA (`d82b6be` e `bf9cfa7`): cumpre o aceite.**
+  - **Medido aqui:**
+    - a emenda do solo, no pior par de tiles, ficou em 1,18 vez o meio (limite 1,3);
+    - o desvio de luminância de cada tile ficou em 15,3 a 15,4, contra o limite de 16,2 (o da
+      `areia.png`, 10,8, × 1,5).
+  - O tipo de camada `decalque` entrou em `TIPOS_DE_CAMADA`, com a regra do F-SPR e os casos que
+    reprovam, e a entrada `capim` tem 10 estados (5 de palha e 5 de verde-oliva).
+  - **Folha de contato aberta:** o solo é bege claro, sem tufo nem costura visível, e se distingue
+    da areia alaranjada.
+  - **Ressalvas, para o operador:**
+    - os decalques de capim saíram **muito pequenos**: na folha, cada tufo parece ter de 6 a 10 px
+      no zoom 1, e não os 16 a 32 px do aceite. Isso fica para conferir na D-TELA-DECALQUES-DE-CAPIM,
+      onde a escala é do render;
+    - na mesma folha, a **areia de hoje** também mostra a repetição em colunas no zoom 2, assim como a
+      água antiga. É candidata à próxima rodada de arte;
+    - o `SKILL_BUILDER_PROGRESS.md` passou a existir na **raiz da `main`**. A branch
+      `noru-novos-sprites` tem um arquivo com o mesmo nome e outro conteúdo, então um merge futuro
+      dela vai dar conflito nesse arquivo.
+- As duas worktrees foram encerradas. O `node_modules` da `main` ficou intacto.
