@@ -1201,6 +1201,24 @@ function validarCameraDoTerreno(dados, erros) {
   }
 }
 
+// F-TELA-NEVOA: o escuro da nevoa na tela. Dado de render: a cor em hex e os dois alfas em [0, 1],
+// o nao descoberto pelo menos tao escuro quanto o descoberto fora da vista (senao a nevoa se
+// inverte: o que se viu ficaria mais escuro que o que nunca se viu).
+function validarNevoaDoTerreno(dados, erros) {
+  const nevoa = dados.terrain && dados.terrain.nevoa;
+  if (!nevoa || typeof nevoa !== 'object') {
+    erros.push('terreno/nevoa: terrain.nevoa precisa existir (F-TELA-NEVOA)');
+    return;
+  }
+  if (typeof nevoa.cor !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(nevoa.cor)) erros.push(`terreno/nevoa: cor precisa ser #rrggbb (veio '${nevoa.cor}')`);
+  const alfa = (v) => typeof v === 'number' && v >= 0 && v <= 1;
+  if (!alfa(nevoa.alfaNaoDescoberto) || !alfa(nevoa.alfaForaDaVista)) {
+    erros.push('terreno/nevoa: alfaNaoDescoberto e alfaForaDaVista precisam estar em [0, 1]');
+    return;
+  }
+  if (nevoa.alfaNaoDescoberto < nevoa.alfaForaDaVista) erros.push('terreno/nevoa: alfaNaoDescoberto nao pode ser menor que alfaForaDaVista');
+}
+
 // F-D3: a reserva da vila. Dado de AUTORIA — quem le e tools/gerar-mapa.js, e o
 // jogo nunca roda o gerador. A regra guarda a forma e as duas coerencias que so
 // aparecem quando se cruza o bloco com o resto do dado: terreno que a legenda de
@@ -1840,6 +1858,7 @@ function validarTudo(dados) {
   validarDevolucaoDeEstrada(dados, erros);
   validarZoomDoTerreno(dados, erros);
   validarCameraDoTerreno(dados, erros);
+  validarNevoaDoTerreno(dados, erros);
   validarGeracaoDoTerreno(dados, erros);
   validarDevolucaoDePredio(dados, erros);
   validarEscadaDePrioridade(dados, erros);

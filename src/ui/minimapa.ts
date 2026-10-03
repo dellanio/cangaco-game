@@ -8,6 +8,9 @@
 //
 // Redesenha por QUADRO, e nao por tick: a vista anda com a camera mesmo com o jogo pausado.
 import type { GameState } from '../sim/state';
+import { LADO_DO_JOGADOR } from '../sim/state';
+import { prediosInimigosForaDaVista, texturaDaNevoa } from '../render/nevoa';
+import type { CoresDaNevoa } from '../render/nevoa';
 import { corDoBando } from '../render/cor-do-bando';
 import { enquadrar, pixelsDoTerreno, retanguloNoMinimapa, tileDoMinimapa, vistaEmTiles } from '../render/minimapa';
 import type { Enquadro, RetanguloEmTiles } from '../render/minimapa';
@@ -23,6 +26,8 @@ export interface FonteDoMinimapa {
   /** O `worldView` da camera, ou `null` antes de a cena existir. */
   vista(): { readonly x: number; readonly y: number; readonly width: number; readonly height: number } | null;
   centrarEm(tile: { readonly gx: number; readonly gy: number }): void;
+  /** F-TELA-NEVOA — a cor e os alfas da nevoa (`configDoMapa.nevoa`). */
+  readonly nevoa: CoresDaNevoa;
 }
 
 export interface Minimapa {
@@ -54,6 +59,11 @@ export function montarMinimapa(fonte: FonteDoMinimapa): Minimapa {
   terreno.getContext('2d')?.putImageData(new ImageData(pixelsDoTerreno(fonte.terreno), largura, altura), 0, 0);
 
   let ultimo: GameState | null = null;
+  const nevoa = document.createElement('canvas');
+  nevoa.width = largura;
+  nevoa.height = altura;
+  const pixelsDaNevoa = new Uint8ClampedArray(largura * altura * 4);
+  let estadoDaNevoa: GameState | null = null;
   let enquadro: Enquadro = enquadrar(largura, altura, { largura: 1, altura: 1 });
 
   function desenhar(): void {
@@ -70,12 +80,23 @@ export function montarMinimapa(fonte: FonteDoMinimapa): Minimapa {
     pincel.imageSmoothingEnabled = false;
     pincel.drawImage(terreno, e.x0, e.y0, largura * e.pxPorTile, altura * e.pxPorTile);
 
+    // F-TELA-NEVOA: o escuro da nevoa por cima do terreno (um px por tile, repintado so quando o
+    // estado muda), e o predio inimigo fora da vista nao entra
+    if (ultimo !== null && ultimo !== estadoDaNevoa) {
+      estadoDaNevoa = ultimo;
+      texturaDaNevoa(ultimo, fonte.nevoa, { largura, altura }, pixelsDaNevoa);
+      nevoa.getContext('2d')?.putImageData(new ImageData(pixelsDaNevoa, largura, altura), 0, 0);
+    }
+    pincel.drawImage(nevoa, e.x0, e.y0, largura * e.pxPorTile, altura * e.pxPorTile);
     let predios = 0;
+    let inimigos = 0;
     if (ultimo !== null) {
+      const foraDaVista = prediosInimigosForaDaVista(ultimo);
       for (const id of ultimo.predios.ordem) {
         const p = ultimo.predios.porId[id];
         const caixa = p === undefined ? null : fonte.caixaDoPredio(p.tipo, p.gx, p.gy);
-        if (p === undefined || caixa === null) continue;
+        if (p === undefined || caixa === null || foraDaVista.has(id)) continue;
+        if (p.lado !== LADO_DO_JOGADOR) inimigos += 1;
         const r = retanguloNoMinimapa(caixa, e);
         const lw = Math.max(LADO_MINIMO_DO_PREDIO_PX, r.largura);
         const lh = Math.max(LADO_MINIMO_DO_PREDIO_PX, r.altura);
@@ -95,6 +116,8 @@ export function montarMinimapa(fonte: FonteDoMinimapa): Minimapa {
     }
     // para o roteiro afirmar numero, e nao pixel da captura
     canvas.dataset.predios = String(predios);
+    // F-TELA-NEVOA: quantos predios de outro lado o minimapa desenhou (so os que estao a vista)
+    canvas.dataset.prediosInimigos = String(inimigos);
     canvas.dataset.pxPorTile = String(e.pxPorTile);
     canvas.dataset.x0 = String(e.x0);
     canvas.dataset.y0 = String(e.y0);

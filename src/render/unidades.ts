@@ -51,6 +51,7 @@ import type { Direcao } from './manifesto';
 import { iconesDoJogo, manifestoDoJogo } from './sprites';
 import { posicaoDaUnidade } from '../sim/selectors';
 import { fracaoDeCondicao } from '../sim/condicao';
+import { inimigosForaDaVista } from './nevoa';
 import { unidadesInvisiveis } from './visibilidade';
 import type { GameState } from '../sim/state';
 import type { LuzDoRelevo } from './camada-de-relevo';
@@ -360,7 +361,9 @@ export function criarCamadaDeUnidades(
         }
       }
       const renderizadas: UnidadeRenderizada[] = [];
-      const invisiveis = unidadesInvisiveis(estado);
+      // F-TELA-NEVOA: o inimigo fora da vista some como o especialista dentro da casa — nao se
+      // desenha e o acerto o pula (`naTela`), entao o clique nao o acha
+      const invisiveis = new Set([...unidadesInvisiveis(estado), ...inimigosForaDaVista(estado)]);
       const memoriasDeAcao = acoes();
       for (const id of estado.unidades.ordem) {
         const unidade = estado.unidades.porId[id];

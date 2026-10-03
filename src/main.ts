@@ -46,6 +46,7 @@ import { configDoMapa, terrenoDeRender } from './render/mapa';
 import { caixaDeTipoNoMapa } from './render/predios';
 import { montarMinimapa } from './ui/minimapa';
 import { predioNoTile } from './sim/selectors';
+import { predioClicavel } from './render/nevoa';
 import { classeDaUnidade } from './sim/condicao';
 import { criarSelecaoMilitar } from './input/selecao-militar';
 import { montarPainelGrupo } from './ui/painel-grupo';
@@ -121,7 +122,7 @@ export function iniciarPartida(
       sessao.enviar(comando);
     },
     (tile) => {
-      selecao.selecionar(predioNoTile(sessao.estado, tile.gx, tile.gy));
+      selecao.selecionar(predioClicavel(sessao.estado, predioNoTile(sessao.estado, tile.gx, tile.gy)));
     },
     {
       aoClicarVazio(tile, ponto, somar) {
@@ -134,7 +135,8 @@ export function iniciarPartida(
           return;
         }
         if (!somar) selecaoMilitar.limpar();
-        selecao.selecionar(predioNoTile(sessao.estado, tile.gx, tile.gy));
+        // F-TELA-NEVOA: o predio inimigo fora da vista nao existe para o clique
+        selecao.selecionar(predioClicavel(sessao.estado, predioNoTile(sessao.estado, tile.gx, tile.gy)));
       },
       aoCaixa(a, b, somar) {
         const soldados = soldadosDoJogador(jogo.unidadesNaCaixa(a, b));
@@ -229,9 +231,12 @@ export function iniciarPartida(
     caixaDoPredio: caixaDeTipoNoMapa,
     vista: () => jogo.vistaDaCamera(),
     centrarEm: (tile) => jogo.centrarCameraEm(tile),
+    nevoa: configDoMapa.nevoa,
   });
 
   function atualizar(s: GameState): void {
+    // F-TELA-NEVOA: o predio inimigo que saiu da vista sai do painel (ele so existe a vista)
+    if (selecao.predio !== null && predioClicavel(s, selecao.predio) === null) selecao.selecionar(null);
     jogo.atualizar(s);
     minimapa.atualizar(s);
     hud.atualizar(s);

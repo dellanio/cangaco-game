@@ -18692,3 +18692,57 @@ resultado (os carimbos da medida (d) saíram iguais, 5 566 e 272 734): o avanço
 partir de qualquer visão), e o atalho do `descoberto` só vale quando o array dele é o mesmo que a
 visão conferiu (`descobertoConferido`, que trocou o `cobreODescoberto`); e os olhos andam sem
 montar mapa novo por tick (marca de geração). Depois: 0,87 s.
+
+## 2026-10-03 — F-TELA-NEVOA (a névoa na tela, no painel e no minimapa)
+
+Só render, ui e roteiro: `git diff` desta feature não toca `src/sim/` (os seletores já existiam em
+`sim/nevoa.ts`).
+
+**Feito (verificado rodando e abrindo as capturas):**
+- `src/render/nevoa.ts` (puro, testado em Node): `inimigosForaDaVista`, `prediosInimigosForaDaVista`,
+  `predioClicavel` e a textura `texturaDaNevoa`, um pixel RGBA por tile. Estado sem a camada não
+  esconde nada.
+- A cena desenha a textura esticada sobre o mapa, com filtro linear (a borda da vista é um degradê
+  de um tile), na profundidade 800 000: acima de prédio, unidade e árvore, abaixo dos nomes e da
+  seleção. Ela só é repintada quando o estado da ponte muda, e só a partir do estado atual (a visão
+  é cacheada por ele).
+- Os números da tela ficam em `data/terrain.json: nevoa` (cor `#000000`, nunca descoberto 1,0,
+  descoberto fora da vista 0,5; PARA REVISÃO). O `render/mapa.ts` lê o bloco direto do arquivo,
+  como o tema, porque o loader da sim não o carrega. O `validate:data` confere cor e alfas
+  (`validarNevoaDoTerreno`).
+- Unidade inimiga fora da vista: entra no conjunto de quem a camada não desenha (o mesmo do
+  especialista dentro da casa), e por isso o acerto do clique também a pula. Prédio inimigo fora da
+  vista: não se desenha, a chaminé dele não fuma, e na ponte de debug ele aparece com
+  `naVista: false` (o roteiro é harness e sabe onde ele está).
+- Clique esquerdo no prédio inimigo fora da vista não o seleciona (`main.ts`, `predioClicavel`).
+  Botão direito nele vira **marcha até o tile** (`ui/ordem-militar.ts`). O prédio inimigo
+  selecionado que sai da vista fecha o painel.
+- Minimapa: a mesma névoa por cima do terreno, e o prédio inimigo fora da vista não é desenhado
+  (`data-predios-inimigos` conta os desenhados). O minimapa não desenha unidade (verificado).
+- Alertas: `alertasDoEstado` já não lista nada do inimigo; nada mudou.
+- Custo do quadro: camada `nevoa` nova em `custo-do-quadro.ts`.
+
+**Aceite** (`tools/shots/F-TELA-NEVOA.js`, `test-output/F-TELA-NEVOA.json`, e
+`tests/F-TELA-NEVOA.test.ts` para a parte pura e o clique):
+- (a) capturas `F-TELA-NEVOA-1-tick0-vila-clara` (a vila clara, o escuro a leste, com a borda em
+  degradê), `-3-marcha-caminho-descoberto` (a tropa perto da defesa da IA: 6 cabras da IA à vista,
+  22 no escuro, o resto preto) e `-4-caminho-esmaecido` (o trajeto já visto, esmaecido, com o canto
+  nunca visto preto). Contagem no tick 0: 506 tiles visíveis, 0 esmaecidos, 15 878 escuros; depois
+  da marcha (tick 313): 784, 613 e 14 987. A marcha foi dada pelo botão direito num tile no escuro.
+- (b) minimapa: 0 prédios inimigos desenhados no tick 0, e depois da marcha o mesmo número de
+  prédios da IA à vista (0).
+- (c) clique despausado (mouse.down / 150 ms / mouse.up) no armazém da IA no escuro: o painel não
+  abriu (`-2-vila-da-ia-no-escuro`, toda preta).
+- (d) custo, número da corrida (não é asserção): pausado com a câmera parada, 0 tiles repintados
+  em 60 quadros (a asserção, no eixo determinístico); avançando 1 tick por quadro, 16 384 tiles e
+  ~0,53 a 0,55 ms por quadro.
+- **C-IA-03c sem mudança, com a névoa na tela:** o clique no inimigo fora da vista agora acerta o
+  tile e vira marcha até ele (a estratégia que venceu sem tela). Ainda perde por pouco: sobram 2
+  militares da IA e nenhum do jogador. Continua a pergunta em aberto da F-COMBATE-ALVO-NA-VISTA
+  (a margem da tropa ou a afirmação de vitória; decisão do operador).
+- **(e) não verificado neste commit.** O `shot:todos` rodou com o shell em segundo plano, e o
+  sistema encerrou o shell por memória baixa no meio. Os processos seguiram, mas desde ali todo
+  roteiro saiu em 0 s com `3221225794` (`0xC0000142`, o processo filho não inicializou): 6 de 116
+  rodaram e saíram 0 (BUG-T a BUG-Z, C-COMBATE-01c), 110 nem começaram. É ambiente, não roteiro.
+  Não repeti: o fechamento da §13 roda o `shot:todos` inteiro, e é lá que o (e) fica medido, com a
+  lista dos roteiros cuja captura mudou só pela névoa.
