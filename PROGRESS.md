@@ -18842,3 +18842,15 @@ F-IA-DIFICULDADE             tres niveis de adversario          passa
   tick de ataque do normal (o nível só muda o tamanho, porque o quartel da IA está vazio).
 
 **Aberto, fora da Fase F:** os três bugs de roteiro acima, cada um no `BUGS.md`.
+
+## 2026-10-03 — Fase F mesclada e Fase H detalhada (o som)
+
+- **F mesclada** (`41d74fe`), aprovada pelo operador depois de jogar a névoa ("está muito bom").
+  `verify:rapido` verde depois do merge (2 431 testes). A worktree da F foi encerrada (junction
+  desfeita antes; o `node_modules` da `main` ficou com os 104 itens) e a branch apagada.
+- **Aberto:** a chave da F-TELA-NEVOA (a névoa na tela) segue `false` pelo roteiro C-IA-03c. O
+  operador ainda não escolheu entre aumentar a tropa do jogador (`escaramuca.tropaDoJogador`) e
+  mudar o que o roteiro afirma.
+- **Fase H detalhada** no `BUILD_PLAN.md`. Decisão do operador: os sons vêm de bancos CC0, a sessão
+  lista os candidatos com link e licença, e ele aprova cada um. Leitura conservadora (PARA REVISÃO):
+  o código do som é TELA e o arquivo é ARTE, porque a lista de módulos não tem SOM.
