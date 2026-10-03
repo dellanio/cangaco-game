@@ -18190,3 +18190,35 @@ não existe em `src/sim` nem em `src/render` (a IA a ignora por decisão, `src/s
 Hipótese, não conferida: a citação `KM_GUIMenuLobby.pas:635-638` do intervalo da paz vem do
 `data/escaramuca.json` (`_docPeacetime`), sem o caminho completo exigido pela §15. O item
 E-TELA-CONFIGURAR-PARTIDA manda conferir no clone.
+## 2026-10-03 — D-ARTE-SERF-COMFYUI (o serf animado gerado no ComfyUI local), pela sessão Claude
+- **Pedido do operador:** "gere e já atribua no jogo as animações". Aceite `b3b5409`, com emendas
+  `845b944` (o alinhamento do pé) e `1ce911b` (o roteiro da Leva 2), todos antes do código.
+- **A instalação local** (fora do repositório, em `D:\ComfyUI`), feita pela sessão Claude porque
+  os créditos da Antigravity acabaram: DreamShaper XL Turbo, IP-Adapter Plus SDXL com CLIP-ViT-H,
+  ControlNet OpenPose SDXL (xinsir) e o nó `ComfyUI_IPAdapter_plus`. Sem dependência nova no
+  projeto.
+- **A geração:**
+  - 45 quadros: 5 direções × (parado 1 + andar 8), de 34 a 53 s cada na RTX 3060;
+  - a referência de estilo é o serf do teste-2, que veio do serf pintado do jogo (`unit-atlas-a`);
+  - as poses de OpenPose foram desenhadas por geometria (vista de 38° de cima, ciclo de andar),
+    sem o nó de pré-processamento;
+  - os brutos e as poses estão em `cangaco-game-candidatos\arte\D\serf\comfyui-serf-2026-10-03\`.
+- **A derivação:**
+  - o fundo cinza e a sombra que o modelo desenha saem por preenchimento a partir das bordas;
+  - os fragmentos soltos com menos de 12% do corpo são apagados;
+  - a escala é por direção, pela mediana dos 9 quadros, e o eixo é o da pose;
+  - o pé fica alinhado por quadro.
+
+  **Medido:** o pior desvio do pé é de 1 px da linha 95 (limite 2).
+- **No jogo:** o manifesto do serf ganhou `atlas` e `animacoes` (parado 1, andar 8,
+  `tilesPorCiclo` 2). Os `estados` antigos ficam como fallback. Nada mudou em `src/`.
+- **Verificado:**
+  - os testes `F17f-manifesto`, `F-SPR-carregamento`, `D-TELA-04b` e `D-TELA-04e` deram 60/60;
+  - os roteiros `D-ARTE-SERF-COMFYUI`, `D-TELA-04c` (com a asserção emendada), `D-TELA-03` e
+    `ARTE-VILA` saíram 0;
+  - a captura do serf andando, aberta, mostra os carregadores novos perto do armazém, com o ícone
+    da carga.
+- **Limites conhecidos (aceite 5):**
+  - a roupa varia um pouco entre quadros (geração quadro a quadro);
+  - o perfil leste/oeste é mais magro;
+  - alguns quadros do norte e do nordeste encostam a cabeça no topo da célula.

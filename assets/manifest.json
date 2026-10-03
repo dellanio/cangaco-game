@@ -612,11 +612,24 @@
         "parado:l": "sprites/units/serf/parado.png",
         "parado:s": "sprites/units/serf/parado.png"
       },
-      "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+      "atlas": "sprites/units/serf/serf.json",
+      "animacoes": {
+        "parado": {
+          "quadros": 1,
+          "fps": 10,
+          "laco": true
+        },
+        "andar": {
+          "quadros": 8,
+          "tilesPorCiclo": 2,
+          "laco": true
+        }
+      },
+      "licenca": "arte propria do projeto, gerada no ComfyUI local por decisao do operador em 2026-10-03",
       "origem": {
-        "base": "base/unit-atlas-a/source.png",
-        "semente": null,
-        "nota": "Derivado pela skill pianco-art-pipeline do layout serf."
+        "base": "base/units/serf-comfyui/registro.json",
+        "semente": 20261005,
+        "nota": "D-ARTE-SERF-COMFYUI: SDXL DreamShaper XL Turbo + IP-Adapter Plus (referencia base/units/serf-comfyui/referencia-ip-adapter.png) + ControlNet OpenPose (poses em base/units/serf-comfyui/poses.png), 5 direcoes x (parado 1 + andar 8). Os estados parado:* continuam como fallback."
       }
     },
     {

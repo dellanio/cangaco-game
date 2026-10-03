@@ -1,0 +1,253 @@
+{
+ "modelo": "DreamShaperXL_Turbo_v2_1",
+ "ipadapter": "ip-adapter-plus_sdxl_vit-h, style transfer, 0.75",
+ "controlnet": "xinsir openpose sdxl, 1.0, end 0.85",
+ "sampler": "dpmpp_sde karras, 8 passos, cfg 2",
+ "semente": 20261005,
+ "referencia": "D:\\projetos-pessoal\\cangaco-game-candidatos\\arte\\D\\serf\\comfyui-teste-2026-10-03\\teste-2\\serf2-s20261005-ip0.9-pose0.8_00001_.png",
+ "prompt": "hand-painted RTS game unit, the same stocky Brazilian sertao peasant porter man with black beard, straw hat, red neckerchief, red waist sash, off-white cotton shirt and trousers, leather suspenders, sandals, chunky game proportions, broad shoulders, {dir}, {acao}, viewed from above at a three-quarter top-down angle, soft light from above slightly from the south, painterly brush strokes, saturated warm colors, full body centered, isolated on a flat plain medium gray background",
+ "negativo": "photorealistic, 3d render, anime, woman, dress, portrait, close-up, eye-level view, watercolor paper, text, watermark, multiple people, cropped feet, blurry, lowres, pixel art, thin, tall, cast shadow, extra limbs",
+ "direcoes": {
+  "s": "facing south toward the camera, front view from above",
+  "se": "facing south-east, three-quarter front view from above, body turned to the right",
+  "l": "facing east, side view from above, walking to the right",
+  "ne": "facing north-east, three-quarter back view from above, turned away to the right",
+  "n": "facing north, back view from above, seen from behind"
+ },
+ "pose": {
+  "escala": 420,
+  "pitch_graus": 38,
+  "pe_y": 1070,
+  "cx": 416
+ },
+ "brutos": {
+  "serf/parado/n/0000": "4e1c68742ce04f60412ddfd4a22a5f81f9028d913d3b52b5e905344f6f645a95",
+  "serf/andar/n/0000": "4b6d02d952a0663f0039e0b4433a583fbaee96bf78ce655bcc2c12c43f21378e",
+  "serf/andar/n/0001": "98fd573b64ea80b9cf102926f04b72f8e0d4021d62ab9cdd96bd049057c79496",
+  "serf/andar/n/0002": "4c71256c84340bbc437a1c5cdadc2f636fb03e8a77cf25b7d3ee7944087b2ffe",
+  "serf/andar/n/0003": "5c8e97efb1abddb0a83ed83095614d600b8a33b55e66be758df6aa38c2c2844e",
+  "serf/andar/n/0004": "28e088e9f5b61db4c73b54afefdec022805a2e27561687f6aab172b2e2eed1be",
+  "serf/andar/n/0005": "4a9d9cc0cdd476bf137c72b448304de46e000c127da0a98e48620ff86bc791ac",
+  "serf/andar/n/0006": "97b369d26a293ce18c5f566ad9a8656452ebdedb2f31ecf7ef289844087bf233",
+  "serf/andar/n/0007": "45bd6e0b7ef0affa2e0698909527e916c7f8ab45d7398c84be86782c93051313",
+  "serf/parado/ne/0000": "6b490a3aa45709ca6ceeaad2afce7519e994265d32fd5692d1524544827c60bf",
+  "serf/andar/ne/0000": "379f7915a7c2aff23b99a43ba869be2b0644c9eec5dbf4c6fb2bf6c1d3ea6d0e",
+  "serf/andar/ne/0001": "7bb35d7c427b5b03345c8944676a6fde3b28a64fe96915f2e3276dd3428b82f7",
+  "serf/andar/ne/0002": "03b1a44cb51d0f8672f05d1d9dec73a4f2f2b8ae493961fa1f943404d3391233",
+  "serf/andar/ne/0003": "6c32935bd6eb34dcdc0320d0144e613a55cf31291ff9017ed714ba5a66a70b0b",
+  "serf/andar/ne/0004": "4bf4f13fe239eeca5f37423d3daff67308243210001886b126f755efb2f75ca5",
+  "serf/andar/ne/0005": "23afea39b46ac1903f619eb8a4d67d12341973ff205cfc8f4de9f346dbbac5fd",
+  "serf/andar/ne/0006": "cec8686af30230a1c500bceb5e64bb148cf565800b6f2239ef3e4a1a6e68cc37",
+  "serf/andar/ne/0007": "fb46898090b9a64a2e9ab563addb223bb5f6935c1e93dc532791ba61bb5b7ef2",
+  "serf/parado/l/0000": "4702be9dbd27c48483d77254eb6a0b716ae66d1d9803d7bf87af330f334d9eaa",
+  "serf/andar/l/0000": "0e6b6987cb5266913603990029e8b3836e10496887bda5d257cef9a4d7d35f17",
+  "serf/andar/l/0001": "ef9748ecd96bd59dc0eb84a1b228bb895a62fcdf0e928323c349268653c187a6",
+  "serf/andar/l/0002": "794e679513c08b4eabe30d2032b945abaf462f5f2344455a5415f2a9dc6103ba",
+  "serf/andar/l/0003": "e9219da18a31cfeab317b609fa9f352666185615bc6b3c2e644048fd740951f4",
+  "serf/andar/l/0004": "82ca88c7fd2e1967f9a16c3643b977a0738bd40f6fb4437c0c22bae320f233c1",
+  "serf/andar/l/0005": "2c1630b61b547adb6320b73d5da52009143d2345b357ef39defbcb5a8547f2bc",
+  "serf/andar/l/0006": "384ab423b964b7e06b8aa308fb23d8e3d08363235ba10b57a27e287d11073b3b",
+  "serf/andar/l/0007": "8fa5d142ed071f9b80f5bd93591d418fe17b8f8761437739c211430dd076dae3",
+  "serf/parado/se/0000": "ea55fe06520b497ecfb51404a31fe077a5be63099751661d310829863c9fffc7",
+  "serf/andar/se/0000": "da48982966916bde546c74bab527c93189ce7fcd822aba7d0f184ded20052dfc",
+  "serf/andar/se/0001": "a7c6c75d7bf89f94ab6f6ec7de858db5c923ffd01f1667bbc0b730f7c85b04e0",
+  "serf/andar/se/0002": "4518db8dec97c2cf1fa16d82e5acd104733a87aeb0cc0ee5677ce11d91e1b372",
+  "serf/andar/se/0003": "ef6c0d96982e4060e5aad2873cedd12bb8a517e72ae6dfcbc04f19ba6a863519",
+  "serf/andar/se/0004": "5e3963832d52c147342c211bb1841aa979d4218d7e420b01be893ae566487b15",
+  "serf/andar/se/0005": "41b1585c30da2dd9ea5fe297dc520e73ac646e5d6e320137300c76394669d71f",
+  "serf/andar/se/0006": "9a604bf5547ca6b0e31ed3b66f300f88fc71e4d03534262b0e2db68b01fb9901",
+  "serf/andar/se/0007": "1365e4d181b0335e2a01075fb9a5e22eae71d9751f8791e17ac2aa8be8f8bde1",
+  "serf/parado/s/0000": "06c151eb4f7427f46f760279d94b79ea2a6fcacfc03366e85450d7c93fc40bae",
+  "serf/andar/s/0000": "775eeea5fa8da21339825b2b36f7290f643591279d163a9a9ce62d46b092ec04",
+  "serf/andar/s/0001": "1d25895f288bde86f296b41141c397ad3eda625312e6e5bdfd7e6876698039d5",
+  "serf/andar/s/0002": "814229b770f65abcd7e40c9143b11b049332d9600d48e134106e3618aac3730f",
+  "serf/andar/s/0003": "27e91f350f85766b0840c326d6cc821f8fb1889d76ee802836d2a700f9cbdc66",
+  "serf/andar/s/0004": "b0c3f6859bf70f14258c19f7a38e2595dc8e3462f68feb72dd69b7c2e90c103b",
+  "serf/andar/s/0005": "9243f2d014f94f09e32fecaeb3b570133ace6dc13c9bb563b5a08ce666ce4e1b",
+  "serf/andar/s/0006": "93b765ce5cc58efdc1fcc06ca78cceac5f0bc81e9a26c255bd06c38d6d3e9ad4",
+  "serf/andar/s/0007": "2d7eb9be429026b433c0620a33ad855e7eeb0ebcf113c5e155981c1d48d0633b"
+ },
+ "brutos_em": "D:\\projetos-pessoal\\cangaco-game-candidatos\\arte\\D\\serf\\comfyui-serf-2026-10-03\\brutos",
+ "medidas": {
+  "serf/parado/n/0000": {
+   "linha_do_pe": 95,
+   "escala": 0.10106
+  },
+  "serf/andar/n/0000": {
+   "linha_do_pe": 95,
+   "escala": 0.10106
+  },
+  "serf/andar/n/0001": {
+   "linha_do_pe": 95,
+   "escala": 0.10106
+  },
+  "serf/andar/n/0002": {
+   "linha_do_pe": 95,
+   "escala": 0.10106
+  },
+  "serf/andar/n/0003": {
+   "linha_do_pe": 95,
+   "escala": 0.10106
+  },
+  "serf/andar/n/0004": {
+   "linha_do_pe": 95,
+   "escala": 0.10106
+  },
+  "serf/andar/n/0005": {
+   "linha_do_pe": 95,
+   "escala": 0.10106
+  },
+  "serf/andar/n/0006": {
+   "linha_do_pe": 95,
+   "escala": 0.10106
+  },
+  "serf/andar/n/0007": {
+   "linha_do_pe": 95,
+   "escala": 0.10106
+  },
+  "serf/parado/ne/0000": {
+   "linha_do_pe": 95,
+   "escala": 0.14405
+  },
+  "serf/andar/ne/0000": {
+   "linha_do_pe": 95,
+   "escala": 0.14405
+  },
+  "serf/andar/ne/0001": {
+   "linha_do_pe": 95,
+   "escala": 0.14405
+  },
+  "serf/andar/ne/0002": {
+   "linha_do_pe": 94,
+   "escala": 0.14405
+  },
+  "serf/andar/ne/0003": {
+   "linha_do_pe": 95,
+   "escala": 0.14405
+  },
+  "serf/andar/ne/0004": {
+   "linha_do_pe": 95,
+   "escala": 0.14405
+  },
+  "serf/andar/ne/0005": {
+   "linha_do_pe": 95,
+   "escala": 0.14405
+  },
+  "serf/andar/ne/0006": {
+   "linha_do_pe": 95,
+   "escala": 0.14405
+  },
+  "serf/andar/ne/0007": {
+   "linha_do_pe": 95,
+   "escala": 0.14405
+  },
+  "serf/parado/l/0000": {
+   "linha_do_pe": 94,
+   "escala": 0.12028
+  },
+  "serf/andar/l/0000": {
+   "linha_do_pe": 95,
+   "escala": 0.12028
+  },
+  "serf/andar/l/0001": {
+   "linha_do_pe": 95,
+   "escala": 0.12028
+  },
+  "serf/andar/l/0002": {
+   "linha_do_pe": 95,
+   "escala": 0.12028
+  },
+  "serf/andar/l/0003": {
+   "linha_do_pe": 95,
+   "escala": 0.12028
+  },
+  "serf/andar/l/0004": {
+   "linha_do_pe": 95,
+   "escala": 0.12028
+  },
+  "serf/andar/l/0005": {
+   "linha_do_pe": 95,
+   "escala": 0.12028
+  },
+  "serf/andar/l/0006": {
+   "linha_do_pe": 95,
+   "escala": 0.12028
+  },
+  "serf/andar/l/0007": {
+   "linha_do_pe": 95,
+   "escala": 0.12028
+  },
+  "serf/parado/se/0000": {
+   "linha_do_pe": 95,
+   "escala": 0.11125
+  },
+  "serf/andar/se/0000": {
+   "linha_do_pe": 94,
+   "escala": 0.11125
+  },
+  "serf/andar/se/0001": {
+   "linha_do_pe": 95,
+   "escala": 0.11125
+  },
+  "serf/andar/se/0002": {
+   "linha_do_pe": 94,
+   "escala": 0.11125
+  },
+  "serf/andar/se/0003": {
+   "linha_do_pe": 95,
+   "escala": 0.11125
+  },
+  "serf/andar/se/0004": {
+   "linha_do_pe": 94,
+   "escala": 0.11125
+  },
+  "serf/andar/se/0005": {
+   "linha_do_pe": 95,
+   "escala": 0.11125
+  },
+  "serf/andar/se/0006": {
+   "linha_do_pe": 95,
+   "escala": 0.11125
+  },
+  "serf/andar/se/0007": {
+   "linha_do_pe": 95,
+   "escala": 0.11125
+  },
+  "serf/parado/s/0000": {
+   "linha_do_pe": 94,
+   "escala": 0.11054
+  },
+  "serf/andar/s/0000": {
+   "linha_do_pe": 95,
+   "escala": 0.11054
+  },
+  "serf/andar/s/0001": {
+   "linha_do_pe": 95,
+   "escala": 0.11054
+  },
+  "serf/andar/s/0002": {
+   "linha_do_pe": 95,
+   "escala": 0.11054
+  },
+  "serf/andar/s/0003": {
+   "linha_do_pe": 95,
+   "escala": 0.11054
+  },
+  "serf/andar/s/0004": {
+   "linha_do_pe": 95,
+   "escala": 0.11054
+  },
+  "serf/andar/s/0005": {
+   "linha_do_pe": 94,
+   "escala": 0.11054
+  },
+  "serf/andar/s/0006": {
+   "linha_do_pe": 95,
+   "escala": 0.11054
+  },
+  "serf/andar/s/0007": {
+   "linha_do_pe": 94,
+   "escala": 0.11054
+  }
+ }
+}

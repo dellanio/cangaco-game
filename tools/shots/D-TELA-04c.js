@@ -12,7 +12,10 @@ async function roteiro({ page, estado, afirmar, capturar }) {
     await page.waitForFunction(() => window.__cangaco?.pronto);
   };
   let s = await estado();
-  afirmar(s.unidadesRenderizadas.filter((u) => u.tipo === 'serf').every((u) => !u.frame), 'jogo normal deve preservar sprites atuais');
+  // D-ARTE-SERF-COMFYUI (emenda do aceite 4): o jogo normal usa o atlas REAL do serf, e nunca o de depuracao.
+  const quadrosReais = new Set(Object.keys(require('../../assets/sprites/units/serf/serf.json').frames));
+  afirmar(s.unidadesRenderizadas.filter((u) => u.tipo === 'serf').every((u) => u.frame && quadrosReais.has(u.frame)),
+    'jogo normal deve usar o atlas real do serf, e nao o de depuracao');
   await navegar('?vitrine=serf');
   s = await estado();
   afirmar(s.tick === 0 && s.unidadesRenderizadas.length === 0, 'vitrine não inicia partida');
