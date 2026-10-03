@@ -17771,3 +17771,130 @@ Parada prevista: sem avançar para arte real, máscaras ou outras unidades. A ap
     do bando. A ondulação é de no máximo 3 px e quase não se vê parada; ela aparece em movimento.
   - **Ressalva de forma:** o `import` da bandeira entrou acima do comentário de cabeçalho do
     `WorldScene.ts`. Não muda nada no comportamento.
+## 2026-10-02 — D-TELA-LUZ-RELEVO (luz do relevo), pelo Codex
+
+### Fechamento da comparação — interrompido na preparação
+
+**Verificado:** a worktree do lado A está no commit `6317c42`, com o aceite
+`7163e21` presente e `data/relevo.json` com `ligado: false`. O código do jogo,
+os dados e `test-results.json` não foram alterados. Os saves e arquivos
+`partida.json` exigidos pelos roteiros foram copiados de `test-output/` da
+main para o lado A antes de qualquer corrida. Também foi ligado o
+`node_modules` da main por junction.
+
+O lado B foi criado destacado em
+`D:/projetos-pessoal/cangaco-game-relevo-fechamento-B`, no mesmo `6317c42`.
+A preparação prescrita (reverter o diff `7a9e038..95b9e74` apenas em `src/`)
+foi conferida com `git apply --reverse --check`, sem aplicar mudanças.
+O comando saiu 1:
+
+```text
+error: patch failed: src/render/scenes/WorldScene.ts:11
+error: src/render/scenes/WorldScene.ts: patch does not apply
+```
+
+**Veredito:** comparação não executada. Não há novos códigos de saída A/B,
+sha256 nem medida do recorte da F24c-1 (painel de ajuda). A hipótese de
+rolagem permanece aberta, e não há fundamento novo para mudar a chave false.
+A regra de parar diante de situação não coberta pelo plano impediu adaptar
+manualmente a retirada do relevo. O lado B foi removido ainda limpo; não
+recebeu commit. Nenhum roteiro foi iniciado por esta sessão.
+
+**Pendência para o operador:** especificar a retirada do relevo na base atual
+ou autorizar a adaptação do diff original mantendo as demais mudanças da main.
+A execução ainda precisa respeitar a ordem final e exclusiva da leva; durante
+a preparação a trava estava ocupada por água com peixe e depois bandeira da
+facção. A última leitura de memória antes da preparação deu 10 515 MB livres.
+
+### Verificação do registro
+
+- `npm run verify:rapido`: saída 0; typecheck e lint verdes,
+  `validate:data` com 19 arquivos e 0 erros; 0 testes relacionados; 38 s.
+- `npm run verify`: saída 1; typecheck, lint e dados passaram;
+  231 arquivos de testes passaram e 1 falhou; 2 236 testes passaram e 1 falhou
+  (2 237 no total, 77,22 s de Vitest). Não chegou à suíte transladada.
+  A falha é `tests/D-TELA-FUMACA-DA-PADARIA.test.ts:70`: esperava apenas
+  `bakery` com âncora de fumaça, mas o manifesto também declara `metallurgists`,
+  `iron_smithy`, `weapon_smithy` e `armor_smithy`. Nenhuma correção foi feita
+  nesta tarefa de medida.
+- O merge não foi feito: na conferência após a verificação, a main tinha
+  `tests/D-TELA-FUMACA-DA-PADARIA.test.ts` modificado por outra sessão.
+  O registro permanece sem commit diante da verificação completa vermelha.
+
+### Retomada autorizada — comparação executada na base final
+
+A retirada antiga foi substituída pelo operador. Os dois lados foram criados no mesmo commit `236c486`. No lado B, somente o import de `criarCamadaDeRelevo` saiu e sua chamada virou `this.luz = null`. Os tipos e ganchos `luz?.` permaneceram. `npx tsc --noEmit` no B saiu 0; o diff conferido tinha um único arquivo, 1 linha acrescentada e 2 removidas. A retirada não recebeu commit.
+
+Antes dos roteiros, os mesmos saves e `partida.json` foram copiados para B: 39 arquivos conferidos por hash, além de `saves/`. Cada execução usou `npm run shot -- <nome>` na porta 5176, pela trava comum, com A e B sequenciais. A memória livre foi amostrada a cada segundo, inclusive durante as esperas pela trava.
+
+**Corrida final:** 22/22 execuções com saída 0; mínimo de memória livre amostrado: **10702.0 MB**, acima do limite de 1 500 MB. Logs, capturas, quadros e saídas estão em `test-output/relevo-fechamento/`; `runs.json` contém os comandos por lado, e `comparison.json` contém o sha256 de **cada captura**, tick, câmera, pausa, alfa, pixels diferentes e sua caixa.
+
+#### Os dez roteiros anteriormente sem par
+
+| Roteiro (nome) | Saída A | Saída B | Capturas iguais (sha256) | Diferentes | Diferentes estáveis fora das exceções |
+|---|---:|---:|---:|---:|---:|
+| BUG-U (Quartel sem estrada) | 0 | 0 | 1 | 0 | 0 |
+| BUG-W (estágio da cultura) | 0 | 0 | 1 | 0 | 0 |
+| BUG-X (especialista dentro) | 0 | 0 | 2 | 0 | 0 |
+| BUG-Z (nome acima das unidades) | 0 | 0 | 0 | 1 | 0 |
+| C-COMIDA-01d (painel do grupo) | 0 | 0 | 2 | 1 | 0 |
+| C-TELA-05 (ordem da feira) | 0 | 0 | 0 | 1 | 0 |
+| C2 (projétil no ar) | 0 | 0 | 1 | 0 | 0 |
+| C4 (reparo) | 0 | 0 | 1 | 0 | 0 |
+| D-PRODUCAO-03 (encomendas da ferraria) | 0 | 0 | 1 | 2 | 0 |
+| D-TELA-07 (sinal de prédio pausado) | 0 | 0 | 1 | 1 | 1 |
+
+#### Capturas diferentes e classificação
+
+- `BUG-Z-1-nomes-por-cima.png` (nome acima das unidades): 352 px; caixa XYXY [597, 97, 819, 405]; ticks A/B 104/105; pausado True/True; alfa 1/1; **tick ou câmera distintos: instável, listado e excluído**. Os detalhes de câmera estão no JSON.
+- `C-COMIDA-01d-2-pao-a-caminho.png` (painel do grupo): 9935 px; caixa XYXY [622, 39, 789, 177]; ticks A/B 14/15; pausado True/True; alfa 1/1; **tick ou câmera distintos: instável, listado e excluído**. Os detalhes de câmera estão no JSON.
+- `C-TELA-05-1-ordem-mandada.png` (ordem da feira): 105 px; caixa XYXY [639, 16, 894, 639]; ticks A/B 24/23; pausado True/True; alfa 1/1; **tick ou câmera distintos: instável, listado e excluído**. Os detalhes de câmera estão no JSON.
+- `D-PRODUCAO-03-2-encomenda-cumprida.png` (encomendas da ferraria): 2226 px; caixa XYXY [564, 215, 1176, 661]; ticks A/B 431/432; pausado True/True; alfa 1/1; **tick ou câmera distintos: instável, listado e excluído**. Os detalhes de câmera estão no JSON.
+- `D-PRODUCAO-03-3-lanca-encomendada.png` (encomendas da ferraria): 7463 px; caixa XYXY [564, 215, 1183, 661]; ticks A/B 438/439; pausado True/True; alfa 1/1; **tick ou câmera distintos: instável, listado e excluído**. Os detalhes de câmera estão no JSON.
+- `D-TELA-07-2-retomada-sem-placa.png` (sinal de prédio pausado): 55 px; caixa XYXY [784, 372, 792, 380]; ticks A/B 49/49; pausado True/True; alfa 1/1; **mesmo tick e câmera: não cumpre a igualdade escrita**. Os detalhes de câmera estão no JSON.
+- `F24c-2-escudo-dez.png` (ajuda e encomenda da Casa do Gibão): 3820 px; caixa XYXY [462, 4, 1119, 453]; ticks A/B 20/19; pausado True/True; alfa 1/1; **instável conhecido, excluído**. Os detalhes de câmera estão no JSON.
+
+Os seis instáveis conhecidos permanecem excluídos: C-TELA-01-1 (marcha em paz), C-TELA-02-1 (marca no destino), F-T3-1 e F-TR-1 (pedreiro no campo), F24c-2 (escudo dez) e F28b-1 (pedra no ar); também F11a-2 (interpolação a 1x). Desses, somente F24c-2 faz parte desta corrida; os demais não foram rodados neste fechamento.
+
+#### F24c-1 (painel de ajuda): recorte medido e aberto
+
+O roteiro F24c (ajuda e encomenda da Casa do Gibão) saiu 0 nos dois lados. Recorte da caixa do painel: XYXY **[540, 24, 1000, 696]**, **460 × 672 px**, sem a sombra externa. Diferença no quadro inteiro: **0 px**; dentro do painel: **0 px**; fora: **0 px**. Deslocamento vertical medido nesta corrida: **0 px**.
+
+SHA256 dos dois recortes: `38abd4814ac5425023245f184ccb5e0654564282ae126af7e6254c5caae5e8bf`. As capturas `F24c-1-painel-A.png` e `F24c-1-painel-B.png` foram abertas e mostram o mesmo conteúdo na mesma posição. A medida está em `F24c-1-painel-medida.json`.
+
+**Conclusão limitada à medida:** nesta corrida não há diferença de rolagem nem outra diferença no painel. A diferença de 88 136 px registrada em 2026-10-01 não foi reproduzida; igualdade agora não demonstra que a causa antiga era rolagem. A hipótese histórica continua aberta, sem substituí-la por uma causa inventada.
+
+#### Corridas anteriores da retomada
+
+As integrações de água, forja e Leva 2 avançaram a main durante as primeiras corridas. Elas foram preservadas separadamente e não foram misturadas à tabela final:
+
+| Base | Saídas 0 | Pares iguais | Pares diferentes | Diferenças estáveis fora das exceções |
+|---|---:|---:|---:|---:|
+| `804026d` | 22/22 | 11 | 7 | 1 |
+| `d12b2ea` | 22/22 | 14 | 4 | 1 |
+| `9f950a5` | 22/22 | 10 | 8 | 1 |
+
+Nas bases `804026d` e `d12b2ea`, D-TELA-07-2 (retomada sem placa) diferiu em **55 px**, caixa XYXY `[784, 372, 792, 380]`, tick **49**, câmera **(1666, 1880), zoom 1**, ambos pausados e alfa 1. Na base `9f950a5`, D-PRODUCAO-03-3 (lança encomendada) diferiu em **6 656 px** no tick **439**, com câmera igual. São observações de igualdade reprovada; a causa não foi investigada nem atribuída ao relevo. Os pares da ajuda medidos nessas corridas também ficaram iguais.
+
+#### Veredito
+
+**Ponto 1:** os códigos de saída dos dez roteiros batem. Há 1 captura(s) estável(is) diferente(s) fora das exceções; a igualdade exigida não fecha.
+
+**Ponto 2:** o painel de ajuda atual é idêntico nos dois lados, mas a causa dos 88 136 px da corrida antiga permanece aberta. O recorte atual não confirma a hipótese de rolagem antiga.
+
+**A chave permanece false pelo aceite.** `test-results.json` não foi modificado. A tarefa entregou medidas e veredito, sem corrigir código do jogo e sem transformar hipótese em fato. A worktree B foi retirada após restaurar o único arquivo modificado e desfazer sua junction de `node_modules`, preservando as dependências da main.
+
+#### Validação final da retomada
+
+- Depois da corrida final, rebase sobre `8a45ebe`: só a revisão documental
+  da bandeira foi acrescentada; `git diff 236c486 HEAD -- src data assets
+  tools/shots` vazio. Os fontes medidos continuam os mesmos.
+- `npm run verify`: saída 0; typecheck e lint verdes; `validate:data`,
+  22 arquivos e 0 erros; suíte normal, 239 arquivos e 2 302 testes verdes
+  (68,31 s); transladada, 239 arquivos, 2 300 testes verdes e 5 pulados
+  (69,46 s). Log: `test-output/relevo-fechamento/verify-final.log`.
+- `npm run verify:rapido` antes do commit: saída 0; 1 arquivo documental
+  alterado, 0 testes relacionados, 22 s. Typecheck, lint e dados verdes.
+- `git diff --check` passou. O diff da tarefa contém somente `PROGRESS.md`;
+  código do jogo, `src/sim/`, dados e `test-results.json` não foram alterados.
+  A worktree descartável B e sua junction foram removidas.
