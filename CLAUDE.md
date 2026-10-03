@@ -122,8 +122,10 @@ Não adicione dependência nova sem registrar o motivo em `PROGRESS.md`.
    têm prioridade sobre a fila.
 3. Leia `STEER.md` se existir, e `BUGS.md`: bug de severidade `trava` tem
    precedência sobre a fila.
-4. Pegue **uma** feature de `BUILD_PLAN.md` — a primeira com `passes: false` em
-   `test-results.json`. Uma por sessão. Não adiante a próxima.
+4. Pegue a próxima feature de `BUILD_PLAN.md`, na ordem da lista. **Uma de cada vez**:
+   ela fecha (teste, evidência, PROGRESS, commit) antes de a seguinte abrir. A sessão
+   pode seguir pela fila, feature após feature, até o fim do bloco de entrega
+   (ver §11, "Sessões longas").
 5. Implemente, escreva o teste, rode, capture a evidência.
 6. Atualize `PROGRESS.md`: o que fez, o que decidiu e por quê, o que ficou aberto.
 7. Commit com a mensagem `feat(<sigla>): <resumo>`. A sigla segue `docs/siglas.md`. Item
@@ -163,7 +165,7 @@ Não adicione dependência nova sem registrar o motivo em `PROGRESS.md`.
   sessão estava girando, e quase leu a falha como sua. Antes de qualquer commit
   na `main`: `git status`, e só arquivos seus na lista.
 
-Se a feature se revelar maior do que uma sessão, **não improvise**: quebre em
+Se a feature se revelar maior do que o previsto, **não improvise**: quebre em
 sub-itens dentro de `BUILD_PLAN.md`, registre em `PROGRESS.md` e entregue o
 primeiro. Feature pela metade sem registro é o pior resultado possível.
 
@@ -310,11 +312,22 @@ componentes mais caros em token e o orçamento aqui é semanal.
 **Codex** recebe só trabalho mecânico já especificado, pelo comando `/codex`.
 A tabela de roteamento está lá. O resumo: `sim/` nunca sai daqui.
 
-**Crédito é finito.** Sessões curtas, uma feature por vez, disparadas pelo
-operador. Nada de loop desatendido rodando por horas. Em feature grande, use
-plan mode antes de escrever código — revisar plano é muito mais barato que
-desfazer implementação. Nunca faça leitura ampla do projeto: delegue a um
-subagente, que gasta contexto próprio e devolve só o resumo.
+**Sessões longas (decisão do operador, 2026-10-02; revoga "sessões curtas, nada de loop
+desatendido").** A sessão pode rodar por horas, desatendida, avançando pela fila feature após
+feature. O operador joga ao fim de cada grande bloco de entrega, não a cada feature. O que
+continua valendo:
+- uma feature de cada vez, um commit por feature (§6), `npm run verify:rapido` verde antes de
+  cada commit;
+- aceite reprovado, decisão de design não coberta pelo GDD ou decisão reservada ao operador:
+  **não decidir**. Registra em `PROGRESS.md` (`## Perguntas em aberto`) e segue para a próxima
+  tarefa que não dependa dela;
+- `AGENT_STOP` e `STEER.md` (§14) são conferidos entre uma feature e a seguinte;
+- o fechamento do bloco (`verify` completo, `test:longo`, `shot:todos`, §13) roda quando o
+  operador diz que o bloco fechou.
+
+Em feature grande, use plan mode antes de escrever código — revisar plano é muito mais barato
+que desfazer implementação. Nunca faça leitura ampla do projeto: delegue a um subagente, que
+gasta contexto próprio e devolve só o resumo.
 
 ## 12. Bugs, balanceamento e ideias
 

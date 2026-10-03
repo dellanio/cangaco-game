@@ -1,7 +1,8 @@
 # BUILD_PLAN — cangaço
 
-Fila de trabalho. **Uma feature por sessão**, na ordem. **A fila é este
-arquivo**, não o `test-results.json`.
+Fila de trabalho. **Uma feature de cada vez**, na ordem; a sessão pode seguir
+pela fila até o fim do bloco de entrega (CLAUDE.md §11, decisão do operador de
+2026-10-02). **A fila é este arquivo**, não o `test-results.json`.
 
 A chave em `test-results.json` **nasce quando a feature fecha**, com
 `"passes": true`, e o portão do hook é o que a controla. Feature não iniciada

@@ -17936,3 +17936,21 @@ Medidas (borda / meio; antes -> depois):
 
 - A extrusao protege a amostragem da tira, mas a medida nao prova que toda a costura visivel vinha do filtro. Em zoom 1,5, a borda vertical da areia caiu de 9,284 para 8,610; a da agua subiu de 13,103 para 14,388. As bordas horizontais nao mudaram e os interiores em zoom 1 permaneceram identicos.
 - A arte ainda ser a causa predominante da emenda da agua e uma inferencia, nao uma conclusao desta tarefa. A troca dos PNGs pertence a D-ARTE-AGUA-GRAMA-SEM-EMENDA (agua e grama refeitas para emendar). Nenhuma melhoria numerica minima de costura era exigida pelo aceite; todos os pontos foram verificados, sem mudar o contrato.
+
+## 2026-10-02 — Sessões longas (decisão do operador)
+
+**Decisão do operador (2026-10-02):** sai do planejamento a regra de sessões curtas. O motivo
+dele: o jogo está levando tempo demais para ser construído; as sessões passam a rodar por mais
+tempo, e ele joga só ao fim de grandes blocos de entrega. Isto torna permanente o que a leva de
+2026-10-01 tinha como exceção ao CLAUDE.md §11.
+- CLAUDE.md §11: "Crédito é finito. Sessões curtas… nada de loop desatendido" virou "Sessões
+  longas". Ficam as salvaguardas da leva desatendida: uma feature de cada vez, um commit por
+  feature com `verify:rapido` verde, e o que pede decisão (aceite reprovado, design não coberto)
+  vai para `## Perguntas em aberto` sem ser decidido, com a sessão seguindo para a próxima tarefa
+  independente. `AGENT_STOP`/`STEER.md` são conferidos entre features.
+- CLAUDE.md §6, item 4: "Uma por sessão. Não adiante a próxima" virou "uma de cada vez"; a
+  sessão segue pela fila até o fim do bloco. "Maior do que uma sessão" virou "maior do que o
+  previsto" (a regra de quebrar em sub-itens fica).
+- BUILD_PLAN.md, cabeçalho: "Uma feature por sessão" virou "Uma feature de cada vez".
+- Não mudou: a proibição de `subagent-driven-development` e `dispatching-parallel-agents` (§11)
+  e o fechamento do bloco (§13). O operador não pediu essas mudanças.
