@@ -18815,7 +18815,14 @@ Só render, ui e roteiro: `git diff` desta feature não toca `src/sim/` (os sele
      tocou ou que dependem do que ele mudou (os 6 acima, `F-TELA-NEVOA` e `D-TELA-05c/05d`). O
      `?semNevoa` só muda a tela quando o parâmetro está na URL.
 3. `npm run verify` completo de novo no `ef3bc3c`: verde (os mesmos números). Com ele, as chaves.
-4. `npm run test:longo`, sozinho, é a última coisa. O resultado e o hash do selo entram no commit
+4. `npm run test:longo` no `dd12835`: **vermelha**. O `C-IA-03b` (a partida inteira) dava a ordem de
+   ataque a qualquer militar da IA, a vista ou não, e com a névoa ela era recusada (os três prédios
+   da IA ficavam de pé). O teste passou a jogar com névoa, pelo caminho do jogo: ataca o inimigo à
+   vista; sem nenhum à vista, marcha até o tile dele (o mesmo vale para o prédio). O que ele afirma
+   não mudou: vitória, a tropa da IA morta, sobra gente. Medido: fim da paz 6 000, tropa da IA
+   morta no 6 978, vitória no 9 176, sobram 4 de 18 (antes da Fase F, sem névoa, o número não
+   estava no PROGRESS desta worktree; não comparei).
+5. `npm run test:longo`, sozinho, de novo, é a última coisa. O resultado e o hash do selo entram no commit
    seguinte à avaliação, como pede a §13.
 
 **As chaves (`test-results.json`):**
