@@ -702,7 +702,9 @@
       "semPaz": "Sem paz",
       "minutos": "{min} min",
       "padrao": "{rotulo} (padrão)",
-      "comecar": "Começar"
+      "comecar": "Começar",
+      "nivel": "O adversário",
+      "niveis": { "facil": "Fácil", "normal": "Normal", "dificil": "Difícil" }
     }
   }
 }

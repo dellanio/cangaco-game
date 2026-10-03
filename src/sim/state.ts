@@ -1630,6 +1630,10 @@ export interface PosicaoDeDefesa {
 
 export interface IADoLado {
   readonly posicoes: readonly PosicaoDeDefesa[];
+  /** F-IA-DIFICULDADE — o nivel do adversario (`combat.json: ia.niveis`), escolhido no configurar
+   *  partida. AUSENTE = `normal`: a escaramuca normal sai byte a byte igual a de antes, e o save
+   *  de antes da F tambem. Quem le e `numerosDaIA` (`sim/ia.ts`). */
+  readonly nivel?: string;
 }
 
 function construirColecao<T extends { readonly id: string }>(itens: readonly T[]): Colecao<T> {

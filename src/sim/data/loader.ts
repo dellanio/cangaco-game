@@ -3,7 +3,7 @@ import type {
   CombateData, CondicaoData, ConstrucaoData, ConversaoRegistrada, EconomiaData,
   EntregaData, GameData, ModoDeTrabalho, ModosDoPredio, MovimentoData, ProducaoData, ReceitaDePredio,
   MapaData, RecursosData, RegimeDeRecurso, TerrenoData, TerrenoDeMapa, TerrenoTipo,
-  LimiaresEmTicks, Ticks, TileDeMapa, TipoDeRecurso, UnidadesData, VisaoData,
+  LimiaresEmTicks, NumerosDaIA, Ticks, TileDeMapa, TipoDeRecurso, UnidadesData, VisaoData,
 } from './types';
 import { TERRENOS_DE_MAPA } from './terrenos';
 import { hashDeTexto } from './hash';
@@ -390,6 +390,28 @@ export function loadGameData(raw: RawGameData): GameData {
     return ticks;
   }
 
+  // --- F-IA-DIFICULDADE: cada nivel por cima do valor de hoje; o ritmo do prefeito vira tick aqui ---
+  function niveisDaIA(): Record<string, NumerosDaIA> {
+    const prefeito = raw.economy.prefeito;
+    const escalaDoPrefeito = escalaDe(escalas, prefeito.escala) as number;
+    const niveis: Readonly<Record<string, unknown>> = raw.combat.ia.niveis;
+    const r: Record<string, NumerosDaIA> = {};
+    for (const [nome, cru] of Object.entries(niveis)) {
+      if (nome.startsWith('_')) continue;
+      const nivel = cru as { readonly tamanhoDoGrupo?: number; readonly atacantes?: number; readonly revisaoDoPrefeito_fator?: number };
+      const segundos = prefeito.revisao_segundos_base * (nivel.revisaoDoPrefeito_fator ?? 1);
+      r[nome] = {
+        tamanhoDoGrupo: nivel.tamanhoDoGrupo ?? raw.combat.ia.tamanhoDoGrupo,
+        atacantes: nivel.atacantes ?? raw.escaramuca.atacantes.quantidade,
+        ticksDaRevisao: registrar(
+          `combat.ia.niveis.${nome}.revisaoDoPrefeito`, prefeito.escala, segundos, 'segundos',
+          paraTicksDeDuracao(segundos, 'segundos', escalaDoPrefeito, tickHz),
+        ),
+      };
+    }
+    return r;
+  }
+
   // --- construcao ---
   const escalaConstrucaoNome = raw.buildings.construcao.escala;
   const escalaConstrucao = escalaDe(escalas, escalaConstrucaoNome);
@@ -661,6 +683,7 @@ export function loadGameData(raw: RawGameData): GameData {
     formacao: raw.combat.formacao,
     escudo: raw.combat.escudo,
     ia: raw.combat.ia,
+    niveisDaIA: niveisDaIA(),
     regeneracao: {
       hp: raw.combat.regeneracao.hp,
       ticksIntervalo: registrar(

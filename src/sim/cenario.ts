@@ -34,6 +34,7 @@ import { canPlowField } from './campos';
 import { caixaDoPredio } from './footprint';
 import { receitaDoTipo } from './producao';
 import { descobertoInicial } from './nevoa';
+import { NIVEL_PADRAO } from './ia';
 
 /**
  * C-IA-02a — a estrada da porta do armazem da IA a porta de cada outro predio dela, pelo A*
@@ -88,6 +89,8 @@ function camposDaVila(state: GameState, predio: Predio, recurso: string, quantid
 export interface OpcoesDaEscaramuca {
   /** A duracao da paz, um valor de `peacetime_opcoes_min_base`; ausente, `peacetime_min_base`. */
   readonly pazMinBase?: number;
+  /** F-IA-DIFICULDADE — o nivel do adversario, uma chave de `combat.json: ia.niveis`; ausente, o normal. */
+  readonly nivel?: string;
 }
 
 /** Os ticks da paz escolhida. Valor fora da lista do dado e erro de quem chamou: a tela so
@@ -101,6 +104,10 @@ export function ticksDaPaz(dados: GameData, pazMinBase: number | undefined): num
 
 export function criarEscaramuca(seed: number, dados: GameData = gameData, opcoes: OpcoesDaEscaramuca = {}): GameState {
   const ticksDePaz = ticksDaPaz(dados, opcoes.pazMinBase);
+  // F-IA-DIFICULDADE: o nivel so e guardado quando nao e o normal (o normal e a escaramuca de hoje, byte a byte)
+  const nivel = opcoes.nivel ?? NIVEL_PADRAO;
+  const numeros = dados.combate.niveisDaIA[nivel];
+  if (numeros === undefined) throw new Error(`criarEscaramuca: o nivel '${nivel}' nao esta em combat.json ia.niveis`);
   const base = createInitialState(seed, dados);
   const cenario = dados.escaramuca;
   let contador = base.proximoId;
@@ -153,7 +160,7 @@ export function criarEscaramuca(seed: number, dados: GameData = gameData, opcoes
   // voltar ao ponto usaria): em peacetime a IA nao se reposiciona (sim/paz.ts).
   const posicoes: PosicaoDeDefesa[] = [];
   for (const pos of cenario.posicoes) {
-    const tiles = tilesDoGrupo(comVila, pos.ponto, dados.combate.ia.tamanhoDoGrupo, dados);
+    const tiles = tilesDoGrupo(comVila, pos.ponto, numeros.tamanhoDoGrupo, dados);
     const membros: string[] = [];
     for (let i = 0; i < pos.tropa.quantidade; i++) {
       const tile = tiles[i];
@@ -169,11 +176,13 @@ export function criarEscaramuca(seed: number, dados: GameData = gameData, opcoes
 
   // C-IA-04 — ANDAIME: o grupo fora das posicoes, a sobra que o `atacarComASobra` manda ao
   // ataque quando a paz acaba. Sai com a C-IA-02 (economia da IA): ver o `_doc` do dado.
+  // F-IA-DIFICULDADE: quantos, pelo nivel (no normal, `atacantes.quantidade`)
   const at = cenario.atacantes;
-  const tilesDosAtacantes = tilesDoGrupo(comVila, at.ponto, at.quantidade, dados);
-  for (let i = 0; i < at.quantidade; i++) {
+  const quantosAtacantes = numeros.atacantes;
+  const tilesDosAtacantes = tilesDoGrupo(comVila, at.ponto, quantosAtacantes, dados);
+  for (let i = 0; i < quantosAtacantes; i++) {
     const tile = tilesDosAtacantes[i];
-    if (tile === undefined) throw new Error(`criarEscaramuca: os atacantes nao tem ${at.quantidade} tiles andaveis`);
+    if (tile === undefined) throw new Error(`criarEscaramuca: os atacantes nao tem ${quantosAtacantes} tiles andaveis`);
     nascer(LADO_DA_IA, at.tipo, tile.gx, tile.gy);
   }
 
@@ -190,7 +199,7 @@ export function criarEscaramuca(seed: number, dados: GameData = gameData, opcoes
     ...comVila,
     unidades: { porId: unidades, ordem: ordemDasUnidades },
     proximoId: contador,
-    ia: { [String(LADO_DA_IA)]: { posicoes } },
+    ia: { [String(LADO_DA_IA)]: { posicoes, ...(nivel === NIVEL_PADRAO ? {} : { nivel }) } },
     // C-IA-03b — o peacetime (sim/paz.ts); E-TELA-CONFIGURAR-PARTIDA: o jogador escolhe a duracao
     pazAteTick: base.tick + ticksDePaz,
   };

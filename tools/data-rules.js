@@ -1026,6 +1026,41 @@ function validarVisao(dados, erros) {
   }
 }
 
+// F-IA-DIFICULDADE — os niveis do adversario. Tem de haver `normal` (o jogo de hoje, a falta
+// do save antigo), e cada nivel so pode trocar numero que a IA le: campo fora da lista nao teria
+// leitor e viraria folclore. O tamanho do grupo nao pode ficar abaixo da tropa de uma posicao da
+// escaramuca (o cenario poe a tropa nos tiles do grupo, e faltaria tile).
+const CAMPOS_DO_NIVEL_DA_IA = ['tamanhoDoGrupo', 'atacantes', 'revisaoDoPrefeito_fator'];
+function validarNiveisDaIA(dados, erros) {
+  const niveis = dados.combat && dados.combat.ia && dados.combat.ia.niveis;
+  if (!niveis || typeof niveis !== 'object') {
+    erros.push('ia/niveis: combat.ia.niveis precisa existir (F-IA-DIFICULDADE)');
+    return;
+  }
+  if (!niveis.normal || typeof niveis.normal !== 'object') erros.push('ia/niveis: combat.ia.niveis precisa ter o nivel `normal`');
+  const posicoes = (dados.escaramuca && dados.escaramuca.posicoes) || [];
+  const maiorPosicao = Math.max(0, ...posicoes.map((p) => (p.tropa && p.tropa.quantidade) || 0));
+  for (const [nome, nivel] of Object.entries(niveis)) {
+    if (nome.startsWith('_')) continue;
+    if (!nivel || typeof nivel !== 'object') {
+      erros.push(`ia/niveis: o nivel '${nome}' precisa ser objeto`);
+      continue;
+    }
+    for (const [campo, valor] of Object.entries(nivel)) {
+      if (!CAMPOS_DO_NIVEL_DA_IA.includes(campo)) {
+        erros.push(`ia/niveis: '${nome}.${campo}' nao e numero que a IA le (${CAMPOS_DO_NIVEL_DA_IA.join(', ')})`);
+        continue;
+      }
+      const ok = campo === 'revisaoDoPrefeito_fator' ? typeof valor === 'number' && valor > 0 : Number.isInteger(valor) && valor >= 1;
+      if (!ok) erros.push(`ia/niveis: '${nome}.${campo}' invalido (veio ${valor})`);
+    }
+    const tamanho = nivel.tamanhoDoGrupo !== undefined ? nivel.tamanhoDoGrupo : dados.combat.ia.tamanhoDoGrupo;
+    if (Number.isInteger(tamanho) && tamanho < maiorPosicao) {
+      erros.push(`ia/niveis: '${nome}.tamanhoDoGrupo' ${tamanho} abaixo da maior tropa de posicao da escaramuca (${maiorPosicao})`);
+    }
+  }
+}
+
 function validarEncomenda(dados, erros) {
   const enc = dados.production && dados.production.encomenda;
   if (!enc || !Number.isInteger(enc.maxima) || enc.maxima < 1) {
@@ -1872,6 +1907,7 @@ function validarTudo(dados) {
   validarLance(dados, erros);
   validarEncomenda(dados, erros);
   validarVisao(dados, erros);
+  validarNiveisDaIA(dados, erros);
   validarPedidoDeComida(dados, erros);
   validarPrioridadesDaIA(dados, erros);
   validarEscaramuca(dados, erros);

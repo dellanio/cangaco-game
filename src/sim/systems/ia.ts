@@ -42,7 +42,7 @@ import { aplicarFeedUnits, vaiPedirComida } from './alimentar';
 import { emPaz } from '../paz';
 import { direcaoEntre, distanciaEmTiles } from '../combate';
 import { hpMaximoDoTipo } from '../vida';
-import { intrusos, posicaoDoMembro, tipoDeGrupo } from '../ia';
+import { intrusos, numerosDaIA, posicaoDoMembro, tipoDeGrupo } from '../ia';
 import { comUnidade } from '../units/movimento';
 import { FSM_MARCHANDO, tilesDoGrupo } from './marcha';
 import { FSM_ATIRANDO, FSM_INDO_LUTAR, FSM_LUTANDO } from './combate';
@@ -69,7 +69,7 @@ function alimentarGrupo(state: GameState, ids: readonly string[], dados: GameDat
 
 /** 1. guarnecer: as posicoes na ordem frente -> tras, e dentro da linha a da lista. */
 function guarnecer(state: GameState, lado: number, ia: IADoLado, dados: GameData): IADoLado {
-  const tamanho = dados.combate.ia.tamanhoDoGrupo;
+  const tamanho = numerosDaIA(state, lado, dados).tamanhoDoGrupo;
   const posicoes = ia.posicoes.map((p) => ({ ...p, membros: p.membros.filter((id) => state.unidades.porId[id] !== undefined) }));
   const ordem = [...posicoes.keys()].sort((a, b) => {
     const la = posicoes[a]?.linha === 'frente' ? 0 : 1;
@@ -88,7 +88,8 @@ function guarnecer(state: GameState, lado: number, ia: IADoLado, dados: GameData
     const p = i === undefined ? undefined : posicoes[i];
     if (i !== undefined && p !== undefined) posicoes[i] = { ...p, membros: [...p.membros, id] };
   }
-  return { posicoes };
+  // F-IA-DIFICULDADE: o resto do lado (o nivel) atravessa
+  return { ...ia, posicoes };
 }
 
 /** O alvo da posicao: quem ataca um membro (retaliar), senao o intruso mais perto do ponto. */
@@ -107,7 +108,7 @@ function alvoDaPosicao(state: GameState, p: PosicaoDeDefesa, lado: number, dados
 function defenderEPosicionar(state: GameState, p: PosicaoDeDefesa, lado: number, dados: GameData): GameState {
   let atual = state;
   const alvo = alvoDaPosicao(atual, p, lado, dados);
-  const tiles = tilesDoGrupo(atual, p.ponto, dados.combate.ia.tamanhoDoGrupo, dados);
+  const tiles = tilesDoGrupo(atual, p.ponto, numerosDaIA(atual, lado, dados).tamanhoDoGrupo, dados);
   p.membros.forEach((id, i) => {
     const u = atual.unidades.porId[id];
     if (u === undefined) return;
@@ -156,7 +157,7 @@ function reporPeloQuartel(
   let atual = state;
   const events: GameEvent[] = [];
   for (const p of ia.posicoes) {
-    if (p.membros.length >= dados.combate.ia.tamanhoDoGrupo) continue;
+    if (p.membros.length >= numerosDaIA(state, lado, dados).tamanhoDoGrupo) continue;
     // C8: o mais forte que o quartel consegue formar agora, na ordem do KaM
     // (`combat.json: ia.ordemDeTreino`, o AI_TROOP_TRAIN_ORDER), pela MESMA regra do comando
     const ordem: readonly string[] = (dados.combate.ia.ordemDeTreino as Readonly<Record<string, readonly string[]>>)[p.tipoDeGrupo] ?? [];
@@ -183,7 +184,7 @@ function atacarComASobra(state: GameState, lado: number, ia: IADoLado, dados: Ga
     .map((id) => state.unidades.porId[id])
     .filter((u): u is Unidade => u !== undefined && u.lado === lado && u.fsm === 'ocioso'
       && classeDaUnidade(u.tipo, dados) === 'militar' && posicaoDoMembro(ia.posicoes, u.id) === null);
-  if (livres.length < dados.combate.ia.tamanhoDoGrupo) return state;
+  if (livres.length < numerosDaIA(state, lado, dados).tamanhoDoGrupo) return state;
   const centro = {
     gx: Math.round(livres.reduce((s, u) => s + u.gx, 0) / livres.length),
     gy: Math.round(livres.reduce((s, u) => s + u.gy, 0) / livres.length),
@@ -236,7 +237,7 @@ export function sistemaDaIA(state: GameState, dados: GameData, tick: number): Re
       atual = alimentada.state;
       events.push(...alimentada.events);
     }
-    if (ehTickDaRevisao(tick, dados)) {
+    if (ehTickDaRevisao(tick, numerosDaIA(atual, lado, dados).ticksDaRevisao)) {
       for (const pedido of pedidosDoPrefeito(atual, lado, dados)) {
         const r = aplicarEnqueueTraining(atual, { type: 'EnqueueTraining', ...pedido }, dados);
         atual = r.state;

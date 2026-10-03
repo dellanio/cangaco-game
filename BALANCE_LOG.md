@@ -1506,3 +1506,17 @@ Medi o mesmo roteiro, o da C-IA-03c (jogar pela tela), contra a mesma IA:
 - Não é número para girar sozinho: é a margem da tropa do jogador (`escaramuca.tropaDoJogador`)
   contra a IA, que também entra na F-IA-DIFICULDADE (o nível normal é o jogo de hoje). Junta ao
   lote do combate ("o empate é caótico", 2026-09-29).
+
+## 2026-10-03 — F-IA-DIFICULDADE: fácil e difícil são primeira proposta
+
+- `combat.json: ia.niveis`. Normal vazio (o jogo de hoje). Fácil: `tamanhoDoGrupo` 12,
+  `atacantes` 6, prefeito duas vezes mais lento. Difícil: `atacantes` 12, prefeito duas vezes mais
+  rápido.
+- Medido com o jogador parado e paz de 10 min base (`test-output/F-IA-DIFICULDADE-primeiro-ataque.json`):
+  normal ataca no tick 3001 com 9; difícil no tick 3001 com 12; fácil não ataca em 2 000 ticks
+  depois da paz. **Com o quartel da IA vazio, nada muda o tick do ataque**: ele sai quando a paz
+  acaba, e o nível só muda o tamanho. No fácil, o grupo de 12 nunca se forma com 6 atacantes, e a
+  IA só defende.
+- A conferir no lote de balanceamento: se "fácil só defende" é o fácil que se quer; o difícil
+  contra a margem da tropa do jogador (18), que já perde por pouco no normal (C-IA-03c,
+  2026-10-03 acima).

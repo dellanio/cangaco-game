@@ -30,8 +30,9 @@ export interface PedidoDoPrefeito {
 
 /** Se o tick que o `step` produz e de revisao do prefeito (o `UpdateState` do KaM, a
  *  cada 48 ticks). */
-export function ehTickDaRevisao(tick: number, dados: GameData): boolean {
-  return tick % dados.economia.prefeito.ticksDaRevisao === 0;
+export function ehTickDaRevisao(tick: number, ticksDaRevisao: number): boolean {
+  // F-IA-DIFICULDADE: o periodo vem do nivel da IA (`numerosDaIA`); no normal, o de hoje
+  return tick % ticksDaRevisao === 0;
 }
 
 export function pedidosDoPrefeito(state: GameState, lado: number, dados: GameData): readonly PedidoDoPrefeito[] {

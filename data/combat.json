@@ -127,6 +127,12 @@
       ]
     },
     "_doc": "F28-IA (decisao do operador, 2026-09-28): o grupo de defesa da IA tem 9 homens, o padrao da IA do KaM (KM_AIDefensePos.pas:223-224). E da IA, nao regra do jogador. Os '3 por fileira' do KaM NAO estao aqui: a sim nao tem formacao em fileiras (a marcha usa `tilesDoGrupo`), e o campo que dizia 3 foi removido por nao ter leitor (operador, 2026-09-28).",
+    "niveis": {
+      "_doc": "F-IA-DIFICULDADE (BUILD_PLAN, Fase F). Tres niveis do adversario, escolhidos no configurar partida e guardados no save (`ia.<lado>.nivel`, ausente = normal). Cada nivel so troca numeros que a IA ja le, por cima do valor de hoje: `tamanhoDoGrupo` (combat.json ia.tamanhoDoGrupo: o tamanho da posicao e o minimo de soldados livres para atacar), `atacantes` (escaramuca.json atacantes.quantidade: a tropa que a IA manda ao ataque quando a paz acaba) e `revisaoDoPrefeito_fator` (multiplica economy.json prefeito.revisao_segundos_base: 2 = o prefeito revisa duas vezes mais devagar; vira tick inteiro uma vez, no carregamento). `normal` vazio E o jogo de hoje, sem mudar um numero. Facil e dificil sao primeira proposta (BALANCE_LOG.md, 2026-10-03): no facil a IA so defende (o grupo de 12 nunca se forma com 6 atacantes, porque a IA nao forma tropa nova com o quartel vazio), no dificil ela ataca com 12. O validate:data recusa nivel sem `normal` e campo que a IA nao le.",
+      "facil": { "tamanhoDoGrupo": 12, "atacantes": 6, "revisaoDoPrefeito_fator": 2.0 },
+      "normal": {},
+      "dificil": { "atacantes": 12, "revisaoDoPrefeito_fator": 0.5 }
+    },
     "_docPrioridades": "C8 (operador, 2026-09-28: 'meca no kam_remake como eles escolhem'). Alvo: o da IA nova do KaM, primeiro o mais perto entre Quartel, Armazem, Escola e Prefeitura (TARGET_HOUSES, ai/newAI/KM_ArmyAttack.pas:155-160), e so sem nenhum deles qualquer predio. Tropa: AI_TROOP_TRAIN_ORDER (common/KM_Defaults.pas:701-705), o mais forte que o equipamento permite, caindo para o seguinte (KM_AIGeneral.pas:282-300)."
   }
 }

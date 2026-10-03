@@ -8,7 +8,7 @@
 import { iniciarSeHouverWebgl } from './render/webgl';
 import { depuracaoDeUnidade, tiposDeDepuracao, chaveDoAtlas } from './render/animacao-de-unidade';
 import { registrarDepuracao } from './render/registro-de-depuracao';
-import { abreNoMenu, escolhaDaUrl, estadoDaEscolha, estadoNovo, opcoesDePazNaTela } from './escolha-da-partida';
+import { abreNoMenu, escolhaDaUrl, estadoDaEscolha, estadoNovo, opcoesDeNivelNaTela, opcoesDePazNaTela } from './escolha-da-partida';
 import type { EscolhaDaPartida } from './escolha-da-partida';
 import { lerGavetas, lerUltimoSave } from './arquivo-da-partida';
 import type { Gaveta } from './arquivo-da-partida';
@@ -51,7 +51,7 @@ function abrirMenu(): Promise<void> {
       if (evento.key === 'Escape' && ajuda?.fechar() === true) evento.preventDefault();
     }
     window.addEventListener('keydown', aoTeclar);
-    const menu = montarMenuInicial(situacaoDoSave(), lerGavetas(gavetaDoNavegador()), opcoesDePazNaTela(), (escolha) => {
+    const menu = montarMenuInicial(situacaoDoSave(), lerGavetas(gavetaDoNavegador()), opcoesDePazNaTela(), opcoesDeNivelNaTela(), (escolha) => {
       window.removeEventListener('keydown', aoTeclar);
       ajuda?.fechar();
       menu.fechar();

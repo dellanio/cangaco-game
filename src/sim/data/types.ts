@@ -310,6 +310,16 @@ export interface CadenciaDoAtirador {
   readonly recarga: Ticks;
 }
 
+/** F-IA-DIFICULDADE — os numeros da IA de um nivel. */
+export interface NumerosDaIA {
+  /** O tamanho da posicao de defesa e o minimo de soldados livres para atacar. */
+  readonly tamanhoDoGrupo: number;
+  /** A tropa atacante da escaramuca (`escaramuca.json: atacantes.quantidade`). */
+  readonly atacantes: number;
+  /** De quantos em quantos ticks o prefeito da IA revisa (`economy.json: prefeito`). */
+  readonly ticksDaRevisao: Ticks;
+}
+
 export interface CombateData {
   readonly formula: string;
   readonly attackEfetivo: string;
@@ -338,6 +348,12 @@ export interface CombateData {
   readonly formacao: RawGameData['combat']['formacao'];
   /** F28-IA — o tamanho do grupo de defesa da IA. */
   readonly ia: RawGameData['combat']['ia'];
+  /**
+   * F-IA-DIFICULDADE — os numeros que a IA le, ja resolvidos por nivel (`combat.json: ia.niveis`
+   * por cima do valor de hoje), com o ritmo do prefeito em ticks inteiros convertidos aqui, uma
+   * vez. Quem le e `numerosDaIA` (`sim/ia.ts`); `normal` e o jogo de hoje.
+   */
+  readonly niveisDaIA: Readonly<Record<string, NumerosDaIA>>;
   /** F28d — quem tem escudo (pelos requisitos) e a defesa extra por tipo de projetil. */
   readonly escudo: RawGameData['combat']['escudo'];
   /** F28c — quanto HP volta e de quantos em quantos ticks (ja convertido). */

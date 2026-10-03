@@ -18746,3 +18746,41 @@ Só render, ui e roteiro: `git diff` desta feature não toca `src/sim/` (os sele
   rodaram e saíram 0 (BUG-T a BUG-Z, C-COMBATE-01c), 110 nem começaram. É ambiente, não roteiro.
   Não repeti: o fechamento da §13 roda o `shot:todos` inteiro, e é lá que o (e) fica medido, com a
   lista dos roteiros cuja captura mudou só pela névoa.
+
+## 2026-10-03 — F-IA-DIFICULDADE (três níveis de adversário; integração declarada no item)
+
+**Feito (verificado rodando):**
+- `combat.json: ia.niveis` com `facil`, `normal` (vazio) e `dificil`; cada nível só troca
+  `tamanhoDoGrupo`, `atacantes` (a tropa atacante da escaramuça) e `revisaoDoPrefeito_fator` (o
+  ritmo do prefeito). O loader resolve cada nível por cima do valor de hoje em
+  `GameData.combate.niveisDaIA` e converte o ritmo em ticks uma vez, registrado em `conversoes`.
+- O nível mora em `ia.<lado>.nivel`, **ausente no normal**. A IA lê tudo por
+  `numerosDaIA(state, lado)` (`sim/ia.ts`): `guarnecer`, `defenderEPosicionar`,
+  `reporPeloQuartel`, `atacarComASobra` e o tick da revisão do prefeito (`ehTickDaRevisao` passou a
+  receber o período). O `guarnecer` devolvia só `{ posicoes }` e perderia o nível; agora espalha o
+  lado. `criarEscaramuca` ganhou `nivel`.
+- Tela: o configurar partida ganhou "O adversário" (`select[data-campo="nivel"]`), com os rótulos do
+  tema (`menuInicial.configurar.niveis`) e o normal marcado. A escolha leva `nivel` até o estado.
+- `validate:data`: `validarNiveisDaIA` recusa nível sem `normal`, campo que a IA não lê, número
+  inválido, e `tamanhoDoGrupo` abaixo da maior tropa de posição da escaramuça (o cenário quebraria).
+
+**Aceite** (`tests/F-IA-DIFICULDADE.test.ts`, roteiro `F-IA-DIFICULDADE`):
+- (a) escolher o normal dá o mesmo JSON que não escolher, no tick 0 e 400 ticks depois, sem o
+  campo `nivel`; os números do normal são os de hoje. O save do operador
+  (`D-SAVE-VILA-PRONTA`, montado sobre a escaramuça) continua byte a byte.
+- (b) cada nível rodado duas vezes com os mesmos comandos dá o mesmo save.
+- (c) o primeiro ataque com o jogador parado (paz de 10 min base, folga de 2 000 ticks):
+
+  ```text
+  nivel     tick do primeiro ataque   tamanho
+  facil     nao atacou                0
+  normal    3001                      9
+  dificil   3001                      12
+  ```
+
+  O tick é o mesmo no normal e no difícil: com o quartel da IA vazio, o ataque sai quando a paz
+  acaba, e o nível só muda o tamanho (BALANCE_LOG, 2026-10-03).
+- (d) o `validate:data` recusa os quatro casos (teste por tabela).
+- (e) captura `F-IA-DIFICULDADE-1-configurar-com-o-nivel` (o adversário "Difícil" ao lado da paz);
+  o Começar segurado 150 ms faz a partida nascer com `ia.1.nivel = dificil`. O save e o carregar
+  guardam o nível, e a IA o lê depois (teste headless, pelo `salvar`/`carregar` do jogo).
