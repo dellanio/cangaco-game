@@ -6,6 +6,8 @@
 // no estado (CLAUDE.md §3). Os rotulos vem de `data/theme-sertao.json` (`menuInicial`).
 import temaSertao from '../../data/theme-sertao.json';
 import type { EscolhaDaPartida, OpcaoDePazNaTela } from '../escolha-da-partida';
+import type { SituacaoDaGaveta } from '../arquivo-da-partida';
+import { textoDaGaveta } from './arquivo';
 import { mmss } from './contador-de-paz';
 
 const rotulos = temaSertao.menuInicial;
@@ -21,9 +23,11 @@ export function motivoDoContinuar(situacao: SituacaoDoSave): string | null {
   return rotulos[situacao.causa].replace('{detalhe}', situacao.detalhe);
 }
 
-/** O rotulo da gaveta na lista do Carregar. */
-export function rotuloDaGaveta(situacao: SituacaoDoSave): string {
-  return situacao.pronto ? rotulos.gavetaCheia.replace('{tick}', String(situacao.tick)) : (motivoDoContinuar(situacao) ?? '');
+/** E-SAVE-GAVETAS — por que uma gaveta do Carregar nao abre, ou `null` quando abre. Pura. */
+export function motivoDaGaveta(g: SituacaoDaGaveta): string | null {
+  if (g.situacao === 'pronta') return null;
+  if (g.situacao === 'vazia') return rotulos['sem-save'];
+  return motivoDoContinuar({ pronto: false, causa: g.causa, detalhe: g.detalhe });
 }
 
 /** E-TELA-CONFIGURAR-PARTIDA — o rotulo de uma duracao da paz, em tempo de jogo. Pura. */
@@ -38,9 +42,11 @@ export interface MenuInicial {
   fechar(): void;
 }
 
-/** Monta o menu em `<body>` e chama `aoEscolher` uma vez. `aoAjuda` abre a tela de ajuda. */
+/** Monta o menu em `<body>` e chama `aoEscolher` uma vez. `aoAjuda` abre a tela de ajuda. O
+ *  Continuar abre a gaveta salva por ultimo (`situacao`); o Carregar, a que o jogador escolher. */
 export function montarMenuInicial(
   situacao: SituacaoDoSave,
+  gavetas: readonly SituacaoDaGaveta[],
   opcoesDePaz: readonly OpcaoDePazNaTela[],
   aoEscolher: (escolha: EscolhaDaPartida) => void,
   aoAjuda: () => void,
@@ -129,11 +135,13 @@ export function montarMenuInicial(
     botao('escaramuca', rotulos.escaramuca, () => { mostrar(configurar); }),
     botao('voltar', rotulos.voltar, () => { mostrar(principal); }),
   );
-  // Hoje ha uma gaveta so (a da F23b); as tres chegam com a E-SAVE-GAVETAS.
-  carregar.append(
-    botao('gaveta-1', rotuloDaGaveta(situacao), () => { escolher({ modo: 'continuar' }); }, motivo),
-    botao('voltar', rotulos.voltar, () => { mostrar(principal); }),
-  );
+  // E-SAVE-GAVETAS: as tres gavetas. A que nao abre fica desabilitada, com o motivo embaixo.
+  for (const g of gavetas) {
+    const motivoDela = motivoDaGaveta(g);
+    const rotulo = motivoDela === null ? textoDaGaveta(g) : temaSertao.hud.arquivo.gavetas.nome.replace('{n}', String(g.n));
+    carregar.append(botao(`gaveta-${g.n}`, rotulo, () => { escolher({ modo: 'carregar', gaveta: g.n }); }, motivoDela));
+  }
+  carregar.append(botao('voltar', rotulos.voltar, () => { mostrar(principal); }));
 
   const rotulosDaPaz = rotulos.configurar;
   const campoDaPaz = document.createElement('label');

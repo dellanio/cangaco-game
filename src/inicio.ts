@@ -10,7 +10,7 @@ import { depuracaoDeUnidade, tiposDeDepuracao, chaveDoAtlas } from './render/ani
 import { registrarDepuracao } from './render/registro-de-depuracao';
 import { abreNoMenu, escolhaDaUrl, estadoDaEscolha, estadoNovo, opcoesDePazNaTela } from './escolha-da-partida';
 import type { EscolhaDaPartida } from './escolha-da-partida';
-import { lerUltimoSave } from './arquivo-da-partida';
+import { lerGavetas, lerUltimoSave } from './arquivo-da-partida';
 import type { Gaveta } from './arquivo-da-partida';
 import { montarMenuInicial } from './ui/menu-inicial';
 import type { SituacaoDoSave } from './ui/menu-inicial';
@@ -30,7 +30,7 @@ function gavetaDoNavegador(): Gaveta | null {
 async function jogar(escolha: EscolhaDaPartida, ajuda: Ajuda | null): Promise<void> {
   const gaveta = gavetaDoNavegador();
   const partida = estadoDaEscolha(escolha, gaveta);
-  // o menu so oferece o Continuar que abre; se o save sumiu entre o menu e o clique, o jogo livre
+  // o menu so oferece o save que abre; se ele sumiu entre o menu e o clique, o jogo livre
   const estado = partida.ok ? partida.estado : estadoNovo({ modo: 'livre' });
   const modulo = await import('./main');
   modulo.iniciarPartida(estado, ajuda);
@@ -48,7 +48,7 @@ function abrirMenu(): Promise<void> {
       if (evento.key === 'Escape' && ajuda?.fechar() === true) evento.preventDefault();
     }
     window.addEventListener('keydown', aoTeclar);
-    const menu = montarMenuInicial(situacaoDoSave(), opcoesDePazNaTela(), (escolha) => {
+    const menu = montarMenuInicial(situacaoDoSave(), lerGavetas(gavetaDoNavegador()), opcoesDePazNaTela(), (escolha) => {
       window.removeEventListener('keydown', aoTeclar);
       ajuda?.fechar();
       menu.fechar();

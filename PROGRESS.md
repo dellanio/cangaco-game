@@ -18332,3 +18332,45 @@ Feature de integração (sim + tela), como o item declara.
   `screenshots/E-TELA-CONFIGURAR-PARTIDA-1-configurar.png` foi aberta. O roteiro do menu continua 0.
 - `npm run verify:rapido`: 2 208 testes, verde.
 
+
+## 2026-10-03 — E-SAVE-GAVETAS (salvar e carregar pela tela)
+
+**O que mudou.**
+- `src/arquivo-da-partida.ts`: três gavetas. **A gaveta 1 é a chave da F23b** (`cangaco:partida`),
+  sem migração: o save de quem já tinha um já é a gaveta 1. A 2 e a 3 são `cangaco:partida:2` e `:3`,
+  com o texto da F23. O tipo da partida, a data e a última salva ficam num índice à parte,
+  `cangaco:gavetas`. Índice ilegível conta como vazio, e sem índice o save da F23b é a última.
+  `salvar(n)` e `carregar(n)` levam o número (1 por padrão, como na F23b); entraram `lerGavetas`,
+  `lerGaveta` e `ultimaGaveta`.
+- **A data** vem do relógio que o `main.ts` injeta (`new Date().toISOString()`), no laço externo. O
+  texto do save, que é o que a `sim/` produz, não a contém (teste).
+- Na ajuda (H), uma linha por gaveta: "Gaveta 2: Jogo livre, tick 60, 03/10, 05:49", vazia, ou
+  "não abre: <motivo>". Cada linha tem Guardar e Retomar. Ao lado do "Nova escaramuça", o botão
+  **Menu inicial** abre `/`. As linhas nascem uma vez, e depois só o texto muda.
+- No menu, o **Carregar** lista as três (a que não abre fica desabilitada, com o motivo), e o
+  **Continuar** abre a última salva.
+- O nome da gaveta é o tipo da partida (Escaramuça ou Jogo livre), sem campo para digitar (ver
+  Perguntas em aberto).
+- **Os roteiros que injetam `cangaco:partida`** (são ~25, como o BUG-U e a D-TELA-05c) continuam
+  valendo sem mudar, porque a chave é a da gaveta 1 e o primeiro Retomar da ajuda é o dela. **O
+  roteiro da F23b mudou** (não-regressão na tarefa que mudou o comportamento): o Guardar agora
+  acrescenta a chave dela **e** a do índice, e a asserção ficou mais estrita (o índice marca a 1 como a
+  última).
+
+**Verificado:**
+- `tests/E-SAVE-GAVETAS.test.ts` (6 testes, verde):
+  - (a) em cada uma das três gavetas, salvar no tick 200, carregar numa sessão nova e rodar 300 dá o
+    mesmo JSON que rodar 300 sem salvar. As gavetas são independentes, e o Continuar abre a última;
+  - (b) só a chave da F23b, sem índice: gaveta 1 pronta, tick 40, sem data. O Continuar e o
+    `carregar()` sem número a abrem;
+  - (c) a versão `VERSAO_DO_SAVE + 1` na gaveta 3 aparece recusada com "o save e da versao 5…", e as
+    outras continuam. Índice ilegível, armazenamento que lança e armazenamento ausente não lançam.
+    A data não entra no save.
+- O teste da F23b continuou verde sem mudar.
+- Roteiro `E-SAVE-GAVETAS` saiu 0. As três gavetas nascem vazias. A 3 foi guardada e estragada
+  (versão +50), a 1 guardada no tick 20 e a 2 no tick 60; as linhas dizem isso, e a 3 aparece "não
+  abre: o save e da versao 54, e esta build le a versao 4". O botão Menu inicial leva ao menu (0
+  canvas), onde o Carregar mostra a 3 desabilitada com o motivo e a 1 e a 2 abrindo. (d) O Continuar
+  segurado 150 ms, despausado, abriu a 2 e seguiu até o tick 69, e o `P` pausou. A foto
+  `screenshots/E-SAVE-GAVETAS-1-gavetas-no-jogo.png` foi aberta.
+- Os roteiros F23b, E-TELA-MENU-INICIAL e C-IA-03c saíram 0.

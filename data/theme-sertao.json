@@ -386,7 +386,17 @@
       "carregou": "Partida retomada",
       "semSave": "Nenhuma partida guardada",
       "recusado": "Não retomou: {detalhe}",
-      "gaveta": "O navegador não guardou: {detalhe}"
+      "gaveta": "O navegador não guardou: {detalhe}",
+      "menuInicial": "Menu inicial",
+      "gavetas": {
+        "_doc": "E-SAVE-GAVETAS. Uma linha por gaveta (src/ui/arquivo.ts, textoDaGaveta), no jogo e no Carregar do menu. {tipo} vem de `tipos` (o tipo da partida guardada, o nome da gaveta); {data} e a data do indice, no fuso do jogador; save da F23b nao tem data.",
+        "nome": "Gaveta {n}",
+        "vazia": "vazia",
+        "pronta": "{tipo}, tick {tick}",
+        "data": ", {data}",
+        "recusada": "não abre: {detalhe}",
+        "tipos": { "escaramuca": "Escaramuça", "livre": "Jogo livre" }
+      }
     }
   },
   "menuBuild": {
@@ -680,7 +690,6 @@
     "sem-save": "Nenhuma partida guardada ainda",
     "recusado": "A partida guardada não abre: {detalhe}",
     "gaveta": "O navegador não deixa ler a partida guardada",
-    "gavetaCheia": "Partida guardada, tick {tick}",
     "configurar": {
       "_doc": "E-TELA-CONFIGURAR-PARTIDA. A tela antes da escaramuca. {min} e o tempo de JOGO (os ticks da opcao, nao os minutos base do dado); {rotulo} e o rotulo da opcao padrao.",
       "titulo": "A escaramuça",

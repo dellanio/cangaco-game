@@ -15,7 +15,7 @@ import { salvar } from '../src/sim/save';
 import { abreNoMenu, escolhaDaUrl, estadoDaEscolha } from '../src/escolha-da-partida';
 import { CHAVE_DO_SAVE } from '../src/arquivo-da-partida';
 import type { Gaveta } from '../src/arquivo-da-partida';
-import { motivoDoContinuar, rotuloDaGaveta } from '../src/ui/menu-inicial';
+import { motivoDoContinuar } from '../src/ui/menu-inicial';
 import temaSertao from '../data/theme-sertao.json';
 import { gravarEvidencia } from './helpers/evidence';
 
@@ -95,7 +95,6 @@ describe('E-TELA-MENU-INICIAL — aceite (c): o Continuar', () => {
     if (!r.ok) return;
     expect(JSON.stringify(r.estado)).toBe(JSON.stringify(s));
     expect(motivoDoContinuar({ pronto: true, tick: r.estado.tick })).toBeNull();
-    expect(rotuloDaGaveta({ pronto: true, tick: 20 })).toContain('20');
     gravarEvidencia('E-TELA-MENU-INICIAL', evidencia);
   });
 });

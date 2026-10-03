@@ -249,20 +249,21 @@ export function iniciarPartida(estadoInicial: GameState, ajudaDoMenu: Ajuda | nu
   // F23b — guardar e retomar a partida. A gaveta e o `localStorage`, injetado aqui
   // para o arquivo continuar testavel sem navegador. Retomar fecha o painel: o
   // predio aberto e da partida velha e pode nao existir na nova.
-  const arquivo = criarArquivoDaPartida(sessao, window.localStorage);
-  const painelDoArquivo = montarArquivo(
-    () => {
-      painelDoArquivo.mostrar(arquivo.salvar());
+  // E-SAVE-GAVETAS: tres gavetas; a data e do relogio do navegador, aqui no laco externo.
+  const arquivo = criarArquivoDaPartida(sessao, window.localStorage, gameData, () => new Date().toISOString());
+  const painelDoArquivo = montarArquivo({
+    aoSalvar(n) {
+      painelDoArquivo.mostrar(arquivo.salvar(n));
     },
-    () => {
-      const resultado = arquivo.carregar();
+    aoCarregar(n) {
+      const resultado = arquivo.carregar(n);
       if (resultado.ok) {
         jogo.reiniciarApresentacao();
         selecao.selecionar(null);
       }
       painelDoArquivo.mostrar(resultado);
     },
-    () => {
+    aoEscaramuca() {
       // C-IA-03c: a escaramuca do comeco, no lugar da partida em curso
       jogo.reiniciarApresentacao();
       sessao.substituir(criarEscaramuca(SEMENTE));
@@ -270,7 +271,12 @@ export function iniciarPartida(estadoInicial: GameState, ajudaDoMenu: Ajuda | nu
       selecaoMilitar.limpar();
       painelDoArquivo.mostrar({ ok: true, acao: 'escaramuca', tick: 0 });
     },
-  );
+    aoMenu() {
+      // E-SAVE-GAVETAS: o menu inicial e a pagina sem parametro; o que nao foi guardado se perde
+      window.location.assign(window.location.pathname);
+    },
+    gavetas: () => arquivo.gavetas(),
+  });
   // O painel abre NO CLIQUE, sem esperar o proximo tick: com o jogo pausado nao
   // viria nenhum, e o painel so apareceria quando o jogador retomasse.
   selecao.aoMudar(() => {

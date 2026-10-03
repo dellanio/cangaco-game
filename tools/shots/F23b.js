@@ -31,6 +31,8 @@ const OBRA = 'woodcutters';
  *  guardar ACRESCENTOU (a ajuda e a prancha ja tem as suas): se ela mudar la, este
  *  roteiro acusa em vez de ler vazio. */
 const CHAVE = 'cangaco:partida';
+/** E-SAVE-GAVETAS — o indice das gavetas, de `src/arquivo-da-partida.ts`. */
+const CHAVE_DO_INDICE = 'cangaco:gavetas';
 const TICKS_ANTES_DE_GUARDAR = 300;
 const PASSO_DE_AVANCO = 50; // um `avancar` seco e grande estoura o frame (F16b)
 /** Teto do passo despausado: ~0,5 s a 10 Hz, com folga. E seguranca contra o
@@ -89,7 +91,7 @@ async function roteiro(ctx) {
   afirmar(await page.textContent(BOTAO('salvar')) === ROTULOS.salvar, 'o botao de guardar deveria usar o rotulo do tema');
   afirmar(await page.textContent(BOTAO('carregar')) === ROTULOS.carregar, 'o botao de retomar deveria usar o rotulo do tema');
   afirmar((await recado()) === null, 'o recado deveria nascer escondido');
-  const chavesDeAntes = Object.keys(await gaveta()).filter((k) => k !== CHAVE).sort();
+  const chavesDeAntes = Object.keys(await gaveta()).filter((k) => k !== CHAVE && k !== CHAVE_DO_INDICE).sort();
 
   // ---- 1. o jogador planta uma obra e a aldeia anda -------------------------------
   // A obra fica logo abaixo da Casa do Coronel, no primeiro lugar livre: sem ela,
@@ -133,10 +135,13 @@ async function roteiro(ctx) {
   await clicar('salvar');
   afirmar((await recado()) === ROTULOS.salvou, `o recado deveria ser '${ROTULOS.salvou}', veio '${await recado()}'`);
   const guardado = await gaveta();
+  // E-SAVE-GAVETAS: o primeiro Guardar e o da gaveta 1, que continua sendo a chave da F23b; o indice
+  // das gavetas (tipo, data e a ultima salva) entra junto, e diz que a ultima e a 1
   afirmar(
-    JSON.stringify(Object.keys(guardado).sort()) === JSON.stringify([...chavesDeAntes, CHAVE].sort()),
-    `guardar deveria acrescentar so a chave '${CHAVE}' a ${JSON.stringify(chavesDeAntes)}, a gaveta tem ${JSON.stringify(Object.keys(guardado))}`,
+    JSON.stringify(Object.keys(guardado).sort()) === JSON.stringify([...chavesDeAntes, CHAVE, CHAVE_DO_INDICE].sort()),
+    `guardar deveria acrescentar so as chaves '${CHAVE}' e '${CHAVE_DO_INDICE}' a ${JSON.stringify(chavesDeAntes)}, a gaveta tem ${JSON.stringify(Object.keys(guardado))}`,
   );
+  afirmar(JSON.parse(guardado[CHAVE_DO_INDICE]).ultima === 1, `o indice deveria marcar a gaveta 1 como a ultima: ${guardado[CHAVE_DO_INDICE]}`);
   const texto = guardado[CHAVE];
   afirmar(JSON.parse(texto).estado.tick === TICKS_ANTES_DE_GUARDAR, 'o save deveria ser do tick em que o jogador guardou');
   // a aldeia, sem a ajuda por cima: e esta foto que a `retomada` tem de repetir

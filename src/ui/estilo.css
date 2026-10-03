@@ -875,3 +875,8 @@ body[data-menu] #ajuda { z-index: 30; }
   font: 15px/1.2 var(--fonte-corpo); padding: 6px 8px; color: var(--tinta);
   background: var(--papel); border: 2px solid var(--tinta); border-radius: 0;
 }
+/* E-SAVE-GAVETAS — uma linha por gaveta na secao Partida da ajuda */
+#ajuda .arquivo .gavetas { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+#ajuda .arquivo .gaveta { display: flex; align-items: center; gap: 8px; }
+#ajuda .arquivo .gaveta .texto { flex: 1; font-size: 13px; }
+#ajuda .arquivo .gaveta .texto[data-situacao="recusada"] { color: var(--terracota); font-style: italic; }

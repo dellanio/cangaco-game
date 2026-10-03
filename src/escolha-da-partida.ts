@@ -17,15 +17,17 @@ import type { GameState } from './sim/state';
 import { criarEscaramuca } from './sim/cenario';
 import type { GameData } from './sim/data/types';
 import { gameData } from './sim/data';
-import { lerUltimoSave } from './arquivo-da-partida';
-import type { Gaveta, LeituraDoSave } from './arquivo-da-partida';
+import { lerGaveta, lerUltimoSave } from './arquivo-da-partida';
+import type { Gaveta, LeituraDoSave, NumeroDaGaveta } from './arquivo-da-partida';
 
 export type EscolhaDaPartida =
   | { readonly modo: 'livre' }
   /** E-TELA-CONFIGURAR-PARTIDA — a paz escolhida, em minutos base do dado; ausente, o padrao. */
   | { readonly modo: 'escaramuca'; readonly pazMinBase?: number }
   /** O ultimo save (o Continuar do menu). */
-  | { readonly modo: 'continuar' };
+  | { readonly modo: 'continuar' }
+  /** E-SAVE-GAVETAS — uma gaveta escolhida no Carregar. */
+  | { readonly modo: 'carregar'; readonly gaveta: NumeroDaGaveta };
 
 /** `true` quando a pagina abre no menu. */
 export function abreNoMenu(busca: string): boolean {
@@ -42,7 +44,7 @@ export type EstadoDaEscolha =
   | { readonly ok: true; readonly estado: GameState }
   | { readonly ok: false; readonly leitura: Exclude<LeituraDoSave, { ok: true }> };
 
-export type PartidaNova = Exclude<EscolhaDaPartida, { readonly modo: 'continuar' }>;
+export type PartidaNova = Extract<EscolhaDaPartida, { readonly modo: 'livre' | 'escaramuca' }>;
 
 /** O tick 0 de uma partida nova. A semente e a do dado, como sempre foi. */
 export function estadoNovo(escolha: PartidaNova, dados: GameData = gameData): GameState {
@@ -68,9 +70,9 @@ export function opcoesDePazNaTela(dados: GameData = gameData): OpcaoDePazNaTela[
   }));
 }
 
-/** O estado de cada escolha: a partida nova, ou o ultimo save (que pode ser recusado). */
+/** O estado de cada escolha: a partida nova, o ultimo save ou uma gaveta (que podem ser recusados). */
 export function estadoDaEscolha(escolha: EscolhaDaPartida, gaveta: Gaveta | null, dados: GameData = gameData): EstadoDaEscolha {
-  if (escolha.modo !== 'continuar') return { ok: true, estado: estadoNovo(escolha, dados) };
-  const leitura = lerUltimoSave(gaveta, dados);
+  if (escolha.modo === 'livre' || escolha.modo === 'escaramuca') return { ok: true, estado: estadoNovo(escolha, dados) };
+  const leitura = escolha.modo === 'carregar' ? lerGaveta(gaveta, escolha.gaveta, dados) : lerUltimoSave(gaveta, dados);
   return leitura.ok ? { ok: true, estado: leitura.estado } : { ok: false, leitura };
 }
