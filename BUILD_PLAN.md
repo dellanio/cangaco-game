@@ -6823,6 +6823,21 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
      `capim` por não ser recurso do mapa, **PARE e reporte**: a forma do decalque no manifesto é
      decisão da D-TELA-DECALQUES-DE-CAPIM, e não se contorna afrouxando o teste.
   6. **Na tela:** `F-T1` e `ARTE-VILA` saem 0, e a captura da grama é aberta.
+- **Emenda do aceite 5 (2026-10-02, antes da geração; o Codex parou no bloqueio previsto):** o
+  `tests/F-SPR-carregamento.test.ts:79` exige que toda `vegetacao` do manifesto seja recurso do
+  mapa, e o `capim` não é. A forma decidida é **um tipo de camada novo, `decalque`**, e não uma
+  `vegetacao`:
+  - `TIPOS_DE_CAMADA` (`src/render/manifesto.ts`) ganha `decalque`. O render ainda não desenha esse
+    tipo, porque isso é a D-TELA-DECALQUES-DE-CAPIM, e o tipo só existe para o manifesto e o
+    validador;
+  - a regra do `F-SPR` para `decalque`: o id **não** precisa ser recurso do mapa; todo estado aponta
+    um PNG que existe; o anchor é `[0.5, 1]`. Cada regra tem um caso que reprova num manifesto
+    sintético, e a regra de `vegetacao` continua igual (o caso `capim` como `vegetacao` continua
+    reprovando);
+  - a entrada fica `{ "id": "capim", "tipo": "decalque", ... }`, com os oito campos do §9.
+
+  O resto do aceite não muda. Isso é código em `src/render/manifesto.ts` e no teste, permitido nesta
+  entrega por esta emenda.
 
 #### D-TELA-DECALQUES-DE-CAPIM — O render espalha os decalques de capim pelo chão
 - **Depende da D-ARTE-SOLO-CAATINGA.** O aceite entra num commit próprio quando a arte estiver na
