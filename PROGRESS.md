@@ -17760,3 +17760,14 @@ Parada prevista: sem avançar para arte real, máscaras ou outras unidades. A ap
 ### Hipoteses e limites
 - Nenhuma hipotese usada como criterio de aceite. O verify completo, a suite longa e shot:todos
   pertencem ao fechamento de fase e nao foram rodados nesta entrega; test-results.json fica para o operador.
+- **Revisão da sessão Claude: D-ARTE-BANDEIRA-FACCAO (`671f950` e `236c486`), cumpre o aceite.**
+  - **Conferido no diff:** nada mudou em `src/sim/`. O pano é um polígono de 8 segmentos com a
+    onda do vento, o mastro fica parado, e a cor é a do bando. O pano é reaproveitado quando o
+    prédio é redesenhado e sai da memória quando o prédio some. Ele só redesenha com o tick, o
+    alfa ou a câmera, e só na vista.
+  - **Rodado aqui, com saída 0:** os testes da bandeira, do vento, da água com peixe, de manifesto
+    e da C-IA-03c (50/50) e os roteiros da bandeira, da C-IA-03c e da D-TELA-07.
+  - **Captura aberta (lado 1):** as bandeiras azuis do inimigo aparecem no alto dos prédios, na cor
+    do bando. A ondulação é de no máximo 3 px e quase não se vê parada; ela aparece em movimento.
+  - **Ressalva de forma:** o `import` da bandeira entrou acima do comentário de cabeçalho do
+    `WorldScene.ts`. Não muda nada no comportamento.
