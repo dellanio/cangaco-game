@@ -29,6 +29,10 @@ const QUATRO = {
   build: { commit: HEAD, arvoreLimpa: true },
 };
 const evidencia: Record<string, unknown> = {};
+// O aceite (b) sobe repositorio git e processos de verdade: sozinho, o arquivo leva ~5 s; na
+// suite inteira, com a maquina cheia, a recusa levou 5,9 s e estourou os 5 s padrao. O limite e
+// para o caso travar, nao afirma tempo (CLAUDE.md §8), como os 90 s do PORTOES-verify.
+const LIMITE_DE_PROCESSO = 60_000;
 
 describe('E-ENTREGA-PUBLICACAO — aceite (a): a regra, por tabela', () => {
   it('passa com os quatro, e a versao e a tag', () => {
@@ -118,7 +122,7 @@ describe('E-ENTREGA-PUBLICACAO — aceite (b): como processo, com o butler falso
     expect(chamada.args).toEqual(['push', 'dist', 'operador/cangaco:html5', '--userversion', 'teste-jogo-7']);
     expect(chamada.cwd.toLowerCase()).toBe(repo.toLowerCase());
     evidencia['chamada'] = chamada.args;
-  });
+  }, LIMITE_DE_PROCESSO);
 
   it('--ensaio: confere e mostra o comando, sem chamar o butler', () => {
     const { repo, butler, log } = projeto();
@@ -126,7 +130,7 @@ describe('E-ENTREGA-PUBLICACAO — aceite (b): como processo, com o butler falso
     expect(r.status, r.saida).toBe(0);
     expect(r.saida).toContain('operador/cangaco:html5');
     expect(existsSync(log)).toBe(false);
-  });
+  }, LIMITE_DE_PROCESSO);
 
   it('cada recusa sai diferente de 0 e nao chama o butler', () => {
     const casos: [string, (repo: string) => void][] = [
@@ -153,5 +157,5 @@ describe('E-ENTREGA-PUBLICACAO — aceite (b): como processo, com o butler falso
     }
     evidencia['recusas'] = saidas;
     gravarEvidencia('E-ENTREGA-PUBLICACAO', evidencia);
-  });
+  }, LIMITE_DE_PROCESSO);
 });
