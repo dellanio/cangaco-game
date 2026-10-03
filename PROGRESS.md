@@ -18037,3 +18037,20 @@ Luminância = 0,2126 R + 0,7152 G + 0,0722 B; desvio populacional de todos os pi
       `noru-novos-sprites` tem um arquivo com o mesmo nome e outro conteúdo, então um merge futuro
       dela vai dar conflito nesse arquivo.
 - As duas worktrees foram encerradas. O `node_modules` da `main` ficou intacto.
+
+## 2026-10-03 — A arte do chão descartada (decisão do operador)
+- O operador reprovou o solo de caatinga ("essa areia ficou péssima") e a água candidata ("não
+  resolveu"), e mandou descartar o trabalho das duas worktrees de arte. Ele vai produzir os sprites
+  novos depois.
+- **Feito:**
+  - `git revert` do `d82b6be` (`d37fbc3`). A grama anterior, o manifesto, o `src/render/manifesto.ts`
+    (sem o tipo `decalque`) e o `tests/F-SPR-carregamento.test.ts` voltaram a ser idênticos aos do
+    `67b3722` (o diff de `assets`, `src` e `tests` contra ele é vazio), e o `SKILL_BUILDER_PROGRESS.md`
+    da raiz saiu;
+  - a worktree `D-ARTE-AGUA-GRAMA-SEM-EMENDA` e a branch dela (`d7dc4db`, nunca mergeada) foram
+    apagadas;
+  - os três itens de arte foram marcados como descartados no `BUILD_PLAN.md`.
+- **Verificado:** os testes de manifesto e do véu deram 46/46, e o roteiro `F-T1` saiu 0.
+- **Continua na `main`:** a correção de render. É a costura dos tiles (D-TELA-COSTURA-DOS-TILES) e o
+  véu dos detalhes (D-TELA-VEU-DOS-DETALHES), que valem para qualquer arte futura. Os candidatos
+  gerados continuam fora do repositório, em `D:\projetos-pessoal\cangaco-game-candidatos\`.

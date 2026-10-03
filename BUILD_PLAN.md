@@ -6723,6 +6723,12 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
      direto. `git diff main -- src/sim` vazio.
 
 #### D-ARTE-AGUA-GRAMA-SEM-EMENDA — A água e a grama refeitas para emendar
+- **DESCARTADO (decisão do operador, 2026-10-03):** "essa areia ficou péssima, reverta para a grama
+  anterior; a água também não resolveu; todo o trabalho dessas worktrees pode ser jogado fora". O
+  operador vai produzir os sprites novos depois. A arte da D-ARTE-SOLO-CAATINGA foi revertida
+  (`d37fbc3`), e a candidata da D-ARTE-AGUA-GRAMA-SEM-EMENDA foi apagada sem merge. A
+  D-TELA-DECALQUES-DE-CAPIM fica sem arte e não entra na fila. A correção de render (a costura e o
+  véu) continua na `main`.
 - **Origem (medido em 2026-10-02):** a diferença de cor entre a borda esquerda e a direita do
   tile, contra a diferença entre duas colunas vizinhas do meio:
   - `agua.png` 11,1 contra 6,8;
@@ -6789,6 +6795,12 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
      e `ARTE-VILA` saem 0; o `verify:rapido` passa; `git diff main -- src/sim` vazio.
 
 #### D-ARTE-SOLO-CAATINGA — O chão da caatinga no começo da seca e os decalques de capim
+- **DESCARTADO (decisão do operador, 2026-10-03):** "essa areia ficou péssima, reverta para a grama
+  anterior; a água também não resolveu; todo o trabalho dessas worktrees pode ser jogado fora". O
+  operador vai produzir os sprites novos depois. A arte da D-ARTE-SOLO-CAATINGA foi revertida
+  (`d37fbc3`), e a candidata da D-ARTE-AGUA-GRAMA-SEM-EMENDA foi apagada sem merge. A
+  D-TELA-DECALQUES-DE-CAPIM fica sem arte e não entra na fila. A correção de render (a costura e o
+  véu) continua na `main`.
 - **Pedido do operador (2026-10-02):** a grama verde-oliva da D-ARTE-AGUA-GRAMA-SEM-EMENDA está
   **reprovada como direção**. O chão é solo de caatinga no começo da seca, sem tufos destacados. A
   vida vem de pequenos decalques independentes de capim, palha e verde-oliva, espalhados pelo
@@ -6840,6 +6852,12 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
   entrega por esta emenda.
 
 #### D-TELA-DECALQUES-DE-CAPIM — O render espalha os decalques de capim pelo chão
+- **DESCARTADO (decisão do operador, 2026-10-03):** "essa areia ficou péssima, reverta para a grama
+  anterior; a água também não resolveu; todo o trabalho dessas worktrees pode ser jogado fora". O
+  operador vai produzir os sprites novos depois. A arte da D-ARTE-SOLO-CAATINGA foi revertida
+  (`d37fbc3`), e a candidata da D-ARTE-AGUA-GRAMA-SEM-EMENDA foi apagada sem merge. A
+  D-TELA-DECALQUES-DE-CAPIM fica sem arte e não entra na fila. A correção de render (a costura e o
+  véu) continua na `main`.
 - **Depende da D-ARTE-SOLO-CAATINGA.** O aceite entra num commit próprio quando a arte estiver na
   `main`, porque a forma da entrada `capim` no manifesto e a densidade dependem dela. Fica
   registrado o escopo: só render, por hash do tile e da semente, várias por tile, com posição,
