@@ -17898,3 +17898,41 @@ Nas bases `804026d` e `d12b2ea`, D-TELA-07-2 (retomada sem placa) diferiu em **5
 - `git diff --check` passou. O diff da tarefa contém somente `PROGRESS.md`;
   código do jogo, `src/sim/`, dados e `test-results.json` não foram alterados.
   A worktree descartável B e sua junction foram removidas.
+
+
+## 2026-10-02 — D-TELA-COSTURA-DOS-TILES (margem e extrusao nas tiras), pelo Codex
+
+### Verificado
+
+- HEAD de partida: `692aa70`, o aceite; nenhum rebase inicial foi necessario. O contrato em `BUILD_PLAN.md` nao foi alterado.
+- Antes de alterar o render, foi criado e rodado o roteiro `tools/shots/D-TELA-COSTURA-DOS-TILES.js` com `CANGACO_COSTURA_ETAPA=antes`. A referencia final foi refeita ainda com o render original depois de retirar o ponteiro do canvas: o realce do tile nao pode entrar na medida de costura.
+- `src/render/extrusao-de-tira.ts` e puro, sem Phaser: duplica dois pixels da propria borda, inclusive os cantos e o alfa. Margem 2 px e espacamento 4 px, constantes comentadas de tela. O interior continua com 64 px e os mesmos indices.
+- As sete tiras do `WorldScene.ts` usam a extrusao e os parametros correspondentes no `addTilesetImage`: terreno, bordas de agua/areia/rocha, detalhes, chao da cana e recursos. A extrusao so acontece na montagem, nunca por quadro, inclusive nos placeholders.
+- 17 testes por tabela em Node: tres tiles de cores distintas, tamanhos 1/2/4/64 e extrusao 1/2; isolamento das margens, alfa, cantos com pixels distintos, interior intacto e posicoes/contagem conforme a conta do Tileset do Phaser.
+- Medidas em blocos puros de 12x12 do mapa, tick 0 pausado, camera em pixel inteiro, zooms 1/0,75/1,5. Diferenca RGB media entre pixels adjacentes nas bordas e no meio; 16 segmentos por eixo, usando os 50% centrais de cada lado (512/384/768 pares, respectivamente). Fontes iguais antes/depois: SHA-256 de 76 PNGs de terreno. Nenhum PNG foi alterado.
+- No zoom 1, os hashes dos bytes RGBA de todas as 16 celulas internas de areia e das 16 de agua sao iguais ao antes (62x62 px por celula). O roteiro afirma igualdade exata, sem tolerancia.
+- As quatro capturas do depois com zoom fracionario foram abertas. O JSON preserva as duas etapas e os caminhos das capturas em `test-output/D-TELA-COSTURA-DOS-TILES.json`.
+
+Medidas (borda / meio; antes -> depois):
+
+| Terreno | Zoom | Colunas: antes -> depois | Linhas: antes -> depois |
+|---|---:|---|---|
+| areia | 1 | 9.661 / 9.328 -> 9.661 / 9.328 | 10.859 / 9.387 -> 10.859 / 9.387 |
+| areia | 0.75 | 7.553 / 7.574 -> 7.553 / 7.577 | 9.061 / 7.977 -> 9.061 / 7.977 |
+| areia | 1.5 | 9.284 / 5.465 -> 8.610 / 5.465 | 9.994 / 5.345 -> 9.994 / 5.345 |
+| agua | 1 | 15.577 / 6.819 -> 15.577 / 6.819 | 13.474 / 11.219 -> 13.474 / 11.219 |
+| agua | 0.75 | 14.873 / 6.694 -> 14.872 / 6.694 | 13.315 / 11.769 -> 13.315 / 11.769 |
+| agua | 1.5 | 13.103 / 3.759 -> 14.388 / 3.760 | 13.008 / 7.289 -> 13.008 / 7.289 |
+
+- `npm run verify:rapido` antes do commit de codigo: saida 0; typecheck, lint e 22 arquivos de dados verdes; 17 testes relacionados; 34 s. Depois do rebase, com a arvore limpa e sem upstream: saida 0, 0 relacionados, 17 s (nao substitui os testes diretos).
+- Testes diretos, pela trava, antes e depois do rebase: saida 0; 6 arquivos e 76 testes. Arquivos: `D-TELA-COSTURA-DOS-TILES`, `D-TELA-AGUA-VIVA`, `D-ARTE-CHAO-DE-ROCA`, `D-TELA-CHAO-DA-CANA-SO-QUANDO-MUDA`, `F-SPR-carregamento` e `F17f-manifesto` (todos em `tests/*.test.ts`). Log: `test-output/D-TELA-COSTURA-DOS-TILES-testes-diretos.log`.
+- Roteiros de nao regressao, todos com saida 0: `F-T1` (terreno; 4 capturas), `F-TR` (transicoes; 7), `ARTE-VILA` (arte da vila; 9), `D-ARTE-CHAO-DE-ROCA` (chao das culturas; 2), `D-TELA-AGUA-VIVA` (variantes pelo tick; 2), `D-TELA-CUSTO-DO-QUADRO` (contadores/custo; sem captura). A agua manteve a variante da funcao pura em cada tile; o chao desenhado manteve a contagem da cana na vista, inclusive ao mover a camera sem tick; agua/cana paradas trabalham zero.
+- O roteiro novo saiu 0 antes, depois e novamente depois do rebase, com seis capturas por rodada. Logs: `test-output/D-TELA-COSTURA-DOS-TILES-depois.log` e `test-output/D-TELA-COSTURA-DOS-TILES-rebase-shot.log`.
+- `npm run verify` completo apos o rebase: saida 0. Typecheck/lint verdes; 22 arquivos de dados e 0 erros; normal: 240 arquivos, 2319 testes verdes, 66,71 s; transladada: 240 arquivos, 2317 testes verdes e 5 pulados, 74,81 s. Nao foi alterada nenhuma verificacao. Log: `test-output/D-TELA-COSTURA-DOS-TILES-verify-completo.log`.
+- `git diff main -- src/sim` vazio, `git diff --check` sem erro. Sem mudancas em PNGs, `assets/manifest.json`, `BUILD_PLAN.md`, `test-results.json`, `.claude/` ou `AGENTS.md`.
+- Commit de codigo: `9234eb2`. A main local foi conferida limpa e o `git rebase main` respondeu que a branch ja estava atualizada. Sem push; a marcacao da feature cabe ao operador.
+
+### Hipotese e limite
+
+- A extrusao protege a amostragem da tira, mas a medida nao prova que toda a costura visivel vinha do filtro. Em zoom 1,5, a borda vertical da areia caiu de 9,284 para 8,610; a da agua subiu de 13,103 para 14,388. As bordas horizontais nao mudaram e os interiores em zoom 1 permaneceram identicos.
+- A arte ainda ser a causa predominante da emenda da agua e uma inferencia, nao uma conclusao desta tarefa. A troca dos PNGs pertence a D-ARTE-AGUA-GRAMA-SEM-EMENDA (agua e grama refeitas para emendar). Nenhuma melhoria numerica minima de costura era exigida pelo aceite; todos os pontos foram verificados, sem mudar o contrato.
