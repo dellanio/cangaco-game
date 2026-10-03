@@ -6217,7 +6217,9 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
     O leste foi aprovado no tamanho. A troca:
     - **uma escala só para todas as direções,** e não uma por direção. As poses foram desenhadas
       todas na mesma escala, então um fator único mantém a proporção entre as direções. Ele é
-      calibrado para o andar do leste ficar com a altura de hoje (a mediana de 86 px);
+      calibrado para o andar do leste ficar com a altura que ele tem hoje no jogo: medido, o
+      quadro 3 do leste vai da linha 23 à 96, 73 px, a mesma altura do laborer (17 a 90). A
+      mediana do andar do leste vai para 73 px;
     - **o pé na linha 90,** como o `parado.png` do laborer e o do serf antigo (medido: a linha de
       baixo do alfa dos dois é a 89). O aceite 2 passa a medir a distância à linha 90;
     - **os quadros reprovados são gerados de novo,** com o prompt de cabeça reta e olhar para a
