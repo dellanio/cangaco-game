@@ -17972,3 +17972,42 @@ tempo, e ele joga só ao fim de grandes blocos de entrega. Isto torna permanente
 - A media dos centros nao isola o efeito do veu: arte, variantes e outras camadas tambem aparecem na captura. A agua nao apresentou reducao nessa medida; nao se afirma melhora numerica geral.
 - Costuras ainda visiveis no zoom 2 nas capturas. Eliminar costuras da arte ou outras camadas esta fora deste aceite. A prova direta desta mudanca e a contagem zero da camada de detalhes nos tipos com arte.
 - A suite longa fica para o fechamento do bloco pelo operador. Feature nao marcada em test-results.json.
+
+## 2026-10-02 — D-ARTE-SOLO-CAATINGA (chão de caatinga e decalques de capim), pelo Codex
+
+### Verificado
+
+- Worktree começou no aceite `bcfeb30`, fez rebase na emenda `6c9c710` e, antes da entrega, na main `67b3722`. Commit de arte depois desse rebase: `d82b6be`. O aceite e a emenda não foram alterados.
+- Skills: pianco-sprite-director, pianco-natural-resources (solo), pianco-vegetation (capim), pianco-render-contract e pianco-sprite-tools. Luz cdcfec5: solo de albedo, volume de capim iluminado de cima levemente sul, sem eixo leste-oeste. Referências de geração somente os PNGs D limpos de storehouse/serf da PR #1, externos; nenhuma folha de terreno/sprite atual nem asset de 1998 foi referência.
+- Orçamento conjunto **4/4 gerações**: solo 1 reprovado, capim 2 reprovado por luz, solo 3 e capim 4 usados. PNGs brutos, prompts completos, hashes, scripts e relatórios em `D:/projetos-pessoal/cangaco-game-candidatos/arte/D/solo-caatinga/` e `D:/projetos-pessoal/cangaco-game-candidatos/arte/D/capim/`. Histórico das quatro chamadas em `SKILL_BUILDER_PROGRESS.md`; nenhum processamento pinta arte.
+- Solo: uma textura grande da geração 3, reduzida para 768×768 por NEAREST; quatro recortes 64×64 distintos e sem sobreposição em (273,23), (361,289), (138,165), (595,539). Mesmos arquivos `assets/sprites/terrain/grama-D-v0.png` até `v3.png`, mesmo id `grama`. Base `assets/base/terrain/solo-caatinga-D-raw.png`.
+
+**Conta do aceite 1:** diferença = média absoluta de RGB por canal. O meio de cada tile usa as colunas 32 e 33. Para cada um dos 16 pares ordenados, incluindo o próprio tile, medem-se borda direita → esquerda e inferior → superior; a razão divide pela menor diferença do meio dos dois membros. Maior razão própria: **1,202445**; maior de todos os pares: **1,22941388**, no horizontal v1 → v3: 17,80729167 / min(14,484375; 15,44791667). Ambos abaixo de **1,3**. Matrizes completas e hashes em `assets/base/terrain/solo-caatinga-metrics.json`.
+
+| Tile | Diferença no meio | Desvio da luminância |
+| --- | ---: | ---: |
+| v0 | 14,625000 | 15,533530 |
+| v1 | 14,484375 | 15,559655 |
+| v2 | 17,473958 | 15,698455 |
+| v3 | 15,447917 | 15,622839 |
+
+Luminância = 0,2126 R + 0,7152 G + 0,0722 B; desvio populacional de todos os pixels. `assets/sprites/terrain/areia.png`: **10,85938093 × 1,5 = 16,28907140**. Todos os quatro tiles abaixo desse limite; maior **15,69845462**. Na inspeção da grade não há tufo/pedra/elemento dominante nem linha de emenda perceptível.
+
+- Capim: **10 estados**, cinco `palha-1..5` e cinco `oliva-1..5`, todos RGBA **32×24**, footprint [1,1], anchor [0.5,1], com alfa0 nos cantos e em todas as bordas. Todos os pés legíveis (alfa ≥128) terminam em **y22**, a última linha útil; y23 é margem transparente. Masters 64×48 em `assets/base/vegetation/capim/`, folha original `capim-D-raw.png`; derivados em `assets/sprites/vegetation/capim/`.
+- Validador pianco-sprite-tools executado novamente após alinhamento dos pés: **saída 0, success=true, errors=[], 10 estados**. Modo `trial`: prova técnica sem calibração cromática homologada. Revisão independente pelo agente `revisao_arte`: direção, luz, escala e repetição passam; solo, folha final e contato abertos, sem halo perceptível. Essa revisão não substitui homologação do operador.
+- Contato do aceite 3, aberto: `assets/base/terrain/solo-caatinga-contato.png`. Solo 6×6 com 11/36 tiles ocupados por capim (alvo 30% arredondado = 30,56%), zooms 0,5 / 1 / 2, ao lado de areia e água atuais. Também preservado ao lado da candidata externa; nunca usado como referência de geração.
+- Manifesto: somente `origem` e `licenca` da grama mudaram; entrada nova `capim` do tipo **decalque**, conforme emenda 5. `TIPOS_DE_CAMADA` ganhou `decalque`. Guarda F-SPR exige anchor [0.5,1] e PNG existente em todo estado; casos sintéticos reprovam anchor errado, arquivo ausente e arquivo existente não PNG. `capim` como `vegetacao` continua reprovando; regra de vegetação preservada.
+
+**Verificações após o rebase, todas pela trava e com saída 0:**
+
+- `npm run verify:rapido`: typecheck, lint e 22 dados/0 erros; árvore limpa sem upstream, 0 relacionados, 25 s. Antes do commit de arte, com os 32 arquivos alterados, rodou **299 testes**, 43 s, todos verdes.
+- `node tools/trava-de-testes.js npx vitest run tests/F-SPR-carregamento.test.ts tests/F17f-manifesto.test.ts`: **2 arquivos, 42 testes**, 2,44 s, todos verdes.
+- `npm run shot -- F-T1` (terreno no mapa): **4 capturas**, saída 0. `npm run shot -- ARTE-VILA` (vila com arte): **9 capturas**, saída 0. Reabertas após o rebase: `screenshots/F-T1-1-vila-em-terreno-limpo.png` e `screenshots/ARTE-VILA-8-close-terreno-acude.png`.
+- `npm run verify`: typecheck/lint verdes, **22 dados/0 erros**; suíte normal **241 arquivos/2325 testes verdes** (70,60 s); transladada **241 arquivos/2323 verdes/5 pulados** (78,94 s), sem alteração dessas exclusões. Saída final: `Verificacao completa. Evidencia em test-output/ e screenshots/.` Logs completos externos `solo-caatinga/*-rebase.log` e `verify-completo.log`.
+- `git diff main -- src/sim` vazio; `test-results.json`, AGENTS.md e .claude não foram alterados. A junction node_modules fornecida pelo operador foi usada sem instalar dependências ou apagar a pasta. Entrega local preparada para merge ff, sem push; confirmação do merge na resposta final.
+
+### Limites observados e hipóteses
+
+- **Observado nas capturas:** as bordas antigas areia → grama ainda contêm faixa verde. Os arquivos `sand-grass` não pertencem aos quatro tiles autorizados e foram preservados; esta entrega não resolve essa transição.
+- O render ainda não espalha capim, como determina a emenda: isso pertence a D-TELA-DECALQUES-DE-CAPIM (render dos decalques de capim). A prova dos tufos aqui é contato composto e manifesto, não presença no mapa.
+- Nenhuma hipótese foi usada para alterar gameplay ou o contrato; homologação visual final pertence ao operador.
