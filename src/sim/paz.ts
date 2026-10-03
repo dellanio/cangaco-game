@@ -18,7 +18,9 @@
  * avancar no mapa". A cerca da C-COMBATE-02 (marcha a ate N tiles da vila) saiu inteira.
  *
  * O campo so existe no estado da escaramuca (`criarEscaramuca`); o jogo livre nao tem paz.
- * O valor e FIXO no cenario (`data/escaramuca.json`) e vira parametro de fase no sistema de
+ * A duracao vem do cenario (`data/escaramuca.json`): o padrao, ou a que o jogador escolheu antes da
+ * escaramuca (E-TELA-CONFIGURAR-PARTIDA, `criarEscaramuca(semente, dados, { pazMinBase })`). Vira
+ * parametro de fase no sistema de
  * fases.
  */
 import type { Command } from './commands';

@@ -5,7 +5,8 @@
 // externo (`src/escolha-da-partida.ts`), e quem carrega o jogo e o `inicio.ts`. `ui/` nunca toca
 // no estado (CLAUDE.md §3). Os rotulos vem de `data/theme-sertao.json` (`menuInicial`).
 import temaSertao from '../../data/theme-sertao.json';
-import type { EscolhaDaPartida } from '../escolha-da-partida';
+import type { EscolhaDaPartida, OpcaoDePazNaTela } from '../escolha-da-partida';
+import { mmss } from './contador-de-paz';
 
 const rotulos = temaSertao.menuInicial;
 
@@ -25,6 +26,14 @@ export function rotuloDaGaveta(situacao: SituacaoDoSave): string {
   return situacao.pronto ? rotulos.gavetaCheia.replace('{tick}', String(situacao.tick)) : (motivoDoContinuar(situacao) ?? '');
 }
 
+/** E-TELA-CONFIGURAR-PARTIDA — o rotulo de uma duracao da paz, em tempo de jogo. Pura. */
+export function rotuloDaPaz(opcao: OpcaoDePazNaTela, rotulos: typeof temaSertao.menuInicial.configurar = temaSertao.menuInicial.configurar): string {
+  const tempo = opcao.segundos === 0 ? rotulos.semPaz
+    : opcao.segundos % 60 === 0 ? rotulos.minutos.replace('{min}', String(opcao.segundos / 60))
+      : rotulos.minutos.replace('{min}', mmss(opcao.segundos));
+  return opcao.padrao ? rotulos.padrao.replace('{rotulo}', tempo) : tempo;
+}
+
 export interface MenuInicial {
   fechar(): void;
 }
@@ -32,6 +41,7 @@ export interface MenuInicial {
 /** Monta o menu em `<body>` e chama `aoEscolher` uma vez. `aoAjuda` abre a tela de ajuda. */
 export function montarMenuInicial(
   situacao: SituacaoDoSave,
+  opcoesDePaz: readonly OpcaoDePazNaTela[],
   aoEscolher: (escolha: EscolhaDaPartida) => void,
   aoAjuda: () => void,
 ): MenuInicial {
@@ -97,9 +107,14 @@ export function montarMenuInicial(
   carregar.className = 'opcoes';
   carregar.dataset.tela = 'carregar';
   carregar.hidden = true;
+  // E-TELA-CONFIGURAR-PARTIDA — antes da escaramuca, a duracao da paz
+  const configurar = document.createElement('div');
+  configurar.className = 'opcoes';
+  configurar.dataset.tela = 'configurar';
+  configurar.hidden = true;
 
   function mostrar(tela: HTMLElement): void {
-    for (const t of [principal, novo, carregar]) t.hidden = t !== tela;
+    for (const t of [principal, novo, carregar, configurar]) t.hidden = t !== tela;
   }
 
   const motivo = motivoDoContinuar(situacao);
@@ -111,7 +126,7 @@ export function montarMenuInicial(
   );
   novo.append(
     botao('livre', rotulos.livre, () => { escolher({ modo: 'livre' }); }),
-    botao('escaramuca', rotulos.escaramuca, () => { escolher({ modo: 'escaramuca' }); }),
+    botao('escaramuca', rotulos.escaramuca, () => { mostrar(configurar); }),
     botao('voltar', rotulos.voltar, () => { mostrar(principal); }),
   );
   // Hoje ha uma gaveta so (a da F23b); as tres chegam com a E-SAVE-GAVETAS.
@@ -120,7 +135,31 @@ export function montarMenuInicial(
     botao('voltar', rotulos.voltar, () => { mostrar(principal); }),
   );
 
-  caixa.append(logo, lema, principal, novo, carregar);
+  const rotulosDaPaz = rotulos.configurar;
+  const campoDaPaz = document.createElement('label');
+  campoDaPaz.className = 'campo';
+  const nomeDaPaz = document.createElement('span');
+  nomeDaPaz.textContent = rotulosDaPaz.paz;
+  const paz = document.createElement('select');
+  paz.dataset.campo = 'paz';
+  for (const opcao of opcoesDePaz) {
+    const item = document.createElement('option');
+    item.value = String(opcao.valor);
+    item.textContent = rotuloDaPaz(opcao, rotulosDaPaz);
+    item.selected = opcao.padrao;
+    paz.append(item);
+  }
+  campoDaPaz.append(nomeDaPaz, paz);
+  const tituloDaConfiguracao = document.createElement('h2');
+  tituloDaConfiguracao.textContent = rotulosDaPaz.titulo;
+  configurar.append(
+    tituloDaConfiguracao,
+    campoDaPaz,
+    botao('comecar', rotulosDaPaz.comecar, () => { escolher({ modo: 'escaramuca', pazMinBase: Number(paz.value) }); }),
+    botao('voltar', rotulos.voltar, () => { mostrar(novo); }),
+  );
+
+  caixa.append(logo, lema, principal, novo, carregar, configurar);
   raiz.append(caixa);
   document.body.append(raiz);
 

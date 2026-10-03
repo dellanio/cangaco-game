@@ -22,7 +22,8 @@ import type { Gaveta, LeituraDoSave } from './arquivo-da-partida';
 
 export type EscolhaDaPartida =
   | { readonly modo: 'livre' }
-  | { readonly modo: 'escaramuca' }
+  /** E-TELA-CONFIGURAR-PARTIDA — a paz escolhida, em minutos base do dado; ausente, o padrao. */
+  | { readonly modo: 'escaramuca'; readonly pazMinBase?: number }
   /** O ultimo save (o Continuar do menu). */
   | { readonly modo: 'continuar' };
 
@@ -41,15 +42,35 @@ export type EstadoDaEscolha =
   | { readonly ok: true; readonly estado: GameState }
   | { readonly ok: false; readonly leitura: Exclude<LeituraDoSave, { ok: true }> };
 
+export type PartidaNova = Exclude<EscolhaDaPartida, { readonly modo: 'continuar' }>;
+
 /** O tick 0 de uma partida nova. A semente e a do dado, como sempre foi. */
-export function estadoNovo(modo: 'livre' | 'escaramuca', dados: GameData = gameData): GameState {
+export function estadoNovo(escolha: PartidaNova, dados: GameData = gameData): GameState {
   const semente = dados.economia.estadoInicial.semente;
-  return modo === 'escaramuca' ? criarEscaramuca(semente, dados) : createInitialState(semente, dados);
+  if (escolha.modo === 'livre') return createInitialState(semente, dados);
+  return criarEscaramuca(semente, dados, escolha.pazMinBase === undefined ? {} : { pazMinBase: escolha.pazMinBase });
+}
+
+/** E-TELA-CONFIGURAR-PARTIDA — as opcoes da paz como a tela as mostra: o valor do dado (o que volta
+ *  na escolha), a duracao em SEGUNDOS DE JOGO (os ticks convertidos, nao os minutos base) e o padrao.
+ *  O menu nao le `sim/data`: recebe esta lista. */
+export interface OpcaoDePazNaTela {
+  readonly valor: number;
+  readonly segundos: number;
+  readonly padrao: boolean;
+}
+
+export function opcoesDePazNaTela(dados: GameData = gameData): OpcaoDePazNaTela[] {
+  return dados.escaramuca.opcoesDePaz.map((o) => ({
+    valor: o.minBase,
+    segundos: o.ticks / dados.tempo.tickHz,
+    padrao: o.minBase === dados.escaramuca.peacetime_min_base,
+  }));
 }
 
 /** O estado de cada escolha: a partida nova, ou o ultimo save (que pode ser recusado). */
 export function estadoDaEscolha(escolha: EscolhaDaPartida, gaveta: Gaveta | null, dados: GameData = gameData): EstadoDaEscolha {
-  if (escolha.modo !== 'continuar') return { ok: true, estado: estadoNovo(escolha.modo, dados) };
+  if (escolha.modo !== 'continuar') return { ok: true, estado: estadoNovo(escolha, dados) };
   const leitura = lerUltimoSave(gaveta, dados);
   return leitura.ok ? { ok: true, estado: leitura.estado } : { ok: false, leitura };
 }

@@ -83,7 +83,23 @@ function camposDaVila(state: GameState, predio: Predio, recurso: string, quantid
   return recursos;
 }
 
-export function criarEscaramuca(seed: number, dados: GameData = gameData): GameState {
+/** E-TELA-CONFIGURAR-PARTIDA — o que o jogador escolhe antes da escaramuca. Ausente, o padrao. */
+export interface OpcoesDaEscaramuca {
+  /** A duracao da paz, um valor de `peacetime_opcoes_min_base`; ausente, `peacetime_min_base`. */
+  readonly pazMinBase?: number;
+}
+
+/** Os ticks da paz escolhida. Valor fora da lista do dado e erro de quem chamou: a tela so
+ *  oferece a lista. */
+export function ticksDaPaz(dados: GameData, pazMinBase: number | undefined): number {
+  if (pazMinBase === undefined) return dados.escaramuca.ticksDePaz;
+  const opcao = dados.escaramuca.opcoesDePaz.find((o) => o.minBase === pazMinBase);
+  if (opcao === undefined) throw new Error(`criarEscaramuca: paz de ${pazMinBase} min base nao esta em escaramuca.peacetime_opcoes_min_base`);
+  return opcao.ticks;
+}
+
+export function criarEscaramuca(seed: number, dados: GameData = gameData, opcoes: OpcoesDaEscaramuca = {}): GameState {
+  const ticksDePaz = ticksDaPaz(dados, opcoes.pazMinBase);
   const base = createInitialState(seed, dados);
   const cenario = dados.escaramuca;
   let contador = base.proximoId;
@@ -174,7 +190,7 @@ export function criarEscaramuca(seed: number, dados: GameData = gameData): GameS
     unidades: { porId: unidades, ordem: ordemDasUnidades },
     proximoId: contador,
     ia: { [String(LADO_DA_IA)]: { posicoes } },
-    // C-IA-03b — o peacetime: fixo no cenario, parametro de fase depois (sim/paz.ts)
-    pazAteTick: base.tick + dados.escaramuca.ticksDePaz,
+    // C-IA-03b — o peacetime (sim/paz.ts); E-TELA-CONFIGURAR-PARTIDA: o jogador escolhe a duracao
+    pazAteTick: base.tick + ticksDePaz,
   };
 }

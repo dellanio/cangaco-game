@@ -3243,6 +3243,19 @@ que vetar custe uma linha.
   no lajedo. Saídas possíveis: aceitar como está (o prédio "trabalha a pedra que chega"),
   ou o brief §4a ganha outra leitura e o caso 2 passa a animar só num trecho. Isso é
   decisão de arte/design, não minha.
+- **(2026-10-03, Fase E) E-TELA-CONFIGURAR-PARTIDA — em que unidade vale o intervalo do KaM
+  (0 a 120 min, de 5 em 5)?** O KaM conta minutos de jogo; o nosso dado conta minutos base, e a
+  escala economia (2,0) divide: 20 base = 10 min de jogo. Implementei o conservador: o validador
+  confere o intervalo na unidade do dado (`peacetime_opcoes_min_base`, minutos base), e a tela mostra
+  o tempo de jogo. Se for em minutos de jogo, o teto passa a 240 base e o passo a 10.
+- **(2026-10-03, Fase E) E-TELA-CONFIGURAR-PARTIDA — a lista das opções da paz.** O BUILD_PLAN diz
+  só que as opções ficam no dado. Pus `[0, 10, 20, 30, 40, 60, 90, 120]` (base), que na tela são
+  sem paz, 5, 10 (padrão), 15, 20, 30, 45 e 60 min de jogo. O 0 é o padrão do KaM no jogo solo
+  (`KM_Defaults.pas:117`, citação do `_docPeacetime`, não conferida nesta sessão). Trocar a lista é só
+  mudar o dado.
+- **(2026-10-03, Fase E) E-SAVE-GAVETAS — o "nome" da gaveta.** O BUILD_PLAN pede "três gavetas com
+  nome, tick e data", sem dizer quem dá o nome. Fiz o conservador: o nome é o tipo da partida
+  (Escaramuça ou Jogo livre), sem campo de texto para o jogador digitar.
 
 
 ## F-T1 — Camada de terreno base (dado + sim + render mínimo) (2026-09-24)
@@ -18268,3 +18281,54 @@ do menu; fecha com Esc). Os rótulos estão em `data/theme-sertao.json` (`menuIn
 - `npm run verify:rapido`: 48 arquivos, 479 testes, verde.
 - (d) os roteiros que existem: `shot:todos` sobre este commit, numa worktree irmã. O resultado vai no
   registro seguinte.
+
+## 2026-10-03 — E-TELA-MENU-INICIAL, aceite (d): os roteiros que existem
+
+`shot:todos` sobre o commit `1258564`, numa worktree irmã (`fase-e-shots`, com o `test-output` desta
+copiado para os roteiros que leem save): **111 roteiros, 107 com saída 0**. As 4 falhas são as mesmas
+4 do fechamento da D, já registradas (BUG-SAVE-DO-ROTEIRO-TRANSLADADO e BUG-ROTEIRO-DE-DUAS-ETAPAS),
+pelos mesmos motivos. Nenhum roteiro mudou uma linha, e nenhuma falha nova. O resumo da corrida
+ficou em `test-output/shot-todos-E-TELA-MENU-INICIAL.json`.
+
+## 2026-10-03 — E-TELA-CONFIGURAR-PARTIDA (a paz da escaramuça se escolhe)
+
+Feature de integração (sim + tela), como o item declara.
+
+**O que mudou.**
+- `data/escaramuca.json`: `peacetime_opcoes_min_base` `[0, 10, 20, 30, 40, 60, 90, 120]`, na unidade
+  do `peacetime_min_base` (minutos base, grupo economia). O padrão continua o `peacetime_min_base` (20).
+- `sim/data/loader.ts`: cada opção vira ticks no carregamento (`escaramuca.opcoesDePaz`). O 0 não
+  vira conversão, porque toda conversão registrada tem ao menos 1 tick (`F03`).
+- `sim/cenario.ts`: `criarEscaramuca(semente, dados, { pazMinBase })` e `ticksDaPaz`. Opção fora
+  da lista lança erro, e sem opção vale o padrão.
+- `tools/data-rules.js`: `validarOpcoesDePaz` cobre o intervalo do KaM, a ordem crescente sem repetir
+  e o padrão na lista. O registro de duração aceita `x[]` para os itens de um array, e
+  `peacetime_opcoes_min_base[]` entrou em `CAMPOS_ESCALONADOS`.
+- Menu: Novo jogo > Escaramuça abre "A escaramuça", com a paz num seletor. As opções aparecem em tempo
+  de JOGO ("10 min (padrão)"), com "Sem paz" no 0, e o Começar fica embaixo. O `?escaramuca` e o
+  "Nova escaramuça" do jogo usam o padrão. O roteiro do menu ganhou o clique no Começar (o passo da
+  escaramuça mudou de tela), e a asserção dele continua a mesma.
+- **Citação conferida no clone (§15):** o intervalo do lobby está em
+  `src/gui/pages_menu/KM_GUIMenuLobby.pas:635-638` (`TKMTrackBar.Create(..., 0, 120)` e `Step := 5`), e
+  não em `src/KM_GUIMenuLobby.pas`, como dizia o BUILD_PLAN. O aceite não mudou; o caminho certo está
+  no `_docPeacetimeOpcoes` e no validador.
+
+**Verificado:**
+- `tests/E-TELA-CONFIGURAR-PARTIDA.test.ts` (21 testes, verde):
+  - (a) a paz de 10 base com a mesma marcha dá o mesmo save no tick 200 (58 597 bytes), e outra paz dá
+    outro estado;
+  - (b) sem opção, com o padrão e pelo menu, o save é igual ao da `criarEscaramuca(semente)` de hoje.
+    Os testes da C-IA-03a e da C-IA-03b rodaram verdes sem mudar uma linha;
+  - (c) para cada uma das 8 opções: `pazAteTick` igual aos ticks dela, e o contador no tick 0 igual à
+    duração (0 = sem contador; 3 000 ticks = "Paz: 5:00"; 36 000 = "Paz: 60:00"). O ataque do jogador
+    é recusado com `em-paz` no tick P−1 e aceito no P. A IA, com um intruso no raio, não sai até o
+    tick P e sai depois (9 lutando). O estado é posto no tick P−30 em vez de andar até 36 000 ticks; o
+    relógio andando tick a tick é o do C-IA-03b;
+  - (d) o validador recusa 125, 7, −5, a lista vazia, a repetida e o padrão fora da lista, e passa
+    no dado real.
+- Roteiro `E-TELA-CONFIGURAR-PARTIDA` saiu 0. O seletor tem as 8 opções do dado, com o padrão
+  marcado. Com 30 base, o contador mostra "Paz: 15:00" no tick 0. No passo despausado (Começar
+  segurado 150 ms) o relógio corre, o contador mostra "Paz: 14:58" no tick 20 e o `P` pausa. A foto
+  `screenshots/E-TELA-CONFIGURAR-PARTIDA-1-configurar.png` foi aberta. O roteiro do menu continua 0.
+- `npm run verify:rapido`: 2 208 testes, verde.
+

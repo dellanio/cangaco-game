@@ -680,6 +680,15 @@
     "sem-save": "Nenhuma partida guardada ainda",
     "recusado": "A partida guardada não abre: {detalhe}",
     "gaveta": "O navegador não deixa ler a partida guardada",
-    "gavetaCheia": "Partida guardada, tick {tick}"
+    "gavetaCheia": "Partida guardada, tick {tick}",
+    "configurar": {
+      "_doc": "E-TELA-CONFIGURAR-PARTIDA. A tela antes da escaramuca. {min} e o tempo de JOGO (os ticks da opcao, nao os minutos base do dado); {rotulo} e o rotulo da opcao padrao.",
+      "titulo": "A escaramuça",
+      "paz": "Paz antes da guerra",
+      "semPaz": "Sem paz",
+      "minutos": "{min} min",
+      "padrao": "{rotulo} (padrão)",
+      "comecar": "Começar"
+    }
   }
 }

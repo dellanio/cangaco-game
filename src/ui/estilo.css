@@ -868,3 +868,10 @@ body[data-menu] #ajuda { z-index: 30; }
 #menu-inicial button[aria-disabled="true"] { box-shadow: none; }
 #menu-inicial button[data-acao="voltar"] { font-size: 13px; padding: 4px 8px; align-self: center; }
 #menu-inicial .motivo { font-size: 12px; font-style: italic; color: var(--terracota); text-align: center; }
+/* E-TELA-CONFIGURAR-PARTIDA — a paz da escaramuca */
+#menu-inicial h2 { margin: 0; font-size: 20px; text-align: center; }
+#menu-inicial .campo { display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+#menu-inicial select {
+  font: 15px/1.2 var(--fonte-corpo); padding: 6px 8px; color: var(--tinta);
+  background: var(--papel); border: 2px solid var(--tinta); border-radius: 0;
+}

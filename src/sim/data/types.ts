@@ -3,6 +3,12 @@ import type { RawGameData } from './raw';
 /** Ticks inteiros — nunca segundos, nunca ponto flutuante de runtime. */
 export type Ticks = number;
 
+/** E-TELA-CONFIGURAR-PARTIDA — uma duracao da paz da escaramuca: o valor do dado e os ticks dele. */
+export interface OpcaoDePaz {
+  readonly minBase: number;
+  readonly ticks: Ticks;
+}
+
 /**
  * `economia | movimento | construcao | combate`, ou `null` para "esta
  * conversao declara, de proposito, que nao tem escala" (caso de
@@ -499,6 +505,8 @@ export interface GameData {
   readonly escaramuca: RawGameData['escaramuca'] & {
     /** C-IA-03b — `peacetime_min_base` x escala, em ticks, convertido no carregamento. */
     readonly ticksDePaz: Ticks;
+    /** E-TELA-CONFIGURAR-PARTIDA — cada opcao de `peacetime_opcoes_min_base`, em ticks (0 = sem paz). */
+    readonly opcoesDePaz: readonly OpcaoDePaz[];
   };
   readonly conversoes: readonly ConversaoRegistrada[];
 }

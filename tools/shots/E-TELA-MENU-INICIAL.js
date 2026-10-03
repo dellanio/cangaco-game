@@ -6,7 +6,7 @@
 // Daqui o roteiro navega por conta propria:
 //   1. `/` sem parametro e sem save: o menu, NENHUM canvas e nenhum `__cangaco` (aceite a); o
 //      Continuar desabilitado, com o motivo do tema (aceite c); a foto do menu (aceite e).
-//   2. `/?menu&pausado`: Novo jogo > Escaramuca. O estado do tick 0 e o do `/?escaramuca&pausado`,
+//   2. `/?menu&pausado`: Novo jogo > Escaramuca > Comecar (a paz padrao). O estado do tick 0 e o do `/?escaramuca&pausado`,
 //      byte a byte (aceite b), pelo `__cangacoPartida.estadoSerializado()` do laco externo.
 //   3. `/` DESPAUSADO (§8): Novo jogo > Jogo livre com mouse.down / 150 ms / mouse.up; o relogio
 //      corre depois da escolha, e o roteiro pausa de volta (`p`).
@@ -76,6 +76,8 @@ async function roteiro(ctx) {
   afirmar((await page.textContent(BOTAO('escaramuca'))) === ROTULOS.escaramuca, 'Novo jogo deveria oferecer a escaramuca');
   afirmar((await page.textContent(BOTAO('livre'))) === ROTULOS.livre, 'Novo jogo deveria oferecer o jogo livre');
   await page.click(BOTAO('escaramuca'));
+  // E-TELA-CONFIGURAR-PARTIDA: a escaramuca passa pela paz; Comecar com o padrao e a do ?escaramuca
+  await page.click(BOTAO('comecar'));
   await esperarJogo();
   afirmar(await page.isHidden('#menu-inicial').catch(() => true), 'o menu deveria sumir depois da escolha');
   const peloMenu = await serializado();
