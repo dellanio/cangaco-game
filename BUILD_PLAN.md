@@ -8063,11 +8063,85 @@ que o operador joga pelo link. Desde a E, cada fase fecha numa versão publicada
     diretório, o canal e a versão certos, e nada é enviado quando a regra recusa;
   - (c) uma primeira publicação feita pelo operador, com o link registrado no PROGRESS.
 
-## Fase F — A névoa e o adversário (só escopo; detalha quando a E fechar)
-A névoa de guerra do GDD §6.5, nos dois níveis: apresentação (o escuro no não descoberto, o último
-visto) e regra (inimigo só onde se vê agora, em tela, painel, minimapa e alvo de ordem). A torre
-revela. A IA ganha três níveis de dificuldade, com os números em `data/`, e o nível entra no
-configurar partida da E.
+## Fase F — A névoa e o adversário
+
+A E fechou e foi mesclada (`1f020e8`, 2026-10-03). O operador mandou abrir a F e detalhá-la sem
+perguntas: o que o GDD não decide segue a leitura conservadora, escrita no item, e vai para o
+PROGRESS como PARA REVISÃO. A ordem é a da lista.
+
+O que já existe e a F usa: o lado (`lado` em prédio e unidade, F-CERCO-a1), a `visao` 9 dos
+militares em `data/units.json` e a decisão de que **a IA ignora a névoa**
+(`src/sim/systems/ia.ts:29`), que continua valendo.
+
+### F-TERRENO-NEVOA-DESCOBERTO — O que cada lado vê e já viu (sim)
+- **Escopo** (GDD §6.5):
+  - `visao` no dado para quem ainda não tem: civil 9 (`data/units.json`), o raio pequeno fixo de
+    prédio e o da torre de vigia, que agora existe (`data/buildings.json`). Os números vêm do GDD;
+    o raio do prédio e o da torre não estão lá, e a sessão escolhe o menor que deixa a vila do
+    tick 0 inteira à vista, com a escolha e a medida no PROGRESS (PARA REVISÃO);
+  - `descoberto`: monotônico, por lado, **1 bit por tile**, empacotado em inteiros de 32 bits,
+    no `GameState` e no save;
+  - `visivel`: derivado, recomposto no `step`, **fora** do estado serializado, com buffer
+    reaproveitado (marca de geração ou carimbo só de quem se moveu, GDD §6.5 item 2);
+  - só para o lado do jogador. A IA ignora a névoa, e camada sem consumidor não nasce.
+- **Aceite:**
+  - (a) no tick 0 da escaramuça e do jogo livre, todo tile de prédio e unidade do jogador está
+    visível e descoberto;
+  - (b) `descoberto` nunca perde um bit em 6 000 ticks da escaramuça, e ganha bits quando a
+    tropa marcha (pelo `step`);
+  - (c) salvar, carregar e rodar N ticks dá o mesmo estado e o mesmo `visivel` que não salvar;
+  - (d) eixo determinístico: os tiles carimbados por tick crescem com as unidades que se moveram,
+    e não com `largura × altura` (contagem, com 1 e com 50 unidades andando; razão no PROGRESS);
+  - (e) o tamanho do estado serializado antes e depois vai para o PROGRESS, como medida;
+  - (f) o campo novo entra na guarda `GUARDA-step-preserva-opcionais` e passa na suíte
+    transladada.
+
+### F-COMBATE-ALVO-NA-VISTA — Ordem só contra o inimigo que se vê (sim)
+- **Escopo:** `AttackUnit` e `AttackBuilding` do jogador contra alvo que não está em tile
+  `visivel` agora são recusados com motivo próprio (`alvo-fora-da-vista`), e o estado fica igual.
+  A IA não muda.
+- **Medida antes do código:** quantos testes e roteiros que existem dão ordem a alvo fora da
+  vista. Eles ganham a vista **pelo caminho do jogo** (uma unidade do jogador perto do alvo), e
+  nunca desligando a regra. Se dar a vista mudar o que o teste afirma, o caso vai para o PROGRESS
+  como pergunta, e o item segue com os outros.
+- **Aceite:**
+  - (a) alvo fora da vista: recusa com o motivo, estado igual byte a byte;
+  - (b) o mesmo alvo com uma unidade do jogador a menos de `visao` dele: aceito;
+  - (c) o alvo que sai da vista no meio do ataque: a regra escrita no PROGRESS (a leitura
+    conservadora é a do KaM, que segue o alvo já escolhido; a sessão confere no clone e cita
+    `arquivo:linha`, §15) e um teste dela;
+  - (d) a IA ataca como antes: os testes da C e da escaramuça saem iguais.
+
+### F-TELA-NEVOA — A névoa na tela, no painel e no minimapa (render + ui)
+- **Escopo:** o render lê o `descoberto` e o `visivel` do lado do jogador por um seletor da sim.
+  O não descoberto fica escuro; o descoberto fora da vista, esmaecido. Unidade e prédio inimigos
+  fora da vista não são desenhados e não aparecem no painel, no minimapa, nos alertas nem no
+  clique. O terreno e o prédio próprio aparecem como estão (GDD §6.5, nível de apresentação).
+- **Aceite:**
+  - (a) screenshot da escaramuça no tick 0 (a vila clara, o resto escuro) e depois de a tropa
+    marchar (o caminho descoberto, a tropa inimiga só onde se vê);
+  - (b) o minimapa não mostra inimigo fora da vista (pelo dado que ele desenha, no roteiro);
+  - (c) clicar onde há um prédio inimigo fora da vista não abre o painel dele (despausado,
+    150 ms, §8);
+  - (d) o custo da camada nova no quadro, pelos contadores da D-TELA-CUSTO-DO-QUADRO, vai para o
+    PROGRESS como medida;
+  - (e) os roteiros que existem continuam saindo 0. Roteiro cuja captura muda só pela névoa é
+    listado no PROGRESS, com o porquê.
+
+### F-IA-DIFICULDADE — Três níveis de adversário (sim + ui; integração declarada aqui)
+- **Escopo:** fácil, normal e difícil em `data/combat.json` (`ia.niveis`). Cada nível troca os
+  números que a IA já lê (o tamanho do grupo de ataque, a tropa atacante da escaramuça, o ritmo do
+  prefeito) e nada além. **Normal é o jogo de hoje**, sem mudar um número. A escolha entra no
+  configurar partida da E (E-TELA-CONFIGURAR-PARTIDA) e no save. Os números de fácil e difícil
+  são uma primeira proposta, e vão para o `BALANCE_LOG.md` para o lote de balanceamento.
+- **Aceite:**
+  - (a) com o normal, o estado é igual ao da escaramuça de hoje, byte a byte;
+  - (b) o mesmo nível com os mesmos comandos dá o mesmo estado;
+  - (c) com o jogador parado, o tick do primeiro ataque e o tamanho dele ficam em ordem: difícil
+    ataca antes ou com mais do que normal, e normal antes ou com mais do que fácil (eixo de tick
+    e de contagem; a tabela no PROGRESS);
+  - (d) o `validate:data` recusa nível sem `normal` e campo de nível que a IA não lê;
+  - (e) screenshot do configurar partida com o nível, e o nível sobrevive ao salvar e carregar.
 
 ## Fase G — Animação das unidades (outra sessão, ComfyUI; fora desta fila)
 

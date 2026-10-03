@@ -18568,3 +18568,20 @@ entradas.
 D-ARTE-SERF-COMFYUI, de outra sessão). Esta branch saiu do `61d9e49` e não foi rebaseada. O merge é do
 operador. Os dois lados mexem no PROGRESS e no BUILD_PLAN, e **hipótese, não conferida:** a outra
 sessão pode ter tocado o roteiro D-TELA-04c e o `assets/manifest.json`, que esta branch não tocou.
+
+## 2026-10-03 — Fase F detalhada (névoa e adversário)
+
+O operador aprovou e mandou mesclar a E (`1f020e8`), adiou a publicação no itch.io ("ainda tem muita
+falha de visual e animação") e mandou abrir a F, detalhar o que faltava sem perguntar e começar.
+Os quatro itens estão no `BUILD_PLAN.md`, em "Fase F": F-TERRENO-NEVOA-DESCOBERTO (o que cada lado
+vê e já viu), F-COMBATE-ALVO-NA-VISTA (ordem só contra o inimigo que se vê), F-TELA-NEVOA (a névoa na
+tela) e F-IA-DIFICULDADE (três níveis de adversário).
+Leituras conservadoras, PARA REVISÃO do operador:
+- a névoa é calculada só para o lado do jogador, porque a IA a ignora (decisão anterior) e camada sem
+  consumidor não nasce;
+- o raio de visão de prédio e de torre não está no GDD; a sessão escolhe o menor que deixa a vila do
+  tick 0 inteira à vista;
+- teste que hoje ataca alvo fora da vista ganha a vista pelo caminho do jogo, nunca com a regra
+  desligada;
+- o nível normal da IA é o jogo de hoje; fácil e difícil são proposta, a ajustar no lote de
+  balanceamento.
