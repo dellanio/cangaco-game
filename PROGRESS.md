@@ -17723,3 +17723,40 @@ Parada prevista: sem avançar para arte real, máscaras ou outras unidades. A ap
   - **Decisões aplicadas e aprovadas:** o andar de 8 quadros, o degrau da virada de 0,7 tick e os
     sprites de depuração no git. O espelho das três direções do oeste fica valendo para a arte
     real do serf.
+
+
+## 2026-10-02 — D-ARTE-BANDEIRA-FACCAO (a bandeira do bando balança no vento), pelo Codex
+
+### Implementado
+- Contrato: item inteiro do BUILD_PLAN.md, aceite 7163e21 e regras 56eea43. So render, sem arte nova.
+- `src/render/bandeira.ts`: pano segmentado, onda do mastro para a ponta, tick/alfa/hash do tile,
+  forca, direcao e rajada de `vento.ts`; fixacao no mastro, teto de amplitude e retangulo sem vento.
+- `data/bandeira.json`: 8 segmentos, amplitude maxima 3 px, comprimento de onda 24 px e velocidade 2 px/tick.
+- `WorldScene.ts`: reaproveita mastro e poligono mesmo quando o container do predio muda; atualiza
+  vertices somente quando muda o quadro e o pano esta na vista. Cor do bando e dono preservados.
+- Ponte `debug.ts`: `bandeirasRedesenhadas` por quadro. Registro/validacao de interface nos tres
+  arquivos `tools/data-schema.js`, `tools/data-rules.js` e `tools/data-rules.d.ts`.
+- Teste e roteiro proprios: `tests/D-ARTE-BANDEIRA-FACCAO.test.ts` e `tools/shots/D-ARTE-BANDEIRA-FACCAO.js`.
+- Rebase final sobre dfe676f: listas de interface unidas, preservando agua-peixe e animacao-unidade.
+  Commit de implementacao: 671f950.
+
+### Verificado
+- `npm run verify:rapido`: saida 0, 19 s, typecheck/lint/validate:data verdes. Arvore limpa e sem
+  upstream: 0 arquivos e 0 testes no related; nao substitui a corrida direta abaixo.
+- Testes diretos pela trava: 9 arquivos, 82 testes, todos passaram. Incluem bandeira, agua com
+  peixe, vento, manifesto, carregamento, C-IA-03c (jogar pela tela), D-TELA-07 (sinal de pausado)
+  e D-TELA-04d/04e (animacao de unidades, pela integracao da lista). Relatorio completo:
+  `test-output/D-ARTE-BANDEIRA-FACCAO-diretos.json`.
+- Roteiros apos o ultimo rebase, todos saida 0: D-ARTE-BANDEIRA-FACCAO (6 capturas),
+  C-IA-03c (3), D-TELA-07 (2), ARTE-VILA (9). JSONs: `test-output/<ID>-shot.json`.
+- Save da vila pronta: uma vista por lado; T=20 e T+5=25. As seis capturas da bandeira foram abertas.
+  Dois carregamentos produziram o mesmo SHA-256 de T para cada lado:
+  lado 0 `fc3da6eb9a1f3fd90fc32a4717a20fd90bcecd15880cbdbe4a6ec4774392c536`;
+  lado 1 `c35cfc259e06dfb9f7786ec0c89d167668c22c44ded057543138955b61787bdd`.
+  T+5 difere de T nos dois lados. `bandeirasRedesenhadas=0` pausado com camera parada.
+  Passo despausado executado. Evidencia: `test-output/D-ARTE-BANDEIRA-FACCAO-captura.json`.
+- `git diff main -- src/sim` vazio. Nao houve alteracao em assets, AGENTS.md, .claude/ ou test-results.json.
+
+### Hipoteses e limites
+- Nenhuma hipotese usada como criterio de aceite. O verify completo, a suite longa e shot:todos
+  pertencem ao fechamento de fase e nao foram rodados nesta entrega; test-results.json fica para o operador.
