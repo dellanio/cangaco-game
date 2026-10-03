@@ -6801,6 +6801,19 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
   (`d37fbc3`), e a candidata da D-ARTE-AGUA-GRAMA-SEM-EMENDA foi apagada sem merge. A
   D-TELA-DECALQUES-DE-CAPIM fica sem arte e não entra na fila. A correção de render (a costura e o
   véu) continua na `main`.
+- **REABERTO SÓ O SOLO, GERAÇÃO 1 (decisão do operador, 2026-10-03; aceite antes da aplicação).**
+  O operador escolheu na pasta de candidatos a `generation-01-raw.png`
+  (`D:\projetos-pessoal\cangaco-game-candidatosrte\D\solo-caatinga\`), que tinha reprovado
+  por emenda 1,33 e textura acima do limite de neutralidade. **A neutralidade (aceite 1, segunda
+  parte) fica dispensada por ele:** a textura é a que ele quer. Os capins e a água continuam
+  descartados.
+  - **Aceite:**
+    1. os 4 estados da `grama`, nos mesmos caminhos, recortados da geração 1 reduzida sem
+       suavização. A pior emenda entre todo par de tiles, nos dois sentidos, é ≤ 1,3 vez o meio;
+    2. a base em `assets/base/terrain/` e a `origem` e a `licenca` da `grama` no manifesto, com o
+       sha256 do bruto, a redução e os recortes na nota. Nada mais muda no manifesto;
+    3. os testes de manifesto passam, e os roteiros `F-T1` e `ARTE-VILA` saem 0, com a captura da
+       vila aberta.
 - **Pedido do operador (2026-10-02):** a grama verde-oliva da D-ARTE-AGUA-GRAMA-SEM-EMENDA está
   **reprovada como direção**. O chão é solo de caatinga no começo da seca, sem tufos destacados. A
   vida vem de pequenos decalques independentes de capim, palha e verde-oliva, espalhados pelo
