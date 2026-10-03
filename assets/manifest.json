@@ -623,6 +623,11 @@
           "quadros": 8,
           "tilesPorCiclo": 2,
           "laco": true
+        },
+        "carregando": {
+          "quadros": 8,
+          "tilesPorCiclo": 2,
+          "laco": true
         }
       },
       "licenca": "arte propria do projeto, gerada no ComfyUI local por decisao do operador em 2026-10-03",
@@ -2518,109 +2523,369 @@
   ],
   "icones": {
     "mercadorias": {
-      "_doc": "D-ARTE-01 (Leva 1 da animacao direcional): o icone de cada mercadoria que ja tem arte, nos quatro campos do icones.hud. O render desenha o icone sobre a carga do serf e na pilha sem PNG proprio. Os mesmos arquivos do HUD e do recurso do mapa: nenhum PNG novo.",
-      "timber": {
-        "arquivo": "sprites/ui/hud-timber.png",
+      "_doc": "D-ARTE-PIXEL-ART-CIVIS (teste de pixel art, 2026-10-03): o sprite de cada uma das 28 mercadorias, gerado no PixelLab (create_1_direction_object, objeto 6151a7ab-f694-44dc-a929-1ca871a4e143, 32x32). O render desenha o sprite entre as maos do serf que carrega e na pilha sem PNG proprio.",
+      "tree_trunk": {
+        "arquivo": "sprites/mercadorias/tree_trunk.png",
         "tamanho": [
-          24,
-          24
+          32,
+          32
         ],
-        "licenca": "arte propria do projeto, fornecida pelo operador e processada em 2026-09-26",
+        "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
         "origem": {
-          "base": "base/ui-icons-cordel/recurso_tabua_source.png",
+          "base": "base/mercadorias/tree_trunk.png",
           "semente": null,
-          "nota": "PNG transparente derivado pelo processador de tinta da skill pianco-art-pipeline."
+          "nota": "PixelLab, candidata 0 do lote 6151a7ab; sha256 c605a3d7bb1fccf470e18572ef4d3b8f3c76903125e908f20c267fc85a691b07"
+        }
+      },
+      "timber": {
+        "arquivo": "sprites/mercadorias/timber.png",
+        "tamanho": [
+          32,
+          32
+        ],
+        "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
+        "origem": {
+          "base": "base/mercadorias/timber.png",
+          "semente": null,
+          "nota": "PixelLab, candidata 1 do lote 6151a7ab; sha256 be2f8b6da8f91621b1b08b82757bc4381b8394bf36f7130f175d1cbb71456b88"
         }
       },
       "stone": {
-        "arquivo": "sprites/ui/hud-stone.png",
+        "arquivo": "sprites/mercadorias/stone.png",
         "tamanho": [
-          24,
-          24
+          32,
+          32
         ],
-        "licenca": "arte propria do projeto, fornecida pelo operador e processada em 2026-09-26",
+        "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
         "origem": {
-          "base": "base/ui-icons-cordel/recurso_pedra_source.png",
+          "base": "base/mercadorias/stone.png",
           "semente": null,
-          "nota": "PNG transparente derivado pelo processador de tinta da skill pianco-art-pipeline."
-        }
-      },
-      "gold": {
-        "arquivo": "sprites/ui/hud-gold.png",
-        "tamanho": [
-          24,
-          24
-        ],
-        "licenca": "arte propria do projeto, fornecida pelo operador e processada em 2026-09-26",
-        "origem": {
-          "base": "base/ui-icons-cordel/recurso_dinheiro_source.png",
-          "semente": null,
-          "nota": "PNG transparente derivado pelo processador de tinta da skill pianco-art-pipeline."
-        }
-      },
-      "corn": {
-        "arquivo": "sprites/resources/corn.png",
-        "tamanho": [
-          64,
-          64
-        ],
-        "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
-        "origem": {
-          "base": "base/resource-atlas/source.png",
-          "semente": null,
-          "nota": "Derivado pela skill pianco-art-pipeline do layout corn."
-        }
-      },
-      "fish": {
-        "arquivo": "sprites/resources/fish.png",
-        "tamanho": [
-          64,
-          64
-        ],
-        "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
-        "origem": {
-          "base": "base/resource-atlas/source.png",
-          "semente": null,
-          "nota": "Derivado pela skill pianco-art-pipeline do layout fish."
-        }
-      },
-      "coal": {
-        "arquivo": "sprites/resources/coal.png",
-        "tamanho": [
-          64,
-          64
-        ],
-        "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
-        "origem": {
-          "base": "base/resource-atlas/source.png",
-          "semente": null,
-          "nota": "Derivado pela skill pianco-art-pipeline do layout coal."
-        }
-      },
-      "iron_ore": {
-        "arquivo": "sprites/resources/iron_ore.png",
-        "tamanho": [
-          64,
-          64
-        ],
-        "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
-        "origem": {
-          "base": "base/resource-atlas/source.png",
-          "semente": null,
-          "nota": "Derivado pela skill pianco-art-pipeline do layout iron_ore."
+          "nota": "PixelLab, candidata 2 do lote 6151a7ab; sha256 60f0a0f43b5d2c1357b8b69ec0f92898e73c0b11c90d413021f500615190959a"
         }
       },
       "gold_ore": {
-        "arquivo": "sprites/resources/gold_ore.png",
+        "arquivo": "sprites/mercadorias/gold_ore.png",
         "tamanho": [
-          64,
-          64
+          32,
+          32
         ],
-        "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+        "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
         "origem": {
-          "base": "base/resource-atlas/source.png",
+          "base": "base/mercadorias/gold_ore.png",
           "semente": null,
-          "nota": "Derivado pela skill pianco-art-pipeline do layout gold_ore."
+          "nota": "PixelLab, candidata 3 do lote 6151a7ab; sha256 23ce36bfb81f974d0f655366edeffd5d948fb3a482f41cce775190b89788006d"
+        }
+      },
+      "gold": {
+        "arquivo": "sprites/mercadorias/gold.png",
+        "tamanho": [
+          32,
+          32
+        ],
+        "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
+        "origem": {
+          "base": "base/mercadorias/gold.png",
+          "semente": null,
+          "nota": "PixelLab, candidata 4 do lote 6151a7ab; sha256 5c518db0b0013f845abfc0476b2146cb3f419308918143338550a647e61b32b5"
+        }
+      },
+      "coal": {
+        "arquivo": "sprites/mercadorias/coal.png",
+        "tamanho": [
+          32,
+          32
+        ],
+        "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
+        "origem": {
+          "base": "base/mercadorias/coal.png",
+          "semente": null,
+          "nota": "PixelLab, candidata 5 do lote 6151a7ab; sha256 a21a1ac8632db528c7fd665e2f069d45decf4f229fecad1e319e4453d4616fab"
+        }
+      },
+      "iron_ore": {
+        "arquivo": "sprites/mercadorias/iron_ore.png",
+        "tamanho": [
+          32,
+          32
+        ],
+        "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
+        "origem": {
+          "base": "base/mercadorias/iron_ore.png",
+          "semente": null,
+          "nota": "PixelLab, candidata 6 do lote 6151a7ab; sha256 e78a12ae036bf21de983be09aec57e13ae38330755713149c0a06d2ce85a3672"
+        }
+      },
+      "iron": {
+        "arquivo": "sprites/mercadorias/iron.png",
+        "tamanho": [
+          32,
+          32
+        ],
+        "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
+        "origem": {
+          "base": "base/mercadorias/iron.png",
+          "semente": null,
+          "nota": "PixelLab, candidata 7 do lote 6151a7ab; sha256 677beb2032a8221ef0b16adb34387730c2eb0ba9f4dfc4fa34e3d81d1703c0df"
+        }
+      },
+      "corn": {
+        "arquivo": "sprites/mercadorias/corn.png",
+        "tamanho": [
+          32,
+          32
+        ],
+        "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
+        "origem": {
+          "base": "base/mercadorias/corn.png",
+          "semente": null,
+          "nota": "PixelLab, candidata 8 do lote 6151a7ab; sha256 4dbfdb0ecbc0e1c608044b43906af7c835e876860425c9be0c737993003606dc"
+        }
+      },
+      "flour": {
+        "arquivo": "sprites/mercadorias/flour.png",
+        "tamanho": [
+          32,
+          32
+        ],
+        "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
+        "origem": {
+          "base": "base/mercadorias/flour.png",
+          "semente": null,
+          "nota": "PixelLab, candidata 9 do lote 6151a7ab; sha256 66e98962c942cf50e074a7c81dc7614b0086d989ffdfb41bc24264511d29710b"
+        }
+      },
+      "pigs": {
+        "arquivo": "sprites/mercadorias/pigs.png",
+        "tamanho": [
+          32,
+          32
+        ],
+        "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
+        "origem": {
+          "base": "base/mercadorias/pigs.png",
+          "semente": null,
+          "nota": "PixelLab, candidata 10 do lote 6151a7ab; sha256 7fc694af38a75bbd38781edb4a331fc06d2c9a0e95d877c1baadc591d0dc27cc"
+        }
+      },
+      "skins": {
+        "arquivo": "sprites/mercadorias/skins.png",
+        "tamanho": [
+          32,
+          32
+        ],
+        "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
+        "origem": {
+          "base": "base/mercadorias/skins.png",
+          "semente": null,
+          "nota": "PixelLab, candidata 11 do lote 6151a7ab; sha256 fbe8cdeb500c1d5b809968c1a6b2c873acd41d64b83eb4a093b870a6fdd29a1e"
+        }
+      },
+      "leather": {
+        "arquivo": "sprites/mercadorias/leather.png",
+        "tamanho": [
+          32,
+          32
+        ],
+        "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
+        "origem": {
+          "base": "base/mercadorias/leather.png",
+          "semente": null,
+          "nota": "PixelLab, candidata 12 do lote 6151a7ab; sha256 8f88efec85a08cbd8659f9c358695b0f6bd6d609fce29acd40bdb89b6d657ee2"
+        }
+      },
+      "horses": {
+        "arquivo": "sprites/mercadorias/horses.png",
+        "tamanho": [
+          32,
+          32
+        ],
+        "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
+        "origem": {
+          "base": "base/mercadorias/horses.png",
+          "semente": null,
+          "nota": "PixelLab, candidata 13 do lote 6151a7ab; sha256 dd5b14ee20ee5ac8ced438e49439183f06e40f962fbbcb5b3eda2a7e2bedb1a8"
+        }
+      },
+      "loaves": {
+        "arquivo": "sprites/mercadorias/loaves.png",
+        "tamanho": [
+          32,
+          32
+        ],
+        "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
+        "origem": {
+          "base": "base/mercadorias/loaves.png",
+          "semente": null,
+          "nota": "PixelLab, candidata 14 do lote 6151a7ab; sha256 d193abdd4b11de0c111c92dcb4ef749505ace948ecffa953c9bab07da9e75f70"
+        }
+      },
+      "sausages": {
+        "arquivo": "sprites/mercadorias/sausages.png",
+        "tamanho": [
+          32,
+          32
+        ],
+        "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
+        "origem": {
+          "base": "base/mercadorias/sausages.png",
+          "semente": null,
+          "nota": "PixelLab, candidata 15 do lote 6151a7ab; sha256 55606b09e0327f732181e02d2e0e64d95273db7a63a22b8f34da1aa516fb038d"
+        }
+      },
+      "wine": {
+        "arquivo": "sprites/mercadorias/wine.png",
+        "tamanho": [
+          32,
+          32
+        ],
+        "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
+        "origem": {
+          "base": "base/mercadorias/wine.png",
+          "semente": null,
+          "nota": "PixelLab, candidata 16 do lote 6151a7ab; sha256 c0aac7efa1d20a8e0a92cab3c660f7656abeadc9a61adb25975d21dadf0d4a2d"
+        }
+      },
+      "fish": {
+        "arquivo": "sprites/mercadorias/fish.png",
+        "tamanho": [
+          32,
+          32
+        ],
+        "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
+        "origem": {
+          "base": "base/mercadorias/fish.png",
+          "semente": null,
+          "nota": "PixelLab, candidata 17 do lote 6151a7ab; sha256 edc8d5bc21bcf2ee6a7d991fdbec770d454479d46d152dc203a8f5fc77fa038e"
+        }
+      },
+      "hand_axe": {
+        "arquivo": "sprites/mercadorias/hand_axe.png",
+        "tamanho": [
+          32,
+          32
+        ],
+        "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
+        "origem": {
+          "base": "base/mercadorias/hand_axe.png",
+          "semente": null,
+          "nota": "PixelLab, candidata 18 do lote 6151a7ab; sha256 bd3dd7670e4a4605de69e9bcdfb6894819863ce70b37cacd86492230ef5c34e5"
+        }
+      },
+      "sword": {
+        "arquivo": "sprites/mercadorias/sword.png",
+        "tamanho": [
+          32,
+          32
+        ],
+        "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
+        "origem": {
+          "base": "base/mercadorias/sword.png",
+          "semente": null,
+          "nota": "PixelLab, candidata 19 do lote 6151a7ab; sha256 e720c7f672605b14f9e7b5b1c8645044f5100c4b169a3f4b99d291c7a3759bb5"
+        }
+      },
+      "lance": {
+        "arquivo": "sprites/mercadorias/lance.png",
+        "tamanho": [
+          32,
+          32
+        ],
+        "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
+        "origem": {
+          "base": "base/mercadorias/lance.png",
+          "semente": null,
+          "nota": "PixelLab, candidata 20 do lote 6151a7ab; sha256 1dbe41073cbd8bda3982184b33de535c23e8f5d90711a26830a34f09cfa30ddd"
+        }
+      },
+      "pike": {
+        "arquivo": "sprites/mercadorias/pike.png",
+        "tamanho": [
+          32,
+          32
+        ],
+        "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
+        "origem": {
+          "base": "base/mercadorias/pike.png",
+          "semente": null,
+          "nota": "PixelLab, candidata 21 do lote 6151a7ab; sha256 59ffd23051e29c45dc70965bdc7c4e46f6630a229a5176b79d91b89b09a9e86a"
+        }
+      },
+      "longbow": {
+        "arquivo": "sprites/mercadorias/longbow.png",
+        "tamanho": [
+          32,
+          32
+        ],
+        "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
+        "origem": {
+          "base": "base/mercadorias/longbow.png",
+          "semente": null,
+          "nota": "PixelLab, candidata 22 do lote 6151a7ab; sha256 2929e5b7ac0061db64923db7a5a5fa78096a16f97245e1f5ac8aaefe2c3b7b83"
+        }
+      },
+      "crossbow": {
+        "arquivo": "sprites/mercadorias/crossbow.png",
+        "tamanho": [
+          32,
+          32
+        ],
+        "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
+        "origem": {
+          "base": "base/mercadorias/crossbow.png",
+          "semente": null,
+          "nota": "PixelLab, candidata 23 do lote 6151a7ab; sha256 7c16fcd1eaf67e97093f124bea2843030ce0ec7111a837ff1905208355ae210c"
+        }
+      },
+      "leather_armor": {
+        "arquivo": "sprites/mercadorias/leather_armor.png",
+        "tamanho": [
+          32,
+          32
+        ],
+        "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
+        "origem": {
+          "base": "base/mercadorias/leather_armor.png",
+          "semente": null,
+          "nota": "PixelLab, candidata 24 do lote 6151a7ab; sha256 0451536ba366e6f43f7b95ad37af15ff81480cc30f01dc9d0f39a99a33c8f1cd"
+        }
+      },
+      "iron_armor": {
+        "arquivo": "sprites/mercadorias/iron_armor.png",
+        "tamanho": [
+          32,
+          32
+        ],
+        "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
+        "origem": {
+          "base": "base/mercadorias/iron_armor.png",
+          "semente": null,
+          "nota": "PixelLab, candidata 25 do lote 6151a7ab; sha256 525adaa2eb0a9a19d5d53ed0aa71729d087645205a0b616e959f52eb1f2dc205"
+        }
+      },
+      "wooden_shield": {
+        "arquivo": "sprites/mercadorias/wooden_shield.png",
+        "tamanho": [
+          32,
+          32
+        ],
+        "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
+        "origem": {
+          "base": "base/mercadorias/wooden_shield.png",
+          "semente": null,
+          "nota": "PixelLab, candidata 26 do lote 6151a7ab; sha256 de5835c53e7b0c47e6a7ff2132a9344a4fb1cb69924470113dc695da86d199d0"
+        }
+      },
+      "iron_shield": {
+        "arquivo": "sprites/mercadorias/iron_shield.png",
+        "tamanho": [
+          32,
+          32
+        ],
+        "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
+        "origem": {
+          "base": "base/mercadorias/iron_shield.png",
+          "semente": null,
+          "nota": "PixelLab, candidata 27 do lote 6151a7ab; sha256 6b70a5072bfdd7e34e74e523dcd8194b692ad15a7f1fccf347c40c5957af7f1c"
         }
       }
     },

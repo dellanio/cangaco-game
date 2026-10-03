@@ -31,6 +31,7 @@ async function roteiro({ page, estado, afirmar, capturar }) {
   const passos = [];
   let id = null;
   let capturouAndando = false;
+  let carregou = false;
   for (let n = 0; n < 260; n++) {
     await page.evaluate(() => window.__cangaco.avancar(1));
     await page.waitForFunction((tick) => window.__cangaco.tick > tick, s.tick);
@@ -38,10 +39,12 @@ async function roteiro({ page, estado, afirmar, capturar }) {
     afirmar(s.unidadesRenderizadas.filter((u) => u.tipo === 'serf').every((u) => !u.frame || quadrosReais.has(u.frame)),
       'nenhum serf pode usar quadro fora do atlas real');
     const u = id ? s.unidadesRenderizadas.find((x) => x.id === id)
-      : s.unidadesRenderizadas.find((x) => x.tipo === 'serf' && x.animacao === 'andar');
-    if (u?.animacao === 'andar') {
+      : s.unidadesRenderizadas.find((x) => x.tipo === 'serf' && (x.animacao === 'andar' || x.animacao === 'carregando'));
+    if (u?.animacao === 'andar' || u?.animacao === 'carregando') {
+      if (u.animacao === 'carregando') carregou = true;
       id = u.id;
-      afirmar(u.frame.startsWith('serf/andar/'), `quadro de andar inesperado: ${u.frame}`);
+      // D-TELA-SERF-CARREGANDO: com carga, a animacao e a de carregar; sem carga, o andar.
+      afirmar(u.frame.startsWith(u.carga ? 'serf/carregando/' : 'serf/andar/'), `quadro inesperado (carga ${u.carga}): ${u.frame}`);
       afirmar(u.peY === 0, `o pe saiu da linha: ${u.peY}`);
       passos.push({ tick: s.tick, id, direcao: u.direcao, quadro: u.quadro, frame: u.frame });
       if (!capturouAndando && passos.length === 6) { await capturar('serf-andando-1'); capturouAndando = true; }
@@ -50,6 +53,18 @@ async function roteiro({ page, estado, afirmar, capturar }) {
   }
   afirmar(passos.length >= 24, 'um serf deve andar pelo menos 24 ticks');
   afirmar(new Set(passos.map((p) => p.quadro)).size >= 5, 'os quadros do andar devem avancar');
+  // Se o serf acompanhado nao carregou nada, procura qualquer serf com carga no ultimo estado.
+  if (!carregou) {
+    for (let n = 0; n < 200 && !carregou; n++) {
+      await page.evaluate(() => window.__cangaco.avancar(1));
+      await page.waitForFunction((tick) => window.__cangaco.tick > tick, s.tick);
+      s = await estado();
+      carregou = s.unidadesRenderizadas.some((x) => x.tipo === 'serf' && x.carga && x.animacao === 'carregando'
+        && x.frame.startsWith('serf/carregando/'));
+    }
+  }
+  afirmar(carregou, 'um serf com carga deve andar com a animacao de carregar');
+  await capturar('serf-carregando');
   await capturar('serf-andando-2');
   // Passo despausado (CLAUDE.md §8): o laco roda de verdade e o serf continua no atlas real.
   await page.keyboard.press('p'); await page.waitForTimeout(600); await page.keyboard.press('p');

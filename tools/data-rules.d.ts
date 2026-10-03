@@ -9,3 +9,4 @@ export function validarPoeira(poeira: unknown, erros: string[]): void;
 
 export function validarFumaca(fumaca: unknown, erros: string[]): void;
 export function validarBandeira(bandeira: unknown, erros: string[]): void;
+export function validarCargaNasMaos(config: unknown, erros: string[]): void;

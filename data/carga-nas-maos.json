@@ -1,0 +1,11 @@
+{
+  "_doc": "D-ARTE-PIXEL-ART-CIVIS (teste de pixel art): onde o sprite da mercadoria fica entre as maos de quem anda com a pose de carregar, relativo ao pe (origem da unidade, o fundo da celula 64x96). Medido na pose 'Carregar vazio' do serf do PixelLab. O oeste e espelho do leste. De costas (atras) a carga fica atras do corpo. So render; a sim nao le.",
+  "tamanhoPx": 24,
+  "pontos": {
+    "s": { "x": 0, "y": -34, "atras": false },
+    "se": { "x": 13, "y": -35, "atras": false },
+    "l": { "x": 18, "y": -38, "atras": false },
+    "ne": { "x": 8, "y": -42, "atras": true },
+    "n": { "x": 0, "y": -42, "atras": true }
+  }
+}

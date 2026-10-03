@@ -95,6 +95,24 @@ function validarAguaPeixe(config, erros) {
   if (typeof config.cor !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(config.cor)) e('cor precisa ser #rrggbb');
 }
 
+// D-ARTE-PIXEL-ART-CIVIS — o ponto da mercadoria entre as maos de quem carrega, por direcao canonica.
+function validarCargaNasMaos(config, erros) {
+  const e = (msg) => erros.push(`interface/carga-nas-maos: ${msg}`);
+  if (!config || typeof config !== 'object' || Array.isArray(config)) {
+    e('data/carga-nas-maos.json precisa existir e ser objeto');
+    return;
+  }
+  if (!Number.isInteger(config.tamanhoPx) || config.tamanhoPx <= 0) e('tamanhoPx precisa ser inteiro > 0');
+  for (const d of ['n', 'ne', 'l', 'se', 's']) {
+    const p = config.pontos && config.pontos[d];
+    if (!p || !Number.isFinite(p.x) || !Number.isFinite(p.y) || typeof p.atras !== 'boolean') {
+      e(`pontos.${d} precisa de x, y (numeros) e atras (booleano)`);
+    } else if (p.y >= 0) {
+      e(`pontos.${d}.y precisa ser negativo (acima do pe)`);
+    }
+  }
+}
+
 function validarPoeira(poeira, erros) {
   const e = (msg) => erros.push(`interface/poeira: ${msg}`);
   if (!poeira || typeof poeira !== 'object' || Array.isArray(poeira)) {
@@ -1746,6 +1764,7 @@ function validarInterface(dados, interfaceUi) {
   validarBandeira(interfaceUi && interfaceUi.bandeira, erros);
   validarVento(interfaceUi && interfaceUi.vento, erros);
   validarAguaPeixe(interfaceUi && interfaceUi['agua-peixe'], erros);
+  validarCargaNasMaos(interfaceUi && interfaceUi['carga-nas-maos'], erros);
   validarPoeira(interfaceUi && interfaceUi.poeira, erros);
   validarFumaca(interfaceUi && interfaceUi.fumaca, erros);
   if (!menu || !Array.isArray(menu.grupos)) {
@@ -1834,4 +1853,4 @@ function validarTudo(dados) {
   return erros;
 }
 
-module.exports = { validarBandeira, validarFumaca, validarTudo, validarInterface, validarVento, validarPoeira, getByPath };
+module.exports = { validarCargaNasMaos, validarBandeira, validarFumaca, validarTudo, validarInterface, validarVento, validarPoeira, getByPath };
