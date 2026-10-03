@@ -3,7 +3,7 @@ import type {
   CombateData, CondicaoData, ConstrucaoData, ConversaoRegistrada, EconomiaData,
   EntregaData, GameData, ModoDeTrabalho, ModosDoPredio, MovimentoData, ProducaoData, ReceitaDePredio,
   MapaData, RecursosData, RegimeDeRecurso, TerrenoData, TerrenoDeMapa, TerrenoTipo,
-  LimiaresEmTicks, Ticks, TileDeMapa, TipoDeRecurso, UnidadesData,
+  LimiaresEmTicks, Ticks, TileDeMapa, TipoDeRecurso, UnidadesData, VisaoData,
 } from './types';
 import { TERRENOS_DE_MAPA } from './terrenos';
 import { hashDeTexto } from './hash';
@@ -881,12 +881,24 @@ export function loadGameData(raw: RawGameData): GameData {
     mercenarios: raw.units.mercenarios,
   };
 
+  // --- F-TERRENO-NEVOA-DESCOBERTO: os raios de visao, em tiles (sem escala de tempo) ---
+  const visao: VisaoData = {
+    porTipoDeUnidade: Object.fromEntries([
+      ...raw.units.civis.tipos.map((t) => [t.id, raw.units.civis._comum.visao] as const),
+      ...raw.units.militares.tipos.map((t) => [t.id, t.visao] as const),
+      ...raw.units.mercenarios.tipos.map((t) => [t.id, t.visao] as const),
+    ]),
+    predio: raw.buildings.visao.predio_tiles,
+    porTipoDePredio: raw.buildings.visao.porTipo,
+  };
+
   return {
     tempo: { tickHz, tickMs, velocidadeDeJogo: raw.time.velocidadeDeJogo },
     predios: raw.buildings.predios,
     construcao,
     producao,
     unidades,
+    visao,
     movimento,
     combate,
     condicao,

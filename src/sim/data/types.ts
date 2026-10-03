@@ -466,6 +466,20 @@ export interface EconomiaData {
   readonly grupos: RawGameData['economy']['grupos'];
 }
 
+/**
+ * F-TERRENO-NEVOA-DESCOBERTO — o raio de visao de quem enxerga (GDD 6.5), em tiles, montado
+ * uma vez no carregamento a partir de `units.json` (o `visao` de cada tipo, e o do civil em
+ * `civis._comum`) e de `buildings.json: visao`. Quem le e `sim/nevoa.ts`.
+ */
+export interface VisaoData {
+  /** Tipo de unidade -> raio. Todo tipo de `units.json` tem entrada. */
+  readonly porTipoDeUnidade: Readonly<Record<string, number>>;
+  /** O raio do predio completo, alem do proprio footprint. */
+  readonly predio: number;
+  /** Tipo de predio -> raio, para quem difere de `predio` (a torre de vigia). */
+  readonly porTipoDePredio: Readonly<Record<string, number>>;
+}
+
 export interface UnidadesData {
   readonly civis: RawGameData['units']['civis'];
   readonly militares: RawGameData['units']['militares'];
@@ -490,6 +504,8 @@ export interface GameData {
   readonly construcao: ConstrucaoData;
   readonly producao: ProducaoData;
   readonly unidades: UnidadesData;
+  /** F-TERRENO-NEVOA-DESCOBERTO — os raios de visao. Leia por `sim/nevoa.ts`. */
+  readonly visao: VisaoData;
   readonly movimento: MovimentoData;
   readonly combate: CombateData;
   readonly condicao: CondicaoData;

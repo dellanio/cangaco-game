@@ -3256,6 +3256,15 @@ que vetar custe uma linha.
 - **(2026-10-03, Fase E) E-SAVE-GAVETAS — o "nome" da gaveta.** O BUILD_PLAN pede "três gavetas com
   nome, tick e data", sem dizer quem dá o nome. Fiz o conservador: o nome é o tipo da partida
   (Escaramuça ou Jogo livre), sem campo de texto para o jogador digitar.
+- **(2026-10-03, Fase F) F-TERRENO-NEVOA-DESCOBERTO — o raio do prédio e o da torre (PARA REVISÃO).**
+  O GDD não dá os números. Prédio: 2 tiles além do footprint, o menor em que a caixa dos prédios
+  do jogador, com a linha das portas, fica à vista só pelos prédios, no jogo livre e na escaramuça
+  (medido: 2 e 2). Torre de vigia: 9, o do civil que a ocupa, acima do alcance de tiro (7). Os dois
+  ficam em `data/buildings.json: visao`.
+- **(2026-10-03, Fase F) F-TERRENO-NEVOA-DESCOBERTO — obra revela?** Segui o KaM: só o prédio
+  pronto revela (`src/houses/KM_Houses.pas:669-694`, `Activate`). A obra não revela, e o operário
+  nela revela pela visão dele. Em aberto: o KaM recusa planta no escuro; aqui nada impede o
+  jogador de plantar no não descoberto. O GDD não fala disso, e a F não mexe no `canPlace`.
 
 
 ## F-T1 — Camada de terreno base (dado + sim + render mínimo) (2026-09-24)
@@ -18585,3 +18594,40 @@ Leituras conservadoras, PARA REVISÃO do operador:
   desligada;
 - o nível normal da IA é o jogo de hoje; fácil e difícil são proposta, a ajustar no lote de
   balanceamento.
+
+## 2026-10-03 — F-TERRENO-NEVOA-DESCOBERTO (o que o jogador vê e já viu)
+
+**Feito (verificado rodando):**
+- `src/sim/nevoa.ts`: `descoberto` no `GameState` (opcional, por lado, só o do jogador), 1 bit por
+  tile em inteiros de 32 bits sem sinal (512 palavras no 128×128). `visivel` é uma contagem por
+  tile (quantos olhos o veem) num `WeakMap` pela referência do estado, como o índice das estradas.
+  O `step` passa o cache do estado de entrada para o de saída e só descarimba e carimba o olho que
+  mudou (andou, nasceu, morreu, prédio ficou pronto ou caiu). Sem cache (load, ramo, estado montado
+  à mão), a conta é inteira, e o teste confere que as duas dão o mesmo `visivel` em 200 ticks.
+- O disco é o do KaM, `dx²+dy² <= r²` (`src/game/KM_FogOfWar.pas:176`), medido até o footprint no
+  prédio, que é a união dos discos de cada tile dele (`src/houses/KM_Houses.pas:690-694`).
+- Dado: `visao` 9 do civil em `units.json: civis._comum`; `buildings.json: visao` com
+  `predio_tiles` 2 e `porTipo.watchtower` 9. `GameData.visao` é a tabela montada no carregamento.
+  `validate:data` ganhou `validarVisao` (testado: recusa civil sem raio, raio negativo ou
+  fracionário, `porTipo` de prédio que não existe).
+- Estado sem a camada (montado à mão, save anterior) fica sem névoa: o `step` não a cria, e
+  `ehDescoberto` responde "sim". O save não mudou de versão (campo opcional).
+- `saves/teste-operador-vila-pronta.txt` regravado pelo interruptor do próprio teste
+  (`CANGACO_GRAVAR_SAVE_DO_OPERADOR=1`): a montagem agora traz o `descoberto`. Foi o único teste da
+  suíte que quebrou (2393 de 2394 verdes antes de regravar).
+
+**Aceite** (`tests/F-TERRENO-NEVOA-DESCOBERTO.test.ts`, evidência em
+`test-output/F-TERRENO-NEVOA-DESCOBERTO-*.json`):
+- (a) tick 0 do jogo livre e da escaramuça: todo tile de prédio e de unidade do jogador visível e
+  descoberto. Descobertos no tick 0 da escaramuça: 506 de 16 384.
+- (b) 6 000 ticks da escaramuça sem paz, a tropa marchando no tick 1: 0 bits perdidos; 506 no
+  início, 1 557 no tick 300, 1 597 no fim.
+- (c) salvar no tick 151, carregar e rodar 150: o mesmo JSON e o mesmo `visivel` que não salvar.
+- (d) eixo determinístico, 100 ticks de marcha: parado, 0 carimbos; 1 cabra, 11 passos e 5 566
+  carimbos; 50 cabras, 539 passos e 272 734 carimbos. **Razão dos carimbos 49, razão dos passos 49.**
+  Com 50 andando, ~2 727 carimbos por tick, contra 16 384 tiles do mapa. A asserção: zero parado,
+  carimbos <= passos × 2 × (2r+1)², e 50:1 >= 25.
+- (e) tamanho do estado: jogo livre 53 556 → 54 884 bytes (+1 328); escaramuça 45 345 → 46 610
+  (+1 265). O save do operador: 67 858 → 69 292.
+- (f) `descoberto` entrou na `GUARDA-step-preserva-opcionais` como `persiste` (o typecheck cobrou),
+  e o arquivo da feature, a guarda e o save do operador passam na suíte transladada.

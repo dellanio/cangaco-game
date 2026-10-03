@@ -1001,6 +1001,31 @@ function validarLance(dados, erros) {
   }
 }
 
+// F-TERRENO-NEVOA-DESCOBERTO — o raio de visao (GDD 6.5): todo tipo de unidade tem um (o civil
+// pelo `civis._comum`), o predio tem o dele, e o `porTipo` so nomeia predio que existe. Inteiro
+// >= 0: e raio em tiles do disco do KaM (`dx*dx + dy*dy <= r*r`).
+function validarVisao(dados, erros) {
+  const raioValido = (v) => Number.isInteger(v) && v >= 0;
+  const units = dados.units || {};
+  const civil = units.civis && units.civis._comum && units.civis._comum.visao;
+  if (!raioValido(civil)) erros.push('visao/civil: units.civis._comum.visao precisa ser inteiro >= 0');
+  for (const grupo of ['militares', 'mercenarios']) {
+    for (const t of (units[grupo] && units[grupo].tipos) || []) {
+      if (!raioValido(t.visao)) erros.push(`visao/unidade: units.${grupo} '${t.id}'.visao precisa ser inteiro >= 0`);
+    }
+  }
+  const visao = dados.buildings && dados.buildings.visao;
+  if (!visao || !raioValido(visao.predio_tiles)) {
+    erros.push('visao/predio: buildings.visao.predio_tiles precisa ser inteiro >= 0');
+    return;
+  }
+  const ids = new Set(((dados.buildings && dados.buildings.predios) || []).map((p) => p.id));
+  for (const [id, r] of Object.entries(visao.porTipo || {})) {
+    if (!ids.has(id)) erros.push(`visao/predio: buildings.visao.porTipo.${id} nao e predio de buildings.predios`);
+    if (!raioValido(r)) erros.push(`visao/predio: buildings.visao.porTipo.${id} precisa ser inteiro >= 0`);
+  }
+}
+
 function validarEncomenda(dados, erros) {
   const enc = dados.production && dados.production.encomenda;
   if (!enc || !Number.isInteger(enc.maxima) || enc.maxima < 1) {
@@ -1827,6 +1852,7 @@ function validarTudo(dados) {
   validarDivisaoDoEscasso(dados, erros);
   validarLance(dados, erros);
   validarEncomenda(dados, erros);
+  validarVisao(dados, erros);
   validarPedidoDeComida(dados, erros);
   validarPrioridadesDaIA(dados, erros);
   validarEscaramuca(dados, erros);

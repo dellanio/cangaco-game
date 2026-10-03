@@ -33,6 +33,7 @@ import { buscarCaminho } from './pathfinding';
 import { canPlowField } from './campos';
 import { caixaDoPredio } from './footprint';
 import { receitaDoTipo } from './producao';
+import { descobertoInicial } from './nevoa';
 
 /**
  * C-IA-02a — a estrada da porta do armazem da IA a porta de cada outro predio dela, pelo A*
@@ -185,7 +186,7 @@ export function criarEscaramuca(seed: number, dados: GameData = gameData, opcoes
     nascer(LADO_DA_IA, tipo, tile.gx, tile.gy);
   });
 
-  return {
+  const escaramuca: GameState = {
     ...comVila,
     unidades: { porId: unidades, ordem: ordemDasUnidades },
     proximoId: contador,
@@ -193,4 +194,6 @@ export function criarEscaramuca(seed: number, dados: GameData = gameData, opcoes
     // C-IA-03b — o peacetime (sim/paz.ts); E-TELA-CONFIGURAR-PARTIDA: o jogador escolhe a duracao
     pazAteTick: base.tick + ticksDePaz,
   };
+  // F-TERRENO-NEVOA-DESCOBERTO: refeito com a tropa do jogador, que nasceu aqui
+  return { ...escaramuca, descoberto: descobertoInicial(escaramuca, dados) };
 }
