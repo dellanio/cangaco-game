@@ -18459,3 +18459,55 @@ Feature de integração (sim + tela), como o item declara.
 Na página do itch.io: marcar "This file will be played in the browser" no upload html5, e um
 tamanho de tela de pelo menos 1280×720 (é o viewport dos roteiros). **Hipótese, não conferida:** o
 itch.io pede o `index.html` na raiz do zip ou do diretório enviado, e o `dist/` já é assim.
+
+## 2026-10-03 — Fase E: o que fechou, o que ficou aberto e o que espera o operador
+
+Sessão longa e desatendida, na branch `dellanio/fase-e-casca-e-vitrine` (worktree do Orca). Nada foi
+para a `main`, nada foi empurrado e nada foi publicado.
+
+**Conferência final, sobre o `3893ee5` (verificado):**
+- `npm run verify` completo verde: 2 394 testes; transladada 2 392 e 5 pulados. Selo `completo` do
+  `3893ee5`.
+- `npm run shot:todos` numa worktree irmã no `3893ee5`: **114 roteiros, 112 com saída 0**
+  (`test-output/shot-todos-fase-e.json`). Só falham os dois do **BUG-ROTEIRO-DE-DUAS-ETAPAS**. A
+  D-TELA-05c e a D-TELA-05d passaram desta vez, porque o `test-output` copiado tinha os saves da suíte
+  normal. Isso confirma a causa do **BUG-SAVE-DO-ROTEIRO-TRANSLADADO**, que continua aberto: depois de
+  um `verify` completo, os dois voltam a falhar.
+- `npm run test:longo` roda **depois** deste commit, sozinha, e é a última coisa da sessão. O
+  resultado fica no selo (`test-output/test-longo.json`) e entra no PROGRESS no commit seguinte à
+  avaliação (§13).
+- Chaves marcadas em `test-results.json`: `E-TELA-MENU-INICIAL`, `E-TELA-CONFIGURAR-PARTIDA`,
+  `E-SAVE-GAVETAS` e `E-ENTREGA-BUILD` (true). `E-ENTREGA-PUBLICACAO` fica false até o aceite (c).
+  O aceite (d) do menu ("os roteiros que existem continuam saindo 0") foi lido como não-regressão:
+  as falhas que restam são anteriores à Fase E, as mesmas do fechamento da D, e estão registradas.
+
+```text
+item                          estado      commit    nota
+abertura (fechamento da D)    fechou*     3968e65   *shot:todos 106/110; 4 falhas em 2 bugs registrados
+E-TELA-MENU-INICIAL           fechou      1258564   ?menu forca o menu; qualquer outro parametro o pula
+E-TELA-CONFIGURAR-PARTIDA     fechou      c3c8c55   8 opcoes no dado; unidade e lista: perguntas
+E-SAVE-GAVETAS                fechou      c5869fe   gaveta 1 = chave da F23b; nome = tipo da partida
+E-ENTREGA-BUILD               fechou      7ed152a   11,75 MB; --base=./ (subpasta do itch.io)
+E-ENTREGA-PUBLICACAO (a)(b)   fechou      3893ee5   regra + butler falso; nada enviado
+E-ENTREGA-PUBLICACAO (c)      espera      -         primeira publicacao: e do operador
+BUG-SAVE-DO-ROTEIRO-TRANSL.   aberto      -         errado; correcao pre-escrita no BUGS.md
+BUG-ROTEIRO-DE-DUAS-ETAPAS    aberto      -         errado; espera decisao do operador
+Perguntas em aberto (3)       espera      -         unidade da paz, lista da paz, nome da gaveta
+```
+
+**Espera o operador:**
+1. **A primeira publicação** (E-ENTREGA-PUBLICACAO c): o passo a passo está na entrada dela, acima.
+   Antes, o merge desta branch na `main`.
+2. **As três perguntas em aberto da Fase E** (em `## Perguntas em aberto`): em que unidade vale o
+   0–120 do KaM, a lista das opções da paz e o nome das gavetas.
+3. **BUG-ROTEIRO-DE-DUAS-ETAPAS**: como tirar a comparação antes/depois do roteiro de não-regressão.
+4. **BUG-SAVE-DO-ROTEIRO-TRANSLADADO**: a correção está escrita no bug (gravar no
+   `CANGACO_EVIDENCIA_DIR`). Fica para quem pegar o bug; a abertura da E mandava registrar e não
+   corrigir.
+
+**Comportamento a conferir jogando (não é bug registrado):** o botão "Menu inicial" da ajuda volta ao
+menu sem perguntar, e o que não foi guardado se perde.
+
+**Limpeza que cabe ao operador:** a worktree irmã `C:/Users/della/orca/workspaces/cangaco-game/fase-e-shots`
+(HEAD destacado no `3893ee5`, `node_modules` por junction) existe só para os `shot:todos`. Para
+encerrá-la: `cmd //c "rmdir <worktree>\node_modules"` (só o link) e `git worktree remove`.

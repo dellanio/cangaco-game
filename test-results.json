@@ -631,5 +631,20 @@
   },
   "D-TELA-VEU-DOS-DETALHES-veu-fora-da-arte": {
     "passes": false
+  },
+  "E-TELA-MENU-INICIAL-a-porta-do-jogo": {
+    "passes": true
+  },
+  "E-TELA-CONFIGURAR-PARTIDA-paz-escolhida": {
+    "passes": true
+  },
+  "E-SAVE-GAVETAS-tres-gavetas": {
+    "passes": true
+  },
+  "E-ENTREGA-BUILD-jogo-fora-do-dev-server": {
+    "passes": true
+  },
+  "E-ENTREGA-PUBLICACAO-link-no-itch": {
+    "passes": false
   }
 }
