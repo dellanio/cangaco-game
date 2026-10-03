@@ -289,6 +289,7 @@ export interface EstadoDebug {
    *  uma vez no `create` (a arte chega no `preload`). Lista vazia e o placeholder de
    *  hoje — cor chapada e marcador —, que e comportamento normal (§9). Vegetacao e o
    *  recurso que virou sprite em pe, e nao celula da tira. */
+  detalhesDoTerrenoPorTipo: Readonly<Record<string, number>>;
   arteDasCamadas: {
     readonly terreno: readonly string[];
     readonly recurso: readonly string[];
@@ -470,6 +471,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     transicoesVisiveis: {},
     crescimentoDasArvores: {},
     estagiosDasCulturas: {},
+    detalhesDoTerrenoPorTipo: {},
     arteDasCamadas: { terreno: [], recurso: [], vegetacao: [] },
     vegetacaoRenderizada: 0,
     rochasRenderizadas: 0,

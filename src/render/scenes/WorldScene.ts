@@ -25,6 +25,7 @@ import { proximoNivel, mundoSobPonto, scrollAncorado } from '../zoom';
 import type { Navegacao } from '../../input/navegacao';
 import type { Tile } from '../grid';
 import { publicarEstadoDebug } from '../debug';
+import { terrenoRecebeDetalhe } from '../detalhes-do-terreno';
 import { somarCusto } from '../custo-do-quadro';
 import { criarCamadaDeRelevo } from '../camada-de-relevo';
 import { arvoreNaVista, balancaVegetacao, especieDoTile, quadroDoVentoMudou, transformacaoDoVento } from '../vento';
@@ -387,7 +388,7 @@ export class WorldScene extends Phaser.Scene {
     let ultimoQuadroDosAneis = '';
     let estadoDosAneis: GameState | null = null;
     const texturaDosDetalhes = this.criarTexturaDeDetalhesDoTerreno(tilePx);
-    this.criarCamadaDeDetalhesDoTerreno(tilePx, largura, altura, texturaDosDetalhes);
+    this.criarCamadaDeDetalhesDoTerreno(tilePx, largura, altura, texturaDosDetalhes, estado);
     const texturaDaBordaDaAgua = this.criarTexturaDaBordaDaAgua(tilePx, carregada);
     const texturaDaBordaAreiaGrama = this.criarTexturaDaBordaAreiaGrama(tilePx, carregada);
     const texturaDaBordaRochaGrama = this.criarTexturaDaBordaRochaGrama(tilePx, carregada);
@@ -1186,6 +1187,7 @@ export class WorldScene extends Phaser.Scene {
   /** Camada separada para preservar indices, contagens e culling do chao. */
   private criarCamadaDeDetalhesDoTerreno(
     tilePx: number, largura: number, altura: number, textura: string,
+    debug: EstadoDebug,
   ): Phaser.Tilemaps.TilemapLayer {
     type Detalhe = { readonly densidade: number };
     const detalhes = temaSertao.detalhesTerreno as unknown as Readonly<Record<string, Detalhe | string | undefined>>;
@@ -1196,10 +1198,12 @@ export class WorldScene extends Phaser.Scene {
     if (!camada) throw new Error('WorldScene: falha ao criar a camada de detalhes do terreno.');
 
     const { codigos, largura: larguraDoTerreno, altura: alturaDoTerreno } = terrenoDeRender;
+    const contagens: Record<string, number> = Object.fromEntries(terrenoDeRender.tipos.map((tipo) => [tipo, 0]));
     for (let gy = 0; gy < Math.min(altura, alturaDoTerreno); gy += 1) {
       for (let gx = 0; gx < Math.min(largura, larguraDoTerreno); gx += 1) {
         const codigo = codigos[gy * larguraDoTerreno + gx] as number;
         const tipo = terrenoDeRender.tipos[codigo];
+        if (tipo === undefined || !terrenoRecebeDetalhe(tipo, debug.arteDasCamadas.terreno)) continue;
         const detalhe = tipo === undefined ? undefined : detalhes[tipo];
         if (typeof detalhe !== 'object' || detalhe === null) continue;
         const hash = this.hashVisual(gx, gy, codigo);
@@ -1208,8 +1212,10 @@ export class WorldScene extends Phaser.Scene {
         const tile = camada.putTileAt(codigo * VARIANTES_DE_DETALHE + variante, gx, gy);
         tile.flipX = (hash & 1) !== 0;
         tile.flipY = (hash & 2) !== 0;
+        contagens[tipo] = (contagens[tipo] ?? 0) + 1;
       }
     }
+    debug.detalhesDoTerrenoPorTipo = contagens;
     return camada.setDepth(0.1);
   }
 
