@@ -18854,3 +18854,25 @@ F-IA-DIFICULDADE             tres niveis de adversario          passa
 - **Fase H detalhada** no `BUILD_PLAN.md`. Decisão do operador: os sons vêm de bancos CC0, a sessão
   lista os candidatos com link e licença, e ele aprova cada um. Leitura conservadora (PARA REVISÃO):
   o código do som é TELA e o arquivo é ARTE, porque a lista de módulos não tem SOM.
+
+## 2026-10-03 — H-ARTE-SONS-CANDIDATOS (a lista de sons para o operador aprovar)
+
+- **Feito:** `docs/sons-candidatos.md`, 20 sons e 44 candidatos, de 1 a 3 por som, cada um com o
+  link, o autor, a licença e a duração. A coluna `aprovado` está vazia: **espera o operador.** Nada
+  foi baixado.
+- **Verificado:** a licença de cada candidato foi conferida **na página do som** (curl de cada
+  página em 2026-10-03; Freesound: o selo "Creative Commons 0" do próprio som, que aponta para
+  `creativecommons.org/publicdomain/zero/1.0/`; OpenGameArt: o campo "License(s)"). Um candidato
+  com licença dupla (`OGA-BY 3.0, CC0`, The Accordion Sample IV) ficou de fora.
+- **Teste:** `tests/H-ARTE-SONS-CANDIDATOS.test.ts`, com o leitor puro `tools/sons-candidatos.js`:
+  todo candidato é CC0 com link de banco livre, de 1 a 3 por som, sem id repetido; o leitor acusa
+  licença que não é CC0, candidato sem link e escolha fora da lista. O aceite (a) (todo id do
+  `data/som.json` tem candidato) fica condicional até o `data/som.json` existir, na feature
+  seguinte, que o torna incondicional.
+- **Decisões (PARA REVISÃO):**
+  - os ids de som são neutros e em inglês, como os da sim (`strike-hit`, `inn-bell`);
+  - `unit-struck` toca dois sons (acerto e erro), `match-ended` dois (vitória e derrota) e
+    `projectile-fired` dois (o bacamarte do `virote` e o bodoque/funda da `flecha`/`funda`);
+  - instrumentos do sertão (rabeca, zabumba, pífano): não achei música CC0 com eles; as músicas
+    da lista são de feira medieval e de batalha genérica, até haver gravação própria;
+  - o berro de bode, o carro de boi e a martelada a cada HP não têm evento na sim e ficaram de fora.
