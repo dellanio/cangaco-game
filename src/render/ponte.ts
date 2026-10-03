@@ -12,21 +12,30 @@
  * (CLAUDE.md §3).
  */
 import type { GameState } from '../sim/state';
+import { criarObservadorDeUnidades } from './observacao-de-unidades';
+import type { MorteVisual } from './observacao-de-unidades';
+import type { MemoriaDeAcao } from './acao-de-unidade';
 
 export interface PonteDeEstado {
   atual: GameState | null;
   readonly identidadePartida?: number;
   reiniciar?(): void;
+  readonly acoes?: ReadonlyMap<string, MemoriaDeAcao>;
+  consumirMortes?(): readonly MorteVisual[];
 }
 
 export function criarPonte(): PonteDeEstado {
   let atual: GameState | null = null, identidade = 0;
+  const observador = criarObservadorDeUnidades();
   return {
     get atual() { return atual; },
     set atual(novo: GameState | null) {
+      observador.observar(atual, novo);
       atual = novo;
     },
     get identidadePartida() { return identidade; },
-    reiniciar() { identidade++; },
+    get acoes() { return observador.acoes; },
+    consumirMortes() { return observador.consumirMortes(); },
+    reiniciar() { identidade++; observador.reiniciar(atual); },
   };
 }

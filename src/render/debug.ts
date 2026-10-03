@@ -132,6 +132,8 @@ export interface RelevoNoDebug {
 }
 
 export interface EstadoDebug {
+  mortesRenderizadas: readonly import('./mortes-de-unidades').MorteRenderizada[];
+  corposNaMemoria: number;
   cargasDeUnidade: Readonly<Record<string,{readonly estado:string;readonly pedidos:number}>>;
   /** O renderizador ativo: `tipo` e `game.renderer.type`, `webgl` e `Phaser.WEBGL`. O
    *  roteiro compara os dois sem importar o Phaser. */
@@ -502,6 +504,8 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     filaDeTreino: {},
     unidadesRenderizadas: [],
     cargasDeUnidade: {},
+    mortesRenderizadas: [],
+    corposNaMemoria: 0,
     animacoesDeUnidadeTrabalhadas: 0,
     pesDosQuadrosDoSerf: [],
     mostrarViradaDoSerf: () => undefined,

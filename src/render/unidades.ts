@@ -65,11 +65,14 @@ import { assetDaCamada } from './manifesto';
 import { peDoSprite } from './pe-do-sprite';
 import { atualizarVirada, iniciarVirada } from './virada-de-unidade';
 import type { MemoriaDaVirada } from './virada-de-unidade';
+import { acaoDaUnidade, direcaoDoTrabalho } from './acao-de-unidade';
+import type { MemoriaDeAcao } from './acao-de-unidade';
 
 /** O que a camada desenhou de uma unidade, para o roteiro afirmar (`window.__cangaco`). */
 export interface UnidadeRenderizada {
   readonly direcaoLogica?: Direcao | null;
   readonly animacao?: string;
+  readonly inicioDaAcao?: number;
   readonly quadro?: number;
   readonly frame?: string;
   readonly distanciaAnimada?: number;
@@ -173,6 +176,7 @@ const corDoMarcadorDeFome: string = (
 )[temaSertao.marcadores.fome.cor] ?? temaSertao.paleta.terraQueimada;
 
 interface Desenhado {
+  inicioDaAcao: number;
   virada: MemoriaDaVirada;
   distancia: number;
   ultimaPosicao: PontoEmTiles | null;
@@ -200,6 +204,7 @@ export function criarCamadaDeUnidades(
   /** D-TELA-LUZ-RELEVO — a luz do relevo, ou `null` (o padrao): o tint segue a posicao do pe. */
   luz: LuzDoRelevo | null = null,
   identidadePartida: () => number = () => 0,
+  acoes: () => ReadonlyMap<string, MemoriaDeAcao> | undefined = () => undefined,
 ): CamadaDeUnidades {
   const desenhados = new Map<string, Desenhado>();
   const memoria = criarMemoriaDePosicoes();
@@ -242,7 +247,7 @@ export function criarCamadaDeUnidades(
     marcadorDeFome.setVisible(false);
     const container = cena.add.container(0, 0, [retangulo, marcadorDeCarga, marcadorDeFome]);
     return { container, retangulo, imagem: null, direcao: 's', nome: rotulo, marcadorDeCarga, iconeDaCarga: null, placaDoIcone: null, marcadorDeFome,
-      distancia: 0, ultimaPosicao: null, ultimoTickAnimado: -1, animacao: 'parado', quadro: 0, spriteAnimado: null,
+      distancia: 0, ultimaPosicao: null, ultimoTickAnimado: -1, animacao: 'parado', inicioDaAcao: 0, quadro: 0, spriteAnimado: null,
       virada: iniciarVirada('s', 0) };
   }
 
@@ -356,6 +361,7 @@ export function criarCamadaDeUnidades(
       }
       const renderizadas: UnidadeRenderizada[] = [];
       const invisiveis = unidadesInvisiveis(estado);
+      const memoriasDeAcao = acoes();
       for (const id of estado.unidades.ordem) {
         const unidade = estado.unidades.porId[id];
         if (!unidade) continue;
@@ -388,14 +394,24 @@ export function criarCamadaDeUnidades(
             const salto = Math.hypot(posicao.gx - anterior.gx, posicao.gy - anterior.gy) > SALTO_MAXIMO_EM_TILES;
             item.distancia = somarDistancia(item.distancia, voltou ? null : item.ultimaPosicao, desenhada, SALTO_MAXIMO_EM_TILES, salto);
             const andando = posicao.gx !== anterior.gx || posicao.gy !== anterior.gy;
-            const alvo = alvoDaDirecao(unidade.tipo, unidade.direcao, posicao.gx - anterior.gx, posicao.gy - anterior.gy, direcoes);
-            item.virada = atualizarVirada(item.virada, alvo, tempoDeAnimacao(estado.tick, alfa), configAnimacao.passoDaViradaTicks);
+            const acao = acaoDaUnidade(unidade, andando, !invisiveis.has(id)) ?? 'parado';
+            const registro = memoriasDeAcao?.get(id);
+            if (item.animacao !== acao) item.inicioDaAcao = estado.tick;
+            if (registro?.animacao === acao) item.inicioDaAcao = registro.inicio;
+            const alvo = acao === 'trabalhar' ? direcaoDoTrabalho(estado, unidade)
+              : alvoDaDirecao(unidade.tipo, unidade.direcao, posicao.gx - anterior.gx, posicao.gy - anterior.gy, direcoes);
+            item.virada = acao === 'atacar' && alvo ? iniciarVirada(alvo, tempoDeAnimacao(estado.tick, alfa))
+              : atualizarVirada(item.virada, alvo, tempoDeAnimacao(estado.tick, alfa), configAnimacao.passoDaViradaTicks);
             item.direcao = item.virada.visivel;
-            item.animacao = andando ? 'andar' : 'parado';
+            item.animacao = acao;
             const animacao = entradaAnimada.animacoes?.[item.animacao];
+            item.spriteAnimado = null;
+            item.quadro = 0;
             if (animacao) {
-              item.quadro = andando ? quadroDoAndar(item.distancia, animacao.tilesPorCiclo ?? 1, animacao.quadros)
-                : quadroPeloTempo(tempoDeAnimacao(estado.tick, alfa), tempo.tickHz, animacao);
+              const decorrido = acao === 'atacar' || acao === 'trabalhar'
+                ? Math.max(0, tempoDeAnimacao(estado.tick, alfa) - item.inicioDaAcao) : tempoDeAnimacao(estado.tick, alfa);
+              item.quadro = acao === 'andar' ? quadroDoAndar(item.distancia, animacao.tilesPorCiclo ?? 1, animacao.quadros)
+                : quadroPeloTempo(decorrido, tempo.tickHz, animacao);
               item.spriteAnimado = spriteDoAtlas(manifestoAnimado, unidade.tipo, item.animacao, item.direcao, item.quadro,
                 (chave, frame) => cena.textures.exists(chave) && cena.textures.get(chave).has(frame));
             }
@@ -433,7 +449,7 @@ export function criarCamadaDeUnidades(
           direcaoLogica: alvoDaDirecao(unidade.tipo, unidade.direcao, posicao.gx - anterior.gx, posicao.gy - anterior.gy, direcoes),
           direcao: direcoes === null ? null : item.direcao, sprite,
           ...(item.spriteAnimado && item.imagem ? {
-            animacao: item.animacao, quadro: item.quadro, frame: item.imagem.frame.name,
+            animacao: item.animacao, inicioDaAcao: item.inicioDaAcao, quadro: item.quadro, frame: item.imagem.frame.name,
             distanciaAnimada: item.distancia, espelhado: item.imagem.flipX,
             peY: peDoSprite(item.imagem),
           } : {}),

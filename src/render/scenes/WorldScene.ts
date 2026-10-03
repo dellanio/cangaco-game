@@ -69,6 +69,8 @@ import { depuracaoDeUnidade, spriteDoAtlas } from '../animacao-de-unidade';
 import { DIRECOES } from '../manifesto';
 import { peDoSprite } from '../pe-do-sprite';
 import { memoriaDeTexturas } from '../memoria-de-texturas';
+import { criarCamadaDeMortes } from '../mortes-de-unidades';
+import { tempoDeAnimacao } from '../animacao-de-unidade';
 import { criarCargaDeUnidades, pedidosDeUnidade, tiposPresentes } from '../carregamento-de-unidades';
 import { urlsDeSprites } from '../sprites-urls';
 import { posicaoDoProjetil } from '../projeteis';
@@ -444,7 +446,9 @@ export class WorldScene extends Phaser.Scene {
     const previaDeEstrada = criarPreviaDeEstrada(this, tilePx);
     const camadaDeCampos = criarCamadaDeCampos(this, tilePx);
     const previaDeCampo = criarPreviaDeCampo(this, tilePx);
-    const camadaDeUnidades = criarCamadaDeUnidades(this, tilePx, this.luz, ()=>this.ponte.identidadePartida ?? 0);
+    const camadaDeUnidades = criarCamadaDeUnidades(this, tilePx, this.luz, ()=>this.ponte.identidadePartida ?? 0, () => this.ponte.acoes);
+    const camadaDeMortes = criarCamadaDeMortes(this, tilePx, this.luz);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => camadaDeMortes.limpar());
     const carga=criarCargaDeUnidades((chave)=>this.textures.exists(chave),(p)=>{
       if(p.dados) this.load.atlas(p.chave,p.url,p.dados); else this.load.image(p.chave,p.url);
     });
@@ -775,6 +779,8 @@ export class WorldScene extends Phaser.Scene {
       }
       estado.cargasDeUnidade=carga.estados;
       estado.unidadesRenderizadas = camadaDeUnidades.atualizar(this.ponte.atual, this.relogio.alfa());
+      estado.mortesRenderizadas = camadaDeMortes.atualizar(this.ponte.consumirMortes?.() ?? [], tempoDeAnimacao(estado.tick, this.relogio.alfa()), this.ponte.identidadePartida ?? 0);
+      estado.corposNaMemoria = camadaDeMortes.quantidade;
       estado.animacoesDeUnidadeTrabalhadas = camadaDeUnidades.animacoesTrabalhadas;
       // F26b: o acerto do proximo clique mira ESTE desenho
       this.unidadesDesenhadas = estado.unidadesRenderizadas;
