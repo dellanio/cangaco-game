@@ -58,7 +58,9 @@ import { criarEscaramuca } from './sim/cenario';
 import type { Command } from './sim/commands';
 import { criarCamadaDeSom, urlsDosSons } from './render/som';
 import type { SonsDoManifesto, TabelaDeSom, ContadoresDeSom } from './render/som';
-import { criarTocadorDoNavegador } from './render/tocador-de-som';
+import { criarTocadorDeLacoDoNavegador, criarTocadorDoNavegador } from './render/tocador-de-som';
+import { criarFundoSonoro } from './render/fundo-sonoro';
+import type { ContadoresDoFundo, DadosDoFundo, VistaEmTiles } from './render/fundo-sonoro';
 import { urlsDeArquivosDeSom } from './render/sprites-urls';
 import tabelaDeSom from '../data/som.json';
 import { canalDoSom, volumeEfetivo } from './preferencias-de-som';
@@ -72,7 +74,7 @@ declare global {
   interface Window {
     __cangacoPartida?: { estadoSerializado(): string };
     /** H-TELA-CAMADA-DE-SOM — HARNESS: os contadores da camada de som, para o roteiro. */
-    __cangacoSom?: { contadores(): ContadoresDeSom };
+    __cangacoSom?: { contadores(): ContadoresDeSom & { readonly fundo: ContadoresDoFundo } };
   }
 }
 
@@ -92,8 +94,18 @@ export function iniciarPartida(
   // vem do manifesto (secao `sons`) pela URL do bundler; sem arquivo, o id e silencio.
   const urlsDeSom = urlsDosSons((manifestoJson as unknown as { sons?: SonsDoManifesto }).sons, urlsDeArquivosDeSom);
   const tabela = tabelaDeSom as TabelaDeSom;
-  const som = criarCamadaDeSom(tabela, new Set(Object.keys(urlsDeSom)), criarTocadorDoNavegador(urlsDeSom),
-    (id) => (preferenciasDeSom === null ? 1 : volumeEfetivo(preferenciasDeSom.atual, canalDoSom(tabela.sons, id))));
+  const volumeDoSom = (id: string): number =>
+    (preferenciasDeSom === null ? 1 : volumeEfetivo(preferenciasDeSom.atual, canalDoSom(tabela.sons, id)));
+  const som = criarCamadaDeSom(tabela, new Set(Object.keys(urlsDeSom)), criarTocadorDoNavegador(urlsDeSom), volumeDoSom);
+  // H-TELA-AMBIENTE-E-MUSICA — o ambiente em laco, o sino da Bodega e a musica da paz e do combate
+  const fundo = criarFundoSonoro({
+    dados: tabelaDeSom as DadosDoFundo,
+    disponiveis: new Set(Object.keys(urlsDeSom)),
+    tocador: criarTocadorDeLacoDoNavegador(urlsDeSom),
+    volume: volumeDoSom,
+    pedir: (id) => { som.pedir(id); },
+    tickMs: gameData.tempo.tickMs,
+  });
   // Todo comando do jogador passa por aqui: a conta diz ao som que a recusa do proximo passo e
   // do jogador, e a planta posicionada pede o som seco no quadro do clique (GDD §10).
   let comandosDoJogador = 0;
@@ -123,7 +135,10 @@ export function iniciarPartida(
     passo: () => {
       const doJogador = comandosDoJogador;
       comandosDoJogador = 0;
-      som.aoPasso(sessao.passo(), doJogador);
+      const antes = sessao.estado;
+      const depois = sessao.passo();
+      som.aoPasso(depois, doJogador);
+      fundo.aoPasso(depois, antes);
     },
     tickMs: gameData.tempo.tickMs,
     velocidades: gameData.tempo.velocidadeDeJogo.opcoes,
@@ -302,6 +317,7 @@ export function iniciarPartida(
       if (resultado.ok) {
         jogo.reiniciarApresentacao();
         som.reiniciar();
+        fundo.reiniciar();
         selecao.selecionar(null);
       }
       painelDoArquivo.mostrar(resultado);
@@ -310,6 +326,7 @@ export function iniciarPartida(
       // C-IA-03c: a escaramuca do comeco, no lugar da partida em curso
       jogo.reiniciarApresentacao();
       som.reiniciar();
+      fundo.reiniciar();
       sessao.substituir(criarEscaramuca(SEMENTE));
       selecao.selecionar(null);
       selecaoMilitar.limpar();
@@ -329,10 +346,19 @@ export function iniciarPartida(
   atualizar(sessao.estado);
   aviso.atualizar(laco.pausado, laco.velocidade);
 
+  /** A vista da camera em tiles, para o sino da Bodega. */
+  function vistaEmTiles(): VistaEmTiles | null {
+    const v = jogo.vistaDaCamera();
+    if (v === null) return null;
+    const t = configDoMapa.tilePx;
+    return { x0: Math.floor(v.x / t), y0: Math.floor(v.y / t), x1: Math.floor((v.x + v.width) / t), y1: Math.floor((v.y + v.height) / t) };
+  }
+
   // O relogio do navegador dirige o laco. Isto NAO e o `update()` da cena: o laco e do laco
   // externo, nao do render (CLAUDE.md §10).
   function quadro(agoraMs: number): void {
     laco.tique(agoraMs);
+    fundo.quadro(agoraMs, sessao.estado, vistaEmTiles());
     som.quadro();
     aviso.atualizar(laco.pausado, laco.velocidade);
     requestAnimationFrame(quadro);
@@ -342,6 +368,6 @@ export function iniciarPartida(
   // E-TELA-MENU-INICIAL — HARNESS, como o `__cangaco` do render: o estado serializado, para o
   // roteiro comparar a escaramuca do menu com a do `?escaramuca` no tick 0. Nao usar em jogo.
   window.__cangacoPartida = { estadoSerializado: () => JSON.stringify(sessao.estado) };
-  window.__cangacoSom = { contadores: () => som.contadores() };
+  window.__cangacoSom = { contadores: () => ({ ...som.contadores(), fundo: fundo.contadores() }) };
 
 }

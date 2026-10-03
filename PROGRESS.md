@@ -18943,3 +18943,32 @@ F-IA-DIFICULDADE             tres niveis de adversario          passa
   `verify:rapido` verde (943 testes).
 - **PARA REVISÃO:** os quatro volumes padrão; a caixa abre centrada na página inteira (por cima da
   barra e do mapa), e não só na célula do mapa como a ajuda.
+
+## 2026-10-03 — H-TELA-AMBIENTE-E-MUSICA (o sertão de fundo)
+
+- **Feito:**
+  - `data/som.json`: os ids `ambient-wind`, `ambient-cicada`, `inn-bell` (canal ambiente),
+    `music-peace` e `music-combat` (canal música); `ambiente` (os laços e o sino da Bodega, `inn`, a
+    cada 20 s de relógio enquanto na vista) e `musica` (raio do combate 16 tiles, 15 s de jogo de
+    combate depois da última luta, passagem de 3 s). O `validate:data` confere id, canal e tempos
+    (`transicaoSegundos` 0 é recusado: a troca não corta).
+  - `src/render/fundo-sonoro.ts`, puro: `houveLutaPertoDaVila` (golpe, ataque a prédio, tiro e
+    pedra, a até o raio de um prédio do jogador), `faixaDaMusica`, `misturar` (cada faixa anda no
+    máximo `dt / duração` por quadro), `bodegaNaVista` e `criarFundoSonoro`. O tocador em laço do
+    navegador (`criarTocadorDeLacoDoNavegador`) só cria `Audio` para id com arquivo e, recusado pelo
+    autoplay, tenta de novo no máximo uma vez por segundo.
+  - `src/main.ts`: o passo entrega o estado e o anterior ao fundo (a luta de todo tick, não só a do
+    quadro); o quadro toca o fundo com a vista da câmera em tiles; o load o reinicia.
+- **Verificado:** `tests/H-TELA-AMBIENTE-E-MUSICA.test.ts` (12 testes: a faixa por tabela — paz,
+  combate perto, combate longe, o combate que dura 150 ticks, o fim de partida —, a passagem de
+  3 000 ms em 188 quadros de 16 ms com o maior pulo 0,0053, o fundo sem arquivo, com arquivo, o
+  sino e o combate pelo `aoPasso`). Roteiro `H-TELA-AMBIENTE-E-MUSICA` saiu 0: no jogo, os dois
+  laços ligados e 54 quadros com ambiente (despausado e pausado), a paz subindo a 0,72; pelo botão
+  Menu da ajuda, no menu nenhum contador, nenhum `Audio`, nenhum canvas; zero requisição de áudio.
+  `verify:rapido` verde (478 testes).
+- **Decisões (PARA REVISÃO):**
+  - "combate longe" toca a música da paz: só a luta perto da vila do jogador troca a faixa;
+  - o ambiente continua com o jogo pausado; depois do fim da partida a música desce até o silêncio
+    e o ambiente fica;
+  - o sino é da Bodega do **jogador**, pela origem do prédio dentro da vista da câmera;
+  - os números (16 tiles, 15 s, 3 s, 20 s) são os primeiros que pareceram razoáveis, sem medida.

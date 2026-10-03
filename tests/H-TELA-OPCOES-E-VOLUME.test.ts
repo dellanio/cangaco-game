@@ -51,8 +51,8 @@ describe('H-TELA-OPCOES-E-VOLUME — (a) o volume efetivo', () => {
     evidencia['volumeEfetivo'] = casos.map(([prefs, canal, v]) => `geral ${prefs.geral} x ${canal} ${prefs[canal]}${prefs.mudo ? ' mudo' : ''} = ${v}`);
   });
 
-  it('o canal de cada som vem do dado; todo som de hoje e efeito', () => {
-    for (const id of Object.keys(TABELA.sons)) expect(canalDoSom(TABELA.sons, id)).toBe('efeitos');
+  it('o canal de cada som vem do dado; sem canal, efeitos', () => {
+    for (const [id, def] of Object.entries(TABELA.sons)) expect(canalDoSom(TABELA.sons, id)).toBe(def.canal);
     expect(canalDoSom({}, 'nao-existe')).toBe('efeitos');
     expect(canalDoSom({ x: { canal: 'musica' } }, 'x')).toBe('musica');
   });

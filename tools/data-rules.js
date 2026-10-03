@@ -1846,6 +1846,31 @@ function validarSom(som, erros, opcoes = {}) {
       e(`evento '${tipo}': a linha precisa ser um id ou {campo, por}`);
     }
   }
+  // H-TELA-AMBIENTE-E-MUSICA: o fundo toca so id de `sons`, no canal certo, e os tempos sao > 0
+  const doCanal = (id, canal, onde) => {
+    tocado(id, onde);
+    if (sons[id] && sons[id].canal !== canal) e(`${onde}: '${id}' precisa ser do canal ${canal}`);
+  };
+  const ambiente = som.ambiente;
+  if (!ambiente || !Array.isArray(ambiente.lacos) || !ambiente.sino) {
+    e('ambiente precisa de lacos (array) e sino');
+  } else {
+    for (const id of ambiente.lacos) doCanal(id, 'ambiente', 'ambiente.lacos');
+    doCanal(ambiente.sino.som, 'ambiente', 'ambiente.sino');
+    if (typeof ambiente.sino.predio !== 'string') e('ambiente.sino.predio precisa ser o id de um tipo de predio');
+    if (!(ambiente.sino.intervaloSegundos > 0)) e('ambiente.sino.intervaloSegundos precisa ser > 0');
+  }
+  const musica = som.musica;
+  if (!musica) {
+    e('musica precisa existir');
+  } else {
+    doCanal(musica.paz, 'musica', 'musica.paz');
+    doCanal(musica.combate, 'musica', 'musica.combate');
+    for (const campo of ['raioDoCombateTiles', 'segundosDeCombateDepoisDaLuta']) {
+      if (!(typeof musica[campo] === 'number' && musica[campo] > 0)) e(`musica.${campo} precisa ser > 0`);
+    }
+    if (!(typeof musica.transicaoSegundos === 'number' && musica.transicaoSegundos > 0)) e('musica.transicaoSegundos precisa ser > 0: a troca de faixa nao corta');
+  }
   const doManifesto = manifesto && manifesto.sons && typeof manifesto.sons === 'object' ? manifesto.sons : {};
   for (const id of Object.keys(doManifesto)) {
     if (id.startsWith('_')) continue;
