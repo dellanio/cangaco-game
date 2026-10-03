@@ -17637,3 +17637,14 @@ A ponte publica especie e angulo por arvore. No tick 1 capturado: maior angulo a
 ### Hipóteses e pendências
 
 - Nenhuma hipótese de simulação foi usada. No fechamento anterior, o merge foi suspenso porque a main estava suja, com tests/D-TELA-FUMACA-DA-PADARIA.test.ts modificado por outra sessão. Na retomada, o operador aprovou os pontos e autorizou o merge ff após as verificações acima e nova conferência da main limpa. Sem push; test-results.json é exclusivo do operador.
+- **Revisão da sessão Claude: D-TELA-FUMACA-DA-FORJA (`76c6fe6`, `b0b9183` e `9f950a5`), cumpre o
+  aceite.**
+  - Nada mudou em `src/sim/` nem em `src/render/fumaca.ts`. O script de prova das chaminés não
+    foi commitado.
+  - Os pontos do Codex substituem os da arte na `metallurgists` e na `iron_smithy`. A prova são os
+    recortes ampliados, abertos na revisão anterior: o ponto da arte da fundição caía fora da
+    chaminé.
+  - **Rodado aqui, com saída 0:** os testes da forja, da padaria, de manifesto e da água com peixe
+    (52/52) e o roteiro da forja.
+  - **Captura aberta:** a fumaça sai da chaminé da fundição e da forja, no topo de cada uma. A
+    fagulha não se distingue na captura, por ser pequena. Fica para o operador olhar em jogo.
