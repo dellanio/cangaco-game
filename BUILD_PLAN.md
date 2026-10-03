@@ -6185,6 +6185,16 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
   2. **O pé fica numa linha fixa:** em todo quadro, a linha mais baixa com alfa fica a no máximo
      2 px da linha 95. A transformação do bruto para o quadro é a mesma em todos os quadros:
      escala e âncora fixas, e não o recorte pela caixa de cada um.
+  - **Emenda do aceite 2 (2026-10-03, antes do processamento; medido no teste de 3 quadros):** o
+    modelo não põe o pé na mesma altura em toda imagem, mesmo com a pose fixa. A transformação
+    passa a ser:
+    - **escala fixa por direção:** a altura do serf parado da direção vai para 86 px, e a mesma
+      escala vale para os 8 quadros do andar dela;
+    - **eixo horizontal fixo pela pose:** o centro da pose (x = 416 no bruto) vai para a coluna 32;
+    - **o pé alinhado por quadro:** a linha mais baixa com alfa vai para a linha 95.
+
+    A medida do aceite 2 (pé a no máximo 2 px da linha 95) continua valendo. A sombra projetada no
+    chão, que o modelo desenha, sai junto com o fundo cinza.
   3. **No jogo:** um roteiro novo, `tools/shots/D-ARTE-SERF-COMFYUI.js`, sobre a vila pronta, com
      um passo despausado. A ponte publica, para os serfs na vista, a animação, o quadro e o
      `frame` do atlas. O roteiro afirma pelo menos um serf com `frame` do atlas novo em `andar`
