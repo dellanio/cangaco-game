@@ -18054,3 +18054,5 @@ Luminância = 0,2126 R + 0,7152 G + 0,0722 B; desvio populacional de todos os pi
 - **Continua na `main`:** a correção de render. É a costura dos tiles (D-TELA-COSTURA-DOS-TILES) e o
   véu dos detalhes (D-TELA-VEU-DOS-DETALHES), que valem para qualquer arte futura. Os candidatos
   gerados continuam fora do repositório, em `D:\projetos-pessoal\cangaco-game-candidatos\`.
+- **D-TELA-COSTURA-DOS-TILES (`9234eb2` e `a761dcd`): aprovado pelo operador em jogo** ("o piso
+  ficou melhor depois que corrigiu isso"). Já estava na `main`. A worktree foi encerrada.
