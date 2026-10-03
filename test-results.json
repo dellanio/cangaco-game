@@ -544,5 +544,92 @@
   },
   "D-TELA-03b-pilha-com-icone": {
     "passes": true
+  },
+  "D-ARTE-BANDEIRA-FACCAO-bandeira-no-vento": {
+    "passes": true
+  },
+  "D-ARTE-BODEGA-MENOR-bodega-a-1-2": {
+    "passes": true
+  },
+  "D-ARTE-CHAO-DE-ROCA-chao-da-cana": {
+    "passes": true
+  },
+  "D-ARTE-DEPURACAO-LEVA-TRES-fixtures-militares": {
+    "passes": true
+  },
+  "D-ARTE-INTEGRA-1-arte-na-main": {
+    "passes": true
+  },
+  "D-ARTE-PESCADOR-BAIXO-pescador-mais-baixo": {
+    "passes": true
+  },
+  "D-TELA-04a-manifesto-de-animacoes": {
+    "passes": true
+  },
+  "D-TELA-04b-serf-por-animacao": {
+    "passes": true
+  },
+  "D-TELA-04c-vitrine-serf-andando": {
+    "passes": true
+  },
+  "D-TELA-04d-virada-suavizada": {
+    "passes": true
+  },
+  "D-TELA-04e-memoria-das-texturas": {
+    "passes": true
+  },
+  "D-TELA-05a-civis-8-direcoes": {
+    "passes": true
+  },
+  "D-TELA-05b-direcao-militar": {
+    "passes": true
+  },
+  "D-TELA-AGUA-PEIXE-anel-do-peixe": {
+    "passes": true
+  },
+  "D-TELA-AGUA-VIVA-agua-pelo-tick": {
+    "passes": true
+  },
+  "D-TELA-CACTO-NO-VENTO-cacto-quase-parado": {
+    "passes": true
+  },
+  "D-TELA-CHAO-DA-CANA-SO-QUANDO-MUDA-varre-so-no-tick": {
+    "passes": true
+  },
+  "D-TELA-CUSTO-DO-QUADRO-custo-por-camada": {
+    "passes": true
+  },
+  "D-TELA-FUMACA-DA-FORJA-fumaca-e-fagulha": {
+    "passes": true
+  },
+  "D-TELA-FUMACA-DA-PADARIA-fumaca-da-chamine": {
+    "passes": true
+  },
+  "D-TELA-LIMPEZA-DO-MUNDO-VIVO-tres-ressalvas": {
+    "passes": true
+  },
+  "D-TELA-POEIRA-AMBIENTE-poeira-no-vento": {
+    "passes": true
+  },
+  "D-TELA-VENTO-NA-VISTA-vento-so-na-vista": {
+    "passes": true
+  },
+  "D-TELA-VENTO-VEGETACAO-arvores-no-vento": {
+    "passes": true
+  },
+  "D-SAVE-VILA-PRONTA-save-da-vila-pronta": {
+    "passes": true
+  },
+  "D-TELA-05c-ataque-trabalho-morte": {
+    "passes": false
+  },
+  "D-TELA-05d-carga-por-tipo": {
+    "passes": false
+  },
+  "D-TELA-COSTURA-DOS-TILES-extrusao-da-tira": {
+    "passes": false
+  },
+  "D-TELA-VEU-DOS-DETALHES-veu-fora-da-arte": {
+    "passes": false
   }
 }

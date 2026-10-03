@@ -18190,3 +18190,48 @@ não existe em `src/sim` nem em `src/render` (a IA a ignora por decisão, `src/s
 Hipótese, não conferida: a citação `KM_GUIMenuLobby.pas:635-638` do intervalo da paz vem do
 `data/escaramuca.json` (`_docPeacetime`), sem o caminho completo exigido pela §15. O item
 E-TELA-CONFIGURAR-PARTIDA manda conferir no clone.
+
+## 2026-10-03 — Abertura da Fase E: o fechamento da Fase D (branch `dellanio/fase-e-casca-e-vitrine`)
+
+Rodado na worktree da Fase E, com o `HEAD` igual à `main` (`61d9e49`), um de cada vez, sob a trava.
+
+**Verificado (evidência aberta nesta sessão):**
+- `npm run verify` completo: verde, duas vezes (07:00 e 07:51 UTC). Suíte: 245 arquivos, 2 338
+  testes; transladada: 245 arquivos, 2 336 testes e 5 pulados. Selo `completo` do `61d9e49`.
+- `npm run test:longo`, sozinha: verde em 28 s, `test-output/test-longo.json` com o commit
+  `61d9e493f3`, `arvoreLimpa: true`, `sozinha: true`. `npm run selo:longo` saiu 0.
+- `npm run shot:todos`: **110 roteiros, 106 com saída 0 e 4 com saída 1** (`test-output/shot-todos.json`,
+  commit `61d9e49`, porta 5176). O aceite pede todas as saídas 0, então **ele não passa por inteiro**.
+  As quatro falhas viraram registro no `BUGS.md`, e não foram corrigidas aqui:
+  - **BUG-SAVE-DO-ROTEIRO-TRANSLADADO** (D-TELA-05c e D-TELA-05d): os testes gravam o save do
+    roteiro em `test-output/` fixo, e a corrida transladada do `verify` o sobrescreve com o hash do
+    mapa transladado. O Retomar recusa ("o mapa 'sertao-128' mudou desde o save"). Medido com uma
+    sonda (apagada) e confirmado: rodando só os dois testes na suíte normal e depois os dois
+    roteiros, ambos saem 0.
+  - **BUG-ROTEIRO-DE-DUAS-ETAPAS** (D-TELA-COSTURA-DOS-TILES e D-TELA-VEU-DOS-DETALHES): a etapa
+    padrão "depois" exige a medida da etapa "antes", feita sobre o código de antes da mudança.
+    Numa worktree nova ela não existe.
+
+**As chaves de `test-results.json`** (a lista das features da D sem chave saiu de um subagente de
+leitura, que conferiu cada uma no PROGRESS e no BUILD_PLAN):
+
+```text
+marcadas true (25)
+  D-ARTE-BANDEIRA-FACCAO, D-ARTE-BODEGA-MENOR, D-ARTE-CHAO-DE-ROCA, D-ARTE-DEPURACAO-LEVA-TRES,
+  D-ARTE-INTEGRA-1, D-ARTE-PESCADOR-BAIXO, D-TELA-04a..04e, D-TELA-05a, D-TELA-05b,
+  D-TELA-AGUA-PEIXE, D-TELA-AGUA-VIVA, D-TELA-CACTO-NO-VENTO, D-TELA-CHAO-DA-CANA-SO-QUANDO-MUDA,
+  D-TELA-CUSTO-DO-QUADRO, D-TELA-FUMACA-DA-FORJA, D-TELA-FUMACA-DA-PADARIA,
+  D-TELA-LIMPEZA-DO-MUNDO-VIVO, D-TELA-POEIRA-AMBIENTE, D-TELA-VENTO-NA-VISTA,
+  D-TELA-VENTO-VEGETACAO, D-SAVE-VILA-PRONTA
+marcadas false (4), com bug aberto
+  D-TELA-05c, D-TELA-05d            BUG-SAVE-DO-ROTEIRO-TRANSLADADO
+  D-TELA-COSTURA-DOS-TILES,
+  D-TELA-VEU-DOS-DETALHES           BUG-ROTEIRO-DE-DUAS-ETAPAS
+sem chave nova (3)
+  D-TELA-LUZ-RELEVO                 continua false: aceite 1 reprovado (BUILD_PLAN, D-TELA-LUZ-RELEVO)
+  D-TELA-CAPTURA-DETERMINISTICA     aceite 3 reprovado; o BUILD_PLAN diz "fica sem chave"
+  D-TELA-CHAO-DETERMINISTICO        parado, substituido pela CAPTURA-DETERMINISTICA (sem codigo)
+```
+
+A D-ARTE-CHAO-DE-ROCA foi marcada com a ressalva que já estava no PROGRESS: o validador de arte rodou
+em modo `trial`, e a revisão deu o aceite 1 como cumprido. Os itens da D sem código ficam na D.
