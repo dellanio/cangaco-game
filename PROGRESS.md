@@ -17711,3 +17711,15 @@ Parada prevista: sem avançar para arte real, máscaras ou outras unidades. A ap
 - A verificação completa final roda após este commit, pela trava, com log em test-output/LEVA2-final-verify.log; seu resultado e o merge são reportados na entrega. Merge somente com main limpa, por fast-forward.
 - Para o operador abrir: npm run dev na main e acrescentar ?vitrine=serf ao endereço do Vite. A partida com atlas usa ?depuracao. O jogo sem esses parâmetros mantém os sprites existentes.
 - Parada na D-TELA-04e: aprovação visual do espelho e do formato pertence ao operador. Não se iniciou arte real, máscara ou outra unidade; não se marcou test-results.json.
+- **Revisão da sessão Claude: a Leva 2 da animação (D-ARTE-02 e D-TELA-04a a 04e, até `93751c0`),
+  cumpre o aceite. O operador aprovou a vitrine em 2026-10-02.**
+  - **Conferido no diff:** nada mudou em `src/sim/` nem no `assets/manifest.json` real. O atlas de
+    depuração só carrega com `?depuracao` ou `?vitrine=serf`, por import dinâmico. O
+    `.gitattributes` novo só fixa o fim de linha dos JSON de `assets/depuracao/`.
+  - **Rodado aqui, com saída 0:**
+    - os testes da Leva 2 e de manifesto (71/71);
+    - os roteiros `D-TELA-04b`, `04c`, `04d` e `04e`;
+    - a não-regressão do jogo normal: `F-SPR` e `D-TELA-03`, o ícone da carga do serf.
+  - **Decisões aplicadas e aprovadas:** o andar de 8 quadros, o degrau da virada de 0,7 tick e os
+    sprites de depuração no git. O espelho das três direções do oeste fica valendo para a arte
+    real do serf.
