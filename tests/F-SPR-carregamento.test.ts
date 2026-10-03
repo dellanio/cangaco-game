@@ -11,7 +11,7 @@
  * acrescentar depois, e cada um prova que acusa com uma entrada sintetica errada.
  */
 import { describe, it, expect } from 'vitest';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import {
   assetDoPredio, chaveDaPose, chaveDaTextura, chaveDeTextura, desenhoDoRecurso, direcaoDoPasso,
   ehEntradaDePredio, spriteDaUnidade, texturaDaCamada, DIRECOES, DIRECOES_DE_QUATRO,
@@ -71,17 +71,6 @@ function problemasDasCamadas(m: Manifesto, direcoes: ReadonlyMap<string, 4 | 8 |
     }
     if ((e.tipo === 'recurso' || e.tipo === 'vegetacao') && !recursosDeRender.tipos.includes(e.id)) {
       problemas.push(`${e.tipo} '${e.id}' nao e um recurso do mapa`);
-    }
-    // D-ARTE-SOLO-CAATINGA: decalque e arte independente, sem recurso na sim.
-    if (e.tipo === 'decalque') {
-      if (e.anchor.length !== 2 || e.anchor[0] !== 0.5 || e.anchor[1] !== 1) {
-        problemas.push(`decalque '${e.id}' precisa de anchor [0.5, 1]`);
-      }
-      for (const [estado, arquivo] of Object.entries(e.estados)) {
-        if (!arquivo.endsWith('.png') || !existsSync(`assets/${arquivo}`)) {
-          problemas.push(`decalque '${e.id}/${estado}' precisa de PNG existente`);
-        }
-      }
     }
     if (e.tipo === 'vegetacao' && camadas.some((o) => o.tipo === 'recurso' && o.id === e.id)) {
       problemas.push(`'${e.id}' e recurso E vegetacao`);
@@ -286,29 +275,6 @@ describe('F-SPR — unidade: um arquivo por direcao, oeste espelhado', () => {
 });
 
 describe('F-SPR — o manifesto real', () => {
-  it('decalque dispensa recurso do mapa, mas exige PNG existente e anchor no pe', () => {
-    const direcoes = direcoesPorTipo();
-    const png = 'sprites/terrain/areia.png';
-    const verificar = (entrada: EntradaDeCamada): string[] =>
-      problemasDasCamadas({ versao: 1, assets: [entrada] }, direcoes);
-    const valido = camada('decalque', 'capim', { 'palha-1': png });
-    expect(TIPOS_DE_CAMADA).toContain('decalque');
-    expect(recursosDeRender.tipos).not.toContain('capim');
-    expect(verificar(valido)).toEqual([]);
-    expect(verificar(camada('vegetacao', 'capim', { 'palha-1': png }))).toEqual([
-      "vegetacao 'capim' nao e um recurso do mapa",
-    ]);
-    expect(verificar({ ...valido, anchor: [0.5, 0.5] })).toEqual([
-      "decalque 'capim' precisa de anchor [0.5, 1]",
-    ]);
-    expect(verificar({ ...valido, estados: { 'palha-1': 'sprites/capim/inexistente.png' } })).toEqual([
-      "decalque 'capim/palha-1' precisa de PNG existente",
-    ]);
-    // Existe no disco, mas nao e PNG: existencia sozinha nao basta.
-    expect(verificar({ ...valido, estados: { 'palha-1': 'manifest.json' } })).toEqual([
-      "decalque 'capim/palha-1' precisa de PNG existente",
-    ]);
-  });
   it('nenhuma entrada de camada tem problema — e o guarda acusa cada um', () => {
     const direcoes = direcoesPorTipo();
     expect(problemasDasCamadas(manifestoReal, direcoes)).toEqual([]);

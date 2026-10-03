@@ -266,11 +266,11 @@
         "v2": "sprites/terrain/grama-D-v2.png",
         "v3": "sprites/terrain/grama-D-v3.png"
       },
-      "licenca": "arte propria do projeto, geracao nativa original autorizada em 2026-10-02; sem assets de terceiros ou do jogo de 1998",
+      "licenca": "arte propria do projeto, estudo D de grama autorizado para ensaio em jogo em 2026-09-30",
       "origem": {
-        "base": "base/terrain/solo-caatinga-D-raw.png",
+        "base": "base/terrain/grama-D-raw.png",
         "semente": null,
-        "nota": "D-ARTE-SOLO-CAATINGA: geracao nativa 3/4; albedo caatinga inicio da seca. Quatro recortes distintos sem sobreposicao apos reducao NEAREST 768x768; conta em base/terrain/solo-caatinga-metrics.json. Luz cdcfec5 aplicada pelo render, sem tufo ou pedra no tile."
+        "nota": "Quatro reducoes/rotacoes do mesmo recorte central do estudo candidatos/D/grama/generation-01-raw.png. Tileability e albedo nao homologados."
       }
     },
     {
@@ -2500,40 +2500,6 @@
             0.38123
           ]
         }
-      }
-    },
-    {
-      "id": "capim",
-      "tipo": "decalque",
-      "footprint": [
-        1,
-        1
-      ],
-      "tamanho": [
-        32,
-        24
-      ],
-      "anchor": [
-        0.5,
-        1
-      ],
-      "estados": {
-        "palha-1": "sprites/vegetation/capim/palha-1.png",
-        "palha-2": "sprites/vegetation/capim/palha-2.png",
-        "palha-3": "sprites/vegetation/capim/palha-3.png",
-        "palha-4": "sprites/vegetation/capim/palha-4.png",
-        "palha-5": "sprites/vegetation/capim/palha-5.png",
-        "oliva-1": "sprites/vegetation/capim/oliva-1.png",
-        "oliva-2": "sprites/vegetation/capim/oliva-2.png",
-        "oliva-3": "sprites/vegetation/capim/oliva-3.png",
-        "oliva-4": "sprites/vegetation/capim/oliva-4.png",
-        "oliva-5": "sprites/vegetation/capim/oliva-5.png"
-      },
-      "licenca": "arte propria do projeto, geracao nativa original autorizada em 2026-10-02; sem assets de terceiros ou do jogo de 1998",
-      "origem": {
-        "base": "base/vegetation/capim/capim-D-raw.png",
-        "semente": null,
-        "nota": "D-ARTE-SOLO-CAATINGA: folha geracao 4/4, cinco palha e cinco oliva, luz unica de cima levemente sul (cdcfec5); masters 64x48, derivados RGBA 32x24, pe na linha util y22 com ultima borda alfa0. O render de decalques pertence a D-TELA-DECALQUES-DE-CAPIM."
       }
     }
   ],
