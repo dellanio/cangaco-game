@@ -17693,3 +17693,21 @@ A medição detectou que a importação estática ainda buscava o módulo URL do
 Limite medido: o atlas contém 90 quadros físicos e resolve 144 com espelho; seus slots fixos totalizam os mesmos 2.211.840 bytes que 90 quadros completos sem trim. Trim confirma a origem, mas não poupa bytes neste empacotamento de depuração. Sem espelho, 144 quadros completos seriam 3.538.944 bytes (conta, não medição de GPU).
 
 Parada prevista: sem avançar para arte real, máscaras ou outras unidades. A aprovação do espelho/formato é do operador na vitrine. Nenhuma escrita em test-results.json, sim, manifesto real ou teste da padaria. A integração final exige main limpa, rebase e repetição dos testes diretos e roteiros.
+
+## 2026-10-02 — D-TELA-04e (integração da Leva 2 e parada na vitrine), pelo Codex
+
+### Verificado
+- Rebase sobre a main em 9f950a5, incluindo a correção externa da padaria (7c986ef), a limpeza do mundo vivo, a água do peixe e a fumaça da forja. Conflitos de append no PROGRESS preservaram os dois registros; o registro dos dados de interface preserva agua-peixe e animacao-unidade.
+- Commits de código, na ordem: f121470 (D-ARTE-02, gerador), 123afcb (D-TELA-04a, manifesto), 23411c0 (D-TELA-04b, animação por distância), 5b677be (D-TELA-04c, vitrine e partida), a0035b0 (D-TELA-04d, virada) e 368bd77 (D-TELA-04e, memória e isolamento da carga).
+- verify:rapido após a última integração: saída 0, 19 s; typecheck e lint verdes, validate:data com 21 arquivos e zero erros. Árvore limpa sem upstream selecionou zero arquivos e zero testes; esse resultado não substitui os testes diretos.
+- Testes diretos pela trava: sete arquivos, 123 testes verdes (2,17 s), incluindo D-ARTE-02, D-TELA-04b/04d/04e, F17f (manifesto), F-SPR (carregamento de unidades) e F11a (laço e interpolação). Log: test-output/LEVA2-final-diretos.log.
+- Quatro roteiros após a integração: D-TELA-04b, D-TELA-04c, D-TELA-04d e D-TELA-04e, todos saída 0, respectivamente 1, 2, 1 e 0 capturas. Todas as quatro capturas atuais foram abertas. Logs: test-output/LEVA2-final-D-TELA-04*.log.
+- Pé relativo y=0 nos 144 casos; caminhada com 20 amostras dos ticks 3 a 28, distância acumulada de 0,142857 a 2,857143 tiles. Demonstração da virada N para S em 1,4 ticks mostra SE, andar quadro 1.
+- Memória das fontes de texturas: 19.611.260 bytes sem atlas; 21.823.100 com atlas; delta 2.211.840 = 512 × 1080 × 4. Nenhuma requisição de depuração na partida normal; uma resposta PNG no modo de depuração. Evidência: test-output/D-TELA-04e.json. A conta é RGBA8 das fontes, não memória real de GPU.
+- Uma verificação rápida foi iniciada indevidamente enquanto o segundo rebase ainda estava em curso: testou somente o primeiro item e falhou na comparação de JSON com CRLF. O gerador foi rodado novamente depois do rebase completo; bytes e hashes conferidos e teste de duas corridas passou. PNG SHA256 39c18a302b8750db4195319a8d6790a76ddae0f8c06fd75cb6301c3309019afa; JSON b6e439d57028634f81775f862ae65acb2dc8bab0533a5b2302c55586f8f966ab.
+- Diff contra main vazio em src/sim, assets/manifest.json, tests/D-TELA-FUMACA-DA-PADARIA.test.ts e test-results.json. Não houve push.
+
+### Fechamento e limite
+- A verificação completa final roda após este commit, pela trava, com log em test-output/LEVA2-final-verify.log; seu resultado e o merge são reportados na entrega. Merge somente com main limpa, por fast-forward.
+- Para o operador abrir: npm run dev na main e acrescentar ?vitrine=serf ao endereço do Vite. A partida com atlas usa ?depuracao. O jogo sem esses parâmetros mantém os sprites existentes.
+- Parada na D-TELA-04e: aprovação visual do espelho e do formato pertence ao operador. Não se iniciou arte real, máscara ou outra unidade; não se marcou test-results.json.
