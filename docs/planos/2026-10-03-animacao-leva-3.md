@@ -1,7 +1,8 @@
 # Animação — Leva 3: generalização do consumidor de unidades
 
 Pedido do operador em 2026-10-03: planejar a Leva 3. Este documento especifica a
-pipeline; não autoriza iniciar a implementação nem produzir arte final. As tarefas
+pipeline. Execução autorizada pelo operador em 2026-10-03, após definir morte,
+esqueleto e desaparecimento; não inclui produzir arte final. As tarefas
 mantêm os ids D-TELA-05b, D-TELA-05c e D-TELA-05d do plano de origem.
 
 ## Resultado do bloco
@@ -12,8 +13,8 @@ Arte estática e placeholders continuam funcionando. Nenhuma regra, número,
 evento ou formato de save da simulação muda.
 
 **Limite de pronto:** infraestrutura de animação generalizada e verificada. Não
-significa que as 28 unidades ganharam arte animada. A morte em partida depende
-da decisão descrita no portão M; sem ela, o bloco fica parcialmente entregue.
+significa que as 28 unidades ganharam arte animada. A morte mantém apenas um
+resíduo visual: morte, esqueleto e desaparecimento, sem unidade lógica.
 
 ## Base conferida e reconciliação
 
@@ -78,7 +79,7 @@ esta leva valem a reconciliação acima e os aceites abaixo.
 | 1 | D-ARTE-DEPURACAO-LEVA-TRES — fixtures de militar e trabalhador | Atlas versionados e validados; serf anterior preservado |
 | 2 | D-TELA-05b — direção militar e piloto | Fixtures; consumidor e carga de atlas funcionando |
 | P | Revisão do espelho do militar | Operador vê as direções; reprovação impede generalizar o espelho militar |
-| M | Decisão sobre morte visual | Operador resolve incompatibilidade com remoção imediata |
+| M | Morte visual definida em 2026-10-03 | Morte → esqueleto → desaparecimento; apenas render |
 | 3 | D-TELA-05c — atacar, trabalhar e morrer | 05b e portões P/M; aceite da morte confirmado antes do código |
 | 4 | D-TELA-05d — carregar tipos presentes e carga tardia | 05b; pode avançar com 05c bloqueada, conforme sessões longas do CLAUDE.md |
 | 5 | Fechamento e avaliação | Operador declara o bloco fechado; morte pendente impede declarar a leva inteira pronta |
@@ -141,8 +142,8 @@ tipos presentes: isso é a D-TELA-05d.
 
 ## Tarefa 3 — D-TELA-05c (estados de ação)
 
-**Situação:** planejamento de ataque/trabalho especificado; execução desta tarefa
-depende da decisão M. Não mudar o aceite antigo da morte implicitamente.
+**Situação:** execução autorizada em 2026-10-03; morte definida abaixo. O portão
+P continua sendo a inspeção do piloto militar, antes da generalização.
 
 **Ataque e trabalho — aceite proposto:**
 
@@ -167,14 +168,20 @@ depende da decisão M. Não mudar o aceite antigo da morte implicitamente.
    com estado/quadro/início de ação; passo despausado e capturas abertas. Sim com
    mesma semente/comandos termina byte a byte igual, com depuração ligada ou não.
 
-### Portão M — morte: decisão pendente do operador
+### Portão M — morte, esqueleto e desaparecimento (definido em 2026-10-03)
 
 O contrato antigo “corpo até a sim remover” é incompatível com a remoção no tick
-da morte. Foram apresentadas ao operador duas opções; silêncio não escolhe uma:
+da morte. O operador trouxe a referência do esqueleto desaparecendo e mandou
+gerar o planejamento e executar. Esta emenda substitui a escolha pendente.
+No clone KaM `731a8a4`, `src/units/tasks/KM_UnitTaskDie.pas:85-86` executa `uaDie`
+por toda sua sequência, e `:105` fecha a unidade depois. Aqui a morte lógica
+continua imediata; só o render mantém a apresentação. Não se copia arte do KaM.
 
-- **Proposta A:** corpo temporário exclusivamente no render por uma animação de
-  seis quadros. Unidade lógica continua removida imediatamente. Se aprovada,
-  registrar emenda do aceite antes do código. O plano de implementação deve:
+- **Aceite:** resíduo temporário exclusivamente no render, com sequência visual
+  morte → esqueleto → desaparecimento. A fixture de seis quadros usa dois de
+  queda, dois de esqueleto e dois de dissipação; arte final pode definir outra
+  contagem/fps pelo manifesto. Unidade lógica continua removida imediatamente.
+  O plano de implementação deve:
   - consumir `unit-killed` e `unit-starved` uma vez por tick recebido na ponte,
     capturando posição/tipo/direção do estado anterior antes de substituí-lo;
   - não inferir morte só de id ausente: carregar outra partida não é morte;
@@ -190,9 +197,8 @@ da morte. Foram apresentadas ao operador duas opções; silêncio não escolhe u
   - provar morte por luta, projétil e fome; múltiplos ticks sem render; evento
     duplicado não duplica corpo; ausência de atlas cai na remoção atual; pausa,
     fim, load e liberação de objetos. Sem crescer a memória após corpos expirarem.
-- **Opção B:** manter morte bloqueada. Não iniciar 05c como se seu aceite completo
-  estivesse aprovado. A 05d pode seguir independentemente; separar ataque/trabalho
-  em tarefa própria exige emenda registrada, sem marcar 05c inteira pronta.
+- A forma da fixture é geometria própria de depuração; esqueleto e dissipação
+  devem ser distinguíveis na vitrine e na sequência da partida.
 
 ## Tarefa 4 — D-TELA-05d (carga inicial e tardia)
 
