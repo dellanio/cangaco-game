@@ -18075,3 +18075,41 @@ Luminância = 0,2126 R + 0,7152 G + 0,0722 B; desvio populacional de todos os pi
   contínuo, sem o xadrez dos tiles.
 - **Na tela:** a borda de grama verde que contorna o chão (as transições de terreno) continua a
   antiga, e destoa do solo novo. É candidata à próxima arte do operador.
+
+## 2026-10-03 — Animação Leva 3 (planejamento), pelo Codex
+
+### Verificado por leitura
+- Pedido do operador: planejar a generalização da animação. Criado o plano
+  `docs/planos/2026-10-03-animacao-leva-3.md` e a referência no BUILD_PLAN, depois
+  da Leva 2. Nenhuma implementação começou.
+- A Leva 2 foi aprovada pelo operador em 2026-10-02. O plano preserva os ids
+  D-TELA-05b (direção militar), D-TELA-05c (estados de ação) e D-TELA-05d (carga
+  por tipo), com uma preparação de fixtures D-ARTE-DEPURACAO-LEVA-TRES.
+- O render atual só escolhe andar/parado; o preload normal só enfileira poses
+  PNG. Carregar atlas genericamente precede otimizar a carga por tipos presentes.
+- Direção militar confirmada: norte=0, sentido horário, ausente=sul. Civis,
+  militares e mercenários já declaram 8 direções; não repetir essa entrega.
+- A sim remove a unidade no tick da morte; o render destrói o desenho ausente.
+  Não existe estado de cadáver que permita cumprir a redação antiga. O plano
+  tem portão M explícito, sem autorizar mudança da sim ou retenção visual implícita.
+- O plano cobre fallback, isolamento da depuração, eventos de vários ticks entre
+  quadros, load no mesmo tick/ids, textura que termina de carregar pausada e provas
+  por estado/frame/bytes, sem asserção de tempo de parede.
+
+### Perguntas em aberto
+- Morte da D-TELA-05c (estados de ação): o operador escolhe corpo temporário só no
+  render até terminar seis quadros ou mantém a morte bloqueada. Pergunta enviada;
+  nenhuma opção é tomada pelo silêncio. A D-TELA-05d é independente desse portão.
+- Espelho de arma/escudo: avaliar a vitrine militar após D-TELA-05b antes de
+  generalizar o espelho. A aprovação anterior foi do serf.
+
+### Verificação da documentação
+- `git diff --check` sem erro. Nenhum código, dado ou asset alterado por esta tarefa.
+- `npm run verify:rapido`: saída 0, 673 testes, 50 s; seleção de 71 arquivos da
+  árvore e dos commits ainda não enviados ao upstream, não só desta documentação.
+- `npm run verify`: saída 0; typecheck/lint verdes, 22 arquivos de dados/0 erros,
+  suíte normal e transladada aprovadas. A saída final da transladada registra
+  241 arquivos, 2322 testes aprovados e 5 pulados, 76,96 s; nenhuma exclusão mudou.
+  Saída final: `Verificacao completa. Evidencia em test-output/ e screenshots/.`
+- O plano não é evidência de que a Leva 3 foi implementada. Não marcado
+  `test-results.json`; sem push.

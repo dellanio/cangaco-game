@@ -7194,6 +7194,29 @@ pediu para "providenciar" a Leva 2 sem esperar a arte pintada: o encanamento é 
   GPU, se medida, é evidência da sessão.
 - **Parada para o operador depois da 04e** (§10 do plano): o espelho e o formato, vendo a vitrine.
 
+### Leva 3 da animação direcional — generalização (planejada em 2026-10-03)
+
+Pedido do operador: planejar a Leva 3. Plano e aceites:
+`docs/planos/2026-10-03-animacao-leva-3.md`.
+Este registro não inicia implementação. A Leva 2 (piloto do serf) foi aprovada;
+D-TELA-05a (8 direções) e D-TELA-05e (mercenários em 8 direções) não se repetem.
+
+| Ordem interna | Tarefa | Portão |
+|---|---|---|
+| 1 | D-ARTE-DEPURACAO-LEVA-TRES — fixtures militares e de trabalho | Só formas de depuração; preservar atlas do serf |
+| 2 | D-TELA-05b — direção militar e piloto com arma e escudo | Operador avalia espelho militar antes de generalizar |
+| 3 | D-TELA-05c — atacar, trabalhar e morrer | Morte depende de decisão; sim remove unidade no mesmo tick |
+| 4 | D-TELA-05d — carga por tipos presentes e carga tardia | Depende de 05b; independente da decisão de morte |
+
+- **Morte: decisão pendente.** O plano antigo pede corpo até a sim remover, mas a
+  remoção é imediata. O portão M do plano apresenta corpo temporário só no render
+  ou bloqueio da morte. Nenhuma dessas opções é aprovada por este registro.
+- **Fronteira:** nenhum código/dado da sim, arte final, máscara de facção,
+  montados em 16 direções ou carga no braço. Fixtures não são arte do jogo.
+- **Entrega:** testes e roteiros por tarefa, um commit por tarefa, sem push.
+  Operador declara fechamento; verify completo, shot:todos e test:longo com selo
+  antes da avaliação. Morte pendente impede declarar a Leva 3 inteira pronta.
+
 ### F34 — Condições de vitória e derrota (escaramuça)
 - **ENTREGUE (2026-09-28, sessão autônoma; plano em `docs/planos/2026-09-28-A16-F34-fim.md`).**
   Decisão do operador: *"Vitória: destruir Armazém, Escola e Quartel inimigos e todas as
