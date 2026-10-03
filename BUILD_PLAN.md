@@ -6877,6 +6877,72 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
   giro e escala variando, sem grade, só na vista, só em `grama`, sem cobrir estrada, prédio nem
   recurso, densidade em dado de render e pool reaproveitado.
 
+#### D-TELA-SERRA-POR-LAJEDO — A serra contínua desenhada uma vez por lajedo, baixando com a lavra
+- **Decisão do operador (2026-10-03):** a arte aprovada é a `piloto-serra-continua-2026-10-02`
+  (`D:\projetos-pessoal\cangaco-game-candidatos\arte\D\rock\piloto-serra-continua-2026-10-02\`),
+  e a integração é a **opção A**:
+  - uma formação por lajedo;
+  - o estado pela fração lavrada do lajedo inteiro;
+  - a pedreira continua lavrando tile a tile.
+
+  O operador aprovou com as ressalvas registradas pela noru: entulho nas frentes, parede central
+  quase reta, degraus no remanescente e 2 de 5 estados reprovados no validador de luz.
+- **A arte (medida em 2026-10-03):** 5 estados de uma formação inteira (`intacta`,
+  `frente-esquerda`, `duas-frentes`, `remanescente` e `quase-esgotada`), cada um em `<estado>/rock-1x.png`
+  de 256×256 (master `rock-master-2x.png` de 512×512), pivô `[0.5, 1]`. A formação ocupa a largura
+  toda do quadro: 256 px = 4 tiles. O esgotado é o chão sem pedra, sem sprite.
+- **O mapa (medido):** 49 lajedos de `rock` (componentes 4-conexos). São 26 tiles soltos, e os
+  maiores ficam entre 5×9 e 8×8.
+- **Escopo:** arte, manifesto e render. **Nada em `src/sim/`,** nem no gerador de mapa, nem em número
+  de `data/` que a sim leia.
+- **Aceite (escrito antes do código, 2026-10-03):**
+  1. **A arte no repositório:**
+     - os 5 derivados em `assets/sprites/rock-serra/<estado>.png`;
+     - os 5 masters e o bruto `generation-01-raw.png` em `assets/base/rock-serra/`, com o sha256 de
+       cada um;
+     - uma entrada nova no manifesto, `{ "id": "serra", "tipo": "formacao" }`, com os oito campos do
+       §9, os 5 estados, a licença "aprovada pelo operador em 2026-10-03" e as ressalvas na nota.
+  2. **O tipo de camada `formacao`:** entra em `TIPOS_DE_CAMADA` (`src/render/manifesto.ts`). A regra
+     dele no `tests/F-SPR-carregamento.test.ts`: o id **não** precisa ser recurso do mapa, todo
+     estado aponta um PNG que existe e o anchor é `[0.5, 1]`. Cada regra tem um caso que reprova
+     num manifesto sintético, e as regras de `vegetacao` e de `recurso` não mudam.
+  3. **As funções puras** (num arquivo novo de `src/render/`), por tabela, em
+     `tests/D-TELA-SERRA-POR-LAJEDO.test.ts`:
+     - `lajedosDoEstado(recursos)`: os componentes 4-conexos de tiles `rock`, **contando também os de
+       quantidade 0**, para a identidade do lajedo não mudar com a lavra. Cada um sai com id
+       estável, tiles, caixa e a soma restante;
+     - `estadoDaSerra(restante, total, limiares)`: o total é o número de tiles × o
+       `rendimentoPorTile` lido do dado do recurso (`data/resources.json`, sem número digitado).
+       Os limiares, decrescentes, ficam em `data/serra.json`: acima do 1º, `intacta`; depois
+       `frente-esquerda`, `duas-frentes`, `remanescente` e `quase-esgotada`; em 0, nenhum sprite;
+     - `serraDoLajedo(lajedo, config)`: só lajedo com pelo menos `minimoDeTiles` (dado) recebe a
+       serra. O pé fica no meio da borda de baixo da caixa do lajedo, e a escala é a largura da
+       caixa ÷ 4 tiles, presa entre `escalaMinima` e `escalaMaxima` (dado);
+     - a tabela cobre: um lajedo cheio (intacta), cada limiar, um esgotado (sem sprite), um abaixo
+       do mínimo (sem serra) e dois lajedos vizinhos separados por um tile não `rock` (dois ids).
+  4. **O desenho:**
+     - o lajedo com serra **não** desenha mais o sprite de rocha por tile nem o marcador de esgotado
+       dos seus tiles. O lajedo abaixo do mínimo continua exatamente como hoje (as 16 máscaras);
+     - a serra é um sprite por lajedo, reaproveitado, com o `depth` pelo pé. Ela só é recalculada
+       quando os recursos mudam (o tick), e só na vista;
+     - a ponte publica `serrasDesenhadas` (o id, o estado, a fração e a escala de cada uma).
+  5. **`data/serra.json`** é dado de interface (`ARQUIVOS_DA_INTERFACE`), com a regra
+     `interface/serra`. Ela reprova limiares que não são decrescentes ou que estão fora de (0, 1),
+     `minimoDeTiles` < 1 e `escalaMinima` > `escalaMaxima`, cada uma com um caso que reprova.
+  6. **O roteiro `tools/shots/D-TELA-SERRA-POR-LAJEDO.js`:** o teste grava um save montado pela sim,
+     como os outros cenários, com os lajedos do mapa em frações diferentes de quantidade (um em
+     cada estado e um esgotado). O roteiro carrega o save, põe a câmera pela ponte sobre cada um e
+     afirma o `estado` publicado contra a função pura. As capturas são abertas, e há um passo
+     despausado (§8).
+  7. **Não-regressão:**
+     - os roteiros `F-TR`, `ARTE-VILA`, `D-SAVE-VILA-PRONTA` e `F-T1` saem 0;
+     - **se o `F-TR` (as máscaras do lajedo) reprovar porque o lajedo da vista ganhou a serra,** a
+       asserção dele passa a valer para os lajedos abaixo do mínimo, e para os outros ela afirma a
+       serra. A asserção nova fica mais estrita, e não só diferente. A troca e o motivo vão para o
+       PROGRESS;
+     - o `verify:rapido` passa, e os testes que leem o manifesto passam rodados direto;
+     - `git diff main -- src/sim tools/gerar-mapa.js data/maps` vazio.
+
 #### D-TELA-LIMPEZA-DO-MUNDO-VIVO — Três ressalvas das revisões de 2026-10-02
 - **Origem:** as ressalvas das revisões da sessão Claude no PROGRESS de 2026-10-02. Vai no mesmo
   pacote do `verify-rapido-dado-lido` (abaixo), por decisão do operador.
