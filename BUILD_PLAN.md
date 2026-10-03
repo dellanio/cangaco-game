@@ -6761,6 +6761,75 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
   7. **Na tela:** os roteiros `F-T1`, `D-TELA-AGUA-VIVA` e `ARTE-VILA` saem 0, e as capturas da
      água e da grama são abertas. Os testes de manifesto passam rodados direto.
 
+#### D-TELA-VEU-DOS-DETALHES — O véu de tom por tile sai do terreno que tem arte
+- **Origem (lido no código em 2026-10-02, pela captura do operador no zoom 2x):** o
+  `criarTexturaDeDetalhesDoTerreno` (`WorldScene.ts`) pinta, em cada célula de detalhe, um
+  retângulo do tamanho do tile inteiro (`fillRect` com 4,5% de opacidade) que alterna entre o tom
+  claro e o escuro do tema, mais um padrão fixo (`onda`, `capim` e outros). O
+  `criarCamadaDeDetalhesDoTerreno` sorteia esse véu em `densidade` dos tiles: 55% da água e 38%
+  da grama. O resultado é um tom diferente a cada quadrado, o xadrez, qualquer que seja o PNG por
+  baixo. A camada é anterior à arte de terreno (F-T1) e serve ao placeholder de cor chapada.
+- **Escopo:** só render. O terreno que tem arte carregada no manifesto (o mesmo predicado que já
+  troca a cor chapada pela textura em `criarTexturaDeTerreno`) não recebe célula de detalhe. O
+  terreno sem arte continua como hoje.
+- **Aceite (escrito antes do código, 2026-10-02):**
+  1. **A regra pura** `terrenoRecebeDetalhe(tipo, temArte)`, por tabela: com arte não recebe, sem
+     arte recebe. A cena e o teste chamam a mesma função, e a camada lê a lista de tipos com arte
+     do mesmo lugar que a tira de terreno.
+  2. **A ponte publica `detalhesDoTerrenoPorTipo`,** a contagem de células da camada por tipo. Com o
+     manifesto de hoje, a `agua` e a `grama` dão 0. Um tipo sem arte, num manifesto sintético do
+     teste, continua com células.
+  3. **A medida na tela** (o roteiro novo `tools/shots/D-TELA-VEU-DOS-DETALHES.js`), na vista do
+     açude e numa de grama, nos zooms 1 e 2:
+     - a diferença média de cor entre o centro de tiles vizinhos do mesmo terreno vai para o
+       `test-output` e para o PROGRESS, antes e depois;
+     - as capturas são abertas.
+  4. **Não-regressão:** os roteiros `F-T1`, `F-TR`, `D-TELA-COSTURA-DOS-TILES`, `D-TELA-AGUA-VIVA`
+     e `ARTE-VILA` saem 0; o `verify:rapido` passa; `git diff main -- src/sim` vazio.
+
+#### D-ARTE-SOLO-CAATINGA — O chão da caatinga no começo da seca e os decalques de capim
+- **Pedido do operador (2026-10-02):** a grama verde-oliva da D-ARTE-AGUA-GRAMA-SEM-EMENDA está
+  **reprovada como direção**. O chão é solo de caatinga no começo da seca, sem tufos destacados. A
+  vida vem de pequenos decalques independentes de capim, palha e verde-oliva, espalhados pelo
+  render (D-TELA-DECALQUES-DE-CAPIM), e não pintados no tile.
+- **Escopo:** arte e manifesto.
+  - **O solo:** os 4 estados da `grama` (`grama-D-v0` a `v3`, mesmos caminhos e nomes). É terra
+    clara de caatinga, com grão fino, poucas manchas de terra mais escura e algum resto de folha
+    seca miúda, sem tufo, pedra ou elemento que chame o olho. O id continua `grama`, porque mudar
+    o id é mexer no mapa e na sim.
+  - **Os decalques:** uma entrada nova no manifesto, `capim`, do tipo `vegetacao`, sem
+    `vegetacaoQueBalanca` por enquanto, com 8 a 12 estados (`palha-1`… e `oliva-1`…), PNG
+    transparentes de 16 a 32 px de largura, anchor `[0.5, 1]`. São tufos baixos, vistos de cima
+    em 3/4, com a luz do `cdcfec5`.
+- **Aceite (escrito antes da geração, 2026-10-02):**
+  1. **O solo emenda,** pela conta da D-ARTE-AGUA-GRAMA-SEM-EMENDA: a borda de cada tile e a de
+     todo par de tiles difere no máximo 1,3 vez o meio. **E o solo é neutro:** o desvio padrão da
+     luminância de cada tile é no máximo o da `areia.png` de hoje × 1,5, e nenhum elemento
+     marcante repete na mesma posição.
+  2. **Os decalques:** fundo transparente de verdade (o canto e a borda com alfa 0), o pé na linha
+     de baixo, no máximo 32 px de largura, metade palha e metade verde-oliva. O validador da
+     `pianco-sprite-tools` passa em todos.
+  3. **A folha de contato:** o solo em grade 6×6 com os decalques espalhados por cima, a 30% de
+     densidade, nos zooms 0,5, 1 e 2, ao lado da `areia` e da água de hoje. É aberta e salva ao lado
+     da base.
+  4. **As regras de arte:** as skills, a luz do `cdcfec5` (o solo é albedo, e o decalque tem
+     volume com a luz de cima), as referências limpas da PR #1, nenhum asset do jogo de 1998, e a
+     base em `assets/base/terrain/` e `assets/base/vegetation/capim/`. No máximo **4 gerações**
+     para o solo e os decalques juntos, registradas no `SKILL_BUILDER_PROGRESS.md`.
+  5. **O manifesto e os testes:** só a `origem` e a `licenca` da `grama` mudam, e a entrada `capim`
+     é nova. O `F17f-manifesto` e o `F-SPR-carregamento` passam, e o `capim` como `vegetacao`
+     precisa ser um recurso do mapa ou uma regra nova no `F-SPR`. Se o `F-SPR` reprovar o
+     `capim` por não ser recurso do mapa, **PARE e reporte**: a forma do decalque no manifesto é
+     decisão da D-TELA-DECALQUES-DE-CAPIM, e não se contorna afrouxando o teste.
+  6. **Na tela:** `F-T1` e `ARTE-VILA` saem 0, e a captura da grama é aberta.
+
+#### D-TELA-DECALQUES-DE-CAPIM — O render espalha os decalques de capim pelo chão
+- **Depende da D-ARTE-SOLO-CAATINGA.** O aceite entra num commit próprio quando a arte estiver na
+  `main`, porque a forma da entrada `capim` no manifesto e a densidade dependem dela. Fica
+  registrado o escopo: só render, por hash do tile e da semente, várias por tile, com posição,
+  giro e escala variando, sem grade, só na vista, só em `grama`, sem cobrir estrada, prédio nem
+  recurso, densidade em dado de render e pool reaproveitado.
+
 #### D-TELA-LIMPEZA-DO-MUNDO-VIVO — Três ressalvas das revisões de 2026-10-02
 - **Origem:** as ressalvas das revisões da sessão Claude no PROGRESS de 2026-10-02. Vai no mesmo
   pacote do `verify-rapido-dado-lido` (abaixo), por decisão do operador.
