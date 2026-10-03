@@ -17954,3 +17954,19 @@ tempo, e ele joga só ao fim de grandes blocos de entrega. Isto torna permanente
 - BUILD_PLAN.md, cabeçalho: "Uma feature por sessão" virou "Uma feature de cada vez".
 - Não mudou: a proibição de `subagent-driven-development` e `dispatching-parallel-agents` (§11)
   e o fechamento do bloco (§13). O operador não pediu essas mudanças.
+
+## 2026-10-02 — D-TELA-VEU-DOS-DETALHES (o véu de tom por tile sai do terreno que tem arte), pelo Codex
+
+### Verificado
+- Aceite presente antes do codigo: HEAD inicial bcfeb30. BUILD_PLAN intocado.
+- Regra pura terrenoRecebeDetalhe em src/render/detalhes-do-terreno.ts; a cena consulta arteDasCamadas.terreno, a lista de arte realmente carregada que criarTexturaDeTerreno publica. Sem arte, densidade, hash, variante e flips continuam iguais.
+- Ponte detalhesDoTerrenoPorTipo conta celulas efetivamente inseridas: agua e grama = 0 no roteiro. Teste por tabela e manifesto sintetico: tipo ausente da arte e textura nao carregada conservam celulas elegiveis.
+- Roteiro novo executado ANTES da alteracao do render. Diferenca media RGB por canal entre centros de vizinhos, 32 pares horizontais/verticais por vista, mesmo tick 0 e mesmas cameras: agua zoom 1: 26,4375 -> 26,5000; agua zoom 2: 24,15625 -> 24,16667; grama zoom 1: 7,03125 -> 6,86458; grama zoom 2: 2,4375 -> 2,16667. Numeros em test-output/D-TELA-VEU-DOS-DETALHES.json; oito capturas antes/depois abertas.
+- Tests diretos D-TELA-VEU-DOS-DETALHES, D-TELA-COSTURA-DOS-TILES, D-TELA-AGUA-VIVA, F-SPR-carregamento e F17f-manifesto: saida 0. verify:rapido: saida 0, 5 testes, 30 s nesta corrida (incluindo espera pela trava).
+- Roteiros F-T1, F-TR, D-TELA-COSTURA-DOS-TILES, D-TELA-AGUA-VIVA e ARTE-VILA: saida 0. Costuras inicialmente recusou referencia ausente; foi gerada uma referencia da propria regressao ja no render corrigido e a comparacao passou, sem alterar suas assercoes. Essa referencia NAO e o antes da remocao do veu.
+- git diff main -- src/sim vazio. Nenhum PNG, manifesto, node_modules, .claude ou test-results.json alterado. Dependencias usadas pela junction provisionada pelo operador.
+
+### Limites e hipoteses
+- A media dos centros nao isola o efeito do veu: arte, variantes e outras camadas tambem aparecem na captura. A agua nao apresentou reducao nessa medida; nao se afirma melhora numerica geral.
+- Costuras ainda visiveis no zoom 2 nas capturas. Eliminar costuras da arte ou outras camadas esta fora deste aceite. A prova direta desta mudanca e a contagem zero da camada de detalhes nos tipos com arte.
+- Verificacao completa e suite longa ficam para o fechamento do bloco pelo operador, conforme as regras comuns. Feature nao marcada em test-results.json.
