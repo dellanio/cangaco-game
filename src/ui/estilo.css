@@ -880,3 +880,14 @@ body[data-menu] #ajuda { z-index: 30; }
 #ajuda .arquivo .gaveta { display: flex; align-items: center; gap: 8px; }
 #ajuda .arquivo .gaveta .texto { flex: 1; font-size: 13px; }
 #ajuda .arquivo .gaveta .texto[data-situacao="recusada"] { color: var(--terracota); font-style: italic; }
+/* E-ENTREGA-BUILD — a tela de carregamento, por cima de tudo ate o loader terminar */
+#carregamento {
+  position: fixed; inset: 0; z-index: 40; display: grid; place-items: center;
+  background: #25170f;
+}
+#carregamento .caixa { width: 320px; display: flex; flex-direction: column; gap: 10px; align-items: stretch; }
+#carregamento .titulo, #carregamento .texto { margin: 0; text-align: center; color: var(--pergaminho); }
+#carregamento .titulo { font: 20px/1.2 var(--fonte-display); letter-spacing: 0.04em; }
+#carregamento .texto { font: 13px/1.2 var(--fonte-corpo); font-style: italic; }
+#carregamento .trilho { height: 14px; border: 2px solid var(--pergaminho); background: var(--tabua); }
+#carregamento .barra { height: 100%; width: 0; background: var(--ocre); }

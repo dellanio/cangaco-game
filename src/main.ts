@@ -32,6 +32,7 @@ import { montarAvisoDoTempo } from './ui/aviso-tempo';
 import { montarFimDePartida } from './ui/fim-de-partida';
 import { montarAjuda } from './ui/ajuda';
 import type { Ajuda } from './ui/ajuda';
+import type { TelaDeCarregamento } from './ui/carregamento';
 import { montarBarra } from './ui/barra';
 import { montarArquivo } from './ui/arquivo';
 import { criarArquivoDaPartida } from './arquivo-da-partida';
@@ -69,7 +70,9 @@ declare global {
  * `escolha-da-partida.ts`), e o Phaser so nasce aqui, depois da escolha. A ajuda que o menu ja
  * montou vem junto: o `#ajuda` e montado uma vez so.
  */
-export function iniciarPartida(estadoInicial: GameState, ajudaDoMenu: Ajuda | null = null): void {
+export function iniciarPartida(
+  estadoInicial: GameState, ajudaDoMenu: Ajuda | null = null, carregamento: TelaDeCarregamento | null = null,
+): void {
   const sessao = criarSessao(estadoInicial);
   const ferramenta = criarFerramenta();
   // O predio aberto no painel (F13b). Estado de interface, como a ferramenta.
@@ -213,7 +216,10 @@ export function iniciarPartida(estadoInicial: GameState, ajudaDoMenu: Ajuda | nu
   // funil `render/mapa.ts`: `input/` nao le `sim/data`.
   const navegacao = ligarNavegacao(window, configDoMapa.camera);
 
-  const jogo = iniciarJogo(ferramenta, entrada, laco, navegacao, selecaoMilitar);
+  // E-ENTREGA-BUILD: o progresso do loader vai para a tela de carregamento do `inicio.ts`
+  const jogo = iniciarJogo(ferramenta, entrada, laco, navegacao, selecaoMilitar, (fracao) => {
+    carregamento?.atualizar(fracao);
+  });
 
   // D-TELA-02 — o minimapa, depois da barra (ele toma o lugar do placeholder dela). O
   // terreno, o footprint e a camera chegam daqui: `ui/` nao le `sim/data` nem o funil.

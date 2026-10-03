@@ -677,6 +677,11 @@
       "encomenda-dez": "Shift + clique"
     }
   },
+  "carregamento": {
+    "_doc": "E-ENTREGA-BUILD. A tela entre a escolha da partida e o primeiro quadro (src/ui/carregamento.ts). {pct} e o progresso do loader de assets, de 0 a 100.",
+    "titulo": "Preparando a partida",
+    "progresso": "Carregando: {pct}%"
+  },
   "menuInicial": {
     "_doc": "E-TELA-MENU-INICIAL. A porta do jogo, antes do Phaser: os botoes do menu (src/ui/menu-inicial.ts). As chaves sem-save, recusado e gaveta sao as causas de `lerUltimoSave` (src/arquivo-da-partida.ts), e o motivo do Continuar desabilitado.",
     "titulo": "Piancó",

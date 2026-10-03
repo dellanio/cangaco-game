@@ -18374,3 +18374,46 @@ Feature de integração (sim + tela), como o item declara.
   segurado 150 ms, despausado, abriu a 2 e seguiu até o tick 69, e o `P` pausou. A foto
   `screenshots/E-SAVE-GAVETAS-1-gavetas-no-jogo.png` foi aberta.
 - Os roteiros F23b, E-TELA-MENU-INICIAL e C-IA-03c saíram 0.
+
+## 2026-10-03 — E-ENTREGA-BUILD (o jogo fora do dev server)
+
+**O que mudou.**
+- `npm run build` agora é `vite build --base=./ --manifest && node tools/conferir-dist.js`.
+  - `--base=./` deixa toda URL do `dist/` relativa (`./assets/...`). O itch.io serve o jogo de uma
+    subpasta, e com `/assets/...` absoluto nada carregaria lá.
+  - `--manifest` grava `dist/.vite/manifest.json`, que a conferência lê.
+- `tools/conferir-dist.js` + `tools/conferir-dist-regra.js` (regra pura): reprova arquivo de
+  `assets/base/` no `dist/` **pelo conteúdo** (sha256; o Vite renomeia tudo) e página de depuração
+  como fonte de alguma saída do manifesto. Grava o tamanho em `test-output/E-ENTREGA-BUILD.json`.
+- As páginas de depuração (`?depuracao=`, `?vitrine=`) ficaram atrás de `import.meta.env.DEV` no
+  `inicio.ts`: no build o `import()` vira código morto, e os dois chunks (81 kB e 3 kB) saíram do
+  `dist/`.
+- **Tela de carregamento** (`src/ui/carregamento.ts`): nasce no `inicio.ts` na hora da escolha, antes
+  de o `main.ts` e o Phaser chegarem pela rede. Ela mostra o progresso do loader da cena ("Carregando:
+  46%") e some no 100%. A cena só avisa a fração por um callback (`WorldScene`, `aoCarregar`), que o
+  `main.ts` liga à tela. Toca render e ui, não a sim.
+- `tools/shot.js --preview` serve o `dist/` pelo `vite preview` em vez do dev server, e o roteiro lê
+  `ctx.servidor`. `npm run shot:dist` faz o build e roda o roteiro nesse modo. `npm run preview`
+  entrou.
+
+**Verificado:**
+- `npm run shot:dist`: o build passou na conferência (268 arquivos, **11,75 MB**; 136 arquivos de
+  `assets/base/` conferidos por sha256, nenhum no `dist/`; sem página de depuração no manifesto). O
+  roteiro saiu 0 contra o `vite preview`, com **zero erro de console**:
+  - (a) `/` mostra o menu, sem canvas. Novo jogo > Escaramuça > Começar (segurado 150 ms,
+    despausado). A tela de carregamento apareceu, chegou a "Carregando: 100%" e sumiu. A escaramuça
+    andou até o tick 300 a 3x, o contador de paz correndo, e o `P` pausou;
+  - (b) a listagem do `dist/` não tem arquivo de `assets/base/` (conferido pelo conteúdo);
+  - (c) `test-output/E-ENTREGA-BUILD.json`: 11,75 MB e menu em 100 ms (preview local). São números
+    desta corrida e não entram em asserção.
+- A foto `screenshots/E-ENTREGA-BUILD-2-escaramuca.png` foi aberta: sprites dos prédios e das
+  unidades, "Paz: 9:30", "Pausado · 3x".
+- O mesmo roteiro contra o dev server também saiu 0, e é o que o `shot:todos` roda.
+- **Sonda (apagada), não cobertura contínua:** o `dist/` servido numa subpasta (`/jogo/`, como no
+  itch.io) por um servidor estático mínimo deu zero pedido fora da subpasta, zero 404 e zero erro de
+  console, e a escaramuça andou.
+- `tests/E-ENTREGA-BUILD.test.ts` (6 testes): a regra do `dist/` limpo por tabela. Ela reprova a
+  cópia da base com outro nome e não reprova o homônimo de outro conteúdo; reprova cada página de
+  depuração no manifesto, a falta de `dist/` e a falta de manifesto. Cobre também o texto do
+  progresso.
+- `npm run verify:rapido` verde.

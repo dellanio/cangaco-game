@@ -15,6 +15,7 @@ import type { Gaveta } from './arquivo-da-partida';
 import { montarMenuInicial } from './ui/menu-inicial';
 import type { SituacaoDoSave } from './ui/menu-inicial';
 import { montarAjuda } from './ui/ajuda';
+import { montarCarregamento } from './ui/carregamento';
 import type { Ajuda } from './ui/ajuda';
 
 /** O `localStorage`, ou `null` quando o navegador o bloqueia (o acesso pode lancar). */
@@ -32,8 +33,10 @@ async function jogar(escolha: EscolhaDaPartida, ajuda: Ajuda | null): Promise<vo
   const partida = estadoDaEscolha(escolha, gaveta);
   // o menu so oferece o save que abre; se ele sumiu entre o menu e o clique, o jogo livre
   const estado = partida.ok ? partida.estado : estadoNovo({ modo: 'livre' });
+  // E-ENTREGA-BUILD: a tela de carregamento nasce antes de o `main.ts` (e o Phaser) chegar
+  const carregamento = montarCarregamento();
   const modulo = await import('./main');
-  modulo.iniciarPartida(estado, ajuda);
+  modulo.iniciarPartida(estado, ajuda, carregamento);
 }
 
 function situacaoDoSave(): SituacaoDoSave {
@@ -60,8 +63,10 @@ function abrirMenu(): Promise<void> {
   });
 }
 
+// E-ENTREGA-BUILD: a depuracao e a vitrine sao do dev server. No `npm run build` o `DEV` e falso,
+// os dois `import()` saem como codigo morto, e as paginas de depuracao nao entram no `dist/`.
 void iniciarSeHouverWebgl(document, async () => {
-  if (depuracaoDeUnidade(window.location.search)) {
+  if (import.meta.env.DEV && depuracaoDeUnidade(window.location.search)) {
     const modulo = await import('./render/depuracao-de-unidade');
     const tipos = tiposDeDepuracao(window.location.search);
     registrarDepuracao({ manifesto: { ...modulo.manifestoDeDepuracao,
@@ -70,7 +75,7 @@ void iniciarSeHouverWebgl(document, async () => {
       atlases: modulo.atlasesDeDepuracao.filter((a) => tipos.some((id) => a.chave === chaveDoAtlas(id))),
     });
   }
-  if (tiposDeDepuracao(window.location.search).includes(new URLSearchParams(window.location.search).get('vitrine') ?? '')) {
+  if (import.meta.env.DEV && tiposDeDepuracao(window.location.search).includes(new URLSearchParams(window.location.search).get('vitrine') ?? '')) {
     return import('./render/vitrine-serf');
   }
   if (abreNoMenu(window.location.search)) return abrirMenu();

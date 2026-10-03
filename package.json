@@ -4,7 +4,9 @@
   "version": "0.1.0",
   "scripts": {
     "dev": "node tools/dev.js",
-    "build": "vite build",
+    "build": "vite build --base=./ --manifest && node tools/conferir-dist.js",
+    "preview": "vite preview",
+    "shot:dist": "npm run build && node tools/trava-de-testes.js node tools/shot.js E-ENTREGA-BUILD --preview",
     "test": "node tools/trava-de-testes.js vitest run",
     "test:transladado": "node tools/trava-de-testes.js vitest run -c vitest.transladado.config.mts",
     "test:longo": "node tools/trava-de-testes.js node tools/test-longo.js",

@@ -46,9 +46,11 @@ export function iniciarJogo(
   navegacao: Navegacao,
   /** F26b — o grupo militar na mao do jogador, que a cena desenha. */
   selecaoMilitar: SelecaoMilitar,
+  /** E-ENTREGA-BUILD — o progresso do carregamento dos assets, de 0 a 1 (1 = pronto). */
+  aoCarregar?: (fracao: number) => void,
 ): JogoLigado {
   const ponte = criarPonte();
-  const cena = new WorldScene(ponte, ferramenta, entrada, relogio, navegacao, selecaoMilitar);
+  const cena = new WorldScene(ponte, ferramenta, entrada, relogio, navegacao, selecaoMilitar, aoCarregar);
   const jogo = new Phaser.Game({
     type: Phaser.WEBGL,
     parent: 'jogo',
