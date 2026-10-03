@@ -65,7 +65,7 @@ import { assetDaCamada } from './manifesto';
 import { peDoSprite } from './pe-do-sprite';
 import { atualizarVirada, iniciarVirada } from './virada-de-unidade';
 import type { MemoriaDaVirada } from './virada-de-unidade';
-import { acaoDaUnidade, direcaoDoTrabalho } from './acao-de-unidade';
+import { acaoDaUnidade, animacaoComCarga, direcaoDoTrabalho } from './acao-de-unidade';
 import type { MemoriaDeAcao } from './acao-de-unidade';
 
 /** O que a camada desenhou de uma unidade, para o roteiro afirmar (`window.__cangaco`). */
@@ -403,7 +403,7 @@ export function criarCamadaDeUnidades(
             item.virada = acao === 'atacar' && alvo ? iniciarVirada(alvo, tempoDeAnimacao(estado.tick, alfa))
               : atualizarVirada(item.virada, alvo, tempoDeAnimacao(estado.tick, alfa), configAnimacao.passoDaViradaTicks);
             item.direcao = item.virada.visivel;
-            item.animacao = acao;
+            item.animacao = animacaoComCarga(acao, Boolean(unidade.fsmData.carga), entradaAnimada.animacoes);
             const animacao = entradaAnimada.animacoes?.[item.animacao];
             item.spriteAnimado = null;
             item.quadro = 0;

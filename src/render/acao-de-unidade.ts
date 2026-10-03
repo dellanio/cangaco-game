@@ -15,6 +15,13 @@ export function acaoDaUnidade(u: Pick<Unidade, 'tipo' | 'fsm'>, andando: boolean
   return andando ? 'andar' : 'parado';
 }
 
+/** D-TELA-SERF-CARREGANDO — quem anda com carga usa a animacao `carregando`, quando o manifesto a tem. */
+export function animacaoComCarga(
+  acao: string, temCarga: boolean, animacoes: Readonly<Record<string, unknown>> | undefined,
+): string {
+  return acao === 'andar' && temCarga && animacoes?.['carregando'] !== undefined ? 'carregando' : acao;
+}
+
 export function atualizarAcao(anterior: MemoriaDeAcao | undefined, animacao: AcaoVisual | null, tick: number): MemoriaDeAcao {
   return anterior?.animacao === animacao && tick >= anterior.inicio ? anterior : { animacao, inicio: tick };
 }
