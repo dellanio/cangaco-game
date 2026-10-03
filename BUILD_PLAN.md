@@ -6161,6 +6161,29 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
   4. o registro no `SKILL_BUILDER_PROGRESS.md`: o prompt, a referência, os hashes e as gerações
      gastas.
 
+### D-TELA-SERF-CARREGANDO — O serf anda com os braços levando a carga
+- **Pedido do operador (2026-10-03, no teste de pixel art):** "o serf está carregando os produtos
+  com o braço pra baixo e deveria simular os braços levando um produto". **Feature de integração
+  de render e arte:** o render e o manifesto. Nada em `src/sim/`.
+- **Escopo:**
+  - a arte ganha a animação `carregando` (8 quadros nas 5 direções, o oeste por espelho), com os
+    braços dobrados segurando um saco neutro à frente do peito. O ícone da mercadoria continua por
+    cima (D-TELA-03a);
+  - o render troca o `andar` por `carregando` quando a unidade leva carga (`fsmData.carga`) e a
+    entrada do manifesto tem a animação `carregando`. Sem ela, fica o `andar` de hoje. O quadro do
+    `carregando` segue a distância, como o `andar`.
+- **Aceite (escrito antes do código, 2026-10-03):**
+  1. **A regra pura** `animacaoComCarga(acao, temCarga, animacoes)`, por tabela: `andar` com carga e
+     com `carregando` no manifesto vira `carregando`; sem carga, sem a animação, ou com outra ação
+     (`parado`, `trabalhar`, `atacar`), a ação não muda.
+  2. **O atlas** tem `serf/carregando/<dir>/0000..0007` nas 5 direções, e o `F17f-manifesto` (o
+     validador de atlas) passa.
+  3. **No jogo,** o roteiro `D-ARTE-SERF-COMFYUI` ganha a afirmação: o serf que anda com `carga`
+     publica `animacao` `carregando` e um `frame` `serf/carregando/...`, e o que anda sem carga
+     publica `andar`. As capturas são abertas.
+  4. **Não-regressão:** os testes da D-TELA-05c e da D-TELA-04b e os roteiros `D-TELA-04c` e
+     `D-TELA-03` saem 0; `git diff main -- src/sim` vazio.
+
 ### D-ARTE-SERF-COMFYUI — O serf animado gerado no ComfyUI local, no jogo
 - **Pedido do operador (2026-10-03):** "gere e já atribua no jogo as animações. Quero ver já
   funcionando no jogo". A arte sai do ComfyUI local (SDXL DreamShaper XL Turbo + IP-Adapter Plus +
