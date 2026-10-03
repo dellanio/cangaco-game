@@ -35,6 +35,8 @@ const OPCIONAIS_DO_ESTADO = {
   // o voo acaba e o campo some: cobrado so enquanto `restantes` nao zera (o fixture voa longe)
   projeteis: 'persiste',
   distribuicao: 'persiste',
+  // F-TERRENO-NEVOA-DESCOBERTO: monotonico, nenhum tick o apaga
+  descoberto: 'persiste',
 } as const satisfies Record<ChavesOpcionais<GameState>, Regime>;
 
 const OPCIONAIS_DO_PREDIO = {
@@ -84,6 +86,7 @@ function estadoCheio(): { readonly state: Required<GameState>; readonly ids: Rea
     .find((p): p is PredioCompleto => p?.estado === 'completo' && p.lado === LADO_DO_JOGADOR && p.tipo === 'storehouse');
   if (armazem === undefined) throw new Error('fixture: a escaramuca nao tem armazem do jogador');
   if (base.ia === undefined || base.pazAteTick === undefined) throw new Error('fixture: a escaramuca deveria criar ia e pazAteTick');
+  if (base.descoberto === undefined) throw new Error('fixture: a escaramuca deveria criar descoberto');
 
   let s: GameState = base;
   s = comPredioNovo(s, { ...novo('g-quartel', 'barracks', 2, 2), recrutas: 3 });
@@ -101,6 +104,7 @@ function estadoCheio(): { readonly state: Required<GameState>; readonly ids: Rea
     ia: base.ia,
     pazAteTick: base.pazAteTick,
     distribuicao: comLimite.distribuicao,
+    descoberto: base.descoberto,
     partida: { fim: 'vitoria', tick: comLimite.tick },
     projeteis: [{
       projetil: 'arrow',

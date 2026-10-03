@@ -26,6 +26,7 @@ import { buscarCaminho, passoAndavel } from '../pathfinding';
 import { andar, comUnidade, noTile, ocioso } from '../units/movimento';
 import { FSM_EM_CARGA, emCargaIncontrolavel } from '../carga';
 import type { ResultadoDeSistema } from './jobs';
+import { ordemDoJogadorSemVista, unidadeNaVista } from '../nevoa';
 import { FSM_MARCHANDO } from './marcha';
 import { FSM_ATACANDO, FSM_INDO_ATACAR } from './cerco';
 
@@ -61,6 +62,10 @@ export function motivoDaRecusaDeLuta(
     if (classeDaUnidade(u.tipo, dados) !== 'militar') return { motivo: 'unidade-nao-militar', unidade: id };
     if (ehADistancia(u.tipo, dados)) return { motivo: 'unidade-a-distancia', unidade: id };
     if (u.lado === alvo.lado) return { motivo: 'alvo-do-proprio-lado', unidade: id };
+  }
+  // F-COMBATE-ALVO-NA-VISTA: por ultimo, para as recusas de antes continuarem com o motivo delas
+  if (ordemDoJogadorSemVista(state, comando.unidades, () => unidadeNaVista(state, comando.alvo, dados))) {
+    return { motivo: 'alvo-fora-da-vista', unidade: null };
   }
   return null;
 }

@@ -61,6 +61,18 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
 - evidência: test-output/shot-todos.json (corrida de 2026-10-03, commit 61d9e49)
 - status: aberto
 
+## BUG-ROTEIRO-04E-DELTA-DO-ATLAS — o roteiro D-TELA-04e mede menos memoria do que o atlas da depuracao
+- feature: D-TELA-04e (memoria de texturas)
+- severidade: errado
+- repro: `npm run shot -- D-TELA-04e`, no commit `3e08253` (antes da Fase F) e no fechamento da F
+- esperado: o `?depuracao` soma ao `memoriaDeTexturas` os bytes RGBA do atlas
+  `assets/depuracao/serf/serf.png` (512 x 1080 x 4 = 2 211 840)
+- observado: "delta 1032192 deve ser 2211840", igual nos dois commits. Hipotese, nao conferida: a
+  arte do serf (D-ARTE-SERF-COMFYUI) mudou o que a cena normal carrega, e a diferenca deixou de ser
+  so o atlas.
+- evidência: `test-output/shot-todos.json` do fechamento da Fase F (2026-10-03)
+- status: aberto
+
 ## Polimento
 
 Os três bugs de oscilação de tempo que moravam aqui (BUG-D na F-T1, BUG-E na F-T2b e,

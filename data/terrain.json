@@ -32,6 +32,12 @@
     "_doc": "Dado de RENDER, nao balanceamento: zoom nao muda regra nenhuma, nao entra em GameState e sim/ nao le este bloco. Passos discretos e crescentes. tile_px vezes o nivel e INTEIRO em todos (32, 48, 64, 96, 128), que e o que mantem a ida e volta grid<->pixel exata sem depender de sorte de ponto flutuante. O inicial e 1 porque todo roteiro de screenshot ja validado calcula a posicao do tile no canvas assumindo escala 1."
   }
 ,
+  "nevoa": {
+    "_doc": "F-TELA-NEVOA (GDD 6.5, nivel de apresentacao). Dado de RENDER, como o zoom e a camera: sim/ nao le este bloco. A camada escura por cima do mundo (abaixo dos nomes e da selecao): o tile nunca descoberto leva `alfaNaoDescoberto`, o descoberto fora da vista `alfaForaDaVista`, o visivel nada. A textura tem um pixel por tile e e esticada com filtro linear, entao a borda da vista e um degrade de um tile, e nao um degrau. PARA REVISAO: os dois alfas sao da sessao.",
+    "cor": "#000000",
+    "alfaNaoDescoberto": 1.0,
+    "alfaForaDaVista": 0.5
+  },
   "camera": {
     "velocidadeInicialPxPorSegundo": 640,
     "aceleracaoPxPorSegundo2": 900,

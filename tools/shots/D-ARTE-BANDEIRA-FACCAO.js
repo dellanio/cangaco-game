@@ -5,8 +5,18 @@ const { retanguloDoCanvas } = require('./_canvas');
 const terreno = require('../../data/terrain.json');
 
 async function roteiro({ page, capturar, estado, afirmar }) {
-  const save = readFileSync('saves/teste-operador-vila-pronta.txt', 'utf8');
-  const salvo = JSON.parse(save).estado;
+  // F-TELA-NEVOA: a vila da IA nasce na nevoa, e a bandeira dela nao se desenharia (a captura do
+  // lado 1 em T e em T+5 sairia preta e igual). Ela ganha a vista pelo caminho do jogo: um cabra
+  // do jogador parado 4 tiles ao sul do predio da IA, posto no save antes de carregar.
+  const envelope = JSON.parse(readFileSync('saves/teste-operador-vila-pronta.txt', 'utf8'));
+  const daIA = envelope.estado.predios.ordem.map((id) => envelope.estado.predios.porId[id]).find((p) => p.lado === 1);
+  afirmar(daIA !== undefined, 'o save precisa de um predio da IA');
+  envelope.estado.unidades.porId.olheiro = {
+    id: 'olheiro', lado: 0, tipo: 'militia', gx: daIA.gx + 1, gy: daIA.gy + 6, fsm: 'ocioso', fsmData: {}, condicao: 18000,
+  };
+  envelope.estado.unidades.ordem.push('olheiro');
+  const save = JSON.stringify(envelope);
+  const salvo = envelope.estado;
   const canvas = await retanguloDoCanvas(page);
   const clip = { x: canvas.left, y: canvas.top, width: canvas.width, height: canvas.height };
   const esperar = () => page.waitForTimeout(200);

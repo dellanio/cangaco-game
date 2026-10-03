@@ -3,7 +3,8 @@
 //   1. H -> "Nova escaramuca"; caixa em volta dos 18 cabras;
 //   2. DESPAUSADO (§8), botao direito longe da vila: C-COMBATE-02b tirou a cerca da paz, e
 //      a tropa marcha sem aviso;
-//   3. botao direito no armazem da IA: "Em paz — faltam m:ss";
+//   3. a tropa marcha ate ver o armazem da IA (ele nasce na nevoa), e o botao direito nele:
+//      "Em paz — faltam m:ss";
 //   4. a mensagem some sozinha.
 // O px sai do debug (`unidadesRenderizadas`, `prediosDoEstado`), nunca de pixel da captura.
 const { retanguloDoCanvas } = require('./_canvas');
@@ -100,8 +101,20 @@ async function roteiro(ctx) {
   await capturar('marcha-em-paz');
 
   // 3. o armazem da IA: ataque em paz
-  const [, armazem] = Object.entries(s.prediosDoEstado).find(([, p]) => p.lado === LADO_DA_IA && p.tipo === 'storehouse');
+  const [idDoArmazem, armazem] = Object.entries(s.prediosDoEstado).find(([, p]) => p.lado === LADO_DA_IA && p.tipo === 'storehouse');
   const alvo = { gx: armazem.gx + 1, gy: armazem.gy + 1 };
+  // F-COMBATE-ALVO-NA-VISTA / F-TELA-NEVOA: o armazem da IA nasce no escuro, e o clique nele no
+  // escuro e marcha, nao ataque. A tropa ganha a vista pelo caminho do jogo: marcha (em paz
+  // pode) ate perto dele, e o relogio corre ate ele aparecer.
+  const perto = { gx: armazem.gx - 6, gy: armazem.gy + 1 };
+  await centrar(perto);
+  s = await estado();
+  await direito(pontoDoTile(perto.gx, perto.gy, s.camera));
+  for (let i = 0; i < 40 && !(await estado()).prediosDoEstado[idDoArmazem].naVista; i += 1) {
+    await page.evaluate(() => window.__cangaco.avancar(25));
+    await esperarFrame();
+  }
+  afirmar((await estado()).prediosDoEstado[idDoArmazem].naVista, 'a tropa deveria ter chegado a ver o armazem da IA');
   await centrar(alvo);
   s = await estado();
   await direito(pontoDoTile(alvo.gx, alvo.gy, s.camera));

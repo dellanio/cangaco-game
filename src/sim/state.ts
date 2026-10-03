@@ -26,6 +26,7 @@ import type { MotivoDeRecusaDeMercenario } from './prefeitura';
 // `sim/recursos.ts`. Import de valor (nao de tipo) e o unico deste arquivo alem
 // do RNG e do dado — `createInitialState` e o lugar certo para ele.
 import { recursosIniciais } from './recursos';
+import { descobertoInicial } from './nevoa';
 
 /**
  * Efeito colateral emitido por um sistema para o render consumir
@@ -49,7 +50,9 @@ export type MotivoDeRecusaDeLuta =
   | 'unidade-a-distancia'
   | 'alvo-do-proprio-lado'
   /** C-IA-03b — a partida esta em peacetime (`sim/paz.ts`). */
-  | 'em-paz';
+  | 'em-paz'
+  /** F-COMBATE-ALVO-NA-VISTA — o jogador mandou atacar quem ele nao ve agora (`sim/nevoa.ts`). */
+  | 'alvo-fora-da-vista';
 
 /** F26a — por que um `MoveUnits` foi recusado. */
 export type MotivoDeRecusaDeMarcha =
@@ -90,7 +93,9 @@ export type MotivoDeRecusaDeAtaque =
   | 'unidade-nao-militar'
   | 'predio-do-proprio-lado'
   /** C-IA-03b — a partida esta em peacetime (`sim/paz.ts`). */
-  | 'em-paz';
+  | 'em-paz'
+  /** F-COMBATE-ALVO-NA-VISTA — o jogador mandou atacar o predio que ele nao ve agora (`sim/nevoa.ts`). */
+  | 'alvo-fora-da-vista';
 
 export type GameEvent =
   | { readonly type: 'tick-advanced'; readonly tick: number }
@@ -1574,6 +1579,15 @@ export interface GameState {
    * mexeu, e o save nao muda de versao.
    */
   readonly distribuicao?: Readonly<Record<string, Readonly<Record<string, Readonly<Record<string, number>>>>>>;
+  /**
+   * F-TERRENO-NEVOA-DESCOBERTO — o que cada LADO ja viu (GDD 6.5; chave: o lado, em texto). 1 bit
+   * por tile (indice `gy * largura + gx`), em inteiros de 32 bits sem sinal. MONOTONICO: bit
+   * ligado nunca desliga. So o lado do jogador tem entrada (a IA ignora a nevoa). Quem cria e
+   * o estado inicial (jogo livre e escaramuca); quem liga bit e o `step` (`sim/nevoa.ts`).
+   * AUSENTE = sem nevoa: estado montado a mao e save de antes da F continuam iguais. O que se
+   * ve AGORA (`visivel`) nao mora aqui: e derivado (`visaoDe`).
+   */
+  readonly descoberto?: Readonly<Record<string, readonly number[]>>;
 }
 
 /**
@@ -1616,6 +1630,10 @@ export interface PosicaoDeDefesa {
 
 export interface IADoLado {
   readonly posicoes: readonly PosicaoDeDefesa[];
+  /** F-IA-DIFICULDADE — o nivel do adversario (`combat.json: ia.niveis`), escolhido no configurar
+   *  partida. AUSENTE = `normal`: a escaramuca normal sai byte a byte igual a de antes, e o save
+   *  de antes da F tambem. Quem le e `numerosDaIA` (`sim/ia.ts`). */
+  readonly nivel?: string;
 }
 
 function construirColecao<T extends { readonly id: string }>(itens: readonly T[]): Colecao<T> {
@@ -1807,7 +1825,7 @@ function criarUnidades(
 export function createInitialState(seed: number, dados: GameData = gameData): GameState {
   const { predios, proximoContador: apósPredios } = criarPredios(dados, 1);
   const { unidades, proximoContador: apósUnidades } = criarUnidades(dados, apósPredios);
-  return {
+  const inicial: GameState = {
     tick: 0,
     rng: createRng(seed),
     events: [],
@@ -1823,6 +1841,8 @@ export function createInitialState(seed: number, dados: GameData = gameData): Ga
     jobs: { tarefas: { porId: {}, ordem: [] } },
     treino: {},
   };
+  // F-TERRENO-NEVOA-DESCOBERTO: o tick 0 ja nasce com o que a vila ve
+  return { ...inicial, descoberto: descobertoInicial(inicial, dados) };
 }
 
 /** Tipos distintos dos predios `'completo'`, na ordem de `predios.ordem`. */

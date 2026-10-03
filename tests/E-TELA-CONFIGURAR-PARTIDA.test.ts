@@ -32,6 +32,7 @@ import { validarTudo } from '../tools/data-rules.js';
 import { ARQUIVOS } from '../tools/data-schema.js';
 import { doLado, SEMENTE, tropaDoJogador } from './helpers/escaramuca-paz';
 import { gravarEvidencia } from './helpers/evidence';
+import { comOlheiro } from './helpers/vista';
 
 const OPCOES = gameData.escaramuca.opcoesDePaz;
 const PADRAO = gameData.escaramuca.peacetime_min_base;
@@ -131,6 +132,11 @@ describe('E-TELA-CONFIGURAR-PARTIDA — aceite (c), cada opcao', () => {
       const depois: GameState = { ...s0, tick: P };
       expect(emPaz(depois)).toBe(false);
       expect(recusado(depois)).toBe(false);
+      // F-COMBATE-ALVO-NA-VISTA: o alvo nasceu longe da vila; com um olheiro do jogador perto
+      // dele, a ordem e aceita de fato (sem vista, a recusa seria pela nevoa, nao pela paz)
+      const alvoU = s0.unidades.porId[alvo];
+      if (alvoU === undefined) throw new Error('fixture: alvo');
+      expect(step(comOlheiro(depois, alvoU), [ataque], gameData).events.filter((e) => e.type === 'command-rejected')).toEqual([]);
 
       // a IA: com um intruso no raio, nao sai ate o fim da paz; depois, sai
       const JANELA = 30;

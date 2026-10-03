@@ -24,7 +24,9 @@
     "_comum": {
       "velocidade": "aPe",
       "direcoesDeSprite": 8,
-      "vaiAoInn": true
+      "vaiAoInn": true,
+      "visao": 9,
+      "_docVisao": "F-TERRENO-NEVOA-DESCOBERTO (GDD 6.5): o civil ve 9 tiles, o mesmo do militar; sem isso a vila nasce dentro da propria nevoa."
     },
     "tipos": [
       {

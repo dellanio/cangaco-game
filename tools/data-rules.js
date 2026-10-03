@@ -1001,6 +1001,66 @@ function validarLance(dados, erros) {
   }
 }
 
+// F-TERRENO-NEVOA-DESCOBERTO — o raio de visao (GDD 6.5): todo tipo de unidade tem um (o civil
+// pelo `civis._comum`), o predio tem o dele, e o `porTipo` so nomeia predio que existe. Inteiro
+// >= 0: e raio em tiles do disco do KaM (`dx*dx + dy*dy <= r*r`).
+function validarVisao(dados, erros) {
+  const raioValido = (v) => Number.isInteger(v) && v >= 0;
+  const units = dados.units || {};
+  const civil = units.civis && units.civis._comum && units.civis._comum.visao;
+  if (!raioValido(civil)) erros.push('visao/civil: units.civis._comum.visao precisa ser inteiro >= 0');
+  for (const grupo of ['militares', 'mercenarios']) {
+    for (const t of (units[grupo] && units[grupo].tipos) || []) {
+      if (!raioValido(t.visao)) erros.push(`visao/unidade: units.${grupo} '${t.id}'.visao precisa ser inteiro >= 0`);
+    }
+  }
+  const visao = dados.buildings && dados.buildings.visao;
+  if (!visao || !raioValido(visao.predio_tiles)) {
+    erros.push('visao/predio: buildings.visao.predio_tiles precisa ser inteiro >= 0');
+    return;
+  }
+  const ids = new Set(((dados.buildings && dados.buildings.predios) || []).map((p) => p.id));
+  for (const [id, r] of Object.entries(visao.porTipo || {})) {
+    if (!ids.has(id)) erros.push(`visao/predio: buildings.visao.porTipo.${id} nao e predio de buildings.predios`);
+    if (!raioValido(r)) erros.push(`visao/predio: buildings.visao.porTipo.${id} precisa ser inteiro >= 0`);
+  }
+}
+
+// F-IA-DIFICULDADE — os niveis do adversario. Tem de haver `normal` (o jogo de hoje, a falta
+// do save antigo), e cada nivel so pode trocar numero que a IA le: campo fora da lista nao teria
+// leitor e viraria folclore. O tamanho do grupo nao pode ficar abaixo da tropa de uma posicao da
+// escaramuca (o cenario poe a tropa nos tiles do grupo, e faltaria tile).
+const CAMPOS_DO_NIVEL_DA_IA = ['tamanhoDoGrupo', 'atacantes', 'revisaoDoPrefeito_fator'];
+function validarNiveisDaIA(dados, erros) {
+  const niveis = dados.combat && dados.combat.ia && dados.combat.ia.niveis;
+  if (!niveis || typeof niveis !== 'object') {
+    erros.push('ia/niveis: combat.ia.niveis precisa existir (F-IA-DIFICULDADE)');
+    return;
+  }
+  if (!niveis.normal || typeof niveis.normal !== 'object') erros.push('ia/niveis: combat.ia.niveis precisa ter o nivel `normal`');
+  const posicoes = (dados.escaramuca && dados.escaramuca.posicoes) || [];
+  const maiorPosicao = Math.max(0, ...posicoes.map((p) => (p.tropa && p.tropa.quantidade) || 0));
+  for (const [nome, nivel] of Object.entries(niveis)) {
+    if (nome.startsWith('_')) continue;
+    if (!nivel || typeof nivel !== 'object') {
+      erros.push(`ia/niveis: o nivel '${nome}' precisa ser objeto`);
+      continue;
+    }
+    for (const [campo, valor] of Object.entries(nivel)) {
+      if (!CAMPOS_DO_NIVEL_DA_IA.includes(campo)) {
+        erros.push(`ia/niveis: '${nome}.${campo}' nao e numero que a IA le (${CAMPOS_DO_NIVEL_DA_IA.join(', ')})`);
+        continue;
+      }
+      const ok = campo === 'revisaoDoPrefeito_fator' ? typeof valor === 'number' && valor > 0 : Number.isInteger(valor) && valor >= 1;
+      if (!ok) erros.push(`ia/niveis: '${nome}.${campo}' invalido (veio ${valor})`);
+    }
+    const tamanho = nivel.tamanhoDoGrupo !== undefined ? nivel.tamanhoDoGrupo : dados.combat.ia.tamanhoDoGrupo;
+    if (Number.isInteger(tamanho) && tamanho < maiorPosicao) {
+      erros.push(`ia/niveis: '${nome}.tamanhoDoGrupo' ${tamanho} abaixo da maior tropa de posicao da escaramuca (${maiorPosicao})`);
+    }
+  }
+}
+
 function validarEncomenda(dados, erros) {
   const enc = dados.production && dados.production.encomenda;
   if (!enc || !Number.isInteger(enc.maxima) || enc.maxima < 1) {
@@ -1174,6 +1234,24 @@ function validarCameraDoTerreno(dados, erros) {
         + `inicial (${camera.velocidadeInicialPxPorSegundo}): segurar a seta frearia a camera`,
     );
   }
+}
+
+// F-TELA-NEVOA: o escuro da nevoa na tela. Dado de render: a cor em hex e os dois alfas em [0, 1],
+// o nao descoberto pelo menos tao escuro quanto o descoberto fora da vista (senao a nevoa se
+// inverte: o que se viu ficaria mais escuro que o que nunca se viu).
+function validarNevoaDoTerreno(dados, erros) {
+  const nevoa = dados.terrain && dados.terrain.nevoa;
+  if (!nevoa || typeof nevoa !== 'object') {
+    erros.push('terreno/nevoa: terrain.nevoa precisa existir (F-TELA-NEVOA)');
+    return;
+  }
+  if (typeof nevoa.cor !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(nevoa.cor)) erros.push(`terreno/nevoa: cor precisa ser #rrggbb (veio '${nevoa.cor}')`);
+  const alfa = (v) => typeof v === 'number' && v >= 0 && v <= 1;
+  if (!alfa(nevoa.alfaNaoDescoberto) || !alfa(nevoa.alfaForaDaVista)) {
+    erros.push('terreno/nevoa: alfaNaoDescoberto e alfaForaDaVista precisam estar em [0, 1]');
+    return;
+  }
+  if (nevoa.alfaNaoDescoberto < nevoa.alfaForaDaVista) erros.push('terreno/nevoa: alfaNaoDescoberto nao pode ser menor que alfaForaDaVista');
 }
 
 // F-D3: a reserva da vila. Dado de AUTORIA — quem le e tools/gerar-mapa.js, e o
@@ -1815,6 +1893,7 @@ function validarTudo(dados) {
   validarDevolucaoDeEstrada(dados, erros);
   validarZoomDoTerreno(dados, erros);
   validarCameraDoTerreno(dados, erros);
+  validarNevoaDoTerreno(dados, erros);
   validarGeracaoDoTerreno(dados, erros);
   validarDevolucaoDePredio(dados, erros);
   validarEscadaDePrioridade(dados, erros);
@@ -1827,6 +1906,8 @@ function validarTudo(dados) {
   validarDivisaoDoEscasso(dados, erros);
   validarLance(dados, erros);
   validarEncomenda(dados, erros);
+  validarVisao(dados, erros);
+  validarNiveisDaIA(dados, erros);
   validarPedidoDeComida(dados, erros);
   validarPrioridadesDaIA(dados, erros);
   validarEscaramuca(dados, erros);

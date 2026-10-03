@@ -5,7 +5,7 @@
 // externo (`src/escolha-da-partida.ts`), e quem carrega o jogo e o `inicio.ts`. `ui/` nunca toca
 // no estado (CLAUDE.md §3). Os rotulos vem de `data/theme-sertao.json` (`menuInicial`).
 import temaSertao from '../../data/theme-sertao.json';
-import type { EscolhaDaPartida, OpcaoDePazNaTela } from '../escolha-da-partida';
+import type { EscolhaDaPartida, OpcaoDeNivelNaTela, OpcaoDePazNaTela } from '../escolha-da-partida';
 import type { SituacaoDaGaveta } from '../arquivo-da-partida';
 import { textoDaGaveta } from './arquivo';
 import { mmss } from './contador-de-paz';
@@ -38,6 +38,12 @@ export function rotuloDaPaz(opcao: OpcaoDePazNaTela, rotulos: typeof temaSertao.
   return opcao.padrao ? rotulos.padrao.replace('{rotulo}', tempo) : tempo;
 }
 
+/** F-IA-DIFICULDADE — o rotulo de um nivel do adversario, do tema; o padrao leva a marca. Pura. */
+export function rotuloDoNivel(opcao: OpcaoDeNivelNaTela, rotulos: typeof temaSertao.menuInicial.configurar = temaSertao.menuInicial.configurar): string {
+  const nome = (rotulos.niveis as Readonly<Record<string, string | undefined>>)[opcao.valor] ?? opcao.valor;
+  return opcao.padrao ? rotulos.padrao.replace('{rotulo}', nome) : nome;
+}
+
 export interface MenuInicial {
   fechar(): void;
 }
@@ -48,6 +54,7 @@ export function montarMenuInicial(
   situacao: SituacaoDoSave,
   gavetas: readonly SituacaoDaGaveta[],
   opcoesDePaz: readonly OpcaoDePazNaTela[],
+  opcoesDeNivel: readonly OpcaoDeNivelNaTela[],
   aoEscolher: (escolha: EscolhaDaPartida) => void,
   aoAjuda: () => void,
 ): MenuInicial {
@@ -158,12 +165,28 @@ export function montarMenuInicial(
     paz.append(item);
   }
   campoDaPaz.append(nomeDaPaz, paz);
+  // F-IA-DIFICULDADE — o nivel do adversario, ao lado da paz
+  const campoDoNivel = document.createElement('label');
+  campoDoNivel.className = 'campo';
+  const nomeDoNivel = document.createElement('span');
+  nomeDoNivel.textContent = rotulosDaPaz.nivel;
+  const nivel = document.createElement('select');
+  nivel.dataset.campo = 'nivel';
+  for (const opcao of opcoesDeNivel) {
+    const item = document.createElement('option');
+    item.value = opcao.valor;
+    item.textContent = rotuloDoNivel(opcao, rotulosDaPaz);
+    item.selected = opcao.padrao;
+    nivel.append(item);
+  }
+  campoDoNivel.append(nomeDoNivel, nivel);
   const tituloDaConfiguracao = document.createElement('h2');
   tituloDaConfiguracao.textContent = rotulosDaPaz.titulo;
   configurar.append(
     tituloDaConfiguracao,
     campoDaPaz,
-    botao('comecar', rotulosDaPaz.comecar, () => { escolher({ modo: 'escaramuca', pazMinBase: Number(paz.value) }); }),
+    campoDoNivel,
+    botao('comecar', rotulosDaPaz.comecar, () => { escolher({ modo: 'escaramuca', pazMinBase: Number(paz.value), nivel: nivel.value }); }),
     botao('voltar', rotulos.voltar, () => { mostrar(novo); }),
   );
 

@@ -1,6 +1,7 @@
 'use strict';
 // Roteiro da D-TELA-02 — O MINIMAPA.
-//   1. H -> "Nova escaramuca": o minimapa desenha todos os predios do estado; o pixel no
+//   1. H -> "Nova escaramuca"; a tropa marcha em paz ate ver a vila da IA (ela nasce na nevoa,
+//      F-TELA-NEVOA); o minimapa desenha os predios do jogador e os da IA a vista; o pixel no
 //      meio de um predio do jogador tem a cor do bando dele, e o de um da IA a do outro
 //      (leitura do canvas, `getImageData`, nao da captura);
 //   2. DESPAUSADO e com o botao seguro 150 ms (§8), o clique no minimapa sobre a vila da IA
@@ -26,9 +27,50 @@ async function roteiro(ctx) {
   await page.keyboard.press('Escape');
   await esperarFrame();
 
+  // F-TELA-NEVOA: o minimapa so desenha o predio da IA que o jogador ve agora, e a vila da IA nasce
+  // na nevoa. A tropa ganha a vista pelo caminho do jogo: caixa nos 18, marcha em paz ate 6 tiles
+  // a oeste do maior predio da IA, e o relogio corre ate ele aparecer.
+  {
+    const fixar = async (t) => {
+      await page.evaluate(([x, y]) => window.__cangaco.fixarCamera({ scrollX: x, scrollY: y }), [t.gx * TILE_PX - canvas.width / 2, t.gy * TILE_PX - canvas.height / 2]);
+      await esperarFrame();
+    };
+    const naTela = (t, cam) => ({ x: canvas.left + t.gx * TILE_PX + TILE_PX / 2 - cam.scrollX, y: canvas.top + t.gy * TILE_PX + TILE_PX / 2 - cam.scrollY });
+    let s0 = await estado();
+    const minha = s0.unidadesRenderizadas.filter((u) => u.lado === LADO_DO_JOGADOR && u.tipo === 'militia');
+    const meio = { gx: Math.round(minha.reduce((n, u) => n + u.gx, 0) / minha.length), gy: Math.round(minha.reduce((n, u) => n + u.gy, 0) / minha.length) };
+    await fixar(meio);
+    s0 = await estado();
+    const pts = minha.map((u) => naTela(u, s0.camera));
+    await page.mouse.move(Math.min(...pts.map((q) => q.x)) - TILE_PX / 2, Math.min(...pts.map((q) => q.y)) - TILE_PX / 2);
+    await page.mouse.down();
+    await page.mouse.move(Math.max(...pts.map((q) => q.x)) + TILE_PX / 2, Math.max(...pts.map((q) => q.y)) + TILE_PX / 2, { steps: 8 });
+    await page.mouse.up();
+    await esperarFrame();
+    const areaDe = (p) => predios.predios.find((d) => d.id === p.tipo).tamanho.reduce((a, b) => a * b, 1);
+    const [idDoMaior, maiorDaIA] = Object.entries(s0.prediosDoEstado).filter(([, p]) => p.lado !== LADO_DO_JOGADOR)
+      .sort(([, a], [, b]) => areaDe(b) - areaDe(a))[0];
+    const perto = { gx: maiorDaIA.gx - 6, gy: maiorDaIA.gy + 1 };
+    await fixar(perto);
+    s0 = await estado();
+    const q = naTela(perto, s0.camera);
+    await page.mouse.move(q.x, q.y);
+    await page.mouse.down({ button: 'right' });
+    await page.waitForTimeout(150);
+    await page.mouse.up({ button: 'right' });
+    for (let i = 0; i < 40 && !(await estado()).prediosDoEstado[idDoMaior].naVista; i += 1) {
+      await page.evaluate(() => window.__cangaco.avancar(25));
+      await esperarFrame();
+    }
+    afirmar((await estado()).prediosDoEstado[idDoMaior].naVista, 'a tropa deveria ter chegado a ver o maior predio da IA');
+    // a camera volta a vila: o retangulo da vista no minimapa nao pode cobrir o predio da IA lido abaixo
+    await fixar(meio);
+  }
+
   // 1. os predios, na cor do bando
   const s = await estado();
-  const doEstado = Object.values(s.prediosDoEstado);
+  // F-TELA-NEVOA: os do jogador e os da IA a vista
+  const doEstado = Object.values(s.prediosDoEstado).filter((p) => p.lado === LADO_DO_JOGADOR || p.naVista);
   const mapa = await page.evaluate(() => {
     const c = window.document.querySelector('#minimapa canvas.mapa');
     if (c === null) return null;

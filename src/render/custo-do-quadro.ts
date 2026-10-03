@@ -1,4 +1,4 @@
-export type CamadaAnimada = 'vento' | 'agua' | 'chaoDaCana';
+export type CamadaAnimada = 'vento' | 'agua' | 'chaoDaCana' | 'nevoa';
 export type CustoDoQuadro = Record<CamadaAnimada, { ms: number; chamadas: number; itens: number }>;
 
 export function custoZerado(): CustoDoQuadro {
@@ -6,6 +6,8 @@ export function custoZerado(): CustoDoQuadro {
     vento: { ms: 0, chamadas: 0, itens: 0 },
     agua: { ms: 0, chamadas: 0, itens: 0 },
     chaoDaCana: { ms: 0, chamadas: 0, itens: 0 },
+    // F-TELA-NEVOA: itens = tiles da textura da nevoa repintados (o mapa inteiro, so quando o estado muda)
+    nevoa: { ms: 0, chamadas: 0, itens: 0 },
   };
 }
 
