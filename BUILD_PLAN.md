@@ -6161,6 +6161,40 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
   4. o registro no `SKILL_BUILDER_PROGRESS.md`: o prompt, a referência, os hashes e as gerações
      gastas.
 
+### D-ARTE-SERF-COMFYUI — O serf animado gerado no ComfyUI local, no jogo
+- **Pedido do operador (2026-10-03):** "gere e já atribua no jogo as animações. Quero ver já
+  funcionando no jogo". A arte sai do ComfyUI local (SDXL DreamShaper XL Turbo + IP-Adapter Plus +
+  ControlNet OpenPose), como no teste-2 aprovado para seguir
+  (`D:\projetos-pessoal\cangaco-game-candidatos\arte\D\serf\comfyui-teste-2026-10-03\teste-2\`).
+  **Substitui o piloto da D-ARTE-SERF-ANDAR pelo Codex,** que está parado.
+- **Escopo: arte e manifesto, sem código.** O render já desenha unidade por atlas e animação no
+  jogo normal: o atlas do manifesto é carregado por tipo (D-TELA-05d), e o quadro do andar sai da
+  distância andada (D-TELA-04b). Nada muda em `src/`, nem em `data/`.
+  - O serf ganha `atlas` e `animacoes` no `assets/manifest.json`: `parado` (1 quadro) e `andar`
+    (8 quadros, `tilesPorCiclo` 2), nas 5 direções canônicas (n, ne, l, se, s). O oeste é
+    espelho. Os `estados` de hoje continuam como fallback.
+  - O atlas fica em `assets/sprites/units/serf/serf.png` + `serf.json`, com quadros de 64×96 sem
+    trim, nomeados `serf/<animacao>/<direcao>/<nnnn>`.
+  - A base em `assets/base/units/serf-comfyui/`: a imagem de referência do IP-Adapter, os
+    esqueletos de pose e o `registro.json`, com o modelo, o prompt, as sementes e os pesos de cada
+    quadro. Os brutos (832×1216) ficam nos candidatos, fora do repositório.
+- **Aceite (escrito antes da geração, 2026-10-03):**
+  1. **O atlas passa no validador da D-TELA-04a** (o `F17f-manifesto`): todo quadro prometido
+     existe, toda direção tem o mesmo número de quadros e o `sourceSize` é 64×96. O
+     `F-SPR-carregamento` também passa.
+  2. **O pé fica numa linha fixa:** em todo quadro, a linha mais baixa com alfa fica a no máximo
+     2 px da linha 95. A transformação do bruto para o quadro é a mesma em todos os quadros:
+     escala e âncora fixas, e não o recorte pela caixa de cada um.
+  3. **No jogo:** um roteiro novo, `tools/shots/D-ARTE-SERF-COMFYUI.js`, sobre a vila pronta, com
+     um passo despausado. A ponte publica, para os serfs na vista, a animação, o quadro e o
+     `frame` do atlas. O roteiro afirma pelo menos um serf com `frame` do atlas novo em `andar`
+     e o quadro mudando entre dois instantes. As capturas são abertas.
+  4. **Não-regressão:** os roteiros `D-TELA-04c` (a vitrine de depuração), `D-TELA-03` (o ícone
+     da carga) e `ARTE-VILA` saem 0, e o `verify:rapido` passa.
+  5. **Limites conhecidos, registrados e não reprovados:** a geração é quadro a quadro, então
+     detalhes da roupa podem variar entre quadros (cintilação). A carga continua como ícone sobre
+     o serf (D-TELA-03a).
+
 ### D-ARTE-CHAO-DE-ROCA — Pedido de arte para o Codex: o chão de roça sob a cana
 - **Registrado por decisão do operador (2026-10-01): é pedido de arte para o Codex**, e não
   trabalho desta fila de código. Vem da avaliação da F-TR (o esgotado por tipo, `9fb7b71`): a
