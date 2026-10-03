@@ -18056,3 +18056,22 @@ Luminância = 0,2126 R + 0,7152 G + 0,0722 B; desvio populacional de todos os pi
   gerados continuam fora do repositório, em `D:\projetos-pessoal\cangaco-game-candidatos\`.
 - **D-TELA-COSTURA-DOS-TILES (`9234eb2` e `a761dcd`): aprovado pelo operador em jogo** ("o piso
   ficou melhor depois que corrigiu isso"). Já estava na `main`. A worktree foi encerrada.
+
+## 2026-10-03 — D-ARTE-SOLO-CAATINGA, só o solo, geração 1 (escolhida pelo operador), aplicada pela sessão Claude
+- O operador escolheu na pasta de candidatos a `generation-01-raw.png` do solo de caatinga, que tinha
+  sido descartada por emenda 1,33 e textura acima do limite de neutralidade. Ele dispensou a
+  neutralidade. Aceite `b533d0d` (caminho corrigido em `998bb75`).
+- **Feito:**
+  - a base `assets/base/terrain/solo-caatinga-D-g1-raw.png`;
+  - o bruto reduzido para 320×320 por NEAREST, com 4 recortes de 64×64 em (126,91), (212,8),
+    (73,225) e (172,209) para `grama-D-v0..v3`, nos mesmos caminhos;
+  - no manifesto, só a `licenca` e a `origem` da `grama` mudaram (3 linhas).
+- **Medido:**
+  - a pior emenda entre todo par de tiles ficou em **1,145 vez** o meio (limite 1,3). A
+    derivação antiga do Codex, com outros recortes, dava 1,33. A diferença é a busca de recorte;
+  - a cor média do bruto, do tile e da captura em jogo é a mesma: (212, 157, 106).
+- **Verificado:** os testes de manifesto, do véu e da costura deram 63/63, e os roteiros `F-T1`,
+  `ARTE-VILA` e `D-SAVE-VILA-PRONTA` saíram 0. A captura da vila pronta foi aberta: o chão aparece
+  contínuo, sem o xadrez dos tiles.
+- **Na tela:** a borda de grama verde que contorna o chão (as transições de terreno) continua a
+  antiga, e destoa do solo novo. É candidata à próxima arte do operador.

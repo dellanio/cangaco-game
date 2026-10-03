@@ -266,11 +266,11 @@
         "v2": "sprites/terrain/grama-D-v2.png",
         "v3": "sprites/terrain/grama-D-v3.png"
       },
-      "licenca": "arte propria do projeto, estudo D de grama autorizado para ensaio em jogo em 2026-09-30",
+      "licenca": "arte propria do projeto, geracao 1 do solo de caatinga escolhida pelo operador em 2026-10-03",
       "origem": {
-        "base": "base/terrain/grama-D-raw.png",
+        "base": "base/terrain/solo-caatinga-D-g1-raw.png",
         "semente": null,
-        "nota": "Quatro reducoes/rotacoes do mesmo recorte central do estudo candidatos/D/grama/generation-01-raw.png. Tileability e albedo nao homologados."
+        "nota": "Solo de caatinga, geracao 1 (D-ARTE-SOLO-CAATINGA, reaberto pelo operador em 2026-10-03). Bruto 1254x1254 sha256 29cf98404a8936bb1193544c0227d7ddf97527397b87c74d1c2113c5a39822f9; reduzido para 320x320 por NEAREST; recortes 64x64 em (126,91), (212,8), (73,225), (172,209) para v0..v3. Pior emenda entre pares 1,145x o meio (limite 1,3). Neutralidade dispensada pelo operador. Candidatos em D:/projetos-pessoal/cangaco-game-candidatos/arte/D/solo-caatinga/."
       }
     },
     {
