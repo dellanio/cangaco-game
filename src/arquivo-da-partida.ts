@@ -9,6 +9,7 @@
  * deixa a partida em curso intocada.
  */
 import type { Sessao } from './sessao';
+import type { GameState } from './sim/state';
 import { carregar, salvar } from './sim/save';
 import type { GameData } from './sim/data/types';
 import { gameData } from './sim/data';
@@ -40,6 +41,31 @@ function mensagemDe(erro: unknown): string {
   return texto.startsWith(PREFIXO_DA_RECUSA) ? texto.slice(PREFIXO_DA_RECUSA.length) : texto;
 }
 
+/**
+ * E-TELA-MENU-INICIAL — le o ultimo save sem tocar em sessao nenhuma: e o que o menu usa para
+ * saber se o Continuar abre (e por que nao), antes de o jogo existir. `gaveta` nula e o
+ * navegador sem armazenamento. O `carregar` do jogo passa por aqui tambem.
+ */
+export type LeituraDoSave =
+  | { readonly ok: true; readonly estado: GameState }
+  | { readonly ok: false; readonly causa: 'sem-save' | 'recusado' | 'gaveta'; readonly detalhe: string };
+
+export function lerUltimoSave(gaveta: Gaveta | null, dados: GameData = gameData): LeituraDoSave {
+  if (gaveta === null) return { ok: false, causa: 'gaveta', detalhe: '' };
+  let texto: string | null;
+  try {
+    texto = gaveta.getItem(CHAVE_DO_SAVE);
+  } catch (erro) {
+    return { ok: false, causa: 'gaveta', detalhe: mensagemDe(erro) };
+  }
+  if (texto === null) return { ok: false, causa: 'sem-save', detalhe: '' };
+  try {
+    return { ok: true, estado: carregar(texto, dados) };
+  } catch (erro) {
+    return { ok: false, causa: 'recusado', detalhe: mensagemDe(erro) };
+  }
+}
+
 export function criarArquivoDaPartida(sessao: Sessao, gaveta: Gaveta, dados: GameData = gameData): ArquivoDaPartida {
   return {
     salvar() {
@@ -52,21 +78,10 @@ export function criarArquivoDaPartida(sessao: Sessao, gaveta: Gaveta, dados: Gam
       return { ok: true, acao: 'salvou', tick: estado.tick };
     },
     carregar() {
-      let texto: string | null;
-      try {
-        texto = gaveta.getItem(CHAVE_DO_SAVE);
-      } catch (erro) {
-        return { ok: false, causa: 'gaveta', detalhe: mensagemDe(erro) };
-      }
-      if (texto === null) return { ok: false, causa: 'sem-save', detalhe: '' };
-      let estado;
-      try {
-        estado = carregar(texto, dados);
-      } catch (erro) {
-        return { ok: false, causa: 'recusado', detalhe: mensagemDe(erro) };
-      }
-      sessao.substituir(estado);
-      return { ok: true, acao: 'carregou', tick: estado.tick };
+      const leitura = lerUltimoSave(gaveta, dados);
+      if (!leitura.ok) return leitura;
+      sessao.substituir(leitura.estado);
+      return { ok: true, acao: 'carregou', tick: leitura.estado.tick };
     },
   };
 }

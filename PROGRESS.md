@@ -18235,3 +18235,36 @@ sem chave nova (3)
 
 A D-ARTE-CHAO-DE-ROCA foi marcada com a ressalva que já estava no PROGRESS: o validador de arte rodou
 em modo `trial`, e a revisão deu o aceite 1 como cumprido. Os itens da D sem código ficam na D.
+
+## 2026-10-03 — E-TELA-MENU-INICIAL (a porta do jogo)
+
+**O que mudou.** Abrir `/` sem parâmetro mostra o menu antes do jogo: **Novo jogo** (abre Jogo livre
+e Escaramuça), **Continuar** (o último save), **Carregar** (a lista das gavetas; hoje a gaveta única
+da F23b, as três chegam com a E-SAVE-GAVETAS) e **Ajuda** (a tela de ajuda que já existia, por cima
+do menu; fecha com Esc). Os rótulos estão em `data/theme-sertao.json` (`menuInicial`).
+- `src/main.ts` deixou de rodar no import: o corpo virou `iniciarPartida(estado, ajuda)`. O
+  `inicio.ts` decide (menu ou URL) e só depois importa o `main.ts`, e com ele o Phaser.
+- `src/escolha-da-partida.ts` (laço externo, puro): `abreNoMenu`, `escolhaDaUrl`, `estadoNovo` e
+  `estadoDaEscolha`. A escaramuça do menu e a do `?escaramuca` passam pela mesma função.
+- `src/arquivo-da-partida.ts`: `lerUltimoSave(gaveta)`, que o menu usa antes de o jogo existir. O
+  `carregar` do jogo passou a usá-lo, sem mudar o resultado (o teste da F23b continua verde).
+- `src/ui/menu-inicial.ts`: só DOM e a escolha por callback.
+- **A regra da URL.** Qualquer parâmetro pula o menu (é o que mantém todo roteiro como estava), e
+  `?menu` força o menu. O `?menu` existe para o roteiro nascer pausado no menu (`?menu&pausado`) e
+  comparar o tick 0. Não é superfície de jogador.
+- Harness novo, do laço externo: `window.__cangacoPartida.estadoSerializado()`.
+
+**Verificado:**
+- `tests/E-TELA-MENU-INICIAL.test.ts` (6 testes): a regra da URL por tabela; (b) a escaramuça do
+  menu, a do `?escaramuca` e a `criarEscaramuca(semente)` de antes dão o mesmo JSON (53 556 bytes);
+  (c) o Continuar sem save, sem armazenamento e com save ilegível, cada um com o motivo, e com save
+  ele abre a partida igual.
+- Roteiro `E-TELA-MENU-INICIAL` saiu 0: (a) `/` sem save mostra o menu com 0 canvas e sem
+  `__cangaco`; (c) o Continuar tem `aria-disabled` e diz "Nenhuma partida guardada ainda", e o
+  clique nele não sai do menu; a Ajuda abre por cima e fecha com Esc sem criar canvas; (b) a
+  escaramuça por `?menu&pausado` e a do `?escaramuca&pausado` têm o estado serializado igual no tick 0;
+  (e) a foto `screenshots/E-TELA-MENU-INICIAL-1-menu.png`, aberta. O passo despausado escolhe o jogo
+  livre com `mouse.down` / 150 ms / `mouse.up`, o relógio corre até o tick 5 e o `P` pausa de volta.
+- `npm run verify:rapido`: 48 arquivos, 479 testes, verde.
+- (d) os roteiros que existem: `shot:todos` sobre este commit, numa worktree irmã. O resultado vai no
+  registro seguinte.

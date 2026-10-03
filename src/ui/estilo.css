@@ -836,3 +836,35 @@ body:not([data-corpo="distribuicao"]) #distribuicao { display: none; }
   position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
   padding: 24px; text-align: center; font-size: 20px; background: #0a0a0a; color: #f0e0c0; z-index: 1000;
 }
+
+/* ---- o menu inicial (E-TELA-MENU-INICIAL) ------------------------------------- */
+/* Por cima da grade inteira, barra e canvas, antes de o jogo existir. A ajuda do menu
+   abre por cima dele, na celula do canvas, como no jogo. */
+#menu-inicial {
+  grid-column: 1 / -1; grid-row: 1; z-index: 20;
+  display: grid; place-items: center;
+  background: #25170f url('../../assets/sprites/ui/resource-plank.png') center top / 100% 96px repeat-y;
+}
+body[data-menu] #ajuda { z-index: 30; }
+#menu-inicial .caixa {
+  box-sizing: border-box; width: 340px; padding: 18px 26px 24px;
+  display: flex; flex-direction: column; align-items: stretch; gap: 10px;
+  background-color: var(--papel); background-image: var(--grao);
+  border: var(--traco) solid var(--tinta);
+  outline: 2px solid var(--papel); outline-offset: -8px;
+  box-shadow: 6px 6px 0 var(--tinta), 0 12px 40px rgba(0, 0, 0, 0.6);
+}
+#menu-inicial .logo-do-menu {
+  height: 120px;
+  background: transparent url('../../assets/sprites/ui/logo-pianco-completo.png') center / contain no-repeat;
+}
+#menu-inicial .lema {
+  margin: 0 0 6px; text-align: center; font-style: italic; color: var(--terra-queimada);
+}
+#menu-inicial .opcoes { display: flex; flex-direction: column; gap: 10px; }
+#menu-inicial .opcoes[hidden] { display: none; }
+#menu-inicial .opcao { display: flex; flex-direction: column; gap: 3px; }
+#menu-inicial button { font-size: 17px; padding: 8px 12px; box-shadow: 3px 3px 0 var(--tinta); }
+#menu-inicial button[aria-disabled="true"] { box-shadow: none; }
+#menu-inicial button[data-acao="voltar"] { font-size: 13px; padding: 4px 8px; align-self: center; }
+#menu-inicial .motivo { font-size: 12px; font-style: italic; color: var(--terracota); text-align: center; }
