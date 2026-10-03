@@ -6803,7 +6803,7 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
   véu) continua na `main`.
 - **REABERTO SÓ O SOLO, GERAÇÃO 1 (decisão do operador, 2026-10-03; aceite antes da aplicação).**
   O operador escolheu na pasta de candidatos a `generation-01-raw.png`
-  (`D:\projetos-pessoal\cangaco-game-candidatosrte\D\solo-caatinga\`), que tinha reprovado
+  (`D:\projetos-pessoal\cangaco-game-candidatos\arte\D\solo-caatinga\`), que tinha reprovado
   por emenda 1,33 e textura acima do limite de neutralidade. **A neutralidade (aceite 1, segunda
   parte) fica dispensada por ele:** a textura é a que ele quer. Os capins e a água continuam
   descartados.
