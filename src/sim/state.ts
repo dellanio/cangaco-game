@@ -50,7 +50,9 @@ export type MotivoDeRecusaDeLuta =
   | 'unidade-a-distancia'
   | 'alvo-do-proprio-lado'
   /** C-IA-03b — a partida esta em peacetime (`sim/paz.ts`). */
-  | 'em-paz';
+  | 'em-paz'
+  /** F-COMBATE-ALVO-NA-VISTA — o jogador mandou atacar quem ele nao ve agora (`sim/nevoa.ts`). */
+  | 'alvo-fora-da-vista';
 
 /** F26a — por que um `MoveUnits` foi recusado. */
 export type MotivoDeRecusaDeMarcha =
@@ -91,7 +93,9 @@ export type MotivoDeRecusaDeAtaque =
   | 'unidade-nao-militar'
   | 'predio-do-proprio-lado'
   /** C-IA-03b — a partida esta em peacetime (`sim/paz.ts`). */
-  | 'em-paz';
+  | 'em-paz'
+  /** F-COMBATE-ALVO-NA-VISTA — o jogador mandou atacar o predio que ele nao ve agora (`sim/nevoa.ts`). */
+  | 'alvo-fora-da-vista';
 
 export type GameEvent =
   | { readonly type: 'tick-advanced'; readonly tick: number }

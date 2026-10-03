@@ -1492,3 +1492,17 @@ Medi o mesmo roteiro, o da C-IA-03c (jogar pela tela), contra a mesma IA:
   - Trocar só 8 → 6 **não** resolve: continua sem efeito.
   - **Decidido (operador, 2026-09-30): (A).** O campo saiu de `condition.json`; a (B) está no
     `IDEIAS.md`.
+
+## 2026-10-03 — F-COMBATE-ALVO-NA-VISTA: com a névoa, a vitória da escaramuça vira cara ou coroa
+
+- A tropa inicial (18 cabras) contra a defesa e o terceiro grupo da IA vence por pouco, e o
+  resultado depende de como ela se aproxima. Sem névoa, a ordem de ataque dada de longe (o
+  roteiro C-IA-03c) vence com 6 vivos. Com névoa a ordem de longe é recusada, e o jogador marcha
+  até ver o inimigo.
+- Medido sem tela (sonda apagada), a mesma largada do roteiro (a tropa 16 tiles ao sul na paz) e
+  seis jeitos de chegar: marchar a 8, 4, 2 ou 1 tile do inimigo e atacar quando ele aparece,
+  esperar quem vem, ou marchar até o próprio tile dele. **Só o último vence (5 vivos); os outros
+  cinco perdem a tropa inteira.** Sem a largada ao sul, a marcha a 8 tiles vence com 4.
+- Não é número para girar sozinho: é a margem da tropa do jogador (`escaramuca.tropaDoJogador`)
+  contra a IA, que também entra na F-IA-DIFICULDADE (o nível normal é o jogo de hoje). Junta ao
+  lote do combate ("o empate é caótico", 2026-09-29).

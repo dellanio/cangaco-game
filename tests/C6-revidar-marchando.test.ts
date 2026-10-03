@@ -18,6 +18,7 @@ import { condicaoCheiaDoTipo } from '../src/sim/condicao';
 import { salvar } from '../src/sim/save';
 import { naVila } from './helpers/ancoras';
 import { gravarEvidencia } from './helpers/evidence';
+import { comOlheiro } from './helpers/vista';
 
 const INIMIGO = LADO_DO_JOGADOR + 1;
 const semCivis = (s: GameState): GameState => ({ ...s, unidades: { porId: {}, ordem: [] } });
@@ -98,7 +99,9 @@ describe('C6 — revidar enquanto marcha', () => {
     for (let t = 0; t < 400 && s.unidades.porId['m']?.fsm !== 'lutando'; t += 1) s = step(s, [], gameData);
     expect(s.unidades.porId['m']?.fsm).toBe('lutando');
     expect(s.unidades.porId['m']?.retomarMarcha).toEqual(destino);
-    s = step(s, [{ type: 'AttackBuilding', unidades: ['m'], predio: escolaId }], gameData);
+    // F-COMBATE-ALVO-NA-VISTA: a escola inimiga fica longe da luta; um olheiro do jogador a ve
+    s = step(comOlheiro(s, escola), [{ type: 'AttackBuilding', unidades: ['m'], predio: escolaId }], gameData);
+    expect(s.events.filter((e) => e.type === 'command-rejected')).toEqual([]);
     expect(s.unidades.porId['m']?.retomarMarcha).toBeUndefined();
   });
 

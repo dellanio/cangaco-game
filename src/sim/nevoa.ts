@@ -39,6 +39,8 @@ interface Olho {
   readonly x1: number;
   readonly y1: number;
   readonly raio: number;
+  /** A geracao do ultimo avanco que achou a entidade dele: quem fica para tras saiu. */
+  visto: number;
 }
 
 export interface Visao {
@@ -51,11 +53,31 @@ export interface Visao {
   readonly olhos: Map<string, Olho>;
   /** Eixo deterministico (aceite d): tiles carimbados ou descarimbados no ultimo avanco. */
   carimbados: number;
+  /**
+   * O array de `descoberto` que ja liga todo tile que esta visao ve, ou `null`. So `avancarNevoa`
+   * o grava. O avanco seguinte so pode olhar o tile que acendeu se o `descoberto` do estado for
+   * ESTE array (a mesma referencia): a visao feita por um leitor (`visaoDe` de um estado montado
+   * a mao, de um load, de um ramo) nao garante nada, e um estado de outra linha tem outro array.
+   */
+  descobertoConferido: readonly number[] | null;
+  /** O estado de quem esta visao e agora (a chave dela em `visoes`), para tira-la de la quando
+   *  o avanco a reaproveita. */
+  dono: GameState | null;
+  /** Conta os avancos, para marcar os olhos achados (`Olho.visto`) sem montar mapa novo. */
+  geracao: number;
 }
 
 const BITS = 32;
 
 const visoes = new WeakMap<GameState, Visao>();
+
+/**
+ * A ultima visao que o `step` deixou. O avanco reaproveita ela quando o estado de entrada nao
+ * tem a sua — o teste que troca o estado entre dois `step` (`{ ...s, ... }`) cairia na conta
+ * inteira a cada tick. A diferenca entre olhos vale a partir de QUALQUER visao: so muda o custo,
+ * nunca o resultado.
+ */
+let ultima: Visao | null = null;
 
 function mesmoOlho(a: Olho, b: Olho): boolean {
   return a.x0 === b.x0 && a.y0 === b.y0 && a.x1 === b.x1 && a.y1 === b.y1 && a.raio === b.raio;
@@ -74,14 +96,14 @@ function olhosDoEstado(state: GameState, dados: GameData): Map<string, Olho> {
   for (const id of state.unidades.ordem) {
     const u = state.unidades.porId[id];
     if (u === undefined || u.lado !== LADO_DO_JOGADOR) continue;
-    olhos.set(id, { x0: u.gx, y0: u.gy, x1: u.gx + 1, y1: u.gy + 1, raio: raioDaUnidade(u.tipo, dados) });
+    olhos.set(id, { x0: u.gx, y0: u.gy, x1: u.gx + 1, y1: u.gy + 1, raio: raioDaUnidade(u.tipo, dados), visto: 0 });
   }
   for (const id of state.predios.ordem) {
     const p = state.predios.porId[id];
     if (p === undefined || p.lado !== LADO_DO_JOGADOR || p.estado !== 'completo') continue;
     const caixa = caixaDoPredio(p, dados);
     if (caixa === null) continue;
-    olhos.set(id, { ...caixa, raio: dados.visao.porTipoDePredio[p.tipo] ?? dados.visao.predio });
+    olhos.set(id, { ...caixa, raio: dados.visao.porTipoDePredio[p.tipo] ?? dados.visao.predio, visto: 0 });
   }
   return olhos;
 }
@@ -113,10 +135,59 @@ function carimbar(v: Visao, o: Olho, delta: 1 | -1, aoAcender: ((i: number) => v
   return n;
 }
 
+/**
+ * Leva os olhos de `v` para os de `state`, sem montar mapa novo: quem nao mudou so ganha a marca
+ * da geracao; quem mudou descarimba o disco velho e carimba o novo; quem ficou sem marca saiu
+ * (morreu, caiu, mudou de lado) e descarimba. So o carimbo de um olho que FICA pode acender um
+ * tile (de 0 a 1), e nada que vem depois na mesma passada o apaga.
+ */
+function atualizarOlhos(v: Visao, state: GameState, dados: GameData, acender: (i: number) => void): void {
+  v.carimbados = 0;
+  v.geracao += 1;
+  const g = v.geracao;
+  const trocar = (id: string, novo: Olho): void => {
+    const velho = v.olhos.get(id);
+    if (velho !== undefined && mesmoOlho(velho, novo)) {
+      velho.visto = g;
+      return;
+    }
+    if (velho !== undefined) v.carimbados += carimbar(v, velho, -1, null);
+    v.carimbados += carimbar(v, novo, 1, acender);
+    v.olhos.set(id, novo);
+  };
+  for (const id of state.unidades.ordem) {
+    const u = state.unidades.porId[id];
+    if (u === undefined || u.lado !== LADO_DO_JOGADOR) continue;
+    const velho = v.olhos.get(id);
+    if (velho !== undefined && velho.x0 === u.gx && velho.y0 === u.gy && velho.x1 === u.gx + 1 && velho.y1 === u.gy + 1) {
+      velho.visto = g;
+      continue;
+    }
+    trocar(id, { x0: u.gx, y0: u.gy, x1: u.gx + 1, y1: u.gy + 1, raio: raioDaUnidade(u.tipo, dados), visto: g });
+  }
+  for (const id of state.predios.ordem) {
+    const p = state.predios.porId[id];
+    if (p === undefined || p.lado !== LADO_DO_JOGADOR || p.estado !== 'completo') continue;
+    // o tipo de um id nao muda: no mesmo canto, e a mesma caixa e o mesmo raio
+    const velho = v.olhos.get(id);
+    if (velho !== undefined && velho.x0 === p.gx && velho.y0 === p.gy) {
+      velho.visto = g;
+      continue;
+    }
+    const caixa = caixaDoPredio(p, dados);
+    if (caixa !== null) trocar(id, { ...caixa, raio: dados.visao.porTipoDePredio[p.tipo] ?? dados.visao.predio, visto: g });
+  }
+  for (const [id, o] of v.olhos) {
+    if (o.visto === g) continue;
+    v.carimbados += carimbar(v, o, -1, null);
+    v.olhos.delete(id);
+  }
+}
+
 /** A visao inteira, do zero. */
 function visaoInteira(state: GameState, dados: GameData): Visao {
   const { largura, altura } = dados.mapa;
-  const v: Visao = { dados, largura, altura, contagem: new Uint16Array(largura * altura), olhos: olhosDoEstado(state, dados), carimbados: 0 };
+  const v: Visao = { dados, largura, altura, contagem: new Uint16Array(largura * altura), olhos: olhosDoEstado(state, dados), carimbados: 0, descobertoConferido: null, dono: state, geracao: 0 };
   for (const o of v.olhos.values()) v.carimbados += carimbar(v, o, 1, null);
   return v;
 }
@@ -178,9 +249,11 @@ export function descobertoInicial(state: GameState, dados: GameData = gameData):
  * olhos que mudaram, e liga em `descoberto` o tile que acendeu. Estado sem a camada passa
  * igual. A referencia de `descoberto` so muda quando algum bit novo acende.
  *
- * Sem cache de `antes` (load, ramo, estado montado), a visao e inteira e TODO tile visivel e
- * conferido contra `descoberto`; com cache, `antes` saiu de um `step`, que ja ligou tudo o que
- * via, e so o tile que acendeu agora pode ser novo. As duas dao o mesmo `descoberto`.
+ * A visao de partida e a de `antes`, ou a ultima do `step` (`ultima`), ou a conta inteira. Se o
+ * `descoberto` de entrada e o array que essa visao ja conferiu (`descobertoConferido`), ele ja
+ * liga tudo o que ela via, e so o tile que acendeu agora pode ser novo. Senao (load, ramo, estado
+ * montado, visao pedida por um leitor), TODO tile visivel e conferido contra ele, uma vez. Todos
+ * os caminhos dao o mesmo `descoberto`.
  */
 export function avancarNevoa(antes: GameState, depois: GameState, dados: GameData = gameData): GameState {
   const chave = String(LADO_DO_JOGADOR);
@@ -194,29 +267,54 @@ export function avancarNevoa(antes: GameState, depois: GameState, dados: GameDat
     ligar(bits, i);
   };
 
-  const emCache = visoes.get(antes);
+  const doAntes = visoes.get(antes);
+  const deOnde = doAntes !== undefined && doAntes.dados === dados ? doAntes : ultima !== null && ultima.dados === dados ? ultima : null;
   let v: Visao;
-  if (emCache !== undefined && emCache.dados === dados) {
-    v = emCache;
-    visoes.delete(antes);
-    v.carimbados = 0;
-    const novos = olhosDoEstado(depois, dados);
-    for (const [id, velho] of v.olhos) {
-      const novo = novos.get(id);
-      if (novo !== undefined && mesmoOlho(velho, novo)) continue;
-      v.carimbados += carimbar(v, velho, -1, null);
-      v.olhos.delete(id);
-    }
-    for (const [id, novo] of novos) {
-      if (v.olhos.has(id)) continue;
-      v.carimbados += carimbar(v, novo, 1, acender);
-      v.olhos.set(id, novo);
-    }
+  if (deOnde !== null) {
+    v = deOnde;
+    if (v.dono !== null) visoes.delete(v.dono);
+    atualizarOlhos(v, depois, dados, acender);
   } else {
     v = visaoInteira(depois, dados);
+  }
+  if (v.descobertoConferido !== bitsAntes) {
     for (let i = 0; i < v.contagem.length; i++) if ((v.contagem[i] ?? 0) > 0) acender(i);
   }
-  const resultado: GameState = bits === null ? depois : { ...depois, descoberto: { ...depois.descoberto, [chave]: bits } };
+  const bitsDepois: readonly number[] = bits ?? bitsAntes;
+  const resultado: GameState = bits === null ? depois : { ...depois, descoberto: { ...depois.descoberto, [chave]: bitsDepois } };
+  v.descobertoConferido = bitsDepois;
+  v.dono = resultado;
   visoes.set(resultado, v);
+  ultima = v;
   return resultado;
+}
+
+/**
+ * F-COMBATE-ALVO-NA-VISTA — a ordem de ataque e do jogador (alguma unidade dela e do lado dele),
+ * o estado tem a nevoa, e o alvo nao esta a vista (`naVista`, so perguntado nesse caso). A IA
+ * ignora a nevoa e nao passa por aqui: ela da ordem pela FSM, sem comando (`systems/ia.ts`).
+ */
+export function ordemDoJogadorSemVista(state: GameState, unidades: readonly string[], naVista: () => boolean): boolean {
+  if (state.descoberto?.[String(LADO_DO_JOGADOR)] === undefined) return false;
+  if (!unidades.some((id) => state.unidades.porId[id]?.lado === LADO_DO_JOGADOR)) return false;
+  return !naVista();
+}
+
+/**
+ * F-COMBATE-ALVO-NA-VISTA — o inimigo que o lado do jogador ve agora: a unidade no tile dela, o
+ * predio se algum tile do footprint esta visivel (um canto a vista ja mostra a casa). Alvo que
+ * nao existe: nao.
+ */
+export function unidadeNaVista(state: GameState, id: string, dados: GameData = gameData): boolean {
+  const u = state.unidades.porId[id];
+  return u !== undefined && ehVisivel(visaoDe(state, dados), u.gx, u.gy);
+}
+
+export function predioNaVista(state: GameState, id: string, dados: GameData = gameData): boolean {
+  const p = state.predios.porId[id];
+  const caixa = p === undefined ? null : caixaDoPredio(p, dados);
+  if (caixa === null) return false;
+  const v = visaoDe(state, dados);
+  for (let gy = caixa.y0; gy < caixa.y1; gy++) for (let gx = caixa.x0; gx < caixa.x1; gx++) if (ehVisivel(v, gx, gy)) return true;
+  return false;
 }

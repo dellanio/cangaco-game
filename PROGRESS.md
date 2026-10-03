@@ -3265,6 +3265,14 @@ que vetar custe uma linha.
   pronto revela (`src/houses/KM_Houses.pas:669-694`, `Activate`). A obra não revela, e o operário
   nela revela pela visão dele. Em aberto: o KaM recusa planta no escuro; aqui nada impede o
   jogador de plantar no não descoberto. O GDD não fala disso, e a F não mexe no `canPlace`.
+- **(2026-10-03, Fase F) F-COMBATE-ALVO-NA-VISTA — o roteiro C-IA-03c com a névoa.** Ele vence a
+  escaramuça dando a ordem de ataque de longe, e com a névoa essa ordem é recusada. Jogando como o
+  jogador joga com névoa (marchar até ver, depois atacar), a vitória vira sorte: sem tela, só 1 de
+  6 jeitos de chegar vence (`BALANCE_LOG.md`, 2026-10-03). Fiz o conservador: o roteiro não mudou
+  nesta feature e sai 1 entre ela e a F-TELA-NEVOA. Na F-TELA, o clique no tile de um inimigo fora
+  da vista vira marcha até o tile (o único jeito que venceu), e o roteiro passa a jogar assim. Se
+  ainda assim perder, a decisão é do operador: a margem da tropa (`escaramuca.tropaDoJogador`), ou
+  a afirmação de vitória do roteiro.
 
 
 ## F-T1 — Camada de terreno base (dado + sim + render mínimo) (2026-09-24)
@@ -18631,3 +18639,56 @@ Leituras conservadoras, PARA REVISÃO do operador:
   (+1 265). O save do operador: 67 858 → 69 292.
 - (f) `descoberto` entrou na `GUARDA-step-preserva-opcionais` como `persiste` (o typecheck cobrou),
   e o arquivo da feature, a guarda e o save do operador passam na suíte transladada.
+
+## 2026-10-03 — F-COMBATE-ALVO-NA-VISTA (ordem só contra o inimigo que se vê)
+
+**Medida antes do código (sonda temporária, já apagada; não é cobertura contínua):** registrei
+toda ordem `AttackUnit`/`AttackBuilding` de unidade do jogador a alvo fora da vista na suíte
+inteira. **5 arquivos, 13 chamadas:** `C-TELA-04-atacar-unidade` (2), `C6-revidar-marchando` (1),
+`E-TELA-CONFIGURAR-PARTIDA` (8, o laço das opções de paz), `F28a-corpo-a-corpo` (1) e
+`F-CERCO-a2-ataque` (1). Os dois últimos são casos de recusa por outro motivo (alvo que não
+existe): a regra nova vem por último e eles ficam iguais. Roteiros que dão ordem de ataque:
+`F26b`, `D-TELA-05c` e `C-IA-03c`.
+
+**Feito (verificado rodando):**
+- `alvo-fora-da-vista` em `MotivoDeRecusaDeLuta` e `MotivoDeRecusaDeAtaque`, conferido **depois**
+  das recusas que já existiam. Vale para a ordem de unidade do jogador e só quando o estado tem a
+  névoa (`descoberto` do jogador). Unidade: o tile dela visível. Prédio: algum tile do footprint
+  visível (um canto à vista já mostra a casa). `sim/nevoa.ts`: `ordemDoJogadorSemVista`,
+  `unidadeNaVista`, `predioNaVista`.
+- **(c) o alvo que sai da vista no meio do ataque: a tropa segue o alvo já escolhido.** No KaM o
+  grupo corpo a corpo persegue o alvo da ordem até ele morrer, sem olhar a névoa
+  (`src/units/KM_UnitGroup.pas:1083-1092`; o alvo só vira nulo morto, `:2118-2127`). Só o atirador
+  larga quem está no escuro (`src/units/actions/KM_UnitActionFight.pas:199-200`), e aqui atirador
+  nem recebe `AttackUnit`. Por isso nada muda depois da ordem aceita.
+- Os testes ganharam a vista pelo caminho do jogo: `tests/helpers/vista.ts` (`comOlheiro`) põe um
+  cabra do jogador a 3..6 tiles do alvo, sem encostar. `C-TELA-04` (a escaramuça sem paz),
+  `C6 (c)` (o olheiro só no tick da ordem) e `E-TELA-CONFIGURAR-PARTIDA`. Neste último a asserção
+  ficou **mais estrita**: antes conferia só "não foi recusada pela paz", e com a névoa a ordem
+  passava a ser recusada pela vista sem o teste notar; agora confere "nenhuma recusa" com o olheiro.
+- **Defeito da névoa achado pela sonda e corrigido:** `visaoDe` num estado montado à mão punha a
+  visão no cache, e o `step` seguinte a tomava como vinda de um `step` (que já liga no
+  `descoberto` tudo o que vê). Resultado: o `descoberto` saía diferente com e sem a leitura (o
+  `F28a (d)` acusou). A visão ganhou `cobreODescoberto`, que só o avanço liga. Teste novo no
+  arquivo da F-TERRENO, e conferi que ele reprova com a marca forçada a `true`.
+
+**Aceite** (`tests/F-COMBATE-ALVO-NA-VISTA.test.ts`):
+- (a) `AttackUnit` e `AttackBuilding` contra a vila da IA a ~40 tiles: recusa com o motivo, e o
+  save do estado igual ao do tick sem a ordem.
+- (b) com o olheiro a menos de `visao`: aceito, e a tropa inteira sai para lutar; o prédio, com
+  um canto à vista. A recusa de antes (prédio do próprio lado, alvo que não existe) mantém o motivo.
+- (c) o olheiro some no tick seguinte à ordem: 200 ticks com o alvo fora da vista e o atacante em
+  `indo_lutar` com ele, 0 ticks em que largou (`test-output/F-COMBATE-ALVO-NA-VISTA-segue-o-alvo.json`).
+- (d) a IA não passa por comando (`systems/ia.ts`): a ordem dada à tropa da IA contra o jogador
+  longe é aceita. A suíte inteira roda verde com a regra (a C e a escaramuça iguais).
+- Roteiros: `F26b` e `D-TELA-05c` saem 0. **`C-IA-03c` sai 1** (a pergunta em aberto acima).
+
+**Custo da névoa num teste que troca o estado entre dois `step`** (`LOTE3-c`, 12 000 ticks; tempo
+de parede, número da corrida, nunca asserção): sem a névoa 0,69 s; com a primeira versão 2,17 s
+(o `{ ...s }` do teste derrubava o cache, e cada tick fazia a conta inteira; o `verify:rapido`
+estourou os 10 s do teste com a máquina cheia). Duas mudanças em `sim/nevoa.ts`, sem mudar
+resultado (os carimbos da medida (d) saíram iguais, 5 566 e 272 734): o avanço reaproveita a
+última visão do `step` quando o estado de entrada não tem a sua (a diferença entre olhos vale a
+partir de qualquer visão), e o atalho do `descoberto` só vale quando o array dele é o mesmo que a
+visão conferiu (`descobertoConferido`, que trocou o `cobreODescoberto`); e os olhos andam sem
+montar mapa novo por tick (marca de geração). Depois: 0,87 s.

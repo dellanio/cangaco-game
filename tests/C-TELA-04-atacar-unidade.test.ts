@@ -14,15 +14,17 @@ import { step } from '../src/sim/tick';
 import { criarEscaramuca } from '../src/sim/cenario';
 import { FSM_INDO_LUTAR } from '../src/sim/systems/combate';
 import { gravarEvidencia } from './helpers/evidence';
+import { comOlheiro } from './helpers/vista';
 
 const s0 = criarEscaramuca(gameData.economia.estadoInicial.semente);
-/** A mesma partida, sem a paz: a ordem de ataque em paz e recusada (C-IA-03b), e aqui se
- *  prova o que a ordem FAZ, nao a cerca. */
-const semPaz: GameState = { ...s0, pazAteTick: 0 };
 const unidades = (s: GameState, f: (u: Unidade) => boolean): Unidade[] =>
   s.unidades.ordem.map((id) => s.unidades.porId[id] as Unidade).filter(f);
 const tropa = unidades(s0, (u) => u.lado === LADO_DO_JOGADOR && u.tipo === gameData.escaramuca.tropaDoJogador.tipo).map((u) => u.id);
 const inimigo = unidades(s0, (u) => u.lado === LADO_DA_IA && u.tipo === 'militia')[0] as Unidade;
+/** A mesma partida, sem a paz: a ordem de ataque em paz e recusada (C-IA-03b), e aqui se
+ *  prova o que a ordem FAZ, nao a cerca. F-COMBATE-ALVO-NA-VISTA: com um olheiro do jogador
+ *  perto do inimigo, que nasceu longe da vila — sem vista, a ordem e recusada. */
+const semPaz: GameState = comOlheiro({ ...s0, pazAteTick: 0 }, inimigo);
 const tileDo = (u: Unidade) => ({ gx: u.gx, gy: u.gy });
 
 describe('C-TELA-04 — atacar unidade pelo mouse', () => {

@@ -146,6 +146,28 @@ describe('F-TERRENO-NEVOA-DESCOBERTO — (b) monotonico, e cresce quando a tropa
   });
 });
 
+describe('F-TERRENO-NEVOA-DESCOBERTO — a visao lida antes do step nao pula o descoberto', () => {
+  it('estado montado a mao, lido por `visaoDe` e depois avancado: o mesmo descoberto que sem a leitura', () => {
+    // achado pela sonda da F-COMBATE-ALVO-NA-VISTA: a leitura punha o estado no cache, e o step
+    // seguinte tratava o cache como se o descoberto ja cobrisse o que ele ve
+    const base = createInitialState(SEMENTE);
+    const longe = LONGE();
+    const montado: GameState = {
+      ...base,
+      unidades: {
+        porId: { ...base.unidades.porId, olho: { id: 'olho', lado: J, tipo: 'militia', gx: longe.gx, gy: longe.gy, fsm: 'ocioso', fsmData: {}, condicao: 1_000_000 } },
+        ordem: [...base.unidades.ordem, 'olho'],
+      },
+    };
+    const clone = JSON.parse(JSON.stringify(montado)) as GameState;
+    visaoDe(montado);
+    const lido = step(montado, [], gameData);
+    const semLeitura = step(clone, [], gameData);
+    expect(ehDescoberto(lido, J, longe.gx, longe.gy)).toBe(true);
+    expect(bitsDe(lido)).toEqual(bitsDe(semLeitura));
+  });
+});
+
 describe('F-TERRENO-NEVOA-DESCOBERTO — (c) salvar e carregar', () => {
   it('salvar no meio, carregar e rodar da o mesmo estado e o mesmo visivel que nao salvar', () => {
     const N = 150;
