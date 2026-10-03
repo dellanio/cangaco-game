@@ -836,3 +836,58 @@ body:not([data-corpo="distribuicao"]) #distribuicao { display: none; }
   position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
   padding: 24px; text-align: center; font-size: 20px; background: #0a0a0a; color: #f0e0c0; z-index: 1000;
 }
+
+/* ---- o menu inicial (E-TELA-MENU-INICIAL) ------------------------------------- */
+/* Por cima da grade inteira, barra e canvas, antes de o jogo existir. A ajuda do menu
+   abre por cima dele, na celula do canvas, como no jogo. */
+#menu-inicial {
+  grid-column: 1 / -1; grid-row: 1; z-index: 20;
+  display: grid; place-items: center;
+  background: #25170f url('../../assets/sprites/ui/resource-plank.png') center top / 100% 96px repeat-y;
+}
+body[data-menu] #ajuda { z-index: 30; }
+#menu-inicial .caixa {
+  box-sizing: border-box; width: 340px; padding: 18px 26px 24px;
+  display: flex; flex-direction: column; align-items: stretch; gap: 10px;
+  background-color: var(--papel); background-image: var(--grao);
+  border: var(--traco) solid var(--tinta);
+  outline: 2px solid var(--papel); outline-offset: -8px;
+  box-shadow: 6px 6px 0 var(--tinta), 0 12px 40px rgba(0, 0, 0, 0.6);
+}
+#menu-inicial .logo-do-menu {
+  height: 120px;
+  background: transparent url('../../assets/sprites/ui/logo-pianco-completo.png') center / contain no-repeat;
+}
+#menu-inicial .lema {
+  margin: 0 0 6px; text-align: center; font-style: italic; color: var(--terra-queimada);
+}
+#menu-inicial .opcoes { display: flex; flex-direction: column; gap: 10px; }
+#menu-inicial .opcoes[hidden] { display: none; }
+#menu-inicial .opcao { display: flex; flex-direction: column; gap: 3px; }
+#menu-inicial button { font-size: 17px; padding: 8px 12px; box-shadow: 3px 3px 0 var(--tinta); }
+#menu-inicial button[aria-disabled="true"] { box-shadow: none; }
+#menu-inicial button[data-acao="voltar"] { font-size: 13px; padding: 4px 8px; align-self: center; }
+#menu-inicial .motivo { font-size: 12px; font-style: italic; color: var(--terracota); text-align: center; }
+/* E-TELA-CONFIGURAR-PARTIDA — a paz da escaramuca */
+#menu-inicial h2 { margin: 0; font-size: 20px; text-align: center; }
+#menu-inicial .campo { display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+#menu-inicial select {
+  font: 15px/1.2 var(--fonte-corpo); padding: 6px 8px; color: var(--tinta);
+  background: var(--papel); border: 2px solid var(--tinta); border-radius: 0;
+}
+/* E-SAVE-GAVETAS — uma linha por gaveta na secao Partida da ajuda */
+#ajuda .arquivo .gavetas { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+#ajuda .arquivo .gaveta { display: flex; align-items: center; gap: 8px; }
+#ajuda .arquivo .gaveta .texto { flex: 1; font-size: 13px; }
+#ajuda .arquivo .gaveta .texto[data-situacao="recusada"] { color: var(--terracota); font-style: italic; }
+/* E-ENTREGA-BUILD — a tela de carregamento, por cima de tudo ate o loader terminar */
+#carregamento {
+  position: fixed; inset: 0; z-index: 40; display: grid; place-items: center;
+  background: #25170f;
+}
+#carregamento .caixa { width: 320px; display: flex; flex-direction: column; gap: 10px; align-items: stretch; }
+#carregamento .titulo, #carregamento .texto { margin: 0; text-align: center; color: var(--pergaminho); }
+#carregamento .titulo { font: 20px/1.2 var(--fonte-display); letter-spacing: 0.04em; }
+#carregamento .texto { font: 13px/1.2 var(--fonte-corpo); font-style: italic; }
+#carregamento .trilho { height: 14px; border: 2px solid var(--pergaminho); background: var(--tabua); }
+#carregamento .barra { height: 100%; width: 0; background: var(--ocre); }

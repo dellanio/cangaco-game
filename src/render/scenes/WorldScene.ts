@@ -245,6 +245,9 @@ export class WorldScene extends Phaser.Scene {
     private readonly navegacao: Navegacao,
     /** F26b — o grupo militar na mao do jogador. A cena so o DESENHA. */
     private readonly selecaoMilitar: SelecaoMilitar,
+    /** E-ENTREGA-BUILD — o progresso do loader, de 0 a 1, para a tela de carregamento (`ui/`). A
+     *  cena so avisa; quem desenha a barra e quem a passou. */
+    private readonly aoCarregar: (fracao: number) => void = () => undefined,
   ) {
     super('world');
   }
@@ -335,6 +338,11 @@ export class WorldScene extends Phaser.Scene {
   }
 
   preload(): void {
+    this.load.on(Phaser.Loader.Events.PROGRESS, this.aoCarregar);
+    this.load.once(Phaser.Loader.Events.COMPLETE, () => {
+      this.load.off(Phaser.Loader.Events.PROGRESS, this.aoCarregar);
+      this.aoCarregar(1);
+    });
     const depuracao = depuracaoRegistrada();
     const tipos = tiposPresentes(this.ponte.atual);
     if (depuracao && depuracaoDeUnidade(window.location.search)) {

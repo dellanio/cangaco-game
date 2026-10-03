@@ -60,8 +60,13 @@ function carregarRoteiro(nome) {
  *  que o registro grava e o que escuta a porta (decisao do operador, 2026-10-01). */
 const VITE = path.join(__dirname, '..', 'node_modules', 'vite', 'bin', 'vite.js');
 
+/** E-ENTREGA-BUILD — `--preview` serve o `dist/` do `npm run build` pelo `vite preview`, em vez do
+ *  dev server: e o jogo que vai para o itch.io. O roteiro le `ctx.servidor`. */
+const PREVIEW = process.argv.slice(2).includes('--preview');
+
 function subirServidor() {
-  const processo = spawn(process.execPath, [VITE, '--port', String(PORTA), '--strictPort'], {
+  const args = PREVIEW ? [VITE, 'preview', '--port', String(PORTA), '--strictPort'] : [VITE, '--port', String(PORTA), '--strictPort'];
+  const processo = spawn(process.execPath, args, {
     cwd: path.join(__dirname, '..'),
     stdio: ['ignore', 'pipe', 'pipe'],
     // fora do Windows, lider de grupo: `derrubarServidor` derruba o grupo inteiro
@@ -196,6 +201,7 @@ async function main() {
     }
 
     const ctx = {
+      servidor: PREVIEW ? 'preview' : 'dev',
       page,
       capturar: (nome) => capturar(page, nome),
       estado: () => page.evaluate(() => window.__cangaco),
@@ -222,6 +228,7 @@ async function main() {
     `test-output/${nomeFeature}-shot.json`,
     JSON.stringify({
       feature: nomeFeature,
+      servidor: PREVIEW ? 'preview' : 'dev',
       sucesso,
       motivoDaFalha,
       capturas,

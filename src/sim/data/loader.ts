@@ -677,6 +677,15 @@ export function loadGameData(raw: RawGameData): GameData {
     'escaramuca.peacetime_min_base', escalaDaEscaramucaNome, raw.escaramuca.peacetime_min_base, 'min',
     paraTicksDeDuracao(raw.escaramuca.peacetime_min_base, 'min', escalaDe(escalas, escalaDaEscaramucaNome) as number, tickHz),
   );
+  // E-TELA-CONFIGURAR-PARTIDA: cada opcao da paz, convertida uma vez aqui. 0 e sem paz em qualquer
+  // escala e nao vira conversao (toda conversao registrada tem ao menos 1 tick).
+  const opcoesDePaz = raw.escaramuca.peacetime_opcoes_min_base.map((minBase, i) => ({
+    minBase,
+    ticks: minBase === 0 ? 0 : registrar(
+      `escaramuca.peacetime_opcoes_min_base[${i}]`, escalaDaEscaramucaNome, minBase, 'min',
+      paraTicksDeDuracao(minBase, 'min', escalaDe(escalas, escalaDaEscaramucaNome) as number, tickHz),
+    ),
+  }));
 
   // --- condicao ---
   const escalaCondicaoNome = raw.condition.escala;
@@ -886,7 +895,7 @@ export function loadGameData(raw: RawGameData): GameData {
     mapa: carregarMapa(raw),
     recursos,
     economia,
-    escaramuca: { ...raw.escaramuca, ticksDePaz },
+    escaramuca: { ...raw.escaramuca, ticksDePaz, opcoesDePaz },
     conversoes,
   };
 }

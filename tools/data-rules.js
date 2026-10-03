@@ -561,7 +561,8 @@ function validarTempo(dados, erros) {
     const achados = [];
     varrerCamposDeTempo(dados[arquivo], arquivo, achados, false);
     for (const caminho of achados) {
-      if (registrados.has(caminho) || isentos.has(caminho)) continue;
+      // um item de array (`x[3]`) casa o registro `x[]`: a lista inteira tem a mesma unidade
+      if (registrados.has(caminho) || registrados.has(caminho.replace(/\[\d+\]/g, '[]')) || isentos.has(caminho)) continue;
       erros.push(`tempo/duracao-nao-registrada: ${caminho} parece duracao/taxa de tempo mas nao esta no registro nem na allowlist`);
     }
   }
@@ -838,6 +839,29 @@ function validarPrioridadesDaIA(dados, erros) {
   }
 }
 
+// E-TELA-CONFIGURAR-PARTIDA: a paz que o jogador escolhe. As opcoes ficam no intervalo do lobby do
+// KaM, 0 a 120 min de 5 em 5 (src/gui/pages_menu/KM_GUIMenuLobby.pas:635-638, clone 731a8a4), sem
+// repetir, em ordem crescente; o padrao (`peacetime_min_base`) e uma delas.
+const PAZ_DO_KAM = { min: 0, max: 120, passo: 5 };
+function validarOpcoesDePaz(e, erros) {
+  const opcoes = e.peacetime_opcoes_min_base;
+  if (!Array.isArray(opcoes) || opcoes.length === 0) {
+    erros.push('escaramuca/paz: peacetime_opcoes_min_base precisa ser um array nao vazio');
+    return;
+  }
+  for (const v of opcoes) {
+    if (!(Number.isInteger(v) && v >= PAZ_DO_KAM.min && v <= PAZ_DO_KAM.max && v % PAZ_DO_KAM.passo === 0)) {
+      erros.push(`escaramuca/paz: opcao ${v} fora do intervalo do KaM (${PAZ_DO_KAM.min} a ${PAZ_DO_KAM.max} min, de ${PAZ_DO_KAM.passo} em ${PAZ_DO_KAM.passo})`);
+    }
+  }
+  if (opcoes.some((v, i) => i > 0 && !(v > opcoes[i - 1]))) {
+    erros.push('escaramuca/paz: peacetime_opcoes_min_base precisa estar em ordem crescente, sem repetir');
+  }
+  if (!opcoes.includes(e.peacetime_min_base)) {
+    erros.push(`escaramuca/paz: o padrao peacetime_min_base (${e.peacetime_min_base}) nao esta em peacetime_opcoes_min_base`);
+  }
+}
+
 // C-IA-03a (cenario de escaramuca): a vila e a tropa da IA em data/escaramuca.json
 // apontam para ids que existem, e a tropa cabe na posicao do tipo dela. O encaixe no
 // MAPA (terreno livre, sem sobreposicao) e do teste da C-IA-03a, com o `canPlace` da sim:
@@ -848,6 +872,7 @@ function validarEscaramuca(dados, erros) {
     erros.push('escaramuca/forma: escaramuca.predios e escaramuca.posicoes precisam ser arrays');
     return;
   }
+  validarOpcoesDePaz(e, erros);
   const predios = new Set(((dados.buildings && dados.buildings.predios) || []).map((p) => p.id));
   for (const p of e.predios) {
     if (!predios.has(p.id)) erros.push(`escaramuca/predio: '${p.id}' nao esta em buildings.json`);

@@ -88,6 +88,9 @@ const CAMPOS_ESCALONADOS = [
   // C-IA-03b — o peacetime da escaramuca (fixo; vira parametro de fase depois).
   { arquivo: 'escaramuca', caminho: 'peacetime_min_base',
     unidade: 'min', declaraEscalaEm: 'escala' },
+  // E-TELA-CONFIGURAR-PARTIDA — as opcoes da paz. `[]` casa qualquer indice do array.
+  { arquivo: 'escaramuca', caminho: 'peacetime_opcoes_min_base[]',
+    unidade: 'min', declaraEscalaEm: 'escala' },
   { arquivo: 'condition', caminho: 'duracaoCondicaoCheia_min_base.civil',
     unidade: 'min', declaraEscalaEm: 'escala' },
   { arquivo: 'condition', caminho: 'duracaoCondicaoCheia_min_base.militar',

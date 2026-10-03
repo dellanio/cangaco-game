@@ -3243,6 +3243,19 @@ que vetar custe uma linha.
   no lajedo. Saídas possíveis: aceitar como está (o prédio "trabalha a pedra que chega"),
   ou o brief §4a ganha outra leitura e o caso 2 passa a animar só num trecho. Isso é
   decisão de arte/design, não minha.
+- **(2026-10-03, Fase E) E-TELA-CONFIGURAR-PARTIDA — em que unidade vale o intervalo do KaM
+  (0 a 120 min, de 5 em 5)?** O KaM conta minutos de jogo; o nosso dado conta minutos base, e a
+  escala economia (2,0) divide: 20 base = 10 min de jogo. Implementei o conservador: o validador
+  confere o intervalo na unidade do dado (`peacetime_opcoes_min_base`, minutos base), e a tela mostra
+  o tempo de jogo. Se for em minutos de jogo, o teto passa a 240 base e o passo a 10.
+- **(2026-10-03, Fase E) E-TELA-CONFIGURAR-PARTIDA — a lista das opções da paz.** O BUILD_PLAN diz
+  só que as opções ficam no dado. Pus `[0, 10, 20, 30, 40, 60, 90, 120]` (base), que na tela são
+  sem paz, 5, 10 (padrão), 15, 20, 30, 45 e 60 min de jogo. O 0 é o padrão do KaM no jogo solo
+  (`KM_Defaults.pas:117`, citação do `_docPeacetime`, não conferida nesta sessão). Trocar a lista é só
+  mudar o dado.
+- **(2026-10-03, Fase E) E-SAVE-GAVETAS — o "nome" da gaveta.** O BUILD_PLAN pede "três gavetas com
+  nome, tick e data", sem dizer quem dá o nome. Fiz o conservador: o nome é o tipo da partida
+  (Escaramuça ou Jogo livre), sem campo de texto para o jogador digitar.
 
 
 ## F-T1 — Camada de terreno base (dado + sim + render mínimo) (2026-09-24)
@@ -18241,3 +18254,317 @@ E-TELA-CONFIGURAR-PARTIDA manda conferir no clone.
   - **Verificado:** os testes de manifesto e de animação deram 65/65, e os roteiros
     `D-ARTE-SERF-COMFYUI`, `D-TELA-04c` e `ARTE-VILA` saíram 0. Na captura do serf andando, aberta,
     ele tem o tamanho do obreiro ao lado.
+
+
+## 2026-10-03 — Abertura da Fase E: o fechamento da Fase D (branch `dellanio/fase-e-casca-e-vitrine`)
+
+Rodado na worktree da Fase E, com o `HEAD` igual à `main` (`61d9e49`), um de cada vez, sob a trava.
+
+**Verificado (evidência aberta nesta sessão):**
+- `npm run verify` completo: verde, duas vezes (07:00 e 07:51 UTC). Suíte: 245 arquivos, 2 338
+  testes; transladada: 245 arquivos, 2 336 testes e 5 pulados. Selo `completo` do `61d9e49`.
+- `npm run test:longo`, sozinha: verde em 28 s, `test-output/test-longo.json` com o commit
+  `61d9e493f3`, `arvoreLimpa: true`, `sozinha: true`. `npm run selo:longo` saiu 0.
+- `npm run shot:todos`: **110 roteiros, 106 com saída 0 e 4 com saída 1** (`test-output/shot-todos.json`,
+  commit `61d9e49`, porta 5176). O aceite pede todas as saídas 0, então **ele não passa por inteiro**.
+  As quatro falhas viraram registro no `BUGS.md`, e não foram corrigidas aqui:
+  - **BUG-SAVE-DO-ROTEIRO-TRANSLADADO** (D-TELA-05c e D-TELA-05d): os testes gravam o save do
+    roteiro em `test-output/` fixo, e a corrida transladada do `verify` o sobrescreve com o hash do
+    mapa transladado. O Retomar recusa ("o mapa 'sertao-128' mudou desde o save"). Medido com uma
+    sonda (apagada) e confirmado: rodando só os dois testes na suíte normal e depois os dois
+    roteiros, ambos saem 0.
+  - **BUG-ROTEIRO-DE-DUAS-ETAPAS** (D-TELA-COSTURA-DOS-TILES e D-TELA-VEU-DOS-DETALHES): a etapa
+    padrão "depois" exige a medida da etapa "antes", feita sobre o código de antes da mudança.
+    Numa worktree nova ela não existe.
+
+**As chaves de `test-results.json`** (a lista das features da D sem chave saiu de um subagente de
+leitura, que conferiu cada uma no PROGRESS e no BUILD_PLAN):
+
+```text
+marcadas true (25)
+  D-ARTE-BANDEIRA-FACCAO, D-ARTE-BODEGA-MENOR, D-ARTE-CHAO-DE-ROCA, D-ARTE-DEPURACAO-LEVA-TRES,
+  D-ARTE-INTEGRA-1, D-ARTE-PESCADOR-BAIXO, D-TELA-04a..04e, D-TELA-05a, D-TELA-05b,
+  D-TELA-AGUA-PEIXE, D-TELA-AGUA-VIVA, D-TELA-CACTO-NO-VENTO, D-TELA-CHAO-DA-CANA-SO-QUANDO-MUDA,
+  D-TELA-CUSTO-DO-QUADRO, D-TELA-FUMACA-DA-FORJA, D-TELA-FUMACA-DA-PADARIA,
+  D-TELA-LIMPEZA-DO-MUNDO-VIVO, D-TELA-POEIRA-AMBIENTE, D-TELA-VENTO-NA-VISTA,
+  D-TELA-VENTO-VEGETACAO, D-SAVE-VILA-PRONTA
+marcadas false (4), com bug aberto
+  D-TELA-05c, D-TELA-05d            BUG-SAVE-DO-ROTEIRO-TRANSLADADO
+  D-TELA-COSTURA-DOS-TILES,
+  D-TELA-VEU-DOS-DETALHES           BUG-ROTEIRO-DE-DUAS-ETAPAS
+sem chave nova (3)
+  D-TELA-LUZ-RELEVO                 continua false: aceite 1 reprovado (BUILD_PLAN, D-TELA-LUZ-RELEVO)
+  D-TELA-CAPTURA-DETERMINISTICA     aceite 3 reprovado; o BUILD_PLAN diz "fica sem chave"
+  D-TELA-CHAO-DETERMINISTICO        parado, substituido pela CAPTURA-DETERMINISTICA (sem codigo)
+```
+
+A D-ARTE-CHAO-DE-ROCA foi marcada com a ressalva que já estava no PROGRESS: o validador de arte rodou
+em modo `trial`, e a revisão deu o aceite 1 como cumprido. Os itens da D sem código ficam na D.
+
+## 2026-10-03 — E-TELA-MENU-INICIAL (a porta do jogo)
+
+**O que mudou.** Abrir `/` sem parâmetro mostra o menu antes do jogo: **Novo jogo** (abre Jogo livre
+e Escaramuça), **Continuar** (o último save), **Carregar** (a lista das gavetas; hoje a gaveta única
+da F23b, as três chegam com a E-SAVE-GAVETAS) e **Ajuda** (a tela de ajuda que já existia, por cima
+do menu; fecha com Esc). Os rótulos estão em `data/theme-sertao.json` (`menuInicial`).
+- `src/main.ts` deixou de rodar no import: o corpo virou `iniciarPartida(estado, ajuda)`. O
+  `inicio.ts` decide (menu ou URL) e só depois importa o `main.ts`, e com ele o Phaser.
+- `src/escolha-da-partida.ts` (laço externo, puro): `abreNoMenu`, `escolhaDaUrl`, `estadoNovo` e
+  `estadoDaEscolha`. A escaramuça do menu e a do `?escaramuca` passam pela mesma função.
+- `src/arquivo-da-partida.ts`: `lerUltimoSave(gaveta)`, que o menu usa antes de o jogo existir. O
+  `carregar` do jogo passou a usá-lo, sem mudar o resultado (o teste da F23b continua verde).
+- `src/ui/menu-inicial.ts`: só DOM e a escolha por callback.
+- **A regra da URL.** Qualquer parâmetro pula o menu (é o que mantém todo roteiro como estava), e
+  `?menu` força o menu. O `?menu` existe para o roteiro nascer pausado no menu (`?menu&pausado`) e
+  comparar o tick 0. Não é superfície de jogador.
+- Harness novo, do laço externo: `window.__cangacoPartida.estadoSerializado()`.
+
+**Verificado:**
+- `tests/E-TELA-MENU-INICIAL.test.ts` (6 testes): a regra da URL por tabela; (b) a escaramuça do
+  menu, a do `?escaramuca` e a `criarEscaramuca(semente)` de antes dão o mesmo JSON (53 556 bytes);
+  (c) o Continuar sem save, sem armazenamento e com save ilegível, cada um com o motivo, e com save
+  ele abre a partida igual.
+- Roteiro `E-TELA-MENU-INICIAL` saiu 0: (a) `/` sem save mostra o menu com 0 canvas e sem
+  `__cangaco`; (c) o Continuar tem `aria-disabled` e diz "Nenhuma partida guardada ainda", e o
+  clique nele não sai do menu; a Ajuda abre por cima e fecha com Esc sem criar canvas; (b) a
+  escaramuça por `?menu&pausado` e a do `?escaramuca&pausado` têm o estado serializado igual no tick 0;
+  (e) a foto `screenshots/E-TELA-MENU-INICIAL-1-menu.png`, aberta. O passo despausado escolhe o jogo
+  livre com `mouse.down` / 150 ms / `mouse.up`, o relógio corre até o tick 5 e o `P` pausa de volta.
+- `npm run verify:rapido`: 48 arquivos, 479 testes, verde.
+- (d) os roteiros que existem: `shot:todos` sobre este commit, numa worktree irmã. O resultado vai no
+  registro seguinte.
+
+## 2026-10-03 — E-TELA-MENU-INICIAL, aceite (d): os roteiros que existem
+
+`shot:todos` sobre o commit `1258564`, numa worktree irmã (`fase-e-shots`, com o `test-output` desta
+copiado para os roteiros que leem save): **111 roteiros, 107 com saída 0**. As 4 falhas são as mesmas
+4 do fechamento da D, já registradas (BUG-SAVE-DO-ROTEIRO-TRANSLADADO e BUG-ROTEIRO-DE-DUAS-ETAPAS),
+pelos mesmos motivos. Nenhum roteiro mudou uma linha, e nenhuma falha nova. O resumo da corrida
+ficou em `test-output/shot-todos-E-TELA-MENU-INICIAL.json`.
+
+## 2026-10-03 — E-TELA-CONFIGURAR-PARTIDA (a paz da escaramuça se escolhe)
+
+Feature de integração (sim + tela), como o item declara.
+
+**O que mudou.**
+- `data/escaramuca.json`: `peacetime_opcoes_min_base` `[0, 10, 20, 30, 40, 60, 90, 120]`, na unidade
+  do `peacetime_min_base` (minutos base, grupo economia). O padrão continua o `peacetime_min_base` (20).
+- `sim/data/loader.ts`: cada opção vira ticks no carregamento (`escaramuca.opcoesDePaz`). O 0 não
+  vira conversão, porque toda conversão registrada tem ao menos 1 tick (`F03`).
+- `sim/cenario.ts`: `criarEscaramuca(semente, dados, { pazMinBase })` e `ticksDaPaz`. Opção fora
+  da lista lança erro, e sem opção vale o padrão.
+- `tools/data-rules.js`: `validarOpcoesDePaz` cobre o intervalo do KaM, a ordem crescente sem repetir
+  e o padrão na lista. O registro de duração aceita `x[]` para os itens de um array, e
+  `peacetime_opcoes_min_base[]` entrou em `CAMPOS_ESCALONADOS`.
+- Menu: Novo jogo > Escaramuça abre "A escaramuça", com a paz num seletor. As opções aparecem em tempo
+  de JOGO ("10 min (padrão)"), com "Sem paz" no 0, e o Começar fica embaixo. O `?escaramuca` e o
+  "Nova escaramuça" do jogo usam o padrão. O roteiro do menu ganhou o clique no Começar (o passo da
+  escaramuça mudou de tela), e a asserção dele continua a mesma.
+- **Citação conferida no clone (§15):** o intervalo do lobby está em
+  `src/gui/pages_menu/KM_GUIMenuLobby.pas:635-638` (`TKMTrackBar.Create(..., 0, 120)` e `Step := 5`), e
+  não em `src/KM_GUIMenuLobby.pas`, como dizia o BUILD_PLAN. O aceite não mudou; o caminho certo está
+  no `_docPeacetimeOpcoes` e no validador.
+
+**Verificado:**
+- `tests/E-TELA-CONFIGURAR-PARTIDA.test.ts` (21 testes, verde):
+  - (a) a paz de 10 base com a mesma marcha dá o mesmo save no tick 200 (58 597 bytes), e outra paz dá
+    outro estado;
+  - (b) sem opção, com o padrão e pelo menu, o save é igual ao da `criarEscaramuca(semente)` de hoje.
+    Os testes da C-IA-03a e da C-IA-03b rodaram verdes sem mudar uma linha;
+  - (c) para cada uma das 8 opções: `pazAteTick` igual aos ticks dela, e o contador no tick 0 igual à
+    duração (0 = sem contador; 3 000 ticks = "Paz: 5:00"; 36 000 = "Paz: 60:00"). O ataque do jogador
+    é recusado com `em-paz` no tick P−1 e aceito no P. A IA, com um intruso no raio, não sai até o
+    tick P e sai depois (9 lutando). O estado é posto no tick P−30 em vez de andar até 36 000 ticks; o
+    relógio andando tick a tick é o do C-IA-03b;
+  - (d) o validador recusa 125, 7, −5, a lista vazia, a repetida e o padrão fora da lista, e passa
+    no dado real.
+- Roteiro `E-TELA-CONFIGURAR-PARTIDA` saiu 0. O seletor tem as 8 opções do dado, com o padrão
+  marcado. Com 30 base, o contador mostra "Paz: 15:00" no tick 0. No passo despausado (Começar
+  segurado 150 ms) o relógio corre, o contador mostra "Paz: 14:58" no tick 20 e o `P` pausa. A foto
+  `screenshots/E-TELA-CONFIGURAR-PARTIDA-1-configurar.png` foi aberta. O roteiro do menu continua 0.
+- `npm run verify:rapido`: 2 208 testes, verde.
+
+
+## 2026-10-03 — E-SAVE-GAVETAS (salvar e carregar pela tela)
+
+**O que mudou.**
+- `src/arquivo-da-partida.ts`: três gavetas. **A gaveta 1 é a chave da F23b** (`cangaco:partida`),
+  sem migração: o save de quem já tinha um já é a gaveta 1. A 2 e a 3 são `cangaco:partida:2` e `:3`,
+  com o texto da F23. O tipo da partida, a data e a última salva ficam num índice à parte,
+  `cangaco:gavetas`. Índice ilegível conta como vazio, e sem índice o save da F23b é a última.
+  `salvar(n)` e `carregar(n)` levam o número (1 por padrão, como na F23b); entraram `lerGavetas`,
+  `lerGaveta` e `ultimaGaveta`.
+- **A data** vem do relógio que o `main.ts` injeta (`new Date().toISOString()`), no laço externo. O
+  texto do save, que é o que a `sim/` produz, não a contém (teste).
+- Na ajuda (H), uma linha por gaveta: "Gaveta 2: Jogo livre, tick 60, 03/10, 05:49", vazia, ou
+  "não abre: <motivo>". Cada linha tem Guardar e Retomar. Ao lado do "Nova escaramuça", o botão
+  **Menu inicial** abre `/`. As linhas nascem uma vez, e depois só o texto muda.
+- No menu, o **Carregar** lista as três (a que não abre fica desabilitada, com o motivo), e o
+  **Continuar** abre a última salva.
+- O nome da gaveta é o tipo da partida (Escaramuça ou Jogo livre), sem campo para digitar (ver
+  Perguntas em aberto).
+- **Os roteiros que injetam `cangaco:partida`** (são ~25, como o BUG-U e a D-TELA-05c) continuam
+  valendo sem mudar, porque a chave é a da gaveta 1 e o primeiro Retomar da ajuda é o dela. **O
+  roteiro da F23b mudou** (não-regressão na tarefa que mudou o comportamento): o Guardar agora
+  acrescenta a chave dela **e** a do índice, e a asserção ficou mais estrita (o índice marca a 1 como a
+  última).
+
+**Verificado:**
+- `tests/E-SAVE-GAVETAS.test.ts` (6 testes, verde):
+  - (a) em cada uma das três gavetas, salvar no tick 200, carregar numa sessão nova e rodar 300 dá o
+    mesmo JSON que rodar 300 sem salvar. As gavetas são independentes, e o Continuar abre a última;
+  - (b) só a chave da F23b, sem índice: gaveta 1 pronta, tick 40, sem data. O Continuar e o
+    `carregar()` sem número a abrem;
+  - (c) a versão `VERSAO_DO_SAVE + 1` na gaveta 3 aparece recusada com "o save e da versao 5…", e as
+    outras continuam. Índice ilegível, armazenamento que lança e armazenamento ausente não lançam.
+    A data não entra no save.
+- O teste da F23b continuou verde sem mudar.
+- Roteiro `E-SAVE-GAVETAS` saiu 0. As três gavetas nascem vazias. A 3 foi guardada e estragada
+  (versão +50), a 1 guardada no tick 20 e a 2 no tick 60; as linhas dizem isso, e a 3 aparece "não
+  abre: o save e da versao 54, e esta build le a versao 4". O botão Menu inicial leva ao menu (0
+  canvas), onde o Carregar mostra a 3 desabilitada com o motivo e a 1 e a 2 abrindo. (d) O Continuar
+  segurado 150 ms, despausado, abriu a 2 e seguiu até o tick 69, e o `P` pausou. A foto
+  `screenshots/E-SAVE-GAVETAS-1-gavetas-no-jogo.png` foi aberta.
+- Os roteiros F23b, E-TELA-MENU-INICIAL e C-IA-03c saíram 0.
+
+## 2026-10-03 — E-ENTREGA-BUILD (o jogo fora do dev server)
+
+**O que mudou.**
+- `npm run build` agora é `vite build --base=./ --manifest && node tools/conferir-dist.js`.
+  - `--base=./` deixa toda URL do `dist/` relativa (`./assets/...`). O itch.io serve o jogo de uma
+    subpasta, e com `/assets/...` absoluto nada carregaria lá.
+  - `--manifest` grava `dist/.vite/manifest.json`, que a conferência lê.
+- `tools/conferir-dist.js` + `tools/conferir-dist-regra.js` (regra pura): reprova arquivo de
+  `assets/base/` no `dist/` **pelo conteúdo** (sha256; o Vite renomeia tudo) e página de depuração
+  como fonte de alguma saída do manifesto. Grava o tamanho em `test-output/E-ENTREGA-BUILD.json`.
+- As páginas de depuração (`?depuracao=`, `?vitrine=`) ficaram atrás de `import.meta.env.DEV` no
+  `inicio.ts`: no build o `import()` vira código morto, e os dois chunks (81 kB e 3 kB) saíram do
+  `dist/`.
+- **Tela de carregamento** (`src/ui/carregamento.ts`): nasce no `inicio.ts` na hora da escolha, antes
+  de o `main.ts` e o Phaser chegarem pela rede. Ela mostra o progresso do loader da cena ("Carregando:
+  46%") e some no 100%. A cena só avisa a fração por um callback (`WorldScene`, `aoCarregar`), que o
+  `main.ts` liga à tela. Toca render e ui, não a sim.
+- `tools/shot.js --preview` serve o `dist/` pelo `vite preview` em vez do dev server, e o roteiro lê
+  `ctx.servidor`. `npm run shot:dist` faz o build e roda o roteiro nesse modo. `npm run preview`
+  entrou.
+
+**Verificado:**
+- `npm run shot:dist`: o build passou na conferência (268 arquivos, **11,75 MB**; 136 arquivos de
+  `assets/base/` conferidos por sha256, nenhum no `dist/`; sem página de depuração no manifesto). O
+  roteiro saiu 0 contra o `vite preview`, com **zero erro de console**:
+  - (a) `/` mostra o menu, sem canvas. Novo jogo > Escaramuça > Começar (segurado 150 ms,
+    despausado). A tela de carregamento apareceu, chegou a "Carregando: 100%" e sumiu. A escaramuça
+    andou até o tick 300 a 3x, o contador de paz correndo, e o `P` pausou;
+  - (b) a listagem do `dist/` não tem arquivo de `assets/base/` (conferido pelo conteúdo);
+  - (c) `test-output/E-ENTREGA-BUILD.json`: 11,75 MB e menu em 100 ms (preview local). São números
+    desta corrida e não entram em asserção.
+- A foto `screenshots/E-ENTREGA-BUILD-2-escaramuca.png` foi aberta: sprites dos prédios e das
+  unidades, "Paz: 9:30", "Pausado · 3x".
+- O mesmo roteiro contra o dev server também saiu 0, e é o que o `shot:todos` roda.
+- **Sonda (apagada), não cobertura contínua:** o `dist/` servido numa subpasta (`/jogo/`, como no
+  itch.io) por um servidor estático mínimo deu zero pedido fora da subpasta, zero 404 e zero erro de
+  console, e a escaramuça andou.
+- `tests/E-ENTREGA-BUILD.test.ts` (6 testes): a regra do `dist/` limpo por tabela. Ela reprova a
+  cópia da base com outro nome e não reprova o homônimo de outro conteúdo; reprova cada página de
+  depuração no manifesto, a falta de `dist/` e a falta de manifesto. Cobre também o texto do
+  progresso.
+- `npm run verify:rapido` verde.
+
+## 2026-10-03 — E-ENTREGA-PUBLICACAO (o link para o operador jogar), aceites (a) e (b)
+
+**O que mudou.**
+- `npm run publicar` (`tools/publicar.js`) envia o `dist/` ao itch.io pelo `butler`, no canal `html5`,
+  com a tag `teste-jogo-<n>` do HEAD como versão (`--userversion`). **A sessão não publicou nada.**
+- A regra pura (`tools/publicar-regra.js`) passa só com os quatro:
+  - a tag `teste-jogo-<n>` no HEAD (com mais de uma, vale a de maior `n`);
+  - a árvore limpa;
+  - o selo `completo` do HEAD no `.verify-ok`;
+  - o `dist/` do HEAD feito com a árvore limpa.
+  Qualquer recusa sai 1 com o motivo, e o `butler` não é chamado.
+- `tools/conferir-dist.js` passou a gravar `dist/build.json` (commit e árvore limpa), e só quando o
+  `dist/` passa na conferência.
+- `CANGACO_ITCH_ALVO` (`<usuario>/<jogo>` da página) é obrigatória para enviar. `CANGACO_BUTLER`
+  troca o executável (o teste usa um falso). `--ensaio` confere tudo e mostra o comando, sem enviar.
+
+**Verificado:**
+- `tests/E-ENTREGA-PUBLICACAO.test.ts` (16 testes, verde):
+  - (a) por tabela: passa com os quatro, e recusa sem tag, com tag de outro formato, com a árvore
+    suja, sem selo, com selo rápido, com selo de outro commit, com selo no formato antigo, sem
+    `dist/`, com `dist/` de outro commit e com `dist/` feito com a árvore suja (um problema por
+    caso). A maior tag vence, e os argumentos do butler saem certos;
+  - (b) como processo, num repositório git falso: com os quatro, o butler falso recebeu
+    `push dist operador/cangaco:html5 --userversion teste-jogo-7`, no diretório do projeto. Com
+    `--ensaio`, o butler não foi chamado. Árvore suja, sem tag, sem selo, `dist/` de outro commit e um
+    commit depois do selo saíram ≠ 0, com "nada foi enviado" e sem chamada ao butler.
+- Sonda no repositório real: `node tools/publicar.js --ensaio` recusou com os quatro motivos (HEAD
+  sem tag, árvore suja, sem selo completo do HEAD, `dist/` de outro commit). Nada foi chamado.
+
+**(c) espera o operador: a primeira publicação.** O passo a passo, para quando ele quiser:
+1. Criar a página no itch.io (tipo HTML, rascunho com senha) e instalar o `butler`, com o
+   `butler login` (a chave fica com ele, fora do repositório).
+2. Na `main` (depois do merge desta branch), com a árvore limpa: `npm run verify` (o completo) e
+   `npm run build`.
+3. `git tag teste-jogo-<n>` no HEAD.
+4. `CANGACO_ITCH_ALVO=<usuario>/<jogo> npm run publicar -- --ensaio` para conferir, e depois sem o
+   `--ensaio`. No PowerShell: `$env:CANGACO_ITCH_ALVO='<usuario>/<jogo>'; npm run publicar`.
+5. Registrar o link no PROGRESS. Só então o aceite (c) fecha.
+Na página do itch.io: marcar "This file will be played in the browser" no upload html5, e um
+tamanho de tela de pelo menos 1280×720 (é o viewport dos roteiros). **Hipótese, não conferida:** o
+itch.io pede o `index.html` na raiz do zip ou do diretório enviado, e o `dist/` já é assim.
+
+## 2026-10-03 — Fase E: o que fechou, o que ficou aberto e o que espera o operador
+
+Sessão longa e desatendida, na branch `dellanio/fase-e-casca-e-vitrine` (worktree do Orca). Nada foi
+para a `main`, nada foi empurrado e nada foi publicado.
+
+**Conferência final, sobre o `3893ee5` (verificado):**
+- `npm run verify` completo verde: 2 394 testes; transladada 2 392 e 5 pulados. Selo `completo` do
+  `3893ee5`.
+- `npm run shot:todos` numa worktree irmã no `3893ee5`: **114 roteiros, 112 com saída 0**
+  (`test-output/shot-todos-fase-e.json`). Só falham os dois do **BUG-ROTEIRO-DE-DUAS-ETAPAS**. A
+  D-TELA-05c e a D-TELA-05d passaram desta vez, porque o `test-output` copiado tinha os saves da suíte
+  normal. Isso confirma a causa do **BUG-SAVE-DO-ROTEIRO-TRANSLADADO**, que continua aberto: depois de
+  um `verify` completo, os dois voltam a falhar.
+- `npm run test:longo` roda **depois** deste commit, sozinha, e é a última coisa da sessão. O
+  resultado fica no selo (`test-output/test-longo.json`) e entra no PROGRESS no commit seguinte à
+  avaliação (§13).
+- Chaves marcadas em `test-results.json`: `E-TELA-MENU-INICIAL`, `E-TELA-CONFIGURAR-PARTIDA`,
+  `E-SAVE-GAVETAS` e `E-ENTREGA-BUILD` (true). `E-ENTREGA-PUBLICACAO` fica false até o aceite (c).
+  O aceite (d) do menu ("os roteiros que existem continuam saindo 0") foi lido como não-regressão:
+  as falhas que restam são anteriores à Fase E, as mesmas do fechamento da D, e estão registradas.
+
+```text
+item                          estado      commit    nota
+abertura (fechamento da D)    fechou*     3968e65   *shot:todos 106/110; 4 falhas em 2 bugs registrados
+E-TELA-MENU-INICIAL           fechou      1258564   ?menu forca o menu; qualquer outro parametro o pula
+E-TELA-CONFIGURAR-PARTIDA     fechou      c3c8c55   8 opcoes no dado; unidade e lista: perguntas
+E-SAVE-GAVETAS                fechou      c5869fe   gaveta 1 = chave da F23b; nome = tipo da partida
+E-ENTREGA-BUILD               fechou      7ed152a   11,75 MB; --base=./ (subpasta do itch.io)
+E-ENTREGA-PUBLICACAO (a)(b)   fechou      3893ee5   regra + butler falso; nada enviado
+E-ENTREGA-PUBLICACAO (c)      espera      -         primeira publicacao: e do operador
+BUG-SAVE-DO-ROTEIRO-TRANSL.   aberto      -         errado; correcao pre-escrita no BUGS.md
+BUG-ROTEIRO-DE-DUAS-ETAPAS    aberto      -         errado; espera decisao do operador
+Perguntas em aberto (3)       espera      -         unidade da paz, lista da paz, nome da gaveta
+```
+
+**Espera o operador:**
+1. **A primeira publicação** (E-ENTREGA-PUBLICACAO c): o passo a passo está na entrada dela, acima.
+   Antes, o merge desta branch na `main`.
+2. **As três perguntas em aberto da Fase E** (em `## Perguntas em aberto`): em que unidade vale o
+   0–120 do KaM, a lista das opções da paz e o nome das gavetas.
+3. **BUG-ROTEIRO-DE-DUAS-ETAPAS**: como tirar a comparação antes/depois do roteiro de não-regressão.
+4. **BUG-SAVE-DO-ROTEIRO-TRANSLADADO**: a correção está escrita no bug (gravar no
+   `CANGACO_EVIDENCIA_DIR`). Fica para quem pegar o bug; a abertura da E mandava registrar e não
+   corrigir.
+
+**Comportamento a conferir jogando (não é bug registrado):** o botão "Menu inicial" da ajuda volta ao
+menu sem perguntar, e o que não foi guardado se perde.
+
+**Limpeza feita:** a worktree irmã `fase-e-shots`, criada só para os `shot:todos`, foi removida no fim
+da sessão. Antes saiu o link do `node_modules`, e o `node_modules` da `main` continuou com 104
+entradas.
+
+**Para o merge:** a `main` andou durante a sessão (está em `4e65f9e`: o serf animado do ComfyUI, a
+D-ARTE-SERF-COMFYUI, de outra sessão). Esta branch saiu do `61d9e49` e não foi rebaseada. O merge é do
+operador. Os dois lados mexem no PROGRESS e no BUILD_PLAN, e **hipótese, não conferida:** a outra
+sessão pode ter tocado o roteiro D-TELA-04c e o `assets/manifest.json`, que esta branch não tocou.
