@@ -17622,6 +17622,18 @@ A ponte publica especie e angulo por arvore. No tick 1 capturado: maior angulo a
 - verify:rapido (portão por commit): saída 0; typecheck e lint sem erros, validate:data com 19 arquivos e 0 erros; 42 arquivos de teste, 568 testes aprovados; 13 arquivos alterados, 55 s nesta máquina. Tempo é evidência da corrida, não asserção.
 - git diff main -- src/sim e git diff main -- src/render/fumaca.ts: vazios.
 
+### Revisão dos pontos aprovada e fechamento retomado
+
+- O operador informou a revisão e aprovação da sessão Claude, incluindo os pontos de chaminé do Codex. A prova é o recorte do PNG completo em 4× por vizinho mais próximo, com cruz ciano no ponto da arte e magenta no ponto do Codex:
+  - screenshots/D-TELA-FUMACA-DA-FORJA-chamine-metallurgists.png: arte (159.55776, 30.528) px, fora da chaminé segundo a revisão; Codex (149, 25) px, na borda frontal da boca. Mantido [149/192, 25/192].
+  - screenshots/D-TELA-FUMACA-DA-FORJA-chamine-iron_smithy.png: arte (216.89856, 45.3508) px, na borda direita; Codex (207, 48) px, na borda frontal da boca. Mantido [207/256, 48/220].
+  - screenshots/D-TELA-FUMACA-DA-FORJA-fogo-iron_smithy.png: cruz amarela em (146, 156) px, na região incandescente da fornalha; mantido [146/256, 156/220]. Todos os três recortes foram abertos na sessão da prova.
+- O Codex havia interrompido no item 2 por interpretar "boca" como apenas o vão escuro. A decisão de manter os pontos vem da aprovação explícita do operador após a revisão Claude; não de uma nova medição improvisada.
+- A sonda tools/prova-chamines-forja.py foi apagada por instrução do operador e nunca entrou num commit. Os recortes permanecem como evidência local.
+- Rebase sobre 804026d: mantidos o teste da padaria da main (todas as chaminés, sem lista fixa) e os registros de ambas as branches no PROGRESS. Na cena, preservada a remoção dos pools introduzida pela limpeza do mundo vivo, incluindo o pool novo de fagulhas quando o prédio sai do estado.
+- Verificações pós-rebase pedidas pelo operador: verify:rapido saiu 0 (typecheck e lint sem erros; validate:data: 19 arquivos, 0 erros; apenas PROGRESS alterado depois dos commits rebased, 0 testes relacionados). Os quatro testes diretos pela trava — forja, padaria, manifesto e carregamento — passaram, 48/48, em 4 arquivos.
+- Roteiro da forja pós-rebase: saída 0, 2 capturas abertas; fumaça 8/8, fagulhas 6, ambas em 0 na forja depois da pausa; pools 64/24 constantes, contador por quadro parado em 0. Roteiro da padaria: saída 0, 3 capturas; trabalho 12, pausa 0; pool 64 → 32 após demolir a padaria, preservando a prova da limpeza incorporada da main.
+
 ### Hipóteses e pendências
 
-- Nenhuma hipótese de simulação foi usada. O merge não foi executado: a main estava suja na conferência, com tests/D-TELA-FUMACA-DA-PADARIA.test.ts modificado por outra sessão. A regra comum manda parar o merge nessa situação. Implementação e documentação ficam commitadas na branch, sem push; test-results.json é exclusivo do operador.
+- Nenhuma hipótese de simulação foi usada. No fechamento anterior, o merge foi suspenso porque a main estava suja, com tests/D-TELA-FUMACA-DA-PADARIA.test.ts modificado por outra sessão. Na retomada, o operador aprovou os pontos e autorizou o merge ff após as verificações acima e nova conferência da main limpa. Sem push; test-results.json é exclusivo do operador.
