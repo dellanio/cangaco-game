@@ -6201,6 +6201,12 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
      e o quadro mudando entre dois instantes. As capturas são abertas.
   4. **Não-regressão:** os roteiros `D-TELA-04c` (a vitrine de depuração), `D-TELA-03` (o ícone
      da carga) e `ARTE-VILA` saem 0, e o `verify:rapido` passa.
+  - **Emenda do aceite 4 (2026-10-03, antes do código):** o `tools/shots/D-TELA-04c.js` afirma
+    "jogo normal deve preservar sprites atuais", ou seja, nenhum serf com `frame`. Era a garantia
+    de que o atlas de **depuração** não vazava para o jogo, e este item muda de propósito o jogo
+    normal. A asserção passa a ser mais estrita: no jogo normal, todo `frame` de serf é um quadro
+    do atlas **real** (existe em `assets/sprites/units/serf/serf.json`), e nenhum é da depuração.
+    Com `?depuracao`, o atlas de depuração continua vencendo, como hoje.
   5. **Limites conhecidos, registrados e não reprovados:** a geração é quadro a quadro, então
      detalhes da roupa podem variar entre quadros (cintilação). A carga continua como ícone sobre
      o serf (D-TELA-03a).
