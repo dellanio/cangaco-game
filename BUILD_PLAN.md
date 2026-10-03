@@ -6161,6 +6161,34 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
   4. o registro no `SKILL_BUILDER_PROGRESS.md`: o prompt, a referência, os hashes e as gerações
      gastas.
 
+### D-ARTE-PIXEL-ART-CIVIS — Teste do pixel art: as 28 mercadorias, a carga nas mãos e os civis
+- **Pedido do operador (2026-10-03, teste de pixel art, branch `serf-pixelart`, sem merge na
+  `main`):** "mapear todos os itens do jogo e criar sprites para cada um, seguindo a temática;
+  terminando os produtos e o serf, passar para todas as demais profissões". A arte é do PixelLab
+  (MCP), no modo `v3`, com canvas de 76 px. O boneco tem cerca de 74 px de altura, a altura do
+  laborer (73), aprovada no serf.
+- **Decisão da carga (operador, 2026-10-03):** uma pose de carregar com as mãos vazias, e o render
+  desenha o sprite da mercadoria entre as mãos, em vez de uma animação por mercadoria. Uma pose
+  vale para as 28 mercadorias, e mercadoria nova custa só o sprite dela.
+- **Feature de integração de arte e render,** só na branch de teste. Nada em `src/sim/`.
+- **Aceite (escrito antes do código, 2026-10-03):**
+  1. **As 28 mercadorias** de `economia.mercadorias` têm um sprite em
+     `assets/sprites/mercadorias/<id>.png` e uma entrada `icones.mercadorias` no manifesto. O
+     validador do manifesto (o `F17f`, as regras da D-ARTE-01) passa nas 28.
+  2. **A carga nas mãos:** a regra pura `pontoDaCargaNasMaos(direcao)` diz onde fica a mercadoria
+     relativa ao pé, e se ela vai à frente ou atrás do corpo. Os números ficam num dado de render,
+     com caso por direção na tabela do teste. O serf com carga e com a animação `carregar` desenha
+     o sprite da mercadoria nesse ponto, no lugar do ícone sobre a cabeça. Sem a animação, fica o
+     ícone de hoje (D-TELA-03a).
+  3. **Os civis em pixel art:** cada profissão de `civis` ganha `atlas` e `animacoes` (parado e
+     andar, 8 quadros, 5 direções e o oeste por espelho) no manifesto, com o pé na linha 90 e a
+     célula de 64×96. O validador de atlas passa. A profissão que não ficar pronta fica com a arte
+     de hoje e entra no relatório.
+  4. **No jogo:** o roteiro `D-ARTE-SERF-COMFYUI` sai 0, e a captura com serfs carregando e civis
+     andando é aberta.
+  5. **Não-regressão:** os testes de manifesto, de animação (D-TELA-04b e D-TELA-05c) e da carga
+     (D-TELA-SERF-CARREGANDO) passam, e `git diff main -- src/sim` fica vazio.
+
 ### D-TELA-SERF-CARREGANDO — O serf anda com os braços levando a carga
 - **Pedido do operador (2026-10-03, no teste de pixel art):** "o serf está carregando os produtos
   com o braço pra baixo e deveria simular os braços levando um produto". **Feature de integração
