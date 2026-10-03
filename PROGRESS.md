@@ -17590,3 +17590,14 @@ A ponte publica especie e angulo por arvore. No tick 1 capturado: maior angulo a
 
 ### Hipoteses
 - Nenhuma inferencia substitui as evidencias acima; a verificacao completa e a operacao de merge sao conferidas no fechamento, nao antecipadas neste registro.
+- **Revisão da sessão Claude: D-TELA-AGUA-PEIXE (`f6614ca`, `6a1dc5e` e `d12b2ea`), cumpre o
+  aceite.** Nada mudou em `src/sim/`. O anel do pescador sai do tile da tarefa, só aparece em
+  tile de água e usa um pool fixo de 16. Ele só redesenha com o tick, a câmera ou a partida, e a
+  água viva não foi tocada.
+  - **Rodado aqui, com saída 0:** os testes da água com peixe, da água viva e de manifesto
+    (43/43) e o roteiro. O peixe apareceu no tick 46, com o mesmo sha256 nas duas corridas, e o
+    trabalho pausado deu 0.
+  - **Captura aberta (o pescador):** o anel aparece pequeno e claro, na água junto ao pescador.
+    Ele é **muito discreto**: um círculo de 1 px, com raio de 0,04 a 0,35 tile. Lê como detalhe,
+    não como efeito. A espessura e o raio estão no `data/agua-peixe.json`, para o operador girar
+    olhando.
