@@ -4,6 +4,7 @@ import { panoDaBandeira } from '../bandeira';
 // desenha. Nada de logica de jogo (CLAUDE.md §10): nenhuma decisao de regra
 // mora aqui, so apresentacao.
 import Phaser from 'phaser';
+import { extrudarTira, MARGEM_DA_TIRA, ESPACAMENTO_DA_TIRA } from '../extrusao-de-tira';
 import temaSertao from '../../../data/theme-sertao.json';
 import dadosDoVento from '../../../data/vento.json';
 import dadosDosAneis from '../../../data/agua-peixe.json';
@@ -974,7 +975,7 @@ export class WorldScene extends Phaser.Scene {
     tilePx: number, largura: number, altura: number, textura: string,
   ): Phaser.Tilemaps.TilemapLayer {
     const mapa = this.make.tilemap({ tileWidth: tilePx, tileHeight: tilePx, width: largura, height: altura });
-    const tileset = mapa.addTilesetImage('borda-agua', textura, tilePx, tilePx, 0, 0);
+    const tileset = mapa.addTilesetImage('borda-agua', textura, tilePx, tilePx, MARGEM_DA_TIRA, ESPACAMENTO_DA_TIRA);
     if (!tileset) throw new Error('WorldScene: falha ao criar o tileset da borda da agua.');
     const camada = mapa.createBlankLayer('borda-agua', tileset);
     if (!camada) throw new Error('WorldScene: falha ao criar a camada da borda da agua.');
@@ -1013,7 +1014,7 @@ export class WorldScene extends Phaser.Scene {
     tilePx: number, largura: number, altura: number, textura: string,
   ): Phaser.Tilemaps.TilemapLayer {
     const mapa = this.make.tilemap({ tileWidth: tilePx, tileHeight: tilePx, width: largura, height: altura });
-    const tileset = mapa.addTilesetImage('areia-grama', textura, tilePx, tilePx, 0, 0);
+    const tileset = mapa.addTilesetImage('areia-grama', textura, tilePx, tilePx, MARGEM_DA_TIRA, ESPACAMENTO_DA_TIRA);
     if (!tileset) throw new Error('WorldScene: falha ao criar o tileset areia-grama.');
     const camada = mapa.createBlankLayer('areia-grama', tileset);
     if (!camada) throw new Error('WorldScene: falha ao criar a camada areia-grama.');
@@ -1053,7 +1054,7 @@ export class WorldScene extends Phaser.Scene {
     tilePx: number, largura: number, altura: number, textura: string,
   ): Phaser.Tilemaps.TilemapLayer {
     const mapa = this.make.tilemap({ tileWidth: tilePx, tileHeight: tilePx, width: largura, height: altura });
-    const tileset = mapa.addTilesetImage('rocha-grama', textura, tilePx, tilePx, 0, 0);
+    const tileset = mapa.addTilesetImage('rocha-grama', textura, tilePx, tilePx, MARGEM_DA_TIRA, ESPACAMENTO_DA_TIRA);
     if (!tileset) throw new Error('WorldScene: falha ao criar o tileset rocha-grama.');
     const camada = mapa.createBlankLayer('rocha-grama', tileset);
     if (!camada) throw new Error('WorldScene: falha ao criar a camada rocha-grama.');
@@ -1179,7 +1180,7 @@ export class WorldScene extends Phaser.Scene {
       tilePx,
     );
     g.destroy();
-    return CHAVE_TEXTURA_DETALHES;
+    return this.extrudarTexturaDaTira(CHAVE_TEXTURA_DETALHES, tilePx);
   }
 
   /** Camada separada para preservar indices, contagens e culling do chao. */
@@ -1189,7 +1190,7 @@ export class WorldScene extends Phaser.Scene {
     type Detalhe = { readonly densidade: number };
     const detalhes = temaSertao.detalhesTerreno as unknown as Readonly<Record<string, Detalhe | string | undefined>>;
     const mapa = this.make.tilemap({ tileWidth: tilePx, tileHeight: tilePx, width: largura, height: altura });
-    const tileset = mapa.addTilesetImage('detalhes-terreno', textura, tilePx, tilePx, 0, 0);
+    const tileset = mapa.addTilesetImage('detalhes-terreno', textura, tilePx, tilePx, MARGEM_DA_TIRA, ESPACAMENTO_DA_TIRA);
     if (!tileset) throw new Error('WorldScene: falha ao criar o tileset de detalhes do terreno.');
     const camada = mapa.createBlankLayer('detalhes-terreno', tileset);
     if (!camada) throw new Error('WorldScene: falha ao criar a camada de detalhes do terreno.');
@@ -1232,7 +1233,7 @@ export class WorldScene extends Phaser.Scene {
   private sobreporArteNaTira(
     chaveDaTira: string, tilePx: number, arte: readonly (string | null)[], vazias: readonly number[],
   ): string {
-    if (arte.every((c) => c === null) && vazias.length === 0) return chaveDaTira;
+    if (arte.every((c) => c === null) && vazias.length === 0) return this.extrudarTexturaDaTira(chaveDaTira, tilePx);
     const base = this.textures.get(chaveDaTira).getSourceImage() as HTMLCanvasElement;
     const chave = `${chaveDaTira}:arte`;
     const tira = this.textures.createCanvas(chave, base.width, base.height);
@@ -1247,6 +1248,23 @@ export class WorldScene extends Phaser.Scene {
       ctx.drawImage(imagem, codigo * tilePx, 0, tilePx, tilePx);
     });
     tira.refresh();
+    return this.extrudarTexturaDaTira(chave, tilePx);
+  }
+
+  /** Extruda so na montagem: a camada continua usando os mesmos indices e tilePx. */
+  private extrudarTexturaDaTira(chaveDaTira: string, tilePx: number): string {
+    const base = this.textures.get(chaveDaTira).getSourceImage() as HTMLCanvasElement;
+    const ctx = base.getContext('2d');
+    if (!ctx) throw new Error(`WorldScene: falta contexto da tira '${chaveDaTira}'.`);
+    const tira = extrudarTira(ctx.getImageData(0, 0, base.width, base.height).data, tilePx, base.width / tilePx);
+    const chave = `${chaveDaTira}:extrusao`;
+    const textura = this.textures.createCanvas(chave, tira.largura, tira.altura);
+    if (!textura) throw new Error(`WorldScene: falha ao extrudar a tira '${chaveDaTira}'.`);
+    const destino = textura.getContext();
+    const imagem = destino.createImageData(tira.largura, tira.altura);
+    imagem.data.set(tira.pixels);
+    destino.putImageData(imagem, 0, 0);
+    textura.refresh();
     return chave;
   }
 
@@ -1316,7 +1334,8 @@ export class WorldScene extends Phaser.Scene {
     });
     tira.refresh();
     const mapa = this.make.tilemap({ tileWidth: tilePx, tileHeight: tilePx, width: largura, height: altura });
-    const tileset = mapa.addTilesetImage('chao-da-cana', CHAVE_TEXTURA_CHAO_DA_CANA, tilePx, tilePx, 0, 0);
+    const textura = this.extrudarTexturaDaTira(CHAVE_TEXTURA_CHAO_DA_CANA, tilePx);
+    const tileset = mapa.addTilesetImage('chao-da-cana', textura, tilePx, tilePx, MARGEM_DA_TIRA, ESPACAMENTO_DA_TIRA);
     if (!tileset) throw new Error('WorldScene: falha ao criar o tileset do chao da cana.');
     const camada = mapa.createBlankLayer('chao-da-cana', tileset);
     if (!camada) throw new Error('WorldScene: falha ao criar a camada do chao da cana.');
@@ -1368,7 +1387,7 @@ export class WorldScene extends Phaser.Scene {
     tilePx: number, largura: number, altura: number, textura: string,
   ): Phaser.Tilemaps.TilemapLayer {
     const mapa = this.make.tilemap({ tileWidth: tilePx, tileHeight: tilePx, width: largura, height: altura });
-    const tileset = mapa.addTilesetImage('recurso', textura, tilePx, tilePx, 0, 0);
+    const tileset = mapa.addTilesetImage('recurso', textura, tilePx, tilePx, MARGEM_DA_TIRA, ESPACAMENTO_DA_TIRA);
     if (!tileset) throw new Error('WorldScene: falha ao criar o tileset de recurso.');
     const camada = mapa.createBlankLayer('recursos', tileset);
     if (!camada) throw new Error('WorldScene: falha ao criar a camada de recursos.');
@@ -1650,7 +1669,7 @@ export class WorldScene extends Phaser.Scene {
     tilePx: number, largura: number, altura: number, textura: string,
   ): Phaser.Tilemaps.TilemapLayer {
     const mapa = this.make.tilemap({ tileWidth: tilePx, tileHeight: tilePx, width: largura, height: altura });
-    const tileset = mapa.addTilesetImage('terreno', textura, tilePx, tilePx, 0, 0);
+    const tileset = mapa.addTilesetImage('terreno', textura, tilePx, tilePx, MARGEM_DA_TIRA, ESPACAMENTO_DA_TIRA);
     if (!tileset) throw new Error('WorldScene: falha ao criar o tileset de terreno.');
     const camada = mapa.createBlankLayer('chao', tileset);
     if (!camada) throw new Error('WorldScene: falha ao criar a camada de chao.');
