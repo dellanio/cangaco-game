@@ -17964,9 +17964,11 @@ tempo, e ele joga só ao fim de grandes blocos de entrega. Isto torna permanente
 - Roteiro novo executado ANTES da alteracao do render. Diferenca media RGB por canal entre centros de vizinhos, 32 pares horizontais/verticais por vista, mesmo tick 0 e mesmas cameras: agua zoom 1: 26,4375 -> 26,5000; agua zoom 2: 24,15625 -> 24,16667; grama zoom 1: 7,03125 -> 6,86458; grama zoom 2: 2,4375 -> 2,16667. Numeros em test-output/D-TELA-VEU-DOS-DETALHES.json; oito capturas antes/depois abertas.
 - Tests diretos D-TELA-VEU-DOS-DETALHES, D-TELA-COSTURA-DOS-TILES, D-TELA-AGUA-VIVA, F-SPR-carregamento e F17f-manifesto: saida 0. verify:rapido: saida 0, 5 testes, 30 s nesta corrida (incluindo espera pela trava).
 - Roteiros F-T1, F-TR, D-TELA-COSTURA-DOS-TILES, D-TELA-AGUA-VIVA e ARTE-VILA: saida 0. Costuras inicialmente recusou referencia ausente; foi gerada uma referencia da propria regressao ja no render corrigido e a comparacao passou, sem alterar suas assercoes. Essa referencia NAO e o antes da remocao do veu.
+- Depois do rebase sobre 6c9c710: verify:rapido saida 0 (25 s, arvore limpa, 0 relacionados), testes diretos 5 arquivos/66 testes verdes e roteiro do veu saida 0, mesmas medidas. Conflito somente no fim do PROGRESS, preservadas as duas secoes.
+- npm run verify completo, exigido pelo AGENTS.md: saida 0; typecheck/lint verdes, 22 arquivos de dados/0 erros; normal 241 arquivos/2324 testes verdes (92,76 s); transladada 241 arquivos/2322 testes verdes/5 pulados existentes (94,46 s). Nenhuma verificacao alterada.
 - git diff main -- src/sim vazio. Nenhum PNG, manifesto, node_modules, .claude ou test-results.json alterado. Dependencias usadas pela junction provisionada pelo operador.
 
 ### Limites e hipoteses
 - A media dos centros nao isola o efeito do veu: arte, variantes e outras camadas tambem aparecem na captura. A agua nao apresentou reducao nessa medida; nao se afirma melhora numerica geral.
 - Costuras ainda visiveis no zoom 2 nas capturas. Eliminar costuras da arte ou outras camadas esta fora deste aceite. A prova direta desta mudanca e a contagem zero da camada de detalhes nos tipos com arte.
-- Verificacao completa e suite longa ficam para o fechamento do bloco pelo operador, conforme as regras comuns. Feature nao marcada em test-results.json.
+- A suite longa fica para o fechamento do bloco pelo operador. Feature nao marcada em test-results.json.
