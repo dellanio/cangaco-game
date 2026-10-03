@@ -18784,3 +18784,54 @@ Só render, ui e roteiro: `git diff` desta feature não toca `src/sim/` (os sele
 - (e) captura `F-IA-DIFICULDADE-1-configurar-com-o-nivel` (o adversário "Difícil" ao lado da paz);
   o Começar segurado 150 ms faz a partida nascer com `ia.1.nivel = dificil`. O save e o carregar
   guardam o nível, e a IA o lê depois (teste headless, pelo `salvar`/`carregar` do jogo).
+
+## 2026-10-03 — Fechamento da Fase F (§13)
+
+**Rodado, nesta ordem:**
+1. `npm run verify` completo no `075e1b0`: verde (2 431 testes na suíte, 2 429 + 5 fora de propósito
+   na transladada).
+2. `npm run shot:todos` (num processo destacado, para não depender do shell): **117 roteiros, 11
+   com saída diferente de 0.** Triados um a um:
+   - **da névoa, corrigidos** (`ef3bc3c`), cada um rodado de novo sozinho e saindo 0:
+     - `C-TELA-01`, `C-TELA-04` e `D-TELA-02` miravam a vila da IA no escuro: a tropa marcha em paz
+       até vê-la, e só então vem o clique;
+     - `D-ARTE-BANDEIRA-FACCAO`: um cabra do jogador entra no save, perto do prédio da IA;
+     - `D-TELA-VENTO-VEGETACAO`: abre com o harness `?semNevoa` (`render/nevoa.ts`), que tira só a
+       camada escura da cena e do minimapa; a regra continua.
+     O que cada um afirma não mudou. `C-TELA-04` passou também a avançar a paz exatamente até o
+     fim (`pazAteTick`), porque passar do fim com a tropa no raio da defesa a deixa apanhar antes
+     do clique.
+   - **de antes da Fase F, conferidos no `3e08253`** (worktree temporária, já removida):
+     - `D-TELA-COSTURA-DOS-TILES` e `D-TELA-VEU-DOS-DETALHES`: pedem a etapa `antes` de uma corrida
+       anterior (`BUG-ROTEIRO-DE-DUAS-ETAPAS`, já aberto);
+     - `D-TELA-05c` e `D-TELA-05d`: o `verify` completo regrava os saves deles no mundo transladado
+       (`BUG-SAVE-DO-ROTEIRO-TRANSLADADO`, já aberto). Com os saves regravados pela suíte normal,
+       os dois saem 0;
+     - `D-TELA-04e`: "delta 1032192 deve ser 2211840", igual no `3e08253`. Registrado agora:
+       `BUG-ROTEIRO-04E-DELTA-DO-ATLAS`.
+   - **espera o operador:** `C-IA-03c` (a pergunta em aberto da F-COMBATE-ALVO-NA-VISTA). Com a
+     névoa ele marcha até o tile do inimigo e perde por pouco.
+   - **Não verificado:** os 117 de novo depois do `ef3bc3c`. Rodei sozinhos os 8 que o commit
+     tocou ou que dependem do que ele mudou (os 6 acima, `F-TELA-NEVOA` e `D-TELA-05c/05d`). O
+     `?semNevoa` só muda a tela quando o parâmetro está na URL.
+3. `npm run verify` completo de novo no `ef3bc3c`: verde (os mesmos números). Com ele, as chaves.
+4. `npm run test:longo`, sozinho, é a última coisa. O resultado e o hash do selo entram no commit
+   seguinte à avaliação, como pede a §13.
+
+**As chaves (`test-results.json`):**
+
+```text
+F-TERRENO-NEVOA-DESCOBERTO   o que o jogador ve e ja viu        passa
+F-COMBATE-ALVO-NA-VISTA      ordem so contra o que se ve        passa
+F-TELA-NEVOA                 a nevoa na tela, painel, minimapa  NAO: aceite (e), C-IA-03c sai 1
+F-IA-DIFICULDADE             tres niveis de adversario          passa
+```
+
+**Espera o operador:**
+- `C-IA-03c` e a margem da escaramuça: aumentar `escaramuca.tropaDoJogador`, ou mudar o que o
+  roteiro afirma (BALANCE_LOG, 2026-10-03). Decidido isso, a chave da F-TELA-NEVOA pode virar.
+- PARA REVISÃO: o raio do prédio (2) e o da torre (9); a obra que não revela; a planta no escuro,
+  que nada impede; os alfas da névoa (1,0 e 0,5); o fácil que só defende, e o difícil com o mesmo
+  tick de ataque do normal (o nível só muda o tamanho, porque o quartel da IA está vazio).
+
+**Aberto, fora da Fase F:** os três bugs de roteiro acima, cada um no `BUGS.md`.
