@@ -15,21 +15,23 @@
     "match-ended": { "campo": "fim", "por": { "vitoria": "victory", "derrota": "defeat" } },
     "command-rejected": "command-rejected"
   },
+  "_docVolume": "H-TELA-OPCOES-E-VOLUME. O volume de cada CANAL (efeitos, ambiente, musica) e o geral, de 0 a 1, quando o jogador ainda nao mexeu (src/preferencias-de-som.ts). O volume que toca e geral x canal; o mudo zera. A escolha do jogador mora no localStorage, fora do save. `canal` de cada som diz qual volume o rege.",
+  "volumePadrao": { "geral": 0.8, "efeitos": 1, "ambiente": 0.6, "musica": 0.5 },
   "sons": {
-    "blueprint-placed": { "tetoPorQuadro": 1 },
-    "building-completed": { "tetoPorQuadro": 1 },
-    "goods-produced": { "tetoPorQuadro": 1 },
-    "unit-trained": { "tetoPorQuadro": 1 },
-    "strike-hit": { "tetoPorQuadro": 1 },
-    "strike-miss": { "tetoPorQuadro": 1 },
-    "unit-killed": { "tetoPorQuadro": 1 },
-    "shot-gun": { "tetoPorQuadro": 1 },
-    "shot-sling": { "tetoPorQuadro": 1 },
-    "stone-thrown": { "tetoPorQuadro": 1 },
-    "building-hit": { "tetoPorQuadro": 1 },
-    "peace-ended": { "tetoPorQuadro": 1 },
-    "victory": { "tetoPorQuadro": 1 },
-    "defeat": { "tetoPorQuadro": 1 },
-    "command-rejected": { "tetoPorQuadro": 1 }
+    "blueprint-placed": { "canal": "efeitos", "tetoPorQuadro": 1 },
+    "building-completed": { "canal": "efeitos", "tetoPorQuadro": 1 },
+    "goods-produced": { "canal": "efeitos", "tetoPorQuadro": 1 },
+    "unit-trained": { "canal": "efeitos", "tetoPorQuadro": 1 },
+    "strike-hit": { "canal": "efeitos", "tetoPorQuadro": 1 },
+    "strike-miss": { "canal": "efeitos", "tetoPorQuadro": 1 },
+    "unit-killed": { "canal": "efeitos", "tetoPorQuadro": 1 },
+    "shot-gun": { "canal": "efeitos", "tetoPorQuadro": 1 },
+    "shot-sling": { "canal": "efeitos", "tetoPorQuadro": 1 },
+    "stone-thrown": { "canal": "efeitos", "tetoPorQuadro": 1 },
+    "building-hit": { "canal": "efeitos", "tetoPorQuadro": 1 },
+    "peace-ended": { "canal": "efeitos", "tetoPorQuadro": 1 },
+    "victory": { "canal": "efeitos", "tetoPorQuadro": 1 },
+    "defeat": { "canal": "efeitos", "tetoPorQuadro": 1 },
+    "command-rejected": { "canal": "efeitos", "tetoPorQuadro": 1 }
   }
 }

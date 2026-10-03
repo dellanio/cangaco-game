@@ -11,7 +11,7 @@ import type { Tocador } from './som';
 export function criarTocadorDoNavegador(urls: Readonly<Record<string, string>>): Tocador {
   const modelos = new Map<string, HTMLAudioElement>();
   return {
-    tocar(id) {
+    tocar(id, volume) {
       const url = urls[id];
       if (url === undefined) return;
       let modelo = modelos.get(id);
@@ -21,6 +21,7 @@ export function criarTocadorDoNavegador(urls: Readonly<Record<string, string>>):
         modelos.set(id, modelo);
       }
       const copia = modelo.cloneNode() as HTMLAudioElement;
+      copia.volume = Math.min(1, Math.max(0, volume));
       copia.play().catch(() => undefined);
     },
   };

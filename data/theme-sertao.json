@@ -691,6 +691,7 @@
     "continuar": "Continuar",
     "carregar": "Carregar",
     "ajuda": "Ajuda",
+    "opcoes": "Opções",
     "voltar": "Voltar",
     "sem-save": "Nenhuma partida guardada ainda",
     "recusado": "A partida guardada não abre: {detalhe}",
@@ -706,5 +707,14 @@
       "nivel": "O adversário",
       "niveis": { "facil": "Fácil", "normal": "Normal", "dificil": "Difícil" }
     }
+  },
+  "som": {
+    "_doc": "H-TELA-OPCOES-E-VOLUME. A caixa de opcoes de som (src/ui/opcoes-de-som.ts), aberta pelo menu inicial e pela ajuda em jogo. As chaves de `canais` sao os canais de data/som.json.",
+    "titulo": "Som",
+    "abrirNaAjuda": "Opções de som",
+    "geral": "Volume geral",
+    "canais": { "efeitos": "Efeitos", "ambiente": "Ambiente", "musica": "Música" },
+    "mudo": "Sem som",
+    "fechar": "Fechar"
   }
 }

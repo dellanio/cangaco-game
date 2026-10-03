@@ -18917,3 +18917,29 @@ F-IA-DIFICULDADE             tres niveis de adversario          passa
   conservadora: o som que o manifesto tem precisa ser um id que o `som.json` toca (arquivo órfão é
   recusado), e o id sem arquivo é silêncio. Se o operador quiser a literal, a regra muda num lugar
   só (`validarSom`).
+
+## 2026-10-03 — H-TELA-OPCOES-E-VOLUME (a tela de opções)
+
+- **Feito:**
+  - `src/preferencias-de-som.ts` (laço externo, puro): `volumeEfetivo` (geral × canal, mudo
+    zera, limitado a [0, 1]), `lerPreferencias` / `gravarPreferencias` na chave `cangaco:som` do
+    `localStorage` (o que não serve volta ao padrão campo a campo; a gaveta que lança é o padrão),
+    `criarPreferenciasVivas` (uma por página, o menu e o jogo usam a mesma) e `canalDoSom`.
+  - `data/som.json`: `volumePadrao` (geral 0,8, efeitos 1, ambiente 0,6, música 0,5) e o `canal` de
+    cada som (todos `efeitos` hoje). O `validate:data` recusa canal fora da lista e volume fora de
+    [0, 1].
+  - `src/ui/opcoes-de-som.ts`: a caixa (geral, efeitos, ambiente, música, "Sem som", Fechar),
+    montada uma vez; o `Esc` fecha ela antes de chegar à ajuda ou ao menu. Abre pelo botão
+    "Opções" do menu inicial e pelo botão "Opções de som" que ela põe na ajuda em jogo (H).
+    Rótulos em `theme-sertao.som` e `menuInicial.opcoes`.
+  - A camada de som toca com o volume efetivo do canal do id; volume 0 não toca e conta como
+    silêncio.
+- **Verificado:** `tests/H-TELA-OPCOES-E-VOLUME.test.ts` (8 testes: a regra por tabela, o canal, a
+  camada com o mudo, o validador, o padrão, gravar e recarregar, o guardado que não serve, e o save
+  byte a byte igual com e sem mudar o volume). Roteiro `H-TELA-OPCOES-E-VOLUME` saiu 0: pelo menu
+  (geral a 24), recarregado (continua 24), pelo jogo **despausado** (18 ticks rodaram durante o
+  gesto), efeitos a 50 e o mudo, com o aperto segurado 150 ms; o primeiro `Esc` fecha só a caixa.
+  As duas fotos abertas: `screenshots/H-TELA-OPCOES-E-VOLUME-1-pelo-menu.png` e `-2-pelo-jogo.png`.
+  `verify:rapido` verde (943 testes).
+- **PARA REVISÃO:** os quatro volumes padrão; a caixa abre centrada na página inteira (por cima da
+  barra e do mapa), e não só na célula do mapa como a ajuda.

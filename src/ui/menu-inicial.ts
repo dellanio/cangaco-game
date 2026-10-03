@@ -57,6 +57,8 @@ export function montarMenuInicial(
   opcoesDeNivel: readonly OpcaoDeNivelNaTela[],
   aoEscolher: (escolha: EscolhaDaPartida) => void,
   aoAjuda: () => void,
+  /** H-TELA-OPCOES-E-VOLUME — abre a caixa de opcoes de som. */
+  aoOpcoes: () => void = () => undefined,
 ): MenuInicial {
   const raiz = document.createElement('section');
   raiz.id = 'menu-inicial';
@@ -136,6 +138,7 @@ export function montarMenuInicial(
     botao('continuar', rotulos.continuar, () => { escolher({ modo: 'continuar' }); }, motivo),
     botao('carregar', rotulos.carregar, () => { mostrar(carregar); }),
     botao('ajuda', rotulos.ajuda, aoAjuda),
+    botao('opcoes', rotulos.opcoes, aoOpcoes),
   );
   novo.append(
     botao('livre', rotulos.livre, () => { escolher({ modo: 'livre' }); }),

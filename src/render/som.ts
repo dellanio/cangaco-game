@@ -26,7 +26,7 @@ export type LinhaDoEvento = string | { readonly campo: string; readonly por: Rea
 export interface TabelaDeSom {
   readonly planta: string;
   readonly eventos: Readonly<Record<string, LinhaDoEvento | string>>;
-  readonly sons: Readonly<Record<string, { readonly tetoPorQuadro: number }>>;
+  readonly sons: Readonly<Record<string, { readonly tetoPorQuadro: number; readonly canal?: string }>>;
 }
 
 /** O id de som do evento pela tabela, ou `null` (evento sem linha, ou valor do campo sem id). */
@@ -123,9 +123,9 @@ export function sonsDoQuadro(pedidos: readonly string[], tabela: TabelaDeSom, di
   return { tocar, silencio };
 }
 
-/** Quem toca de verdade. Recebe so id que tem arquivo. */
+/** Quem toca de verdade. Recebe so id que tem arquivo, com o volume (0 a 1) que vale agora. */
 export interface Tocador {
-  tocar(id: string): void;
+  tocar(id: string, volume: number): void;
 }
 
 export interface ContadoresDeSom {
@@ -150,7 +150,13 @@ export interface CamadaDeSom {
   contadores(): ContadoresDeSom;
 }
 
-export function criarCamadaDeSom(tabela: TabelaDeSom, disponiveis: ReadonlySet<string>, tocador: Tocador): CamadaDeSom {
+/**
+ * `volume` diz o volume efetivo de um id agora (H-TELA-OPCOES-E-VOLUME: geral x canal, o mudo
+ * zera). Id com volume 0 nao toca e conta como silencio.
+ */
+export function criarCamadaDeSom(
+  tabela: TabelaDeSom, disponiveis: ReadonlySet<string>, tocador: Tocador, volume: (id: string) => number = () => 1,
+): CamadaDeSom {
   let antes: GameState | null = null;
   let pendentes: string[] = [];
   let pedidos = 0;
@@ -174,9 +180,16 @@ export function criarCamadaDeSom(tabela: TabelaDeSom, disponiveis: ReadonlySet<s
       pendentes = [];
       for (const id of [...r.tocar, ...r.silencio]) porId[id] = (porId[id] ?? 0) + 1;
       pedidos += r.tocar.length + r.silencio.length;
-      tocados += r.tocar.length;
       emSilencio += r.silencio.length;
-      for (const id of r.tocar) tocador.tocar(id);
+      for (const id of r.tocar) {
+        const v = volume(id);
+        if (v <= 0) {
+          emSilencio += 1;
+          continue;
+        }
+        tocados += 1;
+        tocador.tocar(id, v);
+      }
     },
     reiniciar() {
       antes = null;

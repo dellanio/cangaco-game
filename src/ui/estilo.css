@@ -891,3 +891,26 @@ body[data-menu] #ajuda { z-index: 30; }
 #carregamento .texto { font: 13px/1.2 var(--fonte-corpo); font-style: italic; }
 #carregamento .trilho { height: 14px; border: 2px solid var(--pergaminho); background: var(--tabua); }
 #carregamento .barra { height: 100%; width: 0; background: var(--ocre); }
+
+/* ---- as opcoes de som (H-TELA-OPCOES-E-VOLUME) -------------------------------- */
+/* A caixa de cima de todas: abre pelo menu inicial e pela ajuda, e fica por cima dos dois. */
+#opcoes-de-som {
+  grid-column: 1 / -1; grid-row: 1; place-self: center; z-index: 40;
+  box-sizing: border-box; width: 340px; padding: 14px 20px 16px;
+  display: flex; flex-direction: column; gap: 10px;
+  background-color: var(--papel); background-image: var(--grao);
+  color: var(--tinta); font: 14px/1.35 var(--fonte-corpo);
+  border: var(--traco) solid var(--tinta);
+  outline: 2px solid var(--papel); outline-offset: -8px;
+  box-shadow: 6px 6px 0 var(--tinta), 0 12px 40px rgba(0, 0, 0, 0.6);
+}
+#opcoes-de-som[hidden] { display: none; }
+#opcoes-de-som h2 {
+  margin: 0 0 4px; padding-bottom: 6px; font-size: 22px;
+  border-bottom: var(--traco) solid var(--tinta);
+}
+#opcoes-de-som .campo { display: flex; flex-direction: column; gap: 3px; }
+#opcoes-de-som .campo.mudo { flex-direction: row; align-items: center; gap: 8px; }
+#opcoes-de-som input[type="range"] { width: 100%; accent-color: var(--terracota); }
+#opcoes-de-som button[data-acao="fechar"] { align-self: center; padding: 4px 14px; }
+#ajuda button[data-acao="opcoes-de-som"] { margin-bottom: 8px; }

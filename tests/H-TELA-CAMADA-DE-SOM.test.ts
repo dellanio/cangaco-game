@@ -255,7 +255,7 @@ describe('H-TELA-CAMADA-DE-SOM — (d) o validate:data', () => {
   it('recusa id tocado sem linha em sons, e teto que nao e inteiro >= 1', () => {
     const eventos = { ...(som['eventos'] as object), 'unit-starved': 'starve' };
     expect(rodar({ ...som, eventos })).toEqual(["interface/som: evento 'unit-starved' toca 'starve', que nao esta em sons"]);
-    const sons = { ...(som['sons'] as object), 'unit-killed': { tetoPorQuadro: 0 } };
+    const sons = { ...(som['sons'] as object), 'unit-killed': { canal: 'efeitos', tetoPorQuadro: 0 } };
     expect(rodar({ ...som, sons })).toEqual(["interface/som: 'unit-killed': tetoPorQuadro precisa ser inteiro >= 1"]);
   });
 

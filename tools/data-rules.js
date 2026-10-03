@@ -1813,9 +1813,17 @@ function validarSom(som, erros, opcoes = {}) {
     e('sons precisa ser objeto');
     return;
   }
+  // H-TELA-OPCOES-E-VOLUME: o canal de cada som e o volume padrao de cada canal e do geral
+  const canais = ['efeitos', 'ambiente', 'musica'];
   for (const [id, def] of Object.entries(sons)) {
     if (id.startsWith('_')) continue;
     if (!def || !Number.isInteger(def.tetoPorQuadro) || def.tetoPorQuadro < 1) e(`'${id}': tetoPorQuadro precisa ser inteiro >= 1`);
+    if (!def || !canais.includes(def.canal)) e(`'${id}': canal precisa ser um de ${canais.join(', ')}`);
+  }
+  const padrao = som.volumePadrao;
+  for (const campo of ['geral', ...canais]) {
+    const v = padrao && padrao[campo];
+    if (typeof v !== 'number' || !Number.isFinite(v) || v < 0 || v > 1) e(`volumePadrao.${campo} precisa ser numero de 0 a 1`);
   }
   const tocado = (id, onde) => {
     if (typeof id !== 'string' || !Object.prototype.hasOwnProperty.call(sons, id)) e(`${onde} toca '${id}', que nao esta em sons`);

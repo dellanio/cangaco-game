@@ -61,6 +61,9 @@ import type { SonsDoManifesto, TabelaDeSom, ContadoresDeSom } from './render/som
 import { criarTocadorDoNavegador } from './render/tocador-de-som';
 import { urlsDeArquivosDeSom } from './render/sprites-urls';
 import tabelaDeSom from '../data/som.json';
+import { canalDoSom, volumeEfetivo } from './preferencias-de-som';
+import type { PreferenciasVivas } from './preferencias-de-som';
+import type { OpcoesDeSom } from './ui/opcoes-de-som';
 
 // C-IA-03c — o botao "Nova escaramuca" do painel H comeca a escaramuca no meio do jogo.
 const SEMENTE = gameData.economia.estadoInicial.semente;
@@ -81,12 +84,16 @@ declare global {
  */
 export function iniciarPartida(
   estadoInicial: GameState, ajudaDoMenu: Ajuda | null = null, carregamento: TelaDeCarregamento | null = null,
+  /** H-TELA-OPCOES-E-VOLUME — o volume escolhido (o mesmo do menu) e a caixa que o muda. */
+  preferenciasDeSom: PreferenciasVivas | null = null, opcoesDeSom: OpcoesDeSom | null = null,
 ): void {
   const sessao = criarSessao(estadoInicial);
   // H-TELA-CAMADA-DE-SOM — o som le os eventos de cada passo e toca no fim do quadro. O arquivo
   // vem do manifesto (secao `sons`) pela URL do bundler; sem arquivo, o id e silencio.
   const urlsDeSom = urlsDosSons((manifestoJson as unknown as { sons?: SonsDoManifesto }).sons, urlsDeArquivosDeSom);
-  const som = criarCamadaDeSom(tabelaDeSom as TabelaDeSom, new Set(Object.keys(urlsDeSom)), criarTocadorDoNavegador(urlsDeSom));
+  const tabela = tabelaDeSom as TabelaDeSom;
+  const som = criarCamadaDeSom(tabela, new Set(Object.keys(urlsDeSom)), criarTocadorDoNavegador(urlsDeSom),
+    (id) => (preferenciasDeSom === null ? 1 : volumeEfetivo(preferenciasDeSom.atual, canalDoSom(tabela.sons, id))));
   // Todo comando do jogador passa por aqui: a conta diz ao som que a recusa do proximo passo e
   // do jogador, e a planta posicionada pede o som seco no quadro do clique (GDD §10).
   let comandosDoJogador = 0;
@@ -105,6 +112,8 @@ export function iniciarPartida(
   // entao ela pode nascer antes do resto da interface. Quem a abre e o teclado, e
   // e por isso que ela e o quarto parametro: com a ajuda aberta, o `Esc` e dela.
   const ajuda = ajudaDoMenu ?? montarAjuda();
+  // H-TELA-OPCOES-E-VOLUME — a ajuda em jogo abre as opcoes de som
+  opcoesDeSom?.ligarNaAjuda();
   ligarTeclado(ferramenta, window, selecao, ajuda);
 
   // O laco. `?pausado` na URL o faz NASCER pausado: e o que o runner de screenshot usa para todo
