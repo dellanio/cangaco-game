@@ -18585,3 +18585,39 @@ Leituras conservadoras, PARA REVISÃO do operador:
   desligada;
 - o nível normal da IA é o jogo de hoje; fácil e difícil são proposta, a ajustar no lote de
   balanceamento.
+
+## 2026-10-03 — D-ARTE-PIXEL-ART-CIVIS: mercadorias, carga nas mãos e as profissões civis em pixel art (TESTE)
+
+Branch `serf-pixelart`, worktree irmã. **Teste de arte; não vai para a `main` sem decisão do
+operador.** Arte gerada no PixelLab (assinatura do operador, Tier 1, 2000 gerações no ciclo que
+renova em 2026-11-03). Os ids de cada personagem estão em
+`D:\projetos-pessoal\cangaco-game-candidatos\arte\pixelart\ids.json`, e no `origem.nota` de cada
+entrada do manifesto.
+
+**Verificado (aberto ou rodado nesta sessão):**
+- As 28 mercadorias da economia têm sprite 32×32 em `assets/sprites/mercadorias/` (base em
+  `assets/base/mercadorias/`). O `F17f-manifesto` passou a exigir as 28, e não as 8 de antes.
+- O serf com carga anda na pose de braços erguidos (`carregando`), e o render põe o sprite da
+  mercadoria no ponto de `data/carga-nas-maos.json`, atrás do corpo quando ele anda para o norte.
+  Roteiro `D-ARTE-SERF-COMFYUI` verde, captura `screenshots/D-ARTE-SERF-COMFYUI-3-serf-carregando.png`
+  aberta: a pedra aparece entre as mãos do serf que anda para o leste.
+- Profissões civis com atlas de pixel art (parado + andar de 8 quadros, 5 direções, pé na linha 90,
+  célula 64×96), conferidas numa folha de revisão: as 13 profissões além do serf (obreiro, pedreiro,
+  lenhador, carpinteiro, fazendeiro, padeiro, criador, carneador, pescador, mineiro, fundidor,
+  ferreiro e aprendiz). Todas com o pé medido na linha 90 em todos os quadros.
+- O criador saiu na primeira geração com cabeça de bode (o texto "goat herder"); foi refeito com
+  outro texto, e o primeiro ficou registrado como `animal_breeder_v1_cabeca_de_bode` no `ids.json`.
+
+**Defeitos vistos, não corrigidos (custo de nova geração):** o obreiro, andando para o leste, perde a
+marreta em alguns quadros; lenhador, fazendeiro, padeiro e mineiro encostam a ferramenta na borda da
+célula de 64 px (largura máxima medida: 64); o criador perde o cajado nos últimos quadros do leste e
+do nordeste. Os militares ficaram de fora: o pedido do operador foi "as demais profissões", e as
+unidades militares ficam para decisão dele.
+
+**Como se refaz:** os scripts ficam no scratchpad da sessão e não sobrevivem a ela. O método: baixar o
+zip do personagem (`https://api.pixellab.ai/mcp/characters/<id>/download`), colar cada quadro de 76 px
+centrado numa célula 64×96 com o pé na linha 90, montar o atlas `<tipo>/<anim>/<dir>/<nnnn>` e
+trocar só a entrada do tipo no manifesto, por splice de texto (o manifesto é CRLF).
+
+**Incidente:** por uns 10 minutos o PixelLab recusou todo pedido ("Service hiccup talking to the
+database"). Os pedidos que falharam não foram cobrados, e o serviço voltou sozinho.
