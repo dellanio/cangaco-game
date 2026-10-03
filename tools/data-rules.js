@@ -1792,6 +1792,59 @@ function validarRelevo(dados, relevo, erros) {
   }
 }
 
+/**
+ * H-TELA-CAMADA-DE-SOM — `data/som.json`. Recusa: o evento que a sim nao emite (a lista vem de
+ * `src/render/eventos-da-sim.ts`, que o compilador confere contra `GameEvent`); o id tocado sem
+ * linha em `sons`; o teto que nao e inteiro >= 1; e o som do manifesto (`assets/manifest.json`,
+ * secao `sons`) cujo id nao esta em `som.json` (arquivo que nada toca). O id de `som.json` sem
+ * arquivo no manifesto NAO e erro: e silencio, o estado normal antes da aprovacao.
+ */
+function validarSom(som, erros, opcoes = {}) {
+  const e = (msg) => erros.push(`interface/som: ${msg}`);
+  if (!som || typeof som !== 'object' || Array.isArray(som)) {
+    e('data/som.json precisa existir e ser objeto');
+    return;
+  }
+  const eventosDaSim = opcoes.eventosDaSim
+    ?? require('../src/render/eventos-da-sim.ts').EVENTOS_DA_SIM;
+  const manifesto = opcoes.manifesto ?? manifestoDeAssets;
+  const sons = som.sons && typeof som.sons === 'object' && !Array.isArray(som.sons) ? som.sons : null;
+  if (sons === null) {
+    e('sons precisa ser objeto');
+    return;
+  }
+  for (const [id, def] of Object.entries(sons)) {
+    if (id.startsWith('_')) continue;
+    if (!def || !Number.isInteger(def.tetoPorQuadro) || def.tetoPorQuadro < 1) e(`'${id}': tetoPorQuadro precisa ser inteiro >= 1`);
+  }
+  const tocado = (id, onde) => {
+    if (typeof id !== 'string' || !Object.prototype.hasOwnProperty.call(sons, id)) e(`${onde} toca '${id}', que nao esta em sons`);
+  };
+  tocado(som.planta, 'planta');
+  const eventos = som.eventos && typeof som.eventos === 'object' && !Array.isArray(som.eventos) ? som.eventos : null;
+  if (eventos === null) {
+    e('eventos precisa ser objeto');
+    return;
+  }
+  const emitidos = new Set(eventosDaSim);
+  for (const [tipo, linha] of Object.entries(eventos)) {
+    if (tipo.startsWith('_')) continue;
+    if (!emitidos.has(tipo)) e(`evento '${tipo}' nao e emitido pela sim`);
+    if (typeof linha === 'string') {
+      tocado(linha, `evento '${tipo}'`);
+    } else if (linha && typeof linha.campo === 'string' && linha.por && typeof linha.por === 'object') {
+      for (const [valor, id] of Object.entries(linha.por)) tocado(id, `evento '${tipo}' (${linha.campo}=${valor})`);
+    } else {
+      e(`evento '${tipo}': a linha precisa ser um id ou {campo, por}`);
+    }
+  }
+  const doManifesto = manifesto && manifesto.sons && typeof manifesto.sons === 'object' ? manifesto.sons : {};
+  for (const id of Object.keys(doManifesto)) {
+    if (id.startsWith('_')) continue;
+    if (!Object.prototype.hasOwnProperty.call(sons, id)) e(`o manifesto tem o som '${id}', que data/som.json nao toca`);
+  }
+}
+
 function validarInterface(dados, interfaceUi) {
   const erros = [];
   const animacao = interfaceUi && interfaceUi['animacao-unidade'];
@@ -1826,6 +1879,7 @@ function validarInterface(dados, interfaceUi) {
   validarAguaPeixe(interfaceUi && interfaceUi['agua-peixe'], erros);
   validarPoeira(interfaceUi && interfaceUi.poeira, erros);
   validarFumaca(interfaceUi && interfaceUi.fumaca, erros);
+  validarSom(interfaceUi && interfaceUi.som, erros);
   if (!menu || !Array.isArray(menu.grupos)) {
     erros.push('interface/menu-build-forma: menu-build.grupos precisa ser array');
     return erros;
@@ -1915,4 +1969,4 @@ function validarTudo(dados) {
   return erros;
 }
 
-module.exports = { validarBandeira, validarFumaca, validarTudo, validarInterface, validarVento, validarPoeira, getByPath };
+module.exports = { validarSom, validarBandeira, validarFumaca, validarTudo, validarInterface, validarVento, validarPoeira, getByPath };

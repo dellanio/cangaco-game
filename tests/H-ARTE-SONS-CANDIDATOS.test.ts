@@ -2,12 +2,12 @@
  * H-ARTE-SONS-CANDIDATOS — a lista de sons para o operador aprovar (`docs/sons-candidatos.md`).
  *
  * Aceite: (a) todo id da tabela de eventos da H-TELA-CAMADA-DE-SOM tem pelo menos um candidato
- * (a tabela e o `data/som.json`; ate ele existir, a lista e conferida por si); (b) todo candidato
+ * (a tabela e o `data/som.json`); (b) todo candidato
  * tem licenca CC0 e o link de um banco livre. A licenca foi conferida na pagina pela sessao
  * (2026-10-03); o teste guarda que a lista nao aceita outra licenca nem candidato sem link.
  */
 import { describe, it, expect } from 'vitest';
-import { existsSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { gravarEvidencia } from './helpers/evidence';
 import { lerSonsCandidatos, escolhaDoOperador } from '../tools/sons-candidatos.js';
 
@@ -52,13 +52,11 @@ describe('H-ARTE-SONS-CANDIDATOS — a lista', () => {
   });
 
   it('(a) todo id do data/som.json tem linha com candidato', () => {
-    // A tabela de eventos nasce na H-TELA-CAMADA-DE-SOM; ate la, so a lista.
+    // A tabela de eventos e o data/som.json (H-TELA-CAMADA-DE-SOM): todo id dele tem linha aqui.
     const ids = new Set(linhas.map((l) => l.id));
-    const faltam: string[] = [];
-    if (existsSync('data/som.json')) {
-      const som = JSON.parse(readFileSync('data/som.json', 'utf8')) as { sons?: Record<string, unknown> };
-      for (const id of Object.keys(som.sons ?? {})) if (!ids.has(id)) faltam.push(id);
-    }
+    const som = JSON.parse(readFileSync('data/som.json', 'utf8')) as { sons: Record<string, unknown> };
+    expect(Object.keys(som.sons).length).toBeGreaterThan(0);
+    const faltam = Object.keys(som.sons).filter((id) => !id.startsWith('_') && !ids.has(id));
     expect(faltam).toEqual([]);
     gravarEvidencia('H-ARTE-SONS-CANDIDATOS', {
       sons: linhas.length,

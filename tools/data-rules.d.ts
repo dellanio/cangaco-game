@@ -9,3 +9,6 @@ export function validarPoeira(poeira: unknown, erros: string[]): void;
 
 export function validarFumaca(fumaca: unknown, erros: string[]): void;
 export function validarBandeira(bandeira: unknown, erros: string[]): void;
+export function validarSom(
+  som: unknown, erros: string[], opcoes?: { eventosDaSim?: readonly string[]; manifesto?: unknown },
+): void;

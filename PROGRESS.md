@@ -18876,3 +18876,44 @@ F-IA-DIFICULDADE             tres niveis de adversario          passa
   - instrumentos do sertão (rabeca, zabumba, pífano): não achei música CC0 com eles; as músicas
     da lista são de feira medieval e de batalha genérica, até haver gravação própria;
   - o berro de bode, o carro de boi e a martelada a cada HP não têm evento na sim e ficaram de fora.
+
+## 2026-10-03 — H-TELA-CAMADA-DE-SOM (o render toca os eventos da sim)
+
+- **Feito:**
+  - `data/som.json`: a tabela evento → id de som (11 eventos e a planta, 15 ids, teto 1 por quadro
+    para todos). `projectile-fired` escolhe o id pelo `projetil`; `unit-struck` pelo `acertou`;
+    `match-ended` pelo `fim`. A pedra da torre (`pedraDaTorre`) fica sem som no `projectile-fired`,
+    porque o `stone-thrown` do mesmo tick já toca.
+  - `src/render/som.ts`, puro: `idDoSom`, `sonsDoTick` (a vista e a recusa), `sonsDoQuadro` (o teto
+    e o silêncio), `criarCamadaDeSom` e `urlsDosSons`. `src/render/tocador-de-som.ts` toca com
+    `Audio` do navegador, e só id com arquivo; o `play()` recusado pela política de autoplay é
+    engolido (silêncio, sem erro de console).
+  - `src/render/eventos-da-sim.ts`: os `type` da sim em valor, conferidos pelo compilador nos dois
+    sentidos (`satisfies` e o `_TODOS`). É o que o `validate:data` lê (o Node 24 tira os tipos
+    sozinho; só `import type` no arquivo).
+  - `src/main.ts`: o passo do laço entrega o estado ao som com quantos comandos do jogador ele
+    consumiu; a planta (`PlaceBlueprint`) pede o som no clique; o fim do quadro toca. Harness
+    `window.__cangacoSom.contadores()`.
+  - `tools/data-rules.js` (`validarSom`): recusa evento que a sim não emite, id tocado sem linha em
+    `sons`, teto que não é inteiro ≥ 1, e som do manifesto que o `som.json` não toca.
+- **Verificado:** `tests/H-TELA-CAMADA-DE-SOM.test.ts` (17 testes: o mapeamento por tabela, o teto,
+  o silêncio, a velocidade, a vista com a escaramuca de verdade, a morte pelo estado anterior, a
+  recusa só do jogador, o grafo de import da sim pelo parser do TypeScript, e o validador por
+  caso); roteiro `H-TELA-CAMADA-DE-SOM` saiu 0, despausado, com
+  `{"pedidos":2,"tocados":0,"emSilencio":2}` (a planta e a recusa dela), zero erro de console e
+  zero requisição de áudio. `verify:rapido` verde (494 testes).
+- **Medida:** a escaramuca parada não pede som nenhum em 1 500 ticks (ninguém produz sem o jogador
+  mandar); a pedreira do cenário de produção, em 600 ticks, pede 1 `goods-produced`.
+- **Decisões (PARA REVISÃO):**
+  - a recusa toca só no tick que consumiu comando do jogador; uma recusa da IA no mesmo tick
+    tocaria junto (raro, e é a leitura conservadora sem campo de lado no evento);
+  - a unidade do jogador está sempre na vista; a que morreu no tick usa o tile do estado anterior.
+
+### Perguntas em aberto
+
+- **O aceite (d) da H-TELA-CAMADA-DE-SOM, "id de som fora do manifesto, quando o manifesto tiver o
+  som".** A leitura literal (todo id do `som.json` precisa estar no manifesto) contradiz o "som que
+  falta é silêncio" assim que o operador aprovar só parte da lista. A leitura implementada,
+  conservadora: o som que o manifesto tem precisa ser um id que o `som.json` toca (arquivo órfão é
+  recusado), e o id sem arquivo é silêncio. Se o operador quiser a literal, a regra muda num lugar
+  só (`validarSom`).
