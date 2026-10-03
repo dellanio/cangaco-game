@@ -41,7 +41,7 @@ function png(largura, altura, pixels) {
   for (let y = 0; y < altura; y++) pixels.copy(linhas, y * (1 + largura * 4) + 1, y * largura * 4, (y + 1) * largura * 4);
   return Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10]), chunk('IHDR', ihdr), chunk('IDAT', deflateSync(linhas, { level: 9 })), chunk('IEND', Buffer.alloc(0))]);
 }
-function gerar(destino = 'assets/depuracao') {
+function gerarSerf(destino) {
   const largura = 512, altura = 1080;
   const pixels = Buffer.alloc(largura * altura * 4);
   const frames = {};
@@ -86,6 +86,80 @@ function gerar(destino = 'assets/depuracao') {
     estados: {}, atlas: 'depuracao/serf/serf.json', animacoes: ANIMACOES,
     licenca: 'CC0, formas de depuração', origem: { base: 'depuracao/serf/serf.png', semente: null, nota: 'tools/gerar-sprites-depuracao.js' },
   }] }, null, 2) + '\n');
+}
+// Fixtures geométricas; não são arte final. O serf acima mantém seus bytes.
+function gerarTipo(destino, id, acao) {
+  const animacoes = {
+    parado: ANIMACOES.parado, andar: ANIMACOES.andar,
+    [acao]: { quadros: 6, fps: 10, laco: true }, morrer: ANIMACOES.morrer,
+  };
+  const largura = 512, altura = 1440;
+  const pixels = Buffer.alloc(largura * altura * 4), frames = {};
+  let indice = 0;
+  for (const [animacao, dado] of Object.entries(animacoes)) {
+    for (const [d, direcao] of DIRECOES.entries()) for (let q = 0; q < dado.quadros; q++) {
+      const x = indice % 8 * 64, y = Math.floor(indice / 8) * 96;
+      const rect = (px, py, w, h, cor) => {
+        for (let yy = py; yy < py + h; yy++) for (let xx = px; xx < px + w; xx++) {
+          pixels.set(cor, ((y + yy - 10) * largura + x + xx - 6) * 4);
+        }
+      };
+      const alpha = animacao === 'morrer' && q >= 4 ? (q === 4 ? 128 : 32) : 255;
+      const tinta = [60 + 30 * d, 150, 110 + 15 * q, alpha], osso = [235,235,215,alpha];
+      const esqueleto = animacao === 'morrer' && q >= 2;
+      if (esqueleto) {
+        rect(19, 76, 7, 6, osso); rect(26, 79, 21, 2, osso);
+        rect(31, 73, 2, 14, osso); rect(37, 74, 2, 12, osso);
+        rect(44, 80, 10, 2, osso);
+      } else {
+        const caindo = animacao === 'morrer';
+        rect(26, caindo ? 65 : 30, 12, 12, tinta);
+        rect(caindo ? 21 : 24, caindo ? 78 : 42, caindo ? 28 : 16, caindo ? 10 : 36, tinta);
+        rect(27, 78, 4, 17, tinta); rect(35, 78, 4, 17, tinta);
+        if (id === 'militia') {
+          rect(13, 48, 7, 21, [45,90,200,alpha]); // escudo, esquerda
+          rect(45, 33 + q % 3, 3, 36, [240,150,30,alpha]); // arma, direita
+        } else {
+          rect(44, 35 + q % 3, 3, 39, [160,110,60,alpha]);
+          rect(40, 32 + q % 3, 13, 5, [230,230,230,alpha]);
+        }
+      }
+      // Linha técnica de assentamento, também no quadro dissipado.
+      rect(6, 95, 52, 1, [255,255,255,alpha]);
+      const sigla = { parado: 'p', andar: 'a', atacar: 't', trabalhar: 't', morrer: 'm' }[animacao];
+      let tx = 12;
+      for (const letra of `${sigla}${direcao}${q}`) {
+        FONTE[letra].forEach((linha, yy) => [...linha].forEach((b, xx) => {
+          if (b === '1') rect(tx + xx * 2, 12 + yy * 2, 2, 2, [255,255,255,255]);
+        }));
+        tx += 8;
+      }
+      frames[`${id}/${animacao}/${direcao}/${String(q).padStart(4, '0')}`] = {
+        frame: { x, y, w: 52, h: 86 }, rotated: false, trimmed: true,
+        spriteSourceSize: { x: 6, y: 10, w: 52, h: 86 }, sourceSize: { w: 64, h: 96 },
+      };
+      indice++;
+    }
+  }
+  mkdirSync(join(destino, id), { recursive: true });
+  writeFileSync(join(destino, `${id}/${id}.png`), png(largura, altura, pixels));
+  writeFileSync(join(destino, `${id}/${id}.json`), JSON.stringify({ frames,
+    meta: { image: `${id}.png`, size: { w: largura, h: altura }, scale: '1' } }, null, 2) + '\n');
+  return { id, tipo: 'unidade', footprint: [1,1], tamanho: [64,96], anchor: [0.5,1],
+    estados: {}, atlas: `depuracao/${id}/${id}.json`, animacoes,
+    licenca: 'CC0, formas de depuração', origem: { base: `depuracao/${id}/${id}.png`, semente: null,
+      nota: 'tools/gerar-sprites-depuracao.js; morte, esqueleto, dissipação' } };
+}
+FONTE.p = ['110','101','110','100','100']; FONTE.a = ['010','101','111','101','101'];
+FONTE.t = ['111','010','010','010','010']; FONTE.m = ['101','111','111','101','101'];
+function gerar(destino = 'assets/depuracao') {
+  gerarSerf(destino);
+  const { readFileSync } = require('node:fs');
+  const manifesto = JSON.parse(readFileSync(join(destino, 'manifesto.json'), 'utf8'));
+  for (const [id, acao] of [['militia','atacar'], ['woodcutter','trabalhar'], ['laborer','trabalhar']]) {
+    manifesto.assets.push(gerarTipo(destino, id, acao));
+  }
+  writeFileSync(join(destino, 'manifesto.json'), JSON.stringify(manifesto, null, 2) + '\n');
 }
 if (require.main === module) gerar(process.argv[2]);
 module.exports = { gerar };

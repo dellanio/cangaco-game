@@ -18113,3 +18113,17 @@ Luminância = 0,2126 R + 0,7152 G + 0,0722 B; desvio populacional de todos os pi
   Saída final: `Verificacao completa. Evidencia em test-output/ e screenshots/.`
 - O plano não é evidência de que a Leva 3 foi implementada. Não marcado
   `test-results.json`; sem push.
+
+## 2026-10-03 — D-ARTE-DEPURACAO-LEVA-TRES (fixtures de animação), pelo Codex
+
+- Emenda de morte/execução em `563dc1a`, antes do código. A verificação rápida da
+  emenda teve um timeout do teste de vento, sem código alterado; o teste isolado
+  passou (4 testes) e a repetição do rápido passou (673 testes), sem alterar limite.
+- Gerador estendido com militia, woodcutter e laborer: cada atlas tem 120 quadros,
+  pé constante, arma/escudo/ferramenta e morte → esqueleto → dissipação.
+- Os bytes de PNG/JSON do serf permanecem iguais aos hashes registrados na Leva 2.
+- Testes diretos da tarefa, gerador antigo, 04b/04d/04e e manifesto/carregamento:
+  saída 0. Duas gerações conferidas byte a byte. Evidência em
+  `test-output/D-ARTE-DEPURACAO-LEVA-TRES.json`; atlas militia aberto e inspecionado.
+- Só fixtures de depuração, não arte final. Nenhum dado/código da sim ou asset
+  real alterado; não marcado `test-results.json`, sem push.

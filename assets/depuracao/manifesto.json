@@ -41,6 +41,144 @@
         "semente": null,
         "nota": "tools/gerar-sprites-depuracao.js"
       }
+    },
+    {
+      "id": "militia",
+      "tipo": "unidade",
+      "footprint": [
+        1,
+        1
+      ],
+      "tamanho": [
+        64,
+        96
+      ],
+      "anchor": [
+        0.5,
+        1
+      ],
+      "estados": {},
+      "atlas": "depuracao/militia/militia.json",
+      "animacoes": {
+        "parado": {
+          "quadros": 4,
+          "fps": 10,
+          "laco": true
+        },
+        "andar": {
+          "quadros": 8,
+          "tilesPorCiclo": 2,
+          "laco": true
+        },
+        "atacar": {
+          "quadros": 6,
+          "fps": 10,
+          "laco": true
+        },
+        "morrer": {
+          "quadros": 6,
+          "fps": 10,
+          "laco": false
+        }
+      },
+      "licenca": "CC0, formas de depuração",
+      "origem": {
+        "base": "depuracao/militia/militia.png",
+        "semente": null,
+        "nota": "tools/gerar-sprites-depuracao.js; morte, esqueleto, dissipação"
+      }
+    },
+    {
+      "id": "woodcutter",
+      "tipo": "unidade",
+      "footprint": [
+        1,
+        1
+      ],
+      "tamanho": [
+        64,
+        96
+      ],
+      "anchor": [
+        0.5,
+        1
+      ],
+      "estados": {},
+      "atlas": "depuracao/woodcutter/woodcutter.json",
+      "animacoes": {
+        "parado": {
+          "quadros": 4,
+          "fps": 10,
+          "laco": true
+        },
+        "andar": {
+          "quadros": 8,
+          "tilesPorCiclo": 2,
+          "laco": true
+        },
+        "trabalhar": {
+          "quadros": 6,
+          "fps": 10,
+          "laco": true
+        },
+        "morrer": {
+          "quadros": 6,
+          "fps": 10,
+          "laco": false
+        }
+      },
+      "licenca": "CC0, formas de depuração",
+      "origem": {
+        "base": "depuracao/woodcutter/woodcutter.png",
+        "semente": null,
+        "nota": "tools/gerar-sprites-depuracao.js; morte, esqueleto, dissipação"
+      }
+    },
+    {
+      "id": "laborer",
+      "tipo": "unidade",
+      "footprint": [
+        1,
+        1
+      ],
+      "tamanho": [
+        64,
+        96
+      ],
+      "anchor": [
+        0.5,
+        1
+      ],
+      "estados": {},
+      "atlas": "depuracao/laborer/laborer.json",
+      "animacoes": {
+        "parado": {
+          "quadros": 4,
+          "fps": 10,
+          "laco": true
+        },
+        "andar": {
+          "quadros": 8,
+          "tilesPorCiclo": 2,
+          "laco": true
+        },
+        "trabalhar": {
+          "quadros": 6,
+          "fps": 10,
+          "laco": true
+        },
+        "morrer": {
+          "quadros": 6,
+          "fps": 10,
+          "laco": false
+        }
+      },
+      "licenca": "CC0, formas de depuração",
+      "origem": {
+        "base": "depuracao/laborer/laborer.png",
+        "semente": null,
+        "nota": "tools/gerar-sprites-depuracao.js; morte, esqueleto, dissipação"
+      }
     }
   ]
 }
