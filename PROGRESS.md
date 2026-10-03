@@ -18972,3 +18972,53 @@ F-IA-DIFICULDADE             tres niveis de adversario          passa
     e o ambiente fica;
   - o sino é da Bodega do **jogador**, pela origem do prédio dentro da vista da câmera;
   - os números (16 tiles, 15 s, 3 s, 20 s) são os primeiros que pareceram razoáveis, sem medida.
+
+## 2026-10-03 — H-ARTE-SONS-APROVADOS (os sons aprovados entram no jogo): espera o operador
+
+- **Não começou.** A coluna `aprovado` do `docs/sons-candidatos.md` está vazia nas 20 linhas, e o
+  item só começa com ela preenchida pelo operador. Nada foi baixado. O jogo inteiro roda em
+  silêncio enquanto isso, e o código não espera o som: assim que um arquivo entrar em
+  `assets/sons/` com a linha dele na seção `sons` do `assets/manifest.json`, a camada o toca.
+- **O que a sessão seguinte faz, com a aprovação:** baixa só o candidato do número escrito,
+  recorta o que a lista marcou "(recorte)", converte para o formato que o build serve, e escreve no
+  manifesto `sons.<id>` com `arquivo`, `licenca` (CC0) e `origem` (o link). O aceite (a), (b) e (c)
+  está no `BUILD_PLAN.md`.
+
+## 2026-10-03 — Fechamento da Fase H (§13)
+
+**Rodado, nesta ordem:**
+1. `npm run verify` completo no `2fc4f8b`: verde (2 471 testes na suíte; 2 469 + 5 fora de
+   propósito na transladada).
+2. `npm run shot:todos` num processo destacado: **120 roteiros, 7 com saída diferente de 0.**
+   Triados:
+   - **os seis de antes, os mesmos da Fase F**, já no `BUGS.md`: `C-IA-03c` (espera o operador, a
+     margem da escaramuça), `D-TELA-04e` (`BUG-ROTEIRO-04E-DELTA-DO-ATLAS`), `D-TELA-05c` e
+     `D-TELA-05d` (`BUG-SAVE-DO-ROTEIRO-TRANSLADADO`: o `verify` completo do passo 1 regravou os
+     saves no mundo transladado), `D-TELA-COSTURA-DOS-TILES` e `D-TELA-VEU-DOS-DETALHES`
+     (`BUG-ROTEIRO-DE-DUAS-ETAPAS`). Não rodei de novo; a causa de cada um é a registrada;
+   - **`F-D2`, novo:** "segurar 1,2 s deveria andar mais que 4 toques". Rodado sozinho no mesmo
+     commit, saiu 0 três vezes. Registrado como `BUG-ROTEIRO-F-D2-RELOGIO` (`feio`): o roteiro
+     afirma sobre relógio de parede. A carga como causa é hipótese.
+   - Os três roteiros da H saíram 0 dentro da corrida.
+3. `npm run verify` completo de novo, para o selo das chaves.
+4. `npm run test:longo`, sozinho, é a última coisa. O resultado e o hash do selo entram no commit
+   seguinte à avaliação, como pede a §13.
+
+**As chaves (`test-results.json`):**
+
+```text
+H-ARTE-SONS-CANDIDATOS     a lista de sons para o operador aprovar   passa
+H-TELA-CAMADA-DE-SOM       o render toca os eventos da sim            passa (aceite d pela leitura conservadora)
+H-TELA-OPCOES-E-VOLUME     a tela de opcoes                           passa
+H-TELA-AMBIENTE-E-MUSICA   o sertao de fundo                          passa
+H-ARTE-SONS-APROVADOS      os sons aprovados entram no jogo           NAO: espera a aprovacao do operador
+```
+
+**Espera o operador:**
+- a coluna `aprovado` de `docs/sons-candidatos.md` (20 sons, 44 candidatos CC0);
+- a leitura do aceite (d) da H-TELA-CAMADA-DE-SOM (Perguntas em aberto, acima);
+- PARA REVISÃO: os ids em inglês, o módulo (código TELA, arquivo ARTE), os volumes padrão, os
+  números do fundo (16 tiles, 15 s, 3 s, 20 s), a música de feira medieval no lugar dos
+  instrumentos do sertão, e a recusa que só toca no tick de comando do jogador.
+
+**Aberto, fora da Fase H:** os bugs de roteiro acima, cada um no `BUGS.md`, e o `C-IA-03c`.

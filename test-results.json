@@ -658,5 +658,20 @@
   },
   "F-IA-DIFICULDADE-tres-niveis": {
     "passes": true
+  },
+  "H-ARTE-SONS-CANDIDATOS-lista-para-o-operador": {
+    "passes": true
+  },
+  "H-TELA-CAMADA-DE-SOM-eventos-tocam": {
+    "passes": true
+  },
+  "H-TELA-OPCOES-E-VOLUME-tela-de-opcoes": {
+    "passes": true
+  },
+  "H-TELA-AMBIENTE-E-MUSICA-sertao-de-fundo": {
+    "passes": true
+  },
+  "H-ARTE-SONS-APROVADOS-sons-no-jogo": {
+    "passes": false
   }
 }
