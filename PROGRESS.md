@@ -18167,3 +18167,26 @@ Luminância = 0,2126 R + 0,7152 G + 0,0722 B; desvio populacional de todos os pi
 - Roteiro `D-TELA-05c` passou, com passo despausado e seis capturas abertas e inspecionadas: queda, esqueleto, dissipacao, ataque, lenhador e laborer. Quadro 0 na entrada, pe constante, pausa congelada, corpo removido ao completar seis quadros; load no MESMO tick e com os mesmos ids apaga corpo anterior. Evidencias em `test-output/D-TELA-05c*.json` e `screenshots/D-TELA-05c-*`.
 - Nao-regressao: D-TELA-05d (carga), D-TELA-05b (piloto militar), D-TELA-04b/c/d/e (piloto serf), F-SPR (sprites), D-TELA-03 (carga do serf), C-TELA-03 (selecao), C-COMBATE-01c (formacao), F-T3 (trabalho externo) e F23b (save/load), todos com saida 0. Verificacao rapida final: 687 testes aprovados. Verificacao completa de encerramento roda sobre o commit desta implementacao; resultado reportado no log e ao operador.
 - A entrega e o consumidor generalizado com formas de DEPURACAO: `?depuracao=militia,woodcutter,laborer`. A arte real atual continua estatica; arte final de animacao nao foi produzida nem integrada. Sem alteracoes em sim, sessao, laco, dados ou assets reais; sem push e sem escrever test-results.json. Fechamento formal de fase (shot:todos/test:longo e marca das features) continua com o operador, conforme o plano.
+
+## 2026-10-03 — Planejamento das fases E a I (decisões do operador)
+
+Planejamento conversado com o operador. O texto das fases está no `BUILD_PLAN.md`, em "As fases E
+a I", antes do "Backlog com gatilho". Decisões dele, todas de 2026-10-03:
+- **Alvo:** a escaramuça completa e polida, jogada também por quem nunca viu o jogo (ele escolheu
+  isso entre escaramuça, campanha e multiplayer, e entre "só eu" e "outras pessoas").
+- **Animação das unidades:** só as que aparecem mais (serf, laborer, militares, alguns ofícios).
+  Ela virou a Fase **G**, feita por outra sessão com ComfyUI, fora desta fila.
+- **Mapas:** fica o mapa único. Mapas e história do jogo vêm num bloco depois, e ele prevê o Tiled
+  para gerenciar os mapas.
+- **Ordem:** uma worktree por vez, E → F → H → I, sem paralelismo. A regra da fila ("detalhar só
+  quando a anterior fechar") vale: só a E foi detalhada.
+- **Módulo novo `ENTREGA`** (build, carregamento, publicação). `docs/siglas.md` e CLAUDE.md §6
+  passam de 11 para 12 módulos.
+- **Publicação:** itch.io, rascunho com senha. Quem publica e quem abre ao público é o operador.
+
+Verificado nesta sessão: os 28 prédios do GDD §5.2 existem em `data/buildings.json`; as 23
+unidades têm 1 PNG cada em `assets/sprites/units/`; nenhum arquivo de `src/` cita áudio; a névoa
+não existe em `src/sim` nem em `src/render` (a IA a ignora por decisão, `src/sim/systems/ia.ts:29`).
+Hipótese, não conferida: a citação `KM_GUIMenuLobby.pas:635-638` do intervalo da paz vem do
+`data/escaramuca.json` (`_docPeacetime`), sem o caminho completo exigido pela §15. O item
+E-TELA-CONFIGURAR-PARTIDA manda conferir no clone.

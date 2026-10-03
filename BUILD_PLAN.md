@@ -7899,6 +7899,120 @@ vai para o PROGRESS como PARA REVISÃO, e o trabalho segue.
     roteiro despausado da §8).
 ---
 
+## As fases E a I — a escaramuça completa, para quem nunca jogou (operador, 2026-10-03)
+
+Decisões do operador, no planejamento de 2026-10-03:
+- **O alvo é a escaramuça completa e polida** contra a IA, jogada também por quem nunca viu o
+  jogo. "Pronto" quer dizer: alguém de fora abre o link, entende e joga uma partida inteira.
+- **Uma worktree por vez, na ordem E → F → H → I.** A regra da fila vale: só a fase da vez é
+  detalhada; as outras têm só o escopo, e ganham o detalhe quando a anterior fechar.
+- **G é a animação das unidades** (serf, laborer, militares e alguns ofícios), feita por outra
+  sessão, com ComfyUI. Ela não está nesta fila.
+- **Fora destas fases:** mapas novos e a história do jogo. Ficam para um bloco depois, e o
+  operador prevê o Tiled para gerenciar os mapas. Até lá o mapa é o `sertao-128`.
+- **Módulo novo `ENTREGA`** (build, carregamento, publicação), aprovado pelo operador
+  (`docs/siglas.md`).
+- **Publicação no itch.io**, como rascunho com senha. Ela se abre para outras pessoas quando a I
+  fechar, e quem abre é o operador.
+
+## Fase E — A casca e a vitrine
+
+O jogo ganha uma porta (menu), uma partida configurável, saves pela tela e uma versão publicada
+que o operador joga pelo link. Desde a E, cada fase fecha numa versão publicada.
+
+### Abertura da E: o fechamento da Fase D
+- **Escopo:** o fechamento da §13 sobre a `main`: `npm run verify` completo, `npm run test:longo`
+  sozinho na máquina (com o selo) e `npm run shot:todos`. As chaves que passam são marcadas em
+  `test-results.json`. Reprovação vira registro no `BUGS.md`, com a severidade, e não é corrigida
+  aqui.
+- Os itens da D **sem código** (chão determinístico, solo de caatinga, decalques de capim, água e
+  grama sem emenda, véu dos detalhes, efeitos do trabalho, D-ARTE-02, D-ARTE-SERF-ANDAR) ficam na D.
+  Eles não são da E.
+- **Aceite:** `test-output/test-longo.json` com o commit do `HEAD` e a suíte verde,
+  `test-output/shot-todos.json` com todas as saídas 0, e uma tabela no PROGRESS com as chaves
+  marcadas e as que ficaram de fora, com o motivo de cada uma.
+
+### E-TELA-MENU-INICIAL — A porta do jogo
+- **Escopo:** abrir `/` mostra o menu antes do jogo: **Novo jogo** (livre ou escaramuça),
+  **Continuar** (o último save), **Carregar** e **Ajuda** (a tela de ajuda que já existe; a I
+  amplia). O `Phaser.Game` só nasce depois da escolha. Os rótulos vêm de `data/theme-sertao.json`.
+  `?escaramuca`, `?pausado` e os outros parâmetros dos roteiros continuam pulando o menu.
+- **Aceite:**
+  - (a) `/` sem parâmetro mostra o menu, e não existe canvas do Phaser antes da escolha (roteiro);
+  - (b) a escaramuça pelo menu nasce com o estado igual ao do `?escaramuca` no tick 0 (igualdade
+    do estado serializado);
+  - (c) **Continuar** sem save está desabilitado e diz por quê;
+  - (d) os roteiros que existem continuam saindo 0, sem mudar uma linha deles;
+  - (e) screenshot do menu, e o roteiro despausa e segura o clique 150 ms (§8).
+
+### E-TELA-CONFIGURAR-PARTIDA — A paz da escaramuça se escolhe
+- **Feature de integração (sim + tela), declarada aqui antes do código (§10).** O cenário da
+  escaramuça recebe a paz como parâmetro, em vez de ler o número fixo.
+- **Escopo:** antes da escaramuça, o jogador escolhe a duração da paz (GDD §8.2: "Peacetime
+  configurável"). As opções e o padrão ficam em `data/escaramuca.json`, e o padrão é o
+  `peacetime_min_base` de hoje. Nada mais se configura nesta fase: mapa e semente esperam o bloco
+  dos mapas.
+- **Aceite:**
+  - (a) a mesma paz com os mesmos comandos dá o mesmo estado, byte a byte;
+  - (b) com o padrão, o estado é igual ao da escaramuça de hoje (nenhum teste da C muda);
+  - (c) com cada opção, o contador de paz mostra a duração escolhida, e a marcha e o ataque da IA
+    são recusados até o tick dela e aceitos depois (pelo `step`);
+  - (d) o `validate:data` recusa opção fora do intervalo do KaM (0 a 120 min, de 5 em 5,
+    `src/KM_GUIMenuLobby.pas:635-638` a conferir no clone, §15) e padrão fora da lista.
+
+### E-SAVE-GAVETAS — Salvar e carregar pela tela
+- **Escopo:** três gavetas com nome, tick e data, mais o **Continuar** do menu (a gaveta salva por
+  último). A data é do laço externo (`ui`/`arquivo-da-partida`), nunca da `sim/`. O save de hoje
+  vira a gaveta 1 sem perder a partida de quem já tem save.
+- **Aceite:**
+  - (a) salvar, carregar e rodar N ticks dá o mesmo estado que rodar N ticks sem salvar;
+  - (b) o save antigo de gaveta única carrega como gaveta 1;
+  - (c) gaveta com save de versão incompatível aparece recusada, com o motivo, e não derruba o menu;
+  - (d) roteiro: salvar na 2, voltar ao menu, Continuar abre a 2 (despausado, §8).
+
+### E-ENTREGA-BUILD — O jogo fora do dev server
+- **Escopo:** `npm run build` gera um `dist/` que roda num servidor estático qualquer, com os
+  sprites de `assets/sprites/` e os dados. Tela de carregamento com o progresso dos assets. A base
+  (`assets/base/`) e as páginas de depuração não entram no bundle.
+- **Aceite:**
+  - (a) roteiro contra o `vite preview` do `dist/`: o menu aparece, a escaramuça começa e anda 300
+    ticks, com zero erro de console;
+  - (b) nenhum arquivo de `assets/base/` no `dist/` (por listagem);
+  - (c) o tamanho do `dist/` e o tempo até o menu vão para `test-output/E-ENTREGA-BUILD.json`,
+    como número da corrida, nunca asserção (§8).
+
+### E-ENTREGA-PUBLICACAO — O link para o operador jogar
+- **Escopo:** `npm run publicar` envia o `dist/` ao itch.io pelo `butler`, no canal `html5`, com a
+  tag `teste-jogo-<n>` como versão. A página do jogo é criada pelo operador como rascunho com
+  senha; a chave do `butler` é dele e fica fora do repositório. **Quem publica é o operador:** a
+  sessão prepara e testa o comando, e não envia nada sozinha.
+- **Aceite:**
+  - (a) a regra pura, por tabela: recusa sem a tag `teste-jogo-<n>` no `HEAD`, com a árvore suja,
+    sem o selo `completo` do `HEAD` e sem `dist/` do mesmo commit. Passa com os quatro;
+  - (b) como processo, com um `butler` falso (`CANGACO_BUTLER`): o comando chega ao `butler` com o
+    diretório, o canal e a versão certos, e nada é enviado quando a regra recusa;
+  - (c) uma primeira publicação feita pelo operador, com o link registrado no PROGRESS.
+
+## Fase F — A névoa e o adversário (só escopo; detalha quando a E fechar)
+A névoa de guerra do GDD §6.5, nos dois níveis: apresentação (o escuro no não descoberto, o último
+visto) e regra (inimigo só onde se vê agora, em tela, painel, minimapa e alvo de ordem). A torre
+revela. A IA ganha três níveis de dificuldade, com os números em `data/`, e o nível entra no
+configurar partida da E.
+
+## Fase G — Animação das unidades (outra sessão, ComfyUI; fora desta fila)
+
+## Fase H — O som (só escopo; detalha quando a F fechar)
+Uma camada de áudio no render que consome `state.events`. Os efeitos do GDD §10, o ambiente do
+§9.8 (vento seco, cigarra, sino da bodega) e a música da paz e do combate. A tela de opções nasce
+aqui, com o volume. O som entra por decisão humana, como a arte (§9).
+
+## Fase I — Para quem nunca jogou (só escopo; detalha quando a H fechar)
+A partida guiada, as dicas na primeira vez e a ajuda com as cadeias e as teclas. Depois, o
+playtest com gente de fora: o que eles acham vai para `BUGS.md` e `BALANCE_LOG.md`. A I fecha com
+o operador abrindo a página do itch.io para outras pessoas.
+
+---
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a

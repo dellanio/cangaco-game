@@ -23,7 +23,8 @@ Decisão do operador (2026-09-28).
 - **Formato:** `<fase>-<MÓDULO>-<nn>`, com letra minúscula para sub-item. Exemplos:
   `D-MOVIMENTO-01a`, `C-IA-01`.
 - **Fase:** a do `BUILD_PLAN.md` em que o item **nasceu**: A (loop de construção), B (comida e
-  crescimento), C (militar) ou D (profundidade). A Fase 0 (fundação) está fechada e não recebe
+  crescimento), C (militar), D (profundidade), E (casca e vitrine), F (névoa e adversário),
+  G (animação), H (som) ou I (para quem nunca jogou). A Fase 0 (fundação) está fechada e não recebe
   item novo. Se o item mudar de fase, a sigla não muda.
 - **Módulo:** um da lista fechada abaixo. **Módulo novo só entra por decisão do operador.**
 - **Número:** sequencial dentro de cada par fase-módulo, com dois dígitos. Uma sigla dada não
@@ -36,7 +37,7 @@ Decisão do operador (2026-09-28).
 
   Arquivos antigos mantêm o nome que têm.
 
-## Os 11 módulos
+## Os 12 módulos
 
 | Módulo | O que cobre |
 |---|---|
@@ -51,6 +52,7 @@ Decisão do operador (2026-09-28).
 | TELA | o que o render desenha e a interface mostra (veja a fronteira abaixo) |
 | ARTE | o asset em si (veja a fronteira abaixo) |
 | SAVE | salvar, carregar, versão do save, determinismo entre saves |
+| ENTREGA | build, carregamento e publicação do jogo (decisão do operador, 2026-10-03) |
 
 ### A fronteira entre TELA e ARTE
 - **TELA** é o que o render desenha e a interface mostra: câmera, HUD, painéis, menus,

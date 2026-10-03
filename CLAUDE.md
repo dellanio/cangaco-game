@@ -131,7 +131,7 @@ Não adicione dependência nova sem registrar o motivo em `PROGRESS.md`.
 7. Commit com a mensagem `feat(<sigla>): <resumo>`. A sigla segue `docs/siglas.md`. Item
    **novo** (desde 2026-09-30): `<FASE>-<MÓDULO>-<NOME-CURTO>`, como
    `feat(D-TELA-LUZ-RELEVO): ...`. Os itens com número (`D-MOVIMENTO-01e`) mantêm o id que têm.
-   Módulo só da lista fechada de 11; módulo novo só por decisão do operador. O que fechou antes
+   Módulo só da lista fechada de 12; módulo novo só por decisão do operador. O que fechou antes
    de 2026-09-28 mantém a sigla antiga (`F17g`, `C5`), e a tabela de equivalência está no
    mesmo arquivo.
 8. **Sigla nunca aparece sozinha em relatório** (PROGRESS, avaliação, resposta ao
@@ -140,7 +140,7 @@ Não adicione dependência nova sem registrar o motivo em `PROGRESS.md`.
 9. **Id de item novo descreve o conteúdo** (regra do operador, 2026-09-30; substitui a regra
    de reserva do mesmo dia). Formato `<FASE>-<ÁREA>-<NOME-CURTO-DO-CONTEÚDO>`, em maiúsculas
    com hífen, sem número sequencial: `D-TELA-LUZ-RELEVO`, `D-TERRENO-ALTURA`. A área é um dos
-   11 módulos. O nome diz o que o item faz, **nunca** o nome de branch ou worktree. Quem cria
+   12 módulos. O nome diz o que o item faz, **nunca** o nome de branch ou worktree. Quem cria
    o item confere com `git grep` na `main` que o id não existe; não há commit de reserva. A
    ordem de execução continua sendo a ordem da lista no `BUILD_PLAN.md`. Vale para item novo,
    e item antigo não se renomeia. **Exceção única, por ordem do operador (2026-09-30):** os dois
