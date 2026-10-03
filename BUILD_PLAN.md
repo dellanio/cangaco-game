@@ -6934,6 +6934,22 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
      cada estado e um esgotado). O roteiro carrega o save, põe a câmera pela ponte sobre cada um e
      afirma o `estado` publicado contra a função pura. As capturas são abertas, e há um passo
      despausado (§8).
+- **Emenda do aceite 3 (2026-10-03, antes do código; achado do Codex, conferido no código):** o
+  `rock` tem regime `nunca` (`data/resources.json`), e o tile esgotado **sai do estado**
+  (`src/sim/recursos.ts:531`, `delete recursos[chaveDoTile]`). Por isso o `lajedosDoEstado` não
+  consegue achar os tiles já lavrados, e o lajedo encolheria e mudaria de identidade com a lavra. A
+  troca:
+  - **a forma do lajedo vem do mapa inicial,** e não do estado. São os tiles `rock` de
+    `recursosIniciais()` (`src/sim/recursos.ts:57`), que é a mesma fonte que semeia o estado no
+    começo da partida, lidos pela fronteira do render com a sim (`src/render/mapa.ts`, que já
+    importa `sim/`). Os componentes 4-conexos desses tiles dão o id, os tiles e a caixa, que nunca
+    mudam;
+  - **a quantidade vem do estado:** o restante do lajedo é a soma de `state.recursos` nos tiles
+    dele, e um tile ausente conta 0;
+  - a função vira `lajedosDoMapa(recursosIniciais)`, que é memoizável porque o mapa não muda, mais
+    `restanteDoLajedo(lajedo, recursos)`. A tabela do aceite 3 ganha o caso "tile lavrado até o fim
+    some do estado, e o lajedo mantém o id, a caixa e o total". O resto do aceite não muda, e a sim
+    continua intocada.
   7. **Não-regressão:**
      - os roteiros `F-TR`, `ARTE-VILA`, `D-SAVE-VILA-PRONTA` e `F-T1` saem 0;
      - **se o `F-TR` (as máscaras do lajedo) reprovar porque o lajedo da vista ganhou a serra,** a
