@@ -9,7 +9,7 @@
 // Redesenha por QUADRO, e nao por tick: a vista anda com a camera mesmo com o jogo pausado.
 import type { GameState } from '../sim/state';
 import { LADO_DO_JOGADOR } from '../sim/state';
-import { prediosInimigosForaDaVista, texturaDaNevoa } from '../render/nevoa';
+import { nevoaNaTela, prediosInimigosForaDaVista, texturaDaNevoa } from '../render/nevoa';
 import type { CoresDaNevoa } from '../render/nevoa';
 import { corDoBando } from '../render/cor-do-bando';
 import { enquadrar, pixelsDoTerreno, retanguloNoMinimapa, tileDoMinimapa, vistaEmTiles } from '../render/minimapa';
@@ -64,6 +64,7 @@ export function montarMinimapa(fonte: FonteDoMinimapa): Minimapa {
   nevoa.height = altura;
   const pixelsDaNevoa = new Uint8ClampedArray(largura * altura * 4);
   let estadoDaNevoa: GameState | null = null;
+  const comNevoa = nevoaNaTela(window.location.search);
   let enquadro: Enquadro = enquadrar(largura, altura, { largura: 1, altura: 1 });
 
   function desenhar(): void {
@@ -87,7 +88,7 @@ export function montarMinimapa(fonte: FonteDoMinimapa): Minimapa {
       texturaDaNevoa(ultimo, fonte.nevoa, { largura, altura }, pixelsDaNevoa);
       nevoa.getContext('2d')?.putImageData(new ImageData(pixelsDaNevoa, largura, altura), 0, 0);
     }
-    pincel.drawImage(nevoa, e.x0, e.y0, largura * e.pxPorTile, altura * e.pxPorTile);
+    if (comNevoa) pincel.drawImage(nevoa, e.x0, e.y0, largura * e.pxPorTile, altura * e.pxPorTile);
     let predios = 0;
     let inimigos = 0;
     if (ultimo !== null) {

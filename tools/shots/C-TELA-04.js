@@ -1,7 +1,8 @@
 'use strict';
 // Roteiro da C-TELA-04 — botao direito sobre um militar inimigo, com a tropa na mao, e ataque.
-//   1. H -> "Nova escaramuca"; o relogio corre (avancar, pausado) ate a paz acabar;
-//   2. caixa em volta dos 18 cabras;
+//   1. H -> "Nova escaramuca"; caixa em volta dos 18 cabras; a tropa marcha em paz ate perto da
+//      frente da IA (ela nasce na nevoa); o relogio corre (avancar, pausado) ate a paz acabar;
+//   2. (a caixa vem antes da marcha);
 //   3. DESPAUSADO e com o botao seguro (§8), botao direito sobre um cabra da IA na posicao
 //      "frente": os 18 saem para lutar (`indo_lutar` ou `lutando`), sem marca de destino;
 //   4. depois de correr, a tropa chega e trava a luta (`lutando`). O debug nao expoe HP de
@@ -29,10 +30,6 @@ async function roteiro(ctx) {
   await page.keyboard.press('Escape');
   await esperarFrame();
 
-  // 1. a paz acaba
-  for (let i = 0; i < 20 && (await pazNaTela()) !== null; i += 1) await avancar(500);
-  afirmar((await pazNaTela()) === null, 'a paz deveria ter acabado');
-  await esperarFrame();
 
   async function centrarNoEixo(alvoEmTiles, eixo) {
     { // D-TELA-CAPTURA-DETERMINISTICA: a camera vai exata pela ponte (harness), e nao por setas no tempo de parede
@@ -82,10 +79,42 @@ async function roteiro(ctx) {
   s = await estado();
   afirmar(s.selecaoMilitar.length === 18, `a caixa deveria pegar os 18, veio ${s.selecaoMilitar.length}`);
 
-  // 3. o alvo: o cabra da IA mais perto do ponto da "frente"
+  // F-COMBATE-ALVO-NA-VISTA / F-TELA-NEVOA: a frente da IA nasce no escuro, e o clique num cabra
+  // no escuro e marcha, nao ataque. A tropa ganha a vista pelo caminho do jogo: marcha em paz
+  // ate 8 tiles da frente, e so entao a paz acaba (1).
   const frente = escaramuca.posicoes.find((p) => p.id === 'frente').ponto;
+  const d = Math.hypot(meio.gx - frente.gx, meio.gy - frente.gy);
+  const perto = { gx: Math.round(frente.gx + ((meio.gx - frente.gx) / d) * 8), gy: Math.round(frente.gy + ((meio.gy - frente.gy) / d) * 8) };
+  await centrar(perto);
+  s = await estado();
+  {
+    const q = pontoDoTile(perto.gx, perto.gy, s.camera);
+    await page.mouse.move(q.x, q.y);
+    await page.mouse.down({ button: 'right' });
+    await page.waitForTimeout(150);
+    await page.mouse.up({ button: 'right' });
+  }
+  for (let i = 0; i < 40; i += 1) {
+    await avancar(25);
+    s = await estado();
+    if (s.unidadesRenderizadas.filter((u) => u.lado === LADO_DO_JOGADOR && u.tipo === 'militia').every((u) => u.fsm === 'ocioso')) break;
+  }
+
+  // 1. a paz acaba — exatamente no tick do fim (o `pazAteTick` do estado serializado): passar do
+  // fim com a tropa no raio da defesa da IA deixa a IA golpear antes do clique
+  {
+    const partida = JSON.parse(await page.evaluate(() => window.__cangacoPartida.estadoSerializado()));
+    const faltam = partida.pazAteTick - (await estado()).tick;
+    if (faltam > 0) await avancar(faltam);
+  }
+  for (let i = 0; i < 20 && (await pazNaTela()) !== null; i += 1) await avancar(1);
+  afirmar((await pazNaTela()) === null, 'a paz deveria ter acabado');
+  await esperarFrame();
+  s = await estado();
+
+  // 3. o alvo: o cabra da IA A VISTA mais perto do ponto da "frente"
   const dist = (u) => Math.abs(u.gx - frente.gx) + Math.abs(u.gy - frente.gy);
-  const alvo = s.unidadesRenderizadas.filter((u) => u.lado !== LADO_DO_JOGADOR && u.tipo === 'militia')
+  const alvo = s.unidadesRenderizadas.filter((u) => u.lado !== LADO_DO_JOGADOR && u.tipo === 'militia' && u.visivel)
     .sort((a, b) => dist(a) - dist(b))[0];
   afirmar(alvo !== undefined, 'a IA deveria ter um cabra na frente');
   await centrar(alvo);

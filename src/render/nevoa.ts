@@ -91,6 +91,16 @@ export function texturaDaNevoa(
   return px;
 }
 
+/**
+ * F-TELA-NEVOA — HARNESS de roteiro, como o `?aguaDesligada`: `?semNevoa` tira so a camada escura
+ * (na cena e no minimapa), para o roteiro que olha terreno longe da vila (o vento, a agua) ver o
+ * chao. A regra continua: o inimigo fora da vista segue sem se desenhar e sem se clicar, e a sim
+ * nao muda. Nao usar em jogo.
+ */
+export function nevoaNaTela(busca: string): boolean {
+  return !new URLSearchParams(busca).has('semNevoa');
+}
+
 /** F-TELA-NEVOA — a profundidade da nevoa: acima de todo predio, unidade e arvore (que se ordenam
  *  pelo y em px de mundo, alguns milhares) e abaixo dos nomes (900 000) e da selecao. */
 export const PROFUNDIDADE_DA_NEVOA = 800_000;

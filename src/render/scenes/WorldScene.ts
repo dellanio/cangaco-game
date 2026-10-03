@@ -27,7 +27,7 @@ import type { Tile } from '../grid';
 import { publicarEstadoDebug } from '../debug';
 import { terrenoRecebeDetalhe } from '../detalhes-do-terreno';
 import { somarCusto } from '../custo-do-quadro';
-import { PROFUNDIDADE_DA_NEVOA, prediosInimigosForaDaVista, resumoDaNevoa, texturaDaNevoa } from '../nevoa';
+import { nevoaNaTela, PROFUNDIDADE_DA_NEVOA, prediosInimigosForaDaVista, resumoDaNevoa, texturaDaNevoa } from '../nevoa';
 import { criarCamadaDeRelevo } from '../camada-de-relevo';
 import { arvoreNaVista, balancaVegetacao, especieDoTile, quadroDoVentoMudou, transformacaoDoVento } from '../vento';
 import type { LuzDoRelevo } from '../camada-de-relevo';
@@ -401,7 +401,8 @@ export class WorldScene extends Phaser.Scene {
     if (texturaDaNevoaNaCena === null) throw new Error('nevoa: o Phaser nao criou a textura');
     texturaDaNevoaNaCena.setFilter(Phaser.Textures.FilterMode.LINEAR);
     this.add.image(0, 0, CHAVE_DA_NEVOA).setOrigin(0, 0)
-      .setDisplaySize(largura * tilePx * ESCALA_DO_MUNDO, altura * tilePx * ESCALA_DO_MUNDO).setDepth(PROFUNDIDADE_DA_NEVOA);
+      .setDisplaySize(largura * tilePx * ESCALA_DO_MUNDO, altura * tilePx * ESCALA_DO_MUNDO).setDepth(PROFUNDIDADE_DA_NEVOA)
+      .setVisible(nevoaNaTela(window.location.search));
     const pixelsDaNevoa = new Uint8ClampedArray(largura * altura * 4);
     let estadoDaNevoa: GameState | null | undefined;
     const aguaAnimada = !new URLSearchParams(window.location.search).has('aguaDesligada');
