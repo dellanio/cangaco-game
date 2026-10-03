@@ -6686,6 +6686,81 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
        o `F-ESC-escala` passam direto;
      - `git diff main -- src/sim` vazio.
 
+#### D-TELA-COSTURA-DOS-TILES — A tira de tiles ganha margem, e o filtro não puxa o vizinho
+- **Origem (2026-10-02, captura do operador):** o chão aparece quadriculado. Há duas causas. A
+  de arte é medida e está na D-ARTE-AGUA-GRAMA-SEM-EMENDA. **A de render é hipótese:** o jogo usa
+  filtro linear (`pixelArt: false`, `src/render/game.ts`) e monta as tiras de tile coladas, sem
+  margem (`addTilesetImage(..., tilePx, tilePx, 0, 0)` no `WorldScene.ts`). Com zoom fracionário,
+  a amostragem puxa o pixel do tile vizinho da tira, e aparece uma costura na borda.
+- **Escopo:** só render. Toda tira de tile do `WorldScene.ts` (o terreno, as bordas da água, da
+  areia e da rocha, os detalhes, o chão da cana e os recursos) é montada com **margem e
+  espaçamento** e com a borda de cada tile **duplicada para fora** (extrusão de 1 a 2 px). O
+  `addTilesetImage` recebe a margem e o espaçamento certos. Os números da extrusão ficam num dado
+  de render ou numa constante de tela comentada, como o `DEPTH_DOS_RECURSOS`.
+- **Aceite (escrito antes do código, 2026-10-02):**
+  1. **A função pura de extrusão** (`src/render/extrusao-de-tira.ts`), testada em Node por tabela
+     sobre uma tira sintética de 3 tiles de cores chapadas:
+     - cada tile sai com a margem preenchida pela própria borda;
+     - nenhum pixel de um tile vaza para a margem do outro;
+     - a posição de cada tile na tira nova é a que o `addTilesetImage` espera com aquela margem e
+       aquele espaçamento.
+  2. **A medida da costura, antes e depois,** no roteiro novo `tools/shots/D-TELA-COSTURA-DOS-TILES.js`:
+     - numa vista de areia pura (o tile que já emenda: borda 7,0 contra 5,6 no meio) e numa de
+       água, nos zooms 1, 0,75 e 1,5;
+     - mede, nas linhas e colunas de borda de tile da captura, a diferença média de cor contra as
+       linhas vizinhas do meio. Os números de antes e depois vão para o
+       `test-output/D-TELA-COSTURA-DOS-TILES.json` e para o PROGRESS;
+     - **asserção no eixo determinístico:** com o zoom 1 e a câmera em pixel inteiro, a captura
+       do depois é igual à do antes nas células internas. A extrusão não muda o interior de
+       nenhum tile;
+     - as capturas de zoom fracionário são abertas.
+  3. **Nada some e nada se desloca:** os roteiros `F-T1`, `F-TR`, `ARTE-VILA`,
+     `D-ARTE-CHAO-DE-ROCA`, `D-TELA-AGUA-VIVA` e `D-TELA-CUSTO-DO-QUADRO` saem 0. A água viva
+     continua com a variante de cada tile igual à da função pura, e o chão da cana com a contagem
+     igual à da cana na vista.
+  4. **Não-regressão:** o `verify:rapido` passa, e os testes que leem o manifesto passam rodados
+     direto. `git diff main -- src/sim` vazio.
+
+#### D-ARTE-AGUA-GRAMA-SEM-EMENDA — A água e a grama refeitas para emendar
+- **Origem (medido em 2026-10-02):** a diferença de cor entre a borda esquerda e a direita do
+  tile, contra a diferença entre duas colunas vizinhas do meio:
+  - `agua.png` 11,1 contra 6,8;
+  - `agua-v1.png` 15,9 contra 4,9;
+  - `grama-D-v0.png` 18,9 contra 8,7;
+  - `areia.png` 7,0 contra 5,6 (a referência do que emenda).
+
+  A água repete também o mesmo detalhe no mesmo canto de todo tile. **Pedido do operador
+  (2026-10-02):** regerar **só a grama e a água**, pelo Codex.
+- **Escopo:** arte e manifesto.
+  - Os 4 estados da `grama` (`padrao`, `v1`, `v2`, `v3`) e os 4 do miolo da `agua`. As 16
+    bordas da água (`borda-m0` a `borda-m15`) **não** mudam.
+  - O caminho é gerar uma textura grande e sem emenda de cada material e cortar dela 4 tiles de
+    64×64 diferentes que emendam entre si, e não 4 rotações do mesmo recorte.
+  - **A água é animada** (D-TELA-AGUA-VIVA, a variante troca pelo tick): os 4 tiles da água são
+    quadros de uma mesma superfície, deslocada pouco a pouco. Nenhum pode piscar ou destoar.
+- **Aceite (escrito antes da geração, 2026-10-02):**
+  1. **A emenda, medida pela mesma conta:** em cada um dos 8 PNG novos, a diferença da borda
+     esquerda × direita e da de cima × de baixo é no máximo **1,3 vez** a diferença entre duas
+     colunas vizinhas do meio. E isso vale **entre pares**: a borda direita de qualquer tile
+     contra a esquerda de qualquer outro do mesmo material (os 4 × 4 casos), e o mesmo na vertical.
+     A conta e os números vão para o PROGRESS.
+  2. **Sem detalhe repetido:** nenhum elemento marcante (bolha, pedra, tufo) cai na mesma posição
+     em todos os tiles do material.
+  3. **A água anima sem piscar:** a diferença média de cor entre dois quadros consecutivos da água
+     é no máximo 1,5 vez a diferença entre colunas vizinhas do meio.
+  4. **O estilo e a luz:** pelas skills (`skills/pianco-sprite-director/SKILL.md` e a especialidade
+     que ela escolher), com a luz do `cdcfec5` (terreno é albedo, sem luz direcional pintada).
+     Nenhum asset do jogo de 1998. As referências limpas da PR #1 valem: nenhuma folha com
+     terreno ou sprite atual do jogo entra como referência de geração.
+  5. **A base e o manifesto:** a base em `assets/base/terrain/`, e o derivado no **mesmo caminho e
+     nome** dos PNG de hoje, para o manifesto só mudar a `origem` e a `licenca`. O registro (o
+     prompt, as referências, os sha256 e as gerações gastas, **no máximo 4**) vai no
+     `SKILL_BUILDER_PROGRESS.md` da worktree, e a nota da `origem` diz o caminho dele.
+  6. **A folha de contato:** uma grade 6×6 de cada material com as 4 variantes misturadas, e a
+     água ao lado da borda (as 16 bordas de hoje). É aberta e salva ao lado da base.
+  7. **Na tela:** os roteiros `F-T1`, `D-TELA-AGUA-VIVA` e `ARTE-VILA` saem 0, e as capturas da
+     água e da grama são abertas. Os testes de manifesto passam rodados direto.
+
 #### D-TELA-LIMPEZA-DO-MUNDO-VIVO — Três ressalvas das revisões de 2026-10-02
 - **Origem:** as ressalvas das revisões da sessão Claude no PROGRESS de 2026-10-02. Vai no mesmo
   pacote do `verify-rapido-dado-lido` (abaixo), por decisão do operador.
