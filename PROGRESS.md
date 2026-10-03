@@ -18417,3 +18417,45 @@ Feature de integração (sim + tela), como o item declara.
   depuração no manifesto, a falta de `dist/` e a falta de manifesto. Cobre também o texto do
   progresso.
 - `npm run verify:rapido` verde.
+
+## 2026-10-03 — E-ENTREGA-PUBLICACAO (o link para o operador jogar), aceites (a) e (b)
+
+**O que mudou.**
+- `npm run publicar` (`tools/publicar.js`) envia o `dist/` ao itch.io pelo `butler`, no canal `html5`,
+  com a tag `teste-jogo-<n>` do HEAD como versão (`--userversion`). **A sessão não publicou nada.**
+- A regra pura (`tools/publicar-regra.js`) passa só com os quatro:
+  - a tag `teste-jogo-<n>` no HEAD (com mais de uma, vale a de maior `n`);
+  - a árvore limpa;
+  - o selo `completo` do HEAD no `.verify-ok`;
+  - o `dist/` do HEAD feito com a árvore limpa.
+  Qualquer recusa sai 1 com o motivo, e o `butler` não é chamado.
+- `tools/conferir-dist.js` passou a gravar `dist/build.json` (commit e árvore limpa), e só quando o
+  `dist/` passa na conferência.
+- `CANGACO_ITCH_ALVO` (`<usuario>/<jogo>` da página) é obrigatória para enviar. `CANGACO_BUTLER`
+  troca o executável (o teste usa um falso). `--ensaio` confere tudo e mostra o comando, sem enviar.
+
+**Verificado:**
+- `tests/E-ENTREGA-PUBLICACAO.test.ts` (16 testes, verde):
+  - (a) por tabela: passa com os quatro, e recusa sem tag, com tag de outro formato, com a árvore
+    suja, sem selo, com selo rápido, com selo de outro commit, com selo no formato antigo, sem
+    `dist/`, com `dist/` de outro commit e com `dist/` feito com a árvore suja (um problema por
+    caso). A maior tag vence, e os argumentos do butler saem certos;
+  - (b) como processo, num repositório git falso: com os quatro, o butler falso recebeu
+    `push dist operador/cangaco:html5 --userversion teste-jogo-7`, no diretório do projeto. Com
+    `--ensaio`, o butler não foi chamado. Árvore suja, sem tag, sem selo, `dist/` de outro commit e um
+    commit depois do selo saíram ≠ 0, com "nada foi enviado" e sem chamada ao butler.
+- Sonda no repositório real: `node tools/publicar.js --ensaio` recusou com os quatro motivos (HEAD
+  sem tag, árvore suja, sem selo completo do HEAD, `dist/` de outro commit). Nada foi chamado.
+
+**(c) espera o operador: a primeira publicação.** O passo a passo, para quando ele quiser:
+1. Criar a página no itch.io (tipo HTML, rascunho com senha) e instalar o `butler`, com o
+   `butler login` (a chave fica com ele, fora do repositório).
+2. Na `main` (depois do merge desta branch), com a árvore limpa: `npm run verify` (o completo) e
+   `npm run build`.
+3. `git tag teste-jogo-<n>` no HEAD.
+4. `CANGACO_ITCH_ALVO=<usuario>/<jogo> npm run publicar -- --ensaio` para conferir, e depois sem o
+   `--ensaio`. No PowerShell: `$env:CANGACO_ITCH_ALVO='<usuario>/<jogo>'; npm run publicar`.
+5. Registrar o link no PROGRESS. Só então o aceite (c) fecha.
+Na página do itch.io: marcar "This file will be played in the browser" no upload html5, e um
+tamanho de tela de pelo menos 1280×720 (é o viewport dos roteiros). **Hipótese, não conferida:** o
+itch.io pede o `index.html` na raiz do zip ou do diretório enviado, e o `dist/` já é assim.

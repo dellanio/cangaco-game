@@ -56,4 +56,14 @@ if (r.problemas.length > 0) {
   console.error(`conferir-dist: o dist/ NAO esta limpo:\n${r.problemas.map((p) => `  - ${p}`).join('\n')}`);
   process.exit(1);
 }
+// E-ENTREGA-PUBLICACAO: de que commit e este dist/, e se a arvore estava limpa no build. O
+// `npm run publicar` so envia um dist/ do HEAD feito com a arvore limpa. So o dist/ que passou na
+// conferencia ganha o arquivo: um dist/ reprovado fica sem ele, e o publicar o recusa.
+if (fs.existsSync(DIST)) {
+  const arvoreLimpa = (() => {
+    try { return execSync('git status --porcelain', { cwd: RAIZ, encoding: 'utf8' }).trim() === ''; } catch { return false; }
+  })();
+  fs.writeFileSync(path.join(DIST, 'build.json'), JSON.stringify({ commit, arvoreLimpa, quando: new Date().toISOString() }, null, 2));
+}
+
 console.log(`conferir-dist: ${r.arquivos} arquivos, ${(r.bytes / 1e6).toFixed(2)} MB; nenhum de assets/base/ (${base.length} conferidos), sem pagina de depuracao.`);

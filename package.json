@@ -6,6 +6,7 @@
     "dev": "node tools/dev.js",
     "build": "vite build --base=./ --manifest && node tools/conferir-dist.js",
     "preview": "vite preview",
+    "publicar": "node tools/publicar.js",
     "shot:dist": "npm run build && node tools/trava-de-testes.js node tools/shot.js E-ENTREGA-BUILD --preview",
     "test": "node tools/trava-de-testes.js vitest run",
     "test:transladado": "node tools/trava-de-testes.js vitest run -c vitest.transladado.config.mts",
