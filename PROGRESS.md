@@ -18222,3 +18222,22 @@ E-TELA-CONFIGURAR-PARTIDA manda conferir no clone.
   - a roupa varia um pouco entre quadros (geração quadro a quadro);
   - o perfil leste/oeste é mais magro;
   - alguns quadros do norte e do nordeste encostam a cabeça no topo da célula.
+- **Revisão do operador em jogo, corrigida (2026-10-03).** Ele reprovou: o parado e o andar de
+  frente e na diagonal grandes demais perto do laborer, o serf olhando para cima, quadros na
+  direção errada e uma mão levantada. O leste foi aprovado. Emendas `c5707b7` e `8ebfde4`.
+  - **Escala única para as 5 direções,** calibrada para o andar do leste ter 73 px (a altura do
+    laborer, medida). O pé foi para a linha 90, como o laborer.
+    - **Medido:** a maior largura ficou em 52 px (limite 1,25 × 42), o pior desvio do pé em 1 px e
+      o menor topo em 4.
+  - **Gerados de novo** (22 quadros e depois mais 4), com o prompt de cabeça reta, olhar para a
+    frente, mãos vazias e a direção descrita pela tela: o sul inteiro, o nordeste inteiro, os
+    quadros 5 a 7 do norte, o 6 do leste e o 6 do sudeste.
+    - O sul e o nordeste melhoraram: cabeça reta e direção certa.
+    - **O norte não obedeceu:** com a vista de cima reforçada, os quadros 5 a 7 voltaram de
+      frente. A saída foi **derivar os quadros 5 a 7 do norte por espelho dos quadros 1 a 3**
+      (visto de costas, o espelho troca a perna da frente, que é a meia-volta do ciclo), e usar
+      o quadro 0 do andar como parado do norte, que saía alto demais e cortado.
+  - Os brutos da primeira rodada estão em `brutos-v1`, e a folha quadro a quadro em `revisao-2`.
+  - **Verificado:** os testes de manifesto e de animação deram 65/65, e os roteiros
+    `D-ARTE-SERF-COMFYUI`, `D-TELA-04c` e `ARTE-VILA` saíram 0. Na captura do serf andando, aberta,
+    ele tem o tamanho do obreiro ao lado.
