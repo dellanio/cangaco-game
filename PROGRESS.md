@@ -19488,3 +19488,28 @@ som; o conflito do PROGRESS era só as duas pontas acrescentando no fim, e ficar
 - **Aceite, verificado:** `npm run shot -- D-TELA-04e` saiu 0 (depois do verify completo do item 6).
   O bug saiu do `BUGS.md` neste commit.
 
+## 2026-10-04 — Leva, item 8: BUG-ROTEIRO-DE-DUAS-ETAPAS — pulado, espera o operador
+
+Pelo próprio item da leva: separar a comparação antes/depois do roteiro de não-regressão, ou
+versionar a medida "antes", é decisão do operador. Sem ela, nada mudou; o bug segue no `BUGS.md`,
+e os dois roteiros (`D-TELA-COSTURA-DOS-TILES`, `D-TELA-VEU-DOS-DETALHES`) seguem falhando sozinhos
+no `shot:todos`, como antes.
+
+## 2026-10-04 — Leva, item 9: BUG-ROTEIRO-F-D2-RELOGIO (a aceleração sem relógio de parede)
+
+- **A correção:** `tools/shots/F-D2.js` não compara mais os pixels de 1,2 s segurando com os de 4
+  toques de 300 ms. Segurando a seta, o roteiro espera, quadro a quadro (`waitForFunction` na
+  velocidade publicada pelo debug), a velocidade passar da inicial do dado e crescer de novo; depois
+  segura até ela chegar ao teto e parar lá; soltando, ela volta **exatamente** à inicial, que é o
+  que faz o toque curto andar sempre o mesmo passo. Nenhum limiar depende de quantos quadros o
+  navegador entregou. As outras partes do roteiro (as quatro setas, o clamp nas bordas, o `Espaço`)
+  não mudaram.
+- **Aceite:** três corridas seguidas saíram 0 (velocidade 640 → 686/694/686 → 748/765/745 → teto
+  1 600; solta, 640). **Falta** a parte "dentro do `shot:todos`", que é do fechamento da leva. O bug
+  saiu do `BUGS.md` neste commit; se o `shot:todos` o acusar, ele volta.
+
+## 2026-10-04 — Leva, item 10: BUG-CIVIS-EMPILHADOS — pulado, espera o operador
+
+Religar a colisão civil ou só espalhar na tela os civis do mesmo tile é decisão do operador (o item
+da leva diz isso). Nada mudou, e o bug segue no `BUGS.md`.
+
