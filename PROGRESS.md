@@ -19344,3 +19344,17 @@ canavial e padaria com a bandeira no telhado. A casa do pescador não está no s
 ela fica coberta pelo teste do ponto, mas não foi vista no jogo.
 O decodificador PNG dos testes de arte saiu para `tests/helpers/png.ts` e serve à morte, à bandeira e
 ao serf.
+
+### G-ARTE-SERF-CARGA-PARADA (o serf carrega com as mãos paradas no centro)
+**Verificado:** pedir de novo ao PixelLab "hands perfectly still" não segurou os braços: o sul gerado
+começava com as mãos caídas e só depois as subia. Também não serviu montar o tronco a partir da pose
+parada "Carregar vazio", que tem os braços caídos em algumas direções. **O que entrou:** sem geração,
+`tools/arte/tronco-fixo-do-serf.py 0.64 4 --gravar`. Na `carregando` de cada direção, o tronco acima
+da cintura (64% da altura do corpo) vem do quadro 4, com as mãos juntas à frente, e as pernas vêm de
+cada quadro. Rodar de novo depois de remontar o atlas do serf.
+`tests/G-ARTE-SERF-CARGA-PARADA.test.ts`: acima da cintura, os 8 quadros de cada direção são iguais
+pixel a pixel, e abaixo as pernas mudam. A prova de que o teste acusa: no `andar`, o tronco muda. A
+folha das 5 direções e a captura `D-ARTE-SERF-COMFYUI-3-serf-carregando.png` foram abertas: os
+serfs levam a pedra com as mãos à frente. `D-TELA-SERF-CARREGANDO` passa, e o ponto da carga não
+mudou.
+**Visto, não corrigido:** sobra um pixel solto na borda de dois quadros do nordeste.
