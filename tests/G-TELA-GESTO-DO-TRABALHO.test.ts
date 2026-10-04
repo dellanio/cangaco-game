@@ -10,7 +10,9 @@ import { animacaoDoGesto, colheitaNasMaos, deslocamentoDoTrabalho } from '../src
 import type { GestoDoTrabalho } from '../src/render/gesto-do-trabalho';
 import dados from '../data/gesto-do-trabalho.json';
 import { caixaDeTipoNoMapa } from '../src/render/predios';
-import { cenarioDeFazenda } from './helpers/producao-cenario';
+import { cenarioDeCanavial, cenarioDeFazenda } from './helpers/producao-cenario';
+import { rotuloDaCarga } from '../src/render/rotulo-da-carga';
+import { iconesDoJogo } from '../src/render/sprites';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { salvar } from '../src/sim/save';
 
@@ -96,4 +98,22 @@ describe('o roceiro trabalha dentro do campo com a ferramenta da fase', () => {
     expect(colheitaNasMaos(estadoCom({}), u, config)).toBeNull();
     expect(animacaoDoGesto(estadoCom({}), u, 'andar', todas, config)).toBe('andar');
   });
+
+  it('BUG-ROCEIRO-CANA-SEM-NOME: toda colheita nas maos tem nome no tema e icone', () => {
+    for (const [predio, colheita] of Object.entries(config.colheitaPorPredio)) {
+      expect(() => rotuloDaCarga(colheita), `${predio}: ${colheita}`).not.toThrow();
+      expect(iconesDoJogo?.[colheita], `${predio}: ${colheita}`).toBeDefined();
+    }
+  });
+
+  it('BUG-ROCEIRO-CANA-SEM-NOME: o canavial de verdade volta com a cana, e o rotulo e o do tema', () => {
+    let s = cenarioDeCanavial();
+    let visto: string | null = null;
+    for (let t = 0; t < 8000 && visto === null; t++) {
+      s = step(s, []);
+      visto = colheitaNasMaos(s, s.unidades.porId['canavieiro']!, config);
+    }
+    expect(visto).toBe('grapes');
+    expect(rotuloDaCarga(visto!)).toBe('Cana');
+  }, 60000);
 });

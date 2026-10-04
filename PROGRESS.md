@@ -19944,3 +19944,17 @@ na mesma escala.
 **Para o operador (aceite 4):** na fundição (`metallurgists`), a área tem 31×35 px. O recorte mostra a
 cabeça e os ombros, e o gesto quase não aparece. O save da vila pronta não tem fundição, então ela foi
 vista só na folha, não em jogo. A saída é apontar uma área maior na arte da casa.
+
+### BUG-ROCEIRO-CANA-SEM-NOME corrigido (trava, achado pelo operador jogando, 2026-10-04)
+**Causa (verificada):** o roceiro do canavial voltava com `cana`. Essa era só a chave do ícone, sem nome
+no tema, e a `rotuloDaCarga` lança erro para mercadoria sem nome. A ponte do debug a chama em todo
+quadro, e o jogo parava. O teste do G-TELA-ROCEIRO-NO-CAMPO só rodou o roçado (`corn`, que tem nome).
+**Correção:** a colheita do canavial passa a ser o id neutro do recurso, `grapes`, que o tema já chama
+de "Cana". O ícone vai para `icones.colheitas.grapes`, com o mesmo PNG.
+**Teste** (`tests/G-TELA-GESTO-DO-TRABALHO.test.ts`, +2):
+- por tabela, toda colheita de `colheitaPorPredio` tem nome no tema e ícone;
+- um canavial de verdade, rodado pelo `step`, volta com `grapes`, e o rótulo é "Cana".
+
+Os dois reprovaram contra o dado antigo com o erro do bug, e passam depois da correção. O roteiro
+G-TELA-GESTO-DO-TRABALHO continua saindo 0.
+**Não visto:** não fiz captura de um roceiro do canavial carregando a cana em jogo.

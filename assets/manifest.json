@@ -3299,8 +3299,8 @@
   ],
   "icones": {
     "colheitas": {
-      "_doc": "G-TELA-ROCEIRO-NO-CAMPO (2026-10-04): o que o roceiro leva nas maos voltando de um campo cuja colheita nao e mercadoria. A cana (o recurso grapes do canavial) vira cachaca dentro do predio, entao nao tem icone de mercadoria. So render.",
-      "cana": { "arquivo": "sprites/colheitas/cana.png", "tamanho": [32, 32], "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03", "origem": { "base": "base/colheitas/cana.png", "semente": null, "nota": "PixelLab, candidata 58 do lote 6151a7ab das mercadorias; sha256 a3486af0662b4e14705ac202bf9c9918509f55c3d15e52a02f71e1ed861213e9" } }
+      "_doc": "G-TELA-ROCEIRO-NO-CAMPO (2026-10-04): o que o roceiro leva nas maos voltando de um campo cuja colheita nao e mercadoria. A cana (o recurso grapes do canavial) vira cachaca dentro do predio, entao nao tem icone de mercadoria. A chave e o id neutro do recurso (`grapes`), que o tema ja chama de Cana: o texto da carga sai do tema, e `cana` nao tinha nome (BUG-ROCEIRO-CANA-SEM-NOME). So render.",
+      "grapes": { "arquivo": "sprites/colheitas/cana.png", "tamanho": [32, 32], "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03", "origem": { "base": "base/colheitas/cana.png", "semente": null, "nota": "PixelLab, candidata 58 do lote 6151a7ab das mercadorias; sha256 a3486af0662b4e14705ac202bf9c9918509f55c3d15e52a02f71e1ed861213e9" } }
     },
     "mercadorias": {
       "_doc": "D-ARTE-PIXEL-ART-CIVIS (teste de pixel art, 2026-10-03): o sprite de cada uma das 28 mercadorias, gerado no PixelLab (create_1_direction_object, objeto 6151a7ab-f694-44dc-a929-1ca871a4e143, 32x32). O render desenha o sprite entre as maos do serf que carrega e na pilha sem PNG proprio.",

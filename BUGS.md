@@ -30,26 +30,6 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
 
 ## Abertos
 
-## BUG-ROCEIRO-CANA-SEM-NOME — o jogo trava quando o roceiro do canavial volta com a cana
-- feature: G-TELA-ROCEIRO-NO-CAMPO (`f8736b3`)
-- severidade: trava
-- repro: o operador jogando a `main` (`9440185`), 2026-10-04. Um roceiro do canavial volta da
-  colheita.
-- esperado: ele volta com a cana entre as mãos, como o do roçado volta com o milho
-- observado: `Uncaught Error: render/rotulo-da-carga: theme-sertao.json nao tem nome para a mercadoria
-  'cana'`, em `unidades.ts:483`, e o jogo para. Causa (verificada): `data/gesto-do-trabalho.json` dá
-  `wineyard: "cana"`, e `cana` é só a chave do ícone (`icones.colheitas.cana`), sem nome no tema. A
-  ponte do debug chama `rotuloDaCarga(carga)` em todo quadro, e o texto também seria o caminho se a
-  textura do ícone não estivesse carregada. O teste usou só o roçado (`corn`, que tem nome).
-- correção prevista: a colheita do canavial passa a ser o id neutro do recurso, `grapes`, que o tema
-  já chama de "Cana"; o ícone sai de `icones.colheitas.cana` para `icones.colheitas.grapes`.
-- **aceite (antes do código):** (1) por tabela, para toda colheita de `colheitaPorPredio`,
-  `rotuloDaCarga` devolve um nome sem lançar e o ícone existe em `iconesDoJogo`; (2) um canavial de
-  verdade, rodado pelo `step` até o roceiro voltar com a colheita, dá `colheitaNasMaos` = `grapes`,
-  e o rótulo é "Cana"; (3) contra o dado de hoje, o (1) reprova.
-- evidência: o erro do console colado pelo operador
-- status: aberto
-
 ## BUG-ROTEIRO-D-TELA-03-MACHADO-COM-ICONE — o roteiro da D-TELA-03 supoe que o machado nao tem icone
 - feature: D-TELA-03 (logistica na tela)
 - severidade: errado

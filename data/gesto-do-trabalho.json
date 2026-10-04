@@ -3,6 +3,6 @@
   "obreiroPorTarefa": { "construir": "martelar", "reparar": "martelar", "assentar-estrada": "assentar", "arar": "arar" },
   "roceiroPorEstado": { "semeando": "semear", "colhendo": "colher" },
   "avancoDoMartelarPx": 10,
-  "colheitaPorPredio": { "farm": "corn", "wineyard": "cana" },
+  "colheitaPorPredio": { "farm": "corn", "wineyard": "grapes" },
   "tiposDeRoceiro": ["farmer"]
 }
