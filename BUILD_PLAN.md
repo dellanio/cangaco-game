@@ -8775,6 +8775,45 @@ no mapa atual) espera a decisão dele sobre os saves, registrada no PROGRESS.
   4. sem obra pendente, a saída da pedreira continua indo ao armazém (`saida-cheia-para-armazem`);
   5. as invariantes do JobBoard (reserva e release) continuam valendo no cenário longo do teste.
 
+### I-MOVIMENTO-FILA-DE-CIVIS — Civis em fila, um por tile, sem empurrar (integração; muda a sim)
+- **Pedido (operador, 2026-10-04, duas vezes):** com a colisão civil ligada, serf e obreiro "ficam
+  travando e indo pra frente e pra trás… é como se estivessem empurrando uns aos outros". Decisão: **um
+  civil por tile, como no KaM; quem chega atrás espera parado na fila, e quem vem de frente cruza**.
+  Saem o contorno, a troca forçada que empurra para trás e o empurrão teleportado. O ocioso no caminho
+  dá um passo de lado, andando, e só o ciclo de espera destrava sozinho.
+- **Medida (sonda, jogo livre, 8 000 ticks):** 89 desvios de lado, 15 empurrões para trás e 1 874 ticks
+  segurados no fim do passo. Desligada, zero.
+- **KaM (`731a8a4`):** o tile seguinte é reservado **no início do passo**, e a espera acontece no
+  centro do próprio tile:
+  - `fUnit.Walk(...) //Pre-occupy next tile`, `src/units/actions/KM_UnitActionWalkTo.pas:1312`;
+  - `TKMTerrain.UnitWalk`, `src/terrain/KM_Terrain.pas:4266-4279`;
+  - `DoUnitInteraction` falso para a unidade, `KM_UnitActionWalkTo.pas:1289-1291`.
+
+  Hoje nós conferimos no fim do passo (`passoCivil`). **Divergência declarada:** o KaM também tem
+  AVOID, SIDESTEP, DODGE e a troca forçada do `WAITING_TIMEOUT` (`:125-131`, `:1066-1073`); aqui saem,
+  por decisão do operador, e fica o PUSH do ocioso, andando.
+- **Feature de integração de sim e render:** a regra é da sim (`src/sim/colisao.ts`,
+  `src/sim/units/movimento.ts`), e o desenho do segurado sai do seletor. Plano em
+  `C:\Users\della\.claude\plans\delightful-wobbling-gray.md`.
+- **Aceite (antes do código):**
+  1. **Fila:** pelo `step`, A atrás de B, que trabalha parado no tile. A espera com `progresso 0` no
+     próprio tile, desenhado no centro dele, e nunca muda de tile até B sair; então anda.
+  2. **De frente:** 20 tiles de frente numa rua de uma faixa levam 100 ticks nos dois, o mesmo de andar
+     sozinho, e nenhum progresso fica abaixo de 0.
+  3. **Ciclo de 3**, montado à mão: os três largam no mesmo tick, e ninguém muda de tile para fora do
+     próprio caminho.
+  4. **Ocioso no caminho:** sai para o vizinho livre **andando** (o tile dele muda só no fim de um passo
+     do caminho dele). Quem esperava passa.
+  5. **Sem empurrão:** na vila pronta (3 000 ticks) e no jogo livre (8 000 ticks), todo civil que muda de
+     tile vai ao próximo tile do próprio caminho. Zero para-trás, de-lado ou teleporte, contra 15 + 89
+     hoje. Um civil por tile na ocupação lógica em todo tick.
+  6. **Não trava:** o `prazoDeProgresso` de hoje (450 ticks) vale na escaramuça e no jogo livre. Se
+     reprovar, paro e reporto com a medida, sem afrouxar o prazo.
+  7. **Determinismo** (mesma corrida, mesmo estado). **Desligada**, o estado é byte a byte o de hoje.
+  8. O roteiro `I-MOVIMENTO-COLISAO-CIVIL-LIGADA` sai 0, e a captura é aberta.
+- **Fora do aceite:** o efeito no ritmo da produção não é asserção (o teste afirma mecânica). Vai para
+  o PROGRESS como número da corrida.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
