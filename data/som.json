@@ -1,6 +1,8 @@
 {
   "_doc": "H-TELA-CAMADA-DE-SOM. A tabela evento da sim -> id de som. So a TELA le este arquivo (src/render/som.ts); a sim/ nunca (guarda pelo grafo de import em tests/H-TELA-CAMADA-DE-SOM.test.ts). Som cujo id nao esta no manifesto (assets/manifest.json, secao `sons`) e silencio, sem erro. `eventos`: a chave e o `type` do evento (src/sim/state.ts, GameEvent); o valor e o id do som, ou {campo, por}, que escolhe o id pelo valor de um campo do evento (valor sem id = silencio). `planta` e o som do input, sem evento (a planta posicionada, GDD 10). `sons`: todo id que alguma linha toca, com o teto de vezes por quadro (o mesmo id pedido varias vezes no mesmo quadro toca no maximo isso). A lista de candidatos de cada id esta em docs/sons-candidatos.md.",
   "planta": "blueprint-placed",
+  "_docRua": "H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA. `rua` e o som do input a cada tile de rua novo que o PlaceRoad aceita (src/render/som.ts, pedidosDaRua): som de interface, sem lugar. O teto por quadro faz N tiles do mesmo arrasto tocarem uma vez; o arrasto recusado toca a recusa (command-rejected), nao este.",
+  "rua": "road-placed",
   "eventos": {
     "building-completed": "building-completed",
     "goods-produced": "goods-produced",
@@ -33,11 +35,24 @@
     "victory": { "canal": "efeitos", "tetoPorQuadro": 1 },
     "defeat": { "canal": "efeitos", "tetoPorQuadro": 1 },
     "command-rejected": { "canal": "efeitos", "tetoPorQuadro": 1 },
+    "road-placed": { "canal": "efeitos", "tetoPorQuadro": 1 },
+    "build-wood": { "canal": "efeitos", "tetoPorQuadro": 1 },
+    "build-road": { "canal": "efeitos", "tetoPorQuadro": 1 },
+    "quarry-work": { "canal": "efeitos", "tetoPorQuadro": 1 },
     "ambient-wind": { "canal": "ambiente", "tetoPorQuadro": 1 },
     "ambient-cicada": { "canal": "ambiente", "tetoPorQuadro": 1 },
     "inn-bell": { "canal": "ambiente", "tetoPorQuadro": 1 },
     "music-peace": { "canal": "musica", "tetoPorQuadro": 1 },
     "music-combat": { "canal": "musica", "tetoPorQuadro": 1 }
+  },
+  "_docDistancia": "H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA. Todo som com lugar (os eventos de predio e de unidade, o sino da Bodega, os sons de trabalho) cai com a distancia, em tiles, entre o lugar e o centro da camera: cheio no centro, zero em `raioTiles` e alem (src/render/som.ts, volumeNaDistancia). Fora do raio nao toca, e o laco que tocava para. O som sem lugar (fim da paz, vitoria, derrota, recusa, a rua, o ambiente, a musica) nao muda. Numero de TELA, sem leitor na sim.",
+  "distancia": { "raioTiles": 18 },
+  "_docTrabalho": "H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA. Os sons de trabalho em laco, derivados do estado da unidade como a animacao de trabalho (src/render/som-do-trabalho.ts), sem evento na sim. `construir`: o laborer `martelando` numa obra de predio (tarefa `construir`). `estrada`: o laborer `nivelando` ou `martelando` num tile de estrada (tarefa `assentar-estrada`). `colheita`: o especialista `colhendo` no recurso da chave (a pedra do lajedo). `tetoDeVozes`: quantos lacos de trabalho tocam juntos, os mais perto do centro da camera primeiro.",
+  "trabalho": {
+    "construir": "build-wood",
+    "estrada": "build-road",
+    "colheita": { "rock": "quarry-work" },
+    "tetoDeVozes": 3
   },
   "_docAmbiente": "H-TELA-AMBIENTE-E-MUSICA (src/render/fundo-sonoro.ts). `lacos`: os sons de fundo que tocam em laco o tempo todo em jogo, sem lugar (seguem a camera), e param no menu. `sino`: o sino da Bodega (`predio` e o id neutro do tipo), pedido assim que um predio desse tipo do jogador entra na vista da camera e de novo a cada `intervaloSegundos` (relogio de parede, dado de TELA) enquanto ele estiver nela.",
   "ambiente": {

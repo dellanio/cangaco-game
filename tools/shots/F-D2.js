@@ -61,27 +61,35 @@ async function roteiro(ctx) {
   afirmar(comD.dx > 0, `a tecla D deveria andar como a seta direita, veio ${comD.dx}`);
 
   // ---- 2. segurar acelera, e para no teto do DADO --------------------------
-  const longo = await segurar('ArrowRight', 1200);
-  afirmar(
-    longo.velocidade <= DADOS.tetoPxPorSegundo,
-    `a velocidade (${longo.velocidade}) passou do teto do dado (${DADOS.tetoPxPorSegundo})`,
-  );
-  afirmar(
-    longo.velocidade > DADOS.velocidadeInicialPxPorSegundo,
-    `segurar 1,2s deveria acelerar: ${longo.velocidade} contra ${DADOS.velocidadeInicialPxPorSegundo}`,
-  );
-  // A medida contra a LINHA DE BASE: o mesmo tempo total em quatro toques
-  // curtos anda menos, porque cada toque recomeca no passo inicial.
-  let emToques = 0;
-  for (let i = 0; i < 4; i += 1) {
-    const toque = await segurar('ArrowLeft', 300);
-    emToques += Math.abs(toque.dx);
-  }
-  afirmar(
-    Math.abs(longo.dx) > emToques,
-    `segurar 1,2s (${Math.abs(longo.dx).toFixed(0)}px) deveria andar mais que 4 toques de 300ms `
-      + `(${emToques.toFixed(0)}px): a aceleracao nao esta acontecendo`,
-  );
+  // BUG-ROTEIRO-F-D2-RELOGIO (§8): a aceleracao se afirma pelos QUADROS, nao pelos pixels andados
+  // num tempo de parede. A versao antiga comparava 1,2 s segurando com 4 toques de 300 ms, e com a
+  // maquina carregada o navegador entrega menos quadros e a conta virava. Aqui o roteiro espera,
+  // quadro a quadro, a velocidade publicada passar da inicial e depois crescer de novo (ou chegar ao
+  // teto); soltar volta exatamente a inicial, e e isso que faz o toque curto andar sempre o mesmo
+  // passo. Nenhum limiar depende de quantos quadros couberam num intervalo.
+  const velocidade = async () => (await estado()).navegacao.velocidade;
+  const inicial = DADOS.velocidadeInicialPxPorSegundo;
+  afirmar((await velocidade()) === inicial, `parado, a velocidade deveria ser a inicial do dado (${inicial})`);
+  await page.keyboard.down('ArrowRight');
+  await page.waitForFunction((v) => window.__cangaco.navegacao.velocidade > v, inicial, { timeout: 15_000 });
+  const v1 = await velocidade();
+  await page.waitForFunction(([v, teto]) => window.__cangaco.navegacao.velocidade > v || window.__cangaco.navegacao.velocidade >= teto,
+    [v1, DADOS.tetoPxPorSegundo], { timeout: 15_000 });
+  const v2 = await velocidade();
+  await page.keyboard.up('ArrowRight');
+  await esperarFrame();
+  await page.waitForFunction((v) => window.__cangaco.navegacao.velocidade === v, inicial, { timeout: 15_000 });
+  afirmar(v1 > inicial, `segurar deveria acelerar: ${v1} contra a inicial ${inicial}`);
+  afirmar(v2 > v1 || v2 === DADOS.tetoPxPorSegundo, `segurando, a velocidade deveria continuar crescendo ate o teto: ${v1} -> ${v2}`);
+  afirmar(v2 <= DADOS.tetoPxPorSegundo, `a velocidade (${v2}) passou do teto do dado (${DADOS.tetoPxPorSegundo})`);
+  // o teto de verdade: segurando mais, a velocidade chega a ele e para la
+  await page.keyboard.down('ArrowLeft');
+  await page.waitForFunction((teto) => window.__cangaco.navegacao.velocidade >= teto, DADOS.tetoPxPorSegundo, { timeout: 30_000 });
+  const noTeto = await velocidade();
+  await page.keyboard.up('ArrowLeft');
+  await esperarFrame();
+  afirmar(noTeto === DADOS.tetoPxPorSegundo, `segurando, a velocidade deveria parar no teto do dado: ${noTeto}`);
+  console.log(`F-D2: velocidade ${inicial} -> ${v1.toFixed(0)} -> ${v2.toFixed(0)} -> teto ${noTeto}; solta, volta a ${inicial}`);
 
   // ---- 3. o clamp da F04 nas quatro bordas ---------------------------------
   // Esquerda e topo primeiro: a vila abre perto deles, entao sao baratos.

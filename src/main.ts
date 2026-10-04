@@ -30,6 +30,13 @@ import { modosDoTipo } from './ui/modo-do-predio';
 import { montarAlertas } from './ui/alertas';
 import { montarAvisoDoTempo } from './ui/aviso-tempo';
 import { montarFimDePartida } from './ui/fim-de-partida';
+import { montarFaixaDePassos } from './ui/partida-guiada';
+import { montarCaixaDeDica } from './ui/dicas';
+import { montarSecaoDoRelato } from './ui/relato';
+import { lerRelato, nomeDoArquivoDoRelato, relatoDaPartida, textoDoRelato } from './relato';
+import { COMMIT_DO_BUILD } from './commit-do-build';
+import { criarDicasVivas } from './preferencias-de-dicas';
+import type { DicasVivas } from './preferencias-de-dicas';
 import { montarAjuda } from './ui/ajuda';
 import type { Ajuda } from './ui/ajuda';
 import type { TelaDeCarregamento } from './ui/carregamento';
@@ -58,11 +65,14 @@ import { criarEscaramuca } from './sim/cenario';
 import type { Command } from './sim/commands';
 import { criarCamadaDeSom, urlsDosSons } from './render/som';
 import type { SonsDoManifesto, TabelaDeSom, ContadoresDeSom } from './render/som';
-import { criarTocadorDeLacoDoNavegador, criarTocadorDoNavegador } from './render/tocador-de-som';
+import { criarTocadorDeLacoDoNavegador, criarTocadorDeVozesDoNavegador, criarTocadorDoNavegador } from './render/tocador-de-som';
+import { criarSomDoTrabalho } from './render/som-do-trabalho';
+import type { ContadoresDoTrabalho, DadosDoTrabalho } from './render/som-do-trabalho';
 import { criarFundoSonoro } from './render/fundo-sonoro';
 import type { ContadoresDoFundo, DadosDoFundo, VistaEmTiles } from './render/fundo-sonoro';
 import { urlsDeArquivosDeSom } from './render/sprites-urls';
 import tabelaDeSom from '../data/som.json';
+import temaSertao from '../data/theme-sertao.json';
 import { canalDoSom, volumeEfetivo } from './preferencias-de-som';
 import type { PreferenciasVivas } from './preferencias-de-som';
 import type { OpcoesDeSom } from './ui/opcoes-de-som';
@@ -74,7 +84,7 @@ declare global {
   interface Window {
     __cangacoPartida?: { estadoSerializado(): string };
     /** H-TELA-CAMADA-DE-SOM — HARNESS: os contadores da camada de som, para o roteiro. */
-    __cangacoSom?: { contadores(): ContadoresDeSom & { readonly fundo: ContadoresDoFundo } };
+    __cangacoSom?: { contadores(): ContadoresDeSom & { readonly fundo: ContadoresDoFundo; readonly trabalho: ContadoresDoTrabalho } };
   }
 }
 
@@ -88,6 +98,10 @@ export function iniciarPartida(
   estadoInicial: GameState, ajudaDoMenu: Ajuda | null = null, carregamento: TelaDeCarregamento | null = null,
   /** H-TELA-OPCOES-E-VOLUME — o volume escolhido (o mesmo do menu) e a caixa que o muda. */
   preferenciasDeSom: PreferenciasVivas | null = null, opcoesDeSom: OpcoesDeSom | null = null,
+  /** I-TELA-PARTIDA-GUIADA — o Aprender a jogar: a faixa de passos por cima do jogo livre. */
+  guiada = false,
+  /** I-TELA-DICAS-NA-PRIMEIRA-VEZ — as dicas ligadas e as ja vistas (as mesmas das Opcoes). */
+  dicas: DicasVivas | null = null,
 ): void {
   const sessao = criarSessao(estadoInicial);
   // H-TELA-CAMADA-DE-SOM — o som le os eventos de cada passo e toca no fim do quadro. O arquivo
@@ -103,8 +117,17 @@ export function iniciarPartida(
     disponiveis: new Set(Object.keys(urlsDeSom)),
     tocador: criarTocadorDeLacoDoNavegador(urlsDeSom),
     volume: volumeDoSom,
-    pedir: (id) => { som.pedir(id); },
+    pedir: (id, tile) => { som.pedir(id, tile); },
     tickMs: gameData.tempo.tickMs,
+  });
+  // H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA — os lacos de trabalho (a obra, a estrada, a pedra), do
+  // estado da unidade, com lugar e teto de vozes
+  const trabalho = criarSomDoTrabalho({
+    dados: (tabelaDeSom as unknown as { trabalho: DadosDoTrabalho }).trabalho,
+    raioTiles: tabela.distancia?.raioTiles ?? 0,
+    disponiveis: new Set(Object.keys(urlsDeSom)),
+    tocador: criarTocadorDeVozesDoNavegador(urlsDeSom),
+    volume: volumeDoSom,
   });
   // Todo comando do jogador passa por aqui: a conta diz ao som que a recusa do proximo passo e
   // do jogador, e a planta posicionada pede o som seco no quadro do clique (GDD §10).
@@ -113,6 +136,8 @@ export function iniciarPartida(
     sessao.enviar(comando);
     comandosDoJogador += 1;
     if (comando.type === 'PlaceBlueprint') som.pedirPlanta();
+    // H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA: o tile de rua pedido, um som por arrasto aceito
+    if (comando.type === 'PlaceRoad') som.pedirRua(sessao.estado, comando.tiles, gameData);
   }
   const ferramenta = criarFerramenta();
   // O predio aberto no painel (F13b). Estado de interface, como a ferramenta.
@@ -123,7 +148,7 @@ export function iniciarPartida(
   // A ajuda (F-D1) precisa do `#logo` ja no DOM, e ele e estatico no index.html —
   // entao ela pode nascer antes do resto da interface. Quem a abre e o teclado, e
   // e por isso que ela e o quarto parametro: com a ajuda aberta, o `Esc` e dela.
-  const ajuda = ajudaDoMenu ?? montarAjuda();
+  const ajuda = ajudaDoMenu ?? montarAjuda(gameData);
   // H-TELA-OPCOES-E-VOLUME — a ajuda em jogo abre as opcoes de som
   opcoesDeSom?.ligarNaAjuda();
   ligarTeclado(ferramenta, window, selecao, ajuda);
@@ -251,6 +276,9 @@ export function iniciarPartida(
   // F34 — o aviso do fim da escaramuca. Derivado do estado, como os alertas.
   const fimDePartida = montarFimDePartida();
 
+  // I-TELA-PARTIDA-GUIADA — a faixa de passos. Derivada do estado; a sim nao sabe dela.
+  const faixaDePassos = guiada ? montarFaixaDePassos(gameData) : null;
+
   // UI-barra-a (docs/propostas/barra-lateral-unica.md): a barra lateral unica.
   // Ela so escreve `data-corpo` no <body> — grade, painel ou opcoes no corpo da
   // aba —, e a area do canvas nao muda com isso. Nasce ANTES do jogo pelo mesmo
@@ -280,6 +308,12 @@ export function iniciarPartida(
     nevoa: configDoMapa.nevoa,
   });
 
+  // I-TELA-DICAS-NA-PRIMEIRA-VEZ — a dica de primeira vez. Derivada do estado; o que ja foi visto
+  // e a chave das Opcoes moram no localStorage. Sem o `inicio.ts` (nunca, hoje), a gaveta e a mesma.
+  const caixaDeDica = montarCaixaDeDica(gameData, dicas ?? criarDicasVivas(window.localStorage), (tile) => {
+    jogo.centrarCameraEm(tile);
+  });
+
   function atualizar(s: GameState): void {
     // F-TELA-NEVOA: o predio inimigo que saiu da vista sai do painel (ele so existe a vista)
     if (selecao.predio !== null && predioClicavel(s, selecao.predio) === null) selecao.selecionar(null);
@@ -297,6 +331,9 @@ export function iniciarPartida(
     // C-TELA-02: destino que ninguem vai alcancar nao fica marcado
     if (recusaDaPaz(s.events) !== null) jogo.apagarDestino();
     fimDePartida.atualizar(s);
+    faixaDePassos?.atualizar(s);
+    caixaDeDica.atualizar(s);
+    ajuda.atualizar(s);
     // C9: a partida acabou -> o laco para (e so outro save o reabre)
     acompanharFimDePartida(laco, s);
   }
@@ -338,6 +375,36 @@ export function iniciarPartida(
     },
     gavetas: () => arquivo.gavetas(),
   });
+  // I-ENTREGA-PLAYTEST — o relato: baixa um arquivo (nada sai pela rede) e o traz de volta.
+  const temaDoRelato = temaSertao.relato;
+  const secaoDoRelato = montarSecaoDoRelato({
+    aoEnviar(texto) {
+      const relato = relatoDaPartida(sessao.estado, COMMIT_DO_BUILD, texto, gameData);
+      const nome = nomeDoArquivoDoRelato(relato, sessao.estado);
+      const url = URL.createObjectURL(new Blob([textoDoRelato(relato)], { type: 'application/json' }));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = nome;
+      a.click();
+      URL.revokeObjectURL(url);
+      secaoDoRelato.recado(temaDoRelato.baixou.replace('{arquivo}', nome), true);
+    },
+    aoAbrir(conteudo) {
+      const leitura = lerRelato(conteudo, gameData);
+      if (!leitura.ok) {
+        secaoDoRelato.recado(temaDoRelato.recusado.replace('{motivo}', leitura.motivo), false);
+        return;
+      }
+      jogo.reiniciarApresentacao();
+      som.reiniciar();
+      fundo.reiniciar();
+      sessao.substituir(leitura.estado);
+      selecao.selecionar(null);
+      selecaoMilitar.limpar();
+      secaoDoRelato.recado(temaDoRelato.abriu.replace('{tick}', String(leitura.estado.tick)), true);
+    },
+  });
+
   // O painel abre NO CLIQUE, sem esperar o proximo tick: com o jogo pausado nao
   // viria nenhum, e o painel so apareceria quando o jogador retomasse.
   selecao.aoMudar(() => {
@@ -358,8 +425,12 @@ export function iniciarPartida(
   // externo, nao do render (CLAUDE.md §10).
   function quadro(agoraMs: number): void {
     laco.tique(agoraMs);
-    fundo.quadro(agoraMs, sessao.estado, vistaEmTiles());
-    som.quadro();
+    const vista = vistaEmTiles();
+    // H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA: o som com lugar cai com a distancia ao centro da camera
+    const centro = vista === null ? null : { gx: (vista.x0 + vista.x1) / 2, gy: (vista.y0 + vista.y1) / 2 };
+    fundo.quadro(agoraMs, sessao.estado, vista);
+    som.quadro(centro);
+    trabalho.quadro(sessao.estado, centro);
     aviso.atualizar(laco.pausado, laco.velocidade);
     requestAnimationFrame(quadro);
   }
@@ -368,6 +439,6 @@ export function iniciarPartida(
   // E-TELA-MENU-INICIAL — HARNESS, como o `__cangaco` do render: o estado serializado, para o
   // roteiro comparar a escaramuca do menu com a do `?escaramuca` no tick 0. Nao usar em jogo.
   window.__cangacoPartida = { estadoSerializado: () => JSON.stringify(sessao.estado) };
-  window.__cangacoSom = { contadores: () => ({ ...som.contadores(), fundo: fundo.contadores() }) };
+  window.__cangacoSom = { contadores: () => ({ ...som.contadores(), fundo: fundo.contadores(), trabalho: trabalho.contadores() }) };
 
 }

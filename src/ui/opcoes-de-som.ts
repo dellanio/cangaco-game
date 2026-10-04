@@ -19,7 +19,15 @@ export interface OpcoesDeSom {
   ligarNaAjuda(): void;
 }
 
-export function montarOpcoesDeSom(inicial: PreferenciasDeSom, aoMudar: (p: PreferenciasDeSom) => void): OpcoesDeSom {
+/** I-TELA-DICAS-NA-PRIMEIRA-VEZ — a chave das dicas, na mesma caixa. */
+export interface ChaveDasDicas {
+  readonly ligadas: boolean;
+  aoMudar(ligadas: boolean): void;
+}
+
+export function montarOpcoesDeSom(
+  inicial: PreferenciasDeSom, aoMudar: (p: PreferenciasDeSom) => void, dicas: ChaveDasDicas | null = null,
+): OpcoesDeSom {
   let prefs = inicial;
   const raiz = document.createElement('section');
   raiz.id = 'opcoes-de-som';
@@ -68,6 +76,23 @@ export function montarOpcoesDeSom(inicial: PreferenciasDeSom, aoMudar: (p: Prefe
   nomeDoMudo.textContent = rotulos.mudo;
   linhaDoMudo.append(mudo, nomeDoMudo);
   raiz.append(linhaDoMudo);
+
+  // I-TELA-DICAS-NA-PRIMEIRA-VEZ: desligar as dicas e preferencia, como o mudo
+  if (dicas !== null) {
+    const linhaDasDicas = document.createElement('label');
+    linhaDasDicas.className = 'campo mudo';
+    const chave = document.createElement('input');
+    chave.type = 'checkbox';
+    chave.dataset.opcao = 'dicas';
+    chave.checked = dicas.ligadas;
+    chave.addEventListener('change', () => {
+      dicas.aoMudar(chave.checked);
+    });
+    const nomeDasDicas = document.createElement('span');
+    nomeDasDicas.textContent = temaSertao.dicas.opcao;
+    linhaDasDicas.append(chave, nomeDasDicas);
+    raiz.append(linhaDasDicas);
+  }
 
   const fechar = document.createElement('button');
   fechar.type = 'button';

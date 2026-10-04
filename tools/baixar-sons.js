@@ -43,6 +43,13 @@ const RECORTES = {
   'stone-thrown': { silencioInicial: true, duracao: 1.5, fade: 0.3 },
   defeat: { silencioInicial: true },
   'inn-bell': { silencioInicial: true, duracao: 3.0, fade: 0.8 },
+  // H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA: os tres de trabalho tocam em laco, entao o recorte e um
+  // trecho curto que se repete; a rua e a recusa sao um so impacto
+  'command-rejected': { silencioInicial: true, duracao: 0.8, fade: 0.2 },
+  'build-wood': { silencioInicial: true, duracao: 2.0, fade: 0.1 },
+  'build-road': { silencioInicial: true, duracao: 2.0, fade: 0.1 },
+  'quarry-work': { silencioInicial: true, duracao: 2.5, fade: 0.1 },
+  'road-placed': { silencioInicial: true, duracao: 0.7, fade: 0.2 },
 };
 
 async function texto(url) {

@@ -47,8 +47,10 @@ function fome(): GameState {
   return com(s, u('faminto', 'militia', campo(s), { condicao: 1 }));
 }
 function gravarSave(nome: string, s: GameState): void {
-  mkdirSync('test-output', { recursive: true });
-  writeFileSync(`test-output/D-TELA-05c-${nome}.save.txt`, salvar(s));
+  // BUG-SAVE-DO-ROTEIRO-TRANSLADADO: no diretorio da evidencia, que a corrida transladada troca
+  const dir = process.env['CANGACO_EVIDENCIA_DIR'] ?? 'test-output';
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(`${dir}/D-TELA-05c-${nome}.save.txt`, salvar(s));
 }
 
 describe('D-TELA-05c - acao e morte', () => {

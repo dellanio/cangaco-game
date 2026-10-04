@@ -85,6 +85,8 @@ describe('H-TELA-CAMADA-DE-SOM — (a) o mapeamento', () => {
     expect(chamados).toEqual(['goods-produced']);
     expect(camada.contadores()).toEqual({
       pedidos: 3, tocados: 1, emSilencio: 2, porId: { 'goods-produced': 1, 'building-completed': 1, 'blueprint-placed': 1 },
+      // H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA: sem camera no quadro, nada cai com a distancia
+      foraDoRaio: 0, fatorDaDistancia: { 'goods-produced': 1 },
     });
   });
 
