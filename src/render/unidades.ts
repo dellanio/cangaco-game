@@ -69,6 +69,12 @@ import type { MemoriaDaVirada } from './virada-de-unidade';
 import { acaoDaUnidade, animacaoComCarga, direcaoDoTrabalho } from './acao-de-unidade';
 import dadosDaCargaNasMaos from '../../data/carga-nas-maos.json';
 import { pontoDaCargaNasMaos } from './carga-nas-maos';
+import { animacaoDoGesto, colheitaNasMaos, deslocamentoDoTrabalho } from './gesto-do-trabalho';
+import type { GestoDoTrabalho } from './gesto-do-trabalho';
+import { caixaDeTipoNoMapa } from './predios';
+import dadosDoGesto from '../../data/gesto-do-trabalho.json';
+
+const gestoDoTrabalho = dadosDoGesto as unknown as GestoDoTrabalho;
 import type { CargaNasMaos } from './carga-nas-maos';
 import type { MemoriaDeAcao } from './acao-de-unidade';
 
@@ -186,6 +192,8 @@ interface Desenhado {
   ultimaPosicao: PontoEmTiles | null;
   ultimoTickAnimado: number;
   animacao: string;
+  /** A acao que o estado pede (antes do gesto): o deslocamento do trabalho le esta. */
+  acaoDoTrabalho: string;
   quadro: number;
   spriteAnimado: SpriteAnimado | null;
   readonly container: Phaser.GameObjects.Container;
@@ -251,7 +259,7 @@ export function criarCamadaDeUnidades(
     marcadorDeFome.setVisible(false);
     const container = cena.add.container(0, 0, [retangulo, marcadorDeCarga, marcadorDeFome]);
     return { container, retangulo, imagem: null, direcao: 's', nome: rotulo, marcadorDeCarga, iconeDaCarga: null, placaDoIcone: null, marcadorDeFome,
-      distancia: 0, ultimaPosicao: null, ultimoTickAnimado: -1, animacao: 'parado', inicioDaAcao: 0, quadro: 0, spriteAnimado: null,
+      distancia: 0, ultimaPosicao: null, ultimoTickAnimado: -1, animacao: 'parado', acaoDoTrabalho: 'parado', inicioDaAcao: 0, quadro: 0, spriteAnimado: null,
       virada: iniciarVirada('s', 0) };
   }
 
@@ -428,7 +436,9 @@ export function criarCamadaDeUnidades(
             item.virada = acao === 'atacar' && alvo ? iniciarVirada(alvo, tempoDeAnimacao(estado.tick, alfa))
               : atualizarVirada(item.virada, alvo, tempoDeAnimacao(estado.tick, alfa), configAnimacao.passoDaViradaTicks);
             item.direcao = item.virada.visivel;
-            item.animacao = animacaoComCarga(acao, Boolean(unidade.fsmData.carga), entradaAnimada.animacoes);
+            item.acaoDoTrabalho = acao;
+            item.animacao = animacaoDoGesto(estado, unidade,
+              animacaoComCarga(acao, Boolean(unidade.fsmData.carga), entradaAnimada.animacoes), entradaAnimada.animacoes, gestoDoTrabalho);
             const animacao = entradaAnimada.animacoes?.[item.animacao];
             item.spriteAnimado = null;
             item.quadro = 0;
@@ -449,13 +459,17 @@ export function criarCamadaDeUnidades(
         // F18f: duas unidades no mesmo tile caem no mesmo pixel e a de cima esconde a de baixo
         // inteira. O desvio e de DESENHO: some ao pixel e ao depth (assim a que desenha mais ao
         // sul segue na frente), nunca a posicao do tick, que continua sendo `posicao`.
-        item.container.setPosition(centro.x + desvio.x, centro.y + desvio.y);
-        item.container.setDepth(depthDeY(centro.y + desvio.y));
-        luz?.tingirPelaPosicao(item.imagem, centro.x + desvio.x, centro.y + desvio.y, `unidade:${id}`);
+        // G-TELA-OBREIRO-POR-TAREFA / G-TELA-ROCEIRO-NO-CAMPO: o desenho de quem trabalha vai para o lugar
+        // do trabalho (o roceiro para dentro do campo, o obreiro alguns px para dentro da obra); a
+        // posicao logica nao muda.
+        const noTrabalho = deslocamentoDoTrabalho(estado, unidade, item.acaoDoTrabalho, gridToScreenCentro({ gx: 1, gy: 0 }, tilePx, ESCALA_DO_MUNDO).x - gridToScreenCentro({ gx: 0, gy: 0 }, tilePx, ESCALA_DO_MUNDO).x, gestoDoTrabalho, caixaDeTipoNoMapa);
+        item.container.setPosition(centro.x + desvio.x + noTrabalho.x, centro.y + desvio.y + noTrabalho.y);
+        item.container.setDepth(depthDeY(centro.y + desvio.y + noTrabalho.y));
+        luz?.tingirPelaPosicao(item.imagem, centro.x + desvio.x + noTrabalho.x, centro.y + desvio.y + noTrabalho.y, `unidade:${id}`);
         const visivel = !invisiveis.has(id);
         item.container.setVisible(visivel);
         item.nome.setVisible(visivel);
-        const carga = unidade.fsmData.carga ?? null;
+        const carga = unidade.fsmData.carga ?? colheitaNasMaos(estado, unidade, gestoDoTrabalho);
         const marca = carga === null ? null : desenharCarga(item, carga);
         if (marca === null) {
           item.marcadorDeCarga.setVisible(false);

@@ -9,6 +9,7 @@ const { execSync, spawnSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const { testesQueLeemDado } = require('../tools/testes-que-leem-dado.js');
+const { comandoDoVitest, corridaDoVitest } = require('../tools/vitest-do-rapido.js');
 
 function fontesDosTestes(dir = 'tests') {
   if (!fs.existsSync(dir)) return {};
@@ -65,16 +66,19 @@ const { commit, base } = commitEBase();
 const arquivos = alterados(base, commit);
 console.log(`\n--- vitest related (${arquivos.length} arquivo(s) alterado(s)) ---`);
 let testes = 0;
+let corrida = null;
 if (arquivos.length > 0) {
   const relatorio = 'test-output/verify-rapido-vitest.json';
   fs.mkdirSync('test-output', { recursive: true });
   const leitores = testesQueLeemDado(arquivos, fontesDosTestes());
-  const lista = [...new Set([...arquivos, ...leitores])].map((f) => `"${f}"`).join(' ');
+  const lista = [...new Set([...arquivos, ...leitores])];
   console.log(`testes que leem dado alterado: ${leitores.length}`);
-  // CANGACO_VITEST troca o comando (o teste dos portoes usa um vitest falso; padrao: npx vitest)
-  const vitest = process.env.CANGACO_VITEST ?? 'npx vitest';
-  const r = spawnSync(`${vitest} related --run --passWithNoTests --reporter=default --reporter=json --outputFile.json=${relatorio} ${lista}`,
-    { stdio: 'inherit', shell: true });
+  // CANGACO_VITEST troca o comando (o teste dos portoes usa um vitest falso; padrao: o node no vitest.mjs).
+  // Sem shell (BUG-VERIFY-RAPIDO-LINHA-LONGA): o cmd.exe corta a linha em ~8 191 caracteres.
+  const programa = comandoDoVitest(process.env.CANGACO_VITEST, process.execPath, path.resolve('node_modules/vitest/vitest.mjs'));
+  corrida = corridaDoVitest(programa, lista, relatorio);
+  if (corrida.modo !== 'related') console.log(`suite inteira: ${corrida.motivo}`);
+  const r = spawnSync(corrida.argv[0], corrida.argv.slice(1), { stdio: 'inherit' });
   if (r.status !== 0) {
     console.error(`\nFALHOU: vitest related. O selo ${SELO} NAO foi criado.`);
     process.exit(1);
@@ -85,5 +89,6 @@ if (arquivos.length > 0) {
 }
 
 const segundos = Math.round((Date.now() - inicio) / 1000);
-fs.writeFileSync(SELO, JSON.stringify({ tipo: 'rapido', commit, base, arquivos: arquivos.length, testes, segundos, quando: new Date().toISOString() }, null, 2));
+fs.writeFileSync(SELO, JSON.stringify({ tipo: 'rapido', commit, base, arquivos: arquivos.length, testes, segundos, quando: new Date().toISOString(),
+  ...(corrida && corrida.modo !== 'related' ? { modo: corrida.modo, motivo: corrida.motivo } : {}) }, null, 2));
 console.log(`\nverify:rapido OK: ${arquivos.length} arquivo(s) alterado(s), ${testes} teste(s), ${segundos} s. Selo do ${commit.slice(0, 7)} desde ${base.slice(0, 7)}; marcar feature pede o \`npm run verify\` completo.`);

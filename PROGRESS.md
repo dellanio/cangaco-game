@@ -3229,6 +3229,10 @@ que vetar custe uma linha.
 
 ## Perguntas em aberto
 
+- **(2026-10-04, G-TELA-ROCEIRO-NO-CAMPO) O roceiro de verdade dentro do tile?** Hoje a sim leva o
+  roceiro ao tile vizinho do campo, e o render só desenha ele dentro. Pôr o roceiro dentro do tile na
+  sim muda o caminho e o tempo do ciclo da fazenda e do canavial, ou seja, é balanceamento. Decisão
+  do operador.
 - **(2026-09-26, noite 18) A frase cortada do BRIEF-ARTE:** o operador escreveu que os
   sprites de estado da roça vão "desenhada[s] pelo render sobre o tile, nunca" — e a
   mensagem parou aí. O BRIEF-ARTE não completa a frase; falta o que vem depois do nunca.
@@ -19680,6 +19684,120 @@ está**, porque o corpo esmaece em 1,2 s. A célula não muda e o render não ga
 Se o corte incomodar jogando, a saída que ficou pronta é a (b): uma célula de 96×96 só para a
 `morrer`, num item próprio de render e manifesto. A pergunta saiu de `## Perguntas em aberto`.
 
+## 2026-10-04 — Leva de bugs visuais do operador (branch `dellanio/bugs-visuais-2026-10-04`)
+
+Sete defeitos visuais mandados pelo operador depois de jogar. Os aceites estão no `BUILD_PLAN.md`
+(`0dce31b`). Nada em `src/sim/`.
+
+### G-TELA-ESTOQUE-SEM-PLACA (o estoque sem fundo preto, 20% maior)
+**Verificado:** a pilha que cai no ícone da mercadoria não desenha mais a placa escura
+(`COR_DA_PLACA_DO_ICONE`), e o ícone tem 1,2 vez o lado de antes, lido de
+`data/carga-nas-maos.json:escalaDoIconeNaPilha` (validado em `tools/data-rules.js`).
+`tests/G-TELA-ESTOQUE-SEM-PLACA.test.ts` passa (5). A captura `F-VIVO-a-1-armazem.png` foi aberta: a
+madeira, a pedra, a linguiça e o pão aparecem sem fundo e maiores. O roteiro F-VIVO-a falhou uma vez
+("Execution context was destroyed"); passou na `main` sem a mudança e duas vezes seguidas com ela.
+**Hipótese, não confirmada:** é intermitente, e não desta mudança.
+
+### G-ARTE-BANDEIRA-NO-TELHADO (a bandeira presa na cumeeira)
+**Verificado:** dez prédios estavam sem `ancoras.bandeira` (lenhador, pedreira, serraria, escola,
+bodega, fazenda, canavial, pescador, moinho e padaria), e o render punha a bandeira na posição
+padrão, solta no ar. A âncora de cada um é o pixel opaco mais alto da metade esquerda do sprite
+`completo`, a ponta da cumeeira apontada pelas setas dos prints. Os pontos foram conferidos numa
+folha com o ponto marcado. No manifesto entrou só a linha da âncora, sem reformatar as entradas.
+`tests/G-ARTE-BANDEIRA-NO-TELHADO.test.ts`: todo prédio tem a âncora, e ela fica a até 3 px de um
+pixel opaco (29 casos, mais a prova de que um ponto no ar reprova). O roteiro novo
+`G-ARTE-BANDEIRA-NO-TELHADO` sai 0. As capturas foram abertas: lenhador, serraria, pedreira, fazenda,
+canavial e padaria com a bandeira no telhado. A casa do pescador não está no save da vila pronta;
+ela fica coberta pelo teste do ponto, mas não foi vista no jogo.
+O decodificador PNG dos testes de arte saiu para `tests/helpers/png.ts` e serve à morte, à bandeira e
+ao serf.
+
+### G-ARTE-SERF-CARGA-PARADA (o serf carrega com as mãos paradas no centro)
+**Verificado:** pedir de novo ao PixelLab "hands perfectly still" não segurou os braços: o sul gerado
+começava com as mãos caídas e só depois as subia. Também não serviu montar o tronco a partir da pose
+parada "Carregar vazio", que tem os braços caídos em algumas direções. **O que entrou:** sem geração,
+`tools/arte/tronco-fixo-do-serf.py 0.64 4 --gravar`. Na `carregando` de cada direção, o tronco acima
+da cintura (64% da altura do corpo) vem do quadro 4, com as mãos juntas à frente, e as pernas vêm de
+cada quadro. Rodar de novo depois de remontar o atlas do serf.
+`tests/G-ARTE-SERF-CARGA-PARADA.test.ts`: acima da cintura, os 8 quadros de cada direção são iguais
+pixel a pixel, e abaixo as pernas mudam. A prova de que o teste acusa: no `andar`, o tronco muda. A
+folha das 5 direções e a captura `D-ARTE-SERF-COMFYUI-3-serf-carregando.png` foram abertas: os
+serfs levam a pedra com as mãos à frente. `D-TELA-SERF-CARREGANDO` passa, e o ponto da carga não
+mudou.
+**Visto, não corrigido:** sobra um pixel solto na borda de dois quadros do nordeste.
+
+### G-ARTE-OBREIRO-MAIOR, G-TELA-OBREIRO-POR-TAREFA e G-TELA-ROCEIRO-NO-CAMPO (num commit só)
+Os três itens mexem no mesmo manifesto e no mesmo `unidades.ts`, então foram juntos. Os aceites
+continuam separados no `BUILD_PLAN.md`.
+
+**O obreiro 10% maior (verificado):** com imagem de referência, o PixelLab ignora o `size` e devolve
+o tamanho da referência. Uma tentativa com a referência de 76 px saiu com os mesmos 74 px
+(`laborer_84_ref_sem_ampliar` no `ids.json`). O que entrou: a referência foi ampliada para 84 px e
+reduzida a 48 cores (o base64 caiu para 2,7 mil caracteres), e o v3 redesenhou o obreiro nesse tamanho
+(personagem `80199fe5`). No `parado` sul ele mede 81 px contra 74: 1,095 vez.
+`tests/G-ARTE-OBREIRO-MAIOR.test.ts` afirma a razão entre 1,07 e 1,13, o pé na linha 90 e o serf ainda
+com 74 (a régua).
+
+**O obreiro faz o gesto da tarefa (verificado):** a regra pura está em `src/render/gesto-do-trabalho.ts`
+e os números em `data/gesto-do-trabalho.json`. `construir` e `reparar` dão `martelar` (de cima para
+baixo, sobre a viga); `assentar-estrada` dá `assentar` (agachado, assentando pedra); `arar` dá
+`arar` (enxada). Sem tarefa, ou sem a animação, fica o `trabalhar`, que no obreiro novo é o próprio
+martelar. Martelando a obra, o desenho avança 10 px na direção do centro dela, e a posição lógica não
+muda. As cinco animações do obreiro novo estão nas 5 direções, junto com o andar e a morte.
+
+**O roceiro trabalha dentro do campo (verificado):** a sim deixa o roceiro no tile vizinho do campo;
+o render desenha ele no tile da tarefa (`colhendo`: `origemTile`; `semeando`: o `plantio.tile` do
+prédio). Os gestos são `semear` (enxada, o grupo `trabalhar-2` da Fase G) e `colher` (foice, grupo
+`colher-2`; a primeira tentativa, sem lâmina, ficou fora). Voltando de uma colheita, ele usa
+`carregando` (o tronco fixo da carga, como o serf, por `tools/arte/tronco-fixo-da-carga.py farmer 0.64 4`),
+com o milho entre as mãos no roçado e a cana no canavial. A cana não é mercadoria: ganhou
+`icones.colheitas.cana` no manifesto (a candidata 58 que tinha sobrado do lote das mercadorias), e
+`iconesDoJogo` junta os dois blocos só para o desenho. A regra das 28 mercadorias não muda.
+`tests/G-TELA-GESTO-DO-TRABALHO.test.ts` (12): a tabela do obreiro e do roceiro e o avanço do martelo.
+Uma fazenda de verdade, rodada pelo `step`, prova que, semeando e colhendo, o desenho fica a menos de
+1/4 de tile do centro do tile trabalhado, e que ele volta com o milho. O teste grava os saves das três
+fases para o roteiro. O roteiro novo `G-TELA-GESTO-DO-TRABALHO` sai 0, com as capturas abertas: o
+obreiro martelando a obra, o roceiro semeando em cima do tile arado, colhendo entre o milho e voltando
+com o milho à frente da barriga, e o obreiro assentando a estrada. O D-ARTE-PIXEL-ART-MILITARES
+esperava o obreiro da estrada em `trabalhar` e passou a exigir `assentar`, o gesto novo.
+**Não-regressão:** D-TELA-05c, D-ARTE-SERF-COMFYUI, G-ARTE-TRABALHO-DOS-OFICIOS e
+G-ARTE-MORTE-DAS-UNIDADES saem 0. O `verify:rapido` deu 231 verdes e 1 vermelho, o mesmo
+`H-ARTE-SONS-APROVADOS` da `main`.
+**Pergunta registrada (não decidida):** se o operador quiser o roceiro de verdade dentro do tile, e não
+só o desenho, isso muda o caminho na sim e o tempo do ciclo, ou seja, mexe em balanceamento.
+**Visto, não corrigido:** o roceiro carregando leva a enxada no ombro e uma mão no peito; o milho
+aparece à frente da barriga.
+
+### G-ARTE-TRABALHO-DENTRO-DO-PREDIO — o trabalhador produzindo no espaço da casa
+**O lugar (verificado):** o espaço que a arte de cada casa deixou já estava medido no manifesto, em
+`ancoras.trabalho.area` (F-VIVO-b), para os 13 prédios dos casos `transforma` (pedreira, canavial) e
+`dentro` (serraria, moinho, padaria, açougue, curtume, fundição, ferraria, oficina de armas, oficina de
+armaduras e as duas forjas). Faltava a arte, e não foi preciso perguntar o lugar.
+**A arte (verificado):** cada prédio usa o personagem PixelLab da profissão dele em `buildings.json`
+(`trabalhador`), com animações v3 `dentro-<prédio>-<laço>` no sul. O canavial tem inicio/meio/fim com o
+roceiro na cana; a pedreira, o cabra no lajedo. Nos 11 do caso `dentro`, laco1 e laco2 são dois gestos
+da receita (serrar e aplainar; peneirar e moer; sovar e enfornar; e assim por diante). O laco2 da
+ferraria reaproveita o laco1 da fundição, porque o PixelLab deduplicou a descrição igual. A montagem é
+mecânica: recorte pela caixa comum dos 8 quadros, redução por vizinho só quando não cabe e encaixe na
+área com o pé embaixo, no centro. O quadro sai com o tamanho exato da área, porque o render estica o
+quadro para ela. Os PNGs estão em `assets/sprites/trabalho/<prédio>/`, e cada prédio ganhou uma entrada
+`trabalho` no manifesto.
+**Teste:** `tests/G-ARTE-TRABALHO-DENTRO-DO-PREDIO.test.ts` (40). Para os 13 prédios ele afirma:
+- `violacoesDaCamadaViva` limpo, com os laços do caso;
+- todo quadro com o tamanho da área e com pixel opaco;
+- o personagem da origem igual ao `trabalhador` do prédio.
+
+Junto com o F17f e o F-VIVO-b, deu 92 verdes.
+**Evidência (aberta):** a folha dos 13 sobre o sprite de cada casa. Também o roteiro novo
+`G-ARTE-TRABALHO-DENTRO-DO-PREDIO`, que sai 0. Ele carrega a vila pronta e avança a sim até cada prédio
+publicar um quadro com sprite. As capturas abertas mostram o carpinteiro na bancada da serraria e o
+artesão na oficina de armas; a da pedreira foi gravada, mas não aberta.
+**Visto, não corrigido:**
+- Na fundição a área é pequena (31×35 px), e o boneco ficou a 40% do tamanho. No curtume ele também
+  ficou miúdo. Os dois aparecem, mas pequenos. Se o operador quiser, ele aponta um espaço maior na arte.
+- O moinho ocioso ainda mostra o placeholder `ocioso_6` (a entrada genérica `ocioso`, F-VIVO-e). Ele é
+  outro asset e fica fora deste item.
+
 ## 2026-10-04 — Leva, item 8: BUG-ROTEIRO-DE-DUAS-ETAPAS (decisão do operador: A, separar)
 
 O operador decidiu os itens 8 e 10 (`ded2162`, trazido pelo `git merge main`, `6adfa6c`; o conflito
@@ -19996,3 +20114,58 @@ teste (a)/(b) de ~25 s na normal       pergunta  e9b1bd1   operador: mover para 
 **Espera o operador:** as três perguntas em aberto acima (o `BUG-TROPA-DE-24-PRESA`, o obreiro no
 canteiro e o teste de 25 s); jogar a escaramuça com 24 e a vila com a colisão ligada; e o merge na
 `main`, que é da sessão principal.
+
+### BUG-VERIFY-RAPIDO-LINHA-LONGA corrigido (o operador mandou consertar, 2026-10-04)
+**Causa (verificada):** o `scripts/verify-rapido.js` passava a lista de arquivos ao vitest pelo shell, e
+o `cmd.exe` corta a linha em ~8 191 caracteres.
+**Correção:** a regra pura está em `tools/vitest-do-rapido.js`. O vitest roda sem shell
+(`spawnSync(programa, args)`), e o padrão é o `node` no `vitest.mjs` do projeto, porque o `npx` é
+`.cmd` e pede shell. O `CANGACO_VITEST` continua trocando o comando. Se a linha passar do teto (30 000,
+abaixo do limite de 32 767 do Windows), roda a suíte inteira e o selo grava `modo: "suite-inteira"`
+com o motivo.
+**Teste:** `tests/BUG-VERIFY-RAPIDO-LINHA-LONGA.test.ts` (4) cobre por tabela o comando e o modo. Como
+processo, num repositório falso, ele confere duas coisas: 600 arquivos de nome longo chegam todos ao
+vitest falso pelo `related`, com a linha acima de 8 191; e com 1 000 arquivos roda a suíte inteira, com
+o modo e o motivo no selo.
+**Prova de que acusa:** contra o script antigo, o mesmo teste falha com "Linha de comando muito longa.".
+Os portões (`PORTOES-pre-push`, `PORTOES-verify`) continuam verdes.
+**O primeiro `verify:rapido` de verdade depois da correção** rodou na `main`, com 668 arquivos desde o
+`origin/main`. A etapa do `related` rodou 2 654 testes, e a linha longa sumiu. Ele achou 2 vermelhos:
+- **F04 (os funis do `sim/data`), meu, de `f8736b3`:** o `unidades.ts` importava o `gameData`
+  direto. Agora o `deslocamentoDoTrabalho` recebe a função da caixa, e o `unidades.ts` passa o funil
+  `caixaDeTipoNoMapa` do `predios.ts`. O `gesto-do-trabalho.ts` deixou de importar `GameData`. Antes
+  desta correção, o rápido não tinha como pegar isso, porque a etapa nem rodava.
+- **D-TELA-VENTO-VEGETACAO:** estourou o tempo de 5 s com a suíte carregada e passou sozinho
+  (hipótese: carga da máquina, sem mudança de código).
+
+O roteiro G-TELA-GESTO-DO-TRABALHO continua saindo 0.
+
+### G-ARTE-TRABALHADOR-RECORTADO — o trabalhador da casa na escala da rua, recortado pela área (2026-10-04)
+**Pedido do operador:** não é preciso mostrar o corpo inteiro; basta a parte que se veria dentro do
+prédio, naquela câmera.
+**Medida (verificada):** os 13 prédios são desenhados na escala 1,0, e as unidades da rua também. O
+boneco da PixelLab na escala 1 já tem o tamanho de quem anda na rua; até aqui ele era reduzido para
+caber inteiro (a fundição ficava a 40%).
+**O que mudou:** os quadros são os mesmos grupos PixelLab, sem geração nova. Eles entram sem redução e
+são recortados pela área:
+- se o boneco cabe (só o moinho), entra inteiro com o pé embaixo;
+- se não cabe, a janela começa no alto da cabeça, e o corte fica na borda de baixo, como atrás do
+  balcão;
+- na largura, a janela centra nos pixels que mudam entre os 8 quadros (as mãos e a ferramenta).
+
+A origem de cada entrada registra `escala: 1`. Os scripts de montagem (`dentro_atlas.py`,
+`dentro_recorte.py` e o plano `dentro.json`) ficaram no rascunho da sessão, **fora do repositório**. A
+nota da origem descreve o método, mas o repositório sozinho não refaz os quadros.
+**Teste:** `tests/G-ARTE-TRABALHO-DENTRO-DO-PREDIO.test.ts` ganhou o bloco do recorte, e o arquivo deu 91
+verdes junto com o F17f. Ele afirma duas coisas:
+- a escala 1 na origem;
+- em toda área mais baixa que o serf (74 px), os quadros encostam na borda de baixo, e o alto da
+  cabeça, no quadro mais alto, fica a até 3 px do topo.
+
+**Evidência (aberta):** a folha dos 13 sobre o sprite, um zoom de 8 quadros dos seis menores e o
+roteiro `G-ARTE-TRABALHO-DENTRO-DO-PREDIO`, que sai 0. Na captura, o artesão da oficina de armas tem o
+tamanho dos carregadores da rua e está cortado no balcão; o carpinteiro da serraria aparece inteiro,
+na mesma escala.
+**Para o operador (aceite 4):** na fundição (`metallurgists`), a área tem 31×35 px. O recorte mostra a
+cabeça e os ombros, e o gesto quase não aparece. O save da vila pronta não tem fundição, então ela foi
+vista só na folha, não em jogo. A saída é apontar uma área maior na arte da casa.

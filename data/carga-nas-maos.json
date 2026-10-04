@@ -1,6 +1,8 @@
 {
   "_doc": "D-ARTE-PIXEL-ART-CIVIS (teste de pixel art): onde o sprite da mercadoria fica entre as maos de quem anda com a pose de carregar, relativo ao pe (origem da unidade, o fundo da celula 64x96). Medido na pose 'Carregar vazio' do serf do PixelLab. O oeste e espelho do leste. De costas (atras) a carga fica atras do corpo. So render; a sim nao le.",
   "tamanhoPx": 24,
+  "_docEscalaDoIconeNaPilha": "G-TELA-ESTOQUE-SEM-PLACA (pedido do operador, 2026-10-04): o icone da mercadoria no estoque do predio, sem placa escura, e 1,2 vez o lado da unidade da pilha de antes.",
+  "escalaDoIconeNaPilha": 1.2,
   "pontos": {
     "s": { "x": 0, "y": -34, "atras": false },
     "se": { "x": 10, "y": -35, "atras": false },

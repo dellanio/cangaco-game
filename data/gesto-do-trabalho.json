@@ -1,0 +1,8 @@
+{
+  "_doc": "G-TELA-OBREIRO-POR-TAREFA e G-TELA-ROCEIRO-NO-CAMPO (pedidos do operador, 2026-10-04): o gesto de quem trabalha e onde ele e desenhado. So render; a sim nao le. obreiroPorTarefa: animacao do laborer pelo tipo da tarefa. roceiroPorEstado: animacao do roceiro pelo estado da FSM. avancoDoMartelarPx: quanto o desenho do obreiro avanca na direcao da obra ao martelar. colheitaPorPredio: o icone que o roceiro leva nas maos voltando da colheita.",
+  "obreiroPorTarefa": { "construir": "martelar", "reparar": "martelar", "assentar-estrada": "assentar", "arar": "arar" },
+  "roceiroPorEstado": { "semeando": "semear", "colhendo": "colher" },
+  "avancoDoMartelarPx": 10,
+  "colheitaPorPredio": { "farm": "corn", "wineyard": "cana" },
+  "tiposDeRoceiro": ["farmer"]
+}

@@ -8317,6 +8317,128 @@ Regras para os quatro itens:
      que não ficou é registrado no PROGRESS com o motivo;
   2. os testes de manifesto e o D-ARTE-PIXEL-ART-MILITARES continuam passando.
 
+
+### Leva de bugs visuais do operador (2026-10-04, worktree `cangaco-game-serf-pixelart`, branch `dellanio/bugs-visuais-2026-10-04`)
+
+O operador jogou e mandou sete defeitos visuais, com prints das bandeiras. Todos são de render e
+arte, e **nada mexe em `src/sim/`**. Onde o item muda o render, ele é **feature de integração de
+render e arte**, declarada aqui. A ordem de execução é a da lista, e o método da arte é o da Fase G.
+
+#### G-TELA-ESTOQUE-SEM-PLACA — O estoque do prédio sem fundo preto, 20% maior
+- **Pedido:** "o estoque de cada material dentro do edifício ainda está com fundo preto. Remover o
+  fundo preto e aumentar o tamanho do material em 20%."
+- **Causa (verificada em `src/render/scenes/WorldScene.ts`, `desenharPilhas`):** a pilha que cai no
+  ícone da mercadoria desenha antes uma placa na cor `COR_DA_PLACA_DO_ICONE`. A placa servia para o
+  ícone de traço claro do HUD, mas os 28 sprites de pixel art já têm fundo transparente.
+- **Aceite (antes do código):** (1) a pilha desenhada com o ícone não cria placa; (2) o lado do
+  ícone na pilha passa a ser 1,2 vez o de hoje, e o fator fica num dado de render; (3) a captura de
+  um armazém com estoque é aberta.
+
+#### G-ARTE-BANDEIRA-NO-TELHADO — A bandeira presa na cumeeira
+- **Pedido (com prints):** a bandeira flutua à esquerda da casa do pescador, da pedreira, da
+  serraria, do lenhador, da fazenda e do canavial, e as setas apontam a ponta da cumeeira.
+- **Causa (verificada):** essas casas não têm `ancoras.bandeira` no manifesto, e o render usa a
+  posição padrão. A escola, a bodega, o moinho e a padaria também estão sem âncora.
+- **Aceite (antes do código):** (1) os 10 prédios sem âncora ganham `ancoras.bandeira`, medida no
+  sprite `completo` na ponta da cumeeira; (2) um teste afirma que todo prédio tem a âncora e que o
+  ponto cai a até 3 px de um pixel opaco do sprite; (3) a captura das seis casas dos prints é
+  aberta.
+
+#### G-ARTE-SERF-CARGA-PARADA — O serf carrega com as mãos paradas no centro do corpo
+- **Pedido:** "os serfs ao carregar material estão balançando as mãos; deixe as mãos paradas e
+  com foco no centro do corpo (estão carregando peso)".
+- **Aceite (antes do código):** (1) a `carregando` do serf é gerada de novo nas 5 direções, com as
+  mãos juntas à frente do corpo; (2) **medida, e não a olho:** nos 8 quadros de cada direção, o
+  centro dos pixels de pele na faixa das mãos varia no máximo 4 px na horizontal, e o teste guarda
+  a medida; (3) o ponto de `data/carga-nas-maos.json` é conferido, e a captura de um serf
+  carregando é aberta.
+
+#### G-ARTE-OBREIRO-MAIOR — O obreiro 10% maior
+- **Pedido:** "aumente o tamanho do laborer em 10%; ele está pequeno em relação ao serf".
+- **Como:** ampliar a pixel art por 1,1 estraga o pixel. O personagem é gerado de novo a 84 px a
+  partir do de hoje (PixelLab v3 com imagem de referência), e as animações dele são geradas de novo
+  junto com as do item seguinte.
+- **Aceite (antes do código):** (1) a altura do obreiro no `parado` sul (a caixa dos pixels
+  opacos) fica entre 1,07 e 1,13 vez a de hoje, com a tabela no teste; (2) o pé continua na
+  linha 90.
+
+#### G-TELA-OBREIRO-POR-TAREFA — O obreiro faz o gesto da tarefa
+- **Pedido:** na estrada e na terra arada, ele não bate o martelo: agacha mexendo na terra, põe
+  pedras na estrada e ara com a enxada no roçado e no canavial. No prédio, bate o martelo de cima
+  para baixo e avança alguns pixels para dentro do lote da obra.
+- **Feature de integração de render e arte.** O render já sabe a tarefa da unidade (`tarefa.tipo`
+  em `estado.jobs`: `construir` e `reparar`, `assentar-estrada`, `arar`) e só lê.
+- **Aceite (antes do código):**
+  1. **a regra pura** "tipo da tarefa → animação", por tabela: `construir` e `reparar` → `martelar`;
+     `assentar-estrada` → `assentar`; `arar` → `arar`; sem tarefa, ou sem a animação no manifesto,
+     → `trabalhar` (o de hoje);
+  2. **o avanço:** martelando, o desenho do obreiro anda N px na direção da obra, com N num dado de
+     render, e a posição lógica não muda;
+  3. o obreiro tem `martelar`, `assentar` e `arar` (8 quadros, 5 direções) no atlas;
+  4. roteiro em jogo, sem `?depuracao`: um obreiro na obra passa por quadros `laborer/martelar/…`,
+     e um na estrada por `laborer/assentar/…`. As capturas são abertas.
+
+#### G-TELA-ROCEIRO-NO-CAMPO — O roceiro trabalha dentro do campo, com a ferramenta da fase
+- **Pedido:** ele não faz a animação dentro do tile. Com o milho ou a cana verdes, usa a enxada com
+  as duas mãos; na colheita, corta com foice ou facão; e volta para casa levando o milho ou a cana
+  nas mãos, como o serf.
+- **Causa (verificada em `especialistas.ts`):** a sim leva o roceiro ao tile **vizinho** do campo
+  (`caminhoAteAproximacaoDoTile`), e ele trabalha dali. **Interpretação conservadora:** a sim não
+  muda, porque mudar o caminho mexe no tempo do ciclo, e isso é balanceamento. O render desenha o
+  roceiro deslocado para dentro do tile que ele trabalha, como o avanço do obreiro. Se o operador
+  quiser o roceiro no tile de verdade, isso fica para a sim, registrado como pergunta.
+- **Feature de integração de render e arte.**
+- **Aceite (antes do código):**
+  1. a regra pura "estado → animação do roceiro", por tabela: `semeando` → `semear` (enxada com as
+     duas mãos); `colhendo` → `colher` (facão); `voltando` com a tarefa de colheita
+     (`fsmData.tarefa`) → `carregando`, com o sprite da colheita entre as mãos; o resto fica como
+     hoje;
+  2. trabalhando, o centro do desenho do roceiro fica a menos de 1/4 de tile do centro do tile da
+     tarefa, e a posição lógica não muda;
+  3. o fazendeiro tem `semear`, `colher` e `carregando` no atlas, nas 5 direções;
+  4. roteiro em jogo: o roceiro semeia dentro do campo, colhe e volta carregando. As capturas são
+     abertas.
+
+#### G-ARTE-TRABALHO-DENTRO-DO-PREDIO — O trabalhador aparece trabalhando no espaço da casa
+- **Pedido:** cada edifício foi desenhado com um espaço para mostrar o trabalhador produzindo;
+  achar esse lugar e fazer a animação.
+- **O que já existe (verificado):** a F-VIVO-b já desenha os quadros de trabalho na
+  `ancoras.trabalho.area` de cada prédio, e quem aparece hoje é o placeholder dos prints
+  ("ocioso_7"). As áreas já estão medidas no manifesto para 2 prédios do caso `transforma`
+  (pedreira e canavial) e 11 do caso `dentro` (serraria, moinho, padaria, açougue, curtume,
+  fundição, ferraria, oficina de armas, oficina de armaduras e as duas forjas). Falta a arte.
+- **Aceite (antes do código):**
+  1. cada um desses 13 prédios ganha a entrada `trabalho` no manifesto, com os laços do caso dele
+     (`inicio`, `meio`, `fim` ou `laco1`, `laco2`, de 8 quadros cada), e o validador das camadas
+     vivas (`violacoesDaCamadaViva`) passa;
+  2. o trabalhador de cada um é o personagem da profissão daquele prédio, fazendo o gesto da
+     receita;
+  3. a folha com os 13 é aberta, e também uma captura em jogo de um prédio trabalhando;
+  4. o prédio cuja área medida não mostrar o trabalhador entra no relatório com uma captura, para
+     o operador apontar o lugar.
+
+#### G-ARTE-TRABALHADOR-RECORTADO — O trabalhador da casa na escala da rua, recortado pela área
+- **Pedido (2026-10-04, depois de ver o G-ARTE-TRABALHO-DENTRO-DO-PREDIO):** "não precisa sempre
+  exibir o corpo dele completo. Pode cortar uma parte e só exibir exatamente a parte do corpo,
+  simulando o trabalhador dentro do prédio naquela visualização de câmera."
+- **Medida (verificada):** os 13 prédios são desenhados na escala 1,0 (`escalaDoSprite`, régua de 64
+  px por tile), e as unidades da rua também. Por isso o boneco da PixelLab, na escala 1, já tem o
+  tamanho de quem anda na rua. Até aqui ele era reduzido para caber inteiro na área: a fundição ficou
+  a 40% e o curtume, miúdo.
+- **Regra do recorte:** o boneco não é reduzido. Se ele cabe na área, entra inteiro com o pé
+  embaixo, como hoje. Se não cabe, a janela de altura da área começa no alto da cabeça, e o resto
+  do corpo fica atrás da parede, cortado na borda de baixo da área. Na largura, se não couber, a
+  janela é centrada no movimento dos 8 quadros, ou seja, nas mãos e na ferramenta.
+- **Aceite (antes do código):**
+  1. a origem de cada entrada `trabalho` registra `escala: 1`, e os quadros continuam com o tamanho
+     da área e passam no `violacoesDaCamadaViva`;
+  2. em todo prédio cuja área é mais baixa que o boneco, os 8 quadros têm pixel opaco na última linha
+     (o corte encosta na borda, e o boneco não flutua) e o alto da cabeça fica a até 3 px do topo;
+  3. a folha dos 13 sobre o sprite é aberta, e também a captura em jogo de prédios trabalhando;
+  4. o prédio em que o recorte não mostrar o gesto (só a cabeça, por exemplo) entra no relatório com a
+     captura, para o operador decidir.
+
+
 ## Fase H — O som
 
 A F fechou e foi mesclada (`41d74fe`, 2026-10-03, aprovada pelo operador depois de jogar). O som
