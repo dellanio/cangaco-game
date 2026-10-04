@@ -19961,3 +19961,38 @@ O `C-IA-03c` e a `F-TELA-NEVOA` saíram 0 dentro da corrida.
   deslocamento da F18f. O relato do operador ("vários serfs ou unidades ocupando o mesmo tile, e não
   pode") pode incluir esse caso. Mudar a classificação muda a sim (o empurrão passaria a tirar o
   ocioso de lá) e não estava no aceite.
+
+## 2026-10-04 — Fechamento da leva de 2026-10-04 (2), §13
+
+Na branch `dellanio/colisao-e-escaramuca`, sem merge na `main` (a sessão principal faz) e sem push.
+
+**A corrida, nesta ordem:**
+1. `npm run shot:todos` no `e9b1bd1`, destacado: **129 roteiros, nenhum em 0 s, 2 com saída
+   diferente de 0**: `D-TELA-03` (`BUG-ROTEIRO-D-TELA-03-MACHADO-COM-ICONE`, já registrado, vindo da
+   `main`) e `F18f` (a pilha de 6 que a colisão elimina; consertado no `c13b168` e rodado de novo
+   sozinho: sai 0). `C-IA-03c` e `F-TELA-NEVOA` saíram 0 dentro da corrida, e com eles o aceite (a)
+   da I-COMBATE-ESCARAMUCA-GANHAVEL. **Não verificado:** os 129 de novo depois do `c13b168`, que só
+   mudou o `F18f.js` e o PROGRESS.
+2. `npm run verify` completo no `c13b168`: verde, 2 557 testes, e 2 555 + 5 pulados no transladado
+   (os 5 de antes). Com esse selo, as chaves (`c831eea`): `F-TELA-NEVOA` passa (aceite (b) da
+   escaramuça), e entram `I-COMBATE-ESCARAMUCA-GANHAVEL` e `I-MOVIMENTO-COLISAO-CIVIL-LIGADA`.
+3. `npm run test:longo`, sozinha, por último: **verde**, 59 s, no `c831eea`, com a árvore limpa;
+   `selo:longo` OK. Este commit de PROGRESS deixa o selo para trás.
+
+**Estado final da leva:**
+
+```text
+item                                   estado    commit    o que falta
+1  I-COMBATE-ESCARAMUCA-GANHAVEL       fechou    6db44e3   tropa 24; conferida de novo com a colisao ligada
+2  I-MOVIMENTO-COLISAO-CIVIL-LIGADA    fechou    e9b1bd1   -
+   F18f (roteiro, pela colisao)        fechou    c13b168   -
+   chaves do fechamento                feito     c831eea   -
+BUG-TROPA-DE-24-PRESA (achado)         aberto    e9b1bd1   operador: consertar agora ou depois
+BUG-ROTEIRO-D-TELA-03 (da main)        aberto    -         registrado, nao corrigido
+obreiro no canteiro ocupa o tile?      pergunta  c13b168   operador
+teste (a)/(b) de ~25 s na normal       pergunta  e9b1bd1   operador: mover para a longa?
+```
+
+**Espera o operador:** as três perguntas em aberto acima (o `BUG-TROPA-DE-24-PRESA`, o obreiro no
+canteiro e o teste de 25 s); jogar a escaramuça com 24 e a vila com a colisão ligada; e o merge na
+`main`, que é da sessão principal.
