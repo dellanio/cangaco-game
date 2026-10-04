@@ -73,6 +73,18 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
 - evidência: `test-output/shot-todos.json` do fechamento da Fase F (2026-10-03)
 - status: aberto
 
+## BUG-ROTEIRO-F-D2-RELOGIO — o roteiro F-D2 afirma sobre relogio de parede e falhou no `shot:todos`
+- feature: F-D2 (navegacao da camera)
+- severidade: feio
+- repro: `npm run shot:todos` no `2fc4f8b` (fechamento da Fase H, 2026-10-03), com a maquina carregada
+- esperado: o roteiro passar em qualquer carga; a §8 diz que medida de relogio e evidencia, nunca asserção
+- observado: "segurar 1,2s (1091px) deveria andar mais que 4 toques de 300ms (1222px): a aceleracao
+  nao esta acontecendo". Rodado sozinho logo depois, no mesmo commit, saiu 0 tres vezes. Hipotese,
+  nao conferida: a distancia andada depende dos quadros que o navegador entrega no tempo de parede,
+  e com a maquina carregada sao menos. Nao foi visto no `shot:todos` da Fase F.
+- evidência: `test-output/shot-todos.json` do fechamento da Fase H
+- status: aberto
+
 ## Polimento
 
 Os três bugs de oscilação de tempo que moravam aqui (BUG-D na F-T1, BUG-E na F-T2b e,

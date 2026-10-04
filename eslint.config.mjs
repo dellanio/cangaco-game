@@ -55,6 +55,13 @@ export default tseslint.config(
     },
   },
   {
+    // H-ARTE-SONS-APROVADOS: tools/baixar-sons.js baixa da pagina do som em Node (`fetch` nativo).
+    files: ['tools/baixar-sons.js'],
+    languageOptions: {
+      globals: { fetch: 'readonly' },
+    },
+  },
+  {
     // Mesmo caso do bloco acima, em bloco proprio para nao dar `document` e
     // `Image` aos roteiros de screenshot, que nao precisam: derivar-sprites.js
     // roda em Node (Buffer) e serializa UMA closure para o Chromium, onde

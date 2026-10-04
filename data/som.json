@@ -1,0 +1,55 @@
+{
+  "_doc": "H-TELA-CAMADA-DE-SOM. A tabela evento da sim -> id de som. So a TELA le este arquivo (src/render/som.ts); a sim/ nunca (guarda pelo grafo de import em tests/H-TELA-CAMADA-DE-SOM.test.ts). Som cujo id nao esta no manifesto (assets/manifest.json, secao `sons`) e silencio, sem erro. `eventos`: a chave e o `type` do evento (src/sim/state.ts, GameEvent); o valor e o id do som, ou {campo, por}, que escolhe o id pelo valor de um campo do evento (valor sem id = silencio). `planta` e o som do input, sem evento (a planta posicionada, GDD 10). `sons`: todo id que alguma linha toca, com o teto de vezes por quadro (o mesmo id pedido varias vezes no mesmo quadro toca no maximo isso). A lista de candidatos de cada id esta em docs/sons-candidatos.md.",
+  "planta": "blueprint-placed",
+  "eventos": {
+    "building-completed": "building-completed",
+    "goods-produced": "goods-produced",
+    "unit-trained": "unit-trained",
+    "unit-struck": { "campo": "acertou", "por": { "true": "strike-hit", "false": "strike-miss" } },
+    "unit-killed": "unit-killed",
+    "_docProjetil": "pedraDaTorre fica sem som aqui: a torre ja toca o stone-thrown no mesmo tick.",
+    "projectile-fired": { "campo": "projetil", "por": { "virote": "shot-gun", "flecha": "shot-sling", "funda": "shot-sling" } },
+    "stone-thrown": "stone-thrown",
+    "building-attacked": "building-hit",
+    "peace-ended": "peace-ended",
+    "match-ended": { "campo": "fim", "por": { "vitoria": "victory", "derrota": "defeat" } },
+    "command-rejected": "command-rejected"
+  },
+  "_docVolume": "H-TELA-OPCOES-E-VOLUME. O volume de cada CANAL (efeitos, ambiente, musica) e o geral, de 0 a 1, quando o jogador ainda nao mexeu (src/preferencias-de-som.ts). O volume que toca e geral x canal; o mudo zera. A escolha do jogador mora no localStorage, fora do save. `canal` de cada som diz qual volume o rege.",
+  "volumePadrao": { "geral": 0.8, "efeitos": 1, "ambiente": 0.6, "musica": 0.5 },
+  "sons": {
+    "blueprint-placed": { "canal": "efeitos", "tetoPorQuadro": 1 },
+    "building-completed": { "canal": "efeitos", "tetoPorQuadro": 1 },
+    "goods-produced": { "canal": "efeitos", "tetoPorQuadro": 1 },
+    "unit-trained": { "canal": "efeitos", "tetoPorQuadro": 1 },
+    "strike-hit": { "canal": "efeitos", "tetoPorQuadro": 1 },
+    "strike-miss": { "canal": "efeitos", "tetoPorQuadro": 1 },
+    "unit-killed": { "canal": "efeitos", "tetoPorQuadro": 1 },
+    "shot-gun": { "canal": "efeitos", "tetoPorQuadro": 1 },
+    "shot-sling": { "canal": "efeitos", "tetoPorQuadro": 1 },
+    "stone-thrown": { "canal": "efeitos", "tetoPorQuadro": 1 },
+    "building-hit": { "canal": "efeitos", "tetoPorQuadro": 1 },
+    "peace-ended": { "canal": "efeitos", "tetoPorQuadro": 1 },
+    "victory": { "canal": "efeitos", "tetoPorQuadro": 1 },
+    "defeat": { "canal": "efeitos", "tetoPorQuadro": 1 },
+    "command-rejected": { "canal": "efeitos", "tetoPorQuadro": 1 },
+    "ambient-wind": { "canal": "ambiente", "tetoPorQuadro": 1 },
+    "ambient-cicada": { "canal": "ambiente", "tetoPorQuadro": 1 },
+    "inn-bell": { "canal": "ambiente", "tetoPorQuadro": 1 },
+    "music-peace": { "canal": "musica", "tetoPorQuadro": 1 },
+    "music-combat": { "canal": "musica", "tetoPorQuadro": 1 }
+  },
+  "_docAmbiente": "H-TELA-AMBIENTE-E-MUSICA (src/render/fundo-sonoro.ts). `lacos`: os sons de fundo que tocam em laco o tempo todo em jogo, sem lugar (seguem a camera), e param no menu. `sino`: o sino da Bodega (`predio` e o id neutro do tipo), pedido assim que um predio desse tipo do jogador entra na vista da camera e de novo a cada `intervaloSegundos` (relogio de parede, dado de TELA) enquanto ele estiver nela.",
+  "ambiente": {
+    "lacos": ["ambient-wind", "ambient-cicada"],
+    "sino": { "som": "inn-bell", "predio": "inn", "intervaloSegundos": 20 }
+  },
+  "_docMusica": "H-TELA-AMBIENTE-E-MUSICA. A faixa sai do estado: `combate` enquanto houver luta (golpe, tiro, ataque a predio) a ate `raioDoCombateTiles` de um predio do jogador, e por `segundosDeCombateDepoisDaLuta` (segundos de JOGO, contados em ticks) depois da ultima; `paz` no resto, inclusive na paz da escaramuca e na luta longe da vila; nenhuma depois do fim da partida. A troca de faixa e uma passagem de `transicaoSegundos` (relogio de parede): a que sai desce enquanto a que entra sobe, sem corte.",
+  "musica": {
+    "paz": "music-peace",
+    "combate": "music-combat",
+    "raioDoCombateTiles": 16,
+    "segundosDeCombateDepoisDaLuta": 15,
+    "transicaoSegundos": 3
+  }
+}

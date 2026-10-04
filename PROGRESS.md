@@ -18854,3 +18854,236 @@ F-IA-DIFICULDADE             tres niveis de adversario          passa
 - **Fase H detalhada** no `BUILD_PLAN.md`. Decisão do operador: os sons vêm de bancos CC0, a sessão
   lista os candidatos com link e licença, e ele aprova cada um. Leitura conservadora (PARA REVISÃO):
   o código do som é TELA e o arquivo é ARTE, porque a lista de módulos não tem SOM.
+
+## 2026-10-03 — H-ARTE-SONS-CANDIDATOS (a lista de sons para o operador aprovar)
+
+- **Feito:** `docs/sons-candidatos.md`, 20 sons e 44 candidatos, de 1 a 3 por som, cada um com o
+  link, o autor, a licença e a duração. A coluna `aprovado` está vazia: **espera o operador.** Nada
+  foi baixado.
+- **Verificado:** a licença de cada candidato foi conferida **na página do som** (curl de cada
+  página em 2026-10-03; Freesound: o selo "Creative Commons 0" do próprio som, que aponta para
+  `creativecommons.org/publicdomain/zero/1.0/`; OpenGameArt: o campo "License(s)"). Um candidato
+  com licença dupla (`OGA-BY 3.0, CC0`, The Accordion Sample IV) ficou de fora.
+- **Teste:** `tests/H-ARTE-SONS-CANDIDATOS.test.ts`, com o leitor puro `tools/sons-candidatos.js`:
+  todo candidato é CC0 com link de banco livre, de 1 a 3 por som, sem id repetido; o leitor acusa
+  licença que não é CC0, candidato sem link e escolha fora da lista. O aceite (a) (todo id do
+  `data/som.json` tem candidato) fica condicional até o `data/som.json` existir, na feature
+  seguinte, que o torna incondicional.
+- **Decisões (PARA REVISÃO):**
+  - os ids de som são neutros e em inglês, como os da sim (`strike-hit`, `inn-bell`);
+  - `unit-struck` toca dois sons (acerto e erro), `match-ended` dois (vitória e derrota) e
+    `projectile-fired` dois (o bacamarte do `virote` e o bodoque/funda da `flecha`/`funda`);
+  - instrumentos do sertão (rabeca, zabumba, pífano): não achei música CC0 com eles; as músicas
+    da lista são de feira medieval e de batalha genérica, até haver gravação própria;
+  - o berro de bode, o carro de boi e a martelada a cada HP não têm evento na sim e ficaram de fora.
+
+## 2026-10-03 — H-TELA-CAMADA-DE-SOM (o render toca os eventos da sim)
+
+- **Feito:**
+  - `data/som.json`: a tabela evento → id de som (11 eventos e a planta, 15 ids, teto 1 por quadro
+    para todos). `projectile-fired` escolhe o id pelo `projetil`; `unit-struck` pelo `acertou`;
+    `match-ended` pelo `fim`. A pedra da torre (`pedraDaTorre`) fica sem som no `projectile-fired`,
+    porque o `stone-thrown` do mesmo tick já toca.
+  - `src/render/som.ts`, puro: `idDoSom`, `sonsDoTick` (a vista e a recusa), `sonsDoQuadro` (o teto
+    e o silêncio), `criarCamadaDeSom` e `urlsDosSons`. `src/render/tocador-de-som.ts` toca com
+    `Audio` do navegador, e só id com arquivo; o `play()` recusado pela política de autoplay é
+    engolido (silêncio, sem erro de console).
+  - `src/render/eventos-da-sim.ts`: os `type` da sim em valor, conferidos pelo compilador nos dois
+    sentidos (`satisfies` e o `_TODOS`). É o que o `validate:data` lê (o Node 24 tira os tipos
+    sozinho; só `import type` no arquivo).
+  - `src/main.ts`: o passo do laço entrega o estado ao som com quantos comandos do jogador ele
+    consumiu; a planta (`PlaceBlueprint`) pede o som no clique; o fim do quadro toca. Harness
+    `window.__cangacoSom.contadores()`.
+  - `tools/data-rules.js` (`validarSom`): recusa evento que a sim não emite, id tocado sem linha em
+    `sons`, teto que não é inteiro ≥ 1, e som do manifesto que o `som.json` não toca.
+- **Verificado:** `tests/H-TELA-CAMADA-DE-SOM.test.ts` (17 testes: o mapeamento por tabela, o teto,
+  o silêncio, a velocidade, a vista com a escaramuca de verdade, a morte pelo estado anterior, a
+  recusa só do jogador, o grafo de import da sim pelo parser do TypeScript, e o validador por
+  caso); roteiro `H-TELA-CAMADA-DE-SOM` saiu 0, despausado, com
+  `{"pedidos":2,"tocados":0,"emSilencio":2}` (a planta e a recusa dela), zero erro de console e
+  zero requisição de áudio. `verify:rapido` verde (494 testes).
+- **Medida:** a escaramuca parada não pede som nenhum em 1 500 ticks (ninguém produz sem o jogador
+  mandar); a pedreira do cenário de produção, em 600 ticks, pede 1 `goods-produced`.
+- **Decisões (PARA REVISÃO):**
+  - a recusa toca só no tick que consumiu comando do jogador; uma recusa da IA no mesmo tick
+    tocaria junto (raro, e é a leitura conservadora sem campo de lado no evento);
+  - a unidade do jogador está sempre na vista; a que morreu no tick usa o tile do estado anterior.
+
+### Perguntas em aberto
+
+- **O aceite (d) da H-TELA-CAMADA-DE-SOM, "id de som fora do manifesto, quando o manifesto tiver o
+  som".** A leitura literal (todo id do `som.json` precisa estar no manifesto) contradiz o "som que
+  falta é silêncio" assim que o operador aprovar só parte da lista. A leitura implementada,
+  conservadora: o som que o manifesto tem precisa ser um id que o `som.json` toca (arquivo órfão é
+  recusado), e o id sem arquivo é silêncio. Se o operador quiser a literal, a regra muda num lugar
+  só (`validarSom`).
+
+## 2026-10-03 — H-TELA-OPCOES-E-VOLUME (a tela de opções)
+
+- **Feito:**
+  - `src/preferencias-de-som.ts` (laço externo, puro): `volumeEfetivo` (geral × canal, mudo
+    zera, limitado a [0, 1]), `lerPreferencias` / `gravarPreferencias` na chave `cangaco:som` do
+    `localStorage` (o que não serve volta ao padrão campo a campo; a gaveta que lança é o padrão),
+    `criarPreferenciasVivas` (uma por página, o menu e o jogo usam a mesma) e `canalDoSom`.
+  - `data/som.json`: `volumePadrao` (geral 0,8, efeitos 1, ambiente 0,6, música 0,5) e o `canal` de
+    cada som (todos `efeitos` hoje). O `validate:data` recusa canal fora da lista e volume fora de
+    [0, 1].
+  - `src/ui/opcoes-de-som.ts`: a caixa (geral, efeitos, ambiente, música, "Sem som", Fechar),
+    montada uma vez; o `Esc` fecha ela antes de chegar à ajuda ou ao menu. Abre pelo botão
+    "Opções" do menu inicial e pelo botão "Opções de som" que ela põe na ajuda em jogo (H).
+    Rótulos em `theme-sertao.som` e `menuInicial.opcoes`.
+  - A camada de som toca com o volume efetivo do canal do id; volume 0 não toca e conta como
+    silêncio.
+- **Verificado:** `tests/H-TELA-OPCOES-E-VOLUME.test.ts` (8 testes: a regra por tabela, o canal, a
+  camada com o mudo, o validador, o padrão, gravar e recarregar, o guardado que não serve, e o save
+  byte a byte igual com e sem mudar o volume). Roteiro `H-TELA-OPCOES-E-VOLUME` saiu 0: pelo menu
+  (geral a 24), recarregado (continua 24), pelo jogo **despausado** (18 ticks rodaram durante o
+  gesto), efeitos a 50 e o mudo, com o aperto segurado 150 ms; o primeiro `Esc` fecha só a caixa.
+  As duas fotos abertas: `screenshots/H-TELA-OPCOES-E-VOLUME-1-pelo-menu.png` e `-2-pelo-jogo.png`.
+  `verify:rapido` verde (943 testes).
+- **PARA REVISÃO:** os quatro volumes padrão; a caixa abre centrada na página inteira (por cima da
+  barra e do mapa), e não só na célula do mapa como a ajuda.
+
+## 2026-10-03 — H-TELA-AMBIENTE-E-MUSICA (o sertão de fundo)
+
+- **Feito:**
+  - `data/som.json`: os ids `ambient-wind`, `ambient-cicada`, `inn-bell` (canal ambiente),
+    `music-peace` e `music-combat` (canal música); `ambiente` (os laços e o sino da Bodega, `inn`, a
+    cada 20 s de relógio enquanto na vista) e `musica` (raio do combate 16 tiles, 15 s de jogo de
+    combate depois da última luta, passagem de 3 s). O `validate:data` confere id, canal e tempos
+    (`transicaoSegundos` 0 é recusado: a troca não corta).
+  - `src/render/fundo-sonoro.ts`, puro: `houveLutaPertoDaVila` (golpe, ataque a prédio, tiro e
+    pedra, a até o raio de um prédio do jogador), `faixaDaMusica`, `misturar` (cada faixa anda no
+    máximo `dt / duração` por quadro), `bodegaNaVista` e `criarFundoSonoro`. O tocador em laço do
+    navegador (`criarTocadorDeLacoDoNavegador`) só cria `Audio` para id com arquivo e, recusado pelo
+    autoplay, tenta de novo no máximo uma vez por segundo.
+  - `src/main.ts`: o passo entrega o estado e o anterior ao fundo (a luta de todo tick, não só a do
+    quadro); o quadro toca o fundo com a vista da câmera em tiles; o load o reinicia.
+- **Verificado:** `tests/H-TELA-AMBIENTE-E-MUSICA.test.ts` (12 testes: a faixa por tabela — paz,
+  combate perto, combate longe, o combate que dura 150 ticks, o fim de partida —, a passagem de
+  3 000 ms em 188 quadros de 16 ms com o maior pulo 0,0053, o fundo sem arquivo, com arquivo, o
+  sino e o combate pelo `aoPasso`). Roteiro `H-TELA-AMBIENTE-E-MUSICA` saiu 0: no jogo, os dois
+  laços ligados e 54 quadros com ambiente (despausado e pausado), a paz subindo a 0,72; pelo botão
+  Menu da ajuda, no menu nenhum contador, nenhum `Audio`, nenhum canvas; zero requisição de áudio.
+  `verify:rapido` verde (478 testes).
+- **Decisões (PARA REVISÃO):**
+  - "combate longe" toca a música da paz: só a luta perto da vila do jogador troca a faixa;
+  - o ambiente continua com o jogo pausado; depois do fim da partida a música desce até o silêncio
+    e o ambiente fica;
+  - o sino é da Bodega do **jogador**, pela origem do prédio dentro da vista da câmera;
+  - os números (16 tiles, 15 s, 3 s, 20 s) são os primeiros que pareceram razoáveis, sem medida.
+
+## 2026-10-03 — H-ARTE-SONS-APROVADOS (os sons aprovados entram no jogo): espera o operador
+
+- **Não começou.** A coluna `aprovado` do `docs/sons-candidatos.md` está vazia nas 20 linhas, e o
+  item só começa com ela preenchida pelo operador. Nada foi baixado. O jogo inteiro roda em
+  silêncio enquanto isso, e o código não espera o som: assim que um arquivo entrar em
+  `assets/sons/` com a linha dele na seção `sons` do `assets/manifest.json`, a camada o toca.
+- **O que a sessão seguinte faz, com a aprovação:** baixa só o candidato do número escrito,
+  recorta o que a lista marcou "(recorte)", converte para o formato que o build serve, e escreve no
+  manifesto `sons.<id>` com `arquivo`, `licenca` (CC0) e `origem` (o link). O aceite (a), (b) e (c)
+  está no `BUILD_PLAN.md`.
+
+## 2026-10-03 — Fechamento da Fase H (§13)
+
+**Rodado, nesta ordem:**
+1. `npm run verify` completo no `2fc4f8b`: verde (2 471 testes na suíte; 2 469 + 5 fora de
+   propósito na transladada).
+2. `npm run shot:todos` num processo destacado: **120 roteiros, 7 com saída diferente de 0.**
+   Triados:
+   - **os seis de antes, os mesmos da Fase F**, já no `BUGS.md`: `C-IA-03c` (espera o operador, a
+     margem da escaramuça), `D-TELA-04e` (`BUG-ROTEIRO-04E-DELTA-DO-ATLAS`), `D-TELA-05c` e
+     `D-TELA-05d` (`BUG-SAVE-DO-ROTEIRO-TRANSLADADO`: o `verify` completo do passo 1 regravou os
+     saves no mundo transladado), `D-TELA-COSTURA-DOS-TILES` e `D-TELA-VEU-DOS-DETALHES`
+     (`BUG-ROTEIRO-DE-DUAS-ETAPAS`). Não rodei de novo; a causa de cada um é a registrada;
+   - **`F-D2`, novo:** "segurar 1,2 s deveria andar mais que 4 toques". Rodado sozinho no mesmo
+     commit, saiu 0 três vezes. Registrado como `BUG-ROTEIRO-F-D2-RELOGIO` (`feio`): o roteiro
+     afirma sobre relógio de parede. A carga como causa é hipótese.
+   - Os três roteiros da H saíram 0 dentro da corrida.
+3. `npm run verify` completo de novo, para o selo das chaves.
+4. `npm run test:longo`, sozinho, é a última coisa. O resultado e o hash do selo entram no commit
+   seguinte à avaliação, como pede a §13.
+
+**As chaves (`test-results.json`):**
+
+```text
+H-ARTE-SONS-CANDIDATOS     a lista de sons para o operador aprovar   passa
+H-TELA-CAMADA-DE-SOM       o render toca os eventos da sim            passa (aceite d pela leitura conservadora)
+H-TELA-OPCOES-E-VOLUME     a tela de opcoes                           passa
+H-TELA-AMBIENTE-E-MUSICA   o sertao de fundo                          passa
+H-ARTE-SONS-APROVADOS      os sons aprovados entram no jogo           NAO: espera a aprovacao do operador
+```
+
+**Espera o operador:**
+- a coluna `aprovado` de `docs/sons-candidatos.md` (20 sons, 44 candidatos CC0);
+- a leitura do aceite (d) da H-TELA-CAMADA-DE-SOM (Perguntas em aberto, acima);
+- PARA REVISÃO: os ids em inglês, o módulo (código TELA, arquivo ARTE), os volumes padrão, os
+  números do fundo (16 tiles, 15 s, 3 s, 20 s), a música de feira medieval no lugar dos
+  instrumentos do sertão, e a recusa que só toca no tick de comando do jogador.
+
+**Aberto, fora da Fase H:** os bugs de roteiro acima, cada um no `BUGS.md`, e o `C-IA-03c`.
+
+## 2026-10-03 — H-ARTE-SONS-APROVADOS (os sons aprovados entram no jogo)
+
+- **A aprovação do operador** (`a679f40`): 14 linhas com o número do candidato, 3 com um link
+  novo do Freesound e 3 em branco.
+- **Verificado na página do som** (pelo `tools/baixar-sons.js`, que confere de novo a licença de
+  todo som antes de baixar, inclusive a dos candidatos):
+  - `inn-bell` → TRP, "Bell, dinner, large, old, clang…" (574664): **Creative Commons 0**. Baixado.
+  - `victory` → chripei, "VICTORY CRY REVERB 2.wav" (165491): **Attribution 4.0**. Não é CC0,
+    **não baixado**, segue em silêncio.
+  - `music-peace` → Setuniman, "mixed feelings 0H_22mi" (146896): **Attribution NonCommercial
+    4.0**. Não é CC0, **não baixado**, segue em silêncio.
+  - `building-hit`, `peace-ended`, `command-rejected`: em branco, seguem em silêncio, sem procurar
+    outro.
+- **Feito:** 15 sons em `assets/sons/<id>.mp3` (mp3 128 kbps, 3,5 MB no total), com o original em
+  `assets/base/sons/<id>/` (11 MB, registro de geração, fora do build, no git como a base da arte,
+  §9). Do Freesound vem o preview HQ (o original pede login); do OpenGameArt, o arquivo da página.
+  A seção `sons` do `assets/manifest.json` tem, por id: `arquivo`, `base`, `licenca` (CC0 1.0),
+  `origem` (a página), `autor`, `titulo`, `baixadoDe`, `aprovado` (o que o operador escreveu), as
+  duas durações e o `recorte`.
+- **Recortes** (anotados no manifesto; escolha da sessão, sem ouvir, PARA REVISÃO):
+  `building-completed` 14 s → 2,5 s; `goods-produced` 25,6 s → 1 s; `stone-thrown` 6,6 s → 1,5 s;
+  `inn-bell` 39,9 s → 3 s (com fade de saída). Os efeitos curtos só perderam o silêncio do começo;
+  os laços (`ambient-wind` 59,6 s, `ambient-cicada` 45,8 s) e a música (`music-combat` 95,9 s)
+  entraram inteiros.
+- **Ferramenta:** o `ffmpeg` da máquina (winget, Gyan.FFmpeg 9.0.1), só no `tools/baixar-sons.js`
+  (`FFMPEG` troca o caminho). **Não é dependência do projeto**: o jogo e os testes não o usam.
+- **Código:** o leitor da lista (`tools/sons-candidatos.js`) aceita o link do operador como
+  escolha; o `validate:data` recusa som do manifesto sem CC0, sem o link da página ou fora de
+  `sons/`; o `conferir-dist` grava os sons do build em `test-output/E-ENTREGA-BUILD.json`. Os
+  roteiros da camada e do fundo passaram a afirmar os dois lados: o som com arquivo é pedido à
+  rede e toca, o sem arquivo (a recusa, a música da paz) é silêncio, sem requisição nem erro. A
+  requisição de mídia não entra no Resource Timing do Chromium; os roteiros escutam a rede
+  (`page.on('request')`).
+- **Verificado:** `tests/H-ARTE-SONS-APROVADOS.test.ts` (4 testes: CC0, link e arquivo de cada som;
+  o validador por caso; a origem de cada som é a escolha do operador; as linhas em branco e os
+  dois links não CC0 fora do manifesto). Os três roteiros da H saíram 0 com os arquivos de verdade:
+  a camada com `{"pedidos":2,"tocados":1,"emSilencio":1}` (a planta toca, a recusa é silêncio).
+  `verify:rapido` verde (582 testes). Na primeira corrida, o `D-TELA-VENTO-VEGETACAO` estourou o
+  tempo do teste (6,3 s) e passou sozinho e na segunda; a carga como causa é hipótese.
+
+### Perguntas em aberto
+
+- **`victory` e `music-peace`:** os links aprovados não são CC0 (CC-BY 4.0 e CC-BY-NC 4.0). Pela
+  regra do operador (só CC0), não foram baixados e seguem em silêncio. Escolher outro candidato da
+  lista (ou outro link CC0) os traz com `node tools/baixar-sons.js`.
+
+## 2026-10-03 — Fechamento dos sons aprovados (§13, só do que mudou)
+
+- **Rodado no `7fe8819`, nesta ordem, num processo destacado:**
+  1. `npm run shot:dist` (o `npm run build` e o roteiro `E-ENTREGA-BUILD` no `--preview`): saiu 0.
+     O `conferir-dist`: 284 arquivos, 15,67 MB, nenhum de `assets/base/` (154 conferidos, incluindo
+     os originais dos sons), sem página de depuração. **Os sons no build: 15 arquivos, 3 622 376
+     bytes (3,62 MB)**, medida da corrida em `test-output/E-ENTREGA-BUILD.json`.
+  2. Os três roteiros da H: `H-TELA-CAMADA-DE-SOM`, `H-TELA-OPCOES-E-VOLUME` e
+     `H-TELA-AMBIENTE-E-MUSICA`, todos 0, com os arquivos de verdade e zero erro de console.
+  3. `npm run verify` completo: verde (2 475 testes na suíte; 2 473 + 5 fora de propósito na
+     transladada). Com ele, a chave.
+- **Não rodado:** o `shot:todos` inteiro e a `test:longo`. O operador pediu só o que mudou, e
+  nenhuma regra de sim mudou desde a `test:longo` verde do `01d9197`. Por isso o selo da longa não
+  é o do `HEAD`: o `selo:longo` sai diferente de 0 até a próxima corrida dela.
+- **A chave:** `H-ARTE-SONS-APROVADOS` passa a `true` (a, b e c verificados). A Fase H fica com as
+  cinco chaves verdes.
+- **Espera o operador:** `victory` e `music-peace` (links não CC0, em Perguntas em aberto acima), e
+  ouvir os recortes.

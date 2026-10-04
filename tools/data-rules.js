@@ -1792,6 +1792,98 @@ function validarRelevo(dados, relevo, erros) {
   }
 }
 
+/**
+ * H-TELA-CAMADA-DE-SOM — `data/som.json`. Recusa: o evento que a sim nao emite (a lista vem de
+ * `src/render/eventos-da-sim.ts`, que o compilador confere contra `GameEvent`); o id tocado sem
+ * linha em `sons`; o teto que nao e inteiro >= 1; e o som do manifesto (`assets/manifest.json`,
+ * secao `sons`) cujo id nao esta em `som.json` (arquivo que nada toca). O id de `som.json` sem
+ * arquivo no manifesto NAO e erro: e silencio, o estado normal antes da aprovacao.
+ */
+function validarSom(som, erros, opcoes = {}) {
+  const e = (msg) => erros.push(`interface/som: ${msg}`);
+  if (!som || typeof som !== 'object' || Array.isArray(som)) {
+    e('data/som.json precisa existir e ser objeto');
+    return;
+  }
+  const eventosDaSim = opcoes.eventosDaSim
+    ?? require('../src/render/eventos-da-sim.ts').EVENTOS_DA_SIM;
+  const manifesto = opcoes.manifesto ?? manifestoDeAssets;
+  const sons = som.sons && typeof som.sons === 'object' && !Array.isArray(som.sons) ? som.sons : null;
+  if (sons === null) {
+    e('sons precisa ser objeto');
+    return;
+  }
+  // H-TELA-OPCOES-E-VOLUME: o canal de cada som e o volume padrao de cada canal e do geral
+  const canais = ['efeitos', 'ambiente', 'musica'];
+  for (const [id, def] of Object.entries(sons)) {
+    if (id.startsWith('_')) continue;
+    if (!def || !Number.isInteger(def.tetoPorQuadro) || def.tetoPorQuadro < 1) e(`'${id}': tetoPorQuadro precisa ser inteiro >= 1`);
+    if (!def || !canais.includes(def.canal)) e(`'${id}': canal precisa ser um de ${canais.join(', ')}`);
+  }
+  const padrao = som.volumePadrao;
+  for (const campo of ['geral', ...canais]) {
+    const v = padrao && padrao[campo];
+    if (typeof v !== 'number' || !Number.isFinite(v) || v < 0 || v > 1) e(`volumePadrao.${campo} precisa ser numero de 0 a 1`);
+  }
+  const tocado = (id, onde) => {
+    if (typeof id !== 'string' || !Object.prototype.hasOwnProperty.call(sons, id)) e(`${onde} toca '${id}', que nao esta em sons`);
+  };
+  tocado(som.planta, 'planta');
+  const eventos = som.eventos && typeof som.eventos === 'object' && !Array.isArray(som.eventos) ? som.eventos : null;
+  if (eventos === null) {
+    e('eventos precisa ser objeto');
+    return;
+  }
+  const emitidos = new Set(eventosDaSim);
+  for (const [tipo, linha] of Object.entries(eventos)) {
+    if (tipo.startsWith('_')) continue;
+    if (!emitidos.has(tipo)) e(`evento '${tipo}' nao e emitido pela sim`);
+    if (typeof linha === 'string') {
+      tocado(linha, `evento '${tipo}'`);
+    } else if (linha && typeof linha.campo === 'string' && linha.por && typeof linha.por === 'object') {
+      for (const [valor, id] of Object.entries(linha.por)) tocado(id, `evento '${tipo}' (${linha.campo}=${valor})`);
+    } else {
+      e(`evento '${tipo}': a linha precisa ser um id ou {campo, por}`);
+    }
+  }
+  // H-TELA-AMBIENTE-E-MUSICA: o fundo toca so id de `sons`, no canal certo, e os tempos sao > 0
+  const doCanal = (id, canal, onde) => {
+    tocado(id, onde);
+    if (sons[id] && sons[id].canal !== canal) e(`${onde}: '${id}' precisa ser do canal ${canal}`);
+  };
+  const ambiente = som.ambiente;
+  if (!ambiente || !Array.isArray(ambiente.lacos) || !ambiente.sino) {
+    e('ambiente precisa de lacos (array) e sino');
+  } else {
+    for (const id of ambiente.lacos) doCanal(id, 'ambiente', 'ambiente.lacos');
+    doCanal(ambiente.sino.som, 'ambiente', 'ambiente.sino');
+    if (typeof ambiente.sino.predio !== 'string') e('ambiente.sino.predio precisa ser o id de um tipo de predio');
+    if (!(ambiente.sino.intervaloSegundos > 0)) e('ambiente.sino.intervaloSegundos precisa ser > 0');
+  }
+  const musica = som.musica;
+  if (!musica) {
+    e('musica precisa existir');
+  } else {
+    doCanal(musica.paz, 'musica', 'musica.paz');
+    doCanal(musica.combate, 'musica', 'musica.combate');
+    for (const campo of ['raioDoCombateTiles', 'segundosDeCombateDepoisDaLuta']) {
+      if (!(typeof musica[campo] === 'number' && musica[campo] > 0)) e(`musica.${campo} precisa ser > 0`);
+    }
+    if (!(typeof musica.transicaoSegundos === 'number' && musica.transicaoSegundos > 0)) e('musica.transicaoSegundos precisa ser > 0: a troca de faixa nao corta');
+  }
+  const doManifesto = manifesto && manifesto.sons && typeof manifesto.sons === 'object' ? manifesto.sons : {};
+  for (const [id, def] of Object.entries(doManifesto)) {
+    if (id.startsWith('_')) continue;
+    if (!Object.prototype.hasOwnProperty.call(sons, id)) e(`o manifesto tem o som '${id}', que data/som.json nao toca`);
+    // H-ARTE-SONS-APROVADOS: todo som do manifesto e CC0, com o link da pagina e o arquivo em sons/
+    if (!def || typeof def.licenca !== 'string' || !def.licenca.startsWith('CC0')) e(`manifesto, som '${id}': licenca precisa ser CC0`);
+    if (!def || typeof def.origem !== 'string' || !/^https:\/\/(freesound\.org\/people|opengameart\.org\/content)\//.test(def.origem)) {
+      e(`manifesto, som '${id}': origem precisa ser o link da pagina do som (Freesound ou OpenGameArt)`);
+    }
+    if (!def || typeof def.arquivo !== 'string' || !/^sons\/[a-z0-9-]+\.mp3$/.test(def.arquivo)) e(`manifesto, som '${id}': arquivo precisa ser sons/<id>.mp3`);
+  }
+}
+
 function validarInterface(dados, interfaceUi) {
   const erros = [];
   const animacao = interfaceUi && interfaceUi['animacao-unidade'];
@@ -1826,6 +1918,7 @@ function validarInterface(dados, interfaceUi) {
   validarAguaPeixe(interfaceUi && interfaceUi['agua-peixe'], erros);
   validarPoeira(interfaceUi && interfaceUi.poeira, erros);
   validarFumaca(interfaceUi && interfaceUi.fumaca, erros);
+  validarSom(interfaceUi && interfaceUi.som, erros);
   if (!menu || !Array.isArray(menu.grupos)) {
     erros.push('interface/menu-build-forma: menu-build.grupos precisa ser array');
     return erros;
@@ -1915,4 +2008,4 @@ function validarTudo(dados) {
   return erros;
 }
 
-module.exports = { validarBandeira, validarFumaca, validarTudo, validarInterface, validarVento, validarPoeira, getByPath };
+module.exports = { validarSom, validarBandeira, validarFumaca, validarTudo, validarInterface, validarVento, validarPoeira, getByPath };
