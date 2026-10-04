@@ -159,7 +159,9 @@ describe('H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA', () => {
     let sem = CORRIDA.inicial;
     const camada = criarCamadaDeSom(TABELA, TODOS, { tocar: () => undefined });
     const somDoTrabalho = criarSomDoTrabalho({ dados: TRABALHO, raioTiles: RAIO, disponiveis: TODOS, volume: () => 1, tocador: { tocar: () => undefined, parar: () => undefined } });
-    const centro = { gx: 32, gy: 32 };
+    // a camera na vila (o armazem), e nao num tile literal: na suite transladada a vila e outra
+    const armazem = CORRIDA.inicial.predios.porId[CORRIDA.inicial.predios.ordem[0] as string];
+    const centro = { gx: armazem?.gx ?? 0, gy: armazem?.gy ?? 0 };
     for (const c of CORRIDA.comandos) {
       com = step(com, c, gameData);
       camada.aoPasso(com, c.length);
