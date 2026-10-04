@@ -19330,3 +19330,17 @@ Sete defeitos visuais mandados pelo operador depois de jogar. Os aceites estão 
 madeira, a pedra, a linguiça e o pão aparecem sem fundo e maiores. O roteiro F-VIVO-a falhou uma vez
 ("Execution context was destroyed"); passou na `main` sem a mudança e duas vezes seguidas com ela.
 **Hipótese, não confirmada:** é intermitente, e não desta mudança.
+
+### G-ARTE-BANDEIRA-NO-TELHADO (a bandeira presa na cumeeira)
+**Verificado:** dez prédios estavam sem `ancoras.bandeira` (lenhador, pedreira, serraria, escola,
+bodega, fazenda, canavial, pescador, moinho e padaria), e o render punha a bandeira na posição
+padrão, solta no ar. A âncora de cada um é o pixel opaco mais alto da metade esquerda do sprite
+`completo`, a ponta da cumeeira apontada pelas setas dos prints. Os pontos foram conferidos numa
+folha com o ponto marcado. No manifesto entrou só a linha da âncora, sem reformatar as entradas.
+`tests/G-ARTE-BANDEIRA-NO-TELHADO.test.ts`: todo prédio tem a âncora, e ela fica a até 3 px de um
+pixel opaco (29 casos, mais a prova de que um ponto no ar reprova). O roteiro novo
+`G-ARTE-BANDEIRA-NO-TELHADO` sai 0. As capturas foram abertas: lenhador, serraria, pedreira, fazenda,
+canavial e padaria com a bandeira no telhado. A casa do pescador não está no save da vila pronta;
+ela fica coberta pelo teste do ponto, mas não foi vista no jogo.
+O decodificador PNG dos testes de arte saiu para `tests/helpers/png.ts` e serve à morte, à bandeira e
+ao serf.

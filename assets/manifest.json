@@ -89,7 +89,8 @@
     "base": "base/woodcutters/woodcutters-D-master-2x.png",
     "semente": null,
     "nota": "Proposta D de troncos e palha geracao 01 derivada em 192x176. Estado madeira preservado da arte antiga e ainda requer par compativel."
-  }
+  },
+  "ancoras": { "bandeira": [0.26042, 0.01136] }
 },
     {
   "id": "quarry",
@@ -116,7 +117,7 @@
     "semente": null,
     "nota": "Candidato D derivado de candidatos/D/quarry/generation-02-raw.png. Area de trabalho a esquerda e patio de stone a direita sao hipoteses para teste em jogo; arte de madeira e previa antiga redimensionada, com geometria/estilo distintos. Referencia externa usada so para clima e materiais, nao proporcoes."
   },
-  "ancoras": {
+  "ancoras": {"bandeira": [0.53646, 0.05114], 
     "trabalho": {
       "area": [
         0.13,
@@ -161,7 +162,7 @@
         "semente": null,
  "nota": "Layout D aprovado pelo operador, completo corrigido na geracao 05 para baias vazias com estoque dinamico. Madeira geracao 04 no mesmo canvas e geometria aproximada; diferenca de piso central ainda requer ensaio da revelacao de obra."
  },
- "ancoras": {
+ "ancoras": {"bandeira": [0.39844, 0.1], 
    "trabalho": { "area": [0.36, 0.48, 0.64, 0.91] },
    "estoque": { "entrada": [[0.19, 0.79]], "saida": [[0.78, 0.79]] }
  }
@@ -192,8 +193,9 @@
         "base": "base/schoolhouse/schoolhouse_blender_compressed_premium_v3.png",
         "semente": null,
         "nota": "Casa do Coronel sobrado 3x3 frontal. O telhado nao foi achatado: uma faixa interna de cada agua foi removida e as bordas originais foram reunidas, preservando inclinacao visual, tamanho das telhas, cumeeira, diagonais e beiral. A escada foi encurtada sem escalar a fachada. Madeira e completo usam o mesmo recorte. Saida 214x240; anchor [0.5,0.875] assenta o piso da varanda e reserva somente o acesso compacto abaixo do lote."
-      }
-    },
+      },
+  "ancoras": { "bandeira": [0.05607, 0.0] }
+},
     {
   "id": "inn",
   "tipo": "predio",
@@ -219,7 +221,7 @@
     "semente": null,
     "nota": "Bodega D ampliada linearmente em 50% desde os brutos 02/03; area de estoque e mesas continuam vazias, anchors normalizados conservados. Candidata a revisao visual."
   },
-  "ancoras": {
+  "ancoras": {"bandeira": [0.26042, 0.14242], 
     "estoque": {
       "entrada": [
         [
@@ -2187,7 +2189,7 @@
         "semente": null,
         "nota": "Candidato D derivado de candidatos/D/farm/generation-02-yellow-raw.png. Parede amarelo-milho; silhueta cerca de 4% mais larga e 11% mais alta que o derivado anterior. Plataforma de milho permanece vazia."
       },
-      "ancoras": {
+      "ancoras": {"bandeira": [0.51301, 0.215], 
         "estoque": { "entrada": [], "saida": [[0.78, 0.80]] }
       }
     },
@@ -2216,7 +2218,7 @@
         "semente": null,
         "nota": "Mesmo bruto generation-02-green-cane rederivado em 2026-10-01: largura 250 px preservada, altura 164 para 180 px (+9,76% no canvas) e silhueta 242x152 para 242x168 (+10,53% vertical), base e anchor [0.5,1] preservados. Parede verde-cana, teto de caules, prensa esquerda e patio de cachaca vazio a direita."
       },
-      "ancoras": {
+      "ancoras": {"bandeira": [0.256, 0.04444], 
         "trabalho": { "area": [0.10, 0.43, 0.35, 0.83] },
         "estoque": { "entrada": [], "saida": [[0.76, 0.79]] }
       }
@@ -2246,7 +2248,7 @@
     "semente": null,
     "nota": "Casa do Pescador azul da geracao 02, derivada no mesmo quadro 192x176 da Pedreira. Zona de trabalho fica reservada na arte, mas sem ancora de trabalho: a simulacao realiza pesca fora da casa. Ancora de estoque e hipotese ate revisao visual."
   },
-  "ancoras": {
+  "ancoras": {"bandeira": [0.41146, 0.01136], 
     "estoque": {
       "entrada": [],
       "saida": [
@@ -2553,7 +2555,7 @@
     "semente": null,
     "nota": "Candidato D geracao 02 ampliado em 15 por cento nas duas dimensoes a pedido do operador em 2026-10-01. Roda lateral ainda pintada no corpo; plataformas vazias para milho/farinha dinamica."
   },
-  "ancoras": {
+  "ancoras": {"bandeira": [0.54299, 0.10145], 
     "trabalho": {
       "area": [
         0.39,
@@ -2603,7 +2605,7 @@
         "semente": null,
         "nota": "Derivado de candidatos/D/bakery/generation-02-raw.png, vitrine apagada; luz antiga. Areas de trabalho e estoque sao hipoteses para avaliar por captura em jogo."
       },
-      "ancoras": {
+      "ancoras": {"bandeira": [0.45312, 0.05729], 
         "trabalho": {
           "area": [
             0.39,
