@@ -8,7 +8,7 @@ import { gameData } from '../src/sim/data';
 import { LADO_DO_JOGADOR } from '../src/sim/state';
 import type { GameEvent, GameState, Unidade } from '../src/sim/state';
 import { step } from '../src/sim/tick';
-import { criarEscaramuca } from '../src/sim/cenario';
+import { escaramucaComTropaDe, TROPA_DOS_TESTES_DE_FORMACAO } from './helpers/escaramuca-paz';
 import { FSM_EM_CARGA } from '../src/sim/carga';
 import { colunasDaFormacao } from '../src/sim/systems/marcha';
 import { colunasAjustadas, colunasAtuais, direcaoDoArrasto, ordemDeFormacao, podeCarregar } from '../src/ui/formacao';
@@ -20,7 +20,8 @@ import { criarFerramenta } from '../src/input/ferramenta';
 import temaSertao from '../data/theme-sertao.json';
 import { gravarEvidencia } from './helpers/evidence';
 
-const comPaz = criarEscaramuca(gameData.economia.estadoInicial.semente);
+// a tropa fixa de 18: o mecanismo foi medido com ela (I-COMBATE-ESCARAMUCA-GANHAVEL)
+const comPaz = escaramucaComTropaDe(TROPA_DOS_TESTES_DE_FORMACAO, gameData.economia.estadoInicial.semente);
 const { pazAteTick: _paz, ...semPaz } = comPaz;
 void _paz;
 const s0: GameState = semPaz;

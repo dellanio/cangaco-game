@@ -1520,3 +1520,11 @@ Medi o mesmo roteiro, o da C-IA-03c (jogar pela tela), contra a mesma IA:
 - A conferir no lote de balanceamento: se "fácil só defende" é o fácil que se quer; o difícil
   contra a margem da tropa do jogador (18), que já perde por pouco no normal (C-IA-03c,
   2026-10-03 acima).
+
+## 2026-10-04 — I-COMBATE-ESCARAMUCA-GANHAVEL: a tropa da escaramuça de teste sobe para 24
+
+- Decisão do operador: a escaramuça é cenário de teste, e o número da tropa é dado do cenário, não
+  balanceamento. Medido 18, 21 e 24 nos seis jeitos de chegar (tabela no PROGRESS): 24 é o menor
+  que vence nos seis. Fecha a entrada de 2026-10-03 ("com a névoa, a vitória vira cara ou coroa").
+- O "difícil contra a margem da tropa" da F-IA-DIFICULDADE (entrada acima) continua em aberto: a
+  tropa de 24 não foi medida contra o difícil.

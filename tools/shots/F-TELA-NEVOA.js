@@ -86,9 +86,13 @@ async function roteiro({ page, capturar, estado, afirmar }) {
   await capturar('vila-da-ia-no-escuro');
 
   // (a) a marcha: caixa em volta da tropa e botao direito num tile no escuro, perto da defesa da IA
-  await camera(meio);
+  // a camera no centro da tropa (e nao no `meio`, 4 tiles ao norte): com a tropa do cenario em 3
+  // fileiras (24, I-COMBATE-ESCARAMUCA-GANHAVEL) a caixa a partir do `meio` saia do canvas
+  await camera({ gx: meio.gx, gy: meio.gy + 4 });
   s = await estado();
   const pontos = minha.map((u) => pontoDoTileNaTela(canvas, { gx: u.gx, gy: u.gy }, s.camera, TILE_PX));
+  const caixa = { y0: Math.min(...pontos.map((p) => p.y)) - TILE_PX / 2, y1: Math.max(...pontos.map((p) => p.y)) + TILE_PX / 2 };
+  afirmar(caixa.y0 >= canvas.top && caixa.y1 <= canvas.bottom, `a caixa cabe no canvas: ${JSON.stringify(caixa)} em ${canvas.top}..${canvas.bottom}`);
   await page.mouse.move(Math.min(...pontos.map((p) => p.x)) - TILE_PX / 2, Math.min(...pontos.map((p) => p.y)) - TILE_PX / 2);
   await page.mouse.down();
   await page.mouse.move(Math.max(...pontos.map((p) => p.x)) + TILE_PX / 2, Math.max(...pontos.map((p) => p.y)) + TILE_PX / 2, { steps: 8 });

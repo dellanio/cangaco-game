@@ -11,6 +11,7 @@
 // O px sai do debug (`unidadesRenderizadas`, `camera`), nunca de pixel da captura.
 const { retanguloDoCanvas } = require('./_canvas');
 const terreno = require('../../data/terrain.json');
+const TROPA = require('../../data/escaramuca.json').tropaDoJogador.quantidade; // dado do cenario (I-COMBATE-ESCARAMUCA-GANHAVEL: 18 -> 24)
 
 const TILE_PX = terreno.tile_px;
 const LADO_DO_JOGADOR = 0;
@@ -29,7 +30,7 @@ async function roteiro(ctx) {
   let s = await estado();
   const cabras = (st) => st.unidadesRenderizadas.filter((u) => u.lado === LADO_DO_JOGADOR && u.tipo === 'militia');
   const minha = cabras(s);
-  afirmar(minha.length === 18, `o jogador deveria nascer com 18 cabras, veio ${minha.length}`);
+  afirmar(minha.length === TROPA, `o jogador deveria nascer com ${TROPA} cabras, veio ${minha.length}`);
 
   async function centrarNoEixo(alvoEmTiles, eixo) {
     { // D-TELA-CAPTURA-DETERMINISTICA: a camera vai exata pela ponte (harness), e nao por setas no tempo de parede
@@ -147,16 +148,16 @@ async function roteiro(ctx) {
   await page.keyboard.press('p');
 
   console.log(`C-TELA-03: ${JSON.stringify({ zoomAntes, ...resultado })}`);
-  afirmar(resultado.emCimaDoCabra === 18, `caixa comecando em cima do cabra deveria pegar 18, pegou ${resultado.emCimaDoCabra}`);
-  afirmar(resultado.aoContrario === 18, `caixa ao contrario deveria pegar 18, pegou ${resultado.aoContrario}`);
+  afirmar(resultado.emCimaDoCabra === TROPA, `caixa comecando em cima do cabra deveria pegar ${TROPA}, pegou ${resultado.emCimaDoCabra}`);
+  afirmar(resultado.aoContrario === TROPA, `caixa ao contrario deveria pegar ${TROPA}, pegou ${resultado.aoContrario}`);
   afirmar(resultado.zoom !== zoomAntes, `a roda deveria ter mudado o zoom (${zoomAntes})`);
-  afirmar(resultado.afastado === 18, `caixa com a camera afastada deveria pegar 18, pegou ${resultado.afastado}`);
-  afirmar(resultado.marchando + resultado.jaNaVaga === 18,
-    `os 18 deveriam receber a ordem (marchando ou ja na vaga), vieram ${resultado.marchando} + ${resultado.jaNaVaga}`);
+  afirmar(resultado.afastado === TROPA, `caixa com a camera afastada deveria pegar ${TROPA}, pegou ${resultado.afastado}`);
+  afirmar(resultado.marchando + resultado.jaNaVaga === TROPA,
+    `os ${TROPA} deveriam receber a ordem (marchando ou ja na vaga), vieram ${resultado.marchando} + ${resultado.jaNaVaga}`);
   afirmar(resultado.marchando > 0 && resultado.sairamDoLugar === resultado.marchando,
     `quem marchou deveria sair do lugar: marcharam ${resultado.marchando}, sairam ${resultado.sairamDoLugar}`);
-  afirmar(resultado.pararam === 18, `os 18 deveriam parar na formacao, pararam ${resultado.pararam}`);
-  afirmar(resultado.tilesDistintos === 18, `os 18 deveriam parar em tiles distintos, ${resultado.tilesDistintos}`);
+  afirmar(resultado.pararam === TROPA, `os ${TROPA} deveriam parar na formacao, pararam ${resultado.pararam}`);
+  afirmar(resultado.tilesDistintos === TROPA, `os ${TROPA} deveriam parar em tiles distintos, ${resultado.tilesDistintos}`);
 }
 
 module.exports = { roteiro };

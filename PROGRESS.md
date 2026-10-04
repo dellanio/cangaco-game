@@ -3273,6 +3273,8 @@ que vetar custe uma linha.
   da vista vira marcha até o tile (o único jeito que venceu), e o roteiro passa a jogar assim. Se
   ainda assim perder, a decisão é do operador: a margem da tropa (`escaramuca.tropaDoJogador`), ou
   a afirmação de vitória do roteiro.
+  **Decidido pelo operador (2026-10-04):** a escaramuça é cenário de teste; a tropa sobe para 24
+  e o roteiro afirma mecânica (I-COMBATE-ESCARAMUCA-GANHAVEL, leva de 2026-10-04 (2)).
 - **(2026-10-04, Fase I) I-TELA-PARTIDA-GUIADA — a leitura dos passos (PARA REVISÃO).** O
   BUILD_PLAN nomeia os passos ("estrada até o armazém, escola, lenhador, pedreira, serraria, a
   primeira comida, o quartel e a escaramuça") sem dizer a condição de cada um. Fiz o conservador:
@@ -19771,3 +19773,68 @@ C-IA-03c (de antes)                      espera    -         operador: a margem 
 Perguntas em aberto); o playtest e o itch.io; a `C-IA-03c`; ouvir os sons novos; as leituras PARA
 REVISÃO; e o merge na `main`, que é da sessão principal.
 
+
+## 2026-10-04 — Leva (2), item 1: I-COMBATE-ESCARAMUCA-GANHAVEL (a escaramuça de teste volta a ser ganhável)
+
+Branch `dellanio/colisao-e-escaramuca`, com a colisão civil ainda **desligada** (o item 2 liga e
+confere de novo).
+
+**A medida (sonda headless, apagada; números da corrida, não asserção).** A largada do roteiro (a
+tropa marcha 16 tiles ao sul na paz), a paz real, e depois, a cada 100 ticks, a tropa inteira recebe
+a ordem: ataque ao militar da IA à vista mais perto; sem nenhum à vista, marcha até `d` tiles dele.
+Os seis jeitos da Fase F (`BALANCE_LOG.md`, 2026-10-03):
+
+```text
+tropa   a 8      a 4      a 2      a 1      esperar   o tile dele   vence em
+18      V 5      V 5      V 2      V 8      perde     V 6           5 de 6
+21      V 8      V 7      perde    V 4      perde     V 3           4 de 6
+24      V 10     V 10     V 10     V 1      V 2       V 12          6 de 6
+(V n = vitória com n vivos)
+```
+
+- **Fica 24**, o menor que vence nos 6. A margem é fina em dois caminhos (1 e 2 vivos).
+- "Esperar": na primeira versão da sonda, a tropa que só espera nunca ataca e morre parada no tick
+  18 000 nos três tamanhos (**hipótese: fome**, não conferida). Esperar sozinho não ganha prédio, e
+  passei a medir "esperar o ataque da IA por 2 000 ticks e depois marchar até o tile". A tabela traz
+  essa segunda leitura.
+- A sonda dá 18 vencendo em 5 de 6, e o `BALANCE_LOG` de 2026-10-03 dava 1 de 6. A sonda de lá foi
+  apagada e o roteiro dela não está escrito; **não sei qual diferença explica** (cadência, quem
+  recebe a ordem). Não muda a escolha: 21 já perde em 2 dos 6 aqui.
+
+**O que mudou:**
+- `data/escaramuca.json`: `tropaDoJogador.quantidade` 18 → 24 (três fileiras: 9, 9, 6), com o
+  `_doc` dizendo que é número do cenário de teste.
+- **Teste longo `C-IA-03b`** passa a afirmar **mecânica**: a tropa marcha no escuro depois da paz,
+  ataca o que vê, nenhuma ordem recusada, a IA ataca um prédio do jogador depois da paz, um
+  `match-ended`, e a partida é determinística (corrida dupla, `salvar` igual byte a byte, teste
+  novo). A vitória fica como "este cenário de teste é ganhável", comentada como dado do cenário. Saiu
+  o `sobram > 0` (balanceamento; o número vai para a evidência). Medido: IA ataca no 6 002, primeiro
+  ataque ao que se vê no 6 251, tropa da IA morta no 6 937, vitória no 8 117, sobram 12 de 24.
+- **Roteiro `C-IA-03c`**: a tática passou a ser a do gêmeo headless (o bodoqueiro à vista primeiro,
+  senão qualquer um à vista; sem ninguém à vista, o tile do bodoqueiro). Com a tática antiga ("o
+  inimigo mais perto") a tropa de 24 perseguia o grupo de ataque da IA e morria inteira (medido numa
+  corrida: 0 de 24 na rodada 13; numa outra corrida da mesma árvore venceu, porque a primeira ordem
+  roda despausada). Afirma agora a marcha no escuro, o ataque ao que se vê e a saída da IA para
+  atacar, além do que já afirmava. **Três corridas seguidas iguais**: vitória no tick 8 324, 11 de 24
+  vivos. Captura `C-IA-03c-4-vitoria.png` aberta: o cartaz "VITÓRIA" e "11 Cabra" no painel.
+- **Os testes de mecanismo da tropa fixam 18** (`escaramucaComTropaDe(18)`, novo em
+  `tests/helpers/escaramuca-paz.ts`): `C-COMBATE-01c` (a carga do `tropa[9]`), `C-MOVIMENTO-02` (a
+  vaga emparedada), `C-MOVIMENTO-02b` (o caso `vagaTomadaPor` só acontece com 18) e `C-TELA-03` (a
+  caixa). Eles reprovaram com 24 porque o caso que guardam foi medido com duas fileiras de 9; o que
+  afirmam não mudou. `C-IA-03b` (o teste curto) passa a ler a quantidade do dado.
+- **Roteiros** que tinham 18 escrito passam a ler o dado: `C-COMBATE-01c` (as fileiras de 7 viram
+  `ceil(tropa / 7)`), `C-TELA-01`, `C-TELA-02`, `C-TELA-03`, `C-TELA-04` e `C-IA-03c`.
+  `F-TELA-NEVOA`: a caixa pegava 1 de 24; a câmera passou ao centro da tropa e o roteiro afirma que a
+  caixa cabe no canvas. **A causa (a terceira fileira fora do canvas) é hipótese**: não medi a caixa
+  antes da troca.
+- `saves/teste-operador-vila-pronta.txt` regravado (a escaramuça tem 6 cabras a mais).
+
+**Rodado:** `npm run test` com 24 (6 falhas, as listadas acima, todas consertadas no guarda e
+conferidas de novo: 22 testes verdes nos 6 arquivos); o teste longo da `C-IA-03b` verde; os 14
+roteiros que abrem a escaramuça saem 0, rodados um de cada vez (`C-IA-03c` três vezes). A primeira
+corrida do `C-IA-03c`, logo depois de a worktree subir o vite pela primeira vez, falhou com "o
+contador de paz não existe" e não se repetiu; **hipótese**: o vite recarregou a página ao otimizar
+dependências.
+
+**Aceite:** (a) o `C-IA-03c` sai 0 sozinho; dentro do `shot:todos` fica para o fechamento; (b) a
+chave da F-TELA-NEVOA também (o fechamento); (c) a tabela acima.

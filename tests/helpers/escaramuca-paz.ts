@@ -9,6 +9,7 @@ import type { GameEvent, GameState } from '../../src/sim/state';
 import { step } from '../../src/sim/tick';
 import { emPaz } from '../../src/sim/paz';
 import { classeDaUnidade } from '../../src/sim/condicao';
+import { criarEscaramuca } from '../../src/sim/cenario';
 
 export const SEMENTE = gameData.economia.estadoInicial.semente;
 export const PAZ = gameData.escaramuca.ticksDePaz;
@@ -31,4 +32,17 @@ export function ateOFimDaPaz(s0: GameState): { s: GameState; eventos: GameEvent[
     eventos.push(...s.events);
   }
   return { s, eventos };
+}
+
+/**
+ * I-COMBATE-ESCARAMUCA-GANHAVEL — a escaramuca com a tropa do jogador de `n` cabras. A tropa do
+ * cenario (`escaramuca.tropaDoJogador.quantidade`) e dado do cenario e muda quando ele muda
+ * (subiu de 18 para 24 para a escaramuca de teste ser ganhavel com a nevoa). Os testes de
+ * MECANISMO da tropa (formacao, caixa, vaga tomada) foram medidos com 18 e afirmam casos que
+ * dependem dessa forma (duas fileiras de 9): eles fixam a tropa aqui, e nao no dado do cenario.
+ */
+export const TROPA_DOS_TESTES_DE_FORMACAO = 18;
+export function escaramucaComTropaDe(n: number, semente: number = SEMENTE): GameState {
+  const tj = { ...gameData.escaramuca.tropaDoJogador, quantidade: n };
+  return criarEscaramuca(semente, { ...gameData, escaramuca: { ...gameData.escaramuca, tropaDoJogador: tj } });
 }

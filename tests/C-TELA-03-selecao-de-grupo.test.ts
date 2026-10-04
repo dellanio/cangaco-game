@@ -11,14 +11,15 @@ import { deslocamentoDaUnidade, ESCALA_DO_MUNDO } from '../src/render/grid';
 import { GESTOS } from '../src/input/atalhos';
 import { gameData } from '../src/sim/data';
 import { LADO_DO_JOGADOR } from '../src/sim/state';
-import { criarEscaramuca } from '../src/sim/cenario';
+import { escaramucaComTropaDe, TROPA_DOS_TESTES_DE_FORMACAO } from './helpers/escaramuca-paz';
 import tema from '../data/theme-sertao.json';
 import { gravarEvidencia } from './helpers/evidence';
 
 const TILE = gameData.terreno.tilePx;
 
 describe('C-TELA-03 — a caixa pega a tropa de 18', () => {
-  const s0 = criarEscaramuca(gameData.economia.estadoInicial.semente);
+  // a tropa fixa de 18: o mecanismo foi medido com ela (I-COMBATE-ESCARAMUCA-GANHAVEL)
+  const s0 = escaramucaComTropaDe(TROPA_DOS_TESTES_DE_FORMACAO, gameData.economia.estadoInicial.semente);
   const tropa: UnidadeDesenhada[] = s0.unidades.ordem
     .map((id) => s0.unidades.porId[id])
     .filter((u) => u !== undefined && u.lado === LADO_DO_JOGADOR && u.tipo === gameData.escaramuca.tropaDoJogador.tipo)
