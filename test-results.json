@@ -621,10 +621,10 @@
     "passes": true
   },
   "D-TELA-05c-ataque-trabalho-morte": {
-    "passes": false
+    "passes": true
   },
   "D-TELA-05d-carga-por-tipo": {
-    "passes": false
+    "passes": true
   },
   "D-TELA-COSTURA-DOS-TILES-extrusao-da-tira": {
     "passes": false
@@ -685,5 +685,8 @@
   },
   "I-ENTREGA-PLAYTEST-gente-de-fora-joga": {
     "passes": false
+  },
+  "H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA-som-com-lugar": {
+    "passes": true
   }
 }
