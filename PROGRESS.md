@@ -19100,3 +19100,14 @@ H-ARTE-SONS-APROVADOS      os sons aprovados entram no jogo           NAO: esper
   - `building-hit`, `peace-ended` e `command-rejected`: em branco na coluna `aprovado`.
   Para fechar, o operador escolhe outro candidato CC0 em `docs/sons-candidatos.md`, e o som entra
   como os outros 15 (H-ARTE-SONS-APROVADOS).
+
+## 2026-10-04 — Fase I detalhada (para quem nunca jogou)
+
+Worktree da H encerrada (junction desfeita antes; o `node_modules` da `main` ficou com 104 itens; o
+Orca apagou a branch). Os quatro itens da I estão no `BUILD_PLAN.md`: I-TELA-PARTIDA-GUIADA
+(aprender a jogar), I-TELA-DICAS-NA-PRIMEIRA-VEZ (o jogo explica quando acontece),
+I-TELA-AJUDA-DAS-CADEIAS (a ajuda mostra as cadeias) e I-ENTREGA-PLAYTEST (gente de fora joga).
+Leituras conservadoras, PARA REVISÃO do operador:
+- os passos da partida guiada seguem a abertura do GDD §1.3;
+- o relato do playtest é um arquivo que a pessoa baixa e manda; nada é enviado pela rede;
+- o playtest em si e a abertura do itch.io são do operador, e a I só fecha com ele.

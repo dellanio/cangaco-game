@@ -8214,10 +8214,68 @@ fechada. Módulo próprio para som é decisão do operador (PARA REVISÃO).
   `docs/sons-candidatos.md`; (c) o build (E-ENTREGA-BUILD) leva os sons, e o tamanho deles vai para
   o PROGRESS como medida.
 
-## Fase I — Para quem nunca jogou (só escopo; detalha quando a H fechar)
-A partida guiada, as dicas na primeira vez e a ajuda com as cadeias e as teclas. Depois, o
-playtest com gente de fora: o que eles acham vai para `BUGS.md` e `BALANCE_LOG.md`. A I fecha com
-o operador abrindo a página do itch.io para outras pessoas.
+## Fase I — Para quem nunca jogou
+
+A H fechou e foi mesclada (`55393a5`, 2026-10-04, aprovada pelo operador). O alvo da I é o critério de
+"pronto" do operador: **alguém que nunca viu o jogo abre o link, entende e joga uma partida
+inteira.** O que já existe e a I amplia: a tela de ajuda com as teclas (`ui/ajuda.ts`, que lê
+`input/atalhos.ts`), o lembrete da primeira partida e o menu inicial da E.
+
+Regras para os quatro itens:
+- Todo texto que o jogador lê vem de `data/theme-sertao.json`. A `sim/` não lê o tema e não sabe
+  que existe tutorial.
+- O que é preferência de quem joga (já viu a dica, desligou as dicas) mora no `localStorage`, nunca
+  no `GameState`, como a marca do lembrete de hoje.
+- A condição de cada passo e de cada dica é **derivada do estado** por seletor puro. Nada no estado
+  marca o tutorial.
+
+### I-TELA-PARTIDA-GUIADA — Aprender a jogar
+- **Escopo:** uma entrada **Aprender a jogar** no menu inicial abre o jogo livre com uma faixa de
+  passos. Cada passo diz o que fazer, e passa sozinho quando a condição dele vale no estado. Os
+  passos seguem a abertura do GDD §1.3: estrada até o armazém, escola, lenhador, pedreira,
+  serraria, a primeira comida, e por fim o quartel e a escaramuça. A faixa se pula e se reabre. A
+  lista de passos e a condição de cada um ficam num dado da tela, sem a `sim/` saber.
+- **Aceite:**
+  - (a) a função pura "estado → passo atual" por tabela, com a condição de cada passo;
+  - (b) **headless, como prova de que o tutorial se cumpre:** os comandos que o passo pede, dados um
+    a um ao `step`, levam do primeiro ao último passo, e nenhum passo pede o que a regra recusa;
+  - (c) a mesma partida com e sem a faixa dá o mesmo estado, byte a byte (o tutorial não mexe na
+    sim);
+  - (d) roteiro pelo menu: a faixa aparece, o primeiro passo se cumpre com o gesto do jogador
+    (despausado, 150 ms, §8), e o passo seguinte aparece. Screenshot de 3 passos.
+
+### I-TELA-DICAS-NA-PRIMEIRA-VEZ — O jogo explica quando acontece
+- **Escopo:** uma dica curta, uma vez por máquina, na primeira vez que acontece algo que confunde
+  quem chega: prédio pronto sem trabalhador, prédio sem estrada, a primeira fome, a primeira névoa
+  com inimigo, o fim da paz, a primeira ordem recusada (com o motivo que já existe). A dica aponta
+  o lugar, como os alertas. Ela se desliga nas opções da H (H-TELA-OPCOES-E-VOLUME).
+- **Aceite:** (a) a função pura "estado + o que já vi → dica a mostrar" por tabela, uma dica por vez
+  e nunca repetida; (b) desligada nas opções, nenhuma dica aparece; (c) a marca fica no
+  `localStorage`, e o save fica igual com e sem dica vista; (d) roteiro de duas dicas, com
+  screenshot.
+
+### I-TELA-AJUDA-DAS-CADEIAS — A ajuda mostra as cadeias de produção
+- **Escopo:** a tela de ajuda ganha uma aba **Cadeias**: de onde vem cada mercadoria e para onde vai,
+  pelo nome do tema. Ela é **derivada de `data/buildings.json` e `data/production.json`**, nunca
+  escrita à mão, como as teclas vêm de `input/atalhos.ts`. Prédio ainda bloqueado mostra o "requer
+  X" do menu de construir.
+- **Aceite:** (a) toda receita do dado aparece na aba, e nenhuma linha da aba fica sem receita
+  (igualdade de conjuntos, sem varrer texto); (b) mudar uma receita no dado muda a aba sem tocar no
+  código (teste com dado alterado); (c) screenshot da aba.
+
+### I-ENTREGA-PLAYTEST — Gente de fora joga
+- **Escopo:**
+  - `docs/playtest.md`: o roteiro para quem testa (o que tentar, sem ensinar) e as perguntas depois
+    da partida;
+  - um botão **Enviar relato** na ajuda em jogo, que baixa um arquivo com o save, o commit do build,
+    o nível da IA e o texto que a pessoa escrever. Nada sai da máquina sozinho: a pessoa manda o
+    arquivo para o operador;
+  - **o playtest em si é do operador:** ele escolhe quem joga, recolhe os relatos, e o que eles
+    trazem vai para `BUGS.md` e `BALANCE_LOG.md`.
+- **Aceite:** (a) o arquivo do relato carrega de volta no jogo e dá o mesmo estado (o save dentro
+  dele é o save de sempre); (b) o relato não leva nada além do que a tela diz que leva (pela lista
+  de campos, no teste); (c) o `docs/playtest.md` está no git. **O fechamento da I é do operador:**
+  os relatos registrados e a página do itch.io aberta para outras pessoas.
 
 ---
 
