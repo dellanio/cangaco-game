@@ -6189,6 +6189,36 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
   5. **Não-regressão:** os testes de manifesto, de animação (D-TELA-04b e D-TELA-05c) e da carga
      (D-TELA-SERF-CARREGANDO) passam, e `git diff main -- src/sim` fica vazio.
 
+### D-ARTE-PIXEL-ART-MILITARES — Os militares em pixel art, o obreiro refeito e o obreiro trabalhando
+
+- **Pedido do operador (2026-10-03, no teste de pixel art):** "Aprovado, gere as unidades militares.
+  O laborer ficou ruim, use como inspiração essa imagem" (um obreiro de macacão de brim
+  ferrugem, uma alça caída, peito nu, capacete, martelo de unha, barra dobrada e botina) e "a
+  animação do laborer construindo os edifícios e ruas já está pronta? Se tiver, crie a arte para
+  isso também, e pode fazer o merge no final".
+- **O que já existe:** o render já escolhe a ação `trabalhar` para o obreiro que está `nivelando` ou
+  `martelando` (`src/render/acao-de-unidade.ts`), e `atacar` para o militar que luta. Falta só a
+  arte: a entrada do manifesto sem a animação cai no quadro parado, como hoje.
+- **Feature de arte e manifesto.** Nada em `src/sim/` nem no código do render.
+- **Os nove militares da camada sertão:** cabra, cabra de gibão, valente, bodoqueiro, cabra de
+  fogo, aguilhadeiro, ferrão, vaqueiro (montado) e capitão do bando (montado). Os mercenários não
+  têm entrada no manifesto e ficam de fora.
+- **Aceite (escrito antes do código, 2026-10-03):**
+  1. **Os sete militares a pé** têm atlas com `parado`, `andar` (8 quadros) e `atacar`, nas 5
+     direções canônicas (o oeste por espelho), na célula 64×96 com o pé na linha 90. Os dois
+     montados têm `parado`, `andar` e `atacar` na célula 96×128 da entrada deles, com o pé na
+     linha de base menos 6.
+  2. **O obreiro refeito** a partir da imagem do operador tem `parado`, `andar` e `trabalhar`
+     (golpe de martelo) nas 5 direções, na célula 64×96 com o pé na linha 90.
+  3. Cada entrada nova do manifesto aponta para o atlas, e o validador do manifesto (`F17f`) e o
+     carregamento (`F-SPR-carregamento`) passam.
+  4. **Evidência:** a folha de revisão de cada unidade é aberta, e a captura de um roteiro em que um
+     obreiro trabalha mostra o quadro de `trabalhar` do atlas novo.
+  5. **Não-regressão:** os testes de manifesto e de animação (D-TELA-04b, D-TELA-05c,
+     D-TELA-SERF-CARREGANDO) passam, e `git diff main -- src/sim` continua vazio.
+  6. **O merge na `main`** fica autorizado pelo operador ao fim, depois do `verify:rapido` verde,
+     sem tocar o trabalho da outra sessão (a névoa).
+
 ### D-TELA-SERF-CARREGANDO — O serf anda com os braços levando a carga
 - **Pedido do operador (2026-10-03, no teste de pixel art):** "o serf está carregando os produtos
   com o braço pra baixo e deveria simular os braços levando um produto". **Feature de integração
