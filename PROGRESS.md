@@ -19243,3 +19243,61 @@ Leituras conservadoras, PARA REVISÃO do operador:
 - **Espera o operador (o fechamento da I é dele, pelo BUILD_PLAN):** escolher quem joga, recolher
   os relatos (para `BUGS.md` e `BALANCE_LOG.md`) e abrir a página do itch.io para outras pessoas.
 
+## 2026-10-04 — Fechamento da Fase I (para quem nunca jogou), §13
+
+Branch `dellanio/fase-i-para-quem-nunca-jogou`, sem merge na `main` e sem push.
+
+**A corrida, nesta ordem:**
+1. `npm run verify` completo no `1b5dd08`: 2 494 testes, e 2 492 + 5 pulados no mundo transladado.
+   As chaves foram marcadas com esse selo, pelo portão do hook.
+2. `npm run shot:todos`, num processo destacado: **124 roteiros, 9 com saída diferente de 0.**
+   - **cinco de antes, já no `BUGS.md`:** `D-TELA-04e` (`BUG-ROTEIRO-04E-DELTA-DO-ATLAS`), `D-TELA-05c`
+     e `D-TELA-05d` (`BUG-SAVE-DO-ROTEIRO-TRANSLADADO`), `D-TELA-COSTURA-DOS-TILES` e
+     `D-TELA-VEU-DOS-DETALHES` (`BUG-ROTEIRO-DE-DUAS-ETAPAS`);
+   - **`C-IA-03c`, de antes:** "os três prédios da IA deveriam cair". Já falhava no fechamento da H, e
+     espera o operador (a margem da escaramuça). Rodado sozinho depois da correção abaixo: mesma falha;
+   - **três defeitos da Fase I, corrigidos no `876ec43`:**
+     - `C-COMIDA-01d`: a dica de fome aparecia por cima das cabras e engolia o arrasto da caixa de
+       seleção. A dica e a faixa de passos agora deixam o mouse passar para o mapa, e só os botões
+       delas o recebem. O jogador sofreria o mesmo defeito;
+     - `F-TP`: a linha da aba Cadeias usava `data-predio`, e o seletor `[data-predio="quarry"]` do
+       menu passou a casar dois elementos. Ela usa `data-cadeia`;
+     - `F23b`: o roteiro fotografava a gaveta antes de a aldeia andar 300 ticks, e nesse meio a dica
+       "sem estrada" (o mesmo alerta da F22 que já existia) grava `cangaco:dicas`. A foto passou para
+       o instante antes do Guardar, e a afirmação ficou a mesma.
+     Rodados sozinhos depois da correção, todos saíram 0: `C-COMIDA-01d`, `F-TP`, `F23b` e os quatro
+     roteiros da I.
+3. `npm run verify` completo no `876ec43`: verde (2 494; 2 492 + 5 pulados).
+4. `npm run test:longo`, sozinha, por último: **verde**, 5 + 5 testes, 34 s. O selo é o do `876ec43`
+   (`selo:longo` OK). Este commit de PROGRESS o deixa para trás, como na H.
+
+**As chaves (`test-results.json`):**
+
+```text
+I-TELA-PARTIDA-GUIADA          aprender a jogar                   passa
+I-TELA-DICAS-NA-PRIMEIRA-VEZ   o jogo explica quando acontece     passa
+I-TELA-AJUDA-DAS-CADEIAS       a aba Cadeias da ajuda             passa
+I-ENTREGA-PLAYTEST             gente de fora joga                 false: (a), (b) e (c) verificados;
+                                                                  o fechamento e do operador
+```
+
+**Estado da fase:**
+
+```text
+item                           estado      commit    o que falta
+I-TELA-PARTIDA-GUIADA          fechou      fc1322f   revisar a leitura dos passos (Perguntas em aberto)
+I-TELA-DICAS-NA-PRIMEIRA-VEZ   fechou      2b25335   revisar os gatilhos (Perguntas em aberto)
+I-TELA-AJUDA-DAS-CADEIAS       fechou      7c6e99e   -
+I-ENTREGA-PLAYTEST             espera      1b5dd08   o operador: quem joga, os relatos, o itch.io
+correcoes do shot:todos        fechou      876ec43   -
+C-IA-03c (de antes)            espera      -         o operador: a margem da escaramuca
+5 roteiros com bug registrado  aberto      -         BUGS.md, como antes
+```
+
+**Espera o operador:** o playtest (escolher quem joga, recolher os relatos para `BUGS.md` e
+`BALANCE_LOG.md`) e a abertura da página do itch.io; a revisão das duas leituras conservadoras da I
+(os passos da partida guiada e os gatilhos das dicas), em Perguntas em aberto.
+
+**A seguir (recado do operador, 2026-10-04):** `git merge main` nesta branch (traz o `a8ed630` com
+a leva de 2026-10-04) e a leva na ordem: itens 1, 6, 7 e 9; o 8 e o 10 esperam decisão do operador.
+
