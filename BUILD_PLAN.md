@@ -8563,7 +8563,7 @@ exército e demora a atacar, outra em que ela começa com pouco e constrói, e a
   um cenário** (quem vence, quanto se produz). O resultado de cada cenário se acerta jogando, no
   dado do cenário.
 
-### LEVA2-MOVIMENTO-COLISAO-CIVIL-LIGADA — Civis colidem (integração; muda a sim)
+### I-MOVIMENTO-COLISAO-CIVIL-LIGADA — Civis colidem (integração; muda a sim)
 - **Escopo:** `units.json colisaoCivil.ligada: true` de vez. O GDD §6.4 passa a dizer que civis
   colidem, com a data, a decisão do operador e o motivo dele (o desafio da logística, rua bem
   desenhada contra serf demais), e o registro de 2026-09-28 fica como histórico. O defeito
@@ -8592,7 +8592,7 @@ exército e demora a atacar, outra em que ela começa com pouco e constrói, e a
   - (d) a suíte normal, a transladada e a longa verdes, sem teste pulado: o que sai, sai do arquivo;
   - (e) screenshot da estrada da pedreira com os serfs em tiles distintos.
 
-### LEVA2-COMBATE-ESCARAMUCA-GANHAVEL — A escaramuça de teste volta a ser ganhável
+### I-COMBATE-ESCARAMUCA-GANHAVEL — A escaramuça de teste volta a ser ganhável
 - **Escopo:** a tropa inicial do jogador (`escaramuca.tropaDoJogador.quantidade`, hoje 18) sobe até
   a escaramuça de teste ser ganhável com a névoa. Mede-se 21 e 24, e fica o menor que vence em todos
   os caminhos de ataque que o agente da Fase F tentou (6). É número do cenário, não balanceamento
