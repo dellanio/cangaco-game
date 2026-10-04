@@ -103,6 +103,7 @@ function validarCargaNasMaos(config, erros) {
     return;
   }
   if (!Number.isInteger(config.tamanhoPx) || config.tamanhoPx <= 0) e('tamanhoPx precisa ser inteiro > 0');
+  if (!Number.isFinite(config.escalaDoIconeNaPilha) || config.escalaDoIconeNaPilha <= 0) e('escalaDoIconeNaPilha precisa ser numero > 0');
   for (const d of ['n', 'ne', 'l', 'se', 's']) {
     const p = config.pontos && config.pontos[d];
     if (!p || !Number.isFinite(p.x) || !Number.isFinite(p.y) || typeof p.atras !== 'boolean') {

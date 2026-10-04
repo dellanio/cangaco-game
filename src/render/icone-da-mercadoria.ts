@@ -60,6 +60,12 @@ export function errosDosIconesDeMercadoria(
  *  sem placa some na camisa branca do serf e na grama (medido na captura da D-TELA-03a/03b). */
 export const COR_DA_PLACA_DO_ICONE = 0x2c1d12;
 
+/** G-TELA-ESTOQUE-SEM-PLACA — o icone de pixel art no estoque do predio: sem placa (o sprite ja
+ *  tem fundo transparente) e com o lado multiplicado pela escala do dado. */
+export function iconeNaPilha(ladoDaUnidade: number, escala: number): { readonly placa: false; readonly lado: number } {
+  return { placa: false, lado: (ladoDaUnidade - 3) * escala };
+}
+
 /** O estado unico do icone: a mercadoria inteira, sem pose. */
 export const ESTADO_DO_ICONE = 'mercadoria';
 

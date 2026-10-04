@@ -85,7 +85,8 @@ import {
   type EstadoDeCrescimento, type EstagioDaCultura,
 } from '../crescimento';
 import { iconesDoJogo, manifestoDoJogo, prediosSemArteDaBusca, texturasDosIcones, texturasParaCarregar, atlasesParaCarregar } from '../sprites';
-import { COR_DA_PLACA_DO_ICONE, fonteDaPilha } from '../icone-da-mercadoria';
+import { COR_DA_PLACA_DO_ICONE, fonteDaPilha, iconeNaPilha } from '../icone-da-mercadoria';
+import dadosDaCargaNasMaos from '../../../data/carga-nas-maos.json';
 import type { FonteDaPilha } from '../icone-da-mercadoria';
 import { escalaDoSprite, regraDeLarguraDoManifesto, regraDoManifesto } from '../escala-predio';
 import { centroDesenhado, unidadesNaCaixa, unidadesNoPonto } from '../acerto';
@@ -2490,12 +2491,11 @@ export class WorldScene extends Phaser.Scene {
         const x = px + dx * lado;
         const y = py + dy * lado - lado / 2;
         if (fonte.fonte === 'icone') {
-          // o icone do HUD e traco claro feito para o painel escuro: vai sobre uma placa da cor do
-          // contorno do quadrado, ou some na grama (medido na captura da D-TELA-03b)
-          const placa = this.add.rectangle(x, y, lado - 1, lado - 1, COR_DA_PLACA_DO_ICONE, 1);
+          // G-TELA-ESTOQUE-SEM-PLACA: o icone de pixel art ja tem fundo transparente; sem placa, maior
+          const desenho = iconeNaPilha(lado, dadosDaCargaNasMaos.escalaDoIconeNaPilha);
           const icone = this.add.image(x, y, fonte.chave);
-          icone.setDisplaySize(lado - 3, lado - 3);
-          objetos.push(placa, icone);
+          icone.setDisplaySize(desenho.lado, desenho.lado);
+          objetos.push(icone);
         } else if (fonte.fonte === 'pilha') {
           const imagem = this.add.image(x, y + lado / 2, fonte.chave);
           imagem.setOrigin(0.5, 1);

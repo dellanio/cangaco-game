@@ -19316,3 +19316,17 @@ O operador escolheu a saída (a) para o corpo caído que passa dos 64 px da cél
 está**, porque o corpo esmaece em 1,2 s. A célula não muda e o render não ganha tamanho por animação.
 Se o corte incomodar jogando, a saída que ficou pronta é a (b): uma célula de 96×96 só para a
 `morrer`, num item próprio de render e manifesto. A pergunta saiu de `## Perguntas em aberto`.
+
+## 2026-10-04 — Leva de bugs visuais do operador (branch `dellanio/bugs-visuais-2026-10-04`)
+
+Sete defeitos visuais mandados pelo operador depois de jogar. Os aceites estão no `BUILD_PLAN.md`
+(`0dce31b`). Nada em `src/sim/`.
+
+### G-TELA-ESTOQUE-SEM-PLACA (o estoque sem fundo preto, 20% maior)
+**Verificado:** a pilha que cai no ícone da mercadoria não desenha mais a placa escura
+(`COR_DA_PLACA_DO_ICONE`), e o ícone tem 1,2 vez o lado de antes, lido de
+`data/carga-nas-maos.json:escalaDoIconeNaPilha` (validado em `tools/data-rules.js`).
+`tests/G-TELA-ESTOQUE-SEM-PLACA.test.ts` passa (5). A captura `F-VIVO-a-1-armazem.png` foi aberta: a
+madeira, a pedra, a linguiça e o pão aparecem sem fundo e maiores. O roteiro F-VIVO-a falhou uma vez
+("Execution context was destroyed"); passou na `main` sem a mudança e duas vezes seguidas com ela.
+**Hipótese, não confirmada:** é intermitente, e não desta mudança.
