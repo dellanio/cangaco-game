@@ -8409,6 +8409,38 @@ Regras para os quatro itens:
 
 ---
 
+## Leva de 2026-10-04 — dez itens do operador, na ordem dele
+
+Pedido do operador (2026-10-04): depois dos itens em curso, estes dez, nesta ordem. Uma worktree por
+vez: a leva continua na **mesma worktree da Fase I**, depois que a I fechar, e o merge na `main` é do
+operador. O que pede decisão dele não é decidido: vai para "Perguntas em aberto", e a leva segue.
+
+1. **H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA** (o som com lugar e os sons de trabalho), com o aceite já
+   escrito na Fase H. Aprovados pelo operador: `build-wood` 1, `build-road` 1, `quarry-work` 2,
+   `road-placed` 2 (primeiro impacto) e `command-rejected` 2. Os outros seguem em silêncio.
+2. a 5. **A Fase I**: I-TELA-PARTIDA-GUIADA (aprender a jogar), I-TELA-DICAS-NA-PRIMEIRA-VEZ (o jogo
+   explica quando acontece), I-TELA-AJUDA-DAS-CADEIAS (a ajuda mostra as cadeias) e
+   I-ENTREGA-PLAYTEST (gente de fora joga), já em curso na worktree da I.
+6. **BUG-SAVE-DO-ROTEIRO-TRANSLADADO** (os roteiros da 05c e da 05d leem o save do mundo
+   transladado). Correção escrita no bug: gravar os saves em
+   `${process.env.CANGACO_EVIDENCIA_DIR ?? 'test-output'}`. **Aceite:** `npm run verify` completo e
+   depois `npm run shot -- D-TELA-05c` e `-- D-TELA-05d` saem 0, nessa ordem. As duas chaves voltam
+   a passar no fechamento.
+7. **BUG-ROTEIRO-04E-DELTA-DO-ATLAS** (o roteiro da D-TELA-04e mede menos memória que o atlas).
+   Primeiro se mede a causa, que hoje é hipótese. Se o roteiro estiver errado, ele passa a medir o
+   que a cena normal carrega de fato. Se a memória estiver errada, o defeito vai para o código.
+   **Aceite:** o roteiro sai 0, e o PROGRESS diz qual dos dois era, com a medida.
+8. **BUG-ROTEIRO-DE-DUAS-ETAPAS** (a costura dos tiles e o véu dos detalhes não rodam sozinhos).
+   **Espera a decisão do operador:** separar a comparação antes/depois do roteiro de
+   não-regressão, ou versionar a medida "antes". Sem ela, a sessão registra e pula.
+9. **BUG-ROTEIRO-F-D2-RELOGIO** (o roteiro da F-D2 afirma sobre relógio de parede). Pela §8, a
+   aceleração da câmera se afirma num eixo determinístico, pelos quadros ou pelo passo por quadro,
+   e não pelos pixels andados num tempo de parede. **Aceite:** o roteiro afirma a aceleração sem
+   tempo de parede e sai 0 três vezes seguidas, inclusive dentro do `shot:todos`.
+10. **BUG-CIVIS-EMPILHADOS** (vários serfs desenhados no mesmo tile). **Espera a decisão do
+    operador:** religar a colisão civil ou só espalhar na tela os civis do mesmo tile. Sem ela, a
+    sessão registra e pula.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
