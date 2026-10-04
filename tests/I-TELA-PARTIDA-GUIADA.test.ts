@@ -221,5 +221,8 @@ describe('I-TELA-PARTIDA-GUIADA — aprender a jogar', () => {
     expect(com.tick).toBe(CORRIDA.estado.tick);
     expect(JSON.stringify(com)).toBe(JSON.stringify(sem));
     expect(JSON.stringify(sem)).toBe(JSON.stringify(CORRIDA.estado));
-  });
+    // Duas partidas inteiras de ~4 900 ticks pelo `step`: com a colisao civil ligada
+    // (I-MOVIMENTO-COLISAO-CIVIL-LIGADA) passou dos 5 s padrao na suite transladada. O limite e
+    // para o caso travar, nao afirma tempo (CLAUDE.md §8).
+  }, 60_000);
 });
