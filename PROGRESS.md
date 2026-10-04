@@ -19301,3 +19301,103 @@ C-IA-03c (de antes)            espera      -         o operador: a margem da esc
 **A seguir (recado do operador, 2026-10-04):** `git merge main` nesta branch (traz o `a8ed630` com
 a leva de 2026-10-04) e a leva na ordem: itens 1, 6, 7 e 9; o 8 e o 10 esperam decisão do operador.
 
+
+## 2026-10-03 — D-ARTE-PIXEL-ART-CIVIS: mercadorias, carga nas mãos e as profissões civis em pixel art (TESTE)
+
+Branch `serf-pixelart`, worktree irmã. **Teste de arte; não vai para a `main` sem decisão do
+operador.** Arte gerada no PixelLab (assinatura do operador, Tier 1, 2000 gerações no ciclo que
+renova em 2026-11-03). Os ids de cada personagem estão em
+`D:\projetos-pessoal\cangaco-game-candidatos\arte\pixelart\ids.json`, e no `origem.nota` de cada
+entrada do manifesto.
+
+**Verificado (aberto ou rodado nesta sessão):**
+- As 28 mercadorias da economia têm sprite 32×32 em `assets/sprites/mercadorias/` (base em
+  `assets/base/mercadorias/`). O `F17f-manifesto` passou a exigir as 28, e não as 8 de antes.
+- O serf com carga anda na pose de braços erguidos (`carregando`), e o render põe o sprite da
+  mercadoria no ponto de `data/carga-nas-maos.json`, atrás do corpo quando ele anda para o norte.
+  Roteiro `D-ARTE-SERF-COMFYUI` verde, captura `screenshots/D-ARTE-SERF-COMFYUI-3-serf-carregando.png`
+  aberta: a pedra aparece entre as mãos do serf que anda para o leste.
+- Profissões civis com atlas de pixel art (parado + andar de 8 quadros, 5 direções, pé na linha 90,
+  célula 64×96), conferidas numa folha de revisão: as 13 profissões além do serf (obreiro, pedreiro,
+  lenhador, carpinteiro, fazendeiro, padeiro, criador, carneador, pescador, mineiro, fundidor,
+  ferreiro e aprendiz). Todas com o pé medido na linha 90 em todos os quadros.
+- O criador saiu na primeira geração com cabeça de bode (o texto "goat herder"); foi refeito com
+  outro texto, e o primeiro ficou registrado como `animal_breeder_v1_cabeca_de_bode` no `ids.json`.
+
+**Defeitos vistos, não corrigidos (custo de nova geração):** o obreiro, andando para o leste, perde a
+marreta em alguns quadros; lenhador, fazendeiro, padeiro e mineiro encostam a ferramenta na borda da
+célula de 64 px (largura máxima medida: 64); o criador perde o cajado nos últimos quadros do leste e
+do nordeste. Os militares ficaram de fora: o pedido do operador foi "as demais profissões", e as
+unidades militares ficam para decisão dele.
+
+**Como se refaz:** os scripts ficam no scratchpad da sessão e não sobrevivem a ela. O método: baixar o
+zip do personagem (`https://api.pixellab.ai/mcp/characters/<id>/download`), colar cada quadro de 76 px
+centrado numa célula 64×96 com o pé na linha 90, montar o atlas `<tipo>/<anim>/<dir>/<nnnn>` e
+trocar só a entrada do tipo no manifesto, por splice de texto (o manifesto é CRLF).
+
+**Incidente:** por uns 10 minutos o PixelLab recusou todo pedido ("Service hiccup talking to the
+database"). Os pedidos que falharam não foram cobrados, e o serviço voltou sozinho.
+
+## 2026-10-03 — D-ARTE-PIXEL-ART-MILITARES: os militares, o obreiro refeito e a pedreira em pixel art
+
+Pedido do operador: gerar os militares, refazer o obreiro a partir de uma imagem dele (macacão de
+uma alça, peito nu, capacete, martelo), dar arte ao obreiro construindo e converter a pedreira
+pintada em pixel art "sem mudar os traços". No fim, o merge na `main`, que ele autorizou.
+
+**Verificado (aberto ou rodado nesta sessão):**
+- O obreiro novo tem `parado`, `andar` e `trabalhar` (martelada de 8 quadros, que o PixelLab
+  desenhou com uma faísca no golpe) nas 5 direções. O roteiro novo `D-ARTE-PIXEL-ART-MILITARES` sai
+  0: um obreiro nivela a estrada passando por `laborer/trabalhar/l/0000..0002`, e a captura
+  `screenshots/D-ARTE-PIXEL-ART-MILITARES-1-obreiro-trabalhando.png` foi aberta.
+- Os sete militares a pé (cabra, cabra de gibão, valente, bodoqueiro, cabra de fogo, aguilhadeiro e
+  ferrão) têm `parado`, `andar` e `atacar` (8 quadros) nas 5 direções, na célula 64×96 com o pé na
+  linha 90. Os dois montados (vaqueiro e capitão do bando) têm o mesmo na célula 128×128 com o pé
+  na linha 122 (emenda do aceite: o cavalo mede até 108 px). As folhas foram conferidas.
+- A pedreira foi convertida sem redesenho por `tools/arte/pixelar-predio.py`: reduz a 2×2 por pixel,
+  usa 40 cores e põe um contorno de 1 pixel. As versões pintadas continuam no disco, e o manifesto
+  aponta para `quarry_*-pixel.png`.
+- **Defeito de render achado e corrigido:** com o cabra e o obreiro ganhando atlas real, o
+  `?depuracao` passou a carregar o atlas real no lugar do de depuração, e o roteiro D-TELA-05c
+  falhou. A causa é a lista da carga tardia (`atlasesDisponiveis`, em `WorldScene`), que punha o
+  real antes. A primeira hipótese, a do `preload`, sozinha não bastou. Agora o de depuração vence
+  nos dois pontos (tabela em `tests/D-ARTE-PIXEL-ART-MILITARES.test.ts`), e D-TELA-04b, 04c, 04d,
+  05b, 05c, F-VIVO-d e D-ARTE-SERF-COMFYUI saem 0.
+- **O vaqueiro montado** saiu duas vezes com os rótulos de direção girados 45° (o sul de verdade no
+  rótulo `south-east`). O atlas remapeia as direções, sem nova geração, e o primeiro ficou registrado
+  como `scout_v1_direcoes_giradas` no `ids.json`.
+
+**Defeitos vistos, não corrigidos:** o aguilhadeiro de costas perde a vara no ataque; o andar dos
+montados mexe pouco as pernas do cavalo; o ataque do aguilhadeiro para o sul encurta a vara (ela
+aponta para a câmera).
+
+**Merge na `main` (autorizado pelo operador, 2026-10-03):** a branch `serf-pixelart` foi mesclada
+com a `main` que já tinha a Fase F (névoa). O único conflito foi o PROGRESS: as duas entradas ficaram,
+a da `main` primeiro. As entradas de arte acima, marcadas como TESTE, valem agora como arte do jogo.
+
+**O serf carregando de frente (pedido do operador, 2026-10-03):** "está com os braços muito
+abertos, não parece que está segurando o material". O `carregando` do sul e do sudeste foi gerado de
+novo (PixelLab v3, grupos `carregar-junto` e `carregar-junto-se` do estado 98e6a675), com os
+antebraços juntos à frente da barriga. O ponto da carga no sudeste foi de x 13 para 10. Verificado
+numa composição da pedra sobre os quadros do atlas, antes e depois. A captura do roteiro desta corrida
+mostra carregadores andando para leste e oeste, e não de frente.
+
+## 2026-10-04 — Som do trabalho e som na distância (pedido do operador)
+
+O operador pediu três sons que faltavam: o laborer construindo prédio ("batendo tábua"), o laborer
+construindo rua, e a pedreira trabalhando. Pediu também que o som de cada prédio dependa da
+distância até o foco da câmera: perto toca, longe baixa, e fora de alcance para. Isso virou o item
+H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA, no fim da Fase H do `BUILD_PLAN.md`. Ele roda depois que a I
+fechar, porque o operador decidiu uma worktree por vez.
+- Seis candidatos novos, todos CC0 conferidos na página em 2026-10-04, estão em
+  `docs/sons-candidatos.md` e esperam a aprovação dele.
+- Leitura conservadora (PARA REVISÃO): os sons de trabalho saem do estado da unidade, como a
+  animação de trabalho, sem evento novo na sim. O som sem lugar (paz, vitória, derrota, recusa,
+  ambiente, música) não muda.
+
+**Pedreira de volta à arte pintada (pedido do operador, 2026-10-03):** o manifesto volta a apontar
+para `quarry_completo-D.png` e `quarry_madeira-D-preview.png`, e os dois PNG em pixel art saíram do
+repositório. O script `tools/arte/pixelar-predio.py` fica, e refaz a conversão se ela for pedida.
+O `verify:rapido` deste commit sai vermelho por um teste que não é desta mudança:
+`tests/H-ARTE-SONS-APROVADOS.test.ts` ("linha sem aprovacao ... fora do manifesto") falha também na `main`
+em `579f25f` sem ela (conferido com a mudança guardada no stash). Ele vem dos aceites do
+H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA, da outra sessão, e fica com ela. Os testes do manifesto passam.

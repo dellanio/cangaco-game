@@ -406,13 +406,14 @@ describe('D-ARTE-01 — icones.mercadorias aponta os icones que ja existem', () 
   const mercadorias = gameData.economia.mercadorias;
   const dimensao = (arquivo: string): [number, number] | null =>
     existsSync(`assets/${arquivo}`) ? dimensaoDoPng(`assets/${arquivo}`) : null;
-  const ESPERADAS = ['coal', 'corn', 'fish', 'gold', 'gold_ore', 'iron_ore', 'stone', 'timber'];
+  // D-ARTE-PIXEL-ART-CIVIS (teste de pixel art): todas as 28 mercadorias tem sprite, e nao so as 8 da D-ARTE-01.
+  const ESPERADAS = [...mercadorias].sort();
 
   it('o manifesto real passa: todo id e mercadoria, todo arquivo existe com o tamanho declarado', () => {
     expect(errosDosIconesDeMercadoria(icones, mercadorias, dimensao)).toEqual([]);
   });
 
-  it('sao exatamente as 8 do escopo', () => {
+  it('sao exatamente as 28 mercadorias da economia', () => {
     expect(entradasDosIcones(icones).map(([id]) => id).sort()).toEqual(ESPERADAS);
   });
 

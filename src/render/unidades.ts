@@ -66,7 +66,10 @@ import { assetDaCamada } from './manifesto';
 import { peDoSprite } from './pe-do-sprite';
 import { atualizarVirada, iniciarVirada } from './virada-de-unidade';
 import type { MemoriaDaVirada } from './virada-de-unidade';
-import { acaoDaUnidade, direcaoDoTrabalho } from './acao-de-unidade';
+import { acaoDaUnidade, animacaoComCarga, direcaoDoTrabalho } from './acao-de-unidade';
+import dadosDaCargaNasMaos from '../../data/carga-nas-maos.json';
+import { pontoDaCargaNasMaos } from './carga-nas-maos';
+import type { CargaNasMaos } from './carga-nas-maos';
 import type { MemoriaDeAcao } from './acao-de-unidade';
 
 /** O que a camada desenhou de uma unidade, para o roteiro afirmar (`window.__cangaco`). */
@@ -291,6 +294,25 @@ export function criarCamadaDeUnidades(
       } else if (item.iconeDaCarga.texture.key !== marca.chave) {
         item.iconeDaCarga.setTexture(marca.chave);
       }
+      // D-ARTE-PIXEL-ART-CIVIS: com a pose de carregar, a mercadoria vai entre as maos, sem placa;
+      // sem ela, o icone sobre a cabeca de hoje (D-TELA-03a).
+      const config = dadosDaCargaNasMaos as unknown as CargaNasMaos;
+      if (item.animacao === 'carregando') {
+        const ponto = pontoDaCargaNasMaos(item.direcao, config);
+        item.iconeDaCarga.setPosition(ponto.x, ponto.y);
+        item.iconeDaCarga.setDisplaySize(config.tamanhoPx, config.tamanhoPx);
+        const indice = item.container.getIndex(item.iconeDaCarga);
+        const indiceDoCorpo = item.imagem ? item.container.getIndex(item.imagem) : -1;
+        if (ponto.atras && indice > indiceDoCorpo && indiceDoCorpo >= 0) item.container.moveBelow(item.iconeDaCarga, item.imagem!);
+        if (!ponto.atras && indice < indiceDoCorpo) item.container.moveAbove(item.iconeDaCarga, item.imagem!);
+        item.iconeDaCarga.setVisible(true);
+        item.placaDoIcone?.setVisible(false);
+        return marca.como;
+      }
+      item.iconeDaCarga.setPosition(0, -lado * ALTURA_DA_CARGA_EM_LADOS);
+      if (item.imagem && item.container.getIndex(item.iconeDaCarga) < item.container.getIndex(item.imagem)) {
+        item.container.moveAbove(item.iconeDaCarga, item.imagem);
+      }
       item.iconeDaCarga.setDisplaySize(lado * LADO_DO_ICONE_DA_CARGA_EM_LADOS, lado * LADO_DO_ICONE_DA_CARGA_EM_LADOS);
     }
     item.iconeDaCarga?.setVisible(marca.como === 'icone');
@@ -406,7 +428,7 @@ export function criarCamadaDeUnidades(
             item.virada = acao === 'atacar' && alvo ? iniciarVirada(alvo, tempoDeAnimacao(estado.tick, alfa))
               : atualizarVirada(item.virada, alvo, tempoDeAnimacao(estado.tick, alfa), configAnimacao.passoDaViradaTicks);
             item.direcao = item.virada.visivel;
-            item.animacao = acao;
+            item.animacao = animacaoComCarga(acao, Boolean(unidade.fsmData.carga), entradaAnimada.animacoes);
             const animacao = entradaAnimada.animacoes?.[item.animacao];
             item.spriteAnimado = null;
             item.quadro = 0;

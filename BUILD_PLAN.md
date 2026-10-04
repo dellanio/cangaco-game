@@ -6161,6 +6161,96 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
   4. o registro no `SKILL_BUILDER_PROGRESS.md`: o prompt, a referência, os hashes e as gerações
      gastas.
 
+### D-ARTE-PIXEL-ART-CIVIS — Teste do pixel art: as 28 mercadorias, a carga nas mãos e os civis
+- **Pedido do operador (2026-10-03, teste de pixel art, branch `serf-pixelart`, sem merge na
+  `main`):** "mapear todos os itens do jogo e criar sprites para cada um, seguindo a temática;
+  terminando os produtos e o serf, passar para todas as demais profissões". A arte é do PixelLab
+  (MCP), no modo `v3`, com canvas de 76 px. O boneco tem cerca de 74 px de altura, a altura do
+  laborer (73), aprovada no serf.
+- **Decisão da carga (operador, 2026-10-03):** uma pose de carregar com as mãos vazias, e o render
+  desenha o sprite da mercadoria entre as mãos, em vez de uma animação por mercadoria. Uma pose
+  vale para as 28 mercadorias, e mercadoria nova custa só o sprite dela.
+- **Feature de integração de arte e render,** só na branch de teste. Nada em `src/sim/`.
+- **Aceite (escrito antes do código, 2026-10-03):**
+  1. **As 28 mercadorias** de `economia.mercadorias` têm um sprite em
+     `assets/sprites/mercadorias/<id>.png` e uma entrada `icones.mercadorias` no manifesto. O
+     validador do manifesto (o `F17f`, as regras da D-ARTE-01) passa nas 28.
+  2. **A carga nas mãos:** a regra pura `pontoDaCargaNasMaos(direcao)` diz onde fica a mercadoria
+     relativa ao pé, e se ela vai à frente ou atrás do corpo. Os números ficam num dado de render,
+     com caso por direção na tabela do teste. O serf com carga e com a animação `carregar` desenha
+     o sprite da mercadoria nesse ponto, no lugar do ícone sobre a cabeça. Sem a animação, fica o
+     ícone de hoje (D-TELA-03a).
+  3. **Os civis em pixel art:** cada profissão de `civis` ganha `atlas` e `animacoes` (parado e
+     andar, 8 quadros, 5 direções e o oeste por espelho) no manifesto, com o pé na linha 90 e a
+     célula de 64×96. O validador de atlas passa. A profissão que não ficar pronta fica com a arte
+     de hoje e entra no relatório.
+  4. **No jogo:** o roteiro `D-ARTE-SERF-COMFYUI` sai 0, e a captura com serfs carregando e civis
+     andando é aberta.
+  5. **Não-regressão:** os testes de manifesto, de animação (D-TELA-04b e D-TELA-05c) e da carga
+     (D-TELA-SERF-CARREGANDO) passam, e `git diff main -- src/sim` fica vazio.
+
+### D-ARTE-PIXEL-ART-MILITARES — Os militares em pixel art, o obreiro refeito e o obreiro trabalhando
+
+- **Pedido do operador (2026-10-03, no teste de pixel art):** "Aprovado, gere as unidades militares.
+  O laborer ficou ruim, use como inspiração essa imagem" (um obreiro de macacão de brim
+  ferrugem, uma alça caída, peito nu, capacete, martelo de unha, barra dobrada e botina) e "a
+  animação do laborer construindo os edifícios e ruas já está pronta? Se tiver, crie a arte para
+  isso também, e pode fazer o merge no final".
+- **O que já existe:** o render já escolhe a ação `trabalhar` para o obreiro que está `nivelando` ou
+  `martelando` (`src/render/acao-de-unidade.ts`), e `atacar` para o militar que luta. Falta só a
+  arte: a entrada do manifesto sem a animação cai no quadro parado, como hoje.
+- **Feature de arte e manifesto.** Nada em `src/sim/`. O render muda num ponto só (aceite 7).
+- **Emenda (2026-10-03, antes do código, pela medida):** com o cabra e o obreiro ganhando atlas
+  real, o roteiro D-TELA-05c falhou ("corpo inicia no quadro zero"). Hipótese: no `preload` da
+  cena, o atlas de depuração e o real do mesmo tipo entram na fila com a mesma chave
+  (`unidade:<tipo>:atlas`), e o real ocupa o lugar do de depuração, que é o que tem a morte.
+- **Os nove militares da camada sertão:** cabra, cabra de gibão, valente, bodoqueiro, cabra de
+  fogo, aguilhadeiro, ferrão, vaqueiro (montado) e capitão do bando (montado). Os mercenários não
+  têm entrada no manifesto e ficam de fora.
+- **Aceite (escrito antes do código, 2026-10-03):**
+  1. **Os sete militares a pé** têm atlas com `parado`, `andar` (8 quadros) e `atacar`, nas 5
+     direções canônicas (o oeste por espelho), na célula 64×96 com o pé na linha 90. Os dois
+     montados têm `parado`, `andar` e `atacar` numa célula de 128×128, com o pé na linha 122.
+     **Emenda (2026-10-03, antes do atlas, pela medida):** o cavalo de lado mede até 108 px de
+     largura e não cabe nos 96 px da entrada de hoje; a entrada dos dois passa a `tamanho`
+     [128, 128].
+  2. **O obreiro refeito** a partir da imagem do operador tem `parado`, `andar` e `trabalhar`
+     (golpe de martelo) nas 5 direções, na célula 64×96 com o pé na linha 90.
+  3. Cada entrada nova do manifesto aponta para o atlas, e o validador do manifesto (`F17f`) e o
+     carregamento (`F-SPR-carregamento`) passam.
+  4. **Evidência:** a folha de revisão de cada unidade é aberta, e a captura de um roteiro em que um
+     obreiro trabalha mostra o quadro de `trabalhar` do atlas novo.
+  5. **Não-regressão:** os testes de manifesto e de animação (D-TELA-04b, D-TELA-05c,
+     D-TELA-SERF-CARREGANDO) passam, e `git diff main -- src/sim` continua vazio.
+  6. **O merge na `main`** fica autorizado pelo operador ao fim, depois do `verify:rapido` verde,
+     sem tocar o trabalho da outra sessão (a névoa).
+  7. **No modo `?depuracao=<tipos>`, o atlas de depuração vence o real do mesmo tipo:** a regra pura
+     que decide o que o `preload` enfileira não devolve o atlas real de um tipo cujo atlas de
+     depuração já entrou (teste por tabela), e o roteiro D-TELA-05c sai 0.
+
+### D-TELA-SERF-CARREGANDO — O serf anda com os braços levando a carga
+- **Pedido do operador (2026-10-03, no teste de pixel art):** "o serf está carregando os produtos
+  com o braço pra baixo e deveria simular os braços levando um produto". **Feature de integração
+  de render e arte:** o render e o manifesto. Nada em `src/sim/`.
+- **Escopo:**
+  - a arte ganha a animação `carregando` (8 quadros nas 5 direções, o oeste por espelho), com os
+    braços dobrados segurando um saco neutro à frente do peito. O ícone da mercadoria continua por
+    cima (D-TELA-03a);
+  - o render troca o `andar` por `carregando` quando a unidade leva carga (`fsmData.carga`) e a
+    entrada do manifesto tem a animação `carregando`. Sem ela, fica o `andar` de hoje. O quadro do
+    `carregando` segue a distância, como o `andar`.
+- **Aceite (escrito antes do código, 2026-10-03):**
+  1. **A regra pura** `animacaoComCarga(acao, temCarga, animacoes)`, por tabela: `andar` com carga e
+     com `carregando` no manifesto vira `carregando`; sem carga, sem a animação, ou com outra ação
+     (`parado`, `trabalhar`, `atacar`), a ação não muda.
+  2. **O atlas** tem `serf/carregando/<dir>/0000..0007` nas 5 direções, e o `F17f-manifesto` (o
+     validador de atlas) passa.
+  3. **No jogo,** o roteiro `D-ARTE-SERF-COMFYUI` ganha a afirmação: o serf que anda com `carga`
+     publica `animacao` `carregando` e um `frame` `serf/carregando/...`, e o que anda sem carga
+     publica `andar`. As capturas são abertas.
+  4. **Não-regressão:** os testes da D-TELA-05c e da D-TELA-04b e os roteiros `D-TELA-04c` e
+     `D-TELA-03` saem 0; `git diff main -- src/sim` vazio.
+
 ### D-ARTE-SERF-COMFYUI — O serf animado gerado no ComfyUI local, no jogo
 - **Pedido do operador (2026-10-03):** "gere e já atribua no jogo as animações. Quero ver já
   funcionando no jogo". A arte sai do ComfyUI local (SDXL DreamShaper XL Turbo + IP-Adapter Plus +
@@ -8214,6 +8304,46 @@ fechada. Módulo próprio para som é decisão do operador (PARA REVISÃO).
   `docs/sons-candidatos.md`; (c) o build (E-ENTREGA-BUILD) leva os sons, e o tamanho deles vai para
   o PROGRESS como medida.
 
+### H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA — O som de cada prédio vem do lugar dele (pedido do operador, 2026-10-04)
+- **Pedido do operador, nas palavras dele:** "o som de cada edifício só deve aparecer quando o foco
+  da tela estiver próximo da visão daquele edifício; se o foco sair de perto o som para de tocar, e
+  quanto mais longe, o volume diminui". E faltam três sons: "o laborer construindo as coisas, tanto
+  as ruas como os edifícios (som de batendo tábua)", e "a pedreira trabalhando, quebrando pedra ou
+  batendo em pedras".
+- **Ordem:** uma worktree por vez (decisão do operador). Este item roda **depois que a Fase I
+  fechar**, e não na worktree dela.
+- **Escopo (só tela; a sim não muda):**
+  - **Som com lugar.** Todo som que nasce de um prédio ou de uma unidade tem posição: o
+    `goods-produced`, o `building-completed`, o `building-hit`, o sino da Bodega e os três sons de
+    trabalho novos. O volume dele cai com a distância entre essa posição e o **centro da câmera**,
+    até um raio no dado (`data/som.json`). Fora do raio ele não toca, e o que está tocando em laço
+    para. O que não tem lugar (fim da paz, vitória, derrota, recusa de comando, o ambiente e a
+    música) não muda.
+  - **Os três sons de trabalho**, derivados do estado por seletor puro, como a animação de trabalho
+    (`src/render/acao-de-unidade.ts`), sem evento novo na sim: `build-wood` com o laborer
+    `martelando` numa obra de prédio; `build-road` com o laborer `nivelando` ou `martelando` num
+    tile de estrada; `quarry-work` com o cabouqueiro trabalhando a pedra. Tocam em laço enquanto o
+    estado dura e há alguém trabalhando ali, com teto de vozes no dado.
+  - **O tile de rua pedido** (pedido do operador, 2026-10-04: "um som simples para toda vez que eu
+    solicitar a construção de um tile de rua"): `road-placed`, tocado pelo input a cada tile de rua
+    que o `PlaceRoad` aceita, como a planta posicionada (`blueprint-placed`). Arrastar uma rua de N
+    tiles toca no máximo um por quadro (o teto que já existe), e o tile recusado toca a recusa, não
+    este. É som de interface, sem lugar: não cai com a distância.
+  - Os candidatos CC0 estão em `docs/sons-candidatos.md` (`build-wood`, `build-road`,
+    `quarry-work`, `road-placed`), com a licença conferida na página em 2026-10-04. **Nenhum se baixa sem a coluna
+    "aprovado" preenchida pelo operador**; até lá, silêncio.
+- **Aceite:**
+  - (a) a função pura "posição do som + centro da câmera → volume" por tabela: o volume cheio no
+    centro, caindo com a distância, e zero no raio e além dele;
+  - (b) a função pura "estado → sons de trabalho a tocar" por tabela: o laborer na obra, o laborer
+    na estrada, o cabouqueiro, ninguém trabalhando (silêncio), e o teto de vozes;
+  - (c) roteiro com a câmera sobre uma obra, depois longe dela: o contador de sons mostra o laço
+    tocando perto e parado longe, e o volume pedido menor a meia distância do que no centro;
+  - (d) a mesma partida com e sem som dá o mesmo estado, byte a byte;
+  - (f) a função pura do som do tile de rua por tabela: um tile aceito toca uma vez, N tiles no
+    mesmo quadro tocam uma vez, e o tile recusado não toca o `road-placed`;
+  - (e) os sons aprovados entram como na H-ARTE-SONS-APROVADOS, com licença e link no manifesto.
+
 ## Fase I — Para quem nunca jogou
 
 A H fechou e foi mesclada (`55393a5`, 2026-10-04, aprovada pelo operador). O alvo da I é o critério de
@@ -8278,6 +8408,38 @@ Regras para os quatro itens:
   os relatos registrados e a página do itch.io aberta para outras pessoas.
 
 ---
+
+## Leva de 2026-10-04 — dez itens do operador, na ordem dele
+
+Pedido do operador (2026-10-04): depois dos itens em curso, estes dez, nesta ordem. Uma worktree por
+vez: a leva continua na **mesma worktree da Fase I**, depois que a I fechar, e o merge na `main` é do
+operador. O que pede decisão dele não é decidido: vai para "Perguntas em aberto", e a leva segue.
+
+1. **H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA** (o som com lugar e os sons de trabalho), com o aceite já
+   escrito na Fase H. Aprovados pelo operador: `build-wood` 1, `build-road` 1, `quarry-work` 2,
+   `road-placed` 2 (primeiro impacto) e `command-rejected` 2. Os outros seguem em silêncio.
+2. a 5. **A Fase I**: I-TELA-PARTIDA-GUIADA (aprender a jogar), I-TELA-DICAS-NA-PRIMEIRA-VEZ (o jogo
+   explica quando acontece), I-TELA-AJUDA-DAS-CADEIAS (a ajuda mostra as cadeias) e
+   I-ENTREGA-PLAYTEST (gente de fora joga), já em curso na worktree da I.
+6. **BUG-SAVE-DO-ROTEIRO-TRANSLADADO** (os roteiros da 05c e da 05d leem o save do mundo
+   transladado). Correção escrita no bug: gravar os saves em
+   `${process.env.CANGACO_EVIDENCIA_DIR ?? 'test-output'}`. **Aceite:** `npm run verify` completo e
+   depois `npm run shot -- D-TELA-05c` e `-- D-TELA-05d` saem 0, nessa ordem. As duas chaves voltam
+   a passar no fechamento.
+7. **BUG-ROTEIRO-04E-DELTA-DO-ATLAS** (o roteiro da D-TELA-04e mede menos memória que o atlas).
+   Primeiro se mede a causa, que hoje é hipótese. Se o roteiro estiver errado, ele passa a medir o
+   que a cena normal carrega de fato. Se a memória estiver errada, o defeito vai para o código.
+   **Aceite:** o roteiro sai 0, e o PROGRESS diz qual dos dois era, com a medida.
+8. **BUG-ROTEIRO-DE-DUAS-ETAPAS** (a costura dos tiles e o véu dos detalhes não rodam sozinhos).
+   **Espera a decisão do operador:** separar a comparação antes/depois do roteiro de
+   não-regressão, ou versionar a medida "antes". Sem ela, a sessão registra e pula.
+9. **BUG-ROTEIRO-F-D2-RELOGIO** (o roteiro da F-D2 afirma sobre relógio de parede). Pela §8, a
+   aceleração da câmera se afirma num eixo determinístico, pelos quadros ou pelo passo por quadro,
+   e não pelos pixels andados num tempo de parede. **Aceite:** o roteiro afirma a aceleração sem
+   tempo de parede e sai 0 três vezes seguidas, inclusive dentro do `shot:todos`.
+10. **BUG-CIVIS-EMPILHADOS** (vários serfs desenhados no mesmo tile). **Espera a decisão do
+    operador:** religar a colisão civil ou só espalhar na tela os civis do mesmo tile. Sem ela, a
+    sessão registra e pula.
 
 ## Backlog com gatilho
 

@@ -27,9 +27,11 @@ export interface TexturaParaCarregar {
 export interface AtlasParaCarregar extends TexturaParaCarregar { readonly dados: object }
 export function atlasesParaCarregar(manifesto: Manifesto = manifestoDoJogo,
   urls: Readonly<Record<string,string>> = urlsDeSprites,
-  dados: Readonly<Record<string,object>> = dadosDosAtlases): AtlasParaCarregar[] {
+  dados: Readonly<Record<string,object>> = dadosDosAtlases,
+  /** D-ARTE-PIXEL-ART-MILITARES: chaves ja enfileiradas pela depuracao; o atlas dela vence o real. */
+  jaNaFila: ReadonlySet<string> = new Set()): AtlasParaCarregar[] {
   return manifesto.assets.flatMap((a) => {
-    if (a.tipo !== 'unidade' || !a.atlas || !dados[a.atlas]) return [];
+    if (a.tipo !== 'unidade' || !a.atlas || !dados[a.atlas] || jaNaFila.has(chaveDoAtlas(a.id))) return [];
     const atlas = dados[a.atlas] as { meta?: { image?: string } };
     const image = atlas.meta?.image;
     if (!image || image.includes('..') || image.includes('/') || image.includes('\\')) return [];
