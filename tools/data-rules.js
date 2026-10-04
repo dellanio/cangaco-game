@@ -1872,9 +1872,15 @@ function validarSom(som, erros, opcoes = {}) {
     if (!(typeof musica.transicaoSegundos === 'number' && musica.transicaoSegundos > 0)) e('musica.transicaoSegundos precisa ser > 0: a troca de faixa nao corta');
   }
   const doManifesto = manifesto && manifesto.sons && typeof manifesto.sons === 'object' ? manifesto.sons : {};
-  for (const id of Object.keys(doManifesto)) {
+  for (const [id, def] of Object.entries(doManifesto)) {
     if (id.startsWith('_')) continue;
     if (!Object.prototype.hasOwnProperty.call(sons, id)) e(`o manifesto tem o som '${id}', que data/som.json nao toca`);
+    // H-ARTE-SONS-APROVADOS: todo som do manifesto e CC0, com o link da pagina e o arquivo em sons/
+    if (!def || typeof def.licenca !== 'string' || !def.licenca.startsWith('CC0')) e(`manifesto, som '${id}': licenca precisa ser CC0`);
+    if (!def || typeof def.origem !== 'string' || !/^https:\/\/(freesound\.org\/people|opengameart\.org\/content)\//.test(def.origem)) {
+      e(`manifesto, som '${id}': origem precisa ser o link da pagina do som (Freesound ou OpenGameArt)`);
+    }
+    if (!def || typeof def.arquivo !== 'string' || !/^sons\/[a-z0-9-]+\.mp3$/.test(def.arquivo)) e(`manifesto, som '${id}': arquivo precisa ser sons/<id>.mp3`);
   }
 }
 

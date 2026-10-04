@@ -3269,5 +3269,250 @@
         }
       }
     }
+  },
+  "sons": {
+    "_doc": "H-ARTE-SONS-APROVADOS. Os sons aprovados pelo operador em docs/sons-candidatos.md, gerados por tools/baixar-sons.js. `arquivo` e o derivado que o jogo toca (relativo a esta pasta); `base` o original baixado (registro, fora do build); `origem` a pagina do som, onde a licenca foi conferida; `recorte` o que foi tirado do original (null = inteiro, so convertido para mp3 128 kbps).",
+    "blueprint-placed": {
+      "arquivo": "sons/blueprint-placed.mp3",
+      "base": "base/sons/blueprint-placed/original.mp3",
+      "licenca": "CC0 1.0",
+      "origem": "https://freesound.org/people/CuboRodante/sounds/812363/",
+      "autor": "CuboRodante",
+      "titulo": "Knocking once on wood, single footstep",
+      "baixadoDe": "https://cdn.freesound.org/previews/812/812363_17517436-hq.mp3",
+      "nota": "preview HQ do Freesound (o original pede login)",
+      "aprovado": "1",
+      "duracaoOriginal": 1.109,
+      "duracao": 1.064,
+      "recorte": {
+        "silencioInicial": true
+      }
+    },
+    "building-completed": {
+      "arquivo": "sons/building-completed.mp3",
+      "base": "base/sons/building-completed/original.mp3",
+      "licenca": "CC0 1.0",
+      "origem": "https://freesound.org/people/dnewtonjr/sounds/189785/",
+      "autor": "dnewtonjr",
+      "titulo": "Cow Bell.wav",
+      "baixadoDe": "https://cdn.freesound.org/previews/189/189785_2800743-hq.mp3",
+      "nota": "preview HQ do Freesound (o original pede login)",
+      "aprovado": "1",
+      "duracaoOriginal": 14,
+      "duracao": 2.5,
+      "recorte": {
+        "silencioInicial": true,
+        "duracao": 2.5,
+        "fade": 0.5
+      }
+    },
+    "goods-produced": {
+      "arquivo": "sons/goods-produced.mp3",
+      "base": "base/sons/goods-produced/original.mp3",
+      "licenca": "CC0 1.0",
+      "origem": "https://freesound.org/people/Julien_Matthey/sounds/118341/",
+      "autor": "Julien_Matthey",
+      "titulo": "JM_TOOLS_Hammer 01 - Nail in Wood - In a Room.wav",
+      "baixadoDe": "https://cdn.freesound.org/previews/118/118341_1535323-hq.mp3",
+      "nota": "preview HQ do Freesound (o original pede login)",
+      "aprovado": "1",
+      "duracaoOriginal": 25.623,
+      "duracao": 1,
+      "recorte": {
+        "silencioInicial": true,
+        "duracao": 1,
+        "fade": 0.2
+      }
+    },
+    "unit-trained": {
+      "arquivo": "sons/unit-trained.mp3",
+      "base": "base/sons/unit-trained/original.mp3",
+      "licenca": "CC0 1.0",
+      "origem": "https://freesound.org/people/metrostock99/sounds/345083/",
+      "autor": "metrostock99",
+      "titulo": "HEY VERY LOW 4.WAV",
+      "baixadoDe": "https://cdn.freesound.org/previews/345/345083_1256155-hq.mp3",
+      "nota": "preview HQ do Freesound (o original pede login)",
+      "aprovado": "1",
+      "duracaoOriginal": 0.569,
+      "duracao": 0.459,
+      "recorte": {
+        "silencioInicial": true
+      }
+    },
+    "strike-hit": {
+      "arquivo": "sons/strike-hit.mp3",
+      "base": "base/sons/strike-hit/original.mp3",
+      "licenca": "CC0 1.0",
+      "origem": "https://freesound.org/people/qubodup/sounds/442769/",
+      "autor": "qubodup",
+      "titulo": "Sword Hit",
+      "baixadoDe": "https://cdn.freesound.org/previews/442/442769_71257-hq.mp3",
+      "nota": "preview HQ do Freesound (o original pede login)",
+      "aprovado": "1",
+      "duracaoOriginal": 0.761,
+      "duracao": 0.761,
+      "recorte": {
+        "silencioInicial": true
+      }
+    },
+    "strike-miss": {
+      "arquivo": "sons/strike-miss.mp3",
+      "base": "base/sons/strike-miss/original.mp3",
+      "licenca": "CC0 1.0",
+      "origem": "https://freesound.org/people/Nightflame/sounds/422513/",
+      "autor": "Nightflame",
+      "titulo": "Swinging staff whoosh (strong) 04.wav",
+      "baixadoDe": "https://cdn.freesound.org/previews/422/422513_3302499-hq.mp3",
+      "nota": "preview HQ do Freesound (o original pede login)",
+      "aprovado": "1",
+      "duracaoOriginal": 0.31,
+      "duracao": 0.272,
+      "recorte": {
+        "silencioInicial": true
+      }
+    },
+    "unit-killed": {
+      "arquivo": "sons/unit-killed.mp3",
+      "base": "base/sons/unit-killed/original.mp3",
+      "licenca": "CC0 1.0",
+      "origem": "https://freesound.org/people/Blankened/sounds/554443/",
+      "autor": "Blankened",
+      "titulo": "Male Death Sound",
+      "baixadoDe": "https://cdn.freesound.org/previews/554/554443_6512859-hq.mp3",
+      "nota": "preview HQ do Freesound (o original pede login)",
+      "aprovado": "1",
+      "duracaoOriginal": 1.007,
+      "duracao": 0.908,
+      "recorte": {
+        "silencioInicial": true
+      }
+    },
+    "shot-gun": {
+      "arquivo": "sons/shot-gun.mp3",
+      "base": "base/sons/shot-gun/original.mp3",
+      "licenca": "CC0 1.0",
+      "origem": "https://freesound.org/people/mlsulli/sounds/234869/",
+      "autor": "mlsulli",
+      "titulo": "Musket Shot.wav",
+      "baixadoDe": "https://cdn.freesound.org/previews/234/234869_3883507-hq.mp3",
+      "nota": "preview HQ do Freesound (o original pede login)",
+      "aprovado": "1",
+      "duracaoOriginal": 2.4,
+      "duracao": 1.683,
+      "recorte": {
+        "silencioInicial": true
+      }
+    },
+    "shot-sling": {
+      "arquivo": "sons/shot-sling.mp3",
+      "base": "base/sons/shot-sling/original.mp3",
+      "licenca": "CC0 1.0",
+      "origem": "https://freesound.org/people/K27K_Mike/sounds/853649/",
+      "autor": "K27K_Mike",
+      "titulo": "Slingshot sound",
+      "baixadoDe": "https://cdn.freesound.org/previews/853/853649_16768942-hq.mp3",
+      "nota": "preview HQ do Freesound (o original pede login)",
+      "aprovado": "2",
+      "duracaoOriginal": 2.496,
+      "duracao": 2.361,
+      "recorte": {
+        "silencioInicial": true
+      }
+    },
+    "stone-thrown": {
+      "arquivo": "sons/stone-thrown.mp3",
+      "base": "base/sons/stone-thrown/original.mp3",
+      "licenca": "CC0 1.0",
+      "origem": "https://freesound.org/people/Vrymaa/sounds/734669/",
+      "autor": "Vrymaa",
+      "titulo": "Stone - Throwing pebbles",
+      "baixadoDe": "https://cdn.freesound.org/previews/734/734669_13973196-hq.mp3",
+      "nota": "preview HQ do Freesound (o original pede login)",
+      "aprovado": "2",
+      "duracaoOriginal": 6.564,
+      "duracao": 1.5,
+      "recorte": {
+        "silencioInicial": true,
+        "duracao": 1.5,
+        "fade": 0.3
+      }
+    },
+    "defeat": {
+      "arquivo": "sons/defeat.mp3",
+      "base": "base/sons/defeat/original.wav",
+      "licenca": "CC0 1.0",
+      "origem": "https://opengameart.org/content/game-over-0",
+      "autor": "zuvizu",
+      "titulo": "Game Over!",
+      "baixadoDe": "https://opengameart.org/sites/default/files/GAMEOVER.wav",
+      "nota": "arquivo da pagina do OpenGameArt",
+      "aprovado": "2",
+      "duracaoOriginal": 8.574,
+      "duracao": 8.566,
+      "recorte": {
+        "silencioInicial": true
+      }
+    },
+    "ambient-wind": {
+      "arquivo": "sons/ambient-wind.mp3",
+      "base": "base/sons/ambient-wind/original.mp3",
+      "licenca": "CC0 1.0",
+      "origem": "https://freesound.org/people/DarkShroom/sounds/645305/",
+      "autor": "DarkShroom",
+      "titulo": "desert_wind.wav",
+      "baixadoDe": "https://cdn.freesound.org/previews/645/645305_3139426-hq.mp3",
+      "nota": "preview HQ do Freesound (o original pede login)",
+      "aprovado": "2",
+      "duracaoOriginal": 59.648,
+      "duracao": 59.648,
+      "recorte": null
+    },
+    "ambient-cicada": {
+      "arquivo": "sons/ambient-cicada.mp3",
+      "base": "base/sons/ambient-cicada/original.mp3",
+      "licenca": "CC0 1.0",
+      "origem": "https://freesound.org/people/dethrok/sounds/272169/",
+      "autor": "dethrok",
+      "titulo": "Cicadas ",
+      "baixadoDe": "https://cdn.freesound.org/previews/272/272169_3186672-hq.mp3",
+      "nota": "preview HQ do Freesound (o original pede login)",
+      "aprovado": "2",
+      "duracaoOriginal": 45.803,
+      "duracao": 45.803,
+      "recorte": null
+    },
+    "inn-bell": {
+      "arquivo": "sons/inn-bell.mp3",
+      "base": "base/sons/inn-bell/original.mp3",
+      "licenca": "CC0 1.0",
+      "origem": "https://freesound.org/people/TRP/sounds/574664/",
+      "autor": "TRP",
+      "titulo": "Bell, dinner, large, old, clang, various hits, Chris S cottage, summer 03.flac",
+      "baixadoDe": "https://cdn.freesound.org/previews/574/574664_97550-hq.mp3",
+      "nota": "preview HQ do Freesound (o original pede login)",
+      "aprovado": "https://freesound.org/people/TRP/sounds/574664/",
+      "duracaoOriginal": 39.946,
+      "duracao": 3,
+      "recorte": {
+        "silencioInicial": true,
+        "duracao": 3,
+        "fade": 0.8
+      }
+    },
+    "music-combat": {
+      "arquivo": "sons/music-combat.mp3",
+      "base": "base/sons/music-combat/original.mp3",
+      "licenca": "CC0 1.0",
+      "origem": "https://opengameart.org/content/battle-theme-a",
+      "autor": "cynicmusic",
+      "titulo": "Battle Theme A",
+      "baixadoDe": "https://opengameart.org/sites/default/files/battleThemeA.mp3",
+      "nota": "arquivo da pagina do OpenGameArt",
+      "aprovado": "1",
+      "duracaoOriginal": 95.852,
+      "duracao": 95.852,
+      "recorte": null
+    }
   }
 }

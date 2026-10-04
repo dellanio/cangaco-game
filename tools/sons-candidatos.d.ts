@@ -5,6 +5,8 @@ export interface CandidatoDeSom {
   url?: string;
   licenca?: string;
   texto: string;
+  /** Link que o operador escreveu na coluna `aprovado`, fora da lista. */
+  novo?: boolean;
 }
 export interface LinhaDeSom {
   id: string;

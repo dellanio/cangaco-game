@@ -30,13 +30,18 @@ function lerSonsCandidatos(md) {
 }
 
 /**
- * A escolha do operador numa linha: `null` (vazio, ainda nao olhou), `'nenhum'`, ou o candidato
- * pelo numero. Valor que nao e nenhum dos tres e `'invalido'`.
+ * A escolha do operador numa linha: `null` (vazio, ainda nao olhou), `'nenhum'`, o candidato pelo
+ * numero, ou um link novo do operador (`{ valido, url, novo: true }`: a licenca dele NAO foi
+ * conferida pela lista, e quem baixa confere na pagina antes). Outro valor e `'invalido'`.
  */
 function escolhaDoOperador(linha) {
-  const v = linha.aprovado.trim().toLowerCase();
+  const bruto = linha.aprovado.trim();
+  const v = bruto.toLowerCase();
   if (v === '') return null;
   if (v === 'nenhum') return 'nenhum';
+  if (/^https:\/\/(freesound\.org\/people|opengameart\.org\/content)\/\S+$/.test(bruto)) {
+    return { valido: true, url: bruto, novo: true, texto: bruto };
+  }
   const c = linha.candidatos.find((x) => x.valido && String(x.numero) === v);
   return c ?? 'invalido';
 }

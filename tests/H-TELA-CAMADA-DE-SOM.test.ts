@@ -260,8 +260,9 @@ describe('H-TELA-CAMADA-DE-SOM — (d) o validate:data', () => {
   });
 
   it('com o som no manifesto: o id que o som.json toca passa; o que ele nao toca e recusado', () => {
-    expect(rodar(som, { assets: [], sons: { 'unit-killed': { arquivo: 'sons/unit-killed.ogg' } } })).toEqual([]);
-    expect(rodar(som, { assets: [], sons: { 'goat-bleat': { arquivo: 'sons/goat-bleat.ogg' } } }))
+    const entrada = (id: string) => ({ arquivo: `sons/${id}.mp3`, licenca: 'CC0 1.0', origem: 'https://freesound.org/people/x/sounds/1/' });
+    expect(rodar(som, { assets: [], sons: { 'unit-killed': entrada('unit-killed') } })).toEqual([]);
+    expect(rodar(som, { assets: [], sons: { 'goat-bleat': entrada('goat-bleat') } }))
       .toEqual(["interface/som: o manifesto tem o som 'goat-bleat', que data/som.json nao toca"]);
   });
 

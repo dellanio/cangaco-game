@@ -19022,3 +19022,49 @@ H-ARTE-SONS-APROVADOS      os sons aprovados entram no jogo           NAO: esper
   instrumentos do sertão, e a recusa que só toca no tick de comando do jogador.
 
 **Aberto, fora da Fase H:** os bugs de roteiro acima, cada um no `BUGS.md`, e o `C-IA-03c`.
+
+## 2026-10-03 — H-ARTE-SONS-APROVADOS (os sons aprovados entram no jogo)
+
+- **A aprovação do operador** (`a679f40`): 14 linhas com o número do candidato, 3 com um link
+  novo do Freesound e 3 em branco.
+- **Verificado na página do som** (pelo `tools/baixar-sons.js`, que confere de novo a licença de
+  todo som antes de baixar, inclusive a dos candidatos):
+  - `inn-bell` → TRP, "Bell, dinner, large, old, clang…" (574664): **Creative Commons 0**. Baixado.
+  - `victory` → chripei, "VICTORY CRY REVERB 2.wav" (165491): **Attribution 4.0**. Não é CC0,
+    **não baixado**, segue em silêncio.
+  - `music-peace` → Setuniman, "mixed feelings 0H_22mi" (146896): **Attribution NonCommercial
+    4.0**. Não é CC0, **não baixado**, segue em silêncio.
+  - `building-hit`, `peace-ended`, `command-rejected`: em branco, seguem em silêncio, sem procurar
+    outro.
+- **Feito:** 15 sons em `assets/sons/<id>.mp3` (mp3 128 kbps, 3,5 MB no total), com o original em
+  `assets/base/sons/<id>/` (11 MB, registro de geração, fora do build, no git como a base da arte,
+  §9). Do Freesound vem o preview HQ (o original pede login); do OpenGameArt, o arquivo da página.
+  A seção `sons` do `assets/manifest.json` tem, por id: `arquivo`, `base`, `licenca` (CC0 1.0),
+  `origem` (a página), `autor`, `titulo`, `baixadoDe`, `aprovado` (o que o operador escreveu), as
+  duas durações e o `recorte`.
+- **Recortes** (anotados no manifesto; escolha da sessão, sem ouvir, PARA REVISÃO):
+  `building-completed` 14 s → 2,5 s; `goods-produced` 25,6 s → 1 s; `stone-thrown` 6,6 s → 1,5 s;
+  `inn-bell` 39,9 s → 3 s (com fade de saída). Os efeitos curtos só perderam o silêncio do começo;
+  os laços (`ambient-wind` 59,6 s, `ambient-cicada` 45,8 s) e a música (`music-combat` 95,9 s)
+  entraram inteiros.
+- **Ferramenta:** o `ffmpeg` da máquina (winget, Gyan.FFmpeg 9.0.1), só no `tools/baixar-sons.js`
+  (`FFMPEG` troca o caminho). **Não é dependência do projeto**: o jogo e os testes não o usam.
+- **Código:** o leitor da lista (`tools/sons-candidatos.js`) aceita o link do operador como
+  escolha; o `validate:data` recusa som do manifesto sem CC0, sem o link da página ou fora de
+  `sons/`; o `conferir-dist` grava os sons do build em `test-output/E-ENTREGA-BUILD.json`. Os
+  roteiros da camada e do fundo passaram a afirmar os dois lados: o som com arquivo é pedido à
+  rede e toca, o sem arquivo (a recusa, a música da paz) é silêncio, sem requisição nem erro. A
+  requisição de mídia não entra no Resource Timing do Chromium; os roteiros escutam a rede
+  (`page.on('request')`).
+- **Verificado:** `tests/H-ARTE-SONS-APROVADOS.test.ts` (4 testes: CC0, link e arquivo de cada som;
+  o validador por caso; a origem de cada som é a escolha do operador; as linhas em branco e os
+  dois links não CC0 fora do manifesto). Os três roteiros da H saíram 0 com os arquivos de verdade:
+  a camada com `{"pedidos":2,"tocados":1,"emSilencio":1}` (a planta toca, a recusa é silêncio).
+  `verify:rapido` verde (582 testes). Na primeira corrida, o `D-TELA-VENTO-VEGETACAO` estourou o
+  tempo do teste (6,3 s) e passou sozinho e na segunda; a carga como causa é hipótese.
+
+### Perguntas em aberto
+
+- **`victory` e `music-peace`:** os links aprovados não são CC0 (CC-BY 4.0 e CC-BY-NC 4.0). Pela
+  regra do operador (só CC0), não foram baixados e seguem em silêncio. Escolher outro candidato da
+  lista (ou outro link CC0) os traz com `node tools/baixar-sons.js`.

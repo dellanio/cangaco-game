@@ -2,15 +2,20 @@
 // Roteiro da H-TELA-AMBIENTE-E-MUSICA — o sertao de fundo.
 //   (c) pelo contador (`window.__cangacoSom.contadores().fundo`): no JOGO o ambiente fica ligado e
 //       o numero de quadros com ambiente cresce, com o jogo despausado e pausado; o botao Menu da
-//       ajuda leva ao MENU, e la o jogo nao existe: nenhum contador, nenhum `Audio`. Sem arquivo
-//       nenhum, tudo e silencio: o tocador nunca e chamado e nenhuma requisicao de audio sai.
+//       ajuda leva ao MENU, e la o jogo nao existe: nenhum contador, nenhum `Audio`.
+// Desde a H-ARTE-SONS-APROVADOS o vento e a cigarra TEM arquivo, e a musica da paz NAO (o link
+// aprovado nao era CC0): os lacos sao pedidos ao servidor, a musica da paz nao.
 const { URL } = require('node:url');
 const som = require('../../data/som.json');
+const manifesto = require('../../assets/manifest.json');
 
 const TIMEOUT_PRONTO_MS = 10_000;
 
 async function roteiro({ page, capturar, afirmar }) {
   const base = new URL('/', page.url()).href;
+  // a requisicao de midia nao entra no Resource Timing do Chromium: escuta-se a rede direto
+  const pedidosDeAudio = [];
+  page.on('request', (r) => { if (/\.(ogg|mp3|wav)(\?|$)/.test(r.url())) pedidosDeAudio.push(r.url()); });
   const fundo = () => page.evaluate(() => window.__cangacoSom.contadores().fundo);
   async function apertar(seletor) {
     const r = await page.$eval(seletor, (n) => {
@@ -38,8 +43,12 @@ async function roteiro({ page, capturar, afirmar }) {
   await page.waitForTimeout(300);
   const c = await fundo();
   afirmar(c.quadrosComAmbiente > b.quadrosComAmbiente, 'pausado, o ambiente continua (o sertao nao para com o relogio)');
-  const audios = await page.evaluate(() => window.performance.getEntriesByType('resource').filter((r) => /\.(ogg|mp3|wav)(\?|$)/.test(r.name)).length);
-  afirmar(audios === 0, `sem arquivo, nenhuma requisicao de audio, sairam ${audios}`);
+  const audios = [...pedidosDeAudio];
+  for (const id of som.ambiente.lacos) {
+    if (manifesto.sons[id] !== undefined) afirmar(audios.some((n) => n.includes(id)), `o laco '${id}' tem arquivo e deveria ser pedido: ${JSON.stringify(audios)}`);
+  }
+  afirmar(manifesto.sons[som.musica.paz] === undefined && !audios.some((n) => n.includes(som.musica.paz)),
+    `a musica da paz nao tem arquivo e nao pede nada: ${JSON.stringify(audios)}`);
   await capturar('no-jogo');
 
   // ---- 2. o Menu da ajuda: o jogo deixa de existir, e o ambiente com ele --------------------------
