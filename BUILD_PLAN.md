@@ -8726,6 +8726,55 @@ exército e demora a atacar, outra em que ela começa com pouco e constrói, e a
 - **Aceite:** (a) o C-IA-03c sai 0, inclusive dentro do `shot:todos`; (b) a chave da F-TELA-NEVOA
   (a névoa na tela) passa no fechamento; (c) a tabela "tropa → caminhos que vencem" no PROGRESS.
 
+## Leva de 2026-10-04 (3) — bugs de jogo do operador: escola, entrega direta, minas
+
+O operador jogou e mandou três pedidos. Os dois primeiros mudam a sim. O terceiro (minas perto da vila
+no mapa atual) espera a decisão dele sobre os saves, registrada no PROGRESS.
+
+### I-TRANSPORTE-OURO-SEMPRE-NA-ESCOLA — A escola fica abastecida de ouro, com ou sem fila
+- **Pedido:** "a escola sempre precisa estar abastecida com dinheiro."
+- **Hoje (verificado em `src/sim/insumo.ts:82-91` e `src/sim/escola.ts:66-74`):** o alvo de ouro da
+  escola é `aguardando × custoOuroPorUnidade`. Com a fila vazia, o alvo é zero, e o ouro só sai do
+  armazém depois que o jogador pede o treino.
+- **KaM (`src/houses/KM_Houses.pas:2221-2258`, `src/common/KM_Defaults.pas:299`):** toda casa pede o
+  insumo até a cota dela (5), com ou sem fila. A escola é uma casa cujo insumo é o ouro.
+- **Regra:** o alvo de ouro da escola passa a ser `max(ouroEmEstoque, aguardando × custo)`, com
+  `ouroEmEstoque` em `data/economy.json` (`schoolhouse`, 5, o do KaM). O `ouroNecessario` continua
+  sendo `alvo − emCaixa`. Vale para a escola de qualquer lado, inclusive a da IA.
+- **Aceite (antes do código):**
+  1. por tabela: com a fila vazia, o alvo é `ouroEmEstoque`; com a fila pedindo mais que a cota, é o
+     da fila; e `ouroNecessario === alvo − emCaixa` em todos os casos;
+  2. pelo `step`: uma escola completa e ligada, de fila vazia, com ouro no armazém, recebe ouro até
+     `ouroEmEstoque` e para aí. O ouro não volta ao armazém pelo nível 7 (excedente zero);
+  3. pelo `step`: depois de abastecida, um treino enfileirado começa sem esperar entrega (o ouro já
+     está lá);
+  4. os testes que afirmavam "fila vazia, nenhum ouro pedido" passam a afirmar a regra nova (a
+     não-regressão vai nesta tarefa).
+
+### I-TRANSPORTE-MATERIAL-DIRETO-DA-CASA — Pedra e tábua vão da casa direto à obra
+- **Pedido:** "Pedra e Tábua devem ter como prioridade construções pendentes antes do estoque." O
+  pedido do milho (fazenda → moinho antes do armazém) foi **medido e já acontece**: numa sonda de 6 000
+  ticks na vila pronta, as 33 entregas de milho foram da fazenda direto ao moinho, e nenhuma ao
+  armazém. Fica no PROGRESS como medida, sem mudança.
+- **Hoje (verificado em `src/sim/systems/jobs.ts:441-454`):** a tarefa `material-para-obra` só tem
+  origem em **armazém** (`origemMaisPerto`). A pedra da pedreira e a tábua da serraria vão sempre ao
+  armazém primeiro (na sonda, 30 de pedra e 26 de tábua, todas `saida-cheia-para-armazem`), e só
+  depois à obra.
+- **KaM (o mesmo lance de `delivery.lance`, `KM_HandLogistics.pas:1587-1590`):** a oferta de uma casa
+  vai direto a quem pede, e o armazém paga a multa.
+- **Regra:** a origem do material de obra passa a ser escolhida como a do insumo (`origemDoInsumo`): o
+  armazém (ligação mais `ticksMultaDoArmazem`) ou a casa completa do mesmo lado com a mercadoria
+  livre na `saida`, no modo do tipo (`livre`). Vale também para a pedra do canteiro de estrada
+  (`pedra-para-canteiro`, a mesma classe da obra, D3).
+- **Aceite (antes do código):**
+  1. pelo `step`: com uma obra nivelada pedindo pedra, uma pedreira com pedra na `saida` e um armazém
+     com pedra, os dois ligados, a pedra da obra sai da **pedreira**. Sem pedra na pedreira, sai do
+     armazém (como hoje);
+  2. o mesmo para a tábua da serraria;
+  3. a pedra do canteiro de estrada sai da pedreira, nas mesmas condições;
+  4. sem obra pendente, a saída da pedreira continua indo ao armazém (`saida-cheia-para-armazem`);
+  5. as invariantes do JobBoard (reserva e release) continuam valendo no cenário longo do teste.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
