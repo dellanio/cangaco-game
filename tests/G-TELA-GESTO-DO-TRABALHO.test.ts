@@ -5,11 +5,11 @@
  */
 import { describe, expect, it } from 'vitest';
 import type { GameState } from '../src/sim/state';
-import { gameData } from '../src/sim/data';
 import { step } from '../src/sim/tick';
 import { animacaoDoGesto, colheitaNasMaos, deslocamentoDoTrabalho } from '../src/render/gesto-do-trabalho';
 import type { GestoDoTrabalho } from '../src/render/gesto-do-trabalho';
 import dados from '../data/gesto-do-trabalho.json';
+import { caixaDeTipoNoMapa } from '../src/render/predios';
 import { cenarioDeFazenda } from './helpers/producao-cenario';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { salvar } from '../src/sim/save';
@@ -49,11 +49,11 @@ describe('o obreiro faz o gesto da tarefa', () => {
   it('martelando a obra, o desenho avanca avancoDoMartelarPx na direcao do centro dela; a posicao logica nao muda', () => {
     const e = estadoCom({ t1: { id: 't1', tipo: 'construir', destino: 'o1' } }, { o1: obra });
     const u = { id: 'l1', tipo: 'laborer', fsm: 'martelando', fsmData: { tarefa: 't1' }, gx: 9, gy: 12 };
-    const d = deslocamentoDoTrabalho(e, u, 'trabalhar', 64, config, gameData);
+    const d = deslocamentoDoTrabalho(e, u, 'trabalhar', 64, config, caixaDeTipoNoMapa);
     expect(Math.hypot(d.x, d.y)).toBeCloseTo(config.avancoDoMartelarPx, 6);
     expect(d.x).toBeGreaterThan(0);
     expect(u.gx).toBe(9);
-    expect(deslocamentoDoTrabalho(e, { ...u, fsmData: { tarefa: 't2' } }, 'trabalhar', 64, config, gameData)).toEqual({ x: 0, y: 0 });
+    expect(deslocamentoDoTrabalho(e, { ...u, fsmData: { tarefa: 't2' } }, 'trabalhar', 64, config, caixaDeTipoNoMapa)).toEqual({ x: 0, y: 0 });
   });
 });
 
@@ -70,7 +70,7 @@ describe('o roceiro trabalha dentro do campo com a ferramenta da fase', () => {
       const u = s.unidades.porId['roceiro']!;
       if (u.fsm === 'semeando' || u.fsm === 'colhendo') {
         const lado = 64;
-        const d = deslocamentoDoTrabalho(s, u, 'trabalhar', lado, config, gameData);
+        const d = deslocamentoDoTrabalho(s, u, 'trabalhar', lado, config, caixaDeTipoNoMapa);
         const tile = u.fsm === 'colhendo'
           ? (s.jobs.tarefas.porId[u.fsmData.tarefa!] as { origemTile: { gx: number; gy: number } }).origemTile
           : (s.predios.porId['f1'] as unknown as { producao: { plantio: { tile: { gx: number; gy: number } } } }).producao.plantio.tile;

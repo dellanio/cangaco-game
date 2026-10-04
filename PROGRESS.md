@@ -19904,3 +19904,13 @@ vitest falso pelo `related`, com a linha acima de 8 191; e com 1 000 arquivos ro
 o modo e o motivo no selo.
 **Prova de que acusa:** contra o script antigo, o mesmo teste falha com "Linha de comando muito longa.".
 Os portões (`PORTOES-pre-push`, `PORTOES-verify`) continuam verdes.
+**O primeiro `verify:rapido` de verdade depois da correção** rodou na `main`, com 668 arquivos desde o
+`origin/main`. A etapa do `related` rodou 2 654 testes, e a linha longa sumiu. Ele achou 2 vermelhos:
+- **F04 (os funis do `sim/data`), meu, de `f8736b3`:** o `unidades.ts` importava o `gameData`
+  direto. Agora o `deslocamentoDoTrabalho` recebe a função da caixa, e o `unidades.ts` passa o funil
+  `caixaDeTipoNoMapa` do `predios.ts`. O `gesto-do-trabalho.ts` deixou de importar `GameData`. Antes
+  desta correção, o rápido não tinha como pegar isso, porque a etapa nem rodava.
+- **D-TELA-VENTO-VEGETACAO:** estourou o tempo de 5 s com a suíte carregada e passou sozinho
+  (hipótese: carga da máquina, sem mudança de código).
+
+O roteiro G-TELA-GESTO-DO-TRABALHO continua saindo 0.

@@ -71,8 +71,8 @@ import dadosDaCargaNasMaos from '../../data/carga-nas-maos.json';
 import { pontoDaCargaNasMaos } from './carga-nas-maos';
 import { animacaoDoGesto, colheitaNasMaos, deslocamentoDoTrabalho } from './gesto-do-trabalho';
 import type { GestoDoTrabalho } from './gesto-do-trabalho';
+import { caixaDeTipoNoMapa } from './predios';
 import dadosDoGesto from '../../data/gesto-do-trabalho.json';
-import { gameData } from '../sim/data';
 
 const gestoDoTrabalho = dadosDoGesto as unknown as GestoDoTrabalho;
 import type { CargaNasMaos } from './carga-nas-maos';
@@ -462,7 +462,7 @@ export function criarCamadaDeUnidades(
         // G-TELA-OBREIRO-POR-TAREFA / G-TELA-ROCEIRO-NO-CAMPO: o desenho de quem trabalha vai para o lugar
         // do trabalho (o roceiro para dentro do campo, o obreiro alguns px para dentro da obra); a
         // posicao logica nao muda.
-        const noTrabalho = deslocamentoDoTrabalho(estado, unidade, item.acaoDoTrabalho, gridToScreenCentro({ gx: 1, gy: 0 }, tilePx, ESCALA_DO_MUNDO).x - gridToScreenCentro({ gx: 0, gy: 0 }, tilePx, ESCALA_DO_MUNDO).x, gestoDoTrabalho, gameData);
+        const noTrabalho = deslocamentoDoTrabalho(estado, unidade, item.acaoDoTrabalho, gridToScreenCentro({ gx: 1, gy: 0 }, tilePx, ESCALA_DO_MUNDO).x - gridToScreenCentro({ gx: 0, gy: 0 }, tilePx, ESCALA_DO_MUNDO).x, gestoDoTrabalho, caixaDeTipoNoMapa);
         item.container.setPosition(centro.x + desvio.x + noTrabalho.x, centro.y + desvio.y + noTrabalho.y);
         item.container.setDepth(depthDeY(centro.y + desvio.y + noTrabalho.y));
         luz?.tingirPelaPosicao(item.imagem, centro.x + desvio.x + noTrabalho.x, centro.y + desvio.y + noTrabalho.y, `unidade:${id}`);

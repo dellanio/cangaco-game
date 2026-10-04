@@ -8,9 +8,11 @@
  * Quem nao tem a animacao no manifesto continua com a de hoje (o `trabalhar` e o `andar`).
  */
 import type { GameState, Tarefa, Unidade } from '../sim/state';
-import type { GameData } from '../sim/data/types';
-import { caixaDoPredio } from '../sim/footprint';
+import type { CaixaEmTiles } from '../sim/footprint';
 import { predioDoOcupante } from '../sim/ocupacao';
+
+/** A caixa em tiles de um tipo de predio posto em (gx, gy): em `render/`, o funil `caixaDeTipoNoMapa`. */
+export type CaixaDeTipo = (tipo: string, gx: number, gy: number) => CaixaEmTiles | null;
 
 export interface GestoDoTrabalho {
   /** Animacao do obreiro por tipo de tarefa. */
@@ -80,7 +82,7 @@ function tileDoTrabalho(estado: GameState, u: Pick<Unidade, 'id' | 'tipo' | 'fsm
  */
 export function deslocamentoDoTrabalho(
   estado: GameState, u: Pick<Unidade, 'id' | 'tipo' | 'fsm' | 'fsmData' | 'gx' | 'gy'>, acao: string,
-  ladoPx: number, config: GestoDoTrabalho, dados: GameData,
+  ladoPx: number, config: GestoDoTrabalho, caixaDe: CaixaDeTipo,
 ): { readonly x: number; readonly y: number } {
   if (acao !== 'trabalhar') return { x: 0, y: 0 };
   const tile = tileDoTrabalho(estado, u, config);
@@ -89,7 +91,7 @@ export function deslocamentoDoTrabalho(
     const tarefa = tarefaDa(estado, u);
     if (!tarefa || (tarefa.tipo !== 'construir' && tarefa.tipo !== 'reparar')) return { x: 0, y: 0 };
     const obra = estado.predios.porId[tarefa.destino];
-    const caixa = obra ? caixaDoPredio(obra, dados) : null;
+    const caixa = obra ? caixaDe(obra.tipo, obra.gx, obra.gy) : null;
     if (!caixa) return { x: 0, y: 0 };
     const dx = (caixa.x0 + caixa.x1) / 2 - (u.gx + 0.5); const dy = (caixa.y0 + caixa.y1) / 2 - (u.gy + 0.5);
     const d = Math.hypot(dx, dy);
