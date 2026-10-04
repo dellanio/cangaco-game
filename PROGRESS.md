@@ -19937,3 +19937,27 @@ o defeito está no `BUGS.md` como `BUG-TROPA-DE-24-PRESA` (severidade `errado`, 
   longa é decisão do operador (a lista dos longos é dele); ficou na normal.
 - **`BUG-TROPA-DE-24-PRESA`:** a escaramuça que o operador joga tem 24 cabras, e a varredura do BUG-T
   acha soldados presos com 24. Consertar agora ou depois é do operador.
+
+## 2026-10-04 — Leva (2), fechamento: o roteiro F18f (unidade empilhada não some) com a colisão ligada
+
+O `shot:todos` do `e9b1bd1` (129 roteiros, nenhum em 0 s) deu 2 falhas: `D-TELA-03` (o
+`BUG-ROTEIRO-D-TELA-03-MACHADO-COM-ICONE`, já registrado, vindo da `main`) e **`F18f`**, nova.
+O `C-IA-03c` e a `F-TELA-NEVOA` saíram 0 dentro da corrida.
+
+- **F18f** esperava uma pilha de 6 unidades no mesmo tile na rua da pedreira, a regra da F03
+  ("civis ocupam o mesmo tile"). Com a colisão ligada, a maior pilha é 2: era o defeito que a
+  decisão do operador elimina. Pela regra do projeto (a asserção nova fica mais estrita), o roteiro
+  passa a afirmar, na mesma geometria: em 600 ticks, **nenhuma pilha de 3 ou mais**; toda pilha de 2
+  com os centros desenhados distintos (o aceite original da F18f, o deslocamento pelo id); o
+  deslocamento não vaza do tile e não salta. Medido: maior pilha 2, em 33 quadros.
+- **O que forma a pilha de 2 (medido):** um serf ocioso parado no tile em que o obreiro martela ou
+  nivela a obra (`martelando`/`nivelando`, estados "dentro", que não ocupam tile), e os cruzamentos de
+  frente de um instante. O aceite (a) da colisão exclui os estados "dentro", e na tela o
+  deslocamento pelo id os separa. Ficou como está; a pergunta abaixo.
+
+### Perguntas em aberto
+- **O obreiro trabalhando no canteiro deve ocupar o tile?** Hoje `martelando` e `nivelando` são
+  "dentro" (não ocupam), e um serf ocioso pode parar no mesmo tile, desenhado ao lado pelo
+  deslocamento da F18f. O relato do operador ("vários serfs ou unidades ocupando o mesmo tile, e não
+  pode") pode incluir esse caso. Mudar a classificação muda a sim (o empurrão passaria a tirar o
+  ocioso de lá) e não estava no aceite.
