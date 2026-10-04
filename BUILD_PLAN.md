@@ -8800,6 +8800,14 @@ no mapa atual) espera a decisão dele sobre os saves, registrada no PROGRESS.
      próprio tile, desenhado no centro dele, e nunca muda de tile até B sair; então anda.
   2. **De frente:** 20 tiles de frente numa rua de uma faixa levam 100 ticks nos dois, o mesmo de andar
      sozinho, e nenhum progresso fica abaixo de 0.
+     - **Emenda do aceite 2 (pela medida, antes do commit do código):** com a reserva do tile no início
+       do passo, o encontro **num tile** (distância par: 20 tiles) põe os dois atrás do mesmo tile vago,
+       e só um o tem. O outro espera um passo: 100 e 105. O encontro **numa aresta** (distância ímpar: 19
+       tiles) cruza no tempo de andar, 95 e 95. Para os dois cruzarem no tempo de andar num tile, eles
+       teriam de dividir o tile por um instante, o que a regra do operador proíbe. O 100 e 100 de antes
+       vinha da dívida de progresso negativo, que era o desenho atrás do próprio tile. O aceite 2 passa
+       a ser: aresta, os dois no tempo de andar; tile, um espera exatamente um passo; nenhum progresso
+       abaixo de 0.
   3. **Ciclo de 3**, montado à mão: os três largam no mesmo tick, e ninguém muda de tile para fora do
      próprio caminho.
   4. **Ocioso no caminho:** sai para o vizinho livre **andando** (o tile dele muda só no fim de um passo
