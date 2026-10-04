@@ -19203,3 +19203,11 @@ fechar, porque o operador decidiu uma worktree por vez.
 - Leitura conservadora (PARA REVISÃO): os sons de trabalho saem do estado da unidade, como a
   animação de trabalho, sem evento novo na sim. O som sem lugar (paz, vitória, derrota, recusa,
   ambiente, música) não muda.
+
+**Pedreira de volta à arte pintada (pedido do operador, 2026-10-03):** o manifesto volta a apontar
+para `quarry_completo-D.png` e `quarry_madeira-D-preview.png`, e os dois PNG em pixel art saíram do
+repositório. O script `tools/arte/pixelar-predio.py` fica, e refaz a conversão se ela for pedida.
+O `verify:rapido` deste commit sai vermelho por um teste que não é desta mudança:
+`tests/H-ARTE-SONS-APROVADOS.test.ts` ("linha sem aprovacao ... fora do manifesto") falha também na `main`
+em `579f25f` sem ela (conferido com a mudança guardada no stash). Ele vem dos aceites do
+H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA, da outra sessão, e fica com ela. Os testes do manifesto passam.
