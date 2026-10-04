@@ -19404,3 +19404,33 @@ G-ARTE-MORTE-DAS-UNIDADES saem 0. O `verify:rapido` deu 231 verdes e 1 vermelho,
 só o desenho, isso muda o caminho na sim e o tempo do ciclo, ou seja, mexe em balanceamento.
 **Visto, não corrigido:** o roceiro carregando leva a enxada no ombro e uma mão no peito; o milho
 aparece à frente da barriga.
+
+### G-ARTE-TRABALHO-DENTRO-DO-PREDIO — o trabalhador produzindo no espaço da casa
+**O lugar (verificado):** o espaço que a arte de cada casa deixou já estava medido no manifesto, em
+`ancoras.trabalho.area` (F-VIVO-b), para os 13 prédios dos casos `transforma` (pedreira, canavial) e
+`dentro` (serraria, moinho, padaria, açougue, curtume, fundição, ferraria, oficina de armas, oficina de
+armaduras e as duas forjas). Faltava a arte, e não foi preciso perguntar o lugar.
+**A arte (verificado):** cada prédio usa o personagem PixelLab da profissão dele em `buildings.json`
+(`trabalhador`), com animações v3 `dentro-<prédio>-<laço>` no sul. O canavial tem inicio/meio/fim com o
+roceiro na cana; a pedreira, o cabra no lajedo. Nos 11 do caso `dentro`, laco1 e laco2 são dois gestos
+da receita (serrar e aplainar; peneirar e moer; sovar e enfornar; e assim por diante). O laco2 da
+ferraria reaproveita o laco1 da fundição, porque o PixelLab deduplicou a descrição igual. A montagem é
+mecânica: recorte pela caixa comum dos 8 quadros, redução por vizinho só quando não cabe e encaixe na
+área com o pé embaixo, no centro. O quadro sai com o tamanho exato da área, porque o render estica o
+quadro para ela. Os PNGs estão em `assets/sprites/trabalho/<prédio>/`, e cada prédio ganhou uma entrada
+`trabalho` no manifesto.
+**Teste:** `tests/G-ARTE-TRABALHO-DENTRO-DO-PREDIO.test.ts` (40). Para os 13 prédios ele afirma:
+- `violacoesDaCamadaViva` limpo, com os laços do caso;
+- todo quadro com o tamanho da área e com pixel opaco;
+- o personagem da origem igual ao `trabalhador` do prédio.
+
+Junto com o F17f e o F-VIVO-b, deu 92 verdes.
+**Evidência (aberta):** a folha dos 13 sobre o sprite de cada casa. Também o roteiro novo
+`G-ARTE-TRABALHO-DENTRO-DO-PREDIO`, que sai 0. Ele carrega a vila pronta e avança a sim até cada prédio
+publicar um quadro com sprite. As capturas abertas mostram o carpinteiro na bancada da serraria e o
+artesão na oficina de armas; a da pedreira foi gravada, mas não aberta.
+**Visto, não corrigido:**
+- Na fundição a área é pequena (31×35 px), e o boneco ficou a 40% do tamanho. No curtume ele também
+  ficou miúdo. Os dois aparecem, mas pequenos. Se o operador quiser, ele aponta um espaço maior na arte.
+- O moinho ocioso ainda mostra o placeholder `ocioso_6` (a entrada genérica `ocioso`, F-VIVO-e). Ele é
+  outro asset e fica fora deste item.
