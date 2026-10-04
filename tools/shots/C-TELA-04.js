@@ -10,6 +10,7 @@
 // O px sai do debug (`unidadesRenderizadas`, `camera`), nunca de pixel da captura.
 const { retanguloDoCanvas } = require('./_canvas');
 const terreno = require('../../data/terrain.json');
+const TROPA = require('../../data/escaramuca.json').tropaDoJogador.quantidade; // dado do cenario (I-COMBATE-ESCARAMUCA-GANHAVEL: 18 -> 24)
 const escaramuca = require('../../data/escaramuca.json');
 
 const TILE_PX = terreno.tile_px;
@@ -63,7 +64,7 @@ async function roteiro(ctx) {
   // 2. a caixa em volta dos 18
   let s = await estado();
   const minha = s.unidadesRenderizadas.filter((u) => u.lado === LADO_DO_JOGADOR && u.tipo === 'militia');
-  afirmar(minha.length === 18, `o jogador deveria ter 18 cabras, tem ${minha.length}`);
+  afirmar(minha.length === TROPA, `o jogador deveria ter ${TROPA} cabras, tem ${minha.length}`);
   const meio = {
     gx: Math.round(minha.reduce((n, u) => n + u.gx, 0) / minha.length),
     gy: Math.round(minha.reduce((n, u) => n + u.gy, 0) / minha.length),
@@ -77,7 +78,7 @@ async function roteiro(ctx) {
   await page.mouse.up();
   await esperarFrame();
   s = await estado();
-  afirmar(s.selecaoMilitar.length === 18, `a caixa deveria pegar os 18, veio ${s.selecaoMilitar.length}`);
+  afirmar(s.selecaoMilitar.length === TROPA, `a caixa deveria pegar os ${TROPA}, veio ${s.selecaoMilitar.length}`);
 
   // F-COMBATE-ALVO-NA-VISTA / F-TELA-NEVOA: a frente da IA nasce no escuro, e o clique num cabra
   // no escuro e marcha, nao ataque. A tropa ganha a vista pelo caminho do jogo: marcha em paz
@@ -152,7 +153,7 @@ async function roteiro(ctx) {
   await capturar('a-tropa-no-alvo');
 
   console.log(`C-TELA-04: ${JSON.stringify({ alvo: alvo.id, lutando, marca, travaram, tick: s.tick })}`);
-  afirmar(lutando === 18, `os 18 deveriam sair para lutar, sairam ${lutando}`);
+  afirmar(lutando === TROPA, `os ${TROPA} deveriam sair para lutar, sairam ${lutando}`);
   afirmar(marca === null, `ataque nao marca destino, veio ${JSON.stringify(marca)}`);
   afirmar(travaram > 0, 'a tropa deveria chegar e travar a luta')
 }

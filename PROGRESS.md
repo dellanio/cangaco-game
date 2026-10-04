@@ -3277,6 +3277,8 @@ que vetar custe uma linha.
   da vista vira marcha até o tile (o único jeito que venceu), e o roteiro passa a jogar assim. Se
   ainda assim perder, a decisão é do operador: a margem da tropa (`escaramuca.tropaDoJogador`), ou
   a afirmação de vitória do roteiro.
+  **Decidido pelo operador (2026-10-04):** a escaramuça é cenário de teste; a tropa sobe para 24
+  e o roteiro afirma mecânica (I-COMBATE-ESCARAMUCA-GANHAVEL, leva de 2026-10-04 (2)).
 - **(2026-10-04, Fase I) I-TELA-PARTIDA-GUIADA — a leitura dos passos (PARA REVISÃO).** O
   BUILD_PLAN nomeia os passos ("estrada até o armazém, escola, lenhador, pedreira, serraria, a
   primeira comida, o quartel e a escaramuça") sem dizer a condição de cada um. Fiz o conservador:
@@ -19889,6 +19891,229 @@ C-IA-03c (de antes)                      espera    -         operador: a margem 
 Perguntas em aberto); o playtest e o itch.io; a `C-IA-03c`; ouvir os sons novos; as leituras PARA
 REVISÃO; e o merge na `main`, que é da sessão principal.
 
+
+## 2026-10-04 — Leva (2), item 1: I-COMBATE-ESCARAMUCA-GANHAVEL (a escaramuça de teste volta a ser ganhável)
+
+Branch `dellanio/colisao-e-escaramuca`, com a colisão civil ainda **desligada** (o item 2 liga e
+confere de novo).
+
+**A medida (sonda headless, apagada; números da corrida, não asserção).** A largada do roteiro (a
+tropa marcha 16 tiles ao sul na paz), a paz real, e depois, a cada 100 ticks, a tropa inteira recebe
+a ordem: ataque ao militar da IA à vista mais perto; sem nenhum à vista, marcha até `d` tiles dele.
+Os seis jeitos da Fase F (`BALANCE_LOG.md`, 2026-10-03):
+
+```text
+tropa   a 8      a 4      a 2      a 1      esperar   o tile dele   vence em
+18      V 5      V 5      V 2      V 8      perde     V 6           5 de 6
+21      V 8      V 7      perde    V 4      perde     V 3           4 de 6
+24      V 10     V 10     V 10     V 1      V 2       V 12          6 de 6
+(V n = vitória com n vivos)
+```
+
+- **Fica 24**, o menor que vence nos 6. A margem é fina em dois caminhos (1 e 2 vivos).
+- "Esperar": na primeira versão da sonda, a tropa que só espera nunca ataca e morre parada no tick
+  18 000 nos três tamanhos (**hipótese: fome**, não conferida). Esperar sozinho não ganha prédio, e
+  passei a medir "esperar o ataque da IA por 2 000 ticks e depois marchar até o tile". A tabela traz
+  essa segunda leitura.
+- A sonda dá 18 vencendo em 5 de 6, e o `BALANCE_LOG` de 2026-10-03 dava 1 de 6. A sonda de lá foi
+  apagada e o roteiro dela não está escrito; **não sei qual diferença explica** (cadência, quem
+  recebe a ordem). Não muda a escolha: 21 já perde em 2 dos 6 aqui.
+
+**O que mudou:**
+- `data/escaramuca.json`: `tropaDoJogador.quantidade` 18 → 24 (três fileiras: 9, 9, 6), com o
+  `_doc` dizendo que é número do cenário de teste.
+- **Teste longo `C-IA-03b`** passa a afirmar **mecânica**: a tropa marcha no escuro depois da paz,
+  ataca o que vê, nenhuma ordem recusada, a IA ataca um prédio do jogador depois da paz, um
+  `match-ended`, e a partida é determinística (corrida dupla, `salvar` igual byte a byte, teste
+  novo). A vitória fica como "este cenário de teste é ganhável", comentada como dado do cenário. Saiu
+  o `sobram > 0` (balanceamento; o número vai para a evidência). Medido: IA ataca no 6 002, primeiro
+  ataque ao que se vê no 6 251, tropa da IA morta no 6 937, vitória no 8 117, sobram 12 de 24.
+- **Roteiro `C-IA-03c`**: a tática passou a ser a do gêmeo headless (o bodoqueiro à vista primeiro,
+  senão qualquer um à vista; sem ninguém à vista, o tile do bodoqueiro). Com a tática antiga ("o
+  inimigo mais perto") a tropa de 24 perseguia o grupo de ataque da IA e morria inteira (medido numa
+  corrida: 0 de 24 na rodada 13; numa outra corrida da mesma árvore venceu, porque a primeira ordem
+  roda despausada). Afirma agora a marcha no escuro, o ataque ao que se vê e a saída da IA para
+  atacar, além do que já afirmava. **Três corridas seguidas iguais**: vitória no tick 8 324, 11 de 24
+  vivos. Captura `C-IA-03c-4-vitoria.png` aberta: o cartaz "VITÓRIA" e "11 Cabra" no painel.
+- **Os testes de mecanismo da tropa fixam 18** (`escaramucaComTropaDe(18)`, novo em
+  `tests/helpers/escaramuca-paz.ts`): `C-COMBATE-01c` (a carga do `tropa[9]`), `C-MOVIMENTO-02` (a
+  vaga emparedada), `C-MOVIMENTO-02b` (o caso `vagaTomadaPor` só acontece com 18) e `C-TELA-03` (a
+  caixa). Eles reprovaram com 24 porque o caso que guardam foi medido com duas fileiras de 9; o que
+  afirmam não mudou. `C-IA-03b` (o teste curto) passa a ler a quantidade do dado.
+- **Roteiros** que tinham 18 escrito passam a ler o dado: `C-COMBATE-01c` (as fileiras de 7 viram
+  `ceil(tropa / 7)`), `C-TELA-01`, `C-TELA-02`, `C-TELA-03`, `C-TELA-04` e `C-IA-03c`.
+  `F-TELA-NEVOA`: a caixa pegava 1 de 24; a câmera passou ao centro da tropa e o roteiro afirma que a
+  caixa cabe no canvas. **A causa (a terceira fileira fora do canvas) é hipótese**: não medi a caixa
+  antes da troca.
+- `saves/teste-operador-vila-pronta.txt` regravado (a escaramuça tem 6 cabras a mais).
+
+**Rodado:** `npm run test` com 24 (6 falhas, as listadas acima, todas consertadas no guarda e
+conferidas de novo: 22 testes verdes nos 6 arquivos); o teste longo da `C-IA-03b` verde; os 14
+roteiros que abrem a escaramuça saem 0, rodados um de cada vez (`C-IA-03c` três vezes). A primeira
+corrida do `C-IA-03c`, logo depois de a worktree subir o vite pela primeira vez, falhou com "o
+contador de paz não existe" e não se repetiu; **hipótese**: o vite recarregou a página ao otimizar
+dependências.
+
+**Aceite:** (a) o `C-IA-03c` sai 0 sozinho; dentro do `shot:todos` fica para o fechamento; (b) a
+chave da F-TELA-NEVOA também (o fechamento); (c) a tabela acima.
+
+## 2026-10-04 — Leva (2), item 2: I-MOVIMENTO-COLISAO-CIVIL-LIGADA (civis colidem; integração, muda a sim)
+
+Decisão do operador (2026-10-04, BUILD_PLAN): a colisão civil fica ligada, porque é o desafio da
+logística; a produção que cai com ela não é defeito; teste não afirma produção.
+
+**O que mudou na sim (`src/sim/colisao.ts`, `src/sim/selectors.ts`):**
+- `units.json colisaoCivil.ligada: true`.
+- **A permuta de frente leva o tempo exato de andar (aceite (c)).** O defeito: o outro entrava no
+  meu tile com `progresso: 0` mesmo no começo do passo dele, e os dois ganhavam o tick do `andar`.
+  Medido no teste novo: de frente em 20 tiles, `a` 95 e `b` 100, contra 100 sozinho.
+  - O conserto proposto no plano de 2026-10-01 ("permutar só quando o passo dos dois vence no mesmo
+    tick") **não chega aos 100 nos dois** (medido): quem ficou segurado perde o tick da espera, e a
+    fila de frente numa rua de um tile passa a esperar 15 ticks (o teste da D-MOVIMENTO-01a pede
+    menos que 5). O que entrou: a permuta continua imediata (o meu passo vence), e cada um entra no
+    tile do outro com o progresso que tinha **menos o custo do passo, mais a espera** (`bloqueado`),
+    menos 1 pelo `andar` do mesmo tick. Quem estava no meio do passo entra **devendo** o resto
+    (progresso negativo), e o desenho (`posicaoDaUnidade`) o põe atrás do tile, no ponto contínuo
+    certo do cruzamento. Teto: o passo seguinte não vence no mesmo tick (ninguém anda dois tiles num
+    tick). Resultado: **100 e 100**.
+  - A dívida encadeia **uma vez só**: quem deve mais que um passo não permuta de frente de novo.
+    Sem teto ela não tinha fundo (medido na suíte: até −13, dois passos); sem encadear nenhuma, a fila
+    de frente esperava 11 ticks (contra 3). O piso do progresso fica em menos dois maiores passos a
+    pé (`menorProgresso`), e é o que as invariantes da FSM passam a conferir (antes: `>= 0`).
+  - A troca forçada: quem entra não ganha o tick do `andar`, e a espera não vira progresso; o outro
+    volta e recomeça o passo, como antes.
+- **O civil segurado é desenhado na borda do tile.** Quem espera o tile seguinte vagar fica em
+  `custo − 1` (entra assim que vaga), e a tela o desenhava a 0,14 tile de quem ocupa o tile, por todo
+  o tempo da espera: era o "vários serfs no mesmo tile" do relato do operador, medido na vila pronta
+  (um serf a 0,14 tile do canavieiro semeando, por mais de 20 ticks). `posicaoDaUnidade` para o civil
+  com `bloqueado` em meio passo. **Tentado e revertido:** esperar no próprio tile antes de começar o
+  passo, como o militar (C-MOVIMENTO-01). Ele criou um travamento real na escaramuça (dois serfs
+  barrados 537 e 453 ticks: a troca forçada empurrava um para trás sem zerar a espera dele) e mudou a
+  rota de 3 testes. A sim ficou como estava; só o desenho mudou.
+
+**O "não trava" por progresso (aceite (b)).** O teto de espera da invariante (troca forçada + passo,
+31 ticks) saiu, como a lição da D-MOVIMENTO-01 pedia. No lugar, `units.json
+colisaoCivil.prazoDeProgresso_segundos_base` = 90 (450 ticks): o civil que quer andar avança um tile
+dentro dele. Medido: a espera legítima mais longa é a de quem chega ao tile onde outro **trabalha**
+(245 ticks esperando o semear, 319 esperando o corte da árvore, `woodcutters.colheita.noTile` 66,2 s
+base). Uma regra de dado obriga o prazo a cobrir o semear e o trabalho no tile das colheitas, e o
+teste prova que ela reprova 66 e 52. **Só os testes leem o campo**; a sim não.
+
+**Aceite:**
+- (a) e (b): `tests/I-MOVIMENTO-COLISAO-CIVIL-LIGADA.test.ts`, 20 000 ticks pelo `step`, escaramuça e
+  vila da calibração: **0 ticks com dois civis num tile** nos dois; maior tempo sem avançar 102 ticks
+  (escaramuça) e 319 (jogo livre), prazo 450. ~25 s na suíte normal (ver Perguntas em aberto).
+- (c): `D-MOVIMENTO-01a`, teste novo: sozinho 100, de frente 100 e 100.
+- (d): suíte normal **2 555 verdes**, transladada **2 553 + 5 pulados** (os 5 já eram pulados antes
+  desta leva, por configuração do transladado; nenhum pulado novo), longa **6 de 6**. Nada de `skip`:
+  o que saiu, saiu do arquivo.
+- (e): roteiro novo `I-MOVIMENTO-COLISAO-CIVIL-LIGADA` (vila pronta, câmera na pedreira, 61
+  checagens a cada 10 ticks sem par de civis desenhados juntos em duas checagens seguintes; 8
+  cruzamentos de um instante). Captura aberta: a pedreira, um carregador com pedra na porta e dois
+  entre as rochas, cada um no seu tile. Dois civis que se cruzam de frente são desenhados no mesmo
+  ponto no tick do cruzamento (medido: 33, 40,8 no tick 100), e na sim estão em tiles distintos; o
+  roteiro afirma "empilhado" como ficar junto, e não o instante do cruzamento.
+- `BUG-CIVIS-EMPILHADOS` saiu do `BUGS.md`; GDD §6.4 reescrito com a data, a decisão e as palavras
+  do operador, e o registro de 2026-09-28 como histórico; a boa prática das duas rotas também.
+- Testes novos dos guardas: o piso do progresso acusa abaixo dele (e, desligada, abaixo de 0); o civil
+  segurado é desenhado em meio passo, e o que anda segue o passo.
+
+**Os testes que mudaram, um a um:**
+
+```text
+teste                                   caminho                      o que foi feito
+D-MOVIMENTO-01a (o dado)                chave desligada -> ligada    afirma ligada:true
+D-MOVIMENTO-01a (2 do modo desligado)   chave desligada              GameData desligado explicito (o mecanismo ainda tem a chave)
+D-MOVIMENTO-01a (teto da invariante)    teto de espera saiu          afirma o prazo do dado > troca forcada
+D-MOVIMENTO-01a (parado que nunca sai)  prazo maior                  corre ate o prazo + 200 ticks; a invariante segue acusando
+D-MOVIMENTO-01a (permuta, novo)         aceite (c)                   100 sozinho, 100 e 100 de frente
+BUG-X (medida desligada)                gameData agora ligado        GameData desligado explicito
+D-SAVE-VILA-PRONTA                      save versionado              regravado com a colisao ligada
+D-TRANSPORTE-03 T1 (aceite 2)           afirma producao no prazo     "15 chegam ao quartel" -> "chegam (>0)"; medido 11
+D-TRANSPORTE-03-T2 longo (aceite 2)     afirma calibracao            a comparacao com a base saiu; fica "toda cadeia produz e cresce por janela"
+F09-sistema (reserva no save)           ficava vacuo                 o save e no primeiro tick com reserva pendente (derivado, nao 112)
+F20b-4 (comensais)                      era o teto de espera         passou com o prazo; nao era defeito do teto de comensais
+F10, F10-fsm, F11c, F18g                progresso negativo           o guarda da FSM passou a aceitar a divida (piso menorProgresso)
+D-TRANSPORTE-03-T2 (nos do A*)          teto medido sem colisao      passa (teto 24 700); nao mudou
+I-TELA-PARTIDA-GUIADA (c)               prazo de 5 s                 passa; nao mudou
+```
+
+O pão com a colisão ligada, na vila da calibração (evidência do T2 longo, número da corrida): 64 em
+16 000 ticks (base sem colisão: 80), 94 em 20 000 (112), 170 em 30 000 (190). É o desafio.
+
+**A escaramuça de novo, com a colisão ligada** (o item 1 foi medido desligado): a sonda dos 6 jeitos
+deu exatamente a mesma tabela, e o `C-IA-03c` sai 0 (vitória no 8 308, 11 de 24).
+
+**Achado de passagem (registrado, não consertado):** o teste longo `BUG-T-troca-mutua` (a varredura
+das 400 ordens) reprovou com a tropa de 24 do item 1, com a colisão ligada e desligada: na ordem 13
+ficam 8 ou mais soldados marchando depois de 1 500 ticks. O item 1 não rodou a longa inteira e não o
+pegou. A varredura voltou à receita do plano (tropa de 18, a mesma fixture dos testes de formação), e
+o defeito está no `BUGS.md` como `BUG-TROPA-DE-24-PRESA` (severidade `errado`, causa não investigada).
+
+### Perguntas em aberto
+- **O teste dos aceites (a)/(b) leva ~25 s na suíte normal** (40 000 ticks no total). Mover para a
+  longa é decisão do operador (a lista dos longos é dele); ficou na normal.
+- **`BUG-TROPA-DE-24-PRESA`:** a escaramuça que o operador joga tem 24 cabras, e a varredura do BUG-T
+  acha soldados presos com 24. Consertar agora ou depois é do operador.
+
+## 2026-10-04 — Leva (2), fechamento: o roteiro F18f (unidade empilhada não some) com a colisão ligada
+
+O `shot:todos` do `e9b1bd1` (129 roteiros, nenhum em 0 s) deu 2 falhas: `D-TELA-03` (o
+`BUG-ROTEIRO-D-TELA-03-MACHADO-COM-ICONE`, já registrado, vindo da `main`) e **`F18f`**, nova.
+O `C-IA-03c` e a `F-TELA-NEVOA` saíram 0 dentro da corrida.
+
+- **F18f** esperava uma pilha de 6 unidades no mesmo tile na rua da pedreira, a regra da F03
+  ("civis ocupam o mesmo tile"). Com a colisão ligada, a maior pilha é 2: era o defeito que a
+  decisão do operador elimina. Pela regra do projeto (a asserção nova fica mais estrita), o roteiro
+  passa a afirmar, na mesma geometria: em 600 ticks, **nenhuma pilha de 3 ou mais**; toda pilha de 2
+  com os centros desenhados distintos (o aceite original da F18f, o deslocamento pelo id); o
+  deslocamento não vaza do tile e não salta. Medido: maior pilha 2, em 33 quadros.
+- **O que forma a pilha de 2 (medido):** um serf ocioso parado no tile em que o obreiro martela ou
+  nivela a obra (`martelando`/`nivelando`, estados "dentro", que não ocupam tile), e os cruzamentos de
+  frente de um instante. O aceite (a) da colisão exclui os estados "dentro", e na tela o
+  deslocamento pelo id os separa. Ficou como está; a pergunta abaixo.
+
+### Perguntas em aberto
+- **O obreiro trabalhando no canteiro deve ocupar o tile?** Hoje `martelando` e `nivelando` são
+  "dentro" (não ocupam), e um serf ocioso pode parar no mesmo tile, desenhado ao lado pelo
+  deslocamento da F18f. O relato do operador ("vários serfs ou unidades ocupando o mesmo tile, e não
+  pode") pode incluir esse caso. Mudar a classificação muda a sim (o empurrão passaria a tirar o
+  ocioso de lá) e não estava no aceite.
+
+## 2026-10-04 — Fechamento da leva de 2026-10-04 (2), §13
+
+Na branch `dellanio/colisao-e-escaramuca`, sem merge na `main` (a sessão principal faz) e sem push.
+
+**A corrida, nesta ordem:**
+1. `npm run shot:todos` no `e9b1bd1`, destacado: **129 roteiros, nenhum em 0 s, 2 com saída
+   diferente de 0**: `D-TELA-03` (`BUG-ROTEIRO-D-TELA-03-MACHADO-COM-ICONE`, já registrado, vindo da
+   `main`) e `F18f` (a pilha de 6 que a colisão elimina; consertado no `c13b168` e rodado de novo
+   sozinho: sai 0). `C-IA-03c` e `F-TELA-NEVOA` saíram 0 dentro da corrida, e com eles o aceite (a)
+   da I-COMBATE-ESCARAMUCA-GANHAVEL. **Não verificado:** os 129 de novo depois do `c13b168`, que só
+   mudou o `F18f.js` e o PROGRESS.
+2. `npm run verify` completo no `c13b168`: verde, 2 557 testes, e 2 555 + 5 pulados no transladado
+   (os 5 de antes). Com esse selo, as chaves (`c831eea`): `F-TELA-NEVOA` passa (aceite (b) da
+   escaramuça), e entram `I-COMBATE-ESCARAMUCA-GANHAVEL` e `I-MOVIMENTO-COLISAO-CIVIL-LIGADA`.
+3. `npm run test:longo`, sozinha, por último: **verde**, 59 s, no `c831eea`, com a árvore limpa;
+   `selo:longo` OK. Este commit de PROGRESS deixa o selo para trás.
+
+**Estado final da leva:**
+
+```text
+item                                   estado    commit    o que falta
+1  I-COMBATE-ESCARAMUCA-GANHAVEL       fechou    6db44e3   tropa 24; conferida de novo com a colisao ligada
+2  I-MOVIMENTO-COLISAO-CIVIL-LIGADA    fechou    e9b1bd1   -
+   F18f (roteiro, pela colisao)        fechou    c13b168   -
+   chaves do fechamento                feito     c831eea   -
+BUG-TROPA-DE-24-PRESA (achado)         aberto    e9b1bd1   operador: consertar agora ou depois
+BUG-ROTEIRO-D-TELA-03 (da main)        aberto    -         registrado, nao corrigido
+obreiro no canteiro ocupa o tile?      pergunta  c13b168   operador
+teste (a)/(b) de ~25 s na normal       pergunta  e9b1bd1   operador: mover para a longa?
+```
+
+**Espera o operador:** as três perguntas em aberto acima (o `BUG-TROPA-DE-24-PRESA`, o obreiro no
+canteiro e o teste de 25 s); jogar a escaramuça com 24 e a vila com a colisão ligada; e o merge na
+`main`, que é da sessão principal.
 
 ### BUG-VERIFY-RAPIDO-LINHA-LONGA corrigido (o operador mandou consertar, 2026-10-04)
 **Causa (verificada):** o `scripts/verify-rapido.js` passava a lista de arquivos ao vitest pelo shell, e

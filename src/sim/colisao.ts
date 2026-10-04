@@ -179,16 +179,6 @@ function desvioCivil(state: GameState, u: Unidade, caminho: readonly TileDeGrid[
 }
 
 /**
- * O teto da espera que a invariante confere: a troca forcada mais o maior passo do dado.
- * D-MOVIMENTO-01j — com a permuta, quem espera outro que anda permuta no teto; o passo a mais
- * cobre a ultima volta do `andar`. Esperar um PARADO (carregando, colhendo) dura o trabalho
- * dele, e passar daqui e o que a invariante existe para mostrar. Derivado do dado.
- */
-export function tetoDaEspera(dados: GameData): number {
-  return dados.movimento.colisaoCivil.ticksTrocaForcada + Math.max(...Object.values(dados.movimento.ticksPorTileDiagonal.aPe));
-}
-
-/**
  * D-MOVIMENTO-01g — a PRIORIDADE de quem ja passou da troca forcada: ninguem mais entra no
  * tile que ele quer. Sem isto, numa porta com fluxo continuo, pares novos se formavam a cada
  * vez que o anterior se desfazia, e ele esperava sem limite (medido: 24 ticks na porta de uma
@@ -269,9 +259,46 @@ export function passoCivil(state: GameState, u: Unidade, custo: number, dados: G
  * por tick. A PRIORIDADE de quem passou do teto (`cedeAQuemEspera`) NAO vale aqui: ela e para
  * entrar em tile vazio. Medido (porta de 10 ticks, carga 2x): com ela bloqueando a permuta, quem
  * sai da porta e quem espera de frente para entrar ficavam presos um contra o outro, porque um
- * terceiro com mais espera queria aquele tile — e a vila parou. Quem permuta ganha 1 tick
- * (o `andar` do mesmo tick ja soma no passo seguinte): deterministico e registrado.
+ * terceiro com mais espera queria aquele tile — e a vila parou.
+ *
+ * I-MOVIMENTO-COLISAO-CIVIL-LIGADA — o TEMPO da permuta e exato (`progressoDaPermuta`). De frente,
+ * cada um entra no tile do outro com o progresso que tinha, menos o custo do passo, mais a espera
+ * (`bloqueado`): quem estava no meio do passo entra DEVENDO o resto dele, e quem estava segurado ja
+ * tinha terminado o passo, e o tempo segurado e progresso do seguinte. Menos 1, porque o `andar`
+ * deste mesmo tick ainda soma. O defeito medido (2026-09-29): de frente em 20 tiles, um chegava em
+ * 95 ticks, contra 100 sozinho (ganhava o resto do passo do outro e o tick do `andar`). Na forcada,
+ * quem entra nao ganha o tick do `andar` e a espera nao vira progresso (foi espera de verdade); o
+ * outro volta e recomeca o passo.
  */
+/**
+ * I-MOVIMENTO-COLISAO-CIVIL-LIGADA — o menor `progresso` valido de uma unidade: 0, e com a
+ * colisao civil ligada, menos DOIS maiores passos a pe do dado: a divida de quem entrou pela
+ * permuta de frente no meio do passo (`progressoDaPermuta`), que encadeia uma vez so (quem deve
+ * mais que um passo nao permuta de novo). E o que as invariantes da FSM conferem.
+ */
+export function menorProgresso(dados: GameData): number {
+  return colisaoCivilLigada(dados) ? -2 * maiorPassoAPe(dados) : 0;
+}
+
+/** O maior passo a pe do dado (a diagonal mais cara). */
+function maiorPassoAPe(dados: GameData): number {
+  return Math.max(...Object.values(dados.movimento.ticksPorTileDiagonal.aPe));
+}
+
+/**
+ * O progresso de quem entra no tile seguinte pela permuta (ver `sistemaDaPermuta`): o que tinha,
+ * menos o custo do passo (o progresso que sobra do passo, ou o que ainda deve dele), mais a espera
+ * quando ela conta, menos o 1 que o `andar` deste tick soma. Teto: o passo seguinte nao vence neste
+ * tick, para ninguem andar dois tiles num tick so. Quem chegou ao fim do caminho fica em 0.
+ */
+function progressoDaPermuta(state: GameState, u: Unidade, caminho: readonly TileDeGrid[], contaEspera: boolean, dados: GameData): number {
+  const [entra, depois] = caminho;
+  if (entra === undefined || depois === undefined) return 0;
+  const custo = custoDoPasso(state.estradas, u, entra, dados);
+  const espera = contaEspera ? (u.fsmData.bloqueado ?? 0) : 0;
+  return Math.min((u.fsmData.progresso ?? 0) - custo + espera, custoDoPasso(state.estradas, entra, depois, dados) - 2);
+}
+
 export function sistemaDaPermuta(state: GameState, dados: GameData): GameState {
   if (!colisaoCivilLigada(dados)) return state;
   const teto = dados.movimento.colisaoCivil.ticksTrocaForcada;
@@ -289,13 +316,16 @@ export function sistemaDaPermuta(state: GameState, dados: GameData): GameState {
     const o = ocupantes[0] as Unidade;
     if (permutou.has(o.id) || !anda(o)) continue;
     const caminhoDele = o.fsmData.caminho as readonly TileDeGrid[];
-    const deFrente = mesmoTile(caminhoDele[0] as TileDeGrid, u);
+    // a divida encadeia uma vez so: quem ja deve mais que um passo nao permuta de novo de frente
+    // (espera pagar). Sem teto, a divida nao tinha fundo (medido: -13 na suite, dois passos); sem
+    // encadear nenhuma, a coluna de frente esperava 11 ticks na rua de um tile, contra 3
+    const deFrente = mesmoTile(caminhoDele[0] as TileDeGrid, u) && (o.fsmData.progresso ?? 0) >= -maiorPassoAPe(dados);
     const forcada = !deFrente && (u.fsmData.bloqueado ?? 0) + 1 >= teto;
     if (!deFrente && !forcada) continue;
     if (!passoAndavel(atual, o, u, modoDoDesvio(atual, o, caminhoDele), dados)) continue;
-    const eu: Unidade = { ...u, gx: proximo.gx, gy: proximo.gy, fsmData: { ...semEspera(u.fsmData), caminho: caminho.slice(1), progresso: 0 } };
+    const eu: Unidade = { ...u, gx: proximo.gx, gy: proximo.gy, fsmData: { ...semEspera(u.fsmData), caminho: caminho.slice(1), progresso: progressoDaPermuta(atual, u, caminho, deFrente, dados) } };
     const ele: Unidade = deFrente
-      ? { ...o, gx: u.gx, gy: u.gy, fsmData: { ...semEspera(o.fsmData), caminho: caminhoDele.slice(1), progresso: 0 } }
+      ? { ...o, gx: u.gx, gy: u.gy, fsmData: { ...semEspera(o.fsmData), caminho: caminhoDele.slice(1), progresso: progressoDaPermuta(atual, o, caminhoDele, true, dados) } }
       : { ...o, gx: u.gx, gy: u.gy, fsmData: { ...o.fsmData, caminho: [{ gx: o.gx, gy: o.gy }, ...caminhoDele], progresso: 0 } };
     atual = { ...atual, unidades: { ...atual.unidades, porId: { ...atual.unidades.porId, [eu.id]: eu, [ele.id]: ele } } };
     permutou.add(eu.id);

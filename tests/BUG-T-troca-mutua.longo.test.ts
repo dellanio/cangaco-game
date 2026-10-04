@@ -9,7 +9,7 @@ import { gameData } from '../src/sim/data';
 import { LADO_DO_JOGADOR } from '../src/sim/state';
 import type { Unidade } from '../src/sim/state';
 import { step } from '../src/sim/tick';
-import { criarEscaramuca } from '../src/sim/cenario';
+import { escaramucaComTropaDe, TROPA_DOS_TESTES_DE_FORMACAO } from './helpers/escaramuca-paz';
 import { gravarEvidencia } from './helpers/evidence';
 import { sobrepostos } from './helpers/militares';
 
@@ -21,7 +21,9 @@ describe('BUG-T aceite 4 — a varredura das 400 ordens (receita fixada na secao
   it('nenhuma ordem deixa soldado marchando, e nenhum tick tem dois militares no mesmo tile', () => {
     let x = 12345n;
     const rnd = (n: number): number => { x = (x * 1103515245n + 12345n) % 2147483648n; return Number(x % BigInt(n)); };
-    let s = criarEscaramuca(gameData.economia.estadoInicial.semente);
+    // a receita do plano (secao 7) e com a tropa de 18. Com a de 24 do cenario de hoje
+    // (I-COMBATE-ESCARAMUCA-GANHAVEL) a ordem 13 deixa soldados marchando: BUG-TROPA-DE-24-PRESA
+    let s = escaramucaComTropaDe(TROPA_DOS_TESTES_DE_FORMACAO, gameData.economia.estadoInicial.semente);
     const tropa = s.unidades.ordem.filter((id) => s.unidades.porId[id]?.lado === LADO_DO_JOGADOR && s.unidades.porId[id]?.tipo === TIPO);
     const lider = s.unidades.porId[tropa[0] as string] as Unidade;
     const comPreso: unknown[] = [];

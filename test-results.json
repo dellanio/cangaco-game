@@ -654,7 +654,7 @@
     "passes": true
   },
   "F-TELA-NEVOA-nevoa-na-tela": {
-    "passes": false
+    "passes": true
   },
   "F-IA-DIFICULDADE-tres-niveis": {
     "passes": true
@@ -687,6 +687,12 @@
     "passes": false
   },
   "H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA-som-com-lugar": {
+    "passes": true
+  },
+  "I-COMBATE-ESCARAMUCA-GANHAVEL-escaramuca-de-teste-ganhavel": {
+    "passes": true
+  },
+  "I-MOVIMENTO-COLISAO-CIVIL-LIGADA-civis-colidem": {
     "passes": true
   }
 }

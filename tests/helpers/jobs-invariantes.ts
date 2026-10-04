@@ -20,7 +20,7 @@ import { insumosDoPredio } from '../../src/sim/insumo';
 import { receitaDoTipo, unidadesPorCiclo } from '../../src/sim/producao';
 import { ehPredioOcupavel } from '../../src/sim/ocupacao';
 import { predioReparavel } from '../../src/sim/reparo';
-import { ehCivilQueOcupa, POSICAO_DO_ESTADO, tetoDaEspera } from '../../src/sim/colisao';
+import { ehCivilQueOcupa, POSICAO_DO_ESTADO } from '../../src/sim/colisao';
 import { classeDaUnidade } from '../../src/sim/condicao';
 import { ehQuartelCompleto, ehRequisitoDoQuartel } from '../../src/sim/quartel';
 import { demandaDoTile, disponivelNaOrigem, vagaNoDestino } from '../../src/sim/reservas';
@@ -340,16 +340,17 @@ export function violacoesDeInvariantes(estado: GameState, dados: GameData = game
  * D-MOVIMENTO-01 — as invariantes da colisao civil. So com `colisaoCivil.ligada`: desligada, os civis se
  * atravessam como antes e nada disto vale.
  *  - todo estado de FSM tem classificacao (dentro ou fora);
- *  - nenhum civil espera alem do teto (`tetoDaEspera`: a troca forcada mais o maior passo),
- *    nem no passo nem na porta: e o "nao trava";
+ *  - nao trava, POR PROGRESSO (I-MOVIMENTO-COLISAO-CIVIL-LIGADA, a licao da D-MOVIMENTO-01): o
+ *    civil que quer andar avanca um tile dentro de `ticksPrazoDeProgresso` (do dado). `bloqueado`
+ *    e `saindo` contam os ticks seguidos sem avancar, no passo e na porta. O teto de espera de
+ *    antes (troca forcada + passo) acusava fila legitima, e saiu;
  *  - dois civis "fora" no mesmo tile e defeito, SEMPRE (D-MOVIMENTO-01j: a troca e
  *    permuta). Quem espera a porta (`saindo`) esta dentro: nao ocupa, e nao conta.
  */
 export function violacoesDaColisao(estado: GameState, dados: GameData = gameData): string[] {
   const c = dados.movimento.colisaoCivil;
   if (!c.ligada) return [];
-  // D-MOVIMENTO-01g — troca forcada + o maior passo: o par que ocupa o tile dura um passo
-  const teto = tetoDaEspera(dados);
+  const prazo = c.ticksPrazoDeProgresso;
   const v: string[] = [];
   const porTile = new Map<string, string[]>();
   for (const id of estado.unidades.ordem) {
@@ -360,8 +361,8 @@ export function violacoesDaColisao(estado: GameState, dados: GameData = gameData
       continue;
     }
     if (classeDaUnidade(u.tipo, dados) !== 'civil') continue;
-    if ((u.fsmData.bloqueado ?? 0) > teto) v.push(`${id}: bloqueado ha ${u.fsmData.bloqueado} ticks (teto ${teto})`);
-    if ((u.saindo ?? 0) > teto) v.push(`${id}: esperando a porta ha ${u.saindo} ticks (teto ${teto})`);
+    if ((u.fsmData.bloqueado ?? 0) > prazo) v.push(`${id}: bloqueado ha ${u.fsmData.bloqueado} ticks (prazo ${prazo})`);
+    if ((u.saindo ?? 0) > prazo) v.push(`${id}: esperando a porta ha ${u.saindo} ticks (prazo ${prazo})`);
     if (!ehCivilQueOcupa(u, dados)) continue;
     const k = `${u.gx},${u.gy}`;
     porTile.set(k, [...(porTile.get(k) ?? []), id]);

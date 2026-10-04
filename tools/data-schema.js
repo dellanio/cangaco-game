@@ -111,6 +111,9 @@ const CAMPOS_ESCALONADOS = [
     unidade: 'segundos', declaraEscalaEm: 'escalaVelocidade' },
   { arquivo: 'units', caminho: 'colisaoCivil.trocaForcadaDepois_segundos_base',
     unidade: 'segundos', declaraEscalaEm: 'escalaVelocidade' },
+  // I-MOVIMENTO-COLISAO-CIVIL-LIGADA — o prazo do "nao trava" por progresso (so a invariante le).
+  { arquivo: 'units', caminho: 'colisaoCivil.prazoDeProgresso_segundos_base',
+    unidade: 'segundos', declaraEscalaEm: 'escalaVelocidade' },
   // A taxa e do REGIME e nao do tipo, e e por isso que ela cabe aqui: caminho
   // fixo se registra, caminho por tipo (como as taxas de production.json) nao.
   { arquivo: 'resources', caminho: 'regimes.porTempo.segundosPorUnidade_base',

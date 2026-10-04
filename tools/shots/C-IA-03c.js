@@ -17,6 +17,7 @@
 // O px sai do debug (`unidadesRenderizadas`, `prediosDoEstado`), nunca de pixel da captura.
 const { retanguloDoCanvas } = require('./_canvas');
 const terreno = require('../../data/terrain.json');
+const TROPA = require('../../data/escaramuca.json').tropaDoJogador.quantidade; // dado do cenario (I-COMBATE-ESCARAMUCA-GANHAVEL: 18 -> 24)
 const escaramuca = require('../../data/escaramuca.json');
 const unidades = require('../../data/units.json');
 
@@ -51,7 +52,7 @@ async function roteiro(ctx) {
   const daIA = s.unidadesRenderizadas.filter((u) => u.lado === LADO_DA_IA);
   const minha = s.unidadesRenderizadas.filter((u) => u.lado === LADO_DO_JOGADOR && u.tipo === 'militia');
   afirmar(s.tick === 0, `a escaramuca deveria nascer no tick 0, veio ${s.tick}`);
-  afirmar(minha.length === 18, `o jogador deveria nascer com 18 cabras, veio ${minha.length}`);
+  afirmar(minha.length === TROPA, `o jogador deveria nascer com ${TROPA} cabras, veio ${minha.length}`);
   afirmar(daIA.length > 0 || Object.values(s.prediosDoEstado).some((p) => p.lado === LADO_DA_IA), 'a IA deveria existir');
   const contadorNoInicio = await texto('#minimapa [data-campo="paz"]');
   afirmar(contadorNoInicio !== null && /Paz: 10:00/.test(contadorNoInicio), `o contador deveria mostrar 10:00, veio ${contadorNoInicio}`);
@@ -118,7 +119,7 @@ async function roteiro(ctx) {
   await page.mouse.up();
   await esperarFrame();
   s = await estado();
-  afirmar(s.selecaoMilitar.length === 18, `a caixa deveria pegar os 18, veio ${s.selecaoMilitar.length}`);
+  afirmar(s.selecaoMilitar.length === TROPA, `a caixa deveria pegar os ${TROPA}, veio ${s.selecaoMilitar.length}`);
 
   // em paz, o botao direito LONGE da vila move a tropa (C-COMBATE-02b: a cerca saiu)
   const LONGE_TILES = 16;
@@ -155,19 +156,21 @@ async function roteiro(ctx) {
   // 5. o ataque. A primeira ordem DESPAUSADA, com o laco redesenhando (§8)
   // C-TELA-04: o botao direito sobre o inimigo passou a ser `AttackUnit` (antes era marcha ao
   // tile dele). Mirar o ARQUEIRO atras da linha agora manda os 18 perseguirem um so alvo
-  // atraves da frente e da chuva de flecha, e a tropa morre inteira (medido). O roteiro joga
-  // como o jogador: o inimigo MAIS PERTO da tropa.
+  // atraves da frente e da chuva de flecha, e a tropa morre inteira (medido, com 18 e sem nevoa).
+  // I-COMBATE-ESCARAMUCA-GANHAVEL: a mesma tatica do gemeo headless (o teste longo da C-IA-03b):
+  // o bodoqueiro a vista primeiro, senao qualquer um a vista; sem ninguem a vista, o tile do
+  // bodoqueiro no escuro (o clique vira marcha, F-TELA-NEVOA). Perseguir o "mais perto" corria
+  // atras do grupo de ataque da IA e perdia a tropa (medido: 0 de 24, rodadas 2 a 13).
   const alvoDaRodada = () => {
     const inimigos = s.unidadesRenderizadas.filter((u) => u.lado === LADO_DA_IA && MILITARES.has(u.tipo));
-    const meus = s.unidadesRenderizadas.filter((u) => u.lado === LADO_DO_JOGADOR && u.tipo === 'militia');
-    if (meus.length === 0) return inimigos[0] ?? null;
-    const cx = meus.reduce((n, u) => n + u.gx, 0) / meus.length;
-    const cy = meus.reduce((n, u) => n + u.gy, 0) / meus.length;
-    const d = (u) => Math.hypot(u.gx - cx, u.gy - cy);
-    return [...inimigos].sort((a, b) => d(a) - d(b))[0] ?? null;
+    const aVista = inimigos.filter((u) => u.visivel !== false);
+    const arqueiro = (us) => us.find((u) => u.tipo === 'bowman');
+    return arqueiro(aVista) ?? aVista[0] ?? arqueiro(inimigos) ?? inimigos[0] ?? null;
   };
   let primeira = true;
   let capturouCombate = false;
+  // a mecanica que o roteiro afirma (I-COMBATE-ESCARAMUCA-GANHAVEL), alem da vitoria
+  const mecanica = { marchaNoEscuro: false, ataqueAoQueSeVe: false, iaAtacou: false };
   let rodadas = 0;
   const rodadasIndoAtacar = {};
   for (; rodadas < 200; rodadas += 1) {
@@ -199,6 +202,10 @@ async function roteiro(ctx) {
     }
     await avancar(RODADA);
     s = await estado();
+    const meusAgora = s.unidadesRenderizadas.filter((u) => u.lado === LADO_DO_JOGADOR && u.tipo === 'militia');
+    if (alvo !== null && alvo.visivel === false && meusAgora.some((u) => u.fsm === 'marchando')) mecanica.marchaNoEscuro = true;
+    if (alvo !== null && alvo.visivel !== false && meusAgora.some((u) => ['indo_lutar', 'lutando'].includes(u.fsm))) mecanica.ataqueAoQueSeVe = true;
+    if (s.unidadesRenderizadas.some((u) => u.lado === LADO_DA_IA && u.fsm === 'indo_atacar')) mecanica.iaAtacou = true;
     if (rodadas % 10 === 0 || process.env.CANGACO_SHOT_LOG) {
       const meus = s.unidadesRenderizadas.filter((u) => u.lado === LADO_DO_JOGADOR && u.tipo === 'militia');
       const fsms = {};
@@ -225,10 +232,15 @@ async function roteiro(ctx) {
   const titulo = fim === null ? null : await page.$eval('#fim-de-partida h2', (n) => n.textContent);
   afirmar(osTresDaIA().length === 0, `os tres predios da IA deveriam cair, sobraram ${osTresDaIA().length}`);
   afirmar(s.unidadesRenderizadas.every((u) => u.lado !== LADO_DA_IA || !MILITARES.has(u.tipo)), 'a tropa da IA deveria cair');
+  afirmar(mecanica.marchaNoEscuro, 'depois da paz, o clique no inimigo fora da vista deveria fazer a tropa marchar pelo escuro');
+  afirmar(mecanica.ataqueAoQueSeVe, 'o clique no inimigo a vista deveria levar a tropa a lutar');
+  afirmar(mecanica.iaAtacou, 'depois da paz, a IA deveria sair para atacar (indo_atacar)');
+  // ESTE CENARIO DE TESTE E GANHAVEL: e dado do cenario (`escaramuca.tropaDoJogador`, 24 em
+  // 2026-10-04), e nao regra de jogo; muda quando o cenario mudar.
   afirmar(fim === 'vitoria', `a vitoria deveria aparecer na tela, veio ${fim} (${titulo})`);
   const vivos = s.unidadesRenderizadas.filter((u) => u.lado === LADO_DO_JOGADOR && u.tipo === 'militia').length;
   await capturar('vitoria');
-  console.log(`C-IA-03c: "${titulo}"; paz ate o tick ${tickDoFimDaPaz}, vitoria no tick ${s.tick}, ${rodadas} rodadas, ${vivos} de 18 cabras vivos, combate capturado: ${capturouCombate}`);
+  console.log(`C-IA-03c: "${titulo}"; paz ate o tick ${tickDoFimDaPaz}, vitoria no tick ${s.tick}, ${rodadas} rodadas, ${vivos} de ${TROPA} cabras vivos, combate capturado: ${capturouCombate}, mecanica: ${JSON.stringify(mecanica)}`);
 }
 
 module.exports = { roteiro };

@@ -48,8 +48,9 @@ describe('C-IA-03b — peacetime e tropas', () => {
     expect(emPaz(livre)).toBe(false);
   });
 
-  it('as tropas: 18 cabras do jogador; a IA 9 cabras + 3 bodoqueiros nas posicoes, mais os 9 atacantes, e o quartel dela vazio', () => {
-    expect(tropaDoJogador(s0)).toHaveLength(18);
+  it('as tropas: a tropa do cenario para o jogador; a IA 9 cabras + 3 bodoqueiros nas posicoes, mais os 9 atacantes, e o quartel dela vazio', () => {
+    // o tamanho da tropa e dado do cenario (I-COMBATE-ESCARAMUCA-GANHAVEL: 18 -> 24), nao regra
+    expect(tropaDoJogador(s0)).toHaveLength(gameData.escaramuca.tropaDoJogador.quantidade);
     const ia = doLado(s0, LADO_DA_IA).map((id) => s0.unidades.porId[id]?.tipo);
     // C-IA-04 (andaime): os 9 cabras atacantes fora das posicoes
     expect(ia.filter((t) => t === 'militia')).toHaveLength(9 + 9);

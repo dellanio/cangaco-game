@@ -30,6 +30,21 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
 
 ## Abertos
 
+## BUG-TROPA-DE-24-PRESA — com a tropa de 24, a varredura do BUG-T deixa soldados marchando
+- feature: C-MOVIMENTO / BUG-T (a tropa travada), exposto pela I-COMBATE-ESCARAMUCA-GANHAVEL
+- severidade: errado
+- repro: a varredura de `tests/BUG-T-troca-mutua.longo.test.ts` (as 400 ordens, a receita do plano
+  `docs/planos/2026-09-30-BUG-T-tropa-travada.md` §7) com a tropa da escaramuca de 24
+  (`criarEscaramuca(semente)` com o dado de hoje, em vez da fixture de 18): ordem k = 13, destino
+  (24, 43), direcao 0, colunas 3.
+- esperado: o aceite 4 do BUG-T: nenhuma ordem deixa soldado marchando.
+- observado: depois de 1 500 ticks, `u19`, `u20`, `u22`, `u23`, `u24`, `u27`, `u34`, `u37` (e mais)
+  seguem em `marchando`. Igual com a colisao civil ligada e desligada (medido): e a tropa maior, e
+  nao a colisao. A varredura voltou a rodar com a fixture de 18 (a receita do plano), e por isso
+  continua verde; este bug e o que ela acharia com 24. **Causa nao investigada.**
+- evidência: a saida do `npm run test:longo` de 2026-10-04 (branch `dellanio/colisao-e-escaramuca`)
+- status: aberto
+
 ## BUG-ROTEIRO-D-TELA-03-MACHADO-COM-ICONE — o roteiro da D-TELA-03 supoe que o machado nao tem icone
 - feature: D-TELA-03 (logistica na tela)
 - severidade: errado
@@ -51,19 +66,3 @@ antes deles, o BUG-001 na F09) saíram em 2026-09-24 com a regra que os dissolve
 **medida de relógio é evidência da sessão, nunca asserção** — `CLAUDE.md` §8, decisão
 do operador. A regra antiga daqui ("alargar o teto com o número medido") está **revogada**:
 ela consertava a asserção em vez de perguntar se aquele eixo podia ser asserção.
-
-## BUG-CIVIS-EMPILHADOS — vários serfs desenhados no mesmo tile
-- feature: D-MOVIMENTO-01 (colisão civil)
-- severidade: feio
-- repro: partida normal; serfs passando pela estrada na porta da pedreira (relato do operador,
-  2026-10-03, com captura)
-- esperado: o operador: "existem vários serfs ou unidades ocupando o mesmo tile, e não pode"
-- observado: três serfs desenhados quase no mesmo lugar, na estrada em frente à pedreira.
-  **Não viola regra escrita:** o GDD §6.4 diz "civis não colidem entre si", e a colisão civil
-  (D-MOVIMENTO-01) foi fechada desligada como DEFINITIVA pelo operador em 2026-09-28
-  (`units.json colisaoCivil.ligada: false`). Por isso a severidade é `feio`, e não `errado`.
-  Mudar isso é decisão do operador: religar a colisão (a medida da época está no GDD §6.4) ou
-  só espalhar na tela os civis do mesmo tile (render, sem mexer na sim).
-- evidência: screenshots/bug-civis-empilhados.png (a captura do operador; `screenshots/` não vai
-  para o git)
-- status: aberto

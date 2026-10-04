@@ -12,11 +12,12 @@ import { LADO_DO_JOGADOR } from '../src/sim/state';
 import type { GameState, Unidade } from '../src/sim/state';
 import type { Command } from '../src/sim/commands';
 import { step } from '../src/sim/tick';
-import { criarEscaramuca } from '../src/sim/cenario';
+import { escaramucaComTropaDe, TROPA_DOS_TESTES_DE_FORMACAO } from './helpers/escaramuca-paz';
 import { posicaoDaUnidade } from '../src/sim/selectors';
 import { gravarEvidencia } from './helpers/evidence';
 
-const s0 = criarEscaramuca(gameData.economia.estadoInicial.semente);
+// a tropa fixa de 18: o mecanismo foi medido com ela (I-COMBATE-ESCARAMUCA-GANHAVEL)
+const s0 = escaramucaComTropaDe(TROPA_DOS_TESTES_DE_FORMACAO, gameData.economia.estadoInicial.semente);
 const tropa = s0.unidades.ordem.filter((id) => s0.unidades.porId[id]?.lado === LADO_DO_JOGADOR && s0.unidades.porId[id]?.tipo === gameData.escaramuca.tropaDoJogador.tipo);
 const lider = s0.unidades.porId[tropa[0] as string] as Unidade;
 const mover = (destino: { gx: number; gy: number }): Command => ({ type: 'MoveUnits', unidades: tropa, destino });

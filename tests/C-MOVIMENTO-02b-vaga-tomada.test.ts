@@ -10,12 +10,13 @@ import { LADO_DO_JOGADOR } from '../src/sim/state';
 import type { GameState, Unidade } from '../src/sim/state';
 import type { Command } from '../src/sim/commands';
 import { step } from '../src/sim/tick';
-import { criarEscaramuca } from '../src/sim/cenario';
+import { escaramucaComTropaDe, TROPA_DOS_TESTES_DE_FORMACAO } from './helpers/escaramuca-paz';
 import { direcaoDe } from '../src/sim/combate';
 import { tilesDaFormacao, vagaTomadaPor } from '../src/sim/systems/marcha';
 import { gravarEvidencia } from './helpers/evidence';
 
-const s0 = criarEscaramuca(gameData.economia.estadoInicial.semente);
+// a tropa fixa de 18: o mecanismo foi medido com ela (I-COMBATE-ESCARAMUCA-GANHAVEL)
+const s0 = escaramucaComTropaDe(TROPA_DOS_TESTES_DE_FORMACAO, gameData.economia.estadoInicial.semente);
 const tropa = s0.unidades.ordem.filter((id) => s0.unidades.porId[id]?.lado === LADO_DO_JOGADOR && s0.unidades.porId[id]?.tipo === gameData.escaramuca.tropaDoJogador.tipo);
 const parados = (s: GameState): boolean => tropa.every((id) => s.unidades.porId[id]?.fsm === 'ocioso');
 const LESTE = 2;

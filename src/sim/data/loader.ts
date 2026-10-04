@@ -621,6 +621,11 @@ export function loadGameData(raw: RawGameData): GameData {
       ticksPorUnidadeNaRota: Math.round(
         raw.units.colisaoCivil.custoPorUnidade_tiles * ticksPorTileAPe.estrada,
       ),
+      ticksPrazoDeProgresso: registrar(
+        'units.colisaoCivil.prazoDeProgresso_segundos_base', raw.units.escalaVelocidade,
+        raw.units.colisaoCivil.prazoDeProgresso_segundos_base, 'segundos',
+        paraTicksDeDuracao(raw.units.colisaoCivil.prazoDeProgresso_segundos_base, 'segundos', escalaMovimento, tickHz),
+      ),
     },
   };
 

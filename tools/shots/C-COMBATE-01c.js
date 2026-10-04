@@ -12,6 +12,7 @@
 // O px sai do debug (`unidadesRenderizadas`, `camera`), nunca de pixel da captura.
 const { retanguloDoCanvas } = require('./_canvas');
 const terreno = require('../../data/terrain.json');
+const TROPA = require('../../data/escaramuca.json').tropaDoJogador.quantidade; // dado do cenario (I-COMBATE-ESCARAMUCA-GANHAVEL: 18 -> 24)
 
 const TILE_PX = terreno.tile_px;
 const LADO_DO_JOGADOR = 0;
@@ -35,7 +36,7 @@ async function roteiro(ctx) {
   let s = await estado();
   const cabras = (st) => st.unidadesRenderizadas.filter((u) => u.lado === LADO_DO_JOGADOR && u.tipo === 'militia');
   const minha = cabras(s);
-  afirmar(minha.length === 18, `o jogador deveria nascer com 18 cabras, veio ${minha.length}`);
+  afirmar(minha.length === TROPA, `o jogador deveria nascer com ${TROPA} cabras, veio ${minha.length}`);
 
   async function centrarNoEixo(alvoEmTiles, eixo) {
     { // D-TELA-CAPTURA-DETERMINISTICA: a camera vai exata pela ponte (harness), e nao por setas no tempo de parede
@@ -168,20 +169,20 @@ async function roteiro(ctx) {
   await page.keyboard.press('p');
 
   console.log(`C-COMBATE-01c: ${JSON.stringify(resultado)}`);
-  afirmar(resultado.selecionados === 18, `a caixa deveria pegar 18, pegou ${resultado.selecionados}`);
+  afirmar(resultado.selecionados === TROPA, `a caixa deveria pegar ${TROPA}, pegou ${resultado.selecionados}`);
   afirmar(resultado.colunasAntes === '5 por fileira', `o painel deveria partir de 5 por fileira, veio ${resultado.colunasAntes}`);
   afirmar(resultado.colunasDepois === '7 por fileira', `dois "+" deveriam dar 7 por fileira, veio ${resultado.colunasDepois}`);
-  afirmar(resultado.fileirasDe7.maior === 7 && resultado.fileirasDe7.linhas === 3,
-    `os 18 deveriam parar em 3 fileiras de ate 7 (linhas de gy), veio ${JSON.stringify(resultado.fileirasDe7)}`);
-  afirmar(resultado.pararam === 18, `os 18 deveriam parar, pararam ${resultado.pararam}`);
-  afirmar(resultado.viradosAoLeste.maior === 7 && resultado.viradosAoLeste.linhas === 3,
+  afirmar(resultado.fileirasDe7.maior === 7 && resultado.fileirasDe7.linhas === Math.ceil(TROPA / 7),
+    `os ${TROPA} deveriam parar em ${Math.ceil(TROPA / 7)} fileiras de ate 7 (linhas de gy), veio ${JSON.stringify(resultado.fileirasDe7)}`);
+  afirmar(resultado.pararam === TROPA, `os ${TROPA} deveriam parar, pararam ${resultado.pararam}`);
+  afirmar(resultado.viradosAoLeste.maior === 7 && resultado.viradosAoLeste.linhas === Math.ceil(TROPA / 7),
     `virados ao leste, a fileira e uma linha de gx com 7, veio ${JSON.stringify(resultado.viradosAoLeste)}`);
   afirmar(typeof resultado.avisoEmPaz === 'string' && resultado.avisoEmPaz.startsWith('Em paz'),
     `a Investida em paz deveria dar o aviso da paz, veio ${resultado.avisoEmPaz}`);
   afirmar(resultado.emCargaNaPaz === 0, `em paz ninguem deveria carregar, vieram ${resultado.emCargaNaPaz}`);
   afirmar(resultado.pazAcabou, 'a paz deveria acabar');
-  afirmar(resultado.investidaHabilitada, 'a Investida deveria estar habilitada com 18 de corpo a corpo');
-  afirmar(resultado.emCarga === 18, `depois da paz, os 18 deveriam entrar em carga, vieram ${resultado.emCarga}`);
+  afirmar(resultado.investidaHabilitada, `a Investida deveria estar habilitada com ${TROPA} de corpo a corpo`);
+  afirmar(resultado.emCarga === TROPA, `depois da paz, os ${TROPA} deveriam entrar em carga, vieram ${resultado.emCarga}`);
   afirmar(resultado.colunasNaCarga === '7 por fileira' && resultado.maisNaCarga,
     `em carga o painel segue com 7 por fileira e o +/− desabilitado, veio ${resultado.colunasNaCarga} / ${resultado.maisNaCarga}`);
 }

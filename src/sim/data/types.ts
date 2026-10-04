@@ -301,6 +301,9 @@ export interface ColisaoCivilData {
    *  planeja (o AVOID_UNIT_PENALTY do KaM), em ticks: `custoPorUnidade_tiles` vezes o passo
    *  a pe na estrada, convertido no carregamento. */
   readonly ticksPorUnidadeNaRota: Ticks;
+  /** I-MOVIMENTO-COLISAO-CIVIL-LIGADA — o prazo do "nao trava" por progresso: o civil que quer
+   *  andar avanca um tile dentro dele. So a invariante dos testes le; a sim nao. */
+  readonly ticksPrazoDeProgresso: Ticks;
 }
 
 export interface CadenciaDoAtirador {

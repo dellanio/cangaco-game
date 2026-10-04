@@ -40,6 +40,10 @@ const LIGADA: GameData = {
   ...gameData, movimento: { ...gameData.movimento, colisaoCivil: { ...gameData.movimento.colisaoCivil, ligada: true } },
 };
 
+/** O modo desligado da chave, explicito: desde a I-MOVIMENTO-COLISAO-CIVIL-LIGADA o dado vem ligado. */
+const DESLIGADA: GameData = {
+  ...gameData, movimento: { ...gameData.movimento, colisaoCivil: { ...gameData.movimento.colisaoCivil, ligada: false } },
+};
 const mesmoTile = (a: { gx: number; gy: number }, b: { gx: number; gy: number }): boolean => a.gx === b.gx && a.gy === b.gy;
 
 interface Medida {
@@ -90,12 +94,12 @@ function medir(dados: GameData): Medida {
   return { encontros, bloqueios, entrouAntes, bloqueiosDeSerf, final: s };
 }
 
-const desligada = medir(gameData);
+const desligada = medir(DESLIGADA);
 const ligada = medir(LIGADA);
 const evidencia: Record<string, unknown> = {};
 
 describe('BUG-X — medida: o especialista dentro nao barra o serf na porta', () => {
-  it('desligada (o dado de hoje) e ligada: encontros > 0, bloqueios 0', () => {
+  it('desligada e ligada (o dado de hoje, I-MOVIMENTO-COLISAO-CIVIL-LIGADA): encontros > 0, bloqueios 0', () => {
     for (const [nome, m] of [['desligada', desligada], ['ligada', ligada]] as const) {
       evidencia[nome] = { ticks: TICKS, encontros: m.encontros, bloqueios: m.bloqueios, entrouAntes: m.entrouAntes, bloqueiosDeSerf: m.bloqueiosDeSerf };
       expect(m.encontros, nome).toBeGreaterThan(0);

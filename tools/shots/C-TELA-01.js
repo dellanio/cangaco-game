@@ -9,6 +9,7 @@
 // O px sai do debug (`unidadesRenderizadas`, `prediosDoEstado`), nunca de pixel da captura.
 const { retanguloDoCanvas } = require('./_canvas');
 const terreno = require('../../data/terrain.json');
+const TROPA = require('../../data/escaramuca.json').tropaDoJogador.quantidade; // dado do cenario (I-COMBATE-ESCARAMUCA-GANHAVEL: 18 -> 24)
 const tema = require('../../data/theme-sertao.json');
 
 const TILE_PX = terreno.tile_px;
@@ -29,7 +30,7 @@ async function roteiro(ctx) {
   await esperarFrame();
   let s = await estado();
   const minha = s.unidadesRenderizadas.filter((u) => u.lado === LADO_DO_JOGADOR && u.tipo === 'militia');
-  afirmar(minha.length === 18, `o jogador deveria nascer com 18 cabras, veio ${minha.length}`);
+  afirmar(minha.length === TROPA, `o jogador deveria nascer com ${TROPA} cabras, veio ${minha.length}`);
   afirmar((await aviso()) === null, 'o aviso de ordem nao deveria existir antes de ordem nenhuma');
 
   async function centrarNoEixo(alvoEmTiles, eixo) {
@@ -81,7 +82,7 @@ async function roteiro(ctx) {
   await page.mouse.up();
   await esperarFrame();
   s = await estado();
-  afirmar(s.selecaoMilitar.length === 18, `a caixa deveria pegar os 18, veio ${s.selecaoMilitar.length}`);
+  afirmar(s.selecaoMilitar.length === TROPA, `a caixa deveria pegar os ${TROPA}, veio ${s.selecaoMilitar.length}`);
 
   // 2. longe da vila (onde a cerca antiga, de 12 tiles, recusava): em paz, a tropa anda
   const LONGE_TILES = 16;
