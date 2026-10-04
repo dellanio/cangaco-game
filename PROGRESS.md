@@ -19889,3 +19889,18 @@ C-IA-03c (de antes)                      espera    -         operador: a margem 
 Perguntas em aberto); o playtest e o itch.io; a `C-IA-03c`; ouvir os sons novos; as leituras PARA
 REVISÃO; e o merge na `main`, que é da sessão principal.
 
+
+### BUG-VERIFY-RAPIDO-LINHA-LONGA corrigido (o operador mandou consertar, 2026-10-04)
+**Causa (verificada):** o `scripts/verify-rapido.js` passava a lista de arquivos ao vitest pelo shell, e
+o `cmd.exe` corta a linha em ~8 191 caracteres.
+**Correção:** a regra pura está em `tools/vitest-do-rapido.js`. O vitest roda sem shell
+(`spawnSync(programa, args)`), e o padrão é o `node` no `vitest.mjs` do projeto, porque o `npx` é
+`.cmd` e pede shell. O `CANGACO_VITEST` continua trocando o comando. Se a linha passar do teto (30 000,
+abaixo do limite de 32 767 do Windows), roda a suíte inteira e o selo grava `modo: "suite-inteira"`
+com o motivo.
+**Teste:** `tests/BUG-VERIFY-RAPIDO-LINHA-LONGA.test.ts` (4) cobre por tabela o comando e o modo. Como
+processo, num repositório falso, ele confere duas coisas: 600 arquivos de nome longo chegam todos ao
+vitest falso pelo `related`, com a linha acima de 8 191; e com 1 000 arquivos roda a suíte inteira, com
+o modo e o motivo no selo.
+**Prova de que acusa:** contra o script antigo, o mesmo teste falha com "Linha de comando muito longa.".
+Os portões (`PORTOES-pre-push`, `PORTOES-verify`) continuam verdes.

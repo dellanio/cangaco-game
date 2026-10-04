@@ -30,33 +30,6 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
 
 ## Abertos
 
-## BUG-VERIFY-RAPIDO-LINHA-LONGA — o `verify:rapido` falha com muitos arquivos alterados
-- feature: camadas de teste (CLAUDE.md §13, `verify:rapido`)
-- severidade: errado
-- repro: na `main` com 55+ commits à frente do `origin/main` (217 arquivos alterados desde a
-  base), `npm run verify:rapido` depois do merge da Fase H (`55393a5`, 2026-10-04)
-- esperado: o `vitest related` roda nos arquivos alterados e o selo rápido é gravado
-- observado: "Linha de comando muito longa." e "FALHOU: vitest related"; o selo não é criado.
-  `scripts/verify-rapido.js:76` passa a lista inteira de arquivos na linha de comando, por
-  `spawnSync(..., { shell: true })`, e o `cmd.exe` tem limite de ~8 191 caracteres. Typecheck, lint
-  e validate:data passaram; o `npm run verify` completo do mesmo commit saiu 0 (2 475 testes).
-  Sem push há tempo, a lista só cresce, então o rápido fica inutilizável até o próximo push.
-- correção prevista: passar a lista sem shell (`spawnSync` com array de argumentos, que no Windows
-  aguenta ~32 767), ou, acima de um teto, cair para a suíte inteira e dizer isso no selo.
-- evidência: o log da corrida, nesta sessão (não guardado)
-- status: aberto
-- **aceite da correção (operador mandou consertar, 2026-10-04; escrito antes do código):**
-  1. o `vitest` é chamado **sem shell**, com a lista num vetor de argumentos (`spawnSync(programa, args)`),
-     e o padrão é o `node` rodando o `vitest.mjs` do projeto (o `npx` é `.cmd` no Windows e pede shell).
-     O `CANGACO_VITEST` continua trocando o comando;
-  2. uma função pura decide o modo pelo tamanho da linha: até o teto, `related` com a lista; acima, a
-     **suíte inteira** (`vitest run`), e o selo grava `modo: "suite-inteira"` e o motivo. O teto é o
-     limite do Windows (32 767) com folga, numa constante nomeada, e o teste o cobre por tabela;
-  3. como processo, no repositório falso dos portões: 600 arquivos alterados com nomes longos (linha
-     acima de 8 191 e abaixo do teto) chegam todos ao vitest falso, e o rápido sai 0 com o selo. O caso
-     acima do teto roda a suíte inteira e diz isso no selo;
-  4. o `verify:rapido` desta branch, com os ~400 arquivos alterados, passa da etapa do `vitest related`.
-
 ## BUG-ROTEIRO-D-TELA-03-MACHADO-COM-ICONE — o roteiro da D-TELA-03 supoe que o machado nao tem icone
 - feature: D-TELA-03 (logistica na tela)
 - severidade: errado
