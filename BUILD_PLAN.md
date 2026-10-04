@@ -8494,8 +8494,8 @@ Regras para os quatro itens:
 ## Leva de 2026-10-04 — dez itens do operador, na ordem dele
 
 Pedido do operador (2026-10-04): depois dos itens em curso, estes dez, nesta ordem. Uma worktree por
-vez: a leva continua na **mesma worktree da Fase I**, depois que a I fechar, e o merge na `main` é do
-operador. O que pede decisão dele não é decidido: vai para "Perguntas em aberto", e a leva segue.
+vez: a leva continua na **mesma worktree da Fase I**, depois que a I fechar. No fim, a sessão principal faz o
+merge na `main` (pedido do operador, 2026-10-04: "faça merge na main no final"). O que pede decisão dele não é decidido: vai para "Perguntas em aberto", e a leva segue.
 
 1. **H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA** (o som com lugar e os sons de trabalho), com o aceite já
    escrito na Fase H. Aprovados pelo operador: `build-wood` 1, `build-road` 1, `quarry-work` 2,
@@ -8513,15 +8513,36 @@ operador. O que pede decisão dele não é decidido: vai para "Perguntas em aber
    que a cena normal carrega de fato. Se a memória estiver errada, o defeito vai para o código.
    **Aceite:** o roteiro sai 0, e o PROGRESS diz qual dos dois era, com a medida.
 8. **BUG-ROTEIRO-DE-DUAS-ETAPAS** (a costura dos tiles e o véu dos detalhes não rodam sozinhos).
-   **Espera a decisão do operador:** separar a comparação antes/depois do roteiro de
-   não-regressão, ou versionar a medida "antes". Sem ela, a sessão registra e pula.
+   **Decisão do operador (2026-10-04): A, separar.** O roteiro, rodado sem variável, é só de
+   não-regressão: ele afirma o que vale sozinho, no código de hoje, sem medida de outra corrida. A
+   comparação antes/depois vira um modo pedido por variável (`CANGACO_COSTURA_ETAPA`), e só ele exige
+   a medida "antes". **Aceite:** (a) os dois roteiros saem 0 numa worktree nova, sem nada em
+   `test-output/`, inclusive dentro do `shot:todos`; (b) o modo de comparação continua existindo e
+   recusa rodar sem a medida "antes", com a mensagem de hoje; (c) as asserções de não-regressão que
+   valem sozinhas são as mesmas de hoje, e o PROGRESS lista quais saíram para o modo de comparação.
 9. **BUG-ROTEIRO-F-D2-RELOGIO** (o roteiro da F-D2 afirma sobre relógio de parede). Pela §8, a
    aceleração da câmera se afirma num eixo determinístico, pelos quadros ou pelo passo por quadro,
    e não pelos pixels andados num tempo de parede. **Aceite:** o roteiro afirma a aceleração sem
    tempo de parede e sai 0 três vezes seguidas, inclusive dentro do `shot:todos`.
-10. **BUG-CIVIS-EMPILHADOS** (vários serfs desenhados no mesmo tile). **Espera a decisão do
-    operador:** religar a colisão civil ou só espalhar na tela os civis do mesmo tile. Sem ela, a
-    sessão registra e pula.
+10. **BUG-CIVIS-EMPILHADOS** (vários serfs desenhados no mesmo tile). **Decisão do operador (2026-10-04): A, religar a
+    colisão civil.** Ela revoga o "DEFINITIVO" de 2026-09-28 no GDD §6.4 (desligada porque duas faixas
+    de rua não aliviavam a fila). O GDD §6.4 passa a dizer que civis colidem, com esta data e o
+    motivo: o jogador vê civis empilhados, e isso não pode. É a feature de integração do mecanismo
+    que já existe (D-MOVIMENTO-01), e muda a sim.
+    - **Escopo:** `units.json colisaoCivil.ligada: true`; o defeito conhecido da permuta de frente
+      (chega um passo mais cedo, D-MOVIMENTO-01) corrigido pelo conserto já escrito lá; os testes
+      que mudam por ela, consertados no guarda e não na asserção; a recalibração, se a medida
+      pedir, em lote no `BALANCE_LOG.md`, nunca item a item.
+    - **Medida antes do código:** ligar a chave e rodar a suíte inteira e a longa. Contar o que
+      reprova e por quê (empilhamento, tick exato, calibração). Se a calibração da cadeia de comida
+      ou da madeira cair mais de 10 %, parar e registrar para o operador antes de girar número.
+    - **Aceite:** (a) a invariante "um civil por tile" vale em todo tick de 20 000 ticks da
+      escaramuça e do jogo livre (pelo `step`), fora dos estados "dentro"; (b) **não trava, por
+      progresso**: cada civil avança (tile, entrega ou tarefa) dentro de um prazo no dado, como a
+      lição escrita na D-MOVIMENTO-01; (c) a permuta de frente leva o mesmo tempo que andar sozinho
+      (20 tiles: 100 ticks nos dois); (d) a suíte normal, a transladada e a longa verdes; (e) o
+      `BUG-CIVIS-EMPILHADOS` sai do `BUGS.md` no mesmo commit; (f) screenshot da estrada da pedreira
+      com os serfs em tiles distintos.
 
 ## Backlog com gatilho
 
