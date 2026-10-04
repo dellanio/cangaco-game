@@ -1721,6 +1721,266 @@
       }
     },
     {
+      "id": "rebel",
+      "tipo": "unidade",
+      "footprint": [
+        1,
+        1
+      ],
+      "tamanho": [
+        64,
+        96
+      ],
+      "anchor": [
+        0.5,
+        1
+      ],
+      "estados": {
+        "parado:n": "sprites/units/rebel/parado.png",
+        "parado:ne": "sprites/units/rebel/parado.png",
+        "parado:l": "sprites/units/rebel/parado.png",
+        "parado:se": "sprites/units/rebel/parado.png",
+        "parado:s": "sprites/units/rebel/parado.png"
+      },
+      "atlas": "sprites/units/rebel/rebel.json",
+      "animacoes": {
+        "parado": {
+          "quadros": 1,
+          "fps": 10,
+          "laco": true
+        },
+        "andar": {
+          "quadros": 8,
+          "tilesPorCiclo": 2,
+          "laco": true
+        },
+        "atacar": {
+          "quadros": 8,
+          "fps": 10,
+          "laco": true
+        },
+        "morrer": {
+          "quadros": 12,
+          "fps": 10,
+          "laco": false
+        }
+      },
+      "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
+      "origem": {
+        "base": "base/units/rebel-pixellab/south.png",
+        "semente": null,
+        "nota": "PixelLab v3, personagem 02a69435-d9c0-4cdd-8261-90e10c3fc973, andar skeleton-v3 walking-8-frames, atacar/morrer v3 por direcao; sha256 da base 46c10218d41eb19e41b21a12813f50a3eb0c3f165a0e98c1655372256b9fbd6c"
+      }
+    },
+    {
+      "id": "rogue",
+      "tipo": "unidade",
+      "footprint": [
+        1,
+        1
+      ],
+      "tamanho": [
+        64,
+        96
+      ],
+      "anchor": [
+        0.5,
+        1
+      ],
+      "estados": {
+        "parado:n": "sprites/units/rogue/parado.png",
+        "parado:ne": "sprites/units/rogue/parado.png",
+        "parado:l": "sprites/units/rogue/parado.png",
+        "parado:se": "sprites/units/rogue/parado.png",
+        "parado:s": "sprites/units/rogue/parado.png"
+      },
+      "atlas": "sprites/units/rogue/rogue.json",
+      "animacoes": {
+        "parado": {
+          "quadros": 1,
+          "fps": 10,
+          "laco": true
+        },
+        "andar": {
+          "quadros": 8,
+          "tilesPorCiclo": 2,
+          "laco": true
+        },
+        "atacar": {
+          "quadros": 8,
+          "fps": 10,
+          "laco": true
+        },
+        "morrer": {
+          "quadros": 12,
+          "fps": 10,
+          "laco": false
+        }
+      },
+      "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
+      "origem": {
+        "base": "base/units/rogue-pixellab/south.png",
+        "semente": null,
+        "nota": "PixelLab v3, personagem 3ab87c23-3690-48a7-830a-869d7c948aea, andar skeleton-v3 walking-8-frames, atacar/morrer v3 por direcao; sha256 da base 86fa2f4156d0ed9263277e3ec5e0df44d62f68a814016eb21c5757cc6805c7e1"
+      }
+    },
+    {
+      "id": "vagabond",
+      "tipo": "unidade",
+      "footprint": [
+        1,
+        1
+      ],
+      "tamanho": [
+        128,
+        128
+      ],
+      "anchor": [
+        0.5,
+        1
+      ],
+      "estados": {
+        "parado:n": "sprites/units/vagabond/parado.png",
+        "parado:ne": "sprites/units/vagabond/parado.png",
+        "parado:l": "sprites/units/vagabond/parado.png",
+        "parado:se": "sprites/units/vagabond/parado.png",
+        "parado:s": "sprites/units/vagabond/parado.png"
+      },
+      "atlas": "sprites/units/vagabond/vagabond.json",
+      "animacoes": {
+        "parado": {
+          "quadros": 1,
+          "fps": 10,
+          "laco": true
+        },
+        "andar": {
+          "quadros": 8,
+          "tilesPorCiclo": 2,
+          "laco": true
+        },
+        "atacar": {
+          "quadros": 8,
+          "fps": 10,
+          "laco": true
+        },
+        "morrer": {
+          "quadros": 12,
+          "fps": 10,
+          "laco": false
+        }
+      },
+      "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
+      "origem": {
+        "base": "base/units/vagabond-pixellab/south.png",
+        "semente": null,
+        "nota": "PixelLab v3, personagem ca1bed3e-92c8-4ba8-8b87-ab2b65615539, andar skeleton-v3 walking-8-frames, atacar/morrer v3 por direcao; sha256 da base 838ee51756752cec952847e7121f33221eba126f92eb06cb9500139d248a8bdd"
+      }
+    },
+    {
+      "id": "barbarian",
+      "tipo": "unidade",
+      "footprint": [
+        1,
+        1
+      ],
+      "tamanho": [
+        64,
+        96
+      ],
+      "anchor": [
+        0.5,
+        1
+      ],
+      "estados": {
+        "parado:n": "sprites/units/barbarian/parado.png",
+        "parado:ne": "sprites/units/barbarian/parado.png",
+        "parado:l": "sprites/units/barbarian/parado.png",
+        "parado:se": "sprites/units/barbarian/parado.png",
+        "parado:s": "sprites/units/barbarian/parado.png"
+      },
+      "atlas": "sprites/units/barbarian/barbarian.json",
+      "animacoes": {
+        "parado": {
+          "quadros": 1,
+          "fps": 10,
+          "laco": true
+        },
+        "andar": {
+          "quadros": 8,
+          "tilesPorCiclo": 2,
+          "laco": true
+        },
+        "atacar": {
+          "quadros": 8,
+          "fps": 10,
+          "laco": true
+        },
+        "morrer": {
+          "quadros": 12,
+          "fps": 10,
+          "laco": false
+        }
+      },
+      "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
+      "origem": {
+        "base": "base/units/barbarian-pixellab/south.png",
+        "semente": null,
+        "nota": "PixelLab v3, personagem e88ba484-7767-47f9-804d-f7a932e25137, andar skeleton-v3 walking-8-frames, atacar/morrer v3 por direcao; sha256 da base 9121d44565db4ae22b2be18899bc37f24a1ee7809da1537631835a6e9dc8cca1"
+      }
+    },
+    {
+      "id": "warrior",
+      "tipo": "unidade",
+      "footprint": [
+        1,
+        1
+      ],
+      "tamanho": [
+        64,
+        96
+      ],
+      "anchor": [
+        0.5,
+        1
+      ],
+      "estados": {
+        "parado:n": "sprites/units/warrior/parado.png",
+        "parado:ne": "sprites/units/warrior/parado.png",
+        "parado:l": "sprites/units/warrior/parado.png",
+        "parado:se": "sprites/units/warrior/parado.png",
+        "parado:s": "sprites/units/warrior/parado.png"
+      },
+      "atlas": "sprites/units/warrior/warrior.json",
+      "animacoes": {
+        "parado": {
+          "quadros": 1,
+          "fps": 10,
+          "laco": true
+        },
+        "andar": {
+          "quadros": 8,
+          "tilesPorCiclo": 2,
+          "laco": true
+        },
+        "atacar": {
+          "quadros": 8,
+          "fps": 10,
+          "laco": true
+        },
+        "morrer": {
+          "quadros": 12,
+          "fps": 10,
+          "laco": false
+        }
+      },
+      "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
+      "origem": {
+        "base": "base/units/warrior-pixellab/south.png",
+        "semente": null,
+        "nota": "PixelLab v3, personagem a6bbfef5-4022-45bb-8e17-71f3e3681fb4, andar skeleton-v3 walking-8-frames, atacar/morrer v3 por direcao; sha256 da base 55c7b253d2b6bf2e2dae2a55e28f56d896774b99ece5134f2d66b24e4bb7bf9a"
+      }
+    },
+    {
       "id": "fish",
       "tipo": "recurso",
       "footprint": [

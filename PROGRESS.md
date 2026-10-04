@@ -3229,6 +3229,14 @@ que vetar custe uma linha.
 
 ## Perguntas em aberto
 
+- **(2026-10-04, Fase G) O corpo deitado não cabe na célula de 64 px.** O personagem caído de lado
+  mede uns 70–80 px, e a célula das unidades a pé tem 64, então a cabeça ou os pés são cortados nos
+  últimos quadros da `morrer`. Há três saídas, e todas são decisão do operador:
+  (a) aceitar como está, porque o corpo esmaece em 1,2 s;
+  (b) célula de 96×96 só para a `morrer`, o que pede ao render um tamanho por animação (mudança de
+  render e de manifesto, num item próprio);
+  (c) célula de 96×96 para a unidade inteira, que muda o hit e a seleção.
+  A sessão seguiu com (a).
 - **(2026-09-26, noite 18) A frase cortada do BRIEF-ARTE:** o operador escreveu que os
   sprites de estado da roça vão "desenhada[s] pelo render sobre o tile, nunca" — e a
   mensagem parou aí. O BRIEF-ARTE não completa a frase; falta o que vem depois do nunca.
@@ -19263,3 +19271,25 @@ porque a fila E–I está com outra sessão. O plano e os aceites estão no `BUI
 **Visto, não corrigido:** o corpo deitado de lado fica mais largo que a célula de 64 px e pode cortar
 uns pixels nas pontas (hipótese, não medida no jogo). A queda do cabra de costas abre os braços em
 vez de cair.
+
+## 2026-10-04 — G-ARTE-MERCENARIOS (os cinco mercenários da Prefeitura ganham corpo)
+
+**Verificado (aberto ou rodado nesta sessão):**
+- Os cinco tipos de `mercenarios` ganharam entrada no manifesto, que antes não tinham, com `atlas` e
+  `animacoes` `parado`, `andar`, `atacar` e `morrer` (12 quadros), nas 5 direções. São eles: o
+  Retirante (`rebel`, foice), o Emboscador (`rogue`, funda), o Bruto do Mato (`barbarian`, porrete), o
+  Jagunço (`warrior`, rifle de alavanca com clarão) e o Andarilho (`vagabond`, montado num jumento,
+  célula 128×128). Os ids estão em `ids.json` e no `origem.nota` de cada entrada.
+- A folha com os cinco (parado, andar, um quadro de ataque e o corpo no chão) foi aberta.
+- F17f, F-SPR-carregamento, D-TELA-05b, D-TELA-05c e G-ARTE-MORTE-DAS-UNIDADES: 79 verdes. O teste da
+  morte passou a cobrir também os 5, e são 28 tipos com atlas. `validate:data` está ok. O
+  `verify:rapido` deu 176 verdes e 1 vermelho, o mesmo `H-ARTE-SONS-APROVADOS` da `main`.
+- Sem roteiro em jogo, como o aceite previa: contratar mercenário pede a Prefeitura de pé, e isso é
+  do roteiro da F36.
+
+**Visto, não corrigido:**
+- O ataque do Emboscador quase não mostra a funda.
+- O corpo deitado de lado passa dos 64 px da célula e é cortado nas pontas. Isso aparece na folha dos
+  mercenários e confirma a hipótese registrada no G2: a cabeça ou os pés ficam fora. **Hipótese da
+  correção:** gerar a célula da morte mais larga exige que o render aceite um tamanho por animação,
+  e isso é decisão do operador (registrada nas perguntas em aberto).
