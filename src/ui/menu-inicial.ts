@@ -134,6 +134,8 @@ export function montarMenuInicial(
 
   const motivo = motivoDoContinuar(situacao);
   principal.append(
+    // I-TELA-PARTIDA-GUIADA: o primeiro botao, para quem nunca jogou
+    botao('aprender', rotulos.aprender, () => { escolher({ modo: 'guiada' }); }),
     botao('novo', rotulos.novoJogo, () => { mostrar(novo); }),
     botao('continuar', rotulos.continuar, () => { escolher({ modo: 'continuar' }); }, motivo),
     botao('carregar', rotulos.carregar, () => { mostrar(carregar); }),

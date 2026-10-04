@@ -75,10 +75,12 @@ describe('H-ARTE-SONS-APROVADOS — (b) so o que o operador aprovou', () => {
 
   it('linha sem aprovacao e link que nao e CC0 ficam em silencio: fora do manifesto e sem URL', () => {
     const semAprovacao = LINHAS.filter((l) => escolhaDoOperador(l) === null).map((l) => l.id);
-    expect(semAprovacao).toEqual(['building-hit', 'peace-ended', 'command-rejected']);
+    // H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA: o command-rejected foi aprovado pelo operador (2026-10-04)
+    expect(semAprovacao).toEqual(['building-hit', 'peace-ended']);
     for (const id of [...semAprovacao, ...NAO_CC0]) expect(SONS[id], id).toBeUndefined();
     const aprovadas = LINHAS.filter((l) => { const e = escolhaDoOperador(l); return e !== null && typeof e === 'object'; }).map((l) => l.id);
-    expect(aprovadas.length).toBe(17);
+    // 17 da H, mais as cinco de 2026-10-04 (command-rejected, build-wood, build-road, quarry-work, road-placed)
+    expect(aprovadas.length).toBe(22);
     expect(Object.keys(SONS).sort()).toEqual(aprovadas.filter((id) => !NAO_CC0.includes(id)).sort());
     // o caminho do jogo: o id sem arquivo nao ganha URL (silencio)
     const urls = urlsDosSons(SONS, Object.fromEntries(Object.values(SONS).map((s) => [s.arquivo, `/x/${s.arquivo}`])));

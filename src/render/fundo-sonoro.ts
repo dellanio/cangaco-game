@@ -100,15 +100,20 @@ export interface VistaEmTiles {
   readonly y1: number;
 }
 
-/** Uma Bodega do jogador (o tipo do dado) tem o tile de origem dentro da vista. */
-export function bodegaNaVista(estado: GameState, tipo: string, vista: VistaEmTiles | null): boolean {
-  if (vista === null) return false;
+/** O tile de uma Bodega do jogador (o tipo do dado) que esta dentro da vista, ou `null`. */
+export function bodegaNaVistaEm(estado: GameState, tipo: string, vista: VistaEmTiles | null): Tile | null {
+  if (vista === null) return null;
   for (const id of estado.predios.ordem) {
     const p = estado.predios.porId[id];
     if (p === undefined || p.tipo !== tipo || p.lado !== LADO_DO_JOGADOR) continue;
-    if (p.gx >= vista.x0 && p.gx <= vista.x1 && p.gy >= vista.y0 && p.gy <= vista.y1) return true;
+    if (p.gx >= vista.x0 && p.gx <= vista.x1 && p.gy >= vista.y0 && p.gy <= vista.y1) return { gx: p.gx, gy: p.gy };
   }
-  return false;
+  return null;
+}
+
+/** Uma Bodega do jogador (o tipo do dado) tem o tile de origem dentro da vista. */
+export function bodegaNaVista(estado: GameState, tipo: string, vista: VistaEmTiles | null): boolean {
+  return bodegaNaVistaEm(estado, tipo, vista) !== null;
 }
 
 /** Quem toca o som em laco: `tocar` liga (ou so ajusta o volume do que ja toca); `parar` desliga. */
@@ -143,8 +148,8 @@ export function criarFundoSonoro(opcoes: {
   readonly tocador: TocadorDeLaco;
   /** O volume efetivo do id agora (geral x canal, o mudo zera). */
   readonly volume: (id: string) => number;
-  /** O sino vai para a camada de efeitos. */
-  readonly pedir: (id: string) => void;
+  /** O sino vai para a camada de efeitos, com o lugar da Bodega (H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA). */
+  readonly pedir: (id: string, tile: Tile) => void;
   /** `gameData.tempo.tickMs`: os segundos de combate depois da luta sao de jogo. */
   readonly tickMs: number;
 }): FundoSonoro {
@@ -179,9 +184,10 @@ export function criarFundoSonoro(opcoes: {
       quadrosComAmbiente += 1;
       for (const id of dados.ambiente.lacos) soar(id, volume(id));
 
-      if (bodegaNaVista(estado, dados.ambiente.sino.predio, vista)) {
+      const bodega = bodegaNaVistaEm(estado, dados.ambiente.sino.predio, vista);
+      if (bodega !== null) {
         if (proximoSinoMs === null || agoraMs >= proximoSinoMs) {
-          pedir(dados.ambiente.sino.som);
+          pedir(dados.ambiente.sino.som, bodega);
           sinos += 1;
           proximoSinoMs = agoraMs + dados.ambiente.sino.intervaloSegundos * 1000;
         }

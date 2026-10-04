@@ -4499,6 +4499,24 @@
         "silencioInicial": true
       }
     },
+    "command-rejected": {
+      "arquivo": "sons/command-rejected.mp3",
+      "base": "base/sons/command-rejected/original.mp3",
+      "licenca": "CC0 1.0",
+      "origem": "https://freesound.org/people/Funky_Audio/sounds/702999/",
+      "autor": "Funky_Audio",
+      "titulo": "UIClick_clay plop various negative UI_Funky Audio_FASS.wav",
+      "baixadoDe": "https://cdn.freesound.org/previews/702/702999_14953219-hq.mp3",
+      "nota": "preview HQ do Freesound (o original pede login)",
+      "aprovado": "2",
+      "duracaoOriginal": 9.344,
+      "duracao": 0.8,
+      "recorte": {
+        "silencioInicial": true,
+        "duracao": 0.8,
+        "fade": 0.2
+      }
+    },
     "ambient-wind": {
       "arquivo": "sons/ambient-wind.mp3",
       "base": "base/sons/ambient-wind/original.mp3",
@@ -4558,6 +4576,78 @@
       "duracaoOriginal": 95.852,
       "duracao": 95.852,
       "recorte": null
+    },
+    "build-wood": {
+      "arquivo": "sons/build-wood.mp3",
+      "base": "base/sons/build-wood/original.mp3",
+      "licenca": "CC0 1.0",
+      "origem": "https://freesound.org/people/CapsLok/sounds/204946/",
+      "autor": "CapsLok",
+      "titulo": "Hammering_Wood.wav",
+      "baixadoDe": "https://cdn.freesound.org/previews/204/204946_850742-hq.mp3",
+      "nota": "preview HQ do Freesound (o original pede login)",
+      "aprovado": "1",
+      "duracaoOriginal": 13.347,
+      "duracao": 2,
+      "recorte": {
+        "silencioInicial": true,
+        "duracao": 2,
+        "fade": 0.1
+      }
+    },
+    "build-road": {
+      "arquivo": "sons/build-road.mp3",
+      "base": "base/sons/build-road/original.mp3",
+      "licenca": "CC0 1.0",
+      "origem": "https://freesound.org/people/dr19/sounds/353907/",
+      "autor": "dr19",
+      "titulo": "Shovel_dirt.wav",
+      "baixadoDe": "https://cdn.freesound.org/previews/353/353907_5984825-hq.mp3",
+      "nota": "preview HQ do Freesound (o original pede login)",
+      "aprovado": "1",
+      "duracaoOriginal": 9.053,
+      "duracao": 2,
+      "recorte": {
+        "silencioInicial": true,
+        "duracao": 2,
+        "fade": 0.1
+      }
+    },
+    "quarry-work": {
+      "arquivo": "sons/quarry-work.mp3",
+      "base": "base/sons/quarry-work/original.mp3",
+      "licenca": "CC0 1.0",
+      "origem": "https://freesound.org/people/qubodup/sounds/184383/",
+      "autor": "qubodup",
+      "titulo": "Gathering Stone Resources.flac",
+      "baixadoDe": "https://cdn.freesound.org/previews/184/184383_71257-hq.mp3",
+      "nota": "preview HQ do Freesound (o original pede login)",
+      "aprovado": "2",
+      "duracaoOriginal": 10.681,
+      "duracao": 2.5,
+      "recorte": {
+        "silencioInicial": true,
+        "duracao": 2.5,
+        "fade": 0.1
+      }
+    },
+    "road-placed": {
+      "arquivo": "sons/road-placed.mp3",
+      "base": "base/sons/road-placed/original.mp3",
+      "licenca": "CC0 1.0",
+      "origem": "https://freesound.org/people/SoundCollectah/sounds/109360/",
+      "autor": "SoundCollectah",
+      "titulo": "stone falls and breaks low pitch.aiff",
+      "baixadoDe": "https://cdn.freesound.org/previews/109/109360_1868848-hq.mp3",
+      "nota": "preview HQ do Freesound (o original pede login)",
+      "aprovado": "2",
+      "duracaoOriginal": 4.594,
+      "duracao": 0.7,
+      "recorte": {
+        "silencioInicial": true,
+        "duracao": 0.7,
+        "fade": 0.2
+      }
     }
   }
 }

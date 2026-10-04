@@ -7,7 +7,13 @@ const mapa = require('../../data/maps/sertao-128.json');
 const terreno = require('../../data/terrain.json');
 const manifesto = require('../../assets/manifest.json');
 const SAIDA = 'test-output/D-TELA-COSTURA-DOS-TILES.json';
-const ETAPA = process.env.CANGACO_COSTURA_ETAPA ?? 'depois';
+// BUG-ROTEIRO-DE-DUAS-ETAPAS (decisao do operador, 2026-10-04: A, separar). Sem variavel, o roteiro
+// e de NAO-REGRESSAO: mede e afirma so o que vale sozinho, no codigo de hoje, e grava a medida em
+// `regressao`, sem tocar `antes`/`depois`. A comparacao antes/depois e um modo pedido por
+// `CANGACO_COSTURA_ETAPA=antes|depois`, e so ele exige a medida "antes". O que saiu para o modo de
+// comparacao: a baseline existir, a arte ser a mesma do antes, e os bytes das 16 celulas internas
+// iguais ao antes no zoom 1.
+const ETAPA = process.env.CANGACO_COSTURA_ETAPA ?? 'regressao';
 const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
 
 // O bloco de 12x12 garante que o recorte central seja terreno puro nos tres zooms.
@@ -93,7 +99,7 @@ function medir({ largura, pixels, x0, y0 }, camera, canvas, centro) {
 }
 
 async function roteiro({ page, estado, afirmar, capturar }) {
-  afirmar(['antes', 'depois'].includes(ETAPA), 'etapa deve ser antes ou depois');
+  afirmar(['antes', 'depois', 'regressao'].includes(ETAPA), 'etapa deve ser antes ou depois (ou nenhuma, a nao-regressao)');
   const anterior = fs.existsSync(SAIDA) ? JSON.parse(fs.readFileSync(SAIDA, 'utf8')) : {};
   if (ETAPA === 'depois') afirmar(Boolean(anterior.antes), 'baseline anterior a mudanca precisa existir');
   const fontesAtuais = fontes();

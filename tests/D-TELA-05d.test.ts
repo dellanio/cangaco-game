@@ -77,12 +77,14 @@ describe('D-TELA-05d - carga inicial e tardia', () => {
     q = { ...q, recrutas: 1, estoque: { ...q.estoque, entrada: { hand_axe: 1 } } };
     s = { ...s, predios: { porId: { ...s.predios.porId, [q.id]: q }, ordem: [...s.predios.ordem, q.id] } };
     expect(tiposPresentes(s).has('militia')).toBe(false);
-    mkdirSync('test-output', { recursive: true });
-    writeFileSync('test-output/D-TELA-05d-inicio.save.txt', salvar(s));
+    // BUG-SAVE-DO-ROTEIRO-TRANSLADADO: no diretorio da evidencia, que a corrida transladada troca
+    const dir = process.env['CANGACO_EVIDENCIA_DIR'] ?? 'test-output';
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(`${dir}/D-TELA-05d-inicio.save.txt`, salvar(s));
     const depois = step(s, [{ type: 'TrainSoldier', predio: q.id, tipo: 'militia' }]);
     expect(tiposPresentes(depois).has('militia')).toBe(true);
     const militar = depois.unidades.ordem.map(id => depois.unidades.porId[id]!).find(u => u.tipo === 'militia')!;
-    writeFileSync('test-output/D-TELA-05d-treino.save.txt', salvar(depois));
+    writeFileSync(`${dir}/D-TELA-05d-treino.save.txt`, salvar(depois));
     gravarEvidencia('D-TELA-05d', { quartel: q, militar, antes: [...tiposPresentes(s)], depois: [...tiposPresentes(depois)] });
   });
 });

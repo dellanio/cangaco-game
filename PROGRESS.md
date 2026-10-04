@@ -3277,6 +3277,45 @@ que vetar custe uma linha.
   da vista vira marcha até o tile (o único jeito que venceu), e o roteiro passa a jogar assim. Se
   ainda assim perder, a decisão é do operador: a margem da tropa (`escaramuca.tropaDoJogador`), ou
   a afirmação de vitória do roteiro.
+- **(2026-10-04, Fase I) I-TELA-PARTIDA-GUIADA — a leitura dos passos (PARA REVISÃO).** O
+  BUILD_PLAN nomeia os passos ("estrada até o armazém, escola, lenhador, pedreira, serraria, a
+  primeira comida, o quartel e a escaramuça") sem dizer a condição de cada um. Fiz o conservador:
+  (1) a **estrada** passa quando a escola fica ligada ao armazém por estrada **planejada ou
+  calçada**: o passo ensina o gesto, e o calçamento é dos obreiros; (2) a **escola** já nasce de pé,
+  então o passo é engajar o lenhador nela (na fila ou formado); (3) lenhador, pedreira, serraria e
+  quartel passam com a casa **completa**, porque a serraria só destrava com um lenhador completo e
+  o passo não pode pedir o que o jogo recusa; (4) a **primeira comida** é qualquer casa completa cuja
+  receita produz comida (`condition.json: restauracaoPorComida`), e o passo sugere as que não pedem
+  insumo (canavial, pescador); (5) os passos de construir também pedem o trabalhador da casa
+  (pedreiro, carpina, roceiro ou pescador), senão a casa fica parada e a pedra acaba; (6) o jogo
+  livre não tem inimigo, então a **escaramuça** é o último passo, sem condição: ele convida a
+  começar uma escaramuça pelo menu. Qualquer troca é só em `src/ui/partida-guiada.ts` e no tema.
+- **(2026-10-04, Fase I) I-TELA-DICAS-NA-PRIMEIRA-VEZ — os gatilhos (PARA REVISÃO).** Cada dica
+  usa o seletor que a tela já tinha, sem regra nova: "prédio pronto sem trabalhador" e "prédio sem
+  estrada" são as causas do alerta da F22 (só casa **completa**; obra sem estrada não dispara,
+  porque logo depois de pôr a planta o jogador ainda não puxou a estrada); "a primeira fome" é uma
+  unidade do jogador no limiar de alerta (35 %); "a primeira névoa com inimigo" é a primeira
+  unidade ou casa de outro lado **na vista**; "o fim da paz" vale só na partida que teve paz
+  (`pazAteTick > 0`); "a primeira ordem recusada" é o texto que o aviso de ordem já dá
+  (`textoDaRecusa`). Quando duas valem juntas, ganha a ordem de `DICAS` (`src/ui/dicas.ts`): a
+  resposta ao gesto primeiro, a casa parada por último. A dica fica até o "Entendi".
+- **(2026-10-04, leva) H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA — duas leituras (PARA REVISÃO).** (1) O
+  escopo diz "todo som que nasce de um prédio ou de uma unidade tem posição" e cita alguns; apliquei
+  a distância a **todo** som com lugar, inclusive golpe, tiro e morte, e deixei sem lugar só o que o
+  escopo lista (paz, vitória, derrota, recusa, rua, ambiente, música). (2) O `quarry-work` toca com o
+  cabouqueiro `colhendo` no lajedo, que é o trabalho que se vê; a fase "na casa" (dentro da
+  pedreira) fica muda. Se a pedreira deve soar também por dentro, é mudar `fontesDeTrabalho`.
+- **(2026-10-04, leva) Item 10, BUG-CIVIS-EMPILHADOS — PARADO pela regra do operador: a comida cai
+  mais de 10 % com a colisão civil ligada.** Com `colisaoCivil.ligada: true`, a produção de pão
+  (`loaves`) no cenário longo da D-TRANSPORTE-03 T2 cai **−25,0 % (16 000), −19,6 % (20 000) e
+  −13,7 % (30 000)** contra a base; a madeira cai no máximo −5,1 %. Nada mudou no código, e a chave
+  segue `false`. Saídas possíveis, todas decisão sua: (a) recalibrar a cadeia do pão em lote
+  (`BALANCE_LOG.md`) com a colisão ligada; (b) olhar antes por que a padaria perde tanto (a F-CAL,
+  que mede o moinho e a padaria ocupados, quase não muda: o efeito parece estar no transporte do
+  pão ou nos comensais, e é hipótese); (c) desistir da colisão e ir pela outra saída do bug (só
+  espalhar na tela os civis do mesmo tile). A medida inteira está na entrada do item 10, no fim.
+  Os recortes dos cinco sons novos (laço de 2 a 2,5 s; rua e recusa com 0,7 a 0,8 s) foram
+  escolhidos sem ouvir, como os da H: o operador ouve e ajusta em `tools/baixar-sons.js`.
 
 
 ## F-T1 — Camada de terreno base (dado + sim + render mínimo) (2026-09-24)
@@ -19116,6 +19155,174 @@ Leituras conservadoras, PARA REVISÃO do operador:
 - o relato do playtest é um arquivo que a pessoa baixa e manda; nada é enviado pela rede;
 - o playtest em si e a abertura do itch.io são do operador, e a I só fecha com ele.
 
+## 2026-10-04 — I-TELA-PARTIDA-GUIADA (aprender a jogar)
+
+- **O que existe:** o botão **Aprender a jogar**, o primeiro do menu inicial, abre o jogo livre
+  com a faixa de passos no alto da tela (`src/ui/partida-guiada.ts`, textos em
+  `theme-sertao.json: partidaGuiada`). Oito passos: estrada, escola (engajar o lenhador), lenhador,
+  pedreira, serraria, comida, quartel e o convite à escaramuça. **Esconder** recolhe a faixa e
+  **Passos** a reabre. `?guiada` abre o mesmo direto (para roteiro).
+- **Como:** a lista de passos é dado da tela (TS, como `input/atalhos.ts`); o passo atual é o
+  primeiro cuja condição não vale, derivado do estado por função pura, sem memória. Nada no
+  `GameState` marca o tutorial, e a escolha `guiada` dá o mesmo estado do jogo livre. O `GameData`
+  chega por parâmetro (`ui/` não lê `sim/data`, guarda da F05b, que acusou a primeira versão). A
+  leitura de cada passo está em Perguntas em aberto (PARA REVISÃO).
+- **Verificado (evidência aberta nesta sessão):**
+  - `tests/I-TELA-PARTIDA-GUIADA.test.ts`, 5 testes verdes: (a) a tabela estado → passo, com o
+    que não conta (obra, casa do outro lado) e a volta quando o estado desfaz; (b) o jogador que só
+    faz o que o passo pede vai do passo 1 ao 8 em **4 856 ticks**, com 0 recusas
+    (`test-output/I-TELA-PARTIDA-GUIADA.json`; teto 6 100, +25%); (c) a mesma corrida, com a faixa
+    lida a cada tick e sem ela, dá o mesmo estado byte a byte, e `guiada` nasce igual ao livre;
+    mais a ida e volta dos textos do tema.
+  - `npm run shot -- I-TELA-PARTIDA-GUIADA`: OK, 3 capturas abertas
+    (`screenshots/I-TELA-PARTIDA-GUIADA-{1,2,3}-passo-*.png`). Pelo menu, despausado, com o aperto
+    segurado 150 ms: o arrasto da estrada da escola ao armazém passa o passo 1, o clique na escola e
+    no Lenhador do painel passa o 2, e o 3 aparece. Esconder e Passos conferidos.
+  - A primeira captura pôs a faixa embaixo, por cima da linha das portas, que é onde o passo 1 pede
+    a estrada; ela foi para o alto.
+  - `npm run verify:rapido` verde (535 testes).
+- **Aberto:** a chave em `test-results.json` é marcada no fechamento da fase, com o verify completo.
+
+## 2026-10-04 — I-TELA-DICAS-NA-PRIMEIRA-VEZ (o jogo explica quando acontece)
+
+- **O que existe:** seis dicas de primeira vez (`src/ui/dicas.ts`, textos em
+  `theme-sertao.json: dicas`): ordem recusada, fim da paz, inimigo à vista, fome, casa sem estrada
+  e casa sem trabalhador. Uma por vez, numa caixa no canto de baixo do mapa, com **Ver onde** (anda
+  a câmera até o lugar, quando há lugar) e **Entendi**. A dica é marcada como vista no instante em
+  que aparece. A caixa de Opções (a da H) ganhou **Mostrar dicas**; desligar some com a dica aberta.
+- **Como:** o gatilho é derivado do estado por função pura (`dicaAMostrar(estado, vistas, ligadas,
+  dados)`), lendo os seletores que a tela já usa. Ligadas e vistas moram em
+  `src/preferencias-de-dicas.ts`, no `localStorage` (`cangaco:dicas`), fora do save, como o volume.
+  Os gatilhos estão em Perguntas em aberto (PARA REVISÃO). Os helpers de vila do teste da partida
+  guiada foram para `tests/helpers/vila-da-fase-i.ts`, e os dois testes os usam.
+- **Verificado (evidência aberta nesta sessão):**
+  - `tests/I-TELA-DICAS-NA-PRIMEIRA-VEZ.test.ts`, 6 testes verdes: (a) a tabela de 13 estados
+    (a dica que vale, a vista que não volta, as duas casas uma depois da outra, o lugar apontado, o
+    motivo da recusa repetido); a sequência mostra e marca até acabar, sem repetir; (b) desligadas,
+    nenhuma em estado nenhum da tabela, e a chave fica guardada; (c) 300 ticks com a dica
+    consultada e marcada a cada tick dão o mesmo save, byte a byte, que sem ela, e a gaveta só tem
+    a chave `cangaco:dicas`. O teste grava o save do roteiro
+    (`test-output/I-TELA-DICAS-NA-PRIMEIRA-VEZ.save.txt`).
+  - `npm run shot -- I-TELA-DICAS-NA-PRIMEIRA-VEZ`: OK, 2 capturas abertas. Com o save carregado
+    pela gaveta 1, a dica da estrada aparece; despausado e com o aperto segurado 150 ms, Ver onde
+    anda a câmera e Entendi traz a dica do trabalhador. As duas ficam no `localStorage`, e não no
+    estado. Com as marcas apagadas e as dicas desligadas nas Opções, o mesmo save não mostra nenhuma.
+  - `npm run verify:rapido` verde (541 testes).
+- **Aberto:** a chave em `test-results.json` é marcada no fechamento da fase.
+
+## 2026-10-04 — I-TELA-AJUDA-DAS-CADEIAS (a ajuda mostra as cadeias)
+
+- **O que existe:** a ajuda ganhou duas abas, **Controles** (a de antes, que é a que abre) e
+  **Cadeias** (`src/ui/cadeias.ts`, textos em `theme-sertao.json: ajuda.cadeias`). Uma linha por
+  receita, na ordem de `buildings.json`: o que entra e de que casa vem, o que sai e para onde vai.
+  A casa ainda bloqueada mostra o "requer X" do menu de construir, lido do estado quando a aba está
+  aberta (no menu inicial, sem partida, nenhuma trava aparece). O título da ajuda segue a aba.
+- **Como:** tudo derivado do dado. "Para onde vai" junta as receitas que pedem a mercadoria e os
+  destinos que o dado já diz fora delas: o custo das obras (`buildings.json`), a comida
+  (`condition.json`, para a Bodega), as armas do quartel (`requisitosDoQuartel`) e o ouro da escola
+  (`MERCADORIA_DE_OURO`). Sem destino, "fica no Armazém". A colheita diz "tira do mapa": o tema não
+  tem nome de recurso (o bloco `recursos` dele é cor), e inventar um seria texto escrito à mão.
+  `montarAjuda` passou a receber o `GameData` (do `inicio.ts` e do `main.ts`).
+- **Verificado (evidência aberta nesta sessão):**
+  - `tests/I-TELA-AJUDA-DAS-CADEIAS.test.ts`, 3 testes verdes: (a) o conjunto das linhas é o
+    conjunto das receitas, e cada linha tem as entradas e saídas da receita, o "de onde" exato e
+    toda receita consumidora entre os destinos; (b) com o dado alterado (a serraria passa a pedir
+    pedra, o pescador perde a receita, a Bodega ganha uma), a aba muda: a linha some, a nova aparece,
+    a pedra da pedreira passa a ir para a serraria e o texto acompanha; mais o "requer" da serraria
+    no começo. Linhas em `test-output/I-TELA-AJUDA-DAS-CADEIAS.json`.
+  - `npm run shot -- I-TELA-AJUDA-DAS-CADEIAS`: OK, captura aberta. 21 linhas, uma por receita, e a
+    serraria com "requer Casa do Lenhador". Despausado, com o aperto segurado 150 ms na aba.
+  - Não-regressão pelo código de saída: `F-D1`, `E-TELA-MENU-INICIAL` e `H-TELA-OPCOES-E-VOLUME`
+    OK. `npm run verify:rapido` verde (544 testes).
+- **Aberto:** a chave em `test-results.json` é marcada no fechamento da fase.
+
+## 2026-10-04 — I-ENTREGA-PLAYTEST (gente de fora joga)
+
+- **O que existe:**
+  - `docs/playtest.md`: o roteiro de quem testa (o que tentar, sem ensinar), como mandar o relato,
+    as nove perguntas depois da partida, e a parte do operador.
+  - Na ajuda em jogo, a seção **Relato para quem fez o jogo**: um campo de texto, **Enviar relato**
+    (baixa `relato-<commit>-tick-<n>.json`; nada vai pela rede) e **Abrir relato** (escolhe o
+    arquivo e devolve a partida àquele instante). A frase do que o arquivo leva é montada da lista
+    de campos (`CAMPOS_DO_RELATO`, `src/relato.ts`): o save, o commit do build, o nível do
+    adversário (`null` no jogo livre) e o texto. As letras do campo não viram atalho.
+  - `vite.config.mts`, novo, só com o `define` do commit do build (`git describe --always --dirty`;
+    sem git, `desconhecido`), lido por `src/commit-do-build.ts`. Não é dependência nova: o `vite` já
+    estava. O `E-ENTREGA-BUILD` (o build do itch.io) segue OK com ele.
+- **Verificado (evidência aberta nesta sessão):**
+  - `tests/I-ENTREGA-PLAYTEST.test.ts`, 5 testes verdes: (a) o relato de uma escaramuça andando
+    (nível fácil, tick 200) volta pelo `lerRelato` com o save byte a byte e o estado igual, e segue
+    igual depois de um `step`; arquivo que não é relato (JSON ruim, campo a mais, campo a menos) e
+    save recusado pelo jogo são recusados com o motivo; (b) as chaves do arquivo são
+    `CAMPOS_DO_RELATO`, na ordem, o tema tem um rótulo por campo (ida e volta) e a frase da tela
+    cita todos; (c) `git ls-files docs/playtest.md`.
+  - `npm run shot -- I-ENTREGA-PLAYTEST`: OK, 2 capturas (aberta a do relato escrito). O texto com
+    "h" e "p" fica no campo sem fechar a ajuda nem despausar; despausado, o aperto segurado em
+    Enviar baixa o arquivo com os quatro campos e o commit do dev server; o jogo anda 50 ticks, e
+    Abrir relato devolve o estado do save de dentro dele, byte a byte.
+  - `npm run verify:rapido` verde (2 494 testes: o `vite.config.mts` liga a suíte inteira).
+- **Espera o operador (o fechamento da I é dele, pelo BUILD_PLAN):** escolher quem joga, recolher
+  os relatos (para `BUGS.md` e `BALANCE_LOG.md`) e abrir a página do itch.io para outras pessoas.
+
+## 2026-10-04 — Fechamento da Fase I (para quem nunca jogou), §13
+
+Branch `dellanio/fase-i-para-quem-nunca-jogou`, sem merge na `main` e sem push.
+
+**A corrida, nesta ordem:**
+1. `npm run verify` completo no `1b5dd08`: 2 494 testes, e 2 492 + 5 pulados no mundo transladado.
+   As chaves foram marcadas com esse selo, pelo portão do hook.
+2. `npm run shot:todos`, num processo destacado: **124 roteiros, 9 com saída diferente de 0.**
+   - **cinco de antes, já no `BUGS.md`:** `D-TELA-04e` (`BUG-ROTEIRO-04E-DELTA-DO-ATLAS`), `D-TELA-05c`
+     e `D-TELA-05d` (`BUG-SAVE-DO-ROTEIRO-TRANSLADADO`), `D-TELA-COSTURA-DOS-TILES` e
+     `D-TELA-VEU-DOS-DETALHES` (`BUG-ROTEIRO-DE-DUAS-ETAPAS`);
+   - **`C-IA-03c`, de antes:** "os três prédios da IA deveriam cair". Já falhava no fechamento da H, e
+     espera o operador (a margem da escaramuça). Rodado sozinho depois da correção abaixo: mesma falha;
+   - **três defeitos da Fase I, corrigidos no `876ec43`:**
+     - `C-COMIDA-01d`: a dica de fome aparecia por cima das cabras e engolia o arrasto da caixa de
+       seleção. A dica e a faixa de passos agora deixam o mouse passar para o mapa, e só os botões
+       delas o recebem. O jogador sofreria o mesmo defeito;
+     - `F-TP`: a linha da aba Cadeias usava `data-predio`, e o seletor `[data-predio="quarry"]` do
+       menu passou a casar dois elementos. Ela usa `data-cadeia`;
+     - `F23b`: o roteiro fotografava a gaveta antes de a aldeia andar 300 ticks, e nesse meio a dica
+       "sem estrada" (o mesmo alerta da F22 que já existia) grava `cangaco:dicas`. A foto passou para
+       o instante antes do Guardar, e a afirmação ficou a mesma.
+     Rodados sozinhos depois da correção, todos saíram 0: `C-COMIDA-01d`, `F-TP`, `F23b` e os quatro
+     roteiros da I.
+3. `npm run verify` completo no `876ec43`: verde (2 494; 2 492 + 5 pulados).
+4. `npm run test:longo`, sozinha, por último: **verde**, 5 + 5 testes, 34 s. O selo é o do `876ec43`
+   (`selo:longo` OK). Este commit de PROGRESS o deixa para trás, como na H.
+
+**As chaves (`test-results.json`):**
+
+```text
+I-TELA-PARTIDA-GUIADA          aprender a jogar                   passa
+I-TELA-DICAS-NA-PRIMEIRA-VEZ   o jogo explica quando acontece     passa
+I-TELA-AJUDA-DAS-CADEIAS       a aba Cadeias da ajuda             passa
+I-ENTREGA-PLAYTEST             gente de fora joga                 false: (a), (b) e (c) verificados;
+                                                                  o fechamento e do operador
+```
+
+**Estado da fase:**
+
+```text
+item                           estado      commit    o que falta
+I-TELA-PARTIDA-GUIADA          fechou      fc1322f   revisar a leitura dos passos (Perguntas em aberto)
+I-TELA-DICAS-NA-PRIMEIRA-VEZ   fechou      2b25335   revisar os gatilhos (Perguntas em aberto)
+I-TELA-AJUDA-DAS-CADEIAS       fechou      7c6e99e   -
+I-ENTREGA-PLAYTEST             espera      1b5dd08   o operador: quem joga, os relatos, o itch.io
+correcoes do shot:todos        fechou      876ec43   -
+C-IA-03c (de antes)            espera      -         o operador: a margem da escaramuca
+5 roteiros com bug registrado  aberto      -         BUGS.md, como antes
+```
+
+**Espera o operador:** o playtest (escolher quem joga, recolher os relatos para `BUGS.md` e
+`BALANCE_LOG.md`) e a abertura da página do itch.io; a revisão das duas leituras conservadoras da I
+(os passos da partida guiada e os gatilhos das dicas), em Perguntas em aberto.
+
+**A seguir (recado do operador, 2026-10-04):** `git merge main` nesta branch (traz o `a8ed630` com
+a leva de 2026-10-04) e a leva na ordem: itens 1, 6, 7 e 9; o 8 e o 10 esperam decisão do operador.
+
+
 ## 2026-10-03 — D-ARTE-PIXEL-ART-CIVIS: mercadorias, carga nas mãos e as profissões civis em pixel art (TESTE)
 
 Branch `serf-pixelart`, worktree irmã. **Teste de arte; não vai para a `main` sem decisão do
@@ -19215,6 +19422,160 @@ O `verify:rapido` deste commit sai vermelho por um teste que não é desta mudan
 `tests/H-ARTE-SONS-APROVADOS.test.ts` ("linha sem aprovacao ... fora do manifesto") falha também na `main`
 em `579f25f` sem ela (conferido com a mudança guardada no stash). Ele vem dos aceites do
 H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA, da outra sessão, e fica com ela. Os testes do manifesto passam.
+
+## 2026-10-04 — Leva, item 1: H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA (o som vem do lugar)
+
+Depois do fechamento da I, `git merge main` (`d2cbacc`, a leva de 2026-10-04 e as aprovações de
+som; o conflito do PROGRESS era só as duas pontas acrescentando no fim, e ficaram as duas).
+
+- **O que existe:**
+  - **Som com lugar** (`src/render/som.ts`): cada pedido leva o tile do prédio ou da unidade, e o
+    volume é multiplicado por `volumeNaDistancia(lugar, centro da câmera, raio)`: 1 no centro,
+    linear até 0 no raio (`data/som.json: distancia.raioTiles`, 18). Fora do raio não toca e conta
+    em `foraDoRaio`. Com dois pedidos do mesmo id no quadro, toca o mais perto. O sino da Bodega
+    leva o tile dela. Sem lugar, nada muda.
+  - **Os sons de trabalho** (`src/render/som-do-trabalho.ts`): `fontesDeTrabalho(estado)` lê o
+    estado da unidade e a tarefa dela, como a animação de trabalho. `build-wood` é o laborer
+    `martelando` numa obra (`construir`), `build-road` é o laborer `nivelando`/`martelando` num tile
+    de estrada, e `quarry-work` é o especialista `colhendo` no recurso `rock`. As vozes são as
+    fontes no raio, as mais perto primeiro, até `trabalho.tetoDeVozes` (3). Cada uma é um laço
+    (`criarTocadorDeVozesDoNavegador`), e o laço para quando a voz some.
+  - **O tile de rua** (`pedidosDaRua`): o `PlaceRoad` que o `canPlaceRoad` aceita pede um
+    `road-placed` por tile novo, e o teto por quadro faz o arrasto tocar uma vez. O recusado não
+    pede nada (a recusa toca a dela).
+  - **Os cinco sons aprovados** (`command-rejected` 2, `build-wood` 1, `build-road` 1,
+    `quarry-work` 2, `road-placed` 2) baixados por `tools/baixar-sons.js`, com a licença conferida
+    de novo na página (CC0) e o recorte no manifesto. Os 15 de antes saíram byte a byte iguais. A
+    primeira corrida caiu por tempo esgotado na conexão com o Freesound, antes de escrever o
+    manifesto; a segunda foi inteira.
+- **Testes que mudaram por decisão do operador, e não por afrouxar:** `H-ARTE-SONS-APROVADOS` (os
+  sem aprovação passam de três para dois, e os aprovados de 17 para 22: o `command-rejected` e os
+  quatro novos); o roteiro `H-TELA-CAMADA-DE-SOM` usava a recusa como exemplo de som sem arquivo, e
+  agora afirma que tudo o que o gesto pede toca e nada fica em silêncio (o silêncio sem arquivo
+  segue no teste headless); o contador da camada ganhou `foraDoRaio` e `fatorDaDistancia`, e o
+  `toEqual` do teste da camada passou a incluir os dois.
+- **Verificado (evidência aberta nesta sessão):**
+  - `tests/H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA.test.ts`, 4 testes verdes: (a) a tabela do volume
+    (1, 0,5, 0,75 na diagonal, 0 no raio e além; nunca sobe com a distância), e na camada o pedido
+    fora do raio não toca e o mais perto ganha o teto; (b) os três sons de trabalho em estados de
+    uma partida de verdade (a abertura da Fase A: `build-road` no tick 30, `build-wood` no 265,
+    `quarry-work` no 944), o silêncio sem ninguém, e o teto de vozes por tabela; (d) a abertura com
+    a camada, a rua e o trabalho consultados a cada tick dá o mesmo estado byte a byte; (f) um tile,
+    N tiles, o tile recusado e o canteiro que já existia.
+  - `npm run shot -- H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA`: OK, 3 capturas (aberta a de perto). Com o
+    save do tick 265: `build-wood` com volume 0,800 em cima do laborer (geral 0,8 vezes 1), 0,400 a
+    meio raio, e parado além do raio.
+  - Não-regressão pelo código de saída: `H-TELA-CAMADA-DE-SOM` (depois da premissa nova),
+    `H-TELA-AMBIENTE-E-MUSICA` e `H-TELA-OPCOES-E-VOLUME` OK.
+  - `npm run verify:rapido` verde.
+- **Aberto:** a chave em `test-results.json` é marcada no fechamento da leva, com o verify completo.
+
+## 2026-10-04 — Leva, item 6: BUG-SAVE-DO-ROTEIRO-TRANSLADADO (os saves dos roteiros 05c e 05d)
+
+- **A correção escrita no bug:** `tests/D-TELA-05c.test.ts` e `tests/D-TELA-05d.test.ts` gravam os
+  saves em `${CANGACO_EVIDENCIA_DIR ?? 'test-output'}`, como os do BUG-U/W/X. A corrida transladada
+  do `verify` grava no diretório dela e não sobrescreve mais o save que o roteiro lê. O bug saiu do
+  `BUGS.md` neste commit.
+- **Aceite, verificado nesta sessão:** `npm run verify` completo (2 520; 2 518 + 5 pulados no
+  transladado) e depois `npm run shot -- D-TELA-05c` (6 capturas) e `-- D-TELA-05d` (2 capturas),
+  nessa ordem: os três saíram 0. A primeira tentativa do `verify` acusou um literal do item 1 (o
+  centro `32,32` no teste do som, longe da vila no mundo transladado), corrigido em `53767d6`.
+- **As chaves 05c e 05d** voltam a ser conferidas no fechamento da leva.
+
+## 2026-10-04 — Leva, item 7: BUG-ROTEIRO-04E-DELTA-DO-ATLAS (o roteiro, não a memória)
+
+- **Qual dos dois era: o ROTEIRO.** Com `?depuracao`, o atlas de depuração do serf entra na fila
+  primeiro com a mesma chave do atlas normal (`unidade:serf:atlas`, `render/depuracao-de-unidade.ts:15`),
+  e `render/sprites.ts:34` pula o normal que já está na fila. Ele **substitui** o atlas do serf, e não
+  se soma a ele. O roteiro esperava a soma.
+- **A medida:** no `3e08253` o atlas normal do serf tinha 512 × 576 (conferido com `git show`), e
+  2 211 840 − 1 179 648 = 1 032 192, exatamente o delta que o roteiro recusava. Hoje o normal tem
+  512 × 1 056 (a arte do serf mudou), e a corrida desta sessão mediu `semAtlas` 23 752 188,
+  `comAtlas` 23 801 340, **delta 49 152 = 2 211 840 − 2 162 688**. A hipótese registrada no bug ("a
+  arte do serf mudou o que a cena normal carrega") estava perto: a arte mudou o tamanho, mas o
+  delta nunca foi só o atlas.
+- **A correção:** `tools/shots/D-TELA-04e.js` lê pelo manifesto (o `atlas` do asset e o
+  `meta.image` do json) o atlas que a cena normal carrega e espera `bytes(depuração) − bytes(normal)`,
+  com igualdade exata. A medida vai para `test-output/D-TELA-04e.json` (`atlasNormalSubstituido`,
+  `deltaEsperado`). A memória (`render/memoria-de-texturas.ts`) não mudou: ela estava certa.
+- **Aceite, verificado:** `npm run shot -- D-TELA-04e` saiu 0 (depois do verify completo do item 6).
+  O bug saiu do `BUGS.md` neste commit.
+
+## 2026-10-04 — Leva, item 8: BUG-ROTEIRO-DE-DUAS-ETAPAS — pulado, espera o operador
+
+Pelo próprio item da leva: separar a comparação antes/depois do roteiro de não-regressão, ou
+versionar a medida "antes", é decisão do operador. Sem ela, nada mudou; o bug segue no `BUGS.md`,
+e os dois roteiros (`D-TELA-COSTURA-DOS-TILES`, `D-TELA-VEU-DOS-DETALHES`) seguem falhando sozinhos
+no `shot:todos`, como antes.
+
+## 2026-10-04 — Leva, item 9: BUG-ROTEIRO-F-D2-RELOGIO (a aceleração sem relógio de parede)
+
+- **A correção:** `tools/shots/F-D2.js` não compara mais os pixels de 1,2 s segurando com os de 4
+  toques de 300 ms. Segurando a seta, o roteiro espera, quadro a quadro (`waitForFunction` na
+  velocidade publicada pelo debug), a velocidade passar da inicial do dado e crescer de novo; depois
+  segura até ela chegar ao teto e parar lá; soltando, ela volta **exatamente** à inicial, que é o
+  que faz o toque curto andar sempre o mesmo passo. Nenhum limiar depende de quantos quadros o
+  navegador entregou. As outras partes do roteiro (as quatro setas, o clamp nas bordas, o `Espaço`)
+  não mudaram.
+- **Aceite:** três corridas seguidas saíram 0 (velocidade 640 → 686/694/686 → 748/765/745 → teto
+  1 600; solta, 640). **Falta** a parte "dentro do `shot:todos`", que é do fechamento da leva. O bug
+  saiu do `BUGS.md` neste commit; se o `shot:todos` o acusar, ele volta.
+
+## 2026-10-04 — Leva, item 10: BUG-CIVIS-EMPILHADOS — pulado, espera o operador
+
+Religar a colisão civil ou só espalhar na tela os civis do mesmo tile é decisão do operador (o item
+da leva diz isso). Nada mudou, e o bug segue no `BUGS.md`.
+
+## 2026-10-04 — Fechamento da leva de 2026-10-04 (itens 1, 6, 7 e 9), §13
+
+Na mesma branch da Fase I (`dellanio/fase-i-para-quem-nunca-jogou`), sem merge na `main` e sem push.
+
+**A corrida, nesta ordem:**
+1. `npm run verify` completo no `5b5f933`: 2 520 testes, e 2 518 + 5 pulados no transladado. As
+   chaves foram marcadas com esse selo, pelo portão do hook.
+2. `npm run shot:todos`, num processo destacado: **126 roteiros, 4 com saída diferente de 0**, e
+   nenhum em 0 s (não foi o ambiente):
+   - **`C-IA-03c`, `D-TELA-COSTURA-DOS-TILES` e `D-TELA-VEU-DOS-DETALHES`:** os de antes, todos
+     esperando o operador (a margem da escaramuça e o item 8, BUG-ROTEIRO-DE-DUAS-ETAPAS);
+   - **`D-TELA-03`, novo, não desta leva:** o roteiro usa o machado como exemplo de mercadoria sem
+     arte, e o `8529594` (as 28 mercadorias em pixel art, vindo pela `main`) deu ícone a ele.
+     Registrado como `BUG-ROTEIRO-D-TELA-03-MACHADO-COM-ICONE`, sem corrigir;
+   - **os consertados saíram 0 dentro da corrida:** `D-TELA-05c`, `D-TELA-05d`, `D-TELA-04e`,
+     `F-D2` (o aceite do item 9, "inclusive dentro do `shot:todos`", fecha aqui) e
+     `H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA`, mais os roteiros da Fase I.
+3. `npm run test:longo`, sozinha, por último: **verde**, 5 + 5 testes, 29 s, no `a236c1d`, com a
+   árvore limpa. Este commit de PROGRESS deixa o selo para trás, como nos fechamentos de antes.
+
+**As chaves (`test-results.json`):**
+
+```text
+H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA   o som com lugar            passa (nova)
+D-TELA-05c                            ataque, trabalho e morte   false -> passa
+D-TELA-05d                            carga por tipo             false -> passa
+D-TELA-04e, F-D2                      ja passavam                passa (o roteiro voltou a sair 0)
+```
+
+**Estado da leva:**
+
+```text
+item                                     estado    commit    o que falta
+1  H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA   fechou    53e8f90   revisar duas leituras (Perguntas em aberto); ouvir os recortes
+   (o literal do teste, no transladado)  fechou    53767d6   -
+2-5 Fase I                               fechou    23ce943   o playtest e o itch.io (operador)
+6  BUG-SAVE-DO-ROTEIRO-TRANSLADADO       fechou    33d56d1   -
+7  BUG-ROTEIRO-04E-DELTA-DO-ATLAS        fechou    ae306ae   - (era o roteiro; delta medido 49 152)
+8  BUG-ROTEIRO-DE-DUAS-ETAPAS            espera    -         decisao do operador
+9  BUG-ROTEIRO-F-D2-RELOGIO              fechou    5b5f933   -
+10 BUG-CIVIS-EMPILHADOS                  espera    -         decisao do operador
+novo: BUG-ROTEIRO-D-TELA-03-MACHADO...   aberto    a236c1d   registrado, nao corrigido
+```
+
+**Espera o operador:** os itens 8 e 10 da leva; o playtest e a página do itch.io (a I-ENTREGA-PLAYTEST
+fica `false` até lá); a margem da escaramuça (`C-IA-03c`); ouvir os cinco sons novos e os recortes;
+e as leituras PARA REVISÃO em Perguntas em aberto (os passos da partida guiada, os gatilhos das
+dicas, a distância em todo som com lugar e o `quarry-work` só no lajedo). O merge desta branch na
+`main` é dele.
+
 
 ## 2026-10-04 — G-ARTE-TRABALHO-DOS-OFICIOS (quem trabalha fora de casa mexe a ferramenta)
 
@@ -19434,3 +19795,97 @@ artesão na oficina de armas; a da pedreira foi gravada, mas não aberta.
   ficou miúdo. Os dois aparecem, mas pequenos. Se o operador quiser, ele aponta um espaço maior na arte.
 - O moinho ocioso ainda mostra o placeholder `ocioso_6` (a entrada genérica `ocioso`, F-VIVO-e). Ele é
   outro asset e fica fora deste item.
+
+## 2026-10-04 — Leva, item 8: BUG-ROTEIRO-DE-DUAS-ETAPAS (decisão do operador: A, separar)
+
+O operador decidiu os itens 8 e 10 (`ded2162`, trazido pelo `git merge main`, `6adfa6c`; o conflito
+do PROGRESS era só as duas pontas acrescentando, e ficaram as duas). Ordem final da leva: 1, 6, 7,
+8, 9, 10.
+
+- **O que mudou:** `tools/shots/D-TELA-COSTURA-DOS-TILES.js` e `tools/shots/D-TELA-VEU-DOS-DETALHES.js`,
+  rodados sem variável, são de **não-regressão**: medem, afirmam o que vale sozinho e gravam a
+  medida em `regressao`, sem tocar `antes`/`depois`. A comparação é o modo
+  `CANGACO_COSTURA_ETAPA=antes|depois` (e `CANGACO_VEU_ETAPA` no véu), o único que exige a medida
+  "antes", com a mensagem de hoje.
+- **(c) O que saiu para o modo de comparação:**
+  - costura: a baseline existir ("baseline anterior a mudanca precisa existir"), a arte ser a mesma
+    do antes, e os bytes das 16 células internas iguais ao antes no zoom 1;
+  - véu: a medida anterior existir ("medida anterior existe").
+  **O que ficou, igual:** a etapa válida, o canvas, o zoom aplicado, o mesmo tick pausado e a câmera
+  em pixel inteiro (costura); a etapa válida e o zoom (véu). **Uma ficou mais estrita:** "água e
+  grama sem detalhes" só valia no `depois`, e agora vale também na não-regressão (só a medida
+  `antes`, tirada no código de antes do véu, tinha detalhes).
+- **Aceite, verificado nesta sessão:** (a) com `test-output/` sem nenhuma medida dos dois (só os
+  relatórios `-shot.json` do runner, como numa worktree nova), os dois saíram 0 (6 e 4 capturas);
+  falta a parte "dentro do `shot:todos`", que é do fechamento; (b) com `ETAPA=depois` e sem a medida
+  "antes", os dois recusam com a mensagem de hoje. O bug saiu do `BUGS.md` neste commit.
+
+## 2026-10-04 — Leva, item 10: BUG-CIVIS-EMPILHADOS (decisão do operador: A, religar) — PARADO na medida
+
+O aceite do item manda medir antes do código, e parar se a calibração da comida ou da madeira cair
+mais de 10 %. Caiu. **Nenhum código mudou**: a chave voltou a `false`, e o bug segue no `BUGS.md`.
+
+**A medida** (`units.json colisaoCivil.ligada: true`, `npm run test` e `npm run test:longo`, no
+`67410e3`; números da corrida, não asserção):
+- **Calibração**, contra a mesma corrida com a chave desligada:
+
+  ```text
+  cenario longo D-TRANSPORTE-03 T2 (producao por cadeia, base -> ligada)
+  janela  tree_trunk  stone       timber      corn     flour    loaves
+  16000   41 -> 41    78 -> 78    78 -> 74    48 -> 48 44 -> 44 80 -> 60   (-25,0 %)
+  20000   50 -> 50    99 -> 99    98 -> 98    64 -> 64 58 -> 58 112 -> 90  (-19,6 %)
+  30000   78 -> 77    153 -> 150  154 -> 152  99 -> 98 96 -> 97 190 -> 164 (-13,7 %)
+  ```
+
+  A F-CAL quase não muda (moinho sustentado: intervalo 241,7 nos dois; espera do moinho 6,3 % ->
+  6,1 %, da padaria 2,7 % -> 2,2 %), e a abertura da F17 fecha em 3 796 ticks contra 3 825.
+- **O que reprova na suíte normal (9 testes, 7 arquivos):**
+  - `D-MOVIMENTO-01a` (3): afirmam a chave desligada; mudam por construção ao ligar;
+  - `D-SAVE-VILA-PRONTA`: o save versionado passa a ter `bloqueado`/`saindo` (regravar o save);
+  - `D-TRANSPORTE-03` T1: 9 de 15 armas chegam ao quartel no prazo;
+  - `D-TRANSPORTE-03-T2` (aceite 10): os nós do A* passam do teto medido (o custo de unidade na rota);
+  - `F09`: o cenário do save com reserva pendente deixa de ter reserva no tick do save (o teste
+    ficaria vácuo);
+  - `F20b-4`: os comensais a caminho passam de `refeicoesGarantidas` (pode ser defeito real, não
+    conferido);
+  - `I-TELA-PARTIDA-GUIADA` (c): passa do prazo de 5 s do teste (a corrida fica mais lenta).
+- **Na longa (2 de 5):** a T2 acima, e a `C-IA-03b` (a escaramuça não fecha em vitória).
+
+**Espera o operador**, em Perguntas em aberto: recalibrar o pão em lote, investigar a queda antes,
+ou ir pela outra saída do bug.
+
+## 2026-10-04 — Fechamento final da leva de 2026-10-04 (com os itens 8 e 10 decididos), §13
+
+Na branch `dellanio/fase-i-para-quem-nunca-jogou`, sem merge na `main` (a sessão principal faz) e
+sem push.
+
+**A corrida, nesta ordem:**
+1. `npm run shot:todos` no `8dce31d`, destacado: **128 roteiros, 2 com saída diferente de 0**, nenhum
+   em 0 s: `C-IA-03c` (espera o operador, a margem da escaramuça) e `D-TELA-03`
+   (`BUG-ROTEIRO-D-TELA-03-MACHADO-COM-ICONE`, registrado, vindo da `main`). A costura e o véu
+   saíram 0 sozinhos, dentro da corrida: o aceite (a) do item 8 fecha. `F-D2` e
+   `H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA` também saíram 0.
+2. `npm run verify` completo no `8dce31d`: 2 550 testes, e 2 548 + 5 pulados no transladado. As
+   chaves da costura e do véu passaram a `true` com esse selo.
+3. `npm run test:longo`, sozinha, por último: **verde**, 29 s, no `9347369`, com a árvore limpa.
+   Este commit de PROGRESS deixa o selo para trás.
+
+**Estado final da leva:**
+
+```text
+item                                     estado    commit    o que falta
+1  H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA   fechou    53e8f90   ouvir os recortes; revisar 2 leituras
+2-5 Fase I                               fechou    23ce943   o playtest e o itch.io (operador)
+6  BUG-SAVE-DO-ROTEIRO-TRANSLADADO       fechou    33d56d1   -
+7  BUG-ROTEIRO-04E-DELTA-DO-ATLAS        fechou    ae306ae   -
+8  BUG-ROTEIRO-DE-DUAS-ETAPAS            fechou    67410e3   -
+9  BUG-ROTEIRO-F-D2-RELOGIO              fechou    5b5f933   -
+10 BUG-CIVIS-EMPILHADOS                  parado    8dce31d   operador: o pao cai 25 % com a colisao
+BUG-ROTEIRO-D-TELA-03 (da main)          aberto    a236c1d   registrado, nao corrigido
+C-IA-03c (de antes)                      espera    -         operador: a margem da escaramuca
+```
+
+**Espera o operador:** o item 10 (o pão cai até −25 % com a colisão ligada; as saídas estão em
+Perguntas em aberto); o playtest e o itch.io; a `C-IA-03c`; ouvir os sons novos; as leituras PARA
+REVISÃO; e o merge na `main`, que é da sessão principal.
+

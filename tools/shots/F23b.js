@@ -91,7 +91,6 @@ async function roteiro(ctx) {
   afirmar(await page.textContent(BOTAO('salvar')) === ROTULOS.salvar, 'o botao de guardar deveria usar o rotulo do tema');
   afirmar(await page.textContent(BOTAO('carregar')) === ROTULOS.carregar, 'o botao de retomar deveria usar o rotulo do tema');
   afirmar((await recado()) === null, 'o recado deveria nascer escondido');
-  const chavesDeAntes = Object.keys(await gaveta()).filter((k) => k !== CHAVE && k !== CHAVE_DO_INDICE).sort();
 
   // ---- 1. o jogador planta uma obra e a aldeia anda -------------------------------
   // A obra fica logo abaixo da Casa do Coronel, no primeiro lugar livre: sem ela,
@@ -132,6 +131,10 @@ async function roteiro(ctx) {
   afirmar(JSON.stringify(await aldeia()) === JSON.stringify(antes), 'retomar sem save nao pode mexer na partida');
 
   // ---- 3. guardar -----------------------------------------------------------------
+  // A foto da gaveta e tirada AQUI, logo antes do Guardar: desde a I-TELA-DICAS-NA-PRIMEIRA-VEZ a
+  // aldeia que anda 300 ticks pode marcar uma dica (`cangaco:dicas`), e isso nao e do Guardar.
+  const chavesDeAntes = Object.keys(await gaveta()).filter((k) => k !== CHAVE && k !== CHAVE_DO_INDICE).sort();
+  console.log(`F23b: a gaveta antes do Guardar: ${JSON.stringify(chavesDeAntes)}; dicas ${(await gaveta())['cangaco:dicas'] ?? 'nenhuma'}`);
   await clicar('salvar');
   afirmar((await recado()) === ROTULOS.salvou, `o recado deveria ser '${ROTULOS.salvou}', veio '${await recado()}'`);
   const guardado = await gaveta();

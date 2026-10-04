@@ -646,6 +646,20 @@
     "titulo": "Os controles",
     "rodape": "Esc ou H fecha este aviso",
     "dica": "Aperte H para ver os controles",
+    "abas": { "controles": "Controles", "cadeias": "Cadeias" },
+    "cadeias": {
+      "_doc": "I-TELA-AJUDA-DAS-CADEIAS. A aba Cadeias (src/ui/cadeias.ts): uma linha por receita de data/production.json, derivada do dado. {mercadoria}, {de} e {para} sao nomes do tema.",
+      "titulo": "As cadeias",
+      "intro": "De onde vem cada coisa e para onde vai. Tudo passa pelo Armazém, nas costas dos carregadores.",
+      "entra": "Entra",
+      "sai": "Sai",
+      "colhe": "tira do mapa, ao alcance da casa",
+      "vemDe": "{mercadoria} (de {de})",
+      "vaiPara": "{mercadoria} (para {para})",
+      "vaiParaArmazem": "{mercadoria} (fica no Armazém)",
+      "obras": "as obras",
+      "separador": ", "
+    },
     "grupos": {
       "ferramenta": "Na mão",
       "tempo": "O tempo",
@@ -685,6 +699,7 @@
   "menuInicial": {
     "_doc": "E-TELA-MENU-INICIAL. A porta do jogo, antes do Phaser: os botoes do menu (src/ui/menu-inicial.ts). As chaves sem-save, recusado e gaveta sao as causas de `lerUltimoSave` (src/arquivo-da-partida.ts), e o motivo do Continuar desabilitado.",
     "titulo": "Piancó",
+    "aprender": "Aprender a jogar",
     "novoJogo": "Novo jogo",
     "livre": "Jogo livre",
     "escaramuca": "Escaramuça",
@@ -716,5 +731,74 @@
     "canais": { "efeitos": "Efeitos", "ambiente": "Ambiente", "musica": "Música" },
     "mudo": "Sem som",
     "fechar": "Fechar"
+  },
+  "dicas": {
+    "_doc": "I-TELA-DICAS-NA-PRIMEIRA-VEZ. A dica de primeira vez (src/ui/dicas.ts). As chaves de `textos` sao os ids de `DICAS`: dica sem texto, ou texto sem dica, reprova o verify (tests/I-TELA-DICAS-NA-PRIMEIRA-VEZ.test.ts). {motivo} e o texto que o aviso de ordem ja da. `opcao` e a chave da caixa de Opcoes.",
+    "titulo": "Dica",
+    "ver": "Ver onde",
+    "entendi": "Entendi",
+    "opcao": "Mostrar dicas",
+    "textos": {
+      "ordem-recusada": "A ordem não foi: {motivo}. O aviso no alto da tela sempre diz por quê.",
+      "fim-da-paz": "A paz acabou. Daqui em diante o outro bando pode atacar a sua vila, e você pode atacar a dele.",
+      "inimigo-a-vista": "Gente de outro bando à vista. Só se vê o que os seus enxergam: o resto do mapa fica na névoa.",
+      "fome": "Tem gente com fome. O povo come na Bodega, se houver comida no Armazém; a tropa come quando você manda Alimentar no painel do grupo.",
+      "sem-estrada": "Esta casa não tem estrada até o Armazém, e o carregador só anda pela estrada. Puxe uma da porta (o lado de baixo da casa) até a rede.",
+      "sem-trabalhador": "Esta casa está pronta, mas ninguém trabalha nela. Clique na Casa do Coronel e peça o trabalhador dela."
+    }
+  },
+  "relato": {
+    "_doc": "I-ENTREGA-PLAYTEST. O Enviar relato da ajuda em jogo (src/ui/relato.ts). As chaves de `campos` sao os de `CAMPOS_DO_RELATO` (src/relato.ts): campo sem rotulo, ou rotulo sem campo, reprova o verify (tests/I-ENTREGA-PLAYTEST.test.ts). A frase `leva` e montada da lista, e por isso a tela diz exatamente o que o arquivo leva.",
+    "titulo": "Relato para quem fez o jogo",
+    "leva": "O arquivo leva {campos}. Nada sai daqui sozinho: você baixa e manda o arquivo.",
+    "e": " e ",
+    "campos": { "save": "a partida como está agora", "commit": "a versão do jogo", "nivel": "o nível do adversário", "texto": "o que você escrever aqui" },
+    "placeholder": "O que deu certo, o que travou, o que você não entendeu",
+    "enviar": "Enviar relato",
+    "abrir": "Abrir relato",
+    "baixou": "Relato baixado: {arquivo}",
+    "abriu": "Relato aberto: partida no tick {tick}",
+    "recusado": "Não abriu o relato: {motivo}"
+  },
+  "partidaGuiada": {
+    "_doc": "I-TELA-PARTIDA-GUIADA. A faixa de passos do Aprender a jogar (src/ui/partida-guiada.ts). As chaves de `passos` sao os ids de `passosDaPartidaGuiada`: passo sem texto, ou texto sem passo, reprova o verify (tests/I-TELA-PARTIDA-GUIADA.test.ts). {predio} e o nome do tema do predio que o passo pede; {unidade}, o do civil; {n} e {total}, a contagem.",
+    "contagem": "Passo {n} de {total}",
+    "ou": " ou ",
+    "pular": "Esconder",
+    "reabrir": "Passos",
+    "passos": {
+      "estrada": {
+        "titulo": "Puxe a estrada",
+        "texto": "Pegue a estrada no menu (ou aperte R) e puxe da porta da {predio} até a porta do Armazém. A porta é o lado de baixo da casa. Os obreiros calçam depois."
+      },
+      "escola": {
+        "titulo": "Engaje um {unidade}",
+        "texto": "Clique na Casa do Coronel e peça um {unidade}. Ele custa ouro, e um carregador leva o ouro pela estrada."
+      },
+      "lenhador": {
+        "titulo": "Levante a {predio}",
+        "texto": "Escolha a {predio} no menu e ponha perto do mato. Puxe estrada da porta dela até a rede. Os obreiros levantam a obra; espere ficar pronta."
+      },
+      "pedreira": {
+        "titulo": "Levante a {predio}",
+        "texto": "Ponha a {predio} perto do lajedo, ligue a porta à estrada e peça um {unidade} na Casa do Coronel. Sem ele a casa fica parada. Pedra serve para casa e para calçar estrada."
+      },
+      "serraria": {
+        "titulo": "Levante a {predio}",
+        "texto": "Com o lenhador de pé, a {predio} aparece no menu. Ela faz tábua da tora. Ligue a porta à estrada e peça um {unidade}."
+      },
+      "comida": {
+        "titulo": "A primeira comida",
+        "texto": "Gente com fome para de trabalhar. Levante um {predio}, ligue à estrada e peça um {unidade}. Comida vai para a Bodega, onde o povo come."
+      },
+      "quartel": {
+        "titulo": "Levante o {predio}",
+        "texto": "O {predio} transforma recruta e arma em cabra de briga. Ponha e ligue à estrada."
+      },
+      "escaramuca": {
+        "titulo": "Pronto para a briga",
+        "texto": "A vila anda sozinha. Quando quiser enfrentar outro bando, volte ao menu e comece uma Escaramuça."
+      }
+    }
   }
 }
