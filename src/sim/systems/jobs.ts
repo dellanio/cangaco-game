@@ -21,7 +21,7 @@ import {
 } from '../state';
 import type { GameData } from '../data/types';
 import { gameData } from '../data';
-import { armazensCompletos, chaveDeTile, ehPlanejada, MERCADORIA_DA_ESTRADA, tilesOrdenados } from '../estradas';
+import { armazensCompletos, chaveDeTile, ehPlanejada, MERCADORIA_DA_ESTRADA, predioLigadoAoArmazem, tilesOrdenados } from '../estradas';
 import type { TileDeGrid } from '../estradas';
 import { ehCampoPlanejado, tilesPlanejadosParaArar } from '../campos';
 import {
@@ -478,25 +478,38 @@ function ofertaDaSaidaAoArmazem(state: GameState, id: string, mercadoria: string
  * tambem nao desconta: ela cede (`ofertaDaSaidaAoArmazem`). `usados`: o que o laco do gerador
  * ja criou de cada origem para ESTE destino neste tick.
  */
-function origemDoInsumo(
-  state: GameState, destino: PredioCompleto, mercadoria: string, tipo: TarefaDeTransporte['tipo'],
-  usados: Readonly<Record<string, number>>, dados: GameData,
-): string | null {
+function origensDoInsumo(
+  state: GameState, destino: Predio, mercadoria: string, tipo: TarefaDeTransporte['tipo'], dados: GameData,
+): readonly { readonly id: string; readonly custo: number }[] {
   const modo = modoDoTipo(tipo, dados);
-  let melhor: { id: string; custo: number } | null = null;
+  const origens: { id: string; custo: number }[] = [];
   for (const id of state.predios.ordem) {
     const predio = state.predios.porId[id];
     if (predio?.estado !== 'completo' || predio.lado !== destino.lado || id === destino.id) continue;
     const armazem = predio.tipo === ID_DO_ARMAZEM;
     if (ehQuartelCompleto(predio)) continue;
-    const livre = disponivelNaOrigem(state, id, mercadoria) - (usados[id] ?? 0);
-    if (livre < 1) continue;
+    if (disponivelNaOrigem(state, id, mercadoria) < 1) continue;
+    // I-TRANSPORTE-MATERIAL-DIRETO-DA-CASA: no modo livre (a obra), a casa so e origem ligada ao
+    // armazem por estrada — sem rua a gaveta dela nao escoa (a _nota_modo; F18d-1a)
+    if (!armazem && modo !== 'estrada' && !predioLigadoAoArmazem(state, predio, dados)) continue;
     const ligacao = ligacaoEntrePredios(state, predio, destino, modo, dados);
     if (ligacao === null) continue;
-    const custo = ligacao + (armazem ? dados.entrega.lance.ticksMultaDoArmazem : 0);
-    if (melhor === null || custo < melhor.custo) melhor = { id, custo };
+    origens.push({ id, custo: ligacao + (armazem ? dados.entrega.lance.ticksMultaDoArmazem : 0) });
   }
-  return melhor === null ? null : melhor.id;
+  // `sort` estavel: no empate fica a ordem de `predios.ordem`
+  return origens.sort((a, b) => a.custo - b.custo);
+}
+
+/** A primeira das `origens` (ja em ordem de custo) que ainda tem `mercadoria` livre depois do que o
+ *  laco do gerador ja tirou dela (`usados`). As origens se medem uma vez por destino e mercadoria:
+ *  criar tarefa aberta nao muda caminho nem `disponivelNaOrigem`, e medir de novo a cada unidade
+ *  repetia o A* (I-TRANSPORTE-MATERIAL-DIRETO-DA-CASA, o teto de nos da D-TRANSPORTE-03 T2). */
+function origemDoInsumo(
+  state: GameState, origens: readonly { readonly id: string }[], mercadoria: string,
+  usados: Readonly<Record<string, number>>,
+): string | null {
+  for (const o of origens) if (disponivelNaOrigem(state, o.id, mercadoria) - (usados[o.id] ?? 0) >= 1) return o.id;
+  return null;
 }
 
 /** Os niveis 6 e 7 entregam os dois na PORTA do armazem, e por isso tem que ter o
@@ -620,8 +633,9 @@ function gerarTarefasDeInsumo(state: GameState, dados: GameData): GameState {
       const tipo = parada ? 'insumo-producao-parada' : 'insumo-producao-baixa';
       // D-TRANSPORTE-03 T2: cada unidade escolhe a origem de novo, armazem ou casa
       const usados: Record<string, number> = {};
+      const origens = origensDoInsumo(atual, predio, mercadoria, tipo, dados);
       for (let i = existentes; i < querem; i++) {
-        const origem = origemDoInsumo(atual, predio, mercadoria, tipo, usados, dados);
+        const origem = origemDoInsumo(atual, origens, mercadoria, usados);
         if (origem === null) break;
         usados[origem] = (usados[origem] ?? 0) + 1;
         atual = criarTarefaDeInsumo(atual, { mercadoria, origem, destino: id, parada }).state;
@@ -832,14 +846,23 @@ function armazemMaisPertoDoTile(
   // BUG-R: a pedra da estrada sai de armazem do JOGADOR (so ele planeja estrada, plano da
   // C7). Sem o lado, um canteiro perto da vila da IA pegava o armazem dela, e a tarefa ficava
   // aberta para sempre: o serf do jogador nao pode reclama-la (C7).
-  for (const armazem of armazensCompletos(state, LADO_DO_JOGADOR)) {
-    if (livre(armazem.id) < 1) continue;
+  // I-TRANSPORTE-MATERIAL-DIRETO-DA-CASA: o armazem (com a multa do lance) ou a casa do jogador com
+  // pedra livre na `saida` (a pedreira), como o insumo; o quartel nao e origem
+  for (const id of state.predios.ordem) {
+    const predio = state.predios.porId[id];
+    if (predio?.estado !== 'completo' || predio.lado !== LADO_DO_JOGADOR) continue;
+    const armazem = predio.tipo === ID_DO_ARMAZEM;
+    if (ehQuartelCompleto(predio)) continue;
+    if (livre(id) < 1) continue;
+    // sem rua a gaveta da casa nao escoa (a _nota_modo; F18d-1a), como na obra
+    if (!armazem && !predioLigadoAoArmazem(state, predio, dados)) continue;
     // a existencia memoizada ANTES do A* do custo: um tile ilhado com pedra livre
     // no armazem faria um A* de mapa inteiro por tick, para sempre.
-    if (!tileAlcancavelDaPorta(state, armazem, tile, dados)) continue;
-    const distancia = ligacaoEntrePredioETile(state, armazem, tile, modo, dados);
-    if (distancia === null) continue;
-    if (melhor === null || distancia < melhor.distancia) melhor = { id: armazem.id, distancia };
+    if (!tileAlcancavelDaPorta(state, predio, tile, dados)) continue;
+    const ligacao = ligacaoEntrePredioETile(state, predio, tile, modo, dados);
+    if (ligacao === null) continue;
+    const distancia = ligacao + (armazem ? dados.entrega.lance.ticksMultaDoArmazem : 0);
+    if (melhor === null || distancia < melhor.distancia) melhor = { id, distancia };
   }
   return melhor === null ? null : melhor.id;
 }
@@ -1031,10 +1054,21 @@ export function gerarTarefas(state: GameState, dados: GameData = gameData): Game
         const existentes = tarefasPorNumero(atual)
           .filter((t) => t.tipo === 'material-para-obra' && t.destino === obra.id && t.mercadoria === mercadoria).length;
         if (faltam <= existentes) continue;
-        const origem = origemMaisPerto(atual, obra, mercadoria, 'material-para-obra', dados);
-        if (origem === null) continue;
-        for (let i = existentes; i < faltam; i++) {
+        // I-TRANSPORTE-MATERIAL-DIRETO-DA-CASA: cada unidade escolhe a origem como o insumo (a casa
+        // com a mercadoria livre na `saida` ou o armazem com a multa); o que sobra da demanda sem
+        // lastro fica, como antes, com o armazem mais perto que tem estoque
+        const usados: Record<string, number> = {};
+        const origens = origensDoInsumo(atual, obra, mercadoria, 'material-para-obra', dados);
+        let i = existentes;
+        for (; i < faltam; i++) {
+          const origem = origemDoInsumo(atual, origens, mercadoria, usados);
+          if (origem === null) break;
+          usados[origem] = (usados[origem] ?? 0) + 1;
           atual = criarTarefa(atual, { mercadoria, origem, destino: obra.id }).state;
+        }
+        const doArmazem = i < faltam ? origemMaisPerto(atual, obra, mercadoria, 'material-para-obra', dados) : null;
+        for (; doArmazem !== null && i < faltam; i++) {
+          atual = criarTarefa(atual, { mercadoria, origem: doArmazem, destino: obra.id }).state;
         }
       }
     }

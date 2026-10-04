@@ -40,8 +40,12 @@ const VIAGENS_POR_TORA_NO_T1 = 32 / 16;
  * Aceite 10, teto de nos do A* nesta vila e janela. Sonda 2026-09-30: T1 (a1dbb5c) 22 141, T2
  * 22 935. Remedido no merge (2026-09-30, T2 rebaseado sobre o BUG-Y, viagem inutil para comer):
  * 22 470, e o teto leva ~10 % de folga. Eixo deterministico, nao relogio (CLAUDE.md §8).
+ * Remedido em 2026-10-04: com a escola abastecida (I-TRANSPORTE-OURO-SEMPRE-NA-ESCOLA) 24 421; com o
+ * material direto da casa (I-TRANSPORTE-MATERIAL-DIRETO-DA-CASA) 25 687, +790 da obra e +476 do
+ * canteiro de estrada, as casas que passaram a ser origem medida. Medir as origens uma vez por
+ * destino, e nao por unidade, nao mudou o numero (o laco nao repetia A* nesta vila). Folga de ~10 %.
  */
-const TETO_DE_NOS = 24700;
+const TETO_DE_NOS = 28300;
 
 
 type Variante = 'real' | 'serraria-cheia' | 'sem-lenhador';

@@ -222,7 +222,10 @@ describe('F08 + F18g — o custo em pedra e PEDIDO no comando e pago tile a tile
     expect(gaveta(depois, segundo, 'saida')).toBe(10);
   });
 
-  it('so armazem paga: pedra na saida de outro tipo de predio nao conta', () => {
+  it('pedra na saida de predio sem ligacao ao armazem nao paga', () => {
+    // I-TRANSPORTE-MATERIAL-DIRETO-DA-CASA: a casa do jogador com pedra na `saida` passou a pagar o
+    // canteiro, mas so ligada ao armazem por estrada (sem rua a gaveta nao escoa). Aqui nao ha
+    // armazem nenhum, entao a pedreira continua sem pagar.
     const semArmazem = (() => {
       const outro: PredioCompleto = {
         lado: LADO_DO_JOGADOR, id: 'pedreira', tipo: 'quarry', gx: 0, gy: 0, estado: 'completo', hp: 0,
@@ -233,7 +236,7 @@ describe('F08 + F18g — o custo em pedra e PEDIDO no comando e pago tile a tile
       return { ...inicial, predios: { porId: { pedreira: outro }, ordem: ['pedreira'] } } as GameState;
     })();
     // F18g: o canteiro se desenha mesmo assim — o feedback e o tile esperando —, so
-    // nao nasce carga nenhuma, porque so armazem e origem de pedra.
+    // nao nasce carga nenhuma, porque a pedreira nao esta ligada a armazem nenhum.
     const depois = step(semArmazem, [construir([tile(10, 40)])]);
     expect(depois.estradas).toBe(semArmazem.estradas);
     expect(planejados(depois)).toBe(1);

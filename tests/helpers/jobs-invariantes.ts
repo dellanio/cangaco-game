@@ -229,8 +229,10 @@ export function violacoesDeInvariantes(estado: GameState, dados: GameData = game
       // importa; so o destino, a unidade e a vaga tem que valer.
       const origem = estado.predios.porId[t.origem];
       const destino = estado.predios.porId[t.destino];
-      if (t.estado !== 'carregando' && (!origem || origem.estado !== 'completo' || origem.tipo !== ID_DO_ARMAZEM)) {
-        v.push(`${id}: origem '${t.origem}' nao e armazem completo`);
+      // I-TRANSPORTE-MATERIAL-DIRETO-DA-CASA: a forma da origem e a do predicado do saneamento
+      // (`origemDaTarefaVale`), e nao uma copia da regra: o material sai do armazem OU da casa
+      if (t.estado !== 'carregando' && !origemDaTarefaVale(estado, t)) {
+        v.push(`${id}: origem '${t.origem}' nao tem a forma do tipo (ORIGEM_ESPERADA_POR_TIPO)`);
       }
       // F18d-1a: o modo e do nivel, nao do verificador — o nivel 3 anda livre, e dizer
       // "por estrada" aqui esconderia qual busca falhou.

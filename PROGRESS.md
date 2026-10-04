@@ -3228,6 +3228,14 @@ que vetar custe uma linha.
   nenhum guarda de dado.
 
 ## Perguntas em aberto
+- **(2026-10-04, leva 3, item 3: minas perto da vila) Mudar o `sertao-128` ou fazer outro mapa?** O
+  operador pediu carvão, ouro e ferro mais perto do centro da cidade "no mapa atual", para testar a
+  fundição. Medido: os veios mais perto ficam a 79 tiles (ferro), 86 (ouro) e 91 (carvão) do armazém
+  inicial (29,30), e ficam dentro de montanha, porque mina só se constrói ao lado de montanha. O mapa é
+  emitido por `tools/gerar-mapa.js` (semente 20260924), e o save guarda o hash dele. Mudar o mapa
+  atual faz o jogo **recusar todo save antigo**: o do operador, os das gavetas e o
+  `teste-operador-vila-pronta`, que teria de ser refeito. Também mexe nos testes calibrados nas
+  distâncias de hoje. Não decidido; a fila seguiu com os itens 1 e 2.
 
 - **(2026-10-04, G-TELA-ROCEIRO-NO-CAMPO) O roceiro de verdade dentro do tile?** Hoje a sim leva o
   roceiro ao tile vizinho do campo, e o render só desenha ele dentro. Pôr o roceiro dentro do tile na
@@ -20221,3 +20229,36 @@ coleta, pode levar a caixa abaixo da cota por uma viagem. A corrida já existia 
 excedente reclamado), e ela se corrige sozinha pela demanda.
 **Efeito de balanceamento (não medido):** cada escola prende 5 de ouro no início. A IA começa com o
 mesmo armazém, e o prefeito só pede serf com ouro acima de 20 no armazém.
+
+### I-TRANSPORTE-MATERIAL-DIRETO-DA-CASA — pedra e tábua vão da casa direto à obra
+**Pedido:** a pedra e a tábua vão primeiro às construções pendentes, e só depois ao estoque. O milho
+vai primeiro ao moinho.
+**O milho (medido, sem mudança):** numa sonda de 6 000 ticks sobre a vila pronta, as 33 entregas de
+milho foram da fazenda direto ao moinho, e nenhuma ao armazém. O insumo já tinha a regra do KaM desde a
+D-TRANSPORTE-03 T2. Se o operador viu milho indo ao armazém, a hipótese é o moinho com a gaveta cheia
+(5), quando o armazém é o destino certo. Não reproduzido.
+**Antes (verificado):** a tarefa `material-para-obra` e a `pedra-para-canteiro` só tinham origem no
+armazém. Na sonda, as 30 pedras e as 26 tábuas foram todas ao armazém primeiro.
+**Regra:** a origem do material passa a ser escolhida como a do insumo (`origensDoInsumo` +
+`origemDoInsumo`): a casa com a mercadoria livre na `saida` ou o armazém com a multa do lance. A pedra
+do canteiro segue a mesma regra. Duas condições respeitam decisões antigas:
+- a casa só é origem quando ligada ao armazém por estrada (a `_nota_modo`: sem rua a gaveta não escoa;
+  o aceite da F18d-1a continua valendo inteiro);
+- o resto da demanda sem lastro fica com o armazém mais perto, como antes.
+
+`ORIGEM_ESPERADA_POR_TIPO` passou a `qualquer` para os dois tipos. As origens se medem uma vez por
+destino e mercadoria, e não por unidade (criar tarefa não muda caminho nem estoque livre).
+**Teste:** `tests/I-TRANSPORTE-MATERIAL-DIRETO-DA-CASA.test.ts` (6) cobre os aceites 1 a 5, mais a prova
+de que o guarda acusa. Com o `jobs.ts` e o `state.ts` antigos, os testes 1, 2, 3 e 5 reprovam.
+**Não-regressão (nesta tarefa):**
+- O guarda `tests/helpers/jobs-invariantes.ts` tinha a cópia "origem de material é armazém". Ele passou
+  a usar `origemDaTarefaVale`, o predicado do saneamento, que o canteiro já usava.
+- No F17b, a pedreira ligada agora manda a pedra à obra, e a saída-cheia não nasce mais. O cardápio
+  ficou com dois tipos, e a escolha continua sendo a obra.
+- O F08 "só armazém paga" virou "predio sem ligação ao armazém não paga". O cenário dele não tem
+  armazém.
+- O teto de nós do A* da D-TRANSPORTE-03 T2 foi remedido. A base com o item 1 era 24 421; com este,
+  25 687 (+790 da obra, +476 do canteiro, as casas que agora são medidas). O teto foi de 24 700 para
+  28 300. É eixo determinístico, e medir por destino não mudou o número.
+
+**Não verificado em jogo:** não houve captura nem roteiro. É regra de sim, coberta pelo `step`.

@@ -914,7 +914,9 @@ export function gavetaDeOrigem(tipo: TipoComOrigem): Gaveta {
  */
 export const ORIGEM_ESPERADA_POR_TIPO: Readonly<Record<TipoComOrigem, 'armazem' | 'outro-predio' | 'qualquer'>> = {
   'comida-para-inn': 'armazem',
-  'material-para-obra': 'armazem',
+  // I-TRANSPORTE-MATERIAL-DIRETO-DA-CASA — o material sai do armazem OU da casa que o fez (a pedra da
+  // pedreira, a tabua da serraria), como o insumo: o lance do KaM com a multa do armazem
+  'material-para-obra': 'qualquer',
   'ouro-para-escola': 'armazem',
   'arma-para-quartel': 'qualquer',
   // D-TRANSPORTE-03 T2 — o insumo sai do armazem OU da casa que o fez (a oferta casada com a
@@ -923,7 +925,8 @@ export const ORIGEM_ESPERADA_POR_TIPO: Readonly<Record<TipoComOrigem, 'armazem' 
   'insumo-producao-baixa': 'qualquer',
   'saida-cheia-para-armazem': 'outro-predio',
   'excedente-para-armazem': 'outro-predio',
-  'pedra-para-canteiro': 'armazem',
+  // I-TRANSPORTE-MATERIAL-DIRETO-DA-CASA — idem, a pedra do canteiro de estrada
+  'pedra-para-canteiro': 'qualquer',
   // C-COMIDA-01b — so de armazem completo do mesmo lado (L3, decisao do operador)
   'comida-para-tropa': 'armazem',
 };

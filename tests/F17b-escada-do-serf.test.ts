@@ -135,11 +135,13 @@ describe('a escada de delivery.json decide a escolha do serf, nao a distancia', 
     });
   });
 
-  it('com material-para-obra, saida-cheia e excedente abertas, ele vai a OBRA', () => {
+  it('com material-para-obra e excedente abertas, ele vai a OBRA', () => {
     const escolha = oQueOSerfPegou(cenario(true));
-    // o cardapio tinha mesmo os tres tipos na mesa
+    // o cardapio tinha os dois tipos na mesa. Desde a I-TRANSPORTE-MATERIAL-DIRETO-DA-CASA a pedra da
+    // `saida` da pedreira ligada vai direto a obra (a material-para-obra sai DELA), e por isso a
+    // saida-cheia ao armazem nao nasce: a obra pediu a pedra antes.
     expect(Object.keys(escolha.cardapio).sort())
-      .toEqual(['excedente-para-armazem', 'material-para-obra', 'saida-cheia-para-armazem']);
+      .toEqual(['excedente-para-armazem', 'material-para-obra']);
     expect(escolha.tipo).toBe('material-para-obra');
   });
 });
