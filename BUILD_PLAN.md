@@ -8544,6 +8544,66 @@ merge na `main` (pedido do operador, 2026-10-04: "faça merge na main no final")
       `BUG-CIVIS-EMPILHADOS` sai do `BUGS.md` no mesmo commit; (f) screenshot da estrada da pedreira
       com os serfs em tiles distintos.
 
+## Leva de 2026-10-04 (2) — a colisão civil fica, e a escaramuça é cenário de teste
+
+Decisões do operador (2026-10-04), nas palavras dele, e o que muda por elas.
+
+**Sobre a colisão:** "A colisão é justamente um dos desafios do jogo, para não criar serf demais. O
+jogador precisa saber desenhar bem as ruas e rotas para ter eficiência logística. Pode deixar a
+colisão e não se preocupe com produções: o jogador é que vai precisar resolver esse ponto na
+partida. A nível de teste, pode remover esse teste inclusive; não podemos correlacionar os itens."
+- Isso revoga a regra "parar se a calibração cair mais de 10 %" do item 10 da leva anterior e a
+  recalibração em lote. **A produção com a colisão ligada não é defeito: é o desafio.**
+
+**Sobre a escaramuça:** o operador lembrou que ela é um cenário de teste do desenvolvimento.
+Quando houver história e várias fases, cada fase terá uma lógica própria: uma em que a IA tem muito
+exército e demora a atacar, outra em que ela começa com pouco e constrói, e assim por diante.
+- **Regra que sai disso, para todo teste daqui em diante:** teste afirma **mecânica** (a regra
+  funciona, a partida anda, termina, é determinística), e **nunca o resultado de balanceamento de
+  um cenário** (quem vence, quanto se produz). O resultado de cada cenário se acerta jogando, no
+  dado do cenário.
+
+### LEVA2-MOVIMENTO-COLISAO-CIVIL-LIGADA — Civis colidem (integração; muda a sim)
+- **Escopo:** `units.json colisaoCivil.ligada: true` de vez. O GDD §6.4 passa a dizer que civis
+  colidem, com a data, a decisão do operador e o motivo dele (o desafio da logística, rua bem
+  desenhada contra serf demais), e o registro de 2026-09-28 fica como histórico. O defeito
+  conhecido da permuta de frente (chega um passo mais cedo, D-MOVIMENTO-01) é corrigido pelo
+  conserto já escrito lá. O `BUG-CIVIS-EMPILHADOS` sai do `BUGS.md` no mesmo commit.
+- **Os testes que reprovam ao ligar** (a lista da medida está no PROGRESS, item 10 da leva
+  anterior), cada um por um caminho:
+  - **afirma produção ou calibração** (quanto se produz, quantas armas chegam no prazo, teto de nós
+    do A* medido sem colisão): **sai**, por decisão do operador, ou passa a afirmar só a mecânica
+    que ele protegia, se ela existir sem o número. O PROGRESS lista cada um e o que foi feito;
+  - **afirma a chave desligada** (D-MOVIMENTO-01a): passa a afirmar a chave ligada;
+  - **fica vácuo** (F09, o save sem a reserva pendente): o cenário muda até a reserva existir de
+    novo, porque o que o teste guarda é a reserva no save;
+  - **pode ser defeito real** (F20b-4, comensais a caminho além de `refeicoesGarantidas`): medir
+    primeiro. Se for defeito, conserta-se o código. Se a regra estiver certa e o teste supuser a
+    chave desligada, ajusta-se o guarda, e não a asserção;
+  - **save versionado** (D-SAVE-VILA-PRONTA): regravado com a colisão ligada;
+  - **prazo de teste** (I-TELA-PARTIDA-GUIADA (c), 5 s): o limite explícito, que é para o caso
+    travar e não afirma tempo (§8).
+- **Aceite:**
+  - (a) a invariante "um civil por tile" vale em todo tick de 20 000 ticks da escaramuça e do jogo
+    livre (pelo `step`), fora dos estados "dentro";
+  - (b) não trava, **por progresso**: cada civil avança (tile, entrega ou tarefa) dentro de um prazo
+    no dado;
+  - (c) a permuta de frente leva o mesmo tempo que andar sozinho (20 tiles: 100 ticks nos dois);
+  - (d) a suíte normal, a transladada e a longa verdes, sem teste pulado: o que sai, sai do arquivo;
+  - (e) screenshot da estrada da pedreira com os serfs em tiles distintos.
+
+### LEVA2-COMBATE-ESCARAMUCA-GANHAVEL — A escaramuça de teste volta a ser ganhável
+- **Escopo:** a tropa inicial do jogador (`escaramuca.tropaDoJogador.quantidade`, hoje 18) sobe até
+  a escaramuça de teste ser ganhável com a névoa. Mede-se 21 e 24, e fica o menor que vence em todos
+  os caminhos de ataque que o agente da Fase F tentou (6). É número do cenário, não balanceamento
+  (o mesmo registro do `BALANCE_LOG.md` de 2026-09-29).
+- **O roteiro C-IA-03c e o teste longo da C-IA-03b** passam a afirmar **mecânica**: a tropa marcha
+  pelo escuro, ataca o que vê, a IA ataca depois da paz e a partida termina por `match-ended`,
+  determinística. A vitória com a tropa de teste fica afirmada só como "este cenário de teste é
+  ganhável", com o comentário de que é dado do cenário e muda quando ele mudar.
+- **Aceite:** (a) o C-IA-03c sai 0, inclusive dentro do `shot:todos`; (b) a chave da F-TELA-NEVOA
+  (a névoa na tela) passa no fechamento; (c) a tabela "tropa → caminhos que vencem" no PROGRESS.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
