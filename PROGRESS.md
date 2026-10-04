@@ -19293,3 +19293,27 @@ vez de cair.
   mercenários e confirma a hipótese registrada no G2: a cabeça ou os pés ficam fora. **Hipótese da
   correção:** gerar a célula da morte mais larga exige que o render aceite um tamanho por animação,
   e isso é decisão do operador (registrada nas perguntas em aberto).
+
+## 2026-10-04 — G-ARTE-RETOQUES-PIXEL-ART (os defeitos vistos na D-ARTE-PIXEL-ART)
+
+**Verificado (folhas de antes e depois abertas):**
+- **Criador, andar para o leste e o nordeste:** o cajado sumia nos últimos quadros. Gerei de novo em
+  `v3` ("the staff stays in the hand and visible on every step"), e ele aparece nos 8. **Entrou.**
+- **Capitão do bando e vaqueiro, andar:** o cavalo mexia pouco as pernas. Gerei de novo em `v3`, com
+  o trote descrito ("each leg lifting high"), nas 5 direções de cada um. As pernas passaram a se mexer
+  visivelmente, o que é uma melhora modesta. **Entrou.**
+- **Aguilhadeiro, ataque para o nordeste e o norte:** o golpe perdia a vara. No nordeste ela agora
+  aparece em todo o golpe, e **entrou**. No norte melhorou só em parte: aparece no começo e encurta no
+  fim. Entrou mesmo assim, porque ainda é melhor que antes, e fica registrado.
+- **Ordem dos grupos no atlas:** a variante de retoque (`-2`) vence a `-v3`, que vence os grupos de
+  uma direção só (`-l`, `-se`), que vencem o grupo base. A ordem por letra punha o `andar-l` antigo do
+  capitão na frente do `andar-2` novo; agora a prioridade está escrita, com a lista dela.
+- **Ferramenta encostando na borda da célula de 64 px** (lenhador, fazendeiro, padeiro, mineiro):
+  ficou só medida, como manda o aceite. A largura máxima é 64 em todos os quatro, e mudar a célula é
+  decisão do operador.
+- G-ARTE-MORTE-DAS-UNIDADES, F17f, F-SPR-carregamento e D-TELA-05c: 76 verdes. Os roteiros
+  D-ARTE-PIXEL-ART-MILITARES e G-ARTE-MORTE-DAS-UNIDADES saem 0. O `verify:rapido` passou, mas não
+  rodou teste nenhum: só mudou arte e PROGRESS, e nenhum arquivo que um teste importe.
+
+**Gasto da Fase G no PixelLab:** cerca de 515 gerações (de 1 363 para 848), contra uma estimativa de
+~500.
