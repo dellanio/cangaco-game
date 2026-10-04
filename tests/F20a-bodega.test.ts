@@ -33,6 +33,7 @@ import {
 import { armazemDoCenario, comObra, comEstradas, tile } from './helpers/jobs-cenario';
 import { violacoesDeInvariantes } from './helpers/jobs-invariantes';
 import { gravarEvidencia } from './helpers/evidence';
+import { comEscolasAbastecidas } from './helpers/escola-cenario';
 
 const COMIDAS = comidasConhecidas();
 const TETO = tetoDeComidaNaBodega();
@@ -204,7 +205,8 @@ describe('F20a-4 — pelo caminho real, do estado inicial e so por comando', () 
 
 describe('F20a-5 — a prioridade 1 e obedecida', () => {
   it('com obra pedindo material e Bodega vazia, a comida vem primeiro', () => {
-    const base = cenarioComBodega();
+    // I-TRANSPORTE-OURO-SEMPRE-NA-ESCOLA: a escola inicial ja abastecida (o regime depois da cota), para o ouro (classe 1) nao passar na frente do que o teste mede
+    const base = comEscolasAbastecidas(cenarioComBodega());
     const planta = plantaDaBodega(createInitialState(1));
     // uma obra nivelada pedindo material, ligada pela mesma rua
     const comObraA = comObra(base, 'obra-a', { gx: 26, gy: 34, faltam: { stone: 2, timber: 3 } });

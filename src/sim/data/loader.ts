@@ -873,6 +873,7 @@ export function loadGameData(raw: RawGameData): GameData {
     estadoInicial: raw.economy.estadoInicial,
     schoolhouse: {
       custoOuroPorUnidade: raw.economy.schoolhouse.custoOuroPorUnidade,
+      ouroEmEstoque: raw.economy.schoolhouse.ouroEmEstoque,
       slotsDeFila: raw.economy.schoolhouse.slotsDeFila,
       ticksPorTreino: registrar(
         'economy.schoolhouse.segundosPorTreino_base', escalaSchoolhouseNome,

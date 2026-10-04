@@ -23,6 +23,7 @@ import { ARQUIVOS } from '../tools/data-schema.js';
 import { comandosDaVilaNoTick, vilaDaCalibracao } from './helpers/cal-vila';
 import { violacoesDeInvariantes } from './helpers/jobs-invariantes';
 import { gravarEvidencia } from './helpers/evidence';
+import { comEscolasAbastecidas } from './helpers/escola-cenario';
 
 const TORA = 'tree_trunk';
 const SERRARIA = 'sawmill';
@@ -64,7 +65,8 @@ const completosDo = (s: GameState, tipo: string): PredioCompleto[] => s.predios.
   .filter((p): p is PredioCompleto => p?.tipo === tipo && p.estado === 'completo');
 
 function correr(variante: Variante, dados: GameData = gameData, ticks: number = TICKS, invariantes = false): Corrida {
-  let s = createInitialState(dados.economia.estadoInicial.semente);
+  // I-TRANSPORTE-OURO-SEMPRE-NA-ESCOLA: a escola inicial ja abastecida (o regime depois da cota), para o ouro (classe 1) nao passar na frente do que o teste mede
+  let s = comEscolasAbastecidas(createInitialState(dados.economia.estadoInicial.semente), dados);
   const vila = vilaDaCalibracao(s, dados);
   if (variante === 'sem-lenhador') {
     // o armazem com tora e nenhum lenhador: a unica oferta e a do armazem. A serraria e

@@ -454,6 +454,8 @@ export interface TerrenoData {
 
 export interface EconomiaSchoolhouseData {
   readonly custoOuroPorUnidade: number;
+  /** I-TRANSPORTE-OURO-SEMPRE-NA-ESCOLA — o ouro que a escola guarda com a fila vazia. */
+  readonly ouroEmEstoque: number;
   readonly slotsDeFila: number;
   readonly ticksPorTreino: Ticks;
   readonly reembolsoSeNaoIniciado: boolean;

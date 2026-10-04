@@ -16,7 +16,7 @@ import { classeDaUnidade, emAlertaDeFome, fracaoDeCondicao } from './condicao';
 import { caixaDoPredio } from './footprint';
 import { estaDesbloqueado } from './desbloqueio';
 import { predioLigadoAoArmazem } from './estradas';
-import { custoDeTreino, ehEscolaCompleta, filaDaEscola, ouroNecessario } from './escola';
+import { custoDeTreino, ehEscolaCompleta, filaDaEscola, ouroQueAFilaEspera } from './escola';
 import { custoDoPassoDaUnidade } from './carga';
 import { alvoDeNivelamento, custoDoPredio } from './obra';
 import { receitaDoTipo, saidasDaReceita, semTrabalhoAoAlcance } from './producao';
@@ -420,7 +420,8 @@ export interface PainelDaEscola {
 function motivoDaEspera(
   state: GameState, predioId: string, escola: Predio, dados: GameData,
 ): MotivoDeEspera | null {
-  if (ouroNecessario(state, predioId, dados) <= 0) return null;
+  // a ESPERA e da fila: a cota de fundo (I-TRANSPORTE-OURO-SEMPRE-NA-ESCOLA) nao para treino nenhum
+  if (ouroQueAFilaEspera(state, predioId, dados) <= 0) return null;
   const temTarefa = state.jobs.tarefas.ordem.some((id) => {
     const tarefa = state.jobs.tarefas.porId[id];
     return tarefa !== undefined
@@ -436,7 +437,7 @@ function motivoDaEspera(
  * pronto e so escreve DOM. `null` quando o id nao e de uma escola completa — e
  * assim que o painel se fecha sozinho se o predio cair.
  *
- * O MOTIVO e da FILA, nao do item: `ouroNecessario` e um agregado da escola, e
+ * O MOTIVO e da FILA, nao do item: `ouroQueAFilaEspera` e um agregado da escola, e
  * nao existe "o ouro deste item".
  */
 export function painelDaEscola(

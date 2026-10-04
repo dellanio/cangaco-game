@@ -37,6 +37,7 @@ import { aberturaDaFaseA } from './helpers/abertura';
 import { naVila } from './helpers/ancoras';
 import { violacoesDeInvariantes } from './helpers/jobs-invariantes';
 import { gravarEvidencia } from './helpers/evidence';
+import { comEscolasAbastecidas } from './helpers/escola-cenario';
 
 const ARMAS = ['hand_axe', 'lance', 'longbow'];
 const COTA = 5;
@@ -261,7 +262,8 @@ const comImportancias = (troca: Readonly<Record<string, number | null>>): GameDa
  *  armazem vizinho) e uma serraria longe, ligada, pede tora ao armazem (insumo parado). Devolve
  *  o tipo da primeira tarefa que o serf reclama, pelo `step` com `dados`. */
 function escolhaDoSerfNa7b(dados: GameData): { comInsumo: boolean; tipo: string | undefined } {
-  let s = createInitialState(1);
+  // I-TRANSPORTE-OURO-SEMPRE-NA-ESCOLA: a escola inicial ja abastecida (o regime depois da cota), para o ouro (classe 1) nao passar na frente do que o teste mede
+  let s = comEscolasAbastecidas(createInitialState(1));
   const [primeiro, ...outros] = s.unidades.ordem.filter((id) => s.unidades.porId[id]?.tipo === 'serf');
   const unidades = { ...s.unidades.porId };
   for (const id of outros) delete unidades[id];

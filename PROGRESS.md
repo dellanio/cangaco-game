@@ -20183,3 +20183,41 @@ de "Cana". O ícone vai para `icones.colheitas.grapes`, com o mesmo PNG.
 Os dois reprovaram contra o dado antigo com o erro do bug, e passam depois da correção. O roteiro
 G-TELA-GESTO-DO-TRABALHO continua saindo 0.
 **Não visto:** não fiz captura de um roceiro do canavial carregando a cana em jogo.
+
+## 2026-10-04 — Leva 3: bugs de jogo do operador (escola, entrega direta, minas)
+
+### I-TRANSPORTE-OURO-SEMPRE-NA-ESCOLA — a escola fica abastecida de ouro, com ou sem fila
+**Pedido:** "a escola sempre precisa estar abastecida com dinheiro."
+**Antes (verificado):** o alvo de ouro da escola era `aguardando × custo`. Com a fila vazia, ela não
+pedia nada, e o ouro só saía do armazém depois do pedido de treino.
+**Regra (do KaM):** toda casa do KaM pede o insumo até a cota, com ou sem fila (`UpdateDemands`,
+`src/houses/KM_Houses.pas:2221-2258`; `MAX_WARES_IN_HOUSE = 5`, `src/common/KM_Defaults.pas:299`).
+O alvo passa a ser `max(ouroEmEstoque, aguardando × custo)`, com `ouroEmEstoque: 5` em
+`data/economy.json`, numa função só (`alvoDeOuroDaEscola`, `src/sim/escola.ts`), lida pelo
+`ouroNecessario` e pelo `alvoDeEntrada`. Vale também para a escola da IA.
+**A espera da fila é separada (verificado pelo F22):** com a cota, a escola inicial sem estrada
+acendia o alerta "sem estrada" com a fila vazia. Agora o `motivoDaEspera` (painel e alerta) lê
+`ouroQueAFilaEspera`, o que falta para a fila começar, e não o abastecimento de fundo.
+**Teste:** `tests/I-TRANSPORTE-OURO-SEMPRE-NA-ESCOLA.test.ts` (4):
+- por tabela, inclusive o ramo da fila acima da cota e a cota zero (a regra de antes), numa cópia do
+  dado;
+- pelo `step`, a escola de fila vazia enche até 5 e fica ali por 600 ticks, com excedente zero;
+- abastecida, o treino pedido começa no mesmo tick.
+
+Com o alvo antigo, o 1 e o 2 reprovam. O 2 pega o vaivém: o ouro chega e o nível 7 o devolve.
+**Não-regressão (nesta tarefa):**
+- F13a, F15b-insumo, F15b-entrega e F15b-aceite afirmavam "fila vazia não quer ouro" e "todo ouro de
+  fila vazia é excedente". As asserções passaram a falar da cota (o excedente é o que passa dela).
+- Os cenários de F20a-5, D-TRANSPORTE-03 (7b) e D-TRANSPORTE-03-T2 mediam outra coisa (comida, saída
+  perto, tora, nós do A*), e o ouro da escola, classe 1, passava na frente. Eles começam com a escola
+  abastecida (`comEscolasAbastecidas`, que move a cota do armazém e conserva o total). As asserções
+  não mudaram.
+- O save `saves/teste-operador-vila-pronta.txt` foi refeito pelo caminho do teste
+  (`CANGACO_GRAVAR_SAVE_DO_OPERADOR=1`), porque a montagem roda `step` e a escola agora recebe ouro
+  nesses ticks.
+
+**Hipótese, não verificada:** um excedente de ouro já reclamado, quando o treino gasta a sobra antes da
+coleta, pode levar a caixa abaixo da cota por uma viagem. A corrida já existia antes (fila que sobe com
+excedente reclamado), e ela se corrige sozinha pela demanda.
+**Efeito de balanceamento (não medido):** cada escola prende 5 de ouro no início. A IA começa com o
+mesmo armazém, e o prefeito só pede serf com ouro acima de 20 no armazém.

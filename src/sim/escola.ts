@@ -56,9 +56,35 @@ export function custoDeTreino(dados: GameData = gameData): number {
 }
 
 /**
- * O ouro que a fila desta escola ainda precisa RECEBER: os itens que nao
- * comecaram, vezes o custo, menos o que ja esta na gaveta `entrada`. Nunca
- * negativo. Um item em treino ja pagou e nao conta.
+ * I-TRANSPORTE-OURO-SEMPRE-NA-ESCOLA — o ouro que a escola quer TER na gaveta: a cota
+ * `ouroEmEstoque`, mesmo com a fila vazia (o KaM pede o insumo de toda casa ate a cota), ou o
+ * que a fila em `aguardando` custa, se for mais. Zero para o que nao e escola completa.
+ */
+export function alvoDeOuroDaEscola(
+  state: GameState, predioId: string, dados: GameData = gameData,
+): number {
+  if (!ehEscolaCompleta(state.predios.porId[predioId])) return 0;
+  const aguardando = filaDaEscola(state, predioId).filter((i) => i.estado === 'aguardando').length;
+  return Math.max(dados.economia.schoolhouse.ouroEmEstoque, aguardando * custoDeTreino(dados));
+}
+
+/**
+ * I-TRANSPORTE-OURO-SEMPRE-NA-ESCOLA — o ouro que FALTA para a fila em `aguardando` comecar: o
+ * custo dela menos o que esta na gaveta. Diferente de `ouroNecessario`, que tambem conta a cota
+ * de fundo: a fila vazia nao espera nada, mesmo com a escola ainda enchendo a gaveta.
+ */
+export function ouroQueAFilaEspera(
+  state: GameState, predioId: string, dados: GameData = gameData,
+): number {
+  const escola = state.predios.porId[predioId];
+  if (!ehEscolaCompleta(escola)) return 0;
+  const aguardando = filaDaEscola(state, predioId).filter((i) => i.estado === 'aguardando').length;
+  return Math.max(0, aguardando * custoDeTreino(dados) - (escola.estoque.entrada[MERCADORIA_DE_OURO] ?? 0));
+}
+
+/**
+ * O ouro que esta escola ainda precisa RECEBER: o alvo (`alvoDeOuroDaEscola`) menos o que
+ * ja esta na gaveta `entrada`. Nunca negativo. Um item em treino ja pagou e nao conta.
  *
  * E a demanda que o JobBoard converte em tarefa de entrega, e e a "vaga no
  * destino" de uma tarefa de ouro — o analogo de `faltam` numa obra.
@@ -68,9 +94,8 @@ export function ouroNecessario(
 ): number {
   const escola = state.predios.porId[predioId];
   if (!ehEscolaCompleta(escola)) return 0;
-  const aguardando = filaDaEscola(state, predioId).filter((i) => i.estado === 'aguardando').length;
   const emCaixa = escola.estoque.entrada[MERCADORIA_DE_OURO] ?? 0;
-  return Math.max(0, aguardando * custoDeTreino(dados) - emCaixa);
+  return Math.max(0, alvoDeOuroDaEscola(state, predioId, dados) - emCaixa);
 }
 
 /** Se `tipo` e um civil declarado em `data/units.json`. O comando recusa o que nao e. */

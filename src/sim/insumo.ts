@@ -17,7 +17,7 @@ import { MERCADORIA_DE_OURO } from './state';
 import type { GameData } from './data/types';
 import { gameData } from './data';
 import { ehBodegaCompleta, ehComida, tetoDeComidaNaBodega } from './bodega';
-import { custoDeTreino, ehEscolaCompleta, filaDaEscola } from './escola';
+import { alvoDeOuroDaEscola, ehEscolaCompleta } from './escola';
 import { receitaDoTipo } from './producao';
 import { ehQuartelCompleto, ehRequisitoDoQuartel } from './quartel';
 import { ehTorreCompleta, ID_DA_TORRE, MUNICAO_DA_TORRE } from './torre';
@@ -86,8 +86,7 @@ export function alvoDeEntrada(
     // voltar ao armazem pelo nivel 7 — o vaivem que esta funcao existe para
     // impedir. A relacao entre os dois continua exata:
     // `ouroNecessario === alvoDeEntrada - emCaixa`.
-    const aguardando = filaDaEscola(state, predioId).filter((i) => i.estado === 'aguardando').length;
-    return aguardando * custoDeTreino(dados);
+    return alvoDeOuroDaEscola(state, predioId, dados);
   }
   // C3 — o quartel guarda ate a gaveta de entrada de qualquer produtor
   // (`producao.estoqueInternoPorPredio.entrada`, 5) de CADA requisito. Antes era infinito,

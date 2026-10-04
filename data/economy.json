@@ -18,6 +18,8 @@
   },
   "schoolhouse": {
     "custoOuroPorUnidade": 1,
+    "ouroEmEstoque": 5,
+    "_docOuroEmEstoque": "I-TRANSPORTE-OURO-SEMPRE-NA-ESCOLA (pedido do operador, 2026-10-04): a escola pede ouro ate esta cota mesmo com a fila vazia, como toda casa do KaM pede o insumo ate MAX_WARES_IN_HOUSE (src/common/KM_Defaults.pas:299; UpdateDemands em src/houses/KM_Houses.pas:2221-2258, clone 731a8a4). A fila que pede mais que a cota continua pedindo o dela.",
     "slotsDeFila": 5,
     "segundosPorTreino_base": 30,
     "escala": "construcao",

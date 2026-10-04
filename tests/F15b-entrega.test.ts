@@ -383,6 +383,10 @@ describe('F15b — niveis 4 e 5: o insumo chega ao produtor', () => {
   });
 });
 
+// I-TRANSPORTE-OURO-SEMPRE-NA-ESCOLA: a escola guarda a cota de fila vazia, entao o excedente de
+// ouro e o que passa dela (antes, todo ouro de fila vazia era excedente)
+const ACIMA = gameData.economia.schoolhouse.ouroEmEstoque + 1;
+
 describe('F15b — nivel 7: o excedente volta', () => {
   const escola = escolaDoCenario(createInitialState(1)).id;
   // A linha de porta dos dois predios do cenario inicial (armazem em 29..31,
@@ -390,8 +394,8 @@ describe('F15b — nivel 7: o excedente volta', () => {
   // excedente ficaria parado com razao.
   const ligado = (): GameState => comEstradas(createInitialState(1), linhaHDe(naVila, 0, 7, 3));
 
-  it('escola com ouro e fila vazia devolve o ouro ao armazem', () => {
-    const s = gerarTarefas(comOuroNaEscola(ligado(), escola, 1));
+  it('escola com ouro acima da cota e fila vazia devolve o que passa ao armazem', () => {
+    const s = gerarTarefas(comOuroNaEscola(ligado(), escola, ACIMA));
     const t = tarefasDoTipo(s, 'excedente-para-armazem');
     expect(t).toHaveLength(1);
     expect(t[0]!.mercadoria).toBe(MERCADORIA_DE_OURO);
@@ -406,12 +410,13 @@ describe('F15b — nivel 7: o excedente volta', () => {
     expect(tarefasDoTipo(s, 'excedente-para-armazem')).toEqual([]);
   });
 
-  it('o excedente some quando a fila volta a querer o ouro, e a aberta e cancelada', () => {
+  it('o excedente some quando a caixa volta a cota, e a aberta e cancelada', () => {
     const inicial = ligado();
-    const comSobra = gerarTarefas(comOuroNaEscola(inicial, escola, 1));
+    const comSobra = gerarTarefas(comOuroNaEscola(inicial, escola, ACIMA));
     expect(tarefasDoTipo(comSobra, 'excedente-para-armazem')).toHaveLength(1);
-    const pediuDeNovo = step(comSobra, [pedir(escola, 'serf')]);
-    expect(tarefasDoTipo(pediuDeNovo, 'excedente-para-armazem')).toEqual([]);
+    // a caixa desce a cota (o que o treino faz ao pagar): a aberta nao tem mais o que levar
+    const naCota = step(comOuroNaEscola(comSobra, escola, ACIMA - 1), []);
+    expect(tarefasDoTipo(naCota, 'excedente-para-armazem')).toEqual([]);
   });
 
   it('o armazem nunca e origem de tarefa de excedente (nao devolve a si mesmo)', () => {
@@ -486,11 +491,11 @@ describe('F15b — o serf coleta da gaveta do tipo e entrega no destino do tipo'
   });
 
   it('nivel 7: tira da ENTRADA da escola e poe na SAIDA do armazem', () => {
-    const cenario = comOuroNaEscola(ligado(), escola, 1);
+    const cenario = comOuroNaEscola(ligado(), escola, ACIMA);
     const noArmazem = saidaDe(cenario, armazem)[MERCADORIA_DE_OURO] ?? 0;
     const fim = ateEntregarEm(cenario, armazem);
 
-    expect(ouroNaEscola(fim, escola)).toBe(0);
+    expect(ouroNaEscola(fim, escola)).toBe(ACIMA - 1);
     expect(saidaDe(fim, armazem)[MERCADORIA_DE_OURO] ?? 0).toBe(noArmazem + 1);
   });
 
@@ -498,7 +503,7 @@ describe('F15b — o serf coleta da gaveta do tipo e entrega no destino do tipo'
     const casos = [
       { cenario: pedreiraParada(), destino: armazem, mercadoria: 'stone' },
       { cenario: serrariaParada(), destino: 's1', mercadoria: 'tree_trunk' },
-      { cenario: comOuroNaEscola(ligado(), escola, 1), destino: armazem, mercadoria: MERCADORIA_DE_OURO },
+      { cenario: comOuroNaEscola(ligado(), escola, ACIMA), destino: armazem, mercadoria: MERCADORIA_DE_OURO },
     ];
     for (const { cenario, destino, mercadoria } of casos) {
       const fim = ateEntregarEm(cenario, destino);
@@ -510,7 +515,7 @@ describe('F15b — o serf coleta da gaveta do tipo e entrega no destino do tipo'
     const casos = [
       { cenario: pedreiraParada(), destino: armazem, tipo: 'saida-cheia-para-armazem' as const },
       { cenario: serrariaParada(), destino: 's1', tipo: 'insumo-producao-parada' as const },
-      { cenario: comOuroNaEscola(ligado(), escola, 1), destino: armazem, tipo: 'excedente-para-armazem' as const },
+      { cenario: comOuroNaEscola(ligado(), escola, ACIMA), destino: armazem, tipo: 'excedente-para-armazem' as const },
     ];
     for (const { cenario, destino, tipo } of casos) {
       const fim = ateEntregarEm(cenario, destino);
@@ -586,12 +591,13 @@ describe('F15b — o ciclo fechado', () => {
     expect(maiorSequencia).toBeLessThan(gameData.entrega.ticksAlertaTarefaSemCandidato);
   });
 
-  it('o ouro parado na escola volta ao armazem quando a fila esvazia (D4)', () => {
-    const cenario = comOuroNaEscola(ligadoAEscola(), escolaLigada, 1);
+  it('o ouro parado na escola acima da cota volta ao armazem com a fila vazia (D4)', () => {
+    const acima = gameData.economia.schoolhouse.ouroEmEstoque + 1;
+    const cenario = comOuroNaEscola(ligadoAEscola(), escolaLigada, acima);
     const antes = noArmazem(cenario, MERCADORIA_DE_OURO);
     const fim = rodar(cenario, 300);
     expect(noArmazem(fim, MERCADORIA_DE_OURO)).toBe(antes + 1);
-    expect(ouroNaEscola(fim, escolaLigada)).toBe(0);
+    expect(ouroNaEscola(fim, escolaLigada)).toBe(acima - 1);
   });
 
   it('nenhuma invariante do quadro e violada em nenhum tick', () => {

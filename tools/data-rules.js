@@ -756,6 +756,9 @@ function validarPoliticaDeTreino(dados, erros) {
   if (!Number.isInteger(escola.custoOuroPorUnidade) || escola.custoOuroPorUnidade < 0) {
     erros.push('economia/escola: custoOuroPorUnidade precisa ser inteiro >= 0');
   }
+  if (!Number.isInteger(escola.ouroEmEstoque) || escola.ouroEmEstoque < 0) {
+    erros.push('economia/escola: ouroEmEstoque precisa ser inteiro >= 0');
+  }
 }
 
 // C-IA-02b: o prefeito enfileira enquanto a fila esta abaixo de `filaAlvo`; acima dos

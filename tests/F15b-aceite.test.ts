@@ -109,7 +109,8 @@ describe('F15b-1 — aceite da escada do produtor', () => {
     const fimDoTronco = rodar(comTronco, 900);
     const timberNoArmazem = estoqueDosArmazens(fimDoTronco).timber ?? 0;
 
-    // (c) escola com ouro e fila vazia: o nivel 7 devolve, e a gaveta fica vazia
+    // (c) escola com ouro e fila vazia: desde a I-TRANSPORTE-OURO-SEMPRE-NA-ESCOLA ela GUARDA a cota
+    //     (`ouroEmEstoque`), e o armazem manda o que falta; antes o nivel 7 devolvia tudo
     const comOuro = comOuroNaEscola(comEstradas(createInitialState(1), linhaHDe(naVila, 0, 7, 3)), ESCOLA, 1);
     const ouroAntes = totalNoMundo(comOuro, MERCADORIA_DE_OURO);
     const fimDoOuro = rodar(comOuro, 300);
@@ -118,8 +119,9 @@ describe('F15b-1 — aceite da escada do produtor', () => {
     expect(stoneNoArmazem).toBeGreaterThan(0);
     expect(timberNoArmazem).toBeGreaterThan(0);
     expect(progressoDe(fimDoTronco, 's1')).toBeGreaterThanOrEqual(0);
-    expect(ouroNoArmazem).toBe((estoqueDosArmazens(comOuro)[MERCADORIA_DE_OURO] ?? 0) + 1);
-    expect(ouroNaEscola(fimDoOuro, ESCOLA)).toBe(0);
+    const cota = gameData.economia.schoolhouse.ouroEmEstoque;
+    expect(ouroNaEscola(fimDoOuro, ESCOLA)).toBe(cota);
+    expect(ouroNoArmazem).toBe((estoqueDosArmazens(comOuro)[MERCADORIA_DE_OURO] ?? 0) + 1 - cota);
 
     // (d) conservacao: so a PRODUCAO cria e so o CONSUMO destroi.
     //     stone: a pedreira tira do veio, entao o total so pode ter crescido.

@@ -6,6 +6,9 @@ import { step } from '../../src/sim/tick';
 import { ID_DA_ESCOLA, ID_DO_ARMAZEM, MERCADORIA_DE_OURO } from '../../src/sim/state';
 import type { Command } from '../../src/sim/commands';
 import type { GameEvent, GameState, PredioCompleto, Unidade } from '../../src/sim/state';
+import { ehEscolaCompleta, ouroNecessario } from '../../src/sim/escola';
+import { gameData } from '../../src/sim/data';
+import type { GameData } from '../../src/sim/data/types';
 
 export function escolaDoCenario(estado: GameState): PredioCompleto {
   const p = estado.predios.ordem
@@ -95,3 +98,25 @@ export function novasUnidades(antes: GameState, depois: GameState): Unidade[] {
 
 export const recusasDeTreino = (estado: GameState): GameEvent[] =>
   estado.events.filter((e) => e.type === 'command-rejected' && e.command === 'EnqueueTraining');
+
+/**
+ * I-TRANSPORTE-OURO-SEMPRE-NA-ESCOLA — o regime de toda escola depois que os serfs a abastecem: a
+ * cota `ouroEmEstoque` na gaveta, MOVIDA do primeiro armazem com ouro (o total do mundo nao muda).
+ * Para o cenario cujo teste mede outra coisa (comida, tora, caminho) e que, desde a cota, veria a
+ * entrega de ouro (classe 1) passar na frente do que ele mede.
+ */
+export function comEscolasAbastecidas(estado: GameState, dados: GameData = gameData): GameState {
+  let atual = estado;
+  for (const id of estado.predios.ordem) {
+    if (!ehEscolaCompleta(atual.predios.porId[id])) continue;
+    const falta = ouroNecessario(atual, id, dados);
+    if (falta <= 0) continue;
+    const armazem = atual.predios.ordem.map((a) => atual.predios.porId[a]!)
+      .find((p): p is PredioCompleto => p.estado === 'completo' && p.tipo === ID_DO_ARMAZEM && (p.estoque.saida[MERCADORIA_DE_OURO] ?? 0) > 0);
+    if (armazem === undefined) continue;
+    const move = Math.min(falta, armazem.estoque.saida[MERCADORIA_DE_OURO] ?? 0);
+    atual = comOuroNoArmazem(atual, armazem.id, (armazem.estoque.saida[MERCADORIA_DE_OURO] ?? 0) - move);
+    atual = comOuroNaEscola(atual, id, ouroNaEscola(atual, id) + move);
+  }
+  return atual;
+}

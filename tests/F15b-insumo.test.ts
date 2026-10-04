@@ -84,9 +84,9 @@ describe('F15b — o alvo da gaveta de entrada', () => {
     expect(alvoDeEntrada(s, escola, MERCADORIA_DE_OURO) % custoDeTreino()).toBe(0);
   });
 
-  it('escola sem fila nao quer ouro nenhum', () => {
+  it('escola sem fila quer a cota de ouro (I-TRANSPORTE-OURO-SEMPRE-NA-ESCOLA; antes, nenhum)', () => {
     const s = createInitialState(1);
-    expect(alvoDeEntrada(s, escolaDoCenario(s).id, MERCADORIA_DE_OURO)).toBe(0);
+    expect(alvoDeEntrada(s, escolaDoCenario(s).id, MERCADORIA_DE_OURO)).toBe(gameData.economia.schoolhouse.ouroEmEstoque);
   });
 });
 
@@ -117,12 +117,16 @@ describe('F15b — demanda de insumo e excedente', () => {
     }
   });
 
-  it('ouro parado em escola sem fila e excedente por inteiro', () => {
+  it('ouro parado em escola sem fila so e excedente acima da cota (I-TRANSPORTE-OURO-SEMPRE-NA-ESCOLA)', () => {
     const inicial = createInitialState(1);
     const escola = escolaDoCenario(inicial).id;
-    const s = comOuroNaEscola(inicial, escola, 1);
-    expect(excedenteNaEntrada(s, escola, MERCADORIA_DE_OURO)).toBe(1);
-    expect(demandaDeInsumo(s, escola, MERCADORIA_DE_OURO)).toBe(0);
+    const cota = gameData.economia.schoolhouse.ouroEmEstoque;
+    const um = comOuroNaEscola(inicial, escola, 1);
+    expect(excedenteNaEntrada(um, escola, MERCADORIA_DE_OURO)).toBe(0);
+    expect(demandaDeInsumo(um, escola, MERCADORIA_DE_OURO)).toBe(cota - 1);
+    const acima = comOuroNaEscola(inicial, escola, cota + 2);
+    expect(excedenteNaEntrada(acima, escola, MERCADORIA_DE_OURO)).toBe(2);
+    expect(demandaDeInsumo(acima, escola, MERCADORIA_DE_OURO)).toBe(0);
   });
 
   it('a relacao com `ouroNecessario` e exata: alvo - emCaixa', () => {
