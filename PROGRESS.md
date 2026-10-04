@@ -3229,14 +3229,6 @@ que vetar custe uma linha.
 
 ## Perguntas em aberto
 
-- **(2026-10-04, Fase G) O corpo deitado não cabe na célula de 64 px.** O personagem caído de lado
-  mede uns 70–80 px, e a célula das unidades a pé tem 64, então a cabeça ou os pés são cortados nos
-  últimos quadros da `morrer`. Há três saídas, e todas são decisão do operador:
-  (a) aceitar como está, porque o corpo esmaece em 1,2 s;
-  (b) célula de 96×96 só para a `morrer`, o que pede ao render um tamanho por animação (mudança de
-  render e de manifesto, num item próprio);
-  (c) célula de 96×96 para a unidade inteira, que muda o hit e a seleção.
-  A sessão seguiu com (a).
 - **(2026-09-26, noite 18) A frase cortada do BRIEF-ARTE:** o operador escreveu que os
   sprites de estado da roça vão "desenhada[s] pelo render sobre o tile, nunca" — e a
   mensagem parou aí. O BRIEF-ARTE não completa a frase; falta o que vem depois do nunca.
@@ -19317,3 +19309,10 @@ vez de cair.
 
 **Gasto da Fase G no PixelLab:** cerca de 515 gerações (de 1 363 para 848), contra uma estimativa de
 ~500.
+
+## 2026-10-04 — Decisão do operador: o corpo deitado fica como está
+
+O operador escolheu a saída (a) para o corpo caído que passa dos 64 px da célula: **aceitar como
+está**, porque o corpo esmaece em 1,2 s. A célula não muda e o render não ganha tamanho por animação.
+Se o corte incomodar jogando, a saída que ficou pronta é a (b): uma célula de 96×96 só para a
+`morrer`, num item próprio de render e manifesto. A pergunta saiu de `## Perguntas em aberto`.
