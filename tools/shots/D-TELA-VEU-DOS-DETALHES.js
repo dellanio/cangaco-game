@@ -3,7 +3,11 @@ const fs = require('node:fs');
 const mapa = require('../../data/maps/sertao-128.json');
 const terreno = require('../../data/terrain.json');
 const SAIDA = 'test-output/D-TELA-VEU-DOS-DETALHES.json';
-const etapa = process.env.CANGACO_VEU_ETAPA ?? 'depois';
+// BUG-ROTEIRO-DE-DUAS-ETAPAS (decisao do operador, 2026-10-04: A, separar). Sem variavel, o roteiro
+// e de NAO-REGRESSAO: afirma o que vale sozinho no codigo de hoje (agua e grama sem detalhes, nos
+// dois zooms) e grava a medida em `regressao`. A comparacao e o modo `CANGACO_VEU_ETAPA=antes|depois`,
+// e so ele exige a medida "antes" (o que saiu para ele: a medida anterior existir).
+const etapa = process.env.CANGACO_VEU_ETAPA ?? 'regressao';
 
 function vista(tipo) {
   const simbolo = Object.keys(mapa.legenda).find((s) => mapa.legenda[s] === tipo);
@@ -18,7 +22,7 @@ function vista(tipo) {
 }
 
 async function roteiro({ page, estado, afirmar, capturar }) {
-  afirmar(['antes', 'depois'].includes(etapa), 'etapa valida');
+  afirmar(['antes', 'depois', 'regressao'].includes(etapa), 'etapa valida');
   const anterior = fs.existsSync(SAIDA) ? JSON.parse(fs.readFileSync(SAIDA, 'utf8')) : {};
   if (etapa === 'depois') afirmar(Boolean(anterior.antes), 'medida anterior existe');
   const canvas = await page.locator('#jogo canvas').boundingBox();
@@ -39,7 +43,8 @@ async function roteiro({ page, estado, afirmar, capturar }) {
     await page.waitForTimeout(150);
     const arquivo = await capturar(`${etapa}-${tipo}-${zoom}`);
     const s = await estado();
-    if (etapa === 'depois') afirmar(s.detalhesDoTerrenoPorTipo[tipo] === 0, `${tipo} sem detalhes`);
+    // vale sozinho: so a medida "antes", tirada no codigo de antes do veu, tinha detalhes
+    if (etapa !== 'antes') afirmar(s.detalhesDoTerrenoPorTipo[tipo] === 0, `${tipo} sem detalhes`);
     const medida = await page.evaluate(async ({ b64, canvas, camera, centro, tilePx }) => {
       const img = new window.Image();
       img.src = `data:image/png;base64,${b64}`;

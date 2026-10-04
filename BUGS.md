@@ -60,20 +60,6 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
 - evidência: test-output/shot-todos.json (corrida do `5b5f933`)
 - status: aberto
 
-## BUG-ROTEIRO-DE-DUAS-ETAPAS — dois roteiros nao rodam sozinhos no `shot:todos`
-- feature: D-TELA-COSTURA-DOS-TILES, D-TELA-VEU-DOS-DETALHES
-- severidade: errado
-- repro: `npm run shot:todos` com o `test-output/` sem a medida da etapa "antes"
-- esperado: todo roteiro de `tools/shots/` sai 0 sozinho (aceite do `shot:todos`, CLAUDE.md §13)
-- observado: a etapa padrao e "depois" (`CANGACO_COSTURA_ETAPA ?? 'depois'`,
-  `tools/shots/D-TELA-COSTURA-DOS-TILES.js:10`), e ela exige a medida da etapa "antes", feita sobre
-  o codigo de ANTES da mudanca: "baseline anterior a mudanca precisa existir" e "medida anterior
-  existe". Numa worktree nova o arquivo nao existe e o roteiro nao tem como gera-lo.
-- correcao: decisao do operador (separar a comparacao antes/depois do roteiro de nao-regressao, ou
-  versionar a medida "antes").
-- evidência: test-output/shot-todos.json (corrida de 2026-10-03, commit 61d9e49)
-- status: aberto
-
 ## Polimento
 
 Os três bugs de oscilação de tempo que moravam aqui (BUG-D na F-T1, BUG-E na F-T2b e,

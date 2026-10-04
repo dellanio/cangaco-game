@@ -19668,3 +19668,28 @@ O operador escolheu a saída (a) para o corpo caído que passa dos 64 px da cél
 está**, porque o corpo esmaece em 1,2 s. A célula não muda e o render não ganha tamanho por animação.
 Se o corte incomodar jogando, a saída que ficou pronta é a (b): uma célula de 96×96 só para a
 `morrer`, num item próprio de render e manifesto. A pergunta saiu de `## Perguntas em aberto`.
+
+## 2026-10-04 — Leva, item 8: BUG-ROTEIRO-DE-DUAS-ETAPAS (decisão do operador: A, separar)
+
+O operador decidiu os itens 8 e 10 (`ded2162`, trazido pelo `git merge main`, `6adfa6c`; o conflito
+do PROGRESS era só as duas pontas acrescentando, e ficaram as duas). Ordem final da leva: 1, 6, 7,
+8, 9, 10.
+
+- **O que mudou:** `tools/shots/D-TELA-COSTURA-DOS-TILES.js` e `tools/shots/D-TELA-VEU-DOS-DETALHES.js`,
+  rodados sem variável, são de **não-regressão**: medem, afirmam o que vale sozinho e gravam a
+  medida em `regressao`, sem tocar `antes`/`depois`. A comparação é o modo
+  `CANGACO_COSTURA_ETAPA=antes|depois` (e `CANGACO_VEU_ETAPA` no véu), o único que exige a medida
+  "antes", com a mensagem de hoje.
+- **(c) O que saiu para o modo de comparação:**
+  - costura: a baseline existir ("baseline anterior a mudanca precisa existir"), a arte ser a mesma
+    do antes, e os bytes das 16 células internas iguais ao antes no zoom 1;
+  - véu: a medida anterior existir ("medida anterior existe").
+  **O que ficou, igual:** a etapa válida, o canvas, o zoom aplicado, o mesmo tick pausado e a câmera
+  em pixel inteiro (costura); a etapa válida e o zoom (véu). **Uma ficou mais estrita:** "água e
+  grama sem detalhes" só valia no `depois`, e agora vale também na não-regressão (só a medida
+  `antes`, tirada no código de antes do véu, tinha detalhes).
+- **Aceite, verificado nesta sessão:** (a) com `test-output/` sem nenhuma medida dos dois (só os
+  relatórios `-shot.json` do runner, como numa worktree nova), os dois saíram 0 (6 e 4 capturas);
+  falta a parte "dentro do `shot:todos`", que é do fechamento; (b) com `ETAPA=depois` e sem a medida
+  "antes", os dois recusam com a mensagem de hoje. O bug saiu do `BUGS.md` neste commit.
+
