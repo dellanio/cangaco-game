@@ -417,8 +417,11 @@ revisita aquela regra; não é esquecimento.
   plantio cobra da gaveta de entrada do prédio, e o Canavial não recebe insumo: ninguém
   entregaria a tábua e o plantio esperaria para sempre (F-CANA, `BALANCE_LOG.md`).
 - Boa prática do original: estrada ao redor de todos os prédios desde cedo e pelo
-  menos 2 rotas entre prédios relacionados **[fonte]**. Aqui civis não colidem (§6.4), então a segunda rota não
-  alivia engarrafamento: ela encurta caminho e dá rota de reserva quando uma rua é cortada.
+  menos 2 rotas entre prédios relacionados **[fonte]**. Aqui civis colidem (§6.4, desde 2026-10-04): a
+  fila na rua é o desafio da logística, e a segunda rota encurta caminho, dá rota de reserva quando
+  uma rua é cortada e pode desafogar a fila (o serf planeja a rota contando os civis nela, o custo de
+  unidade do KaM). Quanto ela alivia não foi medido com a colisão ligada; na medida de 2026-09-28,
+  com a porta lenta, duas faixas não aliviavam (o histórico em §6.4).
 
 ---
 
@@ -520,9 +523,18 @@ montanha **[fonte]**.
 - Velocidade base 1,0 tile/s a pé e 1,66 tile/s montado **[proposta]**, mantendo
   a razão 1:1,666 do Remake **[fonte]**.
 - Custo de movimento por terreno em `data/terrain.json`.
-- Civis não colidem entre si, para não travar a logística. Militares colidem (C5).
-  - **Testado e recusado com o mecanismo do KaM. DEFINITIVO (D-MOVIMENTO-01, colisão civil,
-    fechado em 2026-09-28 pelo operador, com prova).** O mecanismo do `WalkTo` do kam_remake foi implementado:
+- **Civis colidem entre si: um civil por tile** (I-MOVIMENTO-COLISAO-CIVIL-LIGADA, decisão do
+  operador em 2026-10-04). Militares colidem (C5). O motivo, nas palavras do operador: "A colisão é
+  justamente um dos desafios do jogo, para não criar serf demais. O jogador precisa saber desenhar
+  bem as ruas e rotas para ter eficiência logística." A produção que cai com a fila na rua não é
+  defeito: é o desafio, e o jogador o resolve na partida. O mecanismo é o do `WalkTo` do kam_remake
+  (abaixo), com a permuta de frente no tempo exato de andar (ninguém ganha nem perde tempo ao
+  cruzar). `units.json colisaoCivil.ligada: true`.
+  - *Histórico (2026-09-28 a 2026-10-04):* a colisão ficou desligada. **Testado e recusado com o
+    mecanismo do KaM, "DEFINITIVO" (D-MOVIMENTO-01, colisão civil, fechado em 2026-09-28 pelo
+    operador, com prova)**, revogado em 2026-10-04 pela decisão acima, depois do relato dos serfs
+    empilhados na estrada da pedreira (BUG-CIVIS-EMPILHADOS). O registro de então:
+  - O mecanismo do `WalkTo` do kam_remake foi implementado:
     - troca de frente e troca forçada como **permuta** (um civil por tile, sempre);
     - empurrão do ocioso, desvio e prioridade de quem espera;
     - a porta que espera;
@@ -533,7 +545,7 @@ montanha **[fonte]**.
     de carga e porta, de 17% a 60% piores.
   - A mecânica "mais rua resolve o engarrafamento" não se reproduz. Os números estão no
     PROGRESS (D-MOVIMENTO-01j) e em `docs/planos/2026-09-28-D1-colisao-civil.md`.
-  - O mecanismo fica no código, desligado (`units.json colisaoCivil.ligada: false`).
+  - O mecanismo ficou no código, desligado (`units.json colisaoCivil.ligada: false`), até 2026-10-04.
 - **Névoa não afeta pathfinding nem JobBoard.** O A* enxerga o mapa inteiro, a
   tarefa se cria e se reclama igual no escuro, e o serf acha o armazém que o
   jogador não está vendo. A névoa é sobre o que o **jogador** sabe, nunca sobre

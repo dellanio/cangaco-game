@@ -543,7 +543,10 @@ const plantarERuar = (t: number): Command[] => {
     { type: 'PlaceRoad', tiles: [naVila(0, 3), naVila(0, 4), naVila(0, 5), naVila(0, 6), naVila(-1, 6)] },
   ];
 };
-const SAVE_NO_TICK = 112;
+/** I-MOVIMENTO-COLISAO-CIVIL-LIGADA: o tick do save e o PRIMEIRO com reserva pendente, e nao um
+ *  numero fixo. Com a colisao civil ligada o 112 ficou vacuo (a tarefa ainda nao fora reclamada);
+ *  o que o teste guarda e a reserva atravessando o save, e nao o tick. */
+const LIMITE_DA_PROCURA = 600;
 
 describe('F09 — determinismo e save/load com reservas pendentes', () => {
   it('compararComESemSave continua passando SEM o gancho (o helper canonico da F02)', () => {
@@ -559,7 +562,11 @@ describe('F09 — determinismo e save/load com reservas pendentes', () => {
     // tiles antes de nivelar a obra (a rua fica de pe perto do tick 75). O marco andou
     // junto: a primeira tarefa de material e reclamada por volta do tick 110.
     let noSave = createInitialState(1);
-    for (let t = 0; t < SAVE_NO_TICK; t++) noSave = step(noSave, plantarERuar(t));
+    let tickDoSave = 0;
+    for (; tickDoSave < LIMITE_DA_PROCURA; tickDoSave++) {
+      if (tarefasDe(noSave).some((t) => t.estado === 'reclamada')) break;
+      noSave = step(noSave, plantarERuar(tickDoSave));
+    }
     const pendentesNoSave = tarefasDe(noSave).filter((t) => t.estado === 'reclamada');
     expect(pendentesNoSave.length, 'sem reserva pendente no tick do save o teste seria vacuo').toBeGreaterThan(0);
     for (const t of pendentesNoSave) {
@@ -568,7 +575,8 @@ describe('F09 — determinismo e save/load com reservas pendentes', () => {
     }
 
     const { direto, comSave } = compararComESemSave({
-      seed: 1, totalTicks: 150, saveAtTick: SAVE_NO_TICK, comandosNoTick: plantarERuar,
+      // os 38 ticks depois do save sao os de antes (112 -> 150)
+      seed: 1, totalTicks: tickDoSave + 38, saveAtTick: tickDoSave, comandosNoTick: plantarERuar,
     });
     expect(comSave).toBe(direto);
     const final = JSON.parse(direto) as GameState;

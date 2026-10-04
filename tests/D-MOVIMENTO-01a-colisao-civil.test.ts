@@ -15,7 +15,7 @@ import type { GameData } from '../src/sim/data/types';
 import { createInitialState, LADO_DO_JOGADOR } from '../src/sim/state';
 import type { GameState, Unidade } from '../src/sim/state';
 import { andar, comUnidade } from '../src/sim/units/movimento';
-import { custoDeUnidadesNaRota, POSICAO_DO_ESTADO, sistemaDaPermuta, sistemaDaPorta, sistemaDoEmpurrao, tetoDaEspera } from '../src/sim/colisao';
+import { custoDeUnidadesNaRota, POSICAO_DO_ESTADO, sistemaDaPermuta, sistemaDaPorta, sistemaDoEmpurrao } from '../src/sim/colisao';
 import { buscarCaminho, buscasComUnidades, tileAndavel, zerarEstatisticasDeBusca } from '../src/sim/pathfinding';
 import { condicaoCheiaDoTipo } from '../src/sim/condicao';
 import { salvar } from '../src/sim/save';
@@ -26,6 +26,8 @@ import { gravarEvidencia } from './helpers/evidence';
 type Tile = { gx: number; gy: number };
 const LIGADA: GameData = { ...gameData, movimento: { ...gameData.movimento, colisaoCivil: { ...gameData.movimento.colisaoCivil, ligada: true } } };
 const C = LIGADA.movimento.colisaoCivil;
+/** O modo desligado da chave, explicito: desde a I-MOVIMENTO-COLISAO-CIVIL-LIGADA o dado vem ligado. */
+const DESLIGADA: GameData = { ...gameData, movimento: { ...gameData.movimento, colisaoCivil: { ...gameData.movimento.colisaoCivil, ligada: false } } };
 
 // ---------- a varredura dos estados ----------
 function arquivos(dir: string): string[] {
@@ -124,8 +126,8 @@ const trecho = (tiles: Tile[], de: number, ate: number): Tile[] => {
 };
 
 describe('D-MOVIMENTO-01a — a colisao civil', () => {
-  it('o dado: a chave comeca desligada, e as esperas sao as do KaM na escala do movimento', () => {
-    expect(gameData.movimento.colisaoCivil.ligada).toBe(false);
+  it('o dado: a chave vem LIGADA (I-MOVIMENTO-COLISAO-CIVIL-LIGADA), e as esperas sao as do KaM na escala do movimento', () => {
+    expect(gameData.movimento.colisaoCivil.ligada).toBe(true);
     expect([C.ticksEmpurrar, C.ticksDesviar, C.ticksRepetirDesvio, C.ticksTrocaForcada]).toEqual([1, 5, 25, 20]);
   });
 
@@ -243,7 +245,8 @@ describe('D-MOVIMENTO-01a — a colisao civil', () => {
   it('um parado que NUNCA sai tranca a rua de uma faixa, e a invariante acusa a espera', () => {
     const { s, tiles } = rua(8);
     const s0 = comUnidades(s, [civil('w', tiles[0] as Tile, 'indo_buscar', trecho(tiles, 0, 7)), civil('x', tiles[3] as Tile, 'colhendo')]);
-    const r = correr(s0, todosChegaram, LIGADA, 200);
+    // corre alem do prazo do "nao trava" (I-MOVIMENTO-COLISAO-CIVIL-LIGADA): so ai a invariante acusa
+    const r = correr(s0, todosChegaram, LIGADA, C.ticksPrazoDeProgresso + 200);
     expect(todosChegaram(r.s)).toBe(false);
     expect(r.violacoes.some((v) => v.includes('w: bloqueado ha'))).toBe(true);
     expect(r.violacoes.some((v) => v.includes('empilhados'))).toBe(false);
@@ -278,6 +281,29 @@ describe('D-MOVIMENTO-01a — a colisao civil', () => {
     expect(t).toBeLessThanOrEqual(LIGADA.movimento.ticksPorTile.aPe.estrada + C.ticksTrocaForcada);
   });
 
+  // I-MOVIMENTO-COLISAO-CIVIL-LIGADA, aceite (c): a permuta de frente nao adianta ninguem. O
+  // defeito medido em 2026-09-29: dois de frente em 20 tiles chegavam em 95 ticks, contra 100
+  // sozinho (o passo da permuta somava o tick do `andar` e entregava o caminho um passo antes).
+  it('a permuta de frente leva o mesmo tempo que andar sozinho: 20 tiles, 100 ticks nos dois', () => {
+    const { s, tiles } = rua(21);
+    const passo = LIGADA.movimento.ticksPorTile.aPe.estrada;
+    const ticksAte = (us: Unidade[]): Record<string, number> => {
+      let x = comUnidades(s, us);
+      const chegou: Record<string, number> = {};
+      for (let t = 1; t <= 400 && Object.keys(chegou).length < us.length; t += 1) {
+        x = tickDeMovimento(x, LIGADA);
+        expect(maiorPorTile(x)).toBeLessThanOrEqual(1);
+        for (const u of us) if (chegou[u.id] === undefined && (x.unidades.porId[u.id]?.fsmData.caminho ?? []).length === 0) chegou[u.id] = t;
+      }
+      return chegou;
+    };
+    const sozinho = ticksAte([civil('a', tiles[0] as Tile, 'indo_buscar', trecho(tiles, 0, 20))]);
+    const deFrente = ticksAte([civil('a', tiles[0] as Tile, 'indo_buscar', trecho(tiles, 0, 20)), civil('b', tiles[20] as Tile, 'indo_buscar', trecho(tiles, 20, 0))]);
+    gravarEvidencia('I-MOVIMENTO-COLISAO-CIVIL-LIGADA-permuta', { passo, sozinho, deFrente });
+    expect(sozinho).toEqual({ a: 20 * passo });
+    expect(deFrente).toEqual({ a: 20 * passo, b: 20 * passo });
+  });
+
   it('desligada, o mesmo encontro de frente se atravessa, sem campo novo', () => {
     // distancia par: os dois chegam ao tile do meio no mesmo tick
     const { s, tiles } = rua(11);
@@ -285,9 +311,9 @@ describe('D-MOVIMENTO-01a — a colisao civil', () => {
     let x = s0;
     let empilhou = false;
     for (let t = 0; t < 400 && !todosChegaram(x); t += 1) {
-      x = tickDeMovimento(x, gameData);
+      x = tickDeMovimento(x, DESLIGADA);
       empilhou ||= em(x, 'a').gx === em(x, 'b').gx;
-      expect(salvar(x)).not.toMatch(/bloqueado|saindo/);
+      expect(salvar(x, DESLIGADA)).not.toMatch(/bloqueado|saindo/);
     }
     expect(todosChegaram(x)).toBe(true);
     expect(empilhou).toBe(true);
@@ -431,8 +457,8 @@ describe('D-MOVIMENTO-01a — a colisao civil', () => {
       expect(violacoesDaColisao(x, LIGADA)).toEqual([]);
     });
 
-    it('o teto da invariante e a troca forcada mais o maior passo do dado', () => {
-      expect(tetoDaEspera(LIGADA)).toBe(C.ticksTrocaForcada + Math.max(...Object.values(LIGADA.movimento.ticksPorTileDiagonal.aPe)));
+    it('o prazo do "nao trava" vem do dado, e cobre mais que a troca forcada (I-MOVIMENTO-COLISAO-CIVIL-LIGADA)', () => {
+      expect(C.ticksPrazoDeProgresso).toBeGreaterThan(C.ticksTrocaForcada);
     });
   });
 
@@ -451,7 +477,7 @@ describe('D-MOVIMENTO-01a — a colisao civil', () => {
     it('desligada: nenhum custo, e a busca segue no cache', () => {
       const { s: s0, cima } = duasFaixas();
       const x = comUnidades(s0, [civil('a', cima[3] as Tile, 'indo_buscar', [cima[4] as Tile])]);
-      expect(custoDeUnidadesNaRota(x, 'w', 'estrada', gameData)).toBeUndefined();
+      expect(custoDeUnidadesNaRota(x, 'w', 'estrada', DESLIGADA)).toBeUndefined();
     });
 
     it('ligada: com a faixa de cima cheia, a rota por estrada vai pela de baixo; vazia, vai pela de cima', () => {

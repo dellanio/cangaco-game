@@ -961,6 +961,42 @@ function validarEscaramuca(dados, erros) {
 // `militar.pedeComidaAbaixoDe`, e a IA alimenta a tropa abaixo de `limiares.civilVaiComer`
 // (o limiar do civil, decisao do operador). A IA pedir ACIMA de onde o membro aceita pedir
 // faria o Feed dela voltar `sem-fome` para sempre: por isso civilVaiComer < pedeComida.
+/**
+ * I-MOVIMENTO-COLISAO-CIVIL-LIGADA — o prazo do "nao trava" da colisao civil cobre, em tempo de
+ * jogo, o trabalho mais longo que um civil faz parado num tile: o semear de resources.json e o
+ * `noTile` das colheitas de production.json. Quem chega ao tile onde outro trabalha espera o
+ * trabalho inteiro, e isso e espera legitima, nao travamento (medido: 245 e 319 ticks).
+ */
+function validarPrazoDeProgresso(dados, erros) {
+  const units = dados.units || {};
+  const c = units.colisaoCivil || {};
+  const escalas = (dados.time && dados.time.escalas) || {};
+  const prazo = c.prazoDeProgresso_segundos_base;
+  const escalaDoPrazo = escalas[units.escalaVelocidade];
+  if (typeof prazo !== 'number' || !(prazo > 0) || typeof escalaDoPrazo !== 'number') {
+    erros.push('units/colisaoCivil: prazoDeProgresso_segundos_base precisa ser numero > 0, numa escala de time.json');
+    return;
+  }
+  const res = dados.resources || {};
+  const escalaDoSemear = escalas[res.escala];
+  if (typeof escalaDoSemear !== 'number') return;
+  for (const [tipo, def] of Object.entries(res.tipos || {})) {
+    const semear = def && def.reposicao && def.reposicao.semear_segundos_base;
+    if (typeof semear === 'number' && prazo / escalaDoPrazo < semear / escalaDoSemear) {
+      erros.push(`units/colisaoCivil: prazoDeProgresso (${prazo / escalaDoPrazo} s de jogo) nao cobre o semear de '${tipo}' (${semear / escalaDoSemear} s de jogo)`);
+    }
+  }
+  const prod = dados.production || {};
+  const escalaDaColheita = escalas[prod.escala];
+  if (typeof escalaDaColheita !== 'number') return;
+  for (const [tipo, def] of Object.entries(prod.predios || {})) {
+    const noTile = def && def.colheita && def.colheita.fases && def.colheita.fases.noTile_segundos_base;
+    if (typeof noTile === 'number' && prazo / escalaDoPrazo < noTile / escalaDaColheita) {
+      erros.push(`units/colisaoCivil: prazoDeProgresso (${prazo / escalaDoPrazo} s de jogo) nao cobre o trabalho no tile de '${tipo}' (${noTile / escalaDaColheita} s de jogo)`);
+    }
+  }
+}
+
 function validarPedidoDeComida(dados, erros) {
   const c = dados.condition || {};
   const pede = c.militar && c.militar.pedeComidaAbaixoDe;
@@ -2021,6 +2057,7 @@ function validarTudo(dados) {
   validarVisao(dados, erros);
   validarNiveisDaIA(dados, erros);
   validarPedidoDeComida(dados, erros);
+  validarPrazoDeProgresso(dados, erros);
   validarPrioridadesDaIA(dados, erros);
   validarEscaramuca(dados, erros);
   validarMapas(dados, erros);

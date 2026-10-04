@@ -853,7 +853,13 @@ export function posicaoDaUnidade(
   const progresso = unidade.fsmData.progresso ?? 0;
   if (!proximo || progresso === 0) return { gx: unidade.gx, gy: unidade.gy };
   // C-COMBATE-01b: o passo da carga e mais curto; o desenho interpola no custo da unidade
-  const fracao = progresso / custoDoPassoDaUnidade(state, unidade, proximo, dados);
+  const noPasso = progresso / custoDoPassoDaUnidade(state, unidade, proximo, dados);
+  // I-MOVIMENTO-COLISAO-CIVIL-LIGADA — o civil SEGURADO no fim do passo (`bloqueado`, o tile seguinte
+  // ocupado) fica em `custo - 1` para entrar assim que o tile vagar; desenhado ali, ele ficava a
+  // 0,14 tile de quem ocupa o tile (o "dois no mesmo tile" do relato do operador). O desenho para na
+  // BORDA do tile (meio passo), que e geometria do grid e nao numero de jogo.
+  const segurado = (unidade.fsmData.bloqueado ?? 0) > 0 && classeDaUnidade(unidade.tipo, dados) === 'civil';
+  const fracao = segurado ? Math.min(noPasso, 0.5) : noPasso;
   return {
     gx: unidade.gx + (proximo.gx - unidade.gx) * fracao,
     gy: unidade.gy + (proximo.gy - unidade.gy) * fracao,
