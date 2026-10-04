@@ -60,6 +60,16 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
   segurou naquele tick, e nenhum vai além dela; (c) a contagem vai para o `test-output`. O salto até a
   borda quando o tile fica ocupado no último instante é decisão do operador (pergunta no PROGRESS) e
   fica neste bug, aberto.
+- **decisão do operador (2026-10-04, depois da correção parcial `02b95aa`):** "o serf precisa esperar
+  ou ficar parado se houver fila nas ruas". O segurado no último instante **para onde está**, sem
+  voltar à borda (a saída B da pergunta). Só desenho: a sim já espera.
+- **aceite da decisão (antes do código):** (1) uma regra pura de render (`src/render/`, sem Phaser) com
+  memória por unidade: dentro do mesmo passo (mesmo tile, mesmo tile seguinte) a fração desenhada nunca
+  cai; trocou o passo, a memória recomeça. Por tabela: avançar passa; cair fica onde estava; passo
+  novo aceita a fração dele; unidade esquecida recomeça; (2) a regra aplicada à vila pronta com a
+  colisão, em 3 000 ticks: **zero** recuos dentro do passo (eram 112), e a contagem vai para o
+  `test-output`; (3) `unidades.ts` passa a posição pela regra antes da interpolação; o roteiro
+  `I-MOVIMENTO-COLISAO-CIVIL-LIGADA` continua saindo 0 e a captura dele é aberta.
 - evidência: a sonda desta sessão (`test-output/zz-sonda-recuo.json`, apagado)
 - status: aberto
 
