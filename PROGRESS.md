@@ -19215,3 +19215,31 @@ Leituras conservadoras, PARA REVISÃO do operador:
     OK. `npm run verify:rapido` verde (544 testes).
 - **Aberto:** a chave em `test-results.json` é marcada no fechamento da fase.
 
+## 2026-10-04 — I-ENTREGA-PLAYTEST (gente de fora joga)
+
+- **O que existe:**
+  - `docs/playtest.md`: o roteiro de quem testa (o que tentar, sem ensinar), como mandar o relato,
+    as nove perguntas depois da partida, e a parte do operador.
+  - Na ajuda em jogo, a seção **Relato para quem fez o jogo**: um campo de texto, **Enviar relato**
+    (baixa `relato-<commit>-tick-<n>.json`; nada vai pela rede) e **Abrir relato** (escolhe o
+    arquivo e devolve a partida àquele instante). A frase do que o arquivo leva é montada da lista
+    de campos (`CAMPOS_DO_RELATO`, `src/relato.ts`): o save, o commit do build, o nível do
+    adversário (`null` no jogo livre) e o texto. As letras do campo não viram atalho.
+  - `vite.config.mts`, novo, só com o `define` do commit do build (`git describe --always --dirty`;
+    sem git, `desconhecido`), lido por `src/commit-do-build.ts`. Não é dependência nova: o `vite` já
+    estava. O `E-ENTREGA-BUILD` (o build do itch.io) segue OK com ele.
+- **Verificado (evidência aberta nesta sessão):**
+  - `tests/I-ENTREGA-PLAYTEST.test.ts`, 5 testes verdes: (a) o relato de uma escaramuça andando
+    (nível fácil, tick 200) volta pelo `lerRelato` com o save byte a byte e o estado igual, e segue
+    igual depois de um `step`; arquivo que não é relato (JSON ruim, campo a mais, campo a menos) e
+    save recusado pelo jogo são recusados com o motivo; (b) as chaves do arquivo são
+    `CAMPOS_DO_RELATO`, na ordem, o tema tem um rótulo por campo (ida e volta) e a frase da tela
+    cita todos; (c) `git ls-files docs/playtest.md`.
+  - `npm run shot -- I-ENTREGA-PLAYTEST`: OK, 2 capturas (aberta a do relato escrito). O texto com
+    "h" e "p" fica no campo sem fechar a ajuda nem despausar; despausado, o aperto segurado em
+    Enviar baixa o arquivo com os quatro campos e o commit do dev server; o jogo anda 50 ticks, e
+    Abrir relato devolve o estado do save de dentro dele, byte a byte.
+  - `npm run verify:rapido` verde (2 494 testes: o `vite.config.mts` liga a suíte inteira).
+- **Espera o operador (o fechamento da I é dele, pelo BUILD_PLAN):** escolher quem joga, recolher
+  os relatos (para `BUGS.md` e `BALANCE_LOG.md`) e abrir a página do itch.io para outras pessoas.
+

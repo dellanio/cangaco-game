@@ -389,6 +389,17 @@ body:not([data-corpo="opcoes"]) #opcoes { display: none; }
 #ajuda .arquivo .botoes { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 #ajuda .arquivo .recado { font-size: 13px; font-style: italic; }
 #ajuda .arquivo .recado[hidden] { display: none; }
+/* I-ENTREGA-PLAYTEST: o relato, embaixo dos controles. */
+#ajuda .relato .leva { margin: 2px 0 6px; font-size: 13px; }
+#ajuda .relato textarea {
+  box-sizing: border-box; width: 100%; resize: vertical; padding: 4px 6px;
+  font: 13px/1.35 var(--fonte-corpo); color: var(--tinta); background: var(--papel-escuro);
+  border: 2px solid var(--tinta);
+}
+#ajuda .relato .botoes { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+#ajuda .relato .recado { font-size: 13px; font-style: italic; }
+#ajuda .relato .recado[hidden] { display: none; }
+#ajuda .relato .recado[data-ok="false"] { color: var(--terracota); }
 #ajuda .arquivo .recado[data-ok="false"] { color: var(--terracota); }
 #ajuda .arquivo .recado.pisca { animation: recado-pisca 0.6s ease-out; }
 @keyframes recado-pisca { from { background: var(--terracota); color: var(--papel); } }

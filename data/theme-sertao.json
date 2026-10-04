@@ -747,6 +747,19 @@
       "sem-trabalhador": "Esta casa está pronta, mas ninguém trabalha nela. Clique na Casa do Coronel e peça o trabalhador dela."
     }
   },
+  "relato": {
+    "_doc": "I-ENTREGA-PLAYTEST. O Enviar relato da ajuda em jogo (src/ui/relato.ts). As chaves de `campos` sao os de `CAMPOS_DO_RELATO` (src/relato.ts): campo sem rotulo, ou rotulo sem campo, reprova o verify (tests/I-ENTREGA-PLAYTEST.test.ts). A frase `leva` e montada da lista, e por isso a tela diz exatamente o que o arquivo leva.",
+    "titulo": "Relato para quem fez o jogo",
+    "leva": "O arquivo leva {campos}. Nada sai daqui sozinho: você baixa e manda o arquivo.",
+    "e": " e ",
+    "campos": { "save": "a partida como está agora", "commit": "a versão do jogo", "nivel": "o nível do adversário", "texto": "o que você escrever aqui" },
+    "placeholder": "O que deu certo, o que travou, o que você não entendeu",
+    "enviar": "Enviar relato",
+    "abrir": "Abrir relato",
+    "baixou": "Relato baixado: {arquivo}",
+    "abriu": "Relato aberto: partida no tick {tick}",
+    "recusado": "Não abriu o relato: {motivo}"
+  },
   "partidaGuiada": {
     "_doc": "I-TELA-PARTIDA-GUIADA. A faixa de passos do Aprender a jogar (src/ui/partida-guiada.ts). As chaves de `passos` sao os ids de `passosDaPartidaGuiada`: passo sem texto, ou texto sem passo, reprova o verify (tests/I-TELA-PARTIDA-GUIADA.test.ts). {predio} e o nome do tema do predio que o passo pede; {unidade}, o do civil; {n} e {total}, a contagem.",
     "contagem": "Passo {n} de {total}",

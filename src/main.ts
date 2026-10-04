@@ -32,6 +32,9 @@ import { montarAvisoDoTempo } from './ui/aviso-tempo';
 import { montarFimDePartida } from './ui/fim-de-partida';
 import { montarFaixaDePassos } from './ui/partida-guiada';
 import { montarCaixaDeDica } from './ui/dicas';
+import { montarSecaoDoRelato } from './ui/relato';
+import { lerRelato, nomeDoArquivoDoRelato, relatoDaPartida, textoDoRelato } from './relato';
+import { COMMIT_DO_BUILD } from './commit-do-build';
 import { criarDicasVivas } from './preferencias-de-dicas';
 import type { DicasVivas } from './preferencias-de-dicas';
 import { montarAjuda } from './ui/ajuda';
@@ -67,6 +70,7 @@ import { criarFundoSonoro } from './render/fundo-sonoro';
 import type { ContadoresDoFundo, DadosDoFundo, VistaEmTiles } from './render/fundo-sonoro';
 import { urlsDeArquivosDeSom } from './render/sprites-urls';
 import tabelaDeSom from '../data/som.json';
+import temaSertao from '../data/theme-sertao.json';
 import { canalDoSom, volumeEfetivo } from './preferencias-de-som';
 import type { PreferenciasVivas } from './preferencias-de-som';
 import type { OpcoesDeSom } from './ui/opcoes-de-som';
@@ -358,6 +362,36 @@ export function iniciarPartida(
     },
     gavetas: () => arquivo.gavetas(),
   });
+  // I-ENTREGA-PLAYTEST — o relato: baixa um arquivo (nada sai pela rede) e o traz de volta.
+  const temaDoRelato = temaSertao.relato;
+  const secaoDoRelato = montarSecaoDoRelato({
+    aoEnviar(texto) {
+      const relato = relatoDaPartida(sessao.estado, COMMIT_DO_BUILD, texto, gameData);
+      const nome = nomeDoArquivoDoRelato(relato, sessao.estado);
+      const url = URL.createObjectURL(new Blob([textoDoRelato(relato)], { type: 'application/json' }));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = nome;
+      a.click();
+      URL.revokeObjectURL(url);
+      secaoDoRelato.recado(temaDoRelato.baixou.replace('{arquivo}', nome), true);
+    },
+    aoAbrir(conteudo) {
+      const leitura = lerRelato(conteudo, gameData);
+      if (!leitura.ok) {
+        secaoDoRelato.recado(temaDoRelato.recusado.replace('{motivo}', leitura.motivo), false);
+        return;
+      }
+      jogo.reiniciarApresentacao();
+      som.reiniciar();
+      fundo.reiniciar();
+      sessao.substituir(leitura.estado);
+      selecao.selecionar(null);
+      selecaoMilitar.limpar();
+      secaoDoRelato.recado(temaDoRelato.abriu.replace('{tick}', String(leitura.estado.tick)), true);
+    },
+  });
+
   // O painel abre NO CLIQUE, sem esperar o proximo tick: com o jogo pausado nao
   // viria nenhum, e o painel so apareceria quando o jogador retomasse.
   selecao.aoMudar(() => {
