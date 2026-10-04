@@ -21,6 +21,8 @@ import { montarOpcoesDeSom } from './ui/opcoes-de-som';
 import type { OpcoesDeSom } from './ui/opcoes-de-som';
 import { criarPreferenciasVivas } from './preferencias-de-som';
 import type { PreferenciasVivas, VolumePadrao } from './preferencias-de-som';
+import { criarDicasVivas } from './preferencias-de-dicas';
+import type { DicasVivas } from './preferencias-de-dicas';
 import tabelaDeSom from '../data/som.json';
 
 /** O `localStorage`, ou `null` quando o navegador o bloqueia (o acesso pode lancar). */
@@ -34,11 +36,17 @@ function gavetaDoNavegador(): Gaveta | null {
 
 /** H-TELA-OPCOES-E-VOLUME — o volume do jogador e a caixa que o muda, uma vez por pagina: o menu
  *  e o jogo usam os mesmos. */
-let som: { readonly preferencias: PreferenciasVivas; readonly opcoes: OpcoesDeSom } | null = null;
-function somDaPagina(): { readonly preferencias: PreferenciasVivas; readonly opcoes: OpcoesDeSom } {
+let som: { readonly preferencias: PreferenciasVivas; readonly opcoes: OpcoesDeSom; readonly dicas: DicasVivas } | null = null;
+function somDaPagina(): { readonly preferencias: PreferenciasVivas; readonly opcoes: OpcoesDeSom; readonly dicas: DicasVivas } {
   if (som !== null) return som;
   const preferencias = criarPreferenciasVivas(gavetaDoNavegador(), tabelaDeSom.volumePadrao as VolumePadrao);
-  som = { preferencias, opcoes: montarOpcoesDeSom(preferencias.atual, (p) => { preferencias.mudar(p); }) };
+  // I-TELA-DICAS-NA-PRIMEIRA-VEZ: a chave das dicas mora na mesma caixa de Opcoes
+  const dicas = criarDicasVivas(gavetaDoNavegador());
+  som = {
+    preferencias,
+    dicas,
+    opcoes: montarOpcoesDeSom(preferencias.atual, (p) => { preferencias.mudar(p); }, { ligadas: dicas.atual.ligadas, aoMudar: (l) => { dicas.ligar(l); } }),
+  };
   return som;
 }
 
@@ -51,9 +59,9 @@ async function jogar(escolha: EscolhaDaPartida, ajuda: Ajuda | null): Promise<vo
   // E-ENTREGA-BUILD: a tela de carregamento nasce antes de o `main.ts` (e o Phaser) chegar
   const carregamento = montarCarregamento();
   const modulo = await import('./main');
-  const { preferencias, opcoes } = somDaPagina();
+  const { preferencias, opcoes, dicas } = somDaPagina();
   opcoes.fechar();
-  modulo.iniciarPartida(estado, ajuda, carregamento, preferencias, opcoes, escolha.modo === 'guiada');
+  modulo.iniciarPartida(estado, ajuda, carregamento, preferencias, opcoes, escolha.modo === 'guiada', dicas);
 }
 
 function situacaoDoSave(): SituacaoDoSave {

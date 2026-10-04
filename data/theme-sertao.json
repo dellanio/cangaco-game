@@ -718,6 +718,21 @@
     "mudo": "Sem som",
     "fechar": "Fechar"
   },
+  "dicas": {
+    "_doc": "I-TELA-DICAS-NA-PRIMEIRA-VEZ. A dica de primeira vez (src/ui/dicas.ts). As chaves de `textos` sao os ids de `DICAS`: dica sem texto, ou texto sem dica, reprova o verify (tests/I-TELA-DICAS-NA-PRIMEIRA-VEZ.test.ts). {motivo} e o texto que o aviso de ordem ja da. `opcao` e a chave da caixa de Opcoes.",
+    "titulo": "Dica",
+    "ver": "Ver onde",
+    "entendi": "Entendi",
+    "opcao": "Mostrar dicas",
+    "textos": {
+      "ordem-recusada": "A ordem não foi: {motivo}. O aviso no alto da tela sempre diz por quê.",
+      "fim-da-paz": "A paz acabou. Daqui em diante o outro bando pode atacar a sua vila, e você pode atacar a dele.",
+      "inimigo-a-vista": "Gente de outro bando à vista. Só se vê o que os seus enxergam: o resto do mapa fica na névoa.",
+      "fome": "Tem gente com fome. O povo come na Bodega, se houver comida no Armazém; a tropa come quando você manda Alimentar no painel do grupo.",
+      "sem-estrada": "Esta casa não tem estrada até o Armazém, e o carregador só anda pela estrada. Puxe uma da porta (o lado de baixo da casa) até a rede.",
+      "sem-trabalhador": "Esta casa está pronta, mas ninguém trabalha nela. Clique na Casa do Coronel e peça o trabalhador dela."
+    }
+  },
   "partidaGuiada": {
     "_doc": "I-TELA-PARTIDA-GUIADA. A faixa de passos do Aprender a jogar (src/ui/partida-guiada.ts). As chaves de `passos` sao os ids de `passosDaPartidaGuiada`: passo sem texto, ou texto sem passo, reprova o verify (tests/I-TELA-PARTIDA-GUIADA.test.ts). {predio} e o nome do tema do predio que o passo pede; {unidade}, o do civil; {n} e {total}, a contagem.",
     "contagem": "Passo {n} de {total}",

@@ -3286,6 +3286,15 @@ que vetar custe uma linha.
   (pedreiro, carpina, roceiro ou pescador), senão a casa fica parada e a pedra acaba; (6) o jogo
   livre não tem inimigo, então a **escaramuça** é o último passo, sem condição: ele convida a
   começar uma escaramuça pelo menu. Qualquer troca é só em `src/ui/partida-guiada.ts` e no tema.
+- **(2026-10-04, Fase I) I-TELA-DICAS-NA-PRIMEIRA-VEZ — os gatilhos (PARA REVISÃO).** Cada dica
+  usa o seletor que a tela já tinha, sem regra nova: "prédio pronto sem trabalhador" e "prédio sem
+  estrada" são as causas do alerta da F22 (só casa **completa**; obra sem estrada não dispara,
+  porque logo depois de pôr a planta o jogador ainda não puxou a estrada); "a primeira fome" é uma
+  unidade do jogador no limiar de alerta (35 %); "a primeira névoa com inimigo" é a primeira
+  unidade ou casa de outro lado **na vista**; "o fim da paz" vale só na partida que teve paz
+  (`pazAteTick > 0`); "a primeira ordem recusada" é o texto que o aviso de ordem já dá
+  (`textoDaRecusa`). Quando duas valem juntas, ganha a ordem de `DICAS` (`src/ui/dicas.ts`): a
+  resposta ao gesto primeiro, a casa parada por último. A dica fica até o "Entendi".
 
 
 ## F-T1 — Camada de terreno base (dado + sim + render mínimo) (2026-09-24)
@@ -19152,4 +19161,31 @@ Leituras conservadoras, PARA REVISÃO do operador:
     a estrada; ela foi para o alto.
   - `npm run verify:rapido` verde (535 testes).
 - **Aberto:** a chave em `test-results.json` é marcada no fechamento da fase, com o verify completo.
+
+## 2026-10-04 — I-TELA-DICAS-NA-PRIMEIRA-VEZ (o jogo explica quando acontece)
+
+- **O que existe:** seis dicas de primeira vez (`src/ui/dicas.ts`, textos em
+  `theme-sertao.json: dicas`): ordem recusada, fim da paz, inimigo à vista, fome, casa sem estrada
+  e casa sem trabalhador. Uma por vez, numa caixa no canto de baixo do mapa, com **Ver onde** (anda
+  a câmera até o lugar, quando há lugar) e **Entendi**. A dica é marcada como vista no instante em
+  que aparece. A caixa de Opções (a da H) ganhou **Mostrar dicas**; desligar some com a dica aberta.
+- **Como:** o gatilho é derivado do estado por função pura (`dicaAMostrar(estado, vistas, ligadas,
+  dados)`), lendo os seletores que a tela já usa. Ligadas e vistas moram em
+  `src/preferencias-de-dicas.ts`, no `localStorage` (`cangaco:dicas`), fora do save, como o volume.
+  Os gatilhos estão em Perguntas em aberto (PARA REVISÃO). Os helpers de vila do teste da partida
+  guiada foram para `tests/helpers/vila-da-fase-i.ts`, e os dois testes os usam.
+- **Verificado (evidência aberta nesta sessão):**
+  - `tests/I-TELA-DICAS-NA-PRIMEIRA-VEZ.test.ts`, 6 testes verdes: (a) a tabela de 13 estados
+    (a dica que vale, a vista que não volta, as duas casas uma depois da outra, o lugar apontado, o
+    motivo da recusa repetido); a sequência mostra e marca até acabar, sem repetir; (b) desligadas,
+    nenhuma em estado nenhum da tabela, e a chave fica guardada; (c) 300 ticks com a dica
+    consultada e marcada a cada tick dão o mesmo save, byte a byte, que sem ela, e a gaveta só tem
+    a chave `cangaco:dicas`. O teste grava o save do roteiro
+    (`test-output/I-TELA-DICAS-NA-PRIMEIRA-VEZ.save.txt`).
+  - `npm run shot -- I-TELA-DICAS-NA-PRIMEIRA-VEZ`: OK, 2 capturas abertas. Com o save carregado
+    pela gaveta 1, a dica da estrada aparece; despausado e com o aperto segurado 150 ms, Ver onde
+    anda a câmera e Entendi traz a dica do trabalhador. As duas ficam no `localStorage`, e não no
+    estado. Com as marcas apagadas e as dicas desligadas nas Opções, o mesmo save não mostra nenhuma.
+  - `npm run verify:rapido` verde (541 testes).
+- **Aberto:** a chave em `test-results.json` é marcada no fechamento da fase.
 

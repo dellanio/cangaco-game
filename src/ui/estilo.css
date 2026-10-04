@@ -939,3 +939,21 @@ body[data-menu] #ajuda { z-index: 30; }
 #opcoes-de-som input[type="range"] { width: 100%; accent-color: var(--terracota); }
 #opcoes-de-som button[data-acao="fechar"] { align-self: center; padding: 4px 14px; }
 #ajuda button[data-acao="opcoes-de-som"] { margin-bottom: 8px; }
+
+/* ---- I-TELA-DICAS-NA-PRIMEIRA-VEZ: a dica de primeira vez -------------------- */
+/* Embaixo da celula do canvas, a direita: o alto e da faixa de passos e do aviso
+   de ordem. Fica ate o "Entendi". */
+#dica {
+  grid-column: 2; grid-row: 1; align-self: end; justify-self: end; margin: 0 16px 18px 0; z-index: 7;
+  box-sizing: border-box; width: min(340px, calc(100% - 32px)); padding: 8px 12px 10px;
+  background-color: var(--papel); background-image: var(--grao); color: var(--tinta);
+  border: var(--traco) solid var(--tinta); box-shadow: 4px 4px 0 var(--terracota);
+  font: 14px/1.35 var(--fonte-corpo);
+}
+#dica[hidden] { display: none; }
+#dica .titulo {
+  display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--terra-queimada);
+}
+#dica .texto { margin: 4px 0 8px; }
+#dica .botoes { display: flex; gap: 10px; justify-content: flex-end; }
+#dica .botoes button[hidden] { display: none; }

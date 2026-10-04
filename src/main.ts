@@ -31,6 +31,9 @@ import { montarAlertas } from './ui/alertas';
 import { montarAvisoDoTempo } from './ui/aviso-tempo';
 import { montarFimDePartida } from './ui/fim-de-partida';
 import { montarFaixaDePassos } from './ui/partida-guiada';
+import { montarCaixaDeDica } from './ui/dicas';
+import { criarDicasVivas } from './preferencias-de-dicas';
+import type { DicasVivas } from './preferencias-de-dicas';
 import { montarAjuda } from './ui/ajuda';
 import type { Ajuda } from './ui/ajuda';
 import type { TelaDeCarregamento } from './ui/carregamento';
@@ -91,6 +94,8 @@ export function iniciarPartida(
   preferenciasDeSom: PreferenciasVivas | null = null, opcoesDeSom: OpcoesDeSom | null = null,
   /** I-TELA-PARTIDA-GUIADA — o Aprender a jogar: a faixa de passos por cima do jogo livre. */
   guiada = false,
+  /** I-TELA-DICAS-NA-PRIMEIRA-VEZ — as dicas ligadas e as ja vistas (as mesmas das Opcoes). */
+  dicas: DicasVivas | null = null,
 ): void {
   const sessao = criarSessao(estadoInicial);
   // H-TELA-CAMADA-DE-SOM — o som le os eventos de cada passo e toca no fim do quadro. O arquivo
@@ -286,6 +291,12 @@ export function iniciarPartida(
     nevoa: configDoMapa.nevoa,
   });
 
+  // I-TELA-DICAS-NA-PRIMEIRA-VEZ — a dica de primeira vez. Derivada do estado; o que ja foi visto
+  // e a chave das Opcoes moram no localStorage. Sem o `inicio.ts` (nunca, hoje), a gaveta e a mesma.
+  const caixaDeDica = montarCaixaDeDica(gameData, dicas ?? criarDicasVivas(window.localStorage), (tile) => {
+    jogo.centrarCameraEm(tile);
+  });
+
   function atualizar(s: GameState): void {
     // F-TELA-NEVOA: o predio inimigo que saiu da vista sai do painel (ele so existe a vista)
     if (selecao.predio !== null && predioClicavel(s, selecao.predio) === null) selecao.selecionar(null);
@@ -304,6 +315,7 @@ export function iniciarPartida(
     if (recusaDaPaz(s.events) !== null) jogo.apagarDestino();
     fimDePartida.atualizar(s);
     faixaDePassos?.atualizar(s);
+    caixaDeDica.atualizar(s);
     // C9: a partida acabou -> o laco para (e so outro save o reabre)
     acompanharFimDePartida(laco, s);
   }
