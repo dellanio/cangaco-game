@@ -17,6 +17,7 @@ import type { Command } from '../sim/commands';
 import type { GameData } from '../sim/data/types';
 import type { GameState } from '../sim/state';
 import { predioNoTile } from '../sim/selectors';
+import { predioClicavel } from '../render/nevoa';
 import { hpMaximoDoTipo } from '../sim/vida';
 import { ehADistancia } from '../sim/combate';
 import { quemAceitaOrdem } from './formacao';
@@ -64,7 +65,8 @@ export function ordemDoBotaoDireito(
     return { comandos, marcarDestino: aDistancia.length > 0 ? destino : null };
   }
 
-  const idDoPredio = predioNoTile(estado, tile.gx, tile.gy);
+  // F-TELA-NEVOA: o predio inimigo fora da vista nao e alvo — o clique no tile dele e marcha ate la
+  const idDoPredio = predioClicavel(estado, predioNoTile(estado, tile.gx, tile.gy));
   const predio = idDoPredio === null ? undefined : estado.predios.porId[idDoPredio];
   if (predio !== undefined && predio.lado !== lado) {
     return { comandos: [{ type: 'AttackBuilding', unidades: grupo, predio: predio.id }], marcarDestino: null };

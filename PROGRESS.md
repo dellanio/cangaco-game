@@ -3256,6 +3256,23 @@ que vetar custe uma linha.
 - **(2026-10-03, Fase E) E-SAVE-GAVETAS — o "nome" da gaveta.** O BUILD_PLAN pede "três gavetas com
   nome, tick e data", sem dizer quem dá o nome. Fiz o conservador: o nome é o tipo da partida
   (Escaramuça ou Jogo livre), sem campo de texto para o jogador digitar.
+- **(2026-10-03, Fase F) F-TERRENO-NEVOA-DESCOBERTO — o raio do prédio e o da torre (PARA REVISÃO).**
+  O GDD não dá os números. Prédio: 2 tiles além do footprint, o menor em que a caixa dos prédios
+  do jogador, com a linha das portas, fica à vista só pelos prédios, no jogo livre e na escaramuça
+  (medido: 2 e 2). Torre de vigia: 9, o do civil que a ocupa, acima do alcance de tiro (7). Os dois
+  ficam em `data/buildings.json: visao`.
+- **(2026-10-03, Fase F) F-TERRENO-NEVOA-DESCOBERTO — obra revela?** Segui o KaM: só o prédio
+  pronto revela (`src/houses/KM_Houses.pas:669-694`, `Activate`). A obra não revela, e o operário
+  nela revela pela visão dele. Em aberto: o KaM recusa planta no escuro; aqui nada impede o
+  jogador de plantar no não descoberto. O GDD não fala disso, e a F não mexe no `canPlace`.
+- **(2026-10-03, Fase F) F-COMBATE-ALVO-NA-VISTA — o roteiro C-IA-03c com a névoa.** Ele vence a
+  escaramuça dando a ordem de ataque de longe, e com a névoa essa ordem é recusada. Jogando como o
+  jogador joga com névoa (marchar até ver, depois atacar), a vitória vira sorte: sem tela, só 1 de
+  6 jeitos de chegar vence (`BALANCE_LOG.md`, 2026-10-03). Fiz o conservador: o roteiro não mudou
+  nesta feature e sai 1 entre ela e a F-TELA-NEVOA. Na F-TELA, o clique no tile de um inimigo fora
+  da vista vira marcha até o tile (o único jeito que venceu), e o roteiro passa a jogar assim. Se
+  ainda assim perder, a decisão é do operador: a margem da tropa (`escaramuca.tropaDoJogador`), ou
+  a afirmação de vitória do roteiro.
 
 
 ## F-T1 — Camada de terreno base (dado + sim + render mínimo) (2026-09-24)
@@ -18586,6 +18603,258 @@ Leituras conservadoras, PARA REVISÃO do operador:
 - o nível normal da IA é o jogo de hoje; fácil e difícil são proposta, a ajustar no lote de
   balanceamento.
 
+## 2026-10-03 — F-TERRENO-NEVOA-DESCOBERTO (o que o jogador vê e já viu)
+
+**Feito (verificado rodando):**
+- `src/sim/nevoa.ts`: `descoberto` no `GameState` (opcional, por lado, só o do jogador), 1 bit por
+  tile em inteiros de 32 bits sem sinal (512 palavras no 128×128). `visivel` é uma contagem por
+  tile (quantos olhos o veem) num `WeakMap` pela referência do estado, como o índice das estradas.
+  O `step` passa o cache do estado de entrada para o de saída e só descarimba e carimba o olho que
+  mudou (andou, nasceu, morreu, prédio ficou pronto ou caiu). Sem cache (load, ramo, estado montado
+  à mão), a conta é inteira, e o teste confere que as duas dão o mesmo `visivel` em 200 ticks.
+- O disco é o do KaM, `dx²+dy² <= r²` (`src/game/KM_FogOfWar.pas:176`), medido até o footprint no
+  prédio, que é a união dos discos de cada tile dele (`src/houses/KM_Houses.pas:690-694`).
+- Dado: `visao` 9 do civil em `units.json: civis._comum`; `buildings.json: visao` com
+  `predio_tiles` 2 e `porTipo.watchtower` 9. `GameData.visao` é a tabela montada no carregamento.
+  `validate:data` ganhou `validarVisao` (testado: recusa civil sem raio, raio negativo ou
+  fracionário, `porTipo` de prédio que não existe).
+- Estado sem a camada (montado à mão, save anterior) fica sem névoa: o `step` não a cria, e
+  `ehDescoberto` responde "sim". O save não mudou de versão (campo opcional).
+- `saves/teste-operador-vila-pronta.txt` regravado pelo interruptor do próprio teste
+  (`CANGACO_GRAVAR_SAVE_DO_OPERADOR=1`): a montagem agora traz o `descoberto`. Foi o único teste da
+  suíte que quebrou (2393 de 2394 verdes antes de regravar).
+
+**Aceite** (`tests/F-TERRENO-NEVOA-DESCOBERTO.test.ts`, evidência em
+`test-output/F-TERRENO-NEVOA-DESCOBERTO-*.json`):
+- (a) tick 0 do jogo livre e da escaramuça: todo tile de prédio e de unidade do jogador visível e
+  descoberto. Descobertos no tick 0 da escaramuça: 506 de 16 384.
+- (b) 6 000 ticks da escaramuça sem paz, a tropa marchando no tick 1: 0 bits perdidos; 506 no
+  início, 1 557 no tick 300, 1 597 no fim.
+- (c) salvar no tick 151, carregar e rodar 150: o mesmo JSON e o mesmo `visivel` que não salvar.
+- (d) eixo determinístico, 100 ticks de marcha: parado, 0 carimbos; 1 cabra, 11 passos e 5 566
+  carimbos; 50 cabras, 539 passos e 272 734 carimbos. **Razão dos carimbos 49, razão dos passos 49.**
+  Com 50 andando, ~2 727 carimbos por tick, contra 16 384 tiles do mapa. A asserção: zero parado,
+  carimbos <= passos × 2 × (2r+1)², e 50:1 >= 25.
+- (e) tamanho do estado: jogo livre 53 556 → 54 884 bytes (+1 328); escaramuça 45 345 → 46 610
+  (+1 265). O save do operador: 67 858 → 69 292.
+- (f) `descoberto` entrou na `GUARDA-step-preserva-opcionais` como `persiste` (o typecheck cobrou),
+  e o arquivo da feature, a guarda e o save do operador passam na suíte transladada.
+
+## 2026-10-03 — F-COMBATE-ALVO-NA-VISTA (ordem só contra o inimigo que se vê)
+
+**Medida antes do código (sonda temporária, já apagada; não é cobertura contínua):** registrei
+toda ordem `AttackUnit`/`AttackBuilding` de unidade do jogador a alvo fora da vista na suíte
+inteira. **5 arquivos, 13 chamadas:** `C-TELA-04-atacar-unidade` (2), `C6-revidar-marchando` (1),
+`E-TELA-CONFIGURAR-PARTIDA` (8, o laço das opções de paz), `F28a-corpo-a-corpo` (1) e
+`F-CERCO-a2-ataque` (1). Os dois últimos são casos de recusa por outro motivo (alvo que não
+existe): a regra nova vem por último e eles ficam iguais. Roteiros que dão ordem de ataque:
+`F26b`, `D-TELA-05c` e `C-IA-03c`.
+
+**Feito (verificado rodando):**
+- `alvo-fora-da-vista` em `MotivoDeRecusaDeLuta` e `MotivoDeRecusaDeAtaque`, conferido **depois**
+  das recusas que já existiam. Vale para a ordem de unidade do jogador e só quando o estado tem a
+  névoa (`descoberto` do jogador). Unidade: o tile dela visível. Prédio: algum tile do footprint
+  visível (um canto à vista já mostra a casa). `sim/nevoa.ts`: `ordemDoJogadorSemVista`,
+  `unidadeNaVista`, `predioNaVista`.
+- **(c) o alvo que sai da vista no meio do ataque: a tropa segue o alvo já escolhido.** No KaM o
+  grupo corpo a corpo persegue o alvo da ordem até ele morrer, sem olhar a névoa
+  (`src/units/KM_UnitGroup.pas:1083-1092`; o alvo só vira nulo morto, `:2118-2127`). Só o atirador
+  larga quem está no escuro (`src/units/actions/KM_UnitActionFight.pas:199-200`), e aqui atirador
+  nem recebe `AttackUnit`. Por isso nada muda depois da ordem aceita.
+- Os testes ganharam a vista pelo caminho do jogo: `tests/helpers/vista.ts` (`comOlheiro`) põe um
+  cabra do jogador a 3..6 tiles do alvo, sem encostar. `C-TELA-04` (a escaramuça sem paz),
+  `C6 (c)` (o olheiro só no tick da ordem) e `E-TELA-CONFIGURAR-PARTIDA`. Neste último a asserção
+  ficou **mais estrita**: antes conferia só "não foi recusada pela paz", e com a névoa a ordem
+  passava a ser recusada pela vista sem o teste notar; agora confere "nenhuma recusa" com o olheiro.
+- **Defeito da névoa achado pela sonda e corrigido:** `visaoDe` num estado montado à mão punha a
+  visão no cache, e o `step` seguinte a tomava como vinda de um `step` (que já liga no
+  `descoberto` tudo o que vê). Resultado: o `descoberto` saía diferente com e sem a leitura (o
+  `F28a (d)` acusou). A visão ganhou `cobreODescoberto`, que só o avanço liga. Teste novo no
+  arquivo da F-TERRENO, e conferi que ele reprova com a marca forçada a `true`.
+
+**Aceite** (`tests/F-COMBATE-ALVO-NA-VISTA.test.ts`):
+- (a) `AttackUnit` e `AttackBuilding` contra a vila da IA a ~40 tiles: recusa com o motivo, e o
+  save do estado igual ao do tick sem a ordem.
+- (b) com o olheiro a menos de `visao`: aceito, e a tropa inteira sai para lutar; o prédio, com
+  um canto à vista. A recusa de antes (prédio do próprio lado, alvo que não existe) mantém o motivo.
+- (c) o olheiro some no tick seguinte à ordem: 200 ticks com o alvo fora da vista e o atacante em
+  `indo_lutar` com ele, 0 ticks em que largou (`test-output/F-COMBATE-ALVO-NA-VISTA-segue-o-alvo.json`).
+- (d) a IA não passa por comando (`systems/ia.ts`): a ordem dada à tropa da IA contra o jogador
+  longe é aceita. A suíte inteira roda verde com a regra (a C e a escaramuça iguais).
+- Roteiros: `F26b` e `D-TELA-05c` saem 0. **`C-IA-03c` sai 1** (a pergunta em aberto acima).
+
+**Custo da névoa num teste que troca o estado entre dois `step`** (`LOTE3-c`, 12 000 ticks; tempo
+de parede, número da corrida, nunca asserção): sem a névoa 0,69 s; com a primeira versão 2,17 s
+(o `{ ...s }` do teste derrubava o cache, e cada tick fazia a conta inteira; o `verify:rapido`
+estourou os 10 s do teste com a máquina cheia). Duas mudanças em `sim/nevoa.ts`, sem mudar
+resultado (os carimbos da medida (d) saíram iguais, 5 566 e 272 734): o avanço reaproveita a
+última visão do `step` quando o estado de entrada não tem a sua (a diferença entre olhos vale a
+partir de qualquer visão), e o atalho do `descoberto` só vale quando o array dele é o mesmo que a
+visão conferiu (`descobertoConferido`, que trocou o `cobreODescoberto`); e os olhos andam sem
+montar mapa novo por tick (marca de geração). Depois: 0,87 s.
+
+## 2026-10-03 — F-TELA-NEVOA (a névoa na tela, no painel e no minimapa)
+
+Só render, ui e roteiro: `git diff` desta feature não toca `src/sim/` (os seletores já existiam em
+`sim/nevoa.ts`).
+
+**Feito (verificado rodando e abrindo as capturas):**
+- `src/render/nevoa.ts` (puro, testado em Node): `inimigosForaDaVista`, `prediosInimigosForaDaVista`,
+  `predioClicavel` e a textura `texturaDaNevoa`, um pixel RGBA por tile. Estado sem a camada não
+  esconde nada.
+- A cena desenha a textura esticada sobre o mapa, com filtro linear (a borda da vista é um degradê
+  de um tile), na profundidade 800 000: acima de prédio, unidade e árvore, abaixo dos nomes e da
+  seleção. Ela só é repintada quando o estado da ponte muda, e só a partir do estado atual (a visão
+  é cacheada por ele).
+- Os números da tela ficam em `data/terrain.json: nevoa` (cor `#000000`, nunca descoberto 1,0,
+  descoberto fora da vista 0,5; PARA REVISÃO). O `render/mapa.ts` lê o bloco direto do arquivo,
+  como o tema, porque o loader da sim não o carrega. O `validate:data` confere cor e alfas
+  (`validarNevoaDoTerreno`).
+- Unidade inimiga fora da vista: entra no conjunto de quem a camada não desenha (o mesmo do
+  especialista dentro da casa), e por isso o acerto do clique também a pula. Prédio inimigo fora da
+  vista: não se desenha, a chaminé dele não fuma, e na ponte de debug ele aparece com
+  `naVista: false` (o roteiro é harness e sabe onde ele está).
+- Clique esquerdo no prédio inimigo fora da vista não o seleciona (`main.ts`, `predioClicavel`).
+  Botão direito nele vira **marcha até o tile** (`ui/ordem-militar.ts`). O prédio inimigo
+  selecionado que sai da vista fecha o painel.
+- Minimapa: a mesma névoa por cima do terreno, e o prédio inimigo fora da vista não é desenhado
+  (`data-predios-inimigos` conta os desenhados). O minimapa não desenha unidade (verificado).
+- Alertas: `alertasDoEstado` já não lista nada do inimigo; nada mudou.
+- Custo do quadro: camada `nevoa` nova em `custo-do-quadro.ts`.
+
+**Aceite** (`tools/shots/F-TELA-NEVOA.js`, `test-output/F-TELA-NEVOA.json`, e
+`tests/F-TELA-NEVOA.test.ts` para a parte pura e o clique):
+- (a) capturas `F-TELA-NEVOA-1-tick0-vila-clara` (a vila clara, o escuro a leste, com a borda em
+  degradê), `-3-marcha-caminho-descoberto` (a tropa perto da defesa da IA: 6 cabras da IA à vista,
+  22 no escuro, o resto preto) e `-4-caminho-esmaecido` (o trajeto já visto, esmaecido, com o canto
+  nunca visto preto). Contagem no tick 0: 506 tiles visíveis, 0 esmaecidos, 15 878 escuros; depois
+  da marcha (tick 313): 784, 613 e 14 987. A marcha foi dada pelo botão direito num tile no escuro.
+- (b) minimapa: 0 prédios inimigos desenhados no tick 0, e depois da marcha o mesmo número de
+  prédios da IA à vista (0).
+- (c) clique despausado (mouse.down / 150 ms / mouse.up) no armazém da IA no escuro: o painel não
+  abriu (`-2-vila-da-ia-no-escuro`, toda preta).
+- (d) custo, número da corrida (não é asserção): pausado com a câmera parada, 0 tiles repintados
+  em 60 quadros (a asserção, no eixo determinístico); avançando 1 tick por quadro, 16 384 tiles e
+  ~0,53 a 0,55 ms por quadro.
+- **C-IA-03c sem mudança, com a névoa na tela:** o clique no inimigo fora da vista agora acerta o
+  tile e vira marcha até ele (a estratégia que venceu sem tela). Ainda perde por pouco: sobram 2
+  militares da IA e nenhum do jogador. Continua a pergunta em aberto da F-COMBATE-ALVO-NA-VISTA
+  (a margem da tropa ou a afirmação de vitória; decisão do operador).
+- **(e) não verificado neste commit.** O `shot:todos` rodou com o shell em segundo plano, e o
+  sistema encerrou o shell por memória baixa no meio. Os processos seguiram, mas desde ali todo
+  roteiro saiu em 0 s com `3221225794` (`0xC0000142`, o processo filho não inicializou): 6 de 116
+  rodaram e saíram 0 (BUG-T a BUG-Z, C-COMBATE-01c), 110 nem começaram. É ambiente, não roteiro.
+  Não repeti: o fechamento da §13 roda o `shot:todos` inteiro, e é lá que o (e) fica medido, com a
+  lista dos roteiros cuja captura mudou só pela névoa.
+
+## 2026-10-03 — F-IA-DIFICULDADE (três níveis de adversário; integração declarada no item)
+
+**Feito (verificado rodando):**
+- `combat.json: ia.niveis` com `facil`, `normal` (vazio) e `dificil`; cada nível só troca
+  `tamanhoDoGrupo`, `atacantes` (a tropa atacante da escaramuça) e `revisaoDoPrefeito_fator` (o
+  ritmo do prefeito). O loader resolve cada nível por cima do valor de hoje em
+  `GameData.combate.niveisDaIA` e converte o ritmo em ticks uma vez, registrado em `conversoes`.
+- O nível mora em `ia.<lado>.nivel`, **ausente no normal**. A IA lê tudo por
+  `numerosDaIA(state, lado)` (`sim/ia.ts`): `guarnecer`, `defenderEPosicionar`,
+  `reporPeloQuartel`, `atacarComASobra` e o tick da revisão do prefeito (`ehTickDaRevisao` passou a
+  receber o período). O `guarnecer` devolvia só `{ posicoes }` e perderia o nível; agora espalha o
+  lado. `criarEscaramuca` ganhou `nivel`.
+- Tela: o configurar partida ganhou "O adversário" (`select[data-campo="nivel"]`), com os rótulos do
+  tema (`menuInicial.configurar.niveis`) e o normal marcado. A escolha leva `nivel` até o estado.
+- `validate:data`: `validarNiveisDaIA` recusa nível sem `normal`, campo que a IA não lê, número
+  inválido, e `tamanhoDoGrupo` abaixo da maior tropa de posição da escaramuça (o cenário quebraria).
+
+**Aceite** (`tests/F-IA-DIFICULDADE.test.ts`, roteiro `F-IA-DIFICULDADE`):
+- (a) escolher o normal dá o mesmo JSON que não escolher, no tick 0 e 400 ticks depois, sem o
+  campo `nivel`; os números do normal são os de hoje. O save do operador
+  (`D-SAVE-VILA-PRONTA`, montado sobre a escaramuça) continua byte a byte.
+- (b) cada nível rodado duas vezes com os mesmos comandos dá o mesmo save.
+- (c) o primeiro ataque com o jogador parado (paz de 10 min base, folga de 2 000 ticks):
+
+  ```text
+  nivel     tick do primeiro ataque   tamanho
+  facil     nao atacou                0
+  normal    3001                      9
+  dificil   3001                      12
+  ```
+
+  O tick é o mesmo no normal e no difícil: com o quartel da IA vazio, o ataque sai quando a paz
+  acaba, e o nível só muda o tamanho (BALANCE_LOG, 2026-10-03).
+- (d) o `validate:data` recusa os quatro casos (teste por tabela).
+- (e) captura `F-IA-DIFICULDADE-1-configurar-com-o-nivel` (o adversário "Difícil" ao lado da paz);
+  o Começar segurado 150 ms faz a partida nascer com `ia.1.nivel = dificil`. O save e o carregar
+  guardam o nível, e a IA o lê depois (teste headless, pelo `salvar`/`carregar` do jogo).
+
+## 2026-10-03 — Fechamento da Fase F (§13)
+
+**Rodado, nesta ordem:**
+1. `npm run verify` completo no `075e1b0`: verde (2 431 testes na suíte, 2 429 + 5 fora de propósito
+   na transladada).
+2. `npm run shot:todos` (num processo destacado, para não depender do shell): **117 roteiros, 11
+   com saída diferente de 0.** Triados um a um:
+   - **da névoa, corrigidos** (`ef3bc3c`), cada um rodado de novo sozinho e saindo 0:
+     - `C-TELA-01`, `C-TELA-04` e `D-TELA-02` miravam a vila da IA no escuro: a tropa marcha em paz
+       até vê-la, e só então vem o clique;
+     - `D-ARTE-BANDEIRA-FACCAO`: um cabra do jogador entra no save, perto do prédio da IA;
+     - `D-TELA-VENTO-VEGETACAO`: abre com o harness `?semNevoa` (`render/nevoa.ts`), que tira só a
+       camada escura da cena e do minimapa; a regra continua.
+     O que cada um afirma não mudou. `C-TELA-04` passou também a avançar a paz exatamente até o
+     fim (`pazAteTick`), porque passar do fim com a tropa no raio da defesa a deixa apanhar antes
+     do clique.
+   - **de antes da Fase F, conferidos no `3e08253`** (worktree temporária, já removida):
+     - `D-TELA-COSTURA-DOS-TILES` e `D-TELA-VEU-DOS-DETALHES`: pedem a etapa `antes` de uma corrida
+       anterior (`BUG-ROTEIRO-DE-DUAS-ETAPAS`, já aberto);
+     - `D-TELA-05c` e `D-TELA-05d`: o `verify` completo regrava os saves deles no mundo transladado
+       (`BUG-SAVE-DO-ROTEIRO-TRANSLADADO`, já aberto). Com os saves regravados pela suíte normal,
+       os dois saem 0;
+     - `D-TELA-04e`: "delta 1032192 deve ser 2211840", igual no `3e08253`. Registrado agora:
+       `BUG-ROTEIRO-04E-DELTA-DO-ATLAS`.
+   - **espera o operador:** `C-IA-03c` (a pergunta em aberto da F-COMBATE-ALVO-NA-VISTA). Com a
+     névoa ele marcha até o tile do inimigo e perde por pouco.
+   - **Não verificado:** os 117 de novo depois do `ef3bc3c`. Rodei sozinhos os 8 que o commit
+     tocou ou que dependem do que ele mudou (os 6 acima, `F-TELA-NEVOA` e `D-TELA-05c/05d`). O
+     `?semNevoa` só muda a tela quando o parâmetro está na URL.
+3. `npm run verify` completo de novo no `ef3bc3c`: verde (os mesmos números). Com ele, as chaves.
+4. `npm run test:longo` no `dd12835`: **vermelha**. O `C-IA-03b` (a partida inteira) dava a ordem de
+   ataque a qualquer militar da IA, a vista ou não, e com a névoa ela era recusada (os três prédios
+   da IA ficavam de pé). O teste passou a jogar com névoa, pelo caminho do jogo: ataca o inimigo à
+   vista; sem nenhum à vista, marcha até o tile dele (o mesmo vale para o prédio). O que ele afirma
+   não mudou: vitória, a tropa da IA morta, sobra gente. Medido: fim da paz 6 000, tropa da IA
+   morta no 6 978, vitória no 9 176, sobram 4 de 18 (antes da Fase F, sem névoa, o número não
+   estava no PROGRESS desta worktree; não comparei).
+5. `npm run test:longo`, sozinho, de novo, é a última coisa. O resultado e o hash do selo entram no commit
+   seguinte à avaliação, como pede a §13.
+
+**As chaves (`test-results.json`):**
+
+```text
+F-TERRENO-NEVOA-DESCOBERTO   o que o jogador ve e ja viu        passa
+F-COMBATE-ALVO-NA-VISTA      ordem so contra o que se ve        passa
+F-TELA-NEVOA                 a nevoa na tela, painel, minimapa  NAO: aceite (e), C-IA-03c sai 1
+F-IA-DIFICULDADE             tres niveis de adversario          passa
+```
+
+**Espera o operador:**
+- `C-IA-03c` e a margem da escaramuça: aumentar `escaramuca.tropaDoJogador`, ou mudar o que o
+  roteiro afirma (BALANCE_LOG, 2026-10-03). Decidido isso, a chave da F-TELA-NEVOA pode virar.
+- PARA REVISÃO: o raio do prédio (2) e o da torre (9); a obra que não revela; a planta no escuro,
+  que nada impede; os alfas da névoa (1,0 e 0,5); o fácil que só defende, e o difícil com o mesmo
+  tick de ataque do normal (o nível só muda o tamanho, porque o quartel da IA está vazio).
+
+**Aberto, fora da Fase F:** os três bugs de roteiro acima, cada um no `BUGS.md`.
+
+## 2026-10-03 — Fase F mesclada e Fase H detalhada (o som)
+
+- **F mesclada** (`41d74fe`), aprovada pelo operador depois de jogar a névoa ("está muito bom").
+  `verify:rapido` verde depois do merge (2 431 testes). A worktree da F foi encerrada (junction
+  desfeita antes; o `node_modules` da `main` ficou com os 104 itens) e a branch apagada.
+- **Aberto:** a chave da F-TELA-NEVOA (a névoa na tela) segue `false` pelo roteiro C-IA-03c. O
+  operador ainda não escolheu entre aumentar a tropa do jogador (`escaramuca.tropaDoJogador`) e
+  mudar o que o roteiro afirma.
+- **Fase H detalhada** no `BUILD_PLAN.md`. Decisão do operador: os sons vêm de bancos CC0, a sessão
+  lista os candidatos com link e licença, e ele aprova cada um. Leitura conservadora (PARA REVISÃO):
+  o código do som é TELA e o arquivo é ARTE, porque a lista de módulos não tem SOM.
+
 ## 2026-10-03 — D-ARTE-PIXEL-ART-CIVIS: mercadorias, carga nas mãos e as profissões civis em pixel art (TESTE)
 
 Branch `serf-pixelart`, worktree irmã. **Teste de arte; não vai para a `main` sem decisão do
@@ -18653,3 +18922,7 @@ pintada em pixel art "sem mudar os traços". No fim, o merge na `main`, que ele 
 **Defeitos vistos, não corrigidos:** o aguilhadeiro de costas perde a vara no ataque; o andar dos
 montados mexe pouco as pernas do cavalo; o ataque do aguilhadeiro para o sul encurta a vara (ela
 aponta para a câmera).
+
+**Merge na `main` (autorizado pelo operador, 2026-10-03):** a branch `serf-pixelart` foi mesclada
+com a `main` que já tinha a Fase F (névoa). O único conflito foi o PROGRESS: as duas entradas ficaram,
+a da `main` primeiro. As entradas de arte acima, marcadas como TESTE, valem agora como arte do jogo.

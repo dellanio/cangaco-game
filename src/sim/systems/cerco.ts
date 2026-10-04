@@ -31,6 +31,7 @@ import { emCargaIncontrolavel } from '../carga';
 import { semOPredio } from './demolicao';
 import { soltarRecrutas } from './quartel';
 import type { ResultadoDeSistema } from './jobs';
+import { ordemDoJogadorSemVista, predioNaVista } from '../nevoa';
 
 export type AttackBuilding = Extract<Command, { readonly type: 'AttackBuilding' }>;
 
@@ -70,6 +71,10 @@ export function motivoDaRecusaDeAtaque(
     if (u === undefined) return { motivo: 'unidade-inexistente', unidade: id };
     if (classeDaUnidade(u.tipo, dados) !== 'militar') return { motivo: 'unidade-nao-militar', unidade: id };
     if (u.lado === predio.lado) return { motivo: 'predio-do-proprio-lado', unidade: id };
+  }
+  // F-COMBATE-ALVO-NA-VISTA: por ultimo, para as recusas de antes continuarem com o motivo delas
+  if (ordemDoJogadorSemVista(state, comando.unidades, () => predioNaVista(state, comando.predio, dados))) {
+    return { motivo: 'alvo-fora-da-vista', unidade: null };
   }
   return null;
 }

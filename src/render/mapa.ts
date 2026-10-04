@@ -10,8 +10,10 @@ import { TERRENOS_DE_MAPA } from '../sim/data/terrenos';
 import type { TerrenoDeMapa } from '../sim/data/types';
 import { tipoDoTile } from '../sim/mapa';
 import temaSertao from '../../data/theme-sertao.json';
+import dadosDoTerreno from '../../data/terrain.json';
 
 import type { DadosDaCamera } from '../input/navegacao';
+import type { CoresDaNevoa } from './nevoa';
 
 export interface ConfigDoMapa {
   readonly tilePx: number;
@@ -27,10 +29,14 @@ export interface ConfigDoMapa {
    *  mesmo funil do zoom: nenhum outro arquivo de `render/` (nem `input/`)
    *  importa `sim/data` para ler isto. */
   readonly camera: DadosDaCamera;
+  /** F-TELA-NEVOA — a cor e os alfas da nevoa, de `data/terrain.json`. Dado de render. */
+  readonly nevoa: CoresDaNevoa;
 }
 
 export function criarConfigDoMapa(): ConfigDoMapa {
   const { tilePx, mapaPadrao, zoom, camera } = gameData.terreno;
+  // F-TELA-NEVOA: bloco so de render, lido do arquivo como o tema; a sim nao o carrega
+  const { nevoa } = dadosDoTerreno;
   return {
     tilePx,
     largura: mapaPadrao.largura,
@@ -43,6 +49,7 @@ export function criarConfigDoMapa(): ConfigDoMapa {
       aceleracaoPxPorSegundo2: camera.aceleracaoPxPorSegundo2,
       tetoPxPorSegundo: camera.tetoPxPorSegundo,
     },
+    nevoa: { cor: nevoa.cor, alfaNaoDescoberto: nevoa.alfaNaoDescoberto, alfaForaDaVista: nevoa.alfaForaDaVista },
   };
 }
 

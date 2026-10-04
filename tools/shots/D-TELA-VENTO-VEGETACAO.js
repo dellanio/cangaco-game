@@ -1,4 +1,5 @@
 'use strict';
+const { URL } = require('node:url');
 
 const { retanguloDoCanvas } = require('./_canvas');
 const mapa = require('../../data/maps/sertao-128.json');
@@ -33,6 +34,10 @@ function vistaMaisCheia() {
 }
 
 async function roteiro({ page, capturar, estado, afirmar }) {
+  // F-TELA-NEVOA: a vista mais cheia de arvore fica longe da vila, na nevoa. O roteiro mede o
+  // vento, nao a nevoa: abre com o harness `semNevoa`, que tira so a camada escura da tela.
+  await page.goto(new URL('/?pausado&semNevoa', page.url()).href);
+  await page.waitForFunction(() => Boolean(window.__cangaco && window.__cangaco.pronto));
   const canvas = await retanguloDoCanvas(page);
   const mato = vistaMaisCheia();
   afirmar(mato.n > 0, 'o mapa precisa ter arvores para a captura');

@@ -8235,10 +8235,74 @@ militares em `data/units.json` e a decisão de que **a IA ignora a névoa**
 
 ## Fase G — Animação das unidades (outra sessão, ComfyUI; fora desta fila)
 
-## Fase H — O som (só escopo; detalha quando a F fechar)
-Uma camada de áudio no render que consome `state.events`. Os efeitos do GDD §10, o ambiente do
-§9.8 (vento seco, cigarra, sino da bodega) e a música da paz e do combate. A tela de opções nasce
-aqui, com o volume. O som entra por decisão humana, como a arte (§9).
+## Fase H — O som
+
+A F fechou e foi mesclada (`41d74fe`, 2026-10-03, aprovada pelo operador depois de jogar). O som
+entra por decisão humana, como a arte (§9). **Decisão do operador (2026-10-03): os sons vêm de
+bancos livres com licença CC0 (Freesound, OpenGameArt e afins), a sessão lista os candidatos com o
+link e a licença, e o operador aprova cada um.** Nenhum som entra sem a aprovação dele.
+
+O código não espera o som: **som que falta é silêncio**, como o placeholder da arte. A H entrega a
+camada de som inteira com silêncio, e os arquivos entram à medida que o operador aprova.
+
+Módulos: o código é TELA (o render toca, a interface mostra o volume); o arquivo de som é ARTE (o
+asset em si, com entrada no `assets/manifest.json`), por ser a leitura mais próxima da lista
+fechada. Módulo próprio para som é decisão do operador (PARA REVISÃO).
+
+### H-ARTE-SONS-CANDIDATOS — A lista de sons para o operador aprovar
+- **Escopo:** `docs/sons-candidatos.md`, com uma linha por som que a H usa (os efeitos do GDD §10,
+  o ambiente do §9.8 e as duas músicas): o id neutro do som, o evento ou a situação que o toca, de 1
+  a 3 candidatos com link, autor e licença conferida na página, e uma coluna "aprovado" vazia, que
+  só o operador preenche. A sessão **não baixa** nada nesta etapa.
+- **Aceite:** (a) todo id da tabela de eventos da H-TELA-CAMADA-DE-SOM tem pelo menos um candidato;
+  (b) todo candidato tem licença CC0 conferida na página, com o link; (c) o arquivo está no git e o
+  PROGRESS registra que ele espera o operador.
+
+### H-TELA-CAMADA-DE-SOM — O render toca os eventos da sim
+- **Escopo:** a camada de som em `src/render/`, que lê `state.events` depois de cada `step` (como o
+  render já lê) e toca o som do evento. A tabela evento → id de som fica em `data/som.json`, que a
+  `sim/` nunca lê. Os primeiros eventos: `building-completed`, `goods-produced`, `unit-trained`,
+  `unit-struck`, `unit-killed`, `projectile-fired`, `stone-thrown`, `building-attacked`,
+  `peace-ended`, `match-ended`, `command-rejected`, e a planta posicionada (que vem do input, sem
+  evento). Som que não existe no manifesto é silêncio, sem erro de console. O mesmo evento repetido
+  no mesmo quadro toca uma vez (teto por id, no dado). Evento de fora da vista do jogador (a névoa
+  da F) não toca. A velocidade de jogo não muda o som.
+- **Aceite:**
+  - (a) a função pura "eventos do tick → sons a tocar" por tabela: o mapeamento, o teto por quadro,
+    o evento fora da vista que não toca e o id sem arquivo que vira silêncio;
+  - (b) nenhum import de `src/render/` ou de áudio em `src/sim/`, e a `sim/` não lê `data/som.json`
+    (guarda estrutural, pelo grafo de import);
+  - (c) roteiro com a partida andando e todo som faltando: zero erro de console, e o contador de sons
+    pedidos (exposto ao roteiro) maior que zero;
+  - (d) o `validate:data` recusa evento que a sim não emite e id de som fora do manifesto, quando o
+    manifesto tiver o som.
+
+### H-TELA-OPCOES-E-VOLUME — A tela de opções
+- **Escopo:** a tela de opções, aberta pelo menu inicial (E-TELA-MENU-INICIAL) e pela ajuda em jogo,
+  com o volume geral, dos efeitos, do ambiente e da música, e o mudo. A escolha fica no
+  `localStorage`, fora do save da partida. Rótulos em `data/theme-sertao.json`.
+- **Aceite:** (a) a regra pura do volume efetivo (geral × canal, mudo zera) por tabela; (b) o volume
+  sobrevive a recarregar a página e não entra no save (o estado salvo é igual com e sem mudar o
+  volume); (c) roteiro: abrir pelo menu e pelo jogo, mexer no volume (despausado, 150 ms, §8) e
+  screenshot.
+
+### H-TELA-AMBIENTE-E-MUSICA — O sertão de fundo
+- **Escopo:** o ambiente em laço (vento seco, cigarra), que segue a câmera; o sino da bodega quando
+  a Bodega está na vista; a música da paz e a do combate, trocadas com transição suave pelo estado
+  (a paz da E, a luta perto da vila do jogador). Tudo em silêncio enquanto o arquivo não existe.
+- **Aceite:** (a) a regra pura "estado → faixa de música" por tabela (paz, combate perto, combate
+  longe, fim de partida); (b) a troca não corta no meio: a transição tem duração no dado; (c) o
+  roteiro mede, pelo contador, que o ambiente toca no jogo e para no menu.
+
+### H-ARTE-SONS-APROVADOS — Os sons aprovados entram no jogo
+- **Escopo:** depois da aprovação do operador no `docs/sons-candidatos.md`, os sons aprovados são
+  baixados, convertidos para o formato que o build serve, e entram em `assets/sons/` e no
+  `assets/manifest.json` com `licença` e `origem` (o link). **Este item espera o operador** e só
+  começa com a coluna "aprovado" preenchida. Sem ela, a sessão registra no PROGRESS e fecha a fase
+  com ele aberto.
+- **Aceite:** (a) todo som do manifesto tem licença CC0 e o link; (b) nenhum som sem aprovação no
+  `docs/sons-candidatos.md`; (c) o build (E-ENTREGA-BUILD) leva os sons, e o tamanho deles vai para
+  o PROGRESS como medida.
 
 ## Fase I — Para quem nunca jogou (só escopo; detalha quando a H fechar)
 A partida guiada, as dicas na primeira vez e a ajuda com as cadeias e as teclas. Depois, o

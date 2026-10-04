@@ -646,5 +646,17 @@
   },
   "E-ENTREGA-PUBLICACAO-link-no-itch": {
     "passes": false
+  },
+  "F-TERRENO-NEVOA-DESCOBERTO-o-que-o-jogador-ve": {
+    "passes": true
+  },
+  "F-COMBATE-ALVO-NA-VISTA-ordem-so-na-vista": {
+    "passes": true
+  },
+  "F-TELA-NEVOA-nevoa-na-tela": {
+    "passes": false
+  },
+  "F-IA-DIFICULDADE-tres-niveis": {
+    "passes": true
   }
 }

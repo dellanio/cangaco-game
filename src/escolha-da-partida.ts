@@ -15,6 +15,7 @@
 import { createInitialState } from './sim/state';
 import type { GameState } from './sim/state';
 import { criarEscaramuca } from './sim/cenario';
+import { NIVEL_PADRAO } from './sim/ia';
 import type { GameData } from './sim/data/types';
 import { gameData } from './sim/data';
 import { lerGaveta, lerUltimoSave } from './arquivo-da-partida';
@@ -23,7 +24,7 @@ import type { Gaveta, LeituraDoSave, NumeroDaGaveta } from './arquivo-da-partida
 export type EscolhaDaPartida =
   | { readonly modo: 'livre' }
   /** E-TELA-CONFIGURAR-PARTIDA — a paz escolhida, em minutos base do dado; ausente, o padrao. */
-  | { readonly modo: 'escaramuca'; readonly pazMinBase?: number }
+  | { readonly modo: 'escaramuca'; readonly pazMinBase?: number; readonly nivel?: string }
   /** O ultimo save (o Continuar do menu). */
   | { readonly modo: 'continuar' }
   /** E-SAVE-GAVETAS — uma gaveta escolhida no Carregar. */
@@ -50,7 +51,11 @@ export type PartidaNova = Extract<EscolhaDaPartida, { readonly modo: 'livre' | '
 export function estadoNovo(escolha: PartidaNova, dados: GameData = gameData): GameState {
   const semente = dados.economia.estadoInicial.semente;
   if (escolha.modo === 'livre') return createInitialState(semente, dados);
-  return criarEscaramuca(semente, dados, escolha.pazMinBase === undefined ? {} : { pazMinBase: escolha.pazMinBase });
+  return criarEscaramuca(semente, dados, {
+    ...(escolha.pazMinBase === undefined ? {} : { pazMinBase: escolha.pazMinBase }),
+    // F-IA-DIFICULDADE: o nivel do adversario; ausente, o normal
+    ...(escolha.nivel === undefined ? {} : { nivel: escolha.nivel }),
+  });
 }
 
 /** E-TELA-CONFIGURAR-PARTIDA — as opcoes da paz como a tela as mostra: o valor do dado (o que volta
@@ -68,6 +73,17 @@ export function opcoesDePazNaTela(dados: GameData = gameData): OpcaoDePazNaTela[
     segundos: o.ticks / dados.tempo.tickHz,
     padrao: o.minBase === dados.escaramuca.peacetime_min_base,
   }));
+}
+
+/** F-IA-DIFICULDADE — os niveis do adversario como a tela os mostra: a chave do dado (o que volta
+ *  na escolha), na ordem de `combat.json: ia.niveis`, e qual e o padrao. O menu nao le `sim/data`. */
+export interface OpcaoDeNivelNaTela {
+  readonly valor: string;
+  readonly padrao: boolean;
+}
+
+export function opcoesDeNivelNaTela(dados: GameData = gameData): OpcaoDeNivelNaTela[] {
+  return Object.keys(dados.combate.niveisDaIA).map((valor) => ({ valor, padrao: valor === NIVEL_PADRAO }));
 }
 
 /** O estado de cada escolha: a partida nova, o ultimo save ou uma gaveta (que podem ser recusados). */

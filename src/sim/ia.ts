@@ -3,7 +3,7 @@
  * membro de que posicao, e quem esta no raio. O sistema (`systems/ia.ts`) so compoe.
  */
 import type { GameState, PosicaoDeDefesa, TipoDeGrupo, Unidade } from './state';
-import type { GameData } from './data/types';
+import type { GameData, NumerosDaIA } from './data/types';
 import { gameData } from './data';
 import { defDaTropa, distanciaEmTiles } from './combate';
 
@@ -33,4 +33,19 @@ export function intrusos(state: GameState, posicao: PosicaoDeDefesa, lado: numbe
     .map((u, i) => ({ u, i, d: distanciaEmTiles(posicao.ponto, u) }))
     .sort((a, b) => a.d - b.d || a.i - b.i)
     .map(({ u }) => u);
+}
+
+/** F-IA-DIFICULDADE — o nivel que vale quando o estado nao diz nenhum. */
+export const NIVEL_PADRAO = 'normal';
+
+/**
+ * F-IA-DIFICULDADE — os numeros que a IA do `lado` le, pelo nivel guardado no estado (ausente,
+ * `normal`, o jogo de hoje). Nivel que o dado nao tem e erro: o configurar partida so oferece
+ * os do dado, e o save guarda um deles.
+ */
+export function numerosDaIA(state: GameState, lado: number, dados: GameData = gameData): NumerosDaIA {
+  const nivel = state.ia?.[String(lado)]?.nivel ?? NIVEL_PADRAO;
+  const numeros = dados.combate.niveisDaIA[nivel];
+  if (numeros === undefined) throw new Error(`ia: o nivel '${nivel}' nao esta em combat.json ia.niveis`);
+  return numeros;
 }

@@ -21,6 +21,7 @@ import type { EstagioDaCultura } from './crescimento';
 import type { ItemDeFila } from '../sim/state';
 import { ATALHOS, GESTOS } from '../input/atalhos';
 import { custoZerado, type CustoDoQuadro } from './custo-do-quadro';
+import type { ResumoDaNevoa } from './nevoa';
 
 /** O recorte de um predio que o roteiro le. Nao e `Predio`: so o que a tela
  *  precisa afirmar, para a ponte nao virar copia do GameState. */
@@ -36,6 +37,9 @@ export interface PredioNoDebug {
   readonly hp: number;
   readonly pausado: boolean;
   readonly ocupante: string | null;
+  /** F-TELA-NEVOA — o jogador ve o predio agora. O inimigo fora da vista fica aqui (o roteiro
+   *  e harness e sabe onde ele esta), mas a tela nao o desenha nem o deixa clicar. */
+  readonly naVista: boolean;
 }
 
 /** F-VIVO-a — uma pilha desenhada, como o roteiro a le. */
@@ -310,6 +314,9 @@ export interface EstadoDebug {
   arvoresDoVentoNaVista: Readonly<Record<string, { readonly especie: string; readonly anguloGraus: number }>>;
   custo: CustoDoQuadro;
   zerarCusto: () => void;
+  /** F-TELA-NEVOA — os tiles que a textura da nevoa deixou visiveis, esmaecidos e escuros, do
+   *  ultimo estado que ela pintou (`null` antes do primeiro). */
+  nevoa: ResumoDaNevoa | null;
   /** Controle de medicao do render; nao altera o estado da sim. */
   ligarVento: (ligado: boolean) => void;
   /** Quantos tiles de estrada DE PE (F08) a cena tem desenhados agora. */
@@ -484,6 +491,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     arvoresDoVentoNaVista: {},
     custo: custoZerado(),
     zerarCusto: () => { estado.custo = custoZerado(); },
+    nevoa: null,
     ligarVento: () => undefined,
     estradasRenderizadas: 0,
     estradasPlanejadasRenderizadas: 0,

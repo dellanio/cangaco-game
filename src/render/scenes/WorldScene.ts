@@ -27,6 +27,7 @@ import type { Tile } from '../grid';
 import { publicarEstadoDebug } from '../debug';
 import { terrenoRecebeDetalhe } from '../detalhes-do-terreno';
 import { somarCusto } from '../custo-do-quadro';
+import { nevoaNaTela, PROFUNDIDADE_DA_NEVOA, prediosInimigosForaDaVista, resumoDaNevoa, texturaDaNevoa } from '../nevoa';
 import { criarCamadaDeRelevo } from '../camada-de-relevo';
 import { arvoreNaVista, balancaVegetacao, especieDoTile, quadroDoVentoMudou, transformacaoDoVento } from '../vento';
 import type { LuzDoRelevo } from '../camada-de-relevo';
@@ -92,6 +93,9 @@ import { LADO_DA_UNIDADE_EM_TILES as LADO_DO_SOLDADO } from '../grid';
 import type { UnidadeDesenhada } from '../acerto';
 import type { SelecaoMilitar } from '../../input/selecao-militar';
 import { mascaraCardinal, VIZINHOS_CARDINAIS } from '../mascara-cardinal';
+
+/** F-TELA-NEVOA — a chave da textura da nevoa no TextureManager. */
+const CHAVE_DA_NEVOA = 'nevoa-do-jogador';
 
 const CHAVE_TEXTURA_TERRENO = 'tiles-terreno';
 const ESTADOS_DO_TERRENO = [ESTADO_DO_TERRENO, 'v1', 'v2', 'v3'] as const;
@@ -391,6 +395,17 @@ export class WorldScene extends Phaser.Scene {
     const carregada: TexturaCarregada = (chave) => this.textures.exists(chave);
     const texturaDoTerreno = this.criarTexturaDeTerreno(tilePx, carregada, estado);
     const camadaChao = this.criarTilemap(tilePx, largura, altura, texturaDoTerreno);
+    // F-TELA-NEVOA: um pixel por tile, esticado com filtro linear (a borda da vista vira degrade
+    // de um tile), acima do mundo e abaixo dos nomes e da selecao. Repinta so quando o estado muda.
+    if (this.textures.exists(CHAVE_DA_NEVOA)) this.textures.remove(CHAVE_DA_NEVOA);
+    const texturaDaNevoaNaCena = this.textures.createCanvas(CHAVE_DA_NEVOA, largura, altura);
+    if (texturaDaNevoaNaCena === null) throw new Error('nevoa: o Phaser nao criou a textura');
+    texturaDaNevoaNaCena.setFilter(Phaser.Textures.FilterMode.LINEAR);
+    this.add.image(0, 0, CHAVE_DA_NEVOA).setOrigin(0, 0)
+      .setDisplaySize(largura * tilePx * ESCALA_DO_MUNDO, altura * tilePx * ESCALA_DO_MUNDO).setDepth(PROFUNDIDADE_DA_NEVOA)
+      .setVisible(nevoaNaTela(window.location.search));
+    const pixelsDaNevoa = new Uint8ClampedArray(largura * altura * 4);
+    let estadoDaNevoa: GameState | null | undefined;
     const aguaAnimada = !new URLSearchParams(window.location.search).has('aguaDesligada');
     let ultimoTickDaAgua: number | null = null;
     let ultimaVistaDaAgua = '';
@@ -725,6 +740,20 @@ export class WorldScene extends Phaser.Scene {
       });
     }
       estado.custo = somarCusto(estado.custo, 'agua', inicioDaAgua, celulasDaAguaTrabalhadas, agora);
+      // F-TELA-NEVOA: so o estado ATUAL da ponte (a visao e cacheada por ele), e so quando ele muda
+      const inicioDaNevoa = agora();
+      let tilesDaNevoa = 0;
+      if (this.ponte.atual !== estadoDaNevoa) {
+        estadoDaNevoa = this.ponte.atual;
+        if (estadoDaNevoa !== null) {
+          texturaDaNevoa(estadoDaNevoa, configDoMapa.nevoa, configDoMapa, pixelsDaNevoa);
+          texturaDaNevoaNaCena.context.putImageData(new ImageData(pixelsDaNevoa, largura, altura), 0, 0);
+          texturaDaNevoaNaCena.refresh();
+          tilesDaNevoa = largura * altura;
+          estado.nevoa = resumoDaNevoa(pixelsDaNevoa, configDoMapa.nevoa);
+        }
+      }
+      estado.custo = somarCusto(estado.custo, 'nevoa', inicioDaNevoa, tilesDaNevoa, agora);
       estado.terrenoVisivel = this.contarTerrenoVisivel(camadaChao);
       // F-T2a: a camada de recurso se repinta do ESTADO a cada frame (por diff),
       // e nao uma vez no create como a de terreno. E a diferenca que o item pede:
@@ -1772,9 +1801,11 @@ export class WorldScene extends Phaser.Scene {
       for (const grafico of memoria.pool) grafico.setVisible(false);
       for (const grafico of memoria.poolFagulha) grafico.setVisible(false);
     }
+    const foraDaVista = prediosInimigosForaDaVista(jogo);
     for (const id of jogo.predios.ordem) {
       const predio = jogo.predios.porId[id];
-      if (predio === undefined) continue;
+      // F-TELA-NEVOA: a chamine do inimigo fora da vista nao fuma na tela
+      if (predio === undefined || foraDaVista.has(id)) continue;
       const ancora = DADOS_DO_TRABALHO.ancoras[predio.tipo]?.trabalho?.fumaca;
       if (ancora === undefined) continue;
       const fogo = DADOS_DO_TRABALHO.ancoras[predio.tipo]?.trabalho?.fogo;
@@ -1876,6 +1907,8 @@ export class WorldScene extends Phaser.Scene {
       }
     }
     const porEstagio = contagemDeEstagios();
+    // F-TELA-NEVOA: o predio inimigo fora da vista nao se desenha (GDD 6.5, nivel de regra)
+    const foraDaVista = prediosInimigosForaDaVista(estadoDoJogo);
     // F16b: o recorte cru do estado para o roteiro. Montado aqui porque este laco
     // ja percorre `predios.ordem` — e e `ordem`, nunca `Object.keys` (contrato da
     // F05a). Nao entra em sprite: e ponte de harness, nao estado guardado no render.
@@ -1913,6 +1946,7 @@ export class WorldScene extends Phaser.Scene {
         hp: predio.hp,
         pausado: predio.estado === 'completo' ? predio.pausado : false,
         ocupante: predio.estado === 'completo' ? predio.ocupante : null,
+        naVista: !foraDaVista.has(id),
       };
       const aparencia = aparenciaDoPredio(predio.tipo);
       // F17d: o canteiro so existe para obra, como o medidor — predio completo nao
@@ -2049,6 +2083,7 @@ export class WorldScene extends Phaser.Scene {
         ),
       });
     }
+    for (const [id, item] of this.desenhados) item.objeto.setVisible(!foraDaVista.has(id));
     debug.prediosRenderizados = this.desenhados.size;
     debug.prediosDoEstado = doEstado;
     // F11c: um predio 'completo' tem hp === hpTotal, entao estagio 'completo' aqui NAO

@@ -20,6 +20,7 @@ import { aplicarAttackUnit, sistemaDoCombate } from './systems/combate';
 import { sistemaDaTorre } from './systems/torre';
 import { sistemaDaIA } from './systems/ia';
 import { resultadoDaPartida } from './partida';
+import { avancarNevoa } from './nevoa';
 import { aplicarSetTrade, sistemaDaFeira } from './systems/feira';
 import { aplicarHireMercenary } from './systems/prefeitura';
 import { sistemaDosProjeteis } from './systems/projeteis';
@@ -291,7 +292,7 @@ export function step(
     }
   }
 
-  return {
+  const novo: GameState = {
     tick,
     rng: atual.rng,
     events,
@@ -325,5 +326,10 @@ export function step(
     ...(atual.projeteis === undefined ? {} : { projeteis: atual.projeteis }),
     // D-TRANSPORTE-02a: o limite do menu de distribuicao, so quando o jogador mudou algum
     ...(atual.distribuicao === undefined ? {} : { distribuicao: atual.distribuicao }),
+    // F-TERRENO-NEVOA-DESCOBERTO: so um comando nao o toca; a nevoa liga os bits logo abaixo
+    ...(atual.descoberto === undefined ? {} : { descoberto: atual.descoberto }),
   };
+  // F-TERRENO-NEVOA-DESCOBERTO: a visao anda do estado de entrada para o de saida, mexendo so
+  // em quem mudou, e o tile que acendeu vira descoberto (sim/nevoa.ts)
+  return avancarNevoa(state, novo, dados);
 }
