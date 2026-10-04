@@ -627,10 +627,10 @@
     "passes": true
   },
   "D-TELA-COSTURA-DOS-TILES-extrusao-da-tira": {
-    "passes": false
+    "passes": true
   },
   "D-TELA-VEU-DOS-DETALHES-veu-fora-da-arte": {
-    "passes": false
+    "passes": true
   },
   "E-TELA-MENU-INICIAL-a-porta-do-jogo": {
     "passes": true
