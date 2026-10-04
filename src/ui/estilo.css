@@ -363,6 +363,9 @@ body:not([data-corpo="opcoes"]) #opcoes { display: none; }
   font: 14px/1.35 var(--fonte-corpo);
 }
 #partida-guiada[hidden] { display: none; }
+/* Como a dica: o mapa embaixo da faixa continua recebendo o mouse; so o botao a recebe. */
+#partida-guiada { pointer-events: none; }
+#partida-guiada button { pointer-events: auto; }
 #partida-guiada .contagem {
   grid-column: 1; font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--terra-queimada);
 }
@@ -972,6 +975,11 @@ body[data-menu] #ajuda { z-index: 30; }
   font: 14px/1.35 var(--fonte-corpo);
 }
 #dica[hidden] { display: none; }
+/* A caixa fica por cima do mapa: o arrasto da caixa de selecao e o clique no chao passam por
+   ela (medido: a dica de fome sobre as cabras engoliu a caixa do roteiro C-COMIDA-01d). So os
+   botoes recebem o mouse. */
+#dica { pointer-events: none; }
+#dica button { pointer-events: auto; }
 #dica .titulo {
   display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--terra-queimada);
 }

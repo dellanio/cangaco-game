@@ -673,5 +673,17 @@
   },
   "H-ARTE-SONS-APROVADOS-sons-no-jogo": {
     "passes": true
+  },
+  "I-TELA-PARTIDA-GUIADA-aprender-a-jogar": {
+    "passes": true
+  },
+  "I-TELA-DICAS-NA-PRIMEIRA-VEZ-o-jogo-explica": {
+    "passes": true
+  },
+  "I-TELA-AJUDA-DAS-CADEIAS-aba-cadeias": {
+    "passes": true
+  },
+  "I-ENTREGA-PLAYTEST-gente-de-fora-joga": {
+    "passes": false
   }
 }

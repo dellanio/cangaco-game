@@ -41,16 +41,16 @@ async function roteiro(ctx) {
   afirmar(await page.isVisible('#ajuda .aba[data-aba="cadeias"]'), 'a aba Cadeias deveria abrir no aperto');
   afirmar(await page.isHidden('#ajuda .aba[data-aba="controles"]'), 'a aba dos controles deveria fechar');
   afirmar((await page.textContent('#ajuda h2')) === tema.ajuda.cadeias.titulo, 'o titulo deveria seguir a aba');
-  const naTela = await page.$$eval('#ajuda .cadeia', (ns) => ns.map((n) => n.dataset.predio));
+  const naTela = await page.$$eval('#ajuda .cadeia', (ns) => ns.map((n) => n.dataset.cadeia));
   const noDado = Object.keys(producao.predios);
   afirmar(
     JSON.stringify([...naTela].sort()) === JSON.stringify([...noDado].sort()),
     `a aba deveria ter uma linha por receita do dado: ${naTela.length} na tela, ${noDado.length} no dado`,
   );
-  const trava = await page.$eval('#ajuda .cadeia[data-predio="sawmill"] .requer', (n) => (n.hidden ? null : n.textContent));
+  const trava = await page.$eval('#ajuda .cadeia[data-cadeia="sawmill"] .requer', (n) => (n.hidden ? null : n.textContent));
   const esperada = `${tema.menuBuild.requer} ${tema.predios.woodcutters.nome}`;
   afirmar(trava === esperada, `a serraria bloqueada deveria dizer '${esperada}', veio '${trava}'`);
-  const livre = await page.$eval('#ajuda .cadeia[data-predio="woodcutters"] .requer', (n) => n.hidden);
+  const livre = await page.$eval('#ajuda .cadeia[data-cadeia="woodcutters"] .requer', (n) => n.hidden);
   afirmar(livre, 'a casa do lenhador, liberada, nao deveria mostrar requer');
   await capturar('aba-cadeias');
 
