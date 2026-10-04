@@ -8,7 +8,7 @@ import { gameData } from '../../src/sim/data';
 import type { GameData } from '../../src/sim/data/types';
 import type { GameState } from '../../src/sim/state';
 import { custoDoPasso } from '../../src/sim/pathfinding';
-import { menorProgresso } from '../../src/sim/colisao';
+import { ehPassoDeLado, menorProgresso } from '../../src/sim/colisao';
 import { MERCADORIA_DA_ESTRADA } from '../../src/sim/estradas';
 
 export const ESTADOS_DO_SERF = ['ocioso', 'indo_buscar', 'carregando', 'indo_entregar', 'entregando', 'devolvendo'] as const;
@@ -38,7 +38,8 @@ export function violacoesDaFsm(estado: GameState, dados: GameData = gameData): s
 
     switch (u.fsm) {
       case 'ocioso':
-        if (Object.keys(dadosDaFsm).length > 0) v.push(`${id}: ocioso com fsmData nao vazio (${JSON.stringify(dadosDaFsm)})`);
+        // I-MOVIMENTO-FILA-DE-CIVIS: vazio, ou o passo de lado do empurrao (`ehPassoDeLado`, o da sim)
+        if (!ehPassoDeLado(dadosDaFsm)) v.push(`${id}: ocioso com fsmData nao vazio (${JSON.stringify(dadosDaFsm)})`);
         if (suas.length > 0) v.push(`${id}: ocioso mas a tarefa ${suas[0]} e dele`);
         break;
       case 'indo_buscar':

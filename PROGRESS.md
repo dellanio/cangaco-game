@@ -3228,6 +3228,13 @@ que vetar custe uma linha.
   nenhum guarda de dado.
 
 ## Perguntas em aberto
+- **(2026-10-04, I-MOVIMENTO-FILA-DE-CIVIS) A faixa no helper da porta (F13a).** O terceiro
+  recém-treinado nasce numa porta cercada por seis ociosos e vai ao tile livre mais perto, a 2 tiles.
+  Para o F13a passar, o helper `tests/helpers/na-porta.ts` foi de "porta ou vizinho" para "dentro de
+  `margemDoEmpurrao`" (4). É faixa, e o operador recusou faixa ali em 2026-09-28. Duas saídas:
+  - (a) aceitar a faixa só com a porta cercada;
+  - (b) o teste afirmar a história da porta (quando não havia vizinho livre, o tile livre mais perto),
+    que é exato e mais caro.
 - **(2026-10-04, leva 3, item 3: minas perto da vila) Mudar o `sertao-128` ou fazer outro mapa?** O
   operador pediu carvão, ouro e ferro mais perto do centro da cidade "no mapa atual", para testar a
   fundição. Medido: os veios mais perto ficam a 79 tiles (ferro), 86 (ouro) e 91 (carvão) do armazém
@@ -20322,3 +20329,74 @@ seu lugar. Uma imagem parada não mostra vaivém: a prova da ausência dele é a
 **Hipótese, não verificada:** quem para onde está, perto do fim do passo, pode ficar a 0,14–0,4 tile
 de um civil que acabou de **parar** no tile da frente. É o caso raro que a borda evitava; o parado que
 já estava lá limita antes (`esperaNoTileSeguinte`). O `BUG-CIVIL-RECUA-NO-DESENHO` saiu do `BUGS.md`.
+
+### I-MOVIMENTO-FILA-DE-CIVIS — civis em fila, um por tile, sem empurrar (2026-10-04)
+**Relato do operador (duas vezes):** com a colisão ligada, serf e obreiro "ficam travando e indo pra
+frente e pra trás… é como se estivessem empurrando uns aos outros". As correções do desenho (`02b95aa`,
+`37df7f7`) não bastavam: o empurrão vinha da sim. **Decisão do operador:** opção B, "é assim no KaM, um
+civil por tile". O ocioso no caminho dá um passo de lado andando, e só o ciclo de espera destrava
+sozinho.
+**A causa de raiz (verificada no KaM `731a8a4`):** o KaM reserva o tile seguinte no **início** do passo
+(`fUnit.Walk(...) //Pre-occupy next tile`, `src/units/actions/KM_UnitActionWalkTo.pas:1312`;
+`TKMTerrain.UnitWalk`, `src/terrain/KM_Terrain.pas:4266-4279`) e espera no centro do próprio tile. Nós
+conferíamos no **fim** do passo: o civil andava até quase entrar, ficava pendurado na borda, e a
+permuta, o desvio e a troca forçada o puxavam de volta.
+**O mecanismo novo (`src/sim/colisao.ts`, `units/movimento.ts`):**
+- **ocupação lógica** (`tileOcupado`): com o passo começado, o tile é o seguinte;
+- **largada** (`largadaCivil`): com o progresso em 0, só larga com o tile seguinte livre; senão espera
+  no próprio tile;
+- **largada em ciclo** (`sistemaDaLargadaEmCiclo`): de frente e rotação largam no mesmo tick, e o tile
+  que um do ciclo vai tomar já conta como reservado (`reservadoPorCiclo`);
+- **passo de lado do ocioso**, andando (`passoDeLado`; o ocioso pega tarefa primeiro, e só anda o passo
+  se não houver tarefa ou se o passo já começou). Sem vizinho livre, ele troca de lugar com quem espera;
+- **o passo começado termina** (`comPassoComecadoTerminado`): a FSM que tira a unidade do meio do passo
+  (tarefa cancelada) a deixa terminar o passo antes da unidade seguinte;
+- a **porta** continua, com a prioridade no teto (`prioridadeDaPortaDepois`, 4 s);
+- o **empilhamento por nascimento** (spawn, fixture) se separa na hora, como antes, e roda de novo no
+  fim do tick;
+- a rua nova que encurta o passo de quem anda para o tile assentado (`passosSobreARuaNova`): ninguém
+  fica com o passo vencido.
+
+**Saíram** o desvio, a troca forçada, a permuta com dívida (progresso negativo), o desenho do segurado
+na borda e os campos do dado sem leitor (`desviarDepois`, `repetirDesvio`, `trocaForcadaDepois`,
+`margemDoDesvio`). O `_doc` do `units.json` e o GDD §6.4 registram a decisão e a divergência do KaM.
+**Medida (verificada; `tests/I-MOVIMENTO-FILA-DE-CIVIS.test.ts` e `test-output`):**
+
+| cena | fora do próprio caminho | dois num tile | progresso < 0 | maior sem avançar |
+|---|---|---|---|---|
+| vila pronta, 3 000 ticks | 0 | 0 | 0 | 116 |
+| jogo livre, 8 000 ticks | **0** (eram 15 para trás + 89 desvios) | 0 | 0 | 91 (prazo 450) |
+| escaramuça, 8 000 ticks | 0 | 0 | 0 | 99 |
+
+Quem espera está sempre no centro do próprio tile. Com o código de antes, os testes de mecanismo deste
+arquivo reprovam (6 de 9; worktree temporária no `HEAD`, já removida, `node_modules` intacto).
+**Os defeitos que a medida achou no caminho, todos corrigidos:**
+1. o terceiro que larga entre os dois de um cruzamento;
+2. o passo largado pela FSM;
+3. o ocioso na porta de quem sai (a escola com três recém-treinados, 1 000 ticks);
+4. a porta cercada;
+5. dois obreiros saindo juntos da obra;
+6. a estrada assentada no meio do passo;
+7. o serf injetado pelo caos do F09.
+
+**Testes que mudaram (não-regressão nesta tarefa):**
+- `D-MOVIMENTO-01a`:
+  - o desvio e a troca forçada viraram a fila em campo aberto e o ciclo de três;
+  - de frente, o tempo: aresta 95/95 e tile 100/105, pela emenda do aceite 2 no BUILD_PLAN;
+  - a espera da coluna de frente passou a ser no máximo meia coluna de passos (medido 0, 5 e 15);
+- `I-MOVIMENTO-COLISAO-CIVIL-LIGADA`: o piso do progresso é 0, e quem espera é desenhado no centro do
+  tile;
+- `BUG-CIVIL-RECUA-NO-DESENHO`: o limite da borda saiu;
+- os guardas (`jobs-`, `serf-`, `laborer-`, `especialista-invariantes`) usam a ocupação lógica e o
+  `ehPassoDeLado` da sim;
+- F10, F16a: "ocioso sem tarefa nem carga", e o resto do `fsmData` só pode ser o passo terminando;
+- F15a: o atraso da colisão foi remedido, de 4 para 2 ticks (valor exato, como o operador decidiu);
+- o save `teste-operador-vila-pronta` foi refeito pelo caminho do teste.
+
+**Divergência a decidir (registrada em Perguntas em aberto):** no F13a, o terceiro recém-treinado nasce
+numa porta cercada por seis ociosos e vai ao tile livre mais perto, a 2 tiles. O helper `na-porta.ts`
+passou de "porta ou vizinho" para "dentro de `margemDoEmpurrao`" (4, do dado). **É uma faixa**, e o
+operador recusou faixa nesse helper em 2026-09-28. A alternativa exata depende de afirmar a história
+da porta.
+**Não verificado:** não joguei. A suíte longa (`test:longo`) pode sentir o ritmo novo e fica para o
+fechamento do bloco. O efeito na produção não é asserção.

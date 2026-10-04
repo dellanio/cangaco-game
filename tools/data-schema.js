@@ -105,11 +105,9 @@ const CAMPOS_ESCALONADOS = [
   // D-MOVIMENTO-01 — as esperas da colisao civil (as constantes do WalkTo do kam_remake).
   { arquivo: 'units', caminho: 'colisaoCivil.empurrarDepois_segundos_base',
     unidade: 'segundos', declaraEscalaEm: 'escalaVelocidade' },
-  { arquivo: 'units', caminho: 'colisaoCivil.desviarDepois_segundos_base',
-    unidade: 'segundos', declaraEscalaEm: 'escalaVelocidade' },
-  { arquivo: 'units', caminho: 'colisaoCivil.repetirDesvio_segundos_base',
-    unidade: 'segundos', declaraEscalaEm: 'escalaVelocidade' },
-  { arquivo: 'units', caminho: 'colisaoCivil.trocaForcadaDepois_segundos_base',
+  // I-MOVIMENTO-FILA-DE-CIVIS — a espera da porta antes da prioridade do tile (o desvio e a troca
+  // forcada sairam, por decisao do operador).
+  { arquivo: 'units', caminho: 'colisaoCivil.prioridadeDaPortaDepois_segundos_base',
     unidade: 'segundos', declaraEscalaEm: 'escalaVelocidade' },
   // I-MOVIMENTO-COLISAO-CIVIL-LIGADA — o prazo do "nao trava" por progresso (so a invariante le).
   { arquivo: 'units', caminho: 'colisaoCivil.prazoDeProgresso_segundos_base',

@@ -289,14 +289,11 @@ export interface ColisaoCivilData {
   readonly ligada: boolean;
   /** Quanto o civil bloqueado espera antes de empurrar o ocioso do tile seguinte. */
   readonly ticksEmpurrar: Ticks;
-  /** Quanto espera antes do primeiro desvio. */
-  readonly ticksDesviar: Ticks;
-  /** De quanto em quanto tenta o desvio de novo. */
-  readonly ticksRepetirDesvio: Ticks;
-  /** Quanto espera antes de entrar no tile ocupado: o teto da espera. */
-  readonly ticksTrocaForcada: Ticks;
-  /** A margem, em tiles, da caixa da busca do desvio (limite de busca). */
-  readonly margemDoDesvio: number;
+  /** I-MOVIMENTO-FILA-DE-CIVIS — quanto quem sai de casa espera a porta antes de ganhar a
+   *  prioridade do tile (ninguem mais larga para ali). */
+  readonly ticksPrioridadeDaPorta: Ticks;
+  /** A margem, em tiles, da busca do tile livre para o ocioso empilhado por nascimento (limite de busca). */
+  readonly margemDoEmpurrao: number;
   /** D-MOVIMENTO-01h — quanto um tile com outro civil custa a mais na rota que o serf
    *  planeja (o AVOID_UNIT_PENALTY do KaM), em ticks: `custoPorUnidade_tiles` vezes o passo
    *  a pe na estrada, convertido no carregamento. */

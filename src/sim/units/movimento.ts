@@ -11,7 +11,7 @@ import type { GameData } from '../data/types';
 import type { TileDeGrid } from '../estradas';
 import { custoDoPasso, passoAndavel } from '../pathfinding';
 import { classeDaUnidade } from '../condicao';
-import { colisaoCivilLigada, passoCivil } from '../colisao';
+import { colisaoCivilLigada, largadaCivil, largou } from '../colisao';
 import type { ResultadoDeSistema } from '../systems/jobs';
 
 type Passo = ResultadoDeSistema;
@@ -236,6 +236,16 @@ export function andar(state: GameState, u: Unidade, dados: GameData, parceiro: s
   if (militar && (u.fsmData.progresso ?? 0) === 0 && tomado) {
     return esperarOuDesviar(state, u, caminho, 0, dados);
   }
+  // I-MOVIMENTO-FILA-DE-CIVIS — o civil com a colisao ligada confere o tile seguinte na LARGADA (o
+  // `Walk` do KaM reserva no inicio do passo): ocupado, espera no proprio tile; livre, larga e o tile
+  // e dele (`tileOcupado`) ate chegar. No fim do passo so entra.
+  const civilEmFila = colisaoCivilLigada(dados) && classeDaUnidade(u.tipo, dados) === 'civil';
+  if (civilEmFila && (u.fsmData.progresso ?? 0) === 0) {
+    const esperando = largadaCivil(state, u, dados);
+    if (esperando !== null) return esperando;
+    if (custo <= 1) return { ...u, gx: proximo.gx, gy: proximo.gy, fsmData: { ...largou(u.fsmData), caminho: caminho.slice(1), progresso: 0 } };
+    return { ...u, fsmData: { ...largou(u.fsmData), progresso: 1 } };
+  }
   const progresso = (u.fsmData.progresso ?? 0) + 1;
   if (progresso < custo) {
     // o passo comecou: a espera da largada nao conta para a da chegada
@@ -258,11 +268,18 @@ export function andar(state: GameState, u: Unidade, dados: GameData, parceiro: s
     if (saiAndandoLivre(state, proximo, u.id, dados)) return { ...u, fsmData: { ...u.fsmData, progresso: custo - 1 } };
     return esperarOuDesviar(state, u, caminho, custo - 1, dados);
   }
-  // D1 — o civil com a colisao civil ligada: troca, espera, desvio e troca forcada
-  if (colisaoCivilLigada(dados) && classeDaUnidade(u.tipo, dados) === 'civil') return passoCivil(state, u, custo, dados);
   const { bloqueado: _b, ...semEspera } = u.fsmData;
   void _b;
   return { ...u, gx: proximo.gx, gy: proximo.gy, fsmData: { ...semEspera, caminho: caminho.slice(1), progresso: 0 } };
 }
 
 export const chegou = (u: Unidade): boolean => (u.fsmData.caminho ?? []).length === 0;
+
+/**
+ * I-MOVIMENTO-FILA-DE-CIVIS — um tick do passo de lado do ocioso (o PUSH do KaM, andando): anda pelo
+ * `andar`, e ao chegar volta a ocioso LIMPO (o `fsmData` vazio do ocioso).
+ */
+export function passoDeLado(state: GameState, u: Unidade, dados: GameData): Unidade {
+  const andou = andar(state, u, dados);
+  return chegou(andou) ? ocioso(andou) : andou;
+}

@@ -22,6 +22,7 @@ import {
   serfsDoCenario, 
 } from './helpers/jobs-cenario';
 import { linhaHDe, linhaVDe, naVila } from './helpers/ancoras';
+import { ehPassoDeLado } from '../src/sim/colisao';
 
 const armazem = armazemDoCenario(inicial);
 const serfs = serfsDoCenario(inicial);
@@ -105,7 +106,7 @@ describe('F10 — aceite: 10 stone no armazem, obra pedindo 2 -> obra recebe 2, 
     expect(quieto(fim)).toBe(true);
     expect(ticks).toBeGreaterThan(10);
     expect(ticks).toBeLessThan(200);
-    for (const id of serfsDoCenario(fim)) expect(fim.unidades.porId[id]?.fsmData).toEqual({});
+    for (const id of serfsDoCenario(fim)) { /* I-MOVIMENTO-FILA-DE-CIVIS: ocioso sem tarefa nem carga; o resto, so o passo comecado terminando */ const d = fim.unidades.porId[id]?.fsmData ?? {}; expect(d.tarefa).toBeUndefined(); expect(d.carga).toBeUndefined(); expect(ehPassoDeLado(d)).toBe(true); }
     expect(tarefasDe(fim)).toEqual([]);
   });
 

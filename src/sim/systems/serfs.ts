@@ -50,8 +50,9 @@ import { buscarCaminho, passoAndavel } from '../pathfinding';
 import { custoDeUnidadesNaRota } from '../colisao';
 import { ehEscolaCompleta } from '../escola';
 import { demandaNoDestino } from '../reservas';
-import { andar, chegou, comUnidade, dadosDaFsm, ficarOcioso, noTile, ocioso } from '../units/movimento';
+import { andar, chegou, comUnidade, dadosDaFsm, ficarOcioso, noTile, ocioso, passoDeLado } from '../units/movimento';
 import type { ResultadoDeSistema } from './jobs';
+import { comPassoComecadoTerminado } from '../colisao';
 
 type Passo = ResultadoDeSistema;
 
@@ -90,7 +91,22 @@ function comecarADevolver(state: GameState, u: Unidade, carga: string, dados: Ga
 
 // --- os estados ---
 
+/**
+ * I-MOVIMENTO-FILA-DE-CIVIS — o ocioso com passo de lado (`sistemaDoEmpurrao`) pega tarefa como
+ * sempre, se o passo ainda nao comecou; sem tarefa, ou com o passo comecado, anda o passo (o tile
+ * dele muda so no fim, nunca por teletransporte) e volta a ocioso limpo ao chegar.
+ */
 function passoOcioso(state: GameState, u: Unidade, dados: GameData): Passo {
+  if ((u.fsmData.caminho ?? []).length === 0) return passoOciosoQuePega(state, u, dados);
+  // com a troca marcada (`largada`), o outro ja entra no tile dele neste tick: anda, nao pega tarefa
+  if ((u.fsmData.progresso ?? 0) === 0 && u.fsmData.largada !== true) {
+    const r = passoOciosoQuePega(state, u, dados);
+    if (r.state.unidades.porId[u.id]?.fsm !== 'ocioso') return r;
+  }
+  return semEventos(comUnidade(state, passoDeLado(state, u, dados)));
+}
+
+function passoOciosoQuePega(state: GameState, u: Unidade, dados: GameData): Passo {
   const r = reclamarMelhor(state, u.id, dados);
   if (!r.ok) return semEventos(state);
   // reclamarMelhor (F11b: filtrado por elegivelParaTarefa) so devolve tarefa de
@@ -431,7 +447,8 @@ export function sistemaDosSerfs(state: GameState, dados: GameData = gameData): R
     // esquecer este pulo nao daria bug silencioso. `ehEstadoDeFome` e a lista unica.
     if (ehEstadoDeFome(u.fsm)) continue;
     const r = passoDoSerf(atual, u, dados);
-    atual = r.state;
+    // I-MOVIMENTO-FILA-DE-CIVIS: o passo que a FSM largou no meio termina, antes da unidade seguinte
+    atual = comPassoComecadoTerminado(r.state, u, dados);
     events.push(...r.events);
   }
   return { state: atual, events };

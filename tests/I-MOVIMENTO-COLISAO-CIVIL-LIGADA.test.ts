@@ -18,7 +18,7 @@ import type { GameState } from '../src/sim/state';
 import { createInitialState } from '../src/sim/state';
 import { step } from '../src/sim/tick';
 import { criarEscaramuca } from '../src/sim/cenario';
-import { ehCivilQueOcupa, menorProgresso } from '../src/sim/colisao';
+import { ehCivilQueOcupa, menorProgresso, tileOcupado } from '../src/sim/colisao';
 import { posicaoDaUnidade } from '../src/sim/selectors';
 import { custoDoPasso } from '../src/sim/pathfinding';
 import { violacoesDaFsm } from './helpers/serf-invariantes';
@@ -55,7 +55,9 @@ function correr(s0: GameState, comandos: (s: GameState, t: number) => Parameters
       const u = s.unidades.porId[id];
       if (u === undefined || classeDaUnidade(u.tipo, gameData) !== 'civil') continue;
       if (ehCivilQueOcupa(u, gameData)) {
-        const k = `${u.gx},${u.gy}`;
+        // I-MOVIMENTO-FILA-DE-CIVIS: a ocupacao LOGICA da sim (o passo comecado ja e do tile seguinte)
+        const o = tileOcupado(u);
+        const k = `${o.gx},${o.gy}`;
         porTile.set(k, [...(porTile.get(k) ?? []), id]);
       }
       const querAndar = (u.fsmData.caminho ?? []).length > 0 || u.saindo !== undefined;
@@ -92,7 +94,7 @@ describe('I-MOVIMENTO-COLISAO-CIVIL-LIGADA — civis colidem, pelo step', () => 
     expect(daRegra(0).length).toBeGreaterThan(0);
   });
 
-  it('o piso do progresso: a divida de dois passos vale, abaixo dela a invariante acusa; desligada, so 0', () => {
+  it('o piso do progresso e 0, ligada ou desligada: a reserva no inicio do passo acabou com a divida (I-MOVIMENTO-FILA-DE-CIVIS)', () => {
     const DESLIGADA: GameData = { ...gameData, movimento: { ...gameData.movimento, colisaoCivil: { ...gameData.movimento.colisaoCivil, ligada: false } } };
     const s0 = createInitialState(gameData.economia.estadoInicial.semente);
     const serf = s0.unidades.ordem.map((id) => s0.unidades.porId[id] as Unidade).find((u) => u.tipo === 'serf') as Unidade;
@@ -100,28 +102,23 @@ describe('I-MOVIMENTO-COLISAO-CIVIL-LIGADA — civis colidem, pelo step', () => 
       [serf.id]: { ...serf, fsm: 'indo_buscar', fsmData: { caminho: [{ gx: serf.gx + 1, gy: serf.gy }], progresso: p } } } } });
     const acusa = (p: number, dados: GameData): boolean => violacoesDaFsm(comProgresso(p), dados).some((v) => v.includes('progresso invalido'));
     const piso = menorProgresso(gameData);
-    expect(piso).toBe(-2 * Math.max(...Object.values(gameData.movimento.ticksPorTileDiagonal.aPe)));
+    expect(piso).toBe(0);
     expect(acusa(piso, gameData)).toBe(false);
     expect(acusa(piso - 1, gameData)).toBe(true);
     expect(menorProgresso(DESLIGADA)).toBe(0);
     expect(acusa(-1, DESLIGADA)).toBe(true);
   });
 
-  it('o civil segurado no fim do passo e desenhado na borda do tile, e nao dentro do tile do outro', () => {
+  it('quem espera esta no centro do proprio tile (progresso 0), e o desenho o poe ali (I-MOVIMENTO-FILA-DE-CIVIS)', () => {
     const s0 = createInitialState(gameData.economia.estadoInicial.semente);
     const serf = s0.unidades.ordem.map((id) => s0.unidades.porId[id] as Unidade).find((u) => u.tipo === 'serf') as Unidade;
-    // o tile da frente VAZIO de civil (BUG-CIVIL-RECUA-NO-DESENHO: com um civil parado nele, o desenho
-    // ja para na borda andando; os serfs iniciais nascem lado a lado, e o de leste tinha um)
-    const proximo = [1, -1].map((d) => ({ gx: serf.gx + d, gy: serf.gy }))
-      .find((t) => !s0.unidades.ordem.some((id) => { const o = s0.unidades.porId[id] as Unidade; return o.id !== serf.id && o.gx === t.gx && o.gy === t.gy && ehCivilQueOcupa(o, gameData); })) as { gx: number; gy: number };
-    expect(proximo, 'fixture: um vizinho de leste ou oeste sem civil').toBeDefined();
-    const sentido = proximo.gx - serf.gx;
+    const proximo = { gx: serf.gx + 1, gy: serf.gy };
     const custo = custoDoPasso(s0.estradas, serf, proximo, gameData);
-    const com = (bloqueado: number | undefined): Unidade => ({ ...serf, fsm: 'indo_buscar',
-      fsmData: { caminho: [proximo], progresso: custo - 1, ...(bloqueado === undefined ? {} : { bloqueado }) } });
-    // andando, o desenho segue o passo; segurado, para no meio (a borda entre os dois tiles)
-    expect((posicaoDaUnidade(s0, com(undefined)).gx - serf.gx) * sentido).toBeGreaterThan(0.5);
-    expect((posicaoDaUnidade(s0, com(3)).gx - serf.gx) * sentido).toBe(0.5);
+    const esperando: Unidade = { ...serf, fsm: 'indo_buscar', fsmData: { caminho: [proximo], progresso: 0, bloqueado: 3 } };
+    expect(posicaoDaUnidade(s0, esperando)).toEqual({ gx: serf.gx, gy: serf.gy });
+    // andando, o desenho segue o passo
+    const andando: Unidade = { ...serf, fsm: 'indo_buscar', fsmData: { caminho: [proximo], progresso: custo - 1 } };
+    expect(posicaoDaUnidade(s0, andando).gx - serf.gx).toBeGreaterThan(0.5);
   });
 
   it('(a) e (b) na escaramuca: um civil por tile em todo tick, e quem quer andar avanca dentro do prazo', () => {

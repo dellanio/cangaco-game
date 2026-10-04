@@ -42,10 +42,12 @@ import {
 } from '../jobs';
 import type { MotivoDeLiberacao } from '../jobs';
 import { alvoDeNivelamento, hpTotalDoTipo, obraNivelada, obraTrabalhavel, tetoDeHp } from '../obra';
-import { passoAndavel } from '../pathfinding';
-import { andar, chegou, comPredio, comUnidade, dadosDaFsm, ficarOcioso, noTile, ocioso } from '../units/movimento';
+import { custoDoPasso, passoAndavel } from '../pathfinding';
+import type { TileDeGrid } from '../estradas';
+import { andar, chegou, comPredio, comUnidade, dadosDaFsm, ficarOcioso, noTile, ocioso, passoDeLado } from '../units/movimento';
 import { ehEstadoDeFome } from '../condicao';
 import type { ResultadoDeSistema } from './jobs';
+import { comPassoComecadoTerminado } from '../colisao';
 
 type Passo = ResultadoDeSistema;
 
@@ -83,7 +85,22 @@ function reavaliar(obra: PredioEmObra, u: Unidade, tarefa: TarefaConstruir, dado
 
 // --- os estados ---
 
+/**
+ * I-MOVIMENTO-FILA-DE-CIVIS — o ocioso com passo de lado (`sistemaDoEmpurrao`) pega tarefa como
+ * sempre, se o passo ainda nao comecou; sem tarefa, ou com o passo comecado, anda o passo (o tile
+ * dele muda so no fim, nunca por teletransporte) e volta a ocioso limpo ao chegar.
+ */
 function passoOcioso(state: GameState, u: Unidade, dados: GameData): Passo {
+  if ((u.fsmData.caminho ?? []).length === 0) return passoOciosoQuePega(state, u, dados);
+  // com a troca marcada (`largada`), o outro ja entra no tile dele neste tick: anda, nao pega tarefa
+  if ((u.fsmData.progresso ?? 0) === 0 && u.fsmData.largada !== true) {
+    const r = passoOciosoQuePega(state, u, dados);
+    if (r.state.unidades.porId[u.id]?.fsm !== 'ocioso') return r;
+  }
+  return semEventos(comUnidade(state, passoDeLado(state, u, dados)));
+}
+
+function passoOciosoQuePega(state: GameState, u: Unidade, dados: GameData): Passo {
   const r = reclamarMelhorDoLaborer(state, u.id, dados);
   if (!r.ok) return semEventos(state);
   const bruta = r.state.jobs.tarefas.porId[r.tarefa];
@@ -291,7 +308,26 @@ function passoAssentando(
     const l = liberarTarefa(state, tarefa.id, 'pedido-da-unidade');
     return ficarOcioso(l.state, u, l.events);
   }
-  return semEventos(comUnidade(removerTarefa(assentado, tarefa.id), ocioso(u)));
+  return semEventos(comUnidade(passosSobreARuaNova(removerTarefa(assentado, tarefa.id), tarefa.destinoTile, dados), ocioso(u)));
+}
+
+/**
+ * I-MOVIMENTO-FILA-DE-CIVIS — a rua nova encurta o passo de quem anda PARA o tile assentado (o custo
+ * e o do destino): quem ja tinha andado mais que o passo novo chega no proximo tick, com o progresso
+ * em `custo - 1`, e nunca fica com o passo vencido entre dois ticks (medido: progresso 5 num passo
+ * que caiu de 7 para 5, no F18g).
+ */
+function passosSobreARuaNova(state: GameState, tile: TileDeGrid, dados: GameData): GameState {
+  let atual = state;
+  for (const id of state.unidades.ordem) {
+    const x = atual.unidades.porId[id];
+    const proximo = x?.fsmData.caminho?.[0];
+    if (x === undefined || proximo === undefined || proximo.gx !== tile.gx || proximo.gy !== tile.gy) continue;
+    const custo = custoDoPasso(atual.estradas, noTile(x), proximo, dados);
+    if ((x.fsmData.progresso ?? 0) < custo) continue;
+    atual = comUnidade(atual, { ...x, fsmData: { ...x.fsmData, progresso: custo - 1 } });
+  }
+  return atual;
 }
 
 /**
@@ -421,7 +457,8 @@ export function sistemaDosLaborers(state: GameState, dados: GameData = gameData)
     // esquecer este pulo nao daria bug silencioso. `ehEstadoDeFome` e a lista unica.
     if (ehEstadoDeFome(u.fsm)) continue;
     const r = passoDoLaborer(atual, u, dados);
-    atual = r.state;
+    // I-MOVIMENTO-FILA-DE-CIVIS: o passo que a FSM largou no meio termina, antes da unidade seguinte
+    atual = comPassoComecadoTerminado(r.state, u, dados);
     events.push(...r.events);
   }
   return { state: atual, events };

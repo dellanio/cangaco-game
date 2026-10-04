@@ -527,9 +527,21 @@ montanha **[fonte]**.
   operador em 2026-10-04). Militares colidem (C5). O motivo, nas palavras do operador: "A colisão é
   justamente um dos desafios do jogo, para não criar serf demais. O jogador precisa saber desenhar
   bem as ruas e rotas para ter eficiência logística." A produção que cai com a fila na rua não é
-  defeito: é o desafio, e o jogador o resolve na partida. O mecanismo é o do `WalkTo` do kam_remake
-  (abaixo), com a permuta de frente no tempo exato de andar (ninguém ganha nem perde tempo ao
-  cruzar). `units.json colisaoCivil.ligada: true`.
+  defeito: é o desafio, e o jogador o resolve na partida. `units.json colisaoCivil.ligada: true`.
+  - **Em fila, sem empurrar** (I-MOVIMENTO-FILA-DE-CIVIS, decisão do operador em 2026-10-04, depois
+    do relato "ficam travando e indo pra frente e pra trás… como se estivessem empurrando uns aos
+    outros"):
+    - o civil reserva o tile seguinte no início do passo, como o `Walk` do KaM
+      (`src/units/actions/KM_UnitActionWalkTo.pas:1312`), e com ele ocupado espera no centro do
+      próprio tile;
+    - quem vem de frente cruza: os dois largam no mesmo tick, e a rotação de três ou mais também
+      destrava;
+    - o ocioso no caminho dá um passo de lado, andando; sem vizinho livre, troca de lugar com quem
+      espera.
+  - **Divergência declarada do KaM:** saíram o desvio (AVOID, SIDESTEP, DODGE) e a troca forçada do
+    `WAITING_TIMEOUT` (`KM_UnitActionWalkTo.pas:125-131`), que empurravam e desviavam quem andava.
+  - **De frente com o encontro num tile** (distância par): um espera um passo. Os dois querem o mesmo
+    tile vago, e só um o tem.
   - *Histórico (2026-09-28 a 2026-10-04):* a colisão ficou desligada. **Testado e recusado com o
     mecanismo do KaM, "DEFINITIVO" (D-MOVIMENTO-01, colisão civil, fechado em 2026-09-28 pelo
     operador, com prova)**, revogado em 2026-10-04 pela decisão acima, depois do relato dos serfs

@@ -20,7 +20,7 @@ import { insumosDoPredio } from '../../src/sim/insumo';
 import { receitaDoTipo, unidadesPorCiclo } from '../../src/sim/producao';
 import { ehPredioOcupavel } from '../../src/sim/ocupacao';
 import { predioReparavel } from '../../src/sim/reparo';
-import { ehCivilQueOcupa, POSICAO_DO_ESTADO } from '../../src/sim/colisao';
+import { ehCivilQueOcupa, POSICAO_DO_ESTADO, tileOcupado } from '../../src/sim/colisao';
 import { classeDaUnidade } from '../../src/sim/condicao';
 import { ehQuartelCompleto, ehRequisitoDoQuartel } from '../../src/sim/quartel';
 import { demandaDoTile, disponivelNaOrigem, vagaNoDestino } from '../../src/sim/reservas';
@@ -346,8 +346,8 @@ export function violacoesDeInvariantes(estado: GameState, dados: GameData = game
  *    civil que quer andar avanca um tile dentro de `ticksPrazoDeProgresso` (do dado). `bloqueado`
  *    e `saindo` contam os ticks seguidos sem avancar, no passo e na porta. O teto de espera de
  *    antes (troca forcada + passo) acusava fila legitima, e saiu;
- *  - dois civis "fora" no mesmo tile e defeito, SEMPRE (D-MOVIMENTO-01j: a troca e
- *    permuta). Quem espera a porta (`saindo`) esta dentro: nao ocupa, e nao conta.
+ *  - dois civis "fora" no mesmo tile (na OCUPACAO LOGICA, `tileOcupado`) e defeito, SEMPRE. Quem
+ *    espera a porta (`saindo`) esta dentro: nao ocupa, e nao conta.
  */
 export function violacoesDaColisao(estado: GameState, dados: GameData = gameData): string[] {
   const c = dados.movimento.colisaoCivil;
@@ -366,7 +366,10 @@ export function violacoesDaColisao(estado: GameState, dados: GameData = gameData
     if ((u.fsmData.bloqueado ?? 0) > prazo) v.push(`${id}: bloqueado ha ${u.fsmData.bloqueado} ticks (prazo ${prazo})`);
     if ((u.saindo ?? 0) > prazo) v.push(`${id}: esperando a porta ha ${u.saindo} ticks (prazo ${prazo})`);
     if (!ehCivilQueOcupa(u, dados)) continue;
-    const k = `${u.gx},${u.gy}`;
+    // I-MOVIMENTO-FILA-DE-CIVIS — a OCUPACAO LOGICA da sim (`tileOcupado`), e nao uma copia: com o
+    // passo comecado o tile e o seguinte (o `Walk` do KaM). Quem ja saiu do tile nao o ocupa mais
+    const o = tileOcupado(u);
+    const k = `${o.gx},${o.gy}`;
     porTile.set(k, [...(porTile.get(k) ?? []), id]);
   }
   // D-MOVIMENTO-01j — a troca e permuta: dois civis "fora" no mesmo tile e SEMPRE defeito,

@@ -52,7 +52,9 @@ const TETO_DA_GAVETA = gameData.producao.estoqueInternoPorPredio.saida;
 /** D-MOVIMENTO-01c (empilhamento de fora do passo) — o valor esperado POR ESTADO DA CHAVE da colisao civil (decisao do operador,
  *  2026-09-28): ligada, a primeira pedra atravessa a vila com fila e chega 4 ticks depois
  *  (medido). NAO e faixa: a faixa foi recusada porque aceitaria deriva futura sem avisar. */
-const ATRASO_DA_COLISAO = colisaoCivilLigada(gameData) ? 4 : 0;
+// I-MOVIMENTO-FILA-DE-CIVIS (2026-10-04): com a fila (a reserva do tile no inicio do passo, sem
+// empurrao), remedido: 2 ticks.
+const ATRASO_DA_COLISAO = colisaoCivilLigada(gameData) ? 2 : 0;
 const CICLO = gameData.producao.receitas.quarry?.ticksDoCiclo ?? 0;
 /**
  * F-T3 — entre um deposito e o seguinte ha agora a IDA ao tile e a VOLTA. O

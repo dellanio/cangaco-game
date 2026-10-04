@@ -49,6 +49,7 @@ import { cenarioDePedreira, comSaida } from './helpers/producao-cenario';
 import { validarTudo } from '../tools/data-rules.js';
 import { ARQUIVOS } from '../tools/data-schema.js';
 import { linhaHDe, naVila } from './helpers/ancoras';
+import { ehPassoDeLado } from '../src/sim/colisao';
 
 const inicial = createInitialState(1);
 const ARMAZEM = armazemDoJogo.id;
@@ -181,7 +182,7 @@ describe('F16a — obra demolida com o serf a caminho (aceite, pelo comando real
     expect(tarefasDe(corrida.estado, 'obra-a')).toEqual([]);
     expect(corrida.fsms).toContain('devolvendo');
     expect(fsmDe(corrida.estado)).toBe('ocioso');
-    expect(corrida.estado.unidades.porId[serfDoJogo]?.fsmData).toEqual({});
+    { /* I-MOVIMENTO-FILA-DE-CIVIS: ocioso sem tarefa nem carga; o resto, so o passo comecado terminando */ const d = corrida.estado.unidades.porId[serfDoJogo]?.fsmData ?? {}; expect(d.tarefa).toBeUndefined(); expect(d.carga).toBeUndefined(); expect(ehPassoDeLado(d)).toBe(true); }
     expect(saidaDe(corrida.estado, ARMAZEM)).toBe(pedraAntes + 1);
     expect(corrida.violacoes).toEqual([]);
 
@@ -333,7 +334,7 @@ describe('F16a — o estoque interno vai INTEIRO para o armazem (decisao do oper
 
     const depois = step(step(demolido, []), []);
     expect(depois.unidades.porId.u1?.fsm).toBe('ocioso');
-    expect(depois.unidades.porId.u1?.fsmData).toEqual({});
+    { /* I-MOVIMENTO-FILA-DE-CIVIS: ocioso sem tarefa nem carga; o resto, so o passo comecado terminando */ const d = depois.unidades.porId.u1?.fsmData ?? {}; expect(d.tarefa).toBeUndefined(); expect(d.carga).toBeUndefined(); expect(ehPassoDeLado(d)).toBe(true); }
     expect(tarefasDe(depois, 'q1')).toEqual([]);
     expect(violacoesDaFsmDoEspecialista(depois)).toEqual([]);
 

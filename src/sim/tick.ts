@@ -33,7 +33,7 @@ import { aplicarSetProductionQuota } from './systems/cota';
 import { aplicarSetBuildingMode } from './systems/modo';
 import { sistemaDosEspecialistas } from './systems/especialistas';
 import { sistemaDaFome } from './systems/fome';
-import { sistemaDaPermuta, sistemaDaPorta, sistemaDoEmpurrao } from './colisao';
+import { sistemaDaLargadaEmCiclo, sistemaDaPorta, sistemaDoEmpilhamento, sistemaDoEmpurrao, sistemaDoPassoComecado } from './colisao';
 import { sistemaDosLaborers } from './systems/laborers';
 import { sistemaDosSerfs } from './systems/serfs';
 
@@ -247,8 +247,8 @@ export function step(
   // (colheita do faminto, tarefa do morto) tem de ser revalidada pelo gerador no fim
   // deste mesmo tick, e nao pelo saneamento do seguinte.
   // D-MOVIMENTO-01 (colisao civil) — o empurrao do ocioso vem antes das FSMs: o bloqueado anda no mesmo tick
-  // D-MOVIMENTO-01j — a permuta depois do empurrao: as duas antes das FSMs
-  const empurrado = sistemaDaPermuta(sistemaDoEmpurrao(saneado.state, dados), dados);
+  // I-MOVIMENTO-FILA-DE-CIVIS — a largada em ciclo (de frente ou rotacao) depois do empurrao: as duas antes das FSMs
+  const empurrado = sistemaDaLargadaEmCiclo(sistemaDoEmpurrao(saneado.state, dados), dados);
   const fome = sistemaDaFome(empurrado, dados);
   const serfs = sistemaDosSerfs(fome.state, dados);
   const laborers = sistemaDosLaborers(serfs.state, dados);
@@ -266,7 +266,8 @@ export function step(
   // F35: a feira fecha a troca DEPOIS das entregas do tick (o A que chegou agora ja
   // conta) e ANTES do gerador (o B novo ja ganha a tarefa de escoar neste tick)
   // D-MOVIMENTO-01c (empilhamento de fora do passo) — a porta: quem nasceu ou saiu de "dentro" para um tile ocupado espera ele vagar
-  atual = gerarTarefas(sistemaDaFeira(sistemaDaPorta(empurrado, escolas.state, dados), dados), dados);
+  // I-MOVIMENTO-FILA-DE-CIVIS — quem a FSM tirou do meio de um passo termina o passo antes da porta
+  atual = gerarTarefas(sistemaDaFeira(sistemaDoEmpilhamento(sistemaDaPorta(empurrado, sistemaDoPassoComecado(empurrado, escolas.state, dados), dados), dados, true), dados), dados);
   events.push(
     ...saneado.events, ...fome.events, ...serfs.events, ...laborers.events,
     ...especialistas.events, ...escolas.events,

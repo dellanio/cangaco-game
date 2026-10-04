@@ -32,6 +32,7 @@ import type { GameState } from '../../src/sim/state';
 import { ehTarefaDeColheita } from '../../src/sim/state';
 import { predioAceita, predioDoOcupante, tiposQueOcupam } from '../../src/sim/ocupacao';
 import { caixaDoPredio, type CaixaEmTiles } from '../../src/sim/footprint';
+import { ehPassoDeLado } from '../../src/sim/colisao';
 
 /** F15a — os tres estados em que o especialista trabalha DENTRO do predio: tem
  *  predio, nao segura tarefa de ocupar e tem `fsmData` vazio. O que os distingue
@@ -102,7 +103,8 @@ export function violacoesDaFsmDoEspecialista(estado: GameState, dados: GameData 
 
     switch (u.fsm) {
       case 'ocioso':
-        if (Object.keys(u.fsmData).length > 0) v.push(`${id}: ocioso com fsmData nao vazio`);
+        // I-MOVIMENTO-FILA-DE-CIVIS: vazio, ou o passo de lado do empurrao (`ehPassoDeLado`, o da sim)
+        if (!ehPassoDeLado(u.fsmData)) v.push(`${id}: ocioso com fsmData nao vazio`);
         if (suas.length > 0) v.push(`${id}: ocioso mas a tarefa ${suas[0]} e dele`);
         if (predio !== null) v.push(`${id}: ocioso mas ocupa ${predio.id}`);
         break;
@@ -170,7 +172,8 @@ export function violacoesDaFsmDoEspecialista(estado: GameState, dados: GameData 
     }
 
     const caminho = u.fsmData.caminho ?? [];
-    if (caminho.length > 0 && !(ANDANDO as readonly string[]).includes(u.fsm)) {
+    // I-MOVIMENTO-FILA-DE-CIVIS: o ocioso tambem anda o passo de lado (`ehPassoDeLado`, o da sim)
+    if (caminho.length > 0 && !(ANDANDO as readonly string[]).includes(u.fsm) && !(u.fsm === 'ocioso' && ehPassoDeLado(u.fsmData))) {
       v.push(`${id}: ${u.fsm} com caminho pendente`);
     }
     // F-T3 — e o contrario tambem e violacao: quem anda sem caminho so e legitimo

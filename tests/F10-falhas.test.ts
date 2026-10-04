@@ -39,6 +39,7 @@ import {
 } from './helpers/jobs-cenario';
 import type { TileDeGrid } from '../src/sim/estradas';
 import { linhaHDe, linhaVDe, naVila, xy } from './helpers/ancoras';
+import { ehPassoDeLado } from '../src/sim/colisao';
 
 const P1 = armazemDoJogo.id;
 // F11b: quantas tarefas de MATERIAL (qualquer estado) estao no quadro — 'construir' fica de
@@ -90,7 +91,7 @@ describe('F10 — obra demolida com o serf a caminho: a carga volta ao armazem e
     const { estado, eventos } = rodarAte(semOPredio(meio, 'obra-a'), quieto);
     expect(saidaDe(estado, P1)).toBe(10);
     expect(fsmDe(estado)).toBe('ocioso');
-    expect(estado.unidades.porId[serfDoJogo]?.fsmData).toEqual({});
+    { /* I-MOVIMENTO-FILA-DE-CIVIS: ocioso sem tarefa nem carga; o resto, so o passo comecado terminando */ const d = estado.unidades.porId[serfDoJogo]?.fsmData ?? {}; expect(d.tarefa).toBeUndefined(); expect(d.carga).toBeUndefined(); expect(ehPassoDeLado(d)).toBe(true); }
     expect(eventos.filter((e) => e.type === 'cargo-returned')).toEqual([
       { type: 'cargo-returned', unidade: serfDoJogo, armazem: P1, mercadoria: 'stone' },
     ]);

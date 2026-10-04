@@ -67,25 +67,21 @@ function dois(eu: Partial<Unidade> & { fsmData: Unidade['fsmData'] }, outro: Par
 
 describe('BUG-CIVIL-RECUA-NO-DESENHO', () => {
   const leste = [{ gx: 11, gy: 10 }, { gx: 12, gy: 10 }];
-  const quase = 8; // perto do fim do passo (o custo a pe e maior que isto e a fracao passa de 0,5)
 
-  it('1. por tabela: divida desenha no tile; civil parado ou de frente no tile seguinte limita a borda', () => {
+  it('1. por tabela: progresso negativo desenha no tile; quem anda segue o passo (I-MOVIMENTO-FILA-DE-CIVIS: o limite da borda saiu)', () => {
     const fx = (s: GameState, u: Unidade): number => posicaoDaUnidade(s, u, gameData).gx - u.gx;
-    // progresso negativo (a divida da permuta): no tile, nunca atras dele
+    // progresso negativo (defeito, a invariante acusa): no tile, nunca atras dele
     const divida = dois({ fsmData: { caminho: leste, progresso: -5 } }, null);
     expect(fx(divida.s, divida.u)).toBe(0);
-    // sozinho, perto do fim do passo: a fracao de hoje, acima da borda
-    const sozinho = dois({ fsmData: { caminho: leste, progresso: quase } }, null);
-    expect(fx(sozinho.s, sozinho.u)).toBeGreaterThan(0.5);
-    // civil PARADO no tile seguinte: limitado a borda
-    const parado = dois({ fsmData: { caminho: leste, progresso: quase } }, { fsmData: {} });
-    expect(fx(parado.s, parado.u)).toBe(0.5);
-    // civil vindo de FRENTE (o proximo dele e o meu tile): limitado a borda
-    const deFrente = dois({ fsmData: { caminho: leste, progresso: quase } }, { fsmData: { caminho: [{ gx: 10, gy: 10 }], progresso: 1 } });
-    expect(fx(deFrente.s, deFrente.u)).toBe(0.5);
-    // civil andando para LONGE (a coluna): a fracao de hoje
-    const coluna = dois({ fsmData: { caminho: leste, progresso: quase } }, { fsmData: { caminho: [{ gx: 12, gy: 10 }], progresso: 1 } });
-    expect(fx(coluna.s, coluna.u)).toBe(fx(sozinho.s, sozinho.u));
+    // quem espera na fila esta em progresso 0: no centro do proprio tile
+    const esperando = dois({ fsmData: { caminho: leste, progresso: 0, bloqueado: 3 } }, { fsmData: {} });
+    expect(fx(esperando.s, esperando.u)).toBe(0);
+    // quem anda segue o passo, haja ou nao alguem no tile seguinte: o tile ja e dele (a reserva)
+    const passo = 3;
+    const sozinho = dois({ fsmData: { caminho: leste, progresso: passo } }, null);
+    const comOutro = dois({ fsmData: { caminho: leste, progresso: passo } }, { fsmData: {} });
+    expect(fx(sozinho.s, sozinho.u)).toBeGreaterThan(0);
+    expect(fx(comOutro.s, comOutro.u)).toBe(fx(sozinho.s, sozinho.u));
   });
 
   it('2. na vila pronta, com a colisao: nada atras do tile, e todo recuo no passo termina na borda', () => {
@@ -121,7 +117,7 @@ describe('BUG-CIVIL-RECUA-NO-DESENHO', () => {
     expect(fracaoNoPasso(passo, em(0.25))).toBeCloseTo(0.25, 9);
   });
 
-  it('4. na vila pronta com a colisao, pela regra do render: zero recuos dentro do passo', () => {
+  it('4. na vila pronta com a colisao, depois da regra do render: zero recuos dentro do passo', () => {
     let s = carregar(VILA, gameData);
     const m = criarMemoriaDaEspera();
     const ant: Record<string, { chave: string; f: number }> = {};
@@ -147,7 +143,8 @@ describe('BUG-CIVIL-RECUA-NO-DESENHO', () => {
     }
     gravarEvidencia('BUG-CIVIL-RECUA-NO-DESENHO-render', { passos, recuosNoPasso: recuos, ticksEmQueAEsperaSegurou: seguraram, antes: 112 });
     expect(passos).toBeGreaterThan(5000);
-    expect(seguraram).toBeGreaterThan(0); // a regra agiu: havia o que segurar
+    // I-MOVIMENTO-FILA-DE-CIVIS: a sim ja nao recua o passo, e a regra do render e so rede de seguranca
+    // (o numero de vezes que ela segurou vai para o test-output, sem asserção)
     expect(recuos).toBe(0);
   }, 120_000);
 });

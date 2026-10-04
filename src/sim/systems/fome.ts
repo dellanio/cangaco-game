@@ -46,6 +46,7 @@ import { predioDoOcupante } from '../ocupacao';
 import { passoAndavel } from '../pathfinding';
 import { andar, chegou, comPredio, comUnidade, dadosDaFsm, ficarOcioso, noTile } from '../units/movimento';
 import type { ResultadoDeSistema } from './jobs';
+import { comPassoComecadoTerminado } from '../colisao';
 
 type Passo = ResultadoDeSistema;
 
@@ -240,7 +241,8 @@ export function sistemaDaFome(state: GameState, dados: GameData = gameData): Res
     const u = atual.unidades.porId[id];
     if (u === undefined) continue;   // morreu neste mesmo tick por outro caminho
     const r = passoDeFome(atual, u, dados);
-    atual = r.state;
+    // I-MOVIMENTO-FILA-DE-CIVIS: o passo que a FSM largou no meio termina, antes da unidade seguinte
+    atual = comPassoComecadoTerminado(r.state, u, dados);
     events.push(...r.events);
   }
   return { state: atual, events };

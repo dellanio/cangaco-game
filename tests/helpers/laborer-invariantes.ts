@@ -9,7 +9,7 @@ import type { GameData } from '../../src/sim/data/types';
 import type { GameState } from '../../src/sim/state';
 import { ehTarefaDeLaborer } from '../../src/sim/state';
 import { custoDoPasso } from '../../src/sim/pathfinding';
-import { menorProgresso } from '../../src/sim/colisao';
+import { ehPassoDeLado, menorProgresso } from '../../src/sim/colisao';
 
 export const ESTADOS_DO_LABORER = ['ocioso', 'indo_a_obra', 'nivelando', 'esperando_material', 'martelando'] as const;
 
@@ -42,7 +42,8 @@ export function violacoesDaFsmDoLaborer(estado: GameState, dados: GameData = gam
 
     switch (u.fsm) {
       case 'ocioso':
-        if (Object.keys(dadosDaFsm).length > 0) v.push(`${id}: ocioso com fsmData nao vazio (${JSON.stringify(dadosDaFsm)})`);
+        // I-MOVIMENTO-FILA-DE-CIVIS: vazio, ou o passo de lado do empurrao (`ehPassoDeLado`, o da sim)
+        if (!ehPassoDeLado(dadosDaFsm)) v.push(`${id}: ocioso com fsmData nao vazio (${JSON.stringify(dadosDaFsm)})`);
         if (suas.length > 0) v.push(`${id}: ocioso mas a tarefa ${suas[0]} e dele`);
         break;
       case 'indo_a_obra':
@@ -61,7 +62,8 @@ export function violacoesDaFsmDoLaborer(estado: GameState, dados: GameData = gam
 
     // movimento: so `indo_a_obra` guarda caminho; os outros estados nao andam.
     const caminho = dadosDaFsm.caminho ?? [];
-    if (caminho.length > 0 && u.fsm !== 'indo_a_obra') v.push(`${id}: ${u.fsm} com caminho pendente`);
+    // I-MOVIMENTO-FILA-DE-CIVIS: o ocioso tambem anda o passo de lado (`ehPassoDeLado`, o da sim)
+    if (caminho.length > 0 && u.fsm !== 'indo_a_obra' && !(u.fsm === 'ocioso' && ehPassoDeLado(dadosDaFsm))) v.push(`${id}: ${u.fsm} com caminho pendente`);
     let atualPos = { gx: u.gx, gy: u.gy };
     for (const passo of caminho) {
       if (Math.max(Math.abs(passo.gx - atualPos.gx), Math.abs(passo.gy - atualPos.gy)) !== 1) {

@@ -1356,6 +1356,9 @@ export interface DadosDaFsm {
   /** C5 — ticks que o militar ja esperou um tile ocupado por outro militar. D-MOVIMENTO-01 (colisao civil) — o mesmo
    *  para o civil com a colisao civil ligada (zera so num passo normal). */
   readonly bloqueado?: number;
+  /** I-MOVIMENTO-FILA-DE-CIVIS — o civil de um ciclo de espera (de frente ou rotacao) larga neste
+   *  tick mesmo com o tile seguinte ocupado (`sistemaDaLargadaEmCiclo`); some quando o passo comeca. */
+  readonly largada?: boolean;
   readonly tarefa?: string;
   readonly carga?: string;
   readonly caminho?: readonly TileDeGrid[];

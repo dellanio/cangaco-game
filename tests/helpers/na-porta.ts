@@ -15,7 +15,10 @@ export function foraDaPorta(portas: readonly TileDeGrid[], onde: readonly TileDe
   const chave = (t: TileDeGrid): string => `${t.gx},${t.gy}`;
   const naPorta = (t: TileDeGrid): boolean => portas.some((p) => p.gx === t.gx && p.gy === t.gy);
   if (!colisaoCivilLigada(dados)) return onde.filter((t) => !naPorta(t)).map(chave);
-  const junto = (t: TileDeGrid): boolean => portas.some((p) => Math.abs(p.gx - t.gx) <= 1 && Math.abs(p.gy - t.gy) <= 1);
+  // I-MOVIMENTO-FILA-DE-CIVIS: com a porta cercada (sem vizinho livre), quem sai vai ao tile livre mais
+  // perto, dentro de `margemDoEmpurrao` (o dado): medido na escola cercada por seis ociosos, 2 tiles
+  const m = dados.movimento.colisaoCivil.margemDoEmpurrao;
+  const junto = (t: TileDeGrid): boolean => portas.some((p) => Math.abs(p.gx - t.gx) <= m && Math.abs(p.gy - t.gy) <= m);
   const erros = onde.filter((t) => !junto(t)).map(chave);
   const vistos = new Set<string>();
   for (const t of onde) {
