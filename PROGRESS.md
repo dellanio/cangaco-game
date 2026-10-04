@@ -19513,3 +19513,53 @@ no `shot:todos`, como antes.
 Religar a colisão civil ou só espalhar na tela os civis do mesmo tile é decisão do operador (o item
 da leva diz isso). Nada mudou, e o bug segue no `BUGS.md`.
 
+## 2026-10-04 — Fechamento da leva de 2026-10-04 (itens 1, 6, 7 e 9), §13
+
+Na mesma branch da Fase I (`dellanio/fase-i-para-quem-nunca-jogou`), sem merge na `main` e sem push.
+
+**A corrida, nesta ordem:**
+1. `npm run verify` completo no `5b5f933`: 2 520 testes, e 2 518 + 5 pulados no transladado. As
+   chaves foram marcadas com esse selo, pelo portão do hook.
+2. `npm run shot:todos`, num processo destacado: **126 roteiros, 4 com saída diferente de 0**, e
+   nenhum em 0 s (não foi o ambiente):
+   - **`C-IA-03c`, `D-TELA-COSTURA-DOS-TILES` e `D-TELA-VEU-DOS-DETALHES`:** os de antes, todos
+     esperando o operador (a margem da escaramuça e o item 8, BUG-ROTEIRO-DE-DUAS-ETAPAS);
+   - **`D-TELA-03`, novo, não desta leva:** o roteiro usa o machado como exemplo de mercadoria sem
+     arte, e o `8529594` (as 28 mercadorias em pixel art, vindo pela `main`) deu ícone a ele.
+     Registrado como `BUG-ROTEIRO-D-TELA-03-MACHADO-COM-ICONE`, sem corrigir;
+   - **os consertados saíram 0 dentro da corrida:** `D-TELA-05c`, `D-TELA-05d`, `D-TELA-04e`,
+     `F-D2` (o aceite do item 9, "inclusive dentro do `shot:todos`", fecha aqui) e
+     `H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA`, mais os roteiros da Fase I.
+3. `npm run test:longo`, sozinha, por último: **verde**, 5 + 5 testes, 29 s, no `a236c1d`, com a
+   árvore limpa. Este commit de PROGRESS deixa o selo para trás, como nos fechamentos de antes.
+
+**As chaves (`test-results.json`):**
+
+```text
+H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA   o som com lugar            passa (nova)
+D-TELA-05c                            ataque, trabalho e morte   false -> passa
+D-TELA-05d                            carga por tipo             false -> passa
+D-TELA-04e, F-D2                      ja passavam                passa (o roteiro voltou a sair 0)
+```
+
+**Estado da leva:**
+
+```text
+item                                     estado    commit    o que falta
+1  H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA   fechou    53e8f90   revisar duas leituras (Perguntas em aberto); ouvir os recortes
+   (o literal do teste, no transladado)  fechou    53767d6   -
+2-5 Fase I                               fechou    23ce943   o playtest e o itch.io (operador)
+6  BUG-SAVE-DO-ROTEIRO-TRANSLADADO       fechou    33d56d1   -
+7  BUG-ROTEIRO-04E-DELTA-DO-ATLAS        fechou    ae306ae   - (era o roteiro; delta medido 49 152)
+8  BUG-ROTEIRO-DE-DUAS-ETAPAS            espera    -         decisao do operador
+9  BUG-ROTEIRO-F-D2-RELOGIO              fechou    5b5f933   -
+10 BUG-CIVIS-EMPILHADOS                  espera    -         decisao do operador
+novo: BUG-ROTEIRO-D-TELA-03-MACHADO...   aberto    a236c1d   registrado, nao corrigido
+```
+
+**Espera o operador:** os itens 8 e 10 da leva; o playtest e a página do itch.io (a I-ENTREGA-PLAYTEST
+fica `false` até lá); a margem da escaramuça (`C-IA-03c`); ouvir os cinco sons novos e os recortes;
+e as leituras PARA REVISÃO em Perguntas em aberto (os passos da partida guiada, os gatilhos das
+dicas, a distância em todo som com lugar e o `quarry-work` só no lajedo). O merge desta branch na
+`main` é dele.
+
