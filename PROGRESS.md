@@ -19235,3 +19235,31 @@ porque a fila E–I está com outra sessão. O plano e os aceites estão no `BUI
 - O `verify:rapido` sai vermelho só por `tests/H-ARTE-SONS-APROVADOS.test.ts`, a mesma falha que a
   `main` tem desde `579f25f`. Ela vem do item de som da outra sessão (registrado acima) e não desta
   mudança.
+
+## 2026-10-04 — G-ARTE-MORTE-DAS-UNIDADES (a unidade cai, e não some)
+
+**Verificado (aberto ou rodado nesta sessão):**
+- Antes, o manifesto real não tinha nenhuma `morrer`: toda unidade da arte nova sumia sem cair. Agora
+  as 23 unidades com atlas (serf, as 13 profissões e os 9 militares) têm `morrer` com 12 quadros (8 de
+  queda do PixelLab `v3` e 4 que esmaecem o corpo no chão, feitos localmente, sem geração),
+  `laco: false`, nas 5 direções. Os montados caem junto com o cavalo.
+- O template `falling-back-death` (`skeleton-v3`) foi testado no serf e rejeitado: começava agachado e
+  não terminava deitado. A descrição em `v3` ("staggers, knees buckle, collapses, ends lying flat")
+  entrou.
+- **Defeito do gerador achado pelo teste:** colar o quadro com `paste(im, pos, im)` multiplica o alfa
+  por ele mesmo, e o esmaecer de 0,75 saía 0,56. Os dois geradores passaram a usar
+  `alpha_composite`, e o teste afirma a razão entre 0,7 e 0,8. Isso também corrige as bordas
+  semitransparentes de todos os quadros, que saíam mais claras.
+- `tests/G-ARTE-MORTE-DAS-UNIDADES.test.ts`: para cada unidade com atlas, 12 quadros por direção, e o
+  alfa somado do último quadro menor que o do primeiro. Um decodificador PNG mínimo dentro do teste,
+  com `node:zlib`, sem dependência nova. 66 testes verdes, junto com F17f e F-SPR-carregamento.
+- Roteiro novo `G-ARTE-MORTE-DAS-UNIDADES`, sem `?depuracao`: carrega o save da fome do D-TELA-05c. O
+  corpo do cabra começa em `militia/morrer/s/0000` do atlas real, passa por `0006` e some no fim. As
+  capturas foram abertas (de pé, depois caído no chão).
+- D-TELA-05c, G-ARTE-TRABALHO-DOS-OFICIOS, D-ARTE-PIXEL-ART-MILITARES e D-ARTE-SERF-COMFYUI saem 0.
+  O `verify:rapido` deu 171 verdes e 1 vermelho, o mesmo `H-ARTE-SONS-APROVADOS` de antes, que já
+  falha na `main`.
+
+**Visto, não corrigido:** o corpo deitado de lado fica mais largo que a célula de 64 px e pode cortar
+uns pixels nas pontas (hipótese, não medida no jogo). A queda do cabra de costas abre os braços em
+vez de cair.

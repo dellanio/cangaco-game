@@ -340,10 +340,250 @@
     "h": 96
    }
   },
-  "serf/parado/ne/0000": {
+  "serf/morrer/n/0000": {
    "frame": {
     "x": 64,
     "y": 192,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/n/0001": {
+   "frame": {
+    "x": 128,
+    "y": 192,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/n/0002": {
+   "frame": {
+    "x": 192,
+    "y": 192,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/n/0003": {
+   "frame": {
+    "x": 256,
+    "y": 192,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/n/0004": {
+   "frame": {
+    "x": 320,
+    "y": 192,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/n/0005": {
+   "frame": {
+    "x": 384,
+    "y": 192,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/n/0006": {
+   "frame": {
+    "x": 448,
+    "y": 192,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/n/0007": {
+   "frame": {
+    "x": 0,
+    "y": 288,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/n/0008": {
+   "frame": {
+    "x": 64,
+    "y": 288,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/n/0009": {
+   "frame": {
+    "x": 128,
+    "y": 288,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/n/0010": {
+   "frame": {
+    "x": 192,
+    "y": 288,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/n/0011": {
+   "frame": {
+    "x": 256,
+    "y": 288,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/parado/ne/0000": {
+   "frame": {
+    "x": 320,
+    "y": 288,
     "w": 64,
     "h": 96
    },
@@ -362,8 +602,8 @@
   },
   "serf/andar/ne/0000": {
    "frame": {
-    "x": 128,
-    "y": 192,
+    "x": 384,
+    "y": 288,
     "w": 64,
     "h": 96
    },
@@ -382,8 +622,8 @@
   },
   "serf/andar/ne/0001": {
    "frame": {
-    "x": 192,
-    "y": 192,
+    "x": 448,
+    "y": 288,
     "w": 64,
     "h": 96
    },
@@ -402,8 +642,8 @@
   },
   "serf/andar/ne/0002": {
    "frame": {
-    "x": 256,
-    "y": 192,
+    "x": 0,
+    "y": 384,
     "w": 64,
     "h": 96
    },
@@ -422,8 +662,8 @@
   },
   "serf/andar/ne/0003": {
    "frame": {
-    "x": 320,
-    "y": 192,
+    "x": 64,
+    "y": 384,
     "w": 64,
     "h": 96
    },
@@ -442,8 +682,8 @@
   },
   "serf/andar/ne/0004": {
    "frame": {
-    "x": 384,
-    "y": 192,
+    "x": 128,
+    "y": 384,
     "w": 64,
     "h": 96
    },
@@ -462,8 +702,8 @@
   },
   "serf/andar/ne/0005": {
    "frame": {
-    "x": 448,
-    "y": 192,
+    "x": 192,
+    "y": 384,
     "w": 64,
     "h": 96
    },
@@ -482,8 +722,8 @@
   },
   "serf/andar/ne/0006": {
    "frame": {
-    "x": 0,
-    "y": 288,
+    "x": 256,
+    "y": 384,
     "w": 64,
     "h": 96
    },
@@ -502,8 +742,8 @@
   },
   "serf/andar/ne/0007": {
    "frame": {
-    "x": 64,
-    "y": 288,
+    "x": 320,
+    "y": 384,
     "w": 64,
     "h": 96
    },
@@ -522,8 +762,8 @@
   },
   "serf/carregando/ne/0000": {
    "frame": {
-    "x": 128,
-    "y": 288,
+    "x": 384,
+    "y": 384,
     "w": 64,
     "h": 96
    },
@@ -542,8 +782,8 @@
   },
   "serf/carregando/ne/0001": {
    "frame": {
-    "x": 192,
-    "y": 288,
+    "x": 448,
+    "y": 384,
     "w": 64,
     "h": 96
    },
@@ -562,8 +802,8 @@
   },
   "serf/carregando/ne/0002": {
    "frame": {
-    "x": 256,
-    "y": 288,
+    "x": 0,
+    "y": 480,
     "w": 64,
     "h": 96
    },
@@ -582,8 +822,8 @@
   },
   "serf/carregando/ne/0003": {
    "frame": {
-    "x": 320,
-    "y": 288,
+    "x": 64,
+    "y": 480,
     "w": 64,
     "h": 96
    },
@@ -602,8 +842,8 @@
   },
   "serf/carregando/ne/0004": {
    "frame": {
-    "x": 384,
-    "y": 288,
+    "x": 128,
+    "y": 480,
     "w": 64,
     "h": 96
    },
@@ -622,8 +862,8 @@
   },
   "serf/carregando/ne/0005": {
    "frame": {
-    "x": 448,
-    "y": 288,
+    "x": 192,
+    "y": 480,
     "w": 64,
     "h": 96
    },
@@ -642,8 +882,8 @@
   },
   "serf/carregando/ne/0006": {
    "frame": {
-    "x": 0,
-    "y": 384,
+    "x": 256,
+    "y": 480,
     "w": 64,
     "h": 96
    },
@@ -662,8 +902,248 @@
   },
   "serf/carregando/ne/0007": {
    "frame": {
+    "x": 320,
+    "y": 480,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/ne/0000": {
+   "frame": {
+    "x": 384,
+    "y": 480,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/ne/0001": {
+   "frame": {
+    "x": 448,
+    "y": 480,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/ne/0002": {
+   "frame": {
+    "x": 0,
+    "y": 576,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/ne/0003": {
+   "frame": {
     "x": 64,
-    "y": 384,
+    "y": 576,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/ne/0004": {
+   "frame": {
+    "x": 128,
+    "y": 576,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/ne/0005": {
+   "frame": {
+    "x": 192,
+    "y": 576,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/ne/0006": {
+   "frame": {
+    "x": 256,
+    "y": 576,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/ne/0007": {
+   "frame": {
+    "x": 320,
+    "y": 576,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/ne/0008": {
+   "frame": {
+    "x": 384,
+    "y": 576,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/ne/0009": {
+   "frame": {
+    "x": 448,
+    "y": 576,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/ne/0010": {
+   "frame": {
+    "x": 0,
+    "y": 672,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/ne/0011": {
+   "frame": {
+    "x": 64,
+    "y": 672,
     "w": 64,
     "h": 96
    },
@@ -683,7 +1163,7 @@
   "serf/parado/l/0000": {
    "frame": {
     "x": 128,
-    "y": 384,
+    "y": 672,
     "w": 64,
     "h": 96
    },
@@ -703,7 +1183,7 @@
   "serf/andar/l/0000": {
    "frame": {
     "x": 192,
-    "y": 384,
+    "y": 672,
     "w": 64,
     "h": 96
    },
@@ -723,7 +1203,7 @@
   "serf/andar/l/0001": {
    "frame": {
     "x": 256,
-    "y": 384,
+    "y": 672,
     "w": 64,
     "h": 96
    },
@@ -743,7 +1223,7 @@
   "serf/andar/l/0002": {
    "frame": {
     "x": 320,
-    "y": 384,
+    "y": 672,
     "w": 64,
     "h": 96
    },
@@ -763,7 +1243,7 @@
   "serf/andar/l/0003": {
    "frame": {
     "x": 384,
-    "y": 384,
+    "y": 672,
     "w": 64,
     "h": 96
    },
@@ -783,7 +1263,7 @@
   "serf/andar/l/0004": {
    "frame": {
     "x": 448,
-    "y": 384,
+    "y": 672,
     "w": 64,
     "h": 96
    },
@@ -803,7 +1283,7 @@
   "serf/andar/l/0005": {
    "frame": {
     "x": 0,
-    "y": 480,
+    "y": 768,
     "w": 64,
     "h": 96
    },
@@ -823,7 +1303,7 @@
   "serf/andar/l/0006": {
    "frame": {
     "x": 64,
-    "y": 480,
+    "y": 768,
     "w": 64,
     "h": 96
    },
@@ -843,7 +1323,7 @@
   "serf/andar/l/0007": {
    "frame": {
     "x": 128,
-    "y": 480,
+    "y": 768,
     "w": 64,
     "h": 96
    },
@@ -863,7 +1343,7 @@
   "serf/carregando/l/0000": {
    "frame": {
     "x": 192,
-    "y": 480,
+    "y": 768,
     "w": 64,
     "h": 96
    },
@@ -883,7 +1363,7 @@
   "serf/carregando/l/0001": {
    "frame": {
     "x": 256,
-    "y": 480,
+    "y": 768,
     "w": 64,
     "h": 96
    },
@@ -903,7 +1383,7 @@
   "serf/carregando/l/0002": {
    "frame": {
     "x": 320,
-    "y": 480,
+    "y": 768,
     "w": 64,
     "h": 96
    },
@@ -923,7 +1403,7 @@
   "serf/carregando/l/0003": {
    "frame": {
     "x": 384,
-    "y": 480,
+    "y": 768,
     "w": 64,
     "h": 96
    },
@@ -943,7 +1423,7 @@
   "serf/carregando/l/0004": {
    "frame": {
     "x": 448,
-    "y": 480,
+    "y": 768,
     "w": 64,
     "h": 96
    },
@@ -963,7 +1443,7 @@
   "serf/carregando/l/0005": {
    "frame": {
     "x": 0,
-    "y": 576,
+    "y": 864,
     "w": 64,
     "h": 96
    },
@@ -983,7 +1463,7 @@
   "serf/carregando/l/0006": {
    "frame": {
     "x": 64,
-    "y": 576,
+    "y": 864,
     "w": 64,
     "h": 96
    },
@@ -1003,7 +1483,247 @@
   "serf/carregando/l/0007": {
    "frame": {
     "x": 128,
-    "y": 576,
+    "y": 864,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/l/0000": {
+   "frame": {
+    "x": 192,
+    "y": 864,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/l/0001": {
+   "frame": {
+    "x": 256,
+    "y": 864,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/l/0002": {
+   "frame": {
+    "x": 320,
+    "y": 864,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/l/0003": {
+   "frame": {
+    "x": 384,
+    "y": 864,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/l/0004": {
+   "frame": {
+    "x": 448,
+    "y": 864,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/l/0005": {
+   "frame": {
+    "x": 0,
+    "y": 960,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/l/0006": {
+   "frame": {
+    "x": 64,
+    "y": 960,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/l/0007": {
+   "frame": {
+    "x": 128,
+    "y": 960,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/l/0008": {
+   "frame": {
+    "x": 192,
+    "y": 960,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/l/0009": {
+   "frame": {
+    "x": 256,
+    "y": 960,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/l/0010": {
+   "frame": {
+    "x": 320,
+    "y": 960,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/l/0011": {
+   "frame": {
+    "x": 384,
+    "y": 960,
     "w": 64,
     "h": 96
    },
@@ -1022,8 +1742,8 @@
   },
   "serf/parado/se/0000": {
    "frame": {
-    "x": 192,
-    "y": 576,
+    "x": 448,
+    "y": 960,
     "w": 64,
     "h": 96
    },
@@ -1042,8 +1762,8 @@
   },
   "serf/andar/se/0000": {
    "frame": {
-    "x": 256,
-    "y": 576,
+    "x": 0,
+    "y": 1056,
     "w": 64,
     "h": 96
    },
@@ -1062,8 +1782,8 @@
   },
   "serf/andar/se/0001": {
    "frame": {
-    "x": 320,
-    "y": 576,
+    "x": 64,
+    "y": 1056,
     "w": 64,
     "h": 96
    },
@@ -1082,8 +1802,8 @@
   },
   "serf/andar/se/0002": {
    "frame": {
-    "x": 384,
-    "y": 576,
+    "x": 128,
+    "y": 1056,
     "w": 64,
     "h": 96
    },
@@ -1102,8 +1822,8 @@
   },
   "serf/andar/se/0003": {
    "frame": {
-    "x": 448,
-    "y": 576,
+    "x": 192,
+    "y": 1056,
     "w": 64,
     "h": 96
    },
@@ -1122,8 +1842,8 @@
   },
   "serf/andar/se/0004": {
    "frame": {
-    "x": 0,
-    "y": 672,
+    "x": 256,
+    "y": 1056,
     "w": 64,
     "h": 96
    },
@@ -1142,8 +1862,8 @@
   },
   "serf/andar/se/0005": {
    "frame": {
-    "x": 64,
-    "y": 672,
+    "x": 320,
+    "y": 1056,
     "w": 64,
     "h": 96
    },
@@ -1162,8 +1882,8 @@
   },
   "serf/andar/se/0006": {
    "frame": {
-    "x": 128,
-    "y": 672,
+    "x": 384,
+    "y": 1056,
     "w": 64,
     "h": 96
    },
@@ -1182,8 +1902,8 @@
   },
   "serf/andar/se/0007": {
    "frame": {
-    "x": 192,
-    "y": 672,
+    "x": 448,
+    "y": 1056,
     "w": 64,
     "h": 96
    },
@@ -1202,8 +1922,8 @@
   },
   "serf/carregando/se/0000": {
    "frame": {
-    "x": 256,
-    "y": 672,
+    "x": 0,
+    "y": 1152,
     "w": 64,
     "h": 96
    },
@@ -1222,8 +1942,8 @@
   },
   "serf/carregando/se/0001": {
    "frame": {
-    "x": 320,
-    "y": 672,
+    "x": 64,
+    "y": 1152,
     "w": 64,
     "h": 96
    },
@@ -1242,8 +1962,8 @@
   },
   "serf/carregando/se/0002": {
    "frame": {
-    "x": 384,
-    "y": 672,
+    "x": 128,
+    "y": 1152,
     "w": 64,
     "h": 96
    },
@@ -1262,8 +1982,8 @@
   },
   "serf/carregando/se/0003": {
    "frame": {
-    "x": 448,
-    "y": 672,
+    "x": 192,
+    "y": 1152,
     "w": 64,
     "h": 96
    },
@@ -1282,8 +2002,8 @@
   },
   "serf/carregando/se/0004": {
    "frame": {
-    "x": 0,
-    "y": 768,
+    "x": 256,
+    "y": 1152,
     "w": 64,
     "h": 96
    },
@@ -1302,8 +2022,8 @@
   },
   "serf/carregando/se/0005": {
    "frame": {
-    "x": 64,
-    "y": 768,
+    "x": 320,
+    "y": 1152,
     "w": 64,
     "h": 96
    },
@@ -1322,8 +2042,8 @@
   },
   "serf/carregando/se/0006": {
    "frame": {
-    "x": 128,
-    "y": 768,
+    "x": 384,
+    "y": 1152,
     "w": 64,
     "h": 96
    },
@@ -1342,8 +2062,248 @@
   },
   "serf/carregando/se/0007": {
    "frame": {
+    "x": 448,
+    "y": 1152,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/se/0000": {
+   "frame": {
+    "x": 0,
+    "y": 1248,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/se/0001": {
+   "frame": {
+    "x": 64,
+    "y": 1248,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/se/0002": {
+   "frame": {
+    "x": 128,
+    "y": 1248,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/se/0003": {
+   "frame": {
     "x": 192,
-    "y": 768,
+    "y": 1248,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/se/0004": {
+   "frame": {
+    "x": 256,
+    "y": 1248,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/se/0005": {
+   "frame": {
+    "x": 320,
+    "y": 1248,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/se/0006": {
+   "frame": {
+    "x": 384,
+    "y": 1248,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/se/0007": {
+   "frame": {
+    "x": 448,
+    "y": 1248,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/se/0008": {
+   "frame": {
+    "x": 0,
+    "y": 1344,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/se/0009": {
+   "frame": {
+    "x": 64,
+    "y": 1344,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/se/0010": {
+   "frame": {
+    "x": 128,
+    "y": 1344,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/se/0011": {
+   "frame": {
+    "x": 192,
+    "y": 1344,
     "w": 64,
     "h": 96
    },
@@ -1363,7 +2323,7 @@
   "serf/parado/s/0000": {
    "frame": {
     "x": 256,
-    "y": 768,
+    "y": 1344,
     "w": 64,
     "h": 96
    },
@@ -1383,7 +2343,7 @@
   "serf/andar/s/0000": {
    "frame": {
     "x": 320,
-    "y": 768,
+    "y": 1344,
     "w": 64,
     "h": 96
    },
@@ -1403,7 +2363,7 @@
   "serf/andar/s/0001": {
    "frame": {
     "x": 384,
-    "y": 768,
+    "y": 1344,
     "w": 64,
     "h": 96
    },
@@ -1423,7 +2383,7 @@
   "serf/andar/s/0002": {
    "frame": {
     "x": 448,
-    "y": 768,
+    "y": 1344,
     "w": 64,
     "h": 96
    },
@@ -1443,7 +2403,7 @@
   "serf/andar/s/0003": {
    "frame": {
     "x": 0,
-    "y": 864,
+    "y": 1440,
     "w": 64,
     "h": 96
    },
@@ -1463,7 +2423,7 @@
   "serf/andar/s/0004": {
    "frame": {
     "x": 64,
-    "y": 864,
+    "y": 1440,
     "w": 64,
     "h": 96
    },
@@ -1483,7 +2443,7 @@
   "serf/andar/s/0005": {
    "frame": {
     "x": 128,
-    "y": 864,
+    "y": 1440,
     "w": 64,
     "h": 96
    },
@@ -1503,7 +2463,7 @@
   "serf/andar/s/0006": {
    "frame": {
     "x": 192,
-    "y": 864,
+    "y": 1440,
     "w": 64,
     "h": 96
    },
@@ -1523,7 +2483,7 @@
   "serf/andar/s/0007": {
    "frame": {
     "x": 256,
-    "y": 864,
+    "y": 1440,
     "w": 64,
     "h": 96
    },
@@ -1543,7 +2503,7 @@
   "serf/carregando/s/0000": {
    "frame": {
     "x": 320,
-    "y": 864,
+    "y": 1440,
     "w": 64,
     "h": 96
    },
@@ -1563,7 +2523,7 @@
   "serf/carregando/s/0001": {
    "frame": {
     "x": 384,
-    "y": 864,
+    "y": 1440,
     "w": 64,
     "h": 96
    },
@@ -1583,7 +2543,7 @@
   "serf/carregando/s/0002": {
    "frame": {
     "x": 448,
-    "y": 864,
+    "y": 1440,
     "w": 64,
     "h": 96
    },
@@ -1603,7 +2563,7 @@
   "serf/carregando/s/0003": {
    "frame": {
     "x": 0,
-    "y": 960,
+    "y": 1536,
     "w": 64,
     "h": 96
    },
@@ -1623,7 +2583,7 @@
   "serf/carregando/s/0004": {
    "frame": {
     "x": 64,
-    "y": 960,
+    "y": 1536,
     "w": 64,
     "h": 96
    },
@@ -1643,7 +2603,7 @@
   "serf/carregando/s/0005": {
    "frame": {
     "x": 128,
-    "y": 960,
+    "y": 1536,
     "w": 64,
     "h": 96
    },
@@ -1663,7 +2623,7 @@
   "serf/carregando/s/0006": {
    "frame": {
     "x": 192,
-    "y": 960,
+    "y": 1536,
     "w": 64,
     "h": 96
    },
@@ -1683,7 +2643,247 @@
   "serf/carregando/s/0007": {
    "frame": {
     "x": 256,
-    "y": 960,
+    "y": 1536,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/s/0000": {
+   "frame": {
+    "x": 320,
+    "y": 1536,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/s/0001": {
+   "frame": {
+    "x": 384,
+    "y": 1536,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/s/0002": {
+   "frame": {
+    "x": 448,
+    "y": 1536,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/s/0003": {
+   "frame": {
+    "x": 0,
+    "y": 1632,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/s/0004": {
+   "frame": {
+    "x": 64,
+    "y": 1632,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/s/0005": {
+   "frame": {
+    "x": 128,
+    "y": 1632,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/s/0006": {
+   "frame": {
+    "x": 192,
+    "y": 1632,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/s/0007": {
+   "frame": {
+    "x": 256,
+    "y": 1632,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/s/0008": {
+   "frame": {
+    "x": 320,
+    "y": 1632,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/s/0009": {
+   "frame": {
+    "x": 384,
+    "y": 1632,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/s/0010": {
+   "frame": {
+    "x": 448,
+    "y": 1632,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "serf/morrer/s/0011": {
+   "frame": {
+    "x": 0,
+    "y": 1728,
     "w": 64,
     "h": 96
    },
@@ -1705,7 +2905,7 @@
   "image": "serf.png",
   "size": {
    "w": 512,
-   "h": 1056
+   "h": 1824
   },
   "scale": "1"
  }
