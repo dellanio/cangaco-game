@@ -107,14 +107,14 @@
     1
   ],
   "estados": {
-    "madeira": "sprites/quarry/quarry_madeira-D-preview.png",
-    "completo": "sprites/quarry/quarry_completo-D.png"
+    "madeira": "sprites/quarry/quarry_madeira-pixel.png",
+    "completo": "sprites/quarry/quarry_completo-pixel.png"
   },
   "licenca": "arte propria do projeto, candidata D da pedreira para ensaio em jogo em 2026-09-30",
   "origem": {
     "base": "base/quarry/quarry-D-master-2x.png",
     "semente": null,
-    "nota": "Candidato D derivado de candidatos/D/quarry/generation-02-raw.png. Area de trabalho a esquerda e patio de stone a direita sao hipoteses para teste em jogo; arte de madeira e previa antiga redimensionada, com geometria/estilo distintos. Referencia externa usada so para clima e materiais, nao proporcoes."
+    "nota": "D-ARTE-PIXEL-ART-MILITARES (2026-10-03, pedido do operador): os dois estados convertidos em pixel art SEM redesenho por tools/arte/pixelar-predio.py (bloco 2x2, 40 cores, contorno escuro de 1 pixel), a partir do master pintado e da previa de madeira; as versoes pintadas continuam em quarry_completo-D.png e quarry_madeira-D-preview.png. Candidato D derivado de candidatos/D/quarry/generation-02-raw.png. Area de trabalho a esquerda e patio de stone a direita sao hipoteses para teste em jogo; arte de madeira e previa antiga redimensionada, com geometria/estilo distintos. Referencia externa usada so para clima e materiais, nao proporcoes."
   },
   "ancoras": {
     "trabalho": {
@@ -668,13 +668,18 @@
           "quadros": 8,
           "tilesPorCiclo": 2,
           "laco": true
+        },
+        "trabalhar": {
+          "quadros": 8,
+          "fps": 10,
+          "laco": true
         }
       },
       "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
       "origem": {
         "base": "base/units/laborer-pixellab/south.png",
         "semente": null,
-        "nota": "PixelLab v3 76 px, personagem adbf9470-3d21-4953-8f3e-6a42879043e2, andar skeleton-v3 walking-8-frames; sha256 da base b564b2771dd9008dfa86ad8422849ee9e35b21a80c84db675900dc92d90f3251"
+        "nota": "PixelLab v3, personagem 98f65934-7886-4b13-a224-5b10d6d99193, andar skeleton-v3 walking-8-frames, trabalhar v3 por direcao; sha256 da base 76bd46dde66f681ac65667fd78d1a42bb7dc361f2d602768d4fe1cce84a9a109"
       }
     },
     {
@@ -1179,11 +1184,29 @@
         "parado:se": "sprites/units/militia/parado.png",
         "parado:s": "sprites/units/militia/parado.png"
       },
-      "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+      "atlas": "sprites/units/militia/militia.json",
+      "animacoes": {
+        "parado": {
+          "quadros": 1,
+          "fps": 10,
+          "laco": true
+        },
+        "andar": {
+          "quadros": 8,
+          "tilesPorCiclo": 2,
+          "laco": true
+        },
+        "atacar": {
+          "quadros": 8,
+          "fps": 10,
+          "laco": true
+        }
+      },
+      "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
       "origem": {
-        "base": "base/unit-atlas-b/source.png",
+        "base": "base/units/militia-pixellab/south.png",
         "semente": null,
-        "nota": "Derivado pela skill pianco-art-pipeline do layout militia."
+        "nota": "PixelLab v3, personagem 785958d2-558c-4d7c-a15b-e179f5200342, andar skeleton-v3 walking-8-frames, atacar v3 por direcao; sha256 da base 9bc308ae378eb50530773123dd5ccd1b6df7f86345a757554d9e23e7db735aa4"
       }
     },
     {

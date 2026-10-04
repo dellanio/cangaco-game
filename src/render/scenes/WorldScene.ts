@@ -345,12 +345,13 @@ export class WorldScene extends Phaser.Scene {
     });
     const depuracao = depuracaoRegistrada();
     const tipos = tiposPresentes(this.ponte.atual);
+    const daDepuracao = new Set<string>();
     if (depuracao && depuracaoDeUnidade(window.location.search)) {
       for (const a of depuracao.atlases ?? [depuracao.atlas]) {
-        if([...tipos].some((id)=>a.chave===`unidade:${id}:atlas`)) this.load.atlas(a.chave, a.url, a.dados);
+        if([...tipos].some((id)=>a.chave===`unidade:${id}:atlas`)) { this.load.atlas(a.chave, a.url, a.dados); daDepuracao.add(a.chave); }
       }
     }
-    for (const a of atlasesParaCarregar()) if([...tipos].some((id)=>a.chave===`unidade:${id}:atlas`)) this.load.atlas(a.chave, a.url, a.dados);
+    for (const a of atlasesParaCarregar(undefined, undefined, undefined, daDepuracao)) if([...tipos].some((id)=>a.chave===`unidade:${id}:atlas`)) this.load.atlas(a.chave, a.url, a.dados);
     for (const textura of texturasParaCarregar(manifestoDoJogo, undefined, this.prediosSemArte, tipos)) {
       this.load.image(textura.chave, textura.url);
     }
@@ -465,7 +466,8 @@ export class WorldScene extends Phaser.Scene {
     this.load.on('filecomplete',concluiu);this.load.on('loaderror',falhou);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN,()=>{this.load.off('filecomplete',concluiu);this.load.off('loaderror',falhou);});
     const dep=depuracaoRegistrada();
-    const atlasesDisponiveis=[...atlasesParaCarregar(),...(dep?.atlases ?? [])];
+    // D-ARTE-PIXEL-ART-MILITARES: o atlas de depuracao vence o real do mesmo tipo tambem na carga tardia
+    const atlasesDisponiveis=[...(dep?.atlases ?? []),...atlasesParaCarregar(undefined,undefined,undefined,new Set((dep?.atlases ?? []).map((a)=>a.chave)))];
     let estadoDaCarga: GameState | null | undefined;
     let partidaDaCarga = -1;
     // F26b: o anel dos selecionados e a caixa ficam ACIMA de tudo do mundo
