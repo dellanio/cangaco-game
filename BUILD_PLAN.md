@@ -8324,8 +8324,13 @@ fechada. Módulo próprio para som é decisão do operador (PARA REVISÃO).
     `martelando` numa obra de prédio; `build-road` com o laborer `nivelando` ou `martelando` num
     tile de estrada; `quarry-work` com o cabouqueiro trabalhando a pedra. Tocam em laço enquanto o
     estado dura e há alguém trabalhando ali, com teto de vozes no dado.
+  - **O tile de rua pedido** (pedido do operador, 2026-10-04: "um som simples para toda vez que eu
+    solicitar a construção de um tile de rua"): `road-placed`, tocado pelo input a cada tile de rua
+    que o `PlaceRoad` aceita, como a planta posicionada (`blueprint-placed`). Arrastar uma rua de N
+    tiles toca no máximo um por quadro (o teto que já existe), e o tile recusado toca a recusa, não
+    este. É som de interface, sem lugar: não cai com a distância.
   - Os candidatos CC0 estão em `docs/sons-candidatos.md` (`build-wood`, `build-road`,
-    `quarry-work`), com a licença conferida na página em 2026-10-04. **Nenhum se baixa sem a coluna
+    `quarry-work`, `road-placed`), com a licença conferida na página em 2026-10-04. **Nenhum se baixa sem a coluna
     "aprovado" preenchida pelo operador**; até lá, silêncio.
 - **Aceite:**
   - (a) a função pura "posição do som + centro da câmera → volume" por tabela: o volume cheio no
@@ -8335,6 +8340,8 @@ fechada. Módulo próprio para som é decisão do operador (PARA REVISÃO).
   - (c) roteiro com a câmera sobre uma obra, depois longe dela: o contador de sons mostra o laço
     tocando perto e parado longe, e o volume pedido menor a meia distância do que no centro;
   - (d) a mesma partida com e sem som dá o mesmo estado, byte a byte;
+  - (f) a função pura do som do tile de rua por tabela: um tile aceito toca uma vez, N tiles no
+    mesmo quadro tocam uma vez, e o tile recusado não toca o `road-placed`;
   - (e) os sons aprovados entram como na H-ARTE-SONS-APROVADOS, com licença e link no manifesto.
 
 ## Fase I — Para quem nunca jogou
