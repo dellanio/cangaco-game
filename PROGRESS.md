@@ -3229,6 +3229,10 @@ que vetar custe uma linha.
 
 ## Perguntas em aberto
 
+- **(2026-10-04, G-TELA-ROCEIRO-NO-CAMPO) O roceiro de verdade dentro do tile?** Hoje a sim leva o
+  roceiro ao tile vizinho do campo, e o render só desenha ele dentro. Pôr o roceiro dentro do tile na
+  sim muda o caminho e o tempo do ciclo da fazenda e do canavial, ou seja, é balanceamento. Decisão
+  do operador.
 - **(2026-09-26, noite 18) A frase cortada do BRIEF-ARTE:** o operador escreveu que os
   sprites de estado da roça vão "desenhada[s] pelo render sobre o tile, nunca" — e a
   mensagem parou aí. O BRIEF-ARTE não completa a frase; falta o que vem depois do nunca.
@@ -19358,3 +19362,45 @@ folha das 5 direções e a captura `D-ARTE-SERF-COMFYUI-3-serf-carregando.png` f
 serfs levam a pedra com as mãos à frente. `D-TELA-SERF-CARREGANDO` passa, e o ponto da carga não
 mudou.
 **Visto, não corrigido:** sobra um pixel solto na borda de dois quadros do nordeste.
+
+### G-ARTE-OBREIRO-MAIOR, G-TELA-OBREIRO-POR-TAREFA e G-TELA-ROCEIRO-NO-CAMPO (num commit só)
+Os três itens mexem no mesmo manifesto e no mesmo `unidades.ts`, então foram juntos. Os aceites
+continuam separados no `BUILD_PLAN.md`.
+
+**O obreiro 10% maior (verificado):** com imagem de referência, o PixelLab ignora o `size` e devolve
+o tamanho da referência. Uma tentativa com a referência de 76 px saiu com os mesmos 74 px
+(`laborer_84_ref_sem_ampliar` no `ids.json`). O que entrou: a referência foi ampliada para 84 px e
+reduzida a 48 cores (o base64 caiu para 2,7 mil caracteres), e o v3 redesenhou o obreiro nesse tamanho
+(personagem `80199fe5`). No `parado` sul ele mede 81 px contra 74: 1,095 vez.
+`tests/G-ARTE-OBREIRO-MAIOR.test.ts` afirma a razão entre 1,07 e 1,13, o pé na linha 90 e o serf ainda
+com 74 (a régua).
+
+**O obreiro faz o gesto da tarefa (verificado):** a regra pura está em `src/render/gesto-do-trabalho.ts`
+e os números em `data/gesto-do-trabalho.json`. `construir` e `reparar` dão `martelar` (de cima para
+baixo, sobre a viga); `assentar-estrada` dá `assentar` (agachado, assentando pedra); `arar` dá
+`arar` (enxada). Sem tarefa, ou sem a animação, fica o `trabalhar`, que no obreiro novo é o próprio
+martelar. Martelando a obra, o desenho avança 10 px na direção do centro dela, e a posição lógica não
+muda. As cinco animações do obreiro novo estão nas 5 direções, junto com o andar e a morte.
+
+**O roceiro trabalha dentro do campo (verificado):** a sim deixa o roceiro no tile vizinho do campo;
+o render desenha ele no tile da tarefa (`colhendo`: `origemTile`; `semeando`: o `plantio.tile` do
+prédio). Os gestos são `semear` (enxada, o grupo `trabalhar-2` da Fase G) e `colher` (foice, grupo
+`colher-2`; a primeira tentativa, sem lâmina, ficou fora). Voltando de uma colheita, ele usa
+`carregando` (o tronco fixo da carga, como o serf, por `tools/arte/tronco-fixo-da-carga.py farmer 0.64 4`),
+com o milho entre as mãos no roçado e a cana no canavial. A cana não é mercadoria: ganhou
+`icones.colheitas.cana` no manifesto (a candidata 58 que tinha sobrado do lote das mercadorias), e
+`iconesDoJogo` junta os dois blocos só para o desenho. A regra das 28 mercadorias não muda.
+`tests/G-TELA-GESTO-DO-TRABALHO.test.ts` (12): a tabela do obreiro e do roceiro e o avanço do martelo.
+Uma fazenda de verdade, rodada pelo `step`, prova que, semeando e colhendo, o desenho fica a menos de
+1/4 de tile do centro do tile trabalhado, e que ele volta com o milho. O teste grava os saves das três
+fases para o roteiro. O roteiro novo `G-TELA-GESTO-DO-TRABALHO` sai 0, com as capturas abertas: o
+obreiro martelando a obra, o roceiro semeando em cima do tile arado, colhendo entre o milho e voltando
+com o milho à frente da barriga, e o obreiro assentando a estrada. O D-ARTE-PIXEL-ART-MILITARES
+esperava o obreiro da estrada em `trabalhar` e passou a exigir `assentar`, o gesto novo.
+**Não-regressão:** D-TELA-05c, D-ARTE-SERF-COMFYUI, G-ARTE-TRABALHO-DOS-OFICIOS e
+G-ARTE-MORTE-DAS-UNIDADES saem 0. O `verify:rapido` deu 231 verdes e 1 vermelho, o mesmo
+`H-ARTE-SONS-APROVADOS` da `main`.
+**Pergunta registrada (não decidida):** se o operador quiser o roceiro de verdade dentro do tile, e não
+só o desenho, isso muda o caminho na sim e o tempo do ciclo, ou seja, mexe em balanceamento.
+**Visto, não corrigido:** o roceiro carregando leva a enxada no ombro e uma mão no peito; o milho
+aparece à frente da barriga.

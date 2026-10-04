@@ -30,10 +30,11 @@ async function roteiro({ page, estado, afirmar, capturar }) {
     await page.evaluate(() => window.__cangaco.avancar(1));
     await page.waitForFunction((tick) => window.__cangaco.tick > tick, s.tick);
     s = await estado();
-    const u = s.unidadesRenderizadas.find((x) => x.tipo === 'laborer' && x.animacao === 'trabalhar'
+    const u = s.unidadesRenderizadas.find((x) => x.tipo === 'laborer' && x.animacao === 'assentar'
       && (obreiro === null || x.id === obreiro));
     if (u) {
-      afirmar(u.frame.startsWith('laborer/trabalhar/') && quadrosReais.has(u.frame), `quadro fora do atlas: ${u.frame}`);
+      // G-TELA-OBREIRO-POR-TAREFA: na estrada, o gesto e assentar a pedra, e nao o martelo
+      afirmar(u.frame.startsWith('laborer/assentar/') && quadrosReais.has(u.frame), `quadro fora do atlas: ${u.frame}`);
       afirmar(u.peY === 0, `o pe saiu da linha: ${u.peY}`);
       obreiro = u.id;
       quadros.add(u.frame);

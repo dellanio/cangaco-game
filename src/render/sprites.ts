@@ -80,8 +80,11 @@ export function prediosSemArteDaBusca(busca: string): ReadonlySet<string> {
 }
 
 /** D-ARTE-01 — os icones de mercadoria do mesmo manifesto (`icones.mercadorias`). */
-export const iconesDoJogo: IconesDeMercadoria | undefined =
-  (manifestoJson as unknown as { icones?: { mercadorias?: IconesDeMercadoria } }).icones?.mercadorias;
+export const iconesDoJogo: IconesDeMercadoria | undefined = (() => {
+  const icones = (manifestoJson as unknown as { icones?: { mercadorias?: IconesDeMercadoria; colheitas?: IconesDeMercadoria } }).icones;
+  // G-TELA-ROCEIRO-NO-CAMPO: a colheita que nao e mercadoria (a cana) entra no mesmo mapa, so para o desenho
+  return icones?.mercadorias === undefined ? undefined : { ...icones.mercadorias, ...(icones.colheitas ?? {}) };
+})();
 
 /** D-TELA-03a — os icones que o `preload()` enfileira, na chave `icone:<mercadoria>:mercadoria`.
  *  Como em `texturasParaCarregar`, so o que o bundler resolveu: o resto fica no texto ou no

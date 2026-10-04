@@ -681,6 +681,21 @@
           "fps": 10,
           "laco": true
         },
+        "martelar": {
+          "quadros": 8,
+          "fps": 10,
+          "laco": true
+        },
+        "assentar": {
+          "quadros": 8,
+          "fps": 10,
+          "laco": true
+        },
+        "arar": {
+          "quadros": 8,
+          "fps": 10,
+          "laco": true
+        },
         "morrer": {
           "quadros": 12,
           "fps": 10,
@@ -691,7 +706,7 @@
       "origem": {
         "base": "base/units/laborer-pixellab/south.png",
         "semente": null,
-        "nota": "PixelLab v3, personagem 98f65934-7886-4b13-a224-5b10d6d99193, andar skeleton-v3 walking-8-frames, trabalhar/morrer v3 por direcao; sha256 da base 76bd46dde66f681ac65667fd78d1a42bb7dc361f2d602768d4fe1cce84a9a109"
+        "nota": "PixelLab v3, personagem 80199fe5-69dd-4d61-bc97-df109804187b, andar skeleton-v3 walking-8-frames, trabalhar/morrer/martelar/assentar/arar v3 por direcao; sha256 da base 7de6519878a3566ec1068719ca40fdc0e695f16bbe623bbf544f25ed9e3ce2c0"
       }
     },
     {
@@ -876,6 +891,21 @@
           "fps": 10,
           "laco": true
         },
+        "semear": {
+          "quadros": 8,
+          "fps": 10,
+          "laco": true
+        },
+        "colher": {
+          "quadros": 8,
+          "fps": 10,
+          "laco": true
+        },
+        "carregando": {
+          "quadros": 8,
+          "tilesPorCiclo": 2,
+          "laco": true
+        },
         "morrer": {
           "quadros": 12,
           "fps": 10,
@@ -886,7 +916,7 @@
       "origem": {
         "base": "base/units/farmer-pixellab/south.png",
         "semente": null,
-        "nota": "PixelLab v3, personagem a19c5e3e-a0e0-4855-89e7-c8237a10d40e, andar skeleton-v3 walking-8-frames, trabalhar/morrer v3 por direcao; sha256 da base 3b72f8d8822a423eb3a7b959a5cff64fb6631ccc2a5c549193c8c5bf6af572c1"
+        "nota": "PixelLab v3, personagem a19c5e3e-a0e0-4855-89e7-c8237a10d40e, andar skeleton-v3 walking-8-frames, trabalhar/morrer/semear/colher/carregando v3 por direcao; sha256 da base 3b72f8d8822a423eb3a7b959a5cff64fb6631ccc2a5c549193c8c5bf6af572c1"
       }
     },
     {
@@ -3255,6 +3285,10 @@
     }
   ],
   "icones": {
+    "colheitas": {
+      "_doc": "G-TELA-ROCEIRO-NO-CAMPO (2026-10-04): o que o roceiro leva nas maos voltando de um campo cuja colheita nao e mercadoria. A cana (o recurso grapes do canavial) vira cachaca dentro do predio, entao nao tem icone de mercadoria. So render.",
+      "cana": { "arquivo": "sprites/colheitas/cana.png", "tamanho": [32, 32], "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03", "origem": { "base": "base/colheitas/cana.png", "semente": null, "nota": "PixelLab, candidata 58 do lote 6151a7ab das mercadorias; sha256 a3486af0662b4e14705ac202bf9c9918509f55c3d15e52a02f71e1ed861213e9" } }
+    },
     "mercadorias": {
       "_doc": "D-ARTE-PIXEL-ART-CIVIS (teste de pixel art, 2026-10-03): o sprite de cada uma das 28 mercadorias, gerado no PixelLab (create_1_direction_object, objeto 6151a7ab-f694-44dc-a929-1ca871a4e143, 32x32). O render desenha o sprite entre as maos do serf que carrega e na pilha sem PNG proprio.",
       "tree_trunk": {
