@@ -19563,3 +19563,108 @@ e as leituras PARA REVISÃO em Perguntas em aberto (os passos da partida guiada,
 dicas, a distância em todo som com lugar e o `quarry-work` só no lajedo). O merge desta branch na
 `main` é dele.
 
+
+## 2026-10-04 — G-ARTE-TRABALHO-DOS-OFICIOS (quem trabalha fora de casa mexe a ferramenta)
+
+Primeiro item da Fase G, que o operador mandou planejar e tocar a noite toda numa worktree própria,
+porque a fila E–I está com outra sessão. O plano e os aceites estão no `BUILD_PLAN.md` (`f7b2b27`).
+
+**Verificado (aberto ou rodado nesta sessão):**
+- O pedreiro, o lenhador, o fazendeiro e o pescador têm `trabalhar` (8 quadros, em laço) nas 5
+  direções. Cada um usa a ferramenta dele: picareta na rocha, machado no tronco, enxada no chão e
+  tarrafa lançada. A primeira tentativa do fazendeiro quase não mexia a enxada; a segunda (grupo
+  `trabalhar-2`, descrição com o golpe no chão) entrou, e o atlas usa a variante mais nova. As folhas
+  de revisão com a linha do pé foram abertas.
+- **Pé estável no golpe:** o atlas deixou de alinhar quadro a quadro pelo fundo da caixa. No andar
+  continua assim (o pé é o ponto mais baixo); no trabalho e no ataque usa a mediana dos fundos, porque
+  a ferramenta passa abaixo do pé em alguns quadros; na morte usa o primeiro quadro, em pé. Antes da
+  mudança, o pedreiro "pulava" 4 px quando a picareta descia.
+- Roteiro novo `G-ARTE-TRABALHO-DOS-OFICIOS`: carrega o save do lenhador do D-TELA-05c, no jogo
+  normal, e o lenhador passa por `woodcutter/trabalhar/l/0001..0003` do atlas real, com o pé na linha.
+  A captura `screenshots/G-ARTE-TRABALHO-DOS-OFICIOS-1-lenhador-cortando.png` foi aberta: o machado
+  bate no tronco e a copa da árvore cobre metade dele, o que é o certo, porque a árvore está à frente.
+- O D-TELA-05c sai 0. F17f, F-SPR-carregamento, D-TELA-05c e D-TELA-04b: 64 testes verdes.
+- O `verify:rapido` sai vermelho só por `tests/H-ARTE-SONS-APROVADOS.test.ts`, a mesma falha que a
+  `main` tem desde `579f25f`. Ela vem do item de som da outra sessão (registrado acima) e não desta
+  mudança.
+
+## 2026-10-04 — G-ARTE-MORTE-DAS-UNIDADES (a unidade cai, e não some)
+
+**Verificado (aberto ou rodado nesta sessão):**
+- Antes, o manifesto real não tinha nenhuma `morrer`: toda unidade da arte nova sumia sem cair. Agora
+  as 23 unidades com atlas (serf, as 13 profissões e os 9 militares) têm `morrer` com 12 quadros (8 de
+  queda do PixelLab `v3` e 4 que esmaecem o corpo no chão, feitos localmente, sem geração),
+  `laco: false`, nas 5 direções. Os montados caem junto com o cavalo.
+- O template `falling-back-death` (`skeleton-v3`) foi testado no serf e rejeitado: começava agachado e
+  não terminava deitado. A descrição em `v3` ("staggers, knees buckle, collapses, ends lying flat")
+  entrou.
+- **Defeito do gerador achado pelo teste:** colar o quadro com `paste(im, pos, im)` multiplica o alfa
+  por ele mesmo, e o esmaecer de 0,75 saía 0,56. Os dois geradores passaram a usar
+  `alpha_composite`, e o teste afirma a razão entre 0,7 e 0,8. Isso também corrige as bordas
+  semitransparentes de todos os quadros, que saíam mais claras.
+- `tests/G-ARTE-MORTE-DAS-UNIDADES.test.ts`: para cada unidade com atlas, 12 quadros por direção, e o
+  alfa somado do último quadro menor que o do primeiro. Um decodificador PNG mínimo dentro do teste,
+  com `node:zlib`, sem dependência nova. 66 testes verdes, junto com F17f e F-SPR-carregamento.
+- Roteiro novo `G-ARTE-MORTE-DAS-UNIDADES`, sem `?depuracao`: carrega o save da fome do D-TELA-05c. O
+  corpo do cabra começa em `militia/morrer/s/0000` do atlas real, passa por `0006` e some no fim. As
+  capturas foram abertas (de pé, depois caído no chão).
+- D-TELA-05c, G-ARTE-TRABALHO-DOS-OFICIOS, D-ARTE-PIXEL-ART-MILITARES e D-ARTE-SERF-COMFYUI saem 0.
+  O `verify:rapido` deu 171 verdes e 1 vermelho, o mesmo `H-ARTE-SONS-APROVADOS` de antes, que já
+  falha na `main`.
+
+**Visto, não corrigido:** o corpo deitado de lado fica mais largo que a célula de 64 px e pode cortar
+uns pixels nas pontas (hipótese, não medida no jogo). A queda do cabra de costas abre os braços em
+vez de cair.
+
+## 2026-10-04 — G-ARTE-MERCENARIOS (os cinco mercenários da Prefeitura ganham corpo)
+
+**Verificado (aberto ou rodado nesta sessão):**
+- Os cinco tipos de `mercenarios` ganharam entrada no manifesto, que antes não tinham, com `atlas` e
+  `animacoes` `parado`, `andar`, `atacar` e `morrer` (12 quadros), nas 5 direções. São eles: o
+  Retirante (`rebel`, foice), o Emboscador (`rogue`, funda), o Bruto do Mato (`barbarian`, porrete), o
+  Jagunço (`warrior`, rifle de alavanca com clarão) e o Andarilho (`vagabond`, montado num jumento,
+  célula 128×128). Os ids estão em `ids.json` e no `origem.nota` de cada entrada.
+- A folha com os cinco (parado, andar, um quadro de ataque e o corpo no chão) foi aberta.
+- F17f, F-SPR-carregamento, D-TELA-05b, D-TELA-05c e G-ARTE-MORTE-DAS-UNIDADES: 79 verdes. O teste da
+  morte passou a cobrir também os 5, e são 28 tipos com atlas. `validate:data` está ok. O
+  `verify:rapido` deu 176 verdes e 1 vermelho, o mesmo `H-ARTE-SONS-APROVADOS` da `main`.
+- Sem roteiro em jogo, como o aceite previa: contratar mercenário pede a Prefeitura de pé, e isso é
+  do roteiro da F36.
+
+**Visto, não corrigido:**
+- O ataque do Emboscador quase não mostra a funda.
+- O corpo deitado de lado passa dos 64 px da célula e é cortado nas pontas. Isso aparece na folha dos
+  mercenários e confirma a hipótese registrada no G2: a cabeça ou os pés ficam fora. **Hipótese da
+  correção:** gerar a célula da morte mais larga exige que o render aceite um tamanho por animação,
+  e isso é decisão do operador (registrada nas perguntas em aberto).
+
+## 2026-10-04 — G-ARTE-RETOQUES-PIXEL-ART (os defeitos vistos na D-ARTE-PIXEL-ART)
+
+**Verificado (folhas de antes e depois abertas):**
+- **Criador, andar para o leste e o nordeste:** o cajado sumia nos últimos quadros. Gerei de novo em
+  `v3` ("the staff stays in the hand and visible on every step"), e ele aparece nos 8. **Entrou.**
+- **Capitão do bando e vaqueiro, andar:** o cavalo mexia pouco as pernas. Gerei de novo em `v3`, com
+  o trote descrito ("each leg lifting high"), nas 5 direções de cada um. As pernas passaram a se mexer
+  visivelmente, o que é uma melhora modesta. **Entrou.**
+- **Aguilhadeiro, ataque para o nordeste e o norte:** o golpe perdia a vara. No nordeste ela agora
+  aparece em todo o golpe, e **entrou**. No norte melhorou só em parte: aparece no começo e encurta no
+  fim. Entrou mesmo assim, porque ainda é melhor que antes, e fica registrado.
+- **Ordem dos grupos no atlas:** a variante de retoque (`-2`) vence a `-v3`, que vence os grupos de
+  uma direção só (`-l`, `-se`), que vencem o grupo base. A ordem por letra punha o `andar-l` antigo do
+  capitão na frente do `andar-2` novo; agora a prioridade está escrita, com a lista dela.
+- **Ferramenta encostando na borda da célula de 64 px** (lenhador, fazendeiro, padeiro, mineiro):
+  ficou só medida, como manda o aceite. A largura máxima é 64 em todos os quatro, e mudar a célula é
+  decisão do operador.
+- G-ARTE-MORTE-DAS-UNIDADES, F17f, F-SPR-carregamento e D-TELA-05c: 76 verdes. Os roteiros
+  D-ARTE-PIXEL-ART-MILITARES e G-ARTE-MORTE-DAS-UNIDADES saem 0. O `verify:rapido` passou, mas não
+  rodou teste nenhum: só mudou arte e PROGRESS, e nenhum arquivo que um teste importe.
+
+**Gasto da Fase G no PixelLab:** cerca de 515 gerações (de 1 363 para 848), contra uma estimativa de
+~500.
+
+## 2026-10-04 — Decisão do operador: o corpo deitado fica como está
+
+O operador escolheu a saída (a) para o corpo caído que passa dos 64 px da célula: **aceitar como
+está**, porque o corpo esmaece em 1,2 s. A célula não muda e o render não ganha tamanho por animação.
+Se o corte incomodar jogando, a saída que ficou pronta é a (b): uma célula de 96×96 só para a
+`morrer`, num item próprio de render e manifesto. A pergunta saiu de `## Perguntas em aberto`.
