@@ -19736,3 +19736,38 @@ mais de 10 %. Caiu. **Nenhum código mudou**: a chave voltou a `false`, e o bug 
 **Espera o operador**, em Perguntas em aberto: recalibrar o pão em lote, investigar a queda antes,
 ou ir pela outra saída do bug.
 
+## 2026-10-04 — Fechamento final da leva de 2026-10-04 (com os itens 8 e 10 decididos), §13
+
+Na branch `dellanio/fase-i-para-quem-nunca-jogou`, sem merge na `main` (a sessão principal faz) e
+sem push.
+
+**A corrida, nesta ordem:**
+1. `npm run shot:todos` no `8dce31d`, destacado: **128 roteiros, 2 com saída diferente de 0**, nenhum
+   em 0 s: `C-IA-03c` (espera o operador, a margem da escaramuça) e `D-TELA-03`
+   (`BUG-ROTEIRO-D-TELA-03-MACHADO-COM-ICONE`, registrado, vindo da `main`). A costura e o véu
+   saíram 0 sozinhos, dentro da corrida: o aceite (a) do item 8 fecha. `F-D2` e
+   `H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA` também saíram 0.
+2. `npm run verify` completo no `8dce31d`: 2 550 testes, e 2 548 + 5 pulados no transladado. As
+   chaves da costura e do véu passaram a `true` com esse selo.
+3. `npm run test:longo`, sozinha, por último: **verde**, 29 s, no `9347369`, com a árvore limpa.
+   Este commit de PROGRESS deixa o selo para trás.
+
+**Estado final da leva:**
+
+```text
+item                                     estado    commit    o que falta
+1  H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA   fechou    53e8f90   ouvir os recortes; revisar 2 leituras
+2-5 Fase I                               fechou    23ce943   o playtest e o itch.io (operador)
+6  BUG-SAVE-DO-ROTEIRO-TRANSLADADO       fechou    33d56d1   -
+7  BUG-ROTEIRO-04E-DELTA-DO-ATLAS        fechou    ae306ae   -
+8  BUG-ROTEIRO-DE-DUAS-ETAPAS            fechou    67410e3   -
+9  BUG-ROTEIRO-F-D2-RELOGIO              fechou    5b5f933   -
+10 BUG-CIVIS-EMPILHADOS                  parado    8dce31d   operador: o pao cai 25 % com a colisao
+BUG-ROTEIRO-D-TELA-03 (da main)          aberto    a236c1d   registrado, nao corrigido
+C-IA-03c (de antes)                      espera    -         operador: a margem da escaramuca
+```
+
+**Espera o operador:** o item 10 (o pão cai até −25 % com a colisão ligada; as saídas estão em
+Perguntas em aberto); o playtest e o itch.io; a `C-IA-03c`; ouvir os sons novos; as leituras PARA
+REVISÃO; e o merge na `main`, que é da sessão principal.
+
