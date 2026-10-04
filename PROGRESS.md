@@ -19914,3 +19914,33 @@ Os portões (`PORTOES-pre-push`, `PORTOES-verify`) continuam verdes.
   (hipótese: carga da máquina, sem mudança de código).
 
 O roteiro G-TELA-GESTO-DO-TRABALHO continua saindo 0.
+
+### G-ARTE-TRABALHADOR-RECORTADO — o trabalhador da casa na escala da rua, recortado pela área (2026-10-04)
+**Pedido do operador:** não é preciso mostrar o corpo inteiro; basta a parte que se veria dentro do
+prédio, naquela câmera.
+**Medida (verificada):** os 13 prédios são desenhados na escala 1,0, e as unidades da rua também. O
+boneco da PixelLab na escala 1 já tem o tamanho de quem anda na rua; até aqui ele era reduzido para
+caber inteiro (a fundição ficava a 40%).
+**O que mudou:** os quadros são os mesmos grupos PixelLab, sem geração nova. Eles entram sem redução e
+são recortados pela área:
+- se o boneco cabe (só o moinho), entra inteiro com o pé embaixo;
+- se não cabe, a janela começa no alto da cabeça, e o corte fica na borda de baixo, como atrás do
+  balcão;
+- na largura, a janela centra nos pixels que mudam entre os 8 quadros (as mãos e a ferramenta).
+
+A origem de cada entrada registra `escala: 1`. Os scripts de montagem (`dentro_atlas.py`,
+`dentro_recorte.py` e o plano `dentro.json`) ficaram no rascunho da sessão, **fora do repositório**. A
+nota da origem descreve o método, mas o repositório sozinho não refaz os quadros.
+**Teste:** `tests/G-ARTE-TRABALHO-DENTRO-DO-PREDIO.test.ts` ganhou o bloco do recorte, e o arquivo deu 91
+verdes junto com o F17f. Ele afirma duas coisas:
+- a escala 1 na origem;
+- em toda área mais baixa que o serf (74 px), os quadros encostam na borda de baixo, e o alto da
+  cabeça, no quadro mais alto, fica a até 3 px do topo.
+
+**Evidência (aberta):** a folha dos 13 sobre o sprite, um zoom de 8 quadros dos seis menores e o
+roteiro `G-ARTE-TRABALHO-DENTRO-DO-PREDIO`, que sai 0. Na captura, o artesão da oficina de armas tem o
+tamanho dos carregadores da rua e está cortado no balcão; o carpinteiro da serraria aparece inteiro,
+na mesma escala.
+**Para o operador (aceite 4):** na fundição (`metallurgists`), a área tem 31×35 px. O recorte mostra a
+cabeça e os ombros, e o gesto quase não aparece. O save da vila pronta não tem fundição, então ela foi
+vista só na folha, não em jogo. A saída é apontar uma área maior na arte da casa.

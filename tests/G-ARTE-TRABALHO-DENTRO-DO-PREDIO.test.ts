@@ -5,6 +5,7 @@
  * do caso; os quadros tem o tamanho da `ancoras.trabalho.area` do predio (o render estica o quadro
  * para a area, e quadro de outra proporcao deforma o boneco); cada quadro tem gente; e o personagem
  * que a origem registra e o trabalhador do predio em `data/buildings.json`.
+ * G-ARTE-TRABALHADOR-RECORTADO: o boneco na escala 1 (a da rua), recortado pela area quando nao cabe.
  */
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
@@ -61,5 +62,28 @@ describe('G-ARTE-TRABALHO-DENTRO-DO-PREDIO', () => {
     const nota = (camadaDe(id)!.origem as { nota?: string }).nota ?? '';
     const personagem = /personagem (\w+) \(/.exec(nota)?.[1];
     expect(personagem).toBe(trabalhadorDo.get(id));
+  });
+});
+
+describe('G-ARTE-TRABALHADOR-RECORTADO — na escala da rua, recortado pela area', () => {
+  /** A altura do serf no `parado` sul, a regua da rua (G-ARTE-OBREIRO-MAIOR a afirma): area mais baixa
+   *  que ela nao cabe o boneco inteiro na escala 1, e o recorte tem de aparecer. */
+  const ALTURA_DO_BONECO = 74;
+
+  it.each(comTrabalho)('%s: a origem registra escala 1', (id) => {
+    expect((camadaDe(id)!.origem as { escala?: number }).escala).toBe(1);
+  });
+
+  it.each(comTrabalho)('%s: area mais baixa que o boneco -> o corte encosta na borda de baixo e a cabeca no topo', (id) => {
+    const e = camadaDe(id)!;
+    if (e.tamanho[1] >= ALTURA_DO_BONECO) return;
+    let cabeca = Infinity;
+    for (const arq of Object.values(e.estados)) {
+      const img = lerPng(`assets/${arq}`);
+      const c = caixaOpaca(img, { x: 0, y: 0, w: img.largura, h: img.altura })!;
+      expect(c.y1, `${arq}: o boneco flutua acima da borda de baixo`).toBe(img.altura - 1);
+      cabeca = Math.min(cabeca, c.y0);
+    }
+    expect(cabeca, 'o alto da cabeca, no quadro mais alto, longe do topo').toBeLessThanOrEqual(3);
   });
 });
