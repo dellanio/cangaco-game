@@ -29,3 +29,12 @@ const atlases = import.meta.glob('../../assets/sprites/**/*.json', { eager: true
 export const dadosDosAtlases: Readonly<Record<string, object>> = Object.fromEntries(
   Object.entries(atlases).map(([caminho, dado]) => [caminho.replace('../../assets/', ''), dado]),
 );
+
+/**
+ * H-TELA-CAMADA-DE-SOM — os arquivos de som aprovados (`assets/sons/`), pelo mesmo caminho do
+ * manifesto (`sons/x.ogg`). Sem arquivo, o mapa e vazio e todo som e silencio.
+ */
+const sons = import.meta.glob('../../assets/sons/**/*.{ogg,mp3,wav}', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+export const urlsDeArquivosDeSom: Readonly<Record<string, string>> = Object.fromEntries(
+  Object.entries(sons).map(([caminho, url]) => [caminho.replace('../../assets/', ''), url]),
+);

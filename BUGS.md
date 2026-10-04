@@ -9,7 +9,23 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
 **Severidades e o que cada uma provoca:**
 - `trava` — interrompe a fila do BUILD_PLAN; é a próxima coisa a ser feita.
 - `errado` — vira a chave da feature para `false` em `test-results.json`.
-- `feio` — vai para `## Polimento` e não bloqueia nada.
+- `feio` — vai para `## BUG-VERIFY-RAPIDO-LINHA-LONGA — o `verify:rapido` falha com muitos arquivos alterados
+- feature: camadas de teste (CLAUDE.md §13, `verify:rapido`)
+- severidade: errado
+- repro: na `main` com 55+ commits à frente do `origin/main` (217 arquivos alterados desde a
+  base), `npm run verify:rapido` depois do merge da Fase H (`55393a5`, 2026-10-04)
+- esperado: o `vitest related` roda nos arquivos alterados e o selo rápido é gravado
+- observado: "Linha de comando muito longa." e "FALHOU: vitest related"; o selo não é criado.
+  `scripts/verify-rapido.js:76` passa a lista inteira de arquivos na linha de comando, por
+  `spawnSync(..., { shell: true })`, e o `cmd.exe` tem limite de ~8 191 caracteres. Typecheck, lint
+  e validate:data passaram; o `npm run verify` completo do mesmo commit saiu 0 (2 475 testes).
+  Sem push há tempo, a lista só cresce, então o rápido fica inutilizável até o próximo push.
+- correção prevista: passar a lista sem shell (`spawnSync` com array de argumentos, que no Windows
+  aguenta ~32 767), ou, acima de um teto, cair para a suíte inteira e dizer isso no selo.
+- evidência: o log da corrida, nesta sessão (não guardado)
+- status: aberto
+
+## Polimento` e não bloqueia nada.
 
 ---
 
@@ -71,6 +87,18 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
   arte do serf (D-ARTE-SERF-COMFYUI) mudou o que a cena normal carrega, e a diferenca deixou de ser
   so o atlas.
 - evidência: `test-output/shot-todos.json` do fechamento da Fase F (2026-10-03)
+- status: aberto
+
+## BUG-ROTEIRO-F-D2-RELOGIO — o roteiro F-D2 afirma sobre relogio de parede e falhou no `shot:todos`
+- feature: F-D2 (navegacao da camera)
+- severidade: feio
+- repro: `npm run shot:todos` no `2fc4f8b` (fechamento da Fase H, 2026-10-03), com a maquina carregada
+- esperado: o roteiro passar em qualquer carga; a §8 diz que medida de relogio e evidencia, nunca asserção
+- observado: "segurar 1,2s (1091px) deveria andar mais que 4 toques de 300ms (1222px): a aceleracao
+  nao esta acontecendo". Rodado sozinho logo depois, no mesmo commit, saiu 0 tres vezes. Hipotese,
+  nao conferida: a distancia andada depende dos quadros que o navegador entrega no tempo de parede,
+  e com a maquina carregada sao menos. Nao foi visto no `shot:todos` da Fase F.
+- evidência: `test-output/shot-todos.json` do fechamento da Fase H
 - status: aberto
 
 ## Polimento

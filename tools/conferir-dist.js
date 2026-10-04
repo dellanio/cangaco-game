@@ -49,7 +49,12 @@ const commit = commitAtual();
 fs.mkdirSync(path.dirname(SAIDA), { recursive: true });
 fs.writeFileSync(SAIDA, JSON.stringify({
   ...anterior,
-  dist: { commit, arquivos: r.arquivos, bytes: r.bytes, megabytes: Number((r.bytes / 1e6).toFixed(2)), arquivosDaBaseConferidos: base.length, problemas: r.problemas, quando: new Date().toISOString() },
+  dist: { commit, arquivos: r.arquivos, bytes: r.bytes, megabytes: Number((r.bytes / 1e6).toFixed(2)), arquivosDaBaseConferidos: base.length, problemas: r.problemas, quando: new Date().toISOString(),
+    // H-ARTE-SONS-APROVADOS: os sons que o build leva (numero da corrida, nunca asserção)
+    sons: (() => {
+      const sons = dist.filter((d) => /\.(mp3|ogg|wav)$/.test(d.caminho));
+      return { arquivos: sons.length, bytes: sons.reduce((t, d) => t + d.bytes, 0) };
+    })() },
 }, null, 2));
 
 if (r.problemas.length > 0) {
@@ -66,4 +71,6 @@ if (fs.existsSync(DIST)) {
   fs.writeFileSync(path.join(DIST, 'build.json'), JSON.stringify({ commit, arvoreLimpa, quando: new Date().toISOString() }, null, 2));
 }
 
+const sonsNoDist = dist.filter((d) => /\.(mp3|ogg|wav)$/.test(d.caminho));
+console.log(`conferir-dist: ${sonsNoDist.length} sons, ${(sonsNoDist.reduce((t, d) => t + d.bytes, 0) / 1e6).toFixed(2)} MB.`);
 console.log(`conferir-dist: ${r.arquivos} arquivos, ${(r.bytes / 1e6).toFixed(2)} MB; nenhum de assets/base/ (${base.length} conferidos), sem pagina de depuracao.`);

@@ -55,6 +55,17 @@ import { montarAvisoDeOrdem, recusaDaPaz } from './ui/aviso-de-ordem';
 import { ordemDoBotaoDireito } from './ui/ordem-militar';
 import { direcaoDoArrasto } from './ui/formacao';
 import { criarEscaramuca } from './sim/cenario';
+import type { Command } from './sim/commands';
+import { criarCamadaDeSom, urlsDosSons } from './render/som';
+import type { SonsDoManifesto, TabelaDeSom, ContadoresDeSom } from './render/som';
+import { criarTocadorDeLacoDoNavegador, criarTocadorDoNavegador } from './render/tocador-de-som';
+import { criarFundoSonoro } from './render/fundo-sonoro';
+import type { ContadoresDoFundo, DadosDoFundo, VistaEmTiles } from './render/fundo-sonoro';
+import { urlsDeArquivosDeSom } from './render/sprites-urls';
+import tabelaDeSom from '../data/som.json';
+import { canalDoSom, volumeEfetivo } from './preferencias-de-som';
+import type { PreferenciasVivas } from './preferencias-de-som';
+import type { OpcoesDeSom } from './ui/opcoes-de-som';
 
 // C-IA-03c — o botao "Nova escaramuca" do painel H comeca a escaramuca no meio do jogo.
 const SEMENTE = gameData.economia.estadoInicial.semente;
@@ -62,6 +73,8 @@ const SEMENTE = gameData.economia.estadoInicial.semente;
 declare global {
   interface Window {
     __cangacoPartida?: { estadoSerializado(): string };
+    /** H-TELA-CAMADA-DE-SOM — HARNESS: os contadores da camada de som, para o roteiro. */
+    __cangacoSom?: { contadores(): ContadoresDeSom & { readonly fundo: ContadoresDoFundo } };
   }
 }
 
@@ -73,8 +86,34 @@ declare global {
  */
 export function iniciarPartida(
   estadoInicial: GameState, ajudaDoMenu: Ajuda | null = null, carregamento: TelaDeCarregamento | null = null,
+  /** H-TELA-OPCOES-E-VOLUME — o volume escolhido (o mesmo do menu) e a caixa que o muda. */
+  preferenciasDeSom: PreferenciasVivas | null = null, opcoesDeSom: OpcoesDeSom | null = null,
 ): void {
   const sessao = criarSessao(estadoInicial);
+  // H-TELA-CAMADA-DE-SOM — o som le os eventos de cada passo e toca no fim do quadro. O arquivo
+  // vem do manifesto (secao `sons`) pela URL do bundler; sem arquivo, o id e silencio.
+  const urlsDeSom = urlsDosSons((manifestoJson as unknown as { sons?: SonsDoManifesto }).sons, urlsDeArquivosDeSom);
+  const tabela = tabelaDeSom as TabelaDeSom;
+  const volumeDoSom = (id: string): number =>
+    (preferenciasDeSom === null ? 1 : volumeEfetivo(preferenciasDeSom.atual, canalDoSom(tabela.sons, id)));
+  const som = criarCamadaDeSom(tabela, new Set(Object.keys(urlsDeSom)), criarTocadorDoNavegador(urlsDeSom), volumeDoSom);
+  // H-TELA-AMBIENTE-E-MUSICA — o ambiente em laco, o sino da Bodega e a musica da paz e do combate
+  const fundo = criarFundoSonoro({
+    dados: tabelaDeSom as DadosDoFundo,
+    disponiveis: new Set(Object.keys(urlsDeSom)),
+    tocador: criarTocadorDeLacoDoNavegador(urlsDeSom),
+    volume: volumeDoSom,
+    pedir: (id) => { som.pedir(id); },
+    tickMs: gameData.tempo.tickMs,
+  });
+  // Todo comando do jogador passa por aqui: a conta diz ao som que a recusa do proximo passo e
+  // do jogador, e a planta posicionada pede o som seco no quadro do clique (GDD §10).
+  let comandosDoJogador = 0;
+  function enviar(comando: Command): void {
+    sessao.enviar(comando);
+    comandosDoJogador += 1;
+    if (comando.type === 'PlaceBlueprint') som.pedirPlanta();
+  }
   const ferramenta = criarFerramenta();
   // O predio aberto no painel (F13b). Estado de interface, como a ferramenta.
   const selecao = criarSelecao();
@@ -85,6 +124,8 @@ export function iniciarPartida(
   // entao ela pode nascer antes do resto da interface. Quem a abre e o teclado, e
   // e por isso que ela e o quarto parametro: com a ajuda aberta, o `Esc` e dela.
   const ajuda = ajudaDoMenu ?? montarAjuda();
+  // H-TELA-OPCOES-E-VOLUME — a ajuda em jogo abre as opcoes de som
+  opcoesDeSom?.ligarNaAjuda();
   ligarTeclado(ferramenta, window, selecao, ajuda);
 
   // O laco. `?pausado` na URL o faz NASCER pausado: e o que o runner de screenshot usa para todo
@@ -92,7 +133,12 @@ export function iniciarPartida(
   // pausar depois do aperto de mao. Nao e superficie de jogador.
   const laco = criarLaco({
     passo: () => {
-      sessao.passo();
+      const doJogador = comandosDoJogador;
+      comandosDoJogador = 0;
+      const antes = sessao.estado;
+      const depois = sessao.passo();
+      som.aoPasso(depois, doJogador);
+      fundo.aoPasso(depois, antes);
     },
     tickMs: gameData.tempo.tickMs,
     velocidades: gameData.tempo.velocidadeDeJogo.opcoes,
@@ -119,7 +165,7 @@ export function iniciarPartida(
   const entrada = criarEntradaDoMapa(
     ferramenta,
     (comando) => {
-      sessao.enviar(comando);
+      enviar(comando);
     },
     (tile) => {
       selecao.selecionar(predioClicavel(sessao.estado, predioNoTile(sessao.estado, tile.gx, tile.gy)));
@@ -155,7 +201,7 @@ export function iniciarPartida(
           ponto === null ? [] : jogo.unidadesNoPonto(ponto),
           { ...(direcao === null ? {} : { direcao }), ...(colunas === null ? {} : { colunas }) },
         );
-        for (const comando of ordem.comandos) sessao.enviar(comando);
+        for (const comando of ordem.comandos) enviar(comando);
         // C-TELA-02: a marca aparece no clique, mesmo pausado (retorno imediato, GDD §10)
         if (ordem.marcarDestino !== null) jogo.marcarDestino(ordem.marcarDestino);
       },
@@ -168,7 +214,7 @@ export function iniciarPartida(
   const estatisticas = montarEstatisticas();
   // D-TRANSPORTE-02b — a aba Distribuicao emite `SetWareDistribution`
   const distribuicao = montarDistribuicao((comando) => {
-    sessao.enviar(comando);
+    enviar(comando);
   });
   const aviso = montarAvisoDoTempo();
   // Os icones do menu: o trecho `icones` do manifesto mais as URLs que o bundler
@@ -180,12 +226,12 @@ export function iniciarPartida(
   );
   // UM painel para todo predio (F16b). A fila da escola virou uma secao dele.
   const painel = montarPainelPredio(selecao, (comando) => {
-    sessao.enviar(comando);
+    enviar(comando);
   }, gameData.economia.mercadorias, (tipo) => modosDoTipo(gameData.producao.receitas, tipo));
 
   // C-COMIDA-01d — o painel do grupo militar, com o Alimentar.
   const painelGrupo = montarPainelGrupo(selecaoMilitar, (comando) => {
-    sessao.enviar(comando);
+    enviar(comando);
   }, soldadosDoJogador, gameData);
   // predio e grupo nao convivem (F26b): escolher predio pela aba solta o grupo aqui tambem
   selecao.aoMudar(() => {
@@ -270,6 +316,8 @@ export function iniciarPartida(
       const resultado = arquivo.carregar(n);
       if (resultado.ok) {
         jogo.reiniciarApresentacao();
+        som.reiniciar();
+        fundo.reiniciar();
         selecao.selecionar(null);
       }
       painelDoArquivo.mostrar(resultado);
@@ -277,6 +325,8 @@ export function iniciarPartida(
     aoEscaramuca() {
       // C-IA-03c: a escaramuca do comeco, no lugar da partida em curso
       jogo.reiniciarApresentacao();
+      som.reiniciar();
+      fundo.reiniciar();
       sessao.substituir(criarEscaramuca(SEMENTE));
       selecao.selecionar(null);
       selecaoMilitar.limpar();
@@ -296,10 +346,20 @@ export function iniciarPartida(
   atualizar(sessao.estado);
   aviso.atualizar(laco.pausado, laco.velocidade);
 
+  /** A vista da camera em tiles, para o sino da Bodega. */
+  function vistaEmTiles(): VistaEmTiles | null {
+    const v = jogo.vistaDaCamera();
+    if (v === null) return null;
+    const t = configDoMapa.tilePx;
+    return { x0: Math.floor(v.x / t), y0: Math.floor(v.y / t), x1: Math.floor((v.x + v.width) / t), y1: Math.floor((v.y + v.height) / t) };
+  }
+
   // O relogio do navegador dirige o laco. Isto NAO e o `update()` da cena: o laco e do laco
   // externo, nao do render (CLAUDE.md §10).
   function quadro(agoraMs: number): void {
     laco.tique(agoraMs);
+    fundo.quadro(agoraMs, sessao.estado, vistaEmTiles());
+    som.quadro();
     aviso.atualizar(laco.pausado, laco.velocidade);
     requestAnimationFrame(quadro);
   }
@@ -308,5 +368,6 @@ export function iniciarPartida(
   // E-TELA-MENU-INICIAL — HARNESS, como o `__cangaco` do render: o estado serializado, para o
   // roteiro comparar a escaramuca do menu com a do `?escaramuca` no tick 0. Nao usar em jogo.
   window.__cangacoPartida = { estadoSerializado: () => JSON.stringify(sessao.estado) };
+  window.__cangacoSom = { contadores: () => ({ ...som.contadores(), fundo: fundo.contadores() }) };
 
 }
