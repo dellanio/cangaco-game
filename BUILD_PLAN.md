@@ -6199,7 +6199,11 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
 - **O que já existe:** o render já escolhe a ação `trabalhar` para o obreiro que está `nivelando` ou
   `martelando` (`src/render/acao-de-unidade.ts`), e `atacar` para o militar que luta. Falta só a
   arte: a entrada do manifesto sem a animação cai no quadro parado, como hoje.
-- **Feature de arte e manifesto.** Nada em `src/sim/` nem no código do render.
+- **Feature de arte e manifesto.** Nada em `src/sim/`. O render muda num ponto só (aceite 7).
+- **Emenda (2026-10-03, antes do código, pela medida):** com o cabra e o obreiro ganhando atlas
+  real, o roteiro D-TELA-05c falhou ("corpo inicia no quadro zero"). Hipótese: no `preload` da
+  cena, o atlas de depuração e o real do mesmo tipo entram na fila com a mesma chave
+  (`unidade:<tipo>:atlas`), e o real ocupa o lugar do de depuração, que é o que tem a morte.
 - **Os nove militares da camada sertão:** cabra, cabra de gibão, valente, bodoqueiro, cabra de
   fogo, aguilhadeiro, ferrão, vaqueiro (montado) e capitão do bando (montado). Os mercenários não
   têm entrada no manifesto e ficam de fora.
@@ -6218,6 +6222,9 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
      D-TELA-SERF-CARREGANDO) passam, e `git diff main -- src/sim` continua vazio.
   6. **O merge na `main`** fica autorizado pelo operador ao fim, depois do `verify:rapido` verde,
      sem tocar o trabalho da outra sessão (a névoa).
+  7. **No modo `?depuracao=<tipos>`, o atlas de depuração vence o real do mesmo tipo:** a regra pura
+     que decide o que o `preload` enfileira não devolve o atlas real de um tipo cujo atlas de
+     depuração já entrou (teste por tabela), e o roteiro D-TELA-05c sai 0.
 
 ### D-TELA-SERF-CARREGANDO — O serf anda com os braços levando a carga
 - **Pedido do operador (2026-10-03, no teste de pixel art):** "o serf está carregando os produtos
