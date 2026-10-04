@@ -19457,3 +19457,15 @@ som; o conflito do PROGRESS era só as duas pontas acrescentando no fim, e ficar
   - `npm run verify:rapido` verde.
 - **Aberto:** a chave em `test-results.json` é marcada no fechamento da leva, com o verify completo.
 
+## 2026-10-04 — Leva, item 6: BUG-SAVE-DO-ROTEIRO-TRANSLADADO (os saves dos roteiros 05c e 05d)
+
+- **A correção escrita no bug:** `tests/D-TELA-05c.test.ts` e `tests/D-TELA-05d.test.ts` gravam os
+  saves em `${CANGACO_EVIDENCIA_DIR ?? 'test-output'}`, como os do BUG-U/W/X. A corrida transladada
+  do `verify` grava no diretório dela e não sobrescreve mais o save que o roteiro lê. O bug saiu do
+  `BUGS.md` neste commit.
+- **Aceite, verificado nesta sessão:** `npm run verify` completo (2 520; 2 518 + 5 pulados no
+  transladado) e depois `npm run shot -- D-TELA-05c` (6 capturas) e `-- D-TELA-05d` (2 capturas),
+  nessa ordem: os três saíram 0. A primeira tentativa do `verify` acusou um literal do item 1 (o
+  centro `32,32` no teste do som, longe da vila no mundo transladado), corrigido em `53767d6`.
+- **As chaves 05c e 05d** voltam a ser conferidas no fechamento da leva.
+
