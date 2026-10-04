@@ -30,6 +30,7 @@ import { modosDoTipo } from './ui/modo-do-predio';
 import { montarAlertas } from './ui/alertas';
 import { montarAvisoDoTempo } from './ui/aviso-tempo';
 import { montarFimDePartida } from './ui/fim-de-partida';
+import { montarFaixaDePassos } from './ui/partida-guiada';
 import { montarAjuda } from './ui/ajuda';
 import type { Ajuda } from './ui/ajuda';
 import type { TelaDeCarregamento } from './ui/carregamento';
@@ -88,6 +89,8 @@ export function iniciarPartida(
   estadoInicial: GameState, ajudaDoMenu: Ajuda | null = null, carregamento: TelaDeCarregamento | null = null,
   /** H-TELA-OPCOES-E-VOLUME — o volume escolhido (o mesmo do menu) e a caixa que o muda. */
   preferenciasDeSom: PreferenciasVivas | null = null, opcoesDeSom: OpcoesDeSom | null = null,
+  /** I-TELA-PARTIDA-GUIADA — o Aprender a jogar: a faixa de passos por cima do jogo livre. */
+  guiada = false,
 ): void {
   const sessao = criarSessao(estadoInicial);
   // H-TELA-CAMADA-DE-SOM — o som le os eventos de cada passo e toca no fim do quadro. O arquivo
@@ -251,6 +254,9 @@ export function iniciarPartida(
   // F34 — o aviso do fim da escaramuca. Derivado do estado, como os alertas.
   const fimDePartida = montarFimDePartida();
 
+  // I-TELA-PARTIDA-GUIADA — a faixa de passos. Derivada do estado; a sim nao sabe dela.
+  const faixaDePassos = guiada ? montarFaixaDePassos(gameData) : null;
+
   // UI-barra-a (docs/propostas/barra-lateral-unica.md): a barra lateral unica.
   // Ela so escreve `data-corpo` no <body> — grade, painel ou opcoes no corpo da
   // aba —, e a area do canvas nao muda com isso. Nasce ANTES do jogo pelo mesmo
@@ -297,6 +303,7 @@ export function iniciarPartida(
     // C-TELA-02: destino que ninguem vai alcancar nao fica marcado
     if (recusaDaPaz(s.events) !== null) jogo.apagarDestino();
     fimDePartida.atualizar(s);
+    faixaDePassos?.atualizar(s);
     // C9: a partida acabou -> o laco para (e so outro save o reabre)
     acompanharFimDePartida(laco, s);
   }

@@ -3273,6 +3273,19 @@ que vetar custe uma linha.
   da vista vira marcha até o tile (o único jeito que venceu), e o roteiro passa a jogar assim. Se
   ainda assim perder, a decisão é do operador: a margem da tropa (`escaramuca.tropaDoJogador`), ou
   a afirmação de vitória do roteiro.
+- **(2026-10-04, Fase I) I-TELA-PARTIDA-GUIADA — a leitura dos passos (PARA REVISÃO).** O
+  BUILD_PLAN nomeia os passos ("estrada até o armazém, escola, lenhador, pedreira, serraria, a
+  primeira comida, o quartel e a escaramuça") sem dizer a condição de cada um. Fiz o conservador:
+  (1) a **estrada** passa quando a escola fica ligada ao armazém por estrada **planejada ou
+  calçada**: o passo ensina o gesto, e o calçamento é dos obreiros; (2) a **escola** já nasce de pé,
+  então o passo é engajar o lenhador nela (na fila ou formado); (3) lenhador, pedreira, serraria e
+  quartel passam com a casa **completa**, porque a serraria só destrava com um lenhador completo e
+  o passo não pode pedir o que o jogo recusa; (4) a **primeira comida** é qualquer casa completa cuja
+  receita produz comida (`condition.json: restauracaoPorComida`), e o passo sugere as que não pedem
+  insumo (canavial, pescador); (5) os passos de construir também pedem o trabalhador da casa
+  (pedreiro, carpina, roceiro ou pescador), senão a casa fica parada e a pedra acaba; (6) o jogo
+  livre não tem inimigo, então a **escaramuça** é o último passo, sem condição: ele convida a
+  começar uma escaramuça pelo menu. Qualquer troca é só em `src/ui/partida-guiada.ts` e no tema.
 
 
 ## F-T1 — Camada de terreno base (dado + sim + render mínimo) (2026-09-24)
@@ -19111,3 +19124,32 @@ Leituras conservadoras, PARA REVISÃO do operador:
 - os passos da partida guiada seguem a abertura do GDD §1.3;
 - o relato do playtest é um arquivo que a pessoa baixa e manda; nada é enviado pela rede;
 - o playtest em si e a abertura do itch.io são do operador, e a I só fecha com ele.
+
+## 2026-10-04 — I-TELA-PARTIDA-GUIADA (aprender a jogar)
+
+- **O que existe:** o botão **Aprender a jogar**, o primeiro do menu inicial, abre o jogo livre
+  com a faixa de passos no alto da tela (`src/ui/partida-guiada.ts`, textos em
+  `theme-sertao.json: partidaGuiada`). Oito passos: estrada, escola (engajar o lenhador), lenhador,
+  pedreira, serraria, comida, quartel e o convite à escaramuça. **Esconder** recolhe a faixa e
+  **Passos** a reabre. `?guiada` abre o mesmo direto (para roteiro).
+- **Como:** a lista de passos é dado da tela (TS, como `input/atalhos.ts`); o passo atual é o
+  primeiro cuja condição não vale, derivado do estado por função pura, sem memória. Nada no
+  `GameState` marca o tutorial, e a escolha `guiada` dá o mesmo estado do jogo livre. O `GameData`
+  chega por parâmetro (`ui/` não lê `sim/data`, guarda da F05b, que acusou a primeira versão). A
+  leitura de cada passo está em Perguntas em aberto (PARA REVISÃO).
+- **Verificado (evidência aberta nesta sessão):**
+  - `tests/I-TELA-PARTIDA-GUIADA.test.ts`, 5 testes verdes: (a) a tabela estado → passo, com o
+    que não conta (obra, casa do outro lado) e a volta quando o estado desfaz; (b) o jogador que só
+    faz o que o passo pede vai do passo 1 ao 8 em **4 856 ticks**, com 0 recusas
+    (`test-output/I-TELA-PARTIDA-GUIADA.json`; teto 6 100, +25%); (c) a mesma corrida, com a faixa
+    lida a cada tick e sem ela, dá o mesmo estado byte a byte, e `guiada` nasce igual ao livre;
+    mais a ida e volta dos textos do tema.
+  - `npm run shot -- I-TELA-PARTIDA-GUIADA`: OK, 3 capturas abertas
+    (`screenshots/I-TELA-PARTIDA-GUIADA-{1,2,3}-passo-*.png`). Pelo menu, despausado, com o aperto
+    segurado 150 ms: o arrasto da estrada da escola ao armazém passa o passo 1, o clique na escola e
+    no Lenhador do painel passa o 2, e o 3 aparece. Esconder e Passos conferidos.
+  - A primeira captura pôs a faixa embaixo, por cima da linha das portas, que é onde o passo 1 pede
+    a estrada; ela foi para o alto.
+  - `npm run verify:rapido` verde (535 testes).
+- **Aberto:** a chave em `test-results.json` é marcada no fechamento da fase, com o verify completo.
+

@@ -23,6 +23,9 @@ import type { Gaveta, LeituraDoSave, NumeroDaGaveta } from './arquivo-da-partida
 
 export type EscolhaDaPartida =
   | { readonly modo: 'livre' }
+  /** I-TELA-PARTIDA-GUIADA — o Aprender a jogar: o MESMO estado do jogo livre; a faixa de passos e
+   *  so da tela, e a sim nao sabe dela. */
+  | { readonly modo: 'guiada' }
   /** E-TELA-CONFIGURAR-PARTIDA — a paz escolhida, em minutos base do dado; ausente, o padrao. */
   | { readonly modo: 'escaramuca'; readonly pazMinBase?: number; readonly nivel?: string }
   /** O ultimo save (o Continuar do menu). */
@@ -38,19 +41,22 @@ export function abreNoMenu(busca: string): boolean {
 
 /** A partida que a URL pede quando nao ha menu: a de sempre (`main.ts` antes do menu). */
 export function escolhaDaUrl(busca: string): EscolhaDaPartida {
-  return new URLSearchParams(busca).has('escaramuca') ? { modo: 'escaramuca' } : { modo: 'livre' };
+  const parametros = new URLSearchParams(busca);
+  if (parametros.has('escaramuca')) return { modo: 'escaramuca' };
+  // I-TELA-PARTIDA-GUIADA: `?guiada`, para o roteiro nascer com a faixa sem passar pelo menu
+  return parametros.has('guiada') ? { modo: 'guiada' } : { modo: 'livre' };
 }
 
 export type EstadoDaEscolha =
   | { readonly ok: true; readonly estado: GameState }
   | { readonly ok: false; readonly leitura: Exclude<LeituraDoSave, { ok: true }> };
 
-export type PartidaNova = Extract<EscolhaDaPartida, { readonly modo: 'livre' | 'escaramuca' }>;
+export type PartidaNova = Extract<EscolhaDaPartida, { readonly modo: 'livre' | 'guiada' | 'escaramuca' }>;
 
 /** O tick 0 de uma partida nova. A semente e a do dado, como sempre foi. */
 export function estadoNovo(escolha: PartidaNova, dados: GameData = gameData): GameState {
   const semente = dados.economia.estadoInicial.semente;
-  if (escolha.modo === 'livre') return createInitialState(semente, dados);
+  if (escolha.modo === 'livre' || escolha.modo === 'guiada') return createInitialState(semente, dados);
   return criarEscaramuca(semente, dados, {
     ...(escolha.pazMinBase === undefined ? {} : { pazMinBase: escolha.pazMinBase }),
     // F-IA-DIFICULDADE: o nivel do adversario; ausente, o normal
@@ -88,7 +94,7 @@ export function opcoesDeNivelNaTela(dados: GameData = gameData): OpcaoDeNivelNaT
 
 /** O estado de cada escolha: a partida nova, o ultimo save ou uma gaveta (que podem ser recusados). */
 export function estadoDaEscolha(escolha: EscolhaDaPartida, gaveta: Gaveta | null, dados: GameData = gameData): EstadoDaEscolha {
-  if (escolha.modo === 'livre' || escolha.modo === 'escaramuca') return { ok: true, estado: estadoNovo(escolha, dados) };
+  if (escolha.modo === 'livre' || escolha.modo === 'guiada' || escolha.modo === 'escaramuca') return { ok: true, estado: estadoNovo(escolha, dados) };
   const leitura = escolha.modo === 'carregar' ? lerGaveta(gaveta, escolha.gaveta, dados) : lerUltimoSave(gaveta, dados);
   return leitura.ok ? { ok: true, estado: leitura.estado } : { ok: false, leitura };
 }

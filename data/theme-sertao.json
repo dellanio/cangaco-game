@@ -685,6 +685,7 @@
   "menuInicial": {
     "_doc": "E-TELA-MENU-INICIAL. A porta do jogo, antes do Phaser: os botoes do menu (src/ui/menu-inicial.ts). As chaves sem-save, recusado e gaveta sao as causas de `lerUltimoSave` (src/arquivo-da-partida.ts), e o motivo do Continuar desabilitado.",
     "titulo": "Piancó",
+    "aprender": "Aprender a jogar",
     "novoJogo": "Novo jogo",
     "livre": "Jogo livre",
     "escaramuca": "Escaramuça",
@@ -716,5 +717,46 @@
     "canais": { "efeitos": "Efeitos", "ambiente": "Ambiente", "musica": "Música" },
     "mudo": "Sem som",
     "fechar": "Fechar"
+  },
+  "partidaGuiada": {
+    "_doc": "I-TELA-PARTIDA-GUIADA. A faixa de passos do Aprender a jogar (src/ui/partida-guiada.ts). As chaves de `passos` sao os ids de `passosDaPartidaGuiada`: passo sem texto, ou texto sem passo, reprova o verify (tests/I-TELA-PARTIDA-GUIADA.test.ts). {predio} e o nome do tema do predio que o passo pede; {unidade}, o do civil; {n} e {total}, a contagem.",
+    "contagem": "Passo {n} de {total}",
+    "ou": " ou ",
+    "pular": "Esconder",
+    "reabrir": "Passos",
+    "passos": {
+      "estrada": {
+        "titulo": "Puxe a estrada",
+        "texto": "Pegue a estrada no menu (ou aperte R) e puxe da porta da {predio} até a porta do Armazém. A porta é o lado de baixo da casa. Os obreiros calçam depois."
+      },
+      "escola": {
+        "titulo": "Engaje um {unidade}",
+        "texto": "Clique na Casa do Coronel e peça um {unidade}. Ele custa ouro, e um carregador leva o ouro pela estrada."
+      },
+      "lenhador": {
+        "titulo": "Levante a {predio}",
+        "texto": "Escolha a {predio} no menu e ponha perto do mato. Puxe estrada da porta dela até a rede. Os obreiros levantam a obra; espere ficar pronta."
+      },
+      "pedreira": {
+        "titulo": "Levante a {predio}",
+        "texto": "Ponha a {predio} perto do lajedo, ligue a porta à estrada e peça um {unidade} na Casa do Coronel. Sem ele a casa fica parada. Pedra serve para casa e para calçar estrada."
+      },
+      "serraria": {
+        "titulo": "Levante a {predio}",
+        "texto": "Com o lenhador de pé, a {predio} aparece no menu. Ela faz tábua da tora. Ligue a porta à estrada e peça um {unidade}."
+      },
+      "comida": {
+        "titulo": "A primeira comida",
+        "texto": "Gente com fome para de trabalhar. Levante um {predio}, ligue à estrada e peça um {unidade}. Comida vai para a Bodega, onde o povo come."
+      },
+      "quartel": {
+        "titulo": "Levante o {predio}",
+        "texto": "O {predio} transforma recruta e arma em cabra de briga. Ponha e ligue à estrada."
+      },
+      "escaramuca": {
+        "titulo": "Pronto para a briga",
+        "texto": "A vila anda sozinha. Quando quiser enfrentar outro bando, volte ao menu e comece uma Escaramuça."
+      }
+    }
   }
 }

@@ -349,6 +349,31 @@ body:not([data-corpo="opcoes"]) #opcoes { display: none; }
 }
 #aviso-de-ordem[hidden] { display: none; }
 
+/* ---- I-TELA-PARTIDA-GUIADA: a faixa de passos do Aprender a jogar ----------- */
+/* No alto da celula do canvas, centrada, logo abaixo do lugar do aviso de ordem:
+   embaixo ela cobria a linha das portas da vila, que e onde o primeiro passo pede
+   a estrada (medido na captura do passo 1). Recolhida, sobra so o botao que a
+   reabre, no canto de cima. */
+#partida-guiada {
+  grid-column: 2; grid-row: 1; align-self: start; justify-self: center; margin-top: 58px; z-index: 6;
+  box-sizing: border-box; width: min(560px, calc(100% - 32px)); padding: 8px 14px 10px;
+  display: grid; grid-template-columns: 1fr auto; column-gap: 12px; align-items: start;
+  background-color: var(--papel); background-image: var(--grao); color: var(--tinta);
+  border: var(--traco) solid var(--tinta); box-shadow: 4px 4px 0 var(--tinta);
+  font: 14px/1.35 var(--fonte-corpo);
+}
+#partida-guiada[hidden] { display: none; }
+#partida-guiada .contagem {
+  grid-column: 1; font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--terra-queimada);
+}
+#partida-guiada .titulo { grid-column: 1; font: 18px/1.2 var(--fonte-display); letter-spacing: 0.02em; }
+#partida-guiada .texto { grid-column: 1; margin: 4px 0 0; }
+#partida-guiada button[data-acao="pular"] { grid-column: 2; grid-row: 1 / span 3; align-self: center; }
+#reabrir-passos {
+  grid-column: 2; grid-row: 1; align-self: start; justify-self: start; margin: 16px 0 0 16px; z-index: 6;
+}
+#reabrir-passos[hidden] { display: none; }
+
 /* ---- a tela de ajuda (F-D1) ------------------------------------------------- */
 /* Sobreposicao na celula do canvas, centrada, e `hidden` por padrao: fechada,
    ela nao existe para medida nenhuma. */

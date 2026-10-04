@@ -53,7 +53,7 @@ async function jogar(escolha: EscolhaDaPartida, ajuda: Ajuda | null): Promise<vo
   const modulo = await import('./main');
   const { preferencias, opcoes } = somDaPagina();
   opcoes.fechar();
-  modulo.iniciarPartida(estado, ajuda, carregamento, preferencias, opcoes);
+  modulo.iniciarPartida(estado, ajuda, carregamento, preferencias, opcoes, escolha.modo === 'guiada');
 }
 
 function situacaoDoSave(): SituacaoDoSave {
