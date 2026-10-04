@@ -1,6 +1,7 @@
 # --- Regras Específicas do Projeto Cangaço ---
 test-output/
-screenshots/
+/screenshots/
+/candidatos/
 *.png
 # A arte do jogo e versionada (CLAUDE.md 9): base e derivado entram no git.
 !assets/**/*.png
