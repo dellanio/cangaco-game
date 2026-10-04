@@ -19211,3 +19211,27 @@ O `verify:rapido` deste commit sai vermelho por um teste que não é desta mudan
 `tests/H-ARTE-SONS-APROVADOS.test.ts` ("linha sem aprovacao ... fora do manifesto") falha também na `main`
 em `579f25f` sem ela (conferido com a mudança guardada no stash). Ele vem dos aceites do
 H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA, da outra sessão, e fica com ela. Os testes do manifesto passam.
+
+## 2026-10-04 — G-ARTE-TRABALHO-DOS-OFICIOS (quem trabalha fora de casa mexe a ferramenta)
+
+Primeiro item da Fase G, que o operador mandou planejar e tocar a noite toda numa worktree própria,
+porque a fila E–I está com outra sessão. O plano e os aceites estão no `BUILD_PLAN.md` (`f7b2b27`).
+
+**Verificado (aberto ou rodado nesta sessão):**
+- O pedreiro, o lenhador, o fazendeiro e o pescador têm `trabalhar` (8 quadros, em laço) nas 5
+  direções. Cada um usa a ferramenta dele: picareta na rocha, machado no tronco, enxada no chão e
+  tarrafa lançada. A primeira tentativa do fazendeiro quase não mexia a enxada; a segunda (grupo
+  `trabalhar-2`, descrição com o golpe no chão) entrou, e o atlas usa a variante mais nova. As folhas
+  de revisão com a linha do pé foram abertas.
+- **Pé estável no golpe:** o atlas deixou de alinhar quadro a quadro pelo fundo da caixa. No andar
+  continua assim (o pé é o ponto mais baixo); no trabalho e no ataque usa a mediana dos fundos, porque
+  a ferramenta passa abaixo do pé em alguns quadros; na morte usa o primeiro quadro, em pé. Antes da
+  mudança, o pedreiro "pulava" 4 px quando a picareta descia.
+- Roteiro novo `G-ARTE-TRABALHO-DOS-OFICIOS`: carrega o save do lenhador do D-TELA-05c, no jogo
+  normal, e o lenhador passa por `woodcutter/trabalhar/l/0001..0003` do atlas real, com o pé na linha.
+  A captura `screenshots/G-ARTE-TRABALHO-DOS-OFICIOS-1-lenhador-cortando.png` foi aberta: o machado
+  bate no tronco e a copa da árvore cobre metade dele, o que é o certo, porque a árvore está à frente.
+- O D-TELA-05c sai 0. F17f, F-SPR-carregamento, D-TELA-05c e D-TELA-04b: 64 testes verdes.
+- O `verify:rapido` sai vermelho só por `tests/H-ARTE-SONS-APROVADOS.test.ts`, a mesma falha que a
+  `main` tem desde `579f25f`. Ela vem do item de som da outra sessão (registrado acima) e não desta
+  mudança.

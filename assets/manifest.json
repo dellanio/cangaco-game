@@ -713,13 +713,18 @@
           "quadros": 8,
           "tilesPorCiclo": 2,
           "laco": true
+        },
+        "trabalhar": {
+          "quadros": 8,
+          "fps": 10,
+          "laco": true
         }
       },
       "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
       "origem": {
         "base": "base/units/stonemason-pixellab/south.png",
         "semente": null,
-        "nota": "PixelLab v3 76 px, personagem 15056cf3-469a-4777-9814-254d63697f1b, andar skeleton-v3 walking-8-frames; sha256 da base 118acda73214857a41f9b4a53921dda7bacbee970a3633a649987d5c08a6f31a"
+        "nota": "PixelLab v3, personagem 15056cf3-469a-4777-9814-254d63697f1b, andar skeleton-v3 walking-8-frames, trabalhar v3 por direcao; sha256 da base 118acda73214857a41f9b4a53921dda7bacbee970a3633a649987d5c08a6f31a"
       }
     },
     {
@@ -753,13 +758,18 @@
           "quadros": 8,
           "tilesPorCiclo": 2,
           "laco": true
+        },
+        "trabalhar": {
+          "quadros": 8,
+          "fps": 10,
+          "laco": true
         }
       },
       "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
       "origem": {
         "base": "base/units/woodcutter-pixellab/south.png",
         "semente": null,
-        "nota": "PixelLab v3 76 px, personagem 6e96aeaa-5cae-438d-b91d-27331fac35c1, andar skeleton-v3 walking-8-frames; sha256 da base 7428a1a81df921ea2976f779a7378343703306e93f030bc5b3a2c5d695b136b0"
+        "nota": "PixelLab v3, personagem 6e96aeaa-5cae-438d-b91d-27331fac35c1, andar skeleton-v3 walking-8-frames, trabalhar v3 por direcao; sha256 da base 7428a1a81df921ea2976f779a7378343703306e93f030bc5b3a2c5d695b136b0"
       }
     },
     {
@@ -833,13 +843,18 @@
           "quadros": 8,
           "tilesPorCiclo": 2,
           "laco": true
+        },
+        "trabalhar": {
+          "quadros": 8,
+          "fps": 10,
+          "laco": true
         }
       },
       "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
       "origem": {
         "base": "base/units/farmer-pixellab/south.png",
         "semente": null,
-        "nota": "PixelLab v3 76 px, personagem a19c5e3e-a0e0-4855-89e7-c8237a10d40e, andar skeleton-v3 walking-8-frames; sha256 da base 3b72f8d8822a423eb3a7b959a5cff64fb6631ccc2a5c549193c8c5bf6af572c1"
+        "nota": "PixelLab v3, personagem a19c5e3e-a0e0-4855-89e7-c8237a10d40e, andar skeleton-v3 walking-8-frames, trabalhar v3 por direcao; sha256 da base 3b72f8d8822a423eb3a7b959a5cff64fb6631ccc2a5c549193c8c5bf6af572c1"
       }
     },
     {
@@ -993,13 +1008,18 @@
           "quadros": 8,
           "tilesPorCiclo": 2,
           "laco": true
+        },
+        "trabalhar": {
+          "quadros": 8,
+          "fps": 10,
+          "laco": true
         }
       },
       "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
       "origem": {
         "base": "base/units/fisherman-pixellab/south.png",
         "semente": null,
-        "nota": "PixelLab v3 76 px, personagem 95e79070-c057-4068-b906-33fdf772f4be, andar skeleton-v3 walking-8-frames; sha256 da base 67e8520c075e56a6ce99a17b4d737ae82ce92bc1c7560344db04836d65ab9a43"
+        "nota": "PixelLab v3, personagem 95e79070-c057-4068-b906-33fdf772f4be, andar skeleton-v3 walking-8-frames, trabalhar v3 por direcao; sha256 da base 67e8520c075e56a6ce99a17b4d737ae82ce92bc1c7560344db04836d65ab9a43"
       }
     },
     {
