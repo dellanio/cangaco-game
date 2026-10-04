@@ -4,10 +4,10 @@
 //       contador de sons pedidos (`window.__cangacoSom`) maior que zero.
 // O pedido vem do gesto do jogador: a planta posicionada pede o som seco no quadro do clique, e a
 // recusa (se o tile nao servir) pede o dela no passo seguinte.
-// Desde a H-ARTE-SONS-APROVADOS a planta TEM arquivo e a recusa NAO (o operador deixou a linha em
-// branco): o roteiro afirma os dois lados. O som com arquivo toca e o arquivo dele e pedido; o som
-// sem arquivo e silencio, sem requisicao e sem erro. O "todo som faltando" inteiro e o teste
-// headless (`criarCamadaDeSom` com `disponiveis` vazio).
+// Desde a H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA (2026-10-04) a planta E a recusa tem arquivo (o operador
+// aprovou a recusa): tudo o que o gesto pede toca, o arquivo de cada um e pedido, e nada fica em
+// silencio. O som sem arquivo (silencio, sem requisicao e sem erro) e o teste headless
+// (`criarCamadaDeSom` com `disponiveis` vazio, e o `building-hit` sem aprovacao).
 const manifesto = require('../../assets/manifest.json');
 const { retanguloDoCanvas } = require('./_canvas');
 
@@ -40,12 +40,13 @@ async function roteiro({ page, capturar, afirmar }) {
   afirmar(depois.pedidos > 0, `com a planta posicionada, o contador de sons pedidos deveria passar de 0: ${JSON.stringify(depois)}`);
   afirmar((depois.porId['blueprint-placed'] ?? 0) >= 1, `a planta deveria pedir 'blueprint-placed': ${JSON.stringify(depois.porId)}`);
   const comArquivo = (id) => manifesto.sons[id] !== undefined;
-  afirmar(comArquivo('blueprint-placed') && !comArquivo('command-rejected'), 'premissa: a planta tem arquivo, a recusa nao');
-  afirmar(depois.tocados === (depois.porId['blueprint-placed'] ?? 0), `toca so o que tem arquivo (a planta): ${JSON.stringify(depois)}`);
-  afirmar(depois.emSilencio === (depois.porId['command-rejected'] ?? 0), `o que nao tem arquivo e silencio (a recusa): ${JSON.stringify(depois)}`);
+  afirmar(comArquivo('blueprint-placed') && comArquivo('command-rejected'), 'premissa: a planta e a recusa tem arquivo');
+  afirmar(depois.tocados === depois.pedidos && depois.emSilencio === 0, `tudo o que o gesto pede tem arquivo e toca: ${JSON.stringify(depois)}`);
   const audios = [...pedidosDeAudio];
   afirmar(audios.some((n) => n.includes('blueprint-placed')), `o arquivo da planta deveria ser pedido: ${JSON.stringify(audios)}`);
-  afirmar(!audios.some((n) => n.includes('command-rejected')), `sem arquivo, a recusa nao pede nada: ${JSON.stringify(audios)}`);
+  if ((depois.porId['command-rejected'] ?? 0) > 0) {
+    afirmar(audios.some((n) => n.includes('command-rejected')), `a recusa pedida deveria pedir o arquivo dela: ${JSON.stringify(audios)}`);
+  }
   console.log(`[H-TELA-CAMADA-DE-SOM] contadores: ${JSON.stringify(depois)}`);
   await capturar('partida-andando-sem-som');
 }

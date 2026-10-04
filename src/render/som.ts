@@ -17,14 +17,48 @@
  */
 import { LADO_DO_JOGADOR } from '../sim/state';
 import type { GameEvent, GameState } from '../sim/state';
+import type { GameData } from '../sim/data/types';
 import { ehVisivel, predioNaVista, visaoDe } from '../sim/nevoa';
+import { canPlaceRoad, chaveDeTile } from '../sim/estradas';
 import { temNevoa } from './nevoa';
+
+/** Um tile do mapa: o lugar de um som, ou o centro da camera. */
+export interface TileDoSom {
+  readonly gx: number;
+  readonly gy: number;
+}
+
+/**
+ * H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA — o fator de volume de um som com lugar: 1 no centro da
+ * camera, caindo em linha reta com a distancia (em tiles), e 0 no raio e alem dele. Pura.
+ */
+export function volumeNaDistancia(lugar: TileDoSom, centro: TileDoSom, raioTiles: number): number {
+  if (raioTiles <= 0) return 0;
+  const d = Math.hypot(lugar.gx - centro.gx, lugar.gy - centro.gy);
+  return d >= raioTiles ? 0 : 1 - d / raioTiles;
+}
+
+/**
+ * H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA — o som do tile de rua pedido: um `rua` por tile NOVO do
+ * `PlaceRoad` que o jogo aceita agora (o tile que ja e estrada ou canteiro nao conta, como na sim);
+ * nada se o comando e recusado (quem toca entao e a recusa). O teto por quadro faz N tiles tocarem
+ * uma vez. Pura: pergunta ao `canPlaceRoad`, nao decide.
+ */
+export function pedidosDaRua(estado: GameState, tiles: readonly TileDoSom[], idDaRua: string, dados: GameData): string[] {
+  if (tiles.length === 0 || !canPlaceRoad(estado, tiles, dados).ok) return [];
+  const novos = new Set(tiles.map((t) => chaveDeTile(t)).filter((k) => estado.estradas[k] === undefined && estado.estradasPlanejadas[k] === undefined));
+  return [...novos].map(() => idDaRua);
+}
 
 /** Uma linha de `eventos`: o id direto, ou o id escolhido pelo valor de um campo do evento. */
 export type LinhaDoEvento = string | { readonly campo: string; readonly por: Readonly<Record<string, string>> };
 
 export interface TabelaDeSom {
   readonly planta: string;
+  /** H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA — o som do tile de rua pedido. */
+  readonly rua?: string;
+  /** O raio, em tiles, alem do qual o som com lugar nao toca. Sem ele, o som nao cai com a distancia. */
+  readonly distancia?: { readonly raioTiles: number };
   readonly eventos: Readonly<Record<string, LinhaDoEvento | string>>;
   readonly sons: Readonly<Record<string, { readonly tetoPorQuadro: number; readonly canal?: string }>>;
 }
@@ -81,22 +115,45 @@ function naVista(lugar: Lugar, depois: GameState, antes: GameState | null): bool
   return p !== undefined && ehVisivel(v, p.gx, p.gy);
 }
 
+/** O tile do lugar (a unidade ou o predio de agora, ou de `antes` se saiu neste tick). */
+function tileDoLugar(lugar: Lugar, depois: GameState, antes: GameState | null): TileDoSom | null {
+  if (lugar === null) return null;
+  if ('gx' in lugar) return { gx: lugar.gx, gy: lugar.gy };
+  const id = 'unidade' in lugar ? lugar.unidade : lugar.predio;
+  const coisa = depois.unidades.porId[id] ?? depois.predios.porId[id] ?? antes?.unidades.porId[id] ?? antes?.predios.porId[id];
+  return coisa === undefined ? null : { gx: coisa.gx, gy: coisa.gy };
+}
+
+/** Um pedido de som: o id e o lugar dele (`null` = sem lugar, nao cai com a distancia). */
+export interface PedidoDeSom {
+  readonly id: string;
+  readonly tile: TileDoSom | null;
+}
+
 /**
- * Os ids de som de UM tick, ja sem o que esta fora da vista. `comandosDoJogador` e quantos
+ * Os sons de UM tick, com o lugar, ja sem o que esta fora da vista. `comandosDoJogador` e quantos
  * comandos do jogador este tick consumiu: sem nenhum, a recusa nao e dele e nao toca.
  */
-export function sonsDoTick(
+export function pedidosDoTick(
   depois: GameState, antes: GameState | null, tabela: TabelaDeSom, comandosDoJogador: number,
-): string[] {
-  const ids: string[] = [];
+): PedidoDeSom[] {
+  const pedidos: PedidoDeSom[] = [];
   for (const e of depois.events) {
     const id = idDoSom(e, tabela);
     if (id === null) continue;
     if (e.type === 'command-rejected' && comandosDoJogador === 0) continue;
-    if (!naVista(lugarDoEvento(e), depois, antes)) continue;
-    ids.push(id);
+    const lugar = lugarDoEvento(e);
+    if (!naVista(lugar, depois, antes)) continue;
+    pedidos.push({ id, tile: tileDoLugar(lugar, depois, antes) });
   }
-  return ids;
+  return pedidos;
+}
+
+/** Os ids de som de UM tick (`pedidosDoTick` sem o lugar). */
+export function sonsDoTick(
+  depois: GameState, antes: GameState | null, tabela: TabelaDeSom, comandosDoJogador: number,
+): string[] {
+  return pedidosDoTick(depois, antes, tabela, comandosDoJogador).map((p) => p.id);
 }
 
 export interface SonsDoQuadro {
@@ -134,17 +191,23 @@ export interface ContadoresDeSom {
   readonly tocados: number;
   readonly emSilencio: number;
   readonly porId: Readonly<Record<string, number>>;
+  /** H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA — pedidos com lugar que cairam fora do raio (nao tocam). */
+  readonly foraDoRaio: number;
+  /** O fator da distancia do ultimo pedido de cada id que tocou (1 sem lugar). */
+  readonly fatorDaDistancia: Readonly<Record<string, number>>;
 }
 
 export interface CamadaDeSom {
   /** Um `step` rodou: junta os sons dele ao quadro. */
   aoPasso(estado: GameState, comandosDoJogador: number): void;
-  /** Um som que vem do input, sem evento (a planta posicionada). */
-  pedir(id: string): void;
+  /** Um som que vem do input, sem evento (a planta posicionada), ou do fundo com lugar (o sino). */
+  pedir(id: string, tile?: TileDoSom | null): void;
+  /** H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA — o tile de rua pedido (`pedidosDaRua`). */
+  pedirRua(estado: GameState, tiles: readonly TileDoSom[], dados: GameData): void;
   /** O som da planta posicionada (`tabela.planta`). */
   pedirPlanta(): void;
-  /** Fim do quadro: aplica o teto e toca. */
-  quadro(): void;
+  /** Fim do quadro: aplica a distancia ao `centro` da camera (sem camera, nenhuma), o teto, e toca. */
+  quadro(centro?: TileDoSom | null): void;
   /** A partida foi trocada (load): o estado anterior nao serve de `antes`. */
   reiniciar(): void;
   contadores(): ContadoresDeSom;
@@ -158,31 +221,51 @@ export function criarCamadaDeSom(
   tabela: TabelaDeSom, disponiveis: ReadonlySet<string>, tocador: Tocador, volume: (id: string) => number = () => 1,
 ): CamadaDeSom {
   let antes: GameState | null = null;
-  let pendentes: string[] = [];
+  let pendentes: PedidoDeSom[] = [];
   let pedidos = 0;
   let tocados = 0;
   let emSilencio = 0;
+  let foraDoRaio = 0;
   const porId: Record<string, number> = {};
+  const fatorDaDistancia: Record<string, number> = {};
   return {
     aoPasso(estado, comandosDoJogador) {
-      pendentes.push(...sonsDoTick(estado, antes, tabela, comandosDoJogador));
+      pendentes.push(...pedidosDoTick(estado, antes, tabela, comandosDoJogador));
       antes = estado;
     },
-    pedir(id) {
-      pendentes.push(id);
+    pedir(id, tile = null) {
+      pendentes.push({ id, tile });
+    },
+    pedirRua(estado, tiles, dados) {
+      if (tabela.rua === undefined) return;
+      for (const id of pedidosDaRua(estado, tiles, tabela.rua, dados)) pendentes.push({ id, tile: null });
     },
     pedirPlanta() {
-      pendentes.push(tabela.planta);
+      pendentes.push({ id: tabela.planta, tile: null });
     },
-    quadro() {
+    quadro(centro = null) {
       if (pendentes.length === 0) return;
-      const r = sonsDoQuadro(pendentes, tabela, disponiveis);
+      // a distancia antes do teto: o pedido fora do raio nao gasta a vez do que esta perto, e o
+      // mais perto de cada id e o que toca
+      const raio = tabela.distancia?.raioTiles;
+      const comFator = pendentes.map((p) => ({
+        id: p.id,
+        fator: p.tile === null || centro === null || raio === undefined ? 1 : volumeNaDistancia(p.tile, centro, raio),
+      }));
       pendentes = [];
+      const dentro = comFator.filter((p) => p.fator > 0);
+      foraDoRaio += comFator.length - dentro.length;
+      dentro.sort((a, b) => b.fator - a.fator);
+      const fatores = new Map<string, number[]>();
+      for (const p of dentro) fatores.set(p.id, [...(fatores.get(p.id) ?? []), p.fator]);
+      const r = sonsDoQuadro(dentro.map((p) => p.id), tabela, disponiveis);
       for (const id of [...r.tocar, ...r.silencio]) porId[id] = (porId[id] ?? 0) + 1;
       pedidos += r.tocar.length + r.silencio.length;
       emSilencio += r.silencio.length;
       for (const id of r.tocar) {
-        const v = volume(id);
+        const fator = fatores.get(id)?.shift() ?? 1;
+        const v = volume(id) * fator;
+        fatorDaDistancia[id] = fator;
         if (v <= 0) {
           emSilencio += 1;
           continue;
@@ -196,7 +279,7 @@ export function criarCamadaDeSom(
       pendentes = [];
     },
     contadores() {
-      return { pedidos, tocados, emSilencio, porId: { ...porId } };
+      return { pedidos, tocados, emSilencio, porId: { ...porId }, foraDoRaio, fatorDaDistancia: { ...fatorDaDistancia } };
     },
   };
 }

@@ -65,7 +65,9 @@ import { criarEscaramuca } from './sim/cenario';
 import type { Command } from './sim/commands';
 import { criarCamadaDeSom, urlsDosSons } from './render/som';
 import type { SonsDoManifesto, TabelaDeSom, ContadoresDeSom } from './render/som';
-import { criarTocadorDeLacoDoNavegador, criarTocadorDoNavegador } from './render/tocador-de-som';
+import { criarTocadorDeLacoDoNavegador, criarTocadorDeVozesDoNavegador, criarTocadorDoNavegador } from './render/tocador-de-som';
+import { criarSomDoTrabalho } from './render/som-do-trabalho';
+import type { ContadoresDoTrabalho, DadosDoTrabalho } from './render/som-do-trabalho';
 import { criarFundoSonoro } from './render/fundo-sonoro';
 import type { ContadoresDoFundo, DadosDoFundo, VistaEmTiles } from './render/fundo-sonoro';
 import { urlsDeArquivosDeSom } from './render/sprites-urls';
@@ -82,7 +84,7 @@ declare global {
   interface Window {
     __cangacoPartida?: { estadoSerializado(): string };
     /** H-TELA-CAMADA-DE-SOM — HARNESS: os contadores da camada de som, para o roteiro. */
-    __cangacoSom?: { contadores(): ContadoresDeSom & { readonly fundo: ContadoresDoFundo } };
+    __cangacoSom?: { contadores(): ContadoresDeSom & { readonly fundo: ContadoresDoFundo; readonly trabalho: ContadoresDoTrabalho } };
   }
 }
 
@@ -115,8 +117,17 @@ export function iniciarPartida(
     disponiveis: new Set(Object.keys(urlsDeSom)),
     tocador: criarTocadorDeLacoDoNavegador(urlsDeSom),
     volume: volumeDoSom,
-    pedir: (id) => { som.pedir(id); },
+    pedir: (id, tile) => { som.pedir(id, tile); },
     tickMs: gameData.tempo.tickMs,
+  });
+  // H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA — os lacos de trabalho (a obra, a estrada, a pedra), do
+  // estado da unidade, com lugar e teto de vozes
+  const trabalho = criarSomDoTrabalho({
+    dados: (tabelaDeSom as unknown as { trabalho: DadosDoTrabalho }).trabalho,
+    raioTiles: tabela.distancia?.raioTiles ?? 0,
+    disponiveis: new Set(Object.keys(urlsDeSom)),
+    tocador: criarTocadorDeVozesDoNavegador(urlsDeSom),
+    volume: volumeDoSom,
   });
   // Todo comando do jogador passa por aqui: a conta diz ao som que a recusa do proximo passo e
   // do jogador, e a planta posicionada pede o som seco no quadro do clique (GDD §10).
@@ -125,6 +136,8 @@ export function iniciarPartida(
     sessao.enviar(comando);
     comandosDoJogador += 1;
     if (comando.type === 'PlaceBlueprint') som.pedirPlanta();
+    // H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA: o tile de rua pedido, um som por arrasto aceito
+    if (comando.type === 'PlaceRoad') som.pedirRua(sessao.estado, comando.tiles, gameData);
   }
   const ferramenta = criarFerramenta();
   // O predio aberto no painel (F13b). Estado de interface, como a ferramenta.
@@ -412,8 +425,12 @@ export function iniciarPartida(
   // externo, nao do render (CLAUDE.md §10).
   function quadro(agoraMs: number): void {
     laco.tique(agoraMs);
-    fundo.quadro(agoraMs, sessao.estado, vistaEmTiles());
-    som.quadro();
+    const vista = vistaEmTiles();
+    // H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA: o som com lugar cai com a distancia ao centro da camera
+    const centro = vista === null ? null : { gx: (vista.x0 + vista.x1) / 2, gy: (vista.y0 + vista.y1) / 2 };
+    fundo.quadro(agoraMs, sessao.estado, vista);
+    som.quadro(centro);
+    trabalho.quadro(sessao.estado, centro);
     aviso.atualizar(laco.pausado, laco.velocidade);
     requestAnimationFrame(quadro);
   }
@@ -422,6 +439,6 @@ export function iniciarPartida(
   // E-TELA-MENU-INICIAL — HARNESS, como o `__cangaco` do render: o estado serializado, para o
   // roteiro comparar a escaramuca do menu com a do `?escaramuca` no tick 0. Nao usar em jogo.
   window.__cangacoPartida = { estadoSerializado: () => JSON.stringify(sessao.estado) };
-  window.__cangacoSom = { contadores: () => ({ ...som.contadores(), fundo: fundo.contadores() }) };
+  window.__cangacoSom = { contadores: () => ({ ...som.contadores(), fundo: fundo.contadores(), trabalho: trabalho.contadores() }) };
 
 }

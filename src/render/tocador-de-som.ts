@@ -8,6 +8,7 @@
  */
 import type { Tocador } from './som';
 import type { TocadorDeLaco } from './fundo-sonoro';
+import type { TocadorDeVozes } from './som-do-trabalho';
 
 export function criarTocadorDoNavegador(urls: Readonly<Record<string, string>>): Tocador {
   const modelos = new Map<string, HTMLAudioElement>();
@@ -60,6 +61,42 @@ export function criarTocadorDeLacoDoNavegador(urls: Readonly<Record<string, stri
       if (item === undefined) return;
       item.audio.pause();
       tocando.delete(id);
+    },
+  };
+}
+
+/**
+ * H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA — o tocador das vozes de trabalho: um `Audio` em laco por
+ * VOZ (`build-wood:0`, `build-wood:1`), com o arquivo do id dela. Mesma regra do tocador em laco:
+ * criado so com arquivo, e o `play()` recusado antes do primeiro gesto tenta de novo depois.
+ */
+export function criarTocadorDeVozesDoNavegador(urls: Readonly<Record<string, string>>): TocadorDeVozes {
+  const tocando = new Map<string, { readonly audio: HTMLAudioElement; tentativa: number }>();
+  function tentar(item: { readonly audio: HTMLAudioElement; tentativa: number }): void {
+    item.tentativa = window.performance.now();
+    item.audio.play().catch(() => undefined);
+  }
+  return {
+    tocar(voz, id, volume) {
+      const url = urls[id];
+      if (url === undefined) return;
+      let item = tocando.get(voz);
+      if (item === undefined) {
+        const audio = new Audio(url);
+        audio.loop = true;
+        item = { audio, tentativa: 0 };
+        tocando.set(voz, item);
+        tentar(item);
+      } else if (item.audio.paused && window.performance.now() - item.tentativa > 1000) {
+        tentar(item);
+      }
+      item.audio.volume = Math.min(1, Math.max(0, volume));
+    },
+    parar(voz) {
+      const item = tocando.get(voz);
+      if (item === undefined) return;
+      item.audio.pause();
+      tocando.delete(voz);
     },
   };
 }

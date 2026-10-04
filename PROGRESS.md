@@ -3295,6 +3295,14 @@ que vetar custe uma linha.
   (`pazAteTick > 0`); "a primeira ordem recusada" é o texto que o aviso de ordem já dá
   (`textoDaRecusa`). Quando duas valem juntas, ganha a ordem de `DICAS` (`src/ui/dicas.ts`): a
   resposta ao gesto primeiro, a casa parada por último. A dica fica até o "Entendi".
+- **(2026-10-04, leva) H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA — duas leituras (PARA REVISÃO).** (1) O
+  escopo diz "todo som que nasce de um prédio ou de uma unidade tem posição" e cita alguns; apliquei
+  a distância a **todo** som com lugar, inclusive golpe, tiro e morte, e deixei sem lugar só o que o
+  escopo lista (paz, vitória, derrota, recusa, rua, ambiente, música). (2) O `quarry-work` toca com o
+  cabouqueiro `colhendo` no lajedo, que é o trabalho que se vê; a fase "na casa" (dentro da
+  pedreira) fica muda. Se a pedreira deve soar também por dentro, é mudar `fontesDeTrabalho`.
+  Os recortes dos cinco sons novos (laço de 2 a 2,5 s; rua e recusa com 0,7 a 0,8 s) foram
+  escolhidos sem ouvir, como os da H: o operador ouve e ajusta em `tools/baixar-sons.js`.
 
 
 ## F-T1 — Camada de terreno base (dado + sim + render mínimo) (2026-09-24)
@@ -19401,3 +19409,51 @@ O `verify:rapido` deste commit sai vermelho por um teste que não é desta mudan
 `tests/H-ARTE-SONS-APROVADOS.test.ts` ("linha sem aprovacao ... fora do manifesto") falha também na `main`
 em `579f25f` sem ela (conferido com a mudança guardada no stash). Ele vem dos aceites do
 H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA, da outra sessão, e fica com ela. Os testes do manifesto passam.
+
+## 2026-10-04 — Leva, item 1: H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA (o som vem do lugar)
+
+Depois do fechamento da I, `git merge main` (`d2cbacc`, a leva de 2026-10-04 e as aprovações de
+som; o conflito do PROGRESS era só as duas pontas acrescentando no fim, e ficaram as duas).
+
+- **O que existe:**
+  - **Som com lugar** (`src/render/som.ts`): cada pedido leva o tile do prédio ou da unidade, e o
+    volume é multiplicado por `volumeNaDistancia(lugar, centro da câmera, raio)`: 1 no centro,
+    linear até 0 no raio (`data/som.json: distancia.raioTiles`, 18). Fora do raio não toca e conta
+    em `foraDoRaio`. Com dois pedidos do mesmo id no quadro, toca o mais perto. O sino da Bodega
+    leva o tile dela. Sem lugar, nada muda.
+  - **Os sons de trabalho** (`src/render/som-do-trabalho.ts`): `fontesDeTrabalho(estado)` lê o
+    estado da unidade e a tarefa dela, como a animação de trabalho. `build-wood` é o laborer
+    `martelando` numa obra (`construir`), `build-road` é o laborer `nivelando`/`martelando` num tile
+    de estrada, e `quarry-work` é o especialista `colhendo` no recurso `rock`. As vozes são as
+    fontes no raio, as mais perto primeiro, até `trabalho.tetoDeVozes` (3). Cada uma é um laço
+    (`criarTocadorDeVozesDoNavegador`), e o laço para quando a voz some.
+  - **O tile de rua** (`pedidosDaRua`): o `PlaceRoad` que o `canPlaceRoad` aceita pede um
+    `road-placed` por tile novo, e o teto por quadro faz o arrasto tocar uma vez. O recusado não
+    pede nada (a recusa toca a dela).
+  - **Os cinco sons aprovados** (`command-rejected` 2, `build-wood` 1, `build-road` 1,
+    `quarry-work` 2, `road-placed` 2) baixados por `tools/baixar-sons.js`, com a licença conferida
+    de novo na página (CC0) e o recorte no manifesto. Os 15 de antes saíram byte a byte iguais. A
+    primeira corrida caiu por tempo esgotado na conexão com o Freesound, antes de escrever o
+    manifesto; a segunda foi inteira.
+- **Testes que mudaram por decisão do operador, e não por afrouxar:** `H-ARTE-SONS-APROVADOS` (os
+  sem aprovação passam de três para dois, e os aprovados de 17 para 22: o `command-rejected` e os
+  quatro novos); o roteiro `H-TELA-CAMADA-DE-SOM` usava a recusa como exemplo de som sem arquivo, e
+  agora afirma que tudo o que o gesto pede toca e nada fica em silêncio (o silêncio sem arquivo
+  segue no teste headless); o contador da camada ganhou `foraDoRaio` e `fatorDaDistancia`, e o
+  `toEqual` do teste da camada passou a incluir os dois.
+- **Verificado (evidência aberta nesta sessão):**
+  - `tests/H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA.test.ts`, 4 testes verdes: (a) a tabela do volume
+    (1, 0,5, 0,75 na diagonal, 0 no raio e além; nunca sobe com a distância), e na camada o pedido
+    fora do raio não toca e o mais perto ganha o teto; (b) os três sons de trabalho em estados de
+    uma partida de verdade (a abertura da Fase A: `build-road` no tick 30, `build-wood` no 265,
+    `quarry-work` no 944), o silêncio sem ninguém, e o teto de vozes por tabela; (d) a abertura com
+    a camada, a rua e o trabalho consultados a cada tick dá o mesmo estado byte a byte; (f) um tile,
+    N tiles, o tile recusado e o canteiro que já existia.
+  - `npm run shot -- H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA`: OK, 3 capturas (aberta a de perto). Com o
+    save do tick 265: `build-wood` com volume 0,800 em cima do laborer (geral 0,8 vezes 1), 0,400 a
+    meio raio, e parado além do raio.
+  - Não-regressão pelo código de saída: `H-TELA-CAMADA-DE-SOM` (depois da premissa nova),
+    `H-TELA-AMBIENTE-E-MUSICA` e `H-TELA-OPCOES-E-VOLUME` OK.
+  - `npm run verify:rapido` verde.
+- **Aberto:** a chave em `test-results.json` é marcada no fechamento da leva, com o verify completo.
+
