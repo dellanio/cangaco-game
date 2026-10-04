@@ -19469,3 +19469,22 @@ som; o conflito do PROGRESS era só as duas pontas acrescentando no fim, e ficar
   centro `32,32` no teste do som, longe da vila no mundo transladado), corrigido em `53767d6`.
 - **As chaves 05c e 05d** voltam a ser conferidas no fechamento da leva.
 
+## 2026-10-04 — Leva, item 7: BUG-ROTEIRO-04E-DELTA-DO-ATLAS (o roteiro, não a memória)
+
+- **Qual dos dois era: o ROTEIRO.** Com `?depuracao`, o atlas de depuração do serf entra na fila
+  primeiro com a mesma chave do atlas normal (`unidade:serf:atlas`, `render/depuracao-de-unidade.ts:15`),
+  e `render/sprites.ts:34` pula o normal que já está na fila. Ele **substitui** o atlas do serf, e não
+  se soma a ele. O roteiro esperava a soma.
+- **A medida:** no `3e08253` o atlas normal do serf tinha 512 × 576 (conferido com `git show`), e
+  2 211 840 − 1 179 648 = 1 032 192, exatamente o delta que o roteiro recusava. Hoje o normal tem
+  512 × 1 056 (a arte do serf mudou), e a corrida desta sessão mediu `semAtlas` 23 752 188,
+  `comAtlas` 23 801 340, **delta 49 152 = 2 211 840 − 2 162 688**. A hipótese registrada no bug ("a
+  arte do serf mudou o que a cena normal carrega") estava perto: a arte mudou o tamanho, mas o
+  delta nunca foi só o atlas.
+- **A correção:** `tools/shots/D-TELA-04e.js` lê pelo manifesto (o `atlas` do asset e o
+  `meta.image` do json) o atlas que a cena normal carrega e espera `bytes(depuração) − bytes(normal)`,
+  com igualdade exata. A medida vai para `test-output/D-TELA-04e.json` (`atlasNormalSubstituido`,
+  `deltaEsperado`). A memória (`render/memoria-de-texturas.ts`) não mudou: ela estava certa.
+- **Aceite, verificado:** `npm run shot -- D-TELA-04e` saiu 0 (depois do verify completo do item 6).
+  O bug saiu do `BUGS.md` neste commit.
+
