@@ -19189,3 +19189,29 @@ Leituras conservadoras, PARA REVISÃO do operador:
   - `npm run verify:rapido` verde (541 testes).
 - **Aberto:** a chave em `test-results.json` é marcada no fechamento da fase.
 
+## 2026-10-04 — I-TELA-AJUDA-DAS-CADEIAS (a ajuda mostra as cadeias)
+
+- **O que existe:** a ajuda ganhou duas abas, **Controles** (a de antes, que é a que abre) e
+  **Cadeias** (`src/ui/cadeias.ts`, textos em `theme-sertao.json: ajuda.cadeias`). Uma linha por
+  receita, na ordem de `buildings.json`: o que entra e de que casa vem, o que sai e para onde vai.
+  A casa ainda bloqueada mostra o "requer X" do menu de construir, lido do estado quando a aba está
+  aberta (no menu inicial, sem partida, nenhuma trava aparece). O título da ajuda segue a aba.
+- **Como:** tudo derivado do dado. "Para onde vai" junta as receitas que pedem a mercadoria e os
+  destinos que o dado já diz fora delas: o custo das obras (`buildings.json`), a comida
+  (`condition.json`, para a Bodega), as armas do quartel (`requisitosDoQuartel`) e o ouro da escola
+  (`MERCADORIA_DE_OURO`). Sem destino, "fica no Armazém". A colheita diz "tira do mapa": o tema não
+  tem nome de recurso (o bloco `recursos` dele é cor), e inventar um seria texto escrito à mão.
+  `montarAjuda` passou a receber o `GameData` (do `inicio.ts` e do `main.ts`).
+- **Verificado (evidência aberta nesta sessão):**
+  - `tests/I-TELA-AJUDA-DAS-CADEIAS.test.ts`, 3 testes verdes: (a) o conjunto das linhas é o
+    conjunto das receitas, e cada linha tem as entradas e saídas da receita, o "de onde" exato e
+    toda receita consumidora entre os destinos; (b) com o dado alterado (a serraria passa a pedir
+    pedra, o pescador perde a receita, a Bodega ganha uma), a aba muda: a linha some, a nova aparece,
+    a pedra da pedreira passa a ir para a serraria e o texto acompanha; mais o "requer" da serraria
+    no começo. Linhas em `test-output/I-TELA-AJUDA-DAS-CADEIAS.json`.
+  - `npm run shot -- I-TELA-AJUDA-DAS-CADEIAS`: OK, captura aberta. 21 linhas, uma por receita, e a
+    serraria com "requer Casa do Lenhador". Despausado, com o aperto segurado 150 ms na aba.
+  - Não-regressão pelo código de saída: `F-D1`, `E-TELA-MENU-INICIAL` e `H-TELA-OPCOES-E-VOLUME`
+    OK. `npm run verify:rapido` verde (544 testes).
+- **Aberto:** a chave em `test-results.json` é marcada no fechamento da fase.
+

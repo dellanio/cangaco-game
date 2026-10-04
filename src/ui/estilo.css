@@ -393,6 +393,16 @@ body:not([data-corpo="opcoes"]) #opcoes { display: none; }
 #ajuda .arquivo .recado.pisca { animation: recado-pisca 0.6s ease-out; }
 @keyframes recado-pisca { from { background: var(--terracota); color: var(--papel); } }
 #ajuda[hidden] { display: none; }
+/* I-TELA-AJUDA-DAS-CADEIAS: as abas da ajuda (Controles, Cadeias) e as linhas. */
+#ajuda .abas-da-ajuda { display: flex; gap: 8px; margin: 0 0 8px; }
+#ajuda .abas-da-ajuda button[aria-selected="true"] { background: var(--tinta); color: var(--papel); }
+#ajuda .aba[hidden] { display: none; }
+#ajuda .aba .intro { margin: 0 0 8px; font-style: italic; }
+#ajuda .cadeia { padding: 5px 0; border-bottom: 1px dotted var(--tinta-fraca); }
+#ajuda .cadeia .nome { font: 15px/1.2 var(--fonte-display); letter-spacing: 0.02em; }
+#ajuda .cadeia .requer { margin-left: 8px; font-size: 12px; font-style: italic; color: var(--terracota); }
+#ajuda .cadeia .requer[hidden] { display: none; }
+#ajuda .cadeia .entra, #ajuda .cadeia .sai { font-size: 13px; padding-left: 10px; }
 #ajuda h2 {
   margin: 0 0 10px; padding-bottom: 6px; font-size: 22px;
   border-bottom: var(--traco) solid var(--tinta);

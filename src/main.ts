@@ -131,7 +131,7 @@ export function iniciarPartida(
   // A ajuda (F-D1) precisa do `#logo` ja no DOM, e ele e estatico no index.html —
   // entao ela pode nascer antes do resto da interface. Quem a abre e o teclado, e
   // e por isso que ela e o quarto parametro: com a ajuda aberta, o `Esc` e dela.
-  const ajuda = ajudaDoMenu ?? montarAjuda();
+  const ajuda = ajudaDoMenu ?? montarAjuda(gameData);
   // H-TELA-OPCOES-E-VOLUME — a ajuda em jogo abre as opcoes de som
   opcoesDeSom?.ligarNaAjuda();
   ligarTeclado(ferramenta, window, selecao, ajuda);
@@ -316,6 +316,7 @@ export function iniciarPartida(
     fimDePartida.atualizar(s);
     faixaDePassos?.atualizar(s);
     caixaDeDica.atualizar(s);
+    ajuda.atualizar(s);
     // C9: a partida acabou -> o laco para (e so outro save o reabre)
     acompanharFimDePartida(laco, s);
   }

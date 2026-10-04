@@ -11,6 +11,9 @@
 import { ATALHOS, GESTOS } from '../input/atalhos';
 import type { GrupoDeAtalho } from '../input/atalhos';
 import type { AjudaParaTeclado } from '../input/teclado';
+import type { GameState } from '../sim/state';
+import type { GameData } from '../sim/data/types';
+import { linhasDasCadeias, requisitosNaTela, textoDaLinha } from './cadeias';
 import temaSertao from '../../data/theme-sertao.json';
 
 const tema = temaSertao.ajuda;
@@ -27,6 +30,9 @@ export interface Ajuda extends AjudaParaTeclado {
   readonly aberta: boolean;
   /** A aba Opcoes (UI-barra-a) abre a mesma caixa que o H. */
   abrir(): void;
+  /** I-TELA-AJUDA-DAS-CADEIAS — o "requer X" dos predios bloqueados neste estado. So mexe no DOM com
+   *  a ajuda aberta. */
+  atualizar(estado: GameState): void;
 }
 
 /** O que sai impresso na tecla. `Escape` vira `Esc` porque e o que esta escrito
@@ -81,7 +87,47 @@ function linha(cap: string, texto: string, id: string): HTMLElement {
   return item;
 }
 
-export function montarAjuda(marca: Marca = marcaNoNavegador()): Ajuda {
+/** I-TELA-AJUDA-DAS-CADEIAS — a aba Cadeias: uma linha por receita do dado, montada uma vez. Devolve
+ *  o que reescreve o "requer X" de cada linha. */
+function montarCadeias(aba: HTMLElement, dados: GameData): (estado: GameState) => void {
+  const t = tema.cadeias;
+  const intro = document.createElement('p');
+  intro.className = 'intro';
+  intro.textContent = t.intro;
+  aba.append(intro);
+  const requer = new Map<string, HTMLElement>();
+  for (const linha of linhasDasCadeias(dados)) {
+    const texto = textoDaLinha(linha);
+    const item = document.createElement('div');
+    item.className = 'cadeia';
+    item.dataset.predio = linha.predio;
+    const nome = document.createElement('strong');
+    nome.className = 'nome';
+    nome.textContent = texto.predio;
+    const trava = document.createElement('span');
+    trava.className = 'requer';
+    trava.hidden = true;
+    requer.set(linha.predio, trava);
+    const entra = document.createElement('div');
+    entra.className = 'entra';
+    entra.textContent = `${t.entra}: ${texto.entra}`;
+    const sai = document.createElement('div');
+    sai.className = 'sai';
+    sai.textContent = `${t.sai}: ${texto.sai}`;
+    item.append(nome, trava, entra, sai);
+    aba.append(item);
+  }
+  return (estado) => {
+    const bloqueados = requisitosNaTela(estado, dados);
+    for (const [predio, trava] of requer) {
+      const texto = bloqueados.get(predio) ?? '';
+      trava.hidden = texto === '';
+      if (trava.textContent !== texto) trava.textContent = texto;
+    }
+  };
+}
+
+export function montarAjuda(dados: GameData, marca: Marca = marcaNoNavegador()): Ajuda {
   const raiz = document.getElementById('ajuda');
   if (!raiz) throw new Error('ajuda: #ajuda nao existe no index.html');
   const logo = document.getElementById('logo');
@@ -90,6 +136,41 @@ export function montarAjuda(marca: Marca = marcaNoNavegador()): Ajuda {
   const titulo = document.createElement('h2');
   titulo.textContent = tema.titulo;
   raiz.append(titulo);
+
+  // I-TELA-AJUDA-DAS-CADEIAS — duas abas: os controles (o que havia) e as cadeias. A dos controles e
+  // a que abre: os roteiros de antes acham tudo no mesmo lugar.
+  const abas = document.createElement('div');
+  abas.className = 'abas-da-ajuda';
+  abas.setAttribute('role', 'tablist');
+  const controles = document.createElement('div');
+  controles.className = 'aba';
+  controles.dataset.aba = 'controles';
+  const cadeias = document.createElement('div');
+  cadeias.className = 'aba';
+  cadeias.dataset.aba = 'cadeias';
+  cadeias.hidden = true;
+  const botoesDasAbas = new Map<string, HTMLButtonElement>();
+  for (const [id, painel] of [['controles', controles], ['cadeias', cadeias]] as const) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.setAttribute('role', 'tab');
+    b.dataset.abaDaAjuda = id;
+    b.textContent = tema.abas[id];
+    b.setAttribute('aria-selected', String(id === 'controles'));
+    b.addEventListener('click', () => {
+      controles.hidden = painel !== controles;
+      cadeias.hidden = painel !== cadeias;
+      titulo.textContent = painel === cadeias ? tema.cadeias.titulo : tema.titulo;
+      for (const [outro, botao] of botoesDasAbas) botao.setAttribute('aria-selected', String(outro === id));
+      if (painel === cadeias && ultimo !== null) atualizarCadeias(ultimo);
+      b.blur();
+    });
+    botoesDasAbas.set(id, b);
+    abas.append(b);
+  }
+  raiz.append(abas, controles, cadeias);
+  const atualizarCadeias = montarCadeias(cadeias, dados);
+  let ultimo: GameState | null = null;
 
   // Um bloco por grupo, na ordem em que os grupos aparecem no inventario: a
   // ordem da tela e a ordem do dado, e nao uma terceira ordem digitada aqui.
@@ -116,7 +197,7 @@ export function montarAjuda(marca: Marca = marcaNoNavegador()): Ajuda {
       if (gesto.grupo !== grupo) continue;
       bloco.append(linha(GESTO_TEXTO[gesto.id] ?? gesto.id, ROTULOS[gesto.id] ?? gesto.id, gesto.id));
     }
-    raiz.append(bloco);
+    controles.append(bloco);
   }
 
   const rodape = document.createElement('p');
@@ -140,6 +221,7 @@ export function montarAjuda(marca: Marca = marcaNoNavegador()): Ajuda {
     aberta = valor;
     raiz!.hidden = !valor;
     if (!valor) return;
+    if (ultimo !== null && !cadeias.hidden) atualizarCadeias(ultimo);
     // O lembrete cumpriu o que tinha a fazer no instante em que a ajuda abriu.
     dica.hidden = true;
     marca.marcar();
@@ -159,6 +241,10 @@ export function montarAjuda(marca: Marca = marcaNoNavegador()): Ajuda {
       if (!aberta) return false;
       mostrar(false);
       return true;
+    },
+    atualizar(estado) {
+      ultimo = estado;
+      if (aberta && !cadeias.hidden) atualizarCadeias(estado);
     },
   };
 }

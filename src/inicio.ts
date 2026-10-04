@@ -15,6 +15,7 @@ import type { Gaveta } from './arquivo-da-partida';
 import { montarMenuInicial } from './ui/menu-inicial';
 import type { SituacaoDoSave } from './ui/menu-inicial';
 import { montarAjuda } from './ui/ajuda';
+import { gameData } from './sim/data';
 import { montarCarregamento } from './ui/carregamento';
 import type { Ajuda } from './ui/ajuda';
 import { montarOpcoesDeSom } from './ui/opcoes-de-som';
@@ -82,7 +83,7 @@ function abrirMenu(): Promise<void> {
       menu.fechar();
       void jogar(escolha, ajuda).then(pronto);
     }, () => {
-      ajuda ??= montarAjuda();
+      ajuda ??= montarAjuda(gameData);
       ajuda.alternar();
     }, () => {
       somDaPagina().opcoes.abrir();

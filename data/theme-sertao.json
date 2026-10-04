@@ -646,6 +646,20 @@
     "titulo": "Os controles",
     "rodape": "Esc ou H fecha este aviso",
     "dica": "Aperte H para ver os controles",
+    "abas": { "controles": "Controles", "cadeias": "Cadeias" },
+    "cadeias": {
+      "_doc": "I-TELA-AJUDA-DAS-CADEIAS. A aba Cadeias (src/ui/cadeias.ts): uma linha por receita de data/production.json, derivada do dado. {mercadoria}, {de} e {para} sao nomes do tema.",
+      "titulo": "As cadeias",
+      "intro": "De onde vem cada coisa e para onde vai. Tudo passa pelo Armazém, nas costas dos carregadores.",
+      "entra": "Entra",
+      "sai": "Sai",
+      "colhe": "tira do mapa, ao alcance da casa",
+      "vemDe": "{mercadoria} (de {de})",
+      "vaiPara": "{mercadoria} (para {para})",
+      "vaiParaArmazem": "{mercadoria} (fica no Armazém)",
+      "obras": "as obras",
+      "separador": ", "
+    },
     "grupos": {
       "ferramenta": "Na mão",
       "tempo": "O tempo",
