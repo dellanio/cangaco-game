@@ -30,6 +30,30 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
 
 ## Abertos
 
+## BUG-CIVIL-RECUA-NO-DESENHO — serf e obreiro andam para frente e para trás e "travam"
+- feature: I-MOVIMENTO-COLISAO-CIVIL-LIGADA (`e9b1bd1`), no desenho do passo (`posicaoDaUnidade`)
+- severidade: errado
+- repro: o operador jogando a `main` (`54da7c6`), 2026-10-04: "ficam travando e indo pra frente e pra
+  trás".
+- esperado: o desenho de quem anda só vai para a frente; quem espera para na borda do tile sem voltar
+- observado (medido, sonda de 3 000 ticks na vila pronta): o desenho de serf e obreiro recua 412 vezes
+  com a colisão ligada, contra 140 com ela desligada (os 140 são as voltas de quem troca de caminho).
+  Causa (verificada em `src/sim/selectors.ts:851-866`): (1) desde a permuta com dívida, o `progresso`
+  fica negativo (220 ticks na sonda), e a fração `progresso/custo` desenha a unidade **atrás** do
+  próprio tile; (2) o civil segurado salta de ~0,8 do passo para a borda (0,5) quando o tile da frente
+  está ocupado (121 recuos).
+- correção prevista: a fração nunca é negativa (a dívida é tempo, desenhado parado no tile); e o civil
+  cujo tile seguinte tem um civil parado, ou que vem de frente, já anda limitado à borda (0,5), sem
+  saltar para trás depois. Uma coluna andando no mesmo sentido não é limitada.
+- **aceite (antes do código):** (1) por tabela, `posicaoDaUnidade`: progresso negativo desenha no tile;
+  com civil parado no tile seguinte, a fração fica em no máximo 0,5; com civil vindo de frente, também;
+  com o da frente andando para longe, a fração é a de hoje; (2) pela sonda transformada em teste: na
+  vila pronta, em 3 000 ticks, os recuos do desenho com a colisão ligada ficam em no máximo 1,2 vez os
+  da colisão desligada, e a razão vai para o `test-output`; (3) só o desenho muda: `step` e o dado não
+  são tocados.
+- evidência: a sonda desta sessão (`test-output/zz-sonda-recuo.json`, apagado)
+- status: aberto
+
 ## BUG-TROPA-DE-24-PRESA — com a tropa de 24, a varredura do BUG-T deixa soldados marchando
 - feature: C-MOVIMENTO / BUG-T (a tropa travada), exposto pela I-COMBATE-ESCARAMUCA-GANHAVEL
 - severidade: errado
