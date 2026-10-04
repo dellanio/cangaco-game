@@ -16,6 +16,8 @@ import { classeDaUnidade, emAlertaDeFome, fracaoDeCondicao } from './condicao';
 import { caixaDoPredio } from './footprint';
 import { estaDesbloqueado } from './desbloqueio';
 import { predioLigadoAoArmazem } from './estradas';
+import type { TileDeGrid } from './estradas';
+import { civisNoTile, colisaoCivilLigada } from './colisao';
 import { custoDeTreino, ehEscolaCompleta, filaDaEscola, ouroQueAFilaEspera } from './escola';
 import { custoDoPassoDaUnidade } from './carga';
 import { alvoDeNivelamento, custoDoPredio } from './obra';
@@ -860,11 +862,31 @@ export function posicaoDaUnidade(
   // 0,14 tile de quem ocupa o tile (o "dois no mesmo tile" do relato do operador). O desenho para na
   // BORDA do tile (meio passo), que e geometria do grid e nao numero de jogo.
   const segurado = (unidade.fsmData.bloqueado ?? 0) > 0 && classeDaUnidade(unidade.tipo, dados) === 'civil';
-  const fracao = segurado ? Math.min(noPasso, 0.5) : noPasso;
+  // BUG-CIVIL-RECUA-NO-DESENHO — (1) a divida da permuta (`progresso` negativo) e tempo, e se desenha
+  // parada no tile: a fracao negativa punha o civil ATRAS do proprio tile, e ele andava de volta. (2)
+  // quem vai esperar ja anda limitado a borda: o civil parado (ou vindo de frente) no tile seguinte o
+  // seguraria, e o salto de ~0,8 para 0,5 no tick do bloqueio era o recuo. A coluna que anda no mesmo
+  // sentido nao e limitada: o da frente sai do tile.
+  const vaiEsperar = segurado || (noPasso > 0.5 && esperaNoTileSeguinte(state, unidade, proximo, dados));
+  const fracao = Math.max(0, vaiEsperar ? Math.min(noPasso, 0.5) : noPasso);
   return {
     gx: unidade.gx + (proximo.gx - unidade.gx) * fracao,
     gy: unidade.gy + (proximo.gy - unidade.gy) * fracao,
   };
+}
+
+/**
+ * BUG-CIVIL-RECUA-NO-DESENHO — o civil que anda para `proximo` vai ser segurado ali: com a colisao
+ * civil ligada, o tile tem um civil que nao vai sair dele antes (parado, segurado, ou vindo de frente
+ * para o tile de `unidade`). So desenho: a regra de quem entra e da `sistemaDaPermuta` e do passo.
+ */
+function esperaNoTileSeguinte(state: GameState, unidade: Unidade, proximo: TileDeGrid, dados: GameData): boolean {
+  if (!colisaoCivilLigada(dados) || classeDaUnidade(unidade.tipo, dados) !== 'civil') return false;
+  return civisNoTile(state, proximo, unidade.id, dados).some((o) => {
+    const dele = o.fsmData.caminho?.[0];
+    if (dele === undefined || (o.fsmData.bloqueado ?? 0) > 0) return true;
+    return dele.gx === unidade.gx && dele.gy === unidade.gy;
+  });
 }
 
 /**

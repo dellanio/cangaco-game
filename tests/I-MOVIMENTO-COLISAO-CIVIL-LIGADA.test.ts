@@ -110,13 +110,18 @@ describe('I-MOVIMENTO-COLISAO-CIVIL-LIGADA — civis colidem, pelo step', () => 
   it('o civil segurado no fim do passo e desenhado na borda do tile, e nao dentro do tile do outro', () => {
     const s0 = createInitialState(gameData.economia.estadoInicial.semente);
     const serf = s0.unidades.ordem.map((id) => s0.unidades.porId[id] as Unidade).find((u) => u.tipo === 'serf') as Unidade;
-    const proximo = { gx: serf.gx + 1, gy: serf.gy };
+    // o tile da frente VAZIO de civil (BUG-CIVIL-RECUA-NO-DESENHO: com um civil parado nele, o desenho
+    // ja para na borda andando; os serfs iniciais nascem lado a lado, e o de leste tinha um)
+    const proximo = [1, -1].map((d) => ({ gx: serf.gx + d, gy: serf.gy }))
+      .find((t) => !s0.unidades.ordem.some((id) => { const o = s0.unidades.porId[id] as Unidade; return o.id !== serf.id && o.gx === t.gx && o.gy === t.gy && ehCivilQueOcupa(o, gameData); })) as { gx: number; gy: number };
+    expect(proximo, 'fixture: um vizinho de leste ou oeste sem civil').toBeDefined();
+    const sentido = proximo.gx - serf.gx;
     const custo = custoDoPasso(s0.estradas, serf, proximo, gameData);
     const com = (bloqueado: number | undefined): Unidade => ({ ...serf, fsm: 'indo_buscar',
       fsmData: { caminho: [proximo], progresso: custo - 1, ...(bloqueado === undefined ? {} : { bloqueado }) } });
     // andando, o desenho segue o passo; segurado, para no meio (a borda entre os dois tiles)
-    expect(posicaoDaUnidade(s0, com(undefined)).gx - serf.gx).toBeGreaterThan(0.5);
-    expect(posicaoDaUnidade(s0, com(3)).gx - serf.gx).toBe(0.5);
+    expect((posicaoDaUnidade(s0, com(undefined)).gx - serf.gx) * sentido).toBeGreaterThan(0.5);
+    expect((posicaoDaUnidade(s0, com(3)).gx - serf.gx) * sentido).toBe(0.5);
   });
 
   it('(a) e (b) na escaramuca: um civil por tile em todo tick, e quem quer andar avanca dentro do prazo', () => {

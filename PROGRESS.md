@@ -3228,6 +3228,17 @@ que vetar custe uma linha.
   nenhum guarda de dado.
 
 ## Perguntas em aberto
+- **(2026-10-04, BUG-CIVIL-RECUA-NO-DESENHO) O civil que o tile da frente segura no último instante:
+  salta para a borda ou para onde está?** Quando o tile seguinte fica ocupado no mesmo tick em que o
+  civil chega ao fim do passo, o desenho salta de 0,6 a 0,86 do passo para a borda (0,5). Medido: 112
+  vezes em 3 000 ticks da vila pronta, contra 0 sem a colisão. A borda veio do relato anterior do
+  operador ("vários serfs no mesmo tile", I-MOVIMENTO-COLISAO-CIVIL-LIGADA). Há três saídas:
+  - (A) fica como está, com o salto curto e rápido;
+  - (B) o render guarda o ponto e o civil para onde está, sem recuo, mas fica a 0,14–0,2 tile de quem
+    ocupa o tile, como no relato antigo;
+  - (C) o render recua devagar até a borda (~0,3 s), parecendo dar um passo atrás para abrir espaço.
+
+  Recomendação: (C).
 - **(2026-10-04, leva 3, item 3: minas perto da vila) Mudar o `sertao-128` ou fazer outro mapa?** O
   operador pediu carvão, ouro e ferro mais perto do centro da cidade "no mapa atual", para testar a
   fundição. Medido: os veios mais perto ficam a 79 tiles (ferro), 86 (ouro) e 91 (carvão) do armazém
@@ -20262,3 +20273,44 @@ de que o guarda acusa. Com o `jobs.ts` e o `state.ts` antigos, os testes 1, 2, 3
   28 300. É eixo determinístico, e medir por destino não mudou o número.
 
 **Não verificado em jogo:** não houve captura nem roteiro. É regra de sim, coberta pelo `step`.
+
+### BUG-CIVIL-RECUA-NO-DESENHO — serf e obreiro andavam para frente e para trás (parcial)
+**Relato do operador:** "ficam travando e indo pra frente e pra trás", depois das últimas mudanças.
+**Medida (sonda, vila pronta, 3 000 ticks):** a simulação não muda de padrão com a colisão. As voltas
+A→B→A ficam em ~6% dos passos ligada e desligada. A causa está no **desenho** do passo
+(`posicaoDaUnidade`, `src/sim/selectors.ts`), desde a I-MOVIMENTO-COLISAO-CIVIL-LIGADA (`e9b1bd1`). Os
+números abaixo são da medida certa, o recuo dentro do mesmo passo:
+- sem a colisão: 0 recuos no passo;
+- com a colisão, antes da correção: 122 recuos no passo, mais 220 ticks desenhados **atrás do próprio
+  tile**. A dívida da permuta deixa o `progresso` negativo, e a fração negativa punha o civil até dois
+  passos atrás;
+- com a correção: 0 atrás do tile e 112 recuos no passo, todos terminando exatamente na borda (0,5).
+
+**Correção:**
+- a fração nunca é negativa (a dívida é tempo, desenhado parado no tile);
+- o civil cujo tile seguinte tem um civil parado, segurado ou vindo de frente já anda limitado à
+  borda (`esperaNoTileSeguinte`), sem saltar para trás;
+- a coluna que anda no mesmo sentido não é limitada;
+- `step` e o dado não mudaram.
+
+**Aberto:** o salto até a borda quando o tile fica ocupado no último instante (112) é a pergunta em
+aberto (A, B ou C). O bug continua no `BUGS.md`.
+**Teste:** `tests/BUG-CIVIL-RECUA-NO-DESENHO.test.ts` (2):
+- a tabela da fração;
+- a vila pronta com a colisão: zero atrás do tile, todo recuo termina na borda, e a régua sem a
+  colisão dá zero.
+
+Com o `selectors.ts` antigo, os dois reprovam.
+**Dois deslizes de processo nesta correção, registrados:**
+- O commit `cce5ed4` (só a emenda do aceite no `BUGS.md`) entrou com o `verify:rapido` **vermelho**. A
+  falha era do teste em andamento, que estava na árvore com a métrica velha, e não do `BUGS.md`. A causa
+  foi o `&&` encadeado depois do `grep`, e não depois do verify. Não reescrevi o histórico: o commit
+  seguinte saiu com o verify verde.
+- Um `git stash push` que falhou (arquivo novo não rastreado), seguido de `git stash pop`, aplicou o
+  `stash@{0}` de outra branch (`D-TELA-LUZ-RELEVO-FECHAMENTO`) sobre o `PROGRESS.md`, com conflito.
+  Desfeito com `git checkout HEAD -- PROGRESS.md`. Como o pop conflitou, o git manteve o stash: as 6
+  entradas continuam na lista, intactas.
+**Não-regressão:** o teste "o civil segurado no fim do passo é desenhado na borda" da
+I-MOVIMENTO-COLISAO-CIVIL-LIGADA punha o serf andando para leste, onde nasce outro serf parado. Pela
+regra nova, ali o desenho já para na borda. A montagem passou a escolher o vizinho de leste ou oeste
+sem civil, e as duas asserções (andando passa de 0,5; segurado fica em 0,5) não mudaram.
