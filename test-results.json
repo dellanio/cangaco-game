@@ -672,6 +672,6 @@
     "passes": true
   },
   "H-ARTE-SONS-APROVADOS-sons-no-jogo": {
-    "passes": false
+    "passes": true
   }
 }

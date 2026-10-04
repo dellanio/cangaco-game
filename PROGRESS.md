@@ -19068,3 +19068,22 @@ H-ARTE-SONS-APROVADOS      os sons aprovados entram no jogo           NAO: esper
 - **`victory` e `music-peace`:** os links aprovados não são CC0 (CC-BY 4.0 e CC-BY-NC 4.0). Pela
   regra do operador (só CC0), não foram baixados e seguem em silêncio. Escolher outro candidato da
   lista (ou outro link CC0) os traz com `node tools/baixar-sons.js`.
+
+## 2026-10-03 — Fechamento dos sons aprovados (§13, só do que mudou)
+
+- **Rodado no `7fe8819`, nesta ordem, num processo destacado:**
+  1. `npm run shot:dist` (o `npm run build` e o roteiro `E-ENTREGA-BUILD` no `--preview`): saiu 0.
+     O `conferir-dist`: 284 arquivos, 15,67 MB, nenhum de `assets/base/` (154 conferidos, incluindo
+     os originais dos sons), sem página de depuração. **Os sons no build: 15 arquivos, 3 622 376
+     bytes (3,62 MB)**, medida da corrida em `test-output/E-ENTREGA-BUILD.json`.
+  2. Os três roteiros da H: `H-TELA-CAMADA-DE-SOM`, `H-TELA-OPCOES-E-VOLUME` e
+     `H-TELA-AMBIENTE-E-MUSICA`, todos 0, com os arquivos de verdade e zero erro de console.
+  3. `npm run verify` completo: verde (2 475 testes na suíte; 2 473 + 5 fora de propósito na
+     transladada). Com ele, a chave.
+- **Não rodado:** o `shot:todos` inteiro e a `test:longo`. O operador pediu só o que mudou, e
+  nenhuma regra de sim mudou desde a `test:longo` verde do `01d9197`. Por isso o selo da longa não
+  é o do `HEAD`: o `selo:longo` sai diferente de 0 até a próxima corrida dela.
+- **A chave:** `H-ARTE-SONS-APROVADOS` passa a `true` (a, b e c verificados). A Fase H fica com as
+  cinco chaves verdes.
+- **Espera o operador:** `victory` e `music-peace` (links não CC0, em Perguntas em aberto acima), e
+  ouvir os recortes.
