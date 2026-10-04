@@ -6210,8 +6210,10 @@ do tick 29 ao 178; o recruta sai no 179 e o laço some nesse tick). Roteiro
 - **Aceite (escrito antes do código, 2026-10-03):**
   1. **Os sete militares a pé** têm atlas com `parado`, `andar` (8 quadros) e `atacar`, nas 5
      direções canônicas (o oeste por espelho), na célula 64×96 com o pé na linha 90. Os dois
-     montados têm `parado`, `andar` e `atacar` na célula 96×128 da entrada deles, com o pé na
-     linha de base menos 6.
+     montados têm `parado`, `andar` e `atacar` numa célula de 128×128, com o pé na linha 122.
+     **Emenda (2026-10-03, antes do atlas, pela medida):** o cavalo de lado mede até 108 px de
+     largura e não cabe nos 96 px da entrada de hoje; a entrada dos dois passa a `tamanho`
+     [128, 128].
   2. **O obreiro refeito** a partir da imagem do operador tem `parado`, `andar` e `trabalhar`
      (golpe de martelo) nas 5 direções, na célula 64×96 com o pé na linha 90.
   3. Cada entrada nova do manifesto aponta para o atlas, e o validador do manifesto (`F17f`) e o
