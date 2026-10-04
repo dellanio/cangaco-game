@@ -3301,6 +3301,15 @@ que vetar custe uma linha.
   escopo lista (paz, vitória, derrota, recusa, rua, ambiente, música). (2) O `quarry-work` toca com o
   cabouqueiro `colhendo` no lajedo, que é o trabalho que se vê; a fase "na casa" (dentro da
   pedreira) fica muda. Se a pedreira deve soar também por dentro, é mudar `fontesDeTrabalho`.
+- **(2026-10-04, leva) Item 10, BUG-CIVIS-EMPILHADOS — PARADO pela regra do operador: a comida cai
+  mais de 10 % com a colisão civil ligada.** Com `colisaoCivil.ligada: true`, a produção de pão
+  (`loaves`) no cenário longo da D-TRANSPORTE-03 T2 cai **−25,0 % (16 000), −19,6 % (20 000) e
+  −13,7 % (30 000)** contra a base; a madeira cai no máximo −5,1 %. Nada mudou no código, e a chave
+  segue `false`. Saídas possíveis, todas decisão sua: (a) recalibrar a cadeia do pão em lote
+  (`BALANCE_LOG.md`) com a colisão ligada; (b) olhar antes por que a padaria perde tanto (a F-CAL,
+  que mede o moinho e a padaria ocupados, quase não muda: o efeito parece estar no transporte do
+  pão ou nos comensais, e é hipótese); (c) desistir da colisão e ir pela outra saída do bug (só
+  espalhar na tela os civis do mesmo tile). A medida inteira está na entrada do item 10, no fim.
   Os recortes dos cinco sons novos (laço de 2 a 2,5 s; rua e recusa com 0,7 a 0,8 s) foram
   escolhidos sem ouvir, como os da H: o operador ouve e ajusta em `tools/baixar-sons.js`.
 
@@ -19692,4 +19701,38 @@ do PROGRESS era só as duas pontas acrescentando, e ficaram as duas). Ordem fina
   relatórios `-shot.json` do runner, como numa worktree nova), os dois saíram 0 (6 e 4 capturas);
   falta a parte "dentro do `shot:todos`", que é do fechamento; (b) com `ETAPA=depois` e sem a medida
   "antes", os dois recusam com a mensagem de hoje. O bug saiu do `BUGS.md` neste commit.
+
+## 2026-10-04 — Leva, item 10: BUG-CIVIS-EMPILHADOS (decisão do operador: A, religar) — PARADO na medida
+
+O aceite do item manda medir antes do código, e parar se a calibração da comida ou da madeira cair
+mais de 10 %. Caiu. **Nenhum código mudou**: a chave voltou a `false`, e o bug segue no `BUGS.md`.
+
+**A medida** (`units.json colisaoCivil.ligada: true`, `npm run test` e `npm run test:longo`, no
+`67410e3`; números da corrida, não asserção):
+- **Calibração**, contra a mesma corrida com a chave desligada:
+
+  ```text
+  cenario longo D-TRANSPORTE-03 T2 (producao por cadeia, base -> ligada)
+  janela  tree_trunk  stone       timber      corn     flour    loaves
+  16000   41 -> 41    78 -> 78    78 -> 74    48 -> 48 44 -> 44 80 -> 60   (-25,0 %)
+  20000   50 -> 50    99 -> 99    98 -> 98    64 -> 64 58 -> 58 112 -> 90  (-19,6 %)
+  30000   78 -> 77    153 -> 150  154 -> 152  99 -> 98 96 -> 97 190 -> 164 (-13,7 %)
+  ```
+
+  A F-CAL quase não muda (moinho sustentado: intervalo 241,7 nos dois; espera do moinho 6,3 % ->
+  6,1 %, da padaria 2,7 % -> 2,2 %), e a abertura da F17 fecha em 3 796 ticks contra 3 825.
+- **O que reprova na suíte normal (9 testes, 7 arquivos):**
+  - `D-MOVIMENTO-01a` (3): afirmam a chave desligada; mudam por construção ao ligar;
+  - `D-SAVE-VILA-PRONTA`: o save versionado passa a ter `bloqueado`/`saindo` (regravar o save);
+  - `D-TRANSPORTE-03` T1: 9 de 15 armas chegam ao quartel no prazo;
+  - `D-TRANSPORTE-03-T2` (aceite 10): os nós do A* passam do teto medido (o custo de unidade na rota);
+  - `F09`: o cenário do save com reserva pendente deixa de ter reserva no tick do save (o teste
+    ficaria vácuo);
+  - `F20b-4`: os comensais a caminho passam de `refeicoesGarantidas` (pode ser defeito real, não
+    conferido);
+  - `I-TELA-PARTIDA-GUIADA` (c): passa do prazo de 5 s do teste (a corrida fica mais lenta).
+- **Na longa (2 de 5):** a T2 acima, e a `C-IA-03b` (a escaramuça não fecha em vitória).
+
+**Espera o operador**, em Perguntas em aberto: recalibrar o pão em lote, investigar a queda antes,
+ou ir pela outra saída do bug.
 
