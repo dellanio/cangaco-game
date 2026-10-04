@@ -8417,6 +8417,27 @@ render e arte**, declarada aqui. A ordem de execução é a da lista, e o métod
   4. o prédio cuja área medida não mostrar o trabalhador entra no relatório com uma captura, para
      o operador apontar o lugar.
 
+#### G-ARTE-TRABALHADOR-RECORTADO — O trabalhador da casa na escala da rua, recortado pela área
+- **Pedido (2026-10-04, depois de ver o G-ARTE-TRABALHO-DENTRO-DO-PREDIO):** "não precisa sempre
+  exibir o corpo dele completo. Pode cortar uma parte e só exibir exatamente a parte do corpo,
+  simulando o trabalhador dentro do prédio naquela visualização de câmera."
+- **Medida (verificada):** os 13 prédios são desenhados na escala 1,0 (`escalaDoSprite`, régua de 64
+  px por tile), e as unidades da rua também. Por isso o boneco da PixelLab, na escala 1, já tem o
+  tamanho de quem anda na rua. Até aqui ele era reduzido para caber inteiro na área: a fundição ficou
+  a 40% e o curtume, miúdo.
+- **Regra do recorte:** o boneco não é reduzido. Se ele cabe na área, entra inteiro com o pé
+  embaixo, como hoje. Se não cabe, a janela de altura da área começa no alto da cabeça, e o resto
+  do corpo fica atrás da parede, cortado na borda de baixo da área. Na largura, se não couber, a
+  janela é centrada no movimento dos 8 quadros, ou seja, nas mãos e na ferramenta.
+- **Aceite (antes do código):**
+  1. a origem de cada entrada `trabalho` registra `escala: 1`, e os quadros continuam com o tamanho
+     da área e passam no `violacoesDaCamadaViva`;
+  2. em todo prédio cuja área é mais baixa que o boneco, os 8 quadros têm pixel opaco na última linha
+     (o corte encosta na borda, e o boneco não flutua) e o alto da cabeça fica a até 3 px do topo;
+  3. a folha dos 13 sobre o sprite é aberta, e também a captura em jogo de prédios trabalhando;
+  4. o prédio em que o recorte não mostrar o gesto (só a cabeça, por exemplo) entra no relatório com a
+     captura, para o operador decidir.
+
 
 ## Fase H — O som
 
