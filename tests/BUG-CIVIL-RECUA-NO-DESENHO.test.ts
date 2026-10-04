@@ -15,6 +15,7 @@ import type { GameData } from '../src/sim/data/types';
 import type { GameState, Unidade } from '../src/sim/state';
 import { posicaoDaUnidade } from '../src/sim/selectors';
 import { gravarEvidencia } from './helpers/evidence';
+import { criarMemoriaDaEspera, fracaoNoPasso } from '../src/render/espera-na-fila';
 
 const VILA = readFileSync('saves/teste-operador-vila-pronta.txt', 'utf8');
 
@@ -102,5 +103,51 @@ describe('BUG-CIVIL-RECUA-NO-DESENHO', () => {
     expect(com.atrasDoTile).toBe(0);
     // o que sobra e o civil que o tile da frente segurou NAQUELE tick: ele para na borda, nunca alem
     expect(com.destinos.every((f) => Math.abs(f - 0.5) < 1e-9)).toBe(true);
+  }, 120_000);
+
+  it('3. decisao do operador, por tabela: dentro do passo o desenho nao cai; passo novo recomeca', () => {
+    const m = criarMemoriaDaEspera();
+    const passo = { gx: 10, gy: 10, proximo: { gx: 11, gy: 10 } };
+    const em = (f: number) => ({ gx: 10 + f, gy: 10 });
+    expect(m.semRecuo('u', passo, em(0.3))).toEqual(em(0.3)); // primeira vez
+    expect(m.semRecuo('u', passo, em(0.8))).toEqual(em(0.8)); // avancar passa
+    expect(m.semRecuo('u', passo, em(0.5))).toEqual(em(0.8)); // cair fica onde estava (o serf espera)
+    expect(m.semRecuo('u', passo, em(0.9))).toEqual(em(0.9)); // voltou a andar
+    const seguinte = { gx: 11, gy: 10, proximo: { gx: 12, gy: 10 } };
+    expect(m.semRecuo('u', seguinte, { gx: 11, gy: 10 })).toEqual({ gx: 11, gy: 10 }); // passo novo aceita o 0
+    m.esquecer('u');
+    expect(m.semRecuo('u', passo, em(0.2))).toEqual(em(0.2)); // esquecida recomeca
+    expect(m.semRecuo('u', { gx: 10, gy: 10, proximo: undefined }, { gx: 10, gy: 10 })).toEqual({ gx: 10, gy: 10 }); // sem caminho
+    expect(fracaoNoPasso(passo, em(0.25))).toBeCloseTo(0.25, 9);
+  });
+
+  it('4. na vila pronta com a colisao, pela regra do render: zero recuos dentro do passo', () => {
+    let s = carregar(VILA, gameData);
+    const m = criarMemoriaDaEspera();
+    const ant: Record<string, { chave: string; f: number }> = {};
+    let passos = 0;
+    let recuos = 0;
+    let seguraram = 0;
+    for (let t = 0; t < 3000; t++) {
+      s = step(s, [], gameData);
+      for (const id of s.unidades.ordem) {
+        const u = s.unidades.porId[id]!;
+        if (u.tipo !== 'serf' && u.tipo !== 'laborer') continue;
+        const passo = { gx: u.gx, gy: u.gy, proximo: u.fsmData.caminho?.[0] };
+        const bruta = posicaoDaUnidade(s, u, gameData);
+        const p = m.semRecuo(id, passo, bruta);
+        if (p !== bruta) seguraram++;
+        if (passo.proximo === undefined) { delete ant[id]; continue; }
+        const f = fracaoNoPasso(passo, p);
+        const chave = `${u.gx},${u.gy}>${passo.proximo.gx},${passo.proximo.gy}`;
+        const a = ant[id];
+        if (a !== undefined && a.chave === chave) { passos++; if (f < a.f - 1e-9) recuos++; }
+        ant[id] = { chave, f };
+      }
+    }
+    gravarEvidencia('BUG-CIVIL-RECUA-NO-DESENHO-render', { passos, recuosNoPasso: recuos, ticksEmQueAEsperaSegurou: seguraram, antes: 112 });
+    expect(passos).toBeGreaterThan(5000);
+    expect(seguraram).toBeGreaterThan(0); // a regra agiu: havia o que segurar
+    expect(recuos).toBe(0);
   }, 120_000);
 });

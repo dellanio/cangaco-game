@@ -3228,17 +3228,6 @@ que vetar custe uma linha.
   nenhum guarda de dado.
 
 ## Perguntas em aberto
-- **(2026-10-04, BUG-CIVIL-RECUA-NO-DESENHO) O civil que o tile da frente segura no último instante:
-  salta para a borda ou para onde está?** Quando o tile seguinte fica ocupado no mesmo tick em que o
-  civil chega ao fim do passo, o desenho salta de 0,6 a 0,86 do passo para a borda (0,5). Medido: 112
-  vezes em 3 000 ticks da vila pronta, contra 0 sem a colisão. A borda veio do relato anterior do
-  operador ("vários serfs no mesmo tile", I-MOVIMENTO-COLISAO-CIVIL-LIGADA). Há três saídas:
-  - (A) fica como está, com o salto curto e rápido;
-  - (B) o render guarda o ponto e o civil para onde está, sem recuo, mas fica a 0,14–0,2 tile de quem
-    ocupa o tile, como no relato antigo;
-  - (C) o render recua devagar até a borda (~0,3 s), parecendo dar um passo atrás para abrir espaço.
-
-  Recomendação: (C).
 - **(2026-10-04, leva 3, item 3: minas perto da vila) Mudar o `sertao-128` ou fazer outro mapa?** O
   operador pediu carvão, ouro e ferro mais perto do centro da cidade "no mapa atual", para testar a
   fundição. Medido: os veios mais perto ficam a 79 tiles (ferro), 86 (ouro) e 91 (carvão) do armazém
@@ -20314,3 +20303,22 @@ Com o `selectors.ts` antigo, os dois reprovam.
 I-MOVIMENTO-COLISAO-CIVIL-LIGADA punha o serf andando para leste, onde nasce outro serf parado. Pela
 regra nova, ali o desenho já para na borda. A montagem passou a escolher o vizinho de leste ou oeste
 sem civil, e as duas asserções (andando passa de 0,5; segurado fica em 0,5) não mudaram.
+
+**Decisão do operador (2026-10-04):** "o serf precisa esperar ou ficar parado se houver fila nas ruas".
+Saída B: quem é segurado no último instante para onde está. A pergunta saiu de `## Perguntas em
+aberto`.
+**Como:** `src/render/espera-na-fila.ts`, uma regra pura de render com memória por unidade (como a
+interpolação). Dentro do mesmo passo, a fração desenhada nunca cai; trocou o passo, a memória
+recomeça. O `unidades.ts` passa a posição por ela antes da interpolação. A simulação e o seletor não
+mudaram.
+**Teste (+2, total 4):**
+- a tabela da regra;
+- a vila pronta com a colisão, pela regra: **0 recuos dentro do passo** (eram 112). A regra segurou
+  o serf parado em 279 ticks.
+
+**Evidência:** o roteiro `I-MOVIMENTO-COLISAO-CIVIL-LIGADA` sai 0 (60 checagens sem empilhamento, 7
+cruzamentos de um instante). A captura foi aberta: os carregadores na estrada da pedreira, cada um no
+seu lugar. Uma imagem parada não mostra vaivém: a prova da ausência dele é a contagem do teste.
+**Hipótese, não verificada:** quem para onde está, perto do fim do passo, pode ficar a 0,14–0,4 tile
+de um civil que acabou de **parar** no tile da frente. É o caso raro que a borda evitava; o parado que
+já estava lá limita antes (`esperaNoTileSeguinte`). O `BUG-CIVIL-RECUA-NO-DESENHO` saiu do `BUGS.md`.

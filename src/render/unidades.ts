@@ -37,6 +37,7 @@ import {
   PROFUNDIDADE_DOS_NOMES,
 } from './grid';
 import { criarMemoriaDePosicoes, interpolarPosicao } from './interpolacao';
+import { criarMemoriaDaEspera } from './espera-na-fila';
 import {
   ALTURA_DA_CARGA_EM_LADOS, ALTURA_DA_FOME_EM_LADOS, temMarcadorDeFome,
 } from './marcador-de-fome';
@@ -220,6 +221,8 @@ export function criarCamadaDeUnidades(
 ): CamadaDeUnidades {
   const desenhados = new Map<string, Desenhado>();
   const memoria = criarMemoriaDePosicoes();
+  /** BUG-CIVIL-RECUA-NO-DESENHO — dentro do passo o desenho nao volta (o serf espera parado na fila). */
+  const espera = criarMemoriaDaEspera();
   const lado = tilePx * LADO_DA_UNIDADE_EM_TILES;
   const depuracao = depuracaoDeUnidade(window.location.search);
   const manifestoAnimado = mesclarManifestos(manifestoDoJogo, depuracao ? depuracaoRegistrada()?.manifesto : undefined);
@@ -373,7 +376,7 @@ export function criarCamadaDeUnidades(
       if (estado === null) return [];
       if(identidade!==identidadePartida()) {
         identidade=identidadePartida();ultimaChaveAnimada='';
-        for(const [id,item] of desenhados) {item.container.destroy();item.nome.destroy();memoria.esquecer(id);}
+        for(const [id,item] of desenhados) {item.container.destroy();item.nome.destroy();memoria.esquecer(id);espera.esquecer(id);}
         desenhados.clear();
       }
       const vista = cena.cameras.main.worldView;
@@ -388,6 +391,7 @@ export function criarCamadaDeUnidades(
           item.nome.destroy();
           desenhados.delete(id);
           memoria.esquecer(id);
+          espera.esquecer(id);
         }
       }
       const renderizadas: UnidadeRenderizada[] = [];
@@ -405,7 +409,7 @@ export function criarCamadaDeUnidades(
           if (inicial) { item.direcao = inicial; item.virada = iniciarVirada(inicial, tempoDeAnimacao(estado.tick, alfa)); }
           desenhados.set(id, item);
         }
-        const posicao = posicaoDaUnidade(estado, unidade);
+        const posicao = espera.semRecuo(id, { gx: unidade.gx, gy: unidade.gy, proximo: unidade.fsmData.caminho?.[0] }, posicaoDaUnidade(estado, unidade));
         const anterior = memoria.observar(id, estado.tick, posicao);
         const desenhada = interpolarPosicao(anterior, posicao, alfa, SALTO_MAXIMO_EM_TILES);
         const entradaAnimada = assetDaCamada(manifestoAnimado, 'unidade', unidade.tipo);

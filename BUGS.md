@@ -30,49 +30,6 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
 
 ## Abertos
 
-## BUG-CIVIL-RECUA-NO-DESENHO — serf e obreiro andam para frente e para trás e "travam"
-- feature: I-MOVIMENTO-COLISAO-CIVIL-LIGADA (`e9b1bd1`), no desenho do passo (`posicaoDaUnidade`)
-- severidade: errado
-- repro: o operador jogando a `main` (`54da7c6`), 2026-10-04: "ficam travando e indo pra frente e pra
-  trás".
-- esperado: o desenho de quem anda só vai para a frente; quem espera para na borda do tile sem voltar
-- observado (medido, sonda de 3 000 ticks na vila pronta): o desenho de serf e obreiro recua 412 vezes
-  com a colisão ligada, contra 140 com ela desligada (os 140 são as voltas de quem troca de caminho).
-  Causa (verificada em `src/sim/selectors.ts:851-866`): (1) desde a permuta com dívida, o `progresso`
-  fica negativo (220 ticks na sonda), e a fração `progresso/custo` desenha a unidade **atrás** do
-  próprio tile; (2) o civil segurado salta de ~0,8 do passo para a borda (0,5) quando o tile da frente
-  está ocupado (121 recuos).
-- correção prevista: a fração nunca é negativa (a dívida é tempo, desenhado parado no tile); e o civil
-  cujo tile seguinte tem um civil parado, ou que vem de frente, já anda limitado à borda (0,5), sem
-  saltar para trás depois. Uma coluna andando no mesmo sentido não é limitada.
-- **aceite (antes do código):** (1) por tabela, `posicaoDaUnidade`: progresso negativo desenha no tile;
-  com civil parado no tile seguinte, a fração fica em no máximo 0,5; com civil vindo de frente, também;
-  com o da frente andando para longe, a fração é a de hoje; (2) pela sonda transformada em teste: na
-  vila pronta, em 3 000 ticks, os recuos do desenho com a colisão ligada ficam em no máximo 1,2 vez os
-  da colisão desligada, e a razão vai para o `test-output`; (3) só o desenho muda: `step` e o dado não
-  são tocados.
-- **emenda do aceite (2), pela medida (antes do código):** a contagem do (2) misturava a volta legítima
-  de quem chega ao centro de um tile e sai em ângulo maior que 90°. A medida certa é o recuo **dentro do
-  mesmo passo** (mesmo tile, mesmo tile seguinte, a fração caindo). Sem a colisão ela dá **0**; com a
-  colisão, antes da correção, dá **122**, mais **220** ticks desenhados atrás do próprio tile. O aceite
-  (2) passa a ser: com a colisão, na vila pronta, em 3 000 ticks, (a) zero ticks atrás do tile; (b)
-  todo recuo dentro do passo termina exatamente na borda (0,5), ou seja, é o civil que o tile da frente
-  segurou naquele tick, e nenhum vai além dela; (c) a contagem vai para o `test-output`. O salto até a
-  borda quando o tile fica ocupado no último instante é decisão do operador (pergunta no PROGRESS) e
-  fica neste bug, aberto.
-- **decisão do operador (2026-10-04, depois da correção parcial `02b95aa`):** "o serf precisa esperar
-  ou ficar parado se houver fila nas ruas". O segurado no último instante **para onde está**, sem
-  voltar à borda (a saída B da pergunta). Só desenho: a sim já espera.
-- **aceite da decisão (antes do código):** (1) uma regra pura de render (`src/render/`, sem Phaser) com
-  memória por unidade: dentro do mesmo passo (mesmo tile, mesmo tile seguinte) a fração desenhada nunca
-  cai; trocou o passo, a memória recomeça. Por tabela: avançar passa; cair fica onde estava; passo
-  novo aceita a fração dele; unidade esquecida recomeça; (2) a regra aplicada à vila pronta com a
-  colisão, em 3 000 ticks: **zero** recuos dentro do passo (eram 112), e a contagem vai para o
-  `test-output`; (3) `unidades.ts` passa a posição pela regra antes da interpolação; o roteiro
-  `I-MOVIMENTO-COLISAO-CIVIL-LIGADA` continua saindo 0 e a captura dele é aberta.
-- evidência: a sonda desta sessão (`test-output/zz-sonda-recuo.json`, apagado)
-- status: aberto
-
 ## BUG-TROPA-DE-24-PRESA — com a tropa de 24, a varredura do BUG-T deixa soldados marchando
 - feature: C-MOVIMENTO / BUG-T (a tropa travada), exposto pela I-COMBATE-ESCARAMUCA-GANHAVEL
 - severidade: errado
