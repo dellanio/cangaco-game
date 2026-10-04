@@ -8233,7 +8233,89 @@ militares em `data/units.json` e a decisão de que **a IA ignora a névoa**
   - (d) o `validate:data` recusa nível sem `normal` e campo de nível que a IA não lê;
   - (e) screenshot do configurar partida com o nível, e o nível sobrevive ao salvar e carregar.
 
-## Fase G — Animação das unidades (outra sessão, ComfyUI; fora desta fila)
+## Fase G — Animação das unidades (pixel art do PixelLab; planejada em 2026-10-04)
+
+O que já está na `main` (D-ARTE-PIXEL-ART-CIVIS e D-ARTE-PIXEL-ART-MILITARES, 2026-10-03): o serf
+(`parado`, `andar` e `carregando`), as 13 profissões civis (`parado` e `andar`), o obreiro com
+`trabalhar` e os 9 militares (`parado`, `andar` e `atacar`), tudo em pixel art. Cada um tem 5
+direções canônicas, e o oeste sai por espelho. A Fase G fecha o que ainda falta para a unidade
+contar o que faz.
+O operador mandou planejar e seguir a noite toda (2026-10-04), numa worktree própria, porque a fila
+E–I está com outra sessão.
+
+Regras para os quatro itens:
+- **São de arte e manifesto.** O render já escolhe a ação (`src/render/acao-de-unidade.ts`) e
+  desenha a morte (`src/render/mortes-de-unidades.ts`); só falta o quadro no atlas. Nada em `src/sim/`.
+  Se algum item precisar mudar código do render, o aceite ganha uma emenda num commit próprio antes.
+- **O método é o da D-ARTE-PIXEL-ART:** PixelLab v3, personagem de 76 px (os montados têm 104). O
+  andar sai do `skeleton-v3 walking-8-frames`, e as outras ações do `v3` com descrição, 8 quadros,
+  uma direção por chamada. Cada personagem fica com o id em
+  `cangaco-game-candidatos/arte/pixelart/ids.json` e no `origem.nota` do manifesto.
+- **Toda animação nova é conferida numa folha de revisão aberta antes de entrar no atlas.** O que
+  sair ruim é gerado de novo, ou fica de fora e entra no relatório. Não entra no jogo arte que eu
+  não vi.
+- **Orçamento:** ~500 das 1 363 gerações que restam no ciclo (renova em 2026-11-03). Se um item
+  passar do dobro da estimativa dele, ele para e entra em `## Perguntas em aberto`.
+- **Merge na `main`** só com `git status` limpo lá e sem a outra sessão no meio de um item. Se não
+  der na madrugada, a branch fica pronta e o operador decide.
+
+### G-ARTE-TRABALHO-DOS-OFICIOS — Quem trabalha fora de casa mexe a ferramenta
+- **Escopo:** a ação `trabalhar` (8 quadros, em laço) para os quatro ofícios que o render já põe
+  em `trabalhar` fora do prédio (`colhendo` e `semeando` em `src/sim/systems/especialistas.ts`):
+  o pedreiro (picareta na rocha), o lenhador (machado na árvore), o fazendeiro (enxada, que serve
+  para colher e para semear, no roçado e no canavial) e o pescador (lança a tarrafa). Os ofícios
+  de dentro de casa não aparecem trabalhando e ficam de fora. Estimativa: 40 gerações.
+- **Aceite (antes do código):**
+  1. as entradas `stonemason`, `woodcutter`, `farmer` e `fisherman` têm `trabalhar` no atlas, nas 5
+     direções, com o pé na linha 90 em todos os quadros;
+  2. **no jogo, sem `?depuracao`:** um roteiro novo carrega o save do lenhador do D-TELA-05c, e o
+     lenhador passa por pelo menos 3 quadros `woodcutter/trabalhar/…` do atlas real. Captura aberta;
+  3. o validador do manifesto (`F17f`), o carregamento (`F-SPR-carregamento`) e o D-TELA-05c
+     passam.
+
+### G-ARTE-MORTE-DAS-UNIDADES — A unidade cai, e não some
+- **Escopo:** **verificado em 2026-10-04:** `assets/manifest.json` não tem nenhuma animação
+  `morrer` (a depuração tem 4). Como `mortes-de-unidades.ts` só desenha o corpo de quem tem
+  `morrer`, toda unidade da arte nova some sem cair. O item dá `morrer` a todo tipo com atlas: os
+  23 de hoje (serf, as 13 profissões e os 9 militares) e os 5 mercenários do item seguinte. São 8
+  quadros de queda (PixelLab, `falling-back-death`) e mais 4 quadros que esmaecem o corpo no chão.
+  Esses 4 são feitos localmente, pela transparência do último quadro (75, 50, 25 e 10 %), sem
+  geração. Fica `laco: false` e `fps: 10`. Estimativa: 230 gerações.
+- **Aceite (antes do código):**
+  1. toda entrada `unidade` com `atlas` tem `morrer` com 12 quadros nas 5 direções, e o último
+     quadro tem menos alfa que o primeiro. O teste lê o atlas e soma o alfa, sem varrer texto;
+  2. **no jogo, sem `?depuracao`:** um roteiro carrega o save da morte do D-TELA-05c (o militar
+     faminto). O corpo começa no quadro 0 do atlas real, passa por um quadro do meio e some ao fim
+     da sequência. Captura aberta;
+  3. não-regressão: o D-TELA-05c (com depuração) e os testes de manifesto passam.
+
+### G-ARTE-MERCENARIOS — Os cinco mercenários da Prefeitura ganham corpo
+- **Escopo:** os cinco tipos de `mercenarios` (`data/units.json`) não têm entrada no manifesto e
+  aparecem como placeholder (D-TELA-05e). Cada um ganha personagem, `parado`, `andar`, `atacar` e
+  `morrer`, pela camada sertão (`data/theme-sertao.json`): o Retirante (`rebel`, foice e roupa
+  rasgada), o Emboscador (`rogue`, que atira de longe com a funda: `aDistancia`, projétil
+  `funda`), o Andarilho (`vagabond`, montado num jumento ou cavalo magro), o Bruto do Mato
+  (`barbarian`, porrete) e o Jagunço (`warrior`, rifle e peixeira). A célula é 64×96, e o montado
+  fica em 128×128, como o vaqueiro. Estimativa: 170 gerações.
+- **Aceite (antes do código):**
+  1. as cinco entradas novas no manifesto passam no validador (`F17f`), com `id`, `tipo`,
+     `footprint`, `tamanho`, `anchor`, `estados` (o `parado.png` de reserva), `atlas`, `animacoes`,
+     `licenca` e `origem`, e o carregamento (`F-SPR-carregamento`) acha os cinco atlas;
+  2. o teste das 8 direções da D-TELA-05e continua passando para os 28 tipos;
+  3. uma folha com os cinco (parado e um quadro de ataque) é aberta. O roteiro em jogo fica de fora:
+     contratar mercenário pela tela pede a Prefeitura de pé, e isso já tem roteiro próprio (F36).
+
+### G-ARTE-RETOQUES-PIXEL-ART — Os defeitos vistos na D-ARTE-PIXEL-ART
+- **Escopo:** gerar de novo só o que foi registrado como defeito nas duas entradas do PROGRESS. O
+  aguilhadeiro perde a vara no ataque para o norte e o nordeste. O criador perde o cajado no andar
+  para o leste e o nordeste. O andar dos dois montados mexe pouco as pernas do cavalo; a nova
+  tentativa é o `v3` com o trote descrito. Lenhador, fazendeiro, padeiro e mineiro encostam a
+  ferramenta na borda da célula de 64 px. Esse último fica só medido e registrado, porque mudar a
+  célula é decisão do operador. Estimativa: 60 gerações.
+- **Aceite (antes do código):**
+  1. para cada retoque, a folha de antes e a de depois são abertas. Entra só o que ficou melhor, e o
+     que não ficou é registrado no PROGRESS com o motivo;
+  2. os testes de manifesto e o D-ARTE-PIXEL-ART-MILITARES continuam passando.
 
 ## Fase H — O som
 
