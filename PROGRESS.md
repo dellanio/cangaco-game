@@ -18926,3 +18926,10 @@ aponta para a câmera).
 **Merge na `main` (autorizado pelo operador, 2026-10-03):** a branch `serf-pixelart` foi mesclada
 com a `main` que já tinha a Fase F (névoa). O único conflito foi o PROGRESS: as duas entradas ficaram,
 a da `main` primeiro. As entradas de arte acima, marcadas como TESTE, valem agora como arte do jogo.
+
+**O serf carregando de frente (pedido do operador, 2026-10-03):** "está com os braços muito
+abertos, não parece que está segurando o material". O `carregando` do sul e do sudeste foi gerado de
+novo (PixelLab v3, grupos `carregar-junto` e `carregar-junto-se` do estado 98e6a675), com os
+antebraços juntos à frente da barriga. O ponto da carga no sudeste foi de x 13 para 10. Verificado
+numa composição da pedra sobre os quadros do atlas, antes e depois. A captura do roteiro desta corrida
+mostra carregadores andando para leste e oeste, e não de frente.
