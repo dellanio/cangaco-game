@@ -51,6 +51,15 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
   vila pronta, em 3 000 ticks, os recuos do desenho com a colisão ligada ficam em no máximo 1,2 vez os
   da colisão desligada, e a razão vai para o `test-output`; (3) só o desenho muda: `step` e o dado não
   são tocados.
+- **emenda do aceite (2), pela medida (antes do código):** a contagem do (2) misturava a volta legítima
+  de quem chega ao centro de um tile e sai em ângulo maior que 90°. A medida certa é o recuo **dentro do
+  mesmo passo** (mesmo tile, mesmo tile seguinte, a fração caindo). Sem a colisão ela dá **0**; com a
+  colisão, antes da correção, dá **122**, mais **220** ticks desenhados atrás do próprio tile. O aceite
+  (2) passa a ser: com a colisão, na vila pronta, em 3 000 ticks, (a) zero ticks atrás do tile; (b)
+  todo recuo dentro do passo termina exatamente na borda (0,5), ou seja, é o civil que o tile da frente
+  segurou naquele tick, e nenhum vai além dela; (c) a contagem vai para o `test-output`. O salto até a
+  borda quando o tile fica ocupado no último instante é decisão do operador (pergunta no PROGRESS) e
+  fica neste bug, aberto.
 - evidência: a sonda desta sessão (`test-output/zz-sonda-recuo.json`, apagado)
 - status: aberto
 
