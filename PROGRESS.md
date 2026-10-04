@@ -19087,3 +19087,16 @@ H-ARTE-SONS-APROVADOS      os sons aprovados entram no jogo           NAO: esper
   cinco chaves verdes.
 - **Espera o operador:** `victory` e `music-peace` (links não CC0, em Perguntas em aberto acima), e
   ouvir os recortes.
+
+## 2026-10-04 — Fase H mesclada; pendências do som
+
+- **H mesclada** (`55393a5`), aprovada pelo operador. O `verify:rapido` falhou pela ferramenta
+  ("Linha de comando muito longa", 217 arquivos alterados desde o `origin/main`), registrado como
+  `BUG-VERIFY-RAPIDO-LINHA-LONGA`. O `npm run verify` completo do merge saiu 0: 2 475 testes, e na
+  transladada 2 473 com 5 pulados.
+- **Pendência do som (decisão do operador, 2026-10-04: "anote como pendência")**: cinco sons seguem
+  em silêncio até nova escolha dele:
+  - `victory` e `music-peace`: os links que o operador mandou não são CC0, e não entraram;
+  - `building-hit`, `peace-ended` e `command-rejected`: em branco na coluna `aprovado`.
+  Para fechar, o operador escolhe outro candidato CC0 em `docs/sons-candidatos.md`, e o som entra
+  como os outros 15 (H-ARTE-SONS-APROVADOS).
