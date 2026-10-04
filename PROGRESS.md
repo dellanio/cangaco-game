@@ -19190,3 +19190,16 @@ novo (PixelLab v3, grupos `carregar-junto` e `carregar-junto-se` do estado 98e6a
 antebraços juntos à frente da barriga. O ponto da carga no sudeste foi de x 13 para 10. Verificado
 numa composição da pedra sobre os quadros do atlas, antes e depois. A captura do roteiro desta corrida
 mostra carregadores andando para leste e oeste, e não de frente.
+
+## 2026-10-04 — Som do trabalho e som na distância (pedido do operador)
+
+O operador pediu três sons que faltavam: o laborer construindo prédio ("batendo tábua"), o laborer
+construindo rua, e a pedreira trabalhando. Pediu também que o som de cada prédio dependa da
+distância até o foco da câmera: perto toca, longe baixa, e fora de alcance para. Isso virou o item
+H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA, no fim da Fase H do `BUILD_PLAN.md`. Ele roda depois que a I
+fechar, porque o operador decidiu uma worktree por vez.
+- Seis candidatos novos, todos CC0 conferidos na página em 2026-10-04, estão em
+  `docs/sons-candidatos.md` e esperam a aprovação dele.
+- Leitura conservadora (PARA REVISÃO): os sons de trabalho saem do estado da unidade, como a
+  animação de trabalho, sem evento novo na sim. O som sem lugar (paz, vitória, derrota, recusa,
+  ambiente, música) não muda.

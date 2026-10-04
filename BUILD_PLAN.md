@@ -8304,6 +8304,39 @@ fechada. Módulo próprio para som é decisão do operador (PARA REVISÃO).
   `docs/sons-candidatos.md`; (c) o build (E-ENTREGA-BUILD) leva os sons, e o tamanho deles vai para
   o PROGRESS como medida.
 
+### H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA — O som de cada prédio vem do lugar dele (pedido do operador, 2026-10-04)
+- **Pedido do operador, nas palavras dele:** "o som de cada edifício só deve aparecer quando o foco
+  da tela estiver próximo da visão daquele edifício; se o foco sair de perto o som para de tocar, e
+  quanto mais longe, o volume diminui". E faltam três sons: "o laborer construindo as coisas, tanto
+  as ruas como os edifícios (som de batendo tábua)", e "a pedreira trabalhando, quebrando pedra ou
+  batendo em pedras".
+- **Ordem:** uma worktree por vez (decisão do operador). Este item roda **depois que a Fase I
+  fechar**, e não na worktree dela.
+- **Escopo (só tela; a sim não muda):**
+  - **Som com lugar.** Todo som que nasce de um prédio ou de uma unidade tem posição: o
+    `goods-produced`, o `building-completed`, o `building-hit`, o sino da Bodega e os três sons de
+    trabalho novos. O volume dele cai com a distância entre essa posição e o **centro da câmera**,
+    até um raio no dado (`data/som.json`). Fora do raio ele não toca, e o que está tocando em laço
+    para. O que não tem lugar (fim da paz, vitória, derrota, recusa de comando, o ambiente e a
+    música) não muda.
+  - **Os três sons de trabalho**, derivados do estado por seletor puro, como a animação de trabalho
+    (`src/render/acao-de-unidade.ts`), sem evento novo na sim: `build-wood` com o laborer
+    `martelando` numa obra de prédio; `build-road` com o laborer `nivelando` ou `martelando` num
+    tile de estrada; `quarry-work` com o cabouqueiro trabalhando a pedra. Tocam em laço enquanto o
+    estado dura e há alguém trabalhando ali, com teto de vozes no dado.
+  - Os candidatos CC0 estão em `docs/sons-candidatos.md` (`build-wood`, `build-road`,
+    `quarry-work`), com a licença conferida na página em 2026-10-04. **Nenhum se baixa sem a coluna
+    "aprovado" preenchida pelo operador**; até lá, silêncio.
+- **Aceite:**
+  - (a) a função pura "posição do som + centro da câmera → volume" por tabela: o volume cheio no
+    centro, caindo com a distância, e zero no raio e além dele;
+  - (b) a função pura "estado → sons de trabalho a tocar" por tabela: o laborer na obra, o laborer
+    na estrada, o cabouqueiro, ninguém trabalhando (silêncio), e o teto de vozes;
+  - (c) roteiro com a câmera sobre uma obra, depois longe dela: o contador de sons mostra o laço
+    tocando perto e parado longe, e o volume pedido menor a meia distância do que no centro;
+  - (d) a mesma partida com e sem som dá o mesmo estado, byte a byte;
+  - (e) os sons aprovados entram como na H-ARTE-SONS-APROVADOS, com licença e link no manifesto.
+
 ## Fase I — Para quem nunca jogou
 
 A H fechou e foi mesclada (`55393a5`, 2026-10-04, aprovada pelo operador). O alvo da I é o critério de

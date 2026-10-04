@@ -40,6 +40,14 @@ O `id` é o id neutro do som (o mesmo que o `data/som.json` usa); o "toca quando
 | `inn-bell` | a Bodega (`inn`) está na vista (sino da bodega, GDD §9.8) | 1. [Small Bell #2 — steffcaffrey](https://freesound.org/people/steffcaffrey/sounds/452379/) · CC0 · 1,9 s<br>2. [Small Bell — NachtmahrTV](https://freesound.org/people/NachtmahrTV/sounds/553214/) · CC0 · 5,8 s | https://freesound.org/people/TRP/sounds/574664/ |
 | `music-peace` | música enquanto não há luta perto da vila do jogador | 1. [Medieval: Market Day — RandomMind](https://opengameart.org/content/medieval-market-day) · CC0 · tem versão em laço<br>2. [Medieval: Harvest Season — RandomMind](https://opengameart.org/content/medieval-harvest-season) · CC0<br>3. [Happy Accordion — TheSoundLibrary](https://freesound.org/people/TheSoundLibrary/sounds/813189/) · CC0 · 16,4 s (o fole, perto da sanfona) | https://freesound.org/people/Setuniman/sounds/146896/ |
 | `music-combat` | música com luta perto da vila do jogador | 1. [Battle Theme A — cynicmusic](https://opengameart.org/content/battle-theme-a) · CC0<br>2. [Fast fight / battle music (looped) — XCVG](https://opengameart.org/content/fast-fight-battle-music-looped) · CC0 |1  | 
+| `build-wood` | laborer `martelando` numa obra de prédio (pedido do operador, 2026-10-04: "batendo tábua") | 1. [Hammering_Wood.wav — CapsLok](https://freesound.org/people/CapsLok/sounds/204946/) · CC0 · 13,3 s (recorte; prego numa tábua)<br>2. [Hammer hitting nail.wav — LiezelDippenaar](https://freesound.org/people/LiezelDippenaar/sounds/707525/) · CC0 · 4,0 s (martelo, prego, tábua) | |
+| `build-road` | laborer `nivelando` ou `martelando` num tile de estrada (pedido do operador, 2026-10-04) | 1. [Shovel_dirt.wav — dr19](https://freesound.org/people/dr19/sounds/353907/) · CC0 · 9,1 s (pá na terra, batidas)<br>2. [Shovel in dirt — RavenWolfProds](https://freesound.org/people/RavenWolfProds/sounds/503672/) · CC0 · 10,8 s (pá entrando e saindo da terra) | |
+| `quarry-work` | o cabouqueiro trabalhando a pedra do lajedo (pedido do operador, 2026-10-04: "quebrando pedra, batendo em pedras") | 1. [Tiny Hammer on Stone.wav — Shamewap](https://freesound.org/people/meggiepie/sounds/389692/) · CC0 · 6,5 s (martelinho num bloco de pedra)<br>2. [Gathering Stone Resources.flac — qubodup](https://freesound.org/people/qubodup/sounds/184383/) · CC0 · 10,7 s (picareta em chão duro; o autor pede o link da página) | |
+
+**Os três últimos (2026-10-04)** entraram a pedido do operador, depois do merge da H, com a licença
+conferida na página de cada um no mesmo dia. Ficou de fora, por não ser CC0: `Rock_Hammer_Chisel_01`
+de dheming (Attribution 4.0), `Chisels` de iainmccurdy e `Wooden hammer hitting stone surface` de
+alec_havinmaa (Attribution NonCommercial 4.0).
 
 ## O que ficou de fora, e por quê
 
