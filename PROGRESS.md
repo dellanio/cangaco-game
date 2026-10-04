@@ -18621,3 +18621,35 @@ trocar só a entrada do tipo no manifesto, por splice de texto (o manifesto é C
 
 **Incidente:** por uns 10 minutos o PixelLab recusou todo pedido ("Service hiccup talking to the
 database"). Os pedidos que falharam não foram cobrados, e o serviço voltou sozinho.
+
+## 2026-10-03 — D-ARTE-PIXEL-ART-MILITARES: os militares, o obreiro refeito e a pedreira em pixel art
+
+Pedido do operador: gerar os militares, refazer o obreiro a partir de uma imagem dele (macacão de
+uma alça, peito nu, capacete, martelo), dar arte ao obreiro construindo e converter a pedreira
+pintada em pixel art "sem mudar os traços". No fim, o merge na `main`, que ele autorizou.
+
+**Verificado (aberto ou rodado nesta sessão):**
+- O obreiro novo tem `parado`, `andar` e `trabalhar` (martelada de 8 quadros, que o PixelLab
+  desenhou com uma faísca no golpe) nas 5 direções. O roteiro novo `D-ARTE-PIXEL-ART-MILITARES` sai
+  0: um obreiro nivela a estrada passando por `laborer/trabalhar/l/0000..0002`, e a captura
+  `screenshots/D-ARTE-PIXEL-ART-MILITARES-1-obreiro-trabalhando.png` foi aberta.
+- Os sete militares a pé (cabra, cabra de gibão, valente, bodoqueiro, cabra de fogo, aguilhadeiro e
+  ferrão) têm `parado`, `andar` e `atacar` (8 quadros) nas 5 direções, na célula 64×96 com o pé na
+  linha 90. Os dois montados (vaqueiro e capitão do bando) têm o mesmo na célula 128×128 com o pé
+  na linha 122 (emenda do aceite: o cavalo mede até 108 px). As folhas foram conferidas.
+- A pedreira foi convertida sem redesenho por `tools/arte/pixelar-predio.py`: reduz a 2×2 por pixel,
+  usa 40 cores e põe um contorno de 1 pixel. As versões pintadas continuam no disco, e o manifesto
+  aponta para `quarry_*-pixel.png`.
+- **Defeito de render achado e corrigido:** com o cabra e o obreiro ganhando atlas real, o
+  `?depuracao` passou a carregar o atlas real no lugar do de depuração, e o roteiro D-TELA-05c
+  falhou. A causa é a lista da carga tardia (`atlasesDisponiveis`, em `WorldScene`), que punha o
+  real antes. A primeira hipótese, a do `preload`, sozinha não bastou. Agora o de depuração vence
+  nos dois pontos (tabela em `tests/D-ARTE-PIXEL-ART-MILITARES.test.ts`), e D-TELA-04b, 04c, 04d,
+  05b, 05c, F-VIVO-d e D-ARTE-SERF-COMFYUI saem 0.
+- **O vaqueiro montado** saiu duas vezes com os rótulos de direção girados 45° (o sul de verdade no
+  rótulo `south-east`). O atlas remapeia as direções, sem nova geração, e o primeiro ficou registrado
+  como `scout_v1_direcoes_giradas` no `ids.json`.
+
+**Defeitos vistos, não corrigidos:** o aguilhadeiro de costas perde a vara no ataque; o andar dos
+montados mexe pouco as pernas do cavalo; o ataque do aguilhadeiro para o sul encurta a vara (ela
+aponta para a câmera).

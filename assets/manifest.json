@@ -1231,11 +1231,29 @@
         "parado:se": "sprites/units/axe_fighter/parado.png",
         "parado:s": "sprites/units/axe_fighter/parado.png"
       },
-      "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+      "atlas": "sprites/units/axe_fighter/axe_fighter.json",
+      "animacoes": {
+        "parado": {
+          "quadros": 1,
+          "fps": 10,
+          "laco": true
+        },
+        "andar": {
+          "quadros": 8,
+          "tilesPorCiclo": 2,
+          "laco": true
+        },
+        "atacar": {
+          "quadros": 8,
+          "fps": 10,
+          "laco": true
+        }
+      },
+      "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
       "origem": {
-        "base": "base/unit-atlas-b/source.png",
+        "base": "base/units/axe_fighter-pixellab/south.png",
         "semente": null,
-        "nota": "Derivado pela skill pianco-art-pipeline do layout axe_fighter."
+        "nota": "PixelLab v3, personagem 2ad6133d-f959-46f4-9d80-9b476d28e84c, andar skeleton-v3 walking-8-frames, atacar v3 por direcao; sha256 da base c1146001ebe3cd5d7b64e759dd783906cbb88dde42e482b3b4c1294b0296feaf"
       }
     },
     {
@@ -1260,11 +1278,29 @@
         "parado:se": "sprites/units/sword_fighter/parado.png",
         "parado:s": "sprites/units/sword_fighter/parado.png"
       },
-      "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+      "atlas": "sprites/units/sword_fighter/sword_fighter.json",
+      "animacoes": {
+        "parado": {
+          "quadros": 1,
+          "fps": 10,
+          "laco": true
+        },
+        "andar": {
+          "quadros": 8,
+          "tilesPorCiclo": 2,
+          "laco": true
+        },
+        "atacar": {
+          "quadros": 8,
+          "fps": 10,
+          "laco": true
+        }
+      },
+      "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
       "origem": {
-        "base": "base/unit-atlas-c/source.png",
+        "base": "base/units/sword_fighter-pixellab/south.png",
         "semente": null,
-        "nota": "Derivado pela skill pianco-art-pipeline do layout sword_fighter."
+        "nota": "PixelLab v3, personagem f9c98111-c57c-4f91-97cf-2a1da79226e0, andar skeleton-v3 walking-8-frames, atacar v3 por direcao; sha256 da base d56837a15608c85f19a92839bb3a501a8d1e29ab2ec671e132a3b9396ea479bb"
       }
     },
     {
@@ -1289,11 +1325,29 @@
         "parado:se": "sprites/units/bowman/parado.png",
         "parado:s": "sprites/units/bowman/parado.png"
       },
-      "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+      "atlas": "sprites/units/bowman/bowman.json",
+      "animacoes": {
+        "parado": {
+          "quadros": 1,
+          "fps": 10,
+          "laco": true
+        },
+        "andar": {
+          "quadros": 8,
+          "tilesPorCiclo": 2,
+          "laco": true
+        },
+        "atacar": {
+          "quadros": 8,
+          "fps": 10,
+          "laco": true
+        }
+      },
+      "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
       "origem": {
-        "base": "base/unit-atlas-c/source.png",
+        "base": "base/units/bowman-pixellab/south.png",
         "semente": null,
-        "nota": "Derivado pela skill pianco-art-pipeline do layout bowman."
+        "nota": "PixelLab v3, personagem 7e21a522-e871-45f3-9146-b58c9c181ed4, andar skeleton-v3 walking-8-frames, atacar v3 por direcao; sha256 da base 0df3c845f59c0cfcc1661a29ee55caddf4044e8b037cedeebb871c9ac760c092"
       }
     },
     {
@@ -1318,11 +1372,29 @@
         "parado:se": "sprites/units/crossbowman/parado.png",
         "parado:s": "sprites/units/crossbowman/parado.png"
       },
-      "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+      "atlas": "sprites/units/crossbowman/crossbowman.json",
+      "animacoes": {
+        "parado": {
+          "quadros": 1,
+          "fps": 10,
+          "laco": true
+        },
+        "andar": {
+          "quadros": 8,
+          "tilesPorCiclo": 2,
+          "laco": true
+        },
+        "atacar": {
+          "quadros": 8,
+          "fps": 10,
+          "laco": true
+        }
+      },
+      "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
       "origem": {
-        "base": "base/unit-atlas-c/source.png",
+        "base": "base/units/crossbowman-pixellab/south.png",
         "semente": null,
-        "nota": "Derivado pela skill pianco-art-pipeline do layout crossbowman."
+        "nota": "PixelLab v3, personagem 25421bd8-cb0e-4b4b-95ed-6f10d5d996d8, andar skeleton-v3 walking-8-frames, atacar v3 por direcao; sha256 da base 1a2d8c22f203ba85b77512c54f8928f1358646b1cc2178ca37a37c459df1ff11"
       }
     },
     {
@@ -1347,11 +1419,29 @@
         "parado:se": "sprites/units/lance_carrier/parado.png",
         "parado:s": "sprites/units/lance_carrier/parado.png"
       },
-      "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+      "atlas": "sprites/units/lance_carrier/lance_carrier.json",
+      "animacoes": {
+        "parado": {
+          "quadros": 1,
+          "fps": 10,
+          "laco": true
+        },
+        "andar": {
+          "quadros": 8,
+          "tilesPorCiclo": 2,
+          "laco": true
+        },
+        "atacar": {
+          "quadros": 8,
+          "fps": 10,
+          "laco": true
+        }
+      },
+      "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
       "origem": {
-        "base": "base/unit-atlas-c/source.png",
+        "base": "base/units/lance_carrier-pixellab/south.png",
         "semente": null,
-        "nota": "Derivado pela skill pianco-art-pipeline do layout lance_carrier."
+        "nota": "PixelLab v3, personagem 39e1ad31-76a3-44e3-bf47-685491e98bb5, andar skeleton-v3 walking-8-frames, atacar v3 por direcao; sha256 da base ee483807280dc1043be2d011dcc4dcf530533f595bbd4244cb2c4ea33c8185e4"
       }
     },
     {
@@ -1376,11 +1466,29 @@
         "parado:se": "sprites/units/pikeman/parado.png",
         "parado:s": "sprites/units/pikeman/parado.png"
       },
-      "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+      "atlas": "sprites/units/pikeman/pikeman.json",
+      "animacoes": {
+        "parado": {
+          "quadros": 1,
+          "fps": 10,
+          "laco": true
+        },
+        "andar": {
+          "quadros": 8,
+          "tilesPorCiclo": 2,
+          "laco": true
+        },
+        "atacar": {
+          "quadros": 8,
+          "fps": 10,
+          "laco": true
+        }
+      },
+      "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
       "origem": {
-        "base": "base/unit-atlas-c/source.png",
+        "base": "base/units/pikeman-pixellab/south.png",
         "semente": null,
-        "nota": "Derivado pela skill pianco-art-pipeline do layout pikeman."
+        "nota": "PixelLab v3, personagem 102af8d0-cbc9-431e-8f2b-1f3eb72b1c31, andar skeleton-v3 walking-8-frames, atacar v3 por direcao; sha256 da base 56abf4b44d3987ee76ec3d375369d49b1fb9c62ee3f9bc71f791e9f1abe14583"
       }
     },
     {
@@ -1391,7 +1499,7 @@
         1
       ],
       "tamanho": [
-        96,
+        128,
         128
       ],
       "anchor": [
@@ -1405,11 +1513,29 @@
         "parado:se": "sprites/units/scout/parado.png",
         "parado:s": "sprites/units/scout/parado.png"
       },
-      "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+      "atlas": "sprites/units/scout/scout.json",
+      "animacoes": {
+        "parado": {
+          "quadros": 1,
+          "fps": 10,
+          "laco": true
+        },
+        "andar": {
+          "quadros": 8,
+          "tilesPorCiclo": 2,
+          "laco": true
+        },
+        "atacar": {
+          "quadros": 8,
+          "fps": 10,
+          "laco": true
+        }
+      },
+      "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
       "origem": {
-        "base": "base/unit-atlas-c/source.png",
+        "base": "base/units/scout-pixellab/south.png",
         "semente": null,
-        "nota": "Derivado pela skill pianco-art-pipeline do layout scout."
+        "nota": "PixelLab v3, personagem b2d9dc8c-0e89-487f-8782-b95c9ab11ba9, andar skeleton-v3 walking-8-frames, atacar v3 por direcao; sha256 da base 43b2a6cff1c61991973d10d6288d074a84bad0fcf8d2602cf7aa4b48e2b62958"
       }
     },
     {
@@ -1420,7 +1546,7 @@
         1
       ],
       "tamanho": [
-        96,
+        128,
         128
       ],
       "anchor": [
@@ -1434,11 +1560,29 @@
         "parado:se": "sprites/units/knight/parado.png",
         "parado:s": "sprites/units/knight/parado.png"
       },
-      "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+      "atlas": "sprites/units/knight/knight.json",
+      "animacoes": {
+        "parado": {
+          "quadros": 1,
+          "fps": 10,
+          "laco": true
+        },
+        "andar": {
+          "quadros": 8,
+          "tilesPorCiclo": 2,
+          "laco": true
+        },
+        "atacar": {
+          "quadros": 8,
+          "fps": 10,
+          "laco": true
+        }
+      },
+      "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-03",
       "origem": {
-        "base": "base/unit-atlas-c/source.png",
+        "base": "base/units/knight-pixellab/south.png",
         "semente": null,
-        "nota": "Derivado pela skill pianco-art-pipeline do layout knight."
+        "nota": "PixelLab v3, personagem 6e5aa7ee-e000-4275-a7b8-9aae4f16d550, andar skeleton-v3 walking-8-frames, atacar v3 por direcao; sha256 da base e5a03e7c466d9c502deea51c53c393f806b9c3aa11a8c90521a3d2e97db9434a"
       }
     },
     {
