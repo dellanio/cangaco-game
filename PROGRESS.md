@@ -20568,3 +20568,34 @@ três veios de carvão, dois de ferro e dois de ouro, e o corpo da serra entrand
 **Visto, para o operador:** a serra nasce debaixo da névoa, porque o civil vê 9 tiles. Ela aparece
 quando a vila anda para oeste (a pedreira do lajedo já a descobre). O bloco é retangular e de borda
 reta, e dá para arredondar se ele destoar.
+
+### I-TELA-BALAO-DE-PENSAMENTO — o morador mostra num balão o que vai fazer (verificado)
+Como o `TKMUnitThought` do KaM (`731a8a4`, conferido): `src/common/KM_Defaults.pas:710` (comer, casa,
+construir, pedra, madeira). A tarefa o acende (`src/units/tasks/KM_UnitTaskGoEat.pas:111`,
+`src/units/tasks/KM_UnitTaskBuild.pas:157`, `:258`, `:405`, `src/units/tasks/KM_UnitTaskGoHome.pas:28`), e
+o desenho o lê enquanto ele dura (`src/units/KM_Units.pas:524-525`).
+- **A divergência, pedida pelo operador:** aqui o balão aparece de vez em quando no caminho, e não na
+  tarefa inteira.
+- **A regra, só render** (`src/render/pensamento.ts`, pura):
+  - o serf indo buscar ou entregar pensa na mercadoria da tarefa ou da carga;
+  - `indo_comer` pensa em comer, com o ícone do pão;
+  - `indo_a_obra` pensa em obra; `indo_ocupar`, em casa;
+  - parado, trabalhando, martelando ou entregando não pensa em nada.
+- **O relógio:** aceso `duracaoTicks` (25) a cada `intervaloTicks` (80), numa fase por unidade (FNV do
+  id). Os números ficam em `data/pensamento.json`, e o texto da obra e da casa no tema
+  (`pensamentos`), que não têm ícone.
+- **O desenho** (`src/render/unidades.ts`): um balão creme com as duas bolinhas, o ícone da mercadoria
+  quando existe, senão o texto. A ponte publica `pensamento` e `balaoComo` por unidade.
+
+**Teste:** `tests/I-TELA-BALAO-DE-PENSAMENTO.test.ts` (5) cobre:
+- a tabela "estado → pensamento", e nenhum balão sem destino;
+- "tick → aceso": a janela é única, se repete, e a fase muda entre unidades;
+- pelo `step`, na abertura (1 500 ticks): 722 balões acesos para 3 944 unidade-ticks a caminho, com
+  pedra, madeira, ouro, tora, obra e casa (número da corrida no test-output);
+- o validador reprova o balão sempre aceso e o ícone de comer que não é mercadoria.
+
+**Evidência:** o roteiro novo `I-TELA-BALAO-DE-PENSAMENTO` sai 0. No tick 10, um serf indo entregar
+pensa em pedra (ícone); ninguém parado tem balão. A captura aberta mostra dois carregadores com o
+balão da pedra e dois obreiros com "obra".
+**Não verificado:** não joguei com muita gente na tela. O balão pode cobrir o vizinho, e a frequência
+(25 de 80 ticks) é da sessão: fica para o operador.

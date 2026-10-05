@@ -78,6 +78,10 @@ import dadosDoGesto from '../../data/gesto-do-trabalho.json';
 const gestoDoTrabalho = dadosDoGesto as unknown as GestoDoTrabalho;
 import type { CargaNasMaos } from './carga-nas-maos';
 import type { MemoriaDeAcao } from './acao-de-unidade';
+import dadosDoPensamento from '../../data/pensamento.json';
+import { mercadoriaDoBalao, pensamentoNaTela } from './pensamento';
+import type { ConfigDoPensamento, Pensamento } from './pensamento';
+import { chaveDoIcone } from './icone-da-mercadoria';
 
 /** O que a camada desenhou de uma unidade, para o roteiro afirmar (`window.__cangaco`). */
 export interface UnidadeRenderizada {
@@ -124,6 +128,10 @@ export interface UnidadeRenderizada {
    * segunda conta: sai do mesmo `temMarcadorDeFome` que liga o objeto na tela.
    */
   readonly marcadorDeFome: boolean;
+  /** I-TELA-BALAO-DE-PENSAMENTO — o balao aceso agora: a mercadoria, ou `comer`, `construir`,
+   *  `casa`; null sem balao. `balaoComo` diz se ele mostrou o icone ou o texto do tema. */
+  readonly pensamento?: string | null;
+  readonly balaoComo?: 'icone' | 'texto' | null;
   /** F20c — a condicao de 0 a 1 (`fracaoDeCondicao`), para o roteiro afirmar o limiar contra
    *  `data/condition.json` em vez de contra um numero escrito no roteiro. */
   readonly fracaoDeCondicao: number;
@@ -178,6 +186,7 @@ const ALTURA_DO_NOME_EM_LADOS = 0.6;
 /** D-TELA-03a — o lado do icone da carga, em multiplos do lado da unidade: 24 px num lado de 32,
  *  o tamanho do arquivo do HUD. Apresentacao, nao balanceamento. */
 const LADO_DO_ICONE_DA_CARGA_EM_LADOS = 0.75;
+const CONFIG_DO_PENSAMENTO = dadosDoPensamento as ConfigDoPensamento;
 
 const cor = (hex: string): number => Phaser.Display.Color.HexStringToColor(hex).color;
 
@@ -210,6 +219,8 @@ interface Desenhado {
   iconeDaCarga: Phaser.GameObjects.Image | null;
   placaDoIcone: Phaser.GameObjects.Rectangle | null;
   readonly marcadorDeFome: Phaser.GameObjects.Text;
+  /** I-TELA-BALAO-DE-PENSAMENTO — o balao, criado no primeiro pensamento; memoria de render. */
+  balao: { readonly fundo: Phaser.GameObjects.Graphics; readonly icone: Phaser.GameObjects.Image; readonly texto: Phaser.GameObjects.Text } | null;
 }
 
 export function criarCamadaDeUnidades(
@@ -261,7 +272,7 @@ export function criarCamadaDeUnidades(
     marcadorDeFome.setOrigin(0.5, 0.5);
     marcadorDeFome.setVisible(false);
     const container = cena.add.container(0, 0, [retangulo, marcadorDeCarga, marcadorDeFome]);
-    return { container, retangulo, imagem: null, direcao: 's', nome: rotulo, marcadorDeCarga, iconeDaCarga: null, placaDoIcone: null, marcadorDeFome,
+    return { container, retangulo, imagem: null, direcao: 's', nome: rotulo, marcadorDeCarga, iconeDaCarga: null, placaDoIcone: null, marcadorDeFome, balao: null,
       distancia: 0, ultimaPosicao: null, ultimoTickAnimado: -1, animacao: 'parado', acaoDoTrabalho: 'parado', inicioDaAcao: 0, quadro: 0, spriteAnimado: null,
       virada: iniciarVirada('s', 0) };
   }
@@ -329,6 +340,54 @@ export function criarCamadaDeUnidades(
     item.iconeDaCarga?.setVisible(marca.como === 'icone');
     item.placaDoIcone?.setVisible(marca.como === 'icone');
     return marca.como;
+  }
+
+  /** I-TELA-BALAO-DE-PENSAMENTO — o balao sobre a cabeca: o icone da mercadoria quando existe,
+   *  senao o texto do tema. Sem pensamento, ele se apaga. */
+  function desenharPensamento(item: Desenhado, pensamento: Pensamento | null): 'icone' | 'texto' | null {
+    if (pensamento === null) {
+      if (item.balao !== null) {
+        item.balao.fundo.setVisible(false);
+        item.balao.icone.setVisible(false);
+        item.balao.texto.setVisible(false);
+      }
+      return null;
+    }
+    const y = -lado * CONFIG_DO_PENSAMENTO.alturaEmLados;
+    if (item.balao === null) {
+      const fundo = cena.add.graphics();
+      const largura = lado * 1.1;
+      const altura = lado * 0.8;
+      fundo.fillStyle(cor(temaSertao.paleta.cal), 1);
+      fundo.lineStyle(2, cor(temaSertao.paleta.madeira), 1);
+      fundo.fillEllipse(0, y, largura, altura);
+      fundo.strokeEllipse(0, y, largura, altura);
+      // as duas bolinhas do balao de pensamento, descendo para a cabeca
+      for (const [dx, dy, r] of [[-lado * 0.18, altura * 0.7, lado * 0.09], [-lado * 0.28, altura * 1.05, lado * 0.05]] as const) {
+        fundo.fillCircle(dx, y + dy, r);
+        fundo.strokeCircle(dx, y + dy, r);
+      }
+      const icone = cena.add.image(0, y, '__DEFAULT');
+      const texto = cena.add.text(0, y, '', { fontSize: '10px', color: temaSertao.paleta.madeira });
+      texto.setOrigin(0.5, 0.5);
+      item.balao = { fundo, icone, texto };
+      item.container.add([fundo, icone, texto]);
+    }
+    const mercadoria = mercadoriaDoBalao(pensamento, CONFIG_DO_PENSAMENTO);
+    const chave = mercadoria === null ? null : chaveDoIcone(mercadoria);
+    const comIcone = chave !== null && cena.textures.exists(chave);
+    item.balao.fundo.setVisible(true);
+    item.balao.icone.setVisible(comIcone);
+    item.balao.texto.setVisible(!comIcone);
+    if (comIcone) {
+      if (item.balao.icone.texture.key !== chave) item.balao.icone.setTexture(chave);
+      const ladoDoIcone = lado * CONFIG_DO_PENSAMENTO.ladoDoIconeEmLados;
+      item.balao.icone.setDisplaySize(ladoDoIcone, ladoDoIcone);
+    } else {
+      const rotulos = temaSertao.pensamentos as Readonly<Record<string, string>>;
+      item.balao.texto.setText(rotulos[pensamento.tipo] ?? '');
+    }
+    return comIcone ? 'icone' : 'texto';
   }
 
   /**
@@ -482,11 +541,14 @@ export function criarCamadaDeUnidades(
         }
         const comFome = temMarcadorDeFome(unidade);
         item.marcadorDeFome.setVisible(comFome);
+        const pensamento = visivel ? pensamentoNaTela(estado, unidade, CONFIG_DO_PENSAMENTO) : null;
+        const balaoComo = desenharPensamento(item, pensamento);
         renderizadas.push({
           id, tipo: unidade.tipo, gx: posicao.gx, gy: posicao.gy,
           gxDesenhado: desenhada.gx, gyDesenhado: desenhada.gy, fsm: unidade.fsm, lado: unidade.lado, corDoBando: corDoBando(unidade.lado), carga, rotuloDaCarga: carga === null ? null : rotuloDaCarga(carga), marcaDaCarga: marca,
           deslocamentoPx: { x: desvio.x, y: desvio.y },
           marcadorDeFome: comFome, fracaoDeCondicao: fracaoDeCondicao(unidade),
+          pensamento: pensamento === null ? null : pensamento.tipo === 'mercadoria' ? pensamento.mercadoria : pensamento.tipo, balaoComo,
           nome: item.nome.text, larguraDoRotuloPx: item.nome.width, visivel,
           profundidadeDoNome: item.nome.depth, profundidadeDoCorpo: item.container.depth, nomeVisivel: item.nome.visible,
           direcaoLogica: alvoDaDirecao(unidade.tipo, unidade.direcao, posicao.gx - anterior.gx, posicao.gy - anterior.gy, direcoes),

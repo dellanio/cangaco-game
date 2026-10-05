@@ -491,6 +491,12 @@
     "vitoriaDesc": "O inimigo perdeu o armazém, a escola, o quartel e todas as tropas.",
     "derrotaDesc": "Você perdeu o armazém, a escola, o quartel e todas as tropas."
   },
+  "pensamentos": {
+    "_doc": "I-TELA-BALAO-DE-PENSAMENTO. O texto do balao de pensamento quando ele nao tem icone (src/render/unidades.ts): a obra e a casa nao sao mercadoria. A chave e o tipo do pensamento (src/render/pensamento.ts); comer so aparece se o icone de data/pensamento.json iconeDeComer faltar.",
+    "construir": "obra",
+    "casa": "casa",
+    "comer": "comer"
+  },
   "marcadores": {
     "_doc": "F20c. Marcador sobre a unidade no MUNDO (src/render/unidades.ts). Nao e o alerta do HUD (alertas, F22): aquele fala de predio parado, este de gente. `fome` acende a partir de limiares.alertaVisual (data/condition.json) — o limiar nunca e digitado em .ts.",
     "fome": { "rotulo": "com fome", "cor": "telha" }

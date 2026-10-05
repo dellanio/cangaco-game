@@ -1,0 +1,8 @@
+{
+  "_doc": "I-TELA-BALAO-DE-PENSAMENTO (pedido do operador, 2026-10-05). O balao sobre a cabeca do morador que vai a algum lugar, como o TKMUnitThought do KaM (src/common/KM_Defaults.pas:710: comer, casa, construir, pedra, madeira). No KaM ele fica aceso a tarefa inteira; aqui ele aparece de vez em quando no caminho: aceso `duracaoTicks` a cada `intervaloTicks`, com uma fase por unidade derivada do id, para nao piscarem todos juntos. So render; a sim nao le. `alturaEmLados` e `ladoDoIconeEmLados` sao em lados da unidade, como o marcador de fome (1,75). `iconeDeComer` e a mercadoria cujo icone o balao de comer mostra.",
+  "intervaloTicks": 80,
+  "duracaoTicks": 25,
+  "alturaEmLados": 2.4,
+  "ladoDoIconeEmLados": 0.6,
+  "iconeDeComer": "loaves"
+}

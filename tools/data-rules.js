@@ -114,6 +114,32 @@ function validarCargaNasMaos(config, erros) {
   }
 }
 
+// I-TELA-BALAO-DE-PENSAMENTO — o relogio do balao, a altura, o icone de comer e o texto do tema.
+function validarPensamento(dados, config, tema, erros) {
+  const e = (msg) => erros.push(`interface/pensamento: ${msg}`);
+  if (!config || typeof config !== 'object' || Array.isArray(config)) {
+    e('data/pensamento.json precisa existir e ser objeto');
+    return;
+  }
+  for (const campo of ['intervaloTicks', 'duracaoTicks']) {
+    if (!Number.isInteger(config[campo]) || config[campo] <= 0) e(`${campo} precisa ser inteiro > 0`);
+  }
+  if (Number.isInteger(config.duracaoTicks) && config.duracaoTicks >= config.intervaloTicks) {
+    e('duracaoTicks precisa ser menor que intervaloTicks (o balao aparece de vez em quando)');
+  }
+  for (const campo of ['alturaEmLados', 'ladoDoIconeEmLados']) {
+    if (!Number.isFinite(config[campo]) || config[campo] <= 0) e(`${campo} precisa ser numero > 0`);
+  }
+  const mercadorias = (dados.economy && dados.economy.mercadorias) || [];
+  if (!mercadorias.includes(config.iconeDeComer)) e(`iconeDeComer '${config.iconeDeComer}' nao e mercadoria de economy.json`);
+  const rotulos = tema && tema.pensamentos;
+  for (const tipo of ['construir', 'casa', 'comer']) {
+    if (!rotulos || typeof rotulos[tipo] !== 'string' || rotulos[tipo].length === 0) {
+      e(`theme-sertao.json pensamentos.${tipo} precisa de texto`);
+    }
+  }
+}
+
 function validarPoeira(poeira, erros) {
   const e = (msg) => erros.push(`interface/poeira: ${msg}`);
   if (!poeira || typeof poeira !== 'object' || Array.isArray(poeira)) {
@@ -1975,6 +2001,7 @@ function validarInterface(dados, interfaceUi) {
   validarVento(interfaceUi && interfaceUi.vento, erros);
   validarAguaPeixe(interfaceUi && interfaceUi['agua-peixe'], erros);
   validarCargaNasMaos(interfaceUi && interfaceUi['carga-nas-maos'], erros);
+  validarPensamento(dados, interfaceUi && interfaceUi.pensamento, tema, erros);
   validarPoeira(interfaceUi && interfaceUi.poeira, erros);
   validarFumaca(interfaceUi && interfaceUi.fumaca, erros);
   validarSom(interfaceUi && interfaceUi.som, erros);
