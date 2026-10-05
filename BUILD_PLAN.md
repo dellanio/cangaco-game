@@ -8822,6 +8822,128 @@ no mapa atual) espera a decisão dele sobre os saves, registrada no PROGRESS.
 - **Fora do aceite:** o efeito no ritmo da produção não é asserção (o teste afirma mecânica). Vai para
   o PROGRESS como número da corrida.
 
+## Leva de 2026-10-05 (noite) — o pacote do operador para rodar até as 6h
+
+O operador mandou o pacote numa mensagem só. Decisões dele, registradas aqui:
+- **a faixa no teste da escola** (I-MOVIMENTO-FILA-DE-CIVIS, F13a): **(a)**, aceitar a faixa só no
+  caso da porta cercada;
+- **as minas perto da vila**: **do lado esquerdo da vila atual**, no mapa atual. O operador decidiu
+  mudar o mapa, sabendo que os saves antigos deixam de carregar.
+
+A ordem de execução é a desta lista. Cada item tem o aceite abaixo, escrito antes do código.
+
+### I-TELA-CURRAL — "Malhada" vira "Curral" em todo o jogo
+- **Pedido:** "Alterar nome Malhada para Curral em todos os pontos do jogo."
+- **Aceite:** (1) nenhum texto que o jogador lê diz "Malhada" (o tema, a ajuda, as dicas, as cadeias);
+  um teste varre `data/theme-sertao.json` e o HTML; (2) o id neutro `swine_farm` não muda (a sim
+  nunca lê o tema); (3) os comentários de código que citam o nome visível passam a dizer Curral.
+
+### I-TELA-ABAS-MENORES — os quatro botões principais 20% menores
+- **Pedido:** "Diminuir proporção dos 4 botões principais em 20%."
+- **Aceite:** (1) altura, ícone e largura dos quatro botões de `#abas` ficam em 80% de hoje, com os
+  números no CSS lidos por um teste do estilo; (2) a captura da barra é aberta.
+
+### I-TELA-SUBABAS-DO-CONSTRUIR — o menu Construir em quatro sub-abas
+- **Pedido:** dentro de Construir, sub-abas por categoria, em vez da lista vertical comprida:
+  - **Vila:** Armazém, Casa do Coronel (escola), Bodega, Feira;
+  - **De Comer:** Roçado de Milho, Canavial, Casa do Pescador, Moinho, Padaria, Curral, Casa de Carne;
+  - **Mato e Pedra:** Lenhador, Serraria, Garimpo, Jazida de Carvão, Mina de Ferro, Fundição, Forja;
+  - **Guerra:** Casa de Armas, Curtume, Casa do Ferro, Ferraria, Torre de Pedra, Quartel, Cocheira,
+    Mercenários.
+
+  Prédio novo, na dúvida, vai para Vila.
+- **Interpretação conservadora, registrada como pergunta:** a lista do operador não cita a Pedreira
+  (`quarry`) nem a Casa do Gibão (`armory_workshop`). A Pedreira vai para Mato e Pedra, que é pedra, e
+  a Casa do Gibão vai para Guerra, que é armadura. A regra "na dúvida, Vila" fica para o prédio novo,
+  sem grupo no dado.
+- **Aceite:** (1) `data/menu-build.json` tem os quatro grupos na ordem do operador, e o validador do
+  dado continua exigindo cada prédio num grupo só; (2) o render do menu mostra uma linha de quatro
+  sub-abas, e só o corpo da sub-aba escolhida; a sub-aba lembra a escolha ao reabrir; (3) o prédio
+  sem grupo no dado cai em Vila, com teste; (4) as ferramentas de estrada e roçado continuam no topo,
+  fora das sub-abas; (5) o roteiro do menu despausa, aperta e segura 150 ms numa sub-aba (regra do
+  §8), e a captura é aberta.
+
+### I-ARTE-PREDIOS-MAIORES — Casa de Carne, Casa do Gibão e Curtume +20%, Cocheira +30%
+- **Pedido:** os quatro prédios estão pequenos.
+- **Como:** um campo novo de exibição por prédio no manifesto, `escalaDeExibicao` (1,2 e 1,3),
+  multiplicado depois da regra de altura e largura (`escalaDoSprite`). O footprint e a sim não mudam.
+  As âncoras (bandeira, trabalho, estoque) são frações do sprite e acompanham a escala.
+- **Aceite:** (1) o tamanho desenhado dos quatro é 1,2 / 1,2 / 1,2 / 1,3 vez o de hoje, e o dos outros
+  não muda (teste por tabela sobre `escalaDoSprite`); (2) o validador do manifesto aceita o campo só
+  com número > 0; (3) a captura dos quatro em jogo é aberta.
+
+### I-OBRA-UM-TILE-ENTRE-PREDIOS — prédio não encosta em prédio
+- **Pedido:** "Os edifícios devem possuir uma distância um dos outros de pelo menos 1 tile."
+- **Aceite:** (1) `canPlace` recusa, com o motivo `colado`, a planta cujo lote fica a menos de
+  `distanciaMinimaEntrePredios_tiles` (1, em `data/buildings.json`) de outro prédio ou obra, em
+  qualquer direção, inclusive na diagonal; (2) a planta a exatamente 1 tile passa; (3) a fantasma do
+  render mostra a recusa como as outras (o motivo vem da sim); (4) os testes que plantavam prédios
+  colados passam a plantar com o vão, e a contagem do que mudou vai para o PROGRESS.
+
+### I-TERRENO-MINAS-PERTO-DA-VILA — carvão, ouro e ferro do lado esquerdo da vila
+- **Pedido:** "Minas perto da vila: colocar do lado esquerdo da vila atual", para testar a fundição.
+- **Como:** um bloco de montanha a oeste da vila, fora da moldura de 8 tiles e fora da reserva da vila,
+  com os três veios na borda leste dele (como os veios do mapa: minério no tile de montanha da borda).
+  Escrito por um script versionado em `tools/`, que registra a mudança no `_doc` do mapa. A semente vira
+  registro histórico, como o próprio `_doc` prevê.
+- **Aceite:** (1) há carvão, ferro e ouro a até 20 tiles do armazém inicial, a oeste dele; (2) as três
+  minas cabem ao lado dos veios pelo `canPlace` e produzem pelo `step`; (3) a contagem de recursos e a
+  de terreno do mapa conferem com o que o script escreveu, e o hash muda; (4) o save
+  `teste-operador-vila-pronta` é refeito pelo caminho do teste; (5) a captura do lado esquerdo da vila
+  é aberta.
+
+### I-TELA-BALAO-DE-PENSAMENTO — o morador mostra o que quer fazer
+- **Pedido:** como no KaM, um balão de pensamento sobre a cabeça indicando o que o morador deseja
+  fazer, aparecendo de vez em quando no caminho até o destino.
+- **KaM:** `TKMUnitThought` (`src/units/KM_Units.pas`, a conferir com arquivo:linha no PROGRESS): comer,
+  casa, construir, pedra, madeira e assim por diante.
+- **Regra (só render):** o balão sai do estado:
+  - o serf indo buscar ou entregar mostra a mercadoria da tarefa;
+  - quem vai comer mostra a comida;
+  - o obreiro indo à obra mostra o martelo;
+  - o especialista indo ocupar mostra a casa.
+
+  Aparece por `duracao` a cada `intervalo`, com uma fase por unidade derivada do id, para não piscarem
+  todos juntos. Os números ficam em `data/pensamento.json`.
+- **Aceite:** (1) a regra pura "estado → pensamento", por tabela, e "tick → visível", com a fase por
+  unidade; (2) sem destino (ocioso, trabalhando dentro), nenhum balão; (3) o roteiro em jogo publica os
+  balões na ponte de debug, e a captura com um balão é aberta.
+
+### I-TELA-OBRA-PARTE-A-PARTE — a obra sobe por partes, não como uma cortina
+- **Pedido:** a obra hoje é a camada de madeira subindo de baixo para cima, e depois a de pedra por cima
+  dela. No KaM, a sensação é de ver o prédio subir parte a parte.
+- **Regra (só render, com os sprites atuais):** a revelação de cada camada deixa de ser um corte
+  horizontal único. Passa a ser uma grade de blocos (linhas × colunas em `data/obra-revelacao.json`),
+  revelada linha a linha de baixo para cima e, dentro da linha, numa ordem fixa embaralhada por prédio.
+  Cada bloco aparece inteiro quando a fração dele é alcançada.
+- **Aceite:** (1) a regra pura "fração → blocos visíveis", por tabela: 0 nada, 1 tudo, monotônica (o
+  bloco que apareceu não some), a mesma ordem para o mesmo prédio e outra para outro; (2) a contagem de
+  blocos visíveis segue a fração; (3) três capturas da mesma obra em frações diferentes são abertas.
+
+### I-ARTE-ARVORE-SECA — o umbuzeiro pequeno vira árvore seca do sertão
+- **Pedido (com print):** a árvore pequena (o estado `umbuzeiro` de `tree`) destoa. Trocar por uma
+  árvore seca do sertão, no porte das outras árvores.
+- **Aceite:** (1) o estado `umbuzeiro` aponta para a arte nova, com master em `assets/base/` e a origem
+  registrada; (2) a silhueta tem altura comparável à do juazeiro (`presente`), medida no PNG; (3) os
+  outros estados e o anchor não mudam; (4) a captura de uma mata com a árvore nova é aberta. A
+  homologação da arte é do operador.
+
+### I-ARTE-BODES-DO-CURRAL — os bodes do Curral, nas três idades
+- **Pedido:** a animação dos bodes, com todas as fases de crescimento, para o Curral.
+- **O consumidor (verificado em `src/render/manifesto-camadas.ts` e `animais.ts`):** o Curral
+  (`swine_farm`) desenha o animal `pigs` em `idade1`, `idade2` e `idade3`, de 4 quadros cada. Hoje é
+  placeholder.
+- **Aceite:** (1) a entrada `animal` `pigs` no manifesto tem os 12 quadros (bode filhote, jovem,
+  adulto), e o validador das camadas vivas passa; (2) o tamanho cresce com a idade, medido no PNG; (3) a
+  captura do Curral ocupado em jogo é aberta. A homologação da arte é do operador.
+
+### I-ARTE-PEDRA-DA-RUA — a pedra da rua com cara de pedra (delegado ao Codex)
+- **Pedido:** um sprite novo para as pedras da cidade, que combine ao montar as ruas. Pedido expresso
+  do operador: passar ao Codex.
+- **Aceite:** (1) o pedido vai ao Codex pelo `/codex`, com o consumidor (a máscara de vizinhança da
+  estrada) e as regras de albedo do contrato; (2) o resultado volta como candidata e só entra no jogo
+  depois de conferido em captura de rua com curva e cruzamento.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a

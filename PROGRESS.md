@@ -3228,21 +3228,6 @@ que vetar custe uma linha.
   nenhum guarda de dado.
 
 ## Perguntas em aberto
-- **(2026-10-04, I-MOVIMENTO-FILA-DE-CIVIS) A faixa no helper da porta (F13a).** O terceiro
-  recém-treinado nasce numa porta cercada por seis ociosos e vai ao tile livre mais perto, a 2 tiles.
-  Para o F13a passar, o helper `tests/helpers/na-porta.ts` foi de "porta ou vizinho" para "dentro de
-  `margemDoEmpurrao`" (4). É faixa, e o operador recusou faixa ali em 2026-09-28. Duas saídas:
-  - (a) aceitar a faixa só com a porta cercada;
-  - (b) o teste afirmar a história da porta (quando não havia vizinho livre, o tile livre mais perto),
-    que é exato e mais caro.
-- **(2026-10-04, leva 3, item 3: minas perto da vila) Mudar o `sertao-128` ou fazer outro mapa?** O
-  operador pediu carvão, ouro e ferro mais perto do centro da cidade "no mapa atual", para testar a
-  fundição. Medido: os veios mais perto ficam a 79 tiles (ferro), 86 (ouro) e 91 (carvão) do armazém
-  inicial (29,30), e ficam dentro de montanha, porque mina só se constrói ao lado de montanha. O mapa é
-  emitido por `tools/gerar-mapa.js` (semente 20260924), e o save guarda o hash dele. Mudar o mapa
-  atual faz o jogo **recusar todo save antigo**: o do operador, os das gavetas e o
-  `teste-operador-vila-pronta`, que teria de ser refeito. Também mexe nos testes calibrados nas
-  distâncias de hoje. Não decidido; a fila seguiu com os itens 1 e 2.
 
 - **(2026-10-04, G-TELA-ROCEIRO-NO-CAMPO) O roceiro de verdade dentro do tile?** Hoje a sim leva o
   roceiro ao tile vizinho do campo, e o render só desenha ele dentro. Pôr o roceiro dentro do tile na
@@ -20400,3 +20385,14 @@ operador recusou faixa nesse helper em 2026-09-28. A alternativa exata depende d
 da porta.
 **Não verificado:** não joguei. A suíte longa (`test:longo`) pode sentir o ritmo novo e fica para o
 fechamento do bloco. O efeito na produção não é asserção.
+
+## 2026-10-05 — Leva da noite (pacote do operador, até as 6h)
+
+**Decisões do operador (2026-10-05), que saíram de Perguntas em aberto:**
+- **A faixa no helper da porta (F13a):** **(a)**, aceitar a faixa só no caso da porta cercada. O
+  `tests/helpers/na-porta.ts` fica como está desde `1f9c150`: "dentro de `margemDoEmpurrao`".
+- **Minas perto da vila:** do lado esquerdo da vila atual, mudando o mapa atual. O operador aceita que
+  os saves antigos deixam de carregar.
+
+Os aceites dos onze itens estão no BUILD_PLAN.md, "Leva de 2026-10-05 (noite)", num commit só, antes
+do código.
