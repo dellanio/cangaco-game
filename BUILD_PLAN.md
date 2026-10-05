@@ -8994,6 +8994,65 @@ A ordem de execução é a desta lista. Cada item tem o aceite abaixo, escrito a
 
   Nenhum código.
 
+### Pedido do operador de 2026-10-05 (manhã): o aviso da tropa com fome e o jornal
+
+#### I-COMIDA-AVISO-DA-TROPA-COM-FOME — a tropa com fome avisa, com som
+- **Pedido:** "O exército, quando estiver com fome, precisa tocar um som indicando ao jogador que o
+  exército está passando fome."
+- **KaM (`731a8a4`):** `TKMUnitGroup.UpdateHungerMessage` (`src/units/KM_UnitGroup.pas:1975-2005`) avisa
+  o dono quando alguém do grupo está abaixo da condição mínima, e repete o aviso a cada
+  `TIME_BETWEEN_MESSAGES` = 4 min (`src/common/KM_Defaults.pas:390`) enquanto a fome continua. A
+  mensagem entra no registro do jogador e toca a corneta (`src/game/KM_Game.pas:1696-1707`).
+- **Regra (sim):** o `step` emite `troop-hungry` (`lado`, `unidades`: quantos militares do lado estão
+  em alerta de fome, o `emAlertaDeFome` da F20c) em dois casos:
+  - quando a contagem desse lado vai de 0 para mais de 0 entre o estado de antes e o de depois do
+    passo;
+  - e, enquanto ela continua acima de 0, no tick múltiplo do lembrete
+    (`condition.json` `avisoDaTropaComFome.lembrete_segundos_base`: 240, a escala do arquivo).
+
+  Não há estado novo. **Divergência declarada:** o KaM conta o lembrete a partir do primeiro aviso, e
+  aqui ele cai no múltiplo do tick, sem estado. O KaM também pula quem já pediu comida, e aqui conta
+  todo militar em alerta.
+- **Som (dado):** `data/som.json` liga `troop-hungry` ao som `troop-hungry`, sem lugar (toca de
+  qualquer ponto do mapa). O arquivo segue a regra dos sons (H-ARTE-SONS-CANDIDATOS): os candidatos CC0
+  vão para `docs/sons-candidatos.md` com a licença conferida na página, e **o operador aprova**. Até lá,
+  é silêncio, que é o comportamento normal.
+- **Aceite:**
+  1. pelo `step`: a tropa do jogador drenando cruza o limiar, e o evento sai **no tick** em que a
+     contagem passa de 0 a 1, com `unidades` 1;
+  2. o lembrete sai no múltiplo enquanto a fome continua, e **não** sai entre dois múltiplos;
+  3. alimentada (acima do limiar), nenhum evento. O civil com fome não dispara;
+  4. a tropa da IA dispara com o lado da IA;
+  5. o determinismo (mesma corrida, mesmos eventos) e a guarda de que `sim/` não lê `som.json`;
+  6. o `validate:data` aceita o campo novo e recusa o lembrete ≤ 0.
+
+#### I-TELA-JORNAL — o jornal das notícias importantes
+- **Pedido:** um sistema de alertas para eventos importantes, como o da tropa com fome (e, no futuro,
+  "a seca está chegando").
+  - Um **ícone pequeno do lado esquerdo da tela** indica que há jornal.
+  - O clique abre o **jornal aberto no meio da tela**, como popup, **sem bordas**, só a folha do
+    jornal e o ícone de fechar.
+- **KaM:** a pilha de mensagens no canto esquerdo, que abre a mensagem ao clicar
+  (`src/gui/KM_InterfaceGamePlay.pas:2047-2055`).
+- **Regra (só tela):**
+  - **a regra pura** `noticiasDosEventos` transforma os eventos do passo em notícias, pela tabela de
+    `data/jornal.json` (evento → manchete e texto no tema, só do lado do jogador). Começa com a
+    `troop-hungry` e a `peace-ended`;
+  - **a memória:** a interface guarda as últimas `maximoDeNoticias` (dado), a mais nova no alto. Ela
+    não entra no save (memória de tela);
+  - **o ícone** fica no canto inferior esquerdo da área do jogo, escondido sem notícia, com a marca de
+    não lida;
+  - **o jornal:** o clique abre a folha no centro: papel envelhecido em CSS, nome do jornal do tema,
+    "Dia N" e as manchetes. Sem moldura de janela, com o ✕ de fechar; o Esc também fecha. Abrir marca
+    tudo como lido, e o jogo não pausa.
+- **Aceite:**
+  1. a regra pura por tabela: o evento do jogador vira notícia com a manchete do tema; o evento da IA
+     e o sem linha não viram nada; o teto de notícias vale; a mais nova fica no alto;
+  2. o validador reprova o evento sem manchete no tema e o teto ≤ 0;
+  3. o roteiro em jogo despausa e leva a tropa da escaramuça à fome pelo relógio. O ícone aparece com
+     a marca. O roteiro aperta o ícone (down, 150 ms, up) com o jogo andando, e o jornal abre no
+     centro com a manchete da fome. O ✕ fecha, e a marca some. A captura do jornal aberto é aberta.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
