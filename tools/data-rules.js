@@ -1084,6 +1084,13 @@ function validarPedidoDeComida(dados, erros) {
   }
 }
 
+// I-COMIDA-AVISO-DA-TROPA-COM-FOME — o lembrete do aviso precisa ser > 0 (o tick multiplo de 0 nao existe)
+function validarAvisoDaTropaComFome(dados, erros) {
+  const aviso = (dados.condition || {}).avisoDaTropaComFome;
+  const s = aviso && aviso.lembrete_segundos_base;
+  if (typeof s !== 'number' || !(s > 0)) erros.push('condicao/aviso: avisoDaTropaComFome.lembrete_segundos_base precisa ser > 0');
+}
+
 function validarFeira(dados, erros) {
   const feira = (dados.economy && dados.economy.marketplace) || {};
   if (!Number.isInteger(feira.taxa) || feira.taxa < 1) erros.push('economia/feira: marketplace.taxa precisa ser inteiro >= 1');
@@ -2134,6 +2141,7 @@ function validarTudo(dados) {
   validarVisao(dados, erros);
   validarNiveisDaIA(dados, erros);
   validarPedidoDeComida(dados, erros);
+  validarAvisoDaTropaComFome(dados, erros);
   validarPrazoDeProgresso(dados, erros);
   validarPrioridadesDaIA(dados, erros);
   validarEscaramuca(dados, erros);

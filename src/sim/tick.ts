@@ -1,6 +1,7 @@
 import { recusaNaPaz } from './paz';
 import type { Command } from './commands';
 import type { GameEvent, GameState } from './state';
+import { eventosDaTropaComFome } from './condicao';
 import type { GameData } from './data/types';
 import { gameData } from './data';
 import { registrarConclusoes } from './desbloqueio';
@@ -280,6 +281,9 @@ export function step(
   // conclusao do tick `t` vale para os COMANDOS de `t+1`, que e onde o jogador clica.
   // Identidade num tick sem conclusao.
   atual = registrarConclusoes(atual, events);
+
+  // I-COMIDA-AVISO-DA-TROPA-COM-FOME: a tropa com fome avisa o dono (e o lembrete enquanto dura)
+  events.push(...eventosDaTropaComFome(state, atual, tick, dados));
 
   // C-IA-03b: o peacetime acaba neste tick
   if (atual.pazAteTick !== undefined && tick === atual.pazAteTick) events.push({ type: 'peace-ended' });

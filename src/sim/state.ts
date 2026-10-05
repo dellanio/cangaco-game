@@ -440,6 +440,13 @@ export type GameEvent =
       readonly type: 'peace-ended';
     }
   | {
+      /** I-COMIDA-AVISO-DA-TROPA-COM-FOME — militares do `lado` em alerta de fome: a contagem foi de 0
+       *  a `unidades` neste tick, ou e o lembrete enquanto a fome continua (`sim/condicao.ts`). */
+      readonly type: 'troop-hungry';
+      readonly lado: number;
+      readonly unidades: number;
+    }
+  | {
       /** F28a — a unidade morreu em luta e saiu do estado neste tick. */
       readonly type: 'unit-killed';
       readonly unidade: string;

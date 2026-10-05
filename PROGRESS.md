@@ -20695,3 +20695,38 @@ Nenhum código. A implementação e o sprite da Igreja (Codex) esperam a aprova�
 **A proposta central:** a estação é função pura do tick, sem estado. O crescimento passa por um
 relógio global por classe de irrigação (O(açudes) por tick, nada por tile). A ligação é a opção A, por
 distância. Fome e consumo não mudam. Nenhum código.
+
+## Leva da manhã de 2026-10-05 — o aviso da tropa com fome e o jornal (pedido do operador)
+
+### I-COMIDA-AVISO-DA-TROPA-COM-FOME — a tropa com fome avisa, com som (verificado; o som espera aprovação)
+**A regra:** o `step` emite `troop-hungry` (`lado`, `unidades`) nos dois casos abaixo. Ela fica em
+`src/sim/condicao.ts` (`eventosDaTropaComFome`), chamada no fim do `step`:
+- quando os militares de um lado em alerta de fome (`emAlertaDeFome`, F20c) vão de 0 a mais de 0;
+- enquanto continuam acima de 0, no tick múltiplo do lembrete (`condition.json`
+  `avisoDaTropaComFome.lembrete_segundos_base` 480, na escala `economia` = 2 400 ticks, os 4 min do KaM).
+
+Não tem estado novo.
+**KaM (`731a8a4`, conferido):** `src/units/KM_UnitGroup.pas:1975-2005` (`UpdateHungerMessage`),
+`src/common/KM_Defaults.pas:390` (`TIME_BETWEEN_MESSAGES`) e `src/game/KM_Game.pas:1696-1707` (a
+mensagem e a corneta). **Divergências declaradas no BUILD_PLAN:**
+- o lembrete cai no múltiplo do tick, e não conta a partir do primeiro aviso;
+- conta todo militar em alerta, e não pula quem já pediu comida.
+
+**O som:** `data/som.json` liga o evento ao som `troop-hungry` só no lado do jogador (`{campo: lado}`); a
+fome da IA é silêncio. Os candidatos CC0 estão em `docs/sons-candidatos.md`, com a licença conferida na
+página hoje: a corneta da adharca (4,4 s), a corneta distante do DeVern e a barriga roncando. O recorte
+está previsto em `tools/baixar-sons.js`.
+**Até o operador aprovar, é silêncio**, que é o comportamento normal da regra dos sons.
+**Integração:** a lista `EVENTOS_DA_SIM` (`src/render/eventos-da-sim.ts`) ganhou o evento. A nota está
+no BUILD_PLAN, num commit antes do código.
+**Teste:** `tests/I-COMIDA-AVISO-DA-TROPA-COM-FOME.test.ts` (8) cobre:
+- o aviso no tick exato da entrada em alerta;
+- os lembretes em 2 400 e 4 800, e nada entre eles (os ticks estão no test-output);
+- a tropa alimentada e o civil sem aviso;
+- a IA com o lado dela, e a ordem dos lados;
+- o determinismo e a guarda de import;
+- o som do jogador e o silêncio da IA;
+- o validador recusando o lembrete 0.
+
+O `H-ARTE-SONS-APROVADOS` passou a listar o `troop-hungry` entre as linhas que esperam aprovação.
+**Não verificado:** não ouvi (não há arquivo), e não joguei.

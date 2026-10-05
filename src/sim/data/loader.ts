@@ -741,6 +741,11 @@ export function loadGameData(raw: RawGameData): GameData {
     iaDrena: raw.condition.militar.iaDrena,
     inn: raw.condition.inn,
     populacao: raw.condition.populacao,
+    ticksDoLembreteDaTropaComFome: registrar(
+      'condition.avisoDaTropaComFome.lembrete_segundos_base', escalaCondicaoNome,
+      raw.condition.avisoDaTropaComFome.lembrete_segundos_base, 'segundos',
+      paraTicksDeDuracao(raw.condition.avisoDaTropaComFome.lembrete_segundos_base, 'segundos', escalaCondicao, tickHz),
+    ),
   };
 
   // --- entrega (delivery) — escala null e decisao explicita, nao ausencia ---

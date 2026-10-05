@@ -405,6 +405,9 @@ export interface CondicaoData {
    *  Sai (vira true) quando a IA tiver armazem, comida e serf. */
   readonly iaDrena: boolean;
   readonly inn: RawGameData['condition']['inn'];
+  /** I-COMIDA-AVISO-DA-TROPA-COM-FOME — de quantos em quantos ticks o aviso da tropa com fome se
+   *  repete (`condition.json` `avisoDaTropaComFome.lembrete_segundos_base`, convertido no carregamento). */
+  readonly ticksDoLembreteDaTropaComFome: Ticks;
   readonly populacao: RawGameData['condition']['populacao'];
 }
 

@@ -1,6 +1,6 @@
 import { gameData } from './data';
 import type { GameData, LimiaresEmTicks } from './data/types';
-import type { GameState, Unidade } from './state';
+import type { GameEvent, GameState, Unidade } from './state';
 
 /**
  * F20b — os derivados puros da CONDICAO (fome): quem sente fome, quanto e "cheia",
@@ -200,4 +200,42 @@ export function resumoDeCondicao(
     }
   }
   return { civis, comFome, emAlerta, militares, militaresEmAlerta };
+}
+
+/**
+ * I-COMIDA-AVISO-DA-TROPA-COM-FOME — quantos MILITARES de cada lado estao em alerta de fome
+ * (`emAlertaDeFome`), pela chave do lado em texto. Lado sem militar em alerta nao aparece.
+ */
+export function tropaComFomePorLado(state: GameState, dados: GameData = gameData): Readonly<Record<string, number>> {
+  const porLado: Record<string, number> = {};
+  for (const id of state.unidades.ordem) {
+    const u = state.unidades.porId[id];
+    if (u === undefined || classeDaUnidade(u.tipo, dados) !== 'militar' || !emAlertaDeFome(u, dados)) continue;
+    porLado[String(u.lado)] = (porLado[String(u.lado)] ?? 0) + 1;
+  }
+  return porLado;
+}
+
+/**
+ * I-COMIDA-AVISO-DA-TROPA-COM-FOME — o aviso da tropa com fome, como o `UpdateHungerMessage` do KaM
+ * (`src/units/KM_UnitGroup.pas:1975-2005`): sai quando a contagem de um lado vai de 0 a mais de 0
+ * entre `antes` e `depois`, e, enquanto ela continua acima de 0, no tick multiplo do lembrete
+ * (`condition.json` `avisoDaTropaComFome`). Sem estado: o lembrete cai no multiplo do tick, e nao
+ * conta a partir do primeiro aviso como no KaM (divergencia declarada no BUILD_PLAN). Os lados saem
+ * em ordem numerica, para a lista de eventos ser a mesma em toda corrida.
+ */
+export function eventosDaTropaComFome(
+  antes: GameState, depois: GameState, tick: number, dados: GameData = gameData,
+): GameEvent[] {
+  const agora = tropaComFomePorLado(depois, dados);
+  const lados = Object.keys(agora).map(Number).sort((a, b) => a - b);
+  if (lados.length === 0) return [];
+  const eraAntes = tropaComFomePorLado(antes, dados);
+  const lembrete = tick % dados.condicao.ticksDoLembreteDaTropaComFome === 0;
+  const eventos: GameEvent[] = [];
+  for (const lado of lados) {
+    const unidades = agora[String(lado)] ?? 0;
+    if ((eraAntes[String(lado)] ?? 0) === 0 || lembrete) eventos.push({ type: 'troop-hungry', lado, unidades });
+  }
+  return eventos;
 }

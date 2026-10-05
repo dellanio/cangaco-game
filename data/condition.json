@@ -3,6 +3,10 @@
   "escala": "economia",
   "duracaoCondicaoCheia_min_base": { "civil": 40, "militar": 60 },
   "duracaoEfetiva_min_escala2": { "civil": 20, "militar": 30 },
+  "avisoDaTropaComFome": {
+    "_doc": "I-COMIDA-AVISO-DA-TROPA-COM-FOME. O evento troop-hungry sai quando a tropa de um lado entra em alerta de fome (limiares.alertaVisual) e, enquanto dura, a cada lembrete. KaM: TIME_BETWEEN_MESSAGES = 4 min (src/common/KM_Defaults.pas:390). 480 s na escala 1.0 = 240 s com economia 2.0, os 4 min do KaM. O som e o jornal sao da tela.",
+    "lembrete_segundos_base": 480
+  },
   "limiares": { "alertaVisual": 0.35, "civilVaiComer": 0.50, "morte": 0.0 },
   "restauracaoPorComida": { "wine": 0.30, "loaves": 0.40, "fish": 0.50, "sausages": 0.60 },
   "regraCivil": "Precisa de pelo menos 2 comidas DIFERENTES para chegar a 100%.",

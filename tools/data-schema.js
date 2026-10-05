@@ -95,6 +95,8 @@ const CAMPOS_ESCALONADOS = [
     unidade: 'min', declaraEscalaEm: 'escala' },
   { arquivo: 'condition', caminho: 'duracaoCondicaoCheia_min_base.militar',
     unidade: 'min', declaraEscalaEm: 'escala' },
+  { arquivo: 'condition', caminho: 'avisoDaTropaComFome.lembrete_segundos_base',
+    unidade: 'segundos', declaraEscalaEm: 'escala' },
   { arquivo: 'units', caminho: 'velocidadeBase_tilesPorSegundo.aPe',
     unidade: 'tilesPorSegundo', declaraEscalaEm: 'escalaVelocidade' },
   { arquivo: 'units', caminho: 'velocidadeBase_tilesPorSegundo.montado',

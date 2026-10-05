@@ -38,6 +38,7 @@ const RECORTES = {
   'strike-hit': { silencioInicial: true },
   'strike-miss': { silencioInicial: true },
   'unit-killed': { silencioInicial: true },
+  'troop-hungry': { silencioInicial: true, duracao: 3.0, fade: 0.5 },
   'shot-gun': { silencioInicial: true },
   'shot-sling': { silencioInicial: true },
   'stone-thrown': { silencioInicial: true, duracao: 1.5, fade: 0.3 },
