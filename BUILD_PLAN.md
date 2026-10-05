@@ -8944,6 +8944,56 @@ A ordem de execução é a desta lista. Cada item tem o aceite abaixo, escrito a
   estrada) e as regras de albedo do contrato; (2) o resultado volta como candidata e só entra no jogo
   depois de conferido em captura de rua com curva e cruzamento.
 
+### Itens 12 a 14 do pacote da noite (mandados pelo operador durante a madrugada)
+
+#### I-TELA-BARRA-RAPIDA-DE-RECURSOS — a barra fina de recursos no meio da tela
+- **Pedido (com imagem de inspiração):** uma barra rápida no meio da tela, fina, com ícone e
+  quantidade:
+  - os recursos (madeira, pedra, carvão, ouro e ferro);
+  - o total de comida, todas as comidas somadas;
+  - as armas em duas categorias: armas e armaduras. Os escudos vão em armaduras.
+- **Aceite:**
+  1. uma regra pura agrupa o estoque dos armazéns do jogador nas categorias. A lista de mercadorias
+     de cada categoria fica num dado de interface (`data/barra-rapida.json`), e a comida vem do grupo
+     `comida` do `economy.json`. O validador reprova a mercadoria que não existe e a categoria sem
+     ícone;
+  2. por tabela: o total de cada categoria é a soma das mercadorias dela nos armazéns completos do
+     jogador, e o escudo conta em armaduras;
+  3. a barra é DOM sobre o canvas, centrada no alto, com altura de até 28 px, e mostra os mesmos
+     números do HUD da sim (`ui/` só lê);
+  4. o roteiro em jogo confere os números contra o estado, e a captura é aberta.
+
+#### I-PESQUISA-IGREJA — a pesquisa da Igreja e do padre (antes do código)
+- **Pedido:** pesquisar e depois implementar um prédio novo, a Igreja, bem característica do Nordeste.
+  A base de tamanho e proporção é a padaria, e o sprite vai para o Codex. Ela gera padres, com dois
+  poderes:
+  - **Bênção das Tropas:** uma aura de 8 tiles, com +x% de dano ou +x% de resistência; a aura de
+    vários padres não acumula;
+  - **Converter:** como no Age of Empires 2, converte uma unidade inimiga por vez depois de uma
+    oração de x ticks, com a janela de sucesso entre ~5 e 9 intervalos.
+- **Aceite da pesquisa:** `docs/pesquisas/2026-10-05-igreja-e-padre.md` traz:
+  - a arquitetura das igrejas do sertão (fonte citada);
+  - o padre no Age of Empires 2 (a conversão, a recarga, quem resiste);
+  - a aura em jogos de RTS;
+  - a proposta de números, todos em dado, com o que é decisão do operador marcado como pergunta.
+
+  A implementação abre como itens próprios, depois da pesquisa, um de cada vez, com aceite próprio.
+  O sprite vai ao Codex pelo `/codex`.
+
+#### I-PLANO-ACUDE-E-CLIMA — o planejamento do Açude e do clima (só documento)
+- **Pedido:** o planejamento, em `docs`, de um sistema de clima (inverno e seca) e de um prédio novo,
+  o Açude, com o roteiro de pesquisa e as restrições do operador (não mexer em fome, sem sede
+  individual, tudo em dado). Antes de implementar, o operador aprova.
+- **Aceite:** `docs/planos/2026-10-05-acude-e-clima.md` responde os dez pontos do pedido:
+  - a pesquisa histórica com fontes, e as culturas;
+  - o benchmark de sete jogos;
+  - o fluxo e o modelo de dados;
+  - a integração com o que o Piancó já tem, com `arquivo:linha` (como a fazenda cresce, como o tick
+    roda, onde fica o balanceamento);
+  - o plano em etapas e os riscos.
+
+  Nenhum código.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
