@@ -83,9 +83,12 @@ async function roteiro(ctx) {
   afirmar(malhada.ocupante != null, 'o Curral carregado deveria estar ocupado');
   const curral = carregado.animaisDoCurral[ID_DA_MALHADA];
   afirmar(Array.isArray(curral) && curral.length === 5,
-    `o Curral ocupado e alimentada deveria ter 5 animais, veio ${JSON.stringify(curral)}`);
-  afirmar(curral.every((a) => a.sprite === false),
-    'sem PNG de animal no manifesto: todo animal deveria ser placeholder');
+    `o Curral ocupado e alimentado deveria ter 5 animais, veio ${JSON.stringify(curral)}`);
+  // I-ARTE-BODES-DO-CURRAL (2026-10-05): o bode do Curral ganhou arte; com ela, todo animal sai com
+  // a textura (antes, sem PNG, o losango do §9)
+  const temBode = require('../../assets/manifest.json').assets.some((a) => a.tipo === 'animal' && a.id === 'pigs');
+  afirmar(curral.every((a) => a.sprite === temBode),
+    `todo animal deveria ser ${temBode ? 'a textura do bode' : 'placeholder'}: ${JSON.stringify(curral.map((a) => a.sprite))}`);
   afirmar(curral.every((a) => a.animal === 'pigs' && a.idade >= 1 && a.idade <= 3),
     `animal e idade fora do dominio: ${JSON.stringify(curral)}`);
 

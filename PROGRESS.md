@@ -20474,3 +20474,22 @@ juazeiro, e os outros estados e o anchor intactos.
 da lagoa, perto da vila. A mata mais densa do mapa fica na névoa no início da partida.
 **Não feito pela regra das skills de arte:** a revisão por um agente diferente do gerador e a folha
 nos três terrenos e três zooms. A homologação é do operador.
+
+### I-ARTE-BODES-DO-CURRAL — o bode do Curral, nas três idades (verificado; homologação do operador)
+O Curral (`swine_farm`) desenhava o animal `pigs` como losango (sem arte). Agora:
+- **Os bodes:** três personagens PixelLab standard, quadrúpedes (o template `dog`; o v3 não aceita
+  quadrúpede), um por idade: cabrito (`384f06ea`), jovem (`5c311a5b`) e adulto (`8a693d4a`).
+- **A animação:** a `idle` do template, para o leste, com 8 quadros, dos quais o jogo usa 0, 2, 4 e 6
+  (o laço do animal tem 4).
+- **O quadro:** recorte pela caixa comum da idade, pé embaixo e centrado, num quadro comum de 64×56.
+- **Os arquivos:** os quadros em `assets/sprites/animais/pigs/` e a rotação leste de cada idade em
+  `assets/base/animais/pigs/`.
+
+**Teste:** `tests/I-ARTE-BODES-DO-CURRAL.test.ts` (2) cobre o validador das camadas vivas, os 12
+quadros, o tamanho, o pé na borda e a altura crescente (28, 37 e 50 px).
+**Não-regressão:** o roteiro `F-VIVO-c` afirmava "sem PNG de animal, todo animal é placeholder". A
+asserção passou a ler o manifesto, e o roteiro sai 0. A captura aberta mostra os cinco bodes no
+cercado, de idades diferentes.
+**Visto, não corrigido:** os bodes ficam apertados no cercado. Os pontos dos animais estão em
+`ancoras` (ou no padrão do render), e o adulto, com 53 px, é largo para o cercado. Se o operador
+quiser, dá para espaçar os pontos ou reduzir o adulto.
