@@ -20402,3 +20402,12 @@ O nome do `swine_farm` no tema (`data/theme-sertao.json`) passou a "Curral". Os 
 teste que citavam o nome visível também mudaram, com o gênero ajustado ("o Curral ocupado"). Os
 identificadores de código (`malhada`, `ID_DA_MALHADA`) ficaram: não são texto do jogo. O id neutro não
 muda. `tests/I-TELA-CURRAL.test.ts` (2) varre o tema e o `index.html`; com o tema antigo, reprova.
+
+### I-TELA-ABAS-MENORES — os quatro botões principais 20% menores (verificado)
+A regra que vale para `#abas` é a última do `src/ui/estilo.css`, a da arte final. Nela:
+- a altura passou de 66 para 53 px, a linha do pictograma de 46 para 37 e o pictograma de 44 para 35;
+- as quatro colunas ocupam 80% da régua, centradas.
+
+O rótulo ficou em 6 px. Com os 80% exatos (6,4 px), o rótulo "Distribuição" estourava a largura menor,
+e o roteiro `UI-barra-a` reprovava por rótulo cortado. `tests/I-TELA-ABAS-MENORES.test.ts` lê os números
+do CSS. O roteiro `UI-barra-a` sai 0 (5 capturas), e a captura da barra foi aberta.

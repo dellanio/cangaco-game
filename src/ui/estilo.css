@@ -767,17 +767,21 @@ body:not([data-corpo="distribuicao"]) #distribuicao { display: none; }
 
 /* Artes finais das quatro abas. A moldura preserva a madeira pesada da marca
  * Piancó; o aro terracota é exclusivamente o retorno de hover/ativo. */
-#abas { gap: 4px; padding: 5px; background: #4b2d1a var(--veio-tabua); }
+/* I-TELA-ABAS-MENORES (pedido do operador, 2026-10-05): os quatro botoes 20% menores, na altura, no
+   pictograma e na largura (as quatro colunas ocupam 80% da regua, centradas). */
+#abas { gap: 4px; padding: 5px; background: #4b2d1a var(--veio-tabua);
+  grid-template-columns: repeat(4, calc((80% - 12px) / 4)); justify-content: center; }
 #abas button {
-  height: 66px;
-  grid-template-rows: 46px 1fr;
+  height: 53px;
+  grid-template-rows: 37px 1fr;
+  font-size: 6px; /* o rotulo um pouco abaixo dos 80% (6,4 px): com 6,4 "Distribuicao" estoura a largura menor */
   background: #ead3a1 var(--grao);
   border: 3px solid #4b2d1a;
   outline: 1px solid #ba7a3c;
   outline-offset: -5px;
   box-shadow: inset 0 0 0 1px #1f130c, 1px 2px 0 #25170f;
 }
-#abas button::before { width: 44px; height: 44px; }
+#abas button::before { width: 35px; height: 35px; }
 #abas button[data-aba="construir"]::before { background-image: url('../../assets/sprites/ui/tab-construir-premium.png'); }
 #abas button[data-aba="distribuicao"]::before { background-image: url('../../assets/sprites/ui/tab-distribuicao-premium.png'); }
 #abas button[data-aba="estatisticas"]::before { background-image: url('../../assets/sprites/ui/tab-estatisticas-premium.png'); }
