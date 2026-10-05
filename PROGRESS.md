@@ -20665,3 +20665,17 @@ centralização, e madeira, pedra e ouro iguais aos do HUD, antes e depois de um
 **Pergunta (em aberto):** o HUD de "Estado da vila" soma a comida de **todo** prédio (`comidaTotal`,
 inclusive a da Bodega). A barra soma só os armazéns, como o aceite escreveu. Os dois números podem
 diferir. Fica para o operador decidir se a barra passa a usar o `comidaTotal`.
+
+### I-PESQUISA-IGREJA — a pesquisa da Igreja e do padre (documento; espera o operador)
+`docs/pesquisas/2026-10-05-igreja-e-padre.md`. O documento traz:
+- a arquitetura da igreja do sertão, com fontes: cal branca, torre única, frontão de reboco;
+- o pedido de arte para o Codex, com a padaria como base;
+- a conversão do AoE2, com fontes: intervalos de 1,2 s, aquecimento de 4, janela do 5º ao 9º com 38 %
+  e o 9º garantido, recarga, padres empilhados e a resistência;
+- a aura nos RTS: AoE3/4 e Warcraft 3 entram como memória de jogo, marcada como **hipótese**, sem fonte
+  conferida nesta sessão. O KaM não tem nem aura nem padre;
+- a proposta em dado, ligada à fórmula de acerto (`src/sim/combate.ts:105-114`): no Piancó, "+x % de
+  dano" é chance de acerto;
+- a ordem de seis itens de implementação, os riscos e oito **perguntas ao operador**.
+
+Nenhum código. A implementação e o sprite da Igreja (Codex) esperam a aprovação do operador.
