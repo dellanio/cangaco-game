@@ -26,7 +26,9 @@ describe('D-TELA-VENTO-VEGETACAO', () => {
       faseDoTile(n % 10, Math.floor(n / 10)))).size;
     expect(fasesDistintas).toBeGreaterThan(1);
     gravarEvidencia('D-TELA-VENTO-VEGETACAO', { maiorDeslocamentoGraus: maior, fasesDistintas, tiles: 100, ticks: 2000 });
-  });
+  // `timeout` NAO e assercao de tempo (CLAUDE.md §8): existe para o caso travar. Sozinho 2,2 s (medido
+  // 2026-10-05); na suite carregada passou do padrao de 5 s duas vezes (2026-10-04 e 2026-10-05).
+  }, 15_000);
 
   it('a rajada chega ao tile jusante depois do montante, pela velocidade do dado', () => {
     const pico = (x: number) => {
