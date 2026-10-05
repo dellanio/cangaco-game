@@ -540,7 +540,7 @@
   ],
   "estados": {
     "presente": "sprites/vegetation/tree-D-double.png",
-    "umbuzeiro": "sprites/vegetation/umbuzeiro-double-frame.png",
+    "umbuzeiro": "sprites/vegetation/arvore-seca-double-frame.png",
     "mandacaru": "sprites/vegetation/mandacaru-double-frame.png",
     "facheiro": "sprites/vegetation/facheiro-double-frame.png",
     "xique-xique": "sprites/vegetation/xique-xique-double-frame.png",
@@ -550,7 +550,7 @@
   "origem": {
     "base": "base/vegetation-sertao/juazeiro-D-double-master-2x.png",
     "semente": null,
-    "nota": "Juazeiro D generation-01 com silhueta linear 2x no quadro 192x256, pe preservado. Outros estados somente acolchoados com transparencia no mesmo quadro, sem aumento visual. Candidata com luz anterior."
+    "nota": "Juazeiro D generation-01 com silhueta linear 2x no quadro 192x256, pe preservado. Outros estados somente acolchoados com transparencia no mesmo quadro, sem aumento visual. Candidata com luz anterior. I-ARTE-ARVORE-SECA (pedido do operador, 2026-10-05): o estado `umbuzeiro` (a arvore pequena que destoava) passou a apontar para uma ARVORE SECA da caatinga, no porte do juazeiro: PixelLab create_image_pro, job 72ed5301-21ec-4c70-b37d-38dedec62d00, estilo do juazeiro D como referencia, sha256 c5ab80a6ced07fc538dc76b86d6e3ae472e440fe1029b63a7e752c8b0cf5207b; o pe descido 19 px para a linha do juazeiro (pixels de alfa > 128); master 2x em base/vegetation-sertao/arvore-seca-master-2x.png. A chave `umbuzeiro` ficou (vento.json e a distribuicao das especies a leem); o nome do estado e o slot, nao a especie desenhada."
   }
 },
     {

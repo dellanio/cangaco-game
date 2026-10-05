@@ -20455,3 +20455,22 @@ quatro mudam), o campo maior que 0 e o save do roteiro. O F-ESC passou a esperar
 pura.
 **Evidência:** o roteiro novo `I-ARTE-PREDIOS-MAIORES` sai 0, com duas capturas abertas: os quatro, de
 pé, ao lado do Moinho (3×3, sem fator).
+
+### I-ARTE-ARVORE-SECA — o umbuzeiro pequeno vira árvore seca do sertão (verificado; homologação do operador)
+A árvore pequena do print era o estado `umbuzeiro` de `tree`, com 62 px de copa num quadro de 256.
+- **Arte nova:** PixelLab `create_image_pro`, job `72ed5301`, com o juazeiro D como referência de estilo.
+  É uma árvore seca da caatinga: tronco retorcido, galhos nus, sem folha.
+- **Candidata:** salva em `D:\projetos-pessoal\cangaco-game-candidatos\arte\noite-2026-10-05\arvore-seca\`.
+- **Ajuste:** o pé desceu 19 px, até a linha do juazeiro (pixels de alfa > 128). A silhueta tem 204 px,
+  contra 206 do juazeiro.
+- **Arquivos:** derivado em `assets/sprites/vegetation/arvore-seca-double-frame.png` e master 2× em
+  `assets/base/vegetation-sertao/`.
+
+A chave `umbuzeiro` ficou, porque `vento.json` e a distribuição de espécies a leem: o nome é do slot,
+não da espécie desenhada. A origem no manifesto registra tudo.
+**Teste:** `tests/I-ARTE-ARVORE-SECA.test.ts` (3) cobre o caminho, a altura e a base iguais às do
+juazeiro, e os outros estados e o anchor intactos.
+**Evidência:** o roteiro novo `I-ARTE-ARVORE-SECA` sai 0. A captura aberta mostra a árvore seca ao lado
+da lagoa, perto da vila. A mata mais densa do mapa fica na névoa no início da partida.
+**Não feito pela regra das skills de arte:** a revisão por um agente diferente do gerador e a folha
+nos três terrenos e três zooms. A homologação é do operador.
