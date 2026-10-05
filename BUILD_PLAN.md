@@ -9025,6 +9025,9 @@ A ordem de execução é a desta lista. Cada item tem o aceite abaixo, escrito a
   4. a tropa da IA dispara com o lado da IA;
   5. o determinismo (mesma corrida, mesmos eventos) e a guarda de que `sim/` não lê `som.json`;
   6. o `validate:data` aceita o campo novo e recusa o lembrete ≤ 0.
+- **Nota (feature de integração, 2026-10-05, antes do código):** o evento novo entra também na lista
+  `EVENTOS_DA_SIM` de `src/render/eventos-da-sim.ts`, que o compilador obriga a espelhar o `GameEvent` e
+  o `validate:data` usa para conferir o `som.json`. É a única linha de `src/render/` desta feature.
 
 #### I-TELA-JORNAL — o jornal das notícias importantes
 - **Pedido:** um sistema de alertas para eventos importantes, como o da tropa com fome (e, no futuro,
