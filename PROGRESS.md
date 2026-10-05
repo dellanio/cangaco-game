@@ -20636,3 +20636,32 @@ caíram em linhas inteiras (8 de 16 blocos), e a ordem embaralhada dentro da lin
 capturas: ela está coberta só pela tabela do teste.
 **Para o operador:** com 4 × 4, o salto é de 1/16 por bloco. A obra de poucas marteladas fica sem corpo
 até o primeiro bloco, e o lote e o canteiro continuam por baixo. A grade é dado.
+
+### I-TELA-BARRA-RAPIDA-DE-RECURSOS — a barra fina de recursos no alto do meio da tela (verificado)
+**O que faz:** uma barra em DOM (`#barra-rapida`, `src/ui/barra-rapida.ts`), centrada no alto da
+célula do canvas, com 24 px de altura. Ela mostra o ícone e o total de oito categorias:
+- madeira (a tábua), pedra, carvão, ouro (o refinado) e ferro (a barra);
+- a comida, que é o grupo `comida` do `economy.json`;
+- armas e armaduras (os escudos vão em armaduras).
+
+**De onde vêm os números:** as categorias ficam em `data/barra-rapida.json`, e os nomes no tema
+(`barraRapida`). Os totais saem de `estoqueDosArmazens`, o mesmo seletor do HUD: os armazéns completos
+do jogador. Os ícones são os das mercadorias no manifesto.
+**O validador reprova:** a mercadoria que não existe, a categoria sem ícone, a categoria sem nome no
+tema e a mercadoria em duas categorias.
+**O aviso de ordem recusada** desceu de 18 para 36 px, para não cair em cima da barra. O roteiro
+`C-TELA-01` sai 0.
+**Teste:** `tests/I-TELA-BARRA-RAPIDA-DE-RECURSOS.test.ts` (5) cobre:
+- as categorias na ordem, e a comida pelo grupo;
+- a tabela de somas: dois armazéns, a obra que não guarda nada, a tora que não é madeira e o escudo em
+  armaduras;
+- a barra igual ao seletor do HUD;
+- o CSS (centrada, no alto, até 28 px, sem pegar clique);
+- o validador.
+
+**Evidência:** o roteiro novo `I-TELA-BARRA-RAPIDA-DE-RECURSOS` sai 0. Ele confere a altura e a
+centralização, e madeira, pedra e ouro iguais aos do HUD, antes e depois de uma rua gastar pedra (30 →
+22). A captura aberta mostra a barra.
+**Pergunta (em aberto):** o HUD de "Estado da vila" soma a comida de **todo** prédio (`comidaTotal`,
+inclusive a da Bodega). A barra soma só os armazéns, como o aceite escreveu. Os dois números podem
+diferir. Fica para o operador decidir se a barra passa a usar o `comidaTotal`.

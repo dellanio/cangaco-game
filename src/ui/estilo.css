@@ -340,9 +340,18 @@ body:not([data-corpo="opcoes"]) #opcoes { display: none; }
 /* ---- o mapa ------------------------------------------------------------------ */
 #jogo { grid-column: 2; grid-row: 1; min-width: 0; min-height: 0; overflow: hidden; }
 #jogo canvas { display: block; }
+/* I-TELA-BARRA-RAPIDA-DE-RECURSOS — a barra fina no alto do meio do canvas: icone e numero, sem pegar clique */
+#barra-rapida {
+  grid-column: 2; grid-row: 1; align-self: start; justify-self: center; margin-top: 4px; z-index: 4;
+  pointer-events: none; display: flex; align-items: center; gap: 10px; height: 24px; box-sizing: border-box;
+  padding: 0 10px; background: rgba(44, 29, 18, 0.82); border: 1px solid var(--madeira); border-radius: 3px;
+}
+#barra-rapida .item { display: flex; align-items: center; gap: 3px; }
+#barra-rapida img { width: 18px; height: 18px; image-rendering: pixelated; }
+#barra-rapida .valor { font: 12px/1 var(--fonte-display); color: var(--ocre); font-variant-numeric: tabular-nums; }
 /* C-TELA-01 — a ordem recusada: no alto da celula do canvas, sem pegar clique */
 #aviso-de-ordem {
-  grid-column: 2; grid-row: 1; align-self: start; justify-self: center; margin-top: 18px; z-index: 5;
+  grid-column: 2; grid-row: 1; align-self: start; justify-self: center; margin-top: 36px; z-index: 5;
   pointer-events: none; padding: 5px 14px; background: var(--papel); color: var(--tinta);
   border: 2px solid var(--tinta); box-shadow: 3px 3px 0 var(--tinta);
   font: 16px/1.2 var(--fonte-display); letter-spacing: 0.04em; white-space: nowrap;

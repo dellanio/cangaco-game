@@ -152,6 +152,38 @@ function validarObraRevelacao(config, erros) {
   }
 }
 
+// I-TELA-BARRA-RAPIDA-DE-RECURSOS — cada categoria soma mercadorias que existem (ou um grupo de
+// economy.json), tem icone que e mercadoria e nome no tema; uma mercadoria so cabe numa categoria.
+function validarBarraRapida(dados, config, tema, erros) {
+  const e = (msg) => erros.push(`interface/barra-rapida: ${msg}`);
+  if (!config || typeof config !== 'object' || !Array.isArray(config.categorias) || config.categorias.length === 0) {
+    e('data/barra-rapida.json precisa de categorias, lista nao vazia');
+    return;
+  }
+  const mercadorias = new Set((dados.economy && dados.economy.mercadorias) || []);
+  const grupos = (dados.economy && dados.economy.grupos) || {};
+  const nomes = (tema && tema.barraRapida) || {};
+  const vistas = new Map();
+  const ids = new Set();
+  for (const c of config.categorias) {
+    if (!c || typeof c.id !== 'string' || c.id.length === 0) { e('categoria sem id'); continue; }
+    if (ids.has(c.id)) e(`categoria ${c.id} repetida`);
+    ids.add(c.id);
+    if (typeof c.icone !== 'string' || !mercadorias.has(c.icone)) e(`categoria ${c.id}: icone '${c.icone}' precisa ser mercadoria de economy.json`);
+    if (typeof nomes[c.id] !== 'string' || nomes[c.id].length === 0) e(`categoria ${c.id}: sem nome em theme-sertao.json barraRapida`);
+    const temLista = Array.isArray(c.mercadorias);
+    const temGrupo = typeof c.grupo === 'string';
+    if (temLista === temGrupo) { e(`categoria ${c.id}: precisa de mercadorias ou de grupo, um so`); continue; }
+    if (temGrupo && !Array.isArray(grupos[c.grupo])) e(`categoria ${c.id}: grupo '${c.grupo}' nao existe em economy.json`);
+    const lista = temGrupo ? (grupos[c.grupo] || []) : c.mercadorias;
+    for (const m of lista) {
+      if (!mercadorias.has(m)) e(`categoria ${c.id}: mercadoria '${m}' nao existe em economy.json`);
+      if (vistas.has(m)) e(`mercadoria '${m}' em duas categorias (${vistas.get(m)} e ${c.id})`);
+      vistas.set(m, c.id);
+    }
+  }
+}
+
 function validarPoeira(poeira, erros) {
   const e = (msg) => erros.push(`interface/poeira: ${msg}`);
   if (!poeira || typeof poeira !== 'object' || Array.isArray(poeira)) {
@@ -2015,6 +2047,7 @@ function validarInterface(dados, interfaceUi) {
   validarCargaNasMaos(interfaceUi && interfaceUi['carga-nas-maos'], erros);
   validarPensamento(dados, interfaceUi && interfaceUi.pensamento, tema, erros);
   validarObraRevelacao(interfaceUi && interfaceUi['obra-revelacao'], erros);
+  validarBarraRapida(dados, interfaceUi && interfaceUi['barra-rapida'], tema, erros);
   validarPoeira(interfaceUi && interfaceUi.poeira, erros);
   validarFumaca(interfaceUi && interfaceUi.fumaca, erros);
   validarSom(interfaceUi && interfaceUi.som, erros);

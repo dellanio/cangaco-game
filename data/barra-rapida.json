@@ -1,0 +1,13 @@
+{
+  "_doc": "I-TELA-BARRA-RAPIDA-DE-RECURSOS (pedido do operador, 2026-10-05). A barra fina no alto do meio da tela: icone e total de cada categoria, somado nos armazens completos do jogador (sim/selectors.ts estoqueDosArmazens). Cada categoria lista as mercadorias que soma (`mercadorias`) ou aponta um grupo de economy.json (`grupo`; a comida e o grupo `comida`). `icone` e a mercadoria cujo icone (assets/manifest.json icones.mercadorias) a categoria mostra. Leitura do pedido: madeira e a tabua (`timber`), ouro e o ouro refinado (`gold`), ferro e o ferro em barra (`iron`); os escudos vao em armaduras. So interface; a sim nao le.",
+  "categorias": [
+    { "id": "madeira", "mercadorias": ["timber"], "icone": "timber" },
+    { "id": "pedra", "mercadorias": ["stone"], "icone": "stone" },
+    { "id": "carvao", "mercadorias": ["coal"], "icone": "coal" },
+    { "id": "ouro", "mercadorias": ["gold"], "icone": "gold" },
+    { "id": "ferro", "mercadorias": ["iron"], "icone": "iron" },
+    { "id": "comida", "grupo": "comida", "icone": "loaves" },
+    { "id": "armas", "mercadorias": ["hand_axe", "sword", "lance", "pike", "longbow", "crossbow"], "icone": "sword" },
+    { "id": "armaduras", "mercadorias": ["leather_armor", "iron_armor", "wooden_shield", "iron_shield"], "icone": "iron_armor" }
+  ]
+}

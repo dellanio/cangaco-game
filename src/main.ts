@@ -18,6 +18,9 @@ import { criarSessao } from './sessao';
 import { acompanharFimDePartida, criarLaco, nascerPausadoPelaUrl, pausarAoOcultar } from './laco';
 import { iniciarJogo } from './render/game';
 import { montarHud } from './ui/hud';
+import { montarBarraRapida } from './ui/barra-rapida';
+import type { ConfigDaBarra } from './ui/barra-rapida';
+import configDaBarraRapida from '../data/barra-rapida.json';
 import { montarEstatisticas } from './ui/estatisticas';
 import { montarDistribuicao } from './ui/distribuicao';
 import { montarMenuBuild } from './ui/menu-build';
@@ -236,6 +239,14 @@ export function iniciarPartida(
   // HUD e painel ANTES do jogo: o Phaser mede o pai no boot e o layout tem que
   // estar assentado (as dimensoes sao fixas no CSS, mas nao custa a ordem certa).
   const hud = montarHud();
+  // I-TELA-BARRA-RAPIDA-DE-RECURSOS: o icone de cada categoria e o da mercadoria no manifesto, pela URL
+  // que o bundler resolveu (a mesma composicao do menu, logo abaixo)
+  const iconesDasMercadorias = (manifestoJson as unknown as { icones?: { mercadorias?: Readonly<Record<string, { arquivo?: string } | string>> } })
+    .icones?.mercadorias ?? {};
+  const barraRapida = montarBarraRapida(configDaBarraRapida as ConfigDaBarra, Object.fromEntries(Object.entries(gameData.economia.grupos).filter((par): par is [string, string[]] => Array.isArray(par[1]))), (mercadoria) => {
+    const entrada = iconesDasMercadorias[mercadoria];
+    return typeof entrada === 'object' && entrada.arquivo !== undefined ? urlsDeSprites[entrada.arquivo] ?? null : null;
+  });
   const estatisticas = montarEstatisticas();
   // D-TRANSPORTE-02b — a aba Distribuicao emite `SetWareDistribution`
   const distribuicao = montarDistribuicao((comando) => {
@@ -320,6 +331,7 @@ export function iniciarPartida(
     jogo.atualizar(s);
     minimapa.atualizar(s);
     hud.atualizar(s);
+    barraRapida.atualizar(s);
     estatisticas.atualizar(s);
     distribuicao.atualizar(s);
     menu.atualizar(s);
