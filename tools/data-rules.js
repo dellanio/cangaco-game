@@ -140,6 +140,18 @@ function validarPensamento(dados, config, tema, erros) {
   }
 }
 
+// I-TELA-OBRA-PARTE-A-PARTE — a grade de blocos da obra revelada.
+function validarObraRevelacao(config, erros) {
+  const e = (msg) => erros.push(`interface/obra-revelacao: ${msg}`);
+  if (!config || typeof config !== 'object' || Array.isArray(config)) {
+    e('data/obra-revelacao.json precisa existir e ser objeto');
+    return;
+  }
+  for (const campo of ['linhas', 'colunas']) {
+    if (!Number.isInteger(config[campo]) || config[campo] <= 0) e(`${campo} precisa ser inteiro > 0`);
+  }
+}
+
 function validarPoeira(poeira, erros) {
   const e = (msg) => erros.push(`interface/poeira: ${msg}`);
   if (!poeira || typeof poeira !== 'object' || Array.isArray(poeira)) {
@@ -2002,6 +2014,7 @@ function validarInterface(dados, interfaceUi) {
   validarAguaPeixe(interfaceUi && interfaceUi['agua-peixe'], erros);
   validarCargaNasMaos(interfaceUi && interfaceUi['carga-nas-maos'], erros);
   validarPensamento(dados, interfaceUi && interfaceUi.pensamento, tema, erros);
+  validarObraRevelacao(interfaceUi && interfaceUi['obra-revelacao'], erros);
   validarPoeira(interfaceUi && interfaceUi.poeira, erros);
   validarFumaca(interfaceUi && interfaceUi.fumaca, erros);
   validarSom(interfaceUi && interfaceUi.som, erros);

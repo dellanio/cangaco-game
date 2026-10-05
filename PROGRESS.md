@@ -20614,3 +20614,25 @@ costura, porque o recorte por máscara usa offsets diferentes. A diagonal sai em
 ponte de hoje.
 **Não entrou no jogo:** o manifesto e `assets/sprites/road/` não mudaram. O aceite pede a conferência
 numa captura de rua em jogo depois da escolha do operador.
+
+### I-TELA-OBRA-PARTE-A-PARTE — a obra sobe por blocos, não como uma cortina (verificado)
+Cada camada da obra revelada (madeira, depois pedra; a fração continua a da F17g) passou a ser uma
+grade de `linhas × colunas` (4 × 4, em `data/obra-revelacao.json`). Os blocos se revelam linha a linha,
+de baixo para cima, e dentro da linha numa ordem fixa, embaralhada pela semente `<id do prédio>:<camada>`.
+Cada bloco aparece inteiro quando a fração dele é alcançada (`floor(total × fração)`). A regra é pura
+(`src/render/obra-revelacao.ts`). O desenho (`WorldScene.desenharRevelado`) põe uma imagem por bloco
+visível, recortada no quadro da textura. Só render; a sim não muda.
+**Teste:** `tests/I-TELA-OBRA-PARTE-A-PARTE.test.ts` (5) cobre:
+- a tabela fração → contagem (0 nada, 1 tudo);
+- a monotonia em 101 frações (o bloco que apareceu não some);
+- a ordem por linha, a mesma ordem para a mesma semente e outra para outra;
+- o recorte que cobre a textura sem fresta;
+- o validador.
+
+**Evidência:** o roteiro F17g sai 0, e as três capturas da mesma obra foram abertas. Na meia madeira,
+as duas linhas de baixo do esqueleto. Na virada, a madeira inteira e nenhum bloco de pedra. Na meia
+pedra, as duas linhas de baixo em pedra sobre o esqueleto. **Limite da evidência:** os três marcos
+caíram em linhas inteiras (8 de 16 blocos), e a ordem embaralhada dentro da linha não aparece nas
+capturas: ela está coberta só pela tabela do teste.
+**Para o operador:** com 4 × 4, o salto é de 1/16 por bloco. A obra de poucas marteladas fica sem corpo
+até o primeiro bloco, e o lote e o canteiro continuam por baixo. A grade é dado.

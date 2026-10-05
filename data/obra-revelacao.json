@@ -1,0 +1,5 @@
+{
+  "_doc": "I-TELA-OBRA-PARTE-A-PARTE (pedido do operador, 2026-10-05). A obra deixa de subir como uma cortina: cada camada (madeira, depois pedra) e uma grade de `linhas` x `colunas` blocos, revelada linha a linha de baixo para cima e, dentro da linha, numa ordem fixa embaralhada por predio. Cada bloco aparece inteiro quando a fracao dele e alcancada. So render; a sim nao le. A fracao continua a da F17g (src/render/estagio-obra.ts, revelacaoDaObra).",
+  "linhas": 4,
+  "colunas": 4
+}

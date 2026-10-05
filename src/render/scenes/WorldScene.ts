@@ -12,6 +12,9 @@ import { aneisDaAgua, pescadoresNaAgua } from '../agua-peixe';
 import agua from '../../../data/agua.json';
 import dadosDaPoeira from '../../../data/poeira.json';
 import dadosDaFumaca from '../../../data/fumaca.json';
+import dadosDaObraRevelada from '../../../data/obra-revelacao.json';
+import { blocosVisiveis, recorteDoBloco } from '../obra-revelacao';
+import type { GradeDaObra } from '../obra-revelacao';
 import { chaminesRemovidas, particulasDaFumaca, type ParticulaDaFumaca } from '../fumaca';
 import { particulasDaFagulha } from '../fagulha';
 import { celulasDaAguaParaTrocar } from '../agua-viva';
@@ -2269,8 +2272,8 @@ export class WorldScene extends Phaser.Scene {
     const corpo = revelacao !== null && par !== null
       ? [
         this.desenharLote(estagio, larguraPx, alturaPx),
-        ...this.desenharRevelado(par.madeira, revelacao.madeira, larguraPx, alturaPx),
-        ...this.desenharRevelado(par.pedra, revelacao.pedra, larguraPx, alturaPx),
+        ...this.desenharRevelado(par.madeira, revelacao.madeira, larguraPx, alturaPx, `${predio.id}:madeira`),
+        ...this.desenharRevelado(par.pedra, revelacao.pedra, larguraPx, alturaPx, `${predio.id}:pedra`),
       ]
       : sprite === null
         ? this.desenharPlaceholder(estagio, nome, larguraPx, alturaPx)
@@ -2320,19 +2323,22 @@ export class WorldScene extends Phaser.Scene {
     return imagem;
   }
 
-  /** F17g — uma imagem do par recortada DE BAIXO PARA CIMA pela fracao: a obra
-   *  sobe do chao. O recorte e no quadro da textura (px do arquivo); escala e
-   *  ancoragem continuam as de `desenharSprite`. Fracao zero nao desenha nada. */
+  /** F17g — uma camada do par revelada pela fracao: a obra sobe do chao.
+   *  I-TELA-OBRA-PARTE-A-PARTE: por BLOCOS de uma grade (`data/obra-revelacao.json`), linha a linha
+   *  de baixo para cima e, na linha, na ordem embaralhada pela `semente` (o predio e a camada). Uma
+   *  imagem por bloco visivel, recortada no quadro da textura (px do arquivo); escala e ancoragem
+   *  continuam as de `desenharSprite`. Fracao zero nao desenha nada. */
   private desenharRevelado(
     sprite: { readonly chave: string; readonly entrada: EntradaDeAsset }, fracao: Fracao,
-    larguraPx: number, alturaPx: number,
+    larguraPx: number, alturaPx: number, semente: string,
   ): Phaser.GameObjects.Image[] {
-    const [num, den] = fracao;
-    if (num <= 0) return [];
-    const imagem = this.desenharSprite(sprite.chave, sprite.entrada, larguraPx, alturaPx);
-    const visivel = imagem.height * num / den;
-    imagem.setCrop(0, imagem.height - visivel, imagem.width, visivel);
-    return [imagem];
+    const grade = dadosDaObraRevelada as GradeDaObra;
+    return blocosVisiveis(fracao, grade, semente).map((bloco) => {
+      const imagem = this.desenharSprite(sprite.chave, sprite.entrada, larguraPx, alturaPx);
+      const r = recorteDoBloco(bloco, grade, imagem.width, imagem.height);
+      imagem.setCrop(r.x, r.y, r.w, r.h);
+      return imagem;
+    });
   }
 
   /** F-VIVO-a — o retangulo que o sprite ocupa dentro do container, pela mesma
