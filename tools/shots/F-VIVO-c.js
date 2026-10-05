@@ -4,14 +4,14 @@
 // Afirma o que a cena publicou (`window.__cangaco.animaisDoCurral`), nunca pixel
 // (§8). Qual idade sai de qual progresso e `render/animais.ts`, testado em Node
 // (tests/F-VIVO-c-animais.test.ts); aqui se prova que a cena desenha o curral de
-// uma Malhada OCUPADA E ALIMENTADA, com o relogio correndo:
+// um Curral OCUPADO E ALIMENTADO, com o relogio correndo:
 //  1. no tick 0 da abertura nao ha curral nenhum;
-//  2. o jogador carrega a partida (botao "carregar" da ajuda, F23b) e a Malhada
+//  2. o jogador carrega a partida (botao "carregar" da ajuda, F23b) e o Curral
 //     `sf1` aparece com cinco animais, placeholder (o manifesto nao tem `animal`);
 //  3. despausado, o laco anda; e com o tempo a idade de alguma posicao muda.
 //
 // A partida carregada e `test-output/F-VIVO-c.save.txt`, que o teste grava: a
-// cadeia da carne da F19b andada ate a Malhada ter milho. A tela NAO constroi a
+// cadeia da carne da F19b andada ate o Curral ter milho. A tela NAO constroi a
 // cadeia pela abertura (serraria -> fazenda -> milho, o mesmo limite da F18);
 // o gesto do jogador aqui e carregar, e e ele que o roteiro exerce.
 //
@@ -79,11 +79,11 @@ async function roteiro(ctx) {
   const carregado = await estado();
   const malhada = carregado.prediosDoEstado[ID_DA_MALHADA];
   afirmar(malhada !== undefined && malhada.tipo === 'swine_farm',
-    `a partida carregada deveria ter a Malhada '${ID_DA_MALHADA}', veio ${JSON.stringify(malhada)}`);
-  afirmar(malhada.ocupante != null, 'a Malhada carregada deveria estar ocupada');
+    `a partida carregada deveria ter o Curral '${ID_DA_MALHADA}', veio ${JSON.stringify(malhada)}`);
+  afirmar(malhada.ocupante != null, 'o Curral carregado deveria estar ocupado');
   const curral = carregado.animaisDoCurral[ID_DA_MALHADA];
   afirmar(Array.isArray(curral) && curral.length === 5,
-    `a Malhada ocupada e alimentada deveria ter 5 animais, veio ${JSON.stringify(curral)}`);
+    `o Curral ocupado e alimentada deveria ter 5 animais, veio ${JSON.stringify(curral)}`);
   afirmar(curral.every((a) => a.sprite === false),
     'sem PNG de animal no manifesto: todo animal deveria ser placeholder');
   afirmar(curral.every((a) => a.animal === 'pigs' && a.idade >= 1 && a.idade <= 3),

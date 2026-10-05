@@ -20396,3 +20396,9 @@ fechamento do bloco. O efeito na produção não é asserção.
 
 Os aceites dos onze itens estão no BUILD_PLAN.md, "Leva de 2026-10-05 (noite)", num commit só, antes
 do código.
+
+### I-TELA-CURRAL — "Malhada" vira "Curral" (verificado)
+O nome do `swine_farm` no tema (`data/theme-sertao.json`) passou a "Curral". Os comentários e títulos de
+teste que citavam o nome visível também mudaram, com o gênero ajustado ("o Curral ocupado"). Os
+identificadores de código (`malhada`, `ID_DA_MALHADA`) ficaram: não são texto do jogo. O id neutro não
+muda. `tests/I-TELA-CURRAL.test.ts` (2) varre o tema e o `index.html`; com o tema antigo, reprova.

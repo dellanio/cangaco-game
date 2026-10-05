@@ -3,7 +3,7 @@
  * F-VIVO-g", docs/planos/2026-09-30-F-VIVO-e-em-diante.md).
  *
  * `animaisDoCurral` esvazia o curral quando a gaveta de entrada seca e o ciclo volta ao
- * zero: entre duas entregas de milho a Malhada ocupada piscava vazia. `curralDesenhado`
+ * zero: entre duas entregas de milho o Curral ocupado piscava vazio. `curralDesenhado`
  * guarda o ultimo curral cheio enquanto o predio estiver ocupado. A memoria e de tela (um
  * `Map` da cena), nao entra no save: aqui ela e a variavel `anterior` do laco.
  */
@@ -43,7 +43,7 @@ describe('F-VIVO-g — o curral guarda', () => {
     expect(curralDesenhado([], [], true)).toEqual([]);
   });
 
-  it('aceite 2: na cadeia da carne, pelo step, o curral vazio com a Malhada ocupada cai a 0 depois da primeira entrega', () => {
+  it('aceite 2: na cadeia da carne, pelo step, o curral vazio com o Curral ocupado cai a 0 depois da primeira entrega', () => {
     const TICKS = 20_000;
     let s = cenarioDaCadeiaDaCarne();
     let anterior: readonly AnimalDoCurral[] = [];
@@ -51,7 +51,7 @@ describe('F-VIVO-g — o curral guarda', () => {
     let vazioOcupadoAntes = 0; // so `animaisDoCurral`, depois da primeira entrega
     let vazioOcupadoDepois = 0; // com `curralDesenhado`, depois da primeira entrega
     // a janela do roteiro: o primeiro tick, depois da primeira entrega, em que o curral
-    // atual esvazia com a Malhada ocupada, e o tick em que ele volta a encher
+    // atual esvazia com o Curral ocupado, e o tick em que ele volta a encher
     let esvazia: number | null = null;
     let reenche: number | null = null;
     let partida: GameState | null = null;
@@ -78,7 +78,7 @@ describe('F-VIVO-g — o curral guarda', () => {
     evidencia['aceite2'] = { ticks: TICKS, primeiraEntrega, antes: vazioOcupadoAntes, depois: vazioOcupadoDepois, esvazia, reenche };
     gravarEvidencia('F-VIVO-g', evidencia);
     expect(primeiraEntrega).not.toBeNull();
-    // guarda do cenario: o curral atual esvazia de fato entre entregas, com a Malhada ocupada
+    // guarda do cenario: o curral atual esvazia de fato entre entregas, com o Curral ocupado
     expect(vazioOcupadoAntes).toBeGreaterThan(0);
     expect(esvazia).not.toBeNull();
     expect(reenche).not.toBeNull();

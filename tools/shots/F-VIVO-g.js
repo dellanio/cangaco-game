@@ -3,7 +3,7 @@
 //
 // Carrega pelo botao "carregar" (F23b) a partida que o aceite 2 de
 // `tests/F-VIVO-g-curral-guarda.test.ts` grava: a cadeia da carne 40 ticks antes de o curral
-// da sim (`animaisDoCurral`) esvaziar com a Malhada ocupada. Passo 0 mede pela ponte de
+// da sim (`animaisDoCurral`) esvaziar com o Curral ocupado. Passo 0 mede pela ponte de
 // debug que o curral carregado tem animais. Depois DESPAUSA o relogio (§8) e le a ponte ate
 // passar do tick em que a sim esvazia: `debug.animaisDoCurral` (src/render/debug.ts) nunca
 // fica vazio na sf1. Pausa de volta e captura dentro da janela vazia da sim. Nao clica em

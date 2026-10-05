@@ -1,5 +1,5 @@
 /**
- * F24b — A CADEIA DO COURO no mapa emitido: Malhada (bode e couro cru), Curtume, Casa do
+ * F24b — A CADEIA DO COURO no mapa emitido: Curral (bode e couro cru), Curtume, Casa do
  * Gibao (gibao e escudo). Plano: docs/planos/2026-09-29-F24b-cadeia-do-couro.md.
  *
  * A sonda veio primeiro, como na D-PRODUCAO-01a, e deu o mesmo resultado: a cadeia fecha
@@ -86,7 +86,7 @@ describe('F24b — a cadeia do couro fecha no mapa emitido', () => {
     for (const bem of ['skins', 'leather', ...PECAS]) expect(totalNoMundo(inicio, bem), bem).toBe(0);
   });
 
-  it('aceite 2 — a Malhada faz o couro cru junto com o bode', () => {
+  it('aceite 2 — o Curral faz o couro cru junto com o bode', () => {
     expect(registro.produziu['sf1:skins']).toBeDefined();
     expect(registro.produziu['sf1:skins']).toBe(registro.produziu['sf1:pigs']);
   });

@@ -1,5 +1,5 @@
 /**
- * F-VIVO-c — os animais do curral: cinco posicoes na Malhada e na Cocheira, idade
+ * F-VIVO-c — os animais do curral: cinco posicoes no Curral e na Cocheira, idade
  * derivada do progresso da receita (docs/BRIEF-ARTE.md §4a, BUILD_PLAN.md "Aceite
  * da F-VIVO-c").
  *
@@ -161,10 +161,10 @@ describe('F-VIVO-c — os animais do curral', () => {
     }
   });
 
-  it('a Malhada da cadeia da carne (F19b) enche o curral: o save que o roteiro carrega', () => {
+  it('o Curral da cadeia da carne (F19b) enche o curral: o save que o roteiro carrega', () => {
     // A tela nao constroi a cadeia pela abertura (serraria -> fazenda -> milho: o
     // precedente da F18). O roteiro `tools/shots/F-VIVO-c.js` carrega ESTE estado pelo
-    // botao "carregar" do jogador: a fixture da F19b, andada ate a Malhada ter milho.
+    // botao "carregar" do jogador: a fixture da F19b, andada ate o Curral ter milho.
     const PASSO = 50;
     const TETO = 20000;
     let s = cenarioDaCadeiaDaCarne();

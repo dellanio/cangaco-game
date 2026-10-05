@@ -53,7 +53,7 @@ const PISO_DA_CADEIA = PLANTIO + FAZENDA.ticksDoCiclo + GRANJA.ticksDoCiclo + AC
 
 /**
  * Tolerancia de TRANSPORTE, nao de balanceamento: o serf leva o milho da
- * fazenda ao armazem, do armazem a Malhada, o bode a Casa de Carne e a carne de
+ * fazenda ao armazem, do armazem o Curral, o bode a Casa de Carne e a carne de
  * volta — quatro viagens na cadeia, e isso nao e de graca. A medicao desta
  * sessao deu 93 % do teto; 85 % e o mesmo numero e o mesmo motivo da F19.
  */
@@ -203,7 +203,7 @@ describe('F19b — a cadeia fecha: milho vira bode, bode vira carne de sol', () 
   // consome (a oferta casada com a demanda, com a multa do armazem), e nao passam mais pelo
   // armazem enquanto alguem os pede. O marco de cada elo do meio e a chegada NO CONSUMIDOR;
   // a carne, que ninguem na cadeia consome, continua medida no armazem.
-  it('e cada elo chega na sua vez: milho na Malhada, bode na Casa de Carne, carne no armazem', () => {
+  it('e cada elo chega na sua vez: milho no Curral, bode na Casa de Carne, carne no armazem', () => {
     const c = completa();
     const milho = c.primeiroNoConsumidor[GRAO] ?? 0;
     const bode = c.primeiroNoConsumidor[BODE] ?? 0;
@@ -215,7 +215,7 @@ describe('F19b — a cadeia fecha: milho vira bode, bode vira carne de sol', () 
 });
 
 describe('F19b — os dois elos do meio sao reais', () => {
-  it('sem a Malhada nao ha uma carne, o milho se acumula, e o carneador espera', () => {
+  it('sem o Curral nao ha uma carne, o milho se acumula, e o carneador espera', () => {
     const c = semGranja();
     expect(c.produzido[CARNE] ?? 0).toBe(0);
     expect(c.produzido[BODE] ?? 0).toBe(0);
@@ -224,7 +224,7 @@ describe('F19b — os dois elos do meio sao reais', () => {
     expect(c.produzido[GRAO] ?? 0).toBeGreaterThan(0);
     expect(acimaDaBase(c, GRAO)).toBeGreaterThan(0);
     expect(c.ultimoFsm.carneador).toBe('esperando_insumo');
-    // F20b: sem a Malhada nao ha carne, e sem carne nao ha comida — a vila inteira
+    // F20b: sem o Curral nao ha carne, e sem carne nao ha comida — a vila inteira
     // morre de fome dentro da janela. A morte entra como assercao propria, mais
     // estrita do que a leitura antiga do `fsm` no fim.
     expect(c.mortes).toBeGreaterThan(0);
@@ -281,7 +281,7 @@ describe('F19b — a granja tem DUAS saidas, e as duas chegam', () => {
 });
 
 describe('F19b — o jogador alcanca a cadeia', () => {
-  it('a arvore leva serraria -> fazenda -> Malhada -> Casa de Carne', () => {
+  it('a arvore leva serraria -> fazenda -> Curral -> Casa de Carne', () => {
     // Sem a corrente de `desbloqueadoPor` a cadeia existiria so dentro de teste,
     // que e onde ela NAO pode existir.
     const daVila = new Map(

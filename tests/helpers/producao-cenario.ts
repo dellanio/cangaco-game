@@ -422,7 +422,7 @@ function semPredioEOcupante(estado: GameState, predio: string, unidade: string):
   });
 }
 
-/** Sem a Malhada: o milho se acumula e o acougue nunca ve um bode. E o que impede
+/** Sem o Curral: o milho se acumula e o acougue nunca ve um bode. E o que impede
  *  o aceite de passar por um acougue que fabrique carne do nada. */
 export function cenarioDaCarneSemGranja(dados: GameData = gameData): GameState {
   return semPredioEOcupante(cenarioDaCadeiaDaCarne(dados), 'sf1', 'criador');
@@ -438,7 +438,7 @@ export function cenarioDaCarneSemFazenda(dados: GameData = gameData): GameState 
 export const MADEIRA_DA_CADEIA_DO_COURO = 20;
 
 /**
- * F24b — a cadeia do couro: a cadeia da carne (a Malhada faz bode E couro cru) mais um
+ * F24b — a cadeia do couro: a cadeia da carne (o Curral faz bode E couro cru) mais um
  * Curtume (`ta1`) e uma Casa do Gibao (`aw1`), cada um na primeira posicao, em aneis a
  * partir do armazem, que o `canPlace` do jogador aceita E que uma rua liga ao armazem
  * (`ligarPorRua`). Madeira no armazem, para a Casa do Gibao ter o outro insumo.
@@ -996,10 +996,10 @@ export function cenarioDaCadeiaDoOuro(
  *   - uma pedreira com rocha ao alcance (transforma) — recurso no lugar dele;
  *   - uma fazenda com milho na saida (guarda) — a pilha e semeada, o campo nao
  *     existe ali; a fazenda nao se liga a rua, e por isso a pilha fica;
- *   - uma Malhada com milho na entrada (criacao).
+ *   - um Curral com milho na entrada (criacao).
  * Nenhum recurso sai do lugar. A POSICAO nao e digitada: e a primeira que o mesmo
  * `canPlace` do jogador aceita, varrendo a caixa em ordem (y, depois x). A fazenda e
- * a Malhada nao sao alcancaveis assim por partida (sem campo, sem rua), e isso e o que
+ * o Curral nao sao alcancaveis assim por partida (sem campo, sem rua), e isso e o que
  * faz disto VITRINE: serve ao quadro do render, nunca a aceite de regra da sim.
  */
 export function cenarioDaAldeiaDaSerra(dados: GameData = gameData): GameState {
@@ -1007,7 +1007,7 @@ export function cenarioDaAldeiaDaSerra(dados: GameData = gameData): GameState {
   const m = serra(dados);
   // as caixas de busca, relativas a ancora da serra: o gramado entre o lajedo e a rua
   // y=105 (pedreira e fazenda) e o gramado ao sul da rua, ao lado da mina de carvao
-  // (Malhada). As duas ficam dentro de ~16x12 tiles com a mina e a metalurgia, que
+  // (Curral). As duas ficam dentro de ~16x12 tiles com a mina e a metalurgia, que
   // cabem na vista de ~21x15 a 0,75.
   const norteDaRua = { dx0: -14, dx1: 4, dy0: 12, dy1: 17 }; // x 74..92, y 96..101 hoje
   const sulDaRua = { dx0: -8, dx1: 4, dy0: 22, dy1: 25 }; // x 80..92, y 106..109 hoje

@@ -1,6 +1,6 @@
 /**
  * F-VIVO-c — os animais do curral (docs/BRIEF-ARTE.md §4a, BUILD_PLAN.md "Aceite da
- * F-VIVO-c"): cinco posicoes na Malhada e na Cocheira, com a idade DERIVADA do
+ * F-VIVO-c"): cinco posicoes no Curral e na Cocheira, com a idade DERIVADA do
  * progresso da receita. A sim nao muda e nao sabe que existe animal.
  *
  * Aritmetica pura, como `trabalho.ts`: o dado chega por parametro (`DadosDosAnimais`),
@@ -84,7 +84,7 @@ export function animaisDoCurral(predio: Predio, dados: DadosDosAnimais): AnimalD
 
 /**
  * F-VIVO-g — o curral que a tela desenha. `animaisDoCurral` esvazia entre duas entregas
- * de milho (gaveta seca, ciclo no zero), e a Malhada ocupada piscava vazia. Enquanto o
+ * de milho (gaveta seca, ciclo no zero), e o Curral ocupado piscava vazio. Enquanto o
  * predio estiver ocupado, o curral vazio mostra o `anterior`, o ultimo desenhado; cheio,
  * mostra o `atual`; desocupado, esvazia. O `anterior` e memoria de tela (um `Map` da
  * cena), nao entra no save: depois de carregar partida, o curral comeca vazio ate a
