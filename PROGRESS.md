@@ -20679,3 +20679,19 @@ diferir. Fica para o operador decidir se a barra passa a usar o `comidaTotal`.
 - a ordem de seis itens de implementação, os riscos e oito **perguntas ao operador**.
 
 Nenhum código. A implementação e o sprite da Igreja (Codex) esperam a aprovação do operador.
+
+### I-PLANO-ACUDE-E-CLIMA — o plano do clima e do Açude (documento; espera o operador)
+`docs/planos/2026-10-05-acude-e-clima.md`. O documento traz:
+- a história, com fontes: a Grande Seca de 1877, o Açude do Cedro, a IOCS/DNOCS e o Coremas–Mãe
+  d'Água, que represa o próprio rio Piancó;
+- as culturas: o milho de sequeiro, o déficit de 37 % medido pela ANA/IBGE, a cana e a vazante;
+- o benchmark de sete jogos: cinco com fonte; Civilization e Frostpunk de memória, marcados como
+  **hipótese**;
+- o fluxo, o modelo de dados e a integração com `arquivo:linha` conferidos nesta sessão:
+  `tileMaduro` em `src/sim/recursos.ts:260-266` é o ponto que muda; o loader em
+  `src/sim/data/loader.ts:813-826`; o `step` em `src/sim/tick.ts:52`;
+- as etapas, os riscos e oito **perguntas ao operador**.
+
+**A proposta central:** a estação é função pura do tick, sem estado. O crescimento passa por um
+relógio global por classe de irrigação (O(açudes) por tick, nada por tile). A ligação é a opção A, por
+distância. Fome e consumo não mudam. Nenhum código.
