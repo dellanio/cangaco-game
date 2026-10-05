@@ -113,7 +113,10 @@ function cabe(
   if (!veredito.ok && veredito.motivo !== 'bloqueado') return false;
   const caixa = caixaOuEstoura(tipo, gx, gy, dados);
   const porta = bordaSul(caixa);
-  return !ocupadas.some((c) => caixasSeSobrepoem(caixa, c)
+  // I-OBRA-UM-TILE-ENTRE-PREDIOS: as plantas ainda nao estao no estado, entao o vao entre lotes que o
+  // `canPlace` confere com os de pe e conferido aqui com elas
+  const v = dados.construcao.distanciaMinimaEntrePredios;
+  return !ocupadas.some((c) => caixasSeSobrepoem(caixa, { x0: c.x0 - v, y0: c.y0 - v, x1: c.x1 + v, y1: c.y1 + v })
     || caixasSeSobrepoem(porta, c)
     || caixasSeSobrepoem(caixa, bordaSul(c)));
 }

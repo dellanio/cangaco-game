@@ -49,6 +49,7 @@ export interface EntradaDaGeometria {
   readonly estoqueInicialDeStone: number;
   /** `terreno.estrada.custoStonePorTile`. */
   readonly custoStonePorTile: number;
+  readonly vaoEntrePredios?: number;
 }
 
 export interface GeometriaDaAbertura {

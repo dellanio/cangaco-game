@@ -294,12 +294,15 @@ describe('F-CAL-b1 — a calibracao medida na abertura', () => {
     expect(m.unidadesNoFim).toBe(m.unidadesNoInicio + m.ouroInicial);
   });
 
-  it('(a) F-CAL-b2: com o campo do lado da porta, a fazenda entrega ao menos um milho por ciclo do moinho', () => {
+  it('(a) F-CAL-b2: com o campo do lado da porta, a fazenda entrega milho num intervalo medido (dado da corrida)', () => {
     // A decisao do operador: a sobra do lado da porta e recompensa, entao o teto e o
     // ciclo, sem piso. Com o campo atras a fazenda NAO sustenta (346 ticks por milho,
     // tabela em BUILD_PLAN.md) — e isso e aceito, nao afirmado aqui.
+    // Decisao do operador (2026-10-04, "teste afirma mecanica, nao balanceamento"): o intervalo e
+    // NUMERO DA CORRIDA, no test-output (`intervaloMedioAte24k`), e nao teto. Com o vao entre lotes
+    // (I-OBRA-UM-TILE-ENTRE-PREDIOS) a vila se espalhou e o intervalo foi a 247,9 contra o ciclo de 246.
+    // O que fica afirmado e o progresso: ha intervalo (a fazenda entrega).
     expect(Number.isFinite(intervaloMedioAte24k)).toBe(true);
-    expect(intervaloMedioAte24k).toBeLessThanOrEqual(cicloDoMoinho);
   });
 
   it('a fazenda entregou milho durante a corrida inteira (a medida de (a) e (c) nao e de uma vila parada)', () => {

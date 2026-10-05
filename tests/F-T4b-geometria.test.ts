@@ -54,6 +54,7 @@ function predicadosDoRoteiro(): {
   stoneDe: (tipo: string) => number;
   estoqueInicialDeStone: number;
   custoStonePorTile: number;
+  vaoEntrePredios: number;
 } {
   const { predios } = lerJson<{ predios: readonly PredioNoJson[] }>('../data/buildings.json');
   const economia = lerJson<{
@@ -108,6 +109,7 @@ function predicadosDoRoteiro(): {
     },
     estoqueInicialDeStone: economia.estadoInicial.estoque['stone'] ?? 0,
     custoStonePorTile: terreno.estrada.custoStonePorTile,
+    vaoEntrePredios: lerJson<{ construcao: { distanciaMinimaEntrePredios_tiles: number } }>('../data/buildings.json').construcao.distanciaMinimaEntrePredios_tiles,
   };
 }
 

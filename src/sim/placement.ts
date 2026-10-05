@@ -27,6 +27,9 @@ export type MotivoDeRecusa =
   // entao predio sem porta nunca recebe entrega e nunca funciona, e escola com a
   // porta tapada segura para sempre um treino ja pago (`systems/escolas.ts`).
   | 'porta-sem-saida'
+  /** I-OBRA-UM-TILE-ENTRE-PREDIOS — o lote fica a menos de `distanciaMinimaEntrePredios` tiles de
+   *  outro predio ou obra (pedido do operador, 2026-10-05). Vem depois de todos os outros motivos. */
+  | 'colado'
   // F-T1: ALCANCAVEL desde que existe camada de terreno. Algum tile do
   // footprint e intransponivel (`terrain.intransponivel`: agua, rocha,
   // montanha). Declarado desde a F06 e inalcancavel ate aqui — o tipo
@@ -139,6 +142,18 @@ export function canPlace(
     if (caixa === null) continue;
     if (caixasSeSobrepoem(porta, caixa)) return recusa('porta-sem-saida');
     if (caixasSeSobrepoem(candidato, bordaSul(caixa))) return recusa('porta-sem-saida');
+  }
+  // I-OBRA-UM-TILE-ENTRE-PREDIOS: o vao entre lotes, por ultimo (os motivos de antes ganham quando valem)
+  const vao = dados.construcao.distanciaMinimaEntrePredios;
+  if (vao > 0) {
+    for (const id of state.predios.ordem) {
+      const existente = state.predios.porId[id];
+      if (!existente) continue;
+      const caixa = caixaDoPredio(existente, dados);
+      if (caixa === null) continue;
+      const comVao = { x0: caixa.x0 - vao, y0: caixa.y0 - vao, x1: caixa.x1 + vao, y1: caixa.y1 + vao };
+      if (caixasSeSobrepoem(candidato, comVao)) return recusa('colado');
+    }
   }
 
   return { ok: true };

@@ -44,8 +44,10 @@ const VIAGENS_POR_TORA_NO_T1 = 32 / 16;
  * material direto da casa (I-TRANSPORTE-MATERIAL-DIRETO-DA-CASA) 25 687, +790 da obra e +476 do
  * canteiro de estrada, as casas que passaram a ser origem medida. Medir as origens uma vez por
  * destino, e nao por unidade, nao mudou o numero (o laco nao repetia A* nesta vila). Folga de ~10 %.
+ * Remedido em 2026-10-05: com o vao de 1 tile entre lotes (I-OBRA-UM-TILE-ENTRE-PREDIOS) a vila se
+ * espalha e as rotas ficam mais longas: 30 347. Folga de ~10 %.
  */
-const TETO_DE_NOS = 28300;
+const TETO_DE_NOS = 33400;
 
 
 type Variante = 'real' | 'serraria-cheia' | 'sem-lenhador';

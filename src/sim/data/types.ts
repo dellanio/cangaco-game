@@ -48,6 +48,8 @@ export interface ConstrucaoData {
   readonly ticksPorMartelada: Ticks;
   readonly ticksNivelamentoPorTile: Ticks;
   readonly devolucaoAoDemolir: number;
+  /** I-OBRA-UM-TILE-ENTRE-PREDIOS — o vao minimo, em tiles, entre o lote novo e o de outro predio. */
+  readonly distanciaMinimaEntrePredios: number;
 }
 
 /**

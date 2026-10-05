@@ -597,7 +597,12 @@ export function comBodegaAbastecida(
       ordem: [...estado.predios.ordem, id],
     },
   };
-  return exigirLigado(comEstradas(comBodega, tilesDaPorta(predio, dados)), id, dados);
+  // I-OBRA-UM-TILE-ENTRE-PREDIOS: com o vao entre lotes, a porta da Bodega nao encosta mais na do
+  // armazem; a rua cobre a linha da porta do armazem ate a dela
+  const linha = tilesDaPorta(armazem, dados)[0]?.gy ?? caixaDoArmazem.y1;
+  const vao: TileDeGrid[] = [];
+  for (let x = caixaDoArmazem.x0; x < gx; x++) vao.push({ gx: x, gy: linha });
+  return exigirLigado(comEstradas(comBodega, [...vao, ...tilesDaPorta(predio, dados)]), id, dados);
 }
 
 /**

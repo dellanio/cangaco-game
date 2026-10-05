@@ -186,6 +186,7 @@ async function roteiro(ctx) {
     stoneDe: (tipo) => defDe(tipo).stone,
     estoqueInicialDeStone: economia.estadoInicial.estoque.stone,
     custoStonePorTile: terreno.estrada.custoStonePorTile,
+    vaoEntrePredios: require('../../data/buildings.json').construcao.distanciaMinimaEntrePredios_tiles,
   });
   const yRua = geo.yRua;
   const plantas = geo.plantas.map((p) => ({ ...p, civil: defDe(p.tipo).trabalhador }));

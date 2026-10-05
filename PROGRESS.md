@@ -20493,3 +20493,45 @@ cercado, de idades diferentes.
 **Visto, não corrigido:** os bodes ficam apertados no cercado. Os pontos dos animais estão em
 `ancoras` (ou no padrão do render), e o adulto, com 53 px, é largo para o cercado. Se o operador
 quiser, dá para espaçar os pontos ou reduzir o adulto.
+
+### I-OBRA-UM-TILE-ENTRE-PREDIOS — prédio não encosta em prédio (verificado)
+`canPlace` recusa com o motivo novo `colado` o lote a menos de `distanciaMinimaEntrePredios_tiles` (1,
+em `data/buildings.json`, `construcao`) de outro prédio ou obra, em qualquer direção, inclusive na
+diagonal: a caixa de cada prédio cresce o vão e não pode tocar a do candidato
+(`src/sim/placement.ts`, no fim do `canPlace`).
+**KaM (`731a8a4`, conferido):** `hasHousesNearTile` olha os 8 vizinhos de cada tile e tira o `tpBuild`
+de quem encosta num tile `tlHouse`, `tlFenced` ou `tlDigged` (`src/terrain/KM_Terrain.pas:3784-3790`,
+`:3803-3806`). O vão de 1 é o mesmo.
+**Teste:** `tests/F06-build.test.ts`, describe novo (5): colado à esquerda e na diagonal recusa, com 1
+tile passa nas duas, e com o vão 0 no dado o colado volta a passar.
+**A fantasma:** ela lê o `ok` da sim e não tem texto por motivo, então o `colado` aparece em vermelho
+como as outras recusas. Lido na ponte do roteiro F17g: `{"valida":false,"motivo":"colado"}`. Não abri
+captura só da fantasma.
+**O que mudou para plantar com o vão (21 arquivos):**
+- a geometria da abertura (`tools/geometria-da-abertura.mjs`) ganhou `vaoEntrePredios` e o passa a
+  `enfileirar`, `grupoCabe` e à pedreira; o helper `abertura.ts`, os roteiros F17 e F17g e o
+  `F-T4b-geometria` o leem do dado;
+- `cal-vila.ts` cresce as caixas ocupadas pelo vão; `producao-cenario.ts` liga a bodega pela rua da
+  porta do armazém; a escaramuça moveu moinho, padaria e bodega (`data/escaramuca.json`);
+- F07 (posicionar e sessão): o segundo clique e as plantas contíguas passaram a ter o vão, e um caso
+  afirma a recusa do colado;
+- **F17g:** o armazém novo foi para 4 tiles do fim da rua (a 3, `colado` ao lenhador). O oráculo dos
+  estágios passou a descontar **todas** as obras reveladas, e não só a dele: com a abertura mais lenta,
+  outra obra com o par ainda está revelada no marco. Ele afirma também que a obra dele está entre as
+  reveladas. Sai 0, marcos em 2200, 2280 e 3610.
+- **D-TRANSPORTE-03-T2:** o teto de nós do A* remedido: 30 347 (a vila espalhada tem rotas maiores), e
+  o teto foi para 33 400 (~10 % de folga). É eixo determinístico.
+- **F-CAL-b2 (a):** o teto "intervalo do milho ≤ ciclo do moinho" deu 247,9 contra 246. Pela decisão
+  do operador de 2026-10-04 (o teste afirma mecânica), o intervalo é número da corrida no test-output,
+  e fica afirmado só que a fazenda entrega.
+- **D-TRANSPORTE-03 (logística do KaM), corrida B (carga infinita):** 0 arma em 12 000 ticks, eram 9.
+  Medido: o carpinteiro fica em `esperando_insumo`, porque a tábua para a oficina, agora 1 tile mais
+  longe, perde sempre para a pedra da escola na mesma classe. Isso é espera sem fim por disputa, e não
+  ritmo. Ficou registrado como **BUG-CARGA-INFINITA-SEM-VEZ** (`errado`), com a correção como decisão
+  do operador. A corrida B passou a gravar a contagem em vez de afirmar a entrega. A corrida A
+  continua afirmando.
+- o save `teste-operador-vila-pronta` foi refeito pelo caminho do teste.
+
+**Medida:** a suíte inteira deu 285 arquivos e 2 727 testes verdes; o F17 e o F17g saem 0.
+**Não verificado:** não joguei. A suíte longa pode sentir a vila mais espalhada, e fica para o
+fechamento do bloco.

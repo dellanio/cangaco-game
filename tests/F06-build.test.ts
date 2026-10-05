@@ -220,12 +220,16 @@ function tamanhoDe(id: string): readonly [number, number] {
   return [largura, altura];
 }
 
-function comTamanho(id: string, tamanho: readonly [number, number]): GameData {
+function comTamanho(id: string, tamanho: readonly [number, number], base: GameData = gameData): GameData {
   return {
-    ...gameData,
-    predios: gameData.predios.map((p) => (p.id === id ? { ...p, tamanho: [...tamanho] } : p)),
+    ...base,
+    predios: base.predios.map((p) => (p.id === id ? { ...p, tamanho: [...tamanho] } : p)),
   };
 }
+
+/** I-OBRA-UM-TILE-ENTRE-PREDIOS — o dado SEM o vao entre lotes: os casos que provam o limite do
+ *  meio-aberto (encostar nao e sobrepor) rodam nele, porque o vao recusa o encosto antes. */
+const SEM_VAO: GameData = { ...gameData, construcao: { ...gameData.construcao, distanciaMinimaEntrePredios: 0 } };
 
 describe('F06 — canPlace', () => {
   const inicial = createInitialState(1);
@@ -261,9 +265,12 @@ describe('F06 — canPlace', () => {
       // recurso, entao ele roda sem a camada; e o par abaixo afirma que a recusa
       // por recurso e o que acontece no mapa de verdade, no MESMO ponto.
       const semRecursos: GameState = { ...inicial, recursos: {} };
-      expect(canPlace(semRecursos, 'quarry', armazem.gx - pedreiraL, armazem.gy)).toEqual({ ok: true });
+      expect(canPlace(semRecursos, 'quarry', armazem.gx - pedreiraL, armazem.gy, SEM_VAO)).toEqual({ ok: true });
       expect(canPlace(inicial, 'quarry', armazem.gx - pedreiraL, armazem.gy))
         .toEqual({ ok: false, motivo: 'recurso' });
+      // I-OBRA-UM-TILE-ENTRE-PREDIOS: com o vao do dado, o encosto e `colado`, e a um tile passa
+      expect(canPlace(semRecursos, 'quarry', armazem.gx - pedreiraL, armazem.gy)).toEqual({ ok: false, motivo: 'colado' });
+      expect(canPlace(semRecursos, 'quarry', armazem.gx - pedreiraL - 1, armazem.gy)).toEqual({ ok: true });
     });
 
     it('um tile para dentro do encosto ja e sobreposicao (o limite e exato)', () => {
@@ -276,7 +283,7 @@ describe('F06 — canPlace', () => {
     it('o tamanho vem do dado: com o armazem 1x1 injetado, o mesmo ponto passa a ser livre', () => {
       const ponto = { gx: armazem.gx + 1, gy: armazem.gy + 1 };
       expect(canPlace(inicial, 'quarry', ponto.gx, ponto.gy)).toEqual({ ok: false, motivo: 'sobreposicao' });
-      expect(canPlace(inicial, 'quarry', ponto.gx, ponto.gy, comTamanho('storehouse', [1, 1]))).toEqual({ ok: true });
+      expect(canPlace(inicial, 'quarry', ponto.gx, ponto.gy, comTamanho('storehouse', [1, 1], SEM_VAO))).toEqual({ ok: true });
     });
   });
 
@@ -808,5 +815,30 @@ afterAll(() => {
     },
     // Verificacao visual e separada, fora do npm run verify (CLAUDE.md §8).
     verificacaoVisual: 'fora deste arquivo: npm run shot -- F06 (test-output/F06-shot.json)',
+  });
+});
+
+describe('I-OBRA-UM-TILE-ENTRE-PREDIOS — o lote novo fica a pelo menos um tile de outro lote', () => {
+  const s: GameState = { ...createInitialState(1), recursos: {} };
+  const armazem = s.predios.porId['p1']!;
+  const [aL, aA] = gameData.predios.find((p) => p.id === 'storehouse')!.tamanho as [number, number];
+  const [qL, qA] = gameData.predios.find((p) => p.id === 'quarry')!.tamanho as [number, number];
+
+  it('o vao e do dado (1 tile)', () => {
+    expect(gameData.construcao.distanciaMinimaEntrePredios).toBe(1);
+  });
+
+  it('colado em qualquer direcao, inclusive na diagonal, recusa com `colado`; a um tile passa', () => {
+    // a esquerda, colado e com um tile de vao (acima nao serve: a porta da pedreira cairia no armazem)
+    expect(canPlace(s, 'quarry', armazem.gx - qL, armazem.gy)).toEqual({ ok: false, motivo: 'colado' });
+    expect(canPlace(s, 'quarry', armazem.gx - qL - 1, armazem.gy)).toEqual({ ok: true });
+    // na diagonal de cima a esquerda, colado e com um tile de vao
+    expect(canPlace(s, 'quarry', armazem.gx - qL, armazem.gy - qA)).toEqual({ ok: false, motivo: 'colado' });
+    expect(canPlace(s, 'quarry', armazem.gx - qL - 1, armazem.gy - qA - 1)).toEqual({ ok: true });
+    void aL; void aA;
+  });
+
+  it('com o vao zero no dado, o encosto volta a passar (o numero e do dado, nao do codigo)', () => {
+    expect(canPlace(s, 'quarry', armazem.gx - qL, armazem.gy, SEM_VAO)).toEqual({ ok: true });
   });
 });

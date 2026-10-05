@@ -430,6 +430,7 @@ export function loadGameData(raw: RawGameData): GameData {
       paraTicksDeDuracao(raw.buildings.construcao.segundosNivelamentoPorTile_base, 'segundos', escalaConstrucao, tickHz),
     ),
     devolucaoAoDemolir: raw.buildings.construcao.devolucaoAoDemolir,
+    distanciaMinimaEntrePredios: raw.buildings.construcao.distanciaMinimaEntrePredios_tiles,
   };
 
   // --- producao: a receita vira um CICLO (F15a) ---

@@ -39,7 +39,7 @@
     "segundosPorMartelada_base": 1.0,
     "segundosNivelamentoPorTile_base": 2.0,
     "escala": "construcao",
-    "devolucaoAoDemolir": 0.5
+    "devolucaoAoDemolir": 0.5, "distanciaMinimaEntrePredios_tiles": 1, "_docDistanciaMinima": "I-OBRA-UM-TILE-ENTRE-PREDIOS (pedido do operador, 2026-10-05): o lote de um predio novo fica a pelo menos esta distancia (Chebyshev, em tiles) do lote de qualquer predio ou obra; colado, `canPlace` recusa com o motivo `colado`. Tiles, nao tempo: sem escala."
   },
   "visao": {
     "_doc": "F-TERRENO-NEVOA-DESCOBERTO (GDD 6.5). O predio COMPLETO do jogador revela o proprio footprint mais `predio_tiles` (distancia euclidiana do tile ao footprint, `dx*dx + dy*dy <= r*r`, a regra do RevealCircle do KaM, src/game/KM_FogOfWar.pas:176, aplicada a cada tile do footprint como em src/houses/KM_Houses.pas:690-694). Obra nao revela: no KaM so a casa ativada (pronta) revela (KM_Houses.pas:669-694). O GDD nao da o numero: a sessao escolheu o menor raio que deixa a vila do tick 0 inteira a vista so pelos predios (medida no PROGRESS, PARA REVISAO). `porTipo` troca o raio de um tipo: a torre de vigia ve 9, o mesmo do civil que a ocupa, e mais que o alcance de tiro dela (combat.json watchtower.alcance_tiles 7), para o jogador ver o que a torre acerta (PARA REVISAO).",

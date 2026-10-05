@@ -164,6 +164,7 @@ export function aberturaDaFaseA(state: GameState, dados: GameData = gameData): A
     stoneDe: (tipo: string) => defDe(tipo, dados).stone,
     estoqueInicialDeStone: dados.economia.estadoInicial.estoque['stone'] ?? 0,
     custoStonePorTile: dados.terreno.estrada.custoStonePorTile,
+    vaoEntrePredios: dados.construcao.distanciaMinimaEntrePredios,
   });
   const yRua = geo.yRua;
 

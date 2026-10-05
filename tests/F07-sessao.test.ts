@@ -156,7 +156,8 @@ describe('F07 — do clique ao estado, sem tela (ferramenta + entrada + sessao)'
     const { sessao, ferramenta, clicar } = montar();
     ferramenta.selecionar('quarry');
     clicar(0, 0);
-    clicar(3, 0);
+    // I-OBRA-UM-TILE-ENTRE-PREDIOS: a pedreira tem 3 de largura; com o vao de 1, o segundo clique vai a 4
+    clicar(4, 0);
     expect(contarObras(sessao.estado)).toBe(2);
     expect(ferramenta.predioAtivo).toBe('quarry');
   });

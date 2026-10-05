@@ -5,7 +5,7 @@
 // libera depois de uma serraria completa, que so libera depois de um lenhador
 // completo. Nao ha ponte para injetar obra (de proposito), entao este roteiro
 // faz a abertura da F17 com o mouse ate a serraria ficar de pe, estica a rua
-// tres tiles para leste e planta o armazem com a porta nela.
+// quatro tiles para leste e planta o armazem com a porta nela.
 //
 // Tres fotos: meia madeira, a virada (madeira inteira) e meia pedra. Em cada
 // uma, a fracao que a CENA publicou (`revelacaoDasObras`, a mesma que foi para
@@ -121,12 +121,13 @@ async function roteiro(ctx) {
     await esperarFrame();
     await clicarNoTile(gx, gy);
     await avancar(1);
+    const fantasma = (await estado()).plantaFantasma;
     await page.keyboard.press('Escape');
     await esperarFrame();
     const posta = await predioNoCanto(gx, gy);
     afirmar(
       posta !== null && posta.tipo === tipo && posta.estado === 'obra',
-      `o clique deveria ter posto uma obra de ${tipo} em (${gx},${gy}), veio ${JSON.stringify(posta)}`,
+      `o clique deveria ter posto uma obra de ${tipo} em (${gx},${gy}), veio ${JSON.stringify(posta)}; fantasma ${JSON.stringify(fantasma)}`,
     );
     return posta;
   }
@@ -157,15 +158,18 @@ async function roteiro(ctx) {
     stoneDe: (tipo) => defDe(tipo).stone,
     estoqueInicialDeStone: economia.estadoInicial.estoque.stone,
     custoStonePorTile: terreno.estrada.custoStonePorTile,
+    vaoEntrePredios: require('../../data/buildings.json').construcao.distanciaMinimaEntrePredios_tiles,
   });
   const plantas = geo.plantas.map((p) => ({ ...p, civil: defDe(p.tipo).trabalhador }));
   const meioDaEscola = { gx: escola.gx + Math.floor(largEs / 2), gy: escola.gy + Math.floor(altEs / 2) };
   // O armazem novo: porta (borda sul, a linha abaixo do footprint) na rua esticada
-  // tres tiles para leste do fim do trecho principal. Medido na sonda: e o
-  // primeiro lugar livre com porta na rede sem mexer na abertura.
+  // quatro tiles para leste do fim do trecho principal. Medido na sonda: e o
+  // primeiro lugar livre com porta na rede sem mexer na abertura. Eram tres ate o
+  // vao de 1 tile entre lotes (I-OBRA-UM-TILE-ENTRE-PREDIOS): ali a fantasma diz
+  // `colado` ao lenhador do leste.
   const fimDaRua = Math.max(...geo.rua.filter((t) => t.gy === geo.yRua).map((t) => t.gx));
   const [, altArm] = defDe('storehouse').tamanho;
-  const novoArmazem = { gx: fimDaRua + 3, gy: geo.yRua - altArm };
+  const novoArmazem = { gx: fimDaRua + 4, gy: geo.yRua - altArm };
 
   // ---- 1. a abertura da F17 ate a serraria ficar de pe ----------------------
   afirmar(!(await liberadoNoMenu('storehouse')), 'o armazem deveria nascer BLOQUEADO: depende da serraria');
@@ -213,7 +217,7 @@ async function roteiro(ctx) {
   );
 
   // ---- 2. a rua esticada e o armazem ----------------------------------------
-  await arrastarRua([{ de: { gx: fimDaRua + 1, gy: geo.yRua }, ate: { gx: fimDaRua + 3, gy: geo.yRua } }]);
+  await arrastarRua([{ de: { gx: fimDaRua + 1, gy: geo.yRua }, ate: { gx: fimDaRua + 4, gy: geo.yRua } }]);
   const obra = await plantar('storehouse', novoArmazem.gx, novoArmazem.gy);
   const def = defDe('storehouse');
 
@@ -231,8 +235,9 @@ async function roteiro(ctx) {
       const e = s.estagiosDeObraRenderizados;
       afirmar(
         e.marcacao + e.fundacao >= 1
-          && Object.values(e).reduce((a, n) => a + n, 0) === Object.keys(s.prediosDoEstado).length,
-        `${marco}: obra com hp 0 deveria estar no fallback (marcacao/fundacao), veio ${JSON.stringify(e)}`,
+          && Object.values(e).reduce((a, n) => a + n, 0)
+            === Object.keys(s.prediosDoEstado).length - Object.keys(s.revelacaoDasObras).length,
+        `${marco}: obra com hp 0 deveria estar no fallback (marcacao/fundacao), veio ${JSON.stringify(e)} para ${Object.keys(s.prediosDoEstado).length} predios e ${JSON.stringify(Object.keys(s.revelacaoDasObras))} revelados`,
       );
       return { hp: p.hp, madeira: [0, 1], pedra: [0, 1] };
     }
@@ -243,7 +248,11 @@ async function roteiro(ctx) {
       `${marco}: hp ${p.hp}, a tela revelou ${JSON.stringify(naTela)}, a conta do dado da ${JSON.stringify(esperada)}`,
     );
     afirmar(
-      Object.values(s.estagiosDeObraRenderizados).reduce((a, n) => a + n, 0) === Object.keys(s.prediosDoEstado).length - 1,
+      // a obra deste roteiro esta entre as reveladas; com o vao entre lotes (I-OBRA-UM-TILE-ENTRE-PREDIOS)
+      // a abertura atrasa, e outra obra com o par pode estar revelada ao mesmo tempo
+      s.revelacaoDasObras[obra.id] !== undefined
+        && Object.values(s.estagiosDeObraRenderizados).reduce((a, n) => a + n, 0)
+          === Object.keys(s.prediosDoEstado).length - Object.keys(s.revelacaoDasObras).length,
       `${marco}: a obra revelada nao pode contar nos seis estagios do fallback`,
     );
     afirmar(

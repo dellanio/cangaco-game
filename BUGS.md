@@ -30,6 +30,21 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
 
 ## Abertos
 
+## BUG-CARGA-INFINITA-SEM-VEZ — sob carga infinita, a tábua da oficina nunca ganha a pedra da escola
+- feature: D-TRANSPORTE-03 (o lance do KaM e a classe comum), achado pela I-OBRA-UM-TILE-ENTRE-PREDIOS
+- severidade: errado
+- repro: `tests/D-TRANSPORTE-03-logistica-kam.test.ts`, corrida B (`carga: true`): 40 pedras repostas a
+  cada 200 ticks na saída da escola
+- esperado: as armas chegam ao quartel, mais devagar, mas chegam
+- observado (medido em 2026-10-05): 0 arma produzida em 12 000 ticks. O carpinteiro fica em
+  `esperando_insumo`, porque a tábua do armazém para a oficina perde sempre para a pedra da escola na
+  mesma classe (5): as duas pagam a multa do armazém, e a pedra está mais perto. Antes do vão entre
+  lotes, com a oficina 1 tile mais perto, chegavam 9. A carga é infinita (mais pedra do que 4 serfs
+  carregam), e por isso um insumo pode esperar para sempre.
+- correção prevista: decisão do operador. Uma vez por espera (o envelhecimento da tarefa aberta) ou um
+  teto de vez para a saída cheia; o KaM não tem envelhecimento.
+- status: aberto; a corrida B passou a gravar a contagem em vez de afirmar entrega
+
 ## BUG-F18F-PILHA-DE-TRES-NO-CANTEIRO — o roteiro F18f conta 3 no mesmo ponto na porta da obra
 - feature: I-MOVIMENTO-FILA-DE-CIVIS (`1f9c150`), com a pergunta em aberto "o obreiro no canteiro ocupa
   o tile?" (`c13b168`)

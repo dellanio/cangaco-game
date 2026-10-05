@@ -84,8 +84,8 @@ function alturaUnicaDe(tipos, tamanhoDe, ondeEstou) {
   return alturas[0];
 }
 
-function larguraTotalDe(tipos, tamanhoDe) {
-  return tipos.reduce((s, t) => s + tamanhoDe(t).largura, 0);
+function larguraTotalDe(tipos, tamanhoDe, vao = 0) {
+  return tipos.reduce((s, t) => s + tamanhoDe(t).largura, 0) + vao * (tipos.length - 1);
 }
 
 function retanguloLivre(x0, y0, largura, altura, bloqueia) {
@@ -97,18 +97,19 @@ function retanguloLivre(x0, y0, largura, altura, bloqueia) {
   return true;
 }
 
-/** Enfileira os tipos a partir de `x0`, encostados na horizontal. */
-function enfileirar(tipos, x0, gy, tamanhoDe) {
+/** Enfileira os tipos a partir de `x0`, na horizontal, com `vao` tiles entre eles
+ *  (I-OBRA-UM-TILE-ENTRE-PREDIOS: o lote nao encosta em outro lote, como no KaM). */
+function enfileirar(tipos, x0, gy, tamanhoDe, vao = 0) {
   let x = x0;
   return tipos.map((tipo) => {
     const planta = { tipo, gx: x, gy };
-    x += tamanhoDe(tipo).largura;
+    x += tamanhoDe(tipo).largura + vao;
     return planta;
   });
 }
 
-function grupoCabe(tipos, x0, gy, tamanhoDe, bloqueia) {
-  return enfileirar(tipos, x0, gy, tamanhoDe).every((p) => {
+function grupoCabe(tipos, x0, gy, tamanhoDe, bloqueia, vao = 0) {
+  return enfileirar(tipos, x0, gy, tamanhoDe, vao).every((p) => {
     const { largura, altura } = tamanhoDe(p.tipo);
     return retanguloLivre(p.gx, p.gy, largura, altura, bloqueia);
   });
@@ -139,6 +140,7 @@ function mataAoAlcance(p, tamanhoDe, temArvore, alcance) {
  * @param {(tipo:string)=>number} e.stoneDe custo em pedra de um predio
  * @param {number} e.estoqueInicialDeStone pedra no armazem no tick 0
  * @param {number} e.custoStonePorTile pedra por tile de estrada
+ * @param {number} [e.vaoEntrePredios] o vao minimo entre lotes (I-OBRA-UM-TILE-ENTRE-PREDIOS)
  */
 export function geometriaDaAbertura({
   armazem,
@@ -150,7 +152,9 @@ export function geometriaDaAbertura({
   stoneDe,
   estoqueInicialDeStone,
   custoStonePorTile,
+  vaoEntrePredios = 0,
 }) {
+  const vao = vaoEntrePredios;
   const yRua = armazem.gy + armazem.altura;
   // A rua tem que passar pela porta da ESCOLA tambem: sem estrada ate ela o ouro
   // do treino nao chega e a fila fica em `sem-estrada` para sempre (F13b) — os
@@ -168,9 +172,9 @@ export function geometriaDaAbertura({
   // isso que a pedreira acaba colada no lajedo, alcancando a rocha dele.
   const alturaDaPedra = alturaUnicaDe(GRUPO_DA_PEDRA, tamanhoDe, 'o grupo da pedra');
   const gyDaPedra = yRua - alturaDaPedra;
-  const larguraDaPedra = larguraTotalDe(GRUPO_DA_PEDRA, tamanhoDe);
-  let xDaPedra = armazem.gx - larguraDaPedra;
-  while (xDaPedra >= 0 && !grupoCabe(GRUPO_DA_PEDRA, xDaPedra, gyDaPedra, tamanhoDe, bloqueia)) {
+  const larguraDaPedra = larguraTotalDe(GRUPO_DA_PEDRA, tamanhoDe, vao);
+  let xDaPedra = armazem.gx - larguraDaPedra - vao;
+  while (xDaPedra >= 0 && !grupoCabe(GRUPO_DA_PEDRA, xDaPedra, gyDaPedra, tamanhoDe, bloqueia, vao)) {
     xDaPedra -= 1;
   }
   if (xDaPedra < 0) {
@@ -178,13 +182,13 @@ export function geometriaDaAbertura({
       'abertura: o grupo da pedra nao cabe a oeste do armazem sem pisar em recurso que bloqueia construcao',
     );
   }
-  const plantasDaPedra = enfileirar(GRUPO_DA_PEDRA, xDaPedra, gyDaPedra, tamanhoDe);
+  const plantasDaPedra = enfileirar(GRUPO_DA_PEDRA, xDaPedra, gyDaPedra, tamanhoDe, vao);
 
   // ---- grupo da mata: varre para LESTE na linha acima do armazem ------------
   const alturaDaMata = alturaUnicaDe(GRUPO_DA_MATA, tamanhoDe, 'o grupo da mata');
   const yPortaDoPar = armazem.gy - 1;
   const gyDaMata = yPortaDoPar - alturaDaMata;
-  const larguraDaMata = larguraTotalDe(GRUPO_DA_MATA, tamanhoDe);
+  const larguraDaMata = larguraTotalDe(GRUPO_DA_MATA, tamanhoDe, vao);
   const caixaDoArmazem = caixa(armazem.gx, armazem.gy, armazem);
   if (gyDaMata < 0) throw new Error('abertura: nao ha linha acima do armazem para o grupo da mata');
 
@@ -195,12 +199,12 @@ export function geometriaDaAbertura({
     // O par mora DENTRO do proprio alcance de colheita, contado do armazem: e o
     // que mantem a vila junta sem limiar digitado. Passou disso, para a varredura.
     if (distancia > alcanceDaMata) break;
-    if (!grupoCabe(GRUPO_DA_MATA, gx, gyDaMata, tamanhoDe, bloqueia)) continue;
+    if (!grupoCabe(GRUPO_DA_MATA, gx, gyDaMata, tamanhoDe, bloqueia, vao)) continue;
     // A linha de porta do par tem de aceitar ESTRADA na largura toda: arvore
     // bloqueia estrada igual bloqueia obra, e porta sem rua e predio que
     // ninguem ocupa (F13b).
     if (!retanguloLivre(gx, yPortaDoPar, larguraDaMata, 1, bloqueia)) continue;
-    const plantas = enfileirar(GRUPO_DA_MATA, gx, gyDaMata, tamanhoDe);
+    const plantas = enfileirar(GRUPO_DA_MATA, gx, gyDaMata, tamanhoDe, vao);
     const arvores = plantas.map((p) => mataAoAlcance(p, tamanhoDe, temArvore, alcanceDaMata));
     const minimo = Math.min(...arvores);
     if (minimo < 1) continue;

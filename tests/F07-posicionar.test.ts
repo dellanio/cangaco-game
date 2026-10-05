@@ -101,12 +101,16 @@ describe('F07 — um segundo comando na mesma posicao e rejeitado', () => {
     expect(rejeicoes(depois)).toHaveLength(1);
   });
 
-  it('a posicao vizinha, encostada e sem sobrepor, segue aceita (largura lida do dado)', () => {
+  it('a posicao vizinha, com o vao do dado e sem sobrepor, segue aceita (largura lida do dado)', () => {
     const [largura] = definicaoDe('quarry').tamanho;
     if (largura === undefined) throw new Error('fixture: quarry sem tamanho');
-    const depois = step(inicial, [colocar('quarry', 0, 0), colocar('quarry', largura, 0)]);
+    // I-OBRA-UM-TILE-ENTRE-PREDIOS: encostada e `colado`; com o vao, aceita
+    const vao = gameData.construcao.distanciaMinimaEntrePredios;
+    const depois = step(inicial, [colocar('quarry', 0, 0), colocar('quarry', largura + vao, 0)]);
     expect(depois.predios.ordem).toHaveLength(inicial.predios.ordem.length + 2);
     expect(rejeicoes(depois)).toEqual([]);
+    const colada = step(inicial, [colocar('quarry', 0, 0), colocar('quarry', largura, 0)]);
+    expect(colada.predios.ordem).toHaveLength(inicial.predios.ordem.length + 1);
   });
 });
 
