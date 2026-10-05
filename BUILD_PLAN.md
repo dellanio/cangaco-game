@@ -9025,6 +9025,15 @@ A ordem de execução é a desta lista. Cada item tem o aceite abaixo, escrito a
   4. a tropa da IA dispara com o lado da IA;
   5. o determinismo (mesma corrida, mesmos eventos) e a guarda de que `sim/` não lê `som.json`;
   6. o `validate:data` aceita o campo novo e recusa o lembrete ≤ 0.
+- **Emenda (2026-10-05, antes do código; pela medida do roteiro do I-TELA-JORNAL):** o lembrete no
+  múltiplo do tick, sem estado, repetiu a notícia 300 ticks depois do primeiro aviso (fome no 11 700,
+  múltiplo no 12 000). O lembrete passa a contar **a partir do último aviso**, como o KaM
+  (`fTimeSinceHungryReminder`, `src/units/KM_UnitGroup.pas:1993-2005`). O tick do último aviso fica
+  num campo opcional do estado, `avisoDaTropaComFome` (lado → tick), que sai quando o lado não tem
+  mais tropa com fome. A primeira divergência declarada cai; a do pedido de comida fica. O aceite 2
+  passa a ser: o lembrete sai `lembrete` ticks depois do aviso anterior enquanto a fome dura, e nunca
+  antes; saindo da fome e voltando, o aviso é imediato. O campo entra na guarda
+  `GUARDA-step-preserva-opcionais` e atravessa o save.
 - **Nota (feature de integração, 2026-10-05, antes do código):** o evento novo entra também na lista
   `EVENTOS_DA_SIM` de `src/render/eventos-da-sim.ts`, que o compilador obriga a espelhar o `GameEvent` e
   o `validate:data` usa para conferir o `som.json`. É a única linha de `src/render/` desta feature.
