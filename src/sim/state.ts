@@ -1581,6 +1581,12 @@ export interface GameState {
    */
   readonly pazAteTick?: number;
   /**
+   * I-COMIDA-AVISO-DA-TROPA-COM-FOME — o tick do ultimo aviso `troop-hungry` de cada LADO (chave: o
+   * lado, em texto), so dos lados com tropa em alerta de fome agora (`sim/condicao.ts`). E o
+   * `fTimeSinceHungryReminder` do KaM. AUSENTE sem tropa com fome; o save nao muda de versao.
+   */
+  readonly avisoDaTropaComFome?: Readonly<Record<string, number>>;
+  /**
    * C2 — os projeteis no ar (`sim/projeteis.ts`), na ordem em que sairam. AUSENTE quando
    * nenhum voa: o estado sem combate nao carrega o campo, e o save nao muda de versao.
    */

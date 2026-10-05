@@ -20730,3 +20730,12 @@ no BUILD_PLAN, num commit antes do código.
 
 O `H-ARTE-SONS-APROVADOS` passou a listar o `troop-hungry` entre as linhas que esperam aprovação.
 **Não verificado:** não ouvi (não há arquivo), e não joguei.
+**Emenda (2026-10-05, mesma manhã; aceite emendado antes do código em `d2a133e`):** o roteiro do jornal
+mostrou o defeito do lembrete sem estado: a fome entrou no tick 11 700, e o múltiplo de 2 400 caiu no
+12 000. Eram duas notícias "Tropa passa fome!" com 300 ticks de distância. Agora o lembrete conta do
+**último aviso**, como o `fTimeSinceHungryReminder` do KaM (`src/units/KM_UnitGroup.pas:1993-2005`):
+- o tick fica no campo opcional `avisoDaTropaComFome` (lado → tick), que sai quando o lado não tem
+  mais fome;
+- na guarda `GUARDA-step-preserva-opcionais`, o campo entra como `do-sistema`;
+- testes novos: lembretes em 37, 37 + 2 400 e 37 + 4 800, e o aviso imediato ao voltar à fome. Com a
+  correção, o roteiro do jornal mostra uma notícia de fome só.

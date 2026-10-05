@@ -32,6 +32,8 @@ const OPCIONAIS_DO_ESTADO = {
   ia: 'persiste',
   partida: 'persiste',
   pazAteTick: 'persiste',
+  // I-COMIDA-AVISO-DA-TROPA-COM-FOME: o sistema do aviso cria e apaga com a fome da tropa
+  avisoDaTropaComFome: 'do-sistema',
   // o voo acaba e o campo some: cobrado so enquanto `restantes` nao zera (o fixture voa longe)
   projeteis: 'persiste',
   distribuicao: 'persiste',
@@ -103,6 +105,7 @@ function estadoCheio(): { readonly state: Required<GameState>; readonly ids: Rea
     ...comLimite,
     ia: base.ia,
     pazAteTick: base.pazAteTick,
+    avisoDaTropaComFome: { [String(LADO_DO_JOGADOR)]: comLimite.tick },
     distribuicao: comLimite.distribuicao,
     descoberto: base.descoberto,
     partida: { fim: 'vitoria', tick: comLimite.tick },

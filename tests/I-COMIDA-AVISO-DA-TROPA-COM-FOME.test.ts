@@ -50,15 +50,27 @@ describe('I-COMIDA-AVISO-DA-TROPA-COM-FOME', () => {
     expect(emAlertaDeFome(s.unidades.porId['a']!)).toBe(true);
   });
 
-  it('(2) o lembrete sai no multiplo enquanto a fome dura, e nao sai entre dois multiplos', () => {
-    // a condicao alta o bastante para durar dois lembretes sem morrer
-    const inicio = createInitialState(1);
-    const ate = LEMBRETE * 2 + 10 - inicio.tick;
-    const { avisos } = rodar(com(tropa('a', LIMIAR + 1)), ate);
+  it('(2) o lembrete sai `lembrete` ticks depois do aviso anterior enquanto a fome dura, e nunca antes', () => {
+    // a entrada em alerta no tick 37: o lembrete conta dela, e nao do multiplo do tick (emenda do aceite 2)
+    const { avisos } = rodar(com(tropa('a', LIMIAR + 37)), 37 + LEMBRETE * 2 + 10);
     const ticks = avisos.map((a) => a.tick);
-    expect(ticks[0]).toBe(1); // a entrada em alerta
-    expect(ticks.slice(1)).toEqual([LEMBRETE, LEMBRETE * 2]);
+    expect(ticks).toEqual([37, 37 + LEMBRETE, 37 + LEMBRETE * 2]);
     gravarEvidencia('I-COMIDA-AVISO-DA-TROPA-COM-FOME', { limiar: LIMIAR, lembreteTicks: LEMBRETE, ticksDosAvisos: ticks });
+  });
+
+  it('(2) saindo da fome e voltando, o aviso e imediato; sem fome, o estado nao carrega o registro', () => {
+    let s = com(tropa('a', LIMIAR + 2));
+    const primeira = rodar(s, 5);
+    expect(primeira.avisos.map((a) => a.tick)).toEqual([2]);
+    expect(primeira.s.avisoDaTropaComFome).toEqual({ [String(LADO_DO_JOGADOR)]: 2 });
+    // a tropa come (a condicao volta a cheia): o registro sai
+    const a = primeira.s.unidades.porId['a']!;
+    s = { ...primeira.s, unidades: { ...primeira.s.unidades, porId: { ...primeira.s.unidades.porId, a: { ...a, condicao: LIMIAR + 3 } } } };
+    const fora = rodar(s, 1);
+    expect(fora.s.avisoDaTropaComFome).toBeUndefined();
+    // e volta a ter fome dois ticks depois: avisa na hora, sem esperar o lembrete
+    const volta = rodar(fora.s, 5);
+    expect(volta.avisos.map((x) => x.tick)).toEqual([fora.s.tick + 2]);
   });
 
   it('(3) alimentada, nenhum aviso; o civil com fome nao dispara', () => {

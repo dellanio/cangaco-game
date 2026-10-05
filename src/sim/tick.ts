@@ -1,7 +1,7 @@
 import { recusaNaPaz } from './paz';
 import type { Command } from './commands';
 import type { GameEvent, GameState } from './state';
-import { eventosDaTropaComFome } from './condicao';
+import { avisosDaTropaComFome } from './condicao';
 import type { GameData } from './data/types';
 import { gameData } from './data';
 import { registrarConclusoes } from './desbloqueio';
@@ -283,7 +283,8 @@ export function step(
   atual = registrarConclusoes(atual, events);
 
   // I-COMIDA-AVISO-DA-TROPA-COM-FOME: a tropa com fome avisa o dono (e o lembrete enquanto dura)
-  events.push(...eventosDaTropaComFome(state, atual, tick, dados));
+  const aviso = avisosDaTropaComFome(atual, tick, dados);
+  events.push(...aviso.eventos);
 
   // C-IA-03b: o peacetime acaba neste tick
   if (atual.pazAteTick !== undefined && tick === atual.pazAteTick) events.push({ type: 'peace-ended' });
@@ -327,6 +328,8 @@ export function step(
     ...(atual.partida === undefined ? {} : { partida: atual.partida }),
     // C-IA-03b: o fim do peacetime, so na escaramuca
     ...(atual.pazAteTick === undefined ? {} : { pazAteTick: atual.pazAteTick }),
+    // I-COMIDA-AVISO-DA-TROPA-COM-FOME: o tick do ultimo aviso por lado, so enquanto ha tropa com fome
+    ...(aviso.registro === undefined ? {} : { avisoDaTropaComFome: aviso.registro }),
     // C2: os projeteis no ar, so quando ha algum voando
     ...(atual.projeteis === undefined ? {} : { projeteis: atual.projeteis }),
     // D-TRANSPORTE-02a: o limite do menu de distribuicao, so quando o jogador mudou algum

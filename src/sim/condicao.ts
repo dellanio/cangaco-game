@@ -218,24 +218,28 @@ export function tropaComFomePorLado(state: GameState, dados: GameData = gameData
 
 /**
  * I-COMIDA-AVISO-DA-TROPA-COM-FOME — o aviso da tropa com fome, como o `UpdateHungerMessage` do KaM
- * (`src/units/KM_UnitGroup.pas:1975-2005`): sai quando a contagem de um lado vai de 0 a mais de 0
- * entre `antes` e `depois`, e, enquanto ela continua acima de 0, no tick multiplo do lembrete
- * (`condition.json` `avisoDaTropaComFome`). Sem estado: o lembrete cai no multiplo do tick, e nao
- * conta a partir do primeiro aviso como no KaM (divergencia declarada no BUILD_PLAN). Os lados saem
- * em ordem numerica, para a lista de eventos ser a mesma em toda corrida.
+ * (`src/units/KM_UnitGroup.pas:1975-2005`): o lado com tropa em alerta e sem aviso registrado avisa
+ * na hora; com aviso registrado, avisa de novo quando passou o lembrete (`condition.json`
+ * `avisoDaTropaComFome`) desde o ultimo, como o `fTimeSinceHungryReminder`. O lado sem tropa com fome
+ * sai do registro, e a proxima fome avisa na hora. Os lados saem em ordem numerica. Devolve os
+ * eventos e o registro novo (`undefined` quando vazio: o estado sem fome nao ganha o campo).
  */
-export function eventosDaTropaComFome(
-  antes: GameState, depois: GameState, tick: number, dados: GameData = gameData,
-): GameEvent[] {
+export function avisosDaTropaComFome(
+  depois: GameState, tick: number, dados: GameData = gameData,
+): { readonly eventos: GameEvent[]; readonly registro: Readonly<Record<string, number>> | undefined } {
   const agora = tropaComFomePorLado(depois, dados);
-  const lados = Object.keys(agora).map(Number).sort((a, b) => a - b);
-  if (lados.length === 0) return [];
-  const eraAntes = tropaComFomePorLado(antes, dados);
-  const lembrete = tick % dados.condicao.ticksDoLembreteDaTropaComFome === 0;
+  const anterior = depois.avisoDaTropaComFome ?? {};
+  const registro: Record<string, number> = {};
   const eventos: GameEvent[] = [];
-  for (const lado of lados) {
-    const unidades = agora[String(lado)] ?? 0;
-    if ((eraAntes[String(lado)] ?? 0) === 0 || lembrete) eventos.push({ type: 'troop-hungry', lado, unidades });
+  for (const lado of Object.keys(agora).map(Number).sort((a, b) => a - b)) {
+    const chave = String(lado);
+    const ultimo = anterior[chave];
+    if (ultimo === undefined || tick - ultimo >= dados.condicao.ticksDoLembreteDaTropaComFome) {
+      eventos.push({ type: 'troop-hungry', lado, unidades: agora[chave] ?? 0 });
+      registro[chave] = tick;
+    } else {
+      registro[chave] = ultimo;
+    }
   }
-  return eventos;
+  return { eventos, registro: Object.keys(registro).length === 0 ? undefined : registro };
 }
