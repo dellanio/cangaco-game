@@ -121,7 +121,8 @@ describe('F-ESC — altura maxima pela largura do lote', () => {
       // que desenha a 1,2 do lote com um arquivo de 1,5 (D-ARTE-BODEGA-MENOR, decisao do operador)
       if (e.id === 'inn') expect(escala, e.id).toBeCloseTo(1.2 / 1.5, 10);
       else if (e.id === 'fishermans') expect(escala, e.id).toBeCloseTo((0.8 * 192) / 176, 10);
-      else expect(escala, e.id).toBe(1);
+      // I-ARTE-PREDIOS-MAIORES (2026-10-05): o fator de exibicao vem depois dos tetos; sem ele, 1
+      else expect(escala, e.id).toBe(e.escalaDeExibicao ?? 1);
       medidas.push({
         id: e.id, footprint: e.footprint, tamanho: e.tamanho, teto: alturaMaxPorLargura(e, regra),
         alturaSobreLote: +(e.tamanho[1] / lote).toFixed(3), escala,

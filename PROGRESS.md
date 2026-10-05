@@ -20445,3 +20445,13 @@ bateria, e o servidor de desenvolvimento recarregou a página. De novo, sem edi�
   naquela leva. A asserção passou a ler o manifesto, e o roteiro sai 0;
 - **F18f:** a pilha de 3 na porta da obra, registrada como `BUG-F18F-PILHA-DE-TRES-NO-CANTEIRO`. É o
   caso da pergunta em aberto do obreiro no canteiro; não afrouxei o roteiro.
+
+### I-ARTE-PREDIOS-MAIORES — Casa de Carne, Casa do Gibão e Curtume +20%, Cocheira +30% (verificado)
+`escalaDeExibicao` é um campo novo do manifesto por prédio (1,2 / 1,2 / 1,2 / 1,3). `escalaDoSprite`
+multiplica por ele depois dos tetos de altura e largura. O footprint e a sim não mudam, e as âncoras
+(bandeira, trabalho, estoque) são frações do sprite e acompanham.
+**Teste:** `tests/I-ARTE-PREDIOS-MAIORES.test.ts` (3) cobre a razão com e sem o campo, por prédio (só os
+quatro mudam), o campo maior que 0 e o save do roteiro. O F-ESC passou a esperar o fator na escala
+pura.
+**Evidência:** o roteiro novo `I-ARTE-PREDIOS-MAIORES` sai 0, com duas capturas abertas: os quatro, de
+pé, ao lado do Moinho (3×3, sem fator).

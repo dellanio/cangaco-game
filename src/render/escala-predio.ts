@@ -58,7 +58,8 @@ export function escalaDoSprite(
   const pelaAltura = alturaMaxPorLargura(entrada, regra) * larguraDoLotePx / entrada.tamanho[1];
   // C10: nem mais largo que o teto de largura (o arquivo pode ter mais px que o lote)
   const pelaLarguraMax = larguraMaxPorLote(entrada, regraDeLargura) * larguraDoLotePx / entrada.tamanho[0];
-  return Math.min(pelaLargura, pelaAltura, pelaLarguraMax);
+  // I-ARTE-PREDIOS-MAIORES: o multiplicador de exibicao do predio, depois dos tetos
+  return Math.min(pelaLargura, pelaAltura, pelaLarguraMax) * (entrada.escalaDeExibicao ?? 1);
 }
 
 /** A escala que um teto impoe a um arquivo de `razao` (px do arquivo / px do lote), num eixo: o mesmo

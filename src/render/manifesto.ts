@@ -50,6 +50,10 @@ export interface EntradaDeAsset {
   /** C10 — a excecao ao `regraDeLargura.k`, em multiplos da largura do lote. So onde a arte
    *  transborda o lote (armazem, Casa do Coronel); `escala-predio.ts`. */
   readonly larguraMaxPorLote?: number;
+  /** I-ARTE-PREDIOS-MAIORES (pedido do operador, 2026-10-05) — o multiplicador de EXIBICAO do
+   *  predio, aplicado depois dos tetos de altura e largura (`escalaDoSprite`). So na tela: o
+   *  footprint e a sim nao mudam, e as ancoras (fracoes do sprite) acompanham. */
+  readonly escalaDeExibicao?: number;
 }
 
 /** Um ponto em FRACAO do sprite `completo`: `[x, y]` de 0 a 1, origem no canto
