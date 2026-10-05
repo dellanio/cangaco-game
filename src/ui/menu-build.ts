@@ -137,6 +137,17 @@ function retrato(url: string): HTMLElement {
   return img;
 }
 
+/** I-TELA-SUBABAS-DO-CONSTRUIR — a sub-aba de quem nao tem grupo no dado: na duvida, Vila. */
+export const GRUPO_PADRAO = 'vila';
+
+/** A sub-aba de um predio: o grupo dele no dado, ou `GRUPO_PADRAO`. */
+export function grupoDaOpcao(id: string, grupoDe: ReadonlyMap<string, string>): string {
+  return grupoDe.get(id) ?? GRUPO_PADRAO;
+}
+
+/** I-TELA-SUBABAS-DO-CONSTRUIR — a sub-aba escolhida, lembrada entre aberturas da aba. */
+let subabaEscolhida: string | null = null;
+
 /** Monta a grade em `#menu-build` na primeira `atualizar` (e la que se sabe a
  *  lista de predios) e depois so reescreve o que mudou. */
 export function montarMenuBuild(
@@ -278,26 +289,40 @@ export function montarMenuBuild(
       });
     raiz?.append(linhaDeFerramentas);
 
-    // Uma faixa por grupo, na ordem de `menu-build.json`; dentro do grupo, a
-    // ordem e a do seletor (= buildings.json), que a regra do dado exige que o
-    // JSON de grupos respeite — a ordem nunca e digitada duas vezes.
+    // I-TELA-SUBABAS-DO-CONSTRUIR (pedido do operador, 2026-10-05): uma SUB-ABA por grupo, na ordem
+    // de `menu-build.json`, e so a grade da escolhida a mostra. Dentro do grupo, a ordem e a do
+    // seletor (= buildings.json), que a regra do dado exige que o JSON de grupos respeite — a ordem
+    // nunca e digitada duas vezes. A escolha fica no fecho: trocar de aba principal e voltar mantem.
     const grupoDe = new Map<string, string>();
     for (const grupo of menuBuild.grupos) for (const id of grupo.predios) grupoDe.set(id, grupo.id);
     const grades = new Map<string, HTMLElement>();
+    const subabas = document.createElement('div');
+    subabas.className = 'subabas';
+    subabas.setAttribute('role', 'tablist');
+    raiz?.append(subabas);
+    const botoesDeSubaba = new Map<string, HTMLButtonElement>();
     for (const grupo of menuBuild.grupos) {
-      const regua = document.createElement('div');
-      regua.className = 'regua';
-      regua.dataset.grupo = grupo.id;
-      regua.textContent = rotulosDosGrupos[grupo.id] ?? grupo.id;
+      const subaba = document.createElement('button');
+      subaba.type = 'button';
+      subaba.className = 'subaba';
+      subaba.dataset.grupo = grupo.id;
+      subaba.setAttribute('role', 'tab');
+      subaba.textContent = rotulosDosGrupos[grupo.id] ?? grupo.id;
+      subaba.addEventListener('click', () => escolherSubaba(grupo.id));
+      subabas.append(subaba);
+      botoesDeSubaba.set(grupo.id, subaba);
       const grade = document.createElement('div');
       grade.className = 'grade';
       grade.dataset.grupo = grupo.id;
-      raiz?.append(regua, grade);
+      raiz?.append(grade);
       grades.set(grupo.id, grade);
     }
-    // Predio fora de grupo e erro de dado (`interface/menu-build`), mas a tela
-    // nunca esconde um predio por causa disso: ele cai numa faixa sem rotulo.
-    let semGrupo: HTMLElement | null = null;
+    function escolherSubaba(id: string): void {
+      subabaEscolhida = id;
+      for (const [g, grade] of grades) grade.hidden = g !== id;
+      for (const [g, botao] of botoesDeSubaba) botao.setAttribute('aria-selected', String(g === id));
+    }
+    escolherSubaba(subabaEscolhida ?? menuBuild.grupos[0]?.id ?? GRUPO_PADRAO);
 
     for (const opcao of opcoes) {
       const botao = botaoIcone(opcao.id, nomeDe(opcao.id));
@@ -312,17 +337,9 @@ export function montarMenuBuild(
         ferramenta.alternar('predio', opcao.id);
       });
 
-      const grade = grades.get(grupoDe.get(opcao.id) ?? '');
-      if (grade !== undefined) grade.append(botao);
-      else {
-        if (semGrupo === null) {
-          semGrupo = document.createElement('div');
-          semGrupo.className = 'grade';
-          semGrupo.dataset.grupo = '';
-          raiz?.append(semGrupo);
-        }
-        semGrupo.append(botao);
-      }
+      // Predio fora de grupo e erro de dado (`interface/menu-build`), mas a tela nunca o esconde:
+      // na duvida, ele vai para Vila (pedido do operador, 2026-10-05)
+      grades.get(grupoDaOpcao(opcao.id, grupoDe))?.append(botao);
       itens.set(opcao.id, { botao, planta: plantaDaOpcao(opcao) });
     }
 

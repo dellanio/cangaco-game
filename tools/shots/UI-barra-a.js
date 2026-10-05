@@ -147,12 +147,21 @@ async function roteiro(ctx) {
     await page.$eval('#corpo-aba', (c, o) => { c.scrollTop = o === 'fim' ? c.scrollHeight : 0; }, onde);
     await esperarFrame();
   };
-  afirmar(await haMais(), 'a 720 a grade nao cabe: a sombra do pe deveria estar acesa');
+  // I-TELA-SUBABAS-DO-CONSTRUIR (2026-10-05): com as sub-abas, a maior delas (Guerra, 9 predios) CABE
+  // a 720 — era o pedido do operador ("a lista esta muito comprida"). A sombra continua provada numa
+  // janela baixa, onde o corpo rola de verdade.
+  afirmar(!(await haMais()), 'a 720, com as sub-abas, a grade cabe: a sombra do pe deveria estar apagada');
+  await page.setViewportSize({ width: 1280, height: 520 });
+  await esperarFrame();
+  await rolarCorpo('topo');
+  afirmar(await haMais(), 'a 520 a grade nao cabe: a sombra do pe deveria estar acesa');
   await capturar('sombra-grade');
   await rolarCorpo('fim');
   afirmar(!(await haMais()), 'no fim da rolagem a sombra do pe deveria apagar');
   await rolarCorpo('topo');
   afirmar(await haMais(), 'de volta ao topo a sombra do pe deveria acender de novo');
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await esperarFrame();
 
   // ---- 2c. popup de contexto: fora da grade e estavel sob hover ------------
   // O popup nao ocupa a grade nem captura o ponteiro. A amostra despausada
@@ -194,7 +203,8 @@ async function roteiro(ctx) {
     const c = window.document.querySelector('#menu-build .cartao');
     const d = c.querySelector('.desc');
     d.dataset.antes = d.textContent;
-    d.textContent = Array(6).fill(d.textContent || 'texto').join(' ');
+    // 12x (eram 6): desde as sub-abas o ultimo botao e a Casa do Ferro, de descricao mais curta
+    d.textContent = Array(12).fill(d.textContent || 'texto').join(' ');
     const m = c.querySelector('.miolo');
     return {
       altura: c.getBoundingClientRect().height,
@@ -277,7 +287,7 @@ async function roteiro(ctx) {
   afirmar(await page.isVisible('#menu-build'), 'depois do Esc a grade deveria voltar');
   const gradeNoTopo = await page.evaluate(() => {
     const corpoDaGrade = window.document.getElementById('corpo-aba');
-    const primeiraRegua = window.document.querySelector('#menu-build .regua[data-grupo="vila"]');
+    const primeiraRegua = window.document.querySelector('#menu-build .subabas');
     const limite = corpoDaGrade.getBoundingClientRect();
     const regua = primeiraRegua.getBoundingClientRect();
     return {
@@ -289,7 +299,7 @@ async function roteiro(ctx) {
   await page.hover(`[data-predio="${ultimo}"]`);
   afirmar(
     gradeNoTopo.scrollTop === 0 && gradeNoTopo.vilaVisivel,
-    `voltar do painel deveria mostrar A VILA no topo da grade: ${JSON.stringify(gradeNoTopo)}`,
+    `voltar do painel deveria mostrar as sub-abas no topo da grade: ${JSON.stringify(gradeNoTopo)}`,
   );
 
   // ---- 4. aba Construir volta a grade, DESPAUSADO e segurado (§8) -----------

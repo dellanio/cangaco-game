@@ -127,23 +127,40 @@ async function roteiro(ctx) {
       && new Set(glifos.map((g) => g.fundo)).size === 5,
     `cada campo do HUD deveria ter o seu glifo raster distinto, veio ${JSON.stringify(glifos.map((g) => [g.recurso, g.fundo.slice(0, 80)]))}`,
   );
-  // Todos os 28 estao na grade, em faixas por grupo (data/menu-build.json). Desde
-  // a UI-barra-a a grade mora no corpo da aba, que e o UNICO lugar que rola: a
-  // barra inteira cabe na janela.
+  // Todos os 28 estao na grade, uma grade por grupo (data/menu-build.json). Desde a
+  // I-TELA-SUBABAS-DO-CONSTRUIR cada grupo e uma SUB-ABA, e so a grade da escolhida aparece. O gesto
+  // da sub-aba e o do jogador, DESPAUSADO e segurando 150 ms (CLAUDE.md §8): o redesenho que destroi
+  // o no sob o dedo so aparece assim.
   const gruposDoDado = require('../../data/menu-build.json').grupos;
+  await page.keyboard.press('p');
   for (const g of gruposDoDado) {
+    const sub = await retanguloDe(page, `#menu-build .subaba[data-grupo="${g.id}"]`);
+    await page.mouse.move(sub.left + sub.width / 2, sub.top + sub.height / 2);
+    await page.mouse.down();
+    await page.waitForTimeout(150);
+    await page.mouse.up();
+    await page.waitForTimeout(150);
+    const visiveis = await page.$$eval('#menu-build .grade[data-grupo]:not([hidden])', (gs) => gs.map((x) => x.dataset.grupo));
+    afirmar(
+      JSON.stringify(visiveis) === JSON.stringify([g.id]),
+      `com a sub-aba '${g.id}' so a grade dela deveria aparecer, aparecem ${JSON.stringify(visiveis)}`,
+    );
     const naFaixa = await page.$$eval(
       `#menu-build .grade[data-grupo="${g.id}"] [data-predio]`, (ns) => ns.map((n) => n.dataset.predio),
     );
     afirmar(
       JSON.stringify(naFaixa) === JSON.stringify(g.predios),
-      `a faixa '${g.id}' deveria ter ${JSON.stringify(g.predios)}, veio ${JSON.stringify(naFaixa)}`,
+      `a sub-aba '${g.id}' deveria ter ${JSON.stringify(g.predios)}, veio ${JSON.stringify(naFaixa)}`,
     );
     afirmar(
-      (await page.textContent(`#menu-build .regua[data-grupo="${g.id}"]`)) === tema.menuBuild.grupos[g.id],
-      `a regua da faixa '${g.id}' deveria ter o rotulo do tema`,
+      (await page.textContent(`#menu-build .subaba[data-grupo="${g.id}"]`)) === tema.menuBuild.grupos[g.id],
+      `a sub-aba '${g.id}' deveria ter o rotulo do tema`,
     );
+    const cortada = await page.$eval(`#menu-build .subaba[data-grupo="${g.id}"]`, (b) => b.scrollWidth > b.clientWidth || b.scrollHeight > b.clientHeight);
+    afirmar(!cortada, `o rotulo da sub-aba '${g.id}' esta cortado`);
+    await capturar(`subaba-${g.id}`);
   }
+  await page.keyboard.press('p');
   afirmar(
     (await page.$$('#menu-build [data-predio]')).length === predios.length,
     `a grade deveria ter os ${predios.length} predios`,

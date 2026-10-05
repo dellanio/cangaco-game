@@ -457,6 +457,18 @@ body:not([data-corpo="opcoes"]) #opcoes { display: none; }
 }
 #menu-build .regua::before, #menu-build .regua::after { content: ''; flex: 1; border-top: 2px solid var(--tinta); }
 #menu-build .regua[data-grupo=""] { display: none; }
+/* I-TELA-SUBABAS-DO-CONSTRUIR (pedido do operador, 2026-10-05): as categorias em sub-abas, numa
+   linha, e so a grade da escolhida aparece. A escolhida fica na cor do ativo das abas principais. */
+#menu-build .subabas { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; margin: 6px 0 4px; }
+#menu-build .subaba {
+  min-width: 0; height: 26px; padding: 0 2px; border: 2px solid #4b2d1a;
+  background: #ead3a1 var(--grao); color: var(--tinta); cursor: pointer;
+  font: 9px/1.05 var(--fonte-display); text-transform: uppercase; letter-spacing: 0;
+  white-space: normal; overflow: hidden; /* "Mato e Pedra" e "De Comer" em duas linhas */
+}
+#menu-build .subaba:hover { border-color: #8c4a25; }
+#menu-build .subaba[aria-selected="true"] { background: var(--terracota); color: var(--papel); border-color: #8c4a25; }
+#menu-build .grade[hidden] { display: none; }
 #menu-build .icone {
   position: relative;
   width: 52px; height: 52px; box-sizing: border-box; padding: 0;

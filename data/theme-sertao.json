@@ -414,13 +414,7 @@
     "apagarCampo": "Apagar roçado",
     "apagarCampoDesc": "só o traçado; terra arada fica",
     "cartaoVazio": "Passe o mouse num prédio para ver o que ele custa",
-    "grupos": {
-      "vila": "A vila",
-      "materia": "Mato e pedra",
-      "comida": "De comer",
-      "oficinas": "Oficinas",
-      "bando": "O bando"
-    }
+    "grupos": { "vila": "Vila", "comida": "De Comer", "materia": "Mato e Pedra", "guerra": "Guerra" }
   },
   "painelEscola": {
     "_doc": "F13b. Os três motivos de espera são específicos de propósito: cada um aponta a ação que resolve aquele caso. 'Sem estrada' é um arrasto de dez segundos; 'sem dinheiro' é garimpo e metalurgia. Um texto neutro para os dois esconderia justamente a diferença que importa.",

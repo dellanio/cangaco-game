@@ -196,9 +196,13 @@ async function roteiro(ctx) {
     },
     TETO_ATE_QUADRO, PASSO_FINO, 'quadro de trabalho na pedreira ocupada',
   );
+  // G-ARTE-TRABALHO-DENTRO-DO-PREDIO (2026-10-04): a pedreira ganhou os quadros de trabalho no
+  // manifesto, e o quadro sai com a textura; antes era o placeholder
+  const temArte = Object.keys(require('../../assets/manifest.json').assets
+    .find((a) => a.tipo === 'trabalho' && a.id === 'quarry')?.estados ?? {}).length > 0;
   afirmar(
-    comQuadro.quadrosDeTrabalho[ID_PEDREIRA].sprite === false,
-    'sem PNG de trabalho no manifesto: o quadro deveria ser placeholder',
+    comQuadro.quadrosDeTrabalho[ID_PEDREIRA].sprite === temArte,
+    `o quadro deveria ser ${temArte ? 'a textura do manifesto' : 'placeholder'}, veio sprite=${comQuadro.quadrosDeTrabalho[ID_PEDREIRA].sprite}`,
   );
   const animando = await janelaDespausada(ID_PEDREIRA);
   const distintos = new Set(animando.map((a) => a.quadro).filter((q) => q !== null));

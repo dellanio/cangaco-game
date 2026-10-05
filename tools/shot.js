@@ -16,6 +16,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { spawn } = require('node:child_process');
 const { chromium } = require('@playwright/test');
+const { comSubabaAutomatica } = require('./shots/_subaba');
 // BUG-K: as duas defesas moram em `_servidor.js`, com o `tools/dev.js` (F-DEV).
 const {
   derrubarServidor, portaJaResponde, mensagemDePortaOcupada, gravarRegistro, apagarRegistro, liberarViteOrfao,
@@ -168,7 +169,8 @@ async function main() {
     // deixa baixar). Sem a variavel, o comportamento e o de sempre.
     const executablePath = process.env.CANGACO_CHROMIUM;
     browser = await chromium.launch(executablePath ? { executablePath } : {});
-    const page = await browser.newPage({ viewport: VIEWPORT });
+    // I-TELA-SUBABAS-DO-CONSTRUIR: o botao de predio mirado pelo roteiro tem a sub-aba aberta antes
+    const page = comSubabaAutomatica(await browser.newPage({ viewport: VIEWPORT }));
     // CANGACO_SHOT_NUVEM=1: a sessao de nuvem sai por um proxy que nao entrega a
     // fonte do Google (estilo.css), e o Chromium completo pede /favicon.ico, que
     // o headless shell nao pede. Os dois virariam erro de console alheio ao jogo

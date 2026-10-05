@@ -20411,3 +20411,37 @@ A regra que vale para `#abas` é a última do `src/ui/estilo.css`, a da arte fin
 O rótulo ficou em 6 px. Com os 80% exatos (6,4 px), o rótulo "Distribuição" estourava a largura menor,
 e o roteiro `UI-barra-a` reprovava por rótulo cortado. `tests/I-TELA-ABAS-MENORES.test.ts` lê os números
 do CSS. O roteiro `UI-barra-a` sai 0 (5 capturas), e a captura da barra foi aberta.
+
+### I-TELA-SUBABAS-DO-CONSTRUIR — o menu Construir em quatro sub-abas (verificado)
+**O dado:** `data/menu-build.json` tem quatro grupos na ordem do operador: `vila`, `comida`, `materia` e
+`guerra`. O tema chama cada um de Vila, De Comer, Mato e Pedra e Guerra. Dentro do grupo, a ordem
+continua a do `buildings.json`, como a regra do dado exige.
+**A tela:** uma linha de quatro sub-abas, e só a grade da escolhida aparece. A escolha fica guardada
+entre aberturas da aba. As ferramentas de estrada e roçado continuam no topo. O prédio sem grupo cai
+em Vila (`grupoDaOpcao`).
+**Pergunta registrada (interpretação conservadora):** a lista do operador não cita a Pedreira nem a
+Casa do Gibão. A Pedreira foi para Mato e Pedra e a Casa do Gibão para Guerra.
+**Os roteiros:** 38 roteiros miram `[data-predio="x"]`, e o botão de outra categoria agora fica
+escondido. Em vez de reescrevê-los, o `tools/shot.js` envolve a página (`tools/shots/_subaba.js`):
+antes de mirar um botão de prédio do menu, ele abre a sub-aba dele com um clique de DOM. O gesto da
+sub-aba com mouse de verdade, despausado e segurando 150 ms (§8), é do F06, que confere as quatro, o
+conteúdo, o rótulo do tema e o rótulo sem corte.
+
+O `UI-barra-a` mudou em dois pontos:
+- a 720 px a grade agora **cabe**, e a sombra do pé fica apagada. Era o pedido do operador. A sombra
+  continua provada a 520 px, onde o corpo rola;
+- a descrição de estresse do cartão foi de 6 para 12 vezes, porque o último botão passou a ser a Casa do
+  Ferro, de texto mais curto.
+
+**Teste:** `tests/I-TELA-SUBABAS-DO-CONSTRUIR.test.ts` (4) cobre os grupos, o conteúdo, a Vila como
+padrão e o reconhecedor do envoltório. Os roteiros F06, F07, F17, F-TP, D-TELA-07 e UI-barra-a saem 0, e
+as capturas das sub-abas foram abertas. Os outros 32 que clicam prédio estão anotados abaixo.
+**Os 32 roteiros que clicam prédio (rodados um a um):** 28 passaram de primeira. Na primeira rodada,
+F17e, F-VIVO-a e F-VIVO-b caíram com "contexto destruído": eu editei o `assets/manifest.json` durante a
+bateria, e o servidor de desenvolvimento recarregou a página. De novo, sem edição, F17e e F-VIVO-a saem
+0. Restam duas falhas:
+- **F-VIVO-b:** o roteiro afirmava "sem PNG de trabalho, o quadro é placeholder", mas a pedreira ganhou
+  arte de trabalho em `59e1131` (G-ARTE-TRABALHO-DENTRO-DO-PREDIO, ontem), e este roteiro não foi rodado
+  naquela leva. A asserção passou a ler o manifesto, e o roteiro sai 0;
+- **F18f:** a pilha de 3 na porta da obra, registrada como `BUG-F18F-PILHA-DE-TRES-NO-CANTEIRO`. É o
+  caso da pergunta em aberto do obreiro no canteiro; não afrouxei o roteiro.
