@@ -347,6 +347,51 @@ body:not([data-corpo="opcoes"]) #opcoes { display: none; }
   padding: 0 10px; background: rgba(44, 29, 18, 0.82); border: 1px solid var(--madeira); border-radius: 3px;
 }
 #barra-rapida .item { display: flex; align-items: center; gap: 3px; }
+/* I-TELA-JORNAL — o icone: um jornal dobrado, pequeno, no canto inferior esquerdo da area do jogo.
+   O ponto vermelho e a noticia nao lida. */
+#jornal-icone {
+  grid-column: 2; grid-row: 1; align-self: end; justify-self: start; margin: 0 0 12px 12px; z-index: 6;
+  position: relative; width: 34px; height: 28px; padding: 0; cursor: pointer;
+  border: 0; border-radius: 2px; transform: rotate(-6deg);
+  background:
+    linear-gradient(#3a2a1c, #3a2a1c) 5px 5px / 24px 3px no-repeat,
+    repeating-linear-gradient(#8a7a62 0 1px, transparent 1px 4px) 5px 11px / 11px 13px no-repeat,
+    repeating-linear-gradient(#8a7a62 0 1px, transparent 1px 4px) 18px 11px / 11px 13px no-repeat,
+    #efe3c4;
+  box-shadow: 2px 2px 0 rgba(44, 29, 18, 0.55);
+}
+#jornal-icone[hidden] { display: none; }
+#jornal-icone.nao-lida::after {
+  content: ''; position: absolute; top: -4px; right: -4px; width: 10px; height: 10px; border-radius: 50%;
+  background: #c0392b; box-shadow: 0 0 0 2px #efe3c4;
+}
+/* I-TELA-JORNAL — a folha aberta no meio da tela: so o papel, sem moldura de janela; o X fecha */
+#jornal { grid-column: 1 / -1; grid-row: 1; place-self: center; z-index: 30; pointer-events: none; }
+#jornal[hidden] { display: none; }
+#jornal .papel {
+  pointer-events: auto; position: relative; width: min(640px, 80vw); max-height: 78vh; overflow: auto;
+  box-sizing: border-box; padding: 26px 34px 30px; color: #2b2116;
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(255, 255, 255, 0.35), transparent 60%),
+    radial-gradient(ellipse at 80% 90%, rgba(120, 90, 40, 0.18), transparent 55%),
+    linear-gradient(90deg, transparent 49.6%, rgba(90, 70, 40, 0.18) 50%, transparent 50.4%),
+    #eadcb8;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55); transform: rotate(-0.6deg);
+  font-family: Georgia, 'Times New Roman', serif;
+}
+#jornal header { text-align: center; border-bottom: 3px double #2b2116; margin-bottom: 14px; padding-bottom: 6px; }
+#jornal h1 { margin: 0; font: 700 34px/1.1 var(--fonte-display), Georgia, serif; letter-spacing: 0.04em; }
+#jornal .linha-da-data { margin: 4px 0 0; font-style: italic; font-size: 13px; }
+#jornal .colunas { column-count: 2; column-gap: 26px; column-rule: 1px solid rgba(43, 33, 22, 0.4); }
+#jornal .noticia { break-inside: avoid; margin: 0 0 14px; }
+#jornal .noticia h2 { margin: 0 0 2px; font: 700 20px/1.15 Georgia, serif; text-transform: uppercase; }
+#jornal .noticia .hora { margin: 0 0 4px; font-size: 11px; letter-spacing: 0.08em; color: #6b5a42; }
+#jornal .noticia p { margin: 0; font-size: 14px; line-height: 1.4; text-align: justify; }
+#jornal .fechar {
+  position: absolute; top: 8px; right: 10px; width: 28px; height: 28px; padding: 0; border: 0; cursor: pointer;
+  background: transparent; color: #2b2116; font: 700 20px/28px Georgia, serif;
+}
+#jornal .fechar:hover { color: #c0392b; }
 #barra-rapida img { width: 18px; height: 18px; image-rendering: pixelated; }
 #barra-rapida .valor { font: 12px/1 var(--fonte-display); color: var(--ocre); font-variant-numeric: tabular-nums; }
 /* C-TELA-01 — a ordem recusada: no alto da celula do canvas, sem pegar clique */

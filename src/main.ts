@@ -21,6 +21,9 @@ import { montarHud } from './ui/hud';
 import { montarBarraRapida } from './ui/barra-rapida';
 import type { ConfigDaBarra } from './ui/barra-rapida';
 import configDaBarraRapida from '../data/barra-rapida.json';
+import { montarJornal } from './ui/jornal';
+import type { ConfigDoJornal } from './ui/jornal';
+import configDoJornal from '../data/jornal.json';
 import { montarEstatisticas } from './ui/estatisticas';
 import { montarDistribuicao } from './ui/distribuicao';
 import { montarMenuBuild } from './ui/menu-build';
@@ -107,6 +110,8 @@ export function iniciarPartida(
   dicas: DicasVivas | null = null,
 ): void {
   const sessao = criarSessao(estadoInicial);
+  // I-TELA-JORNAL — o jornal das noticias importantes; le os eventos de cada passo
+  const jornal = montarJornal(configDoJornal as ConfigDoJornal, gameData.tempo.tickMs);
   // H-TELA-CAMADA-DE-SOM — o som le os eventos de cada passo e toca no fim do quadro. O arquivo
   // vem do manifesto (secao `sons`) pela URL do bundler; sem arquivo, o id e silencio.
   const urlsDeSom = urlsDosSons((manifestoJson as unknown as { sons?: SonsDoManifesto }).sons, urlsDeArquivosDeSom);
@@ -166,6 +171,8 @@ export function iniciarPartida(
       const antes = sessao.estado;
       const depois = sessao.passo();
       som.aoPasso(depois, doJogador);
+      // I-TELA-JORNAL: as noticias do passo (le os eventos, como o som)
+      jornal.aoPasso(depois);
       fundo.aoPasso(depois, antes);
     },
     tickMs: gameData.tempo.tickMs,

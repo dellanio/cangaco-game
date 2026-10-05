@@ -491,6 +491,23 @@
     "vitoriaDesc": "O inimigo perdeu o armazém, a escola, o quartel e todas as tropas.",
     "derrotaDesc": "Você perdeu o armazém, a escola, o quartel e todas as tropas."
   },
+  "jornal": {
+    "_doc": "I-TELA-JORNAL. O jornal das noticias importantes (src/ui/jornal.ts). `noticias` tem uma entrada por chave de data/jornal.json eventos; `{n}` vira o numero do evento (a contagem da tropa).",
+    "nome": "O Correio do Piancó",
+    "lema": "Notícias do sertão, fresquinhas como o cuscuz",
+    "abrir": "Abrir o jornal",
+    "fechar": "Fechar o jornal",
+    "noticias": {
+      "tropaComFome": {
+        "manchete": "Tropa passa fome!",
+        "texto": "{n} cabras estão com a barriga roncando. Sem comida chegando ao quartel, a fome derruba a tropa antes da luta."
+      },
+      "fimDaPaz": {
+        "manchete": "Acabou a trégua!",
+        "texto": "O tempo de paz chegou ao fim. O inimigo já pode marchar sobre a vila: guarneça as torres e junte a tropa."
+      }
+    }
+  },
   "barraRapida": {
     "_doc": "I-TELA-BARRA-RAPIDA-DE-RECURSOS. O nome de cada categoria da barra rapida (data/barra-rapida.json), no titulo e no texto alternativo do icone.",
     "madeira": "Tábua", "pedra": "Pedra", "carvao": "Carvão", "ouro": "Ouro", "ferro": "Ferro",

@@ -20739,3 +20739,35 @@ mostrou o defeito do lembrete sem estado: a fome entrou no tick 11 700, e o múl
 - na guarda `GUARDA-step-preserva-opcionais`, o campo entra como `do-sistema`;
 - testes novos: lembretes em 37, 37 + 2 400 e 37 + 4 800, e o aviso imediato ao voltar à fome. Com a
   correção, o roteiro do jornal mostra uma notícia de fome só.
+
+### I-TELA-JORNAL — o jornal das notícias importantes (verificado)
+**Pedido, com a correção do operador:** um ícone pequeno do lado esquerdo indica que há jornal. O
+clique abre o jornal aberto no meio da tela, como popup, sem bordas, com o ícone de fechar.
+**A regra pura** (`src/ui/jornal.ts`):
+- `noticiasDosEventos` lê os eventos do passo pela tabela de `data/jornal.json` (`troop-hungry` →
+  "Tropa passa fome!", `peace-ended` → "Acabou a trégua!", com os textos no tema, `jornal.noticias`).
+  Ela ignora o evento de outro lado;
+- `acrescentarNoticias` põe a mais nova no alto e corta em `maximoDeNoticias` (12).
+
+**A lista** vive na memória da tela e não entra no save. O KaM guarda o registro no save
+(`src/game/KM_Game.pas:1701-1702`): fica como pergunta.
+**A tela:**
+- **o ícone** é um jornalzinho dobrado em CSS no canto inferior esquerdo da área do jogo, escondido sem
+  notícia, com um ponto vermelho para a não lida;
+- **a folha** é o papel envelhecido em CSS, sem moldura de janela, com "O Correio do Piancó", o lema,
+  duas colunas e a hora de jogo de cada notícia. O ✕ e o Esc fecham;
+- abrir marca tudo como lido, e o jogo não pausa;
+- o `main.ts` chama `jornal.aoPasso` a cada passo, como o som.
+
+**Teste:** `tests/I-TELA-JORNAL.test.ts` (4) cobre a tabela evento → notícia (o jogador, a IA e o evento
+sem linha, com o `{n}` preenchido), a ordem e o teto, a hora de jogo e o validador.
+**Evidência:** o roteiro novo `I-TELA-JORNAL` sai 0. Na escaramuça, a paz acaba no tick 6 000 e a fome
+chega no 11 700 (sonda headless, ~10 s). O roteiro confere:
+- o ícone no canto, com duas não lidas;
+- o aperto (down, 150 ms, up) com o jogo andando: o jornal no meio da tela (±40 px), com a fome no alto
+  e a trégua embaixo;
+- a marca que some ao abrir, e o ✕ que fecha.
+
+As duas capturas (o ícone e o jornal aberto) foram abertas.
+**Arte:** o ícone e o papel são CSS, não raster. Um ícone desenhado entra só por decisão do operador.
+**Pergunta:** a lista de notícias deve atravessar o save, como no KaM?

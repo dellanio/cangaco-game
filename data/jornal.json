@@ -1,0 +1,8 @@
+{
+  "_doc": "I-TELA-JORNAL (pedido do operador, 2026-10-05). O jornal das noticias importantes: um icone pequeno no canto inferior esquerdo da area do jogo indica que ha noticia, e o clique abre o jornal no meio da tela. `eventos` liga o `type` do evento da sim (src/sim/state.ts, GameEvent) a chave da noticia no tema (theme-sertao.json jornal.noticias); evento com campo `lado` so vira noticia se for o do jogador. `maximoDeNoticias` e quantas o jornal guarda, a mais nova no alto. So interface; a sim nao le. A lista vive na memoria da tela e nao entra no save (como a pilha de mensagens local do KaM, src/gui/KM_InterfaceGamePlay.pas:2047-2055).",
+  "maximoDeNoticias": 12,
+  "eventos": {
+    "troop-hungry": "tropaComFome",
+    "peace-ended": "fimDaPaz"
+  }
+}

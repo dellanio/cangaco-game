@@ -184,6 +184,23 @@ function validarBarraRapida(dados, config, tema, erros) {
   }
 }
 
+// I-TELA-JORNAL — o teto de noticias, e cada evento da tabela com noticia no tema (manchete e texto).
+function validarJornal(config, tema, erros) {
+  const e = (msg) => erros.push(`interface/jornal: ${msg}`);
+  if (!config || typeof config !== 'object' || Array.isArray(config)) {
+    e('data/jornal.json precisa existir e ser objeto');
+    return;
+  }
+  if (!Number.isInteger(config.maximoDeNoticias) || config.maximoDeNoticias <= 0) e('maximoDeNoticias precisa ser inteiro > 0');
+  const noticias = (tema && tema.jornal && tema.jornal.noticias) || {};
+  for (const [evento, chave] of Object.entries(config.eventos || {})) {
+    const n = noticias[chave];
+    if (!n || typeof n.manchete !== 'string' || n.manchete.length === 0 || typeof n.texto !== 'string' || n.texto.length === 0) {
+      e(`evento '${evento}': a noticia '${chave}' precisa de manchete e texto em theme-sertao.json jornal.noticias`);
+    }
+  }
+}
+
 function validarPoeira(poeira, erros) {
   const e = (msg) => erros.push(`interface/poeira: ${msg}`);
   if (!poeira || typeof poeira !== 'object' || Array.isArray(poeira)) {
@@ -2055,6 +2072,7 @@ function validarInterface(dados, interfaceUi) {
   validarPensamento(dados, interfaceUi && interfaceUi.pensamento, tema, erros);
   validarObraRevelacao(interfaceUi && interfaceUi['obra-revelacao'], erros);
   validarBarraRapida(dados, interfaceUi && interfaceUi['barra-rapida'], tema, erros);
+  validarJornal(interfaceUi && interfaceUi.jornal, tema, erros);
   validarPoeira(interfaceUi && interfaceUi.poeira, erros);
   validarFumaca(interfaceUi && interfaceUi.fumaca, erros);
   validarSom(interfaceUi && interfaceUi.som, erros);
