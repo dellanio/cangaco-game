@@ -1,0 +1,207 @@
+{
+  "seed": 20261005,
+  "sourceSize": [
+    128,
+    128
+  ],
+  "roadWidth": 34,
+  "periodicity": true,
+  "images64x64": 17,
+  "masks": [
+    [
+      {
+        "x": 0,
+        "y": 2,
+        "mask": 2
+      },
+      {
+        "x": 1,
+        "y": 2,
+        "mask": 10
+      },
+      {
+        "x": 2,
+        "y": 2,
+        "mask": 10
+      },
+      {
+        "x": 3,
+        "y": 2,
+        "mask": 10
+      },
+      {
+        "x": 4,
+        "y": 2,
+        "mask": 8
+      }
+    ],
+    [
+      {
+        "x": 2,
+        "y": 0,
+        "mask": 4
+      },
+      {
+        "x": 2,
+        "y": 1,
+        "mask": 5
+      },
+      {
+        "x": 2,
+        "y": 2,
+        "mask": 5
+      },
+      {
+        "x": 2,
+        "y": 3,
+        "mask": 5
+      },
+      {
+        "x": 2,
+        "y": 4,
+        "mask": 1
+      }
+    ],
+    [
+      {
+        "x": 0,
+        "y": 2,
+        "mask": 2
+      },
+      {
+        "x": 1,
+        "y": 2,
+        "mask": 10
+      },
+      {
+        "x": 2,
+        "y": 2,
+        "mask": 12
+      },
+      {
+        "x": 2,
+        "y": 3,
+        "mask": 5
+      },
+      {
+        "x": 2,
+        "y": 4,
+        "mask": 1
+      }
+    ],
+    [
+      {
+        "x": 0,
+        "y": 2,
+        "mask": 2
+      },
+      {
+        "x": 1,
+        "y": 2,
+        "mask": 10
+      },
+      {
+        "x": 2,
+        "y": 2,
+        "mask": 14
+      },
+      {
+        "x": 3,
+        "y": 2,
+        "mask": 10
+      },
+      {
+        "x": 4,
+        "y": 2,
+        "mask": 8
+      },
+      {
+        "x": 2,
+        "y": 3,
+        "mask": 5
+      },
+      {
+        "x": 2,
+        "y": 4,
+        "mask": 1
+      }
+    ],
+    [
+      {
+        "x": 0,
+        "y": 2,
+        "mask": 2
+      },
+      {
+        "x": 1,
+        "y": 2,
+        "mask": 10
+      },
+      {
+        "x": 2,
+        "y": 2,
+        "mask": 15
+      },
+      {
+        "x": 3,
+        "y": 2,
+        "mask": 10
+      },
+      {
+        "x": 4,
+        "y": 2,
+        "mask": 8
+      },
+      {
+        "x": 2,
+        "y": 0,
+        "mask": 4
+      },
+      {
+        "x": 2,
+        "y": 1,
+        "mask": 5
+      },
+      {
+        "x": 2,
+        "y": 3,
+        "mask": 5
+      },
+      {
+        "x": 2,
+        "y": 4,
+        "mask": 1
+      }
+    ],
+    [
+      {
+        "x": 0,
+        "y": 0,
+        "mask": 0
+      },
+      {
+        "x": 1,
+        "y": 1,
+        "mask": 0
+      },
+      {
+        "x": 2,
+        "y": 2,
+        "mask": 0
+      },
+      {
+        "x": 3,
+        "y": 3,
+        "mask": 0
+      },
+      {
+        "x": 4,
+        "y": 4,
+        "mask": 0
+      }
+    ]
+  ],
+  "sourceSHA256": "73f1bcd070d057d0d7ea482cc82dc20cab072f65a3d54f966a81063db3edf50a",
+  "limitation": "Pipeline vigente recorta offsets diferentes por máscara; periodicidade da fonte não garante continuidade das pedras entre derivados.",
+  "approval": "Candidata; aguarda operador. Não integrada."
+}

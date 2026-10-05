@@ -20599,3 +20599,18 @@ pensa em pedra (ícone); ninguém parado tem balão. A captura aberta mostra doi
 balão da pedra e dois obreiros com "obra".
 **Não verificado:** não joguei com muita gente na tela. O balão pode cobrir o vizinho, e a frequência
 (25 de 80 ticks) é da sessão: fica para o operador.
+
+### I-ARTE-PEDRA-DA-RUA — a candidata do calçamento (entregue como candidata; homologação do operador)
+Pedido expresso do operador: passar ao Codex. O Codex (`codex exec -s workspace-write`) escreveu o
+gerador procedural (`skills/pianco-sprite-tools/scripts/generate-road-stone-candidate.mjs`, semente
+20261005, sem rede e sem relógio) e a textura-fonte periódica de 128×128. O pipeline das máscaras
+(`process-road-tiles.mjs`) precisa do Chromium, e o sandbox dele recusou (`spawn EPERM`). Rodei o mesmo
+script daqui. Também corrigi o lint dele (o `process` e o `console` importados de `node:`).
+**O que existe** (em `assets/base/road-tiles/candidata-pedra-2026-10-05/`): as 17 imagens 64×64, a folha
+`ruas-contato.png` (reta, curva, T, cruzamento e diagonal sobre a grama), o `conferencia.json` (fonte
+periódica: sim) e o `LEIAME.md`.
+**Visto na folha (aberta):** a reta, a curva, o T e o cruzamento emendam. Algumas junções mostram
+costura, porque o recorte por máscara usa offsets diferentes. A diagonal sai em contas soltas, como a
+ponte de hoje.
+**Não entrou no jogo:** o manifesto e `assets/sprites/road/` não mudaram. O aceite pede a conferência
+numa captura de rua em jogo depois da escolha do operador.

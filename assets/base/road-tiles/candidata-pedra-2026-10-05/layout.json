@@ -1,0 +1,8 @@
+{
+  "source": "assets/base/road-tiles/candidata-pedra-2026-10-05/road-material-source.png",
+  "outputDir": "assets/base/road-tiles/candidata-pedra-2026-10-05/sprites",
+  "size": 64,
+  "roadWidth": 34,
+  "previewBackground": "assets/sprites/terrain/grama.png",
+  "preview": "assets/base/road-tiles/candidata-pedra-2026-10-05/preview-mascaras.png"
+}
