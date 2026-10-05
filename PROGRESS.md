@@ -20535,3 +20535,36 @@ captura só da fantasma.
 **Medida:** a suíte inteira deu 285 arquivos e 2 727 testes verdes; o F17 e o F17g saem 0.
 **Não verificado:** não joguei. A suíte longa pode sentir a vila mais espalhada, e fica para o
 fechamento do bloco.
+
+### I-TERRENO-MINAS-PERTO-DA-VILA — carvão, ferro e ouro do lado esquerdo da vila (verificado)
+Decisão do operador: as minas ficam do lado esquerdo da vila atual, no mapa atual, sabendo que os
+saves antigos deixam de carregar.
+**O que mudou:** o próprio gerador (`tools/gerar-mapa.js`, `SERRA_DO_OESTE`) põe uma serra de
+montanha em x 8–13, y 32–38, com os veios na face leste (x 13): carvão em y 32–34, ferro em 35–36 e
+ouro em 37–38. A face fica a 16 tiles do armazém.
+- **Sem sorteio:** a serra entra por último no terreno, e os veios por último nos recursos, sem RNG.
+  Ela fica de fora dos afloramentos sorteados (`daSerra`). Medido contra o mapa anterior: o terreno
+  mudou só nos 42 tiles da serra, e os recursos ganharam só os 7 tiles de veio. Nenhum outro tile
+  mudou.
+- **A semente continua valendo:** o `--conferir` passa. O aceite previa um script à parte e a semente
+  como registro histórico; pelo gerador, a semente segue reproduzindo o arquivo. O `_doc` do mapa cita
+  a serra.
+
+**O lugar é medido:** a primeira versão (x 8–12, y 22–40) derrubou 27 testes de F08, F09, F10,
+F18d-1b e F18e, que trabalham em volta de (10,20) e de (10..16, 39..44). Entre as duas faixas, y 32–38,
+a suíte inteira passa. A abertura (lenhador em 14,31, pedreira em 19,31) não pisa nela.
+**Teste:** `tests/I-TERRENO-MINAS-PERTO-DA-VILA.test.ts` (4) cobre:
+- os três minérios a até 20 tiles do armazém, a oeste;
+- as três minas na face leste: `canPlace` ok, com a serraria no histórico, e cada uma tira do veio
+  dela pelo `step`. São 5 por mina em 3 000 ticks, número da corrida no test-output;
+- o mapa no disco igual ao que o gerador emite, a serra em montanha e os veios tile a tile;
+- o hash do mapa diferente do save anterior (`7a1f4844`).
+
+O save `teste-operador-vila-pronta` foi refeito pelo caminho do teste. A suíte inteira dá 286 arquivos
+e 2 731 testes verdes.
+**Evidência:** o roteiro novo `I-TERRENO-MINAS-PERTO-DA-VILA` puxa uma rua para oeste, na linha 34 (a
+33 cruza a pedra do lajedo). Um carregador vê a serra no tick 200. A captura aberta mostra a face com
+três veios de carvão, dois de ferro e dois de ouro, e o corpo da serra entrando na névoa.
+**Visto, para o operador:** a serra nasce debaixo da névoa, porque o civil vê 9 tiles. Ela aparece
+quando a vila anda para oeste (a pedreira do lajedo já a descobre). O bloco é retangular e de borda
+reta, e dá para arredondar se ele destoar.

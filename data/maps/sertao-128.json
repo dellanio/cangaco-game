@@ -1,23 +1,23 @@
 {
   "id": "sertao-128",
-  "_doc": "Mapa base do sertao. EMITIDO por tools/gerar-mapa.js — nao edite a mao sem apagar a semente ou aceitar que ela vira registro historico. O jogo nunca roda o gerador: le este arquivo. `linhas` e a camada de terreno, um char por tile, na legenda abaixo; `recursos` e a camada ESPARSA da F-T2a, uma lista de tiles [gx,gy] por tipo — QUANTO cada tile rende nao esta aqui, esta em data/resources.json. Duas regioes nascem em grama de proposito: a RESERVA DA VILA (raio 3 em volta de cada tile que a vila inicial ocupa, de terrain.json) e uma moldura de 8 tiles em volta do mapa. A primeira e o que garante que a vila cabe; a segunda, que a borda do mundo nao e intransponivel. Ate a F-D3 a primeira era uma faixa de 72 tiles no quadrante noroeste, e era ela que mantinha agua, mato e pedra fora do alcance da abertura.",
+  "_doc": "Mapa base do sertao. EMITIDO por tools/gerar-mapa.js — nao edite a mao sem apagar a semente ou aceitar que ela vira registro historico. O jogo nunca roda o gerador: le este arquivo. `linhas` e a camada de terreno, um char por tile, na legenda abaixo; `recursos` e a camada ESPARSA da F-T2a, uma lista de tiles [gx,gy] por tipo — QUANTO cada tile rende nao esta aqui, esta em data/resources.json. Duas regioes nascem em grama de proposito: a RESERVA DA VILA (raio 3 em volta de cada tile que a vila inicial ocupa, de terrain.json) e uma moldura de 8 tiles em volta do mapa. A primeira e o que garante que a vila cabe; a segunda, que a borda do mundo nao e intransponivel. Ate a F-D3 a primeira era uma faixa de 72 tiles no quadrante noroeste, e era ela que mantinha agua, mato e pedra fora do alcance da abertura. A serra do oeste (I-TERRENO-MINAS-PERTO-DA-VILA, 2026-10-05) poe carvao, ferro e ouro a 16 tiles do armazem, sem sortear nada.",
   "gerador": "tools/gerar-mapa.js",
   "semente": 20260924,
   "contagemPorTipo": {
-    "grama": 14109,
+    "grama": 14067,
     "campoArado": 140,
     "areia": 1110,
     "agua": 274,
-    "rocha": 298,
-    "montanha": 453
+    "montanha": 495,
+    "rocha": 298
   },
   "contagemDeRecursos": {
     "rock": 265,
     "tree": 350,
     "fish": 274,
-    "coal": 25,
-    "iron_ore": 20,
-    "gold_ore": 11,
+    "coal": 28,
+    "iron_ore": 22,
+    "gold_ore": 13,
     "grapes": 10
   },
   "largura": 128,
@@ -63,13 +63,13 @@
     "gggggggggggggggggggggggggggggggaaggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggccccccggggggggggggg",
     "ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggccgggggggggggggggg",
     "gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg",
-    "gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg",
-    "gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg",
-    "gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg",
-    "ggggggggggggggggggggggggggcccccggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg",
-    "ggggggggggggggggggggggggggcccccggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg",
-    "ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggaaaaaagggggggggggggggggggggggggggggg",
-    "gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggaaaaaaaaaaagggggggggggggggggggggggggggg",
+    "ggggggggmmmmmmgggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg",
+    "ggggggggmmmmmmgggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg",
+    "ggggggggmmmmmmgggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg",
+    "ggggggggmmmmmmggggggggggggcccccggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg",
+    "ggggggggmmmmmmggggggggggggcccccggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg",
+    "ggggggggmmmmmmggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggaaaaaagggggggggggggggggggggggggggggg",
+    "ggggggggmmmmmmgggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggaaaaaaaaaaagggggggggggggggggggggggggggg",
     "ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggaaaaaaaaaaaaaaaagggggggggggggggggggggggggg",
     "ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggaaaaaawwwwwwwwwwaaaaaggggggggggggggggggggggggg",
     "ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggaaaaawwwwwwwwwwwwwwwwaaagggggggggggggggggggggggg",
@@ -284,16 +284,16 @@
       [104,115], [103,115], [102,115], [101,114], [105,116], [106,116], [100,113], [99,112],
       [99,111], [107,116], [108,117], [109,117], [100,89], [100,90], [100,91], [100,92],
       [101,93], [101,94], [102,95], [103,96], [104,96], [98,106], [98,107], [98,108],
-      [98,109]
+      [98,109], [13,32], [13,33], [13,34]
     ],
     "iron_ore": [
       [88,87], [88,86], [88,85], [88,84], [88,88], [89,84], [88,89], [90,84],
       [88,90], [91,84], [114,106], [114,105], [114,104], [114,103], [113,102], [113,101],
-      [112,100], [111,99], [108,98], [109,98]
+      [112,100], [111,99], [108,98], [109,98], [13,35], [13,36]
     ],
     "gold_ore": [
       [94,99], [95,100], [96,101], [96,100], [97,102], [93,98], [90,97], [89,97],
-      [88,96], [87,96], [106,97]
+      [88,96], [87,96], [106,97], [13,37], [13,38]
     ],
     "grapes": [
       [34,35], [35,35], [36,35], [37,35], [38,35], [34,36], [35,36], [36,36],

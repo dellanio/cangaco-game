@@ -261,6 +261,12 @@ function gerar() {
     }
   }
 
+  // --- a serra do oeste: as minas que a abertura alcanca ---------------------
+  // I-TERRENO-MINAS-PERTO-DA-VILA, decisao do operador (2026-10-05): carvao, ferro e
+  // ouro do lado esquerdo da vila, para testar a fundicao sem atravessar o mapa.
+  // Por ultimo e sem sortear nada, como o acude: nao desloca o RNG de nada acima.
+  for (const [gx, gy] of tilesDaSerraDoOeste()) por(gx, gy, 'montanha');
+
   return { largura, altura, grade, rng, ruido };
 }
 
@@ -309,6 +315,37 @@ function faixa({ gx, gy, largura, altura }) {
 /** Centro e raio do lajedo da vila. Ver o cabecalho: e a unica pedra dentro do
  *  quadrante protegido, e existe para que a partida abra com o que cortar. */
 const LAJEDO_DA_VILA = { gx: 24, gy: 31, raio: 2 };
+
+/** I-TERRENO-MINAS-PERTO-DA-VILA — a serra do oeste: um bloco de montanha colado na
+ *  moldura, de `x0` a `x1` e de `y0` a `y1` (inclusive), com os veios na face leste
+ *  (`x1`), cada um num trecho de linhas. A face leste fica a 16 tiles do armazem
+ *  (29,30). O lugar e MEDIDO, como a caixa do acude: a primeira versao (y 22..40)
+ *  derrubou 27 testes de F08, F09, F10, F18d-1b e F18e, que trabalham em (10,20) e
+ *  em volta de (10..16, 39..44). Entre as duas faixas, y 32..38, a suite inteira
+ *  passa. A abertura (lenhador, serraria, pedreira) usa as colunas 14 a 26 e nao
+ *  pisa nela. Autoria, como o lajedo; o rendimento por tile mora em
+ *  `data/resources.json`. */
+const SERRA_DO_OESTE = {
+  x0: 8, x1: 13, y0: 32, y1: 38,
+  veios: [
+    { tipo: 'coal', y0: 32, y1: 34 },
+    { tipo: 'iron_ore', y0: 35, y1: 36 },
+    { tipo: 'gold_ore', y0: 37, y1: 38 },
+  ],
+};
+
+/** Os tiles da serra do oeste. */
+function tilesDaSerraDoOeste() {
+  const tiles = [];
+  for (let gy = SERRA_DO_OESTE.y0; gy <= SERRA_DO_OESTE.y1; gy += 1) {
+    for (let gx = SERRA_DO_OESTE.x0; gx <= SERRA_DO_OESTE.x1; gx += 1) tiles.push([gx, gy]);
+  }
+  return tiles;
+}
+
+function naSerraDoOeste(gx, gy) {
+  return gx >= SERRA_DO_OESTE.x0 && gx <= SERRA_DO_OESTE.x1 && gy >= SERRA_DO_OESTE.y0 && gy <= SERRA_DO_OESTE.y1;
+}
 
 /**
  * F21b - os veios de minerio da serra: os tipos, na ordem, e o teto de cada veio.
@@ -474,6 +511,9 @@ function gerarRecursos({ largura, altura, grade, rng }) {
     return lista;
   };
   const daSerra = (gx, gy) => {
+    // a serra do oeste tem os veios dela, escritos a mao no fim: fora dos afloramentos
+    // sorteados, que assim saem tile por tile os mesmos de antes
+    if (naSerraDoOeste(gx, gy)) return false;
     const tipo = grade[gy][gx];
     if (tipo === 'montanha') return true;
     return tipo === 'rocha' && vizinhos(gx, gy).some(([nx, ny]) => grade[ny][nx] === 'montanha');
@@ -573,6 +613,13 @@ function gerarRecursos({ largura, altura, grade, rng }) {
   // F-CANA-b compara a mancha inteira, para a recusa calada nao a encolher sem ninguem ver.
   for (const [gx, gy] of faixa(CANAVIAL_DA_VILA)) {
     if (grade[gy]?.[gx] === 'grama') por('grapes', gx, gy);
+  }
+
+  // --- os veios da serra do oeste: na face leste, sem sortear -----------------
+  // I-TERRENO-MINAS-PERTO-DA-VILA. Por ultimo, e sem RNG: nada acima muda.
+  for (const { tipo, y0, y1 } of SERRA_DO_OESTE.veios) {
+    conferirQuemColhe(tipo);
+    for (let gy = y0; gy <= y1; gy += 1) por(tipo, SERRA_DO_OESTE.x1, gy);
   }
 
   return recursos;
@@ -753,7 +800,8 @@ function montarArquivo() {
       + `e uma moldura de ${MARGEM_DE_BORDA} tiles em volta do mapa. A primeira e o que garante `
       + 'que a vila cabe; a segunda, que a borda do mundo nao e intransponivel. Ate a F-D3 a '
       + 'primeira era uma faixa de 72 tiles no quadrante noroeste, e era ela que mantinha agua, '
-      + 'mato e pedra fora do alcance da abertura.',
+      + 'mato e pedra fora do alcance da abertura. A serra do oeste (I-TERRENO-MINAS-PERTO-DA-VILA, '
+      + '2026-10-05) poe carvao, ferro e ouro a 16 tiles do armazem, sem sortear nada.',
     gerador: 'tools/gerar-mapa.js',
     semente: SEMENTE,
     contagemPorTipo: contagem,
@@ -819,6 +867,8 @@ module.exports = {
   // conta dele — se o gerador e o teste discordarem, discordam no mesmo lugar.
   RESERVA, tilesDaVila, naVila, naReserva,
   CANAVIAL_DA_VILA, ROCADO_DA_VILA, disco, faixa,
+  // I-TERRENO-MINAS-PERTO-DA-VILA: o teste confere o mapa contra a mesma serra.
+  SERRA_DO_OESTE, tilesDaSerraDoOeste,
   // D-TERRENO-ALTURA: o teste roda o mesmo codigo que grava o relevo.
   montarRelevo, montarArquivoDeRelevo, serializarRelevo, forcarDecliveMaximo, declivesForaDoLimite,
   DIGITOS_DO_RELEVO,
