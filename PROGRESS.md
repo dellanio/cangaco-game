@@ -21157,3 +21157,32 @@ o botão numa chamada só.
 (a bênção e a conversão) são os itens seguintes.
 **Testes que mudaram:** F36 (os mercenários da prefeitura passam a ser os sem `predioQueTreina`), F-SPR
 (29 tipos de unidade), I-TELA-SUBABAS-DO-CONSTRUIR (a Igreja na Vila), F03 e o validador (29 prédios).
+
+### I-COMBATE-BENCAO e I-COMBATE-CONVERTER — os poderes do padre (verificado)
+- **A bênção** (`src/sim/systems/padre.ts`, passiva): o militar a até 8 tiles (euclidiano) de um padre
+  vivo do mesmo lado é abençoado. No acerto contra ele, a defesa vale × 1,2 (o parâmetro novo
+  `multiplicadorDaDefesa` de `chanceDeAcerto`, passado pela luta corpo a corpo). Não acumula: o
+  predicado é "há um padre", e não "quantos";
+- **A conversão** (`ConvertUnit {padre, alvo}`):
+  - o padre anda até 7 tiles do militar inimigo e reza: um intervalo a cada 8 ticks (1,2 s na escala de
+    combate);
+  - do 5º intervalo em diante sorteia 38 % pelo RNG da sim, e o 9º converte sempre;
+  - o convertido passa ao lado do padre, fica `ocioso`, sai da posição da IA, e a comida que o outro
+    lado mandava para ele cai (`liberar 'destino-sumiu'`, como na morte por fome);
+  - o padre fica em recarga (`Unidade.conversaoProntaEm`, 30 s), e sai `unit-converted`;
+  - o alvo que morre ou some faz o padre desistir; o alvo que sai do alcance faz o padre ir atrás; sem
+    caminho, ele desiste, e não trava;
+  - é recusado na paz, com o civil, o aliado e quem não é padre;
+- **A ordem na tela:** com o padre no grupo, o clique direito no inimigo manda `ConvertUnit` para ele, e
+  a tropa ataca (`src/ui/ordem-militar.ts`). O padre não ataca prédio: ele vai até o tile.
+
+**Teste:** `tests/I-COMBATE-PADRE.test.ts` (7) cobre:
+- a bênção: a razão da chance; 8 tiles sim e 9 não; dois padres igual a um; o padre do outro lado não
+  abençoa;
+- a conversão em 40 sementes, sempre entre o 5º e o 9º intervalo, com intervalos diferentes;
+- a troca de lado, a IA e a recarga (recusa `em-recarga`);
+- as recusas e o alvo longe (o padre anda e converte);
+- o determinismo;
+- a ordem do botão direito.
+
+**Ainda não:** o padre desenhado e os poderes na tela (o I-ARTE-PADRE, com o PixelLab gerando).

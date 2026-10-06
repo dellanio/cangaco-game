@@ -300,6 +300,12 @@ export type Command =
       readonly quantidade: number;
     }
   | {
+      /** I-COMBATE-CONVERTER — o padre vai rezar pela conversao do militar inimigo `alvo`. */
+      readonly type: 'ConvertUnit';
+      readonly padre: string;
+      readonly alvo: string;
+    }
+  | {
       /**
        * F36 — contrata um mercenario `tipo` (`units.json: mercenarios`) na Prefeitura
        * `predio`: debita `custoOuro` da gaveta de entrada e a unidade nasce na porta no

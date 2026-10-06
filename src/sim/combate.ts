@@ -108,13 +108,17 @@ export function defesaDoEscudo(alvoTipo: string, projetil: string | null, dados:
 /** A chance de `atacante` acertar `alvo`, pela formula de `combat.json`:
  *  `clamp(attackEfetivo * multiplicadorDirecao / (defence * 100), piso, teto)`. Contra
  *  projetil (F28d), a `defence` soma a do escudo. */
-export function chanceDeAcerto(atacante: Unidade, alvo: Unidade, dados: GameData = gameData): number {
+export function chanceDeAcerto(
+  atacante: Unidade, alvo: Unidade, dados: GameData = gameData,
+  /** I-COMBATE-BENCAO — o multiplicador da defesa do alvo (1 sem bencao; `systems/padre.ts`). */
+  multiplicadorDaDefesa = 1,
+): number {
   const a = defDaTropa(atacante.tipo, dados);
   const d = defDaTropa(alvo.tipo, dados);
   if (a === null || d === null) return 0;
   const attackEfetivo = a.attack + (d.montado ? a.attackVsCavalo : 0);
   const multiplicador = dados.combate.multiplicadorDirecao[ladoDoGolpe(atacante, alvo)];
-  const defesa = d.defence + defesaDoEscudo(alvo.tipo, projetilDe(atacante.tipo, dados), dados);
+  const defesa = (d.defence + defesaDoEscudo(alvo.tipo, projetilDe(atacante.tipo, dados), dados)) * multiplicadorDaDefesa;
   const bruta = (attackEfetivo * multiplicador) / (defesa * 100);
   return Math.min(dados.combate.tetoAcerto, Math.max(dados.combate.pisoAcerto, bruta));
 }

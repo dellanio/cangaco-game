@@ -198,6 +198,13 @@ export type GameEvent =
       readonly motivo: MotivoDeRecusaDeTroca;
     }
   | {
+      readonly type: 'command-rejected';
+      readonly command: 'ConvertUnit';
+      readonly padre: string;
+      readonly alvo: string;
+      readonly motivo: 'padre-inexistente' | 'nao-e-padre' | 'alvo-inexistente' | 'alvo-do-proprio-lado' | 'alvo-nao-militar' | 'em-recarga' | 'em-paz';
+    }
+  | {
       /** F36 — `HireMercenary` recusado; o estado nao mudou. */
       readonly type: 'command-rejected';
       readonly command: 'HireMercenary';
@@ -447,6 +454,14 @@ export type GameEvent =
       readonly type: 'troop-hungry';
       readonly lado: number;
       readonly unidades: number;
+    }
+  | {
+      /** I-COMBATE-CONVERTER — o padre converteu `unidade`, que passou do lado `de` para o `para`. */
+      readonly type: 'unit-converted';
+      readonly padre: string;
+      readonly unidade: string;
+      readonly de: number;
+      readonly para: number;
     }
   | {
       /** I-CLIMA-ESTACAO — a estacao do ano mudou neste tick (`sim/clima.ts`). */
@@ -1395,6 +1410,9 @@ export interface DadosDaFsm {
   readonly cargaRestante?: number;
   /** C-COMBATE-01b — para onde a carga vai (0..7), a frente do lider. */
   readonly cargaDirecao?: number;
+  /** I-COMBATE-CONVERTER — os ticks rezados no intervalo em curso, e quantos intervalos ja passaram. */
+  readonly oracao?: number;
+  readonly intervaloDaOracao?: number;
 }
 
 export interface Unidade {
@@ -1448,6 +1466,8 @@ export interface Unidade {
    * nova do jogador apaga. Fora do `fsmData` de proposito: a luta o reescreve varias vezes.
    */
   readonly retomarMarcha?: TileDeGrid;
+  /** I-COMBATE-CONVERTER — o padre so converte de novo a partir deste tick (a recarga). Ausente: pronto. */
+  readonly conversaoProntaEm?: number;
 }
 
 /**

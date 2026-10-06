@@ -323,6 +323,17 @@ export interface NumerosDaIA {
 }
 
 export interface CombateData {
+  /** I-COMBATE-BENCAO / I-COMBATE-CONVERTER — os poderes do padre, com o tempo ja em ticks. */
+  readonly padre: {
+    readonly raioDaBencao_tiles: number;
+    readonly resistencia: number;
+    readonly alcance_tiles: number;
+    readonly intervaloMinimo: number;
+    readonly intervaloGarantido: number;
+    readonly chancePorIntervalo: number;
+    readonly ticksDoIntervalo: Ticks;
+    readonly ticksDeRecarga: Ticks;
+  };
   readonly formula: string;
   readonly attackEfetivo: string;
   readonly pisoAcerto: number;

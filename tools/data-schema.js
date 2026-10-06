@@ -78,6 +78,11 @@ const CAMPOS_ESCALONADOS = [
     unidade: 'segundos', declaraEscalaEm: 'escala' },
   { arquivo: 'combat', caminho: 'watchtower.recarga_segundos_base',
     unidade: 'segundos', declaraEscalaEm: 'escala' },
+  // I-COMBATE-CONVERTER — o intervalo da oracao e a recarga do padre.
+  { arquivo: 'combat', caminho: 'padre.intervalo_segundos_base',
+    unidade: 'segundos', declaraEscalaEm: 'escala' },
+  { arquivo: 'combat', caminho: 'padre.recarga_segundos_base',
+    unidade: 'segundos', declaraEscalaEm: 'escala' },
   // C2 — a velocidade de cada projetil.
   { arquivo: 'combat', caminho: 'aDistancia.velocidade_tilesPorSegundo_base.flecha',
     unidade: 'tilesPorSegundo', declaraEscalaEm: 'escala' },

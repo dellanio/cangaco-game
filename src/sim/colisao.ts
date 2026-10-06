@@ -59,6 +59,9 @@ export const POSICAO_DO_ESTADO: Readonly<Record<string, 'dentro' | 'fora'>> = {
   indo_lutar: 'fora',
   lutando: 'fora',
   atirando: 'fora',
+  // I-COMBATE-CONVERTER: o padre indo converter e rezando, na rua como quem luta
+  indo_converter: 'fora',
+  convertendo: 'fora',
   indo_atacar: 'fora',
   atacando: 'fora',
 };

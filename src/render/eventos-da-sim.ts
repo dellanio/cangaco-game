@@ -12,7 +12,7 @@ export const EVENTOS_DA_SIM = [
   'tick-advanced', 'command-rejected', 'building-attacked', 'unit-trained', 'task-released', 'unit-fed',
   'task-completed', 'cargo-returned', 'building-completed', 'building-occupied', 'goods-produced',
   'production-order-completed', 'building-demolished', 'vein-exhausted', 'unit-starved', 'unit-struck',
-  'projectile-fired', 'stone-thrown', 'match-ended', 'peace-ended', 'unit-killed', 'troop-hungry', 'season-changed',
+  'projectile-fired', 'stone-thrown', 'match-ended', 'peace-ended', 'unit-killed', 'troop-hungry', 'season-changed', 'unit-converted',
 ] as const satisfies readonly GameEvent['type'][];
 
 type Faltando = Exclude<GameEvent['type'], (typeof EVENTOS_DA_SIM)[number]>;

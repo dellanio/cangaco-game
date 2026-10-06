@@ -19,6 +19,7 @@ import { aplicarMoveUnits, sistemaDaMarcha } from './systems/marcha';
 import { aplicarStormAttack, sistemaDaCarga } from './systems/carga';
 import { aplicarFeedUnits } from './systems/alimentar';
 import { aplicarAttackUnit, sistemaDoCombate } from './systems/combate';
+import { aplicarConvertUnit, sistemaDoPadre } from './systems/padre';
 import { sistemaDaTorre } from './systems/torre';
 import { sistemaDaIA } from './systems/ia';
 import { resultadoDaPartida } from './partida';
@@ -168,6 +169,13 @@ export function step(
         events.push(...resultado.events);
         break;
       }
+      // I-COMBATE-CONVERTER: o padre vai converter o militar inimigo
+      case 'ConvertUnit': {
+        const resultado = aplicarConvertUnit(atual, command, dados);
+        atual = resultado.state;
+        events.push(...resultado.events);
+        break;
+      }
       case 'TrainSoldier': {
         const resultado = aplicarTrainSoldier(atual, command, dados);
         atual = resultado.state;
@@ -235,7 +243,10 @@ export function step(
   const comIA = sistemaDaIA(sistemaDaRegeneracao(noAr.state, tick, dados), dados, tick);
   events.push(...comIA.events);
   // C-COMBATE-01b: a carga depois da marcha e antes da luta, como ela
-  const luta = sistemaDoCombate(sistemaDaCarga(sistemaDaMarcha(comIA.state, dados).state, dados).state, dados);
+  const lutaDaTropa = sistemaDoCombate(sistemaDaCarga(sistemaDaMarcha(comIA.state, dados).state, dados).state, dados);
+  events.push(...lutaDaTropa.events);
+  // I-COMBATE-CONVERTER: o padre anda e reza depois da luta (quem morreu nela nao e convertido)
+  const luta = sistemaDoPadre(lutaDaTropa.state, dados);
   events.push(...luta.events);
   // F28b: a torre atira depois da luta e antes do cerco
   const torre = sistemaDaTorre(luta.state, dados);

@@ -635,6 +635,23 @@ export function loadGameData(raw: RawGameData): GameData {
       paraTicksDeDuracao(raw.combat.cadenciaDeAtaque_segundos_base, 'segundos', escalaCombate, tickHz),
     ),
     aDistancia: raw.combat.aDistancia,
+    // I-COMBATE-BENCAO / I-COMBATE-CONVERTER: o intervalo e a recarga do padre em ticks, aqui
+    padre: {
+      raioDaBencao_tiles: raw.combat.padre.raioDaBencao_tiles,
+      resistencia: raw.combat.padre.resistencia,
+      alcance_tiles: raw.combat.padre.alcance_tiles,
+      intervaloMinimo: raw.combat.padre.intervaloMinimo,
+      intervaloGarantido: raw.combat.padre.intervaloGarantido,
+      chancePorIntervalo: raw.combat.padre.chancePorIntervalo,
+      ticksDoIntervalo: registrar(
+        'combat.padre.intervalo_segundos_base', raw.combat.escala, raw.combat.padre.intervalo_segundos_base, 'segundos',
+        paraTicksDeDuracao(raw.combat.padre.intervalo_segundos_base, 'segundos', escalaCombate, tickHz),
+      ),
+      ticksDeRecarga: registrar(
+        'combat.padre.recarga_segundos_base', raw.combat.escala, raw.combat.padre.recarga_segundos_base, 'segundos',
+        paraTicksDeDuracao(raw.combat.padre.recarga_segundos_base, 'segundos', escalaCombate, tickHz),
+      ),
+    },
     stormAttack: raw.combat.stormAttack,
     ataqueAPredio: {
       danoCorpoACorpo: raw.combat.ataqueAPredio.danoCorpoACorpo,

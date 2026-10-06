@@ -20,6 +20,7 @@ import { hpDaUnidade, hpMaximoDoTipo } from '../vida';
 import { nextFloat } from '../rng';
 import { comProjetil, vooEmTicks } from '../projeteis';
 import { alvosDeAproximacao } from '../aproximacao';
+import { multiplicadorDaDefesa } from './padre';
 import { buscarCaminho, passoAndavel } from '../pathfinding';
 import { andar, comUnidade, noTile, ocioso } from '../units/movimento';
 import { FSM_EM_CARGA, emCargaIncontrolavel } from '../carga';
@@ -153,7 +154,7 @@ function passoLutando(
     return { state: comUnidade(state, { ...virado, fsmData: { alvoUnidade: alvo.id, recarga } }), events: [] };
   }
   const sorteio = nextFloat(state.rng);
-  const acertou = sorteio.value < chanceDeAcerto(virado, alvo, dados);
+  const acertou = sorteio.value < chanceDeAcerto(virado, alvo, dados, multiplicadorDaDefesa(state, alvo, dados));
   const hpAntes = hpDaUnidade(alvo, dados) ?? 0;
   const hp = acertou ? hpAntes - 1 : hpAntes;
   const golpe: GameEvent = { type: 'unit-struck', atacante: u.id, alvo: alvo.id, acertou, hp };

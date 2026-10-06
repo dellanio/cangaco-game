@@ -74,6 +74,17 @@
     "colunasMax": "tamanhoDoGrupo",
     "_doc": "Homens por fileira vai de 1 ao tamanho do grupo, como no KaM (KM_UnitGroup.pas:661-666). Nao ha tamanho recomendado: o '9-15' saiu (operador, 2026-09-28). O padrao da IA do KaM, 9 homens em 3 por fileira (KM_AIDefensePos.pas:223-224), e da IA, nao regra."
   },
+  "padre": {
+    "_doc": "I-COMBATE-BENCAO e I-COMBATE-CONVERTER (2026-10-06; pesquisa em docs/pesquisas/2026-10-05-igreja-e-padre.md), [proposta]. A bencao: o militar a ate `raioDaBencao_tiles` (euclidiano) de um padre do mesmo lado tem a defesa x (1 + `resistencia`) no acerto contra ele; nao acumula. A conversao: o padre reza a ate `alcance_tiles` do alvo, em intervalos de `intervalo_segundos_base`; do `intervaloMinimo` em diante sorteia `chancePorIntervalo`, e o `intervaloGarantido` converte sempre (o monge do AoE2: 1,2 s, do 5o ao 9o, 38 %). Depois de converter, o padre espera `recarga_segundos_base`.",
+    "raioDaBencao_tiles": 8,
+    "resistencia": 0.2,
+    "alcance_tiles": 7,
+    "intervalo_segundos_base": 1.2,
+    "intervaloMinimo": 5,
+    "intervaloGarantido": 9,
+    "chancePorIntervalo": 0.38,
+    "recarga_segundos_base": 30
+  },
   "ataqueAPredio": {
     "danoCorpoACorpo": 2,
     "danoProjetil": 1,
