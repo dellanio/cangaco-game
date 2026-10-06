@@ -27,8 +27,11 @@ export interface ChaveDasDicas {
 
 export function montarOpcoesDeSom(
   inicial: PreferenciasDeSom, aoMudar: (p: PreferenciasDeSom) => void, dicas: ChaveDasDicas | null = null,
+  /** I-TELA-TRILHA-SONORA — a preferencia de agora: o player da trilha tambem a muda, e a caixa a rele ao abrir. */
+  atual: (() => PreferenciasDeSom) | null = null,
 ): OpcoesDeSom {
   let prefs = inicial;
+  const entradas: HTMLInputElement[] = [];
   const raiz = document.createElement('section');
   raiz.id = 'opcoes-de-som';
   raiz.setAttribute('role', 'dialog');
@@ -51,6 +54,7 @@ export function montarOpcoesDeSom(
     entrada.step = '1';
     entrada.dataset.volume = campo;
     entrada.value = String(Math.round(prefs[campo] * 100));
+    entradas.push(entrada);
     entrada.addEventListener('input', () => {
       prefs = { ...prefs, [campo]: Number(entrada.value) / 100 };
       aoMudar(prefs);
@@ -106,6 +110,14 @@ export function montarOpcoesDeSom(
 
   let aberta = false;
   function mostrar(valor: boolean): void {
+    if (valor) {
+      prefs = atual === null ? prefs : atual();
+      for (const entrada of entradas) {
+        const campo = entrada.dataset.volume as 'geral' | Canal;
+        entrada.value = String(Math.round(prefs[campo] * 100));
+      }
+      mudo.checked = prefs.mudo;
+    }
     aberta = valor;
     raiz.hidden = !valor;
   }

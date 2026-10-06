@@ -71,7 +71,8 @@ import { criarEscaramuca } from './sim/cenario';
 import type { Command } from './sim/commands';
 import { criarCamadaDeSom, urlsDosSons } from './render/som';
 import type { SonsDoManifesto, TabelaDeSom, ContadoresDeSom } from './render/som';
-import { criarTocadorDeLacoDoNavegador, criarTocadorDeVozesDoNavegador, criarTocadorDoNavegador } from './render/tocador-de-som';
+import { criarTocadorDeFaixasDoNavegador, criarTocadorDeLacoDoNavegador, criarTocadorDeVozesDoNavegador, criarTocadorDoNavegador } from './render/tocador-de-som';
+import { montarPlayerDaTrilha } from './ui/player-da-trilha';
 import { criarSomDoTrabalho } from './render/som-do-trabalho';
 import type { ContadoresDoTrabalho, DadosDoTrabalho } from './render/som-do-trabalho';
 import { criarFundoSonoro } from './render/fundo-sonoro';
@@ -90,7 +91,10 @@ declare global {
   interface Window {
     __cangacoPartida?: { estadoSerializado(): string };
     /** H-TELA-CAMADA-DE-SOM — HARNESS: os contadores da camada de som, para o roteiro. */
-    __cangacoSom?: { contadores(): ContadoresDeSom & { readonly fundo: ContadoresDoFundo; readonly trabalho: ContadoresDoTrabalho } };
+    __cangacoSom?: {
+      contadores(): ContadoresDeSom & { readonly fundo: ContadoresDoFundo; readonly trabalho: ContadoresDoTrabalho };
+      trilha(): Record<string, { readonly tocando: boolean; readonly tempo: number; readonly volume: number }>;
+    };
   }
 }
 
@@ -114,7 +118,12 @@ export function iniciarPartida(
   const jornal = montarJornal(configDoJornal as ConfigDoJornal, gameData.tempo.tickMs);
   // H-TELA-CAMADA-DE-SOM — o som le os eventos de cada passo e toca no fim do quadro. O arquivo
   // vem do manifesto (secao `sons`) pela URL do bundler; sem arquivo, o id e silencio.
-  const urlsDeSom = urlsDosSons((manifestoJson as unknown as { sons?: SonsDoManifesto }).sons, urlsDeArquivosDeSom);
+  const urlsDeSom = {
+    ...urlsDosSons((manifestoJson as unknown as { sons?: SonsDoManifesto }).sons, urlsDeArquivosDeSom),
+    // I-TELA-TRILHA-SONORA: as faixas da trilha, da secao propria do manifesto
+    ...urlsDosSons((manifestoJson as unknown as { trilha?: SonsDoManifesto }).trilha, urlsDeArquivosDeSom),
+  };
+  const tocadorDaTrilha = criarTocadorDeFaixasDoNavegador(urlsDeSom);
   const tabela = tabelaDeSom as TabelaDeSom;
   const volumeDoSom = (id: string): number =>
     (preferenciasDeSom === null ? 1 : volumeEfetivo(preferenciasDeSom.atual, canalDoSom(tabela.sons, id)));
@@ -124,10 +133,19 @@ export function iniciarPartida(
     dados: tabelaDeSom as DadosDoFundo,
     disponiveis: new Set(Object.keys(urlsDeSom)),
     tocador: criarTocadorDeLacoDoNavegador(urlsDeSom),
+    // I-TELA-TRILHA-SONORA: a playlist na camada da paz
+    tocadorDaTrilha,
     volume: volumeDoSom,
     pedir: (id, tile) => { som.pedir(id, tile); },
     tickMs: gameData.tempo.tickMs,
   });
+  // I-TELA-TRILHA-SONORA — o player da trilha na aba Opcoes: o nome, pausar, passar e os volumes
+  const abaDeOpcoes = document.getElementById('opcoes');
+  const player = abaDeOpcoes === null || preferenciasDeSom === null ? null : montarPlayerDaTrilha(abaDeOpcoes, {
+    estado: () => fundo.contadores().trilha,
+    passar: () => { fundo.passarFaixa(); },
+    alternarPausa: () => { fundo.alternarPausaDaTrilha(); },
+  }, preferenciasDeSom);
   // H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA — os lacos de trabalho (a obra, a estrada, a pedra), do
   // estado da unidade, com lugar e teto de vozes
   const trabalho = criarSomDoTrabalho({
@@ -448,6 +466,7 @@ export function iniciarPartida(
     // H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA: o som com lugar cai com a distancia ao centro da camera
     const centro = vista === null ? null : { gx: (vista.x0 + vista.x1) / 2, gy: (vista.y0 + vista.y1) / 2 };
     fundo.quadro(agoraMs, sessao.estado, vista);
+    player?.atualizar();
     som.quadro(centro);
     trabalho.quadro(sessao.estado, centro);
     aviso.atualizar(laco.pausado, laco.velocidade);
@@ -458,6 +477,10 @@ export function iniciarPartida(
   // E-TELA-MENU-INICIAL — HARNESS, como o `__cangaco` do render: o estado serializado, para o
   // roteiro comparar a escaramuca do menu com a do `?escaramuca` no tick 0. Nao usar em jogo.
   window.__cangacoPartida = { estadoSerializado: () => JSON.stringify(sessao.estado) };
-  window.__cangacoSom = { contadores: () => ({ ...som.contadores(), fundo: fundo.contadores(), trabalho: trabalho.contadores() }) };
+  window.__cangacoSom = {
+    contadores: () => ({ ...som.contadores(), fundo: fundo.contadores(), trabalho: trabalho.contadores() }),
+    // I-TELA-TRILHA-SONORA: o que o elemento de cada faixa esta fazendo (tocando, tempo, volume)
+    trilha: () => tocadorDaTrilha.inspecionar(),
+  };
 
 }

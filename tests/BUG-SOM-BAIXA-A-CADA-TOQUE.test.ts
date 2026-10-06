@@ -62,7 +62,7 @@ describe('BUG-SOM-BAIXA-A-CADA-TOQUE', () => {
     let relogio = 0;
     const lacos = criarLacos((url) => {
       criados.push(url);
-      const a = { loop: false, volume: 1, paused: true, play: async () => { plays.push(url); a.paused = false; }, pause: () => { a.paused = true; } };
+      const a = { loop: false, volume: 1, currentTime: 0, paused: true, addEventListener: () => undefined, play: async () => { plays.push(url); a.paused = false; }, pause: () => { a.paused = true; } };
       return a;
     }, () => relogio);
     for (let i = 0; i < 10; i++) {

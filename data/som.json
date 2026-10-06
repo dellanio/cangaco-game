@@ -45,6 +45,9 @@
     "ambient-cicada": { "canal": "ambiente", "tetoPorQuadro": 1 },
     "inn-bell": { "canal": "ambiente", "tetoPorQuadro": 1 },
     "music-peace": { "canal": "musica", "tetoPorQuadro": 1 },
+    "music-pianco-01": { "canal": "musica", "tetoPorQuadro": 1 },
+    "music-pianco-02": { "canal": "musica", "tetoPorQuadro": 1 },
+    "music-pianco-03": { "canal": "musica", "tetoPorQuadro": 1 },
     "music-combat": { "canal": "musica", "tetoPorQuadro": 1 }
   },
   "_docDistancia": "H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA. Todo som com lugar (os eventos de predio e de unidade, o sino da Bodega, os sons de trabalho) cai com a distancia, em tiles, entre o lugar e o centro da camera: cheio no centro, zero em `raioTiles` e alem (src/render/som.ts, volumeNaDistancia). Fora do raio nao toca, e o laco que tocava para. O som sem lugar (fim da paz, vitoria, derrota, recusa, a rua, o ambiente, a musica) nao muda. Numero de TELA, sem leitor na sim.",
@@ -63,6 +66,8 @@
   },
   "_docMusica": "H-TELA-AMBIENTE-E-MUSICA. A faixa sai do estado: `combate` enquanto houver luta (golpe, tiro, ataque a predio) a ate `raioDoCombateTiles` de um predio do jogador, e por `segundosDeCombateDepoisDaLuta` (segundos de JOGO, contados em ticks) depois da ultima; `paz` no resto, inclusive na paz da escaramuca e na luta longe da vila; nenhuma depois do fim da partida. A troca de faixa e uma passagem de `transicaoSegundos` (relogio de parede): a que sai desce enquanto a que entra sobe, sem corte.",
   "musica": {
+    "_docPlaylist": "I-TELA-TRILHA-SONORA (2026-10-06). A trilha: as faixas na ordem, da secao `trilha` do manifesto. Presente e nao vazia, ela e a camada da paz no lugar de `paz`: comeca pela primeira, passa para a seguinte quando uma termina, e da ultima volta a primeira. O jogador pausa e passa na aba Opcoes.",
+    "playlist": ["music-pianco-01", "music-pianco-02", "music-pianco-03"],
     "paz": "music-peace",
     "combate": "music-combat",
     "raioDoCombateTiles": 16,

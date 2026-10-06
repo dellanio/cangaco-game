@@ -54,9 +54,12 @@ describe('H-ARTE-SONS-CANDIDATOS — a lista', () => {
   it('(a) todo id do data/som.json tem linha com candidato', () => {
     // A tabela de eventos e o data/som.json (H-TELA-CAMADA-DE-SOM): todo id dele tem linha aqui.
     const ids = new Set(linhas.map((l) => l.id));
-    const som = JSON.parse(readFileSync('data/som.json', 'utf8')) as { sons: Record<string, unknown> };
+    const som = JSON.parse(readFileSync('data/som.json', 'utf8')) as { sons: Record<string, unknown>; musica: { playlist?: string[] } };
     expect(Object.keys(som.sons).length).toBeGreaterThan(0);
-    const faltam = Object.keys(som.sons).filter((id) => !id.startsWith('_') && !ids.has(id));
+    // I-TELA-TRILHA-SONORA (2026-10-06): as faixas da trilha nao vem do banco de candidatos, vem do
+    // operador; a regra delas e a da secao `trilha` do manifesto (tools/data-rules.js validarSom)
+    const daTrilha = new Set(som.musica.playlist ?? []);
+    const faltam = Object.keys(som.sons).filter((id) => !id.startsWith('_') && !ids.has(id) && !daTrilha.has(id));
     expect(faltam).toEqual([]);
     gravarEvidencia('H-ARTE-SONS-CANDIDATOS', {
       sons: linhas.length,

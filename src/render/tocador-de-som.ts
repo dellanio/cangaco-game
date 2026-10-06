@@ -7,7 +7,7 @@
  * promessa e engolida aqui, para nao virar erro de console.
  */
 import type { Tocador } from './som';
-import type { TocadorDeLaco } from './fundo-sonoro';
+import type { TocadorDeFaixa, TocadorDeLaco } from './fundo-sonoro';
 import type { TocadorDeVozes } from './som-do-trabalho';
 
 /** BUG-SOM-BAIXA-A-CADA-TOQUE — o pedaco do Web Audio que o tocador usa, para o teste injetar um falso. */
@@ -80,7 +80,9 @@ export function criarTocadorDoNavegador(urls: Readonly<Record<string, string>>):
 export interface AudioDeLaco {
   loop: boolean;
   volume: number;
+  currentTime: number;
   readonly paused: boolean;
+  addEventListener(tipo: 'ended', fn: () => void): void;
   play(): Promise<void>;
   pause(): void;
 }
@@ -92,10 +94,19 @@ export interface AudioDeLaco {
  * `tocar` da mesma chave o retoma. Antes, `parar` jogava o elemento fora e cada volta criava um novo,
  * que buscava o arquivo de novo (a voz da pedreira baixou 4 vezes em 60 s, medido no roteiro).
  */
-export function criarLacos(criarAudio: (url: string) => AudioDeLaco, agora: () => number): {
+export function criarLacos(
+  criarAudio: (url: string) => AudioDeLaco, agora: () => number,
+  /** I-TELA-TRILHA-SONORA — a faixa da trilha toca uma vez (`repetir` falso) e avisa o fim. */
+  opcoes: { readonly repetir?: boolean; readonly aoTerminar?: (chave: string) => void } = {},
+): {
   tocar(chave: string, url: string, volume: number): void;
   parar(chave: string): void;
+  /** Para e volta ao comeco: o proximo `tocar` toca do inicio. */
+  reiniciar(chave: string): void;
+  /** O que cada elemento esta fazendo, para o roteiro (a ponte de depuracao). */
+  inspecionar(): Record<string, { readonly tocando: boolean; readonly tempo: number; readonly volume: number }>;
 } {
+  const repetir = opcoes.repetir ?? true;
   const lacos = new Map<string, { readonly audio: AudioDeLaco; tentativa: number; ativo: boolean }>();
   function tentar(item: { readonly audio: AudioDeLaco; tentativa: number }): void {
     item.tentativa = agora();
@@ -106,7 +117,9 @@ export function criarLacos(criarAudio: (url: string) => AudioDeLaco, agora: () =
       let item = lacos.get(chave);
       if (item === undefined) {
         const audio = criarAudio(url);
-        audio.loop = true;
+        audio.loop = repetir;
+        const aoTerminar = opcoes.aoTerminar;
+        if (aoTerminar !== undefined) audio.addEventListener('ended', () => { aoTerminar(chave); });
         item = { audio, tentativa: 0, ativo: true };
         lacos.set(chave, item);
         tentar(item);
@@ -124,6 +137,39 @@ export function criarLacos(criarAudio: (url: string) => AudioDeLaco, agora: () =
       item.audio.pause();
       item.ativo = false;
     },
+    reiniciar(chave) {
+      const item = lacos.get(chave);
+      if (item === undefined) return;
+      item.audio.pause();
+      item.audio.currentTime = 0;
+      item.ativo = false;
+    },
+    inspecionar() {
+      const r: Record<string, { tocando: boolean; tempo: number; volume: number }> = {};
+      for (const [chave, item] of lacos) r[chave] = { tocando: !item.audio.paused, tempo: item.audio.currentTime, volume: item.audio.volume };
+      return r;
+    },
+  };
+}
+
+/**
+ * I-TELA-TRILHA-SONORA — o tocador das faixas da trilha: uma faixa por id, sem laco, e o fim dela
+ * avisa quem registrou em `quandoTerminar` (o fundo sonoro, que passa para a seguinte).
+ */
+export function criarTocadorDeFaixasDoNavegador(urls: Readonly<Record<string, string>>): TocadorDeFaixa & {
+  inspecionar(): Record<string, { readonly tocando: boolean; readonly tempo: number; readonly volume: number }>;
+} {
+  let aoTerminar: (id: string) => void = () => undefined;
+  const lacos = criarLacos(audioDoNavegador, agoraDoNavegador, { repetir: false, aoTerminar: (id) => { aoTerminar(id); } });
+  return {
+    tocar(id, volume) {
+      const url = urls[id];
+      if (url !== undefined) lacos.tocar(id, url, volume);
+    },
+    parar(id) { lacos.parar(id); },
+    reiniciar(id) { lacos.reiniciar(id); },
+    quandoTerminar(fn) { aoTerminar = fn; },
+    inspecionar() { return lacos.inspecionar(); },
   };
 }
 

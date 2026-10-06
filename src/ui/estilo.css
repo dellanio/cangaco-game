@@ -1205,3 +1205,16 @@ body[data-menu] #ajuda { z-index: 30; }
   background: transparent url('../../assets/sprites/ui/menu/rodape-sol.png') center / 100% 100% no-repeat;
 }
 #marca::before, #marca::after { content: none; }
+
+/* I-TELA-TRILHA-SONORA — o player da trilha, no alto da aba Opcoes */
+#player-da-trilha { display: flex; flex-direction: column; gap: 6px; padding: 6px; border: 2px solid #8b5a35; border-radius: 4px; background: rgba(255, 246, 222, 0.55); }
+#player-da-trilha[hidden] { display: none; }
+#player-da-trilha h2 { margin: 0; font: 13px/1.1 var(--fonte-display); color: #6b2412; text-transform: none; }
+#player-da-trilha h3 { margin: 4px 0 0; font: 11px/1.1 var(--fonte-display); color: #6b2412; }
+#player-da-trilha .faixa { margin: 0; font-size: 12px; font-style: italic; color: #3a2416; }
+#player-da-trilha .botoes { display: flex; gap: 6px; }
+#player-da-trilha .botoes button { min-width: 40px; height: 30px; padding: 0 8px; font-size: 16px; line-height: 1; }
+#player-da-trilha .botoes button[aria-pressed="true"] { background: #f6d888; border-color: #e8a320; }
+#player-da-trilha .campo { display: grid; grid-template-columns: 62px 1fr; align-items: center; gap: 6px; font-size: 11px; }
+#player-da-trilha .campo.mudo { grid-template-columns: auto 1fr; }
+#player-da-trilha input[type="range"] { width: 100%; min-width: 0; }

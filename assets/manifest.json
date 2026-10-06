@@ -4341,6 +4341,36 @@
       }
     }
   },
+  "trilha": {
+    "_doc": "I-TELA-TRILHA-SONORA. As faixas da trilha sonora (data/som.json musica.playlist), entregues pelo operador. Fora de `sons` de proposito: a regra de `sons` (so CC0, de Freesound ou OpenGameArt, aprovado em docs/sons-candidatos.md) nao muda; a trilha tem a regra dela (tools/data-rules.js validarSom).",
+    "music-pianco-01": {
+      "arquivo": "sons/trilha/music-pianco-01.mp3",
+      "base": "base/trilha/music_pianco_01.mp3",
+      "licenca": "do operador; entregue por ele para a trilha do jogo em 2026-10-06 (licenca a confirmar)",
+      "origem": "entregue pelo operador: D:/projetos-pessoal/cangaco-game-candidatos/sound/music_pianco_01.mp3",
+      "duracao": 185.063,
+      "recorte": null,
+      "nota": "O derivado e o original reconvertido para mp3 128 kbps 44,1 kHz sem metadados (ffmpeg), para nao ser a base byte a byte (tools/conferir-dist recusa arquivo de assets/base no build)."
+    },
+    "music-pianco-02": {
+      "arquivo": "sons/trilha/music-pianco-02.mp3",
+      "base": "base/trilha/music_pianco_02.mp3",
+      "licenca": "do operador; entregue por ele para a trilha do jogo em 2026-10-06 (licenca a confirmar)",
+      "origem": "entregue pelo operador: D:/projetos-pessoal/cangaco-game-candidatos/sound/music_pianco_02.mp3",
+      "duracao": 157.989,
+      "recorte": null,
+      "nota": "O derivado e o original reconvertido para mp3 128 kbps 44,1 kHz sem metadados (ffmpeg), para nao ser a base byte a byte (tools/conferir-dist recusa arquivo de assets/base no build)."
+    },
+    "music-pianco-03": {
+      "arquivo": "sons/trilha/music-pianco-03.mp3",
+      "base": "base/trilha/music_pianco_03.mp3",
+      "licenca": "do operador; entregue por ele para a trilha do jogo em 2026-10-06 (licenca a confirmar)",
+      "origem": "entregue pelo operador: D:/projetos-pessoal/cangaco-game-candidatos/sound/music_pianco_03.mp3",
+      "duracao": 175.148,
+      "recorte": null,
+      "nota": "O derivado e o original reconvertido para mp3 128 kbps 44,1 kHz sem metadados (ffmpeg), para nao ser a base byte a byte (tools/conferir-dist recusa arquivo de assets/base no build)."
+    }
+  },
   "sons": {
     "_doc": "H-ARTE-SONS-APROVADOS. Os sons aprovados pelo operador em docs/sons-candidatos.md, gerados por tools/baixar-sons.js. `arquivo` e o derivado que o jogo toca (relativo a esta pasta); `base` o original baixado (registro, fora do build); `origem` a pagina do som, onde a licenca foi conferida; `recorte` o que foi tirado do original (null = inteiro, so convertido para mp3 128 kbps).",
     "blueprint-placed": {

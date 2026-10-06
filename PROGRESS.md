@@ -20944,3 +20944,45 @@ contínuo, sem costura.
 - as rachaduras finas espalhadas são a camada de detalhes que já existia, e não deste item.
 
 Se o solo for aprovado, as margens são o próximo passo.
+
+### I-TELA-TRILHA-SONORA — a trilha sonora em playlist, com o player na aba Opções (verificado)
+**Pedido do operador (2026-10-06), em três mensagens:** uma playlist que começa pela primeira faixa e
+já toca no jogo. Depois a segunda e a terceira faixa, e a possibilidade de passar a música, pausar e
+controlar os volumes.
+**Como (só tela e dado; a sim não muda):**
+- **a playlist** (`data/som.json` `musica.playlist`: 01, 02, 03) é a camada da paz no lugar do
+  `music-peace`, que não tinha arquivo e era silêncio. Ela começa pela primeira, o fim de uma (`ended`,
+  sem laço) passa para a seguinte, e da última volta à primeira. O combate continua por cima, com a
+  passagem de hoje. A regra pura é `proximaFaixa`/`passarFaixa` em `src/render/fundo-sonoro.ts`;
+- **o tocador:** `criarTocadorDeFaixasDoNavegador`, no mesmo `criarLacos` do BUG-SOM, sem laço, com o
+  `reiniciar` e o aviso de fim;
+- **"já começa tocando":** a faixa pede para tocar desde o primeiro quadro. O navegador só libera som
+  depois de um gesto, e o clique em "Nova partida" já é o gesto;
+- **o player** (`src/ui/player-da-trilha.ts`), no alto da aba Opções da barra:
+  - "Tocando: Piancó, nº 1", com ⏸/▶ para pausar e continuar, e ⏭ para a próxima;
+  - os volumes (geral, efeitos, ambiente, música) e o "Sem som". Eles usam a mesma preferência da caixa
+    de opções de som, que passou a relê-la ao abrir;
+  - a pausa do jogador guarda o ponto da faixa, e passar volta a faixa de antes ao começo;
+- **os arquivos:** os originais do operador estão em `assets/base/trilha/`. Os derivados em
+  `assets/sons/trilha/` foram reconvertidos para mp3 de 128 kbps sem metadados, para não serem a base
+  byte a byte (o `conferir-dist` recusa). Eles ficam na seção própria `trilha` do manifesto: a regra
+  CC0 de `sons` não mudou, e a trilha tem a regra dela no `validate:data`.
+
+**Teste:** `tests/I-TELA-TRILHA-SONORA.test.ts` (5) cobre:
+- a regra pura;
+- a playlist do dado;
+- o fundo sonoro com o tocador falso (toca a da vez, o fim avança 01 → 02 → 03 → 01, e o fim de outra
+  faixa não mexe);
+- pausar, continuar e passar, inclusive passar pausado;
+- o validador (a playlist vazia, a faixa fora da trilha, a faixa sem origem).
+
+Ajustado: `H-ARTE-SONS-CANDIDATOS` deixa de exigir linha de candidato para as faixas da trilha, que
+vêm do operador.
+**Evidência:** o roteiro novo `I-TELA-TRILHA-SONORA` sai 0, com o jogo andando. Ele confere:
+- a faixa 01 tocando, com o tempo andando;
+- o ⏭ passando para a 02 e parando a 01;
+- o ⏸ pausando, e o ▶ retomando do ponto;
+- o deslizador da música baixando o volume da faixa.
+
+A captura do player foi aberta.
+**Pergunta (em aberto):** a licença das faixas está registrada como "do operador, a confirmar".

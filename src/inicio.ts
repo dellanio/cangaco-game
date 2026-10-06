@@ -46,7 +46,7 @@ function somDaPagina(): { readonly preferencias: PreferenciasVivas; readonly opc
   som = {
     preferencias,
     dicas,
-    opcoes: montarOpcoesDeSom(preferencias.atual, (p) => { preferencias.mudar(p); }, { ligadas: dicas.atual.ligadas, aoMudar: (l) => { dicas.ligar(l); } }),
+    opcoes: montarOpcoesDeSom(preferencias.atual, (p) => { preferencias.mudar(p); }, { ligadas: dicas.atual.ligadas, aoMudar: (l) => { dicas.ligar(l); } }, () => preferencias.atual),
   };
   return som;
 }

@@ -500,6 +500,16 @@
     "vitoriaDesc": "O inimigo perdeu o armazém, a escola, o quartel e todas as tropas.",
     "derrotaDesc": "Você perdeu o armazém, a escola, o quartel e todas as tropas."
   },
+  "trilha": {
+    "_doc": "I-TELA-TRILHA-SONORA. O player da trilha na aba Opcoes (src/ui/player-da-trilha.ts): o nome de cada faixa (a chave e o id de data/som.json musica.playlist) e os rotulos.",
+    "titulo": "Trilha sonora",
+    "tocando": "Tocando",
+    "pausar": "Pausar a música",
+    "continuar": "Continuar a música",
+    "passar": "Próxima música",
+    "volumes": "Volumes",
+    "faixas": { "music-pianco-01": "Piancó, nº 1", "music-pianco-02": "Piancó, nº 2", "music-pianco-03": "Piancó, nº 3" }
+  },
   "jornal": {
     "_doc": "I-TELA-JORNAL. O jornal das noticias importantes (src/ui/jornal.ts). `noticias` tem uma entrada por chave de data/jornal.json eventos; `{n}` vira o numero do evento (a contagem da tropa).",
     "nome": "O Correio do Piancó",

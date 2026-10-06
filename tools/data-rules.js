@@ -2022,6 +2022,29 @@ function validarSom(som, erros, opcoes = {}) {
       if (!(typeof musica[campo] === 'number' && musica[campo] > 0)) e(`musica.${campo} precisa ser > 0`);
     }
     if (!(typeof musica.transicaoSegundos === 'number' && musica.transicaoSegundos > 0)) e('musica.transicaoSegundos precisa ser > 0: a troca de faixa nao corta');
+    // I-TELA-TRILHA-SONORA: a playlist, se existe, nao e vazia, e cada faixa e do canal musica e esta na
+    // secao `trilha` do manifesto, com o arquivo em sons/trilha/, a base, a licenca e a origem
+    if (musica.playlist !== undefined) {
+      // o manifesto injetado pelo teste da regra de `sons` nao traz a trilha: ai vale a do manifesto de verdade
+      const fonte = manifesto && manifesto.trilha ? manifesto : manifestoDeAssets;
+      const trilha = fonte && fonte.trilha && typeof fonte.trilha === 'object' ? fonte.trilha : {};
+      if (!Array.isArray(musica.playlist) || musica.playlist.length === 0) {
+        e('musica.playlist precisa ser uma lista nao vazia de faixas');
+      } else {
+        for (const id of musica.playlist) {
+          doCanal(id, 'musica', 'musica.playlist');
+          const f = trilha[id];
+          if (!f || typeof f !== 'object') { e(`musica.playlist: a faixa '${id}' nao esta na secao trilha do manifesto`); continue; }
+          if (typeof f.arquivo !== 'string' || f.arquivo !== `sons/trilha/${id}.mp3`) e(`manifesto, faixa '${id}': arquivo precisa ser sons/trilha/<id>.mp3`);
+          for (const campo of ['base', 'licenca', 'origem']) {
+            if (typeof f[campo] !== 'string' || f[campo].length === 0) e(`manifesto, faixa '${id}': falta ${campo}`);
+          }
+        }
+        for (const id of Object.keys(trilha)) {
+          if (!id.startsWith('_') && !musica.playlist.includes(id)) e(`o manifesto tem a faixa '${id}', que a playlist nao toca`);
+        }
+      }
+    }
   }
   const doManifesto = manifesto && manifesto.sons && typeof manifesto.sons === 'object' ? manifesto.sons : {};
   for (const [id, def] of Object.entries(doManifesto)) {

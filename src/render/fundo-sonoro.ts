@@ -24,6 +24,9 @@ export interface DadosDoFundo {
   };
   readonly musica: {
     readonly paz: string;
+    /** I-TELA-TRILHA-SONORA — as faixas da trilha, na ordem; presente e nao vazia, ela e a camada da
+     *  paz no lugar de `paz`. */
+    readonly playlist?: readonly string[];
     readonly combate: string;
     readonly raioDoCombateTiles: number;
     readonly segundosDeCombateDepoisDaLuta: number;
@@ -122,6 +125,32 @@ export interface TocadorDeLaco {
   parar(id: string): void;
 }
 
+/** I-TELA-TRILHA-SONORA — quem toca as faixas da trilha: sem laco; `parar` guarda o ponto, `reiniciar`
+ *  volta ao comeco, e o fim de uma faixa chama `quandoTerminar`. */
+export interface TocadorDeFaixa extends TocadorDeLaco {
+  reiniciar(id: string): void;
+  quandoTerminar(fn: (id: string) => void): void;
+}
+
+/** I-TELA-TRILHA-SONORA — o player: a faixa da vez (o indice na playlist) e a pausa do jogador. */
+export interface EstadoDaTrilha {
+  readonly indice: number;
+  readonly pausada: boolean;
+}
+
+/** A faixa depois da `indice`, numa playlist de `n`: da ultima volta a primeira. */
+export function proximaFaixa(indice: number, n: number): number {
+  return n <= 0 ? 0 : (indice + 1) % n;
+}
+
+/** Passar: a proxima faixa, e a pausa como estava. */
+export function passarFaixa(estado: EstadoDaTrilha, n: number): EstadoDaTrilha {
+  return { indice: proximaFaixa(estado.indice, n), pausada: estado.pausada };
+}
+
+/** O comeco da partida: a primeira faixa (a padrao), tocando. */
+export const TRILHA_INICIAL: EstadoDaTrilha = { indice: 0, pausada: false };
+
 export interface ContadoresDoFundo {
   /** Os lacos de ambiente ligados (com e sem arquivo): o que o roteiro mede. */
   readonly ambienteLigado: readonly string[];
@@ -130,6 +159,8 @@ export interface ContadoresDoFundo {
   readonly faixa: Faixa | null;
   readonly niveis: Niveis;
   readonly sinos: number;
+  /** I-TELA-TRILHA-SONORA — a faixa da vez e a pausa do jogador; `null` sem playlist. */
+  readonly trilha: (EstadoDaTrilha & { readonly faixa: string }) | null;
 }
 
 export interface FundoSonoro {
@@ -140,6 +171,9 @@ export interface FundoSonoro {
   /** A partida foi trocada (load): sem luta lembrada, a musica volta a pedir do zero. */
   reiniciar(): void;
   contadores(): ContadoresDoFundo;
+  /** I-TELA-TRILHA-SONORA — os controles do jogador: passar a faixa, e pausar ou continuar a trilha. */
+  passarFaixa(): void;
+  alternarPausaDaTrilha(): void;
 }
 
 export function criarFundoSonoro(opcoes: {
@@ -152,8 +186,25 @@ export function criarFundoSonoro(opcoes: {
   readonly pedir: (id: string, tile: Tile) => void;
   /** `gameData.tempo.tickMs`: os segundos de combate depois da luta sao de jogo. */
   readonly tickMs: number;
+  /** I-TELA-TRILHA-SONORA — quem toca as faixas da playlist (sem ele, a playlist e silencio). */
+  readonly tocadorDaTrilha?: TocadorDeFaixa;
 }): FundoSonoro {
   const { dados, disponiveis, tocador, volume, pedir, tickMs } = opcoes;
+  const faixas = dados.musica.playlist ?? [];
+  const tocadorDaTrilha = opcoes.tocadorDaTrilha ?? null;
+  const comTrilha = faixas.length > 0 && tocadorDaTrilha !== null;
+  let trilha: EstadoDaTrilha = TRILHA_INICIAL;
+  const faixaDaVez = (): string => faixas[trilha.indice] ?? dados.musica.paz;
+  const tocandoTrilha = new Set<string>();
+  /** Passa para a proxima: a de agora para e volta ao comeco (para tocar do inicio quando voltar). */
+  function avancar(): void {
+    const atual = faixaDaVez();
+    tocandoTrilha.delete(atual);
+    tocadorDaTrilha?.reiniciar(atual);
+    trilha = passarFaixa(trilha, faixas.length);
+  }
+  // o fim de uma faixa (sem laco) passa para a seguinte
+  tocadorDaTrilha?.quandoTerminar((id) => { if (id === faixaDaVez()) avancar(); });
   const ticksDeCombate = Math.round((dados.musica.segundosDeCombateDepoisDaLuta * 1000) / tickMs);
   const idDaFaixa: Readonly<Record<Faixa, string>> = { paz: dados.musica.paz, combate: dados.musica.combate };
   let ultimaLutaPerto: number | null = null;
@@ -197,13 +248,35 @@ export function criarFundoSonoro(opcoes: {
 
       faixa = faixaDaMusica(estado, ultimaLutaPerto, ticksDeCombate);
       niveis = misturar(niveis, faixa, dt, dados.musica.transicaoSegundos * 1000);
-      for (const f of FAIXAS) soar(idDaFaixa[f], niveis[f] * volume(idDaFaixa[f]));
+      soar(idDaFaixa.combate, niveis.combate * volume(idDaFaixa.combate));
+      if (!comTrilha) {
+        soar(idDaFaixa.paz, niveis.paz * volume(idDaFaixa.paz));
+      } else {
+        // I-TELA-TRILHA-SONORA: a camada da paz e a faixa da vez; a pausa do jogador a cala (e guarda o ponto)
+        const id = faixaDaVez();
+        const v = trilha.pausada ? 0 : niveis.paz * volume(id);
+        if (!disponiveis.has(id) || v <= 0) {
+          if (tocandoTrilha.delete(id)) tocadorDaTrilha!.parar(id);
+        } else {
+          tocandoTrilha.add(id);
+          tocadorDaTrilha!.tocar(id, v);
+        }
+      }
     },
     reiniciar() {
       ultimaLutaPerto = null;
     },
     contadores() {
-      return { ambienteLigado: [...dados.ambiente.lacos], quadrosComAmbiente, faixa, niveis, sinos };
+      return {
+        ambienteLigado: [...dados.ambiente.lacos], quadrosComAmbiente, faixa, niveis, sinos,
+        trilha: comTrilha ? { ...trilha, faixa: faixaDaVez() } : null,
+      };
+    },
+    passarFaixa() {
+      if (comTrilha) avancar();
+    },
+    alternarPausaDaTrilha() {
+      if (comTrilha) trilha = { ...trilha, pausada: !trilha.pausada };
     },
   };
 }
