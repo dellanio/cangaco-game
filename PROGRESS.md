@@ -21280,3 +21280,23 @@ mostra o clarão, e o rótulo do convertido já vermelho.
 - **Roteiro `I-ARTE-PADRE` (sai 0, 4 capturas):** o passo da conversão passou a ser pelo Converter, com o
   jogo andando. A captura `converter-armado` (aberta) mostra o painel sem a Investida e o botão armado.
   A `convertendo` (aberta) mostra o facho e o padre ainda selecionado.
+
+### I-TELA-CHAO-DA-ROCA-DO-MILHO — o roçado de milho e de cana com o chão desenhado, sem o losango (verificado)
+- **A causa (medida pela sonda, já apagada):** o tile que o jogador ara vira `{tipo, quantidade: 0}`,
+  isto é, pousio. O código do pousio desenhava o losango da F-T2a. O milho não tinha chão próprio, porque o
+  `D-ARTE-CHAO-DE-ROCA` contava com o terreno `campoArado` do mapa, que o roçado do jogador não tem.
+- **O que mudou:**
+  - `chaoDaRoca` dá `campoArado` ao milho (a arte que já existia, com 4 variantes) e `campoCana` à cana;
+  - a camada do chão tem um bloco de 4 variantes por chão (`indiceDoChao`);
+  - a célula do pousio na tira de recurso ficou vazia, então o chão aparece. O semeado continua com a
+    planta por cima, no alfa do estágio.
+- **Teste:** `tests/I-TELA-CHAO-DA-ROCA-DO-MILHO.test.ts` (8). Ele grava a partida do roteiro: o
+  `PlowField` de verdade pelo `step`, todo tile em pousio, metade semeada. O `D-ARTE-CHAO-DE-ROCA.test.ts`
+  mudou nos dois casos do milho (de `null` para `campoArado`), que é a regra nova do aceite.
+- **Roteiro novo `I-TELA-CHAO-DA-ROCA-DO-MILHO` (sai 0, captura aberta):**
+  - 28 tiles de cultura na vista, com chão em 28;
+  - a célula do pousio na tira tem alfa 0, e a do esgotado (o controle, que segue losango) tem 255;
+  - na captura, nenhum losango.
+- **Roteiro `D-ARTE-CHAO-DE-ROCA`:** contava só a cana (`chão 16, cana 10` reprovou, como esperado). Ele
+  passou a contar toda cultura na vista, nas três vistas, e sai 0. `F-TR`, `F18`, `F-CANA-b`, `F-D3` e
+  `F-T2a` saem 0.

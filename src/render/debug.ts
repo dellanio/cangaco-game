@@ -269,6 +269,8 @@ export interface EstadoDebug {
   recursosVisiveis: Readonly<Record<string, number>>;
   /** Tiles de chao da cana efetivamente desenhados na vista da camera. */
   chaoDaCanaDesenhado: number;
+  /** I-TELA-CHAO-DA-ROCA-DO-MILHO — o alfa no meio da celula do pousio e do esgotado na tira de recurso. */
+  losangoNaTira: { readonly pousio: number; readonly esgotado: number } | null;
   /** Recursos examinados pelo chao da cana neste quadro; zero no quadro repetido. */
   recursosVarridosPeloChao: number;
   /** F-TR — mascara N/L/S/O de cada tile de `rock` ainda presente. O roteiro
@@ -479,6 +481,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     particulasCalculadasNesteQuadro: 0,
     recursosVisiveis: {},
     chaoDaCanaDesenhado: 0,
+    losangoNaTira: null,
     recursosVarridosPeloChao: 0,
     mascarasDoLajedo: {},
     lajedoDesenhado: {},

@@ -16,6 +16,14 @@ async function roteiro(ctx) {
       ...Object.fromEntries(chave.split(',').map((n, i) => [i === 0 ? 'gx' : 'gy', Number(n)])),
       quantidade: recurso.quantidade,
     }));
+  // I-TELA-CHAO-DA-ROCA-DO-MILHO: o chao cobre tambem o milho; a contagem do chao e a de toda cultura
+  const roca = Object.entries(salvo.recursos)
+    .filter(([, recurso]) => recurso.tipo === 'grapes' || recurso.tipo === 'corn')
+    .map(([chave]) => Object.fromEntries(chave.split(',').map((n, i) => [i === 0 ? 'gx' : 'gy', Number(n)])));
+  const naCaixa = (tiles, v) => tiles.filter(({ gx, gy }) => {
+    const x = gx * terreno.tile_px; const y = gy * terreno.tile_px;
+    return x < v.direita && x + terreno.tile_px > v.esquerda && y < v.fundo && y + terreno.tile_px > v.topo;
+  });
   afirmar(cana.length > 0, 'o save precisa conter tiles de cana');
   afirmar(cana.some((tile) => tile.quantidade === 0), 'o save precisa conter cana em pousio');
   const servido = await page.evaluate(async ([chave, url]) => {
@@ -55,8 +63,9 @@ async function roteiro(ctx) {
   });
   afirmar(naVista.length > 0, 'a camera precisa ver a cana');
   afirmar(naVista.some((tile) => tile.quantidade === 0), 'a camera precisa ver cana em pousio');
-  afirmar(s.chaoDaCanaDesenhado === naVista.length,
-    `chao desenhado ${s.chaoDaCanaDesenhado}, cana na vista ${naVista.length}`);
+  const rocaNaVista = naCaixa(roca, vista).length;
+  afirmar(s.chaoDaCanaDesenhado === rocaNaVista,
+    `chao desenhado ${s.chaoDaCanaDesenhado}, cultura na vista ${rocaNaVista} (cana ${naVista.length})`);
   // Outra vista, sem tick novo: a contagem acompanha a camera sem varrer recursos.
   await page.evaluate(() => window.__cangaco.fixarCamera({ scrollX: 0, scrollY: 0 }));
   await page.waitForTimeout(200);
@@ -71,13 +80,13 @@ async function roteiro(ctx) {
   });
   afirmar(canaNaOutraVista.length !== naVista.length, 'a mudanca de camera precisa mudar a cana visivel');
   afirmar(outra.tick === s.tick, 'fixarCamera nao avanca o tick');
-  afirmar(outra.chaoDaCanaDesenhado === canaNaOutraVista.length, 'o chao acompanha a cana na nova vista sem tick');
+  afirmar(outra.chaoDaCanaDesenhado === naCaixa(roca, outraVista).length, 'o chao acompanha a roca na nova vista sem tick');
   afirmar(outra.recursosVarridosPeloChao === 0, 'camera nova nao varre recursos');
   await page.evaluate((scroll) => window.__cangaco.fixarCamera(scroll),
     { scrollX: s.camera.scrollX, scrollY: s.camera.scrollY });
   await page.waitForTimeout(200);
   const voltou = await estado();
-  afirmar(voltou.tick === s.tick && voltou.chaoDaCanaDesenhado === naVista.length,
+  afirmar(voltou.tick === s.tick && voltou.chaoDaCanaDesenhado === rocaNaVista,
     'a contagem volta com a camera, ainda sem tick');
   afirmar(voltou.recursosVarridosPeloChao === 0, 'voltar a camera tambem nao varre recursos');
   await capturar('chao-de-roca-da-cana');

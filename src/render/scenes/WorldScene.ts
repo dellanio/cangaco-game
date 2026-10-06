@@ -31,7 +31,7 @@ import { particulasDaFagulha } from '../fagulha';
 import { celulasDaAguaParaTrocar } from '../agua-viva';
 import { particulasDaPoeira, rajadaNaVista } from '../poeira';
 import { codigoDoRecurso, configDoMapa, recursosDeRender, terrenoDeRender } from '../mapa';
-import { CHAO_DA_CANA, chaoDaRoca, quadroDoChaoDaCanaMudou } from '../chao-da-roca';
+import { CHAOS_DA_ROCA, chaoDaRoca, indiceDoChao, quadroDoChaoDaCanaMudou } from '../chao-da-roca';
 import {
   gridToScreen, screenToGrid, deslocamentoDaUnidade, depthDeY, tileDentroDoMapa, ESCALA_DO_MUNDO, PROFUNDIDADE_DA_SELECAO,
 } from '../grid';
@@ -1455,6 +1455,8 @@ export class WorldScene extends Phaser.Scene {
     const raio = Math.max(2, Math.round(tilePx * 0.3));
     recursosDeRender.cores.forEach((hex, codigo) => {
       if (codigo === 0) return; // tile vazio: nada desenhado, chao a mostra
+      // I-TELA-CHAO-DA-ROCA-DO-MILHO: a roca em pousio nao tem losango; o chao da roca e o desenho dela
+      if (codigo === recursosDeRender.codigoEmPousio) return;
       const x = codigo * tilePx + meio;
       g.fillStyle(Phaser.Display.Color.HexStringToColor(hex).color, 1);
       g.fillPoints([
@@ -1469,6 +1471,10 @@ export class WorldScene extends Phaser.Scene {
     });
     g.generateTexture(CHAVE_TEXTURA_RECURSO, tilePx * recursosDeRender.cores.length, tilePx);
     g.destroy();
+    // I-TELA-CHAO-DA-ROCA-DO-MILHO: o alfa no meio da celula do pousio e do esgotado (o controle, que
+    // continua losango), lido da textura gerada
+    const alfaNoMeio = (codigo: number): number => this.textures.getPixelAlpha(codigo * tilePx + meio, meio, CHAVE_TEXTURA_RECURSO) ?? -1;
+    debug.losangoNaTira = { pousio: alfaNoMeio(recursosDeRender.codigoEmPousio), esgotado: alfaNoMeio(recursosDeRender.codigoEsgotado) };
     // Codigo 0 e o esgotado ficam fora: vazio e marcador unico, sem entrada propria.
     this.desenhoPorCodigo = recursosDeRender.cores.map((_cor, codigo): DesenhoDoRecurso => {
       const id = recursosDeRender.tipos[codigo - 1];
@@ -1489,14 +1495,20 @@ export class WorldScene extends Phaser.Scene {
   private criarCamadaDoChaoDaCana(
     tilePx: number, largura: number, altura: number, carregada: TexturaCarregada,
   ): Phaser.Tilemaps.TilemapLayer | null {
-    const padrao = texturaDaCamada(manifestoDoJogo, 'terreno', CHAO_DA_CANA, ESTADO_DO_TERRENO, carregada);
-    if (padrao === null) return null;
-    const tira = this.textures.createCanvas(CHAVE_TEXTURA_CHAO_DA_CANA, tilePx * 5, tilePx);
+    // I-TELA-CHAO-DA-ROCA-DO-MILHO: um bloco de 4 variantes por chao (a cana e o milho); chao sem PNG fica
+    // com o bloco vazio (o terreno aparece)
+    const padroes = CHAOS_DA_ROCA.map((chao) => texturaDaCamada(manifestoDoJogo, 'terreno', chao, ESTADO_DO_TERRENO, carregada));
+    if (padroes.every((p) => p === null)) return null;
+    const tira = this.textures.createCanvas(CHAVE_TEXTURA_CHAO_DA_CANA, tilePx * (1 + 4 * CHAOS_DA_ROCA.length), tilePx);
     if (!tira) throw new Error('WorldScene: falha ao criar a tira do chao da cana.');
     const ctx = tira.getContext();
-    ESTADOS_DO_TERRENO.forEach((estado, variante) => {
-      const chave = texturaDaCamada(manifestoDoJogo, 'terreno', CHAO_DA_CANA, estado, carregada) ?? padrao;
-      ctx.drawImage(this.textures.get(chave).getSourceImage() as HTMLImageElement, (variante + 1) * tilePx, 0, tilePx, tilePx);
+    CHAOS_DA_ROCA.forEach((chao, bloco) => {
+      const padrao = padroes[bloco];
+      if (padrao === null || padrao === undefined) return;
+      ESTADOS_DO_TERRENO.forEach((estado, variante) => {
+        const chave = texturaDaCamada(manifestoDoJogo, 'terreno', chao, estado, carregada) ?? padrao;
+        ctx.drawImage(this.textures.get(chave).getSourceImage() as HTMLImageElement, (1 + bloco * 4 + variante) * tilePx, 0, tilePx, tilePx);
+      });
     });
     tira.refresh();
     const mapa = this.make.tilemap({ tileWidth: tilePx, tileHeight: tilePx, width: largura, height: altura });
@@ -1527,10 +1539,11 @@ export class WorldScene extends Phaser.Scene {
       const atuais = new Set<string>();
       for (const [chave, recurso] of Object.entries(recursos)) {
         if (debug) debug.recursosVarridosPeloChao += 1;
-        if (chaoDaRoca(recurso) === null) continue;
+        const chao = chaoDaRoca(recurso);
+        if (chao === null) continue;
         atuais.add(chave);
         const { gx, gy } = tileDeChave(chave);
-        const variante = 1 + ((gx * 17 + gy * 31) & 3);
+        const variante = indiceDoChao(chao, gx, gy);
         if (this.chaoDaCanaNoMapa.get(chave) !== variante) camada.putTileAt(variante, gx, gy);
         this.chaoDaCanaNoMapa.set(chave, variante);
       }
