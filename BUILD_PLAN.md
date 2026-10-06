@@ -9278,7 +9278,8 @@ perguntas do plano. Pela regra (CLAUDE.md §14), vale a interpretação mais con
 resposta fica registrada como **decisão da sessão, revisável**:
 - **P1 (efeito por cultura):** um efeito só, o mesmo para o milho e a cana;
 - **P2 (escala):** a duração do ciclo declara o grupo `economia`, como manda o §5. Os valores base são
-  a metade dos minutos do pedido, para que, com a escala 2,0 de hoje, o inverno dure os 5 min de
+  o dobro dos minutos do pedido (o carregador DIVIDE pela escala; emenda de 2026-10-06, medida no
+  teste), para que, com a escala 2,0 de hoje, o inverno dure os 5 min de
   relógio que o operador pediu (e assim por diante);
 - **P5 (o crescimento):** o multiplicador é o da estação **na semeadura**: o tile semeado no inverno
   cresce como inverno até o fim. É a opção sem estado novo (o maduro continua derivado de `semeadoEm`);
