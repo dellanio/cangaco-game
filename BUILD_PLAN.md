@@ -9303,6 +9303,12 @@ resposta fica registrada como **decisão da sessão, revisável**:
   1,20 / 0,65 (a menos do arredondamento); (2) a árvore amadurece igual com e sem clima; (3) com
   `ligado: false`, igual a hoje; (4) o consumo de comida por cabeça não muda (o teste da fome continua
   verde).
+- **Nota (feature de integração, 2026-10-06, antes do código):** o estágio da cultura que o render
+  desenha (`src/render/crescimento.ts`, `estagioDaCultura`, chamado em `WorldScene`) é derivado do mesmo
+  tempo de crescer, e o BUG-W afirma que o `pronto` cai no tick em que a sim diz maduro. A chamada do
+  render passa a usar `ticksParaAmadurecer` da sim (a mesma função), e esta feature toca `src/render/`.
+  Os testes de mecanismo da roça que derivam o tick maduro de `ticksDeCrescer` (F18, F19) passam a
+  derivá-lo da mesma função, pelo tick da semeadura.
 
 ##### I-TELA-RELOGIO-DO-SOL — o relógio do sol no canto superior direito
 - **Pedido:** "um relógio do SOL no canto superior direito, rodando e mostrando as estações do ano (peça
