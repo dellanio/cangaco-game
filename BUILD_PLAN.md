@@ -9108,6 +9108,11 @@ A ordem de execução é a desta lista. Cada item tem o aceite abaixo, escrito a
      - a captura é aberta e comparada com a proposta;
   5. a **não-regressão** dos roteiros que clicam no menu (F06, F17, F17g e os que usam o `_subaba.js`)
      sai 0.
+- **Emenda (2026-10-05, antes do código):** o ícone da sub-aba e o da rua vão por CSS (`::before` /
+  `background-image` com o PNG do manifesto), como os das abas principais, e não por `img`. A `ui/` não
+  resolve URL do bundler (`src/ui/icones.ts`), e o CSS já é o caminho das abas. O aceite 1 confere, no
+  CSS, que cada sub-aba e a rua apontam o PNG certo, e o aceite 2 confere que esse PNG existe e está no
+  manifesto.
 
 #### I-ARTE-AGUA-PIXEL-ART — a água em pixel art, para o operador ver
 - **Pedido:** "Mude o sprite da água do jogo e suas animações para pixel art para eu ver como fica."
