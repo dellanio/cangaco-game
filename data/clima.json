@@ -1,0 +1,12 @@
+{
+  "_doc": "I-CLIMA-ESTACAO e I-CLIMA-CRESCIMENTO (pedido do operador; plano em docs/planos/2026-10-05-acude-e-clima.md). O ciclo previsivel do sertao: o inverno (o tempo das chuvas), a transicao para a seca, a seca e a transicao para a chuva, e de novo o inverno. A estacao e FUNCAO DO TICK (sim/clima.ts), sem estado no GameState. `duracao_segundos_base` na escala 1.0 do grupo `escala` (economia): o carregador DIVIDE pela escala: com economia 2,0 o inverno de 600 s base dura os 5 min de relogio do pedido, a transicao 1, a seca 6. `multiplicadorDeCrescimento` acelera ou atrasa o amadurecer das `culturas` (o tile semeado numa estacao cresce no ritmo dela ate o fim; a arvore fica fora). `ligado` false desliga tudo: nenhuma estacao muda nada e nenhum evento sai. Os numeros do pedido sao [proposta], para o BALANCE_LOG.",
+  "escala": "economia",
+  "ligado": true,
+  "culturas": ["corn", "grapes"],
+  "ciclo": [
+    { "id": "inverno", "duracao_segundos_base": 600, "multiplicadorDeCrescimento": 1.2 },
+    { "id": "transicaoSeca", "duracao_segundos_base": 120, "multiplicadorDeCrescimento": 1.0 },
+    { "id": "seca", "duracao_segundos_base": 720, "multiplicadorDeCrescimento": 0.65 },
+    { "id": "transicaoChuva", "duracao_segundos_base": 120, "multiplicadorDeCrescimento": 1.0 }
+  ]
+}

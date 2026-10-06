@@ -35,6 +35,7 @@ import type { GameState, PredioCompleto } from '../src/sim/state';
 import type { Command } from '../src/sim/commands';
 import { step } from '../src/sim/tick';
 import { gameData } from '../src/sim/data';
+import type { GameData } from '../src/sim/data/types';
 import { estoqueDosArmazens } from '../src/sim/selectors';
 import { filaDaEscola } from '../src/sim/escola';
 import { comandosDaVilaNoTick, vilaDaCalibracao } from './helpers/cal-vila';
@@ -100,9 +101,15 @@ function observarOcupante(s: GameState, predio: PredioCompleto | null, o: Ocupac
  * que 20 de ouro treinam", que e a populacao do item (d). Serf porque e o civil que
  * nao precisa de predio para existir; o tipo nao muda quem come.
  */
+/** I-CLIMA-CRESCIMENTO (2026-10-06): a calibracao mede os numeros BASE da economia, e roda com o clima
+ *  desligado. Com o clima, a seca atrasa o milho e o moinho espera mais (medido: 14,5 % contra o teto
+ *  de 10 %); esse efeito e balanceamento do clima, registrado no BALANCE_LOG, e o teste do clima afirma
+ *  a mecanica dele (tests/I-CLIMA-ESTACAO.test.ts). */
+const DADOS: GameData = { ...gameData, clima: { ...gameData.clima, ligado: false } };
+
 function correr(): Medicao {
-  let s = createInitialState(gameData.economia.estadoInicial.semente);
-  const vila = vilaDaCalibracao(s);
+  let s = createInitialState(gameData.economia.estadoInicial.semente, DADOS);
+  const vila = vilaDaCalibracao(s, DADOS);
   const escola = vila.abertura.escola;
   const slots = gameData.economia.schoolhouse.slotsDeFila;
   const ouroInicial = gameData.economia.estadoInicial.estoque.gold ?? 0;
@@ -126,14 +133,14 @@ function correr(): Medicao {
 
   const comecou = Date.now();
   for (let i = 0; i < JANELA_D; i += 1) {
-    const comandos: Command[] = [...comandosDaVilaNoTick(s, vila, i)];
+    const comandos: Command[] = [...comandosDaVilaNoTick(s, vila, i, DADOS)];
     if (vilaFechada && extrasPedidos < serfsExtras
       && filaDaEscola(s, escola).length < slots
       && !comandos.some((c) => c.type === 'EnqueueTraining')) {
       comandos.push({ type: 'EnqueueTraining', predio: escola, unidade: 'serf' });
       extrasPedidos += 1;
     }
-    s = step(s, comandos);
+    s = step(s, comandos, DADOS);
 
     const farm = completoDoTipo(s, 'farm');
     for (const ev of s.events) {

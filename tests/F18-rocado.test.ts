@@ -24,6 +24,8 @@
  * semear e viagem, e entre semear e colher ha o crescer).
  */
 import { describe, expect, it } from 'vitest';
+// I-CLIMA-CRESCIMENTO (2026-10-06): o tick maduro vem do tempo da estacao da semeadura, a conta da sim
+import { ticksParaAmadurecer } from '../src/sim/clima';
 import { gameData } from '../src/sim/data';
 import type { GameData } from '../src/sim/data/types';
 import type { GameState } from '../src/sim/state';
@@ -90,7 +92,7 @@ const IDA = 35;
 const VOLTA = 33;
 const VOLTA_INTEIRA = 1 + IDA + CICLO + VOLTA;
 const SEMEADO_EM = IDA + PLANTIO;
-const MADURO = SEMEADO_EM + CRESCER;
+const MADURO = SEMEADO_EM + ticksParaAmadurecer(GRAO, CRESCER, SEMEADO_EM);
 const PRIMEIRA = MADURO + VOLTA_INTEIRA;
 const SECOU = MADURO + RENDIMENTO * VOLTA_INTEIRA;
 /** No meio do semear do replantio: o roceiro esta parado no tile, semeando. */

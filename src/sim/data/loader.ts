@@ -934,5 +934,18 @@ export function loadGameData(raw: RawGameData): GameData {
     economia,
     escaramuca: { ...raw.escaramuca, ticksDePaz, opcoesDePaz },
     conversoes,
+    // I-CLIMA-ESTACAO: cada fase do ciclo em ticks, uma vez, aqui
+    clima: {
+      ligado: raw.clima.ligado,
+      culturas: raw.clima.culturas,
+      ciclo: raw.clima.ciclo.map((fase, i) => ({
+        id: fase.id,
+        multiplicadorDeCrescimento: fase.multiplicadorDeCrescimento,
+        ticks: registrar(
+          `clima.ciclo[${i}].duracao_segundos_base`, raw.clima.escala, fase.duracao_segundos_base, 'segundos',
+          paraTicksDeDuracao(fase.duracao_segundos_base, 'segundos', escalaDe(escalas, raw.clima.escala), tickHz),
+        ),
+      })),
+    },
   };
 }

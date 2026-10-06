@@ -14,6 +14,7 @@ import dadosDaPoeira from '../../../data/poeira.json';
 import dadosDaFumaca from '../../../data/fumaca.json';
 import dadosDoPensamento from '../../../data/pensamento.json';
 import { CHAVE_DO_MARTELO } from '../pensamento';
+import { ticksParaAmadurecer } from '../../sim/clima';
 import dadosDaObraRevelada from '../../../data/obra-revelacao.json';
 import { blocosVisiveis, recorteDoBloco } from '../obra-revelacao';
 import type { GradeDaObra } from '../obra-revelacao';
@@ -1639,7 +1640,10 @@ export class WorldScene extends Phaser.Scene {
     const tick = this.ponte.atual?.tick ?? 0;
     const estagio = this.desenhoPorCodigo[codigo]?.como === 'vegetacao'
       ? null
-      : estagioDaCultura(recurso, tick, recursosDeRender.ticksDeCrescer[recurso.tipo] ?? 0);
+      // I-CLIMA-CRESCIMENTO: o tempo de crescer e o da estacao da semeadura, a mesma conta da sim
+      : estagioDaCultura(recurso, tick, recurso.semeadoEm === undefined
+        ? recursosDeRender.ticksDeCrescer[recurso.tipo] ?? 0
+        : ticksParaAmadurecer(recurso.tipo, recursosDeRender.ticksDeCrescer[recurso.tipo] ?? 0, recurso.semeadoEm));
     if (!repor && estagio === (this.estagioDesenhado.get(chave) ?? null)) return;
     const { gx, gy } = tileDeChave(chave);
     camada.getTileAt(gx, gy)?.setAlpha(estagio === null ? 1 : ALFA_DO_ESTAGIO[estagio]);

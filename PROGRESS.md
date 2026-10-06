@@ -21046,3 +21046,44 @@ A tabela de `data/som.json` já ligava o evento ao som, só no lado do jogador.
 **Teste:** `H-ARTE-SONS-APROVADOS` (23 aprovados, e o `troop-hungry` saiu dos sem aprovação) e o
 `I-COMIDA-AVISO-DA-TROPA-COM-FOME` (o som do aviso tem arquivo CC0).
 **Não verificado:** não ouvi o recorte. Os 3 s são o começo do arquivo, sem o silêncio inicial.
+
+### I-CLIMA-ESTACAO e I-CLIMA-CRESCIMENTO — as estações do sertão e o milho no ritmo delas (verificado)
+O operador mandou prosseguir com o plano do clima sem responder às perguntas dele. As respostas
+conservadoras estão no BUILD_PLAN, como decisão da sessão, revisável:
+- um efeito só para as duas culturas;
+- a escala `economia`;
+- o multiplicador fixado na semeadura (sem estado novo);
+- a árvore fora;
+- o Açude depois.
+
+**A sim:**
+- `data/clima.json` (inverno, transição para a seca, seca, transição para a chuva; 5, 1, 6 e 1 min de
+  relógio) é lido pelo loader, que converte a duração para ticks uma vez;
+- `src/sim/clima.ts`, puro: a estação é função do tick, sem campo novo no `GameState`;
+- o `step` emite `season-changed`;
+- o `tileMaduro` usa `ticksParaAmadurecer` (o tempo do tipo ÷ o multiplicador da estação da
+  semeadura) para o milho e a cana;
+- o validador cobre o ciclo vazio, a duração ≤ 0, o multiplicador ≤ 0 e a cultura que não existe.
+
+**Integração (nota no BUILD_PLAN antes do código):** o estágio da cultura que o render desenha usa a
+mesma função. O BUG-W afirma o `pronto` no tick em que a sim diz maduro, semeado no inverno e na seca.
+**Testes que mudaram:**
+- F18-rocado (o tick maduro pela função);
+- F18-ciclo-do-roceiro, o tick exato do primeiro milho no F19 e a calibração F-CAL-b: a linha do tempo da
+  fazenda com o crescer do dado, que **rodam com o clima desligado**, com o porquê escrito no arquivo;
+- F19: o piso da cadeia passou a ser o crescer da estação.
+
+O efeito do clima é afirmado nos testes dele.
+**Teste:** `tests/I-CLIMA-ESTACAO.test.ts` (7) cobre:
+- o ciclo em minutos;
+- as bordas de cada fase e depois de um ciclo;
+- os quatro eventos nos ticks exatos, pelo `step`;
+- o desligado;
+- o validador;
+- a razão seca/inverno do milho (1,846, igual a 1,20 / 0,65);
+- a árvore igual.
+
+A suíte inteira dá 298 arquivos e 2 792 testes verdes.
+**Balanceamento:** com o clima, o moinho da calibração espera 14,5 % (teto 10 %). Está no BALANCE_LOG.
+**Ainda não:** a tela (o relógio do sol, o véu e a chuva, o jornal) é o item seguinte, e o Açude vem
+depois.

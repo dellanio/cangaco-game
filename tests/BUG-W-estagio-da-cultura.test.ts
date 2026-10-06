@@ -9,6 +9,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { gameData } from '../src/sim/data';
 import type { GameState, RecursoNoTile } from '../src/sim/state';
 import { tileMaduro } from '../src/sim/recursos';
+import { ticksParaAmadurecer } from '../src/sim/clima';
 import { ALFA_DO_ESTAGIO, ESTAGIOS_DA_CULTURA, estagioDaCultura } from '../src/render/crescimento';
 import { recursosDeRender } from '../src/render/mapa';
 import { salvar } from '../src/sim/save';
@@ -28,9 +29,11 @@ describe('BUG-W — estagioDaCultura', () => {
 
   it('pronto exatamente onde a sim diz maduro, tick a tick', () => {
     const evidencia: Record<string, { crescer: number; divergencias: number; primeiroPronto: number | null }> = {};
-    for (const tipo of CULTURAS) {
-      const crescer = crescerDe(tipo);
-      const semeadoEm = 100;
+    // I-CLIMA-CRESCIMENTO (2026-10-06): o tempo de crescer e o da estacao da semeadura, e o render passa a
+    // mesma conta (`ticksParaAmadurecer`). Semeado no inverno (tick 100) e na seca.
+    const naSeca = gameData.clima.ciclo.slice(0, 2).reduce((s, f) => s + f.ticks, 0) + 100;
+    for (const [tipo, semeadoEm] of CULTURAS.flatMap((c) => [[c, 100], [c, naSeca]] as const)) {
+      const crescer = ticksParaAmadurecer(tipo, crescerDe(tipo), semeadoEm);
       const tile: RecursoNoTile = { tipo, quantidade: 4, semeadoEm };
       let divergencias = 0;
       let primeiroPronto: number | null = null;
@@ -39,7 +42,7 @@ describe('BUG-W — estagioDaCultura', () => {
         if (pronto && primeiroPronto === null) primeiroPronto = tick;
         if (pronto !== tileMaduro({ tick } as GameState, tile, gameData)) divergencias += 1;
       }
-      evidencia[tipo] = { crescer, divergencias, primeiroPronto };
+      evidencia[`${tipo}@${semeadoEm}`] = { crescer, divergencias, primeiroPronto };
       expect(divergencias).toBe(0);
       expect(primeiroPronto).toBe(semeadoEm + crescer);
     }

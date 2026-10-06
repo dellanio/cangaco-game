@@ -548,4 +548,19 @@ export interface GameData {
     readonly opcoesDePaz: readonly OpcaoDePaz[];
   };
   readonly conversoes: readonly ConversaoRegistrada[];
+  /** I-CLIMA-ESTACAO — o ciclo das estacoes, ja em ticks (`data/clima.json`). Leia por `sim/clima.ts`. */
+  readonly clima: ClimaData;
+}
+
+/** I-CLIMA-ESTACAO — uma fase do ciclo, com a duracao ja em ticks. */
+export interface FaseDoCicloData {
+  readonly id: string;
+  readonly ticks: Ticks;
+  readonly multiplicadorDeCrescimento: number;
+}
+
+export interface ClimaData {
+  readonly ligado: boolean;
+  readonly culturas: readonly string[];
+  readonly ciclo: readonly FaseDoCicloData[];
 }

@@ -15,7 +15,9 @@
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { gameData } from '../src/sim/data';
+import { gameData } from '../src/sim/data';
+import { ticksParaAmadurecer } from '../src/sim/clima';
+import type { GameData } from '../src/sim/data/types';
 import type { GameState } from '../src/sim/state';
 import { receitaDoTipo, unidadesPorCiclo } from '../src/sim/producao';
 import { opcoesDoMenuBuild } from '../src/sim/selectors';
@@ -58,7 +60,11 @@ const VIAGEM_DA_FAZENDA = 69;
  * parcelas sao a latencia que o modelo novo pos na frente de todo o resto.
  */
 const IDA_DE_SEMEAR = 35;
-const ATE_O_MILHO_CRESCER = IDA_DE_SEMEAR + PLANTIO + CRESCER;
+/** Com o clima desligado (o tick exato do primeiro milho, abaixo). */
+const ATE_O_MILHO_CRESCER_SEM_CLIMA = IDA_DE_SEMEAR + PLANTIO + CRESCER;
+/** I-CLIMA-CRESCIMENTO (2026-10-06): com o clima do jogo, o tile semeado no tick IDA + PLANTIO cresce no
+ *  ritmo da estacao dele (a mesma conta da sim). E o piso da cadeia. */
+const ATE_O_MILHO_CRESCER = IDA_DE_SEMEAR + PLANTIO + ticksParaAmadurecer(GRAO, CRESCER, IDA_DE_SEMEAR + PLANTIO);
 
 /** O que a FONTE permite: um tile de milho custa um plantio mais os ciclos que
  *  ele rende, viagem incluida, e e isso — e nao o relogio do moinho — que limita
@@ -172,11 +178,16 @@ describe('F19 — a cadeia fecha: milho vira fubá, fubá vira cuscuz', () => {
 
   it('e cada elo chega na sua vez: milho, depois fubá, depois cuscuz', () => {
     // A ordem e o que separa uma cadeia de tres prédios que produzem sozinhos.
-    const inicial = cenarioDaCadeiaDoPao();
+    // I-CLIMA-CRESCIMENTO (2026-10-06): o tick exato do primeiro milho e a linha do tempo da fazenda
+    // com o crescer do dado; com o clima, o crescer muda pela estacao e o roceiro intercala o plantio
+    // de outros tiles (medido: 1859). O efeito do clima e afirmado em tests/I-CLIMA-ESTACAO.test.ts; esta
+    // conta de mecanismo roda com o clima desligado.
+    const dados: GameData = { ...gameData, clima: { ...gameData.clima, ligado: false } };
+    const inicial = cenarioDaCadeiaDoPao(dados);
     const primeiro: Record<string, number> = {};
     let s = inicial;
     for (let t = 1; t <= JANELA && Object.keys(primeiro).length < 3; t += 1) {
-      s = avancar(s, 1);
+      s = avancar(s, 1, dados);
       for (const m of [GRAO, FARINHA, PAO]) {
         if (primeiro[m] === undefined && desdeOInicio(inicial, s, m) > 0) primeiro[m] = t;
       }
@@ -186,7 +197,7 @@ describe('F19 — a cadeia fecha: milho vira fubá, fubá vira cuscuz', () => {
     // viagem + ciclo (250), com o plantio dentro do predio e o tile maduro na hora.
     // A forma e a mesma — tick exato, so com numero derivado ou medido —, e deu
     // 1899 na sonda de 2026-09-27.
-    expect(primeiro[GRAO]).toBe(ATE_O_MILHO_CRESCER + VIAGEM_DA_FAZENDA + FAZENDA.ticksDoCiclo);
+    expect(primeiro[GRAO]).toBe(ATE_O_MILHO_CRESCER_SEM_CLIMA + VIAGEM_DA_FAZENDA + FAZENDA.ticksDoCiclo);
     // e cada elo seguinte nao pode chegar antes do proprio relogio dele, contado
     // do elo anterior: mais estrito que a ordem, e ainda so com numero derivado.
     expect(primeiro[FARINHA]).toBeGreaterThanOrEqual((primeiro[GRAO] ?? 0) + MOINHO.ticksDoCiclo);

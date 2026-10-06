@@ -20,6 +20,7 @@
  *              Woodcutter's e o campo arado da F18 vao ler.
  *   `porTempo` sobe sozinho ate o teto do tipo.
  */
+import { ticksParaAmadurecer } from './clima';
 import type { ColheitaDeRecurso, GameData, RegimeDeRecurso } from './data/types';
 import { gameData } from './data';
 import type { GameState, PredioCompleto, RecursoNoTile } from './state';
@@ -262,7 +263,8 @@ export function tileMaduro(
 ): boolean {
   if (recurso.semeadoEm === undefined) return true;
   const crescer = dados.recursos.tipos[recurso.tipo]?.reposicao?.ticksDeCrescer ?? 0;
-  return state.tick >= recurso.semeadoEm + crescer;
+  // I-CLIMA-CRESCIMENTO: a cultura do clima cresce no ritmo da estacao da semeadura
+  return state.tick >= recurso.semeadoEm + ticksParaAmadurecer(recurso.tipo, crescer, recurso.semeadoEm, dados);
 }
 
 /** F-CAMPO-a — semeado, com o que colher, e ainda nao maduro. */

@@ -11,6 +11,8 @@ import economyJson from '../../../data/economy.json';
 import resourcesJson from '../../../data/resources.json';
 // C-IA-03a — o cenario de escaramuca (a vila e a tropa iniciais da IA).
 import escaramucaJson from '../../../data/escaramuca.json';
+// I-CLIMA-ESTACAO — o ciclo das estacoes e o efeito no crescimento.
+import climaJson from '../../../data/clima.json';
 // F-T1 — a camada de terreno base. Um arquivo por mapa; o jogo carrega ESTE, e
 // `tools/gerar-mapa.js` e quem o emite (autoria, nunca runtime).
 import mapaSertaoJson from '../../../data/maps/sertao-128.json';
@@ -43,6 +45,7 @@ export const rawGameData = {
   economy: economyJson,
   resources: resourcesJson,
   escaramuca: escaramucaJson,
+  clima: climaJson,
   mapa: mapaSertaoJson,
 };
 

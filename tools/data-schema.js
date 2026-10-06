@@ -22,6 +22,8 @@ const ARQUIVOS = [
   'resources',
   // C-IA-03a — o cenario de escaramuca: a vila e a tropa iniciais da IA.
   'escaramuca',
+  // I-CLIMA-ESTACAO — o ciclo das estacoes.
+  'clima',
   // F-T1 — a camada de terreno base. Um arquivo por mapa; `maps/` e diretorio
   // porque a campanha vai ter varios (GDD Anexo B).
   'maps/sertao-128',
@@ -96,6 +98,9 @@ const CAMPOS_ESCALONADOS = [
   { arquivo: 'condition', caminho: 'duracaoCondicaoCheia_min_base.militar',
     unidade: 'min', declaraEscalaEm: 'escala' },
   { arquivo: 'condition', caminho: 'avisoDaTropaComFome.lembrete_segundos_base',
+    unidade: 'segundos', declaraEscalaEm: 'escala' },
+  // I-CLIMA-ESTACAO — a duracao de cada fase do ciclo. `[]` casa qualquer indice do array.
+  { arquivo: 'clima', caminho: 'ciclo[].duracao_segundos_base',
     unidade: 'segundos', declaraEscalaEm: 'escala' },
   { arquivo: 'units', caminho: 'velocidadeBase_tilesPorSegundo.aPe',
     unidade: 'tilesPorSegundo', declaraEscalaEm: 'escalaVelocidade' },

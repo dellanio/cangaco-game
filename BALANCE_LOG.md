@@ -1528,3 +1528,12 @@ Medi o mesmo roteiro, o da C-IA-03c (jogar pela tela), contra a mesma IA:
   que vence nos seis. Fecha a entrada de 2026-10-03 ("com a névoa, a vitória vira cara ou coroa").
 - O "difícil contra a margem da tropa" da F-IA-DIFICULDADE (entrada acima) continua em aberto: a
   tropa de 24 não foi medida contra o difícil.
+
+## 2026-10-06 — o clima (I-CLIMA-CRESCIMENTO), números do pedido do operador, [proposta]
+- Inverno ×1,20, seca ×0,65 e transições ×1,0 no tempo de crescer do milho e da cana
+  (`data/clima.json`), com 5 + 1 + 6 + 1 min de relógio por ciclo.
+- **Medido (F-CAL-b, a vila da calibração, 24 000 ticks, com o clima ligado):** o moinho passa 14,5 % dos
+  ticks esperando insumo, contra o teto de 10 % da calibração sem clima. A seca atrasa o milho, como o
+  pedido quer. A calibração passou a medir a economia base com o clima desligado. Se o efeito for forte
+  demais, os números a girar juntos são o multiplicador da seca e o número de roças por moinho.
+- Sem irrigação ainda: o Açude (que devolve 25 pontos na seca) vem em itens próprios.

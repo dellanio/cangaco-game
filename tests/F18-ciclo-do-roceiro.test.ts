@@ -25,7 +25,13 @@
  * cada um com o que caiu e o que continua valendo ao lado.
  */
 import { describe, expect, it } from 'vitest';
-import { gameData } from '../src/sim/data';
+import { gameData as gameDataDoJogo } from '../src/sim/data';
+import type { GameData } from '../src/sim/data/types';
+
+// I-CLIMA-CRESCIMENTO (2026-10-06): este arquivo afirma a linha do tempo do roceiro tick a tick, com o
+// crescer do dado. Com o clima o crescer muda pela estacao da semeadura e o roceiro intercala o plantio
+// de outros tiles; o efeito do clima e afirmado em tests/I-CLIMA-ESTACAO.test.ts. Aqui ele fica desligado.
+const gameData: GameData = { ...gameDataDoJogo, clima: { ...gameDataDoJogo.clima, ligado: false } };
 import type { GameState } from '../src/sim/state';
 import {
   melhorTileParaPlantio, recursoNoTile, tileMaduro, tilesReservadosParaColheita,

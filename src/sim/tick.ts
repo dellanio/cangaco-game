@@ -2,6 +2,7 @@ import { recusaNaPaz } from './paz';
 import type { Command } from './commands';
 import type { GameEvent, GameState } from './state';
 import { avisosDaTropaComFome } from './condicao';
+import { eventoDaEstacao } from './clima';
 import type { GameData } from './data/types';
 import { gameData } from './data';
 import { registrarConclusoes } from './desbloqueio';
@@ -285,6 +286,10 @@ export function step(
   // I-COMIDA-AVISO-DA-TROPA-COM-FOME: a tropa com fome avisa o dono (e o lembrete enquanto dura)
   const aviso = avisosDaTropaComFome(atual, tick, dados);
   events.push(...aviso.eventos);
+
+  // I-CLIMA-ESTACAO: a estacao mudou neste tick (funcao do tick, sem estado)
+  const mudouAEstacao = eventoDaEstacao(tick, dados);
+  if (mudouAEstacao !== null) events.push(mudouAEstacao);
 
   // C-IA-03b: o peacetime acaba neste tick
   if (atual.pazAteTick !== undefined && tick === atual.pazAteTick) events.push({ type: 'peace-ended' });

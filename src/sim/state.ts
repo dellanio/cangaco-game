@@ -447,6 +447,11 @@ export type GameEvent =
       readonly unidades: number;
     }
   | {
+      /** I-CLIMA-ESTACAO — a estacao do ano mudou neste tick (`sim/clima.ts`). */
+      readonly type: 'season-changed';
+      readonly estacao: string;
+    }
+  | {
       /** F28a — a unidade morreu em luta e saiu do estado neste tick. */
       readonly type: 'unit-killed';
       readonly unidade: string;

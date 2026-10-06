@@ -1107,6 +1107,26 @@ function validarPedidoDeComida(dados, erros) {
   }
 }
 
+// I-CLIMA-ESTACAO — o ciclo nao e vazio, cada fase tem id unico, duracao > 0 e multiplicador > 0, e as
+// culturas sao tipos de recurso
+function validarClima(dados, erros) {
+  const e = (msg) => erros.push(`clima: ${msg}`);
+  const c = dados.clima;
+  if (!c || typeof c !== 'object') { e('data/clima.json precisa existir'); return; }
+  if (typeof c.ligado !== 'boolean') e('ligado precisa ser booleano');
+  if (!Array.isArray(c.ciclo) || c.ciclo.length === 0) { e('ciclo precisa ser uma lista nao vazia'); return; }
+  const ids = new Set();
+  for (const f of c.ciclo) {
+    if (!f || typeof f.id !== 'string' || f.id.length === 0) { e('fase sem id'); continue; }
+    if (ids.has(f.id)) e(`fase '${f.id}' repetida`);
+    ids.add(f.id);
+    if (!(typeof f.duracao_segundos_base === 'number' && f.duracao_segundos_base > 0)) e(`fase '${f.id}': duracao_segundos_base precisa ser > 0`);
+    if (!(typeof f.multiplicadorDeCrescimento === 'number' && f.multiplicadorDeCrescimento > 0)) e(`fase '${f.id}': multiplicadorDeCrescimento precisa ser > 0`);
+  }
+  const tipos = (dados.resources && dados.resources.tipos) || {};
+  for (const cultura of c.culturas || []) if (!tipos[cultura]) e(`cultura '${cultura}' nao e tipo de resources.json`);
+}
+
 // I-COMIDA-AVISO-DA-TROPA-COM-FOME — o lembrete do aviso precisa ser > 0 (o tick multiplo de 0 nao existe)
 function validarAvisoDaTropaComFome(dados, erros) {
   const aviso = (dados.condition || {}).avisoDaTropaComFome;
@@ -2189,6 +2209,7 @@ function validarTudo(dados) {
   validarNiveisDaIA(dados, erros);
   validarPedidoDeComida(dados, erros);
   validarAvisoDaTropaComFome(dados, erros);
+  validarClima(dados, erros);
   validarPrazoDeProgresso(dados, erros);
   validarPrioridadesDaIA(dados, erros);
   validarEscaramuca(dados, erros);
