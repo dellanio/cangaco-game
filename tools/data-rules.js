@@ -191,7 +191,7 @@ function validarBarraRapida(dados, config, tema, erros) {
 }
 
 // I-TELA-JORNAL — o teto de noticias, e cada evento da tabela com noticia no tema (manchete e texto).
-function validarJornal(config, tema, erros) {
+function validarJornal(config, tema, erros, dadosDoJogo) {
   const e = (msg) => erros.push(`interface/jornal: ${msg}`);
   if (!config || typeof config !== 'object' || Array.isArray(config)) {
     e('data/jornal.json precisa existir e ser objeto');
@@ -200,11 +200,34 @@ function validarJornal(config, tema, erros) {
   if (!Number.isInteger(config.maximoDeNoticias) || config.maximoDeNoticias <= 0) e('maximoDeNoticias precisa ser inteiro > 0');
   const noticias = (tema && tema.jornal && tema.jornal.noticias) || {};
   for (const [evento, chave] of Object.entries(config.eventos || {})) {
+    // I-TELA-CLIMA-VISUAL: a estacao tem uma noticia por fase do ciclo de data/clima.json
+    if (evento === 'season-changed') {
+      for (const fase of (dadosDoJogo && dadosDoJogo.clima && dadosDoJogo.clima.ciclo) || []) {
+        const n = noticias[`${chave}:${fase.id}`];
+        if (!n || !n.manchete || !n.texto) e(`evento 'season-changed': a noticia '${chave}:${fase.id}' precisa de manchete e texto em theme-sertao.json jornal.noticias`);
+      }
+      continue;
+    }
     const n = noticias[chave];
     if (!n || typeof n.manchete !== 'string' || n.manchete.length === 0 || typeof n.texto !== 'string' || n.texto.length === 0) {
       e(`evento '${evento}': a noticia '${chave}' precisa de manchete e texto em theme-sertao.json jornal.noticias`);
     }
   }
+}
+
+// I-TELA-CLIMA-VISUAL — o veu, a chuva e o calor da tela do clima
+function validarClimaVisual(config, erros) {
+  const e = (msg) => erros.push(`interface/clima-visual: ${msg}`);
+  if (!config || typeof config !== 'object') { e('data/clima-visual.json precisa existir e ser objeto'); return; }
+  const cor = (c) => typeof c === 'string' && /^#[0-9a-fA-F]{6}$/.test(c);
+  for (const est of ['inverno', 'seca']) {
+    const v = config.veu && config.veu[est];
+    if (!v || !cor(v.cor) || !(v.alfa >= 0 && v.alfa <= 1)) e(`veu.${est} precisa de cor #rrggbb e alfa em [0, 1]`);
+  }
+  const ch = config.chuva || {};
+  if (!Number.isInteger(ch.maximo) || ch.maximo < 0 || !(ch.comprimentoPx > 0) || !(ch.velocidadePxPorTick > 0) || !cor(ch.cor)) e('chuva precisa de maximo inteiro >= 0, comprimentoPx > 0, velocidadePxPorTick > 0 e cor');
+  const ca = config.calor || {};
+  if (!Number.isInteger(ca.maximo) || ca.maximo < 0 || !(ca.velocidadePxPorTick > 0) || !(ca.raioPx > 0) || !cor(ca.cor)) e('calor precisa de maximo inteiro >= 0, velocidadePxPorTick > 0, raioPx > 0 e cor');
 }
 
 function validarPoeira(poeira, erros) {
@@ -2121,7 +2144,8 @@ function validarInterface(dados, interfaceUi) {
   validarPensamento(dados, interfaceUi && interfaceUi.pensamento, tema, erros);
   validarObraRevelacao(interfaceUi && interfaceUi['obra-revelacao'], erros);
   validarBarraRapida(dados, interfaceUi && interfaceUi['barra-rapida'], tema, erros);
-  validarJornal(interfaceUi && interfaceUi.jornal, tema, erros);
+  validarJornal(interfaceUi && interfaceUi.jornal, tema, erros, dados);
+  validarClimaVisual(interfaceUi && interfaceUi['clima-visual'], erros);
   validarPoeira(interfaceUi && interfaceUi.poeira, erros);
   validarFumaca(interfaceUi && interfaceUi.fumaca, erros);
   validarSom(interfaceUi && interfaceUi.som, erros);

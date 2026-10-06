@@ -1,0 +1,10 @@
+{
+  "_doc": "I-TELA-CLIMA-VISUAL e I-TELA-RELOGIO-DO-SOL (2026-10-06). So TELA: a sim nao le. `veu` e a cor (e a opacidade) que tinge a vista em cada estacao de pico; nas transicoes a cor passa de uma para a outra pela fracao da fase (src/render/clima-visual.ts). `chuva` cai no inverno (e sobe e desce nas transicoes): `maximo` gotas na vista, cada uma um traco de `comprimentoPx`, caindo `velocidadePxPorTick`, inclinado `inclinacao` (px de x por px de y). `calor` sobe na seca: particulas claras de poeira quente. A posicao de cada particula sai de um hash do indice e da semente, sem acaso de relogio.",
+  "semente": 20261006,
+  "veu": {
+    "inverno": { "cor": "#5f7f6a", "alfa": 0.14 },
+    "seca": { "cor": "#c8792f", "alfa": 0.16 }
+  },
+  "chuva": { "maximo": 220, "comprimentoPx": 16, "velocidadePxPorTick": 26, "inclinacao": 0.25, "cor": "#dce8f2", "alfa": 0.75 },
+  "calor": { "maximo": 70, "velocidadePxPorTick": 1.4, "raioPx": 1.8, "cor": "#f6e2b0", "alfa": 0.55 }
+}

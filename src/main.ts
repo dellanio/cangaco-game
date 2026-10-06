@@ -73,6 +73,7 @@ import { criarCamadaDeSom, urlsDosSons } from './render/som';
 import type { SonsDoManifesto, TabelaDeSom, ContadoresDeSom } from './render/som';
 import { criarTocadorDeFaixasDoNavegador, criarTocadorDeLacoDoNavegador, criarTocadorDeVozesDoNavegador, criarTocadorDoNavegador } from './render/tocador-de-som';
 import { montarPlayerDaTrilha } from './ui/player-da-trilha';
+import { montarRelogioDoSol } from './ui/relogio-do-sol';
 import { criarSomDoTrabalho } from './render/som-do-trabalho';
 import type { ContadoresDoTrabalho, DadosDoTrabalho } from './render/som-do-trabalho';
 import { criarFundoSonoro } from './render/fundo-sonoro';
@@ -268,6 +269,8 @@ export function iniciarPartida(
   // que o bundler resolveu (a mesma composicao do menu, logo abaixo)
   const iconesDasMercadorias = (manifestoJson as unknown as { icones?: { mercadorias?: Readonly<Record<string, { arquivo?: string } | string>> } })
     .icones?.mercadorias ?? {};
+  // I-TELA-RELOGIO-DO-SOL: o relogio das estacoes no canto superior direito
+  const relogioDoSol = montarRelogioDoSol(gameData.clima.ciclo.length, gameData.tempo.tickMs);
   const barraRapida = montarBarraRapida(configDaBarraRapida as ConfigDaBarra, Object.fromEntries(Object.entries(gameData.economia.grupos).filter((par): par is [string, string[]] => Array.isArray(par[1]))), (mercadoria) => {
     const entrada = iconesDasMercadorias[mercadoria];
     return typeof entrada === 'object' && entrada.arquivo !== undefined ? urlsDeSprites[entrada.arquivo] ?? null : null;
@@ -357,6 +360,7 @@ export function iniciarPartida(
     minimapa.atualizar(s);
     hud.atualizar(s);
     barraRapida.atualizar(s);
+    relogioDoSol.atualizar(s);
     estatisticas.atualizar(s);
     distribuicao.atualizar(s);
     menu.atualizar(s);

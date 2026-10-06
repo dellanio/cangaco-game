@@ -500,6 +500,11 @@
     "vitoriaDesc": "O inimigo perdeu o armazém, a escola, o quartel e todas as tropas.",
     "derrotaDesc": "Você perdeu o armazém, a escola, o quartel e todas as tropas."
   },
+  "clima": {
+    "_doc": "I-TELA-RELOGIO-DO-SOL e I-TELA-CLIMA-VISUAL. O nome de cada fase do ciclo (a chave e o id de data/clima.json), no relogio do sol.",
+    "titulo": "Relógio do sol",
+    "estacoes": { "inverno": "Inverno (as chuvas)", "transicaoSeca": "Fim das chuvas", "seca": "Seca", "transicaoChuva": "Volta das chuvas" }
+  },
   "trilha": {
     "_doc": "I-TELA-TRILHA-SONORA. O player da trilha na aba Opcoes (src/ui/player-da-trilha.ts): o nome de cada faixa (a chave e o id de data/som.json musica.playlist) e os rotulos.",
     "titulo": "Trilha sonora",
@@ -520,6 +525,22 @@
       "tropaComFome": {
         "manchete": "Tropa passa fome!",
         "texto": "{n} cabras estão com a barriga roncando. Sem comida chegando ao quartel, a fome derruba a tropa antes da luta."
+      },
+      "estacao:inverno": {
+        "manchete": "Chegou o inverno!",
+        "texto": "As chuvas caíram no sertão. O milho e a cana crescem mais ligeiro: é hora de semear."
+      },
+      "estacao:transicaoSeca": {
+        "manchete": "A seca vem aí",
+        "texto": "As últimas chuvas estão passando. Guarde comida: na seca as roças crescem devagar."
+      },
+      "estacao:seca": {
+        "manchete": "É seca no sertão",
+        "texto": "O sol racha o chão. O milho e a cana crescem bem mais devagar até as chuvas voltarem."
+      },
+      "estacao:transicaoChuva": {
+        "manchete": "Cheiro de chuva no ar",
+        "texto": "As nuvens voltam a se juntar no céu. O inverno está perto."
       },
       "fimDaPaz": {
         "manchete": "Acabou a trégua!",

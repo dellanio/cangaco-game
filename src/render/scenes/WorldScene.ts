@@ -14,7 +14,11 @@ import dadosDaPoeira from '../../../data/poeira.json';
 import dadosDaFumaca from '../../../data/fumaca.json';
 import dadosDoPensamento from '../../../data/pensamento.json';
 import { CHAVE_DO_MARTELO } from '../pensamento';
-import { ticksParaAmadurecer } from '../../sim/clima';
+import { faseNoTick, ticksParaAmadurecer } from '../../sim/clima';
+import dadosDoClimaVisualCru from '../../../data/clima-visual.json';
+import { gotasDaChuva, particulasDoCalor, veuDaEstacao } from '../clima-visual';
+import type { ConfigDoClimaVisual } from '../clima-visual';
+const dadosDoClimaVisual = dadosDoClimaVisualCru as ConfigDoClimaVisual;
 import dadosDaObraRevelada from '../../../data/obra-revelacao.json';
 import { blocosVisiveis, recorteDoBloco } from '../obra-revelacao';
 import type { GradeDaObra } from '../obra-revelacao';
@@ -419,6 +423,10 @@ export class WorldScene extends Phaser.Scene {
     const aguaAnimada = !new URLSearchParams(window.location.search).has('aguaDesligada');
     let ultimoTickDaAgua: number | null = null;
     let ultimaVistaDaAgua = '';
+    // I-TELA-CLIMA-VISUAL: o veu da estacao, a chuva e o calor, em coordenadas da tela (acima do mundo,
+    // abaixo da nevoa)
+    const climaNaTela = this.add.graphics().setScrollFactor(0).setDepth(PROFUNDIDADE_DA_NEVOA - 1);
+    let ultimoQuadroDoClima = '';
     const poolDaPoeira = Array.from({ length: dadosDaPoeira.maximoNaVista }, () =>
       this.add.graphics().setDepth(0.75).setVisible(false));
     estado.poolDaPoeira = poolDaPoeira.length;
@@ -724,6 +732,28 @@ export class WorldScene extends Phaser.Scene {
         });
       }
       const alfaDaPoeira = this.relogio.alfa();
+    // I-TELA-CLIMA-VISUAL: a estacao do tick, e o que ela desenha na vista
+    const tempoDoClima = tickDaAgua + alfaDaPoeira;
+    const chaveDoClima = `${tempoDoClima.toFixed(2)},${this.scale.width},${this.scale.height}`;
+    if (chaveDoClima !== ultimoQuadroDoClima) {
+      ultimoQuadroDoClima = chaveDoClima;
+      const fase = faseNoTick(tickDaAgua);
+      const w = this.scale.width;
+      const h = this.scale.height;
+      climaNaTela.clear();
+      const veu = veuDaEstacao(fase, dadosDoClimaVisual);
+      if (veu !== null && veu.alfa > 0) {
+        climaNaTela.fillStyle(Number.parseInt(veu.cor.slice(1), 16), veu.alfa);
+        climaNaTela.fillRect(0, 0, w, h);
+      }
+      const gotas = gotasDaChuva(fase, tempoDoClima, w, h, dadosDoClimaVisual);
+      climaNaTela.lineStyle(1, Number.parseInt(dadosDoClimaVisual.chuva.cor.slice(1), 16), dadosDoClimaVisual.chuva.alfa);
+      for (const g of gotas) climaNaTela.lineBetween(g.x, g.y, g.x + g.dx, g.y + g.dy);
+      const calor = particulasDoCalor(fase, tempoDoClima, w, h, dadosDoClimaVisual);
+      climaNaTela.fillStyle(Number.parseInt(dadosDoClimaVisual.calor.cor.slice(1), 16), dadosDoClimaVisual.calor.alfa);
+      for (const p of calor) climaNaTela.fillCircle(p.x, p.y, dadosDoClimaVisual.calor.raioPx);
+      estado.clima = { estacao: fase?.id ?? null, veu, gotas: gotas.length, calor: calor.length };
+    }
     const chaveDaPoeira = `${tickDaAgua},${alfaDaPoeira},${chaveDaVistaDaAgua}`;
     if (chaveDaPoeira !== ultimoQuadroDaPoeira) {
       ultimoQuadroDaPoeira = chaveDaPoeira;

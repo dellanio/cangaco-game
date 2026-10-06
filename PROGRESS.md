@@ -21087,3 +21087,36 @@ A suíte inteira dá 298 arquivos e 2 792 testes verdes.
 **Balanceamento:** com o clima, o moinho da calibração espera 14,5 % (teto 10 %). Está no BALANCE_LOG.
 **Ainda não:** a tela (o relógio do sol, o véu e a chuva, o jornal) é o item seguinte, e o Açude vem
 depois.
+
+### I-TELA-RELOGIO-DO-SOL e I-TELA-CLIMA-VISUAL — o relógio do sol, a chuva, o calor e o jornal (verificado)
+- **O relógio do sol** (canto superior direito do jogo, DOM, `src/ui/relogio-do-sol.ts`):
+  - a arte é do Codex (`codex exec`, com a geração de imagem dele): o mostrador com as quatro fases em
+    setores iguais e o ponteiro do sol, com os originais em `assets/base/ui-clima/codex/`, limpos pelo
+    `tools/limpar-relogio-do-sol.mjs`. Corrigi o lint do script;
+  - a animação é minha: o ponteiro gira por CSS. Como as fases têm tempos diferentes e os setores são
+    iguais, o ângulo anda o setor da fase pela fração dela (`anguloDoPonteiro`, pura);
+  - embaixo vêm o nome da estação e o tempo até a próxima ("Seca · 3:00");
+- **O clima na tela** (`src/render/clima-visual.ts`, puro, e uma camada da cena em coordenadas de tela,
+  abaixo da névoa):
+  - o véu de cor da estação, esverdeado no inverno e ocre na seca, com a rampa contínua nas
+    transições;
+  - a chuva em traços no inverno e o calor (partículas claras subindo) na seca. As posições saem de um
+    hash, sem acaso de relógio, e os números ficam em `data/clima-visual.json`. Depois da primeira
+    captura, a chuva e o véu ficaram mais fortes, porque mal se viam;
+- **O jornal:** `season-changed` vira uma notícia por estação ("Chegou o inverno!", "A seca vem aí", "É
+  seca no sertão", "Cheiro de chuva no ar"). O validador exige a notícia de cada fase do ciclo.
+
+**Teste:** `tests/I-TELA-CLIMA-VISUAL.test.ts` (8) cobre:
+- o véu (o pico, as rampas e a continuidade nas bordas das fases);
+- a chuva e o calor (cada um só na sua estação, determinísticos, a gota caindo);
+- a notícia de cada estação e o validador;
+- o ângulo do ponteiro (os setores e monótono no ciclo) e o tempo em m:ss;
+- a arte no manifesto.
+
+**Evidência:** o roteiro novo `I-TELA-CLIMA-VISUAL` sai 0. Ele confere:
+- no meio do inverno: o relógio em "Inverno", o ponteiro no primeiro setor, a chuva caindo e nada de
+  calor;
+- no meio da seca: o relógio em "Seca", o ponteiro em 225°, nada de chuva, o calor subindo, e o jornal
+  com "A seca vem aí" e "É seca no sertão".
+
+As capturas foram abertas, inclusive o recorte ampliado do relógio nas duas estações.

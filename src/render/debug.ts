@@ -354,6 +354,9 @@ export interface EstadoDebug {
   /** A planta fantasma desenhada agora, ou null se escondida. `valida` e o
    *  que `canPlace` respondeu; `motivo` e o porque quando nao pode. */
   plantaFantasma: EstadoDaPlanta | null;
+  /** I-TELA-CLIMA-VISUAL — o que a camada do clima desenhou no ultimo quadro: a estacao, o veu e quantas
+   *  gotas e particulas de calor. */
+  clima: { readonly estacao: string | null; readonly veu: { readonly cor: string; readonly alfa: number } | null; readonly gotas: number; readonly calor: number } | null;
   /** Predio que a ferramenta carrega (src/input/ferramenta.ts), ou null. */
   ferramentaAtiva: string | null;
   /**
@@ -492,6 +495,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     custo: custoZerado(),
     zerarCusto: () => { estado.custo = custoZerado(); },
     nevoa: null,
+    clima: null,
     ligarVento: () => undefined,
     estradasRenderizadas: 0,
     estradasPlanejadasRenderizadas: 0,

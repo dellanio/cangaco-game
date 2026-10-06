@@ -41,9 +41,11 @@ export function noticiasDosEventos(
     const chave = config.eventos[e.type];
     if (chave === undefined) continue;
     if ('lado' in e && e.lado !== LADO_DO_JOGADOR) continue;
-    const t = textos[chave];
+    // I-TELA-CLIMA-VISUAL: a noticia da estacao e uma por estacao (`estacao:seca`)
+    const chaveDaNoticia = 'estacao' in e ? `${chave}:${e.estacao}` : chave;
+    const t = textos[chaveDaNoticia];
     if (t === undefined) continue;
-    noticias.push({ tick, chave, manchete: preencher(t.manchete, e), texto: preencher(t.texto, e) });
+    noticias.push({ tick, chave: chaveDaNoticia, manchete: preencher(t.manchete, e), texto: preencher(t.texto, e) });
   }
   return noticias;
 }
