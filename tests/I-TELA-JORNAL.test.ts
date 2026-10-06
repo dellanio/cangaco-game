@@ -4,7 +4,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { acrescentarNoticias, horaDoJogo, noticiasDosEventos } from '../src/ui/jornal';
+import { acrescentarNoticias, horaDoJogo, iconeVisivel, noticiasDosEventos } from '../src/ui/jornal';
 import type { ConfigDoJornal, Noticia, TextoDaNoticia } from '../src/ui/jornal';
 import type { GameEvent } from '../src/sim/state';
 import { LADO_DO_JOGADOR } from '../src/sim/state';
@@ -57,5 +57,15 @@ describe('I-TELA-JORNAL', () => {
       .toContain('interface/jornal: maximoDeNoticias precisa ser inteiro > 0');
     expect(validarInterface(dados, { ...interfaceUi, jornal: { ...config, eventos: { ...config.eventos, 'unit-killed': 'morte' } } }))
       .toContain("interface/jornal: evento 'unit-killed': a noticia 'morte' precisa de manchete e texto em theme-sertao.json jornal.noticias");
+  });
+
+  it('I-TELA-JORNAL-SO-A-ULTIMA: com tres noticias seguidas, a lista guarda so a ultima; o icone some ao fechar', () => {
+    expect(config.maximoDeNoticias).toBe(1);
+    let lista: Noticia[] = [];
+    for (const t of [1, 2, 3]) lista = acrescentarNoticias(lista, [{ tick: t, chave: 'tropaComFome', manchete: 'm', texto: 't' }], config.maximoDeNoticias);
+    expect(lista.map((n) => n.tick)).toEqual([3]);
+    expect(iconeVisivel(0, false)).toBe(false); // fechado e lido: some
+    expect(iconeVisivel(1, false)).toBe(true); // noticia nova: volta
+    expect(iconeVisivel(0, true)).toBe(true); // aberto
   });
 });

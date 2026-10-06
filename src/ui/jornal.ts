@@ -65,6 +65,12 @@ export function horaDoJogo(tick: number, tickMs: number): string {
   return h > 0 ? `${h}:${dois(m)}:${dois(s)}` : `${dois(m)}:${dois(s)}`;
 }
 
+/** I-TELA-JORNAL-SO-A-ULTIMA — o icone aparece com noticia nao lida (ou com o jornal aberto) e some ao
+ *  fechar: o jogador ja leu. Pura. */
+export function iconeVisivel(naoLidas: number, aberto: boolean): boolean {
+  return aberto || naoLidas > 0;
+}
+
 export interface Jornal {
   aoPasso(estado: GameState): void;
   readonly aberto: boolean;
@@ -87,7 +93,7 @@ export function montarJornal(config: ConfigDoJornal, tickMs: number, janela: Win
   let aberto = false;
 
   function desenharIcone(): void {
-    icone!.hidden = noticias.length === 0;
+    icone!.hidden = !iconeVisivel(naoLidas, aberto);
     icone!.dataset.naoLidas = String(naoLidas);
     icone!.classList.toggle('nao-lida', naoLidas > 0);
   }
@@ -144,6 +150,7 @@ export function montarJornal(config: ConfigDoJornal, tickMs: number, janela: Win
       if (!aberto) return;
       aberto = false;
       folha!.hidden = true;
+      desenharIcone();
     },
   };
 

@@ -21232,3 +21232,15 @@ a caixa selecioná-lo e de o botão direito ser dado no inimigo, com o jogo anda
 mostra o clarão, e o rótulo do convertido já vermelho.
 
 **Aberto:** a homologação da arte do padre é do operador.
+
+### I-TELA-JORNAL-SO-A-ULTIMA — o jornal só com a última notícia, e o ícone some ao fechar (verificado)
+- `data/jornal.json` `maximoDeNoticias` passou de 12 para 1. O ícone segue a regra pura `iconeVisivel`:
+  aparece com notícia não lida ou com o jornal aberto, e some ao fechar (pelo X, pelo ícone ou pelo Esc).
+  Uma notícia nova o traz de volta.
+- **Teste:** `tests/I-TELA-JORNAL.test.ts`, com o caso novo das três notícias seguidas e do ícone.
+- **Roteiro `I-TELA-JORNAL` (sai 0):** a asserção ficou mais estrita. A folha tem uma notícia só. Depois
+  do X o ícone está escondido (`jornal-fechado`, captura aberta). A notícia seguinte traz o ícone de volta,
+  e a folha troca para ela.
+- **Achado:** com as estações, a notícia mais nova nas duas primeiras já não é sempre a fome (agora é "É
+  seca no sertão" no tick ~4 000). Por isso a asserção "a do alto é a da fome" saiu: ela afirmava a ordem
+  dos eventos do balanceamento, e não a mecânica do jornal.
