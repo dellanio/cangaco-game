@@ -9365,6 +9365,11 @@ BALANCE_LOG como [proposta].
   o padre na porta da Igreja completa do jogador, pagando `custoOuro` do padre da gaveta de ouro dela,
   como o `HireMercenary` faz na prefeitura. O ouro é levado à Igreja pela mesma regra do insumo da
   prefeitura (alvo de ouro no dado). O painel da Igreja tem o botão de treinar.
+- **Emenda (2026-10-06, antes do código):** em vez de um comando novo, o `HireMercenary` (F36) se
+  generaliza: cada tipo pago em ouro é contratado no prédio do seu `predioQueTreina` (o padrão continua
+  a prefeitura). A Igreja recebe ouro pela mesma regra do insumo (o alvo é o custo mais caro do que ela
+  treina), e o painel lista, em cada prédio, só os tipos dele. Onde o aceite abaixo diz `TrainPriest`,
+  leia `HireMercenary {predio: igreja, tipo: priest}`.
 - **Aceite:** (1) planta, constrói e completa pelo `step`; (2) com ouro, o `TrainPriest` cria o padre na
   porta e debita o ouro; sem ouro, é recusado com motivo; na Igreja de outro lado, também; (3) a Igreja
   está no menu (sub-aba Vila), com o nome do tema; (4) o determinismo.
