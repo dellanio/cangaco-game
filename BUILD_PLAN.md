@@ -9335,6 +9335,83 @@ resposta fica registrada como **decisão da sessão, revisável**:
   o mesmo trecho da vila no inverno (com chuva) e na seca, com as capturas abertas, e a notícia da seca
   no jornal.
 
+#### A Igreja e o padre — a implementação (pedido do operador, 2026-10-06: "prossiga com a implementação do prédio Igreja e o padre; o sprite da igreja e do padre, e as animações do padre andando e jogando seus poderes")
+A pesquisa é `docs/pesquisas/2026-10-05-igreja-e-padre.md`. O operador mandou prosseguir sem responder
+às oito perguntas dela. Vale a interpretação mais conservadora (CLAUDE.md §14), registrada como
+**decisão da sessão, revisável**:
+1. a torre única fica à direita da fachada;
+2. o padre converte só **militar** inimigo (o civil fica de fora: mexeria na economia do outro lado);
+3. cada padre converte por conta própria; dois no mesmo alvo sorteiam cada um, como no AoE2;
+4. a bênção é **+20 % de resistência** (a defesa do abençoado no cálculo do acerto), e não de dano: é a
+   opção que não aumenta a letalidade;
+5. a Igreja é 3×3, com 5 de madeira e 5 de pedra (hp 500, pela regra do dado), desbloqueada pela Escola;
+6. o padre é treinado na própria Igreja e pago em ouro (2), como o mercenário na prefeitura;
+7. a Igreja vai na sub-aba Vila ("na dúvida, Vila");
+8. a IA não ganha Igreja nem padre por enquanto.
+
+Os números ficam em dado (`buildings.json`, `units.json`, `combat.json` `padre`), e entram no
+BALANCE_LOG como [proposta].
+
+##### I-ARTE-IGREJA — a igreja do sertão (Codex)
+- **Como:** o Codex gera a igreja caiada de torre única, frontão de volutas, sino, cruz e porta de
+  madeira, na régua da padaria (3×3), com o par `madeira` (a obra) e `completo`. Os originais vão para
+  `assets/base/church/`, e os derivados para `assets/sprites/church/`.
+- **Aceite:** a entrada `church` no manifesto, com os dois estados e a origem; a dimensão e o anchor na
+  régua dos prédios 3×3 (o teste de escala dos prédios passa); a captura da igreja em jogo é aberta. A
+  homologação é do operador.
+
+##### I-PREDIO-IGREJA — a Igreja no jogo, e o treino do padre
+- **Regra (sim):** `church` em `buildings.json` (sem trabalhador). O comando `TrainPriest {predio}` cria
+  o padre na porta da Igreja completa do jogador, pagando `custoOuro` do padre da gaveta de ouro dela,
+  como o `HireMercenary` faz na prefeitura. O ouro é levado à Igreja pela mesma regra do insumo da
+  prefeitura (alvo de ouro no dado). O painel da Igreja tem o botão de treinar.
+- **Aceite:** (1) planta, constrói e completa pelo `step`; (2) com ouro, o `TrainPriest` cria o padre na
+  porta e debita o ouro; sem ouro, é recusado com motivo; na Igreja de outro lado, também; (3) a Igreja
+  está no menu (sub-aba Vila), com o nome do tema; (4) o determinismo.
+
+##### I-UNIDADE-PADRE — o padre, que obedece e não luta
+- **Regra (sim):** `priest` em `units.json` (`mercenarios`, com `predioQueTreina: "church"`, que a
+  prefeitura não oferece) e `naoLuta: true`: ele recebe a ordem de mover, mas não engaja em
+  corpo a corpo nem é mandado atacar.
+- **Aceite:** (1) o padre anda com `MoveUnits`; (2) com um inimigo encostado, ele não golpeia (nenhum
+  `unit-struck` com ele de atacante); (3) a prefeitura não lista o padre.
+
+##### I-COMBATE-BENCAO — a Bênção das Tropas
+- **Regra (sim):** o militar do jogador a até `raioDaBencao_tiles` (8, euclidiano) de um padre vivo do
+  MESMO lado é abençoado: no cálculo do acerto contra ele, a defesa vale `× (1 + resistencia)` (0,20).
+  Não acumula: um padre ou cinco dão o mesmo.
+- **Aceite:** (1) por tabela, a chance de acerto contra o abençoado é a do não abençoado com a defesa
+  × 1,2; (2) a 8 tiles abençoa, a 9 não; (3) dois padres dão o mesmo que um; (4) o padre do outro lado
+  não abençoa.
+
+##### I-COMBATE-CONVERTER — o padre converte o inimigo
+- **Regra (sim):** o comando `ConvertUnit {padre, alvo}`. O padre anda até ficar a `alcance_tiles`
+  (7) do alvo militar inimigo e reza: conta intervalos de `intervalo_segundos` (1,2 s). Do intervalo
+  `intervaloMinimo` (5) em diante, sorteia `chancePorIntervalo` (0,38) pelo RNG da sim, e o
+  `intervaloGarantido` (9) converte sempre. Ao converter, o alvo passa para o lado do padre, a
+  FSM dele volta a `ocioso`, e ele sai das posições da IA. O padre fica em recarga por
+  `recarga_segundos` (30) antes da próxima. Sai o evento `unit-converted`. Alvo morto, fora do mapa ou já
+  do mesmo lado: o padre desiste e volta a `ocioso`.
+- **Aceite:** (1) pelo `step`, a conversão nunca antes do 5º intervalo e sempre até o 9º; (2) o
+  convertido troca de lado, fica `ocioso` e sai da IA; quem lutava com ele larga (a regra que já
+  existe); (3) a recarga impede a segunda conversão antes do tempo; (4) civil, aliado e alvo longe
+  demais com o caminho bloqueado: a ordem é recusada ou desiste, sem travar; (5) o determinismo (a
+  mesma semente dá o mesmo intervalo).
+
+##### I-ARTE-PADRE — o padre desenhado, andando e rezando, e os poderes na tela
+- **Como:** o padre (batina preta, chapéu de palha, cruz no peito) pelo PixelLab, nas direções que o
+  jogo usa (n, ne, l, se, s; o oeste é espelho). As animações são `andar` e `rezar` (os braços erguidos,
+  que vale para os dois poderes), montadas no atlas como as das outras unidades. Os poderes na tela:
+  - a aura da bênção é um anel dourado tênue no chão, no raio, em volta de cada padre, com um brilho
+    nos abençoados;
+  - a conversão é um facho de luz do padre ao alvo enquanto ele reza, e um clarão no alvo convertido.
+
+  Os números ficam em `data/padre-visual.json`.
+- **Aceite:** (1) a entrada `priest` no manifesto com o atlas e as animações, e o validador das unidades
+  passa; (2) o padre anda com a animação de andar e reza com a de rezar (a ponte publica a animação);
+  (3) a captura do padre abençoando a tropa e a do padre convertendo são abertas. A homologação é do
+  operador.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
