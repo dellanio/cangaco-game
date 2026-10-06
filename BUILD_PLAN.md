@@ -9202,6 +9202,24 @@ A ordem de execução é a desta lista. Cada item tem o aceite abaixo, escrito a
      trilha sem arquivo, base ou origem. A regra CC0 de `sons` continua igual;
   4. o roteiro em jogo, com o gesto: a faixa da playlist está tocando (o elemento de áudio da trilha
      não pausado, com o tempo andando), e não há erro de console.
+- **Emenda (2026-10-06, pedido do operador no meio do trabalho, antes do código):** a segunda faixa,
+  `music_pianco_02.mp3`, entra na playlist depois da primeira. E o jogador ganha os **controles da
+  trilha** na aba Opções da barra (hoje ela só tem o botão de ajuda):
+  - o nome da faixa que toca;
+  - **pausar/continuar** (a pausa da trilha é do jogador e vale até ele continuar; o combate não a
+    desfaz);
+  - **passar** para a próxima faixa (da última, volta à primeira);
+  - os **volumes**: o geral e o de cada canal (efeitos, ambiente e música), os mesmos da caixa de
+    opções de som (`ui/opcoes-de-som.ts`), lidos e gravados pela mesma preferência. Mexer num muda o
+    outro, e o mudo também.
+  **Aceite emendado:**
+  5. a regra pura de `passar` (com uma ou várias faixas) e o estado do player por tabela: pausado não
+     toca a playlist e não avança; passar com a trilha pausada troca a faixa e continua pausada;
+  6. pelo fundo sonoro, com o tocador falso: `pausar` para a faixa, `continuar` a retoma da mesma faixa,
+     e `passar` para a atual e toca a seguinte desde o começo;
+  7. o roteiro em jogo, com o jogo andando, aperta os controles (down, 150 ms, up): passar troca o nome
+     e a faixa que toca; pausar deixa o áudio da trilha pausado e continuar o retoma; o deslizador do
+     volume da música muda o volume do áudio da trilha. A captura do player é aberta.
 
 ## Backlog com gatilho
 
