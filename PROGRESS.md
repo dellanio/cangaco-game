@@ -20985,4 +20985,13 @@ vêm do operador.
 - o deslizador da música baixando o volume da faixa.
 
 A captura do player foi aberta.
-**Pergunta (em aberto):** a licença das faixas está registrada como "do operador, a confirmar".
+**Licença e nomes (respondidos pelo operador em 2026-10-06):** as faixas são músicas dele, feitas com IA
+para o jogo, e são arte própria do projeto (registrado no manifesto). Os nomes são da sessão, a partir
+da descrição dele: a 1 e a 2 são rápidas, "lembrando feira de mangaio", e viraram "Feira de Piancó" e
+"Arrasta-pé do Mandacaru". A 3 é lenta, "lembrando asa branca", e virou "Lamento da Seca". Ficam no tema
+(`trilha.faixas`).
+**Visto na corrida do `verify:rapido` (2026-10-06):** `F24a` (save/load no rodízio) e `F35` (a feira com 20
+serfs) estouraram o limite padrão de 5 s com a suíte carregada (5,07 s e 5,48 s). Sozinhos, passam
+(16 de 16, em 5,2 s os dois arquivos). Na segunda corrida tudo passou. Não é falha de lógica: é a margem
+do timeout padrão. Fica registrado, e não mexi: dar limite explícito a esses dois casos, como foi feito no
+`D-TELA-VENTO-VEGETACAO`, é a saída se repetir.
