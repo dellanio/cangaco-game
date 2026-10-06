@@ -9272,6 +9272,62 @@ A ordem de execução é a desta lista. Cada item tem o aceite abaixo, escrito a
 - **Aceite:** (1) o som está no manifesto com CC0 e o link da página, e o arquivo existe; (2) o
   `H-ARTE-SONS-APROVADOS` passa com 23 aprovados; (3) pelo evento, o aviso do jogador toca o som.
 
+#### O clima — a implementação (pedido do operador, 2026-10-06: "prossiga com a implementação do conceito de clima")
+O plano é `docs/planos/2026-10-05-acude-e-clima.md`. O operador mandou prosseguir sem responder às oito
+perguntas do plano. Pela regra (CLAUDE.md §14), vale a interpretação mais conservadora, e cada
+resposta fica registrada como **decisão da sessão, revisável**:
+- **P1 (efeito por cultura):** um efeito só, o mesmo para o milho e a cana;
+- **P2 (escala):** a duração do ciclo declara o grupo `economia`, como manda o §5. Os valores base são
+  a metade dos minutos do pedido, para que, com a escala 2,0 de hoje, o inverno dure os 5 min de
+  relógio que o operador pediu (e assim por diante);
+- **P5 (o crescimento):** o multiplicador é o da estação **na semeadura**: o tile semeado no inverno
+  cresce como inverno até o fim. É a opção sem estado novo (o maduro continua derivado de `semeadoEm`);
+- **P6 (a árvore):** fora do clima;
+- **O Açude** (P3, P4, P7, P8) vem depois, em itens próprios: esta leva é o clima.
+
+##### I-CLIMA-ESTACAO — a estação do ano, função do tick
+- **Regra (sim):** `data/clima.json` (lido pela sim) tem o ciclo (inverno, transição para a seca, seca,
+  transição para a chuva) com a duração de cada fase e o `multiplicadorDeCrescimento`, mais o `ligado`.
+  A conversão para ticks acontece no carregamento. `estacaoNoTick(tick)` é pura, sem estado no
+  `GameState`. O `step` emite `season-changed` (`estacao`) no tick em que a estação muda.
+- **Aceite:** (1) por tabela, tick → estação nas bordas de cada fase e depois de um ciclo inteiro; (2)
+  pelo `step`, o evento sai exatamente nos ticks de troca, e só neles; (3) com `ligado: false`, nenhum
+  evento, e o estado é igual ao de hoje; (4) o validador recusa o ciclo vazio, a duração ≤ 0 e o
+  multiplicador ≤ 0.
+
+##### I-CLIMA-CRESCIMENTO — o milho e a cana crescem com a estação
+- **Regra (sim):** o tile de uma cultura do clima (`culturas`: `corn`, `grapes`) amadurece em
+  `ticksDeCrescer / multiplicador(estação na semeadura)`, arredondado. A árvore não muda.
+- **Aceite:** (1) por tabela, o mesmo tile semeado no inverno e na seca: a razão dos tempos é
+  1,20 / 0,65 (a menos do arredondamento); (2) a árvore amadurece igual com e sem clima; (3) com
+  `ligado: false`, igual a hoje; (4) o consumo de comida por cabeça não muda (o teste da fome continua
+  verde).
+
+##### I-TELA-RELOGIO-DO-SOL — o relógio do sol no canto superior direito
+- **Pedido:** "um relógio do SOL no canto superior direito, rodando e mostrando as estações do ano (peça
+  ao Codex para gerar a arte e você faz a animação)".
+- **Como:** o Codex gera a arte, que é o mostrador com as quatro fases em setores (inverno, chuva caindo,
+  a seca, o sol rachando) e o ponteiro do sol, em PNG. A tela gira o ponteiro pela fração do ciclo
+  (`fracaoDoCiclo(tick)`, pura), e o nome da estação e o tempo até a próxima ficam embaixo. É DOM, no canto
+  superior direito do canvas, sem pegar clique.
+- **Aceite:** (1) a regra pura da fração e do ângulo, por tabela; (2) a arte do Codex no manifesto, com
+  a origem; (3) o roteiro anda o relógio e confere que o ângulo e o nome acompanham a estação do estado,
+  e a captura é aberta.
+
+##### I-TELA-CLIMA-VISUAL — o mundo muda com a estação, e o jornal avisa
+- **Como (só tela):**
+  - o chão ganha um véu de cor por estação, com a passagem suave nas transições: o verde do inverno, o
+    ocre queimado da seca;
+  - no inverno cai chuva (partículas, pelo tick, sem acaso de relógio);
+  - na seca sobe o tremor de calor (partículas de poeira clara), com o número de cada coisa em
+    `data/clima-visual.json`;
+  - o jornal ganha as notícias `season-changed`: "A seca vem aí" na transição para a seca, "Chegou o
+    inverno" etc.
+- **Aceite:** (1) a regra pura "estação e fração → cor e opacidade do véu", por tabela, contínua nas
+  trocas; (2) o jornal transforma `season-changed` em notícia com a manchete do tema; (3) o roteiro mostra
+  o mesmo trecho da vila no inverno (com chuva) e na seca, com as capturas abertas, e a notícia da seca
+  no jornal.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
