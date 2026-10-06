@@ -20995,3 +20995,12 @@ serfs) estouraram o limite padrão de 5 s com a suíte carregada (5,07 s e 5,48 
 (16 de 16, em 5,2 s os dois arquivos). Na segunda corrida tudo passou. Não é falha de lógica: é a margem
 do timeout padrão. Fica registrado, e não mexi: dar limite explícito a esses dois casos, como foi feito no
 `D-TELA-VENTO-VEGETACAO`, é a saída se repetir.
+
+## Leva de 2026-10-06 (manhã) — o lote de correções, a Igreja e o clima
+
+### I-ARTE-ESCOLA-DE-VOLTA — a escola volta ao sobrado de antes (verificado)
+O operador reprovou a escola rural D: "ficou muito ruim e fora das dimensões". A entrada `schoolhouse`
+do manifesto voltou, igual, à de `a2a26a4^` (o diff dela contra esse commit é vazio). Os 4 arquivos D
+saíram de `assets/`; eles continuam na pasta de candidatos de fora. O teste novo
+`tests/I-ARTE-ESCOLA-DE-VOLTA.test.ts` confere os estados, o envelope e a ausência dos arquivos D. Os
+58 testes da escola passam, o F17f sai 0, e a captura (o sobrado ao lado do armazém) foi aberta.

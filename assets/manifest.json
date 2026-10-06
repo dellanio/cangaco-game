@@ -178,37 +178,24 @@
         214,
         240
       ],
+      "alturaMaxPorLargura": 1.33,
+      "larguraMaxPorLote": 1.12,
       "anchor": [
         0.5,
         0.875
       ],
       "estados": {
-        "madeira": "sprites/schoolhouse/schoolhouse_madeira-D-20261003.png",
-        "completo": "sprites/schoolhouse/schoolhouse_completo-D-20261003.png"
+        "madeira": "sprites/schoolhouse/schoolhouse_madeira.png",
+        "completo": "sprites/schoolhouse/schoolhouse_completo.png"
       },
-      "licenca": "arte propria do projeto; geracao nativa solicitada pelo operador em 2026-10-03; aplicada no jogo por ordem do operador em 2026-10-05 (I-ARTE-ESCOLA-DA-NORU)",
+      "licenca": "arte propria do projeto, modelada no Blender para o projeto em 2026-09-27",
       "origem": {
-        "base": "base/schoolhouse/schoolhouse-D-20261003-completo-master-2x.png",
+        "base": "base/schoolhouse/schoolhouse_blender_compressed_premium_v3.png",
         "semente": null,
-        "nota": "Escola rural com alpendre, quadro-negro e emblema de livro; variante D. Luz de cima, levemente do sul, sem componente leste-oeste. Geracoes nativas completo02 e madeira03. Envelope original214x240, masters428x480, silhueta186x151 sem ampliacao, footprint3x3 e anchor[0.5,0.875] preservados; transformacao uniforme compartilhada e alpha bleed. Validador trial passou, sem calibracao cromatica; revisao independente confirmou identidade e alinhamento, com ressalva de simbolos em zoom0.5. Porta/escadaria e area de treino aguardam prova em tela; ocupante nao pintado. Master da madeira: base/schoolhouse/schoolhouse-D-20261003-madeira-master-2x.png. Os arquivos da Casa do Coronel de antes continuam em sprites/schoolhouse/schoolhouse_{madeira,completo}.png."
+        "nota": "Casa do Coronel sobrado 3x3 frontal. O telhado nao foi achatado: uma faixa interna de cada agua foi removida e as bordas originais foram reunidas, preservando inclinacao visual, tamanho das telhas, cumeeira, diagonais e beiral. A escada foi encurtada sem escalar a fachada. Madeira e completo usam o mesmo recorte. Saida 214x240; anchor [0.5,0.875] assenta o piso da varanda e reserva somente o acesso compacto abaixo do lote."
       },
-      "ancoras": {
-        "bandeira": [
-          0.3385,
-          0.335
-        ],
-        "trabalho": {
-          "area": [
-            0.213,
-            0.655,
-            0.365,
-            0.783
-          ]
-        }
-      },
-      "alturaMaxPorLargura": 1.33,
-      "larguraMaxPorLote": 1.12
-    },
+  "ancoras": { "bandeira": [0.05607, 0.0] }
+},
     {
   "id": "inn",
   "tipo": "predio",
