@@ -5,7 +5,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { faseDaUnidade, mercadoriaDoBalao, pensamentoAceso, pensamentoDaUnidade, pensamentoNaTela } from '../src/render/pensamento';
+import { anguloDoMartelo, faseDaUnidade, mercadoriaDoBalao, pensamentoAceso, pensamentoDaUnidade, pensamentoNaTela } from '../src/render/pensamento';
 import type { ConfigDoPensamento } from '../src/render/pensamento';
 import type { DadosDaFsm, GameState } from '../src/sim/state';
 import { createInitialState } from '../src/sim/state';
@@ -87,6 +87,27 @@ describe('I-TELA-BALAO-DE-PENSAMENTO', () => {
     expect(Object.keys(vistos).length).toBeGreaterThan(0);
     // de vez em quando, e nao o caminho inteiro
     expect(acesos).toBeLessThan(aCaminho);
+  });
+
+  it('I-TELA-BALAO-COM-MARTELO: o angulo do martelo e periodico, dentro da amplitude, sobe devagar e desce de uma vez', () => {
+    const { amplitudeGraus, periodoTicks } = config.martelo;
+    for (const id of ['u1', 'u9', 'laborer-3']) {
+      const angulos = Array.from({ length: periodoTicks }, (_, t) => anguloDoMartelo(t, id, config));
+      for (const a of angulos) { expect(a).toBeLessThanOrEqual(0); expect(a).toBeGreaterThanOrEqual(-amplitudeGraus); }
+      for (let t = 0; t < periodoTicks; t++) expect(anguloDoMartelo(t + periodoTicks * 5, id, config)).toBeCloseTo(angulos[t]!);
+      // a batida: a maior queda entre dois ticks e maior que a maior subida
+      const passos = angulos.map((a, i) => angulos[(i + 1) % periodoTicks]! - a);
+      expect(Math.max(...passos)).toBeGreaterThan(-Math.min(...passos));
+    }
+    expect(anguloDoMartelo(0, 'u1', config)).not.toBe(anguloDoMartelo(0, 'u9', config));
+  });
+
+  it('I-TELA-BALAO-TRANSPARENTE: a opacidade do balao e 0,9, e o validador recusa fora de (0, 1]', () => {
+    expect(config.opacidade).toBe(0.9);
+    const ler = (nomes: readonly string[]) => Object.fromEntries(nomes.map((nome) => [nome, JSON.parse(readFileSync(`data/${nome}.json`, 'utf8'))]));
+    const dados = ler(ARQUIVOS), interfaceUi = ler(ARQUIVOS_DA_INTERFACE);
+    expect(validarInterface(dados, { ...interfaceUi, pensamento: { ...config, opacidade: 1.2 } }))
+      .toContain('interface/pensamento: opacidade precisa ser um numero em (0, 1]');
   });
 
   it('o dado: o validador reprova o balao sempre aceso e o icone de comer que nao e mercadoria', () => {

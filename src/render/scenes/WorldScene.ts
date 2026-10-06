@@ -12,6 +12,8 @@ import { aneisDaAgua, pescadoresNaAgua } from '../agua-peixe';
 import agua from '../../../data/agua.json';
 import dadosDaPoeira from '../../../data/poeira.json';
 import dadosDaFumaca from '../../../data/fumaca.json';
+import dadosDoPensamento from '../../../data/pensamento.json';
+import { CHAVE_DO_MARTELO } from '../pensamento';
 import dadosDaObraRevelada from '../../../data/obra-revelacao.json';
 import { blocosVisiveis, recorteDoBloco } from '../obra-revelacao';
 import type { GradeDaObra } from '../obra-revelacao';
@@ -365,6 +367,9 @@ export class WorldScene extends Phaser.Scene {
     }
     // D-TELA-03a/03b: os icones de mercadoria, para a carga do serf e a pilha sem PNG
     for (const textura of texturasDosIcones()) this.load.image(textura.chave, textura.url);
+    // I-TELA-BALAO-COM-MARTELO: o martelo do balao de obra
+    const urlDoMartelo = urlsDeSprites[(dadosDoPensamento as { iconeDeObra: string }).iconeDeObra];
+    if (urlDoMartelo !== undefined) this.load.image(CHAVE_DO_MARTELO, urlDoMartelo);
   }
 
   create(): void {

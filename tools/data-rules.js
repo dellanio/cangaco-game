@@ -11,6 +11,8 @@ const {
   bateNomeDeTempo,
 } = require('./data-schema');
 const manifestoDeAssets = require('../assets/manifest.json');
+const fs = require('node:fs');
+const path = require('node:path');
 
 function validarBandeira(bandeira, erros) {
   const e = (msg) => erros.push(`interface/bandeira: ${msg}`);
@@ -132,6 +134,10 @@ function validarPensamento(dados, config, tema, erros) {
   }
   const mercadorias = (dados.economy && dados.economy.mercadorias) || [];
   if (!mercadorias.includes(config.iconeDeComer)) e(`iconeDeComer '${config.iconeDeComer}' nao e mercadoria de economy.json`);
+  if (typeof config.iconeDeObra !== 'string' || !fs.existsSync(path.join(__dirname, '..', 'assets', config.iconeDeObra))) e(`iconeDeObra '${config.iconeDeObra}' precisa ser um arquivo em assets/`);
+  const martelo = config.martelo || {};
+  if (!(martelo.amplitudeGraus > 0) || !Number.isInteger(martelo.periodoTicks) || martelo.periodoTicks < 2) e('martelo precisa de amplitudeGraus > 0 e periodoTicks inteiro >= 2');
+  if (typeof config.opacidade !== 'number' || !(config.opacidade > 0 && config.opacidade <= 1)) e('opacidade precisa ser um numero em (0, 1]');
   const rotulos = tema && tema.pensamentos;
   for (const tipo of ['construir', 'casa', 'comer']) {
     if (!rotulos || typeof rotulos[tipo] !== 'string' || rotulos[tipo].length === 0) {

@@ -79,7 +79,7 @@ const gestoDoTrabalho = dadosDoGesto as unknown as GestoDoTrabalho;
 import type { CargaNasMaos } from './carga-nas-maos';
 import type { MemoriaDeAcao } from './acao-de-unidade';
 import dadosDoPensamento from '../../data/pensamento.json';
-import { mercadoriaDoBalao, pensamentoNaTela } from './pensamento';
+import { anguloDoMartelo, CHAVE_DO_MARTELO, mercadoriaDoBalao, pensamentoNaTela } from './pensamento';
 import type { ConfigDoPensamento, Pensamento } from './pensamento';
 import { chaveDoIcone } from './icone-da-mercadoria';
 
@@ -132,6 +132,9 @@ export interface UnidadeRenderizada {
    *  `casa`; null sem balao. `balaoComo` diz se ele mostrou o icone ou o texto do tema. */
   readonly pensamento?: string | null;
   readonly balaoComo?: 'icone' | 'texto' | null;
+  /** I-TELA-BALAO-TRANSPARENTE / I-TELA-BALAO-COM-MARTELO — a opacidade e o angulo do icone do balao aceso. */
+  readonly balaoOpacidade?: number | null;
+  readonly balaoAngulo?: number | null;
   /** F20c — a condicao de 0 a 1 (`fracaoDeCondicao`), para o roteiro afirmar o limiar contra
    *  `data/condition.json` em vez de contra um numero escrito no roteiro. */
   readonly fracaoDeCondicao: number;
@@ -344,7 +347,7 @@ export function criarCamadaDeUnidades(
 
   /** I-TELA-BALAO-DE-PENSAMENTO — o balao sobre a cabeca: o icone da mercadoria quando existe,
    *  senao o texto do tema. Sem pensamento, ele se apaga. */
-  function desenharPensamento(item: Desenhado, pensamento: Pensamento | null): 'icone' | 'texto' | null {
+  function desenharPensamento(item: Desenhado, pensamento: Pensamento | null, id: string, tick: number): 'icone' | 'texto' | null {
     if (pensamento === null) {
       if (item.balao !== null) {
         item.balao.fundo.setVisible(false);
@@ -374,8 +377,14 @@ export function criarCamadaDeUnidades(
       item.container.add([fundo, icone, texto]);
     }
     const mercadoria = mercadoriaDoBalao(pensamento, CONFIG_DO_PENSAMENTO);
-    const chave = mercadoria === null ? null : chaveDoIcone(mercadoria);
+    // I-TELA-BALAO-COM-MARTELO: a obra mostra o martelo (textura propria, carregada pela cena)
+    const ehObra = pensamento.tipo === 'construir';
+    const chave = ehObra ? CHAVE_DO_MARTELO : mercadoria === null ? null : chaveDoIcone(mercadoria);
     const comIcone = chave !== null && cena.textures.exists(chave);
+    // I-TELA-BALAO-TRANSPARENTE: o balao inteiro com a opacidade do dado
+    item.balao.fundo.setAlpha(CONFIG_DO_PENSAMENTO.opacidade);
+    item.balao.icone.setAlpha(CONFIG_DO_PENSAMENTO.opacidade);
+    item.balao.texto.setAlpha(CONFIG_DO_PENSAMENTO.opacidade);
     item.balao.fundo.setVisible(true);
     item.balao.icone.setVisible(comIcone);
     item.balao.texto.setVisible(!comIcone);
@@ -383,6 +392,16 @@ export function criarCamadaDeUnidades(
       if (item.balao.icone.texture.key !== chave) item.balao.icone.setTexture(chave);
       const ladoDoIcone = lado * CONFIG_DO_PENSAMENTO.ladoDoIconeEmLados;
       item.balao.icone.setDisplaySize(ladoDoIcone, ladoDoIcone);
+      if (ehObra) {
+        // gira em torno do cabo (o canto de baixo a direita do desenho), e o cabo fica no centro do balao
+        item.balao.icone.setOrigin(0.78, 0.8);
+        item.balao.icone.setPosition(ladoDoIcone * 0.28, -lado * CONFIG_DO_PENSAMENTO.alturaEmLados + ladoDoIcone * 0.3);
+        item.balao.icone.setAngle(anguloDoMartelo(tick, id, CONFIG_DO_PENSAMENTO));
+      } else {
+        item.balao.icone.setOrigin(0.5, 0.5);
+        item.balao.icone.setPosition(0, -lado * CONFIG_DO_PENSAMENTO.alturaEmLados);
+        item.balao.icone.setAngle(0);
+      }
     } else {
       const rotulos = temaSertao.pensamentos as Readonly<Record<string, string>>;
       item.balao.texto.setText(rotulos[pensamento.tipo] ?? '');
@@ -542,13 +561,15 @@ export function criarCamadaDeUnidades(
         const comFome = temMarcadorDeFome(unidade);
         item.marcadorDeFome.setVisible(comFome);
         const pensamento = visivel ? pensamentoNaTela(estado, unidade, CONFIG_DO_PENSAMENTO) : null;
-        const balaoComo = desenharPensamento(item, pensamento);
+        const balaoComo = desenharPensamento(item, pensamento, id, estado.tick);
         renderizadas.push({
           id, tipo: unidade.tipo, gx: posicao.gx, gy: posicao.gy,
           gxDesenhado: desenhada.gx, gyDesenhado: desenhada.gy, fsm: unidade.fsm, lado: unidade.lado, corDoBando: corDoBando(unidade.lado), carga, rotuloDaCarga: carga === null ? null : rotuloDaCarga(carga), marcaDaCarga: marca,
           deslocamentoPx: { x: desvio.x, y: desvio.y },
           marcadorDeFome: comFome, fracaoDeCondicao: fracaoDeCondicao(unidade),
           pensamento: pensamento === null ? null : pensamento.tipo === 'mercadoria' ? pensamento.mercadoria : pensamento.tipo, balaoComo,
+          balaoOpacidade: balaoComo === null || item.balao === null ? null : item.balao.fundo.alpha,
+          balaoAngulo: balaoComo === 'icone' && item.balao !== null ? item.balao.icone.angle : null,
           nome: item.nome.text, larguraDoRotuloPx: item.nome.width, visivel,
           profundidadeDoNome: item.nome.depth, profundidadeDoCorpo: item.container.depth, nomeVisivel: item.nome.visible,
           direcaoLogica: alvoDaDirecao(unidade.tipo, unidade.direcao, posicao.gx - anterior.gx, posicao.gy - anterior.gy, direcoes),

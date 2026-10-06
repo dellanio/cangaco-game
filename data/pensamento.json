@@ -4,5 +4,9 @@
   "duracaoTicks": 25,
   "alturaEmLados": 2.4,
   "ladoDoIconeEmLados": 0.6,
-  "iconeDeComer": "loaves"
+  "iconeDeComer": "loaves",
+  "_docObra": "I-TELA-BALAO-COM-MARTELO (2026-10-06): o balao de obra mostra o martelo da aba Construir (`iconeDeObra`, caminho em assets/), batendo: gira `amplitudeGraus` em torno do cabo, subindo devagar e descendo rapido, a cada `periodoTicks`, na fase da unidade. I-TELA-BALAO-TRANSPARENTE: `opacidade` e a do balao inteiro (0,9 = 10 % de transparencia).",
+  "iconeDeObra": "sprites/ui/tab-construir-premium.png",
+  "martelo": { "amplitudeGraus": 40, "periodoTicks": 6 },
+  "opacidade": 0.9
 }

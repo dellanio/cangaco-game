@@ -46,6 +46,8 @@ async function roteiro({ page, capturar, estado, afirmar }) {
     if (com !== null) break;
   }
   afirmar(com !== null, `nenhum serf com balao de icone em ${TETO} ticks; vistos ${JSON.stringify([...vistos])}`);
+  // I-TELA-BALAO-TRANSPARENTE: o balao com 10 % de transparencia
+  afirmar(Math.abs(com.balaoOpacidade - 0.9) < 1e-6, `o balao deveria ter opacidade 0,9, veio ${com.balaoOpacidade}`);
   afirmar(['indo_buscar', 'indo_entregar'].includes(com.fsm), `o balao de mercadoria e de quem vai buscar ou entregar, veio ${com.fsm}`);
   // quem nao vai a lugar nenhum nao pensa
   const s = await estado();
@@ -55,5 +57,23 @@ async function roteiro({ page, capturar, estado, afirmar }) {
   await fixar(com.gx, com.gy - 0.5);
   await esperarFrame();
   await capturar('balao');
+
+  // I-TELA-BALAO-COM-MARTELO: um obreiro indo a obra, com o martelo no balao, batendo (o angulo muda)
+  let obreiro = null;
+  const angulos = new Set();
+  for (let t = 0; t < TETO && angulos.size < 2; t += PASSO) {
+    await page.evaluate((k) => window.__cangaco.avancar(k), PASSO);
+    await esperarFrame();
+    const achado = (await estado()).unidadesRenderizadas.find((u) => u.tipo === 'laborer' && u.pensamento === 'construir');
+    if (achado) {
+      obreiro = achado;
+      angulos.add(Math.round(achado.balaoAngulo));
+    }
+  }
+  afirmar(obreiro !== null && obreiro.balaoComo === 'icone', `o obreiro indo a obra deveria ter o martelo (icone): ${JSON.stringify(obreiro)}`);
+  afirmar(angulos.size >= 2, `o martelo deveria bater (o angulo mudar): ${JSON.stringify([...angulos])}`);
+  await fixar(obreiro.gx, obreiro.gy - 0.5);
+  await esperarFrame();
+  await capturar('martelo');
 }
 module.exports = { roteiro };

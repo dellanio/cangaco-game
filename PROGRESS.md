@@ -21004,3 +21004,18 @@ do manifesto voltou, igual, à de `a2a26a4^` (o diff dela contra esse commit é 
 saíram de `assets/`; eles continuam na pasta de candidatos de fora. O teste novo
 `tests/I-ARTE-ESCOLA-DE-VOLTA.test.ts` confere os estados, o envelope e a ausência dos arquivos D. Os
 58 testes da escola passam, o F17f sai 0, e a captura (o sobrado ao lado do armazém) foi aberta.
+
+### I-TELA-BALAO-COM-MARTELO e I-TELA-BALAO-TRANSPARENTE — o martelo batendo e o balão a 90 % (verificado)
+- **O martelo:** o balão de obra mostra o martelo da aba Construir, no lugar do texto "obra". Ele gira
+  em torno do cabo e bate: sobe devagar em 3/4 do período e desce de uma vez no último quarto, com a
+  fase por unidade. Os dados ficam em `data/pensamento.json` (`iconeDeObra`, `martelo`), e a regra
+  pura é `anguloDoMartelo`; a cena carrega a textura `pensamento:martelo`;
+- **A transparência:** o balão inteiro (fundo, ícone e texto) a `opacidade` 0,9. O validador recusa a
+  opacidade fora de (0, 1], o martelo sem período e o ícone sem arquivo.
+
+**Teste:** no `tests/I-TELA-BALAO-DE-PENSAMENTO.test.ts` (7), mais dois casos: o martelo é periódico,
+fica dentro da amplitude e a queda é maior que a subida, com a fase por unidade; e a opacidade, com o
+validador.
+**Evidência:** o roteiro `I-TELA-BALAO-DE-PENSAMENTO` sai 0. Ele confere a opacidade 0,9 na ponte e um
+obreiro indo à obra com o balão de ícone, com o ângulo mudando entre as leituras. A captura do martelo
+no balão do obreiro foi aberta.

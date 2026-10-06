@@ -9,6 +9,9 @@
  */
 import type { GameState, Unidade } from '../sim/state';
 
+/** I-TELA-BALAO-COM-MARTELO — a chave da textura do martelo (a cena a carrega de `iconeDeObra`). */
+export const CHAVE_DO_MARTELO = 'pensamento:martelo';
+
 export type Pensamento =
   | { readonly tipo: 'mercadoria'; readonly mercadoria: string }
   | { readonly tipo: 'comer' }
@@ -21,6 +24,21 @@ export interface ConfigDoPensamento {
   readonly alturaEmLados: number;
   readonly ladoDoIconeEmLados: number;
   readonly iconeDeComer: string;
+  readonly iconeDeObra: string;
+  readonly martelo: { readonly amplitudeGraus: number; readonly periodoTicks: number };
+  readonly opacidade: number;
+}
+
+/**
+ * I-TELA-BALAO-COM-MARTELO — o angulo do martelo no balao de obra, em graus: sobe devagar ate
+ * `-amplitude` nos primeiros 3/4 do periodo e desce de uma vez no ultimo quarto (a batida). A fase e a
+ * da unidade, para os obreiros nao baterem juntos.
+ */
+export function anguloDoMartelo(tick: number, id: string, config: Pick<ConfigDoPensamento, 'martelo'>): number {
+  const { amplitudeGraus, periodoTicks } = config.martelo;
+  const fase = ((tick + faseDaUnidade(id, periodoTicks)) % periodoTicks) / periodoTicks;
+  const subida = 0.75;
+  return fase < subida ? -amplitudeGraus * (fase / subida) : -amplitudeGraus * ((1 - fase) / (1 - subida));
 }
 
 /** A mercadoria da tarefa da unidade, quando a tarefa leva uma; senao `null`. */
